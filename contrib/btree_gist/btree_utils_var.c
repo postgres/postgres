@@ -225,13 +225,13 @@ void
 gbt_var_bin_union(Datum *u, GBT_VARKEY *e, Oid collation,
 				  const gbtree_vinfo *tinfo)
 {
-	GBT_VARKEY *nk = NULL;
-	GBT_VARKEY *tmp = NULL;
-	GBT_VARKEY_R nr;
 	GBT_VARKEY_R eo = gbt_var_key_readable(e);
+	GBT_VARKEY_R nr;
 
 	if (eo.lower == eo.upper)	/* leaf */
 	{
+		GBT_VARKEY *tmp;
+
 		tmp = gbt_var_leaf2node(e, tinfo);
 		if (tmp != e)
 			eo = gbt_var_key_readable(tmp);
@@ -239,25 +239,26 @@ gbt_var_bin_union(Datum *u, GBT_VARKEY *e, Oid collation,
 
 	if (DatumGetPointer(*u))
 	{
-
 		GBT_VARKEY_R ro = gbt_var_key_readable((GBT_VARKEY *) DatumGetPointer(*u));
+		bool		update = false;
+
+		nr.lower = ro.lower;
+		nr.upper = ro.upper;
 
 		if ((*tinfo->f_cmp) (ro.lower, eo.lower, collation) > 0)
 		{
 			nr.lower = eo.lower;
-			nr.upper = ro.upper;
-			nk = gbt_var_key_copy(&nr, TRUE);
+			update = true;
 		}
 
 		if ((*tinfo->f_cmp) (ro.upper, eo.upper, collation) < 0)
 		{
 			nr.upper = eo.upper;
-			nr.lower = ro.lower;
-			nk = gbt_var_key_copy(&nr, TRUE);
+			update = true;
 		}
 
-		if (nk)
-			*u = PointerGetDatum(nk);
+		if (update)
+			*u = PointerGetDatum(gbt_var_key_copy(&nr, TRUE));
 	}
 	else
 	{
