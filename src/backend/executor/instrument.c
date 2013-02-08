@@ -33,9 +33,9 @@ InstrAlloc(int n, int instrument_options)
 	instr = palloc0(n * sizeof(Instrumentation));
 	if (instrument_options & (INSTRUMENT_BUFFERS | INSTRUMENT_TIMER))
 	{
+		bool		need_buffers = (instrument_options & INSTRUMENT_BUFFERS) != 0;
+		bool		need_timer = (instrument_options & INSTRUMENT_TIMER) != 0;
 		int			i;
-		bool		need_buffers = instrument_options & INSTRUMENT_BUFFERS;
-		bool		need_timer = instrument_options & INSTRUMENT_TIMER;
 
 		for (i = 0; i < n; i++)
 		{
@@ -51,10 +51,13 @@ InstrAlloc(int n, int instrument_options)
 void
 InstrStartNode(Instrumentation *instr)
 {
-	if (instr->need_timer && INSTR_TIME_IS_ZERO(instr->starttime))
-		INSTR_TIME_SET_CURRENT(instr->starttime);
-	else
-		elog(DEBUG2, "InstrStartNode called twice in a row");
+	if (instr->need_timer)
+	{
+		if (INSTR_TIME_IS_ZERO(instr->starttime))
+			INSTR_TIME_SET_CURRENT(instr->starttime);
+		else
+			elog(ERROR, "InstrStartNode called twice in a row");
+	}
 
 	/* save buffer usage totals at node entry, if needed */
 	if (instr->need_bufusage)
@@ -73,18 +76,13 @@ InstrStopNode(Instrumentation *instr, double nTuples)
 	/* let's update the time only if the timer was requested */
 	if (instr->need_timer)
 	{
-
 		if (INSTR_TIME_IS_ZERO(instr->starttime))
-		{
-			elog(DEBUG2, "InstrStopNode called without start");
-			return;
-		}
+			elog(ERROR, "InstrStopNode called without start");
 
 		INSTR_TIME_SET_CURRENT(endtime);
 		INSTR_TIME_ACCUM_DIFF(instr->counter, endtime, instr->starttime);
 
 		INSTR_TIME_SET_ZERO(instr->starttime);
-
 	}
 
 	/* Add delta of buffer usage since entry to node's totals */
@@ -111,7 +109,7 @@ InstrEndLoop(Instrumentation *instr)
 		return;
 
 	if (!INSTR_TIME_IS_ZERO(instr->starttime))
-		elog(DEBUG2, "InstrEndLoop called on running node");
+		elog(ERROR, "InstrEndLoop called on running node");
 
 	/* Accumulate per-cycle statistics into totals */
 	totaltime = INSTR_TIME_GET_DOUBLE(instr->counter);
