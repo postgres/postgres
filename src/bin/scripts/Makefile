@@ -25,15 +25,15 @@ all: $(PROGRAMS)
 %: %.o $(WIN32RES)
 	$(CC) $(CFLAGS) $^ $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
-createdb: createdb.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq
-createlang: createlang.o common.o print.o mbprint.o | submake-libpq
-createuser: createuser.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq
-dropdb: dropdb.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq
-droplang: droplang.o common.o print.o mbprint.o | submake-libpq
-dropuser: dropuser.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq
-clusterdb: clusterdb.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq
-vacuumdb: vacuumdb.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq
-reindexdb: reindexdb.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq
+createdb: createdb.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq submake-libpgport
+createlang: createlang.o common.o print.o mbprint.o | submake-libpq submake-libpgport
+createuser: createuser.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq submake-libpgport
+dropdb: dropdb.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq submake-libpgport
+droplang: droplang.o common.o print.o mbprint.o | submake-libpq submake-libpgport
+dropuser: dropuser.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq submake-libpgport
+clusterdb: clusterdb.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq submake-libpgport
+vacuumdb: vacuumdb.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq submake-libpgport
+reindexdb: reindexdb.o common.o dumputils.o kwlookup.o keywords.o | submake-libpq submake-libpgport
 pg_isready: pg_isready.o common.o | submake-libpq submake-libpgport
 
 dumputils.c keywords.c: % : $(top_srcdir)/src/bin/pg_dump/%
