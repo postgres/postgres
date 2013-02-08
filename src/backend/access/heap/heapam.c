@@ -5113,10 +5113,11 @@ heap_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid,
 	 * cutoff; it doesn't remove dead members of a very old multixact.
 	 */
 	xid = HeapTupleHeaderGetRawXmax(tuple);
-	if (TransactionIdIsNormal(xid) &&
-		(((!(tuple->t_infomask & HEAP_XMAX_IS_MULTI) &&
-		   TransactionIdPrecedes(xid, cutoff_xid))) ||
-		 MultiXactIdPrecedes(xid, cutoff_multi)))
+	if ((tuple->t_infomask & HEAP_XMAX_IS_MULTI) ?
+		(MultiXactIdIsValid(xid) &&
+		 MultiXactIdPrecedes(xid, cutoff_multi)) :
+		(TransactionIdIsNormal(xid) &&
+		 TransactionIdPrecedes(xid, cutoff_xid)))
 	{
 		HeapTupleHeaderSetXmax(tuple, InvalidTransactionId);
 
