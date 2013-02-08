@@ -638,10 +638,10 @@ extern Datum Float8GetDatum(float8 X);
  * ----------------------------------------------------------------
  */
 
+/*
+ * This declaration supports the assertion-related macros in c.h.  This is here
+ * because that file doesn't have PGDLLIMPORT in the right place.
+ */
 extern PGDLLIMPORT bool assert_enabled;
-
-extern void ExceptionalCondition(const char *conditionName,
-					 const char *errorType,
-			 const char *fileName, int lineNumber) __attribute__((noreturn));
 
 #endif   /* POSTGRES_H */
