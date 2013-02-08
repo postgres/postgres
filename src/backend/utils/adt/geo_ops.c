@@ -558,15 +558,10 @@ box_overlap(PG_FUNCTION_ARGS)
 static bool
 box_ov(BOX *box1, BOX *box2)
 {
-	return ((FPge(box1->high.x, box2->high.x) &&
-			 FPle(box1->low.x, box2->high.x)) ||
-			(FPge(box2->high.x, box1->high.x) &&
-			 FPle(box2->low.x, box1->high.x)))
-		&&
-		((FPge(box1->high.y, box2->high.y) &&
-		  FPle(box1->low.y, box2->high.y)) ||
-		 (FPge(box2->high.y, box1->high.y) &&
-		  FPle(box2->low.y, box1->high.y)));
+	return (FPle(box1->low.x, box2->high.x) &&
+			FPle(box2->low.x, box1->high.x) &&
+			FPle(box1->low.y, box2->high.y) &&
+			FPle(box2->low.y, box1->high.y));
 }
 
 /*		box_left		-		is box1 strictly left of box2?
