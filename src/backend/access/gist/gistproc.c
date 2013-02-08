@@ -838,7 +838,12 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 /*
  * Equality method
  *
- * This is used for both boxes and points.
+ * This is used for boxes, points, circles, and polygons, all of which store
+ * boxes as GiST index entries.
+ *
+ * Returns true only when boxes are exactly the same.  We can't use fuzzy
+ * comparisons here without breaking index consistency; therefore, this isn't
+ * equivalent to box_same().
  */
 Datum
 gist_box_same(PG_FUNCTION_ARGS)
@@ -848,11 +853,10 @@ gist_box_same(PG_FUNCTION_ARGS)
 	bool	   *result = (bool *) PG_GETARG_POINTER(2);
 
 	if (b1 && b2)
-		*result = DatumGetBool(DirectFunctionCall2(box_same,
-												   PointerGetDatum(b1),
-												   PointerGetDatum(b2)));
+		*result = (b1->low.x == b2->low.x && b1->low.y == b2->low.y &&
+				   b1->high.x == b2->high.x && b1->high.y == b2->high.y);
 	else
-		*result = (b1 == NULL && b2 == NULL) ? TRUE : FALSE;
+		*result = (b1 == NULL && b2 == NULL);
 	PG_RETURN_POINTER(result);
 }
 
@@ -1296,13 +1300,16 @@ gist_point_consistent_internal(StrategyNumber strategy,
 		case RTSameStrategyNumber:
 			if (isLeaf)
 			{
-				result = FPeq(key->low.x, query->x)
-					&& FPeq(key->low.y, query->y);
+				/* key.high must equal key.low, so we can disregard it */
+				result = (FPeq(key->low.x, query->x) &&
+						  FPeq(key->low.y, query->y));
 			}
 			else
 			{
-				result = (query->x <= key->high.x && query->x >= key->low.x &&
-						  query->y <= key->high.y && query->y >= key->low.y);
+				result = (FPle(query->x, key->high.x) &&
+						  FPge(query->x, key->low.x) &&
+						  FPle(query->y, key->high.y) &&
+						  FPge(query->y, key->low.y));
 			}
 			break;
 		default:
@@ -1337,12 +1344,31 @@ gist_point_consistent(PG_FUNCTION_ARGS)
 			*recheck = false;
 			break;
 		case BoxStrategyNumberGroup:
-			result = DatumGetBool(DirectFunctionCall5(
-													  gist_box_consistent,
-													  PointerGetDatum(entry),
-													  PG_GETARG_DATUM(1),
-									  Int16GetDatum(RTOverlapStrategyNumber),
-											   0, PointerGetDatum(recheck)));
+			{
+				/*
+				 * The only operator in this group is point <@ box (on_pb), so
+				 * we needn't examine strategy again.
+				 *
+				 * For historical reasons, on_pb uses exact rather than fuzzy
+				 * comparisons.  We could use box_overlap when at an internal
+				 * page, but that would lead to possibly visiting child pages
+				 * uselessly, because box_overlap uses fuzzy comparisons.
+				 * Instead we write a non-fuzzy overlap test.  The same code
+				 * will also serve for leaf-page tests, since leaf keys have
+				 * high == low.
+				 */
+				BOX		   *query,
+						   *key;
+
+				query = PG_GETARG_BOX_P(1);
+				key = DatumGetBoxP(entry->key);
+
+				result = (key->high.x >= query->low.x &&
+						  key->low.x <= query->high.x &&
+						  key->high.y >= query->low.y &&
+						  key->low.y <= query->high.y);
+				*recheck = false;
+			}
 			break;
 		case PolygonStrategyNumberGroup:
 			{
