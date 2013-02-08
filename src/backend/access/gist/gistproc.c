@@ -533,6 +533,13 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 
 /*
  * Equality method
+ *
+ * This is used for boxes, circles, and polygons, all of which store
+ * boxes as GiST index entries.
+ *
+ * Returns true only when boxes are exactly the same.  We can't use fuzzy
+ * comparisons here without breaking index consistency; therefore, this isn't
+ * equivalent to box_same().
  */
 Datum
 gist_box_same(PG_FUNCTION_ARGS)
@@ -542,11 +549,10 @@ gist_box_same(PG_FUNCTION_ARGS)
 	bool	   *result = (bool *) PG_GETARG_POINTER(2);
 
 	if (b1 && b2)
-		*result = DatumGetBool(DirectFunctionCall2(box_same,
-												   PointerGetDatum(b1),
-												   PointerGetDatum(b2)));
+		*result = (b1->low.x == b2->low.x && b1->low.y == b2->low.y &&
+				   b1->high.x == b2->high.x && b1->high.y == b2->high.y);
 	else
-		*result = (b1 == NULL && b2 == NULL) ? TRUE : FALSE;
+		*result = (b1 == NULL && b2 == NULL);
 	PG_RETURN_POINTER(result);
 }
 
