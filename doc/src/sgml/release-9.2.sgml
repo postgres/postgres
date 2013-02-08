@@ -235,10 +235,10 @@
      </para>
 
      <para>
-      The main consequence of this mistake is that lowering <link
+      In installations that have existed for more than <link
       linkend="guc-vacuum-freeze-min-age"><varname>vacuum_freeze_min_age</></link>
-      would cause full-table vacuuming scans to occur much more frequently
-      than intended.
+      transactions, this mistake prevented autovacuum from using partial-table
+      scans, so that a full-table scan would always happen instead.
      </para>
     </listitem>
 
@@ -377,7 +377,7 @@
 
     <listitem>
      <para>
-      Fix <application>pg_upgrade</>'s -O/-o options (Bruce Momjian)
+      Fix <application>pg_upgrade</>'s -O/-o options (Marti Raudsepp)
      </para>
     </listitem>
 
