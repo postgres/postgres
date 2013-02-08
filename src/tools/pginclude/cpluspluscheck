@@ -14,6 +14,7 @@ trap 'rm -rf $tmp' 0 1 2 3 15
 # the relevant file anyway.
 # rusagestub.h is also platform-specific, and will be included by
 # utils/pg_rusage.h if necessary.
+# access/rmgrlist.h is not meant to be included standalone.
 # regex/regerrs.h is not meant to be included standalone.
 # parser/gram.h will be included by parser/gramparse.h.
 # parser/kwlist.h is not meant to be included standalone.
@@ -21,6 +22,7 @@ trap 'rm -rf $tmp' 0 1 2 3 15
 for f in `find src/include src/interfaces/libpq/libpq-fe.h src/interfaces/libpq/libpq-events.h -name '*.h' -print | \
     grep -v -e ^src/include/port/ \
 	-e ^src/include/rusagestub.h -e ^src/include/regex/regerrs.h \
+	-e ^src/include/access/rmgrlist.h \
 	-e ^src/include/parser/gram.h -e ^src/include/parser/kwlist.h`
 do
 	{
