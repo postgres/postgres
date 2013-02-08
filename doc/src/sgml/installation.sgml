@@ -363,16 +363,18 @@ su - postgres
   <title>Getting The Source</title>
 
   <para>
-   The <productname>PostgreSQL</> &version; sources can be obtained by
-   anonymous FTP from <ulink
-   url="ftp://ftp.postgresql.org/pub/source/v&version;/postgresql-&version;.tar.gz"></ulink>.
-   Other download options can be found on our website:
-   <ulink url="http://www.postgresql.org/download/"></ulink>. After you
-   have obtained the file, unpack it:
+   The <productname>PostgreSQL</> &version; sources can be obtained from the
+   download section of our
+   website: <ulink url="http://www.postgresql.org/download/"></ulink>.  You
+   should get a file named <filename>postgresql-&version;.tar.gz</filename>
+   or <filename>postgresql-&version;.tar.bz2</filename>. After
+   you have obtained the file, unpack it:
 <screen>
 <userinput>gunzip postgresql-&version;.tar.gz</userinput>
 <userinput>tar xf postgresql-&version;.tar</userinput>
 </screen>
+   (Use <command>bunzip2</command> instead of <command>gunzip</command> if you
+   have the <filename>.bz2</filename> file.)
    This will create a directory
    <filename>postgresql-&version;</filename> under the current directory
    with the <productname>PostgreSQL</> sources.
