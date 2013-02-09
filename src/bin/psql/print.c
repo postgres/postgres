@@ -439,10 +439,13 @@ print_unaligned_vertical(const printTableContent *cont, FILE *fout)
 		}
 
 		/* see above in print_unaligned_text() */
-		if (cont->opt->recordSep.separator_zero)
-			print_separator(cont->opt->recordSep, fout);
-		else
-			fputc('\n', fout);
+		if (need_recordsep)
+		{
+			if (cont->opt->recordSep.separator_zero)
+				print_separator(cont->opt->recordSep, fout);
+			else
+				fputc('\n', fout);
+		}
 	}
 }
 
