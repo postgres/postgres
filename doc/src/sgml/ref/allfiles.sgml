@@ -25,6 +25,7 @@ Complete list of usable sgml source files in this directory.
 <!ENTITY alterOperatorClass SYSTEM "alter_opclass.sgml">
 <!ENTITY alterOperatorFamily SYSTEM "alter_opfamily.sgml">
 <!ENTITY alterRole          SYSTEM "alter_role.sgml">
+<!ENTITY alterRule          SYSTEM "alter_rule.sgml">
 <!ENTITY alterSchema        SYSTEM "alter_schema.sgml">
 <!ENTITY alterServer        SYSTEM "alter_server.sgml">
 <!ENTITY alterSequence      SYSTEM "alter_sequence.sgml">

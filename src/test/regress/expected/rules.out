@@ -2559,3 +2559,44 @@ Rules:
     ON UPDATE TO rules_src DO  VALUES (old.f1,old.f2,'old'::text), (new.f1,new.f2,'new'::text)
 Has OIDs: no
 
+--
+-- check alter rename rule
+--
+CREATE TABLE rule_t1 (a INT);
+CREATE VIEW rule_v1 AS SELECT * FROM rule_t1;
+CREATE RULE InsertRule AS
+    ON INSERT TO rule_v1
+    DO INSTEAD
+        INSERT INTO rule_t1 VALUES(new.a);
+ALTER RULE InsertRule ON rule_v1 RENAME to NewInsertRule;
+INSERT INTO rule_v1 VALUES(1);
+SELECT * FROM rule_v1;
+ a 
+---
+ 1
+(1 row)
+
+\d+ rule_v1
+                View "public.rule_v1"
+ Column |  Type   | Modifiers | Storage | Description 
+--------+---------+-----------+---------+-------------
+ a      | integer |           | plain   | 
+View definition:
+ SELECT rule_t1.a
+   FROM rule_t1;
+Rules:
+ newinsertrule AS
+    ON INSERT TO rule_v1 DO INSTEAD  INSERT INTO rule_t1 (a) 
+  VALUES (new.a)
+
+--
+-- error conditions for alter rename rule
+--
+ALTER RULE InsertRule ON rule_v1 RENAME TO NewInsertRule; -- doesn't exist
+ERROR:  rule "insertrule" for relation "rule_v1" does not exist
+ALTER RULE NewInsertRule ON rule_v1 RENAME TO "_RETURN"; -- already exists
+ERROR:  rule "_RETURN" for relation "rule_v1" already exists
+ALTER RULE "_RETURN" ON rule_v1 RENAME TO abc; -- ON SELECT rule cannot be renamed
+ERROR:  renaming an ON SELECT rule is not allowed
+DROP VIEW rule_v1;
+DROP TABLE rule_t1;

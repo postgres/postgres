@@ -752,37 +752,98 @@ EnableDisableRule(Relation rel, const char *rulename,
 
 
 /*
- * Rename an existing rewrite rule.
- *
- * This is unused code at the moment.  Note that it lacks a permissions check.
+ * Perform permissions and integrity checks before acquiring a relation lock.
  */
-#ifdef NOT_USED
-void
-RenameRewriteRule(Oid owningRel, const char *oldName,
+static void
+RangeVarCallbackForRenameRule(const RangeVar *rv, Oid relid, Oid oldrelid,
+							  void *arg)
+{
+	HeapTuple	tuple;
+	Form_pg_class form;
+
+	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+	if (!HeapTupleIsValid(tuple))
+		return;					/* concurrently dropped */
+	form = (Form_pg_class) GETSTRUCT(tuple);
+
+	/* only tables and views can have rules */
+	if (form->relkind != RELKIND_RELATION && form->relkind != RELKIND_VIEW)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a table or view", rv->relname)));
+
+	if (!allowSystemTableMods && IsSystemClass(form))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied: \"%s\" is a system catalog",
+						rv->relname)));
+
+	/* you must own the table to rename one of its rules */
+	if (!pg_class_ownercheck(relid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS, rv->relname);
+
+	ReleaseSysCache(tuple);
+}
+
+/*
+ * Rename an existing rewrite rule.
+ */
+Oid
+RenameRewriteRule(RangeVar *relation, const char *oldName,
 				  const char *newName)
 {
+	Oid			relid;
+	Relation	targetrel;
 	Relation	pg_rewrite_desc;
 	HeapTuple	ruletup;
+	Form_pg_rewrite ruleform;
+	Oid			ruleOid;
 
+	/*
+	 * Look up name, check permissions, and acquire lock (which we will NOT
+	 * release until end of transaction).
+	 */
+	relid = RangeVarGetRelidExtended(relation, AccessExclusiveLock,
+									 false, false,
+									 RangeVarCallbackForRenameRule,
+									 NULL);
+
+	/* Have lock already, so just need to build relcache entry. */
+	targetrel = relation_open(relid, NoLock);
+
+	/* Prepare to modify pg_rewrite */
 	pg_rewrite_desc = heap_open(RewriteRelationId, RowExclusiveLock);
 
+	/* Fetch the rule's entry (it had better exist) */
 	ruletup = SearchSysCacheCopy2(RULERELNAME,
-								  ObjectIdGetDatum(owningRel),
+								  ObjectIdGetDatum(relid),
 								  PointerGetDatum(oldName));
 	if (!HeapTupleIsValid(ruletup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("rule \"%s\" for relation \"%s\" does not exist",
-						oldName, get_rel_name(owningRel))));
+						oldName, RelationGetRelationName(targetrel))));
+	ruleform = (Form_pg_rewrite) GETSTRUCT(ruletup);
+	ruleOid = HeapTupleGetOid(ruletup);
 
-	/* should not already exist */
-	if (IsDefinedRewriteRule(owningRel, newName))
+	/* rule with the new name should not already exist */
+	if (IsDefinedRewriteRule(relid, newName))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("rule \"%s\" for relation \"%s\" already exists",
-						newName, get_rel_name(owningRel))));
+						newName, RelationGetRelationName(targetrel))));
 
-	namestrcpy(&(((Form_pg_rewrite) GETSTRUCT(ruletup))->rulename), newName);
+	/*
+	 * We disallow renaming ON SELECT rules, because they should always be
+	 * named "_RETURN".
+	 */
+	if (ruleform->ev_type == CMD_SELECT + '0')
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("renaming an ON SELECT rule is not allowed")));
+
+	/* OK, do the update */
+	namestrcpy(&(ruleform->rulename), newName);
 
 	simple_heap_update(pg_rewrite_desc, &ruletup->t_self, ruletup);
 
@@ -791,6 +852,18 @@ RenameRewriteRule(Oid owningRel, const char *oldName,
 
 	heap_freetuple(ruletup);
 	heap_close(pg_rewrite_desc, RowExclusiveLock);
-}
 
-#endif
+	/*
+	 * Invalidate relation's relcache entry so that other backends (and this
+	 * one too!) are sent SI message to make them rebuild relcache entries.
+	 * (Ideally this should happen automatically...)
+	 */
+	CacheInvalidateRelcache(targetrel);
+
+	/*
+	 * Close rel, but keep exclusive lock!
+	 */
+	relation_close(targetrel, NoLock);
+
+	return ruleOid;
+}

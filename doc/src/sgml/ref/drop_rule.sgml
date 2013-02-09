@@ -103,7 +103,9 @@ DROP RULE newrule ON mytable;
   <title>Compatibility</title>
 
   <para>
-   There is no <command>DROP RULE</command> statement in the SQL standard.
+   <command>DROP RULE</command> is a
+   <productname>PostgreSQL</productname> language extension, as is the
+   entire query rewrite system.
   </para>
  </refsect1>
 
@@ -112,6 +114,7 @@ DROP RULE newrule ON mytable;
 
   <simplelist type="inline">
    <member><xref linkend="sql-createrule"></member>
+   <member><xref linkend="sql-alterrule"></member>
   </simplelist>
  </refsect1>
 

@@ -53,6 +53,7 @@
    &alterOperatorClass;
    &alterOperatorFamily;
    &alterRole;
+   &alterRule;
    &alterSchema;
    &alterSequence;
    &alterServer;

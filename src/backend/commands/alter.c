@@ -51,6 +51,7 @@
 #include "commands/user.h"
 #include "parser/parse_func.h"
 #include "miscadmin.h"
+#include "rewrite/rewriteDefine.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -323,6 +324,10 @@ ExecRenameStmt(RenameStmt *stmt)
 		case OBJECT_COLUMN:
 		case OBJECT_ATTRIBUTE:
 			return renameatt(stmt);
+
+		case OBJECT_RULE:
+			return RenameRewriteRule(stmt->relation, stmt->subname,
+									 stmt->newname);
 
 		case OBJECT_TRIGGER:
 			return renametrig(stmt);

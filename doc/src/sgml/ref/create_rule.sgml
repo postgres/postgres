@@ -284,4 +284,14 @@ UPDATE mytable SET name = 'foo' WHERE id = 42;
    entire query rewrite system.
   </para>
  </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-alterrule"></member>
+   <member><xref linkend="sql-droprule"></member>
+  </simplelist>
+ </refsect1>
+
 </refentry>

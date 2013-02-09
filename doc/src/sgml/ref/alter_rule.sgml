@@ -1,0 +1,105 @@
+<!--
+doc/src/sgml/ref/alter_rule.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-ALTERRULE">
+ <refmeta>
+  <refentrytitle>ALTER RULE</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>ALTER RULE</refname>
+  <refpurpose>change the definition of a rule</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="sql-alterrule">
+  <primary>ALTER RULE</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+ALTER RULE <replaceable class="PARAMETER">name</replaceable> ON <replaceable class="PARAMETER">table_name</replaceable> RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>ALTER RULE</command> changes properties of an existing
+   rule.  Currently, the only available action is to change the rule's name.
+  </para>
+
+  <para>
+   To use <command>ALTER RULE</command>, you must own the table or view that
+   the rule applies to.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <listitem>
+     <para>
+      The name of an existing rule to alter.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">table_name</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of the table or view that the
+      rule applies to.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">new_name</replaceable></term>
+    <listitem>
+     <para>
+      The new name for the rule.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   To rename an existing rule:
+<programlisting>
+ALTER RULE notify_all ON emp RENAME TO notify_me;
+</programlisting></para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   <command>ALTER RULE</command> is a
+   <productname>PostgreSQL</productname> language extension, as is the
+   entire query rewrite system.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createrule"></member>
+   <member><xref linkend="sql-droprule"></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>

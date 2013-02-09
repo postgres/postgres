@@ -32,7 +32,7 @@ extern Oid DefineQueryRewrite(char *rulename,
 				   bool replace,
 				   List *action);
 
-extern void RenameRewriteRule(Oid owningRel, const char *oldName,
+extern Oid RenameRewriteRule(RangeVar *relation, const char *oldName,
 				  const char *newName);
 
 extern void setRuleCheckAsUser(Node *node, Oid userid);
