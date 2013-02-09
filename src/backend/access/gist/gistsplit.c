@@ -401,7 +401,7 @@ gistUserPicksplit(Relation r, GistEntryVector *entryvec, int attno, GistSplitVec
 
 		if (sv->spl_ldatum_exists || sv->spl_rdatum_exists)
 		{
-			elog(LOG, "picksplit method for column %d of index \"%s\" doesn't support secondary split",
+			elog(DEBUG1, "picksplit method for column %d of index \"%s\" doesn't support secondary split",
 				 attno + 1, RelationGetRelationName(r));
 
 			supportSecondarySplit(r, giststate, attno, sv, v->spl_lattr[attno], v->spl_rattr[attno]);
