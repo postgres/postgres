@@ -162,23 +162,16 @@ findDontCares(Relation r, GISTSTATE *giststate, GISTENTRY *valvec,
  * Remove tuples that are marked don't-cares from the tuple index array a[]
  * of length *len.	This is applied separately to the spl_left and spl_right
  * arrays.
- *
- * Corner case: we do not wish to reduce the index array to zero length.
- * (If we did, then the union key for this side would be null, and having just
- * one of spl_ldatum_exists and spl_rdatum_exists be TRUE might confuse
- * user-defined PickSplit methods.)  To avoid that, we'll forcibly redefine
- * one tuple as non-don't-care if necessary.  Hence, we must be able to adjust
- * caller's NumDontCare count.
  */
 static void
-removeDontCares(OffsetNumber *a, int *len, bool *dontcare, int *NumDontCare)
+removeDontCares(OffsetNumber *a, int *len, const bool *dontcare)
 {
 	int			origlen,
-				curlen,
+				newlen,
 				i;
 	OffsetNumber *curwpos;
 
-	origlen = curlen = *len;
+	origlen = newlen = *len;
 	curwpos = a;
 	for (i = 0; i < origlen; i++)
 	{
@@ -190,18 +183,11 @@ removeDontCares(OffsetNumber *a, int *len, bool *dontcare, int *NumDontCare)
 			*curwpos = ai;
 			curwpos++;
 		}
-		else if (curlen == 1)
-		{
-			/* corner case: don't let array become empty */
-			dontcare[ai] = FALSE;		/* mark item as non-dont-care */
-			*NumDontCare -= 1;
-			i--;				/* reprocess item on next iteration */
-		}
 		else
-			curlen--;
+			newlen--;
 	}
 
-	*len = curlen;
+	*len = newlen;
 }
 
 /*
@@ -304,8 +290,14 @@ supportSecondarySplit(Relation r, GISTSTATE *giststate, int attno,
 					penalty2;
 
 		/*
-		 * there is only one previously defined union, so we just choose swap
-		 * or not by lowest penalty
+		 * There is only one previously defined union, so we just choose swap
+		 * or not by lowest penalty for that side.	We can only get here if a
+		 * secondary split happened to have all NULLs in its column in the
+		 * tuples that the outer recursion level had assigned to one side.
+		 * (Note that the null checks in gistSplitByKey don't prevent the
+		 * case, because they'll only be checking tuples that were considered
+		 * don't-cares at the outer recursion level, not the tuples that went
+		 * into determining the passed-down left and right union keys.)
 		 */
 		penalty1 = gistpenalty(giststate, attno, entry1, false, &entrySL, false);
 		penalty2 = gistpenalty(giststate, attno, entry1, false, &entrySR, false);
@@ -405,13 +397,19 @@ genericPickSplit(GISTSTATE *giststate, GistEntryVector *entryvec, GIST_SPLITVEC 
  * two vectors.
  *
  * Returns FALSE if split is complete (there are no more index columns, or
- * there is no need to consider them).	Note that in this case the union
- * keys for all columns must be computed here.
- * Returns TRUE and v->spl_dontcare = NULL if left and right unions of attno
- * column are the same, so we should split on next column instead.
+ * there is no need to consider them because split is optimal already).
+ *
+ * Returns TRUE and v->spl_dontcare = NULL if the picksplit result is
+ * degenerate (all tuples seem to be don't-cares), so we should just
+ * disregard this column and split on the next column(s) instead.
+ *
  * Returns TRUE and v->spl_dontcare != NULL if there are don't-care tuples
  * that could be relocated based on the next column(s).  The don't-care
  * tuples have been removed from the split and must be reinserted by caller.
+ * There is at least one non-don't-care tuple on each side of the split,
+ * and union keys for all columns are updated to include just those tuples.
+ *
+ * A TRUE result implies there is at least one more index column.
  */
 static bool
 gistUserPicksplit(Relation r, GistEntryVector *entryvec, int attno, GistSplitVector *v,
@@ -483,8 +481,7 @@ gistUserPicksplit(Relation r, GistEntryVector *entryvec, int attno, GistSplitVec
 
 	/*
 	 * If index columns remain, then consider whether we can improve the split
-	 * by using them.  Even if we can't, we must compute union keys for those
-	 * columns before we can return FALSE.
+	 * by using them.
 	 */
 	v->spl_dontcare = NULL;
 
@@ -492,40 +489,49 @@ gistUserPicksplit(Relation r, GistEntryVector *entryvec, int attno, GistSplitVec
 	{
 		int			NumDontCare;
 
+		/*
+		 * Make a quick check to see if left and right union keys are equal;
+		 * if so, the split is certainly degenerate, so tell caller to
+		 * re-split with the next column.
+		 */
 		if (gistKeyIsEQ(giststate, attno, sv->spl_ldatum, sv->spl_rdatum))
-		{
-			/*
-			 * Left and right union keys are equal, so we can get better split
-			 * by considering next column.
-			 */
 			return true;
-		}
 
 		/*
-		 * Locate don't-care tuples, if any
+		 * Locate don't-care tuples, if any.  If there are none, the split is
+		 * optimal, so just fall out and return false.
 		 */
 		v->spl_dontcare = (bool *) palloc0(sizeof(bool) * (entryvec->n + 1));
 
 		NumDontCare = findDontCares(r, giststate, entryvec->vector, v, attno);
 
-		if (NumDontCare == 0)
+		if (NumDontCare > 0)
 		{
 			/*
-			 * There are no don't-cares, so just compute the union keys for
-			 * remaining columns and we're done.
+			 * Remove don't-cares from spl_left[] and spl_right[].
 			 */
-			gistunionsubkey(giststate, itup, v);
-		}
-		else
-		{
+			removeDontCares(sv->spl_left, &sv->spl_nleft, v->spl_dontcare);
+			removeDontCares(sv->spl_right, &sv->spl_nright, v->spl_dontcare);
+
 			/*
-			 * Remove don't-cares from spl_left[] and spl_right[].  NOTE: this
-			 * could reduce NumDontCare to zero.
+			 * If all tuples on either side were don't-cares, the split is
+			 * degenerate, and we're best off to ignore it and split on the
+			 * next column.  (We used to try to press on with a secondary
+			 * split by forcing a random tuple on each side to be treated as
+			 * non-don't-care, but it seems unlikely that that technique
+			 * really gives a better result.  Note that we don't want to try a
+			 * secondary split with empty left or right primary split sides,
+			 * because then there is no union key on that side for the
+			 * PickSplit function to try to expand, so it can have no good
+			 * figure of merit for what it's doing.  Also note that this check
+			 * ensures we can't produce a bogus one-side-only split in the
+			 * NumDontCare == 1 special case below.)
 			 */
-			removeDontCares(sv->spl_left, &sv->spl_nleft,
-							v->spl_dontcare, &NumDontCare);
-			removeDontCares(sv->spl_right, &sv->spl_nright,
-							v->spl_dontcare, &NumDontCare);
+			if (sv->spl_nleft == 0 || sv->spl_nright == 0)
+			{
+				v->spl_dontcare = NULL;
+				return true;
+			}
 
 			/*
 			 * Recompute union keys, considering only non-don't-care tuples.
@@ -541,7 +547,9 @@ gistUserPicksplit(Relation r, GistEntryVector *entryvec, int attno, GistSplitVec
 				/*
 				 * If there's only one don't-care tuple then we can't do a
 				 * PickSplit on it, so just choose whether to send it left or
-				 * right by comparing penalties.
+				 * right by comparing penalties.  We needed the
+				 * gistunionsubkey step anyway so that we have appropriate
+				 * union keys for figuring the penalties.
 				 */
 				OffsetNumber toMove;
 
@@ -556,13 +564,14 @@ gistUserPicksplit(Relation r, GistEntryVector *entryvec, int attno, GistSplitVec
 				/* ... and assign it to cheaper side */
 				placeOne(r, giststate, v, itup[toMove - 1], toMove, attno + 1);
 
-				/* recompute the union keys including this tuple */
-				v->spl_dontcare = NULL;
-				gistunionsubkey(giststate, itup, v);
+				/*
+				 * At this point the union keys are wrong, but we don't care
+				 * because we're done splitting.  The outermost recursion
+				 * level of gistSplitByKey will fix things before returning.
+				 */
 			}
-			else if (NumDontCare > 1)
+			else
 				return true;
-			/* else NumDontCare is now zero; handle same as above */
 		}
 	}
 
@@ -648,7 +657,7 @@ gistSplitByKey(Relation r, Page page, IndexTuple *itup, int len,
 		 */
 		v->spl_risnull[attno] = v->spl_lisnull[attno] = TRUE;
 
-		if (attno + 1 < r->rd_att->natts)
+		if (attno + 1 < giststate->tupdesc->natts)
 			gistSplitByKey(r, page, itup, len, giststate, v, attno + 1);
 		else
 			gistSplitHalf(&v->splitVector, len);
@@ -673,14 +682,17 @@ gistSplitByKey(Relation r, Page page, IndexTuple *itup, int len,
 			else
 				v->splitVector.spl_left[v->splitVector.spl_nleft++] = i;
 
-		/* Must compute union keys for this and any following columns */
-		v->spl_dontcare = NULL;
-		gistunionsubkey(giststate, itup, v);
+		/* Compute union keys, unless outer recursion level will handle it */
+		if (attno == 0 && giststate->tupdesc->natts == 1)
+		{
+			v->spl_dontcare = NULL;
+			gistunionsubkey(giststate, itup, v);
+		}
 	}
 	else
 	{
 		/*
-		 * all keys are not-null, so apply user-defined PickSplit method
+		 * All keys are not-null, so apply user-defined PickSplit method
 		 */
 		if (gistUserPicksplit(r, entryvec, attno, v, itup, len, giststate))
 		{
@@ -688,13 +700,13 @@ gistSplitByKey(Relation r, Page page, IndexTuple *itup, int len,
 			 * Splitting on attno column is not optimal, so consider
 			 * redistributing don't-care tuples according to the next column
 			 */
-			Assert(attno + 1 < r->rd_att->natts);
+			Assert(attno + 1 < giststate->tupdesc->natts);
 
 			if (v->spl_dontcare == NULL)
 			{
 				/*
-				 * Simple case: left and right keys for attno column are
-				 * equal, so just split according to the next column.
+				 * This split was actually degenerate, so ignore it altogether
+				 * and just split according to the next column.
 				 */
 				gistSplitByKey(r, page, itup, len, giststate, v, attno + 1);
 			}
@@ -741,10 +753,27 @@ gistSplitByKey(Relation r, Page page, IndexTuple *itup, int len,
 					backupSplit.spl_right[backupSplit.spl_nright++] = map[v->splitVector.spl_right[i] - 1];
 
 				v->splitVector = backupSplit;
-
-				/* recompute left and right union datums */
-				gistunionsubkey(giststate, itup, v);
 			}
 		}
+	}
+
+	/*
+	 * If we're handling a multicolumn index, at the end of the recursion
+	 * recompute the left and right union datums for all index columns.  This
+	 * makes sure we hand back correct union datums in all corner cases,
+	 * including when we haven't processed all columns to start with, or when
+	 * a secondary split moved "don't care" tuples from one side to the other
+	 * (we really shouldn't assume that that didn't change the union datums).
+	 *
+	 * Note: when we're in an internal recursion (attno > 0), we do not worry
+	 * about whether the union datums we return with are sensible, since
+	 * calling levels won't care.  Also, in a single-column index, we expect
+	 * that PickSplit (or the special cases above) produced correct union
+	 * datums.
+	 */
+	if (attno == 0 && giststate->tupdesc->natts > 1)
+	{
+		v->spl_dontcare = NULL;
+		gistunionsubkey(giststate, itup, v);
 	}
 }
