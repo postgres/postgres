@@ -460,11 +460,6 @@ gistUserPicksplit(Relation r, GistEntryVector *entryvec, int attno, GistSplitVec
 
 		/* Do a generic split */
 		genericPickSplit(giststate, entryvec, sv, attno);
-
-		/* Clean up if we're in a secondary split */
-		if (sv->spl_ldatum_exists || sv->spl_rdatum_exists)
-			supportSecondarySplit(r, giststate, attno, sv,
-								  v->spl_lattr[attno], v->spl_rattr[attno]);
 	}
 	else
 	{
@@ -473,17 +468,12 @@ gistUserPicksplit(Relation r, GistEntryVector *entryvec, int attno, GistSplitVec
 			sv->spl_left[sv->spl_nleft - 1] = (OffsetNumber) (entryvec->n - 1);
 		if (sv->spl_right[sv->spl_nright - 1] == InvalidOffsetNumber)
 			sv->spl_right[sv->spl_nright - 1] = (OffsetNumber) (entryvec->n - 1);
-
-		/* Clean up if we're in a secondary split */
-		if (sv->spl_ldatum_exists || sv->spl_rdatum_exists)
-		{
-			elog(DEBUG1, "picksplit method for column %d of index \"%s\" doesn't support secondary split",
-				 attno + 1, RelationGetRelationName(r));
-
-			supportSecondarySplit(r, giststate, attno, sv,
-								  v->spl_lattr[attno], v->spl_rattr[attno]);
-		}
 	}
+
+	/* Clean up if PickSplit didn't take care of a secondary split */
+	if (sv->spl_ldatum_exists || sv->spl_rdatum_exists)
+		supportSecondarySplit(r, giststate, attno, sv,
+							  v->spl_lattr[attno], v->spl_rattr[attno]);
 
 	/* emit union datums computed by PickSplit back to v arrays */
 	v->spl_lattr[attno] = sv->spl_ldatum;
