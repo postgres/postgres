@@ -85,11 +85,30 @@ typedef GISTPageOpaqueData *GISTPageOpaque;
 
 /*
  * This is the Split Vector to be returned by the PickSplit method.
- * PickSplit should check spl_(r|l)datum_exists. If it is 'true',
- * that corresponding spl_(r|l)datum already defined and
- * PickSplit should use that value. PickSplit should always set
- * spl_(r|l)datum_exists to false: GiST will check value to
- * control supportng this feature by PickSplit...
+ * PickSplit should fill the indexes of tuples to go to the left side into
+ * spl_left[], and those to go to the right into spl_right[] (note the method
+ * is responsible for palloc'ing both of these arrays!).  The tuple counts
+ * go into spl_nleft/spl_nright, and spl_ldatum/spl_rdatum must be set to
+ * the union keys for each side.
+ *
+ * If spl_ldatum_exists and spl_rdatum_exists are true, then we are performing
+ * a "secondary split" using a non-first index column.  In this case some
+ * decisions have already been made about a page split, and the set of tuples
+ * being passed to PickSplit is just the tuples about which we are undecided.
+ * spl_ldatum/spl_rdatum then contain the union keys for the tuples already
+ * chosen to go left or right.  Ideally the PickSplit method should take those
+ * keys into account while deciding what to do with the remaining tuples, ie
+ * it should try to "build out" from those unions so as to minimally expand
+ * them.  If it does so, it should union the given tuples' keys into the
+ * existing spl_ldatum/spl_rdatum values rather than just setting those values
+ * from scratch, and then set spl_ldatum_exists/spl_rdatum_exists to false to
+ * show it has done this.
+ *
+ * If the PickSplit method fails to clear spl_ldatum_exists/spl_rdatum_exists,
+ * the core GiST code will make its own decision about how to merge the
+ * secondary-split results with the previously-chosen tuples, and will then
+ * recompute the union keys from scratch.  This is a workable though often not
+ * optimal approach.
  */
 typedef struct GIST_SPLITVEC
 {
