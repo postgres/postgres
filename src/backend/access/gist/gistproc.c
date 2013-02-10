@@ -223,15 +223,8 @@ fallbackSplit(GistEntryVector *entryvec, GIST_SPLITVEC *v)
 		}
 	}
 
-	if (v->spl_ldatum_exists)
-		adjustBox(unionL, DatumGetBoxP(v->spl_ldatum));
 	v->spl_ldatum = BoxPGetDatum(unionL);
-
-	if (v->spl_rdatum_exists)
-		adjustBox(unionR, DatumGetBoxP(v->spl_rdatum));
 	v->spl_rdatum = BoxPGetDatum(unionR);
-
-	v->spl_ldatum_exists = v->spl_rdatum_exists = false;
 }
 
 /*
