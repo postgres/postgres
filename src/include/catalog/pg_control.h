@@ -21,7 +21,7 @@
 
 
 /* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	933
+#define PG_CONTROL_VERSION	934
 
 /*
  * Body of CheckPoint XLOG records.  This is declared here because we keep
@@ -33,6 +33,8 @@ typedef struct CheckPoint
 	XLogRecPtr	redo;			/* next RecPtr available when we began to
 								 * create CheckPoint (i.e. REDO start point) */
 	TimeLineID	ThisTimeLineID; /* current TLI */
+	TimeLineID	PrevTimeLineID; /* previous TLI, if this record begins a new
+								 * timeline (equals ThisTimeLineID otherwise) */
 	bool		fullPageWrites; /* current full_page_writes */
 	uint32		nextXidEpoch;	/* higher-order bits of nextXid */
 	TransactionId nextXid;		/* next free XID */

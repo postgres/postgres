@@ -215,6 +215,8 @@ main(int argc, char *argv[])
 		   xlogfilename);
 	printf(_("Latest checkpoint's TimeLineID:       %u\n"),
 		   ControlFile.checkPointCopy.ThisTimeLineID);
+	printf(_("Latest checkpoint's PrevTimeLineID:   %u\n"),
+		   ControlFile.checkPointCopy.PrevTimeLineID);
 	printf(_("Latest checkpoint's full_page_writes: %s\n"),
 		   ControlFile.checkPointCopy.fullPageWrites ? _("on") : _("off"));
 	printf(_("Latest checkpoint's NextXID:          %u/%u\n"),

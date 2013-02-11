@@ -340,7 +340,10 @@ main(int argc, char *argv[])
 		ControlFile.checkPointCopy.nextMultiOffset = set_mxoff;
 
 	if (minXlogTli > ControlFile.checkPointCopy.ThisTimeLineID)
+	{
 		ControlFile.checkPointCopy.ThisTimeLineID = minXlogTli;
+		ControlFile.checkPointCopy.PrevTimeLineID = minXlogTli;
+	}
 
 	if (minXlogSegNo > newXlogSegNo)
 		newXlogSegNo = minXlogSegNo;
@@ -490,6 +493,7 @@ GuessControlValues(void)
 
 	ControlFile.checkPointCopy.redo = SizeOfXLogLongPHD;
 	ControlFile.checkPointCopy.ThisTimeLineID = 1;
+	ControlFile.checkPointCopy.PrevTimeLineID = 1;
 	ControlFile.checkPointCopy.fullPageWrites = false;
 	ControlFile.checkPointCopy.nextXidEpoch = 0;
 	ControlFile.checkPointCopy.nextXid = FirstNormalTransactionId;

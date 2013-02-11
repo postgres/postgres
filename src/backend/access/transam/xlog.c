@@ -408,7 +408,15 @@ typedef struct XLogCtlData
 	char	   *pages;			/* buffers for unwritten XLOG pages */
 	XLogRecPtr *xlblocks;		/* 1st byte ptr-s + XLOG_BLCKSZ */
 	int			XLogCacheBlck;	/* highest allocated xlog buffer index */
+
+	/*
+	 * Shared copy of ThisTimeLineID. Does not change after end-of-recovery.
+	 * If we created a new timeline when the system was started up,
+	 * PrevTimeLineID is the old timeline's ID that we forked off from.
+	 * Otherwise it's equal to ThisTimeLineID.
+	 */
 	TimeLineID	ThisTimeLineID;
+	TimeLineID	PrevTimeLineID;
 
 	/*
 	 * archiveCleanupCommand is read from recovery.conf but needs to be in
@@ -613,7 +621,8 @@ static void SetLatestXTime(TimestampTz xtime);
 static void SetCurrentChunkStartTime(TimestampTz xtime);
 static void CheckRequiredParameterValues(void);
 static void XLogReportParameters(void);
-static void checkTimeLineSwitch(XLogRecPtr lsn, TimeLineID newTLI);
+static void checkTimeLineSwitch(XLogRecPtr lsn, TimeLineID newTLI,
+					TimeLineID prevTLI);
 static void LocalSetXLogInsertAllowed(void);
 static void CreateEndOfRecoveryRecord(void);
 static void CheckPointGuts(XLogRecPtr checkPointRedo, int flags);
@@ -3896,6 +3905,7 @@ BootStrapXLOG(void)
 	 */
 	checkPoint.redo = XLogSegSize + SizeOfXLogLongPHD;
 	checkPoint.ThisTimeLineID = ThisTimeLineID;
+	checkPoint.PrevTimeLineID = ThisTimeLineID;
 	checkPoint.fullPageWrites = fullPageWrites;
 	checkPoint.nextXidEpoch = 0;
 	checkPoint.nextXid = FirstNormalTransactionId;
@@ -4712,6 +4722,7 @@ StartupXLOG(void)
 				checkPointLoc,
 				EndOfLog;
 	XLogSegNo	endLogSegNo;
+	TimeLineID	PrevTimeLineID;
 	XLogRecord *record;
 	uint32		freespace;
 	TransactionId oldestActiveXID;
@@ -5431,6 +5442,7 @@ StartupXLOG(void)
 				if (record->xl_rmid == RM_XLOG_ID)
 				{
 					TimeLineID	newTLI = ThisTimeLineID;
+					TimeLineID	prevTLI = ThisTimeLineID;
 					uint8		info = record->xl_info & ~XLR_INFO_MASK;
 
 					if (info == XLOG_CHECKPOINT_SHUTDOWN)
@@ -5439,6 +5451,7 @@ StartupXLOG(void)
 
 						memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));
 						newTLI = checkPoint.ThisTimeLineID;
+						prevTLI = checkPoint.PrevTimeLineID;
 					}
 					else if (info == XLOG_END_OF_RECOVERY)
 					{
@@ -5446,12 +5459,13 @@ StartupXLOG(void)
 
 						memcpy(&xlrec, XLogRecGetData(record), sizeof(xl_end_of_recovery));
 						newTLI = xlrec.ThisTimeLineID;
+						prevTLI = xlrec.PrevTimeLineID;
 					}
 
 					if (newTLI != ThisTimeLineID)
 					{
 						/* Check that it's OK to switch to this TLI */
-						checkTimeLineSwitch(EndRecPtr, newTLI);
+						checkTimeLineSwitch(EndRecPtr, newTLI, prevTLI);
 
 						/* Following WAL records should be run with new TLI */
 						ThisTimeLineID = newTLI;
@@ -5620,6 +5634,7 @@ StartupXLOG(void)
 	 *
 	 * In a normal crash recovery, we can just extend the timeline we were in.
 	 */
+	PrevTimeLineID = ThisTimeLineID;
 	if (InArchiveRecovery)
 	{
 		char	reason[200];
@@ -5655,6 +5670,7 @@ StartupXLOG(void)
 
 	/* Save the selected TimeLineID in shared memory, too */
 	XLogCtl->ThisTimeLineID = ThisTimeLineID;
+	XLogCtl->PrevTimeLineID = PrevTimeLineID;
 
 	/*
 	 * We are now done reading the old WAL.  Turn off archive fetching if it
@@ -6690,6 +6706,11 @@ CreateCheckPoint(int flags)
 		LocalSetXLogInsertAllowed();
 
 	checkPoint.ThisTimeLineID = ThisTimeLineID;
+	if (flags & CHECKPOINT_END_OF_RECOVERY)
+		checkPoint.PrevTimeLineID = XLogCtl->PrevTimeLineID;
+	else
+		checkPoint.PrevTimeLineID = ThisTimeLineID;
+
 	checkPoint.fullPageWrites = Insert->fullPageWrites;
 
 	/*
@@ -6980,7 +7001,11 @@ CreateEndOfRecoveryRecord(void)
 		elog(ERROR, "can only be used to end recovery");
 
 	xlrec.end_time = time(NULL);
+
+	LWLockAcquire(WALInsertLock, LW_SHARED);
 	xlrec.ThisTimeLineID = ThisTimeLineID;
+	xlrec.PrevTimeLineID = XLogCtl->PrevTimeLineID;
+	LWLockRelease(WALInsertLock);
 
 	LocalSetXLogInsertAllowed();
 
@@ -7535,8 +7560,13 @@ UpdateFullPageWrites(void)
  * replay. (Currently, timeline can only change at a shutdown checkpoint).
  */
 static void
-checkTimeLineSwitch(XLogRecPtr lsn, TimeLineID newTLI)
+checkTimeLineSwitch(XLogRecPtr lsn, TimeLineID newTLI, TimeLineID prevTLI)
 {
+	/* Check that the record agrees on what the current (old) timeline is */
+	if (prevTLI != ThisTimeLineID)
+		ereport(PANIC,
+				(errmsg("unexpected prev timeline ID %u (current timeline ID %u) in checkpoint record",
+						prevTLI, ThisTimeLineID)));
 	/*
 	 * The new timeline better be in the list of timelines we expect
 	 * to see, according to the timeline history. It should also not

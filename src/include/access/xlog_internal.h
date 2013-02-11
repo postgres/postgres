@@ -221,7 +221,8 @@ typedef struct xl_restore_point
 typedef struct xl_end_of_recovery
 {
 	TimestampTz end_time;
-	TimeLineID	ThisTimeLineID;
+	TimeLineID	ThisTimeLineID; /* new TLI */
+	TimeLineID	PrevTimeLineID; /* previous TLI we forked off from */
 } xl_end_of_recovery;
 
 /*
