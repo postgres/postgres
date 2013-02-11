@@ -4731,6 +4731,7 @@ StartupXLOG(void)
 	DBState		dbstate_at_startup;
 	XLogReaderState *xlogreader;
 	XLogPageReadPrivate private;
+	bool		fast_promoted = false;
 
 	/*
 	 * Read control file and check XLOG status looks valid.
@@ -5781,15 +5782,13 @@ StartupXLOG(void)
 		 * assigning a new TLI, using a shutdown checkpoint allows us to have
 		 * the rule that TLI only changes in shutdown checkpoints, which
 		 * allows some extra error checking in xlog_redo.
+		 *
+		 * In fast promotion, only create a lightweight end-of-recovery record
+		 * instead of a full checkpoint. A checkpoint is requested later, after
+		 * we're fully out of recovery mode and already accepting queries.
 		 */
 		if (bgwriterLaunched)
 		{
-			bool	checkpoint_wait = true;
-
-			/*
-			 * If we've been explicitly promoted with fast option,
-			 * end of recovery without a checkpoint if possible.
-			 */
 			if (fast_promote)
 			{
 				checkPointLoc = ControlFile->prevCheckPoint;
@@ -5802,22 +5801,15 @@ StartupXLOG(void)
 				record = ReadCheckpointRecord(xlogreader, checkPointLoc, 1, false);
 				if (record != NULL)
 				{
-					checkpoint_wait = false;
+					fast_promoted = true;
 					CreateEndOfRecoveryRecord();
 				}
 			}
 
-			/*
-			 * In most cases we will wait for a full checkpoint to complete.
-			 *
-			 * If not, issue a normal, non-immediate checkpoint but don't wait.
-			 */
-			if (checkpoint_wait)
+			if (!fast_promoted)
 				RequestCheckpoint(CHECKPOINT_END_OF_RECOVERY |
 									CHECKPOINT_IMMEDIATE |
 									CHECKPOINT_WAIT);
-			else
-				RequestCheckpoint(0);	/* No flags */
 		}
 		else
 			CreateCheckPoint(CHECKPOINT_END_OF_RECOVERY | CHECKPOINT_IMMEDIATE);
@@ -5925,6 +5917,15 @@ StartupXLOG(void)
 	 * wal sender processes to notice that we've been promoted.
 	 */
 	WalSndWakeup();
+
+	/*
+	 * If this was a fast promotion, request an (online) checkpoint now. This
+	 * isn't required for consistency, but the last restartpoint might be far
+	 * back, and in case of a crash, recovering from it might take a longer
+	 * than is appropriate now that we're not in standby mode anymore.
+	 */
+	if (fast_promoted)
+		RequestCheckpoint(0);
 }
 
 /*
