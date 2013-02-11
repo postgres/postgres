@@ -798,16 +798,30 @@ gistoptions(PG_FUNCTION_ARGS)
 }
 
 /*
- * Temporary GiST indexes are not WAL-logged, but we need LSNs to detect
- * concurrent page splits anyway. GetXLogRecPtrForTemp() provides a fake
- * sequence of LSNs for that purpose. Each call generates an LSN that is
- * greater than any previous value returned by this function in the same
- * session.
+ * Temporary and unlogged GiST indexes are not WAL-logged, but we need LSNs
+ * to detect concurrent page splits anyway. This function provides a fake
+ * sequence of LSNs for that purpose.
  */
 XLogRecPtr
-GetXLogRecPtrForTemp(void)
+gistGetFakeLSN(Relation rel)
 {
 	static XLogRecPtr counter = 1;
-	counter++;
-	return counter;
+
+	if (rel->rd_rel->relpersistence == RELPERSISTENCE_TEMP)
+	{
+		/*
+		 * Temporary relations are only accessible in our session, so a
+		 * simple backend-local counter will do.
+		 */
+		return counter++;
+	}
+	else
+	{
+		/*
+		 * Unlogged relations are accessible from other backends, and survive
+		 * (clean) restarts. GetFakeLSNForUnloggedRel() handles that for us.
+		 */
+		Assert(rel->rd_rel->relpersistence == RELPERSISTENCE_UNLOGGED);
+		return GetFakeLSNForUnloggedRel();
+	}
 }

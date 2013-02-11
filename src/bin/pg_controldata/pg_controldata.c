@@ -240,6 +240,9 @@ main(int argc, char *argv[])
 		   ControlFile.checkPointCopy.oldestMultiDB);
 	printf(_("Time of latest checkpoint:            %s\n"),
 		   ckpttime_str);
+	printf(_("Fake LSN counter for unlogged rels:   %X/%X\n"),
+		   (uint32) (ControlFile.unloggedLSN >> 32),
+		   (uint32) ControlFile.unloggedLSN);
 	printf(_("Min recovery ending location:         %X/%X\n"),
 		   (uint32) (ControlFile.minRecoveryPoint >> 32),
 		   (uint32) ControlFile.minRecoveryPoint);

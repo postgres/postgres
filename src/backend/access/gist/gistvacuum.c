@@ -238,7 +238,7 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 					PageSetTLI(page, ThisTimeLineID);
 				}
 				else
-					PageSetLSN(page, GetXLogRecPtrForTemp());
+					PageSetLSN(page, gistGetFakeLSN(rel));
 
 				END_CRIT_SECTION();
 			}

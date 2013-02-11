@@ -21,7 +21,7 @@
 
 
 /* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	934
+#define PG_CONTROL_VERSION	935
 
 /*
  * Body of CheckPoint XLOG records.  This is declared here because we keep
@@ -125,6 +125,8 @@ typedef struct ControlFileData
 	XLogRecPtr	prevCheckPoint; /* previous check point record ptr */
 
 	CheckPoint	checkPointCopy; /* copy of last check point record */
+
+	XLogRecPtr  unloggedLSN;	/* current fake LSN value, for unlogged rels */
 
 	/*
 	 * These two values determine the minimum point we must recover up to

@@ -182,8 +182,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       automatically truncated after a crash or unclean shutdown.  The contents
       of an unlogged table are also not replicated to standby servers.
       Any indexes created on an unlogged table are automatically unlogged as
-      well; however, unlogged <link linkend="GiST">GiST indexes</link> are
-      currently not supported and cannot be created on an unlogged table.
+      well.
      </para>
     </listitem>
    </varlistentry>
