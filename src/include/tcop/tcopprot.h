@@ -64,7 +64,7 @@ extern void assign_max_stack_depth(int newval, void *extra);
 extern void die(SIGNAL_ARGS);
 extern void quickdie(SIGNAL_ARGS) __attribute__((noreturn));
 extern void StatementCancelHandler(SIGNAL_ARGS);
-extern void FloatExceptionHandler(SIGNAL_ARGS);
+extern void FloatExceptionHandler(SIGNAL_ARGS) __attribute__((noreturn));
 extern void RecoveryConflictInterrupt(ProcSignalReason reason); /* called from SIGUSR1
 																 * handler */
 extern void prepare_for_client_read(void);

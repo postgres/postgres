@@ -60,7 +60,7 @@ float        ({integer}|{real})([eE]{integer})?
 
 %%
 
-void
+void __attribute__((noreturn))
 yyerror(const char *message)
 {
 	if (*yytext == YY_END_OF_BUFFER_CHAR)
