@@ -53,7 +53,6 @@
  */
 
 #include "compress_io.h"
-#include "dumpmem.h"
 #include "dumputils.h"
 
 /*----------------------

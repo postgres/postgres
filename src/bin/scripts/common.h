@@ -50,8 +50,4 @@ extern bool yesno_prompt(const char *question);
 
 extern void setup_cancel_handler(void);
 
-extern char *pg_strdup(const char *string);
-extern void *pg_malloc(size_t size);
-extern void *pg_malloc0(size_t size);
-
 #endif   /* COMMON_H */

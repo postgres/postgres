@@ -13,6 +13,7 @@ top_builddir = ..
 include Makefile.global
 
 SUBDIRS = \
+	common \
 	port \
 	timezone \
 	backend \

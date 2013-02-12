@@ -54,6 +54,7 @@
 #include "access/xlog_internal.h"
 #include "catalog/catversion.h"
 #include "catalog/pg_control.h"
+#include "common/fe_memutils.h"
 
 extern int	optind;
 extern char *optarg;
@@ -420,7 +421,7 @@ ReadControlFile(void)
 	}
 
 	/* Use malloc to ensure we have a maxaligned buffer */
-	buffer = (char *) malloc(PG_CONTROL_SIZE);
+	buffer = (char *) pg_malloc(PG_CONTROL_SIZE);
 
 	len = read(fd, buffer, PG_CONTROL_SIZE);
 	if (len < 0)
@@ -942,7 +943,7 @@ WriteEmptyXLOG(void)
 	int			nbytes;
 
 	/* Use malloc() to ensure buffer is MAXALIGNED */
-	buffer = (char *) malloc(XLOG_BLCKSZ);
+	buffer = (char *) pg_malloc(XLOG_BLCKSZ);
 	page = (XLogPageHeader) buffer;
 	memset(buffer, 0, XLOG_BLCKSZ);
 

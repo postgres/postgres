@@ -634,6 +634,42 @@ MemoryContextAllocZeroAligned(MemoryContext context, Size size)
 	return ret;
 }
 
+void *
+palloc(Size size)
+{
+	/* duplicates MemoryContextAlloc to avoid increased overhead */
+	AssertArg(MemoryContextIsValid(CurrentMemoryContext));
+
+	if (!AllocSizeIsValid(size))
+		elog(ERROR, "invalid memory alloc request size %lu",
+			 (unsigned long) size);
+
+	CurrentMemoryContext->isReset = false;
+
+	return (*CurrentMemoryContext->methods->alloc) (CurrentMemoryContext, size);
+}
+
+void *
+palloc0(Size size)
+{
+	/* duplicates MemoryContextAllocZero to avoid increased overhead */
+	void	   *ret;
+
+	AssertArg(MemoryContextIsValid(CurrentMemoryContext));
+
+	if (!AllocSizeIsValid(size))
+		elog(ERROR, "invalid memory alloc request size %lu",
+			 (unsigned long) size);
+
+	CurrentMemoryContext->isReset = false;
+
+	ret = (*CurrentMemoryContext->methods->alloc) (CurrentMemoryContext, size);
+
+	MemSetAligned(ret, 0, size);
+
+	return ret;
+}
+
 /*
  * pfree
  *		Release an allocated chunk.
@@ -715,6 +751,12 @@ MemoryContextStrdup(MemoryContext context, const char *string)
 	return nstr;
 }
 
+char *
+pstrdup(const char *in)
+{
+	return MemoryContextStrdup(CurrentMemoryContext, in);
+}
+
 /*
  * pnstrdup
  *		Like pstrdup(), but append null byte to a
@@ -729,39 +771,3 @@ pnstrdup(const char *in, Size len)
 	out[len] = '\0';
 	return out;
 }
-
-
-#if defined(WIN32) || defined(__CYGWIN__)
-/*
- *	Memory support routines for libpgport on Win32
- *
- *	Win32 can't load a library that PGDLLIMPORTs a variable
- *	if the link object files also PGDLLIMPORT the same variable.
- *	For this reason, libpgport can't reference CurrentMemoryContext
- *	in the palloc macro calls.
- *
- *	To fix this, we create several functions here that allow us to
- *	manage memory without doing the inline in libpgport.
- */
-void *
-pgport_palloc(Size sz)
-{
-	return palloc(sz);
-}
-
-
-char *
-pgport_pstrdup(const char *str)
-{
-	return pstrdup(str);
-}
-
-
-/* Doesn't reference a PGDLLIMPORT variable, but here for completeness. */
-void
-pgport_pfree(void *pointer)
-{
-	pfree(pointer);
-}
-
-#endif

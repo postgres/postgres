@@ -320,59 +320,6 @@ static char *select_only = {
 static void setalarm(int seconds);
 static void *threadRun(void *arg);
 
-
-/*
- * routines to check mem allocations and fail noisily.
- */
-static void *
-pg_malloc(size_t size)
-{
-	void	   *result;
-
-	/* Avoid unportable behavior of malloc(0) */
-	if (size == 0)
-		size = 1;
-	result = malloc(size);
-	if (!result)
-	{
-		fprintf(stderr, "out of memory\n");
-		exit(1);
-	}
-	return result;
-}
-
-static void *
-pg_realloc(void *ptr, size_t size)
-{
-	void	   *result;
-
-	/* Avoid unportable behavior of realloc(NULL, 0) */
-	if (ptr == NULL && size == 0)
-		size = 1;
-	result = realloc(ptr, size);
-	if (!result)
-	{
-		fprintf(stderr, "out of memory\n");
-		exit(1);
-	}
-	return result;
-}
-
-static char *
-pg_strdup(const char *s)
-{
-	char	   *result;
-
-	result = strdup(s);
-	if (!result)
-	{
-		fprintf(stderr, "out of memory\n");
-		exit(1);
-	}
-	return result;
-}
-
-
 static void
 usage(void)
 {

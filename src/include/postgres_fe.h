@@ -24,4 +24,6 @@
 
 #include "c.h"
 
+#include "common/fe_memutils.h"
+
 #endif   /* POSTGRES_FE_H */

@@ -3,7 +3,7 @@ CATALOG_NAME     = pg_dump
 AVAIL_LANGUAGES  = de es fr it ja ko pt_BR sv tr zh_CN zh_TW
 GETTEXT_FILES    = pg_backup_archiver.c pg_backup_db.c pg_backup_custom.c \
                    pg_backup_null.c pg_backup_tar.c \
-                   pg_backup_directory.c dumpmem.c dumputils.c compress_io.c \
+                   pg_backup_directory.c dumputils.c compress_io.c \
                    pg_dump.c common.c pg_dump_sort.c \
                    pg_restore.c pg_dumpall.c \
                    ../../port/exec.c

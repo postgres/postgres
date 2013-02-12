@@ -14,15 +14,6 @@
 
 #define atooid(x)  ((Oid) strtoul((x), NULL, 10))
 
-/*
- * Safer versions of some standard C library functions. If an
- * out-of-memory condition occurs, these functions will bail out
- * safely; therefore, their return value is guaranteed to be non-NULL.
- */
-extern char *pg_strdup(const char *string);
-extern void *pg_malloc(size_t size);
-extern void *pg_malloc0(size_t size);
-
 extern bool setQFout(const char *fname);
 
 extern void

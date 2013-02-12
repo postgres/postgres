@@ -33,56 +33,6 @@ static bool command_no_begin(const char *query);
 static bool is_select_command(const char *query);
 
 /*
- * "Safe" wrapper around strdup()
- */
-char *
-pg_strdup(const char *string)
-{
-	char	   *tmp;
-
-	if (!string)
-	{
-		psql_error("%s: pg_strdup: cannot duplicate null pointer (internal error)\n",
-				   pset.progname);
-		exit(EXIT_FAILURE);
-	}
-	tmp = strdup(string);
-	if (!tmp)
-	{
-		psql_error("out of memory\n");
-		exit(EXIT_FAILURE);
-	}
-	return tmp;
-}
-
-void *
-pg_malloc(size_t size)
-{
-	void	   *tmp;
-
-	/* Avoid unportable behavior of malloc(0) */
-	if (size == 0)
-		size = 1;
-	tmp = malloc(size);
-	if (!tmp)
-	{
-		psql_error("out of memory\n");
-		exit(EXIT_FAILURE);
-	}
-	return tmp;
-}
-
-void *
-pg_malloc0(size_t size)
-{
-	void	   *tmp;
-
-	tmp = pg_malloc(size);
-	MemSet(tmp, 0, size);
-	return tmp;
-}
-
-/*
  * setQFout
  * -- handler for -o command line option and \o command
  *

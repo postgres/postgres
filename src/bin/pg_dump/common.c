@@ -18,8 +18,6 @@
 #include <ctype.h>
 
 #include "catalog/pg_class.h"
-#include "dumpmem.h"
-#include "dumputils.h"
 
 
 /*

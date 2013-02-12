@@ -59,7 +59,6 @@
 
 #include "pg_backup_archiver.h"
 #include "pg_backup_db.h"
-#include "dumpmem.h"
 #include "dumputils.h"
 
 extern char *optarg;

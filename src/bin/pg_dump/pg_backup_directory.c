@@ -34,7 +34,6 @@
  */
 
 #include "compress_io.h"
-#include "dumpmem.h"
 #include "dumputils.h"
 
 #include <dirent.h>

@@ -25,7 +25,6 @@
 #include "getopt_long.h"
 
 #include "dumputils.h"
-#include "dumpmem.h"
 #include "pg_backup.h"
 
 /* version string we expect back from pg_dump */

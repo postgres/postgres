@@ -50,9 +50,6 @@ struct options
 /* function prototypes */
 static void help(const char *progname);
 void		get_opts(int, char **, struct options *);
-void	   *pg_malloc(size_t size);
-void	   *pg_realloc(void *ptr, size_t size);
-char	   *pg_strdup(const char *str);
 void		add_one_elt(char *eltname, eary *eary);
 char	   *get_comma_elts(eary *eary);
 PGconn	   *sql_conn(struct options *);
@@ -199,53 +196,6 @@ help(const char *progname)
 		   "\nThe default action is to show all database OIDs.\n\n"
 		   "Report bugs to <pgsql-bugs@postgresql.org>.\n",
 		   progname, progname);
-}
-
-void *
-pg_malloc(size_t size)
-{
-	void	   *ptr;
-
-	/* Avoid unportable behavior of malloc(0) */
-	if (size == 0)
-		size = 1;
-	ptr = malloc(size);
-	if (!ptr)
-	{
-		fprintf(stderr, "out of memory\n");
-		exit(1);
-	}
-	return ptr;
-}
-
-void *
-pg_realloc(void *ptr, size_t size)
-{
-	void	   *result;
-
-	/* Avoid unportable behavior of realloc(NULL, 0) */
-	if (ptr == NULL && size == 0)
-		size = 1;
-	result = realloc(ptr, size);
-	if (!result)
-	{
-		fprintf(stderr, "out of memory\n");
-		exit(1);
-	}
-	return result;
-}
-
-char *
-pg_strdup(const char *str)
-{
-	char	   *result = strdup(str);
-
-	if (!result)
-	{
-		fprintf(stderr, "out of memory\n");
-		exit(1);
-	}
-	return result;
 }
 
 /*

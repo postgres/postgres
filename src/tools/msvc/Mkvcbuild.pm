@@ -24,6 +24,7 @@ our (@ISA, @EXPORT_OK);
 
 my $solution;
 my $libpgport;
+my $libpgcommon;
 my $postgres;
 my $libpq;
 
@@ -31,6 +32,11 @@ my $contrib_defines = { 'refint' => 'REFINT_VERBOSE' };
 my @contrib_uselibpq =
   ('dblink', 'oid2name', 'pgbench', 'pg_upgrade', 'vacuumlo');
 my @contrib_uselibpgport = (
+	'oid2name',      'pgbench',
+	'pg_standby',    'pg_archivecleanup',
+	'pg_test_fsync', 'pg_test_timing',
+	'pg_upgrade',    'vacuumlo');
+my @contrib_uselibpgcommon = (
 	'oid2name',      'pgbench',
 	'pg_standby',    'pg_archivecleanup',
 	'pg_test_fsync', 'pg_test_timing',
@@ -63,9 +69,18 @@ sub mkvcbuild
 	  sprompt.c tar.c thread.c getopt.c getopt_long.c dirent.c rint.c win32env.c
 	  win32error.c win32setlocale.c);
 
+	our @pgcommonfiles = qw(
+		fe_memutils.c);
+
+	our @pgcommonbkndfiles = qw();
+
 	$libpgport = $solution->AddProject('libpgport', 'lib', 'misc');
 	$libpgport->AddDefine('FRONTEND');
 	$libpgport->AddFiles('src\port', @pgportfiles);
+
+	$libpgcommon = $solution->AddProject('libpgcommon', 'lib', 'misc');
+	$libpgcommon->AddDefine('FRONTEND');
+	$libpgcommon->AddFiles('src\common', @pgcommonfiles);
 
 	$postgres = $solution->AddProject('postgres', 'exe', '', 'src\backend');
 	$postgres->AddIncludeDir('src\backend');
@@ -81,6 +96,7 @@ sub mkvcbuild
 	$postgres->ReplaceFile('src\backend\port\pg_latch.c',
 		'src\backend\port\win32_latch.c');
 	$postgres->AddFiles('src\port', @pgportfiles);
+	$postgres->AddFiles('src\common', @pgcommonbkndfiles);
 	$postgres->AddDir('src\timezone');
 	$postgres->AddFiles('src\backend\parser', 'scan.l', 'gram.y');
 	$postgres->AddFiles('src\backend\bootstrap', 'bootscanner.l',
@@ -297,7 +313,7 @@ sub mkvcbuild
 	$ecpg->AddDefine('MINOR_VERSION=9');
 	$ecpg->AddDefine('PATCHLEVEL=0');
 	$ecpg->AddDefine('ECPG_COMPILE');
-	$ecpg->AddReference($libpgport);
+	$ecpg->AddReference($libpgport, $libpgcommon);
 
 	my $pgregress_ecpg =
 	  $solution->AddProject('pg_regress_ecpg', 'exe', 'misc');
@@ -307,7 +323,7 @@ sub mkvcbuild
 	$pgregress_ecpg->AddIncludeDir('src\test\regress');
 	$pgregress_ecpg->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
 	$pgregress_ecpg->AddDefine('FRONTEND');
-	$pgregress_ecpg->AddReference($libpgport);
+	$pgregress_ecpg->AddReference($libpgport, $libpgcommon);
 
 	my $isolation_tester =
 	  $solution->AddProject('isolationtester', 'exe', 'misc');
@@ -332,7 +348,7 @@ sub mkvcbuild
 	$pgregress_isolation->AddIncludeDir('src\test\regress');
 	$pgregress_isolation->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
 	$pgregress_isolation->AddDefine('FRONTEND');
-	$pgregress_isolation->AddReference($libpgport);
+	$pgregress_isolation->AddReference($libpgport, $libpgcommon);
 
 	# src/bin
 	my $initdb = AddSimpleFrontend('initdb');
@@ -393,7 +409,6 @@ sub mkvcbuild
 	$pgdumpall->AddIncludeDir('src\backend');
 	$pgdumpall->AddFile('src\bin\pg_dump\pg_dumpall.c');
 	$pgdumpall->AddFile('src\bin\pg_dump\dumputils.c');
-	$pgdumpall->AddFile('src\bin\pg_dump\dumpmem.c');
 	$pgdumpall->AddFile('src\bin\pg_dump\keywords.c');
 	$pgdumpall->AddFile('src\backend\parser\kwlookup.c');
 
@@ -407,7 +422,7 @@ sub mkvcbuild
 	my $zic = $solution->AddProject('zic', 'exe', 'utils');
 	$zic->AddFiles('src\timezone', 'zic.c', 'ialloc.c', 'scheck.c',
 		'localtime.c');
-	$zic->AddReference($libpgport);
+	$zic->AddReference($libpgport, $libpgcommon);
 
 	if ($solution->{options}->{xml})
 	{
@@ -547,7 +562,7 @@ sub mkvcbuild
 		$proj->AddIncludeDir('src\interfaces\libpq');
 		$proj->AddIncludeDir('src\bin\pg_dump');
 		$proj->AddIncludeDir('src\bin\psql');
-		$proj->AddReference($libpq, $libpgport);
+		$proj->AddReference($libpq, $libpgport, $libpgcommon);
 		$proj->AddResourceFile('src\bin\scripts', 'PostgreSQL Utility');
 	}
 
@@ -561,7 +576,7 @@ sub mkvcbuild
 	$pgregress->AddFile('src\test\regress\pg_regress_main.c');
 	$pgregress->AddIncludeDir('src\port');
 	$pgregress->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
-	$pgregress->AddReference($libpgport);
+	$pgregress->AddReference($libpgport, $libpgcommon);
 
 	$solution->Save();
 	return $solution->{vcver};
@@ -579,7 +594,7 @@ sub AddSimpleFrontend
 
 	my $p = $solution->AddProject($n, 'exe', 'bin');
 	$p->AddDir('src\bin\\' . $n);
-	$p->AddReference($libpgport);
+	$p->AddReference($libpgport, $libpgcommon);
 	if ($uselibpq)
 	{
 		$p->AddIncludeDir('src\interfaces\libpq');
@@ -729,6 +744,10 @@ sub AdjustContribProj
 	if (grep { /^$n$/ } @contrib_uselibpgport)
 	{
 		$proj->AddReference($libpgport);
+	}
+	if (grep { /^$n$/ } @contrib_uselibpgcommon)
+	{
+		$proj->AddReference($libpgcommon);
 	}
 	if ($contrib_extralibs->{$n})
 	{

@@ -11,7 +11,6 @@
  */
 
 #include "pg_backup_db.h"
-#include "dumpmem.h"
 #include "dumputils.h"
 
 #include <unistd.h>

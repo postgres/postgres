@@ -15,8 +15,4 @@ extern PGconn *conn;
 	exit(code);									\
 	}
 
-
-extern char *pg_strdup(const char *s);
-extern void *pg_malloc0(size_t size);
-
 extern PGconn *GetConnection(void);

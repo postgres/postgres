@@ -118,8 +118,6 @@ write_stderr(const char *fmt,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
 __attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
-static void *pg_malloc(size_t size);
-static char *pg_strdup(const char *s);
 static void do_advice(void);
 static void do_help(void);
 static void set_mode(char *modeopt);
@@ -223,42 +221,6 @@ write_stderr(const char *fmt,...)
 		vfprintf(stderr, fmt, ap);
 #endif
 	va_end(ap);
-}
-
-/*
- * routines to check memory allocations and fail noisily.
- */
-
-static void *
-pg_malloc(size_t size)
-{
-	void	   *result;
-
-	/* Avoid unportable behavior of malloc(0) */
-	if (size == 0)
-		size = 1;
-	result = malloc(size);
-	if (!result)
-	{
-		write_stderr(_("%s: out of memory\n"), progname);
-		exit(1);
-	}
-	return result;
-}
-
-
-static char *
-pg_strdup(const char *s)
-{
-	char	   *result;
-
-	result = strdup(s);
-	if (!result)
-	{
-		write_stderr(_("%s: out of memory\n"), progname);
-		exit(1);
-	}
-	return result;
 }
 
 /*

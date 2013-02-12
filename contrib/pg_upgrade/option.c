@@ -7,7 +7,7 @@
  *	contrib/pg_upgrade/option.c
  */
 
-#include "postgres.h"
+#include "postgres_fe.h"
 
 #include "miscadmin.h"
 

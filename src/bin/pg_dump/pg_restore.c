@@ -41,7 +41,6 @@
 
 #include "pg_backup_archiver.h"
 
-#include "dumpmem.h"
 #include "dumputils.h"
 
 #include <ctype.h>
