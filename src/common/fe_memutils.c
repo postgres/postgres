@@ -67,17 +67,17 @@ pg_realloc(void *ptr, size_t size)
  * "Safe" wrapper around strdup().
  */
 char *
-pg_strdup(const char *string)
+pg_strdup(const char *in)
 {
 	char	   *tmp;
 
-	if (!string)
+	if (!in)
 	{
 		fprintf(stderr,
 				_("cannot duplicate null pointer (internal error)\n"));
 		exit(EXIT_FAILURE);
 	}
-	tmp = strdup(string);
+	tmp = strdup(in);
 	if (!tmp)
 	{
 		fprintf(stderr, _("out of memory\n"));
@@ -116,9 +116,9 @@ pfree(void *pointer)
 }
 
 char *
-pstrdup(const char *string)
+pstrdup(const char *in)
 {
-	return pg_strdup(string);
+	return pg_strdup(in);
 }
 
 void *
