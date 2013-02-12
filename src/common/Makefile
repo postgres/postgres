@@ -29,7 +29,7 @@ OBJS_FRONTEND = $(OBJS_COMMON) fe_memutils.o
 
 OBJS_SRV = $(OBJS_COMMON:%.o=%_srv.o)
 
-all: libpgcommon.a libpgcommon_srv.a
+all: libpgcommon.a
 
 # libpgcommon is needed by some contrib
 install: all installdirs
