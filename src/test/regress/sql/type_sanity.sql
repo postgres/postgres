@@ -96,8 +96,10 @@ WHERE (p1.typinput = 0 OR p1.typoutput = 0);
 
 SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2
-WHERE p1.typinput = p2.oid AND p1.typtype in ('b', 'p') AND NOT
+WHERE p1.typinput = p2.oid AND NOT
     ((p2.pronargs = 1 AND p2.proargtypes[0] = 'cstring'::regtype) OR
+     (p2.pronargs = 2 AND p2.proargtypes[0] = 'cstring'::regtype AND
+      p2.proargtypes[1] = 'oid'::regtype) OR
      (p2.pronargs = 3 AND p2.proargtypes[0] = 'cstring'::regtype AND
       p2.proargtypes[1] = 'oid'::regtype AND
       p2.proargtypes[2] = 'int4'::regtype));
@@ -115,7 +117,7 @@ ORDER BY 1;
 -- Exception as of 8.1: int2vector and oidvector have their own I/O routines
 SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2
-WHERE p1.typinput = p2.oid AND p1.typtype in ('b', 'p') AND
+WHERE p1.typinput = p2.oid AND
     (p1.typelem != 0 AND p1.typlen < 0) AND NOT
     (p2.oid = 'array_in'::regproc)
 ORDER BY 1;
@@ -141,7 +143,7 @@ ORDER BY 1;
 
 SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2
-WHERE p1.typoutput = p2.oid AND p1.typtype in ('b', 'p') AND NOT
+WHERE p1.typoutput = p2.oid AND NOT
     (p2.prorettype = 'cstring'::regtype AND NOT p2.proretset);
 
 -- Composites, enums, ranges should all use the same output routines
@@ -159,8 +161,10 @@ WHERE p1.typtype = 'd' AND p1.typoutput IS DISTINCT FROM p2.typoutput;
 
 SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2
-WHERE p1.typreceive = p2.oid AND p1.typtype in ('b', 'p') AND NOT
+WHERE p1.typreceive = p2.oid AND NOT
     ((p2.pronargs = 1 AND p2.proargtypes[0] = 'internal'::regtype) OR
+     (p2.pronargs = 2 AND p2.proargtypes[0] = 'internal'::regtype AND
+      p2.proargtypes[1] = 'oid'::regtype) OR
      (p2.pronargs = 3 AND p2.proargtypes[0] = 'internal'::regtype AND
       p2.proargtypes[1] = 'oid'::regtype AND
       p2.proargtypes[2] = 'int4'::regtype));
@@ -178,7 +182,7 @@ ORDER BY 1;
 -- Exception as of 8.1: int2vector and oidvector have their own I/O routines
 SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2
-WHERE p1.typreceive = p2.oid AND p1.typtype in ('b', 'p') AND
+WHERE p1.typreceive = p2.oid AND
     (p1.typelem != 0 AND p1.typlen < 0) AND NOT
     (p2.oid = 'array_recv'::regproc)
 ORDER BY 1;
@@ -210,7 +214,7 @@ ORDER BY 1;
 
 SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2
-WHERE p1.typsend = p2.oid AND p1.typtype in ('b', 'p') AND NOT
+WHERE p1.typsend = p2.oid AND NOT
     (p2.prorettype = 'bytea'::regtype AND NOT p2.proretset);
 
 -- Composites, enums, ranges should all use the same send routines
