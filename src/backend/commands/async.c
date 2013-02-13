@@ -350,11 +350,11 @@ static volatile sig_atomic_t notifyInterruptOccurred = 0;
 /* True if we've registered an on_shmem_exit cleanup */
 static bool unlistenExitRegistered = false;
 
+/* True if we're currently registered as a listener in asyncQueueControl */
+static bool amRegisteredListener = false;
+
 /* has this backend sent notifications in the current transaction? */
 static bool backendHasSentNotifications = false;
-
-/* has this backend executed its first LISTEN in the current transaction? */
-static bool backendHasExecutedInitialListen = false;
 
 /* GUC parameter */
 bool		Trace_notify = false;
@@ -724,6 +724,7 @@ static void
 Async_UnlistenOnExit(int code, Datum arg)
 {
 	Exec_UnlistenAllCommit();
+	asyncQueueUnregister();
 }
 
 /*
@@ -767,8 +768,6 @@ PreCommit_Notify(void)
 
 	if (Trace_notify)
 		elog(DEBUG1, "PreCommit_Notify");
-
-	Assert(backendHasExecutedInitialListen == false);
 
 	/* Preflight for any pending listen/unlisten actions */
 	foreach(p, pendingActions)
@@ -892,11 +891,9 @@ AtCommit_Notify(void)
 		}
 	}
 
-	/*
-	 * If we did an initial LISTEN, listenChannels now has the entry, so we no
-	 * longer need or want the flag to be set.
-	 */
-	backendHasExecutedInitialListen = false;
+	/* If no longer listening to anything, get out of listener array */
+	if (amRegisteredListener && listenChannels == NIL)
+		asyncQueueUnregister();
 
 	/* And clean up */
 	ClearPendingActionsAndNotifies();
@@ -914,18 +911,11 @@ Exec_ListenPreCommit(void)
 	 * Nothing to do if we are already listening to something, nor if we
 	 * already ran this routine in this transaction.
 	 */
-	if (listenChannels != NIL || backendHasExecutedInitialListen)
+	if (amRegisteredListener)
 		return;
 
 	if (Trace_notify)
 		elog(DEBUG1, "Exec_ListenPreCommit(%d)", MyProcPid);
-
-	/*
-	 * We need this variable to detect an aborted initial LISTEN. In that case
-	 * we would set up our pointer but not listen on any channel. This flag
-	 * gets cleared in AtCommit_Notify or AtAbort_Notify().
-	 */
-	backendHasExecutedInitialListen = true;
 
 	/*
 	 * Before registering, make sure we will unlisten before dying. (Note:
@@ -949,6 +939,9 @@ Exec_ListenPreCommit(void)
 	QUEUE_BACKEND_POS(MyBackendId) = QUEUE_TAIL;
 	QUEUE_BACKEND_PID(MyBackendId) = MyProcPid;
 	LWLockRelease(AsyncQueueLock);
+
+	/* Now we are listed in the global array, so remember we're listening */
+	amRegisteredListener = true;
 
 	/*
 	 * Try to move our pointer forward as far as possible. This will skip over
@@ -1022,10 +1015,6 @@ Exec_UnlistenCommit(const char *channel)
 	 * We do not complain about unlistening something not being listened;
 	 * should we?
 	 */
-
-	/* If no longer listening to anything, get out of listener array */
-	if (listenChannels == NIL)
-		asyncQueueUnregister();
 }
 
 /*
@@ -1041,8 +1030,6 @@ Exec_UnlistenAllCommit(void)
 
 	list_free_deep(listenChannels);
 	listenChannels = NIL;
-
-	asyncQueueUnregister();
 }
 
 /*
@@ -1160,6 +1147,9 @@ asyncQueueUnregister(void)
 
 	Assert(listenChannels == NIL);		/* else caller error */
 
+	if (!amRegisteredListener)			/* nothing to do */
+		return;
+
 	LWLockAcquire(AsyncQueueLock, LW_SHARED);
 	/* check if entry is valid and oldest ... */
 	advanceTail = (MyProcPid == QUEUE_BACKEND_PID(MyBackendId)) &&
@@ -1167,6 +1157,9 @@ asyncQueueUnregister(void)
 	/* ... then mark it invalid */
 	QUEUE_BACKEND_PID(MyBackendId) = InvalidPid;
 	LWLockRelease(AsyncQueueLock);
+
+	/* mark ourselves as no longer listed in the global array */
+	amRegisteredListener = false;
 
 	/* If we were the laziest backend, try to advance the tail pointer */
 	if (advanceTail)
@@ -1524,21 +1517,12 @@ void
 AtAbort_Notify(void)
 {
 	/*
-	 * If we LISTEN but then roll back the transaction we have set our pointer
-	 * but have not made any entry in listenChannels. In that case, remove our
-	 * pointer again.
+	 * If we LISTEN but then roll back the transaction after PreCommit_Notify,
+	 * we have registered as a listener but have not made any entry in
+	 * listenChannels.  In that case, deregister again.
 	 */
-	if (backendHasExecutedInitialListen)
-	{
-		/*
-		 * Checking listenChannels should be redundant but it can't hurt doing
-		 * it for safety reasons.
-		 */
-		if (listenChannels == NIL)
-			asyncQueueUnregister();
-
-		backendHasExecutedInitialListen = false;
-	}
+	if (amRegisteredListener && listenChannels == NIL)
+		asyncQueueUnregister();
 
 	/* And clean up */
 	ClearPendingActionsAndNotifies();
