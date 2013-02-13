@@ -553,6 +553,10 @@ cnt_sml(TRGM *trg1, TRGM *trg2)
 	len1 = ARRNELEM(trg1);
 	len2 = ARRNELEM(trg2);
 
+	/* explicit test is needed to avoid 0/0 division when both lengths are 0 */
+	if (len1 <= 0 || len2 <= 0)
+		return (float4) 0.0;
+
 	while (ptr1 - GETARR(trg1) < len1 && ptr2 - GETARR(trg2) < len2)
 	{
 		int			res = CMPTRGM(ptr1, ptr2);
@@ -570,9 +574,9 @@ cnt_sml(TRGM *trg1, TRGM *trg2)
 	}
 
 #ifdef DIVUNION
-	return ((((float4) count) / ((float4) (len1 + len2 - count))));
+	return ((float4) count) / ((float4) (len1 + len2 - count));
 #else
-	return (((float) count) / ((float) ((len1 > len2) ? len1 : len2)));
+	return ((float4) count) / ((float4) ((len1 > len2) ? len1 : len2));
 #endif
 
 }

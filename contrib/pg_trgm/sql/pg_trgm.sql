@@ -11,6 +11,8 @@ select show_trgm('a b C0*%^');
 select similarity('wow','WOWa ');
 select similarity('wow',' WOW ');
 
+select similarity('---', '####---');
+
 CREATE TABLE test_trgm(t text);
 
 \copy test_trgm from 'data/trgm.data
