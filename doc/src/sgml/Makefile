@@ -46,6 +46,8 @@ endif
 
 override XSLTPROCFLAGS += --stringparam pg.version '$(VERSION)'
 
+DBTOEPUB ?= dbtoepub
+
 
 GENERATED_SGML = bookindex.sgml version.sgml \
 	features-supported.sgml features-unsupported.sgml errcodes-table.sgml
@@ -271,6 +273,10 @@ htmlhelp: stylesheet-hh.xsl postgres.xml
 %-US.fo: stylesheet-fo.xsl %.xml
 	$(XSLTPROC) $(XSLTPROCFLAGS) --stringparam paper.type USletter -o $@ $^
 
+epub: postgres.epub
+postgres.epub: postgres.xml
+	$(DBTOEPUB) $<
+
 
 ##
 ## Experimental Texinfo targets
@@ -385,6 +391,8 @@ clean:
 	rm -f HTML.index $(GENERATED_SGML)
 # XSLT
 	rm -f postgres.xml postgres.xmltmp htmlhelp.hhp toc.hhc index.hhk *.fo
+# EPUB
+	rm -f postgres.epub
 # Texinfo
 	rm -f *.texixml *.texi *.info db2texi.refs
 
