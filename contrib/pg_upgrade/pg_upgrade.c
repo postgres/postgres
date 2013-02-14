@@ -574,7 +574,7 @@ cleanup(void)
 				snprintf(sql_file_name, sizeof(sql_file_name), DB_DUMP_FILE_MASK, old_db->db_oid);
 				unlink(sql_file_name);
 
-				snprintf(log_file_name, sizeof(log_file_name), DB_DUMP_FILE_MASK, old_db->db_oid);
+				snprintf(log_file_name, sizeof(log_file_name), DB_DUMP_LOG_FILE_MASK, old_db->db_oid);
 				unlink(log_file_name);
 			}
 	}
