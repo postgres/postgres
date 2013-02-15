@@ -10,21 +10,21 @@ This can format all PostgreSQL *.c and *.h files, but excludes *.y, and
 
 3) Change directory to the top of the build tree.
 
-4) Download the typedef file from the buildfarm:
-
-	wget -O src/tools/pgindent/typedefs.list http://buildfarm.postgresql.org/cgi-bin/typedefs.pl
-
-5) Remove all derived files (pgindent has trouble with one of the flex macros):
+4) Remove all derived files (pgindent has trouble with one of the flex macros):
 
 	gmake maintainer-clean
 
    Or:
 
-        git clean -fdx
+	git clean -fdx
+
+5) Download the typedef file from the buildfarm:
+
+	wget -O src/tools/pgindent/typedefs.list http://buildfarm.postgresql.org/cgi-bin/typedefs.pl
 
 6) Run pgindent:
 
-	pgindent
+	src/tools/pgindent/pgindent
 
 7) Remove any files that generate errors and restore their original
    versions.
