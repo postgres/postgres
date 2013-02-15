@@ -1825,6 +1825,8 @@ CommitTransaction(void)
 			break;
 	}
 
+	CallXactCallbacks(XACT_EVENT_PRE_COMMIT);
+
 	/*
 	 * The remaining actions cannot call any user-defined code, so it's safe
 	 * to start shutting down within-transaction services.	But note that most
@@ -2027,6 +2029,8 @@ PrepareTransaction(void)
 		if (!PreCommit_Portals(true))
 			break;
 	}
+
+	CallXactCallbacks(XACT_EVENT_PRE_PREPARE);
 
 	/*
 	 * The remaining actions cannot call any user-defined code, so it's safe
@@ -4058,8 +4062,12 @@ CommitSubTransaction(void)
 		elog(WARNING, "CommitSubTransaction while in %s state",
 			 TransStateAsString(s->state));
 
-	/* Pre-commit processing goes here -- nothing to do at the moment */
+	/* Pre-commit processing goes here */
 
+	CallSubXactCallbacks(SUBXACT_EVENT_PRE_COMMIT_SUB, s->subTransactionId,
+						 s->parent->subTransactionId);
+
+	/* Do the actual "commit", such as it is */
 	s->state = TRANS_COMMIT;
 
 	/* Must CCI to ensure commands of subtransaction are seen as done */

@@ -6150,7 +6150,7 @@ plpgsql_xact_cb(XactEvent event, void *arg)
 	 * expect the regular abort recovery procedures to release everything of
 	 * interest.
 	 */
-	if (event != XACT_EVENT_ABORT)
+	if (event == XACT_EVENT_COMMIT || event == XACT_EVENT_PREPARE)
 	{
 		/* Shouldn't be any econtext stack entries left at commit */
 		Assert(simple_econtext_stack == NULL);
@@ -6159,7 +6159,7 @@ plpgsql_xact_cb(XactEvent event, void *arg)
 			FreeExecutorState(simple_eval_estate);
 		simple_eval_estate = NULL;
 	}
-	else
+	else if (event == XACT_EVENT_ABORT)
 	{
 		simple_econtext_stack = NULL;
 		simple_eval_estate = NULL;
@@ -6178,19 +6178,19 @@ void
 plpgsql_subxact_cb(SubXactEvent event, SubTransactionId mySubid,
 				   SubTransactionId parentSubid, void *arg)
 {
-	if (event == SUBXACT_EVENT_START_SUB)
-		return;
-
-	while (simple_econtext_stack != NULL &&
-		   simple_econtext_stack->xact_subxid == mySubid)
+	if (event == SUBXACT_EVENT_COMMIT_SUB || event == SUBXACT_EVENT_ABORT_SUB)
 	{
-		SimpleEcontextStackEntry *next;
+		while (simple_econtext_stack != NULL &&
+			   simple_econtext_stack->xact_subxid == mySubid)
+		{
+			SimpleEcontextStackEntry *next;
 
-		FreeExprContext(simple_econtext_stack->stack_econtext,
-						(event == SUBXACT_EVENT_COMMIT_SUB));
-		next = simple_econtext_stack->next;
-		pfree(simple_econtext_stack);
-		simple_econtext_stack = next;
+			FreeExprContext(simple_econtext_stack->stack_econtext,
+							(event == SUBXACT_EVENT_COMMIT_SUB));
+			next = simple_econtext_stack->next;
+			pfree(simple_econtext_stack);
+			simple_econtext_stack = next;
+		}
 	}
 }
 
