@@ -433,6 +433,7 @@ typedef struct XLogCtlData
 	 * recovery.  Protected by info_lck.
 	 */
 	bool		SharedRecoveryInProgress;
+	bool		SharedInArchiveRecovery;
 
 	/*
 	 * SharedHotStandbyActive indicates if we're still in crash or archive
@@ -619,6 +620,7 @@ static bool bgwriterLaunched = false;
 
 static void readRecoveryCommandFile(void);
 static void exitArchiveRecovery(TimeLineID endTLI, XLogSegNo endLogSegNo);
+static bool ArchiveRecoveryInProgress(void);
 static bool recoveryStopsHere(XLogRecord *record, bool *includeThis);
 static void recoveryPausesHere(void);
 static void SetLatestXTime(TimestampTz xtime);
@@ -2923,7 +2925,7 @@ RemoveOldXlogFiles(XLogSegNo segno, XLogRecPtr endptr)
 			strspn(xlde->d_name, "0123456789ABCDEF") == 24 &&
 			strcmp(xlde->d_name + 8, lastoff + 8) <= 0)
 		{
-			if (RecoveryInProgress() || XLogArchiveCheckDone(xlde->d_name))
+			if (ArchiveRecoveryInProgress() || XLogArchiveCheckDone(xlde->d_name))
 			{
 				snprintf(path, MAXPGPATH, XLOGDIR "/%s", xlde->d_name);
 
@@ -3869,6 +3871,7 @@ XLOGShmemInit(void)
 	 */
 	XLogCtl->XLogCacheBlck = XLOGbuffers - 1;
 	XLogCtl->SharedRecoveryInProgress = true;
+	XLogCtl->SharedInArchiveRecovery = false;
 	XLogCtl->SharedHotStandbyActive = false;
 	XLogCtl->WalWriterSleeping = false;
 	XLogCtl->Insert.currpage = (XLogPageHeader) (XLogCtl->pages);
@@ -4262,6 +4265,7 @@ readRecoveryCommandFile(void)
 
 	/* Enable fetching from archive recovery area */
 	InArchiveRecovery = true;
+	XLogCtl->SharedInArchiveRecovery = true;
 
 	/*
 	 * If user specified recovery_target_timeline, validate it or compute the
@@ -4300,11 +4304,16 @@ exitArchiveRecovery(TimeLineID endTLI, XLogSegNo endLogSegNo)
 {
 	char		recoveryPath[MAXPGPATH];
 	char		xlogpath[MAXPGPATH];
+	/* use volatile pointer to prevent code rearrangement */
+	volatile XLogCtlData *xlogctl = XLogCtl;
 
 	/*
 	 * We are no longer in archive recovery state.
 	 */
 	InArchiveRecovery = false;
+	SpinLockAcquire(&xlogctl->info_lck);
+	xlogctl->SharedInArchiveRecovery = false;
+	SpinLockRelease(&xlogctl->info_lck);
 
 	/*
 	 * Update min recovery point one last time.
@@ -6099,6 +6108,25 @@ RecoveryInProgress(void)
 
 		return LocalRecoveryInProgress;
 	}
+}
+
+/*
+ * Are we currently in archive recovery? In the startup process, you can just
+ * check InArchiveRecovery variable instead.
+ */
+static bool
+ArchiveRecoveryInProgress()
+{
+	bool		result;
+	/* use volatile pointer to prevent code rearrangement */
+	volatile XLogCtlData *xlogctl = XLogCtl;
+
+	/* spinlock is essential on machines with weak memory ordering! */
+	SpinLockAcquire(&xlogctl->info_lck);
+	result = xlogctl->SharedInArchiveRecovery;
+	SpinLockRelease(&xlogctl->info_lck);
+
+	return result;
 }
 
 /*
