@@ -371,6 +371,8 @@ verify_dir_is_empty_or_create(char *dirname)
 			 */
 			return;
 		case 2:
+		case 3:
+		case 4:
 
 			/*
 			 * Exists, not empty
