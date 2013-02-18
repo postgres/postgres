@@ -619,10 +619,6 @@ typedef NameData *Name;
 #define AssertState(condition) \
 		Trap(!(condition), "BadState")
 
-extern void ExceptionalCondition(const char *conditionName,
-					 const char *errorType,
-			 const char *fileName, int lineNumber) __attribute__((noreturn));
-
 #endif /* USE_ASSERT_CHECKING && !FRONTEND */
 
 
