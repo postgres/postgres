@@ -192,6 +192,7 @@ const char *subdirs[] = {
 	"base",
 	"base/1",
 	"pg_tblspc",
+	"pg_stat",
 	"pg_stat_tmp"
 };
 
