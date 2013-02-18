@@ -87,6 +87,7 @@ typedef enum
 	PGC_S_ENV_VAR,				/* postmaster environment variable */
 	PGC_S_FILE,					/* postgresql.conf */
 	PGC_S_ARGV,					/* postmaster command line */
+	PGC_S_GLOBAL,				/* global in-database setting */
 	PGC_S_DATABASE,				/* per-database setting */
 	PGC_S_USER,					/* per-user setting */
 	PGC_S_DATABASE_USER,		/* per-user-and-database setting */

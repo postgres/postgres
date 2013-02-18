@@ -1010,6 +1010,7 @@ process_settings(Oid databaseid, Oid roleid)
 	ApplySetting(databaseid, roleid, relsetting, PGC_S_DATABASE_USER);
 	ApplySetting(InvalidOid, roleid, relsetting, PGC_S_USER);
 	ApplySetting(databaseid, InvalidOid, relsetting, PGC_S_DATABASE);
+	ApplySetting(InvalidOid, InvalidOid, relsetting, PGC_S_GLOBAL);
 
 	heap_close(relsetting, AccessShareLock);
 }
