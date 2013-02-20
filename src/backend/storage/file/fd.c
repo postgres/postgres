@@ -43,7 +43,7 @@
  * fopen(3), opendir(3), and open(2), respectively. They behave like the
  * corresponding native functions, except that the handle is registered with
  * the current subtransaction, and will be automatically closed at abort.
- * These are intended for short operations like reading a configuration file.
+ * These are intended for short operations like reading a configuration file,
  * and there is a fixed limit on the number of files that can be opened using
  * these functions at any one time.
  *
