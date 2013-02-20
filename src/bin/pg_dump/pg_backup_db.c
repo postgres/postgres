@@ -300,7 +300,8 @@ ConnectDatabase(Archive *AHX,
 	/* check to see that the backend connection was successfully made */
 	if (PQstatus(AH->connection) == CONNECTION_BAD)
 		exit_horribly(modulename, "connection to database \"%s\" failed: %s",
-					  PQdb(AH->connection), PQerrorMessage(AH->connection));
+					  PQdb(AH->connection) ? PQdb(AH->connection) : "",
+					  PQerrorMessage(AH->connection));
 
 	/* check for version mismatch */
 	_check_database_version(AH);
