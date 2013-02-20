@@ -50,6 +50,7 @@ static void makeAlterConfigCommand(PGconn *conn, const char *arrayitem,
 static void dumpDatabases(PGconn *conn);
 static void dumpTimestamp(char *msg);
 static void doShellQuoting(PQExpBuffer buf, const char *str);
+static void doConnStrQuoting(PQExpBuffer buf, const char *str);
 
 static int	runPgDump(const char *dbname);
 static void buildShSecLabels(PGconn *conn, const char *catalog_name,
@@ -1629,6 +1630,7 @@ dumpDatabases(PGconn *conn)
 static int
 runPgDump(const char *dbname)
 {
+	PQExpBuffer connstr = createPQExpBuffer();
 	PQExpBuffer cmd = createPQExpBuffer();
 	int			ret;
 
@@ -1644,7 +1646,17 @@ runPgDump(const char *dbname)
 	else
 		appendPQExpBuffer(cmd, " -Fp ");
 
-	doShellQuoting(cmd, dbname);
+	/*
+	 * Construct a connection string from the database name, like
+	 * dbname='<database name>'. pg_dump would usually also accept the
+	 * database name as is, but if it contains any = characters, it would
+	 * incorrectly treat it as a connection string.
+	 */
+	appendPQExpBuffer(connstr, "dbname='");
+	doConnStrQuoting(connstr, dbname);
+	appendPQExpBuffer(connstr, "'");
+
+	doShellQuoting(cmd, connstr->data);
 
 	appendPQExpBuffer(cmd, "%s", SYSTEMQUOTE);
 
@@ -1657,6 +1669,7 @@ runPgDump(const char *dbname)
 	ret = system(cmd->data);
 
 	destroyPQExpBuffer(cmd);
+	destroyPQExpBuffer(connstr);
 
 	return ret;
 }
@@ -1895,6 +1908,25 @@ dumpTimestamp(char *msg)
 		fprintf(OPF, "-- %s %s\n\n", msg, buf);
 }
 
+
+/*
+ * Append the given string to the buffer, with suitable quoting for passing
+ * the string as a value, in a keyword/pair value in a libpq connection
+ * string
+ */
+static void
+doConnStrQuoting(PQExpBuffer buf, const char *str)
+{
+	while (*str)
+	{
+		/* ' and \ must be escaped by to \' and \\ */
+		if (*str == '\'' || *str == '\\')
+			appendPQExpBufferChar(buf, '\\');
+
+		appendPQExpBufferChar(buf, *str);
+		str++;
+	}
+}
 
 /*
  * Append the given string to the shell command being built in the buffer,
