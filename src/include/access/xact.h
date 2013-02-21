@@ -28,7 +28,7 @@
 #define XACT_SERIALIZABLE		3
 
 extern int	DefaultXactIsoLevel;
-extern int	XactIsoLevel;
+extern PGDLLIMPORT int XactIsoLevel;
 
 /*
  * We implement three isolation levels internally.
