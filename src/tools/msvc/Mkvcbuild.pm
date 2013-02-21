@@ -30,7 +30,7 @@ my $libpq;
 
 my $contrib_defines = { 'refint' => 'REFINT_VERBOSE' };
 my @contrib_uselibpq =
-  ('dblink', 'oid2name', 'pgbench', 'pg_upgrade', 'vacuumlo');
+  ('dblink', 'oid2name', 'pgbench', 'pg_upgrade', 'postgres_fdw', 'vacuumlo');
 my @contrib_uselibpgport = (
 	'oid2name',      'pgbench',
 	'pg_standby',    'pg_archivecleanup',
