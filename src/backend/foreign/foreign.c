@@ -485,11 +485,15 @@ is_conninfo_option(const char *option, Oid context)
 
 /*
  * Validate the generic option given to SERVER or USER MAPPING.
- * Raise an ERROR if the option or its value is considered
- * invalid.
+ * Raise an ERROR if the option or its value is considered invalid.
  *
  * Valid server options are all libpq conninfo options except
  * user and password -- these may only appear in USER MAPPING options.
+ *
+ * Caution: this function is deprecated, and is now meant only for testing
+ * purposes, because the list of options it knows about doesn't necessarily
+ * square with those known to whichever libpq instance you might be using.
+ * Inquire of libpq itself, instead.
  */
 Datum
 postgresql_fdw_validator(PG_FUNCTION_ARGS)

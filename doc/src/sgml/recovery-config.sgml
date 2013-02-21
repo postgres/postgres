@@ -314,8 +314,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
          <para>
           Specifies a connection string to be used for the standby server
           to connect with the primary. This string is in the format
-          accepted by the libpq <function>PQconnectdb</function> function,
-          described in <xref linkend="libpq-connect">. If any option is
+          described in <xref linkend="libpq-connstring">. If any option is
           unspecified in this string, then the corresponding environment
           variable (see <xref linkend="libpq-envars">) is checked. If the
           environment variable is not set either, then

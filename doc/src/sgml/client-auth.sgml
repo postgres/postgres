@@ -1098,7 +1098,7 @@ omicron         bryanh                  guest1
     <replaceable>servicename</> can be set on the server side using the
     <xref linkend="guc-krb-srvname"> configuration parameter, and on the
     client side using the <literal>krbsrvname</> connection parameter. (See
-    also <xref linkend="libpq-connect">.)  The installation default can be
+    also <xref linkend="libpq-paramkeywords">.) The installation default can be
     changed from the default <literal>postgres</literal> at build time using
     <literal>./configure --with-krb-srvnam=</><replaceable>whatever</>.
     In most environments,

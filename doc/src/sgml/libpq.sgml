@@ -6941,7 +6941,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
   <para>
    The file uses an <quote>INI file</quote> format where the section
    name is the service name and the parameters are connection
-   parameters; see <xref linkend="libpq-connect"> for a list.  For
+   parameters; see <xref linkend="libpq-paramkeywords"> for a list.  For
    example:
 <programlisting>
 # comment

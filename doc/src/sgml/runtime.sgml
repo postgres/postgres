@@ -1751,7 +1751,7 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    (<xref linkend="ssl-tcp">). The TCP client must connect using
    <literal>sslmode=verify-ca</> or
    <literal>verify-full</> and have the appropriate root certificate
-   file installed (<xref linkend="libpq-connect">).
+   file installed (<xref linkend="libq-ssl-certificates">).
   </para>
  </sect1>
 

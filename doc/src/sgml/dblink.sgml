@@ -8,9 +8,14 @@
  </indexterm>
 
  <para>
-  <filename>dblink</> is a module which supports connections to
+  <filename>dblink</> is a module that supports connections to
   other <productname>PostgreSQL</> databases from within a database
   session.
+ </para>
+
+ <para>
+  See also <xref linkend="postgres-fdw">, which provides roughly the same
+  functionality using a more modern and standards-compliant infrastructure.
  </para>
 
  <refentry id="CONTRIB-DBLINK-CONNECT">
@@ -47,12 +52,10 @@ dblink_connect(text connname, text connstr) returns text
    <para>
     The connection string may also be the name of an existing foreign
     server.  It is recommended to use the foreign-data wrapper
-    <literal>dblink_fdw</literal> when defining the corresponding foreign
-    server.  See the example below, as well as the following:
-    <simplelist type="inline">
-     <member><xref linkend="sql-createserver"></member>
-     <member><xref linkend="sql-createusermapping"></member>
-    </simplelist>
+    <literal>dblink_fdw</literal> when defining the foreign
+    server.  See the example below, as well as
+    <xref linkend="sql-createserver"> and
+    <xref linkend="sql-createusermapping">.
    </para>
 
   </refsect1>
@@ -77,8 +80,8 @@ dblink_connect(text connname, text connstr) returns text
       <para><application>libpq</>-style connection info string, for example
        <literal>hostaddr=127.0.0.1 port=5432 dbname=mydb user=postgres
        password=mypasswd</>.
-       For details see <function>PQconnectdb</> in
-       <xref linkend="libpq-connect">.
+       For details see <xref linkend="libpq-connstring">.
+       Alternatively, the name of a foreign server.
       </para>
      </listitem>
     </varlistentry>
@@ -133,9 +136,10 @@ SELECT dblink_connect('myconn', 'dbname=postgres');
 --       ERROR:  password is required
 --       DETAIL:  Non-superuser cannot connect if the server does not request a password.
 --       HINT:  Target server's authentication method must be changed.
-CREATE USER dblink_regression_test WITH PASSWORD 'secret';
+
 CREATE SERVER fdtest FOREIGN DATA WRAPPER dblink_fdw OPTIONS (hostaddr '127.0.0.1', dbname 'contrib_regression');
 
+CREATE USER dblink_regression_test WITH PASSWORD 'secret';
 CREATE USER MAPPING FOR dblink_regression_test SERVER fdtest OPTIONS (user 'dblink_regression_test', password 'secret');
 GRANT USAGE ON FOREIGN SERVER fdtest TO dblink_regression_test;
 GRANT SELECT ON TABLE foo TO dblink_regression_test;
@@ -166,7 +170,7 @@ SELECT * FROM dblink('myconn','SELECT * FROM foo') AS t(a int, b text, c text[])
 
 \c - :ORIGINAL_USER
 REVOKE USAGE ON FOREIGN SERVER fdtest FROM dblink_regression_test;
-REVOKE SELECT ON TABLE foo FROM  dblink_regression_test;
+REVOKE SELECT ON TABLE foo FROM dblink_regression_test;
 DROP USER MAPPING FOR dblink_regression_test SERVER fdtest;
 DROP USER dblink_regression_test;
 DROP SERVER fdtest;

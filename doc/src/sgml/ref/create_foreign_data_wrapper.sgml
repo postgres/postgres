@@ -121,14 +121,6 @@ CREATE FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable>
    There is no support for updating a foreign table, and optimization of
    queries is primitive (and mostly left to the wrapper, too).
   </para>
-
-  <para>
-   There is one built-in foreign-data wrapper validator function
-   provided:
-   <filename>postgresql_fdw_validator</filename>, which accepts
-   options corresponding to <application>libpq</> connection
-   parameters.
-  </para>
  </refsect1>
 
  <refsect1>

@@ -32,7 +32,7 @@ CREATE FOREIGN TABLE [ IF NOT EXISTS ] <replaceable class="PARAMETER">table_name
   <title>Description</title>
 
   <para>
-   <command>CREATE FOREIGN TABLE</command> will create a new foreign table
+   <command>CREATE FOREIGN TABLE</command> creates a new foreign table
    in the current database. The table will be owned by the user issuing the
    command.
   </para>
@@ -54,8 +54,9 @@ CREATE FOREIGN TABLE [ IF NOT EXISTS ] <replaceable class="PARAMETER">table_name
   </para>
 
   <para>
-   To be able to create a table, you must have <literal>USAGE</literal>
-   privilege on all column types.
+   To be able to create a foreign table, you must have <literal>USAGE</literal>
+   privilege on the foreign server, as well as <literal>USAGE</literal>
+   privilege on all column types used in the table.
   </para>
  </refsect1>
 
@@ -134,7 +135,7 @@ CREATE FOREIGN TABLE [ IF NOT EXISTS ] <replaceable class="PARAMETER">table_name
     <term><replaceable class="PARAMETER">server_name</replaceable></term>
     <listitem>
      <para>
-      The name of an existing server for the foreign table.
+      The name of an existing foreign server to use for the foreign table.
       For details on defining a server, see <xref
       linkend="SQL-CREATESERVER">.
      </para>
@@ -164,7 +165,8 @@ CREATE FOREIGN TABLE [ IF NOT EXISTS ] <replaceable class="PARAMETER">table_name
   <title>Examples</title>
 
   <para>
-   Create foreign table <structname>films</> with <structname>film_server</>:
+   Create foreign table <structname>films</>, which will be accessed through
+   the server <structname>film_server</>:
 
 <programlisting>
 CREATE FOREIGN TABLE films (

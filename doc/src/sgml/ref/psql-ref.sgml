@@ -120,7 +120,8 @@ PostgreSQL documentation
        with a valid <acronym>URI</acronym> prefix
        (<literal>postgresql://</literal>
        or <literal>postgres://</literal>), it is treated as a
-       <parameter>conninfo</parameter> string. See <xref linkend="libpq-connect"> for more information.
+       <parameter>conninfo</parameter> string. See <xref
+       linkend="libpq-connstring"> for more information.
       </para>
       </listitem>
     </varlistentry>
@@ -608,9 +609,9 @@ PostgreSQL documentation
 $ <userinput>psql "service=myservice sslmode=require"</userinput>
 $ <userinput>psql postgresql://dbmaster:5433/mydb?sslmode=require</userinput>
 </programlisting>
-     This way you can also use <acronym>LDAP</acronym> for connection parameter lookup as
-     described in <xref linkend="libpq-ldap">.
-     See <xref linkend="libpq-connect"> for more information on all the
+     This way you can also use <acronym>LDAP</acronym> for connection
+     parameter lookup as described in <xref linkend="libpq-ldap">.
+     See <xref linkend="libpq-paramkeywords"> for more information on all the
      available connection options.
     </para>
 
