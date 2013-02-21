@@ -4386,15 +4386,19 @@ static void
 pgstat_recv_inquiry(PgStat_MsgInquiry *msg, int len)
 {
 	slist_iter	iter;
-	bool		found = false;
 	DBWriteRequest *newreq;
 	PgStat_StatDBEntry *dbentry;
 
 	elog(DEBUG2, "received inquiry for %d", msg->databaseid);
 
 	/*
-	 * Find the last write request for this DB (found=true in that case).
-	 * Plain linear search, not really worth doing any magic here (probably).
+	 * Find the last write request for this DB.  If it's older than the
+	 * request's cutoff time, update it; otherwise there's nothing to do.
+	 *
+	 * Note that if a request is found, we return early and skip the below
+	 * check for clock skew.  This is okay, since the only way for a DB request
+	 * to be present in the list is that we have been here since the last write
+	 * round.
 	 */
 	slist_foreach(iter, &last_statrequests)
 	{
@@ -4405,7 +4409,6 @@ pgstat_recv_inquiry(PgStat_MsgInquiry *msg, int len)
 
 		if (msg->cutoff_time > req->request_time)
 			req->request_time = msg->cutoff_time;
-		found = true;
 		return;
 	}
 
