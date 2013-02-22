@@ -855,10 +855,6 @@ deparseArrayRef(StringInfo buf, ArrayRef *node, PlannerInfo *root)
 
 /*
  * Deparse given node which represents a function call into buf.
- *
- * Here not only explicit function calls and explicit casts but also implicit
- * casts are deparsed to avoid problems caused by different cast settings
- * between local and remote.
  */
 static void
 deparseFuncExpr(StringInfo buf, FuncExpr *node, PlannerInfo *root)
@@ -870,6 +866,37 @@ deparseFuncExpr(StringInfo buf, FuncExpr *node, PlannerInfo *root)
 	bool		first;
 	ListCell   *arg;
 
+	/*
+	 * If the function call came from an implicit coercion, then just show the
+	 * first argument.
+	 */
+	if (node->funcformat == COERCE_IMPLICIT_CAST)
+	{
+		deparseExpr(buf, (Expr *) linitial(node->args), root);
+		return;
+	}
+
+	/*
+	 * If the function call came from a cast, then show the first argument
+	 * plus an explicit cast operation.
+	 */
+	if (node->funcformat == COERCE_EXPLICIT_CAST)
+	{
+		Oid			rettype = node->funcresulttype;
+		int32		coercedTypmod;
+
+		/* Get the typmod if this is a length-coercion function */
+		(void) exprIsLengthCoercion((Node *) node, &coercedTypmod);
+
+		deparseExpr(buf, (Expr *) linitial(node->args), root);
+		appendStringInfo(buf, "::%s",
+						 format_type_with_typemod(rettype, coercedTypmod));
+		return;
+	}
+
+	/*
+	 * Normal function: display as proname(args).
+	 */
 	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(node->funcid));
 	if (!HeapTupleIsValid(proctup))
 		elog(ERROR, "cache lookup failed for function %u", node->funcid);
@@ -1062,9 +1089,10 @@ static void
 deparseRelabelType(StringInfo buf, RelabelType *node, PlannerInfo *root)
 {
 	deparseExpr(buf, node->arg, root);
-	appendStringInfo(buf, "::%s",
-					 format_type_with_typemod(node->resulttype,
-											  node->resulttypmod));
+	if (node->relabelformat != COERCE_IMPLICIT_CAST)
+		appendStringInfo(buf, "::%s",
+						 format_type_with_typemod(node->resulttype,
+												  node->resulttypmod));
 }
 
 /*
