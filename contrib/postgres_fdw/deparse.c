@@ -364,6 +364,7 @@ deparseSimpleSql(StringInfo buf,
 {
 	RangeTblEntry *rte = root->simple_rte_array[baserel->relid];
 	Bitmapset  *attrs_used = NULL;
+	bool		have_wholerow;
 	bool		first;
 	AttrNumber	attr;
 	ListCell   *lc;
@@ -380,6 +381,10 @@ deparseSimpleSql(StringInfo buf,
 		pull_varattnos((Node *) rinfo->clause, baserel->relid,
 					   &attrs_used);
 	}
+
+	/* If there's a whole-row reference, we'll need all the columns. */
+	have_wholerow = bms_is_member(0 - FirstLowInvalidHeapAttributeNumber,
+								  attrs_used);
 
 	/*
 	 * Construct SELECT list
@@ -401,7 +406,8 @@ deparseSimpleSql(StringInfo buf,
 			appendStringInfo(buf, ", ");
 		first = false;
 
-		if (bms_is_member(attr - FirstLowInvalidHeapAttributeNumber,
+		if (have_wholerow ||
+			bms_is_member(attr - FirstLowInvalidHeapAttributeNumber,
 						  attrs_used))
 			deparseColumnRef(buf, baserel->relid, attr, root);
 		else
