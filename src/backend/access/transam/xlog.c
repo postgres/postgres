@@ -188,7 +188,18 @@ static bool LocalHotStandbyActive = false;
  */
 static int	LocalXLogInsertAllowed = -1;
 
-/* Are we recovering using offline XLOG archives? */
+/*
+ * When ArchiveRecoveryRequested is set, archive recovery was requested,
+ * ie. recovery.conf file was present. When InArchiveRecovery is set, we are
+ * currently recovering using offline XLOG archives. These variables are only
+ * valid in the startup process.
+ *
+ * When ArchiveRecoveryRequested is true, but InArchiveRecovery is false, we're
+ * currently performing crash recovery using only XLOG files in pg_xlog, but
+ * will switch to using offline XLOG archives as soon as we reach the end of
+ * WAL in pg_xlog.
+*/
+static bool ArchiveRecoveryRequested = false;
 static bool InArchiveRecovery = false;
 
 /* Was the last xlog file restored from archive, or local? */
@@ -206,9 +217,12 @@ static TimestampTz recoveryTargetTime;
 static char *recoveryTargetName;
 
 /* options taken from recovery.conf for XLOG streaming */
-static bool StandbyMode = false;
+static bool StandbyModeRequested = false;
 static char *PrimaryConnInfo = NULL;
 static char *TriggerFile = NULL;
+
+/* are we currently in standby mode? */
+bool StandbyMode = false;
 
 /* if recoveryStopsHere returns true, it saves actual stop xid/time/name here */
 static TransactionId recoveryStopXid;
@@ -4236,6 +4250,43 @@ next_record_is_invalid:
 		readFile = -1;
 	}
 
+	/*
+	 * If archive recovery was requested, but we were still doing crash
+	 * recovery, switch to archive recovery and retry using the offline
+	 * archive. We have now replayed all the valid WAL in pg_xlog, so
+	 * we are presumably now consistent.
+	 *
+	 * We require that there's at least some valid WAL present in
+	 * pg_xlog, however (!fetch_ckpt). We could recover using the WAL
+	 * from the archive, even if pg_xlog is completely empty, but we'd
+	 * have no idea how far we'd have to replay to reach consistency.
+	 * So err on the safe side and give up.
+	 */
+	if (!InArchiveRecovery && ArchiveRecoveryRequested && !fetching_ckpt)
+	{
+		ereport(DEBUG1,
+				(errmsg_internal("reached end of WAL in pg_xlog, entering archive recovery")));
+		InArchiveRecovery = true;
+		if (StandbyModeRequested)
+			StandbyMode = true;
+
+		/* initialize minRecoveryPoint to this record */
+		LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);
+		ControlFile->state = DB_IN_ARCHIVE_RECOVERY;
+		if (XLByteLT(ControlFile->minRecoveryPoint, EndRecPtr))
+			ControlFile->minRecoveryPoint = EndRecPtr;
+
+		/* update local copy */
+		minRecoveryPoint = ControlFile->minRecoveryPoint;
+
+		UpdateControlFile();
+		LWLockRelease(ControlFileLock);
+
+		CheckRecoveryConsistency();
+
+		goto retry;
+	}
+
 	/* In standby-mode, keep trying */
 	if (StandbyMode)
 		goto retry;
@@ -5631,7 +5682,7 @@ readRecoveryCommandFile(void)
 		}
 		else if (strcmp(item->name, "standby_mode") == 0)
 		{
-			if (!parse_bool(item->value, &StandbyMode))
+			if (!parse_bool(item->value, &StandbyModeRequested))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("parameter \"%s\" requires a Boolean value",
@@ -5662,7 +5713,7 @@ readRecoveryCommandFile(void)
 	/*
 	 * Check for compulsory parameters
 	 */
-	if (StandbyMode)
+	if (StandbyModeRequested)
 	{
 		if (PrimaryConnInfo == NULL && recoveryRestoreCommand == NULL)
 			ereport(WARNING,
@@ -5679,7 +5730,7 @@ readRecoveryCommandFile(void)
 	}
 
 	/* Enable fetching from archive recovery area */
-	InArchiveRecovery = true;
+	ArchiveRecoveryRequested = true;
 
 	/*
 	 * If user specified recovery_target_timeline, validate it or compute the
@@ -5689,6 +5740,11 @@ readRecoveryCommandFile(void)
 	 */
 	if (rtliGiven)
 	{
+		/*
+		 * Temporarily set InArchiveRecovery, so that existsTimeLineHistory
+		 * or findNewestTimeLine below will check the archive.
+		 */
+		InArchiveRecovery = true;
 		if (rtli)
 		{
 			/* Timeline 1 does not have a history file, all else should */
@@ -5705,6 +5761,7 @@ readRecoveryCommandFile(void)
 			recoveryTargetTLI = findNewestTimeLine(recoveryTargetTLI);
 			recoveryTargetIsLatest = true;
 		}
+		InArchiveRecovery = false;
 	}
 
 	FreeConfigVariables(head);
@@ -6283,9 +6340,9 @@ StartupXLOG(void)
 			archiveCleanupCommand ? archiveCleanupCommand : "",
 			sizeof(XLogCtl->archiveCleanupCommand));
 
-	if (InArchiveRecovery)
+	if (ArchiveRecoveryRequested)
 	{
-		if (StandbyMode)
+		if (StandbyModeRequested)
 			ereport(LOG,
 					(errmsg("entering standby mode")));
 		else if (recoveryTarget == RECOVERY_TARGET_XID)
@@ -6309,12 +6366,21 @@ StartupXLOG(void)
 	 * Take ownership of the wakeup latch if we're going to sleep during
 	 * recovery.
 	 */
-	if (StandbyMode)
+	if (StandbyModeRequested)
 		OwnLatch(&XLogCtl->recoveryWakeupLatch);
 
 	if (read_backup_label(&checkPointLoc, &backupEndRequired,
 						  &backupFromStandby))
 	{
+		/*
+		 * Archive recovery was requested, and thanks to the backup label file,
+		 * we know how far we need to replay to reach consistency. Enter
+		 * archive recovery directly.
+		 */
+		InArchiveRecovery = true;
+		if (StandbyModeRequested)
+			StandbyMode = true;
+
 		/*
 		 * When a backup_label file is present, we want to roll forward from
 		 * the checkpoint it identifies, rather than using pg_control.
@@ -6355,6 +6421,33 @@ StartupXLOG(void)
 	}
 	else
 	{
+		/*
+		 * It's possible that archive recovery was requested, but we don't
+		 * know how far we need to replay the WAL before we reach consistency.
+		 * This can happen for example if a base backup is taken from a running
+		 * server using an atomic filesystem snapshot, without calling
+		 * pg_start/stop_backup. Or if you just kill a running master server
+		 * and put it into archive recovery by creating a recovery.conf file.
+		 *
+		 * Our strategy in that case is to perform crash recovery first,
+		 * replaying all the WAL present in pg_xlog, and only enter archive
+		 * recovery after that.
+		 *
+		 * But usually we already know how far we need to replay the WAL (up to
+		 * minRecoveryPoint, up to backupEndPoint, or until we see an
+		 * end-of-backup record), and we can enter archive recovery directly.
+		 */
+		if (ArchiveRecoveryRequested &&
+			(!XLByteEQ(ControlFile->minRecoveryPoint, InvalidXLogRecPtr) ||
+			 ControlFile->backupEndRequired ||
+			 !XLByteEQ(ControlFile->backupEndPoint, InvalidXLogRecPtr) ||
+			 ControlFile->state == DB_SHUTDOWNED))
+		{
+			InArchiveRecovery = true;
+			if (StandbyModeRequested)
+				StandbyMode = true;
+		}
+
 		/*
 		 * Get the last valid checkpoint record.  If the latest one according
 		 * to pg_control is broken, try the next-to-last one.
@@ -6454,7 +6547,7 @@ StartupXLOG(void)
 	}
 	else if (ControlFile->state != DB_SHUTDOWNED)
 		InRecovery = true;
-	else if (InArchiveRecovery)
+	else if (ArchiveRecoveryRequested)
 	{
 		/* force recovery due to presence of recovery.conf */
 		InRecovery = true;
@@ -6487,12 +6580,6 @@ StartupXLOG(void)
 		ControlFile->prevCheckPoint = ControlFile->checkPoint;
 		ControlFile->checkPoint = checkPointLoc;
 		ControlFile->checkPointCopy = checkPoint;
-		if (InArchiveRecovery)
-		{
-			/* initialize minRecoveryPoint if not set yet */
-			if (XLByteLT(ControlFile->minRecoveryPoint, checkPoint.redo))
-				ControlFile->minRecoveryPoint = checkPoint.redo;
-		}
 
 		/*
 		 * Set backupStartPoint if we're starting recovery from a base backup.
@@ -6571,7 +6658,7 @@ StartupXLOG(void)
 		 * control file and we've established a recovery snapshot from a
 		 * running-xacts WAL record.
 		 */
-		if (InArchiveRecovery && EnableHotStandby)
+		if (ArchiveRecoveryRequested && EnableHotStandby)
 		{
 			TransactionId *xids;
 			int			nxids;
@@ -6669,7 +6756,7 @@ StartupXLOG(void)
 		 * process in addition to postmaster!  Also, fsync requests are
 		 * subsequently to be handled by the checkpointer, not locally.
 		 */
-		if (InArchiveRecovery && IsUnderPostmaster)
+		if (ArchiveRecoveryRequested && IsUnderPostmaster)
 		{
 			PublishStartupProcessInformation();
 			SetForwardFsyncRequests();
@@ -6873,7 +6960,7 @@ StartupXLOG(void)
 	 * We don't need the latch anymore. It's not strictly necessary to disown
 	 * it, but let's do it for the sake of tidiness.
 	 */
-	if (StandbyMode)
+	if (StandbyModeRequested)
 		DisownLatch(&XLogCtl->recoveryWakeupLatch);
 
 	/*
@@ -6918,7 +7005,7 @@ StartupXLOG(void)
 		 * crashes while an online backup is in progress. We must not treat
 		 * that as an error, or the database will refuse to start up.
 		 */
-		if (InArchiveRecovery || ControlFile->backupEndRequired)
+		if (ArchiveRecoveryRequested || ControlFile->backupEndRequired)
 		{
 			if (ControlFile->backupEndRequired)
 				ereport(FATAL,
@@ -6948,8 +7035,10 @@ StartupXLOG(void)
 	 *
 	 * In a normal crash recovery, we can just extend the timeline we were in.
 	 */
-	if (InArchiveRecovery)
+	if (ArchiveRecoveryRequested)
 	{
+		Assert(InArchiveRecovery);
+
 		ThisTimeLineID = findNewestTimeLine(recoveryTargetTLI) + 1;
 		ereport(LOG,
 				(errmsg("selected new timeline ID: %u", ThisTimeLineID)));
@@ -6966,7 +7055,7 @@ StartupXLOG(void)
 	 * that we also have a copy of the last block of the old WAL in readBuf;
 	 * we will use that below.)
 	 */
-	if (InArchiveRecovery)
+	if (ArchiveRecoveryRequested)
 		exitArchiveRecovery(curFileTLI, endLogId, endLogSeg);
 
 	/*
@@ -8799,7 +8888,7 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 		 * record, the backup was canceled and the end-of-backup record will
 		 * never arrive.
 		 */
-		if (InArchiveRecovery &&
+		if (ArchiveRecoveryRequested &&
 			!XLogRecPtrIsInvalid(ControlFile->backupStartPoint) &&
 			XLogRecPtrIsInvalid(ControlFile->backupEndPoint))
 			ereport(PANIC,
@@ -10263,7 +10352,7 @@ XLogPageRead(XLogRecPtr *RecPtr, int emode, bool fetching_ckpt,
 		 * Request a restartpoint if we've replayed too much xlog since the
 		 * last one.
 		 */
-		if (StandbyMode && bgwriterLaunched)
+		if (StandbyModeRequested && bgwriterLaunched)
 		{
 			if (XLogCheckpointNeeded(readId, readSeg))
 			{
