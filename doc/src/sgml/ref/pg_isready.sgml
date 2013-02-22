@@ -12,7 +12,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>pg_isready</refname>
-  <refpurpose>checks the connection status of a <productname>PostgreSQL</productname> server</refpurpose>
+  <refpurpose>check the connection status of a <productname>PostgreSQL</productname> server</refpurpose>
  </refnamediv>
 
  <indexterm zone="app-pg-isready">

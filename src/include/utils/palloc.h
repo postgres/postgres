@@ -28,14 +28,14 @@
 #ifndef PALLOC_H
 #define PALLOC_H
 
-#ifndef FRONTEND
-
 /*
  * Type MemoryContextData is declared in nodes/memnodes.h.	Most users
  * of memory allocation should just treat it as an abstract type, so we
  * do not provide the struct contents here.
  */
 typedef struct MemoryContextData *MemoryContext;
+
+#ifndef FRONTEND
 
 /*
  * CurrentMemoryContext is the default allocation context for palloc().
