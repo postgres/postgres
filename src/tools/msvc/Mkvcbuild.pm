@@ -69,10 +69,13 @@ sub mkvcbuild
 	  sprompt.c tar.c thread.c getopt.c getopt_long.c dirent.c rint.c win32env.c
 	  win32error.c win32setlocale.c);
 
-	our @pgcommonfiles = qw(
-		fe_memutils.c);
+	our @pgcommonallfiles = qw(
+		relpath.c);
 
-	our @pgcommonbkndfiles = qw();
+	our @pgcommonfrontendfiles = (@pgcommonallfiles,
+		qw(fe_memutils.c));
+
+	our @pgcommonbkndfiles = @pgcommonallfiles;
 
 	$libpgport = $solution->AddProject('libpgport', 'lib', 'misc');
 	$libpgport->AddDefine('FRONTEND');
@@ -80,7 +83,7 @@ sub mkvcbuild
 
 	$libpgcommon = $solution->AddProject('libpgcommon', 'lib', 'misc');
 	$libpgcommon->AddDefine('FRONTEND');
-	$libpgcommon->AddFiles('src\common', @pgcommonfiles);
+	$libpgcommon->AddFiles('src\common', @pgcommonfrontendfiles);
 
 	$postgres = $solution->AddProject('postgres', 'exe', '', 'src\backend');
 	$postgres->AddIncludeDir('src\backend');

@@ -56,6 +56,7 @@
 #include "catalog/schemapg.h"
 #include "catalog/storage.h"
 #include "commands/trigger.h"
+#include "common/relpath.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"

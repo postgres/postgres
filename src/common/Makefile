@@ -23,13 +23,13 @@ include $(top_builddir)/src/Makefile.global
 override CPPFLAGS := -DFRONTEND $(CPPFLAGS)
 LIBS += $(PTHREAD_LIBS)
 
-OBJS_COMMON =
+OBJS_COMMON = relpath.o
 
 OBJS_FRONTEND = $(OBJS_COMMON) fe_memutils.o
 
 OBJS_SRV = $(OBJS_COMMON:%.o=%_srv.o)
 
-all: libpgcommon.a
+all: libpgcommon.a libpgcommon_srv.a
 
 # libpgcommon is needed by some contrib
 install: all installdirs
@@ -59,6 +59,13 @@ libpgcommon_srv.a: $(OBJS_SRV)
 # corresponding *.o, but it works for now.
 %_srv.o: %.c %.o
 	$(CC) $(CFLAGS) $(subst -DFRONTEND,, $(CPPFLAGS)) -c $< -o $@
+
+$(OBJS_SRV): | submake-errcodes
+
+.PHONY: submake-errcodes
+
+submake-errcodes:
+	$(MAKE) -C ../backend submake-errcodes
 
 clean distclean maintainer-clean:
 	rm -f libpgcommon.a libpgcommon_srv.a $(OBJS_FRONTEND) $(OBJS_SRV)

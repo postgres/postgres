@@ -71,6 +71,7 @@
 #include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/pg_tablespace.h"
+#include "common/relpath.h"
 #include "pgstat.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"

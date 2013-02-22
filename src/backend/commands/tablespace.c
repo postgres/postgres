@@ -64,6 +64,7 @@
 #include "commands/comment.h"
 #include "commands/seclabel.h"
 #include "commands/tablespace.h"
+#include "common/relpath.h"
 #include "miscadmin.h"
 #include "postmaster/bgwriter.h"
 #include "storage/fd.h"

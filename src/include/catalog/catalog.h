@@ -14,34 +14,14 @@
 #ifndef CATALOG_H
 #define CATALOG_H
 
-/*
- *	'pgrminclude ignore' needed here because CppAsString2() does not throw
- *	an error if the symbol is not defined.
- */
-#include "catalog/catversion.h" /* pgrminclude ignore */
 #include "catalog/pg_class.h"
 #include "storage/relfilenode.h"
 #include "utils/relcache.h"
 
-#define OIDCHARS		10		/* max chars printed by %u */
-#define TABLESPACE_VERSION_DIRECTORY	"PG_" PG_MAJORVERSION "_" \
-									CppAsString2(CATALOG_VERSION_NO)
-
-extern const char *forkNames[];
 extern ForkNumber forkname_to_number(char *forkName);
-extern int	forkname_chars(const char *str, ForkNumber *);
 
-extern char *relpathbackend(RelFileNode rnode, BackendId backend,
-			   ForkNumber forknum);
 extern char *GetDatabasePath(Oid dbNode, Oid spcNode);
 
-/* First argument is a RelFileNodeBackend */
-#define relpath(rnode, forknum) \
-		relpathbackend((rnode).node, (rnode).backend, (forknum))
-
-/* First argument is a RelFileNode */
-#define relpathperm(rnode, forknum) \
-		relpathbackend((rnode), InvalidBackendId, (forknum))
 
 extern bool IsSystemRelation(Relation relation);
 extern bool IsToastRelation(Relation relation);

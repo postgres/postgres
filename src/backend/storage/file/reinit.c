@@ -17,6 +17,7 @@
 #include <unistd.h>
 
 #include "catalog/catalog.h"
+#include "common/relpath.h"
 #include "storage/copydir.h"
 #include "storage/fd.h"
 #include "storage/reinit.h"
