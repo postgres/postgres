@@ -902,10 +902,23 @@ create_cursor(ForeignScanState *node)
 				params->paramFetch(params, paramno);
 
 			/*
+			 * Force the remote server to infer a type for this parameter.
+			 * Since we explicitly cast every parameter (see deparse.c), the
+			 * "inference" is trivial and will produce the desired result.
+			 * This allows us to avoid assuming that the remote server has the
+			 * same OIDs we do for the parameters' types.
+			 *
+			 * We'd not need to pass a type array to PQexecParams at all,
+			 * except that there may be unused holes in the array, which
+			 * will have to be filled with something or the remote server will
+			 * complain.  We arbitrarily set them to INT4OID earlier.
+			 */
+			types[paramno - 1] = InvalidOid;
+
+			/*
 			 * Get string representation of each parameter value by invoking
 			 * type-specific output function, unless the value is null.
 			 */
-			types[paramno - 1] = prm->ptype;
 			if (prm->isnull)
 				values[paramno - 1] = NULL;
 			else

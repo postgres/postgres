@@ -331,12 +331,10 @@ foreign_expr_walker(Node *node, foreign_expr_cxt *context)
  * function or type defined in the information_schema.
  *
  * Our constraints for dealing with types are tighter than they are for
- * functions or operators: we want to accept only types that are in pg_catalog
- * (else format_type might incorrectly fail to schema-qualify their names),
- * and we want to be sure that the remote server will use the same OID as
- * we do (since we must transmit a numeric type OID when passing a value of
- * the type as a query parameter).  Both of these are reasons to reject
- * objects created post-bootstrap.
+ * functions or operators: we want to accept only types that are in pg_catalog,
+ * else format_type might incorrectly fail to schema-qualify their names.
+ * (This could be fixed with some changes to format_type, but for now there's
+ * no need.)  Thus we must exclude information_schema types.
  *
  * XXX there is a problem with this, which is that the set of built-in
  * objects expands over time.  Something that is built-in to us might not
@@ -794,12 +792,20 @@ deparseConst(StringInfo buf, Const *node, PlannerInfo *root)
  * We don't need to renumber the parameter ID, because the executor functions
  * in postgres_fdw.c preserve the numbering of PARAM_EXTERN Params.
  * (This might change soon.)
+ *
+ * Note: we label the Param's type explicitly rather than relying on
+ * transmitting a numeric type OID in PQexecParams().  This allows us to
+ * avoid assuming that types have the same OIDs on the remote side as they
+ * do locally --- they need only have the same names.
  */
 static void
 deparseParam(StringInfo buf, Param *node, PlannerInfo *root)
 {
 	Assert(node->paramkind == PARAM_EXTERN);
 	appendStringInfo(buf, "$%d", node->paramid);
+	appendStringInfo(buf, "::%s",
+					 format_type_with_typemod(node->paramtype,
+											  node->paramtypmod));
 }
 
 /*
