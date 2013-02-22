@@ -43,6 +43,7 @@ SUBDIRS = \
 		pgcrypto	\
 		pgrowlocks	\
 		pgstattuple	\
+		pg_xlogdump	\
 		postgres_fdw	\
 		seg		\
 		spi		\
