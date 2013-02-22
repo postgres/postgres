@@ -11,6 +11,9 @@
  * One saving grace is that we only need deparse logic for node types that
  * we consider safe to send.
  *
+ * We assume that the remote session's search_path is exactly "pg_catalog",
+ * and thus we need schema-qualify all and only names outside pg_catalog.
+ *
  * Portions Copyright (c) 2012-2013, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
@@ -25,6 +28,7 @@
 #include "access/htup_details.h"
 #include "access/sysattr.h"
 #include "access/transam.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
@@ -73,6 +77,7 @@ static void deparseParam(StringInfo buf, Param *node, PlannerInfo *root);
 static void deparseArrayRef(StringInfo buf, ArrayRef *node, PlannerInfo *root);
 static void deparseFuncExpr(StringInfo buf, FuncExpr *node, PlannerInfo *root);
 static void deparseOpExpr(StringInfo buf, OpExpr *node, PlannerInfo *root);
+static void deparseOperatorName(StringInfo buf, Form_pg_operator opform);
 static void deparseDistinctExpr(StringInfo buf, DistinctExpr *node,
 					PlannerInfo *root);
 static void deparseScalarArrayOpExpr(StringInfo buf, ScalarArrayOpExpr *node,
@@ -321,6 +326,18 @@ foreign_expr_walker(Node *node, foreign_expr_cxt *context)
 /*
  * Return true if given object is one of PostgreSQL's built-in objects.
  *
+ * We use FirstBootstrapObjectId as the cutoff, so that we only consider
+ * objects with hand-assigned OIDs to be "built in", not for instance any
+ * function or type defined in the information_schema.
+ *
+ * Our constraints for dealing with types are tighter than they are for
+ * functions or operators: we want to accept only types that are in pg_catalog
+ * (else format_type might incorrectly fail to schema-qualify their names),
+ * and we want to be sure that the remote server will use the same OID as
+ * we do (since we must transmit a numeric type OID when passing a value of
+ * the type as a query parameter).  Both of these are reasons to reject
+ * objects created post-bootstrap.
+ *
  * XXX there is a problem with this, which is that the set of built-in
  * objects expands over time.  Something that is built-in to us might not
  * be known to the remote server, if it's of an older version.  But keeping
@@ -329,7 +346,7 @@ foreign_expr_walker(Node *node, foreign_expr_cxt *context)
 static bool
 is_builtin(Oid oid)
 {
-	return (oid < FirstNormalObjectId);
+	return (oid < FirstBootstrapObjectId);
 }
 
 
@@ -563,6 +580,10 @@ deparseRelation(StringInfo buf, Oid relid)
 			relname = defGetString(def);
 	}
 
+	/*
+	 * Note: we could skip printing the schema name if it's pg_catalog,
+	 * but that doesn't seem worth the trouble.
+	 */
 	if (nspname == NULL)
 		nspname = get_namespace_name(get_rel_namespace(relid));
 	if (relname == NULL)
@@ -832,9 +853,6 @@ deparseArrayRef(StringInfo buf, ArrayRef *node, PlannerInfo *root)
  * Here not only explicit function calls and explicit casts but also implicit
  * casts are deparsed to avoid problems caused by different cast settings
  * between local and remote.
- *
- * Function name is always qualified by schema name to avoid problems caused
- * by different setting of search_path on remote side.
  */
 static void
 deparseFuncExpr(StringInfo buf, FuncExpr *node, PlannerInfo *root)
@@ -842,7 +860,6 @@ deparseFuncExpr(StringInfo buf, FuncExpr *node, PlannerInfo *root)
 	HeapTuple	proctup;
 	Form_pg_proc procform;
 	const char *proname;
-	const char *schemaname;
 	bool		use_variadic;
 	bool		first;
 	ListCell   *arg;
@@ -851,7 +868,6 @@ deparseFuncExpr(StringInfo buf, FuncExpr *node, PlannerInfo *root)
 	if (!HeapTupleIsValid(proctup))
 		elog(ERROR, "cache lookup failed for function %u", node->funcid);
 	procform = (Form_pg_proc) GETSTRUCT(proctup);
-	proname = NameStr(procform->proname);
 
 	/* Check if need to print VARIADIC (cf. ruleutils.c) */
 	if (OidIsValid(procform->provariadic))
@@ -864,11 +880,18 @@ deparseFuncExpr(StringInfo buf, FuncExpr *node, PlannerInfo *root)
 	else
 		use_variadic = false;
 
+	/* Print schema name only if it's not pg_catalog */
+	if (procform->pronamespace != PG_CATALOG_NAMESPACE)
+	{
+		const char *schemaname;
+
+		schemaname = get_namespace_name(procform->pronamespace);
+		appendStringInfo(buf, "%s.", quote_identifier(schemaname));
+	}
+
 	/* Deparse the function name ... */
-	schemaname = get_namespace_name(procform->pronamespace);
-	appendStringInfo(buf, "%s.%s(",
-					 quote_identifier(schemaname),
-					 quote_identifier(proname));
+	proname = NameStr(procform->proname);
+	appendStringInfo(buf, "%s(", quote_identifier(proname));
 	/* ... and all the arguments */
 	first = true;
 	foreach(arg, node->args)
@@ -887,16 +910,13 @@ deparseFuncExpr(StringInfo buf, FuncExpr *node, PlannerInfo *root)
 
 /*
  * Deparse given operator expression into buf.	To avoid problems around
- * priority of operations, we always parenthesize the arguments.  Also we use
- * OPERATOR(schema.operator) notation to determine remote operator exactly.
+ * priority of operations, we always parenthesize the arguments.
  */
 static void
 deparseOpExpr(StringInfo buf, OpExpr *node, PlannerInfo *root)
 {
 	HeapTuple	tuple;
 	Form_pg_operator form;
-	const char *opnspname;
-	char	   *opname;
 	char		oprkind;
 	ListCell   *arg;
 
@@ -905,10 +925,6 @@ deparseOpExpr(StringInfo buf, OpExpr *node, PlannerInfo *root)
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for operator %u", node->opno);
 	form = (Form_pg_operator) GETSTRUCT(tuple);
-
-	opnspname = quote_identifier(get_namespace_name(form->oprnamespace));
-	/* opname is not a SQL identifier, so we don't need to quote it. */
-	opname = NameStr(form->oprname);
 	oprkind = form->oprkind;
 
 	/* Sanity check. */
@@ -927,8 +943,8 @@ deparseOpExpr(StringInfo buf, OpExpr *node, PlannerInfo *root)
 		appendStringInfoChar(buf, ' ');
 	}
 
-	/* Deparse fully qualified operator name. */
-	appendStringInfo(buf, "OPERATOR(%s.%s)", opnspname, opname);
+	/* Deparse operator name. */
+	deparseOperatorName(buf, form);
 
 	/* Deparse right operand. */
 	if (oprkind == 'l' || oprkind == 'b')
@@ -941,6 +957,34 @@ deparseOpExpr(StringInfo buf, OpExpr *node, PlannerInfo *root)
 	appendStringInfoChar(buf, ')');
 
 	ReleaseSysCache(tuple);
+}
+
+/*
+ * Print the name of an operator.
+ */
+static void
+deparseOperatorName(StringInfo buf, Form_pg_operator opform)
+{
+	char	   *opname;
+
+	/* opname is not a SQL identifier, so we should not quote it. */
+	opname = NameStr(opform->oprname);
+
+	/* Print schema name only if it's not pg_catalog */
+	if (opform->oprnamespace != PG_CATALOG_NAMESPACE)
+	{
+		const char *opnspname;
+
+		opnspname = get_namespace_name(opform->oprnamespace);
+		/* Print fully qualified operator name. */
+		appendStringInfo(buf, "OPERATOR(%s.%s)",
+						 quote_identifier(opnspname), opname);
+	}
+	else
+	{
+		/* Just print operator name. */
+		appendStringInfo(buf, "%s", opname);
+	}
 }
 
 /*
@@ -960,9 +1004,7 @@ deparseDistinctExpr(StringInfo buf, DistinctExpr *node, PlannerInfo *root)
 
 /*
  * Deparse given ScalarArrayOpExpr expression into buf.  To avoid problems
- * around priority of operations, we always parenthesize the arguments.  Also
- * we use OPERATOR(schema.operator) notation to determine remote operator
- * exactly.
+ * around priority of operations, we always parenthesize the arguments.
  */
 static void
 deparseScalarArrayOpExpr(StringInfo buf,
@@ -971,8 +1013,6 @@ deparseScalarArrayOpExpr(StringInfo buf,
 {
 	HeapTuple	tuple;
 	Form_pg_operator form;
-	const char *opnspname;
-	char	   *opname;
 	Expr	   *arg1;
 	Expr	   *arg2;
 
@@ -981,10 +1021,6 @@ deparseScalarArrayOpExpr(StringInfo buf,
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for operator %u", node->opno);
 	form = (Form_pg_operator) GETSTRUCT(tuple);
-
-	opnspname = quote_identifier(get_namespace_name(form->oprnamespace));
-	/* opname is not a SQL identifier, so we don't need to quote it. */
-	opname = NameStr(form->oprname);
 
 	/* Sanity check. */
 	Assert(list_length(node->args) == 2);
@@ -995,10 +1031,11 @@ deparseScalarArrayOpExpr(StringInfo buf,
 	/* Deparse left operand. */
 	arg1 = linitial(node->args);
 	deparseExpr(buf, arg1, root);
+	appendStringInfoChar(buf, ' ');
 
-	/* Deparse fully qualified operator name plus decoration. */
-	appendStringInfo(buf, " OPERATOR(%s.%s) %s (",
-					 opnspname, opname, node->useOr ? "ANY" : "ALL");
+	/* Deparse operator name plus decoration. */
+	deparseOperatorName(buf, form);
+	appendStringInfo(buf, " %s (", node->useOr ? "ANY" : "ALL");
 
 	/* Deparse right operand. */
 	arg2 = lsecond(node->args);

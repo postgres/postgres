@@ -63,6 +63,7 @@ static bool xact_got_connection = false;
 /* prototypes of private functions */
 static PGconn *connect_pg_server(ForeignServer *server, UserMapping *user);
 static void check_conn_params(const char **keywords, const char **values);
+static void configure_remote_session(PGconn *conn);
 static void begin_remote_xact(ConnCacheEntry *entry);
 static void pgfdw_xact_callback(XactEvent event, void *arg);
 static void pgfdw_subxact_callback(SubXactEvent event,
@@ -237,6 +238,9 @@ connect_pg_server(ForeignServer *server, UserMapping *user)
 				   errdetail("Non-superuser cannot connect if the server does not request a password."),
 				   errhint("Target server's authentication method must be changed.")));
 
+		/* Prepare new session for use */
+		configure_remote_session(conn);
+
 		pfree(keywords);
 		pfree(values);
 	}
@@ -279,6 +283,31 @@ check_conn_params(const char **keywords, const char **values)
 			(errcode(ERRCODE_S_R_E_PROHIBITED_SQL_STATEMENT_ATTEMPTED),
 			 errmsg("password is required"),
 			 errdetail("Non-superusers must provide a password in the user mapping.")));
+}
+
+/*
+ * Issue SET commands to make sure remote session is configured properly.
+ *
+ * We do this just once at connection, assuming nothing will change the
+ * values later.  Since we'll never send volatile function calls to the
+ * remote, there shouldn't be any way to break this assumption from our end.
+ * It's possible to think of ways to break it at the remote end, eg making
+ * a foreign table point to a view that includes a set_config call ---
+ * but once you admit the possibility of a malicious view definition,
+ * there are any number of ways to break things.
+ */
+static void
+configure_remote_session(PGconn *conn)
+{
+	const char *sql;
+	PGresult   *res;
+
+	/* Force the search path to contain only pg_catalog (see deparse.c) */
+	sql = "SET search_path = pg_catalog";
+	res = PQexec(conn, sql);
+	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+		pgfdw_report_error(ERROR, res, true, sql);
+	PQclear(res);
 }
 
 /*
