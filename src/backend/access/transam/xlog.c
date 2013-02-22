@@ -5265,6 +5265,15 @@ StartupXLOG(void)
 		ControlFile->prevCheckPoint = ControlFile->checkPoint;
 		ControlFile->checkPoint = checkPointLoc;
 		ControlFile->checkPointCopy = checkPoint;
+		if (InArchiveRecovery)
+		{
+			/* initialize minRecoveryPoint if not set yet */
+			if (ControlFile->minRecoveryPoint < checkPoint.redo)
+			{
+				ControlFile->minRecoveryPoint = checkPoint.redo;
+				ControlFile->minRecoveryPointTLI = checkPoint.ThisTimeLineID;
+			}
+		}
 
 		/*
 		 * Set backupStartPoint if we're starting recovery from a base backup.
