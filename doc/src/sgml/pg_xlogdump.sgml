@@ -3,7 +3,7 @@ doc/src/sgml/ref/pg_xlogdump.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="pg_xlogdump">
+<refentry id="pgxlogdump">
  <refmeta>
   <refentrytitle><application>pg_xlogdump</application></refentrytitle>
   <manvolnum>1</manvolnum>
@@ -15,7 +15,7 @@ PostgreSQL documentation
   <refpurpose>Display a human-readable rendering of the write-ahead log of a <productname>PostgreSQL</productname> database cluster</refpurpose>
  </refnamediv>
 
- <indexterm zone="pg_xlogdump">
+ <indexterm zone="pgxlogdump">
   <primary>pg_xlogdump</primary>
  </indexterm>
 
@@ -32,7 +32,7 @@ PostgreSQL documentation
  <refsect1 id="R1-APP-PGXLOGDUMP-1">
   <title>Description</title>
   <para>
-   <command>pg_xlogdump</command> display the write-ahead log (WAL) and is mainly
+   <command>pg_xlogdump</command> displays the write-ahead log (WAL) and is mainly
    useful for debugging or educational purposes.
   </para>
 
@@ -198,8 +198,8 @@ PostgreSQL documentation
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="wal"></member>
+   <member><xref linkend="wal-internals"></member>
   </simplelist>
- </rfsect1>
+ </refsect1>
 
 </refentry>
