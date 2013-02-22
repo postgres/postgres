@@ -457,6 +457,29 @@ appendWhereClause(StringInfo buf,
 }
 
 /*
+ * Construct SELECT statement to acquire size in blocks of given relation.
+ *
+ * Note: we use local definition of block size, not remote definition.
+ * This is perhaps debatable.
+ *
+ * Note: pg_relation_size() exists in 8.1 and later.
+ */
+void
+deparseAnalyzeSizeSql(StringInfo buf, Relation rel)
+{
+	Oid			relid = RelationGetRelid(rel);
+	StringInfoData relname;
+
+	/* We'll need the remote relation name as a literal. */
+	initStringInfo(&relname);
+	deparseRelation(&relname, relid);
+
+	appendStringInfo(buf, "SELECT pg_catalog.pg_relation_size(");
+	deparseStringLiteral(buf, relname.data);
+	appendStringInfo(buf, "::pg_catalog.regclass) / %d", BLCKSZ);
+}
+
+/*
  * Construct SELECT statement to acquire sample rows of given relation.
  *
  * Note: command is appended to whatever might be in buf already.

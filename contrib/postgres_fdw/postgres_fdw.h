@@ -47,6 +47,7 @@ extern void appendWhereClause(StringInfo buf,
 				  bool has_where,
 				  List *exprs,
 				  PlannerInfo *root);
+extern void deparseAnalyzeSizeSql(StringInfo buf, Relation rel);
 extern void deparseAnalyzeSql(StringInfo buf, Relation rel);
 
 #endif   /* POSTGRES_FDW_H */

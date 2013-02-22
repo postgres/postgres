@@ -259,6 +259,9 @@ postgresGetForeignRelSize(PlannerInfo *root,
 	int			width;
 	Cost		startup_cost;
 	Cost		total_cost;
+	Cost		run_cost;
+	QualCost	qpqual_cost;
+	Cost		cpu_per_tuple;
 	List	   *remote_conds;
 	List	   *param_conds;
 	List	   *local_conds;
@@ -349,6 +352,16 @@ postgresGetForeignRelSize(PlannerInfo *root,
 		sel *= clauselist_selectivity(root, local_conds,
 									  baserel->relid, JOIN_INNER, NULL);
 
+		/*
+		 * Add in the eval cost of those conditions, too.
+		 */
+		cost_qual_eval(&qpqual_cost, param_conds, root);
+		startup_cost += qpqual_cost.startup;
+		total_cost += qpqual_cost.per_tuple * rows;
+		cost_qual_eval(&qpqual_cost, local_conds, root);
+		startup_cost += qpqual_cost.startup;
+		total_cost += qpqual_cost.per_tuple * rows;
+
 		/* Report estimated numbers to planner. */
 		baserel->rows = clamp_row_est(rows * sel);
 		baserel->width = width;
@@ -367,18 +380,25 @@ postgresGetForeignRelSize(PlannerInfo *root,
 		 * estimate of 10 pages, and divide by the column-datatype-based width
 		 * estimate to get the corresponding number of tuples.
 		 */
-		if (baserel->tuples <= 0)
+		if (baserel->pages == 0 && baserel->tuples == 0)
+		{
+			baserel->pages = 10;
 			baserel->tuples =
 				(10 * BLCKSZ) / (baserel->width + sizeof(HeapTupleHeaderData));
+		}
 
 		set_baserel_size_estimates(root, baserel);
 
-		/*
-		 * XXX need to do something here to calculate sane startup and total
-		 * cost estimates ... for the moment, we do this:
-		 */
+		/* Cost as though this were a seqscan, which is pessimistic. */
 		startup_cost = 0;
-		total_cost = baserel->rows * cpu_tuple_cost;
+		run_cost = 0;
+		run_cost += seq_page_cost * baserel->pages;
+
+		startup_cost += baserel->baserestrictcost.startup;
+		cpu_per_tuple = cpu_tuple_cost + baserel->baserestrictcost.per_tuple;
+		run_cost += cpu_per_tuple * baserel->tuples;
+
+		total_cost = startup_cost + run_cost;
 	}
 
 	/*
@@ -1068,8 +1088,61 @@ postgresAnalyzeForeignTable(Relation relation,
 							AcquireSampleRowsFunc *func,
 							BlockNumber *totalpages)
 {
-	*totalpages = 0;			/* XXX this is probably a bad idea */
+	ForeignTable *table;
+	ForeignServer *server;
+	UserMapping *user;
+	PGconn	   *conn;
+	StringInfoData sql;
+	PGresult   *volatile res = NULL;
+
+	/* Return the row-analysis function pointer */
 	*func = postgresAcquireSampleRowsFunc;
+
+	/*
+	 * Now we have to get the number of pages.  It's annoying that the ANALYZE
+	 * API requires us to return that now, because it forces some duplication
+	 * of effort between this routine and postgresAcquireSampleRowsFunc.  But
+	 * it's probably not worth redefining that API at this point.
+	 */
+
+	/*
+	 * Get the connection to use.  We do the remote access as the table's
+	 * owner, even if the ANALYZE was started by some other user.
+	 */
+	table = GetForeignTable(RelationGetRelid(relation));
+	server = GetForeignServer(table->serverid);
+	user = GetUserMapping(relation->rd_rel->relowner, server->serverid);
+	conn = GetConnection(server, user);
+
+	/*
+	 * Construct command to get page count for relation.
+	 */
+	initStringInfo(&sql);
+	deparseAnalyzeSizeSql(&sql, relation);
+
+	/* In what follows, do not risk leaking any PGresults. */
+	PG_TRY();
+	{
+		res = PQexec(conn, sql.data);
+		if (PQresultStatus(res) != PGRES_TUPLES_OK)
+			pgfdw_report_error(ERROR, res, false, sql.data);
+
+		if (PQntuples(res) != 1 || PQnfields(res) != 1)
+			elog(ERROR, "unexpected result from deparseAnalyzeSizeSql query");
+		*totalpages = strtoul(PQgetvalue(res, 0, 0), NULL, 10);
+
+		PQclear(res);
+		res = NULL;
+	}
+	PG_CATCH();
+	{
+		if (res)
+			PQclear(res);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	ReleaseConnection(conn);
 
 	return true;
 }
