@@ -44,7 +44,7 @@ typedef struct XLogDumpConfig
 	/* filter options */
 	int			filter_by_rmgr;
 	TransactionId filter_by_xid;
-	TransactionId filter_by_xid_enabled;
+	bool		filter_by_xid_enabled;
 } XLogDumpConfig;
 
 static void
