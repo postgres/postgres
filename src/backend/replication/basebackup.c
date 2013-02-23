@@ -308,7 +308,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 			char startfname[MAXFNAMELEN];
 			XLogFileName(startfname, ThisTimeLineID, startlogid, startlogseg);
 			ereport(ERROR,
-					(errmsg("could not find WAL file %s", startfname)));
+					(errmsg("could not find WAL file \"%s\"", startfname)));
 		}
 		for (i = 0; i < nWalFiles; i++)
 		{
@@ -325,7 +325,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 				char nextfname[MAXFNAMELEN];
 				XLogFileName(nextfname, ThisTimeLineID, nextlogid, nextlogseg);
 				ereport(ERROR,
-						(errmsg("could not find WAL file %s", nextfname)));
+						(errmsg("could not find WAL file \"%s\"", nextfname)));
 			}
 		}
 		if (logid != endlogid || logseg != endlogseg)
@@ -333,7 +333,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 			char endfname[MAXFNAMELEN];
 			XLogFileName(endfname, ThisTimeLineID, endlogid, endlogseg);
 			ereport(ERROR,
-					(errmsg("could not find WAL file %s", endfname)));
+					(errmsg("could not find WAL file \"%s\"", endfname)));
 		}
 
 		/* Ok, we have everything we need. Send the WAL files. */
