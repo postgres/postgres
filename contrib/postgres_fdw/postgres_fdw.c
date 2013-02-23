@@ -248,7 +248,7 @@ postgresGetForeignRelSize(PlannerInfo *root,
 						  RelOptInfo *baserel,
 						  Oid foreigntableid)
 {
-	bool		use_remote_explain = false;
+	bool		use_remote_estimate = false;
 	ListCell   *lc;
 	PgFdwRelationInfo *fpinfo;
 	StringInfo	sql;
@@ -285,9 +285,9 @@ postgresGetForeignRelSize(PlannerInfo *root,
 	{
 		DefElem    *def = (DefElem *) lfirst(lc);
 
-		if (strcmp(def->defname, "use_remote_explain") == 0)
+		if (strcmp(def->defname, "use_remote_estimate") == 0)
 		{
-			use_remote_explain = defGetBoolean(def);
+			use_remote_estimate = defGetBoolean(def);
 			break;
 		}
 	}
@@ -295,9 +295,9 @@ postgresGetForeignRelSize(PlannerInfo *root,
 	{
 		DefElem    *def = (DefElem *) lfirst(lc);
 
-		if (strcmp(def->defname, "use_remote_explain") == 0)
+		if (strcmp(def->defname, "use_remote_estimate") == 0)
 		{
-			use_remote_explain = defGetBoolean(def);
+			use_remote_estimate = defGetBoolean(def);
 			break;
 		}
 	}
@@ -315,12 +315,12 @@ postgresGetForeignRelSize(PlannerInfo *root,
 		appendWhereClause(sql, true, remote_conds, root);
 
 	/*
-	 * If the table or the server is configured to use remote EXPLAIN, connect
-	 * to the foreign server and execute EXPLAIN with the quals that don't
-	 * contain any Param nodes.  Otherwise, estimate rows using whatever
+	 * If the table or the server is configured to use remote estimates,
+	 * connect to the foreign server and execute EXPLAIN with the quals that
+	 * don't contain any Param nodes.  Otherwise, estimate rows using whatever
 	 * statistics we have locally, in a way similar to ordinary tables.
 	 */
-	if (use_remote_explain)
+	if (use_remote_estimate)
 	{
 		RangeTblEntry *rte;
 		Oid			userid;

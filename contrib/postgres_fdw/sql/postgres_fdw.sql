@@ -87,7 +87,7 @@ ALTER FOREIGN TABLE ft2 DROP COLUMN c0;
 -- requiressl, krbsrvname and gsslib are omitted because they depend on
 -- configure options
 ALTER SERVER testserver1 OPTIONS (
-	use_remote_explain 'false',
+	use_remote_estimate 'false',
 	fdw_startup_cost '123.456',
 	fdw_tuple_cost '0.123',
 	service 'value',
@@ -124,9 +124,9 @@ ALTER FOREIGN TABLE ft2 ALTER COLUMN c1 OPTIONS (column_name 'C 1');
 
 -- Now we should be able to run ANALYZE.
 -- To exercise multiple code paths, we use local stats on ft1
--- and remote_explain mode on ft2.
+-- and remote-estimate mode on ft2.
 ANALYZE ft1;
-ALTER FOREIGN TABLE ft2 OPTIONS (use_remote_explain 'true');
+ALTER FOREIGN TABLE ft2 OPTIONS (use_remote_estimate 'true');
 
 -- ===================================================================
 -- simple queries
