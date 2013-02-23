@@ -484,7 +484,8 @@ CREATE TRIGGER view_insert
   <para>
    The <command>CREATE TRIGGER</command> statement in
    <productname>PostgreSQL</productname> implements a subset of the
-   <acronym>SQL</> standard. The following functionality is currently missing:
+   <acronym>SQL</> standard. The following functionalities are currently
+   missing:
 
    <itemizedlist>
     <listitem>
@@ -497,6 +498,16 @@ CREATE TRIGGER view_insert
       allows trigger procedures to be written in any number of
       user-defined languages, access to the data is handled in a
       language-specific way.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <productname>PostgreSQL</productname> does not allow the old and new
+      tables to be referenced in statement-level triggers, i.e., the tables
+      that contain all the old and/or new rows, which are referred to by the
+      <literal>OLD TABLE</literal> and <literal>NEW TABLE</literal> clauses in
+      the <acronym>SQL</> standard.
      </para>
     </listitem>
 
