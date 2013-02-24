@@ -10,7 +10,7 @@ OBJS = pg_xlogdump.o compat.o xlogreader.o rmgrdesc.o \
 RMGRDESCSOURCES = $(notdir $(wildcard $(top_srcdir)/src/backend/access/rmgrdesc/*desc.c))
 RMGRDESCOBJS = $(patsubst %.c,%.o,$(RMGRDESCSOURCES))
 
-EXTRA_CLEAN = $(RMGRDESCSOURCES) xlogreader.c rmgrdesc.c
+EXTRA_CLEAN = $(RMGRDESCSOURCES) xlogreader.c
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
@@ -25,7 +25,7 @@ endif
 
 override CPPFLAGS := -DFRONTEND $(CPPFLAGS)
 
-rmgrdesc.c xlogreader.c: % : $(top_srcdir)/src/backend/access/transam/%
+xlogreader.c: % : $(top_srcdir)/src/backend/access/transam/%
 	rm -f $@ && $(LN_S) $< .
 
 $(RMGRDESCSOURCES): % : $(top_srcdir)/src/backend/access/rmgrdesc/%
