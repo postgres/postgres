@@ -1362,7 +1362,7 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 				vacrelstats->lock_waiter_detected = true;
 				ereport(LOG,
 						(errmsg("automatic vacuum of table \"%s.%s.%s\": "
-								"cannot (re)acquire exclusive "
+								"could not (re)acquire exclusive "
 								"lock for truncate scan",
 								get_database_name(MyDatabaseId),
 							get_namespace_name(RelationGetNamespace(onerel)),
