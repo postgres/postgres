@@ -2038,15 +2038,40 @@ dumpTimestamp(char *msg)
 static void
 doConnStrQuoting(PQExpBuffer buf, const char *str)
 {
-	while (*str)
-	{
-		/* ' and \ must be escaped by to \' and \\ */
-		if (*str == '\'' || *str == '\\')
-			appendPQExpBufferChar(buf, '\\');
+	const char *s;
+	bool needquotes;
 
-		appendPQExpBufferChar(buf, *str);
-		str++;
+	/*
+	 * If the string consists entirely of plain ASCII characters, no need to
+	 * quote it. This is quite conservative, but better safe than sorry.
+	 */
+	needquotes = false;
+	for (s = str; *s; s++)
+	{
+		if (!((*s >= 'a' && *s <= 'z') || (*s >= 'A' && *s <= 'Z') ||
+			  (*s >= '0' && *s <= '9') || *s == '_' || *s == '.'))
+		{
+			needquotes = true;
+			break;
+		}
 	}
+
+	if (needquotes)
+	{
+		appendPQExpBufferChar(buf, '\'');
+		while (*str)
+		{
+			/* ' and \ must be escaped by to \' and \\ */
+			if (*str == '\'' || *str == '\\')
+				appendPQExpBufferChar(buf, '\\');
+
+			appendPQExpBufferChar(buf, *str);
+			str++;
+		}
+		appendPQExpBufferChar(buf, '\'');
+	}
+	else
+		appendPQExpBufferStr(buf, str);
 }
 
 /*
