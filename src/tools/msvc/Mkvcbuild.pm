@@ -35,18 +35,23 @@ my @contrib_uselibpgport = (
 	'oid2name',      'pgbench',
 	'pg_standby',    'pg_archivecleanup',
 	'pg_test_fsync', 'pg_test_timing',
-	'pg_upgrade',    'vacuumlo');
+	'pg_upgrade',    'pg_xlogdump',
+	'vacuumlo');
 my @contrib_uselibpgcommon = (
 	'oid2name',      'pgbench',
 	'pg_standby',    'pg_archivecleanup',
 	'pg_test_fsync', 'pg_test_timing',
-	'pg_upgrade',    'vacuumlo');
+	'pg_upgrade',    'pg_xlogdump',
+	'vacuumlo');
 my $contrib_extralibs = { 'pgbench' => ['wsock32.lib'] };
 my $contrib_extraincludes =
   { 'tsearch2' => ['contrib/tsearch2'], 'dblink' => ['src/backend'] };
 my $contrib_extrasource = {
 	'cube' => [ 'cubescan.l', 'cubeparse.y' ],
-	'seg'  => [ 'segscan.l',  'segparse.y' ] };
+	'seg'  => [ 'segscan.l',  'segparse.y' ], 
+	'pg_xlogdump' => [ '../../src/backend/access/transam/xlogreader.c',
+			   map { "../../$_" } glob('src/backend/access/rmgrdesc/*desc.c') ],
+	};
 my @contrib_excludes = ('pgcrypto', 'intagg', 'sepgsql');
 
 sub mkvcbuild
@@ -580,6 +585,10 @@ sub mkvcbuild
 	$pgregress->AddIncludeDir('src\port');
 	$pgregress->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
 	$pgregress->AddReference($libpgport, $libpgcommon);
+
+	my $pg_xlogdump = (grep {$_->{name} eq 'pg_xlogdump'} @{$solution->{projects}->{contrib}} )[0];
+	delete $pg_xlogdump->{files}->{'contrib\\pg_xlogdump\\xlogreader.c'};
+	$pg_xlogdump->AddDefine('FRONTEND');
 
 	$solution->Save();
 	return $solution->{vcver};
