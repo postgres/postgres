@@ -307,6 +307,7 @@ main(int argc, char **argv)
 		{"blobs", no_argument, NULL, 'b'},
 		{"clean", no_argument, NULL, 'c'},
 		{"create", no_argument, NULL, 'C'},
+		{"dbname", required_argument, NULL, 'd'},
 		{"file", required_argument, NULL, 'f'},
 		{"format", required_argument, NULL, 'F'},
 		{"host", required_argument, NULL, 'h'},
@@ -387,7 +388,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "abcCE:f:F:h:in:N:oOp:RsS:t:T:U:vwWxZ:",
+	while ((c = getopt_long(argc, argv, "abcCd:E:f:F:h:iK:n:N:oOp:RsS:t:T:U:vwWxZ:",
 							long_options, &optindex)) != -1)
 	{
 		switch (c)
@@ -406,6 +407,10 @@ main(int argc, char **argv)
 
 			case 'C':			/* Create DB */
 				outputCreateDB = 1;
+				break;
+
+			case 'd':			/* database name */
+				dbname = pg_strdup(optarg);
 				break;
 
 			case 'E':			/* Dump encoding */
@@ -520,8 +525,11 @@ main(int argc, char **argv)
 		}
 	}
 
-	/* Get database name from command line */
-	if (optind < argc)
+	/*
+	 * Non-option argument specifies database name as long as it wasn't
+	 * already specified with -d / --dbname
+	 */
+	if (optind < argc && dbname == NULL)
 		dbname = argv[optind++];
 
 	/* Complain if any arguments remain */
@@ -872,6 +880,7 @@ help(const char *progname)
 			 "                               ALTER OWNER commands to set ownership\n"));
 
 	printf(_("\nConnection options:\n"));
+	printf(_("  -d, --dbname=DBNAME      database to dump\n"));
 	printf(_("  -h, --host=HOSTNAME      database server host or socket directory\n"));
 	printf(_("  -p, --port=PORT          database server port number\n"));
 	printf(_("  -U, --username=NAME      connect as specified database user\n"));
