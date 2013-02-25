@@ -56,13 +56,15 @@ static int	runPgDump(const char *dbname);
 static void buildShSecLabels(PGconn *conn, const char *catalog_name,
 				 uint32 objectId, PQExpBuffer buffer,
 				 const char *target, const char *objname);
-static PGconn *connectDatabase(const char *dbname, const char *pghost, const char *pgport,
+static PGconn *connectDatabase(const char *dbname, const char *connstr, const char *pghost, const char *pgport,
 	  const char *pguser, enum trivalue prompt_password, bool fail_on_error);
+static char *constructConnStr(const char **keywords, const char **values);
 static PGresult *executeQuery(PGconn *conn, const char *query);
 static void executeCommand(PGconn *conn, const char *query);
 
 static char pg_dump_bin[MAXPGPATH];
 static PQExpBuffer pgdumpopts;
+static char *connstr = "";
 static bool skip_acls = false;
 static bool verbose = false;
 
@@ -91,6 +93,7 @@ main(int argc, char *argv[])
 		{"globals-only", no_argument, NULL, 'g'},
 		{"host", required_argument, NULL, 'h'},
 		{"ignore-version", no_argument, NULL, 'i'},
+		{"dbname", required_argument, NULL, 'd'},
 		{"database", required_argument, NULL, 'l'},
 		{"oids", no_argument, NULL, 'o'},
 		{"no-owner", no_argument, NULL, 'O'},
@@ -188,7 +191,7 @@ main(int argc, char *argv[])
 
 	pgdumpopts = createPQExpBuffer();
 
-	while ((c = getopt_long(argc, argv, "acf:gh:il:oOp:rsS:tU:vwWx", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "acd:f:gh:i:l:oOp:rsS:tU:vwWx", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
@@ -199,6 +202,10 @@ main(int argc, char *argv[])
 
 			case 'c':
 				output_clean = true;
+				break;
+
+			case 'd':
+				connstr = pg_strdup(optarg);
 				break;
 
 			case 'f':
@@ -213,8 +220,6 @@ main(int argc, char *argv[])
 
 			case 'h':
 				pghost = pg_strdup(optarg);
-				appendPQExpBuffer(pgdumpopts, " -h ");
-				doShellQuoting(pgdumpopts, pghost);
 				break;
 
 			case 'i':
@@ -235,8 +240,6 @@ main(int argc, char *argv[])
 
 			case 'p':
 				pgport = pg_strdup(optarg);
-				appendPQExpBuffer(pgdumpopts, " -p ");
-				doShellQuoting(pgdumpopts, pgport);
 				break;
 
 			case 'r':
@@ -258,8 +261,6 @@ main(int argc, char *argv[])
 
 			case 'U':
 				pguser = pg_strdup(optarg);
-				appendPQExpBuffer(pgdumpopts, " -U ");
-				doShellQuoting(pgdumpopts, pguser);
 				break;
 
 			case 'v':
@@ -370,7 +371,7 @@ main(int argc, char *argv[])
 	 */
 	if (pgdb)
 	{
-		conn = connectDatabase(pgdb, pghost, pgport, pguser,
+		conn = connectDatabase(pgdb, connstr, pghost, pgport, pguser,
 							   prompt_password, false);
 
 		if (!conn)
@@ -382,10 +383,10 @@ main(int argc, char *argv[])
 	}
 	else
 	{
-		conn = connectDatabase("postgres", pghost, pgport, pguser,
+		conn = connectDatabase("postgres", connstr, pghost, pgport, pguser,
 							   prompt_password, false);
 		if (!conn)
-			conn = connectDatabase("template1", pghost, pgport, pguser,
+			conn = connectDatabase("template1", connstr, pghost, pgport, pguser,
 								   prompt_password, true);
 
 		if (!conn)
@@ -568,6 +569,7 @@ help(void)
 			 "                               ALTER OWNER commands to set ownership\n"));
 
 	printf(_("\nConnection options:\n"));
+	printf(_("  -d, --dbname=CONNSTR     connect using connection string\n"));
 	printf(_("  -h, --host=HOSTNAME      database server host or socket directory\n"));
 	printf(_("  -l, --database=DBNAME    alternative default database\n"));
 	printf(_("  -p, --port=PORT          database server port number\n"));
@@ -1630,7 +1632,7 @@ dumpDatabases(PGconn *conn)
 static int
 runPgDump(const char *dbname)
 {
-	PQExpBuffer connstr = createPQExpBuffer();
+	PQExpBuffer connstrbuf = createPQExpBuffer();
 	PQExpBuffer cmd = createPQExpBuffer();
 	int			ret;
 
@@ -1647,16 +1649,13 @@ runPgDump(const char *dbname)
 		appendPQExpBuffer(cmd, " -Fp ");
 
 	/*
-	 * Construct a connection string from the database name, like
-	 * dbname='<database name>'. pg_dump would usually also accept the
-	 * database name as is, but if it contains any = characters, it would
-	 * incorrectly treat it as a connection string.
+	 * Append the database name to the already-constructed stem of connection
+	 * string.
 	 */
-	appendPQExpBuffer(connstr, "dbname='");
-	doConnStrQuoting(connstr, dbname);
-	appendPQExpBuffer(connstr, "'");
+	appendPQExpBuffer(connstrbuf, "%s dbname=", connstr);
+	doConnStrQuoting(connstrbuf, dbname);
 
-	doShellQuoting(cmd, connstr->data);
+	doShellQuoting(cmd, connstrbuf->data);
 
 	appendPQExpBuffer(cmd, "%s", SYSTEMQUOTE);
 
@@ -1669,7 +1668,7 @@ runPgDump(const char *dbname)
 	ret = system(cmd->data);
 
 	destroyPQExpBuffer(cmd);
-	destroyPQExpBuffer(connstr);
+	destroyPQExpBuffer(connstrbuf);
 
 	return ret;
 }
@@ -1703,16 +1702,23 @@ buildShSecLabels(PGconn *conn, const char *catalog_name, uint32 objectId,
  *
  * If fail_on_error is false, we return NULL without printing any message
  * on failure, but preserve any prompted password for the next try.
+ *
+ * On success, the global variable 'connstr' is set to a connection string
+ * containing the options used.
  */
 static PGconn *
-connectDatabase(const char *dbname, const char *pghost, const char *pgport,
-	   const char *pguser, enum trivalue prompt_password, bool fail_on_error)
+connectDatabase(const char *dbname, const char *connection_string,
+				const char *pghost, const char *pgport, const char *pguser,
+				enum trivalue prompt_password, bool fail_on_error)
 {
 	PGconn	   *conn;
 	bool		new_pass;
 	const char *remoteversion_str;
 	int			my_version;
 	static char *password = NULL;
+	const char **keywords = NULL;
+	const char **values = NULL;
+	PQconninfoOption *conn_opts = NULL;
 
 	if (prompt_password == TRI_YES && !password)
 		password = simple_prompt("Password: ", 100, false);
@@ -1723,30 +1729,92 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 	 */
 	do
 	{
-#define PARAMS_ARRAY_SIZE	7
-		const char **keywords = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
-		const char **values = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
+		int			argcount = 6;
+		PQconninfoOption *conn_opt;
+		char	   *err_msg = NULL;
+		int			i = 0;
 
-		keywords[0] = "host";
-		values[0] = pghost;
-		keywords[1] = "port";
-		values[1] = pgport;
-		keywords[2] = "user";
-		values[2] = pguser;
-		keywords[3] = "password";
-		values[3] = password;
-		keywords[4] = "dbname";
-		values[4] = dbname;
-		keywords[5] = "fallback_application_name";
-		values[5] = progname;
-		keywords[6] = NULL;
-		values[6] = NULL;
+		if (keywords)
+			free(keywords);
+		if (values)
+			free(values);
+		if (conn_opts)
+			PQconninfoFree(conn_opts);
+
+		/*
+		 * Merge the connection info inputs given in form of connection string
+		 * and other options.
+		 */
+		if (connection_string)
+		{
+			conn_opts = PQconninfoParse(connection_string, &err_msg);
+			if (conn_opts == NULL)
+			{
+				fprintf(stderr, "%s: %s\n", progname, err_msg);
+				exit_nicely(1);
+			}
+
+			for (conn_opt = conn_opts; conn_opt->keyword != NULL; conn_opt++)
+			{
+				if (conn_opt->val != NULL && conn_opt->val[0] != '\0')
+					argcount++;
+			}
+
+			keywords = pg_malloc0((argcount + 1) * sizeof(*keywords));
+			values = pg_malloc0((argcount + 1) * sizeof(*values));
+
+			for (conn_opt = conn_opts; conn_opt->keyword != NULL; conn_opt++)
+			{
+				if (conn_opt->val != NULL && conn_opt->val[0] != '\0')
+				{
+					keywords[i] = conn_opt->keyword;
+					values[i] = conn_opt->val;
+					i++;
+				}
+			}
+		}
+		else
+		{
+			keywords = pg_malloc0((argcount + 1) * sizeof(*keywords));
+			values = pg_malloc0((argcount + 1) * sizeof(*values));
+		}
+
+		if (pghost)
+		{
+			keywords[i] = "host";
+			values[i] = pghost;
+			i++;
+		}
+		if (pgport)
+		{
+			keywords[i] = "port";
+			values[i] = pgport;
+			i++;
+		}
+		if (pguser)
+		{
+			keywords[i] = "user";
+			values[i] = pguser;
+			i++;
+		}
+		if (password)
+		{
+			keywords[i] = "password";
+			values[i] = password;
+			i++;
+		}
+		if (dbname)
+		{
+			keywords[i] = "dbname";
+			values[i] = dbname;
+			i++;
+		}
+		keywords[i] = "fallback_application_name";
+		values[i] = progname;
+		i++;
 
 		new_pass = false;
 		conn = PQconnectdbParams(keywords, values, true);
-
-		free(keywords);
-		free(values);
 
 		if (!conn)
 		{
@@ -1779,10 +1847,26 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 		else
 		{
 			PQfinish(conn);
+
+			free(keywords);
+			free(values);
+			PQconninfoFree(conn_opts);
+
 			return NULL;
 		}
 	}
 
+	/*
+	 * Ok, connected successfully. Remember the options used, in the form of
+	 * a connection string.
+	 */
+	connstr = constructConnStr(keywords, values);
+
+	free(keywords);
+	free(values);
+	PQconninfoFree(conn_opts);
+
+	/* Check version */
 	remoteversion_str = PQparameterStatus(conn, "server_version");
 	if (!remoteversion_str)
 	{
@@ -1829,6 +1913,43 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 	return conn;
 }
 
+/* ----------
+ * Construct a connection string from the given keyword/value pairs. It is
+ * used to pass the connection options to the pg_dump subprocess.
+ *
+ * The following parameters are excluded:
+ *	dbname		- varies in each pg_dump invocation
+ *	password	- it's not secure to pass a password on the command line
+ *	fallback_application_name - we'll let pg_dump set it
+ * ----------
+ */
+static char *
+constructConnStr(const char **keywords, const char **values)
+{
+	PQExpBuffer buf = createPQExpBuffer();
+	char	   *connstr;
+	int			i;
+	bool		firstkeyword = true;
+
+	/* Construct a new connection string in key='value' format. */
+	for (i = 0; keywords[i] != NULL; i++)
+	{
+		if (strcmp(keywords[i], "dbname") == 0 ||
+			strcmp(keywords[i], "password") == 0 ||
+			strcmp(keywords[i], "fallback_application_name") == 0)
+			continue;
+
+		if (!firstkeyword)
+			appendPQExpBufferChar(buf, ' ');
+		firstkeyword = false;
+		appendPQExpBuffer(buf, "%s=", keywords[i]);
+		doConnStrQuoting(buf, values[i]);
+	}
+
+	connstr = pg_strdup(buf->data);
+	destroyPQExpBuffer(buf);
+	return connstr;
+}
 
 /*
  * Run a query, return the results, exit program on failure.

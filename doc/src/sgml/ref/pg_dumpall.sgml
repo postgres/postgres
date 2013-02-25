@@ -406,6 +406,25 @@ PostgreSQL documentation
 
    <variablelist>
      <varlistentry>
+      <term><option>-d <replaceable class="parameter">connstr</replaceable></option></term>
+      <term><option>--dbname=<replaceable class="parameter">connstr</replaceable></option></term>
+      <listitem>
+       <para>
+        Specifies parameters used to connect to the server, as a connection
+        string. See <xref linkend="libpq-connstring"> for more information.
+       </para>
+       <para>
+        The option is called <literal>--dbname</> for consistency with other
+        client applications, but because <application>pg_dumpall</application>
+        needs to connect to many databases, database name in the connection
+        string will be ignored. Use <literal>-l</literal> option to specify
+        the name of the database used to dump global objects and to discover
+        what other databases should be dumped.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-h <replaceable>host</replaceable></option></term>
       <term><option>--host=<replaceable>host</replaceable></option></term>
       <listitem>
