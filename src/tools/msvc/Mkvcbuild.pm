@@ -13,6 +13,7 @@ use Project;
 use Solution;
 use Cwd;
 use File::Copy;
+use File::Basename;
 use Config;
 use VSObjectFactory;
 use List::Util qw(first);
@@ -49,8 +50,6 @@ my $contrib_extraincludes =
 my $contrib_extrasource = {
 	'cube' => [ 'cubescan.l', 'cubeparse.y' ],
 	'seg'  => [ 'segscan.l',  'segparse.y' ], 
-	'pg_xlogdump' => [ '../../src/backend/access/transam/xlogreader.c',
-			   map { "../../$_" } glob('src/backend/access/rmgrdesc/*desc.c') ],
 	};
 my @contrib_excludes = ('pgcrypto', 'intagg', 'sepgsql');
 
@@ -586,9 +585,19 @@ sub mkvcbuild
 	$pgregress->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
 	$pgregress->AddReference($libpgport, $libpgcommon);
 
-	my $pg_xlogdump = (grep {$_->{name} eq 'pg_xlogdump'} @{$solution->{projects}->{contrib}} )[0];
-	delete $pg_xlogdump->{files}->{'contrib\\pg_xlogdump\\xlogreader.c'};
+	# fix up pg_xlogdump once it's been set up
+	# files symlinked on Unix are copied on windows
+	my $pg_xlogdump = (grep {$_->{name} eq 'pg_xlogdump'} 
+					   @{$solution->{projects}->{contrib}} )[0];
 	$pg_xlogdump->AddDefine('FRONTEND');
+	foreach my $xf (glob('src/backend/access/rmgrdesc/*desc.c') )
+	{
+		my $bf = basename $xf;
+		copy($xf,"contrib/pg_xlogdump/$bf");
+		$pg_xlogdump->AddFile("contrib\\pg_xlogdump\\$bf");
+	}
+	copy('src/backend/access/transam/xlogreader.c',
+		 'contrib/pg_xlogdump/xlogreader.c'); 
 
 	$solution->Save();
 	return $solution->{vcver};
