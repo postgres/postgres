@@ -1,0 +1,19 @@
+/pg_xlogdump
+# Source files copied from src/backend/access/
+/clogdesc.c
+/dbasedesc.c
+/gindesc.c
+/gistdesc.c
+/hashdesc.c
+/heapdesc.c
+/mxactdesc.c
+/nbtdesc.c
+/relmapdesc.c
+/seqdesc.c
+/smgrdesc.c
+/spgdesc.c
+/standbydesc.c
+/tblspcdesc.c
+/xactdesc.c
+/xlogdesc.c
+/xlogreader.c
