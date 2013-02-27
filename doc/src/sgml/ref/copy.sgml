@@ -422,7 +422,7 @@ COPY <replaceable class="parameter">count</replaceable>
 
    <para>
     Executing a command with <literal>PROGRAM</literal> might be restricted
-    by operating system's access control mechanisms, such as the SELinux.
+    by the operating system's access control mechanisms, such as SELinux.
    </para>
 
    <para>
