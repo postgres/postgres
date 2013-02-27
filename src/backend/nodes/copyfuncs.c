@@ -2703,6 +2703,7 @@ _copyCopyStmt(const CopyStmt *from)
 	COPY_NODE_FIELD(query);
 	COPY_NODE_FIELD(attlist);
 	COPY_SCALAR_FIELD(is_from);
+	COPY_SCALAR_FIELD(is_program);
 	COPY_STRING_FIELD(filename);
 	COPY_NODE_FIELD(options);
 

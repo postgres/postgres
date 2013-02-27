@@ -588,6 +588,7 @@ fileBeginForeignScan(ForeignScanState *node, int eflags)
 	 */
 	cstate = BeginCopyFrom(node->ss.ss_currentRelation,
 						   filename,
+						   false,
 						   NIL,
 						   options);
 
@@ -660,6 +661,7 @@ fileReScanForeignScan(ForeignScanState *node)
 
 	festate->cstate = BeginCopyFrom(node->ss.ss_currentRelation,
 									festate->filename,
+									false,
 									NIL,
 									festate->options);
 }
@@ -993,7 +995,7 @@ file_acquire_sample_rows(Relation onerel, int elevel,
 	/*
 	 * Create CopyState from FDW options.
 	 */
-	cstate = BeginCopyFrom(onerel, filename, NIL, options);
+	cstate = BeginCopyFrom(onerel, filename, false, NIL, options);
 
 	/*
 	 * Use per-tuple memory context to prevent leak of memory used to read

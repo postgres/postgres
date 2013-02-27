@@ -23,11 +23,11 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 COPY <replaceable class="parameter">table_name</replaceable> [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ]
-    FROM { '<replaceable class="parameter">filename</replaceable>' | STDIN }
+    FROM { '<replaceable class="parameter">filename</replaceable>' | PROGRAM '<replaceable class="parameter">command</replaceable>' | STDIN }
     [ [ WITH ] ( <replaceable class="parameter">option</replaceable> [, ...] ) ]
 
 COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ] | ( <replaceable class="parameter">query</replaceable> ) }
-    TO { '<replaceable class="parameter">filename</replaceable>' | STDOUT }
+    TO { '<replaceable class="parameter">filename</replaceable>' | PROGRAM '<replaceable class="parameter">command</replaceable>' | STDOUT }
     [ [ WITH ] ( <replaceable class="parameter">option</replaceable> [, ...] ) ]
 
 <phrase>where <replaceable class="parameter">option</replaceable> can be one of:</phrase>
@@ -72,6 +72,10 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
    <productname>PostgreSQL</productname> server to directly read from
    or write to a file. The file must be accessible to the server and
    the name must be specified from the viewpoint of the server. When
+   <literal>PROGRAM</literal> is specified, the server executes the
+   given command, and reads from its standard input, or writes to its
+   standard output. The command must be specified from the viewpoint of the
+   server, and be executable by the <literal>postgres</> user. When
    <literal>STDIN</literal> or <literal>STDOUT</literal> is
    specified, data is transmitted via the connection between the
    client and the server.
@@ -121,6 +125,25 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
       an absolute or relative path, but an output filename must be an absolute
       path.  Windows users might need to use an <literal>E''</> string and
       double any backslashes used in the path name.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>PROGRAM</literal></term>
+    <listitem>
+     <para>
+      A command to execute. In <command>COPY FROM</command>, the input is
+      read from standard output of the command, and in <command>COPY TO</>,
+      the output is written to the standard input of the command.
+     </para>
+     <para>
+      Note that the command is invoked by the shell, so if you need to pass
+      any arguments to shell command that come from an untrusted source, you
+      must be careful to strip or escape any special characters that might
+      have a special meaning for the shell. For security reasons, it is best
+      to use a fixed command string, or at least avoid passing any user input
+      in it.
      </para>
     </listitem>
    </varlistentry>
@@ -367,9 +390,13 @@ COPY <replaceable class="parameter">count</replaceable>
     they must reside on or be accessible to the database server machine,
     not the client. They must be accessible to and readable or writable
     by the <productname>PostgreSQL</productname> user (the user ID the
-    server runs as), not the client. <command>COPY</command> naming a
-    file is only allowed to database superusers, since it allows reading
-    or writing any file that the server has privileges to access.
+    server runs as), not the client. Similarly,
+    the command specified with <literal>PROGRAM</literal> is executed directly
+    by the server, not by the client application, must be executable by the
+    <productname>PostgreSQL</productname> user.
+    <command>COPY</command> naming a file or command is only allowed to
+    database superusers, since it allows reading or writing any file that the
+    server has privileges to access.
    </para>
 
    <para>
@@ -391,6 +418,11 @@ COPY <replaceable class="parameter">count</replaceable>
     a file specified by a relative path. The path will be interpreted
     relative to the working directory of the server process (normally
     the cluster's data directory), not the client's working directory.
+   </para>
+
+   <para>
+    Executing a command with <literal>PROGRAM</literal> might be restricted
+    by operating system's access control mechanisms, such as the SELinux.
    </para>
 
    <para>
@@ -838,6 +870,14 @@ COPY country FROM '/usr1/proj/bray/sql/country_data';
    To copy into a file just the countries whose names start with 'A':
 <programlisting>
 COPY (SELECT * FROM country WHERE country_name LIKE 'A%') TO '/usr1/proj/bray/sql/a_list_countries.copy';
+</programlisting>
+  </para>
+
+  <para>
+   To copy into a compressed file, you can pipe the output through an external
+   compression program:
+<programlisting>
+COPY country TO PROGRAM 'gzip > /usr1/proj/bray/sql/country_data.gz';
 </programlisting>
   </para>
 

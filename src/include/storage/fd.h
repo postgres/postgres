@@ -80,6 +80,10 @@ extern char *FilePathName(File file);
 extern FILE *AllocateFile(const char *name, const char *mode);
 extern int	FreeFile(FILE *file);
 
+/* Operations that allow use of pipe streams (popen/pclose) */
+extern FILE *OpenPipeStream(const char *command, const char *mode);
+extern int	ClosePipeStream(FILE *file);
+
 /* Operations to allow use of the <dirent.h> library routines */
 extern DIR *AllocateDir(const char *dirname);
 extern struct dirent *ReadDir(DIR *dir, const char *dirname);

@@ -26,7 +26,7 @@ extern Oid DoCopy(const CopyStmt *stmt, const char *queryString,
 
 extern void ProcessCopyOptions(CopyState cstate, bool is_from, List *options);
 extern CopyState BeginCopyFrom(Relation rel, const char *filename,
-			  List *attnamelist, List *options);
+			  bool is_program, List *attnamelist, List *options);
 extern void EndCopyFrom(CopyState cstate);
 extern bool NextCopyFrom(CopyState cstate, ExprContext *econtext,
 			 Datum *values, bool *nulls, Oid *tupleOid);

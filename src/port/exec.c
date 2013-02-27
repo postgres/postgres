@@ -505,14 +505,12 @@ pipe_read_line(char *cmd, char *line, int maxsize)
 
 /*
  * pclose() plus useful error reporting
- * Is this necessary?  bjm 2004-05-11
- * Originally this was stated to be here because pipe.c had backend linkage.
- * Perhaps that's no longer so now we have got rid of pipe.c amd 2012-03-28
  */
 int
 pclose_check(FILE *stream)
 {
 	int			exitstatus;
+	char	   *reason;
 
 	exitstatus = pclose(stream);
 
@@ -522,35 +520,20 @@ pclose_check(FILE *stream)
 	if (exitstatus == -1)
 	{
 		/* pclose() itself failed, and hopefully set errno */
-		perror("pclose failed");
+		log_error(_("pclose failed: %s"), strerror(errno));
 	}
-	else if (WIFEXITED(exitstatus))
-		log_error(_("child process exited with exit code %d"),
-				  WEXITSTATUS(exitstatus));
-	else if (WIFSIGNALED(exitstatus))
-#if defined(WIN32)
-		log_error(_("child process was terminated by exception 0x%X"),
-				  WTERMSIG(exitstatus));
-#elif defined(HAVE_DECL_SYS_SIGLIST) && HAVE_DECL_SYS_SIGLIST
-	{
-		char		str[256];
-
-		snprintf(str, sizeof(str), "%d: %s", WTERMSIG(exitstatus),
-				 WTERMSIG(exitstatus) < NSIG ?
-				 sys_siglist[WTERMSIG(exitstatus)] : "(unknown)");
-		log_error(_("child process was terminated by signal %s"), str);
-	}
-#else
-		log_error(_("child process was terminated by signal %d"),
-				  WTERMSIG(exitstatus));
-#endif
 	else
-		log_error(_("child process exited with unrecognized status %d"),
-				  exitstatus);
-
-	return -1;
+	{
+		reason = wait_result_to_str(exitstatus);
+		log_error("%s", reason);
+#ifdef FRONTEND
+		free(reason);
+#else
+		pfree(reason);
+#endif
+	}
+	return exitstatus;
 }
-
 
 /*
  *	set_pglocale_pgservice

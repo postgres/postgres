@@ -35,6 +35,9 @@
  *	\copy tablename [(columnlist)] from|to filename [options]
  *	\copy ( select stmt ) to filename [options]
  *
+ * where 'filename' can be one of the following:
+ *  '<file path>' | PROGRAM '<command>' | stdin | stdout | pstdout | pstdout
+ *
  * An undocumented fact is that you can still write BINARY before the
  * tablename; this is a hangover from the pre-7.3 syntax.  The options
  * syntax varies across backend versions, but we avoid all that mess
@@ -43,6 +46,7 @@
  * table name can be double-quoted and can have a schema part.
  * column names can be double-quoted.
  * filename can be single-quoted like SQL literals.
+ * command must be single-quoted like SQL literals.
  *
  * returns a malloc'ed structure with the options, or NULL on parsing error
  */
@@ -52,6 +56,7 @@ struct copy_options
 	char	   *before_tofrom;	/* COPY string before TO/FROM */
 	char	   *after_tofrom;	/* COPY string after TO/FROM filename */
 	char	   *file;			/* NULL = stdin/stdout */
+	bool		program;		/* is 'file' a program to popen? */
 	bool		psql_inout;		/* true = use psql stdin/stdout */
 	bool		from;			/* true = FROM, false = TO */
 };
@@ -191,15 +196,37 @@ parse_slash_copy(const char *args)
 	else
 		goto error;
 
+	/* { 'filename' | PROGRAM 'command' | STDIN | STDOUT | PSTDIN | PSTDOUT } */
 	token = strtokx(NULL, whitespace, NULL, "'",
-					0, false, true, pset.encoding);
+					0, false, false, pset.encoding);
 	if (!token)
 		goto error;
 
-	if (pg_strcasecmp(token, "stdin") == 0 ||
-		pg_strcasecmp(token, "stdout") == 0)
+	if (pg_strcasecmp(token, "program") == 0)
 	{
-		result->psql_inout = false;
+		int toklen;
+
+		token = strtokx(NULL, whitespace, NULL, "'",
+						0, false, false, pset.encoding);
+		if (!token)
+			goto error;
+
+		/*
+		 * The shell command must be quoted. This isn't fool-proof, but catches
+		 * most quoting errors.
+		 */
+		toklen = strlen(token);
+		if (token[0] != '\'' || toklen < 2 || token[toklen - 1] != '\'')
+			goto error;
+
+		strip_quotes(token, '\'', 0, pset.encoding);
+
+		result->program = true;
+		result->file = pg_strdup(token);
+	}
+	else if (pg_strcasecmp(token, "stdin") == 0 ||
+			 pg_strcasecmp(token, "stdout") == 0)
+	{
 		result->file = NULL;
 	}
 	else if (pg_strcasecmp(token, "pstdin") == 0 ||
@@ -210,7 +237,8 @@ parse_slash_copy(const char *args)
 	}
 	else
 	{
-		result->psql_inout = false;
+		/* filename can be optionally quoted */
+		strip_quotes(token, '\'', 0, pset.encoding);
 		result->file = pg_strdup(token);
 		expand_tilde(&result->file);
 	}
@@ -235,9 +263,9 @@ error:
 
 
 /*
- * Execute a \copy command (frontend copy). We have to open a file, then
- * submit a COPY query to the backend and either feed it data from the
- * file or route its response into the file.
+ * Execute a \copy command (frontend copy). We have to open a file (or execute
+ * a command), then submit a COPY query to the backend and either feed it data
+ * from the file or route its response into the file.
  */
 bool
 do_copy(const char *args)
@@ -257,7 +285,7 @@ do_copy(const char *args)
 		return false;
 
 	/* prepare to read or write the target file */
-	if (options->file)
+	if (options->file && !options->program)
 		canonicalize_path(options->file);
 
 	if (options->from)
@@ -265,7 +293,17 @@ do_copy(const char *args)
 		override_file = &pset.cur_cmd_source;
 
 		if (options->file)
-			copystream = fopen(options->file, PG_BINARY_R);
+		{
+			if (options->program)
+			{
+				fflush(stdout);
+				fflush(stderr);
+				errno = 0;
+				copystream = popen(options->file, PG_BINARY_R);
+			}
+			else
+				copystream = fopen(options->file, PG_BINARY_R);
+		}
 		else if (!options->psql_inout)
 			copystream = pset.cur_cmd_source;
 		else
@@ -276,7 +314,20 @@ do_copy(const char *args)
 		override_file = &pset.queryFout;
 
 		if (options->file)
-			copystream = fopen(options->file, PG_BINARY_W);
+		{
+			if (options->program)
+			{
+				fflush(stdout);
+				fflush(stderr);
+				errno = 0;
+#ifndef WIN32
+				pqsignal(SIGPIPE, SIG_IGN);
+#endif
+				copystream = popen(options->file, PG_BINARY_W);
+			}
+			else
+				copystream = fopen(options->file, PG_BINARY_W);
+		}
 		else if (!options->psql_inout)
 			copystream = pset.queryFout;
 		else
@@ -285,21 +336,28 @@ do_copy(const char *args)
 
 	if (!copystream)
 	{
-		psql_error("%s: %s\n",
-				   options->file, strerror(errno));
+		if (options->program)
+			psql_error("could not execute command \"%s\": %s\n",
+					   options->file, strerror(errno));
+		else
+			psql_error("%s: %s\n",
+					   options->file, strerror(errno));
 		free_copy_options(options);
 		return false;
 	}
 
-	/* make sure the specified file is not a directory */
-	fstat(fileno(copystream), &st);
-	if (S_ISDIR(st.st_mode))
+	if (!options->program)
 	{
-		fclose(copystream);
-		psql_error("%s: cannot copy from/to a directory\n",
-				   options->file);
-		free_copy_options(options);
-		return false;
+		/* make sure the specified file is not a directory */
+		fstat(fileno(copystream), &st);
+		if (S_ISDIR(st.st_mode))
+		{
+			fclose(copystream);
+			psql_error("%s: cannot copy from/to a directory\n",
+					   options->file);
+			free_copy_options(options);
+			return false;
+		}
 	}
 
 	/* build the command we will send to the backend */
@@ -322,10 +380,35 @@ do_copy(const char *args)
 
 	if (options->file != NULL)
 	{
-		if (fclose(copystream) != 0)
+		if (options->program)
 		{
-			psql_error("%s: %s\n", options->file, strerror(errno));
-			success = false;
+			int pclose_rc = pclose(copystream);
+			if (pclose_rc != 0)
+			{
+				if (pclose_rc < 0)
+					psql_error("could not close pipe to external command: %s\n",
+							   strerror(errno));
+				else
+				{
+					char *reason = wait_result_to_str(pclose_rc);
+					psql_error("%s: %s\n", options->file,
+							   reason ? reason : "");
+					if (reason)
+						free(reason);
+				}
+				success = false;
+			}
+#ifndef WIN32
+			pqsignal(SIGPIPE, SIG_DFL);
+#endif
+		}
+		else
+		{
+			if (fclose(copystream) != 0)
+			{
+				psql_error("%s: %s\n", options->file, strerror(errno));
+				success = false;
+			}
 		}
 	}
 	free_copy_options(options);

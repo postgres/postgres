@@ -13,9 +13,6 @@
 #include "stringutils.h"
 
 
-static void strip_quotes(char *source, char quote, char escape, int encoding);
-
-
 /*
  * Replacement for strtok() (a.k.a. poor man's flex)
  *
@@ -239,7 +236,7 @@ strtokx(const char *s,
  *
  * Note that the source string is overwritten in-place.
  */
-static void
+void
 strip_quotes(char *source, char quote, char escape, int encoding)
 {
 	char	   *src;
