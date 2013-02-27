@@ -711,6 +711,7 @@ parsebranch(struct vars * v,
 
 		/* NB, recursion in parseqatom() may swallow rest of branch */
 		parseqatom(v, stopper, type, lp, right, t);
+		NOERRN();
 	}
 
 	if (!seencontent)
@@ -1155,6 +1156,7 @@ parseqatom(struct vars * v,
 		EMPTYARC(atom->end, rp);
 		t->right = subre(v, '=', 0, atom->end, rp);
 	}
+	NOERR();
 	assert(SEE('|') || SEE(stopper) || SEE(EOS));
 	t->flags |= COMBINE(t->flags, t->right->flags);
 	top->flags |= COMBINE(top->flags, t->flags);
