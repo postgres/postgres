@@ -109,7 +109,10 @@ extern char *output_files[];
 #define VISIBILITY_MAP_CRASHSAFE_CAT_VER 201107031
 
 /*
- * pg_multixact format changed in this catversion:
+ * pg_multixact format changed in 9.3 commit 0ac5ad5134f2769ccbaefec73844f85,
+ * ("Improve concurrency of foreign key locking") which also updated catalog
+ * version to this value.  pg_upgrade behavior depends on whether old and new
+ * server versions are both newer than this, or only the new one is.
  */
 #define MULTIXACT_FORMATCHANGE_CAT_VER 201301231
 

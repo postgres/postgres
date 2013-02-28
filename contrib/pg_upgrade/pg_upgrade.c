@@ -407,11 +407,10 @@ copy_clog_xlog_xid(void)
 	check_ok();
 
 	/*
-	 * If both new and old are after the pg_multixact change commit, copy those
-	 * files too.  If the old server is before that change and the new server
-	 * is after, then we don't copy anything but we need to reset pg_control so
-	 * that the new server doesn't attempt to read multis older than the cutoff
-	 * value.
+	 * If the old server is before the MULTIXACT_FORMATCHANGE_CAT_VER change
+	 * (see pg_upgrade.h) and the new server is after, then we don't copy
+	 * pg_multixact files, but we need to reset pg_control so that the new
+	 * server doesn't attempt to read multis older than the cutoff value.
 	 */
 	if (old_cluster.controldata.cat_ver >= MULTIXACT_FORMATCHANGE_CAT_VER &&
 		new_cluster.controldata.cat_ver >= MULTIXACT_FORMATCHANGE_CAT_VER)
