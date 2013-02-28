@@ -70,6 +70,8 @@ exit_nicely(void)
 
 	for (i = 0; i < nconns; i++)
 		PQfinish(conns[i]);
+	fflush(stderr);
+	fflush(stdout);
 	exit(1);
 }
 
@@ -283,6 +285,8 @@ main(int argc, char **argv)
 	/* Clean up and exit */
 	for (i = 0; i < nconns; i++)
 		PQfinish(conns[i]);
+	fflush(stderr);
+	fflush(stdout);
 	return 0;
 }
 
