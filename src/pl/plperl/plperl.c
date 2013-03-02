@@ -184,6 +184,7 @@ typedef struct plperl_call_data
 typedef struct plperl_query_desc
 {
 	char		qname[24];
+	MemoryContext plan_cxt;		/* context holding this struct */
 	SPIPlanPtr	plan;
 	int			nargs;
 	Oid		   *argtypes;
@@ -3209,33 +3210,57 @@ plperl_spi_cursor_close(char *cursor)
 SV *
 plperl_spi_prepare(char *query, int argc, SV **argv)
 {
-	plperl_query_desc *qdesc;
-	plperl_query_entry *hash_entry;
-	bool		found;
-	SPIPlanPtr	plan;
-	int			i;
-
+	volatile SPIPlanPtr plan = NULL;
+	volatile MemoryContext plan_cxt = NULL;
+	plperl_query_desc *volatile qdesc = NULL;
+	plperl_query_entry *volatile hash_entry = NULL;
 	MemoryContext oldcontext = CurrentMemoryContext;
 	ResourceOwner oldowner = CurrentResourceOwner;
+	MemoryContext work_cxt;
+	bool		found;
+	int			i;
 
 	check_spi_usage_allowed();
 
 	BeginInternalSubTransaction(NULL);
 	MemoryContextSwitchTo(oldcontext);
 
-	/************************************************************
-	 * Allocate the new querydesc structure
-	 ************************************************************/
-	qdesc = (plperl_query_desc *) malloc(sizeof(plperl_query_desc));
-	MemSet(qdesc, 0, sizeof(plperl_query_desc));
-	snprintf(qdesc->qname, sizeof(qdesc->qname), "%p", qdesc);
-	qdesc->nargs = argc;
-	qdesc->argtypes = (Oid *) malloc(argc * sizeof(Oid));
-	qdesc->arginfuncs = (FmgrInfo *) malloc(argc * sizeof(FmgrInfo));
-	qdesc->argtypioparams = (Oid *) malloc(argc * sizeof(Oid));
-
 	PG_TRY();
 	{
+		CHECK_FOR_INTERRUPTS();
+
+		/************************************************************
+		 * Allocate the new querydesc structure
+		 *
+		 * The qdesc struct, as well as all its subsidiary data, lives in its
+		 * plan_cxt.  But note that the SPIPlan does not.
+		 ************************************************************/
+		plan_cxt = AllocSetContextCreate(TopMemoryContext,
+										 "PL/Perl spi_prepare query",
+										 ALLOCSET_SMALL_MINSIZE,
+										 ALLOCSET_SMALL_INITSIZE,
+										 ALLOCSET_SMALL_MAXSIZE);
+		MemoryContextSwitchTo(plan_cxt);
+		qdesc = (plperl_query_desc *) palloc0(sizeof(plperl_query_desc));
+		snprintf(qdesc->qname, sizeof(qdesc->qname), "%p", qdesc);
+		qdesc->plan_cxt = plan_cxt;
+		qdesc->nargs = argc;
+		qdesc->argtypes = (Oid *) palloc(argc * sizeof(Oid));
+		qdesc->arginfuncs = (FmgrInfo *) palloc(argc * sizeof(FmgrInfo));
+		qdesc->argtypioparams = (Oid *) palloc(argc * sizeof(Oid));
+		MemoryContextSwitchTo(oldcontext);
+
+		/************************************************************
+		 * Do the following work in a short-lived context so that we don't
+		 * leak a lot of memory in the PL/Perl function's SPI Proc context.
+		 ************************************************************/
+		work_cxt = AllocSetContextCreate(CurrentMemoryContext,
+										 "PL/Perl spi_prepare workspace",
+										 ALLOCSET_DEFAULT_MINSIZE,
+										 ALLOCSET_DEFAULT_INITSIZE,
+										 ALLOCSET_DEFAULT_MAXSIZE);
+		MemoryContextSwitchTo(work_cxt);
+
 		/************************************************************
 		 * Resolve argument type names and then look them up by oid
 		 * in the system cache, and remember the required information
@@ -3256,7 +3281,7 @@ plperl_spi_prepare(char *query, int argc, SV **argv)
 			getTypeInputInfo(typId, &typInput, &typIOParam);
 
 			qdesc->argtypes[i] = typId;
-			perm_fmgr_info(typInput, &(qdesc->arginfuncs[i]));
+			fmgr_info_cxt(typInput, &(qdesc->arginfuncs[i]), plan_cxt);
 			qdesc->argtypioparams[i] = typIOParam;
 		}
 
@@ -3280,6 +3305,17 @@ plperl_spi_prepare(char *query, int argc, SV **argv)
 			elog(ERROR, "SPI_keepplan() failed");
 		qdesc->plan = plan;
 
+		/************************************************************
+		 * Insert a hashtable entry for the plan.
+		 ************************************************************/
+		hash_entry = hash_search(plperl_active_interp->query_hash,
+								 qdesc->qname,
+								 HASH_ENTER, &found);
+		hash_entry->query_data = qdesc;
+
+		/* Get rid of workspace */
+		MemoryContextDelete(work_cxt);
+
 		/* Commit the inner transaction, return to outer xact context */
 		ReleaseCurrentSubTransaction();
 		MemoryContextSwitchTo(oldcontext);
@@ -3295,15 +3331,20 @@ plperl_spi_prepare(char *query, int argc, SV **argv)
 	{
 		ErrorData  *edata;
 
-		free(qdesc->argtypes);
-		free(qdesc->arginfuncs);
-		free(qdesc->argtypioparams);
-		free(qdesc);
-
 		/* Save error info */
 		MemoryContextSwitchTo(oldcontext);
 		edata = CopyErrorData();
 		FlushErrorState();
+
+		/* Drop anything we managed to allocate */
+		if (hash_entry)
+			hash_search(plperl_active_interp->query_hash,
+						qdesc->qname,
+						HASH_REMOVE, NULL);
+		if (plan_cxt)
+			MemoryContextDelete(plan_cxt);
+		if (plan)
+			SPI_freeplan(plan);
 
 		/* Abort the inner transaction */
 		RollbackAndReleaseCurrentSubTransaction();
@@ -3326,14 +3367,8 @@ plperl_spi_prepare(char *query, int argc, SV **argv)
 	PG_END_TRY();
 
 	/************************************************************
-	 * Insert a hashtable entry for the plan and return
-	 * the key to the caller.
+	 * Return the query's hash key to the caller.
 	 ************************************************************/
-
-	hash_entry = hash_search(plperl_active_interp->query_hash, qdesc->qname,
-							 HASH_ENTER, &found);
-	hash_entry->query_data = qdesc;
-
 	return cstr2sv(qdesc->qname);
 }
 
@@ -3368,16 +3403,14 @@ plperl_spi_exec_prepared(char *query, HV *attr, int argc, SV **argv)
 		/************************************************************
 		 * Fetch the saved plan descriptor, see if it's o.k.
 		 ************************************************************/
-
 		hash_entry = hash_search(plperl_active_interp->query_hash, query,
 								 HASH_FIND, NULL);
 		if (hash_entry == NULL)
 			elog(ERROR, "spi_exec_prepared: Invalid prepared query passed");
 
 		qdesc = hash_entry->query_data;
-
 		if (qdesc == NULL)
-			elog(ERROR, "spi_exec_prepared: panic - plperl query_hash value vanished");
+			elog(ERROR, "spi_exec_prepared: plperl query_hash value vanished");
 
 		if (qdesc->nargs != argc)
 			elog(ERROR, "spi_exec_prepared: expected %d argument(s), %d passed",
@@ -3509,12 +3542,11 @@ plperl_spi_query_prepared(char *query, int argc, SV **argv)
 		hash_entry = hash_search(plperl_active_interp->query_hash, query,
 								 HASH_FIND, NULL);
 		if (hash_entry == NULL)
-			elog(ERROR, "spi_exec_prepared: Invalid prepared query passed");
+			elog(ERROR, "spi_query_prepared: Invalid prepared query passed");
 
 		qdesc = hash_entry->query_data;
-
 		if (qdesc == NULL)
-			elog(ERROR, "spi_query_prepared: panic - plperl query_hash value vanished");
+			elog(ERROR, "spi_query_prepared: plperl query_hash value vanished");
 
 		if (qdesc->nargs != argc)
 			elog(ERROR, "spi_query_prepared: expected %d argument(s), %d passed",
@@ -3619,12 +3651,12 @@ plperl_spi_freeplan(char *query)
 	hash_entry = hash_search(plperl_active_interp->query_hash, query,
 							 HASH_FIND, NULL);
 	if (hash_entry == NULL)
-		elog(ERROR, "spi_exec_prepared: Invalid prepared query passed");
+		elog(ERROR, "spi_freeplan: Invalid prepared query passed");
 
 	qdesc = hash_entry->query_data;
-
 	if (qdesc == NULL)
-		elog(ERROR, "spi_exec_freeplan: panic - plperl query_hash value vanished");
+		elog(ERROR, "spi_freeplan: plperl query_hash value vanished");
+	plan = qdesc->plan;
 
 	/*
 	 * free all memory before SPI_freeplan, so if it dies, nothing will be
@@ -3633,11 +3665,7 @@ plperl_spi_freeplan(char *query)
 	hash_search(plperl_active_interp->query_hash, query,
 				HASH_REMOVE, NULL);
 
-	plan = qdesc->plan;
-	free(qdesc->argtypes);
-	free(qdesc->arginfuncs);
-	free(qdesc->argtypioparams);
-	free(qdesc);
+	MemoryContextDelete(qdesc->plan_cxt);
 
 	SPI_freeplan(plan);
 }
