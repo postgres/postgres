@@ -25,10 +25,12 @@
 #include "nodes/nodeFuncs.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_func.h"
+#include "storage/proc.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"
 #include "utils/datum.h"
 #include "utils/lsyscache.h"
+#include "utils/memutils.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 
@@ -74,8 +76,17 @@ typedef struct execution_state
  * and linked to from the fn_extra field of the FmgrInfo struct.
  *
  * Note that currently this has only the lifespan of the calling query.
- * Someday we might want to consider caching the parse/plan results longer
- * than that.
+ * Someday we should rewrite this code to use plancache.c to save parse/plan
+ * results for longer than that.
+ *
+ * Physically, though, the data has the lifespan of the FmgrInfo that's used
+ * to call the function, and there are cases (particularly with indexes)
+ * where the FmgrInfo might survive across transactions.  We cannot assume
+ * that the parse/plan trees are good for longer than the (sub)transaction in
+ * which parsing was done, so we must mark the record with the LXID/subxid of
+ * its creation time, and regenerate everything if that's obsolete.  To avoid
+ * memory leakage when we do have to regenerate things, all the data is kept
+ * in a sub-context of the FmgrInfo's fn_mcxt.
  */
 typedef struct
 {
@@ -106,6 +117,12 @@ typedef struct
 	 * track of where the original query boundaries are.
 	 */
 	List	   *func_state;
+
+	MemoryContext fcontext;		/* memory context holding this struct and all
+								 * subsidiary data */
+
+	LocalTransactionId lxid;	/* lxid in which cache was made */
+	SubTransactionId subxid;	/* subxid in which cache was made */
 } SQLFunctionCache;
 
 typedef SQLFunctionCache *SQLFunctionCachePtr;
@@ -551,6 +568,8 @@ static void
 init_sql_fcache(FmgrInfo *finfo, Oid collation, bool lazyEvalOK)
 {
 	Oid			foid = finfo->fn_oid;
+	MemoryContext fcontext;
+	MemoryContext oldcontext;
 	Oid			rettype;
 	HeapTuple	procedureTuple;
 	Form_pg_proc procedureStruct;
@@ -562,7 +581,25 @@ init_sql_fcache(FmgrInfo *finfo, Oid collation, bool lazyEvalOK)
 	Datum		tmp;
 	bool		isNull;
 
+	/*
+	 * Create memory context that holds all the SQLFunctionCache data.	It
+	 * must be a child of whatever context holds the FmgrInfo.
+	 */
+	fcontext = AllocSetContextCreate(finfo->fn_mcxt,
+									 "SQL function data",
+									 ALLOCSET_DEFAULT_MINSIZE,
+									 ALLOCSET_DEFAULT_INITSIZE,
+									 ALLOCSET_DEFAULT_MAXSIZE);
+
+	oldcontext = MemoryContextSwitchTo(fcontext);
+
+	/*
+	 * Create the struct proper, link it to fcontext and fn_extra.	Once this
+	 * is done, we'll be able to recover the memory after failure, even if the
+	 * FmgrInfo is long-lived.
+	 */
 	fcache = (SQLFunctionCachePtr) palloc0(sizeof(SQLFunctionCache));
+	fcache->fcontext = fcontext;
 	finfo->fn_extra = (void *) fcache;
 
 	/*
@@ -635,6 +672,11 @@ init_sql_fcache(FmgrInfo *finfo, Oid collation, bool lazyEvalOK)
 	 * sublist, for example if the last query rewrites to DO INSTEAD NOTHING.
 	 * (It might not be unreasonable to throw an error in such a case, but
 	 * this is the historical behavior and it doesn't seem worth changing.)
+	 *
+	 * Note: since parsing and planning is done in fcontext, we will generate
+	 * a lot of cruft that lives as long as the fcache does.  This is annoying
+	 * but we'll not worry about it until the module is rewritten to use
+	 * plancache.c.
 	 */
 	raw_parsetree_list = pg_parse_query(fcache->src);
 
@@ -700,7 +742,13 @@ init_sql_fcache(FmgrInfo *finfo, Oid collation, bool lazyEvalOK)
 											  fcache,
 											  lazyEvalOK);
 
+	/* Mark fcache with time of creation to show it's valid */
+	fcache->lxid = MyProc->lxid;
+	fcache->subxid = GetCurrentSubTransactionId();
+
 	ReleaseSysCache(procedureTuple);
+
+	MemoryContextSwitchTo(oldcontext);
 }
 
 /* Start up execution of one execution_state node */
@@ -923,9 +971,9 @@ postquel_get_single_result(TupleTableSlot *slot,
 Datum
 fmgr_sql(PG_FUNCTION_ARGS)
 {
-	MemoryContext oldcontext;
 	SQLFunctionCachePtr fcache;
 	ErrorContextCallback sqlerrcontext;
+	MemoryContext oldcontext;
 	bool		randomAccess;
 	bool		lazyEvalOK;
 	bool		is_first;
@@ -935,13 +983,6 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	Datum		result;
 	List	   *eslist;
 	ListCell   *eslc;
-
-	/*
-	 * Switch to context in which the fcache lives.  This ensures that
-	 * parsetrees, plans, etc, will have sufficient lifetime.  The
-	 * sub-executor is responsible for deleting per-tuple information.
-	 */
-	oldcontext = MemoryContextSwitchTo(fcinfo->flinfo->fn_mcxt);
 
 	/*
 	 * Setup error traceback support for ereport()
@@ -978,20 +1019,43 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Initialize fcache (build plans) if first time through.
+	 * Initialize fcache (build plans) if first time through; or re-initialize
+	 * if the cache is stale.
 	 */
 	fcache = (SQLFunctionCachePtr) fcinfo->flinfo->fn_extra;
+
+	if (fcache != NULL)
+	{
+		if (fcache->lxid != MyProc->lxid ||
+			!SubTransactionIsActive(fcache->subxid))
+		{
+			/* It's stale; unlink and delete */
+			fcinfo->flinfo->fn_extra = NULL;
+			MemoryContextDelete(fcache->fcontext);
+			fcache = NULL;
+		}
+	}
+
 	if (fcache == NULL)
 	{
 		init_sql_fcache(fcinfo->flinfo, PG_GET_COLLATION(), lazyEvalOK);
 		fcache = (SQLFunctionCachePtr) fcinfo->flinfo->fn_extra;
 	}
-	eslist = fcache->func_state;
+
+	/*
+	 * Switch to context in which the fcache lives.  This ensures that our
+	 * tuplestore etc will have sufficient lifetime.  The sub-executor is
+	 * responsible for deleting per-tuple information.	(XXX in the case of a
+	 * long-lived FmgrInfo, this policy represents more memory leakage, but
+	 * it's not entirely clear where to keep stuff instead.)
+	 */
+	oldcontext = MemoryContextSwitchTo(fcache->fcontext);
 
 	/*
 	 * Find first unfinished query in function, and note whether it's the
 	 * first query.
 	 */
+	eslist = fcache->func_state;
 	es = NULL;
 	is_first = true;
 	foreach(eslc, eslist)
