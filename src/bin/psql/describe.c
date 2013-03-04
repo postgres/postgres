@@ -641,7 +641,7 @@ describeOperators(const char *pattern, bool showSystem)
  * for \l, \list, and -l switch
  */
 bool
-listAllDbs(bool verbose)
+listAllDbs(const char *pattern, bool verbose)
 {
 	PGresult   *res;
 	PQExpBufferData buf;
@@ -684,6 +684,11 @@ listAllDbs(bool verbose)
 	if (verbose && pset.sversion >= 80000)
 		appendPQExpBuffer(&buf,
 		   "  JOIN pg_catalog.pg_tablespace t on d.dattablespace = t.oid\n");
+
+	if (pattern)
+		processSQLNamePattern(pset.db, &buf, pattern, false, false,
+							  NULL, "d.datname", NULL, NULL);
+
 	appendPQExpBuffer(&buf, "ORDER BY 1;");
 	res = PSQLexec(buf.data, false);
 	termPQExpBuffer(&buf);

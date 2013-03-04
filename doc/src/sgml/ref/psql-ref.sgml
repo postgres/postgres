@@ -1745,12 +1745,13 @@ hello 10
 
 
       <varlistentry>
-        <term><literal>\l</literal> (or <literal>\list</literal>)</term>
-        <term><literal>\l+</literal> (or <literal>\list+</literal>)</term>
+        <term><literal>\l[+]</literal> or <literal>\list[+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
-        List the names, owners, character set encodings, and access privileges
-        of all the databases in the server.
+        List the databases in the server and show their names, owners,
+        character set encodings, and access privileges.
+        If <replaceable class="parameter">pattern</replaceable> is specified,
+        only databases whose names match the pattern are listed.
         If <literal>+</literal> is appended to the command name, database
         sizes, default tablespaces, and descriptions are also displayed.
         (Size information is only available for databases that the current

@@ -55,7 +55,7 @@ extern bool listTSDictionaries(const char *pattern, bool verbose);
 extern bool listTSTemplates(const char *pattern, bool verbose);
 
 /* \l */
-extern bool listAllDbs(bool verbose);
+extern bool listAllDbs(const char *pattern, bool verbose);
 
 /* \dt, \di, \ds, \dS, etc. */
 extern bool listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSystem);

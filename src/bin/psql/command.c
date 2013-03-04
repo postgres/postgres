@@ -821,10 +821,22 @@ exec_command(const char *cmd,
 	}
 
 	/* \l is list databases */
-	else if (strcmp(cmd, "l") == 0 || strcmp(cmd, "list") == 0)
-		success = listAllDbs(false);
-	else if (strcmp(cmd, "l+") == 0 || strcmp(cmd, "list+") == 0)
-		success = listAllDbs(true);
+	else if (strcmp(cmd, "l") == 0 || strcmp(cmd, "list") == 0 ||
+			 strcmp(cmd, "l+") == 0 || strcmp(cmd, "list+") == 0)
+	{
+		char	   *pattern;
+		bool		show_verbose;
+
+		pattern = psql_scan_slash_option(scan_state,
+										 OT_NORMAL, NULL, true);
+
+		show_verbose = strchr(cmd, '+') ? true : false;
+
+		success = listAllDbs(pattern, show_verbose);
+
+		if (pattern)
+			free(pattern);
+	}
 
 	/*
 	 * large object things
