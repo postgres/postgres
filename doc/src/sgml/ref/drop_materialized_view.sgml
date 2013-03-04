@@ -1,0 +1,114 @@
+<!--
+doc/src/sgml/ref/drop_materialized_view.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-DROPMATERIALIZEDVIEW">
+ <refmeta>
+  <refentrytitle>DROP MATERIALIZED VIEW</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>DROP MATERIALIZED VIEW</refname>
+  <refpurpose>remove a materialized view</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="sql-dropmaterializedview">
+  <primary>DROP MATERIALIZED VIEW</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+DROP MATERIALIZED VIEW [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>DROP MATERIALIZED VIEW</command> drops an existing materialized
+   view. To execute this command you must be the owner of the materialized
+   view.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>IF EXISTS</literal></term>
+    <listitem>
+     <para>
+      Do not throw an error if the materialized view does not exist. A notice
+      is issued in this case.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of the materialized view to
+      remove.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>CASCADE</literal></term>
+    <listitem>
+     <para>
+      Automatically drop objects that depend on the materialized view (such as
+      other materialized views, or regular views).
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>RESTRICT</literal></term>
+    <listitem>
+     <para>
+      Refuse to drop the materialized view if any objects depend on it.  This
+      is the default.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   This command will remove the materialized view called
+   <literal>order_summary</literal>:
+<programlisting>
+DROP MATERIALIZED VIEW order_summary;
+</programlisting></para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   <command>DROP MATERIALIZED VIEW</command> is a
+   <productname>PostgreSQL</productname> extension.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-creatematerializedview"></member>
+   <member><xref linkend="sql-altermaterializedview"></member>
+   <member><xref linkend="sql-refreshmaterializedview"></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>

@@ -151,6 +151,7 @@ static void expand_table_name_patterns(Archive *fout,
 						   SimpleOidList *oids);
 static NamespaceInfo *findNamespace(Archive *fout, Oid nsoid, Oid objoid);
 static void dumpTableData(Archive *fout, TableDataInfo *tdinfo);
+static void refreshMatViewData(Archive *fout, TableDataInfo *tdinfo);
 static void guessConstraintInheritance(TableInfo *tblinfo, int numTables);
 static void dumpComment(Archive *fout, const char *target,
 			const char *namespace, const char *owner,
@@ -223,6 +224,7 @@ static void addBoundaryDependencies(DumpableObject **dobjs, int numObjs,
 static void getDomainConstraints(Archive *fout, TypeInfo *tyinfo);
 static void getTableData(TableInfo *tblinfo, int numTables, bool oids);
 static void makeTableDataInfo(TableInfo *tbinfo, bool oids);
+static void buildMatViewRefreshDependencies(Archive *fout);
 static void getTableDataFKConstraints(void);
 static char *format_function_arguments(FuncInfo *finfo, char *funcargs);
 static char *format_function_arguments_old(Archive *fout,
@@ -723,6 +725,7 @@ main(int argc, char **argv)
 	if (!schemaOnly)
 	{
 		getTableData(tblinfo, numTables, oids);
+		buildMatViewRefreshDependencies(fout);
 		if (dataOnly)
 			getTableDataFKConstraints();
 	}
@@ -1075,9 +1078,9 @@ expand_table_name_patterns(Archive *fout,
 						  "SELECT c.oid"
 						  "\nFROM pg_catalog.pg_class c"
 		"\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace"
-						  "\nWHERE c.relkind in ('%c', '%c', '%c', '%c')\n",
+						  "\nWHERE c.relkind in ('%c', '%c', '%c', '%c', '%c')\n",
 						  RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW,
-						  RELKIND_FOREIGN_TABLE);
+						  RELKIND_MATVIEW, RELKIND_FOREIGN_TABLE);
 		processSQLNamePattern(GetConnection(fout), query, cell->val, true,
 							  false, "n.nspname", "c.relname", NULL,
 							  "pg_catalog.pg_table_is_visible(c.oid)");
@@ -1638,6 +1641,49 @@ dumpTableData(Archive *fout, TableDataInfo *tdinfo)
 }
 
 /*
+ * refreshMatViewData -
+ *	  load or refresh the contents of a single materialized view
+ *
+ * Actually, this just makes an ArchiveEntry for the REFRESH MATERIALIZED VIEW
+ * statement.
+ */
+static void
+refreshMatViewData(Archive *fout, TableDataInfo *tdinfo)
+{
+	TableInfo  *tbinfo = tdinfo->tdtable;
+	PQExpBuffer q;
+
+	/* If the materialized view is not flagged as scannable, skip this. */
+	if (!tbinfo->isscannable)
+		return;
+
+	q = createPQExpBuffer();
+
+	appendPQExpBuffer(q, "REFRESH MATERIALIZED VIEW %s;\n",
+					  fmtId(tbinfo->dobj.name));
+
+	ArchiveEntry(fout,
+				 tdinfo->dobj.catId,					/* catalog ID */
+				 tdinfo->dobj.dumpId,					/* dump ID */
+				 tbinfo->dobj.name,						/* Name */
+				 tbinfo->dobj.namespace->dobj.name,	/* Namespace */
+				 NULL,									/* Tablespace */
+				 tbinfo->rolname,						/* Owner */
+				 false,									/* with oids */
+				 "MATERIALIZED VIEW DATA",				/* Desc */
+				 SECTION_POST_DATA,						/* Section */
+				 q->data,								/* Create */
+				 "",									/* Del */
+				 NULL,									/* Copy */
+				 tdinfo->dobj.dependencies,				/* Deps */
+				 tdinfo->dobj.nDeps,					/* # Deps */
+				 NULL,									/* Dumper */
+				 NULL);									/* Dumper Arg */
+
+	destroyPQExpBuffer(q);
+}
+
+/*
  * getTableData -
  *	  set up dumpable objects representing the contents of tables
  */
@@ -1691,7 +1737,10 @@ makeTableDataInfo(TableInfo *tbinfo, bool oids)
 	/* OK, let's dump it */
 	tdinfo = (TableDataInfo *) pg_malloc(sizeof(TableDataInfo));
 
-	tdinfo->dobj.objType = DO_TABLE_DATA;
+	if (tbinfo->relkind == RELKIND_MATVIEW)
+		tdinfo->dobj.objType = DO_REFRESH_MATVIEW;
+	else
+		tdinfo->dobj.objType = DO_TABLE_DATA;
 
 	/*
 	 * Note: use tableoid 0 so that this object won't be mistaken for
@@ -1708,6 +1757,114 @@ makeTableDataInfo(TableInfo *tbinfo, bool oids)
 	addObjectDependency(&tdinfo->dobj, tbinfo->dobj.dumpId);
 
 	tbinfo->dataObj = tdinfo;
+}
+
+/*
+ * The refresh for a materialized view must be dependent on the refresh for
+ * any materialized view that this one is dependent on.
+ *
+ * This must be called after all the objects are created, but before they are
+ * sorted.
+ */
+static void
+buildMatViewRefreshDependencies(Archive *fout)
+{
+	PQExpBuffer query = createPQExpBuffer();
+	PGresult   *res;
+	int			ntups,
+				i;
+	int			i_classid,
+				i_objid,
+				i_refobjid;
+
+	/* Make sure we are in proper schema */
+	selectSourceSchema(fout, "pg_catalog");
+
+	if (fout->remoteVersion >= 90300)
+	{
+		appendPQExpBuffer(query, "with recursive w as "
+						  "( "
+						  "select d1.objid, d2.refobjid, c2.relkind as refrelkind "
+						  "from pg_depend d1 "
+						  "join pg_class c1 on c1.oid = d1.objid "
+						  "and c1.relkind = 'm' "
+						  "join pg_rewrite r1 on r1.ev_class = d1.objid "
+						  "join pg_depend d2 on d2.classid = 'pg_rewrite'::regclass "
+						  "and d2.objid = r1.oid "
+						  "and d2.refobjid <> d1.objid "
+						  "join pg_class c2 on c2.oid = d2.refobjid "
+						  "and c2.relkind in ('m','v') "
+						  "where d1.classid = 'pg_class'::regclass "
+						  "union "
+						  "select w.objid, d3.refobjid, c3.relkind "
+						  "from w "
+						  "join pg_rewrite r3 on r3.ev_class = w.refobjid "
+						  "join pg_depend d3 on d3.classid = 'pg_rewrite'::regclass "
+						  "and d3.objid = r3.oid "
+						  "and d3.refobjid <> w.refobjid "
+						  "join pg_class c3 on c3.oid = d3.refobjid "
+						  "and c3.relkind in ('m','v') "
+						  ") "
+						  "select 'pg_class'::regclass::oid as classid, objid, refobjid "
+						  "from w "
+						  "where refrelkind = 'm'");
+	}
+
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
+
+	ntups = PQntuples(res);
+
+	i_classid = PQfnumber(res, "classid");
+	i_objid = PQfnumber(res, "objid");
+	i_refobjid = PQfnumber(res, "refobjid");
+
+	for (i = 0; i < ntups; i++)
+	{
+		CatalogId	objId;
+		CatalogId	refobjId;
+		DumpableObject	*dobj;
+		DumpableObject	*refdobj;
+		TableInfo	   *tbinfo;
+		TableInfo	   *reftbinfo;
+
+		objId.tableoid = atooid(PQgetvalue(res, i, i_classid));
+		objId.oid = atooid(PQgetvalue(res, i, i_objid));
+		refobjId.tableoid = objId.tableoid;
+		refobjId.oid = atooid(PQgetvalue(res, i, i_refobjid));
+
+		dobj = findObjectByCatalogId(objId);
+		if (dobj == NULL)
+			continue;
+
+		Assert(dobj->objType == DO_TABLE);
+		tbinfo = (TableInfo *) dobj;
+		Assert(tbinfo->relkind == RELKIND_MATVIEW);
+		dobj = (DumpableObject *) tbinfo->dataObj;
+		if (dobj == NULL)
+			continue;
+		Assert(dobj->objType == DO_REFRESH_MATVIEW);
+
+		refdobj = findObjectByCatalogId(refobjId);
+		if (refdobj == NULL)
+			continue;
+
+		Assert(refdobj->objType == DO_TABLE);
+		reftbinfo = (TableInfo *) refdobj;
+		Assert(reftbinfo->relkind == RELKIND_MATVIEW);
+		refdobj = (DumpableObject *) reftbinfo->dataObj;
+		if (refdobj == NULL)
+			continue;
+		Assert(refdobj->objType == DO_REFRESH_MATVIEW);
+
+		addObjectDependency(dobj, refdobj->dumpId);
+
+		if (!reftbinfo->isscannable)
+			tbinfo->isscannable = false;
+	}
+
+	PQclear(res);
+
+	destroyPQExpBuffer(query);
 }
 
 /*
@@ -3953,6 +4110,7 @@ getTables(Archive *fout, int *numTables)
 	int			i_toastoid;
 	int			i_toastfrozenxid;
 	int			i_relpersistence;
+	int			i_isscannable;
 	int			i_owning_tab;
 	int			i_owning_col;
 	int			i_reltablespace;
@@ -3970,7 +4128,7 @@ getTables(Archive *fout, int *numTables)
 	 * defined to inherit from a system catalog (pretty weird, but...)
 	 *
 	 * We ignore relations that are not ordinary tables, sequences, views,
-	 * composite types, or foreign tables.
+	 * materialized views, composite types, or foreign tables.
 	 *
 	 * Composite-type table entries won't be dumped as such, but we have to
 	 * make a DumpableObject for them so that we can track dependencies of the
@@ -3997,7 +4155,7 @@ getTables(Archive *fout, int *numTables)
 						  "c.relhasindex, c.relhasrules, c.relhasoids, "
 						  "c.relfrozenxid, tc.oid AS toid, "
 						  "tc.relfrozenxid AS tfrozenxid, "
-						  "c.relpersistence, "
+						  "c.relpersistence, pg_relation_is_scannable(c.oid) as isscannable, "
 						  "CASE WHEN c.reloftype <> 0 THEN c.reloftype::pg_catalog.regtype ELSE NULL END AS reloftype, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
@@ -4011,13 +4169,13 @@ getTables(Archive *fout, int *numTables)
 						  "d.objsubid = 0 AND "
 						  "d.refclassid = c.tableoid AND d.deptype = 'a') "
 					   "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
-						  "WHERE c.relkind in ('%c', '%c', '%c', '%c', '%c') "
+						  "WHERE c.relkind in ('%c', '%c', '%c', '%c', '%c', '%c') "
 						  "ORDER BY c.oid",
 						  username_subquery,
 						  RELKIND_SEQUENCE,
 						  RELKIND_RELATION, RELKIND_SEQUENCE,
 						  RELKIND_VIEW, RELKIND_COMPOSITE_TYPE,
-						  RELKIND_FOREIGN_TABLE);
+						  RELKIND_MATVIEW, RELKIND_FOREIGN_TABLE);
 	}
 	else if (fout->remoteVersion >= 90000)
 	{
@@ -4033,7 +4191,7 @@ getTables(Archive *fout, int *numTables)
 						  "c.relhasindex, c.relhasrules, c.relhasoids, "
 						  "c.relfrozenxid, tc.oid AS toid, "
 						  "tc.relfrozenxid AS tfrozenxid, "
-						  "'p' AS relpersistence, "
+						  "'p' AS relpersistence, 't'::bool as isscannable, "
 						  "CASE WHEN c.reloftype <> 0 THEN c.reloftype::pg_catalog.regtype ELSE NULL END AS reloftype, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
@@ -4068,7 +4226,7 @@ getTables(Archive *fout, int *numTables)
 						  "c.relhasindex, c.relhasrules, c.relhasoids, "
 						  "c.relfrozenxid, tc.oid AS toid, "
 						  "tc.relfrozenxid AS tfrozenxid, "
-						  "'p' AS relpersistence, "
+						  "'p' AS relpersistence, 't'::bool as isscannable, "
 						  "NULL AS reloftype, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
@@ -4103,7 +4261,7 @@ getTables(Archive *fout, int *numTables)
 						  "c.relhasindex, c.relhasrules, c.relhasoids, "
 						  "c.relfrozenxid, tc.oid AS toid, "
 						  "tc.relfrozenxid AS tfrozenxid, "
-						  "'p' AS relpersistence, "
+						  "'p' AS relpersistence, 't'::bool as isscannable, "
 						  "NULL AS reloftype, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
@@ -4139,7 +4297,7 @@ getTables(Archive *fout, int *numTables)
 						  "0 AS relfrozenxid, "
 						  "0 AS toid, "
 						  "0 AS tfrozenxid, "
-						  "'p' AS relpersistence, "
+						  "'p' AS relpersistence, 't'::bool as isscannable, "
 						  "NULL AS reloftype, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
@@ -4174,7 +4332,7 @@ getTables(Archive *fout, int *numTables)
 						  "0 AS relfrozenxid, "
 						  "0 AS toid, "
 						  "0 AS tfrozenxid, "
-						  "'p' AS relpersistence, "
+						  "'p' AS relpersistence, 't'::bool as isscannable, "
 						  "NULL AS reloftype, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
@@ -4205,7 +4363,7 @@ getTables(Archive *fout, int *numTables)
 						  "0 AS relfrozenxid, "
 						  "0 AS toid, "
 						  "0 AS tfrozenxid, "
-						  "'p' AS relpersistence, "
+						  "'p' AS relpersistence, 't'::bool as isscannable, "
 						  "NULL AS reloftype, "
 						  "NULL::oid AS owning_tab, "
 						  "NULL::int4 AS owning_col, "
@@ -4231,7 +4389,7 @@ getTables(Archive *fout, int *numTables)
 						  "0 AS relfrozenxid, "
 						  "0 AS toid, "
 						  "0 AS tfrozenxid, "
-						  "'p' AS relpersistence, "
+						  "'p' AS relpersistence, 't'::bool as isscannable, "
 						  "NULL AS reloftype, "
 						  "NULL::oid AS owning_tab, "
 						  "NULL::int4 AS owning_col, "
@@ -4267,7 +4425,7 @@ getTables(Archive *fout, int *numTables)
 						  "0 as relfrozenxid, "
 						  "0 AS toid, "
 						  "0 AS tfrozenxid, "
-						  "'p' AS relpersistence, "
+						  "'p' AS relpersistence, 't'::bool as isscannable, "
 						  "NULL AS reloftype, "
 						  "NULL::oid AS owning_tab, "
 						  "NULL::int4 AS owning_col, "
@@ -4315,6 +4473,7 @@ getTables(Archive *fout, int *numTables)
 	i_toastoid = PQfnumber(res, "toid");
 	i_toastfrozenxid = PQfnumber(res, "tfrozenxid");
 	i_relpersistence = PQfnumber(res, "relpersistence");
+	i_isscannable = PQfnumber(res, "isscannable");
 	i_owning_tab = PQfnumber(res, "owning_tab");
 	i_owning_col = PQfnumber(res, "owning_col");
 	i_reltablespace = PQfnumber(res, "reltablespace");
@@ -4356,6 +4515,7 @@ getTables(Archive *fout, int *numTables)
 		tblinfo[i].hasrules = (strcmp(PQgetvalue(res, i, i_relhasrules), "t") == 0);
 		tblinfo[i].hastriggers = (strcmp(PQgetvalue(res, i, i_relhastriggers), "t") == 0);
 		tblinfo[i].hasoids = (strcmp(PQgetvalue(res, i, i_relhasoids), "t") == 0);
+		tblinfo[i].isscannable = (strcmp(PQgetvalue(res, i, i_isscannable), "t") == 0);
 		tblinfo[i].frozenxid = atooid(PQgetvalue(res, i, i_relfrozenxid));
 		tblinfo[i].toast_oid = atooid(PQgetvalue(res, i, i_toastoid));
 		tblinfo[i].toast_frozenxid = atooid(PQgetvalue(res, i, i_toastfrozenxid));
@@ -4551,8 +4711,11 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 	{
 		TableInfo  *tbinfo = &tblinfo[i];
 
-		/* Only plain tables have indexes */
-		if (tbinfo->relkind != RELKIND_RELATION || !tbinfo->hasindex)
+		/* Only plain tables and materialized views have indexes. */
+		if (tbinfo->relkind != RELKIND_RELATION &&
+			tbinfo->relkind != RELKIND_MATVIEW)
+			continue;
+		if (!tbinfo->hasindex)
 			continue;
 
 		/* Ignore indexes of tables not to be dumped */
@@ -5134,12 +5297,14 @@ getRules(Archive *fout, int *numRules)
 		if (ruleinfo[i].ruletable)
 		{
 			/*
-			 * If the table is a view, force its ON SELECT rule to be sorted
-			 * before the view itself --- this ensures that any dependencies
-			 * for the rule affect the table's positioning. Other rules are
-			 * forced to appear after their table.
+			 * If the table is a view or materialized view, force its ON
+			 * SELECT rule to be sorted before the view itself --- this
+			 * ensures that any dependencies for the rule affect the table's
+			 * positioning. Other rules are forced to appear after their
+			 * table.
 			 */
-			if (ruleinfo[i].ruletable->relkind == RELKIND_VIEW &&
+			if ((ruleinfo[i].ruletable->relkind == RELKIND_VIEW ||
+			     ruleinfo[i].ruletable->relkind == RELKIND_MATVIEW) &&
 				ruleinfo[i].ev_type == '1' && ruleinfo[i].is_instead)
 			{
 				addObjectDependency(&ruleinfo[i].ruletable->dobj,
@@ -7344,6 +7509,9 @@ dumpDumpableObject(Archive *fout, DumpableObject *dobj)
 			break;
 		case DO_INDEX:
 			dumpIndex(fout, (IndxInfo *) dobj);
+			break;
+		case DO_REFRESH_MATVIEW:
+			refreshMatViewData(fout, (TableDataInfo *) dobj);
 			break;
 		case DO_RULE:
 			dumpRule(fout, (RuleInfo *) dobj);
@@ -12384,17 +12552,73 @@ dumpTable(Archive *fout, TableInfo *tbinfo)
 }
 
 /*
+ * Create the AS clause for a view or materialized view. The semicolon is
+ * stripped because a materialized view must add a WITH NO DATA clause.
+ *
+ * This returns a new buffer which must be freed by the caller.
+ */
+static PQExpBuffer
+createViewAsClause(Archive *fout, TableInfo *tbinfo)
+{
+	PQExpBuffer query = createPQExpBuffer();
+	PQExpBuffer result = createPQExpBuffer();
+	PGresult   *res;
+	int			len;
+
+	/* Fetch the view definition */
+	if (fout->remoteVersion >= 70300)
+	{
+		/* Beginning in 7.3, viewname is not unique; rely on OID */
+		appendPQExpBuffer(query,
+						  "SELECT pg_catalog.pg_get_viewdef('%u'::pg_catalog.oid) AS viewdef",
+						  tbinfo->dobj.catId.oid);
+	}
+	else
+	{
+		appendPQExpBuffer(query, "SELECT definition AS viewdef "
+						  "FROM pg_views WHERE viewname = ");
+		appendStringLiteralAH(query, tbinfo->dobj.name, fout);
+		appendPQExpBuffer(query, ";");
+	}
+
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
+
+	if (PQntuples(res) != 1)
+	{
+		if (PQntuples(res) < 1)
+			exit_horribly(NULL, "query to obtain definition of view \"%s\" returned no data\n",
+						  tbinfo->dobj.name);
+		else
+			exit_horribly(NULL, "query to obtain definition of view \"%s\" returned more than one definition\n",
+						  tbinfo->dobj.name);
+	}
+
+	len = PQgetlength(res, 0, 0);
+
+	if (len == 0)
+		exit_horribly(NULL, "definition of view \"%s\" appears to be empty (length zero)\n",
+					  tbinfo->dobj.name);
+
+	/* Strip off the trailing semicolon so that other things may follow. */
+	Assert(PQgetvalue(res, 0, 0)[len-1] == ';');
+	appendBinaryPQExpBuffer(result, PQgetvalue(res, 0, 0), len - 1);
+
+	PQclear(res);
+	destroyPQExpBuffer(query);
+
+	return result;
+}
+
+/*
  * dumpTableSchema
  *	  write the declaration (not data) of one user-defined table or view
  */
 static void
 dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 {
-	PQExpBuffer query = createPQExpBuffer();
 	PQExpBuffer q = createPQExpBuffer();
 	PQExpBuffer delq = createPQExpBuffer();
 	PQExpBuffer labelq = createPQExpBuffer();
-	PGresult   *res;
 	int			numParents;
 	TableInfo **parents;
 	int			actual_atts;	/* number of attrs in this CREATE statement */
@@ -12415,43 +12639,9 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 	/* Is it a table or a view? */
 	if (tbinfo->relkind == RELKIND_VIEW)
 	{
-		char	   *viewdef;
+		PQExpBuffer result;
 
 		reltypename = "VIEW";
-
-		/* Fetch the view definition */
-		if (fout->remoteVersion >= 70300)
-		{
-			/* Beginning in 7.3, viewname is not unique; rely on OID */
-			appendPQExpBuffer(query,
-							  "SELECT pg_catalog.pg_get_viewdef('%u'::pg_catalog.oid) AS viewdef",
-							  tbinfo->dobj.catId.oid);
-		}
-		else
-		{
-			appendPQExpBuffer(query, "SELECT definition AS viewdef "
-							  "FROM pg_views WHERE viewname = ");
-			appendStringLiteralAH(query, tbinfo->dobj.name, fout);
-			appendPQExpBuffer(query, ";");
-		}
-
-		res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
-
-		if (PQntuples(res) != 1)
-		{
-			if (PQntuples(res) < 1)
-				exit_horribly(NULL, "query to obtain definition of view \"%s\" returned no data\n",
-							  tbinfo->dobj.name);
-			else
-				exit_horribly(NULL, "query to obtain definition of view \"%s\" returned more than one definition\n",
-							  tbinfo->dobj.name);
-		}
-
-		viewdef = PQgetvalue(res, 0, 0);
-
-		if (strlen(viewdef) == 0)
-			exit_horribly(NULL, "definition of view \"%s\" appears to be empty (length zero)\n",
-						  tbinfo->dobj.name);
 
 		/*
 		 * DROP must be fully qualified in case same name appears in
@@ -12469,49 +12659,60 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		appendPQExpBuffer(q, "CREATE VIEW %s", fmtId(tbinfo->dobj.name));
 		if (tbinfo->reloptions && strlen(tbinfo->reloptions) > 0)
 			appendPQExpBuffer(q, " WITH (%s)", tbinfo->reloptions);
-		appendPQExpBuffer(q, " AS\n    %s\n", viewdef);
+		result = createViewAsClause(fout, tbinfo);
+		appendPQExpBuffer(q, " AS\n%s;\n", result->data);
+		destroyPQExpBuffer(result);
 
 		appendPQExpBuffer(labelq, "VIEW %s",
 						  fmtId(tbinfo->dobj.name));
-
-		PQclear(res);
 	}
 	else
 	{
-		if (tbinfo->relkind == RELKIND_FOREIGN_TABLE)
+		switch (tbinfo->relkind)
 		{
-			int			i_srvname;
-			int			i_ftoptions;
+			case (RELKIND_FOREIGN_TABLE):
+			{
+				PQExpBuffer query = createPQExpBuffer();
+				PGresult   *res;
+				int			i_srvname;
+				int			i_ftoptions;
 
-			reltypename = "FOREIGN TABLE";
+				reltypename = "FOREIGN TABLE";
 
-			/* retrieve name of foreign server and generic options */
-			appendPQExpBuffer(query,
-							  "SELECT fs.srvname, "
-							  "pg_catalog.array_to_string(ARRAY("
-							  "SELECT pg_catalog.quote_ident(option_name) || "
-							  "' ' || pg_catalog.quote_literal(option_value) "
-							"FROM pg_catalog.pg_options_to_table(ftoptions) "
-							  "ORDER BY option_name"
-							  "), E',\n    ') AS ftoptions "
-							  "FROM pg_catalog.pg_foreign_table ft "
-							  "JOIN pg_catalog.pg_foreign_server fs "
-							  "ON (fs.oid = ft.ftserver) "
-							  "WHERE ft.ftrelid = '%u'",
-							  tbinfo->dobj.catId.oid);
-			res = ExecuteSqlQueryForSingleRow(fout, query->data);
-			i_srvname = PQfnumber(res, "srvname");
-			i_ftoptions = PQfnumber(res, "ftoptions");
-			srvname = pg_strdup(PQgetvalue(res, 0, i_srvname));
-			ftoptions = pg_strdup(PQgetvalue(res, 0, i_ftoptions));
-			PQclear(res);
+				/* retrieve name of foreign server and generic options */
+				appendPQExpBuffer(query,
+								  "SELECT fs.srvname, "
+								  "pg_catalog.array_to_string(ARRAY("
+								  "SELECT pg_catalog.quote_ident(option_name) || "
+								  "' ' || pg_catalog.quote_literal(option_value) "
+								"FROM pg_catalog.pg_options_to_table(ftoptions) "
+								  "ORDER BY option_name"
+								  "), E',\n    ') AS ftoptions "
+								  "FROM pg_catalog.pg_foreign_table ft "
+								  "JOIN pg_catalog.pg_foreign_server fs "
+								  "ON (fs.oid = ft.ftserver) "
+								  "WHERE ft.ftrelid = '%u'",
+								  tbinfo->dobj.catId.oid);
+				res = ExecuteSqlQueryForSingleRow(fout, query->data);
+				i_srvname = PQfnumber(res, "srvname");
+				i_ftoptions = PQfnumber(res, "ftoptions");
+				srvname = pg_strdup(PQgetvalue(res, 0, i_srvname));
+				ftoptions = pg_strdup(PQgetvalue(res, 0, i_ftoptions));
+				PQclear(res);
+				destroyPQExpBuffer(query);
+				break;
+			}
+			case (RELKIND_MATVIEW):
+				reltypename = "MATERIALIZED VIEW";
+				srvname = NULL;
+				ftoptions = NULL;
+				break;
+			default:
+				reltypename = "TABLE";
+				srvname = NULL;
+				ftoptions = NULL;
 		}
-		else
-		{
-			reltypename = "TABLE";
-			srvname = NULL;
-			ftoptions = NULL;
-		}
+
 		numParents = tbinfo->numParents;
 		parents = tbinfo->parents;
 
@@ -12544,6 +12745,8 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		if (tbinfo->reloftype && !binary_upgrade)
 			appendPQExpBuffer(q, " OF %s", tbinfo->reloftype);
 
+		if (tbinfo->relkind != RELKIND_MATVIEW)
+		{
 		/* Dump the attributes */
 		actual_atts = 0;
 		for (j = 0; j < tbinfo->numatts; j++)
@@ -12583,7 +12786,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 				actual_atts++;
 
 				/* Attribute name */
-				appendPQExpBuffer(q, "%s ",
+				appendPQExpBuffer(q, "%s",
 								  fmtId(tbinfo->attnames[j]));
 
 				if (tbinfo->attisdropped[j])
@@ -12593,7 +12796,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 					 * so we will not have gotten a valid type name; insert
 					 * INTEGER as a stopgap.  We'll clean things up later.
 					 */
-					appendPQExpBuffer(q, "INTEGER /* dummy */");
+					appendPQExpBuffer(q, " INTEGER /* dummy */");
 					/* Skip all the rest, too */
 					continue;
 				}
@@ -12601,17 +12804,17 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 				/* Attribute type */
 				if (tbinfo->reloftype && !binary_upgrade)
 				{
-					appendPQExpBuffer(q, "WITH OPTIONS");
+					appendPQExpBuffer(q, " WITH OPTIONS");
 				}
 				else if (fout->remoteVersion >= 70100)
 				{
-					appendPQExpBuffer(q, "%s",
+					appendPQExpBuffer(q, " %s",
 									  tbinfo->atttypnames[j]);
 				}
 				else
 				{
 					/* If no format_type, fake it */
-					appendPQExpBuffer(q, "%s",
+					appendPQExpBuffer(q, " %s",
 									  myFormatType(tbinfo->atttypnames[j],
 												   tbinfo->atttypmod[j]));
 				}
@@ -12694,6 +12897,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 
 		if (tbinfo->relkind == RELKIND_FOREIGN_TABLE)
 			appendPQExpBuffer(q, "\nSERVER %s", fmtId(srvname));
+		}
 
 		if ((tbinfo->reloptions && strlen(tbinfo->reloptions) > 0) ||
 		  (tbinfo->toast_reloptions && strlen(tbinfo->toast_reloptions) > 0))
@@ -12718,7 +12922,20 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		if (ftoptions && ftoptions[0])
 			appendPQExpBuffer(q, "\nOPTIONS (\n    %s\n)", ftoptions);
 
-		appendPQExpBuffer(q, ";\n");
+		/*
+		 * For materialized views, create the AS clause just like a view.
+		 */
+		if (tbinfo->relkind == RELKIND_MATVIEW)
+		{
+			PQExpBuffer result;
+
+			result = createViewAsClause(fout, tbinfo);
+			appendPQExpBuffer(q, " AS\n%s\n  WITH NO DATA;\n",
+							  result->data);
+			destroyPQExpBuffer(result);
+		}
+		else
+			appendPQExpBuffer(q, ";\n");
 
 		/*
 		 * To create binary-compatible heap files, we have to ensure the same
@@ -12974,7 +13191,6 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		dumpTableConstraintComment(fout, constr);
 	}
 
-	destroyPQExpBuffer(query);
 	destroyPQExpBuffer(q);
 	destroyPQExpBuffer(delq);
 	destroyPQExpBuffer(labelq);
@@ -14468,6 +14684,7 @@ addBoundaryDependencies(DumpableObject **dobjs, int numObjs,
 				addObjectDependency(postDataBound, dobj->dumpId);
 				break;
 			case DO_INDEX:
+			case DO_REFRESH_MATVIEW:
 			case DO_TRIGGER:
 			case DO_EVENT_TRIGGER:
 			case DO_DEFAULT_ACL:

@@ -206,11 +206,12 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrategy)
 	}
 
 	/*
-	 * Check that it's a plain table or foreign table; we used to do this in
-	 * get_rel_oids() but seems safer to check after we've locked the
-	 * relation.
+	 * Check that it's a plain table, materialized view, or foreign table; we
+	 * used to do this in get_rel_oids() but seems safer to check after we've
+	 * locked the relation.
 	 */
-	if (onerel->rd_rel->relkind == RELKIND_RELATION)
+	if (onerel->rd_rel->relkind == RELKIND_RELATION ||
+		onerel->rd_rel->relkind == RELKIND_MATVIEW)
 	{
 		/* Regular table, so we'll use the regular row acquisition function */
 		acquirefunc = acquire_sample_rows;

@@ -646,6 +646,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 
 	if (relation->rd_rel->relkind != RELKIND_RELATION &&
 		relation->rd_rel->relkind != RELKIND_VIEW &&
+		relation->rd_rel->relkind != RELKIND_MATVIEW &&
 		relation->rd_rel->relkind != RELKIND_COMPOSITE_TYPE &&
 		relation->rd_rel->relkind != RELKIND_FOREIGN_TABLE)
 		ereport(ERROR,
@@ -1998,6 +1999,11 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 	 * beforehand.
 	 */
 	rel = heap_openrv(stmt->relation, AccessExclusiveLock);
+
+	if (rel->rd_rel->relkind == RELKIND_MATVIEW)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("rules on materialized views are not supported")));
 
 	/* Set up pstate */
 	pstate = make_parsestate(NULL);

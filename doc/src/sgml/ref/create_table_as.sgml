@@ -340,6 +340,7 @@ CREATE TEMP TABLE films_recent WITH (OIDS) ON COMMIT DROP AS
   <title>See Also</title>
 
   <simplelist type="inline">
+   <member><xref linkend="sql-creatematerializedview"></member>
    <member><xref linkend="sql-createtable"></member>
    <member><xref linkend="sql-execute"></member>
    <member><xref linkend="sql-select"></member>

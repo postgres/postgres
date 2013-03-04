@@ -24,9 +24,9 @@ static const char *modulename = gettext_noop("sorter");
  * Objects are sorted by priority levels, and within an equal priority level
  * by OID.	(This is a relatively crude hack to provide semi-reasonable
  * behavior for old databases without full dependency info.)  Note: collations,
- * extensions, text search, foreign-data, event trigger, and default ACL
- * objects can't really happen here, so the rather bogus priorities for them
- * don't matter.
+ * extensions, text search, foreign-data, materialized view, event trigger,
+ * and default ACL objects can't really happen here, so the rather bogus
+ * priorities for them don't matter.
  *
  * NOTE: object-type priorities must match the section assignments made in
  * pg_dump.c; that is, PRE_DATA objects must sort before DO_PRE_DATA_BOUNDARY,
@@ -68,7 +68,8 @@ static const int oldObjectTypePriority[] =
 	12,							/* DO_BLOB_DATA */
 	10,							/* DO_PRE_DATA_BOUNDARY */
 	13,							/* DO_POST_DATA_BOUNDARY */
-	20							/* DO_EVENT_TRIGGER */
+	20,							/* DO_EVENT_TRIGGER */
+	15							/* DO_REFRESH_MATVIEW */
 };
 
 /*
@@ -115,7 +116,8 @@ static const int newObjectTypePriority[] =
 	24,							/* DO_BLOB_DATA */
 	22,							/* DO_PRE_DATA_BOUNDARY */
 	25,							/* DO_POST_DATA_BOUNDARY */
-	32							/* DO_EVENT_TRIGGER */
+	32,							/* DO_EVENT_TRIGGER */
+	33							/* DO_REFRESH_MATVIEW */
 };
 
 static DumpId preDataBoundId;
@@ -1150,6 +1152,11 @@ describeDumpableObject(DumpableObject *obj, char *buf, int bufsize)
 		case DO_INDEX:
 			snprintf(buf, bufsize,
 					 "INDEX %s  (ID %d OID %u)",
+					 obj->name, obj->dumpId, obj->catId.oid);
+			return;
+		case DO_REFRESH_MATVIEW:
+			snprintf(buf, bufsize,
+					 "REFRESH MATERIALIZED VIEW %s  (ID %d OID %u)",
 					 obj->name, obj->dumpId, obj->catId.oid);
 			return;
 		case DO_RULE:

@@ -525,8 +525,8 @@ set_frozenxids(void)
 		PQclear(executeQueryOrDie(conn,
 								  "UPDATE	pg_catalog.pg_class "
 								  "SET	relfrozenxid = '%u' "
-		/* only heap and TOAST are vacuumed */
-								  "WHERE	relkind IN ('r', 't')",
+		/* only heap, materialized view, and TOAST are vacuumed */
+								  "WHERE	relkind IN ('r', 'm', 't')",
 								  old_cluster.controldata.chkpnt_nxtxid));
 		PQfinish(conn);
 

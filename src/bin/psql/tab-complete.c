@@ -435,11 +435,11 @@ static const SchemaQuery Query_for_list_of_relations = {
 	NULL
 };
 
-static const SchemaQuery Query_for_list_of_tsvf = {
+static const SchemaQuery Query_for_list_of_tsvmf = {
 	/* catname */
 	"pg_catalog.pg_class c",
 	/* selcondition */
-	"c.relkind IN ('r', 'S', 'v', 'f')",
+	"c.relkind IN ('r', 'S', 'v', 'm', 'f')",
 	/* viscondition */
 	"pg_catalog.pg_table_is_visible(c.oid)",
 	/* namespace */
@@ -450,11 +450,26 @@ static const SchemaQuery Query_for_list_of_tsvf = {
 	NULL
 };
 
-static const SchemaQuery Query_for_list_of_tf = {
+static const SchemaQuery Query_for_list_of_tmf = {
 	/* catname */
 	"pg_catalog.pg_class c",
 	/* selcondition */
-	"c.relkind IN ('r', 'f')",
+	"c.relkind IN ('r', 'm', 'f')",
+	/* viscondition */
+	"pg_catalog.pg_table_is_visible(c.oid)",
+	/* namespace */
+	"c.relnamespace",
+	/* result */
+	"pg_catalog.quote_ident(c.relname)",
+	/* qualresult */
+	NULL
+};
+
+static const SchemaQuery Query_for_list_of_tm = {
+	/* catname */
+	"pg_catalog.pg_class c",
+	/* selcondition */
+	"c.relkind IN ('r', 'm')",
 	/* viscondition */
 	"pg_catalog.pg_table_is_visible(c.oid)",
 	/* namespace */
@@ -470,6 +485,21 @@ static const SchemaQuery Query_for_list_of_views = {
 	"pg_catalog.pg_class c",
 	/* selcondition */
 	"c.relkind IN ('v')",
+	/* viscondition */
+	"pg_catalog.pg_table_is_visible(c.oid)",
+	/* namespace */
+	"c.relnamespace",
+	/* result */
+	"pg_catalog.quote_ident(c.relname)",
+	/* qualresult */
+	NULL
+};
+
+static const SchemaQuery Query_for_list_of_matviews = {
+	/* catname */
+	"pg_catalog.pg_class c",
+	/* selcondition */
+	"c.relkind IN ('m')",
 	/* viscondition */
 	"pg_catalog.pg_table_is_visible(c.oid)",
 	/* namespace */
@@ -752,6 +782,7 @@ static const pgsql_thing_t words_after_create[] = {
 	{"GROUP", Query_for_list_of_roles},
 	{"LANGUAGE", Query_for_list_of_languages},
 	{"INDEX", NULL, &Query_for_list_of_indexes},
+	{"MATERIALIZED VIEW", NULL, NULL},
 	{"OPERATOR", NULL, NULL},	/* Querying for this is probably not such a
 								 * good idea. */
 	{"OWNED", NULL, NULL, THING_NO_CREATE},		/* for DROP OWNED BY ... */
@@ -853,7 +884,7 @@ psql_completion(char *text, int start, int end)
 		"COMMENT", "COMMIT", "COPY", "CREATE", "DEALLOCATE", "DECLARE",
 		"DELETE FROM", "DISCARD", "DO", "DROP", "END", "EXECUTE", "EXPLAIN", "FETCH",
 		"GRANT", "INSERT", "LISTEN", "LOAD", "LOCK", "MOVE", "NOTIFY", "PREPARE",
-		"REASSIGN", "REINDEX", "RELEASE", "RESET", "REVOKE", "ROLLBACK",
+		"REASSIGN", "REFRESH", "REINDEX", "RELEASE", "RESET", "REVOKE", "ROLLBACK",
 		"SAVEPOINT", "SECURITY LABEL", "SELECT", "SET", "SHOW", "START",
 		"TABLE", "TRUNCATE", "UNLISTEN", "UPDATE", "VACUUM", "VALUES", "WITH",
 		NULL
@@ -933,7 +964,7 @@ psql_completion(char *text, int start, int end)
 		static const char *const list_ALTER[] =
 		{"AGGREGATE", "COLLATION", "CONVERSION", "DATABASE", "DEFAULT PRIVILEGES", "DOMAIN",
 			"EXTENSION", "FOREIGN DATA WRAPPER", "FOREIGN TABLE", "FUNCTION",
-			"GROUP", "INDEX", "LANGUAGE", "LARGE OBJECT", "OPERATOR",
+			"GROUP", "INDEX", "LANGUAGE", "LARGE OBJECT", "MATERIALIZED VIEW", "OPERATOR",
 			"ROLE", "RULE", "SCHEMA", "SERVER", "SEQUENCE", "TABLE",
 			"TABLESPACE", "TEXT SEARCH", "TRIGGER", "TYPE",
 		"USER", "USER MAPPING FOR", "VIEW", NULL};
@@ -1102,6 +1133,14 @@ psql_completion(char *text, int start, int end)
 		COMPLETE_WITH_LIST(list_ALTERLARGEOBJECT);
 	}
 
+	/* ALTER MATERIALIZED VIEW */
+	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
+			 pg_strcasecmp(prev2_wd, "MATERIALIZED") == 0 &&
+			 pg_strcasecmp(prev_wd, "VIEW") == 0)
+	{
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_matviews, NULL);
+	}
+
 	/* ALTER USER,ROLE <name> */
 	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
 			 !(pg_strcasecmp(prev2_wd, "USER") == 0 && pg_strcasecmp(prev_wd, "MAPPING") == 0) &&
@@ -1267,6 +1306,16 @@ psql_completion(char *text, int start, int end)
 		{"ALTER COLUMN", "OWNER TO", "RENAME TO", "SET SCHEMA", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTERVIEW);
+	}
+	/* ALTER MATERIALIZED VIEW <name> */
+	else if (pg_strcasecmp(prev4_wd, "ALTER") == 0 &&
+			 pg_strcasecmp(prev3_wd, "MATERIALIZED") == 0 &&
+			 pg_strcasecmp(prev2_wd, "VIEW") == 0)
+	{
+		static const char *const list_ALTERMATVIEW[] =
+		{"ALTER COLUMN", "OWNER TO", "RENAME TO", "SET SCHEMA", NULL};
+
+		COMPLETE_WITH_LIST(list_ALTERMATVIEW);
 	}
 
 	/* ALTER RULE <name>, add ON */
@@ -1746,14 +1795,14 @@ psql_completion(char *text, int start, int end)
 	 */
 	else if (pg_strcasecmp(prev_wd, "CLUSTER") == 0 &&
 			 pg_strcasecmp(prev2_wd, "WITHOUT") != 0)
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, "UNION SELECT 'VERBOSE'");
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tm, "UNION SELECT 'VERBOSE'");
 
 	/*
 	 * If the previous words are CLUSTER VERBOSE produce list of tables
 	 */
 	else if (pg_strcasecmp(prev_wd, "VERBOSE") == 0 &&
 			 pg_strcasecmp(prev2_wd, "CLUSTER") == 0)
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tm, NULL);
 
 	/* If we have CLUSTER <sth>, then add "USING" */
 	else if (pg_strcasecmp(prev2_wd, "CLUSTER") == 0 &&
@@ -1800,7 +1849,7 @@ psql_completion(char *text, int start, int end)
 		{"CAST", "COLLATION", "CONVERSION", "DATABASE", "EXTENSION",
 			"FOREIGN DATA WRAPPER", "FOREIGN TABLE",
 			"SERVER", "INDEX", "LANGUAGE", "RULE", "SCHEMA", "SEQUENCE",
-			"TABLE", "TYPE", "VIEW", "COLUMN", "AGGREGATE", "FUNCTION",
+			"TABLE", "TYPE", "VIEW", "MATERIALIZED VIEW", "COLUMN", "AGGREGATE", "FUNCTION",
 			"OPERATOR", "TRIGGER", "CONSTRAINT", "DOMAIN", "LARGE OBJECT",
 		"TABLESPACE", "TEXT SEARCH", "ROLE", NULL};
 
@@ -1844,6 +1893,13 @@ psql_completion(char *text, int start, int end)
 	{
 		completion_info_charp = prev2_wd;
 		COMPLETE_WITH_QUERY(Query_for_list_of_tables_for_constraint);
+	}
+	else if (pg_strcasecmp(prev4_wd, "COMMENT") == 0 &&
+			 pg_strcasecmp(prev3_wd, "ON") == 0 &&
+			 pg_strcasecmp(prev2_wd, "MATERIALIZED") == 0 &&
+			 pg_strcasecmp(prev_wd, "VIEW") == 0)
+	{
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_matviews, NULL);
 	}
 	else if ((pg_strcasecmp(prev4_wd, "COMMENT") == 0 &&
 			  pg_strcasecmp(prev3_wd, "ON") == 0) ||
@@ -1974,7 +2030,7 @@ psql_completion(char *text, int start, int end)
 			  pg_strcasecmp(prev2_wd, "INDEX") == 0 ||
 			  pg_strcasecmp(prev2_wd, "CONCURRENTLY") == 0) &&
 			 pg_strcasecmp(prev_wd, "ON") == 0)
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tm, NULL);
 	/* If we have CREATE|UNIQUE INDEX <sth> CONCURRENTLY, then add "ON" */
 	else if ((pg_strcasecmp(prev3_wd, "INDEX") == 0 ||
 			  pg_strcasecmp(prev2_wd, "INDEX") == 0) &&
@@ -2080,7 +2136,10 @@ psql_completion(char *text, int start, int end)
 	else if (pg_strcasecmp(prev2_wd, "CREATE") == 0 &&
 			 pg_strcasecmp(prev_wd, "UNLOGGED") == 0)
 	{
-		COMPLETE_WITH_CONST("TABLE");
+		static const char *const list_UNLOGGED[] =
+		{"TABLE", "MATERIALIZED VIEW", NULL};
+
+		COMPLETE_WITH_LIST(list_UNLOGGED);
 	}
 
 /* CREATE TABLESPACE */
@@ -2249,6 +2308,22 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev_wd, "AS") == 0)
 		COMPLETE_WITH_CONST("SELECT");
 
+/* CREATE MATERIALIZED VIEW */
+	else if (pg_strcasecmp(prev2_wd, "CREATE") == 0 &&
+			 pg_strcasecmp(prev_wd, "MATERIALIZED") == 0)
+		COMPLETE_WITH_CONST("VIEW");
+	/* Complete CREATE MATERIALIZED VIEW <name> with AS */
+	else if (pg_strcasecmp(prev4_wd, "CREATE") == 0 &&
+			 pg_strcasecmp(prev3_wd, "MATERIALIZED") == 0 &&
+			 pg_strcasecmp(prev2_wd, "VIEW") == 0)
+		COMPLETE_WITH_CONST("AS");
+	/* Complete "CREATE MATERIALIZED VIEW <sth> AS with "SELECT" */
+	else if (pg_strcasecmp(prev5_wd, "CREATE") == 0 &&
+			 pg_strcasecmp(prev4_wd, "MATERIALIZED") == 0 &&
+			 pg_strcasecmp(prev3_wd, "VIEW") == 0 &&
+			 pg_strcasecmp(prev_wd, "AS") == 0)
+		COMPLETE_WITH_CONST("SELECT");
+
 /* DECLARE */
 	else if (pg_strcasecmp(prev2_wd, "DECLARE") == 0)
 	{
@@ -2375,6 +2450,20 @@ psql_completion(char *text, int start, int end)
 
 		COMPLETE_WITH_LIST(drop_CREATE_FOREIGN);
 	}
+
+	/* DROP MATERIALIZED VIEW */
+	else if (pg_strcasecmp(prev2_wd, "DROP") == 0 &&
+			 pg_strcasecmp(prev_wd, "MATERIALIZED") == 0)
+	{
+		COMPLETE_WITH_CONST("VIEW");
+	}
+	else if (pg_strcasecmp(prev3_wd, "DROP") == 0 &&
+			 pg_strcasecmp(prev2_wd, "MATERIALIZED") == 0 &&
+			 pg_strcasecmp(prev_wd, "VIEW") == 0)
+	{
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_matviews, NULL);
+	}
+
 	else if (pg_strcasecmp(prev4_wd, "DROP") == 0 &&
 			 (pg_strcasecmp(prev3_wd, "AGGREGATE") == 0 ||
 			  pg_strcasecmp(prev3_wd, "FUNCTION") == 0) &&
@@ -2550,7 +2639,7 @@ psql_completion(char *text, int start, int end)
 	else if ((pg_strcasecmp(prev3_wd, "GRANT") == 0 ||
 			  pg_strcasecmp(prev3_wd, "REVOKE") == 0) &&
 			 pg_strcasecmp(prev_wd, "ON") == 0)
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tsvf,
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tsvmf,
 								   " UNION SELECT 'DATABASE'"
 								   " UNION SELECT 'DOMAIN'"
 								   " UNION SELECT 'FOREIGN DATA WRAPPER'"
@@ -2769,6 +2858,37 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev5_wd, "REASSIGN") == 0)
 		COMPLETE_WITH_QUERY(Query_for_list_of_roles);
 
+/* REFRESH MATERIALIZED VIEW */
+	else if (pg_strcasecmp(prev_wd, "REFRESH") == 0)
+		COMPLETE_WITH_CONST("MATERIALIZED VIEW");
+	else if (pg_strcasecmp(prev2_wd, "REFRESH") == 0 &&
+			 pg_strcasecmp(prev_wd, "MATERIALIZED") == 0)
+		COMPLETE_WITH_CONST("VIEW");
+	else if (pg_strcasecmp(prev3_wd, "REFRESH") == 0 &&
+			 pg_strcasecmp(prev2_wd, "MATERIALIZED") == 0 &&
+			 pg_strcasecmp(prev_wd, "VIEW") == 0)
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_matviews, NULL);
+	else if (pg_strcasecmp(prev4_wd, "REFRESH") == 0 &&
+			 pg_strcasecmp(prev3_wd, "MATERIALIZED") == 0 &&
+			 pg_strcasecmp(prev2_wd, "VIEW") == 0)
+		COMPLETE_WITH_CONST("WITH");
+	else if (pg_strcasecmp(prev5_wd, "REFRESH") == 0 &&
+			 pg_strcasecmp(prev4_wd, "MATERIALIZED") == 0 &&
+			 pg_strcasecmp(prev3_wd, "VIEW") == 0 &&
+			 pg_strcasecmp(prev_wd, "WITH") == 0)
+	{
+		static const char *const list_WITH_DATA[] =
+		{"NO DATA", "DATA", NULL};
+
+		COMPLETE_WITH_LIST(list_WITH_DATA);
+	}
+	else if (pg_strcasecmp(prev6_wd, "REFRESH") == 0 &&
+			 pg_strcasecmp(prev5_wd, "MATERIALIZED") == 0 &&
+			 pg_strcasecmp(prev4_wd, "VIEW") == 0 &&
+			 pg_strcasecmp(prev2_wd, "WITH") == 0 &&
+			 pg_strcasecmp(prev_wd, "NO") == 0)
+		COMPLETE_WITH_CONST("DATA");
+
 /* REINDEX */
 	else if (pg_strcasecmp(prev_wd, "REINDEX") == 0)
 	{
@@ -2780,7 +2900,7 @@ psql_completion(char *text, int start, int end)
 	else if (pg_strcasecmp(prev2_wd, "REINDEX") == 0)
 	{
 		if (pg_strcasecmp(prev_wd, "TABLE") == 0)
-			COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
+			COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tm, NULL);
 		else if (pg_strcasecmp(prev_wd, "INDEX") == 0)
 			COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_indexes, NULL);
 		else if (pg_strcasecmp(prev_wd, "SYSTEM") == 0 ||
@@ -2812,9 +2932,9 @@ psql_completion(char *text, int start, int end)
 			  pg_strcasecmp(prev_wd, "ON") == 0))
 	{
 		static const char *const list_SECURITY_LABEL[] =
-		{"LANGUAGE", "SCHEMA", "SEQUENCE", "TABLE", "TYPE", "VIEW", "COLUMN",
-			"AGGREGATE", "FUNCTION", "DOMAIN", "LARGE OBJECT",
-		NULL};
+		{"LANGUAGE", "SCHEMA", "SEQUENCE", "TABLE", "TYPE", "VIEW",
+			"MATERIALIZED VIEW", "COLUMN", "AGGREGATE", "FUNCTION", "DOMAIN",
+			"LARGE OBJECT",	NULL};
 
 		COMPLETE_WITH_LIST(list_SECURITY_LABEL);
 	}
@@ -3061,7 +3181,7 @@ psql_completion(char *text, int start, int end)
  * VACUUM [ FULL | FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column [, ...] ) ] ]
  */
 	else if (pg_strcasecmp(prev_wd, "VACUUM") == 0)
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables,
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tm,
 								   " UNION SELECT 'FULL'"
 								   " UNION SELECT 'FREEZE'"
 								   " UNION SELECT 'ANALYZE'"
@@ -3069,34 +3189,34 @@ psql_completion(char *text, int start, int end)
 	else if (pg_strcasecmp(prev2_wd, "VACUUM") == 0 &&
 			 (pg_strcasecmp(prev_wd, "FULL") == 0 ||
 			  pg_strcasecmp(prev_wd, "FREEZE") == 0))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables,
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tm,
 								   " UNION SELECT 'ANALYZE'"
 								   " UNION SELECT 'VERBOSE'");
 	else if (pg_strcasecmp(prev3_wd, "VACUUM") == 0 &&
 			 pg_strcasecmp(prev_wd, "ANALYZE") == 0 &&
 			 (pg_strcasecmp(prev2_wd, "FULL") == 0 ||
 			  pg_strcasecmp(prev2_wd, "FREEZE") == 0))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables,
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tm,
 								   " UNION SELECT 'VERBOSE'");
 	else if (pg_strcasecmp(prev3_wd, "VACUUM") == 0 &&
 			 pg_strcasecmp(prev_wd, "VERBOSE") == 0 &&
 			 (pg_strcasecmp(prev2_wd, "FULL") == 0 ||
 			  pg_strcasecmp(prev2_wd, "FREEZE") == 0))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables,
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tm,
 								   " UNION SELECT 'ANALYZE'");
 	else if (pg_strcasecmp(prev2_wd, "VACUUM") == 0 &&
 			 pg_strcasecmp(prev_wd, "VERBOSE") == 0)
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables,
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tm,
 								   " UNION SELECT 'ANALYZE'");
 	else if (pg_strcasecmp(prev2_wd, "VACUUM") == 0 &&
 			 pg_strcasecmp(prev_wd, "ANALYZE") == 0)
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables,
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tm,
 								   " UNION SELECT 'VERBOSE'");
 	else if ((pg_strcasecmp(prev_wd, "ANALYZE") == 0 &&
 			  pg_strcasecmp(prev2_wd, "VERBOSE") == 0) ||
 			 (pg_strcasecmp(prev_wd, "VERBOSE") == 0 &&
 			  pg_strcasecmp(prev2_wd, "ANALYZE") == 0))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tm, NULL);
 
 /* WITH [RECURSIVE] */
 
@@ -3111,7 +3231,7 @@ psql_completion(char *text, int start, int end)
 /* ANALYZE */
 	/* If the previous word is ANALYZE, produce list of tables */
 	else if (pg_strcasecmp(prev_wd, "ANALYZE") == 0)
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tf, NULL);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tmf, NULL);
 
 /* WHERE */
 	/* Simple case of the word before the where being the table name */
@@ -3123,11 +3243,11 @@ psql_completion(char *text, int start, int end)
 	else if (pg_strcasecmp(prev_wd, "FROM") == 0 &&
 			 pg_strcasecmp(prev3_wd, "COPY") != 0 &&
 			 pg_strcasecmp(prev3_wd, "\\copy") != 0)
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tsvf, NULL);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tsvmf, NULL);
 
 /* ... JOIN ... */
 	else if (pg_strcasecmp(prev_wd, "JOIN") == 0)
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tsvf, NULL);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tsvmf, NULL);
 
 /* Backslash commands */
 /* TODO:  \dc \dd \dl */
@@ -3167,7 +3287,7 @@ psql_completion(char *text, int start, int end)
 		COMPLETE_WITH_QUERY(Query_for_list_of_schemas);
 	else if (strncmp(prev_wd, "\\dp", strlen("\\dp")) == 0
 			 || strncmp(prev_wd, "\\z", strlen("\\z")) == 0)
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tsvf, NULL);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tsvmf, NULL);
 	else if (strncmp(prev_wd, "\\ds", strlen("\\ds")) == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_sequences, NULL);
 	else if (strncmp(prev_wd, "\\dt", strlen("\\dt")) == 0)
@@ -3179,6 +3299,8 @@ psql_completion(char *text, int start, int end)
 		COMPLETE_WITH_QUERY(Query_for_list_of_roles);
 	else if (strncmp(prev_wd, "\\dv", strlen("\\dv")) == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_views, NULL);
+	else if (strncmp(prev_wd, "\\dm", strlen("\\dm")) == 0)
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_matviews, NULL);
 
 	/* must be at end of \d list */
 	else if (strncmp(prev_wd, "\\d", strlen("\\d")) == 0)

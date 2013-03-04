@@ -341,23 +341,26 @@ get_rel_oids(Oid relid, const RangeVar *vacrel)
 	}
 	else
 	{
-		/* Process all plain relations listed in pg_class */
+		/*
+		 * Process all plain relations and materialized views listed in
+		 * pg_class
+		 */
 		Relation	pgclass;
 		HeapScanDesc scan;
 		HeapTuple	tuple;
-		ScanKeyData key;
-
-		ScanKeyInit(&key,
-					Anum_pg_class_relkind,
-					BTEqualStrategyNumber, F_CHAREQ,
-					CharGetDatum(RELKIND_RELATION));
 
 		pgclass = heap_open(RelationRelationId, AccessShareLock);
 
-		scan = heap_beginscan(pgclass, SnapshotNow, 1, &key);
+		scan = heap_beginscan(pgclass, SnapshotNow, 0, NULL);
 
 		while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 		{
+			Form_pg_class classForm = (Form_pg_class) GETSTRUCT(tuple);
+
+			if (classForm->relkind != RELKIND_RELATION &&
+				classForm->relkind != RELKIND_MATVIEW)
+				continue;
+
 			/* Make a relation list entry for this guy */
 			oldcontext = MemoryContextSwitchTo(vac_context);
 			oid_list = lappend_oid(oid_list, HeapTupleGetOid(tuple));
@@ -743,6 +746,7 @@ vac_update_datfrozenxid(void)
 		 * InvalidTransactionId in relfrozenxid anyway.)
 		 */
 		if (classForm->relkind != RELKIND_RELATION &&
+			classForm->relkind != RELKIND_MATVIEW &&
 			classForm->relkind != RELKIND_TOASTVALUE)
 			continue;
 
@@ -1045,6 +1049,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound)
 	 * relation.
 	 */
 	if (onerel->rd_rel->relkind != RELKIND_RELATION &&
+		onerel->rd_rel->relkind != RELKIND_MATVIEW &&
 		onerel->rd_rel->relkind != RELKIND_TOASTVALUE)
 	{
 		ereport(WARNING,

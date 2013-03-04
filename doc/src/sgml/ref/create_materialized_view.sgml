@@ -1,0 +1,154 @@
+<!--
+doc/src/sgml/ref/create_materialized_view.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-CREATEMATERIALIZEDVIEW">
+ <refmeta>
+  <refentrytitle>CREATE MATERIALIZED VIEW</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>CREATE MATERIALIZED VIEW</refname>
+  <refpurpose>define a new materialized view</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="sql-creatematerializedview">
+  <primary>CREATE MATERIALIZED VIEW</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+CREATE [ UNLOGGED ] MATERIALIZED VIEW <replaceable>table_name</replaceable>
+    [ (<replaceable>column_name</replaceable> [, ...] ) ]
+    [ WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] ) ]
+    [ TABLESPACE <replaceable class="PARAMETER">tablespace_name</replaceable> ]
+    AS <replaceable>query</replaceable>
+    [ WITH [ NO ] DATA ]
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>CREATE MATERIALIZED VIEW</command> defines a materialized view of
+   a query.  The query is executed and used to populate the view at the time
+   the command is issued (unless <command>WITH NO DATA</> is used) and may be
+   refreshed later using <command>REFRESH MATERIALIZED VIEW</command>.
+  </para>
+
+  <para>
+   <command>CREATE MATERIALIZED VIEW</command> is similar to
+   <command>CREATE TABLE AS</>, except that it also remembers the query used
+   to initialize the view, so that it can be refreshed later upon demand.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>UNLOGGED</></term>
+    <listitem>
+     <para>
+      If specified, the materialized view will be unlogged.
+      Refer to <xref linkend="sql-createtable"> for details.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable>table_name</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of the materialized view to be
+      created.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable>column_name</replaceable></term>
+    <listitem>
+     <para>
+      The name of a column in the new materialized view.  If column names are
+      not provided, they are taken from the output column names of the query.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] )</literal></term>
+    <listitem>
+     <para>
+      This clause specifies optional storage parameters for the new
+      materialized view; see <xref linkend="sql-createtable-storage-parameters"
+      endterm="sql-createtable-storage-parameters-title"> for more
+      information.
+      See <xref linkend="sql-createtable"> for more information.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>TABLESPACE <replaceable class="PARAMETER">tablespace_name</replaceable></literal></term>
+    <listitem>
+     <para>
+      The <replaceable class="PARAMETER">tablespace_name</replaceable> is the name
+      of the tablespace in which the new materialized view is to be created.
+      If not specified, <xref linkend="guc-default-tablespace"> is consulted.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable>query</replaceable></term>
+    <listitem>
+     <para>
+      A <xref linkend="sql-select">, <link linkend="sql-table">TABLE</link>,
+      or <xref linkend="sql-values"> command.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>WITH [ NO ] DATA</></term>
+    <listitem>
+     <para>
+      This clause specifies whether or not the materialized view should be
+      populated at creation time.  If not, the materialized view will be
+      flagged as unscannable and cannot be queried until <command>REFRESH
+      MATERIALIZED VIEW</> is used.
+     </para>
+    </listitem>
+   </varlistentry>
+
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   <command>CREATE MATERIALIZED VIEW</command> is a
+   <productname>PostgreSQL</productname> extension.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-altermaterializedview"></member>
+   <member><xref linkend="sql-createtableas"></member>
+   <member><xref linkend="sql-createview"></member>
+   <member><xref linkend="sql-dropmaterializedview"></member>
+   <member><xref linkend="sql-refreshmaterializedview"></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>

@@ -190,6 +190,7 @@ transformTopLevelStmt(ParseState *pstate, Node *parseTree)
 
 			ctas->query = parseTree;
 			ctas->into = stmt->intoClause;
+			ctas->relkind = OBJECT_TABLE;
 			ctas->is_select_into = true;
 
 			/*
@@ -321,6 +322,11 @@ analyze_requires_snapshot(Node *parseTree)
 		case T_ExplainStmt:
 		case T_CreateTableAsStmt:
 			/* yes, because we must analyze the contained statement */
+			result = true;
+			break;
+
+		case T_RefreshMatViewStmt:
+			/* yes, because the SELECT from pg_rewrite must be analyzed */
 			result = true;
 			break;
 
@@ -2117,7 +2123,8 @@ transformExplainStmt(ParseState *pstate, ExplainStmt *stmt)
 
 /*
  * transformCreateTableAsStmt -
- *	transform a CREATE TABLE AS (or SELECT ... INTO) Statement
+ *	transform a CREATE TABLE AS, SELECT ... INTO, or CREATE MATERIALIZED VIEW
+ *	Statement
  *
  * As with EXPLAIN, transform the contained statement now.
  */
@@ -2125,6 +2132,24 @@ static Query *
 transformCreateTableAsStmt(ParseState *pstate, CreateTableAsStmt *stmt)
 {
 	Query	   *result;
+
+	/*
+	 * Set relkind in IntoClause based on statement relkind.  These are
+	 * different types, because the parser users the ObjectType enumeration
+	 * and the executor uses RELKIND_* defines.
+	 */
+	switch (stmt->relkind)
+	{
+		case (OBJECT_TABLE):
+			stmt->into->relkind = RELKIND_RELATION;
+			break;
+		case (OBJECT_MATVIEW):
+			stmt->into->relkind = RELKIND_MATVIEW;
+			break;
+		default:
+			elog(ERROR, "unrecognized object relkind: %d",
+				 (int) stmt->relkind);
+	}
 
 	/* transform contained query */
 	stmt->query = (Node *) transformStmt(pstate, stmt->query);

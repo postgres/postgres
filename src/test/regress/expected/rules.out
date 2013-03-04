@@ -1325,7 +1325,7 @@ SELECT viewname, definition FROM pg_views WHERE schemaname <> 'information_schem
                                  |    JOIN pg_class i ON ((i.oid = x.indexrelid)))                                                                                                                                                                +
                                  |    LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))                                                                                                                                                     +
                                  |    LEFT JOIN pg_tablespace t ON ((t.oid = i.reltablespace)))                                                                                                                                                   +
-                                 |   WHERE ((c.relkind = 'r'::"char") AND (i.relkind = 'i'::"char"));
+                                 |   WHERE ((c.relkind = ANY (ARRAY['r'::"char", 'm'::"char"])) AND (i.relkind = 'i'::"char"));
  pg_locks                        |  SELECT l.locktype,                                                                                                                                                                                            +
                                  |     l.database,                                                                                                                                                                                                +
                                  |     l.relation,                                                                                                                                                                                                +
@@ -1342,6 +1342,17 @@ SELECT viewname, definition FROM pg_views WHERE schemaname <> 'information_schem
                                  |     l.granted,                                                                                                                                                                                                 +
                                  |     l.fastpath                                                                                                                                                                                                 +
                                  |    FROM pg_lock_status() l(locktype, database, relation, page, tuple, virtualxid, transactionid, classid, objid, objsubid, virtualtransaction, pid, mode, granted, fastpath);
+ pg_matviews                     |  SELECT n.nspname AS schemaname,                                                                                                                                                                               +
+                                 |     c.relname AS matviewname,                                                                                                                                                                                  +
+                                 |     pg_get_userbyid(c.relowner) AS matviewowner,                                                                                                                                                               +
+                                 |     t.spcname AS tablespace,                                                                                                                                                                                   +
+                                 |     c.relhasindex AS hasindexes,                                                                                                                                                                               +
+                                 |     pg_relation_is_scannable(c.oid) AS isscannable,                                                                                                                                                            +
+                                 |     pg_get_viewdef(c.oid) AS definition                                                                                                                                                                        +
+                                 |    FROM ((pg_class c                                                                                                                                                                                           +
+                                 |    LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))                                                                                                                                                     +
+                                 |    LEFT JOIN pg_tablespace t ON ((t.oid = c.reltablespace)))                                                                                                                                                   +
+                                 |   WHERE (c.relkind = 'm'::"char");
  pg_prepared_statements          |  SELECT p.name,                                                                                                                                                                                                +
                                  |     p.statement,                                                                                                                                                                                               +
                                  |     p.prepare_time,                                                                                                                                                                                            +
@@ -1385,6 +1396,7 @@ SELECT viewname, definition FROM pg_views WHERE schemaname <> 'information_schem
                                  |                                                                                         CASE                                                                                                                   +
                                  |                                                                                             WHEN (rel.relkind = 'r'::"char") THEN 'table'::text                                                                +
                                  |                                                                                             WHEN (rel.relkind = 'v'::"char") THEN 'view'::text                                                                 +
+                                 |                                                                                             WHEN (rel.relkind = 'm'::"char") THEN 'materialized view'::text                                                    +
                                  |                                                                                             WHEN (rel.relkind = 'S'::"char") THEN 'sequence'::text                                                             +
                                  |                                                                                             WHEN (rel.relkind = 'f'::"char") THEN 'foreign table'::text                                                        +
                                  |                                                                                             ELSE NULL::text                                                                                                    +
@@ -1600,7 +1612,7 @@ SELECT viewname, definition FROM pg_views WHERE schemaname <> 'information_schem
                                  |    JOIN pg_index x ON ((c.oid = x.indrelid)))                                                                                                                                                                  +
                                  |    JOIN pg_class i ON ((i.oid = x.indexrelid)))                                                                                                                                                                +
                                  |    LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))                                                                                                                                                     +
-                                 |   WHERE (c.relkind = ANY (ARRAY['r'::"char", 't'::"char"]));
+                                 |   WHERE (c.relkind = ANY (ARRAY['r'::"char", 't'::"char", 'm'::"char"]));
  pg_stat_all_tables              |  SELECT c.oid AS relid,                                                                                                                                                                                        +
                                  |     n.nspname AS schemaname,                                                                                                                                                                                   +
                                  |     c.relname,                                                                                                                                                                                                 +
@@ -1625,7 +1637,7 @@ SELECT viewname, definition FROM pg_views WHERE schemaname <> 'information_schem
                                  |    FROM ((pg_class c                                                                                                                                                                                           +
                                  |    LEFT JOIN pg_index i ON ((c.oid = i.indrelid)))                                                                                                                                                             +
                                  |    LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))                                                                                                                                                     +
-                                 |   WHERE (c.relkind = ANY (ARRAY['r'::"char", 't'::"char"]))                                                                                                                                                    +
+                                 |   WHERE (c.relkind = ANY (ARRAY['r'::"char", 't'::"char", 'm'::"char"]))                                                                                                                                       +
                                  |   GROUP BY c.oid, n.nspname, c.relname;
  pg_stat_bgwriter                |  SELECT pg_stat_get_bgwriter_timed_checkpoints() AS checkpoints_timed,                                                                                                                                         +
                                  |     pg_stat_get_bgwriter_requested_checkpoints() AS checkpoints_req,                                                                                                                                           +
@@ -1774,7 +1786,7 @@ SELECT viewname, definition FROM pg_views WHERE schemaname <> 'information_schem
                                  |    FROM ((pg_class c                                                                                                                                                                                           +
                                  |    LEFT JOIN pg_index i ON ((c.oid = i.indrelid)))                                                                                                                                                             +
                                  |    LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))                                                                                                                                                     +
-                                 |   WHERE (c.relkind = ANY (ARRAY['r'::"char", 't'::"char"]))                                                                                                                                                    +
+                                 |   WHERE (c.relkind = ANY (ARRAY['r'::"char", 't'::"char", 'm'::"char"]))                                                                                                                                       +
                                  |   GROUP BY c.oid, n.nspname, c.relname;
  pg_stat_xact_sys_tables         |  SELECT pg_stat_xact_all_tables.relid,                                                                                                                                                                         +
                                  |     pg_stat_xact_all_tables.schemaname,                                                                                                                                                                        +
@@ -1822,7 +1834,7 @@ SELECT viewname, definition FROM pg_views WHERE schemaname <> 'information_schem
                                  |    JOIN pg_index x ON ((c.oid = x.indrelid)))                                                                                                                                                                  +
                                  |    JOIN pg_class i ON ((i.oid = x.indexrelid)))                                                                                                                                                                +
                                  |    LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))                                                                                                                                                     +
-                                 |   WHERE (c.relkind = ANY (ARRAY['r'::"char", 't'::"char"]));
+                                 |   WHERE (c.relkind = ANY (ARRAY['r'::"char", 't'::"char", 'm'::"char"]));
  pg_statio_all_sequences         |  SELECT c.oid AS relid,                                                                                                                                                                                        +
                                  |     n.nspname AS schemaname,                                                                                                                                                                                   +
                                  |     c.relname,                                                                                                                                                                                                 +
@@ -1847,7 +1859,7 @@ SELECT viewname, definition FROM pg_views WHERE schemaname <> 'information_schem
                                  |    LEFT JOIN pg_class t ON ((c.reltoastrelid = t.oid)))                                                                                                                                                        +
                                  |    LEFT JOIN pg_class x ON ((t.reltoastidxid = x.oid)))                                                                                                                                                        +
                                  |    LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))                                                                                                                                                     +
-                                 |   WHERE (c.relkind = ANY (ARRAY['r'::"char", 't'::"char"]))                                                                                                                                                    +
+                                 |   WHERE (c.relkind = ANY (ARRAY['r'::"char", 't'::"char", 'm'::"char"]))                                                                                                                                       +
                                  |   GROUP BY c.oid, n.nspname, c.relname, t.oid, x.oid;
  pg_statio_sys_indexes           |  SELECT pg_statio_all_indexes.relid,                                                                                                                                                                           +
                                  |     pg_statio_all_indexes.indexrelid,                                                                                                                                                                          +
@@ -2119,7 +2131,15 @@ SELECT viewname, definition FROM pg_views WHERE schemaname <> 'information_schem
                                  |     emp.location,                                                                                                                                                                                              +
                                  |     (12 * emp.salary) AS annualsal                                                                                                                                                                             +
                                  |    FROM emp;
-(60 rows)
+ tv                              |  SELECT t.type,                                                                                                                                                                                                +
+                                 |     sum(t.amt) AS totamt                                                                                                                                                                                       +
+                                 |    FROM t                                                                                                                                                                                                      +
+                                 |   GROUP BY t.type;
+ tvv                             |  SELECT sum(tv.totamt) AS grandtot                                                                                                                                                                             +
+                                 |    FROM tv;
+ tvvmv                           |  SELECT tvvm.grandtot                                                                                                                                                                                          +
+                                 |    FROM tvvm;
+(64 rows)
 
 SELECT tablename, rulename, definition FROM pg_rules
 	ORDER BY tablename, rulename;

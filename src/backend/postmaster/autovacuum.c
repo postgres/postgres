@@ -1990,22 +1990,17 @@ do_autovacuum(void)
 	 * Scan pg_class to determine which tables to vacuum.
 	 *
 	 * We do this in two passes: on the first one we collect the list of plain
-	 * relations, and on the second one we collect TOAST tables. The reason
-	 * for doing the second pass is that during it we want to use the main
-	 * relation's pg_class.reloptions entry if the TOAST table does not have
-	 * any, and we cannot obtain it unless we know beforehand what's the main
-	 * table OID.
+	 * relations and materialized views, and on the second one we collect
+	 * TOAST tables. The reason for doing the second pass is that during it we
+	 * want to use the main relation's pg_class.reloptions entry if the TOAST
+	 * table does not have any, and we cannot obtain it unless we know
+	 * beforehand what's the main  table OID.
 	 *
 	 * We need to check TOAST tables separately because in cases with short,
 	 * wide tables there might be proportionally much more activity in the
 	 * TOAST table than in its parent.
 	 */
-	ScanKeyInit(&key,
-				Anum_pg_class_relkind,
-				BTEqualStrategyNumber, F_CHAREQ,
-				CharGetDatum(RELKIND_RELATION));
-
-	relScan = heap_beginscan(classRel, SnapshotNow, 1, &key);
+	relScan = heap_beginscan(classRel, SnapshotNow, 0, NULL);
 
 	/*
 	 * On the first pass, we collect main tables to vacuum, and also the main
@@ -2020,6 +2015,10 @@ do_autovacuum(void)
 		bool		dovacuum;
 		bool		doanalyze;
 		bool		wraparound;
+
+		if (classForm->relkind != RELKIND_RELATION &&
+			classForm->relkind != RELKIND_MATVIEW)
+			continue;
 
 		relid = HeapTupleGetOid(tuple);
 
@@ -2406,6 +2405,7 @@ extract_autovac_opts(HeapTuple tup, TupleDesc pg_class_desc)
 	AutoVacOpts *av;
 
 	Assert(((Form_pg_class) GETSTRUCT(tup))->relkind == RELKIND_RELATION ||
+		   ((Form_pg_class) GETSTRUCT(tup))->relkind == RELKIND_MATVIEW ||
 		   ((Form_pg_class) GETSTRUCT(tup))->relkind == RELKIND_TOASTVALUE);
 
 	relopts = extractRelOptions(tup, pg_class_desc, InvalidOid);

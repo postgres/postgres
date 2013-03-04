@@ -765,6 +765,8 @@ objectsInSchemaToOids(GrantObjectType objtype, List *nspnames)
 				objects = list_concat(objects, objs);
 				objs = getRelationsInNamespace(namespaceId, RELKIND_VIEW);
 				objects = list_concat(objects, objs);
+				objs = getRelationsInNamespace(namespaceId, RELKIND_MATVIEW);
+				objects = list_concat(objects, objs);
 				objs = getRelationsInNamespace(namespaceId, RELKIND_FOREIGN_TABLE);
 				objects = list_concat(objects, objs);
 				break;

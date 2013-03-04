@@ -506,6 +506,7 @@ pltcl_init_load_unknown(Tcl_Interp *interp)
 		return;
 	/* must be table or view, else ignore */
 	if (!(pmrel->rd_rel->relkind == RELKIND_RELATION ||
+		  pmrel->rd_rel->relkind == RELKIND_MATVIEW ||
 		  pmrel->rd_rel->relkind == RELKIND_VIEW))
 	{
 		relation_close(pmrel, AccessShareLock);

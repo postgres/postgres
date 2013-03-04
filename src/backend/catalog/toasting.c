@@ -84,10 +84,11 @@ BootstrapToastTable(char *relName, Oid toastOid, Oid toastIndexOid)
 
 	rel = heap_openrv(makeRangeVar(NULL, relName, -1), AccessExclusiveLock);
 
-	if (rel->rd_rel->relkind != RELKIND_RELATION)
+	if (rel->rd_rel->relkind != RELKIND_RELATION &&
+		rel->rd_rel->relkind != RELKIND_MATVIEW)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a table",
+				 errmsg("\"%s\" is not a table or materialized view",
 						relName)));
 
 	/* create_toast_table does all the work */

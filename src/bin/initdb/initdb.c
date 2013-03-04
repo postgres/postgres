@@ -2047,7 +2047,7 @@ setup_privileges(void)
 	static char *privileges_setup[] = {
 		"UPDATE pg_class "
 		"  SET relacl = E'{\"=r/\\\\\"$POSTGRES_SUPERUSERNAME\\\\\"\"}' "
-		"  WHERE relkind IN ('r', 'v', 'S') AND relacl IS NULL;\n",
+		"  WHERE relkind IN ('r', 'v', 'm', 'S') AND relacl IS NULL;\n",
 		"GRANT USAGE ON SCHEMA pg_catalog TO PUBLIC;\n",
 		"GRANT CREATE, USAGE ON SCHEMA public TO PUBLIC;\n",
 		"REVOKE ALL ON pg_largeobject FROM PUBLIC;\n",

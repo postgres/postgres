@@ -21,6 +21,7 @@ Complete list of usable sgml source files in this directory.
 <!ENTITY alterIndex         SYSTEM "alter_index.sgml">
 <!ENTITY alterLanguage      SYSTEM "alter_language.sgml">
 <!ENTITY alterLargeObject   SYSTEM "alter_large_object.sgml">
+<!ENTITY alterMaterializedView SYSTEM "alter_materialized_view.sgml">
 <!ENTITY alterOperator      SYSTEM "alter_operator.sgml">
 <!ENTITY alterOperatorClass SYSTEM "alter_opclass.sgml">
 <!ENTITY alterOperatorFamily SYSTEM "alter_opfamily.sgml">
@@ -63,6 +64,7 @@ Complete list of usable sgml source files in this directory.
 <!ENTITY createGroup        SYSTEM "create_group.sgml">
 <!ENTITY createIndex        SYSTEM "create_index.sgml">
 <!ENTITY createLanguage     SYSTEM "create_language.sgml">
+<!ENTITY createMaterializedView SYSTEM "create_materialized_view.sgml">
 <!ENTITY createOperator     SYSTEM "create_operator.sgml">
 <!ENTITY createOperatorClass SYSTEM "create_opclass.sgml">
 <!ENTITY createOperatorFamily SYSTEM "create_opfamily.sgml">
@@ -102,6 +104,7 @@ Complete list of usable sgml source files in this directory.
 <!ENTITY dropGroup          SYSTEM "drop_group.sgml">
 <!ENTITY dropIndex          SYSTEM "drop_index.sgml">
 <!ENTITY dropLanguage       SYSTEM "drop_language.sgml">
+<!ENTITY dropMaterializedView SYSTEM "drop_materialized_view.sgml">
 <!ENTITY dropOperator       SYSTEM "drop_operator.sgml">
 <!ENTITY dropOperatorClass  SYSTEM "drop_opclass.sgml">
 <!ENTITY dropOperatorFamily  SYSTEM "drop_opfamily.sgml">
@@ -136,6 +139,7 @@ Complete list of usable sgml source files in this directory.
 <!ENTITY prepare            SYSTEM "prepare.sgml">
 <!ENTITY prepareTransaction SYSTEM "prepare_transaction.sgml">
 <!ENTITY reassignOwned      SYSTEM "reassign_owned.sgml">
+<!ENTITY refreshMaterializedView SYSTEM "refresh_materialized_view.sgml">
 <!ENTITY reindex            SYSTEM "reindex.sgml">
 <!ENTITY releaseSavepoint   SYSTEM "release_savepoint.sgml">
 <!ENTITY reset              SYSTEM "reset.sgml">

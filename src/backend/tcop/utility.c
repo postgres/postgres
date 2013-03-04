@@ -37,6 +37,7 @@
 #include "commands/event_trigger.h"
 #include "commands/explain.h"
 #include "commands/extension.h"
+#include "commands/matview.h"
 #include "commands/lockcmds.h"
 #include "commands/portalcmds.h"
 #include "commands/prepare.h"
@@ -202,6 +203,7 @@ check_xact_readonly(Node *parsetree)
 		case T_CreateSeqStmt:
 		case T_CreateStmt:
 		case T_CreateTableAsStmt:
+		case T_RefreshMatViewStmt:
 		case T_CreateTableSpaceStmt:
 		case T_CreateTrigStmt:
 		case T_CompositeTypeStmt:
@@ -713,6 +715,7 @@ standard_ProcessUtility(Node *parsetree,
 					case OBJECT_TABLE:
 					case OBJECT_SEQUENCE:
 					case OBJECT_VIEW:
+					case OBJECT_MATVIEW:
 					case OBJECT_FOREIGN_TABLE:
 						RemoveRelations((DropStmt *) parsetree);
 						break;
@@ -1164,6 +1167,13 @@ standard_ProcessUtility(Node *parsetree,
 								  queryString, params, completionTag));
 			break;
 
+		case T_RefreshMatViewStmt:
+			if (isCompleteQuery)
+				EventTriggerDDLCommandStart(parsetree);
+			ExecRefreshMatView((RefreshMatViewStmt *) parsetree,
+								queryString, params, completionTag);
+			break;
+
 		case T_VariableSetStmt:
 			ExecSetVariableStmt((VariableSetStmt *) parsetree);
 			break;
@@ -1290,6 +1300,7 @@ standard_ProcessUtility(Node *parsetree,
 						ReindexIndex(stmt->relation);
 						break;
 					case OBJECT_TABLE:
+					case OBJECT_MATVIEW:
 						ReindexTable(stmt->relation);
 						break;
 					case OBJECT_DATABASE:
@@ -1509,9 +1520,10 @@ QueryReturnsTuples(Query *parsetree)
  * We assume it is invoked only on already-parse-analyzed statements
  * (else the contained parsetree isn't a Query yet).
  *
- * In some cases (currently, only EXPLAIN of CREATE TABLE AS/SELECT INTO),
- * potentially Query-containing utility statements can be nested.  This
- * function will drill down to a non-utility Query, or return NULL if none.
+ * In some cases (currently, only EXPLAIN of CREATE TABLE AS/SELECT INTO and
+ * CREATE MATERIALIZED VIEW), potentially Query-containing utility statements
+ * can be nested.  This function will drill down to a non-utility Query, or
+ * return NULL if none.
  */
 Query *
 UtilityContainsQuery(Node *parsetree)
@@ -1654,6 +1666,9 @@ AlterObjectTypeCommandTag(ObjectType objtype)
 			break;
 		case OBJECT_VIEW:
 			tag = "ALTER VIEW";
+			break;
+		case OBJECT_MATVIEW:
+			tag = "ALTER MATERIALIZED VIEW";
 			break;
 		default:
 			tag = "???";
@@ -1851,6 +1866,9 @@ CreateCommandTag(Node *parsetree)
 					break;
 				case OBJECT_VIEW:
 					tag = "DROP VIEW";
+					break;
+				case OBJECT_MATVIEW:
+					tag = "DROP MATERIALIZED VIEW";
 					break;
 				case OBJECT_INDEX:
 					tag = "DROP INDEX";
@@ -2113,10 +2131,24 @@ CreateCommandTag(Node *parsetree)
 			break;
 
 		case T_CreateTableAsStmt:
-			if (((CreateTableAsStmt *) parsetree)->is_select_into)
-				tag = "SELECT INTO";
-			else
-				tag = "CREATE TABLE AS";
+			switch (((CreateTableAsStmt *) parsetree)->relkind)
+			{
+				case OBJECT_TABLE:
+					if (((CreateTableAsStmt *) parsetree)->is_select_into)
+						tag = "SELECT INTO";
+					else
+						tag = "CREATE TABLE AS";
+					break;
+				case OBJECT_MATVIEW:
+					tag = "CREATE MATERIALIZED VIEW";
+					break;
+				default:
+					tag = "???";
+			}
+			break;
+
+		case T_RefreshMatViewStmt:
+			tag = "REFRESH MATERIALIZED VIEW";
 			break;
 
 		case T_VariableSetStmt:
@@ -2678,6 +2710,10 @@ GetCommandLogLevel(Node *parsetree)
 			break;
 
 		case T_CreateTableAsStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_RefreshMatViewStmt:
 			lev = LOGSTMT_DDL;
 			break;
 

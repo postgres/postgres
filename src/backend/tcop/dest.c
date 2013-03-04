@@ -32,6 +32,7 @@
 #include "access/xact.h"
 #include "commands/copy.h"
 #include "commands/createas.h"
+#include "commands/matview.h"
 #include "executor/functions.h"
 #include "executor/tstoreReceiver.h"
 #include "libpq/libpq.h"
@@ -125,6 +126,9 @@ CreateDestReceiver(CommandDest dest)
 
 		case DestSQLFunction:
 			return CreateSQLFunctionDestReceiver();
+
+		case DestTransientRel:
+			return CreateTransientRelDestReceiver(InvalidOid);
 	}
 
 	/* should never get here */
@@ -157,6 +161,7 @@ EndCommand(const char *commandTag, CommandDest dest)
 		case DestIntoRel:
 		case DestCopyOut:
 		case DestSQLFunction:
+		case DestTransientRel:
 			break;
 	}
 }
@@ -198,6 +203,7 @@ NullCommand(CommandDest dest)
 		case DestIntoRel:
 		case DestCopyOut:
 		case DestSQLFunction:
+		case DestTransientRel:
 			break;
 	}
 }
@@ -241,6 +247,7 @@ ReadyForQuery(CommandDest dest)
 		case DestIntoRel:
 		case DestCopyOut:
 		case DestSQLFunction:
+		case DestTransientRel:
 			break;
 	}
 }

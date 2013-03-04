@@ -95,6 +95,7 @@ test: prepared_xacts
 test: privileges
 test: security_label
 test: collate
+test: matview
 test: alter_generic
 test: misc
 test: psql

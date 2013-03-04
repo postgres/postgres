@@ -37,6 +37,7 @@
 #include "access/transam.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
+#include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
@@ -399,6 +400,7 @@ RelationParseRelOptions(Relation relation, HeapTuple tuple)
 		case RELKIND_TOASTVALUE:
 		case RELKIND_INDEX:
 		case RELKIND_VIEW:
+		case RELKIND_MATVIEW:
 			break;
 		default:
 			return;
@@ -953,6 +955,12 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 
 	/* make sure relation is marked as having no open file yet */
 	relation->rd_smgr = NULL;
+
+	if (relation->rd_rel->relkind == RELKIND_MATVIEW &&
+		heap_is_matview_init_state(relation))
+		relation->rd_isscannable = false;
+	else
+		relation->rd_isscannable = true;
 
 	/*
 	 * now we can free the memory allocated for pg_class_tuple
@@ -1523,6 +1531,7 @@ formrdesc(const char *relationName, Oid relationReltype,
 	 * initialize physical addressing information for the relation
 	 */
 	RelationInitPhysicalAddr(relation);
+	relation->rd_isscannable = true;
 
 	/*
 	 * initialize the rel-has-index flag, using hardwired knowledge
@@ -1747,6 +1756,7 @@ RelationReloadIndexInfo(Relation relation)
 	heap_freetuple(pg_class_tuple);
 	/* We must recalculate physical address in case it changed */
 	RelationInitPhysicalAddr(relation);
+	relation->rd_isscannable = true;
 
 	/*
 	 * For a non-system index, there are fields of the pg_index row that are
@@ -1893,6 +1903,11 @@ RelationClearRelation(Relation relation, bool rebuild)
 	if (relation->rd_isnailed)
 	{
 		RelationInitPhysicalAddr(relation);
+		if (relation->rd_rel->relkind == RELKIND_MATVIEW &&
+			heap_is_matview_init_state(relation))
+			relation->rd_isscannable = false;
+		else
+			relation->rd_isscannable = true;
 
 		if (relation->rd_rel->relkind == RELKIND_INDEX)
 		{
@@ -2680,6 +2695,12 @@ RelationBuildLocalRelation(const char *relname,
 	RelationInitLockInfo(rel);	/* see lmgr.c */
 
 	RelationInitPhysicalAddr(rel);
+
+	/* materialized view not initially scannable */
+	if (relkind == RELKIND_MATVIEW)
+		rel->rd_isscannable = false;
+	else
+		rel->rd_isscannable = true;
 
 	/*
 	 * Okay to insert into the relcache hash tables.
@@ -4424,6 +4445,11 @@ load_relcache_init_file(bool shared)
 		 */
 		RelationInitLockInfo(rel);
 		RelationInitPhysicalAddr(rel);
+		if (rel->rd_rel->relkind == RELKIND_MATVIEW &&
+			heap_is_matview_init_state(rel))
+			rel->rd_isscannable = false;
+		else
+			rel->rd_isscannable = true;
 	}
 
 	/*

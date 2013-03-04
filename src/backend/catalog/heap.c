@@ -835,6 +835,7 @@ AddNewRelationTuple(Relation pg_class_desc,
 	switch (relkind)
 	{
 		case RELKIND_RELATION:
+		case RELKIND_MATVIEW:
 		case RELKIND_INDEX:
 		case RELKIND_TOASTVALUE:
 			/* The relation is real, but as yet empty */
@@ -858,6 +859,7 @@ AddNewRelationTuple(Relation pg_class_desc,
 
 	/* Initialize relfrozenxid and relminmxid */
 	if (relkind == RELKIND_RELATION ||
+		relkind == RELKIND_MATVIEW ||
 		relkind == RELKIND_TOASTVALUE)
 	{
 		/*
@@ -1069,8 +1071,8 @@ heap_create_with_catalog(const char *relname,
 		if (IsBinaryUpgrade &&
 			OidIsValid(binary_upgrade_next_heap_pg_class_oid) &&
 			(relkind == RELKIND_RELATION || relkind == RELKIND_SEQUENCE ||
-			 relkind == RELKIND_VIEW || relkind == RELKIND_COMPOSITE_TYPE ||
-			 relkind == RELKIND_FOREIGN_TABLE))
+			 relkind == RELKIND_VIEW || relkind == RELKIND_MATVIEW ||
+			 relkind == RELKIND_COMPOSITE_TYPE || relkind == RELKIND_FOREIGN_TABLE))
 		{
 			relid = binary_upgrade_next_heap_pg_class_oid;
 			binary_upgrade_next_heap_pg_class_oid = InvalidOid;
@@ -1096,6 +1098,7 @@ heap_create_with_catalog(const char *relname,
 		{
 			case RELKIND_RELATION:
 			case RELKIND_VIEW:
+			case RELKIND_MATVIEW:
 			case RELKIND_FOREIGN_TABLE:
 				relacl = get_user_default_acl(ACL_OBJECT_RELATION, ownerid,
 											  relnamespace);
@@ -1139,6 +1142,7 @@ heap_create_with_catalog(const char *relname,
 	 */
 	if (IsUnderPostmaster && (relkind == RELKIND_RELATION ||
 							  relkind == RELKIND_VIEW ||
+							  relkind == RELKIND_MATVIEW ||
 							  relkind == RELKIND_FOREIGN_TABLE ||
 							  relkind == RELKIND_COMPOSITE_TYPE))
 		new_array_oid = AssignTypeArrayOid();
@@ -1316,7 +1320,8 @@ heap_create_with_catalog(const char *relname,
 
 	if (relpersistence == RELPERSISTENCE_UNLOGGED)
 	{
-		Assert(relkind == RELKIND_RELATION || relkind == RELKIND_TOASTVALUE);
+		Assert(relkind == RELKIND_RELATION || relkind == RELKIND_MATVIEW ||
+			   relkind == RELKIND_TOASTVALUE);
 		heap_create_init_fork(new_rel_desc);
 	}
 
@@ -1345,6 +1350,26 @@ heap_create_init_fork(Relation rel)
 	if (XLogIsNeeded())
 		log_smgrcreate(&rel->rd_smgr->smgr_rnode.node, INIT_FORKNUM);
 	smgrimmedsync(rel->rd_smgr, INIT_FORKNUM);
+}
+
+/*
+ * Check whether a materialized view is in an initial, unloaded state.
+ *
+ * The check here must match what is set up in heap_create_init_fork().
+ * Currently the init fork is an empty file.  A missing heap is also
+ * considered to be unloaded.
+ */
+bool
+heap_is_matview_init_state(Relation rel)
+{
+	Assert(rel->rd_rel->relkind == RELKIND_MATVIEW);
+
+	RelationOpenSmgr(rel);
+
+	if (!smgrexists(rel->rd_smgr, MAIN_FORKNUM))
+		return true;
+
+	return (smgrnblocks(rel->rd_smgr, MAIN_FORKNUM) < 1);
 }
 
 /*

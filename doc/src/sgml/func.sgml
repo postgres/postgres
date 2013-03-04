@@ -13744,6 +13744,10 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    </indexterm>
 
    <indexterm>
+    <primary>pg_relation_is_scannable</primary>
+   </indexterm>
+
+   <indexterm>
     <primary>pg_typeof</primary>
    </indexterm>
 
@@ -13867,29 +13871,29 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
       <row>
        <entry><literal><function>pg_get_viewdef(<parameter>view_name</parameter>)</function></literal></entry>
        <entry><type>text</type></entry>
-       <entry>get underlying <command>SELECT</command> command for view (<emphasis>deprecated</emphasis>)</entry>
+       <entry>get underlying <command>SELECT</command> command for view or materialized view (<emphasis>deprecated</emphasis>)</entry>
       </row>
       <row>
        <entry><literal><function>pg_get_viewdef(<parameter>view_name</parameter>, <parameter>pretty_bool</>)</function></literal></entry>
        <entry><type>text</type></entry>
-       <entry>get underlying <command>SELECT</command> command for view (<emphasis>deprecated</emphasis>)</entry>
+       <entry>get underlying <command>SELECT</command> command for view or materialized view (<emphasis>deprecated</emphasis>)</entry>
       </row>
       <row>
        <entry><literal><function>pg_get_viewdef(<parameter>view_oid</parameter>)</function></literal></entry>
        <entry><type>text</type></entry>
-       <entry>get underlying <command>SELECT</command> command for view</entry>
+       <entry>get underlying <command>SELECT</command> command for view or materialized view</entry>
       </row>
       <row>
        <entry><literal><function>pg_get_viewdef(<parameter>view_oid</parameter>, <parameter>pretty_bool</>)</function></literal></entry>
        <entry><type>text</type></entry>
-       <entry>get underlying <command>SELECT</command> command for view</entry>
+       <entry>get underlying <command>SELECT</command> command for view or materialized view</entry>
       </row>
       <row>
        <entry><literal><function>pg_get_viewdef(<parameter>view_oid</parameter>, <parameter>wrap_column_int</>)</function></literal></entry>
        <entry><type>text</type></entry>
-       <entry>get underlying <command>SELECT</command> command for view;
-              lines with fields are wrapped to specified number of columns,
-              pretty-printing is implied</entry>
+       <entry>get underlying <command>SELECT</command> command for view or
+              materialized view; lines with fields are wrapped to specified
+              number of columns, pretty-printing is implied</entry>
       </row>
       <row>
        <entry><literal><function>pg_options_to_table(<parameter>reloptions</parameter>)</function></literal></entry>
@@ -13905,6 +13909,11 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <entry><literal><function>pg_tablespace_location(<parameter>tablespace_oid</parameter>)</function></literal></entry>
        <entry><type>text</type></entry>
        <entry>get the path in the file system that this tablespace is located in</entry>
+      </row>
+      <row>
+       <entry><literal><function>pg_relation_is_scannable(<parameter>relation_oid</parameter>)</function></literal></entry>
+       <entry><type>boolean</type></entry>
+       <entry>is the relation scannable; a materialized view which has not been loaded will not be scannable</entry>
       </row>
       <row>
        <entry><literal><function>pg_typeof(<parameter>any</parameter>)</function></literal></entry>

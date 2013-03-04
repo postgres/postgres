@@ -1597,8 +1597,8 @@
    The catalog <structname>pg_class</structname> catalogs tables and most
    everything else that has columns or is otherwise similar to a
    table.  This includes indexes (but see also
-   <structname>pg_index</structname>), sequences, views, composite types,
-   and TOAST tables; see <structfield>relkind</>.
+   <structname>pg_index</structname>), sequences, views, materialized
+   views, composite types, and TOAST tables; see <structfield>relkind</>.
    Below, when we mean all of these
    kinds of objects we speak of <quote>relations</quote>.  Not all
    columns are meaningful for all relation types.
@@ -1789,8 +1789,9 @@
       <entry></entry>
       <entry>
        <literal>r</> = ordinary table, <literal>i</> = index,
-       <literal>S</> = sequence, <literal>v</> = view, <literal>c</> =
-       composite type, <literal>t</> = TOAST table,
+       <literal>S</> = sequence, <literal>v</> = view,
+       <literal>m</> = materialized view,
+       <literal>c</> = composite type, <literal>t</> = TOAST table,
        <literal>f</> = foreign table
       </entry>
      </row>

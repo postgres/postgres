@@ -713,6 +713,7 @@ typedef struct RangeTblEntry
 	 */
 	Oid			relid;			/* OID of the relation */
 	char		relkind;		/* relation kind (see pg_class.relkind) */
+	bool		isResultRel;	/* used in target of SELECT INTO or similar */
 
 	/*
 	 * Fields valid for a subquery RTE (else NULL):
@@ -1135,6 +1136,7 @@ typedef enum ObjectType
 	OBJECT_INDEX,
 	OBJECT_LANGUAGE,
 	OBJECT_LARGEOBJECT,
+	OBJECT_MATVIEW,
 	OBJECT_OPCLASS,
 	OBJECT_OPERATOR,
 	OBJECT_OPFAMILY,
@@ -2447,6 +2449,8 @@ typedef struct ExplainStmt
  * A query written as CREATE TABLE AS will produce this node type natively.
  * A query written as SELECT ... INTO will be transformed to this form during
  * parse analysis.
+ * A query written as CREATE MATERIALIZED view will produce this node type,
+ * during parse analysis, since it needs all the same data.
  *
  * The "query" field is handled similarly to EXPLAIN, though note that it
  * can be a SELECT or an EXECUTE, but not other DML statements.
@@ -2457,8 +2461,20 @@ typedef struct CreateTableAsStmt
 	NodeTag		type;
 	Node	   *query;			/* the query (see comments above) */
 	IntoClause *into;			/* destination table */
+	ObjectType	relkind;		/* type of object */
 	bool		is_select_into; /* it was written as SELECT INTO */
 } CreateTableAsStmt;
+
+/* ----------------------
+ *		REFRESH MATERIALIZED VIEW Statement
+ * ----------------------
+ */
+typedef struct RefreshMatViewStmt
+{
+	NodeTag		type;
+	bool		skipData;		/* true for WITH NO DATA */
+	RangeVar   *relation;		/* relation to insert into */
+} RefreshMatViewStmt;
 
 /* ----------------------
  * Checkpoint Statement
@@ -2517,7 +2533,7 @@ typedef struct ConstraintsSetStmt
 typedef struct ReindexStmt
 {
 	NodeTag		type;
-	ObjectType	kind;			/* OBJECT_INDEX, OBJECT_TABLE, OBJECT_DATABASE */
+	ObjectType	kind;			/* OBJECT_INDEX, OBJECT_TABLE, etc. */
 	RangeVar   *relation;		/* Table or index to reindex */
 	const char *name;			/* name of database to reindex */
 	bool		do_system;		/* include system tables in database case */

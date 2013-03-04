@@ -270,7 +270,8 @@ flagInhTables(TableInfo *tblinfo, int numTables,
 	{
 		/* Sequences and views never have parents */
 		if (tblinfo[i].relkind == RELKIND_SEQUENCE ||
-			tblinfo[i].relkind == RELKIND_VIEW)
+			tblinfo[i].relkind == RELKIND_VIEW ||
+			tblinfo[i].relkind == RELKIND_MATVIEW)
 			continue;
 
 		/* Don't bother computing anything for non-target tables, either */
@@ -315,7 +316,8 @@ flagInhAttrs(TableInfo *tblinfo, int numTables)
 
 		/* Sequences and views never have parents */
 		if (tbinfo->relkind == RELKIND_SEQUENCE ||
-			tbinfo->relkind == RELKIND_VIEW)
+			tbinfo->relkind == RELKIND_VIEW ||
+			tbinfo->relkind == RELKIND_MATVIEW)
 			continue;
 
 		/* Don't bother computing anything for non-target tables, either */

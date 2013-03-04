@@ -893,6 +893,206 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
 
 </sect1>
 
+<sect1 id="rules-materializedviews">
+<title>Materialized Views</title>
+
+<indexterm zone="rules-materializedviews">
+ <primary>rule</primary>
+ <secondary>and materialized views</secondary>
+</indexterm>
+
+<indexterm zone="rules-materializedviews">
+ <primary>materialized view</>
+ <secondary>implementation through rules</>
+</indexterm>
+
+<indexterm zone="rules-materializedviews">
+ <primary>view</>
+ <secondary>materialized</>
+</indexterm>
+
+<para>
+    Materialized views in <productname>PostgreSQL</productname> use the
+    rule system like views do, but persist the results in a table-like form.
+    The main differences between:
+
+<programlisting>
+CREATE MATERIALIZED VIEW mymatview AS SELECT * FROM mytab;
+</programlisting>
+
+    and:
+
+<programlisting>
+CREATE TABLE mymatview AS SELECT * FROM mytab;
+</programlisting>
+
+    are that the materialized view cannot subsequently be directly updated
+    and that the query used to create the materialized view is stored in
+    exactly the same way that a view's query is stored, so that fresh data
+    can be generated for the materialized view with:
+
+<programlisting>
+REFRESH MATERIALIZED VIEW mymatview;
+</programlisting>
+
+    The information about a materialized view in the
+    <productname>PostgreSQL</productname> system catalogs is exactly
+    the same as it is for a table or view. So for the parser, a
+    materialized view is a relation, just like a table or a view.  When
+    a materialized view is referenced in a query, the data is returned
+    directly from the materialized view, like from a table; the rule is
+    only used for populating the materialized view.
+</para>
+
+<para>
+    While access to the data stored in a materialized view is often much
+    faster than accessing the underlying tables directly or through a view,
+    the data is not always current; yet sometimes current data is not needed.
+    Consider a table which records sales:
+
+<programlisting>
+CREATE TABLE invoice (
+    invoice_no    integer        PRIMARY KEY,
+    seller_no     integer,       -- ID of salesperson
+    invoice_date  date,          -- date of sale
+    invoice_amt   numeric(13,2)  -- amount of sale
+);
+</programlisting>
+
+    If people want to be able to quickly graph historical sales data, they
+    might want to summarize, and they may not care about the incomplete data
+    for the current date:
+
+<programlisting>
+CREATE MATERIALIZED VIEW sales_summary AS
+  SELECT
+      seller_no,
+      invoice_date,
+      sum(invoice_amt)::numeric(13,2) as sales_amt
+    FROM invoice
+    WHERE invoice_date < CURRENT_DATE
+    GROUP BY
+      seller_no,
+      invoice_date
+    ORDER BY
+      seller_no,
+      invoice_date;
+
+CREATE UNIQUE INDEX sales_summary_seller
+  ON sales_summary (seller_no, invoice_date);
+</programlisting>
+
+    This materialized view might be useful for displaying a graph in the
+    dashboard created for salespeople.  A job could be scheduled to update
+    the statistics each night using this SQL statement:
+
+<programlisting>
+REFRESH MATERIALIZED VIEW sales_summary;
+</programlisting>
+</para>
+
+<para>
+    Another use for a materialized view is to allow faster access to data
+    brought across from a remote system, through a foreign data wrapper.
+    A simple example using <literal>file_fdw</literal> is below, with timings,
+    but since this is using cache on the local system the performance
+    difference on a foreign data wrapper to a remote system could be greater.
+
+    Setup:
+
+<programlisting>
+CREATE EXTENSION file_fdw;
+CREATE SERVER local_file FOREIGN DATA WRAPPER file_fdw ;
+CREATE FOREIGN TABLE words (word text NOT NULL)
+  SERVER local_file
+  OPTIONS (filename '/etc/dictionaries-common/words');
+CREATE MATERIALIZED VIEW wrd AS SELECT * FROM words;
+CREATE UNIQUE INDEX wrd_word ON wrd (word);
+CREATE EXTENSION pg_trgm ;
+CREATE INDEX wrd_trgm ON wrd USING gist (word gist_trgm_ops);
+VACUUM ANALYZE wrd;
+</programlisting>
+
+    Now let's spell-check a word.  Using <literal>file_fdw</literal> directly:
+
+<programlisting>
+SELECT count(*) FROM words WHERE word = 'caterpiler';
+
+ count 
+-------
+     0
+(1 row)
+</programlisting>
+
+    The plan is:
+
+<programlisting>
+ Aggregate  (cost=4125.19..4125.20 rows=1 width=0) (actual time=26.013..26.014 rows=1 loops=1)
+   ->  Foreign Scan on words  (cost=0.00..4124.70 rows=196 width=0) (actual time=26.011..26.011 rows=0 loops=1)
+         Filter: (word = 'caterpiler'::text)
+         Rows Removed by Filter: 99171
+         Foreign File: /etc/dictionaries-common/words
+         Foreign File Size: 938848
+ Total runtime: 26.081 ms
+</programlisting>
+
+    If the materialized view is used instead, the query is much faster:
+
+<programlisting>
+ Aggregate  (cost=4.44..4.45 rows=1 width=0) (actual time=0.074..0.074 rows=1 loops=1)
+   ->  Index Only Scan using wrd_word on wrd  (cost=0.42..4.44 rows=1 width=0) (actual time=0.071..0.071 rows=0 loops=1)
+         Index Cond: (word = 'caterpiler'::text)
+         Heap Fetches: 0
+ Total runtime: 0.119 ms
+</programlisting>
+
+    Either way, the word is spelled wrong, so let's look for what we might
+    have wanted.  Again using <literal>file_fdw</literal>:
+
+<programlisting>
+SELECT word FROM words ORDER BY word <-> 'caterpiler' LIMIT 10;
+
+     word     
+---------------
+ cater
+ caterpillar
+ Caterpillar
+ caterpillars
+ caterpillar's
+ Caterpillar's
+ caterer
+ caterer's
+ caters
+ catered
+(10 rows)
+</programlisting>
+
+<programlisting>
+ Limit  (cost=2195.70..2195.72 rows=10 width=32) (actual time=218.904..218.906 rows=10 loops=1)
+   ->  Sort  (cost=2195.70..2237.61 rows=16765 width=32) (actual time=218.902..218.904 rows=10 loops=1)
+         Sort Key: ((word <-> 'caterpiler'::text))
+         Sort Method: top-N heapsort  Memory: 25kB
+         ->  Foreign Scan on words  (cost=0.00..1833.41 rows=16765 width=32) (actual time=0.046..200.965 rows=99171 loops=1)
+               Foreign File: /etc/dictionaries-common/words
+               Foreign File Size: 938848
+ Total runtime: 218.966 ms
+</programlisting>
+
+    Using the materialized view:
+
+<programlisting>
+ Limit  (cost=0.28..1.02 rows=10 width=9) (actual time=24.916..25.079 rows=10 loops=1)
+   ->  Index Scan using wrd_trgm on wrd  (cost=0.28..7383.70 rows=99171 width=9) (actual time=24.914..25.076 rows=10 loops=1)
+         Order By: (word <-> 'caterpiler'::text)
+ Total runtime: 25.884 ms
+</programlisting>
+
+    If you can tolerate periodic update of the remote data to the local
+    database, the performance benefit can be substantial.
+</para>
+
+</sect1>
+
 <sect1 id="rules-update">
 <title>Rules on <command>INSERT</>, <command>UPDATE</>, and <command>DELETE</></title>
 

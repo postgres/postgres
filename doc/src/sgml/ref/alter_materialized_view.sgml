@@ -1,0 +1,167 @@
+<!--
+doc/src/sgml/ref/alter_materialized_view.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-ALTERMATERIALIZEDVIEW">
+ <refmeta>
+  <refentrytitle>ALTER MATERIALIZED VIEW</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>ALTER MATERIALIZED VIEW</refname>
+  <refpurpose>change the definition of a materialized view</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="sql-alterview">
+  <primary>ALTER MATERIALIZED VIEW</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+ALTER MATERIALIZED VIEW [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
+    <replaceable class="PARAMETER">action</replaceable> [, ... ]
+ALTER MATERIALIZED VIEW [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
+    RENAME [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> TO <replaceable class="PARAMETER">new_column_name</replaceable>
+ALTER MATERIALIZED VIEW [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
+    RENAME TO <replaceable class="parameter">new_name</replaceable>
+ALTER MATERIALIZED VIEW [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
+    SET SCHEMA <replaceable class="parameter">new_schema</replaceable>
+
+<phrase>where <replaceable class="PARAMETER">action</replaceable> is one of:</phrase>
+
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET STATISTICS <replaceable class="PARAMETER">integer</replaceable>
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET ( <replaceable class="PARAMETER">attribute_option</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> RESET ( <replaceable class="PARAMETER">attribute_option</replaceable> [, ... ] )
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }
+    CLUSTER ON <replaceable class="PARAMETER">index_name</replaceable>
+    SET WITHOUT CLUSTER
+    SET ( <replaceable class="PARAMETER">storage_parameter</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )
+    RESET ( <replaceable class="PARAMETER">storage_parameter</replaceable> [, ... ] )
+    OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
+    SET TABLESPACE <replaceable class="PARAMETER">new_tablespace</replaceable>
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>ALTER MATERIALIZED VIEW</command> changes various auxiliary
+   properties of an existing materialized view.
+  </para>
+
+  <para>
+   You must own the materialized view to use <command>ALTER MATERIALIZED
+   VIEW</>.  To change a materialized view's schema, you must also have
+   <literal>CREATE</> privilege on the new schema.
+   To alter the owner, you must also be a direct or indirect member of the new
+   owning role, and that role must have <literal>CREATE</literal> privilege on
+   the materialized view's schema.  (These restrictions enforce that altering
+   the owner doesn't do anything you couldn't do by dropping and recreating the
+   materialized view.  However, a superuser can alter ownership of any view
+   anyway.)
+  </para>
+
+  <para>
+   The statement subforms and actions available for
+   <command>ALTER MATERIALIZED VIEW</command> are a subset of those available
+   for <command>ALTER TABLE</command>, and have the same meaning when used for
+   materialized views.  See the descriptions for <xref linkend="sql-altertable">
+   for details.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+   <variablelist>
+
+    <varlistentry>
+     <term><replaceable class="parameter">name</replaceable></term>
+     <listitem>
+      <para>
+       The name (optionally schema-qualified) of an existing materialized view.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable class="PARAMETER">column_name</replaceable></term>
+     <listitem>
+      <para>
+       Name of a new or existing column.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable class="PARAMETER">new_column_name</replaceable></term>
+     <listitem>
+      <para>
+       New name for an existing column.
+      </para>
+     </listitem>
+    </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">new_owner</replaceable></term>
+    <listitem>
+     <para>
+      The user name of the new owner of the materialized view.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">new_name</replaceable></term>
+    <listitem>
+     <para>
+      The new name for the materialized view.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">new_schema</replaceable></term>
+    <listitem>
+     <para>
+      The new schema for the materialized view.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   To rename the materialized view <literal>foo</literal> to
+   <literal>bar</literal>:
+<programlisting>
+ALTER MATERIALIZED VIEW foo RENAME TO bar;
+</programlisting></para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   <command>ALTER MATERIALIZED VIEW</command> is a
+   <productname>PostgreSQL</productname> extension.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-creatematerializedview"></member>
+   <member><xref linkend="sql-dropmaterializedview"></member>
+   <member><xref linkend="sql-refreshmaterializedview"></member>
+  </simplelist>
+ </refsect1>
+</refentry>

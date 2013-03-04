@@ -1,0 +1,406 @@
+-- create a table to use as a basis for views and materialized views in various combinations
+CREATE TABLE t (id int NOT NULL PRIMARY KEY, type text NOT NULL, amt numeric NOT NULL);
+INSERT INTO t VALUES
+  (1, 'x', 2),
+  (2, 'x', 3),
+  (3, 'y', 5),
+  (4, 'y', 7),
+  (5, 'z', 11);
+-- we want a view based on the table, too, since views present additional challenges
+CREATE VIEW tv AS SELECT type, sum(amt) AS totamt FROM t GROUP BY type;
+SELECT * FROM tv;
+ type | totamt 
+------+--------
+ y    |     12
+ z    |     11
+ x    |      5
+(3 rows)
+
+-- create a materialized view with no data, and confirm correct behavior
+EXPLAIN (costs off)
+  CREATE MATERIALIZED VIEW tm AS SELECT type, sum(amt) AS totamt FROM t GROUP BY type WITH NO DATA;
+     QUERY PLAN      
+---------------------
+ HashAggregate
+   ->  Seq Scan on t
+(2 rows)
+
+CREATE MATERIALIZED VIEW tm AS SELECT type, sum(amt) AS totamt FROM t GROUP BY type WITH NO DATA;
+SELECT pg_relation_is_scannable('tm'::regclass);
+ pg_relation_is_scannable 
+--------------------------
+ f
+(1 row)
+
+SELECT * FROM tm;
+ERROR:  materialized view "tm" has not been populated
+HINT:  Use the REFRESH MATERIALIZED VIEW command.
+REFRESH MATERIALIZED VIEW tm;
+SELECT pg_relation_is_scannable('tm'::regclass);
+ pg_relation_is_scannable 
+--------------------------
+ t
+(1 row)
+
+CREATE UNIQUE INDEX tm_type ON tm (type);
+SELECT * FROM tm;
+ type | totamt 
+------+--------
+ y    |     12
+ z    |     11
+ x    |      5
+(3 rows)
+
+-- create various views
+EXPLAIN (costs off)
+  CREATE MATERIALIZED VIEW tvm AS SELECT * FROM tv;
+     QUERY PLAN      
+---------------------
+ HashAggregate
+   ->  Seq Scan on t
+(2 rows)
+
+CREATE MATERIALIZED VIEW tvm AS SELECT * FROM tv;
+SELECT * FROM tvm;
+ type | totamt 
+------+--------
+ y    |     12
+ z    |     11
+ x    |      5
+(3 rows)
+
+CREATE MATERIALIZED VIEW tmm AS SELECT sum(totamt) AS grandtot FROM tm;
+CREATE MATERIALIZED VIEW tvmm AS SELECT sum(totamt) AS grandtot FROM tvm;
+CREATE VIEW tvv AS SELECT sum(totamt) AS grandtot FROM tv;
+EXPLAIN (costs off)
+  CREATE MATERIALIZED VIEW tvvm AS SELECT * FROM tvv;
+        QUERY PLAN         
+---------------------------
+ Aggregate
+   ->  HashAggregate
+         ->  Seq Scan on t
+(3 rows)
+
+CREATE MATERIALIZED VIEW tvvm AS SELECT * FROM tvv;
+CREATE VIEW tvvmv AS SELECT * FROM tvvm;
+CREATE MATERIALIZED VIEW bb AS SELECT * FROM tvvmv;
+CREATE INDEX aa ON bb (grandtot);
+-- check that plans seem reasonable
+\d+ tvm
+                    Materialized view "public.tvm"
+ Column |  Type   | Modifiers | Storage  | Stats target | Description 
+--------+---------+-----------+----------+--------------+-------------
+ type   | text    |           | extended |              | 
+ totamt | numeric |           | main     |              | 
+View definition:
+ SELECT tv.type, 
+    tv.totamt
+   FROM tv;
+
+\d+ tvm
+                    Materialized view "public.tvm"
+ Column |  Type   | Modifiers | Storage  | Stats target | Description 
+--------+---------+-----------+----------+--------------+-------------
+ type   | text    |           | extended |              | 
+ totamt | numeric |           | main     |              | 
+View definition:
+ SELECT tv.type, 
+    tv.totamt
+   FROM tv;
+
+\d+ tvvm
+                    Materialized view "public.tvvm"
+  Column  |  Type   | Modifiers | Storage | Stats target | Description 
+----------+---------+-----------+---------+--------------+-------------
+ grandtot | numeric |           | main    |              | 
+View definition:
+ SELECT tvv.grandtot
+   FROM tvv;
+
+\d+ bb
+                     Materialized view "public.bb"
+  Column  |  Type   | Modifiers | Storage | Stats target | Description 
+----------+---------+-----------+---------+--------------+-------------
+ grandtot | numeric |           | main    |              | 
+Indexes:
+    "aa" btree (grandtot)
+View definition:
+ SELECT tvvmv.grandtot
+   FROM tvvmv;
+
+-- test schema behavior
+CREATE SCHEMA mvschema;
+ALTER MATERIALIZED VIEW tvm SET SCHEMA mvschema;
+\d+ tvm
+\d+ tvmm
+                    Materialized view "public.tvmm"
+  Column  |  Type   | Modifiers | Storage | Stats target | Description 
+----------+---------+-----------+---------+--------------+-------------
+ grandtot | numeric |           | main    |              | 
+View definition:
+ SELECT sum(tvm.totamt) AS grandtot
+   FROM mvschema.tvm;
+
+SET search_path = mvschema, public;
+\d+ tvm
+                   Materialized view "mvschema.tvm"
+ Column |  Type   | Modifiers | Storage  | Stats target | Description 
+--------+---------+-----------+----------+--------------+-------------
+ type   | text    |           | extended |              | 
+ totamt | numeric |           | main     |              | 
+View definition:
+ SELECT tv.type, 
+    tv.totamt
+   FROM tv;
+
+-- modify the underlying table data
+INSERT INTO t VALUES (6, 'z', 13);
+-- confirm pre- and post-refresh contents of fairly simple materialized views
+SELECT * FROM tm ORDER BY type;
+ type | totamt 
+------+--------
+ x    |      5
+ y    |     12
+ z    |     11
+(3 rows)
+
+SELECT * FROM tvm ORDER BY type;
+ type | totamt 
+------+--------
+ x    |      5
+ y    |     12
+ z    |     11
+(3 rows)
+
+REFRESH MATERIALIZED VIEW tm;
+REFRESH MATERIALIZED VIEW tvm;
+SELECT * FROM tm ORDER BY type;
+ type | totamt 
+------+--------
+ x    |      5
+ y    |     12
+ z    |     24
+(3 rows)
+
+SELECT * FROM tvm ORDER BY type;
+ type | totamt 
+------+--------
+ x    |      5
+ y    |     12
+ z    |     24
+(3 rows)
+
+RESET search_path;
+-- confirm pre- and post-refresh contents of nested materialized views
+EXPLAIN (costs off)
+  SELECT * FROM tmm;
+   QUERY PLAN    
+-----------------
+ Seq Scan on tmm
+(1 row)
+
+EXPLAIN (costs off)
+  SELECT * FROM tvmm;
+    QUERY PLAN    
+------------------
+ Seq Scan on tvmm
+(1 row)
+
+EXPLAIN (costs off)
+  SELECT * FROM tvvm;
+    QUERY PLAN    
+------------------
+ Seq Scan on tvvm
+(1 row)
+
+SELECT * FROM tmm;
+ grandtot 
+----------
+       28
+(1 row)
+
+SELECT * FROM tvmm;
+ grandtot 
+----------
+       28
+(1 row)
+
+SELECT * FROM tvvm;
+ grandtot 
+----------
+       28
+(1 row)
+
+REFRESH MATERIALIZED VIEW tmm;
+REFRESH MATERIALIZED VIEW tvmm;
+REFRESH MATERIALIZED VIEW tvvm;
+EXPLAIN (costs off)
+  SELECT * FROM tmm;
+   QUERY PLAN    
+-----------------
+ Seq Scan on tmm
+(1 row)
+
+EXPLAIN (costs off)
+  SELECT * FROM tvmm;
+    QUERY PLAN    
+------------------
+ Seq Scan on tvmm
+(1 row)
+
+EXPLAIN (costs off)
+  SELECT * FROM tvvm;
+    QUERY PLAN    
+------------------
+ Seq Scan on tvvm
+(1 row)
+
+SELECT * FROM tmm;
+ grandtot 
+----------
+       41
+(1 row)
+
+SELECT * FROM tvmm;
+ grandtot 
+----------
+       41
+(1 row)
+
+SELECT * FROM tvvm;
+ grandtot 
+----------
+       41
+(1 row)
+
+-- test diemv when the mv does not exist
+DROP MATERIALIZED VIEW IF EXISTS tum;
+NOTICE:  materialized view "tum" does not exist, skipping
+-- make sure that an unlogged materialized view works (in the absence of a crash)
+CREATE UNLOGGED MATERIALIZED VIEW tum AS SELECT type, sum(amt) AS totamt FROM t GROUP BY type WITH NO DATA;
+SELECT pg_relation_is_scannable('tum'::regclass);
+ pg_relation_is_scannable 
+--------------------------
+ f
+(1 row)
+
+SELECT * FROM tum;
+ERROR:  materialized view "tum" has not been populated
+HINT:  Use the REFRESH MATERIALIZED VIEW command.
+REFRESH MATERIALIZED VIEW tum;
+SELECT pg_relation_is_scannable('tum'::regclass);
+ pg_relation_is_scannable 
+--------------------------
+ t
+(1 row)
+
+SELECT * FROM tum;
+ type | totamt 
+------+--------
+ y    |     12
+ z    |     24
+ x    |      5
+(3 rows)
+
+REFRESH MATERIALIZED VIEW tum WITH NO DATA;
+SELECT pg_relation_is_scannable('tum'::regclass);
+ pg_relation_is_scannable 
+--------------------------
+ f
+(1 row)
+
+SELECT * FROM tum;
+ERROR:  materialized view "tum" has not been populated
+HINT:  Use the REFRESH MATERIALIZED VIEW command.
+REFRESH MATERIALIZED VIEW tum WITH DATA;
+SELECT pg_relation_is_scannable('tum'::regclass);
+ pg_relation_is_scannable 
+--------------------------
+ t
+(1 row)
+
+SELECT * FROM tum;
+ type | totamt 
+------+--------
+ y    |     12
+ z    |     24
+ x    |      5
+(3 rows)
+
+-- test diemv when the mv does exist
+DROP MATERIALIZED VIEW IF EXISTS tum;
+-- make sure that dependencies are reported properly when they block the drop
+DROP TABLE t;
+ERROR:  cannot drop table t because other objects depend on it
+DETAIL:  view tv depends on table t
+view tvv depends on view tv
+materialized view tvvm depends on view tvv
+view tvvmv depends on materialized view tvvm
+materialized view bb depends on view tvvmv
+materialized view mvschema.tvm depends on view tv
+materialized view tvmm depends on materialized view mvschema.tvm
+materialized view tm depends on table t
+materialized view tmm depends on materialized view tm
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+-- make sure dependencies are dropped and reported
+-- and make sure that transactional behavior is correct on rollback
+-- incidentally leaving some interesting materialized views for pg_dump testing
+BEGIN;
+DROP TABLE t CASCADE;
+NOTICE:  drop cascades to 9 other objects
+DETAIL:  drop cascades to view tv
+drop cascades to view tvv
+drop cascades to materialized view tvvm
+drop cascades to view tvvmv
+drop cascades to materialized view bb
+drop cascades to materialized view mvschema.tvm
+drop cascades to materialized view tvmm
+drop cascades to materialized view tm
+drop cascades to materialized view tmm
+ROLLBACK;
+-- some additional tests not using base tables
+CREATE VIEW v_test1 AS SELECT 1 moo;
+CREATE VIEW v_test2 AS SELECT moo, 2*moo FROM v_test1 UNION ALL SELECT moo, 3*moo FROM v_test1;
+\d+ v_test2
+                 View "public.v_test2"
+  Column  |  Type   | Modifiers | Storage | Description 
+----------+---------+-----------+---------+-------------
+ moo      | integer |           | plain   | 
+ ?column? | integer |           | plain   | 
+View definition:
+         SELECT v_test1.moo, 
+            2 * v_test1.moo
+           FROM v_test1
+UNION ALL 
+         SELECT v_test1.moo, 
+            3 * v_test1.moo
+           FROM v_test1;
+
+CREATE MATERIALIZED VIEW mv_test2 AS SELECT moo, 2*moo FROM v_test2 UNION ALL SELECT moo, 3*moo FROM v_test2;
+\d+ mv_test2
+                  Materialized view "public.mv_test2"
+  Column  |  Type   | Modifiers | Storage | Stats target | Description 
+----------+---------+-----------+---------+--------------+-------------
+ moo      | integer |           | plain   |              | 
+ ?column? | integer |           | plain   |              | 
+View definition:
+         SELECT v_test2.moo, 
+            2 * v_test2.moo
+           FROM v_test2
+UNION ALL 
+         SELECT v_test2.moo, 
+            3 * v_test2.moo
+           FROM v_test2;
+
+CREATE MATERIALIZED VIEW mv_test3 AS SELECT * FROM mv_test2 WHERE moo = 12345;
+SELECT pg_relation_is_scannable('mv_test3'::regclass);
+ pg_relation_is_scannable 
+--------------------------
+ t
+(1 row)
+
+DROP VIEW v_test1 CASCADE;
+NOTICE:  drop cascades to 3 other objects
+DETAIL:  drop cascades to view v_test2
+drop cascades to materialized view mv_test2
+drop cascades to materialized view mv_test3

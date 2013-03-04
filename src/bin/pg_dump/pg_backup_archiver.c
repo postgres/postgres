@@ -2908,7 +2908,8 @@ _getObjectDescription(PQExpBuffer buf, TocEntry *te, ArchiveHandle *AH)
 	const char *type = te->desc;
 
 	/* Use ALTER TABLE for views and sequences */
-	if (strcmp(type, "VIEW") == 0 || strcmp(type, "SEQUENCE") == 0)
+	if (strcmp(type, "VIEW") == 0 || strcmp(type, "SEQUENCE") == 0||
+		strcmp(type, "MATERIALIZED VIEW") == 0)
 		type = "TABLE";
 
 	/* objects named by a schema and name */
@@ -3140,6 +3141,7 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 			strcmp(te->desc, "TABLE") == 0 ||
 			strcmp(te->desc, "TYPE") == 0 ||
 			strcmp(te->desc, "VIEW") == 0 ||
+			strcmp(te->desc, "MATERIALIZED VIEW") == 0 ||
 			strcmp(te->desc, "SEQUENCE") == 0 ||
 			strcmp(te->desc, "FOREIGN TABLE") == 0 ||
 			strcmp(te->desc, "TEXT SEARCH DICTIONARY") == 0 ||

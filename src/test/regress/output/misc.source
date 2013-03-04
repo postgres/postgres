@@ -588,6 +588,7 @@ SELECT user_relns() AS user_relns
  arrtest
  b
  b_star
+ bb
  box_tbl
  bprime
  bt_f8_heap
@@ -671,6 +672,7 @@ SELECT user_relns() AS user_relns
  student
  subselect_tbl
  suffix_text_tbl
+ t
  tenk1
  tenk2
  test_range_excl
@@ -683,10 +685,18 @@ SELECT user_relns() AS user_relns
  timestamptz_tbl
  timetz_tbl
  tinterval_tbl
+ tm
+ tmm
  toyemp
+ tv
+ tvm
+ tvmm
+ tvv
+ tvvm
+ tvvmv
  varchar_tbl
  xacttest
-(108 rows)
+(118 rows)
 
 SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer')));
  name 

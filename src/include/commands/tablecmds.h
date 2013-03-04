@@ -78,4 +78,6 @@ extern void AtEOSubXact_on_commit_actions(bool isCommit,
 extern void RangeVarCallbackOwnsTable(const RangeVar *relation,
 						  Oid relId, Oid oldRelId, void *arg);
 
+extern bool isQueryUsingTempRelation(Query *query);
+
 #endif   /* TABLECMDS_H */

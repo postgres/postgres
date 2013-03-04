@@ -38,6 +38,7 @@ COMMENT ON
   FUNCTION <replaceable class="PARAMETER">function_name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) |
   INDEX <replaceable class="PARAMETER">object_name</replaceable> |
   LARGE OBJECT <replaceable class="PARAMETER">large_object_oid</replaceable> |
+  MATERIALIZED VIEW <replaceable class="PARAMETER">object_name</replaceable> |
   OPERATOR <replaceable class="PARAMETER">operator_name</replaceable> (<replaceable class="PARAMETER">left_type</replaceable>, <replaceable class="PARAMETER">right_type</replaceable>) |
   OPERATOR CLASS <replaceable class="PARAMETER">object_name</replaceable> USING <replaceable class="parameter">index_method</replaceable> |
   OPERATOR FAMILY <replaceable class="PARAMETER">object_name</replaceable> USING <replaceable class="parameter">index_method</replaceable> |
@@ -279,6 +280,7 @@ COMMENT ON FUNCTION my_function (timestamp) IS 'Returns Roman Numeral';
 COMMENT ON INDEX my_index IS 'Enforces uniqueness on employee ID';
 COMMENT ON LANGUAGE plpython IS 'Python support for stored procedures';
 COMMENT ON LARGE OBJECT 346344 IS 'Planning document';
+COMMENT ON MATERIALIZED VIEW my_matview IS 'Summary of order history';
 COMMENT ON OPERATOR ^ (text, text) IS 'Performs intersection of two texts';
 COMMENT ON OPERATOR - (NONE, integer) IS 'Unary minus';
 COMMENT ON OPERATOR CLASS int4ops USING btree IS '4 byte integer operators for btrees';

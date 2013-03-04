@@ -33,8 +33,8 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ <replaceable class="parameter">name</
   <title>Description</title>
 
   <para>
-   <command>CREATE INDEX</command> constructs an index
-   on the specified column(s) of the specified table.
+   <command>CREATE INDEX</command> constructs an index on the specified column(s)
+   of the specified relation, which can be a table or a materialized view.
    Indexes are primarily used to enhance database performance (though
    inappropriate use can result in slower performance).
   </para>

@@ -1168,7 +1168,8 @@ rewriteTargetListUD(Query *parsetree, RangeTblEntry *target_rte,
 	const char *attrname;
 	TargetEntry *tle;
 
-	if (target_relation->rd_rel->relkind == RELKIND_RELATION)
+	if (target_relation->rd_rel->relkind == RELKIND_RELATION ||
+		target_relation->rd_rel->relkind == RELKIND_MATVIEW)
 	{
 		/*
 		 * Emit CTID so that executor can find the row to update or delete.
@@ -1589,6 +1590,23 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 		 * AcquireRewriteLocks should have locked the rel already.
 		 */
 		rel = heap_open(rte->relid, NoLock);
+
+		/*
+		 * Skip materialized view expansion when it is being created.
+		 *
+		 * NOTE: This is assuming that we cannot have gotten to this point
+		 * with a non-scannable materialized view unless it is being
+		 * populated, and that if it is scannable we want to use the existing
+		 * contents. It would be nice to have some way to confirm that we're
+		 * doing the right thing here, but rule expansion doesn't give us a
+		 * lot to work with, so we are trusting earlier validations and
+		 * execution steps to get it right.
+		 */
+		if (rel->rd_rel->relkind == RELKIND_MATVIEW && rel->rd_isscannable)
+		{
+			heap_close(rel, NoLock);
+			break;
+		}
 
 		/*
 		 * Collect the RIR rules that we must apply

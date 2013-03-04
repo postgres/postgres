@@ -110,7 +110,8 @@ typedef enum
 	DO_BLOB_DATA,
 	DO_PRE_DATA_BOUNDARY,
 	DO_POST_DATA_BOUNDARY,
-	DO_EVENT_TRIGGER
+	DO_EVENT_TRIGGER,
+	DO_REFRESH_MATVIEW
 } DumpableObjectType;
 
 typedef struct _dumpableObject
@@ -242,6 +243,7 @@ typedef struct _tableInfo
 	bool		hasrules;		/* does it have any rules? */
 	bool		hastriggers;	/* does it have any triggers? */
 	bool		hasoids;		/* does it have OIDs? */
+	bool		isscannable;	/* is valid for use in queries */
 	uint32		frozenxid;		/* for restore frozen xid */
 	Oid			toast_oid;		/* for restore toast frozen xid */
 	uint32		toast_frozenxid;	/* for restore toast frozen xid */

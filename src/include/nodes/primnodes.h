@@ -80,7 +80,8 @@ typedef struct RangeVar
 } RangeVar;
 
 /*
- * IntoClause - target information for SELECT INTO and CREATE TABLE AS
+ * IntoClause - target information for SELECT INTO, CREATE TABLE AS, and
+ * CREATE MATERIALIZED VIEW
  */
 typedef struct IntoClause
 {
@@ -92,6 +93,7 @@ typedef struct IntoClause
 	OnCommitAction onCommit;	/* what do we do at COMMIT? */
 	char	   *tableSpaceName; /* table space to use, or NULL */
 	bool		skipData;		/* true for WITH NO DATA */
+	char		relkind;		/* RELKIND_RELATION or RELKIND_MATVIEW */
 } IntoClause;
 
 

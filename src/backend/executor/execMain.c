@@ -84,6 +84,7 @@ static char *ExecBuildSlotValueDescription(TupleTableSlot *slot,
 							  int maxfieldlen);
 static void EvalPlanQualStart(EPQState *epqstate, EState *parentestate,
 				  Plan *planTree);
+static bool RelationIdIsScannable(Oid relid);
 
 /* end of local decls */
 
@@ -493,6 +494,65 @@ ExecutorRewind(QueryDesc *queryDesc)
 
 
 /*
+ * ExecCheckRelationsScannable
+ *		Check that relations which are to be accessed are in a scannable
+ *		state.
+ *
+ * If not, throw error. For a materialized view, suggest refresh.
+ */
+static void
+ExecCheckRelationsScannable(List *rangeTable)
+{
+	ListCell   *l;
+
+	foreach(l, rangeTable)
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
+
+		if (rte->rtekind != RTE_RELATION)
+			continue;
+
+		if (!RelationIdIsScannable(rte->relid))
+		{
+			if (rte->relkind == RELKIND_MATVIEW)
+			{
+				/* It is OK to replace the contents of an invalid matview. */
+				if (rte->isResultRel)
+					continue;
+
+				ereport(ERROR,
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("materialized view \"%s\" has not been populated",
+								get_rel_name(rte->relid)),
+						 errhint("Use the REFRESH MATERIALIZED VIEW command.")));
+			}
+			else
+				/* This should never happen, so elog will do. */
+				elog(ERROR, "relation \"%s\" is not flagged as scannable",
+					 get_rel_name(rte->relid));
+		}
+	}
+}
+
+/*
+ * Tells whether a relation is scannable.
+ *
+ * Currently only non-populated materialzed views are not.
+ */
+static bool
+RelationIdIsScannable(Oid relid)
+{
+	Relation	relation;
+	bool		result;
+
+	relation = RelationIdGetRelation(relid);
+	result = relation->rd_isscannable;
+	RelationClose(relation);
+
+	return result;
+}
+
+/*
  * ExecCheckRTPerms
  *		Check access permissions for all relations listed in a range table.
  *
@@ -883,6 +943,13 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	planstate = ExecInitNode(plan, estate, eflags);
 
 	/*
+	 * Unless we are creating a view or are creating a materialized view WITH
+	 * NO DATA, ensure that all referenced relations are scannable.
+	 */
+	if ((eflags & EXEC_FLAG_WITH_NO_DATA) == 0)
+		ExecCheckRelationsScannable(rangeTable);
+
+	/*
 	 * Get the tuple descriptor describing the type of tuples to return.
 	 */
 	tupType = ExecGetResultType(planstate);
@@ -995,6 +1062,12 @@ CheckValidResultRel(Relation resultRel, CmdType operation)
 					break;
 			}
 			break;
+		case RELKIND_MATVIEW:
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("cannot change materialized view \"%s\"",
+							RelationGetRelationName(resultRel))));
+			break;
 		case RELKIND_FOREIGN_TABLE:
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -1043,6 +1116,13 @@ CheckValidRowMarkRel(Relation rel, RowMarkType markType)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot lock rows in view \"%s\"",
+							RelationGetRelationName(rel))));
+			break;
+		case RELKIND_MATVIEW:
+			/* Should not get here */
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("cannot lock rows in materialized view \"%s\"",
 							RelationGetRelationName(rel))));
 			break;
 		case RELKIND_FOREIGN_TABLE:

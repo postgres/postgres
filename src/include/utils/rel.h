@@ -83,6 +83,7 @@ typedef struct RelationData
 	BackendId	rd_backend;		/* owning backend id, if temporary relation */
 	bool		rd_islocaltemp; /* rel is a temp rel of this session */
 	bool		rd_isnailed;	/* rel is nailed in cache */
+	bool		rd_isscannable; /* rel can be scanned */
 	bool		rd_isvalid;		/* relcache entry is valid */
 	char		rd_indexvalid;	/* state of rd_indexlist: 0 = not valid, 1 =
 								 * valid, 2 = temporarily forced */

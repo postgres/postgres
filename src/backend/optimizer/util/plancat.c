@@ -409,6 +409,7 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 	{
 		case RELKIND_RELATION:
 		case RELKIND_INDEX:
+		case RELKIND_MATVIEW:
 		case RELKIND_TOASTVALUE:
 			/* it has storage, ok to call the smgr */
 			curpages = RelationGetNumberOfBlocks(rel);
