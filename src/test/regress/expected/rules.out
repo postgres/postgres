@@ -2327,6 +2327,13 @@ select xmin, * from fooview;  -- fail, views don't have such a column
 ERROR:  column "xmin" does not exist
 LINE 1: select xmin, * from fooview;
                ^
+select reltoastrelid, reltoastidxid, relkind, relfrozenxid
+  from pg_class where oid = 'fooview'::regclass;
+ reltoastrelid | reltoastidxid | relkind | relfrozenxid 
+---------------+---------------+---------+--------------
+             0 |             0 | v       |            0
+(1 row)
+
 drop view fooview;
 --
 -- check for planner problems with complex inherited UPDATES

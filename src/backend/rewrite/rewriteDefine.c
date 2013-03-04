@@ -16,6 +16,9 @@
 
 #include "access/heapam.h"
 #include "access/htup_details.h"
+#include "access/multixact.h"
+#include "access/transam.h"
+#include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
@@ -409,7 +412,7 @@ DefineQueryRewrite(char *rulename,
 		 * strict, because they will reject relations that once had such but
 		 * don't anymore.  But we don't really care, because this whole
 		 * business of converting relations to views is just a kluge to allow
-		 * loading ancient pg_dump files.)
+		 * dump/reload of views that participate in circular dependencies.)
 		 */
 		if (event_relation->rd_rel->relkind != RELKIND_VIEW)
 		{
@@ -500,30 +503,103 @@ DefineQueryRewrite(char *rulename,
 							replace);
 
 		/*
-		 * Set pg_class 'relhasrules' field TRUE for event relation. If
-		 * appropriate, also modify the 'relkind' field to show that the
-		 * relation is now a view.
+		 * Set pg_class 'relhasrules' field TRUE for event relation.
 		 *
 		 * Important side effect: an SI notice is broadcast to force all
 		 * backends (including me!) to update relcache entries with the new
 		 * rule.
 		 */
-		SetRelationRuleStatus(event_relid, true, RelisBecomingView);
+		SetRelationRuleStatus(event_relid, true);
 	}
 
-	/*
-	 * If the relation is becoming a view, delete the storage files associated
-	 * with it.  Also, get rid of any system attribute entries in pg_attribute,
-	 * because a view shouldn't have any of those.
+	/* ---------------------------------------------------------------------
+	 * If the relation is becoming a view:
+	 * - delete the associated storage files
+	 * - get rid of any system attributes in pg_attribute; a view shouldn't
+	 *   have any of those
+	 * - remove the toast table; there is no need for it anymore, and its
+	 *   presence would make vacuum slightly more complicated
+	 * - set relkind to RELKIND_VIEW, and adjust other pg_class fields
+	 *   to be appropriate for a view
 	 *
 	 * NB: we had better have AccessExclusiveLock to do this ...
-	 *
-	 * XXX what about getting rid of its TOAST table?  For now, we don't.
+	 * ---------------------------------------------------------------------
 	 */
 	if (RelisBecomingView)
 	{
+		Relation	relationRelation;
+		Oid			toastrelid;
+		HeapTuple	classTup;
+		Form_pg_class classForm;
+
+		relationRelation = heap_open(RelationRelationId, RowExclusiveLock);
+		toastrelid = event_relation->rd_rel->reltoastrelid;
+
+		/* drop storage while table still looks like a table  */
 		RelationDropStorage(event_relation);
 		DeleteSystemAttributeTuples(event_relid);
+
+		/*
+		 * Drop the toast table if any.  (This won't take care of updating
+		 * the toast fields in the relation's own pg_class entry; we handle
+		 * that below.)
+		 */
+		if (OidIsValid(toastrelid))
+		{
+			ObjectAddress toastobject;
+
+			/*
+			 * Delete the dependency of the toast relation on the main
+			 * relation so we can drop the former without dropping the latter.
+			 */
+			deleteDependencyRecordsFor(RelationRelationId, toastrelid,
+									   false);
+
+			/* Make deletion of dependency record visible */
+			CommandCounterIncrement();
+
+			/* Now drop toast table, including its index */
+			toastobject.classId = RelationRelationId;
+			toastobject.objectId = toastrelid;
+			toastobject.objectSubId = 0;
+			performDeletion(&toastobject, DROP_RESTRICT,
+							PERFORM_DELETION_INTERNAL);
+		}
+
+		/*
+		 * SetRelationRuleStatus may have updated the pg_class row, so we must
+		 * advance the command counter before trying to update it again.
+		 */
+		CommandCounterIncrement();
+
+		/*
+		 * Fix pg_class entry to look like a normal view's, including setting
+		 * the correct relkind and removal of reltoastrelid/reltoastidxid of
+		 * the toast table we potentially removed above.
+		 */
+		classTup = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(event_relid));
+		if (!HeapTupleIsValid(classTup))
+			elog(ERROR, "cache lookup failed for relation %u", event_relid);
+		classForm = (Form_pg_class) GETSTRUCT(classTup);
+
+		classForm->reltablespace = InvalidOid;
+		classForm->relpages = 0;
+		classForm->reltuples = 0;
+		classForm->relallvisible = 0;
+		classForm->reltoastrelid = InvalidOid;
+		classForm->reltoastidxid = InvalidOid;
+		classForm->relhasindex = false;
+		classForm->relkind = RELKIND_VIEW;
+		classForm->relhasoids = false;
+		classForm->relhaspkey = false;
+		classForm->relfrozenxid = InvalidTransactionId;
+		classForm->relminmxid = InvalidMultiXactId;
+
+		simple_heap_update(relationRelation, &classTup->t_self, classTup);
+		CatalogUpdateIndexes(relationRelation, classTup);
+
+		heap_freetuple(classTup);
+		heap_close(relationRelation, RowExclusiveLock);
 	}
 
 	/* Close rel, but keep lock till commit... */
