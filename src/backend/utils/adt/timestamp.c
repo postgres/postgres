@@ -1690,8 +1690,9 @@ tm2timestamp(struct pg_tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
 		return -1;
 	}
 	/* check for just-barely overflow (okay except time-of-day wraps) */
-	if ((*result < 0 && date >= 0) ||
-		(*result >= 0 && date < 0))
+	/* caution: we want to allow 1999-12-31 24:00:00 */
+	if ((*result < 0 && date > 0) ||
+		(*result > 0 && date < -1))
 	{
 		*result = 0;			/* keep compiler quiet */
 		return -1;
