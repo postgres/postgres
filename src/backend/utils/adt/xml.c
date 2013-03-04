@@ -2002,6 +2002,12 @@ map_sql_value_to_xml_value(Datum value, Oid type, bool xml_escape_strings)
 		char	   *str;
 
 		/*
+		 * Flatten domains; the special-case treatments below should apply
+		 * to, eg, domains over boolean not just boolean.
+		 */
+		type = getBaseType(type);
+
+		/*
 		 * Special XSD formatting for some data types
 		 */
 		switch (type)
