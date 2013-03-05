@@ -1492,12 +1492,7 @@ str_tolower(const char *buff, size_t nbytes, Oid collid)
 	/* C/POSIX collations use this path regardless of database encoding */
 	if (lc_ctype_is_c(collid))
 	{
-		char	   *p;
-
-		result = pnstrdup(buff, nbytes);
-
-		for (p = result; *p; p++)
-			*p = pg_ascii_tolower((unsigned char) *p);
+		result = asc_tolower(buff, nbytes);
 	}
 #ifdef USE_WIDE_UPPER_LOWER
 	else if (pg_database_encoding_max_length() > 1)
@@ -1617,12 +1612,7 @@ str_toupper(const char *buff, size_t nbytes, Oid collid)
 	/* C/POSIX collations use this path regardless of database encoding */
 	if (lc_ctype_is_c(collid))
 	{
-		char	   *p;
-
-		result = pnstrdup(buff, nbytes);
-
-		for (p = result; *p; p++)
-			*p = pg_ascii_toupper((unsigned char) *p);
+		result = asc_toupper(buff, nbytes);
 	}
 #ifdef USE_WIDE_UPPER_LOWER
 	else if (pg_database_encoding_max_length() > 1)
@@ -1743,23 +1733,7 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 	/* C/POSIX collations use this path regardless of database encoding */
 	if (lc_ctype_is_c(collid))
 	{
-		char	   *p;
-
-		result = pnstrdup(buff, nbytes);
-
-		for (p = result; *p; p++)
-		{
-			char		c;
-
-			if (wasalnum)
-				*p = c = pg_ascii_tolower((unsigned char) *p);
-			else
-				*p = c = pg_ascii_toupper((unsigned char) *p);
-			/* we don't trust isalnum() here */
-			wasalnum = ((c >= 'A' && c <= 'Z') ||
-						(c >= 'a' && c <= 'z') ||
-						(c >= '0' && c <= '9'));
-		}
+		result = asc_initcap(buff, nbytes);
 	}
 #ifdef USE_WIDE_UPPER_LOWER
 	else if (pg_database_encoding_max_length() > 1)
@@ -1886,6 +1860,87 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 	return result;
 }
 
+/*
+ * ASCII-only lower function
+ *
+ * We pass the number of bytes so we can pass varlena and char*
+ * to this function.  The result is a palloc'd, null-terminated string.
+ */
+char *
+asc_tolower(const char *buff, size_t nbytes)
+{
+	char	   *result;
+	char	   *p;
+
+	if (!buff)
+		return NULL;
+
+	result = pnstrdup(buff, nbytes);
+
+	for (p = result; *p; p++)
+		*p = pg_ascii_tolower((unsigned char) *p);
+
+	return result;
+}
+
+/*
+ * ASCII-only upper function
+ *
+ * We pass the number of bytes so we can pass varlena and char*
+ * to this function.  The result is a palloc'd, null-terminated string.
+ */
+char *
+asc_toupper(const char *buff, size_t nbytes)
+{
+	char	   *result;
+	char	   *p;
+
+	if (!buff)
+		return NULL;
+
+	result = pnstrdup(buff, nbytes);
+
+	for (p = result; *p; p++)
+		*p = pg_ascii_toupper((unsigned char) *p);
+
+	return result;
+}
+
+/*
+ * ASCII-only initcap function
+ *
+ * We pass the number of bytes so we can pass varlena and char*
+ * to this function.  The result is a palloc'd, null-terminated string.
+ */
+char *
+asc_initcap(const char *buff, size_t nbytes)
+{
+	char	   *result;
+	char	   *p;
+	int			wasalnum = false;
+
+	if (!buff)
+		return NULL;
+
+	result = pnstrdup(buff, nbytes);
+
+	for (p = result; *p; p++)
+	{
+		char		c;
+
+		if (wasalnum)
+			*p = c = pg_ascii_tolower((unsigned char) *p);
+		else
+			*p = c = pg_ascii_toupper((unsigned char) *p);
+		/* we don't trust isalnum() here */
+		wasalnum = ((c >= 'A' && c <= 'Z') ||
+					(c >= 'a' && c <= 'z') ||
+					(c >= '0' && c <= '9'));
+	}
+
+	return result;
+}
+
 /* convenience routines for when the input is null-terminated */
 
 static char *
@@ -1905,6 +1960,20 @@ str_initcap_z(const char *buff, Oid collid)
 {
 	return str_initcap(buff, strlen(buff), collid);
 }
+
+static char *
+asc_tolower_z(const char *buff)
+{
+	return asc_tolower(buff, strlen(buff));
+}
+
+static char *
+asc_toupper_z(const char *buff)
+{
+	return asc_toupper(buff, strlen(buff));
+}
+
+/* asc_initcap_z is not currently needed */
 
 
 /* ----------
@@ -2418,7 +2487,8 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				INVALID_FOR_INTERVAL;
 				if (tmtcTzn(in))
 				{
-					char	   *p = str_tolower_z(tmtcTzn(in), collid);
+					/* We assume here that timezone names aren't localized */
+					char	   *p = asc_tolower_z(tmtcTzn(in));
 
 					strcpy(s, p);
 					pfree(p);
@@ -2465,7 +2535,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					strcpy(s, str_toupper_z(localized_full_months[tm->tm_mon - 1], collid));
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
-						 str_toupper_z(months_full[tm->tm_mon - 1], collid));
+						 asc_toupper_z(months_full[tm->tm_mon - 1]));
 				s += strlen(s);
 				break;
 			case DCH_Month:
@@ -2475,7 +2545,8 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				if (S_TM(n->suffix))
 					strcpy(s, str_initcap_z(localized_full_months[tm->tm_mon - 1], collid));
 				else
-					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9, months_full[tm->tm_mon - 1]);
+					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
+							months_full[tm->tm_mon - 1]);
 				s += strlen(s);
 				break;
 			case DCH_month:
@@ -2485,10 +2556,8 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				if (S_TM(n->suffix))
 					strcpy(s, str_tolower_z(localized_full_months[tm->tm_mon - 1], collid));
 				else
-				{
-					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9, months_full[tm->tm_mon - 1]);
-					*s = pg_tolower((unsigned char) *s);
-				}
+					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
+							asc_tolower_z(months_full[tm->tm_mon - 1]));
 				s += strlen(s);
 				break;
 			case DCH_MON:
@@ -2498,7 +2567,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				if (S_TM(n->suffix))
 					strcpy(s, str_toupper_z(localized_abbrev_months[tm->tm_mon - 1], collid));
 				else
-					strcpy(s, str_toupper_z(months[tm->tm_mon - 1], collid));
+					strcpy(s, asc_toupper_z(months[tm->tm_mon - 1]));
 				s += strlen(s);
 				break;
 			case DCH_Mon:
@@ -2518,10 +2587,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				if (S_TM(n->suffix))
 					strcpy(s, str_tolower_z(localized_abbrev_months[tm->tm_mon - 1], collid));
 				else
-				{
-					strcpy(s, months[tm->tm_mon - 1]);
-					*s = pg_tolower((unsigned char) *s);
-				}
+					strcpy(s, asc_tolower_z(months[tm->tm_mon - 1]));
 				s += strlen(s);
 				break;
 			case DCH_MM:
@@ -2536,7 +2602,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					strcpy(s, str_toupper_z(localized_full_days[tm->tm_wday], collid));
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
-							str_toupper_z(days[tm->tm_wday], collid));
+							asc_toupper_z(days[tm->tm_wday]));
 				s += strlen(s);
 				break;
 			case DCH_Day:
@@ -2544,7 +2610,8 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				if (S_TM(n->suffix))
 					strcpy(s, str_initcap_z(localized_full_days[tm->tm_wday], collid));
 				else
-					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9, days[tm->tm_wday]);
+					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
+							days[tm->tm_wday]);
 				s += strlen(s);
 				break;
 			case DCH_day:
@@ -2552,10 +2619,8 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				if (S_TM(n->suffix))
 					strcpy(s, str_tolower_z(localized_full_days[tm->tm_wday], collid));
 				else
-				{
-					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9, days[tm->tm_wday]);
-					*s = pg_tolower((unsigned char) *s);
-				}
+					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
+							asc_tolower_z(days[tm->tm_wday]));
 				s += strlen(s);
 				break;
 			case DCH_DY:
@@ -2563,7 +2628,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				if (S_TM(n->suffix))
 					strcpy(s, str_toupper_z(localized_abbrev_days[tm->tm_wday], collid));
 				else
-					strcpy(s, str_toupper_z(days_short[tm->tm_wday], collid));
+					strcpy(s, asc_toupper_z(days_short[tm->tm_wday]));
 				s += strlen(s);
 				break;
 			case DCH_Dy:
@@ -2579,10 +2644,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				if (S_TM(n->suffix))
 					strcpy(s, str_tolower_z(localized_abbrev_days[tm->tm_wday], collid));
 				else
-				{
-					strcpy(s, days_short[tm->tm_wday]);
-					*s = pg_tolower((unsigned char) *s);
-				}
+					strcpy(s, asc_tolower_z(days_short[tm->tm_wday]));
 				s += strlen(s);
 				break;
 			case DCH_DDD:
@@ -4690,12 +4752,12 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 				case NUM_rn:
 					if (IS_FILLMODE(Np->Num))
 					{
-						strcpy(Np->inout_p, str_tolower_z(Np->number_p, collid));
+						strcpy(Np->inout_p, asc_tolower_z(Np->number_p));
 						Np->inout_p += strlen(Np->inout_p) - 1;
 					}
 					else
 					{
-						sprintf(Np->inout_p, "%15s", str_tolower_z(Np->number_p, collid));
+						sprintf(Np->inout_p, "%15s", asc_tolower_z(Np->number_p));
 						Np->inout_p += strlen(Np->inout_p) - 1;
 					}
 					break;
