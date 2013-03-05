@@ -24,6 +24,10 @@ extern char *str_tolower(const char *buff, size_t nbytes, Oid collid);
 extern char *str_toupper(const char *buff, size_t nbytes, Oid collid);
 extern char *str_initcap(const char *buff, size_t nbytes, Oid collid);
 
+extern char *asc_tolower(const char *buff, size_t nbytes);
+extern char *asc_toupper(const char *buff, size_t nbytes);
+extern char *asc_initcap(const char *buff, size_t nbytes);
+
 extern Datum timestamp_to_char(PG_FUNCTION_ARGS);
 extern Datum timestamptz_to_char(PG_FUNCTION_ARGS);
 extern Datum interval_to_char(PG_FUNCTION_ARGS);
