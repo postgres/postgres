@@ -268,7 +268,7 @@ sub upgradecheck
 	installcheck();
 	# now we can chdir into the source dir
 	chdir "$topdir/contrib/pg_upgrade";
-	print "\nDuming old cluster\n\n";
+	print "\nDumping old cluster\n\n";
 	system("pg_dumpall -f $tmp_root/dump1.sql") == 0 or exit 1;
 	print "\nStopping old cluster\n\n";
 	system("pg_ctl -m fast stop") == 0 or exit 1;
