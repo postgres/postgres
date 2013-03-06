@@ -6957,6 +6957,11 @@
      </row>
 
      <row>
+      <entry><link linkend="view-pg-matviews"><structname>pg_matviews</structname></link></entry>
+      <entry>materialized views</entry>
+     </row>
+
+     <row>
       <entry><link linkend="view-pg-prepared-statements"><structname>pg_prepared_statements</structname></link></entry>
       <entry>prepared statements</entry>
      </row>
@@ -7715,6 +7720,83 @@
 
  </sect1>
 
+ <sect1 id="view-pg-matviews">
+  <title><structname>pg_matviews</structname></title>
+
+  <indexterm zone="view-pg-matviews">
+   <primary>pg_matviews</primary>
+  </indexterm>
+
+  <indexterm zone="view-pg-matviews">
+   <primary>materialized views</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_matviews</structname> provides access to
+   useful information about each materialized view in the database.
+  </para>
+
+  <table>
+   <title><structname>pg_matviews</> Columns</title>
+
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry><structfield>schemaname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.nspname</literal></entry>
+      <entry>Name of schema containing materialized view</entry>
+     </row>
+     <row>
+      <entry><structfield>matviewname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.relname</literal></entry>
+      <entry>Name of materialized view</entry>
+     </row>
+     <row>
+      <entry><structfield>matviewowner</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.rolname</literal></entry>
+      <entry>Name of materialized view's owner</entry>
+     </row>
+     <row>
+      <entry><structfield>tablespace</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-tablespace"><structname>pg_tablespace</structname></link>.spcname</literal></entry>
+      <entry>Name of tablespace containing materialized view (null if default for database)</entry>
+     </row>
+     <row>
+      <entry><structfield>hasindexes</structfield></entry>
+      <entry><type>boolean</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.relhasindex</literal></entry>
+      <entry>True if materialized view has (or recently had) any indexes</entry>
+     </row>
+     <row>
+      <entry><structfield>isscannable</structfield></entry>
+      <entry><type>boolean</type></entry>
+      <entry></entry>
+      <entry>True if materialized view can currently be scanned</entry>
+     </row>
+     <row>
+      <entry><structfield>definition</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>Materialized view definition (a reconstructed <command>SELECT</command> query)</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </sect1>
+
  <sect1 id="view-pg-prepared-statements">
   <title><structname>pg_prepared_statements</structname></title>
 
@@ -8092,7 +8174,8 @@
 
   <para>
    The <structname>pg_rules</> view excludes the <literal>ON SELECT</> rules
-   of views; those can be seen in <structname>pg_views</>.
+   of views and materialized views; those can be seen in
+   <structname>pg_views</> and <structname>pg_matviews</>.
   </para>
 
  </sect1>
