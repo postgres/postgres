@@ -14,6 +14,7 @@
  */
 #include "postgres.h"
 
+#include "access/heapam_xlog.h"
 #include "access/multixact.h"
 #include "access/relscan.h"
 #include "access/xact.h"
@@ -68,10 +69,15 @@ SetRelationIsScannable(Relation relation)
 	Assert(relation->rd_rel->relkind == RELKIND_MATVIEW);
 	Assert(relation->rd_isscannable == false);
 
-	RelationOpenSmgr(relation);
 	page = (Page) palloc(BLCKSZ);
 	PageInit(page, BLCKSZ, 0);
+
+	if (RelationNeedsWAL(relation))
+		log_newpage(&(relation->rd_node), MAIN_FORKNUM, 0, page);
+
+	RelationOpenSmgr(relation);
 	smgrextend(relation->rd_smgr, MAIN_FORKNUM, 0, (char *) page, true);
+
 	pfree(page);
 
 	smgrimmedsync(relation->rd_smgr, MAIN_FORKNUM);
