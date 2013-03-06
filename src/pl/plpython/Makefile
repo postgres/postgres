@@ -66,7 +66,7 @@ OBJS += libpython${pytverstr}.a
 libpython${pytverstr}.a: python${pytverstr}.def
 	dlltool --dllname python${pytverstr}.dll --def python${pytverstr}.def --output-lib  libpython${pytverstr}.a
 WD=$(subst \,/,$(WINDIR))
-python${pytverstr}.def: $(WD)/system32/python${pytverstr}.dll
+python${pytverstr}.def:
 	pexports $(WD)/system32/python${pytverstr}.dll > python${pytverstr}.def
 endif
 
