@@ -4010,7 +4010,16 @@ ReadRecord(XLogRecPtr *RecPtr, int emode, bool fetching_ckpt)
 retry:
 	/* Read the page containing the record */
 	if (!XLogPageRead(RecPtr, emode, fetching_ckpt, randAccess))
-		return NULL;
+	{
+		/*
+		 * In standby-mode, XLogPageRead returning false means that promotion
+		 * has been triggered.
+		 */
+		if (StandbyMode)
+			return NULL;
+		else
+			goto next_record_is_invalid;
+	}
 
 	pageHeaderSize = XLogPageHeaderSize((XLogPageHeader) readBuf);
 	targetRecOff = RecPtr->xrecoff % XLOG_BLCKSZ;
@@ -4168,7 +4177,16 @@ retry:
 			}
 			/* Wait for the next page to become available */
 			if (!XLogPageRead(&pagelsn, emode, false, false))
-				return NULL;
+			{
+				/*
+				 * In standby-mode, XLogPageRead returning false means that
+				 * promotion has been triggered.
+				 */
+				if (StandbyMode)
+					return NULL;
+				else
+					goto next_record_is_invalid;
+			}
 
 			/* Check that the continuation record looks valid */
 			if (!(((XLogPageHeader) readBuf)->xlp_info & XLP_FIRST_IS_CONTRECORD))
@@ -10326,6 +10344,9 @@ CancelBackup(void)
  * and call XLogPageRead() again with the same arguments. This lets
  * XLogPageRead() to try fetching the record from another source, or to
  * sleep and retry.
+ *
+ * In standby mode, this only returns false if promotion has been triggered.
+ * Otherwise it keeps sleeping and retrying indefinitely.
  */
 static bool
 XLogPageRead(XLogRecPtr *RecPtr, int emode, bool fetching_ckpt,
