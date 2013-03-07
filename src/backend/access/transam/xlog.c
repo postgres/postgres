@@ -200,7 +200,7 @@ static int	LocalXLogInsertAllowed = -1;
  * will switch to using offline XLOG archives as soon as we reach the end of
  * WAL in pg_xlog.
 */
-static bool ArchiveRecoveryRequested = false;
+bool ArchiveRecoveryRequested = false;
 bool InArchiveRecovery = false;
 
 /* Was the last xlog file restored from archive, or local? */
@@ -4339,11 +4339,6 @@ readRecoveryCommandFile(void)
 	 */
 	if (rtliGiven)
 	{
-		/*
-		 * Temporarily set InArchiveRecovery, so that existsTimeLineHistory
-		 * or findNewestTimeLine below will check the archive.
-		 */
-		InArchiveRecovery = true;
 		if (rtli)
 		{
 			/* Timeline 1 does not have a history file, all else should */
@@ -4360,7 +4355,6 @@ readRecoveryCommandFile(void)
 			recoveryTargetTLI = findNewestTimeLine(recoveryTargetTLI);
 			recoveryTargetIsLatest = true;
 		}
-		InArchiveRecovery = false;
 	}
 
 	FreeConfigVariables(head);
