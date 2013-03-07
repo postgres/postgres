@@ -4,5 +4,6 @@ AVAIL_LANGUAGES  = cs de es fr it ja ko pt_BR ro sv ta tr zh_CN zh_TW
 GETTEXT_FILES    = createdb.c createlang.c createuser.c \
                    dropdb.c droplang.c dropuser.c \
                    clusterdb.c vacuumdb.c reindexdb.c \
-                   common.c
+                   common.c \
+                   ../../common/fe_memutils.c
 GETTEXT_TRIGGERS = simple_prompt yesno_prompt
