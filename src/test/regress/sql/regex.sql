@@ -34,3 +34,10 @@ explain (costs off) select * from pg_proc where proname ~ '^abc+d';
 explain (costs off) select * from pg_proc where proname ~ '^(abc)(def)';
 explain (costs off) select * from pg_proc where proname ~ '^(abc)$';
 explain (costs off) select * from pg_proc where proname ~ '^(abc)?d';
+
+-- Test for infinite loop in pullback() (CVE-2007-4772)
+select 'a' ~ '($|^)*';
+
+-- Test for infinite loop in fixempties() (Tcl bugs 3604074, 3606683)
+select 'a' ~ '((((((a)*)*)*)*)*)*';
+select 'a' ~ '((((((a+|)+|)+|)+|)+|)+|)';

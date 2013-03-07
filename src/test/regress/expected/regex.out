@@ -153,3 +153,23 @@ explain (costs off) select * from pg_proc where proname ~ '^(abc)?d';
    Filter: (proname ~ '^(abc)?d'::text)
 (2 rows)
 
+-- Test for infinite loop in pullback() (CVE-2007-4772)
+select 'a' ~ '($|^)*';
+ ?column? 
+----------
+ t
+(1 row)
+
+-- Test for infinite loop in fixempties() (Tcl bugs 3604074, 3606683)
+select 'a' ~ '((((((a)*)*)*)*)*)*';
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'a' ~ '((((((a+|)+|)+|)+|)+|)+|)';
+ ?column? 
+----------
+ t
+(1 row)
+
