@@ -160,7 +160,7 @@ ExecInitForeignScan(ForeignScan *node, EState *estate, int eflags)
 	/*
 	 * Acquire function pointers from the FDW's handler, and init fdw_state.
 	 */
-	fdwroutine = GetFdwRoutineByRelId(RelationGetRelid(currentRelation));
+	fdwroutine = GetFdwRoutineForRelation(currentRelation, true);
 	scanstate->fdwroutine = fdwroutine;
 	scanstate->fdw_state = NULL;
 

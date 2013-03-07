@@ -410,9 +410,6 @@ set_foreign_size(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	/* Mark rel with estimated output rows, width, etc */
 	set_foreign_size_estimates(root, rel);
 
-	/* Get FDW routine pointers for the rel */
-	rel->fdwroutine = GetFdwRoutineByRelId(rte->relid);
-
 	/* Let FDW adjust the size estimates, if it can */
 	rel->fdwroutine->GetForeignRelSize(root, rel, rte->relid);
 }

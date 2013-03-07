@@ -23,6 +23,8 @@
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
+#include "utils/memutils.h"
+#include "utils/rel.h"
 #include "utils/syscache.h"
 
 
@@ -350,6 +352,50 @@ GetFdwRoutineByRelId(Oid relid)
 
 	/* And finally, call the handler function. */
 	return GetFdwRoutine(fdwhandler);
+}
+
+/*
+ * GetFdwRoutineForRelation - look up the handler of the foreign-data wrapper
+ * for the given foreign table, and retrieve its FdwRoutine struct.
+ *
+ * This function is preferred over GetFdwRoutineByRelId because it caches
+ * the data in the relcache entry, saving a number of catalog lookups.
+ *
+ * If makecopy is true then the returned data is freshly palloc'd in the
+ * caller's memory context.  Otherwise, it's a pointer to the relcache data,
+ * which will be lost in any relcache reset --- so don't rely on it long.
+ */
+FdwRoutine *
+GetFdwRoutineForRelation(Relation relation, bool makecopy)
+{
+	FdwRoutine *fdwroutine;
+	FdwRoutine *cfdwroutine;
+
+	if (relation->rd_fdwroutine == NULL)
+	{
+		/* Get the info by consulting the catalogs and the FDW code */
+		fdwroutine = GetFdwRoutineByRelId(RelationGetRelid(relation));
+
+		/* Save the data for later reuse in CacheMemoryContext */
+		cfdwroutine = (FdwRoutine *) MemoryContextAlloc(CacheMemoryContext,
+														sizeof(FdwRoutine));
+		memcpy(cfdwroutine, fdwroutine, sizeof(FdwRoutine));
+		relation->rd_fdwroutine = cfdwroutine;
+
+		/* Give back the locally palloc'd copy regardless of makecopy */
+		return fdwroutine;
+	}
+
+	/* We have valid cached data --- does the caller want a copy? */
+	if (makecopy)
+	{
+		fdwroutine = (FdwRoutine *) palloc(sizeof(FdwRoutine));
+		memcpy(fdwroutine, relation->rd_fdwroutine, sizeof(FdwRoutine));
+		return fdwroutine;
+	}
+
+	/* Only a short-lived reference is needed, so just hand back cached copy */
+	return relation->rd_fdwroutine;
 }
 
 

@@ -1846,6 +1846,8 @@ RelationDestroyRelation(Relation relation)
 		MemoryContextDelete(relation->rd_indexcxt);
 	if (relation->rd_rulescxt)
 		MemoryContextDelete(relation->rd_rulescxt);
+	if (relation->rd_fdwroutine)
+		pfree(relation->rd_fdwroutine);
 	pfree(relation);
 }
 
@@ -4410,7 +4412,7 @@ load_relcache_init_file(bool shared)
 		 * format is complex and subject to change).  They must be rebuilt if
 		 * needed by RelationCacheInitializePhase3.  This is not expected to
 		 * be a big performance hit since few system catalogs have such. Ditto
-		 * for index expressions, predicates, and exclusion info.
+		 * for index expressions, predicates, exclusion info, and FDW info.
 		 */
 		rel->rd_rules = NULL;
 		rel->rd_rulescxt = NULL;
@@ -4420,6 +4422,7 @@ load_relcache_init_file(bool shared)
 		rel->rd_exclops = NULL;
 		rel->rd_exclprocs = NULL;
 		rel->rd_exclstrats = NULL;
+		rel->rd_fdwroutine = NULL;
 
 		/*
 		 * Reset transient-state fields in the relcache entry

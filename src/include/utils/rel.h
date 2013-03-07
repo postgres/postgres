@@ -166,6 +166,17 @@ typedef struct RelationData
 	Oid		   *rd_indcollation;	/* OIDs of index collations */
 
 	/*
+	 * foreign-table support
+	 *
+	 * rd_fdwroutine must point to a single memory chunk palloc'd in
+	 * CacheMemoryContext.  It will be freed and reset to NULL on a relcache
+	 * reset.
+	 */
+
+	/* use "struct" here to avoid needing to include fdwapi.h: */
+	struct FdwRoutine *rd_fdwroutine;	/* cached function pointers, or NULL */
+
+	/*
 	 * Hack for CLUSTER, rewriting ALTER TABLE, etc: when writing a new
 	 * version of a table, we need to make any toast pointers inserted into it
 	 * have the existing toast table's OID, not the OID of the transient toast

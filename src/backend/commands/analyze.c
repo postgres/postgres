@@ -227,7 +227,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrategy)
 		FdwRoutine *fdwroutine;
 		bool		ok = false;
 
-		fdwroutine = GetFdwRoutineByRelId(RelationGetRelid(onerel));
+		fdwroutine = GetFdwRoutineForRelation(onerel, false);
 
 		if (fdwroutine->AnalyzeForeignTable != NULL)
 			ok = fdwroutine->AnalyzeForeignTable(onerel,
