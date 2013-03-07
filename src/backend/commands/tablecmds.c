@@ -4514,8 +4514,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	heap_freetuple(reltup);
 
 	/* Post creation hook for new attribute */
-	InvokeObjectAccessHook(OAT_POST_CREATE,
-						   RelationRelationId, myrelid, newattnum, NULL);
+	InvokeObjectPostCreateHook(RelationRelationId, myrelid, newattnum);
 
 	heap_close(pgclass, RowExclusiveLock);
 

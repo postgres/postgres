@@ -136,8 +136,7 @@ ConversionCreate(const char *conname, Oid connamespace,
 	recordDependencyOnCurrentExtension(&myself, false);
 
 	/* Post creation hook for new conversion */
-	InvokeObjectAccessHook(OAT_POST_CREATE, ConversionRelationId,
-						   HeapTupleGetOid(tup), 0, NULL);
+	InvokeObjectPostCreateHook(ConversionRelationId, HeapTupleGetOid(tup), 0);
 
 	heap_freetuple(tup);
 	heap_close(rel, RowExclusiveLock);

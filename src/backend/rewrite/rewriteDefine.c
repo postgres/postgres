@@ -182,8 +182,7 @@ InsertRule(char *rulname,
 	}
 
 	/* Post creation hook for new rule */
-	InvokeObjectAccessHook(OAT_POST_CREATE,
-						   RewriteRelationId, rewriteObjectId, 0, NULL);
+	InvokeObjectPostCreateHook(RewriteRelationId, rewriteObjectId, 0);
 
 	heap_close(pg_rewrite_desc, RowExclusiveLock);
 

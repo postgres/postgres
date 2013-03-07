@@ -136,8 +136,7 @@ CollationCreate(const char *collname, Oid collnamespace,
 	recordDependencyOnCurrentExtension(&myself, false);
 
 	/* Post creation hook for new collation */
-	InvokeObjectAccessHook(OAT_POST_CREATE,
-						   CollationRelationId, oid, 0, NULL);
+	InvokeObjectPostCreateHook(CollationRelationId, oid, 0);
 
 	heap_freetuple(tup);
 	heap_close(rel, RowExclusiveLock);

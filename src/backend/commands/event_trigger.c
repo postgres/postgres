@@ -310,8 +310,7 @@ insert_event_trigger_tuple(char *trigname, char *eventname, Oid evtOwner,
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
 	/* Post creation hook for new operator family */
-	InvokeObjectAccessHook(OAT_POST_CREATE,
-						   EventTriggerRelationId, trigoid, 0, NULL);
+	InvokeObjectPostCreateHook(EventTriggerRelationId, trigoid, 0);
 
 	/* Close pg_event_trigger. */
 	heap_close(tgrel, RowExclusiveLock);

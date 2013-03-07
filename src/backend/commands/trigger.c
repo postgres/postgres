@@ -742,8 +742,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 							   DEPENDENCY_NORMAL);
 
 	/* Post creation hook for new trigger */
-	InvokeObjectAccessHook(OAT_POST_CREATE,
-						   TriggerRelationId, trigoid, 0, NULL);
+	InvokeObjectPostCreateHook(TriggerRelationId, trigoid, 0);
 
 	/* Keep lock on target rel until end of xact */
 	heap_close(rel, NoLock);

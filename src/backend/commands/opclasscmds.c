@@ -309,8 +309,7 @@ CreateOpFamily(char *amname, char *opfname, Oid namespaceoid, Oid amoid)
 	recordDependencyOnCurrentExtension(&myself, false);
 
 	/* Post creation hook for new operator family */
-	InvokeObjectAccessHook(OAT_POST_CREATE,
-						   OperatorFamilyRelationId, opfamilyoid, 0, NULL);
+	InvokeObjectPostCreateHook(OperatorFamilyRelationId, opfamilyoid, 0);
 
 	heap_close(rel, RowExclusiveLock);
 
@@ -710,8 +709,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	recordDependencyOnCurrentExtension(&myself, false);
 
 	/* Post creation hook for new operator class */
-	InvokeObjectAccessHook(OAT_POST_CREATE,
-						   OperatorClassRelationId, opclassoid, 0, NULL);
+	InvokeObjectPostCreateHook(OperatorClassRelationId, opclassoid, 0);
 
 	heap_close(rel, RowExclusiveLock);
 

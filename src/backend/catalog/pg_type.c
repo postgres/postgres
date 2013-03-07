@@ -163,8 +163,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 								 false);
 
 	/* Post creation hook for new shell type */
-	InvokeObjectAccessHook(OAT_POST_CREATE,
-						   TypeRelationId, typoid, 0, NULL);
+	InvokeObjectPostCreateHook(TypeRelationId, typoid, 0);
 
 	/*
 	 * clean up and return the type-oid
@@ -476,8 +475,7 @@ TypeCreate(Oid newTypeOid,
 								 rebuildDeps);
 
 	/* Post creation hook for new type */
-	InvokeObjectAccessHook(OAT_POST_CREATE,
-						   TypeRelationId, typeObjectId, 0, NULL);
+	InvokeObjectPostCreateHook(TypeRelationId, typeObjectId, 0);
 
 	/*
 	 * finish up

@@ -997,14 +997,8 @@ deleteOneObject(const ObjectAddress *object, Relation *depRel, int flags)
 	HeapTuple	tup;
 
 	/* DROP hook of the objects being removed */
-	if (object_access_hook)
-	{
-		ObjectAccessDrop drop_arg;
-
-		drop_arg.dropflags = flags;
-		InvokeObjectAccessHook(OAT_DROP, object->classId, object->objectId,
-							   object->objectSubId, &drop_arg);
-	}
+	InvokeObjectDropHookArg(object->classId, object->objectId,
+							object->objectSubId, flags);
 
 	/*
 	 * Close depRel if we are doing a drop concurrently.  The object deletion

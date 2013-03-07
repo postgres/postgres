@@ -1028,15 +1028,8 @@ index_create(Relation heapRelation,
 	}
 
 	/* Post creation hook for new index */
-	if (object_access_hook)
-	{
-		ObjectAccessPostCreate	post_create_args;
-
-		memset(&post_create_args, 0, sizeof(ObjectAccessPostCreate));
-		post_create_args.is_internal = is_internal;
-		(*object_access_hook)(OAT_POST_CREATE, RelationRelationId,
-							  indexRelationId, 0, &post_create_args);
-	}
+	InvokeObjectPostCreateHookArg(RelationRelationId,
+								  indexRelationId, 0, is_internal);
 
 	/*
 	 * Advance the command counter so that we can see the newly-entered

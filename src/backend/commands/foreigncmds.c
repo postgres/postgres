@@ -599,8 +599,7 @@ CreateForeignDataWrapper(CreateFdwStmt *stmt)
 	recordDependencyOnCurrentExtension(&myself, false);
 
 	/* Post creation hook for new foreign data wrapper */
-	InvokeObjectAccessHook(OAT_POST_CREATE,
-						   ForeignDataWrapperRelationId, fdwId, 0, NULL);
+	InvokeObjectPostCreateHook(ForeignDataWrapperRelationId, fdwId, 0);
 
 	heap_close(rel, RowExclusiveLock);
 
@@ -900,8 +899,7 @@ CreateForeignServer(CreateForeignServerStmt *stmt)
 	recordDependencyOnCurrentExtension(&myself, false);
 
 	/* Post creation hook for new foreign server */
-	InvokeObjectAccessHook(OAT_POST_CREATE,
-						   ForeignServerRelationId, srvId, 0, NULL);
+	InvokeObjectPostCreateHook(ForeignServerRelationId, srvId, 0);
 
 	heap_close(rel, RowExclusiveLock);
 
@@ -1145,8 +1143,7 @@ CreateUserMapping(CreateUserMappingStmt *stmt)
 	recordDependencyOnCurrentExtension(&myself, false);
 
 	/* Post creation hook for new user mapping */
-	InvokeObjectAccessHook(OAT_POST_CREATE,
-						   UserMappingRelationId, umId, 0, NULL);
+	InvokeObjectPostCreateHook(UserMappingRelationId, umId, 0);
 
 	heap_close(rel, RowExclusiveLock);
 

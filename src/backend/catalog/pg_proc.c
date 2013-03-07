@@ -661,8 +661,7 @@ ProcedureCreate(const char *procedureName,
 	heap_freetuple(tup);
 
 	/* Post creation hook for new function */
-	InvokeObjectAccessHook(OAT_POST_CREATE,
-						   ProcedureRelationId, retval, 0, NULL);
+	InvokeObjectPostCreateHook(ProcedureRelationId, retval, 0);
 
 	heap_close(rel, RowExclusiveLock);
 

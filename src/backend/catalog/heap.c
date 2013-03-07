@@ -1293,15 +1293,7 @@ heap_create_with_catalog(const char *relname,
 	}
 
 	/* Post creation hook for new relation */
-	if (object_access_hook)
-	{
-		ObjectAccessPostCreate	post_create_args;
-
-		memset(&post_create_args, 0, sizeof(ObjectAccessPostCreate));
-		post_create_args.is_internal = is_internal;
-		(*object_access_hook)(OAT_POST_CREATE, RelationRelationId,
-							  relid, 0, &post_create_args);
-    }
+	InvokeObjectPostCreateHookArg(RelationRelationId, relid, 0, is_internal);
 
 	/*
 	 * Store any supplied constraints and defaults.

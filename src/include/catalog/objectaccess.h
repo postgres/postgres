@@ -28,6 +28,7 @@ typedef enum ObjectAccessType
 {
 	OAT_POST_CREATE,
 	OAT_DROP,
+	OAT_POST_ALTER,
 } ObjectAccessType;
 
 /*
@@ -66,11 +67,27 @@ typedef void (*object_access_hook_type) (ObjectAccessType access,
 
 extern PGDLLIMPORT object_access_hook_type object_access_hook;
 
-#define InvokeObjectAccessHook(access,classId,objectId,subId,arg)	\
+extern void RunObjectPostCreateHook(Oid classId, Oid objectId, int subId,
+									bool is_internal);
+extern void RunObjectDropHook(Oid classId, Oid objectId, int subId,
+							  int dropflags);
+
+#define InvokeObjectPostCreateHook(classId,objectId,subId)			\
+	InvokeObjectPostCreateHookArg((classId),(objectId),(subId),false)
+#define InvokeObjectPostCreateHookArg(classId,objectId,subId,is_internal) \
 	do {															\
 		if (object_access_hook)										\
-			(*object_access_hook)((access),(classId),				\
-								  (objectId),(subId),(arg));		\
+			RunObjectPostCreateHook((classId),(objectId),(subId),	\
+									(is_internal));					\
+	} while(0)
+
+#define InvokeObjectDropHook(classId,objectId,subId)				\
+	InvokeObjectDropHookArg((classId),(objectId),(subId),0)
+#define InvokeObjectDropHookArg(classId,objectId,subId,dropflags)	\
+	do {															\
+		if (object_access_hook)										\
+			RunObjectDropHook((classId),(objectId),(subId),			\
+							  (dropflags));							\
 	} while(0)
 
 #endif   /* OBJECTACCESS_H */
