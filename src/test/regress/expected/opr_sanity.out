@@ -1076,6 +1076,7 @@ ORDER BY 1, 2, 3;
        4000 |            4 | ~>=~
        4000 |            5 | >>
        4000 |            5 | ~>~
+       4000 |            6 | -|-
        4000 |            6 | ~=
        4000 |            7 | @>
        4000 |            8 | <@
@@ -1087,7 +1088,7 @@ ORDER BY 1, 2, 3;
        4000 |           15 | >
        4000 |           16 | @>
        4000 |           18 | =
-(61 rows)
+(62 rows)
 
 -- Check that all opclass search operators have selectivity estimators.
 -- This is not absolutely required, but it seems a reasonable thing

@@ -305,6 +305,16 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 	int			which;
 	int			i;
 
+	/*
+	 * For adjacent search we need also previous centroid (if any) to improve
+	 * the precision of the consistent check. In this case needPrevious flag is
+	 * set and centroid is passed into reconstructedValues. This is not the
+	 * intended purpose of reconstructedValues (because we already have the
+	 * full value available at the leaf), but it's a convenient place to store
+	 * state while traversing the tree.
+	 */
+	bool		needPrevious = false;
+
 	if (in->allTheSame)
 	{
 		/* Report that all nodes should be visited */
@@ -351,6 +361,7 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 				case RANGESTRAT_OVERLAPS:
 				case RANGESTRAT_OVERRIGHT:
 				case RANGESTRAT_AFTER:
+				case RANGESTRAT_ADJACENT:
 					/* These strategies return false if any argument is empty */
 					if (empty)
 						which = 0;
@@ -435,6 +446,9 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 			/* Are the restrictions on range bounds inclusive? */
 			bool		inclusive = true;
 			bool		strictEmpty = true;
+			int			cmp,
+						which1,
+						which2;
 
 			strategy = in->scankeys[i].sk_strategy;
 
@@ -520,6 +534,118 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 					 */
 					minLower = &upper;
 					inclusive = false;
+					break;
+
+				case RANGESTRAT_ADJACENT:
+					if (empty)
+						break;				/* Skip to strictEmpty check. */
+
+					/*
+					 * which1 is bitmask for possibility to be adjacent with
+					 * lower bound of argument. which2 is bitmask for
+					 * possibility to be adjacent with upper bound of argument.
+					 */
+					which1 = which2 = (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4);
+
+					/*
+					 * Previously selected quadrant could exclude possibility
+					 * for lower or upper bounds to be adjacent. Deserialize
+					 * previous centroid range if present for checking this.
+					 */
+					if (in->reconstructedValue != (Datum) 0)
+					{
+						RangeType  *prevCentroid;
+						RangeBound	prevLower,
+									prevUpper;
+						bool		prevEmpty;
+						int			cmp1,
+									cmp2;
+
+						prevCentroid = DatumGetRangeType(in->reconstructedValue);
+						range_deserialize(typcache, prevCentroid,
+										  &prevLower, &prevUpper, &prevEmpty);
+
+						/*
+						 * Check if lower bound of argument is not in a
+						 * quadrant we visited in the previous step.
+						 */
+						cmp1 = range_cmp_bounds(typcache, &lower, &prevUpper);
+						cmp2 = range_cmp_bounds(typcache, &centroidUpper,
+												&prevUpper);
+						if ((cmp2 < 0 && cmp1 > 0) || (cmp2 > 0 && cmp1 < 0))
+							which1 = 0;
+
+						/*
+						 * Check if upper bound of argument is not in a
+						 * quadrant we visited in the previous step.
+						 */
+						cmp1 = range_cmp_bounds(typcache, &upper, &prevLower);
+						cmp2 = range_cmp_bounds(typcache, &centroidLower,
+												&prevLower);
+						if ((cmp2 < 0 && cmp1 > 0) || (cmp2 > 0 && cmp1 < 0))
+							which2 = 0;
+					}
+
+					if (which1)
+					{
+						/*
+						 * For a range's upper bound to be adjacent to the
+						 * argument's lower bound, it will be found along the
+						 * line adjacent to (and just below) Y=lower.
+						 * Therefore, if the argument's lower bound is less
+						 * than the centroid's upper bound, the line falls in
+						 * quadrants 2 and 3; if greater, the line falls in
+						 * quadrants 1 and 4.
+						 *
+						 * The above is true even when the argument's lower
+						 * bound is greater and adjacent to the centroid's
+						 * upper bound. If the argument's lower bound is
+						 * greater than the centroid's upper bound, then the
+						 * lowest value that an adjacent range could have is
+						 * that of the centroid's upper bound, which still
+						 * falls in quadrants 1 and 4.
+						 *
+						 * In the edge case, where the argument's lower bound
+						 * is equal to the cetroid's upper bound, there may be
+						 * adjacent ranges in any quadrant.
+						 */
+						cmp = range_cmp_bounds(typcache, &lower,
+											   &centroidUpper);
+						if (cmp < 0)
+							which1 &= (1 << 2) | (1 << 3);
+						else if (cmp > 0)
+							which1 &= (1 << 1) | (1 << 4);
+					}
+
+					if (which2)
+					{
+						/*
+						 * For a range's lower bound to be adjacent to the
+						 * argument's upper bound, it will be found along the
+						 * line adjacent to (and just right of)
+						 * X=upper. Therefore, if the argument's upper bound is
+						 * less than (and not adjacent to) the centroid's upper
+						 * bound, the line falls in quadrants 3 and 4; if
+						 * greater or equal to, the line falls in quadrants 1
+						 * and 2.
+						 *
+						 * The edge case is when the argument's upper bound is
+						 * less than and adjacent to the centroid's lower
+						 * bound. In that case, adjacent ranges may be in any
+						 * quadrant.
+						 */
+						cmp = range_cmp_bounds(typcache, &lower,
+											   &centroidUpper);
+						if (cmp < 0 &&
+							!bounds_adjacent(typcache, upper, centroidLower))
+							which1 &= (1 << 3) | (1 << 4);
+						else if (cmp > 0)
+							which1 &= (1 << 1) | (1 << 2);
+					}
+
+					which &= which1 | which2;
+
+					needPrevious = true;
 					break;
 
 				case RANGESTRAT_CONTAINS:
@@ -652,11 +778,18 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 
 	/* We must descend into the quadrant(s) identified by 'which' */
 	out->nodeNumbers = (int *) palloc(sizeof(int) * in->nNodes);
+	if (needPrevious)
+		out->reconstructedValues = (Datum *) palloc(sizeof(Datum) * in->nNodes);
 	out->nNodes = 0;
 	for (i = 1; i <= in->nNodes; i++)
 	{
 		if (which & (1 << i))
+		{
+			/* Save previous prefix if needed */
+			if (needPrevious)
+				out->reconstructedValues[out->nNodes] = in->prefixDatum;
 			out->nodeNumbers[out->nNodes++] = i - 1;
+		}
 	}
 
 	PG_RETURN_VOID();
@@ -711,6 +844,10 @@ spg_range_quad_leaf_consistent(PG_FUNCTION_ARGS)
 				break;
 			case RANGESTRAT_AFTER:
 				res = range_after_internal(typcache, leafRange,
+										   DatumGetRangeType(keyDatum));
+				break;
+			case RANGESTRAT_ADJACENT:
+				res = range_adjacent_internal(typcache, leafRange,
 										   DatumGetRangeType(keyDatum));
 				break;
 			case RANGESTRAT_CONTAINS:

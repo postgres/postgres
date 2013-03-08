@@ -201,6 +201,8 @@ extern int range_cmp_bounds(TypeCacheEntry *typcache, RangeBound *b1,
 				 RangeBound *b2);
 extern int range_cmp_bound_values(TypeCacheEntry *typcache, RangeBound *b1,
 					   RangeBound *b2);
+extern bool bounds_adjacent(TypeCacheEntry *typcache, RangeBound bound1,
+				RangeBound bound2);
 extern RangeType *make_empty_range(TypeCacheEntry *typcache);
 
 /* GiST support (in rangetypes_gist.c) */
