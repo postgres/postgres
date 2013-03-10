@@ -2057,6 +2057,8 @@ include 'filename'
         than this many seconds (which suggests that
         <varname>checkpoint_segments</> ought to be raised).  The default is
         30 seconds (<literal>30s</>).  Zero disables the warning.
+        No warnings will be generated if <varname>checkpoint_timeout</varname>
+        is less than <varname>checkpoint_warning</varname>.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
        </para>
