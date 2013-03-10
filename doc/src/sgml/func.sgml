@@ -9685,9 +9685,40 @@ table2-mapping
        <entry><literal>row_to_json(row(1,'foo'))</literal></entry>
        <entry><literal>{"f1":1,"f2":"foo"}</literal></entry>
       </row>
+      <row>
+       <entry>
+         <indexterm>
+          <primary>to_json</primary>
+         </indexterm>
+         <literal>to_json(anyelement)</literal>
+       </entry>
+       <entry>
+         Returns the value as JSON. If the data type is not builtin, and there
+         is a cast from the type to json, the cast function will be used to
+         perform the conversion. Otherwise, for any value other than a number,
+         a boolean or NULL, the text representation will be used, escaped and
+         quoted so that it is legal JSON.
+       </entry>
+       <entry><literal>to_json('Fred said "Hi."'</literal></entry>
+       <entry><literal>"Fred said \"Hi.\""</literal></entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
+
+  <note>
+    <para>
+      The <xref linkend="hstore"> extension has a cast from hstore to
+      json, so that converted hstore values are represented as json objects,
+      not as string values.
+    </para>
+  </note>
+
+  <para>
+    See also <xref linkend="functions-aggregate"> about the aggregate
+    function <function>json_agg</function> which aggregates record
+    values as json efficiently.
+  </para>
 
  </sect1>
 
@@ -11062,6 +11093,22 @@ SELECT NULLIF(value, '(none)') ...
      <row>
       <entry>
        <indexterm>
+        <primary>json_agg</primary>
+       </indexterm>
+       <function>json_agg(<replaceable class="parameter">record</replaceable>)</function>
+      </entry>
+      <entry>
+       <type>record</type>
+      </entry>
+      <entry>
+       <type>json</type>
+      </entry>
+      <entry>aggregates records as a json array of objects</entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
         <primary>max</primary>
        </indexterm>
        <function>max(<replaceable class="parameter">expression</replaceable>)</function>
@@ -11204,6 +11251,7 @@ SELECT count(*) FROM sometable;
 
   <para>
    The aggregate functions <function>array_agg</function>,
+   <function>json_agg</function>,
    <function>string_agg</function>,
    and <function>xmlagg</function>, as well as similar user-defined
    aggregate functions, produce meaningfully different result values

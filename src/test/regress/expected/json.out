@@ -403,6 +403,30 @@ SELECT row_to_json(row((select array_agg(x) as d from generate_series(5,10) x)),
  {"f1":[5,6,7,8,9,10]}
 (1 row)
 
+--json_agg
+SELECT json_agg(q)
+  FROM ( SELECT $$a$$ || x AS b, y AS c,
+               ARRAY[ROW(x.*,ARRAY[1,2,3]),
+               ROW(y.*,ARRAY[4,5,6])] AS z
+         FROM generate_series(1,2) x,
+              generate_series(4,5) y) q;
+                               json_agg                                
+-----------------------------------------------------------------------
+ [{"b":"a1","c":4,"z":[{"f1":1,"f2":[1,2,3]},{"f1":4,"f2":[4,5,6]}]}, +
+  {"b":"a1","c":5,"z":[{"f1":1,"f2":[1,2,3]},{"f1":5,"f2":[4,5,6]}]}, +
+  {"b":"a2","c":4,"z":[{"f1":2,"f2":[1,2,3]},{"f1":4,"f2":[4,5,6]}]}, +
+  {"b":"a2","c":5,"z":[{"f1":2,"f2":[1,2,3]},{"f1":5,"f2":[4,5,6]}]}]
+(1 row)
+
+SELECT json_agg(q)
+  FROM rows q;
+       json_agg        
+-----------------------
+ [{"x":1,"y":"txt1"}, +
+  {"x":2,"y":"txt2"}, +
+  {"x":3,"y":"txt3"}]
+(1 row)
+
 -- non-numeric output
 SELECT row_to_json(q)
 FROM (SELECT 'NaN'::float8 AS "float8field") q;

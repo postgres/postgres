@@ -100,6 +100,18 @@ FROM rows q;
 
 SELECT row_to_json(row((select array_agg(x) as d from generate_series(5,10) x)),false);
 
+--json_agg
+
+SELECT json_agg(q)
+  FROM ( SELECT $$a$$ || x AS b, y AS c,
+               ARRAY[ROW(x.*,ARRAY[1,2,3]),
+               ROW(y.*,ARRAY[4,5,6])] AS z
+         FROM generate_series(1,2) x,
+              generate_series(4,5) y) q;
+
+SELECT json_agg(q)
+  FROM rows q;
+
 -- non-numeric output
 SELECT row_to_json(q)
 FROM (SELECT 'NaN'::float8 AS "float8field") q;

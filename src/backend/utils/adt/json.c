@@ -14,6 +14,8 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"
+#include "access/transam.h"
+#include "catalog/pg_cast.h"
 #include "catalog/pg_type.h"
 #include "executor/spi.h"
 #include "lib/stringinfo.h"
@@ -24,6 +26,7 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/json.h"
+#include "utils/syscache.h"
 #include "utils/typcache.h"
 
 typedef enum					/* types of JSON values */
@@ -42,7 +45,7 @@ typedef struct					/* state of JSON lexer */
 {
 	char	   *input;			/* whole string being parsed */
 	char	   *token_start;	/* start of current token within input */
-	char	   *token_terminator; /* end of previous or current token */
+	char	   *token_terminator;		/* end of previous or current token */
 	JsonValueType token_type;	/* type of current token, once it's known */
 } JsonLexContext;
 
@@ -67,7 +70,7 @@ typedef enum					/* required operations on state stack */
 {
 	JSON_STACKOP_NONE,			/* no-op */
 	JSON_STACKOP_PUSH,			/* push new JSON_PARSE_VALUE stack item */
-	JSON_STACKOP_PUSH_WITH_PUSHBACK, /* push, then rescan current token */
+	JSON_STACKOP_PUSH_WITH_PUSHBACK,	/* push, then rescan current token */
 	JSON_STACKOP_POP			/* pop, or expect end of input if no stack */
 } JsonStackOp;
 
@@ -77,19 +80,25 @@ static void json_lex_string(JsonLexContext *lex);
 static void json_lex_number(JsonLexContext *lex, char *s);
 static void report_parse_error(JsonParseStack *stack, JsonLexContext *lex);
 static void report_invalid_token(JsonLexContext *lex);
-static int report_json_context(JsonLexContext *lex);
+static int	report_json_context(JsonLexContext *lex);
 static char *extract_mb_char(char *s);
 static void composite_to_json(Datum composite, StringInfo result,
-							  bool use_line_feeds);
+				  bool use_line_feeds);
 static void array_dim_to_json(StringInfo result, int dim, int ndims, int *dims,
 				  Datum *vals, bool *nulls, int *valcount,
 				  TYPCATEGORY tcategory, Oid typoutputfunc,
 				  bool use_line_feeds);
 static void array_to_json_internal(Datum array, StringInfo result,
-								   bool use_line_feeds);
+					   bool use_line_feeds);
 
+/*
+ * All the defined	type categories are upper case , so use lower case here
+ * so we avoid any possible clash.
+ */
 /* fake type category for JSON so we can distinguish it in datum_to_json */
 #define TYPCATEGORY_JSON 'j'
+/* fake category for types that have a cast to json */
+#define TYPCATEGORY_JSON_CAST 'c'
 /* letters appearing in numeric output that aren't valid in a JSON number */
 #define NON_NUMERIC_LETTER "NnAaIiFfTtYy"
 /* chars to consider as part of an alphanumeric token */
@@ -384,15 +393,15 @@ json_lex(JsonLexContext *lex)
 		 * unintuitive prefix thereof.
 		 */
 		for (p = s; JSON_ALPHANUMERIC_CHAR(*p); p++)
-			/* skip */ ;
+			 /* skip */ ;
 
 		if (p == s)
 		{
 			/*
 			 * We got some sort of unexpected punctuation or an otherwise
 			 * unexpected character, so just complain about that one
-			 * character.  (It can't be multibyte because the above loop
-			 * will advance over any multibyte characters.)
+			 * character.  (It can't be multibyte because the above loop will
+			 * advance over any multibyte characters.)
 			 */
 			lex->token_terminator = s + 1;
 			report_invalid_token(lex);
@@ -585,7 +594,7 @@ json_lex_number(JsonLexContext *lex, char *s)
 	}
 
 	/*
-	 * Check for trailing garbage.  As in json_lex(), any alphanumeric stuff
+	 * Check for trailing garbage.	As in json_lex(), any alphanumeric stuff
 	 * here should be considered part of the token for error-reporting
 	 * purposes.
 	 */
@@ -653,16 +662,16 @@ report_parse_error(JsonParseStack *stack, JsonLexContext *lex)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 						 errmsg("invalid input syntax for type json"),
-						 errdetail("Expected \",\" or \"]\", but found \"%s\".",
-								   token),
+					  errdetail("Expected \",\" or \"]\", but found \"%s\".",
+								token),
 						 report_json_context(lex)));
 				break;
 			case JSON_PARSE_OBJECT_START:
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 						 errmsg("invalid input syntax for type json"),
-						 errdetail("Expected string or \"}\", but found \"%s\".",
-								   token),
+					 errdetail("Expected string or \"}\", but found \"%s\".",
+							   token),
 						 report_json_context(lex)));
 				break;
 			case JSON_PARSE_OBJECT_LABEL:
@@ -677,8 +686,8 @@ report_parse_error(JsonParseStack *stack, JsonLexContext *lex)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 						 errmsg("invalid input syntax for type json"),
-						 errdetail("Expected \",\" or \"}\", but found \"%s\".",
-								   token),
+					  errdetail("Expected \",\" or \"}\", but found \"%s\".",
+								token),
 						 report_json_context(lex)));
 				break;
 			case JSON_PARSE_OBJECT_COMMA:
@@ -820,6 +829,7 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 			  TYPCATEGORY tcategory, Oid typoutputfunc)
 {
 	char	   *outputstr;
+	text	   *jsontext;
 
 	if (is_null)
 	{
@@ -861,6 +871,13 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 			outputstr = OidOutputFunctionCall(typoutputfunc, val);
 			appendStringInfoString(result, outputstr);
 			pfree(outputstr);
+			break;
+		case TYPCATEGORY_JSON_CAST:
+			jsontext = DatumGetTextP(OidFunctionCall1(typoutputfunc, val));
+			outputstr = text_to_cstring(jsontext);
+			appendStringInfoString(result, outputstr);
+			pfree(outputstr);
+			pfree(jsontext);
 			break;
 		default:
 			outputstr = OidOutputFunctionCall(typoutputfunc, val);
@@ -935,6 +952,7 @@ array_to_json_internal(Datum array, StringInfo result, bool use_line_feeds)
 	Oid			typioparam;
 	Oid			typoutputfunc;
 	TYPCATEGORY tcategory;
+	Oid			castfunc = InvalidOid;
 
 	ndim = ARR_NDIM(v);
 	dim = ARR_DIMS(v);
@@ -950,11 +968,32 @@ array_to_json_internal(Datum array, StringInfo result, bool use_line_feeds)
 					 &typlen, &typbyval, &typalign,
 					 &typdelim, &typioparam, &typoutputfunc);
 
+	if (element_type > FirstNormalObjectId)
+	{
+		HeapTuple	tuple;
+		Form_pg_cast castForm;
+
+		tuple = SearchSysCache2(CASTSOURCETARGET,
+								ObjectIdGetDatum(element_type),
+								ObjectIdGetDatum(JSONOID));
+		if (HeapTupleIsValid(tuple))
+		{
+			castForm = (Form_pg_cast) GETSTRUCT(tuple);
+
+			if (castForm->castmethod == COERCION_METHOD_FUNCTION)
+				castfunc = typoutputfunc = castForm->castfunc;
+
+			ReleaseSysCache(tuple);
+		}
+	}
+
 	deconstruct_array(v, element_type, typlen, typbyval,
 					  typalign, &elements, &nulls,
 					  &nitems);
 
-	if (element_type == RECORDOID)
+	if (castfunc != InvalidOid)
+		tcategory = TYPCATEGORY_JSON_CAST;
+	else if (element_type == RECORDOID)
 		tcategory = TYPCATEGORY_COMPOSITE;
 	else if (element_type == JSONOID)
 		tcategory = TYPCATEGORY_JSON;
@@ -1009,6 +1048,7 @@ composite_to_json(Datum composite, StringInfo result, bool use_line_feeds)
 		TYPCATEGORY tcategory;
 		Oid			typoutput;
 		bool		typisvarlena;
+		Oid			castfunc = InvalidOid;
 
 		if (tupdesc->attrs[i]->attisdropped)
 			continue;
@@ -1023,7 +1063,31 @@ composite_to_json(Datum composite, StringInfo result, bool use_line_feeds)
 
 		origval = heap_getattr(tuple, i + 1, tupdesc, &isnull);
 
-		if (tupdesc->attrs[i]->atttypid == RECORDARRAYOID)
+		getTypeOutputInfo(tupdesc->attrs[i]->atttypid,
+						  &typoutput, &typisvarlena);
+
+		if (tupdesc->attrs[i]->atttypid > FirstNormalObjectId)
+		{
+			HeapTuple	cast_tuple;
+			Form_pg_cast castForm;
+
+			cast_tuple = SearchSysCache2(CASTSOURCETARGET,
+							   ObjectIdGetDatum(tupdesc->attrs[i]->atttypid),
+										 ObjectIdGetDatum(JSONOID));
+			if (HeapTupleIsValid(cast_tuple))
+			{
+				castForm = (Form_pg_cast) GETSTRUCT(cast_tuple);
+
+				if (castForm->castmethod == COERCION_METHOD_FUNCTION)
+					castfunc = typoutput = castForm->castfunc;
+
+				ReleaseSysCache(cast_tuple);
+			}
+		}
+
+		if (castfunc != InvalidOid)
+			tcategory = TYPCATEGORY_JSON_CAST;
+		else if (tupdesc->attrs[i]->atttypid == RECORDARRAYOID)
 			tcategory = TYPCATEGORY_ARRAY;
 		else if (tupdesc->attrs[i]->atttypid == RECORDOID)
 			tcategory = TYPCATEGORY_COMPOSITE;
@@ -1031,9 +1095,6 @@ composite_to_json(Datum composite, StringInfo result, bool use_line_feeds)
 			tcategory = TYPCATEGORY_JSON;
 		else
 			tcategory = TypeCategory(tupdesc->attrs[i]->atttypid);
-
-		getTypeOutputInfo(tupdesc->attrs[i]->atttypid,
-						  &typoutput, &typisvarlena);
 
 		/*
 		 * If we have a toasted datum, forcibly detoast it here to avoid
@@ -1119,6 +1180,222 @@ row_to_json_pretty(PG_FUNCTION_ARGS)
 	composite_to_json(array, result, use_line_feeds);
 
 	PG_RETURN_TEXT_P(cstring_to_text(result->data));
+}
+
+/*
+ * SQL function to_json(anyvalue)
+ */
+Datum
+to_json(PG_FUNCTION_ARGS)
+{
+	Oid			val_type = get_fn_expr_argtype(fcinfo->flinfo, 0);
+	StringInfo	result;
+	Datum		orig_val,
+				val;
+	TYPCATEGORY tcategory;
+	Oid			typoutput;
+	bool		typisvarlena;
+	Oid			castfunc = InvalidOid;
+
+	if (val_type == InvalidOid)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("could not determine input data type")));
+
+
+	result = makeStringInfo();
+
+	orig_val = PG_ARGISNULL(0) ? (Datum) 0 : PG_GETARG_DATUM(0);
+
+	getTypeOutputInfo(val_type, &typoutput, &typisvarlena);
+
+	if (val_type > FirstNormalObjectId)
+	{
+		HeapTuple	tuple;
+		Form_pg_cast castForm;
+
+		tuple = SearchSysCache2(CASTSOURCETARGET,
+								ObjectIdGetDatum(val_type),
+								ObjectIdGetDatum(JSONOID));
+		if (HeapTupleIsValid(tuple))
+		{
+			castForm = (Form_pg_cast) GETSTRUCT(tuple);
+
+			if (castForm->castmethod == COERCION_METHOD_FUNCTION)
+				castfunc = typoutput = castForm->castfunc;
+
+			ReleaseSysCache(tuple);
+		}
+	}
+
+	if (castfunc != InvalidOid)
+		tcategory = TYPCATEGORY_JSON_CAST;
+	else if (val_type == RECORDARRAYOID)
+		tcategory = TYPCATEGORY_ARRAY;
+	else if (val_type == RECORDOID)
+		tcategory = TYPCATEGORY_COMPOSITE;
+	else if (val_type == JSONOID)
+		tcategory = TYPCATEGORY_JSON;
+	else
+		tcategory = TypeCategory(val_type);
+
+	/*
+	 * If we have a toasted datum, forcibly detoast it here to avoid memory
+	 * leakage inside the type's output routine.
+	 */
+	if (typisvarlena && orig_val != (Datum) 0)
+		val = PointerGetDatum(PG_DETOAST_DATUM(orig_val));
+	else
+		val = orig_val;
+
+	datum_to_json(val, false, result, tcategory, typoutput);
+
+	/* Clean up detoasted copy, if any */
+	if (val != orig_val)
+		pfree(DatumGetPointer(val));
+
+	PG_RETURN_TEXT_P(cstring_to_text(result->data));
+}
+
+/*
+ * json_agg transition function
+ */
+Datum
+json_agg_transfn(PG_FUNCTION_ARGS)
+{
+	Oid			val_type = get_fn_expr_argtype(fcinfo->flinfo, 1);
+	MemoryContext aggcontext,
+				oldcontext;
+	StringInfo	state;
+	Datum		orig_val,
+				val;
+	TYPCATEGORY tcategory;
+	Oid			typoutput;
+	bool		typisvarlena;
+	Oid			castfunc = InvalidOid;
+
+	if (val_type == InvalidOid)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("could not determine input data type")));
+
+	if (!AggCheckCallContext(fcinfo, &aggcontext))
+	{
+		/* cannot be called directly because of internal-type argument */
+		elog(ERROR, "json_agg_transfn called in non-aggregate context");
+	}
+
+	if (PG_ARGISNULL(0))
+	{
+		/*
+		 * Make this StringInfo in a context where it will persist for the
+		 * duration off the aggregate call. It's only needed for this initial
+		 * piece, as the StringInfo routines make sure they use the right
+		 * context to enlarge the object if necessary.
+		 */
+		oldcontext = MemoryContextSwitchTo(aggcontext);
+		state = makeStringInfo();
+		MemoryContextSwitchTo(oldcontext);
+
+		appendStringInfoChar(state, '[');
+	}
+	else
+	{
+		state = (StringInfo) PG_GETARG_POINTER(0);
+		appendStringInfoString(state, ", ");
+	}
+
+	/* fast path for NULLs */
+	if (PG_ARGISNULL(1))
+	{
+		orig_val = (Datum) 0;
+		datum_to_json(orig_val, true, state, 0, InvalidOid);
+		PG_RETURN_POINTER(state);
+	}
+
+
+	orig_val = PG_GETARG_DATUM(1);
+
+	getTypeOutputInfo(val_type, &typoutput, &typisvarlena);
+
+	if (val_type > FirstNormalObjectId)
+	{
+		HeapTuple	tuple;
+		Form_pg_cast castForm;
+
+		tuple = SearchSysCache2(CASTSOURCETARGET,
+								ObjectIdGetDatum(val_type),
+								ObjectIdGetDatum(JSONOID));
+		if (HeapTupleIsValid(tuple))
+		{
+			castForm = (Form_pg_cast) GETSTRUCT(tuple);
+
+			if (castForm->castmethod == COERCION_METHOD_FUNCTION)
+				castfunc = typoutput = castForm->castfunc;
+
+			ReleaseSysCache(tuple);
+		}
+	}
+
+	if (castfunc != InvalidOid)
+		tcategory = TYPCATEGORY_JSON_CAST;
+	else if (val_type == RECORDARRAYOID)
+		tcategory = TYPCATEGORY_ARRAY;
+	else if (val_type == RECORDOID)
+		tcategory = TYPCATEGORY_COMPOSITE;
+	else if (val_type == JSONOID)
+		tcategory = TYPCATEGORY_JSON;
+	else
+		tcategory = TypeCategory(val_type);
+
+	/*
+	 * If we have a toasted datum, forcibly detoast it here to avoid memory
+	 * leakage inside the type's output routine.
+	 */
+	if (typisvarlena)
+		val = PointerGetDatum(PG_DETOAST_DATUM(orig_val));
+	else
+		val = orig_val;
+
+	if (!PG_ARGISNULL(0) &&
+	  (tcategory == TYPCATEGORY_ARRAY || tcategory == TYPCATEGORY_COMPOSITE))
+	{
+		appendStringInfoString(state, "\n ");
+	}
+
+	datum_to_json(val, false, state, tcategory, typoutput);
+
+	/* Clean up detoasted copy, if any */
+	if (val != orig_val)
+		pfree(DatumGetPointer(val));
+
+	/*
+	 * The transition type for array_agg() is declared to be "internal", which
+	 * is a pass-by-value type the same size as a pointer.	So we can safely
+	 * pass the ArrayBuildState pointer through nodeAgg.c's machinations.
+	 */
+	PG_RETURN_POINTER(state);
+}
+
+/*
+ * json_agg final function
+ */
+Datum
+json_agg_finalfn(PG_FUNCTION_ARGS)
+{
+	StringInfo	state;
+
+	/* cannot be called directly because of internal-type argument */
+	Assert(AggCheckCallContext(fcinfo, NULL));
+
+	state = PG_ARGISNULL(0) ? NULL : (StringInfo) PG_GETARG_POINTER(0);
+
+	if (state == NULL)
+		PG_RETURN_NULL();
+
+	appendStringInfoChar(state, ']');
+
+	PG_RETURN_TEXT_P(cstring_to_text(state->data));
 }
 
 /*

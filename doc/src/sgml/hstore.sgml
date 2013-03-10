@@ -323,6 +323,22 @@ b
      </row>
 
      <row>
+      <entry><function>hstore_to_json(hstore)</function></entry>
+      <entry><type>json</type></entry>
+      <entry>get <type>hstore</type> as a json value</entry>
+      <entry><literal>hstore_to_json('"a key"=&gt;1, b=&gt;t, c=&gt;null, d=&gt;12345, e=&gt;012345, f=&gt;1.234, g=&gt;2.345e+4')</literal></entry>
+      <entry><literal>{"a key": "1", "b": "t", "c": null, "d": "12345", "e": "012345", "f": "1.234", "g": "2.345e+4"}</literal></entry>
+     </row>
+
+     <row>
+      <entry><function>hstore_to_json_loose(hstore)</function></entry>
+      <entry><type>json</type></entry>
+      <entry>get <type>hstore</type> as a json value, but attempting to distinguish numerical and boolean values so they are unquoted in the json</entry>
+      <entry><literal>hstore_to_json('"a key"=&gt;1, b=&gt;t, c=&gt;null, d=&gt;12345, e=&gt;012345, f=&gt;1.234, g=&gt;2.345e+4')</literal></entry>
+      <entry><literal>{"a key": 1, "b": true, "c": null, "d": 12345, "e": "012345", "f": 1.234, "g": 2.345e+4}</literal></entry>
+     </row>
+
+     <row>
       <entry><function>slice(hstore, text[])</function></entry>
       <entry><type>hstore</type></entry>
       <entry>extract a subset of an <type>hstore</></entry>
@@ -395,6 +411,13 @@ b
     </tbody>
    </tgroup>
   </table>
+
+  <note>
+   <para>
+     The function <function>hstore_to_json</function> is used when an <type>hstore</type>
+     value is cast to <type>json</type>.
+   </para>
+  </note>
 
   <note>
    <para>
