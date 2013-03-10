@@ -1134,14 +1134,14 @@ GenerateRecoveryConf(PGconn *conn)
 	recoveryconfcontents = createPQExpBuffer();
 	if (!recoveryconfcontents)
 	{
-		fprintf(stderr, _("%s: out of memory"), progname);
+		fprintf(stderr, _("%s: out of memory\n"), progname);
 		disconnect_and_exit(1);
 	}
 
 	connOptions = PQconninfo(conn);
 	if (connOptions == NULL)
 	{
-		fprintf(stderr, _("%s: out of memory"), progname);
+		fprintf(stderr, _("%s: out of memory\n"), progname);
 		disconnect_and_exit(1);
 	}
 
@@ -1179,7 +1179,7 @@ GenerateRecoveryConf(PGconn *conn)
 	appendPQExpBufferStr(recoveryconfcontents, "'\n");
 	if (PQExpBufferBroken(recoveryconfcontents))
 	{
-		fprintf(stderr, _("%s: out of memory"), progname);
+		fprintf(stderr, _("%s: out of memory\n"), progname);
 		disconnect_and_exit(1);
 	}
 
@@ -1202,7 +1202,7 @@ WriteRecoveryConf(void)
 	cf = fopen(filename, "w");
 	if (cf == NULL)
 	{
-		fprintf(stderr, _("%s: could not create file %s: %s"), progname, filename, strerror(errno));
+		fprintf(stderr, _("%s: could not create file \"%s\": %s\n"), progname, filename, strerror(errno));
 		disconnect_and_exit(1);
 	}
 

@@ -313,7 +313,7 @@ writeTimeLineHistoryFile(char *basedir, TimeLineID tli, char *filename, char *co
 	fd = open(tmppath, O_WRONLY | O_CREAT | PG_BINARY, S_IRUSR | S_IWUSR);
 	if (fd < 0)
 	{
-		fprintf(stderr, _("%s: could not create timeline history file \"%s\": %s"),
+		fprintf(stderr, _("%s: could not create timeline history file \"%s\": %s\n"),
 				progname, tmppath, strerror(errno));
 		return false;
 	}
@@ -329,7 +329,7 @@ writeTimeLineHistoryFile(char *basedir, TimeLineID tli, char *filename, char *co
 		unlink(tmppath);
 		errno = save_errno;
 
-		fprintf(stderr, _("%s: could not write timeline history file \"%s\": %s"),
+		fprintf(stderr, _("%s: could not write timeline history file \"%s\": %s\n"),
 				progname, tmppath, strerror(errno));
 		return false;
 	}
