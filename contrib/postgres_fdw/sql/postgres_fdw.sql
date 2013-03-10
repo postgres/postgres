@@ -316,7 +316,7 @@ ALTER TABLE "S 1"."T 1" ADD CONSTRAINT c2positive CHECK (c2 >= 0);
 
 INSERT INTO ft1(c1, c2) VALUES(11, 12);  -- duplicate key
 INSERT INTO ft1(c1, c2) VALUES(1111, -2);  -- c2positive
-UPDATE ft1 SET c2 = -c2 WHERE c1 = 1;  -- c2positive
+UPDATE ft1 SET c2 = -c2, c4 = null WHERE c1 = 1;  -- c2positive
 
 -- Test savepoint/rollback behavior
 select c2, count(*) from ft2 where c2 < 500 group by 1 order by 1;
@@ -337,7 +337,7 @@ select c2, count(*) from ft2 where c2 < 500 group by 1 order by 1;
 release savepoint s2;
 select c2, count(*) from ft2 where c2 < 500 group by 1 order by 1;
 savepoint s3;
-update ft2 set c2 = -2 where c2 = 42; -- fail on remote side
+update ft2 set c2 = -2, c4 = null where c2 = 42; -- fail on remote side
 rollback to savepoint s3;
 select c2, count(*) from ft2 where c2 < 500 group by 1 order by 1;
 release savepoint s3;
