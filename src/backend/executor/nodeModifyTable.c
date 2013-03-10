@@ -439,6 +439,12 @@ ldelete:;
 		rslot = ExecProcessReturning(resultRelInfo->ri_projectReturning,
 									 slot, planSlot);
 
+		/*
+		 * Before releasing the target tuple again, make sure rslot has a
+		 * local copy of any pass-by-reference values.
+		 */
+		ExecMaterializeSlot(rslot);
+
 		ExecClearTuple(slot);
 		if (BufferIsValid(delbuffer))
 			ReleaseBuffer(delbuffer);
