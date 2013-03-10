@@ -2121,17 +2121,10 @@ CopyFrom(CopyState cstate)
 	 * here that basically duplicated execUtils.c ...)
 	 */
 	resultRelInfo = makeNode(ResultRelInfo);
-	resultRelInfo->ri_RangeTableIndex = 1;		/* dummy */
-	resultRelInfo->ri_RelationDesc = cstate->rel;
-	resultRelInfo->ri_TrigDesc = CopyTriggerDesc(cstate->rel->trigdesc);
-	if (resultRelInfo->ri_TrigDesc)
-	{
-		resultRelInfo->ri_TrigFunctions = (FmgrInfo *)
-			palloc0(resultRelInfo->ri_TrigDesc->numtriggers * sizeof(FmgrInfo));
-		resultRelInfo->ri_TrigWhenExprs = (List **)
-			palloc0(resultRelInfo->ri_TrigDesc->numtriggers * sizeof(List *));
-	}
-	resultRelInfo->ri_TrigInstrument = NULL;
+	InitResultRelInfo(resultRelInfo,
+					  cstate->rel,
+					  1,		/* dummy rangetable index */
+					  0);
 
 	ExecOpenIndices(resultRelInfo);
 

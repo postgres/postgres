@@ -185,15 +185,11 @@ SELECT tableoid::regclass, b FROM agg_csv;
 
 -- updates aren't supported
 INSERT INTO agg_csv VALUES(1,2.0);
-ERROR:  cannot change foreign table "agg_csv"
+ERROR:  cannot insert into foreign table "agg_csv"
 UPDATE agg_csv SET a = 1;
-ERROR:  cannot change foreign table "agg_csv"
+ERROR:  cannot update foreign table "agg_csv"
 DELETE FROM agg_csv WHERE a = 100;
-ERROR:  cannot change foreign table "agg_csv"
-SELECT * FROM agg_csv FOR UPDATE OF agg_csv;
-ERROR:  row-level locks cannot be used with foreign table "agg_csv"
-LINE 1: SELECT * FROM agg_csv FOR UPDATE OF agg_csv;
-                                            ^
+ERROR:  cannot delete from foreign table "agg_csv"
 -- but this should be ignored
 SELECT * FROM agg_csv FOR UPDATE;
   a  |    b    

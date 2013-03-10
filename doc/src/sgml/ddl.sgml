@@ -3040,36 +3040,41 @@ ANALYZE measurement;
     Foreign data is accessed with help from a
     <firstterm>foreign data wrapper</firstterm>. A foreign data wrapper is a
     library that can communicate with an external data source, hiding the
-    details of connecting to the data source and fetching data from it. There
-    is a foreign data wrapper available as a <filename>contrib</> module,
-    which can read plain data files residing on the server.  Other kind of
-    foreign data wrappers might be found as third party products.  If none of
-    the existing foreign data wrappers suit your needs, you can write your
-    own; see <xref linkend="fdwhandler">.
+    details of connecting to the data source and obtaining data from it.
+    There are some foreign data wrappers available as <filename>contrib</>
+    modules; see <xref linkend="contrib">.  Other kinds of foreign data
+    wrappers might be found as third party products.  If none of the existing
+    foreign data wrappers suit your needs, you can write your own; see <xref
+    linkend="fdwhandler">.
    </para>
 
    <para>
     To access foreign data, you need to create a <firstterm>foreign server</>
-    object, which defines how to connect to a particular external data source,
-    according to the set of options used by a particular foreign data
+    object, which defines how to connect to a particular external data source
+    according to the set of options used by its supporting foreign data
     wrapper. Then you need to create one or more <firstterm>foreign
     tables</firstterm>, which define the structure of the remote data. A
     foreign table can be used in queries just like a normal table, but a
     foreign table has no storage in the PostgreSQL server.  Whenever it is
     used, <productname>PostgreSQL</productname> asks the foreign data wrapper
-    to fetch the data from the external source.
+    to fetch data from the external source, or transmit data to the external
+    source in the case of update commands.
    </para>
 
    <para>
-    Accessing remote data may require authentication at the external
+    Accessing remote data may require authenticating to the external
     data source.  This information can be provided by a
-    <firstterm>user mapping</>, which can provide additional options based
+    <firstterm>user mapping</>, which can provide additional data
+    such as user names and passwords based
     on the current <productname>PostgreSQL</productname> role.
    </para>
 
    <para>
-    Currently, foreign tables are read-only.  This limitation may be fixed
-    in a future release.
+    For additional information, see
+    <xref linkend="sql-createforeigndatawrapper">,
+    <xref linkend="sql-createserver">,
+    <xref linkend="sql-createusermapping">, and
+    <xref linkend="sql-createforeigntable">.
    </para>
  </sect1>
 

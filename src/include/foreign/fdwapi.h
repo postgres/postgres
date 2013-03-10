@@ -38,9 +38,6 @@ typedef ForeignScan *(*GetForeignPlan_function) (PlannerInfo *root,
 															 List *tlist,
 														 List *scan_clauses);
 
-typedef void (*ExplainForeignScan_function) (ForeignScanState *node,
-													struct ExplainState *es);
-
 typedef void (*BeginForeignScan_function) (ForeignScanState *node,
 													   int eflags);
 
@@ -49,6 +46,48 @@ typedef TupleTableSlot *(*IterateForeignScan_function) (ForeignScanState *node);
 typedef void (*ReScanForeignScan_function) (ForeignScanState *node);
 
 typedef void (*EndForeignScan_function) (ForeignScanState *node);
+
+typedef void (*AddForeignUpdateTargets_function) (Query *parsetree,
+												   RangeTblEntry *target_rte,
+												   Relation target_relation);
+
+typedef List *(*PlanForeignModify_function) (PlannerInfo *root,
+														 ModifyTable *plan,
+														 Index resultRelation,
+														 int subplan_index);
+
+typedef void (*BeginForeignModify_function) (ModifyTableState *mtstate,
+														 ResultRelInfo *rinfo,
+														 List *fdw_private,
+														 int subplan_index,
+														 int eflags);
+
+typedef TupleTableSlot *(*ExecForeignInsert_function) (EState *estate,
+														ResultRelInfo *rinfo,
+														TupleTableSlot *slot,
+												   TupleTableSlot *planSlot);
+
+typedef TupleTableSlot *(*ExecForeignUpdate_function) (EState *estate,
+														ResultRelInfo *rinfo,
+														TupleTableSlot *slot,
+												   TupleTableSlot *planSlot);
+
+typedef TupleTableSlot *(*ExecForeignDelete_function) (EState *estate,
+														ResultRelInfo *rinfo,
+														TupleTableSlot *slot,
+												   TupleTableSlot *planSlot);
+
+typedef void (*EndForeignModify_function) (EState *estate,
+													   ResultRelInfo *rinfo);
+
+typedef void (*ExplainForeignScan_function) (ForeignScanState *node,
+													struct ExplainState *es);
+
+typedef void (*ExplainForeignModify_function) (ModifyTableState *mtstate,
+														ResultRelInfo *rinfo,
+														   List *fdw_private,
+														   int subplan_index,
+													struct ExplainState *es);
 
 typedef int (*AcquireSampleRowsFunc) (Relation relation, int elevel,
 											   HeapTuple *rows, int targrows,
@@ -73,22 +112,34 @@ typedef struct FdwRoutine
 {
 	NodeTag		type;
 
-	/*
-	 * These functions are required.
-	 */
+	/* Functions for scanning foreign tables */
 	GetForeignRelSize_function GetForeignRelSize;
 	GetForeignPaths_function GetForeignPaths;
 	GetForeignPlan_function GetForeignPlan;
-	ExplainForeignScan_function ExplainForeignScan;
 	BeginForeignScan_function BeginForeignScan;
 	IterateForeignScan_function IterateForeignScan;
 	ReScanForeignScan_function ReScanForeignScan;
 	EndForeignScan_function EndForeignScan;
 
 	/*
-	 * These functions are optional.  Set the pointer to NULL for any that are
-	 * not provided.
+	 * Remaining functions are optional.  Set the pointer to NULL for any that
+	 * are not provided.
 	 */
+
+	/* Functions for updating foreign tables */
+	AddForeignUpdateTargets_function AddForeignUpdateTargets;
+	PlanForeignModify_function PlanForeignModify;
+	BeginForeignModify_function BeginForeignModify;
+	ExecForeignInsert_function ExecForeignInsert;
+	ExecForeignUpdate_function ExecForeignUpdate;
+	ExecForeignDelete_function ExecForeignDelete;
+	EndForeignModify_function EndForeignModify;
+
+	/* Support functions for EXPLAIN */
+	ExplainForeignScan_function ExplainForeignScan;
+	ExplainForeignModify_function ExplainForeignModify;
+
+	/* Support functions for ANALYZE */
 	AnalyzeForeignTable_function AnalyzeForeignTable;
 } FdwRoutine;
 

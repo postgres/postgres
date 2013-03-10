@@ -25,6 +25,7 @@
 
 #include "postgres_fdw.h"
 
+#include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/sysattr.h"
 #include "access/transam.h"
@@ -66,6 +67,14 @@ static bool is_builtin(Oid procid);
 /*
  * Functions to construct string representation of a node tree.
  */
+static void deparseTargetList(StringInfo buf,
+				  PlannerInfo *root,
+				  Index rtindex,
+				  Relation rel,
+				  Bitmapset *attrs_used);
+static void deparseReturningList(StringInfo buf, PlannerInfo *root,
+					 Index rtindex, Relation rel,
+					 List *returningList);
 static void deparseColumnRef(StringInfo buf, int varno, int varattno,
 				 PlannerInfo *root);
 static void deparseRelation(StringInfo buf, Oid relid);
@@ -349,80 +358,104 @@ is_builtin(Oid oid)
 
 
 /*
- * Construct a simple SELECT statement that retrieves interesting columns
+ * Construct a simple SELECT statement that retrieves desired columns
  * of the specified foreign table, and append it to "buf".	The output
  * contains just "SELECT ... FROM tablename".
- *
- * "Interesting" columns are those appearing in the rel's targetlist or
- * in local_conds (conditions which can't be executed remotely).
  */
 void
-deparseSimpleSql(StringInfo buf,
+deparseSelectSql(StringInfo buf,
 				 PlannerInfo *root,
 				 RelOptInfo *baserel,
-				 List *local_conds)
+				 Bitmapset *attrs_used)
 {
-	RangeTblEntry *rte = root->simple_rte_array[baserel->relid];
-	Bitmapset  *attrs_used = NULL;
+	RangeTblEntry *rte = planner_rt_fetch(baserel->relid, root);
+	Relation	rel;
+
+	/*
+	 * Core code already has some lock on each rel being planned, so we can
+	 * use NoLock here.
+	 */
+	rel = heap_open(rte->relid, NoLock);
+
+	/*
+	 * Construct SELECT list
+	 */
+	appendStringInfoString(buf, "SELECT ");
+	deparseTargetList(buf, root, baserel->relid, rel, attrs_used);
+
+	/*
+	 * Construct FROM clause
+	 */
+	appendStringInfoString(buf, " FROM ");
+	deparseRelation(buf, RelationGetRelid(rel));
+
+	heap_close(rel, NoLock);
+}
+
+/*
+ * Emit a target list that retrieves the columns specified in attrs_used.
+ * This is used for both SELECT and RETURNING targetlists.
+ *
+ * We list attributes in order of the foreign table's columns, but replace
+ * any attributes that need not be fetched with NULL constants.  (We can't
+ * just omit such attributes, or we'll lose track of which columns are
+ * which at runtime.)  Note however that any dropped columns are ignored.
+ * Also, if ctid needs to be retrieved, it's added at the end.
+ */
+static void
+deparseTargetList(StringInfo buf,
+				  PlannerInfo *root,
+				  Index rtindex,
+				  Relation rel,
+				  Bitmapset *attrs_used)
+{
+	TupleDesc	tupdesc = RelationGetDescr(rel);
 	bool		have_wholerow;
 	bool		first;
-	AttrNumber	attr;
-	ListCell   *lc;
-
-	/* Collect all the attributes needed for joins or final output. */
-	pull_varattnos((Node *) baserel->reltargetlist, baserel->relid,
-				   &attrs_used);
-
-	/* Add all the attributes used by local_conds. */
-	foreach(lc, local_conds)
-	{
-		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
-
-		pull_varattnos((Node *) rinfo->clause, baserel->relid,
-					   &attrs_used);
-	}
+	int			i;
 
 	/* If there's a whole-row reference, we'll need all the columns. */
 	have_wholerow = bms_is_member(0 - FirstLowInvalidHeapAttributeNumber,
 								  attrs_used);
 
-	/*
-	 * Construct SELECT list
-	 *
-	 * We list attributes in order of the foreign table's columns, but replace
-	 * any attributes that need not be fetched with NULL constants. (We can't
-	 * just omit such attributes, or we'll lose track of which columns are
-	 * which at runtime.)  Note however that any dropped columns are ignored.
-	 */
-	appendStringInfo(buf, "SELECT ");
 	first = true;
-	for (attr = 1; attr <= baserel->max_attr; attr++)
+	for (i = 1; i <= tupdesc->natts; i++)
 	{
+		Form_pg_attribute attr = tupdesc->attrs[i - 1];
+
 		/* Ignore dropped attributes. */
-		if (get_rte_attribute_is_dropped(rte, attr))
+		if (attr->attisdropped)
 			continue;
 
 		if (!first)
-			appendStringInfo(buf, ", ");
+			appendStringInfoString(buf, ", ");
 		first = false;
 
 		if (have_wholerow ||
-			bms_is_member(attr - FirstLowInvalidHeapAttributeNumber,
+			bms_is_member(i - FirstLowInvalidHeapAttributeNumber,
 						  attrs_used))
-			deparseColumnRef(buf, baserel->relid, attr, root);
+			deparseColumnRef(buf, rtindex, i, root);
 		else
-			appendStringInfo(buf, "NULL");
+			appendStringInfoString(buf, "NULL");
+	}
+
+	/*
+	 * Add ctid if needed.	We currently don't support retrieving any other
+	 * system columns.
+	 */
+	if (bms_is_member(SelfItemPointerAttributeNumber - FirstLowInvalidHeapAttributeNumber,
+					  attrs_used))
+	{
+		if (!first)
+			appendStringInfoString(buf, ", ");
+		first = false;
+
+		appendStringInfoString(buf, "ctid");
 	}
 
 	/* Don't generate bad syntax if no undropped columns */
 	if (first)
-		appendStringInfo(buf, "NULL");
-
-	/*
-	 * Construct FROM clause
-	 */
-	appendStringInfo(buf, " FROM ");
-	deparseRelation(buf, rte->relid);
+		appendStringInfoString(buf, "NULL");
 }
 
 /*
@@ -432,9 +465,9 @@ deparseSimpleSql(StringInfo buf,
  */
 void
 appendWhereClause(StringInfo buf,
-				  bool is_first,
+				  PlannerInfo *root,
 				  List *exprs,
-				  PlannerInfo *root)
+				  bool is_first)
 {
 	ListCell   *lc;
 
@@ -444,9 +477,9 @@ appendWhereClause(StringInfo buf,
 
 		/* Connect expressions with "AND" and parenthesize each condition. */
 		if (is_first)
-			appendStringInfo(buf, " WHERE ");
+			appendStringInfoString(buf, " WHERE ");
 		else
-			appendStringInfo(buf, " AND ");
+			appendStringInfoString(buf, " AND ");
 
 		appendStringInfoChar(buf, '(');
 		deparseExpr(buf, ri->clause, root);
@@ -454,6 +487,147 @@ appendWhereClause(StringInfo buf,
 
 		is_first = false;
 	}
+}
+
+/*
+ * deparse remote INSERT statement
+ */
+void
+deparseInsertSql(StringInfo buf, PlannerInfo *root, Index rtindex,
+				 List *targetAttrs, List *returningList)
+{
+	RangeTblEntry *rte = planner_rt_fetch(rtindex, root);
+	Relation	rel = heap_open(rte->relid, NoLock);
+	TupleDesc	tupdesc = RelationGetDescr(rel);
+	AttrNumber	pindex;
+	bool		first;
+	ListCell   *lc;
+
+	appendStringInfoString(buf, "INSERT INTO ");
+	deparseRelation(buf, rte->relid);
+	appendStringInfoString(buf, "(");
+
+	first = true;
+	foreach(lc, targetAttrs)
+	{
+		int			attnum = lfirst_int(lc);
+		Form_pg_attribute attr = tupdesc->attrs[attnum - 1];
+
+		Assert(!attr->attisdropped);
+
+		if (!first)
+			appendStringInfoString(buf, ", ");
+		first = false;
+
+		deparseColumnRef(buf, rtindex, attnum, root);
+	}
+
+	appendStringInfoString(buf, ") VALUES (");
+
+	pindex = 1;
+	first = true;
+	foreach(lc, targetAttrs)
+	{
+		if (!first)
+			appendStringInfoString(buf, ", ");
+		first = false;
+
+		appendStringInfo(buf, "$%d", pindex);
+		pindex++;
+	}
+
+	appendStringInfoString(buf, ")");
+
+	if (returningList)
+		deparseReturningList(buf, root, rtindex, rel, returningList);
+
+	heap_close(rel, NoLock);
+}
+
+/*
+ * deparse remote UPDATE statement
+ */
+void
+deparseUpdateSql(StringInfo buf, PlannerInfo *root, Index rtindex,
+				 List *targetAttrs, List *returningList)
+{
+	RangeTblEntry *rte = planner_rt_fetch(rtindex, root);
+	Relation	rel = heap_open(rte->relid, NoLock);
+	TupleDesc	tupdesc = RelationGetDescr(rel);
+	AttrNumber	pindex;
+	bool		first;
+	ListCell   *lc;
+
+	appendStringInfoString(buf, "UPDATE ");
+	deparseRelation(buf, rte->relid);
+	appendStringInfoString(buf, " SET ");
+
+	pindex = 2;					/* ctid is always the first param */
+	first = true;
+	foreach(lc, targetAttrs)
+	{
+		int			attnum = lfirst_int(lc);
+		Form_pg_attribute attr = tupdesc->attrs[attnum - 1];
+
+		Assert(!attr->attisdropped);
+
+		if (!first)
+			appendStringInfoString(buf, ", ");
+		first = false;
+
+		deparseColumnRef(buf, rtindex, attnum, root);
+		appendStringInfo(buf, " = $%d", pindex);
+		pindex++;
+	}
+	appendStringInfoString(buf, " WHERE ctid = $1");
+
+	if (returningList)
+		deparseReturningList(buf, root, rtindex, rel, returningList);
+
+	heap_close(rel, NoLock);
+}
+
+/*
+ * deparse remote DELETE statement
+ */
+void
+deparseDeleteSql(StringInfo buf, PlannerInfo *root, Index rtindex,
+				 List *returningList)
+{
+	RangeTblEntry *rte = planner_rt_fetch(rtindex, root);
+
+	appendStringInfoString(buf, "DELETE FROM ");
+	deparseRelation(buf, rte->relid);
+	appendStringInfoString(buf, " WHERE ctid = $1");
+
+	if (returningList)
+	{
+		Relation	rel = heap_open(rte->relid, NoLock);
+
+		deparseReturningList(buf, root, rtindex, rel, returningList);
+		heap_close(rel, NoLock);
+	}
+}
+
+/*
+ * deparse RETURNING clause of INSERT/UPDATE/DELETE
+ */
+static void
+deparseReturningList(StringInfo buf, PlannerInfo *root,
+					 Index rtindex, Relation rel,
+					 List *returningList)
+{
+	Bitmapset  *attrs_used;
+
+	/*
+	 * We need the attrs mentioned in the query's RETURNING list.
+	 */
+	attrs_used = NULL;
+	pull_varattnos((Node *) returningList, rtindex,
+				   &attrs_used);
+
+	appendStringInfoString(buf, " RETURNING ");
+	deparseTargetList(buf, root, rtindex, rel, attrs_used);
 }
 
 /*
@@ -495,12 +669,16 @@ deparseAnalyzeSql(StringInfo buf, Relation rel)
 	ListCell   *lc;
 	bool		first = true;
 
-	appendStringInfo(buf, "SELECT ");
+	appendStringInfoString(buf, "SELECT ");
 	for (i = 0; i < tupdesc->natts; i++)
 	{
 		/* Ignore dropped columns. */
 		if (tupdesc->attrs[i]->attisdropped)
 			continue;
+
+		if (!first)
+			appendStringInfoString(buf, ", ");
+		first = false;
 
 		/* Use attribute name or column_name option. */
 		colname = NameStr(tupdesc->attrs[i]->attname);
@@ -517,20 +695,17 @@ deparseAnalyzeSql(StringInfo buf, Relation rel)
 			}
 		}
 
-		if (!first)
-			appendStringInfo(buf, ", ");
 		appendStringInfoString(buf, quote_identifier(colname));
-		first = false;
 	}
 
 	/* Don't generate bad syntax for zero-column relation. */
 	if (first)
-		appendStringInfo(buf, "NULL");
+		appendStringInfoString(buf, "NULL");
 
 	/*
 	 * Construct FROM clause
 	 */
-	appendStringInfo(buf, " FROM ");
+	appendStringInfoString(buf, " FROM ");
 	deparseRelation(buf, relid);
 }
 
@@ -547,10 +722,10 @@ deparseColumnRef(StringInfo buf, int varno, int varattno, PlannerInfo *root)
 	ListCell   *lc;
 
 	/* varno must not be any of OUTER_VAR, INNER_VAR and INDEX_VAR. */
-	Assert(varno >= 1 && varno <= root->simple_rel_array_size);
+	Assert(!IS_SPECIAL_VARNO(varno));
 
 	/* Get RangeTblEntry from array in PlannerInfo. */
-	rte = root->simple_rte_array[varno];
+	rte = planner_rt_fetch(varno, root);
 
 	/*
 	 * If it's a column of a foreign table, and it has the column_name FDW
@@ -608,8 +783,8 @@ deparseRelation(StringInfo buf, Oid relid)
 	}
 
 	/*
-	 * Note: we could skip printing the schema name if it's pg_catalog,
-	 * but that doesn't seem worth the trouble.
+	 * Note: we could skip printing the schema name if it's pg_catalog, but
+	 * that doesn't seem worth the trouble.
 	 */
 	if (nspname == NULL)
 		nspname = get_namespace_name(get_rel_namespace(relid));
@@ -1059,7 +1234,7 @@ deparseDistinctExpr(StringInfo buf, DistinctExpr *node, PlannerInfo *root)
 
 	appendStringInfoChar(buf, '(');
 	deparseExpr(buf, linitial(node->args), root);
-	appendStringInfo(buf, " IS DISTINCT FROM ");
+	appendStringInfoString(buf, " IS DISTINCT FROM ");
 	deparseExpr(buf, lsecond(node->args), root);
 	appendStringInfoChar(buf, ')');
 }
@@ -1146,7 +1321,7 @@ deparseBoolExpr(StringInfo buf, BoolExpr *node, PlannerInfo *root)
 			op = "OR";
 			break;
 		case NOT_EXPR:
-			appendStringInfo(buf, "(NOT ");
+			appendStringInfoString(buf, "(NOT ");
 			deparseExpr(buf, linitial(node->args), root);
 			appendStringInfoChar(buf, ')');
 			return;
@@ -1173,9 +1348,9 @@ deparseNullTest(StringInfo buf, NullTest *node, PlannerInfo *root)
 	appendStringInfoChar(buf, '(');
 	deparseExpr(buf, node->arg, root);
 	if (node->nulltesttype == IS_NULL)
-		appendStringInfo(buf, " IS NULL)");
+		appendStringInfoString(buf, " IS NULL)");
 	else
-		appendStringInfo(buf, " IS NOT NULL)");
+		appendStringInfoString(buf, " IS NOT NULL)");
 }
 
 /*
@@ -1187,11 +1362,11 @@ deparseArrayExpr(StringInfo buf, ArrayExpr *node, PlannerInfo *root)
 	bool		first = true;
 	ListCell   *lc;
 
-	appendStringInfo(buf, "ARRAY[");
+	appendStringInfoString(buf, "ARRAY[");
 	foreach(lc, node->elements)
 	{
 		if (!first)
-			appendStringInfo(buf, ", ");
+			appendStringInfoString(buf, ", ");
 		deparseExpr(buf, lfirst(lc), root);
 		first = false;
 	}

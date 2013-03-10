@@ -16,6 +16,7 @@
 #include "access/sysattr.h"
 #include "catalog/pg_type.h"
 #include "commands/trigger.h"
+#include "foreign/fdwapi.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/analyze.h"
@@ -1156,6 +1157,7 @@ rewriteValuesRTE(RangeTblEntry *rte, Relation target_relation, List *attrnos)
  * is a regular table, the junk TLE emits the ctid attribute of the original
  * row.  When the target relation is a view, there is no ctid, so we instead
  * emit a whole-row Var that will contain the "old" values of the view row.
+ * If it's a foreign table, we let the FDW decide what to add.
  *
  * For UPDATE queries, this is applied after rewriteTargetListIU.  The
  * ordering isn't actually critical at the moment.
@@ -1182,6 +1184,21 @@ rewriteTargetListUD(Query *parsetree, RangeTblEntry *target_rte,
 					  0);
 
 		attrname = "ctid";
+	}
+	else if (target_relation->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
+	{
+		/*
+		 * Let the foreign table's FDW add whatever junk TLEs it wants.
+		 */
+		FdwRoutine *fdwroutine;
+
+		fdwroutine = GetFdwRoutineForRelation(target_relation, false);
+
+		if (fdwroutine->AddForeignUpdateTargets != NULL)
+			fdwroutine->AddForeignUpdateTargets(parsetree, target_rte,
+												target_relation);
+
+		return;
 	}
 	else
 	{
@@ -1444,17 +1461,13 @@ markQueryForLocking(Query *qry, Node *jtnode,
 
 		if (rte->rtekind == RTE_RELATION)
 		{
-			/* ignore foreign tables */
-			if (rte->relkind != RELKIND_FOREIGN_TABLE)
-			{
-				applyLockingClause(qry, rti, strength, noWait, pushedDown);
-				rte->requiredPerms |= ACL_SELECT_FOR_UPDATE;
-			}
+			applyLockingClause(qry, rti, strength, noWait, pushedDown);
+			rte->requiredPerms |= ACL_SELECT_FOR_UPDATE;
 		}
 		else if (rte->rtekind == RTE_SUBQUERY)
 		{
 			applyLockingClause(qry, rti, strength, noWait, pushedDown);
-			/* FOR [KEY] UPDATE/SHARE of subquery is propagated to subquery's rels */
+			/* FOR UPDATE/SHARE of subquery is propagated to subquery's rels */
 			markQueryForLocking(rte->subquery, (Node *) rte->subquery->jointree,
 								strength, noWait, true);
 		}

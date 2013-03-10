@@ -44,6 +44,7 @@
 #include "catalog/namespace.h"
 #include "commands/trigger.h"
 #include "executor/execdebug.h"
+#include "foreign/fdwapi.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
@@ -1005,6 +1006,7 @@ void
 CheckValidResultRel(Relation resultRel, CmdType operation)
 {
 	TriggerDesc *trigDesc = resultRel->trigdesc;
+	FdwRoutine *fdwroutine;
 
 	switch (resultRel->rd_rel->relkind)
 	{
@@ -1069,10 +1071,35 @@ CheckValidResultRel(Relation resultRel, CmdType operation)
 							RelationGetRelationName(resultRel))));
 			break;
 		case RELKIND_FOREIGN_TABLE:
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("cannot change foreign table \"%s\"",
-							RelationGetRelationName(resultRel))));
+			/* Okay only if the FDW supports it */
+			fdwroutine = GetFdwRoutineForRelation(resultRel, false);
+			switch (operation)
+			{
+				case CMD_INSERT:
+					if (fdwroutine->ExecForeignInsert == NULL)
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("cannot insert into foreign table \"%s\"",
+										RelationGetRelationName(resultRel))));
+					break;
+				case CMD_UPDATE:
+					if (fdwroutine->ExecForeignUpdate == NULL)
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("cannot update foreign table \"%s\"",
+										RelationGetRelationName(resultRel))));
+					break;
+				case CMD_DELETE:
+					if (fdwroutine->ExecForeignDelete == NULL)
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("cannot delete from foreign table \"%s\"",
+										RelationGetRelationName(resultRel))));
+					break;
+				default:
+					elog(ERROR, "unrecognized CmdType: %d", (int) operation);
+					break;
+			}
 			break;
 		default:
 			ereport(ERROR,
@@ -1126,7 +1153,7 @@ CheckValidRowMarkRel(Relation rel, RowMarkType markType)
 							RelationGetRelationName(rel))));
 			break;
 		case RELKIND_FOREIGN_TABLE:
-			/* Perhaps we can support this someday, but not today */
+			/* Should not get here */
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot lock rows in foreign table \"%s\"",
@@ -1180,6 +1207,11 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 		resultRelInfo->ri_TrigWhenExprs = NULL;
 		resultRelInfo->ri_TrigInstrument = NULL;
 	}
+	if (resultRelationDesc->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
+		resultRelInfo->ri_FdwRoutine = GetFdwRoutineForRelation(resultRelationDesc, true);
+	else
+		resultRelInfo->ri_FdwRoutine = NULL;
+	resultRelInfo->ri_FdwState = NULL;
 	resultRelInfo->ri_ConstraintExprs = NULL;
 	resultRelInfo->ri_junkFilter = NULL;
 	resultRelInfo->ri_projectReturning = NULL;

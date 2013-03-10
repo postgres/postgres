@@ -20,6 +20,7 @@
 #include <math.h>
 
 #include "access/skey.h"
+#include "catalog/pg_class.h"
 #include "foreign/fdwapi.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -4695,7 +4696,8 @@ make_result(PlannerInfo *root,
  * to make it look better sometime.
  */
 ModifyTable *
-make_modifytable(CmdType operation, bool canSetTag,
+make_modifytable(PlannerInfo *root,
+				 CmdType operation, bool canSetTag,
 				 List *resultRelations,
 				 List *subplans, List *returningLists,
 				 List *rowMarks, int epqParam)
@@ -4703,7 +4705,10 @@ make_modifytable(CmdType operation, bool canSetTag,
 	ModifyTable *node = makeNode(ModifyTable);
 	Plan	   *plan = &node->plan;
 	double		total_size;
+	List	   *fdw_private_list;
 	ListCell   *subnode;
+	ListCell   *lc;
+	int			i;
 
 	Assert(list_length(resultRelations) == list_length(subplans));
 	Assert(returningLists == NIL ||
@@ -4745,6 +4750,53 @@ make_modifytable(CmdType operation, bool canSetTag,
 	node->returningLists = returningLists;
 	node->rowMarks = rowMarks;
 	node->epqParam = epqParam;
+
+	/*
+	 * For each result relation that is a foreign table, allow the FDW to
+	 * construct private plan data, and accumulate it all into a list.
+	 */
+	fdw_private_list = NIL;
+	i = 0;
+	foreach(lc, resultRelations)
+	{
+		Index		rti = lfirst_int(lc);
+		FdwRoutine *fdwroutine;
+		List	   *fdw_private;
+
+		/*
+		 * If possible, we want to get the FdwRoutine from our RelOptInfo for
+		 * the table.  But sometimes we don't have a RelOptInfo and must get
+		 * it the hard way.  (In INSERT, the target relation is not scanned,
+		 * so it's not a baserel; and there are also corner cases for
+		 * updatable views where the target rel isn't a baserel.)
+		 */
+		if (rti < root->simple_rel_array_size &&
+			root->simple_rel_array[rti] != NULL)
+		{
+			RelOptInfo *resultRel = root->simple_rel_array[rti];
+
+			fdwroutine = resultRel->fdwroutine;
+		}
+		else
+		{
+			RangeTblEntry *rte = planner_rt_fetch(rti, root);
+
+			Assert(rte->rtekind == RTE_RELATION);
+			if (rte->relkind == RELKIND_FOREIGN_TABLE)
+				fdwroutine = GetFdwRoutineByRelId(rte->relid);
+			else
+				fdwroutine = NULL;
+		}
+
+		if (fdwroutine != NULL &&
+			fdwroutine->PlanForeignModify != NULL)
+			fdw_private = fdwroutine->PlanForeignModify(root, node, rti, i);
+		else
+			fdw_private = NIL;
+		fdw_private_list = lappend(fdw_private_list, fdw_private);
+		i++;
+	}
+	node->fdwPrivLists = fdw_private_list;
 
 	return node;
 }

@@ -333,6 +333,7 @@ _outModifyTable(StringInfo str, const ModifyTable *node)
 	WRITE_INT_FIELD(resultRelIndex);
 	WRITE_NODE_FIELD(plans);
 	WRITE_NODE_FIELD(returningLists);
+	WRITE_NODE_FIELD(fdwPrivLists);
 	WRITE_NODE_FIELD(rowMarks);
 	WRITE_INT_FIELD(epqParam);
 }

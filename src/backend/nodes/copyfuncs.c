@@ -179,6 +179,7 @@ _copyModifyTable(const ModifyTable *from)
 	COPY_SCALAR_FIELD(resultRelIndex);
 	COPY_NODE_FIELD(plans);
 	COPY_NODE_FIELD(returningLists);
+	COPY_NODE_FIELD(fdwPrivLists);
 	COPY_NODE_FIELD(rowMarks);
 	COPY_SCALAR_FIELD(epqParam);
 

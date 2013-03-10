@@ -13,6 +13,7 @@
   files in the server's file system.  Data files must be in a format
   that can be read by <command>COPY FROM</command>;
   see <xref linkend="sql-copy"> for details.
+  Access to such data files is currently read-only.
  </para>
 
  <para>
@@ -160,7 +161,7 @@
 
  <example>
  <title id="csvlog-fdw">Create a Foreign Table for PostgreSQL CSV Logs</title>
-   
+
   <para>
    One of the obvious uses for the <literal>file_fdw</> is to make
    the PostgreSQL activity log available as a table for querying.  To
@@ -217,8 +218,8 @@ OPTIONS ( filename '/home/josh/9.1/data/pg_log/pglog.csv', format 'csv' );
   </para>
 
   <para>
-   That's it &mdash; now you can query your log directly. In production, of course,
-   you would need to define some way to adjust to log rotation.
+   That's it &mdash; now you can query your log directly. In production, of
+   course, you would need to define some way to deal with log rotation.
   </para>
  </example>
 

@@ -2164,7 +2164,7 @@ transformCreateTableAsStmt(ParseState *pstate, CreateTableAsStmt *stmt)
 
 
 /*
- * Check for features that are not supported together with FOR [KEY] UPDATE/SHARE.
+ * Check for features that are not supported with FOR [KEY] UPDATE/SHARE.
  *
  * exported so planner can check again after rewriting, query pullup, etc
  */
@@ -2239,9 +2239,6 @@ transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc,
 			switch (rte->rtekind)
 			{
 				case RTE_RELATION:
-					/* ignore foreign tables */
-					if (rte->relkind == RELKIND_FOREIGN_TABLE)
-						break;
 					applyLockingClause(qry, i,
 									   lc->strength, lc->noWait, pushedDown);
 					rte->requiredPerms |= ACL_SELECT_FOR_UPDATE;
@@ -2251,7 +2248,7 @@ transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc,
 									   lc->strength, lc->noWait, pushedDown);
 
 					/*
-					 * FOR [KEY] UPDATE/SHARE of subquery is propagated to all of
+					 * FOR UPDATE/SHARE of subquery is propagated to all of
 					 * subquery's rels, too.  We could do this later (based on
 					 * the marking of the subquery RTE) but it is convenient
 					 * to have local knowledge in each query level about which
@@ -2291,12 +2288,6 @@ transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc,
 					switch (rte->rtekind)
 					{
 						case RTE_RELATION:
-							if (rte->relkind == RELKIND_FOREIGN_TABLE)
-								ereport(ERROR,
-									 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-									  errmsg("row-level locks cannot be used with foreign table \"%s\"",
-											 rte->eref->aliasname),
-									  parser_errposition(pstate, thisrel->location)));
 							applyLockingClause(qry, i,
 											   lc->strength, lc->noWait,
 											   pushedDown);

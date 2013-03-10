@@ -571,7 +571,8 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 			else
 				rowMarks = root->rowMarks;
 
-			plan = (Plan *) make_modifytable(parse->commandType,
+			plan = (Plan *) make_modifytable(root,
+											 parse->commandType,
 											 parse->canSetTag,
 									   list_make1_int(parse->resultRelation),
 											 list_make1(plan),
@@ -964,7 +965,8 @@ inheritance_planner(PlannerInfo *root)
 		rowMarks = root->rowMarks;
 
 	/* And last, tack on a ModifyTable node to do the UPDATE/DELETE work */
-	return (Plan *) make_modifytable(parse->commandType,
+	return (Plan *) make_modifytable(root,
+									 parse->commandType,
 									 parse->canSetTag,
 									 resultRelations,
 									 subplans,
@@ -2033,6 +2035,15 @@ preprocess_rowmarks(PlannerInfo *root)
 		 * ROW_MARK_COPY items in the next loop.
 		 */
 		if (rte->rtekind != RTE_RELATION)
+			continue;
+
+		/*
+		 * Similarly, ignore RowMarkClauses for foreign tables; foreign tables
+		 * will instead get ROW_MARK_COPY items in the next loop.  (FDWs might
+		 * choose to do something special while fetching their rows, but that
+		 * is of no concern here.)
+		 */
+		if (rte->relkind == RELKIND_FOREIGN_TABLE)
 			continue;
 
 		rels = bms_del_member(rels, rc->rti);

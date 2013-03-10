@@ -90,6 +90,7 @@ static void ExplainIndexScanDetails(Oid indexid, ScanDirection indexorderdir,
 static void ExplainScanTarget(Scan *plan, ExplainState *es);
 static void ExplainModifyTarget(ModifyTable *plan, ExplainState *es);
 static void ExplainTargetRel(Plan *plan, Index rti, ExplainState *es);
+static void show_modifytable_info(ModifyTableState *mtstate, ExplainState *es);
 static void ExplainMemberNodes(List *plans, PlanState **planstates,
 				   List *ancestors, ExplainState *es);
 static void ExplainSubPlans(List *plans, List *ancestors,
@@ -1341,6 +1342,9 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				show_instrumentation_count("Rows Removed by Filter", 1,
 										   planstate, es);
 			break;
+		case T_ModifyTable:
+			show_modifytable_info((ModifyTableState *) planstate, es);
+			break;
 		case T_Hash:
 			show_hash_info((HashState *) planstate, es);
 			break;
@@ -1840,7 +1844,8 @@ show_foreignscan_info(ForeignScanState *fsstate, ExplainState *es)
 	FdwRoutine *fdwroutine = fsstate->fdwroutine;
 
 	/* Let the FDW emit whatever fields it wants */
-	fdwroutine->ExplainForeignScan(fsstate, es);
+	if (fdwroutine->ExplainForeignScan != NULL)
+		fdwroutine->ExplainForeignScan(fsstate, es);
 }
 
 /*
@@ -2033,6 +2038,34 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 		if (namespace != NULL)
 			ExplainPropertyText("Schema", namespace, es);
 		ExplainPropertyText("Alias", refname, es);
+	}
+}
+
+/*
+ * Show extra information for a ModifyTable node
+ */
+static void
+show_modifytable_info(ModifyTableState *mtstate, ExplainState *es)
+{
+	FdwRoutine *fdwroutine = mtstate->resultRelInfo->ri_FdwRoutine;
+
+	/*
+	 * If the first target relation is a foreign table, call its FDW to
+	 * display whatever additional fields it wants to.	For now, we ignore the
+	 * possibility of other targets being foreign tables, although the API for
+	 * ExplainForeignModify is designed to allow them to be processed.
+	 */
+	if (fdwroutine != NULL &&
+		fdwroutine->ExplainForeignModify != NULL)
+	{
+		ModifyTable *node = (ModifyTable *) mtstate->ps.plan;
+		List	   *fdw_private = (List *) linitial(node->fdwPrivLists);
+
+		fdwroutine->ExplainForeignModify(mtstate,
+										 mtstate->resultRelInfo,
+										 fdw_private,
+										 0,
+										 es);
 	}
 }
 

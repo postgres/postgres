@@ -173,6 +173,7 @@ typedef struct ModifyTable
 	int			resultRelIndex; /* index of first resultRel in plan's list */
 	List	   *plans;			/* plan(s) producing source data */
 	List	   *returningLists; /* per-target-table RETURNING tlists */
+	List	   *fdwPrivLists;	/* per-target-table FDW private data lists */
 	List	   *rowMarks;		/* PlanRowMarks (non-locking only) */
 	int			epqParam;		/* ID of Param for EvalPlanQual re-eval */
 } ModifyTable;
@@ -752,13 +753,32 @@ typedef struct Limit
  * RowMarkType -
  *	  enums for types of row-marking operations
  *
- * When doing UPDATE, DELETE, or SELECT FOR [KEY] UPDATE/SHARE, we have to uniquely
+ * The first four of these values represent different lock strengths that
+ * we can take on tuples according to SELECT FOR [KEY] UPDATE/SHARE requests.
+ * We only support these on regular tables.  For foreign tables, any locking
+ * that might be done for these requests must happen during the initial row
+ * fetch; there is no mechanism for going back to lock a row later (and thus
+ * no need for EvalPlanQual machinery during updates of foreign tables).
+ * This means that the semantics will be a bit different than for a local
+ * table; in particular we are likely to lock more rows than would be locked
+ * locally, since remote rows will be locked even if they then fail
+ * locally-checked restriction or join quals.  However, the alternative of
+ * doing a separate remote query to lock each selected row is extremely
+ * unappealing, so let's do it like this for now.
+ *
+ * When doing UPDATE, DELETE, or SELECT FOR UPDATE/SHARE, we have to uniquely
  * identify all the source rows, not only those from the target relations, so
  * that we can perform EvalPlanQual rechecking at need.  For plain tables we
- * can just fetch the TID, the same as for a target relation.  Otherwise (for
- * example for VALUES or FUNCTION scans) we have to copy the whole row value.
- * The latter is pretty inefficient but fortunately the case is not
- * performance-critical in practice.
+ * can just fetch the TID, much as for a target relation; this case is
+ * represented by ROW_MARK_REFERENCE.  Otherwise (for example for VALUES or
+ * FUNCTION scans) we have to copy the whole row value.  ROW_MARK_COPY is
+ * pretty inefficient, since most of the time we'll never need the data; but
+ * fortunately the case is not performance-critical in practice.  Note that
+ * we use ROW_MARK_COPY for non-target foreign tables, even if the FDW has a
+ * concept of rowid and so could theoretically support some form of
+ * ROW_MARK_REFERENCE.	Although copying the whole row value is inefficient,
+ * it's probably still faster than doing a second remote fetch, so it doesn't
+ * seem worth the extra complexity to permit ROW_MARK_REFERENCE.
  */
 typedef enum RowMarkType
 {
@@ -776,10 +796,10 @@ typedef enum RowMarkType
  * PlanRowMark -
  *	   plan-time representation of FOR [KEY] UPDATE/SHARE clauses
  *
- * When doing UPDATE, DELETE, or SELECT FOR [KEY] UPDATE/SHARE, we create a separate
+ * When doing UPDATE, DELETE, or SELECT FOR UPDATE/SHARE, we create a separate
  * PlanRowMark node for each non-target relation in the query.	Relations that
- * are not specified as FOR [KEY] UPDATE/SHARE are marked ROW_MARK_REFERENCE (if
- * real tables) or ROW_MARK_COPY (if not).
+ * are not specified as FOR UPDATE/SHARE are marked ROW_MARK_REFERENCE (if
+ * regular tables) or ROW_MARK_COPY (if not).
  *
  * Initially all PlanRowMarks have rti == prti and isParent == false.
  * When the planner discovers that a relation is the root of an inheritance
@@ -791,7 +811,7 @@ typedef enum RowMarkType
  *
  * The planner also adds resjunk output columns to the plan that carry
  * information sufficient to identify the locked or fetched rows.  For
- * tables (markType != ROW_MARK_COPY), these columns are named
+ * regular tables (markType != ROW_MARK_COPY), these columns are named
  *		tableoid%u			OID of table
  *		ctid%u				TID of row
  * The tableoid column is only present for an inheritance hierarchy.
