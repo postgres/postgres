@@ -297,9 +297,16 @@ auth_failed(Port *port, int status)
 			break;
 	}
 
-	ereport(FATAL,
-			(errcode(errcode_return),
-			 errmsg(errstr, port->user_name)));
+	if (port->hba)
+		ereport(FATAL,
+				(errcode(errcode_return),
+				 errmsg(errstr, port->user_name),
+				 errdetail_log("Connection matched pg_hba.conf line %d: \"%s\"", port->hba->linenumber, port->hba->rawline)));
+	else
+		ereport(FATAL,
+				(errcode(errcode_return),
+				 errmsg(errstr, port->user_name)));
+
 	/* doesn't return */
 }
 

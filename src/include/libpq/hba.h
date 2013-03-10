@@ -53,6 +53,7 @@ typedef enum ConnType
 typedef struct HbaLine
 {
 	int			linenumber;
+	char	   *rawline;
 	ConnType	conntype;
 	List	   *databases;
 	List	   *roles;
