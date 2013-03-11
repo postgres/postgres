@@ -1605,20 +1605,20 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 		rel = heap_open(rte->relid, NoLock);
 
 		/*
-		 * Skip materialized view expansion when it is being created.
+		 * Ignore RIR rules for a materialized view, if it is scannable.
 		 *
-		 * NOTE: This is assuming that we cannot have gotten to this point
-		 * with a non-scannable materialized view unless it is being
-		 * populated, and that if it is scannable we want to use the existing
-		 * contents. It would be nice to have some way to confirm that we're
-		 * doing the right thing here, but rule expansion doesn't give us a
-		 * lot to work with, so we are trusting earlier validations and
-		 * execution steps to get it right.
+		 * NOTE: This is assuming that if an MV is scannable then we always
+		 * want to use the existing contents, and if it is not scannable we
+		 * cannot have gotten to this point unless it is being populated
+		 * (otherwise an error should be thrown).  It would be nice to have
+		 * some way to confirm that we're doing the right thing here, but rule
+		 * expansion doesn't give us a lot to work with, so we are trusting
+		 * earlier validations to throw error if needed.
 		 */
 		if (rel->rd_rel->relkind == RELKIND_MATVIEW && rel->rd_isscannable)
 		{
 			heap_close(rel, NoLock);
-			break;
+			continue;
 		}
 
 		/*
