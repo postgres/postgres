@@ -505,38 +505,44 @@ deparseInsertSql(StringInfo buf, PlannerInfo *root, Index rtindex,
 
 	appendStringInfoString(buf, "INSERT INTO ");
 	deparseRelation(buf, rte->relid);
-	appendStringInfoString(buf, "(");
 
-	first = true;
-	foreach(lc, targetAttrs)
+	if (targetAttrs)
 	{
-		int			attnum = lfirst_int(lc);
-		Form_pg_attribute attr = tupdesc->attrs[attnum - 1];
+		appendStringInfoString(buf, "(");
 
-		Assert(!attr->attisdropped);
+		first = true;
+		foreach(lc, targetAttrs)
+		{
+			int			attnum = lfirst_int(lc);
+			Form_pg_attribute attr = tupdesc->attrs[attnum - 1];
 
-		if (!first)
-			appendStringInfoString(buf, ", ");
-		first = false;
+			Assert(!attr->attisdropped);
 
-		deparseColumnRef(buf, rtindex, attnum, root);
+			if (!first)
+				appendStringInfoString(buf, ", ");
+			first = false;
+
+			deparseColumnRef(buf, rtindex, attnum, root);
+		}
+
+		appendStringInfoString(buf, ") VALUES (");
+
+		pindex = 1;
+		first = true;
+		foreach(lc, targetAttrs)
+		{
+			if (!first)
+				appendStringInfoString(buf, ", ");
+			first = false;
+
+			appendStringInfo(buf, "$%d", pindex);
+			pindex++;
+		}
+
+		appendStringInfoString(buf, ")");
 	}
-
-	appendStringInfoString(buf, ") VALUES (");
-
-	pindex = 1;
-	first = true;
-	foreach(lc, targetAttrs)
-	{
-		if (!first)
-			appendStringInfoString(buf, ", ");
-		first = false;
-
-		appendStringInfo(buf, "$%d", pindex);
-		pindex++;
-	}
-
-	appendStringInfoString(buf, ")");
+	else
+		appendStringInfoString(buf, " DEFAULT VALUES");
 
 	if (returningList)
 		deparseReturningList(buf, root, rtindex, rel, returningList);
