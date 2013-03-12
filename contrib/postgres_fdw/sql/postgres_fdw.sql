@@ -337,7 +337,7 @@ select c2, count(*) from ft2 where c2 < 500 group by 1 order by 1;
 release savepoint s2;
 select c2, count(*) from ft2 where c2 < 500 group by 1 order by 1;
 savepoint s3;
-update ft2 set c2 = -2 where c2 = 42; -- fail on remote side
+update ft2 set c2 = -2 where c2 = 42 and c1 = 10; -- fail on remote side
 rollback to savepoint s3;
 select c2, count(*) from ft2 where c2 < 500 group by 1 order by 1;
 release savepoint s3;
