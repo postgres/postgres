@@ -1023,6 +1023,8 @@ postgresPlanForeignModify(PlannerInfo *root,
 						  int subplan_index)
 {
 	CmdType		operation = plan->operation;
+	RangeTblEntry *rte = planner_rt_fetch(resultRelation, root);
+	Relation	rel;
 	StringInfoData sql;
 	List	   *targetAttrs = NIL;
 	List	   *returningList = NIL;
@@ -1030,15 +1032,33 @@ postgresPlanForeignModify(PlannerInfo *root,
 	initStringInfo(&sql);
 
 	/*
-	 * Construct a list of the columns that are to be assigned during INSERT
-	 * or UPDATE.  We should transmit only these columns, for performance and
-	 * to respect any DEFAULT values the remote side may have for other
-	 * columns.  (XXX this will need some re-thinking when we support default
-	 * expressions for foreign tables.)
+	 * Core code already has some lock on each rel being planned, so we can
+	 * use NoLock here.
 	 */
-	if (operation == CMD_INSERT || operation == CMD_UPDATE)
+	rel = heap_open(rte->relid, NoLock);
+
+	/*
+	 * In an INSERT, we transmit all columns that are defined in the foreign
+	 * table.  In an UPDATE, we transmit only columns that were explicitly
+	 * targets of the UPDATE, so as to avoid unnecessary data transmission.
+	 * (We can't do that for INSERT since we would miss sending default values
+	 * for columns not listed in the source statement.)
+	 */
+	if (operation == CMD_INSERT)
 	{
-		RangeTblEntry *rte = planner_rt_fetch(resultRelation, root);
+		TupleDesc	tupdesc = RelationGetDescr(rel);
+		int			attnum;
+
+		for (attnum = 1; attnum <= tupdesc->natts; attnum++)
+		{
+			Form_pg_attribute attr = tupdesc->attrs[attnum - 1];
+
+			if (!attr->attisdropped)
+				targetAttrs = lappend_int(targetAttrs, attnum);
+		}
+	}
+	else if (operation == CMD_UPDATE)
+	{
 		Bitmapset  *tmpset = bms_copy(rte->modifiedCols);
 		AttrNumber	col;
 
@@ -1063,20 +1083,23 @@ postgresPlanForeignModify(PlannerInfo *root,
 	switch (operation)
 	{
 		case CMD_INSERT:
-			deparseInsertSql(&sql, root, resultRelation,
+			deparseInsertSql(&sql, root, resultRelation, rel,
 							 targetAttrs, returningList);
 			break;
 		case CMD_UPDATE:
-			deparseUpdateSql(&sql, root, resultRelation,
+			deparseUpdateSql(&sql, root, resultRelation, rel,
 							 targetAttrs, returningList);
 			break;
 		case CMD_DELETE:
-			deparseDeleteSql(&sql, root, resultRelation, returningList);
+			deparseDeleteSql(&sql, root, resultRelation, rel,
+							 returningList);
 			break;
 		default:
 			elog(ERROR, "unexpected operation: %d", (int) operation);
 			break;
 	}
+
+	heap_close(rel, NoLock);
 
 	/*
 	 * Build the fdw_private list that will be available to the executor.

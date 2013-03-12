@@ -53,11 +53,14 @@ extern void appendWhereClause(StringInfo buf,
 				  PlannerInfo *root,
 				  List *exprs,
 				  bool is_first);
-extern void deparseInsertSql(StringInfo buf, PlannerInfo *root, Index rtindex,
+extern void deparseInsertSql(StringInfo buf, PlannerInfo *root,
+				 Index rtindex, Relation rel,
 				 List *targetAttrs, List *returningList);
-extern void deparseUpdateSql(StringInfo buf, PlannerInfo *root, Index rtindex,
+extern void deparseUpdateSql(StringInfo buf, PlannerInfo *root,
+				 Index rtindex, Relation rel,
 				 List *targetAttrs, List *returningList);
-extern void deparseDeleteSql(StringInfo buf, PlannerInfo *root, Index rtindex,
+extern void deparseDeleteSql(StringInfo buf, PlannerInfo *root,
+				 Index rtindex, Relation rel,
 				 List *returningList);
 extern void deparseAnalyzeSizeSql(StringInfo buf, Relation rel);
 extern void deparseAnalyzeSql(StringInfo buf, Relation rel);

@@ -77,7 +77,7 @@ static void deparseReturningList(StringInfo buf, PlannerInfo *root,
 					 List *returningList);
 static void deparseColumnRef(StringInfo buf, int varno, int varattno,
 				 PlannerInfo *root);
-static void deparseRelation(StringInfo buf, Oid relid);
+static void deparseRelation(StringInfo buf, Relation rel);
 static void deparseStringLiteral(StringInfo buf, const char *val);
 static void deparseExpr(StringInfo buf, Expr *expr, PlannerInfo *root);
 static void deparseVar(StringInfo buf, Var *node, PlannerInfo *root);
@@ -387,7 +387,7 @@ deparseSelectSql(StringInfo buf,
 	 * Construct FROM clause
 	 */
 	appendStringInfoString(buf, " FROM ");
-	deparseRelation(buf, RelationGetRelid(rel));
+	deparseRelation(buf, rel);
 
 	heap_close(rel, NoLock);
 }
@@ -499,18 +499,16 @@ appendWhereClause(StringInfo buf,
  * deparse remote INSERT statement
  */
 void
-deparseInsertSql(StringInfo buf, PlannerInfo *root, Index rtindex,
+deparseInsertSql(StringInfo buf, PlannerInfo *root,
+				 Index rtindex, Relation rel,
 				 List *targetAttrs, List *returningList)
 {
-	RangeTblEntry *rte = planner_rt_fetch(rtindex, root);
-	Relation	rel = heap_open(rte->relid, NoLock);
-	TupleDesc	tupdesc = RelationGetDescr(rel);
 	AttrNumber	pindex;
 	bool		first;
 	ListCell   *lc;
 
 	appendStringInfoString(buf, "INSERT INTO ");
-	deparseRelation(buf, rte->relid);
+	deparseRelation(buf, rel);
 
 	if (targetAttrs)
 	{
@@ -520,9 +518,6 @@ deparseInsertSql(StringInfo buf, PlannerInfo *root, Index rtindex,
 		foreach(lc, targetAttrs)
 		{
 			int			attnum = lfirst_int(lc);
-			Form_pg_attribute attr = tupdesc->attrs[attnum - 1];
-
-			Assert(!attr->attisdropped);
 
 			if (!first)
 				appendStringInfoString(buf, ", ");
@@ -552,26 +547,22 @@ deparseInsertSql(StringInfo buf, PlannerInfo *root, Index rtindex,
 
 	if (returningList)
 		deparseReturningList(buf, root, rtindex, rel, returningList);
-
-	heap_close(rel, NoLock);
 }
 
 /*
  * deparse remote UPDATE statement
  */
 void
-deparseUpdateSql(StringInfo buf, PlannerInfo *root, Index rtindex,
+deparseUpdateSql(StringInfo buf, PlannerInfo *root,
+				 Index rtindex, Relation rel,
 				 List *targetAttrs, List *returningList)
 {
-	RangeTblEntry *rte = planner_rt_fetch(rtindex, root);
-	Relation	rel = heap_open(rte->relid, NoLock);
-	TupleDesc	tupdesc = RelationGetDescr(rel);
 	AttrNumber	pindex;
 	bool		first;
 	ListCell   *lc;
 
 	appendStringInfoString(buf, "UPDATE ");
-	deparseRelation(buf, rte->relid);
+	deparseRelation(buf, rel);
 	appendStringInfoString(buf, " SET ");
 
 	pindex = 2;					/* ctid is always the first param */
@@ -579,9 +570,6 @@ deparseUpdateSql(StringInfo buf, PlannerInfo *root, Index rtindex,
 	foreach(lc, targetAttrs)
 	{
 		int			attnum = lfirst_int(lc);
-		Form_pg_attribute attr = tupdesc->attrs[attnum - 1];
-
-		Assert(!attr->attisdropped);
 
 		if (!first)
 			appendStringInfoString(buf, ", ");
@@ -595,30 +583,22 @@ deparseUpdateSql(StringInfo buf, PlannerInfo *root, Index rtindex,
 
 	if (returningList)
 		deparseReturningList(buf, root, rtindex, rel, returningList);
-
-	heap_close(rel, NoLock);
 }
 
 /*
  * deparse remote DELETE statement
  */
 void
-deparseDeleteSql(StringInfo buf, PlannerInfo *root, Index rtindex,
+deparseDeleteSql(StringInfo buf, PlannerInfo *root,
+				 Index rtindex, Relation rel,
 				 List *returningList)
 {
-	RangeTblEntry *rte = planner_rt_fetch(rtindex, root);
-
 	appendStringInfoString(buf, "DELETE FROM ");
-	deparseRelation(buf, rte->relid);
+	deparseRelation(buf, rel);
 	appendStringInfoString(buf, " WHERE ctid = $1");
 
 	if (returningList)
-	{
-		Relation	rel = heap_open(rte->relid, NoLock);
-
 		deparseReturningList(buf, root, rtindex, rel, returningList);
-		heap_close(rel, NoLock);
-	}
 }
 
 /*
@@ -653,12 +633,11 @@ deparseReturningList(StringInfo buf, PlannerInfo *root,
 void
 deparseAnalyzeSizeSql(StringInfo buf, Relation rel)
 {
-	Oid			relid = RelationGetRelid(rel);
 	StringInfoData relname;
 
 	/* We'll need the remote relation name as a literal. */
 	initStringInfo(&relname);
-	deparseRelation(&relname, relid);
+	deparseRelation(&relname, rel);
 
 	appendStringInfo(buf, "SELECT pg_catalog.pg_relation_size(");
 	deparseStringLiteral(buf, relname.data);
@@ -718,7 +697,7 @@ deparseAnalyzeSql(StringInfo buf, Relation rel)
 	 * Construct FROM clause
 	 */
 	appendStringInfoString(buf, " FROM ");
-	deparseRelation(buf, relid);
+	deparseRelation(buf, rel);
 }
 
 /*
@@ -771,7 +750,7 @@ deparseColumnRef(StringInfo buf, int varno, int varattno, PlannerInfo *root)
  * Similarly, schema_name FDW option overrides schema name.
  */
 static void
-deparseRelation(StringInfo buf, Oid relid)
+deparseRelation(StringInfo buf, Relation rel)
 {
 	ForeignTable *table;
 	const char *nspname = NULL;
@@ -779,7 +758,7 @@ deparseRelation(StringInfo buf, Oid relid)
 	ListCell   *lc;
 
 	/* obtain additional catalog information. */
-	table = GetForeignTable(relid);
+	table = GetForeignTable(RelationGetRelid(rel));
 
 	/*
 	 * Use value of FDW options if any, instead of the name of object itself.
@@ -799,9 +778,9 @@ deparseRelation(StringInfo buf, Oid relid)
 	 * that doesn't seem worth the trouble.
 	 */
 	if (nspname == NULL)
-		nspname = get_namespace_name(get_rel_namespace(relid));
+		nspname = get_namespace_name(RelationGetNamespace(rel));
 	if (relname == NULL)
-		relname = get_rel_name(relid);
+		relname = RelationGetRelationName(rel);
 
 	appendStringInfo(buf, "%s.%s",
 					 quote_identifier(nspname), quote_identifier(relname));

@@ -63,23 +63,23 @@ CREATE FOREIGN TABLE ft1 (
 	c4 timestamptz,
 	c5 timestamp,
 	c6 varchar(10),
-	c7 char(10),
+	c7 char(10) default 'ft1',
 	c8 user_enum
 ) SERVER loopback;
 ALTER FOREIGN TABLE ft1 DROP COLUMN c0;
 
 CREATE FOREIGN TABLE ft2 (
-	c0 int,
 	c1 int NOT NULL,
 	c2 int NOT NULL,
+	cx int,
 	c3 text,
 	c4 timestamptz,
 	c5 timestamp,
 	c6 varchar(10),
-	c7 char(10),
+	c7 char(10) default 'ft2',
 	c8 user_enum
 ) SERVER loopback;
-ALTER FOREIGN TABLE ft2 DROP COLUMN c0;
+ALTER FOREIGN TABLE ft2 DROP COLUMN cx;
 
 -- ===================================================================
 -- tests for validator
@@ -286,9 +286,9 @@ INSERT INTO ft2 (c1,c2,c3) VALUES (1104,204,'ddd'), (1105,205,'eee');
 UPDATE ft2 SET c2 = c2 + 300, c3 = c3 || '_update3' WHERE c1 % 10 = 3;
 UPDATE ft2 SET c2 = c2 + 400, c3 = c3 || '_update7' WHERE c1 % 10 = 7 RETURNING *;
 EXPLAIN (verbose, costs off)
-UPDATE ft2 SET c2 = ft2.c2 + 500, c3 = ft2.c3 || '_update9'
+UPDATE ft2 SET c2 = ft2.c2 + 500, c3 = ft2.c3 || '_update9', c7 = DEFAULT
   FROM ft1 WHERE ft1.c1 = ft2.c2 AND ft1.c1 % 10 = 9;
-UPDATE ft2 SET c2 = ft2.c2 + 500, c3 = ft2.c3 || '_update9'
+UPDATE ft2 SET c2 = ft2.c2 + 500, c3 = ft2.c3 || '_update9', c7 = DEFAULT
   FROM ft1 WHERE ft1.c1 = ft2.c2 AND ft1.c1 % 10 = 9;
 DELETE FROM ft2 WHERE c1 % 10 = 5 RETURNING *;
 EXPLAIN (verbose, costs off)
@@ -296,8 +296,7 @@ DELETE FROM ft2 USING ft1 WHERE ft1.c1 = ft2.c2 AND ft1.c1 % 10 = 2;
 DELETE FROM ft2 USING ft1 WHERE ft1.c1 = ft2.c2 AND ft1.c1 % 10 = 2;
 SELECT c1,c2,c3,c4 FROM ft2 ORDER BY c1;
 
--- Test that defaults and triggers on remote table work as expected
-ALTER TABLE "S 1"."T 1" ALTER c6 SET DEFAULT '(^-^;)';
+-- Test that trigger on remote table works as expected
 CREATE OR REPLACE FUNCTION "S 1".F_BRTRIG() RETURNS trigger AS $$
 BEGIN
     NEW.c3 = NEW.c3 || '_trig_update';
