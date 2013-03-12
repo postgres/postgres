@@ -1200,7 +1200,7 @@ FETCH { FIRST | NEXT } [ <replaceable class="parameter">count</replaceable> ] { 
   </refsect2>
 
   <refsect2 id="SQL-FOR-UPDATE-SHARE">
-   <title id="sql-for-update-share-title"><literal>FOR UPDATE</>, <literal>FOR NO KEY UPDATE</>/<literal>FOR SHARE</>/<literal>FOR KEY SHARE</> Clauses</title>
+   <title id="sql-for-update-share-title">The Locking Clause</title>
 
    <para>
     <literal>FOR UPDATE</>, <literal>FOR NO KEY UPDATE</>, <literal>FOR SHARE</>
@@ -1210,30 +1210,19 @@ FETCH { FIRST | NEXT } [ <replaceable class="parameter">count</replaceable> ] { 
    </para>
 
    <para>
-    The <literal>FOR UPDATE</literal> clause has this form:
-<synopsis>
-FOR UPDATE [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ] [ NOWAIT ]
-</synopsis>
-   </para>
+    The locking clause has the general form
 
-   <para>
-    The <literal>FOR NO KEY UPDATE</literal> clause has this form:
 <synopsis>
-FOR NO KEY UPDATE [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ] [ NOWAIT ]
+FOR <replaceable>lock_strength</> [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ] [ NOWAIT ]
 </synopsis>
-   </para>
 
-   <para>
-    The closely related <literal>FOR SHARE</literal> clause has this form:
-<synopsis>
-FOR SHARE [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ] [ NOWAIT ]
-</synopsis>
-   </para>
+    where <replaceable>lock_strength</> can be one of
 
-   <para>
-    Similarly, the <literal>FOR KEY SHARE</> clause has this form:
 <synopsis>
-FOR KEY SHARE [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ] [ NOWAIT ]
+UPDATE
+NO KEY UPDATE
+SHARE
+KEY SHARE
 </synopsis>
    </para>
 
@@ -1245,6 +1234,7 @@ FOR KEY SHARE [ OF <replaceable class="parameter">table_name</replaceable> [, ..
     other transactions that attempt <command>UPDATE</command>,
     <command>DELETE</command>,
     <command>SELECT FOR UPDATE</command>,
+    <command>SELECT FOR NO KEY UPDATE</command>,
     <command>SELECT FOR SHARE</command> or
     <command>SELECT FOR KEY SHARE</command>
     of these rows will be blocked until the current transaction ends.
@@ -1270,15 +1260,17 @@ FOR KEY SHARE [ OF <replaceable class="parameter">table_name</replaceable> [, ..
     <literal>FOR NO KEY UPDATE</> behaves similarly, except that the lock
     acquired is weaker: this lock will not block
     <literal>SELECT FOR KEY SHARE</> commands that attempt to acquire
-    a lock on the same rows.
+    a lock on the same rows. This lock mode is also acquired by any
+    <command>UPDATE</> that does not acquire a <literal>FOR UPDATE</> lock.
    </para>
 
    <para>
     <literal>FOR SHARE</literal> behaves similarly, except that it
     acquires a shared rather than exclusive lock on each retrieved
     row.  A shared lock blocks other transactions from performing
-    <command>UPDATE</command>, <command>DELETE</command>, or <command>SELECT
-    FOR UPDATE</command> on these rows, but it does not prevent them
+    <command>UPDATE</command>, <command>DELETE</command>, <command>SELECT
+    FOR UPDATE</command> or <command>SELECT FOR NO KEY UPDATE</>
+    on these rows, but it does not prevent them
     from performing <command>SELECT FOR SHARE</command> or
     <command>SELECT FOR KEY SHARE</command>.
    </para>
@@ -1290,8 +1282,8 @@ FOR KEY SHARE [ OF <replaceable class="parameter">table_name</replaceable> [, ..
     not <literal>SELECT FOR NO KEY UPDATE</>.  A key-shared
     lock blocks other transactions from performing <command>DELETE</command>
     or any <command>UPDATE</command> that changes the key values, but not
-    other <command>UPDATE</>, and neither it does prevent
-    <command>SELECT FOR UPDATE</>, <command>SELECT FOR SHARE</>, or
+    other <command>UPDATE</>, and neither does it prevent
+    <command>SELECT FOR NO KEY UPDATE</>, <command>SELECT FOR SHARE</>, or
     <command>SELECT FOR KEY SHARE</>.
    </para>
 
@@ -1382,7 +1374,7 @@ UPDATE mytable SET ... WHERE key = 1;
 ROLLBACK TO s;
 </programlisting>
    would fail to preserve the <literal>FOR UPDATE</> lock after the
-   <command>ROLLBACK</>.  This has been fixed in release 9.2.
+   <command>ROLLBACK TO</>.  This has been fixed in release 9.3.
   </para>
 
   <caution>
