@@ -330,7 +330,6 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <list>	stmtblock stmtmulti
 				OptTableElementList TableElementList OptInherit definition
 				OptTypedTableElementList TypedTableElementList
-				OptForeignTableElementList ForeignTableElementList
 				reloptions opt_reloptions
 				OptWith opt_distinct opt_definition func_args func_args_list
 				func_args_with_defaults func_args_with_defaults_list
@@ -408,7 +407,6 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <vsetstmt> set_rest set_rest_more SetResetClause FunctionSetResetClause
 
 %type <node>	TableElement TypedTableElement ConstraintElem TableFuncElement
-				ForeignTableElement
 %type <node>	columnDef columnOptions
 %type <defelt>	def_elem reloption_elem old_aggr_elem
 %type <node>	def_arg columnElem where_clause where_or_current_clause
@@ -4137,55 +4135,35 @@ AlterForeignServerStmt: ALTER SERVER name foreign_server_version alter_generic_o
 
 CreateForeignTableStmt:
 		CREATE FOREIGN TABLE qualified_name
-			OptForeignTableElementList
+			'(' OptTableElementList ')'
 			SERVER name create_generic_options
 				{
 					CreateForeignTableStmt *n = makeNode(CreateForeignTableStmt);
 					$4->relpersistence = RELPERSISTENCE_PERMANENT;
 					n->base.relation = $4;
-					n->base.tableElts = $5;
+					n->base.tableElts = $6;
 					n->base.inhRelations = NIL;
 					n->base.if_not_exists = false;
 					/* FDW-specific data */
-					n->servername = $7;
-					n->options = $8;
+					n->servername = $9;
+					n->options = $10;
 					$$ = (Node *) n;
 				}
 		| CREATE FOREIGN TABLE IF_P NOT EXISTS qualified_name
-			OptForeignTableElementList
+			'(' OptTableElementList ')'
 			SERVER name create_generic_options
 				{
 					CreateForeignTableStmt *n = makeNode(CreateForeignTableStmt);
 					$7->relpersistence = RELPERSISTENCE_PERMANENT;
 					n->base.relation = $7;
-					n->base.tableElts = $8;
+					n->base.tableElts = $9;
 					n->base.inhRelations = NIL;
 					n->base.if_not_exists = true;
 					/* FDW-specific data */
-					n->servername = $10;
-					n->options = $11;
+					n->servername = $12;
+					n->options = $13;
 					$$ = (Node *) n;
 				}
-		;
-
-OptForeignTableElementList:
-			'(' ForeignTableElementList ')'			{ $$ = $2; }
-			| '(' ')'								{ $$ = NIL; }
-		;
-
-ForeignTableElementList:
-			ForeignTableElement
-				{
-					$$ = list_make1($1);
-				}
-			| ForeignTableElementList ',' ForeignTableElement
-				{
-					$$ = lappend($1, $3);
-				}
-		;
-
-ForeignTableElement:
-			columnDef					{ $$ = $1; }
 		;
 
 /*****************************************************************************

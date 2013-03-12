@@ -664,8 +664,6 @@ LINE 1: CREATE FOREIGN TABLE ft1 ();
                                    ^
 CREATE FOREIGN TABLE ft1 () SERVER no_server;                   -- ERROR
 ERROR:  server "no_server" does not exist
-CREATE FOREIGN TABLE ft1 (c1 serial) SERVER sc;                 -- ERROR
-ERROR:  default values on foreign tables are not supported
 CREATE FOREIGN TABLE ft1 () SERVER s0 WITH OIDS;                -- ERROR
 ERROR:  syntax error at or near "WITH OIDS"
 LINE 1: CREATE FOREIGN TABLE ft1 () SERVER s0 WITH OIDS;
@@ -707,17 +705,14 @@ COMMENT ON FOREIGN TABLE ft1 IS NULL;
 COMMENT ON COLUMN ft1.c1 IS 'foreign column';
 COMMENT ON COLUMN ft1.c1 IS NULL;
 ALTER FOREIGN TABLE ft1 ADD COLUMN c4 integer;
-ALTER FOREIGN TABLE ft1 ADD COLUMN c5 integer DEFAULT 0;        -- ERROR
-ERROR:  default values on foreign tables are not supported
+ALTER FOREIGN TABLE ft1 ADD COLUMN c5 integer DEFAULT 0;
 ALTER FOREIGN TABLE ft1 ADD COLUMN c6 integer;
 ALTER FOREIGN TABLE ft1 ADD COLUMN c7 integer NOT NULL;
 ALTER FOREIGN TABLE ft1 ADD COLUMN c8 integer;
 ALTER FOREIGN TABLE ft1 ADD COLUMN c9 integer;
 ALTER FOREIGN TABLE ft1 ADD COLUMN c10 integer OPTIONS (p1 'v1');
-ALTER FOREIGN TABLE ft1 ALTER COLUMN c4 SET DEFAULT 0;          -- ERROR
-ERROR:  "ft1" is not a table or view
-ALTER FOREIGN TABLE ft1 ALTER COLUMN c5 DROP DEFAULT;           -- ERROR
-ERROR:  "ft1" is not a table or view
+ALTER FOREIGN TABLE ft1 ALTER COLUMN c4 SET DEFAULT 0;
+ALTER FOREIGN TABLE ft1 ALTER COLUMN c5 DROP DEFAULT;
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c6 SET NOT NULL;
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c7 DROP NOT NULL;
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 TYPE char(10) USING '0'; -- ERROR
@@ -739,7 +734,8 @@ ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 SET STATISTICS -1;
  c1     | integer | not null  | ("param 1" 'val1')             | plain    | 10000        | 
  c2     | text    |           | (param2 'val2', param3 'val3') | extended |              | 
  c3     | date    |           |                                | plain    |              | 
- c4     | integer |           |                                | plain    |              | 
+ c4     | integer | default 0 |                                | plain    |              | 
+ c5     | integer |           |                                | plain    |              | 
  c6     | integer | not null  |                                | plain    |              | 
  c7     | integer |           | (p1 'v1', p2 'v2')             | plain    |              | 
  c8     | text    |           | (p2 'V2')                      | extended |              | 
@@ -755,7 +751,9 @@ ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 SET DATA TYPE integer;	-- ERROR
 ERROR:  cannot alter foreign table "ft1" because column "use_ft1_column_type.x" uses its row type
 DROP TABLE use_ft1_column_type;
 ALTER FOREIGN TABLE ft1 ADD CONSTRAINT ft1_c9_check CHECK (c9 < 0); -- ERROR
-ERROR:  "ft1" is not a table
+ERROR:  constraints are not supported on foreign tables
+LINE 1: ALTER FOREIGN TABLE ft1 ADD CONSTRAINT ft1_c9_check CHECK (c...
+                                    ^
 ALTER FOREIGN TABLE ft1 DROP CONSTRAINT no_const;               -- ERROR
 ERROR:  "ft1" is not a table
 ALTER FOREIGN TABLE ft1 DROP CONSTRAINT IF EXISTS no_const;
@@ -783,7 +781,8 @@ ALTER FOREIGN TABLE foreign_schema.ft1 RENAME TO foreign_table_1;
  foreign_column_1 | integer | not null  | ("param 1" 'val1')
  c2               | text    |           | (param2 'val2', param3 'val3')
  c3               | date    |           | 
- c4               | integer |           | 
+ c4               | integer | default 0 | 
+ c5               | integer |           | 
  c6               | integer | not null  | 
  c7               | integer |           | (p1 'v1', p2 'v2')
  c8               | text    |           | (p2 'V2')

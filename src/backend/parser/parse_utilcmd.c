@@ -70,6 +70,7 @@ typedef struct
 	RangeVar   *relation;		/* relation to create */
 	Relation	rel;			/* opened/locked rel, if ALTER */
 	List	   *inhRelations;	/* relations to inherit from */
+	bool		isforeign;		/* true if CREATE/ALTER FOREIGN TABLE */
 	bool		isalter;		/* true if altering existing table */
 	bool		hasoids;		/* does relation have an OID column? */
 	List	   *columns;		/* ColumnDef items */
@@ -195,9 +196,15 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 
 	cxt.pstate = pstate;
 	if (IsA(stmt, CreateForeignTableStmt))
+	{
 		cxt.stmtType = "CREATE FOREIGN TABLE";
+		cxt.isforeign = true;
+	}
 	else
+	{
 		cxt.stmtType = "CREATE TABLE";
+		cxt.isforeign = false;
+	}
 	cxt.relation = stmt->relation;
 	cxt.rel = NULL;
 	cxt.inhRelations = stmt->inhRelations;
@@ -515,11 +522,23 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 				break;
 
 			case CONSTR_CHECK:
+				if (cxt->isforeign)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("constraints are not supported on foreign tables"),
+							 parser_errposition(cxt->pstate,
+												constraint->location)));
 				cxt->ckconstraints = lappend(cxt->ckconstraints, constraint);
 				break;
 
 			case CONSTR_PRIMARY:
 			case CONSTR_UNIQUE:
+				if (cxt->isforeign)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("constraints are not supported on foreign tables"),
+							 parser_errposition(cxt->pstate,
+												constraint->location)));
 				if (constraint->keys == NIL)
 					constraint->keys = list_make1(makeString(column->colname));
 				cxt->ixconstraints = lappend(cxt->ixconstraints, constraint);
@@ -531,7 +550,12 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 				break;
 
 			case CONSTR_FOREIGN:
-
+				if (cxt->isforeign)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("constraints are not supported on foreign tables"),
+							 parser_errposition(cxt->pstate,
+												constraint->location)));
 				/*
 				 * Fill in the current attribute's name and throw it into the
 				 * list of FK constraints to be processed later.
@@ -555,8 +579,8 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 	}
 
 	/*
-	 * Generate ALTER FOREIGN TABLE ALTER COLUMN statement which adds
-	 * per-column foreign data wrapper options for this column.
+	 * If needed, generate ALTER FOREIGN TABLE ALTER COLUMN statement to add
+	 * per-column foreign data wrapper options to this column after creation.
 	 */
 	if (column->fdwoptions != NIL)
 	{
@@ -587,6 +611,13 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 static void
 transformTableConstraint(CreateStmtContext *cxt, Constraint *constraint)
 {
+	if (cxt->isforeign)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("constraints are not supported on foreign tables"),
+				 parser_errposition(cxt->pstate,
+									constraint->location)));
+
 	switch (constraint->contype)
 	{
 		case CONSTR_PRIMARY:
@@ -640,7 +671,14 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 	char	   *comment;
 	ParseCallbackState pcbstate;
 
-	setup_parser_errposition_callback(&pcbstate, cxt->pstate, table_like_clause->relation->location);
+	setup_parser_errposition_callback(&pcbstate, cxt->pstate,
+									  table_like_clause->relation->location);
+
+	/* we could support LIKE in many cases, but worry about it another day */
+	if (cxt->isforeign)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("LIKE is not supported for foreign tables")));
 
 	relation = relation_openrv(table_like_clause->relation, AccessShareLock);
 
@@ -2334,7 +2372,16 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 	pstate->p_sourcetext = queryString;
 
 	cxt.pstate = pstate;
-	cxt.stmtType = "ALTER TABLE";
+	if (stmt->relkind == OBJECT_FOREIGN_TABLE)
+	{
+		cxt.stmtType = "ALTER FOREIGN TABLE";
+		cxt.isforeign = true;
+	}
+	else
+	{
+		cxt.stmtType = "ALTER TABLE";
+		cxt.isforeign = false;
+	}
 	cxt.relation = stmt->relation;
 	cxt.rel = rel;
 	cxt.inhRelations = NIL;
