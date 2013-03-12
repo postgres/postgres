@@ -1983,10 +1983,10 @@ INSERT INTO ft1(c1, c2) VALUES(1111, -2);  -- c2positive
 ERROR:  new row for relation "T 1" violates check constraint "c2positive"
 DETAIL:  Failing row contains (1111, -2, null, null, null, (^-^;), null, null).
 CONTEXT:  Remote SQL command: INSERT INTO "S 1"."T 1"("C 1", c2) VALUES ($1, $2)
-UPDATE ft1 SET c2 = -c2, c4 = null WHERE c1 = 1;  -- c2positive
+UPDATE ft1 SET c2 = -c2 WHERE c1 = 1;  -- c2positive
 ERROR:  new row for relation "T 1" violates check constraint "c2positive"
-DETAIL:  Failing row contains (1, -1, 00001_trig_update, null, 1970-01-02 00:00:00, 1, 1         , foo).
-CONTEXT:  Remote SQL command: UPDATE "S 1"."T 1" SET c2 = $2, c4 = $3 WHERE ctid = $1
+DETAIL:  Failing row contains (1, -1, 00001_trig_update, 1970-01-02 08:00:00+00, 1970-01-02 00:00:00, 1, 1         , foo).
+CONTEXT:  Remote SQL command: UPDATE "S 1"."T 1" SET c2 = $2 WHERE ctid = $1
 -- Test savepoint/rollback behavior
 select c2, count(*) from ft2 where c2 < 500 group by 1 order by 1;
  c2  | count 
@@ -2142,10 +2142,10 @@ select c2, count(*) from ft2 where c2 < 500 group by 1 order by 1;
 (13 rows)
 
 savepoint s3;
-update ft2 set c2 = -2, c4 = null where c2 = 42; -- fail on remote side
+update ft2 set c2 = -2 where c2 = 42; -- fail on remote side
 ERROR:  new row for relation "T 1" violates check constraint "c2positive"
-DETAIL:  Failing row contains (10, -2, 00010_trig_update_trig_update, null, 1970-01-11 00:00:00, 0, 0         , foo).
-CONTEXT:  Remote SQL command: UPDATE "S 1"."T 1" SET c2 = $2, c4 = $3 WHERE ctid = $1
+DETAIL:  Failing row contains (10, -2, 00010_trig_update_trig_update, 1970-01-11 08:00:00+00, 1970-01-11 00:00:00, 0, 0         , foo).
+CONTEXT:  Remote SQL command: UPDATE "S 1"."T 1" SET c2 = $2 WHERE ctid = $1
 rollback to savepoint s3;
 select c2, count(*) from ft2 where c2 < 500 group by 1 order by 1;
  c2  | count 
