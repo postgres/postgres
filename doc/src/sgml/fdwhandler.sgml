@@ -899,6 +899,10 @@ GetForeignServerByName(const char *name, bool missing_ok);
      <literal>baserel-&gt;fdw_private</> data previously created by the
      scan-planning functions.  However, in <command>INSERT</> the target
      table is not scanned so there is no <structname>RelOptInfo</> for it.
+     The <structname>List</> returned by <function>PlanForeignModify</> has
+     the same restrictions as the <structfield>fdw_private</> list of a
+     <structname>ForeignScan</> plan node, that is it must contain only
+     structures that <function>copyObject</> knows how to copy.
     </para>
 
     <para>
