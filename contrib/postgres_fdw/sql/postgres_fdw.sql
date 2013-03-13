@@ -199,12 +199,12 @@ EXPLAIN (VERBOSE, COSTS false) EXECUTE st1(1, 2);
 EXECUTE st1(1, 1);
 EXECUTE st1(101, 101);
 -- subquery using stable function (can't be sent to remote)
-PREPARE st2(int) AS SELECT * FROM ft1 t1 WHERE t1.c1 < $2 AND t1.c3 IN (SELECT c3 FROM ft2 t2 WHERE c1 > $1 AND EXTRACT(dow FROM c4) = 6) ORDER BY c1;
+PREPARE st2(int) AS SELECT * FROM ft1 t1 WHERE t1.c1 < $2 AND t1.c3 IN (SELECT c3 FROM ft2 t2 WHERE c1 > $1 AND date(c4) = '1970-01-17'::date) ORDER BY c1;
 EXPLAIN (VERBOSE, COSTS false) EXECUTE st2(10, 20);
 EXECUTE st2(10, 20);
-EXECUTE st1(101, 101);
+EXECUTE st2(101, 121);
 -- subquery using immutable function (can be sent to remote)
-PREPARE st3(int) AS SELECT * FROM ft1 t1 WHERE t1.c1 < $2 AND t1.c3 IN (SELECT c3 FROM ft2 t2 WHERE c1 > $1 AND EXTRACT(dow FROM c5) = 6) ORDER BY c1;
+PREPARE st3(int) AS SELECT * FROM ft1 t1 WHERE t1.c1 < $2 AND t1.c3 IN (SELECT c3 FROM ft2 t2 WHERE c1 > $1 AND date(c5) = '1970-01-17'::date) ORDER BY c1;
 EXPLAIN (VERBOSE, COSTS false) EXECUTE st3(10, 20);
 EXECUTE st3(10, 20);
 EXECUTE st3(20, 30);
@@ -273,6 +273,23 @@ ROLLBACK TO s;
 FETCH c;
 SELECT * FROM ft1 ORDER BY c1 LIMIT 1;
 COMMIT;
+
+-- ===================================================================
+-- test handling of collations
+-- ===================================================================
+create table loct3 (f1 text collate "C", f2 text);
+create foreign table ft3 (f1 text collate "C", f2 text)
+  server loopback options (table_name 'loct3');
+
+-- can be sent to remote
+explain (verbose, costs off) select * from ft3 where f1 = 'foo';
+explain (verbose, costs off) select * from ft3 where f1 COLLATE "C" = 'foo';
+explain (verbose, costs off) select * from ft3 where f2 = 'foo';
+-- can't be sent to remote
+explain (verbose, costs off) select * from ft3 where f1 COLLATE "POSIX" = 'foo';
+explain (verbose, costs off) select * from ft3 where f1 = 'foo' COLLATE "C";
+explain (verbose, costs off) select * from ft3 where f2 COLLATE "C" = 'foo';
+explain (verbose, costs off) select * from ft3 where f2 = 'foo' COLLATE "C";
 
 -- ===================================================================
 -- test writable foreign table stuff

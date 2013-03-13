@@ -477,7 +477,7 @@ EXECUTE st1(101, 101);
 (1 row)
 
 -- subquery using stable function (can't be sent to remote)
-PREPARE st2(int) AS SELECT * FROM ft1 t1 WHERE t1.c1 < $2 AND t1.c3 IN (SELECT c3 FROM ft2 t2 WHERE c1 > $1 AND EXTRACT(dow FROM c4) = 6) ORDER BY c1;
+PREPARE st2(int) AS SELECT * FROM ft1 t1 WHERE t1.c1 < $2 AND t1.c3 IN (SELECT c3 FROM ft2 t2 WHERE c1 > $1 AND date(c4) = '1970-01-17'::date) ORDER BY c1;
 EXPLAIN (VERBOSE, COSTS false) EXECUTE st2(10, 20);
                                                        QUERY PLAN                                                        
 -------------------------------------------------------------------------------------------------------------------------
@@ -494,7 +494,7 @@ EXPLAIN (VERBOSE, COSTS false) EXECUTE st2(10, 20);
                Output: t2.c3
                ->  Foreign Scan on public.ft2 t2
                      Output: t2.c3
-                     Filter: (date_part('dow'::text, t2.c4) = 6::double precision)
+                     Filter: (date(t2.c4) = '01-17-1970'::date)
                      Remote SQL: SELECT NULL, NULL, c3, c4, NULL, NULL, NULL, NULL FROM "S 1"."T 1" WHERE (("C 1" > 10))
 (15 rows)
 
@@ -504,17 +504,17 @@ EXECUTE st2(10, 20);
  16 |  6 | 00016 | Sat Jan 17 00:00:00 1970 PST | Sat Jan 17 00:00:00 1970 | 6  | 6          | foo
 (1 row)
 
-EXECUTE st1(101, 101);
-  c3   |  c3   
--------+-------
- 00101 | 00101
+EXECUTE st2(101, 121);
+ c1  | c2 |  c3   |              c4              |            c5            | c6 |     c7     | c8  
+-----+----+-------+------------------------------+--------------------------+----+------------+-----
+ 116 |  6 | 00116 | Sat Jan 17 00:00:00 1970 PST | Sat Jan 17 00:00:00 1970 | 6  | 6          | foo
 (1 row)
 
 -- subquery using immutable function (can be sent to remote)
-PREPARE st3(int) AS SELECT * FROM ft1 t1 WHERE t1.c1 < $2 AND t1.c3 IN (SELECT c3 FROM ft2 t2 WHERE c1 > $1 AND EXTRACT(dow FROM c5) = 6) ORDER BY c1;
+PREPARE st3(int) AS SELECT * FROM ft1 t1 WHERE t1.c1 < $2 AND t1.c3 IN (SELECT c3 FROM ft2 t2 WHERE c1 > $1 AND date(c5) = '1970-01-17'::date) ORDER BY c1;
 EXPLAIN (VERBOSE, COSTS false) EXECUTE st3(10, 20);
-                                                                                     QUERY PLAN                                                                                     
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                           QUERY PLAN                                                                            
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
  Sort
    Output: t1.c1, t1.c2, t1.c3, t1.c4, t1.c5, t1.c6, t1.c7, t1.c8
    Sort Key: t1.c1
@@ -528,7 +528,7 @@ EXPLAIN (VERBOSE, COSTS false) EXECUTE st3(10, 20);
                Output: t2.c3
                ->  Foreign Scan on public.ft2 t2
                      Output: t2.c3
-                     Remote SQL: SELECT NULL, NULL, c3, NULL, NULL, NULL, NULL, NULL FROM "S 1"."T 1" WHERE (("C 1" > 10)) AND ((date_part('dow'::text, c5) = 6::double precision))
+                     Remote SQL: SELECT NULL, NULL, c3, NULL, NULL, NULL, NULL, NULL FROM "S 1"."T 1" WHERE (("C 1" > 10)) AND ((date(c5) = '1970-01-17'::date))
 (14 rows)
 
 EXECUTE st3(10, 20);
@@ -538,10 +538,9 @@ EXECUTE st3(10, 20);
 (1 row)
 
 EXECUTE st3(20, 30);
- c1 | c2 |  c3   |              c4              |            c5            | c6 |     c7     | c8  
-----+----+-------+------------------------------+--------------------------+----+------------+-----
- 23 |  3 | 00023 | Sat Jan 24 00:00:00 1970 PST | Sat Jan 24 00:00:00 1970 | 3  | 3          | foo
-(1 row)
+ c1 | c2 | c3 | c4 | c5 | c6 | c7 | c8 
+----+----+----+----+----+----+----+----
+(0 rows)
 
 -- custom plan should be chosen initially
 PREPARE st4(int) AS SELECT * FROM ft1 t1 WHERE t1.c1 = $1;
@@ -731,6 +730,74 @@ SELECT * FROM ft1 ORDER BY c1 LIMIT 1;
 (1 row)
 
 COMMIT;
+-- ===================================================================
+-- test handling of collations
+-- ===================================================================
+create table loct3 (f1 text collate "C", f2 text);
+create foreign table ft3 (f1 text collate "C", f2 text)
+  server loopback options (table_name 'loct3');
+-- can be sent to remote
+explain (verbose, costs off) select * from ft3 where f1 = 'foo';
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
+ Foreign Scan on public.ft3
+   Output: f1, f2
+   Remote SQL: SELECT f1, f2 FROM public.loct3 WHERE ((f1 = 'foo'::text))
+(3 rows)
+
+explain (verbose, costs off) select * from ft3 where f1 COLLATE "C" = 'foo';
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
+ Foreign Scan on public.ft3
+   Output: f1, f2
+   Remote SQL: SELECT f1, f2 FROM public.loct3 WHERE ((f1 = 'foo'::text))
+(3 rows)
+
+explain (verbose, costs off) select * from ft3 where f2 = 'foo';
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
+ Foreign Scan on public.ft3
+   Output: f1, f2
+   Remote SQL: SELECT f1, f2 FROM public.loct3 WHERE ((f2 = 'foo'::text))
+(3 rows)
+
+-- can't be sent to remote
+explain (verbose, costs off) select * from ft3 where f1 COLLATE "POSIX" = 'foo';
+                  QUERY PLAN                   
+-----------------------------------------------
+ Foreign Scan on public.ft3
+   Output: f1, f2
+   Filter: ((ft3.f1)::text = 'foo'::text)
+   Remote SQL: SELECT f1, f2 FROM public.loct3
+(4 rows)
+
+explain (verbose, costs off) select * from ft3 where f1 = 'foo' COLLATE "C";
+                  QUERY PLAN                   
+-----------------------------------------------
+ Foreign Scan on public.ft3
+   Output: f1, f2
+   Filter: (ft3.f1 = 'foo'::text COLLATE "C")
+   Remote SQL: SELECT f1, f2 FROM public.loct3
+(4 rows)
+
+explain (verbose, costs off) select * from ft3 where f2 COLLATE "C" = 'foo';
+                  QUERY PLAN                   
+-----------------------------------------------
+ Foreign Scan on public.ft3
+   Output: f1, f2
+   Filter: ((ft3.f2)::text = 'foo'::text)
+   Remote SQL: SELECT f1, f2 FROM public.loct3
+(4 rows)
+
+explain (verbose, costs off) select * from ft3 where f2 = 'foo' COLLATE "C";
+                  QUERY PLAN                   
+-----------------------------------------------
+ Foreign Scan on public.ft3
+   Output: f1, f2
+   Filter: (ft3.f2 = 'foo'::text COLLATE "C")
+   Remote SQL: SELECT f1, f2 FROM public.loct3
+(4 rows)
+
 -- ===================================================================
 -- test writable foreign table stuff
 -- ===================================================================
