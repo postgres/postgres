@@ -97,6 +97,7 @@ static bool is_utf16_surrogate_first(pg_wchar c);
 static bool is_utf16_surrogate_second(pg_wchar c);
 static pg_wchar surrogate_pair_to_codepoint(pg_wchar first, pg_wchar second);
 static void addunicode(pg_wchar c, yyscan_t yyscanner);
+static bool check_uescapechar(unsigned char escape);
 
 #define yyerror(msg)  scanner_yyerror(msg, yyscanner)
 
@@ -150,7 +151,9 @@ extern void core_yyset_column(int column_no, yyscan_t yyscanner);
  *  <xe> extended quoted strings (support backslash escape sequences)
  *  <xdolq> $foo$ quoted strings
  *  <xui> quoted identifier with Unicode escapes
+ *  <xuiend> end of a quoted identifier with Unicode escapes, UESCAPE can follow
  *  <xus> quoted string with Unicode escapes
+ *  <xusend> end of a quoted string with Unicode escapes, UESCAPE can follow
  *  <xeu> Unicode surrogate pair in extended quoted string
  */
 
@@ -162,7 +165,9 @@ extern void core_yyset_column(int column_no, yyscan_t yyscanner);
 %x xq
 %x xdolq
 %x xui
+%x xuiend
 %x xus
+%x xusend
 %x xeu
 
 /*
@@ -279,17 +284,17 @@ xdinside		[^"]+
 /* Unicode escapes */
 uescape			[uU][eE][sS][cC][aA][pP][eE]{whitespace}*{quote}[^']{quote}
 /* error rule to avoid backup */
-uescapefail		("-"|[uU][eE][sS][cC][aA][pP][eE]{whitespace}*"-"|[uU][eE][sS][cC][aA][pP][eE]{whitespace}*{quote}[^']|[uU][eE][sS][cC][aA][pP][eE]{whitespace}*{quote}|[uU][eE][sS][cC][aA][pP][eE]{whitespace}*|[uU][eE][sS][cC][aA][pP]|[uU][eE][sS][cC][aA]|[uU][eE][sS][cC]|[uU][eE][sS]|[uU][eE]|[uU])
+uescapefail		[uU][eE][sS][cC][aA][pP][eE]{whitespace}*"-"|[uU][eE][sS][cC][aA][pP][eE]{whitespace}*{quote}[^']|[uU][eE][sS][cC][aA][pP][eE]{whitespace}*{quote}|[uU][eE][sS][cC][aA][pP][eE]{whitespace}*|[uU][eE][sS][cC][aA][pP]|[uU][eE][sS][cC][aA]|[uU][eE][sS][cC]|[uU][eE][sS]|[uU][eE]|[uU]
 
 /* Quoted identifier with Unicode escapes */
 xuistart		[uU]&{dquote}
-xuistop1		{dquote}{whitespace}*{uescapefail}?
-xuistop2		{dquote}{whitespace}*{uescape}
 
 /* Quoted string with Unicode escapes */
 xusstart		[uU]&{quote}
-xusstop1		{quote}{whitespace}*{uescapefail}?
-xusstop2		{quote}{whitespace}*{uescape}
+
+/* Optional UESCAPE after a quoted string or identifier with Unicode escapes. */
+xustop1		{uescapefail}?
+xustop2		{uescape}
 
 /* error rule to avoid backup */
 xufailed		[uU]&
@@ -536,15 +541,31 @@ other			.
 					yylval->str = litbufdup(yyscanner);
 					return SCONST;
 				}
-<xus>{xusstop1} {
+<xus>{quotestop} |
+<xus>{quotefail} {
 					/* throw back all but the quote */
 					yyless(1);
+					/* handle possible UESCAPE in xusend mode */
+					BEGIN(xusend);
+				}
+<xusend>{whitespace}
+<xusend>{other} |
+<xusend>{xustop1} {
+					/* no UESCAPE after the quote, throw back everything */
+					yyless(0);
 					BEGIN(INITIAL);
 					yylval->str = litbuf_udeescape('\\', yyscanner);
 					return SCONST;
 				}
-<xus>{xusstop2} {
+<xusend>{xustop2} {
+					/* found UESCAPE after the end quote */
 					BEGIN(INITIAL);
+					if (!check_uescapechar(yytext[yyleng-2]))
+					{
+						SET_YYLLOC();
+						ADVANCE_YYLLOC(yyleng-2);
+						yyerror("invalid Unicode escape character");
+					}
 					yylval->str = litbuf_udeescape(yytext[yyleng-2], yyscanner);
 					return SCONST;
 				}
@@ -702,8 +723,18 @@ other			.
 					yylval->str = ident;
 					return IDENT;
 				}
-<xui>{xuistop1}	{
+<xui>{dquote} {
+					yyless(1);
+					/* handle possible UESCAPE in xuiend mode */
+					BEGIN(xuiend);
+				}
+<xuiend>{whitespace} { }
+<xuiend>{other} |
+<xuiend>{xustop1} {
+					/* no UESCAPE after the quote, throw back everything */
 					char		   *ident;
+
+					yyless(0);
 
 					BEGIN(INITIAL);
 					if (yyextra->literallen == 0)
@@ -712,16 +743,21 @@ other			.
 					if (yyextra->literallen >= NAMEDATALEN)
 						truncate_identifier(ident, yyextra->literallen, true);
 					yylval->str = ident;
-					/* throw back all but the quote */
-					yyless(1);
 					return IDENT;
 				}
-<xui>{xuistop2}	{
+<xuiend>{xustop2}	{
+					/* found UESCAPE after the end quote */
 					char		   *ident;
 
 					BEGIN(INITIAL);
 					if (yyextra->literallen == 0)
 						yyerror("zero-length delimited identifier");
+					if (!check_uescapechar(yytext[yyleng-2]))
+					{
+						SET_YYLLOC();
+						ADVANCE_YYLLOC(yyleng-2);
+						yyerror("invalid Unicode escape character");
+					}
 					ident = litbuf_udeescape(yytext[yyleng - 2], yyscanner);
 					if (yyextra->literallen >= NAMEDATALEN)
 						truncate_identifier(ident, yyextra->literallen, true);
@@ -1203,22 +1239,29 @@ addunicode(pg_wchar c, core_yyscan_t yyscanner)
 	addlit(buf, pg_mblen(buf), yyscanner);
 }
 
-static char *
-litbuf_udeescape(unsigned char escape, core_yyscan_t yyscanner)
+/* is 'escape' acceptable as Unicode escape character (UESCAPE syntax) ? */
+static bool
+check_uescapechar(unsigned char escape)
 {
-	char *new;
-	char *litbuf, *in, *out;
-	pg_wchar pair_first = 0;
-
 	if (isxdigit(escape)
 		|| escape == '+'
 		|| escape == '\''
 		|| escape == '"'
 		|| scanner_isspace(escape))
 	{
-		ADVANCE_YYLLOC(yyextra->literallen + yyleng + 1);
-		yyerror("invalid Unicode escape character");
+		return false;
 	}
+	else
+		return true;
+}
+
+/* like litbufdup, but handle unicode escapes */
+static char *
+litbuf_udeescape(unsigned char escape, core_yyscan_t yyscanner)
+{
+	char *new;
+	char *litbuf, *in, *out;
+	pg_wchar pair_first = 0;
 
 	/* Make literalbuf null-terminated to simplify the scanning loop */
 	litbuf = yyextra->literalbuf;
