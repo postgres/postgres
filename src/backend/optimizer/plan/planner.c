@@ -68,6 +68,7 @@ static void preprocess_rowmarks(PlannerInfo *root);
 static double preprocess_limit(PlannerInfo *root,
 				 double tuple_fraction,
 				 int64 *offset_est, int64 *count_est);
+static bool limit_needed(Query *parse);
 static void preprocess_groupclause(PlannerInfo *root);
 static bool choose_hashed_grouping(PlannerInfo *root,
 					   double tuple_fraction, double limit_tuples,
@@ -1825,7 +1826,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	/*
 	 * Finally, if there is a LIMIT/OFFSET clause, add the LIMIT node.
 	 */
-	if (parse->limitCount || parse->limitOffset)
+	if (limit_needed(parse))
 	{
 		result_plan = (Plan *) make_limit(result_plan,
 										  parse->limitOffset,
@@ -2294,6 +2295,60 @@ preprocess_limit(PlannerInfo *root, double tuple_fraction,
 	}
 
 	return tuple_fraction;
+}
+
+/*
+ * limit_needed - do we actually need a Limit plan node?
+ *
+ * If we have constant-zero OFFSET and constant-null LIMIT, we can skip adding
+ * a Limit node.  This is worth checking for because "OFFSET 0" is a common
+ * locution for an optimization fence.  (Because other places in the planner
+ * merely check whether parse->limitOffset isn't NULL, it will still work as
+ * an optimization fence --- we're just suppressing unnecessary run-time
+ * overhead.)
+ *
+ * This might look like it could be merged into preprocess_limit, but there's
+ * a key distinction: here we need hard constants in OFFSET/LIMIT, whereas
+ * in preprocess_limit it's good enough to consider estimated values.
+ */
+static bool
+limit_needed(Query *parse)
+{
+	Node	   *node;
+
+	node = parse->limitCount;
+	if (node)
+	{
+		if (IsA(node, Const))
+		{
+			/* NULL indicates LIMIT ALL, ie, no limit */
+			if (!((Const *) node)->constisnull)
+				return true;	/* LIMIT with a constant value */
+		}
+		else
+			return true;		/* non-constant LIMIT */
+	}
+
+	node = parse->limitOffset;
+	if (node)
+	{
+		if (IsA(node, Const))
+		{
+			/* Treat NULL as no offset; the executor would too */
+			if (!((Const *) node)->constisnull)
+			{
+				int64	offset = DatumGetInt64(((Const *) node)->constvalue);
+
+				/* Executor would treat less-than-zero same as zero */
+				if (offset > 0)
+					return true;	/* OFFSET with a positive value */
+			}
+		}
+		else
+			return true;		/* non-constant OFFSET */
+	}
+
+	return false;				/* don't need a Limit plan node */
 }
 
 

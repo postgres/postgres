@@ -542,36 +542,34 @@ SELECT * FROM rw_view2;
 (2 rows)
 
 EXPLAIN (costs off) UPDATE rw_view2 SET a=3 WHERE a=2;
-                            QUERY PLAN                            
-------------------------------------------------------------------
+                           QUERY PLAN                           
+----------------------------------------------------------------
  Update on base_tbl
    ->  Nested Loop
          ->  Index Scan using base_tbl_pkey on base_tbl
                Index Cond: (a = 2)
          ->  Subquery Scan on rw_view1
                Filter: ((rw_view1.a < 10) AND (rw_view1.a = 2))
-               ->  Limit
-                     ->  Bitmap Heap Scan on base_tbl base_tbl_1
-                           Recheck Cond: (a > 0)
-                           ->  Bitmap Index Scan on base_tbl_pkey
-                                 Index Cond: (a > 0)
-(11 rows)
+               ->  Bitmap Heap Scan on base_tbl base_tbl_1
+                     Recheck Cond: (a > 0)
+                     ->  Bitmap Index Scan on base_tbl_pkey
+                           Index Cond: (a > 0)
+(10 rows)
 
 EXPLAIN (costs off) DELETE FROM rw_view2 WHERE a=2;
-                            QUERY PLAN                            
-------------------------------------------------------------------
+                           QUERY PLAN                           
+----------------------------------------------------------------
  Delete on base_tbl
    ->  Nested Loop
          ->  Index Scan using base_tbl_pkey on base_tbl
                Index Cond: (a = 2)
          ->  Subquery Scan on rw_view1
                Filter: ((rw_view1.a < 10) AND (rw_view1.a = 2))
-               ->  Limit
-                     ->  Bitmap Heap Scan on base_tbl base_tbl_1
-                           Recheck Cond: (a > 0)
-                           ->  Bitmap Index Scan on base_tbl_pkey
-                                 Index Cond: (a > 0)
-(11 rows)
+               ->  Bitmap Heap Scan on base_tbl base_tbl_1
+                     Recheck Cond: (a > 0)
+                     ->  Bitmap Index Scan on base_tbl_pkey
+                           Index Cond: (a > 0)
+(10 rows)
 
 DROP TABLE base_tbl CASCADE;
 NOTICE:  drop cascades to 2 other objects
@@ -775,30 +773,28 @@ SELECT * FROM rw_view2;
 (2 rows)
 
 EXPLAIN (costs off) UPDATE rw_view2 SET a=3 WHERE a=2;
-                         QUERY PLAN                         
-------------------------------------------------------------
+                        QUERY PLAN                        
+----------------------------------------------------------
  Update on rw_view1 rw_view1_1
    ->  Subquery Scan on rw_view1
          Filter: ((rw_view1.a < 10) AND (rw_view1.a = 2))
-         ->  Limit
-               ->  Bitmap Heap Scan on base_tbl
-                     Recheck Cond: (a > 0)
-                     ->  Bitmap Index Scan on base_tbl_pkey
-                           Index Cond: (a > 0)
-(8 rows)
+         ->  Bitmap Heap Scan on base_tbl
+               Recheck Cond: (a > 0)
+               ->  Bitmap Index Scan on base_tbl_pkey
+                     Index Cond: (a > 0)
+(7 rows)
 
 EXPLAIN (costs off) DELETE FROM rw_view2 WHERE a=2;
-                         QUERY PLAN                         
-------------------------------------------------------------
+                        QUERY PLAN                        
+----------------------------------------------------------
  Delete on rw_view1 rw_view1_1
    ->  Subquery Scan on rw_view1
          Filter: ((rw_view1.a < 10) AND (rw_view1.a = 2))
-         ->  Limit
-               ->  Bitmap Heap Scan on base_tbl
-                     Recheck Cond: (a > 0)
-                     ->  Bitmap Index Scan on base_tbl_pkey
-                           Index Cond: (a > 0)
-(8 rows)
+         ->  Bitmap Heap Scan on base_tbl
+               Recheck Cond: (a > 0)
+               ->  Bitmap Index Scan on base_tbl_pkey
+                     Index Cond: (a > 0)
+(7 rows)
 
 DROP TABLE base_tbl CASCADE;
 NOTICE:  drop cascades to 2 other objects
