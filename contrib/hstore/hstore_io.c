@@ -1299,7 +1299,8 @@ hstore_to_json_loose(PG_FUNCTION_ARGS)
 			 * don't treat something with a leading zero followed by another
 			 * digit as numeric - could be a zip code or similar
 			 */
-			if (src->len > 0 && (src->data[0] != '0' || !isdigit(src->data[1])) &&
+			if (src->len > 0 &&
+				!(src->data[0] == '0' && isdigit((unsigned char) src->data[1])) &&
 				strspn(src->data, "+-0123456789Ee.") == src->len)
 			{
 				/*
@@ -1308,7 +1309,7 @@ hstore_to_json_loose(PG_FUNCTION_ARGS)
 				 */
 				char	   *endptr = "junk";
 
-				(void) (strtol(src->data, &endptr, 10) + 1);
+				(void) strtol(src->data, &endptr, 10);
 				if (*endptr == '\0')
 				{
 					/*
@@ -1320,7 +1321,7 @@ hstore_to_json_loose(PG_FUNCTION_ARGS)
 				else
 				{
 					/* not an int - try a double */
-					(void) (strtod(src->data, &endptr) + 1.0);
+					(void) strtod(src->data, &endptr);
 					if (*endptr == '\0')
 						is_number = true;
 				}
