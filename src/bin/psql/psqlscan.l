@@ -166,7 +166,8 @@ static void escape_variable(bool as_ident);
  *  <xe> extended quoted strings (support backslash escape sequences)
  *  <xdolq> $foo$ quoted strings
  *  <xui> quoted identifier with Unicode escapes
- *  <xus> quoted string with Unicode escapes
+ *  <xuiend> end of a quoted identifier with Unicode escapes, UESCAPE can follow *  <xus> quoted string with Unicode escapes
+ *  <xusend> end of a quoted string with Unicode escapes, UESCAPE can follow
  *
  * Note: we intentionally don't mimic the backend's <xeu> state; we have
  * no need to distinguish it from <xe> state, and no good way to get out
@@ -182,7 +183,9 @@ static void escape_variable(bool as_ident);
 %x xq
 %x xdolq
 %x xui
+%x xuiend
 %x xus
+%x xusend
 /* Additional exclusive states for psql only: lex backslash commands */
 %x xslashcmd
 %x xslashargstart
@@ -307,17 +310,17 @@ xdinside		[^"]+
 /* Unicode escapes */
 uescape			[uU][eE][sS][cC][aA][pP][eE]{whitespace}*{quote}[^']{quote}
 /* error rule to avoid backup */
-uescapefail		("-"|[uU][eE][sS][cC][aA][pP][eE]{whitespace}*"-"|[uU][eE][sS][cC][aA][pP][eE]{whitespace}*{quote}[^']|[uU][eE][sS][cC][aA][pP][eE]{whitespace}*{quote}|[uU][eE][sS][cC][aA][pP][eE]{whitespace}*|[uU][eE][sS][cC][aA][pP]|[uU][eE][sS][cC][aA]|[uU][eE][sS][cC]|[uU][eE][sS]|[uU][eE]|[uU])
+uescapefail		[uU][eE][sS][cC][aA][pP][eE]{whitespace}*"-"|[uU][eE][sS][cC][aA][pP][eE]{whitespace}*{quote}[^']|[uU][eE][sS][cC][aA][pP][eE]{whitespace}*{quote}|[uU][eE][sS][cC][aA][pP][eE]{whitespace}*|[uU][eE][sS][cC][aA][pP]|[uU][eE][sS][cC][aA]|[uU][eE][sS][cC]|[uU][eE][sS]|[uU][eE]|[uU]
 
 /* Quoted identifier with Unicode escapes */
 xuistart		[uU]&{dquote}
-xuistop1		{dquote}{whitespace}*{uescapefail}?
-xuistop2		{dquote}{whitespace}*{uescape}
 
 /* Quoted string with Unicode escapes */
 xusstart		[uU]&{quote}
-xusstop1		{quote}{whitespace}*{uescapefail}?
-xusstop2		{quote}{whitespace}*{uescape}
+
+/* Optional UESCAPE after a quoted string or identifier with Unicode escapes. */
+xustop1		{uescapefail}?
+xustop2		{uescape}
 
 /* error rule to avoid backup */
 xufailed		[uU]&
@@ -520,12 +523,22 @@ other			.
 					BEGIN(INITIAL);
 					ECHO;
 				}
-<xus>{xusstop1} {
+<xus>{quotestop} |
+<xus>{quotefail} {
 					yyless(1);
+					BEGIN(xusend);
+					ECHO;
+				}
+<xusend>{whitespace} {
+					ECHO;
+				}
+<xusend>{other} |
+<xusend>{xustop1} {
+					yyless(0);
 					BEGIN(INITIAL);
 					ECHO;
 				}
-<xus>{xusstop2} {
+<xusend>{xustop2} {
 					BEGIN(INITIAL);
 					ECHO;
 				}
@@ -612,12 +625,21 @@ other			.
 					BEGIN(INITIAL);
 					ECHO;
 				}
-<xui>{xuistop1}	{
+<xui>{dquote} {
 					yyless(1);
+					BEGIN(xuiend);
+					ECHO;
+				}
+<xuiend>{whitespace} {
+					ECHO;
+				}
+<xuiend>{other} |
+<xuiend>{xustop1} {
+					yyless(0);
 					BEGIN(INITIAL);
 					ECHO;
 				}
-<xui>{xuistop2}	{
+<xuiend>{xustop2}	{
 					BEGIN(INITIAL);
 					ECHO;
 				}
