@@ -1210,24 +1210,22 @@ select * from matest0 order by 1-id;
 reset enable_indexscan;
 set enable_seqscan = off;  -- plan with fewest seqscans should be merge
 explain (verbose, costs off) select * from matest0 order by 1-id;
-                               QUERY PLAN                               
-------------------------------------------------------------------------
- Result
-   Output: matest0.id, matest0.name, ((1 - matest0.id))
-   ->  Merge Append
-         Sort Key: ((1 - matest0.id))
-         ->  Index Scan using matest0i on public.matest0
-               Output: matest0.id, matest0.name, (1 - matest0.id)
-         ->  Index Scan using matest1i on public.matest1
-               Output: matest1.id, matest1.name, (1 - matest1.id)
-         ->  Sort
-               Output: matest2.id, matest2.name, ((1 - matest2.id))
-               Sort Key: ((1 - matest2.id))
-               ->  Seq Scan on public.matest2
-                     Output: matest2.id, matest2.name, (1 - matest2.id)
-         ->  Index Scan using matest3i on public.matest3
-               Output: matest3.id, matest3.name, (1 - matest3.id)
-(15 rows)
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Merge Append
+   Sort Key: ((1 - matest0.id))
+   ->  Index Scan using matest0i on public.matest0
+         Output: matest0.id, matest0.name, (1 - matest0.id)
+   ->  Index Scan using matest1i on public.matest1
+         Output: matest1.id, matest1.name, (1 - matest1.id)
+   ->  Sort
+         Output: matest2.id, matest2.name, ((1 - matest2.id))
+         Sort Key: ((1 - matest2.id))
+         ->  Seq Scan on public.matest2
+               Output: matest2.id, matest2.name, (1 - matest2.id)
+   ->  Index Scan using matest3i on public.matest3
+         Output: matest3.id, matest3.name, (1 - matest3.id)
+(13 rows)
 
 select * from matest0 order by 1-id;
  id |  name  
@@ -1258,48 +1256,45 @@ SELECT thousand, tenthous FROM tenk1
 UNION ALL
 SELECT thousand, thousand FROM tenk1
 ORDER BY thousand, tenthous;
-                                  QUERY PLAN                                   
--------------------------------------------------------------------------------
- Result
-   ->  Merge Append
-         Sort Key: tenk1.thousand, tenk1.tenthous
-         ->  Index Only Scan using tenk1_thous_tenthous on tenk1
-         ->  Sort
-               Sort Key: tenk1_1.thousand, tenk1_1.thousand
-               ->  Index Only Scan using tenk1_thous_tenthous on tenk1 tenk1_1
-(7 rows)
+                               QUERY PLAN                                
+-------------------------------------------------------------------------
+ Merge Append
+   Sort Key: tenk1.thousand, tenk1.tenthous
+   ->  Index Only Scan using tenk1_thous_tenthous on tenk1
+   ->  Sort
+         Sort Key: tenk1_1.thousand, tenk1_1.thousand
+         ->  Index Only Scan using tenk1_thous_tenthous on tenk1 tenk1_1
+(6 rows)
 
 explain (costs off)
 SELECT thousand, tenthous, thousand+tenthous AS x FROM tenk1
 UNION ALL
 SELECT 42, 42, hundred FROM tenk1
 ORDER BY thousand, tenthous;
-                               QUERY PLAN                               
-------------------------------------------------------------------------
- Result
-   ->  Merge Append
-         Sort Key: tenk1.thousand, tenk1.tenthous
-         ->  Index Only Scan using tenk1_thous_tenthous on tenk1
-         ->  Sort
-               Sort Key: (42), (42)
-               ->  Index Only Scan using tenk1_hundred on tenk1 tenk1_1
-(7 rows)
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Merge Append
+   Sort Key: tenk1.thousand, tenk1.tenthous
+   ->  Index Only Scan using tenk1_thous_tenthous on tenk1
+   ->  Sort
+         Sort Key: (42), (42)
+         ->  Index Only Scan using tenk1_hundred on tenk1 tenk1_1
+(6 rows)
 
 explain (costs off)
 SELECT thousand, tenthous FROM tenk1
 UNION ALL
 SELECT thousand, random()::integer FROM tenk1
 ORDER BY thousand, tenthous;
-                                  QUERY PLAN                                   
--------------------------------------------------------------------------------
- Result
-   ->  Merge Append
-         Sort Key: tenk1.thousand, tenk1.tenthous
-         ->  Index Only Scan using tenk1_thous_tenthous on tenk1
-         ->  Sort
-               Sort Key: tenk1_1.thousand, ((random())::integer)
-               ->  Index Only Scan using tenk1_thous_tenthous on tenk1 tenk1_1
-(7 rows)
+                               QUERY PLAN                                
+-------------------------------------------------------------------------
+ Merge Append
+   Sort Key: tenk1.thousand, tenk1.tenthous
+   ->  Index Only Scan using tenk1_thous_tenthous on tenk1
+   ->  Sort
+         Sort Key: tenk1_1.thousand, ((random())::integer)
+         ->  Index Only Scan using tenk1_thous_tenthous on tenk1 tenk1_1
+(6 rows)
 
 -- Check min/max aggregate optimization
 explain (costs off)
@@ -1345,16 +1340,15 @@ SELECT x, y FROM
    UNION ALL
    SELECT unique2 AS x, unique2 AS y FROM tenk1 b) s
 ORDER BY x, y;
-                            QUERY PLAN                             
--------------------------------------------------------------------
- Result
-   ->  Merge Append
-         Sort Key: a.thousand, a.tenthous
-         ->  Index Only Scan using tenk1_thous_tenthous on tenk1 a
-         ->  Sort
-               Sort Key: b.unique2, b.unique2
-               ->  Index Only Scan using tenk1_unique2 on tenk1 b
-(7 rows)
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Merge Append
+   Sort Key: a.thousand, a.tenthous
+   ->  Index Only Scan using tenk1_thous_tenthous on tenk1 a
+   ->  Sort
+         Sort Key: b.unique2, b.unique2
+         ->  Index Only Scan using tenk1_unique2 on tenk1 b
+(6 rows)
 
 reset enable_seqscan;
 reset enable_indexscan;
