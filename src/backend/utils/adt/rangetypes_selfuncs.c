@@ -20,6 +20,7 @@
 #include "access/htup_details.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_statistic.h"
+#include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/rangetypes.h"
 #include "utils/selfuncs.h"
@@ -39,6 +40,21 @@ static int rbound_bsearch(TypeCacheEntry *typcache, RangeBound *value,
 			   RangeBound *hist, int hist_length, bool equal);
 static float8 get_position(TypeCacheEntry *typcache, RangeBound *value,
 			 RangeBound *hist1, RangeBound *hist2);
+static float8 get_len_position(double value, double hist1, double hist2);
+static float8 get_distance(TypeCacheEntry *typcache, RangeBound *bound1,
+															RangeBound *bound2);
+static int length_hist_bsearch(Datum *length_hist_values,
+					int length_hist_nvalues, double value, bool equal);
+static double calc_length_hist_frac(Datum *length_hist_values,
+									int length_hist_nvalues, double length1, double length2, bool equal);
+static double calc_hist_selectivity_contained(TypeCacheEntry *typcache,
+								RangeBound *lower, RangeBound *upper,
+								RangeBound *hist_lower, int hist_nvalues,
+							Datum *length_hist_values, int length_hist_nvalues);
+static double calc_hist_selectivity_contains(TypeCacheEntry *typcache,
+							   RangeBound *lower, RangeBound *upper,
+							   RangeBound *hist_lower, int hist_nvalues,
+							Datum *length_hist_values, int length_hist_nvalues);
 
 /*
  * Returns a default selectivity estimate for given operator, when we don't
@@ -213,7 +229,7 @@ calc_rangesel(TypeCacheEntry *typcache, VariableStatData *vardata,
 		/* Try to get fraction of empty ranges */
 		if (get_attstatsslot(vardata->statsTuple,
 							 vardata->atttype, vardata->atttypmod,
-							 STATISTIC_KIND_RANGE_EMPTY_FRAC, InvalidOid,
+							 STATISTIC_KIND_RANGE_LENGTH_HISTOGRAM, InvalidOid,
 							 NULL,
 							 NULL, NULL,
 							 &numbers, &nnumbers))
@@ -332,6 +348,8 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 {
 	Datum	   *hist_values;
 	int			nhist;
+	Datum	   *length_hist_values;
+	int			length_nhist;
 	RangeBound *hist_lower;
 	RangeBound *hist_upper;
 	int			i;
@@ -363,6 +381,25 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 		/* The histogram should not contain any empty ranges */
 		if (empty)
 			elog(ERROR, "bounds histogram contains an empty range");
+	}
+
+	/* @> and @< also need a histogram of range lengths */
+	if (operator == OID_RANGE_CONTAINS_OP ||
+		operator == OID_RANGE_CONTAINED_OP)
+	{
+		if (!(HeapTupleIsValid(vardata->statsTuple) &&
+			  get_attstatsslot(vardata->statsTuple,
+							   vardata->atttype, vardata->atttypmod,
+							   STATISTIC_KIND_RANGE_LENGTH_HISTOGRAM,
+							   InvalidOid,
+							   NULL,
+							   &length_hist_values, &length_nhist,
+							   NULL, NULL)))
+			return -1.0;
+
+		/* check that it's a histogram, not just a dummy entry */
+		if (length_nhist < 2)
+			return -1.0;
 	}
 
 	/* Extract the bounds of the constant value. */
@@ -440,6 +477,9 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 			/*
 			 * A && B <=> NOT (A << B OR A >> B).
 			 *
+			 * Since A << B and A >> B are mutually exclusive events we can sum
+			 * their probabilities to find probability of (A << B OR A >> B).
+			 *
 			 * "range @> elem" is equivalent to "range && [elem,elem]". The
 			 * caller already constructed the singular range from the element
 			 * constant, so just treat it the same as &&.
@@ -454,9 +494,36 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 			break;
 
 		case OID_RANGE_CONTAINS_OP:
+			hist_selec =
+				calc_hist_selectivity_contains(typcache, &const_lower,
+											&const_upper, hist_lower, nhist,
+											length_hist_values, length_nhist);
+			break;
+
 		case OID_RANGE_CONTAINED_OP:
-			/* TODO: not implemented yet */
-			hist_selec = -1.0;
+			if (const_lower.infinite)
+			{
+				/*
+				 * Lower bound no longer matters. Just estimate the fraction
+				 * with an upper bound <= const uppert bound
+				 */
+				hist_selec =
+					calc_hist_selectivity_scalar(typcache, &const_upper,
+												 hist_upper, nhist, true);
+			}
+			else if (const_upper.infinite)
+			{
+				hist_selec =
+					1.0 - calc_hist_selectivity_scalar(typcache, &const_lower,
+													   hist_lower, nhist, false);
+			}
+			else
+			{
+				hist_selec =
+					calc_hist_selectivity_contained(typcache, &const_lower,
+													&const_upper, hist_lower, nhist,
+													length_hist_values, length_nhist);
+			}
 			break;
 
 		default:
@@ -497,8 +564,13 @@ calc_hist_selectivity_scalar(TypeCacheEntry *typcache, RangeBound *constbound,
 
 /*
  * Binary search on an array of range bounds. Returns greatest index of range
- * bound in array which is less than given range bound. If all range bounds in
- * array are greater or equal than given range bound, return -1.
+ * bound in array which is less(less or equal) than given range bound. If all
+ * range bounds in array are greater or equal(greater) than given range bound,
+ * return -1. When "equal" flag is set conditions in brackets are used.
+ *
+ * This function is used in scalar operators selectivity estimation. Another
+ * goal of this function is to found an histogram bin where to stop
+ * interpolation of portion of bounds which are less or equal to given bound.
  */
 static int
 rbound_bsearch(TypeCacheEntry *typcache, RangeBound *value, RangeBound *hist,
@@ -515,6 +587,36 @@ rbound_bsearch(TypeCacheEntry *typcache, RangeBound *value, RangeBound *hist,
 		cmp = range_cmp_bounds(typcache, &hist[middle], value);
 
 		if (cmp < 0 || (equal && cmp == 0))
+			lower = middle;
+		else
+			upper = middle - 1;
+	}
+	return lower;
+}
+
+
+/*
+ * Binary search on length histogram. Returns greatest index of range length in
+ * histogram which is less than (less than or equal) the given length value. If
+ * all lengths in the histogram are greater than (greater than or equal) the
+ * given length, returns -1.
+ */
+static int
+length_hist_bsearch(Datum *length_hist_values, int length_hist_nvalues,
+					double value, bool equal)
+{
+	int			lower = -1,
+				upper = length_hist_nvalues - 1,
+				middle;
+
+	while (lower < upper)
+	{
+		double middleval;
+
+		middle = (lower + upper + 1) / 2;
+
+		middleval = DatumGetFloat8(length_hist_values[middle]);
+		if (middleval < value || (equal && middleval <= value))
 			lower = middle;
 		else
 			upper = middle - 1;
@@ -598,3 +700,432 @@ get_position(TypeCacheEntry *typcache, RangeBound *value, RangeBound *hist1,
 	}
 }
 
+
+/*
+ * Get relative position of value in a length histogram bin in [0,1] range.
+ */
+static double
+get_len_position(double value, double hist1, double hist2)
+{
+	if (!is_infinite(hist1) && !is_infinite(hist2))
+	{
+		/*
+		 * Both bounds are finite. The value should be finite too, because it
+		 * lies somewhere between the bounds. If it doesn't, just return
+		 * something.
+		 */
+		if (is_infinite(value))
+			return 0.5;
+
+		return 1.0 - (hist2 - value) / (hist2 - hist1);
+	}
+	else if (is_infinite(hist1) && !is_infinite(hist2))
+	{
+		/*
+		 * Lower bin boundary is -infinite, upper is finite.
+		 * Return 1.0 to indicate the value is infinitely far from the lower
+		 * bound.
+		 */
+		return 1.0;
+	}
+	else if (is_infinite(hist1) && is_infinite(hist2))
+	{
+		/* same as above, but in reverse */
+		return 0.0;
+	}
+	else
+	{
+		/*
+		 * If both bin boundaries are infinite, they should be equal to each
+		 * other, and the value should also be infinite and equal to both
+		 * bounds. (But don't Assert that, to avoid crashing unnecessarily
+		 * if the caller messes up)
+		 *
+		 * Assume the value to lie in the middle of the infinite bounds.
+		 */
+		return 0.5;
+	}
+}
+
+/*
+ * Measure distance between two range bounds.
+ */
+static float8
+get_distance(TypeCacheEntry *typcache, RangeBound *bound1, RangeBound *bound2)
+{
+	bool	has_subdiff = OidIsValid(typcache->rng_subdiff_finfo.fn_oid);
+
+	if (!bound1->infinite && !bound2->infinite)
+	{
+		/*
+		 * No bounds are infinite, use subdiff function or return default
+		 * value of 1.0 if no subdiff is available.
+		 */
+		if (has_subdiff)
+			return
+				DatumGetFloat8(FunctionCall2Coll(&typcache->rng_subdiff_finfo,
+												 typcache->rng_collation,
+												 bound2->val,
+												 bound1->val));
+		else
+			return 1.0;
+	}
+	else if (bound1->infinite && bound2->infinite)
+	{
+		/* Both bounds are infinite */
+		if (bound1->lower == bound2->lower)
+			return 0.0;
+		else
+			return get_float8_infinity();
+	}
+	else
+	{
+		/* One bound is infinite, another is not */
+		return get_float8_infinity();
+	}
+}
+
+/*
+ * Calculate the average of function P(x), in the interval [length1, length2],
+ * where P(x) is the fraction of tuples with length < x (or length <= x if
+ * 'equal' is true).
+ */
+static double
+calc_length_hist_frac(Datum *length_hist_values, int length_hist_nvalues,
+					  double length1, double length2, bool equal)
+{
+	double		frac;
+	double		A, B, PA, PB;
+	double		pos;
+	int			i;
+	double		area;
+
+	Assert(length2 >= length1);
+
+	if (length2 < 0.0)
+		return 0.0; /* shouldn't happen, but doesn't hurt to check */
+
+	/* All lengths in the table are <= infinite. */
+	if (is_infinite(length2) && equal)
+		return 1.0;
+
+	/*----------
+	 * The average of a function between A and B can be calculated by the
+	 * formula:
+	 *
+	 *          B
+	 *    1     /
+	 * -------  | P(x)dx
+	 *  B - A   /
+	 *          A
+	 *
+	 * The geometrical interpretation of the integral is the area under the
+	 * graph of P(x). P(x) is defined by the length histogram. We calculate
+	 * the area in a piecewise fashion, iterating through the length histogram
+	 * bins. Each bin is a trapezoid:
+	 *
+	 *       P(x2)
+	 *        /|
+	 *       / |
+	 * P(x1)/  |
+	 *     |   |
+	 *     |   |
+	 *  ---+---+--
+	 *     x1  x2
+	 *
+	 * where x1 and x2 are the boundaries of the current histogram, and P(x1)
+	 * and P(x1) are the cumulative fraction of tuples at the boundaries.
+	 *
+	 * The area of each trapezoid is 1/2 * (P(x2) + P(x1)) * (x2 - x1)
+	 *
+	 * The first bin contains the lower bound passed by the caller, so we
+	 * use linear interpolation between the previous and next histogram bin
+	 * boundary to calculate P(x1). Likewise for the last bin: we use linear
+	 * interpolation to calculate P(x2). For the bins in between, x1 and x2
+	 * lie on histogram bin boundaries, so P(x1) and P(x2) are simply:
+	 * P(x1) =    (bin index) / (number of bins)
+	 * P(x2) = (bin index + 1 / (number of bins)
+	 */
+
+	/* First bin, the one that contains lower bound */
+	i = length_hist_bsearch(length_hist_values, length_hist_nvalues, length1, equal);
+	if (i >= length_hist_nvalues - 1)
+		return 1.0;
+
+	if (i < 0)
+	{
+		i = 0;
+		pos = 0.0;
+	}
+	else
+	{
+		/* interpolate length1's position in the bin */
+		pos = get_len_position(length1,
+							   DatumGetFloat8(length_hist_values[i]),
+							   DatumGetFloat8(length_hist_values[i + 1]));
+	}
+	PB = (((double) i) + pos) / (double) (length_hist_nvalues - 1);
+	B = length1;
+
+	/*
+	 * In the degenerate case that length1 == length2, simply return P(length1).
+	 * This is not merely an optimization: if length1 == length2, we'd divide
+	 * by zero later on.
+	 */
+	if (length2 == length1)
+		return PB;
+
+	/*
+	 * Loop through all the bins, until we hit the last bin, the one that
+	 * contains the upper bound. (if lower and upper bounds are in the same
+	 * bin, this falls out immediately)
+	 */
+	area = 0.0;
+	for (; i < length_hist_nvalues - 1; i++)
+	{
+		double bin_upper = DatumGetFloat8(length_hist_values[i + 1]);
+
+		/* check if we've reached the last bin */
+		if (!(bin_upper < length2 || (equal && bin_upper <= length2)))
+			break;
+
+		/* the upper bound of previous bin is the lower bound of this bin */
+		A = B; PA = PB;
+
+		B = bin_upper;
+		PB = (double) i / (double) (length_hist_nvalues - 1);
+
+		/*
+		 * Add the area of this trapezoid to the total. The point of the
+		 * if-check is to avoid NaN, in the corner case that PA == PB == 0, and
+		 * B - A == Inf. The area of a zero-height trapezoid (PA == PB == 0) is
+		 * zero, regardless of the width (B - A).
+		 */
+		if (PA > 0 || PB > 0)
+			area += 0.5 * (PB + PA) * (B - A);
+	}
+
+	/* Last bin */
+	A = B; PA = PB;
+
+	B = length2; /* last bin ends at the query upper bound */
+	if (i >= length_hist_nvalues - 1)
+		pos = 0.0;
+	else
+	{
+		if (DatumGetFloat8(length_hist_values[i]) == DatumGetFloat8(length_hist_values[i + 1]))
+			pos = 0.0;
+		else
+			pos = get_len_position(length2, DatumGetFloat8(length_hist_values[i]), DatumGetFloat8(length_hist_values[i + 1]));
+	}
+	PB = (((double) i) + pos) / (double) (length_hist_nvalues - 1);
+
+	if (PA > 0 || PB > 0)
+		area += 0.5 * (PB + PA) * (B - A);
+
+	/*
+	 * Ok, we have calculated the area, ie. the integral. Divide by width to
+	 * get the requested average.
+	 *
+	 * Avoid NaN arising from infinite / infinite. This happens at least if
+	 * length2 is infinite. It's not clear what the correct value would be in
+	 * that case, so 0.5 seems as good as any value.
+	 */
+	if (is_infinite(area) && is_infinite(length2))
+		frac = 0.5;
+	else
+		frac = area / (length2 - length1);
+
+	return frac;
+}
+
+/*
+ * Calculate selectivity of "var <@ const" operator, ie. estimate the fraction
+ * of ranges that fall within the constant lower and upper bounds. This uses
+ * the histograms of range lower bounds and range lengths, on the assumption
+ * that the range lengths are independent of the lower bounds.
+ *
+ * The caller has already checked that constant lower and upper bounds are
+ * finite.
+ */
+static double
+calc_hist_selectivity_contained(TypeCacheEntry *typcache,
+								RangeBound *lower, RangeBound *upper,
+								RangeBound *hist_lower,	int hist_nvalues,
+								Datum *length_hist_values, int length_hist_nvalues)
+{
+	int			i,
+				upper_index;
+	float8		prev_dist;
+	double		bin_width;
+	double		upper_bin_width;
+	double		sum_frac;
+
+	/*
+	 * Begin by finding the bin containing the upper bound, in the lower bound
+	 * histogram. Any range with a lower bound > constant upper bound can't
+	 * match, ie. there are no matches in bins greater than upper_index.
+	 */
+	upper->inclusive = !upper->inclusive;
+	upper->lower = true;
+	upper_index = rbound_bsearch(typcache, upper, hist_lower, hist_nvalues,
+								 false);
+
+	/*
+	 * Calculate upper_bin_width, ie. the fraction of the (upper_index,
+	 * upper_index + 1) bin which is greater than upper bound of query range
+	 * using linear interpolation of subdiff function.
+	 */
+	if (upper_index >= 0 && upper_index < hist_nvalues - 1)
+		upper_bin_width = get_position(typcache, upper,
+									   &hist_lower[upper_index],
+									   &hist_lower[upper_index + 1]);
+	else
+		upper_bin_width = 0.0;
+
+	/*
+	 * In the loop, dist and prev_dist are the distance of the "current" bin's
+	 * lower and upper bounds from the constant upper bound.
+	 *
+	 * bin_width represents the width of the current bin. Normally it is 1.0,
+	 * meaning a full width bin, but can be less in the corner cases: start
+	 * and end of the loop. We start with bin_width = upper_bin_width, because
+	 * we begin at the bin containing the upper bound.
+	 */
+	prev_dist = 0.0;
+	bin_width = upper_bin_width;
+
+	sum_frac = 0.0;
+	for (i = upper_index; i >= 0; i--)
+	{
+		double		dist;
+		double		length_hist_frac;
+		bool		final_bin = false;
+
+		/*
+		 * dist -- distance from upper bound of query range to lower bound of
+		 * the current bin in the lower bound histogram. Or to the lower bound
+		 * of the constant range, if this is the final bin, containing the
+		 * constant lower bound.
+		 */
+		if (range_cmp_bounds(typcache, &hist_lower[i], lower) < 0)
+		{
+			dist = get_distance(typcache, lower, upper);
+			/*
+			 * Subtract from bin_width the portion of this bin that we want
+			 * to ignore.
+			 */
+			bin_width -= get_position(typcache, lower, &hist_lower[i],
+									  &hist_lower[i + 1]);
+			if (bin_width < 0.0)
+				bin_width = 0.0;
+			final_bin = true;
+		}
+		else
+			dist = get_distance(typcache, &hist_lower[i], upper);
+
+		/*
+		 * Estimate the fraction of tuples in this bin that are narrow enough
+		 * to not exceed the distance to the upper bound of the query range.
+		 */
+		length_hist_frac = calc_length_hist_frac(length_hist_values,
+												 length_hist_nvalues,
+												 prev_dist, dist, true);
+
+		/*
+		 * Add the fraction of tuples in this bin, with a suitable length,
+		 * to the total.
+		 */
+		sum_frac += length_hist_frac * bin_width / (double) (hist_nvalues - 1);
+
+		if (final_bin)
+			break;
+
+		bin_width = 1.0;
+		prev_dist = dist;
+	}
+
+	return sum_frac;
+}
+
+/*
+ * Calculate selectivity of "var @> const" operator, ie. estimate the fraction
+ * of ranges that contain the constant lower and upper bounds. This uses
+ * the histograms of range lower bounds and range lengths, on the assumption
+ * that the range lengths are independent of the lower bounds.
+ *
+ * Note, this is "var @> const", ie. estimate the fraction of ranges that
+ * contain the constant lower and upper bounds.
+ */
+static double
+calc_hist_selectivity_contains(TypeCacheEntry *typcache,
+							   RangeBound *lower, RangeBound *upper,
+							   RangeBound *hist_lower, int hist_nvalues,
+							   Datum *length_hist_values, int length_hist_nvalues)
+{
+	int			i,
+				lower_index;
+	double		bin_width,
+				lower_bin_width;
+	double		sum_frac;
+	float8		prev_dist;
+
+	/* Find the bin containing the lower bound of query range. */
+	lower_index = rbound_bsearch(typcache, lower, hist_lower, hist_nvalues,
+								 true);
+
+	/*
+	 * Calculate lower_bin_width, ie. the fraction of the of (lower_index,
+	 * lower_index + 1) bin which is greater than lower bound of query range
+	 * using linear interpolation of subdiff function.
+	 */
+	if (lower_index >= 0 && lower_index < hist_nvalues - 1)
+		lower_bin_width = get_position(typcache, lower, &hist_lower[lower_index],
+								  &hist_lower[lower_index + 1]);
+	else
+		lower_bin_width = 0.0;
+
+	/*
+	 * Loop through all the lower bound bins, smaller than the query lower
+	 * bound. In the loop, dist and prev_dist are the distance of the "current"
+	 * bin's lower and upper bounds from the constant upper bound. We begin
+	 * from query lower bound, and walk backwards, so the first bin's upper
+	 * bound is the query lower bound, and its distance to the query upper
+	 * bound is the length of the query range.
+	 *
+	 * bin_width represents the width of the current bin. Normally it is 1.0,
+	 * meaning a full width bin, except for the first bin, which is only
+	 * counted up to the constant lower bound.
+	 */
+	prev_dist = get_distance(typcache, lower, upper);
+	sum_frac = 0.0;
+	bin_width = lower_bin_width;
+	for (i = lower_index; i >= 0; i--)
+	{
+		float8		dist;
+		double		length_hist_frac;
+
+		/*
+		 * dist -- distance from upper bound of query range to current
+		 * value of lower bound histogram or lower bound of query range (if
+		 * we've reach it).
+		 */
+		dist = get_distance(typcache, &hist_lower[i], upper);
+
+		/*
+		 * Get average fraction of length histogram which covers intervals
+		 * longer than (or equal to) distance to upper bound of query range.
+		 */
+		length_hist_frac =
+			1.0 - calc_length_hist_frac(length_hist_values,
+										length_hist_nvalues,
+										prev_dist, dist, false);
+
+		sum_frac += length_hist_frac * bin_width / (double) (hist_nvalues - 1);
+
+		bin_width = 1.0;
+		prev_dist = dist;
+	}
+
+	return sum_frac;
+}
