@@ -1769,7 +1769,7 @@ makeTableDataInfo(TableInfo *tbinfo, bool oids)
 static void
 buildMatViewRefreshDependencies(Archive *fout)
 {
-	PQExpBuffer query = createPQExpBuffer();
+	PQExpBuffer query;
 	PGresult   *res;
 	int			ntups,
 				i;
@@ -1777,38 +1777,41 @@ buildMatViewRefreshDependencies(Archive *fout)
 				i_objid,
 				i_refobjid;
 
+	/* No Mat Views before 9.3. */
+	if (fout->remoteVersion < 90300)
+		return;
+
 	/* Make sure we are in proper schema */
 	selectSourceSchema(fout, "pg_catalog");
 
-	if (fout->remoteVersion >= 90300)
-	{
-		appendPQExpBuffer(query, "with recursive w as "
-						  "( "
-						  "select d1.objid, d2.refobjid, c2.relkind as refrelkind "
-						  "from pg_depend d1 "
-						  "join pg_class c1 on c1.oid = d1.objid "
-						  "and c1.relkind = 'm' "
-						  "join pg_rewrite r1 on r1.ev_class = d1.objid "
-						  "join pg_depend d2 on d2.classid = 'pg_rewrite'::regclass "
-						  "and d2.objid = r1.oid "
-						  "and d2.refobjid <> d1.objid "
-						  "join pg_class c2 on c2.oid = d2.refobjid "
-						  "and c2.relkind in ('m','v') "
-						  "where d1.classid = 'pg_class'::regclass "
-						  "union "
-						  "select w.objid, d3.refobjid, c3.relkind "
-						  "from w "
-						  "join pg_rewrite r3 on r3.ev_class = w.refobjid "
-						  "join pg_depend d3 on d3.classid = 'pg_rewrite'::regclass "
-						  "and d3.objid = r3.oid "
-						  "and d3.refobjid <> w.refobjid "
-						  "join pg_class c3 on c3.oid = d3.refobjid "
-						  "and c3.relkind in ('m','v') "
-						  ") "
-						  "select 'pg_class'::regclass::oid as classid, objid, refobjid "
-						  "from w "
-						  "where refrelkind = 'm'");
-	}
+	query = createPQExpBuffer();
+
+	appendPQExpBuffer(query, "with recursive w as "
+					  "( "
+					  "select d1.objid, d2.refobjid, c2.relkind as refrelkind "
+					  "from pg_depend d1 "
+					  "join pg_class c1 on c1.oid = d1.objid "
+					  "and c1.relkind = 'm' "
+					  "join pg_rewrite r1 on r1.ev_class = d1.objid "
+					  "join pg_depend d2 on d2.classid = 'pg_rewrite'::regclass "
+					  "and d2.objid = r1.oid "
+					  "and d2.refobjid <> d1.objid "
+					  "join pg_class c2 on c2.oid = d2.refobjid "
+					  "and c2.relkind in ('m','v') "
+					  "where d1.classid = 'pg_class'::regclass "
+					  "union "
+					  "select w.objid, d3.refobjid, c3.relkind "
+					  "from w "
+					  "join pg_rewrite r3 on r3.ev_class = w.refobjid "
+					  "join pg_depend d3 on d3.classid = 'pg_rewrite'::regclass "
+					  "and d3.objid = r3.oid "
+					  "and d3.refobjid <> w.refobjid "
+					  "join pg_class c3 on c3.oid = d3.refobjid "
+					  "and c3.relkind in ('m','v') "
+					  ") "
+					  "select 'pg_class'::regclass::oid as classid, objid, refobjid "
+					  "from w "
+					  "where refrelkind = 'm'");
 
 	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
