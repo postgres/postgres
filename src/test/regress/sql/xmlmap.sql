@@ -39,3 +39,18 @@ SELECT schema_to_xml('testxmlschema', true, false, '');
 SELECT schema_to_xmlschema('testxmlschema', false, true, '');
 SELECT schema_to_xmlschema('testxmlschema', true, false, '');
 SELECT schema_to_xml_and_xmlschema('testxmlschema', true, true, 'foo');
+
+
+-- test that domains are transformed like their base types
+
+CREATE DOMAIN testboolxmldomain AS bool;
+CREATE DOMAIN testdatexmldomain AS date;
+
+CREATE TABLE testxmlschema.test3
+    AS SELECT true c1,
+              true::testboolxmldomain c2,
+              '2013-02-21'::date c3,
+              '2013-02-21'::testdatexmldomain c4;
+
+SELECT xmlforest(c1, c2, c3, c4) FROM testxmlschema.test3;
+SELECT table_to_xml('testxmlschema.test3', true, true, '');
