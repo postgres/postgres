@@ -103,6 +103,9 @@ REFRESH MATERIALIZED VIEW tum WITH DATA;
 SELECT pg_relation_is_scannable('tum'::regclass);
 SELECT * FROM tum;
 
+-- test join of mv and view
+SELECT type, m.totamt AS mtot, v.totamt AS vtot FROM tm m LEFT JOIN tv v USING (type);
+
 -- test diemv when the mv does exist
 DROP MATERIALIZED VIEW IF EXISTS tum;
 

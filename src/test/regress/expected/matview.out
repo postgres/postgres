@@ -327,6 +327,15 @@ SELECT * FROM tum;
  x    |      5
 (3 rows)
 
+-- test join of mv and view
+SELECT type, m.totamt AS mtot, v.totamt AS vtot FROM tm m LEFT JOIN tv v USING (type);
+ type | mtot | vtot 
+------+------+------
+ y    |   12 |   12
+ z    |   24 |   24
+ x    |    5 |    5
+(3 rows)
+
 -- test diemv when the mv does exist
 DROP MATERIALIZED VIEW IF EXISTS tum;
 -- make sure that dependencies are reported properly when they block the drop
