@@ -1519,21 +1519,13 @@
          <primary>format</primary>
         </indexterm>
         <literal><function>format</function>(<parameter>formatstr</parameter> <type>text</type>
-        [, <parameter>str</parameter> <type>"any"</type> [, ...] ])</literal>
+        [, <parameter>formatarg</parameter> <type>"any"</type> [, ...] ])</literal>
        </entry>
        <entry><type>text</type></entry>
        <entry>
          Format arguments according to a format string.
-         This function is similar to the C function
-         <function>sprintf</>, but only the following conversion specifications
-         are recognized: <literal>%s</literal> interpolates the corresponding
-         argument as a string; <literal>%I</literal> escapes its argument as
-         an SQL identifier; <literal>%L</literal> escapes its argument as an
-         SQL literal; <literal>%%</literal> outputs a literal <literal>%</>.
-         A conversion can reference an explicit parameter position by preceding
-         the conversion specifier with <literal><replaceable>n</>$</>, where
-         <replaceable>n</replaceable> is the argument position.
-         See also <xref linkend="plpgsql-quote-literal-example">.
+         This function is similar to the C function <function>sprintf</>.
+         See <xref linkend="functions-string-format">.
        </entry>
        <entry><literal>format('Hello %s, %1$s', 'World')</literal></entry>
        <entry><literal>Hello World, World</literal></entry>
@@ -2846,6 +2838,214 @@
      </tbody>
     </tgroup>
    </table>
+
+   <sect2 id="functions-string-format">
+    <title><function>format</function></title>
+
+    <indexterm>
+     <primary>format</primary>
+    </indexterm>
+
+    <para>
+     The function <function>format</> produces output formatted according to
+     a format string, in a style similar to the C function
+     <function>sprintf</>.
+    </para>
+
+    <para>
+<synopsis>
+<function>format</>(<parameter>formatstr</> <type>text</> [, <parameter>formatarg</> <type>"any"</> [, ...] ])
+</synopsis>
+     <replaceable>formatstr</> is a format string that specifies how the
+     result should be formatted.  Text in the format string is copied
+     directly to the result, except where <firstterm>format specifiers</> are
+     used.  Format specifiers act as placeholders in the string, defining how
+     subsequent function arguments should be formatted and inserted into the
+     result.  Each <replaceable>formatarg</> argument is converted to text
+     according to the usual output rules for its data type, and then formatted
+     and inserted into the result string according to the format specifier(s).
+    </para>
+
+    <para>
+     Format specifiers are introduced by a <literal>%</> character and have
+     the form
+<synopsis>
+%[<replaceable>position</>][<replaceable>flags</>][<replaceable>width</>]<replaceable>type</>
+</synopsis>
+     where the component fields are:
+
+     <variablelist>
+      <varlistentry>
+       <term><replaceable>position</replaceable> (optional)</term>
+       <listitem>
+        <para>
+         A string of the form <literal><replaceable>n</>$</> where
+         <replaceable>n</> is the index of the argument to print.
+         Index 1 means the first argument after
+         <replaceable>formatstr</>.  If the <replaceable>position</> is
+         omitted, the default is to use the next argument in sequence.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><replaceable>flags</replaceable> (optional)</term>
+       <listitem>
+        <para>
+         Additional options controlling how the format specifier's output is
+         formatted.  Currently the only supported flag is a minus sign
+         (<literal>-</>) which will cause the format specifier's output to be
+         left-justified.  This has no effect unless the <replaceable>width</>
+         field is also specified.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><replaceable>width</replaceable> (optional)</term>
+       <listitem>
+        <para>
+         Specifies the <emphasis>minimum</> number of characters to use to
+         display the format specifier's output.  The output is padded on the
+         left or right (depending on the <literal>-</> flag) with spaces as
+         needed to fill the width.  A too-small width does not cause
+         truncation of the output, but is simply ignored.  The width may be
+         specified using any of the following: a positive integer; an
+         asterisk (<literal>*</>) to use the next function argument as the
+         width; or a string of the form <literal>*<replaceable>n</>$</> to
+         use the <replaceable>n</>th function argument as the width.
+        </para>
+
+        <para>
+         If the width comes from a function argument, that argument is
+         consumed before the argument that is used for the format specifier's
+         value.  If the width argument is negative, the result is left
+         aligned (as if the <literal>-</> flag had been specified) within a
+         field of length <function>abs</>(<replaceable>width</replaceable>).
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><replaceable>type</replaceable> (required)</term>
+       <listitem>
+        <para>
+         The type of format conversion to use to produce the format
+         specifier's output.  The following types are supported:
+         <itemizedlist>
+          <listitem>
+           <para>
+            <literal>s</literal> formats the argument value as a simple
+            string.  A null value is treated as an empty string.
+           </para>
+          </listitem>
+          <listitem>
+           <para>
+            <literal>I</literal> treats the argument value as an SQL
+            identifier, double-quoting it if necessary.
+            It is an error for the value to be null.
+           </para>
+          </listitem>
+          <listitem>
+           <para>
+            <literal>L</literal> quotes the argument value as an SQL literal.
+            A null value is displayed as the string <literal>NULL</>, without
+            quotes.
+           </para>
+          </listitem>
+         </itemizedlist>
+        </para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
+    </para>
+
+    <para>
+     In addition to the format specifiers described above, the special sequence
+     <literal>%%</> may be used to output a literal <literal>%</> character.
+    </para>
+
+    <para>
+     Here are some examples of the basic format conversions:
+
+<screen>
+SELECT format('Hello %s', 'World');
+<lineannotation>Result: </lineannotation><computeroutput>Hello World</computeroutput>
+
+SELECT format('Testing %s, %s, %s, %%', 'one', 'two', 'three');
+<lineannotation>Result: </><computeroutput>Testing one, two, three, %</>
+
+SELECT format('INSERT INTO %I VALUES(%L)', 'Foo bar', E'O\'Reilly');
+<lineannotation>Result: </lineannotation><computeroutput>INSERT INTO "Foo bar" VALUES('O''Reilly')</computeroutput>
+
+SELECT format('INSERT INTO %I VALUES(%L)', 'locations', E'C:\\Program Files');
+<lineannotation>Result: </lineannotation><computeroutput>INSERT INTO locations VALUES(E'C:\\Program Files')</computeroutput>
+</screen>
+    </para>
+
+    <para>
+     Here are examples using <replaceable>width</replaceable> fields
+     and the <literal>-</> flag:
+
+<screen>
+SELECT format('|%10s|', 'foo');
+<lineannotation>Result: </><computeroutput>|       foo|</>
+
+SELECT format('|%-10s|', 'foo');
+<lineannotation>Result: </><computeroutput>|foo       |</>
+
+SELECT format('|%*s|', 10, 'foo');
+<lineannotation>Result: </><computeroutput>|       foo|</>
+
+SELECT format('|%*s|', -10, 'foo');
+<lineannotation>Result: </><computeroutput>|foo       |</>
+
+SELECT format('|%-*s|', 10, 'foo');
+<lineannotation>Result: </><computeroutput>|foo       |</>
+
+SELECT format('|%-*s|', -10, 'foo');
+<lineannotation>Result: </><computeroutput>|foo       |</>
+</screen>
+    </para>
+
+    <para>
+     These examples show use of <replaceable>position</> fields:
+
+<screen>
+SELECT format('Testing %3$s, %2$s, %1$s', 'one', 'two', 'three');
+<lineannotation>Result: </><computeroutput>Testing three, two, one</>
+
+SELECT format('|%*2$s|', 'foo', 10, 'bar');
+<lineannotation>Result: </><computeroutput>|       bar|</>
+
+SELECT format('|%1$*2$s|', 'foo', 10, 'bar');
+<lineannotation>Result: </><computeroutput>|       foo|</>
+</screen>
+    </para>
+
+    <para>
+     Unlike the standard C function <function>sprintf</>,
+     <productname>PostgreSQL</>'s <function>format</> function allows format
+     specifiers with and without <replaceable>position</> fields to be mixed
+     in the same format string.  A format specifier without a
+     <replaceable>position</> field always uses the next argument after the
+     last argument consumed.
+     In addition, the <function>format</> function does not require all
+     function arguments to be used in the format string.
+     For example:
+
+<screen>
+SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
+<lineannotation>Result: </><computeroutput>Testing three, two, three</>
+</screen>
+    </para>
+
+    <para>
+     The <literal>%I</> and <literal>%L</> format specifiers are particularly
+     useful for safely constructing dynamic SQL statements.  See
+     <xref linkend="plpgsql-quote-literal-example">.
+    </para>
+   </sect2>
 
   </sect1>
 

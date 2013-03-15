@@ -78,7 +78,8 @@ select format('%1$s %12$s', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
 -- should fail
 select format('%1$s %4$s', 1, 2, 3);
 select format('%1$s %13$s', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
-select format('%1s', 1);
+select format('%0$s', 'Hello');
+select format('%*0$s', 'Hello');
 select format('%1$', 1);
 select format('%1$1', 1);
 -- check mix of positional and ordered placeholders
@@ -97,3 +98,21 @@ select format('Hello', variadic NULL);
 -- variadic argument allows simulating more than FUNC_MAX_ARGS parameters
 select format(string_agg('%s',','), variadic array_agg(i))
 from generate_series(1,200) g(i);
+-- check field widths and left, right alignment
+select format('>>%10s<<', 'Hello');
+select format('>>%10s<<', NULL);
+select format('>>%10s<<', '');
+select format('>>%-10s<<', '');
+select format('>>%-10s<<', 'Hello');
+select format('>>%-10s<<', NULL);
+select format('>>%1$10s<<', 'Hello');
+select format('>>%1$-10I<<', 'Hello');
+select format('>>%2$*1$L<<', 10, 'Hello');
+select format('>>%2$*1$L<<', 10, NULL);
+select format('>>%2$*1$L<<', -10, NULL);
+select format('>>%*s<<', 10, 'Hello');
+select format('>>%*1$s<<', 10, 'Hello');
+select format('>>%-s<<', 'Hello');
+select format('>>%10L<<', NULL);
+select format('>>%2$*1$L<<', NULL, 'Hello');
+select format('>>%2$*1$L<<', 0, 'Hello');

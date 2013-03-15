@@ -56,32 +56,41 @@ typedef struct
 #define PG_GETARG_UNKNOWN_P_COPY(n) DatumGetUnknownPCopy(PG_GETARG_DATUM(n))
 #define PG_RETURN_UNKNOWN_P(x)		PG_RETURN_POINTER(x)
 
-static int	text_cmp(text *arg1, text *arg2, Oid collid);
 static int32 text_length(Datum str);
-static int	text_position(text *t1, text *t2);
-static void text_position_setup(text *t1, text *t2, TextPositionState *state);
-static int	text_position_next(int start_pos, TextPositionState *state);
-static void text_position_cleanup(TextPositionState *state);
 static text *text_catenate(text *t1, text *t2);
 static text *text_substring(Datum str,
 			   int32 start,
 			   int32 length,
 			   bool length_not_specified);
 static text *text_overlay(text *t1, text *t2, int sp, int sl);
-static void appendStringInfoText(StringInfo str, const text *t);
+static int	text_position(text *t1, text *t2);
+static void text_position_setup(text *t1, text *t2, TextPositionState *state);
+static int	text_position_next(int start_pos, TextPositionState *state);
+static void text_position_cleanup(TextPositionState *state);
+static int	text_cmp(text *arg1, text *arg2, Oid collid);
 static bytea *bytea_catenate(bytea *t1, bytea *t2);
 static bytea *bytea_substring(Datum str,
 				int S,
 				int L,
 				bool length_not_specified);
 static bytea *bytea_overlay(bytea *t1, bytea *t2, int sp, int sl);
-static StringInfo makeStringAggState(FunctionCallInfo fcinfo);
-static void text_format_string_conversion(StringInfo buf, char conversion,
-							  FmgrInfo *typOutputInfo,
-							  Datum value, bool isNull);
+static void appendStringInfoText(StringInfo str, const text *t);
 static Datum text_to_array_internal(PG_FUNCTION_ARGS);
 static text *array_to_text_internal(FunctionCallInfo fcinfo, ArrayType *v,
 					   const char *fldsep, const char *null_string);
+static StringInfo makeStringAggState(FunctionCallInfo fcinfo);
+static bool text_format_parse_digits(const char **ptr, const char *end_ptr,
+						 int *value);
+static const char *text_format_parse_format(const char *start_ptr,
+						 const char *end_ptr,
+						 int *argpos, int *widthpos,
+						 int *flags, int *width);
+static void text_format_string_conversion(StringInfo buf, char conversion,
+							  FmgrInfo *typOutputInfo,
+							  Datum value, bool isNull,
+							  int flags, int width);
+static void text_format_append_string(StringInfo buf, const char *str,
+						  int flags, int width);
 
 
 /*****************************************************************************
@@ -3996,8 +4005,22 @@ text_reverse(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(result);
 }
 
+
 /*
- * Returns a formated string
+ * Support macros for text_format()
+ */
+#define TEXT_FORMAT_FLAG_MINUS	0x0001	/* is minus flag present? */
+
+#define ADVANCE_PARSE_POINTER(ptr,end_ptr) \
+	do { \
+		if (++(ptr) >= (end_ptr)) \
+			ereport(ERROR, \
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE), \
+					 errmsg("unterminated format specifier"))); \
+	} while (0)
+
+/*
+ * Returns a formatted string
  */
 Datum
 text_format(PG_FUNCTION_ARGS)
@@ -4008,16 +4031,18 @@ text_format(PG_FUNCTION_ARGS)
 	const char *start_ptr;
 	const char *end_ptr;
 	text	   *result;
-	int			arg = 0;
+	int			arg;
 	bool		funcvariadic;
 	int			nargs;
 	Datum	   *elements = NULL;
 	bool	   *nulls = NULL;
 	Oid			element_type = InvalidOid;
 	Oid			prev_type = InvalidOid;
+	Oid			prev_width_type = InvalidOid;
 	FmgrInfo	typoutputfinfo;
+	FmgrInfo	typoutputinfo_width;
 
-	/* When format string is null, returns null */
+	/* When format string is null, immediately return null */
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
@@ -4081,10 +4106,15 @@ text_format(PG_FUNCTION_ARGS)
 	start_ptr = VARDATA_ANY(fmt);
 	end_ptr = start_ptr + VARSIZE_ANY_EXHDR(fmt);
 	initStringInfo(&str);
+	arg = 1;					/* next argument position to print */
 
 	/* Scan format string, looking for conversion specifiers. */
 	for (cp = start_ptr; cp < end_ptr; cp++)
 	{
+		int			argpos;
+		int			widthpos;
+		int			flags;
+		int			width;
 		Datum		value;
 		bool		isNull;
 		Oid			typid;
@@ -4099,11 +4129,7 @@ text_format(PG_FUNCTION_ARGS)
 			continue;
 		}
 
-		/* Did we run off the end of the string? */
-		if (++cp >= end_ptr)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("unterminated conversion specifier")));
+		ADVANCE_PARSE_POINTER(cp, end_ptr);
 
 		/* Easy case: %% outputs a single % */
 		if (*cp == '%')
@@ -4112,69 +4138,89 @@ text_format(PG_FUNCTION_ARGS)
 			continue;
 		}
 
+		/* Parse the optional portions of the format specifier */
+		cp = text_format_parse_format(cp, end_ptr,
+									  &argpos, &widthpos,
+									  &flags, &width);
+
 		/*
-		 * If the user hasn't specified an argument position, we just advance
-		 * to the next one.  If they have, we must parse it.
+		 * Next we should see the main conversion specifier.  Whether or not
+		 * an argument position was present, it's known that at least one
+		 * character remains in the string at this point.  Experience suggests
+		 * that it's worth checking that that character is one of the expected
+		 * ones before we try to fetch arguments, so as to produce the least
+		 * confusing response to a mis-formatted specifier.
 		 */
-		if (*cp < '0' || *cp > '9')
+		if (strchr("sIL", *cp) == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("unrecognized conversion type specifier \"%c\"",
+							*cp)));
+
+		/* If indirect width was specified, get its value */
+		if (widthpos >= 0)
 		{
-			++arg;
-			if (arg <= 0)		/* overflow? */
-			{
-				/*
-				 * Should not happen, as you can't pass billions of arguments
-				 * to a function, but better safe than sorry.
-				 */
+			/* Collect the specified or next argument position */
+			if (widthpos > 0)
+				arg = widthpos;
+			if (arg >= nargs)
 				ereport(ERROR,
-						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-						 errmsg("argument number is out of range")));
-			}
-		}
-		else
-		{
-			bool		unterminated = false;
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("too few arguments for format")));
 
-			/* Parse digit string. */
-			arg = 0;
-			do
+			/* Get the value and type of the selected argument */
+			if (!funcvariadic)
 			{
-				int			newarg = arg * 10 + (*cp - '0');
-
-				if (newarg / 10 != arg) /* overflow? */
-					ereport(ERROR,
-							(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-							 errmsg("argument number is out of range")));
-				arg = newarg;
-				++cp;
-			} while (cp < end_ptr && *cp >= '0' && *cp <= '9');
-
-			/*
-			 * If we ran off the end, or if there's not a $ next, or if the $
-			 * is the last character, the conversion specifier is improperly
-			 * terminated.
-			 */
-			if (cp == end_ptr || *cp != '$')
-				unterminated = true;
+				value = PG_GETARG_DATUM(arg);
+				isNull = PG_ARGISNULL(arg);
+				typid = get_fn_expr_argtype(fcinfo->flinfo, arg);
+			}
 			else
 			{
-				++cp;
-				if (cp == end_ptr)
-					unterminated = true;
+				value = elements[arg - 1];
+				isNull = nulls[arg - 1];
+				typid = element_type;
 			}
-			if (unterminated)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("unterminated conversion specifier")));
+			if (!OidIsValid(typid))
+				elog(ERROR, "could not determine data type of format() input");
 
-			/* There's no argument 0. */
-			if (arg == 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("conversion specifies argument 0, but arguments are numbered from 1")));
+			arg++;
+
+			/* We can treat NULL width the same as zero */
+			if (isNull)
+				width = 0;
+			else if (typid == INT4OID)
+				width = DatumGetInt32(value);
+			else if (typid == INT2OID)
+				width = DatumGetInt16(value);
+			else
+			{
+				/* For less-usual datatypes, convert to text then to int */
+				char	   *str;
+
+				if (typid != prev_width_type)
+				{
+					Oid			typoutputfunc;
+					bool		typIsVarlena;
+
+					getTypeOutputInfo(typid, &typoutputfunc, &typIsVarlena);
+					fmgr_info(typoutputfunc, &typoutputinfo_width);
+					prev_width_type = typid;
+				}
+
+				str = OutputFunctionCall(&typoutputinfo_width, value);
+
+				/* pg_atoi will complain about bad data or overflow */
+				width = pg_atoi(str, sizeof(int), '\0');
+
+				pfree(str);
+			}
 		}
 
-		/* Not enough arguments?  Deduct 1 to avoid counting format string. */
-		if (arg > nargs - 1)
+		/* Collect the specified or next argument position */
+		if (argpos > 0)
+			arg = argpos;
+		if (arg >= nargs)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("too few arguments for format")));
@@ -4195,6 +4241,8 @@ text_format(PG_FUNCTION_ARGS)
 		if (!OidIsValid(typid))
 			elog(ERROR, "could not determine data type of format() input");
 
+		arg++;
+
 		/*
 		 * Get the appropriate typOutput function, reusing previous one if
 		 * same type as previous argument.  That's particularly useful in the
@@ -4211,9 +4259,7 @@ text_format(PG_FUNCTION_ARGS)
 		}
 
 		/*
-		 * At this point, we should see the main conversion specifier. Whether
-		 * or not an argument position was present, it's known that at least
-		 * one character remains in the string at this point.
+		 * And now we can format the value.
 		 */
 		switch (*cp)
 		{
@@ -4221,13 +4267,16 @@ text_format(PG_FUNCTION_ARGS)
 			case 'I':
 			case 'L':
 				text_format_string_conversion(&str, *cp, &typoutputfinfo,
-											  value, isNull);
+											  value, isNull,
+											  flags, width);
 				break;
 			default:
+				/* should not get here, because of previous check */
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("unrecognized conversion specifier \"%c\"",
+						 errmsg("unrecognized conversion type specifier \"%c\"",
 								*cp)));
+				break;
 		}
 	}
 
@@ -4244,19 +4293,157 @@ text_format(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(result);
 }
 
-/* Format a %s, %I, or %L conversion. */
+/*
+ * Parse contiguous digits as a decimal number.
+ *
+ * Returns true if some digits could be parsed.
+ * The value is returned into *value, and *ptr is advanced to the next
+ * character to be parsed.
+ *
+ * Note parsing invariant: at least one character is known available before
+ * string end (end_ptr) at entry, and this is still true at exit.
+ */
+static bool
+text_format_parse_digits(const char **ptr, const char *end_ptr, int *value)
+{
+	bool		found = false;
+	const char *cp = *ptr;
+	int			val = 0;
+
+	while (*cp >= '0' && *cp <= '9')
+	{
+		int			newval = val * 10 + (*cp - '0');
+
+		if (newval / 10 != val) /* overflow? */
+			ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					 errmsg("number is out of range")));
+		val = newval;
+		ADVANCE_PARSE_POINTER(cp, end_ptr);
+		found = true;
+	}
+
+	*ptr = cp;
+	*value = val;
+
+	return found;
+}
+
+/*
+ * Parse a format specifier (generally following the SUS printf spec).
+ *
+ * We have already advanced over the initial '%', and we are looking for
+ * [argpos][flags][width]type (but the type character is not consumed here).
+ *
+ * Inputs are start_ptr (the position after '%') and end_ptr (string end + 1).
+ * Output parameters:
+ *	argpos: argument position for value to be printed.	-1 means unspecified.
+ *	widthpos: argument position for width.	Zero means the argument position
+ *			was unspecified (ie, take the next arg) and -1 means no width
+ *			argument (width was omitted or specified as a constant).
+ *	flags: bitmask of flags.
+ *	width: directly-specified width value.	Zero means the width was omitted
+ *			(note it's not necessary to distinguish this case from an explicit
+ *			zero width value).
+ *
+ * The function result is the next character position to be parsed, ie, the
+ * location where the type character is/should be.
+ *
+ * Note parsing invariant: at least one character is known available before
+ * string end (end_ptr) at entry, and this is still true at exit.
+ */
+static const char *
+text_format_parse_format(const char *start_ptr, const char *end_ptr,
+						 int *argpos, int *widthpos,
+						 int *flags, int *width)
+{
+	const char *cp = start_ptr;
+	int			n;
+
+	/* set defaults for output parameters */
+	*argpos = -1;
+	*widthpos = -1;
+	*flags = 0;
+	*width = 0;
+
+	/* try to identify first number */
+	if (text_format_parse_digits(&cp, end_ptr, &n))
+	{
+		if (*cp != '$')
+		{
+			/* Must be just a width and a type, so we're done */
+			*width = n;
+			return cp;
+		}
+		/* The number was argument position */
+		*argpos = n;
+		/* Explicit 0 for argument index is immediately refused */
+		if (n == 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("format specifies argument 0, but arguments are numbered from 1")));
+		ADVANCE_PARSE_POINTER(cp, end_ptr);
+	}
+
+	/* Handle flags (only minus is supported now) */
+	while (*cp == '-')
+	{
+		*flags |= TEXT_FORMAT_FLAG_MINUS;
+		ADVANCE_PARSE_POINTER(cp, end_ptr);
+	}
+
+	if (*cp == '*')
+	{
+		/* Handle indirect width */
+		ADVANCE_PARSE_POINTER(cp, end_ptr);
+		if (text_format_parse_digits(&cp, end_ptr, &n))
+		{
+			/* number in this position must be closed by $ */
+			if (*cp != '$')
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				  errmsg("width argument position must be ended by \"$\"")));
+			/* The number was width argument position */
+			*widthpos = n;
+			/* Explicit 0 for argument index is immediately refused */
+			if (n == 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("format specifies argument 0, but arguments are numbered from 1")));
+			ADVANCE_PARSE_POINTER(cp, end_ptr);
+		}
+		else
+			*widthpos = 0;		/* width's argument position is unspecified */
+	}
+	else
+	{
+		/* Check for direct width specification */
+		if (text_format_parse_digits(&cp, end_ptr, &n))
+			*width = n;
+	}
+
+	/* cp should now be pointing at type character */
+	return cp;
+}
+
+/*
+ * Format a %s, %I, or %L conversion
+ */
 static void
 text_format_string_conversion(StringInfo buf, char conversion,
 							  FmgrInfo *typOutputInfo,
-							  Datum value, bool isNull)
+							  Datum value, bool isNull,
+							  int flags, int width)
 {
 	char	   *str;
 
 	/* Handle NULL arguments before trying to stringify the value. */
 	if (isNull)
 	{
-		if (conversion == 'L')
-			appendStringInfoString(buf, "NULL");
+		if (conversion == 's')
+			text_format_append_string(buf, "", flags, width);
+		else if (conversion == 'L')
+			text_format_append_string(buf, "NULL", flags, width);
 		else if (conversion == 'I')
 			ereport(ERROR,
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
@@ -4271,21 +4458,69 @@ text_format_string_conversion(StringInfo buf, char conversion,
 	if (conversion == 'I')
 	{
 		/* quote_identifier may or may not allocate a new string. */
-		appendStringInfoString(buf, quote_identifier(str));
+		text_format_append_string(buf, quote_identifier(str), flags, width);
 	}
 	else if (conversion == 'L')
 	{
 		char	   *qstr = quote_literal_cstr(str);
 
-		appendStringInfoString(buf, qstr);
+		text_format_append_string(buf, qstr, flags, width);
 		/* quote_literal_cstr() always allocates a new string */
 		pfree(qstr);
 	}
 	else
-		appendStringInfoString(buf, str);
+		text_format_append_string(buf, str, flags, width);
 
 	/* Cleanup. */
 	pfree(str);
+}
+
+/*
+ * Append str to buf, padding as directed by flags/width
+ */
+static void
+text_format_append_string(StringInfo buf, const char *str,
+						  int flags, int width)
+{
+	bool		align_to_left = false;
+	int			len;
+
+	/* fast path for typical easy case */
+	if (width == 0)
+	{
+		appendStringInfoString(buf, str);
+		return;
+	}
+
+	if (width < 0)
+	{
+		/* Negative width: implicit '-' flag, then take absolute value */
+		align_to_left = true;
+		/* -INT_MIN is undefined */
+		if (width <= INT_MIN)
+			ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					 errmsg("number is out of range")));
+		width = -width;
+	}
+	else if (flags & TEXT_FORMAT_FLAG_MINUS)
+		align_to_left = true;
+
+	len = pg_mbstrlen(str);
+	if (align_to_left)
+	{
+		/* left justify */
+		appendStringInfoString(buf, str);
+		if (len < width)
+			appendStringInfoSpaces(buf, width - len);
+	}
+	else
+	{
+		/* right justify */
+		if (len < width)
+			appendStringInfoSpaces(buf, width - len);
+		appendStringInfoString(buf, str);
+	}
 }
 
 /*
