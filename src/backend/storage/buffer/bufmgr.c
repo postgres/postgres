@@ -1699,12 +1699,18 @@ AtEOXact_Buffers(bool isCommit)
 #ifdef USE_ASSERT_CHECKING
 	if (assert_enabled)
 	{
-		int			i;
+		int			RefCountErrors = 0;
+		Buffer		b;
 
-		for (i = 0; i < NBuffers; i++)
+		for (b = 1; b <= NBuffers; b++)
 		{
-			Assert(PrivateRefCount[i] == 0);
+			if (PrivateRefCount[b - 1] != 0)
+			{
+				PrintBufferLeakWarning(b);
+				RefCountErrors++;
+			}
 		}
+		Assert(RefCountErrors == 0);
 	}
 #endif
 
@@ -1739,12 +1745,18 @@ AtProcExit_Buffers(int code, Datum arg)
 #ifdef USE_ASSERT_CHECKING
 	if (assert_enabled)
 	{
-		int			i;
+		int			RefCountErrors = 0;
+		Buffer		b;
 
-		for (i = 0; i < NBuffers; i++)
+		for (b = 1; b <= NBuffers; b++)
 		{
-			Assert(PrivateRefCount[i] == 0);
+			if (PrivateRefCount[b - 1] != 0)
+			{
+				PrintBufferLeakWarning(b);
+				RefCountErrors++;
+			}
 		}
+		Assert(RefCountErrors == 0);
 	}
 #endif
 
