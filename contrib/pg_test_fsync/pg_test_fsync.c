@@ -60,7 +60,7 @@ do { \
 
 static const char *progname;
 
-static int	secs_per_test = 2;
+static int	secs_per_test = 5;
 static int	needs_unlink = 0;
 static char full_buf[XLOG_SEG_SIZE],
 		   *buf,

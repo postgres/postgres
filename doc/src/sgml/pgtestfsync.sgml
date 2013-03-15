@@ -36,8 +36,8 @@
   difference in real database throughput, especially since many database servers
   are not speed-limited by their transaction logs.
   <application>pg_test_fsync</application> reports average file sync operation
-  time in microseconds for each wal_sync_method, which can be used to inform
-  efforts to optimize the value of <varname>commit_delay</varname>.
+  time in microseconds for each wal_sync_method, which can also be used to
+  inform efforts to optimize the value of <xref linkend="guc-commit-delay">.
  </para>
  </refsect1>
 
@@ -72,8 +72,8 @@
        <para>
         Specifies the number of seconds for each test.  The more time
         per test, the greater the test's accuracy, but the longer it takes
-        to run.  The default is 2 seconds, which allows the program to
-        complete in about 30 seconds.
+        to run.  The default is 5 seconds, which allows the program to
+        complete in under 2 minutes.
        </para>
       </listitem>
      </varlistentry>

@@ -1603,8 +1603,8 @@ include 'filename'
     <title>Write Ahead Log</title>
 
    <para>
-    See also <xref linkend="wal-configuration"> for details on WAL
-    and checkpoint tuning.
+    For additional information on tuning these settings,
+    see <xref linkend="wal-configuration">.
    </para>
 
     <sect2 id="runtime-config-wal-settings">
@@ -1957,7 +1957,7 @@ include 'filename'
         given interval.  However, it also increases latency by up to
         <varname>commit_delay</varname> microseconds for each WAL
         flush.  Because the delay is just wasted if no other transactions
-        become ready to commit, it is only performed if at least
+        become ready to commit, a delay is only performed if at least
         <varname>commit_siblings</varname> other transactions are active
         immediately before a flush would otherwise have been initiated.
         In <productname>PostgreSQL</> releases prior to 9.3,
@@ -1968,7 +1968,8 @@ include 'filename'
         the first process that becomes ready to flush waits for the configured
         interval, while subsequent processes wait only until the leader
         completes the flush.  The default <varname>commit_delay</> is zero
-        (no delay), and only honored if <varname>fsync</varname> is enabled.
+        (no delay).  No delays are performed unless <varname>fsync</varname>
+        is enabled.
        </para>
       </listitem>
      </varlistentry>
