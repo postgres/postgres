@@ -29,10 +29,12 @@
  *	neither POSIX signals nor BSD signals.	The alternative is to do
  *	signal-handler reinstallation, which doesn't work well at all.
  *
- *	Windows, of course, is resolutely in a class by itself.  This file
- *	should not get compiled at all on Windows.  We have an emulation of
- *	pqsignal() in src/backend/port/win32/signal.c for the backend
- *	environment; frontend programs are out of luck.
+ *	Windows, of course, is resolutely in a class by itself.  In the backend,
+ *	we don't use this file at all; src/backend/port/win32/signal.c provides
+ *	pqsignal() for the backend environment.  Frontend programs can use
+ *	this version of pqsignal() if they wish, but beware that Windows
+ *	requires signal-handler reinstallation, because indeed it provides
+ *	neither POSIX signals nor BSD signals :-(
  * ------------------------------------------------------------------------
  */
 
@@ -40,14 +42,12 @@
 
 #include <signal.h>
 
-#ifndef WIN32
+#if !defined(WIN32) || defined(FRONTEND)
 
 /*
  * Set up a signal handler for signal "signo"
  *
- * Returns the previous handler.  It's expected that the installed handler
- * will persist across multiple deliveries of the signal (unlike the original
- * POSIX definition of signal(2)).
+ * Returns the previous handler.
  */
 pqsigfunc
 pqsignal(int signo, pqsigfunc func)
@@ -73,4 +73,4 @@ pqsignal(int signo, pqsigfunc func)
 #endif   /* !HAVE_POSIX_SIGNALS */
 }
 
-#endif /* WIN32 */
+#endif /* !defined(WIN32) || defined(FRONTEND) */
