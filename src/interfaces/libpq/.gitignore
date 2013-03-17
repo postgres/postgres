@@ -8,6 +8,7 @@
 /noblock.c
 /open.c
 /pgstrcasecmp.c
+/pqsignal.c
 /snprintf.c
 /strerror.c
 /strlcpy.c
