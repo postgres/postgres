@@ -101,14 +101,14 @@ main(int argc, char *argv[])
 	handle_args(argc, argv);
 
 	/* Prevent leaving behind the test file */
-	signal(SIGINT, signal_cleanup);
-	signal(SIGTERM, signal_cleanup);
+	pqsignal(SIGINT, signal_cleanup);
+	pqsignal(SIGTERM, signal_cleanup);
 #ifndef WIN32
-	signal(SIGALRM, process_alarm);
+	pqsignal(SIGALRM, process_alarm);
 #endif
 #ifdef SIGHUP
 	/* Not defined on win32 */
-	signal(SIGHUP, signal_cleanup);
+	pqsignal(SIGHUP, signal_cleanup);
 #endif
 
 	prepare_buf();

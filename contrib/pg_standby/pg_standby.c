@@ -549,7 +549,7 @@ sighandler(int sig)
 static void
 sigquit_handler(int sig)
 {
-	signal(SIGINT, SIG_DFL);
+	pqsignal(SIGINT, SIG_DFL);
 	kill(getpid(), SIGINT);
 }
 #endif
@@ -592,9 +592,9 @@ main(int argc, char **argv)
 	 *
 	 * There's no way to trigger failover via signal on Windows.
 	 */
-	(void) signal(SIGUSR1, sighandler);
-	(void) signal(SIGINT, sighandler);	/* deprecated, use SIGUSR1 */
-	(void) signal(SIGQUIT, sigquit_handler);
+	(void) pqsignal(SIGUSR1, sighandler);
+	(void) pqsignal(SIGINT, sighandler);	/* deprecated, use SIGUSR1 */
+	(void) pqsignal(SIGQUIT, sigquit_handler);
 #endif
 
 	while ((c = getopt(argc, argv, "cdk:lr:s:t:w:")) != -1)
