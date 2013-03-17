@@ -13,7 +13,7 @@
 
 #include "postgres.h"
 
-#include <libpq/pqsignal.h>
+#include "libpq/pqsignal.h"
 
 /*
  * These are exported for use by the UNBLOCKED_SIGNAL_QUEUE() macro.
@@ -158,7 +158,11 @@ pqsigsetmask(int mask)
 }
 
 
-/* signal manipulation. Only called on main thread, no sync required */
+/*
+ * Unix-like signal handler installation
+ *
+ * Only called on main thread, no sync required
+ */
 pqsigfunc
 pqsignal(int signum, pqsigfunc handler)
 {

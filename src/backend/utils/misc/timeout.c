@@ -16,7 +16,6 @@
 
 #include <sys/time.h>
 
-#include "libpq/pqsignal.h"
 #include "storage/proc.h"
 #include "utils/timeout.h"
 #include "utils/timestamp.h"

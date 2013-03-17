@@ -18,7 +18,6 @@
 
 #include "libpq-fe.h"
 #include "pqexpbuffer.h"
-#include "pqsignal.h"
 #include "dumputils.h"
 
 #include "settings.h"

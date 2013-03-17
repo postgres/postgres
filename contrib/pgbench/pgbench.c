@@ -35,7 +35,6 @@
 
 #include "getopt_long.h"
 #include "libpq-fe.h"
-#include "libpq/pqsignal.h"
 #include "portability/instr_time.h"
 
 #include <ctype.h>

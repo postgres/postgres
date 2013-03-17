@@ -33,7 +33,6 @@
 #include <sys/resource.h>
 #endif
 
-#include "libpq/pqsignal.h"
 #include "getopt_long.h"
 #include "miscadmin.h"
 

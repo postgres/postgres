@@ -19,7 +19,6 @@
 #include <unistd.h>
 
 #include "common.h"
-#include "libpq/pqsignal.h"
 
 static void SetCancelConn(PGconn *conn);
 static void ResetCancelConn(void);

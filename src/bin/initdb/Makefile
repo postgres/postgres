@@ -23,21 +23,18 @@ ifneq (,$(with_system_tzdata))
 override CPPFLAGS += '-DSYSTEMTZDIR="$(with_system_tzdata)"'
 endif
 
-OBJS=	initdb.o findtimezone.o localtime.o encnames.o pqsignal.o $(WIN32RES)
+OBJS=	initdb.o findtimezone.o localtime.o encnames.o $(WIN32RES)
 
 all: initdb
 
 initdb: $(OBJS) | submake-libpgport
 	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
-# We used to pull in all of libpq to get encnames and pqsignal, but that
+# We used to pull in all of libpq to get encnames.c, but that
 # exposes us to risks of version skew if we link to a shared library.
 # Do it the hard way, instead, so that we're statically linked.
 
 encnames.c: % : $(top_srcdir)/src/backend/utils/mb/%
-	rm -f $@ && $(LN_S) $< .
-
-pqsignal.c: % : $(top_srcdir)/src/interfaces/libpq/%
 	rm -f $@ && $(LN_S) $< .
 
 # Likewise, pull in localtime.c from src/timezones
@@ -55,7 +52,7 @@ uninstall:
 	rm -f '$(DESTDIR)$(bindir)/initdb$(X)'
 
 clean distclean maintainer-clean:
-	rm -f initdb$(X) $(OBJS) encnames.c pqsignal.c localtime.c
+	rm -f initdb$(X) $(OBJS) encnames.c localtime.c
 
 
 # ensure that changes in datadir propagate into object file

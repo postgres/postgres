@@ -1,17 +1,12 @@
 /*-------------------------------------------------------------------------
  *
  * pqsignal.h
- *	  prototypes for the reliable BSD-style signal(2) routine.
- *
+ *	  Backend signal(2) support (see also src/port/pqsignal.c)
  *
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/libpq/pqsignal.h
- *
- * NOTES
- *	  This shouldn't be in libpq, but the monitor and some other
- *	  things need it...
  *
  *-------------------------------------------------------------------------
  */
@@ -42,10 +37,6 @@ int			pqsigsetmask(int mask);
 #define sigdelset(set, signum)	(*(set) &= ~(sigmask(signum)))
 #endif   /* not HAVE_SIGPROCMASK */
 
-typedef void (*pqsigfunc) (int);
-
 extern void pqinitmask(void);
-
-extern pqsigfunc pqsignal(int signo, pqsigfunc func);
 
 #endif   /* PQSIGNAL_H */

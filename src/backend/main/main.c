@@ -41,9 +41,6 @@
 #include "utils/help_config.h"
 #include "utils/pg_locale.h"
 #include "utils/ps_status.h"
-#ifdef WIN32
-#include "libpq/pqsignal.h"
-#endif
 
 
 const char *progname;

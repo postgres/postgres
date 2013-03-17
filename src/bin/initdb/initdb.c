@@ -56,7 +56,6 @@
 #include <signal.h>
 #include <time.h>
 
-#include "libpq/pqsignal.h"
 #include "mb/pg_wchar.h"
 #include "getaddrinfo.h"
 #include "getopt_long.h"

@@ -55,7 +55,6 @@
 
 #include "libpq-fe.h"
 #include "libpq-int.h"
-#include "pqsignal.h"
 #include "mb/pg_wchar.h"
 #include "pg_config_paths.h"
 

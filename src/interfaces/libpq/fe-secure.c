@@ -30,7 +30,6 @@
 
 #include "libpq-fe.h"
 #include "fe-auth.h"
-#include "pqsignal.h"
 #include "libpq-int.h"
 
 #ifdef WIN32

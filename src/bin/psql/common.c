@@ -19,8 +19,6 @@
 
 #include "portability/instr_time.h"
 
-#include "pqsignal.h"
-
 #include "settings.h"
 #include "command.h"
 #include "copy.h"

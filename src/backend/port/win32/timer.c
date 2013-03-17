@@ -18,8 +18,6 @@
 
 #include "postgres.h"
 
-#include "libpq/pqsignal.h"
-
 
 /* Communication area for inter-thread communication */
 typedef struct timerCA

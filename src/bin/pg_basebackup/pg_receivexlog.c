@@ -14,7 +14,6 @@
 
 #include "postgres_fe.h"
 #include "libpq-fe.h"
-#include "libpq/pqsignal.h"
 #include "access/xlog_internal.h"
 
 #include "receivelog.h"

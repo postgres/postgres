@@ -23,7 +23,6 @@
 #include <locale.h>
 
 #include "catalog/pg_type.h"
-#include "pqsignal.h"
 
 #include "common.h"
 #include "mbprint.h"
