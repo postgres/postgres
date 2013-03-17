@@ -13,18 +13,20 @@
  */
 
 #include "postgres_fe.h"
-#include "libpq-fe.h"
-#include "access/xlog_internal.h"
-
-#include "receivelog.h"
-#include "streamutil.h"
 
 #include <dirent.h>
+#include <signal.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "libpq-fe.h"
+#include "access/xlog_internal.h"
 #include "getopt_long.h"
+
+#include "receivelog.h"
+#include "streamutil.h"
+
 
 /* Time to sleep between reconnection attempts */
 #define RECONNECT_SLEEP_TIME 5
