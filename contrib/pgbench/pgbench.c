@@ -39,6 +39,7 @@
 
 #include <ctype.h>
 #include <math.h>
+#include <signal.h>
 
 #ifndef WIN32
 #include <sys/time.h>
