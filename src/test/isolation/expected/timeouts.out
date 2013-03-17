@@ -1,0 +1,73 @@
+Parsed test spec with 2 sessions
+
+starting permutation: rdtbl sto locktbl
+step rdtbl: SELECT * FROM accounts;
+accountid      balance        
+
+checking       600            
+savings        600            
+step sto: SET statement_timeout = 1000;
+step locktbl: LOCK TABLE accounts; <waiting ...>
+step locktbl: <... completed>
+ERROR:  canceling statement due to statement timeout
+
+starting permutation: rdtbl lto locktbl
+step rdtbl: SELECT * FROM accounts;
+accountid      balance        
+
+checking       600            
+savings        600            
+step lto: SET lock_timeout = 1000;
+step locktbl: LOCK TABLE accounts; <waiting ...>
+step locktbl: <... completed>
+ERROR:  canceling statement due to lock timeout
+
+starting permutation: rdtbl lsto locktbl
+step rdtbl: SELECT * FROM accounts;
+accountid      balance        
+
+checking       600            
+savings        600            
+step lsto: SET lock_timeout = 1000; SET statement_timeout = 2000;
+step locktbl: LOCK TABLE accounts; <waiting ...>
+step locktbl: <... completed>
+ERROR:  canceling statement due to lock timeout
+
+starting permutation: rdtbl slto locktbl
+step rdtbl: SELECT * FROM accounts;
+accountid      balance        
+
+checking       600            
+savings        600            
+step slto: SET lock_timeout = 2000; SET statement_timeout = 1000;
+step locktbl: LOCK TABLE accounts; <waiting ...>
+step locktbl: <... completed>
+ERROR:  canceling statement due to statement timeout
+
+starting permutation: wrtbl sto update
+step wrtbl: UPDATE accounts SET balance = balance + 100;
+step sto: SET statement_timeout = 1000;
+step update: DELETE FROM accounts WHERE accountid = 'checking'; <waiting ...>
+step update: <... completed>
+ERROR:  canceling statement due to statement timeout
+
+starting permutation: wrtbl lto update
+step wrtbl: UPDATE accounts SET balance = balance + 100;
+step lto: SET lock_timeout = 1000;
+step update: DELETE FROM accounts WHERE accountid = 'checking'; <waiting ...>
+step update: <... completed>
+ERROR:  canceling statement due to lock timeout
+
+starting permutation: wrtbl lsto update
+step wrtbl: UPDATE accounts SET balance = balance + 100;
+step lsto: SET lock_timeout = 1000; SET statement_timeout = 2000;
+step update: DELETE FROM accounts WHERE accountid = 'checking'; <waiting ...>
+step update: <... completed>
+ERROR:  canceling statement due to lock timeout
+
+starting permutation: wrtbl slto update
+step wrtbl: UPDATE accounts SET balance = balance + 100;
+step slto: SET lock_timeout = 2000; SET statement_timeout = 1000;
+step update: DELETE FROM accounts WHERE accountid = 'checking'; <waiting ...>
+step update: <... completed>
+ERROR:  canceling statement due to statement timeout

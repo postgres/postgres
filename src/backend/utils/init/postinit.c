@@ -67,6 +67,7 @@ static void CheckMyDatabase(const char *name, bool am_superuser);
 static void InitCommunication(void);
 static void ShutdownPostgres(int code, Datum arg);
 static void StatementTimeoutHandler(void);
+static void LockTimeoutHandler(void);
 static bool ThereIsAtLeastOneRole(void);
 static void process_startup_options(Port *port, bool am_superuser);
 static void process_settings(Oid databaseid, Oid roleid);
@@ -535,6 +536,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	{
 		RegisterTimeout(DEADLOCK_TIMEOUT, CheckDeadLock);
 		RegisterTimeout(STATEMENT_TIMEOUT, StatementTimeoutHandler);
+		RegisterTimeout(LOCK_TIMEOUT, LockTimeoutHandler);
 	}
 
 	/*
@@ -1044,6 +1046,22 @@ ShutdownPostgres(int code, Datum arg)
  */
 static void
 StatementTimeoutHandler(void)
+{
+#ifdef HAVE_SETSID
+	/* try to signal whole process group */
+	kill(-MyProcPid, SIGINT);
+#endif
+	kill(MyProcPid, SIGINT);
+}
+
+/*
+ * LOCK_TIMEOUT handler: trigger a query-cancel interrupt.
+ *
+ * This is identical to StatementTimeoutHandler, but since it's so short,
+ * we might as well keep the two functions separate for clarity.
+ */
+static void
+LockTimeoutHandler(void)
 {
 #ifdef HAVE_SETSID
 	/* try to signal whole process group */

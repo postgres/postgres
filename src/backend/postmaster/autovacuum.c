@@ -547,10 +547,11 @@ AutoVacLauncherMain(int argc, char *argv[])
 	SetConfigOption("zero_damaged_pages", "false", PGC_SUSET, PGC_S_OVERRIDE);
 
 	/*
-	 * Force statement_timeout to zero to avoid a timeout setting from
-	 * preventing regular maintenance from being executed.
+	 * Force statement_timeout and lock_timeout to zero to avoid letting these
+	 * settings prevent regular maintenance from being executed.
 	 */
 	SetConfigOption("statement_timeout", "0", PGC_SUSET, PGC_S_OVERRIDE);
+	SetConfigOption("lock_timeout", "0", PGC_SUSET, PGC_S_OVERRIDE);
 
 	/*
 	 * Force default_transaction_isolation to READ COMMITTED.  We don't want
@@ -1573,10 +1574,11 @@ AutoVacWorkerMain(int argc, char *argv[])
 	SetConfigOption("zero_damaged_pages", "false", PGC_SUSET, PGC_S_OVERRIDE);
 
 	/*
-	 * Force statement_timeout to zero to avoid a timeout setting from
-	 * preventing regular maintenance from being executed.
+	 * Force statement_timeout and lock_timeout to zero to avoid letting these
+	 * settings prevent regular maintenance from being executed.
 	 */
 	SetConfigOption("statement_timeout", "0", PGC_SUSET, PGC_S_OVERRIDE);
+	SetConfigOption("lock_timeout", "0", PGC_SUSET, PGC_S_OVERRIDE);
 
 	/*
 	 * Force default_transaction_isolation to READ COMMITTED.  We don't want

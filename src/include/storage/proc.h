@@ -168,8 +168,8 @@ typedef struct PGXACT
 
 	uint8		vacuumFlags;	/* vacuum-related flags, see above */
 	bool		overflowed;
-	bool		delayChkpt; 	/* true if this proc delays checkpoint start */
-								/* previously called InCommit */
+	bool		delayChkpt;		/* true if this proc delays checkpoint start;
+								 * previously called InCommit */
 
 	uint8		nxids;
 } PGXACT;
@@ -222,6 +222,7 @@ extern PGPROC *PreparedXactProcs;
 /* configurable options */
 extern int	DeadlockTimeout;
 extern int	StatementTimeout;
+extern int	LockTimeout;
 extern bool log_lock_waits;
 
 

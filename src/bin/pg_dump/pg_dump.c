@@ -957,6 +957,8 @@ setup_connection(Archive *AH, const char *dumpencoding, char *use_role)
 	 */
 	if (AH->remoteVersion >= 70300)
 		ExecuteSqlStatement(AH, "SET statement_timeout = 0");
+	if (AH->remoteVersion >= 90300)
+		ExecuteSqlStatement(AH, "SET lock_timeout = 0");
 
 	/*
 	 * Quote all identifiers, if requested.

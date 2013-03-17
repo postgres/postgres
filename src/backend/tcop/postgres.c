@@ -2883,7 +2883,22 @@ ProcessInterrupts(void)
 					(errcode(ERRCODE_QUERY_CANCELED),
 					 errmsg("canceling authentication due to timeout")));
 		}
-		if (get_timeout_indicator(STATEMENT_TIMEOUT))
+
+		/*
+		 * If LOCK_TIMEOUT and STATEMENT_TIMEOUT indicators are both set, we
+		 * prefer to report the former; but be sure to clear both.
+		 */
+		if (get_timeout_indicator(LOCK_TIMEOUT, true))
+		{
+			ImmediateInterruptOK = false;		/* not idle anymore */
+			(void) get_timeout_indicator(STATEMENT_TIMEOUT, true);
+			DisableNotifyInterrupt();
+			DisableCatchupInterrupt();
+			ereport(ERROR,
+					(errcode(ERRCODE_QUERY_CANCELED),
+					 errmsg("canceling statement due to lock timeout")));
+		}
+		if (get_timeout_indicator(STATEMENT_TIMEOUT, true))
 		{
 			ImmediateInterruptOK = false;		/* not idle anymore */
 			DisableNotifyInterrupt();

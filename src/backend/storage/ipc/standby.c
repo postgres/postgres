@@ -428,8 +428,15 @@ ResolveRecoveryConflictWithBufferPin(void)
 		 * Wake up at ltime, and check for deadlocks as well if we will be
 		 * waiting longer than deadlock_timeout
 		 */
-		enable_timeout_after(STANDBY_DEADLOCK_TIMEOUT, DeadlockTimeout);
-		enable_timeout_at(STANDBY_TIMEOUT, ltime);
+		EnableTimeoutParams timeouts[2];
+
+		timeouts[0].id = STANDBY_TIMEOUT;
+		timeouts[0].type = TMPARAM_AT;
+		timeouts[0].fin_time = ltime;
+		timeouts[1].id = STANDBY_DEADLOCK_TIMEOUT;
+		timeouts[1].type = TMPARAM_AFTER;
+		timeouts[1].delay_ms = DeadlockTimeout;
+		enable_timeouts(timeouts, 2);
 	}
 
 	/* Wait to be signaled by UnpinBuffer() */

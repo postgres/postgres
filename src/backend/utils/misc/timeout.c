@@ -31,7 +31,7 @@ typedef struct timeout_params
 	volatile bool indicator;	/* true if timeout has occurred */
 
 	/* callback function for timeout, or NULL if timeout not registered */
-	timeout_handler timeout_handler;
+	timeout_handler_proc timeout_handler;
 
 	TimestampTz start_time;		/* time that timeout was last activated */
 	TimestampTz fin_time;		/* if active, time it is due to fire */
@@ -55,8 +55,47 @@ static timeout_params *volatile active_timeouts[MAX_TIMEOUTS];
  * Internal helper functions
  *
  * For all of these, it is caller's responsibility to protect them from
- * interruption by the signal handler.
+ * interruption by the signal handler.	Generally, call disable_alarm()
+ * first to prevent interruption, then update state, and last call
+ * schedule_alarm(), which will re-enable the interrupt if needed.
  *****************************************************************************/
+
+/*
+ * Disable alarm interrupts
+ *
+ * multi_insert must be true if the caller intends to activate multiple new
+ * timeouts.  Otherwise it should be false.
+ */
+static void
+disable_alarm(bool multi_insert)
+{
+	struct itimerval timeval;
+
+	/*
+	 * If num_active_timeouts is zero, and multi_insert is false, we don't
+	 * have to call setitimer.	There should not be any pending interrupt, and
+	 * even if there is, the worst possible case is that the signal handler
+	 * fires during schedule_alarm.  (If it fires at any point before
+	 * insert_timeout has incremented num_active_timeouts, it will do nothing,
+	 * since it sees no active timeouts.)  In that case we could end up
+	 * scheduling a useless interrupt ... but when the extra interrupt does
+	 * happen, the signal handler will do nothing, so it's all good.
+	 *
+	 * However, if the caller intends to do anything more after first calling
+	 * insert_timeout, the above argument breaks down, since the signal
+	 * handler could interrupt the subsequent operations leading to corrupt
+	 * state.  Out of an abundance of caution, we forcibly disable the timer
+	 * even though it should be off already, just to be sure.  Even though
+	 * this setitimer call is probably useless, we're still ahead of the game
+	 * compared to scheduling two or more timeouts independently.
+	 */
+	if (multi_insert || num_active_timeouts > 0)
+	{
+		MemSet(&timeval, 0, sizeof(struct itimerval));
+		if (setitimer(ITIMER_REAL, &timeval, NULL) != 0)
+			elog(FATAL, "could not disable SIGALRM timer: %m");
+	}
+}
 
 /*
  * Find the index of a given timeout reason in the active array.
@@ -94,7 +133,7 @@ insert_timeout(TimeoutId id, int index)
 
 	active_timeouts[index] = &all_timeouts[id];
 
-	/* NB: this must be the last step, see comments in enable_timeout */
+	/* NB: this must be the last step, see comments in disable_alarm */
 	num_active_timeouts++;
 }
 
@@ -114,6 +153,49 @@ remove_timeout_index(int index)
 		active_timeouts[i - 1] = active_timeouts[i];
 
 	num_active_timeouts--;
+}
+
+/*
+ * Enable the specified timeout reason
+ */
+static void
+enable_timeout(TimeoutId id, TimestampTz now, TimestampTz fin_time)
+{
+	int			i;
+
+	/* Assert request is sane */
+	Assert(all_timeouts_initialized);
+	Assert(all_timeouts[id].timeout_handler != NULL);
+
+	/*
+	 * If this timeout was already active, momentarily disable it.	We
+	 * interpret the call as a directive to reschedule the timeout.
+	 */
+	i = find_active_timeout(id);
+	if (i >= 0)
+		remove_timeout_index(i);
+
+	/*
+	 * Find out the index where to insert the new timeout.	We sort by
+	 * fin_time, and for equal fin_time by priority.
+	 */
+	for (i = 0; i < num_active_timeouts; i++)
+	{
+		timeout_params *old_timeout = active_timeouts[i];
+
+		if (fin_time < old_timeout->fin_time)
+			break;
+		if (fin_time == old_timeout->fin_time && id < old_timeout->index)
+			break;
+	}
+
+	/*
+	 * Mark the timeout active, and insert it into the active list.
+	 */
+	all_timeouts[id].indicator = false;
+	all_timeouts[id].start_time = now;
+	all_timeouts[id].fin_time = fin_time;
+	insert_timeout(id, i);
 }
 
 /*
@@ -260,7 +342,7 @@ InitializeTimeouts(void)
  * return a timeout ID.
  */
 TimeoutId
-RegisterTimeout(TimeoutId id, timeout_handler handler)
+RegisterTimeout(TimeoutId id, timeout_handler_proc handler)
 {
 	Assert(all_timeouts_initialized);
 
@@ -284,75 +366,6 @@ RegisterTimeout(TimeoutId id, timeout_handler handler)
 }
 
 /*
- * Enable the specified timeout reason
- */
-static void
-enable_timeout(TimeoutId id, TimestampTz now, TimestampTz fin_time)
-{
-	struct itimerval timeval;
-	int			i;
-
-	/* Assert request is sane */
-	Assert(all_timeouts_initialized);
-	Assert(all_timeouts[id].timeout_handler != NULL);
-
-	/*
-	 * Disable the timer if it is active; this avoids getting interrupted by
-	 * the signal handler and thereby possibly getting confused.  We will
-	 * re-enable the interrupt below.
-	 *
-	 * If num_active_timeouts is zero, we don't have to call setitimer.  There
-	 * should not be any pending interrupt, and even if there is, the worst
-	 * possible case is that the signal handler fires during schedule_alarm.
-	 * (If it fires at any point before insert_timeout has incremented
-	 * num_active_timeouts, it will do nothing.)  In that case we could end up
-	 * scheduling a useless interrupt ... but when the interrupt does happen,
-	 * the signal handler will do nothing, so it's all good.
-	 */
-	if (num_active_timeouts > 0)
-	{
-		MemSet(&timeval, 0, sizeof(struct itimerval));
-		if (setitimer(ITIMER_REAL, &timeval, NULL) != 0)
-			elog(FATAL, "could not disable SIGALRM timer: %m");
-	}
-
-	/*
-	 * If this timeout was already active, momentarily disable it.	We
-	 * interpret the call as a directive to reschedule the timeout.
-	 */
-	i = find_active_timeout(id);
-	if (i >= 0)
-		remove_timeout_index(i);
-
-	/*
-	 * Find out the index where to insert the new timeout.	We sort by
-	 * fin_time, and for equal fin_time by priority.
-	 */
-	for (i = 0; i < num_active_timeouts; i++)
-	{
-		timeout_params *old_timeout = active_timeouts[i];
-
-		if (fin_time < old_timeout->fin_time)
-			break;
-		if (fin_time == old_timeout->fin_time && id < old_timeout->index)
-			break;
-	}
-
-	/*
-	 * Activate the timeout.
-	 */
-	all_timeouts[id].indicator = false;
-	all_timeouts[id].start_time = now;
-	all_timeouts[id].fin_time = fin_time;
-	insert_timeout(id, i);
-
-	/*
-	 * Set the timer.
-	 */
-	schedule_alarm(now);
-}
-
-/*
  * Enable the specified timeout to fire after the specified delay.
  *
  * Delay is given in milliseconds.
@@ -363,10 +376,16 @@ enable_timeout_after(TimeoutId id, int delay_ms)
 	TimestampTz now;
 	TimestampTz fin_time;
 
+	/* Disable timeout interrupts for safety. */
+	disable_alarm(false);
+
+	/* Queue the timeout at the appropriate time. */
 	now = GetCurrentTimestamp();
 	fin_time = TimestampTzPlusMilliseconds(now, delay_ms);
-
 	enable_timeout(id, now, fin_time);
+
+	/* Set the timer interrupt. */
+	schedule_alarm(now);
 }
 
 /*
@@ -379,7 +398,64 @@ enable_timeout_after(TimeoutId id, int delay_ms)
 void
 enable_timeout_at(TimeoutId id, TimestampTz fin_time)
 {
-	enable_timeout(id, GetCurrentTimestamp(), fin_time);
+	TimestampTz now;
+
+	/* Disable timeout interrupts for safety. */
+	disable_alarm(false);
+
+	/* Queue the timeout at the appropriate time. */
+	now = GetCurrentTimestamp();
+	enable_timeout(id, now, fin_time);
+
+	/* Set the timer interrupt. */
+	schedule_alarm(now);
+}
+
+/*
+ * Enable multiple timeouts at once.
+ *
+ * This works like calling enable_timeout_after() and/or enable_timeout_at()
+ * multiple times.	Use this to reduce the number of GetCurrentTimestamp()
+ * and setitimer() calls needed to establish multiple timeouts.
+ */
+void
+enable_timeouts(const EnableTimeoutParams *timeouts, int count)
+{
+	TimestampTz now;
+	int			i;
+
+	/* Disable timeout interrupts for safety. */
+	disable_alarm(count > 1);
+
+	/* Queue the timeout(s) at the appropriate times. */
+	now = GetCurrentTimestamp();
+
+	for (i = 0; i < count; i++)
+	{
+		TimeoutId	id = timeouts[i].id;
+		TimestampTz fin_time;
+
+		switch (timeouts[i].type)
+		{
+			case TMPARAM_AFTER:
+				fin_time = TimestampTzPlusMilliseconds(now,
+													   timeouts[i].delay_ms);
+				enable_timeout(id, now, fin_time);
+				break;
+
+			case TMPARAM_AT:
+				enable_timeout(id, now, timeouts[i].fin_time);
+				break;
+
+			default:
+				elog(ERROR, "unrecognized timeout type %d",
+					 (int) timeouts[i].type);
+				break;
+		}
+	}
+
+	/* Set the timer interrupt. */
+	schedule_alarm(now);
 }
 
 /*
@@ -394,29 +470,14 @@ enable_timeout_at(TimeoutId id, TimestampTz fin_time)
 void
 disable_timeout(TimeoutId id, bool keep_indicator)
 {
-	struct itimerval timeval;
 	int			i;
 
 	/* Assert request is sane */
 	Assert(all_timeouts_initialized);
 	Assert(all_timeouts[id].timeout_handler != NULL);
 
-	/*
-	 * Disable the timer if it is active; this avoids getting interrupted by
-	 * the signal handler and thereby possibly getting confused.  We will
-	 * re-enable the interrupt if necessary below.
-	 *
-	 * If num_active_timeouts is zero, we don't have to call setitimer.  There
-	 * should not be any pending interrupt, and even if there is, the signal
-	 * handler will not do anything.  In this situation the only thing we
-	 * really have to do is reset the timeout's indicator.
-	 */
-	if (num_active_timeouts > 0)
-	{
-		MemSet(&timeval, 0, sizeof(struct itimerval));
-		if (setitimer(ITIMER_REAL, &timeval, NULL) != 0)
-			elog(FATAL, "could not disable SIGALRM timer: %m");
-	}
+	/* Disable timeout interrupts for safety. */
+	disable_alarm(false);
 
 	/* Find the timeout and remove it from the active list. */
 	i = find_active_timeout(id);
@@ -427,7 +488,48 @@ disable_timeout(TimeoutId id, bool keep_indicator)
 	if (!keep_indicator)
 		all_timeouts[id].indicator = false;
 
-	/* Now re-enable the timer, if necessary. */
+	/* Reschedule the interrupt, if any timeouts remain active. */
+	if (num_active_timeouts > 0)
+		schedule_alarm(GetCurrentTimestamp());
+}
+
+/*
+ * Cancel multiple timeouts at once.
+ *
+ * The timeouts' I've-been-fired indicators are reset,
+ * unless timeouts[i].keep_indicator is true.
+ *
+ * This works like calling disable_timeout() multiple times.
+ * Use this to reduce the number of GetCurrentTimestamp()
+ * and setitimer() calls needed to cancel multiple timeouts.
+ */
+void
+disable_timeouts(const DisableTimeoutParams *timeouts, int count)
+{
+	int			i;
+
+	Assert(all_timeouts_initialized);
+
+	/* Disable timeout interrupts for safety. */
+	disable_alarm(false);
+
+	/* Cancel the timeout(s). */
+	for (i = 0; i < count; i++)
+	{
+		TimeoutId	id = timeouts[i].id;
+		int			idx;
+
+		Assert(all_timeouts[id].timeout_handler != NULL);
+
+		idx = find_active_timeout(id);
+		if (idx >= 0)
+			remove_timeout_index(idx);
+
+		if (!timeouts[i].keep_indicator)
+			all_timeouts[id].indicator = false;
+	}
+
+	/* Reschedule the interrupt, if any timeouts remain active. */
 	if (num_active_timeouts > 0)
 		schedule_alarm(GetCurrentTimestamp());
 }
@@ -442,6 +544,7 @@ disable_all_timeouts(bool keep_indicators)
 	struct itimerval timeval;
 	int			i;
 
+	/* Forcibly reset the timer, whether we think it's active or not */
 	MemSet(&timeval, 0, sizeof(struct itimerval));
 	if (setitimer(ITIMER_REAL, &timeval, NULL) != 0)
 		elog(FATAL, "could not disable SIGALRM timer: %m");
@@ -457,11 +560,21 @@ disable_all_timeouts(bool keep_indicators)
 
 /*
  * Return the timeout's I've-been-fired indicator
+ *
+ * If reset_indicator is true, reset the indicator when returning true.
+ * To avoid missing timeouts due to race conditions, we are careful not to
+ * reset the indicator when returning false.
  */
 bool
-get_timeout_indicator(TimeoutId id)
+get_timeout_indicator(TimeoutId id, bool reset_indicator)
 {
-	return all_timeouts[id].indicator;
+	if (all_timeouts[id].indicator)
+	{
+		if (reset_indicator)
+			all_timeouts[id].indicator = false;
+		return true;
+	}
+	return false;
 }
 
 /*

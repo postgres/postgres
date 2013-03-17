@@ -20,3 +20,4 @@ test: delete-abort-savept
 test: delete-abort-savept-2
 test: aborted-keyrevoke
 test: drop-index-concurrently-1
+test: timeouts
