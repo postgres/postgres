@@ -241,9 +241,7 @@ _bt_getroot(Relation rel, int access)
 			recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_NEWROOT, &rdata);
 
 			PageSetLSN(rootpage, recptr);
-			PageSetTLI(rootpage, ThisTimeLineID);
 			PageSetLSN(metapg, recptr);
-			PageSetTLI(metapg, ThisTimeLineID);
 		}
 
 		END_CRIT_SECTION();
@@ -534,8 +532,8 @@ _bt_log_reuse_page(Relation rel, BlockNumber blkno, TransactionId latestRemovedX
 	START_CRIT_SECTION();
 
 	/*
-	 * We don't do MarkBufferDirty here because we're about initialise the
-	 * page, and nobody else can see it yet.
+	 * We don't do MarkBufferDirty here because we're about to initialise
+	 * the page, and nobody else can see it yet.
 	 */
 
 	/* XLOG stuff */
@@ -554,8 +552,8 @@ _bt_log_reuse_page(Relation rel, BlockNumber blkno, TransactionId latestRemovedX
 		XLogInsert(RM_BTREE_ID, XLOG_BTREE_REUSE_PAGE, rdata);
 
 		/*
-		 * We don't do PageSetLSN or PageSetTLI here because we're about
-		 * initialise the page, so no need.
+		 * We don't do PageSetLSN here because we're about to initialise
+		 * the page, so no need.
 		 */
 	}
 
@@ -863,7 +861,6 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
 		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_VACUUM, rdata);
 
 		PageSetLSN(page, recptr);
-		PageSetTLI(page, ThisTimeLineID);
 	}
 
 	END_CRIT_SECTION();
@@ -951,7 +948,6 @@ _bt_delitems_delete(Relation rel, Buffer buf,
 		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_DELETE, rdata);
 
 		PageSetLSN(page, recptr);
-		PageSetTLI(page, ThisTimeLineID);
 	}
 
 	END_CRIT_SECTION();
@@ -1533,22 +1529,17 @@ _bt_pagedel(Relation rel, Buffer buf, BTStack stack)
 		if (BufferIsValid(metabuf))
 		{
 			PageSetLSN(metapg, recptr);
-			PageSetTLI(metapg, ThisTimeLineID);
 		}
 		page = BufferGetPage(pbuf);
 		PageSetLSN(page, recptr);
-		PageSetTLI(page, ThisTimeLineID);
 		page = BufferGetPage(rbuf);
 		PageSetLSN(page, recptr);
-		PageSetTLI(page, ThisTimeLineID);
 		page = BufferGetPage(buf);
 		PageSetLSN(page, recptr);
-		PageSetTLI(page, ThisTimeLineID);
 		if (BufferIsValid(lbuf))
 		{
 			page = BufferGetPage(lbuf);
 			PageSetLSN(page, recptr);
-			PageSetTLI(page, ThisTimeLineID);
 		}
 	}
 

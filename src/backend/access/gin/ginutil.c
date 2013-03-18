@@ -593,7 +593,6 @@ ginUpdateStats(Relation index, const GinStatsData *stats)
 
 		recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_UPDATE_META_PAGE, &rdata);
 		PageSetLSN(metapage, recptr);
-		PageSetTLI(metapage, ThisTimeLineID);
 	}
 
 	UnlockReleaseBuffer(metabuffer);

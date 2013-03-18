@@ -84,7 +84,6 @@ createPostingTree(Relation index, ItemPointerData *items, uint32 nitems)
 
 		recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_CREATE_PTREE, rdata);
 		PageSetLSN(page, recptr);
-		PageSetTLI(page, ThisTimeLineID);
 	}
 
 	UnlockReleaseBuffer(buffer);
@@ -431,11 +430,9 @@ ginbuild(PG_FUNCTION_ARGS)
 
 		page = BufferGetPage(RootBuffer);
 		PageSetLSN(page, recptr);
-		PageSetTLI(page, ThisTimeLineID);
 
 		page = BufferGetPage(MetaBuffer);
 		PageSetLSN(page, recptr);
-		PageSetTLI(page, ThisTimeLineID);
 	}
 
 	UnlockReleaseBuffer(MetaBuffer);

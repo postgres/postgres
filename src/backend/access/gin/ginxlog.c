@@ -87,7 +87,6 @@ ginRedoCreateIndex(XLogRecPtr lsn, XLogRecord *record)
 	GinInitMetabuffer(MetaBuffer);
 
 	PageSetLSN(page, lsn);
-	PageSetTLI(page, ThisTimeLineID);
 	MarkBufferDirty(MetaBuffer);
 
 	RootBuffer = XLogReadBuffer(*node, GIN_ROOT_BLKNO, true);
@@ -97,7 +96,6 @@ ginRedoCreateIndex(XLogRecPtr lsn, XLogRecord *record)
 	GinInitBuffer(RootBuffer, GIN_LEAF);
 
 	PageSetLSN(page, lsn);
-	PageSetTLI(page, ThisTimeLineID);
 	MarkBufferDirty(RootBuffer);
 
 	UnlockReleaseBuffer(RootBuffer);
@@ -124,7 +122,6 @@ ginRedoCreatePTree(XLogRecPtr lsn, XLogRecord *record)
 	GinPageGetOpaque(page)->maxoff = data->nitem;
 
 	PageSetLSN(page, lsn);
-	PageSetTLI(page, ThisTimeLineID);
 
 	MarkBufferDirty(buffer);
 	UnlockReleaseBuffer(buffer);
@@ -242,7 +239,6 @@ ginRedoInsert(XLogRecPtr lsn, XLogRecord *record)
 		}
 
 		PageSetLSN(page, lsn);
-		PageSetTLI(page, ThisTimeLineID);
 
 		MarkBufferDirty(buffer);
 	}
@@ -333,11 +329,9 @@ ginRedoSplit(XLogRecPtr lsn, XLogRecord *record)
 	}
 
 	PageSetLSN(rpage, lsn);
-	PageSetTLI(rpage, ThisTimeLineID);
 	MarkBufferDirty(rbuffer);
 
 	PageSetLSN(lpage, lsn);
-	PageSetTLI(lpage, ThisTimeLineID);
 	MarkBufferDirty(lbuffer);
 
 	if (!data->isLeaf && data->updateBlkno != InvalidBlockNumber)
@@ -362,7 +356,6 @@ ginRedoSplit(XLogRecPtr lsn, XLogRecord *record)
 		}
 
 		PageSetLSN(rootPage, lsn);
-		PageSetTLI(rootPage, ThisTimeLineID);
 
 		MarkBufferDirty(rootBuf);
 		UnlockReleaseBuffer(rootBuf);
@@ -424,7 +417,6 @@ ginRedoVacuumPage(XLogRecPtr lsn, XLogRecord *record)
 		}
 
 		PageSetLSN(page, lsn);
-		PageSetTLI(page, ThisTimeLineID);
 		MarkBufferDirty(buffer);
 	}
 
@@ -453,7 +445,6 @@ ginRedoDeletePage(XLogRecPtr lsn, XLogRecord *record)
 				Assert(GinPageIsData(page));
 				GinPageGetOpaque(page)->flags = GIN_DELETED;
 				PageSetLSN(page, lsn);
-				PageSetTLI(page, ThisTimeLineID);
 				MarkBufferDirty(dbuffer);
 			}
 		}
@@ -473,7 +464,6 @@ ginRedoDeletePage(XLogRecPtr lsn, XLogRecord *record)
 				Assert(!GinPageIsLeaf(page));
 				GinPageDeletePostingItem(page, data->parentOffset);
 				PageSetLSN(page, lsn);
-				PageSetTLI(page, ThisTimeLineID);
 				MarkBufferDirty(pbuffer);
 			}
 		}
@@ -492,7 +482,6 @@ ginRedoDeletePage(XLogRecPtr lsn, XLogRecord *record)
 				Assert(GinPageIsData(page));
 				GinPageGetOpaque(page)->rightlink = data->rightLink;
 				PageSetLSN(page, lsn);
-				PageSetTLI(page, ThisTimeLineID);
 				MarkBufferDirty(lbuffer);
 			}
 			UnlockReleaseBuffer(lbuffer);
@@ -522,7 +511,6 @@ ginRedoUpdateMetapage(XLogRecPtr lsn, XLogRecord *record)
 	{
 		memcpy(GinPageGetMeta(metapage), &data->metadata, sizeof(GinMetaPageData));
 		PageSetLSN(metapage, lsn);
-		PageSetTLI(metapage, ThisTimeLineID);
 		MarkBufferDirty(metabuffer);
 	}
 
@@ -569,7 +557,6 @@ ginRedoUpdateMetapage(XLogRecPtr lsn, XLogRecord *record)
 					GinPageGetOpaque(page)->maxoff++;
 
 					PageSetLSN(page, lsn);
-					PageSetTLI(page, ThisTimeLineID);
 					MarkBufferDirty(buffer);
 				}
 				UnlockReleaseBuffer(buffer);
@@ -595,7 +582,6 @@ ginRedoUpdateMetapage(XLogRecPtr lsn, XLogRecord *record)
 					GinPageGetOpaque(page)->rightlink = data->newRightlink;
 
 					PageSetLSN(page, lsn);
-					PageSetTLI(page, ThisTimeLineID);
 					MarkBufferDirty(buffer);
 				}
 				UnlockReleaseBuffer(buffer);
@@ -655,7 +641,6 @@ ginRedoInsertListPage(XLogRecPtr lsn, XLogRecord *record)
 	}
 
 	PageSetLSN(page, lsn);
-	PageSetTLI(page, ThisTimeLineID);
 	MarkBufferDirty(buffer);
 
 	UnlockReleaseBuffer(buffer);
@@ -681,7 +666,6 @@ ginRedoDeleteListPages(XLogRecPtr lsn, XLogRecord *record)
 	{
 		memcpy(GinPageGetMeta(metapage), &data->metadata, sizeof(GinMetaPageData));
 		PageSetLSN(metapage, lsn);
-		PageSetTLI(metapage, ThisTimeLineID);
 		MarkBufferDirty(metabuffer);
 	}
 
@@ -708,7 +692,6 @@ ginRedoDeleteListPages(XLogRecPtr lsn, XLogRecord *record)
 				GinPageGetOpaque(page)->flags = GIN_DELETED;
 
 				PageSetLSN(page, lsn);
-				PageSetTLI(page, ThisTimeLineID);
 				MarkBufferDirty(buffer);
 			}
 

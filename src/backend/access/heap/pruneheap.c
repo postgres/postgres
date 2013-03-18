@@ -244,7 +244,6 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 									prstate.latestRemovedXid);
 
 			PageSetLSN(BufferGetPage(buffer), recptr);
-			PageSetTLI(BufferGetPage(buffer), ThisTimeLineID);
 		}
 	}
 	else

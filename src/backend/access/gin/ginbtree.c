@@ -308,7 +308,6 @@ ginInsertValue(GinBtree btree, GinBtreeStack *stack, GinStatsData *buildStats)
 
 				recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_INSERT, rdata);
 				PageSetLSN(page, recptr);
-				PageSetTLI(page, ThisTimeLineID);
 			}
 
 			LockBuffer(stack->buffer, GIN_UNLOCK);
@@ -377,11 +376,8 @@ ginInsertValue(GinBtree btree, GinBtreeStack *stack, GinStatsData *buildStats)
 
 					recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_SPLIT, rdata);
 					PageSetLSN(page, recptr);
-					PageSetTLI(page, ThisTimeLineID);
 					PageSetLSN(lpage, recptr);
-					PageSetTLI(lpage, ThisTimeLineID);
 					PageSetLSN(rpage, recptr);
-					PageSetTLI(rpage, ThisTimeLineID);
 				}
 
 				UnlockReleaseBuffer(rbuffer);
@@ -426,9 +422,7 @@ ginInsertValue(GinBtree btree, GinBtreeStack *stack, GinStatsData *buildStats)
 
 					recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_SPLIT, rdata);
 					PageSetLSN(lpage, recptr);
-					PageSetTLI(lpage, ThisTimeLineID);
 					PageSetLSN(rpage, recptr);
-					PageSetTLI(rpage, ThisTimeLineID);
 				}
 				UnlockReleaseBuffer(rbuffer);
 				END_CRIT_SECTION();

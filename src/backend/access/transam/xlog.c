@@ -3188,7 +3188,6 @@ RestoreBackupBlock(XLogRecPtr lsn, XLogRecord *record, int block_index,
 			}
 
 			PageSetLSN(page, lsn);
-			PageSetTLI(page, ThisTimeLineID);
 			MarkBufferDirty(buffer);
 
 			if (!keep_buffer)

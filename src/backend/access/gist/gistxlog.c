@@ -70,7 +70,6 @@ gistRedoClearFollowRight(XLogRecPtr lsn, XLogRecord *record, int block_index,
 		GistClearFollowRight(page);
 
 		PageSetLSN(page, lsn);
-		PageSetTLI(page, ThisTimeLineID);
 		MarkBufferDirty(buffer);
 	}
 	UnlockReleaseBuffer(buffer);
@@ -185,7 +184,6 @@ gistRedoPageUpdateRecord(XLogRecPtr lsn, XLogRecord *record)
 
 	GistPageGetOpaque(page)->rightlink = InvalidBlockNumber;
 	PageSetLSN(page, lsn);
-	PageSetTLI(page, ThisTimeLineID);
 	MarkBufferDirty(buffer);
 	UnlockReleaseBuffer(buffer);
 }
@@ -289,7 +287,6 @@ gistRedoPageSplitRecord(XLogRecPtr lsn, XLogRecord *record)
 		}
 
 		PageSetLSN(page, lsn);
-		PageSetTLI(page, ThisTimeLineID);
 		MarkBufferDirty(buffer);
 
 		if (i == 0)
@@ -324,7 +321,6 @@ gistRedoCreateIndex(XLogRecPtr lsn, XLogRecord *record)
 	GISTInitBuffer(buffer, F_LEAF);
 
 	PageSetLSN(page, lsn);
-	PageSetTLI(page, ThisTimeLineID);
 
 	MarkBufferDirty(buffer);
 	UnlockReleaseBuffer(buffer);

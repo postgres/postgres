@@ -274,7 +274,6 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, XLogRecPtr recptr,
 				recptr = log_heap_visible(rel->rd_node, heapBlk, buf,
 										  cutoff_xid);
 			PageSetLSN(page, recptr);
-			PageSetTLI(page, ThisTimeLineID);
 		}
 
 		END_CRIT_SECTION();

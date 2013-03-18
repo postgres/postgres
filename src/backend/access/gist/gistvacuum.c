@@ -235,7 +235,6 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 											todelete, ntodelete,
 											NULL, 0, InvalidBuffer);
 					PageSetLSN(page, recptr);
-					PageSetTLI(page, ThisTimeLineID);
 				}
 				else
 					PageSetLSN(page, gistGetFakeLSN(rel));

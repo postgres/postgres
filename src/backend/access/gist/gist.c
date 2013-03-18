@@ -410,7 +410,6 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 		for (ptr = dist; ptr; ptr = ptr->next)
 		{
 			PageSetLSN(ptr->page, recptr);
-			PageSetTLI(ptr->page, ThisTimeLineID);
 		}
 
 		/*
@@ -458,7 +457,6 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 									leftchildbuf);
 
 			PageSetLSN(page, recptr);
-			PageSetTLI(page, ThisTimeLineID);
 		}
 		else
 		{
@@ -491,7 +489,6 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 		GistClearFollowRight(leftpg);
 
 		PageSetLSN(leftpg, recptr);
-		PageSetTLI(leftpg, ThisTimeLineID);
 	}
 
 	END_CRIT_SECTION();

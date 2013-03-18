@@ -439,13 +439,14 @@ critical section.)
 happen before the WAL record is inserted; see notes in SyncOneBuffer().)
 
 5. If the relation requires WAL-logging, build a WAL log record and pass it
-to XLogInsert(); then update the page's LSN and TLI using the returned XLOG
+to XLogInsert(); then update the page's LSN using the returned XLOG
 location.  For instance,
 
 		recptr = XLogInsert(rmgr_id, info, rdata);
 
 		PageSetLSN(dp, recptr);
-		PageSetTLI(dp, ThisTimeLineID);
+		// Note that we no longer do PageSetTLI() from 9.3 onwards
+		// since that field on a page has now changed its meaning.
 
 6. END_CRIT_SECTION()
 
@@ -489,7 +490,6 @@ standard replay-routine pattern for this case is
 	... initialize the page ...
 
 	PageSetLSN(page, lsn);
-	PageSetTLI(page, ThisTimeLineID);
 	MarkBufferDirty(buffer);
 	UnlockReleaseBuffer(buffer);
 
@@ -523,7 +523,6 @@ The standard replay-routine pattern for this case is
 	... apply the change ...
 
 	PageSetLSN(page, lsn);
-	PageSetTLI(page, ThisTimeLineID);
 	MarkBufferDirty(buffer);
 	UnlockReleaseBuffer(buffer);
 

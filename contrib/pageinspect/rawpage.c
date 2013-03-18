@@ -211,7 +211,7 @@ page_header(PG_FUNCTION_ARGS)
 			 (uint32) (lsn >> 32), (uint32) lsn);
 
 	values[0] = CStringGetTextDatum(lsnchar);
-	values[1] = UInt16GetDatum(PageGetTLI(page));
+	values[1] = UInt16GetDatum(page->pd_checksum);
 	values[2] = UInt16GetDatum(page->pd_flags);
 	values[3] = UInt16GetDatum(page->pd_lower);
 	values[4] = UInt16GetDatum(page->pd_upper);

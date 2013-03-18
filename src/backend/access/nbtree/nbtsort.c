@@ -276,11 +276,6 @@ _bt_blwritepage(BTWriteState *wstate, Page page, BlockNumber blkno)
 		/* We use the heap NEWPAGE record type for this */
 		log_newpage(&wstate->index->rd_node, MAIN_FORKNUM, blkno, page);
 	}
-	else
-	{
-		/* Leave the page LSN zero if not WAL-logged, but set TLI anyway */
-		PageSetTLI(page, ThisTimeLineID);
-	}
 
 	/*
 	 * If we have to write pages nonsequentially, fill in the space with

@@ -186,7 +186,6 @@ _bt_restore_meta(RelFileNode rnode, XLogRecPtr lsn,
 		((char *) md + sizeof(BTMetaPageData)) - (char *) metapg;
 
 	PageSetLSN(metapg, lsn);
-	PageSetTLI(metapg, ThisTimeLineID);
 	MarkBufferDirty(metabuf);
 	UnlockReleaseBuffer(metabuf);
 }
@@ -241,7 +240,6 @@ btree_xlog_insert(bool isleaf, bool ismeta,
 					elog(PANIC, "btree_insert_redo: failed to add item");
 
 				PageSetLSN(page, lsn);
-				PageSetTLI(page, ThisTimeLineID);
 				MarkBufferDirty(buffer);
 				UnlockReleaseBuffer(buffer);
 			}
@@ -358,7 +356,6 @@ btree_xlog_split(bool onleft, bool isroot,
 	}
 
 	PageSetLSN(rpage, lsn);
-	PageSetTLI(rpage, ThisTimeLineID);
 	MarkBufferDirty(rbuf);
 
 	/* don't release the buffer yet; we touch right page's first item below */
@@ -430,7 +427,6 @@ btree_xlog_split(bool onleft, bool isroot,
 				lopaque->btpo_cycleid = 0;
 
 				PageSetLSN(lpage, lsn);
-				PageSetTLI(lpage, ThisTimeLineID);
 				MarkBufferDirty(lbuf);
 			}
 
@@ -466,7 +462,6 @@ btree_xlog_split(bool onleft, bool isroot,
 				pageop->btpo_prev = xlrec->rightsib;
 
 				PageSetLSN(page, lsn);
-				PageSetTLI(page, ThisTimeLineID);
 				MarkBufferDirty(buffer);
 			}
 			UnlockReleaseBuffer(buffer);
@@ -563,7 +558,6 @@ btree_xlog_vacuum(XLogRecPtr lsn, XLogRecord *record)
 	opaque->btpo_flags &= ~BTP_HAS_GARBAGE;
 
 	PageSetLSN(page, lsn);
-	PageSetTLI(page, ThisTimeLineID);
 	MarkBufferDirty(buffer);
 	UnlockReleaseBuffer(buffer);
 }
@@ -780,7 +774,6 @@ btree_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 	opaque->btpo_flags &= ~BTP_HAS_GARBAGE;
 
 	PageSetLSN(page, lsn);
-	PageSetTLI(page, ThisTimeLineID);
 	MarkBufferDirty(buffer);
 	UnlockReleaseBuffer(buffer);
 }
@@ -851,7 +844,6 @@ btree_xlog_delete_page(uint8 info, XLogRecPtr lsn, XLogRecord *record)
 				}
 
 				PageSetLSN(page, lsn);
-				PageSetTLI(page, ThisTimeLineID);
 				MarkBufferDirty(buffer);
 				UnlockReleaseBuffer(buffer);
 			}
@@ -877,7 +869,6 @@ btree_xlog_delete_page(uint8 info, XLogRecPtr lsn, XLogRecord *record)
 				pageop->btpo_prev = leftsib;
 
 				PageSetLSN(page, lsn);
-				PageSetTLI(page, ThisTimeLineID);
 				MarkBufferDirty(buffer);
 				UnlockReleaseBuffer(buffer);
 			}
@@ -905,7 +896,6 @@ btree_xlog_delete_page(uint8 info, XLogRecPtr lsn, XLogRecord *record)
 					pageop->btpo_next = rightsib;
 
 					PageSetLSN(page, lsn);
-					PageSetTLI(page, ThisTimeLineID);
 					MarkBufferDirty(buffer);
 					UnlockReleaseBuffer(buffer);
 				}
@@ -928,7 +918,6 @@ btree_xlog_delete_page(uint8 info, XLogRecPtr lsn, XLogRecord *record)
 	pageop->btpo_cycleid = 0;
 
 	PageSetLSN(page, lsn);
-	PageSetTLI(page, ThisTimeLineID);
 	MarkBufferDirty(buffer);
 	UnlockReleaseBuffer(buffer);
 
@@ -992,7 +981,6 @@ btree_xlog_newroot(XLogRecPtr lsn, XLogRecord *record)
 	}
 
 	PageSetLSN(page, lsn);
-	PageSetTLI(page, ThisTimeLineID);
 	MarkBufferDirty(buffer);
 	UnlockReleaseBuffer(buffer);
 

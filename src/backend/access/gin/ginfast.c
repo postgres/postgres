@@ -127,7 +127,6 @@ writeListPage(Relation index, Buffer buffer,
 
 		recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_INSERT_LISTPAGE, rdata);
 		PageSetLSN(page, recptr);
-		PageSetTLI(page, ThisTimeLineID);
 	}
 
 	/* get free space before releasing buffer */
@@ -408,12 +407,10 @@ ginHeapTupleFastInsert(GinState *ginstate, GinTupleCollector *collector)
 
 		recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_UPDATE_META_PAGE, rdata);
 		PageSetLSN(metapage, recptr);
-		PageSetTLI(metapage, ThisTimeLineID);
 
 		if (buffer != InvalidBuffer)
 		{
 			PageSetLSN(page, recptr);
-			PageSetTLI(page, ThisTimeLineID);
 		}
 	}
 
@@ -594,13 +591,11 @@ shiftList(Relation index, Buffer metabuffer, BlockNumber newHead,
 
 			recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_DELETE_LISTPAGE, rdata);
 			PageSetLSN(metapage, recptr);
-			PageSetTLI(metapage, ThisTimeLineID);
 
 			for (i = 0; i < data.ndeleted; i++)
 			{
 				page = BufferGetPage(buffers[i]);
 				PageSetLSN(page, recptr);
-				PageSetTLI(page, ThisTimeLineID);
 			}
 		}
 

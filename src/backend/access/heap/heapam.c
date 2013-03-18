@@ -2129,7 +2129,6 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 		recptr = XLogInsert(RM_HEAP_ID, info, rdata);
 
 		PageSetLSN(page, recptr);
-		PageSetTLI(page, ThisTimeLineID);
 	}
 
 	END_CRIT_SECTION();
@@ -2426,7 +2425,6 @@ heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 			recptr = XLogInsert(RM_HEAP2_ID, info, rdata);
 
 			PageSetLSN(page, recptr);
-			PageSetTLI(page, ThisTimeLineID);
 		}
 
 		END_CRIT_SECTION();
@@ -2787,7 +2785,6 @@ l1:
 		recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_DELETE, rdata);
 
 		PageSetLSN(page, recptr);
-		PageSetTLI(page, ThisTimeLineID);
 	}
 
 	END_CRIT_SECTION();
@@ -3570,10 +3567,8 @@ l2:
 		if (newbuf != buffer)
 		{
 			PageSetLSN(BufferGetPage(newbuf), recptr);
-			PageSetTLI(BufferGetPage(newbuf), ThisTimeLineID);
 		}
 		PageSetLSN(BufferGetPage(buffer), recptr);
-		PageSetTLI(BufferGetPage(buffer), ThisTimeLineID);
 	}
 
 	END_CRIT_SECTION();
@@ -4472,7 +4467,6 @@ failed:
 		recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_LOCK, rdata);
 
 		PageSetLSN(page, recptr);
-		PageSetTLI(page, ThisTimeLineID);
 	}
 
 	END_CRIT_SECTION();
@@ -4889,7 +4883,6 @@ l4:
 			recptr = XLogInsert(RM_HEAP2_ID, XLOG_HEAP2_LOCK_UPDATED, rdata);
 
 			PageSetLSN(page, recptr);
-			PageSetTLI(page, ThisTimeLineID);
 		}
 
 		END_CRIT_SECTION();
@@ -5033,7 +5026,6 @@ heap_inplace_update(Relation relation, HeapTuple tuple)
 		recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_INPLACE, rdata);
 
 		PageSetLSN(page, recptr);
-		PageSetTLI(page, ThisTimeLineID);
 	}
 
 	END_CRIT_SECTION();
@@ -5915,7 +5907,6 @@ log_newpage(RelFileNode *rnode, ForkNumber forkNum, BlockNumber blkno,
 	if (!PageIsNew(page))
 	{
 		PageSetLSN(page, recptr);
-		PageSetTLI(page, ThisTimeLineID);
 	}
 
 	END_CRIT_SECTION();
@@ -5964,7 +5955,6 @@ log_newpage_buffer(Buffer buffer)
 	if (!PageIsNew(page))
 	{
 		PageSetLSN(page, recptr);
-		PageSetTLI(page, ThisTimeLineID);
 	}
 
 	return recptr;
@@ -6066,7 +6056,6 @@ heap_xlog_clean(XLogRecPtr lsn, XLogRecord *record)
 	 */
 
 	PageSetLSN(page, lsn);
-	PageSetTLI(page, ThisTimeLineID);
 	MarkBufferDirty(buffer);
 	UnlockReleaseBuffer(buffer);
 
@@ -6134,7 +6123,6 @@ heap_xlog_freeze(XLogRecPtr lsn, XLogRecord *record)
 	}
 
 	PageSetLSN(page, lsn);
-	PageSetTLI(page, ThisTimeLineID);
 	MarkBufferDirty(buffer);
 	UnlockReleaseBuffer(buffer);
 }
@@ -6262,13 +6250,12 @@ heap_xlog_newpage(XLogRecPtr lsn, XLogRecord *record)
 	memcpy(page, (char *) xlrec + SizeOfHeapNewpage, BLCKSZ);
 
 	/*
-	 * The page may be uninitialized. If so, we can't set the LSN and TLI
-	 * because that would corrupt the page.
+	 * The page may be uninitialized. If so, we can't set the LSN because that
+	 * would corrupt the page.
 	 */
 	if (!PageIsNew(page))
 	{
 		PageSetLSN(page, lsn);
-		PageSetTLI(page, ThisTimeLineID);
 	}
 
 	MarkBufferDirty(buffer);
@@ -6374,7 +6361,6 @@ heap_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 	/* Make sure there is no forward chain link in t_ctid */
 	htup->t_ctid = xlrec->target.tid;
 	PageSetLSN(page, lsn);
-	PageSetTLI(page, ThisTimeLineID);
 	MarkBufferDirty(buffer);
 	UnlockReleaseBuffer(buffer);
 }
@@ -6473,7 +6459,6 @@ heap_xlog_insert(XLogRecPtr lsn, XLogRecord *record)
 	freespace = PageGetHeapFreeSpace(page);		/* needed to update FSM below */
 
 	PageSetLSN(page, lsn);
-	PageSetTLI(page, ThisTimeLineID);
 
 	if (xlrec->all_visible_cleared)
 		PageClearAllVisible(page);
@@ -6620,7 +6605,6 @@ heap_xlog_multi_insert(XLogRecPtr lsn, XLogRecord *record)
 	freespace = PageGetHeapFreeSpace(page);		/* needed to update FSM below */
 
 	PageSetLSN(page, lsn);
-	PageSetTLI(page, ThisTimeLineID);
 
 	if (xlrec->all_visible_cleared)
 		PageClearAllVisible(page);
@@ -6762,7 +6746,6 @@ heap_xlog_update(XLogRecPtr lsn, XLogRecord *record, bool hot_update)
 	}
 
 	PageSetLSN(page, lsn);
-	PageSetTLI(page, ThisTimeLineID);
 	MarkBufferDirty(obuffer);
 
 	/* Deal with new tuple */
@@ -6861,7 +6844,6 @@ newsame:;
 	freespace = PageGetHeapFreeSpace(page);		/* needed to update FSM below */
 
 	PageSetLSN(page, lsn);
-	PageSetTLI(page, ThisTimeLineID);
 	MarkBufferDirty(nbuffer);
 	UnlockReleaseBuffer(nbuffer);
 
@@ -6936,7 +6918,6 @@ heap_xlog_lock(XLogRecPtr lsn, XLogRecord *record)
 	/* Make sure there is no forward chain link in t_ctid */
 	htup->t_ctid = xlrec->target.tid;
 	PageSetLSN(page, lsn);
-	PageSetTLI(page, ThisTimeLineID);
 	MarkBufferDirty(buffer);
 	UnlockReleaseBuffer(buffer);
 }
@@ -6986,7 +6967,6 @@ heap_xlog_lock_updated(XLogRecPtr lsn, XLogRecord *record)
 	HeapTupleHeaderSetXmax(htup, xlrec->xmax);
 
 	PageSetLSN(page, lsn);
-	PageSetTLI(page, ThisTimeLineID);
 	MarkBufferDirty(buffer);
 	UnlockReleaseBuffer(buffer);
 }
@@ -7042,7 +7022,6 @@ heap_xlog_inplace(XLogRecPtr lsn, XLogRecord *record)
 		   newlen);
 
 	PageSetLSN(page, lsn);
-	PageSetTLI(page, ThisTimeLineID);
 	MarkBufferDirty(buffer);
 	UnlockReleaseBuffer(buffer);
 }
