@@ -1169,6 +1169,8 @@ AlterFunction(AlterFunctionStmt *stmt)
 	simple_heap_update(rel, &tup->t_self, tup);
 	CatalogUpdateIndexes(rel, tup);
 
+	InvokeObjectPostAlterHook(ProcedureRelationId, funcOid, 0);
+
 	heap_close(rel, NoLock);
 	heap_freetuple(tup);
 

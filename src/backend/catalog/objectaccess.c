@@ -61,3 +61,26 @@ RunObjectDropHook(Oid classId, Oid objectId, int subId,
 						  classId, objectId, subId,
 						  (void *) &drop_arg);
 }
+
+/*
+ * RunObjectPostAlterHook
+ *
+ * It is entrypoint of OAT_POST_ALTER event
+ */
+void
+RunObjectPostAlterHook(Oid classId, Oid objectId, int subId,
+					   Oid auxiliaryId, bool is_internal)
+{
+	ObjectAccessPostAlter	pa_arg;
+
+	/* caller should check, but just in case... */
+	Assert(object_access_hook != NULL);
+
+	memset(&pa_arg, 0, sizeof(ObjectAccessPostAlter));
+	pa_arg.auxiliary_id = auxiliaryId;
+	pa_arg.is_internal = is_internal;
+
+	(*object_access_hook)(OAT_POST_ALTER,
+						  classId, objectId, subId,
+						  (void *) &pa_arg);
+}

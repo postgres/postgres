@@ -72,7 +72,8 @@ extern void index_constraint_create(Relation heapRelation,
 						bool mark_as_primary,
 						bool update_pgindex,
 						bool remove_old_dependencies,
-						bool allow_system_table_mods);
+						bool allow_system_table_mods,
+						bool is_internal);
 
 extern void index_drop(Oid indexId, bool concurrent);
 

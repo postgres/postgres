@@ -997,6 +997,8 @@ RenameDatabase(const char *oldname, const char *newname)
 	simple_heap_update(rel, &newtup->t_self, newtup);
 	CatalogUpdateIndexes(rel, newtup);
 
+	InvokeObjectPostAlterHook(DatabaseRelationId, db_id, 0);
+
 	/*
 	 * Close pg_database, but keep lock till commit.
 	 */
@@ -1234,6 +1236,9 @@ movedb(const char *dbname, const char *tblspcname)
 		/* Update indexes */
 		CatalogUpdateIndexes(pgdbrel, newtuple);
 
+		InvokeObjectPostAlterHook(DatabaseRelationId,
+								  HeapTupleGetOid(newtuple), 0);
+
 		systable_endscan(sysscan);
 
 		/*
@@ -1431,6 +1436,9 @@ AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 	/* Update indexes */
 	CatalogUpdateIndexes(rel, newtuple);
 
+	InvokeObjectPostAlterHook(DatabaseRelationId,
+							  HeapTupleGetOid(newtuple), 0);
+
 	systable_endscan(scan);
 
 	/* Close pg_database, but keep lock till commit */
@@ -1569,6 +1577,8 @@ AlterDatabaseOwner(const char *dbname, Oid newOwnerId)
 		changeDependencyOnOwner(DatabaseRelationId, HeapTupleGetOid(tuple),
 								newOwnerId);
 	}
+
+	InvokeObjectPostAlterHook(DatabaseRelationId, HeapTupleGetOid(tuple), 0);
 
 	systable_endscan(scan);
 

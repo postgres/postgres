@@ -669,7 +669,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 	 */
 	if (rawDefaults || stmt->constraints)
 		AddRelationNewConstraints(rel, rawDefaults, stmt->constraints,
-								  true, true);
+								  true, true, false);
 
 	/*
 	 * Clean up.  We keep lock on new relation (although it shouldn't be
@@ -1976,6 +1976,15 @@ StoreCatalogInheritance1(Oid relationId, Oid parentOid,
 	recordDependencyOn(&childobject, &parentobject, DEPENDENCY_NORMAL);
 
 	/*
+	 * Post creation hook of this inheritance. Since object_access_hook
+	 * doesn't take multiple object identifiers, we relay oid of parent
+	 * relation using auxiliary_id argument.
+	 */
+	InvokeObjectPostAlterHookArg(InheritsRelationId,
+								 relationId, 0,
+								 parentOid, false);
+
+	/*
 	 * Mark the parent as having subclasses.
 	 */
 	SetRelationHasSubclass(parentOid, true);
@@ -2234,6 +2243,8 @@ renameatt_internal(Oid myrelid,
 	/* keep system catalog indexes current */
 	CatalogUpdateIndexes(attrelation, atttup);
 
+	InvokeObjectPostAlterHook(RelationRelationId, myrelid, attnum);
+
 	heap_freetuple(atttup);
 
 	heap_close(attrelation, RowExclusiveLock);
@@ -2381,7 +2392,7 @@ rename_constraint_internal(Oid myrelid,
 			|| con->contype == CONSTRAINT_UNIQUE
 			|| con->contype == CONSTRAINT_EXCLUSION))
 		/* rename the index; this renames the constraint as well */
-		RenameRelationInternal(con->conindid, newconname);
+		RenameRelationInternal(con->conindid, newconname, false);
 	else
 		RenameConstraintById(constraintOid, newconname);
 
@@ -2461,7 +2472,7 @@ RenameRelation(RenameStmt *stmt)
 	}
 
 	/* Do the work */
-	RenameRelationInternal(relid, stmt->newname);
+	RenameRelationInternal(relid, stmt->newname, false);
 
 	return relid;
 }
@@ -2476,7 +2487,7 @@ RenameRelation(RenameStmt *stmt)
  *			  sequence, AFAIK there's no need for it to be there.
  */
 void
-RenameRelationInternal(Oid myrelid, const char *newrelname)
+RenameRelationInternal(Oid myrelid, const char *newrelname, bool is_internal)
 {
 	Relation	targetrelation;
 	Relation	relrelation;	/* for RELATION relation */
@@ -2517,6 +2528,9 @@ RenameRelationInternal(Oid myrelid, const char *newrelname)
 
 	/* keep the system catalog indexes current */
 	CatalogUpdateIndexes(relrelation, reltup);
+
+	InvokeObjectPostAlterHookArg(RelationRelationId, myrelid, 0,
+								 InvalidOid, is_internal);
 
 	heap_freetuple(reltup);
 	heap_close(relrelation, RowExclusiveLock);
@@ -3531,7 +3545,9 @@ ATRewriteTables(List **wqueue, LOCKMODE lockmode)
 			 * interest in letting this code work on system catalogs.
 			 */
 			finish_heap_swap(tab->relid, OIDNewHeap,
-							 false, false, true, RecentXmin,
+							 false, false, true,
+							 !OidIsValid(tab->newTableSpace),
+							 RecentXmin,
 							 ReadNextMultiXactId());
 		}
 		else
@@ -4531,7 +4547,8 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		 * This function is intended for CREATE TABLE, so it processes a
 		 * _list_ of defaults, but we just do one.
 		 */
-		AddRelationNewConstraints(rel, list_make1(rawEnt), NIL, false, true);
+		AddRelationNewConstraints(rel, list_make1(rawEnt), NIL,
+								  false, true, false);
 
 		/* Make the additional catalog changes visible */
 		CommandCounterIncrement();
@@ -4869,6 +4886,9 @@ ATExecDropNotNull(Relation rel, const char *colName, LOCKMODE lockmode)
 		CatalogUpdateIndexes(attr_rel, tuple);
 	}
 
+	InvokeObjectPostAlterHook(RelationRelationId,
+							  RelationGetRelid(rel), attnum);
+
 	heap_close(attr_rel, RowExclusiveLock);
 }
 
@@ -4920,6 +4940,9 @@ ATExecSetNotNull(AlteredTableInfo *tab, Relation rel,
 		/* Tell Phase 3 it needs to test the constraint */
 		tab->new_notnull = true;
 	}
+
+	InvokeObjectPostAlterHook(RelationRelationId,
+							  RelationGetRelid(rel), attnum);
 
 	heap_close(attr_rel, RowExclusiveLock);
 }
@@ -4975,7 +4998,8 @@ ATExecColumnDefault(Relation rel, const char *colName,
 		 * This function is intended for CREATE TABLE, so it processes a
 		 * _list_ of defaults, but we just do one.
 		 */
-		AddRelationNewConstraints(rel, list_make1(rawEnt), NIL, false, true);
+		AddRelationNewConstraints(rel, list_make1(rawEnt), NIL,
+								  false, true, false);
 	}
 }
 
@@ -5060,6 +5084,9 @@ ATExecSetStatistics(Relation rel, const char *colName, Node *newValue, LOCKMODE 
 	/* keep system catalog indexes current */
 	CatalogUpdateIndexes(attrelation, tuple);
 
+	InvokeObjectPostAlterHook(RelationRelationId,
+							  RelationGetRelid(rel),
+							  attrtuple->attnum);
 	heap_freetuple(tuple);
 
 	heap_close(attrelation, RowExclusiveLock);
@@ -5117,12 +5144,17 @@ ATExecSetOptions(Relation rel, const char *colName, Node *options,
 	repl_repl[Anum_pg_attribute_attoptions - 1] = true;
 	newtuple = heap_modify_tuple(tuple, RelationGetDescr(attrelation),
 								 repl_val, repl_null, repl_repl);
-	ReleaseSysCache(tuple);
 
 	/* Update system catalog. */
 	simple_heap_update(attrelation, &newtuple->t_self, newtuple);
 	CatalogUpdateIndexes(attrelation, newtuple);
+
+	InvokeObjectPostAlterHook(RelationRelationId,
+							  RelationGetRelid(rel),
+							  attrtuple->attnum);
 	heap_freetuple(newtuple);
+
+	ReleaseSysCache(tuple);
 
 	heap_close(attrelation, RowExclusiveLock);
 }
@@ -5192,6 +5224,10 @@ ATExecSetStorage(Relation rel, const char *colName, Node *newValue, LOCKMODE loc
 
 	/* keep system catalog indexes current */
 	CatalogUpdateIndexes(attrelation, tuple);
+
+	InvokeObjectPostAlterHook(RelationRelationId,
+							  RelationGetRelid(rel),
+							  attrtuple->attnum);
 
 	heap_freetuple(tuple);
 
@@ -5507,7 +5543,7 @@ ATExecAddIndexConstraint(AlteredTableInfo *tab, Relation rel,
 		ereport(NOTICE,
 				(errmsg("ALTER TABLE / ADD CONSTRAINT USING INDEX will rename index \"%s\" to \"%s\"",
 						indexName, constraintName)));
-		RenameRelationInternal(index_oid, constraintName);
+		RenameRelationInternal(index_oid, constraintName, false);
 	}
 
 	/* Extra checks needed if making primary key */
@@ -5531,7 +5567,8 @@ ATExecAddIndexConstraint(AlteredTableInfo *tab, Relation rel,
 							stmt->primary,
 							true, /* update pg_index */
 							true, /* remove old dependencies */
-							allowSystemTableMods);
+							allowSystemTableMods,
+							false);	/* is_internal */
 
 	index_close(indexRel, NoLock);
 }
@@ -5643,7 +5680,8 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	newcons = AddRelationNewConstraints(rel, NIL,
 										list_make1(copyObject(constr)),
 										recursing,		/* allow_merge */
-										!recursing);	/* is_local */
+										!recursing,		/* is_local */
+										is_readd);		/* is_internal */
 
 	/* Add each to-be-validated constraint to Phase 3's queue */
 	foreach(lcon, newcons)
@@ -6097,7 +6135,8 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 									  NULL,
 									  true,		/* islocal */
 									  0,		/* inhcount */
-									  true);	/* isnoinherit */
+									  true,		/* isnoinherit */
+									  false);	/* is_internal */
 
 	/*
 	 * Create the triggers that will enforce the constraint.
@@ -6279,6 +6318,10 @@ ATExecValidateConstraint(Relation rel, char *constrName, bool recurse,
 		copy_con->convalidated = true;
 		simple_heap_update(conrel, &copyTuple->t_self, copyTuple);
 		CatalogUpdateIndexes(conrel, copyTuple);
+
+		InvokeObjectPostAlterHook(ConstraintRelationId,
+								  HeapTupleGetOid(tuple), 0);
+
 		heap_freetuple(copyTuple);
 	}
 
@@ -7707,6 +7750,9 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	 */
 	RemoveStatistics(RelationGetRelid(rel), attnum);
 
+	InvokeObjectPostAlterHook(RelationRelationId,
+							  RelationGetRelid(rel), attnum);
+
 	/*
 	 * Update the default, if present, by brute force --- remove and re-add
 	 * the default.  Probably unsafe to take shortcuts, since the new version
@@ -7726,7 +7772,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 		RemoveAttrDefault(RelationGetRelid(rel), attnum, DROP_RESTRICT, true,
 						  true);
 
-		StoreAttrDefault(rel, attnum, defaultexpr);
+		StoreAttrDefault(rel, attnum, defaultexpr, true);
 	}
 
 	/* Cleanup */
@@ -7817,10 +7863,15 @@ ATExecAlterColumnGenericOptions(Relation rel,
 
 	newtuple = heap_modify_tuple(tuple, RelationGetDescr(attrel),
 								 repl_val, repl_null, repl_repl);
-	ReleaseSysCache(tuple);
 
 	simple_heap_update(attrel, &newtuple->t_self, newtuple);
 	CatalogUpdateIndexes(attrel, newtuple);
+
+	InvokeObjectPostAlterHook(RelationRelationId,
+							  RelationGetRelid(rel),
+							  atttableform->attnum);
+
+	ReleaseSysCache(tuple);
 
 	heap_close(attrel, RowExclusiveLock);
 
@@ -8296,6 +8347,8 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing, LOCKMODE lock
 		}
 	}
 
+	InvokeObjectPostAlterHook(RelationRelationId, relationOid, 0);
+
 	ReleaseSysCache(tuple);
 	heap_close(class_rel, RowExclusiveLock);
 	relation_close(target_rel, NoLock);
@@ -8457,7 +8510,7 @@ ATExecClusterOn(Relation rel, const char *indexName, LOCKMODE lockmode)
 	check_index_is_clusterable(rel, indexOid, false, lockmode);
 
 	/* And do the work */
-	mark_index_clustered(rel, indexOid);
+	mark_index_clustered(rel, indexOid, false);
 }
 
 /*
@@ -8469,7 +8522,7 @@ ATExecClusterOn(Relation rel, const char *indexName, LOCKMODE lockmode)
 static void
 ATExecDropCluster(Relation rel, LOCKMODE lockmode)
 {
-	mark_index_clustered(rel, InvalidOid);
+	mark_index_clustered(rel, InvalidOid, false);
 }
 
 /*
@@ -8590,6 +8643,8 @@ ATExecSetRelOptions(Relation rel, List *defList, AlterTableType operation,
 
 	CatalogUpdateIndexes(pgclass, newtuple);
 
+	InvokeObjectPostAlterHook(RelationRelationId, RelationGetRelid(rel), 0);
+
 	heap_freetuple(newtuple);
 
 	ReleaseSysCache(tuple);
@@ -8647,6 +8702,10 @@ ATExecSetRelOptions(Relation rel, List *defList, AlterTableType operation,
 
 		CatalogUpdateIndexes(pgclass, newtuple);
 
+		InvokeObjectPostAlterHookArg(RelationRelationId,
+									 RelationGetRelid(toastrel), 0,
+									 InvalidOid, true);
+
 		heap_freetuple(newtuple);
 
 		ReleaseSysCache(tuple);
@@ -8688,6 +8747,9 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 	if (newTableSpace == oldTableSpace ||
 		(newTableSpace == MyDatabaseTableSpace && oldTableSpace == 0))
 	{
+		InvokeObjectPostAlterHook(RelationRelationId,
+								  RelationGetRelid(rel), 0);
+
 		relation_close(rel, NoLock);
 		return;
 	}
@@ -8784,6 +8846,8 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 	rd_rel->relfilenode = newrelfilenode;
 	simple_heap_update(pg_class, &tuple->t_self, tuple);
 	CatalogUpdateIndexes(pg_class, tuple);
+
+	InvokeObjectPostAlterHook(RelationRelationId, RelationGetRelid(rel), 0);
 
 	heap_freetuple(tuple);
 
@@ -9487,6 +9551,15 @@ ATExecDropInherit(Relation rel, RangeVar *parent, LOCKMODE lockmode)
 						   RelationRelationId,
 						   RelationGetRelid(parent_rel));
 
+	/*
+	 * Post alter hook of this inherits. Since object_access_hook doesn't
+	 * take multiple object identifiers, we relay oid of parent relation
+	 * using auxiliary_id argument.
+	 */
+	InvokeObjectPostAlterHookArg(InheritsRelationId,
+								 RelationGetRelid(rel), 0,
+								 RelationGetRelid(parent_rel), false);
+
 	/* keep our lock on the parent relation until commit */
 	heap_close(parent_rel, NoLock);
 }
@@ -9669,6 +9742,9 @@ ATExecAddOf(Relation rel, const TypeName *ofTypename, LOCKMODE lockmode)
 	((Form_pg_class) GETSTRUCT(classtuple))->reloftype = typeid;
 	simple_heap_update(relationRelation, &classtuple->t_self, classtuple);
 	CatalogUpdateIndexes(relationRelation, classtuple);
+
+	InvokeObjectPostAlterHook(RelationRelationId, relid, 0);
+
 	heap_freetuple(classtuple);
 	heap_close(relationRelation, RowExclusiveLock);
 
@@ -9709,6 +9785,9 @@ ATExecDropOf(Relation rel, LOCKMODE lockmode)
 	((Form_pg_class) GETSTRUCT(tuple))->reloftype = InvalidOid;
 	simple_heap_update(relationRelation, &tuple->t_self, tuple);
 	CatalogUpdateIndexes(relationRelation, tuple);
+
+	InvokeObjectPostAlterHook(RelationRelationId, relid, 0);
+
 	heap_freetuple(tuple);
 	heap_close(relationRelation, RowExclusiveLock);
 }
@@ -9777,6 +9856,9 @@ ATExecGenericOptions(Relation rel, List *options)
 
 	simple_heap_update(ftrel, &tuple->t_self, tuple);
 	CatalogUpdateIndexes(ftrel, tuple);
+
+	InvokeObjectPostAlterHook(ForeignTableRelationId,
+							  RelationGetRelid(rel), 0);
 
 	heap_close(ftrel, RowExclusiveLock);
 
@@ -9935,6 +10017,8 @@ AlterRelationNamespaceInternal(Relation classRel, Oid relOid,
 				 NameStr(classForm->relname));
 
 		add_exact_object_address(&thisobj, objsMoved);
+
+		InvokeObjectPostAlterHook(RelationRelationId, relOid, 0);
 	}
 
 	heap_freetuple(classTup);

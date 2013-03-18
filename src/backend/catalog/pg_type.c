@@ -712,6 +712,8 @@ RenameTypeInternal(Oid typeOid, const char *newTypeName, Oid typeNamespace)
 	/* update the system catalog indexes */
 	CatalogUpdateIndexes(pg_type_desc, tuple);
 
+	InvokeObjectPostAlterHook(TypeRelationId, typeOid, 0);
+
 	heap_freetuple(tuple);
 	heap_close(pg_type_desc, RowExclusiveLock);
 

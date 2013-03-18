@@ -96,9 +96,11 @@ extern List *AddRelationNewConstraints(Relation rel,
 						  List *newColDefaults,
 						  List *newConstraints,
 						  bool allow_merge,
-						  bool is_local);
+						  bool is_local,
+						  bool is_internal);
 
-extern void StoreAttrDefault(Relation rel, AttrNumber attnum, Node *expr);
+extern void StoreAttrDefault(Relation rel, AttrNumber attnum,
+							 Node *expr, bool is_internal);
 
 extern Node *cookDefault(ParseState *pstate,
 			Node *raw_default,

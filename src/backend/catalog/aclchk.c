@@ -25,6 +25,7 @@
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_conversion.h"
@@ -1290,6 +1291,13 @@ SetDefaultACL(InternalDefaultACL *iacls)
 							  iacls->roleid,
 							  noldmembers, oldmembers,
 							  nnewmembers, newmembers);
+
+		if (isNew)
+			InvokeObjectPostCreateHook(DefaultAclRelationId,
+									   HeapTupleGetOid(newtuple), 0);
+		else
+			InvokeObjectPostAlterHook(DefaultAclRelationId,
+									  HeapTupleGetOid(newtuple), 0);
 	}
 
 	if (HeapTupleIsValid(tuple))

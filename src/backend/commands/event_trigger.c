@@ -412,6 +412,9 @@ AlterEventTrigger(AlterEventTrigStmt *stmt)
 	simple_heap_update(tgrel, &tup->t_self, tup);
 	CatalogUpdateIndexes(tgrel, tup);
 
+	InvokeObjectPostAlterHook(EventTriggerRelationId,
+							  trigoid, 0);
+
 	/* clean up */
 	heap_freetuple(tup);
 	heap_close(tgrel, RowExclusiveLock);
@@ -507,6 +510,9 @@ AlterEventTriggerOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 	changeDependencyOnOwner(EventTriggerRelationId,
 							HeapTupleGetOid(tup),
 							newOwnerId);
+
+	InvokeObjectPostAlterHook(EventTriggerRelationId,
+							  HeapTupleGetOid(tup), 0);
 }
 
 /*

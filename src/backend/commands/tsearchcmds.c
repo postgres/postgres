@@ -612,6 +612,8 @@ AlterTSDictionary(AlterTSDictionaryStmt *stmt)
 
 	CatalogUpdateIndexes(rel, newtup);
 
+	InvokeObjectPostAlterHook(TSDictionaryRelationId, dictId, 0);
+
 	/*
 	 * NOTE: because we only support altering the options, not the template,
 	 * there is no need to update dependencies.  This might have to change if
@@ -1183,6 +1185,9 @@ AlterTSConfiguration(AlterTSConfigurationStmt *stmt)
 
 	/* Update dependencies */
 	makeConfigurationDependencies(tup, true, relMap);
+
+	InvokeObjectPostAlterHook(TSConfigMapRelationId,
+							  HeapTupleGetOid(tup), 0);
 
 	heap_close(relMap, RowExclusiveLock);
 

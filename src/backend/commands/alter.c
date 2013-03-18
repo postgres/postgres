@@ -19,6 +19,7 @@
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_conversion.h"
 #include "catalog/pg_event_trigger.h"
@@ -280,6 +281,8 @@ AlterObjectRename_internal(Relation rel, Oid objectId, const char *new_name)
 	/* Perform actual update */
 	simple_heap_update(rel, &oldtup->t_self, newtup);
 	CatalogUpdateIndexes(rel, newtup);
+
+	InvokeObjectPostAlterHook(classId, objectId, 0);
 
 	/* Release memory */
 	pfree(values);
@@ -657,6 +660,8 @@ AlterObjectNamespace_internal(Relation rel, Oid objid, Oid nspOid)
 	changeDependencyFor(classId, objid,
 						NamespaceRelationId, oldNspOid, nspOid);
 
+	InvokeObjectPostAlterHook(classId, objid, 0);
+
 	return oldNspOid;
 }
 
@@ -934,4 +939,6 @@ AlterObjectOwner_internal(Relation rel, Oid objectId, Oid new_ownerId)
 		pfree(nulls);
 		pfree(replaces);
 	}
+
+	InvokeObjectPostAlterHook(classId, objectId, 0);
 }

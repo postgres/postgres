@@ -20,6 +20,7 @@
 #include "access/xlogutils.h"
 #include "catalog/dependency.h"
 #include "catalog/namespace.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "commands/sequence.h"
@@ -486,6 +487,8 @@ AlterSequence(AlterSeqStmt *stmt)
 	/* process OWNED BY if given */
 	if (owned_by)
 		process_owned_by(seqrel, owned_by);
+
+	InvokeObjectPostAlterHook(RelationRelationId, relid, 0);
 
 	relation_close(seqrel, NoLock);
 

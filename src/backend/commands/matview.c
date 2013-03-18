@@ -198,8 +198,8 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	 * Swap the physical files of the target and transient tables, then
 	 * rebuild the target's indexes and throw away the transient table.
 	 */
-	finish_heap_swap(matviewOid, OIDNewHeap, false, false, true, RecentXmin,
-					 ReadNextMultiXactId());
+	finish_heap_swap(matviewOid, OIDNewHeap, false, false, true, true,
+					 RecentXmin, ReadNextMultiXactId());
 
 	RelationCacheInvalidateEntry(matviewOid);
 }

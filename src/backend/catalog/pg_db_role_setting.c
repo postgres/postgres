@@ -14,6 +14,7 @@
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "catalog/indexing.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_db_role_setting.h"
 #include "utils/fmgroids.h"
 #include "utils/rel.h"
@@ -159,6 +160,9 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 		/* Update indexes */
 		CatalogUpdateIndexes(rel, newtuple);
 	}
+
+	InvokeObjectPostAlterHookArg(DbRoleSettingRelationId,
+								 databaseid, 0, roleid, false);
 
 	systable_endscan(scan);
 

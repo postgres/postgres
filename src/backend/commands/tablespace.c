@@ -877,6 +877,8 @@ RenameTableSpace(const char *oldname, const char *newname)
 	simple_heap_update(rel, &newtuple->t_self, newtuple);
 	CatalogUpdateIndexes(rel, newtuple);
 
+	InvokeObjectPostAlterHook(TableSpaceRelationId, tspId, 0);
+
 	heap_close(rel, NoLock);
 
 	return tspId;
@@ -945,6 +947,9 @@ AlterTableSpaceOptions(AlterTableSpaceOptionsStmt *stmt)
 	/* Update system catalog. */
 	simple_heap_update(rel, &newtuple->t_self, newtuple);
 	CatalogUpdateIndexes(rel, newtuple);
+
+	InvokeObjectPostAlterHook(TableSpaceRelationId, HeapTupleGetOid(tup), 0);
+
 	heap_freetuple(newtuple);
 
 	/* Conclude heap scan. */

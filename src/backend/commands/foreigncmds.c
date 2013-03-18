@@ -241,6 +241,9 @@ AlterForeignDataWrapperOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerI
 								HeapTupleGetOid(tup),
 								newOwnerId);
 	}
+
+	InvokeObjectPostAlterHook(ForeignDataWrapperRelationId,
+							  HeapTupleGetOid(tup), 0);
 }
 
 /*
@@ -349,6 +352,9 @@ AlterForeignServerOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 		changeDependencyOnOwner(ForeignServerRelationId, HeapTupleGetOid(tup),
 								newOwnerId);
 	}
+
+	InvokeObjectPostAlterHook(ForeignServerRelationId,
+							  HeapTupleGetOid(tup), 0);
 }
 
 /*
@@ -764,6 +770,8 @@ AlterForeignDataWrapper(AlterFdwStmt *stmt)
 		}
 	}
 
+	InvokeObjectPostAlterHook(ForeignDataWrapperRelationId, fdwId, 0);
+
 	heap_close(rel, RowExclusiveLock);
 
 	return fdwId;
@@ -993,6 +1001,8 @@ AlterForeignServer(AlterForeignServerStmt *stmt)
 
 	simple_heap_update(rel, &tp->t_self, tp);
 	CatalogUpdateIndexes(rel, tp);
+
+	InvokeObjectPostAlterHook(ForeignServerRelationId, srvId, 0);
 
 	heap_freetuple(tp);
 

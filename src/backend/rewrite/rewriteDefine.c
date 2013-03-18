@@ -815,6 +815,9 @@ EnableDisableRule(Relation rel, const char *rulename,
 		changed = true;
 	}
 
+	InvokeObjectPostAlterHook(RewriteRelationId,
+							  HeapTupleGetOid(ruletup), 0);
+
 	heap_freetuple(ruletup);
 	heap_close(pg_rewrite_desc, RowExclusiveLock);
 

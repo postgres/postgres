@@ -58,7 +58,7 @@ extern Oid RenameConstraint(RenameStmt *stmt);
 extern Oid RenameRelation(RenameStmt *stmt);
 
 extern void RenameRelationInternal(Oid myrelid,
-					   const char *newrelname);
+					   const char *newrelname, bool is_internal);
 
 extern void find_composite_type_dependencies(Oid typeOid,
 								 Relation origRelation,

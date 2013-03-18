@@ -39,6 +39,7 @@
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/indexing.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
@@ -1214,6 +1215,8 @@ AlterEnum(AlterEnumStmt *stmt, bool isTopLevel)
 				 stmt->newValNeighbor, stmt->newValIsAfter,
 				 stmt->skipIfExists);
 
+	InvokeObjectPostAlterHook(TypeRelationId, enum_type_oid, 0);
+
 	ReleaseSysCache(tup);
 
 	return enum_type_oid;
@@ -2190,6 +2193,8 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 							 defaultExpr,
 							 true);		/* Rebuild is true */
 
+	InvokeObjectPostAlterHook(TypeRelationId, domainoid, 0);
+
 	/* Clean up */
 	heap_close(rel, NoLock);
 	heap_freetuple(newtuple);
@@ -2298,6 +2303,8 @@ AlterDomainNotNull(List *names, bool notNull)
 	simple_heap_update(typrel, &tup->t_self, tup);
 
 	CatalogUpdateIndexes(typrel, tup);
+
+	InvokeObjectPostAlterHook(TypeRelationId, domainoid, 0);
 
 	/* Clean up */
 	heap_freetuple(tup);
@@ -2586,6 +2593,10 @@ AlterDomainValidateConstraint(List *names, char *constrName)
 	copy_con->convalidated = true;
 	simple_heap_update(conrel, &copyTuple->t_self, copyTuple);
 	CatalogUpdateIndexes(conrel, copyTuple);
+
+	InvokeObjectPostAlterHook(ConstraintRelationId,
+							  HeapTupleGetOid(copyTuple), 0);
+
 	heap_freetuple(copyTuple);
 
 	systable_endscan(scan);
@@ -2993,7 +3004,8 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 						  ccsrc,	/* Source form of check constraint */
 						  true, /* is local */
 						  0,	/* inhcount */
-						  false);		/* connoinherit */
+						  false,	/* connoinherit */
+						  false);	/* is_internal */
 
 	/*
 	 * Return the compiled constraint expression so the calling routine can
@@ -3188,7 +3200,7 @@ RenameType(RenameStmt *stmt)
 	 * RenameRelationInternal will call RenameTypeInternal automatically.
 	 */
 	if (typTup->typtype == TYPTYPE_COMPOSITE)
-		RenameRelationInternal(typTup->typrelid, newTypeName);
+		RenameRelationInternal(typTup->typrelid, newTypeName, false);
 	else
 		RenameTypeInternal(typeOid, newTypeName,
 						   typTup->typnamespace);
@@ -3311,6 +3323,8 @@ AlterTypeOwner(List *names, Oid newOwnerId, ObjectType objecttype)
 			/* Update owner dependency reference */
 			changeDependencyOnOwner(TypeRelationId, typeOid, newOwnerId);
 
+			InvokeObjectPostAlterHook(TypeRelationId, typeOid, 0);
+
 			/* If it has an array type, update that too */
 			if (OidIsValid(typTup->typarray))
 				AlterTypeOwnerInternal(typTup->typarray, newOwnerId, false);
@@ -3333,6 +3347,8 @@ AlterTypeOwner(List *names, Oid newOwnerId, ObjectType objecttype)
  *
  * hasDependEntry should be TRUE if type is expected to have a pg_shdepend
  * entry (ie, it's not a table rowtype nor an array type).
+ * is_primary_ops should be TRUE if this function is invoked with user's
+ * direct operation (e.g, shdepReassignOwned). Elsewhere, 
  */
 void
 AlterTypeOwnerInternal(Oid typeOid, Oid newOwnerId,
@@ -3365,6 +3381,8 @@ AlterTypeOwnerInternal(Oid typeOid, Oid newOwnerId,
 	/* If it has an array type, update that too */
 	if (OidIsValid(typTup->typarray))
 		AlterTypeOwnerInternal(typTup->typarray, newOwnerId, false);
+
+	InvokeObjectPostAlterHook(TypeRelationId, typeOid, 0);
 
 	/* Clean up */
 	heap_close(rel, RowExclusiveLock);
@@ -3552,6 +3570,8 @@ AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 								NamespaceRelationId, oldNspOid, nspOid) != 1)
 			elog(ERROR, "failed to change schema dependency for type %s",
 				 format_type_be(typeOid));
+
+	InvokeObjectPostAlterHook(TypeRelationId, typeOid, 0);
 
 	heap_freetuple(tup);
 

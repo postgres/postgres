@@ -1374,6 +1374,9 @@ storeOperators(List *opfamilyname, Oid amoid,
 			referenced.objectSubId = 0;
 			recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 		}
+		/* Post create hook of this access method operator */
+		InvokeObjectPostCreateHook(AccessMethodOperatorRelationId,
+								   entryoid, 0);
 	}
 
 	heap_close(rel, RowExclusiveLock);
@@ -1473,6 +1476,9 @@ storeProcedures(List *opfamilyname, Oid amoid,
 			referenced.objectSubId = 0;
 			recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);
 		}
+		/* Post create hook of access method procedure */
+		InvokeObjectPostCreateHook(AccessMethodProcedureRelationId,
+								   entryoid, 0);
 	}
 
 	heap_close(rel, RowExclusiveLock);

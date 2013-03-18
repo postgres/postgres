@@ -777,6 +777,8 @@ AlterRole(AlterRoleStmt *stmt)
 	/* Update indexes */
 	CatalogUpdateIndexes(pg_authid_rel, new_tuple);
 
+	InvokeObjectPostAlterHook(AuthIdRelationId, roleid, 0);
+
 	ReleaseSysCache(tuple);
 	heap_freetuple(new_tuple);
 
@@ -1160,6 +1162,8 @@ RenameRole(const char *oldname, const char *newname)
 	simple_heap_update(rel, &oldtuple->t_self, newtuple);
 
 	CatalogUpdateIndexes(rel, newtuple);
+
+	InvokeObjectPostAlterHook(AuthIdRelationId, roleid, 0);
 
 	ReleaseSysCache(oldtuple);
 

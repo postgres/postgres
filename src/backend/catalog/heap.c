@@ -96,8 +96,9 @@ static Oid AddNewRelationType(const char *typeName,
 static void RelationRemoveInheritance(Oid relid);
 static void StoreRelCheck(Relation rel, char *ccname, Node *expr,
 			  bool is_validated, bool is_local, int inhcount,
-			  bool is_no_inherit);
-static void StoreConstraints(Relation rel, List *cooked_constraints);
+			  bool is_no_inherit, bool is_internal);
+static void StoreConstraints(Relation rel, List *cooked_constraints,
+							 bool is_internal);
 static bool MergeWithExistingConstraint(Relation rel, char *ccname, Node *expr,
 							bool allow_merge, bool is_local,
 							bool is_no_inherit);
@@ -1302,7 +1303,7 @@ heap_create_with_catalog(const char *relname,
 	 * entry, so the relation must be valid and self-consistent at this point.
 	 * In particular, there are not yet constraints and defaults anywhere.
 	 */
-	StoreConstraints(new_rel_desc, cooked_constraints);
+	StoreConstraints(new_rel_desc, cooked_constraints, is_internal);
 
 	/*
 	 * If there's a special on-commit action, remember it
@@ -1836,7 +1837,8 @@ heap_drop_with_catalog(Oid relid)
  * Store a default expression for column attnum of relation rel.
  */
 void
-StoreAttrDefault(Relation rel, AttrNumber attnum, Node *expr)
+StoreAttrDefault(Relation rel, AttrNumber attnum,
+				 Node *expr, bool is_internal)
 {
 	char	   *adbin;
 	char	   *adsrc;
@@ -1928,6 +1930,17 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, Node *expr)
 	 * Record dependencies on objects used in the expression, too.
 	 */
 	recordDependencyOnExpr(&defobject, expr, NIL, DEPENDENCY_NORMAL);
+
+	/*
+	 * Post creation hook for attribute defaults.
+	 *
+	 * XXX. ALTER TABLE ALTER COLUMN SET/DROP DEFAULT is implemented
+	 * with a couple of deletion/creation of the attribute's default entry,
+	 * so the callee should check existence of an older version of this
+	 * entry if it needs to distinguish.
+	 */
+	InvokeObjectPostCreateHookArg(AttrDefaultRelationId,
+								  RelationGetRelid(rel), attnum, is_internal);
 }
 
 /*
@@ -1939,7 +1952,7 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, Node *expr)
 static void
 StoreRelCheck(Relation rel, char *ccname, Node *expr,
 			  bool is_validated, bool is_local, int inhcount,
-			  bool is_no_inherit)
+			  bool is_no_inherit, bool is_internal)
 {
 	char	   *ccbin;
 	char	   *ccsrc;
@@ -2023,7 +2036,8 @@ StoreRelCheck(Relation rel, char *ccname, Node *expr,
 						  ccsrc,	/* Source form of check constraint */
 						  is_local,		/* conislocal */
 						  inhcount,		/* coninhcount */
-						  is_no_inherit);		/* connoinherit */
+						  is_no_inherit,		/* connoinherit */
+						  is_internal);	/* internally constructed? */
 
 	pfree(ccbin);
 	pfree(ccsrc);
@@ -2038,7 +2052,7 @@ StoreRelCheck(Relation rel, char *ccname, Node *expr,
  * and StoreRelCheck (see AddRelationNewConstraints()).
  */
 static void
-StoreConstraints(Relation rel, List *cooked_constraints)
+StoreConstraints(Relation rel, List *cooked_constraints, bool is_internal)
 {
 	int			numchecks = 0;
 	ListCell   *lc;
@@ -2060,11 +2074,12 @@ StoreConstraints(Relation rel, List *cooked_constraints)
 		switch (con->contype)
 		{
 			case CONSTR_DEFAULT:
-				StoreAttrDefault(rel, con->attnum, con->expr);
+				StoreAttrDefault(rel, con->attnum, con->expr, is_internal);
 				break;
 			case CONSTR_CHECK:
 				StoreRelCheck(rel, con->name, con->expr, !con->skip_validation,
-						   con->is_local, con->inhcount, con->is_no_inherit);
+							  con->is_local, con->inhcount,
+							  con->is_no_inherit, is_internal);
 				numchecks++;
 				break;
 			default:
@@ -2090,6 +2105,7 @@ StoreConstraints(Relation rel, List *cooked_constraints)
  * newConstraints: list of Constraint nodes
  * allow_merge: TRUE if check constraints may be merged with existing ones
  * is_local: TRUE if definition is local, FALSE if it's inherited
+ * is_internal: TRUE if result of some internal process, not a user request
  *
  * All entries in newColDefaults will be processed.  Entries in newConstraints
  * will be processed only if they are CONSTR_CHECK type.
@@ -2107,7 +2123,8 @@ AddRelationNewConstraints(Relation rel,
 						  List *newColDefaults,
 						  List *newConstraints,
 						  bool allow_merge,
-						  bool is_local)
+						  bool is_local,
+						  bool is_internal)
 {
 	List	   *cookedConstraints = NIL;
 	TupleDesc	tupleDesc;
@@ -2170,7 +2187,7 @@ AddRelationNewConstraints(Relation rel,
 			(IsA(expr, Const) &&((Const *) expr)->constisnull))
 			continue;
 
-		StoreAttrDefault(rel, colDef->attnum, expr);
+		StoreAttrDefault(rel, colDef->attnum, expr, is_internal);
 
 		cooked = (CookedConstraint *) palloc(sizeof(CookedConstraint));
 		cooked->contype = CONSTR_DEFAULT;
@@ -2296,7 +2313,7 @@ AddRelationNewConstraints(Relation rel,
 		 * OK, store it.
 		 */
 		StoreRelCheck(rel, ccname, expr, !cdef->skip_validation, is_local,
-					  is_local ? 0 : 1, cdef->is_no_inherit);
+					  is_local ? 0 : 1, cdef->is_no_inherit, is_internal);
 
 		numchecks++;
 

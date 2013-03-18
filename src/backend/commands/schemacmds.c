@@ -21,6 +21,7 @@
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_namespace.h"
 #include "commands/dbcommands.h"
 #include "commands/schemacmds.h"
@@ -240,6 +241,8 @@ RenameSchema(const char *oldname, const char *newname)
 	simple_heap_update(rel, &tup->t_self, tup);
 	CatalogUpdateIndexes(rel, tup);
 
+	InvokeObjectPostAlterHook(NamespaceRelationId, HeapTupleGetOid(tup), 0);
+
 	heap_close(rel, NoLock);
 	heap_freetuple(tup);
 
@@ -376,4 +379,6 @@ AlterSchemaOwner_internal(HeapTuple tup, Relation rel, Oid newOwnerId)
 								newOwnerId);
 	}
 
+	InvokeObjectPostAlterHook(NamespaceRelationId,
+							  HeapTupleGetOid(tup), 0);
 }
