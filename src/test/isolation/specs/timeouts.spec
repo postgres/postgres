@@ -19,10 +19,10 @@ teardown	{ ABORT; }
 
 session "s2"
 setup		{ BEGIN ISOLATION LEVEL READ COMMITTED; }
-step "sto"	{ SET statement_timeout = 1000; }
-step "lto"	{ SET lock_timeout = 1000; }
-step "lsto"	{ SET lock_timeout = 1000; SET statement_timeout = 2000; }
-step "slto"	{ SET lock_timeout = 2000; SET statement_timeout = 1000; }
+step "sto"	{ SET statement_timeout = 2000; }
+step "lto"	{ SET lock_timeout = 2000; }
+step "lsto"	{ SET lock_timeout = 2000; SET statement_timeout = 3000; }
+step "slto"	{ SET lock_timeout = 3000; SET statement_timeout = 2000; }
 step "locktbl"	{ LOCK TABLE accounts; }
 step "update"	{ DELETE FROM accounts WHERE accountid = 'checking'; }
 teardown	{ ABORT; }
