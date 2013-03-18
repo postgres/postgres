@@ -177,6 +177,50 @@
    (BBU) disk controllers do not prevent partial page writes unless
    they guarantee that data is written to the BBU as full (8kB) pages.
   </para>
+  <para>
+   <productname>PostgreSQL</> also protects against some kinds of data corruption
+   on storage devices that may occur because of hardware errors or media failure over time,
+   such as reading/writing garbage data.
+   <itemizedlist>
+    <listitem>
+     <para>
+      Each individual record in a WAL file is protected by a CRC-32 (32-bit) check
+      that allows us to tell if record contents are correct. The CRC value
+      is set when we write each WAL record and checked during crash recovery,
+      archive recovery and replication.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Data pages are not currently checksummed, though full page images recorded
+      in WAL records will be protected. Data pages have a 16-bit field available
+      for future use with a data page checksum feature.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Internal data structures such as pg_clog, pg_subtrans, pg_multixact,
+      pg_serial, pg_notify, pg_stat, pg_snapshots, pg_twophase are not directly
+      checksummed, nor are pages protected by full page writes. However, where
+      such data structures are persistent, WAL records are written that allow
+      recent changes to be accurately rebuilt at crash recovery and those
+      WAL records are protected as discussed above.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Temporary data files used in larger SQL queries for sorts,
+      materializations and intermediate results are not currently checksummed,
+      nor will WAL records be written for changes to those files.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+  <para>
+   <productname>PostgreSQL</> does not protect against correctable memory errors
+   and it is assumed you will operate using RAM that uses industry standard
+   Error Correcting Codes (ECC) or better protection.
+  </para>
  </sect1>
 
   <sect1 id="wal-intro">
