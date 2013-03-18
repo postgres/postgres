@@ -7151,16 +7151,19 @@ SELECT EXTRACT(SECOND FROM TIME '17:12:28.5');
       <listitem>
        <para>
         The number of the week of the year that the day is in.  By definition
-        (<acronym>ISO</acronym> 8601), the first week of a year
-        contains January 4 of that year.  (The <acronym>ISO</acronym>-8601
-        week starts on Monday.)  In other words, the first Thursday of
-        a year is in week 1 of that year.
+        (<acronym>ISO</acronym> 8601), weeks start on Mondays and the first
+        week of a year contains January 4 of that year.  In other words, the
+        first Thursday of a year is in week 1 of that year.
        </para>
        <para>
-        Because of this, it is possible for early January dates to be part of the
-        52nd or 53rd week of the previous year.  For example, <literal>2005-01-01</>
-        is part of the 53rd week of year 2004, and <literal>2006-01-01</> is part of
-        the 52nd week of year 2005.
+        In the ISO definition, it is possible for early-January dates to be
+        part of the 52nd or 53rd week of the previous year, and for
+        late-December dates to be part of the first week of the next year.
+        For example, <literal>2005-01-01</> is part of the 53rd week of year
+        2004, and <literal>2006-01-01</> is part of the 52nd week of year
+        2005, while <literal>2012-12-31</> is part of the first week of 2013.
+        It's recommended to use the <literal>isoyear</> field together with
+        <literal>week</> to get consistent results.
        </para>
 
 <screen>
