@@ -200,11 +200,16 @@
     <listitem>
      <para>
       Internal data structures such as pg_clog, pg_subtrans, pg_multixact,
-      pg_serial, pg_notify, pg_stat, pg_snapshots, pg_twophase are not directly
+      pg_serial, pg_notify, pg_stat, pg_snapshots are not directly
       checksummed, nor are pages protected by full page writes. However, where
       such data structures are persistent, WAL records are written that allow
       recent changes to be accurately rebuilt at crash recovery and those
       WAL records are protected as discussed above.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Individual state files in pg_twophase are protected by CRC-32.
      </para>
     </listitem>
     <listitem>
