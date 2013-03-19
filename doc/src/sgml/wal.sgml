@@ -148,8 +148,9 @@
    there is little it can do to make sure the data has arrived at a truly
    non-volatile storage area. Rather, it is the
    administrator's responsibility to make certain that all storage components
-   ensure data integrity.  Avoid disk controllers that have non-battery-backed
-   write caches.  At the drive level, disable write-back caching if the
+   ensure integrity for both data and filesystem metadata.
+   Avoid disk controllers that have non-battery-backed write caches.
+   At the drive level, disable write-back caching if the
    drive cannot guarantee the data will be written before shutdown.
    If you use SSDs, be aware that many of these do not honor cache flush
    commands by default.
