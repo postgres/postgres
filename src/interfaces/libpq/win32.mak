@@ -224,8 +224,8 @@ LINK32_OBJS= \
 	$(LIB32_FLAGS) $(DEF_FLAGS) $(LIB32_OBJS)
 <<
 
-"$(INTDIR)\libpq.res" : "$(INTDIR)" libpq-dist.rc
-	$(RSC) $(RSC_PROJ) libpq-dist.rc
+"$(INTDIR)\libpq.res" : "$(INTDIR)" libpq.rc.in
+	$(RSC) $(RSC_PROJ) libpq.rc.in
 
 
 "$(OUTDIR)\$(OUTFILENAME).dll" : "$(OUTDIR)" "$(INTDIR)\libpq.res"
