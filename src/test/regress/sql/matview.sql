@@ -9,7 +9,7 @@ INSERT INTO t VALUES
 
 -- we want a view based on the table, too, since views present additional challenges
 CREATE VIEW tv AS SELECT type, sum(amt) AS totamt FROM t GROUP BY type;
-SELECT * FROM tv;
+SELECT * FROM tv ORDER BY type;
 
 -- create a materialized view with no data, and confirm correct behavior
 EXPLAIN (costs off)
@@ -24,8 +24,8 @@ SELECT * FROM tm;
 
 -- create various views
 EXPLAIN (costs off)
-  CREATE MATERIALIZED VIEW tvm AS SELECT * FROM tv;
-CREATE MATERIALIZED VIEW tvm AS SELECT * FROM tv;
+  CREATE MATERIALIZED VIEW tvm AS SELECT * FROM tv ORDER BY type;
+CREATE MATERIALIZED VIEW tvm AS SELECT * FROM tv ORDER BY type;
 SELECT * FROM tvm;
 CREATE MATERIALIZED VIEW tmm AS SELECT sum(totamt) AS grandtot FROM tm;
 CREATE MATERIALIZED VIEW tvmm AS SELECT sum(totamt) AS grandtot FROM tvm;
@@ -104,7 +104,7 @@ SELECT pg_relation_is_scannable('tum'::regclass);
 SELECT * FROM tum;
 
 -- test join of mv and view
-SELECT type, m.totamt AS mtot, v.totamt AS vtot FROM tm m LEFT JOIN tv v USING (type);
+SELECT type, m.totamt AS mtot, v.totamt AS vtot FROM tm m LEFT JOIN tv v USING (type) ORDER BY type;
 
 -- test diemv when the mv does exist
 DROP MATERIALIZED VIEW IF EXISTS tum;
