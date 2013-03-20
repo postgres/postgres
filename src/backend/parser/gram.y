@@ -5195,20 +5195,25 @@ opt_restart_seqs:
  *	The COMMENT ON statement can take different forms based upon the type of
  *	the object associated with the comment. The form of the statement is:
  *
- *	COMMENT ON [ [ DATABASE | DOMAIN | INDEX | SEQUENCE | TABLE | TYPE | VIEW |
- *				   COLLATION | CONVERSION | LANGUAGE | OPERATOR CLASS |
- *				   LARGE OBJECT | CAST | COLUMN | SCHEMA | TABLESPACE |
- *				   EXTENSION | ROLE | TEXT SEARCH PARSER |
- *				   TEXT SEARCH DICTIONARY | TEXT SEARCH TEMPLATE |
- *				   TEXT SEARCH CONFIGURATION | FOREIGN TABLE |
- *				   FOREIGN DATA WRAPPER | SERVER | EVENT TRIGGER |
- *				   MATERIALIZED VIEW] <objname> |
+ *	COMMENT ON [ [ CONVERSION | COLLATION | DATABASE | DOMAIN |
+ *                 EXTENSION | EVENT TRIGGER | FOREIGN DATA WRAPPER |
+ *                 FOREIGN TABLE | INDEX | [PROCEDURAL] LANGUAGE |
+ *                 MATERIALIZED VIEW | ROLE | SCHEMA | SEQUENCE |
+ *                 SERVER | TABLE | TABLESPACE |
+ *                 TEXT SEARCH CONFIGURATION | TEXT SEARCH DICTIONARY |
+ *                 TEXT SEARCH PARSER | TEXT SEARCH TEMPLATE | TYPE |
+ *                 VIEW] <objname> |
  *				 AGGREGATE <aggname> (arg1, ...) |
- *				 FUNCTION <funcname> (arg1, arg2, ...) |
- *				 OPERATOR <op> (leftoperand_typ, rightoperand_typ) |
- *				 TRIGGER <triggername> ON <relname> |
+ *				 CAST (<src type> AS <dst type>) |
+ *				 COLUMN <relname>.<colname> |
  *				 CONSTRAINT <constraintname> ON <relname> |
- *				 RULE <rulename> ON <relname> ]
+ *				 FUNCTION <funcname> (arg1, arg2, ...) |
+ *				 LARGE OBJECT <oid> |
+ *				 OPERATOR <op> (leftoperand_typ, rightoperand_typ) |
+ *				 OPERATOR CLASS <name> USING <access-method> |
+ *				 OPERATOR FAMILY <name> USING <access-method> |
+ *				 RULE <rulename> ON <relname> |
+ *				 TRIGGER <triggername> ON <relname> ]
  *			   IS 'text'
  *
  *****************************************************************************/
@@ -5332,38 +5337,6 @@ CommentStmt:
 					n->comment = $7;
 					$$ = (Node *) n;
 				}
-			| COMMENT ON TEXT_P SEARCH PARSER any_name IS comment_text
-				{
-					CommentStmt *n = makeNode(CommentStmt);
-					n->objtype = OBJECT_TSPARSER;
-					n->objname = $6;
-					n->comment = $8;
-					$$ = (Node *) n;
-				}
-			| COMMENT ON TEXT_P SEARCH DICTIONARY any_name IS comment_text
-				{
-					CommentStmt *n = makeNode(CommentStmt);
-					n->objtype = OBJECT_TSDICTIONARY;
-					n->objname = $6;
-					n->comment = $8;
-					$$ = (Node *) n;
-				}
-			| COMMENT ON TEXT_P SEARCH TEMPLATE any_name IS comment_text
-				{
-					CommentStmt *n = makeNode(CommentStmt);
-					n->objtype = OBJECT_TSTEMPLATE;
-					n->objname = $6;
-					n->comment = $8;
-					$$ = (Node *) n;
-				}
-			| COMMENT ON TEXT_P SEARCH CONFIGURATION any_name IS comment_text
-				{
-					CommentStmt *n = makeNode(CommentStmt);
-					n->objtype = OBJECT_TSCONFIGURATION;
-					n->objname = $6;
-					n->comment = $8;
-					$$ = (Node *) n;
-				}
 		;
 
 comment_type:
@@ -5386,6 +5359,10 @@ comment_type:
 			| SERVER							{ $$ = OBJECT_FOREIGN_SERVER; }
 			| FOREIGN DATA_P WRAPPER			{ $$ = OBJECT_FDW; }
 			| EVENT TRIGGER						{ $$ = OBJECT_EVENT_TRIGGER; }
+			| TEXT_P SEARCH CONFIGURATION		{ $$ = OBJECT_TSCONFIGURATION; }
+			| TEXT_P SEARCH DICTIONARY			{ $$ = OBJECT_TSDICTIONARY; }
+			| TEXT_P SEARCH PARSER				{ $$ = OBJECT_TSPARSER; }
+			| TEXT_P SEARCH TEMPLATE			{ $$ = OBJECT_TSTEMPLATE; }
 		;
 
 comment_text:

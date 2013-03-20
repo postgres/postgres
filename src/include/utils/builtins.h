@@ -615,7 +615,9 @@ extern Datum regdictionarysend(PG_FUNCTION_ARGS);
 extern Datum text_regclass(PG_FUNCTION_ARGS);
 extern List *stringToQualifiedNameList(const char *string);
 extern char *format_procedure(Oid procedure_oid);
+extern char *format_procedure_qualified(Oid procedure_oid);
 extern char *format_operator(Oid operator_oid);
+extern char *format_operator_qualified(Oid operator_oid);
 
 /* rowtypes.c */
 extern Datum record_in(PG_FUNCTION_ARGS);
@@ -1027,6 +1029,7 @@ extern Datum pg_encoding_max_length_sql(PG_FUNCTION_ARGS);
 /* format_type.c */
 extern Datum format_type(PG_FUNCTION_ARGS);
 extern char *format_type_be(Oid type_oid);
+extern char *format_type_be_qualified(Oid type_oid);
 extern char *format_type_with_typemod(Oid type_oid, int32 typemod);
 extern Datum oidvectortypes(PG_FUNCTION_ARGS);
 extern int32 type_maximum_size(Oid type_oid, int32 typemod);
@@ -1143,6 +1146,7 @@ extern Datum pg_get_multixact_members(PG_FUNCTION_ARGS);
 
 /* catalogs/dependency.c */
 extern Datum pg_describe_object(PG_FUNCTION_ARGS);
+extern Datum pg_identify_object(PG_FUNCTION_ARGS);
 
 /* commands/constraint.c */
 extern Datum unique_key_recheck(PG_FUNCTION_ARGS);

@@ -753,58 +753,6 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 }
 
 /*
- * Return a copy of the tuple for the object with the given object OID, from
- * the given catalog (which must have been opened by the caller and suitably
- * locked).  NULL is returned if the OID is not found.
- *
- * We try a syscache first, if available.
- *
- * XXX this function seems general in possible usage.  Given sufficient callers
- * elsewhere, we should consider moving it to a more appropriate place.
- */
-static HeapTuple
-get_catalog_object_by_oid(Relation catalog, Oid objectId)
-{
-	HeapTuple	tuple;
-	Oid			classId = RelationGetRelid(catalog);
-	int			oidCacheId = get_object_catcache_oid(classId);
-
-	if (oidCacheId > 0)
-	{
-		tuple = SearchSysCacheCopy1(oidCacheId, ObjectIdGetDatum(objectId));
-		if (!HeapTupleIsValid(tuple))  /* should not happen */
-			return NULL;
-	}
-	else
-	{
-		Oid			oidIndexId = get_object_oid_index(classId);
-		SysScanDesc	scan;
-		ScanKeyData	skey;
-
-		Assert(OidIsValid(oidIndexId));
-
-		ScanKeyInit(&skey,
-					ObjectIdAttributeNumber,
-					BTEqualStrategyNumber, F_OIDEQ,
-					ObjectIdGetDatum(objectId));
-
-		scan = systable_beginscan(catalog, oidIndexId, true,
-								  SnapshotNow, 1, &skey);
-		tuple = systable_getnext(scan);
-		if (!HeapTupleIsValid(tuple))
-		{
-			systable_endscan(scan);
-			return NULL;
-		}
-		tuple = heap_copytuple(tuple);
-
-		systable_endscan(scan);
-	}
-
-	return tuple;
-}
-
-/*
  * Generic function to change the ownership of a given object, for simple
  * cases (won't work for tables, nor other cases where we need to do more than
  * change the ownership column of a single catalog entry).
