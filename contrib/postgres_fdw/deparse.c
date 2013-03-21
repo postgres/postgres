@@ -58,11 +58,8 @@
  */
 typedef struct foreign_glob_cxt
 {
-	/* Input values */
-	PlannerInfo *root;
-	RelOptInfo *foreignrel;
-	/* Result values */
-	List	   *param_numbers;	/* Param IDs of PARAM_EXTERN Params */
+	PlannerInfo *root;			/* global planner state */
+	RelOptInfo *foreignrel;		/* the foreign relation we are planning for */
 } foreign_glob_cxt;
 
 /*
@@ -83,11 +80,20 @@ typedef struct foreign_loc_cxt
 } foreign_loc_cxt;
 
 /*
+ * Context for deparseExpr
+ */
+typedef struct deparse_expr_cxt
+{
+	PlannerInfo *root;			/* global planner state */
+	RelOptInfo *foreignrel;		/* the foreign relation we are planning for */
+	StringInfo	buf;			/* output buffer to append to */
+	List	  **params_list;	/* exprs that will become remote Params */
+} deparse_expr_cxt;
+
+/*
  * Functions to determine whether an expression can be evaluated safely on
  * remote server.
  */
-static bool is_foreign_expr(PlannerInfo *root, RelOptInfo *baserel,
-				Expr *expr, List **param_numbers);
 static bool foreign_expr_walker(Node *node,
 					foreign_glob_cxt *glob_cxt,
 					foreign_loc_cxt *outer_cxt);
@@ -108,76 +114,46 @@ static void deparseColumnRef(StringInfo buf, int varno, int varattno,
 				 PlannerInfo *root);
 static void deparseRelation(StringInfo buf, Relation rel);
 static void deparseStringLiteral(StringInfo buf, const char *val);
-static void deparseExpr(StringInfo buf, Expr *expr, PlannerInfo *root);
-static void deparseVar(StringInfo buf, Var *node, PlannerInfo *root);
-static void deparseConst(StringInfo buf, Const *node, PlannerInfo *root);
-static void deparseParam(StringInfo buf, Param *node, PlannerInfo *root);
-static void deparseArrayRef(StringInfo buf, ArrayRef *node, PlannerInfo *root);
-static void deparseFuncExpr(StringInfo buf, FuncExpr *node, PlannerInfo *root);
-static void deparseOpExpr(StringInfo buf, OpExpr *node, PlannerInfo *root);
+static void deparseExpr(Expr *expr, deparse_expr_cxt *context);
+static void deparseVar(Var *node, deparse_expr_cxt *context);
+static void deparseConst(Const *node, deparse_expr_cxt *context);
+static void deparseParam(Param *node, deparse_expr_cxt *context);
+static void deparseArrayRef(ArrayRef *node, deparse_expr_cxt *context);
+static void deparseFuncExpr(FuncExpr *node, deparse_expr_cxt *context);
+static void deparseOpExpr(OpExpr *node, deparse_expr_cxt *context);
 static void deparseOperatorName(StringInfo buf, Form_pg_operator opform);
-static void deparseDistinctExpr(StringInfo buf, DistinctExpr *node,
-					PlannerInfo *root);
-static void deparseScalarArrayOpExpr(StringInfo buf, ScalarArrayOpExpr *node,
-						 PlannerInfo *root);
-static void deparseRelabelType(StringInfo buf, RelabelType *node,
-				   PlannerInfo *root);
-static void deparseBoolExpr(StringInfo buf, BoolExpr *node, PlannerInfo *root);
-static void deparseNullTest(StringInfo buf, NullTest *node, PlannerInfo *root);
-static void deparseArrayExpr(StringInfo buf, ArrayExpr *node,
-				 PlannerInfo *root);
+static void deparseDistinctExpr(DistinctExpr *node, deparse_expr_cxt *context);
+static void deparseScalarArrayOpExpr(ScalarArrayOpExpr *node,
+						 deparse_expr_cxt *context);
+static void deparseRelabelType(RelabelType *node, deparse_expr_cxt *context);
+static void deparseBoolExpr(BoolExpr *node, deparse_expr_cxt *context);
+static void deparseNullTest(NullTest *node, deparse_expr_cxt *context);
+static void deparseArrayExpr(ArrayExpr *node, deparse_expr_cxt *context);
 
 
 /*
  * Examine each restriction clause in baserel's baserestrictinfo list,
- * and classify them into three groups, which are returned as three lists:
- *	- remote_conds contains expressions that can be evaluated remotely,
- *	  and contain no PARAM_EXTERN Params
- *	- param_conds contains expressions that can be evaluated remotely,
- *	  but contain one or more PARAM_EXTERN Params
- *	- local_conds contains all expressions that can't be evaluated remotely
- *
- * In addition, the fourth output parameter param_numbers receives an integer
- * list of the param IDs of the PARAM_EXTERN Params used in param_conds.
- *
- * The reason for segregating param_conds is mainly that it's difficult to
- * use such conditions in remote EXPLAIN.  We could do it, but unless the
- * planner has been given representative values for all the Params, we'd
- * have to guess at representative values to use in EXPLAIN EXECUTE.
- * So for now we don't include them when doing remote EXPLAIN.
+ * and classify them into two groups, which are returned as two lists:
+ *	- remote_conds contains expressions that can be evaluated remotely
+ *	- local_conds contains expressions that can't be evaluated remotely
  */
 void
 classifyConditions(PlannerInfo *root,
 				   RelOptInfo *baserel,
 				   List **remote_conds,
-				   List **param_conds,
-				   List **local_conds,
-				   List **param_numbers)
+				   List **local_conds)
 {
 	ListCell   *lc;
 
 	*remote_conds = NIL;
-	*param_conds = NIL;
 	*local_conds = NIL;
-	*param_numbers = NIL;
 
 	foreach(lc, baserel->baserestrictinfo)
 	{
 		RestrictInfo *ri = (RestrictInfo *) lfirst(lc);
-		List	   *cur_param_numbers;
 
-		if (is_foreign_expr(root, baserel, ri->clause, &cur_param_numbers))
-		{
-			if (cur_param_numbers == NIL)
-				*remote_conds = lappend(*remote_conds, ri);
-			else
-			{
-				*param_conds = lappend(*param_conds, ri);
-				/* Use list_concat_unique_int to get rid of duplicates */
-				*param_numbers = list_concat_unique_int(*param_numbers,
-														cur_param_numbers);
-			}
-		}
+		if (is_foreign_expr(root, baserel, ri->clause))
+			*remote_conds = lappend(*remote_conds, ri);
 		else
 			*local_conds = lappend(*local_conds, ri);
 	}
@@ -185,20 +161,14 @@ classifyConditions(PlannerInfo *root,
 
 /*
  * Returns true if given expr is safe to evaluate on the foreign server.
- *
- * If result is true, we also return a list of param IDs of PARAM_EXTERN
- * Params appearing in the expr into *param_numbers.
  */
-static bool
+bool
 is_foreign_expr(PlannerInfo *root,
 				RelOptInfo *baserel,
-				Expr *expr,
-				List **param_numbers)
+				Expr *expr)
 {
 	foreign_glob_cxt glob_cxt;
 	foreign_loc_cxt loc_cxt;
-
-	*param_numbers = NIL;		/* default result */
 
 	/*
 	 * Check that the expression consists of nodes that are safe to execute
@@ -206,7 +176,6 @@ is_foreign_expr(PlannerInfo *root,
 	 */
 	glob_cxt.root = root;
 	glob_cxt.foreignrel = baserel;
-	glob_cxt.param_numbers = NIL;
 	loc_cxt.collation = InvalidOid;
 	loc_cxt.state = FDW_COLLATE_NONE;
 	if (!foreign_expr_walker((Node *) expr, &glob_cxt, &loc_cxt))
@@ -226,18 +195,14 @@ is_foreign_expr(PlannerInfo *root,
 	if (contain_mutable_functions((Node *) expr))
 		return false;
 
-	/*
-	 * OK, so return list of param IDs too.
-	 */
-	*param_numbers = glob_cxt.param_numbers;
-
+	/* OK to evaluate on the remote server */
 	return true;
 }
 
 /*
  * Check if expression is safe to execute remotely, and return true if so.
  *
- * In addition, glob_cxt->param_numbers and *outer_cxt are updated.
+ * In addition, *outer_cxt is updated with collation information.
  *
  * We must check that the expression contains only node types we can deparse,
  * that all types/functions/operators are safe to send (which we approximate
@@ -271,19 +236,30 @@ foreign_expr_walker(Node *node,
 				Var		   *var = (Var *) node;
 
 				/*
-				 * Var can be used if it is in the foreign table (we shouldn't
-				 * really see anything else in baserestrict clauses, but let's
-				 * check anyway).
+				 * If the Var is from the foreign table, we consider its
+				 * collation (if any) safe to use.	If it is from another
+				 * table, we treat its collation the same way as we would a
+				 * Param's collation, ie it's not safe for it to have a
+				 * non-default collation.
 				 */
-				if (var->varno != glob_cxt->foreignrel->relid ||
-					var->varlevelsup != 0)
-					return false;
+				if (var->varno == glob_cxt->foreignrel->relid &&
+					var->varlevelsup == 0)
+				{
+					/* Var belongs to foreign table */
+					collation = var->varcollid;
+					state = OidIsValid(collation) ? FDW_COLLATE_SAFE : FDW_COLLATE_NONE;
+				}
+				else
+				{
+					/* Var belongs to some other table */
+					if (var->varcollid != InvalidOid &&
+						var->varcollid != DEFAULT_COLLATION_OID)
+						return false;
 
-				/*
-				 * If Var has a collation, consider that safe to use.
-				 */
-				collation = var->varcollid;
-				state = OidIsValid(collation) ? FDW_COLLATE_SAFE : FDW_COLLATE_NONE;
+					/* We can consider that it doesn't set collation */
+					collation = InvalidOid;
+					state = FDW_COLLATE_NONE;
+				}
 			}
 			break;
 		case T_Const:
@@ -309,29 +285,14 @@ foreign_expr_walker(Node *node,
 				Param	   *p = (Param *) node;
 
 				/*
-				 * Only external parameters can be sent to remote.	(XXX This
-				 * needs to be improved, but at the point where this code
-				 * runs, we should only see PARAM_EXTERN Params anyway.)
-				 */
-				if (p->paramkind != PARAM_EXTERN)
-					return false;
-
-				/*
 				 * Collation handling is same as for Consts.
 				 */
 				if (p->paramcollid != InvalidOid &&
 					p->paramcollid != DEFAULT_COLLATION_OID)
 					return false;
+
 				collation = InvalidOid;
 				state = FDW_COLLATE_NONE;
-
-				/*
-				 * Report IDs of PARAM_EXTERN Params.  We don't bother to
-				 * eliminate duplicate list elements here; classifyConditions
-				 * will do that.
-				 */
-				glob_cxt->param_numbers = lappend_int(glob_cxt->param_numbers,
-													  p->paramid);
 			}
 			break;
 		case T_ArrayRef:
@@ -791,16 +752,37 @@ deparseTargetList(StringInfo buf,
 /*
  * Deparse WHERE clauses in given list of RestrictInfos and append them to buf.
  *
+ * baserel is the foreign table we're planning for.
+ *
  * If no WHERE clause already exists in the buffer, is_first should be true.
+ *
+ * If params is not NULL, it receives a list of Params and other-relation Vars
+ * used in the clauses; these values must be transmitted to the remote server
+ * as parameter values.
+ *
+ * If params is NULL, we're generating the query for EXPLAIN purposes,
+ * so Params and other-relation Vars should be replaced by dummy values.
  */
 void
 appendWhereClause(StringInfo buf,
 				  PlannerInfo *root,
+				  RelOptInfo *baserel,
 				  List *exprs,
-				  bool is_first)
+				  bool is_first,
+				  List **params)
 {
+	deparse_expr_cxt context;
 	int			nestlevel;
 	ListCell   *lc;
+
+	if (params)
+		*params = NIL;			/* initialize result list to empty */
+
+	/* Set up context struct for recursion */
+	context.root = root;
+	context.foreignrel = baserel;
+	context.buf = buf;
+	context.params_list = params;
 
 	/* Make sure any constants in the exprs are printed portably */
 	nestlevel = set_transmission_modes();
@@ -816,7 +798,7 @@ appendWhereClause(StringInfo buf,
 			appendStringInfoString(buf, " AND ");
 
 		appendStringInfoChar(buf, '(');
-		deparseExpr(buf, ri->clause, root);
+		deparseExpr(ri->clause, &context);
 		appendStringInfoChar(buf, ')');
 
 		is_first = false;
@@ -1145,7 +1127,7 @@ deparseStringLiteral(StringInfo buf, const char *val)
 }
 
 /*
- * Deparse given expression into buf.
+ * Deparse given expression into context->buf.
  *
  * This function must support all the same node types that foreign_expr_walker
  * accepts.
@@ -1155,7 +1137,7 @@ deparseStringLiteral(StringInfo buf, const char *val)
  * should be self-parenthesized.
  */
 static void
-deparseExpr(StringInfo buf, Expr *node, PlannerInfo *root)
+deparseExpr(Expr *node, deparse_expr_cxt *context)
 {
 	if (node == NULL)
 		return;
@@ -1163,40 +1145,40 @@ deparseExpr(StringInfo buf, Expr *node, PlannerInfo *root)
 	switch (nodeTag(node))
 	{
 		case T_Var:
-			deparseVar(buf, (Var *) node, root);
+			deparseVar((Var *) node, context);
 			break;
 		case T_Const:
-			deparseConst(buf, (Const *) node, root);
+			deparseConst((Const *) node, context);
 			break;
 		case T_Param:
-			deparseParam(buf, (Param *) node, root);
+			deparseParam((Param *) node, context);
 			break;
 		case T_ArrayRef:
-			deparseArrayRef(buf, (ArrayRef *) node, root);
+			deparseArrayRef((ArrayRef *) node, context);
 			break;
 		case T_FuncExpr:
-			deparseFuncExpr(buf, (FuncExpr *) node, root);
+			deparseFuncExpr((FuncExpr *) node, context);
 			break;
 		case T_OpExpr:
-			deparseOpExpr(buf, (OpExpr *) node, root);
+			deparseOpExpr((OpExpr *) node, context);
 			break;
 		case T_DistinctExpr:
-			deparseDistinctExpr(buf, (DistinctExpr *) node, root);
+			deparseDistinctExpr((DistinctExpr *) node, context);
 			break;
 		case T_ScalarArrayOpExpr:
-			deparseScalarArrayOpExpr(buf, (ScalarArrayOpExpr *) node, root);
+			deparseScalarArrayOpExpr((ScalarArrayOpExpr *) node, context);
 			break;
 		case T_RelabelType:
-			deparseRelabelType(buf, (RelabelType *) node, root);
+			deparseRelabelType((RelabelType *) node, context);
 			break;
 		case T_BoolExpr:
-			deparseBoolExpr(buf, (BoolExpr *) node, root);
+			deparseBoolExpr((BoolExpr *) node, context);
 			break;
 		case T_NullTest:
-			deparseNullTest(buf, (NullTest *) node, root);
+			deparseNullTest((NullTest *) node, context);
 			break;
 		case T_ArrayExpr:
-			deparseArrayExpr(buf, (ArrayExpr *) node, root);
+			deparseArrayExpr((ArrayExpr *) node, context);
 			break;
 		default:
 			elog(ERROR, "unsupported expression type for deparse: %d",
@@ -1206,23 +1188,69 @@ deparseExpr(StringInfo buf, Expr *node, PlannerInfo *root)
 }
 
 /*
- * Deparse given Var node into buf.
+ * Deparse given Var node into context->buf.
+ *
+ * If the Var belongs to the foreign relation, just print its remote name.
+ * Otherwise, it's effectively a Param (and will in fact be a Param at
+ * run time).  Handle it the same way we handle plain Params --- see
+ * deparseParam for comments.
  */
 static void
-deparseVar(StringInfo buf, Var *node, PlannerInfo *root)
+deparseVar(Var *node, deparse_expr_cxt *context)
 {
-	Assert(node->varlevelsup == 0);
-	deparseColumnRef(buf, node->varno, node->varattno, root);
+	StringInfo	buf = context->buf;
+
+	if (node->varno == context->foreignrel->relid &&
+		node->varlevelsup == 0)
+	{
+		/* Var belongs to foreign table */
+		deparseColumnRef(buf, node->varno, node->varattno, context->root);
+	}
+	else
+	{
+		/* Treat like a Param */
+		if (context->params_list)
+		{
+			int			pindex = 0;
+			ListCell   *lc;
+
+			/* find its index in params_list */
+			foreach(lc, *context->params_list)
+			{
+				pindex++;
+				if (equal(node, (Node *) lfirst(lc)))
+					break;
+			}
+			if (lc == NULL)
+			{
+				/* not in list, so add it */
+				pindex++;
+				*context->params_list = lappend(*context->params_list, node);
+			}
+
+			appendStringInfo(buf, "$%d", pindex);
+			appendStringInfo(buf, "::%s",
+							 format_type_with_typemod(node->vartype,
+													  node->vartypmod));
+		}
+		else
+		{
+			appendStringInfo(buf, "(SELECT null::%s)",
+							 format_type_with_typemod(node->vartype,
+													  node->vartypmod));
+		}
+	}
 }
 
 /*
- * Deparse given constant value into buf.
+ * Deparse given constant value into context->buf.
  *
  * This function has to be kept in sync with ruleutils.c's get_const_expr.
  */
 static void
-deparseConst(StringInfo buf, Const *node, PlannerInfo *root)
+deparseConst(Const *node, deparse_expr_cxt *context)
 {
+	StringInfo	buf = context->buf;
 	Oid			typoutput;
 	bool		typIsVarlena;
 	char	   *extval;
@@ -1312,11 +1340,19 @@ deparseConst(StringInfo buf, Const *node, PlannerInfo *root)
 }
 
 /*
- * Deparse given Param node into buf.
+ * Deparse given Param node.
  *
- * We don't need to renumber the parameter ID, because the executor functions
- * in postgres_fdw.c preserve the numbering of PARAM_EXTERN Params.
- * (This might change soon.)
+ * If we're generating the query "for real", add the Param to
+ * context->params_list if it's not already present, and then use its index
+ * in that list as the remote parameter number.
+ *
+ * If we're just generating the query for EXPLAIN, replace the Param with
+ * a dummy expression "(SELECT null::<type>)".	In all extant versions of
+ * Postgres, the planner will see that as an unknown constant value, which is
+ * what we want.  (If we sent a Param, recent versions might try to use the
+ * value supplied for the Param as an estimated or even constant value, which
+ * we don't want.)  This might need adjustment if we ever make the planner
+ * flatten scalar subqueries.
  *
  * Note: we label the Param's type explicitly rather than relying on
  * transmitting a numeric type OID in PQexecParams().  This allows us to
@@ -1324,21 +1360,49 @@ deparseConst(StringInfo buf, Const *node, PlannerInfo *root)
  * do locally --- they need only have the same names.
  */
 static void
-deparseParam(StringInfo buf, Param *node, PlannerInfo *root)
+deparseParam(Param *node, deparse_expr_cxt *context)
 {
-	Assert(node->paramkind == PARAM_EXTERN);
-	appendStringInfo(buf, "$%d", node->paramid);
-	appendStringInfo(buf, "::%s",
-					 format_type_with_typemod(node->paramtype,
-											  node->paramtypmod));
+	StringInfo	buf = context->buf;
+
+	if (context->params_list)
+	{
+		int			pindex = 0;
+		ListCell   *lc;
+
+		/* find its index in params_list */
+		foreach(lc, *context->params_list)
+		{
+			pindex++;
+			if (equal(node, (Node *) lfirst(lc)))
+				break;
+		}
+		if (lc == NULL)
+		{
+			/* not in list, so add it */
+			pindex++;
+			*context->params_list = lappend(*context->params_list, node);
+		}
+
+		appendStringInfo(buf, "$%d", pindex);
+		appendStringInfo(buf, "::%s",
+						 format_type_with_typemod(node->paramtype,
+												  node->paramtypmod));
+	}
+	else
+	{
+		appendStringInfo(buf, "(SELECT null::%s)",
+						 format_type_with_typemod(node->paramtype,
+												  node->paramtypmod));
+	}
 }
 
 /*
  * Deparse an array subscript expression.
  */
 static void
-deparseArrayRef(StringInfo buf, ArrayRef *node, PlannerInfo *root)
+deparseArrayRef(ArrayRef *node, deparse_expr_cxt *context)
 {
+	StringInfo	buf = context->buf;
 	ListCell   *lowlist_item;
 	ListCell   *uplist_item;
 
@@ -1352,11 +1416,11 @@ deparseArrayRef(StringInfo buf, ArrayRef *node, PlannerInfo *root)
 	 * case of subscripting a Var, but otherwise do it.
 	 */
 	if (IsA(node->refexpr, Var))
-		deparseExpr(buf, node->refexpr, root);
+		deparseExpr(node->refexpr, context);
 	else
 	{
 		appendStringInfoChar(buf, '(');
-		deparseExpr(buf, node->refexpr, root);
+		deparseExpr(node->refexpr, context);
 		appendStringInfoChar(buf, ')');
 	}
 
@@ -1367,11 +1431,11 @@ deparseArrayRef(StringInfo buf, ArrayRef *node, PlannerInfo *root)
 		appendStringInfoChar(buf, '[');
 		if (lowlist_item)
 		{
-			deparseExpr(buf, lfirst(lowlist_item), root);
+			deparseExpr(lfirst(lowlist_item), context);
 			appendStringInfoChar(buf, ':');
 			lowlist_item = lnext(lowlist_item);
 		}
-		deparseExpr(buf, lfirst(uplist_item), root);
+		deparseExpr(lfirst(uplist_item), context);
 		appendStringInfoChar(buf, ']');
 	}
 
@@ -1379,11 +1443,12 @@ deparseArrayRef(StringInfo buf, ArrayRef *node, PlannerInfo *root)
 }
 
 /*
- * Deparse given node which represents a function call into buf.
+ * Deparse a function call.
  */
 static void
-deparseFuncExpr(StringInfo buf, FuncExpr *node, PlannerInfo *root)
+deparseFuncExpr(FuncExpr *node, deparse_expr_cxt *context)
 {
+	StringInfo	buf = context->buf;
 	HeapTuple	proctup;
 	Form_pg_proc procform;
 	const char *proname;
@@ -1397,7 +1462,7 @@ deparseFuncExpr(StringInfo buf, FuncExpr *node, PlannerInfo *root)
 	 */
 	if (node->funcformat == COERCE_IMPLICIT_CAST)
 	{
-		deparseExpr(buf, (Expr *) linitial(node->args), root);
+		deparseExpr((Expr *) linitial(node->args), context);
 		return;
 	}
 
@@ -1413,7 +1478,7 @@ deparseFuncExpr(StringInfo buf, FuncExpr *node, PlannerInfo *root)
 		/* Get the typmod if this is a length-coercion function */
 		(void) exprIsLengthCoercion((Node *) node, &coercedTypmod);
 
-		deparseExpr(buf, (Expr *) linitial(node->args), root);
+		deparseExpr((Expr *) linitial(node->args), context);
 		appendStringInfo(buf, "::%s",
 						 format_type_with_typemod(rettype, coercedTypmod));
 		return;
@@ -1458,7 +1523,7 @@ deparseFuncExpr(StringInfo buf, FuncExpr *node, PlannerInfo *root)
 			appendStringInfoString(buf, ", ");
 		if (use_variadic && lnext(arg) == NULL)
 			appendStringInfoString(buf, "VARIADIC ");
-		deparseExpr(buf, (Expr *) lfirst(arg), root);
+		deparseExpr((Expr *) lfirst(arg), context);
 		first = false;
 	}
 	appendStringInfoChar(buf, ')');
@@ -1467,12 +1532,13 @@ deparseFuncExpr(StringInfo buf, FuncExpr *node, PlannerInfo *root)
 }
 
 /*
- * Deparse given operator expression into buf.	To avoid problems around
+ * Deparse given operator expression.	To avoid problems around
  * priority of operations, we always parenthesize the arguments.
  */
 static void
-deparseOpExpr(StringInfo buf, OpExpr *node, PlannerInfo *root)
+deparseOpExpr(OpExpr *node, deparse_expr_cxt *context)
 {
+	StringInfo	buf = context->buf;
 	HeapTuple	tuple;
 	Form_pg_operator form;
 	char		oprkind;
@@ -1497,7 +1563,7 @@ deparseOpExpr(StringInfo buf, OpExpr *node, PlannerInfo *root)
 	if (oprkind == 'r' || oprkind == 'b')
 	{
 		arg = list_head(node->args);
-		deparseExpr(buf, lfirst(arg), root);
+		deparseExpr(lfirst(arg), context);
 		appendStringInfoChar(buf, ' ');
 	}
 
@@ -1509,7 +1575,7 @@ deparseOpExpr(StringInfo buf, OpExpr *node, PlannerInfo *root)
 	{
 		arg = list_tail(node->args);
 		appendStringInfoChar(buf, ' ');
-		deparseExpr(buf, lfirst(arg), root);
+		deparseExpr(lfirst(arg), context);
 	}
 
 	appendStringInfoChar(buf, ')');
@@ -1549,26 +1615,27 @@ deparseOperatorName(StringInfo buf, Form_pg_operator opform)
  * Deparse IS DISTINCT FROM.
  */
 static void
-deparseDistinctExpr(StringInfo buf, DistinctExpr *node, PlannerInfo *root)
+deparseDistinctExpr(DistinctExpr *node, deparse_expr_cxt *context)
 {
+	StringInfo	buf = context->buf;
+
 	Assert(list_length(node->args) == 2);
 
 	appendStringInfoChar(buf, '(');
-	deparseExpr(buf, linitial(node->args), root);
+	deparseExpr(linitial(node->args), context);
 	appendStringInfoString(buf, " IS DISTINCT FROM ");
-	deparseExpr(buf, lsecond(node->args), root);
+	deparseExpr(lsecond(node->args), context);
 	appendStringInfoChar(buf, ')');
 }
 
 /*
- * Deparse given ScalarArrayOpExpr expression into buf.  To avoid problems
+ * Deparse given ScalarArrayOpExpr expression.	To avoid problems
  * around priority of operations, we always parenthesize the arguments.
  */
 static void
-deparseScalarArrayOpExpr(StringInfo buf,
-						 ScalarArrayOpExpr *node,
-						 PlannerInfo *root)
+deparseScalarArrayOpExpr(ScalarArrayOpExpr *node, deparse_expr_cxt *context)
 {
+	StringInfo	buf = context->buf;
 	HeapTuple	tuple;
 	Form_pg_operator form;
 	Expr	   *arg1;
@@ -1588,7 +1655,7 @@ deparseScalarArrayOpExpr(StringInfo buf,
 
 	/* Deparse left operand. */
 	arg1 = linitial(node->args);
-	deparseExpr(buf, arg1, root);
+	deparseExpr(arg1, context);
 	appendStringInfoChar(buf, ' ');
 
 	/* Deparse operator name plus decoration. */
@@ -1597,7 +1664,7 @@ deparseScalarArrayOpExpr(StringInfo buf,
 
 	/* Deparse right operand. */
 	arg2 = lsecond(node->args);
-	deparseExpr(buf, arg2, root);
+	deparseExpr(arg2, context);
 
 	appendStringInfoChar(buf, ')');
 
@@ -1611,11 +1678,11 @@ deparseScalarArrayOpExpr(StringInfo buf,
  * Deparse a RelabelType (binary-compatible cast) node.
  */
 static void
-deparseRelabelType(StringInfo buf, RelabelType *node, PlannerInfo *root)
+deparseRelabelType(RelabelType *node, deparse_expr_cxt *context)
 {
-	deparseExpr(buf, node->arg, root);
+	deparseExpr(node->arg, context);
 	if (node->relabelformat != COERCE_IMPLICIT_CAST)
-		appendStringInfo(buf, "::%s",
+		appendStringInfo(context->buf, "::%s",
 						 format_type_with_typemod(node->resulttype,
 												  node->resulttypmod));
 }
@@ -1627,8 +1694,9 @@ deparseRelabelType(StringInfo buf, RelabelType *node, PlannerInfo *root)
  * into N-argument form, so we'd better be prepared to deal with that.
  */
 static void
-deparseBoolExpr(StringInfo buf, BoolExpr *node, PlannerInfo *root)
+deparseBoolExpr(BoolExpr *node, deparse_expr_cxt *context)
 {
+	StringInfo	buf = context->buf;
 	const char *op = NULL;		/* keep compiler quiet */
 	bool		first;
 	ListCell   *lc;
@@ -1643,7 +1711,7 @@ deparseBoolExpr(StringInfo buf, BoolExpr *node, PlannerInfo *root)
 			break;
 		case NOT_EXPR:
 			appendStringInfoString(buf, "(NOT ");
-			deparseExpr(buf, linitial(node->args), root);
+			deparseExpr(linitial(node->args), context);
 			appendStringInfoChar(buf, ')');
 			return;
 	}
@@ -1654,7 +1722,7 @@ deparseBoolExpr(StringInfo buf, BoolExpr *node, PlannerInfo *root)
 	{
 		if (!first)
 			appendStringInfo(buf, " %s ", op);
-		deparseExpr(buf, (Expr *) lfirst(lc), root);
+		deparseExpr((Expr *) lfirst(lc), context);
 		first = false;
 	}
 	appendStringInfoChar(buf, ')');
@@ -1664,10 +1732,12 @@ deparseBoolExpr(StringInfo buf, BoolExpr *node, PlannerInfo *root)
  * Deparse IS [NOT] NULL expression.
  */
 static void
-deparseNullTest(StringInfo buf, NullTest *node, PlannerInfo *root)
+deparseNullTest(NullTest *node, deparse_expr_cxt *context)
 {
+	StringInfo	buf = context->buf;
+
 	appendStringInfoChar(buf, '(');
-	deparseExpr(buf, node->arg, root);
+	deparseExpr(node->arg, context);
 	if (node->nulltesttype == IS_NULL)
 		appendStringInfoString(buf, " IS NULL)");
 	else
@@ -1678,8 +1748,9 @@ deparseNullTest(StringInfo buf, NullTest *node, PlannerInfo *root)
  * Deparse ARRAY[...] construct.
  */
 static void
-deparseArrayExpr(StringInfo buf, ArrayExpr *node, PlannerInfo *root)
+deparseArrayExpr(ArrayExpr *node, deparse_expr_cxt *context)
 {
+	StringInfo	buf = context->buf;
 	bool		first = true;
 	ListCell   *lc;
 
@@ -1688,7 +1759,7 @@ deparseArrayExpr(StringInfo buf, ArrayExpr *node, PlannerInfo *root)
 	{
 		if (!first)
 			appendStringInfoString(buf, ", ");
-		deparseExpr(buf, lfirst(lc), root);
+		deparseExpr(lfirst(lc), context);
 		first = false;
 	}
 	appendStringInfoChar(buf, ']');

@@ -42,17 +42,20 @@ extern int ExtractConnectionOptions(List *defelems,
 extern void classifyConditions(PlannerInfo *root,
 				   RelOptInfo *baserel,
 				   List **remote_conds,
-				   List **param_conds,
-				   List **local_conds,
-				   List **param_numbers);
+				   List **local_conds);
+extern bool is_foreign_expr(PlannerInfo *root,
+				RelOptInfo *baserel,
+				Expr *expr);
 extern void deparseSelectSql(StringInfo buf,
 				 PlannerInfo *root,
 				 RelOptInfo *baserel,
 				 Bitmapset *attrs_used);
 extern void appendWhereClause(StringInfo buf,
 				  PlannerInfo *root,
+				  RelOptInfo *baserel,
 				  List *exprs,
-				  bool is_first);
+				  bool is_first,
+				  List **params);
 extern void deparseInsertSql(StringInfo buf, PlannerInfo *root,
 				 Index rtindex, Relation rel,
 				 List *targetAttrs, List *returningList);

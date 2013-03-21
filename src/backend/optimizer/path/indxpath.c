@@ -78,6 +78,13 @@ typedef struct
 	Bitmapset  *clauseids;		/* quals+preds represented as a bitmapset */
 } PathClauseUsage;
 
+/* Callback argument for ec_member_matches_indexcol */
+typedef struct
+{
+	IndexOptInfo *index;		/* index we're considering */
+	int			indexcol;		/* index column we want to match to */
+} ec_member_matches_arg;
+
 
 static void consider_index_join_clauses(PlannerInfo *root, RelOptInfo *rel,
 							IndexOptInfo *index,
@@ -162,6 +169,9 @@ static void match_pathkeys_to_index(IndexOptInfo *index, List *pathkeys,
 						List **clause_columns_p);
 static Expr *match_clause_to_ordering_op(IndexOptInfo *index,
 							int indexcol, Expr *clause, Oid pk_opfamily);
+static bool ec_member_matches_indexcol(PlannerInfo *root, RelOptInfo *rel,
+						   EquivalenceClass *ec, EquivalenceMember *em,
+						   void *arg);
 static bool match_boolean_index_clause(Node *clause, int indexcol,
 						   IndexOptInfo *index);
 static bool match_special_index_operator(Expr *clause,
@@ -645,7 +655,7 @@ get_join_index_paths(PlannerInfo *root, RelOptInfo *rel,
 
 		/*
 		 * Add applicable eclass join clauses.  The clauses generated for each
-		 * column are redundant (cf generate_implied_equalities_for_indexcol),
+		 * column are redundant (cf generate_implied_equalities_for_column),
 		 * so we need at most one.  This is the only exception to the general
 		 * rule of using all available index clauses.
 		 */
@@ -1992,18 +2002,22 @@ match_eclass_clauses_to_index(PlannerInfo *root, IndexOptInfo *index,
 
 	for (indexcol = 0; indexcol < index->ncolumns; indexcol++)
 	{
+		ec_member_matches_arg arg;
 		List	   *clauses;
 
 		/* Generate clauses, skipping any that join to lateral_referencers */
-		clauses = generate_implied_equalities_for_indexcol(root,
-														   index,
-														   indexcol,
-														lateral_referencers);
+		arg.index = index;
+		arg.indexcol = indexcol;
+		clauses = generate_implied_equalities_for_column(root,
+														 index->rel,
+												  ec_member_matches_indexcol,
+														 (void *) &arg,
+														 lateral_referencers);
 
 		/*
 		 * We have to check whether the results actually do match the index,
 		 * since for non-btree indexes the EC's equality operators might not
-		 * be in the index opclass (cf eclass_member_matches_indexcol).
+		 * be in the index opclass (cf ec_member_matches_indexcol).
 		 */
 		match_clauses_to_index(index, clauses, clauseset);
 	}
@@ -2682,15 +2696,18 @@ check_partial_indexes(PlannerInfo *root, RelOptInfo *rel)
  ****************************************************************************/
 
 /*
- * eclass_member_matches_indexcol
+ * ec_member_matches_indexcol
  *	  Test whether an EquivalenceClass member matches an index column.
  *
- * This is exported for use by generate_implied_equalities_for_indexcol.
+ * This is a callback for use by generate_implied_equalities_for_column.
  */
-bool
-eclass_member_matches_indexcol(EquivalenceClass *ec, EquivalenceMember *em,
-							   IndexOptInfo *index, int indexcol)
+static bool
+ec_member_matches_indexcol(PlannerInfo *root, RelOptInfo *rel,
+						   EquivalenceClass *ec, EquivalenceMember *em,
+						   void *arg)
 {
+	IndexOptInfo *index = ((ec_member_matches_arg *) arg)->index;
+	int			indexcol = ((ec_member_matches_arg *) arg)->indexcol;
 	Oid			curFamily = index->opfamily[indexcol];
 	Oid			curCollation = index->indexcollations[indexcol];
 
@@ -2701,7 +2718,7 @@ eclass_member_matches_indexcol(EquivalenceClass *ec, EquivalenceMember *em,
 	 * whether clauses generated from the EC could be used with the index, so
 	 * don't check the opfamily.  This might mean we return "true" for a
 	 * useless EC, so we have to recheck the results of
-	 * generate_implied_equalities_for_indexcol; see
+	 * generate_implied_equalities_for_column; see
 	 * match_eclass_clauses_to_index.
 	 */
 	if (index->relam == BTREE_AM_OID &&
