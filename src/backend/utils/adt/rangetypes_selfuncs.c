@@ -154,8 +154,6 @@ rangesel(PG_FUNCTION_ARGS)
 		}
 	}
 
-	typcache = range_get_typcache(fcinfo, vardata.vartype);
-
 	/*
 	 * OK, there's a Var and a Const we're dealing with here.  We need the
 	 * Const to be of same range type as the column, else we can't do anything
@@ -169,6 +167,8 @@ rangesel(PG_FUNCTION_ARGS)
 	 */
 	if (operator == OID_RANGE_CONTAINS_ELEM_OP)
 	{
+		typcache = range_get_typcache(fcinfo, vardata.vartype);
+
 		if (((Const *) other)->consttype == typcache->rngelemtype->type_id)
 		{
 			RangeBound lower, upper;
@@ -185,6 +185,8 @@ rangesel(PG_FUNCTION_ARGS)
 	}
 	else
 	{
+		typcache = range_get_typcache(fcinfo, ((Const *) other)->consttype);
+
 		if (((Const *) other)->consttype == vardata.vartype)
 			constrange = DatumGetRangeType(((Const *) other)->constvalue);
 	}

@@ -286,6 +286,15 @@ RESET enable_seqscan;
 RESET enable_indexscan;
 RESET enable_bitmapscan;
 
+-- test elem <@ range operator
+create table test_range_elem(i int4);
+create index test_range_elem_idx on test_range_elem (i);
+insert into test_range_elem select i from generate_series(1,100) i;
+
+select count(*) from test_range_elem where i <@ int4range(10,50);
+
+drop table test_range_elem;
+
 --
 -- Btree_gist is not included by default, so to test exclusion
 -- constraints with range types, use singleton int ranges for the "="
