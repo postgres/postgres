@@ -6,6 +6,7 @@
  */
 typedef bool (*stream_stop_callback) (XLogRecPtr segendpos, uint32 timeline, bool segment_finished);
 
+extern bool CheckServerVersionForStreaming(PGconn *conn);
 extern bool ReceiveXlogStream(PGconn *conn,
 				  XLogRecPtr startpos,
 				  uint32 timeline,

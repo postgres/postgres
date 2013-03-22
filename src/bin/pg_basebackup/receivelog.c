@@ -437,6 +437,40 @@ sendFeedback(PGconn *conn, XLogRecPtr blockpos, int64 now, bool replyRequested)
 }
 
 /*
+ * Check that the server version we're connected to is supported by
+ * ReceiveXlogStream().
+ *
+ * If it's not, an error message is printed to stderr, and false is returned.
+ */
+bool
+CheckServerVersionForStreaming(PGconn *conn)
+{
+	int			minServerMajor,
+				maxServerMajor;
+	int			serverMajor;
+
+	/*
+	 * The message format used in streaming replication changed in 9.3, so we
+	 * cannot stream from older servers. And we don't support servers newer
+	 * than the client; it might work, but we don't know, so err on the safe
+	 * side.
+	 */
+	minServerMajor = 903;
+	maxServerMajor = PG_VERSION_NUM / 100;
+	serverMajor = PQserverVersion(conn) / 100;
+	if (serverMajor < minServerMajor || serverMajor > maxServerMajor)
+	{
+		const char *serverver = PQparameterStatus(conn, "server_version");
+		fprintf(stderr, _("%s: incompatible server version %s; streaming is only supported with server version %s\n"),
+				progname,
+				serverver ? serverver : "'unknown'",
+				"9.3");
+		return false;
+	}
+	return true;
+}
+
+/*
  * Receive a log stream starting at the specified position.
  *
  * If sysidentifier is specified, validate that both the system
@@ -476,19 +510,11 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 	XLogRecPtr	stoppos;
 
 	/*
-	 * The message format used in streaming replication changed in 9.3, so we
-	 * cannot stream from older servers. Don't know if we would work with
-	 * newer versions, but let's not take the risk.
+	 * The caller should've checked the server version already, but doesn't do
+	 * any harm to check it here too.
 	 */
-	if (PQserverVersion(conn) / 100 != PG_VERSION_NUM / 100)
-	{
-		const char *serverver = PQparameterStatus(conn, "server_version");
-		fprintf(stderr, _("%s: incompatible server version %s; streaming is only supported with server version %s\n"),
-				progname,
-				serverver ? serverver : "'unknown'",
-				PG_MAJORVERSION);
+	if (!CheckServerVersionForStreaming(conn))
 		return false;
-	}
 
 	if (sysidentifier != NULL)
 	{

@@ -229,6 +229,16 @@ StreamLog(void)
 		/* Error message already written in GetConnection() */
 		return;
 
+	if (!CheckServerVersionForStreaming(conn))
+	{
+		/*
+		 * Error message already written in CheckServerVersionForStreaming().
+		 * There's no hope of recovering from a version mismatch, so don't
+		 * retry.
+		 */
+		disconnect_and_exit(1);
+	}
+
 	/*
 	 * Run IDENTIFY_SYSTEM so we can get the timeline and current xlog
 	 * position.
