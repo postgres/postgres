@@ -1305,11 +1305,13 @@ hstore_to_json_loose(PG_FUNCTION_ARGS)
 			{
 				/*
 				 * might be a number. See if we can input it as a numeric
-				 * value
+				 * value. Ignore any actual parsed value.
 				 */
 				char	   *endptr = "junk";
+				long        lval;
 
-				(void) strtol(src->data, &endptr, 10);
+				lval =  strtol(src->data, &endptr, 10);
+				(void) lval;
 				if (*endptr == '\0')
 				{
 					/*
@@ -1321,7 +1323,10 @@ hstore_to_json_loose(PG_FUNCTION_ARGS)
 				else
 				{
 					/* not an int - try a double */
-					(void) strtod(src->data, &endptr);
+					double dval;
+
+					dval = strtod(src->data, &endptr);
+					(void) dval;
 					if (*endptr == '\0')
 						is_number = true;
 				}
