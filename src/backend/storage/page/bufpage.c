@@ -15,7 +15,14 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"
+#include "access/xlog.h"
 
+bool ignore_checksum_failure = false;
+
+static char pageCopyData[BLCKSZ];	/* for checksum calculation */
+static Page pageCopy = pageCopyData;
+
+static uint16 PageCalcChecksum16(Page page, BlockNumber blkno);
 
 /* ----------------------------------------------------------------
  *						Page support functions
@@ -25,6 +32,8 @@
 /*
  * PageInit
  *		Initializes the contents of a page.
+ *		Note that we don't calculate an initial checksum here; that's not done
+ *		until it's time to write.
  */
 void
 PageInit(Page page, Size pageSize, Size specialSize)
@@ -39,7 +48,7 @@ PageInit(Page page, Size pageSize, Size specialSize)
 	/* Make sure all fields of page are zero, as well as unused space */
 	MemSet(p, 0, pageSize);
 
-	/* p->pd_flags = 0;								done by above MemSet */
+	p->pd_flags = 0;
 	p->pd_lower = SizeOfPageHeaderData;
 	p->pd_upper = pageSize - specialSize;
 	p->pd_special = pageSize - specialSize;
@@ -49,8 +58,8 @@ PageInit(Page page, Size pageSize, Size specialSize)
 
 
 /*
- * PageHeaderIsValid
- *		Check that the header fields of a page appear valid.
+ * PageIsVerified
+ *		Check that the page header and checksum (if any) appear valid.
  *
  * This is called when a page has just been read in from disk.	The idea is
  * to cheaply detect trashed pages before we go nuts following bogus item
@@ -67,30 +76,77 @@ PageInit(Page page, Size pageSize, Size specialSize)
  * will clean up such a page and make it usable.
  */
 bool
-PageHeaderIsValid(PageHeader page)
+PageIsVerified(Page page, BlockNumber blkno)
 {
+	PageHeader	p = (PageHeader) page;
 	char	   *pagebytes;
 	int			i;
+	bool		checksum_failure = false;
+	bool		header_sane = false;
+	bool		all_zeroes = false;
+	uint16		checksum;
 
-	/* Check normal case */
-	if (PageGetPageSize(page) == BLCKSZ &&
-		PageGetPageLayoutVersion(page) == PG_PAGE_LAYOUT_VERSION &&
-		(page->pd_flags & ~PD_VALID_FLAG_BITS) == 0 &&
-		page->pd_lower >= SizeOfPageHeaderData &&
-		page->pd_lower <= page->pd_upper &&
-		page->pd_upper <= page->pd_special &&
-		page->pd_special <= BLCKSZ &&
-		page->pd_special == MAXALIGN(page->pd_special))
-		return true;
+	/*
+	 * Don't verify page data unless the page passes basic non-zero test
+	 */
+	if (!PageIsNew(page))
+	{
+		if (DataChecksumsEnabled())
+		{
+			checksum = PageCalcChecksum16(page, blkno);
+
+			if (checksum != p->pd_checksum)
+				checksum_failure = true;
+		}
+
+		/*
+		 * The following checks don't prove the header is correct,
+		 * only that it looks sane enough to allow into the buffer pool.
+		 * Later usage of the block can still reveal problems,
+		 * which is why we offer the checksum option.
+		 */
+		if ((p->pd_flags & ~PD_VALID_FLAG_BITS) == 0 &&
+			 p->pd_lower <= p->pd_upper &&
+			 p->pd_upper <= p->pd_special &&
+			 p->pd_special <= BLCKSZ &&
+			 p->pd_special == MAXALIGN(p->pd_special))
+			header_sane = true;
+
+		if (header_sane && !checksum_failure)
+			return true;
+	}
 
 	/* Check all-zeroes case */
+	all_zeroes = true;
 	pagebytes = (char *) page;
 	for (i = 0; i < BLCKSZ; i++)
 	{
 		if (pagebytes[i] != 0)
-			return false;
+		{
+			all_zeroes = false;
+			break;
+		}
 	}
-	return true;
+
+	if (all_zeroes)
+		return true;
+
+	/*
+	 * Throw a WARNING if the checksum fails, but only after we've checked for
+	 * the all-zeroes case.
+	 */
+	if (checksum_failure)
+	{
+		ereport(WARNING,
+				(ERRCODE_DATA_CORRUPTED,
+				 errmsg("page verification failed, calculated checksum %u but expected %u",
+						checksum, p->pd_checksum)));
+
+		if (header_sane && ignore_checksum_failure)
+			return true;
+	}
+
+	return false;
 }
 
 
@@ -826,4 +882,99 @@ PageIndexMultiDelete(Page page, OffsetNumber *itemnos, int nitems)
 	phdr->pd_upper = upper;
 
 	pfree(itemidbase);
+}
+
+/*
+ * Set checksum for page in shared buffers.
+ *
+ * If checksums are disabled, or if the page is not initialized, just return
+ * the input. Otherwise, we must make a copy of the page before calculating the
+ * checksum, to prevent concurrent modifications (e.g. setting hint bits) from
+ * making the final checksum invalid.
+ *
+ * Returns a pointer to the block-sized data that needs to be written. Uses
+ * statically-allocated memory, so the caller must immediately write the
+ * returned page and not refer to it again.
+ */
+char *
+PageSetChecksumCopy(Page page, BlockNumber blkno)
+{
+	if (PageIsNew(page) || !DataChecksumsEnabled())
+		return (char *) page;
+
+	/*
+	 * We make a copy iff we need to calculate a checksum because other
+	 * backends may set hint bits on this page while we write, which
+	 * would mean the checksum differs from the page contents. It doesn't
+	 * matter if we include or exclude hints during the copy, as long
+	 * as we write a valid page and associated checksum.
+	 */
+	memcpy((char *) pageCopy, (char *) page, BLCKSZ);
+	PageSetChecksumInplace(pageCopy, blkno);
+	return (char *) pageCopy;
+}
+
+/*
+ * Set checksum for page in private memory.
+ *
+ * This is a simpler version of PageSetChecksumCopy(). The more explicit API
+ * allows us to more easily see if we're making the correct call and reduces
+ * the amount of additional code specific to page verification.
+ */
+void
+PageSetChecksumInplace(Page page, BlockNumber blkno)
+{
+	if (PageIsNew(page))
+		return;
+
+	if (DataChecksumsEnabled())
+	{
+		PageHeader	p = (PageHeader) page;
+		p->pd_checksum = PageCalcChecksum16(page, blkno);
+	}
+
+	return;
+}
+
+/*
+ * Calculate checksum for a PostgreSQL Page. This includes the block number (to
+ * detect the case when a page is somehow moved to a different location), the
+ * page header (excluding the checksum itself), and the page data.
+ *
+ * Note that if the checksum validation fails we cannot tell the difference
+ * between a transposed block and failure from direct on-block corruption,
+ * though that is better than just ignoring transposed blocks altogether.
+ */
+static uint16
+PageCalcChecksum16(Page page, BlockNumber blkno)
+{
+	pg_crc32    		crc;
+	PageHeader	p = (PageHeader) page;
+
+	/* only calculate the checksum for properly-initialized pages */
+	Assert(!PageIsNew(page));
+
+	INIT_CRC32(crc);
+
+	/*
+	 * Initialize the checksum calculation with the block number. This helps
+	 * catch corruption from whole blocks being transposed with other whole
+	 * blocks.
+	 */
+	COMP_CRC32(crc, &blkno, sizeof(blkno));
+
+	/*
+	 * Now add in the LSN, which is always the first field on the page.
+	 */
+	COMP_CRC32(crc, page, sizeof(p->pd_lsn));
+
+	/*
+	 * Now add the rest of the page, skipping the pd_checksum field.
+	 */
+	COMP_CRC32(crc, page + sizeof(p->pd_lsn) + sizeof(p->pd_checksum),
+				  BLCKSZ - sizeof(p->pd_lsn) - sizeof(p->pd_checksum));
+
+	FIN_CRC32(crc);
+
+	return (uint16) crc;
 }

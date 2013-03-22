@@ -5754,17 +5754,23 @@ log_heap_freeze(Relation reln, Buffer buffer,
  * being marked all-visible, and vm_buffer is the buffer containing the
  * corresponding visibility map block.	Both should have already been modified
  * and dirtied.
+ *
+ * If checksums are enabled, we also add the heap_buffer to the chain to
+ * protect it from being torn.
  */
 XLogRecPtr
-log_heap_visible(RelFileNode rnode, BlockNumber block, Buffer vm_buffer,
+log_heap_visible(RelFileNode rnode, Buffer heap_buffer, Buffer vm_buffer,
 				 TransactionId cutoff_xid)
 {
 	xl_heap_visible xlrec;
 	XLogRecPtr	recptr;
-	XLogRecData rdata[2];
+	XLogRecData rdata[3];
+
+	Assert(BufferIsValid(heap_buffer));
+	Assert(BufferIsValid(vm_buffer));
 
 	xlrec.node = rnode;
-	xlrec.block = block;
+	xlrec.block = BufferGetBlockNumber(heap_buffer);
 	xlrec.cutoff_xid = cutoff_xid;
 
 	rdata[0].data = (char *) &xlrec;
@@ -5777,6 +5783,17 @@ log_heap_visible(RelFileNode rnode, BlockNumber block, Buffer vm_buffer,
 	rdata[1].buffer = vm_buffer;
 	rdata[1].buffer_std = false;
 	rdata[1].next = NULL;
+
+	if (DataChecksumsEnabled())
+	{
+		rdata[1].next = &(rdata[2]);
+
+		rdata[2].data = NULL;
+		rdata[2].len = 0;
+		rdata[2].buffer = heap_buffer;
+		rdata[2].buffer_std = true;
+		rdata[2].next = NULL;
+	}
 
 	recptr = XLogInsert(RM_HEAP2_ID, XLOG_HEAP2_VISIBLE, rdata);
 
@@ -6139,8 +6156,6 @@ static void
 heap_xlog_visible(XLogRecPtr lsn, XLogRecord *record)
 {
 	xl_heap_visible *xlrec = (xl_heap_visible *) XLogRecGetData(record);
-	Buffer		buffer;
-	Page		page;
 
 	/*
 	 * If there are any Hot Standby transactions running that have an xmin
@@ -6155,39 +6170,56 @@ heap_xlog_visible(XLogRecPtr lsn, XLogRecord *record)
 		ResolveRecoveryConflictWithSnapshot(xlrec->cutoff_xid, xlrec->node);
 
 	/*
-	 * Read the heap page, if it still exists.	If the heap file has been
-	 * dropped or truncated later in recovery, we don't need to update the
-	 * page, but we'd better still update the visibility map.
+	 * If heap block was backed up, restore it. This can only happen with
+	 * checksums enabled.
 	 */
-	buffer = XLogReadBufferExtended(xlrec->node, MAIN_FORKNUM, xlrec->block,
-									RBM_NORMAL);
-	if (BufferIsValid(buffer))
+	if (record->xl_info & XLR_BKP_BLOCK(1))
 	{
-		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-
-		page = (Page) BufferGetPage(buffer);
+		Assert(DataChecksumsEnabled());
+		(void) RestoreBackupBlock(lsn, record, 1, false, false);
+	}
+	else
+	{
+		Buffer		buffer;
+		Page		page;
 
 		/*
-		 * We don't bump the LSN of the heap page when setting the visibility
-		 * map bit, because that would generate an unworkable volume of
-		 * full-page writes.  This exposes us to torn page hazards, but since
-		 * we're not inspecting the existing page contents in any way, we
-		 * don't care.
-		 *
-		 * However, all operations that clear the visibility map bit *do* bump
-		 * the LSN, and those operations will only be replayed if the XLOG LSN
-		 * follows the page LSN.  Thus, if the page LSN has advanced past our
-		 * XLOG record's LSN, we mustn't mark the page all-visible, because
-		 * the subsequent update won't be replayed to clear the flag.
+		 * Read the heap page, if it still exists. If the heap file has been
+		 * dropped or truncated later in recovery, we don't need to update the
+		 * page, but we'd better still update the visibility map.
 		 */
-		if (lsn > PageGetLSN(page))
+		buffer = XLogReadBufferExtended(xlrec->node, MAIN_FORKNUM,
+										xlrec->block, RBM_NORMAL);
+		if (BufferIsValid(buffer))
 		{
-			PageSetAllVisible(page);
-			MarkBufferDirty(buffer);
-		}
+			LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 
-		/* Done with heap page. */
-		UnlockReleaseBuffer(buffer);
+			page = (Page) BufferGetPage(buffer);
+
+			/*
+			 * We don't bump the LSN of the heap page when setting the
+			 * visibility map bit (unless checksums are enabled, in which case
+			 * we must), because that would generate an unworkable volume of
+			 * full-page writes.  This exposes us to torn page hazards, but
+			 * since we're not inspecting the existing page contents in any
+			 * way, we don't care.
+			 *
+			 * However, all operations that clear the visibility map bit *do*
+			 * bump the LSN, and those operations will only be replayed if the
+			 * XLOG LSN follows the page LSN.  Thus, if the page LSN has
+			 * advanced past our XLOG record's LSN, we mustn't mark the page
+			 * all-visible, because the subsequent update won't be replayed to
+			 * clear the flag.
+			 */
+			if (lsn > PageGetLSN(page))
+			{
+				PageSetAllVisible(page);
+				MarkBufferDirty(buffer);
+			}
+
+			/* Done with heap page. */
+			UnlockReleaseBuffer(buffer);
+		}
 	}
 
 	/*
@@ -6218,7 +6250,7 @@ heap_xlog_visible(XLogRecPtr lsn, XLogRecord *record)
 		 * real harm is done; and the next VACUUM will fix it.
 		 */
 		if (lsn > PageGetLSN(BufferGetPage(vmbuffer)))
-			visibilitymap_set(reln, xlrec->block, lsn, vmbuffer,
+			visibilitymap_set(reln, xlrec->block, InvalidBuffer, lsn, vmbuffer,
 							  xlrec->cutoff_xid);
 
 		ReleaseBuffer(vmbuffer);

@@ -169,7 +169,9 @@ Recovery
 --------
 
 The FSM is not explicitly WAL-logged. Instead, we rely on a bunch of
-self-correcting measures to repair possible corruption.
+self-correcting measures to repair possible corruption. As a result when
+we write to the FSM we treat that as a hint and thus use MarkBufferDirtyHint()
+rather than MarkBufferDirty().
 
 First of all, whenever a value is set on an FSM page, the root node of the
 page is compared against the new value after bubbling up the change is

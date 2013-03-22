@@ -284,7 +284,7 @@ restart:
 				exclusive_lock_held = true;
 			}
 			fsm_rebuild_page(page);
-			MarkBufferDirty(buf);
+			MarkBufferDirtyHint(buf);
 			goto restart;
 		}
 	}

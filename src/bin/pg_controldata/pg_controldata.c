@@ -287,5 +287,7 @@ main(int argc, char *argv[])
 		   (ControlFile.float4ByVal ? _("by value") : _("by reference")));
 	printf(_("Float8 argument passing:              %s\n"),
 		   (ControlFile.float8ByVal ? _("by value") : _("by reference")));
+	printf(_("Data page checksums:                  %s\n"),
+		   (ControlFile.data_checksums ? _("enabled") : _("disabled")));
 	return 0;
 }

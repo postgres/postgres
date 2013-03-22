@@ -216,7 +216,7 @@ XLogRecordPageWithFreeSpace(RelFileNode rnode, BlockNumber heapBlk,
 		PageInit(page, BLCKSZ, 0);
 
 	if (fsm_set_avail(page, slot, new_cat))
-		MarkBufferDirty(buf);
+		MarkBufferDirtyHint(buf);
 	UnlockReleaseBuffer(buf);
 }
 
@@ -286,7 +286,7 @@ FreeSpaceMapTruncateRel(Relation rel, BlockNumber nblocks)
 			return;				/* nothing to do; the FSM was already smaller */
 		LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 		fsm_truncate_avail(BufferGetPage(buf), first_removed_slot);
-		MarkBufferDirty(buf);
+		MarkBufferDirtyHint(buf);
 		UnlockReleaseBuffer(buf);
 
 		new_nfsmblocks = fsm_logical_to_physical(first_removed_address) + 1;
@@ -583,6 +583,8 @@ fsm_extend(Relation rel, BlockNumber fsm_nblocks)
 
 	while (fsm_nblocks_now < fsm_nblocks)
 	{
+		PageSetChecksumInplace(pg, fsm_nblocks_now);
+
 		smgrextend(rel->rd_smgr, FSM_FORKNUM, fsm_nblocks_now,
 				   (char *) pg, false);
 		fsm_nblocks_now++;
@@ -617,7 +619,7 @@ fsm_set_and_search(Relation rel, FSMAddress addr, uint16 slot,
 	page = BufferGetPage(buf);
 
 	if (fsm_set_avail(page, slot, newValue))
-		MarkBufferDirty(buf);
+		MarkBufferDirtyHint(buf);
 
 	if (minValue != 0)
 	{
@@ -768,7 +770,7 @@ fsm_vacuum_page(Relation rel, FSMAddress addr, bool *eof_p)
 			{
 				LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 				fsm_set_avail(BufferGetPage(buf), slot, child_avail);
-				MarkBufferDirty(buf);
+				MarkBufferDirtyHint(buf);
 				LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 			}
 		}

@@ -407,11 +407,15 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 					 */
 					ItemIdMarkDead(curitemid);
 					opaque->btpo_flags |= BTP_HAS_GARBAGE;
-					/* be sure to mark the proper buffer dirty... */
+
+					/*
+					 * Mark buffer with a dirty hint, since state is not
+					 * crucial. Be sure to mark the proper buffer dirty.
+					 */
 					if (nbuf != InvalidBuffer)
-						SetBufferCommitInfoNeedsSave(nbuf);
+						MarkBufferDirtyHint(nbuf);
 					else
-						SetBufferCommitInfoNeedsSave(buf);
+						MarkBufferDirtyHint(buf);
 				}
 			}
 		}

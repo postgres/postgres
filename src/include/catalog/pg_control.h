@@ -21,7 +21,7 @@
 
 
 /* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	935
+#define PG_CONTROL_VERSION	936
 
 /*
  * Body of CheckPoint XLOG records.  This is declared here because we keep
@@ -65,8 +65,9 @@ typedef struct CheckPoint
 #define XLOG_BACKUP_END					0x50
 #define XLOG_PARAMETER_CHANGE			0x60
 #define XLOG_RESTORE_POINT				0x70
-#define XLOG_FPW_CHANGE				0x80
+#define XLOG_FPW_CHANGE					0x80
 #define XLOG_END_OF_RECOVERY			0x90
+#define XLOG_HINT						0xA0
 
 
 /*
@@ -211,6 +212,9 @@ typedef struct ControlFileData
 	/* flags indicating pass-by-value status of various types */
 	bool		float4ByVal;	/* float4 pass-by-value? */
 	bool		float8ByVal;	/* float8, int8, etc pass-by-value? */
+
+	/* Are data pages protected by checksums? */
+	bool		data_checksums;
 
 	/* CRC of all above ... MUST BE LAST! */
 	pg_crc32	crc;

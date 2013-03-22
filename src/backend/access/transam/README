@@ -437,6 +437,8 @@ critical section.)
 
 4. Mark the shared buffer(s) as dirty with MarkBufferDirty().  (This must
 happen before the WAL record is inserted; see notes in SyncOneBuffer().)
+Note that marking a buffer dirty with MarkBufferDirty() should only
+happen iff you write a WAL record; see Writing Hints below.
 
 5. If the relation requires WAL-logging, build a WAL log record and pass it
 to XLogInsert(); then update the page's LSN using the returned XLOG
@@ -583,6 +585,26 @@ If no matching insert has been found by the time the WAL replay ends, the
 replay code has to do the insertion on its own to restore the index to
 consistency.  Such insertions occur after WAL is operational, so they can
 and should write WAL records for the additional generated actions.
+
+Writing Hints
+-------------
+
+In some cases, we write additional information to data blocks without
+writing a preceding WAL record. This should only happen iff the data can
+be reconstructed later following a crash and the action is simply a way
+of optimising for performance. When a hint is written we use
+MarkBufferDirtyHint() to mark the block dirty.
+
+If the buffer is clean and checksums are in use then
+MarkBufferDirtyHint() inserts an XLOG_HINT record to ensure that we
+take a full page image that includes the hint. We do this to avoid
+a partial page write, when we write the dirtied page. WAL is not
+written during recovery, so we simply skip dirtying blocks because
+of hints when in recovery.
+
+If you do decide to optimise away a WAL record, then any calls to
+MarkBufferDirty() must be replaced by MarkBufferDirtyHint(),
+otherwise you will expose the risk of partial page writes.
 
 
 Write-Ahead Logging for Filesystem Actions

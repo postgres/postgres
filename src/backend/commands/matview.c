@@ -76,6 +76,8 @@ SetRelationIsScannable(Relation relation)
 		log_newpage(&(relation->rd_node), MAIN_FORKNUM, 0, page);
 
 	RelationOpenSmgr(relation);
+
+	PageSetChecksumInplace(page, 0);
 	smgrextend(relation->rd_smgr, MAIN_FORKNUM, 0, (char *) page, true);
 
 	pfree(page);

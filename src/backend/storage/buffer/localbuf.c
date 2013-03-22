@@ -196,16 +196,19 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 	 */
 	if (bufHdr->flags & BM_DIRTY)
 	{
-		SMgrRelation oreln;
+		SMgrRelation	oreln;
+		Page			localpage = (char *) LocalBufHdrGetBlock(bufHdr);
 
 		/* Find smgr relation for buffer */
 		oreln = smgropen(bufHdr->tag.rnode, MyBackendId);
+
+		PageSetChecksumInplace(localpage, bufHdr->tag.blockNum);
 
 		/* And write... */
 		smgrwrite(oreln,
 				  bufHdr->tag.forkNum,
 				  bufHdr->tag.blockNum,
-				  (char *) LocalBufHdrGetBlock(bufHdr),
+				  localpage,
 				  false);
 
 		/* Mark not-dirty now in case we error out below */

@@ -202,6 +202,7 @@ typedef struct
 	uint32		toast;
 	bool		date_is_int;
 	bool		float8_pass_by_value;
+	bool		data_checksums;
 	char	   *lc_collate;
 	char	   *lc_ctype;
 	char	   *encoding;

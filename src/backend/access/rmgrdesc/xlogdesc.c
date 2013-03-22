@@ -81,6 +81,10 @@ xlog_desc(StringInfo buf, uint8 xl_info, char *rec)
 		appendStringInfo(buf, "restore point: %s", xlrec->rp_name);
 
 	}
+	else if (info == XLOG_HINT)
+	{
+		appendStringInfo(buf, "page hint");
+	}
 	else if (info == XLOG_BACKUP_END)
 	{
 		XLogRecPtr	startpoint;
