@@ -801,6 +801,9 @@ postgresGetForeignPlan(PlannerInfo *root,
 	 * The extra roundtrips involved in trying to duplicate the local
 	 * semantics exactly don't seem worthwhile (see also comments for
 	 * RowMarkType).
+	 *
+	 * Note: because we actually run the query as a cursor, this assumes that
+	 * DECLARE CURSOR ... FOR UPDATE is supported, which it isn't before 8.3.
 	 */
 	if (baserel->relid == root->parse->resultRelation &&
 		(root->parse->commandType == CMD_UPDATE ||

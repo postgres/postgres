@@ -326,9 +326,10 @@ configure_remote_session(PGconn *conn)
 	 * anyway.	However it makes the regression test outputs more predictable.
 	 *
 	 * We don't risk setting remote zone equal to ours, since the remote
-	 * server might use a different timezone database.
+	 * server might use a different timezone database.  Instead, use UTC
+	 * (quoted, because very old servers are picky about case).
 	 */
-	do_sql_command(conn, "SET timezone = UTC");
+	do_sql_command(conn, "SET timezone = 'UTC'");
 
 	/*
 	 * Set values needed to ensure unambiguous data output from remote.  (This
@@ -542,8 +543,14 @@ pgfdw_xact_callback(XactEvent event, void *arg)
 				 * prepared statements, do a DEALLOCATE ALL to make sure we
 				 * get rid of all prepared statements.	This is annoying and
 				 * not terribly bulletproof, but it's probably not worth
-				 * trying harder.  We intentionally ignore any errors in the
-				 * DEALLOCATE.
+				 * trying harder.
+				 *
+				 * DEALLOCATE ALL only exists in 8.3 and later, so this
+				 * constrains how old a server postgres_fdw can communicate
+				 * with.  We intentionally ignore errors in the DEALLOCATE, so
+				 * that we can hobble along to some extent with older servers
+				 * (leaking prepared statements as we go; but we don't really
+				 * support update operations pre-8.3 anyway).
 				 */
 				if (entry->have_prep_stmt && entry->have_error)
 				{
