@@ -84,7 +84,7 @@ PageIsVerified(Page page, BlockNumber blkno)
 	bool		checksum_failure = false;
 	bool		header_sane = false;
 	bool		all_zeroes = false;
-	uint16		checksum;
+	uint16		checksum = 0;
 
 	/*
 	 * Don't verify page data unless the page passes basic non-zero test
