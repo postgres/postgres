@@ -53,6 +53,7 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
@@ -86,7 +87,8 @@ typedef struct storeInfo
  */
 static Datum dblink_record_internal(FunctionCallInfo fcinfo, bool is_async);
 static void prepTuplestoreResult(FunctionCallInfo fcinfo);
-static void materializeResult(FunctionCallInfo fcinfo, PGresult *res);
+static void materializeResult(FunctionCallInfo fcinfo, PGconn *conn,
+				  PGresult *res);
 static void materializeQueryResult(FunctionCallInfo fcinfo,
 					   PGconn *conn,
 					   const char *conname,
@@ -118,6 +120,8 @@ static void validate_pkattnums(Relation rel,
 				   int **pkattnums, int *pknumatts);
 static bool is_valid_dblink_option(const PQconninfoOption *options,
 					   const char *option, Oid context);
+static int	applyRemoteGucs(PGconn *conn);
+static void restoreLocalGucs(int nestlevel);
 
 /* Global */
 static remoteConn *pconn = NULL;
@@ -605,7 +609,7 @@ dblink_fetch(PG_FUNCTION_ARGS)
 				 errmsg("cursor \"%s\" does not exist", curname)));
 	}
 
-	materializeResult(fcinfo, res);
+	materializeResult(fcinfo, conn, res);
 	return (Datum) 0;
 }
 
@@ -750,7 +754,7 @@ dblink_record_internal(FunctionCallInfo fcinfo, bool is_async)
 				}
 				else
 				{
-					materializeResult(fcinfo, res);
+					materializeResult(fcinfo, conn, res);
 				}
 			}
 		}
@@ -806,7 +810,7 @@ prepTuplestoreResult(FunctionCallInfo fcinfo)
  * The PGresult will be released in this function.
  */
 static void
-materializeResult(FunctionCallInfo fcinfo, PGresult *res)
+materializeResult(FunctionCallInfo fcinfo, PGconn *conn, PGresult *res)
 {
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 
@@ -816,7 +820,7 @@ materializeResult(FunctionCallInfo fcinfo, PGresult *res)
 	PG_TRY();
 	{
 		TupleDesc	tupdesc;
-		bool		is_sql_cmd = false;
+		bool		is_sql_cmd;
 		int			ntuples;
 		int			nfields;
 
@@ -877,12 +881,17 @@ materializeResult(FunctionCallInfo fcinfo, PGresult *res)
 		if (ntuples > 0)
 		{
 			AttInMetadata *attinmeta;
+			int			nestlevel = -1;
 			Tuplestorestate *tupstore;
 			MemoryContext oldcontext;
 			int			row;
 			char	  **values;
 
 			attinmeta = TupleDescGetAttInMetadata(tupdesc);
+
+			/* Set GUCs to ensure we read GUC-sensitive data types correctly */
+			if (!is_sql_cmd)
+				nestlevel = applyRemoteGucs(conn);
 
 			oldcontext = MemoryContextSwitchTo(
 									rsinfo->econtext->ecxt_per_query_memory);
@@ -919,6 +928,9 @@ materializeResult(FunctionCallInfo fcinfo, PGresult *res)
 				tuple = BuildTupleFromCStrings(attinmeta, values);
 				tuplestore_puttuple(tupstore, tuple);
 			}
+
+			/* clean up GUC settings, if we changed any */
+			restoreLocalGucs(nestlevel);
 
 			/* clean up and return the tuplestore */
 			tuplestore_donestoring(tupstore);
@@ -1053,6 +1065,7 @@ static PGresult *
 storeQueryResult(storeInfo *sinfo, PGconn *conn, const char *sql)
 {
 	bool		first = true;
+	int			nestlevel = -1;
 	PGresult   *res;
 
 	if (!PQsendQuery(conn, sql))
@@ -1072,6 +1085,15 @@ storeQueryResult(storeInfo *sinfo, PGconn *conn, const char *sql)
 		if (PQresultStatus(sinfo->cur_res) == PGRES_SINGLE_TUPLE)
 		{
 			/* got one row from possibly-bigger resultset */
+
+			/*
+			 * Set GUCs to ensure we read GUC-sensitive data types correctly.
+			 * We shouldn't do this until we have a row in hand, to ensure
+			 * libpq has seen any earlier ParameterStatus protocol messages.
+			 */
+			if (first && nestlevel < 0)
+				nestlevel = applyRemoteGucs(conn);
+
 			storeRow(sinfo, sinfo->cur_res, first);
 
 			PQclear(sinfo->cur_res);
@@ -1091,6 +1113,9 @@ storeQueryResult(storeInfo *sinfo, PGconn *conn, const char *sql)
 			first = true;
 		}
 	}
+
+	/* clean up GUC settings, if we changed any */
+	restoreLocalGucs(nestlevel);
 
 	/* return last_res */
 	res = sinfo->last_res;
@@ -2897,4 +2922,74 @@ is_valid_dblink_option(const PQconninfoOption *options, const char *option,
 	}
 
 	return true;
+}
+
+/*
+ * Copy the remote session's values of GUCs that affect datatype I/O
+ * and apply them locally in a new GUC nesting level.  Returns the new
+ * nestlevel (which is needed by restoreLocalGucs to undo the settings),
+ * or -1 if no new nestlevel was needed.
+ *
+ * We use the equivalent of a function SET option to allow the settings to
+ * persist only until the caller calls restoreLocalGucs.  If an error is
+ * thrown in between, guc.c will take care of undoing the settings.
+ */
+static int
+applyRemoteGucs(PGconn *conn)
+{
+	static const char *const GUCsAffectingIO[] = {
+		"DateStyle",
+		"IntervalStyle"
+	};
+
+	int			nestlevel = -1;
+	int			i;
+
+	for (i = 0; i < lengthof(GUCsAffectingIO); i++)
+	{
+		const char *gucName = GUCsAffectingIO[i];
+		const char *remoteVal = PQparameterStatus(conn, gucName);
+		const char *localVal;
+
+		/*
+		 * If the remote server is pre-8.4, it won't have IntervalStyle, but
+		 * that's okay because its output format won't be ambiguous.  So just
+		 * skip the GUC if we don't get a value for it.  (We might eventually
+		 * need more complicated logic with remote-version checks here.)
+		 */
+		if (remoteVal == NULL)
+			continue;
+
+		/*
+		 * Avoid GUC-setting overhead if the remote and local GUCs already
+		 * have the same value.
+		 */
+		localVal = GetConfigOption(gucName, false, false);
+		Assert(localVal != NULL);
+
+		if (strcmp(remoteVal, localVal) == 0)
+			continue;
+
+		/* Create new GUC nest level if we didn't already */
+		if (nestlevel < 0)
+			nestlevel = NewGUCNestLevel();
+
+		/* Apply the option (this will throw error on failure) */
+		(void) set_config_option(gucName, remoteVal,
+								 PGC_USERSET, PGC_S_SESSION,
+								 GUC_ACTION_SAVE, true, 0);
+	}
+
+	return nestlevel;
+}
+
+/*
+ * Restore local GUCs after they have been overlaid with remote settings.
+ */
+static void
+restoreLocalGucs(int nestlevel)
+{
+	/* Do nothing if no new nestlevel was created */
+	if (nestlevel > 0)
+		AtEOXact_GUC(true, nestlevel);
 }
