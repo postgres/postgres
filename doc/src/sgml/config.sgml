@@ -1949,7 +1949,7 @@ include 'filename'
       </indexterm>
       <listitem>
        <para>
-        <varname>commit_delay</varname> adds a time delay, set in
+        <varname>commit_delay</varname> adds a time delay, measured in
         microseconds, before a WAL flush is initiated.  This can improve
         group commit throughput by allowing a larger number of transactions
         to commit via a single WAL flush, if system load is high enough
@@ -1959,7 +1959,12 @@ include 'filename'
         flush.  Because the delay is just wasted if no other transactions
         become ready to commit, a delay is only performed if at least
         <varname>commit_siblings</varname> other transactions are active
-        immediately before a flush would otherwise have been initiated.
+        when a flush is about to be initiated.  Also, no delays are
+        performed if <varname>fsync</varname> is disabled.
+        The default <varname>commit_delay</> is zero (no delay).
+        Only superusers can change this setting.
+       </para>
+       <para>
         In <productname>PostgreSQL</> releases prior to 9.3,
         <varname>commit_delay</varname> behaved differently and was much
         less effective: it affected only commits, rather than all WAL flushes,
@@ -1967,9 +1972,7 @@ include 'filename'
         was completed sooner.  Beginning in <productname>PostgreSQL</> 9.3,
         the first process that becomes ready to flush waits for the configured
         interval, while subsequent processes wait only until the leader
-        completes the flush.  The default <varname>commit_delay</> is zero
-        (no delay).  No delays are performed unless <varname>fsync</varname>
-        is enabled.
+        completes the flush operation.
        </para>
       </listitem>
      </varlistentry>
