@@ -44,6 +44,9 @@ CREATE [ UNLOGGED ] MATERIALIZED VIEW <replaceable>table_name</replaceable>
    <command>CREATE MATERIALIZED VIEW</command> is similar to
    <command>CREATE TABLE AS</>, except that it also remembers the query used
    to initialize the view, so that it can be refreshed later upon demand.
+   A materialized view has many of the same properties as a table, but there
+   is no support for temporary materialized views or automatic generation of
+   OIDs.
   </para>
  </refsect1>
 
@@ -88,7 +91,9 @@ CREATE [ UNLOGGED ] MATERIALIZED VIEW <replaceable>table_name</replaceable>
       This clause specifies optional storage parameters for the new
       materialized view; see <xref linkend="sql-createtable-storage-parameters"
       endterm="sql-createtable-storage-parameters-title"> for more
-      information.
+      information.  All parameters supported for <literal>CREATE
+      TABLE</literal> are also supported for <literal>CREATE MATERIALIZED
+      VIEW</literal> with the exception of <literal>OIDS</literal>.
       See <xref linkend="sql-createtable"> for more information.
      </para>
     </listitem>

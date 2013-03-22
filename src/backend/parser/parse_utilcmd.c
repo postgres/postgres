@@ -199,11 +199,14 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	{
 		cxt.stmtType = "CREATE FOREIGN TABLE";
 		cxt.isforeign = true;
+		cxt.hasoids = interpretOidsOption(stmt->options,
+										  RELKIND_FOREIGN_TABLE);
 	}
 	else
 	{
 		cxt.stmtType = "CREATE TABLE";
 		cxt.isforeign = false;
+		cxt.hasoids = interpretOidsOption(stmt->options, RELKIND_RELATION);
 	}
 	cxt.relation = stmt->relation;
 	cxt.rel = NULL;
@@ -217,7 +220,6 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	cxt.blist = NIL;
 	cxt.alist = NIL;
 	cxt.pkey = NULL;
-	cxt.hasoids = interpretOidsOption(stmt->options);
 
 	Assert(!stmt->ofTypename || !stmt->inhRelations);	/* grammar enforces */
 

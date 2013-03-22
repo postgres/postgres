@@ -559,7 +559,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 	 */
 	descriptor = BuildDescForRelation(schema);
 
-	localHasOids = interpretOidsOption(stmt->options);
+	localHasOids = interpretOidsOption(stmt->options, relkind);
 	descriptor->tdhasoid = (localHasOids || parentOidCount > 0);
 
 	/*

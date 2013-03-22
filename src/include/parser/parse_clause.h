@@ -20,7 +20,7 @@ extern void transformFromClause(ParseState *pstate, List *frmList);
 extern int setTargetTable(ParseState *pstate, RangeVar *relation,
 			   bool inh, bool alsoSource, AclMode requiredPerms);
 extern bool interpretInhOption(InhOption inhOpt);
-extern bool interpretOidsOption(List *defList);
+extern bool interpretOidsOption(List *defList, char relkind);
 
 extern Node *transformWhereClause(ParseState *pstate, Node *clause,
 					 ParseExprKind exprKind, const char *constructName);
