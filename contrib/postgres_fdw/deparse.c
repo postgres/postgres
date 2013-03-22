@@ -106,10 +106,12 @@ static void deparseTargetList(StringInfo buf,
 				  PlannerInfo *root,
 				  Index rtindex,
 				  Relation rel,
-				  Bitmapset *attrs_used);
+				  Bitmapset *attrs_used,
+				  List **retrieved_attrs);
 static void deparseReturningList(StringInfo buf, PlannerInfo *root,
 					 Index rtindex, Relation rel,
-					 List *returningList);
+					 List *returningList,
+					 List **retrieved_attrs);
 static void deparseColumnRef(StringInfo buf, int varno, int varattno,
 				 PlannerInfo *root);
 static void deparseRelation(StringInfo buf, Relation rel);
@@ -652,12 +654,16 @@ is_builtin(Oid oid)
  * Construct a simple SELECT statement that retrieves desired columns
  * of the specified foreign table, and append it to "buf".	The output
  * contains just "SELECT ... FROM tablename".
+ *
+ * We also create an integer List of the columns being retrieved, which is
+ * returned to *retrieved_attrs.
  */
 void
 deparseSelectSql(StringInfo buf,
 				 PlannerInfo *root,
 				 RelOptInfo *baserel,
-				 Bitmapset *attrs_used)
+				 Bitmapset *attrs_used,
+				 List **retrieved_attrs)
 {
 	RangeTblEntry *rte = planner_rt_fetch(baserel->relid, root);
 	Relation	rel;
@@ -672,7 +678,8 @@ deparseSelectSql(StringInfo buf,
 	 * Construct SELECT list
 	 */
 	appendStringInfoString(buf, "SELECT ");
-	deparseTargetList(buf, root, baserel->relid, rel, attrs_used);
+	deparseTargetList(buf, root, baserel->relid, rel, attrs_used,
+					  retrieved_attrs);
 
 	/*
 	 * Construct FROM clause
@@ -687,23 +694,23 @@ deparseSelectSql(StringInfo buf,
  * Emit a target list that retrieves the columns specified in attrs_used.
  * This is used for both SELECT and RETURNING targetlists.
  *
- * We list attributes in order of the foreign table's columns, but replace
- * any attributes that need not be fetched with NULL constants.  (We can't
- * just omit such attributes, or we'll lose track of which columns are
- * which at runtime.)  Note however that any dropped columns are ignored.
- * Also, if ctid needs to be retrieved, it's added at the end.
+ * The tlist text is appended to buf, and we also create an integer List
+ * of the columns being retrieved, which is returned to *retrieved_attrs.
  */
 static void
 deparseTargetList(StringInfo buf,
 				  PlannerInfo *root,
 				  Index rtindex,
 				  Relation rel,
-				  Bitmapset *attrs_used)
+				  Bitmapset *attrs_used,
+				  List **retrieved_attrs)
 {
 	TupleDesc	tupdesc = RelationGetDescr(rel);
 	bool		have_wholerow;
 	bool		first;
 	int			i;
+
+	*retrieved_attrs = NIL;
 
 	/* If there's a whole-row reference, we'll need all the columns. */
 	have_wholerow = bms_is_member(0 - FirstLowInvalidHeapAttributeNumber,
@@ -718,16 +725,18 @@ deparseTargetList(StringInfo buf,
 		if (attr->attisdropped)
 			continue;
 
-		if (!first)
-			appendStringInfoString(buf, ", ");
-		first = false;
-
 		if (have_wholerow ||
 			bms_is_member(i - FirstLowInvalidHeapAttributeNumber,
 						  attrs_used))
+		{
+			if (!first)
+				appendStringInfoString(buf, ", ");
+			first = false;
+
 			deparseColumnRef(buf, rtindex, i, root);
-		else
-			appendStringInfoString(buf, "NULL");
+
+			*retrieved_attrs = lappend_int(*retrieved_attrs, i);
+		}
 	}
 
 	/*
@@ -742,6 +751,9 @@ deparseTargetList(StringInfo buf,
 		first = false;
 
 		appendStringInfoString(buf, "ctid");
+
+		*retrieved_attrs = lappend_int(*retrieved_attrs,
+									   SelfItemPointerAttributeNumber);
 	}
 
 	/* Don't generate bad syntax if no undropped columns */
@@ -809,11 +821,16 @@ appendWhereClause(StringInfo buf,
 
 /*
  * deparse remote INSERT statement
+ *
+ * The statement text is appended to buf, and we also create an integer List
+ * of the columns being retrieved by RETURNING (if any), which is returned
+ * to *retrieved_attrs.
  */
 void
 deparseInsertSql(StringInfo buf, PlannerInfo *root,
 				 Index rtindex, Relation rel,
-				 List *targetAttrs, List *returningList)
+				 List *targetAttrs, List *returningList,
+				 List **retrieved_attrs)
 {
 	AttrNumber	pindex;
 	bool		first;
@@ -858,16 +875,24 @@ deparseInsertSql(StringInfo buf, PlannerInfo *root,
 		appendStringInfoString(buf, " DEFAULT VALUES");
 
 	if (returningList)
-		deparseReturningList(buf, root, rtindex, rel, returningList);
+		deparseReturningList(buf, root, rtindex, rel, returningList,
+							 retrieved_attrs);
+	else
+		*retrieved_attrs = NIL;
 }
 
 /*
  * deparse remote UPDATE statement
+ *
+ * The statement text is appended to buf, and we also create an integer List
+ * of the columns being retrieved by RETURNING (if any), which is returned
+ * to *retrieved_attrs.
  */
 void
 deparseUpdateSql(StringInfo buf, PlannerInfo *root,
 				 Index rtindex, Relation rel,
-				 List *targetAttrs, List *returningList)
+				 List *targetAttrs, List *returningList,
+				 List **retrieved_attrs)
 {
 	AttrNumber	pindex;
 	bool		first;
@@ -894,23 +919,34 @@ deparseUpdateSql(StringInfo buf, PlannerInfo *root,
 	appendStringInfoString(buf, " WHERE ctid = $1");
 
 	if (returningList)
-		deparseReturningList(buf, root, rtindex, rel, returningList);
+		deparseReturningList(buf, root, rtindex, rel, returningList,
+							 retrieved_attrs);
+	else
+		*retrieved_attrs = NIL;
 }
 
 /*
  * deparse remote DELETE statement
+ *
+ * The statement text is appended to buf, and we also create an integer List
+ * of the columns being retrieved by RETURNING (if any), which is returned
+ * to *retrieved_attrs.
  */
 void
 deparseDeleteSql(StringInfo buf, PlannerInfo *root,
 				 Index rtindex, Relation rel,
-				 List *returningList)
+				 List *returningList,
+				 List **retrieved_attrs)
 {
 	appendStringInfoString(buf, "DELETE FROM ");
 	deparseRelation(buf, rel);
 	appendStringInfoString(buf, " WHERE ctid = $1");
 
 	if (returningList)
-		deparseReturningList(buf, root, rtindex, rel, returningList);
+		deparseReturningList(buf, root, rtindex, rel, returningList,
+							 retrieved_attrs);
+	else
+		*retrieved_attrs = NIL;
 }
 
 /*
@@ -919,7 +955,8 @@ deparseDeleteSql(StringInfo buf, PlannerInfo *root,
 static void
 deparseReturningList(StringInfo buf, PlannerInfo *root,
 					 Index rtindex, Relation rel,
-					 List *returningList)
+					 List *returningList,
+					 List **retrieved_attrs)
 {
 	Bitmapset  *attrs_used;
 
@@ -931,7 +968,8 @@ deparseReturningList(StringInfo buf, PlannerInfo *root,
 				   &attrs_used);
 
 	appendStringInfoString(buf, " RETURNING ");
-	deparseTargetList(buf, root, rtindex, rel, attrs_used);
+	deparseTargetList(buf, root, rtindex, rel, attrs_used,
+					  retrieved_attrs);
 }
 
 /*
@@ -959,10 +997,11 @@ deparseAnalyzeSizeSql(StringInfo buf, Relation rel)
 /*
  * Construct SELECT statement to acquire sample rows of given relation.
  *
- * Note: command is appended to whatever might be in buf already.
+ * SELECT command is appended to buf, and list of columns retrieved
+ * is returned to *retrieved_attrs.
  */
 void
-deparseAnalyzeSql(StringInfo buf, Relation rel)
+deparseAnalyzeSql(StringInfo buf, Relation rel, List **retrieved_attrs)
 {
 	Oid			relid = RelationGetRelid(rel);
 	TupleDesc	tupdesc = RelationGetDescr(rel);
@@ -971,6 +1010,8 @@ deparseAnalyzeSql(StringInfo buf, Relation rel)
 	List	   *options;
 	ListCell   *lc;
 	bool		first = true;
+
+	*retrieved_attrs = NIL;
 
 	appendStringInfoString(buf, "SELECT ");
 	for (i = 0; i < tupdesc->natts; i++)
@@ -999,6 +1040,8 @@ deparseAnalyzeSql(StringInfo buf, Relation rel)
 		}
 
 		appendStringInfoString(buf, quote_identifier(colname));
+
+		*retrieved_attrs = lappend_int(*retrieved_attrs, i + 1);
 	}
 
 	/* Don't generate bad syntax for zero-column relation. */

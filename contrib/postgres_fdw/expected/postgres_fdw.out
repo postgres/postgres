@@ -473,16 +473,16 @@ SELECT * FROM ft2 a, ft2 b WHERE a.c1 = 47 AND b.c1 = a.c2;
 -- simple join
 PREPARE st1(int, int) AS SELECT t1.c3, t2.c3 FROM ft1 t1, ft2 t2 WHERE t1.c1 = $1 AND t2.c1 = $2;
 EXPLAIN (VERBOSE, COSTS false) EXECUTE st1(1, 2);
-                                                  QUERY PLAN                                                  
---------------------------------------------------------------------------------------------------------------
+                             QUERY PLAN                             
+--------------------------------------------------------------------
  Nested Loop
    Output: t1.c3, t2.c3
    ->  Foreign Scan on public.ft1 t1
          Output: t1.c3
-         Remote SQL: SELECT NULL, NULL, c3, NULL, NULL, NULL, NULL, NULL FROM "S 1"."T 1" WHERE (("C 1" = 1))
+         Remote SQL: SELECT c3 FROM "S 1"."T 1" WHERE (("C 1" = 1))
    ->  Foreign Scan on public.ft2 t2
          Output: t2.c3
-         Remote SQL: SELECT NULL, NULL, c3, NULL, NULL, NULL, NULL, NULL FROM "S 1"."T 1" WHERE (("C 1" = 2))
+         Remote SQL: SELECT c3 FROM "S 1"."T 1" WHERE (("C 1" = 2))
 (8 rows)
 
 EXECUTE st1(1, 1);
@@ -500,8 +500,8 @@ EXECUTE st1(101, 101);
 -- subquery using stable function (can't be sent to remote)
 PREPARE st2(int) AS SELECT * FROM ft1 t1 WHERE t1.c1 < $2 AND t1.c3 IN (SELECT c3 FROM ft2 t2 WHERE c1 > $1 AND date(c4) = '1970-01-17'::date) ORDER BY c1;
 EXPLAIN (VERBOSE, COSTS false) EXECUTE st2(10, 20);
-                                                       QUERY PLAN                                                        
--------------------------------------------------------------------------------------------------------------------------
+                                                QUERY PLAN                                                
+----------------------------------------------------------------------------------------------------------
  Sort
    Output: t1.c1, t1.c2, t1.c3, t1.c4, t1.c5, t1.c6, t1.c7, t1.c8
    Sort Key: t1.c1
@@ -516,7 +516,7 @@ EXPLAIN (VERBOSE, COSTS false) EXECUTE st2(10, 20);
                ->  Foreign Scan on public.ft2 t2
                      Output: t2.c3
                      Filter: (date(t2.c4) = '01-17-1970'::date)
-                     Remote SQL: SELECT NULL, NULL, c3, c4, NULL, NULL, NULL, NULL FROM "S 1"."T 1" WHERE (("C 1" > 10))
+                     Remote SQL: SELECT c3, c4 FROM "S 1"."T 1" WHERE (("C 1" > 10))
 (15 rows)
 
 EXECUTE st2(10, 20);
@@ -534,8 +534,8 @@ EXECUTE st2(101, 121);
 -- subquery using immutable function (can be sent to remote)
 PREPARE st3(int) AS SELECT * FROM ft1 t1 WHERE t1.c1 < $2 AND t1.c3 IN (SELECT c3 FROM ft2 t2 WHERE c1 > $1 AND date(c5) = '1970-01-17'::date) ORDER BY c1;
 EXPLAIN (VERBOSE, COSTS false) EXECUTE st3(10, 20);
-                                                                           QUERY PLAN                                                                            
------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                      QUERY PLAN                                                       
+-----------------------------------------------------------------------------------------------------------------------
  Sort
    Output: t1.c1, t1.c2, t1.c3, t1.c4, t1.c5, t1.c6, t1.c7, t1.c8
    Sort Key: t1.c1
@@ -549,7 +549,7 @@ EXPLAIN (VERBOSE, COSTS false) EXECUTE st3(10, 20);
                Output: t2.c3
                ->  Foreign Scan on public.ft2 t2
                      Output: t2.c3
-                     Remote SQL: SELECT NULL, NULL, c3, NULL, NULL, NULL, NULL, NULL FROM "S 1"."T 1" WHERE (("C 1" > 10)) AND ((date(c5) = '1970-01-17'::date))
+                     Remote SQL: SELECT c3 FROM "S 1"."T 1" WHERE (("C 1" > 10)) AND ((date(c5) = '1970-01-17'::date))
 (14 rows)
 
 EXECUTE st3(10, 20);
@@ -834,7 +834,7 @@ INSERT INTO ft2 (c1,c2,c3) SELECT c1+1000,c2+100, c3 || c3 FROM ft2 LIMIT 20;
                Output: ((ft2_1.c1 + 1000)), ((ft2_1.c2 + 100)), ((ft2_1.c3 || ft2_1.c3))
                ->  Foreign Scan on public.ft2 ft2_1
                      Output: (ft2_1.c1 + 1000), (ft2_1.c2 + 100), (ft2_1.c3 || ft2_1.c3)
-                     Remote SQL: SELECT "C 1", c2, c3, NULL, NULL, NULL, NULL, NULL FROM "S 1"."T 1"
+                     Remote SQL: SELECT "C 1", c2, c3 FROM "S 1"."T 1"
 (9 rows)
 
 INSERT INTO ft2 (c1,c2,c3) SELECT c1+1000,c2+100, c3 || c3 FROM ft2 LIMIT 20;
@@ -968,7 +968,7 @@ UPDATE ft2 SET c2 = ft2.c2 + 500, c3 = ft2.c3 || '_update9', c7 = DEFAULT
          Hash Cond: (ft2.c2 = ft1.c1)
          ->  Foreign Scan on public.ft2
                Output: ft2.c1, ft2.c2, ft2.c3, ft2.c4, ft2.c5, ft2.c6, ft2.c8, ft2.ctid
-               Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, NULL, c8, ctid FROM "S 1"."T 1" FOR UPDATE
+               Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c8, ctid FROM "S 1"."T 1" FOR UPDATE
          ->  Hash
                Output: ft1.*, ft1.c1
                ->  Foreign Scan on public.ft1
@@ -978,112 +978,124 @@ UPDATE ft2 SET c2 = ft2.c2 + 500, c3 = ft2.c3 || '_update9', c7 = DEFAULT
 
 UPDATE ft2 SET c2 = ft2.c2 + 500, c3 = ft2.c3 || '_update9', c7 = DEFAULT
   FROM ft1 WHERE ft1.c1 = ft2.c2 AND ft1.c1 % 10 = 9;
-DELETE FROM ft2 WHERE c1 % 10 = 5 RETURNING *;
-  c1  | c2  |     c3     |              c4              |            c5            | c6 |     c7     | c8  
-------+-----+------------+------------------------------+--------------------------+----+------------+-----
-    5 |   5 | 00005      | Tue Jan 06 00:00:00 1970 PST | Tue Jan 06 00:00:00 1970 | 5  | 5          | foo
-   15 |   5 | 00015      | Fri Jan 16 00:00:00 1970 PST | Fri Jan 16 00:00:00 1970 | 5  | 5          | foo
-   25 |   5 | 00025      | Mon Jan 26 00:00:00 1970 PST | Mon Jan 26 00:00:00 1970 | 5  | 5          | foo
-   35 |   5 | 00035      | Thu Feb 05 00:00:00 1970 PST | Thu Feb 05 00:00:00 1970 | 5  | 5          | foo
-   45 |   5 | 00045      | Sun Feb 15 00:00:00 1970 PST | Sun Feb 15 00:00:00 1970 | 5  | 5          | foo
-   55 |   5 | 00055      | Wed Feb 25 00:00:00 1970 PST | Wed Feb 25 00:00:00 1970 | 5  | 5          | foo
-   65 |   5 | 00065      | Sat Mar 07 00:00:00 1970 PST | Sat Mar 07 00:00:00 1970 | 5  | 5          | foo
-   75 |   5 | 00075      | Tue Mar 17 00:00:00 1970 PST | Tue Mar 17 00:00:00 1970 | 5  | 5          | foo
-   85 |   5 | 00085      | Fri Mar 27 00:00:00 1970 PST | Fri Mar 27 00:00:00 1970 | 5  | 5          | foo
-   95 |   5 | 00095      | Mon Apr 06 00:00:00 1970 PST | Mon Apr 06 00:00:00 1970 | 5  | 5          | foo
-  105 |   5 | 00105      | Tue Jan 06 00:00:00 1970 PST | Tue Jan 06 00:00:00 1970 | 5  | 5          | foo
-  115 |   5 | 00115      | Fri Jan 16 00:00:00 1970 PST | Fri Jan 16 00:00:00 1970 | 5  | 5          | foo
-  125 |   5 | 00125      | Mon Jan 26 00:00:00 1970 PST | Mon Jan 26 00:00:00 1970 | 5  | 5          | foo
-  135 |   5 | 00135      | Thu Feb 05 00:00:00 1970 PST | Thu Feb 05 00:00:00 1970 | 5  | 5          | foo
-  145 |   5 | 00145      | Sun Feb 15 00:00:00 1970 PST | Sun Feb 15 00:00:00 1970 | 5  | 5          | foo
-  155 |   5 | 00155      | Wed Feb 25 00:00:00 1970 PST | Wed Feb 25 00:00:00 1970 | 5  | 5          | foo
-  165 |   5 | 00165      | Sat Mar 07 00:00:00 1970 PST | Sat Mar 07 00:00:00 1970 | 5  | 5          | foo
-  175 |   5 | 00175      | Tue Mar 17 00:00:00 1970 PST | Tue Mar 17 00:00:00 1970 | 5  | 5          | foo
-  185 |   5 | 00185      | Fri Mar 27 00:00:00 1970 PST | Fri Mar 27 00:00:00 1970 | 5  | 5          | foo
-  195 |   5 | 00195      | Mon Apr 06 00:00:00 1970 PST | Mon Apr 06 00:00:00 1970 | 5  | 5          | foo
-  205 |   5 | 00205      | Tue Jan 06 00:00:00 1970 PST | Tue Jan 06 00:00:00 1970 | 5  | 5          | foo
-  215 |   5 | 00215      | Fri Jan 16 00:00:00 1970 PST | Fri Jan 16 00:00:00 1970 | 5  | 5          | foo
-  225 |   5 | 00225      | Mon Jan 26 00:00:00 1970 PST | Mon Jan 26 00:00:00 1970 | 5  | 5          | foo
-  235 |   5 | 00235      | Thu Feb 05 00:00:00 1970 PST | Thu Feb 05 00:00:00 1970 | 5  | 5          | foo
-  245 |   5 | 00245      | Sun Feb 15 00:00:00 1970 PST | Sun Feb 15 00:00:00 1970 | 5  | 5          | foo
-  255 |   5 | 00255      | Wed Feb 25 00:00:00 1970 PST | Wed Feb 25 00:00:00 1970 | 5  | 5          | foo
-  265 |   5 | 00265      | Sat Mar 07 00:00:00 1970 PST | Sat Mar 07 00:00:00 1970 | 5  | 5          | foo
-  275 |   5 | 00275      | Tue Mar 17 00:00:00 1970 PST | Tue Mar 17 00:00:00 1970 | 5  | 5          | foo
-  285 |   5 | 00285      | Fri Mar 27 00:00:00 1970 PST | Fri Mar 27 00:00:00 1970 | 5  | 5          | foo
-  295 |   5 | 00295      | Mon Apr 06 00:00:00 1970 PST | Mon Apr 06 00:00:00 1970 | 5  | 5          | foo
-  305 |   5 | 00305      | Tue Jan 06 00:00:00 1970 PST | Tue Jan 06 00:00:00 1970 | 5  | 5          | foo
-  315 |   5 | 00315      | Fri Jan 16 00:00:00 1970 PST | Fri Jan 16 00:00:00 1970 | 5  | 5          | foo
-  325 |   5 | 00325      | Mon Jan 26 00:00:00 1970 PST | Mon Jan 26 00:00:00 1970 | 5  | 5          | foo
-  335 |   5 | 00335      | Thu Feb 05 00:00:00 1970 PST | Thu Feb 05 00:00:00 1970 | 5  | 5          | foo
-  345 |   5 | 00345      | Sun Feb 15 00:00:00 1970 PST | Sun Feb 15 00:00:00 1970 | 5  | 5          | foo
-  355 |   5 | 00355      | Wed Feb 25 00:00:00 1970 PST | Wed Feb 25 00:00:00 1970 | 5  | 5          | foo
-  365 |   5 | 00365      | Sat Mar 07 00:00:00 1970 PST | Sat Mar 07 00:00:00 1970 | 5  | 5          | foo
-  375 |   5 | 00375      | Tue Mar 17 00:00:00 1970 PST | Tue Mar 17 00:00:00 1970 | 5  | 5          | foo
-  385 |   5 | 00385      | Fri Mar 27 00:00:00 1970 PST | Fri Mar 27 00:00:00 1970 | 5  | 5          | foo
-  395 |   5 | 00395      | Mon Apr 06 00:00:00 1970 PST | Mon Apr 06 00:00:00 1970 | 5  | 5          | foo
-  405 |   5 | 00405      | Tue Jan 06 00:00:00 1970 PST | Tue Jan 06 00:00:00 1970 | 5  | 5          | foo
-  415 |   5 | 00415      | Fri Jan 16 00:00:00 1970 PST | Fri Jan 16 00:00:00 1970 | 5  | 5          | foo
-  425 |   5 | 00425      | Mon Jan 26 00:00:00 1970 PST | Mon Jan 26 00:00:00 1970 | 5  | 5          | foo
-  435 |   5 | 00435      | Thu Feb 05 00:00:00 1970 PST | Thu Feb 05 00:00:00 1970 | 5  | 5          | foo
-  445 |   5 | 00445      | Sun Feb 15 00:00:00 1970 PST | Sun Feb 15 00:00:00 1970 | 5  | 5          | foo
-  455 |   5 | 00455      | Wed Feb 25 00:00:00 1970 PST | Wed Feb 25 00:00:00 1970 | 5  | 5          | foo
-  465 |   5 | 00465      | Sat Mar 07 00:00:00 1970 PST | Sat Mar 07 00:00:00 1970 | 5  | 5          | foo
-  475 |   5 | 00475      | Tue Mar 17 00:00:00 1970 PST | Tue Mar 17 00:00:00 1970 | 5  | 5          | foo
-  485 |   5 | 00485      | Fri Mar 27 00:00:00 1970 PST | Fri Mar 27 00:00:00 1970 | 5  | 5          | foo
-  495 |   5 | 00495      | Mon Apr 06 00:00:00 1970 PST | Mon Apr 06 00:00:00 1970 | 5  | 5          | foo
-  505 |   5 | 00505      | Tue Jan 06 00:00:00 1970 PST | Tue Jan 06 00:00:00 1970 | 5  | 5          | foo
-  515 |   5 | 00515      | Fri Jan 16 00:00:00 1970 PST | Fri Jan 16 00:00:00 1970 | 5  | 5          | foo
-  525 |   5 | 00525      | Mon Jan 26 00:00:00 1970 PST | Mon Jan 26 00:00:00 1970 | 5  | 5          | foo
-  535 |   5 | 00535      | Thu Feb 05 00:00:00 1970 PST | Thu Feb 05 00:00:00 1970 | 5  | 5          | foo
-  545 |   5 | 00545      | Sun Feb 15 00:00:00 1970 PST | Sun Feb 15 00:00:00 1970 | 5  | 5          | foo
-  555 |   5 | 00555      | Wed Feb 25 00:00:00 1970 PST | Wed Feb 25 00:00:00 1970 | 5  | 5          | foo
-  565 |   5 | 00565      | Sat Mar 07 00:00:00 1970 PST | Sat Mar 07 00:00:00 1970 | 5  | 5          | foo
-  575 |   5 | 00575      | Tue Mar 17 00:00:00 1970 PST | Tue Mar 17 00:00:00 1970 | 5  | 5          | foo
-  585 |   5 | 00585      | Fri Mar 27 00:00:00 1970 PST | Fri Mar 27 00:00:00 1970 | 5  | 5          | foo
-  595 |   5 | 00595      | Mon Apr 06 00:00:00 1970 PST | Mon Apr 06 00:00:00 1970 | 5  | 5          | foo
-  605 |   5 | 00605      | Tue Jan 06 00:00:00 1970 PST | Tue Jan 06 00:00:00 1970 | 5  | 5          | foo
-  615 |   5 | 00615      | Fri Jan 16 00:00:00 1970 PST | Fri Jan 16 00:00:00 1970 | 5  | 5          | foo
-  625 |   5 | 00625      | Mon Jan 26 00:00:00 1970 PST | Mon Jan 26 00:00:00 1970 | 5  | 5          | foo
-  635 |   5 | 00635      | Thu Feb 05 00:00:00 1970 PST | Thu Feb 05 00:00:00 1970 | 5  | 5          | foo
-  645 |   5 | 00645      | Sun Feb 15 00:00:00 1970 PST | Sun Feb 15 00:00:00 1970 | 5  | 5          | foo
-  655 |   5 | 00655      | Wed Feb 25 00:00:00 1970 PST | Wed Feb 25 00:00:00 1970 | 5  | 5          | foo
-  665 |   5 | 00665      | Sat Mar 07 00:00:00 1970 PST | Sat Mar 07 00:00:00 1970 | 5  | 5          | foo
-  675 |   5 | 00675      | Tue Mar 17 00:00:00 1970 PST | Tue Mar 17 00:00:00 1970 | 5  | 5          | foo
-  685 |   5 | 00685      | Fri Mar 27 00:00:00 1970 PST | Fri Mar 27 00:00:00 1970 | 5  | 5          | foo
-  695 |   5 | 00695      | Mon Apr 06 00:00:00 1970 PST | Mon Apr 06 00:00:00 1970 | 5  | 5          | foo
-  705 |   5 | 00705      | Tue Jan 06 00:00:00 1970 PST | Tue Jan 06 00:00:00 1970 | 5  | 5          | foo
-  715 |   5 | 00715      | Fri Jan 16 00:00:00 1970 PST | Fri Jan 16 00:00:00 1970 | 5  | 5          | foo
-  725 |   5 | 00725      | Mon Jan 26 00:00:00 1970 PST | Mon Jan 26 00:00:00 1970 | 5  | 5          | foo
-  735 |   5 | 00735      | Thu Feb 05 00:00:00 1970 PST | Thu Feb 05 00:00:00 1970 | 5  | 5          | foo
-  745 |   5 | 00745      | Sun Feb 15 00:00:00 1970 PST | Sun Feb 15 00:00:00 1970 | 5  | 5          | foo
-  755 |   5 | 00755      | Wed Feb 25 00:00:00 1970 PST | Wed Feb 25 00:00:00 1970 | 5  | 5          | foo
-  765 |   5 | 00765      | Sat Mar 07 00:00:00 1970 PST | Sat Mar 07 00:00:00 1970 | 5  | 5          | foo
-  775 |   5 | 00775      | Tue Mar 17 00:00:00 1970 PST | Tue Mar 17 00:00:00 1970 | 5  | 5          | foo
-  785 |   5 | 00785      | Fri Mar 27 00:00:00 1970 PST | Fri Mar 27 00:00:00 1970 | 5  | 5          | foo
-  795 |   5 | 00795      | Mon Apr 06 00:00:00 1970 PST | Mon Apr 06 00:00:00 1970 | 5  | 5          | foo
-  805 |   5 | 00805      | Tue Jan 06 00:00:00 1970 PST | Tue Jan 06 00:00:00 1970 | 5  | 5          | foo
-  815 |   5 | 00815      | Fri Jan 16 00:00:00 1970 PST | Fri Jan 16 00:00:00 1970 | 5  | 5          | foo
-  825 |   5 | 00825      | Mon Jan 26 00:00:00 1970 PST | Mon Jan 26 00:00:00 1970 | 5  | 5          | foo
-  835 |   5 | 00835      | Thu Feb 05 00:00:00 1970 PST | Thu Feb 05 00:00:00 1970 | 5  | 5          | foo
-  845 |   5 | 00845      | Sun Feb 15 00:00:00 1970 PST | Sun Feb 15 00:00:00 1970 | 5  | 5          | foo
-  855 |   5 | 00855      | Wed Feb 25 00:00:00 1970 PST | Wed Feb 25 00:00:00 1970 | 5  | 5          | foo
-  865 |   5 | 00865      | Sat Mar 07 00:00:00 1970 PST | Sat Mar 07 00:00:00 1970 | 5  | 5          | foo
-  875 |   5 | 00875      | Tue Mar 17 00:00:00 1970 PST | Tue Mar 17 00:00:00 1970 | 5  | 5          | foo
-  885 |   5 | 00885      | Fri Mar 27 00:00:00 1970 PST | Fri Mar 27 00:00:00 1970 | 5  | 5          | foo
-  895 |   5 | 00895      | Mon Apr 06 00:00:00 1970 PST | Mon Apr 06 00:00:00 1970 | 5  | 5          | foo
-  905 |   5 | 00905      | Tue Jan 06 00:00:00 1970 PST | Tue Jan 06 00:00:00 1970 | 5  | 5          | foo
-  915 |   5 | 00915      | Fri Jan 16 00:00:00 1970 PST | Fri Jan 16 00:00:00 1970 | 5  | 5          | foo
-  925 |   5 | 00925      | Mon Jan 26 00:00:00 1970 PST | Mon Jan 26 00:00:00 1970 | 5  | 5          | foo
-  935 |   5 | 00935      | Thu Feb 05 00:00:00 1970 PST | Thu Feb 05 00:00:00 1970 | 5  | 5          | foo
-  945 |   5 | 00945      | Sun Feb 15 00:00:00 1970 PST | Sun Feb 15 00:00:00 1970 | 5  | 5          | foo
-  955 |   5 | 00955      | Wed Feb 25 00:00:00 1970 PST | Wed Feb 25 00:00:00 1970 | 5  | 5          | foo
-  965 |   5 | 00965      | Sat Mar 07 00:00:00 1970 PST | Sat Mar 07 00:00:00 1970 | 5  | 5          | foo
-  975 |   5 | 00975      | Tue Mar 17 00:00:00 1970 PST | Tue Mar 17 00:00:00 1970 | 5  | 5          | foo
-  985 |   5 | 00985      | Fri Mar 27 00:00:00 1970 PST | Fri Mar 27 00:00:00 1970 | 5  | 5          | foo
-  995 |   5 | 00995      | Mon Apr 06 00:00:00 1970 PST | Mon Apr 06 00:00:00 1970 | 5  | 5          | foo
- 1005 | 105 | 0000500005 |                              |                          |    | ft2        | 
- 1015 | 105 | 0001500015 |                              |                          |    | ft2        | 
- 1105 | 205 | eee        |                              |                          |    | ft2        | 
+EXPLAIN (verbose, costs off)
+  DELETE FROM ft2 WHERE c1 % 10 = 5 RETURNING c1, c4;
+                                       QUERY PLAN                                       
+----------------------------------------------------------------------------------------
+ Delete on public.ft2
+   Output: c1, c4
+   Remote SQL: DELETE FROM "S 1"."T 1" WHERE ctid = $1 RETURNING "C 1", c4
+   ->  Foreign Scan on public.ft2
+         Output: ctid
+         Remote SQL: SELECT ctid FROM "S 1"."T 1" WHERE ((("C 1" % 10) = 5)) FOR UPDATE
+(6 rows)
+
+DELETE FROM ft2 WHERE c1 % 10 = 5 RETURNING c1, c4;
+  c1  |              c4              
+------+------------------------------
+    5 | Tue Jan 06 00:00:00 1970 PST
+   15 | Fri Jan 16 00:00:00 1970 PST
+   25 | Mon Jan 26 00:00:00 1970 PST
+   35 | Thu Feb 05 00:00:00 1970 PST
+   45 | Sun Feb 15 00:00:00 1970 PST
+   55 | Wed Feb 25 00:00:00 1970 PST
+   65 | Sat Mar 07 00:00:00 1970 PST
+   75 | Tue Mar 17 00:00:00 1970 PST
+   85 | Fri Mar 27 00:00:00 1970 PST
+   95 | Mon Apr 06 00:00:00 1970 PST
+  105 | Tue Jan 06 00:00:00 1970 PST
+  115 | Fri Jan 16 00:00:00 1970 PST
+  125 | Mon Jan 26 00:00:00 1970 PST
+  135 | Thu Feb 05 00:00:00 1970 PST
+  145 | Sun Feb 15 00:00:00 1970 PST
+  155 | Wed Feb 25 00:00:00 1970 PST
+  165 | Sat Mar 07 00:00:00 1970 PST
+  175 | Tue Mar 17 00:00:00 1970 PST
+  185 | Fri Mar 27 00:00:00 1970 PST
+  195 | Mon Apr 06 00:00:00 1970 PST
+  205 | Tue Jan 06 00:00:00 1970 PST
+  215 | Fri Jan 16 00:00:00 1970 PST
+  225 | Mon Jan 26 00:00:00 1970 PST
+  235 | Thu Feb 05 00:00:00 1970 PST
+  245 | Sun Feb 15 00:00:00 1970 PST
+  255 | Wed Feb 25 00:00:00 1970 PST
+  265 | Sat Mar 07 00:00:00 1970 PST
+  275 | Tue Mar 17 00:00:00 1970 PST
+  285 | Fri Mar 27 00:00:00 1970 PST
+  295 | Mon Apr 06 00:00:00 1970 PST
+  305 | Tue Jan 06 00:00:00 1970 PST
+  315 | Fri Jan 16 00:00:00 1970 PST
+  325 | Mon Jan 26 00:00:00 1970 PST
+  335 | Thu Feb 05 00:00:00 1970 PST
+  345 | Sun Feb 15 00:00:00 1970 PST
+  355 | Wed Feb 25 00:00:00 1970 PST
+  365 | Sat Mar 07 00:00:00 1970 PST
+  375 | Tue Mar 17 00:00:00 1970 PST
+  385 | Fri Mar 27 00:00:00 1970 PST
+  395 | Mon Apr 06 00:00:00 1970 PST
+  405 | Tue Jan 06 00:00:00 1970 PST
+  415 | Fri Jan 16 00:00:00 1970 PST
+  425 | Mon Jan 26 00:00:00 1970 PST
+  435 | Thu Feb 05 00:00:00 1970 PST
+  445 | Sun Feb 15 00:00:00 1970 PST
+  455 | Wed Feb 25 00:00:00 1970 PST
+  465 | Sat Mar 07 00:00:00 1970 PST
+  475 | Tue Mar 17 00:00:00 1970 PST
+  485 | Fri Mar 27 00:00:00 1970 PST
+  495 | Mon Apr 06 00:00:00 1970 PST
+  505 | Tue Jan 06 00:00:00 1970 PST
+  515 | Fri Jan 16 00:00:00 1970 PST
+  525 | Mon Jan 26 00:00:00 1970 PST
+  535 | Thu Feb 05 00:00:00 1970 PST
+  545 | Sun Feb 15 00:00:00 1970 PST
+  555 | Wed Feb 25 00:00:00 1970 PST
+  565 | Sat Mar 07 00:00:00 1970 PST
+  575 | Tue Mar 17 00:00:00 1970 PST
+  585 | Fri Mar 27 00:00:00 1970 PST
+  595 | Mon Apr 06 00:00:00 1970 PST
+  605 | Tue Jan 06 00:00:00 1970 PST
+  615 | Fri Jan 16 00:00:00 1970 PST
+  625 | Mon Jan 26 00:00:00 1970 PST
+  635 | Thu Feb 05 00:00:00 1970 PST
+  645 | Sun Feb 15 00:00:00 1970 PST
+  655 | Wed Feb 25 00:00:00 1970 PST
+  665 | Sat Mar 07 00:00:00 1970 PST
+  675 | Tue Mar 17 00:00:00 1970 PST
+  685 | Fri Mar 27 00:00:00 1970 PST
+  695 | Mon Apr 06 00:00:00 1970 PST
+  705 | Tue Jan 06 00:00:00 1970 PST
+  715 | Fri Jan 16 00:00:00 1970 PST
+  725 | Mon Jan 26 00:00:00 1970 PST
+  735 | Thu Feb 05 00:00:00 1970 PST
+  745 | Sun Feb 15 00:00:00 1970 PST
+  755 | Wed Feb 25 00:00:00 1970 PST
+  765 | Sat Mar 07 00:00:00 1970 PST
+  775 | Tue Mar 17 00:00:00 1970 PST
+  785 | Fri Mar 27 00:00:00 1970 PST
+  795 | Mon Apr 06 00:00:00 1970 PST
+  805 | Tue Jan 06 00:00:00 1970 PST
+  815 | Fri Jan 16 00:00:00 1970 PST
+  825 | Mon Jan 26 00:00:00 1970 PST
+  835 | Thu Feb 05 00:00:00 1970 PST
+  845 | Sun Feb 15 00:00:00 1970 PST
+  855 | Wed Feb 25 00:00:00 1970 PST
+  865 | Sat Mar 07 00:00:00 1970 PST
+  875 | Tue Mar 17 00:00:00 1970 PST
+  885 | Fri Mar 27 00:00:00 1970 PST
+  895 | Mon Apr 06 00:00:00 1970 PST
+  905 | Tue Jan 06 00:00:00 1970 PST
+  915 | Fri Jan 16 00:00:00 1970 PST
+  925 | Mon Jan 26 00:00:00 1970 PST
+  935 | Thu Feb 05 00:00:00 1970 PST
+  945 | Sun Feb 15 00:00:00 1970 PST
+  955 | Wed Feb 25 00:00:00 1970 PST
+  965 | Sat Mar 07 00:00:00 1970 PST
+  975 | Tue Mar 17 00:00:00 1970 PST
+  985 | Fri Mar 27 00:00:00 1970 PST
+  995 | Mon Apr 06 00:00:00 1970 PST
+ 1005 | 
+ 1015 | 
+ 1105 | 
 (103 rows)
 
 EXPLAIN (verbose, costs off)
@@ -1097,7 +1109,7 @@ DELETE FROM ft2 USING ft1 WHERE ft1.c1 = ft2.c2 AND ft1.c1 % 10 = 2;
          Hash Cond: (ft2.c2 = ft1.c1)
          ->  Foreign Scan on public.ft2
                Output: ft2.ctid, ft2.c2
-               Remote SQL: SELECT NULL, c2, NULL, NULL, NULL, NULL, NULL, NULL, ctid FROM "S 1"."T 1" FOR UPDATE
+               Remote SQL: SELECT c2, ctid FROM "S 1"."T 1" FOR UPDATE
          ->  Hash
                Output: ft1.*, ft1.c1
                ->  Foreign Scan on public.ft1

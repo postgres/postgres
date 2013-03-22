@@ -49,7 +49,8 @@ extern bool is_foreign_expr(PlannerInfo *root,
 extern void deparseSelectSql(StringInfo buf,
 				 PlannerInfo *root,
 				 RelOptInfo *baserel,
-				 Bitmapset *attrs_used);
+				 Bitmapset *attrs_used,
+				 List **retrieved_attrs);
 extern void appendWhereClause(StringInfo buf,
 				  PlannerInfo *root,
 				  RelOptInfo *baserel,
@@ -58,14 +59,18 @@ extern void appendWhereClause(StringInfo buf,
 				  List **params);
 extern void deparseInsertSql(StringInfo buf, PlannerInfo *root,
 				 Index rtindex, Relation rel,
-				 List *targetAttrs, List *returningList);
+				 List *targetAttrs, List *returningList,
+				 List **retrieved_attrs);
 extern void deparseUpdateSql(StringInfo buf, PlannerInfo *root,
 				 Index rtindex, Relation rel,
-				 List *targetAttrs, List *returningList);
+				 List *targetAttrs, List *returningList,
+				 List **retrieved_attrs);
 extern void deparseDeleteSql(StringInfo buf, PlannerInfo *root,
 				 Index rtindex, Relation rel,
-				 List *returningList);
+				 List *returningList,
+				 List **retrieved_attrs);
 extern void deparseAnalyzeSizeSql(StringInfo buf, Relation rel);
-extern void deparseAnalyzeSql(StringInfo buf, Relation rel);
+extern void deparseAnalyzeSql(StringInfo buf, Relation rel,
+							  List **retrieved_attrs);
 
 #endif   /* POSTGRES_FDW_H */

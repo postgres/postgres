@@ -311,7 +311,9 @@ UPDATE ft2 SET c2 = ft2.c2 + 500, c3 = ft2.c3 || '_update9', c7 = DEFAULT
   FROM ft1 WHERE ft1.c1 = ft2.c2 AND ft1.c1 % 10 = 9;
 UPDATE ft2 SET c2 = ft2.c2 + 500, c3 = ft2.c3 || '_update9', c7 = DEFAULT
   FROM ft1 WHERE ft1.c1 = ft2.c2 AND ft1.c1 % 10 = 9;
-DELETE FROM ft2 WHERE c1 % 10 = 5 RETURNING *;
+EXPLAIN (verbose, costs off)
+  DELETE FROM ft2 WHERE c1 % 10 = 5 RETURNING c1, c4;
+DELETE FROM ft2 WHERE c1 % 10 = 5 RETURNING c1, c4;
 EXPLAIN (verbose, costs off)
 DELETE FROM ft2 USING ft1 WHERE ft1.c1 = ft2.c2 AND ft1.c1 % 10 = 2;
 DELETE FROM ft2 USING ft1 WHERE ft1.c1 = ft2.c2 AND ft1.c1 % 10 = 2;
