@@ -2063,11 +2063,11 @@ PGresult *PQdescribePortal(PGconn *conn, const char *portalName);
          </varlistentry>
 
          <varlistentry id="libpq-pg-diag-sqlstate">
+          <term><symbol>PG_DIAG_SQLSTATE</></term>
           <indexterm>
            <primary>error codes</primary>
            <secondary>libpq</secondary>
           </indexterm>
-          <term><symbol>PG_DIAG_SQLSTATE</></term>
           <listitem>
            <para>
             The SQLSTATE code for the error. The SQLSTATE code identifies
