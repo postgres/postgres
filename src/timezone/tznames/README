@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/timezone/tznames/README,v 1.3.2.1 2009/09/06 15:25:31 tgl Exp $
+src/timezone/tznames/README
 
 tznames
 =======
