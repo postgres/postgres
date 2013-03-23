@@ -4,7 +4,7 @@
 # timezone_abbreviations to 'Australia'.  See the `Date/Time Support'
 #   appendix in the PostgreSQL documentation for more information.
 #
-# $PostgreSQL: pgsql/src/timezone/tznames/Australia,v 1.2 2006/07/25 13:49:21 tgl Exp $
+# src/timezone/tznames/Australia
 
 
 # include the default set
