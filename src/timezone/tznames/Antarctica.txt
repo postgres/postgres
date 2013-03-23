@@ -17,8 +17,10 @@ DAVT    25200    # Davis Time (Antarctica)
                  #     (Antarctica/Davis)
 DDUT    36000    # Dumont-d`Urville Time (Antarctica)
                  #     (Antarctica/DumontDUrville)
-MAWT    21600    # Mawson Time (Antarctica)
+MAWT    18000    # Mawson Time (Antarctica) (caution: this used to mean 21600)
                  #     (Antarctica/Mawson)
+MIST    39600    # Macquarie Island Time
+                 #     (Antarctica/Macquarie)
 NZDT    46800 D  # New Zealand Daylight Time
                  #     (Antarctica/McMurdo)
                  #     (Pacific/Auckland)

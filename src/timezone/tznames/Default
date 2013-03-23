@@ -239,7 +239,7 @@ DDUT    36000    # Dumont-d'Urville Time (Antarctica)
                  #     (Antarctica/DumontDUrville)
                  #     (Antarctica/Palmer)
                  #     (America/Santiago)
-MAWT    21600    # Mawson Time (Antarctica)
+MAWT    18000    # Mawson Time (Antarctica) (caution: this used to mean 21600)
                  #     (Antarctica/Mawson)
 
 #################### ASIA ####################
@@ -273,9 +273,9 @@ BORT    28800    # Borneo Time (Indonesia) (not in zic)
 BTT     21600    # Bhutan Time
                  #     (Asia/Thimphu)
 CCT     28800    # China Coastal Time (not in zic)
-GEST    14400 D  # Georgia Summer Time (there was a timezone change in 2004)
+GEST    14400 D  # Georgia Summer Time (obsolete)
                  #     (Asia/Tbilisi)
-GET     10800    # Georgia Time (there was a timezone change in 2004)
+GET     14400    # Georgia Time (caution: this used to mean 10800)
                  #     (Asia/Tbilisi)
 HKT     28800    # Hong Kong Time (not in zic)
 ICT     25200    # Indochina Time
@@ -284,9 +284,9 @@ ICT     25200    # Indochina Time
                  #     (Asia/Saigon)
                  #     (Asia/Vientiane)
 IDT     10800 D  # Israel Daylight Time
-IRKST   32400 D  # Irkutsk Summer Time
+IRKST   32400 D  # Irkutsk Summer Time (obsolete)
                  #     (Asia/Irkutsk)
-IRKT    28800    # Irkutsk Time
+IRKT    32400    # Irkutsk Time (caution: this used to mean 28800)
                  #     (Asia/Irkutsk)
 IRT     12600    # Iran Time (not in zic)
 # CONFLICT! IST is not unique
@@ -298,36 +298,36 @@ JAYT    32400    # Jayapura Time (Indonesia) (not in zic)
 JST     32400    # Japan Standard Time
                  #     (Asia/Tokyo)
 KDT     36000 D  # Korean Daylight Time (not in zic)
-KGST    21600 D  # Kyrgyzstan Summer Time
+KGST    21600 D  # Kyrgyzstan Summer Time (obsolete)
                  #     (Asia/Bishkek)
-KGT     18000    # Kyrgyzstan Time
+KGT     21600    # Kyrgyzstan Time (caution: this used to mean 18000)
                  #     (Asia/Bishkek)
-KRAST   28800 D  # Krasnoyarsk Summer Time
+KRAST   28800 D  # Krasnoyarsk Summer Time (obsolete)
                  #     (Asia/Krasnoyarsk)
-KRAT    25200    # Krasnoyarsk Time
+KRAT    28800    # Krasnoyarsk Time (caution: this used to mean 25200)
                  #     (Asia/Krasnoyarsk)
 KST     32400    # Korean Standard Time
                  #     (Asia/Pyongyang)
 LKT     21600    # Lanka Time
                  #     (Asia/Colombo)
-MAGST   43200 D  # Magadan Summer Time
+MAGST   43200 D  # Magadan Summer Time (obsolete)
                  #     (Asia/Magadan)
-MAGT    39600    # Magadan Time
+MAGT    43200    # Magadan Time (caution: this used to mean 39600)
                  #     (Asia/Magadan)
 MMT     23400    # Myanmar Time
                  #     (Asia/Rangoon)
 MYT     28800    # Malaysia Time
                  #     (Asia/Kuala_Lumpur)
                  #     (Asia/Kuching)
-NOVST   25200 D  # Novosibirsk Summer Time
+NOVST   25200 D  # Novosibirsk Summer Time (obsolete)
                  #     (Asia/Novosibirsk)
-NOVT    21600    # Novosibirsk Time
+NOVT    25200    # Novosibirsk Time (caution: this used to mean 21600)
                  #     (Asia/Novosibirsk)
 NPT     20700    # Nepal Time
                  #     (Asia/Katmandu)
-OMSST   25200 D  # Omsk Summer Time
+OMSST   25200 D  # Omsk Summer Time (obsolete)
                  #     (Asia/Omsk)
-OMST    21600    # Omsk Time
+OMST    25200    # Omsk Time (caution: this used to mean 21600)
                  #     (Asia/Omsk)
 PETST   46800 D  # Petropavlovsk-Kamchatski Summer Time
                  #     (Asia/Kamchatka)
@@ -354,17 +354,17 @@ UZST    21600 D  # Uzbekistan Summer Time
 UZT     18000    # Uzbekistan Time
                  #     (Asia/Samarkand)
                  #     (Asia/Tashkent)
-VLAST   39600 D  # Vladivostok Summer Time
+VLAST   39600 D  # Vladivostok Summer Time (obsolete)
                  #     (Asia/Vladivostok)
-VLAT    36000    # Vladivostok Time
+VLAT    39600    # Vladivostok Time (caution: this used to mean 36000)
                  #     (Asia/Vladivostok)
-YAKST   36000 D  # Yakutsk Summer Time
+YAKST   36000 D  # Yakutsk Summer Time (obsolete)
                  #     (Asia/Yakutsk)
-YAKT    32400    # Yakutsk Time
+YAKT    36000    # Yakutsk Time (caution: this used to mean 32400)
                  #     (Asia/Yakutsk)
-YEKST   21600 D  # Yekaterinburg Summer Time
+YEKST   21600 D  # Yekaterinburg Summer Time (obsolete)
                  #     (Asia/Yekaterinburg)
-YEKT    18000    # Yekaterinburg Time
+YEKT    21600    # Yekaterinburg Time (caution: this used to mean 18000)
                  #     (Asia/Yekaterinburg)
 
 #################### ATLANTIC ####################
@@ -622,10 +622,12 @@ MEST     7200 D  # Middle Europe Summer Time (not in zic)
 MET      3600    # Middle Europe Time (not in zic)
 METDST   7200 D  # Middle Europe Summer Time (not in zic)
 MEZ      3600    # Mitteleuropaeische Zeit (German) (not in zic)
-MSD     14400 D  # Moscow Daylight Time
+MSD     14400 D  # Moscow Daylight Time (obsolete)
                  #     (Europe/Moscow)
-MSK     10800    # Moscow Time
+MSK     14400    # Moscow Time (caution: this used to mean 10800)
                  #     (Europe/Moscow)
+VOLT    14400    # Volgograd Time
+                 #     (Europe/Volgograd)
 WET         0    # Western Europe Time
                  #     (Africa/Casablanca)
                  #     (Africa/El_Aaiun)
@@ -714,7 +716,7 @@ PWT     32400    # Palau Time
                  #     (Pacific/Palau)
 TAHT   -36000    # Tahiti Time (zic says "TAHT", other sources "THAT")
                  #     (Pacific/Tahiti)
-TKT    -36000    # Tokelau Time
+TKT     46800    # Tokelau Time (caution: this used to mean -36000)
                  #     (Pacific/Fakaofo)
 TOT     46800    # Tonga Time (not in zic)
 TRUT    36000    # Truk Time (zic used to say "TRUT", other sources say "TRUK")

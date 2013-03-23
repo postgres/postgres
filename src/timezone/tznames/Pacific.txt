@@ -83,7 +83,7 @@ SST    -39600    # South Sumatran Time
                  #     (Pacific/Pago_Pago)
 TAHT   -36000    # Tahiti Time (zic says "TAHT", other sources "THAT")
                  #     (Pacific/Tahiti)
-TKT    -36000    # Tokelau Time
+TKT     46800    # Tokelau Time (caution: this used to mean -36000)
                  #     (Pacific/Fakaofo)
 TOT     46800    # Tonga Time (not in zic)
 TRUT    36000    # Truk Time (zic used to say "TRUT", other sources say "TRUK")
@@ -98,6 +98,8 @@ WFT     43200    # Wallis and Futuna Time
 # CONFLICT! WST is not unique
 # Other timezones:
 #  - WST: Western Standard Time (Australia)
-WST    -39600    # West Samoa Time
+WSDT    50400 D  # West Samoa Daylight Time
+                 #     (Pacific/Apia)
+WST     46800    # West Samoa Time (caution: this used to mean -39600)
                  #     (Pacific/Apia)
 YAPT    36000    # Yap Time (Micronesia) (not in zic)
