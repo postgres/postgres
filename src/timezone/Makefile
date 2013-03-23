@@ -55,6 +55,11 @@ ifeq (,$(with_system_tzdata))
 endif
 	$(MAKE) -C tznames $@
 
+abbrevs.txt: zic $(TZDATAFILES)
+	mkdir junkdir
+	$(ZIC) -P -d junkdir -p '$(POSIXRULES)' $(TZDATAFILES) | LANG=C sort | uniq >abbrevs.txt
+	rm -rf junkdir
+
 installdirs:
 	$(MKDIR_P) '$(DESTDIR)$(datadir)'
 
@@ -65,4 +70,4 @@ endif
 	$(MAKE) -C tznames $@
 
 clean distclean maintainer-clean:
-	rm -f zic$(X) $(ZICOBJS)
+	rm -f zic$(X) $(ZICOBJS) abbrevs.txt

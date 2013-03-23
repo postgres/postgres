@@ -22,11 +22,17 @@ Since time zone rules change frequently in some parts of the world,
 we should endeavor to update the data files before each PostgreSQL
 release.
 
-At each update, we should check if time zone offsets have changed.
-Just search for the current or previous year and see what has changed.
-Sometimes a country changes its time zone offsets, for example Georgia
-in 2004.  Just grepping in the zic database files for 2004 is enough to
-spot such a change.  Then the files under tznames/ should be updated.
+While the files under data/ can just be duplicated when updating, manual
+effort is needed to update the time zone abbreviation lists under tznames/.
+These need to be changed whenever new abbreviations are invented or the
+UTC offset associated with an existing abbreviation changes.  To detect
+if this has happened, after installing new files under data/ do
+	gmake abbrevs.txt
+which will produce a file showing all abbreviations that are in current
+use according to the data/ files.  Compare this to known_abbrevs.txt,
+which is the list that existed last time the tznames/ files were updated.
+Update tznames/ as seems appropriate, then replace known_abbrevs.txt
+in the same commit.
 
 When there has been a new release of Windows (probably including Service
 Packs), the list of matching timezones need to be updated. Run the
