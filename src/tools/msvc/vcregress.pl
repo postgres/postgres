@@ -257,7 +257,7 @@ sub upgradecheck
 	  ("$tmp_install/bin", "$tmp_install/lib", $topdir, $topdir);
 	$ENV{PATH} = "$bindir;$ENV{PATH}";
 	my $data = "$tmp_root/data";
-	$ENV{PGDATA} = $data;
+	$ENV{PGDATA} = "$data.old";
 	my $logdir = "$topdir/contrib/pg_upgrade/log";
 	(mkdir $logdir || die $!) unless -d $logdir;
 	print "\nRunning initdb on old cluster\n\n";
@@ -272,10 +272,7 @@ sub upgradecheck
 	system("pg_dumpall -f $tmp_root/dump1.sql") == 0 or exit 1;
 	print "\nStopping old cluster\n\n";
 	system("pg_ctl -m fast stop") == 0 or exit 1;
-	rename $data, "$data.old";
-	# take a breather in case Windows hasn't quite got
-	# the message about the directory moving
-	sleep(5);
+	$ENV{PGDATA} = "$data";
 	print "\nSetting up new cluster\n\n";
 	system("initdb") == 0 or exit 1;
 	print "\nRunning pg_upgrade\n\n";
