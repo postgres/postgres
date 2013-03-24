@@ -54,6 +54,7 @@
 
 #include "compress_io.h"
 #include "dumputils.h"
+#include "parallel.h"
 
 /*----------------------
  * Compressor API
@@ -182,6 +183,9 @@ size_t
 WriteDataToArchive(ArchiveHandle *AH, CompressorState *cs,
 				   const void *data, size_t dLen)
 {
+	/* Are we aborting? */
+	checkAborting(AH);
+
 	switch (cs->comprAlg)
 	{
 		case COMPR_ALG_LIBZ:
@@ -351,6 +355,9 @@ ReadDataFromArchiveZlib(ArchiveHandle *AH, ReadFunc readF)
 	/* no minimal chunk size for zlib */
 	while ((cnt = readF(AH, &buf, &buflen)))
 	{
+		/* Are we aborting? */
+		checkAborting(AH);
+
 		zp->next_in = (void *) buf;
 		zp->avail_in = cnt;
 
@@ -411,6 +418,9 @@ ReadDataFromArchiveNone(ArchiveHandle *AH, ReadFunc readF)
 
 	while ((cnt = readF(AH, &buf, &buflen)))
 	{
+		/* Are we aborting? */
+		checkAborting(AH);
+
 		ahwrite(buf, 1, cnt, AH);
 	}
 

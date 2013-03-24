@@ -310,6 +310,24 @@ pg_restore -d <replaceable class="parameter">dbname</replaceable> <replaceable c
     with one of the other two approaches.
    </para>
 
+   <formalpara>
+    <title>Use <application>pg_dump</>'s parallel dump feature.</title>
+    <para>
+     To speed up the dump of a large database, you can use
+     <application>pg_dump</application>'s parallel mode. This will dump
+     multiple tables at the same time. You can control the degree of
+     parallelism with the <command>-j</command> parameter. Parallel dumps
+     are only supported for the "directory" archive format.
+
+<programlisting>
+pg_dump -j <replaceable class="parameter">num</replaceable> -F d -f <replaceable class="parameter">out.dir</replaceable> <replaceable class="parameter">dbname</replaceable>
+</programlisting>
+
+     You can use <command>pg_restore -j</command> to restore a dump in parallel.
+     This will work for any archive of either the "custom" or the "directory"
+     archive mode, whether or not it has been created with <command>pg_dump -j</command>.
+    </para>
+   </formalpara>
   </sect2>
  </sect1>
 

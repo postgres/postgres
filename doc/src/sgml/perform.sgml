@@ -1435,6 +1435,15 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
      </listitem>
      <listitem>
       <para>
+       Experiment with the parallel dump and restore modes of both
+       <application>pg_dump</> and <application>pg_restore</> and find the
+       optimal number of concurrent jobs to use. Dumping and restoring in
+       parallel by means of the <option>-j</> option should give you a
+       significantly higher performance over the serial mode.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
        Consider whether the whole dump should be restored as a single
        transaction.  To do that, pass the <option>-1</> or
        <option>--single-transaction</> command-line option to

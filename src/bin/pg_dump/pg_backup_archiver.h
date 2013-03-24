@@ -100,8 +100,21 @@ typedef z_stream *z_streamp;
 #define K_OFFSET_POS_SET 2
 #define K_OFFSET_NO_DATA 3
 
+/*
+ * Special exit values from worker children.  We reserve 0 for normal
+ * success; 1 and other small values should be interpreted as crashes.
+ */
+#define WORKER_OK					  0
+#define WORKER_CREATE_DONE			  10
+#define WORKER_INHIBIT_DATA			  11
+#define WORKER_IGNORED_ERRORS		  12
+
 struct _archiveHandle;
 struct _tocEntry;
+struct _restoreList;
+struct ParallelArgs;
+struct ParallelState;
+enum T_Action;
 
 typedef void (*ClosePtr) (struct _archiveHandle * AH);
 typedef void (*ReopenPtr) (struct _archiveHandle * AH);
@@ -128,6 +141,13 @@ typedef void (*PrintTocDataPtr) (struct _archiveHandle * AH, struct _tocEntry * 
 
 typedef void (*ClonePtr) (struct _archiveHandle * AH);
 typedef void (*DeClonePtr) (struct _archiveHandle * AH);
+
+typedef char *(*WorkerJobRestorePtr) (struct _archiveHandle * AH, struct _tocEntry * te);
+typedef char *(*WorkerJobDumpPtr) (struct _archiveHandle * AH, struct _tocEntry * te);
+typedef char *(*MasterStartParallelItemPtr) (struct _archiveHandle * AH, struct _tocEntry * te,
+														 enum T_Action act);
+typedef int (*MasterEndParallelItemPtr) (struct _archiveHandle * AH, struct _tocEntry * te,
+										 const char *str, enum T_Action act);
 
 typedef size_t (*CustomOutPtr) (struct _archiveHandle * AH, const void *buf, size_t len);
 
@@ -227,6 +247,13 @@ typedef struct _archiveHandle
 	StartBlobPtr StartBlobPtr;
 	EndBlobPtr EndBlobPtr;
 
+	MasterStartParallelItemPtr MasterStartParallelItemPtr;
+	MasterEndParallelItemPtr MasterEndParallelItemPtr;
+
+	SetupWorkerPtr SetupWorkerPtr;
+	WorkerJobDumpPtr WorkerJobDumpPtr;
+	WorkerJobRestorePtr WorkerJobRestorePtr;
+
 	ClonePtr ClonePtr;			/* Clone format-specific fields */
 	DeClonePtr DeClonePtr;		/* Clean up cloned fields */
 
@@ -236,6 +263,7 @@ typedef struct _archiveHandle
 	char	   *archdbname;		/* DB name *read* from archive */
 	enum trivalue promptPassword;
 	char	   *savedPassword;	/* password for ropt->username, if known */
+	char	   *use_role;
 	PGconn	   *connection;
 	int			connectToDB;	/* Flag to indicate if direct DB connection is
 								 * required */
@@ -327,6 +355,7 @@ typedef struct _tocEntry
 	int			nLockDeps;		/* number of such dependencies */
 } TocEntry;
 
+extern int	parallel_restore(struct ParallelArgs * args);
 extern void on_exit_close_archive(Archive *AHX);
 
 extern void warn_or_exit_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt,...) __attribute__((format(PG_PRINTF_ATTRIBUTE, 3, 4)));
@@ -337,9 +366,13 @@ extern void WriteHead(ArchiveHandle *AH);
 extern void ReadHead(ArchiveHandle *AH);
 extern void WriteToc(ArchiveHandle *AH);
 extern void ReadToc(ArchiveHandle *AH);
-extern void WriteDataChunks(ArchiveHandle *AH);
+extern void WriteDataChunks(ArchiveHandle *AH, struct ParallelState *pstate);
+extern void WriteDataChunksForTocEntry(ArchiveHandle *AH, TocEntry *te);
+extern ArchiveHandle *CloneArchive(ArchiveHandle *AH);
+extern void DeCloneArchive(ArchiveHandle *AH);
 
 extern teReqs TocIDRequired(ArchiveHandle *AH, DumpId id);
+TocEntry   *getTocEntryByDumpId(ArchiveHandle *AH, DumpId id);
 extern bool checkSeek(FILE *fp);
 
 #define appendStringLiteralAHX(buf,str,AH) \

@@ -82,9 +82,14 @@ struct Archive
 	int			minRemoteVersion;		/* allowable range */
 	int			maxRemoteVersion;
 
+	int			numWorkers;		/* number of parallel processes */
+	char	   *sync_snapshot_id;		/* sync snapshot id for parallel
+										 * operation */
+
 	/* info needed for string escaping */
 	int			encoding;		/* libpq code for client_encoding */
 	bool		std_strings;	/* standard_conforming_strings */
+	char	   *use_role;		/* Issue SET ROLE to this */
 
 	/* error handling */
 	bool		exit_on_error;	/* whether to exit on SQL errors... */
@@ -142,10 +147,11 @@ typedef struct _restoreOptions
 	int			suppressDumpWarnings;	/* Suppress output of WARNING entries
 										 * to stderr */
 	bool		single_txn;
-	int			number_of_jobs;
 
 	bool	   *idWanted;		/* array showing which dump IDs to emit */
 } RestoreOptions;
+
+typedef void (*SetupWorkerPtr) (Archive *AH, RestoreOptions *ropt);
 
 /*
  * Main archiver interface.
@@ -189,7 +195,8 @@ extern Archive *OpenArchive(const char *FileSpec, const ArchiveFormat fmt);
 
 /* Create a new archive */
 extern Archive *CreateArchive(const char *FileSpec, const ArchiveFormat fmt,
-			  const int compression, ArchiveMode mode);
+			  const int compression, ArchiveMode mode,
+			  SetupWorkerPtr setupDumpWorker);
 
 /* The --list option */
 extern void PrintTOCSummary(Archive *AH, RestoreOptions *ropt);

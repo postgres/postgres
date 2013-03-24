@@ -158,6 +158,12 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 	AH->ClonePtr = NULL;
 	AH->DeClonePtr = NULL;
 
+	AH->MasterStartParallelItemPtr = NULL;
+	AH->MasterEndParallelItemPtr = NULL;
+
+	AH->WorkerJobDumpPtr = NULL;
+	AH->WorkerJobRestorePtr = NULL;
+
 	/*
 	 * Set up some special context used in compressing data.
 	 */
@@ -828,7 +834,7 @@ _CloseArchive(ArchiveHandle *AH)
 		/*
 		 * Now send the data (tables & blobs)
 		 */
-		WriteDataChunks(AH);
+		WriteDataChunks(AH, NULL);
 
 		/*
 		 * Now this format wants to append a script which does a full restore

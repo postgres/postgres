@@ -395,6 +395,7 @@ sub mkvcbuild
 	$psql->AddIncludeDir('src\bin\pg_dump');
 	$psql->AddIncludeDir('src\backend');
 	$psql->AddFile('src\bin\psql\psqlscan.l');
+	$psql->AddLibrary('ws2_32.lib');
 
 	my $pgdump = AddSimpleFrontend('pg_dump', 1);
 	$pgdump->AddIncludeDir('src\backend');
@@ -403,6 +404,7 @@ sub mkvcbuild
 	$pgdump->AddFile('src\bin\pg_dump\pg_dump_sort.c');
 	$pgdump->AddFile('src\bin\pg_dump\keywords.c');
 	$pgdump->AddFile('src\backend\parser\kwlookup.c');
+	$pgdump->AddLibrary('ws2_32.lib');
 
 	my $pgdumpall = AddSimpleFrontend('pg_dump', 1);
 
@@ -419,6 +421,7 @@ sub mkvcbuild
 	$pgdumpall->AddFile('src\bin\pg_dump\dumputils.c');
 	$pgdumpall->AddFile('src\bin\pg_dump\keywords.c');
 	$pgdumpall->AddFile('src\backend\parser\kwlookup.c');
+	$pgdumpall->AddLibrary('ws2_32.lib');
 
 	my $pgrestore = AddSimpleFrontend('pg_dump', 1);
 	$pgrestore->{name} = 'pg_restore';
@@ -426,6 +429,7 @@ sub mkvcbuild
 	$pgrestore->AddFile('src\bin\pg_dump\pg_restore.c');
 	$pgrestore->AddFile('src\bin\pg_dump\keywords.c');
 	$pgrestore->AddFile('src\backend\parser\kwlookup.c');
+	$pgrestore->AddLibrary('ws2_32.lib');
 
 	my $zic = $solution->AddProject('zic', 'exe', 'utils');
 	$zic->AddFiles('src\timezone', 'zic.c', 'ialloc.c', 'scheck.c',
@@ -572,6 +576,7 @@ sub mkvcbuild
 		$proj->AddIncludeDir('src\bin\psql');
 		$proj->AddReference($libpq, $libpgport, $libpgcommon);
 		$proj->AddResourceFile('src\bin\scripts', 'PostgreSQL Utility');
+		$proj->AddLibrary('ws2_32.lib');
 	}
 
 	# Regression DLL and EXE

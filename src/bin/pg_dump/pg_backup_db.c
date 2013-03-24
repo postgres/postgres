@@ -309,12 +309,30 @@ ConnectDatabase(Archive *AHX,
 	PQsetNoticeProcessor(AH->connection, notice_processor, NULL);
 }
 
+/*
+ * Close the connection to the database and also cancel off the query if we
+ * have one running.
+ */
 void
 DisconnectDatabase(Archive *AHX)
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
+	PGcancel   *cancel;
+	char		errbuf[1];
 
-	PQfinish(AH->connection);	/* noop if AH->connection is NULL */
+	if (!AH->connection)
+		return;
+
+	if (PQtransactionStatus(AH->connection) == PQTRANS_ACTIVE)
+	{
+		if ((cancel = PQgetCancel(AH->connection)))
+		{
+			PQcancel(cancel, errbuf, sizeof(errbuf));
+			PQfreeCancel(cancel);
+		}
+	}
+
+	PQfinish(AH->connection);
 	AH->connection = NULL;
 }
 

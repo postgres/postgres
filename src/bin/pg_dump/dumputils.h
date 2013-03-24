@@ -29,14 +29,14 @@ typedef enum					/* bits returned by set_dump_section */
 
 typedef struct SimpleStringListCell
 {
-    struct SimpleStringListCell *next;
-    char        val[1];         /* VARIABLE LENGTH FIELD */
+	struct SimpleStringListCell *next;
+	char		val[1];			/* VARIABLE LENGTH FIELD */
 } SimpleStringListCell;
 
 typedef struct SimpleStringList
 {
-    SimpleStringListCell *head;
-    SimpleStringListCell *tail;
+	SimpleStringListCell *head;
+	SimpleStringListCell *tail;
 } SimpleStringList;
 
 
@@ -47,6 +47,8 @@ extern const char *progname;
 
 extern void init_parallel_dump_utils(void);
 extern const char *fmtId(const char *identifier);
+extern const char *fmtQualifiedId(int remoteVersion,
+			   const char *schema, const char *id);
 extern void appendStringLiteral(PQExpBuffer buf, const char *str,
 					int encoding, bool std_strings);
 extern void appendStringLiteralConn(PQExpBuffer buf, const char *str,
@@ -85,11 +87,12 @@ __attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 0)));
 extern void
 exit_horribly(const char *modulename, const char *fmt,...)
 __attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3), noreturn));
+extern void (*on_exit_msg_func) (const char *modulename, const char *fmt, va_list ap)
+			__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 0)));
 extern void on_exit_nicely(on_exit_nicely_callback function, void *arg);
 extern void exit_nicely(int code) __attribute__((noreturn));
 
 extern void simple_string_list_append(SimpleStringList *list, const char *val);
 extern bool simple_string_list_member(SimpleStringList *list, const char *val);
-
 
 #endif   /* DUMPUTILS_H */

@@ -657,8 +657,8 @@ dumpRoles(PGconn *conn)
 						  "rolcreaterole, rolcreatedb, "
 						  "rolcanlogin, rolconnlimit, rolpassword, "
 						  "rolvaliduntil, rolreplication, "
-			  "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment, "
-			  			  "rolname = current_user AS is_current_user "
+			 "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment, "
+						  "rolname = current_user AS is_current_user "
 						  "FROM pg_authid "
 						  "ORDER BY 2");
 	else if (server_version >= 80200)
@@ -667,8 +667,8 @@ dumpRoles(PGconn *conn)
 						  "rolcreaterole, rolcreatedb, "
 						  "rolcanlogin, rolconnlimit, rolpassword, "
 						  "rolvaliduntil, false as rolreplication, "
-			  "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment, "
-			  			  "rolname = current_user AS is_current_user "
+			 "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment, "
+						  "rolname = current_user AS is_current_user "
 						  "FROM pg_authid "
 						  "ORDER BY 2");
 	else if (server_version >= 80100)
@@ -678,7 +678,7 @@ dumpRoles(PGconn *conn)
 						  "rolcanlogin, rolconnlimit, rolpassword, "
 						  "rolvaliduntil, false as rolreplication, "
 						  "null as rolcomment, "
-			  			  "rolname = current_user AS is_current_user "
+						  "rolname = current_user AS is_current_user "
 						  "FROM pg_authid "
 						  "ORDER BY 2");
 	else
@@ -694,7 +694,7 @@ dumpRoles(PGconn *conn)
 						  "valuntil as rolvaliduntil, "
 						  "false as rolreplication, "
 						  "null as rolcomment, "
-			  			  "rolname = current_user AS is_current_user "
+						  "rolname = current_user AS is_current_user "
 						  "FROM pg_shadow "
 						  "UNION ALL "
 						  "SELECT 0, groname as rolname, "
@@ -755,7 +755,7 @@ dumpRoles(PGconn *conn)
 		 * will acquire the right properties even if it already exists (ie, it
 		 * won't hurt for the CREATE to fail).  This is particularly important
 		 * for the role we are connected as, since even with --clean we will
-		 * have failed to drop it.  binary_upgrade cannot generate any errors,
+		 * have failed to drop it.	binary_upgrade cannot generate any errors,
 		 * so we assume the current role is already created.
 		 */
 		if (!binary_upgrade ||
@@ -1857,8 +1857,8 @@ connectDatabase(const char *dbname, const char *connection_string,
 	}
 
 	/*
-	 * Ok, connected successfully. Remember the options used, in the form of
-	 * a connection string.
+	 * Ok, connected successfully. Remember the options used, in the form of a
+	 * connection string.
 	 */
 	connstr = constructConnStr(keywords, values);
 
@@ -2039,7 +2039,7 @@ static void
 doConnStrQuoting(PQExpBuffer buf, const char *str)
 {
 	const char *s;
-	bool needquotes;
+	bool		needquotes;
 
 	/*
 	 * If the string consists entirely of plain ASCII characters, no need to

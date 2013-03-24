@@ -73,10 +73,12 @@ PostgreSQL documentation
    transfer mechanism. <application>pg_dump</application> can be used to
    backup an entire database, then <application>pg_restore</application>
    can be used to examine the archive and/or select which parts of the
-   database are to be restored. The most flexible output file format is
-   the <quote>custom</quote> format (<option>-Fc</option>). It allows
-   for selection and reordering of all archived items, and is compressed
-   by default.
+   database are to be restored. The most flexible output file formats are
+   the <quote>custom</quote> format (<option>-Fc</option>) and the
+   <quote>directory</quote> format(<option>-Fd</option>). They allow
+   for selection and reordering of all archived items, support parallel
+   restoration, and are compressed by default. The <quote>directory</quote>
+   format is the only format that supports parallel dumps.
   </para>
 
   <para>
@@ -251,7 +253,8 @@ PostgreSQL documentation
            can read. A directory format archive can be manipulated with
            standard Unix tools; for example, files in an uncompressed archive
            can be compressed with the <application>gzip</application> tool.
-           This format is compressed by default.
+           This format is compressed by default and also supports parallel
+           dumps.
           </para>
          </listitem>
         </varlistentry>
@@ -281,6 +284,62 @@ PostgreSQL documentation
       <listitem>
        <para>
         A deprecated option that is now ignored.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-j <replaceable class="parameter">njobs</replaceable></></term>
+      <term><option>--jobs=<replaceable class="parameter">njobs</replaceable></></term>
+      <listitem>
+       <para>
+        Run the dump in parallel by dumping <replaceable class="parameter">njobs</replaceable>
+        tables simultaneously. This option reduces the time of the dump but it also
+        increases the load on the database server. You can only use this option with the
+        directory output format because this is the only output format where multiple processes
+        can write their data at the same time.
+       </para>
+       <para>
+        <application>pg_dump</> will open <replaceable class="parameter">njobs</replaceable>
+        + 1 connections to the database, so make sure your <xref linkend="guc-max-connections">
+        setting is high enough to accommodate all connections.
+       </para>
+       <para>
+        Requesting exclusive locks on database objects while running a parallel dump could
+        cause the dump to fail. The reason is that the <application>pg_dump</> master process
+        requests shared locks on the objects that the worker processes are going to dump later
+        in order to
+        make sure that nobody deletes them and makes them go away while the dump is running.
+        If another client then requests an exclusive lock on a table, that lock will not be
+        granted but will be queued waiting for the shared lock of the master process to be
+        released.. Consequently any other access to the table will not be granted either and
+        will queue after the exclusive lock request. This includes the worker process trying
+        to dump the table. Without any precautions this would be a classic deadlock situation.
+        To detect this conflict, the <application>pg_dump</> worker process requests another
+        shared lock using the <literal>NOWAIT</> option. If the worker process is not granted
+        this shared lock, somebody else must have requested an exclusive lock in the meantime
+        and there is no way to continue with the dump, so <application>pg_dump</> has no choice
+        but to abort the dump.
+       </para>
+       <para>
+        For a consistent backup, the database server needs to support synchronized snapshots,
+        a feature that was introduced in <productname>PostgreSQL</productname> 9.2. With this
+        feature, database clients can ensure they see the same dataset even though they use
+        different connections. <command>pg_dump -j</command> uses multiple database 
+        connections; it connects to the database once with the master process and
+        once again for each worker job. Without the sychronized snapshot feature, the
+        different worker jobs wouldn't be guaranteed to see the same data in each connection,
+        which could lead to an inconsistent backup.
+       </para>
+       <para>
+        If you want to run a parallel dump of a pre-9.2 server, you need to make sure that the
+        database content doesn't change from between the time the master connects to the
+        database until the last worker job has connected to the database. The easiest way to
+        do this is to halt any data modifying processes (DDL and DML) accessing the database
+        before starting the backup. You also need to specify the
+        <option>--no-synchronized-snapshots</option> parameter when running
+        <command>pg_dump -j</command> against a pre-9.2 <productname>PostgreSQL</productname>
+        server.
        </para>
       </listitem>
      </varlistentry>
@@ -691,6 +750,17 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--no-synchronized-snapshots</></term>
+      <listitem>
+       <para>
+        This option allows running <command>pg_dump -j</> against a pre-9.2
+        server, see the documentation of the <option>-j</option> parameter
+        for more details.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--no-tablespaces</option></term>
       <listitem>
        <para>
@@ -1079,6 +1149,15 @@ CREATE DATABASE foo WITH TEMPLATE template0;
 
 <screen>
 <prompt>$</prompt> <userinput>pg_dump -Fd mydb -f dumpdir</userinput>
+</screen>
+  </para>
+
+  <para>
+   To dump a database into a directory-format archive in parallel with
+   5 worker jobs:
+
+<screen>
+<prompt>$</prompt> <userinput>pg_dump -Fd mydb -j 5 -f dumpdir</userinput>
 </screen>
   </para>
 
