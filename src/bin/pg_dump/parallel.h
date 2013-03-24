@@ -29,12 +29,6 @@ typedef enum
 	WRKR_FINISHED
 }	T_WorkerStatus;
 
-typedef enum T_Action
-{
-	ACT_DUMP,
-	ACT_RESTORE,
-}	T_Action;
-
 /* Arguments needed for a worker process */
 typedef struct ParallelArgs
 {

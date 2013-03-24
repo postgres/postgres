@@ -114,7 +114,12 @@ struct _tocEntry;
 struct _restoreList;
 struct ParallelArgs;
 struct ParallelState;
-enum T_Action;
+
+typedef enum T_Action
+{
+	ACT_DUMP,
+	ACT_RESTORE
+} T_Action;
 
 typedef void (*ClosePtr) (struct _archiveHandle * AH);
 typedef void (*ReopenPtr) (struct _archiveHandle * AH);
@@ -145,9 +150,9 @@ typedef void (*DeClonePtr) (struct _archiveHandle * AH);
 typedef char *(*WorkerJobRestorePtr) (struct _archiveHandle * AH, struct _tocEntry * te);
 typedef char *(*WorkerJobDumpPtr) (struct _archiveHandle * AH, struct _tocEntry * te);
 typedef char *(*MasterStartParallelItemPtr) (struct _archiveHandle * AH, struct _tocEntry * te,
-														 enum T_Action act);
+														 T_Action act);
 typedef int (*MasterEndParallelItemPtr) (struct _archiveHandle * AH, struct _tocEntry * te,
-										 const char *str, enum T_Action act);
+										 const char *str, T_Action act);
 
 typedef size_t (*CustomOutPtr) (struct _archiveHandle * AH, const void *buf, size_t len);
 

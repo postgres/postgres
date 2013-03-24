@@ -44,6 +44,7 @@ typedef void (*on_exit_nicely_callback) (int code, void *arg);
 
 extern int	quote_all_identifiers;
 extern const char *progname;
+extern void (*on_exit_msg_func) (const char *modulename, const char *fmt, va_list ap);
 
 extern void init_parallel_dump_utils(void);
 extern const char *fmtId(const char *identifier);
@@ -87,8 +88,6 @@ __attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 0)));
 extern void
 exit_horribly(const char *modulename, const char *fmt,...)
 __attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3), noreturn));
-extern void (*on_exit_msg_func) (const char *modulename, const char *fmt, va_list ap)
-			__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 0)));
 extern void on_exit_nicely(on_exit_nicely_callback function, void *arg);
 extern void exit_nicely(int code) __attribute__((noreturn));
 
