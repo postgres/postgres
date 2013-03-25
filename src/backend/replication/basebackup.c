@@ -19,6 +19,7 @@
 
 #include "access/xlog_internal.h"		/* for pg_start/stop_backup */
 #include "catalog/pg_type.h"
+#include "common/relpath.h"
 #include "lib/stringinfo.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
@@ -45,6 +46,7 @@ typedef struct
 
 
 static int64 sendDir(char *path, int basepathlen, bool sizeonly);
+static int64 sendTablespace(char *path, bool sizeonly);
 static bool sendFile(char *readfilename, char *tarfilename,
 		 struct stat * statbuf, bool missing_ok);
 static void sendFileWithContent(const char *filename, const char *content);
@@ -146,7 +148,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 			ti = palloc(sizeof(tablespaceinfo));
 			ti->oid = pstrdup(de->d_name);
 			ti->path = pstrdup(linkpath);
-			ti->size = opt->progress ? sendDir(linkpath, strlen(linkpath), true) : -1;
+			ti->size = opt->progress ? sendTablespace(fullpath, true) : -1;
 			tablespaces = lappend(tablespaces, ti);
 #else
 
@@ -181,29 +183,26 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 			pq_sendint(&buf, 0, 2);		/* natts */
 			pq_endmessage(&buf);
 
-			/* In the main tar, include the backup_label first. */
-			if (ti->path == NULL)
-				sendFileWithContent(BACKUP_LABEL_FILE, labelfile);
-
-			sendDir(ti->path == NULL ? "." : ti->path,
-					ti->path == NULL ? 1 : strlen(ti->path),
-					false);
-
-			/* In the main tar, include pg_control last. */
 			if (ti->path == NULL)
 			{
 				struct stat statbuf;
 
+				/* In the main tar, include the backup_label first... */
+				sendFileWithContent(BACKUP_LABEL_FILE, labelfile);
+
+				/* ... then the bulk of the files ... */
+				sendDir(".", 1, false);
+
+				/* ... and pg_control after everything else. */
 				if (lstat(XLOG_CONTROL_FILE, &statbuf) != 0)
-				{
 					ereport(ERROR,
 							(errcode_for_file_access(),
 							 errmsg("could not stat control file \"%s\": %m",
 									XLOG_CONTROL_FILE)));
-				}
-
 				sendFile(XLOG_CONTROL_FILE, XLOG_CONTROL_FILE, &statbuf, false);
 			}
+			else
+				sendTablespace(ti->path, false);
 
 			/*
 			 * If we're including WAL, and this is the main data directory we
@@ -726,6 +725,49 @@ sendFileWithContent(const char *filename, const char *content)
 		MemSet(buf, 0, pad);
 		pq_putmessage('d', buf, pad);
 	}
+}
+
+/*
+ * Include the tablespace directory pointed to by 'path' in the output tar
+ * stream.  If 'sizeonly' is true, we just calculate a total length and return
+ * it, without actually sending anything.
+ */
+static int64
+sendTablespace(char *path, bool sizeonly)
+{
+	int64		size;
+	char		pathbuf[MAXPGPATH];
+	struct stat statbuf;
+
+	/*
+	 * 'path' points to the tablespace location, but we only want to include
+	 * the version directory in it that belongs to us.
+	 */
+	snprintf(pathbuf, sizeof(pathbuf), "%s/%s", path,
+			 TABLESPACE_VERSION_DIRECTORY);
+
+	/*
+	 * Store a directory entry in the tar file so we get the permissions right.
+	 */
+	if (lstat(pathbuf, &statbuf) != 0)
+	{
+		if (errno != ENOENT)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not stat file or directory \"%s\": %m",
+							pathbuf)));
+
+		/* If the tablespace went away while scanning, it's no error. */
+		return 0;
+	}
+	if (!sizeonly)
+		_tarWriteHeader(TABLESPACE_VERSION_DIRECTORY, NULL, &statbuf);
+	size = 512;		/* Size of the header just added */
+
+	/* Send all the files in the tablespace version directory */
+	size += sendDir(pathbuf, strlen(path), sizeonly);
+
+	return size;
 }
 
 /*
