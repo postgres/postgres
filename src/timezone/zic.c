@@ -13,6 +13,7 @@
 #endif
 #include <limits.h>
 #include <locale.h>
+#include <time.h>
 
 extern int	optind;
 extern char *optarg;
