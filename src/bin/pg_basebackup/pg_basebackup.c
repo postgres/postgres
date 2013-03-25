@@ -947,6 +947,9 @@ BaseBackup(void)
 	int			i;
 	char		xlogstart[64];
 	char		xlogend[64];
+	int			minServerMajor,
+				maxServerMajor;
+	int			serverMajor;
 
 	/*
 	 * Connect in replication mode to the server
@@ -955,6 +958,21 @@ BaseBackup(void)
 	if (!conn)
 		/* Error message already written in GetConnection() */
 		exit(1);
+
+	/*
+	 * Check server version. BASE_BACKUP command was introduced in 9.1, so
+	 * we can't work with servers older than 9.1. And we don't support servers
+	 * newer than the client.
+	 */
+	minServerMajor = 901;
+	maxServerMajor = PG_VERSION_NUM / 100;
+	serverMajor = PQserverVersion(conn) / 100;
+	if (serverMajor < minServerMajor || serverMajor > maxServerMajor)
+	{
+		fprintf(stderr, _("%s: unsupported server version %s\n"),
+				progname, PQparameterStatus(conn, "server_version"));
+		disconnect_and_exit(1);
+	}
 
 	/*
 	 * Run IDENTIFY_SYSTEM so we can get the timeline

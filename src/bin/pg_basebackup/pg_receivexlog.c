@@ -220,6 +220,9 @@ StreamLog(void)
 	PGresult   *res;
 	uint32		timeline;
 	XLogRecPtr	startpos;
+	int			minServerMajor,
+				maxServerMajor;
+	int			serverMajor;
 
 	/*
 	 * Connect in replication mode to the server
@@ -228,6 +231,21 @@ StreamLog(void)
 	if (!conn)
 		/* Error message already written in GetConnection() */
 		return;
+
+	/*
+	 * Check server version. IDENTIFY_SYSTEM didn't return the current xlog
+	 * position before 9.1, so we can't work with servers older than 9.1. And
+	 * we don't support servers newer than the client.
+	 */
+	minServerMajor = 901;
+	maxServerMajor = PG_VERSION_NUM / 100;
+	serverMajor = PQserverVersion(conn) / 100;
+	if (serverMajor < minServerMajor || serverMajor > maxServerMajor)
+	{
+		fprintf(stderr, _("%s: unsupported server version %s\n"),
+				progname, PQparameterStatus(conn, "server_version"));
+		disconnect_and_exit(1);
+	}
 
 	/*
 	 * Run IDENTIFY_SYSTEM so we can get the timeline and current xlog
