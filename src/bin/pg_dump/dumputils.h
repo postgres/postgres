@@ -44,7 +44,8 @@ typedef void (*on_exit_nicely_callback) (int code, void *arg);
 
 extern int	quote_all_identifiers;
 extern const char *progname;
-extern void (*on_exit_msg_func) (const char *modulename, const char *fmt, va_list ap);
+extern void (*on_exit_msg_func) (const char *modulename, const char *fmt, va_list ap)
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 0)));
 
 extern void init_parallel_dump_utils(void);
 extern const char *fmtId(const char *identifier);
