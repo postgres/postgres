@@ -1873,21 +1873,15 @@ connectDatabase(const char *dbname, const char *connection_string,
 		fprintf(stderr, _("%s: could not get server version\n"), progname);
 		exit_nicely(1);
 	}
-	server_version = parse_version(remoteversion_str);
-	if (server_version < 0)
+	server_version = PQserverVersion(conn);
+	if (server_version == 0)
 	{
 		fprintf(stderr, _("%s: could not parse server version \"%s\"\n"),
 				progname, remoteversion_str);
 		exit_nicely(1);
 	}
 
-	my_version = parse_version(PG_VERSION);
-	if (my_version < 0)
-	{
-		fprintf(stderr, _("%s: could not parse version \"%s\"\n"),
-				progname, PG_VERSION);
-		exit_nicely(1);
-	}
+	my_version = PG_VERSION_NUM;
 
 	/*
 	 * We allow the server to be back to 7.0, and up to any minor release of

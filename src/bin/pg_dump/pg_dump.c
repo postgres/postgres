@@ -295,7 +295,6 @@ main(int argc, char **argv)
 	int			outputNoOwner = 0;
 	char	   *outputSuperuser = NULL;
 	char	   *use_role = NULL;
-	int			my_version;
 	int			optindex;
 	RestoreOptions *ropt;
 	ArchiveFormat archiveFormat = archUnknown;
@@ -620,16 +619,12 @@ main(int argc, char **argv)
 	/* Let the archiver know how noisy to be */
 	fout->verbose = g_verbose;
 
-	my_version = parse_version(PG_VERSION);
-	if (my_version < 0)
-		exit_horribly(NULL, "could not parse version string \"%s\"\n", PG_VERSION);
-
 	/*
 	 * We allow the server to be back to 7.0, and up to any minor release of
 	 * our own major version.  (See also version check in pg_dumpall.c.)
 	 */
 	fout->minRemoteVersion = 70000;
-	fout->maxRemoteVersion = (my_version / 100) * 100 + 99;
+	fout->maxRemoteVersion = (PG_VERSION_NUM / 100) * 100 + 99;
 
 	fout->numWorkers = numWorkers;
 

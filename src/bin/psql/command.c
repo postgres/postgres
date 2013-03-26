@@ -1708,7 +1708,7 @@ connection_warnings(bool in_startup)
 {
 	if (!pset.quiet && !pset.notty)
 	{
-		int			client_ver = parse_version(PG_VERSION);
+		int			client_ver = PG_VERSION_NUM;
 
 		if (pset.sversion != client_ver)
 		{

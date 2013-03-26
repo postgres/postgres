@@ -29,39 +29,23 @@ static void _check_database_version(ArchiveHandle *AH);
 static PGconn *_connectDB(ArchiveHandle *AH, const char *newdbname, const char *newUser);
 static void notice_processor(void *arg, const char *message);
 
-static int
-_parse_version(const char *versionString)
-{
-	int			v;
-
-	v = parse_version(versionString);
-	if (v < 0)
-		exit_horribly(modulename, "could not parse version string \"%s\"\n", versionString);
-
-	return v;
-}
-
 static void
 _check_database_version(ArchiveHandle *AH)
 {
-	int			myversion;
 	const char *remoteversion_str;
 	int			remoteversion;
 
-	myversion = _parse_version(PG_VERSION);
-
 	remoteversion_str = PQparameterStatus(AH->connection, "server_version");
-	if (!remoteversion_str)
+	remoteversion = PQserverVersion(AH->connection);
+	if (remoteversion == 0 || !remoteversion_str)
 		exit_horribly(modulename, "could not get server_version from libpq\n");
-
-	remoteversion = _parse_version(remoteversion_str);
 
 	AH->public.remoteVersionStr = pg_strdup(remoteversion_str);
 	AH->public.remoteVersion = remoteversion;
 	if (!AH->archiveRemoteVersion)
 		AH->archiveRemoteVersion = AH->public.remoteVersionStr;
 
-	if (myversion != remoteversion
+	if (remoteversion != PG_VERSION_NUM
 		&& (remoteversion < AH->public.minRemoteVersion ||
 			remoteversion > AH->public.maxRemoteVersion))
 	{
