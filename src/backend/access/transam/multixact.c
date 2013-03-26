@@ -1980,14 +1980,14 @@ SetMultiXactIdLimit(MultiXactId oldest_datminmxid, Oid oldest_datoid)
 
 		if (oldest_datname)
 			ereport(WARNING,
-					(errmsg("database \"%s\" must be vacuumed before %u more MultiXactId are used",
+					(errmsg("database \"%s\" must be vacuumed before %u more MultiXactIds are used",
 							oldest_datname,
 							multiWrapLimit - curMulti),
 					 errhint("To avoid a database shutdown, execute a database-wide VACUUM in that database.\n"
 							 "You might also need to commit or roll back old prepared transactions.")));
 		else
 			ereport(WARNING,
-					(errmsg("database with OID %u must be vacuumed before %u more MultiXactId are used",
+					(errmsg("database with OID %u must be vacuumed before %u more MultiXactIds are used",
 							oldest_datoid,
 							multiWrapLimit - curMulti),
 					 errhint("To avoid a database shutdown, execute a database-wide VACUUM in that database.\n"
