@@ -3750,6 +3750,7 @@ getIndexes(TableInfo tblinfo[], int numTables)
 							  "ON (d.refclassid = c.tableoid "
 							  "AND d.refobjid = c.oid) "
 							  "WHERE i.indrelid = '%u'::pg_catalog.oid "
+							  "AND i.indisvalid "
 							  "ORDER BY indexname",
 							  tbinfo->dobj.catId.oid);
 		}
