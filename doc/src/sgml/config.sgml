@@ -330,7 +330,6 @@ include 'filename'
       </listitem>
      </varlistentry>
 
-     <variablelist>
      <varlistentry id="guc-recovery-config-directory" xreflabel="recovery_config_directory">
       <term><varname>recovery_config_directory</varname> (<type>string</type>)</term>
       <indexterm>
