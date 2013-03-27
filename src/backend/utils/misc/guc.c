@@ -424,6 +424,7 @@ int			temp_file_limit = -1;
 int			num_temp_buffers = 1024;
 
 char	   *data_directory;
+char	   *recovery_config_directory;
 char	   *ConfigFileName;
 char	   *HbaFileName;
 char	   *IdentFileName;
@@ -2961,6 +2962,17 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
+		{"recovery_config_directory", PGC_POSTMASTER, FILE_LOCATIONS,
+			gettext_noop("Sets the server's recovery configuration directory."),
+			NULL,
+			GUC_SUPERUSER_ONLY
+		},
+		&recovery_config_directory,
+		NULL,
+		NULL, NULL, NULL
+	},
+
+	{
 		{"config_file", PGC_POSTMASTER, FILE_LOCATIONS,
 			gettext_noop("Sets the server's main configuration file."),
 			NULL,
@@ -4180,6 +4192,18 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 	 * DataDir in advance.)
 	 */
 	SetConfigOption("data_directory", DataDir, PGC_POSTMASTER, PGC_S_OVERRIDE);
+
+	/*
+	 * If the recovery_config_directory GUC variable has been set, use that,
+	 * otherwise use DataDir.
+	 *
+	 * Note: SetRecoveryConfDir will copy and absolute-ize its argument,
+	 * so we don't have to.
+	 */
+	if (recovery_config_directory)
+		SetRecoveryConfDir(recovery_config_directory);
+	else
+		SetRecoveryConfDir(DataDir);
 
 	/*
 	 * If timezone_abbreviations wasn't set in the configuration file, install

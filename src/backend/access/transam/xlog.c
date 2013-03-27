@@ -62,6 +62,7 @@
 
 extern bool bootstrap_data_checksums;
 
+char	recoveryConfPath[MAXPGPATH];
 /* File path names (all relative to $PGDATA) */
 #define RECOVERY_COMMAND_FILE	"recovery.conf"
 #define RECOVERY_COMMAND_DONE	"recovery.done"
@@ -4163,7 +4164,8 @@ readRecoveryCommandFile(void)
 			   *head = NULL,
 			   *tail = NULL;
 
-	fd = AllocateFile(RECOVERY_COMMAND_FILE, "r");
+	snprintf(recoveryConfPath, MAXPGPATH, "%s/%s", RecoveryConfDir, RECOVERY_COMMAND_FILE);
+	fd = AllocateFile(recoveryConfPath, "r");
 	if (fd == NULL)
 	{
 		if (errno == ENOENT)
@@ -4171,7 +4173,7 @@ readRecoveryCommandFile(void)
 		ereport(FATAL,
 				(errcode_for_file_access(),
 				 errmsg("could not open recovery command file \"%s\": %m",
-						RECOVERY_COMMAND_FILE)));
+						recoveryConfPath)));
 	}
 
 	/*
@@ -4345,7 +4347,7 @@ readRecoveryCommandFile(void)
 		if (PrimaryConnInfo == NULL && recoveryRestoreCommand == NULL)
 			ereport(WARNING,
 					(errmsg("recovery command file \"%s\" specified neither primary_conninfo nor restore_command",
-							RECOVERY_COMMAND_FILE),
+							recoveryConfPath),
 					 errhint("The database server will regularly poll the pg_xlog subdirectory to check for files placed there.")));
 	}
 	else
@@ -4353,7 +4355,7 @@ readRecoveryCommandFile(void)
 		if (recoveryRestoreCommand == NULL)
 			ereport(FATAL,
 					(errmsg("recovery command file \"%s\" must specify restore_command when standby mode is not enabled",
-							RECOVERY_COMMAND_FILE)));
+							recoveryConfPath)));
 	}
 
 	/* Enable fetching from archive recovery area */
@@ -4395,6 +4397,7 @@ static void
 exitArchiveRecovery(TimeLineID endTLI, XLogSegNo endLogSegNo)
 {
 	char		recoveryPath[MAXPGPATH];
+	char		recoveryDonePath[MAXPGPATH];
 	char		xlogpath[MAXPGPATH];
 
 	/*
@@ -4459,12 +4462,13 @@ exitArchiveRecovery(TimeLineID endTLI, XLogSegNo endLogSegNo)
 	 * Rename the config file out of the way, so that we don't accidentally
 	 * re-enter archive recovery mode in a subsequent crash.
 	 */
-	unlink(RECOVERY_COMMAND_DONE);
-	if (rename(RECOVERY_COMMAND_FILE, RECOVERY_COMMAND_DONE) != 0)
+	snprintf(recoveryDonePath, MAXPGPATH, "%s/%s", RecoveryConfDir, RECOVERY_COMMAND_DONE);
+	unlink(recoveryDonePath);
+	if (rename(recoveryConfPath, recoveryDonePath) != 0)
 		ereport(FATAL,
 				(errcode_for_file_access(),
 				 errmsg("could not rename file \"%s\" to \"%s\": %m",
-						RECOVERY_COMMAND_FILE, RECOVERY_COMMAND_DONE)));
+						recoveryConfPath, recoveryDonePath)));
 
 	ereport(LOG,
 			(errmsg("archive recovery complete")));

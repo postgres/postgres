@@ -330,6 +330,23 @@ include 'filename'
       </listitem>
      </varlistentry>
 
+     <variablelist>
+     <varlistentry id="guc-recovery-config-directory" xreflabel="recovery_config_directory">
+      <term><varname>recovery_config_directory</varname> (<type>string</type>)</term>
+      <indexterm>
+       <primary><varname>recovery_config_directory</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+         Specifies the directory to use for the recovery.conf file. Note
+         the server requires read and write permission on this directory
+         because the file will be renamed to recovery.done at the end of
+         recovery.
+         This parameter can only be set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-config-file" xreflabel="config_file">
       <term><varname>config_file</varname> (<type>string</type>)</term>
       <indexterm>
