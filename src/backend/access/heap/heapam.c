@@ -6824,7 +6824,11 @@ newt:;
 								 ItemPointerGetBlockNumber(&(xlrec->newtid)),
 								 false);
 		if (!BufferIsValid(nbuffer))
+		{
+			if (BufferIsValid(obuffer))
+				UnlockReleaseBuffer(obuffer);
 			return;
+		}
 		page = (Page) BufferGetPage(nbuffer);
 
 		if (lsn <= PageGetLSN(page))	/* changes are applied */
