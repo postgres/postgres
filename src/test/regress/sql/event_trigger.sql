@@ -97,10 +97,112 @@ drop event trigger regress_event_trigger;
 -- should fail, regression_bob owns regress_event_trigger2/3
 drop role regression_bob;
 
+-- cleanup before next test
 -- these are all OK; the second one should emit a NOTICE
 drop event trigger if exists regress_event_trigger2;
 drop event trigger if exists regress_event_trigger2;
 drop event trigger regress_event_trigger3;
 drop event trigger regress_event_trigger_end;
-drop function test_event_trigger();
-drop role regression_bob;
+
+-- test support for dropped objects
+CREATE SCHEMA schema_one authorization regression_bob;
+CREATE SCHEMA schema_two authorization regression_bob;
+CREATE SCHEMA audit_tbls authorization regression_bob;
+SET SESSION AUTHORIZATION regression_bob;
+
+CREATE TABLE schema_one.table_one(a int);
+CREATE TABLE schema_one."table two"(a int);
+CREATE TABLE schema_one.table_three(a int);
+CREATE TABLE audit_tbls.schema_one_table_two(the_value text);
+
+CREATE TABLE schema_two.table_two(a int);
+CREATE TABLE schema_two.table_three(a int, b text);
+CREATE TABLE audit_tbls.schema_two_table_three(the_value text);
+
+CREATE OR REPLACE FUNCTION schema_two.add(int, int) RETURNS int LANGUAGE plpgsql
+  CALLED ON NULL INPUT
+  AS $$ BEGIN RETURN coalesce($1,0) + coalesce($2,0); END; $$;
+CREATE AGGREGATE schema_two.newton
+  (BASETYPE = int, SFUNC = schema_two.add, STYPE = int);
+
+RESET SESSION AUTHORIZATION;
+
+CREATE TABLE undroppable_objs (
+	object_type text,
+	object_identity text
+);
+INSERT INTO undroppable_objs VALUES
+('table', 'schema_one.table_three'),
+('table', 'audit_tbls.schema_two_table_three');
+
+CREATE TABLE dropped_objects (
+	type text,
+	schema text,
+	object text
+);
+
+-- This tests errors raised within event triggers; the one in audit_tbls
+-- uses 2nd-level recursive invocation via test_evtrig_dropped_objects().
+CREATE OR REPLACE FUNCTION undroppable() RETURNS event_trigger
+LANGUAGE plpgsql AS $$
+DECLARE
+	obj record;
+BEGIN
+	PERFORM 1 FROM pg_tables WHERE tablename = 'undroppable_objs';
+	IF NOT FOUND THEN
+		RAISE NOTICE 'table undroppable_objs not found, skipping';
+		RETURN;
+	END IF;
+	FOR obj IN
+		SELECT * FROM pg_event_trigger_dropped_objects() JOIN
+			undroppable_objs USING (object_type, object_identity)
+	LOOP
+		RAISE EXCEPTION 'object % of type % cannot be dropped',
+			obj.object_identity, obj.object_type;
+	END LOOP;
+END;
+$$;
+
+CREATE EVENT TRIGGER undroppable ON sql_drop
+	EXECUTE PROCEDURE undroppable();
+
+CREATE OR REPLACE FUNCTION test_evtrig_dropped_objects() RETURNS event_trigger
+LANGUAGE plpgsql AS $$
+DECLARE
+    obj record;
+BEGIN
+    FOR obj IN SELECT * FROM pg_event_trigger_dropped_objects()
+    LOOP
+        IF obj.object_type = 'table' THEN
+                EXECUTE format('DROP TABLE IF EXISTS audit_tbls.%I',
+					format('%s_%s', obj.schema_name, obj.object_name));
+        END IF;
+
+	INSERT INTO dropped_objects
+		(type, schema, object) VALUES
+		(obj.object_type, obj.schema_name, obj.object_identity);
+    END LOOP;
+END
+$$;
+
+CREATE EVENT TRIGGER regress_event_trigger_drop_objects ON sql_drop
+	WHEN TAG IN ('drop table', 'drop function', 'drop view',
+		'drop owned', 'drop schema', 'alter table')
+	EXECUTE PROCEDURE test_evtrig_dropped_objects();
+
+ALTER TABLE schema_one.table_one DROP COLUMN a;
+DROP SCHEMA schema_one, schema_two CASCADE;
+DELETE FROM undroppable_objs WHERE object_identity = 'audit_tbls.schema_two_table_three';
+DROP SCHEMA schema_one, schema_two CASCADE;
+DELETE FROM undroppable_objs WHERE object_identity = 'schema_one.table_three';
+DROP SCHEMA schema_one, schema_two CASCADE;
+
+SELECT * FROM dropped_objects WHERE schema IS NULL OR schema <> 'pg_toast';
+
+DROP OWNED BY regression_bob;
+SELECT * FROM dropped_objects WHERE type = 'schema';
+
+DROP ROLE regression_bob;
+
+DROP EVENT TRIGGER regress_event_trigger_drop_objects;
+DROP EVENT TRIGGER undroppable;

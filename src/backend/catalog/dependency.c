@@ -191,6 +191,44 @@ static bool stack_address_present_add_flags(const ObjectAddress *object,
 
 
 /*
+ * Go through the objects given running the final actions on them, and execute
+ * the actual deletion.
+ */
+static void
+deleteObjectsInList(ObjectAddresses *targetObjects, Relation *depRel,
+					int flags)
+{
+	int		i;
+
+	/*
+	 * Keep track of objects for event triggers, if necessary.
+	 */
+	if (trackDroppedObjectsNeeded())
+	{
+		for (i = 0; i < targetObjects->numrefs; i++)
+		{
+			ObjectAddress *thisobj = targetObjects->refs + i;
+
+			if ((!(flags & PERFORM_DELETION_INTERNAL)) &&
+				EventTriggerSupportsObjectType(getObjectClass(thisobj)))
+			{
+				EventTriggerSQLDropAddObject(thisobj);
+			}
+		}
+	}
+
+	/*
+	 * Delete all the objects in the proper order.
+	 */
+	for (i = 0; i < targetObjects->numrefs; i++)
+	{
+		ObjectAddress *thisobj = targetObjects->refs + i;
+
+		deleteOneObject(thisobj, depRel, flags);
+	}
+}
+
+/*
  * performDeletion: attempt to drop the specified object.  If CASCADE
  * behavior is specified, also drop any dependent objects (recursively).
  * If RESTRICT behavior is specified, error out if there are any dependent
@@ -215,7 +253,6 @@ performDeletion(const ObjectAddress *object,
 {
 	Relation	depRel;
 	ObjectAddresses *targetObjects;
-	int			i;
 
 	/*
 	 * We save some cycles by opening pg_depend just once and passing the
@@ -250,15 +287,8 @@ performDeletion(const ObjectAddress *object,
 						   NOTICE,
 						   object);
 
-	/*
-	 * Delete all the objects in the proper order.
-	 */
-	for (i = 0; i < targetObjects->numrefs; i++)
-	{
-		ObjectAddress *thisobj = targetObjects->refs + i;
-
-		deleteOneObject(thisobj, &depRel, flags);
-	}
+	/* do the deed */
+	deleteObjectsInList(targetObjects, &depRel, flags);
 
 	/* And clean up */
 	free_object_addresses(targetObjects);
@@ -332,15 +362,8 @@ performMultipleDeletions(const ObjectAddresses *objects,
 						   NOTICE,
 						   (objects->numrefs == 1 ? objects->refs : NULL));
 
-	/*
-	 * Delete all the objects in the proper order.
-	 */
-	for (i = 0; i < targetObjects->numrefs; i++)
-	{
-		ObjectAddress *thisobj = targetObjects->refs + i;
-
-		deleteOneObject(thisobj, &depRel, flags);
-	}
+	/* do the deed */
+	deleteObjectsInList(targetObjects, &depRel, flags);
 
 	/* And clean up */
 	free_object_addresses(targetObjects);
@@ -356,6 +379,10 @@ performMultipleDeletions(const ObjectAddresses *objects,
  * This is currently used only to clean out the contents of a schema
  * (namespace): the passed object is a namespace.  We normally want this
  * to be done silently, so there's an option to suppress NOTICE messages.
+ *
+ * Note we don't fire object drop event triggers here; it would be wrong to do
+ * so for the current only use of this function, but if more callers are added
+ * this might need to be reconsidered.
  */
 void
 deleteWhatDependsOn(const ObjectAddress *object,

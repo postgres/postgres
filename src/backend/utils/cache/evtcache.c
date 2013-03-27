@@ -169,6 +169,8 @@ BuildEventTriggerCache(void)
 			event = EVT_DDLCommandStart;
 		else if (strcmp(evtevent, "ddl_command_end") == 0)
 			event = EVT_DDLCommandEnd;
+		else if (strcmp(evtevent, "sql_drop") == 0)
+			event = EVT_SQLDrop;
 		else
 			continue;
 

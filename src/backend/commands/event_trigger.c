@@ -19,14 +19,17 @@
 #include "catalog/indexing.h"
 #include "catalog/objectaccess.h"
 #include "catalog/pg_event_trigger.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
 #include "commands/event_trigger.h"
 #include "commands/trigger.h"
+#include "funcapi.h"
 #include "parser/parse_func.h"
 #include "pgstat.h"
+#include "lib/ilist.h"
 #include "miscadmin.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -38,6 +41,17 @@
 #include "utils/tqual.h"
 #include "utils/syscache.h"
 #include "tcop/utility.h"
+
+
+typedef struct EventTriggerQueryState
+{
+	slist_head	SQLDropList;
+	bool		in_sql_drop;
+	MemoryContext	cxt;
+	struct EventTriggerQueryState *previous;
+} EventTriggerQueryState;
+
+EventTriggerQueryState	*currentEventTriggerState = NULL;
 
 typedef struct
 {
@@ -89,6 +103,17 @@ static event_trigger_support_data event_trigger_support[] = {
 	{ NULL, false }
 };
 
+/* Support for dropped objects */
+typedef struct SQLDropObject
+{
+	ObjectAddress	address;
+	const char	   *schemaname;
+	const char	   *objname;
+	const char	   *objidentity;
+	const char	   *objecttype;
+	slist_node		next;
+} SQLDropObject;
+
 static void AlterEventTriggerOwner_internal(Relation rel,
 											HeapTuple tup,
 											Oid newOwnerId);
@@ -127,7 +152,8 @@ CreateEventTrigger(CreateEventTrigStmt *stmt)
 
 	/* Validate event name. */
 	if (strcmp(stmt->eventname, "ddl_command_start") != 0 &&
-		strcmp(stmt->eventname, "ddl_command_end") != 0)
+		strcmp(stmt->eventname, "ddl_command_end") != 0 &&
+		strcmp(stmt->eventname, "sql_drop") != 0)
 		ereport(ERROR,
 			(errcode(ERRCODE_SYNTAX_ERROR),
 			 errmsg("unrecognized event name \"%s\"",
@@ -151,7 +177,10 @@ CreateEventTrigger(CreateEventTrigStmt *stmt)
 	}
 
 	/* Validate tag list, if any. */
-	if (strcmp(stmt->eventname, "ddl_command_start") == 0 && tags != NULL)
+	if ((strcmp(stmt->eventname, "ddl_command_start") == 0 ||
+		 strcmp(stmt->eventname, "ddl_command_end") == 0 ||
+		 strcmp(stmt->eventname, "sql_drop") == 0)
+		&& tags != NULL)
 		validate_ddl_tags("tag", tags);
 
 	/*
@@ -220,7 +249,8 @@ check_ddl_tag(const char *tag)
 		pg_strcasecmp(tag, "SELECT INTO") == 0 ||
 		pg_strcasecmp(tag, "REFRESH MATERIALIZED VIEW") == 0 ||
 		pg_strcasecmp(tag, "ALTER DEFAULT PRIVILEGES") == 0 ||
-		pg_strcasecmp(tag, "ALTER LARGE OBJECT") == 0)
+		pg_strcasecmp(tag, "ALTER LARGE OBJECT") == 0 ||
+		pg_strcasecmp(tag, "DROP OWNED") == 0)
 		return EVENT_TRIGGER_COMMAND_TAG_OK;
 
 	/*
@@ -568,35 +598,19 @@ filter_event_trigger(const char **tag, EventTriggerCacheItem  *item)
 }
 
 /*
- * Fire ddl_command_start triggers.
+ * Setup for running triggers for the given event.  Return value is an OID list
+ * of functions to run; if there are any, trigdata is filled with an
+ * appropriate EventTriggerData for them to receive.
  */
-void
-EventTriggerDDLCommandStart(Node *parsetree)
+static List *
+EventTriggerCommonSetup(Node *parsetree,
+						EventTriggerEvent event, const char *eventstr,
+						EventTriggerData *trigdata)
 {
-	List	   *cachelist;
-	List	   *runlist = NIL;
-	ListCell   *lc;
 	const char *tag;
-	EventTriggerData	trigdata;
-
-	/*
-	 * Event Triggers are completely disabled in standalone mode.  There are
-	 * (at least) two reasons for this:
-	 *
-	 * 1. A sufficiently broken event trigger might not only render the
-	 * database unusable, but prevent disabling itself to fix the situation.
-	 * In this scenario, restarting in standalone mode provides an escape
-	 * hatch.
-	 *
-	 * 2. BuildEventTriggerCache relies on systable_beginscan_ordered, and
-	 * therefore will malfunction if pg_event_trigger's indexes are damaged.
-	 * To allow recovery from a damaged index, we need some operating mode
-	 * wherein event triggers are disabled.  (Or we could implement
-	 * heapscan-and-sort logic for that case, but having disaster recovery
-	 * scenarios depend on code that's otherwise untested isn't appetizing.)
-	 */
-	if (!IsUnderPostmaster)
-		return;
+	List	   *cachelist;
+	ListCell   *lc;
+	List	   *runlist = NIL;
 
 	/*
 	 * We want the list of command tags for which this procedure is actually
@@ -624,9 +638,9 @@ EventTriggerDDLCommandStart(Node *parsetree)
 #endif
 
 	/* Use cache to find triggers for this event; fast exit if none. */
-	cachelist = EventCacheLookup(EVT_DDLCommandStart);
-	if (cachelist == NULL)
-		return;
+	cachelist = EventCacheLookup(event);
+	if (cachelist == NIL)
+		return NIL;
 
 	/* Get the command tag. */
 	tag = CreateCommandTag(parsetree);
@@ -649,11 +663,51 @@ EventTriggerDDLCommandStart(Node *parsetree)
 		}
 	}
 
-	/* Construct event trigger data. */
-	trigdata.type = T_EventTriggerData;
-	trigdata.event = "ddl_command_start";
-	trigdata.parsetree = parsetree;
-	trigdata.tag = tag;
+	/* don't spend any more time on this if no functions to run */
+	if (runlist == NIL)
+		return NIL;
+
+	trigdata->type = T_EventTriggerData;
+	trigdata->event = eventstr;
+	trigdata->parsetree = parsetree;
+	trigdata->tag = tag;
+
+	return runlist;
+}
+
+/*
+ * Fire ddl_command_start triggers.
+ */
+void
+EventTriggerDDLCommandStart(Node *parsetree)
+{
+	List	   *runlist;
+	EventTriggerData	trigdata;
+
+	/*
+	 * Event Triggers are completely disabled in standalone mode.  There are
+	 * (at least) two reasons for this:
+	 *
+	 * 1. A sufficiently broken event trigger might not only render the
+	 * database unusable, but prevent disabling itself to fix the situation.
+	 * In this scenario, restarting in standalone mode provides an escape
+	 * hatch.
+	 *
+	 * 2. BuildEventTriggerCache relies on systable_beginscan_ordered, and
+	 * therefore will malfunction if pg_event_trigger's indexes are damaged.
+	 * To allow recovery from a damaged index, we need some operating mode
+	 * wherein event triggers are disabled.  (Or we could implement
+	 * heapscan-and-sort logic for that case, but having disaster recovery
+	 * scenarios depend on code that's otherwise untested isn't appetizing.)
+	 */
+	if (!IsUnderPostmaster)
+		return;
+
+	runlist = EventTriggerCommonSetup(parsetree,
+									  EVT_DDLCommandStart, "ddl_command_start",
+									  &trigdata);
+	if (runlist == NIL)
+		return;
 
 	/* Run the triggers. */
 	EventTriggerInvoke(runlist, &trigdata);
@@ -674,10 +728,42 @@ EventTriggerDDLCommandStart(Node *parsetree)
 void
 EventTriggerDDLCommandEnd(Node *parsetree)
 {
-	List	   *cachelist;
-	List	   *runlist = NIL;
-	ListCell   *lc;
-	const char *tag;
+	List	   *runlist;
+	EventTriggerData	trigdata;
+
+	/*
+	 * See EventTriggerDDLCommandStart for a discussion about why event
+	 * triggers are disabled in single user mode.
+	 */
+	if (!IsUnderPostmaster)
+		return;
+
+	runlist = EventTriggerCommonSetup(parsetree,
+									  EVT_DDLCommandEnd, "ddl_command_end",
+									  &trigdata);
+	if (runlist == NIL)
+		return;
+
+	/*
+	 * Make sure anything the main command did will be visible to the
+	 * event triggers.
+	 */
+	CommandCounterIncrement();
+
+	/* Run the triggers. */
+	EventTriggerInvoke(runlist, &trigdata);
+
+	/* Cleanup. */
+	list_free(runlist);
+}
+
+/*
+ * Fire sql_drop triggers.
+ */
+void
+EventTriggerSQLDrop(Node *parsetree)
+{
+	List	   *runlist;
 	EventTriggerData	trigdata;
 
 	/*
@@ -688,52 +774,25 @@ EventTriggerDDLCommandEnd(Node *parsetree)
 		return;
 
 	/*
-	 * See EventTriggerDDLCommandStart for a discussion about why this check is
-	 * important.
-	 *
+	 * Use current state to determine whether this event fires at all.  If there
+	 * are no triggers for the sql_drop event, then we don't have anything to do
+	 * here.  Note that dropped object collection is disabled if this is the case,
+	 * so even if we were to try to run, the list would be empty.
 	 */
-#ifdef USE_ASSERT_CHECKING
-	if (assert_enabled)
-	{
-		const char *dbgtag;
-
-		dbgtag = CreateCommandTag(parsetree);
-		if (check_ddl_tag(dbgtag) != EVENT_TRIGGER_COMMAND_TAG_OK)
-			elog(ERROR, "unexpected command tag \"%s\"", dbgtag);
-	}
-#endif
-
-	/* Use cache to find triggers for this event; fast exit if none. */
-	cachelist = EventCacheLookup(EVT_DDLCommandEnd);
-	if (cachelist == NULL)
+	if (!currentEventTriggerState ||
+		slist_is_empty(&currentEventTriggerState->SQLDropList))
 		return;
 
-	/* Get the command tag. */
-	tag = CreateCommandTag(parsetree);
-
+	runlist = EventTriggerCommonSetup(parsetree,
+									  EVT_SQLDrop, "sql_drop",
+									  &trigdata);
 	/*
-	 * Filter list of event triggers by command tag, and copy them into
-	 * our memory context.  Once we start running the command trigers, or
-	 * indeed once we do anything at all that touches the catalogs, an
-	 * invalidation might leave cachelist pointing at garbage, so we must
-	 * do this before we can do much else.
+	 * Nothing to do if run list is empty.  Note this shouldn't happen, because
+	 * if there are no sql_drop events, then objects-to-drop wouldn't have been
+	 * collected in the first place and we would have quitted above.
 	 */
-	foreach (lc, cachelist)
-	{
-		EventTriggerCacheItem  *item = lfirst(lc);
-
-		if (filter_event_trigger(&tag, item))
-		{
-			/* We must plan to fire this trigger. */
-			runlist = lappend_oid(runlist, item->fnoid);
-		}
-	}
-
-	/* Construct event trigger data. */
-	trigdata.type = T_EventTriggerData;
-	trigdata.event = "ddl_command_end";
-	trigdata.parsetree = parsetree;
-	trigdata.tag = tag;
+	if (runlist == NIL)
+		return;
 
 	/*
 	 * Make sure anything the main command did will be visible to the
@@ -741,8 +800,27 @@ EventTriggerDDLCommandEnd(Node *parsetree)
 	 */
 	CommandCounterIncrement();
 
+	/*
+	 * Make sure pg_event_trigger_dropped_objects only works when running these
+	 * triggers.  Use PG_TRY to ensure in_sql_drop is reset even when one
+	 * trigger fails.  (This is perhaps not necessary, as the currentState
+	 * variable will be removed shortly by our caller, but it seems better to
+	 * play safe.)
+	 */
+	currentEventTriggerState->in_sql_drop = true;
+
 	/* Run the triggers. */
-	EventTriggerInvoke(runlist, &trigdata);
+	PG_TRY();
+	{
+		EventTriggerInvoke(runlist, &trigdata);
+	}
+	PG_CATCH();
+	{
+		currentEventTriggerState->in_sql_drop = false;
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+	currentEventTriggerState->in_sql_drop = false;
 
 	/* Cleanup. */
 	list_free(runlist);
@@ -831,4 +909,288 @@ EventTriggerSupportsObjectType(ObjectType obtype)
 			break;
 	}
 	return true;
+}
+
+/*
+ * Prepare event trigger state for a new complete query to run, if necessary;
+ * returns whether this was done.  If it was, EventTriggerEndCompleteQuery must
+ * be called when the query is done, regardless of whether it succeeds or fails
+ * -- so use of a PG_TRY block is mandatory.
+ */
+bool
+EventTriggerBeginCompleteQuery(void)
+{
+	EventTriggerQueryState *state;
+	MemoryContext	cxt;
+
+	/*
+	 * Currently, sql_drop events are the only reason to have event trigger
+	 * state at all; so if there are none, don't install one.
+	 */
+	if (!trackDroppedObjectsNeeded())
+		return false;
+
+	cxt = AllocSetContextCreate(TopMemoryContext,
+								"event trigger state",
+								ALLOCSET_DEFAULT_MINSIZE,
+								ALLOCSET_DEFAULT_INITSIZE,
+								ALLOCSET_DEFAULT_MAXSIZE);
+	state = MemoryContextAlloc(cxt, sizeof(EventTriggerQueryState));
+	state->cxt = cxt;
+	slist_init(&(state->SQLDropList));
+	state->in_sql_drop = false;
+
+	state->previous = currentEventTriggerState;
+	currentEventTriggerState = state;
+
+	return true;
+}
+
+/*
+ * Query completed (or errored out) -- clean up local state, return to previous
+ * one.
+ *
+ * Note: it's an error to call this routine if EventTriggerBeginCompleteQuery
+ * returned false previously.
+ *
+ * Note: this might be called in the PG_CATCH block of a failing transaction,
+ * so be wary of running anything unnecessary.  (In particular, it's probably
+ * unwise to try to allocate memory.)
+ */
+void
+EventTriggerEndCompleteQuery(void)
+{
+	EventTriggerQueryState *prevstate;
+
+	prevstate = currentEventTriggerState->previous;
+
+	/* this avoids the need for retail pfree of SQLDropList items: */
+	MemoryContextDelete(currentEventTriggerState->cxt);
+
+	currentEventTriggerState = prevstate;
+}
+
+/*
+ * Do we need to keep close track of objects being dropped?
+ *
+ * This is useful because there is a cost to running with them enabled.
+ */
+bool
+trackDroppedObjectsNeeded(void)
+{
+	/* true if any sql_drop event trigger exists */
+	return list_length(EventCacheLookup(EVT_SQLDrop)) > 0;
+}
+
+/*
+ * Support for dropped objects information on event trigger functions.
+ *
+ * We keep the list of objects dropped by the current command in current
+ * state's SQLDropList (comprising SQLDropObject items).  Each time a new
+ * command is to start, a clean EventTriggerQueryState is created; commands
+ * that drop objects do the dependency.c dance to drop objects, which
+ * populates the current state's SQLDropList; when the event triggers are
+ * invoked they can consume the list via pg_event_trigger_dropped_objects().
+ * When the command finishes, the EventTriggerQueryState is cleared, and
+ * the one from the previous command is restored (when no command is in
+ * execution, the current state is NULL).
+ *
+ * All this lets us support the case that an event trigger function drops
+ * objects "reentrantly".
+ */
+
+/*
+ * Register one object as being dropped by the current command.
+ */
+void
+EventTriggerSQLDropAddObject(ObjectAddress *object)
+{
+	SQLDropObject  *obj;
+	MemoryContext	oldcxt;
+
+	if (!currentEventTriggerState)
+		return;
+
+	Assert(EventTriggerSupportsObjectType(getObjectClass(object)));
+
+	/* don't report temp schemas */
+	if (object->classId == NamespaceRelationId &&
+		isAnyTempNamespace(object->objectId))
+		return;
+
+	oldcxt = MemoryContextSwitchTo(currentEventTriggerState->cxt);
+
+	obj = palloc0(sizeof(SQLDropObject));
+	obj->address = *object;
+
+	/*
+	 * Obtain schema names from the object's catalog tuple, if one exists;
+	 * this lets us skip objects in temp schemas.  We trust that ObjectProperty
+	 * contains all object classes that can be schema-qualified.
+	 */
+	if (is_objectclass_supported(object->classId))
+	{
+		Relation	catalog;
+		HeapTuple	tuple;
+
+		catalog = heap_open(obj->address.classId, AccessShareLock);
+		tuple = get_catalog_object_by_oid(catalog, obj->address.objectId);
+
+		if (tuple)
+		{
+			AttrNumber	attnum;
+			Datum		datum;
+			bool		isnull;
+
+			attnum = get_object_attnum_namespace(obj->address.classId);
+			if (attnum != InvalidAttrNumber)
+			{
+				datum = heap_getattr(tuple, attnum,
+									 RelationGetDescr(catalog), &isnull);
+				if (!isnull)
+				{
+					Oid		namespaceId;
+
+					namespaceId = DatumGetObjectId(datum);
+					/* Don't report objects in temp namespaces */
+					if (isAnyTempNamespace(namespaceId))
+					{
+						pfree(obj);
+						heap_close(catalog, AccessShareLock);
+						MemoryContextSwitchTo(oldcxt);
+						return;
+					}
+
+					obj->schemaname = get_namespace_name(namespaceId);
+				}
+			}
+
+			if (get_object_namensp_unique(obj->address.classId) &&
+				obj->address.objectSubId == 0)
+			{
+				attnum = get_object_attnum_name(obj->address.classId);
+				if (attnum != InvalidAttrNumber)
+				{
+					datum = heap_getattr(tuple, attnum,
+										 RelationGetDescr(catalog), &isnull);
+					if (!isnull)
+						obj->objname = pstrdup(NameStr(*DatumGetName(datum)));
+				}
+			}
+		}
+
+		heap_close(catalog, AccessShareLock);
+	}
+
+	/* object identity */
+	obj->objidentity = getObjectIdentity(&obj->address);
+
+	/* and object type, too */
+	obj->objecttype = getObjectTypeDescription(&obj->address);
+
+	slist_push_head(&(currentEventTriggerState->SQLDropList), &obj->next);
+
+	MemoryContextSwitchTo(oldcxt);
+}
+
+/*
+ * pg_event_trigger_dropped_objects
+ *
+ * Make the list of dropped objects available to the user function run by the
+ * Event Trigger.
+ */
+Datum
+pg_event_trigger_dropped_objects(PG_FUNCTION_ARGS)
+{
+	ReturnSetInfo	   *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	TupleDesc			tupdesc;
+	Tuplestorestate	   *tupstore;
+	MemoryContext		per_query_ctx;
+	MemoryContext		oldcontext;
+	slist_iter			iter;
+
+	/*
+	 * Protect this function from being called out of context
+	 */
+	if (!currentEventTriggerState ||
+		!currentEventTriggerState->in_sql_drop)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("%s can only be called in a sql_drop event trigger function",
+						"pg_event_trigger_dropped_objects()")));
+
+	/* check to see if caller supports us returning a tuplestore */
+	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
+	if (!(rsinfo->allowedModes & SFRM_Materialize))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("materialize mode required, but it is not allowed in this context")));
+
+	/* Build a tuple descriptor for our result type */
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
+
+	/* Build tuplestore to hold the result rows */
+	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+
+	tupstore = tuplestore_begin_heap(true, false, work_mem);
+	rsinfo->returnMode = SFRM_Materialize;
+	rsinfo->setResult = tupstore;
+	rsinfo->setDesc = tupdesc;
+
+	MemoryContextSwitchTo(oldcontext);
+
+	slist_foreach(iter, &(currentEventTriggerState->SQLDropList))
+	{
+		SQLDropObject *obj;
+		int			i = 0;
+		Datum		values[7];
+		bool		nulls[7];
+
+		obj = slist_container(SQLDropObject, next, iter.cur);
+
+		MemSet(values, 0, sizeof(values));
+		MemSet(nulls, 0, sizeof(nulls));
+
+		/* classid */
+		values[i++] = ObjectIdGetDatum(obj->address.classId);
+
+		/* objid */
+		values[i++] = ObjectIdGetDatum(obj->address.objectId);
+
+		/* objsubid */
+		values[i++] = Int32GetDatum(obj->address.objectSubId);
+
+		/* object_type */
+		values[i++] = CStringGetTextDatum(obj->objecttype);
+
+		/* schema_name */
+		if (obj->schemaname)
+			values[i++] = CStringGetTextDatum(obj->schemaname);
+		else
+			nulls[i++] = true;
+
+		/* object_name */
+		if (obj->objname)
+			values[i++] = CStringGetTextDatum(obj->objname);
+		else
+			nulls[i++] = true;
+
+		/* object_identity */
+		if (obj->objidentity)
+			values[i++] = CStringGetTextDatum(obj->objidentity);
+		else
+			nulls[i++] = true;
+
+		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+	}
+
+	/* clean up and return the tuplestore */
+	tuplestore_donestoring(tupstore);
+
+	return (Datum) 0;
 }

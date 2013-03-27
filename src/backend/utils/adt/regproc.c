@@ -345,7 +345,7 @@ format_procedure_internal(Oid procedure_oid, bool force_qualify)
 
 		/*
 		 * Would this proc be found (given the right args) by regprocedurein?
-		 * If not, we need to qualify it.
+		 * If not, or if caller requests it, we need to qualify it.
 		 */
 		if (!force_qualify && FunctionIsVisible(procedure_oid))
 			nspname = NULL;

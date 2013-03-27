@@ -15980,4 +15980,117 @@ FOR EACH ROW EXECUTE PROCEDURE suppress_redundant_updates_trigger();
         <xref linkend="SQL-CREATETRIGGER">.
     </para>
   </sect1>
+
+  <sect1 id="functions-event-triggers">
+   <title>Event Trigger Functions</title>
+
+   <indexterm>
+     <primary>pg_event_trigger_dropped_objects</primary>
+   </indexterm>
+
+   <para>
+    Currently <productname>PostgreSQL</> provides one built-in event trigger
+    helper function, <function>pg_event_trigger_dropped_objects</>.
+   </para>
+
+   <para>
+    <function>pg_event_trigger_dropped_objects</> returns a list of all object
+    dropped by the command in whose <literal>sql_drop</> event it is called.
+    If called in any other context,
+    <function>pg_event_trigger_dropped_objects</> raises an error.
+    <function>pg_event_trigger_dropped_objects</> returns the following columns:
+
+    <informaltable>
+     <tgroup cols="3">
+      <thead>
+       <row>
+        <entry>Name</entry>
+        <entry>Type</entry>
+        <entry>Description</entry>
+       </row>
+      </thead>
+
+      <tbody>
+       <row>
+        <entry><literal>classid</literal></entry>
+        <entry><type>Oid</type></entry>
+        <entry>OID of catalog the object belonged in</entry>
+       </row>
+       <row>
+        <entry><literal>objid</literal></entry>
+        <entry><type>Oid</type></entry>
+        <entry>OID the object had within the catalog</entry>
+       </row>
+       <row>
+        <entry><literal>objsubid</literal></entry>
+        <entry><type>int32</type></entry>
+        <entry>Object sub-id (e.g. attribute number for columns)</entry>
+       </row>
+       <row>
+        <entry><literal>object_type</literal></entry>
+        <entry><type>text</type></entry>
+        <entry>Type of the object</entry>
+       </row>
+       <row>
+        <entry><literal>schema_name</literal></entry>
+        <entry><type>text</type></entry>
+        <entry>
+         Name of the schema the object belonged in, if any; otherwise <literal>NULL</>.
+         No quoting is applied.
+        </entry>
+       </row>
+       <row>
+        <entry><literal>object_name</literal></entry>
+        <entry><type>text</type></entry>
+        <entry>
+         Name of the object, if the combination of schema and name can be
+         used as an unique identifier for the object; otherwise <literal>NULL</>.
+         No quoting is applied, and name is never schema-qualified.
+        </entry>
+       </row>
+       <row>
+        <entry><literal>object_identity</literal></entry>
+        <entry><type>text</type></entry>
+        <entry>
+         Text rendering of the object identity, schema-qualified. Each and every
+         identifier present in the identity is quoted if necessary.
+        </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </informaltable>
+   </para>
+
+   <para>
+    The <function>pg_event_trigger_dropped_objects</> function can be used
+    in an event trigger like this:
+<programlisting>
+CREATE FUNCTION test_event_trigger_for_drops()
+        RETURNS event_trigger LANGUAGE plpgsql AS $$
+DECLARE
+    obj record;
+BEGIN
+    FOR obj IN SELECT * FROM pg_event_trigger_dropped_objects()
+    LOOP
+        RAISE NOTICE '% dropped object: % %.% %',
+                     tg_tag,
+                     obj.object_type,
+                     obj.schema_name,
+                     obj.object_name,
+                     obj.object_identity;
+    END LOOP;
+END
+$$;
+CREATE EVENT TRIGGER test_event_trigger_for_drops
+   ON sql_drop
+   EXECUTE PROCEDURE test_event_trigger_for_drops();
+</programlisting>
+    </para>
+
+     <para>
+       For more information about event triggers,
+       see <xref linkend="event-triggers">.
+    </para>
+  </sect1>
+
 </chapter>

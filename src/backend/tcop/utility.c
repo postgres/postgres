@@ -346,12 +346,13 @@ ProcessUtility(Node *parsetree,
 	do { \
 	    if (isCompleteQuery) \
         { \
-		    EventTriggerDDLCommandStart(parsetree); \
+			EventTriggerDDLCommandStart(parsetree); \
 		} \
 		fncall; \
         if (isCompleteQuery) \
         { \
-		    EventTriggerDDLCommandEnd(parsetree); \
+			EventTriggerSQLDrop(parsetree); \
+			EventTriggerDDLCommandEnd(parsetree); \
 		} \
 	} while (0)
 
@@ -366,7 +367,45 @@ ProcessUtility(Node *parsetree,
 		fncall; \
 		if (_supported) \
 		{ \
+			EventTriggerSQLDrop(parsetree); \
 			EventTriggerDDLCommandEnd(parsetree); \
+		} \
+	} while (0)
+
+/*
+ * UTILITY_BEGIN_QUERY and UTILITY_END_QUERY are a pair of macros to enclose
+ * execution of a single DDL command, to ensure the event trigger environment
+ * is appropriately set up before starting, and tore down after completion or
+ * error.
+ */
+#define UTILITY_BEGIN_QUERY(isComplete) \
+	do { \
+		bool		_needCleanup = false; \
+		\
+		if (isComplete) \
+		{ \
+			_needCleanup = EventTriggerBeginCompleteQuery(); \
+		} \
+		\
+		PG_TRY(); \
+		{ \
+			/* avoid empty statement when followed by a semicolon */ \
+			(void) 0
+
+#define UTILITY_END_QUERY() \
+		} \
+		PG_CATCH(); \
+		{ \
+			if (_needCleanup) \
+			{ \
+				EventTriggerEndCompleteQuery(); \
+			} \
+			PG_RE_THROW(); \
+		} \
+		PG_END_TRY(); \
+		if (_needCleanup) \
+		{ \
+			EventTriggerEndCompleteQuery(); \
 		} \
 	} while (0)
 
@@ -385,6 +424,8 @@ standard_ProcessUtility(Node *parsetree,
 
 	if (completionTag)
 		completionTag[0] = '\0';
+
+	UTILITY_BEGIN_QUERY(isCompleteQuery);
 
 	switch (nodeTag(parsetree))
 	{
@@ -615,7 +656,10 @@ standard_ProcessUtility(Node *parsetree,
 				}
 
 				if (isCompleteQuery)
+				{
+					EventTriggerSQLDrop(parsetree);
 					EventTriggerDDLCommandEnd(parsetree);
+				}
 			}
 			break;
 
@@ -726,7 +770,10 @@ standard_ProcessUtility(Node *parsetree,
 
 				if (isCompleteQuery
 					&& EventTriggerSupportsObjectType(stmt->removeType))
+				{
+					EventTriggerSQLDrop(parsetree);
 					EventTriggerDDLCommandEnd(parsetree);
+				}
 
 				break;
 			}
@@ -856,6 +903,12 @@ standard_ProcessUtility(Node *parsetree,
 					ereport(NOTICE,
 						  (errmsg("relation \"%s\" does not exist, skipping",
 								  atstmt->relation->relname)));
+
+				if (isCompleteQuery)
+				{
+					EventTriggerSQLDrop(parsetree);
+					EventTriggerDDLCommandEnd(parsetree);
+				}
 			}
 			break;
 
@@ -1248,8 +1301,9 @@ standard_ProcessUtility(Node *parsetree,
 			break;
 
 		case T_DropOwnedStmt:
-			/* no event triggers for global objects */
-			DropOwnedObjects((DropOwnedStmt *) parsetree);
+			InvokeDDLCommandEventTriggers(
+				parsetree,
+				DropOwnedObjects((DropOwnedStmt *) parsetree));
 			break;
 
 		case T_ReassignOwnedStmt:
@@ -1372,6 +1426,8 @@ standard_ProcessUtility(Node *parsetree,
 				 (int) nodeTag(parsetree));
 			break;
 	}
+
+	UTILITY_END_QUERY();
 }
 
 /*
