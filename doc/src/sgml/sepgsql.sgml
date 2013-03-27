@@ -438,6 +438,12 @@ UPDATE t1 SET x = 2, y = md5sum(y) WHERE z = 100;
     On creation of objects within a particular schema (tables, views,
     sequences and procedures), <literal>add_name</> will be also checked
     on the schema, not only <literal>create</> on the new object itself.
+    On <xref linkend="sql-createfunction">, <literal>install</> permission
+    will be checked if <literal>leakproof</> attribute was given, not only
+    <literal>create</> on the new function. This permission will be also
+    checked when user tries to turn on <literal>leakproof</> attribute
+    using <xref linkend="sql-alterfunction"> command, with
+    <literal>setattr</> permission on the function being altered.
    </para>
 
    <para>
@@ -450,9 +456,19 @@ UPDATE t1 SET x = 2, y = md5sum(y) WHERE z = 100;
    </para>
 
    <para>
-    When objects that are subsidiary of other objects (such as a table's indexes
-    or triggers) are created or dropped, <literal>setattr</> permission will be
-    checked on the main object, instead of the subsidiary object itself.
+    When <literal>ALTER</> command is executed, <literal>setattr</> will be
+    checked on the object being modified for each object types. 
+    In addition, <literal>remove_name</> and <literal>add_name</>
+    will be checked on the old and new schemas, respectively, when an
+    object is moved to a new schema.
+    For certain object types, additional checks are performed.
+   </para>
+
+   <para>
+    When objects that are subsidiary of other objects (such as a table's
+    indexes or triggers) are created, dropped or altered,
+    <literal>setattr</> permission will be checked on the main object,
+    instead of the subsidiary object itself.
    </para>
 
    <para>

@@ -2,6 +2,12 @@
 -- Regression Test for DDL of Object Permission Checks
 --
 
+-- clean-up in case a prior regression run failed
+SET client_min_messages TO 'warning';
+DROP DATABASE IF EXISTS regtest_sepgsql_test_database;
+DROP USER IF EXISTS regtest_sepgsql_test_user;
+RESET client_min_messages;
+
 -- confirm required permissions using audit messages
 -- @SECURITY-CONTEXT=unconfined_u:unconfined_r:unconfined_t:s0
 SET sepgsql.debug_audit = true;

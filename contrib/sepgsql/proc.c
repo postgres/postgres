@@ -23,6 +23,7 @@
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
+#include "utils/syscache.h"
 #include "utils/tqual.h"
 
 #include "sepgsql.h"
@@ -43,6 +44,7 @@ sepgsql_proc_post_create(Oid functionId)
 	char	   *scontext;
 	char	   *tcontext;
 	char	   *ncontext;
+	uint32		required;
 	int			i;
 	StringInfoData audit_name;
 	ObjectAddress object;
@@ -96,7 +98,7 @@ sepgsql_proc_post_create(Oid functionId)
 									  SEPG_CLASS_DB_PROCEDURE);
 
 	/*
-	 * check db_procedure:{create} permission
+	 * check db_procedure:{create (install)} permission
 	 */
 	initStringInfo(&audit_name);
 	appendStringInfo(&audit_name, "function %s(", NameStr(proForm->proname));
@@ -110,9 +112,13 @@ sepgsql_proc_post_create(Oid functionId)
 	}
 	appendStringInfoChar(&audit_name, ')');
 
+	required = SEPG_DB_PROCEDURE__CREATE;
+	if (proForm->proleakproof)
+		required |= SEPG_DB_PROCEDURE__INSTALL;
+
 	sepgsql_avc_check_perms_label(ncontext,
 								  SEPG_CLASS_DB_PROCEDURE,
-								  SEPG_DB_PROCEDURE__CREATE,
+								  required,
 								  audit_name.data,
 								  true);
 
@@ -213,4 +219,84 @@ sepgsql_proc_relabel(Oid functionId, const char *seclabel)
 								  audit_name,
 								  true);
 	pfree(audit_name);
+}
+
+/*
+ * sepgsql_proc_setattr
+ *
+ * It checks privileges to alter the supplied function.
+ */
+void
+sepgsql_proc_setattr(Oid functionId)
+{
+	Relation		rel;
+	ScanKeyData		skey;
+	SysScanDesc		sscan;
+	HeapTuple		oldtup;
+	HeapTuple		newtup;
+	Form_pg_proc	oldform;
+	Form_pg_proc	newform;
+	uint32			required;
+	ObjectAddress	object;
+	char		   *audit_name;
+
+	/*
+	 * Fetch newer catalog
+	 */
+	rel = heap_open(ProcedureRelationId, AccessShareLock);
+
+	ScanKeyInit(&skey,
+				ObjectIdAttributeNumber,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(functionId));
+
+	sscan = systable_beginscan(rel, ProcedureOidIndexId, true,
+							   SnapshotSelf, 1, &skey);
+	newtup = systable_getnext(sscan);
+	if (!HeapTupleIsValid(newtup))
+		elog(ERROR, "catalog lookup failed for function %u", functionId);
+	newform = (Form_pg_proc) GETSTRUCT(newtup);
+
+	/*
+	 * Fetch older catalog
+	 */
+	oldtup = SearchSysCache1(PROCOID, ObjectIdGetDatum(functionId));
+	if (!HeapTupleIsValid(oldtup))
+		elog(ERROR, "cache lookup failed for function %u", functionId);
+	oldform = (Form_pg_proc) GETSTRUCT(oldtup);
+
+	/*
+	 * Does this ALTER command takes operation to namespace?
+	 */
+	if (newform->pronamespace != oldform->pronamespace)
+	{
+		sepgsql_schema_remove_name(oldform->pronamespace);
+		sepgsql_schema_add_name(oldform->pronamespace);
+	}
+	if (strcmp(NameStr(newform->proname), NameStr(oldform->proname)) != 0)
+		sepgsql_schema_rename(oldform->pronamespace);
+
+	/*
+	 * check db_procedure:{setattr (install)} permission
+	 */
+	required = SEPG_DB_PROCEDURE__SETATTR;
+	if (!oldform->proleakproof && newform->proleakproof)
+		required |= SEPG_DB_PROCEDURE__INSTALL;
+
+	object.classId = ProcedureRelationId;
+	object.objectId = functionId;
+	object.objectSubId = 0;
+	audit_name = getObjectDescription(&object);
+
+	sepgsql_avc_check_perms(&object,
+							SEPG_CLASS_DB_PROCEDURE,
+                            required,
+							audit_name,
+							true);
+	/* cleanups */
+	pfree(audit_name);
+
+	ReleaseSysCache(oldtup);
+	systable_endscan(sscan);
+	heap_close(rel, AccessShareLock);
 }

@@ -293,6 +293,7 @@ extern void sepgsql_database_post_create(Oid databaseId,
 							 const char *dtemplate);
 extern void sepgsql_database_drop(Oid databaseId);
 extern void sepgsql_database_relabel(Oid databaseId, const char *seclabel);
+extern void sepgsql_database_setattr(Oid databaseId);
 
 /*
  * schema.c
@@ -300,6 +301,10 @@ extern void sepgsql_database_relabel(Oid databaseId, const char *seclabel);
 extern void sepgsql_schema_post_create(Oid namespaceId);
 extern void sepgsql_schema_drop(Oid namespaceId);
 extern void sepgsql_schema_relabel(Oid namespaceId, const char *seclabel);
+extern void sepgsql_schema_setattr(Oid namespaceId);
+extern void sepgsql_schema_add_name(Oid namespaceId);
+extern void sepgsql_schema_remove_name(Oid namespaceId);
+extern void sepgsql_schema_rename(Oid namespaceId);
 
 /*
  * relation.c
@@ -308,6 +313,7 @@ extern void sepgsql_attribute_post_create(Oid relOid, AttrNumber attnum);
 extern void sepgsql_attribute_drop(Oid relOid, AttrNumber attnum);
 extern void sepgsql_attribute_relabel(Oid relOid, AttrNumber attnum,
 						  const char *seclabel);
+extern void sepgsql_attribute_setattr(Oid relOid, AttrNumber attnum);
 extern void sepgsql_relation_post_create(Oid relOid);
 extern void sepgsql_relation_drop(Oid relOid);
 extern void sepgsql_relation_relabel(Oid relOid, const char *seclabel);
@@ -319,5 +325,6 @@ extern void sepgsql_relation_setattr(Oid relOid);
 extern void sepgsql_proc_post_create(Oid functionId);
 extern void sepgsql_proc_drop(Oid functionId);
 extern void sepgsql_proc_relabel(Oid functionId, const char *seclabel);
+extern void sepgsql_proc_setattr(Oid functionId);
 
 #endif   /* SEPGSQL_H */

@@ -162,3 +162,54 @@ sepgsql_schema_relabel(Oid namespaceId, const char *seclabel)
 								  true);
 	pfree(audit_name);
 }
+
+/*
+ * sepgsql_schema_check_perms
+ *
+ * utility routine to check db_schema:{xxx} permissions
+ */
+static void
+check_schema_perms(Oid namespaceId, uint32 required)
+{
+	ObjectAddress object;
+	char	   *audit_name;
+
+	object.classId = NamespaceRelationId;
+	object.objectId = namespaceId;
+	object.objectSubId = 0;
+	audit_name = getObjectDescription(&object);
+
+	sepgsql_avc_check_perms(&object,
+							SEPG_CLASS_DB_SCHEMA,
+							required,
+							audit_name,
+							true);
+	pfree(audit_name);
+}
+
+/* db_schema:{setattr} permission */
+void
+sepgsql_schema_setattr(Oid namespaceId)
+{
+	check_schema_perms(namespaceId, SEPG_DB_SCHEMA__SETATTR);
+}
+
+void
+sepgsql_schema_add_name(Oid namespaceId)
+{
+	check_schema_perms(namespaceId, SEPG_DB_SCHEMA__ADD_NAME);
+}
+
+void
+sepgsql_schema_remove_name(Oid namespaceId)
+{
+	check_schema_perms(namespaceId, SEPG_DB_SCHEMA__REMOVE_NAME);
+}
+
+void
+sepgsql_schema_rename(Oid namespaceId)
+{
+	check_schema_perms(namespaceId,
+					   SEPG_DB_SCHEMA__ADD_NAME |
+					   SEPG_DB_SCHEMA__REMOVE_NAME);
+}

@@ -162,6 +162,31 @@ if [ "${POLICY_STATUS}" != on ]; then
     echo ""
     exit 1
 fi
+POLICY_STATUS=`getsebool sepgsql_enable_users_ddl | awk '{print $3}'`
+echo ${POLICY_STATUS:-failed}
+if [ "${POLICY_STATUS}" != on ]; then
+    echo ""
+    echo "The SELinux boolean 'sepgsql_enable_users_ddl' must be"
+    echo "turned on in order to enable the rules necessary to run"
+    echo "the regression tests."
+    echo ""
+    if [ "${POLICY_STATUS}" = "" ]; then
+        echo "We attempted to determine the state of this Boolean using"
+        echo "'getsebool', but that command did not produce the expected"
+        echo "output.  Please verify that getsebool is available and in"
+        echo "your PATH."
+    else
+        echo "You can turn on this variable using the following commands:"
+        echo ""
+        echo "  \$ sudo setsebool sepgsql_enable_users_ddl on"
+        echo ""
+        echo "For security reasons, it is suggested that you turn off this"
+        echo "variable when regression testing is complete, unless you"
+        echo "don't want to allow unprivileged users DDL commands."
+    fi
+    echo ""
+    exit 1
+fi
 
 # 'psql' command must be executable from test domain
 echo -n "checking whether we can run psql    ... "
@@ -259,6 +284,6 @@ echo "found ${NUM}"
 echo
 echo "============== running sepgsql regression tests       =============="
 
-make REGRESS="label dml ddl misc" REGRESS_OPTS="--launcher ./launcher" installcheck
+make REGRESS="label dml ddl alter misc" REGRESS_OPTS="--launcher ./launcher" installcheck
 
 # exit with the exit code provided by "make"

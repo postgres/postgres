@@ -149,6 +149,33 @@ sepgsql_database_drop(Oid databaseId)
 }
 
 /*
+ * sepgsql_database_post_alter
+ *
+ * It checks privileges to alter the supplied database
+ */
+void
+sepgsql_database_setattr(Oid databaseId)
+{
+	ObjectAddress object;
+	char	   *audit_name;
+
+	/*
+	 * check db_database:{setattr} permission
+	 */
+	object.classId = DatabaseRelationId;
+	object.objectId = databaseId;
+	object.objectSubId = 0;
+	audit_name = getObjectDescription(&object);
+
+	sepgsql_avc_check_perms(&object,
+							SEPG_CLASS_DB_DATABASE,
+							SEPG_DB_DATABASE__SETATTR,
+							audit_name,
+							true);
+	pfree(audit_name);
+}
+
+/*
  * sepgsql_database_relabel
  *
  * It checks privileges to relabel the supplied database with the `seclabel'
