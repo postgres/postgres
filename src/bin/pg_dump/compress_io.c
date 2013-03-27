@@ -53,7 +53,7 @@
  */
 
 #include "compress_io.h"
-#include "dumputils.h"
+#include "pg_backup_utils.h"
 #include "parallel.h"
 
 /*----------------------

@@ -31,7 +31,8 @@
 #include "pg_backup.h"
 #include "pg_backup_archiver.h"
 #include "pg_backup_tar.h"
-#include "dumputils.h"
+#include "pg_backup_utils.h"
+#include "parallel.h"
 #include "pgtar.h"
 
 #include <sys/stat.h>

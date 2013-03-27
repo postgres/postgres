@@ -25,8 +25,8 @@
  */
 
 #include "compress_io.h"
-#include "dumputils.h"
 #include "parallel.h"
+#include "pg_backup_utils.h"
 
 /*--------
  * Routines in the format interface

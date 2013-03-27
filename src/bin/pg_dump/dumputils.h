@@ -19,14 +19,6 @@
 #include "libpq-fe.h"
 #include "pqexpbuffer.h"
 
-typedef enum					/* bits returned by set_dump_section */
-{
-	DUMP_PRE_DATA = 0x01,
-	DUMP_DATA = 0x02,
-	DUMP_POST_DATA = 0x04,
-	DUMP_UNSECTIONED = 0xff
-} DumpSections;
-
 typedef struct SimpleStringListCell
 {
 	struct SimpleStringListCell *next;
@@ -40,14 +32,9 @@ typedef struct SimpleStringList
 } SimpleStringList;
 
 
-typedef void (*on_exit_nicely_callback) (int code, void *arg);
-
 extern int	quote_all_identifiers;
-extern const char *progname;
-extern void (*on_exit_msg_func) (const char *modulename, const char *fmt, va_list ap)
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 0)));
+extern PQExpBuffer (*getLocalPQExpBuffer) (void);
 
-extern void init_parallel_dump_utils(void);
 extern const char *fmtId(const char *identifier);
 extern const char *fmtQualifiedId(int remoteVersion,
 			   const char *schema, const char *id);
@@ -79,17 +66,6 @@ extern void buildShSecLabelQuery(PGconn *conn, const char *catalog_name,
 extern void emitShSecLabels(PGconn *conn, PGresult *res,
 				PQExpBuffer buffer, const char *target, const char *objname);
 extern void set_dump_section(const char *arg, int *dumpSections);
-extern void
-write_msg(const char *modulename, const char *fmt,...)
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
-extern void
-vwrite_msg(const char *modulename, const char *fmt, va_list ap)
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 0)));
-extern void
-exit_horribly(const char *modulename, const char *fmt,...)
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3), noreturn));
-extern void on_exit_nicely(on_exit_nicely_callback function, void *arg);
-extern void exit_nicely(int code) __attribute__((noreturn));
 
 extern void simple_string_list_append(SimpleStringList *list, const char *val);
 extern bool simple_string_list_member(SimpleStringList *list, const char *val);

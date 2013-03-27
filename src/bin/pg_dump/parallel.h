@@ -16,6 +16,9 @@
  *-------------------------------------------------------------------------
  */
 
+#ifndef PG_DUMP_PARALLEL_H
+#define PG_DUMP_PARALLEL_H
+
 #include "pg_backup_db.h"
 
 struct _archiveHandle;
@@ -62,6 +65,13 @@ typedef struct ParallelState
 	ParallelSlot *parallelSlot;
 } ParallelState;
 
+#ifdef WIN32
+extern bool parallel_init_done;
+extern DWORD mainThreadId;
+#endif
+
+extern void init_parallel_dump_utils(void);
+
 extern int	GetIdleWorker(ParallelState *pstate);
 extern bool IsEveryWorkerIdle(ParallelState *pstate);
 extern void ListenToWorkers(struct _archiveHandle * AH, ParallelState *pstate, bool do_wait);
@@ -77,3 +87,9 @@ extern void DispatchJobForTocEntry(struct _archiveHandle * AH,
 extern void ParallelBackupEnd(struct _archiveHandle * AH, ParallelState *pstate);
 
 extern void checkAborting(struct _archiveHandle * AH);
+
+extern void
+exit_horribly(const char *modulename, const char *fmt,...)
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3), noreturn));
+
+#endif   /* PG_DUMP_PARALLEL_H */

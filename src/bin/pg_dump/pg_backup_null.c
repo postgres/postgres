@@ -23,7 +23,8 @@
  */
 
 #include "pg_backup_archiver.h"
-#include "dumputils.h"
+#include "pg_backup_utils.h"
+#include "parallel.h"
 
 #include <unistd.h>				/* for dup */
 

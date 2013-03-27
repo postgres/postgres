@@ -14,7 +14,8 @@
  *-------------------------------------------------------------------------
  */
 #include "pg_backup_archiver.h"
-#include "dumputils.h"
+#include "pg_backup_utils.h"
+#include "parallel.h"
 
 /* translator: this is a module name */
 static const char *modulename = gettext_noop("sorter");

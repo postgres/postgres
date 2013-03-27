@@ -63,6 +63,7 @@ static PGresult *executeQuery(PGconn *conn, const char *query);
 static void executeCommand(PGconn *conn, const char *query);
 
 static char pg_dump_bin[MAXPGPATH];
+static const char *progname;
 static PQExpBuffer pgdumpopts;
 static char *connstr = "";
 static bool skip_acls = false;
@@ -82,6 +83,7 @@ static int	server_version;
 static FILE *OPF;
 static char *filename = NULL;
 
+#define exit_nicely(code) exit(code)
 
 int
 main(int argc, char *argv[])
