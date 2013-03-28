@@ -159,7 +159,8 @@ CW	+1211-06900	America/Curacao
 CX	-1025+10543	Indian/Christmas
 CY	+3510+03322	Asia/Nicosia
 CZ	+5005+01426	Europe/Prague
-DE	+5230+01322	Europe/Berlin
+DE	+5230+01322	Europe/Berlin	most locations
+DE	+4742+00841	Europe/Busingen	Busingen
 DJ	+1136+04309	Africa/Djibouti
 DK	+5540+01235	Europe/Copenhagen
 DM	+1518-06124	America/Dominica
@@ -341,8 +342,10 @@ RU	+5345+08707	Asia/Novokuznetsk	Moscow+03 - Novokuznetsk
 RU	+5601+09250	Asia/Krasnoyarsk	Moscow+04 - Yenisei River
 RU	+5216+10420	Asia/Irkutsk	Moscow+05 - Lake Baikal
 RU	+6200+12940	Asia/Yakutsk	Moscow+06 - Lena River
+RU	+623923+1353314	Asia/Khandyga	Moscow+06 - Tomponsky, Ust-Maysky
 RU	+4310+13156	Asia/Vladivostok	Moscow+07 - Amur River
 RU	+4658+14242	Asia/Sakhalin	Moscow+07 - Sakhalin Island
+RU	+643337+1431336	Asia/Ust-Nera	Moscow+07 - Oymyakonsky
 RU	+5934+15048	Asia/Magadan	Moscow+08 - Magadan
 RU	+5301+15839	Asia/Kamchatka	Moscow+08 - Kamchatka
 RU	+6445+17729	Asia/Anadyr	Moscow+08 - Bering Sea

@@ -50,10 +50,8 @@ Rule	ChileAQ	2009	only	-	Mar	Sun>=9	3:00u	0	-
 Rule	ChileAQ	2010	only	-	Apr	Sun>=1	3:00u	0	-
 Rule	ChileAQ	2011	only	-	May	Sun>=2	3:00u	0	-
 Rule	ChileAQ	2011	only	-	Aug	Sun>=16	4:00u	1:00	S
-Rule	ChileAQ	2012	only	-	Apr	Sun>=23	3:00u	0	-
-Rule	ChileAQ	2012	only	-	Sep	Sun>=2	4:00u	1:00	S
-Rule	ChileAQ	2013	max	-	Mar	Sun>=9	3:00u	0	-
-Rule	ChileAQ	2013	max	-	Oct	Sun>=9	4:00u	1:00	S
+Rule	ChileAQ	2012	max	-	Apr	Sun>=23	3:00u	0	-
+Rule	ChileAQ	2012	max	-	Sep	Sun>=2	4:00u	1:00	S
 
 # These rules are stolen from the `australasia' file.
 Rule	AusAQ	1917	only	-	Jan	 1	0:01	1:00	-
