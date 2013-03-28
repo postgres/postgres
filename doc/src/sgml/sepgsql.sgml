@@ -422,69 +422,85 @@ UPDATE t1 SET x = 2, y = md5sum(y) WHERE z = 100;
     addition or deletion of name entries within a particular schema.
    </para>
    <para>
-    When a <literal>CREATE</> command is executed, <literal>create</> will
-    be checked on the object being constructed for each object types.
-    A default security label will be assigned to the new database object,
-    and the <literal>create</> permission will be checked on the pair
-    of security label of the client and the new object itself.
-    We consider <xref linkend="sql-createtable"> to construct a table and
-    underlying columns at the same time, so it requires the users to have
-    permission to create both the table and its columns.
+    Creating a new database object requires <literal>create</> permission.
+    <productname>SELinux</> will grant or deny this permission based on the
+    client's security label and the proposed security label for the new
+    object.  In some cases, additional privileges are required:
    </para>
-   <para>
-    A few additional checks are applied depending on object types.
-    On <xref linkend="sql-createdatabase">, <literal>getattr</> permission
-    will be checked on the source or template database of the new database,
-    not only <literal>create</> on the new database.
-    On creation of objects within a particular schema (tables, views,
-    sequences and procedures), <literal>add_name</> will be also checked
-    on the schema, not only <literal>create</> on the new object itself.
-    On <xref linkend="sql-createfunction">, <literal>install</> permission
-    will be checked if <literal>leakproof</> attribute was given, not only
-    <literal>create</> on the new function. This permission will be also
-    checked when user tries to turn on <literal>leakproof</> attribute
-    using <xref linkend="sql-alterfunction"> command, with
-    <literal>setattr</> permission on the function being altered.
-   </para>
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      <xref linkend="sql-createdatabase"> additionally requires
+      <literal>getattr</> permission for the source or template database.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Creating a schema object additionally requires <literal>add_name</>
+      permission on the parent schema.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Creating a table additionally requires permission to create each
+      individual table column, just as if each table column were a
+      separate top-level object.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Creating a function marked as <literal>LEAKPROOF</> additionally
+      requires <literal>install</> permission.  (This permission is also
+      checked when <literal>LEAKPROOF</> is set for an existing function.)
+     </para>
+    </listitem>
+   </itemizedlist>
 
    <para>
     When <literal>DROP</> command is executed, <literal>drop</> will be
-    checked on the object being removed for each object types.  Permissions
-    will be also checked for objects dropped indirectly via <literal>CASCADE</>.
-    Deletion of objects contained within a particular schema (tables, views,
-    sequences and procedures) additionally requires
-    <literal>remove_name</> on the schema.
+    checked on the object being removed.  Permissions will be also checked for
+    objects dropped indirectly via <literal>CASCADE</>.  Deletion of objects
+    contained within a particular schema (tables, views, sequences and
+    procedures) additionally requires <literal>remove_name</> on the schema.
    </para>
 
    <para>
     When <literal>ALTER</> command is executed, <literal>setattr</> will be
-    checked on the object being modified for each object types. 
-    In addition, <literal>remove_name</> and <literal>add_name</>
-    will be checked on the old and new schemas, respectively, when an
-    object is moved to a new schema.
-    For certain object types, additional checks are performed.
+    checked on the object being modified for each object types, except for
+    subsidiary objects such as the indexes or triggers of a table, where
+    permissions are instead checked on the parent object.  In some cases,
+    additional permissions are required:
    </para>
 
-   <para>
-    When objects that are subsidiary of other objects (such as a table's
-    indexes or triggers) are created, dropped or altered,
-    <literal>setattr</> permission will be checked on the main object,
-    instead of the subsidiary object itself.
-   </para>
+   <itemizedlist>
+    <listitem>
+     <para>
+      Moving an object to a new schema additionally requires
+      <literal>remove_name</> permission on the old schema and
+      <literal>add_name</> permission on the new one.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Setting the <literal>LEAKPROOF</> attribute on a function requires
+      <literal>install</> permission.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Using <xref linkend="sql-security-label"> on an object additionally
+      requires <literal>relabelfrom</> permission for the object in
+      conjunction with its old security label and <literal>relabelto</>
+      permission for the object in conjunction with its new security label.
+      (In cases where multiple label providers are installed and the user
+      tries to set a security label, but it is not managed by
+      <productname>SELinux</>, only <literal>setattr</> should be checked here.
+      This is currently not done due to implementation restrictions.)
+     </para>
+    </listitem>
+   </itemizedlist>
 
-   <para>
-    When <xref linkend="sql-security-label"> is executed, <literal>setattr</>
-    and <literal>relabelfrom</> will be checked on the object being relabeled
-    with its old security label, then <literal>relabelto</> with the supplied
-    new security label.
-   </para>
-
-   <para>
-    In the case where multiple label providers are installed and the user tries
-    to set a security label, but it is not managed by <productname>SELinux</>,
-    only <literal>setattr</> should be checked here.
-    This is currently not done due to implementation restrictions.
-   </para>
   </sect3>
 
   <sect3>
