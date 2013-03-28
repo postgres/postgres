@@ -137,7 +137,6 @@ extern bool IsBinaryUpgrade;
 extern bool ExitOnAnyError;
 
 extern PGDLLIMPORT char *DataDir;
-extern PGDLLIMPORT char *RecoveryConfDir;
 
 extern PGDLLIMPORT int NBuffers;
 extern int	MaxBackends;
@@ -302,7 +301,6 @@ extern Oid	GetCurrentRoleId(void);
 extern void SetCurrentRoleId(Oid roleid, bool is_superuser);
 
 extern void SetDataDir(const char *dir);
-extern void SetRecoveryConfDir(const char *dir);
 extern void ChangeToDataDir(void);
 extern char *make_absolute_path(const char *path);
 

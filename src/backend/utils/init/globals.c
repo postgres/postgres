@@ -46,7 +46,6 @@ int			MyPMChildSlot;
  * explicitly.
  */
 char	   *DataDir = NULL;
-char	   *RecoveryConfDir = NULL;
 
 char		OutputFileName[MAXPGPATH];	/* debugging output file */
 

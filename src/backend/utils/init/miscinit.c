@@ -100,25 +100,6 @@ SetDataDir(const char *dir)
 }
 
 /*
- * Set recovery config directory, but make sure it's an absolute path.  Use this,
- * never set RecoveryConfDir directly.
- */
-void
-SetRecoveryConfDir(const char *dir)
-{
-	char	   *new;
-
-	AssertArg(dir);
-
-	/* If presented path is relative, convert to absolute */
-	new = make_absolute_path(dir);
-
-	if (RecoveryConfDir)
-		free(RecoveryConfDir);
-	RecoveryConfDir = new;
-}
-
-/*
  * Change working directory to DataDir.  Most of the postmaster and backend
  * code assumes that we are in DataDir so it can use relative paths to access
  * stuff in and under the data directory.  For convenience during path
