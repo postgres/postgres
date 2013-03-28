@@ -380,12 +380,9 @@ ProcessUtility(Node *parsetree,
  */
 #define UTILITY_BEGIN_QUERY(isComplete) \
 	do { \
-		bool		_needCleanup = false; \
+		bool		_needCleanup; \
 		\
-		if (isComplete) \
-		{ \
-			_needCleanup = EventTriggerBeginCompleteQuery(); \
-		} \
+		_needCleanup = (isComplete) && EventTriggerBeginCompleteQuery(); \
 		\
 		PG_TRY(); \
 		{ \
