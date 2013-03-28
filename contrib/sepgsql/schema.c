@@ -42,6 +42,7 @@ sepgsql_schema_post_create(Oid namespaceId)
 	char	   *tcontext;
 	char	   *ncontext;
 	char		audit_name[NAMEDATALEN + 20];
+	const char *nsp_name;
 	ObjectAddress object;
 	Form_pg_namespace nspForm;
 
@@ -67,17 +68,21 @@ sepgsql_schema_post_create(Oid namespaceId)
 		elog(ERROR, "catalog lookup failed for namespace %u", namespaceId);
 
 	nspForm = (Form_pg_namespace) GETSTRUCT(tuple);
+	nsp_name = NameStr(nspForm->nspname);
+	if (strncmp(nsp_name, "pg_temp_", 8) == 0)
+		nsp_name = "pg_temp";
+	else if (strncmp(nsp_name, "pg_toast_temp_", 14) == 0)
+		nsp_name = "pg_toast_temp";
 
 	tcontext = sepgsql_get_label(DatabaseRelationId, MyDatabaseId, 0);
 	ncontext = sepgsql_compute_create(sepgsql_get_client_label(),
 									  tcontext,
-									  SEPG_CLASS_DB_SCHEMA);
-
+									  SEPG_CLASS_DB_SCHEMA,
+									  nsp_name);
 	/*
 	 * check db_schema:{create}
 	 */
-	snprintf(audit_name, sizeof(audit_name),
-			 "schema %s", NameStr(nspForm->nspname));
+	snprintf(audit_name, sizeof(audit_name), "schema %s", nsp_name);
 	sepgsql_avc_check_perms_label(ncontext,
 								  SEPG_CLASS_DB_SCHEMA,
 								  SEPG_DB_SCHEMA__CREATE,

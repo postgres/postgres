@@ -836,7 +836,8 @@ sepgsql_compute_avd(const char *scontext,
 char *
 sepgsql_compute_create(const char *scontext,
 					   const char *tcontext,
-					   uint16 tclass)
+					   uint16 tclass,
+					   const char *objname)
 {
 	security_context_t ncontext;
 	security_class_t tclass_ex;
@@ -853,9 +854,11 @@ sepgsql_compute_create(const char *scontext,
 	 * Ask SELinux what is the default context for the given object class on a
 	 * pair of security contexts
 	 */
-	if (security_compute_create_raw((security_context_t) scontext,
-									(security_context_t) tcontext,
-									tclass_ex, &ncontext) < 0)
+	if (security_compute_create_name_raw((security_context_t) scontext,
+										 (security_context_t) tcontext,
+										 tclass_ex,
+										 objname,
+										 &ncontext) < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("SELinux could not compute a new context: "

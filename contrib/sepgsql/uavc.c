@@ -250,10 +250,10 @@ sepgsql_avc_compute(const char *scontext, const char *tcontext, uint16 tclass)
 	{
 		if (!ucontext)
 			ncontext = sepgsql_compute_create(scontext, tcontext,
-											  SEPG_CLASS_PROCESS);
+											  SEPG_CLASS_PROCESS, NULL);
 		else
 			ncontext = sepgsql_compute_create(scontext, ucontext,
-											  SEPG_CLASS_PROCESS);
+											  SEPG_CLASS_PROCESS, NULL);
 		if (strcmp(scontext, ncontext) == 0)
 		{
 			pfree(ncontext);

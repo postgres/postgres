@@ -64,16 +64,44 @@ SELECT sepgsql_getcon();	-- confirm client privilege
 
 CREATE TABLE t3 (s int, t text);
 INSERT INTO t3 VALUES (1, 'sss'), (2, 'ttt'), (3, 'uuu');
+SELECT sepgsql_getcon();	-- confirm client privilege
+                   sepgsql_getcon                   
+----------------------------------------------------
+ unconfined_u:unconfined_r:sepgsql_regtest_dba_t:s0
+(1 row)
+
+CREATE TABLE t4 (m int, n text);
+INSERT INTO t4 VALUES (1,'mmm'), (2,'nnn'), (3,'ooo');
 SELECT objtype, objname, label FROM pg_seclabels
-    WHERE provider = 'selinux'
-     AND  objtype in ('table', 'column')
-     AND  objname in ('t1', 't2', 't3');
+    WHERE provider = 'selinux' AND objtype = 'table' AND objname in ('t1', 't2', 't3');
  objtype | objname |                     label                     
 ---------+---------+-----------------------------------------------
  table   | t1      | unconfined_u:object_r:sepgsql_table_t:s0
  table   | t2      | unconfined_u:object_r:sepgsql_table_t:s0
  table   | t3      | unconfined_u:object_r:user_sepgsql_table_t:s0
 (3 rows)
+
+SELECT objtype, objname, label FROM pg_seclabels
+    WHERE provider = 'selinux' AND objtype = 'column' AND (objname like 't3.%' OR objname like 't4.%');
+ objtype |   objname   |                     label                     
+---------+-------------+-----------------------------------------------
+ column  | t3.t        | unconfined_u:object_r:user_sepgsql_table_t:s0
+ column  | t3.s        | unconfined_u:object_r:user_sepgsql_table_t:s0
+ column  | t3.ctid     | unconfined_u:object_r:user_sepgsql_table_t:s0
+ column  | t3.xmin     | unconfined_u:object_r:user_sepgsql_table_t:s0
+ column  | t3.cmin     | unconfined_u:object_r:user_sepgsql_table_t:s0
+ column  | t3.xmax     | unconfined_u:object_r:user_sepgsql_table_t:s0
+ column  | t3.cmax     | unconfined_u:object_r:user_sepgsql_table_t:s0
+ column  | t3.tableoid | unconfined_u:object_r:user_sepgsql_table_t:s0
+ column  | t4.n        | unconfined_u:object_r:sepgsql_table_t:s0
+ column  | t4.m        | unconfined_u:object_r:sepgsql_table_t:s0
+ column  | t4.ctid     | unconfined_u:object_r:sepgsql_sysobj_t:s0
+ column  | t4.xmin     | unconfined_u:object_r:sepgsql_sysobj_t:s0
+ column  | t4.cmin     | unconfined_u:object_r:sepgsql_sysobj_t:s0
+ column  | t4.xmax     | unconfined_u:object_r:sepgsql_sysobj_t:s0
+ column  | t4.cmax     | unconfined_u:object_r:sepgsql_sysobj_t:s0
+ column  | t4.tableoid | unconfined_u:object_r:sepgsql_sysobj_t:s0
+(16 rows)
 
 --
 -- Tests for SECURITY LABEL
@@ -456,6 +484,7 @@ SELECT sepgsql_getcon();	-- confirm client privilege
 DROP TABLE IF EXISTS t1 CASCADE;
 DROP TABLE IF EXISTS t2 CASCADE;
 DROP TABLE IF EXISTS t3 CASCADE;
+DROP TABLE IF EXISTS t4 CASCADE;
 DROP FUNCTION IF EXISTS f1() CASCADE;
 DROP FUNCTION IF EXISTS f2() CASCADE;
 DROP FUNCTION IF EXISTS f3() CASCADE;

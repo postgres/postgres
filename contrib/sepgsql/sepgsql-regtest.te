@@ -1,4 +1,4 @@
-policy_module(sepgsql-regtest, 1.04)
+policy_module(sepgsql-regtest, 1.05)
 
 gen_require(`
 	all_userspace_class_perms
@@ -42,6 +42,21 @@ allow sepgsql_regtest_dba_t self : process { setcurrent };
 allow sepgsql_regtest_dba_t sepgsql_regtest_user_t : process { dyntransition };
 allow sepgsql_regtest_dba_t sepgsql_regtest_foo_t : process { dyntransition };
 allow sepgsql_regtest_dba_t sepgsql_regtest_var_t : process { dyntransition };
+
+# special rule for system columns
+optional_policy(`
+	gen_require(`
+		attribute	sepgsql_table_type;
+		type		sepgsql_sysobj_t;
+	')
+	type_transition sepgsql_regtest_dba_t sepgsql_table_type:db_column sepgsql_sysobj_t "ctid";
+	type_transition sepgsql_regtest_dba_t sepgsql_table_type:db_column sepgsql_sysobj_t "oid";
+	type_transition sepgsql_regtest_dba_t sepgsql_table_type:db_column sepgsql_sysobj_t "xmin";
+	type_transition sepgsql_regtest_dba_t sepgsql_table_type:db_column sepgsql_sysobj_t "xmax";
+	type_transition sepgsql_regtest_dba_t sepgsql_table_type:db_column sepgsql_sysobj_t "cmin";
+	type_transition sepgsql_regtest_dba_t sepgsql_table_type:db_column sepgsql_sysobj_t "cmax";
+	type_transition sepgsql_regtest_dba_t sepgsql_table_type:db_column sepgsql_sysobj_t "tableoid";
+')
 
 #
 # Dummy domain for unpriv users

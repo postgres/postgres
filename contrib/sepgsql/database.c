@@ -92,7 +92,8 @@ sepgsql_database_post_create(Oid databaseId, const char *dtemplate)
 
 	ncontext = sepgsql_compute_create(sepgsql_get_client_label(),
 									  tcontext,
-									  SEPG_CLASS_DB_DATABASE);
+									  SEPG_CLASS_DB_DATABASE,
+									  NameStr(datForm->datname));
 
 	/*
 	 * check db_database:{create} permission

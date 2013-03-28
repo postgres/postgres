@@ -63,7 +63,7 @@
     <filename>sepgsql</> can only be used on <productname>Linux</productname>
     2.6.28 or higher with <productname>SELinux</productname> enabled.
     It is not available on any other platform.  You will also need
-    <productname>libselinux</> 2.0.99 or higher and
+    <productname>libselinux</> 2.1.10 or higher and
     <productname>selinux-policy</> 3.9.13 or higher (although some
     distributions may backport the necessary rules into older policy
     versions).
@@ -326,8 +326,9 @@ $ sudo semodule -r sepgsql-regtest
     When <filename>sepgsql</filename> is in use, security labels are
     automatically assigned to supported database objects at creation time.
     This label is called a default security label, and is decided according
-    to the system security policy, which takes as input the creator's label
-    and the label assigned to the new object's parent object.
+    to the system security policy, which takes as input the creator's label,
+    the label assigned to the new object's parent object and optionally name
+    of the constructed object.
    </para>
 
    <para>
