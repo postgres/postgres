@@ -4187,7 +4187,9 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 	 * Reflect the final DataDir value back into the data_directory GUC var.
 	 * (If you are wondering why we don't just make them a single variable,
 	 * it's because the EXEC_BACKEND case needs DataDir to be transmitted to
-	 * child backends specially.
+	 * child backends specially.  XXX is that still true?  Given that we now
+	 * chdir to DataDir, EXEC_BACKEND can read the config file without knowing
+	 * DataDir in advance.)
 	 */
 	SetConfigOption("data_directory", DataDir, PGC_POSTMASTER, PGC_S_OVERRIDE);
 
@@ -4202,11 +4204,6 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 		SetRecoveryConfDir(recovery_config_directory);
 	else
 		SetRecoveryConfDir(DataDir);
-
-	/*
-	 * Reflect the final RecoveryConfDir value back into the GUC var, as above.
-	 */
-	SetConfigOption("recovery_config_directory", RecoveryConfDir, PGC_POSTMASTER, PGC_S_OVERRIDE);
 
 	/*
 	 * If timezone_abbreviations wasn't set in the configuration file, install
