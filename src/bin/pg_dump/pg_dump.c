@@ -4520,6 +4520,10 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 		resetPQExpBuffer(query);
 		if (fout->remoteVersion >= 90000)
 		{
+			/*
+			 * the test on indisready is necessary in 9.2, and harmless in
+			 * earlier/later versions
+			 */
 			appendPQExpBuffer(query,
 							  "SELECT t.tableoid, t.oid, "
 							  "t.relname AS indexname, "
@@ -4540,7 +4544,7 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 							  "i.indexrelid = c.conindid AND "
 							  "c.contype IN ('p','u','x')) "
 							  "WHERE i.indrelid = '%u'::pg_catalog.oid "
-							  "AND i.indisvalid "
+							  "AND i.indisvalid AND i.indisready "
 							  "ORDER BY indexname",
 							  tbinfo->dobj.catId.oid);
 		}
