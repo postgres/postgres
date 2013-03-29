@@ -9839,7 +9839,7 @@ table2-mapping
  </sect1>
 
  <sect1 id="functions-json">
-  <title>JSON Functions</title>
+  <title>JSON Functions and Operators</title>
 
   <indexterm zone="functions-json">
     <primary>JSON</primary>
