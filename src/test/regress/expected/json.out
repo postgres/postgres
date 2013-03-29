@@ -457,3 +457,466 @@ FROM (SELECT '{"a":1,"b": [2,3,4,"d","e","f"],"c":{"p":1,"q":2}}'::json AS "json
  {"jsonfield":{"a":1,"b": [2,3,4,"d","e","f"],"c":{"p":1,"q":2}}}
 (1 row)
 
+-- json extraction functions
+CREATE TEMP TABLE test_json (
+       json_type text,
+       test_json json
+);
+INSERT INTO test_json VALUES
+('scalar','"a scalar"'),
+('array','["zero", "one","two",null,"four","five"]'),
+('object','{"field1":"val1","field2":"val2","field3":null}');
+SELECT test_json -> 'x' 
+FROM test_json
+WHERE json_type = 'scalar';
+ERROR:  cannot extract element from a scalar
+SELECT test_json -> 'x' 
+FROM test_json
+WHERE json_type = 'array';
+ERROR:  cannot extract field from a non-object
+SELECT test_json -> 'x' 
+FROM test_json
+WHERE json_type = 'object';
+ ?column? 
+----------
+ 
+(1 row)
+
+SELECT test_json->'field2'
+FROM test_json
+WHERE json_type = 'object';
+ ?column? 
+----------
+ "val2"
+(1 row)
+
+SELECT test_json->>'field2' 
+FROM test_json
+WHERE json_type = 'object';
+ ?column? 
+----------
+ val2
+(1 row)
+
+SELECT test_json -> 2 
+FROM test_json
+WHERE json_type = 'scalar';
+ERROR:  cannot extract element from a scalar
+SELECT test_json -> 2 
+FROM test_json
+WHERE json_type = 'array';
+ ?column? 
+----------
+ "two"
+(1 row)
+
+SELECT test_json -> 2
+FROM test_json
+WHERE json_type = 'object';
+ERROR:  cannot extract array element from a non-array
+SELECT test_json->>2
+FROM test_json
+WHERE json_type = 'array';
+ ?column? 
+----------
+ two
+(1 row)
+
+SELECT json_object_keys(test_json)
+FROM test_json
+WHERE json_type = 'scalar';
+ERROR:  cannot call json_object_keys on a scalar
+SELECT json_object_keys(test_json)
+FROM test_json
+WHERE json_type = 'array';
+ERROR:  cannot call json_object_keys on an array
+SELECT json_object_keys(test_json)
+FROM test_json
+WHERE json_type = 'object';
+ json_object_keys 
+------------------
+ field1
+ field2
+ field3
+(3 rows)
+
+-- nulls
+select (test_json->'field3') is null as expect_false
+from test_json
+where json_type = 'object';
+ expect_false 
+--------------
+ f
+(1 row)
+
+select (test_json->>'field3') is null as expect_true
+from test_json
+where json_type = 'object';
+ expect_true 
+-------------
+ t
+(1 row)
+
+select (test_json->3) is null as expect_false
+from test_json
+where json_type = 'array';
+ expect_false 
+--------------
+ f
+(1 row)
+
+select (test_json->>3) is null as expect_true
+from test_json
+where json_type = 'array';
+ expect_true 
+-------------
+ t
+(1 row)
+
+-- array length
+SELECT json_array_length('[1,2,3,{"f1":1,"f2":[5,6]},4]');
+ json_array_length 
+-------------------
+                 5
+(1 row)
+
+SELECT json_array_length('[]');
+ json_array_length 
+-------------------
+                 0
+(1 row)
+
+SELECT json_array_length('{"f1":1,"f2":[5,6]}');
+ERROR:  cannot get array length of a non-array
+SELECT json_array_length('4');
+ERROR:  cannot get array length of a scalar
+-- each
+select json_each('{"f1":[1,2,3],"f2":{"f3":1},"f4":null}');
+     json_each     
+-------------------
+ (f1,"[1,2,3]")
+ (f2,"{""f3"":1}")
+ (f4,null)
+(3 rows)
+
+select * from json_each('{"f1":[1,2,3],"f2":{"f3":1},"f4":null,"f5":99,"f6":"stringy"}') q;
+ key |   value   
+-----+-----------
+ f1  | [1,2,3]
+ f2  | {"f3":1}
+ f4  | null
+ f5  | 99
+ f6  | "stringy"
+(5 rows)
+
+select json_each_text('{"f1":[1,2,3],"f2":{"f3":1},"f4":null,"f5":"null"}');
+  json_each_text   
+-------------------
+ (f1,"[1,2,3]")
+ (f2,"{""f3"":1}")
+ (f4,)
+ (f5,null)
+(4 rows)
+
+select * from json_each_text('{"f1":[1,2,3],"f2":{"f3":1},"f4":null,"f5":99,"f6":"stringy"}') q;
+ key |  value   
+-----+----------
+ f1  | [1,2,3]
+ f2  | {"f3":1}
+ f4  | 
+ f5  | 99
+ f6  | stringy
+(5 rows)
+
+-- extract_path, extract_path_as_text
+select json_extract_path('{"f2":{"f3":1},"f4":{"f5":99,"f6":"stringy"}}','f4','f6');
+ json_extract_path 
+-------------------
+ "stringy"
+(1 row)
+
+select json_extract_path('{"f2":{"f3":1},"f4":{"f5":99,"f6":"stringy"}}','f2');
+ json_extract_path 
+-------------------
+ {"f3":1}
+(1 row)
+
+select json_extract_path('{"f2":["f3",1],"f4":{"f5":99,"f6":"stringy"}}','f2',0::text);
+ json_extract_path 
+-------------------
+ "f3"
+(1 row)
+
+select json_extract_path('{"f2":["f3",1],"f4":{"f5":99,"f6":"stringy"}}','f2',1::text);
+ json_extract_path 
+-------------------
+ 1
+(1 row)
+
+select json_extract_path_text('{"f2":{"f3":1},"f4":{"f5":99,"f6":"stringy"}}','f4','f6');
+ json_extract_path_text 
+------------------------
+ stringy
+(1 row)
+
+select json_extract_path_text('{"f2":{"f3":1},"f4":{"f5":99,"f6":"stringy"}}','f2');
+ json_extract_path_text 
+------------------------
+ {"f3":1}
+(1 row)
+
+select json_extract_path_text('{"f2":["f3",1],"f4":{"f5":99,"f6":"stringy"}}','f2',0::text);
+ json_extract_path_text 
+------------------------
+ f3
+(1 row)
+
+select json_extract_path_text('{"f2":["f3",1],"f4":{"f5":99,"f6":"stringy"}}','f2',1::text);
+ json_extract_path_text 
+------------------------
+ 1
+(1 row)
+
+-- extract_path nulls
+select json_extract_path('{"f2":{"f3":1},"f4":{"f5":null,"f6":"stringy"}}','f4','f5') is null as expect_false;
+ expect_false 
+--------------
+ f
+(1 row)
+
+select json_extract_path_text('{"f2":{"f3":1},"f4":{"f5":null,"f6":"stringy"}}','f4','f5') is null as expect_true;
+ expect_true 
+-------------
+ t
+(1 row)
+
+select json_extract_path('{"f2":{"f3":1},"f4":[0,1,2,null]}','f4','3') is null as expect_false;
+ expect_false 
+--------------
+ f
+(1 row)
+
+select json_extract_path_text('{"f2":{"f3":1},"f4":[0,1,2,null]}','f4','3') is null as expect_true;
+ expect_true 
+-------------
+ t
+(1 row)
+
+-- extract_path operators
+select '{"f2":{"f3":1},"f4":{"f5":99,"f6":"stringy"}}'::json#>array['f4','f6'];
+ ?column?  
+-----------
+ "stringy"
+(1 row)
+
+select '{"f2":{"f3":1},"f4":{"f5":99,"f6":"stringy"}}'::json#>array['f2'];
+ ?column? 
+----------
+ {"f3":1}
+(1 row)
+
+select '{"f2":["f3",1],"f4":{"f5":99,"f6":"stringy"}}'::json#>array['f2','0'];
+ ?column? 
+----------
+ "f3"
+(1 row)
+
+select '{"f2":["f3",1],"f4":{"f5":99,"f6":"stringy"}}'::json#>array['f2','1'];
+ ?column? 
+----------
+ 1
+(1 row)
+
+select '{"f2":{"f3":1},"f4":{"f5":99,"f6":"stringy"}}'::json#>>array['f4','f6'];
+ ?column? 
+----------
+ stringy
+(1 row)
+
+select '{"f2":{"f3":1},"f4":{"f5":99,"f6":"stringy"}}'::json#>>array['f2'];
+ ?column? 
+----------
+ {"f3":1}
+(1 row)
+
+select '{"f2":["f3",1],"f4":{"f5":99,"f6":"stringy"}}'::json#>>array['f2','0'];
+ ?column? 
+----------
+ f3
+(1 row)
+
+select '{"f2":["f3",1],"f4":{"f5":99,"f6":"stringy"}}'::json#>>array['f2','1'];
+ ?column? 
+----------
+ 1
+(1 row)
+
+-- same using array literals
+select '{"f2":{"f3":1},"f4":{"f5":99,"f6":"stringy"}}'::json#>'{f4,f6}';
+ ?column?  
+-----------
+ "stringy"
+(1 row)
+
+select '{"f2":{"f3":1},"f4":{"f5":99,"f6":"stringy"}}'::json#>'{f2}';
+ ?column? 
+----------
+ {"f3":1}
+(1 row)
+
+select '{"f2":["f3",1],"f4":{"f5":99,"f6":"stringy"}}'::json#>'{f2,0}';
+ ?column? 
+----------
+ "f3"
+(1 row)
+
+select '{"f2":["f3",1],"f4":{"f5":99,"f6":"stringy"}}'::json#>'{f2,1}';
+ ?column? 
+----------
+ 1
+(1 row)
+
+select '{"f2":{"f3":1},"f4":{"f5":99,"f6":"stringy"}}'::json#>>'{f4,f6}';
+ ?column? 
+----------
+ stringy
+(1 row)
+
+select '{"f2":{"f3":1},"f4":{"f5":99,"f6":"stringy"}}'::json#>>'{f2}';
+ ?column? 
+----------
+ {"f3":1}
+(1 row)
+
+select '{"f2":["f3",1],"f4":{"f5":99,"f6":"stringy"}}'::json#>>'{f2,0}';
+ ?column? 
+----------
+ f3
+(1 row)
+
+select '{"f2":["f3",1],"f4":{"f5":99,"f6":"stringy"}}'::json#>>'{f2,1}';
+ ?column? 
+----------
+ 1
+(1 row)
+
+-- array_elements
+select json_array_elements('[1,true,[1,[2,3]],null,{"f1":1,"f2":[7,8,9]},false]');
+  json_array_elements  
+-----------------------
+ 1
+ true
+ [1,[2,3]]
+ null
+ {"f1":1,"f2":[7,8,9]}
+ false
+(6 rows)
+
+select * from json_array_elements('[1,true,[1,[2,3]],null,{"f1":1,"f2":[7,8,9]},false]') q;
+         value         
+-----------------------
+ 1
+ true
+ [1,[2,3]]
+ null
+ {"f1":1,"f2":[7,8,9]}
+ false
+(6 rows)
+
+-- populate_record
+create type jpop as (a text, b int, c timestamp);
+select * from json_populate_record(null::jpop,'{"a":"blurfl","x":43.2}') q;
+   a    | b | c 
+--------+---+---
+ blurfl |   | 
+(1 row)
+
+select * from json_populate_record(row('x',3,'2012-12-31 15:30:56')::jpop,'{"a":"blurfl","x":43.2}') q;
+   a    | b |            c             
+--------+---+--------------------------
+ blurfl | 3 | Mon Dec 31 15:30:56 2012
+(1 row)
+
+select * from json_populate_record(null::jpop,'{"a":"blurfl","x":43.2}', true) q;
+   a    | b | c 
+--------+---+---
+ blurfl |   | 
+(1 row)
+
+select * from json_populate_record(row('x',3,'2012-12-31 15:30:56')::jpop,'{"a":"blurfl","x":43.2}', true) q;
+   a    | b |            c             
+--------+---+--------------------------
+ blurfl | 3 | Mon Dec 31 15:30:56 2012
+(1 row)
+
+select * from json_populate_record(null::jpop,'{"a":[100,200,false],"x":43.2}', true) q;
+        a        | b | c 
+-----------------+---+---
+ [100,200,false] |   | 
+(1 row)
+
+select * from json_populate_record(row('x',3,'2012-12-31 15:30:56')::jpop,'{"a":[100,200,false],"x":43.2}', true) q;
+        a        | b |            c             
+-----------------+---+--------------------------
+ [100,200,false] | 3 | Mon Dec 31 15:30:56 2012
+(1 row)
+
+select * from json_populate_record(row('x',3,'2012-12-31 15:30:56')::jpop,'{"c":[100,200,false],"x":43.2}', true) q;
+ERROR:  invalid input syntax for type timestamp: "[100,200,false]"
+-- populate_recordset
+select * from json_populate_recordset(null::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]',false) q;
+   a    | b |            c             
+--------+---+--------------------------
+ blurfl |   | 
+        | 3 | Fri Jan 20 10:42:53 2012
+(2 rows)
+
+select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]',false) q;
+   a    | b  |            c             
+--------+----+--------------------------
+ blurfl | 99 | 
+ def    |  3 | Fri Jan 20 10:42:53 2012
+(2 rows)
+
+select * from json_populate_recordset(null::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]',true) q;
+   a    | b |            c             
+--------+---+--------------------------
+ blurfl |   | 
+        | 3 | Fri Jan 20 10:42:53 2012
+(2 rows)
+
+select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]',true) q;
+   a    | b  |            c             
+--------+----+--------------------------
+ blurfl | 99 | 
+ def    |  3 | Fri Jan 20 10:42:53 2012
+(2 rows)
+
+select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":[100,200,300],"x":43.2},{"a":{"z":true},"b":3,"c":"2012-01-20 10:42:53"}]',true) q;
+       a       | b  |            c             
+---------------+----+--------------------------
+ [100,200,300] | 99 | 
+ {"z":true}    |  3 | Fri Jan 20 10:42:53 2012
+(2 rows)
+
+select * from json_populate_recordset(row('def',99,null)::jpop,'[{"c":[100,200,300],"x":43.2},{"a":{"z":true},"b":3,"c":"2012-01-20 10:42:53"}]',true) q;
+ERROR:  invalid input syntax for type timestamp: "[100,200,300]"
+-- using the default use_json_as_text argument
+select * from json_populate_recordset(null::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]') q;
+   a    | b |            c             
+--------+---+--------------------------
+ blurfl |   | 
+        | 3 | Fri Jan 20 10:42:53 2012
+(2 rows)
+
+select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]') q;
+   a    | b  |            c             
+--------+----+--------------------------
+ blurfl | 99 | 
+ def    |  3 | Fri Jan 20 10:42:53 2012
+(2 rows)
+
+select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":[100,200,300],"x":43.2},{"a":{"z":true},"b":3,"c":"2012-01-20 10:42:53"}]') q;
+ERROR:  cannot call json_populate_recordset on a nested object
+select * from json_populate_recordset(row('def',99,null)::jpop,'[{"c":[100,200,300],"x":43.2},{"a":{"z":true},"b":3,"c":"2012-01-20 10:42:53"}]') q;
+ERROR:  cannot call json_populate_recordset on a nested object

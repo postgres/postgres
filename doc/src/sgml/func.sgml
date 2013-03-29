@@ -9846,17 +9846,75 @@ table2-mapping
     <secondary>Functions and operators</secondary>
   </indexterm>
 
+   <para>
+   <xref linkend="functions-json-op-table"> shows the operators that are
+   available for use with JSON (see <xref linkend="datatype-json">) data.
+  </para>
+
+  <table id="functions-json-op-table">
+     <title>JSON Operators</title>
+     <tgroup cols="4">
+      <thead>
+       <row>
+        <entry>Operator</entry>
+        <entry>Right Operand Type</entry>
+        <entry>Description</entry>
+        <entry>Example</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+        <entry><literal>-&gt;</literal></entry>
+        <entry>int</entry>
+        <entry>Get JSON array element</entry>
+        <entry><literal>'[1,2,3]'::json-&gt;2</literal></entry>
+       </row>
+       <row>
+        <entry><literal>-&gt;</literal></entry>
+        <entry>text</entry>
+        <entry>Get JSON object field</entry>
+        <entry><literal>'{"a":1,"b":2}'::json-&gt;'b'</literal></entry>
+       </row>
+        <row>
+        <entry><literal>-&gt;&gt;</literal></entry>
+        <entry>int</entry>
+        <entry>Get JSON array element as text</entry>
+        <entry><literal>'[1,2,3]'::json-&gt;&gt;2</literal></entry>
+       </row>
+       <row>
+        <entry><literal>-&gt;&gt;</literal></entry>
+        <entry>text</entry>
+        <entry>Get JSON object field as text</entry>
+        <entry><literal>'{"a":1,"b":2}'::json-&gt;&gt;'b'</literal></entry>
+       </row>
+       <row>
+        <entry><literal>#&gt;</literal></entry>
+        <entry>array of text</entry>
+        <entry>Get JSON object at specified path</entry>
+        <entry><literal>'{"a":[1,2,3],"b":[4,5,6]}'::json#&gt;'{a,2}'</literal></entry>
+       </row>
+       <row>
+        <entry><literal>#&gt;&gt;</literal></entry>
+        <entry>array of text</entry>
+        <entry>Get JSON object at specified path as text</entry>
+        <entry><literal>'{"a":[1,2,3],"b":[4,5,6]}'::json#&gt;&gt;'{a,2}'</literal></entry>
+       </row>
+      </tbody>
+     </tgroup>
+   </table>
+
   <para>
    <xref linkend="functions-json-table"> shows the functions that are available
-   for creating JSON (see <xref linkend="datatype-json">) data.
+   for creating and manipulating JSON (see <xref linkend="datatype-json">) data.
   </para>
 
   <table id="functions-json-table">
     <title>JSON Support Functions</title>
-    <tgroup cols="4">
+    <tgroup cols="5">
      <thead>
       <row>
        <entry>Function</entry>
+       <entry>Return Type</entry>
        <entry>Description</entry>
        <entry>Example</entry>
        <entry>Example Result</entry>
@@ -9870,6 +9928,7 @@ table2-mapping
          </indexterm>
          <literal>array_to_json(anyarray [, pretty_bool])</literal>
        </entry>
+       <entry>json</entry>
        <entry>
          Returns the array as JSON. A PostgreSQL multidimensional array
          becomes a JSON array of arrays. Line feeds will be added between
@@ -9885,6 +9944,7 @@ table2-mapping
          </indexterm>
          <literal>row_to_json(record [, pretty_bool])</literal>
        </entry>
+       <entry>json</entry>
        <entry>
          Returns the row as JSON. Line feeds will be added between level
          1 elements if <parameter>pretty_bool</parameter> is true.
@@ -9899,6 +9959,7 @@ table2-mapping
          </indexterm>
          <literal>to_json(anyelement)</literal>
        </entry>
+       <entry>json</entry>
        <entry>
          Returns the value as JSON. If the data type is not builtin, and there
          is a cast from the type to json, the cast function will be used to
@@ -9908,6 +9969,182 @@ table2-mapping
        </entry>
        <entry><literal>to_json('Fred said "Hi."'</literal></entry>
        <entry><literal>"Fred said \"Hi.\""</literal></entry>
+      </row>
+      <row>
+	   <entry>
+         <indexterm>
+          <primary>json_array_length</primary>
+         </indexterm>
+         <literal>json_array_length(json)</literal>
+       </entry>
+       <entry>int</entry>
+       <entry>
+         Returns the number of elements in the outermost json array.
+       </entry>
+       <entry><literal>json_array_length('[1,2,3,{"f1":1,"f2":[5,6]},4]')</literal></entry>
+       <entry><literal>5</literal></entry>
+      </row>
+      <row>
+       <entry>
+         <indexterm>
+          <primary>json_each</primary>
+         </indexterm>
+         <literal>json_each(json)</literal>
+       </entry>
+       <entry>SETOF key text, value json</entry>
+       <entry>
+         Expands the outermost json object into a set of key/value pairs.
+       </entry>
+       <entry><literal>select * from json_each_as_text('{"a":"foo", "b":"bar"}')</literal></entry>
+       <entry>
+<programlisting>
+ key | value
+-----+-------
+ a   | "foo"
+ b   | "bar"
+ </programlisting>
+       </entry>
+      </row>
+      <row>
+       <entry>
+         <indexterm>
+          <primary>json_each_text</primary>
+         </indexterm>
+         <literal>json_each_text(from_json json)</literal>
+       </entry>
+       <entry>SETOF key text, value text</entry>
+       <entry>
+         Expands the outermost json object into a set of key/value pairs. The
+         returned value will be of type text.
+       </entry>
+       <entry><literal>select * from json_each_as_text('{"a":"foo", "b":"bar"}')</literal></entry>
+       <entry>
+<programlisting>
+ key | value
+-----+-------
+ a   | foo
+ b   | bar
+ </programlisting>
+       </entry>
+      </row>
+      <row>
+       <entry>
+         <indexterm>
+          <primary>json_extract_path</primary>
+         </indexterm>
+         <literal>json_extract_path(from_json json, VARIADIC path_elems text[])</literal>
+       </entry>
+       <entry>json</entry>
+       <entry>
+         Returns json object pointed to by <parameter>path_elems</parameter>.
+       </entry>
+       <entry><literal>json_extract_path('{"f2":{"f3":1},"f4":{"f5":99,"f6":"foo"}}','f4')</literal></entry>
+       <entry><literal>{"f5":99,"f6":"foo"}</literal></entry>
+      </row>
+      <row>
+       <entry>
+         <indexterm>
+          <primary>json_extract_path_text</primary>
+         </indexterm>
+         <literal>json_extract_path_text(from_json json, VARIADIC path_elems text[])</literal>
+       </entry>
+       <entry>text</entry>
+       <entry>
+         Returns json object pointed to by <parameter>path_elems</parameter>.
+       </entry>
+       <entry><literal>json_extract_path_text('{"f2":{"f3":1},"f4":{"f5":99,"f6":"foo"}}','f4', 'f6')</literal></entry>
+       <entry><literal>foo</literal></entry>
+      </row>
+      <row>
+       <entry>
+         <indexterm>
+          <primary>json_object_keys</primary>
+         </indexterm>
+         <literal>json_object_keys(json)</literal>
+       </entry>
+       <entry>SETOF text</entry>
+       <entry>
+          Returns set of keys in the json object.  Only the "outer" object will be displayed.
+       </entry>
+       <entry><literal>json_object_keys('{"f1":"abc","f2":{"f3":"a", "f4":"b"}}')</literal></entry>
+       <entry>
+<programlisting>
+ json_object_keys
+------------------
+ f1
+ f2
+</programlisting>
+       </entry>
+      </row>
+      <row>
+       <entry>
+         <indexterm>
+          <primary>json_populate_record</primary>
+         </indexterm>
+         <literal>json_populate_record(base anyelement, from_json json, [, use_json_as_text bool=false]</literal>
+       </entry>
+       <entry>anyelement</entry>
+       <entry>
+         Expands the object in from_json to a row whose columns match
+         the record type defined by base. Conversion will be best
+         effort; columns in base with no corresponding key in from_json
+         will be left null.  A column may only be specified once.
+       </entry>
+       <entry><literal>json_populate_record(null::x, '{"a":1,"b":2}')</literal></entry>
+       <entry>
+<programlisting>
+ a | b
+---+---
+ 1 | 2
+</programlisting>
+       </entry>
+      </row>
+      <row>
+       <entry>
+         <indexterm>
+          <primary>json_populate_recordset</primary>
+         </indexterm>
+         <literal>json_populate_recordset(base anyelement, from_json json, [, use_json_as_text bool=false]</literal>
+       </entry>
+       <entry>SETOF anyelement</entry>
+       <entry>
+         Expands the outermost set of objects in from_json to a set
+         whose columns match the record type defined by base.
+         Conversion will be best effort; columns in base with no
+         corresponding key in from_json will be left null.  A column
+         may only be specified once.
+       </entry>
+       <entry><literal>json_populate_recordset(null::x, '[{"a":1,"b":2},{"a":3,"b":4}]')</literal></entry>
+       <entry>
+<programlisting>
+ a | b
+---+---
+ 1 | 2
+ 3 | 4
+ </programlisting>
+       </entry>
+      </row>
+      <row>
+       <entry>
+         <indexterm>
+          <primary>json_array_elements</primary>
+         </indexterm>
+         <literal>json_array_elements(json)</literal>
+       </entry>
+       <entry>SETOF json</entry>
+       <entry>
+         Expands a json array to a set of json elements.
+       </entry>
+       <entry><literal>json_array_elements('[1,true, [2,false]]')</literal></entry>
+       <entry>
+<programlisting>
+   value
+-----------
+ 1
+ true
+ [2,false]
+</programlisting>
+       </entry>
       </row>
      </tbody>
     </tgroup>
@@ -9926,7 +10163,6 @@ table2-mapping
     function <function>json_agg</function> which aggregates record
     values as json efficiently.
   </para>
-
  </sect1>
 
  <sect1 id="functions-sequence">

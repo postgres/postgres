@@ -26,59 +26,37 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/json.h"
-#include "utils/syscache.h"
+#include "utils/jsonapi.h"
 #include "utils/typcache.h"
+#include "utils/syscache.h"
 
-typedef enum					/* types of JSON values */
-{
-	JSON_VALUE_INVALID,			/* non-value tokens are reported as this */
-	JSON_VALUE_STRING,
-	JSON_VALUE_NUMBER,
-	JSON_VALUE_OBJECT,
-	JSON_VALUE_ARRAY,
-	JSON_VALUE_TRUE,
-	JSON_VALUE_FALSE,
-	JSON_VALUE_NULL
-} JsonValueType;
-
-typedef struct					/* state of JSON lexer */
-{
-	char	   *input;			/* whole string being parsed */
-	char	   *token_start;	/* start of current token within input */
-	char	   *token_terminator;		/* end of previous or current token */
-	JsonValueType token_type;	/* type of current token, once it's known */
-} JsonLexContext;
-
-typedef enum					/* states of JSON parser */
+/*
+ * The context of the parser is maintained by the recursive descent
+ * mechanism, but is passed explicitly to the error reporting routine
+ * for better diagnostics.
+ */
+typedef enum					/* contexts of JSON parser */
 {
 	JSON_PARSE_VALUE,			/* expecting a value */
+	JSON_PARSE_STRING,			/* expecting a string (for a field name) */
 	JSON_PARSE_ARRAY_START,		/* saw '[', expecting value or ']' */
 	JSON_PARSE_ARRAY_NEXT,		/* saw array element, expecting ',' or ']' */
 	JSON_PARSE_OBJECT_START,	/* saw '{', expecting label or '}' */
 	JSON_PARSE_OBJECT_LABEL,	/* saw object label, expecting ':' */
 	JSON_PARSE_OBJECT_NEXT,		/* saw object value, expecting ',' or '}' */
-	JSON_PARSE_OBJECT_COMMA		/* saw object ',', expecting next label */
-} JsonParseState;
+	JSON_PARSE_OBJECT_COMMA,	/* saw object ',', expecting next label */
+	JSON_PARSE_END				/* saw the end of a document, expect nothing */
+}	JsonParseContext;
 
-typedef struct JsonParseStack	/* the parser state has to be stackable */
-{
-	JsonParseState state;
-	/* currently only need the state enum, but maybe someday more stuff */
-} JsonParseStack;
-
-typedef enum					/* required operations on state stack */
-{
-	JSON_STACKOP_NONE,			/* no-op */
-	JSON_STACKOP_PUSH,			/* push new JSON_PARSE_VALUE stack item */
-	JSON_STACKOP_PUSH_WITH_PUSHBACK,	/* push, then rescan current token */
-	JSON_STACKOP_POP			/* pop, or expect end of input if no stack */
-} JsonStackOp;
-
-static void json_validate_cstring(char *input);
-static void json_lex(JsonLexContext *lex);
-static void json_lex_string(JsonLexContext *lex);
-static void json_lex_number(JsonLexContext *lex, char *s);
-static void report_parse_error(JsonParseStack *stack, JsonLexContext *lex);
+static inline void json_lex(JsonLexContext *lex);
+static inline void json_lex_string(JsonLexContext *lex);
+static inline void json_lex_number(JsonLexContext *lex, char *s);
+static inline void parse_scalar(JsonLexContext *lex, JsonSemAction sem);
+static void parse_object_field(JsonLexContext *lex, JsonSemAction sem);
+static void parse_object(JsonLexContext *lex, JsonSemAction sem);
+static void parse_array_element(JsonLexContext *lex, JsonSemAction sem);
+static void parse_array(JsonLexContext *lex, JsonSemAction sem);
+static void report_parse_error(JsonParseContext ctx, JsonLexContext *lex);
 static void report_invalid_token(JsonLexContext *lex);
 static int	report_json_context(JsonLexContext *lex);
 static char *extract_mb_char(char *s);
@@ -90,6 +68,77 @@ static void array_dim_to_json(StringInfo result, int dim, int ndims, int *dims,
 				  bool use_line_feeds);
 static void array_to_json_internal(Datum array, StringInfo result,
 					   bool use_line_feeds);
+
+/* the null action object used for pure validation */
+static jsonSemAction nullSemAction =
+{
+	NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL
+};
+static JsonSemAction NullSemAction = &nullSemAction;
+
+/* Recursive Descent parser support routines */
+
+/*
+ * lex_peek
+ *
+ * what is the current look_ahead token?
+*/
+static inline JsonTokenType
+lex_peek(JsonLexContext *lex)
+{
+	return lex->token_type;
+}
+
+/*
+ * lex_accept
+ *
+ * accept the look_ahead token and move the lexer to the next token if the
+ * look_ahead token matches the token parameter. In that case, and if required,
+ * also hand back the de-escaped lexeme.
+ *
+ * returns true if the token matched, false otherwise.
+ */
+static inline bool
+lex_accept(JsonLexContext *lex, JsonTokenType token, char **lexeme)
+{
+	if (lex->token_type == token)
+	{
+		if (lexeme != NULL)
+		{
+			if (lex->token_type == JSON_TOKEN_STRING)
+			{
+				if (lex->strval != NULL)
+					*lexeme = pstrdup(lex->strval->data);
+			}
+			else
+			{
+				int			len = (lex->token_terminator - lex->token_start);
+				char	   *tokstr = palloc(len + 1);
+
+				memcpy(tokstr, lex->token_start, len);
+				tokstr[len] = '\0';
+				*lexeme = tokstr;
+			}
+		}
+		json_lex(lex);
+		return true;
+	}
+	return false;
+}
+
+/*
+ * lex_accept
+ *
+ * move the lexer to the next token if the current look_ahead token matches
+ * the parameter token. Otherwise, report an error.
+ */
+static inline void
+lex_expect(JsonParseContext ctx, JsonLexContext *lex, JsonTokenType token)
+{
+	if (!lex_accept(lex, token, NULL))
+		report_parse_error(ctx, lex);;
+}
 
 /*
  * All the defined	type categories are upper case , so use lower case here
@@ -109,19 +158,22 @@ static void array_to_json_internal(Datum array, StringInfo result,
 	 (c) == '_' || \
 	 IS_HIGHBIT_SET(c))
 
-
 /*
  * Input.
  */
 Datum
 json_in(PG_FUNCTION_ARGS)
 {
-	char	   *text = PG_GETARG_CSTRING(0);
+	char	   *json = PG_GETARG_CSTRING(0);
+	text	   *result = cstring_to_text(json);
+	JsonLexContext *lex;
 
-	json_validate_cstring(text);
+	/* validate it */
+	lex = makeJsonLexContext(result, false);
+	pg_parse_json(lex, NullSemAction);
 
 	/* Internal representation is the same as text, for now */
-	PG_RETURN_TEXT_P(cstring_to_text(text));
+	PG_RETURN_TEXT_P(result);
 }
 
 /*
@@ -160,293 +212,457 @@ json_recv(PG_FUNCTION_ARGS)
 	text	   *result;
 	char	   *str;
 	int			nbytes;
+	JsonLexContext *lex;
 
 	str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
 
-	/*
-	 * We need a null-terminated string to pass to json_validate_cstring().
-	 * Rather than make a separate copy, make the temporary result one byte
-	 * bigger than it needs to be.
-	 */
-	result = palloc(nbytes + 1 + VARHDRSZ);
+	result = palloc(nbytes + VARHDRSZ);
 	SET_VARSIZE(result, nbytes + VARHDRSZ);
 	memcpy(VARDATA(result), str, nbytes);
-	str = VARDATA(result);
-	str[nbytes] = '\0';
 
 	/* Validate it. */
-	json_validate_cstring(str);
+	lex = makeJsonLexContext(result, false);
+	pg_parse_json(lex, NullSemAction);
 
 	PG_RETURN_TEXT_P(result);
 }
 
 /*
- * Check whether supplied input is valid JSON.
+ * makeJsonLexContext
+ *
+ * lex constructor, with or without StringInfo object
+ * for de-escaped lexemes.
+ *
+ * Without is better as it makes the processing faster, so only make one
+ * if really required.
  */
-static void
-json_validate_cstring(char *input)
+JsonLexContext *
+makeJsonLexContext(text *json, bool need_escapes)
 {
-	JsonLexContext lex;
-	JsonParseStack *stack,
-			   *stacktop;
-	int			stacksize;
+	JsonLexContext *lex = palloc0(sizeof(JsonLexContext));
 
-	/* Set up lexing context. */
-	lex.input = input;
-	lex.token_terminator = lex.input;
+	lex->input = lex->token_terminator = lex->line_start = VARDATA(json);
+	lex->line_number = 1;
+	lex->input_length = VARSIZE(json) - VARHDRSZ;
+	if (need_escapes)
+		lex->strval = makeStringInfo();
+	return lex;
+}
 
-	/* Set up parse stack. */
-	stacksize = 32;
-	stacktop = (JsonParseStack *) palloc(sizeof(JsonParseStack) * stacksize);
-	stack = stacktop;
-	stack->state = JSON_PARSE_VALUE;
+/*
+ * pg_parse_json
+ *
+ * Publicly visible entry point for the JSON parser.
+ *
+ * lex is a lexing context, set up for the json to be processed by calling
+ * makeJsonLexContext(). sem is a strucure of function pointers to semantic
+ * action routines to be called at appropriate spots during parsing, and a
+ * pointer to a state object to be passed to those routines.
+ */
+void
+pg_parse_json(JsonLexContext *lex, JsonSemAction sem)
+{
+	JsonTokenType tok;
 
-	/* Main parsing loop. */
-	for (;;)
+	/* get the initial token */
+	json_lex(lex);
+
+	tok = lex_peek(lex);
+
+	/* parse by recursive descent */
+	switch (tok)
 	{
-		JsonStackOp op;
-
-		/* Fetch next token. */
-		json_lex(&lex);
-
-		/* Check for unexpected end of input. */
-		if (lex.token_start == NULL)
-			report_parse_error(stack, &lex);
-
-redo:
-		/* Figure out what to do with this token. */
-		op = JSON_STACKOP_NONE;
-		switch (stack->state)
-		{
-			case JSON_PARSE_VALUE:
-				if (lex.token_type != JSON_VALUE_INVALID)
-					op = JSON_STACKOP_POP;
-				else if (lex.token_start[0] == '[')
-					stack->state = JSON_PARSE_ARRAY_START;
-				else if (lex.token_start[0] == '{')
-					stack->state = JSON_PARSE_OBJECT_START;
-				else
-					report_parse_error(stack, &lex);
-				break;
-			case JSON_PARSE_ARRAY_START:
-				if (lex.token_type != JSON_VALUE_INVALID)
-					stack->state = JSON_PARSE_ARRAY_NEXT;
-				else if (lex.token_start[0] == ']')
-					op = JSON_STACKOP_POP;
-				else if (lex.token_start[0] == '[' ||
-						 lex.token_start[0] == '{')
-				{
-					stack->state = JSON_PARSE_ARRAY_NEXT;
-					op = JSON_STACKOP_PUSH_WITH_PUSHBACK;
-				}
-				else
-					report_parse_error(stack, &lex);
-				break;
-			case JSON_PARSE_ARRAY_NEXT:
-				if (lex.token_type != JSON_VALUE_INVALID)
-					report_parse_error(stack, &lex);
-				else if (lex.token_start[0] == ']')
-					op = JSON_STACKOP_POP;
-				else if (lex.token_start[0] == ',')
-					op = JSON_STACKOP_PUSH;
-				else
-					report_parse_error(stack, &lex);
-				break;
-			case JSON_PARSE_OBJECT_START:
-				if (lex.token_type == JSON_VALUE_STRING)
-					stack->state = JSON_PARSE_OBJECT_LABEL;
-				else if (lex.token_type == JSON_VALUE_INVALID &&
-						 lex.token_start[0] == '}')
-					op = JSON_STACKOP_POP;
-				else
-					report_parse_error(stack, &lex);
-				break;
-			case JSON_PARSE_OBJECT_LABEL:
-				if (lex.token_type == JSON_VALUE_INVALID &&
-					lex.token_start[0] == ':')
-				{
-					stack->state = JSON_PARSE_OBJECT_NEXT;
-					op = JSON_STACKOP_PUSH;
-				}
-				else
-					report_parse_error(stack, &lex);
-				break;
-			case JSON_PARSE_OBJECT_NEXT:
-				if (lex.token_type != JSON_VALUE_INVALID)
-					report_parse_error(stack, &lex);
-				else if (lex.token_start[0] == '}')
-					op = JSON_STACKOP_POP;
-				else if (lex.token_start[0] == ',')
-					stack->state = JSON_PARSE_OBJECT_COMMA;
-				else
-					report_parse_error(stack, &lex);
-				break;
-			case JSON_PARSE_OBJECT_COMMA:
-				if (lex.token_type == JSON_VALUE_STRING)
-					stack->state = JSON_PARSE_OBJECT_LABEL;
-				else
-					report_parse_error(stack, &lex);
-				break;
-			default:
-				elog(ERROR, "unexpected json parse state: %d",
-					 (int) stack->state);
-		}
-
-		/* Push or pop the state stack, if needed. */
-		switch (op)
-		{
-			case JSON_STACKOP_PUSH:
-			case JSON_STACKOP_PUSH_WITH_PUSHBACK:
-				stack++;
-				if (stack >= &stacktop[stacksize])
-				{
-					/* Need to enlarge the stack. */
-					int			stackoffset = stack - stacktop;
-
-					stacksize += 32;
-					stacktop = (JsonParseStack *)
-						repalloc(stacktop,
-								 sizeof(JsonParseStack) * stacksize);
-					stack = stacktop + stackoffset;
-				}
-				stack->state = JSON_PARSE_VALUE;
-				if (op == JSON_STACKOP_PUSH_WITH_PUSHBACK)
-					goto redo;
-				break;
-			case JSON_STACKOP_POP:
-				if (stack == stacktop)
-				{
-					/* Expect end of input. */
-					json_lex(&lex);
-					if (lex.token_start != NULL)
-						report_parse_error(NULL, &lex);
-					return;
-				}
-				stack--;
-				break;
-			case JSON_STACKOP_NONE:
-				/* nothing to do */
-				break;
-		}
+		case JSON_TOKEN_OBJECT_START:
+			parse_object(lex, sem);
+			break;
+		case JSON_TOKEN_ARRAY_START:
+			parse_array(lex, sem);
+			break;
+		default:
+			parse_scalar(lex, sem);		/* json can be a bare scalar */
 	}
+
+	lex_expect(JSON_PARSE_END, lex, JSON_TOKEN_END);
+
+}
+
+/*
+ *	Recursive Descent parse routines. There is one for each structural
+ *	element in a json document:
+ *	  - scalar (string, number, true, false, null)
+ *	  - array  ( [ ] )
+ *	  - array element
+ *	  - object ( { } )
+ *	  - object field
+ */
+static inline void
+parse_scalar(JsonLexContext *lex, JsonSemAction sem)
+{
+	char	   *val = NULL;
+	json_scalar_action sfunc = sem->scalar;
+	char	  **valaddr;
+	JsonTokenType tok = lex_peek(lex);
+
+	valaddr = sfunc == NULL ? NULL : &val;
+
+	/* a scalar must be a string, a number, true, false, or null */
+	switch (tok)
+	{
+		case JSON_TOKEN_TRUE:
+			lex_accept(lex, JSON_TOKEN_TRUE, valaddr);
+			break;
+		case JSON_TOKEN_FALSE:
+			lex_accept(lex, JSON_TOKEN_FALSE, valaddr);
+			break;
+		case JSON_TOKEN_NULL:
+			lex_accept(lex, JSON_TOKEN_NULL, valaddr);
+			break;
+		case JSON_TOKEN_NUMBER:
+			lex_accept(lex, JSON_TOKEN_NUMBER, valaddr);
+			break;
+		case JSON_TOKEN_STRING:
+			lex_accept(lex, JSON_TOKEN_STRING, valaddr);
+			break;
+		default:
+			report_parse_error(JSON_PARSE_VALUE, lex);
+	}
+
+	if (sfunc != NULL)
+		(*sfunc) (sem->semstate, val, tok);
+}
+
+static void
+parse_object_field(JsonLexContext *lex, JsonSemAction sem)
+{
+	/*
+	 * an object field is "fieldname" : value where value can be a scalar,
+	 * object or array
+	 */
+
+	char	   *fname = NULL;	/* keep compiler quiet */
+	json_ofield_action ostart = sem->object_field_start;
+	json_ofield_action oend = sem->object_field_end;
+	bool		isnull;
+	char	  **fnameaddr = NULL;
+	JsonTokenType tok;
+
+	if (ostart != NULL || oend != NULL)
+		fnameaddr = &fname;
+
+	if (!lex_accept(lex, JSON_TOKEN_STRING, fnameaddr))
+		report_parse_error(JSON_PARSE_STRING, lex);
+
+	lex_expect(JSON_PARSE_OBJECT_LABEL, lex, JSON_TOKEN_COLON);
+
+	tok = lex_peek(lex);
+	isnull = tok == JSON_TOKEN_NULL;
+
+	if (ostart != NULL)
+		(*ostart) (sem->semstate, fname, isnull);
+
+	switch (tok)
+	{
+		case JSON_TOKEN_OBJECT_START:
+			parse_object(lex, sem);
+			break;
+		case JSON_TOKEN_ARRAY_START:
+			parse_array(lex, sem);
+			break;
+		default:
+			parse_scalar(lex, sem);
+	}
+
+	if (oend != NULL)
+		(*oend) (sem->semstate, fname, isnull);
+
+	if (fname != NULL)
+		pfree(fname);
+}
+
+static void
+parse_object(JsonLexContext *lex, JsonSemAction sem)
+{
+	/*
+	 * an object is a possibly empty sequence of object fields, separated by
+	 * commas and surrounde by curly braces.
+	 */
+	json_struct_action ostart = sem->object_start;
+	json_struct_action oend = sem->object_end;
+	JsonTokenType tok;
+
+	if (ostart != NULL)
+		(*ostart) (sem->semstate);
+
+	/*
+	 * Data inside an object at at a higher nesting level than the object
+	 * itself. Note that we increment this after we call the semantic routine
+	 * for the object start and restore it before we call the routine for the
+	 * object end.
+	 */
+	lex->lex_level++;
+
+	/* we know this will succeeed, just clearing the token */
+	lex_expect(JSON_PARSE_OBJECT_START, lex, JSON_TOKEN_OBJECT_START);
+
+	tok = lex_peek(lex);
+	switch (tok)
+	{
+		case JSON_TOKEN_STRING:
+			parse_object_field(lex, sem);
+			while (lex_accept(lex, JSON_TOKEN_COMMA, NULL))
+				parse_object_field(lex, sem);
+			break;
+		case JSON_TOKEN_OBJECT_END:
+			break;
+		default:
+			/* case of an invalid initial token inside the object */
+			report_parse_error(JSON_PARSE_OBJECT_START, lex);
+	}
+
+	lex_expect(JSON_PARSE_OBJECT_NEXT, lex, JSON_TOKEN_OBJECT_END);
+
+	lex->lex_level--;
+
+	if (oend != NULL)
+		(*oend) (sem->semstate);
+}
+
+static void
+parse_array_element(JsonLexContext *lex, JsonSemAction sem)
+{
+	json_aelem_action astart = sem->array_element_start;
+	json_aelem_action aend = sem->array_element_end;
+	JsonTokenType tok = lex_peek(lex);
+
+	bool		isnull;
+
+	isnull = tok == JSON_TOKEN_NULL;
+
+	if (astart != NULL)
+		(*astart) (sem->semstate, isnull);
+
+	/* an array element is any object, array or scalar */
+	switch (tok)
+	{
+		case JSON_TOKEN_OBJECT_START:
+			parse_object(lex, sem);
+			break;
+		case JSON_TOKEN_ARRAY_START:
+			parse_array(lex, sem);
+			break;
+		default:
+			parse_scalar(lex, sem);
+	}
+
+	if (aend != NULL)
+		(*aend) (sem->semstate, isnull);
+}
+
+static void
+parse_array(JsonLexContext *lex, JsonSemAction sem)
+{
+	/*
+	 * an array is a possibly empty sequence of array elements, separated by
+	 * commas and surrounded by square brackets.
+	 */
+	json_struct_action astart = sem->array_start;
+	json_struct_action aend = sem->array_end;
+
+	if (astart != NULL)
+		(*astart) (sem->semstate);
+
+	/*
+	 * Data inside an array at at a higher nesting level than the array
+	 * itself. Note that we increment this after we call the semantic routine
+	 * for the array start and restore it before we call the routine for the
+	 * array end.
+	 */
+	lex->lex_level++;
+
+	lex_expect(JSON_PARSE_ARRAY_START, lex, JSON_TOKEN_ARRAY_START);
+	if (lex_peek(lex) != JSON_TOKEN_ARRAY_END)
+	{
+
+		parse_array_element(lex, sem);
+
+		while (lex_accept(lex, JSON_TOKEN_COMMA, NULL))
+			parse_array_element(lex, sem);
+	}
+
+	lex_expect(JSON_PARSE_ARRAY_NEXT, lex, JSON_TOKEN_ARRAY_END);
+
+	lex->lex_level--;
+
+	if (aend != NULL)
+		(*aend) (sem->semstate);
 }
 
 /*
  * Lex one token from the input stream.
  */
-static void
+static inline void
 json_lex(JsonLexContext *lex)
 {
 	char	   *s;
+	int			len;
 
 	/* Skip leading whitespace. */
 	s = lex->token_terminator;
-	while (*s == ' ' || *s == '\t' || *s == '\n' || *s == '\r')
-		s++;
+	len = s - lex->input;
+	while (len < lex->input_length &&
+		   (*s == ' ' || *s == '\t' || *s == '\n' || *s == '\r'))
+	{
+		if (*s == '\n')
+			++lex->line_number;
+		++s;
+		++len;
+	}
 	lex->token_start = s;
 
 	/* Determine token type. */
-	if (strchr("{}[],:", s[0]) != NULL)
+	if (len >= lex->input_length)
 	{
-		/* strchr() is willing to match a zero byte, so test for that. */
-		if (s[0] == '\0')
-		{
-			/* End of string. */
-			lex->token_start = NULL;
-			lex->token_terminator = s;
-		}
-		else
-		{
-			/* Single-character token, some kind of punctuation mark. */
-			lex->token_terminator = s + 1;
-		}
-		lex->token_type = JSON_VALUE_INVALID;
-	}
-	else if (*s == '"')
-	{
-		/* String. */
-		json_lex_string(lex);
-		lex->token_type = JSON_VALUE_STRING;
-	}
-	else if (*s == '-')
-	{
-		/* Negative number. */
-		json_lex_number(lex, s + 1);
-		lex->token_type = JSON_VALUE_NUMBER;
-	}
-	else if (*s >= '0' && *s <= '9')
-	{
-		/* Positive number. */
-		json_lex_number(lex, s);
-		lex->token_type = JSON_VALUE_NUMBER;
+		lex->token_start = NULL;
+		lex->prev_token_terminator = lex->token_terminator;
+		lex->token_terminator = s;
+		lex->token_type = JSON_TOKEN_END;
 	}
 	else
-	{
-		char	   *p;
-
-		/*
-		 * We're not dealing with a string, number, legal punctuation mark, or
-		 * end of string.  The only legal tokens we might find here are true,
-		 * false, and null, but for error reporting purposes we scan until we
-		 * see a non-alphanumeric character.  That way, we can report the
-		 * whole word as an unexpected token, rather than just some
-		 * unintuitive prefix thereof.
-		 */
-		for (p = s; JSON_ALPHANUMERIC_CHAR(*p); p++)
-			 /* skip */ ;
-
-		if (p == s)
+		switch (*s)
 		{
-			/*
-			 * We got some sort of unexpected punctuation or an otherwise
-			 * unexpected character, so just complain about that one
-			 * character.  (It can't be multibyte because the above loop will
-			 * advance over any multibyte characters.)
-			 */
-			lex->token_terminator = s + 1;
-			report_invalid_token(lex);
-		}
+				/* Single-character token, some kind of punctuation mark. */
+			case '{':
+				lex->prev_token_terminator = lex->token_terminator;
+				lex->token_terminator = s + 1;
+				lex->token_type = JSON_TOKEN_OBJECT_START;
+				break;
+			case '}':
+				lex->prev_token_terminator = lex->token_terminator;
+				lex->token_terminator = s + 1;
+				lex->token_type = JSON_TOKEN_OBJECT_END;
+				break;
+			case '[':
+				lex->prev_token_terminator = lex->token_terminator;
+				lex->token_terminator = s + 1;
+				lex->token_type = JSON_TOKEN_ARRAY_START;
+				break;
+			case ']':
+				lex->prev_token_terminator = lex->token_terminator;
+				lex->token_terminator = s + 1;
+				lex->token_type = JSON_TOKEN_ARRAY_END;
+				break;
+			case ',':
+				lex->prev_token_terminator = lex->token_terminator;
+				lex->token_terminator = s + 1;
+				lex->token_type = JSON_TOKEN_COMMA;
+				break;
+			case ':':
+				lex->prev_token_terminator = lex->token_terminator;
+				lex->token_terminator = s + 1;
+				lex->token_type = JSON_TOKEN_COLON;
+				break;
+			case '"':
+				/* string */
+				json_lex_string(lex);
+				lex->token_type = JSON_TOKEN_STRING;
+				break;
+			case '-':
+				/* Negative number. */
+				json_lex_number(lex, s + 1);
+				lex->token_type = JSON_TOKEN_NUMBER;
+				break;
+			case '0':
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+			case '9':
+				/* Positive number. */
+				json_lex_number(lex, s);
+				lex->token_type = JSON_TOKEN_NUMBER;
+				break;
+			default:
+				{
+					char	   *p;
 
-		/*
-		 * We've got a real alphanumeric token here.  If it happens to be
-		 * true, false, or null, all is well.  If not, error out.
-		 */
-		lex->token_terminator = p;
-		if (p - s == 4)
-		{
-			if (memcmp(s, "true", 4) == 0)
-				lex->token_type = JSON_VALUE_TRUE;
-			else if (memcmp(s, "null", 4) == 0)
-				lex->token_type = JSON_VALUE_NULL;
-			else
-				report_invalid_token(lex);
-		}
-		else if (p - s == 5 && memcmp(s, "false", 5) == 0)
-			lex->token_type = JSON_VALUE_FALSE;
-		else
-			report_invalid_token(lex);
-	}
+					/*
+					 * We're not dealing with a string, number, legal
+					 * punctuation mark, or end of string.	The only legal
+					 * tokens we might find here are true, false, and null,
+					 * but for error reporting purposes we scan until we see a
+					 * non-alphanumeric character.	That way, we can report
+					 * the whole word as an unexpected token, rather than just
+					 * some unintuitive prefix thereof.
+					 */
+					for (p = s; JSON_ALPHANUMERIC_CHAR(*p) && p - s < lex->input_length - len; p++)
+						 /* skip */ ;
+
+					/*
+					 * We got some sort of unexpected punctuation or an
+					 * otherwise unexpected character, so just complain about
+					 * that one character.
+					 */
+					if (p == s)
+					{
+						lex->prev_token_terminator = lex->token_terminator;
+						lex->token_terminator = s + 1;
+						report_invalid_token(lex);
+					}
+
+					/*
+					 * We've got a real alphanumeric token here.  If it
+					 * happens to be true, false, or null, all is well.  If
+					 * not, error out.
+					 */
+					lex->prev_token_terminator = lex->token_terminator;
+					lex->token_terminator = p;
+					if (p - s == 4)
+					{
+						if (memcmp(s, "true", 4) == 0)
+							lex->token_type = JSON_TOKEN_TRUE;
+						else if (memcmp(s, "null", 4) == 0)
+							lex->token_type = JSON_TOKEN_NULL;
+						else
+							report_invalid_token(lex);
+					}
+					else if (p - s == 5 && memcmp(s, "false", 5) == 0)
+						lex->token_type = JSON_TOKEN_FALSE;
+					else
+						report_invalid_token(lex);
+
+				}
+		}						/* end of switch */
 }
 
 /*
  * The next token in the input stream is known to be a string; lex it.
  */
-static void
+static inline void
 json_lex_string(JsonLexContext *lex)
 {
 	char	   *s;
+	int			len;
 
-	for (s = lex->token_start + 1; *s != '"'; s++)
+	if (lex->strval != NULL)
+		resetStringInfo(lex->strval);
+
+	len = lex->token_start - lex->input;
+	len++;
+	for (s = lex->token_start + 1; *s != '"'; s++, len++)
 	{
-		/* Per RFC4627, these characters MUST be escaped. */
-		if ((unsigned char) *s < 32)
+		/* Premature end of the string. */
+		if (len >= lex->input_length)
 		{
-			/* A NUL byte marks the (premature) end of the string. */
-			if (*s == '\0')
-			{
-				lex->token_terminator = s;
-				report_invalid_token(lex);
-			}
+			lex->token_terminator = s;
+			report_invalid_token(lex);
+		}
+		else if ((unsigned char) *s < 32)
+		{
+			/* Per RFC4627, these characters MUST be escaped. */
 			/* Since *s isn't printable, exclude it from the context string */
 			lex->token_terminator = s;
 			ereport(ERROR,
@@ -460,7 +676,8 @@ json_lex_string(JsonLexContext *lex)
 		{
 			/* OK, we have an escape character. */
 			s++;
-			if (*s == '\0')
+			len++;
+			if (len >= lex->input_length)
 			{
 				lex->token_terminator = s;
 				report_invalid_token(lex);
@@ -473,7 +690,8 @@ json_lex_string(JsonLexContext *lex)
 				for (i = 1; i <= 4; i++)
 				{
 					s++;
-					if (*s == '\0')
+					len++;
+					if (len >= lex->input_length)
 					{
 						lex->token_terminator = s;
 						report_invalid_token(lex);
@@ -494,10 +712,66 @@ json_lex_string(JsonLexContext *lex)
 								 report_json_context(lex)));
 					}
 				}
+				if (lex->strval != NULL)
+				{
+					char		utf8str[5];
+					int			utf8len;
+					char	   *converted;
+
+					unicode_to_utf8(ch, (unsigned char *) utf8str);
+					utf8len = pg_utf_mblen((unsigned char *) utf8str);
+					utf8str[utf8len] = '\0';
+					converted = pg_any_to_server(utf8str, 1, PG_UTF8);
+					appendStringInfoString(lex->strval, converted);
+					if (converted != utf8str)
+						pfree(converted);
+
+				}
+			}
+			else if (lex->strval != NULL)
+			{
+				switch (*s)
+				{
+					case '"':
+					case '\\':
+					case '/':
+						appendStringInfoChar(lex->strval, *s);
+						break;
+					case 'b':
+						appendStringInfoChar(lex->strval, '\b');
+						break;
+					case 'f':
+						appendStringInfoChar(lex->strval, '\f');
+						break;
+					case 'n':
+						appendStringInfoChar(lex->strval, '\n');
+						break;
+					case 'r':
+						appendStringInfoChar(lex->strval, '\r');
+						break;
+					case 't':
+						appendStringInfoChar(lex->strval, '\t');
+						break;
+					default:
+						/* Not a valid string escape, so error out. */
+						lex->token_terminator = s + pg_mblen(s);
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+								 errmsg("invalid input syntax for type json"),
+							errdetail("Escape sequence \"\\%s\" is invalid.",
+									  extract_mb_char(s)),
+								 report_json_context(lex)));
+				}
 			}
 			else if (strchr("\"\\/bfnrt", *s) == NULL)
 			{
-				/* Not a valid string escape, so error out. */
+				/*
+				 * Simpler processing if we're not bothered about de-escaping
+				 *
+				 * It's very tempting to remove the strchr() call here and
+				 * replace it with a switch statement, but testing so far has
+				 * shown it's not a performance win.
+				 */
 				lex->token_terminator = s + pg_mblen(s);
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
@@ -506,10 +780,17 @@ json_lex_string(JsonLexContext *lex)
 								   extract_mb_char(s)),
 						 report_json_context(lex)));
 			}
+
 		}
+		else if (lex->strval != NULL)
+		{
+			appendStringInfoChar(lex->strval, *s);
+		}
+
 	}
 
 	/* Hooray, we found the end of the string! */
+	lex->prev_token_terminator = lex->token_terminator;
 	lex->token_terminator = s + 1;
 }
 
@@ -539,57 +820,70 @@ json_lex_string(JsonLexContext *lex)
  *
  *-------------------------------------------------------------------------
  */
-static void
+static inline void
 json_lex_number(JsonLexContext *lex, char *s)
 {
 	bool		error = false;
 	char	   *p;
+	int			len;
 
+	len = s - lex->input;
 	/* Part (1): leading sign indicator. */
 	/* Caller already did this for us; so do nothing. */
 
 	/* Part (2): parse main digit string. */
 	if (*s == '0')
+	{
 		s++;
+		len++;
+	}
 	else if (*s >= '1' && *s <= '9')
 	{
 		do
 		{
 			s++;
-		} while (*s >= '0' && *s <= '9');
+			len++;
+		} while (*s >= '0' && *s <= '9' && len < lex->input_length);
 	}
 	else
 		error = true;
 
 	/* Part (3): parse optional decimal portion. */
-	if (*s == '.')
+	if (len < lex->input_length && *s == '.')
 	{
 		s++;
-		if (*s < '0' || *s > '9')
+		len++;
+		if (len == lex->input_length || *s < '0' || *s > '9')
 			error = true;
 		else
 		{
 			do
 			{
 				s++;
-			} while (*s >= '0' && *s <= '9');
+				len++;
+			} while (*s >= '0' && *s <= '9' && len < lex->input_length);
 		}
 	}
 
 	/* Part (4): parse optional exponent. */
-	if (*s == 'e' || *s == 'E')
+	if (len < lex->input_length && (*s == 'e' || *s == 'E'))
 	{
 		s++;
-		if (*s == '+' || *s == '-')
+		len++;
+		if (len < lex->input_length && (*s == '+' || *s == '-'))
+		{
 			s++;
-		if (*s < '0' || *s > '9')
+			len++;
+		}
+		if (len == lex->input_length || *s < '0' || *s > '9')
 			error = true;
 		else
 		{
 			do
 			{
 				s++;
-			} while (*s >= '0' && *s <= '9');
+				len++;
+			} while (len < lex->input_length && *s >= '0' && *s <= '9');
 		}
 	}
 
@@ -598,8 +892,9 @@ json_lex_number(JsonLexContext *lex, char *s)
 	 * here should be considered part of the token for error-reporting
 	 * purposes.
 	 */
-	for (p = s; JSON_ALPHANUMERIC_CHAR(*p); p++)
+	for (p = s; JSON_ALPHANUMERIC_CHAR(*p) && len < lex->input_length; p++, len++)
 		error = true;
+	lex->prev_token_terminator = lex->token_terminator;
 	lex->token_terminator = p;
 	if (error)
 		report_invalid_token(lex);
@@ -611,13 +906,13 @@ json_lex_number(JsonLexContext *lex, char *s)
  * lex->token_start and lex->token_terminator must identify the current token.
  */
 static void
-report_parse_error(JsonParseStack *stack, JsonLexContext *lex)
+report_parse_error(JsonParseContext ctx, JsonLexContext *lex)
 {
 	char	   *token;
 	int			toklen;
 
 	/* Handle case where the input ended prematurely. */
-	if (lex->token_start == NULL)
+	if (lex->token_start == NULL || lex->token_type == JSON_TOKEN_END)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type json"),
@@ -631,7 +926,7 @@ report_parse_error(JsonParseStack *stack, JsonLexContext *lex)
 	token[toklen] = '\0';
 
 	/* Complain, with the appropriate detail message. */
-	if (stack == NULL)
+	if (ctx == JSON_PARSE_END)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type json"),
@@ -640,13 +935,21 @@ report_parse_error(JsonParseStack *stack, JsonLexContext *lex)
 				 report_json_context(lex)));
 	else
 	{
-		switch (stack->state)
+		switch (ctx)
 		{
 			case JSON_PARSE_VALUE:
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 						 errmsg("invalid input syntax for type json"),
 						 errdetail("Expected JSON value, but found \"%s\".",
+								   token),
+						 report_json_context(lex)));
+				break;
+			case JSON_PARSE_STRING:
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+						 errmsg("invalid input syntax for type json"),
+						 errdetail("Expected string, but found \"%s\".",
 								   token),
 						 report_json_context(lex)));
 				break;
@@ -699,8 +1002,7 @@ report_parse_error(JsonParseStack *stack, JsonLexContext *lex)
 						 report_json_context(lex)));
 				break;
 			default:
-				elog(ERROR, "unexpected json parse state: %d",
-					 (int) stack->state);
+				elog(ERROR, "unexpected json parse state: %d", ctx);
 		}
 	}
 }
@@ -795,7 +1097,7 @@ report_json_context(JsonLexContext *lex)
 	 * suffixing "..." if not ending at end of line.
 	 */
 	prefix = (context_start > line_start) ? "..." : "";
-	suffix = (*context_end != '\0' && *context_end != '\n' && *context_end != '\r') ? "..." : "";
+	suffix = (lex->token_type != JSON_TOKEN_END && context_end - lex->input < lex->input_length && *context_end != '\n' && *context_end != '\r') ? "..." : "";
 
 	return errcontext("JSON data, line %d: %s%s%s",
 					  line_number, prefix, ctxt, suffix);
