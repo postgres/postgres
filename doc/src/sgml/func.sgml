@@ -1506,7 +1506,8 @@
        <entry>
         Encode binary data into a textual representation.  Supported
         formats are: <literal>base64</>, <literal>hex</>, <literal>escape</>.
-        <literal>escape</> merely outputs null bytes as <literal>\000</> and
+        <literal>escape</> converts zero bytes and high-bit-set bytes to
+        octal sequences (<literal>\</><replaceable>nnn</>) and
         doubles backslashes.
        </entry>
        <entry><literal>encode(E'123\\000\\001', 'base64')</literal></entry>
@@ -3234,12 +3235,12 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
          <primary>decode</primary>
         </indexterm>
        <literal><function>decode(<parameter>string</parameter> <type>text</type>,
-              <parameter>type</parameter> <type>text</type>)</function></literal>
+       <parameter>format</parameter> <type>text</type>)</function></literal>
       </entry>
       <entry><type>bytea</type></entry>
       <entry>
-       Decode binary string from <parameter>string</parameter> previously
-       encoded with <function>encode</>.  Parameter type is same as in <function>encode</>.
+       Decode binary data from textual representation in <parameter>string</>.
+       Options for <parameter>format</> are same as in <function>encode</>.
       </entry>
       <entry><literal>decode(E'123\\000456', 'escape')</literal></entry>
       <entry><literal>123\000456</literal></entry>
@@ -3250,13 +3251,16 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
         <indexterm>
          <primary>encode</primary>
         </indexterm>
-       <literal><function>encode(<parameter>string</parameter> <type>bytea</type>,
-              <parameter>type</parameter> <type>text</type>)</function></literal>
+       <literal><function>encode(<parameter>data</parameter> <type>bytea</type>,
+       <parameter>format</parameter> <type>text</type>)</function></literal>
       </entry>
       <entry><type>text</type></entry>
       <entry>
-       Encode binary string to <acronym>ASCII</acronym>-only representation.  Supported
-       types are: <literal>base64</>, <literal>hex</>, <literal>escape</>.
+       Encode binary data into a textual representation.  Supported
+       formats are: <literal>base64</>, <literal>hex</>, <literal>escape</>.
+       <literal>escape</> converts zero bytes and high-bit-set bytes to
+       octal sequences (<literal>\</><replaceable>nnn</>) and
+       doubles backslashes.
       </entry>
       <entry><literal>encode(E'123\\000456'::bytea, 'escape')</literal></entry>
       <entry><literal>123\000456</literal></entry>
