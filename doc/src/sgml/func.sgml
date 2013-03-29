@@ -1422,12 +1422,12 @@
       <row>
        <entry>
         <literal><function>decode</function>(<parameter>string</parameter> <type>text</type>,
-        <parameter>type</parameter> <type>text</type>)</literal>
+        <parameter>format</parameter> <type>text</type>)</literal>
        </entry>
        <entry><type>bytea</type></entry>
        <entry>
-        Decode binary data from <parameter>string</parameter> previously 
-        encoded with <function>encode</>.  Parameter type is same as in <function>encode</>.
+        Decode binary data from textual representation in <parameter>string</>.
+        Options for <parameter>format</> are same as in <function>encode</>.
        </entry>
        <entry><literal>decode('MTIzAAE=', 'base64')</literal></entry>
        <entry><literal>123\000\001</literal></entry>
@@ -1436,13 +1436,14 @@
       <row>
        <entry>
         <literal><function>encode</function>(<parameter>data</parameter> <type>bytea</type>,
-        <parameter>type</parameter> <type>text</type>)</literal>
+        <parameter>format</parameter> <type>text</type>)</literal>
        </entry>
        <entry><type>text</type></entry>
        <entry>
-        Encode binary data to different representation.  Supported
-        types are: <literal>base64</>, <literal>hex</>, <literal>escape</>.
-        <literal>Escape</> merely outputs null bytes as <literal>\000</> and
+        Encode binary data into a textual representation.  Supported
+        formats are: <literal>base64</>, <literal>hex</>, <literal>escape</>.
+        <literal>escape</> converts zero bytes and high-bit-set bytes to
+        octal sequences (<literal>\</><replaceable>nnn</>) and
         doubles backslashes.
        </entry>
        <entry><literal>encode(E'123\\000\\001', 'base64')</literal></entry>
@@ -2780,12 +2781,12 @@
      <row>
       <entry>
        <literal><function>decode</function>(<parameter>string</parameter> <type>text</type>,
-              <parameter>type</parameter> <type>text</type>)</literal>
+              <parameter>format</parameter> <type>text</type>)</literal>
       </entry>
       <entry><type>bytea</type></entry>
       <entry>
-       Decode binary string from <parameter>string</parameter> previously 
-       encoded with <function>encode</>.  Parameter type is same as in <function>encode</>.
+       Decode binary data from textual representation in <parameter>string</>.
+       Options for <parameter>format</> are same as in <function>encode</>.
       </entry>
       <entry><literal>decode(E'123\\000456', 'escape')</literal></entry>
       <entry><literal>123\000456</literal></entry>
@@ -2793,13 +2794,16 @@
 
      <row>
       <entry>
-       <literal><function>encode</function>(<parameter>string</parameter> <type>bytea</type>,
-              <parameter>type</parameter> <type>text</type>)</literal>
+       <literal><function>encode</function>(<parameter>data</parameter> <type>bytea</type>,
+              <parameter>format</parameter> <type>text</type>)</literal>
       </entry>
       <entry><type>text</type></entry>
       <entry>
-       Encode binary string to <acronym>ASCII</acronym>-only representation.  Supported
-       types are: <literal>base64</>, <literal>hex</>, <literal>escape</>.
+       Encode binary data into a textual representation.  Supported
+       formats are: <literal>base64</>, <literal>hex</>, <literal>escape</>.
+       <literal>escape</> converts zero bytes and high-bit-set bytes to
+       octal sequences (<literal>\</><replaceable>nnn</>) and
+       doubles backslashes.
       </entry>
       <entry><literal>encode(E'123\\000456'::bytea, 'escape')</literal></entry>
       <entry><literal>123\000456</literal></entry>
