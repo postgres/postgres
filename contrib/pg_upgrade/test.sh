@@ -62,9 +62,10 @@ newsrc=`cd ../.. && pwd`
 PATH=$bindir:$PATH
 export PATH
 
-PGDATA=$temp_root/data
+BASE_PGDATA=$temp_root/data
+PGDATA="$BASE_PGDATA.old"
 export PGDATA
-rm -rf "$PGDATA" "$PGDATA".old
+rm -rf "$BASE_PGDATA" "$PGDATA"
 
 unset PGDATABASE
 unset PGUSER
@@ -120,7 +121,7 @@ if [ -n "$pg_dumpall1_status" ]; then
 	exit 1
 fi
 
-mv "${PGDATA}" "${PGDATA}.old"
+PGDATA=$BASE_PGDATA
 
 initdb -N
 
