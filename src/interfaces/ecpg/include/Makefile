@@ -18,7 +18,7 @@ ecpg_headers = ecpgerrno.h ecpglib.h ecpgtype.h sqlca.h sql3types.h ecpg_informi
 	sqlda.h sqlda-compat.h sqlda-native.h
 informix_headers = datetime.h decimal.h sqltypes.h
 
-install-headers: $(ecpg_headers) $(informix_headers)
+install-headers: $(ecpg_headers) $(informix_headers) installdirs
 	$(INSTALL_DATA) $(addprefix $(srcdir)/,$(ecpg_headers)) '$(DESTDIR)$(includedir)/'
 	$(INSTALL_DATA) $(addprefix $(srcdir)/,$(informix_headers)) '$(DESTDIR)$(informix_esql_dir)/'
 	$(INSTALL_DATA) $(ecpg_config_h) '$(DESTDIR)$(includedir)'
