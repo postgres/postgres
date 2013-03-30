@@ -9971,7 +9971,7 @@ table2-mapping
        <entry><literal>"Fred said \"Hi.\""</literal></entry>
       </row>
       <row>
-	   <entry>
+       <entry>
          <indexterm>
           <primary>json_array_length</primary>
          </indexterm>
