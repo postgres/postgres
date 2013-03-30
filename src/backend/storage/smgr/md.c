@@ -3,6 +3,13 @@
  * md.c
  *	  This code manages relations that reside on magnetic disk.
  *
+ * Or at least, that was what the Berkeley folk had in mind when they named
+ * this file.  In reality, what this code provides is an interface from
+ * the smgr API to Unix-like filesystem APIs, so it will work with any type
+ * of device for which the operating system provides filesystem support.
+ * It doesn't matter whether the bits are on spinning rust or some other
+ * storage technology.
+ *
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
