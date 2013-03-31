@@ -20,7 +20,6 @@ static void check_is_super_user(ClusterInfo *cluster);
 static void check_for_prepared_transactions(ClusterInfo *cluster);
 static void check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster);
 static void check_for_reg_data_type_usage(ClusterInfo *cluster);
-static void check_for_invalid_indexes(ClusterInfo *cluster);
 static void get_bin_version(ClusterInfo *cluster);
 static char *get_canonical_locale_name(int category, const char *locale);
 
@@ -97,7 +96,6 @@ check_and_dump_old_cluster(bool live_check, char **sequence_script_file_name)
 	check_is_super_user(&old_cluster);
 	check_for_prepared_transactions(&old_cluster);
 	check_for_reg_data_type_usage(&old_cluster);
-	check_for_invalid_indexes(&old_cluster);
 	check_for_isn_and_int8_passing_mismatch(&old_cluster);
 
 	/* old = PG 8.3 checks? */
@@ -949,95 +947,6 @@ check_for_reg_data_type_usage(ClusterInfo *cluster)
 		"pg_upgrade, so this cluster cannot currently be upgraded.  You can\n"
 			   "remove the problem tables and restart the upgrade.  A list of the problem\n"
 			   "columns is in the file:\n"
-			   "    %s\n\n", output_path);
-	}
-	else
-		check_ok();
-}
-
-
-/*
- * check_for_invalid_indexes()
- *
- *	CREATE INDEX CONCURRENTLY can create invalid indexes if the index build
- *	fails.  These are dumped as valid indexes by pg_dump, but the
- *	underlying files are still invalid indexes.  This checks to make sure
- *	no invalid indexes exist, either failed index builds or concurrent
- *	indexes in the process of being created.
- */
-static void
-check_for_invalid_indexes(ClusterInfo *cluster)
-{
-	int			dbnum;
-	FILE	   *script = NULL;
-	bool		found = false;
-	char		output_path[MAXPGPATH];
-
-	prep_status("Checking for invalid indexes from concurrent index builds");
-
-	snprintf(output_path, sizeof(output_path), "invalid_indexes.txt");
-
-	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
-	{
-		PGresult   *res;
-		bool		db_used = false;
-		int			ntups;
-		int			rowno;
-		int			i_nspname,
-					i_relname;
-		DbInfo	   *active_db = &cluster->dbarr.dbs[dbnum];
-		PGconn	   *conn = connectToServer(cluster, active_db->db_name);
-
-		res = executeQueryOrDie(conn,
-								"SELECT n.nspname, c.relname "
-								"FROM	pg_catalog.pg_class c, "
-								"		pg_catalog.pg_namespace n, "
-								"		pg_catalog.pg_index i "
-								"WHERE	(i.indisvalid = false OR "
-								"		 i.indisready = false) AND "
-								"		i.indexrelid = c.oid AND "
-								"		c.relnamespace = n.oid AND "
-								/* we do not migrate these, so skip them */
-							    " 		n.nspname != 'pg_catalog' AND "
-								"		n.nspname != 'information_schema' AND "
-								/* indexes do not have toast tables */
-								"		n.nspname != 'pg_toast'");
-
-		ntups = PQntuples(res);
-		i_nspname = PQfnumber(res, "nspname");
-		i_relname = PQfnumber(res, "relname");
-		for (rowno = 0; rowno < ntups; rowno++)
-		{
-			found = true;
-			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-				pg_log(PG_FATAL, "Could not open file \"%s\": %s\n",
-					   output_path, getErrorText(errno));
-			if (!db_used)
-			{
-				fprintf(script, "Database: %s\n", active_db->db_name);
-				db_used = true;
-			}
-			fprintf(script, "  %s.%s\n",
-					PQgetvalue(res, rowno, i_nspname),
-					PQgetvalue(res, rowno, i_relname));
-		}
-
-		PQclear(res);
-
-		PQfinish(conn);
-	}
-
-	if (script)
-		fclose(script);
-
-	if (found)
-	{
-		pg_log(PG_REPORT, "fatal\n");
-		pg_log(PG_FATAL,
-			   "Your installation contains invalid indexes due to failed or\n"
-		 	   "currently running CREATE INDEX CONCURRENTLY operations.  You\n"
-			   "cannot upgrade until these indexes are valid or removed.  A\n"
-			   "list of the problem indexes is in the file:\n"
 			   "    %s\n\n", output_path);
 	}
 	else
