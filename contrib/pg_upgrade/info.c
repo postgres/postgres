@@ -325,6 +325,8 @@ get_rel_infos(migratorContext *ctx, const DbInfo *dbinfo,
 			 "FROM pg_catalog.pg_class c JOIN "
 			 "		pg_catalog.pg_namespace n "
 			 "	ON c.relnamespace = n.oid "
+			 "  LEFT OUTER JOIN pg_catalog.pg_index i "
+			 "	   ON c.oid = i.indexrelid "
 			 "   LEFT OUTER JOIN pg_catalog.pg_tablespace t "
 			 "	ON c.reltablespace = t.oid "
 			 "WHERE (( "
@@ -338,7 +340,11 @@ get_rel_infos(migratorContext *ctx, const DbInfo *dbinfo,
 			 "	n.nspname = 'pg_catalog' "
 			 "	AND relname IN "
 			 "        ('pg_largeobject', 'pg_largeobject_loid_pn_index'%s) )) "
-			 "	AND relkind IN ('r','t', 'i'%s)"
+			 "	AND relkind IN ('r','t', 'i'%s) "
+			 /* pg_dump only dumps valid indexes;  testing indisready is
+			 * necessary in 9.2, and harmless in earlier/later versions. */
+			 " AND i.indisvalid IS DISTINCT FROM false AND "
+			 " i.indisready IS DISTINCT FROM false "
 			 "GROUP BY  c.oid, n.nspname, c.relname, c.relfilenode,"
 			 "			c.reltoastrelid, c.reltablespace, t.spclocation, "
 			 "			n.nspname "
