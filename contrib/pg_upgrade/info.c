@@ -267,9 +267,15 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 "	c.relfilenode, c.reltablespace, t.spclocation "
 			 "FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n "
 			 "	   ON c.relnamespace = n.oid "
+			 "  LEFT OUTER JOIN pg_catalog.pg_index i "
+			 "	   ON c.oid = i.indexrelid "
 			 "  LEFT OUTER JOIN pg_catalog.pg_tablespace t "
 			 "	   ON c.reltablespace = t.oid "
 			 "WHERE relkind IN ('r','t', 'i'%s) AND "
+			/* pg_dump only dumps valid indexes;  testing indisready is
+			 * necessary in 9.2, and harmless in earlier/later versions. */
+			 " i.indisvalid IS DISTINCT FROM false AND "
+			 " i.indisready IS DISTINCT FROM false AND "
 			 /* exclude possible orphaned temp tables */
 			 "  ((n.nspname !~ '^pg_temp_' AND "
 			 "    n.nspname !~ '^pg_toast_temp_' AND "
