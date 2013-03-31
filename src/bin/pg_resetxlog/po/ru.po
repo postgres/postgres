@@ -245,11 +245,11 @@ msgstr "Режим full_page_writes последней к.т: %s\n"
 
 #: pg_resetxlog.c:574
 msgid "off"
-msgstr "выкл"
+msgstr "выкл."
 
 #: pg_resetxlog.c:574
 msgid "on"
-msgstr "вкл"
+msgstr "вкл."
 
 #: pg_resetxlog.c:575
 #, c-format
@@ -284,7 +284,7 @@ msgstr "БД с oldestXID последней конт. точки: %u\n"
 #: pg_resetxlog.c:588
 #, c-format
 msgid "Latest checkpoint's oldestActiveXID:  %u\n"
-msgstr "oldestActiveXID последней конт. точки:%u\n"
+msgstr "oldestActiveXID последней к.т.:       %u\n"
 
 #: pg_resetxlog.c:590
 #, c-format

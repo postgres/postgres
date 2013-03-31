@@ -1,5 +1,5 @@
 # German message translation file for libpq
-# Peter Eisentraut <peter_e@gmx.net>, 2001 - 2012.
+# Peter Eisentraut <peter_e@gmx.net>, 2001 - 2013.
 #
 # Use these quotes: »%s«
 #
@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2012-12-01 22:40+0000\n"
-"PO-Revision-Date: 2012-12-02 01:51-0500\n"
+"PO-Revision-Date: 2013-03-04 22:12-0500\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -288,7 +288,7 @@ msgstr "PGEventProc »%s« während PGEVT_CONNRESET-Ereignis fehlgeschlagen\n"
 #: fe-connect.c:3442
 #, c-format
 msgid "invalid LDAP URL \"%s\": scheme must be ldap://\n"
-msgstr "ungÜltige LDAP-URL »%s«: Schema muss ldap:// sein\n"
+msgstr "ungültige LDAP-URL »%s«: Schema muss ldap:// sein\n"
 
 #: fe-connect.c:3457
 #, c-format
@@ -610,7 +610,7 @@ msgid ""
 "\tbefore or while processing the request.\n"
 msgstr ""
 "Server beendete die Verbindung unerwartet\n"
-"\tDas heißt wahrscheinlich, daß der Server abnormal beendete\n"
+"\tDas heißt wahrscheinlich, dass der Server abnormal beendete\n"
 "\tbevor oder während die Anweisung bearbeitet wurde.\n"
 
 #: fe-misc.c:974

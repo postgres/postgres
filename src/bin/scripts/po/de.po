@@ -1,5 +1,5 @@
 # German message translation file for "scripts".
-# Peter Eisentraut <peter_e@gmx.net>, 2003 - 2012.
+# Peter Eisentraut <peter_e@gmx.net>, 2003 - 2013.
 #
 # Use these quotes: »%s«
 #
@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2012-08-22 22:17+0000\n"
-"PO-Revision-Date: 2012-08-22 23:55-0400\n"
+"PO-Revision-Date: 2013-03-08 00:24-0500\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -819,7 +819,7 @@ msgstr "  -d, --dbname=DBNAME       zu reindizierende Datenbank\n"
 #: reindexdb.c:334
 #, c-format
 msgid "  -i, --index=INDEX         recreate specific index only\n"
-msgstr "  -t, --table=TABELLE       erneuere nur einen bestimmten Index\n"
+msgstr "  -i, --index=INDEX         erneuere nur einen bestimmten Index\n"
 
 #: reindexdb.c:336
 #, c-format

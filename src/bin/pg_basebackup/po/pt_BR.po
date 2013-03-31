@@ -129,7 +129,7 @@ msgid ""
 "Connection options:\n"
 msgstr ""
 "\n"
-"Opções de conexão: \n"
+"Opções de conexão:\n"
 
 #: pg_basebackup.c:124 pg_receivexlog.c:68
 #, c-format

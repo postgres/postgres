@@ -160,7 +160,7 @@ msgid ""
 "                         time between status packets sent to server (in "
 "seconds)\n"
 msgstr ""
-"  -s, --statusint=ИНТЕРВАЛ\n"
+"  -s, --status-interval=ИНТЕРВАЛ\n"
 "                         интервал между передаваемыми серверу\n"
 "                         пакетами состояния (в секундах)\n"
 

@@ -160,7 +160,7 @@ msgstr "  --localedir           mostra local dos arquivos de suporte a configura
 #: pg_config.c:442
 #, c-format
 msgid "  --mandir              show location of manual pages\n"
-msgstr "  --bindir              mostra local das páginas de manual\n"
+msgstr "  --mandir              mostra local das páginas de manual\n"
 
 #: pg_config.c:443
 #, c-format

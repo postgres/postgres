@@ -497,7 +497,7 @@ msgstr "  -l, --list                показать список установ
 
 #: createuser.c:185
 msgid "Enter name of role to add: "
-msgstr "Введите имя новой роли:"
+msgstr "Введите имя новой роли: "
 
 #: createuser.c:200
 msgid "Enter password for new role: "
@@ -869,7 +869,7 @@ msgstr "  -d, --dbname=БД           имя базы для переиндек�
 #: reindexdb.c:334
 #, c-format
 msgid "  -i, --index=INDEX         recreate specific index only\n"
-msgstr "  -I, --index=ИНДЕКС        восстановить только указанный индекс\n"
+msgstr "  -i, --index=ИНДЕКС        пересоздать только указанный индекс\n"
 
 #: reindexdb.c:336
 #, c-format

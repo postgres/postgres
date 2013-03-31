@@ -470,12 +470,12 @@ msgstr "  -A, --auth=MÉTODO            método de autenticação padrão para c
 #: initdb.c:2515
 #, c-format
 msgid "      --auth-host=METHOD    default authentication method for local TCP/IP connections\n"
-msgstr "  -A, --auth=MÉTODO            método de autenticação padrão para conexões TCP/IP locais\n"
+msgstr "  -A, --auth-host=MÉTODO       método de autenticação padrão para conexões TCP/IP locais\n"
 
 #: initdb.c:2516
 #, c-format
 msgid "      --auth-local=METHOD   default authentication method for local-socket connections\n"
-msgstr "  -A, --auth=MÉTODO            método de autenticação padrão para conexões de soquete locais\n"
+msgstr "  -A, --auth-local=MÉTODO      método de autenticação padrão para conexões de soquete locais\n"
 
 #: initdb.c:2517
 #, c-format

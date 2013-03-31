@@ -238,6 +238,7 @@ msgid ""
 msgstr ""
 "AVISO: modo cópia de segurança online está ativo\n"
 "Desligamento não completará até que pg_stop_backup() seja chamado.\n"
+"\n"
 
 #: pg_ctl.c:899 pg_ctl.c:987
 msgid "waiting for server to shut down..."
@@ -436,7 +437,9 @@ msgstr "Tente \"%s --help\" para obter informações adicionais.\n"
 msgid ""
 "%s is a utility to initialize, start, stop, or control a PostgreSQL server.\n"
 "\n"
-msgstr "%s é um utilitário para inicializar, iniciar, parar e controlar um servidor PostgreSQL.\n"
+msgstr ""
+"%s é um utilitário para inicializar, iniciar, parar e controlar um servidor PostgreSQL.\n"
+"\n"
 
 #: pg_ctl.c:1751
 #, c-format

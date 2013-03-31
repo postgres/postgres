@@ -277,9 +277,7 @@ msgstr "conexão SSL (cifra: %s, bits: %d)\n"
 #: command.c:1733
 #, c-format
 msgid "SSL connection (unknown cipher)\n"
-msgstr ""
-"conexão SSL (cifra desconhecida)\n"
-"\n"
+msgstr "conexão SSL (cifra desconhecida)\n"
 
 #: command.c:1754
 #, c-format

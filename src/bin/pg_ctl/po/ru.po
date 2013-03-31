@@ -259,7 +259,7 @@ msgstr "%s: не удалось отправить сигнал остановк
 
 #: pg_ctl.c:880
 msgid "server shutting down\n"
-msgstr "сервер завершает работу\n"
+msgstr "сервер останавливается\n"
 
 #: pg_ctl.c:895 pg_ctl.c:983
 msgid ""

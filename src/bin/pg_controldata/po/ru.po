@@ -95,15 +95,15 @@ msgstr "запускается"
 
 #: pg_controldata.c:53
 msgid "shut down"
-msgstr "остановлен"
+msgstr "выключен"
 
 #: pg_controldata.c:55
 msgid "shut down in recovery"
-msgstr "остановлен при восстановлении"
+msgstr "выключен при восстановлении"
 
 #: pg_controldata.c:57
 msgid "shutting down"
-msgstr "останавливается"
+msgstr "выключение"
 
 #: pg_controldata.c:59
 msgid "in crash recovery"
@@ -224,11 +224,11 @@ msgstr "Режим full_page_writes последней к.т: %s\n"
 
 #: pg_controldata.c:207
 msgid "off"
-msgstr "выкл"
+msgstr "выкл."
 
 #: pg_controldata.c:207
 msgid "on"
-msgstr "вкл"
+msgstr "вкл."
 
 #: pg_controldata.c:208
 #, c-format
@@ -263,7 +263,7 @@ msgstr "БД с oldestXID последней конт. точки: %u\n"
 #: pg_controldata.c:221
 #, c-format
 msgid "Latest checkpoint's oldestActiveXID:  %u\n"
-msgstr "oldestActiveXID последней конт. точки:%u\n"
+msgstr "oldestActiveXID последней к.т.:       %u\n"
 
 #: pg_controldata.c:223
 #, c-format
@@ -403,4 +403,3 @@ msgstr "передача аргумента Float8:            %s\n"
 #~ "Параметры:\n"
 #~ "  --help         показать эту справку и выйти\n"
 #~ "  --version      показать версию и выйти\n"
-#~ "\n"
