@@ -87,6 +87,7 @@ shlib_bare	= lib$(NAME)$(DLSUFFIX)
 # Testing the soname variable is a reliable way to determine whether a
 # linkable library is being built.
 soname		= $(shlib_major)
+pkgconfigdir = $(libdir)/pkgconfig
 else
 # Naming convention for dynamically loadable modules
 shlib		= $(NAME)$(DLSUFFIX)
@@ -305,6 +306,7 @@ all-lib: all-shared-lib
 ifdef soname
 # no static library when building a dynamically loadable module
 all-lib: all-static-lib
+all-lib: lib$(NAME).pc
 endif
 
 all-static-lib: $(stlib)
@@ -388,6 +390,23 @@ $(stlib): $(shlib) $(DLL_DEFFILE) | $(SHLIB_PREREQS)
 endif # PORTNAME == cygwin || PORTNAME == win32
 
 
+%.pc: $(MAKEFILE_LIST)
+	echo 'Name: lib$(NAME)' >$@
+	echo 'Description: PostgreSQL lib$(NAME) library' >>$@
+	echo 'Url: http://www.postgresql.org/' >>$@
+	echo 'Version: $(VERSION)' >>$@
+	echo 'Requires: ' >>$@
+	echo 'Requires.private: $(PKG_CONFIG_REQUIRES_PRIVATE)' >>$@
+	echo 'Cflags: -I$(includedir)' >>$@
+	echo 'Libs: -L$(libdir) -l$(NAME)' >>$@
+# Record -L flags that the user might have passed in to the PostgreSQL
+# build to locate third-party libraries (e.g., ldap, ssl).  Filter out
+# those that point inside the build or source tree.  Use sort to
+# remove duplicates.  Also record the -l flags necessary for static
+# linking, but not those already covered by Requires.private.
+	echo 'Libs.private: $(sort $(filter-out -L.% -L$(top_srcdir)/%,$(filter -L%,$(LDFLAGS) $(SHLIB_LINK)))) $(filter-out $(PKG_CONFIG_REQUIRES_PRIVATE:lib%=-l%),$(filter -l%,$(SHLIB_LINK)))' >>$@
+
+
 # We need several not-quite-identical variants of .DEF files to build
 # DLLs for Windows.  These are made from the single source file
 # exports.txt.  Since we can't assume that Windows boxes will have
@@ -430,7 +449,11 @@ endif # SHLIB_EXPORTS
 install-lib: install-lib-shared
 ifdef soname
 install-lib: install-lib-static
+install-lib: install-lib-pc
 endif
+
+install-lib-pc: lib$(NAME).pc installdirs-lib
+	$(INSTALL_DATA) $< '$(DESTDIR)$(pkgconfigdir)/lib$(NAME).pc'
 
 install-lib-static: $(stlib) installdirs-lib
 	$(INSTALL_STLIB) $< '$(DESTDIR)$(libdir)/$(stlib)'
@@ -467,7 +490,7 @@ endif
 
 installdirs-lib:
 ifdef soname
-	$(MKDIR_P) '$(DESTDIR)$(libdir)'
+	$(MKDIR_P) '$(DESTDIR)$(libdir)' '$(DESTDIR)$(pkgconfigdir)'
 else
 	$(MKDIR_P) '$(DESTDIR)$(pkglibdir)'
 endif
@@ -483,7 +506,8 @@ ifdef soname
 	rm -f '$(DESTDIR)$(libdir)/$(stlib)'
 	rm -f '$(DESTDIR)$(libdir)/$(shlib_bare)' \
 	  '$(DESTDIR)$(libdir)/$(shlib_major)' \
-	  '$(DESTDIR)$(libdir)/$(shlib)'
+	  '$(DESTDIR)$(libdir)/$(shlib)' \
+	  '$(DESTDIR)$(pkgconfigdir)/lib$(NAME).pc'
 else # no soname
 	rm -f '$(DESTDIR)$(pkglibdir)/$(shlib)'
 endif # no soname
@@ -495,7 +519,7 @@ endif # no soname
 
 .PHONY: clean-lib
 clean-lib:
-	rm -f $(shlib) $(shlib_bare) $(shlib_major) $(stlib) $(exports_file)
+	rm -f $(shlib) $(shlib_bare) $(shlib_major) $(stlib) $(exports_file) lib$(NAME).pc
 
 ifneq (,$(SHLIB_EXPORTS))
 maintainer-clean-lib:

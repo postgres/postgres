@@ -32,6 +32,8 @@ LIBS := $(filter-out -lpgport, $(LIBS))
 
 OBJS= informix.o $(filter snprintf.o, $(LIBOBJS))
 
+PKG_CONFIG_REQUIRES_PRIVATE = libecpg libpgtypes
+
 all: all-lib
 
 .PHONY: submake-ecpglib submake-pgtypeslib

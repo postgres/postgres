@@ -7641,6 +7641,18 @@ CPPFLAGS += -I/usr/local/pgsql/include
      </para>
 
      <para>
+      If you
+      have <command>pkg-config</command><indexterm><primary>pkg-config</primary><secondary sortas="libpq">with
+      libpq</secondary></indexterm> installed, you can run instead:
+<screen>
+<prompt>$</prompt> pkg-config --cflags libpq
+<computeroutput>-I/usr/local/include</computeroutput>
+</screen>
+      Note that this will already include the <option>-I</option> in front of
+      the path.
+     </para>
+
+     <para>
       Failure to specify the correct option to the compiler will
       result in an error message such as:
 <screen>
@@ -7672,6 +7684,15 @@ cc -o testprog testprog1.o testprog2.o -L/usr/local/pgsql/lib -lpq
 <prompt>$</prompt> pg_config --libdir
 <computeroutput>/usr/local/pgsql/lib</computeroutput>
 </screen>
+     </para>
+
+     <para>
+      Or again use <command>pkg-config</command>:
+<screen>
+<prompt>$</prompt> pkg-config --libs libpq
+<computeroutput>-L/usr/local/pgsql/lib -lpq</computeroutput>
+</screen>
+      Note again that this prints the full options, not only the path.
      </para>
 
      <para>

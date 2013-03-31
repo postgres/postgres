@@ -5715,6 +5715,15 @@ cc -o myprog prog1.o prog2.o ... -lecpg
   </para>
 
   <para>
+   You can
+   use <command>pg_config</command><indexterm><primary>pg_config</primary><secondary sortas="ecpg">with
+   ecpg</secondary></indexterm>
+   or <command>pkg-config</command><indexterm><primary>pkg-config</primary><secondary sortas="ecpg">with
+   ecpg</secondary></indexterm> with package name <literal>libecpg</literal> to
+   get the paths for your installation.
+  </para>
+
+  <para>
    If you manage the build process of a larger project using
    <application>make</application>, it might be convenient to include
    the following implicit rule to your makefiles:

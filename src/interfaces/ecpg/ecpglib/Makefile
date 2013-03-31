@@ -43,6 +43,8 @@ ifeq ($(PORTNAME), win32)
 SHLIB_LINK += -lshfolder
 endif
 
+PKG_CONFIG_REQUIRES_PRIVATE = libpq libpgtypes
+
 all: all-lib
 
 .PHONY: submake-pgtypeslib
