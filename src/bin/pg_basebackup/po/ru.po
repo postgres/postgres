@@ -33,7 +33,7 @@ msgid ""
 "%s takes a base backup of a running PostgreSQL server.\n"
 "\n"
 msgstr ""
-"%s выполняет базовую резервную копию работающего сервера PostgreSQL.\n"
+"%s делает базовую резервную копию работающего сервера PostgreSQL.\n"
 "\n"
 
 #: pg_basebackup.c:123

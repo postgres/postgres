@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.1\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2012-05-29 04:15+0000\n"
-"PO-Revision-Date: 2012-06-17 21:27+0300\n"
+"PO-Revision-Date: 2013-03-31 00:07-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -557,9 +557,7 @@ msgstr "konnte aktuellen Benutzernamen nicht ermitteln: %s\n"
 msgid ""
 "psql is the PostgreSQL interactive terminal.\n"
 "\n"
-msgstr ""
-"psql ist  das interaktive PostgreSQL-Terminal.\n"
-"\n"
+msgstr "psql ist das interaktive PostgreSQL-Terminal.\n\n"
 
 #: help.c:83
 #, c-format
@@ -3585,7 +3583,7 @@ msgstr "Version"
 
 #: sql_help.c:1311
 msgid "old_version"
-msgstr "neue_Version"
+msgstr "alte_Version"
 
 #: sql_help.c:1371 sql_help.c:1699
 msgid "default_expr"
