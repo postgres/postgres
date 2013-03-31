@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-02-02 19:33+0000\n"
-"PO-Revision-Date: 2013-02-03 17:19-0500\n"
+"POT-Creation-Date: 2013-03-05 18:45+0000\n"
+"PO-Revision-Date: 2013-03-06 19:33-0500\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -611,8 +611,8 @@ msgstr "PID %d in Stornierungsanfrage stimmte mit keinem Prozess überein"
 #: postmaster/postmaster.c:3204 postmaster/postmaster.c:3886
 #: postmaster/postmaster.c:3972 postmaster/postmaster.c:4563
 #: utils/hash/dynahash.c:367 utils/hash/dynahash.c:444
-#: utils/hash/dynahash.c:956 utils/misc/guc.c:2920 utils/misc/guc.c:2933
-#: utils/misc/guc.c:2946 utils/init/miscinit.c:149 utils/init/miscinit.c:170
+#: utils/hash/dynahash.c:956 utils/misc/guc.c:2915 utils/misc/guc.c:2928
+#: utils/misc/guc.c:2941 utils/init/miscinit.c:149 utils/init/miscinit.c:170
 #: utils/init/miscinit.c:180 utils/fmgr/dfmgr.c:224 utils/mb/mbutils.c:334
 #: utils/mb/mbutils.c:606 utils/mmgr/aset.c:408 utils/mmgr/aset.c:587
 #: utils/mmgr/aset.c:770 utils/mmgr/aset.c:976 utils/adt/regexp.c:204
@@ -772,7 +772,7 @@ msgid "could not create file \"%s\": %m"
 msgstr "kann Datei »%s« nicht erstellen: %m"
 
 #: postmaster/postmaster.c:3671 postmaster/postmaster.c:3681
-#: utils/misc/guc.c:7059 utils/misc/guc.c:7084 utils/init/miscinit.c:1054
+#: utils/misc/guc.c:7054 utils/misc/guc.c:7079 utils/init/miscinit.c:1054
 #: utils/init/miscinit.c:1063 utils/init/miscinit.c:1070
 #: access/transam/xlog.c:2367 access/transam/xlog.c:2500
 #: access/transam/xlog.c:4396 access/transam/xlog.c:4452 commands/copy.c:1316
@@ -1583,7 +1583,7 @@ msgid "Waits N seconds on connection startup after authentication."
 msgstr ""
 "Wartet beim Starten einer Verbindung N Sekunden nach der Authentifizierung."
 
-#: utils/misc/guc.c:1295 utils/misc/guc.c:1675
+#: utils/misc/guc.c:1295 utils/misc/guc.c:1670
 msgid "This allows attaching a debugger to the process."
 msgstr "Das ermöglicht es, einen Debugger in den Prozess einzuhängen."
 
@@ -1790,7 +1790,7 @@ msgstr ""
 "Alter, bei dem VACUUM die ganze Tabelle durchsuchen soll, um Zeilen "
 "einzufrieren."
 
-#: utils/misc/guc.c:1640
+#: utils/misc/guc.c:1635
 msgid ""
 "Number of transactions by which VACUUM and HOT cleanup should be deferred, "
 "if any."
@@ -1798,11 +1798,11 @@ msgstr ""
 "Anzahl Transaktionen, um die VACUUM- und HOT-Aufräumen aufgeschoben werden "
 "soll."
 
-#: utils/misc/guc.c:1652
+#: utils/misc/guc.c:1647
 msgid "Sets the maximum number of locks per transaction."
 msgstr "Setzt die maximale Anzahl Sperren pro Transaktion."
 
-#: utils/misc/guc.c:1653
+#: utils/misc/guc.c:1648
 msgid ""
 "The shared lock table is sized on the assumption that at most "
 "max_locks_per_transaction * max_connections distinct objects will need to be "
@@ -1812,38 +1812,38 @@ msgstr ""
 "max_locks_per_transaction * max_connections verschiedene Objekte "
 "gleichzeitig gesperrt werden müssen."
 
-#: utils/misc/guc.c:1663
+#: utils/misc/guc.c:1658
 msgid "Sets the maximum allowed time to complete client authentication."
 msgstr "Setzt die maximale Zeit, um die Client-Authentifizierung zu beenden."
 
-#: utils/misc/guc.c:1674
+#: utils/misc/guc.c:1669
 msgid "Waits N seconds on connection startup before authentication."
 msgstr ""
 "Wartet beim Starten einer Verbindung N Sekunden vor der Authentifizierung."
 
-#: utils/misc/guc.c:1684
+#: utils/misc/guc.c:1679
 msgid "Sets the number of WAL files held for standby servers."
 msgstr ""
 "Setzt die maximale Anzahl der für Standby-Server vorgehaltenen WAL-Dateien."
 
-#: utils/misc/guc.c:1693
+#: utils/misc/guc.c:1688
 msgid ""
 "Sets the maximum distance in log segments between automatic WAL checkpoints."
 msgstr ""
 "Setzt die maximale Anzahl Logsegmente zwischen automatischen WAL-Checkpoints."
 
-#: utils/misc/guc.c:1702
+#: utils/misc/guc.c:1697
 msgid "Sets the maximum time between automatic WAL checkpoints."
 msgstr "Setzt die maximale Zeit zwischen automatischen WAL-Checkpoints."
 
-#: utils/misc/guc.c:1712
+#: utils/misc/guc.c:1707
 msgid ""
 "Enables warnings if checkpoint segments are filled more frequently than this."
 msgstr ""
 "Schreibt eine Logmeldung, wenn Checkpoint-Segmente häufiger als dieser Wert "
 "gefüllt werden."
 
-#: utils/misc/guc.c:1714
+#: utils/misc/guc.c:1709
 msgid ""
 "Write a message to the server log if checkpoints caused by the filling of "
 "checkpoint segment files happens more frequently than this number of "
@@ -1853,23 +1853,23 @@ msgstr ""
 "Checkpoint-Segmente ausgelöst werden, häufiger als dieser Wert in Sekunden "
 "passieren. Null schaltet die Warnung ab."
 
-#: utils/misc/guc.c:1725
+#: utils/misc/guc.c:1720
 msgid "Sets the number of disk-page buffers in shared memory for WAL."
 msgstr "Setzt die Anzahl Diskseitenpuffer für WAL im Shared Memory."
 
-#: utils/misc/guc.c:1735
+#: utils/misc/guc.c:1730
 msgid "WAL writer sleep time between WAL flushes."
 msgstr "Schlafzeit zwischen WAL-Flush-Operationen des WAL-Writers."
 
-#: utils/misc/guc.c:1746
+#: utils/misc/guc.c:1741
 msgid "Sets the maximum number of simultaneously running WAL sender processes."
 msgstr "Setzt die maximale Anzahl gleichzeitig laufender WAL-Sender-Prozesse."
 
-#: utils/misc/guc.c:1755
+#: utils/misc/guc.c:1750
 msgid "WAL sender sleep time between WAL replications."
 msgstr "WAL-Sender-Schlafzeit zwischen WAL-Replikationen."
 
-#: utils/misc/guc.c:1765
+#: utils/misc/guc.c:1760
 msgid ""
 "Sets the delay in microseconds between transaction commit and flushing WAL "
 "to disk."
@@ -1877,18 +1877,18 @@ msgstr ""
 "Setzt die Verzögerung in Millisekunden zwischen Transaktionsabschluss und "
 "dem Schreiben von WAL auf die Festplatte."
 
-#: utils/misc/guc.c:1775
+#: utils/misc/guc.c:1770
 msgid ""
 "Sets the minimum concurrent open transactions before performing commit_delay."
 msgstr ""
 "Setzt die minimale Anzahl gleichzeitig offener Transaktionen bevor "
 "»commit_delay« angewendet wird."
 
-#: utils/misc/guc.c:1785
+#: utils/misc/guc.c:1780
 msgid "Sets the number of digits displayed for floating-point values."
 msgstr "Setzt die Anzahl ausgegebener Ziffern für Fließkommawerte."
 
-#: utils/misc/guc.c:1786
+#: utils/misc/guc.c:1781
 msgid ""
 "This affects real, double precision, and geometric data types. The parameter "
 "value is added to the standard number of digits (FLT_DIG or DBL_DIG as "
@@ -1898,16 +1898,16 @@ msgstr ""
 "Datentypen. Der Parameterwert wird zur Standardziffernanzahl (FLT_DIG bzw. "
 "DBL_DIG) hinzuaddiert."
 
-#: utils/misc/guc.c:1796
+#: utils/misc/guc.c:1791
 msgid "Sets the minimum execution time above which statements will be logged."
 msgstr ""
 "Setzt die minimale Ausführungszeit, über der Anweisungen geloggt werden."
 
-#: utils/misc/guc.c:1798
+#: utils/misc/guc.c:1793
 msgid "Zero prints all queries. -1 turns this feature off."
 msgstr "Null zeigt alle Anfragen. -1 schaltet dieses Feature aus."
 
-#: utils/misc/guc.c:1807
+#: utils/misc/guc.c:1802
 msgid ""
 "Sets the minimum execution time above which autovacuum actions will be "
 "logged."
@@ -1915,23 +1915,23 @@ msgstr ""
 "Setzt die minimale Ausführungszeit, über der Autovacuum-Aktionen geloggt "
 "werden."
 
-#: utils/misc/guc.c:1809
+#: utils/misc/guc.c:1804
 msgid "Zero prints all actions. -1 turns autovacuum logging off."
 msgstr ""
 "Null gibt alls Aktionen aus. -1 schaltet die Log-Aufzeichnung über "
 "Autovacuum aus."
 
-#: utils/misc/guc.c:1818
+#: utils/misc/guc.c:1813
 msgid "Background writer sleep time between rounds."
 msgstr "Schlafzeit zwischen Durchläufen des Background-Writers."
 
-#: utils/misc/guc.c:1828
+#: utils/misc/guc.c:1823
 msgid "Background writer maximum number of LRU pages to flush per round."
 msgstr ""
 "Maximale Anzahl der vom Background-Writer pro Durchlauf zu flushenden LRU-"
 "Seiten."
 
-#: utils/misc/guc.c:1843
+#: utils/misc/guc.c:1838
 msgid ""
 "Number of simultaneous requests that can be handled efficiently by the disk "
 "subsystem."
@@ -1939,90 +1939,90 @@ msgstr ""
 "Anzahl simultaner Anfragen, die das Festplattensubsystem effizient "
 "bearbeiten kann."
 
-#: utils/misc/guc.c:1844
+#: utils/misc/guc.c:1839
 msgid ""
 "For RAID arrays, this should be approximately the number of drive spindles "
 "in the array."
 msgstr ""
 "Für RAID-Arrays sollte dies ungefähr die Anzahl Spindeln im Array sein."
 
-#: utils/misc/guc.c:1857
+#: utils/misc/guc.c:1852
 msgid "Automatic log file rotation will occur after N minutes."
 msgstr "Automatische Rotation der Logdateien geschieht nach N Minuten."
 
-#: utils/misc/guc.c:1867
+#: utils/misc/guc.c:1862
 msgid "Automatic log file rotation will occur after N kilobytes."
 msgstr "Automatische Rotation der Logdateien geschieht nach N Kilobytes."
 
-#: utils/misc/guc.c:1877
+#: utils/misc/guc.c:1872
 msgid "Shows the maximum number of function arguments."
 msgstr "Setzt die maximale Anzahl von Funktionsargumenten."
 
-#: utils/misc/guc.c:1887
+#: utils/misc/guc.c:1882
 msgid "Shows the maximum number of index keys."
 msgstr "Zeigt die maximale Anzahl von Indexschlüsseln."
 
-#: utils/misc/guc.c:1897
+#: utils/misc/guc.c:1892
 msgid "Shows the maximum identifier length."
 msgstr "Zeigt die maximale Länge von Bezeichnern."
 
-#: utils/misc/guc.c:1907
+#: utils/misc/guc.c:1902
 msgid "Shows the size of a disk block."
 msgstr "Zeigt die Größe eines Diskblocks."
 
-#: utils/misc/guc.c:1917
+#: utils/misc/guc.c:1912
 msgid "Shows the number of pages per disk file."
 msgstr "Zeigt die Anzahl Seiten pro Diskdatei."
 
-#: utils/misc/guc.c:1927
+#: utils/misc/guc.c:1922
 msgid "Shows the block size in the write ahead log."
 msgstr "Zeigt die Blockgröße im Write-Ahead-Log."
 
-#: utils/misc/guc.c:1937
+#: utils/misc/guc.c:1932
 msgid "Shows the number of pages per write ahead log segment."
 msgstr "Zeit die Anzahl Seiten pro Write-Ahead-Log-Segment."
 
-#: utils/misc/guc.c:1950
+#: utils/misc/guc.c:1945
 msgid "Time to sleep between autovacuum runs."
 msgstr "Wartezeit zwischen Autovacuum-Durchläufen."
 
-#: utils/misc/guc.c:1959
+#: utils/misc/guc.c:1954
 msgid "Minimum number of tuple updates or deletes prior to vacuum."
 msgstr "Mindestanzahl an geänderten oder gelöschten Tupeln vor einem Vacuum."
 
-#: utils/misc/guc.c:1967
+#: utils/misc/guc.c:1962
 msgid "Minimum number of tuple inserts, updates or deletes prior to analyze."
 msgstr ""
 "Mindestanzahl an Einfüge-, Änderungs- oder Löschoperationen von einem "
 "Analyze."
 
-#: utils/misc/guc.c:1976
+#: utils/misc/guc.c:1971
 msgid ""
 "Age at which to autovacuum a table to prevent transaction ID wraparound."
 msgstr ""
 "Alter, nach dem eine Tabelle automatisch gevacuumt wird, um "
 "Transaktionsnummernüberlauf zu verhindern."
 
-#: utils/misc/guc.c:1986
+#: utils/misc/guc.c:1981
 msgid ""
 "Sets the maximum number of simultaneously running autovacuum worker "
 "processes."
 msgstr ""
 "Setzt die maximale Anzahl gleichzeitig laufender Autovacuum-Worker-Prozesse."
 
-#: utils/misc/guc.c:1995
+#: utils/misc/guc.c:1990
 msgid "Time between issuing TCP keepalives."
 msgstr "Zeit zwischen TCP-Keepalive-Sendungen."
 
-#: utils/misc/guc.c:1996 utils/misc/guc.c:2006
+#: utils/misc/guc.c:1991 utils/misc/guc.c:2001
 msgid "A value of 0 uses the system default."
 msgstr "Der Wert 0 verwendet die Systemvoreinstellung."
 
-#: utils/misc/guc.c:2005
+#: utils/misc/guc.c:2000
 msgid "Time between TCP keepalive retransmits."
 msgstr "Zeit zwischen TCP-Keepalive-Neuübertragungen."
 
-#: utils/misc/guc.c:2015
+#: utils/misc/guc.c:2010
 msgid ""
 "Set the amount of traffic to send and receive before renegotiating the "
 "encryption keys."
@@ -2030,11 +2030,11 @@ msgstr ""
 "Setzt die Traffic-Menge, die gesendet oder empfangen wird, bevor der "
 "Verschlüsselungsschlüssel neu ausgehandelt wird."
 
-#: utils/misc/guc.c:2025
+#: utils/misc/guc.c:2020
 msgid "Maximum number of TCP keepalive retransmits."
 msgstr "Maximale Anzahl an TCP-Keepalive-Neuübertragungen."
 
-#: utils/misc/guc.c:2026
+#: utils/misc/guc.c:2021
 msgid ""
 "This controls the number of consecutive keepalive retransmits that can be "
 "lost before a connection is considered dead. A value of 0 uses the system "
@@ -2044,16 +2044,16 @@ msgstr ""
 "Neuübertragungen, die verloren gehen dürfen, bis die Verbindung als tot "
 "betrachtet wird. Der Wert 0 verwendet die Betriebssystemvoreinstellung."
 
-#: utils/misc/guc.c:2036
+#: utils/misc/guc.c:2031
 msgid "Sets the maximum allowed result for exact search by GIN."
 msgstr ""
 "Setzt die maximal erlaubte Anzahl Ergebnisse für eine genaue Suche mit GIN."
 
-#: utils/misc/guc.c:2046
+#: utils/misc/guc.c:2041
 msgid "Sets the planner's assumption about the size of the disk cache."
 msgstr "Setzt die Annahme des Planers über die Größe des Festplatten-Caches."
 
-#: utils/misc/guc.c:2047
+#: utils/misc/guc.c:2042
 msgid ""
 "That is, the portion of the kernel's disk cache that will be used for "
 "PostgreSQL data files. This is measured in disk pages, which are normally 8 "
@@ -2064,35 +2064,35 @@ msgstr ""
 "PostgreSQL verwendet wird). Das wird in Diskseiten gemessen, welche "
 "normalerweise 8 kB groß sind."
 
-#: utils/misc/guc.c:2059
+#: utils/misc/guc.c:2054
 msgid "Shows the server version as an integer."
 msgstr "Zeigt die Serverversion als Zahl."
 
-#: utils/misc/guc.c:2069
+#: utils/misc/guc.c:2064
 msgid "Log the use of temporary files larger than this number of kilobytes."
 msgstr ""
 "Schreibt Meldungen über die Verwendung von temporären Dateien in den Log, "
 "wenn sie größer als diese Anzahl an Kilobytes sind."
 
-#: utils/misc/guc.c:2070
+#: utils/misc/guc.c:2065
 msgid "Zero logs all files. The default is -1 (turning this feature off)."
 msgstr ""
 "Null loggt alle Dateien. Die Standardeinstellung ist -1 (wodurch dieses "
 "Feature ausgeschaltet wird)."
 
-#: utils/misc/guc.c:2079
+#: utils/misc/guc.c:2074
 msgid "Sets the size reserved for pg_stat_activity.current_query, in bytes."
 msgstr ""
 "Setzt die für pg_stat_activity.current_query reservierte Größe, in Bytes."
 
-#: utils/misc/guc.c:2097
+#: utils/misc/guc.c:2092
 msgid ""
 "Sets the planner's estimate of the cost of a sequentially fetched disk page."
 msgstr ""
 "Setzt den vom Planer geschätzten Aufwand, um eine sequenzielle Diskseite zu "
 "lesen."
 
-#: utils/misc/guc.c:2106
+#: utils/misc/guc.c:2101
 msgid ""
 "Sets the planner's estimate of the cost of a nonsequentially fetched disk "
 "page."
@@ -2100,12 +2100,12 @@ msgstr ""
 "Setzt den vom Planer geschätzten Aufwand, um eine nichtsequenzielle "
 "Diskseite zu lesen."
 
-#: utils/misc/guc.c:2115
+#: utils/misc/guc.c:2110
 msgid "Sets the planner's estimate of the cost of processing each tuple (row)."
 msgstr ""
 "Setzt den vom Planer geschätzten Aufwand für die Verarbeitung einer Zeile."
 
-#: utils/misc/guc.c:2124
+#: utils/misc/guc.c:2119
 msgid ""
 "Sets the planner's estimate of the cost of processing each index entry "
 "during an index scan."
@@ -2113,7 +2113,7 @@ msgstr ""
 "Setzt den vom Planer geschätzten Aufwand für die Verarbeitung eines "
 "Indexeintrags während eines Index-Scans."
 
-#: utils/misc/guc.c:2133
+#: utils/misc/guc.c:2128
 msgid ""
 "Sets the planner's estimate of the cost of processing each operator or "
 "function call."
@@ -2121,7 +2121,7 @@ msgstr ""
 "Setzt den vom Planer geschätzten Aufwand für die Verarbeitung eines "
 "Operators oder Funktionsaufrufs."
 
-#: utils/misc/guc.c:2143
+#: utils/misc/guc.c:2138
 msgid ""
 "Sets the planner's estimate of the fraction of a cursor's rows that will be "
 "retrieved."
@@ -2129,24 +2129,24 @@ msgstr ""
 "Setzt den vom Planer geschätzten Anteil der Cursor-Zeilen, die ausgelesen "
 "werden werden."
 
-#: utils/misc/guc.c:2153
+#: utils/misc/guc.c:2148
 msgid "GEQO: selective pressure within the population."
 msgstr "GEQO: selektiver Auswahldruck in der Bevölkerung."
 
-#: utils/misc/guc.c:2162
+#: utils/misc/guc.c:2157
 msgid "GEQO: seed for random path selection."
 msgstr "GEQO: Ausgangswert für die zufällige Pfadauswahl."
 
-#: utils/misc/guc.c:2171
+#: utils/misc/guc.c:2166
 msgid "Multiple of the average buffer usage to free per round."
 msgstr ""
 "Vielfaches der durchschnittlichen freizugebenden Pufferverwendung pro Runde."
 
-#: utils/misc/guc.c:2180
+#: utils/misc/guc.c:2175
 msgid "Sets the seed for random-number generation."
 msgstr "Setzt den Ausgangswert für die Zufallszahlenerzeugung."
 
-#: utils/misc/guc.c:2190
+#: utils/misc/guc.c:2185
 msgid ""
 "Number of tuple updates or deletes prior to vacuum as a fraction of "
 "reltuples."
@@ -2154,7 +2154,7 @@ msgstr ""
 "Anzahl geänderter oder gelöschter Tupel vor einem Vacuum, relativ zu "
 "reltuples."
 
-#: utils/misc/guc.c:2198
+#: utils/misc/guc.c:2193
 msgid ""
 "Number of tuple inserts, updates or deletes prior to analyze as a fraction "
 "of reltuples."
@@ -2162,7 +2162,7 @@ msgstr ""
 "Anzahl eingefügter, geänderter oder gelöschter Tupel vor einem Analyze, "
 "relativ zu reltuples."
 
-#: utils/misc/guc.c:2207
+#: utils/misc/guc.c:2202
 msgid ""
 "Time spent flushing dirty buffers during checkpoint, as fraction of "
 "checkpoint interval."
@@ -2170,54 +2170,54 @@ msgstr ""
 "Zeit, die damit verbracht wird, modifizierte Puffer während eines "
 "Checkpoints zurückzuschreiben, als Bruchteil des Checkpoint-Intervalls."
 
-#: utils/misc/guc.c:2225
+#: utils/misc/guc.c:2220
 msgid "Sets the shell command that will be called to archive a WAL file."
 msgstr ""
 "Setzt den Shell-Befehl, der aufgerufen wird, um eine WAL-Datei zu "
 "archivieren."
 
-#: utils/misc/guc.c:2234
+#: utils/misc/guc.c:2229
 msgid "Sets the client's character set encoding."
 msgstr "Setzt die Zeichensatzkodierung des Clients."
 
-#: utils/misc/guc.c:2244
+#: utils/misc/guc.c:2239
 msgid "Controls information prefixed to each log line."
 msgstr "Bestimmt die Informationen, die vor jede Logzeile geschrieben werden."
 
-#: utils/misc/guc.c:2245
+#: utils/misc/guc.c:2240
 msgid "If blank, no prefix is used."
 msgstr "Wenn leer, dann wird kein Präfix verwendet."
 
-#: utils/misc/guc.c:2253
+#: utils/misc/guc.c:2248
 msgid "Sets the time zone to use in log messages."
 msgstr "Setzt die in Logmeldungen verwendete Zeitzone."
 
-#: utils/misc/guc.c:2262
+#: utils/misc/guc.c:2257
 msgid "Sets the display format for date and time values."
 msgstr "Setzt das Ausgabeformat für Datums- und Zeitwerte."
 
-#: utils/misc/guc.c:2263
+#: utils/misc/guc.c:2258
 msgid "Also controls interpretation of ambiguous date inputs."
 msgstr "Kontrolliert auch die Interpretation von zweideutigen Datumseingaben."
 
-#: utils/misc/guc.c:2273
+#: utils/misc/guc.c:2268
 msgid "Sets the default tablespace to create tables and indexes in."
 msgstr "Setzt den Standard-Tablespace für Tabellen und Indexe."
 
-#: utils/misc/guc.c:2274
+#: utils/misc/guc.c:2269
 msgid "An empty string selects the database's default tablespace."
 msgstr "Eine leere Zeichenkette wählt den Standard-Tablespace der Datenbank."
 
-#: utils/misc/guc.c:2283
+#: utils/misc/guc.c:2278
 msgid "Sets the tablespace(s) to use for temporary tables and sort files."
 msgstr ""
 "Setzt den oder die Tablespaces für temporäre Tabellen und Sortierdateien."
 
-#: utils/misc/guc.c:2293
+#: utils/misc/guc.c:2288
 msgid "Sets the path for dynamically loadable modules."
 msgstr "Setzt den Pfad für ladbare dynamische Bibliotheken."
 
-#: utils/misc/guc.c:2294
+#: utils/misc/guc.c:2289
 msgid ""
 "If a dynamically loadable module needs to be opened and the specified name "
 "does not have a directory component (i.e., the name does not contain a "
@@ -2228,78 +2228,78 @@ msgstr ""
 "Schrägstrich), dann sucht das System in diesem Pfad nach der angegebenen "
 "Datei."
 
-#: utils/misc/guc.c:2306
+#: utils/misc/guc.c:2301
 msgid "Sets the location of the Kerberos server key file."
 msgstr "Setzt den Ort der Kerberos-Server-Schlüsseldatei."
 
-#: utils/misc/guc.c:2316
+#: utils/misc/guc.c:2311
 msgid "Sets the name of the Kerberos service."
 msgstr "Setzt den Namen des Kerberos-Service."
 
-#: utils/misc/guc.c:2325
+#: utils/misc/guc.c:2320
 msgid "Sets the Bonjour service name."
 msgstr "Setzt den Bonjour-Servicenamen."
 
-#: utils/misc/guc.c:2336
+#: utils/misc/guc.c:2331
 msgid "Shows the collation order locale."
 msgstr "Zeigt die Locale für die Sortierreihenfolge."
 
-#: utils/misc/guc.c:2346
+#: utils/misc/guc.c:2341
 msgid "Shows the character classification and case conversion locale."
 msgstr "Zeigt die Locale für Zeichenklassifizierung und Groß-/Kleinschreibung."
 
-#: utils/misc/guc.c:2356
+#: utils/misc/guc.c:2351
 msgid "Sets the language in which messages are displayed."
 msgstr "Setzt die Sprache, in der Mitteilungen ausgegeben werden."
 
-#: utils/misc/guc.c:2365
+#: utils/misc/guc.c:2360
 msgid "Sets the locale for formatting monetary amounts."
 msgstr "Setzt die Locale für die Formatierung von Geldbeträgen."
 
-#: utils/misc/guc.c:2374
+#: utils/misc/guc.c:2369
 msgid "Sets the locale for formatting numbers."
 msgstr "Setzt die Locale für die Formatierung von Zahlen."
 
-#: utils/misc/guc.c:2383
+#: utils/misc/guc.c:2378
 msgid "Sets the locale for formatting date and time values."
 msgstr "Setzt die Locale für die Formatierung von Datums- und Zeitwerten."
 
-#: utils/misc/guc.c:2392
+#: utils/misc/guc.c:2387
 msgid "Lists shared libraries to preload into server."
 msgstr ""
 "Listet dynamische Bibliotheken, die vorab in den Server geladen werden."
 
-#: utils/misc/guc.c:2402
+#: utils/misc/guc.c:2397
 msgid "Lists shared libraries to preload into each backend."
 msgstr ""
 "Listet dynamische Bibliotheken, die vorab in jeden Serverprozess geladen "
 "werden."
 
-#: utils/misc/guc.c:2412
+#: utils/misc/guc.c:2407
 msgid "Sets the schema search order for names that are not schema-qualified."
 msgstr "Setzt die Schemasuchreihenfolge für Namen ohne Schemaqualifikation."
 
-#: utils/misc/guc.c:2423
+#: utils/misc/guc.c:2418
 msgid "Sets the server (database) character set encoding."
 msgstr "Setzt die Zeichensatzkodierung des Servers (der Datenbank)."
 
-#: utils/misc/guc.c:2434
+#: utils/misc/guc.c:2429
 msgid "Shows the server version."
 msgstr "Zeigt die Serverversion."
 
-#: utils/misc/guc.c:2445
+#: utils/misc/guc.c:2440
 msgid "Sets the current role."
 msgstr "Setzt die aktuelle Rolle."
 
-#: utils/misc/guc.c:2456
+#: utils/misc/guc.c:2451
 msgid "Sets the session user name."
 msgstr "Setzt den Sitzungsbenutzernamen."
 
-#: utils/misc/guc.c:2466
+#: utils/misc/guc.c:2461
 msgid "Sets the destination for server log output."
 msgstr "Setzt das Ziel für die Serverlogausgabe."
 
-#: utils/misc/guc.c:2467
+#: utils/misc/guc.c:2462
 msgid ""
 "Valid values are combinations of \"stderr\", \"syslog\", \"csvlog\", and "
 "\"eventlog\", depending on the platform."
@@ -2307,113 +2307,113 @@ msgstr ""
 "Gültige Werte sind Kombinationen von »stderr«, »syslog«, »csvlog« und "
 "»eventlog«, je nach Plattform."
 
-#: utils/misc/guc.c:2477
+#: utils/misc/guc.c:2472
 msgid "Sets the destination directory for log files."
 msgstr "Bestimmt das Zielverzeichnis für Logdateien."
 
-#: utils/misc/guc.c:2478
+#: utils/misc/guc.c:2473
 msgid "Can be specified as relative to the data directory or as absolute path."
 msgstr ""
 "Kann relativ zum Datenverzeichnis oder als absoluter Pfad angegeben werden."
 
-#: utils/misc/guc.c:2487
+#: utils/misc/guc.c:2482
 msgid "Sets the file name pattern for log files."
 msgstr "Bestimmt das Dateinamenmuster für Logdateien."
 
-#: utils/misc/guc.c:2498
+#: utils/misc/guc.c:2493
 msgid "Sets the program name used to identify PostgreSQL messages in syslog."
 msgstr ""
 "Setzt den Programmnamen, mit dem PostgreSQL-Meldungen im Syslog "
 "identifiziert werden."
 
-#: utils/misc/guc.c:2509
+#: utils/misc/guc.c:2504
 msgid "Sets the time zone for displaying and interpreting time stamps."
 msgstr ""
 "Setzt die Zeitzone, in der Zeitangaben interpretiert und ausgegeben werden."
 
-#: utils/misc/guc.c:2518
+#: utils/misc/guc.c:2513
 msgid "Selects a file of time zone abbreviations."
 msgstr "Wählt eine Datei mit Zeitzonenabkürzungen."
 
-#: utils/misc/guc.c:2527
+#: utils/misc/guc.c:2522
 msgid "Sets the current transaction's isolation level."
 msgstr "Zeigt den Isolationsgrad der aktuellen Transaktion."
 
-#: utils/misc/guc.c:2537
+#: utils/misc/guc.c:2532
 msgid "Sets the owning group of the Unix-domain socket."
 msgstr "Setzt die Eigentümergruppe der Unix-Domain-Socket."
 
-#: utils/misc/guc.c:2538
+#: utils/misc/guc.c:2533
 msgid ""
 "The owning user of the socket is always the user that starts the server."
 msgstr "Der Eigentümer ist immer der Benutzer, der den Server startet."
 
-#: utils/misc/guc.c:2547
+#: utils/misc/guc.c:2542
 msgid "Sets the directory where the Unix-domain socket will be created."
 msgstr ""
 "Setzt das Verzeichnis, in dem die Unix-Domain-Socket erzeugt werden soll."
 
-#: utils/misc/guc.c:2557
+#: utils/misc/guc.c:2552
 msgid "Sets the host name or IP address(es) to listen to."
 msgstr ""
 "Setzt den Hostnamen oder die IP-Adresse(n), auf der auf Verbindungen "
 "gewartet wird."
 
-#: utils/misc/guc.c:2567
+#: utils/misc/guc.c:2562
 msgid "Sets the list of known custom variable classes."
 msgstr "Bestimmt die Liste der bekannten benutzerdefinierten Variablenklassen."
 
-#: utils/misc/guc.c:2577
+#: utils/misc/guc.c:2572
 msgid "Sets the server's data directory."
 msgstr "Setzt das Datenverzeichnis des Servers."
 
-#: utils/misc/guc.c:2587
+#: utils/misc/guc.c:2582
 msgid "Sets the server's main configuration file."
 msgstr "Setzt die Hauptkonfigurationsdatei des Servers."
 
-#: utils/misc/guc.c:2597
+#: utils/misc/guc.c:2592
 msgid "Sets the server's \"hba\" configuration file."
 msgstr "Setzt die »hba«-Konfigurationsdatei des Servers."
 
-#: utils/misc/guc.c:2607
+#: utils/misc/guc.c:2602
 msgid "Sets the server's \"ident\" configuration file."
 msgstr "Setzt die »ident«-Konfigurationsdatei des Servers."
 
-#: utils/misc/guc.c:2617
+#: utils/misc/guc.c:2612
 msgid "Writes the postmaster PID to the specified file."
 msgstr "Schreibt die Postmaster-PID in die angegebene Datei."
 
-#: utils/misc/guc.c:2627
+#: utils/misc/guc.c:2622
 msgid "Writes temporary statistics files to the specified directory."
 msgstr "Schreibt temporäre Statistikdateien in das angegebene Verzeichnis."
 
-#: utils/misc/guc.c:2637
+#: utils/misc/guc.c:2632
 msgid "Sets default text search configuration."
 msgstr "Setzt die vorgegebene Textsuchekonfiguration."
 
-#: utils/misc/guc.c:2647
+#: utils/misc/guc.c:2642
 msgid "Sets the list of allowed SSL ciphers."
 msgstr "Setzt die Liste der erlaubten SSL-Verschlüsselungsalgorithmen."
 
-#: utils/misc/guc.c:2658
+#: utils/misc/guc.c:2653
 msgid "Sets the application name to be reported in statistics and logs."
 msgstr ""
 "Setzt den Anwendungsnamen, der in Statistiken und Logs verzeichnet wird."
 
-#: utils/misc/guc.c:2677
+#: utils/misc/guc.c:2672
 msgid "Sets whether \"\\'\" is allowed in string literals."
 msgstr "Bestimmt, ob »\\'« in Zeichenkettenkonstanten erlaubt ist."
 
-#: utils/misc/guc.c:2686
+#: utils/misc/guc.c:2681
 msgid "Sets the output format for bytea."
 msgstr "Setzt das Ausgabeformat für bytea."
 
-#: utils/misc/guc.c:2695
+#: utils/misc/guc.c:2690
 msgid "Sets the message levels that are sent to the client."
 msgstr "Setzt die Meldungstypen, die an den Client gesendet werden."
 
-#: utils/misc/guc.c:2696 utils/misc/guc.c:2745 utils/misc/guc.c:2755
-#: utils/misc/guc.c:2795
+#: utils/misc/guc.c:2691 utils/misc/guc.c:2740 utils/misc/guc.c:2750
+#: utils/misc/guc.c:2790
 msgid ""
 "Each level includes all the levels that follow it. The later the level, the "
 "fewer messages are sent."
@@ -2421,13 +2421,13 @@ msgstr ""
 "Jeder Wert schließt alle ihm folgenden Werte mit ein. Je weiter hinten der "
 "Wert steht, desto weniger Meldungen werden gesendet werden."
 
-#: utils/misc/guc.c:2705
+#: utils/misc/guc.c:2700
 msgid "Enables the planner to use constraints to optimize queries."
 msgstr ""
 "Ermöglicht dem Planer die Verwendung von Constraints, um Anfragen zu "
 "optimieren."
 
-#: utils/misc/guc.c:2706
+#: utils/misc/guc.c:2701
 msgid ""
 "Table scans will be skipped if their constraints guarantee that no rows "
 "match the query."
@@ -2435,66 +2435,66 @@ msgstr ""
 "Tabellen-Scans werden übersprungen, wenn deren Constraints garantieren, dass "
 "keine Zeile mit der Abfrage übereinstimmt."
 
-#: utils/misc/guc.c:2716
+#: utils/misc/guc.c:2711
 msgid "Sets the transaction isolation level of each new transaction."
 msgstr "Setzt den Transaktionsisolationsgrad neuer Transaktionen."
 
-#: utils/misc/guc.c:2725
+#: utils/misc/guc.c:2720
 msgid "Sets the display format for interval values."
 msgstr "Setzt das Ausgabeformat für Intervallwerte."
 
-#: utils/misc/guc.c:2735
+#: utils/misc/guc.c:2730
 msgid "Sets the verbosity of logged messages."
 msgstr "Setzt den Detailgrad von geloggten Meldungen."
 
-#: utils/misc/guc.c:2744
+#: utils/misc/guc.c:2739
 msgid "Sets the message levels that are logged."
 msgstr "Setzt die Meldungstypen, die geloggt werden."
 
-#: utils/misc/guc.c:2754
+#: utils/misc/guc.c:2749
 msgid ""
 "Causes all statements generating error at or above this level to be logged."
 msgstr ""
 "Schreibt alle Anweisungen, die einen Fehler auf dieser Stufe oder höher "
 "verursachen, in den Log."
 
-#: utils/misc/guc.c:2764
+#: utils/misc/guc.c:2759
 msgid "Sets the type of statements logged."
 msgstr "Setzt die Anweisungsarten, die geloggt werden."
 
-#: utils/misc/guc.c:2774
+#: utils/misc/guc.c:2769
 msgid "Sets the syslog \"facility\" to be used when syslog enabled."
 msgstr ""
 "Setzt die zu verwendende Syslog-»Facility«, wenn Syslog angeschaltet ist."
 
-#: utils/misc/guc.c:2784
+#: utils/misc/guc.c:2779
 msgid "Sets the session's behavior for triggers and rewrite rules."
 msgstr "Setzt das Sitzungsverhalten für Trigger und Regeln."
 
-#: utils/misc/guc.c:2794
+#: utils/misc/guc.c:2789
 msgid "Enables logging of recovery-related debugging information."
 msgstr ""
 "Ermöglicht das Loggen von Debug-Informationen über die Wiederherstellung."
 
-#: utils/misc/guc.c:2808
+#: utils/misc/guc.c:2803
 msgid "Collects function-level statistics on database activity."
 msgstr "Sammelt Statistiken auf Funktionsebene über Datenbankaktivität."
 
-#: utils/misc/guc.c:2817
+#: utils/misc/guc.c:2812
 msgid "Set the level of information written to the WAL."
 msgstr "Setzt den Umfang der in den WAL geschriebenen Informationen."
 
-#: utils/misc/guc.c:2826
+#: utils/misc/guc.c:2821
 msgid "Selects the method used for forcing WAL updates to disk."
 msgstr ""
 "Wählt die Methode, um das Schreiben von WAL-Änderungen auf die Festplatte zu "
 "erzwingen."
 
-#: utils/misc/guc.c:2836
+#: utils/misc/guc.c:2831
 msgid "Sets how binary values are to be encoded in XML."
 msgstr "Setzt, wie binäre Werte in XML kodiert werden."
 
-#: utils/misc/guc.c:2845
+#: utils/misc/guc.c:2840
 msgid ""
 "Sets whether XML data in implicit parsing and serialization operations is to "
 "be considered as documents or content fragments."
@@ -2502,7 +2502,7 @@ msgstr ""
 "Setzt, ob XML-Daten in impliziten Parse- und Serialisierungsoperationen als "
 "Dokument oder Fragment betrachtet werden sollen."
 
-#: utils/misc/guc.c:3617
+#: utils/misc/guc.c:3612
 #, c-format
 msgid ""
 "%s does not know where to find the server configuration file.\n"
@@ -2513,12 +2513,12 @@ msgstr ""
 "Sie müssen die Kommandozeilenoption --config-file oder -D angegeben oder\n"
 "die Umgebungsvariable PGDATA setzen.\n"
 
-#: utils/misc/guc.c:3636
+#: utils/misc/guc.c:3631
 #, c-format
 msgid "%s cannot access the server configuration file \"%s\": %s\n"
 msgstr "%s kann nicht auf die Serverkonfigurationsdatei »%s« zugreifen: %s\n"
 
-#: utils/misc/guc.c:3656
+#: utils/misc/guc.c:3651
 #, c-format
 msgid ""
 "%s does not know where to find the database system data.\n"
@@ -2529,7 +2529,7 @@ msgstr ""
 "zu finden sind.  Sie können dies mit »data_directory« in »%s«, mit der\n"
 "Kommandozeilenoption -D oder der Umgebungsvariable PGDATA angeben.\n"
 
-#: utils/misc/guc.c:3687
+#: utils/misc/guc.c:3682
 #, c-format
 msgid ""
 "%s does not know where to find the \"hba\" configuration file.\n"
@@ -2540,7 +2540,7 @@ msgstr ""
 "Sie können dies mit »hba_file« in »%s«, mit der\n"
 "Kommandozeilenoption -D oder der Umgebungsvariable PGDATA angeben.\n"
 
-#: utils/misc/guc.c:3710
+#: utils/misc/guc.c:3705
 #, c-format
 msgid ""
 "%s does not know where to find the \"ident\" configuration file.\n"
@@ -2551,82 +2551,82 @@ msgstr ""
 "Sie können dies mit »ident_file« in »%s«, mit der\n"
 "Kommandozeilenoption -D oder der Umgebungsvariable PGDATA angeben.\n"
 
-#: utils/misc/guc.c:4315 utils/misc/guc.c:4479
+#: utils/misc/guc.c:4310 utils/misc/guc.c:4474
 msgid "Value exceeds integer range."
 msgstr "Wert überschreitet Bereich für ganze Zahlen."
 
-#: utils/misc/guc.c:4334
+#: utils/misc/guc.c:4329
 msgid "Valid units for this parameter are \"kB\", \"MB\", and \"GB\"."
 msgstr "Gültige Einheiten für diesen Parameter sind »kB«, »MB« und »GB«."
 
-#: utils/misc/guc.c:4393
+#: utils/misc/guc.c:4388
 msgid ""
 "Valid units for this parameter are \"ms\", \"s\", \"min\", \"h\", and \"d\"."
 msgstr ""
 "Gültige Einheiten für diesen Parameter sind »ms«, »s«, »min«, »h« und »d«."
 
-#: utils/misc/guc.c:4702 utils/misc/guc.c:5366 utils/misc/guc.c:5456
-#: utils/misc/guc.c:6160 utils/misc/guc.c:6319 utils/misc/guc.c:7559
+#: utils/misc/guc.c:4697 utils/misc/guc.c:5361 utils/misc/guc.c:5451
+#: utils/misc/guc.c:6155 utils/misc/guc.c:6314 utils/misc/guc.c:7554
 #: guc-file.l:217
 #, c-format
 msgid "unrecognized configuration parameter \"%s\""
 msgstr "unbekannter Konfigurationsparameter »%s«"
 
-#: utils/misc/guc.c:4729
+#: utils/misc/guc.c:4724
 #, c-format
 msgid "parameter \"%s\" cannot be changed"
 msgstr "Parameter »%s« kann nicht geändert werden"
 
-#: utils/misc/guc.c:4746 utils/misc/guc.c:4754 guc-file.l:264
+#: utils/misc/guc.c:4741 utils/misc/guc.c:4749 guc-file.l:264
 #, c-format
 msgid "parameter \"%s\" cannot be changed without restarting the server"
 msgstr ""
 "Parameter »%s« kann nicht geändert werden, ohne den Server neu zu starten"
 
-#: utils/misc/guc.c:4764
+#: utils/misc/guc.c:4759
 #, c-format
 msgid "parameter \"%s\" cannot be changed now"
 msgstr "Parameter »%s« kann jetzt nicht geändert werden"
 
-#: utils/misc/guc.c:4795
+#: utils/misc/guc.c:4790
 #, c-format
 msgid "parameter \"%s\" cannot be set after connection start"
 msgstr "Parameter »%s« kann nach Start der Verbindung nicht geändert werden"
 
-#: utils/misc/guc.c:4805 utils/misc/guc.c:7574
+#: utils/misc/guc.c:4800 utils/misc/guc.c:7569
 #, c-format
 msgid "permission denied to set parameter \"%s\""
 msgstr "keine Berechtigung, um Parameter »%s« zu setzen"
 
-#: utils/misc/guc.c:4843
+#: utils/misc/guc.c:4838
 #, c-format
 msgid "cannot set parameter \"%s\" within security-definer function"
 msgstr ""
 "Parameter »%s« kann nicht in einer Security-Definer-Funktion gesetzt werden"
 
-#: utils/misc/guc.c:4851 utils/init/miscinit.c:380
+#: utils/misc/guc.c:4846 utils/init/miscinit.c:380
 #, c-format
 msgid "cannot set parameter \"%s\" within security-restricted operation"
 msgstr ""
 "kann Parameter »%s« nicht in einer sicherheitsbeschränkten Operation setzen"
 
-#: utils/misc/guc.c:4900 access/transam/xlog.c:5298 access/transam/xlog.c:5307
+#: utils/misc/guc.c:4895 access/transam/xlog.c:5298 access/transam/xlog.c:5307
 #, c-format
 msgid "parameter \"%s\" requires a Boolean value"
 msgstr "Parameter »%s« erfordert einen Boole'schen Wert"
 
-#: utils/misc/guc.c:4922 utils/misc/guc.c:4997
+#: utils/misc/guc.c:4917 utils/misc/guc.c:4992
 #, c-format
 msgid "invalid value for parameter \"%s\": %d"
 msgstr "ungültiger Wert für Parameter »%s«: %d"
 
-#: utils/misc/guc.c:4966 utils/misc/guc.c:5168 utils/misc/guc.c:5234
-#: utils/misc/guc.c:5260 guc-file.l:178
+#: utils/misc/guc.c:4961 utils/misc/guc.c:5163 utils/misc/guc.c:5229
+#: utils/misc/guc.c:5255 guc-file.l:178
 #, c-format
 msgid "invalid value for parameter \"%s\": \"%s\""
 msgstr "ungültiger Wert für Parameter »%s«: »%s«"
 
-#: utils/misc/guc.c:4968 utils/misc/guc.c:5236 utils/fmgr/dfmgr.c:381
+#: utils/misc/guc.c:4963 utils/misc/guc.c:5231 utils/fmgr/dfmgr.c:381
 #: utils/adt/xml.c:1393 utils/adt/xml.c:1394 utils/adt/xml.c:1400
 #: utils/adt/xml.c:1471 tcop/postgres.c:4347 commands/tablecmds.c:660
 #: commands/user.c:902 commands/user.c:903 commands/trigger.c:839
@@ -2639,85 +2639,85 @@ msgstr "ungültiger Wert für Parameter »%s«: »%s«"
 msgid "%s"
 msgstr "%s"
 
-#: utils/misc/guc.c:4975
+#: utils/misc/guc.c:4970
 #, c-format
 msgid "%d is outside the valid range for parameter \"%s\" (%d .. %d)"
 msgstr "%d ist außerhalb des gültigen Bereichs für Parameter »%s« (%d ... %d)"
 
-#: utils/misc/guc.c:5039
+#: utils/misc/guc.c:5034
 #, c-format
 msgid "parameter \"%s\" requires a numeric value"
 msgstr "Parameter »%s« erfordert einen numerischen Wert"
 
-#: utils/misc/guc.c:5047
+#: utils/misc/guc.c:5042
 #, c-format
 msgid "%g is outside the valid range for parameter \"%s\" (%g .. %g)"
 msgstr "%g ist außerhalb des gültigen Bereichs für Parameter »%s« (%g ... %g)"
 
-#: utils/misc/guc.c:5069
+#: utils/misc/guc.c:5064
 #, c-format
 msgid "invalid value for parameter \"%s\": %g"
 msgstr "ungültiger Wert für Parameter »%s«: %g"
 
-#: utils/misc/guc.c:5372 utils/misc/guc.c:5460 utils/misc/guc.c:6323
+#: utils/misc/guc.c:5367 utils/misc/guc.c:5455 utils/misc/guc.c:6318
 #, c-format
 msgid "must be superuser to examine \"%s\""
 msgstr "nur Superuser können »%s« ansehen"
 
-#: utils/misc/guc.c:5571
+#: utils/misc/guc.c:5566
 #, c-format
 msgid "SET %s takes only one argument"
 msgstr "SET %s darf nur ein Argument haben"
 
-#: utils/misc/guc.c:5798
+#: utils/misc/guc.c:5793
 msgid "SET requires parameter name"
 msgstr "SET benötigt Parameternamen"
 
-#: utils/misc/guc.c:5913
+#: utils/misc/guc.c:5908
 #, c-format
 msgid "attempt to redefine parameter \"%s\""
 msgstr "Versuch, den Parameter »%s« zu redefinieren"
 
-#: utils/misc/guc.c:7154 utils/init/miscinit.c:1014 commands/copy.c:2217
+#: utils/misc/guc.c:7149 utils/init/miscinit.c:1014 commands/copy.c:2217
 #, c-format
 msgid "could not read from file \"%s\": %m"
 msgstr "konnte nicht aus Datei »%s« lesen: %m"
 
-#: utils/misc/guc.c:7275
+#: utils/misc/guc.c:7270
 #, c-format
 msgid "could not parse setting for parameter \"%s\""
 msgstr "konnte Wert von Parameter »%s« nicht lesen"
 
-#: utils/misc/guc.c:7618
+#: utils/misc/guc.c:7613
 msgid "invalid list syntax for parameter \"log_destination\""
 msgstr "ungültige Listensyntax für Parameter »log_destination«"
 
-#: utils/misc/guc.c:7642
+#: utils/misc/guc.c:7637
 #, c-format
 msgid "unrecognized \"log_destination\" key word: \"%s\""
 msgstr "unbekanntes »log_destination«-Schlüsselwort: »%s«"
 
-#: utils/misc/guc.c:7717
+#: utils/misc/guc.c:7712
 msgid "SET AUTOCOMMIT TO OFF is no longer supported"
 msgstr "SET AUTOCOMMIT TO OFF wird nicht mehr unterstützt"
 
-#: utils/misc/guc.c:7789
+#: utils/misc/guc.c:7784
 msgid "assertion checking is not supported by this build"
 msgstr "Assert-Prüfungen werden von dieser Installation nicht unterstützt"
 
-#: utils/misc/guc.c:7804
+#: utils/misc/guc.c:7799
 msgid "Bonjour is not supported by this build"
 msgstr "Bonjour wird von dieser Installation nicht unterstützt"
 
-#: utils/misc/guc.c:7819
+#: utils/misc/guc.c:7814
 msgid "SSL is not supported by this build"
 msgstr "SSL wird von dieser Installation nicht unterstützt"
 
-#: utils/misc/guc.c:7833
+#: utils/misc/guc.c:7828
 msgid "cannot enable parameter when \"log_statement_stats\" is true"
 msgstr "kann Parameter nicht einschalten, wenn »log_statement_stats« an ist"
 
-#: utils/misc/guc.c:7849
+#: utils/misc/guc.c:7844
 msgid ""
 "cannot enable \"log_statement_stats\" when \"log_parser_stats\", "
 "\"log_planner_stats\", or \"log_executor_stats\" is true"
@@ -2725,13 +2725,13 @@ msgstr ""
 "kann »log_statement_stats« nicht einschalten, wenn »log_parser_stats«, "
 "»log_planner_stats« oder »log_executor_stats« an ist"
 
-#: utils/misc/guc.c:7867
+#: utils/misc/guc.c:7862
 msgid "cannot set transaction read-write mode inside a read-only transaction"
 msgstr ""
 "kann den Read/Write-Modus einer Transaktion nicht in einer Read-Only-"
 "Transaktion setzen"
 
-#: utils/misc/guc.c:7878
+#: utils/misc/guc.c:7873
 msgid "cannot set transaction read-write mode during recovery"
 msgstr ""
 "kann den Read/Write-Modus einer Transaktion nicht während der "
@@ -3630,22 +3630,22 @@ msgstr "XML unterstützt keine unendlichen Datumswerte."
 #: utils/adt/xml.c:1741 utils/adt/xml.c:1748 utils/adt/xml.c:1768
 #: utils/adt/xml.c:1775 utils/adt/timestamp.c:226 utils/adt/timestamp.c:269
 #: utils/adt/timestamp.c:491 utils/adt/timestamp.c:531
-#: utils/adt/timestamp.c:2530 utils/adt/timestamp.c:2551
-#: utils/adt/timestamp.c:2564 utils/adt/timestamp.c:2573
-#: utils/adt/timestamp.c:2631 utils/adt/timestamp.c:2654
-#: utils/adt/timestamp.c:2667 utils/adt/timestamp.c:2678
-#: utils/adt/timestamp.c:3114 utils/adt/timestamp.c:3244
-#: utils/adt/timestamp.c:3285 utils/adt/timestamp.c:3373
-#: utils/adt/timestamp.c:3420 utils/adt/timestamp.c:3531
-#: utils/adt/timestamp.c:3844 utils/adt/timestamp.c:3981
-#: utils/adt/timestamp.c:3988 utils/adt/timestamp.c:4002
-#: utils/adt/timestamp.c:4012 utils/adt/timestamp.c:4075
-#: utils/adt/timestamp.c:4215 utils/adt/timestamp.c:4225
-#: utils/adt/timestamp.c:4440 utils/adt/timestamp.c:4519
-#: utils/adt/timestamp.c:4526 utils/adt/timestamp.c:4553
-#: utils/adt/timestamp.c:4557 utils/adt/timestamp.c:4614
-#: utils/adt/formatting.c:2956 utils/adt/formatting.c:2988
-#: utils/adt/formatting.c:3056 utils/adt/date.c:913 utils/adt/date.c:960
+#: utils/adt/timestamp.c:2531 utils/adt/timestamp.c:2552
+#: utils/adt/timestamp.c:2565 utils/adt/timestamp.c:2574
+#: utils/adt/timestamp.c:2632 utils/adt/timestamp.c:2655
+#: utils/adt/timestamp.c:2668 utils/adt/timestamp.c:2679
+#: utils/adt/timestamp.c:3115 utils/adt/timestamp.c:3245
+#: utils/adt/timestamp.c:3286 utils/adt/timestamp.c:3374
+#: utils/adt/timestamp.c:3421 utils/adt/timestamp.c:3532
+#: utils/adt/timestamp.c:3845 utils/adt/timestamp.c:3982
+#: utils/adt/timestamp.c:3989 utils/adt/timestamp.c:4003
+#: utils/adt/timestamp.c:4013 utils/adt/timestamp.c:4076
+#: utils/adt/timestamp.c:4216 utils/adt/timestamp.c:4226
+#: utils/adt/timestamp.c:4441 utils/adt/timestamp.c:4520
+#: utils/adt/timestamp.c:4527 utils/adt/timestamp.c:4554
+#: utils/adt/timestamp.c:4558 utils/adt/timestamp.c:4615
+#: utils/adt/formatting.c:3044 utils/adt/formatting.c:3076
+#: utils/adt/formatting.c:3144 utils/adt/date.c:913 utils/adt/date.c:960
 #: utils/adt/date.c:1516 utils/adt/date.c:1553 utils/adt/date.c:2426
 #: utils/adt/nabstime.c:480 utils/adt/nabstime.c:523 utils/adt/nabstime.c:553
 #: utils/adt/nabstime.c:596
@@ -3818,7 +3818,7 @@ msgstr "smallint ist außerhalb des gültigen Bereichs"
 
 #: utils/adt/int.c:718 utils/adt/int.c:860 utils/adt/int.c:968
 #: utils/adt/int.c:1057 utils/adt/int.c:1096 utils/adt/int.c:1124
-#: utils/adt/timestamp.c:2876 utils/adt/geo_ops.c:4130 utils/adt/int8.c:599
+#: utils/adt/timestamp.c:2877 utils/adt/geo_ops.c:4130 utils/adt/int8.c:599
 #: utils/adt/int8.c:659 utils/adt/int8.c:848 utils/adt/int8.c:956
 #: utils/adt/int8.c:1045 utils/adt/int8.c:1153 utils/adt/float.c:764
 #: utils/adt/float.c:828 utils/adt/float.c:2470 utils/adt/float.c:2533
@@ -3828,7 +3828,7 @@ msgstr "smallint ist außerhalb des gültigen Bereichs"
 msgid "division by zero"
 msgstr "Division durch Null"
 
-#: utils/adt/int.c:1361 utils/adt/timestamp.c:4712 utils/adt/timestamp.c:4793
+#: utils/adt/int.c:1361 utils/adt/timestamp.c:4713 utils/adt/timestamp.c:4794
 #: utils/adt/int8.c:1411
 msgid "step size cannot equal zero"
 msgstr "Schrittgröße kann nicht gleich null sein"
@@ -3915,8 +3915,8 @@ msgstr "timestamp kann nicht NaN sein"
 msgid "timestamp(%d) precision must be between %d and %d"
 msgstr "Präzision von timestamp(%d) muss zwischen %d und %d sein"
 
-#: utils/adt/timestamp.c:658 utils/adt/timestamp.c:3109
-#: utils/adt/timestamp.c:3239 utils/adt/timestamp.c:3624
+#: utils/adt/timestamp.c:658 utils/adt/timestamp.c:3110
+#: utils/adt/timestamp.c:3240 utils/adt/timestamp.c:3625
 msgid "interval out of range"
 msgstr "interval-Wert ist außerhalb des gültigen Bereichs"
 
@@ -3939,54 +3939,54 @@ msgstr "INTERVAL(%d)-Präzision auf erlaubtes Maximum %d reduziert"
 msgid "interval(%d) precision must be between %d and %d"
 msgstr "Präzision von interval(%d) muss zwischen %d und %d sein"
 
-#: utils/adt/timestamp.c:2306
+#: utils/adt/timestamp.c:2307
 msgid "cannot subtract infinite timestamps"
 msgstr "kann unendliche timestamp-Werte nicht subtrahieren"
 
-#: utils/adt/timestamp.c:3365 utils/adt/timestamp.c:3961
-#: utils/adt/timestamp.c:4020
+#: utils/adt/timestamp.c:3366 utils/adt/timestamp.c:3962
+#: utils/adt/timestamp.c:4021
 #, c-format
 msgid "timestamp units \"%s\" not supported"
 msgstr "»timestamp«-Einheit »%s« nicht unterstützt"
 
-#: utils/adt/timestamp.c:3379 utils/adt/timestamp.c:4030
+#: utils/adt/timestamp.c:3380 utils/adt/timestamp.c:4031
 #, c-format
 msgid "timestamp units \"%s\" not recognized"
 msgstr "»timestamp«-Einheit »%s« nicht erkannt"
 
-#: utils/adt/timestamp.c:3520 utils/adt/timestamp.c:4192
-#: utils/adt/timestamp.c:4233
+#: utils/adt/timestamp.c:3521 utils/adt/timestamp.c:4193
+#: utils/adt/timestamp.c:4234
 #, c-format
 msgid "timestamp with time zone units \"%s\" not supported"
 msgstr "»timestamp with time zone«-Einheit »%s« nicht unterstützt"
 
-#: utils/adt/timestamp.c:3537 utils/adt/timestamp.c:4242
+#: utils/adt/timestamp.c:3538 utils/adt/timestamp.c:4243
 #, c-format
 msgid "timestamp with time zone units \"%s\" not recognized"
 msgstr "»timestamp with time zone«-Einheit »%s« nicht erkannt"
 
-#: utils/adt/timestamp.c:3617 utils/adt/timestamp.c:4348
+#: utils/adt/timestamp.c:3618 utils/adt/timestamp.c:4349
 #, c-format
 msgid "interval units \"%s\" not supported"
 msgstr "»interval«-Einheit »%s« nicht unterstützt"
 
-#: utils/adt/timestamp.c:3633 utils/adt/timestamp.c:4375
+#: utils/adt/timestamp.c:3634 utils/adt/timestamp.c:4376
 #, c-format
 msgid "interval units \"%s\" not recognized"
 msgstr "»interval«-Einheit »%s« nicht erkannt"
 
-#: utils/adt/timestamp.c:4445 utils/adt/timestamp.c:4618
+#: utils/adt/timestamp.c:4446 utils/adt/timestamp.c:4619
 #, c-format
 msgid "could not convert to time zone \"%s\""
 msgstr "konnte nicht in Zeitzone »%s« umwandeln"
 
-#: utils/adt/timestamp.c:4452 utils/adt/timestamp.c:4625 utils/adt/date.c:2631
+#: utils/adt/timestamp.c:4453 utils/adt/timestamp.c:4626 utils/adt/date.c:2631
 #: utils/adt/datetime.c:928 utils/adt/datetime.c:1663
 #, c-format
 msgid "time zone \"%s\" not recognized"
 msgstr "Zeitzone »%s« nicht erkannt"
 
-#: utils/adt/timestamp.c:4477 utils/adt/timestamp.c:4651
+#: utils/adt/timestamp.c:4478 utils/adt/timestamp.c:4652
 #, c-format
 msgid "interval time zone \"%s\" must not specify month"
 msgstr "Intervall-Zeitzone »%s« darf keinen Monat angeben"
@@ -4343,114 +4343,114 @@ msgstr ""
 msgid "\"%s\" is not a number"
 msgstr "»%s« ist keine Zahl"
 
-#: utils/adt/formatting.c:1788
+#: utils/adt/formatting.c:1883
 msgid "invalid combination of date conventions"
 msgstr "ungültige Kombination von Datumskonventionen"
 
-#: utils/adt/formatting.c:1789
+#: utils/adt/formatting.c:1884
 msgid ""
 "Do not mix Gregorian and ISO week date conventions in a formatting template."
 msgstr ""
 "Die Gregorianische und die ISO-Konvention für Wochendaten können nicht einer "
 "Formatvorlage gemischt werden."
 
-#: utils/adt/formatting.c:1806
+#: utils/adt/formatting.c:1901
 #, c-format
 msgid "conflicting values for \"%s\" field in formatting string"
 msgstr "widersprüchliche Werte für das Feld »%s« in Formatzeichenkette"
 
-#: utils/adt/formatting.c:1808
+#: utils/adt/formatting.c:1903
 msgid "This value contradicts a previous setting for the same field type."
 msgstr ""
 "Der Wert widerspricht einer vorherigen Einstellung für den selben Feldtyp."
 
-#: utils/adt/formatting.c:1869
+#: utils/adt/formatting.c:1964
 #, c-format
 msgid "source string too short for \"%s\" formatting field"
 msgstr "Quellzeichenkette zu kurz für Formatfeld »%s»"
 
-#: utils/adt/formatting.c:1871
+#: utils/adt/formatting.c:1966
 #, c-format
 msgid "Field requires %d characters, but only %d remain."
 msgstr "Feld benötigt %d Zeichen, aber nur %d verbleiben."
 
-#: utils/adt/formatting.c:1874 utils/adt/formatting.c:1888
+#: utils/adt/formatting.c:1969 utils/adt/formatting.c:1983
 msgid ""
 "If your source string is not fixed-width, try using the \"FM\" modifier."
 msgstr ""
 "Wenn die Quellzeichenkette keine feste Breite hat, versuchen Sie den "
 "Modifikator »FM«."
 
-#: utils/adt/formatting.c:1884 utils/adt/formatting.c:1897
-#: utils/adt/formatting.c:2027
+#: utils/adt/formatting.c:1979 utils/adt/formatting.c:1992
+#: utils/adt/formatting.c:2122
 #, c-format
 msgid "invalid value \"%s\" for \"%s\""
 msgstr "ungültiger Wert »%s« für »%s«"
 
-#: utils/adt/formatting.c:1886
+#: utils/adt/formatting.c:1981
 #, c-format
 msgid "Field requires %d characters, but only %d could be parsed."
 msgstr "Feld benötigt %d Zeichen, aber nur %d konnten geparst werden."
 
-#: utils/adt/formatting.c:1899
+#: utils/adt/formatting.c:1994
 msgid "Value must be an integer."
 msgstr "Der Wert muss eine ganze Zahl sein."
 
-#: utils/adt/formatting.c:1904
+#: utils/adt/formatting.c:1999
 #, c-format
 msgid "value for \"%s\" in source string is out of range"
 msgstr ""
 "Wert für »%s« in der Eingabezeichenkette ist außerhalb des gültigen Bereichs"
 
-#: utils/adt/formatting.c:1906
+#: utils/adt/formatting.c:2001
 #, c-format
 msgid "Value must be in the range %d to %d."
 msgstr "Der Wert muss im Bereich %d bis %d sein."
 
-#: utils/adt/formatting.c:2029
+#: utils/adt/formatting.c:2124
 msgid "The given value did not match any of the allowed values for this field."
 msgstr ""
 "Der angegebene Wert stimmte mit keinem der für dieses Feld zulässigen Werte "
 "überein."
 
-#: utils/adt/formatting.c:2585
+#: utils/adt/formatting.c:2673
 msgid "\"TZ\"/\"tz\" format patterns are not supported in to_date"
 msgstr "Formatmuster »TZ«/»tz« werden in to_date nicht unterstützt"
 
-#: utils/adt/formatting.c:2689
+#: utils/adt/formatting.c:2777
 msgid "invalid input string for \"Y,YYY\""
 msgstr "ungültige Eingabe für »Y,YYY«"
 
-#: utils/adt/formatting.c:3080 utils/adt/date.c:167
+#: utils/adt/formatting.c:3168 utils/adt/date.c:167
 #, c-format
 msgid "date out of range: \"%s\""
 msgstr "date ist außerhalb des gültigen Bereichs: »%s«"
 
-#: utils/adt/formatting.c:3212
+#: utils/adt/formatting.c:3300
 #, c-format
 msgid "hour \"%d\" is invalid for the 12-hour clock"
 msgstr "Stunde »%d« ist bei einer 12-Stunden-Uhr ungültig"
 
-#: utils/adt/formatting.c:3214
+#: utils/adt/formatting.c:3302
 msgid "Use the 24-hour clock, or give an hour between 1 and 12."
 msgstr ""
 "Verwenden Sie die 24-Stunden-Uhr oder geben Sie eine Stunde zwischen 1 und "
 "12 an."
 
-#: utils/adt/formatting.c:3252
+#: utils/adt/formatting.c:3340
 #, c-format
 msgid "inconsistent use of year %04d and \"BC\""
 msgstr "inkonsistente Verwendung von Jahr %04d und »BC«"
 
-#: utils/adt/formatting.c:3299
+#: utils/adt/formatting.c:3387
 msgid "cannot calculate day of year without year information"
 msgstr "kann Tag des Jahres nicht berechnen ohne Jahrinformationen"
 
-#: utils/adt/formatting.c:4161
+#: utils/adt/formatting.c:4249
 msgid "\"EEEE\" not supported for input"
 msgstr "»E« wird nicht bei der Eingabe unterstützt"
 
-#: utils/adt/formatting.c:4173
+#: utils/adt/formatting.c:4261
 msgid "\"RN\" not supported for input"
 msgstr "»RN« wird nicht bei der Eingabe unterstützt"
 
@@ -5447,19 +5447,19 @@ msgstr "Schema »%s« existiert nicht"
 msgid "must be member of role \"%s\""
 msgstr "Berechtigung nur für Mitglied von Rolle »%s«"
 
-#: utils/adt/enum.c:44 utils/adt/enum.c:54 utils/adt/enum.c:109
-#: utils/adt/enum.c:119
+#: utils/adt/enum.c:45 utils/adt/enum.c:55 utils/adt/enum.c:114
+#: utils/adt/enum.c:124
 #, c-format
 msgid "invalid input value for enum %s: \"%s\""
 msgstr "ungültiger Eingabewert für Enum %s: »%s«"
 
-#: utils/adt/enum.c:81 utils/adt/enum.c:144
+#: utils/adt/enum.c:82 utils/adt/enum.c:149
 #, c-format
 msgid "invalid internal value for enum: %u"
 msgstr "ungültiger interner Wert für Enum: %u"
 
-#: utils/adt/enum.c:264 utils/adt/enum.c:303 utils/adt/enum.c:350
-#: utils/adt/enum.c:370
+#: utils/adt/enum.c:269 utils/adt/enum.c:308 utils/adt/enum.c:355
+#: utils/adt/enum.c:375
 msgid "could not determine actual enum type"
 msgstr "konnte tatsächlichen Enum-Typen nicht bestimmen"
 
@@ -6450,7 +6450,7 @@ msgstr ""
 "Werte, die größer sind als eine Pufferseite, können nicht indiziert werden."
 
 #: access/hash/hashutil.c:165 access/nbtree/nbtpage.c:432
-#: access/gist/gistutil.c:644
+#: access/gist/gistutil.c:640
 #, c-format
 msgid "index \"%s\" contains unexpected zero page at block %u"
 msgstr "Index »%s« enthält unerwartete Nullseite bei Block %u"
@@ -6458,12 +6458,12 @@ msgstr "Index »%s« enthält unerwartete Nullseite bei Block %u"
 #: access/hash/hashutil.c:168 access/hash/hashutil.c:179
 #: access/hash/hashutil.c:191 access/hash/hashutil.c:212
 #: access/nbtree/nbtpage.c:435 access/nbtree/nbtpage.c:446
-#: access/gist/gistutil.c:647 access/gist/gistutil.c:658
+#: access/gist/gistutil.c:643 access/gist/gistutil.c:654
 msgid "Please REINDEX it."
 msgstr "Bitte führen Sie REINDEX für den Index aus."
 
 #: access/hash/hashutil.c:176 access/hash/hashutil.c:188
-#: access/nbtree/nbtpage.c:443 access/gist/gistutil.c:655
+#: access/nbtree/nbtpage.c:443 access/gist/gistutil.c:651
 #, c-format
 msgid "index \"%s\" contains corrupted page at block %u"
 msgstr "Index »%s« enthält korrupte Seite bei Block %u"
@@ -8050,12 +8050,12 @@ msgstr "Das kann daran liegen, dass der Indexausdruck nicht »immutable« ist."
 msgid "\"%s\" is not an index"
 msgstr "»%s« ist kein Index"
 
-#: access/gist/gistsplit.c:372
+#: access/gist/gistsplit.c:444
 #, c-format
 msgid "picksplit method for column %d of index \"%s\" failed"
 msgstr "Picksplit-Methode für Spalte %d von Index »%s« fehlgeschlagen"
 
-#: access/gist/gistsplit.c:374
+#: access/gist/gistsplit.c:446
 msgid ""
 "The index is not optimal. To optimize it, contact a developer, or try to use "
 "the column as the second one in the CREATE INDEX command."
@@ -8075,7 +8075,7 @@ msgstr ""
 msgid "Incomplete insertion detected during crash replay."
 msgstr "Unvollständige Einfügeoperation beim Crash-Replay entdeckt."
 
-#: access/gist/gistutil.c:428
+#: access/gist/gistutil.c:424
 #, c-format
 msgid "index \"%s\" needs VACUUM or REINDEX to finish crash recovery"
 msgstr ""
@@ -9919,9 +9919,9 @@ msgstr ""
 #: commands/vacuumlazy.c:1153
 #, c-format
 msgid ""
-"automatic vacuum of table \"%s.%s.%s\": cannot (re)acquire exclusive lock "
+"automatic vacuum of table \"%s.%s.%s\": could not (re)acquire exclusive lock "
 "for truncate scan"
-msgstr "automatisches Vacuum von Tabelle »%s.%s.%s«: kann exklusive Sperre für Truncate-Scan nicht (wieder)erlangen"
+msgstr "automatisches Vacuum von Tabelle »%s.%s.%s«: konnte exklusive Sperre für Truncate-Scan nicht (wieder)erlangen"
 
 #: commands/vacuumlazy.c:1222
 #, c-format
@@ -11059,30 +11059,30 @@ msgstr "Kanalname zu lang"
 msgid "payload string too long"
 msgstr "Payload-Zeichenkette zu lang"
 
-#: commands/async.c:763
+#: commands/async.c:764
 msgid ""
 "cannot PREPARE a transaction that has executed LISTEN, UNLISTEN or NOTIFY"
 msgstr ""
 "PREPARE kann nicht in einer Transaktion ausgeführt werden, die LISTEN, "
 "UNLISTEN oder NOTIFY ausgeführt hat"
 
-#: commands/async.c:868
+#: commands/async.c:867
 msgid "too many notifications in the NOTIFY queue"
 msgstr "zu viele Benachrichtigungen in NOTIFY-Schlange"
 
-#: commands/async.c:1447
+#: commands/async.c:1440
 #, c-format
 msgid "NOTIFY queue is %.0f%% full"
 msgstr "NOTIFY-Schlange ist %.0f%% voll"
 
-#: commands/async.c:1449
+#: commands/async.c:1442
 #, c-format
 msgid ""
 "The server process with PID %d is among those with the oldest transactions."
 msgstr ""
 "Der Serverprozess mit PID %d gehört zu denen mit den ältesten Transaktionen."
 
-#: commands/async.c:1452
+#: commands/async.c:1445
 msgid ""
 "The NOTIFY queue cannot be emptied until that process ends its current "
 "transaction."

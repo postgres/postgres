@@ -25,8 +25,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-01-31 22:02+0000\n"
-"PO-Revision-Date: 2013-02-01 11:22+0400\n"
+"POT-Creation-Date: 2013-03-11 00:02+0000\n"
+"PO-Revision-Date: 2013-03-13 15:08+0400\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -234,7 +234,7 @@ msgstr ""
 #, c-format
 msgid "autovacuum: found orphan temp table \"%s\".\"%s\" in database \"%s\""
 msgstr ""
-" автоочистка: найдена устаревшая врем. таблица \"%s\".\"%s\" в базе \"%s\""
+"автоочистка: найдена устаревшая врем. таблица \"%s\".\"%s\" в базе \"%s\""
 
 #: postmaster/autovacuum.c:2280
 #, c-format
@@ -2601,7 +2601,9 @@ msgstr "нет прав для изменения параметра \"%s\""
 #: utils/misc/guc.c:4838
 #, c-format
 msgid "cannot set parameter \"%s\" within security-definer function"
-msgstr "параметр \"%s\" нельзя задать в функции, настраивающей безопасность."
+msgstr ""
+"параметр \"%s\" нельзя задать в функции с контекстом безопасности "
+"определившего"
 
 #: utils/misc/guc.c:4846 utils/init/miscinit.c:380
 #, c-format
@@ -3621,22 +3623,22 @@ msgstr "XML не поддерживает бесконечность в дата
 #: utils/adt/xml.c:1741 utils/adt/xml.c:1748 utils/adt/xml.c:1768
 #: utils/adt/xml.c:1775 utils/adt/timestamp.c:226 utils/adt/timestamp.c:269
 #: utils/adt/timestamp.c:491 utils/adt/timestamp.c:531
-#: utils/adt/timestamp.c:2530 utils/adt/timestamp.c:2551
-#: utils/adt/timestamp.c:2564 utils/adt/timestamp.c:2573
-#: utils/adt/timestamp.c:2631 utils/adt/timestamp.c:2654
-#: utils/adt/timestamp.c:2667 utils/adt/timestamp.c:2678
-#: utils/adt/timestamp.c:3114 utils/adt/timestamp.c:3244
-#: utils/adt/timestamp.c:3285 utils/adt/timestamp.c:3373
-#: utils/adt/timestamp.c:3420 utils/adt/timestamp.c:3531
-#: utils/adt/timestamp.c:3844 utils/adt/timestamp.c:3981
-#: utils/adt/timestamp.c:3988 utils/adt/timestamp.c:4002
-#: utils/adt/timestamp.c:4012 utils/adt/timestamp.c:4075
-#: utils/adt/timestamp.c:4215 utils/adt/timestamp.c:4225
-#: utils/adt/timestamp.c:4440 utils/adt/timestamp.c:4519
-#: utils/adt/timestamp.c:4526 utils/adt/timestamp.c:4553
-#: utils/adt/timestamp.c:4557 utils/adt/timestamp.c:4614
-#: utils/adt/formatting.c:2956 utils/adt/formatting.c:2988
-#: utils/adt/formatting.c:3056 utils/adt/date.c:913 utils/adt/date.c:960
+#: utils/adt/timestamp.c:2531 utils/adt/timestamp.c:2552
+#: utils/adt/timestamp.c:2565 utils/adt/timestamp.c:2574
+#: utils/adt/timestamp.c:2632 utils/adt/timestamp.c:2655
+#: utils/adt/timestamp.c:2668 utils/adt/timestamp.c:2679
+#: utils/adt/timestamp.c:3115 utils/adt/timestamp.c:3245
+#: utils/adt/timestamp.c:3286 utils/adt/timestamp.c:3374
+#: utils/adt/timestamp.c:3421 utils/adt/timestamp.c:3532
+#: utils/adt/timestamp.c:3845 utils/adt/timestamp.c:3982
+#: utils/adt/timestamp.c:3989 utils/adt/timestamp.c:4003
+#: utils/adt/timestamp.c:4013 utils/adt/timestamp.c:4076
+#: utils/adt/timestamp.c:4216 utils/adt/timestamp.c:4226
+#: utils/adt/timestamp.c:4441 utils/adt/timestamp.c:4520
+#: utils/adt/timestamp.c:4527 utils/adt/timestamp.c:4554
+#: utils/adt/timestamp.c:4558 utils/adt/timestamp.c:4615
+#: utils/adt/formatting.c:3044 utils/adt/formatting.c:3076
+#: utils/adt/formatting.c:3144 utils/adt/date.c:913 utils/adt/date.c:960
 #: utils/adt/date.c:1516 utils/adt/date.c:1553 utils/adt/date.c:2426
 #: utils/adt/nabstime.c:480 utils/adt/nabstime.c:523 utils/adt/nabstime.c:553
 #: utils/adt/nabstime.c:596
@@ -3803,7 +3805,7 @@ msgstr "smallint вне диапазона"
 
 #: utils/adt/int.c:718 utils/adt/int.c:860 utils/adt/int.c:968
 #: utils/adt/int.c:1057 utils/adt/int.c:1096 utils/adt/int.c:1124
-#: utils/adt/timestamp.c:2876 utils/adt/geo_ops.c:4130 utils/adt/int8.c:599
+#: utils/adt/timestamp.c:2877 utils/adt/geo_ops.c:4130 utils/adt/int8.c:599
 #: utils/adt/int8.c:659 utils/adt/int8.c:848 utils/adt/int8.c:956
 #: utils/adt/int8.c:1045 utils/adt/int8.c:1153 utils/adt/float.c:764
 #: utils/adt/float.c:828 utils/adt/float.c:2470 utils/adt/float.c:2533
@@ -3813,7 +3815,7 @@ msgstr "smallint вне диапазона"
 msgid "division by zero"
 msgstr "деление на ноль"
 
-#: utils/adt/int.c:1361 utils/adt/timestamp.c:4712 utils/adt/timestamp.c:4793
+#: utils/adt/int.c:1361 utils/adt/timestamp.c:4713 utils/adt/timestamp.c:4794
 #: utils/adt/int8.c:1411
 msgid "step size cannot equal zero"
 msgstr "размер шага не может быть нулевым"
@@ -3904,8 +3906,8 @@ msgstr "timestamp не может быть NaN"
 msgid "timestamp(%d) precision must be between %d and %d"
 msgstr "точность timestamp(%d) должна быть между %d и %d"
 
-#: utils/adt/timestamp.c:658 utils/adt/timestamp.c:3109
-#: utils/adt/timestamp.c:3239 utils/adt/timestamp.c:3624
+#: utils/adt/timestamp.c:658 utils/adt/timestamp.c:3110
+#: utils/adt/timestamp.c:3240 utils/adt/timestamp.c:3625
 msgid "interval out of range"
 msgstr "interval вне диапазона"
 
@@ -3928,57 +3930,57 @@ msgstr "INTERVAL(%d): точность уменьшена до максимал�
 msgid "interval(%d) precision must be between %d and %d"
 msgstr "точность interval(%d) должна быть между %d и %d"
 
-#: utils/adt/timestamp.c:2306
+#: utils/adt/timestamp.c:2307
 msgid "cannot subtract infinite timestamps"
 msgstr "вычитать бесконечные значения timestamp нельзя"
 
-#: utils/adt/timestamp.c:3365 utils/adt/timestamp.c:3961
-#: utils/adt/timestamp.c:4020
+#: utils/adt/timestamp.c:3366 utils/adt/timestamp.c:3962
+#: utils/adt/timestamp.c:4021
 #, c-format
 msgid "timestamp units \"%s\" not supported"
 msgstr "единицы timestamp \"%s\" не поддерживаются"
 
-#: utils/adt/timestamp.c:3379 utils/adt/timestamp.c:4030
+#: utils/adt/timestamp.c:3380 utils/adt/timestamp.c:4031
 #, c-format
 msgid "timestamp units \"%s\" not recognized"
 msgstr "единицы timestamp \"%s\" не распознаны"
 
-#: utils/adt/timestamp.c:3520 utils/adt/timestamp.c:4192
-#: utils/adt/timestamp.c:4233
+#: utils/adt/timestamp.c:3521 utils/adt/timestamp.c:4193
+#: utils/adt/timestamp.c:4234
 #, c-format
 msgid "timestamp with time zone units \"%s\" not supported"
 msgstr "единицы timestamp с часовым поясом \"%s\" не поддерживаются"
 
-#: utils/adt/timestamp.c:3537 utils/adt/timestamp.c:4242
+#: utils/adt/timestamp.c:3538 utils/adt/timestamp.c:4243
 #, c-format
 msgid "timestamp with time zone units \"%s\" not recognized"
 msgstr "единицы timestamp с часовым поясом \"%s\" не распознаны"
 
-#: utils/adt/timestamp.c:3617 utils/adt/timestamp.c:4348
+#: utils/adt/timestamp.c:3618 utils/adt/timestamp.c:4349
 #, c-format
 msgid "interval units \"%s\" not supported"
 msgstr "единицы interval \"%s\" не поддерживаются"
 
-#: utils/adt/timestamp.c:3633 utils/adt/timestamp.c:4375
+#: utils/adt/timestamp.c:3634 utils/adt/timestamp.c:4376
 #, c-format
 msgid "interval units \"%s\" not recognized"
 msgstr "единицы interval \"%s\" не распознаны"
 
-#: utils/adt/timestamp.c:4445 utils/adt/timestamp.c:4618
+#: utils/adt/timestamp.c:4446 utils/adt/timestamp.c:4619
 #, c-format
 msgid "could not convert to time zone \"%s\""
 msgstr "не удалось пересчитать время в часовой пояс \"%s\""
 
-#: utils/adt/timestamp.c:4452 utils/adt/timestamp.c:4625 utils/adt/date.c:2631
+#: utils/adt/timestamp.c:4453 utils/adt/timestamp.c:4626 utils/adt/date.c:2631
 #: utils/adt/datetime.c:928 utils/adt/datetime.c:1663
 #, c-format
 msgid "time zone \"%s\" not recognized"
 msgstr "часовой пояс \"%s\" не распознан"
 
-#: utils/adt/timestamp.c:4477 utils/adt/timestamp.c:4651
+#: utils/adt/timestamp.c:4478 utils/adt/timestamp.c:4652
 #, c-format
 msgid "interval time zone \"%s\" must not specify month"
-msgstr "в значении interval с часовым поясом \"%s\" не должно быть месяца"
+msgstr "интервал \"%s\", задающий часовой пояс, не должен содержать месяцев"
 
 #: utils/adt/selfuncs.c:4843
 msgid "case insensitive matching not supported on type bytea"
@@ -4327,110 +4329,110 @@ msgstr ""
 msgid "\"%s\" is not a number"
 msgstr "\"%s\" не является числом"
 
-#: utils/adt/formatting.c:1788
+#: utils/adt/formatting.c:1883
 msgid "invalid combination of date conventions"
 msgstr "неверное сочетание стилей дат"
 
-#: utils/adt/formatting.c:1789
+#: utils/adt/formatting.c:1884
 msgid ""
 "Do not mix Gregorian and ISO week date conventions in a formatting template."
 msgstr ""
 "Не смешивайте Григорианский стиль дат (недель) с ISO в одном шаблоне "
 "форматирования."
 
-#: utils/adt/formatting.c:1806
+#: utils/adt/formatting.c:1901
 #, c-format
 msgid "conflicting values for \"%s\" field in formatting string"
 msgstr "конфликтующие значения поля \"%s\" в строке форматирования"
 
-#: utils/adt/formatting.c:1808
+#: utils/adt/formatting.c:1903
 msgid "This value contradicts a previous setting for the same field type."
 msgstr "Это значение противоречит предыдущему значению поля того же типа."
 
-#: utils/adt/formatting.c:1869
+#: utils/adt/formatting.c:1964
 #, c-format
 msgid "source string too short for \"%s\" formatting field"
 msgstr "входная строка короче, чем требует поле форматирования \"%s\""
 
-#: utils/adt/formatting.c:1871
+#: utils/adt/formatting.c:1966
 #, c-format
 msgid "Field requires %d characters, but only %d remain."
 msgstr "Требуется символов: %d, а осталось только %d."
 
-#: utils/adt/formatting.c:1874 utils/adt/formatting.c:1888
+#: utils/adt/formatting.c:1969 utils/adt/formatting.c:1983
 msgid ""
 "If your source string is not fixed-width, try using the \"FM\" modifier."
 msgstr ""
 "Если входная строка имеет переменную длину, попробуйте использовать "
 "модификатор \"FM\"."
 
-#: utils/adt/formatting.c:1884 utils/adt/formatting.c:1897
-#: utils/adt/formatting.c:2027
+#: utils/adt/formatting.c:1979 utils/adt/formatting.c:1992
+#: utils/adt/formatting.c:2122
 #, c-format
 msgid "invalid value \"%s\" for \"%s\""
 msgstr "неверное значение \"%s\" для \"%s\""
 
-#: utils/adt/formatting.c:1886
+#: utils/adt/formatting.c:1981
 #, c-format
 msgid "Field requires %d characters, but only %d could be parsed."
 msgstr "Поле должно поглотить символов: %d, но удалось разобрать только %d."
 
-#: utils/adt/formatting.c:1899
+#: utils/adt/formatting.c:1994
 msgid "Value must be an integer."
 msgstr "Значение должно быть целым числом."
 
-#: utils/adt/formatting.c:1904
+#: utils/adt/formatting.c:1999
 #, c-format
 msgid "value for \"%s\" in source string is out of range"
 msgstr "значение \"%s\" во входной строке вне диапазона"
 
-#: utils/adt/formatting.c:1906
+#: utils/adt/formatting.c:2001
 #, c-format
 msgid "Value must be in the range %d to %d."
 msgstr "Значение должно быть в интервале %d..%d."
 
-#: utils/adt/formatting.c:2029
+#: utils/adt/formatting.c:2124
 msgid "The given value did not match any of the allowed values for this field."
 msgstr ""
 "Данное значение не соответствует ни одному из допустимых значений для этого "
 "поля."
 
-#: utils/adt/formatting.c:2585
+#: utils/adt/formatting.c:2673
 msgid "\"TZ\"/\"tz\" format patterns are not supported in to_date"
 msgstr "шаблоны формата \"TZ\"/\"tz\" не поддерживаются в to_date"
 
-#: utils/adt/formatting.c:2689
+#: utils/adt/formatting.c:2777
 msgid "invalid input string for \"Y,YYY\""
 msgstr "ошибка синтаксиса в значении для шаблона \"Y,YYY\""
 
-#: utils/adt/formatting.c:3080 utils/adt/date.c:167
+#: utils/adt/formatting.c:3168 utils/adt/date.c:167
 #, c-format
 msgid "date out of range: \"%s\""
 msgstr "дата вне диапазона: \"%s\""
 
-#: utils/adt/formatting.c:3212
+#: utils/adt/formatting.c:3300
 #, c-format
 msgid "hour \"%d\" is invalid for the 12-hour clock"
 msgstr "час \"%d\" не соответствует 12-часовому формату времени"
 
-#: utils/adt/formatting.c:3214
+#: utils/adt/formatting.c:3302
 msgid "Use the 24-hour clock, or give an hour between 1 and 12."
 msgstr "Используйте 24-часовой формат или передавайте часы от 1 до 12."
 
-#: utils/adt/formatting.c:3252
+#: utils/adt/formatting.c:3340
 #, c-format
 msgid "inconsistent use of year %04d and \"BC\""
 msgstr "несогласованное использование в годе %04d и \"BC\""
 
-#: utils/adt/formatting.c:3299
+#: utils/adt/formatting.c:3387
 msgid "cannot calculate day of year without year information"
 msgstr "нельзя рассчитать день года без информации о годе"
 
-#: utils/adt/formatting.c:4161
+#: utils/adt/formatting.c:4249
 msgid "\"EEEE\" not supported for input"
 msgstr "\"EEEE\" не поддерживается при вводе"
 
-#: utils/adt/formatting.c:4173
+#: utils/adt/formatting.c:4261
 msgid "\"RN\" not supported for input"
 msgstr "\"RN\" не поддерживается при вводе"
 
@@ -5424,19 +5426,19 @@ msgstr "схема \"%s\" не существует"
 msgid "must be member of role \"%s\""
 msgstr "нужно быть членом роли \"%s\""
 
-#: utils/adt/enum.c:44 utils/adt/enum.c:54 utils/adt/enum.c:109
-#: utils/adt/enum.c:119
+#: utils/adt/enum.c:45 utils/adt/enum.c:55 utils/adt/enum.c:114
+#: utils/adt/enum.c:124
 #, c-format
 msgid "invalid input value for enum %s: \"%s\""
 msgstr "неверное значение для перечисления %s: \"%s\""
 
-#: utils/adt/enum.c:81 utils/adt/enum.c:144
+#: utils/adt/enum.c:82 utils/adt/enum.c:149
 #, c-format
 msgid "invalid internal value for enum: %u"
 msgstr "неверное внутреннее значение для перечисления: %u"
 
-#: utils/adt/enum.c:264 utils/adt/enum.c:303 utils/adt/enum.c:350
-#: utils/adt/enum.c:370
+#: utils/adt/enum.c:269 utils/adt/enum.c:308 utils/adt/enum.c:355
+#: utils/adt/enum.c:375
 msgid "could not determine actual enum type"
 msgstr "не удалось определить фактический тип перечисления"
 
@@ -5887,7 +5889,7 @@ msgstr "отсутствует параметр AffFile"
 #: tsearch/ts_utils.c:53
 #, c-format
 msgid "invalid text search configuration file name \"%s\""
-msgstr "неверное имя файла конфигурации текстового поиска \"%s\": %m"
+msgstr "неверное имя файла конфигурации текстового поиска \"%s\""
 
 #: tsearch/ts_utils.c:91
 #, c-format
@@ -6420,7 +6422,7 @@ msgid "Values larger than a buffer page cannot be indexed."
 msgstr "Значения, не умещающиеся в страницу буфера, нельзя проиндексировать."
 
 #: access/hash/hashutil.c:165 access/nbtree/nbtpage.c:432
-#: access/gist/gistutil.c:644
+#: access/gist/gistutil.c:640
 #, c-format
 msgid "index \"%s\" contains unexpected zero page at block %u"
 msgstr "в индексе \"%s\" неожиданно оказалась нулевая страница в блоке %u"
@@ -6428,12 +6430,12 @@ msgstr "в индексе \"%s\" неожиданно оказалась нул�
 #: access/hash/hashutil.c:168 access/hash/hashutil.c:179
 #: access/hash/hashutil.c:191 access/hash/hashutil.c:212
 #: access/nbtree/nbtpage.c:435 access/nbtree/nbtpage.c:446
-#: access/gist/gistutil.c:647 access/gist/gistutil.c:658
+#: access/gist/gistutil.c:643 access/gist/gistutil.c:654
 msgid "Please REINDEX it."
 msgstr "Пожалуйста, выполните REINDEX для него."
 
 #: access/hash/hashutil.c:176 access/hash/hashutil.c:188
-#: access/nbtree/nbtpage.c:443 access/gist/gistutil.c:655
+#: access/nbtree/nbtpage.c:443 access/gist/gistutil.c:651
 #, c-format
 msgid "index \"%s\" contains corrupted page at block %u"
 msgstr "индекс \"%s\" содержит испорченную страницу в блоке %u"
@@ -6801,7 +6803,7 @@ msgstr "не удалось создать файл состояния архи�
 #: access/transam/xlog.c:1295
 #, c-format
 msgid "could not write archive status file \"%s\": %m"
-msgstr "не удалось записать в файл состояния архива \"%s\": %m"
+msgstr "не удалось записать файл состояния архива \"%s\": %m"
 
 #: access/transam/xlog.c:1750 access/transam/xlog.c:9719
 #: replication/walreceiver.c:482 replication/walsender.c:597
@@ -7795,8 +7797,7 @@ msgstr ""
 #: access/transam/xlog.c:8075
 #, c-format
 msgid "unexpected timeline ID %u (after %u) in checkpoint record"
-msgstr ""
-"неожиданный ID линии времени %u (после %u) в записи точки восстановления"
+msgstr "неожиданный ID линии времени %u (после %u) в записи контрольной точки"
 
 #: access/transam/xlog.c:8120
 #, c-format
@@ -8037,12 +8038,12 @@ msgstr "Возможно, это вызвано переменной приро�
 msgid "\"%s\" is not an index"
 msgstr "\"%s\" - это не индекс"
 
-#: access/gist/gistsplit.c:372
+#: access/gist/gistsplit.c:444
 #, c-format
 msgid "picksplit method for column %d of index \"%s\" failed"
 msgstr "ошибка в методе picksplit для колонки %d индекса \"%s\""
 
-#: access/gist/gistsplit.c:374
+#: access/gist/gistsplit.c:446
 msgid ""
 "The index is not optimal. To optimize it, contact a developer, or try to use "
 "the column as the second one in the CREATE INDEX command."
@@ -8063,7 +8064,7 @@ msgid "Incomplete insertion detected during crash replay."
 msgstr ""
 "При воспроизведении после сбоя обнаружены неполностью добавленные данные."
 
-#: access/gist/gistutil.c:428
+#: access/gist/gistutil.c:424
 #, c-format
 msgid "index \"%s\" needs VACUUM or REINDEX to finish crash recovery"
 msgstr ""
@@ -9838,7 +9839,7 @@ msgstr ""
 #: commands/vacuumlazy.c:889
 #, c-format
 msgid "\"%s\": removed %.0f row versions in %u pages"
-msgstr "\"%s\": удалено версий строк: %0.f, обработано страниц: %u"
+msgstr "\"%s\": удалено версий строк: %.0f, обработано страниц: %u"
 
 #: commands/vacuumlazy.c:894
 #, c-format
@@ -9897,7 +9898,7 @@ msgstr ""
 #: commands/vacuumlazy.c:1153
 #, c-format
 msgid ""
-"automatic vacuum of table \"%s.%s.%s\": cannot (re)acquire exclusive lock "
+"automatic vacuum of table \"%s.%s.%s\": could not (re)acquire exclusive lock "
 "for truncate scan"
 msgstr ""
 "автоматическая очистка таблицы \"%s.%s.%s\": получить исключительную "
@@ -11045,23 +11046,23 @@ msgstr "слишком длинное имя канала"
 msgid "payload string too long"
 msgstr "слишком длинная строка сообщения-нагрузки"
 
-#: commands/async.c:763
+#: commands/async.c:764
 msgid ""
 "cannot PREPARE a transaction that has executed LISTEN, UNLISTEN or NOTIFY"
 msgstr ""
 "выполнить PREPARE для транзакции с командами LISTEN, UNLISTEN или NOTIFY "
 "нельзя"
 
-#: commands/async.c:868
+#: commands/async.c:867
 msgid "too many notifications in the NOTIFY queue"
 msgstr "слишком много уведомлений в очереди NOTIFY"
 
-#: commands/async.c:1447
+#: commands/async.c:1440
 #, c-format
 msgid "NOTIFY queue is %.0f%% full"
 msgstr "очередь NOTIFY заполнена на %.0f%%"
 
-#: commands/async.c:1449
+#: commands/async.c:1442
 #, c-format
 msgid ""
 "The server process with PID %d is among those with the oldest transactions."
@@ -11069,7 +11070,7 @@ msgstr ""
 "В число серверных процессов с самыми старыми транзакциями входит процесс с "
 "PID %d."
 
-#: commands/async.c:1452
+#: commands/async.c:1445
 msgid ""
 "The NOTIFY queue cannot be emptied until that process ends its current "
 "transaction."
@@ -11169,7 +11170,7 @@ msgid "BEFORE STATEMENT trigger cannot return a value"
 msgstr "триггер BEFORE STATEMENT не может возвращать значение"
 
 #: commands/trigger.c:2404 executor/nodeLockRows.c:137
-#: executor/nodeModifyTable.c:334 executor/nodeModifyTable.c:505
+#: executor/nodeModifyTable.c:334 executor/nodeModifyTable.c:511
 #: executor/execMain.c:1656
 msgid "could not serialize access due to concurrent update"
 msgstr "не удалось сериализовать доступ из-за параллельного изменения"
@@ -11780,17 +11781,17 @@ msgstr "LIMIT не может быть отрицательным"
 #: executor/execMain.c:745
 #, c-format
 msgid "cannot lock rows in sequence \"%s\""
-msgstr "заблокировать строки в последовательности \"%s\" нельзя"
+msgstr "блокировать строки в последовательности \"%s\" нельзя"
 
 #: executor/execMain.c:755
 #, c-format
 msgid "cannot lock rows in view \"%s\""
-msgstr "заблокировать строки в представлении \"%s\" нельзя"
+msgstr "блокировать строки в представлении \"%s\" нельзя"
 
 #: executor/execMain.c:761
 #, c-format
 msgid "cannot lock rows in relation \"%s\""
-msgstr "заблокировать строки в отношении \"%s\" нельзя"
+msgstr "блокировать строки в отношении \"%s\" нельзя"
 
 #: executor/execMain.c:917
 #, c-format
@@ -13988,7 +13989,7 @@ msgid ""
 "A function returning \"internal\" must have at least one \"internal\" "
 "argument."
 msgstr ""
-"Функция, возвращающая \"internal\" должна иметь минимум один аргумент "
+"Функция, возвращающая \"internal\", должна иметь минимум один аргумент "
 "\"internal\"."
 
 #: catalog/pg_aggregate.c:197
@@ -16039,8 +16040,8 @@ msgid ""
 "SELECT FOR UPDATE/SHARE is not allowed with set-returning functions in the "
 "target list"
 msgstr ""
-"SELECT FOR UPDATE/SHARE несовместим с функциями, возвращающие множества, в "
-"списке результатов"
+"SELECT FOR UPDATE/SHARE не допускается с функциями, возвращающие множества, "
+"в списке результатов"
 
 #: parser/analyze.c:2143
 msgid "SELECT FOR UPDATE/SHARE must specify unqualified relation names"

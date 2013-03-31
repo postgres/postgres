@@ -547,7 +547,9 @@ msgstr "Использование:\n"
 msgid ""
 "  psql [OPTION]... [DBNAME [USERNAME]]\n"
 "\n"
-msgstr "  psql [ПАРАМЕТР]... [БД [ПОЛЬЗОВАТЕЛЬ]]\n"
+msgstr ""
+"  psql [ПАРАМЕТР]... [БД [ПОЛЬЗОВАТЕЛЬ]]\n"
+"\n"
 
 #: help.c:90
 #, c-format
@@ -1192,8 +1194,8 @@ msgid ""
 "                         connect to new database (currently \"%s\")\n"
 msgstr ""
 "  \\c[onnect] [БД|- ПОЛЬЗОВАТЕЛЬ|- СЕРВЕР|- ПОРТ|-]\n"
-"                         подключиться к другой базе данных (текущая: \"%s"
-"\")\n"
+"                         подключиться к другой базе данных\n"
+"                         (текущая: \"%s\")\n"
 
 #: help.c:250
 #, c-format

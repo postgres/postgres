@@ -271,7 +271,7 @@ msgstr "БД с oldestXID последней конт. точки: %u\n"
 #: pg_resetxlog.c:585
 #, c-format
 msgid "Latest checkpoint's oldestActiveXID:  %u\n"
-msgstr "oldestActiveXID последней конт. точки:%u\n"
+msgstr "oldestActiveXID последней к.т.:       %u\n"
 
 #: pg_resetxlog.c:587
 #, c-format
