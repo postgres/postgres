@@ -525,7 +525,9 @@ msgstr "%s: remoção da linguagem falhou: %s"
 msgid ""
 "%s removes a procedural language from a database.\n"
 "\n"
-msgstr "%s remove uma linguagem procedural do banco de dados.\n"
+msgstr ""
+"%s remove uma linguagem procedural do banco de dados.\n"
+"\n"
 
 #: droplang.c:335
 #, c-format

@@ -144,6 +144,7 @@ msgid ""
 msgstr ""
 "AVISO: modo cópia de segurança online está ativo\n"
 "Desligamento não completará até que pg_stop_backup() seja chamado.\n"
+"\n"
 
 #: pg_ctl.c:759 pg_ctl.c:836
 msgid "waiting for server to shut down..."

@@ -58,7 +58,6 @@ msgstr ""
 "Параметры:\n"
 "  --help         показать эту справку и выйти\n"
 "  --version      показать версию и выйти\n"
-"\n"
 
 #: pg_controldata.c:36
 #, c-format
@@ -85,11 +84,11 @@ msgstr "запускается"
 
 #: pg_controldata.c:50
 msgid "shut down"
-msgstr "остановлен"
+msgstr "выключен"
 
 #: pg_controldata.c:52
 msgid "shutting down"
-msgstr "останавливается"
+msgstr "выключение"
 
 #: pg_controldata.c:54
 msgid "in crash recovery"

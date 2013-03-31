@@ -110,7 +110,7 @@ msgstr ""
 #: pg_config.c:425
 #, c-format
 msgid "  --mandir              show location of manual pages\n"
-msgstr "  --bindir              mostra local das páginas de manual\n"
+msgstr "  --mandir              mostra local das páginas de manual\n"
 
 #: pg_config.c:426
 #, c-format

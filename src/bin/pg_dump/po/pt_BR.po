@@ -335,7 +335,7 @@ msgid ""
 "Connection options:\n"
 msgstr ""
 "\n"
-"Opções de conexão: \n"
+"Opções de conexão:\n"
 
 #: pg_dump.c:827 pg_restore.c:442 pg_dumpall.c:557
 #, c-format
@@ -1841,7 +1841,7 @@ msgid ""
 "  -L, --use-list=FILENAME  use table of contents from this file for\n"
 "                           selecting/ordering output\n"
 msgstr ""
-"  -L, --user-list=ARQUIVO  usa tabela de conteúdo deste arquivo para\n"
+"  -L, --use-list=ARQUIVO   usa tabela de conteúdo deste arquivo para\n"
 "                           selecionar/ordenar saída\n"
 
 #: pg_restore.c:420
