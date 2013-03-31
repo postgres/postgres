@@ -232,7 +232,8 @@
 
     <listitem>
      <para>
-      Ignore invalid indexes in <application>pg_dump</> (Michael Paquier)
+      Ignore invalid indexes in <application>pg_dump</> and
+      <application>pg_upgrade</> (Michael Paquier, Bruce Momjian)
      </para>
 
      <para>
@@ -242,6 +243,8 @@
       index creation is in fact still in progress, it seems reasonable to
       consider it to be an uncommitted DDL change, which
       <application>pg_dump</> wouldn't be expected to dump anyway.
+      <application>pg_upgrade</> now also skips invalid indexes rather than
+      failing.
      </para>
     </listitem>
 
