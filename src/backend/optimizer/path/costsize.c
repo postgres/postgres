@@ -3742,6 +3742,15 @@ set_subquery_size_estimates(PlannerInfo *root, RelOptInfo *rel)
 			continue;
 
 		/*
+		 * The subquery could be an expansion of a view that's had columns
+		 * added to it since the current query was parsed, so that there are
+		 * non-junk tlist columns in it that don't correspond to any column
+		 * visible at our query level.  Ignore such columns.
+		 */
+		if (te->resno < rel->min_attr || te->resno > rel->max_attr)
+			continue;
+
+		/*
 		 * XXX This currently doesn't work for subqueries containing set
 		 * operations, because the Vars in their tlists are bogus references
 		 * to the first leaf subquery, which wouldn't give the right answer
@@ -3762,7 +3771,6 @@ set_subquery_size_estimates(PlannerInfo *root, RelOptInfo *rel)
 
 			item_width = subrel->attr_widths[var->varattno - subrel->min_attr];
 		}
-		Assert(te->resno >= rel->min_attr && te->resno <= rel->max_attr);
 		rel->attr_widths[te->resno - rel->min_attr] = item_width;
 	}
 
