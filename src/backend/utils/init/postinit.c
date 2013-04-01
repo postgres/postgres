@@ -969,7 +969,7 @@ process_startup_options(Port *port, bool am_superuser)
 
 		Assert(ac < maxac);
 
-		(void) process_postgres_switches(ac, av, gucctx);
+		(void) process_postgres_switches(ac, av, gucctx, NULL);
 	}
 
 	/*

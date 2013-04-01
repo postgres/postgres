@@ -189,7 +189,9 @@ main(int argc, char *argv[])
 	else if (argc > 1 && strcmp(argv[1], "--describe-config") == 0)
 		GucInfoMain();			/* does not return */
 	else if (argc > 1 && strcmp(argv[1], "--single") == 0)
-		PostgresMain(argc, argv, get_current_username(progname)); /* does not return */
+		PostgresMain(argc, argv,
+					 NULL,		/* no dbname */
+					 get_current_username(progname)); /* does not return */
 	else
 		PostmasterMain(argc, argv); /* does not return */
 	abort();						/* should not get here */
