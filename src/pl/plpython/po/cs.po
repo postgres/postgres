@@ -2,21 +2,21 @@
 # Copyright (C) 2011 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 #
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2011, 2012.
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-09-03 21:05+0000\n"
-"PO-Revision-Date: 2011-09-06 12:33+0200\n"
+"POT-Creation-Date: 2013-03-17 12:12+0000\n"
+"PO-Revision-Date: 2012-10-17 20:48+0200\n"
 "Last-Translator: \n"
 "Language-Team: Czech <kde-i18n-doc@kde.org>\n"
-"Language: \n"
+"Language: cs\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Generator: Lokalize 1.2\n"
+"X-Generator: Lokalize 1.4\n"
 
 #: plpython.c:418
 #, c-format
@@ -193,8 +193,7 @@ msgid ""
 "named after the column."
 msgstr ""
 "Pro vrácení hodnoty null ve sloupci, přidejte do mapování hodnotu None s "
-"klíčem"
-"pojmenovaným jako sloupec."
+"klíčempojmenovaným jako sloupec."
 
 #: plpython.c:2357
 msgid "length of returned sequence did not match number of columns in row"
@@ -211,8 +210,7 @@ msgid ""
 "after column with value None."
 msgstr ""
 "Pro vrácení null ve sloupci, nechť vracený objekt má atribut pojmenovaný po "
-"sloupci"
-"s hodnotou None."
+"sloupcis hodnotou None."
 
 #: plpython.c:2685
 msgid "plan.status takes no arguments"
@@ -295,8 +293,8 @@ msgid ""
 "This session has previously used Python major version %d, and it is now "
 "attempting to use Python major version %d."
 msgstr ""
-"Tato session již dříve používala Python s hlavní verzí %d, a nyní se pokouší"
-"použív Python s hlavní verzí %d."
+"Tato session již dříve používala Python s hlavní verzí %d, a nyní se "
+"pokoušípoužív Python s hlavní verzí %d."
 
 #: plpython.c:3250
 msgid "Start a new session to use a different Python major version."
@@ -336,8 +334,10 @@ msgstr "%s"
 msgid "out of memory"
 msgstr "nedostatek paměti"
 
-#: plpython.c:3702
-msgid "could not convert Python Unicode object to PostgreSQL server encoding"
-msgstr "nelze převést Python Unicode objekt do serverového kódování PostgreSQL"
+#: plpython.c:3695
+msgid "could not convert Python Unicode object to bytes"
+msgstr "nelze převést Python Unicode objekt na byty"
 
-
+#: plpython.c:3700
+msgid "could not extract bytes from encoded string"
+msgstr "nepodařilo se získat byty z kódovaného řetězce"
