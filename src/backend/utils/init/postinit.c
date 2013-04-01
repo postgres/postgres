@@ -669,7 +669,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		Assert(!bootstrap);
 
 		/* must have authenticated as a replication role */
-		if (!is_authenticated_user_replication_role())
+		if (!has_rolreplication(GetUserId()))
 			ereport(FATAL,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must be replication role to start walsender")));
