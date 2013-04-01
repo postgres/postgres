@@ -210,7 +210,7 @@ msgid ""
 "By default, a database with the same name as the current user is created.\n"
 msgstr ""
 "\n"
-"По умолчанию именем базы данных становится имя текущего пользователя.\n"
+"По умолчанию именем базы данных считается имя текущего пользователя.\n"
 
 #: createdb.c:265 createlang.c:229 createuser.c:329 dropdb.c:153
 #: droplang.c:346 dropuser.c:152 clusterdb.c:254 vacuumdb.c:283
@@ -336,7 +336,7 @@ msgstr "  -W, --password            запросить пароль\n"
 
 #: createuser.c:169
 msgid "Enter name of role to add: "
-msgstr "Введите имя новой роли:"
+msgstr "Введите имя новой роли: "
 
 #: createuser.c:176
 msgid "Enter password for new role: "
@@ -850,7 +850,7 @@ msgstr "  -d, --dbname=БД           имя базы для переиндек�
 #: reindexdb.c:319
 #, c-format
 msgid "  -i, --index=INDEX         recreate specific index only\n"
-msgstr "  -I, --index=ИНДЕКС        восстановить только указанный индекс\n"
+msgstr "  -i, --index=ИНДЕКС        пересоздать только указанный индекс\n"
 
 #: reindexdb.c:321
 #, c-format

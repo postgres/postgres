@@ -1448,7 +1448,7 @@ msgstr "архиватор (БД)"
 
 #: pg_backup_db.c:54
 msgid "could not get server_version from libpq\n"
-msgstr "%s: не удалось получить версию сервера из libpq\n"
+msgstr "не удалось получить версию сервера из libpq\n"
 
 #: pg_backup_db.c:65 pg_dumpall.c:1615
 #, c-format
