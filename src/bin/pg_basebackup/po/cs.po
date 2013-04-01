@@ -2,13 +2,13 @@
 # Copyright (C) 2011 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 #
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2011, 2012.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2011, 2012, 2013.
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.1\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-04-06 23:46+0000\n"
-"PO-Revision-Date: 2012-04-07 02:05+0200\n"
+"POT-Creation-Date: 2013-03-17 12:08+0000\n"
+"PO-Revision-Date: 2013-03-17 21:09+0100\n"
 "Last-Translator: \n"
 "Language-Team: Czech <kde-i18n-doc@kde.org>\n"
 "Language: cs\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Generator: Lokalize 1.4\n"
+"X-Generator: Lokalize 1.5\n"
 
 #: pg_basebackup.c:96 pg_basebackup.c:110
 #, c-format
@@ -336,8 +336,8 @@ msgstr ""
 
 #: pg_basebackup.c:934
 #, c-format
-msgid "%s: could not get WAL end position from server\n"
-msgstr "%s: ze serveru nelze získat koncovou WAL pozici\n"
+msgid "%s: could not get WAL end position from server: %s"
+msgstr "%s: ze serveru nelze získat koncovou WAL pozici: %s"
 
 #: pg_basebackup.c:940
 #, c-format
@@ -391,4 +391,5 @@ msgstr "%s: pouze tar zálohy mohou být komprimované\n"
 #, c-format
 msgid "%s: this build does not support compression\n"
 msgstr "%s: tento build nepodporuje kompresi\n"
+
 
