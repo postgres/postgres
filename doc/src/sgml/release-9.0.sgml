@@ -43,6 +43,20 @@
 
     <listitem>
      <para>
+      Fix insecure parsing of server command-line switches (Mitsumasa
+      Kondo, Kyotaro Horiguchi)
+     </para>
+
+     <para>
+      A connection request containing a database name that begins with
+      <quote><literal>-</></quote> could be crafted to damage or destroy
+      files within the server's data directory, even if the request is
+      eventually rejected.  (CVE-2013-1899)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       Reset OpenSSL randomness state in each postmaster child process
       (Marko Kreen)
      </para>

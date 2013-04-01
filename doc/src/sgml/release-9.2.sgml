@@ -43,6 +43,20 @@
 
     <listitem>
      <para>
+      Fix insecure parsing of server command-line switches (Mitsumasa
+      Kondo, Kyotaro Horiguchi)
+     </para>
+
+     <para>
+      A connection request containing a database name that begins with
+      <quote><literal>-</></quote> could be crafted to damage or destroy
+      files within the server's data directory, even if the request is
+      eventually rejected.  (CVE-2013-1899)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       Reset OpenSSL randomness state in each postmaster child process
       (Marko Kreen)
      </para>
@@ -53,6 +67,20 @@
       another database user to guess.  The risk is only significant when
       the postmaster is configured with <varname>ssl</> = <literal>on</>
       but most connections don't use SSL encryption.  (CVE-2013-1900)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make REPLICATION privilege checks test current user not authenticated
+      user (Noah Misch)
+     </para>
+
+     <para>
+      An unprivileged database user could exploit this mistake to call
+      <function>pg_start_backup()</> or <function>pg_stop_backup()</>,
+      thus possibly interfering with creation of routine backups.
+      (CVE-2013-1901)
      </para>
     </listitem>
 
