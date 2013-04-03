@@ -666,15 +666,8 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 					nulls[4] = true;
 					break;
 			}
-			if (beentry->st_state == STATE_UNDEFINED ||
-				beentry->st_state == STATE_DISABLED)
-			{
-				values[5] = CStringGetTextDatum("");
-			}
-			else
-			{
-				values[5] = CStringGetTextDatum(beentry->st_activity);
-			}
+
+			values[5] = CStringGetTextDatum(beentry->st_activity);
 			values[6] = BoolGetDatum(beentry->st_waiting);
 
 			if (beentry->st_xact_start_timestamp != 0)
