@@ -311,9 +311,22 @@ run_permutation(TestSpec * testspec, int nsteps, Step ** steps)
 				break;
 
 			case PGRES_FATAL_ERROR:
-				/* Detail may contain xid values, so just show primary. */
-				printf("%s:  %s\n", PQresultErrorField(res, PG_DIAG_SEVERITY),
-					   PQresultErrorField(res, PG_DIAG_MESSAGE_PRIMARY));
+				/*
+				 * Detail may contain XID values, so we want to just show
+				 * primary.  Beware however that libpq-generated error results
+				 * may not contain subfields, only an old-style message.
+				 */
+				{
+					const char *sev = PQresultErrorField(res,
+														 PG_DIAG_SEVERITY);
+					const char *msg = PQresultErrorField(res,
+													PG_DIAG_MESSAGE_PRIMARY);
+
+					if (sev && msg)
+						printf("%s:  %s\n", sev, msg);
+					else
+						printf("%s", PQresultErrorMessage(res));
+				}
 				break;
 
 			default:
