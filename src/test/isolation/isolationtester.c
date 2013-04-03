@@ -578,7 +578,8 @@ run_permutation(TestSpec * testspec, int nsteps, Step ** steps)
 			{
 				char		buf[256];
 
-				PQcancel(cancel, buf, sizeof(buf));
+				if (!PQcancel(cancel, buf, sizeof(buf)))
+					fprintf(stderr, "PQcancel failed: %s\n", buf);
 
 				/* Be sure to consume the error message. */
 				while ((res = PQgetResult(conn)) != NULL)
@@ -771,14 +772,26 @@ try_complete_step(Step * step, int flags)
 					printf("WARNING: this step had a leftover error message\n");
 					printf("%s\n", step->errormsg);
 				}
-				/* Detail may contain xid values, so just show primary. */
-				step->errormsg = malloc(5 +
-						  strlen(PQresultErrorField(res, PG_DIAG_SEVERITY)) +
-										strlen(PQresultErrorField(res,
-												  PG_DIAG_MESSAGE_PRIMARY)));
-				sprintf(step->errormsg, "%s:  %s",
-						PQresultErrorField(res, PG_DIAG_SEVERITY),
-						PQresultErrorField(res, PG_DIAG_MESSAGE_PRIMARY));
+
+				/*
+				 * Detail may contain XID values, so we want to just show
+				 * primary.  Beware however that libpq-generated error results
+				 * may not contain subfields, only an old-style message.
+				 */
+				{
+					const char *sev = PQresultErrorField(res,
+														 PG_DIAG_SEVERITY);
+					const char *msg = PQresultErrorField(res,
+													PG_DIAG_MESSAGE_PRIMARY);
+
+					if (sev && msg)
+					{
+						step->errormsg = malloc(5 + strlen(sev) + strlen(msg));
+						sprintf(step->errormsg, "%s:  %s", sev, msg);
+					}
+					else
+						step->errormsg = strdup(PQresultErrorMessage(res));
+				}
 				break;
 			default:
 				printf("unexpected result status: %s\n",
