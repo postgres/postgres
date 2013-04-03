@@ -354,7 +354,7 @@ PlanForeignModify (PlannerInfo *root,
      <literal>resultRelation</> identifies the target foreign table by its
      rangetable index.  <literal>subplan_index</> identifies which target of
      the <structname>ModifyTable</> plan node this is, counting from zero;
-     use this if you want to index into <literal>node-&gt;plans</> or other
+     use this if you want to index into <literal>plan-&gt;plans</> or other
      substructure of the <literal>plan</> node.
     </para>
 
