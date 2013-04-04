@@ -900,7 +900,7 @@ psql_completion(char *text, int start, int end)
 		"\\lo_import", "\\lo_export", "\\lo_list", "\\lo_unlink",
 		"\\o", "\\p", "\\password", "\\prompt", "\\pset", "\\q", "\\qecho", "\\r",
 		"\\set", "\\sf", "\\t", "\\T",
-		"\\timing", "\\unset", "\\x", "\\w", "\\z", "\\!", NULL
+		"\\timing", "\\unset", "\\x", "\\w", "\\watch", "\\z", "\\!", NULL
 	};
 
 	(void) end;					/* not used */

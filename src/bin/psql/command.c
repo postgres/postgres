@@ -60,6 +60,7 @@ static bool do_edit(const char *filename_arg, PQExpBuffer query_buf,
 		int lineno, bool *edited);
 static bool do_connect(char *dbname, char *user, char *host, char *port);
 static bool do_shell(const char *command);
+static bool do_watch(PQExpBuffer query_buf, long sleep);
 static bool lookup_function_oid(PGconn *conn, const char *desc, Oid *foid);
 static bool get_create_function_cmd(PGconn *conn, Oid oid, PQExpBuffer buf);
 static int	strip_lineno_from_funcdesc(char *func);
@@ -1433,6 +1434,29 @@ exec_command(const char *cmd,
 		free(fname);
 	}
 
+	/* \watch -- execute a query every N seconds */
+	else if (strcmp(cmd, "watch") == 0)
+	{
+		char	   *opt = psql_scan_slash_option(scan_state,
+												 OT_NORMAL, NULL, true);
+		long		sleep = 2;
+
+		/* Convert optional sleep-length argument */
+		if (opt)
+		{
+			sleep = strtol(opt, NULL, 10);
+			if (sleep <= 0)
+				sleep = 1;
+			free(opt);
+		}
+
+		success = do_watch(query_buf, sleep);
+
+		/* Reset the query buffer as though for \r */
+		resetPQExpBuffer(query_buf);
+		psql_scan_reset(scan_state);
+	}
+
 	/* \x -- set or toggle expanded table representation */
 	else if (strcmp(cmd, "x") == 0)
 	{
@@ -2552,6 +2576,112 @@ do_shell(const char *command)
 		psql_error("\\!: failed\n");
 		return false;
 	}
+	return true;
+}
+
+/*
+ * do_watch -- handler for \watch
+ *
+ * We break this out of exec_command to avoid having to plaster "volatile"
+ * onto a bunch of exec_command's variables to silence stupider compilers.
+ */
+static bool
+do_watch(PQExpBuffer query_buf, long sleep)
+{
+	printQueryOpt myopt = pset.popt;
+	char		title[50];
+
+	if (!query_buf || query_buf->len <= 0)
+	{
+		psql_error(_("\\watch cannot be used with an empty query\n"));
+		return false;
+	}
+
+	/*
+	 * Set up rendering options, in particular, disable the pager, because
+	 * nobody wants to be prompted while watching the output of 'watch'.
+	 */
+	myopt.nullPrint = NULL;
+	myopt.topt.pager = 0;
+
+	for (;;)
+	{
+		PGresult   *res;
+		time_t		timer;
+		long		i;
+
+		/*
+		 * Prepare title for output.  XXX would it be better to use the time
+		 * of completion of the command?
+		 */
+		timer = time(NULL);
+		snprintf(title, sizeof(title), _("Watch every %lds\t%s"),
+				 sleep, asctime(localtime(&timer)));
+		myopt.title = title;
+
+		/*
+		 * Run the query.  We use PSQLexec, which is kind of cheating, but
+		 * SendQuery doesn't let us suppress autocommit behavior.
+		 */
+		res = PSQLexec(query_buf->data, false);
+
+		/* PSQLexec handles failure results and returns NULL */
+		if (res == NULL)
+			break;
+
+		/*
+		 * If SIGINT is sent while the query is processing, PSQLexec will
+		 * consume the interrupt.  The user's intention, though, is to cancel
+		 * the entire watch process, so detect a sent cancellation request and
+		 * exit in this case.
+		 */
+		if (cancel_pressed)
+		{
+			PQclear(res);
+			break;
+		}
+
+		switch (PQresultStatus(res))
+		{
+			case PGRES_TUPLES_OK:
+				printQuery(res, &myopt, pset.queryFout, pset.logfile);
+				break;
+
+			case PGRES_EMPTY_QUERY:
+				psql_error(_("\\watch cannot be used with an empty query\n"));
+				PQclear(res);
+				return false;
+
+			default:
+				/* should we fail for non-tuple-result commands? */
+				break;
+		}
+
+		PQclear(res);
+
+		/*
+		 * Set up cancellation of 'watch' via SIGINT.  We redo this each time
+		 * through the loop since it's conceivable something inside PSQLexec
+		 * could change sigint_interrupt_jmp.
+		 */
+		if (sigsetjmp(sigint_interrupt_jmp, 1) != 0)
+			break;
+
+		/*
+		 * Enable 'watch' cancellations and wait a while before running the
+		 * query again.  Break the sleep into short intervals since pg_usleep
+		 * isn't interruptible on some platforms.
+		 */
+		sigint_interrupt_enabled = true;
+		for (i = 0; i < sleep; i++)
+		{
+			pg_usleep(1000000L);
+			if (cancel_pressed)
+				break;
+		}
+		sigint_interrupt_enabled = false;
+	}
+
 	return true;
 }
 

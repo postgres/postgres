@@ -2479,6 +2479,18 @@ testdb=&gt; <userinput>\setenv LESS -imx4F</userinput>
 
 
       <varlistentry>
+        <term><literal>\watch [ <replaceable class="parameter">seconds</replaceable> ]</literal></term>
+        <listitem>
+        <para>
+        Repeatedly execute the current query buffer (like <literal>\g</>)
+        until interrupted or the query fails.  Wait the specified number of
+        seconds (default 2) between executions.
+        </para>
+        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
         <term><literal>\x [ <replaceable class="parameter">on</replaceable> | <replaceable class="parameter">off</replaceable> | <replaceable class="parameter">auto</replaceable> ]</literal></term>
         <listitem>
         <para>
