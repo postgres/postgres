@@ -682,9 +682,13 @@ get_array_start(void *state)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("cannot extract field from a non-object")));
-	/* initialize array count for this nesting level */
+	/* 
+	 * initialize array count for this nesting level 
+	 * Note: the lex_level seen by array_start is one less than that seen by
+	 * the elements of the array.
+	 */
 	if (_state->search_type == JSON_SEARCH_PATH &&
-		lex_level <= _state->npath)
+		lex_level < _state->npath)
 		_state->array_level_index[lex_level] = -1;
 }
 
