@@ -44,6 +44,6 @@ extern bool is_superuser(void);
 extern bool standard_strings(void);
 extern const char *session_username(void);
 
-extern char *expand_tilde(char **filename);
+extern void expand_tilde(char **filename);
 
 #endif   /* COMMON_H */

@@ -610,7 +610,7 @@ process_psqlrc(char *argv0)
 	char		rc_file[MAXPGPATH];
 	char		my_exec_path[MAXPGPATH];
 	char		etc_path[MAXPGPATH];
-	char	   *envrc;
+	char	   *envrc = getenv("PSQLRC");
 
 	find_my_exec(argv0, my_exec_path);
 	get_etc_path(my_exec_path, etc_path);
@@ -618,12 +618,13 @@ process_psqlrc(char *argv0)
 	snprintf(rc_file, MAXPGPATH, "%s/%s", etc_path, SYSPSQLRC);
 	process_psqlrc_file(rc_file);
 
-	envrc = getenv("PSQLRC");
-
 	if (envrc != NULL && strlen(envrc) > 0)
 	{
-		expand_tilde(&envrc);
-		process_psqlrc_file(envrc);
+		/* might need to free() this */
+		char *envrc_alloc = pstrdup(envrc);
+
+		expand_tilde(&envrc_alloc);
+		process_psqlrc_file(envrc_alloc);
 	}
 	else if (get_home_path(home))
 	{
