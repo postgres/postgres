@@ -9967,7 +9967,7 @@ table2-mapping
          a boolean or NULL, the text representation will be used, escaped and
          quoted so that it is legal JSON.
        </entry>
-       <entry><literal>to_json('Fred said "Hi."'</literal></entry>
+       <entry><literal>to_json('Fred said "Hi."'::text)</literal></entry>
        <entry><literal>"Fred said \"Hi.\""</literal></entry>
       </row>
       <row>
@@ -9995,7 +9995,7 @@ table2-mapping
        <entry>
          Expands the outermost json object into a set of key/value pairs.
        </entry>
-       <entry><literal>select * from json_each_as_text('{"a":"foo", "b":"bar"}')</literal></entry>
+       <entry><literal>select * from json_each('{"a":"foo", "b":"bar"}')</literal></entry>
        <entry>
 <programlisting>
  key | value
@@ -10017,7 +10017,7 @@ table2-mapping
          Expands the outermost json object into a set of key/value pairs. The
          returned value will be of type text.
        </entry>
-       <entry><literal>select * from json_each_as_text('{"a":"foo", "b":"bar"}')</literal></entry>
+       <entry><literal>select * from json_each_text('{"a":"foo", "b":"bar"}')</literal></entry>
        <entry>
 <programlisting>
  key | value
@@ -10090,7 +10090,7 @@ table2-mapping
          effort; columns in base with no corresponding key in from_json
          will be left null.  A column may only be specified once.
        </entry>
-       <entry><literal>json_populate_record(null::x, '{"a":1,"b":2}')</literal></entry>
+       <entry><literal>select * from json_populate_record(null::x, '{"a":1,"b":2}')</literal></entry>
        <entry>
 <programlisting>
  a | b
@@ -10114,7 +10114,7 @@ table2-mapping
          corresponding key in from_json will be left null.  A column
          may only be specified once.
        </entry>
-       <entry><literal>json_populate_recordset(null::x, '[{"a":1,"b":2},{"a":3,"b":4}]')</literal></entry>
+       <entry><literal>select * from json_populate_recordset(null::x, '[{"a":1,"b":2},{"a":3,"b":4}]')</literal></entry>
        <entry>
 <programlisting>
  a | b
