@@ -1617,11 +1617,11 @@ session_username(void)
  * substitute '~' with HOME or '~username' with username's home dir
  *
  */
-char *
+void
 expand_tilde(char **filename)
 {
 	if (!filename || !(*filename))
-		return NULL;
+		return;
 
 	/*
 	 * WIN32 doesn't use tilde expansion for file names. Also, it uses tilde
@@ -1669,5 +1669,5 @@ expand_tilde(char **filename)
 	}
 #endif
 
-	return *filename;
+	return;
 }
