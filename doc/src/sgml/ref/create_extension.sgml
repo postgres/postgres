@@ -22,7 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE EXTENSION [ IF NOT EXISTS ] <replaceable class="parameter">extension_name</replaceable>
-    [ WITH ] [ SCHEMA <replaceable class="parameter">schema</replaceable> ]
+    [ WITH ] [ SCHEMA <replaceable class="parameter">schema_name</replaceable> ]
              [ VERSION <replaceable class="parameter">version</replaceable> ]
              [ FROM <replaceable class="parameter">old_version</replaceable> ]
 </synopsis>
@@ -85,7 +85,7 @@ CREATE EXTENSION [ IF NOT EXISTS ] <replaceable class="parameter">extension_name
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="parameter">schema</replaceable></term>
+      <term><replaceable class="parameter">schema_name</replaceable></term>
       <listitem>
        <para>
         The name of the schema in which to install the extension's
@@ -93,6 +93,12 @@ CREATE EXTENSION [ IF NOT EXISTS ] <replaceable class="parameter">extension_name
         relocated.  The named schema must already exist.
         If not specified, and the extension's control file does not specify a
         schema either, the current default object creation schema is used.
+       </para>
+       <para>
+        Remember that the extension itself is not considered to be within any
+        schema: extensions have unqualified names that must be unique
+        database-wide.  But objects belonging to the extension can be within
+        schemas.
        </para>
       </listitem>
      </varlistentry>
