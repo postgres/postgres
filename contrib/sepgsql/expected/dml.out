@@ -47,6 +47,12 @@ ORDER BY objname;
  column  | t5.g    | system_u:object_r:sepgsql_secret_table_t:s0
 (8 rows)
 
+CREATE SCHEMA my_schema_1;
+CREATE TABLE my_schema_1.ts1 (a int, b text);
+CREATE SCHEMA my_schema_2;
+CREATE TABLE my_schema_2.ts2 (x int, y text);
+SECURITY LABEL ON SCHEMA my_schema_2
+    IS 'system_u:object_r:sepgsql_regtest_invisible_schema_t:s0';
 -- Hardwired Rules
 UPDATE pg_attribute SET attisdropped = true
     WHERE attrelid = 't5'::regclass AND attname = 'f';	-- failed
@@ -166,6 +172,23 @@ COPY t5 (e,f) FROM '/dev/null';			-- failed
 ERROR:  SELinux: security policy violation
 COPY t5 (e) FROM '/dev/null';			-- ok
 --
+-- Schema search path
+--
+SET search_path = my_schema_1, my_schema_2, public;
+SELECT * FROM ts1;		-- ok
+ a | b 
+---+---
+(0 rows)
+
+SELECT * FROM ts2;		-- failed (relation not found)
+ERROR:  relation "ts2" does not exist
+LINE 1: SELECT * FROM ts2;
+                      ^
+SELECT * FROM my_schema_2.ts2;	-- failed (policy violation)
+ERROR:  SELinux: security policy violation
+LINE 1: SELECT * FROM my_schema_2.ts2;
+                      ^
+--
 -- Clean up
 --
 SELECT sepgsql_getcon();	-- confirm client privilege
@@ -180,3 +203,7 @@ DROP TABLE IF EXISTS t3 CASCADE;
 DROP TABLE IF EXISTS t4 CASCADE;
 DROP TABLE IF EXISTS t5 CASCADE;
 DROP TABLE IF EXISTS customer CASCADE;
+DROP SCHEMA IF EXISTS my_schema_1 CASCADE;
+NOTICE:  drop cascades to table my_schema_1.ts1
+DROP SCHEMA IF EXISTS my_schema_2 CASCADE;
+NOTICE:  drop cascades to table my_schema_2.ts2

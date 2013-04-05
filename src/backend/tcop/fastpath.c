@@ -22,6 +22,7 @@
 
 #include "access/htup_details.h"
 #include "access/xact.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_proc.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
@@ -355,6 +356,7 @@ HandleFunctionRequest(StringInfo msgBuf)
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
 					   get_namespace_name(fip->namespace));
+	InvokeNamespaceSearchHook(fip->namespace, true);
 
 	aclresult = pg_proc_aclcheck(fid, GetUserId(), ACL_EXECUTE);
 	if (aclresult != ACLCHECK_OK)

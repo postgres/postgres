@@ -27,6 +27,10 @@
  * hook can use SnapshotNow and SnapshotSelf to get the old and new
  * versions of the tuple.
  *
+ * OAT_NAMESPACE_SEARCH should be invoked prior to object name lookup under
+ * a particular namespace. This event is equivalent to usage permission
+ * permission on a schema under the default access control mechanism.
+ *
  * Other types may be added in the future.
  */
 typedef enum ObjectAccessType
@@ -34,6 +38,7 @@ typedef enum ObjectAccessType
 	OAT_POST_CREATE,
 	OAT_DROP,
 	OAT_POST_ALTER,
+	OAT_NAMESPACE_SEARCH,
 } ObjectAccessType;
 
 /*
@@ -84,6 +89,28 @@ typedef struct
 	bool		is_internal;
 } ObjectAccessPostAlter;
 
+/*
+ * Arguments of OAT_NAMESPACE_SEARCH
+ */
+typedef struct
+{
+	/*
+	 * If true, hook should report an error when permission to search this
+	 * schema is denied.
+	 */
+	bool		ereport_on_violation;
+
+	/*
+	 * This is, in essence, an out parameter.  Core code should
+	 * initialize this to true, and any extension that wants to deny
+	 * access should reset it to false.  But an extension should be
+	 * careful never to store a true value here, so that in case there are
+	 * multiple extensions access is only allowed if all extensions
+	 * agree.
+	 */
+	bool		result;
+} ObjectAccessNamespaceSearch;
+
 /* Plugin provides a hook function matching this signature. */
 typedef void (*object_access_hook_type) (ObjectAccessType access,
 													 Oid classId,
@@ -101,6 +128,7 @@ extern void RunObjectDropHook(Oid classId, Oid objectId, int subId,
 							  int dropflags);
 extern void RunObjectPostAlterHook(Oid classId, Oid objectId, int subId,
 								   Oid auxiliaryId, bool is_internal);
+extern bool RunNamespaceSearchHook(Oid objectId, bool ereport_on_volation);
 
 /*
  * The following macros are wrappers around the functions above; these should
@@ -136,5 +164,10 @@ extern void RunObjectPostAlterHook(Oid classId, Oid objectId, int subId,
 			RunObjectPostAlterHook((classId),(objectId),(subId),	\
 								   (auxiliaryId),(is_internal));	\
 	} while(0)
+
+#define InvokeNamespaceSearchHook(objectId, ereport_on_violation)	\
+	(!object_access_hook											\
+	 ? true															\
+	 : RunNamespaceSearchHook((objectId), (ereport_on_violation)))
 
 #endif   /* OBJECTACCESS_H */

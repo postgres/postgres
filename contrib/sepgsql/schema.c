@@ -173,42 +173,54 @@ sepgsql_schema_relabel(Oid namespaceId, const char *seclabel)
  *
  * utility routine to check db_schema:{xxx} permissions
  */
-static void
-check_schema_perms(Oid namespaceId, uint32 required)
+static bool
+check_schema_perms(Oid namespaceId, uint32 required, bool abort_on_violation)
 {
 	ObjectAddress object;
 	char	   *audit_name;
+	bool		result;
 
 	object.classId = NamespaceRelationId;
 	object.objectId = namespaceId;
 	object.objectSubId = 0;
 	audit_name = getObjectDescription(&object);
 
-	sepgsql_avc_check_perms(&object,
-							SEPG_CLASS_DB_SCHEMA,
-							required,
-							audit_name,
-							true);
+	result = sepgsql_avc_check_perms(&object,
+									 SEPG_CLASS_DB_SCHEMA,
+									 required,
+									 audit_name,
+									 abort_on_violation);
 	pfree(audit_name);
+
+	return result;
 }
 
 /* db_schema:{setattr} permission */
 void
 sepgsql_schema_setattr(Oid namespaceId)
 {
-	check_schema_perms(namespaceId, SEPG_DB_SCHEMA__SETATTR);
+	check_schema_perms(namespaceId, SEPG_DB_SCHEMA__SETATTR, true);
+}
+
+/* db_schema:{search} permission */
+bool
+sepgsql_schema_search(Oid namespaceId, bool abort_on_violation)
+{
+	return check_schema_perms(namespaceId,
+							  SEPG_DB_SCHEMA__SEARCH,
+							  abort_on_violation);
 }
 
 void
 sepgsql_schema_add_name(Oid namespaceId)
 {
-	check_schema_perms(namespaceId, SEPG_DB_SCHEMA__ADD_NAME);
+	check_schema_perms(namespaceId, SEPG_DB_SCHEMA__ADD_NAME, true);
 }
 
 void
 sepgsql_schema_remove_name(Oid namespaceId)
 {
-	check_schema_perms(namespaceId, SEPG_DB_SCHEMA__REMOVE_NAME);
+	check_schema_perms(namespaceId, SEPG_DB_SCHEMA__REMOVE_NAME, true);
 }
 
 void
@@ -216,5 +228,6 @@ sepgsql_schema_rename(Oid namespaceId)
 {
 	check_schema_perms(namespaceId,
 					   SEPG_DB_SCHEMA__ADD_NAME |
-					   SEPG_DB_SCHEMA__REMOVE_NAME);
+					   SEPG_DB_SCHEMA__REMOVE_NAME,
+					   true);
 }

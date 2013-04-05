@@ -398,6 +398,16 @@ UPDATE t1 SET x = 2, y = md5sum(y) WHERE z = 100;
    </para>
 
    <para>
+    In order to access any schema object, <literal>db_schema:search</>
+    permission is required on the containing schema.  When an object is
+    referenced without schema qualification, schemas on which this
+    permission is not present will not be searched (just as if the user did
+    not have <literal>USAGE</> privilege on the schema).  If an explicit schema
+    qualification is present, an error will occur if the user does not have
+    the requisite permission on the named schema.
+   </para>
+
+   <para>
     The client must be allowed to access all referenced tables and
     columns, even if they originated from views which were then expanded,
     so that we apply consistent access control rules independent of the manner

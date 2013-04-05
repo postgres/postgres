@@ -43,6 +43,14 @@ SELECT objtype, objname, label FROM pg_seclabels
      AND  objname in ('t1', 't2', 't3', 't4', 't5', 't5.e', 't5.f', 't5.g')
 ORDER BY objname;
 
+CREATE SCHEMA my_schema_1;
+CREATE TABLE my_schema_1.ts1 (a int, b text);
+CREATE SCHEMA my_schema_2;
+CREATE TABLE my_schema_2.ts2 (x int, y text);
+
+SECURITY LABEL ON SCHEMA my_schema_2
+    IS 'system_u:object_r:sepgsql_regtest_invisible_schema_t:s0';
+
 -- Hardwired Rules
 UPDATE pg_attribute SET attisdropped = true
     WHERE attrelid = 't5'::regclass AND attname = 'f';	-- failed
@@ -108,6 +116,14 @@ COPY t5 (e,f) FROM '/dev/null';			-- failed
 COPY t5 (e) FROM '/dev/null';			-- ok
 
 --
+-- Schema search path
+--
+SET search_path = my_schema_1, my_schema_2, public;
+SELECT * FROM ts1;		-- ok
+SELECT * FROM ts2;		-- failed (relation not found)
+SELECT * FROM my_schema_2.ts2;	-- failed (policy violation)
+
+--
 -- Clean up
 --
 -- @SECURITY-CONTEXT=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c255
@@ -117,3 +133,5 @@ DROP TABLE IF EXISTS t3 CASCADE;
 DROP TABLE IF EXISTS t4 CASCADE;
 DROP TABLE IF EXISTS t5 CASCADE;
 DROP TABLE IF EXISTS customer CASCADE;
+DROP SCHEMA IF EXISTS my_schema_1 CASCADE;
+DROP SCHEMA IF EXISTS my_schema_2 CASCADE;

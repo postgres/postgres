@@ -303,6 +303,7 @@ extern void sepgsql_schema_post_create(Oid namespaceId);
 extern void sepgsql_schema_drop(Oid namespaceId);
 extern void sepgsql_schema_relabel(Oid namespaceId, const char *seclabel);
 extern void sepgsql_schema_setattr(Oid namespaceId);
+extern bool sepgsql_schema_search(Oid namespaceId, bool abort_on_violation);
 extern void sepgsql_schema_add_name(Oid namespaceId);
 extern void sepgsql_schema_remove_name(Oid namespaceId);
 extern void sepgsql_schema_rename(Oid namespaceId);

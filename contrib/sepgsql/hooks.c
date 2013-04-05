@@ -236,6 +236,25 @@ sepgsql_object_access(ObjectAccessType access,
 			}
 			break;
 
+		case OAT_NAMESPACE_SEARCH:
+			{
+				ObjectAccessNamespaceSearch   *ns_arg = arg;
+
+				/*
+				 * If stacked extension already decided not to allow users
+				 * to search this schema, we just stick with that decision.
+				 */
+				if (!ns_arg->result)
+					break;
+
+				Assert(classId == NamespaceRelationId);
+				Assert(ns_arg->result);
+				ns_arg->result
+					= sepgsql_schema_search(objectId,
+											ns_arg->ereport_on_violation);
+			}
+			break;
+
 		default:
 			elog(ERROR, "unexpected object access type: %d", (int) access);
 			break;

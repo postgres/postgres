@@ -1,4 +1,4 @@
-policy_module(sepgsql-regtest, 1.05)
+policy_module(sepgsql-regtest, 1.06)
 
 gen_require(`
 	all_userspace_class_perms
@@ -19,6 +19,9 @@ type sepgsql_regtest_trusted_proc_exec_t;
 postgresql_procedure_object(sepgsql_regtest_trusted_proc_exec_t)
 type sepgsql_nosuch_trusted_proc_exec_t;
 postgresql_procedure_object(sepgsql_nosuch_trusted_proc_exec_t)
+
+type sepgsql_regtest_invisible_schema_t;
+postgresql_schema_object(sepgsql_regtest_invisible_schema_t);
 
 #
 # Test domains for database administrators
