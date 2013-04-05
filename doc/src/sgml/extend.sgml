@@ -359,6 +359,12 @@
     extension.)  Also notice that while a table can be a member of an
     extension, its subsidiary objects such as indexes are not directly
     considered members of the extension.
+    Another important point is that schemas can belong to extensions, but not
+    vice versa: an extension as such has an unqualified name and does not
+    exist <quote>within</> any schema.  The extension's member objects,
+    however, will belong to schemas whenever appropriate for their object
+    types.  It may or may not be appropriate for an extension to own the
+    schema(s) its member objects are within.
    </para>
 
    <sect2>
