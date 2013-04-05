@@ -82,7 +82,7 @@
 <table id="keywords-table">
  <title><acronym>SQL</acronym> Key Words</title>
 
- <tgroup cols="5">
+ <tgroup cols="6">
   <thead>
    <row>
     <entry>Key Word</entry>
