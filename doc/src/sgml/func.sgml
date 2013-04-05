@@ -7973,7 +7973,6 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <entry>trigger function for automatic <type>tsvector</> column update</entry>
         <entry><literal>CREATE TRIGGER ... tsvector_update_trigger_column(tsvcol, configcol, title, body)</literal></entry>
         <entry><literal></literal></entry>
-        <entry><literal></literal></entry>
        </row>
       </tbody>
      </tgroup>
