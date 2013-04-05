@@ -106,7 +106,7 @@
 
    <table id="event-trigger-by-command-tag">
      <title>Event Trigger Support by Command Tag</title>
-     <tgroup cols="3">
+     <tgroup cols="4">
       <thead>
        <row>
         <entry>command tag</entry>
