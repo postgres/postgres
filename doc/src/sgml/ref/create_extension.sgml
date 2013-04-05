@@ -94,6 +94,12 @@ CREATE EXTENSION [ IF NOT EXISTS ] <replaceable class="parameter">extension_name
         If not specified, and the extension's control file does not specify a
         schema either, the current default object creation schema is used.
        </para>
+       <para>
+        Remember that the extension itself is not considered to be within any
+        schema: extensions have unqualified names that must be unique
+        database-wide.  But objects belonging to the extension can be within
+        schemas.
+       </para>
       </listitem>
      </varlistentry>
 
