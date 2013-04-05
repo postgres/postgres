@@ -165,7 +165,7 @@ slashUsage(unsigned short int pager)
 
 	currdb = PQdb(pset.db);
 
-	output = PageOutput(96, pager);
+	output = PageOutput(103, pager);
 
 	/* if you add/remove a line here, change the row count above */
 
