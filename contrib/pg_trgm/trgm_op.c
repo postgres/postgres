@@ -109,9 +109,13 @@ find_word(char *str, int lenstr, char **endword, int *charlen)
 	return beginword;
 }
 
-#ifdef USE_WIDE_UPPER_LOWER
+/*
+ * Reduce a trigram (three possibly multi-byte characters) to a trgm,
+ * which is always exactly three bytes.  If we have three single-byte
+ * characters, we just use them as-is; otherwise we form a hash value.
+ */
 static void
-cnt_trigram(trgm *tptr, char *str, int bytelen)
+compact_trigram(trgm *tptr, char *str, int bytelen)
 {
 	if (bytelen == 3)
 	{
@@ -131,7 +135,6 @@ cnt_trigram(trgm *tptr, char *str, int bytelen)
 		CPTRGM(tptr, &crc);
 	}
 }
-#endif
 
 /*
  * Adds trigrams from words (already padded).
@@ -144,16 +147,16 @@ make_trigrams(trgm *tptr, char *str, int bytelen, int charlen)
 	if (charlen < 3)
 		return tptr;
 
-#ifdef USE_WIDE_UPPER_LOWER
-	if (pg_database_encoding_max_length() > 1)
+	if (bytelen > charlen)
 	{
+		/* Find multibyte character boundaries and apply compact_trigram */
 		int			lenfirst = pg_mblen(str),
 					lenmiddle = pg_mblen(str + lenfirst),
 					lenlast = pg_mblen(str + lenfirst + lenmiddle);
 
 		while ((ptr - str) + lenfirst + lenmiddle + lenlast <= bytelen)
 		{
-			cnt_trigram(tptr, ptr, lenfirst + lenmiddle + lenlast);
+			compact_trigram(tptr, ptr, lenfirst + lenmiddle + lenlast);
 
 			ptr += lenfirst;
 			tptr++;
@@ -164,8 +167,8 @@ make_trigrams(trgm *tptr, char *str, int bytelen, int charlen)
 		}
 	}
 	else
-#endif
 	{
+		/* Fast path when there are no multibyte characters */
 		Assert(bytelen == charlen);
 
 		while (ptr - str < bytelen - 2 /* number of trigrams = strlen - 2 */ )
