@@ -51,6 +51,7 @@
 #include "commands/tablespace.h"
 #include "commands/trigger.h"
 #include "commands/typecmds.h"
+#include "common/relpath.h"
 #include "executor/executor.h"
 #include "foreign/foreign.h"
 #include "miscadmin.h"
@@ -8902,11 +8903,20 @@ copy_relation_data(SMgrRelation src, SMgrRelation dst,
 
 		smgrread(src, forkNum, blkno, buf);
 
-		PageSetChecksumInplace(page, blkno);
+		if (!PageIsVerified(page, blkno))
+			ereport(ERROR,
+					(errcode(ERRCODE_DATA_CORRUPTED),
+					 errmsg("invalid page in block %u of relation %s",
+							blkno,
+							relpathbackend(src->smgr_rnode.node,
+										   src->smgr_rnode.backend,
+										   forkNum))));
 
 		/* XLOG stuff */
 		if (use_wal)
 			log_newpage(&dst->smgr_rnode.node, forkNum, blkno, page);
+
+		PageSetChecksumInplace(page, blkno);
 
 		/*
 		 * Now write the page.	We say isTemp = true even if it's not a temp
