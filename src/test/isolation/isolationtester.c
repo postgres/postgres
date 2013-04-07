@@ -716,6 +716,8 @@ try_complete_step(Step * step, int flags)
 		ret = select(sock + 1, &read_set, NULL, NULL, &timeout);
 		if (ret < 0)			/* error in select() */
 		{
+			if (errno == EINTR)
+				continue;
 			fprintf(stderr, "select failed: %s\n", strerror(errno));
 			exit_nicely();
 		}
