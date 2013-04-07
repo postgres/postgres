@@ -2079,8 +2079,10 @@ BufferGetLSNAtomic(Buffer buffer)
 	char				*page = BufferGetPage(buffer);
 	XLogRecPtr			 lsn;
 
-	/* Local buffers don't need a lock. */
-	if (BufferIsLocal(buffer))
+	/*
+	 * If we don't need locking for correctness, fastpath out.
+	 */
+	if (!DataChecksumsEnabled() || BufferIsLocal(buffer))
 		return PageGetLSN(page);
 
 	/* Make sure we've got a real buffer, and that we hold a pin on it. */
