@@ -17,6 +17,7 @@
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
 #include "catalog/pg_control.h"
+#include "common/relpath.h"
 #include "utils/guc.h"
 #include "utils/timestamp.h"
 
@@ -83,7 +84,10 @@ xlog_desc(StringInfo buf, uint8 xl_info, char *rec)
 	}
 	else if (info == XLOG_HINT)
 	{
-		appendStringInfo(buf, "page hint");
+		BkpBlock *bkp = (BkpBlock *) rec;
+		appendStringInfo(buf, "page hint: %s block %u",
+						 relpathperm(bkp->node, bkp->fork),
+						 bkp->block);
 	}
 	else if (info == XLOG_BACKUP_END)
 	{

@@ -2682,8 +2682,8 @@ MarkBufferDirtyHint(Buffer buffer)
 			 * as long as we serialise it somehow we're OK. We choose to
 			 * set LSN while holding the buffer header lock, which causes
 			 * any reader of an LSN who holds only a share lock to also
-			 * obtain a buffer header lock before using PageGetLSN().
-			 * Fortunately, thats not too many places.
+			 * obtain a buffer header lock before using PageGetLSN(),
+			 * which is enforced in BufferGetLSNAtomic().
 			 *
 			 * If checksums are enabled, you might think we should reset the
 			 * checksum here. That will happen when the page is written
