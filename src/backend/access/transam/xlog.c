@@ -646,7 +646,7 @@ static void CreateEndOfRecoveryRecord(void);
 static void CheckPointGuts(XLogRecPtr checkPointRedo, int flags);
 static void KeepLogSeg(XLogRecPtr recptr, XLogSegNo *logSegNo);
 
-static bool XLogCheckBuffer(XLogRecData *rdata, bool doPageWrites,
+static bool XLogCheckBuffer(XLogRecData *rdata, bool holdsExclusiveLock,
 				XLogRecPtr *lsn, BkpBlock *bkpb);
 static Buffer RestoreBackupBlockContents(XLogRecPtr lsn, BkpBlock bkpb,
 				char *blk, bool get_cleanup_lock, bool keep_buffer);
@@ -822,7 +822,7 @@ begin:;
 				{
 					/* OK, put it in this slot */
 					dtbuf[i] = rdt->buffer;
-					if (XLogCheckBuffer(rdt, doPageWrites,
+					if (doPageWrites && XLogCheckBuffer(rdt, true,
 										&(dtbuf_lsn[i]), &(dtbuf_xlg[i])))
 					{
 						dtbuf_bkp[i] = true;
@@ -1243,7 +1243,7 @@ begin:;
  * save the buffer's LSN at *lsn.
  */
 static bool
-XLogCheckBuffer(XLogRecData *rdata, bool doPageWrites,
+XLogCheckBuffer(XLogRecData *rdata, bool holdsExclusiveLock,
 				XLogRecPtr *lsn, BkpBlock *bkpb)
 {
 	Page		page;
@@ -1251,15 +1251,17 @@ XLogCheckBuffer(XLogRecData *rdata, bool doPageWrites,
 	page = BufferGetPage(rdata->buffer);
 
 	/*
-	 * XXX We assume page LSN is first data on *every* page that can be passed
-	 * to XLogInsert, whether it otherwise has the standard page layout or
-	 * not. We don't need the buffer header lock for PageGetLSN because we
-	 * have exclusive lock on the page and/or the relation.
+	 * We assume page LSN is first data on *every* page that can be passed
+	 * to XLogInsert, whether it has the standard page layout or not. We
+	 * don't need to take the buffer header lock for PageGetLSN if we hold
+	 * an exclusive lock on the page and/or the relation.
 	 */
-	*lsn = BufferGetLSNAtomic(rdata->buffer);
+	if (holdsExclusiveLock)
+		*lsn = PageGetLSN(page);
+	else
+		*lsn = BufferGetLSNAtomic(rdata->buffer);
 
-	if (doPageWrites &&
-		*lsn <= RedoRecPtr)
+	if (*lsn <= RedoRecPtr)
 	{
 		/*
 		 * The page needs to be backed up, so set up *bkpb
@@ -7683,7 +7685,10 @@ XLogSaveBufferForHint(Buffer buffer)
 	rdata[0].buffer = buffer;
 	rdata[0].buffer_std = true;
 
-	if (XLogCheckBuffer(rdata, true, &lsn, &bkpb))
+	/*
+	 * Check buffer while not holding an exclusive lock.
+	 */
+	if (XLogCheckBuffer(rdata, false, &lsn, &bkpb))
 	{
 		char copied_buffer[BLCKSZ];
 		char *origdata = (char *) BufferGetBlock(buffer);
