@@ -44,6 +44,17 @@ record a full page image in WAL.  Hint bits updates should be protected using
 MarkBufferDirtyHint(), which is responsible for writing the full-page image
 when necessary.
 
+Note that when we write a page checksum we include the hopefully zero bytes
+that form the hole in the centre of a standard page. Thus, when we read the
+block back from storage we implicitly check that the hole is still all zeroes.
+We do this to ensure that we spot errors that could have destroyed data even
+if they haven't actually done so. Full page images stored in WAL do *not*
+check that the hole is all zero; the data in the hole is simply skipped and
+re-zeroed if the backup block is reapplied. We do this because a failure in
+WAL is a fatal error and prevents further recovery, whereas a checksum failure
+on a normal data block is a hard error but not a critical one for the server,
+even if it is a very bad thing for the user.
+
 New WAL records cannot be written during recovery, so hint bits set during
 recovery must not dirty the page if the buffer is not already dirty, when
 checksums are enabled.  Systems in Hot-Standby mode may benefit from hint bits
