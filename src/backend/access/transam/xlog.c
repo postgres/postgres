@@ -7523,9 +7523,9 @@ CreateRestartPoint(int flags)
 }
 
 /*
- * Calculate the last segment that we need to retain because of
- * wal_keep_segments, by subtracting wal_keep_segments from
- * the given xlog location, recptr.
+ * Retreat *logSegNo to the last segment that we need to retain because of
+ * wal_keep_segments. This is calculated by subtracting wal_keep_segments
+ * from the given xlog location, recptr.
  */
 static void
 KeepLogSeg(XLogRecPtr recptr, XLogSegNo *logSegNo)
@@ -7541,7 +7541,7 @@ KeepLogSeg(XLogRecPtr recptr, XLogSegNo *logSegNo)
 	if (segno <= wal_keep_segments)
 		segno = 1;
 	else
-		segno = *logSegNo - wal_keep_segments;
+		segno = segno - wal_keep_segments;
 
 	/* don't delete WAL segments newer than the calculated segment */
 	if (segno < *logSegNo)
