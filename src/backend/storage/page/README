@@ -44,7 +44,7 @@ record a full page image in WAL.  Hint bits updates should be protected using
 MarkBufferDirtyHint(), which is responsible for writing the full-page image
 when necessary.
 
-Note that when we write a page checksum we include the hopefully zero bytes
+Note that when we write a page checksum we include the hopefully zeroed bytes
 that form the hole in the centre of a standard page. Thus, when we read the
 block back from storage we implicitly check that the hole is still all zeroes.
 We do this to ensure that we spot errors that could have destroyed data even
