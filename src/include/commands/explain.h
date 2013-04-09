@@ -47,6 +47,7 @@ typedef void (*ExplainOneQuery_hook_type) (Query *query,
 													   IntoClause *into,
 													   ExplainState *es,
 													 const char *queryString,
+													   DestReceiver *dest,
 													   ParamListInfo params);
 extern PGDLLIMPORT ExplainOneQuery_hook_type ExplainOneQuery_hook;
 

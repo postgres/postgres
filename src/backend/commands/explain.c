@@ -312,7 +312,7 @@ ExplainOneQuery(Query *query, IntoClause *into, ExplainState *es,
 
 	/* if an advisor plugin is present, let it manage things */
 	if (ExplainOneQuery_hook)
-		(*ExplainOneQuery_hook) (query, into, es, queryString, params);
+		(*ExplainOneQuery_hook) (query, into, es, queryString, dest, params);
 	else
 	{
 		PlannedStmt *plan;
