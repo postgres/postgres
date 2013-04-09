@@ -25,6 +25,11 @@
 typedef unsigned int pg_wchar;
 
 /*
+ * Maximum byte length of multibyte characters in any backend encoding
+ */
+#define MAX_MULTIBYTE_CHAR_LEN	4
+
+/*
  * various definitions for EUC
  */
 #define SS2 0x8e				/* single shift 2 (JIS0201) */

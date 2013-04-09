@@ -77,12 +77,6 @@ unique_array(trgm *a, int len)
 	return curend + 1 - a;
 }
 
-#ifdef KEEPONLYALNUM
-#define iswordchr(c)	(t_isalpha(c) || t_isdigit(c))
-#else
-#define iswordchr(c)	(!t_isspace(c))
-#endif
-
 /*
  * Finds first word in string, returns pointer to the word,
  * endword points to the character after word
@@ -92,7 +86,7 @@ find_word(char *str, int lenstr, char **endword, int *charlen)
 {
 	char	   *beginword = str;
 
-	while (beginword - str < lenstr && !iswordchr(beginword))
+	while (beginword - str < lenstr && !ISWORDCHR(beginword))
 		beginword += pg_mblen(beginword);
 
 	if (beginword - str >= lenstr)
@@ -100,7 +94,7 @@ find_word(char *str, int lenstr, char **endword, int *charlen)
 
 	*endword = beginword;
 	*charlen = 0;
-	while (*endword - str < lenstr && iswordchr(*endword))
+	while (*endword - str < lenstr && ISWORDCHR(*endword))
 	{
 		*endword += pg_mblen(*endword);
 		(*charlen)++;
@@ -114,7 +108,7 @@ find_word(char *str, int lenstr, char **endword, int *charlen)
  * which is always exactly three bytes.  If we have three single-byte
  * characters, we just use them as-is; otherwise we form a hash value.
  */
-static void
+void
 compact_trigram(trgm *tptr, char *str, int bytelen)
 {
 	if (bytelen == 3)
@@ -290,7 +284,7 @@ get_wildcard_part(const char *str, int lenstr,
 	{
 		if (in_escape)
 		{
-			if (iswordchr(beginword))
+			if (ISWORDCHR(beginword))
 				break;
 			in_escape = false;
 			in_leading_wildcard_meta = false;
@@ -301,7 +295,7 @@ get_wildcard_part(const char *str, int lenstr,
 				in_escape = true;
 			else if (ISWILDCARDCHAR(beginword))
 				in_leading_wildcard_meta = true;
-			else if (iswordchr(beginword))
+			else if (ISWORDCHR(beginword))
 				break;
 			else
 				in_leading_wildcard_meta = false;
@@ -344,7 +338,7 @@ get_wildcard_part(const char *str, int lenstr,
 		clen = pg_mblen(endword);
 		if (in_escape)
 		{
-			if (iswordchr(endword))
+			if (ISWORDCHR(endword))
 			{
 				memcpy(s, endword, clen);
 				(*charlen)++;
@@ -372,7 +366,7 @@ get_wildcard_part(const char *str, int lenstr,
 				in_trailing_wildcard_meta = true;
 				break;
 			}
-			else if (iswordchr(endword))
+			else if (ISWORDCHR(endword))
 			{
 				memcpy(s, endword, clen);
 				(*charlen)++;

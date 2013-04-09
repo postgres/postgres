@@ -80,13 +80,15 @@ gin_extract_query_trgm(PG_FUNCTION_ARGS)
 	StrategyNumber strategy = PG_GETARG_UINT16(2);
 
 	/* bool   **pmatch = (bool **) PG_GETARG_POINTER(3); */
-	/* Pointer	  *extra_data = (Pointer *) PG_GETARG_POINTER(4); */
+	Pointer   **extra_data = (Pointer **) PG_GETARG_POINTER(4);
+
 	/* bool   **nullFlags = (bool **) PG_GETARG_POINTER(5); */
 	int32	   *searchMode = (int32 *) PG_GETARG_POINTER(6);
 	Datum	   *entries = NULL;
 	TRGM	   *trg;
 	int32		trglen;
 	trgm	   *ptr;
+	TrgmPackedGraph *graph;
 	int32		i;
 
 	switch (strategy)
@@ -106,6 +108,33 @@ gin_extract_query_trgm(PG_FUNCTION_ARGS)
 			 * potentially-matching string must include.
 			 */
 			trg = generate_wildcard_trgm(VARDATA(val), VARSIZE(val) - VARHDRSZ);
+			break;
+		case RegExpICaseStrategyNumber:
+#ifndef IGNORECASE
+			elog(ERROR, "cannot handle ~* with case-sensitive trigrams");
+#endif
+			/* FALL THRU */
+		case RegExpStrategyNumber:
+			trg = createTrgmNFA(val, &graph, PG_GET_COLLATION());
+			if (trg && ARRNELEM(trg) > 0)
+			{
+				/*
+				 * Successful regex processing: store NFA-like graph as
+				 * extra_data.	GIN API requires an array of nentries
+				 * Pointers, but we just put the same value in each element.
+				 */
+				trglen = ARRNELEM(trg);
+				*extra_data = (Pointer *) palloc(sizeof(Pointer) * trglen);
+				for (i = 0; i < trglen; i++)
+					(*extra_data)[i] = (Pointer) graph;
+			}
+			else
+			{
+				/* No result: have to do full index scan. */
+				*nentries = 0;
+				*searchMode = GIN_SEARCH_MODE_ALL;
+				PG_RETURN_POINTER(entries);
+			}
 			break;
 		default:
 			elog(ERROR, "unrecognized strategy number: %d", strategy);
@@ -146,8 +175,7 @@ gin_trgm_consistent(PG_FUNCTION_ARGS)
 
 	/* text    *query = PG_GETARG_TEXT_P(2); */
 	int32		nkeys = PG_GETARG_INT32(3);
-
-	/* Pointer	  *extra_data = (Pointer *) PG_GETARG_POINTER(4); */
+	Pointer    *extra_data = (Pointer *) PG_GETARG_POINTER(4);
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(5);
 	bool		res;
 	int32		i,
@@ -188,6 +216,21 @@ gin_trgm_consistent(PG_FUNCTION_ARGS)
 					break;
 				}
 			}
+			break;
+		case RegExpICaseStrategyNumber:
+#ifndef IGNORECASE
+			elog(ERROR, "cannot handle ~* with case-sensitive trigrams");
+#endif
+			/* FALL THRU */
+		case RegExpStrategyNumber:
+			if (nkeys < 1)
+			{
+				/* Regex processing gave no result: do full index scan */
+				res = true;
+			}
+			else
+				res = trigramsMatchGraph((TrgmPackedGraph *) extra_data[0],
+										 check);
 			break;
 		default:
 			elog(ERROR, "unrecognized strategy number: %d", strategy);

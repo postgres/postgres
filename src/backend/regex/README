@@ -7,8 +7,8 @@ So this file is an attempt to reverse-engineer some docs.
 General source-file layout
 --------------------------
 
-There are five separately-compilable source files, each exposing exactly
-one exported function:
+There are six separately-compilable source files, five of which expose
+exactly one exported function apiece:
 	regcomp.c: pg_regcomp
 	regexec.c: pg_regexec
 	regerror.c: pg_regerror
@@ -18,6 +18,9 @@ one exported function:
 library version from any similar one that might be present on a particular
 system.  They'd need to be removed or replaced in any standalone version
 of the library.)
+
+The sixth file, regexport.c, exposes multiple functions that allow extraction
+of info about a compiled regex (see regexport.h).
 
 There are additional source files regc_*.c that are #include'd in regcomp,
 and similarly additional source files rege_*.c that are #include'd in
@@ -45,6 +48,7 @@ regexec.c		Top-level regex execution code
 rege_dfa.c		DFA creation and execution
 regerror.c		pg_regerror: generate text for a regex error code
 regfree.c		pg_regfree: API to free a no-longer-needed regex_t
+regexport.c		Functions for extracting info from a regex_t
 regprefix.c		Code for extracting a common prefix from a regex_t
 
 The locale-specific code is concerned primarily with case-folding and with
@@ -56,6 +60,7 @@ The header files for the library are in src/include/regex/:
 regcustom.h		Customizes library for particular application
 regerrs.h		Error message list
 regex.h			Exported API
+regexport.h		Exported API for regexport.c
 regguts.h		Internals declarations
 
 

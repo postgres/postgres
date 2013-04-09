@@ -9,7 +9,7 @@
 
  <para>
   The <filename>pg_trgm</filename> module provides functions and operators
-  for determining the similarity of <acronym>ASCII</>
+  for determining the similarity of
   alphanumeric text based on trigram matching, as
   well as index operator classes that support fast searching for similar
   strings.
@@ -28,7 +28,9 @@
 
   <note>
    <para>
-    A string is considered to have two spaces
+    <filename>pg_trgm</filename> ignores non-word characters
+    (non-alphanumerics) when extracting trigrams from a string.
+    Each word is considered to have two spaces
     prefixed and one space suffixed when determining the set
     of trigrams contained in the string.
     For example, the set of trigrams in the string
@@ -37,6 +39,16 @@
     <quote><literal> ca</literal></quote>,
     <quote><literal>cat</literal></quote>, and
     <quote><literal>at </literal></quote>.
+    The set of trigrams in the string
+    <quote><literal>foo|bar</literal></quote> is
+    <quote><literal>  f</literal></quote>,
+    <quote><literal> fo</literal></quote>,
+    <quote><literal>foo</literal></quote>,
+    <quote><literal>oo </literal></quote>,
+    <quote><literal>  b</literal></quote>,
+    <quote><literal> ba</literal></quote>,
+    <quote><literal>bar</literal></quote>, and
+    <quote><literal>ar </literal></quote>.
    </para>
   </note>
  </sect2>
@@ -145,9 +157,10 @@
    operator classes that allow you to create an index over a text column for
    the purpose of very fast similarity searches.  These index types support
    the above-described similarity operators, and additionally support
-   trigram-based index searches for <literal>LIKE</> and <literal>ILIKE</>
-   queries.  (These indexes do not support equality nor simple comparison
-   operators, so you may need a regular B-tree index too.)
+   trigram-based index searches for <literal>LIKE</>, <literal>ILIKE</>,
+   <literal>~</> and <literal>~*</> queries.  (These indexes do not
+   support equality nor simple comparison operators, so you may need a
+   regular B-tree index too.)
   </para>
 
   <para>
@@ -200,6 +213,26 @@ SELECT * FROM test_trgm WHERE t LIKE '%foo%bar';
    and then looking these up in the index.  The more trigrams in the search
    string, the more effective the index search is.  Unlike B-tree based
    searches, the search string need not be left-anchored.
+  </para>
+
+  <para>
+   Beginning in <productname>PostgreSQL</> 9.3, <filename>pg_trgm</filename>
+   GIN indexes also support index searches for regular-expression matches
+   (<literal>~</> and <literal>~*</> operators), for example
+<programlisting>
+SELECT * FROM test_trgm WHERE t ~ '(foo|bar)';
+</programlisting>
+   The index search works by extracting trigrams from the regular expression
+   and then looking these up in the index.  The more trigrams that can be
+   extracted from the regular expression, the more effective the index search
+   is.  Unlike B-tree based searches, the search string need not be
+   left-anchored.
+  </para>
+
+  <para>
+   For both <literal>LIKE</> and regular-expression searches, keep in mind
+   that a pattern with no extractable trigrams will degenerate to a full-index
+   scan.
   </para>
 
   <para>

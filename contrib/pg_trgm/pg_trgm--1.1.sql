@@ -1,4 +1,4 @@
-/* contrib/pg_trgm/pg_trgm--1.0.sql */
+/* contrib/pg_trgm/pg_trgm--1.1.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION pg_trgm" to load this file. \quit
@@ -164,3 +164,9 @@ AS
 ALTER OPERATOR FAMILY gin_trgm_ops USING gin ADD
         OPERATOR        3       pg_catalog.~~ (text, text),
         OPERATOR        4       pg_catalog.~~* (text, text);
+
+-- Add operators that are new in 9.3.
+
+ALTER OPERATOR FAMILY gin_trgm_ops USING gin ADD
+        OPERATOR        5       pg_catalog.~ (text, text),
+        OPERATOR        6       pg_catalog.~* (text, text);

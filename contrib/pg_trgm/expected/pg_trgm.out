@@ -60,7 +60,7 @@ select similarity('---', '####---');
 (1 row)
 
 CREATE TABLE test_trgm(t text);
-\copy test_trgm from 'data/trgm.data
+\copy test_trgm from 'data/trgm.data'
 select t,similarity(t,'qwertyu0988') as sml from test_trgm where t % 'qwertyu0988' order by sml desc, t;
       t      |   sml    
 -------------+----------
@@ -3470,6 +3470,7 @@ select t,similarity(t,'gwertyu1988') as sml from test_trgm where t % 'gwertyu198
 create table test2(t text);
 insert into test2 values ('abcdef');
 insert into test2 values ('quark');
+insert into test2 values ('  z foo bar');
 create index test2_idx_gin on test2 using gin (t gin_trgm_ops);
 set enable_seqscan=off;
 explain (costs off)
@@ -3519,6 +3520,142 @@ select * from test2 where t ilike 'qua%';
    t   
 -------
  quark
+(1 row)
+
+select * from test2 where t like '%z foo bar%';
+      t      
+-------------
+   z foo bar
+(1 row)
+
+select * from test2 where t like '  z foo%';
+      t      
+-------------
+   z foo bar
+(1 row)
+
+explain (costs off)
+  select * from test2 where t ~ '[abc]{3}';
+                 QUERY PLAN                 
+--------------------------------------------
+ Bitmap Heap Scan on test2
+   Recheck Cond: (t ~ '[abc]{3}'::text)
+   ->  Bitmap Index Scan on test2_idx_gin
+         Index Cond: (t ~ '[abc]{3}'::text)
+(4 rows)
+
+explain (costs off)
+  select * from test2 where t ~* 'DEF';
+                QUERY PLAN                
+------------------------------------------
+ Bitmap Heap Scan on test2
+   Recheck Cond: (t ~* 'DEF'::text)
+   ->  Bitmap Index Scan on test2_idx_gin
+         Index Cond: (t ~* 'DEF'::text)
+(4 rows)
+
+select * from test2 where t ~ '[abc]{3}';
+   t    
+--------
+ abcdef
+(1 row)
+
+select * from test2 where t ~ 'a[bc]+d';
+   t    
+--------
+ abcdef
+(1 row)
+
+select * from test2 where t ~ '(abc)*$';
+      t      
+-------------
+ abcdef
+ quark
+   z foo bar
+(3 rows)
+
+select * from test2 where t ~* 'DEF';
+   t    
+--------
+ abcdef
+(1 row)
+
+select * from test2 where t ~ 'dEf';
+ t 
+---
+(0 rows)
+
+select * from test2 where t ~* '^q';
+   t   
+-------
+ quark
+(1 row)
+
+select * from test2 where t ~* '[abc]{3}[def]{3}';
+   t    
+--------
+ abcdef
+(1 row)
+
+select * from test2 where t ~* 'ab[a-z]{3}';
+   t    
+--------
+ abcdef
+(1 row)
+
+select * from test2 where t ~* '(^| )qua';
+   t   
+-------
+ quark
+(1 row)
+
+select * from test2 where t ~ 'q.*rk$';
+   t   
+-------
+ quark
+(1 row)
+
+select * from test2 where t ~ 'q';
+   t   
+-------
+ quark
+(1 row)
+
+select * from test2 where t ~ '[a-z]{3}';
+      t      
+-------------
+ abcdef
+ quark
+   z foo bar
+(3 rows)
+
+select * from test2 where t ~* '(a{10}|b{10}|c{10}){10}';
+ t 
+---
+(0 rows)
+
+select * from test2 where t ~ 'z foo bar';
+      t      
+-------------
+   z foo bar
+(1 row)
+
+select * from test2 where t ~ ' z foo bar';
+      t      
+-------------
+   z foo bar
+(1 row)
+
+select * from test2 where t ~ '  z foo bar';
+      t      
+-------------
+   z foo bar
+(1 row)
+
+select * from test2 where t ~ '  z foo';
+      t      
+-------------
+   z foo bar
 (1 row)
 
 drop index test2_idx_gin;

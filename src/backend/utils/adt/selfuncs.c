@@ -6746,6 +6746,7 @@ gincost_pattern(IndexOptInfo *index, int indexcol,
 				GinQualCounts *counts)
 {
 	Oid			extractProcOid;
+	Oid			collation;
 	int			strategy_op;
 	Oid			lefttype,
 				righttype;
@@ -6783,7 +6784,16 @@ gincost_pattern(IndexOptInfo *index, int indexcol,
 			 get_rel_name(index->indexoid));
 	}
 
-	OidFunctionCall7(extractProcOid,
+	/*
+	 * Choose collation to pass to extractProc (should match initGinState).
+	 */
+	if (OidIsValid(index->indexcollations[indexcol]))
+		collation = index->indexcollations[indexcol];
+	else
+		collation = DEFAULT_COLLATION_OID;
+
+	OidFunctionCall7Coll(extractProcOid,
+					 collation,
 					 query,
 					 PointerGetDatum(&nentries),
 					 UInt16GetDatum(strategy_op),
