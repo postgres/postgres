@@ -52,22 +52,21 @@ static void refresh_matview_datafill(DestReceiver *dest, Query *query,
 									 const char *queryString);
 
 /*
- * SetRelationIsScannable
- *		Make the relation appear scannable.
+ * SetMatViewToPopulated
+ *		Indicate that the materialized view has been populated by its query.
  *
- * NOTE: This is only implemented for materialized views. The heap starts out
- * in a state that doesn't look scannable, and can only transition from there
- * to scannable, unless a new heap is created.
+ * NOTE: The heap starts out in a state that doesn't look scannable, and can
+ * only transition from there to scannable at the time a new heap is created.
  *
  * NOTE: caller must be holding an appropriate lock on the relation.
  */
 void
-SetRelationIsScannable(Relation relation)
+SetMatViewToPopulated(Relation relation)
 {
 	Page        page;
 
 	Assert(relation->rd_rel->relkind == RELKIND_MATVIEW);
-	Assert(relation->rd_isscannable == false);
+	Assert(relation->rd_ispopulated == false);
 
 	page = (Page) palloc(BLCKSZ);
 	PageInit(page, BLCKSZ, 0);
@@ -323,7 +322,7 @@ transientrel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 		myState->hi_options |= HEAP_INSERT_SKIP_WAL;
 	myState->bistate = GetBulkInsertState();
 
-	SetRelationIsScannable(transientrel);
+	SetMatViewToPopulated(transientrel);
 
 	/* Not using WAL requires smgr_targblock be initially invalid */
 	Assert(RelationGetTargetBlock(transientrel) == InvalidBlockNumber);

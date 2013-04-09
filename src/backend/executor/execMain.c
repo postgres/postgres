@@ -499,7 +499,8 @@ ExecutorRewind(QueryDesc *queryDesc)
  *		Check that relations which are to be accessed are in a scannable
  *		state.
  *
- * If not, throw error. For a materialized view, suggest refresh.
+ * Currently the only relations which are not are materialized views which
+ * have not been populated by their queries.
  */
 static void
 ExecCheckRelationsScannable(List *rangeTable)
@@ -513,32 +514,29 @@ ExecCheckRelationsScannable(List *rangeTable)
 		if (rte->rtekind != RTE_RELATION)
 			continue;
 
-		if (!RelationIdIsScannable(rte->relid))
-		{
-			if (rte->relkind == RELKIND_MATVIEW)
-			{
-				/* It is OK to replace the contents of an invalid matview. */
-				if (rte->isResultRel)
-					continue;
+		if (rte->relkind != RELKIND_MATVIEW)
+			continue;
 
-				ereport(ERROR,
-						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-						 errmsg("materialized view \"%s\" has not been populated",
-								get_rel_name(rte->relid)),
-						 errhint("Use the REFRESH MATERIALIZED VIEW command.")));
-			}
-			else
-				/* This should never happen, so elog will do. */
-				elog(ERROR, "relation \"%s\" is not flagged as scannable",
-					 get_rel_name(rte->relid));
-		}
+		/* It is OK to target an unpopulated materialized for results. */
+		if (rte->isResultRel)
+			continue;
+
+		if (!RelationIdIsScannable(rte->relid))
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("materialized view \"%s\" has not been populated",
+							get_rel_name(rte->relid)),
+					 errhint("Use the REFRESH MATERIALIZED VIEW command.")));
 	}
 }
 
 /*
- * Tells whether a relation is scannable.
+ * Tells whether a relation is scannable based on its OID.
  *
- * Currently only non-populated materialzed views are not.
+ * Currently only non-populated materialized views are not.  This is likely to
+ * change to include other conditions.
+ *
+ * This should only be called while a lock is held on the relation.
  */
 static bool
 RelationIdIsScannable(Oid relid)
@@ -546,9 +544,9 @@ RelationIdIsScannable(Oid relid)
 	Relation	relation;
 	bool		result;
 
-	relation = RelationIdGetRelation(relid);
-	result = relation->rd_isscannable;
-	RelationClose(relation);
+	relation = heap_open(relid, NoLock);
+	result = RelationIsScannable(relation);
+	heap_close(relation, NoLock);
 
 	return result;
 }
@@ -945,7 +943,14 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 
 	/*
 	 * Unless we are creating a view or are creating a materialized view WITH
-	 * NO DATA, ensure that all referenced relations are scannable.
+	 * NO DATA, ensure that all referenced relations are scannable.  The
+	 * omitted cases will be checked as SELECT statements in a different
+	 * phase, so checking again here would be wasteful and it would generate
+	 * errors on a materialized view referenced as a target.
+	 *
+	 * NB: This is being done after all relations are locked, files have been
+	 * opened, etc., to avoid duplicating that effort or creating deadlock
+	 * possibilities.
 	 */
 	if ((eflags & EXEC_FLAG_WITH_NO_DATA) == 0)
 		ExecCheckRelationsScannable(rangeTable);

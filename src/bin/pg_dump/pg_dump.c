@@ -4264,7 +4264,8 @@ getTables(Archive *fout, int *numTables)
 						  "c.relhasindex, c.relhasrules, c.relhasoids, "
 						  "c.relfrozenxid, tc.oid AS toid, "
 						  "tc.relfrozenxid AS tfrozenxid, "
-		 "c.relpersistence, pg_relation_is_scannable(c.oid) as isscannable, "
+						  "c.relpersistence, "
+						  "CASE WHEN c.relkind = '%c' THEN pg_relation_is_scannable(c.oid) ELSE 't'::bool END as isscannable, "
 						  "c.relpages, "
 						  "CASE WHEN c.reloftype <> 0 THEN c.reloftype::pg_catalog.regtype ELSE NULL END AS reloftype, "
 						  "d.refobjid AS owning_tab, "
@@ -4282,6 +4283,7 @@ getTables(Archive *fout, int *numTables)
 				   "WHERE c.relkind in ('%c', '%c', '%c', '%c', '%c', '%c') "
 						  "ORDER BY c.oid",
 						  username_subquery,
+						  RELKIND_MATVIEW,
 						  RELKIND_SEQUENCE,
 						  RELKIND_RELATION, RELKIND_SEQUENCE,
 						  RELKIND_VIEW, RELKIND_COMPOSITE_TYPE,

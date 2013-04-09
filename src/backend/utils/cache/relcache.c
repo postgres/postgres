@@ -958,9 +958,9 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 
 	if (relation->rd_rel->relkind == RELKIND_MATVIEW &&
 		heap_is_matview_init_state(relation))
-		relation->rd_isscannable = false;
+		relation->rd_ispopulated = false;
 	else
-		relation->rd_isscannable = true;
+		relation->rd_ispopulated = true;
 
 	/*
 	 * now we can free the memory allocated for pg_class_tuple
@@ -1531,7 +1531,7 @@ formrdesc(const char *relationName, Oid relationReltype,
 	 * initialize physical addressing information for the relation
 	 */
 	RelationInitPhysicalAddr(relation);
-	relation->rd_isscannable = true;
+	relation->rd_ispopulated = true;
 
 	/*
 	 * initialize the rel-has-index flag, using hardwired knowledge
@@ -1756,7 +1756,7 @@ RelationReloadIndexInfo(Relation relation)
 	heap_freetuple(pg_class_tuple);
 	/* We must recalculate physical address in case it changed */
 	RelationInitPhysicalAddr(relation);
-	relation->rd_isscannable = true;
+	relation->rd_ispopulated = true;
 
 	/*
 	 * For a non-system index, there are fields of the pg_index row that are
@@ -1907,9 +1907,9 @@ RelationClearRelation(Relation relation, bool rebuild)
 		RelationInitPhysicalAddr(relation);
 		if (relation->rd_rel->relkind == RELKIND_MATVIEW &&
 			heap_is_matview_init_state(relation))
-			relation->rd_isscannable = false;
+			relation->rd_ispopulated = false;
 		else
-			relation->rd_isscannable = true;
+			relation->rd_ispopulated = true;
 
 		if (relation->rd_rel->relkind == RELKIND_INDEX)
 		{
@@ -2700,9 +2700,9 @@ RelationBuildLocalRelation(const char *relname,
 
 	/* materialized view not initially scannable */
 	if (relkind == RELKIND_MATVIEW)
-		rel->rd_isscannable = false;
+		rel->rd_ispopulated = false;
 	else
-		rel->rd_isscannable = true;
+		rel->rd_ispopulated = true;
 
 	/*
 	 * Okay to insert into the relcache hash tables.
@@ -4450,9 +4450,9 @@ load_relcache_init_file(bool shared)
 		RelationInitPhysicalAddr(rel);
 		if (rel->rd_rel->relkind == RELKIND_MATVIEW &&
 			heap_is_matview_init_state(rel))
-			rel->rd_isscannable = false;
+			rel->rd_ispopulated = false;
 		else
-			rel->rd_isscannable = true;
+			rel->rd_ispopulated = true;
 	}
 
 	/*

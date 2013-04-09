@@ -83,7 +83,7 @@ typedef struct RelationData
 	BackendId	rd_backend;		/* owning backend id, if temporary relation */
 	bool		rd_islocaltemp; /* rel is a temp rel of this session */
 	bool		rd_isnailed;	/* rel is nailed in cache */
-	bool		rd_isscannable; /* rel can be scanned */
+	bool		rd_ispopulated;	/* matview has query results */
 	bool		rd_isvalid;		/* relcache entry is valid */
 	char		rd_indexvalid;	/* state of rd_indexlist: 0 = not valid, 1 =
 								 * valid, 2 = temporarily forced */
@@ -406,6 +406,16 @@ typedef struct StdRdOptions
 #define RELATION_IS_OTHER_TEMP(relation) \
 	((relation)->rd_rel->relpersistence == RELPERSISTENCE_TEMP && \
 	 !(relation)->rd_islocaltemp)
+
+
+/*
+ * RelationIsScannable
+ * 		Currently can only be false for a materialized view which has not been
+ * 		populated by its query.  This is likely to get more complicated later,
+ * 		so use a macro which looks like a function.
+ */
+#define RelationIsScannable(relation) ((relation)->rd_ispopulated)
+
 
 /* routines in utils/cache/relcache.c */
 extern void RelationIncrementReferenceCount(Relation rel);

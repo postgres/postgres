@@ -1615,7 +1615,8 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 		 * expansion doesn't give us a lot to work with, so we are trusting
 		 * earlier validations to throw error if needed.
 		 */
-		if (rel->rd_rel->relkind == RELKIND_MATVIEW && rel->rd_isscannable)
+		if (rel->rd_rel->relkind == RELKIND_MATVIEW &&
+			RelationIsScannable(rel))
 		{
 			heap_close(rel, NoLock);
 			continue;
