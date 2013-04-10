@@ -187,7 +187,6 @@ XLogReadRecord(XLogReaderState *state, XLogRecPtr RecPtr, char **errormsg)
 	bool		gotheader;
 	int			readOff;
 
-	randAccess = false;
 	/* reset error state */
 	*errormsg = NULL;
 	state->errormsg_buf[0] = '\0';
