@@ -476,10 +476,13 @@ static void printTrgmPackedGraph(TrgmPackedGraph *packedGraph, TRGM *trigrams);
  *
  * Returns an array of trigrams required by the regular expression, or NULL if
  * the regular expression was too complex to analyze.  In addition, a packed
- * graph representation of the regex is returned into *graph.
+ * graph representation of the regex is returned into *graph.  The results
+ * must be allocated in rcontext (which might or might not be the current
+ * context).
  */
 TRGM *
-createTrgmNFA(text *text_re, TrgmPackedGraph **graph, Oid collation)
+createTrgmNFA(text *text_re, Oid collation,
+			  TrgmPackedGraph **graph, MemoryContext rcontext)
 {
 	TRGM	   *trg;
 	regex_t		regex;
@@ -488,10 +491,9 @@ createTrgmNFA(text *text_re, TrgmPackedGraph **graph, Oid collation)
 
 	/*
 	 * This processing generates a great deal of cruft, which we'd like to
-	 * clean up before returning (since this function is normally called in a
+	 * clean up before returning (since this function may be called in a
 	 * query-lifespan memory context).	Make a temp context we can work in so
-	 * that cleanup is easy.  Note that the returned data structures must be
-	 * allocated in caller's context, however.
+	 * that cleanup is easy.
 	 */
 	tmpcontext = AllocSetContextCreate(CurrentMemoryContext,
 									   "createTrgmNFA temporary context",
@@ -516,7 +518,7 @@ createTrgmNFA(text *text_re, TrgmPackedGraph **graph, Oid collation)
 	 */
 	PG_TRY();
 	{
-		trg = createTrgmNFAInternal(&regex, graph, oldcontext);
+		trg = createTrgmNFAInternal(&regex, graph, rcontext);
 	}
 	PG_CATCH();
 	{

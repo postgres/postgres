@@ -616,6 +616,50 @@ trgm_contained_by(TRGM *trg1, TRGM *trg2)
 		return true;
 }
 
+/*
+ * Return a palloc'd boolean array showing, for each trigram in "query",
+ * whether it is present in the trigram array "key".
+ * This relies on the "key" array being sorted, but "query" need not be.
+ */
+bool *
+trgm_presence_map(TRGM *query, TRGM *key)
+{
+	bool	   *result;
+	trgm	   *ptrq = GETARR(query),
+			   *ptrk = GETARR(key);
+	int			lenq = ARRNELEM(query),
+				lenk = ARRNELEM(key),
+				i;
+
+	result = (bool *) palloc0(lenq * sizeof(bool));
+
+	/* for each query trigram, do a binary search in the key array */
+	for (i = 0; i < lenq; i++)
+	{
+		int			lo = 0;
+		int			hi = lenk;
+
+		while (lo < hi)
+		{
+			int			mid = (lo + hi) / 2;
+			int			res = CMPTRGM(ptrq, ptrk + mid);
+
+			if (res < 0)
+				hi = mid;
+			else if (res > 0)
+				lo = mid + 1;
+			else
+			{
+				result[i] = true;
+				break;
+			}
+		}
+		ptrq++;
+	}
+
+	return result;
+}
+
 Datum
 similarity(PG_FUNCTION_ARGS)
 {

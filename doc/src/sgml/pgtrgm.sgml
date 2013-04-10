@@ -216,8 +216,8 @@ SELECT * FROM test_trgm WHERE t LIKE '%foo%bar';
   </para>
 
   <para>
-   Beginning in <productname>PostgreSQL</> 9.3, <filename>pg_trgm</filename>
-   GIN indexes also support index searches for regular-expression matches
+   Beginning in <productname>PostgreSQL</> 9.3, these index types also support
+   index searches for regular-expression matches
    (<literal>~</> and <literal>~*</> operators), for example
 <programlisting>
 SELECT * FROM test_trgm WHERE t ~ '(foo|bar)';

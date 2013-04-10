@@ -132,6 +132,12 @@ ALTER OPERATOR FAMILY gist_trgm_ops USING gist ADD
         OPERATOR        4       pg_catalog.~~* (text, text),
         FUNCTION        8 (text, text)  gtrgm_distance (internal, text, int, oid);
 
+-- Add operators that are new in 9.3.
+
+ALTER OPERATOR FAMILY gist_trgm_ops USING gist ADD
+        OPERATOR        5       pg_catalog.~ (text, text),
+        OPERATOR        6       pg_catalog.~* (text, text);
+
 -- support functions for gin
 CREATE FUNCTION gin_extract_value_trgm(text, internal)
 RETURNS internal

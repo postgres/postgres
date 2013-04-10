@@ -8,6 +8,25 @@
 #include "access/skey.h"
 
 
+typedef struct
+{
+	/* most recent inputs to gtrgm_consistent */
+	StrategyNumber strategy;
+	text	   *query;
+	/* extracted trigrams for query */
+	TRGM	   *trigrams;
+	/* if a regex operator, the extracted graph */
+	TrgmPackedGraph *graph;
+
+	/*
+	 * The "query" and "trigrams" are stored in the same palloc block as this
+	 * cache struct, at MAXALIGN'ed offsets.  The graph however isn't.
+	 */
+} gtrgm_consistent_cache;
+
+#define GETENTRY(vec,pos) ((TRGM *) DatumGetPointer((vec)->vector[(pos)].key))
+
+
 PG_FUNCTION_INFO_V1(gtrgm_in);
 Datum		gtrgm_in(PG_FUNCTION_ARGS);
 
@@ -37,8 +56,6 @@ Datum		gtrgm_penalty(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(gtrgm_picksplit);
 Datum		gtrgm_picksplit(PG_FUNCTION_ARGS);
-
-#define GETENTRY(vec,pos) ((TRGM *) DatumGetPointer((vec)->vector[(pos)].key))
 
 /* Number of one-bits in an unsigned byte */
 static const uint8 number_of_ones[256] = {
@@ -191,24 +208,30 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 	TRGM	   *qtrg;
 	bool		res;
 	Size		querysize = VARSIZE(query);
-	char	   *cache = (char *) fcinfo->flinfo->fn_extra,
-			   *cachedQuery = cache + MAXALIGN(sizeof(StrategyNumber));
+	gtrgm_consistent_cache *cache;
 
 	/*
-	 * Store both the strategy number and extracted trigrams in cache, because
-	 * trigram extraction is relatively CPU-expensive.	We must include
-	 * strategy number because trigram extraction depends on strategy.
+	 * We keep the extracted trigrams in cache, because trigram extraction is
+	 * relatively CPU-expensive.  When trying to reuse a cached value, check
+	 * strategy number not just query itself, because trigram extraction
+	 * depends on strategy.
 	 *
-	 * The cached structure contains the strategy number, then the input query
-	 * (starting at a MAXALIGN boundary), then the TRGM value (also starting
-	 * at a MAXALIGN boundary).
+	 * The cached structure is a single palloc chunk containing the
+	 * gtrgm_consistent_cache header, then the input query (starting at a
+	 * MAXALIGN boundary), then the TRGM value (also starting at a MAXALIGN
+	 * boundary).  However we don't try to include the regex graph (if any) in
+	 * that struct.  (XXX currently, this approach can leak regex graphs
+	 * across index rescans.  Not clear if that's worth fixing.)
 	 */
+	cache = (gtrgm_consistent_cache *) fcinfo->flinfo->fn_extra;
 	if (cache == NULL ||
-		strategy != *((StrategyNumber *) cache) ||
-		VARSIZE(cachedQuery) != querysize ||
-		memcmp(cachedQuery, query, querysize) != 0)
+		cache->strategy != strategy ||
+		VARSIZE(cache->query) != querysize ||
+		memcmp((char *) cache->query, (char *) query, querysize) != 0)
 	{
-		char	   *newcache;
+		gtrgm_consistent_cache *newcache;
+		TrgmPackedGraph *graph = NULL;
+		Size		qtrgsize;
 
 		switch (strategy)
 		{
@@ -225,28 +248,58 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 				qtrg = generate_wildcard_trgm(VARDATA(query),
 											  querysize - VARHDRSZ);
 				break;
+			case RegExpICaseStrategyNumber:
+#ifndef IGNORECASE
+				elog(ERROR, "cannot handle ~* with case-sensitive trigrams");
+#endif
+				/* FALL THRU */
+			case RegExpStrategyNumber:
+				qtrg = createTrgmNFA(query, PG_GET_COLLATION(),
+									 &graph, fcinfo->flinfo->fn_mcxt);
+				/* just in case an empty array is returned ... */
+				if (qtrg && ARRNELEM(qtrg) <= 0)
+				{
+					pfree(qtrg);
+					qtrg = NULL;
+				}
+				break;
 			default:
 				elog(ERROR, "unrecognized strategy number: %d", strategy);
 				qtrg = NULL;	/* keep compiler quiet */
 				break;
 		}
 
-		newcache = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
-									  MAXALIGN(sizeof(StrategyNumber)) +
-									  MAXALIGN(querysize) +
-									  VARSIZE(qtrg));
-		cachedQuery = newcache + MAXALIGN(sizeof(StrategyNumber));
+		qtrgsize = qtrg ? VARSIZE(qtrg) : 0;
 
-		*((StrategyNumber *) newcache) = strategy;
-		memcpy(cachedQuery, query, querysize);
-		memcpy(cachedQuery + MAXALIGN(querysize), qtrg, VARSIZE(qtrg));
+		newcache = (gtrgm_consistent_cache *)
+			MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+							   MAXALIGN(sizeof(gtrgm_consistent_cache)) +
+							   MAXALIGN(querysize) +
+							   qtrgsize);
+
+		newcache->strategy = strategy;
+		newcache->query = (text *)
+			((char *) newcache + MAXALIGN(sizeof(gtrgm_consistent_cache)));
+		memcpy((char *) newcache->query, (char *) query, querysize);
+		if (qtrg)
+		{
+			newcache->trigrams = (TRGM *)
+				((char *) newcache->query + MAXALIGN(querysize));
+			memcpy((char *) newcache->trigrams, (char *) qtrg, qtrgsize);
+			/* release qtrg in case it was made in fn_mcxt */
+			pfree(qtrg);
+		}
+		else
+			newcache->trigrams = NULL;
+		newcache->graph = graph;
 
 		if (cache)
 			pfree(cache);
-		fcinfo->flinfo->fn_extra = newcache;
+		fcinfo->flinfo->fn_extra = (void *) newcache;
+		cache = newcache;
 	}
 
-	qtrg = (TRGM *) (cachedQuery + MAXALIGN(querysize));
+	qtrg = cache->trigrams;
 
 	switch (strategy)
 	{
@@ -315,6 +368,57 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 						break;
 					}
 				}
+			}
+			break;
+		case RegExpICaseStrategyNumber:
+#ifndef IGNORECASE
+			elog(ERROR, "cannot handle ~* with case-sensitive trigrams");
+#endif
+			/* FALL THRU */
+		case RegExpStrategyNumber:
+			/* Regexp search is inexact */
+			*recheck = true;
+
+			/* Check regex match as much as we can with available info */
+			if (qtrg)
+			{
+				if (GIST_LEAF(entry))
+				{				/* all leafs contains orig trgm */
+					bool	   *check;
+
+					check = trgm_presence_map(qtrg, key);
+					res = trigramsMatchGraph(cache->graph, check);
+					pfree(check);
+				}
+				else if (ISALLTRUE(key))
+				{				/* non-leaf contains signature */
+					res = true;
+				}
+				else
+				{				/* non-leaf contains signature */
+					int32		k,
+								tmp = 0,
+								len = ARRNELEM(qtrg);
+					trgm	   *ptr = GETARR(qtrg);
+					BITVECP		sign = GETSIGN(key);
+
+					/* descend only if at least one trigram is present */
+					res = false;
+					for (k = 0; k < len; k++)
+					{
+						CPTRGM(((char *) &tmp), ptr + k);
+						if (GETBIT(sign, HASHVAL(tmp)))
+						{
+							res = true;
+							break;
+						}
+					}
+				}
+			}
+			else
+			{
+				/* trigram-free query must be rechecked everywhere */
+				res = true;
 			}
 			break;
 		default:

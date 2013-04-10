@@ -113,8 +113,9 @@ extern TRGM *generate_trgm(char *str, int slen);
 extern TRGM *generate_wildcard_trgm(const char *str, int slen);
 extern float4 cnt_sml(TRGM *trg1, TRGM *trg2);
 extern bool trgm_contained_by(TRGM *trg1, TRGM *trg2);
-extern TRGM *createTrgmNFA(text *text_re, TrgmPackedGraph **graph,
-			  Oid collation);
+extern bool *trgm_presence_map(TRGM *query, TRGM *key);
+extern TRGM *createTrgmNFA(text *text_re, Oid collation,
+			  TrgmPackedGraph **graph, MemoryContext rcontext);
 extern bool trigramsMatchGraph(TrgmPackedGraph *graph, bool *check);
 
 #endif   /* __TRGM_H__ */

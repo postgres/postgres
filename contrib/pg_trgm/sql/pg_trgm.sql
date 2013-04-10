@@ -90,3 +90,26 @@ select * from test2 where t like '%bcd%';
 select * from test2 where t like E'%\\bcd%';
 select * from test2 where t ilike '%BCD%';
 select * from test2 where t ilike 'qua%';
+select * from test2 where t like '%z foo bar%';
+select * from test2 where t like '  z foo%';
+explain (costs off)
+  select * from test2 where t ~ '[abc]{3}';
+explain (costs off)
+  select * from test2 where t ~* 'DEF';
+select * from test2 where t ~ '[abc]{3}';
+select * from test2 where t ~ 'a[bc]+d';
+select * from test2 where t ~ '(abc)*$';
+select * from test2 where t ~* 'DEF';
+select * from test2 where t ~ 'dEf';
+select * from test2 where t ~* '^q';
+select * from test2 where t ~* '[abc]{3}[def]{3}';
+select * from test2 where t ~* 'ab[a-z]{3}';
+select * from test2 where t ~* '(^| )qua';
+select * from test2 where t ~ 'q.*rk$';
+select * from test2 where t ~ 'q';
+select * from test2 where t ~ '[a-z]{3}';
+select * from test2 where t ~* '(a{10}|b{10}|c{10}){10}';
+select * from test2 where t ~ 'z foo bar';
+select * from test2 where t ~ ' z foo bar';
+select * from test2 where t ~ '  z foo bar';
+select * from test2 where t ~ '  z foo';

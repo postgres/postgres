@@ -3706,3 +3706,135 @@ select * from test2 where t ilike 'qua%';
  quark
 (1 row)
 
+select * from test2 where t like '%z foo bar%';
+      t      
+-------------
+   z foo bar
+(1 row)
+
+select * from test2 where t like '  z foo%';
+      t      
+-------------
+   z foo bar
+(1 row)
+
+explain (costs off)
+  select * from test2 where t ~ '[abc]{3}';
+                QUERY PLAN                
+------------------------------------------
+ Index Scan using test2_idx_gist on test2
+   Index Cond: (t ~ '[abc]{3}'::text)
+(2 rows)
+
+explain (costs off)
+  select * from test2 where t ~* 'DEF';
+                QUERY PLAN                
+------------------------------------------
+ Index Scan using test2_idx_gist on test2
+   Index Cond: (t ~* 'DEF'::text)
+(2 rows)
+
+select * from test2 where t ~ '[abc]{3}';
+   t    
+--------
+ abcdef
+(1 row)
+
+select * from test2 where t ~ 'a[bc]+d';
+   t    
+--------
+ abcdef
+(1 row)
+
+select * from test2 where t ~ '(abc)*$';
+      t      
+-------------
+ abcdef
+ quark
+   z foo bar
+(3 rows)
+
+select * from test2 where t ~* 'DEF';
+   t    
+--------
+ abcdef
+(1 row)
+
+select * from test2 where t ~ 'dEf';
+ t 
+---
+(0 rows)
+
+select * from test2 where t ~* '^q';
+   t   
+-------
+ quark
+(1 row)
+
+select * from test2 where t ~* '[abc]{3}[def]{3}';
+   t    
+--------
+ abcdef
+(1 row)
+
+select * from test2 where t ~* 'ab[a-z]{3}';
+   t    
+--------
+ abcdef
+(1 row)
+
+select * from test2 where t ~* '(^| )qua';
+   t   
+-------
+ quark
+(1 row)
+
+select * from test2 where t ~ 'q.*rk$';
+   t   
+-------
+ quark
+(1 row)
+
+select * from test2 where t ~ 'q';
+   t   
+-------
+ quark
+(1 row)
+
+select * from test2 where t ~ '[a-z]{3}';
+      t      
+-------------
+ abcdef
+ quark
+   z foo bar
+(3 rows)
+
+select * from test2 where t ~* '(a{10}|b{10}|c{10}){10}';
+ t 
+---
+(0 rows)
+
+select * from test2 where t ~ 'z foo bar';
+      t      
+-------------
+   z foo bar
+(1 row)
+
+select * from test2 where t ~ ' z foo bar';
+      t      
+-------------
+   z foo bar
+(1 row)
+
+select * from test2 where t ~ '  z foo bar';
+      t      
+-------------
+   z foo bar
+(1 row)
+
+select * from test2 where t ~ '  z foo';
+      t      
+-------------
+   z foo bar
+(1 row)
+
