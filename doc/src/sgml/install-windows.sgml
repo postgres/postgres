@@ -10,7 +10,7 @@
 
  <para>
   It is recommended that most users download the binary distribution for
-  Windows, available as a one-click installer package
+  Windows, available as a graphical installer package
   from the <productname>PostgreSQL</productname> website. Building from source
   is only intended for people developing <productname>PostgreSQL</productname>
   or extensions.

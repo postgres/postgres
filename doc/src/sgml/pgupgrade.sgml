@@ -206,7 +206,7 @@
     <para>
      If you are using a version-specific installation directory, e.g.
      <filename>/opt/PostgreSQL/9.1</>, you do not need to move the old cluster. The
-     one-click installers all use version-specific installation directories.
+     graphical installers all use version-specific installation directories.
     </para>
 
     <para>
@@ -629,10 +629,10 @@ psql --username postgres --file script.sql postgres
 
   <para>
    For Windows users, note that due to different integer datetimes settings
-   used by the one-click installer and the MSI installer, it is only
-   possible to upgrade from version 8.3 of the one-click distribution to
-   version 8.4 or later of the one-click distribution. It is not
-   possible to upgrade from the MSI installer to the one-click installer.
+   used by the graphical installer and the MSI installer, it is only
+   possible to upgrade from version 8.3 of the installer distribution to
+   version 8.4 or later of the installer distribution. It is not
+   possible to upgrade from the MSI installer to the new graphical installer.
   </para>
 
  </refsect2>
