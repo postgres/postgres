@@ -78,6 +78,8 @@ Starting a New Development Cycle
 	o src/interfaces/*/Makefile
 	o src/interfaces/*/*/Makefile
 
+* Add version tag to src/tools/git_changelog
+
 
 Creating Back-Branch Release Notes
 ==================================
