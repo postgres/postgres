@@ -13,6 +13,7 @@
 #ifndef EVENT_TRIGGER_H
 #define EVENT_TRIGGER_H
 
+#include "catalog/dependency.h"
 #include "catalog/objectaddress.h"
 #include "catalog/pg_event_trigger.h"
 #include "nodes/parsenodes.h"
@@ -41,6 +42,7 @@ extern Oid AlterEventTriggerOwner(const char *name, Oid newOwnerId);
 extern void AlterEventTriggerOwner_oid(Oid, Oid newOwnerId);
 
 extern bool EventTriggerSupportsObjectType(ObjectType obtype);
+extern bool EventTriggerSupportsObjectClass(ObjectClass objclass);
 extern void EventTriggerDDLCommandStart(Node *parsetree);
 extern void EventTriggerDDLCommandEnd(Node *parsetree);
 extern void EventTriggerSQLDrop(Node *parsetree);

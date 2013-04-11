@@ -905,9 +905,96 @@ EventTriggerSupportsObjectType(ObjectType obtype)
 		case OBJECT_EVENT_TRIGGER:
 			/* no support for event triggers on event triggers */
 			return false;
-		default:
+		case OBJECT_AGGREGATE:
+		case OBJECT_ATTRIBUTE:
+		case OBJECT_CAST:
+		case OBJECT_COLUMN:
+		case OBJECT_CONSTRAINT:
+		case OBJECT_COLLATION:
+		case OBJECT_CONVERSION:
+		case OBJECT_DOMAIN:
+		case OBJECT_EXTENSION:
+		case OBJECT_FDW:
+		case OBJECT_FOREIGN_SERVER:
+		case OBJECT_FOREIGN_TABLE:
+		case OBJECT_FUNCTION:
+		case OBJECT_INDEX:
+		case OBJECT_LANGUAGE:
+		case OBJECT_LARGEOBJECT:
+		case OBJECT_MATVIEW:
+		case OBJECT_OPCLASS:
+		case OBJECT_OPERATOR:
+		case OBJECT_OPFAMILY:
+		case OBJECT_RULE:
+		case OBJECT_SCHEMA:
+		case OBJECT_SEQUENCE:
+		case OBJECT_TABLE:
+		case OBJECT_TRIGGER:
+		case OBJECT_TSCONFIGURATION:
+		case OBJECT_TSDICTIONARY:
+		case OBJECT_TSPARSER:
+		case OBJECT_TSTEMPLATE:
+		case OBJECT_TYPE:
+		case OBJECT_VIEW:
+			return true;
+	}
+	return true;
+}
+
+/*
+ * Do event triggers support this object class?
+ */
+bool
+EventTriggerSupportsObjectClass(ObjectClass objclass)
+{
+	switch (objclass)
+	{
+		case OCLASS_DATABASE:
+		case OCLASS_TBLSPACE:
+		case OCLASS_ROLE:
+			/* no support for global objects */
+			return false;
+		case OCLASS_EVENT_TRIGGER:
+			/* no support for event triggers on event triggers */
+			return false;
+		case OCLASS_CLASS:
+		case OCLASS_PROC:
+		case OCLASS_TYPE:
+		case OCLASS_CAST:
+		case OCLASS_COLLATION:
+		case OCLASS_CONSTRAINT:
+		case OCLASS_CONVERSION:
+		case OCLASS_DEFAULT:
+		case OCLASS_LANGUAGE:
+		case OCLASS_LARGEOBJECT:
+		case OCLASS_OPERATOR:
+		case OCLASS_OPCLASS:
+		case OCLASS_OPFAMILY:
+		case OCLASS_AMOP:
+		case OCLASS_AMPROC:
+		case OCLASS_REWRITE:
+		case OCLASS_TRIGGER:
+		case OCLASS_SCHEMA:
+		case OCLASS_TSPARSER:
+		case OCLASS_TSDICT:
+		case OCLASS_TSTEMPLATE:
+		case OCLASS_TSCONFIG:
+		case OCLASS_FDW:
+		case OCLASS_FOREIGN_SERVER:
+		case OCLASS_USER_MAPPING:
+		case OCLASS_DEFACL:
+		case OCLASS_EXTENSION:
+			return true;
+
+		case MAX_OCLASS:
+			/*
+			 * This shouldn't ever happen, but we keep the case to avoid a
+			 * compiler warning without a "default" clause in the switch.
+			 */
+			Assert(false);
 			break;
 	}
+
 	return true;
 }
 
@@ -1011,7 +1098,7 @@ EventTriggerSQLDropAddObject(ObjectAddress *object)
 	if (!currentEventTriggerState)
 		return;
 
-	Assert(EventTriggerSupportsObjectType(getObjectClass(object)));
+	Assert(EventTriggerSupportsObjectClass(getObjectClass(object)));
 
 	/* don't report temp schemas */
 	if (object->classId == NamespaceRelationId &&

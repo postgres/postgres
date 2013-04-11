@@ -210,7 +210,7 @@ deleteObjectsInList(ObjectAddresses *targetObjects, Relation *depRel,
 			ObjectAddress *thisobj = targetObjects->refs + i;
 
 			if ((!(flags & PERFORM_DELETION_INTERNAL)) &&
-				EventTriggerSupportsObjectType(getObjectClass(thisobj)))
+				EventTriggerSupportsObjectClass(getObjectClass(thisobj)))
 			{
 				EventTriggerSQLDropAddObject(thisobj);
 			}
