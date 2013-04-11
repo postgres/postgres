@@ -38,7 +38,7 @@ ERROR:  filter value "create skunkcabbage" not recognized for filter variable "t
 create event trigger regress_event_trigger2 on ddl_command_start
    when tag in ('DROP EVENT TRIGGER')
    execute procedure test_event_trigger();
-ERROR:  event triggers are not supported for "DROP EVENT TRIGGER"
+ERROR:  event triggers are not supported for DROP EVENT TRIGGER
 -- should fail, can't have same filter variable twice
 create event trigger regress_event_trigger2 on ddl_command_start
    when tag in ('create table') and tag in ('CREATE FUNCTION')

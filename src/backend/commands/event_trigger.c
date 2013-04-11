@@ -231,7 +231,7 @@ validate_ddl_tags(const char *filtervar, List *taglist)
 			ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 /* translator: %s represents an SQL statement name */
-				 errmsg("event triggers are not supported for \"%s\"",
+				 errmsg("event triggers are not supported for %s",
 					tag)));
 	}
 }
