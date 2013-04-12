@@ -18,6 +18,7 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_type.h"
 #include "commands/seclabel.h"
 #include "lib/stringinfo.h"
 #include "utils/builtins.h"
@@ -41,6 +42,7 @@ sepgsql_proc_post_create(Oid functionId)
 	ScanKeyData skey;
 	SysScanDesc sscan;
 	HeapTuple	tuple;
+	char	   *nsp_name;
 	char	   *scontext;
 	char	   *tcontext;
 	char	   *ncontext;
@@ -79,7 +81,7 @@ sepgsql_proc_post_create(Oid functionId)
 	sepgsql_avc_check_perms(&object,
 							SEPG_CLASS_DB_SCHEMA,
 							SEPG_DB_SCHEMA__ADD_NAME,
-							getObjectDescription(&object),
+							getObjectIdentity(&object),
 							true);
 
 	/*
@@ -102,14 +104,18 @@ sepgsql_proc_post_create(Oid functionId)
 	 * check db_procedure:{create (install)} permission
 	 */
 	initStringInfo(&audit_name);
-	appendStringInfo(&audit_name, "function %s(", NameStr(proForm->proname));
+	nsp_name = get_namespace_name(proForm->pronamespace);
+	appendStringInfo(&audit_name, "%s(",
+			quote_qualified_identifier(nsp_name, NameStr(proForm->proname)));
 	for (i = 0; i < proForm->pronargs; i++)
 	{
-		Oid			typeoid = proForm->proargtypes.values[i];
-
 		if (i > 0)
 			appendStringInfoChar(&audit_name, ',');
-		appendStringInfoString(&audit_name, format_type_be(typeoid));
+
+		object.classId = TypeRelationId;
+		object.objectId = proForm->proargtypes.values[i];
+		object.objectSubId = 0;
+		appendStringInfoString(&audit_name, getObjectIdentity(&object));
 	}
 	appendStringInfoChar(&audit_name, ')');
 
@@ -159,7 +165,7 @@ sepgsql_proc_drop(Oid functionId)
 	object.classId = NamespaceRelationId;
 	object.objectId = get_func_namespace(functionId);
 	object.objectSubId = 0;
-	audit_name = getObjectDescription(&object);
+	audit_name = getObjectIdentity(&object);
 
 	sepgsql_avc_check_perms(&object,
 							SEPG_CLASS_DB_SCHEMA,
@@ -174,7 +180,7 @@ sepgsql_proc_drop(Oid functionId)
 	object.classId = ProcedureRelationId;
 	object.objectId = functionId;
 	object.objectSubId = 0;
-	audit_name = getObjectDescription(&object);
+	audit_name = getObjectIdentity(&object);
 
 	sepgsql_avc_check_perms(&object,
 							SEPG_CLASS_DB_PROCEDURE,
@@ -199,7 +205,7 @@ sepgsql_proc_relabel(Oid functionId, const char *seclabel)
 	object.classId = ProcedureRelationId;
 	object.objectId = functionId;
 	object.objectSubId = 0;
-	audit_name = getObjectDescription(&object);
+	audit_name = getObjectIdentity(&object);
 
 	/*
 	 * check db_procedure:{setattr relabelfrom} permission
@@ -287,7 +293,7 @@ sepgsql_proc_setattr(Oid functionId)
 	object.classId = ProcedureRelationId;
 	object.objectId = functionId;
 	object.objectSubId = 0;
-	audit_name = getObjectDescription(&object);
+	audit_name = getObjectIdentity(&object);
 
 	sepgsql_avc_check_perms(&object,
 							SEPG_CLASS_DB_PROCEDURE,

@@ -19,6 +19,7 @@
 #include "catalog/indexing.h"
 #include "commands/dbcommands.h"
 #include "commands/seclabel.h"
+#include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/tqual.h"
 #include "sepgsql.h"
@@ -38,9 +39,9 @@ sepgsql_database_post_create(Oid databaseId, const char *dtemplate)
 	HeapTuple	tuple;
 	char	   *tcontext;
 	char	   *ncontext;
-	char		audit_name[NAMEDATALEN + 20];
 	ObjectAddress object;
 	Form_pg_database datForm;
+	StringInfoData audit_name;
 
 	/*
 	 * Oid of the source database is not saved in pg_database catalog, so we
@@ -61,11 +62,12 @@ sepgsql_database_post_create(Oid databaseId, const char *dtemplate)
 	/*
 	 * check db_database:{getattr} permission
 	 */
-	snprintf(audit_name, sizeof(audit_name), "database %s", dtemplate);
+	initStringInfo(&audit_name);
+	appendStringInfo(&audit_name, "%s", quote_identifier(dtemplate));
 	sepgsql_avc_check_perms_label(tcontext,
 								  SEPG_CLASS_DB_DATABASE,
 								  SEPG_DB_DATABASE__GETATTR,
-								  audit_name,
+								  audit_name.data,
 								  true);
 
 	/*
@@ -98,12 +100,13 @@ sepgsql_database_post_create(Oid databaseId, const char *dtemplate)
 	/*
 	 * check db_database:{create} permission
 	 */
-	snprintf(audit_name, sizeof(audit_name),
-			 "database %s", NameStr(datForm->datname));
+	resetStringInfo(&audit_name);
+	appendStringInfo(&audit_name, "%s",
+					 quote_identifier(NameStr(datForm->datname)));
 	sepgsql_avc_check_perms_label(ncontext,
 								  SEPG_CLASS_DB_DATABASE,
 								  SEPG_DB_DATABASE__CREATE,
-								  audit_name,
+								  audit_name.data,
 								  true);
 
 	systable_endscan(sscan);
@@ -139,7 +142,7 @@ sepgsql_database_drop(Oid databaseId)
 	object.classId = DatabaseRelationId;
 	object.objectId = databaseId;
 	object.objectSubId = 0;
-	audit_name = getObjectDescription(&object);
+	audit_name = getObjectIdentity(&object);
 
 	sepgsql_avc_check_perms(&object,
 							SEPG_CLASS_DB_DATABASE,
@@ -166,7 +169,7 @@ sepgsql_database_setattr(Oid databaseId)
 	object.classId = DatabaseRelationId;
 	object.objectId = databaseId;
 	object.objectSubId = 0;
-	audit_name = getObjectDescription(&object);
+	audit_name = getObjectIdentity(&object);
 
 	sepgsql_avc_check_perms(&object,
 							SEPG_CLASS_DB_DATABASE,
@@ -190,7 +193,7 @@ sepgsql_database_relabel(Oid databaseId, const char *seclabel)
 	object.classId = DatabaseRelationId;
 	object.objectId = databaseId;
 	object.objectSubId = 0;
-	audit_name = getObjectDescription(&object);
+	audit_name = getObjectIdentity(&object);
 
 	/*
 	 * check db_database:{setattr relabelfrom} permission

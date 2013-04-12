@@ -19,7 +19,9 @@
 #include "catalog/pg_database.h"
 #include "catalog/pg_namespace.h"
 #include "commands/seclabel.h"
+#include "lib/stringinfo.h"
 #include "miscadmin.h"
+#include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/tqual.h"
@@ -41,10 +43,10 @@ sepgsql_schema_post_create(Oid namespaceId)
 	HeapTuple	tuple;
 	char	   *tcontext;
 	char	   *ncontext;
-	char		audit_name[NAMEDATALEN + 20];
 	const char *nsp_name;
 	ObjectAddress object;
 	Form_pg_namespace nspForm;
+	StringInfoData audit_name;
 
 	/*
 	 * Compute a default security label when we create a new schema object
@@ -82,11 +84,12 @@ sepgsql_schema_post_create(Oid namespaceId)
 	/*
 	 * check db_schema:{create}
 	 */
-	snprintf(audit_name, sizeof(audit_name), "schema %s", nsp_name);
+	initStringInfo(&audit_name);
+	appendStringInfo(&audit_name, "%s", quote_identifier(nsp_name));
 	sepgsql_avc_check_perms_label(ncontext,
 								  SEPG_CLASS_DB_SCHEMA,
 								  SEPG_DB_SCHEMA__CREATE,
-								  audit_name,
+								  audit_name.data,
 								  true);
 	systable_endscan(sscan);
 	heap_close(rel, AccessShareLock);
@@ -120,7 +123,7 @@ sepgsql_schema_drop(Oid namespaceId)
 	object.classId = NamespaceRelationId;
 	object.objectId = namespaceId;
 	object.objectSubId = 0;
-	audit_name = getObjectDescription(&object);
+	audit_name = getObjectIdentity(&object);
 
 	sepgsql_avc_check_perms(&object,
 							SEPG_CLASS_DB_SCHEMA,
@@ -145,7 +148,7 @@ sepgsql_schema_relabel(Oid namespaceId, const char *seclabel)
 	object.classId = NamespaceRelationId;
 	object.objectId = namespaceId;
 	object.objectSubId = 0;
-	audit_name = getObjectDescription(&object);
+	audit_name = getObjectIdentity(&object);
 
 	/*
 	 * check db_schema:{setattr relabelfrom} permission
@@ -183,7 +186,7 @@ check_schema_perms(Oid namespaceId, uint32 required, bool abort_on_violation)
 	object.classId = NamespaceRelationId;
 	object.objectId = namespaceId;
 	object.objectSubId = 0;
-	audit_name = getObjectDescription(&object);
+	audit_name = getObjectIdentity(&object);
 
 	result = sepgsql_avc_check_perms(&object,
 									 SEPG_CLASS_DB_SCHEMA,

@@ -187,7 +187,7 @@ check_relation_privileges(Oid relOid,
 	object.classId = RelationRelationId;
 	object.objectId = relOid;
 	object.objectSubId = 0;
-	audit_name = getObjectDescription(&object);
+	audit_name = getObjectIdentity(&object);
 	switch (relkind)
 	{
 		case RELKIND_RELATION:

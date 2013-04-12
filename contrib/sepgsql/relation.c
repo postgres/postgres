@@ -20,6 +20,8 @@
 #include "catalog/pg_class.h"
 #include "catalog/pg_namespace.h"
 #include "commands/seclabel.h"
+#include "lib/stringinfo.h"
+#include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/catcache.h"
 #include "utils/lsyscache.h"
@@ -49,9 +51,9 @@ sepgsql_attribute_post_create(Oid relOid, AttrNumber attnum)
 	char	   *scontext;
 	char	   *tcontext;
 	char	   *ncontext;
-	char		audit_name[2 * NAMEDATALEN + 20];
 	ObjectAddress object;
 	Form_pg_attribute attForm;
+	StringInfoData audit_name;
 
 	/*
 	 * Only attributes within regular relation have individual security
@@ -94,12 +96,18 @@ sepgsql_attribute_post_create(Oid relOid, AttrNumber attnum)
 	/*
 	 * check db_column:{create} permission
 	 */
-	snprintf(audit_name, sizeof(audit_name), "table %s column %s",
-			 get_rel_name(relOid), NameStr(attForm->attname));
+	object.classId = RelationRelationId;
+	object.objectId = relOid;
+	object.objectSubId = 0;
+
+	initStringInfo(&audit_name);
+	appendStringInfo(&audit_name, "%s.%s",
+					 getObjectIdentity(&object),
+					 quote_identifier(NameStr(attForm->attname)));
 	sepgsql_avc_check_perms_label(ncontext,
 								  SEPG_CLASS_DB_COLUMN,
 								  SEPG_DB_COLUMN__CREATE,
-								  audit_name,
+								  audit_name.data,
 								  true);
 
 	/*
@@ -137,7 +145,7 @@ sepgsql_attribute_drop(Oid relOid, AttrNumber attnum)
 	object.classId = RelationRelationId;
 	object.objectId = relOid;
 	object.objectSubId = attnum;
-	audit_name = getObjectDescription(&object);
+	audit_name = getObjectIdentity(&object);
 
 	sepgsql_avc_check_perms(&object,
 							SEPG_CLASS_DB_COLUMN,
@@ -168,7 +176,7 @@ sepgsql_attribute_relabel(Oid relOid, AttrNumber attnum,
 	object.classId = RelationRelationId;
 	object.objectId = relOid;
 	object.objectSubId = attnum;
-	audit_name = getObjectDescription(&object);
+	audit_name = getObjectIdentity(&object);
 
 	/*
 	 * check db_column:{setattr relabelfrom} permission
@@ -211,7 +219,7 @@ sepgsql_attribute_setattr(Oid relOid, AttrNumber attnum)
 	object.classId = RelationRelationId;
 	object.objectId = relOid;
 	object.objectSubId = attnum;
-	audit_name = getObjectDescription(&object);
+	audit_name = getObjectIdentity(&object);
 
 	sepgsql_avc_check_perms(&object,
 							SEPG_CLASS_DB_COLUMN,
@@ -236,12 +244,12 @@ sepgsql_relation_post_create(Oid relOid)
 	Form_pg_class classForm;
 	ObjectAddress object;
 	uint16		tclass;
-	const char *tclass_text;
 	char	   *scontext;		/* subject */
 	char	   *tcontext;		/* schema */
 	char	   *rcontext;		/* relation */
 	char	   *ccontext;		/* column */
-	char		audit_name[2 * NAMEDATALEN + 20];
+	char	   *nsp_name;
+	StringInfoData audit_name;
 
 	/*
 	 * Fetch catalog record of the new relation. Because pg_class entry is not
@@ -277,22 +285,19 @@ sepgsql_relation_post_create(Oid relOid)
 	sepgsql_avc_check_perms(&object,
 							SEPG_CLASS_DB_SCHEMA,
 							SEPG_DB_SCHEMA__ADD_NAME,
-							getObjectDescription(&object),
+							getObjectIdentity(&object),
 							true);
 
 	switch (classForm->relkind)
 	{
 		case RELKIND_RELATION:
 			tclass = SEPG_CLASS_DB_TABLE;
-			tclass_text = "table";
 			break;
 		case RELKIND_SEQUENCE:
 			tclass = SEPG_CLASS_DB_SEQUENCE;
-			tclass_text = "sequence";
 			break;
 		case RELKIND_VIEW:
 			tclass = SEPG_CLASS_DB_VIEW;
-			tclass_text = "view";
 			break;
 		case RELKIND_INDEX:
 			/* deal with indexes specially; no need for tclass */
@@ -316,12 +321,15 @@ sepgsql_relation_post_create(Oid relOid)
 	/*
 	 * check db_xxx:{create} permission
 	 */
-	snprintf(audit_name, sizeof(audit_name), "%s %s",
-			 tclass_text, NameStr(classForm->relname));
+	nsp_name = get_namespace_name(classForm->relnamespace);
+	initStringInfo(&audit_name);
+	appendStringInfo(&audit_name, "%s.%s",
+					 quote_identifier(nsp_name),
+					 quote_identifier(NameStr(classForm->relname)));
 	sepgsql_avc_check_perms_label(rcontext,
 								  tclass,
 								  SEPG_DB_DATABASE__CREATE,
-								  audit_name,
+								  audit_name.data,
 								  true);
 
 	/*
@@ -358,10 +366,11 @@ sepgsql_relation_post_create(Oid relOid)
 		{
 			attForm = (Form_pg_attribute) GETSTRUCT(atup);
 
-			snprintf(audit_name, sizeof(audit_name), "%s %s column %s",
-					 tclass_text,
-					 NameStr(classForm->relname),
-					 NameStr(attForm->attname));
+			resetStringInfo(&audit_name);
+			appendStringInfo(&audit_name, "%s.%s.%s",
+							 quote_identifier(nsp_name),
+							 quote_identifier(NameStr(classForm->relname)),
+							 quote_identifier(NameStr(attForm->attname)));
 
 			ccontext = sepgsql_compute_create(scontext,
 											  rcontext,
@@ -374,7 +383,7 @@ sepgsql_relation_post_create(Oid relOid)
 			sepgsql_avc_check_perms_label(ccontext,
 										  SEPG_CLASS_DB_COLUMN,
 										  SEPG_DB_COLUMN__CREATE,
-										  audit_name,
+										  audit_name.data,
 										  true);
 
 			object.classId = RelationRelationId;
@@ -436,7 +445,7 @@ sepgsql_relation_drop(Oid relOid)
 	object.classId = NamespaceRelationId;
 	object.objectId = get_rel_namespace(relOid);
 	object.objectSubId = 0;
-	audit_name = getObjectDescription(&object);
+	audit_name = getObjectIdentity(&object);
 
 	sepgsql_avc_check_perms(&object,
 							SEPG_CLASS_DB_SCHEMA,
@@ -458,7 +467,7 @@ sepgsql_relation_drop(Oid relOid)
 	object.classId = RelationRelationId;
 	object.objectId = relOid;
 	object.objectSubId = 0;
-	audit_name = getObjectDescription(&object);
+	audit_name = getObjectIdentity(&object);
 
 	sepgsql_avc_check_perms(&object,
 							tclass,
@@ -489,7 +498,7 @@ sepgsql_relation_drop(Oid relOid)
 			object.classId = RelationRelationId;
 			object.objectId = relOid;
 			object.objectSubId = attForm->attnum;
-			audit_name = getObjectDescription(&object);
+			audit_name = getObjectIdentity(&object);
 
 			sepgsql_avc_check_perms(&object,
 									SEPG_CLASS_DB_COLUMN,
@@ -531,7 +540,7 @@ sepgsql_relation_relabel(Oid relOid, const char *seclabel)
 	object.classId = RelationRelationId;
 	object.objectId = relOid;
 	object.objectSubId = 0;
-	audit_name = getObjectDescription(&object);
+	audit_name = getObjectIdentity(&object);
 
 	/*
 	 * check db_xxx:{setattr relabelfrom} permission
@@ -641,7 +650,7 @@ sepgsql_relation_setattr(Oid relOid)
 	object.classId = RelationRelationId;
 	object.objectId = relOid;
 	object.objectSubId = 0;
-	audit_name = getObjectDescription(&object);
+	audit_name = getObjectIdentity(&object);
 
 	sepgsql_avc_check_perms(&object,
 							tclass,
