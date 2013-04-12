@@ -59,7 +59,7 @@ my $filtered_typedefs_fh;
 
 sub check_indent
 {
-	system("entab < $devnull");
+	system("$entab < $devnull");
 	if ($?)
 	{
 		print STDERR
@@ -448,29 +448,28 @@ sub run_build
 
 	$ENV{PGTYPEDEFS} = abs_path('tmp_typedefs.list');
 
-	$rv =
-	  getstore("ftp://ftp.postgresql.org/pub/dev/indent.netbsd.patched.tgz",
-		"indent.netbsd.patched.tgz");
+	my $pg_bsd_indent_name = "pg_bsd_indent-" . $INDENT_VERSION . ".tar.gz";
 
-	die "fetching indent.netbsd.patched.tgz" unless is_success($rv);
+	$rv =
+	  getstore("ftp://ftp.postgresql.org/pub/dev/$pg_bsd_indent_name",
+		"pg_bsd_indent.tgz");
+
+	die "fetching $pg_bsd_indent_name" unless is_success($rv);
 
 	# XXX add error checking here
 
-	mkdir "bsdindent";
-	chdir "bsdindent";
-	system("tar -z -xf ../indent.netbsd.patched.tgz");
+	system("tar -z -xf pg_bsd_indent.tgz");
+	chdir "pg_bsd_indent";
 	system("make > $devnull 2>&1");
 
-	$ENV{PGINDENT} = abs_path('indent');
+	$ENV{PGINDENT} = abs_path('pg_bsd_indent');
 
 	chdir "../../entab";
-
 	system("make > $devnull 2>&1");
 
 	$ENV{PGENTAB} = abs_path('entab');
 
 	chdir $save_dir;
-
 }
 
 
