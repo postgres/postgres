@@ -29,7 +29,7 @@
  *
  * OAT_NAMESPACE_SEARCH should be invoked prior to object name lookup under
  * a particular namespace. This event is equivalent to usage permission
- * permission on a schema under the default access control mechanism.
+ * on a schema under the default access control mechanism.
  *
  * Other types may be added in the future.
  */

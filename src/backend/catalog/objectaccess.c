@@ -96,7 +96,7 @@ RunNamespaceSearchHook(Oid objectId, bool ereport_on_violation)
 {
 	ObjectAccessNamespaceSearch	ns_arg;
 
-	/* XXX - should be checked at caller side */
+	/* caller should check, but just in case... */
 	Assert(object_access_hook != NULL);
 
 	memset(&ns_arg, 0, sizeof(ObjectAccessNamespaceSearch));
