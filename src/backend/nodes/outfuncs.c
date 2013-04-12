@@ -893,8 +893,8 @@ _outIntoClause(StringInfo str, const IntoClause *node)
 	WRITE_NODE_FIELD(options);
 	WRITE_ENUM_FIELD(onCommit, OnCommitAction);
 	WRITE_STRING_FIELD(tableSpaceName);
+	WRITE_NODE_FIELD(viewQuery);
 	WRITE_BOOL_FIELD(skipData);
-	WRITE_CHAR_FIELD(relkind);
 }
 
 static void

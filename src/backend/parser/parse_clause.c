@@ -244,13 +244,12 @@ interpretInhOption(InhOption inhOpt)
  * parsing the query string because the return value can depend upon the
  * default_with_oids GUC var.
  *
- * Materialized views are handled here rather than reloptions.c because that
- * code explicitly punts checking for oids to here.  We prohibit any explicit
- * specification of the oids option for a materialized view, and indicate that
- * oids are not needed if we don't get an error.
+ * In some situations, we want to reject an OIDS option even if it's present.
+ * That's (rather messily) handled here rather than reloptions.c, because that
+ * code explicitly punts checking for oids to here.
  */
 bool
-interpretOidsOption(List *defList, char relkind)
+interpretOidsOption(List *defList, bool allowOids)
 {
 	ListCell   *cell;
 
@@ -262,16 +261,17 @@ interpretOidsOption(List *defList, char relkind)
 		if (def->defnamespace == NULL &&
 			pg_strcasecmp(def->defname, "oids") == 0)
 		{
-			if (relkind == RELKIND_MATVIEW)
+			if (!allowOids)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("unrecognized parameter \"%s\"", "oids")));
-
+						 errmsg("unrecognized parameter \"%s\"",
+								def->defname)));
 			return defGetBoolean(def);
 		}
 	}
 
-	if (relkind == RELKIND_MATVIEW)
+	/* Force no-OIDS result if caller disallows OIDS. */
+	if (!allowOids)
 		return false;
 
 	/* OIDS option was not specified, so use default. */

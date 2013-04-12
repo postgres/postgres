@@ -121,13 +121,6 @@ typedef struct PrivTarget
 #define CAS_NOT_VALID				0x10
 #define CAS_NO_INHERIT				0x20
 
-/*
- * In the IntoClause structure there is a char value which will eventually be
- * set to RELKIND_RELATION or RELKIND_MATVIEW based on the relkind field in
- * the statement-level structure, which is an ObjectType. Define the default
- * here, which should always be overridden later.
- */
-#define INTO_CLAUSE_RELKIND_DEFAULT	'\0'
 
 #define parser_yyerror(msg)  scanner_yyerror(msg, yyscanner)
 #define parser_errposition(pos)  scanner_errposition(pos, yyscanner)
@@ -3231,8 +3224,8 @@ create_as_target:
 					$$->options = $3;
 					$$->onCommit = $4;
 					$$->tableSpaceName = $5;
+					$$->viewQuery = NULL;
 					$$->skipData = false;		/* might get changed later */
-					$$->relkind = INTO_CLAUSE_RELKIND_DEFAULT;
 				}
 		;
 
@@ -3274,8 +3267,8 @@ create_mv_target:
 					$$->options = $3;
 					$$->onCommit = ONCOMMIT_NOOP;
 					$$->tableSpaceName = $4;
+					$$->viewQuery = NULL;		/* filled at analysis time */
 					$$->skipData = false;		/* might get changed later */
-					$$->relkind = INTO_CLAUSE_RELKIND_DEFAULT;
 				}
 		;
 
@@ -9285,8 +9278,8 @@ into_clause:
 					$$->options = NIL;
 					$$->onCommit = ONCOMMIT_NOOP;
 					$$->tableSpaceName = NULL;
+					$$->viewQuery = NULL;
 					$$->skipData = false;
-					$$->relkind = INTO_CLAUSE_RELKIND_DEFAULT;
 				}
 			| /*EMPTY*/
 				{ $$ = NULL; }

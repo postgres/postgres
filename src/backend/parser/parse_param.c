@@ -57,6 +57,7 @@ static Node *variable_coerce_param_hook(ParseState *pstate, Param *param,
 						   Oid targetTypeId, int32 targetTypeMod,
 						   int location);
 static bool check_parameter_resolution_walker(Node *node, ParseState *pstate);
+static bool query_contains_extern_params_walker(Node *node, void *context);
 
 
 /*
@@ -315,4 +316,39 @@ check_parameter_resolution_walker(Node *node, ParseState *pstate)
 	}
 	return expression_tree_walker(node, check_parameter_resolution_walker,
 								  (void *) pstate);
+}
+
+/*
+ * Check to see if a fully-parsed query tree contains any PARAM_EXTERN Params.
+ */
+bool
+query_contains_extern_params(Query *query)
+{
+	return query_tree_walker(query,
+							 query_contains_extern_params_walker,
+							 NULL, 0);
+}
+
+static bool
+query_contains_extern_params_walker(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Param))
+	{
+		Param	   *param = (Param *) node;
+
+		if (param->paramkind == PARAM_EXTERN)
+			return true;
+		return false;
+	}
+	if (IsA(node, Query))
+	{
+		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
+		return query_tree_walker((Query *) node,
+								 query_contains_extern_params_walker,
+								 context, 0);
+	}
+	return expression_tree_walker(node, query_contains_extern_params_walker,
+								  context);
 }

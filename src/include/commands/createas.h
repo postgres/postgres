@@ -19,10 +19,6 @@
 #include "tcop/dest.h"
 
 
-extern Query *SetupForCreateTableAs(Query *query, IntoClause *into,
-									 const char *queryString,
-									 ParamListInfo params, DestReceiver *dest);
-
 extern void ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 				  ParamListInfo params, char *completionTag);
 

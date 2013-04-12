@@ -2829,6 +2829,9 @@ raw_expression_tree_walker(Node *node,
 				if (walker(into->rel, context))
 					return true;
 				/* colNames, options are deemed uninteresting */
+				/* viewQuery should be null in raw parsetree, but check it */
+				if (walker(into->viewQuery, context))
+					return true;
 			}
 			break;
 		case T_List:

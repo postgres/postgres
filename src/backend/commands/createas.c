@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * createas.c
- *	  Execution of CREATE TABLE ... AS, a/k/a SELECT INTO
+ *	  Execution of CREATE TABLE ... AS, a/k/a SELECT INTO.
  *	  Since CREATE MATERIALIZED VIEW shares syntax and most behaviors,
- *	  implement that here, too.
+ *	  we implement that here, too.
  *
  * We implement this by diverting the query's normal output to a
  * specialized DestReceiver type.
  *
- * Formerly, this command was implemented as a variant of SELECT, which led
+ * Formerly, CTAS was implemented as a variant of SELECT, which led
  * to assorted legacy behaviors that we still try to preserve, notably that
  * we must return a tuples-processed count in the completionTag.
  *
@@ -33,7 +33,6 @@
 #include "commands/prepare.h"
 #include "commands/tablecmds.h"
 #include "commands/view.h"
-#include "parser/analyze.h"
 #include "parser/parse_clause.h"
 #include "rewrite/rewriteHandler.h"
 #include "storage/smgr.h"
@@ -48,7 +47,6 @@ typedef struct
 {
 	DestReceiver pub;			/* publicly-known function pointers */
 	IntoClause *into;			/* target relation specification */
-	Query		*viewParse;		/* the query which defines/populates data */
 	/* These fields are filled by intorel_startup: */
 	Relation	rel;			/* relation to write to */
 	CommandId	output_cid;		/* cmin to insert in output tuples */
@@ -63,62 +61,6 @@ static void intorel_destroy(DestReceiver *self);
 
 
 /*
- * Common setup needed by both normal execution and EXPLAIN ANALYZE.
- */
-Query *
-SetupForCreateTableAs(Query *query, IntoClause *into, const char *queryString,
-					   ParamListInfo params, DestReceiver *dest)
-{
-	List       *rewritten;
-	Query	   *viewParse = NULL;
-
-	Assert(query->commandType == CMD_SELECT);
-
-	if (into->relkind == RELKIND_MATVIEW)
-		viewParse = (Query *) parse_analyze((Node *) copyObject(query),
-											queryString, NULL, 0)->utilityStmt;
-
-	/*
-	 * Parse analysis was done already, but we still have to run the rule
-	 * rewriter.  We do not do AcquireRewriteLocks: we assume the query either
-	 * came straight from the parser, or suitable locks were acquired by
-	 * plancache.c.
-	 *
-	 * Because the rewriter and planner tend to scribble on the input, we make
-	 * a preliminary copy of the source querytree.	This prevents problems in
-	 * the case that CTAS is in a portal or plpgsql function and is executed
-	 * repeatedly.	(See also the same hack in EXPLAIN and PREPARE.)
-	 */
-	rewritten = QueryRewrite((Query *) copyObject(query));
-
-	/* SELECT should never rewrite to more or less than one SELECT query */
-	if (list_length(rewritten) != 1)
-		elog(ERROR, "unexpected rewrite result for CREATE TABLE AS SELECT");
-	query = (Query *) linitial(rewritten);
-
-	Assert(query->commandType == CMD_SELECT);
-
-	/* Save the query after rewrite but before planning. */
-	((DR_intorel *) dest)->viewParse = viewParse;
-	((DR_intorel *) dest)->into = into;
-
-	if (into->relkind == RELKIND_MATVIEW)
-	{
-		/*
-		 * A materialized view would either need to save parameters for use in
-		 * maintaining or loading the data or prohibit them entirely. The
-		 * latter seems safer and more sane.
-		 */
-		if (params != NULL && params->numParams > 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("materialized views may not be defined using bound parameters")));
-	}
-
-	return query;
-}
-
-/*
  * ExecCreateTableAs -- execute a CREATE TABLE AS command
  */
 void
@@ -128,6 +70,7 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	Query	   *query = (Query *) stmt->query;
 	IntoClause *into = stmt->into;
 	DestReceiver *dest;
+	List	   *rewritten;
 	PlannedStmt *plan;
 	QueryDesc  *queryDesc;
 	ScanDirection dir;
@@ -151,8 +94,26 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 
 		return;
 	}
+	Assert(query->commandType == CMD_SELECT);
 
-	query = SetupForCreateTableAs(query, into, queryString, params, dest);
+	/*
+	 * Parse analysis was done already, but we still have to run the rule
+	 * rewriter.  We do not do AcquireRewriteLocks: we assume the query either
+	 * came straight from the parser, or suitable locks were acquired by
+	 * plancache.c.
+	 *
+	 * Because the rewriter and planner tend to scribble on the input, we make
+	 * a preliminary copy of the source querytree.	This prevents problems in
+	 * the case that CTAS is in a portal or plpgsql function and is executed
+	 * repeatedly.	(See also the same hack in EXPLAIN and PREPARE.)
+	 */
+	rewritten = QueryRewrite((Query *) copyObject(query));
+
+	/* SELECT should never rewrite to more or less than one SELECT query */
+	if (list_length(rewritten) != 1)
+		elog(ERROR, "unexpected rewrite result for CREATE TABLE AS SELECT");
+	query = (Query *) linitial(rewritten);
+	Assert(query->commandType == CMD_SELECT);
 
 	/* plan the query */
 	plan = pg_plan_query(query, 0, params);
@@ -213,19 +174,19 @@ int
 GetIntoRelEFlags(IntoClause *intoClause)
 {
 	int		flags;
+
 	/*
 	 * We need to tell the executor whether it has to produce OIDs or not,
 	 * because it doesn't have enough information to do so itself (since we
 	 * can't build the target relation until after ExecutorStart).
+	 *
+	 * Disallow the OIDS option for materialized views.
 	 */
-	if (interpretOidsOption(intoClause->options, intoClause->relkind))
+	if (interpretOidsOption(intoClause->options,
+							(intoClause->viewQuery == NULL)))
 		flags = EXEC_FLAG_WITH_OIDS;
 	else
 		flags = EXEC_FLAG_WITHOUT_OIDS;
-
-	Assert(intoClause->relkind != RELKIND_MATVIEW ||
-		   (flags & (EXEC_FLAG_WITH_OIDS | EXEC_FLAG_WITHOUT_OIDS)) ==
-		   EXEC_FLAG_WITHOUT_OIDS);
 
 	if (intoClause->skipData)
 		flags |= EXEC_FLAG_WITH_NO_DATA;
@@ -264,6 +225,8 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 {
 	DR_intorel *myState = (DR_intorel *) self;
 	IntoClause *into = myState->into;
+	bool		is_matview;
+	char		relkind;
 	CreateStmt *create;
 	Oid			intoRelationId;
 	Relation	intoRelationDesc;
@@ -274,6 +237,10 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 
 	Assert(into != NULL);		/* else somebody forgot to set it */
+
+	/* This code supports both CREATE TABLE AS and CREATE MATERIALIZED VIEW */
+	is_matview = (into->viewQuery != NULL);
+	relkind = is_matview ? RELKIND_MATVIEW : RELKIND_RELATION;
 
 	/*
 	 * Create the target relation by faking up a CREATE TABLE parsetree and
@@ -352,38 +319,12 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	if (lc != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("too many column names are specified")));
-
-	/*
-	 * Enforce validations needed for materialized views only.
-	 */
-	if (into->relkind == RELKIND_MATVIEW)
-	{
-		/*
-		* Prohibit a data-modifying CTE in the query used to create a
-		* materialized view. It's not sufficiently clear what the user would
-		* want to happen if the MV is refreshed or incrementally maintained.
-		*/
-		if (myState->viewParse->hasModifyingCTE)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("materialized views must not use data-modifying statements in WITH")));
-
-		/*
-		 * Check whether any temporary database objects are used in the
-		 * creation query. It would be hard to refresh data or incrementally
-		 * maintain it if a source disappeared.
-		 */
-		if (isQueryUsingTempRelation(myState->viewParse))
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("materialized views must not use temporary tables or views")));
-	}
+				 errmsg("too many column names were specified")));
 
 	/*
 	 * Actually create the target table
 	 */
-	intoRelationId = DefineRelation(create, into->relkind, InvalidOid);
+	intoRelationId = DefineRelation(create, relkind, InvalidOid);
 
 	/*
 	 * If necessary, create a TOAST table for the target table.  Note that
@@ -404,9 +345,12 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	AlterTableCreateToastTable(intoRelationId, toast_options);
 
 	/* Create the "view" part of a materialized view. */
-	if (into->relkind == RELKIND_MATVIEW)
+	if (is_matview)
 	{
-		StoreViewQuery(intoRelationId, myState->viewParse, false);
+		/* StoreViewQuery scribbles on tree, so make a copy */
+		Query  *query = (Query *) copyObject(into->viewQuery);
+
+		StoreViewQuery(intoRelationId, query, false);
 		CommandCounterIncrement();
 	}
 
@@ -415,7 +359,7 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	 */
 	intoRelationDesc = heap_open(intoRelationId, AccessExclusiveLock);
 
-	if (into->relkind == RELKIND_MATVIEW && !into->skipData)
+	if (is_matview && !into->skipData)
 		/* Make sure the heap looks good even if no rows are written. */
 		SetMatViewToPopulated(intoRelationDesc);
 
@@ -428,7 +372,7 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	rte = makeNode(RangeTblEntry);
 	rte->rtekind = RTE_RELATION;
 	rte->relid = intoRelationId;
-	rte->relkind = into->relkind;
+	rte->relkind = relkind;
 	rte->isResultRel = true;
 	rte->requiredPerms = ACL_INSERT;
 

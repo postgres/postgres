@@ -47,7 +47,7 @@ explain_get_index_name_hook_type explain_get_index_name_hook = NULL;
 #define X_NOWHITESPACE 4
 
 static void ExplainOneQuery(Query *query, IntoClause *into, ExplainState *es,
-				const char *queryString, DestReceiver *dest, ParamListInfo params);
+				const char *queryString, ParamListInfo params);
 static void report_triggers(ResultRelInfo *rInfo, bool show_relname,
 				ExplainState *es);
 static double elapsed_time(instr_time *starttime);
@@ -219,7 +219,7 @@ ExplainQuery(ExplainStmt *stmt, const char *queryString,
 		foreach(l, rewritten)
 		{
 			ExplainOneQuery((Query *) lfirst(l), NULL, &es,
-							queryString, None_Receiver, params);
+							queryString, params);
 
 			/* Separate plans with an appropriate separator */
 			if (lnext(l) != NULL)
@@ -300,8 +300,7 @@ ExplainResultDesc(ExplainStmt *stmt)
  */
 static void
 ExplainOneQuery(Query *query, IntoClause *into, ExplainState *es,
-				const char *queryString, DestReceiver *dest,
-				ParamListInfo params)
+				const char *queryString, ParamListInfo params)
 {
 	/* planner will not cope with utility statements */
 	if (query->commandType == CMD_UTILITY)
@@ -312,7 +311,7 @@ ExplainOneQuery(Query *query, IntoClause *into, ExplainState *es,
 
 	/* if an advisor plugin is present, let it manage things */
 	if (ExplainOneQuery_hook)
-		(*ExplainOneQuery_hook) (query, into, es, queryString, dest, params);
+		(*ExplainOneQuery_hook) (query, into, es, queryString, params);
 	else
 	{
 		PlannedStmt *plan;
@@ -321,7 +320,7 @@ ExplainOneQuery(Query *query, IntoClause *into, ExplainState *es,
 		plan = pg_plan_query(query, 0, params);
 
 		/* run it (if needed) and produce output */
-		ExplainOnePlan(plan, into, es, queryString, dest, params);
+		ExplainOnePlan(plan, into, es, queryString, params);
 	}
 }
 
@@ -345,23 +344,19 @@ ExplainOneUtility(Node *utilityStmt, IntoClause *into, ExplainState *es,
 
 	if (IsA(utilityStmt, CreateTableAsStmt))
 	{
-		DestReceiver	*dest;
-
 		/*
 		 * We have to rewrite the contained SELECT and then pass it back to
 		 * ExplainOneQuery.  It's probably not really necessary to copy the
 		 * contained parsetree another time, but let's be safe.
 		 */
 		CreateTableAsStmt *ctas = (CreateTableAsStmt *) utilityStmt;
-		Query	   *query = (Query *) ctas->query;
-
-		dest = CreateIntoRelDestReceiver(into);
+		List	   *rewritten;
 
 		Assert(IsA(ctas->query, Query));
-
-		query = SetupForCreateTableAs(query, ctas->into, queryString, params, dest);
-
-		ExplainOneQuery(query, ctas->into, es, queryString, dest, params);
+		rewritten = QueryRewrite((Query *) copyObject(ctas->query));
+		Assert(list_length(rewritten) == 1);
+		ExplainOneQuery((Query *) linitial(rewritten), ctas->into, es,
+						queryString, params);
 	}
 	else if (IsA(utilityStmt, ExecuteStmt))
 		ExplainExecuteQuery((ExecuteStmt *) utilityStmt, into, es,
@@ -402,8 +397,9 @@ ExplainOneUtility(Node *utilityStmt, IntoClause *into, ExplainState *es,
  */
 void
 ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
-			   const char *queryString, DestReceiver *dest, ParamListInfo params)
+			   const char *queryString, ParamListInfo params)
 {
+	DestReceiver *dest;
 	QueryDesc  *queryDesc;
 	instr_time	starttime;
 	double		totaltime = 0;
@@ -426,6 +422,15 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 	 */
 	PushCopiedSnapshot(GetActiveSnapshot());
 	UpdateActiveSnapshotCommandId();
+
+	/*
+	 * Normally we discard the query's output, but if explaining CREATE TABLE
+	 * AS, we'd better use the appropriate tuple receiver.
+	 */
+	if (into)
+		dest = CreateIntoRelDestReceiver(into);
+	else
+		dest = None_Receiver;
 
 	/* Create a QueryDesc for the query */
 	queryDesc = CreateQueryDesc(plannedstmt, queryString,

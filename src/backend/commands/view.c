@@ -208,7 +208,6 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 		createStmt->inhRelations = NIL;
 		createStmt->constraints = NIL;
 		createStmt->options = options;
-		createStmt->options = lappend(options, defWithOids(false));
 		createStmt->oncommit = ONCOMMIT_NOOP;
 		createStmt->tablespacename = NULL;
 		createStmt->if_not_exists = false;

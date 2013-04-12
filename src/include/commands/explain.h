@@ -47,7 +47,6 @@ typedef void (*ExplainOneQuery_hook_type) (Query *query,
 													   IntoClause *into,
 													   ExplainState *es,
 													 const char *queryString,
-													   DestReceiver *dest,
 													   ParamListInfo params);
 extern PGDLLIMPORT ExplainOneQuery_hook_type ExplainOneQuery_hook;
 
@@ -68,8 +67,8 @@ extern void ExplainOneUtility(Node *utilityStmt, IntoClause *into,
 				  const char *queryString, ParamListInfo params);
 
 extern void ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into,
-			   ExplainState *es, const char *queryString,
-			   DestReceiver *dest, ParamListInfo params);
+			   ExplainState *es,
+			   const char *queryString, ParamListInfo params);
 
 extern void ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc);
 

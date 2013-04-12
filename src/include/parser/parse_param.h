@@ -20,5 +20,6 @@ extern void parse_fixed_parameters(ParseState *pstate,
 extern void parse_variable_parameters(ParseState *pstate,
 						  Oid **paramTypes, int *numParams);
 extern void check_variable_parameters(ParseState *pstate, Query *query);
+extern bool query_contains_extern_params(Query *query);
 
 #endif   /* PARSE_PARAM_H */

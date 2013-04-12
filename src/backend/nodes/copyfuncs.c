@@ -1032,8 +1032,8 @@ _copyIntoClause(const IntoClause *from)
 	COPY_NODE_FIELD(options);
 	COPY_SCALAR_FIELD(onCommit);
 	COPY_STRING_FIELD(tableSpaceName);
+	COPY_NODE_FIELD(viewQuery);
 	COPY_SCALAR_FIELD(skipData);
-	COPY_SCALAR_FIELD(relkind);
 
 	return newnode;
 }
