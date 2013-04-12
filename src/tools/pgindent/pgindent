@@ -30,7 +30,7 @@ my %options = (
 	"excludes=s"  => \$excludes,
 	"indent=s"    => \$indent,
 	"build"       => \$build,);
-GetOptions(%options) || die "bad command line";
+GetOptions(%options) || die "bad command line argument";
 
 run_build($code_base) if ($build);
 
@@ -118,10 +118,11 @@ sub load_typedefs
 		  if (-f "$tdtry/src/tools/pgindent/typedefs.list");
 		$tdtry = "$tdtry/..";
 	}
-	die "no typedefs file" unless $typedefs_file && -f $typedefs_file;
+	die "cannot locate typedefs file \"$typedefs_file\""
+		unless $typedefs_file && -f $typedefs_file;
 
 	open(my $typedefs_fh, '<', $typedefs_file)
-	  || die "opening $typedefs_file: $!";
+	  || die "cannot open typedefs file \"$typedefs_file\": $!";
 	my @typedefs = <$typedefs_fh>;
 	close($typedefs_fh);
 
@@ -143,7 +144,7 @@ sub process_exclude
 {
 	if ($excludes && @files)
 	{
-		open(my $eh, '<', $excludes) || die "opening $excludes";
+		open(my $eh, '<', $excludes) || die "cannot open exclude file \"$excludes\"";
 		while (my $line = <$eh>)
 		{
 			chomp $line;
@@ -162,7 +163,7 @@ sub read_source
 	my $source;
 
 	open(my $src_fd, '<', $source_filename)
-	  || die "opening $source_filename: $!";
+	  || die "cannot open file \"$source_filename\": $!";
 	local ($/) = undef;
 	$source = <$src_fd>;
 	close($src_fd);
@@ -177,7 +178,7 @@ sub write_source
 	my $source_filename = shift;
 
 	open(my $src_fh, '>', $source_filename)
-	  || die "opening $source_filename: $!";
+	  || die "cannot open file \"$source_filename\": $!";
 	print $src_fh $source;
 	close($src_fh);
 }
@@ -436,25 +437,25 @@ sub run_build
 		$code_base = "$code_base/..";
 	}
 
-	die "no src/tools/pgindent directory in $code_base"
+	die "cannot locate src/tools/pgindent directory in \"$code_base\""
 	  unless -d "$code_base/src/tools/pgindent";
 
 	chdir "$code_base/src/tools/pgindent";
 
-	my $rv = getstore("http://buildfarm.postgresql.org/cgi-bin/typedefs.pl",
-		"tmp_typedefs.list");
+	my $typedefs_list_url = "http://buildfarm.postgresql.org/cgi-bin/typedefs.pl";
 
-	die "fetching typedefs.list" unless is_success($rv);
+	my $rv = getstore($typedefs_list_url, "tmp_typedefs.list");
+
+	die "cannot fetch typedefs list from $typedefs_list_url" unless is_success($rv);
 
 	$ENV{PGTYPEDEFS} = abs_path('tmp_typedefs.list');
 
-	my $pg_bsd_indent_name = "pg_bsd_indent-" . $INDENT_VERSION . ".tar.gz";
+	my $pg_bsd_indent_url = "ftp://ftp.postgresql.org/pub/dev/pg_bsd_indent-" . 
+				 $INDENT_VERSION . ".tar.gz";
 
-	$rv =
-	  getstore("ftp://ftp.postgresql.org/pub/dev/$pg_bsd_indent_name",
-		"pg_bsd_indent.tgz");
+	$rv = getstore($pg_bsd_indent_url, "pg_bsd_indent.tgz");
 
-	die "fetching $pg_bsd_indent_name" unless is_success($rv);
+	die "cannot fetch BSD indent tarfile from $pg_bsd_indent_url" unless is_success($rv);
 
 	# XXX add error checking here
 
@@ -484,7 +485,7 @@ sub build_clean
 		$code_base = "$code_base/..";
 	}
 
-	die "no src/tools/pgindent directory in $code_base"
+	die "cannot locate src/tools/pgindent directory in \"$code_base\""
 	  unless -d "$code_base/src/tools/pgindent";
 
 	chdir "$code_base";
