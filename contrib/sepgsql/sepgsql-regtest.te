@@ -1,4 +1,4 @@
-policy_module(sepgsql-regtest, 1.06)
+policy_module(sepgsql-regtest, 1.07)
 
 gen_require(`
 	all_userspace_class_perms
@@ -172,25 +172,14 @@ optional_policy(`
 #
 # Rule to execute original trusted procedures
 #
-# XXX - sepgsql_client_type contains any valid client types, so we allow
-# them to execute the original trusted procedure at once.
+# These rules intends to allow any valid client types to launch trusted-
+# procedures (including ones causes domain transition to invalid domain)
+# being labeled as sepgsql_regtest_trusted_proc_exec_t and
+# sepgsql_nosuch_trusted_proc_exec_t.
 #
 optional_policy(`
 	gen_require(`
 		attribute sepgsql_client_type;
 	')
-	allow sepgsql_client_type { sepgsql_regtest_trusted_proc_exec_t sepgsql_nosuch_trusted_proc_exec_t }:db_procedure { getattr execute };
-
-	# These rules intends sepgsql_regtest_user_t domain to translate
-	# sepgsql_regtest_dba_t on execution of procedures labeled as
-	# sepgsql_regtest_trusted_proc_exec_t.
-	#
-#	allow sepgsql_client_type sepgsql_regtest_trusted_proc_exec_t:db_procedure { getattr execute };
-
-	# These rules intends sepgsql_regtest_user_t domain to translate
-	# sepgsql_regtest_nosuch_t on execution of procedures labeled as
-	# sepgsql_nosuch_trusted_proc_exec_t, without permissions to
-	# translate to sepgsql_nosuch_trusted_proc_exec_t.
-	#
-#	allow sepgsql_client_type sepgsql_nosuch_trusted_proc_exec_t:db_procedure { getattr execute install };
+	allow sepgsql_client_type { sepgsql_regtest_trusted_proc_exec_t sepgsql_nosuch_trusted_proc_exec_t }:db_procedure { getattr execute entrypoint };
 ')

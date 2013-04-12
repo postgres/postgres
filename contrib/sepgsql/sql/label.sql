@@ -97,6 +97,8 @@ SECURITY LABEL ON COLUMN t2.b
 -- Tests for Trusted Procedures
 --
 -- @SECURITY-CONTEXT=unconfined_u:unconfined_r:sepgsql_regtest_user_t:s0
+SET sepgsql.debug_audit = true;
+SET client_min_messages = log;
 SELECT f1();			-- normal procedure
 SELECT f2();			-- trusted procedure
 SELECT f3();			-- trusted procedure that raises an error

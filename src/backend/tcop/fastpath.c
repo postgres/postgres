@@ -362,6 +362,7 @@ HandleFunctionRequest(StringInfo msgBuf)
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, ACL_KIND_PROC,
 					   get_func_name(fid));
+	InvokeFunctionExecuteHook(fid);
 
 	/*
 	 * Prepare function call info block and insert arguments.

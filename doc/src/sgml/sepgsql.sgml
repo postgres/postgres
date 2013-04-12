@@ -393,8 +393,11 @@ UPDATE t1 SET x = 2, y = md5sum(y) WHERE z = 100;
    </para>
 
    <para>
-    For functions, <literal>db_procedure:{execute}</> is defined, but is not
-    checked in this version.
+    For functions, <literal>db_procedure:{execute}</> will be checked when
+    user tries to execute a function as a part of query, or using fast-path
+    invocation. If this function is a trusted procedure, it also checks
+    <literal>db_procedure:{entrypoint}</> permission to check whether it
+    can perform as entrypoint of trusted procedure.
    </para>
 
    <para>

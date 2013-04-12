@@ -31,6 +31,12 @@
  * a particular namespace. This event is equivalent to usage permission
  * on a schema under the default access control mechanism.
  *
+ * OAT_FUNCTION_EXECUTE should be invoked prior to function execution.
+ * This event is almost equivalent to execute permission on functions,
+ * except for the case when execute permission is checked during object
+ * creation or altering, because OAT_POST_CREATE or OAT_POST_ALTER are
+ * sufficient for extensions to track these kind of checks.
+ *
  * Other types may be added in the future.
  */
 typedef enum ObjectAccessType
@@ -39,6 +45,7 @@ typedef enum ObjectAccessType
 	OAT_DROP,
 	OAT_POST_ALTER,
 	OAT_NAMESPACE_SEARCH,
+	OAT_FUNCTION_EXECUTE,
 } ObjectAccessType;
 
 /*
@@ -129,6 +136,7 @@ extern void RunObjectDropHook(Oid classId, Oid objectId, int subId,
 extern void RunObjectPostAlterHook(Oid classId, Oid objectId, int subId,
 								   Oid auxiliaryId, bool is_internal);
 extern bool RunNamespaceSearchHook(Oid objectId, bool ereport_on_volation);
+extern void RunFunctionExecuteHook(Oid objectId);
 
 /*
  * The following macros are wrappers around the functions above; these should
@@ -169,5 +177,11 @@ extern bool RunNamespaceSearchHook(Oid objectId, bool ereport_on_volation);
 	(!object_access_hook											\
 	 ? true															\
 	 : RunNamespaceSearchHook((objectId), (ereport_on_violation)))
+
+#define InvokeFunctionExecuteHook(objectId)		\
+	do {										\
+		if (object_access_hook)					\
+			RunFunctionExecuteHook(objectId);	\
+	} while(0)
 
 #endif   /* OBJECTACCESS_H */

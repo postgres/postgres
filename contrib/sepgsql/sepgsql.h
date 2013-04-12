@@ -328,5 +328,6 @@ extern void sepgsql_proc_post_create(Oid functionId);
 extern void sepgsql_proc_drop(Oid functionId);
 extern void sepgsql_proc_relabel(Oid functionId, const char *seclabel);
 extern void sepgsql_proc_setattr(Oid functionId);
+extern void sepgsql_proc_execute(Oid functionId);
 
 #endif   /* SEPGSQL_H */

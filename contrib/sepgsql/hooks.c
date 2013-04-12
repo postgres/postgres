@@ -255,6 +255,13 @@ sepgsql_object_access(ObjectAccessType access,
 			}
 			break;
 
+		case OAT_FUNCTION_EXECUTE:
+			{
+				Assert(classId == ProcedureRelationId);
+				sepgsql_proc_execute(objectId);
+			}
+			break;
+
 		default:
 			elog(ERROR, "unexpected object access type: %d", (int) access);
 			break;

@@ -12,6 +12,7 @@
 
 #include "catalog/objectaccess.h"
 #include "catalog/pg_namespace.h"
+#include "catalog/pg_proc.h"
 
 /*
  * Hook on object accesses.  This is intended as infrastructure for security
@@ -108,4 +109,20 @@ RunNamespaceSearchHook(Oid objectId, bool ereport_on_violation)
 						  (void *) &ns_arg);
 
 	return ns_arg.result;
+}
+
+/*
+ * RunFunctionExecuteHook
+ *
+ * It is entrypoint of OAT_FUNCTION_EXECUTE event
+ */
+void
+RunFunctionExecuteHook(Oid objectId)
+{
+	/* caller should check, but just in case... */
+	Assert(object_access_hook != NULL);
+
+	(*object_access_hook)(OAT_FUNCTION_EXECUTE,
+						  ProcedureRelationId, objectId, 0,
+						  NULL);
 }

@@ -307,3 +307,29 @@ sepgsql_proc_setattr(Oid functionId)
 	systable_endscan(sscan);
 	heap_close(rel, AccessShareLock);
 }
+
+/*
+ * sepgsql_proc_execute
+ *
+ * It checks privileges to execute the supplied function
+ */
+void
+sepgsql_proc_execute(Oid functionId)
+{
+	ObjectAddress object;
+	char	   *audit_name;
+
+	/*
+	 * check db_procedure:{execute} permission
+	 */
+	object.classId = ProcedureRelationId;
+	object.objectId = functionId;
+	object.objectSubId = 0;
+	audit_name = getObjectDescription(&object);
+	sepgsql_avc_check_perms(&object,
+							SEPG_CLASS_DB_PROCEDURE,
+							SEPG_DB_PROCEDURE__EXECUTE,
+							audit_name,
+							true);
+	pfree(audit_name);
+}
