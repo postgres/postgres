@@ -687,9 +687,12 @@ ifeq ($(GCC), yes)
 endif # GCC
 
 # Include all the dependency files generated for the current
-# directory. List /dev/null as dummy because if the wildcard expands
-# to nothing then make would complain.
--include $(wildcard $(DEPDIR)/*.Po) /dev/null
+# directory. Note that make would complain if include was called with
+# no arguments.
+Po_files := $(wildcard $(DEPDIR)/*.Po)
+ifneq (,$(Po_files))
+include $(Po_files)
+endif
 
 # hook for clean-up
 clean distclean maintainer-clean: clean-deps
