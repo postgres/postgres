@@ -1989,7 +1989,7 @@ view_is_auto_updatable(Relation view)
 		return gettext_noop("Views containing HAVING are not automatically updatable.");
 
 	if (viewquery->setOperations != NULL)
-		return gettext_noop("Views containing UNION, INTERSECT or EXCEPT are not automatically updatable.");
+		return gettext_noop("Views containing UNION, INTERSECT, or EXCEPT are not automatically updatable.");
 
 	if (viewquery->cteList != NIL)
 		return gettext_noop("Views containing WITH are not automatically updatable.");

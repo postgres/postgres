@@ -155,7 +155,7 @@ DETAIL:  Views that return columns that are not columns of their base relation a
 HINT:  To make the view updatable, provide an unconditional ON DELETE DO INSTEAD rule or an INSTEAD OF DELETE trigger.
 DELETE FROM ro_view6;
 ERROR:  cannot delete from view "ro_view6"
-DETAIL:  Views containing UNION, INTERSECT or EXCEPT are not automatically updatable.
+DETAIL:  Views containing UNION, INTERSECT, or EXCEPT are not automatically updatable.
 HINT:  To make the view updatable, provide an unconditional ON DELETE DO INSTEAD rule or an INSTEAD OF DELETE trigger.
 UPDATE ro_view7 SET a=a+1;
 ERROR:  cannot update view "ro_view7"
