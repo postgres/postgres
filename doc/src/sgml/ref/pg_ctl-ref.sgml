@@ -39,6 +39,7 @@ PostgreSQL documentation
    <arg choice="opt"><option>-o</option> <replaceable>options</replaceable></arg>
    <arg choice="opt"><option>-p</option> <replaceable>path</replaceable></arg>
    <arg choice="opt"><option>-c</option></arg>
+   <arg choice="opt"><option>-I</option></arg>
   </cmdsynopsis>
 
   <cmdsynopsis>
@@ -55,6 +56,7 @@ PostgreSQL documentation
        <arg choice="plain"><option>i[mmediate]</option></arg>
      </group>
    </arg>
+   <arg choice="opt"><option>-I</option></arg>
   </cmdsynopsis>
 
   <cmdsynopsis>
@@ -266,6 +268,25 @@ PostgreSQL documentation
         Specifies the file system location of the database configuration files.  If
         this is omitted, the environment variable
         <envar>PGDATA</envar> is used.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-I</option></term>
+      <term><option>--idempotent</option></term>
+      <listitem>
+       <para>
+        When used with the <literal>start</literal> or <literal>stop</literal>
+        actions, return exit code 0 if the server is already running or
+        stopped, respectively.  Otherwise, an error is raised and a nonzero
+        exit code is returned in these cases.
+       </para>
+
+       <para>
+        This option is useful for System-V-style init scripts, which require
+        the <literal>start</literal> and <literal>stop</literal> actions to be
+        idempotent.
        </para>
       </listitem>
      </varlistentry>
