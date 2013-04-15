@@ -401,18 +401,24 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 								len = ARRNELEM(qtrg);
 					trgm	   *ptr = GETARR(qtrg);
 					BITVECP		sign = GETSIGN(key);
+					bool	   *check;
 
-					/* descend only if at least one trigram is present */
-					res = false;
+					/*
+					 * GETBIT() tests may give false positives, due to limited
+					 * size of the sign array.	But since trigramsMatchGraph()
+					 * implements a monotone boolean function, false positives
+					 * in the check array can't lead to false negative answer.
+					 * So we can apply trigramsMatchGraph despite uncertainty,
+					 * and that usefully improves the quality of the search.
+					 */
+					check = (bool *) palloc(len * sizeof(bool));
 					for (k = 0; k < len; k++)
 					{
 						CPTRGM(((char *) &tmp), ptr + k);
-						if (GETBIT(sign, HASHVAL(tmp)))
-						{
-							res = true;
-							break;
-						}
+						check[k] = GETBIT(sign, HASHVAL(tmp));
 					}
+					res = trigramsMatchGraph(cache->graph, check);
+					pfree(check);
 				}
 			}
 			else
