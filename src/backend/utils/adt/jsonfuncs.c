@@ -1217,8 +1217,8 @@ Datum
 json_populate_record(PG_FUNCTION_ARGS)
 {
 	Oid			argtype = get_fn_expr_argtype(fcinfo->flinfo, 0);
-	text	   *json = PG_GETARG_TEXT_P(1);
-	bool		use_json_as_text = PG_GETARG_BOOL(2);
+	text	   *json;
+	bool		use_json_as_text;
 	HTAB	   *json_hash;
 	HeapTupleHeader rec;
 	Oid			tupType;
@@ -1234,6 +1234,7 @@ json_populate_record(PG_FUNCTION_ARGS)
 	char		fname[NAMEDATALEN];
 	JsonHashEntry hashentry;
 
+	use_json_as_text = PG_ARGISNULL(2) ? false : PG_GETARG_BOOL(2);
 
 	if (!type_is_rowtype(argtype))
 		ereport(ERROR,
@@ -1266,6 +1267,8 @@ json_populate_record(PG_FUNCTION_ARGS)
 		tupType = HeapTupleHeaderGetTypeId(rec);
 		tupTypmod = HeapTupleHeaderGetTypMod(rec);
 	}
+
+	json = PG_GETARG_TEXT_P(1);
 
 	json_hash = get_json_object_as_hash(json, "json_populate_record", use_json_as_text);
 
@@ -1559,8 +1562,8 @@ Datum
 json_populate_recordset(PG_FUNCTION_ARGS)
 {
 	Oid			argtype = get_fn_expr_argtype(fcinfo->flinfo, 0);
-	text	   *json = PG_GETARG_TEXT_P(1);
-	bool		use_json_as_text = PG_GETARG_BOOL(2);
+	text	   *json;
+	bool		use_json_as_text;
 	ReturnSetInfo *rsi;
 	MemoryContext old_cxt;
 	Oid			tupType;
@@ -1572,6 +1575,8 @@ json_populate_recordset(PG_FUNCTION_ARGS)
 	JsonLexContext *lex;
 	JsonSemAction sem;
 	PopulateRecordsetState state;
+
+	use_json_as_text = PG_ARGISNULL(2) ? false : PG_GETARG_BOOL(2);
 
 	if (!type_is_rowtype(argtype))
 		ereport(ERROR,
@@ -1615,6 +1620,8 @@ json_populate_recordset(PG_FUNCTION_ARGS)
 	/* if the json is null send back an empty set */
 	if (PG_ARGISNULL(1))
 		PG_RETURN_NULL();
+
+	json = PG_GETARG_TEXT_P(1);
 
 	if (PG_ARGISNULL(0))
 		rec = NULL;
