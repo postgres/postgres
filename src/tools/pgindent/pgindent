@@ -30,7 +30,7 @@ my %options = (
 	"excludes=s"  => \$excludes,
 	"indent=s"    => \$indent,
 	"build"       => \$build,);
-GetOptions(%options) || die "bad command line argument";
+GetOptions(%options) || die "bad command line argument\n";
 
 run_build($code_base) if ($build);
 
@@ -118,11 +118,11 @@ sub load_typedefs
 		  if (-f "$tdtry/src/tools/pgindent/typedefs.list");
 		$tdtry = "$tdtry/..";
 	}
-	die "cannot locate typedefs file \"$typedefs_file\""
+	die "cannot locate typedefs file \"$typedefs_file\"\n"
 		unless $typedefs_file && -f $typedefs_file;
 
 	open(my $typedefs_fh, '<', $typedefs_file)
-	  || die "cannot open typedefs file \"$typedefs_file\": $!";
+	  || die "cannot open typedefs file \"$typedefs_file\": $!\n";
 	my @typedefs = <$typedefs_fh>;
 	close($typedefs_fh);
 
@@ -144,7 +144,7 @@ sub process_exclude
 {
 	if ($excludes && @files)
 	{
-		open(my $eh, '<', $excludes) || die "cannot open exclude file \"$excludes\"";
+		open(my $eh, '<', $excludes) || die "cannot open exclude file \"$excludes\"\n";
 		while (my $line = <$eh>)
 		{
 			chomp $line;
@@ -163,7 +163,7 @@ sub read_source
 	my $source;
 
 	open(my $src_fd, '<', $source_filename)
-	  || die "cannot open file \"$source_filename\": $!";
+	  || die "cannot open file \"$source_filename\": $!\n";
 	local ($/) = undef;
 	$source = <$src_fd>;
 	close($src_fd);
@@ -178,7 +178,7 @@ sub write_source
 	my $source_filename = shift;
 
 	open(my $src_fh, '>', $source_filename)
-	  || die "cannot open file \"$source_filename\": $!";
+	  || die "cannot open file \"$source_filename\": $!\n";
 	print $src_fh $source;
 	close($src_fh);
 }
@@ -437,7 +437,7 @@ sub run_build
 		$code_base = "$code_base/..";
 	}
 
-	die "cannot locate src/tools/pgindent directory in \"$code_base\""
+	die "cannot locate src/tools/pgindent directory in \"$code_base\"\n"
 	  unless -d "$code_base/src/tools/pgindent";
 
 	chdir "$code_base/src/tools/pgindent";
@@ -446,7 +446,7 @@ sub run_build
 
 	my $rv = getstore($typedefs_list_url, "tmp_typedefs.list");
 
-	die "cannot fetch typedefs list from $typedefs_list_url" unless is_success($rv);
+	die "cannot fetch typedefs list from $typedefs_list_url\n" unless is_success($rv);
 
 	$ENV{PGTYPEDEFS} = abs_path('tmp_typedefs.list');
 
@@ -455,7 +455,7 @@ sub run_build
 
 	$rv = getstore($pg_bsd_indent_url, "pg_bsd_indent.tgz");
 
-	die "cannot fetch BSD indent tarfile from $pg_bsd_indent_url" unless is_success($rv);
+	die "cannot fetch BSD indent tarfile from $pg_bsd_indent_url\n" unless is_success($rv);
 
 	# XXX add error checking here
 
@@ -485,7 +485,7 @@ sub build_clean
 		$code_base = "$code_base/..";
 	}
 
-	die "cannot locate src/tools/pgindent directory in \"$code_base\""
+	die "cannot locate src/tools/pgindent directory in \"$code_base\"\n"
 	  unless -d "$code_base/src/tools/pgindent";
 
 	chdir "$code_base";
