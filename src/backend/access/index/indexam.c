@@ -114,6 +114,13 @@ do { \
 	} \
 } while(0)
 
+#define GET_UNCACHED_REL_PROCEDURE(pname) \
+do { \
+	if (!RegProcedureIsValid(indexRelation->rd_am->pname)) \
+		elog(ERROR, "invalid %s regproc", CppAsString(pname)); \
+	fmgr_info(indexRelation->rd_am->pname, &procedure); \
+} while(0)
+
 #define GET_SCAN_PROCEDURE(pname) \
 do { \
 	procedure = &scan->indexRelation->rd_aminfo->pname; \
@@ -671,14 +678,14 @@ index_bulk_delete(IndexVacuumInfo *info,
 				  void *callback_state)
 {
 	Relation	indexRelation = info->index;
-	FmgrInfo   *procedure;
+	FmgrInfo	procedure;
 	IndexBulkDeleteResult *result;
 
 	RELATION_CHECKS;
-	GET_REL_PROCEDURE(ambulkdelete);
+	GET_UNCACHED_REL_PROCEDURE(ambulkdelete);
 
 	result = (IndexBulkDeleteResult *)
-		DatumGetPointer(FunctionCall4(procedure,
+		DatumGetPointer(FunctionCall4(&procedure,
 									  PointerGetDatum(info),
 									  PointerGetDatum(stats),
 									  PointerGetDatum((Pointer) callback),
@@ -698,14 +705,14 @@ index_vacuum_cleanup(IndexVacuumInfo *info,
 					 IndexBulkDeleteResult *stats)
 {
 	Relation	indexRelation = info->index;
-	FmgrInfo   *procedure;
+	FmgrInfo	procedure;
 	IndexBulkDeleteResult *result;
 
 	RELATION_CHECKS;
-	GET_REL_PROCEDURE(amvacuumcleanup);
+	GET_UNCACHED_REL_PROCEDURE(amvacuumcleanup);
 
 	result = (IndexBulkDeleteResult *)
-		DatumGetPointer(FunctionCall2(procedure,
+		DatumGetPointer(FunctionCall2(&procedure,
 									  PointerGetDatum(info),
 									  PointerGetDatum(stats)));
 

@@ -47,8 +47,8 @@ typedef LockInfoData *LockInfo;
 
 
 /*
- * Cached lookup information for the index access method functions defined
- * by the pg_am row associated with an index relation.
+ * Cached lookup information for the frequently used index access method
+ * functions, defined by the pg_am row associated with an index relation.
  */
 typedef struct RelationAmInfo
 {
@@ -60,13 +60,7 @@ typedef struct RelationAmInfo
 	FmgrInfo	amendscan;
 	FmgrInfo	ammarkpos;
 	FmgrInfo	amrestrpos;
-	FmgrInfo	ambuild;
-	FmgrInfo	ambuildempty;
-	FmgrInfo	ambulkdelete;
-	FmgrInfo	amvacuumcleanup;
 	FmgrInfo	amcanreturn;
-	FmgrInfo	amcostestimate;
-	FmgrInfo	amoptions;
 } RelationAmInfo;
 
 
