@@ -790,7 +790,7 @@ check_same_host_or_net(SockAddr *raddr, IPCompareMethod method)
 						authname, argname), \
 				 errcontext("line %d of configuration file \"%s\"", \
 						line_num, HbaFileName))); \
-		return false; \
+		return NULL; \
 	} \
 } while (0);
 
