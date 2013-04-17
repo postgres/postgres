@@ -325,7 +325,7 @@ sepgsql_proc_execute(Oid functionId)
 	object.classId = ProcedureRelationId;
 	object.objectId = functionId;
 	object.objectSubId = 0;
-	audit_name = getObjectDescription(&object);
+	audit_name = getObjectIdentity(&object);
 	sepgsql_avc_check_perms(&object,
 							SEPG_CLASS_DB_PROCEDURE,
 							SEPG_DB_PROCEDURE__EXECUTE,
