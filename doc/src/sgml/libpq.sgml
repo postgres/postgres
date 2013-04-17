@@ -1864,7 +1864,7 @@ int PQconnectionUsedPassword(const PGconn *conn);
        if SSL is not in use.
 
 <synopsis>
-SSL *PQgetssl(const PGconn *conn);
+void *PQgetssl(const PGconn *conn);
 </synopsis>
       </para>
 
@@ -1875,10 +1875,29 @@ SSL *PQgetssl(const PGconn *conn);
       </para>
 
       <para>
-       You must define <symbol>USE_SSL</symbol> in order to get the
-       correct prototype for this function. Doing so will also
-       automatically include <filename>ssl.h</filename> from
-       <productname>OpenSSL</productname>.
+       The actual return value is of type <type>SSL *</type>,
+       where <type>SSL</type> is a type defined by
+       the <productname>OpenSSL</productname> library, but it is not declared
+       this way to avoid requiring the <productname>OpenSSL</productname>
+       header files.  To use this function, code along the following lines
+       could be used:
+<programlisting><![CDATA[
+#include <libpq-fe.h>
+#include <openssl/ssl.h>
+
+...
+
+    SSL *ssl;
+
+    dbconn = PQconnectdb(...);
+    ...
+
+    ssl = PQgetssl(dbconn);
+    if (ssl)
+    {
+        /* use OpenSSL functions to access ssl */
+    }
+]]></programlisting>
       </para>
      </listitem>
     </varlistentry>
