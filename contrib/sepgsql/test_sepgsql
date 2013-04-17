@@ -14,6 +14,9 @@
 
 PG_BINDIR=`pg_config --bindir`
 
+# we must move to contrib/sepgsql directory to run pg_regress correctly
+cd `dirname $0`
+
 echo
 echo "============== checking selinux environment           =============="
 

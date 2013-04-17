@@ -187,7 +187,7 @@ $ cd .../contrib/sepgsql
 $ make -f /usr/share/selinux/devel/Makefile
 $ sudo semodule -u sepgsql-regtest.pp
 $ sudo semodule -l | grep sepgsql
-sepgsql-regtest 1.04
+sepgsql-regtest 1.07
 </screen>
 
   <para>
