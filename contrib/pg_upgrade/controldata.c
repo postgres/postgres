@@ -621,6 +621,7 @@ check_control_data(ControlData *oldctrl,
 			   "options.\n");
 	}
 
+	/* We might eventually allow upgrades from checksum to no-checksum clusters. */
 	if (oldctrl->data_checksums != newctrl->data_checksums)
 	{
 		pg_log(PG_FATAL,
