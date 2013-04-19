@@ -4257,16 +4257,20 @@ ExecEvalArrayCoerceExpr(ArrayCoerceExprState *astate,
 /* ----------------------------------------------------------------
  *		ExecEvalCurrentOfExpr
  *
- * The planner must convert CURRENT OF into a TidScan qualification.
- * So, we have to be able to do ExecInitExpr on a CurrentOfExpr,
- * but we shouldn't ever actually execute it.
+ * The planner should convert CURRENT OF into a TidScan qualification, or some
+ * other special handling in a ForeignScan node.  So we have to be able to do
+ * ExecInitExpr on a CurrentOfExpr, but we shouldn't ever actually execute it.
+ * If we get here, we suppose we must be dealing with CURRENT OF on a foreign
+ * table whose FDW doesn't handle it, and complain accordingly.
  * ----------------------------------------------------------------
  */
 static Datum
 ExecEvalCurrentOfExpr(ExprState *exprstate, ExprContext *econtext,
 					  bool *isNull, ExprDoneCond *isDone)
 {
-	elog(ERROR, "CURRENT OF cannot be executed");
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("WHERE CURRENT OF is not supported for this table type")));
 	return 0;					/* keep compiler quiet */
 }
 
