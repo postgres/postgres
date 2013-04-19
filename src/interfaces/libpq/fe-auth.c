@@ -285,7 +285,7 @@ pg_krb5_sendauth(PGconn *conn)
 		char		sebuf[256];
 
 		printfPQExpBuffer(&conn->errorMessage,
-		libpq_gettext("could not restore non-blocking mode on socket: %s\n"),
+		libpq_gettext("could not restore nonblocking mode on socket: %s\n"),
 						  pqStrerror(errno, sebuf, sizeof(sebuf)));
 		ret = STATUS_ERROR;
 	}

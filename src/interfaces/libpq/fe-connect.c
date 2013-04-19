@@ -1666,7 +1666,7 @@ keep_going:						/* We will come back to here until there is
 					if (!pg_set_noblock(conn->sock))
 					{
 						appendPQExpBuffer(&conn->errorMessage,
-										  libpq_gettext("could not set socket to non-blocking mode: %s\n"),
+										  libpq_gettext("could not set socket to nonblocking mode: %s\n"),
 							SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 						pqDropConnection(conn);
 						conn->addr_cur = addr_cur->ai_next;

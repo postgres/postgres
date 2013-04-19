@@ -6261,7 +6261,7 @@ InitPostmasterDeathWatchHandle(void)
 	if (fcntl(postmaster_alive_fds[POSTMASTER_FD_WATCH], F_SETFL, O_NONBLOCK))
 		ereport(FATAL,
 				(errcode_for_socket_access(),
-				 errmsg_internal("could not set postmaster death monitoring pipe to non-blocking mode: %m")));
+				 errmsg_internal("could not set postmaster death monitoring pipe to nonblocking mode: %m")));
 #else
 
 	/*

@@ -1366,7 +1366,7 @@ SELECT pg_advisory_lock(q.id) FROM
    <para>
     As mentioned in <xref linkend="xact-serializable">, Serializable
     transactions are just Repeatable Read transactions which add
-    non-blocking monitoring for dangerous patterns of read/write conflicts.
+    nonblocking monitoring for dangerous patterns of read/write conflicts.
     When a pattern is detected which could cause a cycle in the apparent
     order of execution, one of the transactions involved is rolled back to
     break the cycle.
