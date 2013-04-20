@@ -66,6 +66,14 @@
 
 
 /*
+ * We must skip "overhead" operations that involve database access when the
+ * cached plan's subject statement is a transaction control command.
+ */
+#define IsTransactionStmtPlan(plansource)  \
+	((plansource)->raw_parse_tree && \
+	 IsA((plansource)->raw_parse_tree, TransactionStmt))
+
+/*
  * This is the head of the backend's list of "saved" CachedPlanSources (i.e.,
  * those that are in long-lived storage and are examined for sinval events).
  * We thread the structs manually instead of using List cells so that we can
@@ -352,9 +360,10 @@ CompleteCachedPlan(CachedPlanSource *plansource,
 	/*
 	 * Use the planner machinery to extract dependencies.  Data is saved in
 	 * query_context.  (We assume that not a lot of extra cruft is created by
-	 * this call.)  We can skip this for one-shot plans.
+	 * this call.)  We can skip this for one-shot plans, and transaction
+	 * control commands have no such dependencies anyway.
 	 */
-	if (!plansource->is_oneshot)
+	if (!plansource->is_oneshot && !IsTransactionStmtPlan(plansource))
 		extract_query_dependencies((Node *) querytree_list,
 								   &plansource->relationOids,
 								   &plansource->invalItems);
@@ -384,9 +393,12 @@ CompleteCachedPlan(CachedPlanSource *plansource,
 
 	/*
 	 * Fetch current search_path into dedicated context, but do any
-	 * recalculation work required in caller's context.
+	 * recalculation work required in caller's context.  We *must* skip this
+	 * for transaction control commands, because this could result in catalog
+	 * accesses.
 	 */
-	plansource->search_path = GetOverrideSearchPath(source_context);
+	if (!IsTransactionStmtPlan(plansource))
+		plansource->search_path = GetOverrideSearchPath(source_context);
 
 	plansource->is_complete = true;
 	plansource->is_valid = true;
@@ -537,9 +549,11 @@ RevalidateCachedQuery(CachedPlanSource *plansource)
 	/*
 	 * For one-shot plans, we do not support revalidation checking; it's
 	 * assumed the query is parsed, planned, and executed in one transaction,
-	 * so that no lock re-acquisition is necessary.
+	 * so that no lock re-acquisition is necessary.  Also, there is never
+	 * any need to revalidate plans for transaction control commands (and
+	 * we mustn't risk any catalog accesses when handling those).
 	 */
-	if (plansource->is_oneshot)
+	if (plansource->is_oneshot || IsTransactionStmtPlan(plansource))
 	{
 		Assert(plansource->is_valid);
 		return NIL;
@@ -859,7 +873,8 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 	 * compared to parse analysis + planning, I'm not going to contort the
 	 * code enough to avoid that.
 	 */
-	PushOverrideSearchPath(plansource->search_path);
+	if (plansource->search_path)
+		PushOverrideSearchPath(plansource->search_path);
 
 	/*
 	 * If a snapshot is already set (the normal case), we can just use that
@@ -894,7 +909,8 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 		PopActiveSnapshot();
 
 	/* Now we can restore current search path */
-	PopOverrideSearchPath();
+	if (plansource->search_path)
+		PopOverrideSearchPath();
 
 	/*
 	 * Normally we make a dedicated memory context for the CachedPlan and its
@@ -964,6 +980,9 @@ choose_custom_plan(CachedPlanSource *plansource, ParamListInfo boundParams)
 
 	/* Otherwise, never any point in a custom plan if there's no parameters */
 	if (boundParams == NULL)
+		return false;
+	/* ... nor for transaction control statements */
+	if (IsTransactionStmtPlan(plansource))
 		return false;
 
 	/* See if caller wants to force the decision */
@@ -1267,7 +1286,8 @@ CopyCachedPlan(CachedPlanSource *plansource)
 		newsource->resultDesc = CreateTupleDescCopy(plansource->resultDesc);
 	else
 		newsource->resultDesc = NULL;
-	newsource->search_path = CopyOverrideSearchPath(plansource->search_path);
+	if (plansource->search_path)
+		newsource->search_path = CopyOverrideSearchPath(plansource->search_path);
 	newsource->context = source_context;
 
 	querytree_context = AllocSetContextCreate(source_context,
@@ -1619,6 +1639,10 @@ PlanCacheRelCallback(Datum arg, Oid relid)
 		if (!plansource->is_valid)
 			continue;
 
+		/* Never invalidate transaction control commands */
+		if (IsTransactionStmtPlan(plansource))
+			continue;
+
 		/*
 		 * Check the dependency list for the rewritten querytree.
 		 */
@@ -1681,6 +1705,10 @@ PlanCacheFuncCallback(Datum arg, int cacheid, uint32 hashvalue)
 
 		/* No work if it's already invalidated */
 		if (!plansource->is_valid)
+			continue;
+
+		/* Never invalidate transaction control commands */
+		if (IsTransactionStmtPlan(plansource))
 			continue;
 
 		/*
@@ -1772,6 +1800,11 @@ ResetPlanCache(void)
 		 * We *must not* mark transaction control statements as invalid,
 		 * particularly not ROLLBACK, because they may need to be executed in
 		 * aborted transactions when we can't revalidate them (cf bug #5269).
+		 */
+		if (IsTransactionStmtPlan(plansource))
+			continue;
+
+		/*
 		 * In general there is no point in invalidating utility statements
 		 * since they have no plans anyway.  So invalidate it only if it
 		 * contains at least one non-utility statement, or contains a utility
