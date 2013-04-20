@@ -1922,7 +1922,7 @@ float8_avg(PG_FUNCTION_ARGS)
 	sumX = transvalues[1];
 	/* ignore sumX2 */
 
-	/* SQL92 defines AVG of no values to be NULL */
+	/* SQL defines AVG of no values to be NULL */
 	if (N == 0.0)
 		PG_RETURN_NULL();
 

@@ -3,7 +3,7 @@
 -- Test various data entry syntaxes.
 --
 
--- SQL92 string continuation syntax
+-- SQL string continuation syntax
 -- E021-03 character string literals
 SELECT 'first line'
 ' - next line'
@@ -92,7 +92,7 @@ SELECT CAST(f1 AS varchar) AS "varchar(char)" FROM CHAR_TBL;
 SELECT CAST(name 'namefield' AS varchar) AS "varchar(name)";
 
 --
--- test SQL92 string functions
+-- test SQL string functions
 -- E### and T### are feature reference numbers from SQL99
 --
 
@@ -345,7 +345,7 @@ insert into toasttest values(repeat('1234567890',10000));
 insert into toasttest values(repeat('1234567890',10000));
 
 -- If the starting position is zero or less, then return from the start of the string
--- adjusting the length to be consistent with the "negative start" per SQL92.
+-- adjusting the length to be consistent with the "negative start" per SQL.
 SELECT substr(f1, -1, 5) from toasttest;
 
 -- If the length is less than zero, an ERROR is thrown.
@@ -378,7 +378,7 @@ insert into toasttest values(decode(repeat('1234567890',10000),'escape'));
 insert into toasttest values(decode(repeat('1234567890',10000),'escape'));
 
 -- If the starting position is zero or less, then return from the start of the string
--- adjusting the length to be consistent with the "negative start" per SQL92.
+-- adjusting the length to be consistent with the "negative start" per SQL.
 SELECT substr(f1, -1, 5) from toasttest;
 
 -- If the length is less than zero, an ERROR is thrown.

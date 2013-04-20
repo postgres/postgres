@@ -366,7 +366,7 @@ SELECT '' AS tf_12_ff_4, BOOLTBL1.*, BOOLTBL2.*
 (16 rows)
 
 --
--- SQL92 syntax
+-- SQL syntax
 -- Try all combinations to ensure that we get nothing when we expect nothing
 -- - thomas 2000-01-04
 --

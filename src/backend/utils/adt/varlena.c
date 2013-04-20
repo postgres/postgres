@@ -720,18 +720,18 @@ charlen_to_bytelen(const char *p, int n)
  *	- string length
  *
  * If the starting position is zero or less, then return from the start of the string
- *	adjusting the length to be consistent with the "negative start" per SQL92.
+ *	adjusting the length to be consistent with the "negative start" per SQL.
  * If the length is less than zero, return the remaining string.
  *
  * Added multibyte support.
  * - Tatsuo Ishii 1998-4-21
- * Changed behavior if starting position is less than one to conform to SQL92 behavior.
+ * Changed behavior if starting position is less than one to conform to SQL behavior.
  * Formerly returned the entire string; now returns a portion.
  * - Thomas Lockhart 1998-12-10
  * Now uses faster TOAST-slicing interface
  * - John Gray 2002-02-22
  * Remove "#ifdef MULTIBYTE" and test for encoding_max_length instead. Change
- * behaviors conflicting with SQL92 to meet SQL92 (if E = S + L < S throw
+ * behaviors conflicting with SQL to meet SQL (if E = S + L < S throw
  * error; if E < 1, return '', not entire string). Fixed MB related bug when
  * S > LC and < LC + 4 sometimes garbage characters are returned.
  * - Joe Conway 2002-08-10
@@ -1023,7 +1023,7 @@ text_overlay(text *t1, text *t2, int sp, int sl)
 /*
  * textpos -
  *	  Return the position of the specified substring.
- *	  Implements the SQL92 POSITION() function.
+ *	  Implements the SQL POSITION() function.
  *	  Ref: A Guide To The SQL Standard, Date & Darwen, 1997
  * - thomas 1997-07-27
  */
@@ -1903,7 +1903,7 @@ bytea_catenate(bytea *t1, bytea *t2)
  *	- string length (optional)
  *
  * If the starting position is zero or less, then return from the start of the string
- * adjusting the length to be consistent with the "negative start" per SQL92.
+ * adjusting the length to be consistent with the "negative start" per SQL.
  * If the length is less than zero, an ERROR is thrown. If no third argument
  * (length) is provided, the length to the end of the string is assumed.
  */
@@ -2046,7 +2046,7 @@ bytea_overlay(bytea *t1, bytea *t2, int sp, int sl)
 /*
  * byteapos -
  *	  Return the position of the specified substring.
- *	  Implements the SQL92 POSITION() function.
+ *	  Implements the SQL POSITION() function.
  * Cloned from textpos and modified as required.
  */
 Datum

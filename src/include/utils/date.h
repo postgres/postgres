@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * date.h
- *	  Definitions for the SQL92 "date" and "time" types.
+ *	  Definitions for the SQL "date" and "time" types.
  *
  *
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group

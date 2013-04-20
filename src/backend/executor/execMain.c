@@ -1618,7 +1618,7 @@ ExecRelCheck(ResultRelInfo *resultRelInfo,
 		qual = resultRelInfo->ri_ConstraintExprs[i];
 
 		/*
-		 * NOTE: SQL92 specifies that a NULL result from a constraint
+		 * NOTE: SQL specifies that a NULL result from a constraint
 		 * expression is not to be treated as a failure.  Therefore, tell
 		 * ExecQual to return TRUE for NULL.
 		 */

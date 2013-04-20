@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * date.c
- *	  implements DATE and TIME data types specified in SQL-92 standard
+ *	  implements DATE and TIME data types specified in SQL standard
  *
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
@@ -1403,9 +1403,9 @@ time_smaller(PG_FUNCTION_ARGS)
 	PG_RETURN_TIMEADT((time1 < time2) ? time1 : time2);
 }
 
-/* overlaps_time() --- implements the SQL92 OVERLAPS operator.
+/* overlaps_time() --- implements the SQL OVERLAPS operator.
  *
- * Algorithm is per SQL92 spec.  This is much harder than you'd think
+ * Algorithm is per SQL spec.  This is much harder than you'd think
  * because the spec requires us to deliver a non-null answer in some cases
  * where some of the inputs are null.
  */
@@ -2273,9 +2273,9 @@ timetz_mi_interval(PG_FUNCTION_ARGS)
 	PG_RETURN_TIMETZADT_P(result);
 }
 
-/* overlaps_timetz() --- implements the SQL92 OVERLAPS operator.
+/* overlaps_timetz() --- implements the SQL OVERLAPS operator.
  *
- * Algorithm is per SQL92 spec.  This is much harder than you'd think
+ * Algorithm is per SQL spec.  This is much harder than you'd think
  * because the spec requires us to deliver a non-null answer in some cases
  * where some of the inputs are null.
  */

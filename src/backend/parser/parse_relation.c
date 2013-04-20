@@ -70,7 +70,7 @@ static bool isQueryUsingTempRelation_walker(Node *node, void *context);
  * that (a) has no alias and (b) is for the same relation identified by
  * schemaname.refname.	In this case we convert schemaname.refname to a
  * relation OID and search by relid, rather than by alias name.  This is
- * peculiar, but it's what SQL92 says to do.
+ * peculiar, but it's what SQL says to do.
  */
 RangeTblEntry *
 refnameRangeTblEntry(ParseState *pstate,
@@ -353,7 +353,7 @@ searchRangeTableForRel(ParseState *pstate, RangeVar *relation)
  * Note: we assume that each given argument does not contain conflicts
  * itself; we just want to know if the two can be merged together.
  *
- * Per SQL92, two alias-less plain relation RTEs do not conflict even if
+ * Per SQL, two alias-less plain relation RTEs do not conflict even if
  * they have the same eref->aliasname (ie, same relation name), if they
  * are for different relation OIDs (implying they are in different schemas).
  *
@@ -389,7 +389,7 @@ checkNameSpaceConflicts(ParseState *pstate, List *namespace1,
 			if (rte1->rtekind == RTE_RELATION && rte1->alias == NULL &&
 				rte2->rtekind == RTE_RELATION && rte2->alias == NULL &&
 				rte1->relid != rte2->relid)
-				continue;		/* no conflict per SQL92 rule */
+				continue;		/* no conflict per SQL rule */
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_ALIAS),
 					 errmsg("table name \"%s\" specified more than once",

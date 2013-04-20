@@ -42,7 +42,7 @@
  *
  *	Keith Parks. <keith@mtcc.demon.co.uk>
  *
- *	SQL92 lets you specify the escape character by saying
+ *	SQL lets you specify the escape character by saying
  *	LIKE <pattern> ESCAPE <escape character>. We are a small operation
  *	so we force you to use '\'. - ay 7/95
  *

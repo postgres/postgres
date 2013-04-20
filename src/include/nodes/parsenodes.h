@@ -1509,7 +1509,7 @@ typedef struct CreateStmt
 
 typedef enum ConstrType			/* types of constraints */
 {
-	CONSTR_NULL,				/* not SQL92, but a lot of people expect it */
+	CONSTR_NULL,				/* not standard SQL, but a lot of people expect it */
 	CONSTR_NOTNULL,
 	CONSTR_DEFAULT,
 	CONSTR_CHECK,

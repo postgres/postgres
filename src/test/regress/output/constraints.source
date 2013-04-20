@@ -188,7 +188,7 @@ SELECT 'eight' AS one, currval('insert_seq');
  eight |       8
 (1 row)
 
--- According to SQL92, it is OK to insert a record that gives rise to NULL
+-- According to SQL, it is OK to insert a record that gives rise to NULL
 -- constraint-condition results.  Postgres used to reject this, but it
 -- was wrong:
 INSERT INTO INSERT_TBL VALUES (null, null, null);

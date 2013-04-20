@@ -1603,7 +1603,7 @@ DoPortalRunFetch(Portal portal,
 	forward = (fdirection == FETCH_FORWARD);
 
 	/*
-	 * Zero count means to re-fetch the current row, if any (per SQL92)
+	 * Zero count means to re-fetch the current row, if any (per SQL)
 	 */
 	if (count == 0)
 	{

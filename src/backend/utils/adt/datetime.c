@@ -1558,8 +1558,8 @@ overflow:
  * Returns 0 if successful, DTERR code if bogus input detected.
  *
  * Note that support for time zone is here for
- * SQL92 TIME WITH TIME ZONE, but it reveals
- * bogosity with SQL92 date/time standards, since
+ * SQL TIME WITH TIME ZONE, but it reveals
+ * bogosity with SQL date/time standards, since
  * we must infer a time zone from current time.
  * - thomas 2000-03-10
  * Allow specifying date to get a better time zone,

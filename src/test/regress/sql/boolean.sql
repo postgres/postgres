@@ -164,7 +164,7 @@ SELECT '' AS tf_12_ff_4, BOOLTBL1.*, BOOLTBL2.*
    ORDER BY BOOLTBL1.f1, BOOLTBL2.f1;
 
 --
--- SQL92 syntax
+-- SQL syntax
 -- Try all combinations to ensure that we get nothing when we expect nothing
 -- - thomas 2000-01-04
 --

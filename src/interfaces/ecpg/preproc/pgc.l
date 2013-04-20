@@ -269,7 +269,7 @@ param			\${integer}
  * In order to make the world safe for Windows and Mac clients as well as
  * Unix ones, we accept either \n or \r as a newline.  A DOS-style \r\n
  * sequence will be seen as two successive newlines, but that doesn't cause
- * any problems.  SQL92-style comments, which start with -- and extend to the
+ * any problems.  SQL-style comments, which start with -- and extend to the
  * next newline, are treated as equivalent to a single whitespace character.
  *
  * NOTE a fine point: if there is no newline following --, we will absorb
@@ -295,7 +295,7 @@ comment			("--"{non_newline}*)
 whitespace		({space}+|{comment})
 
 /*
- * SQL92 requires at least one newline in the whitespace separating
+ * SQL requires at least one newline in the whitespace separating
  * string literals that are to be concatenated.  Silly, but who are we
  * to argue?  Note that {whitespace_with_newline} should not have * after
  * it, whereas {whitespace} should generally have a * after it...
