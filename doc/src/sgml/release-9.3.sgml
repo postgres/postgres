@@ -60,9 +60,113 @@
     <title>Server</title>
 
     <sect4>
-     <title>Performance</title>
+     <title>Locking</title>
 
      <itemizedlist>
+
+      <listitem>
+       <para>
+        Prevent non-key-field row updates from locking foreign key rows
+        (AlvaroAacute;lvaro Herrera, Marti Raudsepp, Alexander Shulgin,
+        Noah Misch and Andres Freund)
+       </para>
+
+       <para>
+        This improves concurrency and reduces the probability of deadlocks.
+        UPDATEs on non-key columns use the new SELECT FOR NO KEY UPDATE lock
+        type, and foreign key checks use the new SELECT FOR KEY SHARE lock mode.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add cache of local locks (Jeff Janes)
+       </para>
+
+       <para>
+        This speeds lock release at statement completion in transactions
+        that hold many locks; it is particularly useful for pg_dump.
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect4>
+
+    <sect4>
+     <title>Indexes</title>
+
+     <itemizedlist>
+
+      <listitem>
+       <para>
+        Add SP-GiST support for range data types (Alexander Korotkov)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow unlogged GiST indexes (Jeevan Chalke)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Improve concurrency of hash indexes (Robert Haas)
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect4>
+
+    <sect4>
+     <title>Optimizer</title>
+
+     <itemizedlist>
+
+      <listitem>
+       <para>
+        Improve the ability to detect indexable prefixes in regular
+        expressions (Tom Lane)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Collect and use histograms of lower and upper bounds for range types
+        (Alexander Korotkov)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Reduce optimizer overhead by discarding plans with unneeded cheaper
+        startup costs (Tom Lane)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Improve optimizer cost estimation for index access (Tom Lane)
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect4>
+
+    <sect4>
+     <title>General Performance</title>
+
+     <itemizedlist>
+
+      <listitem>
+       <para>
+        Add COPY FREEZE option to avoid the overhead of later marking
+        tuples as committed (Simon Riggs, Jeff Davis)
+       </para>
+      </listitem>
 
       <listitem>
        <para>
@@ -73,13 +177,6 @@
       <listitem>
        <para>
         Use a binary heap for Merge-Append operations (Abhijit Menon-Sen)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add COPY FREEZE option to avoid the overhead of later marking
-        tuples as committed (Simon Riggs, Jeff Davis)
        </para>
       </listitem>
 
@@ -141,108 +238,52 @@
     </sect4>
 
     <sect4>
-     <title>Optimizer</title>
+     <title>Monitoring</title>
 
      <itemizedlist>
 
       <listitem>
        <para>
-        Reduce optimizer overhead by discarding plans with unneeded cheaper
-        startup costs (Tom Lane)
+        Add optional ability to checksum data pages and report corruption
+        (Simon Riggs, Jeff Davis, Greg Smith)
+       </para>
+
+       <para>
+        The checksum option can be set during initdb.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Collect and use histograms of lower and upper bounds for range types
-        (Alexander Korotkov)
+        Allow pg_terminate_backend() to terminate other backends with
+        the same role (Dan Farina)
+       </para>
+
+       <para>
+        Previously, only superusers could terminate other sessions.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Improve the ability to detect indexable prefixes in regular
-        expressions (Tom Lane)
+        Allow the statistics collector to operate properly in cases where
+        the system clock goes backwards (Tom Lane)
+       </para>
+
+       <para>
+        Previously statistics collection would stop until the time again
+        reached the previously-stored latest time.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Improve optimizer cost estimation for index access (Tom Lane)
-       </para>
-      </listitem>
-
-     </itemizedlist>
-
-    </sect4>
-
-    <sect4>
-     <title>Indexes</title>
-
-     <itemizedlist>
-
-      <listitem>
-       <para>
-        Reduce use of heavyweight locking inside hash AM.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Improve concurrency of hash indexes (Robert Haas)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add SP-GiST support for range data types (Alexander Korotkov)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow unlogged GiST indexes (Jeevan Chalke)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow SP-GiST to support of the range adjacent operator (Alexander
-        Korotkov)
-       </para>
-      </listitem>
-
-     </itemizedlist>
-
-    </sect4>
-
-    <sect4>
-     <title>Locking</title>
-
-     <itemizedlist>
-
-      <listitem>
-       <para>
-        Prevent non-key-field row updates from locking foreign key rows
-        (AlvaroAacute;lvaro Herrera, Marti Raudsepp, Alexander Shulgin,
-        Noah Misch and Andres Freund)
+        Add function to report the size of the GIN pending index insertion
+        list (Fujii Masao)
        </para>
 
        <para>
-        This improves concurrency and reduces the probability of deadlocks.
-        UPDATEs on non-key columns use the new SELECT FOR NO KEY UPDATE lock
-        type, and foreign key checks use the new SELECT FOR KEY SHARE lock mode.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add cache of local locks (Jeff Janes)
-       </para>
-
-       <para>
-        This speeds lock release at statement completion in transactions
-        that hold many locks; it is particularly useful for pg_dump.
+        The function is pgstatginindex() in pgstattuple.
        </para>
       </listitem>
 
@@ -295,60 +336,6 @@
     </sect4>
 
     <sect4>
-     <title>Monitoring</title>
-
-     <itemizedlist>
-
-      <listitem>
-       <para>
-        Allow the statistics collector to operate properly in cases where
-        the system clock goes backwards (Tom Lane)
-       </para>
-
-       <para>
-        Previously statistics collection would stop until the time again
-        reached the previously-stored latest time.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add optional ability to checksum data pages and report corruption
-        (Simon Riggs, Jeff Davis, Greg Smith)
-       </para>
-
-       <para>
-        The checksum option can be set during initdb.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add function to report the size of the GIN pending index insertion
-        list (Fujii Masao)
-       </para>
-
-       <para>
-        The function is pgstatginindex() in pgstattuple.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow pg_terminate_backend() to terminate other backends with
-        the same role (Dan Farina)
-       </para>
-
-       <para>
-        Previously, only superusers could terminate other sessions.
-       </para>
-      </listitem>
-
-     </itemizedlist>
-
-    </sect4>
-
-    <sect4>
      <title>Server Settings</title>
 
      <itemizedlist>
@@ -367,13 +354,20 @@
 
       <listitem>
        <para>
-        Increase the maximum initdb-configured value for shared_buffers
-        to 128MB (Robert Haas)
+        Allow the postmaster to listen on multiple Unix-domain sockets
+        (Honza Horak)
        </para>
 
        <para>
-        This is the maximum value initdb attempts to set in
-        postgresql.conf;  the previous value was 32MB.
+        This renames configuration parameter unix_socket_directory to
+        unix_socket_directories, which accepts a list of directories.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add configuration variable lock_timeout to limit lock wait duration
+        (Zoltán Böszörményi)
        </para>
       </listitem>
 
@@ -390,21 +384,13 @@
 
       <listitem>
        <para>
-        Have "session id" in log_line_prefix (%c) always output four hex
-        digits after the period (Bruce Momjian)
+        Increase the maximum initdb-configured value for shared_buffers
+        to 128MB (Robert Haas)
        </para>
-      </listitem>
 
-      <listitem>
        <para>
-        Add configuration variable lock_timeout to limit lock wait duration
-        (Zoltán Böszörményi)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Remove the external PID file on postmaster exit (Peter Eisentraut)
+        This is the maximum value initdb attempts to set in
+        postgresql.conf;  the previous value was 32MB.
        </para>
       </listitem>
 
@@ -427,15 +413,17 @@
        </para>
       </listitem>
 
+
       <listitem>
        <para>
-        Allow the postmaster to listen on multiple Unix-domain sockets
-        (Honza Horak)
+        Remove the external PID file on postmaster exit (Peter Eisentraut)
        </para>
+      </listitem>
 
+      <listitem>
        <para>
-        This renames configuration parameter unix_socket_directory to
-        unix_socket_directories, which accepts a list of directories.
+        Have "session id" in log_line_prefix (%c) always output four hex
+        digits after the period (Bruce Momjian) COMPATIBILITY
        </para>
       </listitem>
 
@@ -449,6 +437,18 @@
     <title>Replication and Recovery</title>
 
      <itemizedlist>
+
+      <listitem>
+       <para>
+        Allow a streaming replication standbys to follow a timeline switch (Heikki Linnakangas)
+       </para>
+
+       <para>
+        This allows streaming standbys to feed from newly-promoted slaves.
+        Previously slaves required access to a WAL archive directory to
+        accomplish this.
+       </para>
+      </listitem>
 
       <listitem>
        <para>
@@ -482,18 +482,6 @@
        <para>
         Allow tooling like pg_receivexlog to run on computers with different
         architectures (Heikki Linnakangas)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow a streaming replication standbys to follow a timeline switch (Heikki Linnakangas)
-       </para>
-
-       <para>
-        This allows streaming standbys to feed from newly-promoted slaves.
-        Previously slaves required access to a WAL archive directory to
-        accomplish this.
        </para>
       </listitem>
 
@@ -679,6 +667,37 @@
      </itemizedlist>
 
     <sect4>
+     <title><link linkend="SQL-CREATETABLE"><command>CREATE TABLE</></link></title>
+
+     <itemizedlist>
+
+      <listitem>
+       <para>
+        No longer output messages about implicit index and sequence creation (Robert Haas)
+       </para>
+
+       <para>
+        These messages now appear with DEBUG1-level output.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow CREATE TABLE to succeed for a non-existent schema
+        (Bruce Momjian)
+       </para>
+
+       <para>
+         Previously, CREATE TABLE IF EXIST threw an error if the schema was
+         nonexistent.
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect4>
+
+    <sect4>
      <title>Constraints</title>
 
      <itemizedlist>
@@ -815,37 +834,6 @@
         Access to the materialized view reads from these materialized physical
         tables. There is no facility for incrementally refreshing materialized
         views or auto-accessing them via base table access.
-       </para>
-      </listitem>
-
-     </itemizedlist>
-
-    </sect4>
-
-    <sect4>
-     <title><link linkend="SQL-CREATETABLE"><command>CREATE TABLE</></link></title>
-
-     <itemizedlist>
-
-      <listitem>
-       <para>
-        No longer output messages about implicit index and sequence creation (Robert Haas)
-       </para>
-
-       <para>
-        These messages now appear with DEBUG1-level output.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow CREATE TABLE to succeed for a non-existent schema
-        (Bruce Momjian)
-       </para>
-
-       <para>
-         Previously, CREATE TABLE IF EXIST threw an error if the schema was
-         nonexistent.
        </para>
       </listitem>
 
@@ -1698,7 +1686,7 @@
 
       <listitem>
        <para>
-        Allow pgbench to use scale values larger than 21474 (Greg Smith)
+        Allow pgbench to use a larger scale factor (Greg Smith)
        </para>
       </listitem>
 
