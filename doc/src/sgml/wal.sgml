@@ -71,7 +71,7 @@
   <itemizedlist>
     <listitem>
       <para>
-        On <productname>Linux</>, IDE drives can be queried using
+        On <productname>Linux</>, IDE and SATA drives can be queried using
         <command>hdparm -I</command>; write caching is enabled if there is
         a <literal>*</> next to <literal>Write cache</>.  <command>hdparm -W 0</>
         can be used to turn off write caching.  SCSI drives can be queried
