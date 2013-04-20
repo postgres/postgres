@@ -59,6 +59,14 @@
 #include "utils/syscache.h"
 
 
+/*
+ * We must skip "overhead" operations that involve database access when the
+ * cached plan's subject statement is a transaction control command.
+ */
+#define IsTransactionStmtPlan(plansource)  \
+	((plansource)->raw_parse_tree && \
+	 IsA((plansource)->raw_parse_tree, TransactionStmt))
+
 static List *cached_plans_list = NIL;
 
 static void StoreCachedPlan(CachedPlanSource *plansource, List *stmt_list,
@@ -135,9 +143,13 @@ CreateCachedPlan(Node *raw_parse_tree,
 
 	/*
 	 * Fetch current search_path into new context, but do any recalculation
-	 * work required in caller's context.
+	 * work required in caller's context.  Skip this for a transaction control
+	 * command, since we won't need it and can't risk catalog access.
 	 */
-	search_path = GetOverrideSearchPath(source_context);
+	if (raw_parse_tree && IsA(raw_parse_tree, TransactionStmt))
+		search_path = NULL;
+	else
+		search_path = GetOverrideSearchPath(source_context);
 
 	/*
 	 * Create and fill the CachedPlanSource struct within the new context.
@@ -225,9 +237,13 @@ FastCreateCachedPlan(Node *raw_parse_tree,
 
 	/*
 	 * Fetch current search_path into given context, but do any recalculation
-	 * work required in caller's context.
+	 * work required in caller's context.  Skip this for a transaction control
+	 * command, since we won't need it and can't risk catalog access.
 	 */
-	search_path = GetOverrideSearchPath(context);
+	if (raw_parse_tree && IsA(raw_parse_tree, TransactionStmt))
+		search_path = NULL;
+	else
+		search_path = GetOverrideSearchPath(context);
 
 	/*
 	 * Create and fill the CachedPlanSource struct within the given context.
@@ -474,7 +490,8 @@ RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
 		 *
 		 * (XXX is there anything else we really need to restore?)
 		 */
-		PushOverrideSearchPath(plansource->search_path);
+		if (plansource->search_path)
+			PushOverrideSearchPath(plansource->search_path);
 
 		/*
 		 * If a snapshot is already set (the normal case), we can just use
@@ -553,7 +570,8 @@ RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
 			PopActiveSnapshot();
 
 		/* Now we can restore current search path */
-		PopOverrideSearchPath();
+		if (plansource->search_path)
+			PopOverrideSearchPath();
 
 		/*
 		 * Store the plans into the plancache entry, advancing the generation
