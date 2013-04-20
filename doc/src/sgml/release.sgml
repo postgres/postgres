@@ -78,6 +78,7 @@ can be created without links to the main documentation.  Don't use <xref>.
   The reason for splitting the release notes this way is so that appropriate
   subsets can easily be copied into back branches.
 -->
+&release-9.3;
 &release-9.2;
 &release-9.1;
 &release-9.0;
