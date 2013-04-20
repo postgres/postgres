@@ -452,7 +452,7 @@
 
       <listitem>
        <para>
-        Add SQL functions pg_backup_in_progress() and pg_backup_start_time() (Darold Gilles)
+        Add SQL functions pg_backup_in_progress() and pg_backup_start_time() (Gilles Darold)
        </para>
 
        <para>
