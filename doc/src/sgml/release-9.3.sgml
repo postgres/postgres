@@ -586,6 +586,13 @@
 
       <listitem>
        <para>
+        Add support for piping COPY and psql \copy to/from an external program (Etsuro
+        Fujita)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Improve query string error location reporting (Tom Lane)
        </para>
 
@@ -598,13 +605,6 @@
        <para>
         Correct predicate locking for DROP INDEX CONCURRENTLY (Kevin Grittner)
         KEEP?
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add support for piping COPY and psql \copy to/from an external program (Etsuro
-        Fujita)
        </para>
       </listitem>
 
@@ -704,18 +704,6 @@
 
       <listitem>
        <para>
-        Internally store default foreign key matches (non-FULL, non-PARTIAL) as "simple" (Tom Lane)
-       </para>
-
-       <para>
-        These were previously stored as "&amp;unspecified&amp;".
-        This changes the value stored in system column
-        pg_constraint.confmatchtype.  BACKWARD COMPATIBILITY CHANGE
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Change ON UPDATE SET NULL/SET DEFAULT foreign key actions to affect
         all referenced columns, not just those referenced in the UPDATE
         (Tom Lane)
@@ -741,6 +729,18 @@
        </para>
       </listitem>
 
+      <listitem>
+       <para>
+        Internally store default foreign key matches (non-FULL, non-PARTIAL) as "simple" (Tom Lane)
+       </para>
+
+       <para>
+        These were previously stored as "&amp;unspecified&amp;".
+        This changes the value stored in system column
+        pg_constraint.confmatchtype.  BACKWARD COMPATIBILITY CHANGE
+       </para>
+      </listitem>
+
      </itemizedlist>
 
     </sect4>
@@ -752,7 +752,12 @@
 
       <listitem>
        <para>
-        Add support for ALTER RULE ... RENAME (Ali Dar)
+        Add the ALTER TYPE ... IF NOT EXISTS clause when adding enumerated type labels (Andrew
+        Dunstan)
+       </para>
+
+       <para>
+        This is useful for conditional label creation in transaction blocks.
        </para>
       </listitem>
 
@@ -770,12 +775,7 @@
 
       <listitem>
        <para>
-        Add the ALTER TYPE ... IF NOT EXISTS clause when adding enumerated type labels (Andrew
-        Dunstan)
-       </para>
-
-       <para>
-        This is useful for conditional label creation in transaction blocks.
+        Add support for ALTER RULE ... RENAME (Ali Dar)
        </para>
       </listitem>
 
@@ -790,8 +790,15 @@
 
       <listitem>
        <para>
-        When converting a table to a view, remove its system columns (Tom Lane)
-        KEEP?
+        Add a materialized view relations (Kevin Grittner)
+       </para>
+
+       <para>
+        Unlink ordinary views, where the base tables are read on every access,
+        materialized views create physical tables at creation or refresh time.
+        Access to the materialized view reads from these materialized physical
+        tables. There is no facility for incrementally refreshing materialized
+        views or auto-accessing them via base table access.
        </para>
       </listitem>
 
@@ -825,15 +832,8 @@
 
       <listitem>
        <para>
-        Add a materialized view relations (Kevin Grittner)
-       </para>
-
-       <para>
-        Unlink ordinary views, where the base tables are read on every access,
-        materialized views create physical tables at creation or refresh time.
-        Access to the materialized view reads from these materialized physical
-        tables. There is no facility for incrementally refreshing materialized
-        views or auto-accessing them via base table access.
+        When converting a table to a view, remove its system columns (Tom Lane)
+        KEEP?
        </para>
       </listitem>
 
@@ -850,13 +850,6 @@
 
       <listitem>
        <para>
-        Allow text timezone designations, e.g. "America/Chicago" when using the
-        ISO "T" timestamptz format (Bruce Momjian)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Increase the maximum length of large objects from 2GB to 4TB (Nozomi
         Anzai, Yugo Nagata)
        </para>
@@ -868,9 +861,17 @@
 
       <listitem>
        <para>
-        Add functions to convert values, records, and hstore data to JSON (Andrew Dunstan)
+        Allow text timezone designations, e.g. "America/Chicago" when using the
+        ISO "T" timestamptz format (Bruce Momjian)
        </para>
       </listitem>
+
+    </itemizedlist>
+
+   <sect4>
+    <title>JSON</title>
+
+    <itemizedlist>
 
       <listitem>
        <para>
@@ -885,9 +886,18 @@
        </para>
       </listitem>
 
+      <listitem>
+       <para>
+        Add functions to convert values, records, and hstore data to JSON (Andrew Dunstan)
+       </para>
+      </listitem>
+
     </itemizedlist>
 
+   </sect4>
+
    </sect3>
+
 
    <sect3>
     <title>Functions</title>
@@ -897,6 +907,20 @@
       <listitem>
        <para>
         Add array_remove() and array_replace() functions (Marco Nenciarini, Gabriele Bartolini)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow concat() and format() to properly expand VARIADIC-labeled
+        arguments (Pavel Stehule)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Improve format() to handle field width and left/right alignment
+        (Pavel Stehule)
        </para>
       </listitem>
 
@@ -914,15 +938,8 @@
 
       <listitem>
        <para>
-        In to_date() and to_timestamp(), return proper results when mixing
+        Have to_date() and to_timestamp() return proper results when mixing
         ISO and Gregorian week/day designations (Bruce Momjian)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow concat() and format() to properly expand VARIADIC-labeled
-        arguments (Pavel Stehule)
        </para>
       </listitem>
 
@@ -941,13 +958,6 @@
        <para>
         Have map_sql_value_to_xml_value() properly expand domains (Pavel
         Stehule)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Improve format() to handle field width and left/right alignment
-        (Pavel Stehule)
        </para>
       </listitem>
 
@@ -987,7 +997,12 @@
 
       <listitem>
        <para>
-        Allow greater flexibility in where keywords can be used in PL/pgSQL (Tom Lane)
+        Allow PL/pgSQL to use RETURN with a composite-type expressions (Asif
+        Rehman)
+       </para>
+
+       <para>
+        Previously RETURN could only reference composite-type variables.
        </para>
       </listitem>
 
@@ -1004,12 +1019,7 @@
 
       <listitem>
        <para>
-        Allow PL/pgSQL to use RETURN with a composite-type expressions (Asif
-        Rehman)
-       </para>
-
-       <para>
-        Previously RETURN could only reference composite-type variables.
+        Allow greater flexibility in where keywords can be used in PL/pgSQL (Tom Lane)
        </para>
       </listitem>
 
@@ -1021,26 +1031,6 @@
      <title><link linkend="plpython">PL/Python</link> Server-Side Language</title>
 
      <itemizedlist>
-
-      <listitem>
-       <para>
-        Allow PL/Python to support platform-specific include directories (Peter Eisentraut)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow PL/Python on OS X to build against custom versions of Python
-        (Peter Eisentraut)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Handle SPIErrors raised explicitly with PL/Python's RAISE the same as
-        as internal SPI errors (Oskari Saarenmaa and Jan Urbanski)
-       </para>
-      </listitem>
 
       <listitem>
        <para>
@@ -1058,6 +1048,13 @@
        </para>
       </listitem>
 
+      <listitem>
+       <para>
+        Handle SPIErrors raised explicitly with PL/Python's RAISE the same as
+        as internal SPI errors (Oskari Saarenmaa and Jan Urbanski)
+       </para>
+      </listitem>
+
      </itemizedlist>
 
     </sect4>
@@ -1071,22 +1068,8 @@
 
       <listitem>
        <para>
-        Have initdb fsync the newly created data directory (Jeff Davis)
-       </para>
-
-       <para>
-        This can be disabled by using --nosync.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add initdb --sync-only option to sync the data directory to durable
-        storage (Bruce Momjian)
-       </para>
-
-       <para>
-        This is used by pg_upgrade.
+        Add command-line utility pg_isready to check if the server is ready
+        to accept connections (Phil Sorber)
        </para>
       </listitem>
 
@@ -1098,20 +1081,6 @@
 
        <para>
         This is similar to the pg_dump --table support.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add command-line utility pg_isready to check if the server is ready
-        to accept connections (Phil Sorber)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Have initdb issue a warning about placing the data directory at the
-        top of file system mount points (Bruce Momjian)
        </para>
       </listitem>
 
@@ -1153,18 +1122,25 @@
 
       <listitem>
        <para>
-        Allow the psql --single-transaction mode to work when reading from
-        standard input (Fabien Coelho, Robert Haas)
-       </para>
-
-       <para>
-        Previously this option only worked when reading from a file.
+        Adjust function cost settings so psql tab completion and pattern
+        searching is more efficient (Tom Lane)
        </para>
       </listitem>
 
       <listitem>
        <para>
         Improve psql tab completion (Jeff Janes, Peter Eisentraut)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow the psql --single-transaction mode to work when reading from
+        standard input (Fabien Coelho, Robert Haas)
+       </para>
+
+       <para>
+        Previously this option only worked when reading from a file.
        </para>
       </listitem>
 
@@ -1178,13 +1154,6 @@
        </para>
       </listitem>
 
-      <listitem>
-       <para>
-        Adjust function cost settings so psql tab completion and pattern
-        searching is more efficient (Tom Lane)
-       </para>
-      </listitem>
-
      </itemizedlist>
 
     <sect5>
@@ -1194,7 +1163,33 @@
 
       <listitem>
        <para>
+        Add psql \watch command to repeatedly execute commands (Will
+        Leinweber)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add psql command \gset to store query results in psql variables
+        (Pavel Stehule)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Add SSL information to psql's \conninfo command (Alastair Turner)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add "Security" label to psql \df+ output (Jon Erdman)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow psql \l to accept a database name pattern (Peter Eisentraut)
        </para>
       </listitem>
 
@@ -1211,37 +1206,11 @@
 
       <listitem>
        <para>
-        Add "Security" label to psql \df+ output (Jon Erdman)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Properly reset state if psql's "\g file" command failed (Tom Lane)
        </para>
 
        <para>
         Previously failed commands discarded output from subsequent commands.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add psql command \gset to store query results in psql variables
-        (Pavel Stehule)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add psql \watch command to repeatedly execute commands (Will
-        Leinweber)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow psql \l to accept a database name pattern (Peter Eisentraut)
        </para>
       </listitem>
 
@@ -1297,15 +1266,20 @@
 
       <listitem>
        <para>
-        Fix tar files emitted by pg_dump and pg_basebackup to be POSIX
-        conformant (Brian Weaver, Tom Lane)
+        Add pg_dump --jobs to dump in parallel (Joachim Wieland)
        </para>
       </listitem>
-
 
       <listitem>
        <para>
         Have pg_dump output functions in a predictable order (Joel Jacobson)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Fix tar files emitted by pg_dump and pg_basebackup to be POSIX
+        conformant (Brian Weaver, Tom Lane)
        </para>
       </listitem>
 
@@ -1320,9 +1294,40 @@
        </para>
       </listitem>
 
+     </itemizedlist>
+
+    </sect4>
+
+    <sect4>
+     <title><link linkend="APP-INITDB"><application>initdb</></link></title>
+
+     <itemizedlist>
+
       <listitem>
        <para>
-        Add pg_dump --jobs to dump in parallel (Joachim Wieland)
+        Have initdb fsync the newly created data directory (Jeff Davis)
+       </para>
+
+       <para>
+        This can be disabled by using --nosync.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add initdb --sync-only option to sync the data directory to durable
+        storage (Bruce Momjian)
+       </para>
+
+       <para>
+        This is used by pg_upgrade.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Have initdb issue a warning about placing the data directory at the
+        top of file system mount points (Bruce Momjian)
        </para>
       </listitem>
 
@@ -1339,6 +1344,38 @@
 
       <listitem>
        <para>
+        Add an embedded list interface (Andres Freund)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add infrastructure to better support plug-in background worker
+        processes  (AlvaroAacute;lvaro Herrera)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Create libpgcommon and move pg_malloc() and other functions there
+        (AlvaroAacute;lvaro Herrera, Andres Freund)
+       </para>
+
+       <para>
+        This allows libpgport to be used solely for porting code.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add compiler designations to indicate some ereport() and elog()
+        calls do not return (Peter Eisentraut, Andres Freund, Tom Lane,
+        Heikki Linnakangas)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Remove typedefs for int2/int4 as they are better represented as int16/int32 (Peter Eisentraut)
        </para>
       </listitem>
@@ -1352,14 +1389,6 @@
       <listitem>
        <para>
         Rewrite pgindent in Perl (Andrew Dunstan)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add compiler designations to indicate some ereport() and elog()
-        calls do not return (Peter Eisentraut, Andres Freund, Tom Lane,
-        Heikki Linnakangas)
        </para>
       </listitem>
 
@@ -1406,19 +1435,6 @@
 
       <listitem>
        <para>
-        Add an embedded list interface (Andres Freund)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add infrastructure to better support plug-in background worker
-        processes  (AlvaroAacute;lvaro Herrera)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Add Assert() functionality to client-side code for frontend code (Andrew Dunstan)
        </para>
       </listitem>
@@ -1438,17 +1454,6 @@
        <para>
         Allow options to be passed to the regression test output comparison
         utility via PG_REGRESS_DIFF_OPTS (Peter Eisentraut)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Create libpgcommon and move pg_malloc() and other functions there
-        (AlvaroAacute;lvaro Herrera, Andres Freund)
-       </para>
-
-       <para>
-        This allows libpgport to be used solely for porting code.
        </para>
       </listitem>
 
@@ -1501,6 +1506,19 @@
        <para>
         Split out WAL reading as an independent facility (Andres Freund, Heikki
         Linnakangas)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow PL/Python to support platform-specific include directories (Peter Eisentraut)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow PL/Python on OS X to build against custom versions of Python
+        (Peter Eisentraut)
        </para>
       </listitem>
 
