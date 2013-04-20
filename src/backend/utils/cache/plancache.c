@@ -69,6 +69,14 @@
 
 
 /*
+ * We must skip "overhead" operations that involve database access when the
+ * cached plan's subject statement is a transaction control command.
+ */
+#define IsTransactionStmtPlan(plansource)  \
+	((plansource)->raw_parse_tree && \
+	 IsA((plansource)->raw_parse_tree, TransactionStmt))
+
+/*
  * This is the head of the backend's list of "saved" CachedPlanSources (i.e.,
  * those that are in long-lived storage and are examined for sinval events).
  * We thread the structs manually instead of using List cells so that we can
@@ -352,23 +360,27 @@ CompleteCachedPlan(CachedPlanSource *plansource,
 	plansource->query_context = querytree_context;
 	plansource->query_list = querytree_list;
 
-	/*
-	 * Use the planner machinery to extract dependencies.  Data is saved in
-	 * query_context.  (We assume that not a lot of extra cruft is created by
-	 * this call.)  We can skip this for one-shot plans.
-	 */
-	if (!plansource->is_oneshot)
+	if (!plansource->is_oneshot && !IsTransactionStmtPlan(plansource))
+	{
+		/*
+		 * Use the planner machinery to extract dependencies.  Data is saved
+		 * in query_context.  (We assume that not a lot of extra cruft is
+		 * created by this call.)  We can skip this for one-shot plans, and
+		 * transaction control commands have no such dependencies anyway.
+		 */
 		extract_query_dependencies((Node *) querytree_list,
 								   &plansource->relationOids,
 								   &plansource->invalItems);
 
-	/*
-	 * Also save the current search_path in the query_context.  (This should
-	 * not generate much extra cruft either, since almost certainly the path
-	 * is already valid.)  Again, don't really need it for one-shot plans.
-	 */
-	if (!plansource->is_oneshot)
+		/*
+		 * Also save the current search_path in the query_context.  (This
+		 * should not generate much extra cruft either, since almost certainly
+		 * the path is already valid.)  Again, we don't really need this for
+		 * one-shot plans; and we *must* skip this for transaction control
+		 * commands, because this could result in catalog accesses.
+		 */
 		plansource->search_path = GetOverrideSearchPath(querytree_context);
+	}
 
 	/*
 	 * Save the final parameter types (or other parameter specification data)
@@ -542,9 +554,11 @@ RevalidateCachedQuery(CachedPlanSource *plansource)
 	/*
 	 * For one-shot plans, we do not support revalidation checking; it's
 	 * assumed the query is parsed, planned, and executed in one transaction,
-	 * so that no lock re-acquisition is necessary.
+	 * so that no lock re-acquisition is necessary.  Also, there is never
+	 * any need to revalidate plans for transaction control commands (and
+	 * we mustn't risk any catalog accesses when handling those).
 	 */
-	if (plansource->is_oneshot)
+	if (plansource->is_oneshot || IsTransactionStmtPlan(plansource))
 	{
 		Assert(plansource->is_valid);
 		return NIL;
@@ -966,6 +980,9 @@ choose_custom_plan(CachedPlanSource *plansource, ParamListInfo boundParams)
 
 	/* Otherwise, never any point in a custom plan if there's no parameters */
 	if (boundParams == NULL)
+		return false;
+	/* ... nor for transaction control statements */
+	if (IsTransactionStmtPlan(plansource))
 		return false;
 
 	/* See if caller wants to force the decision */
@@ -1622,6 +1639,10 @@ PlanCacheRelCallback(Datum arg, Oid relid)
 		if (!plansource->is_valid)
 			continue;
 
+		/* Never invalidate transaction control commands */
+		if (IsTransactionStmtPlan(plansource))
+			continue;
+
 		/*
 		 * Check the dependency list for the rewritten querytree.
 		 */
@@ -1684,6 +1705,10 @@ PlanCacheFuncCallback(Datum arg, int cacheid, uint32 hashvalue)
 
 		/* No work if it's already invalidated */
 		if (!plansource->is_valid)
+			continue;
+
+		/* Never invalidate transaction control commands */
+		if (IsTransactionStmtPlan(plansource))
 			continue;
 
 		/*
@@ -1775,6 +1800,11 @@ ResetPlanCache(void)
 		 * We *must not* mark transaction control statements as invalid,
 		 * particularly not ROLLBACK, because they may need to be executed in
 		 * aborted transactions when we can't revalidate them (cf bug #5269).
+		 */
+		if (IsTransactionStmtPlan(plansource))
+			continue;
+
+		/*
 		 * In general there is no point in invalidating utility statements
 		 * since they have no plans anyway.  So invalidate it only if it
 		 * contains at least one non-utility statement, or contains a utility
