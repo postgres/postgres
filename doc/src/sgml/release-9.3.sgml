@@ -182,7 +182,7 @@
 
       <listitem>
        <para>
-        Improve memory usage for in-memory sorts (Jeff Janes)
+        "Allow in-memory sorts to use their full memory allocation (Jeff Janes)
        </para>
 
        <para>
@@ -401,7 +401,8 @@
        </para>
 
        <para>
-        This improves the usefulness of commit_delay.
+        This improves the usefulness and behavior of commit_delay.
+        BACKWARD COMPATIBILITY
        </para>
       </listitem>
 
@@ -462,7 +463,8 @@
 
       <listitem>
        <para>
-        Improve performance of streaming replication log shipping (Andres Freund)
+        Improve performance of streaming replication log shipping and
+        standby promotion (Andres Freund, Simon Riggs)
        </para>
       </listitem>
 
@@ -526,17 +528,10 @@
        </para>
       </listitem>
 
-      <listitem>
-       <para>
-        Allow recovery.conf to be relocated using configuration variable
-        recovery_config_directory (Simon Riggs)
-       </para>
-      </listitem>
-
      </itemizedlist>
 
     <sect4>
-     <title>WAL</title>
+     <title>Write-Ahead Log (WAL)</title>
 
      <itemizedlist>
 
@@ -597,7 +592,7 @@
        </para>
 
        <para>
-        Only CREATE SCHEMA IF NOT EXISTS?  If so, remove it.
+        Only CREATE SCHEMA ... IF NOT EXISTS?  If so, remove it.
        </para>
       </listitem>
 
@@ -635,7 +630,7 @@
 
       <listitem>
        <para>
-        Add IF NOT EXISTS clause to CREATE SCHEMA (Fabrízio de Royes Mello)
+        Add CREATE SCHEMA ... IF NOT EXIST clause (Fabrízio de Royes Mello)
        </para>
       </listitem>
 
@@ -683,13 +678,12 @@
 
       <listitem>
        <para>
-        Allow CREATE TABLE to succeed for a non-existent schema
+        Allow CREATE TABLE IF NOT EXIST to succeed for a non-existent schema
         (Bruce Momjian)
        </para>
 
        <para>
-         Previously, CREATE TABLE IF EXIST threw an error if the schema was
-         nonexistent.
+         Previously, it threw an error if the schema did not exist.
        </para>
       </listitem>
 
@@ -967,7 +961,8 @@
        </para>
 
        <para>
-        Previously functions already run in the current session ignored changes
+        Previously functions already run in the current session ignored
+        search_path changes.
         (Bruce Momjian)
        </para>
       </listitem>
@@ -1390,6 +1385,12 @@
        <para>
         Allow options to be passed to the regression test output comparison
         utility via PG_REGRESS_DIFF_OPTS (Peter Eisentraut)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add isolation tests for CREATE INDEX CONCURRENTLY (Abhijit Menon-Sen)
        </para>
       </listitem>
 
