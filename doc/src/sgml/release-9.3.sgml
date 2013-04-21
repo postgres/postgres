@@ -134,8 +134,7 @@
 
       <listitem>
        <para>
-        Collect and use histograms of lower and upper bounds for range types
-        (Alexander Korotkov)
+        Collect and use histograms for range types (Alexander Korotkov)
        </para>
       </listitem>
 
@@ -171,6 +170,18 @@
       <listitem>
        <para>
         Improve performance of NUMERIC calculations (Kyotaro Horiguchi)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Improve grouping of sessions waiting for commit_delay (Peter
+        Geoghegan)
+       </para>
+
+       <para>
+        This improves the usefulness and behavior of commit_delay.
+        BACKWARD COMPATIBILITY
        </para>
       </listitem>
 
@@ -367,7 +378,7 @@
       <listitem>
        <para>
         Add configuration variable lock_timeout to limit lock wait duration
-        (Zoltán Böszörményi)
+        (Zolt&aacute;n B&ouml;sz&ouml;rm&eacute;nyi)
        </para>
       </listitem>
 
@@ -391,18 +402,6 @@
        <para>
         This is the maximum value initdb attempts to set in
         postgresql.conf;  the previous value was 32MB.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Improve grouping of sessions waiting for commit_delay (Peter
-        Geoghegan)
-       </para>
-
-       <para>
-        This improves the usefulness and behavior of commit_delay.
-        BACKWARD COMPATIBILITY
        </para>
       </listitem>
 
@@ -490,7 +489,7 @@
       <listitem>
        <para>
         Have pg_basebackup --write-recovery-conf output a minimal
-        recovery.conf (Zoltan Boszormenyi, Magnus Hagander)
+        recovery.conf (Zolt&aacute;n B&ouml;sz&ouml;rm&eacute;nyi, Magnus Hagander)
        </para>
 
        <para>
@@ -1352,7 +1351,7 @@
 
       <listitem>
        <para>
-        Create a centralized timeout API (Zoltán Böszörményi)
+        Create a centralized timeout API (Zolt&aacute;n B&ouml;sz&ouml;rm&eacute;nyi)
        </para>
       </listitem>
 
