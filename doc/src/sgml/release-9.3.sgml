@@ -187,7 +187,8 @@
 
       <listitem>
        <para>
-        Use a binary heap for Merge-Append operations (Abhijit Menon-Sen)
+        Implement a generic binary heap and use it for Merge-Append
+        operations (Abhijit Menon-Sen)
        </para>
       </listitem>
 
@@ -537,7 +538,7 @@
       <listitem>
        <para>
         Store WAL in a continuous stream, rather than skipping the last
-        16MB segment every 4GB (Heikki Linnakangas)
+        16MB segment every 4GB (Heikki Linnakangas)  BACKWARD COMPATIBLE BREAK
        </para>
       </listitem>
 
@@ -622,7 +623,8 @@
 
       <listitem>
        <para>
-        Add CREATE SCHEMA ... IF NOT EXIST clause (Fabrízio de Royes Mello)
+        Add CREATE SCHEMA ... IF NOT EXIST clause (Fabr&iacute;zio de
+        Royes Mello)
        </para>
       </listitem>
 
@@ -1253,7 +1255,8 @@
 
       <listitem>
        <para>
-        Add pg_dump --jobs to dump in parallel (Joachim Wieland)
+        Add pg_dump --jobs to dump in parallel when using directory
+        output format  (Joachim Wieland)
        </para>
       </listitem>
 
@@ -1497,8 +1500,8 @@
 
       <listitem>
        <para>
-        Split out WAL reading as an independent facility (Andres Freund, Heikki
-        Linnakangas)
+        Split out WAL reading as an independent facility (Heikki
+        Linnakangas, Andres Freund)
        </para>
       </listitem>
 
