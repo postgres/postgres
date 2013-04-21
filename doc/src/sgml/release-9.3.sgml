@@ -595,13 +595,6 @@
        </para>
       </listitem>
 
-      <listitem>
-       <para>
-        Correct predicate locking for DROP INDEX CONCURRENTLY (Kevin Grittner)
-        KEEP?
-       </para>
-      </listitem>
-
      </itemizedlist>
 
    </sect3>
