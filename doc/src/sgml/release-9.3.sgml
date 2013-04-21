@@ -67,7 +67,7 @@
       <listitem>
        <para>
         Prevent non-key-field row updates from locking foreign key rows
-        (AlvaroAacute;lvaro Herrera, Marti Raudsepp, Alexander Shulgin,
+        (&Aacute;lvaro Herrera, Marti Raudsepp, Alexander Shulgin,
         Noah Misch and Andres Freund)
        </para>
 
@@ -649,7 +649,7 @@
       <listitem>
        <para>
         Have DROP OWNED only remove user-matching GRANTs on shared objects,
-        e.g. databases, tablespaces (AlvaroAacute;lvaro Herrera)
+        e.g. databases, tablespaces (&Aacute;lvaro Herrera)
        </para>
 
        <para>
@@ -659,7 +659,7 @@
 
       <listitem>
        <para>
-        Have REASSIGN OWNED also change ownership of shared objects (AlvaroAacute;lvaro
+        Have REASSIGN OWNED also change ownership of shared objects (&Aacute;lvaro
         Herrera)
        </para>
       </listitem>
@@ -794,7 +794,7 @@
        </para>
 
        <para>
-        Unlink ordinary views, where the base tables are read on every access,
+        Unlike ordinary views, where the base tables are read on every access,
         materialized views create physical tables at creation or refresh time.
         Access to the materialized view reads from these materialized physical
         tables. There is no facility for incrementally refreshing materialized
@@ -1351,18 +1351,30 @@
       <listitem>
        <para>
         Add infrastructure to better support plug-in background worker
-        processes  (AlvaroAacute;lvaro Herrera)
+        processes  (&Aacute;lvaro Herrera)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Create a centralized timeout API (Zoltán Böszörményi)
        </para>
       </listitem>
 
       <listitem>
        <para>
         Create libpgcommon and move pg_malloc() and other functions there
-        (AlvaroAacute;lvaro Herrera, Andres Freund)
+        (&Aacute;lvaro Herrera, Andres Freund)
        </para>
 
        <para>
         This allows libpgport to be used solely for porting code.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Standardize on naming of client-side memory allocation functions (Tom Lane)
        </para>
       </listitem>
 
@@ -1376,19 +1388,14 @@
 
       <listitem>
        <para>
+        Allow options to be passed to the regression test output comparison
+        utility via PG_REGRESS_DIFF_OPTS (Peter Eisentraut)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Remove typedefs for int2/int4 as they are better represented as int16/int32 (Peter Eisentraut)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Create a centralized timeout API (Zoltán Böszörményi)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Rewrite pgindent in Perl (Andrew Dunstan)
        </para>
       </listitem>
 
@@ -1406,6 +1413,12 @@
 
       <listitem>
        <para>
+        Rewrite pgindent in Perl (Andrew Dunstan)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Add emacs macro to match Postgres perltidy formatting (Peter
         Eisentraut)
        </para>
@@ -1414,12 +1427,6 @@
       <listitem>
        <para>
         Run tool to check the keyword list when the backend grammar is changed (Tom Lane)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Standardize on naming of client-side memory allocation functions (Tom Lane)
        </para>
       </listitem>
 
@@ -1452,13 +1459,6 @@
 
       <listitem>
        <para>
-        Allow options to be passed to the regression test output comparison
-        utility via PG_REGRESS_DIFF_OPTS (Peter Eisentraut)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Invent pre-commit/pre-prepare/pre-subcommit events for transaction
         callbacks (Tom Lane)
        </para>
@@ -1472,7 +1472,13 @@
       <listitem>
        <para>
         Add function pg_identify_object() to dump an object in
-        machine-readable format (AlvaroAacute;lvaro Herrera)
+        machine-readable format (&Aacute;lvaro Herrera)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add post-ALTER-object server hooks (KaiGai Kohei)
        </para>
       </listitem>
 
@@ -1486,12 +1492,6 @@
       <listitem>
        <para>
         Add pkg-config support libpq and ecpg libraries (Peter Eisentraut)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add post-ALTER-object server hooks (KaiGai Kohei)
        </para>
       </listitem>
 
@@ -1533,6 +1533,37 @@
 
       <listitem>
        <para>
+        Add a Postgres foreign data wrapper contrib module (Shigeru
+        Hanada, KaiGai Kohei)
+       </para>
+
+       <para>
+        This foreign data wrapper allows writes;  potentially other
+        foreign data wrappers can now support writes.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add pg_xlogdump contrib program (Andres Freund)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add support for indexing of regular-expression searches in
+        contrib/pg_trgm (Alexander Korotkov)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Improve pg_trgm handling of multibyte characters (Tom Lane)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Have oid2name, pgbench, and vacuumlo set fallback_application_name (Amit Kapila)
        </para>
       </listitem>
@@ -1545,53 +1576,17 @@
 
       <listitem>
        <para>
-        Improve pg_test_fsync output (Peter Geoghegan)
+        Improve output of pg_test_fsync (Peter Geoghegan)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Improve contrib/dblink option validator (Tom Lane)
+        Improve dblink option validator (Tom Lane)
        </para>
 
        <para>
         Details?
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add a Postgres foreign data wrapper contrib module (Shigeru Hanada)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add pg_xlogdump contrib program (Andres Freund)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow write to Postgres foreign tables (KaiGai Kohei)
-       </para>
-
-       <para>
-        Other foreign data wrappers can now also potentially support write
-        operations.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Improve pg_trgm handling of multibyte characters (Tom Lane)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add support for indexing of regular-expression searches in
-        contrib/pg_trgm (Alexander Korotkov)
        </para>
       </listitem>
 
@@ -1604,8 +1599,12 @@
 
       <listitem>
        <para>
-        Increase pg_upgrade logging content by showing executed command
-        (AlvaroAacute;lvaro Herrera)
+        Allow pg_upgrade --jobs to do parallelism (Bruce Momjian)
+       </para>
+
+       <para>
+        This allows parallel schema dump/restore of databases, as well as
+        parallel copy/link of data files per tablespace.
        </para>
       </listitem>
 
@@ -1636,18 +1635,14 @@
 
       <listitem>
        <para>
-        Improve pg_upgrade's status display during copy/link (Bruce Momjian)
+        Increase pg_upgrade logging content by showing executed command
+        (&Aacute;lvaro Herrera)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow pg_upgrade --jobs to do parallelism (Bruce Momjian)
-       </para>
-
-       <para>
-        This allows parallel schema dump/restore of databases, as well as
-        parallel copy/link of data files per tablespace.
+        Improve pg_upgrade's status display during copy/link (Bruce Momjian)
        </para>
       </listitem>
 
@@ -1659,6 +1654,7 @@
      <title><link linkend="pgbench"><application>pgbench</></link></title>
 
      <itemizedlist>
+
       <listitem>
        <para>
         Add --foreign-keys option to pgbench (Jeff Janes)
@@ -1672,8 +1668,8 @@
 
       <listitem>
        <para>
-        Reduce and improve the status message output of pgbench's
-        initialization mode (Robert Haas, Peter Eisentraut)
+        Allow pgbench to aggregate performance statistics and produce output
+        every --aggregate-interval specified seconds (Tomas Vondra)
        </para>
       </listitem>
 
@@ -1686,19 +1682,19 @@
 
       <listitem>
        <para>
+        Reduce and improve the status message output of pgbench's
+        initialization mode (Robert Haas, Peter Eisentraut)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Add pgbench -q mode to print one output line every five seconds (Tomas Vondra)
        </para>
 
        <para>
         Output pgbench elapsed and estimated remaining time during
         initialization logging (Tomas Vondra)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow pgbench to aggregate performance statistics and produce output
-        every --aggregate-interval specified seconds (Tomas Vondra)
        </para>
       </listitem>
 
@@ -1721,14 +1717,7 @@
 
       <listitem>
        <para>
-        Improve WINDOW function documentation (Bruce Momjian, Tom Lane)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add instructions for setting up the documentation tool chain on
-        Mac OS X (Peter Eisentraut)
+        Allow EPUB-format documentation to be created (Peter Eisentraut)
        </para>
       </listitem>
 
@@ -1740,7 +1729,14 @@
 
       <listitem>
        <para>
-        Allow EPUB-format documentation to be created (Peter Eisentraut)
+        Improve WINDOW function documentation (Bruce Momjian, Tom Lane)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add instructions for setting up the documentation tool chain on
+        Mac OS X (Peter Eisentraut)
        </para>
       </listitem>
 
