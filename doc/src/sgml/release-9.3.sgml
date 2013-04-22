@@ -67,8 +67,8 @@
       <listitem>
        <para>
         Prevent non-key-field row updates from locking foreign key rows
-        (&Aacute;lvaro Herrera, Marti Raudsepp, Alexander Shulgin,
-        Noah Misch and Andres Freund)
+        (&Aacute;lvaro Herrera, Noah Misch, Andres Freund, Alexander
+        Shulgin, Marti Raudsepp)
        </para>
 
        <para>
@@ -124,13 +124,6 @@
      <title>Optimizer</title>
 
      <itemizedlist>
-
-      <listitem>
-       <para>
-        Improve the ability to detect indexable prefixes in regular
-        expressions (Tom Lane)
-       </para>
-      </listitem>
 
       <listitem>
        <para>
@@ -590,8 +583,8 @@
 
       <listitem>
        <para>
-        Add support to event triggers (Dimitri Fontaine, Tom Lane,
-        Robert Haas)
+        Add support to event triggers (Dimitri Fontaine, Robert Haas,
+        &Aacute;lvaro Herrera)
        </para>
 
        <para>
