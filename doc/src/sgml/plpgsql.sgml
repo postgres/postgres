@@ -1708,7 +1708,7 @@ BEGIN
     RETURN;
 END
 $BODY$
-LANGUAGE 'plpgsql' ;
+LANGUAGE plpgsql;
 
 SELECT * FROM getallfoo();
 </programlisting>
