@@ -463,8 +463,13 @@
 
       <listitem>
        <para>
-        Improve performance of streaming replication log shipping and
-        standby promotion (Andres Freund, Simon Riggs)
+        Improve performance of non-synchronous streaming log shipping (Andres Freund)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow much faster fail-over to a standby server (Simon Riggs)
        </para>
       </listitem>
 
