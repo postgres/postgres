@@ -463,13 +463,15 @@
 
       <listitem>
        <para>
-        Improve performance of non-synchronous streaming log shipping (Andres Freund)
+        Improve performance of streaming log shipping with
+        synchronous_commit disabled (Andres Freund)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow much faster fail-over to a standby server (Simon Riggs)
+        Allow much faster promotion of a streaming standby to primary (Simon
+        Riggs, Kyotaro Horiguchi)
        </para>
       </listitem>
 
