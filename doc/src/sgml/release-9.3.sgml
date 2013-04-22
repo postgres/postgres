@@ -336,7 +336,7 @@
       <listitem>
        <para>
         Allow the postmaster to listen on multiple Unix-domain sockets
-        (Honza Horak)
+        (Honza Hor&aacute;k)
        </para>
 
        <para>
@@ -1064,7 +1064,7 @@
       <listitem>
        <para>
         Add libpq function PQconninfo() to return connection information
-        (Zoltan Boszormenyi, Magnus Hagander)
+        (Zolt&aacute;n B&ouml;sz&ouml;rm&eacute;nyi, Magnus Hagander)
        </para>
       </listitem>
 
