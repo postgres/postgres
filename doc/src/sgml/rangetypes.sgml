@@ -371,9 +371,9 @@ SELECT '[1.234, 5.678]'::floatrange;
   </para>
 
   <para>
-   In addition, any range type that is meant to be used with GiST indexes
+   In addition, any range type that is meant to be used with GiST or SP-GiST indexes
    should define a subtype difference, or <literal>subtype_diff</>, function.
-   (A GiST index will still work without <literal>subtype_diff</>, but it is
+   (the index will still work without <literal>subtype_diff</>, but it is
    likely to be considerably less efficient than if a difference function is
    provided.)  The subtype difference function takes two input values of the
    subtype, and returns their difference (i.e., <replaceable>X</> minus
@@ -394,7 +394,7 @@ SELECT '[1.234, 5.678]'::floatrange;
   </para>
  </sect2>
 
- <sect2 id="rangetypes-gist">
+ <sect2 id="rangetypes-indexing">
   <title>Indexing</title>
 
   <indexterm>
@@ -403,12 +403,12 @@ SELECT '[1.234, 5.678]'::floatrange;
   </indexterm>
 
   <para>
-   GiST indexes can be created for table columns of range types.
-   For instance:
+   GiST and SP-GiST indexes can be created for table columns of range types.
+   For instance, to create a GiST index:
 <programlisting>
 CREATE INDEX reservation_idx ON reservation USING gist (during);
 </programlisting>
-   A GiST index can accelerate queries involving these range operators:
+   A GiST or SP-GiST index can accelerate queries involving these range operators:
    <literal>=</>,
    <literal>&amp;&amp;</>,
    <literal>&lt;@</>,
