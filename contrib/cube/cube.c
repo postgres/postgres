@@ -35,7 +35,6 @@ extern void cube_scanner_finish(void);
 ** Input/Output routines
 */
 PG_FUNCTION_INFO_V1(cube_in);
-PG_FUNCTION_INFO_V1(cube);
 PG_FUNCTION_INFO_V1(cube_a_f8_f8);
 PG_FUNCTION_INFO_V1(cube_a_f8);
 PG_FUNCTION_INFO_V1(cube_out);
@@ -49,7 +48,6 @@ PG_FUNCTION_INFO_V1(cube_ur_coord);
 PG_FUNCTION_INFO_V1(cube_subset);
 
 Datum		cube_in(PG_FUNCTION_ARGS);
-Datum		cube(PG_FUNCTION_ARGS);
 Datum		cube_a_f8_f8(PG_FUNCTION_ARGS);
 Datum		cube_a_f8(PG_FUNCTION_ARGS);
 Datum		cube_out(PG_FUNCTION_ARGS);
