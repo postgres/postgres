@@ -198,9 +198,9 @@
 
       <listitem>
        <para>
-        Improve performance of the CREATE TABLE ... ON COMMIT DELETE ROWS
-        clause by only issuing delete if the temporary table was accessed
-        (Heikki Linnakangas)
+        Improve performance of the CREATE TEMPORARY TABLE ... ON COMMIT
+        DELETE ROWS clause by only issuing delete if the temporary table
+        was accessed (Heikki Linnakangas)
        </para>
       </listitem>
 
@@ -516,18 +516,21 @@
         Store WAL in a continuous stream, rather than skipping the last
         16MB segment every 4GB (Heikki Linnakangas)  BACKWARD COMPATIBLE BREAK
        </para>
-      </listitem>
 
-      <listitem>
        <para>
-        Restructure WAL files to better handle timeline changes during
-        recovery (Heikki Linnakangas)
+        If you have WAL backup or restore scripts that took the skipping
+        into account, they need to be adjusted.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Restructure WAL files to use a more compact storage format (Heikki Linnakangas)
+        Change the WAL record format to allow splitting the record header
+        across pages (Heikki Linnakangas)
+       </para>
+
+       <para>
+        The new format is slightly more compact.
        </para>
       </listitem>
 
@@ -600,7 +603,7 @@
 
       <listitem>
        <para>
-        Add CREATE SCHEMA ... IF NOT EXIST clause (Fabr&iacute;zio de
+        Add CREATE SCHEMA ... IF NOT EXISTS clause (Fabr&iacute;zio de
         Royes Mello)
        </para>
       </listitem>
@@ -638,7 +641,7 @@
 
       <listitem>
        <para>
-        Allow CREATE TABLE IF NOT EXIST to succeed for a non-existent schema
+        Allow CREATE TABLE IF NOT EXISTS to succeed for a non-existent schema
         (Bruce Momjian)
        </para>
 
@@ -762,7 +765,9 @@
        </para>
 
        <para>
-        INSTEAD rules are still available for complex views.
+        Simple views that reference some or all columns from a single base table
+        are now updatable by default. More complex views can be made updatable
+        using INSTEAD OF triggers or INSTEAD rules.
        </para>
       </listitem>
 
@@ -1475,6 +1480,18 @@
        <para>
         Split out WAL reading as an independent facility (Heikki
         Linnakangas, Andres Freund)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Use a 64-bit integer to represent WAL positions (XLogRecPtr)
+        instead of two 32-bit integers (Heikki Linnakangas)
+       </para>
+
+       <para>
+        Generally, tools that need to read the WAL format will need to
+        be adjusted.
        </para>
       </listitem>
 
