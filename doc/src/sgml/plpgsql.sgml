@@ -1714,6 +1714,36 @@ SELECT * FROM get_all_foo();
 </programlisting>
      </para>
 
+     <para>
+      Here is an example of a function using <command>RETURN
+      QUERY</command>:
+
+<programlisting>
+CREATE FUNCTION get_available_flightid(date) RETURNS SETOF integer AS
+$BODY$
+BEGIN
+    RETURN QUERY SELECT flightid
+                   FROM flight
+                  WHERE flightdate >= $1
+                    AND flightdate < ($1 + 1);
+
+    -- Since execution is not finished, we can check whether rows were returned
+    -- and raise exception if not.
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'No flight at %.', $1;
+    END IF;
+
+    RETURN;
+ END
+$BODY$
+LANGUAGE plpgsql;
+
+-- Returns available flights or raises exception if there are no
+-- available flights.
+SELECT * FROM get_available_flightid(CURRENT_DATE);
+</programlisting>
+     </para>
+
      <note>
       <para>
        The current implementation of <command>RETURN NEXT</command>
