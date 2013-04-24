@@ -80,6 +80,13 @@
 
       <listitem>
        <para>
+        Add configuration variable lock_timeout to limit lock wait duration
+        (Zolt&aacute;n B&ouml;sz&ouml;rm&eacute;nyi)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Add cache of local locks (Jeff Janes)
        </para>
 
@@ -347,13 +354,6 @@
 
       <listitem>
        <para>
-        Add configuration variable lock_timeout to limit lock wait duration
-        (Zolt&aacute;n B&ouml;sz&ouml;rm&eacute;nyi)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Allow a directory of configuration files to be processed (Magnus
         Hagander, Greg Smith, Selena Deckelmann)
        </para>
@@ -518,8 +518,9 @@
        </para>
 
        <para>
-        If you have WAL backup or restore scripts that took the skipping
-        into account, they need to be adjusted.
+        Previously, WAL files ending in FF were not used.  If you have
+        WAL backup or restore scripts that took that skipping into account,
+        they need to be adjusted.
        </para>
       </listitem>
 
