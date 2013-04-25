@@ -271,7 +271,7 @@ existsTimeLineHistoryFile(char *basedir, TimeLineID tli)
 	if (fd < 0)
 	{
 		if (errno != ENOENT)
-			fprintf(stderr, _("%s: could not open timeline history file \"%s\": %s"),
+			fprintf(stderr, _("%s: could not open timeline history file \"%s\": %s\n"),
 					progname, path, strerror(errno));
 		return false;
 	}
@@ -298,7 +298,7 @@ writeTimeLineHistoryFile(char *basedir, TimeLineID tli, char *filename, char *co
 	TLHistoryFileName(histfname, tli);
 	if (strcmp(histfname, filename) != 0)
 	{
-		fprintf(stderr, _("%s: server reported unexpected history file name for timeline %u: %s"),
+		fprintf(stderr, _("%s: server reported unexpected history file name for timeline %u: %s\n"),
 				progname, tli, filename);
 		return false;
 	}
