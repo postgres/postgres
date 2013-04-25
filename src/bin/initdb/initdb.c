@@ -2751,7 +2751,7 @@ usage(const char *progname)
 	printf(_("  -X, --xlogdir=XLOGDIR     location for the transaction log directory\n"));
 	printf(_("\nLess commonly used options:\n"));
 	printf(_("  -d, --debug               generate lots of debugging output\n"));
-	printf(_("  -k, --data-checksums      data page checksums\n"));
+	printf(_("  -k, --data-checksums      use data page checksums\n"));
 	printf(_("  -L DIRECTORY              where to find the input files\n"));
 	printf(_("  -n, --noclean             do not clean up after errors\n"));
 	printf(_("  -N, --nosync              do not wait for changes to be written safely to disk\n"));
@@ -3320,7 +3320,8 @@ warn_on_mount_point(int error)
 				_("It contains a lost+found directory, perhaps due to it being a mount point.\n"));
 
 	fprintf(stderr,
-			_("Using the top-level directory of a mount point is not recommended.\n"));
+			_("Using a mount point directly as the data directory is not recommended.\n"
+			  "Create a subdirectory under the mount point.\n"));
 }
 
 
