@@ -2804,7 +2804,7 @@ lock_twophase_recover(TransactionId xid, uint16 info,
 
 /*
  * Re-acquire a lock belonging to a transaction that was prepared, when
- * when starting up into hot standby mode.
+ * starting up into hot standby mode.
  */
 void
 lock_twophase_standby_recover(TransactionId xid, uint16 info,
