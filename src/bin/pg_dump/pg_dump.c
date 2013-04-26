@@ -14621,10 +14621,6 @@ getExtensionMembership(Archive *fout, ExtensionInfo extinfo[],
 		int			nconfigitems;
 		int			nconditionitems;
 
-		/* Tables of not-to-be-dumped extensions shouldn't be dumped */
-		if (!curext->dobj.dump)
-			continue;
-
 		if (parsePGArray(extconfig, &extconfigarray, &nconfigitems) &&
 		  parsePGArray(extcondition, &extconditionarray, &nconditionitems) &&
 			nconfigitems == nconditionitems)
@@ -14634,21 +14630,54 @@ getExtensionMembership(Archive *fout, ExtensionInfo extinfo[],
 			for (j = 0; j < nconfigitems; j++)
 			{
 				TableInfo  *configtbl;
+				Oid			configtbloid = atooid(extconfigarray[j]);
+				bool		dumpobj = curext->dobj.dump;
 
-				configtbl = findTableByOid(atooid(extconfigarray[j]));
+				configtbl = findTableByOid(configtbloid);
 				if (configtbl == NULL)
 					continue;
 
 				/*
-				 * Note: config tables are dumped without OIDs regardless of
-				 * the --oids setting.	This is because row filtering
-				 * conditions aren't compatible with dumping OIDs.
+				 * Tables of not-to-be-dumped extensions shouldn't be dumped
+				 * unless the table or its schema is explicitly included
 				 */
-				makeTableDataInfo(configtbl, false);
-				if (configtbl->dataObj != NULL)
+				if (!curext->dobj.dump)
 				{
-					if (strlen(extconditionarray[j]) > 0)
-						configtbl->dataObj->filtercond = pg_strdup(extconditionarray[j]);
+					/* check table explicitly requested */
+					if (table_include_oids.head != NULL &&
+						simple_oid_list_member(&table_include_oids,
+												configtbloid))
+						dumpobj = true;
+
+					/* check table's schema explicitly requested */
+					if (configtbl->dobj.namespace->dobj.dump)
+						dumpobj = true;
+				}
+
+				/* check table excluded by an exclusion switch */
+				if (table_exclude_oids.head != NULL &&
+					simple_oid_list_member(&table_exclude_oids,
+											configtbloid))
+					dumpobj = false;
+
+				/* check schema excluded by an exclusion switch */
+				if (simple_oid_list_member(&schema_exclude_oids,
+					configtbl->dobj.namespace->dobj.catId.oid))
+					dumpobj = false;
+
+				if (dumpobj)
+				{
+					/*
+					 * Note: config tables are dumped without OIDs regardless of
+					 * the --oids setting.	This is because row filtering
+					 * conditions aren't compatible with dumping OIDs.
+					 */
+					makeTableDataInfo(configtbl, false);
+					if (configtbl->dataObj != NULL)
+					{
+						if (strlen(extconditionarray[j]) > 0)
+							configtbl->dataObj->filtercond = pg_strdup(extconditionarray[j]);
+					}
 				}
 			}
 		}
