@@ -362,6 +362,28 @@ SELECT array_agg(b ORDER BY b) FROM collate_test2;
  {ABD,Abc,abc,bbc}
 (1 row)
 
+-- In aggregates, ORDER BY expressions don't affect aggregate's collation
+SELECT string_agg(x COLLATE "C", y COLLATE "POSIX") FROM collate_test10;  -- fail
+ERROR:  collation mismatch between explicit collations "C" and "POSIX"
+LINE 1: SELECT string_agg(x COLLATE "C", y COLLATE "POSIX") FROM col...
+                                           ^
+SELECT array_agg(x COLLATE "C" ORDER BY y COLLATE "POSIX") FROM collate_test10;
+ array_agg 
+-----------
+ {HIJ,hij}
+(1 row)
+
+SELECT array_agg(a ORDER BY x COLLATE "C", y COLLATE "POSIX") FROM collate_test10;
+ array_agg 
+-----------
+ {2,1}
+(1 row)
+
+SELECT array_agg(a ORDER BY x||y) FROM collate_test10;  -- fail
+ERROR:  collation mismatch between implicit collations "C" and "POSIX"
+LINE 1: SELECT array_agg(a ORDER BY x||y) FROM collate_test10;
+                                       ^
+HINT:  You can choose the collation by applying the COLLATE clause to one or both expressions.
 SELECT a, b FROM collate_test1 UNION ALL SELECT a, b FROM collate_test1 ORDER BY 2;
  a |  b  
 ---+-----
