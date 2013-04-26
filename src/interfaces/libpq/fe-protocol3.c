@@ -1566,7 +1566,8 @@ pqGetline3(PGconn *conn, char *s, int maxlen)
 	int			status;
 
 	if (conn->sock < 0 ||
-		conn->asyncStatus != PGASYNC_COPY_OUT ||
+		(conn->asyncStatus != PGASYNC_COPY_OUT &&
+		 conn->asyncStatus != PGASYNC_COPY_BOTH) ||
 		conn->copy_is_binary)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
@@ -1617,7 +1618,8 @@ pqGetlineAsync3(PGconn *conn, char *buffer, int bufsize)
 	int			msgLength;
 	int			avail;
 
-	if (conn->asyncStatus != PGASYNC_COPY_OUT)
+	if (conn->asyncStatus != PGASYNC_COPY_OUT
+		&& conn->asyncStatus != PGASYNC_COPY_BOTH)
 		return -1;				/* we are not doing a copy... */
 
 	/*
@@ -1671,7 +1673,8 @@ pqEndcopy3(PGconn *conn)
 	PGresult   *result;
 
 	if (conn->asyncStatus != PGASYNC_COPY_IN &&
-		conn->asyncStatus != PGASYNC_COPY_OUT)
+		conn->asyncStatus != PGASYNC_COPY_OUT &&
+		conn->asyncStatus != PGASYNC_COPY_BOTH)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("no COPY in progress\n"));
@@ -1679,7 +1682,8 @@ pqEndcopy3(PGconn *conn)
 	}
 
 	/* Send the CopyDone message if needed */
-	if (conn->asyncStatus == PGASYNC_COPY_IN)
+	if (conn->asyncStatus == PGASYNC_COPY_IN ||
+		conn->asyncStatus == PGASYNC_COPY_BOTH)
 	{
 		if (pqPutMsgStart('c', false, conn) < 0 ||
 			pqPutMsgEnd(conn) < 0)
