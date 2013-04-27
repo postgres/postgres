@@ -1580,6 +1580,19 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 			continue;
 
 		/*
+		 * Always ignore RIR rules for materialized views referenced in
+		 * queries.  (This does not prevent refreshing MVs, since they aren't
+		 * referenced in their own query definitions.)
+		 *
+		 * Note: in the future we might want to allow MVs to be conditionally
+		 * expanded as if they were regular views, if they are not scannable.
+		 * In that case this test would need to be postponed till after we've
+		 * opened the rel, so that we could check its state.
+		 */
+		if (rte->relkind == RELKIND_MATVIEW)
+			continue;
+
+		/*
 		 * If the table is not referenced in the query, then we ignore it.
 		 * This prevents infinite expansion loop due to new rtable entries
 		 * inserted by expansion of a rule. A table is referenced if it is
@@ -1603,24 +1616,6 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 		 * AcquireRewriteLocks should have locked the rel already.
 		 */
 		rel = heap_open(rte->relid, NoLock);
-
-		/*
-		 * Ignore RIR rules for a materialized view, if it is scannable.
-		 *
-		 * NOTE: This is assuming that if an MV is scannable then we always
-		 * want to use the existing contents, and if it is not scannable we
-		 * cannot have gotten to this point unless it is being populated
-		 * (otherwise an error should be thrown).  It would be nice to have
-		 * some way to confirm that we're doing the right thing here, but rule
-		 * expansion doesn't give us a lot to work with, so we are trusting
-		 * earlier validations to throw error if needed.
-		 */
-		if (rel->rd_rel->relkind == RELKIND_MATVIEW &&
-			RelationIsScannable(rel))
-		{
-			heap_close(rel, NoLock);
-			continue;
-		}
 
 		/*
 		 * Collect the RIR rules that we must apply

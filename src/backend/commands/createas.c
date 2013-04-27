@@ -373,7 +373,6 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	rte->rtekind = RTE_RELATION;
 	rte->relid = intoRelationId;
 	rte->relkind = relkind;
-	rte->isResultRel = true;
 	rte->requiredPerms = ACL_INSERT;
 
 	for (attnum = 1; attnum <= intoRelationDesc->rd_att->natts; attnum++)

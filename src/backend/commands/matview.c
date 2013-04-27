@@ -215,10 +215,8 @@ refresh_matview_datafill(DestReceiver *dest, Query *query,
 	List       *rewritten;
 	PlannedStmt *plan;
 	QueryDesc  *queryDesc;
-	List	   *rtable;
-	RangeTblEntry	*initial_rte;
-	RangeTblEntry	*second_rte;
 
+	/* Rewrite, copying the given Query to make sure it's not changed */
 	rewritten = QueryRewrite((Query *) copyObject(query));
 
 	/* SELECT should never rewrite to more or less than one SELECT query */
@@ -228,26 +226,6 @@ refresh_matview_datafill(DestReceiver *dest, Query *query,
 
 	/* Check for user-requested abort. */
 	CHECK_FOR_INTERRUPTS();
-
-	/*
-	 * Kludge here to allow refresh of a materialized view which is invalid
-	 * (that is, it was created or refreshed WITH NO DATA. We flag the first
-	 * two RangeTblEntry list elements, which were added to the front of the
-	 * rewritten Query to keep the rules system happy, with the isResultRel
-	 * flag to indicate that it is OK if they are flagged as invalid. See
-	 * UpdateRangeTableOfViewParse() for details.
-	 *
-	 * NOTE: The rewrite has switched the frist two RTEs, but they are still
-	 * in the first two positions. If that behavior changes, the asserts here
-	 * will fail.
-	 */
-	rtable = query->rtable;
-	initial_rte = ((RangeTblEntry *) linitial(rtable));
-	Assert(strcmp(initial_rte->alias->aliasname, "new"));
-	initial_rte->isResultRel = true;
-	second_rte = ((RangeTblEntry *) lsecond(rtable));
-	Assert(strcmp(second_rte->alias->aliasname, "old"));
-	second_rte->isResultRel = true;
 
 	/* Plan the query which will generate data for the refresh. */
 	plan = pg_plan_query(query, 0, NULL);
