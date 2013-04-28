@@ -299,10 +299,10 @@ sepgsql_exec_check_perms(List *rangeTabls, bool abort)
 static void
 sepgsql_utility_command(Node *parsetree,
 						const char *queryString,
+						ProcessUtilityContext context,
 						ParamListInfo params,
 						DestReceiver *dest,
-						char *completionTag,
-						ProcessUtilityContext context)
+						char *completionTag)
 {
 	sepgsql_context_info_t saved_context_info = sepgsql_context_info;
 	ListCell   *cell;
@@ -362,11 +362,13 @@ sepgsql_utility_command(Node *parsetree,
 		}
 
 		if (next_ProcessUtility_hook)
-			(*next_ProcessUtility_hook) (parsetree, queryString, params,
-										 dest, completionTag, context);
+			(*next_ProcessUtility_hook) (parsetree, queryString,
+										 context, params,
+										 dest, completionTag);
 		else
-			standard_ProcessUtility(parsetree, queryString, params,
-									dest, completionTag, context);
+			standard_ProcessUtility(parsetree, queryString,
+									context, params,
+									dest, completionTag);
 	}
 	PG_CATCH();
 	{

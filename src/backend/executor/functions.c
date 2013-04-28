@@ -831,10 +831,10 @@ postquel_getnext(execution_state *es, SQLFunctionCachePtr fcache)
 						(Node *) es->qd->plannedstmt :
 						es->qd->utilitystmt),
 					   fcache->src,
+					   PROCESS_UTILITY_QUERY,
 					   es->qd->params,
 					   es->qd->dest,
-					   NULL,
-					   PROCESS_UTILITY_QUERY);
+					   NULL);
 		result = true;			/* never stops early */
 	}
 	else

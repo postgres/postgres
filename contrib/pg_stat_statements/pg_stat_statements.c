@@ -239,10 +239,9 @@ static void pgss_ExecutorRun(QueryDesc *queryDesc,
 				 long count);
 static void pgss_ExecutorFinish(QueryDesc *queryDesc);
 static void pgss_ExecutorEnd(QueryDesc *queryDesc);
-static void pgss_ProcessUtility(Node *parsetree,
-			  const char *queryString, ParamListInfo params,
-					DestReceiver *dest, char *completionTag,
-					ProcessUtilityContext context);
+static void pgss_ProcessUtility(Node *parsetree, const char *queryString,
+					ProcessUtilityContext context, ParamListInfo params,
+					DestReceiver *dest, char *completionTag);
 static uint32 pgss_hash_fn(const void *key, Size keysize);
 static int	pgss_match_fn(const void *key1, const void *key2, Size keysize);
 static uint32 pgss_hash_string(const char *str);
@@ -786,8 +785,8 @@ pgss_ExecutorEnd(QueryDesc *queryDesc)
  */
 static void
 pgss_ProcessUtility(Node *parsetree, const char *queryString,
-					ParamListInfo params, DestReceiver *dest,
-					char *completionTag, ProcessUtilityContext context)
+					ProcessUtilityContext context, ParamListInfo params,
+					DestReceiver *dest, char *completionTag)
 {
 	/*
 	 * If it's an EXECUTE statement, we don't track it and don't increment the
@@ -819,11 +818,13 @@ pgss_ProcessUtility(Node *parsetree, const char *queryString,
 		PG_TRY();
 		{
 			if (prev_ProcessUtility)
-				prev_ProcessUtility(parsetree, queryString, params,
-									dest, completionTag, context);
+				prev_ProcessUtility(parsetree, queryString,
+									context, params,
+									dest, completionTag);
 			else
-				standard_ProcessUtility(parsetree, queryString, params,
-										dest, completionTag, context);
+				standard_ProcessUtility(parsetree, queryString,
+										context, params,
+										dest, completionTag);
 			nested_level--;
 		}
 		PG_CATCH();
@@ -880,11 +881,13 @@ pgss_ProcessUtility(Node *parsetree, const char *queryString,
 	else
 	{
 		if (prev_ProcessUtility)
-			prev_ProcessUtility(parsetree, queryString, params,
-								dest, completionTag, context);
+			prev_ProcessUtility(parsetree, queryString,
+								context, params,
+								dest, completionTag);
 		else
-			standard_ProcessUtility(parsetree, queryString, params,
-									dest, completionTag, context);
+			standard_ProcessUtility(parsetree, queryString,
+									context, params,
+									dest, completionTag);
 	}
 }
 

@@ -151,10 +151,10 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 		/* do this step */
 		ProcessUtility(stmt,
 					   queryString,
+					   PROCESS_UTILITY_SUBCOMMAND,
 					   NULL,
 					   None_Receiver,
-					   NULL,
-					   PROCESS_UTILITY_SUBCOMMAND);
+					   NULL);
 		/* make sure later steps can see the object created here */
 		CommandCounterIncrement();
 	}

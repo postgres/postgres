@@ -71,10 +71,10 @@ ProcessUtility_hook_type ProcessUtility_hook = NULL;
 /* local function declarations */
 static void ProcessUtilitySlow(Node *parsetree,
 				   const char *queryString,
+				   ProcessUtilityContext context,
 				   ParamListInfo params,
 				   DestReceiver *dest,
-				   char *completionTag,
-				   ProcessUtilityContext context);
+				   char *completionTag);
 static void ExecDropStmt(DropStmt *stmt, bool isTopLevel);
 
 
@@ -314,8 +314,9 @@ CheckRestrictedOperation(const char *cmdname)
  *
  *	parsetree: the parse tree for the utility statement
  *	queryString: original source text of command
+ *	context: identifies source of statement (toplevel client command,
+ *		non-toplevel client command, subcommand of a larger utility command)
  *	params: parameters to use during execution
- *	isTopLevel: true if executing a "top level" (interactively issued) command
  *	dest: where to send results
  *	completionTag: points to a buffer of size COMPLETION_TAG_BUFSIZE
  *		in which to store a command completion status string.
@@ -331,10 +332,10 @@ CheckRestrictedOperation(const char *cmdname)
 void
 ProcessUtility(Node *parsetree,
 			   const char *queryString,
+			   ProcessUtilityContext context,
 			   ParamListInfo params,
 			   DestReceiver *dest,
-			   char *completionTag,
-			   ProcessUtilityContext context)
+			   char *completionTag)
 {
 	Assert(queryString != NULL);	/* required as of 8.4 */
 
@@ -344,11 +345,13 @@ ProcessUtility(Node *parsetree,
 	 * call standard_ProcessUtility().
 	 */
 	if (ProcessUtility_hook)
-		(*ProcessUtility_hook) (parsetree, queryString, params,
-								dest, completionTag, context);
+		(*ProcessUtility_hook) (parsetree, queryString,
+								context, params,
+								dest, completionTag);
 	else
-		standard_ProcessUtility(parsetree, queryString, params,
-								dest, completionTag, context);
+		standard_ProcessUtility(parsetree, queryString,
+								context, params,
+								dest, completionTag);
 }
 
 /*
@@ -365,10 +368,10 @@ ProcessUtility(Node *parsetree,
 void
 standard_ProcessUtility(Node *parsetree,
 						const char *queryString,
+						ProcessUtilityContext context,
 						ParamListInfo params,
 						DestReceiver *dest,
-						char *completionTag,
-						ProcessUtilityContext context)
+						char *completionTag)
 {
 	bool		isTopLevel = (context == PROCESS_UTILITY_TOPLEVEL);
 
@@ -817,8 +820,9 @@ standard_ProcessUtility(Node *parsetree,
 				DropStmt   *stmt = (DropStmt *) parsetree;
 
 				if (EventTriggerSupportsObjectType(stmt->removeType))
-					ProcessUtilitySlow(parsetree, queryString, params,
-									   dest, completionTag, context);
+					ProcessUtilitySlow(parsetree, queryString,
+									   context, params,
+									   dest, completionTag);
 				else
 					ExecDropStmt(stmt, isTopLevel);
 			}
@@ -829,8 +833,9 @@ standard_ProcessUtility(Node *parsetree,
 				RenameStmt *stmt = (RenameStmt *) parsetree;
 
 				if (EventTriggerSupportsObjectType(stmt->renameType))
-					ProcessUtilitySlow(parsetree, queryString, params,
-									   dest, completionTag, context);
+					ProcessUtilitySlow(parsetree, queryString,
+									   context, params,
+									   dest, completionTag);
 				else
 					ExecRenameStmt(stmt);
 			}
@@ -841,8 +846,9 @@ standard_ProcessUtility(Node *parsetree,
 				AlterObjectSchemaStmt *stmt = (AlterObjectSchemaStmt *) parsetree;
 
 				if (EventTriggerSupportsObjectType(stmt->objectType))
-					ProcessUtilitySlow(parsetree, queryString, params,
-									   dest, completionTag, context);
+					ProcessUtilitySlow(parsetree, queryString,
+									   context, params,
+									   dest, completionTag);
 				else
 					ExecAlterObjectSchemaStmt(stmt);
 			}
@@ -853,8 +859,9 @@ standard_ProcessUtility(Node *parsetree,
 				AlterOwnerStmt *stmt = (AlterOwnerStmt *) parsetree;
 
 				if (EventTriggerSupportsObjectType(stmt->objectType))
-					ProcessUtilitySlow(parsetree, queryString, params,
-									   dest, completionTag, context);
+					ProcessUtilitySlow(parsetree, queryString,
+									   context, params,
+									   dest, completionTag);
 				else
 					ExecAlterOwnerStmt(stmt);
 			}
@@ -862,8 +869,9 @@ standard_ProcessUtility(Node *parsetree,
 
 		default:
 			/* All other statement types have event trigger support */
-			ProcessUtilitySlow(parsetree, queryString, params,
-							   dest, completionTag, context);
+			ProcessUtilitySlow(parsetree, queryString,
+							   context, params,
+							   dest, completionTag);
 			break;
 	}
 }
@@ -876,10 +884,10 @@ standard_ProcessUtility(Node *parsetree,
 static void
 ProcessUtilitySlow(Node *parsetree,
 				   const char *queryString,
+				   ProcessUtilityContext context,
 				   ParamListInfo params,
 				   DestReceiver *dest,
-				   char *completionTag,
-				   ProcessUtilityContext context)
+				   char *completionTag)
 {
 	bool		isTopLevel = (context == PROCESS_UTILITY_TOPLEVEL);
 	bool		isCompleteQuery = (context <= PROCESS_UTILITY_QUERY);
@@ -966,10 +974,10 @@ ProcessUtilitySlow(Node *parsetree,
 							/* Recurse for anything else */
 							ProcessUtility(stmt,
 										   queryString,
+										   PROCESS_UTILITY_SUBCOMMAND,
 										   params,
 										   None_Receiver,
-										   NULL,
-										   PROCESS_UTILITY_GENERATED);
+										   NULL);
 						}
 
 						/* Need CCI between commands */
@@ -1017,10 +1025,10 @@ ProcessUtilitySlow(Node *parsetree,
 								/* Recurse for anything else */
 								ProcessUtility(stmt,
 											   queryString,
+											   PROCESS_UTILITY_SUBCOMMAND,
 											   params,
 											   None_Receiver,
-											   NULL,
-											   PROCESS_UTILITY_GENERATED);
+											   NULL);
 							}
 
 							/* Need CCI between commands */

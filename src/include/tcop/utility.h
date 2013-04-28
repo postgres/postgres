@@ -20,23 +20,22 @@ typedef enum
 {
 	PROCESS_UTILITY_TOPLEVEL,		/* toplevel interactive command */
 	PROCESS_UTILITY_QUERY,			/* a complete query, but not toplevel */
-	PROCESS_UTILITY_SUBCOMMAND,		/* a piece of a query */
-	PROCESS_UTILITY_GENERATED		/* internally generated node query node */
+	PROCESS_UTILITY_SUBCOMMAND		/* a portion of a query */
 } ProcessUtilityContext;
 
 /* Hook for plugins to get control in ProcessUtility() */
 typedef void (*ProcessUtility_hook_type) (Node *parsetree,
-			  const char *queryString, ParamListInfo params,
-			  DestReceiver *dest, char *completionTag,
-			  ProcessUtilityContext context);
+			  const char *queryString, ProcessUtilityContext context,
+			  ParamListInfo params,
+			  DestReceiver *dest, char *completionTag);
 extern PGDLLIMPORT ProcessUtility_hook_type ProcessUtility_hook;
 
 extern void ProcessUtility(Node *parsetree, const char *queryString,
-			   ParamListInfo params, DestReceiver *dest, char *completionTag,
-			   ProcessUtilityContext context);
+			   ProcessUtilityContext context, ParamListInfo params,
+			   DestReceiver *dest, char *completionTag);
 extern void standard_ProcessUtility(Node *parsetree, const char *queryString,
-						ParamListInfo params, DestReceiver *dest,
-						char *completionTag, ProcessUtilityContext context);
+						ProcessUtilityContext context, ParamListInfo params,
+						DestReceiver *dest, char *completionTag);
 
 extern bool UtilityReturnsTuples(Node *parsetree);
 

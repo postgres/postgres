@@ -750,10 +750,10 @@ execute_sql_string(const char *sql, const char *filename)
 			{
 				ProcessUtility(stmt,
 							   sql,
+							   PROCESS_UTILITY_QUERY,
 							   NULL,
 							   dest,
-							   NULL,
-							   PROCESS_UTILITY_QUERY);
+							   NULL);
 			}
 
 			PopActiveSnapshot();

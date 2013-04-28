@@ -2093,10 +2093,10 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 
 				ProcessUtility(stmt,
 							   plansource->query_string,
+							   PROCESS_UTILITY_QUERY,
 							   paramLI,
 							   dest,
-							   completionTag,
-							   PROCESS_UTILITY_QUERY);
+							   completionTag);
 
 				/* Update "processed" if stmt returned tuples */
 				if (_SPI_current->tuptable)
