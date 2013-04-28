@@ -68,6 +68,15 @@
 /* Hook for plugins to get control in ProcessUtility() */
 ProcessUtility_hook_type ProcessUtility_hook = NULL;
 
+/* local function declarations */
+static void ProcessUtilitySlow(Node *parsetree,
+				   const char *queryString,
+				   ParamListInfo params,
+				   DestReceiver *dest,
+				   char *completionTag,
+				   ProcessUtilityContext context);
+static void ExecDropStmt(DropStmt *stmt, bool isTopLevel);
+
 
 /*
  * Verify user has ownership of specified relation, else ereport.
@@ -342,70 +351,17 @@ ProcessUtility(Node *parsetree,
 								dest, completionTag, context);
 }
 
-#define InvokeDDLCommandEventTriggers(parsetree, fncall) \
-	do { \
-	    if (isCompleteQuery) \
-        { \
-			EventTriggerDDLCommandStart(parsetree); \
-		} \
-		fncall; \
-        if (isCompleteQuery) \
-        { \
-			EventTriggerSQLDrop(parsetree); \
-			EventTriggerDDLCommandEnd(parsetree); \
-		} \
-	} while (0)
-
-#define InvokeDDLCommandEventTriggersIfSupported(parsetree, fncall, objtype) \
-	do { \
-		bool	_supported = EventTriggerSupportsObjectType(objtype); \
-		\
-		if (_supported) \
-		{ \
-			EventTriggerDDLCommandStart(parsetree); \
-		} \
-		fncall; \
-		if (_supported) \
-		{ \
-			EventTriggerSQLDrop(parsetree); \
-			EventTriggerDDLCommandEnd(parsetree); \
-		} \
-	} while (0)
-
 /*
- * UTILITY_BEGIN_QUERY and UTILITY_END_QUERY are a pair of macros to enclose
- * execution of a single DDL command, to ensure the event trigger environment
- * is appropriately set up before starting, and tore down after completion or
- * error.
+ * standard_ProcessUtility itself deals only with utility commands for
+ * which we do not provide event trigger support.  Commands that do have
+ * such support are passed down to ProcessUtilitySlow, which contains the
+ * necessary infrastructure for such triggers.
+ *
+ * This division is not just for performance: it's critical that the
+ * event trigger code not be invoked when doing START TRANSACTION for
+ * example, because we might need to refresh the event trigger cache,
+ * which requires being in a valid transaction.
  */
-#define UTILITY_BEGIN_QUERY(isComplete) \
-	do { \
-		bool		_needCleanup; \
-		\
-		_needCleanup = (isComplete) && EventTriggerBeginCompleteQuery(); \
-		\
-		PG_TRY(); \
-		{ \
-			/* avoid empty statement when followed by a semicolon */ \
-			(void) 0
-
-#define UTILITY_END_QUERY() \
-		} \
-		PG_CATCH(); \
-		{ \
-			if (_needCleanup) \
-			{ \
-				EventTriggerEndCompleteQuery(); \
-			} \
-			PG_RE_THROW(); \
-		} \
-		PG_END_TRY(); \
-		if (_needCleanup) \
-		{ \
-			EventTriggerEndCompleteQuery(); \
-		} \
-	} while (0)
-
 void
 standard_ProcessUtility(Node *parsetree,
 						const char *queryString,
@@ -415,14 +371,11 @@ standard_ProcessUtility(Node *parsetree,
 						ProcessUtilityContext context)
 {
 	bool		isTopLevel = (context == PROCESS_UTILITY_TOPLEVEL);
-	bool		isCompleteQuery = (context <= PROCESS_UTILITY_QUERY);
 
 	check_xact_readonly(parsetree);
 
 	if (completionTag)
 		completionTag[0] = '\0';
-
-	UTILITY_BEGIN_QUERY(isCompleteQuery);
 
 	switch (nodeTag(parsetree))
 	{
@@ -571,93 +524,8 @@ standard_ProcessUtility(Node *parsetree,
 							   completionTag);
 			break;
 
-			/*
-			 * relation and attribute manipulation
-			 */
-		case T_CreateSchemaStmt:
-			InvokeDDLCommandEventTriggers(
-				parsetree,
-				CreateSchemaCommand((CreateSchemaStmt *) parsetree,
-									queryString));
-			break;
-
-		case T_CreateStmt:
-		case T_CreateForeignTableStmt:
-			{
-				List	   *stmts;
-				ListCell   *l;
-				Oid			relOid;
-
-				if (isCompleteQuery)
-					EventTriggerDDLCommandStart(parsetree);
-
-				/* Run parse analysis ... */
-				stmts = transformCreateStmt((CreateStmt *) parsetree,
-											queryString);
-
-				/* ... and do it */
-				foreach(l, stmts)
-				{
-					Node	   *stmt = (Node *) lfirst(l);
-
-					if (IsA(stmt, CreateStmt))
-					{
-						Datum		toast_options;
-						static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
-
-						/* Create the table itself */
-						relOid = DefineRelation((CreateStmt *) stmt,
-												RELKIND_RELATION,
-												InvalidOid);
-
-						/*
-						 * Let AlterTableCreateToastTable decide if this one
-						 * needs a secondary relation too.
-						 */
-						CommandCounterIncrement();
-
-						/* parse and validate reloptions for the toast table */
-						toast_options = transformRelOptions((Datum) 0,
-											  ((CreateStmt *) stmt)->options,
-															"toast",
-															validnsps,
-															true, false);
-						(void) heap_reloptions(RELKIND_TOASTVALUE, toast_options,
-											   true);
-
-						AlterTableCreateToastTable(relOid, toast_options);
-					}
-					else if (IsA(stmt, CreateForeignTableStmt))
-					{
-						/* Create the table itself */
-						relOid = DefineRelation((CreateStmt *) stmt,
-												RELKIND_FOREIGN_TABLE,
-												InvalidOid);
-						CreateForeignTable((CreateForeignTableStmt *) stmt,
-										   relOid);
-					}
-					else
-					{
-						/* Recurse for anything else */
-						ProcessUtility(stmt,
-									   queryString,
-									   params,
-									   None_Receiver,
-									   NULL,
-									   PROCESS_UTILITY_GENERATED);
-					}
-
-					/* Need CCI between commands */
-					if (lnext(l) != NULL)
-						CommandCounterIncrement();
-				}
-
-				if (isCompleteQuery)
-				{
-					EventTriggerSQLDrop(parsetree);
-					EventTriggerDDLCommandEnd(parsetree);
-				}
-			}
+		case T_DoStmt:
+			ExecuteDoStmt((DoStmt *) parsetree);
 			break;
 
 		case T_CreateTableSpaceStmt:
@@ -676,104 +544,6 @@ standard_ProcessUtility(Node *parsetree,
 			/* no event triggers for global objects */
 			AlterTableSpaceOptions((AlterTableSpaceOptionsStmt *) parsetree);
 			break;
-
-		case T_CreateExtensionStmt:
-			InvokeDDLCommandEventTriggers(
-				parsetree,
-				CreateExtension((CreateExtensionStmt *) parsetree));
-			break;
-
-		case T_AlterExtensionStmt:
-			InvokeDDLCommandEventTriggers(
-				parsetree,
-				ExecAlterExtensionStmt((AlterExtensionStmt *) parsetree));
-			break;
-
-		case T_AlterExtensionContentsStmt:
-			InvokeDDLCommandEventTriggers(
-				parsetree,
-				ExecAlterExtensionContentsStmt((AlterExtensionContentsStmt *) parsetree));
-			break;
-
-		case T_CreateFdwStmt:
-			InvokeDDLCommandEventTriggers(
-				parsetree,
-				CreateForeignDataWrapper((CreateFdwStmt *) parsetree));
-			break;
-
-		case T_AlterFdwStmt:
-			InvokeDDLCommandEventTriggers(
-				parsetree,
-				AlterForeignDataWrapper((AlterFdwStmt *) parsetree));
-			break;
-
-		case T_CreateForeignServerStmt:
-			InvokeDDLCommandEventTriggers(
-				parsetree,
-				CreateForeignServer((CreateForeignServerStmt *) parsetree));
-			break;
-
-		case T_AlterForeignServerStmt:
-			InvokeDDLCommandEventTriggers(
-				parsetree,
-				AlterForeignServer((AlterForeignServerStmt *) parsetree));
-			break;
-
-		case T_CreateUserMappingStmt:
-			InvokeDDLCommandEventTriggers(
-				parsetree,
-				CreateUserMapping((CreateUserMappingStmt *) parsetree));
-			break;
-
-		case T_AlterUserMappingStmt:
-			InvokeDDLCommandEventTriggers(
-				parsetree,
-				AlterUserMapping((AlterUserMappingStmt *) parsetree));
-			break;
-
-		case T_DropUserMappingStmt:
-			InvokeDDLCommandEventTriggers(
-				parsetree,
-				RemoveUserMapping((DropUserMappingStmt *) parsetree));
-			break;
-
-		case T_DropStmt:
-			{
-				DropStmt   *stmt = (DropStmt *) parsetree;
-
-				if (isCompleteQuery
-					&& EventTriggerSupportsObjectType(stmt->removeType))
-					EventTriggerDDLCommandStart(parsetree);
-
-				switch (stmt->removeType)
-				{
-					case OBJECT_INDEX:
-						if (stmt->concurrent)
-							PreventTransactionChain(isTopLevel,
-													"DROP INDEX CONCURRENTLY");
-						/* fall through */
-
-					case OBJECT_TABLE:
-					case OBJECT_SEQUENCE:
-					case OBJECT_VIEW:
-					case OBJECT_MATVIEW:
-					case OBJECT_FOREIGN_TABLE:
-						RemoveRelations((DropStmt *) parsetree);
-						break;
-					default:
-						RemoveObjects((DropStmt *) parsetree);
-						break;
-				}
-
-				if (isCompleteQuery
-					&& EventTriggerSupportsObjectType(stmt->removeType))
-				{
-					EventTriggerSQLDrop(parsetree);
-					EventTriggerDDLCommandEnd(parsetree);
-				}
-
-				break;
-			}
 
 		case T_TruncateStmt:
 			ExecuteTruncate((TruncateStmt *) parsetree);
@@ -814,310 +584,14 @@ standard_ProcessUtility(Node *parsetree,
 			DeallocateQuery((DeallocateStmt *) parsetree);
 			break;
 
-			/*
-			 * schema
-			 */
-		case T_RenameStmt:
-			{
-				RenameStmt *stmt = (RenameStmt *) parsetree;
-
-				InvokeDDLCommandEventTriggersIfSupported(parsetree,
-														 ExecRenameStmt(stmt),
-														 stmt->renameType);
-				break;
-			}
-
-		case T_AlterObjectSchemaStmt:
-			{
-				AlterObjectSchemaStmt  *stmt = (AlterObjectSchemaStmt *) parsetree;
-				InvokeDDLCommandEventTriggersIfSupported(parsetree,
-														 ExecAlterObjectSchemaStmt(stmt),
-														 stmt->objectType);
-				break;
-			}
-
-		case T_AlterOwnerStmt:
-			{
-				AlterOwnerStmt  *stmt = (AlterOwnerStmt *) parsetree;
-				InvokeDDLCommandEventTriggersIfSupported(parsetree,
-														 ExecAlterOwnerStmt(stmt),
-														 stmt->objectType);
-				break;
-			}
-
-		case T_AlterTableStmt:
-			{
-				AlterTableStmt *atstmt = (AlterTableStmt *) parsetree;
-				Oid			relid;
-				List	   *stmts;
-				ListCell   *l;
-				LOCKMODE	lockmode;
-
-				if (isCompleteQuery)
-					EventTriggerDDLCommandStart(parsetree);
-
-				/*
-				 * Figure out lock mode, and acquire lock.	This also does
-				 * basic permissions checks, so that we won't wait for a lock
-				 * on (for example) a relation on which we have no
-				 * permissions.
-				 */
-				lockmode = AlterTableGetLockLevel(atstmt->cmds);
-				relid = AlterTableLookupRelation(atstmt, lockmode);
-
-				if (OidIsValid(relid))
-				{
-					/* Run parse analysis ... */
-					stmts = transformAlterTableStmt(atstmt, queryString);
-
-					/* ... and do it */
-					foreach(l, stmts)
-					{
-						Node	   *stmt = (Node *) lfirst(l);
-
-						if (IsA(stmt, AlterTableStmt))
-						{
-							/* Do the table alteration proper */
-							AlterTable(relid, lockmode, (AlterTableStmt *) stmt);
-						}
-						else
-						{
-							/* Recurse for anything else */
-							ProcessUtility(stmt,
-										   queryString,
-										   params,
-										   None_Receiver,
-										   NULL,
-										   PROCESS_UTILITY_GENERATED);
-						}
-
-						/* Need CCI between commands */
-						if (lnext(l) != NULL)
-							CommandCounterIncrement();
-					}
-				}
-				else
-					ereport(NOTICE,
-						  (errmsg("relation \"%s\" does not exist, skipping",
-								  atstmt->relation->relname)));
-
-				if (isCompleteQuery)
-				{
-					EventTriggerSQLDrop(parsetree);
-					EventTriggerDDLCommandEnd(parsetree);
-				}
-			}
-			break;
-
-		case T_AlterDomainStmt:
-			{
-				AlterDomainStmt *stmt = (AlterDomainStmt *) parsetree;
-
-				if (isCompleteQuery)
-					EventTriggerDDLCommandStart(parsetree);
-
-				/*
-				 * Some or all of these functions are recursive to cover
-				 * inherited things, so permission checks are done there.
-				 */
-				switch (stmt->subtype)
-				{
-					case 'T':	/* ALTER DOMAIN DEFAULT */
-
-						/*
-						 * Recursively alter column default for table and, if
-						 * requested, for descendants
-						 */
-						AlterDomainDefault(stmt->typeName,
-										   stmt->def);
-						break;
-					case 'N':	/* ALTER DOMAIN DROP NOT NULL */
-						AlterDomainNotNull(stmt->typeName,
-										   false);
-						break;
-					case 'O':	/* ALTER DOMAIN SET NOT NULL */
-						AlterDomainNotNull(stmt->typeName,
-										   true);
-						break;
-					case 'C':	/* ADD CONSTRAINT */
-						AlterDomainAddConstraint(stmt->typeName,
-												 stmt->def);
-						break;
-					case 'X':	/* DROP CONSTRAINT */
-						AlterDomainDropConstraint(stmt->typeName,
-												  stmt->name,
-												  stmt->behavior,
-												  stmt->missing_ok);
-						break;
-					case 'V':	/* VALIDATE CONSTRAINT */
-						AlterDomainValidateConstraint(stmt->typeName,
-													  stmt->name);
-						break;
-					default:	/* oops */
-						elog(ERROR, "unrecognized alter domain type: %d",
-							 (int) stmt->subtype);
-						break;
-				}
-			}
-			break;
-
 		case T_GrantStmt:
+			/* no event triggers for global objects */
 			ExecuteGrantStmt((GrantStmt *) parsetree);
 			break;
 
 		case T_GrantRoleStmt:
+			/* no event triggers for global objects */
 			GrantRole((GrantRoleStmt *) parsetree);
-			break;
-
-		case T_AlterDefaultPrivilegesStmt:
-			InvokeDDLCommandEventTriggers(
-				parsetree,
-				ExecAlterDefaultPrivilegesStmt((AlterDefaultPrivilegesStmt *) parsetree));
-			break;
-
-			/*
-			 * **************** object creation / destruction *****************
-			 */
-		case T_DefineStmt:
-			{
-				DefineStmt *stmt = (DefineStmt *) parsetree;
-
-				if (isCompleteQuery)
-					EventTriggerDDLCommandStart(parsetree);
-
-				switch (stmt->kind)
-				{
-					case OBJECT_AGGREGATE:
-						DefineAggregate(stmt->defnames, stmt->args,
-										stmt->oldstyle, stmt->definition);
-						break;
-					case OBJECT_OPERATOR:
-						Assert(stmt->args == NIL);
-						DefineOperator(stmt->defnames, stmt->definition);
-						break;
-					case OBJECT_TYPE:
-						Assert(stmt->args == NIL);
-						DefineType(stmt->defnames, stmt->definition);
-						break;
-					case OBJECT_TSPARSER:
-						Assert(stmt->args == NIL);
-						DefineTSParser(stmt->defnames, stmt->definition);
-						break;
-					case OBJECT_TSDICTIONARY:
-						Assert(stmt->args == NIL);
-						DefineTSDictionary(stmt->defnames, stmt->definition);
-						break;
-					case OBJECT_TSTEMPLATE:
-						Assert(stmt->args == NIL);
-						DefineTSTemplate(stmt->defnames, stmt->definition);
-						break;
-					case OBJECT_TSCONFIGURATION:
-						Assert(stmt->args == NIL);
-						DefineTSConfiguration(stmt->defnames, stmt->definition);
-						break;
-					case OBJECT_COLLATION:
-						Assert(stmt->args == NIL);
-						DefineCollation(stmt->defnames, stmt->definition);
-						break;
-					default:
-						elog(ERROR, "unrecognized define stmt type: %d",
-							 (int) stmt->kind);
-						break;
-				}
-			}
-			break;
-
-		case T_CompositeTypeStmt:		/* CREATE TYPE (composite) */
-			{
-				CompositeTypeStmt *stmt = (CompositeTypeStmt *) parsetree;
-
-				InvokeDDLCommandEventTriggers(
-					parsetree,
-					DefineCompositeType(stmt->typevar, stmt->coldeflist));
-			}
-			break;
-
-		case T_CreateEnumStmt:	/* CREATE TYPE AS ENUM */
-			InvokeDDLCommandEventTriggers(
-				parsetree,
-				DefineEnum((CreateEnumStmt *) parsetree));
-			break;
-
-		case T_CreateRangeStmt:	/* CREATE TYPE AS RANGE */
-			InvokeDDLCommandEventTriggers(
-				parsetree,
-				DefineRange((CreateRangeStmt *) parsetree));
-			break;
-
-		case T_AlterEnumStmt:	/* ALTER TYPE (enum) */
-			InvokeDDLCommandEventTriggers(
-				parsetree,
-				AlterEnum((AlterEnumStmt *) parsetree, isTopLevel));
-			break;
-
-		case T_ViewStmt:		/* CREATE VIEW */
-			InvokeDDLCommandEventTriggers(
-				parsetree,
-				DefineView((ViewStmt *) parsetree, queryString));
-			break;
-
-		case T_CreateFunctionStmt:		/* CREATE FUNCTION */
-			InvokeDDLCommandEventTriggers(
-				parsetree,
-				CreateFunction((CreateFunctionStmt *) parsetree, queryString));
-			break;
-
-		case T_AlterFunctionStmt:		/* ALTER FUNCTION */
-			InvokeDDLCommandEventTriggers(
-				parsetree,
-				AlterFunction((AlterFunctionStmt *) parsetree));
-			break;
-
-		case T_IndexStmt:		/* CREATE INDEX */
-			{
-				IndexStmt  *stmt = (IndexStmt *) parsetree;
-
-				if (isCompleteQuery)
-					EventTriggerDDLCommandStart(parsetree);
-				if (stmt->concurrent)
-					PreventTransactionChain(isTopLevel,
-											"CREATE INDEX CONCURRENTLY");
-
-				CheckRelationOwnership(stmt->relation, true);
-
-				/* Run parse analysis ... */
-				stmt = transformIndexStmt(stmt, queryString);
-
-				/* ... and do it */
-				DefineIndex(stmt,
-							InvalidOid, /* no predefined OID */
-							false,		/* is_alter_table */
-							true,		/* check_rights */
-							false,		/* skip_build */
-							false);		/* quiet */
-			}
-			break;
-
-		case T_RuleStmt:		/* CREATE RULE */
-			InvokeDDLCommandEventTriggers(
-				parsetree,
-				DefineRule((RuleStmt *) parsetree, queryString));
-			break;
-
-		case T_CreateSeqStmt:
-			InvokeDDLCommandEventTriggers(
-				parsetree,
-				DefineSequence((CreateSeqStmt *) parsetree));
-			break;
-
-		case T_AlterSeqStmt:
-			InvokeDDLCommandEventTriggers(
-				parsetree,
-				AlterSequence((AlterSeqStmt *) parsetree));
-			break;
-
-		case T_DoStmt:
-			ExecuteDoStmt((DoStmt *) parsetree);
 			break;
 
 		case T_CreatedbStmt:
@@ -1210,20 +684,6 @@ standard_ProcessUtility(Node *parsetree,
 			ExplainQuery((ExplainStmt *) parsetree, queryString, params, dest);
 			break;
 
-		case T_CreateTableAsStmt:
-			InvokeDDLCommandEventTriggers(
-				parsetree,
-				ExecCreateTableAs((CreateTableAsStmt *) parsetree,
-								  queryString, params, completionTag));
-			break;
-
-		case T_RefreshMatViewStmt:
-			if (isCompleteQuery)
-				EventTriggerDDLCommandStart(parsetree);
-			ExecRefreshMatView((RefreshMatViewStmt *) parsetree,
-								queryString, params, completionTag);
-			break;
-
 		case T_VariableSetStmt:
 			ExecSetVariableStmt((VariableSetStmt *) parsetree);
 			break;
@@ -1242,13 +702,6 @@ standard_ProcessUtility(Node *parsetree,
 			DiscardCommand((DiscardStmt *) parsetree, isTopLevel);
 			break;
 
-		case T_CreateTrigStmt:
-			InvokeDDLCommandEventTriggers(
-				parsetree,
-				(void) CreateTrigger((CreateTrigStmt *) parsetree, queryString,
-									 InvalidOid, InvalidOid, false));
-			break;
-
 		case T_CreateEventTrigStmt:
 			/* no event triggers on event triggers */
 			CreateEventTrigger((CreateEventTrigStmt *) parsetree);
@@ -1257,21 +710,6 @@ standard_ProcessUtility(Node *parsetree,
 		case T_AlterEventTrigStmt:
 			/* no event triggers on event triggers */
 			AlterEventTrigger((AlterEventTrigStmt *) parsetree);
-			break;
-
-		case T_CreatePLangStmt:
-			InvokeDDLCommandEventTriggers(
-				parsetree,
-				CreateProceduralLanguage((CreatePLangStmt *) parsetree));
-			break;
-
-			/*
-			 * ******************************** DOMAIN statements ****
-			 */
-		case T_CreateDomainStmt:
-			InvokeDDLCommandEventTriggers(
-				parsetree,
-				DefineDomain((CreateDomainStmt *) parsetree));
 			break;
 
 			/*
@@ -1295,12 +733,6 @@ standard_ProcessUtility(Node *parsetree,
 		case T_DropRoleStmt:
 			/* no event triggers for global objects */
 			DropRole((DropRoleStmt *) parsetree);
-			break;
-
-		case T_DropOwnedStmt:
-			InvokeDDLCommandEventTriggers(
-				parsetree,
-				DropOwnedObjects((DropOwnedStmt *) parsetree));
 			break;
 
 		case T_ReassignOwnedStmt:
@@ -1372,60 +804,571 @@ standard_ProcessUtility(Node *parsetree,
 							 (int) stmt->kind);
 						break;
 				}
-				break;
 			}
 			break;
 
-		case T_CreateConversionStmt:
-			InvokeDDLCommandEventTriggers(
-				parsetree,
-				CreateConversionCommand((CreateConversionStmt *) parsetree));
+			/*
+			 * The following statements are supported by Event Triggers only
+			 * in some cases, so we "fast path" them in the other cases.
+			 */
+
+		case T_DropStmt:
+			{
+				DropStmt   *stmt = (DropStmt *) parsetree;
+
+				if (EventTriggerSupportsObjectType(stmt->removeType))
+					ProcessUtilitySlow(parsetree, queryString, params,
+									   dest, completionTag, context);
+				else
+					ExecDropStmt(stmt, isTopLevel);
+			}
 			break;
 
-		case T_CreateCastStmt:
-			InvokeDDLCommandEventTriggers(
-				parsetree,
-				CreateCast((CreateCastStmt *) parsetree));
+		case T_RenameStmt:
+			{
+				RenameStmt *stmt = (RenameStmt *) parsetree;
+
+				if (EventTriggerSupportsObjectType(stmt->renameType))
+					ProcessUtilitySlow(parsetree, queryString, params,
+									   dest, completionTag, context);
+				else
+					ExecRenameStmt(stmt);
+			}
 			break;
 
-		case T_CreateOpClassStmt:
-			InvokeDDLCommandEventTriggers(
-				parsetree,
-				DefineOpClass((CreateOpClassStmt *) parsetree));
+		case T_AlterObjectSchemaStmt:
+			{
+				AlterObjectSchemaStmt *stmt = (AlterObjectSchemaStmt *) parsetree;
+
+				if (EventTriggerSupportsObjectType(stmt->objectType))
+					ProcessUtilitySlow(parsetree, queryString, params,
+									   dest, completionTag, context);
+				else
+					ExecAlterObjectSchemaStmt(stmt);
+			}
 			break;
 
-		case T_CreateOpFamilyStmt:
-			InvokeDDLCommandEventTriggers(
-				parsetree,
-				DefineOpFamily((CreateOpFamilyStmt *) parsetree));
-			break;
+		case T_AlterOwnerStmt:
+			{
+				AlterOwnerStmt *stmt = (AlterOwnerStmt *) parsetree;
 
-		case T_AlterOpFamilyStmt:
-			InvokeDDLCommandEventTriggers(
-				parsetree,
-				AlterOpFamily((AlterOpFamilyStmt *) parsetree));
-			break;
-
-		case T_AlterTSDictionaryStmt:
-			InvokeDDLCommandEventTriggers(
-				parsetree,
-				AlterTSDictionary((AlterTSDictionaryStmt *) parsetree));
-			break;
-
-		case T_AlterTSConfigurationStmt:
-			InvokeDDLCommandEventTriggers(
-				parsetree,
-				AlterTSConfiguration((AlterTSConfigurationStmt *) parsetree));
+				if (EventTriggerSupportsObjectType(stmt->objectType))
+					ProcessUtilitySlow(parsetree, queryString, params,
+									   dest, completionTag, context);
+				else
+					ExecAlterOwnerStmt(stmt);
+			}
 			break;
 
 		default:
-			elog(ERROR, "unrecognized node type: %d",
-				 (int) nodeTag(parsetree));
+			/* All other statement types have event trigger support */
+			ProcessUtilitySlow(parsetree, queryString, params,
+							   dest, completionTag, context);
 			break;
 	}
-
-	UTILITY_END_QUERY();
 }
+
+/*
+ * The "Slow" variant of ProcessUtility should only receive statements
+ * supported by the event triggers facility.  Therefore, we always
+ * perform the trigger support calls if the context allows it.
+ */
+static void
+ProcessUtilitySlow(Node *parsetree,
+				   const char *queryString,
+				   ParamListInfo params,
+				   DestReceiver *dest,
+				   char *completionTag,
+				   ProcessUtilityContext context)
+{
+	bool		isTopLevel = (context == PROCESS_UTILITY_TOPLEVEL);
+	bool		isCompleteQuery = (context <= PROCESS_UTILITY_QUERY);
+	bool		needCleanup;
+
+	/* All event trigger calls are done only when isCompleteQuery is true */
+	needCleanup = isCompleteQuery && EventTriggerBeginCompleteQuery();
+
+	/* PG_TRY block is to ensure we call EventTriggerEndCompleteQuery */
+	PG_TRY();
+	{
+		if (isCompleteQuery)
+			EventTriggerDDLCommandStart(parsetree);
+
+		switch (nodeTag(parsetree))
+		{
+				/*
+				 * relation and attribute manipulation
+				 */
+			case T_CreateSchemaStmt:
+				CreateSchemaCommand((CreateSchemaStmt *) parsetree,
+									queryString);
+				break;
+
+			case T_CreateStmt:
+			case T_CreateForeignTableStmt:
+				{
+					List	   *stmts;
+					ListCell   *l;
+					Oid			relOid;
+
+					/* Run parse analysis ... */
+					stmts = transformCreateStmt((CreateStmt *) parsetree,
+												queryString);
+
+					/* ... and do it */
+					foreach(l, stmts)
+					{
+						Node	   *stmt = (Node *) lfirst(l);
+
+						if (IsA(stmt, CreateStmt))
+						{
+							Datum		toast_options;
+							static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
+
+							/* Create the table itself */
+							relOid = DefineRelation((CreateStmt *) stmt,
+													RELKIND_RELATION,
+													InvalidOid);
+
+							/*
+							 * Let AlterTableCreateToastTable decide if this
+							 * one needs a secondary relation too.
+							 */
+							CommandCounterIncrement();
+
+							/*
+							 * parse and validate reloptions for the toast
+							 * table
+							 */
+							toast_options = transformRelOptions((Datum) 0,
+											  ((CreateStmt *) stmt)->options,
+																"toast",
+																validnsps,
+																true,
+																false);
+							(void) heap_reloptions(RELKIND_TOASTVALUE,
+												   toast_options,
+												   true);
+
+							AlterTableCreateToastTable(relOid, toast_options);
+						}
+						else if (IsA(stmt, CreateForeignTableStmt))
+						{
+							/* Create the table itself */
+							relOid = DefineRelation((CreateStmt *) stmt,
+													RELKIND_FOREIGN_TABLE,
+													InvalidOid);
+							CreateForeignTable((CreateForeignTableStmt *) stmt,
+											   relOid);
+						}
+						else
+						{
+							/* Recurse for anything else */
+							ProcessUtility(stmt,
+										   queryString,
+										   params,
+										   None_Receiver,
+										   NULL,
+										   PROCESS_UTILITY_GENERATED);
+						}
+
+						/* Need CCI between commands */
+						if (lnext(l) != NULL)
+							CommandCounterIncrement();
+					}
+				}
+				break;
+
+			case T_AlterTableStmt:
+				{
+					AlterTableStmt *atstmt = (AlterTableStmt *) parsetree;
+					Oid			relid;
+					List	   *stmts;
+					ListCell   *l;
+					LOCKMODE	lockmode;
+
+					/*
+					 * Figure out lock mode, and acquire lock.	This also does
+					 * basic permissions checks, so that we won't wait for a
+					 * lock on (for example) a relation on which we have no
+					 * permissions.
+					 */
+					lockmode = AlterTableGetLockLevel(atstmt->cmds);
+					relid = AlterTableLookupRelation(atstmt, lockmode);
+
+					if (OidIsValid(relid))
+					{
+						/* Run parse analysis ... */
+						stmts = transformAlterTableStmt(atstmt, queryString);
+
+						/* ... and do it */
+						foreach(l, stmts)
+						{
+							Node	   *stmt = (Node *) lfirst(l);
+
+							if (IsA(stmt, AlterTableStmt))
+							{
+								/* Do the table alteration proper */
+								AlterTable(relid, lockmode,
+										   (AlterTableStmt *) stmt);
+							}
+							else
+							{
+								/* Recurse for anything else */
+								ProcessUtility(stmt,
+											   queryString,
+											   params,
+											   None_Receiver,
+											   NULL,
+											   PROCESS_UTILITY_GENERATED);
+							}
+
+							/* Need CCI between commands */
+							if (lnext(l) != NULL)
+								CommandCounterIncrement();
+						}
+					}
+					else
+						ereport(NOTICE,
+						  (errmsg("relation \"%s\" does not exist, skipping",
+								  atstmt->relation->relname)));
+				}
+				break;
+
+			case T_AlterDomainStmt:
+				{
+					AlterDomainStmt *stmt = (AlterDomainStmt *) parsetree;
+
+					/*
+					 * Some or all of these functions are recursive to cover
+					 * inherited things, so permission checks are done there.
+					 */
+					switch (stmt->subtype)
+					{
+						case 'T':		/* ALTER DOMAIN DEFAULT */
+
+							/*
+							 * Recursively alter column default for table and,
+							 * if requested, for descendants
+							 */
+							AlterDomainDefault(stmt->typeName,
+											   stmt->def);
+							break;
+						case 'N':		/* ALTER DOMAIN DROP NOT NULL */
+							AlterDomainNotNull(stmt->typeName,
+											   false);
+							break;
+						case 'O':		/* ALTER DOMAIN SET NOT NULL */
+							AlterDomainNotNull(stmt->typeName,
+											   true);
+							break;
+						case 'C':		/* ADD CONSTRAINT */
+							AlterDomainAddConstraint(stmt->typeName,
+													 stmt->def);
+							break;
+						case 'X':		/* DROP CONSTRAINT */
+							AlterDomainDropConstraint(stmt->typeName,
+													  stmt->name,
+													  stmt->behavior,
+													  stmt->missing_ok);
+							break;
+						case 'V':		/* VALIDATE CONSTRAINT */
+							AlterDomainValidateConstraint(stmt->typeName,
+														  stmt->name);
+							break;
+						default:		/* oops */
+							elog(ERROR, "unrecognized alter domain type: %d",
+								 (int) stmt->subtype);
+							break;
+					}
+				}
+				break;
+
+				/*
+				 * ************* object creation / destruction **************
+				 */
+			case T_DefineStmt:
+				{
+					DefineStmt *stmt = (DefineStmt *) parsetree;
+
+					switch (stmt->kind)
+					{
+						case OBJECT_AGGREGATE:
+							DefineAggregate(stmt->defnames, stmt->args,
+											stmt->oldstyle, stmt->definition);
+							break;
+						case OBJECT_OPERATOR:
+							Assert(stmt->args == NIL);
+							DefineOperator(stmt->defnames, stmt->definition);
+							break;
+						case OBJECT_TYPE:
+							Assert(stmt->args == NIL);
+							DefineType(stmt->defnames, stmt->definition);
+							break;
+						case OBJECT_TSPARSER:
+							Assert(stmt->args == NIL);
+							DefineTSParser(stmt->defnames, stmt->definition);
+							break;
+						case OBJECT_TSDICTIONARY:
+							Assert(stmt->args == NIL);
+							DefineTSDictionary(stmt->defnames,
+											   stmt->definition);
+							break;
+						case OBJECT_TSTEMPLATE:
+							Assert(stmt->args == NIL);
+							DefineTSTemplate(stmt->defnames,
+											 stmt->definition);
+							break;
+						case OBJECT_TSCONFIGURATION:
+							Assert(stmt->args == NIL);
+							DefineTSConfiguration(stmt->defnames,
+												  stmt->definition);
+							break;
+						case OBJECT_COLLATION:
+							Assert(stmt->args == NIL);
+							DefineCollation(stmt->defnames, stmt->definition);
+							break;
+						default:
+							elog(ERROR, "unrecognized define stmt type: %d",
+								 (int) stmt->kind);
+							break;
+					}
+				}
+				break;
+
+			case T_IndexStmt:	/* CREATE INDEX */
+				{
+					IndexStmt  *stmt = (IndexStmt *) parsetree;
+
+					if (stmt->concurrent)
+						PreventTransactionChain(isTopLevel,
+												"CREATE INDEX CONCURRENTLY");
+
+					CheckRelationOwnership(stmt->relation, true);
+
+					/* Run parse analysis ... */
+					stmt = transformIndexStmt(stmt, queryString);
+
+					/* ... and do it */
+					DefineIndex(stmt,
+								InvalidOid,		/* no predefined OID */
+								false,	/* is_alter_table */
+								true,	/* check_rights */
+								false,	/* skip_build */
+								false); /* quiet */
+				}
+				break;
+
+			case T_CreateExtensionStmt:
+				CreateExtension((CreateExtensionStmt *) parsetree);
+				break;
+
+			case T_AlterExtensionStmt:
+				ExecAlterExtensionStmt((AlterExtensionStmt *) parsetree);
+				break;
+
+			case T_AlterExtensionContentsStmt:
+				ExecAlterExtensionContentsStmt((AlterExtensionContentsStmt *) parsetree);
+				break;
+
+			case T_CreateFdwStmt:
+				CreateForeignDataWrapper((CreateFdwStmt *) parsetree);
+				break;
+
+			case T_AlterFdwStmt:
+				AlterForeignDataWrapper((AlterFdwStmt *) parsetree);
+				break;
+
+			case T_CreateForeignServerStmt:
+				CreateForeignServer((CreateForeignServerStmt *) parsetree);
+				break;
+
+			case T_AlterForeignServerStmt:
+				AlterForeignServer((AlterForeignServerStmt *) parsetree);
+				break;
+
+			case T_CreateUserMappingStmt:
+				CreateUserMapping((CreateUserMappingStmt *) parsetree);
+				break;
+
+			case T_AlterUserMappingStmt:
+				AlterUserMapping((AlterUserMappingStmt *) parsetree);
+				break;
+
+			case T_DropUserMappingStmt:
+				RemoveUserMapping((DropUserMappingStmt *) parsetree);
+				break;
+
+			case T_CompositeTypeStmt:	/* CREATE TYPE (composite) */
+				{
+					CompositeTypeStmt *stmt = (CompositeTypeStmt *) parsetree;
+
+					DefineCompositeType(stmt->typevar, stmt->coldeflist);
+				}
+				break;
+
+			case T_CreateEnumStmt:		/* CREATE TYPE AS ENUM */
+				DefineEnum((CreateEnumStmt *) parsetree);
+				break;
+
+			case T_CreateRangeStmt:		/* CREATE TYPE AS RANGE */
+				DefineRange((CreateRangeStmt *) parsetree);
+				break;
+
+			case T_AlterEnumStmt:		/* ALTER TYPE (enum) */
+				AlterEnum((AlterEnumStmt *) parsetree, isTopLevel);
+				break;
+
+			case T_ViewStmt:	/* CREATE VIEW */
+				DefineView((ViewStmt *) parsetree, queryString);
+				break;
+
+			case T_CreateFunctionStmt:	/* CREATE FUNCTION */
+				CreateFunction((CreateFunctionStmt *) parsetree, queryString);
+				break;
+
+			case T_AlterFunctionStmt:	/* ALTER FUNCTION */
+				AlterFunction((AlterFunctionStmt *) parsetree);
+				break;
+
+			case T_RuleStmt:	/* CREATE RULE */
+				DefineRule((RuleStmt *) parsetree, queryString);
+				break;
+
+			case T_CreateSeqStmt:
+				DefineSequence((CreateSeqStmt *) parsetree);
+				break;
+
+			case T_AlterSeqStmt:
+				AlterSequence((AlterSeqStmt *) parsetree);
+				break;
+
+			case T_CreateTableAsStmt:
+				ExecCreateTableAs((CreateTableAsStmt *) parsetree,
+								  queryString, params, completionTag);
+				break;
+
+			case T_RefreshMatViewStmt:
+				ExecRefreshMatView((RefreshMatViewStmt *) parsetree,
+								   queryString, params, completionTag);
+				break;
+
+			case T_CreateTrigStmt:
+				(void) CreateTrigger((CreateTrigStmt *) parsetree, queryString,
+									 InvalidOid, InvalidOid, false);
+				break;
+
+			case T_CreatePLangStmt:
+				CreateProceduralLanguage((CreatePLangStmt *) parsetree);
+				break;
+
+			case T_CreateDomainStmt:
+				DefineDomain((CreateDomainStmt *) parsetree);
+				break;
+
+			case T_CreateConversionStmt:
+				CreateConversionCommand((CreateConversionStmt *) parsetree);
+				break;
+
+			case T_CreateCastStmt:
+				CreateCast((CreateCastStmt *) parsetree);
+				break;
+
+			case T_CreateOpClassStmt:
+				DefineOpClass((CreateOpClassStmt *) parsetree);
+				break;
+
+			case T_CreateOpFamilyStmt:
+				DefineOpFamily((CreateOpFamilyStmt *) parsetree);
+				break;
+
+			case T_AlterOpFamilyStmt:
+				AlterOpFamily((AlterOpFamilyStmt *) parsetree);
+				break;
+
+			case T_AlterTSDictionaryStmt:
+				AlterTSDictionary((AlterTSDictionaryStmt *) parsetree);
+				break;
+
+			case T_AlterTSConfigurationStmt:
+				AlterTSConfiguration((AlterTSConfigurationStmt *) parsetree);
+				break;
+
+			case T_DropStmt:
+				ExecDropStmt((DropStmt *) parsetree, isTopLevel);
+				break;
+
+			case T_RenameStmt:
+				ExecRenameStmt((RenameStmt *) parsetree);
+				break;
+
+			case T_AlterObjectSchemaStmt:
+				ExecAlterObjectSchemaStmt((AlterObjectSchemaStmt *) parsetree);
+				break;
+
+			case T_AlterOwnerStmt:
+				ExecAlterOwnerStmt((AlterOwnerStmt *) parsetree);
+				break;
+
+			case T_DropOwnedStmt:
+				DropOwnedObjects((DropOwnedStmt *) parsetree);
+				break;
+
+			case T_AlterDefaultPrivilegesStmt:
+				ExecAlterDefaultPrivilegesStmt((AlterDefaultPrivilegesStmt *) parsetree);
+				break;
+
+			default:
+				elog(ERROR, "unrecognized node type: %d",
+					 (int) nodeTag(parsetree));
+				break;
+		}
+
+		if (isCompleteQuery)
+		{
+			EventTriggerSQLDrop(parsetree);
+			EventTriggerDDLCommandEnd(parsetree);
+		}
+	}
+	PG_CATCH();
+	{
+		if (needCleanup)
+			EventTriggerEndCompleteQuery();
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	if (needCleanup)
+		EventTriggerEndCompleteQuery();
+}
+
+/*
+ * Dispatch function for DropStmt
+ */
+static void
+ExecDropStmt(DropStmt *stmt, bool isTopLevel)
+{
+	switch (stmt->removeType)
+	{
+		case OBJECT_INDEX:
+			if (stmt->concurrent)
+				PreventTransactionChain(isTopLevel,
+										"DROP INDEX CONCURRENTLY");
+			/* fall through */
+
+		case OBJECT_TABLE:
+		case OBJECT_SEQUENCE:
+		case OBJECT_VIEW:
+		case OBJECT_MATVIEW:
+		case OBJECT_FOREIGN_TABLE:
+			RemoveRelations(stmt);
+			break;
+		default:
+			RemoveObjects(stmt);
+			break;
+	}
+}
+
 
 /*
  * UtilityReturnsTuples
@@ -2449,7 +2392,7 @@ CreateCommandTag(Node *parsetree)
 									tag = "SELECT FOR UPDATE";
 									break;
 								default:
-									tag =  "???";
+									tag = "???";
 									break;
 							}
 						}
