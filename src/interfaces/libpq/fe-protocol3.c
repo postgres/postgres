@@ -1466,7 +1466,23 @@ getCopyDataMessage(PGconn *conn)
 				break;
 			case 'd':			/* Copy Data, pass it back to caller */
 				return msgLength;
+			case 'c':
+				/*
+				 * If this is a CopyDone message, exit COPY_OUT mode and let
+				 * caller read status with PQgetResult().  If we're in
+				 * COPY_BOTH mode, return to COPY_IN mode.
+				 */
+				if (conn->asyncStatus == PGASYNC_COPY_BOTH)
+					conn->asyncStatus = PGASYNC_COPY_IN;
+				else
+					conn->asyncStatus = PGASYNC_BUSY;
+				return -1;
 			default:			/* treat as end of copy */
+				/*
+				 * Any other message terminates either COPY_IN or COPY_BOTH
+				 * mode.
+				 */
+				conn->asyncStatus = PGASYNC_BUSY;
 				return -1;
 		}
 
@@ -1499,22 +1515,7 @@ pqGetCopyData3(PGconn *conn, char **buffer, int async)
 		 */
 		msgLength = getCopyDataMessage(conn);
 		if (msgLength < 0)
-		{
-			/*
-			 * On end-of-copy, exit COPY_OUT or COPY_BOTH mode and let caller
-			 * read status with PQgetResult().	The normal case is that it's
-			 * Copy Done, but we let parseInput read that.	If error, we
-			 * expect the state was already changed.
-			 */
-			if (msgLength == -1)
-			{
-				if (conn->asyncStatus == PGASYNC_COPY_BOTH)
-					conn->asyncStatus = PGASYNC_COPY_IN;
-				else
-					conn->asyncStatus = PGASYNC_BUSY;
-			}
 			return msgLength;	/* end-of-copy or error */
-		}
 		if (msgLength == 0)
 		{
 			/* Don't block if async read requested */

@@ -1031,8 +1031,13 @@
     goes into copy-in mode, and the server may not send any more CopyData
     messages. After both sides have sent a CopyDone message, the copy mode
     is terminated, and the backend reverts to the command-processing mode.
-    See <xref linkend="protocol-replication"> for more information on the
-    subprotocol transmitted over copy-both mode.
+    In the event of a backend-detected error during copy-both mode,
+    the backend will issue an ErrorResponse message, discard frontend messages
+    until a Sync message is received, and then issue ReadyForQuery and return
+    to normal processing.  The frontend should treat receipt of ErrorResponse
+    as terminating the copy in both directions; no CopyDone should be sent
+    in this case.  See <xref linkend="protocol-replication"> for more
+    information on the subprotocol transmitted over copy-both mode.
    </para>
 
    <para>

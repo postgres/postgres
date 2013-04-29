@@ -32,10 +32,10 @@
 static int	walfile = -1;
 static char	current_walfile_name[MAXPGPATH] = "";
 
-static bool HandleCopyStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
-				 char *basedir, stream_stop_callback stream_stop,
-				 int standby_message_timeout, char *partial_suffix,
-				 XLogRecPtr *stoppos);
+static PGresult *HandleCopyStream(PGconn *conn, XLogRecPtr startpos,
+				 uint32 timeline, char *basedir,
+				 stream_stop_callback stream_stop, int standby_message_timeout,
+				 char *partial_suffix, XLogRecPtr *stoppos);
 
 /*
  * Open a new WAL file in the specified directory.
@@ -615,9 +615,10 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 		PQclear(res);
 
 		/* Stream the WAL */
-		if (!HandleCopyStream(conn, startpos, timeline, basedir, stream_stop,
-							  standby_message_timeout, partial_suffix,
-							  &stoppos))
+		res = HandleCopyStream(conn, startpos, timeline, basedir, stream_stop,
+							   standby_message_timeout, partial_suffix,
+							   &stoppos);
+		if (res == NULL)
 			goto error;
 
 		/*
@@ -630,7 +631,6 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 		 * restart streaming from the next timeline.
 		 */
 
-		res = PQgetResult(conn);
 		if (PQresultStatus(res) == PGRES_TUPLES_OK)
 		{
 			/*
@@ -708,10 +708,11 @@ error:
  * The main loop of ReceiveXLogStream. Handles the COPY stream after
  * initiating streaming with the START_STREAMING command.
  *
- * If the COPY ends normally, returns true and sets *stoppos to the last
- * byte written. On error, returns false.
+ * If the COPY ends (not necessarily successfully) due a message from the
+ * server, returns a PGresult and sets sets *stoppos to the last byte written.
+ * On any other sort of error, returns NULL.
  */
-static bool
+static PGresult *
 HandleCopyStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 				 char *basedir, stream_stop_callback stream_stop,
 				 int standby_message_timeout, char *partial_suffix,
@@ -832,9 +833,12 @@ HandleCopyStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 		}
 		if (r == -1)
 		{
+			PGresult   *res = PQgetResult(conn);
+
 			/*
-			 * The server closed its end of the copy stream. Close ours
-			 * if we haven't done so already, and exit.
+			 * The server closed its end of the copy stream.  If we haven't
+			 * closed ours already, we need to do so now, unless the server
+			 * threw an error, in which case we don't.
 			 */
 			if (still_sending)
 			{
@@ -843,18 +847,23 @@ HandleCopyStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 					/* Error message written in close_walfile() */
 					goto error;
 				}
-				if (PQputCopyEnd(conn, NULL) <= 0 || PQflush(conn))
+				if (PQresultStatus(res) == PGRES_COPY_IN)
 				{
-					fprintf(stderr, _("%s: could not send copy-end packet: %s"),
-							progname, PQerrorMessage(conn));
-					goto error;
+					if (PQputCopyEnd(conn, NULL) <= 0 || PQflush(conn))
+					{
+						fprintf(stderr,
+								_("%s: could not send copy-end packet: %s"),
+								progname, PQerrorMessage(conn));
+						goto error;
+					}
+					res = PQgetResult(conn);
 				}
 				still_sending = false;
 			}
 			if (copybuf != NULL)
 				PQfreemem(copybuf);
 			*stoppos = blockpos;
-			return true;
+			return res;
 		}
 		if (r == -2)
 		{
@@ -1030,5 +1039,5 @@ HandleCopyStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 error:
 	if (copybuf != NULL)
 		PQfreemem(copybuf);
-	return false;
+	return NULL;
 }
