@@ -16,6 +16,7 @@
 
 #include "access/htup_details.h"
 #include "access/xlog.h"
+#include "storage/checksum.h"
 
 bool ignore_checksum_failure = false;
 
@@ -948,33 +949,30 @@ PageSetChecksumInplace(Page page, BlockNumber blkno)
 static uint16
 PageCalcChecksum16(Page page, BlockNumber blkno)
 {
-	pg_crc32    		crc;
-	PageHeader	p = (PageHeader) page;
+	PageHeader	phdr   = (PageHeader) page;
+	uint16		save_checksum;
+	uint32		checksum;
 
 	/* only calculate the checksum for properly-initialized pages */
 	Assert(!PageIsNew(page));
 
-	INIT_CRC32(crc);
+	/*
+	 * Save pd_checksum and set it to zero, so that the checksum calculation
+	 * isn't affected by the checksum stored on the page. We do this to
+	 * allow optimization of the checksum calculation on the whole block
+	 * in one go.
+	 */
+	save_checksum = phdr->pd_checksum;
+	phdr->pd_checksum = 0;
+	checksum = checksum_block(page, BLCKSZ);
+	phdr->pd_checksum = save_checksum;
+
+	/* mix in the block number to detect transposed pages */
+	checksum ^= blkno;
 
 	/*
-	 * Initialize the checksum calculation with the block number. This helps
-	 * catch corruption from whole blocks being transposed with other whole
-	 * blocks.
+	 * Reduce to a uint16 (to fit in the pd_checksum field) with an offset of
+	 * one. That avoids checksums of zero, which seems like a good idea.
 	 */
-	COMP_CRC32(crc, &blkno, sizeof(blkno));
-
-	/*
-	 * Now add in the LSN, which is always the first field on the page.
-	 */
-	COMP_CRC32(crc, page, sizeof(p->pd_lsn));
-
-	/*
-	 * Now add the rest of the page, skipping the pd_checksum field.
-	 */
-	COMP_CRC32(crc, page + sizeof(p->pd_lsn) + sizeof(p->pd_checksum),
-				  BLCKSZ - sizeof(p->pd_lsn) - sizeof(p->pd_checksum));
-
-	FIN_CRC32(crc);
-
-	return (uint16) crc;
+	return (checksum % 65535) + 1;
 }
