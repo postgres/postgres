@@ -154,7 +154,6 @@ typedef enum
 	PATHKEYS_DIFFERENT			/* neither pathkey includes the other */
 } PathKeysComparison;
 
-extern List *canonicalize_pathkeys(PlannerInfo *root, List *pathkeys);
 extern PathKeysComparison compare_pathkeys(List *keys1, List *keys2);
 extern bool pathkeys_contained_in(List *keys1, List *keys2);
 extern Path *get_cheapest_path_for_pathkeys(List *paths, List *pathkeys,
@@ -174,8 +173,7 @@ extern List *build_join_pathkeys(PlannerInfo *root,
 					List *outer_pathkeys);
 extern List *make_pathkeys_for_sortclauses(PlannerInfo *root,
 							  List *sortclauses,
-							  List *tlist,
-							  bool canonicalize);
+							  List *tlist);
 extern void initialize_mergeclause_eclasses(PlannerInfo *root,
 								RestrictInfo *restrictinfo);
 extern void update_mergeclause_eclasses(PlannerInfo *root,

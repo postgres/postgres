@@ -728,22 +728,8 @@ _equalFromExpr(const FromExpr *a, const FromExpr *b)
 static bool
 _equalPathKey(const PathKey *a, const PathKey *b)
 {
-	/*
-	 * This is normally used on non-canonicalized PathKeys, so must chase up
-	 * to the topmost merged EquivalenceClass and see if those are the same
-	 * (by pointer equality).
-	 */
-	EquivalenceClass *a_eclass;
-	EquivalenceClass *b_eclass;
-
-	a_eclass = a->pk_eclass;
-	while (a_eclass->ec_merged)
-		a_eclass = a_eclass->ec_merged;
-	b_eclass = b->pk_eclass;
-	while (b_eclass->ec_merged)
-		b_eclass = b_eclass->ec_merged;
-	if (a_eclass != b_eclass)
-		return false;
+	/* We assume pointer equality is sufficient to compare the eclasses */
+	COMPARE_SCALAR_FIELD(pk_eclass);
 	COMPARE_SCALAR_FIELD(pk_opfamily);
 	COMPARE_SCALAR_FIELD(pk_strategy);
 	COMPARE_SCALAR_FIELD(pk_nulls_first);

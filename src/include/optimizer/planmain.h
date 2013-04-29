@@ -21,11 +21,15 @@
 #define DEFAULT_CURSOR_TUPLE_FRACTION 0.1
 extern double cursor_tuple_fraction;
 
+/* query_planner callback to compute query_pathkeys */
+typedef void (*query_pathkeys_callback) (PlannerInfo *root, void *extra);
+
 /*
  * prototypes for plan/planmain.c
  */
 extern void query_planner(PlannerInfo *root, List *tlist,
 			  double tuple_fraction, double limit_tuples,
+			  query_pathkeys_callback qp_callback, void *qp_extra,
 			  Path **cheapest_path, Path **sorted_path,
 			  double *num_groups);
 

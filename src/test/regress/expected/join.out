@@ -2826,6 +2826,35 @@ select b.unique1 from
         
 (5 rows)
 
+explain (costs off)
+select * from
+(
+  select unique1, q1, coalesce(unique1, -1) + q1 as fault
+  from int8_tbl left join tenk1 on (q2 = unique2)
+) ss
+where fault = 122
+order by fault;
+                           QUERY PLAN                            
+-----------------------------------------------------------------
+ Nested Loop Left Join
+   Filter: ((COALESCE(tenk1.unique1, (-1)) + int8_tbl.q1) = 122)
+   ->  Seq Scan on int8_tbl
+   ->  Index Scan using tenk1_unique2 on tenk1
+         Index Cond: (int8_tbl.q2 = unique2)
+(5 rows)
+
+select * from
+(
+  select unique1, q1, coalesce(unique1, -1) + q1 as fault
+  from int8_tbl left join tenk1 on (q2 = unique2)
+) ss
+where fault = 122
+order by fault;
+ unique1 | q1  | fault 
+---------+-----+-------
+         | 123 |   122
+(1 row)
+
 --
 -- test handling of potential equivalence clauses above outer joins
 --

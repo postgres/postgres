@@ -28,8 +28,6 @@
 #include "utils/lsyscache.h"
 
 
-static PathKey *makePathKey(EquivalenceClass *eclass, Oid opfamily,
-			int strategy, bool nulls_first);
 static PathKey *make_canonical_pathkey(PlannerInfo *root,
 					   EquivalenceClass *eclass, Oid opfamily,
 					   int strategy, bool nulls_first);
@@ -42,34 +40,15 @@ static bool right_merge_direction(PlannerInfo *root, PathKey *pathkey);
  ****************************************************************************/
 
 /*
- * makePathKey
- *		create a PathKey node
- *
- * This does not promise to create a canonical PathKey, it's merely a
- * convenience routine to build the specified node.
- */
-static PathKey *
-makePathKey(EquivalenceClass *eclass, Oid opfamily,
-			int strategy, bool nulls_first)
-{
-	PathKey    *pk = makeNode(PathKey);
-
-	pk->pk_eclass = eclass;
-	pk->pk_opfamily = opfamily;
-	pk->pk_strategy = strategy;
-	pk->pk_nulls_first = nulls_first;
-
-	return pk;
-}
-
-/*
  * make_canonical_pathkey
  *	  Given the parameters for a PathKey, find any pre-existing matching
  *	  pathkey in the query's list of "canonical" pathkeys.  Make a new
  *	  entry if there's not one already.
  *
  * Note that this function must not be used until after we have completed
- * merging EquivalenceClasses.
+ * merging EquivalenceClasses.	(We don't try to enforce that here; instead,
+ * equivclass.c will complain if a merge occurs after root->canon_pathkeys
+ * has become nonempty.)
  */
 static PathKey *
 make_canonical_pathkey(PlannerInfo *root,
@@ -100,7 +79,12 @@ make_canonical_pathkey(PlannerInfo *root,
 	 */
 	oldcontext = MemoryContextSwitchTo(root->planner_cxt);
 
-	pk = makePathKey(eclass, opfamily, strategy, nulls_first);
+	pk = makeNode(PathKey);
+	pk->pk_eclass = eclass;
+	pk->pk_opfamily = opfamily;
+	pk->pk_strategy = strategy;
+	pk->pk_nulls_first = nulls_first;
+
 	root->canon_pathkeys = lappend(root->canon_pathkeys, pk);
 
 	MemoryContextSwitchTo(oldcontext);
@@ -112,8 +96,7 @@ make_canonical_pathkey(PlannerInfo *root,
  * pathkey_is_redundant
  *	   Is a pathkey redundant with one already in the given list?
  *
- * Both the given pathkey and the list members must be canonical for this
- * to work properly.  We detect two cases:
+ * We detect two cases:
  *
  * 1. If the new pathkey's equivalence class contains a constant, and isn't
  * below an outer join, then we can disregard it as a sort key.  An example:
@@ -135,6 +118,12 @@ make_canonical_pathkey(PlannerInfo *root,
  * Note in particular that we need not compare opfamily (all the opfamilies
  * of the EC have the same notion of equality) nor sort direction.
  *
+ * Both the given pathkey and the list members must be canonical for this
+ * to work properly, but that's okay since we no longer ever construct any
+ * non-canonical pathkeys.	(Note: the notion of a pathkey *list* being
+ * canonical includes the additional requirement of no redundant entries,
+ * which is exactly what we are checking for here.)
+ *
  * Because the equivclass.c machinery forms only one copy of any EC per query,
  * pointer comparison is enough to decide whether canonical ECs are the same.
  */
@@ -143,9 +132,6 @@ pathkey_is_redundant(PathKey *new_pathkey, List *pathkeys)
 {
 	EquivalenceClass *new_ec = new_pathkey->pk_eclass;
 	ListCell   *lc;
-
-	/* Assert we've been given canonical pathkeys */
-	Assert(!new_ec->ec_merged);
 
 	/* Check for EC containing a constant --- unconditionally redundant */
 	if (EC_MUST_BE_REDUNDANT(new_ec))
@@ -156,9 +142,6 @@ pathkey_is_redundant(PathKey *new_pathkey, List *pathkeys)
 	{
 		PathKey    *old_pathkey = (PathKey *) lfirst(lc);
 
-		/* Assert we've been given canonical pathkeys */
-		Assert(!old_pathkey->pk_eclass->ec_merged);
-
 		if (new_ec == old_pathkey->pk_eclass)
 			return true;
 	}
@@ -167,56 +150,9 @@ pathkey_is_redundant(PathKey *new_pathkey, List *pathkeys)
 }
 
 /*
- * canonicalize_pathkeys
- *	   Convert a not-necessarily-canonical pathkeys list to canonical form.
- *
- * Note that this function must not be used until after we have completed
- * merging EquivalenceClasses.
- */
-List *
-canonicalize_pathkeys(PlannerInfo *root, List *pathkeys)
-{
-	List	   *new_pathkeys = NIL;
-	ListCell   *l;
-
-	foreach(l, pathkeys)
-	{
-		PathKey    *pathkey = (PathKey *) lfirst(l);
-		EquivalenceClass *eclass;
-		PathKey    *cpathkey;
-
-		/* Find the canonical (merged) EquivalenceClass */
-		eclass = pathkey->pk_eclass;
-		while (eclass->ec_merged)
-			eclass = eclass->ec_merged;
-
-		/*
-		 * If we can tell it's redundant just from the EC, skip.
-		 * pathkey_is_redundant would notice that, but we needn't even bother
-		 * constructing the node...
-		 */
-		if (EC_MUST_BE_REDUNDANT(eclass))
-			continue;
-
-		/* OK, build a canonicalized PathKey struct */
-		cpathkey = make_canonical_pathkey(root,
-										  eclass,
-										  pathkey->pk_opfamily,
-										  pathkey->pk_strategy,
-										  pathkey->pk_nulls_first);
-
-		/* Add to list unless redundant */
-		if (!pathkey_is_redundant(cpathkey, new_pathkeys))
-			new_pathkeys = lappend(new_pathkeys, cpathkey);
-	}
-	return new_pathkeys;
-}
-
-/*
  * make_pathkey_from_sortinfo
  *	  Given an expression and sort-order information, create a PathKey.
- *	  If canonicalize = true, the result is a "canonical" PathKey,
- *	  otherwise not.  (But note it might be redundant anyway.)
+ *	  The result is always a "canonical" PathKey, but it might be redundant.
  *
  * If the PathKey is being generated from a SortGroupClause, sortref should be
  * the SortGroupClause's SortGroupRef; otherwise zero.
@@ -229,9 +165,6 @@ canonicalize_pathkeys(PlannerInfo *root, List *pathkeys)
  * create_it is TRUE if we should create any missing EquivalenceClass
  * needed to represent the sort key.  If it's FALSE, we return NULL if the
  * sort key isn't already present in any EquivalenceClass.
- *
- * canonicalize should always be TRUE after EquivalenceClass merging has
- * been performed, but FALSE if we haven't done EquivalenceClass merging yet.
  */
 static PathKey *
 make_pathkey_from_sortinfo(PlannerInfo *root,
@@ -243,8 +176,7 @@ make_pathkey_from_sortinfo(PlannerInfo *root,
 						   bool nulls_first,
 						   Index sortref,
 						   Relids rel,
-						   bool create_it,
-						   bool canonicalize)
+						   bool create_it)
 {
 	int16		strategy;
 	Oid			equality_op;
@@ -281,11 +213,8 @@ make_pathkey_from_sortinfo(PlannerInfo *root,
 		return NULL;
 
 	/* And finally we can find or create a PathKey node */
-	if (canonicalize)
-		return make_canonical_pathkey(root, eclass, opfamily,
-									  strategy, nulls_first);
-	else
-		return makePathKey(eclass, opfamily, strategy, nulls_first);
+	return make_canonical_pathkey(root, eclass, opfamily,
+								  strategy, nulls_first);
 }
 
 /*
@@ -301,8 +230,7 @@ make_pathkey_from_sortop(PlannerInfo *root,
 						 Oid ordering_op,
 						 bool nulls_first,
 						 Index sortref,
-						 bool create_it,
-						 bool canonicalize)
+						 bool create_it)
 {
 	Oid			opfamily,
 				opcintype,
@@ -327,8 +255,7 @@ make_pathkey_from_sortop(PlannerInfo *root,
 									  nulls_first,
 									  sortref,
 									  NULL,
-									  create_it,
-									  canonicalize);
+									  create_it);
 }
 
 
@@ -341,9 +268,8 @@ make_pathkey_from_sortop(PlannerInfo *root,
  *	  Compare two pathkeys to see if they are equivalent, and if not whether
  *	  one is "better" than the other.
  *
- *	  This function may only be applied to canonicalized pathkey lists.
- *	  In the canonical representation, pathkeys can be checked for equality
- *	  by simple pointer comparison.
+ *	  We assume the pathkeys are canonical, and so they can be checked for
+ *	  equality by simple pointer comparison.
  */
 PathKeysComparison
 compare_pathkeys(List *keys1, List *keys2)
@@ -363,15 +289,6 @@ compare_pathkeys(List *keys1, List *keys2)
 	{
 		PathKey    *pathkey1 = (PathKey *) lfirst(key1);
 		PathKey    *pathkey2 = (PathKey *) lfirst(key2);
-
-		/*
-		 * XXX would like to check that we've been given canonicalized input,
-		 * but PlannerInfo not accessible here...
-		 */
-#ifdef NOT_USED
-		Assert(list_member_ptr(root->canon_pathkeys, pathkey1));
-		Assert(list_member_ptr(root->canon_pathkeys, pathkey2));
-#endif
 
 		if (pathkey1 != pathkey2)
 			return PATHKEYS_DIFFERENT;	/* no need to keep looking */
@@ -414,7 +331,7 @@ pathkeys_contained_in(List *keys1, List *keys2)
  *	  Return NULL if no such path.
  *
  * 'paths' is a list of possible paths that all generate the same relation
- * 'pathkeys' represents a required ordering (already canonicalized!)
+ * 'pathkeys' represents a required ordering (in canonical form!)
  * 'required_outer' denotes allowable outer relations for parameterized paths
  * 'cost_criterion' is STARTUP_COST or TOTAL_COST
  */
@@ -455,7 +372,7 @@ get_cheapest_path_for_pathkeys(List *paths, List *pathkeys,
  * parameter.
  *
  * 'paths' is a list of possible paths that all generate the same relation
- * 'pathkeys' represents a required ordering (already canonicalized!)
+ * 'pathkeys' represents a required ordering (in canonical form!)
  * 'required_outer' denotes allowable outer relations for parameterized paths
  * 'fraction' is the fraction of the total tuples expected to be retrieved
  */
@@ -554,8 +471,7 @@ build_index_pathkeys(PlannerInfo *root,
 											  nulls_first,
 											  0,
 											  index->rel->relids,
-											  false,
-											  true);
+											  false);
 
 		/*
 		 * If the sort key isn't already present in any EquivalenceClass, then
@@ -829,12 +745,8 @@ build_join_pathkeys(PlannerInfo *root,
  *		Generate a pathkeys list that represents the sort order specified
  *		by a list of SortGroupClauses
  *
- * If canonicalize is TRUE, the resulting PathKeys are all in canonical form;
- * otherwise not.  canonicalize should always be TRUE after EquivalenceClass
- * merging has been performed, but FALSE if we haven't done EquivalenceClass
- * merging yet.  (We provide this option because grouping_planner() needs to
- * be able to represent requested pathkeys before the equivalence classes have
- * been created for the query.)
+ * The resulting PathKeys are always in canonical form.  (Actually, there
+ * is no longer any code anywhere that creates non-canonical PathKeys.)
  *
  * 'sortclauses' is a list of SortGroupClause nodes
  * 'tlist' is the targetlist to find the referenced tlist entries in
@@ -842,8 +754,7 @@ build_join_pathkeys(PlannerInfo *root,
 List *
 make_pathkeys_for_sortclauses(PlannerInfo *root,
 							  List *sortclauses,
-							  List *tlist,
-							  bool canonicalize)
+							  List *tlist)
 {
 	List	   *pathkeys = NIL;
 	ListCell   *l;
@@ -861,16 +772,10 @@ make_pathkeys_for_sortclauses(PlannerInfo *root,
 										   sortcl->sortop,
 										   sortcl->nulls_first,
 										   sortcl->tleSortGroupRef,
-										   true,
-										   canonicalize);
+										   true);
 
 		/* Canonical form eliminates redundant ordering keys */
-		if (canonicalize)
-		{
-			if (!pathkey_is_redundant(pathkey, pathkeys))
-				pathkeys = lappend(pathkeys, pathkey);
-		}
-		else
+		if (!pathkey_is_redundant(pathkey, pathkeys))
 			pathkeys = lappend(pathkeys, pathkey);
 	}
 	return pathkeys;

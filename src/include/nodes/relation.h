@@ -206,7 +206,7 @@ typedef struct PlannerInfo
 	List	   *placeholder_list;		/* list of PlaceHolderInfos */
 
 	List	   *query_pathkeys; /* desired pathkeys for query_planner(), and
-								 * actual pathkeys afterwards */
+								 * actual pathkeys after planning */
 
 	List	   *group_pathkeys; /* groupClause pathkeys, if any */
 	List	   *window_pathkeys;	/* pathkeys of bottom window, if any */
