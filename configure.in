@@ -400,6 +400,11 @@ else
   fi
 fi
 
+# set CFLAGS_VECTOR from the environment, if available
+if test "$ac_env_CFLAGS_VECTOR_set" = set; then
+  CFLAGS_VECTOR=$ac_env_CFLAGS_VECTOR_value
+fi
+
 # Some versions of GCC support some additional useful warning flags.
 # Check whether they are supported, and add them to CFLAGS if so.
 # ICC pretends to be GCC but it's lying; it doesn't support these flags,
@@ -419,6 +424,9 @@ if test "$GCC" = yes -a "$ICC" = no; then
   PGAC_PROG_CC_CFLAGS_OPT([-fwrapv])
   # Disable FP optimizations that cause various errors on gcc 4.5+ or maybe 4.6+
   PGAC_PROG_CC_CFLAGS_OPT([-fexcess-precision=standard])
+  # Optimization flags for specific files that benefit from vectorization
+  PGAC_PROG_CC_VAR_OPT(CFLAGS_VECTOR, [-funroll-loops])
+  PGAC_PROG_CC_VAR_OPT(CFLAGS_VECTOR, [-ftree-vectorize])
 elif test "$ICC" = yes; then
   # Intel's compiler has a bug/misoptimization in checking for
   # division by NAN (NaN == 0), -mp1 fixes it, so add it to the CFLAGS.
@@ -433,6 +441,8 @@ elif test "$PORTNAME" = "hpux"; then
   # Fix that by using +Olibmerrno if the compiler recognizes it.
   PGAC_PROG_CC_CFLAGS_OPT([+Olibmerrno])
 fi
+
+AC_SUBST(CFLAGS_VECTOR, $CFLAGS_VECTOR)
 
 # supply -g if --enable-debug
 if test "$enable_debug" = yes && test "$ac_cv_prog_cc_g" = yes; then

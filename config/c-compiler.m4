@@ -242,6 +242,31 @@ undefine([Ac_cachevar])dnl
 
 
 
+# PGAC_PROG_CC_VAR_OPT
+# -----------------------
+# Given a variable name and a string, check if the compiler supports
+# the string as a command-line option. If it does, add the string to
+# the given variable.
+AC_DEFUN([PGAC_PROG_CC_VAR_OPT],
+[define([Ac_cachevar], [AS_TR_SH([pgac_cv_prog_cc_cflags_$2])])dnl
+AC_CACHE_CHECK([whether $CC supports $2], [Ac_cachevar],
+[pgac_save_CFLAGS=$CFLAGS
+CFLAGS="$pgac_save_CFLAGS $2"
+ac_save_c_werror_flag=$ac_c_werror_flag
+ac_c_werror_flag=yes
+_AC_COMPILE_IFELSE([AC_LANG_PROGRAM()],
+                   [Ac_cachevar=yes],
+                   [Ac_cachevar=no])
+ac_c_werror_flag=$ac_save_c_werror_flag
+CFLAGS="$pgac_save_CFLAGS"])
+if test x"$Ac_cachevar" = x"yes"; then
+  $1="${$1} $2"
+fi
+undefine([Ac_cachevar])dnl
+])# PGAC_PROG_CC_CFLAGS_OPT
+
+
+
 # PGAC_PROG_CC_LDFLAGS_OPT
 # ------------------------
 # Given a string, check if the compiler supports the string as a
