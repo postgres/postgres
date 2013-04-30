@@ -129,3 +129,10 @@ CREATE MATERIALIZED VIEW mv_test3 AS SELECT * FROM mv_test2 WHERE moo = 12345;
 SELECT pg_relation_is_scannable('mv_test3'::regclass);
 
 DROP VIEW v_test1 CASCADE;
+
+-- test a corner case for "with no data" versus a query which yields no rows
+CREATE MATERIALIZED VIEW matview_unit_false AS SELECT false WHERE false WITH NO DATA;
+SELECT * FROM matview_unit_false;
+REFRESH MATERIALIZED VIEW matview_unit_false;
+SELECT * FROM matview_unit_false;
+DROP MATERIALIZED VIEW matview_unit_false;
