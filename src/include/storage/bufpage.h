@@ -189,9 +189,12 @@ typedef PageHeaderData *PageHeader;
  * Release 8.3 uses 4; it changed the HeapTupleHeader layout again, and
  *		added the pd_flags field (by stealing some bits from pd_tli),
  *		as well as adding the pd_prune_xid field (which enlarges the header).
+ *
+ * As of Release 9.3, the checksum version must also be considered when
+ * handling pages.
  */
 #define PG_PAGE_LAYOUT_VERSION		4
-
+#define PG_DATA_CHECKSUM_VERSION	1
 
 /* ----------------------------------------------------------------
  *						page support macros

@@ -60,7 +60,7 @@
 #include "utils/timestamp.h"
 #include "pg_trace.h"
 
-extern bool bootstrap_data_checksums;
+extern uint32 bootstrap_data_checksum_version;
 
 /* File path names (all relative to $PGDATA) */
 #define RECOVERY_COMMAND_FILE	"recovery.conf"
@@ -3797,7 +3797,7 @@ bool
 DataChecksumsEnabled(void)
 {
 	Assert(ControlFile != NULL);
-	return ControlFile->data_checksums;
+	return (ControlFile->data_checksum_version > 0);
 }
 
 /*
@@ -4126,7 +4126,7 @@ BootStrapXLOG(void)
 	ControlFile->max_prepared_xacts = max_prepared_xacts;
 	ControlFile->max_locks_per_xact = max_locks_per_xact;
 	ControlFile->wal_level = wal_level;
-	ControlFile->data_checksums = bootstrap_data_checksums;
+	ControlFile->data_checksum_version = bootstrap_data_checksum_version;
 
 	/* some additional ControlFile fields are set in WriteControlFile() */
 

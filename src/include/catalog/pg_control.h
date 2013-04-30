@@ -213,8 +213,8 @@ typedef struct ControlFileData
 	bool		float4ByVal;	/* float4 pass-by-value? */
 	bool		float8ByVal;	/* float8, int8, etc pass-by-value? */
 
-	/* Are data pages protected by checksums? */
-	bool		data_checksums;
+	/* Are data pages protected by checksums? Zero if no checksum version */
+	uint32		data_checksum_version;
 
 	/* CRC of all above ... MUST BE LAST! */
 	pg_crc32	crc;

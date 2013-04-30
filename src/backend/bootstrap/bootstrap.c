@@ -34,6 +34,7 @@
 #include "postmaster/walwriter.h"
 #include "replication/walreceiver.h"
 #include "storage/bufmgr.h"
+#include "storage/bufpage.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
@@ -48,7 +49,7 @@
 extern int	optind;
 extern char *optarg;
 
-bool bootstrap_data_checksums = false;
+uint32 bootstrap_data_checksum_version = 0;  /* No checksum */
 
 
 #define ALLOC(t, c)		((t *) calloc((unsigned)(c), sizeof(t)))
@@ -262,7 +263,7 @@ AuxiliaryProcessMain(int argc, char *argv[])
 				SetConfigOption("fsync", "false", PGC_POSTMASTER, PGC_S_ARGV);
 				break;
 			case 'k':
-				bootstrap_data_checksums = true;
+				bootstrap_data_checksum_version = PG_DATA_CHECKSUM_VERSION;
 				break;
 			case 'r':
 				strlcpy(OutputFileName, optarg, MAXPGPATH);
