@@ -894,26 +894,25 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		freespace = PageGetHeapFreeSpace(page);
 
 		/* mark page all-visible, if appropriate */
-		if (all_visible)
+		if (all_visible && !all_visible_according_to_vm)
 		{
-			if (!PageIsAllVisible(page))
-			{
-				PageSetAllVisible(page);
-				MarkBufferDirty(buf);
-				visibilitymap_set(onerel, blkno, buf, InvalidXLogRecPtr,
-								  vmbuffer, visibility_cutoff_xid);
-			}
-			else if (!all_visible_according_to_vm)
-			{
-				/*
-				 * It should never be the case that the visibility map page is
-				 * set while the page-level bit is clear, but the reverse is
-				 * allowed.  Set the visibility map bit as well so that we get
-				 * back in sync.
-				 */
-				visibilitymap_set(onerel, blkno, buf, InvalidXLogRecPtr,
-								  vmbuffer, visibility_cutoff_xid);
-			}
+			/*
+			 * It should never be the case that the visibility map page is set
+			 * while the page-level bit is clear, but the reverse is allowed
+			 * (if checksums are not enabled).  Regardless, set the both bits
+			 * so that we get back in sync.
+			 *
+			 * NB: If the heap page is all-visible but the VM bit is not set,
+			 * we don't need to dirty the heap page.  However, if checksums are
+			 * enabled, we do need to make sure that the heap page is dirtied
+			 * before passing it to visibilitymap_set(), because it may be
+			 * logged.  Given that this situation should only happen in rare
+			 * cases after a crash, it is not worth optimizing.
+			 */
+			PageSetAllVisible(page);
+			MarkBufferDirty(buf);
+			visibilitymap_set(onerel, blkno, buf, InvalidXLogRecPtr,
+							  vmbuffer, visibility_cutoff_xid);
 		}
 
 		/*
@@ -1139,6 +1138,14 @@ lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 	PageRepairFragmentation(page);
 
 	/*
+	 * Mark buffer dirty before we write WAL.
+	 *
+	 * If checksums are enabled, visibilitymap_set() may log the heap page, so
+	 * we must mark heap buffer dirty before calling visibilitymap_set().
+	 */
+	MarkBufferDirty(buffer);
+
+	/*
 	 * Now that we have removed the dead tuples from the page, once again check
 	 * if the page has become all-visible.
 	 */
@@ -1150,8 +1157,6 @@ lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 		visibilitymap_set(onerel, blkno, buffer, InvalidXLogRecPtr, *vmbuffer,
 				visibility_cutoff_xid);
 	}
-
-	MarkBufferDirty(buffer);
 
 	/* XLOG stuff */
 	if (RelationNeedsWAL(onerel))
