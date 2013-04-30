@@ -12,8 +12,6 @@
 set -e
 
 : ${MAKE=make}
-: ${PGPORT=50432}
-export PGPORT
 
 testhost=`uname -s`
 
