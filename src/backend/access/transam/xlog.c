@@ -8261,10 +8261,18 @@ CreateRestartPoint(int flags)
 		PrevLogSeg(_logId, _logSeg);
 
 		/*
-		 * Update ThisTimeLineID to the recovery target timeline, so that
-		 * we install any recycled segments on the correct timeline.
+		 * Update ThisTimeLineID to the timeline we're currently replaying,
+		 * so that we install any recycled segments on that timeline.
+		 *
+		 * There is no guarantee that the WAL segments will be useful on the
+		 * current timeline; if recovery proceeds to a new timeline right
+		 * after this, the pre-allocated WAL segments on this timeline will
+		 * not be used, and will go wasted until recycled on the next
+		 * restartpoint. We'll live with that.
 		 */
-		ThisTimeLineID = GetRecoveryTargetTLI();
+		SpinLockAcquire(&xlogctl->info_lck);
+		ThisTimeLineID = XLogCtl->lastCheckPoint.ThisTimeLineID;
+		SpinLockRelease(&xlogctl->info_lck);
 
 		RemoveOldXlogFiles(_logId, _logSeg, endptr);
 
