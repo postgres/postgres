@@ -418,15 +418,3 @@ NOTICE:  drop cascades to 3 other objects
 DETAIL:  drop cascades to view v_test2
 drop cascades to materialized view mv_test2
 drop cascades to materialized view mv_test3
--- test a corner case for "with no data" versus a query which yields no rows
-CREATE MATERIALIZED VIEW matview_unit_false AS SELECT false WHERE false WITH NO DATA;
-SELECT * FROM matview_unit_false;
-ERROR:  materialized view "matview_unit_false" has not been populated
-HINT:  Use the REFRESH MATERIALIZED VIEW command.
-REFRESH MATERIALIZED VIEW matview_unit_false;
-SELECT * FROM matview_unit_false;
- bool 
-------
-(0 rows)
-
-DROP MATERIALIZED VIEW matview_unit_false;

@@ -678,36 +678,62 @@ static Plan *
 create_append_plan(PlannerInfo *root, AppendPath *best_path)
 {
 	Append	   *plan;
-	List	   *tlist = build_relation_tlist(best_path->path.parent);
+	RelOptInfo *rel = best_path->path.parent;
+	List	   *tlist = build_relation_tlist(rel);
 	List	   *subplans = NIL;
 	ListCell   *subpaths;
 
 	/*
-	 * It is possible for the subplans list to contain only one entry, or even
-	 * no entries.	Handle these cases specially.
+	 * The subpaths list could be empty, if every child was proven empty by
+	 * constraint exclusion.  In that case generate a dummy plan that returns
+	 * no rows.
 	 *
-	 * XXX ideally, if there's just one entry, we'd not bother to generate an
-	 * Append node but just return the single child.  At the moment this does
-	 * not work because the varno of the child scan plan won't match the
-	 * parent-rel Vars it'll be asked to emit.
+	 * Note that an AppendPath with no members is also generated in certain
+	 * cases where there was no appending construct at all, but we know the
+	 * relation is empty (see set_dummy_rel_pathlist).
 	 */
 	if (best_path->subpaths == NIL)
 	{
-		/* Generate a Result plan with constant-FALSE gating qual */
-		return (Plan *) make_result(root,
-									tlist,
-									(Node *) list_make1(makeBoolConst(false,
-																	  false)),
-									NULL);
+		/*
+		 * If this is a dummy path for a subquery, we have to wrap the
+		 * subquery's original plan in a SubqueryScan so that setrefs.c will
+		 * do the right things.  (In particular, it must pull up the
+		 * subquery's rangetable so that the executor will apply permissions
+		 * checks to those rels at runtime.)
+		 */
+		if (rel->rtekind == RTE_SUBQUERY)
+		{
+			Assert(is_dummy_plan(rel->subplan));
+			return (Plan *) make_subqueryscan(tlist,
+											  NIL,
+											  rel->relid,
+											  rel->subplan);
+		}
+		else
+		{
+			/* Generate a Result plan with constant-FALSE gating qual */
+			return (Plan *) make_result(root,
+										tlist,
+									 (Node *) list_make1(makeBoolConst(false,
+																	 false)),
+										NULL);
+		}
 	}
 
-	/* Normal case with multiple subpaths */
+	/* Build the plan for each child */
 	foreach(subpaths, best_path->subpaths)
 	{
 		Path	   *subpath = (Path *) lfirst(subpaths);
 
 		subplans = lappend(subplans, create_plan_recurse(root, subpath));
 	}
+
+	/*
+	 * XXX ideally, if there's just one child, we'd not bother to generate an
+	 * Append node but just return the single child.  At the moment this does
+	 * not work because the varno of the child scan plan won't match the
+	 * parent-rel Vars it'll be asked to emit.
+	 */
 
 	plan = make_append(subplans, tlist);
 
