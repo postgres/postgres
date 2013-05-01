@@ -721,7 +721,7 @@ json_lex_string(JsonLexContext *lex)
 					unicode_to_utf8(ch, (unsigned char *) utf8str);
 					utf8len = pg_utf_mblen((unsigned char *) utf8str);
 					utf8str[utf8len] = '\0';
-					converted = pg_any_to_server(utf8str, 1, PG_UTF8);
+					converted = pg_any_to_server(utf8str, utf8len, PG_UTF8);
 					appendStringInfoString(lex->strval, converted);
 					if (converted != utf8str)
 						pfree(converted);
