@@ -224,7 +224,7 @@
 
       <listitem>
        <para>
-        Split pgstat file in per-database and global files (Tomas Vondra)
+        Split pgstat file into per-database and global files (Tomas Vondra)
        </para>
 
        <para>
@@ -1520,13 +1520,19 @@
 
       <listitem>
        <para>
+        Allow write-enabled foreign data wrappers to support writes
+        (KaiGai Kohei)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Add a Postgres foreign data wrapper contrib module (Shigeru
-        Hanada, KaiGai Kohei)
+        Hanada)
        </para>
 
        <para>
-        This foreign data wrapper allows writes;  potentially other
-        foreign data wrappers can now support writes.
+        This foreign data wrapper allows writes.
        </para>
       </listitem>
 
