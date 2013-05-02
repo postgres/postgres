@@ -418,3 +418,23 @@ NOTICE:  drop cascades to 3 other objects
 DETAIL:  drop cascades to view v_test2
 drop cascades to materialized view mv_test2
 drop cascades to materialized view mv_test3
+-- test that vacuum does not make empty matview look unpopulated
+CREATE TABLE hoge (i int);
+INSERT INTO hoge VALUES (generate_series(1,100000));
+CREATE MATERIALIZED VIEW hogeview AS SELECT * FROM hoge WHERE i % 2 = 0;
+CREATE INDEX hogeviewidx ON hogeview (i);
+DELETE FROM hoge;
+REFRESH MATERIALIZED VIEW hogeview;
+SELECT * FROM hogeview WHERE i < 10;
+ i 
+---
+(0 rows)
+
+VACUUM ANALYZE;
+SELECT * FROM hogeview WHERE i < 10;
+ i 
+---
+(0 rows)
+
+DROP TABLE hoge CASCADE;
+NOTICE:  drop cascades to materialized view hogeview

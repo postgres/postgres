@@ -129,3 +129,15 @@ CREATE MATERIALIZED VIEW mv_test3 AS SELECT * FROM mv_test2 WHERE moo = 12345;
 SELECT pg_relation_is_scannable('mv_test3'::regclass);
 
 DROP VIEW v_test1 CASCADE;
+
+-- test that vacuum does not make empty matview look unpopulated
+CREATE TABLE hoge (i int);
+INSERT INTO hoge VALUES (generate_series(1,100000));
+CREATE MATERIALIZED VIEW hogeview AS SELECT * FROM hoge WHERE i % 2 = 0;
+CREATE INDEX hogeviewidx ON hogeview (i);
+DELETE FROM hoge;
+REFRESH MATERIALIZED VIEW hogeview;
+SELECT * FROM hogeview WHERE i < 10;
+VACUUM ANALYZE;
+SELECT * FROM hogeview WHERE i < 10;
+DROP TABLE hoge CASCADE;
