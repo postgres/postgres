@@ -3970,7 +3970,7 @@ ReadRecord(XLogRecPtr *RecPtr, int emode, bool fetching_ckpt)
 		if (XLOG_BLCKSZ - (RecPtr->xrecoff % XLOG_BLCKSZ) < SizeOfXLogRecord)
 			NextLogPage(*RecPtr);
 
-		/* Check for crossing of xlog segment boundary */
+		/* Check for crossing of xlog logid boundary */
 		if (RecPtr->xrecoff >= XLogFileSize)
 		{
 			(RecPtr->xlogid)++;
