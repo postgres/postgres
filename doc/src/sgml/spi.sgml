@@ -781,8 +781,8 @@ int SPI_execute_with_args(const char *<parameter>command</parameter>,
     <term><literal>Oid * <parameter>argtypes</parameter></literal></term>
     <listitem>
      <para>
-      an array containing the <acronym>OID</acronym>s of
-      the data types of the parameters
+      an array of length <parameter>nargs</parameter>, containing the
+      <acronym>OID</acronym>s of the data types of the parameters
      </para>
     </listitem>
    </varlistentry>
@@ -791,7 +791,8 @@ int SPI_execute_with_args(const char *<parameter>command</parameter>,
     <term><literal>Datum * <parameter>values</parameter></literal></term>
     <listitem>
      <para>
-      an array of actual parameter values
+      an array of length <parameter>nargs</parameter>, containing the actual
+      parameter values
      </para>
     </listitem>
    </varlistentry>
@@ -800,13 +801,20 @@ int SPI_execute_with_args(const char *<parameter>command</parameter>,
     <term><literal>const char * <parameter>nulls</parameter></literal></term>
     <listitem>
      <para>
-      an array describing which parameters are null
+      an array of length <parameter>nargs</parameter>, describing which
+      parameters are null
      </para>
 
      <para>
       If <parameter>nulls</parameter> is <symbol>NULL</symbol> then
-      <function>SPI_execute_with_args</function> assumes that no parameters are
-      null.
+      <function>SPI_execute_with_args</function> assumes that no parameters
+      are null.  Otherwise, each entry of the <parameter>nulls</parameter>
+      array should be <literal>'&nbsp;'</> if the corresponding parameter
+      value is non-null, or <literal>'n'</> if the corresponding parameter
+      value is null.  (In the latter case, the actual value in the
+      corresponding <parameter>values</parameter> entry doesn't matter.)  Note
+      that <parameter>nulls</parameter> is not a text string, just an array:
+      it does not need a <literal>'\0'</> terminator.
      </para>
     </listitem>
    </varlistentry>
@@ -1456,15 +1464,18 @@ int SPI_execute_plan(SPIPlanPtr <parameter>plan</parameter>, Datum * <parameter>
      <para>
       An array describing which parameters are null.  Must have same length as
       the statement's number of arguments.
-      <literal>n</literal> indicates a null value (entry in
-      <parameter>values</> will be ignored); a space indicates a
-      nonnull value (entry in <parameter>values</> is valid).
      </para>
 
      <para>
       If <parameter>nulls</parameter> is <symbol>NULL</symbol> then
-      <function>SPI_execute_plan</function> assumes that no parameters are
-      null.
+      <function>SPI_execute_plan</function> assumes that no parameters
+      are null.  Otherwise, each entry of the <parameter>nulls</parameter>
+      array should be <literal>'&nbsp;'</> if the corresponding parameter
+      value is non-null, or <literal>'n'</> if the corresponding parameter
+      value is null.  (In the latter case, the actual value in the
+      corresponding <parameter>values</parameter> entry doesn't matter.)  Note
+      that <parameter>nulls</parameter> is not a text string, just an array:
+      it does not need a <literal>'\0'</> terminator.
      </para>
     </listitem>
    </varlistentry>
@@ -1682,15 +1693,18 @@ int SPI_execp(SPIPlanPtr <parameter>plan</parameter>, Datum * <parameter>values<
      <para>
       An array describing which parameters are null.  Must have same length as
       the statement's number of arguments.
-      <literal>n</literal> indicates a null value (entry in
-      <parameter>values</> will be ignored); a space indicates a
-      nonnull value (entry in <parameter>values</> is valid).
      </para>
 
      <para>
       If <parameter>nulls</parameter> is <symbol>NULL</symbol> then
-      <function>SPI_execp</function> assumes that no parameters are
-      null.
+      <function>SPI_execp</function> assumes that no parameters
+      are null.  Otherwise, each entry of the <parameter>nulls</parameter>
+      array should be <literal>'&nbsp;'</> if the corresponding parameter
+      value is non-null, or <literal>'n'</> if the corresponding parameter
+      value is null.  (In the latter case, the actual value in the
+      corresponding <parameter>values</parameter> entry doesn't matter.)  Note
+      that <parameter>nulls</parameter> is not a text string, just an array:
+      it does not need a <literal>'\0'</> terminator.
      </para>
     </listitem>
    </varlistentry>
@@ -1811,15 +1825,18 @@ Portal SPI_cursor_open(const char * <parameter>name</parameter>, SPIPlanPtr <par
      <para>
       An array describing which parameters are null.  Must have same length as
       the statement's number of arguments.
-      <literal>n</literal> indicates a null value (entry in
-      <parameter>values</> will be ignored); a space indicates a
-      nonnull value (entry in <parameter>values</> is valid).
      </para>
 
      <para>
       If <parameter>nulls</parameter> is <symbol>NULL</symbol> then
-      <function>SPI_cursor_open</function> assumes that no parameters are
-      null.
+      <function>SPI_cursor_open</function> assumes that no parameters
+      are null.  Otherwise, each entry of the <parameter>nulls</parameter>
+      array should be <literal>'&nbsp;'</> if the corresponding parameter
+      value is non-null, or <literal>'n'</> if the corresponding parameter
+      value is null.  (In the latter case, the actual value in the
+      corresponding <parameter>values</parameter> entry doesn't matter.)  Note
+      that <parameter>nulls</parameter> is not a text string, just an array:
+      it does not need a <literal>'\0'</> terminator.
      </para>
     </listitem>
    </varlistentry>
@@ -1930,8 +1947,8 @@ Portal SPI_cursor_open_with_args(const char *<parameter>name</parameter>,
     <term><literal>Oid * <parameter>argtypes</parameter></literal></term>
     <listitem>
      <para>
-      an array containing the <acronym>OID</acronym>s of
-      the data types of the parameters
+      an array of length <parameter>nargs</parameter>, containing the
+      <acronym>OID</acronym>s of the data types of the parameters
      </para>
     </listitem>
    </varlistentry>
@@ -1940,7 +1957,8 @@ Portal SPI_cursor_open_with_args(const char *<parameter>name</parameter>,
     <term><literal>Datum * <parameter>values</parameter></literal></term>
     <listitem>
      <para>
-      an array of actual parameter values
+      an array of length <parameter>nargs</parameter>, containing the actual
+      parameter values
      </para>
     </listitem>
    </varlistentry>
@@ -1949,13 +1967,20 @@ Portal SPI_cursor_open_with_args(const char *<parameter>name</parameter>,
     <term><literal>const char * <parameter>nulls</parameter></literal></term>
     <listitem>
      <para>
-      an array describing which parameters are null
+      an array of length <parameter>nargs</parameter>, describing which
+      parameters are null
      </para>
 
      <para>
       If <parameter>nulls</parameter> is <symbol>NULL</symbol> then
-      <function>SPI_cursor_open_with_args</function> assumes that no
-      parameters are null.
+      <function>SPI_cursor_open_with_args</function> assumes that no parameters
+      are null.  Otherwise, each entry of the <parameter>nulls</parameter>
+      array should be <literal>'&nbsp;'</> if the corresponding parameter
+      value is non-null, or <literal>'n'</> if the corresponding parameter
+      value is null.  (In the latter case, the actual value in the
+      corresponding <parameter>values</parameter> entry doesn't matter.)  Note
+      that <parameter>nulls</parameter> is not a text string, just an array:
+      it does not need a <literal>'\0'</> terminator.
      </para>
     </listitem>
    </varlistentry>
@@ -3741,8 +3766,7 @@ HeapTuple SPI_modifytuple(Relation <parameter>rel</parameter>, HeapTuple <parame
     <term><literal>int <parameter>ncols</parameter></literal></term>
     <listitem>
      <para>
-      number of column numbers in the array
-      <parameter>colnum</parameter>
+      number of columns to be changed
      </para>
     </listitem>
    </varlistentry>
@@ -3751,8 +3775,8 @@ HeapTuple SPI_modifytuple(Relation <parameter>rel</parameter>, HeapTuple <parame
     <term><literal>int * <parameter>colnum</parameter></literal></term>
     <listitem>
      <para>
-      array of the numbers of the columns that are to be changed
-      (column numbers start at 1)
+      an array of length <parameter>ncols</parameter>, containing the numbers
+      of the columns that are to be changed (column numbers start at 1)
      </para>
     </listitem>
    </varlistentry>
@@ -3761,17 +3785,30 @@ HeapTuple SPI_modifytuple(Relation <parameter>rel</parameter>, HeapTuple <parame
     <term><literal>Datum * <parameter>values</parameter></literal></term>
     <listitem>
      <para>
+      an array of length <parameter>ncols</parameter>, containing the
       new values for the specified columns
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>const char * <parameter>Nulls</parameter></literal></term>
+    <term><literal>const char * <parameter>nulls</parameter></literal></term>
     <listitem>
      <para>
-      which new values are null, if any (see
-      <function>SPI_execute_plan</function> for the format)
+      an array of length <parameter>ncols</parameter>, describing which
+      new values are null
+     </para>
+
+     <para>
+      If <parameter>nulls</parameter> is <symbol>NULL</symbol> then
+      <function>SPI_modifytuple</function> assumes that no new values
+      are null.  Otherwise, each entry of the <parameter>nulls</parameter>
+      array should be <literal>'&nbsp;'</> if the corresponding new value is
+      non-null, or <literal>'n'</> if the corresponding new value is
+      null.  (In the latter case, the actual value in the corresponding
+      <parameter>values</parameter> entry doesn't matter.)  Note that
+      <parameter>nulls</parameter> is not a text string, just an array: it
+      does not need a <literal>'\0'</> terminator.
      </para>
     </listitem>
    </varlistentry>
