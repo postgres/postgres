@@ -73,15 +73,16 @@
 
        <para>
         This improves concurrency and reduces the probability of deadlocks.
-        UPDATEs on non-key columns use the new SELECT FOR NO KEY UPDATE lock
-        type, and foreign key checks use the new SELECT FOR KEY SHARE lock mode.
+        <command>UPDATE</>s on non-key columns use the new <command>SELECT
+        FOR NO KEY UPDATE</> lock type, and foreign key checks use the
+        new <command>SELECT FOR KEY SHARE</> lock mode.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add configuration variable lock_timeout to limit lock wait duration
-        (Zolt&aacute;n B&ouml;sz&ouml;rm&eacute;nyi)
+        Add configuration variable <varname>lock_timeout</> to limit lock
+        wait duration (Zolt&aacute;n B&ouml;sz&ouml;rm&eacute;nyi)
        </para>
       </listitem>
 
@@ -91,8 +92,9 @@
        </para>
 
        <para>
-        This speeds lock release at statement completion in transactions
-        that hold many locks; it is particularly useful for pg_dump.
+        This speeds lock release at statement completion in
+        transactions that hold many locks; it is particularly useful
+        for <application>pg_dump</>.
        </para>
       </listitem>
 
@@ -107,13 +109,13 @@
 
       <listitem>
        <para>
-        Add SP-GiST support for range data types (Alexander Korotkov)
+        Add <type>SP-GiST</> support for range data types (Alexander Korotkov)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow unlogged GiST indexes (Jeevan Chalke)
+        Allow unlogged <type>GiST</> indexes (Jeevan Chalke)
        </para>
       </listitem>
 
@@ -162,26 +164,26 @@
 
       <listitem>
        <para>
-        Add COPY FREEZE option to avoid the overhead of later marking
-        tuples as committed (Simon Riggs, Jeff Davis)
+        Add <command>COPY FREEZE</> option to avoid the overhead of later
+        marking tuples as committed (Simon Riggs, Jeff Davis)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Improve performance of NUMERIC calculations (Kyotaro Horiguchi)
+        Improve performance of <type>NUMERIC</> calculations (Kyotaro Horiguchi)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Improve grouping of sessions waiting for commit_delay (Peter
-        Geoghegan)
+        Improve grouping of sessions waiting for <varname>commit_delay</>
+        (Peter Geoghegan)
        </para>
 
        <para>
-        This improves the usefulness and behavior of commit_delay.
-        BACKWARD COMPATIBILITY
+        This improves the usefulness and behavior of
+        <varname>commit_delay</>.  BACKWARD COMPATIBILITY
        </para>
       </listitem>
 
@@ -191,8 +193,8 @@
        </para>
 
        <para>
-        Users who have set work_mem based on the previous behavior should
-        revisit that setting.
+        Users who have set <varname>work_mem</> based on the previous
+        behavior should revisit that setting.
        </para>
       </listitem>
 
@@ -205,9 +207,9 @@
 
       <listitem>
        <para>
-        Improve performance of the CREATE TEMPORARY TABLE ... ON COMMIT
-        DELETE ROWS clause by only issuing delete if the temporary table
-        was accessed (Heikki Linnakangas)
+        Improve performance of the <command>CREATE TEMPORARY TABLE
+        ... ON COMMIT DELETE ROWS</> clause by only issuing delete if
+        the temporary table was accessed (Heikki Linnakangas)
        </para>
       </listitem>
 
@@ -254,8 +256,8 @@
 
       <listitem>
        <para>
-        Allow pg_terminate_backend() to terminate other backends with
-        the same role (Dan Farina)
+        Allow <function>pg_terminate_backend()</> to terminate other
+        backends with the same role (Dan Farina)
        </para>
 
        <para>
@@ -286,36 +288,38 @@
 
       <listitem>
        <para>
-        Improve LDAP error reporting and documentation (Peter Eisentraut)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add support for LDAP authentication to be specified in URL format
+        Improve <acronym>LDAP</> error reporting and documentation
         (Peter Eisentraut)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Change the ssl_ciphers parameter to start with DEFAULT, rather
-        than ALL, then remove insecure ciphers (Magnus Hagander)
-       </para>
-
-       <para>
-        It is assumed DEFAULT is more appropriate cipher set.
+        Add support for <acronym>LDAP</> authentication to be specified
+        in <acronym>URL</> format (Peter Eisentraut)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Parse/load pg_ident.conf once, not during each connection (Amit
-        Kapila)
+        Change the <varname>ssl_ciphers</> parameter to start with
+        <literal>DEFAULT</>, rather than <literal>ALL</>, then remove
+        insecure ciphers (Magnus Hagander)
        </para>
 
        <para>
-        This is similar to how pg_hba.conf is processed.
+        It is assumed <literal>DEFAULT</> is more appropriate cipher set.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Parse/load <filename>pg_ident.conf</> once, not during each
+        connection (Amit Kapila)
+       </para>
+
+       <para>
+        This is similar to how <filename>pg_hba.conf</> is processed.
        </para>
       </listitem>
 
@@ -334,9 +338,9 @@
        </para>
 
        <para>
-        Instead, on Unix-like systems, mmap() is used for shared memory.
-        This eliminates the requirement of increasing System V shared
-        memory kernel parameters.
+        Instead, on Unix-like systems, <function>mmap()</> is used for
+        shared memory.  This eliminates the requirement of increasing
+        System V shared memory kernel parameters.
        </para>
       </listitem>
 
@@ -347,8 +351,10 @@
        </para>
 
        <para>
-        This renames configuration parameter unix_socket_directory to
-        unix_socket_directories, which accepts a list of directories.
+        This renames configuration parameter
+        <varname>unix_socket_directory</> to
+        <varname>unix_socket_directories</>, which accepts a list of
+        directories.
        </para>
       </listitem>
 
@@ -359,26 +365,27 @@
        </para>
 
        <para>
-        The directory is specified as include_dir in server configuration file.
+        The directory is specified as <varname>include_dir</> in server
+        configuration file.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Increase the maximum initdb-configured value for shared_buffers
-        to 128MB (Robert Haas)
+        Increase the maximum initdb-configured value for
+        <varname>shared_buffers</> to 128MB (Robert Haas)
        </para>
 
        <para>
         This is the maximum value initdb attempts to set in
-        postgresql.conf;  the previous value was 32MB.
+        <filename>postgresql.conf</>;  the previous value was 32MB.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Require superuser privileges to set commit_delay because it
-        can now potentially delay other sessions (Simon Riggs)
+        Require superuser privileges to set <varname>commit_delay</>
+        because it can now potentially delay other sessions (Simon Riggs)
         BACKWARD COMPATIBILITY
        </para>
       </listitem>
@@ -386,14 +393,16 @@
 
       <listitem>
        <para>
-        Remove the external PID file on postmaster exit (Peter Eisentraut)
+        Remove the external <acronym>PID</> file on postmaster exit
+        (Peter Eisentraut)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Have "session id" in log_line_prefix (%c) always output four hex
-        digits after the period (Bruce Momjian) COMPATIBILITY
+        Have <quote>session id</> (<literal>%c</>) in
+        <varname>log_line_prefix</> always output four hex digits after
+        the period (Bruce Momjian) COMPATIBILITY
        </para>
       </listitem>
 
@@ -410,19 +419,21 @@
 
       <listitem>
        <para>
-        Allow a streaming replication standbys to follow a timeline switch (Heikki Linnakangas)
+        Allow a streaming replication standbys to follow a timeline switch
+        (Heikki Linnakangas)
        </para>
 
        <para>
         This allows streaming standbys to feed from newly-promoted slaves.
-        Previously slaves required access to a WAL archive directory to
+        Previously slaves required access to a <acronym>WAL</> archive directory to
         accomplish this.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add SQL functions pg_backup_in_progress() and pg_backup_start_time() (Gilles Darold)
+        Add <acronym>SQL</> functions <function>pg_backup_in_progress()</>
+        and <function>pg_backup_start_time()</> (Gilles Darold)
        </para>
 
        <para>
@@ -433,7 +444,7 @@
       <listitem>
        <para>
         Improve performance of streaming log shipping with
-        synchronous_commit disabled (Andres Freund)
+        <varname>synchronous_commit</> disabled (Andres Freund)
        </para>
       </listitem>
 
@@ -446,27 +457,28 @@
 
       <listitem>
        <para>
-        Add the last checkpoint's redo location to pg_controldata's output
-        (Fujii Masao)
+        Add the last checkpoint's redo location to
+        <application>pg_controldata</>'s output (Fujii Masao)
        </para>
 
        <para>
-        This information is useful for determining the WAL files needed for
-        restore.
+        This information is useful for determining the <acronym>WAL</>
+        files needed for restore.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow tooling like pg_receivexlog to run on computers with different
+        Allow tooling like <application>pg_receivexlog</> to run on computers with different
         architectures (Heikki Linnakangas)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Have pg_basebackup --write-recovery-conf output a minimal
-        recovery.conf (Zolt&aacute;n B&ouml;sz&ouml;rm&eacute;nyi, Magnus Hagander)
+        Have <application>pg_basebackup</> <option>--write-recovery-conf</>
+        output a minimal <filename>recovery.conf</> (Zolt&aacute;n
+        B&ouml;sz&ouml;rm&eacute;nyi, Magnus Hagander)
        </para>
 
        <para>
@@ -476,57 +488,59 @@
 
       <listitem>
        <para>
-        Allow pg_receivexlog and pg_basebackup -X to handle streaming
-        timeline switches (Heikki Linnakangas)
+        Allow <application>pg_receivexlog</> and
+        <application>pg_basebackup</> <option>--xlog-method</> to handle
+        streaming timeline switches (Heikki Linnakangas)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add wal_receiver_timeout parameter to control the WAL receiver
-        timeout (Amit Kapila)
+        Add <varname>wal_receiver_timeout</> parameter to control the <acronym>WAL</>
+        receiver timeout (Amit Kapila)
        </para>
 
        <para>
         This allows more rapid detection of connection failure. No longer set
-        wal_receiver_status_interval?
+        <varname>wal_receiver_status_interval</>?
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Rename replication_timeout to wal_sender_timeout (Amit Kapila)
+        Rename <varname>replication_timeout</> to <varname>wal_sender_timeout</> (Amit Kapila)
        </para>
 
        <para>
         BACKWARD COMPATIBILITY
-        This setting controls the WAL sender timeout.
+        This setting controls the <acronym>WAL</> sender timeout.
        </para>
       </listitem>
 
      </itemizedlist>
 
     <sect4>
-     <title>Write-Ahead Log (WAL)</title>
+     <title>Write-Ahead Log (<acronym>WAL</>)</title>
 
      <itemizedlist>
 
       <listitem>
        <para>
-        Store WAL in a continuous stream, rather than skipping the last
-        16MB segment every 4GB (Heikki Linnakangas)  BACKWARD COMPATIBLE BREAK
+        Store <acronym>WAL</> in a continuous stream, rather than skipping
+        the last 16MB segment every 4GB (Heikki Linnakangas)  BACKWARD
+        COMPATIBLE BREAK
        </para>
 
        <para>
-        Previously, WAL files ending in FF were not used.  If you have
-        WAL backup or restore scripts that took that skipping into account,
-        they need to be adjusted.
+        Previously, <acronym>WAL</> files ending in <literal>FF</> were
+        not used.  If you have <acronym>WAL</> backup or restore scripts
+        that took that skipping into account, they need to be adjusted.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Change the WAL record format to allow splitting the record header
+        Change the <acronym>WAL</> record format to allow splitting the record header
         across pages (Heikki Linnakangas)
        </para>
 
@@ -548,21 +562,21 @@
 
       <listitem>
        <para>
-        Implement SQL-standard LATERAL for FROM-clause subqueries and
-        function calls (Tom Lane)
+        Implement <acronym>SQL</>-standard <literal>LATERAL</> for
+        <literal>FROM</>-clause subqueries and function calls (Tom Lane)
        </para>
 
        <para>
-        This is useful in allowing FROM subqueries and functions to reference
-        output from tables in the FROM clause. The LATERAL keyword is optional
-        for functions.
+        This is useful in allowing <literal>FROM</> subqueries and
+        functions to reference output from tables in the <literal>FROM</>
+        clause. The <literal>LATERAL</> keyword is optional for functions.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add support for piping COPY and psql \copy to/from an external program (Etsuro
-        Fujita)
+        Add support for piping <command>COPY</> and <application>psql</>
+        <command>\copy</> to/from an external program (Etsuro Fujita)
        </para>
       </listitem>
 
@@ -572,7 +586,7 @@
        </para>
 
        <para>
-        Only CREATE SCHEMA ... IF NOT EXISTS?  If so, remove it.
+        Only <command>CREATE SCHEMA ... IF NOT EXISTS</>?  If so, remove it.
        </para>
       </listitem>
 
@@ -598,13 +612,14 @@
 
       <listitem>
        <para>
-        Allow a multi-row VALUES clause in rules to reference OLD/NEW (Tom Lane)
+        Allow a multi-row <literal>VALUES</> clause in rules to reference
+        <literal>OLD</>/<literal>NEW</> (Tom Lane)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add CREATE SCHEMA ... IF NOT EXISTS clause (Fabr&iacute;zio de
+        Add <command>CREATE SCHEMA ... IF NOT EXISTS</> clause (Fabr&iacute;zio de
         Royes Mello)
        </para>
       </listitem>
@@ -618,8 +633,8 @@
 
       <listitem>
        <para>
-        Have REASSIGN OWNED also change ownership of shared objects (&Aacute;lvaro
-        Herrera)
+        Have <command>REASSIGN OWNED</> also change ownership of shared
+        objects (&Aacute;lvaro Herrera)
        </para>
       </listitem>
 
@@ -636,14 +651,14 @@
        </para>
 
        <para>
-        These messages now appear with DEBUG1-level output.
+        These messages now appear with <literal>DEBUG1</>-level output.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow CREATE TABLE IF NOT EXISTS to succeed for a non-existent schema
-        (Bruce Momjian)
+        Allow <command>CREATE TABLE IF NOT EXISTS</> to succeed for a
+        non-existent schema (Bruce Momjian)
        </para>
 
        <para>
@@ -662,14 +677,14 @@
 
       <listitem>
        <para>
-        Change ON UPDATE SET NULL/SET DEFAULT foreign key actions to affect
-        all referenced columns, not just those referenced in the UPDATE
-        (Tom Lane)
+        Change <literal>ON UPDATE SET NULL/SET DEFAULT</> foreign key
+        actions to affect all referenced columns, not just those referenced
+        in the <command>UPDATE</> (Tom Lane)
        </para>
 
        <para>
-        Previously only columns referenced in the UPDATE were set to null or DEFAULT.
-        BACKWARD COMPATIBILITY CHANGE
+        Previously only columns referenced in the <command>UPDATE</> were
+        set to null or <literal>DEFAULT</>.  BACKWARD COMPATIBILITY CHANGE
        </para>
       </listitem>
 
@@ -689,13 +704,15 @@
 
       <listitem>
        <para>
-        Internally store default foreign key matches (non-FULL, non-PARTIAL) as "simple" (Tom Lane)
+        Internally store default foreign key matches (non-<literal>FULL</>,
+        non-<literal>PARTIAL</>) as <quote>simple</> (Tom Lane)
        </para>
 
        <para>
         These were previously stored as "&lt;unspecified&gt;".
         This changes the value stored in system column
-        pg_constraint.confmatchtype.  BACKWARD COMPATIBILITY CHANGE
+        <structname>pg_constraint.confmatchtype</>.  BACKWARD COMPATIBILITY
+        CHANGE
        </para>
       </listitem>
 
@@ -710,8 +727,8 @@
 
       <listitem>
        <para>
-        Add the ALTER TYPE ... IF NOT EXISTS clause when adding enumerated type labels (Andrew
-        Dunstan)
+        Add the <command>ALTER TYPE ... IF NOT EXISTS</> clause when
+        adding enumerated type labels (Andrew Dunstan)
        </para>
 
        <para>
@@ -721,19 +738,21 @@
 
       <listitem>
        <para>
-        Add ALTER ROLE ALL SET to add settings to all users (Peter Eisentraut)
+        Add <command>ALTER ROLE ALL SET</> to add settings to all users
+        (Peter Eisentraut)
        </para>
 
        <para>
-        This allows settings to apply to all users in all databases. ALTER
-        DATABASE SET already allowed addition of settings for all users in a
-        single database.  postgresql.conf has a similar effect.
+        This allows settings to apply to all users in all
+        databases. <command>ALTER DATABASE SET</> already allowed
+        addition of settings for all users in a single database.
+        <filename>postgresql.conf</> has a similar effect.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add support for ALTER RULE ... RENAME (Ali Dar)
+        Add support for <command>ALTER RULE ... RENAME</> (Ali Dar)
        </para>
       </listitem>
 
@@ -768,7 +787,7 @@
        <para>
         Simple views that reference some or all columns from a single base table
         are now updatable by default. More complex views can be made updatable
-        using INSTEAD OF triggers or INSTEAD rules.
+        using <literal>INSTEAD OF</> triggers or <literal>INSTEAD</> rules.
        </para>
       </listitem>
 
@@ -782,11 +801,12 @@
 
       <listitem>
        <para>
-        Add CREATE RECURSIVE VIEW syntax (Peter Eisentraut)
+        Add <command>CREATE RECURSIVE VIEW</> syntax (Peter Eisentraut)
        </para>
 
        <para>
-        Internally this is translated into CREATE VIEW ... WITH RECURSIVE.
+        Internally this is translated into <command>CREATE VIEW ... WITH
+        RECURSIVE</>.
        </para>
       </listitem>
 
@@ -821,34 +841,36 @@
 
       <listitem>
        <para>
-        Allow text timezone designations, e.g. "America/Chicago" when using the
-        ISO "T" timestamptz format (Bruce Momjian)
+        Allow text timezone designations, e.g. <quote>America/Chicago</>
+        when using the <acronym>ISO</> <quote>T</> timestamptz format (Bruce
+        Momjian)
        </para>
       </listitem>
 
     </itemizedlist>
 
    <sect4>
-    <title>JSON</title>
+    <title><type>JSON</></title>
 
     <itemizedlist>
 
       <listitem>
        <para>
-        Add operators and functions to extract values from JSON data strings
+        Add operators and functions to extract values from <type>JSON</> data strings
         (Andrew Dunstan)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow JSON data strings to be converted into records (Andrew Dunstan)
+        Allow <type>JSON</> data strings to be converted into records (Andrew Dunstan)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add functions to convert values, records, and hstore data to JSON (Andrew Dunstan)
+        Add functions to convert values, records, and hstore data to
+        <type>JSON</> (Andrew Dunstan)
        </para>
       </listitem>
 
@@ -866,69 +888,75 @@
 
       <listitem>
        <para>
-        Add array_remove() and array_replace() functions (Marco Nenciarini, Gabriele Bartolini)
+        Add <function>array_remove()</> and <function>array_replace()</>
+        functions (Marco Nenciarini, Gabriele Bartolini)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow concat() and format() to properly expand VARIADIC-labeled
-        arguments (Pavel Stehule)
+        Allow <function>concat()</> and <function>format()</> to properly
+        expand <literal>VARIADIC</>-labeled arguments (Pavel Stehule)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Improve format() to handle field width and left/right alignment
-        (Pavel Stehule)
+        Improve <function>format()</> to handle field width and left/right
+        alignment (Pavel Stehule)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Have to_char(), to_date(), and to_timestamp() properly handle
-        negative century designations (CC) (Bruce Momjian)
+        Have <function>to_char()</>, <function>to_date()</>, and
+        <function>to_timestamp()</> properly handle negative century
+        designations (<literal>CC</>) (Bruce Momjian)
        </para>
 
        <para>
-        Previously the behavior was either wrong or inconsistent with
-        positive/AD handling, e.g. format mask 'IYYY-IW-DY'.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Have to_date() and to_timestamp() return proper results when mixing
-        ISO and Gregorian week/day designations (Bruce Momjian)
+        Previously the behavior was either wrong or inconsistent
+        with positive/<acronym>AD</> handling, e.g. format mask
+        <quote>IYYY-IW-DY</>.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Cause pg_get_viewdef() to default to wrapping after every SELECT
-        target list and FROM entry (Marko Tiikkaja)
-       </para>
-
-       <para>
-        This causes view output, like from pg_dump, to be more narrow.
+        Have <function>to_date()</> and <function>to_timestamp()</>
+        return proper results when mixing <acronym>ISO</> and Gregorian
+        week/day designations (Bruce Momjian)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Have map_sql_value_to_xml_value() properly expand domains (Pavel
-        Stehule)
+        Cause <function>pg_get_viewdef()</> to default to wrapping after
+        every <command>SELECT</> target list and <literal>FROM</> entry
+        (Marko Tiikkaja)
+       </para>
+
+       <para>
+        This causes view output, like from <application>pg_dump</>,
+        to be more narrow.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Force cached functions to be replanned if the search_path changes (Tom Lane)
+        Have <function>map_sql_value_to_xml_value()</> properly expand
+        domains (Pavel Stehule)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Force cached functions to be replanned if the <varname>search_path</> changes (Tom Lane)
        </para>
 
        <para>
         Previously functions already run in the current session ignored
-        search_path changes.
+        <varname>search_path</> changes.
         (Bruce Momjian)
        </para>
       </listitem>
@@ -944,8 +972,8 @@
 
       <listitem>
        <para>
-        Allow SPI functions to access the number of rows processed by COPY (Pavel
-        Stehule)
+        Allow <acronym>SPI</> functions to access the number of rows
+        processed by <command>COPY</> (Pavel Stehule)
        </para>
       </listitem>
 
@@ -958,23 +986,23 @@
 
       <listitem>
        <para>
-        Allow PL/pgSQL to use RETURN with a composite-type expressions (Asif
-        Rehman)
+        Allow PL/pgSQL to use <literal>RETURN</> with a composite-type
+        expressions (Asif Rehman)
        </para>
 
        <para>
-        Previously RETURN could only reference composite-type variables.
+        Previously <literal>RETURN</> could only reference composite-type variables.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow PL/pgSQL to access the number of rows processed by COPY (Pavel
-        Stehule)
+        Allow PL/pgSQL to access the number of rows processed by
+        <command>COPY</> (Pavel Stehule)
        </para>
 
        <para>
-        The command is GET DIAGNOSTICS x = ROW_COUNT.
+        The command is <command>GET DIAGNOSTICS x = ROW_COUNT</>.
        </para>
       </listitem>
 
@@ -1011,8 +1039,9 @@
 
       <listitem>
        <para>
-        Handle SPIErrors raised explicitly with PL/Python's RAISE the same as
-        as internal SPI errors (Oskari Saarenmaa and Jan Urbanski)
+        Handle <acronym>SPI</> errors raised explicitly with PL/Python's
+        <literal>RAISE</> the same as as internal <acronym>SPI</> errors
+        (Oskari Saarenmaa and Jan Urbanski)
        </para>
       </listitem>
 
@@ -1029,33 +1058,38 @@
 
       <listitem>
        <para>
-        Add command-line utility pg_isready to check if the server is ready
-        to accept connections (Phil Sorber)
+        Add command-line utility <application>pg_isready</> to check if
+        the server is ready to accept connections (Phil Sorber)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Support multiple --table arguments for pg_restore, clusterdb,
-        reindexdb, and vacuumdb (Josh Kupershmidt)
+        Support multiple <option>--table</> arguments for
+        <application>pg_restore</>, <application>clusterdb</>,
+        <application>reindexdb</>, and <application>vacuumdb</> (Josh
+        Kupershmidt)
        </para>
 
        <para>
-        This is similar to the pg_dump --table support.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add -d option to pg_dumpall, pg_basebackup, pg_receivexlog to
-        specify the connection string (Amit Kapila)
+        This is similar to the <application>pg_dump</> <option>--table</>
+        support.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add libpq function PQconninfo() to return connection information
-        (Zolt&aacute;n B&ouml;sz&ouml;rm&eacute;nyi, Magnus Hagander)
+        Add <option>--dbname</> option to <application>pg_dumpall</>,
+        <application>pg_basebackup</>, <application>pg_receivexlog</>
+        to specify the connection string (Amit Kapila)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add libpq function <function>PQconninfo()</> to return connection
+        information (Zolt&aacute;n B&ouml;sz&ouml;rm&eacute;nyi, Magnus
+        Hagander)
        </para>
       </listitem>
 
@@ -1068,21 +1102,21 @@
 
       <listitem>
        <para>
-        Adjust function cost settings so psql tab completion and pattern
-        searching is more efficient (Tom Lane)
+        Adjust function cost settings so <application>psql</> tab
+        completion and pattern searching is more efficient (Tom Lane)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Improve psql tab completion (Jeff Janes, Peter Eisentraut)
+        Improve <application>psql</> tab completion (Jeff Janes, Peter Eisentraut)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow the psql --single-transaction mode to work when reading from
-        standard input (Fabien Coelho, Robert Haas)
+        Allow the <application>psql</> <option>--single-transaction</> mode to work when
+        reading from standard input (Fabien Coelho, Robert Haas)
        </para>
 
        <para>
@@ -1092,7 +1126,8 @@
 
       <listitem>
        <para>
-        Remove psql warning when connecting to an older server (Peter Eisentraut)
+        Remove <application>psql</> warning when connecting to an older
+        server (Peter Eisentraut)
        </para>
 
        <para>
@@ -1109,40 +1144,43 @@
 
       <listitem>
        <para>
-        Add psql \watch command to repeatedly execute commands (Will
-        Leinweber)
+        Add <application>psql</> <command>\watch</> command to repeatedly
+        execute commands (Will Leinweber)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add psql command \gset to store query results in psql variables
-        (Pavel Stehule)
+        Add <application>psql</> command <command>\gset</> to store query
+        results in <application>psql</> variables (Pavel Stehule)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add SSL information to psql's \conninfo command (Alastair Turner)
+        Add <acronym>SSL</> information to <application>psql</>'s
+        <command>\conninfo</> command (Alastair Turner)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add "Security" label to psql \df+ output (Jon Erdman)
+        Add "Security" label to <application>psql</> <command>\df+</>
+        output (Jon Erdman)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow psql \l to accept a database name pattern (Peter Eisentraut)
+        Allow <application>psql</> <command>\l</> to accept a database
+        name pattern (Peter Eisentraut)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        In psql, do not allow \connect to use defaults if there is no active
-        connection (Bruce Momjian)
+        In <application>psql</>, do not allow <command>\connect</> to
+        use defaults if there is no active connection (Bruce Momjian)
        </para>
 
        <para>
@@ -1152,7 +1190,8 @@
 
       <listitem>
        <para>
-        Properly reset state if psql's "\g file" command failed (Tom Lane)
+        Properly reset state if <application>psql</>'s <quote>\g file</>
+        command failed (Tom Lane)
        </para>
 
        <para>
@@ -1171,7 +1210,8 @@
 
       <listitem>
        <para>
-        Add a 'latex-longtable' output format to psql (Bruce Momjian)
+        Add a <literal>latex-longtable</> output format to
+        <application>psql</> (Bruce Momjian)
        </para>
 
        <para>
@@ -1181,21 +1221,22 @@
 
       <listitem>
        <para>
-        Add a border=3 output mode to the psql 'latex' format (Bruce Momjian)
+        Add a <literal>border=3</> output mode to the <application>psql</>
+        <literal>latex</> format (Bruce Momjian)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        In psql tuples-only and expanded modes, no longer output "(No rows)"
-        (Peter Eisentraut)
+        In <application>psql</> tuples-only and expanded modes, no longer
+        output <quote>(No rows)</> (Peter Eisentraut)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        In psql, no longer print an empty line for unaligned, expanded
-        output for zero rows (Peter Eisentraut)
+        In <application>psql</>, no longer print an empty line for
+        unaligned, expanded output for zero rows (Peter Eisentraut)
        </para>
       </listitem>
 
@@ -1212,28 +1253,30 @@
 
       <listitem>
        <para>
-        Add pg_dump --jobs to dump in parallel when using directory
-        output format  (Joachim Wieland)
+        Add <application>pg_dump</> <option>--jobs</> to dump in parallel
+        when using directory output format  (Joachim Wieland)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Have pg_dump output functions in a predictable order (Joel Jacobson)
+        Have <application>pg_dump</> output functions in a predictable
+        order (Joel Jacobson)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Fix tar files emitted by pg_dump and pg_basebackup to be POSIX
-        conformant (Brian Weaver, Tom Lane)
+        Fix tar files emitted by <application>pg_dump</> and
+        <application>pg_basebackup</> to be <acronym>POSIX</> conformant
+        (Brian Weaver, Tom Lane)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add -d/--dbname option to pg_dump, for consistency with other client
-        commands (Heikki Linnakangas)
+        Add <option>--dbname</> option to <application>pg_dump</>, for
+        consistency with other client commands (Heikki Linnakangas)
        </para>
 
        <para>
@@ -1256,18 +1299,18 @@
        </para>
 
        <para>
-        This can be disabled by using --nosync.
+        This can be disabled by using <option>--nosync</>.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add initdb --sync-only option to sync the data directory to durable
+        Add initdb <option>--sync-only</> option to sync the data directory to durable
         storage (Bruce Momjian)
        </para>
 
        <para>
-        This is used by pg_upgrade.
+        This is used by <application>pg_upgrade</>.
        </para>
       </listitem>
 
@@ -1304,14 +1347,15 @@
 
       <listitem>
        <para>
-        Create a centralized timeout API (Zolt&aacute;n B&ouml;sz&ouml;rm&eacute;nyi)
+        Create a centralized timeout <acronym>API</> (Zolt&aacute;n
+        B&ouml;sz&ouml;rm&eacute;nyi)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Create libpgcommon and move pg_malloc() and other functions there
-        (&Aacute;lvaro Herrera, Andres Freund)
+        Create libpgcommon and move <function>pg_malloc()</> and other
+        functions there (&Aacute;lvaro Herrera, Andres Freund)
        </para>
 
        <para>
@@ -1327,22 +1371,22 @@
 
       <listitem>
        <para>
-        Add compiler designations to indicate some ereport() and elog()
-        calls do not return (Peter Eisentraut, Andres Freund, Tom Lane,
-        Heikki Linnakangas)
+        Add compiler designations to indicate some <function>ereport()</>
+        and <function>elog()</> calls do not return (Peter Eisentraut,
+        Andres Freund, Tom Lane, Heikki Linnakangas)
        </para>
       </listitem>
 
       <listitem>
        <para>
         Allow options to be passed to the regression test output comparison
-        utility via PG_REGRESS_DIFF_OPTS (Peter Eisentraut)
+        utility via <envar>PG_REGRESS_DIFF_OPTS</> (Peter Eisentraut)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add isolation tests for CREATE INDEX CONCURRENTLY (Abhijit Menon-Sen)
+        Add isolation tests for <command>CREATE INDEX CONCURRENTLY</> (Abhijit Menon-Sen)
        </para>
       </listitem>
 
@@ -1354,13 +1398,14 @@
 
       <listitem>
        <para>
-        Fix install-strip on Mac OS X (Peter Eisentraut)
+        Fix install-strip on Mac <productname>OS X</> (Peter Eisentraut)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Remove configure flag --disable-shared, as it is no longer used (Bruce Momjian)
+        Remove configure flag <option>--disable-shared</>, as it is no
+        longer used (Bruce Momjian)
        </para>
       </listitem>
 
@@ -1372,8 +1417,8 @@
 
       <listitem>
        <para>
-        Add emacs macro to match Postgres perltidy formatting (Peter
-        Eisentraut)
+        Add emacs macro to match <productname>PostgreSQL</> perltidy
+        formatting (Peter Eisentraut)
        </para>
       </listitem>
 
@@ -1395,13 +1440,14 @@
 
       <listitem>
        <para>
-        Add Assert() functionality to client-side code for frontend code (Andrew Dunstan)
+        Add <function>Assert()</> functionality to client-side code for
+        frontend code (Andrew Dunstan)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Change many internal many backend functions to return OIDs rather
+        Change many internal many backend functions to return <type>OID</>s rather
         than void (Dimitri Fontaine)
        </para>
 
@@ -1424,14 +1470,14 @@
 
       <listitem>
        <para>
-        Add function pg_identify_object() to dump an object in
-        machine-readable format (&Aacute;lvaro Herrera)
+        Add function <function>pg_identify_object()</> to dump an object
+        in machine-readable format (&Aacute;lvaro Herrera)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add post-ALTER-object server hooks (KaiGai Kohei)
+        Add post-<command>ALTER</>-object server hooks (KaiGai Kohei)
        </para>
       </listitem>
 
@@ -1457,27 +1503,28 @@
 
       <listitem>
        <para>
-        Remove src/tool/backend, now that the content is on the Postgres
-        wiki (Bruce Momjian)
+        Remove <filename>src/tool/backend</>, now that the content is on
+        the <productname>PostgreSQL</> wiki (Bruce Momjian)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Split out WAL reading as an independent facility (Heikki
-        Linnakangas, Andres Freund)
+        Split out <acronym>WAL</> reading as an independent facility
+        (Heikki Linnakangas, Andres Freund)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Use a 64-bit integer to represent WAL positions (XLogRecPtr)
-        instead of two 32-bit integers (Heikki Linnakangas)
+        Use a 64-bit integer to represent <acronym>WAL</> positions
+        (<structname>XLogRecPtr</>) instead of two 32-bit integers (Heikki
+        Linnakangas)
        </para>
 
        <para>
-        Generally, tools that need to read the WAL format will need to
-        be adjusted.
+        Generally, tools that need to read the <acronym>WAL</> format
+        will need to be adjusted.
        </para>
       </listitem>
 
@@ -1489,8 +1536,8 @@
 
       <listitem>
        <para>
-        Allow PL/Python on OS X to build against custom versions of Python
-        (Peter Eisentraut)
+        Allow PL/Python on <productname>OS X</> to build against custom
+        versions of Python (Peter Eisentraut)
        </para>
       </listitem>
 
@@ -1512,8 +1559,8 @@
 
       <listitem>
        <para>
-        Add a Postgres foreign data wrapper contrib module (Shigeru
-        Hanada)
+        Add a <productname>Postgres</> foreign data wrapper contrib module
+        (Shigeru Hanada)
        </para>
 
        <para>
@@ -1523,49 +1570,49 @@
 
       <listitem>
        <para>
-        Add pg_xlogdump contrib program (Andres Freund)
+        Add <application>pg_xlogdump</> contrib program (Andres Freund)
        </para>
       </listitem>
 
       <listitem>
        <para>
         Add support for indexing of regular-expression searches in
-        contrib/pg_trgm (Alexander Korotkov)
+        extension <productname>pg_trgm</> (Alexander Korotkov)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Improve pg_trgm handling of multibyte characters (Tom Lane)
+        Improve <productname>pg_trgm</> handling of multibyte characters (Tom Lane)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add function to report the size of the GIN pending index insertion
-        list (Fujii Masao)
+        Add function to report the size of the <type>GIN</> pending index
+        insertion list (Fujii Masao)
        </para>
 
        <para>
-        The function is pgstatginindex() in pgstattuple.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Have oid2name, pgbench, and vacuumlo set fallback_application_name (Amit Kapila)
+        The function is <function>pgstatginindex()</> in pgstattuple.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Improve output of pg_test_timing (Bruce Momjian)
+        Have oid2name, pgbench, and vacuumlo set <varname>fallback_application_name</> (Amit Kapila)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Improve output of pg_test_fsync (Peter Geoghegan)
+        Improve output of <application>pg_test_timing</> (Bruce Momjian)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Improve output of <application>pg_test_fsync</> (Peter Geoghegan)
        </para>
       </listitem>
 
@@ -1588,7 +1635,8 @@
 
       <listitem>
        <para>
-        Allow pg_upgrade --jobs to do parallelism (Bruce Momjian)
+        Allow <application>pg_upgrade</> <option>--jobs</> to do
+        parallelism (Bruce Momjian)
        </para>
 
        <para>
@@ -1599,8 +1647,8 @@
 
       <listitem>
        <para>
-        Have pg_upgrade create unix-domain sockets in the current directory
-        (Bruce Momjian, Tom Lane)
+        Have <application>pg_upgrade</> create unix-domain sockets in
+        the current directory (Bruce Momjian, Tom Lane)
        </para>
 
        <para>
@@ -1611,27 +1659,29 @@
 
       <listitem>
        <para>
-        Have pg_upgrade --check mode properly detect the location of
-        non-default socket directories (Bruce Momjian, Tom Lane)
+        Have <application>pg_upgrade</> <option>--check</> mode properly
+        detect the location of non-default socket directories (Bruce
+        Momjian, Tom Lane)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Improve performance of pg_upgrade for databases with many tables (Bruce Momjian)
+        Improve performance of <application>pg_upgrade</> for databases
+        with many tables (Bruce Momjian)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Increase pg_upgrade logging content by showing executed command
+        Increase <application>pg_upgrade</> logging content by showing executed command
         (&Aacute;lvaro Herrera)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Improve pg_upgrade's status display during copy/link (Bruce Momjian)
+        Improve <application>pg_upgrade</>'s status display during copy/link (Bruce Momjian)
        </para>
       </listitem>
 
@@ -1646,7 +1696,7 @@
 
       <listitem>
        <para>
-        Add --foreign-keys option to pgbench (Jeff Janes)
+        Add <option>--foreign-keys</> option to pgbench (Jeff Janes)
        </para>
 
        <para>
@@ -1658,14 +1708,14 @@
       <listitem>
        <para>
         Allow pgbench to aggregate performance statistics and produce output
-        every --aggregate-interval specified seconds (Tomas Vondra)
+        every <option>--aggregate-interval</> specified seconds (Tomas Vondra)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add pg_bench --sampling-rate option to control the percentage of
-        transactions logged (Tomas Vondra)
+        Add <application>pg_bench</> <option>--sampling-rate</> option to control the
+        percentage of transactions logged (Tomas Vondra)
        </para>
       </listitem>
 
@@ -1678,7 +1728,8 @@
 
       <listitem>
        <para>
-        Add pgbench -q mode to print one output line every five seconds (Tomas Vondra)
+        Add pgbench <option>-q</> mode to print one output line every
+        five seconds (Tomas Vondra)
        </para>
 
        <para>
@@ -1706,32 +1757,33 @@
 
       <listitem>
        <para>
-        Allow EPUB-format documentation to be created (Peter Eisentraut)
+        Allow <productname>EPUB</>-format documentation to be created
+        (Peter Eisentraut)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Update FreeBSD kernel configuration documentation (Brad Davis)
+        Update <productname>FreeBSD</> kernel configuration documentation (Brad Davis)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Improve WINDOW function documentation (Bruce Momjian, Tom Lane)
+        Improve <literal>WINDOW</> function documentation (Bruce Momjian, Tom Lane)
        </para>
       </listitem>
 
       <listitem>
        <para>
         Add instructions for setting up the documentation tool chain on
-        Mac OS X (Peter Eisentraut)
+        Mac <productname>OS X</> (Peter Eisentraut)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Improve commit_delay documentation (Peter Geoghegan)
+        Improve <varname>commit_delay</> documentation (Peter Geoghegan)
        </para>
       </listitem>
 
