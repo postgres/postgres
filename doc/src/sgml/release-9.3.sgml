@@ -6,7 +6,7 @@
 
   <note>
    <title>Release Date</title>
-   <simpara>2013-XX-XX, CURRENT AS OF 2013-04-20</simpara>
+   <simpara>2013-XX-XX, CURRENT AS OF 2013-05-03</simpara>
   </note>
 
   <sect2>
@@ -244,7 +244,7 @@
       <listitem>
        <para>
         Add optional ability to checksum data pages and report corruption
-        (Simon Riggs, Jeff Davis, Greg Smith)
+        (Simon Riggs, Jeff Davis, Greg Smith, Ants Aasma)
        </para>
 
        <para>
@@ -1052,21 +1052,6 @@
        </para>
       </listitem>
 
-      <listitem>
-       <para>
-        Allow pg_ctl --idempotent to a 'success' return code if the requested
-        start/stop action fails, but the cluster is already in the requested
-        state (Peter Eisentraut)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Change pg_ctl to return an error code if start fails because the
-        server is already running (Peter Eisentraut)                                        
-       </para>
-      </listitem>
- 
       <listitem>
        <para>
         Add libpq function PQconninfo() to return connection information
