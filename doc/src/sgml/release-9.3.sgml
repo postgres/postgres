@@ -60,19 +60,6 @@
 
       <listitem>
        <para>
-        Improve grouping of sessions waiting for <link
-        linkend="guc-commit-delay"><varname>commit_delay</></link>
-        (Peter Geoghegan)
-       </para>
-
-       <para>
-        This improves the usefulness and behavior of
-        <varname>commit_delay</>.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Require superuser privileges to set <link
         linkend="guc-commit-delay"><varname>commit_delay</></link>
         because it can now potentially delay other sessions (Simon Riggs)
@@ -81,9 +68,21 @@
 
       <listitem>
        <para>
+        Allow in-memory sorts to use their full memory allocation (Jeff Janes)
+       </para>
+
+       <para>
+        Users who have set <link
+        linkend="guc-work-mem"><varname>work_mem</></link> based on the
+        previous behavior should revisit that setting.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Have <quote>session id</> (<literal>%c</>) in <link
         linkend="guc-log-line-prefix"><varname>log_line_prefix</></link>
-        always output four hex digits after the period (Bruce Momjian)
+        always output at least four hex digits after the period (Bruce Momjian)
        </para>
       </listitem>
 
@@ -287,13 +286,14 @@
 
       <listitem>
        <para>
-        Allow in-memory sorts to use their full memory allocation (Jeff Janes)
+        Improve grouping of sessions waiting for <link
+        linkend="guc-commit-delay"><varname>commit_delay</></link>
+        (Peter Geoghegan)
        </para>
 
        <para>
-        Users who have set <link
-        linkend="guc-work-mem"><varname>work_mem</></link> based on the
-        previous behavior should revisit that setting.
+        This improves the usefulness and behavior of
+        <varname>commit_delay</>.
        </para>
       </listitem>
 
@@ -446,7 +446,7 @@
       <listitem>
        <para>
         Dramatically reduce System V <link linkend="sysvipc">shared
-        memory</link> usage (Robert Haas)
+        memory</link> requirements (Robert Haas)
        </para>
 
        <para>
@@ -746,7 +746,7 @@
 
       <listitem>
        <para>
-        Allow <command>CREATE TABLE IF NOT EXISTS</> to succeed for a
+        Allow <command>DROP TABLE IF NOT EXISTS</> to succeed for a
         non-existent schema (Bruce Momjian)
        </para>
 
