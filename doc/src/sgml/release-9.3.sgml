@@ -463,7 +463,9 @@
        <para>
         Add <acronym>SQL</> functions <link
         linkend="functions-admin-backup"><function>pg_is_in_backup()</></link>
-        and <function>pg_backup_start_time()</> (Gilles Darold)
+        and <link
+        linkend="functions-admin-backup"><function>pg_backup_start_time()</></link>
+        (Gilles Darold)
        </para>
 
        <para>
