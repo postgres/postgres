@@ -518,7 +518,7 @@
 
       <listitem>
        <para>
-        Allow a streaming replication standbys to <link
+        Allow a streaming replication standby to <link
         linkend="protocol-replication">follow a timeline switch</link>
         (Heikki Linnakangas)
        </para>
@@ -574,7 +574,7 @@
 
       <listitem>
        <para>
-        Allow tooling like <link
+        Allow tools like <link
         linkend="app-pgreceivexlog"><application>pg_receivexlog</></link>
         to run on computers with different architectures (Heikki
         Linnakangas)
