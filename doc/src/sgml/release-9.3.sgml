@@ -41,8 +41,111 @@
    </para>
 
    <sect3>
-    <title>ADD HERE</title>
-     <para>here</para>
+    <title>Server Settings</title>
+
+     <itemizedlist>
+
+      <listitem>
+       <para>
+        Rename <varname>replication_timeout</> to <link
+        linkend="guc-wal-sender-timeout"><varname>wal_sender_timeout</></link>
+        (Amit Kapila)
+       </para>
+
+       <para>
+        This setting controls the <link
+        linkend="wal"><acronym>WAL</></link> sender timeout.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Improve grouping of sessions waiting for <link
+        linkend="guc-commit-delay"><varname>commit_delay</></link>
+        (Peter Geoghegan)
+       </para>
+
+       <para>
+        This improves the usefulness and behavior of
+        <varname>commit_delay</>.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Require superuser privileges to set <link
+        linkend="guc-commit-delay"><varname>commit_delay</></link>
+        because it can now potentially delay other sessions (Simon Riggs)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Have <quote>session id</> (<literal>%c</>) in <link
+        linkend="guc-log-line-prefix"><varname>log_line_prefix</></link>
+        always output four hex digits after the period (Bruce Momjian)
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+   </sect3>
+
+   <sect3>
+    <title>Other</title>
+
+     <itemizedlist>
+
+      <listitem>
+       <para>
+        Throw an error if expiring tuple is again updated or deleted (Kevin Grittner)
+        DETAILS?
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Change <link linkend="SQL-CREATETABLE"><literal>ON UPDATE
+        SET NULL/SET DEFAULT</></link> foreign key actions to affect
+        all referenced columns, not just those referenced in the
+        <command>UPDATE</> (Tom Lane)
+       </para>
+
+       <para>
+        Previously only columns referenced in the <command>UPDATE</> were
+        set to null or <literal>DEFAULT</>.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Internally store default foreign key matches (non-<literal>FULL</>,
+        non-<literal>PARTIAL</>) as <quote>simple</> (Tom Lane)
+       </para>
+
+       <para>
+        These were previously stored as "&lt;unspecified&gt;".
+        This changes the value stored in system column <link
+        linkend="catalog-pg-constraint"><structname>pg_constraint.confmatchtype</></link>.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Store <link linkend="wal"><acronym>WAL</></link> in a continuous
+        stream, rather than skipping the last 16MB segment every 4GB
+        (Heikki Linnakangas)
+       </para>
+
+       <para>
+        Previously, <acronym>WAL</> files ending in <literal>FF</> were
+        not used.  If you have <acronym>WAL</> backup or restore scripts
+        that took that skipping into account, they need to be adjusted.
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
    </sect3>
 
   </sect2>
@@ -179,19 +282,6 @@
         Improve performance of <link
         linkend="datatype-numeric"><type>NUMERIC</></link> calculations
         (Kyotaro Horiguchi)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Improve grouping of sessions waiting for <link
-        linkend="guc-commit-delay"><varname>commit_delay</></link>
-        (Peter Geoghegan)
-       </para>
-
-       <para>
-        This improves the usefulness and behavior of
-        <varname>commit_delay</>.  BACKWARD COMPATIBILITY
        </para>
       </listitem>
 
@@ -410,27 +500,8 @@
 
       <listitem>
        <para>
-        Require superuser privileges to set <link
-        linkend="guc-commit-delay"><varname>commit_delay</></link>
-        because it can now potentially delay other sessions (Simon Riggs)
-        BACKWARD COMPATIBILITY
-       </para>
-      </listitem>
-
-
-      <listitem>
-       <para>
         Remove the <link linkend="guc-external-pid-file">external
         <acronym>PID</> file</link> on postmaster exit (Peter Eisentraut)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Have <quote>session id</> (<literal>%c</>) in <link
-        linkend="guc-log-line-prefix"><varname>log_line_prefix</></link>
-        always output four hex digits after the period (Bruce Momjian)
-        COMPATIBILITY
        </para>
       </listitem>
 
@@ -550,19 +621,6 @@
        </para>
       </listitem>
 
-      <listitem>
-       <para>
-        Rename <varname>replication_timeout</> to <link
-        linkend="guc-wal-sender-timeout"><varname>wal_sender_timeout</></link>
-        (Amit Kapila)
-       </para>
-
-       <para>
-        BACKWARD COMPATIBILITY
-        This setting controls the <acronym>WAL</> sender timeout.
-       </para>
-      </listitem>
-
      </itemizedlist>
 
     <sect4>
@@ -570,20 +628,6 @@
      (<acronym>WAL</>)</title>
 
      <itemizedlist>
-
-      <listitem>
-       <para>
-        Store <acronym>WAL</> in a continuous stream, rather than skipping
-        the last 16MB segment every 4GB (Heikki Linnakangas)  BACKWARD
-        COMPATIBLE BREAK
-       </para>
-
-       <para>
-        Previously, <acronym>WAL</> files ending in <literal>FF</> were
-        not used.  If you have <acronym>WAL</> backup or restore scripts
-        that took that skipping into account, they need to be adjusted.
-       </para>
-      </listitem>
 
       <listitem>
        <para>
@@ -677,13 +721,6 @@
 
       <listitem>
        <para>
-        Throw an error if expiring tuple is again updated or deleted (Kevin Grittner)
-        DETAILS?  BACKWARD INCOMPATIBILITY
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Have <link linkend="SQL-REASSIGN-OWNED"><command>REASSIGN
         OWNED</></link> also change ownership of shared objects
         (&Aacute;lvaro Herrera)
@@ -729,20 +766,6 @@
 
       <listitem>
        <para>
-        Change <link linkend="SQL-CREATETABLE"><literal>ON UPDATE
-        SET NULL/SET DEFAULT</></link> foreign key actions to affect
-        all referenced columns, not just those referenced in the
-        <command>UPDATE</> (Tom Lane)
-       </para>
-
-       <para>
-        Previously only columns referenced in the <command>UPDATE</> were
-        set to null or <literal>DEFAULT</>.  BACKWARD COMPATIBILITY CHANGE
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Provide clients with <link
         linkend="libpq-pqresulterrorfield">constraint violation details</link>
         as separate fields (Pavel Stehule)
@@ -753,20 +776,6 @@
         name error details.  Previously such information had to be extracted from
         error strings.  Client language support is required to access these
         fields.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Internally store default foreign key matches (non-<literal>FULL</>,
-        non-<literal>PARTIAL</>) as <quote>simple</> (Tom Lane)
-       </para>
-
-       <para>
-        These were previously stored as "&lt;unspecified&gt;".
-        This changes the value stored in system column <link
-        linkend="catalog-pg-constraint"><structname>pg_constraint.confmatchtype</></link>.
-        BACKWARD COMPATIBILITY CHANGE
        </para>
       </listitem>
 
