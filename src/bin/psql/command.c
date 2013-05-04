@@ -2648,17 +2648,32 @@ do_watch(PQExpBuffer query_buf, long sleep)
 				printQuery(res, &myopt, pset.queryFout, pset.logfile);
 				break;
 
+			case PGRES_COMMAND_OK:
+				fprintf(pset.queryFout, "%s\n%s\n\n", title, PQcmdStatus(res));
+				break;
+
 			case PGRES_EMPTY_QUERY:
 				psql_error(_("\\watch cannot be used with an empty query\n"));
 				PQclear(res);
 				return false;
 
+			case PGRES_COPY_OUT:
+			case PGRES_COPY_IN:
+			case PGRES_COPY_BOTH:
+				psql_error(_("\\watch cannot be used with COPY\n"));
+				PQclear(res);
+				return false;
+
 			default:
-				/* should we fail for non-tuple-result commands? */
-				break;
+				/* other cases should have been handled by PSQLexec */
+				psql_error(_("unexpected result status for \\watch\n"));
+				PQclear(res);
+				return false;
 		}
 
 		PQclear(res);
+
+		fflush(pset.queryFout);
 
 		/*
 		 * Set up cancellation of 'watch' via SIGINT.  We redo this each time
