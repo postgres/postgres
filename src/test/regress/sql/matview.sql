@@ -87,27 +87,10 @@ SELECT * FROM tvmm;
 SELECT * FROM tvvm;
 
 -- test diemv when the mv does not exist
-DROP MATERIALIZED VIEW IF EXISTS tum;
-
--- make sure that an unlogged materialized view works (in the absence of a crash)
-CREATE UNLOGGED MATERIALIZED VIEW tum AS SELECT type, sum(amt) AS totamt FROM t GROUP BY type WITH NO DATA;
-SELECT pg_relation_is_scannable('tum'::regclass);
-SELECT * FROM tum;
-REFRESH MATERIALIZED VIEW tum;
-SELECT pg_relation_is_scannable('tum'::regclass);
-SELECT * FROM tum;
-REFRESH MATERIALIZED VIEW tum WITH NO DATA;
-SELECT pg_relation_is_scannable('tum'::regclass);
-SELECT * FROM tum;
-REFRESH MATERIALIZED VIEW tum WITH DATA;
-SELECT pg_relation_is_scannable('tum'::regclass);
-SELECT * FROM tum;
+DROP MATERIALIZED VIEW IF EXISTS no_such_mv;
 
 -- test join of mv and view
 SELECT type, m.totamt AS mtot, v.totamt AS vtot FROM tm m LEFT JOIN tv v USING (type) ORDER BY type;
-
--- test diemv when the mv does exist
-DROP MATERIALIZED VIEW IF EXISTS tum;
 
 -- make sure that dependencies are reported properly when they block the drop
 DROP TABLE t;

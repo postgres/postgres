@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE [ UNLOGGED ] MATERIALIZED VIEW <replaceable>table_name</replaceable>
+CREATE MATERIALIZED VIEW <replaceable>table_name</replaceable>
     [ (<replaceable>column_name</replaceable> [, ...] ) ]
     [ WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] ) ]
     [ TABLESPACE <replaceable class="PARAMETER">tablespace_name</replaceable> ]
@@ -54,16 +54,6 @@ CREATE [ UNLOGGED ] MATERIALIZED VIEW <replaceable>table_name</replaceable>
   <title>Parameters</title>
 
   <variablelist>
-   <varlistentry>
-    <term><literal>UNLOGGED</></term>
-    <listitem>
-     <para>
-      If specified, the materialized view will be unlogged.
-      Refer to <xref linkend="sql-createtable"> for details.
-     </para>
-    </listitem>
-   </varlistentry>
-
    <varlistentry>
     <term><replaceable>table_name</replaceable></term>
     <listitem>

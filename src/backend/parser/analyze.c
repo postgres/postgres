@@ -2167,6 +2167,18 @@ transformCreateTableAsStmt(ParseState *pstate, CreateTableAsStmt *stmt)
 					 errmsg("materialized views may not be defined using bound parameters")));
 
 		/*
+		 * For now, we disallow unlogged materialized views, because it
+		 * seems like a bad idea for them to just go to empty after a crash.
+		 * (If we could mark them as unpopulated, that would be better, but
+		 * that requires catalog changes which crash recovery can't presently
+		 * handle.)
+		 */
+		if (stmt->into->rel->relpersistence == RELPERSISTENCE_UNLOGGED)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("materialized views cannot be UNLOGGED")));
+
+		/*
 		 * At runtime, we'll need a copy of the parsed-but-not-rewritten Query
 		 * for purposes of creating the view's ON SELECT rule.  We stash that
 		 * in the IntoClause because that's where intorel_startup() can

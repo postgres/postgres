@@ -279,59 +279,8 @@ SELECT * FROM tvvm;
 (1 row)
 
 -- test diemv when the mv does not exist
-DROP MATERIALIZED VIEW IF EXISTS tum;
-NOTICE:  materialized view "tum" does not exist, skipping
--- make sure that an unlogged materialized view works (in the absence of a crash)
-CREATE UNLOGGED MATERIALIZED VIEW tum AS SELECT type, sum(amt) AS totamt FROM t GROUP BY type WITH NO DATA;
-SELECT pg_relation_is_scannable('tum'::regclass);
- pg_relation_is_scannable 
---------------------------
- f
-(1 row)
-
-SELECT * FROM tum;
-ERROR:  materialized view "tum" has not been populated
-HINT:  Use the REFRESH MATERIALIZED VIEW command.
-REFRESH MATERIALIZED VIEW tum;
-SELECT pg_relation_is_scannable('tum'::regclass);
- pg_relation_is_scannable 
---------------------------
- t
-(1 row)
-
-SELECT * FROM tum;
- type | totamt 
-------+--------
- y    |     12
- z    |     24
- x    |      5
-(3 rows)
-
-REFRESH MATERIALIZED VIEW tum WITH NO DATA;
-SELECT pg_relation_is_scannable('tum'::regclass);
- pg_relation_is_scannable 
---------------------------
- f
-(1 row)
-
-SELECT * FROM tum;
-ERROR:  materialized view "tum" has not been populated
-HINT:  Use the REFRESH MATERIALIZED VIEW command.
-REFRESH MATERIALIZED VIEW tum WITH DATA;
-SELECT pg_relation_is_scannable('tum'::regclass);
- pg_relation_is_scannable 
---------------------------
- t
-(1 row)
-
-SELECT * FROM tum;
- type | totamt 
-------+--------
- y    |     12
- z    |     24
- x    |      5
-(3 rows)
-
+DROP MATERIALIZED VIEW IF EXISTS no_such_mv;
+NOTICE:  materialized view "no_such_mv" does not exist, skipping
 -- test join of mv and view
 SELECT type, m.totamt AS mtot, v.totamt AS vtot FROM tm m LEFT JOIN tv v USING (type) ORDER BY type;
  type | mtot | vtot 
@@ -341,8 +290,6 @@ SELECT type, m.totamt AS mtot, v.totamt AS vtot FROM tm m LEFT JOIN tv v USING (
  z    |   24 |   24
 (3 rows)
 
--- test diemv when the mv does exist
-DROP MATERIALIZED VIEW IF EXISTS tum;
 -- make sure that dependencies are reported properly when they block the drop
 DROP TABLE t;
 ERROR:  cannot drop table t because other objects depend on it
