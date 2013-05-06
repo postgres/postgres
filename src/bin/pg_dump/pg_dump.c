@@ -1034,6 +1034,7 @@ setup_connection(Archive *AH, const char *dumpencoding, char *use_role)
 
 			appendPQExpBuffer(query, "SET TRANSACTION SNAPSHOT ");
 			appendStringLiteralConn(query, AH->sync_snapshot_id, conn);
+			ExecuteSqlStatement(AH, query->data);
 			destroyPQExpBuffer(query);
 		}
 		else
