@@ -189,7 +189,7 @@
        <para>
         This speeds lock release at statement completion in
         transactions that hold many locks; it is particularly useful
-        for <application>pg_dump</>.
+        for <application>pg_dump</> and the restoring of such dumps.
        </para>
       </listitem>
 
