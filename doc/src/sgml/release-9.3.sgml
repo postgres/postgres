@@ -78,14 +78,6 @@
        </para>
       </listitem>
 
-      <listitem>
-       <para>
-        Have <quote>session id</> (<literal>%c</>) in <link
-        linkend="guc-log-line-prefix"><varname>log_line_prefix</></link>
-        always output at least four hex digits after the period (Bruce Momjian)
-       </para>
-      </listitem>
-
      </itemizedlist>
 
    </sect3>

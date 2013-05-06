@@ -4089,14 +4089,14 @@ local0.*    /var/log/postgresql
          </informaltable>
 
          The <literal>%c</> escape prints a quasi-unique session identifier,
-         consisting of two 4-byte hexadecimal numbers separated by a dot.
-         The numbers are the process start time and the
+         consisting of two 4-byte hexadecimal numbers (without leading zeros)
+         separated by a dot.  The numbers are the process start time and the
          process ID, so <literal>%c</> can also be used as a space saving way
          of printing those items.  For example, to generate the session
          identifier from <literal>pg_stat_activity</>, use this query:
 <programlisting>
 SELECT to_hex(EXTRACT(EPOCH FROM backend_start)::integer) || '.' ||
-       regexp_replace('0000' || '0133e3', '^0*(.{4,})$', '\1')
+       to_hex(pid)
 FROM pg_stat_activity;
 </programlisting>
 
