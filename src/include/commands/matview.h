@@ -20,7 +20,7 @@
 #include "utils/relcache.h"
 
 
-extern void SetMatViewToPopulated(Relation relation);
+extern void SetMatViewPopulatedState(Relation relation, bool newstate);
 
 extern void ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 				  ParamListInfo params, char *completionTag);

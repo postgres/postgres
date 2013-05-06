@@ -37,7 +37,6 @@
 #include "access/transam.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
-#include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
@@ -956,12 +955,6 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 	/* make sure relation is marked as having no open file yet */
 	relation->rd_smgr = NULL;
 
-	if (relation->rd_rel->relkind == RELKIND_MATVIEW &&
-		heap_is_matview_init_state(relation))
-		relation->rd_ispopulated = false;
-	else
-		relation->rd_ispopulated = true;
-
 	/*
 	 * now we can free the memory allocated for pg_class_tuple
 	 */
@@ -1459,6 +1452,9 @@ formrdesc(const char *relationName, Oid relationReltype,
 	/* formrdesc is used only for permanent relations */
 	relation->rd_rel->relpersistence = RELPERSISTENCE_PERMANENT;
 
+	/* ... and they're always populated, too */
+	relation->rd_rel->relispopulated = true;
+
 	relation->rd_rel->relpages = 0;
 	relation->rd_rel->reltuples = 0;
 	relation->rd_rel->relallvisible = 0;
@@ -1531,7 +1527,6 @@ formrdesc(const char *relationName, Oid relationReltype,
 	 * initialize physical addressing information for the relation
 	 */
 	RelationInitPhysicalAddr(relation);
-	relation->rd_ispopulated = true;
 
 	/*
 	 * initialize the rel-has-index flag, using hardwired knowledge
@@ -1756,7 +1751,6 @@ RelationReloadIndexInfo(Relation relation)
 	heap_freetuple(pg_class_tuple);
 	/* We must recalculate physical address in case it changed */
 	RelationInitPhysicalAddr(relation);
-	relation->rd_ispopulated = true;
 
 	/*
 	 * For a non-system index, there are fields of the pg_index row that are
@@ -1905,11 +1899,6 @@ RelationClearRelation(Relation relation, bool rebuild)
 	if (relation->rd_isnailed)
 	{
 		RelationInitPhysicalAddr(relation);
-		if (relation->rd_rel->relkind == RELKIND_MATVIEW &&
-			heap_is_matview_init_state(relation))
-			relation->rd_ispopulated = false;
-		else
-			relation->rd_ispopulated = true;
 
 		if (relation->rd_rel->relkind == RELKIND_INDEX)
 		{
@@ -2671,6 +2660,12 @@ RelationBuildLocalRelation(const char *relname,
 			break;
 	}
 
+	/* if it's a materialized view, it's not populated initially */
+	if (relkind == RELKIND_MATVIEW)
+		rel->rd_rel->relispopulated = false;
+	else
+		rel->rd_rel->relispopulated = true;
+
 	/*
 	 * Insert relation physical and logical identifiers (OIDs) into the right
 	 * places.	For a mapped relation, we set relfilenode to zero and rely on
@@ -2697,12 +2692,6 @@ RelationBuildLocalRelation(const char *relname,
 	RelationInitLockInfo(rel);	/* see lmgr.c */
 
 	RelationInitPhysicalAddr(rel);
-
-	/* materialized view not initially scannable */
-	if (relkind == RELKIND_MATVIEW)
-		rel->rd_ispopulated = false;
-	else
-		rel->rd_ispopulated = true;
 
 	/*
 	 * Okay to insert into the relcache hash tables.
@@ -4448,11 +4437,6 @@ load_relcache_init_file(bool shared)
 		 */
 		RelationInitLockInfo(rel);
 		RelationInitPhysicalAddr(rel);
-		if (rel->rd_rel->relkind == RELKIND_MATVIEW &&
-			heap_is_matview_init_state(rel))
-			rel->rd_ispopulated = false;
-		else
-			rel->rd_ispopulated = true;
 	}
 
 	/*

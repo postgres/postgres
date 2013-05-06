@@ -230,13 +230,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	 *
 	 * Don't even think about it unless we have a shot at releasing a goodly
 	 * number of pages.  Otherwise, the time taken isn't worth it.
-	 *
-	 * Leave a populated materialized view with at least one page.
 	 */
-	if (onerel->rd_rel->relkind == RELKIND_MATVIEW &&
-		vacrelstats->nonempty_pages == 0)
-		vacrelstats->nonempty_pages = 1;
-
 	possibly_freeable = vacrelstats->rel_pages - vacrelstats->nonempty_pages;
 	if (possibly_freeable > 0 &&
 		(possibly_freeable >= REL_TRUNCATE_MINIMUM ||

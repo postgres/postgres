@@ -70,7 +70,6 @@ extern Oid heap_create_with_catalog(const char *relname,
 						 bool is_internal);
 
 extern void heap_create_init_fork(Relation rel);
-extern bool heap_is_matview_init_state(Relation rel);
 
 extern void heap_drop_with_catalog(Oid relid);
 

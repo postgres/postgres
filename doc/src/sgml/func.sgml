@@ -14239,10 +14239,6 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    </indexterm>
 
    <indexterm>
-    <primary>pg_relation_is_scannable</primary>
-   </indexterm>
-
-   <indexterm>
     <primary>pg_typeof</primary>
    </indexterm>
 
@@ -14409,11 +14405,6 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <entry><literal><function>pg_tablespace_location(<parameter>tablespace_oid</parameter>)</function></literal></entry>
        <entry><type>text</type></entry>
        <entry>get the path in the file system that this tablespace is located in</entry>
-      </row>
-      <row>
-       <entry><literal><function>pg_relation_is_scannable(<parameter>relation_oid</parameter>)</function></literal></entry>
-       <entry><type>boolean</type></entry>
-       <entry>is the relation scannable; a materialized view which has not been loaded will not be scannable</entry>
       </row>
       <row>
        <entry><literal><function>pg_typeof(<parameter>any</parameter>)</function></literal></entry>

@@ -101,7 +101,7 @@ CREATE VIEW pg_matviews AS
         pg_get_userbyid(C.relowner) AS matviewowner,
         T.spcname AS tablespace,
         C.relhasindex AS hasindexes,
-        pg_relation_is_scannable(C.oid) AS isscannable,
+        C.relispopulated AS ispopulated,
         pg_get_viewdef(C.oid) AS definition
     FROM pg_class C LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace)
          LEFT JOIN pg_tablespace T ON (T.oid = C.reltablespace)

@@ -1759,8 +1759,8 @@ refreshMatViewData(Archive *fout, TableDataInfo *tdinfo)
 	TableInfo  *tbinfo = tdinfo->tdtable;
 	PQExpBuffer q;
 
-	/* If the materialized view is not flagged as scannable, skip this. */
-	if (!tbinfo->isscannable)
+	/* If the materialized view is not flagged as populated, skip this. */
+	if (!tbinfo->relispopulated)
 		return;
 
 	q = createPQExpBuffer();
@@ -1967,8 +1967,8 @@ buildMatViewRefreshDependencies(Archive *fout)
 
 		addObjectDependency(dobj, refdobj->dumpId);
 
-		if (!reftbinfo->isscannable)
-			tbinfo->isscannable = false;
+		if (!reftbinfo->relispopulated)
+			tbinfo->relispopulated = false;
 	}
 
 	PQclear(res);
@@ -4219,7 +4219,7 @@ getTables(Archive *fout, int *numTables)
 	int			i_toastoid;
 	int			i_toastfrozenxid;
 	int			i_relpersistence;
-	int			i_isscannable;
+	int			i_relispopulated;
 	int			i_owning_tab;
 	int			i_owning_col;
 	int			i_reltablespace;
@@ -4265,8 +4265,7 @@ getTables(Archive *fout, int *numTables)
 						  "c.relhasindex, c.relhasrules, c.relhasoids, "
 						  "c.relfrozenxid, tc.oid AS toid, "
 						  "tc.relfrozenxid AS tfrozenxid, "
-						  "c.relpersistence, "
-						  "CASE WHEN c.relkind = '%c' THEN pg_relation_is_scannable(c.oid) ELSE 't'::bool END as isscannable, "
+						  "c.relpersistence, c.relispopulated, "
 						  "c.relpages, "
 						  "CASE WHEN c.reloftype <> 0 THEN c.reloftype::pg_catalog.regtype ELSE NULL END AS reloftype, "
 						  "d.refobjid AS owning_tab, "
@@ -4284,7 +4283,6 @@ getTables(Archive *fout, int *numTables)
 				   "WHERE c.relkind in ('%c', '%c', '%c', '%c', '%c', '%c') "
 						  "ORDER BY c.oid",
 						  username_subquery,
-						  RELKIND_MATVIEW,
 						  RELKIND_SEQUENCE,
 						  RELKIND_RELATION, RELKIND_SEQUENCE,
 						  RELKIND_VIEW, RELKIND_COMPOSITE_TYPE,
@@ -4304,7 +4302,7 @@ getTables(Archive *fout, int *numTables)
 						  "c.relhasindex, c.relhasrules, c.relhasoids, "
 						  "c.relfrozenxid, tc.oid AS toid, "
 						  "tc.relfrozenxid AS tfrozenxid, "
-						  "c.relpersistence, 't'::bool as isscannable, "
+						  "c.relpersistence, 't' as relispopulated, "
 						  "c.relpages, "
 						  "CASE WHEN c.reloftype <> 0 THEN c.reloftype::pg_catalog.regtype ELSE NULL END AS reloftype, "
 						  "d.refobjid AS owning_tab, "
@@ -4341,7 +4339,7 @@ getTables(Archive *fout, int *numTables)
 						  "c.relhasindex, c.relhasrules, c.relhasoids, "
 						  "c.relfrozenxid, tc.oid AS toid, "
 						  "tc.relfrozenxid AS tfrozenxid, "
-						  "'p' AS relpersistence, 't'::bool as isscannable, "
+						  "'p' AS relpersistence, 't' as relispopulated, "
 						  "c.relpages, "
 						  "CASE WHEN c.reloftype <> 0 THEN c.reloftype::pg_catalog.regtype ELSE NULL END AS reloftype, "
 						  "d.refobjid AS owning_tab, "
@@ -4377,7 +4375,7 @@ getTables(Archive *fout, int *numTables)
 						  "c.relhasindex, c.relhasrules, c.relhasoids, "
 						  "c.relfrozenxid, tc.oid AS toid, "
 						  "tc.relfrozenxid AS tfrozenxid, "
-						  "'p' AS relpersistence, 't'::bool as isscannable, "
+						  "'p' AS relpersistence, 't' as relispopulated, "
 						  "c.relpages, "
 						  "NULL AS reloftype, "
 						  "d.refobjid AS owning_tab, "
@@ -4413,7 +4411,7 @@ getTables(Archive *fout, int *numTables)
 						  "c.relhasindex, c.relhasrules, c.relhasoids, "
 						  "c.relfrozenxid, tc.oid AS toid, "
 						  "tc.relfrozenxid AS tfrozenxid, "
-						  "'p' AS relpersistence, 't'::bool as isscannable, "
+						  "'p' AS relpersistence, 't' as relispopulated, "
 						  "c.relpages, "
 						  "NULL AS reloftype, "
 						  "d.refobjid AS owning_tab, "
@@ -4450,7 +4448,7 @@ getTables(Archive *fout, int *numTables)
 						  "0 AS relfrozenxid, "
 						  "0 AS toid, "
 						  "0 AS tfrozenxid, "
-						  "'p' AS relpersistence, 't'::bool as isscannable, "
+						  "'p' AS relpersistence, 't' as relispopulated, "
 						  "relpages, "
 						  "NULL AS reloftype, "
 						  "d.refobjid AS owning_tab, "
@@ -4486,7 +4484,7 @@ getTables(Archive *fout, int *numTables)
 						  "0 AS relfrozenxid, "
 						  "0 AS toid, "
 						  "0 AS tfrozenxid, "
-						  "'p' AS relpersistence, 't'::bool as isscannable, "
+						  "'p' AS relpersistence, 't' as relispopulated, "
 						  "relpages, "
 						  "NULL AS reloftype, "
 						  "d.refobjid AS owning_tab, "
@@ -4518,7 +4516,7 @@ getTables(Archive *fout, int *numTables)
 						  "0 AS relfrozenxid, "
 						  "0 AS toid, "
 						  "0 AS tfrozenxid, "
-						  "'p' AS relpersistence, 't'::bool as isscannable, "
+						  "'p' AS relpersistence, 't' as relispopulated, "
 						  "relpages, "
 						  "NULL AS reloftype, "
 						  "NULL::oid AS owning_tab, "
@@ -4545,7 +4543,7 @@ getTables(Archive *fout, int *numTables)
 						  "0 AS relfrozenxid, "
 						  "0 AS toid, "
 						  "0 AS tfrozenxid, "
-						  "'p' AS relpersistence, 't'::bool as isscannable, "
+						  "'p' AS relpersistence, 't' as relispopulated, "
 						  "relpages, "
 						  "NULL AS reloftype, "
 						  "NULL::oid AS owning_tab, "
@@ -4582,7 +4580,7 @@ getTables(Archive *fout, int *numTables)
 						  "0 as relfrozenxid, "
 						  "0 AS toid, "
 						  "0 AS tfrozenxid, "
-						  "'p' AS relpersistence, 't'::bool as isscannable, "
+						  "'p' AS relpersistence, 't' as relispopulated, "
 						  "0 AS relpages, "
 						  "NULL AS reloftype, "
 						  "NULL::oid AS owning_tab, "
@@ -4631,7 +4629,7 @@ getTables(Archive *fout, int *numTables)
 	i_toastoid = PQfnumber(res, "toid");
 	i_toastfrozenxid = PQfnumber(res, "tfrozenxid");
 	i_relpersistence = PQfnumber(res, "relpersistence");
-	i_isscannable = PQfnumber(res, "isscannable");
+	i_relispopulated = PQfnumber(res, "relispopulated");
 	i_relpages = PQfnumber(res, "relpages");
 	i_owning_tab = PQfnumber(res, "owning_tab");
 	i_owning_col = PQfnumber(res, "owning_col");
@@ -4674,7 +4672,7 @@ getTables(Archive *fout, int *numTables)
 		tblinfo[i].hasrules = (strcmp(PQgetvalue(res, i, i_relhasrules), "t") == 0);
 		tblinfo[i].hastriggers = (strcmp(PQgetvalue(res, i, i_relhastriggers), "t") == 0);
 		tblinfo[i].hasoids = (strcmp(PQgetvalue(res, i, i_relhasoids), "t") == 0);
-		tblinfo[i].isscannable = (strcmp(PQgetvalue(res, i, i_isscannable), "t") == 0);
+		tblinfo[i].relispopulated = (strcmp(PQgetvalue(res, i, i_relispopulated), "t") == 0);
 		tblinfo[i].relpages = atoi(PQgetvalue(res, i, i_relpages));
 		tblinfo[i].frozenxid = atooid(PQgetvalue(res, i, i_relfrozenxid));
 		tblinfo[i].toast_oid = atooid(PQgetvalue(res, i, i_toastoid));
@@ -13101,6 +13099,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 
 		/*
 		 * For materialized views, create the AS clause just like a view.
+		 * At this point, we always mark the view as not populated.
 		 */
 		if (tbinfo->relkind == RELKIND_MATVIEW)
 		{
@@ -13227,6 +13226,23 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 								  "WHERE oid = '%u';\n",
 								  tbinfo->toast_frozenxid, tbinfo->toast_oid);
 			}
+		}
+
+		/*
+		 * In binary_upgrade mode, restore matviews' populated status by
+		 * poking pg_class directly.  This is pretty ugly, but we can't use
+		 * REFRESH MATERIALIZED VIEW since it's possible that some underlying
+		 * matview is not populated even though this matview is.
+		 */
+		if (binary_upgrade && tbinfo->relkind == RELKIND_MATVIEW &&
+			tbinfo->relispopulated)
+		{
+			appendPQExpBuffer(q, "\n-- For binary upgrade, mark materialized view as populated\n");
+			appendPQExpBuffer(q, "UPDATE pg_catalog.pg_class\n"
+							  "SET relispopulated = 't'\n"
+							  "WHERE oid = ");
+			appendStringLiteralAH(q, fmtId(tbinfo->dobj.name), fout);
+			appendPQExpBuffer(q, "::pg_catalog.regclass;\n");
 		}
 
 		/*

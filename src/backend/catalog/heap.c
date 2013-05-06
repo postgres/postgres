@@ -780,6 +780,7 @@ InsertPgClassTuple(Relation pg_class_desc,
 	values[Anum_pg_class_relhasrules - 1] = BoolGetDatum(rd_rel->relhasrules);
 	values[Anum_pg_class_relhastriggers - 1] = BoolGetDatum(rd_rel->relhastriggers);
 	values[Anum_pg_class_relhassubclass - 1] = BoolGetDatum(rd_rel->relhassubclass);
+	values[Anum_pg_class_relispopulated - 1] = BoolGetDatum(rd_rel->relispopulated);
 	values[Anum_pg_class_relfrozenxid - 1] = TransactionIdGetDatum(rd_rel->relfrozenxid);
 	values[Anum_pg_class_relminmxid - 1] = MultiXactIdGetDatum(rd_rel->relminmxid);
 	if (relacl != (Datum) 0)
@@ -1343,26 +1344,6 @@ heap_create_init_fork(Relation rel)
 	if (XLogIsNeeded())
 		log_smgrcreate(&rel->rd_smgr->smgr_rnode.node, INIT_FORKNUM);
 	smgrimmedsync(rel->rd_smgr, INIT_FORKNUM);
-}
-
-/*
- * Check whether a materialized view is in an initial, unloaded state.
- *
- * The check here must match what is set up in heap_create_init_fork().
- * Currently the init fork is an empty file.  A missing heap is also
- * considered to be unloaded.
- */
-bool
-heap_is_matview_init_state(Relation rel)
-{
-	Assert(rel->rd_rel->relkind == RELKIND_MATVIEW);
-
-	RelationOpenSmgr(rel);
-
-	if (!smgrexists(rel->rd_smgr, MAIN_FORKNUM))
-		return true;
-
-	return (smgrnblocks(rel->rd_smgr, MAIN_FORKNUM) < 1);
 }
 
 /*

@@ -359,10 +359,6 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	 */
 	intoRelationDesc = heap_open(intoRelationId, AccessExclusiveLock);
 
-	if (is_matview && !into->skipData)
-		/* Make sure the heap looks good even if no rows are written. */
-		SetMatViewToPopulated(intoRelationDesc);
-
 	/*
 	 * Check INSERT permission on the constructed table.
 	 *
@@ -380,6 +376,13 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 								attnum - FirstLowInvalidHeapAttributeNumber);
 
 	ExecCheckRTPerms(list_make1(rte), true);
+
+	/*
+	 * Tentatively mark the target as populated, if it's a matview and we're
+	 * going to fill it; otherwise, no change needed.
+	 */
+	if (is_matview && !into->skipData)
+		SetMatViewPopulatedState(intoRelationDesc, true);
 
 	/*
 	 * Fill private fields of myState for use by later routines

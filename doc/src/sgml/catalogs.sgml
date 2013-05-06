@@ -1864,6 +1864,14 @@
      </row>
 
      <row>
+      <entry><structfield>relispopulated</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>True if relation is populated (this is true for all
+       relations other than some materialized views)</entry>
+     </row>
+
+     <row>
       <entry><structfield>relfrozenxid</structfield></entry>
       <entry><type>xid</type></entry>
       <entry></entry>
@@ -7776,14 +7784,14 @@
      <row>
       <entry><structfield>hasindexes</structfield></entry>
       <entry><type>boolean</type></entry>
-      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.relhasindex</literal></entry>
+      <entry></entry>
       <entry>True if materialized view has (or recently had) any indexes</entry>
      </row>
      <row>
-      <entry><structfield>isscannable</structfield></entry>
+      <entry><structfield>ispopulated</structfield></entry>
       <entry><type>boolean</type></entry>
       <entry></entry>
-      <entry>True if materialized view can currently be scanned</entry>
+      <entry>True if materialized view is currently populated</entry>
      </row>
      <row>
       <entry><structfield>definition</structfield></entry>
