@@ -13,10 +13,14 @@
    <title>Overview</title>
 
    <para>
-    ADD HERE  Major enhancements include:
+    Major enhancements include:
    </para>
 
     <!-- This list duplicates items below, but without authors or details-->
+
+   <para>
+    ADD HERE ...
+   </para>
 
    <para>
     The above items are explained in more detail in the sections below.
@@ -129,9 +133,9 @@
        </para>
 
        <para>
-        Previously, <acronym>WAL</> files ending in <literal>FF</> were
-        not used.  If you have <acronym>WAL</> backup or restore scripts
-        that took that skipping into account, they need to be adjusted.
+        Previously, <acronym>WAL</> files with names ending in <literal>FF</>
+        were not used.  If you have <acronym>WAL</> backup or restore scripts
+        that took that skipping into account, they will need to be adjusted.
        </para>
       </listitem>
 
@@ -263,7 +267,7 @@
       <listitem>
        <para>
         Add <link linkend="SQL-COPY"><command>COPY FREEZE</></link>
-        option to avoid the overhead of later marking tuples as committed
+        option to avoid the overhead of marking tuples as committed later
         (Simon Riggs, Jeff Davis)
        </para>
       </listitem>
@@ -324,7 +328,7 @@
        </para>
 
        <para>
-        This reduces the statistics management read and write overhead.
+        This reduces the I/O overhead for statistics tracking.
        </para>
       </listitem>
 
@@ -443,8 +447,8 @@
 
        <para>
         Instead, on Unix-like systems, <function>mmap()</> is used for
-        shared memory.  This eliminates the requirement of increasing
-        System V shared memory kernel parameters.
+        shared memory.  For most users, this will eliminate the need to
+        adjust kernel parameters for shared memory.
        </para>
       </listitem>
 
@@ -455,8 +459,8 @@
        </para>
 
        <para>
-        This renames configuration parameter
-        <varname>unix_socket_directory</> to <link
+        The configuration parameter
+        <varname>unix_socket_directory</> is replaced by <link
         linkend="guc-unix-socket-directories"><varname>unix_socket_directories</></link>,
         which accepts a list of directories.
        </para>
@@ -469,8 +473,8 @@
        </para>
 
        <para>
-        The directory is specified as <link
-        linkend="config-includes"><varname>include_dir</></link> in server
+        Such a directory is specified with <link
+        linkend="config-includes"><varname>include_dir</></link> in the server
         configuration file.
        </para>
       </listitem>
@@ -484,9 +488,9 @@
        </para>
 
        <para>
-        This is the maximum value initdb attempts to set in <link
+        This is the maximum value that initdb will attempt to set in <link
         linkend="config-setting-configuration-file"><filename>postgresql.conf</></link>;
-        the previous value was 32MB.
+        the previous maximum was 32MB.
        </para>
       </listitem>
 
@@ -571,6 +575,13 @@
         to run on computers with different architectures (Heikki
         Linnakangas)
        </para>
+
+       <para>
+        WAL files can still only be replayed on servers with the same
+        architecture as the primary; but they can now be transmitted to and
+        stored on machines of any architecture, since the
+        streaming replication protocol is now machine-independent.
+       </para>
       </listitem>
 
       <listitem>
@@ -626,7 +637,8 @@
        </para>
 
        <para>
-        The new format is slightly more compact.
+        The new format is slightly more compact, and is more efficient to
+        write.
        </para>
       </listitem>
 
@@ -644,13 +656,13 @@
       <listitem>
        <para>
         Implement <acronym>SQL</>-standard <link
-        linkend="queries-lateral"><literal>LATERAL</></link> for
+        linkend="queries-lateral"><literal>LATERAL</></link> option for
         <literal>FROM</>-clause subqueries and function calls (Tom Lane)
        </para>
 
        <para>
-        This is useful in allowing <literal>FROM</> subqueries and
-        functions to reference output from tables in the <literal>FROM</>
+        This feature allows subqueries and functions in <literal>FROM</> to
+        reference columns from other tables in the <literal>FROM</>
         clause. The <literal>LATERAL</> keyword is optional for functions.
        </para>
       </listitem>
@@ -661,16 +673,6 @@
         linkend="SQL-COPY"><command>COPY</></link> and <link
         linkend="APP-PSQL"><application>psql</></link> <command>\copy</>
         to/from an external program (Etsuro Fujita)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Improve query string error location reporting (Tom Lane)
-       </para>
-
-       <para>
-        Only <command>CREATE SCHEMA ... IF NOT EXISTS</>?  If so, remove it.
        </para>
       </listitem>
 
@@ -685,19 +687,19 @@
 
       <listitem>
        <para>
-        Add support to <link linkend="event-triggers">event triggers</link>
+        Add support for <link linkend="event-triggers">event triggers</link>
         (Dimitri Fontaine, Robert Haas, &Aacute;lvaro Herrera)
        </para>
 
        <para>
-        This allows C functions to be called when specific commands are run.
+        This allows C functions to be called when DDL commands are run.
        </para>
       </listitem>
 
       <listitem>
        <para>
         Allow a multi-row <link
-        linkend="SQL-VALUES"><literal>VALUES</></link> clause in rules
+        linkend="SQL-VALUES"><literal>VALUES</></link> clause in a rule
         to reference <literal>OLD</>/<literal>NEW</> (Tom Lane)
        </para>
       </listitem>
@@ -726,18 +728,20 @@
 
       <listitem>
        <para>
-        No longer output messages about implicit index and sequence creation (Robert Haas)
+        Suppress messages about implicit index and sequence creation
+        (Robert Haas)
        </para>
 
        <para>
-        These messages now appear with <literal>DEBUG1</>-level output.
+        These messages now appear at <literal>DEBUG1</> verbosity, so that
+        they will not be shown by default.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow <command>DROP TABLE IF NOT EXISTS</> to succeed for a
-        non-existent schema (Bruce Momjian)
+        Allow <command>DROP TABLE IF NOT EXISTS</> to succeed when a
+        non-existent schema is specified in the table name (Bruce Momjian)
        </para>
 
        <para>
@@ -764,7 +768,7 @@
        <para>
         This allows clients to retrieve table, column, data type, or constraint
         name error details.  Previously such information had to be extracted from
-        error strings.  Client language support is required to access these
+        error strings.  Client library support is required to access these
         fields.
        </para>
       </listitem>
@@ -780,13 +784,13 @@
 
       <listitem>
        <para>
-        Add the <link linkend="SQL-ALTERTYPE"><command>ALTER TYPE ... IF
-        NOT EXISTS</></link> clause when adding enumerated type labels
+        Support <literal>IF NOT EXISTS</> option in <link
+        linkend="SQL-ALTERTYPE"><command>ALTER TYPE ... ADD VALUE</></link>
         (Andrew Dunstan)
        </para>
 
        <para>
-        This is useful for conditional label creation in transaction blocks.
+        This is useful for conditionally adding values to enumerated types.
        </para>
       </listitem>
 
@@ -822,16 +826,16 @@
 
       <listitem>
        <para>
-        Add a <link linkend="SQL-CREATEMATERIALIZEDVIEW">materialized
-        view</link> relations (Kevin Grittner)
+        Add <link linkend="SQL-CREATEMATERIALIZEDVIEW">materialized
+        views</link> (Kevin Grittner)
        </para>
 
        <para>
         Unlike ordinary views, where the base tables are read on every access,
         materialized views create physical tables at creation or refresh time.
-        Access to the materialized view reads from these materialized physical
-        tables. There is no facility for incrementally refreshing materialized
-        views or auto-accessing them via base table access.
+        Access to the materialized view then reads from its physical
+        table. There is not yet any facility for incrementally refreshing
+        materialized views or auto-accessing them via base table access.
        </para>
       </listitem>
 
@@ -853,9 +857,16 @@
 
       <listitem>
        <para>
-        Allow views and rules to handle cases where referenced tables are
-        renamed, or columns are renamed, added, or dropped (Tom Lane)
-        HOW DOES IT HANDLE A DROPPED REFERENCED COLUMN?
+        Improve view/rule printing code to handle cases where referenced
+        tables are renamed, or columns are renamed, added, or dropped
+        (Tom Lane)
+       </para>
+
+       <para>
+        Table and column renamings can produce cases where, if we merely
+        substitute the new name into the original text of a rule or view, the
+        result is ambiguous.  This patch fixes the rule-dumping code to insert
+        table and column aliases if needed to preserve the original semantics.
        </para>
       </listitem>
 
@@ -867,14 +878,7 @@
 
        <para>
         Internally this is translated into <command>CREATE VIEW ... WITH
-        RECURSIVE</>.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        When converting a table to a view, remove its system columns (Tom Lane)
-        KEEP?
+        RECURSIVE ...</>.
        </para>
       </listitem>
 
@@ -896,7 +900,8 @@
        </para>
 
        <para>
-        This change includes new libpq and server-side 64-bit-enabled functions.
+        This change includes new libpq and server-side 64-bit-capable
+        large object access functions.
        </para>
       </listitem>
 
@@ -1013,23 +1018,28 @@
        <para>
         Cause <link
         linkend="functions-info-catalog-table"><function>pg_get_viewdef()</></link>
-        to default to wrapping after every <link
-        linkend="SQL-SELECT"><command>SELECT</></link> target list and
+        to start a new line by default after each <link
+        linkend="SQL-SELECT"><command>SELECT</></link> target list entry and
         <literal>FROM</> entry (Marko Tiikkaja)
        </para>
 
        <para>
-        This causes view output, like from <link
-        linkend="APP-PGDUMP"><application>pg_dump</></link>, to be
-        more narrow.
+        This reduces line length in view printing, for instance in <link
+        linkend="APP-PGDUMP"><application>pg_dump</></link> output.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Have <function>map_sql_value_to_xml_value()</> properly expand
-        domains (Pavel Stehule)  WHAT IS THE USER-VISIBLE AFFECT HERE?
-        map_sql_value_to_xml_value IS A C FUNCTION
+        Fix <function>map_sql_value_to_xml_value()</> to print values of
+        domain types the same way their base type would be printed
+        (Pavel Stehule)
+       </para>
+
+       <para>
+        There are special formatting rules for certain built-in types such as
+        <type>boolean</>; these rules now also apply to domains over these
+        types.
        </para>
       </listitem>
 
@@ -1043,7 +1053,6 @@
        <para>
         Previously functions already run in the current session ignored
         <varname>search_path</> changes.
-        (Bruce Momjian)
        </para>
       </listitem>
 
@@ -1074,11 +1083,12 @@
       <listitem>
        <para>
         Allow PL/pgSQL to use <literal>RETURN</> with a composite-type
-        expressions (Asif Rehman)
+        expression (Asif Rehman)
        </para>
 
        <para>
-        Previously <literal>RETURN</> could only reference composite-type variables.
+        Previously, in a function returning a composite type,
+        <literal>RETURN</> could only reference a variable of that type.
        </para>
       </listitem>
 
@@ -1122,7 +1132,7 @@
 
       <listitem>
        <para>
-        Have PL/Python convert oid values to a proper Python numeric type
+        Make PL/Python convert OID values to a proper Python numeric type
         (Peter Eisentraut)
        </para>
       </listitem>
@@ -1130,7 +1140,7 @@
       <listitem>
        <para>
         Handle <link linkend="spi"><acronym>SPI</></link> errors raised
-        explicitly with PL/Python's <literal>RAISE</> the same as as
+        explicitly (with PL/Python's <literal>RAISE</>) the same as
         internal <acronym>SPI</> errors (Oskari Saarenmaa and Jan Urbanski)
        </para>
       </listitem>
@@ -1167,7 +1177,7 @@
        <para>
         This is similar to the <link
         linkend="APP-PGDUMP"><application>pg_dump</></link> <option>--table</>
-        support.
+        option.
        </para>
       </listitem>
 
@@ -1175,7 +1185,7 @@
        <para>
         Add <option>--dbname</> option to <link
         linkend="APP-PG-DUMPALL"><application>pg_dumpall</></link>, <link
-        linkend="app-pgbasebackup"><application>pg_basebackup</></link>,
+        linkend="app-pgbasebackup"><application>pg_basebackup</></link>, and
         <link
         linkend="app-pgreceivexlog"><application>pg_receivexlog</></link>
         to specify the connection string (Amit Kapila)
@@ -1289,12 +1299,13 @@
 
       <listitem>
        <para>
-        Properly reset state if <application>psql</>'s <quote>\g file</>
-        command failed (Tom Lane)
+        Properly reset state if the SQL command executed with
+        <application>psql</>'s <quote>\g file</> fails (Tom Lane)
        </para>
 
        <para>
-        Previously failed commands discarded output from subsequent commands.
+        Previously, the output from subsequent SQL commands would unexpectedly
+        continue to go to the same file.
        </para>
       </listitem>
 
@@ -1314,7 +1325,7 @@
        </para>
 
        <para>
-        Longtable allows tables to span multiple pages.
+        This format allows tables to span multiple pages.
        </para>
       </listitem>
 
@@ -1352,14 +1363,14 @@
 
       <listitem>
        <para>
-        Add <application>pg_dump</> <option>--jobs</> to dump in parallel
-        when using directory output format (Joachim Wieland)
+        Add <application>pg_dump</> <option>--jobs</> option to dump tables in
+        parallel (Joachim Wieland)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Have <application>pg_dump</> output functions in a predictable
+        Have <application>pg_dump</> output functions in a more predictable
         order (Joel Jacobson)
        </para>
       </listitem>
@@ -1417,7 +1428,7 @@
       <listitem>
        <para>
         Have initdb issue a warning about placing the data directory at the
-        top of file system mount points (Bruce Momjian)
+        top of a file system mount point (Bruce Momjian)
        </para>
       </listitem>
 
@@ -1550,14 +1561,13 @@
 
       <listitem>
        <para>
-        Add <function>Assert()</> functionality to client-side code for
-        frontend code (Andrew Dunstan)
+        Support <function>Assert()</> in client-side code (Andrew Dunstan)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Change many internal many backend functions to return <type>OID</>s
+        Change many internal backend functions to return <type>OID</>s
         rather than void (Dimitri Fontaine)
        </para>
 
@@ -1668,9 +1678,9 @@
 
       <listitem>
        <para>
-        Allow write-enabled <link
-        linkend="SQL-CREATEFOREIGNDATAWRAPPER">foreign data wrappers</link>
-        to support writes (KaiGai Kohei)
+        Allow <link linkend="SQL-CREATEFOREIGNDATAWRAPPER">foreign data
+        wrappers</link> to support writes (inserts/updates/deletes) on foreign
+        tables (KaiGai Kohei)
        </para>
       </listitem>
 
@@ -1681,7 +1691,7 @@
        </para>
 
        <para>
-        This foreign data wrapper allows writes.
+        This foreign data wrapper supports writes.
        </para>
       </listitem>
 
@@ -1695,7 +1705,7 @@
       <listitem>
        <para>
         Add support for indexing of regular-expression searches in
-        extension <link linkend="pgtrgm"><productname>pg_trgm</></link>
+        <link linkend="pgtrgm"><productname>pg_trgm</></link>
         (Alexander Korotkov)
        </para>
       </listitem>
@@ -1821,26 +1831,27 @@
 
       <listitem>
        <para>
-        Add <option>--foreign-keys</> option to <application>pgbench</> (Jeff Janes)
+        Add <option>--foreign-keys</> option to <application>pgbench</>
+        (Jeff Janes)
        </para>
 
        <para>
-        This adds foreign key constraints to tables, for use in foreign
-        key performance testing.
+        This adds foreign key constraints to the standard tables created by
+        <application>pgbench</>, for use in foreign key performance testing.
        </para>
       </listitem>
 
       <listitem>
        <para>
         Allow <application>pgbench</> to aggregate performance statistics
-        and produce output every <option>--aggregate-interval</> specified
+        and produce output every <option>--aggregate-interval</>
         seconds (Tomas Vondra)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add <application>pg_bench</> <option>--sampling-rate</> option
+        Add <application>pgbench</> <option>--sampling-rate</> option
         to control the percentage of transactions logged (Tomas Vondra)
        </para>
       </listitem>
@@ -1858,10 +1869,12 @@
         Add <application>pgbench</> <option>-q</> mode to print one output
         line every five seconds (Tomas Vondra)
        </para>
+      </listitem>
 
+      <listitem>
        <para>
         Output <application>pgbench</> elapsed and estimated remaining
-        time during initialization logging (Tomas Vondra)
+        time during initialization (Tomas Vondra)
        </para>
       </listitem>
 
