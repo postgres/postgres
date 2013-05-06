@@ -828,10 +828,6 @@ msgstr "%s: integer_datetimes přepínač kompilace neodpovídá serveru\n"
 #~ msgstr ""
 #~ "%s: timeline mezi base backupem a streamovacím spojením neodpovídá\n"
 
-#~| msgid "%s: keepalive message is incorrect size: %d\n"
-#~ msgid "%s: keepalive message has incorrect size %d\n"
-#~ msgstr "%s: keepalive zpráva má neplatnou velikost: %d\n"
-
 #~ msgid "  --help                   show this help, then exit\n"
 #~ msgstr "  --help                   zobraz tuto nápovědu, poté skonči\n"
 

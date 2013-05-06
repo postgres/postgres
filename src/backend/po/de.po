@@ -19991,18 +19991,3 @@ msgstr "kann keinen Snapshot aus einer anderen Datenbank importieren"
 
 #~ msgid "argument number is out of range"
 #~ msgstr "Argumentnummer ist außerhalb des zulässigen Bereichs"
-
-#, fuzzy
-#~| msgid "received promote request"
-#~ msgid "received fast promote request"
-#~ msgstr "Anforderung zum Befördern empfangen"
-
-#, fuzzy
-#~| msgid "database with OID %u must be vacuumed within %u transactions"
-#~ msgid "database with OID %u must be vacuumed before %u more MultiXactId are used"
-#~ msgstr "Datenbank mit OID %u muss innerhalb von %u Transaktionen gevacuumt werden"
-
-#, fuzzy
-#~| msgid "database \"%s\" must be vacuumed within %u transactions"
-#~ msgid "database \"%s\" must be vacuumed before %u more MultiXactId are used"
-#~ msgstr "Datenbank „%s“ muss innerhalb von %u Transaktionen gevacuumt werden"
