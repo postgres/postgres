@@ -1,97 +1,236 @@
-# translation of initdb-cs.po to 
+# translation of initdb-cs.po to
 # translation of initdb-cs.po to Czech
-# Karel  Žák, 2004.
-# Zdeněk Kotala, 2009.
 #
+# Karel  Žák, 2004.
+# Zdeněk Kotala, 2009, 2011, 2012, 2013.
 msgid ""
 msgstr ""
 "Project-Id-Version: postgresql-8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2009-06-06 23:08+0000\n"
-"PO-Revision-Date: 2010-09-25 00:36+0300\n"
-"Last-Translator: Zdeněk Kotala\n"
-"Language-Team:  \n"
+"POT-Creation-Date: 2013-03-17 18:47+0000\n"
+"PO-Revision-Date: 2013-03-17 21:26+0100\n"
+"Last-Translator: \n"
+"Language-Team: Czech <kde-i18n-doc@kde.org>\n"
+"Language: cs\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+"X-Generator: Lokalize 1.5\n"
 
-#: initdb.c:254 initdb.c:268
+#: ../../common/fe_memutils.c:33 ../../common/fe_memutils.c:60
+#: ../../common/fe_memutils.c:83
+#, c-format
+msgid "out of memory\n"
+msgstr "nedostatek paměti\n"
+
+#: ../../common/fe_memutils.c:77
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "nelze duplikovat null pointer (interní chyba)\n"
+
+#: ../../port/dirmod.c:220
+#, c-format
+msgid "could not set junction for \"%s\": %s\n"
+msgstr "nelze nastavit propojení \"%s\": %s\n"
+
+#: ../../port/dirmod.c:295
+#, c-format
+msgid "could not get junction for \"%s\": %s\n"
+msgstr "nelze najít funkci pro \"%s\": %s\n"
+
+#: ../../port/dirmod.c:377
+#, c-format
+msgid "could not open directory \"%s\": %s\n"
+msgstr "nelze otevřít adresář \"%s\": %s\n"
+
+#: ../../port/dirmod.c:414
+#, c-format
+msgid "could not read directory \"%s\": %s\n"
+msgstr "nelze číst z adresáře \"%s\": %s\n"
+
+#: ../../port/dirmod.c:497
+#, c-format
+msgid "could not stat file or directory \"%s\": %s\n"
+msgstr "nelze získat informace o souboru nebo adresáři \"%s\": %s\n"
+
+#: ../../port/dirmod.c:524 ../../port/dirmod.c:541
+#, c-format
+msgid "could not remove file or directory \"%s\": %s\n"
+msgstr "nelze smazat soubor nebo adresář \"%s\": %s\n"
+
+#: ../../port/exec.c:127 ../../port/exec.c:241 ../../port/exec.c:284
+#, c-format
+msgid "could not identify current directory: %s"
+msgstr "nelze získat aktuální adresář: %s"
+
+#: ../../port/exec.c:146
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "neplatný binární soubor\"%s\""
+
+#: ../../port/exec.c:195
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "nelze číst binární soubor \"%s\""
+
+#: ../../port/exec.c:202
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "nelze najít spustitelný soubor \"%s\""
+
+#: ../../port/exec.c:257 ../../port/exec.c:293
+#, c-format
+msgid "could not change directory to \"%s\": %s"
+msgstr "nelze změnit adresář na \"%s\" : %s"
+
+#: ../../port/exec.c:272
+#, c-format
+msgid "could not read symbolic link \"%s\""
+msgstr "nelze číst symbolický link \"%s\""
+
+#: ../../port/exec.c:523
+#, c-format
+msgid "pclose failed: %s"
+msgstr "volání pclose selhalo: %s"
+
+#: ../../port/wait_error.c:47
+#, c-format
+msgid "command not executable"
+msgstr "příkaz není spustitelný"
+
+#: ../../port/wait_error.c:51
+#, c-format
+msgid "command not found"
+msgstr "příkaz nenalezen"
+
+#: ../../port/wait_error.c:56
+#, c-format
+msgid "child process exited with exit code %d"
+msgstr "potomek skončil s návratovým kódem %d"
+
+#: ../../port/wait_error.c:63
+#, c-format
+msgid "child process was terminated by exception 0x%X"
+msgstr "potomek byl ukončen vyjímkou 0x%X"
+
+#: ../../port/wait_error.c:73
+#, c-format
+msgid "child process was terminated by signal %s"
+msgstr "potomek byl ukončen signálem %s"
+
+#: ../../port/wait_error.c:77
+#, c-format
+msgid "child process was terminated by signal %d"
+msgstr "potomek byl ukončen signálem %d"
+
+#: ../../port/wait_error.c:82
+#, c-format
+msgid "child process exited with unrecognized status %d"
+msgstr "potomek skončil s nerozponaným stavem %d"
+
+#: initdb.c:325
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: nedostatek paměti\n"
 
-#: initdb.c:377 initdb.c:1490
+#: initdb.c:435 initdb.c:1538
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
 msgstr "%s: nelze otevřít soubor \"%s\" pro čtení: %s\n"
 
-#: initdb.c:439 initdb.c:998 initdb.c:1027
+#: initdb.c:491 initdb.c:1033 initdb.c:1062
 #, c-format
 msgid "%s: could not open file \"%s\" for writing: %s\n"
 msgstr "%s: nelze otevřít soubor \"%s\" pro zápis: %s\n"
 
-#: initdb.c:447 initdb.c:455 initdb.c:1005 initdb.c:1033
+#: initdb.c:499 initdb.c:507 initdb.c:1040 initdb.c:1068
 #, c-format
 msgid "%s: could not write file \"%s\": %s\n"
 msgstr "%s: nelze zapsat do souboru \"%s\": %s\n"
 
-#: initdb.c:474
+#: initdb.c:529
+#, c-format
+msgid "%s: could not open directory \"%s\": %s\n"
+msgstr "%s : nelze otevřít adresář \"%s\": %s\n"
+
+#: initdb.c:546
+#, c-format
+msgid "%s: could not stat file \"%s\": %s\n"
+msgstr "%s: nelze provést stat souboru \"%s\": %s\n"
+
+#: initdb.c:568
+#, c-format
+msgid "%s: could not read directory \"%s\": %s\n"
+msgstr "%s: nelze načíst adresář \"%s\": %s\n"
+
+#: initdb.c:605 initdb.c:657
+#, c-format
+msgid "%s: could not open file \"%s\": %s\n"
+msgstr "%s: nelze otevřít soubor \"%s\": %s\n"
+
+#: initdb.c:673
+#, c-format
+msgid "%s: could not fsync file \"%s\": %s\n"
+msgstr "%s: nelze provést fsync souboru \"%s\": %s\n"
+
+#: initdb.c:694
 #, c-format
 msgid "%s: could not execute command \"%s\": %s\n"
 msgstr "%s: nelze vykonat příkaz \"%s\": %s\n"
 
-#: initdb.c:594
+#: initdb.c:710
 #, c-format
 msgid "%s: removing data directory \"%s\"\n"
 msgstr "%s: odstraňuji datový adresář \"%s\"\n"
 
-#: initdb.c:597
+#: initdb.c:713
 #, c-format
 msgid "%s: failed to remove data directory\n"
 msgstr "%s: selhalo odstranění datového adresáře\n"
 
-#: initdb.c:603
+#: initdb.c:719
 #, c-format
 msgid "%s: removing contents of data directory \"%s\"\n"
 msgstr "%s: odstraňuji obsah datového adresáře \"%s\"\n"
 
-#: initdb.c:606
+#: initdb.c:722
 #, c-format
 msgid "%s: failed to remove contents of data directory\n"
 msgstr "%s: selhalo odstranění obsahu datového adresáře\n"
 
-#: initdb.c:612
+#: initdb.c:728
 #, c-format
 msgid "%s: removing transaction log directory \"%s\"\n"
 msgstr "%s: odstraňuji adresář s transakčním logem \"%s\"\n"
 
-#: initdb.c:615
+#: initdb.c:731
 #, c-format
 msgid "%s: failed to remove transaction log directory\n"
 msgstr "%s: selhalo odstraňení adresáře s transakčním logem\n"
 
-#: initdb.c:621
+#: initdb.c:737
 #, c-format
 msgid "%s: removing contents of transaction log directory \"%s\"\n"
 msgstr "%s: odstraňuji obsah adresáře s transakčním logem \"%s\"\n"
 
-#: initdb.c:624
+#: initdb.c:740
 #, c-format
 msgid "%s: failed to remove contents of transaction log directory\n"
 msgstr "%s: selhalo odstranění obsahu adresáře s transakčním logem\n"
 
-#: initdb.c:633
+#: initdb.c:749
 #, c-format
 msgid "%s: data directory \"%s\" not removed at user's request\n"
 msgstr "%s: datový adresář \"%s\" nebyl na žádost uživatele odstraněn\n"
 
-#: initdb.c:638
+#: initdb.c:754
 #, c-format
 msgid "%s: transaction log directory \"%s\" not removed at user's request\n"
-msgstr "%s: adresář s transakčním logem \"%s\" nebyl na žádost uživatele odstraněn\n"
+msgstr ""
+"%s: adresář s transakčním logem \"%s\" nebyl na žádost uživatele odstraněn\n"
 
-#: initdb.c:660
+#: initdb.c:776
 #, c-format
 msgid ""
 "%s: cannot be run as root\n"
@@ -102,32 +241,32 @@ msgstr ""
 "Prosím přihlaste se jako (neprivilegovaný) uživatel, který bude vlastníkem\n"
 "serverového procesu (například pomocí příkazu \"su\").\n"
 
-#: initdb.c:672
+#: initdb.c:788
 #, c-format
 msgid "%s: could not obtain information about current user: %s\n"
 msgstr "%s: nelze získat informace o aktualním uživateli: %s\n"
 
-#: initdb.c:689
+#: initdb.c:805
 #, c-format
 msgid "%s: could not get current user name: %s\n"
 msgstr "%s: nelze získat jméno aktuálního uživatele: %s\n"
 
-#: initdb.c:720
+#: initdb.c:836
 #, c-format
 msgid "%s: \"%s\" is not a valid server encoding name\n"
 msgstr "%s: \"%s\" není platný název kódování znaků\n"
 
-#: initdb.c:918 initdb.c:3058
+#: initdb.c:953 initdb.c:3238
 #, c-format
 msgid "%s: could not create directory \"%s\": %s\n"
 msgstr "%s: nelze vytvořít adresář \"%s\": %s\n"
 
-#: initdb.c:948
+#: initdb.c:983
 #, c-format
 msgid "%s: file \"%s\" does not exist\n"
 msgstr "%s: soubor \"%s\" neexistuje\n"
 
-#: initdb.c:950 initdb.c:959 initdb.c:969
+#: initdb.c:985 initdb.c:994 initdb.c:1004
 #, c-format
 msgid ""
 "This might mean you have a corrupted installation or identified\n"
@@ -136,36 +275,36 @@ msgstr ""
 "To znamená, že vaše instalace je poškozena, nebo jste\n"
 "zadal chybný adresář v parametru -L při spuštění.\n"
 
-#: initdb.c:956
+#: initdb.c:991
 #, c-format
 msgid "%s: could not access file \"%s\": %s\n"
 msgstr "%s: nelze přistupit k souboru \"%s\": %s\n"
 
-#: initdb.c:967
+#: initdb.c:1002
 #, c-format
 msgid "%s: file \"%s\" is not a regular file\n"
 msgstr "%s: soubor \"%s\" není běžný soubor\n"
 
-#: initdb.c:1075
+#: initdb.c:1110
 #, c-format
 msgid "selecting default max_connections ... "
-msgstr "vybírám základní nastavení max_connections ... "
+msgstr "vybírám implicitní nastavení max_connections ... "
 
-#: initdb.c:1104
+#: initdb.c:1139
 #, c-format
 msgid "selecting default shared_buffers ... "
-msgstr "vybírám základní nastavení shared_buffers ... "
+msgstr "vybírám implicitní nastavení shared_buffers ... "
 
-#: initdb.c:1147
+#: initdb.c:1183
 msgid "creating configuration files ... "
 msgstr "vytvářím konfigurační soubory ... "
 
-#: initdb.c:1314
+#: initdb.c:1378
 #, c-format
 msgid "creating template1 database in %s/base/1 ... "
 msgstr "vytvářím databázi template1 v %s/base/1 ... "
 
-#: initdb.c:1330
+#: initdb.c:1394
 #, c-format
 msgid ""
 "%s: input file \"%s\" does not belong to PostgreSQL %s\n"
@@ -175,105 +314,142 @@ msgstr ""
 "Zkontrolujte si vaši instalaci nebo zadejte platnou cestu pomocí\n"
 "parametru -L.\n"
 
-#: initdb.c:1429
+#: initdb.c:1479
 msgid "initializing pg_authid ... "
 msgstr "inicializuji pg_authid ... "
 
-#: initdb.c:1465
+#: initdb.c:1513
 msgid "Enter new superuser password: "
 msgstr "Zadejte nové heslo pro superuživatele: "
 
-#: initdb.c:1466
+#: initdb.c:1514
 msgid "Enter it again: "
 msgstr "Zadejte ho znovu: "
 
-#: initdb.c:1469
+#: initdb.c:1517
 #, c-format
 msgid "Passwords didn't match.\n"
 msgstr "Hesla nesouhlasí.\n"
 
-#: initdb.c:1496
+#: initdb.c:1544
 #, c-format
 msgid "%s: could not read password from file \"%s\": %s\n"
 msgstr "%s: nemohu přečíst heslo ze souboru \"%s\": %s\n"
 
-#: initdb.c:1509
+#: initdb.c:1557
 #, c-format
 msgid "setting password ... "
 msgstr "nastavuji heslo ... "
 
-#: initdb.c:1533
-#, c-format
-msgid "%s: The password file was not generated. Please report this problem.\n"
-msgstr ""
-"%s: Soubor s hesly nebyl vytvořen. Prosíme oznamte tento problém tvůrcům.\n"
-
-#: initdb.c:1617
+#: initdb.c:1657
 msgid "initializing dependencies ... "
 msgstr "inicializuji závislosti ... "
 
-#: initdb.c:1645
+#: initdb.c:1685
 msgid "creating system views ... "
 msgstr "vytvářím systémové pohledy ... "
 
-#: initdb.c:1681
+#: initdb.c:1721
 msgid "loading system objects' descriptions ... "
 msgstr "nahrávám popisy systémových objektů ... "
 
-#: initdb.c:1733
-msgid "creating conversions ... "
-msgstr "vytvářím konvertory ... "
+#: initdb.c:1827
+msgid "creating collations ... "
+msgstr "vytvářím collations ... "
 
-#: initdb.c:1768
+#: initdb.c:1860
+#, c-format
+msgid "%s: locale name too long, skipped: \"%s\"\n"
+msgstr "%s: jméno locale je příliš dlouhé, přeskakuji: %s\n"
+
+#: initdb.c:1885
+#, c-format
+msgid "%s: locale name has non-ASCII characters, skipped: \"%s\"\n"
+msgstr "%s: jméno locale obsahuje ne-ASCII znaky, přeskakuji: %s\n"
+
+#: initdb.c:1948
+#, c-format
+msgid "No usable system locales were found.\n"
+msgstr ""
+"Nebylo nalezené žádné použitelné systémové nárovní nastavení (locales).\n"
+
+#: initdb.c:1949
+#, c-format
+msgid "Use the option \"--debug\" to see details.\n"
+msgstr "Pro více detailů použijte volbu \"--debug\".\n"
+
+#: initdb.c:1952
+#, c-format
+msgid "not supported on this platform\n"
+msgstr "na této platformě není podporováno\n"
+
+#: initdb.c:1967
+msgid "creating conversions ... "
+msgstr "vytvářím konverze ... "
+
+#: initdb.c:2002
 msgid "creating dictionaries ... "
 msgstr "vytvářím adresáře ... "
 
-#: initdb.c:1821
+#: initdb.c:2056
 msgid "setting privileges on built-in objects ... "
 msgstr "nastavuji oprávnění pro vestavěné objekty ... "
 
-#: initdb.c:1879
+#: initdb.c:2114
 msgid "creating information schema ... "
 msgstr "vytvářím informační schéma ... "
 
-#: initdb.c:1935
+#: initdb.c:2170
+msgid "loading PL/pgSQL server-side language ... "
+msgstr "načítám PL/pgSQL jazyk ... "
+
+#: initdb.c:2195
 msgid "vacuuming database template1 ... "
 msgstr "pouštím VACUUM na databázi template1 ... "
 
-#: initdb.c:1989
+#: initdb.c:2251
 msgid "copying template1 to template0 ... "
 msgstr "kopíruji template1 do template0 ... "
 
-#: initdb.c:2020
+#: initdb.c:2283
 msgid "copying template1 to postgres ... "
 msgstr "kopíruji template1 do postgres ... "
 
-#: initdb.c:2077
+#: initdb.c:2309
+msgid "syncing data to disk ... "
+msgstr "zapisuji data na disk ... "
+
+#: initdb.c:2381
 #, c-format
 msgid "caught signal\n"
 msgstr "signál obdržen\n"
 
-#: initdb.c:2083
+#: initdb.c:2387
 #, c-format
 msgid "could not write to child process: %s\n"
-msgstr "nemohu zapsat do dětského procesu: %s\n"
+msgstr "nemohu zapsat do potomka: %s\n"
 
-#: initdb.c:2091
+#: initdb.c:2395
 #, c-format
 msgid "ok\n"
 msgstr "ok\n"
 
-#: initdb.c:2211
+#: initdb.c:2498
+#, c-format
+msgid "%s: failed to restore old locale \"%s\"\n"
+msgstr "%s: selhala obnova původní locale \"%s\"\n"
+
+#: initdb.c:2504
 #, c-format
 msgid "%s: invalid locale name \"%s\"\n"
 msgstr "%s: neplatný název národního nastavení (locale) \"%s\"\n"
 
-#: initdb.c:2244
+#: initdb.c:2531
 #, c-format
 msgid "%s: encoding mismatch\n"
 msgstr "%s: nesouhlasí kódování znaků\n"
 
-#: initdb.c:2246
+#: initdb.c:2533
 #, c-format
 msgid ""
 "The encoding you selected (%s) and the encoding that the\n"
@@ -288,26 +464,51 @@ msgstr ""
 "spusťte znovu %s a buď nespecifikujte kódování znaků explicitně, nebo\n"
 "vyberte takovou kombinaci, která si odpovídá.\n"
 
-#: initdb.c:2427
+#: initdb.c:2652
+#, c-format
+msgid "%s: WARNING: cannot create restricted tokens on this platform\n"
+msgstr "%s: WARNING: na této platformě nelze vytvářet vyhrazené tokeny\n"
+
+#: initdb.c:2661
+#, c-format
+msgid "%s: could not open process token: error code %lu\n"
+msgstr "%s: nelze otevřít token procesu: chybový kód %lu\n"
+
+#: initdb.c:2674
+#, c-format
+msgid "%s: could not to allocate SIDs: error code %lu\n"
+msgstr "%s: nelze alokovat SIDs: chybový kód %lu\n"
+
+#: initdb.c:2693
+#, c-format
+msgid "%s: could not create restricted token: error code %lu\n"
+msgstr "%s: nelze vytvořit vyhrazený token: chybový kód %lu\n"
+
+#: initdb.c:2714
+#, c-format
+msgid "%s: could not start process for command \"%s\": error code %lu\n"
+msgstr "%s: nelze nastartovat proces pro příkaz \"%s\": chybový kód %lu\n"
+
+#: initdb.c:2728
 #, c-format
 msgid ""
 "%s initializes a PostgreSQL database cluster.\n"
 "\n"
 msgstr ""
-"%s inicializuji prostor pro PostgreSQL.databáze\n"
+"%s inicializuji PostgreSQL klastr\n"
 "\n"
 
-#: initdb.c:2428
+#: initdb.c:2729
 #, c-format
 msgid "Usage:\n"
 msgstr "Použití:\n"
 
-#: initdb.c:2429
+#: initdb.c:2730
 #, c-format
 msgid "  %s [OPTION]... [DATADIR]\n"
 msgstr "  %s [PŘEPÍNAČ]... [DATAADR]\n"
 
-#: initdb.c:2430
+#: initdb.c:2731
 #, c-format
 msgid ""
 "\n"
@@ -316,31 +517,51 @@ msgstr ""
 "\n"
 "Přepínače:\n"
 
-#: initdb.c:2431
+#: initdb.c:2732
 #, c-format
 msgid ""
 "  -A, --auth=METHOD         default authentication method for local "
 "connections\n"
 msgstr ""
-"  -A, --auth=METODA         výchozí autentizační metoda pro lokálníspojení\n"
+"  -A, --auth=METODA         výchozí autentizační metoda pro lokální spojení\n"
 
-#: initdb.c:2432
+#: initdb.c:2733
+#, c-format
+msgid ""
+"      --auth-host=METHOD    default authentication method for local TCP/IP "
+"connections\n"
+msgstr ""
+"      --auth-host=METHOD    výchozí autentikační metoda pro lokální TCP/IP "
+"spojení\n"
+
+#: initdb.c:2734
+#, c-format
+msgid ""
+"      --auth-local=METHOD   default authentication method for local-socket "
+"connections\n"
+msgstr ""
+"      --auth-local=METHOD   výchozí autentikační metoda pro spojení pro "
+"lokální socket\n"
+
+#: initdb.c:2735
 #, c-format
 msgid " [-D, --pgdata=]DATADIR     location for this database cluster\n"
 msgstr " [-D, --pgdata=]DATAADR     umístění tohoto databázového klastru\n"
 
-#: initdb.c:2433
+#: initdb.c:2736
 #, c-format
 msgid "  -E, --encoding=ENCODING   set default encoding for new databases\n"
 msgstr ""
 "  -E, --encoding=KÓDOVÁNÍ   nastavení výchozího kódování pro nové databáze\n"
 
-#: initdb.c:2434
+#: initdb.c:2737
 #, c-format
 msgid "      --locale=LOCALE       set default locale for new databases\n"
-msgstr "      --locale=LOCALE       nastavení implicitního národního nastavení pro novou databázi\n"
+msgstr ""
+"      --locale=LOCALE       nastavení implicitního národního nastavení pro "
+"novou databázi\n"
 
-#: initdb.c:2435
+#: initdb.c:2738
 #, c-format
 msgid ""
 "      --lc-collate=, --lc-ctype=, --lc-messages=LOCALE\n"
@@ -355,47 +576,48 @@ msgstr ""
 "                            v příslušných kategoriích (výchozí hodnoty se \n"
 "                            vezmou z nastavení prostředí)\n"
 
-#: initdb.c:2439
+#: initdb.c:2742
 #, c-format
 msgid "      --no-locale           equivalent to --locale=C\n"
 msgstr "      --no-locale           ekvivalent --locale=C\n"
 
-#: initdb.c:2440
+#: initdb.c:2743
 #, c-format
 msgid ""
 "      --pwfile=FILE         read password for the new superuser from file\n"
 msgstr ""
-"      --pwfile=SOUBOR       načti heslo pro nového superuživatele ze souboru\n"
+"      --pwfile=SOUBOR       načti heslo pro nového superuživatele ze "
+"souboru\n"
 
-#: initdb.c:2441
+#: initdb.c:2744
 #, c-format
 msgid ""
 "  -T, --text-search-config=CFG\n"
 "                            default text search configuration\n"
 msgstr ""
 "  -T, --text-search-config=CFG\n"
-"                            implicitní configurace fulltextového vyhledávání\n"
+"                            implicitní configurace fulltextového "
+"vyhledávání\n"
 
-#: initdb.c:2443
+#: initdb.c:2746
 #, c-format
 msgid "  -U, --username=NAME       database superuser name\n"
 msgstr "  -U, --username=JMÉNO      jméno databázového superuživatele\n"
 
-#: initdb.c:2444
+#: initdb.c:2747
 #, c-format
 msgid ""
 "  -W, --pwprompt            prompt for a password for the new superuser\n"
 msgstr ""
 "  -W, --pwprompt            zeptej se na heslo pro nového superuživatele\n"
 
-#: initdb.c:2445
+#: initdb.c:2748
 #, c-format
 msgid ""
 "  -X, --xlogdir=XLOGDIR     location for the transaction log directory\n"
-msgstr ""
-"  -X, --xlogdir=XLOGDIR     umístění adresáře s transakčním logem\n"
+msgstr "  -X, --xlogdir=XLOGDIR     umístění adresáře s transakčním logem\n"
 
-#: initdb.c:2446
+#: initdb.c:2749
 #, c-format
 msgid ""
 "\n"
@@ -404,27 +626,39 @@ msgstr ""
 "\n"
 "Méně často používané přepínače:\n"
 
-#: initdb.c:2447
+#: initdb.c:2750
 #, c-format
 msgid "  -d, --debug               generate lots of debugging output\n"
 msgstr "  -d, --debug               generuj spoustu ladicích informací\n"
 
-#: initdb.c:2448
+#: initdb.c:2751
 #, c-format
 msgid "  -L DIRECTORY              where to find the input files\n"
 msgstr "  -L DIRECTORY              kde se nalézají vstupní soubory\n"
 
-#: initdb.c:2449
+#: initdb.c:2752
 #, c-format
 msgid "  -n, --noclean             do not clean up after errors\n"
 msgstr "  -n, --noclean             neuklízet po chybě\n"
 
-#: initdb.c:2450
+#: initdb.c:2753
+#, c-format
+msgid ""
+"  -N, --nosync              do not wait for changes to be written safely to "
+"disk\n"
+msgstr "  -N, --nosync              nečekat na bezpečné zapsání změn na disk\n"
+
+#: initdb.c:2754
 #, c-format
 msgid "  -s, --show                show internal settings\n"
 msgstr "  -s, --show                ukaž interní nastavení\n"
 
-#: initdb.c:2451
+#: initdb.c:2755
+#, c-format
+msgid "  -S, --sync-only           only sync data directory\n"
+msgstr "  -S, --sync-only           pouze provést sync datového adresáře\n"
+
+#: initdb.c:2756
 #, c-format
 msgid ""
 "\n"
@@ -433,17 +667,17 @@ msgstr ""
 "\n"
 "Ostatní přepínače:\n"
 
-#: initdb.c:2452
-#, c-format
-msgid "  -?, --help                show this help, then exit\n"
-msgstr "  -?, --help                ukaž tuto nápovědu, potom skonči\n"
-
-#: initdb.c:2453
+#: initdb.c:2757
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version             vypiš informace o verzi, potom skonči\n"
 
-#: initdb.c:2454
+#: initdb.c:2758
+#, c-format
+msgid "  -?, --help                show this help, then exit\n"
+msgstr "  -?, --help                ukaž tuto nápovědu, potom skonči\n"
+
+#: initdb.c:2759
 #, c-format
 msgid ""
 "\n"
@@ -454,7 +688,7 @@ msgstr ""
 "Pokud není specifikován datový adresář, použije se proměnná\n"
 "prostředí PGDATA.\n"
 
-#: initdb.c:2456
+#: initdb.c:2761
 #, c-format
 msgid ""
 "\n"
@@ -463,56 +697,41 @@ msgstr ""
 "\n"
 "Chyby hlaste na adresu <pgsql-bugs@postgresql.org>.\n"
 
-#: initdb.c:2561
-#, c-format
-msgid "Running in debug mode.\n"
-msgstr "Běžím v ladicím režimu.\n"
-
-#: initdb.c:2565
-#, c-format
-msgid "Running in noclean mode.  Mistakes will not be cleaned up.\n"
-msgstr "Běžím v režimu \"noclean\".  Chybné kroky nebudou uklizeny.\n"
-
-#: initdb.c:2608 initdb.c:2626 initdb.c:2894
-#, c-format
-msgid "Try \"%s --help\" for more information.\n"
-msgstr "Zkuste \"%s --help\" pro více informací.\n"
-
-#: initdb.c:2624
-#, c-format
-msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s: příliš mnoho argumentů v příkazové řádce (první je \"%s\")\n"
-
-#: initdb.c:2633
-#, c-format
-msgid "%s: password prompt and password file cannot be specified together\n"
-msgstr "%s: dotaz na heslo a soubor s heslem nemohou být vyžadovány najednou\n"
-
-#: initdb.c:2639
+#: initdb.c:2769
 msgid ""
 "\n"
 "WARNING: enabling \"trust\" authentication for local connections\n"
-"You can change this by editing pg_hba.conf or using the -A option the\n"
-"next time you run initdb.\n"
+"You can change this by editing pg_hba.conf or using the option -A, or\n"
+"--auth-local and --auth-host, the next time you run initdb.\n"
 msgstr ""
 "\n"
-"VAROVÁNÍ: zapínám \"trust\" autentizaci pro lokální spojení\n"
-"Toto můžete změnit úpravou souboru pg_hba.conf nebo použitím\n"
-"parametru -A při příštím spuštění initdb.\n"
+"WARNING: povoluji \"trust\" autentikace pro lokální spojení\n"
+"Toto můžete změnit upravením pg_hba.conf nebo použitím volby -A,\n"
+"nebo --auth-local a --auth-host, při dalším spuštění initdb.\n"
 
-#: initdb.c:2662
+#: initdb.c:2791
 #, c-format
-msgid "%s: unrecognized authentication method \"%s\"\n"
-msgstr "%s: neznámá autentizační metoda \"%s\".\n"
+msgid "%s: invalid authentication method \"%s\" for \"%s\" connections\n"
+msgstr "%s: neplatná autentikační metoda \"%s\" pro \"%s\" spojení\n"
 
-#: initdb.c:2672
+#: initdb.c:2805
 #, c-format
 msgid ""
 "%s: must specify a password for the superuser to enable %s authentication\n"
 msgstr ""
 "%s: musíte zadat heslo superuživatele pro použití autentizace typu %s.\n"
 
-#: initdb.c:2687
+#: initdb.c:2837
+#, c-format
+msgid "%s: could not re-execute with restricted token: error code %lu\n"
+msgstr "%s: nelze znovu spustit s vyhrazeným tokenem: chybový kód %lu\n"
+
+#: initdb.c:2852
+#, c-format
+msgid "%s: could not get exit code from subprocess: error code %lu\n"
+msgstr "%s: nelze získat návratový kód z podprovesu: chybový kód %lu\n"
+
+#: initdb.c:2877
 #, c-format
 msgid ""
 "%s: no data directory specified\n"
@@ -525,7 +744,7 @@ msgstr ""
 "Učiňte tak buď použitím přepínače -D nebo nastavením proměnné\n"
 "prostředí PGDATA.\n"
 
-#: initdb.c:2763
+#: initdb.c:2916
 #, c-format
 msgid ""
 "The program \"postgres\" is needed by %s but was not found in the\n"
@@ -536,7 +755,7 @@ msgstr ""
 "adresáři jako \"%s\".\n"
 "Zkontrolujte vaši instalaci.\n"
 
-#: initdb.c:2770
+#: initdb.c:2923
 #, c-format
 msgid ""
 "The program \"postgres\" was found by \"%s\"\n"
@@ -547,33 +766,17 @@ msgstr ""
 "ale nebyl ve stejné verzi jako %s.\n"
 "Zkontrolujte vaši instalaci.\n"
 
-#: initdb.c:2789
+#: initdb.c:2942
 #, c-format
 msgid "%s: input file location must be an absolute path\n"
 msgstr "%s: cesta k umístění vstupního souboru musí být absolutní\n"
 
-#: initdb.c:2797
+#: initdb.c:2961
 #, c-format
-msgid "%s: could not determine valid short version string\n"
-msgstr "%s: nemohu zjistit platné krátké označení verze\n"
+msgid "The database cluster will be initialized with locale \"%s\".\n"
+msgstr "Databázový klastr bude inicializován s locale %s.\n"
 
-#: initdb.c:2852
-#, c-format
-msgid ""
-"The files belonging to this database system will be owned by user \"%s\".\n"
-"This user must also own the server process.\n"
-"\n"
-msgstr ""
-"Soubory patřící k této databázi budou vlastněny uživatelem \"%s\".\n"
-"Tento uživatel musí být také vlastníkem serverového procesu.\n"
-"\n"
-
-#: initdb.c:2862
-#, c-format
-msgid "The database cluster will be initialized with locale %s.\n"
-msgstr "Databázový klastr bude inicializován s národním nastavením %s.\n"
-
-#: initdb.c:2865
+#: initdb.c:2964
 #, c-format
 msgid ""
 "The database cluster will be initialized with locales\n"
@@ -592,83 +795,101 @@ msgstr ""
 "  NUMERIC:  %s\n"
 "  TIME:     %s\n"
 
-#: initdb.c:2891
+#: initdb.c:2988
 #, c-format
-msgid "%s: could not find suitable encoding for locale %s\n"
-msgstr "%s: nemohu najít vhodné kódování pro národní nastavení %s\n"
+msgid "%s: could not find suitable encoding for locale \"%s\"\n"
+msgstr "%s: nemohu najít vhodné kódování pro locale %s\n"
 
-#: initdb.c:2893
+#: initdb.c:2990
 #, c-format
 msgid "Rerun %s with the -E option.\n"
 msgstr "Spusťte znovu %s s přepínačem -E.\n"
 
-#: initdb.c:2902
+#: initdb.c:2991 initdb.c:3548 initdb.c:3569
 #, c-format
-msgid "%s: locale %s requires unsupported encoding %s\n"
-msgstr "%s: národní prostředí %s vyžaduje nepodporované kódování %s\n"
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Zkuste \"%s --help\" pro více informací.\n"
 
-#: initdb.c:2905
+#: initdb.c:3003
 #, c-format
 msgid ""
-"Encoding %s is not allowed as a server-side encoding.\n"
+"Encoding \"%s\" implied by locale is not allowed as a server-side encoding.\n"
+"The default database encoding will be set to \"%s\" instead.\n"
+msgstr ""
+"Kódování %s vyplývající z locale není povoleno jako kódování na serveru.\n"
+"Implicitní kódování databáze bude nastaveno na %s.\n"
+
+#: initdb.c:3011
+#, c-format
+msgid "%s: locale \"%s\" requires unsupported encoding \"%s\"\n"
+msgstr "%s: národní prostředí %s vyžaduje nepodporované kódování %s\n"
+
+#: initdb.c:3014
+#, c-format
+msgid ""
+"Encoding \"%s\" is not allowed as a server-side encoding.\n"
 "Rerun %s with a different locale selection.\n"
 msgstr ""
 "Kódování %s není povoleno jako kódování na serveru.\n"
-"Pusťte znovu %s s jiným nastavením národního prostředí.\n"
+"Pusťte znovu %s s jiným nastavením locale.\n"
 
-#: initdb.c:2913
+#: initdb.c:3023
 #, c-format
-msgid "The default database encoding has accordingly been set to %s.\n"
+msgid "The default database encoding has accordingly been set to \"%s\".\n"
 msgstr ""
 "Výchozí kódování pro databáze bylo odpovídajícím způsobem nastaveno na %s.\n"
 
-#: initdb.c:2930
-#, c-format
-msgid "%s: could not find suitable text search configuration for locale %s\n"
-msgstr "%s: nemohu najít vhodnou konfigurace fulltextového vyhledávání %s\n"
-
-#: initdb.c:2941
+#: initdb.c:3094
 #, c-format
 msgid ""
-"%s: warning: suitable text search configuration for locale %s is unknown\n"
-msgstr ""
-"%s: varování: vhodná konfigurace fulltextového vyhledávání pro národní nastavení %s je neznámá\n"
+"%s: could not find suitable text search configuration for locale \"%s\"\n"
+msgstr "%s: nemohu najít vhodnou konfiguraci fulltextového vyhledávání %s\n"
 
-#: initdb.c:2946
+#: initdb.c:3105
+#, c-format
+msgid ""
+"%s: warning: suitable text search configuration for locale \"%s\" is "
+"unknown\n"
+msgstr ""
+"%s: varování: vhodná konfigurace fulltextového vyhledávání pro locale %s "
+"není známa\n"
+
+#: initdb.c:3110
 #, c-format
 msgid ""
 "%s: warning: specified text search configuration \"%s\" might not match "
-"locale %s\n"
+"locale \"%s\"\n"
 msgstr ""
 "%s: varování: zvolená konfigurace fulltextového vyhledávání \"%s\" nemusí "
-"souhlasit s národním prostředím %s\n"
+"souhlasit s locale %s\n"
 
-#: initdb.c:2951
+#: initdb.c:3115
 #, c-format
 msgid "The default text search configuration will be set to \"%s\".\n"
-msgstr "Implicitní konfigurace fulltextového vyhledávání bude nastavena na \"%s\".\n"
+msgstr ""
+"Implicitní konfigurace fulltextového vyhledávání bude nastavena na \"%s\".\n"
 
-#: initdb.c:2985 initdb.c:3052
+#: initdb.c:3154 initdb.c:3232
 #, c-format
 msgid "creating directory %s ... "
 msgstr "vytvářím adresář %s ... "
 
-#: initdb.c:2999 initdb.c:3069
+#: initdb.c:3168 initdb.c:3250
 #, c-format
 msgid "fixing permissions on existing directory %s ... "
 msgstr "opravuji oprávnění pro existující adresář %s ... "
 
-#: initdb.c:3005 initdb.c:3075
+#: initdb.c:3174 initdb.c:3256
 #, c-format
 msgid "%s: could not change permissions of directory \"%s\": %s\n"
 msgstr "%s: nelze změnit práva adresáře \"%s\": %s\n"
 
-#: initdb.c:3018 initdb.c:3087
+#: initdb.c:3189 initdb.c:3271
 #, c-format
 msgid "%s: directory \"%s\" exists but is not empty\n"
 msgstr "%s: adresář \"%s\" existuje, ale není prázdný\n"
 
-#: initdb.c:3021
+#: initdb.c:3195
 #, c-format
 msgid ""
 "If you want to create a new database system, either remove or empty\n"
@@ -679,17 +900,17 @@ msgstr ""
 "vyprázdněte adresář \"%s\" nebo spusťte %s\n"
 "s argumentem jiným než \"%s\".\n"
 
-#: initdb.c:3029 initdb.c:3097
+#: initdb.c:3203 initdb.c:3284
 #, c-format
 msgid "%s: could not access directory \"%s\": %s\n"
 msgstr "%s: nelze přístoupit k adresáři \"%s\": %s\n"
 
-#: initdb.c:3043
+#: initdb.c:3223
 #, c-format
 msgid "%s: transaction log directory location must be an absolute path\n"
 msgstr "%s: cesta k umístění adresáře transakčního logu musí být absolutní\n"
 
-#: initdb.c:3090
+#: initdb.c:3277
 #, c-format
 msgid ""
 "If you want to store the transaction log there, either\n"
@@ -698,23 +919,84 @@ msgstr ""
 "Pokud chcete v tomto adresáři ukládat transakční log odstraňte nebo\n"
 "vyprázdněte adresář \"%s\".\n"
 
-
-#: initdb.c:3109
+#: initdb.c:3296
 #, c-format
 msgid "%s: could not create symbolic link \"%s\": %s\n"
 msgstr "%s: nelze vytvořit symbolický link \"%s\": %s\n"
 
-#: initdb.c:3114
+#: initdb.c:3301
 #, c-format
 msgid "%s: symlinks are not supported on this platform"
 msgstr "%s: na této platformě nejsou podporovány symbolické linky"
 
-#: initdb.c:3120
+#: initdb.c:3313
+#, c-format
+msgid ""
+"It contains a dot-prefixed/invisible file, perhaps due to it being a mount "
+"point.\n"
+msgstr ""
+"Obsahuje neviditelný soubor / soubor s tečkou na začátku názvu, možná proto "
+"že se jedná o mount point.\n"
+
+#: initdb.c:3316
+#, c-format
+msgid ""
+"It contains a lost+found directory, perhaps due to it being a mount point.\n"
+msgstr "Obsahuje lost+found adresář, možná proto že se jedná o mount point.\n"
+
+#: initdb.c:3319
+#, c-format
+msgid "Using the top-level directory of a mount point is not recommended.\n"
+msgstr "Použití top-level adresáře mount pointu se nedoporučuje.\n"
+
+#: initdb.c:3337
 #, c-format
 msgid "creating subdirectories ... "
 msgstr "vytvářím adresáře ... "
 
-#: initdb.c:3182
+#: initdb.c:3495
+#, c-format
+msgid "Running in debug mode.\n"
+msgstr "Běžím v ladicím režimu.\n"
+
+#: initdb.c:3499
+#, c-format
+msgid "Running in noclean mode.  Mistakes will not be cleaned up.\n"
+msgstr "Běžím v režimu \"noclean\".  Chybné kroky nebudou uklizeny.\n"
+
+#: initdb.c:3567
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: příliš mnoho argumentů v příkazové řádce (první je \"%s\")\n"
+
+#: initdb.c:3584
+#, c-format
+msgid "%s: password prompt and password file cannot be specified together\n"
+msgstr "%s: dotaz na heslo a soubor s heslem nemohou být vyžadovány najednou\n"
+
+#: initdb.c:3606
+#, c-format
+msgid ""
+"The files belonging to this database system will be owned by user \"%s\".\n"
+"This user must also own the server process.\n"
+"\n"
+msgstr ""
+"Soubory patřící k této databázi budou vlastněny uživatelem \"%s\".\n"
+"Tento uživatel musí být také vlastníkem serverového procesu.\n"
+"\n"
+
+#: initdb.c:3626
+#, c-format
+msgid ""
+"\n"
+"Sync to disk skipped.\n"
+"The data directory might become corrupt if the operating system crashes.\n"
+msgstr ""
+"\n"
+"Zápis na disk přeskočen.\n"
+"Datový adresář může být v případě pádu operačního systému poškozený.\n"
+
+#: initdb.c:3635
 #, c-format
 msgid ""
 "\n"
@@ -733,88 +1015,11 @@ msgstr ""
 "    %s%s%s/pg_ctl%s -D %s%s%s -l soubor_logu start\n"
 "\n"
 
-#: ../../port/dirmod.c:75 ../../port/dirmod.c:88 ../../port/dirmod.c:101
-#, c-format
-msgid "out of memory\n"
-msgstr "paměť vyčerpána\n"
+#~ msgid "%s: could not determine valid short version string\n"
+#~ msgstr "%s: nemohu zjistit platné krátké označení verze\n"
 
-#: ../../port/dirmod.c:270
-#, c-format
-msgid "could not set junction for \"%s\": %s\n"
-msgstr "nelze nastavit propojení \"%s\": %s\n"
-
-#: ../../port/dirmod.c:309
-#, c-format
-msgid "could not open directory \"%s\": %s\n"
-msgstr "nelze otevřít adresář \"%s\": %s\n"
-
-#: ../../port/dirmod.c:346
-#, c-format
-msgid "could not read directory \"%s\": %s\n"
-msgstr "nelze číst z adresáře \"%s\": %s\n"
-
-#: ../../port/dirmod.c:429
-#, c-format
-msgid "could not stat file or directory \"%s\": %s\n"
-msgstr "nelze získat informace o souboru nebo adresáři \"%s\": %s\n"
-
-#: ../../port/dirmod.c:456 ../../port/dirmod.c:473
-#, c-format
-msgid "could not remove file or directory \"%s\": %s\n"
-msgstr "nelze smazat soubor nebo adresář \"%s\": %s\n"
-
-#: ../../port/exec.c:195 ../../port/exec.c:309 ../../port/exec.c:352
-#, c-format
-msgid "could not identify current directory: %s"
-msgstr "nelze získat aktuální adresář: %s"
-
-#: ../../port/exec.c:214
-#, c-format
-msgid "invalid binary \"%s\""
-msgstr "neplatný binární soubor\"%s\""
-
-#: ../../port/exec.c:263
-#, c-format
-msgid "could not read binary \"%s\""
-msgstr "nelze číst binární soubor \"%s\""
-
-#: ../../port/exec.c:270
-#, c-format
-msgid "could not find a \"%s\" to execute"
-msgstr "nelze najít spustitelný soubor \"%s\""
-
-#: ../../port/exec.c:325 ../../port/exec.c:361
-#, c-format
-msgid "could not change directory to \"%s\""
-msgstr "nelze změnit adresář na \"%s\""
-
-#: ../../port/exec.c:340
-#, c-format
-msgid "could not read symbolic link \"%s\""
-msgstr "nelze číst symbolický link \"%s\""
-
-#: ../../port/exec.c:586
-#, c-format
-msgid "child process exited with exit code %d"
-msgstr "potomek skončil s návratovým kódem %d"
-
-#: ../../port/exec.c:590
-#, c-format
-msgid "child process was terminated by exception 0x%X"
-msgstr "potomek byl ukončen vyjímkou 0x%X"
-
-#: ../../port/exec.c:599
-#, c-format
-msgid "child process was terminated by signal %s"
-msgstr "potomek byl ukončen signálem %s"
-
-#: ../../port/exec.c:602
-#, c-format
-msgid "child process was terminated by signal %d"
-msgstr "potomek byl ukončen signálem %d"
-
-#: ../../port/exec.c:606
-#, c-format
-msgid "child process exited with unrecognized status %d"
-msgstr "potomek skončil s nerozponaným stavem %d"
-
+#~ msgid ""
+#~ "%s: The password file was not generated. Please report this problem.\n"
+#~ msgstr ""
+#~ "%s: Soubor s hesly nebyl vytvořen. Prosíme oznamte tento problém "
+#~ "tvůrcům.\n"

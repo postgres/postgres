@@ -2,763 +2,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0.0rc1\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-06-14 21:24+0900\n"
-"PO-Revision-Date: 2011-06-14 21:32+0900\n"
+"POT-Creation-Date: 2012-08-11 11:13+0900\n"
+"PO-Revision-Date: 2012-08-11 11:41+0900\n"
 "Last-Translator: HOTTA Michihide <hotta@net-newbie.com>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
+"Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-
-#: initdb.c:260 initdb.c:274
-#, c-format
-msgid "%s: out of memory\n"
-msgstr "%s: メモリ不足です\n"
-
-#: initdb.c:383 initdb.c:1289
-#, c-format
-msgid "%s: could not open file \"%s\" for reading: %s\n"
-msgstr "%s: 読み取り用のファイル\"%s\"をオープンできませんでした:%s\n"
-
-#: initdb.c:439 initdb.c:805 initdb.c:834
-#, c-format
-msgid "%s: could not open file \"%s\" for writing: %s\n"
-msgstr "%s:書き込み用のファイル\"%s\"をオープンできませんでした: %s\n"
-
-#: initdb.c:447 initdb.c:455 initdb.c:812 initdb.c:840
-#, c-format
-msgid "%s: could not write file \"%s\": %s\n"
-msgstr "%s:ファイル\"%s\"の書き込みに失敗しました: %s\n"
-
-#: initdb.c:474
-#, c-format
-msgid "%s: could not execute command \"%s\": %s\n"
-msgstr "%s: コマンド\"%s\"の実効に失敗しました: %s\n"
-
-#: initdb.c:490
-#, c-format
-msgid "%s: removing data directory \"%s\"\n"
-msgstr "%s: データディレクトリ\"%s\"の削除を削除しています\n"
-
-#: initdb.c:493
-#, c-format
-msgid "%s: failed to remove data directory\n"
-msgstr "%s: データディレクトリの削除に失敗しました\n"
-
-#: initdb.c:499
-#, c-format
-msgid "%s: removing contents of data directory \"%s\"\n"
-msgstr "%s: データディレクトリ\"%s\"の内容を削除しています\n"
-
-#: initdb.c:502
-#, c-format
-msgid "%s: failed to remove contents of data directory\n"
-msgstr "%s: データディレクトリの内容の削除に失敗しました\n"
-
-#: initdb.c:508
-#, c-format
-msgid "%s: removing transaction log directory \"%s\"\n"
-msgstr "%s: トランザクションログディレクトリ\"%s\"を削除しています\n"
-
-#: initdb.c:511
-#, c-format
-msgid "%s: failed to remove transaction log directory\n"
-msgstr "%s: トランザクションログディレクトリの削除に失敗しました\n"
-
-#: initdb.c:517
-#, c-format
-msgid "%s: removing contents of transaction log directory \"%s\"\n"
-msgstr "%s: トランザクションログディレクトリ\"%s\"の内容を削除しています\n"
-
-#: initdb.c:520
-#, c-format
-msgid "%s: failed to remove contents of transaction log directory\n"
-msgstr "%s: トランザクションログディレクトリの内容の削除に失敗しました\n"
-
-#: initdb.c:529
-#, c-format
-msgid "%s: data directory \"%s\" not removed at user's request\n"
-msgstr "%s: ユーザが要求したデータディレクトリ\"%s\"を削除しません\n"
-
-#: initdb.c:534
-#, c-format
-msgid "%s: transaction log directory \"%s\" not removed at user's request\n"
-msgstr ""
-"%s: ユーザが要求したトランザクションログディレクトリ\"%s\"を削除しません\n"
-
-#: initdb.c:556
-#, c-format
-msgid ""
-"%s: cannot be run as root\n"
-"Please log in (using, e.g., \"su\") as the (unprivileged) user that will\n"
-"own the server process.\n"
-msgstr ""
-"%s: ルートでは実行できません。\n"
-"サーバプロセスの所有者となる(非特権)ユーザとして(例えば\"su\"を使用して)ログ"
-"インしてください。\n"
-
-#: initdb.c:568
-#, c-format
-msgid "%s: could not obtain information about current user: %s\n"
-msgstr "%s: 現在のユーザに関する情報を得ることができませんでした: %s\n"
-
-#: initdb.c:585
-#, c-format
-msgid "%s: could not get current user name: %s\n"
-msgstr "%s: 現在のユーザ名を得ることができませんでした: %s\n"
-
-#: initdb.c:616
-#, c-format
-msgid "%s: \"%s\" is not a valid server encoding name\n"
-msgstr "%s: \"%s\" は無効なサーバ符号化方式名です。\n"
-
-#: initdb.c:725 initdb.c:3173
-#, c-format
-msgid "%s: could not create directory \"%s\": %s\n"
-msgstr "%s: ディレクトリ\"%s\"を作成できませんでした。: %s\n"
-
-#: initdb.c:755
-#, c-format
-msgid "%s: file \"%s\" does not exist\n"
-msgstr "%s: ファイル\"%s\"がありません\n"
-
-#: initdb.c:757 initdb.c:766 initdb.c:776
-#, c-format
-msgid ""
-"This might mean you have a corrupted installation or identified\n"
-"the wrong directory with the invocation option -L.\n"
-msgstr ""
-"インストレーションが破損しているか-Lオプションで指定したディ\n"
-"レクトリが間違っているかを意味する可能性があります。\n"
-
-#: initdb.c:763
-#, c-format
-msgid "%s: could not access file \"%s\": %s\n"
-msgstr "%s: ファイル\"%s\"にアクセスできませんでした: %s\n"
-
-#: initdb.c:774
-#, c-format
-msgid "%s: file \"%s\" is not a regular file\n"
-msgstr "%s: \"%s\" は通常のファイルではありません\n"
-
-#: initdb.c:882
-#, c-format
-msgid "selecting default max_connections ... "
-msgstr "デフォルトのmax_connectionsを選択しています ... "
-
-#: initdb.c:911
-#, c-format
-msgid "selecting default shared_buffers ... "
-msgstr "デフォルトの shared_buffers を選択しています ... "
-
-#: initdb.c:954
-msgid "creating configuration files ... "
-msgstr "設定ファイルを作成しています ... "
-
-#: initdb.c:1129
-#, c-format
-msgid "creating template1 database in %s/base/1 ... "
-msgstr "%s/base/1にtemplate1データベースを作成しています ... "
-
-#: initdb.c:1145
-#, c-format
-msgid ""
-"%s: input file \"%s\" does not belong to PostgreSQL %s\n"
-"Check your installation or specify the correct path using the option -L.\n"
-msgstr ""
-"%s: 入力ファイル\"%s\"がPostgreSQL %sにありません\n"
-"インストレーションを検査し、-Lオプションを使用して正しいパスを指定してくださ"
-"い。\n"
-
-#: initdb.c:1230
-msgid "initializing pg_authid ... "
-msgstr "pg_authidを初期化しています ... "
-
-#: initdb.c:1264
-msgid "Enter new superuser password: "
-msgstr "新しいスーパーユーザのパスワードを入力してください:"
-
-#: initdb.c:1265
-msgid "Enter it again: "
-msgstr "再入力してください:"
-
-#: initdb.c:1268
-#, c-format
-msgid "Passwords didn't match.\n"
-msgstr "パスワードが一致しません。\n"
-
-#: initdb.c:1295
-#, c-format
-msgid "%s: could not read password from file \"%s\": %s\n"
-msgstr ""
-"%s: ファイル\"%s\"からパスワードを読み取ることができませんでした。: %s\n"
-
-#: initdb.c:1308
-#, c-format
-msgid "setting password ... "
-msgstr "パスワードを設定しています ... "
-
-#: initdb.c:1408
-msgid "initializing dependencies ... "
-msgstr "依存関係を初期化しています ... "
-
-#: initdb.c:1436
-msgid "creating system views ... "
-msgstr "システムビューを作成しています ... "
-
-#: initdb.c:1472
-msgid "loading system objects' descriptions ... "
-msgstr "システムオブジェクトの定義をロードしています ... "
-
-#: initdb.c:1578
-msgid "creating collations ... "
-msgstr "照合順序を作成しています ... "
-
-#: initdb.c:1611
-#, c-format
-msgid "%s: locale name too long, skipped: %s\n"
-msgstr "%s: ロケール名が長過ぎますので飛ばします: %s\n"
-
-#: initdb.c:1636
-#, c-format
-msgid "%s: locale name has non-ASCII characters, skipped: %s\n"
-msgstr "%s: ロケール名に非ASCII文字がありますので飛ばします: %s\n"
-
-#: initdb.c:1699
-#, c-format
-msgid "No usable system locales were found.\n"
-msgstr "使用できるシステムロケールがが見つかりません\n"
-
-#: initdb.c:1700
-#, c-format
-msgid "Use the option \"--debug\" to see details.\n"
-msgstr "詳細を確認するためには\"--debug\"オプションを使用してください。\n"
-
-#: initdb.c:1703
-#, c-format
-msgid "not supported on this platform\n"
-msgstr "このプラットフォームではサポートされません\n"
-
-#: initdb.c:1718
-msgid "creating conversions ... "
-msgstr "変換を作成しています ... "
-
-#: initdb.c:1753
-msgid "creating dictionaries ... "
-msgstr "ディレクトリを作成しています ... "
-
-#: initdb.c:1807
-msgid "setting privileges on built-in objects ... "
-msgstr "組み込みオブジェクトに権限を設定しています ... "
-
-#: initdb.c:1865
-msgid "creating information schema ... "
-msgstr "情報スキーマを作成しています ... "
-
-#: initdb.c:1921
-msgid "loading PL/pgSQL server-side language ... "
-msgstr "PL/pgSQL サーバサイド言語をロードしています ... "
-
-#: initdb.c:1946
-msgid "vacuuming database template1 ... "
-msgstr "template1データベースをバキュームしています ... "
-
-#: initdb.c:2002
-msgid "copying template1 to template0 ... "
-msgstr "template1からtemplate0へコピーしています ... "
-
-#: initdb.c:2034
-msgid "copying template1 to postgres ... "
-msgstr "template1からpostgresへコピーしています ... "
-
-#: initdb.c:2091
-#, c-format
-msgid "caught signal\n"
-msgstr "シグナルが発生しました\n"
-
-#: initdb.c:2097
-#, c-format
-msgid "could not write to child process: %s\n"
-msgstr "子プロセスへの書き込みができませんでした: %s\n"
-
-#: initdb.c:2105
-#, c-format
-msgid "ok\n"
-msgstr "ok\n"
-
-#: initdb.c:2225
-#, c-format
-msgid "%s: invalid locale name \"%s\"\n"
-msgstr "\"%s: ロケール名\"%s\"は無効です。\n"
-
-#: initdb.c:2251
-#, c-format
-msgid "%s: encoding mismatch\n"
-msgstr "%s: 符号化方式が合いません\n"
-
-#: initdb.c:2253
-#, c-format
-msgid ""
-"The encoding you selected (%s) and the encoding that the\n"
-"selected locale uses (%s) do not match.  This would lead to\n"
-"misbehavior in various character string processing functions.\n"
-"Rerun %s and either do not specify an encoding explicitly,\n"
-"or choose a matching combination.\n"
-msgstr ""
-"選択した符号化方式(%s)と選択したロケールが使用する符号化方式(%s)が\n"
-"が合いません。これにより各種の文字列処理関数が不正な動作をする可能性が\n"
-"あります。明示的な符号化方式の指定を止めるか合致する組み合わせを\n"
-"選択して%sを再実行してください\n"
-
-#: initdb.c:2514
-#, c-format
-msgid ""
-"%s initializes a PostgreSQL database cluster.\n"
-"\n"
-msgstr "%sはPostgreSQLデータベースクラスタを初期化します。\n"
-
-#: initdb.c:2515
-#, c-format
-msgid "Usage:\n"
-msgstr "使用方法:\n"
-
-#: initdb.c:2516
-#, c-format
-msgid "  %s [OPTION]... [DATADIR]\n"
-msgstr "  %s [OPTION]... [DATADIR]\n"
-
-#: initdb.c:2517
-#, c-format
-msgid ""
-"\n"
-"Options:\n"
-msgstr ""
-"\n"
-"オプション:\n"
-
-#: initdb.c:2518
-#, c-format
-msgid ""
-"  -A, --auth=METHOD         default authentication method for local "
-"connections\n"
-msgstr ""
-"  -A, --auth=METHOD         ローカルな接続向けのデフォルトの認証方式です\n"
-
-#: initdb.c:2519
-#, c-format
-msgid " [-D, --pgdata=]DATADIR     location for this database cluster\n"
-msgstr " [-D, --pgdata=]DATADIR     データベースクラスタの場所です\n"
-
-#: initdb.c:2520
-#, c-format
-msgid "  -E, --encoding=ENCODING   set default encoding for new databases\n"
-msgstr ""
-"  -E, --encoding=ENCODING   新規データベース用のデフォルトの符号化方式です\n"
-
-#: initdb.c:2521
-#, c-format
-msgid "      --locale=LOCALE       set default locale for new databases\n"
-msgstr ""
-"      --locale=LOCALE        新しいデータベースのデフォルトロケールをセット\n"
-
-#: initdb.c:2522
-#, c-format
-msgid ""
-"      --lc-collate=, --lc-ctype=, --lc-messages=LOCALE\n"
-"      --lc-monetary=, --lc-numeric=, --lc-time=LOCALE\n"
-"                            set default locale in the respective category "
-"for\n"
-"                            new databases (default taken from environment)\n"
-msgstr ""
-"      --lc-collate, --lc-ctype, --lc-messages=ロケール名\n"
-"      --lc-monetary, --lc-numeric, --lc-time=ロケール名\n"
-"                            新しいデータベースに対応するカテゴリに対する\n"
-"                            デフォルトロケールをセット(デフォルト値は\n"
-"                            環境変数から選ばれます)\n"
-
-#: initdb.c:2526
-#, c-format
-msgid "      --no-locale           equivalent to --locale=C\n"
-msgstr "      --no-locale           --locale=C と同じです\n"
-
-#: initdb.c:2527
-#, c-format
-msgid ""
-"      --pwfile=FILE         read password for the new superuser from file\n"
-msgstr ""
-"      --pwfile=ファイル名   新しいスーパーユーザのパスワードをファイルから読"
-"み込む\n"
-
-#: initdb.c:2528
-#, c-format
-msgid ""
-"  -T, --text-search-config=CFG\n"
-"                            default text search configuration\n"
-msgstr ""
-"  -T, --text-search-config=CFG\\\n"
-"                            デフォルトのテキスト検索設定です\n"
-
-#: initdb.c:2530
-#, c-format
-msgid "  -U, --username=NAME       database superuser name\n"
-msgstr "  -U, --username=NAME       データベーススーパーユーザの名前です\n"
-
-#: initdb.c:2531
-#, c-format
-msgid ""
-"  -W, --pwprompt            prompt for a password for the new superuser\n"
-msgstr ""
-"  -W, --pwprompt            新規スーパーユーザに対してパスワード入力を促しま"
-"す\n"
-
-#: initdb.c:2532
-#, c-format
-msgid ""
-"  -X, --xlogdir=XLOGDIR     location for the transaction log directory\n"
-msgstr ""
-"  -X, --xlogdir=XLOGDIR     トランザクションログディレクトリの場所です\n"
-
-#: initdb.c:2533
-#, c-format
-msgid ""
-"\n"
-"Less commonly used options:\n"
-msgstr ""
-"\n"
-"使用頻度の低いオプション:\n"
-
-#: initdb.c:2534
-#, c-format
-msgid "  -d, --debug               generate lots of debugging output\n"
-msgstr "  -d, --debug               多くのデバッグ用の出力を生成します\n"
-
-#: initdb.c:2535
-#, c-format
-msgid "  -L DIRECTORY              where to find the input files\n"
-msgstr "  -L DIRECTORY              入力ファイルの場所を指定します\n"
-
-#: initdb.c:2536
-#, c-format
-msgid "  -n, --noclean             do not clean up after errors\n"
-msgstr "  -n, --noclean             エラー発生後の削除を行いません\n"
-
-#: initdb.c:2537
-#, c-format
-msgid "  -s, --show                show internal settings\n"
-msgstr "  -s, --show                内部設定を表示します\n"
-
-#: initdb.c:2538
-#, c-format
-msgid ""
-"\n"
-"Other options:\n"
-msgstr ""
-"\n"
-"その他のオプション:\n"
-
-#: initdb.c:2539
-#, c-format
-msgid "  -?, --help                show this help, then exit\n"
-msgstr "  -?, --help                このヘルプを表示し、終了します\n"
-
-#: initdb.c:2540
-#, c-format
-msgid "  -V, --version             output version information, then exit\n"
-msgstr "  -V, --version             バージョン情報を表示し、終了します\n"
-
-#: initdb.c:2541
-#, c-format
-msgid ""
-"\n"
-"If the data directory is not specified, the environment variable PGDATA\n"
-"is used.\n"
-msgstr ""
-"\n"
-"データディレクトリが指定されない場合、PGDATA環境変数が使用されます。\n"
-
-#: initdb.c:2543
-#, c-format
-msgid ""
-"\n"
-"Report bugs to <pgsql-bugs@postgresql.org>.\n"
-msgstr ""
-"\n"
-"不具合は<pgsql-bugs@postgresql.org>まで報告してください。\n"
-
-#: initdb.c:2649
-#, c-format
-msgid "Running in debug mode.\n"
-msgstr "デバッグモードで実行しています。\n"
-
-#: initdb.c:2653
-#, c-format
-msgid "Running in noclean mode.  Mistakes will not be cleaned up.\n"
-msgstr ""
-"削除を行わないモードで実行しています。失敗した場合でも削除されません。\n"
-
-#: initdb.c:2696 initdb.c:2714 initdb.c:2996
-#, c-format
-msgid "Try \"%s --help\" for more information.\n"
-msgstr "詳細は\"%s --help\"を行ってください。\n"
-
-#: initdb.c:2712
-#, c-format
-msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s: コマンドライン引数が多すぎます。(始めは\"%s\")\n"
-
-#: initdb.c:2721
-#, c-format
-msgid "%s: password prompt and password file cannot be specified together\n"
-msgstr "%s: パスワードプロンプトとパスワードファイルは同時に指定できません\n"
-
-#: initdb.c:2727
-msgid ""
-"\n"
-"WARNING: enabling \"trust\" authentication for local connections\n"
-"You can change this by editing pg_hba.conf or using the -A option the\n"
-"next time you run initdb.\n"
-msgstr ""
-"\n"
-"警告: ローカル接続向けに\"trust\"認証が有効です。\n"
-"pg_hba.confを編集する、もしくは、次回initdbを実行する時に-Aオプショ\n"
-"ンを使用することで変更することができます。\n"
-
-#: initdb.c:2750
-#, c-format
-msgid "%s: unrecognized authentication method \"%s\"\n"
-msgstr "%s: \"%s\"は未知の認証方式です\n"
-
-#: initdb.c:2760
-#, c-format
-msgid ""
-"%s: must specify a password for the superuser to enable %s authentication\n"
-msgstr ""
-"\"%s: %s認証を有効にするためにスーパーユーザのパスワードを指定してください\n"
-
-#: initdb.c:2789
-#, c-format
-msgid ""
-"%s: no data directory specified\n"
-"You must identify the directory where the data for this database system\n"
-"will reside.  Do this with either the invocation option -D or the\n"
-"environment variable PGDATA.\n"
-msgstr ""
-"%s: データディレクトリが指定されていません\n"
-"データベースシステム用のデータを格納するディレクトリを指定しなければなり\n"
-"ません。-Dオプションを付けて呼び出す、あるいは、PGDATA環境変数を使用する\n"
-"ことで指定することができます。\n"
-
-#: initdb.c:2873
-#, c-format
-msgid ""
-"The program \"postgres\" is needed by %s but was not found in the\n"
-"same directory as \"%s\".\n"
-"Check your installation.\n"
-msgstr ""
-"%sでは\"postgres\"プログラムが必要ですが、\"%s\"と同じディレクトリにあり\n"
-"ませんでした。\n"
-"インストレーションを検査してください。\n"
-
-#: initdb.c:2880
-#, c-format
-msgid ""
-"The program \"postgres\" was found by \"%s\"\n"
-"but was not the same version as %s.\n"
-"Check your installation.\n"
-msgstr ""
-"\"postgres\"プログラムは\"%s\"にありましたが、%sと同じバージョンで\n"
-"はありませんでした。\n"
-"インストレーションを検査してください。\n"
-
-#: initdb.c:2899
-#, c-format
-msgid "%s: input file location must be an absolute path\n"
-msgstr "%s: 入力ファイルの場所は絶対パスでなければなりません\n"
-
-#: initdb.c:2956
-#, c-format
-msgid ""
-"The files belonging to this database system will be owned by user \"%s\".\n"
-"This user must also own the server process.\n"
-"\n"
-msgstr ""
-"データベースシステム内のファイルの所有者は\"%s\"ユーザでした。\n"
-"このユーザがサーバプロセスを所有しなければなりません。\n"
-"\n"
-
-#: initdb.c:2966
-#, c-format
-msgid "The database cluster will be initialized with locale %s.\n"
-msgstr "データベースクラスタはロケール%sで初期化されます。\n"
-
-#: initdb.c:2969
-#, c-format
-msgid ""
-"The database cluster will be initialized with locales\n"
-"  COLLATE:  %s\n"
-"  CTYPE:    %s\n"
-"  MESSAGES: %s\n"
-"  MONETARY: %s\n"
-"  NUMERIC:  %s\n"
-"  TIME:     %s\n"
-msgstr ""
-"データベースクラスタは以下のロケールで初期化されます。\n"
-"  COLLATE:  %s\n"
-"  CTYPE:    %s\n"
-"  MESSAGES: %s\n"
-"  MONETARY: %s\n"
-"  NUMERIC:  %s\n"
-"  TIME:     %s\n"
-
-#: initdb.c:2993
-#, c-format
-msgid "%s: could not find suitable encoding for locale %s\n"
-msgstr "%s: ロケール%s用に適切な符号化方式がありませんでした\n"
-
-#: initdb.c:2995
-#, c-format
-msgid "Rerun %s with the -E option.\n"
-msgstr "-Eオプションを付けて%sを再実行してください。\n"
-
-#: initdb.c:3008
-#, c-format
-msgid ""
-"Encoding %s implied by locale is not allowed as a server-side encoding.\n"
-"The default database encoding will be set to %s instead.\n"
-msgstr ""
-"ロケールにより暗示される符号化方式%sはサーバ側の符号化方式として使用できません。\n"
-"デフォルトのデータベース符号が方式は代わりに%sに設定されます。\n"
-
-#: initdb.c:3016
-#, c-format
-msgid "%s: locale %s requires unsupported encoding %s\n"
-msgstr "%s: ロケール%sはサポートしない符号化方式%sを必要とします\n"
-
-#: initdb.c:3019
-#, c-format
-msgid ""
-"Encoding %s is not allowed as a server-side encoding.\n"
-"Rerun %s with a different locale selection.\n"
-msgstr ""
-"符号化方式%sはサーバ側の符号化方式として使用できません。\n"
-"別のロケールを選択して%sを再実行してください\n"
-
-#: initdb.c:3028
-#, c-format
-msgid "The default database encoding has accordingly been set to %s.\n"
-msgstr "デフォルトのデータベース符号化方式は%sに設定されました。\n"
-
-#: initdb.c:3045
-#, c-format
-msgid "%s: could not find suitable text search configuration for locale %s\n"
-msgstr "%s: ロケール\"%s\"用の適切なテキスト検索設定が見つかりません\n"
-
-#: initdb.c:3056
-#, c-format
-msgid ""
-"%s: warning: suitable text search configuration for locale %s is unknown\n"
-msgstr "%s:警告:ロケール%sに適したテキスト検索設定が不明です。\n"
-
-#: initdb.c:3061
-#, c-format
-msgid ""
-"%s: warning: specified text search configuration \"%s\" might not match "
-"locale %s\n"
-msgstr ""
-"%s:警告:指定したテキスト検索設定\"%s\"がロケール%sに合わない可能性\n"
-"があります\n"
-
-#: initdb.c:3066
-#, c-format
-msgid "The default text search configuration will be set to \"%s\".\n"
-msgstr "デフォルトのテキスト検索設定は%sに設定されました。\n"
-
-#: initdb.c:3100 initdb.c:3167
-#, c-format
-msgid "creating directory %s ... "
-msgstr "ディレクトリ%sを作成しています ... "
-
-#: initdb.c:3114 initdb.c:3185
-#, c-format
-msgid "fixing permissions on existing directory %s ... "
-msgstr "ディレクトリ%sの権限を設定しています ... "
-
-#: initdb.c:3120 initdb.c:3191
-#, c-format
-msgid "%s: could not change permissions of directory \"%s\": %s\n"
-msgstr "%s: ディレクトリ\"%s\"の権限を変更できませんでした: %s\n"
-
-#: initdb.c:3133 initdb.c:3204
-#, c-format
-msgid "%s: directory \"%s\" exists but is not empty\n"
-msgstr "%s: ディレクトリ\"%s\"は存在しますが、空ではありません\n"
-
-#: initdb.c:3136
-#, c-format
-msgid ""
-"If you want to create a new database system, either remove or empty\n"
-"the directory \"%s\" or run %s\n"
-"with an argument other than \"%s\".\n"
-msgstr ""
-"新規にデータベースシステムを作成したいのであれば、ディレクトリ\"%s\"\n"
-"を削除するか空にしてください。または、%sを\"%s\"以外の引数で実行して\n"
-"ください。\n"
-
-#: initdb.c:3144 initdb.c:3214
-#, c-format
-msgid "%s: could not access directory \"%s\": %s\n"
-msgstr "%s: ディレクトリ\"%s\"にアクセスできませんでした: %s\n"
-
-#: initdb.c:3158
-#, c-format
-msgid "%s: transaction log directory location must be an absolute path\n"
-msgstr ""
-"%s: トランザクションログのディレクトリの位置は、絶対パスでなければなりませ"
-"ん\n"
-
-#: initdb.c:3207
-#, c-format
-msgid ""
-"If you want to store the transaction log there, either\n"
-"remove or empty the directory \"%s\".\n"
-msgstr ""
-"そこにトランザクションログを格納したい場合はディレクトリ\"%s\"を削除するか\n"
-"空にしてください\n"
-
-#: initdb.c:3226
-#, c-format
-msgid "%s: could not create symbolic link \"%s\": %s\n"
-msgstr "%s: シンボリックリンク\"%s\"を作成できませんでした: %s\n"
-
-#: initdb.c:3231
-#, c-format
-msgid "%s: symlinks are not supported on this platform"
-msgstr "%s: このプラットフォームでシンボリックリンクはサポートされていません"
-
-#: initdb.c:3237
-#, c-format
-msgid "creating subdirectories ... "
-msgstr "サブディレクトリを作成しています ... "
-
-#: initdb.c:3303
-#, c-format
-msgid ""
-"\n"
-"Success. You can now start the database server using:\n"
-"\n"
-"    %s%s%spostgres%s -D %s%s%s\n"
-"or\n"
-"    %s%s%spg_ctl%s -D %s%s%s -l logfile start\n"
-"\n"
-msgstr ""
-"\n"
-"成功しました。以下を使用してデータベースサーバを起動することができます。\n"
-"\n"
-"    %s%s%spostmaster%s -D %s%s%s\n"
-"または\n"
-"    %s%s%spg_ctl%s -D %s%s%s -l logfile start\n"
-"\n"
 
 #: ../../port/dirmod.c:75 ../../port/dirmod.c:88 ../../port/dirmod.c:101
 #, c-format
@@ -788,8 +40,7 @@ msgstr "ディレクトリ\"%s\"を読み取れませんでした。: %s\n"
 #: ../../port/dirmod.c:563
 #, c-format
 msgid "could not stat file or directory \"%s\": %s\n"
-msgstr ""
-"\"%s\"というファイルまたはディレクトリの情報を取得できませんでした。: %s\n"
+msgstr "\"%s\"というファイルまたはディレクトリの情報を取得できませんでした。: %s\n"
 
 #: ../../port/dirmod.c:590 ../../port/dirmod.c:607
 #, c-format
@@ -826,27 +77,802 @@ msgstr "ディレクトリを\"%s\"に変更できませんでした"
 msgid "could not read symbolic link \"%s\""
 msgstr "シンボリックリンク\"%s\"を読み取りできませんでした"
 
-#: ../../port/exec.c:517
+#: ../../port/exec.c:526
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "子プロセスが終了コード%dで終了しました"
 
-#: ../../port/exec.c:521
+#: ../../port/exec.c:530
 #, c-format
 msgid "child process was terminated by exception 0x%X"
 msgstr "子プロセスが例外0x%Xで終了しました"
 
-#: ../../port/exec.c:530
+#: ../../port/exec.c:539
 #, c-format
 msgid "child process was terminated by signal %s"
 msgstr "子プロセスがシグナル%sで終了しました"
 
-#: ../../port/exec.c:533
+#: ../../port/exec.c:542
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "子プロセスがシグナル%dで終了しました"
 
-#: ../../port/exec.c:537
+#: ../../port/exec.c:546
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "子プロセスが未知のステータス%dで終了しました"
+
+#: initdb.c:291 initdb.c:305
+#, c-format
+msgid "%s: out of memory\n"
+msgstr "%s: メモリ不足です\n"
+
+#: initdb.c:414 initdb.c:1332
+#, c-format
+msgid "%s: could not open file \"%s\" for reading: %s\n"
+msgstr "%s: 読み取り用のファイル\"%s\"をオープンできませんでした:%s\n"
+
+#: initdb.c:470 initdb.c:836 initdb.c:865
+#, c-format
+msgid "%s: could not open file \"%s\" for writing: %s\n"
+msgstr "%s:書き込み用のファイル\"%s\"をオープンできませんでした: %s\n"
+
+#: initdb.c:478 initdb.c:486 initdb.c:843 initdb.c:871
+#, c-format
+msgid "%s: could not write file \"%s\": %s\n"
+msgstr "%s:ファイル\"%s\"の書き込みに失敗しました: %s\n"
+
+#: initdb.c:505
+#, c-format
+msgid "%s: could not execute command \"%s\": %s\n"
+msgstr "%s: コマンド\"%s\"の実効に失敗しました: %s\n"
+
+#: initdb.c:521
+#, c-format
+msgid "%s: removing data directory \"%s\"\n"
+msgstr "%s: データディレクトリ\"%s\"を削除しています\n"
+
+#: initdb.c:524
+#, c-format
+msgid "%s: failed to remove data directory\n"
+msgstr "%s: データディレクトリの削除に失敗しました\n"
+
+#: initdb.c:530
+#, c-format
+msgid "%s: removing contents of data directory \"%s\"\n"
+msgstr "%s: データディレクトリ\"%s\"の内容を削除しています\n"
+
+#: initdb.c:533
+#, c-format
+msgid "%s: failed to remove contents of data directory\n"
+msgstr "%s: データディレクトリの内容の削除に失敗しました\n"
+
+#: initdb.c:539
+#, c-format
+msgid "%s: removing transaction log directory \"%s\"\n"
+msgstr "%s: トランザクションログディレクトリ\"%s\"を削除しています\n"
+
+#: initdb.c:542
+#, c-format
+msgid "%s: failed to remove transaction log directory\n"
+msgstr "%s: トランザクションログディレクトリの削除に失敗しました\n"
+
+#: initdb.c:548
+#, c-format
+msgid "%s: removing contents of transaction log directory \"%s\"\n"
+msgstr "%s: トランザクションログディレクトリ\"%s\"の内容を削除しています\n"
+
+#: initdb.c:551
+#, c-format
+msgid "%s: failed to remove contents of transaction log directory\n"
+msgstr "%s: トランザクションログディレクトリの内容の削除に失敗しました\n"
+
+#: initdb.c:560
+#, c-format
+msgid "%s: data directory \"%s\" not removed at user's request\n"
+msgstr "%s: ユーザが要求したデータディレクトリ\"%s\"を削除しません\n"
+
+#: initdb.c:565
+#, c-format
+msgid "%s: transaction log directory \"%s\" not removed at user's request\n"
+msgstr "%s: ユーザが要求したトランザクションログディレクトリ\"%s\"を削除しません\n"
+
+#: initdb.c:587
+#, c-format
+msgid ""
+"%s: cannot be run as root\n"
+"Please log in (using, e.g., \"su\") as the (unprivileged) user that will\n"
+"own the server process.\n"
+msgstr ""
+"%s: ルートでは実行できません。\n"
+"サーバプロセスの所有者となる(非特権)ユーザとして(例えば\"su\"を使用して)ログインしてください。\n"
+
+#: initdb.c:599
+#, c-format
+msgid "%s: could not obtain information about current user: %s\n"
+msgstr "%s: 現在のユーザに関する情報を得ることができませんでした: %s\n"
+
+#: initdb.c:616
+#, c-format
+msgid "%s: could not get current user name: %s\n"
+msgstr "%s: 現在のユーザ名を得ることができませんでした: %s\n"
+
+#: initdb.c:647
+#, c-format
+msgid "%s: \"%s\" is not a valid server encoding name\n"
+msgstr "%s: \"%s\" は無効なサーバ符号化方式名です。\n"
+
+#: initdb.c:756 initdb.c:3190
+#, c-format
+msgid "%s: could not create directory \"%s\": %s\n"
+msgstr "%s: ディレクトリ\"%s\"を作成できませんでした。: %s\n"
+
+#: initdb.c:786
+#, c-format
+msgid "%s: file \"%s\" does not exist\n"
+msgstr "%s: ファイル\"%s\"がありません\n"
+
+#: initdb.c:788 initdb.c:797 initdb.c:807
+#, c-format
+msgid ""
+"This might mean you have a corrupted installation or identified\n"
+"the wrong directory with the invocation option -L.\n"
+msgstr ""
+"インストレーションが破損しているか-Lオプションで指定したディ\n"
+"レクトリが間違っているかを意味する可能性があります。\n"
+
+#: initdb.c:794
+#, c-format
+msgid "%s: could not access file \"%s\": %s\n"
+msgstr "%s: ファイル\"%s\"にアクセスできませんでした: %s\n"
+
+#: initdb.c:805
+#, c-format
+msgid "%s: file \"%s\" is not a regular file\n"
+msgstr "%s: \"%s\" は通常のファイルではありません\n"
+
+#: initdb.c:913
+#, c-format
+msgid "selecting default max_connections ... "
+msgstr "デフォルトのmax_connectionsを選択しています ... "
+
+#: initdb.c:942
+#, c-format
+msgid "selecting default shared_buffers ... "
+msgstr "デフォルトの shared_buffers を選択しています ... "
+
+#: initdb.c:986
+msgid "creating configuration files ... "
+msgstr "設定ファイルを作成しています ... "
+
+#: initdb.c:1172
+#, c-format
+msgid "creating template1 database in %s/base/1 ... "
+msgstr "%s/base/1にtemplate1データベースを作成しています ... "
+
+#: initdb.c:1188
+#, c-format
+msgid ""
+"%s: input file \"%s\" does not belong to PostgreSQL %s\n"
+"Check your installation or specify the correct path using the option -L.\n"
+msgstr ""
+"%s: 入力ファイル\"%s\"がPostgreSQL %sにありません\n"
+"インストレーションを検査し、-Lオプションを使用して正しいパスを指定してください。\n"
+
+#: initdb.c:1273
+msgid "initializing pg_authid ... "
+msgstr "pg_authidを初期化しています ... "
+
+#: initdb.c:1307
+msgid "Enter new superuser password: "
+msgstr "新しいスーパーユーザのパスワードを入力してください:"
+
+#: initdb.c:1308
+msgid "Enter it again: "
+msgstr "再入力してください:"
+
+#: initdb.c:1311
+#, c-format
+msgid "Passwords didn't match.\n"
+msgstr "パスワードが一致しません。\n"
+
+#: initdb.c:1338
+#, c-format
+msgid "%s: could not read password from file \"%s\": %s\n"
+msgstr "%s: ファイル\"%s\"からパスワードを読み取ることができませんでした。: %s\n"
+
+#: initdb.c:1351
+#, c-format
+msgid "setting password ... "
+msgstr "パスワードを設定しています ... "
+
+#: initdb.c:1451
+msgid "initializing dependencies ... "
+msgstr "依存関係を初期化しています ... "
+
+#: initdb.c:1479
+msgid "creating system views ... "
+msgstr "システムビューを作成しています ... "
+
+#: initdb.c:1515
+msgid "loading system objects' descriptions ... "
+msgstr "システムオブジェクトの定義をロードしています ... "
+
+#: initdb.c:1621
+msgid "creating collations ... "
+msgstr "照合順序を作成しています ... "
+
+#: initdb.c:1654
+#, c-format
+msgid "%s: locale name too long, skipped: \"%s\"\n"
+msgstr "%s: ロケール名が長過ぎますので飛ばします: \"%s\"\n"
+
+#: initdb.c:1679
+#, c-format
+msgid "%s: locale name has non-ASCII characters, skipped: \"%s\"\n"
+msgstr "%s: ロケール名に非ASCII文字がありますので飛ばします: \"%s\"\n"
+
+#: initdb.c:1742
+#, c-format
+msgid "No usable system locales were found.\n"
+msgstr "使用できるシステムロケールが見つかりません\n"
+
+#: initdb.c:1743
+#, c-format
+msgid "Use the option \"--debug\" to see details.\n"
+msgstr "詳細を確認するためには\"--debug\"オプションを使用してください。\n"
+
+#: initdb.c:1746
+#, c-format
+msgid "not supported on this platform\n"
+msgstr "このプラットフォームではサポートされません\n"
+
+#: initdb.c:1761
+msgid "creating conversions ... "
+msgstr "変換を作成しています ... "
+
+#: initdb.c:1796
+msgid "creating dictionaries ... "
+msgstr "ディレクトリを作成しています ... "
+
+#: initdb.c:1850
+msgid "setting privileges on built-in objects ... "
+msgstr "組み込みオブジェクトに権限を設定しています ... "
+
+#: initdb.c:1908
+msgid "creating information schema ... "
+msgstr "情報スキーマを作成しています ... "
+
+#: initdb.c:1964
+msgid "loading PL/pgSQL server-side language ... "
+msgstr "PL/pgSQL サーバサイド言語をロードしています ... "
+
+#: initdb.c:1989
+msgid "vacuuming database template1 ... "
+msgstr "template1データベースをバキュームしています ... "
+
+#: initdb.c:2045
+msgid "copying template1 to template0 ... "
+msgstr "template1からtemplate0へコピーしています ... "
+
+#: initdb.c:2077
+msgid "copying template1 to postgres ... "
+msgstr "template1からpostgresへコピーしています ... "
+
+#: initdb.c:2134
+#, c-format
+msgid "caught signal\n"
+msgstr "シグナルが発生しました\n"
+
+#: initdb.c:2140
+#, c-format
+msgid "could not write to child process: %s\n"
+msgstr "子プロセスへの書き込みができませんでした: %s\n"
+
+#: initdb.c:2148
+#, c-format
+msgid "ok\n"
+msgstr "ok\n"
+
+#: initdb.c:2280
+#, c-format
+msgid "%s: failed to restore old locale \"%s\"\n"
+msgstr "%s:古いロケール\"%s\"を戻すことができませんでした。\n"
+
+#: initdb.c:2286
+#, c-format
+msgid "%s: invalid locale name \"%s\"\n"
+msgstr "%s: ロケール名\"%s\"は無効です。\n"
+
+#: initdb.c:2313
+#, c-format
+msgid "%s: encoding mismatch\n"
+msgstr "%s: 符号化方式が合いません\n"
+
+#: initdb.c:2315
+#, c-format
+msgid ""
+"The encoding you selected (%s) and the encoding that the\n"
+"selected locale uses (%s) do not match.  This would lead to\n"
+"misbehavior in various character string processing functions.\n"
+"Rerun %s and either do not specify an encoding explicitly,\n"
+"or choose a matching combination.\n"
+msgstr ""
+"選択した符号化方式(%s)と選択したロケールが使用する符号化方式(%s)が\n"
+"合いません。これにより各種の文字列処理関数が不正な動作をする可能性が\n"
+"あります。明示的な符号化方式の指定を止めるか合致する組み合わせを\n"
+"選択して%sを再実行してください\n"
+
+#: initdb.c:2434
+#, c-format
+msgid "%s: WARNING: cannot create restricted tokens on this platform\n"
+msgstr "%s: 警告: このプラットフォームでは制限付きトークンを作成できません\n"
+
+#: initdb.c:2443
+#, c-format
+msgid "%s: could not open process token: error code %lu\n"
+msgstr "%s: プロセストークンをオープンできませんでした: エラーコード %lu\n"
+
+#: initdb.c:2456
+#, c-format
+msgid "%s: could not to allocate SIDs: error code %lu\n"
+msgstr "%s: SIDを割り当てられませんでした: エラーコード %lu\n"
+
+#: initdb.c:2475
+#, c-format
+msgid "%s: could not create restricted token: error code %lu\n"
+msgstr "%s: 制限付きトークンを作成できませんでした: エラーコード %lu\n"
+
+#: initdb.c:2496
+#, c-format
+msgid "%s: could not start process for command \"%s\": error code %lu\n"
+msgstr "%s: \"%s\"コマンド用のプロセスを起動できませんでした: エラーコード %lu\n"
+
+#: initdb.c:2510
+#, c-format
+msgid ""
+"%s initializes a PostgreSQL database cluster.\n"
+"\n"
+msgstr "%sはPostgreSQLデータベースクラスタを初期化します。\n"
+
+#: initdb.c:2511
+#, c-format
+msgid "Usage:\n"
+msgstr "使用方法:\n"
+
+#: initdb.c:2512
+#, c-format
+msgid "  %s [OPTION]... [DATADIR]\n"
+msgstr "  %s [OPTION]... [DATADIR]\n"
+
+#: initdb.c:2513
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"オプション:\n"
+
+#: initdb.c:2514
+#, c-format
+msgid "  -A, --auth=METHOD         default authentication method for local connections\n"
+msgstr "  -A, --auth=METHOD         ローカルな接続向けのデフォルトの認証方式です\n"
+
+#: initdb.c:2515
+#, c-format
+msgid "      --auth-host=METHOD    default authentication method for local TCP/IP connections\n"
+msgstr "      --auth-host=METHOD    ローカルなTCP/IP接続向けのデフォルトの認証方式です\n"
+
+#: initdb.c:2516
+#, c-format
+msgid "      --auth-local=METHOD   default authentication method for local-socket connections\n"
+msgstr "      --auth-host=METHOD    ローカルソケット接続向けのデフォルトの認証方式です\n"
+
+#: initdb.c:2517
+#, c-format
+msgid " [-D, --pgdata=]DATADIR     location for this database cluster\n"
+msgstr " [-D, --pgdata=]DATADIR     データベースクラスタの場所です\n"
+
+#: initdb.c:2518
+#, c-format
+msgid "  -E, --encoding=ENCODING   set default encoding for new databases\n"
+msgstr "  -E, --encoding=ENCODING   新規データベース用のデフォルトの符号化方式です\n"
+
+#: initdb.c:2519
+#, c-format
+msgid "      --locale=LOCALE       set default locale for new databases\n"
+msgstr "      --locale=LOCALE        新しいデータベースのデフォルトロケールをセット\n"
+
+#: initdb.c:2520
+#, c-format
+msgid ""
+"      --lc-collate=, --lc-ctype=, --lc-messages=LOCALE\n"
+"      --lc-monetary=, --lc-numeric=, --lc-time=LOCALE\n"
+"                            set default locale in the respective category for\n"
+"                            new databases (default taken from environment)\n"
+msgstr ""
+"      --lc-collate, --lc-ctype, --lc-messages=ロケール名\n"
+"      --lc-monetary, --lc-numeric, --lc-time=ロケール名\n"
+"                            新しいデータベースに対応するカテゴリに対する\n"
+"                            デフォルトロケールをセット(デフォルト値は\n"
+"                            環境変数から選ばれます)\n"
+
+#: initdb.c:2524
+#, c-format
+msgid "      --no-locale           equivalent to --locale=C\n"
+msgstr "      --no-locale           --locale=C と同じです\n"
+
+#: initdb.c:2525
+#, c-format
+msgid "      --pwfile=FILE         read password for the new superuser from file\n"
+msgstr "      --pwfile=ファイル名   新しいスーパーユーザのパスワードをファイルから読み込む\n"
+
+#: initdb.c:2526
+#, c-format
+msgid ""
+"  -T, --text-search-config=CFG\n"
+"                            default text search configuration\n"
+msgstr ""
+"  -T, --text-search-config=CFG\\\n"
+"                            デフォルトのテキスト検索設定です\n"
+
+#: initdb.c:2528
+#, c-format
+msgid "  -U, --username=NAME       database superuser name\n"
+msgstr "  -U, --username=NAME       データベーススーパーユーザの名前です\n"
+
+#: initdb.c:2529
+#, c-format
+msgid "  -W, --pwprompt            prompt for a password for the new superuser\n"
+msgstr "  -W, --pwprompt            新規スーパーユーザに対してパスワード入力を促します\n"
+
+#: initdb.c:2530
+#, c-format
+msgid "  -X, --xlogdir=XLOGDIR     location for the transaction log directory\n"
+msgstr "  -X, --xlogdir=XLOGDIR     トランザクションログディレクトリの場所です\n"
+
+#: initdb.c:2531
+#, c-format
+msgid ""
+"\n"
+"Less commonly used options:\n"
+msgstr ""
+"\n"
+"使用頻度の低いオプション:\n"
+
+#: initdb.c:2532
+#, c-format
+msgid "  -d, --debug               generate lots of debugging output\n"
+msgstr "  -d, --debug               多くのデバッグ用の出力を生成します\n"
+
+#: initdb.c:2533
+#, c-format
+msgid "  -L DIRECTORY              where to find the input files\n"
+msgstr "  -L DIRECTORY              入力ファイルの場所を指定します\n"
+
+#: initdb.c:2534
+#, c-format
+msgid "  -n, --noclean             do not clean up after errors\n"
+msgstr "  -n, --noclean             エラー発生後の削除を行いません\n"
+
+#: initdb.c:2535
+#, c-format
+msgid "  -s, --show                show internal settings\n"
+msgstr "  -s, --show                内部設定を表示します\n"
+
+#: initdb.c:2536
+#, c-format
+msgid ""
+"\n"
+"Other options:\n"
+msgstr ""
+"\n"
+"その他のオプション:\n"
+
+#: initdb.c:2537
+#, c-format
+msgid "  -V, --version             output version information, then exit\n"
+msgstr "  -V, --version             バージョン情報を表示し、終了します\n"
+
+#: initdb.c:2538
+#, c-format
+msgid "  -?, --help                show this help, then exit\n"
+msgstr "  -?, --help                このヘルプを表示し、終了します\n"
+
+#: initdb.c:2539
+#, c-format
+msgid ""
+"\n"
+"If the data directory is not specified, the environment variable PGDATA\n"
+"is used.\n"
+msgstr ""
+"\n"
+"データディレクトリが指定されない場合、PGDATA環境変数が使用されます。\n"
+
+#: initdb.c:2541
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"不具合は<pgsql-bugs@postgresql.org>まで報告してください。\n"
+
+#: initdb.c:2549
+msgid ""
+"\n"
+"WARNING: enabling \"trust\" authentication for local connections\n"
+"You can change this by editing pg_hba.conf or using the option -A, or\n"
+"--auth-local and --auth-host, the next time you run initdb.\n"
+msgstr ""
+"\n"
+"警告: ローカル接続向けに\"trust\"認証が有効です。\n"
+"pg_hba.confを編集する、もしくは、次回initdbを実行する時に-Aオプショ\n"
+"ン、または、--auth-localおよび--auth-hostを使用することで変更するこ\n"
+"とができます。\n"
+
+#: initdb.c:2571
+#, c-format
+msgid "%s: invalid authentication method \"%s\" for \"%s\" connections\n"
+msgstr "%1$s: \"%3$s\"接続では認証方式\"%2$s\"は無効です。\n"
+
+#: initdb.c:2585
+#, c-format
+msgid "%s: must specify a password for the superuser to enable %s authentication\n"
+msgstr "%s: %s認証を有効にするためにスーパーユーザのパスワードを指定してください\n"
+
+#: initdb.c:2716
+#, c-format
+msgid "Running in debug mode.\n"
+msgstr "デバッグモードで実行しています。\n"
+
+#: initdb.c:2720
+#, c-format
+msgid "Running in noclean mode.  Mistakes will not be cleaned up.\n"
+msgstr "削除を行わないモードで実行しています。失敗した場合でも削除されません。\n"
+
+#: initdb.c:2763 initdb.c:2784 initdb.c:3013
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "詳細は\"%s --help\"を行ってください。\n"
+
+#: initdb.c:2782
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: コマンドライン引数が多すぎます。(始めは\"%s\")\n"
+
+#: initdb.c:2791
+#, c-format
+msgid "%s: password prompt and password file cannot be specified together\n"
+msgstr "%s: パスワードプロンプトとパスワードファイルは同時に指定できません\n"
+
+#: initdb.c:2814
+#, c-format
+msgid ""
+"%s: no data directory specified\n"
+"You must identify the directory where the data for this database system\n"
+"will reside.  Do this with either the invocation option -D or the\n"
+"environment variable PGDATA.\n"
+msgstr ""
+"%s: データディレクトリが指定されていません\n"
+"データベースシステム用のデータを格納するディレクトリを指定しなければなり\n"
+"ません。-Dオプションを付けて呼び出す、あるいは、PGDATA環境変数を使用する\n"
+"ことで指定することができます。\n"
+
+#: initdb.c:2847
+#, c-format
+msgid "%s: could not re-execute with restricted token: error code %lu\n"
+msgstr "%s: 制限付きトークンで再実行できませんでした: %lu\n"
+
+#: initdb.c:2862
+#, c-format
+msgid "%s: could not get exit code from subprocess: error code %lu\n"
+msgstr "%s: サブプロセスの終了コードを入手できませんでした。: エラーコード %lu\n"
+
+#: initdb.c:2890
+#, c-format
+msgid ""
+"The program \"postgres\" is needed by %s but was not found in the\n"
+"same directory as \"%s\".\n"
+"Check your installation.\n"
+msgstr ""
+"%sでは\"postgres\"プログラムが必要ですが、\"%s\"と同じディレクトリにあり\n"
+"ませんでした。\n"
+"インストレーションを検査してください。\n"
+
+#: initdb.c:2897
+#, c-format
+msgid ""
+"The program \"postgres\" was found by \"%s\"\n"
+"but was not the same version as %s.\n"
+"Check your installation.\n"
+msgstr ""
+"\"postgres\"プログラムは\"%s\"にありましたが、%sと同じバージョンで\n"
+"はありませんでした。\n"
+"インストレーションを検査してください。\n"
+
+#: initdb.c:2916
+#, c-format
+msgid "%s: input file location must be an absolute path\n"
+msgstr "%s: 入力ファイルの場所は絶対パスでなければなりません\n"
+
+#: initdb.c:2973
+#, c-format
+msgid ""
+"The files belonging to this database system will be owned by user \"%s\".\n"
+"This user must also own the server process.\n"
+"\n"
+msgstr ""
+"データベースシステム内のファイルの所有者は\"%s\"ユーザでした。\n"
+"このユーザがサーバプロセスを所有しなければなりません。\n"
+"\n"
+
+#: initdb.c:2983
+#, c-format
+msgid "The database cluster will be initialized with locale \"%s\".\n"
+msgstr "データベースクラスタはロケール\"%s\"で初期化されます。\n"
+
+#: initdb.c:2986
+#, c-format
+msgid ""
+"The database cluster will be initialized with locales\n"
+"  COLLATE:  %s\n"
+"  CTYPE:    %s\n"
+"  MESSAGES: %s\n"
+"  MONETARY: %s\n"
+"  NUMERIC:  %s\n"
+"  TIME:     %s\n"
+msgstr ""
+"データベースクラスタは以下のロケールで初期化されます。\n"
+"  COLLATE:  %s\n"
+"  CTYPE:    %s\n"
+"  MESSAGES: %s\n"
+"  MONETARY: %s\n"
+"  NUMERIC:  %s\n"
+"  TIME:     %s\n"
+
+#: initdb.c:3010
+#, c-format
+msgid "%s: could not find suitable encoding for locale \"%s\"\n"
+msgstr "%s: ロケール\"%s\"用に適切な符号化方式がありませんでした\n"
+
+#: initdb.c:3012
+#, c-format
+msgid "Rerun %s with the -E option.\n"
+msgstr "-Eオプションを付けて%sを再実行してください。\n"
+
+#: initdb.c:3025
+#, c-format
+msgid ""
+"Encoding \"%s\" implied by locale is not allowed as a server-side encoding.\n"
+"The default database encoding will be set to \"%s\" instead.\n"
+msgstr ""
+"ロケールにより暗示される符号化方式\"%s\"はサーバ側の符号化方式として使用できません。\n"
+"デフォルトのデータベース符号化方式は代わりに\"%s\"に設定されます。\n"
+
+#: initdb.c:3033
+#, c-format
+msgid "%s: locale \"%s\" requires unsupported encoding \"%s\"\n"
+msgstr "%s: ロケール\"%s\"はサポートしない符号化方式\"%s\"を必要とします\n"
+
+#: initdb.c:3036
+#, c-format
+msgid ""
+"Encoding \"%s\" is not allowed as a server-side encoding.\n"
+"Rerun %s with a different locale selection.\n"
+msgstr ""
+"符号化方式\"%s\"はサーバ側の符号化方式として使用できません。\n"
+"別のロケールを選択して%sを再実行してください。\n"
+
+#: initdb.c:3045
+#, c-format
+msgid "The default database encoding has accordingly been set to \"%s\".\n"
+msgstr "したがってデフォルトのデータベース符号化方式は%sに設定されました。\n"
+
+#: initdb.c:3062
+#, c-format
+msgid "%s: could not find suitable text search configuration for locale \"%s\"\n"
+msgstr "%s: ロケール\"%s\"用の適切なテキスト検索設定が見つかりません\n"
+
+#: initdb.c:3073
+#, c-format
+msgid "%s: warning: suitable text search configuration for locale \"%s\" is unknown\n"
+msgstr "%s:警告:ロケール\"%s\"に適したテキスト検索設定が不明です。\n"
+
+#: initdb.c:3078
+#, c-format
+msgid "%s: warning: specified text search configuration \"%s\" might not match locale \"%s\"\n"
+msgstr "%s:警告:指定したテキスト検索設定\"%s\"がロケール\"%s\"に合わない可能性があります\n"
+
+#: initdb.c:3083
+#, c-format
+msgid "The default text search configuration will be set to \"%s\".\n"
+msgstr "デフォルトのテキスト検索設定は%sに設定されました。\n"
+
+#: initdb.c:3117 initdb.c:3184
+#, c-format
+msgid "creating directory %s ... "
+msgstr "ディレクトリ%sを作成しています ... "
+
+#: initdb.c:3131 initdb.c:3202
+#, c-format
+msgid "fixing permissions on existing directory %s ... "
+msgstr "ディレクトリ%sの権限を設定しています ... "
+
+#: initdb.c:3137 initdb.c:3208
+#, c-format
+msgid "%s: could not change permissions of directory \"%s\": %s\n"
+msgstr "%s: ディレクトリ\"%s\"の権限を変更できませんでした: %s\n"
+
+#: initdb.c:3150 initdb.c:3221
+#, c-format
+msgid "%s: directory \"%s\" exists but is not empty\n"
+msgstr "%s: ディレクトリ\"%s\"は存在しますが、空ではありません\n"
+
+#: initdb.c:3153
+#, c-format
+msgid ""
+"If you want to create a new database system, either remove or empty\n"
+"the directory \"%s\" or run %s\n"
+"with an argument other than \"%s\".\n"
+msgstr ""
+"新規にデータベースシステムを作成したいのであれば、ディレクトリ\"%s\"\n"
+"を削除するか空にしてください。または、%sを\"%s\"以外の引数で実行して\n"
+"ください。\n"
+
+#: initdb.c:3161 initdb.c:3231
+#, c-format
+msgid "%s: could not access directory \"%s\": %s\n"
+msgstr "%s: ディレクトリ\"%s\"にアクセスできませんでした: %s\n"
+
+#: initdb.c:3175
+#, c-format
+msgid "%s: transaction log directory location must be an absolute path\n"
+msgstr "%s: トランザクションログのディレクトリの位置は、絶対パスでなければなりません\n"
+
+#: initdb.c:3224
+#, c-format
+msgid ""
+"If you want to store the transaction log there, either\n"
+"remove or empty the directory \"%s\".\n"
+msgstr ""
+"そこにトランザクションログを格納したい場合はディレクトリ\"%s\"を削除するか\n"
+"空にしてください\n"
+
+#: initdb.c:3243
+#, c-format
+msgid "%s: could not create symbolic link \"%s\": %s\n"
+msgstr "%s: シンボリックリンク\"%s\"を作成できませんでした: %s\n"
+
+#: initdb.c:3248
+#, c-format
+msgid "%s: symlinks are not supported on this platform"
+msgstr "%s: このプラットフォームでシンボリックリンクはサポートされていません"
+
+#: initdb.c:3254
+#, c-format
+msgid "creating subdirectories ... "
+msgstr "サブディレクトリを作成しています ... "
+
+#: initdb.c:3320
+#, c-format
+msgid ""
+"\n"
+"Success. You can now start the database server using:\n"
+"\n"
+"    %s%s%spostgres%s -D %s%s%s\n"
+"or\n"
+"    %s%s%spg_ctl%s -D %s%s%s -l logfile start\n"
+"\n"
+msgstr ""
+"\n"
+"成功しました。以下を使用してデータベースサーバを起動することができます。\n"
+"\n"
+"    %s%s%spostmaster%s -D %s%s%s\n"
+"または\n"
+"    %s%s%spg_ctl%s -D %s%s%s -l logfile start\n"
+"\n"
+
+#~ msgid "%s: unrecognized authentication method \"%s\"\n"
+#~ msgstr "%s: \"%s\"は未知の認証方式です\n"

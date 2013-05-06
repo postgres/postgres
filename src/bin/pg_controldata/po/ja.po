@@ -5,10 +5,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0 beta 3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-07-20 12:55+0900\n"
-"PO-Revision-Date: 2010-07-15 19:00+0900\n"
+"POT-Creation-Date: 2012-08-11 16:41+0900\n"
+"PO-Revision-Date: 2012-08-11 16:48+0900\n"
 "Last-Translator: HOTTA Michihide <hotta@net-newbie.com>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
+"Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -20,102 +21,112 @@ msgid ""
 "%s displays control information of a PostgreSQL database cluster.\n"
 "\n"
 msgstr ""
-"\"%s はPostgreSQLデータベースクラスタの制御情報を表示します。\n"
+"%s はPostgreSQLデータベースクラスタの制御情報を表示します。\n"
 "\n"
+
+#: pg_controldata.c:34
+#, c-format
+msgid "Usage:\n"
+msgstr "使用方法:\n"
+
+#: pg_controldata.c:35
+#, c-format
+msgid "  %s [OPTION] [DATADIR]\n"
+msgstr "  %s [OPTION] [DATADIR]\n"
+
+#: pg_controldata.c:36
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"オプション:\n"
 
 #: pg_controldata.c:37
 #, c-format
-msgid ""
-"Usage:\n"
-"  %s [OPTION] [DATADIR]\n"
-"\n"
-"Options:\n"
-"  --help         show this help, then exit\n"
-"  --version      output version information, then exit\n"
-msgstr ""
-"使用方法:\n"
-"  %s [OPTION] [DATADIR]\n"
-"\n"
-"オプション:\n"
-"  --help         ヘルプを表示し、終了します\n"
-"  --version      バージョン情報を表示し、終了します\n"
+msgid "  -V, --version  output version information, then exit\n"
+msgstr "  -V, --version             バージョン情報を表示し、終了します\n"
 
-#: pg_controldata.c:45
+#: pg_controldata.c:38
+#, c-format
+msgid "  -?, --help     show this help, then exit\n"
+msgstr "  -?, --help                このヘルプを表示し、終了します\n"
+
+#: pg_controldata.c:39
 #, c-format
 msgid ""
 "\n"
-"If no data directory (DATADIR) is specified, the environment variable "
-"PGDATA\n"
+"If no data directory (DATADIR) is specified, the environment variable PGDATA\n"
 "is used.\n"
 "\n"
 msgstr ""
 "\n"
-"データディレクトリ(DATADIR)が指定されない場合、PGDATA環境変数が使用されま"
-"す。\n"
+"データディレクトリ(DATADIR)が指定されない場合、PGDATA環境変数が使用されます。\n"
 "\n"
 
-#: pg_controldata.c:47
+#: pg_controldata.c:41
 #, c-format
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr "不具合は<pgsql-bugs@postgresql.org>まで報告してください。\n"
 
-#: pg_controldata.c:57
+#: pg_controldata.c:51
 msgid "starting up"
 msgstr "起動"
 
-#: pg_controldata.c:59
+#: pg_controldata.c:53
 msgid "shut down"
 msgstr "シャットダウン"
 
-#: pg_controldata.c:61
+#: pg_controldata.c:55
 msgid "shut down in recovery"
 msgstr "リカバリしながらシャットダウン中"
 
-#: pg_controldata.c:63
+#: pg_controldata.c:57
 msgid "shutting down"
 msgstr "シャットダウン中"
 
-#: pg_controldata.c:65
+#: pg_controldata.c:59
 msgid "in crash recovery"
 msgstr "クラッシュリカバリ中"
 
-#: pg_controldata.c:67
+#: pg_controldata.c:61
 msgid "in archive recovery"
 msgstr "アーカイブリカバリ中"
 
-#: pg_controldata.c:69
+#: pg_controldata.c:63
 msgid "in production"
 msgstr "運用中"
 
-#: pg_controldata.c:71
+#: pg_controldata.c:65
 msgid "unrecognized status code"
 msgstr "未知のステータスコード"
 
-#: pg_controldata.c:86
+#: pg_controldata.c:80
 msgid "unrecognized wal_level"
 msgstr "wal_level を認識できません"
 
-#: pg_controldata.c:129
+#: pg_controldata.c:123
 #, c-format
 msgid "%s: no data directory specified\n"
 msgstr "%s: データディレクトリが指定されていません\n"
 
-#: pg_controldata.c:130
+#: pg_controldata.c:124
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "詳細は\"%s --help\"を実行してください\n"
 
-#: pg_controldata.c:138
+#: pg_controldata.c:132
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
 msgstr "%s: 読み取り用の\"%s\"ファイルのオープンに失敗しました: %s\n"
 
-#: pg_controldata.c:145
+#: pg_controldata.c:139
 #, c-format
 msgid "%s: could not read file \"%s\": %s\n"
 msgstr "%s: \"%s\"ファイルの読み取りに失敗しました: %s\n"
 
-#: pg_controldata.c:159
+#: pg_controldata.c:153
 #, c-format
 msgid ""
 "WARNING: Calculated CRC checksum does not match value stored in file.\n"
@@ -128,203 +139,247 @@ msgstr ""
 "可能性があります。以下の結果は信用できません。\n"
 "\n"
 
-#: pg_controldata.c:186
+#: pg_controldata.c:180
 #, c-format
 msgid "pg_control version number:            %u\n"
 msgstr "pg_controlバージョン番号:                         %u\n"
 
-#: pg_controldata.c:189
+#: pg_controldata.c:183
 #, c-format
 msgid ""
 "WARNING: possible byte ordering mismatch\n"
 "The byte ordering used to store the pg_control file might not match the one\n"
-"used by this program.  In that case the results below would be incorrect, "
-"and\n"
+"used by this program.  In that case the results below would be incorrect, and\n"
 "the PostgreSQL installation would be incompatible with this data directory.\n"
 msgstr ""
 "警告:バイトオーダが異なる可能性があります。\n"
 "pg_controlファイルを格納するために使用するバイトオーダが本プログラムで使用\n"
-"されるものと異なります。この場合以下の結果は不正確になります。また、"
-"PostgreSQL\n"
+"されるものと異なります。この場合以下の結果は不正確になります。また、PostgreSQL\n"
 "インストレーションはこのデータディレクトリと互換性がなくなります。\n"
 
-#: pg_controldata.c:193
+#: pg_controldata.c:187
 #, c-format
 msgid "Catalog version number:               %u\n"
 msgstr "カタログバージョン番号:                           %u\n"
 
-#: pg_controldata.c:195
+#: pg_controldata.c:189
 #, c-format
 msgid "Database system identifier:           %s\n"
 msgstr "データベースシステム識別子:                       %s\n"
 
-#: pg_controldata.c:197
+#: pg_controldata.c:191
 #, c-format
 msgid "Database cluster state:               %s\n"
 msgstr "データベースクラスタの状態:                       %s\n"
 
-#: pg_controldata.c:199
+#: pg_controldata.c:193
 #, c-format
 msgid "pg_control last modified:             %s\n"
 msgstr "pg_control最終更新:                               %s\n"
 
-#: pg_controldata.c:201
+#: pg_controldata.c:195
 #, c-format
 msgid "Latest checkpoint location:           %X/%X\n"
 msgstr "最終チェックポイント位置:                         %X/%X\n"
 
-#: pg_controldata.c:204
+#: pg_controldata.c:198
 #, c-format
 msgid "Prior checkpoint location:            %X/%X\n"
 msgstr "前回のチェックポイント位置:                       %X/%X\n"
 
-#: pg_controldata.c:207
+#: pg_controldata.c:201
 #, c-format
 msgid "Latest checkpoint's REDO location:    %X/%X\n"
 msgstr "最終チェックポイントのREDO位置:                   %X/%X\n"
 
-#: pg_controldata.c:210
+#: pg_controldata.c:204
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
 msgstr "最終チェックポイントの時系列ID:                   %u\n"
 
-#: pg_controldata.c:212
+#: pg_controldata.c:206
+#, c-format
+msgid "Latest checkpoint's full_page_writes: %s\n"
+msgstr "最終チェックポイントのfull_page_writes %s\n"
+
+#: pg_controldata.c:207
+msgid "off"
+msgstr "オフ"
+
+#: pg_controldata.c:207
+msgid "on"
+msgstr "オン"
+
+#: pg_controldata.c:208
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u/%u\n"
 msgstr "最終チェックポイントのNextXID:                    %u/%u\n"
 
-#: pg_controldata.c:215
+#: pg_controldata.c:211
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
 msgstr "最終チェックポイントのNextOID:                    %u\n"
 
-#: pg_controldata.c:217
+#: pg_controldata.c:213
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
 msgstr "最終チェックポイントのNextMultiXactId:  %u\n"
 
-#: pg_controldata.c:219
+#: pg_controldata.c:215
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %u\n"
 msgstr "最終チェックポイントのNextMultiOffset:  %u\n"
 
-#: pg_controldata.c:221
+#: pg_controldata.c:217
 #, c-format
 msgid "Latest checkpoint's oldestXID:        %u\n"
 msgstr "最終チェックポイントのoldestXID:      %u\n"
 
-#: pg_controldata.c:223
+#: pg_controldata.c:219
 #, c-format
 msgid "Latest checkpoint's oldestXID's DB:   %u\n"
 msgstr "最終チェックポイントのoldestXIDのDB:  %u\n"
 
-#: pg_controldata.c:225
+#: pg_controldata.c:221
 #, c-format
 msgid "Latest checkpoint's oldestActiveXID:  %u\n"
 msgstr "最終チェックポイントのoldestActiveXID: %u\n"
 
-#: pg_controldata.c:227
+#: pg_controldata.c:223
 #, c-format
 msgid "Time of latest checkpoint:            %s\n"
 msgstr "最終チェックポイント時刻:                         %s\n"
 
-#: pg_controldata.c:229
+#: pg_controldata.c:225
 #, c-format
 msgid "Minimum recovery ending location:     %X/%X\n"
 msgstr "最小リカバリ終了位置:                             %X/%X\n"
 
-#: pg_controldata.c:232
+#: pg_controldata.c:228
 #, c-format
 msgid "Backup start location:                %X/%X\n"
 msgstr "バックアップ開始位置:                 %X/%X\n"
 
+#: pg_controldata.c:231
+#, c-format
+msgid "Backup end location:                  %X/%X\n"
+msgstr "バックアップ終了位置:                 %X/%X\n"
+
+#: pg_controldata.c:234
+#, c-format
+msgid "End-of-backup record required:        %s\n"
+msgstr "必要なバックアップ最終レコード:        %s\n"
+
 #: pg_controldata.c:235
+msgid "no"
+msgstr "no"
+
+#: pg_controldata.c:235
+msgid "yes"
+msgstr "yes"
+
+#: pg_controldata.c:236
 #, c-format
 msgid "Current wal_level setting:            %s\n"
 msgstr "wal_level の現在設定                  %s\n"
 
-#: pg_controldata.c:237
+#: pg_controldata.c:238
 #, c-format
 msgid "Current max_connections setting:      %d\n"
 msgstr "max_connections の現在設定：          %d\n"
 
-#: pg_controldata.c:239
+#: pg_controldata.c:240
 #, c-format
 msgid "Current max_prepared_xacts setting:   %d\n"
 msgstr "max_prepared_xacts の現在設定：       %d\n"
 
-#: pg_controldata.c:241
+#: pg_controldata.c:242
 #, c-format
 msgid "Current max_locks_per_xact setting:   %d\n"
 msgstr "max_locks_per_xact の現在設定：       %d\n"
 
-#: pg_controldata.c:243
+#: pg_controldata.c:244
 #, c-format
 msgid "Maximum data alignment:               %u\n"
 msgstr "最大データアラインメント              %u\n"
 
-#: pg_controldata.c:246
+#: pg_controldata.c:247
 #, c-format
 msgid "Database block size:                  %u\n"
 msgstr "データベースのブロックサイズ:                     %u\n"
 
-#: pg_controldata.c:248
+#: pg_controldata.c:249
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
 msgstr "ラージリレーションのセグメント当たりのブロック数: %u\n"
 
-#: pg_controldata.c:250
+#: pg_controldata.c:251
 #, c-format
 msgid "WAL block size:                       %u\n"
 msgstr "WALブロックのサイズ:                              %u\n"
 
-#: pg_controldata.c:252
+#: pg_controldata.c:253
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
 msgstr "WALセグメント当たりのバイト数:                  %u\n"
 
-#: pg_controldata.c:254
+#: pg_controldata.c:255
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
 msgstr "識別子の最大長:                                   %u\n"
 
-#: pg_controldata.c:256
+#: pg_controldata.c:257
 #, c-format
 msgid "Maximum columns in an index:          %u\n"
 msgstr "インデックス内の最大列数:             %u\n"
 
-#: pg_controldata.c:258
+#: pg_controldata.c:259
 #, c-format
 msgid "Maximum size of a TOAST chunk:        %u\n"
 msgstr "TOASTチャンクの最大サイズ:                               %u\n"
 
-#: pg_controldata.c:260
+#: pg_controldata.c:261
 #, c-format
 msgid "Date/time type storage:               %s\n"
 msgstr "日付/時刻型の格納方式:                            %s\n"
 
-#: pg_controldata.c:261
+#: pg_controldata.c:262
 msgid "64-bit integers"
 msgstr "64ビット整数"
 
-#: pg_controldata.c:261
+#: pg_controldata.c:262
 msgid "floating-point numbers"
 msgstr "浮動小数点数"
 
-#: pg_controldata.c:262
+#: pg_controldata.c:263
 #, c-format
 msgid "Float4 argument passing:              %s\n"
 msgstr "Float4 引数の渡し方：                 %s\n"
 
-#: pg_controldata.c:263 pg_controldata.c:265
-msgid "by value"
-msgstr "値渡し"
-
-#: pg_controldata.c:263 pg_controldata.c:265
+#: pg_controldata.c:264 pg_controldata.c:266
 msgid "by reference"
 msgstr "参照渡し"
 
-#: pg_controldata.c:264
+#: pg_controldata.c:264 pg_controldata.c:266
+msgid "by value"
+msgstr "値渡し"
+
+#: pg_controldata.c:265
 #, c-format
 msgid "Float8 argument passing:              %s\n"
 msgstr "Float8  引数の渡し方：                %s\n"
+
+#~ msgid ""
+#~ "Usage:\n"
+#~ "  %s [OPTION] [DATADIR]\n"
+#~ "\n"
+#~ "Options:\n"
+#~ "  --help         show this help, then exit\n"
+#~ "  --version      output version information, then exit\n"
+#~ msgstr ""
+#~ "使用方法:\n"
+#~ "  %s [OPTION] [DATADIR]\n"
+#~ "\n"
+#~ "オプション:\n"
+#~ "  --help         ヘルプを表示し、終了します\n"
+#~ "  --version      バージョン情報を表示し、終了します\n"

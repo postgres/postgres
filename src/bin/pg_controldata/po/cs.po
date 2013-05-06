@@ -1,0 +1,427 @@
+# LANGUAGE message translation file for pg_controldata
+# Copyright (C) 2012 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+#
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2012, 2013.
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 9.2\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2013-03-17 18:48+0000\n"
+"PO-Revision-Date: 2013-03-17 21:52+0100\n"
+"Last-Translator: \n"
+"Language-Team: Czech <kde-i18n-doc@kde.org>\n"
+"Language: cs\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+"X-Generator: Lokalize 1.5\n"
+
+#: pg_controldata.c:34
+#, c-format
+msgid ""
+"%s displays control information of a PostgreSQL database cluster.\n"
+"\n"
+msgstr ""
+"%s ukáže kontrolní informace o PostgreSQL databázi.\n"
+"\n"
+
+#: pg_controldata.c:35
+#, c-format
+msgid "Usage:\n"
+msgstr "Použití:\n"
+
+#: pg_controldata.c:36
+#, c-format
+msgid "  %s [OPTION] [DATADIR]\n"
+msgstr "  %s [VOLBY] [DATOVÝADRESÁŘ]\n"
+
+#: pg_controldata.c:37
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"Volby:\n"
+
+#: pg_controldata.c:38
+#, c-format
+msgid "  -V, --version  output version information, then exit\n"
+msgstr "  -V, --version  vypíše informaci o verzi, pak skončí\n"
+
+#: pg_controldata.c:39
+#, c-format
+msgid "  -?, --help     show this help, then exit\n"
+msgstr "  -?, --help     ukáže tuto nápovědu, a skončí\n"
+
+#: pg_controldata.c:40
+#, c-format
+msgid ""
+"\n"
+"If no data directory (DATADIR) is specified, the environment variable "
+"PGDATA\n"
+"is used.\n"
+"\n"
+msgstr ""
+"\n"
+"Není-li specifikován datový adresář, je použita proměnná prostředí\n"
+"PGDATA.\n"
+"\n"
+
+#: pg_controldata.c:42
+#, c-format
+msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr "Oznámení o chybách zasílejte na <pgsql-bugs@postgresql.org>.\n"
+
+#: pg_controldata.c:52
+msgid "starting up"
+msgstr "startování"
+
+#: pg_controldata.c:54
+msgid "shut down"
+msgstr "ukončení"
+
+#: pg_controldata.c:56
+msgid "shut down in recovery"
+msgstr "ukončení (shut down) během obnovy"
+
+#: pg_controldata.c:58
+msgid "shutting down"
+msgstr "ukončování"
+
+#: pg_controldata.c:60
+msgid "in crash recovery"
+msgstr "probíhá zotavení z pádu"
+
+#: pg_controldata.c:62
+msgid "in archive recovery"
+msgstr "probíhá obnova z archivu"
+
+#: pg_controldata.c:64
+msgid "in production"
+msgstr "v provozu"
+
+#: pg_controldata.c:66
+msgid "unrecognized status code"
+msgstr "neznámý stavový kód"
+
+#: pg_controldata.c:81
+msgid "unrecognized wal_level"
+msgstr "neznámý wal_level"
+
+#: pg_controldata.c:126
+#, c-format
+msgid "%s: no data directory specified\n"
+msgstr "%s: není specifikován datový adresář\n"
+
+#: pg_controldata.c:127
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Zkuste \"%s --help\" pro více informací.\n"
+
+#: pg_controldata.c:135
+#, c-format
+msgid "%s: could not open file \"%s\" for reading: %s\n"
+msgstr "%s: nelze otevřít soubor \"%s\" pro čtení: %s\n"
+
+#: pg_controldata.c:142
+#, c-format
+msgid "%s: could not read file \"%s\": %s\n"
+msgstr "%s: nelze číst soubor \"%s\": %s\n"
+
+#: pg_controldata.c:156
+#, c-format
+msgid ""
+"WARNING: Calculated CRC checksum does not match value stored in file.\n"
+"Either the file is corrupt, or it has a different layout than this program\n"
+"is expecting.  The results below are untrustworthy.\n"
+"\n"
+msgstr ""
+"UPOZORNĚNÍ: Spočítaný CRC kontrolní součet nesouhlasí s hodnotou uloženou\n"
+"v souboru. Buď je soubor poškozen nebo má jinou strukturu než tento program\n"
+"očekává.  Níže uvedené výsledky jsou nedůvěryhodné.\n"
+"\n"
+
+#: pg_controldata.c:190
+#, c-format
+msgid "pg_control version number:            %u\n"
+msgstr "číslo verze pg_controlu:              %u\n"
+
+#: pg_controldata.c:193
+#, c-format
+msgid ""
+"WARNING: possible byte ordering mismatch\n"
+"The byte ordering used to store the pg_control file might not match the one\n"
+"used by this program.  In that case the results below would be incorrect, "
+"and\n"
+"the PostgreSQL installation would be incompatible with this data directory.\n"
+msgstr ""
+"VAROVÁNÍ: možný nesoulad v pořadí bytů\n"
+"Pořadí bytů používané pro uložení pg_control souboru nemusí odpovídat tomu\n"
+"používanému tímto programem. V tom případě by výsledky uvedené níže byly "
+"chybné, a\n"
+"PostgreSQL instalace by byla nekompatibilní s tímto datovým adresářem.\n"
+
+#: pg_controldata.c:197
+#, c-format
+msgid "Catalog version number:               %u\n"
+msgstr "Číslo verze katalogu:               %u\n"
+
+#: pg_controldata.c:199
+#, c-format
+msgid "Database system identifier:           %s\n"
+msgstr "Identifikátor databázového systému:   %s\n"
+
+#: pg_controldata.c:201
+#, c-format
+msgid "Database cluster state:               %s\n"
+msgstr "Status databázového klastru:           %s\n"
+
+#: pg_controldata.c:203
+#, c-format
+msgid "pg_control last modified:             %s\n"
+msgstr "poslední modifikace pg_control:      %s\n"
+
+#: pg_controldata.c:205
+#, c-format
+msgid "Latest checkpoint location:           %X/%X\n"
+msgstr "Poslední umístění checkpointu:           %X/%X\n"
+
+#: pg_controldata.c:208
+#, c-format
+msgid "Prior checkpoint location:            %X/%X\n"
+msgstr "Předešlé umístění checkpointu:            %X/%X\n"
+
+#: pg_controldata.c:211
+#, c-format
+msgid "Latest checkpoint's REDO location:    %X/%X\n"
+msgstr "Poslední umístění REDO checkpointu:    %X/%X\n"
+
+#: pg_controldata.c:214
+#, c-format
+#| msgid "Latest checkpoint's REDO location:    %X/%X\n"
+msgid "Latest checkpoint's REDO WAL file:    %s\n"
+msgstr "REDO WAL file posledního checkpointu:    %s\n"
+
+#: pg_controldata.c:216
+#, c-format
+msgid "Latest checkpoint's TimeLineID:       %u\n"
+msgstr "TimeLineID posledního checkpointu:     %u\n"
+
+#: pg_controldata.c:218
+#, c-format
+#| msgid "Latest checkpoint's TimeLineID:       %u\n"
+msgid "Latest checkpoint's PrevTimeLineID:   %u\n"
+msgstr "PrevTimeLineID posledního checkpointu:   %u\n"
+
+#: pg_controldata.c:220
+#, c-format
+msgid "Latest checkpoint's full_page_writes: %s\n"
+msgstr "Poslední full_page_writes checkpointu: %s\n"
+
+#: pg_controldata.c:221
+msgid "off"
+msgstr "vypnuto"
+
+#: pg_controldata.c:221
+msgid "on"
+msgstr "zapnuto"
+
+#: pg_controldata.c:222
+#, c-format
+msgid "Latest checkpoint's NextXID:          %u/%u\n"
+msgstr "Poslední umístění NextXID checkpointu:          %u/%u\n"
+
+#: pg_controldata.c:225
+#, c-format
+msgid "Latest checkpoint's NextOID:          %u\n"
+msgstr "Poslední umístění NextOID checkpointu:          %u\n"
+
+#: pg_controldata.c:227
+#, c-format
+msgid "Latest checkpoint's NextMultiXactId:  %u\n"
+msgstr "NextMultiXactId posledního checkpointu:          %u\n"
+
+#: pg_controldata.c:229
+#, c-format
+msgid "Latest checkpoint's NextMultiOffset:  %u\n"
+msgstr "NextMultiOffset posledního checkpointu:          %u\n"
+
+#: pg_controldata.c:231
+#, c-format
+msgid "Latest checkpoint's oldestXID:        %u\n"
+msgstr "oldestXID posledního checkpointu:          %u\n"
+
+#: pg_controldata.c:233
+#, c-format
+msgid "Latest checkpoint's oldestXID's DB:   %u\n"
+msgstr "DB k oldestXID posledního checkpointu:   %u\n"
+
+#: pg_controldata.c:235
+#, c-format
+msgid "Latest checkpoint's oldestActiveXID:  %u\n"
+msgstr "oldestActiveXID posledního checkpointu:          %u\n"
+
+#: pg_controldata.c:237
+#, c-format
+#| msgid "Latest checkpoint's oldestActiveXID:  %u\n"
+msgid "Latest checkpoint's oldestMultiXid:   %u\n"
+msgstr "oldestMultiXid posledního checkpointu:   %u\n"
+
+#: pg_controldata.c:239
+#, c-format
+#| msgid "Latest checkpoint's oldestXID's DB:   %u\n"
+msgid "Latest checkpoint's oldestMulti's DB: %u\n"
+msgstr "oldestMulti's DB posledního checkpointu: %u\n"
+
+#: pg_controldata.c:241
+#, c-format
+msgid "Time of latest checkpoint:            %s\n"
+msgstr "Čas posledního checkpointu:       %s\n"
+
+#: pg_controldata.c:243
+#, c-format
+msgid "Fake LSN counter for unlogged rels:   %X/%X\n"
+msgstr "Falešné LSN počítadlo pro unlogged relace:   %X/%X\n"
+
+#: pg_controldata.c:246
+#, c-format
+msgid "Minimum recovery ending location:     %X/%X\n"
+msgstr "Minimální pozice ukončení obnovy:     %X/%X\n"
+
+#: pg_controldata.c:249
+#, c-format
+#| msgid "Minimum recovery ending location:     %X/%X\n"
+msgid "Min recovery ending loc's timeline:   %u\n"
+msgstr ""
+
+#: pg_controldata.c:251
+#, c-format
+msgid "Backup start location:                %X/%X\n"
+msgstr "Pozice počátku backupu:               %X/%X\n"
+
+#: pg_controldata.c:254
+#, c-format
+msgid "Backup end location:                  %X/%X\n"
+msgstr "Koncová pozice zálohy:                %X/%X\n"
+
+#: pg_controldata.c:257
+#, c-format
+msgid "End-of-backup record required:        %s\n"
+msgstr "Vyžadován záznam konce backupu:       %s\n"
+
+#: pg_controldata.c:258
+msgid "no"
+msgstr "ne"
+
+#: pg_controldata.c:258
+msgid "yes"
+msgstr "ano"
+
+#: pg_controldata.c:259
+#, c-format
+msgid "Current wal_level setting:            %s\n"
+msgstr "Aktuální nastavení wal_level:         %s\n"
+
+#: pg_controldata.c:261
+#, c-format
+msgid "Current max_connections setting:      %d\n"
+msgstr "Aktuální nastavení max_connections:   %d\n"
+
+#: pg_controldata.c:263
+#, c-format
+msgid "Current max_prepared_xacts setting:   %d\n"
+msgstr "Aktuální nastavení max_prepared_xacts: %d\n"
+
+#: pg_controldata.c:265
+#, c-format
+msgid "Current max_locks_per_xact setting:   %d\n"
+msgstr "Aktuální nastavení max_locks_per_xact:   %d\n"
+
+#: pg_controldata.c:267
+#, c-format
+msgid "Maximum data alignment:               %u\n"
+msgstr "Maximální zarovnání dat:              %u\n"
+
+#: pg_controldata.c:270
+#, c-format
+msgid "Database block size:                  %u\n"
+msgstr "Velikost databázového bloku:                  %u\n"
+
+#: pg_controldata.c:272
+#, c-format
+msgid "Blocks per segment of large relation: %u\n"
+msgstr "Bloků v segmentu velké relace: %u\n"
+
+#: pg_controldata.c:274
+#, c-format
+msgid "WAL block size:                       %u\n"
+msgstr "Velikost WAL bloku:                   %u\n"
+
+#: pg_controldata.c:276
+#, c-format
+msgid "Bytes per WAL segment:                %u\n"
+msgstr "Bytů ve WAL segmentu:                  %u\n"
+
+#: pg_controldata.c:278
+#, c-format
+msgid "Maximum length of identifiers:        %u\n"
+msgstr "Maximální délka identifikátorů:        %u\n"
+
+#: pg_controldata.c:280
+#, c-format
+msgid "Maximum columns in an index:          %u\n"
+msgstr "Maximální počet sloupců v indexu:     %u\n"
+
+#: pg_controldata.c:282
+#, c-format
+msgid "Maximum size of a TOAST chunk:        %u\n"
+msgstr "Maximální velikost úseku TOAST:       %u\n"
+
+#: pg_controldata.c:284
+#, c-format
+msgid "Date/time type storage:               %s\n"
+msgstr "Způsob uložení typu date/time:               %s\n"
+
+#: pg_controldata.c:285
+msgid "64-bit integers"
+msgstr "64-bitová čísla"
+
+#: pg_controldata.c:285
+msgid "floating-point numbers"
+msgstr "čísla s plovoucí řádovou čárkou"
+
+#: pg_controldata.c:286
+#, c-format
+msgid "Float4 argument passing:              %s\n"
+msgstr "Způsob předávání float4 hodnot:        %s\n"
+
+#: pg_controldata.c:287 pg_controldata.c:289
+msgid "by reference"
+msgstr "odkazem"
+
+#: pg_controldata.c:287 pg_controldata.c:289
+msgid "by value"
+msgstr "hodnotou"
+
+#: pg_controldata.c:288
+#, c-format
+msgid "Float8 argument passing:              %s\n"
+msgstr "Způsob předávání float8 hodnot:        %s\n"
+
+#~ msgid ""
+#~ "Usage:\n"
+#~ "  %s [OPTION] [DATADIR]\n"
+#~ "\n"
+#~ "Options:\n"
+#~ "  --help         show this help, then exit\n"
+#~ "  --version      output version information, then exit\n"
+#~ msgstr ""
+#~ "Použití:\n"
+#~ "  %s [PŘEPÍNAČ] [ADRESÁŘ]\n"
+#~ "\n"
+#~ "Přepínače:\n"
+#~ "  --help         ukáže tuto nápovědu a skončí\n"
+#~ "  --version      ukáže verzi tohoto programu a skončí\n"

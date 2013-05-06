@@ -1,8 +1,6 @@
 # translation of pltcl.po to fr_fr
 # french message translation file for pltcl
 #
-# $PostgreSQL$
-#
 # Use these quotes: « %s »
 # Guillaume Lelarge <guillaume@lelarge.info>, 2009.
 #

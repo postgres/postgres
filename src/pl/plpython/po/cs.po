@@ -1,0 +1,460 @@
+# LANGUAGE message translation file for plpython
+# Copyright (C) 2012 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+#
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2012.
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 9.2\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2012-09-18 16:39+0000\n"
+"PO-Revision-Date: 2012-09-19 01:51+0200\n"
+"Last-Translator: \n"
+"Language-Team: Czech <kde-i18n-doc@kde.org>\n"
+"Language: cs\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+"X-Generator: Lokalize 1.4\n"
+
+#: plpy_cursorobject.c:98
+#, c-format
+msgid "plpy.cursor expected a query or a plan"
+msgstr "plpy.cursor očekával dotaz nebo plán"
+
+#: plpy_cursorobject.c:171
+#, c-format
+msgid "plpy.cursor takes a sequence as its second argument"
+msgstr "plpy.cursor jako druhý argument očekává sekvenci"
+
+#: plpy_cursorobject.c:187 plpy_spi.c:222
+#, c-format
+msgid "could not execute plan"
+msgstr "nelze spustit plán"
+
+#: plpy_cursorobject.c:190 plpy_spi.c:225
+#, c-format
+msgid "Expected sequence of %d argument, got %d: %s"
+msgid_plural "Expected sequence of %d arguments, got %d: %s"
+msgstr[0] "Očekávána posloupnost %d argument, předáno %d: %s"
+msgstr[1] "Očekávána posloupnost %d argumentů, předáno %d: %s"
+msgstr[2] "Očekávána posloupnost %d argumentů, předáno %d: %s"
+
+#: plpy_cursorobject.c:340
+#, c-format
+msgid "iterating a closed cursor"
+msgstr "iterování uzavřeného kurzoru"
+
+#: plpy_cursorobject.c:348 plpy_cursorobject.c:415
+#, c-format
+msgid "iterating a cursor in an aborted subtransaction"
+msgstr "iterování kurzoru ve zrušené subtransakci"
+
+#: plpy_cursorobject.c:407
+#, c-format
+msgid "fetch from a closed cursor"
+msgstr "fetch ze zavřeného kurzoru"
+
+#: plpy_cursorobject.c:486
+#, c-format
+msgid "closing a cursor in an aborted subtransaction"
+msgstr "uzavření kurzoru ve zrušené subtransakci"
+
+#: plpy_elog.c:103 plpy_elog.c:104 plpy_plpymodule.c:420
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: plpy_exec.c:90
+#, c-format
+msgid "unsupported set function return mode"
+msgstr "nepodporovaný návratový mód funkce vracející tabulku"
+
+#: plpy_exec.c:91
+#, c-format
+msgid ""
+"PL/Python set-returning functions only support returning only value per call."
+msgstr ""
+"PL/Python funkce vracející tabulku podporují pouze vracení hodnoty pro každé "
+"volání."
+
+#: plpy_exec.c:103
+#, c-format
+msgid "returned object cannot be iterated"
+msgstr "přes vrácený objekt nelze iterovat"
+
+#: plpy_exec.c:104
+#, c-format
+msgid "PL/Python set-returning functions must return an iterable object."
+msgstr "PL/Python funkce vracející tabulku musí vracet iterovatelný objekt."
+
+#: plpy_exec.c:129
+#, c-format
+msgid "error fetching next item from iterator"
+msgstr "chyba při načítání další položky z iterátoru"
+
+#: plpy_exec.c:164
+#, c-format
+msgid "PL/Python function with return type \"void\" did not return None"
+msgstr ""
+"PL/Python funkce s návratovým typem \"void\" nevrátila hodnotu \"None\""
+
+#: plpy_exec.c:288 plpy_exec.c:314
+#, c-format
+msgid "unexpected return value from trigger procedure"
+msgstr "neočekávaná návratová hodnota z trigger procedury"
+
+#: plpy_exec.c:289
+#, c-format
+msgid "Expected None or a string."
+msgstr "Očekáváno None nebo řetězec."
+
+#: plpy_exec.c:304
+#, c-format
+msgid ""
+"PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
+msgstr ""
+"PL/Python trigger funkce vrátila \"MODIFY\" v DELETE triggeru -- ignorováno"
+
+#: plpy_exec.c:315
+#, c-format
+msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
+msgstr "Očekáváno None, \"OK\", \"SKIP\", nebo \"MODIFY\"."
+
+#: plpy_exec.c:396
+#, c-format
+msgid "PyList_SetItem() failed, while setting up arguments"
+msgstr "volání PyList_SetItem() selhalo během vytváření argumentů"
+
+#: plpy_exec.c:400
+#, c-format
+msgid "PyDict_SetItemString() failed, while setting up arguments"
+msgstr "volání PyDict_SetItemString() selhalo během přípravy argumentů"
+
+#: plpy_exec.c:412
+#, c-format
+msgid ""
+"function returning record called in context that cannot accept type record"
+msgstr ""
+"funkce vracející záznam byla zavolána z kontextu, který neumožňuje přijetí "
+"záznamu"
+
+#: plpy_exec.c:450
+#, c-format
+msgid "while creating return value"
+msgstr "během vytváření návratové hodnoty"
+
+#: plpy_exec.c:474
+#, c-format
+msgid "could not create new dictionary while building trigger arguments"
+msgstr "během vytváření argumentů triggeru nelze vytvářet nový slovník"
+
+#: plpy_exec.c:664
+#, c-format
+msgid "TD[\"new\"] deleted, cannot modify row"
+msgstr "TD[\"new\"] smazáno, nelze modifikovat řádek"
+
+#: plpy_exec.c:667
+#, c-format
+msgid "TD[\"new\"] is not a dictionary"
+msgstr "TD[\"new\"] není slovník"
+
+#: plpy_exec.c:691
+#, c-format
+msgid "TD[\"new\"] dictionary key at ordinal position %d is not a string"
+msgstr "TD[\"new\"] klíč slovníku na pozici %d není řetězec"
+
+#: plpy_exec.c:697
+#, c-format
+msgid ""
+"key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering "
+"row"
+msgstr ""
+"klíč \"%s\" nalezený v TD[\"new\"] neexistuje jako sloupec v triggering řádku"
+
+#: plpy_exec.c:778
+#, c-format
+msgid "while modifying trigger row"
+msgstr "během modifikace řádku triggeru"
+
+#: plpy_exec.c:839
+#, c-format
+msgid "forcibly aborting a subtransaction that has not been exited"
+msgstr "vynucené ukončení subtransakce která nebyla dokončena"
+
+#: plpy_main.c:100
+#, c-format
+msgid "Python major version mismatch in session"
+msgstr "Rozpor mezi hlavními verzemi Pythonu v session"
+
+#: plpy_main.c:101
+#, c-format
+msgid ""
+"This session has previously used Python major version %d, and it is now "
+"attempting to use Python major version %d."
+msgstr ""
+"Tato session již dříve používala Python s hlavní verzí %d, a nyní se pokouší "
+"použít Python s hlavní verzí %d."
+
+#: plpy_main.c:103
+#, c-format
+msgid "Start a new session to use a different Python major version."
+msgstr "Spouští se nová session pro použití jiné hlavní verze Pythonu."
+
+#: plpy_main.c:118
+#, c-format
+msgid "untrapped error in initialization"
+msgstr "nezachycená chyba v inicializaci"
+
+#: plpy_main.c:141
+#, c-format
+msgid "could not import \"__main__\" module"
+msgstr "nepodařilo se naimportovat \"__main__\" modul"
+
+#: plpy_main.c:146
+#, c-format
+msgid "could not create globals"
+msgstr "nepodařilo se vytvořit globals"
+
+#: plpy_main.c:150
+#, c-format
+msgid "could not initialize globals"
+msgstr "nepodařilo se inicializovat globální proměnné (globals)"
+
+#: plpy_main.c:347
+#, c-format
+msgid "PL/Python function \"%s\""
+msgstr "PL/Python funkce \"%s\""
+
+#: plpy_main.c:354
+#, c-format
+msgid "PL/Python anonymous code block"
+msgstr "PL/Python anonymní blok kódu"
+
+#: plpy_planobject.c:126
+#, c-format
+msgid "plan.status takes no arguments"
+msgstr "plan.status nepřijímá žádné argumenty"
+
+#: plpy_plpymodule.c:178 plpy_plpymodule.c:181
+#, c-format
+#| msgid "could not import \"__main__\" module"
+msgid "could not import \"plpy\" module"
+msgstr "nepodařilo se naimportovat \"plpy\" modul"
+
+#: plpy_plpymodule.c:196
+#, c-format
+msgid "could not add the spiexceptions module"
+msgstr "nepodařilo se naimportovat \"__main__\" modul"
+
+#: plpy_plpymodule.c:217
+#, c-format
+msgid "could not create the base SPI exceptions"
+msgstr "nepodařilo se vygenerovat základní SPI výjimky"
+
+#: plpy_plpymodule.c:253 plpy_plpymodule.c:257
+#, c-format
+msgid "could not generate SPI exceptions"
+msgstr "nepodařilo se vygenerovat SPI výjimky"
+
+#: plpy_plpymodule.c:388
+#, c-format
+msgid "could not unpack arguments in plpy.elog"
+msgstr "nepodařilo se rozbalit argumenty v plpy.elog"
+
+#: plpy_plpymodule.c:396
+msgid "could not parse error message in plpy.elog"
+msgstr "nepodařilo se naparsovat chybovou hlášku v plpy.elog"
+
+#: plpy_procedure.c:194
+#, c-format
+msgid "trigger functions can only be called as triggers"
+msgstr ""
+"funkce pro obsluhu triggerů mohou být volané pouze prostřednictvím triggerů"
+
+#: plpy_procedure.c:199 plpy_typeio.c:406
+#, c-format
+msgid "PL/Python functions cannot return type %s"
+msgstr "PL/Python funkce nemohou vracet typ %s"
+
+#: plpy_procedure.c:281
+#, c-format
+msgid "PL/Python functions cannot accept type %s"
+msgstr "PL/Python funkce nepodporují typ %s"
+
+#: plpy_procedure.c:377
+#, c-format
+msgid "could not compile PL/Python function \"%s\""
+msgstr "nelze zkompiloval PL/Python funkci \"%s\""
+
+#: plpy_procedure.c:380
+#, c-format
+msgid "could not compile anonymous PL/Python code block"
+msgstr "nelze zkompiloval anonymní PL/Python blok"
+
+#: plpy_resultobject.c:145 plpy_resultobject.c:165 plpy_resultobject.c:185
+#, c-format
+msgid "command did not produce a result set"
+msgstr "příkaz nevrátil žádný výsledek"
+
+#: plpy_spi.c:56
+#, c-format
+msgid "second argument of plpy.prepare must be a sequence"
+msgstr "druhý argument pro plpy.prepare musí být posloupnost"
+
+#: plpy_spi.c:105
+#, c-format
+msgid "plpy.prepare: type name at ordinal position %d is not a string"
+msgstr "plpy.prepare: název typu na pozici %d není řetězec"
+
+#: plpy_spi.c:137
+#, c-format
+msgid "plpy.prepare does not support composite types"
+msgstr "plpy.prepare nepodporuje složené typy"
+
+#: plpy_spi.c:187
+#, c-format
+msgid "plpy.execute expected a query or a plan"
+msgstr "plpy.execute očekávala dotaz nebo plán"
+
+#: plpy_spi.c:206
+#, c-format
+msgid "plpy.execute takes a sequence as its second argument"
+msgstr "plpy.execute jako druhý argument očekává posloupnost"
+
+#: plpy_spi.c:330
+#, c-format
+msgid "SPI_execute_plan failed: %s"
+msgstr "volání SPI_execute_plan selhalo: %s"
+
+#: plpy_spi.c:372
+#, c-format
+msgid "SPI_execute failed: %s"
+msgstr "volání SPI_execute selhalo: %s"
+
+#: plpy_spi.c:439
+#, c-format
+msgid "unrecognized error in PLy_spi_execute_fetch_result"
+msgstr "nerozpoznaná chyba v PLy_spi_execute_fetch_result"
+
+#: plpy_subxactobject.c:122
+#, c-format
+msgid "this subtransaction has already been entered"
+msgstr "tato subtransakce již byla zahájena"
+
+#: plpy_subxactobject.c:128 plpy_subxactobject.c:180
+#, c-format
+msgid "this subtransaction has already been exited"
+msgstr "tato subtransakce již byla dokončena"
+
+#: plpy_subxactobject.c:174
+#, c-format
+msgid "this subtransaction has not been entered"
+msgstr "tato subtransakce nebyla zahájena"
+
+#: plpy_subxactobject.c:186
+#, c-format
+msgid "there is no subtransaction to exit from"
+msgstr "nenalezena subtransakce k ukončení"
+
+#: plpy_typeio.c:291
+#, c-format
+msgid "could not create new dictionary"
+msgstr "nepodařilo se vytvořit nový slovník"
+
+#: plpy_typeio.c:408
+#, c-format
+msgid "PL/Python does not support conversion to arrays of row types."
+msgstr "PL/Python nepodporuje konverzi na pole řádkových typů."
+
+#: plpy_typeio.c:584
+#, c-format
+msgid "cannot convert multidimensional array to Python list"
+msgstr "vícerozměrné pole nelze převést na Python seznam (list)"
+
+#: plpy_typeio.c:585
+#, c-format
+msgid "PL/Python only supports one-dimensional arrays."
+msgstr "PL/Python podporuje pouze jednorozměrná pole."
+
+#: plpy_typeio.c:591
+#, c-format
+msgid "could not create new Python list"
+msgstr "nelze vytvořit nový Python seznam"
+
+#: plpy_typeio.c:650
+#, c-format
+msgid "could not create bytes representation of Python object"
+msgstr "nepodařilo se vytvořit bytovou reprezentaci Python objektu"
+
+#: plpy_typeio.c:742
+#, c-format
+msgid "could not create string representation of Python object"
+msgstr "nepodařilo se vytvořit řetězcovou reprezentaci Python objektu"
+
+#: plpy_typeio.c:753
+#, c-format
+msgid ""
+"could not convert Python object into cstring: Python string representation "
+"appears to contain null bytes"
+msgstr ""
+"nepodařilo se převést Python objekt na cstring: zdá se že řetězcová "
+"reprezentace Python objektu obsahuje null byty"
+
+#: plpy_typeio.c:787
+#, c-format
+msgid ""
+"return value of function with array return type is not a Python sequence"
+msgstr ""
+"návratová hodnota funkce s návratovým typem pole není Python posloupnost "
+"(sequence)"
+
+#: plpy_typeio.c:886
+#, c-format
+msgid "key \"%s\" not found in mapping"
+msgstr "klíč \"%s\" nenalezen v mapování"
+
+#: plpy_typeio.c:887
+#, c-format
+msgid ""
+"To return null in a column, add the value None to the mapping with the key "
+"named after the column."
+msgstr ""
+"Pro vrácení hodnoty null ve sloupci, přidejte do mapování hodnotu None s "
+"klíčem pojmenovaným jako sloupec."
+
+#: plpy_typeio.c:935
+#, c-format
+msgid "length of returned sequence did not match number of columns in row"
+msgstr "délka vrácené posloupnosti neodpovídala počtu sloupců v řádku"
+
+#: plpy_typeio.c:1043
+#, c-format
+msgid "attribute \"%s\" does not exist in Python object"
+msgstr "atribut \"%s\" v Python objektu neexistuje"
+
+#: plpy_typeio.c:1044
+#, c-format
+msgid ""
+"To return null in a column, let the returned object have an attribute named "
+"after column with value None."
+msgstr ""
+"Pro vrácení null ve sloupci, nechť vracený objekt má atribut pojmenovaný po "
+"sloupcis hodnotou None."
+
+#: plpy_util.c:70
+#, c-format
+#| msgid ""
+#| "could not convert Python Unicode object to PostgreSQL server encoding"
+msgid "could not convert Python Unicode object to bytes"
+msgstr "nelze převést Python Unicode objekt na byty"
+
+#: plpy_util.c:75
+#, c-format
+#| msgid "could not generate SPI exceptions"
+msgid "could not extract bytes from encoded string"
+msgstr "nepodařilo se získat byty z kódovaného řetězce"
+
+#~ msgid "could not initialize plpy"
+#~ msgstr "nepodařilo se inicializovat plpy"

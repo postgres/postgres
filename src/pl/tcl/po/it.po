@@ -7,7 +7,7 @@
 #
 # Traduttori:
 #  * Flavio Spada <f.spada@sbv.mi.it>
-# 
+#
 # Revisori:
 #  * Gabriele Bartolini <gabriele.bartolini@2ndQuadrant.it>
 #
@@ -16,23 +16,24 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pltcl\n"
+"Project-Id-Version: pltcl (PostgreSQL) 9.3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-03-26 13:16+0000\n"
-"PO-Revision-Date: 2010-03-27 12:44:19+0100\n"
-"Last-Translator: Gabriele Bartolini <gabriele.bartolini@2ndquadrant.it>\n"
+"POT-Creation-Date: 2013-03-15 22:09+0000\n"
+"PO-Revision-Date: 2012-11-04 18:06+0100\n"
+"Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
+"Language: it\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: KBabel 1.11.4\n"
+"X-Generator: Poedit 1.5.4\n"
 
-#: pltcl.c:1029
+#: pltcl.c:1157
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1030
+#: pltcl.c:1158
 #, c-format
 msgid ""
 "%s\n"
@@ -41,25 +42,27 @@ msgstr ""
 "%s\n"
 "nella funzione PL/Tcl \"%s\""
 
-#: pltcl.c:1127
+#: pltcl.c:1262 pltcl.c:1269
+#, c-format
 msgid "out of memory"
 msgstr "memoria esaurita"
 
-#: pltcl.c:1191
+#: pltcl.c:1316
+#, c-format
 msgid "trigger functions can only be called as triggers"
-msgstr "le funzioni trigger possono essere chiamate solo come trigger"
+msgstr "le funzioni trigger possono essere chiamate esclusivamente da trigger"
 
-#: pltcl.c:1200
+#: pltcl.c:1325
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
-msgstr "le funzioni PL/Tcl non possono ritornare il tipo %s"
+msgstr "le funzioni PL/Tcl non possono restituire il tipo %s"
 
-#: pltcl.c:1212
+#: pltcl.c:1337
+#, c-format
 msgid "PL/Tcl functions cannot return composite types"
-msgstr "le funzioni PL.Tcl non possono ritornare tipi composti"
+msgstr "le funzioni PL/Tcl non possono restituire tipi compositi"
 
-#: pltcl.c:1251
+#: pltcl.c:1376
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "le funzioni PL/Tcl non possono accettare il tipo %s"
-

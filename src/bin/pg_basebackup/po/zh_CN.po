@@ -1,0 +1,717 @@
+# LANGUAGE message translation file for pg_basebackup
+# Copyright (C) 2012 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2012.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_basebackup (PostgreSQL) 9.2\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2013-01-29 13:46+0000\n"
+"PO-Revision-Date: 2012-10-19 10:56+0800\n"
+"Last-Translator: Xiong He <iihero@qq.com>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 1.5.4\n"
+
+#: pg_basebackup.c:103
+#, c-format
+msgid ""
+"%s takes a base backup of a running PostgreSQL server.\n"
+"\n"
+msgstr ""
+"%s 在运行的PostgreSQL服务器上执行基础备份.\n"
+"\n"
+
+#: pg_basebackup.c:105 pg_receivexlog.c:59
+#, c-format
+msgid "Usage:\n"
+msgstr "使用方法:\n"
+
+#: pg_basebackup.c:106 pg_receivexlog.c:60
+#, c-format
+msgid "  %s [OPTION]...\n"
+msgstr "  %s [选项]...\n"
+
+#: pg_basebackup.c:107
+#, c-format
+msgid ""
+"\n"
+"Options controlling the output:\n"
+msgstr ""
+"\n"
+"控制输出的选项:\n"
+
+#: pg_basebackup.c:108
+#, c-format
+msgid "  -D, --pgdata=DIRECTORY receive base backup into directory\n"
+msgstr " -D, --pgdata=DIRECTORY 接收基础备份到指定目录\n"
+
+#: pg_basebackup.c:109
+#, c-format
+msgid "  -F, --format=p|t       output format (plain (default), tar)\n"
+msgstr "  -F, --format=p|t       输出格式 (纯文本 (缺省值), tar压缩格式)\n"
+
+#: pg_basebackup.c:110
+#, c-format
+msgid ""
+"  -x, --xlog             include required WAL files in backup (fetch mode)\n"
+msgstr "  -x, --xlog             在备份中包含必需的WAL文件(fetch 模式)\n"
+
+#: pg_basebackup.c:111
+#, c-format
+msgid ""
+"  -X, --xlog-method=fetch|stream\n"
+"                         include required WAL files with specified method\n"
+msgstr ""
+"  -X, --xlog-method=fetch|stream\n"
+"                         按指定的模式包含必需的WAL日志文件\n"
+
+#: pg_basebackup.c:113
+#, c-format
+msgid "  -z, --gzip             compress tar output\n"
+msgstr "  -z, --gzip             对tar文件进行压缩输出\n"
+
+#: pg_basebackup.c:114
+#, c-format
+msgid ""
+"  -Z, --compress=0-9     compress tar output with given compression level\n"
+msgstr "  -Z, --compress=0-9     按给定的压缩级别对tar文件进行压缩输出\n"
+
+#: pg_basebackup.c:115
+#, c-format
+msgid ""
+"\n"
+"General options:\n"
+msgstr ""
+"\n"
+"一般选项:\n"
+
+#: pg_basebackup.c:116
+#, c-format
+msgid ""
+"  -c, --checkpoint=fast|spread\n"
+"                         set fast or spread checkpointing\n"
+msgstr ""
+"  -c, --checkpoint=fast|spread\n"
+"                         设置检查点方式(fast或者spread)\n"
+
+#: pg_basebackup.c:118
+#, c-format
+msgid "  -l, --label=LABEL      set backup label\n"
+msgstr "  -l, --label=LABEL      设置备份标签\n"
+
+#: pg_basebackup.c:119
+#, c-format
+msgid "  -P, --progress         show progress information\n"
+msgstr "  -P, --progress         显示进度信息\n"
+
+#: pg_basebackup.c:120 pg_receivexlog.c:64
+#, c-format
+msgid "  -v, --verbose          output verbose messages\n"
+msgstr "  -v, --verbose          输出详细的消息\n"
+
+#: pg_basebackup.c:121 pg_receivexlog.c:65
+#, c-format
+msgid "  -V, --version          output version information, then exit\n"
+msgstr "  -V, --version          输出版本信息, 然后退出\n"
+
+#: pg_basebackup.c:122 pg_receivexlog.c:66
+#, c-format
+msgid "  -?, --help             show this help, then exit\n"
+msgstr "  -?, --help             显示帮助, 然后退出\n"
+
+#: pg_basebackup.c:123 pg_receivexlog.c:67
+#, c-format
+msgid ""
+"\n"
+"Connection options:\n"
+msgstr ""
+"\n"
+"联接选项:\n"
+
+#: pg_basebackup.c:124 pg_receivexlog.c:68
+#, c-format
+msgid "  -h, --host=HOSTNAME    database server host or socket directory\n"
+msgstr "  -h, --host=HOSTNAME    数据库服务器主机或者是socket目录\n"
+
+#: pg_basebackup.c:125 pg_receivexlog.c:69
+#, c-format
+msgid "  -p, --port=PORT        database server port number\n"
+msgstr "  -p, --port=PORT        数据库服务器端口号\n"
+
+#: pg_basebackup.c:126 pg_receivexlog.c:70
+#, c-format
+msgid ""
+"  -s, --status-interval=INTERVAL\n"
+"                         time between status packets sent to server (in "
+"seconds)\n"
+msgstr ""
+"  -s, --status-interval=INTERVAL\n"
+"                         发往服务器的状态包的时间间隔 (以秒计)\n"
+
+#: pg_basebackup.c:128 pg_receivexlog.c:72
+#, c-format
+msgid "  -U, --username=NAME    connect as specified database user\n"
+msgstr "  -U, --username=NAME    指定连接所需的数据库用户名\n"
+
+#: pg_basebackup.c:129 pg_receivexlog.c:73
+#, c-format
+msgid "  -w, --no-password      never prompt for password\n"
+msgstr "  -w, --no-password      禁用输入密码的提示\n"
+
+#: pg_basebackup.c:130 pg_receivexlog.c:74
+#, c-format
+msgid ""
+"  -W, --password         force password prompt (should happen "
+"automatically)\n"
+msgstr "  -W, --password         强制提示输入密码 (应该自动发生)\n"
+
+#: pg_basebackup.c:131 pg_receivexlog.c:75
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"错误报告至 <pgsql-bugs@postgresql.org>.\n"
+
+#: pg_basebackup.c:172
+#, c-format
+msgid "%s: could not read from ready pipe: %s\n"
+msgstr "%s: 无法从准备就绪的管道: %s读\n"
+
+#: pg_basebackup.c:180 pg_basebackup.c:271 pg_basebackup.c:1187
+#: pg_receivexlog.c:256
+#, c-format
+msgid "%s: could not parse transaction log location \"%s\"\n"
+msgstr "%s: 无法解析来自 \"%s\"的事务日志\n"
+
+#: pg_basebackup.c:283
+#, c-format
+msgid "%s: could not create pipe for background process: %s\n"
+msgstr "%s: 无法为后台进程: %s创建管道\n"
+
+#: pg_basebackup.c:316
+#, c-format
+msgid "%s: could not create background process: %s\n"
+msgstr "%s: 无法创建后台进程: %s\n"
+
+#: pg_basebackup.c:328
+#, c-format
+msgid "%s: could not create background thread: %s\n"
+msgstr "%s: 无法创建后台线程: %s\n"
+
+#: pg_basebackup.c:353 pg_basebackup.c:821
+#, c-format
+msgid "%s: could not create directory \"%s\": %s\n"
+msgstr "%s: 无法创建目录 \"%s\": %s\n"
+
+#: pg_basebackup.c:370
+#, c-format
+msgid "%s: directory \"%s\" exists but is not empty\n"
+msgstr "%s: 目录\"%s\"已存在，但不是空的\n"
+
+#: pg_basebackup.c:378
+#, c-format
+msgid "%s: could not access directory \"%s\": %s\n"
+msgstr "%s: 无法访问目录 \"%s\": %s\n"
+
+#: pg_basebackup.c:425
+#, c-format
+msgid "%s/%s kB (100%%), %d/%d tablespace %35s"
+msgid_plural "%s/%s kB (100%%), %d/%d tablespaces %35s"
+msgstr[0] "%s/%s kB (100%%), %d/%d 表空间 %35s"
+
+#: pg_basebackup.c:432
+#, c-format
+msgid "%s/%s kB (%d%%), %d/%d tablespace (%-30.30s)"
+msgid_plural "%s/%s kB (%d%%), %d/%d tablespaces (%-30.30s)"
+msgstr[0] "%s/%s kB (%d%%), %d/%d 表空间 (%-30.30s)"
+
+#: pg_basebackup.c:440
+#, c-format
+msgid "%s/%s kB (%d%%), %d/%d tablespace"
+msgid_plural "%s/%s kB (%d%%), %d/%d tablespaces"
+msgstr[0] "%s/%s kB (%d%%), %d/%d 表空间"
+
+#: pg_basebackup.c:486 pg_basebackup.c:506 pg_basebackup.c:534
+#, c-format
+msgid "%s: could not set compression level %d: %s\n"
+msgstr "%s: 无法设置压缩级别 %d: %s\n"
+
+#: pg_basebackup.c:555
+#, c-format
+msgid "%s: could not create compressed file \"%s\": %s\n"
+msgstr "%s: 无法创建压缩文件 \"%s\": %s\n"
+
+#: pg_basebackup.c:566 pg_basebackup.c:863
+#, c-format
+msgid "%s: could not create file \"%s\": %s\n"
+msgstr "%s: 无法创建文件 \"%s\": %s\n"
+
+#: pg_basebackup.c:578 pg_basebackup.c:725
+#, c-format
+msgid "%s: could not get COPY data stream: %s"
+msgstr "%s: 无法得到复制数据流: %s"
+
+#: pg_basebackup.c:612 pg_basebackup.c:670
+#, c-format
+msgid "%s: could not write to compressed file \"%s\": %s\n"
+msgstr "%s: 无法往压缩文件里写\"%s\": %s\n"
+
+#: pg_basebackup.c:623 pg_basebackup.c:680 pg_basebackup.c:903
+#, c-format
+msgid "%s: could not write to file \"%s\": %s\n"
+msgstr "%s: 无法写文件 \"%s\": %s\n"
+
+#: pg_basebackup.c:635
+#, c-format
+msgid "%s: could not close compressed file \"%s\": %s\n"
+msgstr "%s: 无法关闭压缩文件 \"%s\": %s\n"
+
+#: pg_basebackup.c:648 receivelog.c:157 receivelog.c:630 receivelog.c:639
+#, c-format
+msgid "%s: could not close file \"%s\": %s\n"
+msgstr "%s: 无法关闭文件 \"%s\": %s\n"
+
+#: pg_basebackup.c:659 pg_basebackup.c:754 receivelog.c:473
+#, c-format
+msgid "%s: could not read COPY data: %s"
+msgstr "%s: 无法读取复制数据: %s"
+
+#: pg_basebackup.c:768
+#, c-format
+msgid "%s: invalid tar block header size: %d\n"
+msgstr "%s: 无效的tar压缩块头大小: %d\n"
+
+#: pg_basebackup.c:776
+#, c-format
+msgid "%s: could not parse file size\n"
+msgstr "%s: 无法解析文件大小\n"
+
+#: pg_basebackup.c:784
+#, c-format
+msgid "%s: could not parse file mode\n"
+msgstr "%s: 无法解析文件模式\n"
+
+#: pg_basebackup.c:829
+#, c-format
+msgid "%s: could not set permissions on directory \"%s\": %s\n"
+msgstr "%s: 无法设置目录权限 \"%s\": %s\n"
+
+#: pg_basebackup.c:842
+#, c-format
+msgid "%s: could not create symbolic link from \"%s\" to \"%s\": %s\n"
+msgstr "%s: 无法创建从 \"%s\" 到 \"%s\"的符号链接: %s\n"
+
+#: pg_basebackup.c:850
+#, c-format
+msgid "%s: unrecognized link indicator \"%c\"\n"
+msgstr "%s: 无法识别的链接标识符 \"%c\"\n"
+
+#: pg_basebackup.c:870
+#, c-format
+msgid "%s: could not set permissions on file \"%s\": %s\n"
+msgstr "%s: 无法设置文件 \"%s\"的访问权限: %s\n"
+
+#: pg_basebackup.c:929
+#, c-format
+msgid "%s: COPY stream ended before last file was finished\n"
+msgstr "%s: 复制流在最后一个文件结束前终止\n"
+
+#: pg_basebackup.c:965 pg_basebackup.c:994 pg_receivexlog.c:239
+#: receivelog.c:303 receivelog.c:340
+#, c-format
+msgid "%s: could not send replication command \"%s\": %s"
+msgstr "%s: 无法发送复制命令 \"%s\": %s"
+
+#: pg_basebackup.c:972 pg_receivexlog.c:247 receivelog.c:311
+#, c-format
+msgid ""
+"%s: could not identify system: got %d rows and %d fields, expected %d rows "
+"and %d fields\n"
+msgstr "%s: 无法识别系统: 得到 %d 行和 %d 列, 期望值为: %d 行和 %d 列\n"
+
+#: pg_basebackup.c:1005
+#, c-format
+msgid "%s: could not initiate base backup: %s"
+msgstr "%s: 无法发起基础备份: %s"
+
+#: pg_basebackup.c:1011
+#, c-format
+msgid "%s: no start point returned from server\n"
+msgstr "%s: 服务器没有返回起始点\n"
+
+#: pg_basebackup.c:1027
+#, c-format
+msgid "%s: could not get backup header: %s"
+msgstr "%s: 无法得到备份头: %s"
+
+#: pg_basebackup.c:1033
+#, c-format
+msgid "%s: no data returned from server\n"
+msgstr "%s: 服务器没有数据返回\n"
+
+# Here, we need to understand what's the content "database has"? 
+# Is it the stdout fd? or anything else? Please correct me here.
+#: pg_basebackup.c:1062
+#, c-format
+msgid "%s: can only write single tablespace to stdout, database has %d\n"
+msgstr "%s: 只能把表空间写往标准输出, 数据库拥有标准输出: %d\n"
+
+#: pg_basebackup.c:1074
+#, c-format
+msgid "%s: starting background WAL receiver\n"
+msgstr "%s: 启动后台 WAL 接收进程\n"
+
+#: pg_basebackup.c:1104
+#, c-format
+msgid "%s: could not get transaction log end position from server: %s"
+msgstr "%s: 无法得到来自服务器的事务日志终止位置: %s"
+
+#: pg_basebackup.c:1111
+#, c-format
+msgid "%s: no transaction log end position returned from server\n"
+msgstr "%s: 服务器端没有返回事务日志的终止位置\n"
+
+#: pg_basebackup.c:1123
+#, c-format
+msgid "%s: final receive failed: %s"
+msgstr "%s: 最终接收失败: %s"
+
+#: pg_basebackup.c:1139
+#, c-format
+msgid "%s: waiting for background process to finish streaming...\n"
+msgstr "%s: 等待后台进程终止流操作...\n"
+
+#: pg_basebackup.c:1145
+#, c-format
+msgid "%s: could not send command to background pipe: %s\n"
+msgstr "%s: 无法发送命令到后台管道: %s\n"
+
+#: pg_basebackup.c:1154
+#, c-format
+msgid "%s: could not wait for child process: %s\n"
+msgstr "%s: 无法等待子进程: %s\n"
+
+#: pg_basebackup.c:1160
+#, c-format
+msgid "%s: child %d died, expected %d\n"
+msgstr "%s: 子进程 %d 已终止, 期望值为 %d\n"
+
+#: pg_basebackup.c:1166
+#, c-format
+msgid "%s: child process did not exit normally\n"
+msgstr "%s: 子进程没有正常退出\n"
+
+#: pg_basebackup.c:1172
+#, c-format
+msgid "%s: child process exited with error %d\n"
+msgstr "%s: 子进程退出, 错误码为: %d\n"
+
+#: pg_basebackup.c:1198
+#, c-format
+msgid "%s: could not wait for child thread: %s\n"
+msgstr "%s: 无法等待子线程: %s\n"
+
+#: pg_basebackup.c:1205
+#, c-format
+msgid "%s: could not get child thread exit status: %s\n"
+msgstr "%s: 无法得到子线程退出状态: %s\n"
+
+#: pg_basebackup.c:1211
+#, c-format
+msgid "%s: child thread exited with error %u\n"
+msgstr "%s: 子线程退出, 错误码为: %u\n"
+
+#: pg_basebackup.c:1292
+#, c-format
+msgid "%s: invalid output format \"%s\", must be \"plain\" or \"tar\"\n"
+msgstr "%s: 无效输出格式: \"%s\", 有效值为: \"plain\" 或者 \"tar\"\n"
+
+#: pg_basebackup.c:1301 pg_basebackup.c:1313
+#, c-format
+msgid "%s: cannot specify both --xlog and --xlog-method\n"
+msgstr "%s: 不能同时指定两个选项: --xlog and --xlog-method\n"
+
+#: pg_basebackup.c:1328
+#, c-format
+msgid ""
+"%s: invalid xlog-method option \"%s\", must be \"fetch\" or \"stream\"\n"
+msgstr ""
+"%s: 无效的xlog-method 选项: \"%s\", 必须是: \"fetch\" 或者 \"stream\"\n"
+
+#: pg_basebackup.c:1347
+#, c-format
+msgid "%s: invalid compression level \"%s\"\n"
+msgstr "%s: 无效的压缩级别值: \"%s\"\n"
+
+#: pg_basebackup.c:1359
+#, c-format
+msgid ""
+"%s: invalid checkpoint argument \"%s\", must be \"fast\" or \"spread\"\n"
+msgstr "%s: 无效的检查点参数: \"%s\", 必须是: \"fast\" 或 \"spread\"\n"
+
+#: pg_basebackup.c:1383 pg_receivexlog.c:370
+#, c-format
+msgid "%s: invalid status interval \"%s\"\n"
+msgstr "%s: 无效的状态间隔值: \"%s\"\n"
+
+#: pg_basebackup.c:1399 pg_basebackup.c:1413 pg_basebackup.c:1424
+#: pg_basebackup.c:1437 pg_basebackup.c:1447 pg_receivexlog.c:386
+#: pg_receivexlog.c:400 pg_receivexlog.c:411
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "请用 \"%s --help\" 获取更多的信息.\n"
+
+#: pg_basebackup.c:1411 pg_receivexlog.c:398
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: 命令行参数太多 (第一个是 \"%s\")\n"
+
+#: pg_basebackup.c:1423 pg_receivexlog.c:410
+#, c-format
+msgid "%s: no target directory specified\n"
+msgstr "%s: 没有指定目标目录\n"
+
+#: pg_basebackup.c:1435
+#, c-format
+msgid "%s: only tar mode backups can be compressed\n"
+msgstr "%s: 只有tar模式备份才能进行压缩\n"
+
+#: pg_basebackup.c:1445
+#, c-format
+msgid "%s: wal streaming can only be used in plain mode\n"
+msgstr "%s: wal 流只能在plain模式下使用\n"
+
+#: pg_basebackup.c:1456
+#, c-format
+msgid "%s: this build does not support compression\n"
+msgstr "%s: 这个编译版本不支持压缩\n"
+
+#: pg_receivexlog.c:57
+#, c-format
+msgid ""
+"%s receives PostgreSQL streaming transaction logs.\n"
+"\n"
+msgstr ""
+"%s 接收PostgreSQL的流事务日志.\n"
+"\n"
+
+#: pg_receivexlog.c:61
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"选项:\n"
+
+#: pg_receivexlog.c:62
+#, c-format
+msgid ""
+"  -D, --directory=DIR    receive transaction log files into this directory\n"
+msgstr "  -D, --directory=DIR    接收事务日志到指定的目录\n"
+
+#: pg_receivexlog.c:63
+#, c-format
+msgid "  -n, --no-loop          do not loop on connection lost\n"
+msgstr "  -n, --no-loop          连接丢失时不进行循环处理\n"
+
+#: pg_receivexlog.c:82
+#, c-format
+msgid "%s: finished segment at %X/%X (timeline %u)\n"
+msgstr "%s: finished segment at %X/%X (timeline %u)\n"
+
+#: pg_receivexlog.c:87
+#, c-format
+msgid "%s: received interrupt signal, exiting.\n"
+msgstr "%s: 接收到终断信号, 正在退出.\n"
+
+#: pg_receivexlog.c:114
+#, c-format
+msgid "%s: could not open directory \"%s\": %s\n"
+msgstr "%s: 无法打开目录 \"%s\": %s\n"
+
+#: pg_receivexlog.c:155
+#, c-format
+msgid "%s: could not parse transaction log file name \"%s\"\n"
+msgstr "%s: 无法解析事务日志文件名: \"%s\"\n"
+
+#: pg_receivexlog.c:168
+#, c-format
+msgid "%s: could not stat file \"%s\": %s\n"
+msgstr "%s: 无法统计文件: \"%s\": %s\n"
+
+#: pg_receivexlog.c:187
+#, c-format
+msgid "%s: segment file \"%s\" has incorrect size %d, skipping\n"
+msgstr "%s: 段文件 \"%s\" 大小值: %d不正确, 跳过\n"
+
+#: pg_receivexlog.c:277
+#, c-format
+msgid "%s: starting log streaming at %X/%X (timeline %u)\n"
+msgstr "%s: 在时间点: %X/%X (时间安排%u)启动日志的流操作 \n"
+
+#: pg_receivexlog.c:351
+#, c-format
+msgid "%s: invalid port number \"%s\"\n"
+msgstr "%s: 无效端口号 \"%s\"\n"
+
+#: pg_receivexlog.c:433
+#, c-format
+msgid "%s: disconnected.\n"
+msgstr "%s: 连接已断开.\n"
+
+#. translator: check source for value for %d
+#: pg_receivexlog.c:440
+#, c-format
+msgid "%s: disconnected. Waiting %d seconds to try again.\n"
+msgstr "%s: 连接已断开. %d 秒后尝试重连.\n"
+
+#: receivelog.c:72
+#, c-format
+msgid "%s: could not open transaction log file \"%s\": %s\n"
+msgstr "%s: 无法打开事务日志文件 \"%s\": %s\n"
+
+#: receivelog.c:84
+#, c-format
+msgid "%s: could not stat transaction log file \"%s\": %s\n"
+msgstr "%s: 无法统计事务日志文件 \"%s\": %s\n"
+
+#: receivelog.c:94
+#, c-format
+msgid "%s: transaction log file \"%s\" has %d bytes, should be 0 or %d\n"
+msgstr "%s: 事务日志文件 \"%s\" 大小为 %d 字节, 正确值应该是 0 或 %d字节\n"
+
+#: receivelog.c:107
+#, c-format
+msgid "%s: could not pad transaction log file \"%s\": %s\n"
+msgstr "%s: 无法填充事务日志文件 \"%s\": %s\n"
+
+#: receivelog.c:120
+#, c-format
+msgid "%s: could not seek to beginning of transaction log file \"%s\": %s\n"
+msgstr "%s: 无法定位事务日志文件 \"%s\"的开始位置: %s\n"
+
+#: receivelog.c:143
+#, c-format
+msgid "%s: could not determine seek position in file \"%s\": %s\n"
+msgstr "%s: 无法确定文件 \"%s\"的当前位置: %s\n"
+
+#: receivelog.c:150
+#, c-format
+msgid "%s: could not fsync file \"%s\": %s\n"
+msgstr "%s: 无法对文件 \"%s\"进行fsync同步: %s\n"
+
+#: receivelog.c:177
+#, c-format
+msgid "%s: could not rename file \"%s\": %s\n"
+msgstr "%s: 无法重命名文件 \"%s\": %s\n"
+
+#: receivelog.c:184
+#, c-format
+msgid "%s: not renaming \"%s\", segment is not complete\n"
+msgstr "%s: 没有重命名 \"%s\", 段没有完成\n"
+
+#: receivelog.c:319
+#, c-format
+msgid ""
+"%s: system identifier does not match between base backup and streaming "
+"connection\n"
+msgstr "%s: 基础备份和流连接的系统标识符不匹配\n"
+
+#: receivelog.c:327
+#, c-format
+msgid ""
+"%s: timeline does not match between base backup and streaming connection\n"
+msgstr "%s: 基础备份和流连接的时间安排不匹配\n"
+
+#: receivelog.c:398
+#, c-format
+msgid "%s: could not send feedback packet: %s"
+msgstr "%s: 无法发送回馈包: %s"
+
+#: receivelog.c:454
+#, c-format
+msgid "%s: select() failed: %s\n"
+msgstr "%s: select() 失败: %s\n"
+
+#: receivelog.c:462
+#, c-format
+msgid "%s: could not receive data from WAL stream: %s"
+msgstr "%s: 无法接收来自WAL流的数据: %s"
+
+#: receivelog.c:486
+#, c-format
+msgid "%s: keepalive message has incorrect size %d\n"
+msgstr "%s: keepalive(保持活连接)的消息大小 %d 不正确 \n"
+
+#: receivelog.c:494
+#, c-format
+msgid "%s: unrecognized streaming header: \"%c\"\n"
+msgstr "%s: 无法识别的流头: \"%c\"\n"
+
+#: receivelog.c:500
+#, c-format
+msgid "%s: streaming header too small: %d\n"
+msgstr "%s: 流头大小: %d 值太小\n"
+
+#: receivelog.c:519
+#, c-format
+msgid "%s: received transaction log record for offset %u with no file open\n"
+msgstr "%s: 偏移位置 %u 处接收到的事务日志记录没有打开文件\n"
+
+#: receivelog.c:531
+#, c-format
+msgid "%s: got WAL data offset %08x, expected %08x\n"
+msgstr "%s: 得到WAL数据偏移 %08x, 期望值为 %08x\n"
+
+#: receivelog.c:567
+#, c-format
+msgid "%s: could not write %u bytes to WAL file \"%s\": %s\n"
+msgstr "%s: 无法写入 %u 字节到 WAL 文件 \"%s\": %s\n"
+
+#: receivelog.c:613
+#, c-format
+msgid "%s: unexpected termination of replication stream: %s"
+msgstr "%s: 流复制异常终止: %s"
+
+#: receivelog.c:622
+#, c-format
+msgid "%s: replication stream was terminated before stop point\n"
+msgstr "%s: 流复制在停止点之前异常终止\n"
+
+#: streamutil.c:46 streamutil.c:63
+#, c-format
+msgid "%s: out of memory\n"
+msgstr "%s: 内存溢出\n"
+
+#: streamutil.c:142
+msgid "Password: "
+msgstr "口令: "
+
+#: streamutil.c:155
+#, c-format
+msgid "%s: could not connect to server\n"
+msgstr "%s: 无法连接到服务器\n"
+
+#: streamutil.c:171
+#, c-format
+msgid "%s: could not connect to server: %s\n"
+msgstr "%s: 无法连接到服务器: %s\n"
+
+#: streamutil.c:191
+#, c-format
+msgid "%s: could not determine server setting for integer_datetimes\n"
+msgstr "%s: 无法确定服务器上integer_datetimes的配置\n"
+
+#: streamutil.c:204
+#, c-format
+msgid "%s: integer_datetimes compile flag does not match server\n"
+msgstr "%s: integer_datetimes编译开关与服务器端不匹配\n"

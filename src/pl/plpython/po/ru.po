@@ -1,0 +1,463 @@
+# Russian message translation file for plpython
+# Copyright (C) 2012 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# Alexander Lakhin <exclusion@gmail.com>, 2012.
+#
+# ChangeLog:
+#   - June 27, 2012: Updates for 9.2. Alexander Lakhin <exclusion@gmail.com>.
+#   - April 3, 2012: Bug fixes. Alexander Lakhin <exclusion@gmail.com>.
+#   - February 18, 2012: Complete translation for 9.1. Alexander Lakhin <exclusion@gmail.com>.
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 9.2\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2012-08-06 12:39+0000\n"
+"PO-Revision-Date: 2012-08-06 18:19+0400\n"
+"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
+"Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
+"X-Generator: Lokalize 1.4\n"
+
+#: plpy_cursorobject.c:98
+#, c-format
+msgid "plpy.cursor expected a query or a plan"
+msgstr "plpy.cursor ожидает запрос или план"
+
+#: plpy_cursorobject.c:171
+#, c-format
+msgid "plpy.cursor takes a sequence as its second argument"
+msgstr "plpy.cursor принимает в качестве второго аргумента последовательность"
+
+#: plpy_cursorobject.c:187 plpy_spi.c:222
+#, c-format
+msgid "could not execute plan"
+msgstr "нельзя выполнить план"
+
+#: plpy_cursorobject.c:190 plpy_spi.c:225
+#, c-format
+msgid "Expected sequence of %d argument, got %d: %s"
+msgid_plural "Expected sequence of %d arguments, got %d: %s"
+msgstr[0] "Ожидалась последовательность из %d аргумента, получено %d: %s"
+msgstr[1] "Ожидалась последовательность из %d аргументов, получено %d: %s"
+msgstr[2] "Ожидалась последовательность из %d аргументов, получено %d: %s"
+
+#: plpy_cursorobject.c:340
+#, c-format
+msgid "iterating a closed cursor"
+msgstr "перемещение закрытого курсора"
+
+#: plpy_cursorobject.c:348 plpy_cursorobject.c:415
+#, c-format
+msgid "iterating a cursor in an aborted subtransaction"
+msgstr "перемещение курсора в прерванной подтранзакции"
+
+#: plpy_cursorobject.c:407
+#, c-format
+msgid "fetch from a closed cursor"
+msgstr "выборка из закрытого курсора"
+
+#: plpy_cursorobject.c:486
+#, c-format
+msgid "closing a cursor in an aborted subtransaction"
+msgstr "закрытие курсора в прерванной подтранзакции"
+
+#: plpy_elog.c:103 plpy_elog.c:104 plpy_plpymodule.c:420
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: plpy_exec.c:90
+#, c-format
+msgid "unsupported set function return mode"
+msgstr "неподдерживаемый режим возврата для функции с результатом-множеством"
+
+#: plpy_exec.c:91
+#, c-format
+msgid ""
+"PL/Python set-returning functions only support returning only value per call."
+msgstr ""
+"Функции PL/Python с результатом-множеством могут возвращать только по одному "
+"значению за вызов."
+
+#: plpy_exec.c:103
+#, c-format
+msgid "returned object cannot be iterated"
+msgstr "возвращаемый объект не поддерживает итерации"
+
+#: plpy_exec.c:104
+#, c-format
+msgid "PL/Python set-returning functions must return an iterable object."
+msgstr ""
+"Функции PL/Python с результатом-множеством должны возвращать объекты с "
+"возможностью итерации."
+
+#: plpy_exec.c:129
+#, c-format
+msgid "error fetching next item from iterator"
+msgstr "ошибка получения следующего элемента из итератора"
+
+#: plpy_exec.c:164
+#, c-format
+msgid "PL/Python function with return type \"void\" did not return None"
+msgstr "функция PL/Python с типом результата \"void\" вернула не None"
+
+#: plpy_exec.c:288 plpy_exec.c:314
+#, c-format
+msgid "unexpected return value from trigger procedure"
+msgstr "триггерная процедура вернула недопустимое значение"
+
+#: plpy_exec.c:289
+#, c-format
+msgid "Expected None or a string."
+msgstr "Ожидалось None или строка."
+
+#: plpy_exec.c:304
+#, c-format
+msgid ""
+"PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
+msgstr ""
+"триггерная функция PL/Python вернула \"MODIFY\" в триггере DELETE -- "
+"игнорируется"
+
+#: plpy_exec.c:315
+#, c-format
+msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
+msgstr "Ожидалось None, \"OK\", \"SKIP\" или \"MODIFY\"."
+
+#: plpy_exec.c:396
+#, c-format
+msgid "PyList_SetItem() failed, while setting up arguments"
+msgstr "ошибка в PyList_SetItem() при настройке аргументов"
+
+#: plpy_exec.c:400
+#, c-format
+msgid "PyDict_SetItemString() failed, while setting up arguments"
+msgstr "ошибка в PyDict_SetItemString() при настройке аргументов"
+
+#: plpy_exec.c:412
+#, c-format
+msgid ""
+"function returning record called in context that cannot accept type record"
+msgstr ""
+"функция, возвращающая запись, вызвана в контексте, не допускающем этот тип"
+
+#: plpy_exec.c:450
+#, c-format
+msgid "while creating return value"
+msgstr "при создании возвращаемого значения"
+
+#: plpy_exec.c:474
+#, c-format
+msgid "could not create new dictionary while building trigger arguments"
+msgstr "не удалось создать словарь для передачи аргументов триггера"
+
+#: plpy_exec.c:664
+#, c-format
+msgid "TD[\"new\"] deleted, cannot modify row"
+msgstr "элемент TD[\"new\"] удалён -- изменить строку нельзя"
+
+#: plpy_exec.c:667
+#, c-format
+msgid "TD[\"new\"] is not a dictionary"
+msgstr "TD[\"new\"] - не словарь"
+
+#: plpy_exec.c:691
+#, c-format
+msgid "TD[\"new\"] dictionary key at ordinal position %d is not a string"
+msgstr "ключ словаря TD[\"new\"] с порядковым номером %d не является строкой"
+
+#: plpy_exec.c:697
+#, c-format
+msgid ""
+"key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering "
+"row"
+msgstr ""
+"ключу \"%s\", найденному в TD[\"new\"], не соответствует колонка в строке, "
+"обрабатываемой триггером"
+
+#: plpy_exec.c:778
+#, c-format
+msgid "while modifying trigger row"
+msgstr "при изменении строки в триггере"
+
+#: plpy_exec.c:839
+#, c-format
+msgid "forcibly aborting a subtransaction that has not been exited"
+msgstr "принудительное прерывание незавершённой подтранзакции"
+
+#: plpy_main.c:100
+#, c-format
+msgid "Python major version mismatch in session"
+msgstr "несовпадение базовой версии Python в сеансе"
+
+#: plpy_main.c:101
+#, c-format
+msgid ""
+"This session has previously used Python major version %d, and it is now "
+"attempting to use Python major version %d."
+msgstr ""
+"В данном сеансе до этого использовался Python базовой версии %d, а сейчас "
+"планируется использовать Python версии %d."
+
+#: plpy_main.c:103
+#, c-format
+msgid "Start a new session to use a different Python major version."
+msgstr ""
+"Чтобы переключиться на другую базовую версию Python, начните новый сеанс."
+
+#: plpy_main.c:118
+#, c-format
+msgid "untrapped error in initialization"
+msgstr "необработанная ошибка при инициализации"
+
+#: plpy_main.c:141
+#, c-format
+msgid "could not import \"__main__\" module"
+msgstr "не удалось импортировать модуль \"__main__\""
+
+#: plpy_main.c:146
+#, c-format
+msgid "could not create globals"
+msgstr "не удалось создать глобальные данные"
+
+#: plpy_main.c:150
+#, c-format
+msgid "could not initialize globals"
+msgstr "не удалось инициализировать глобальные данные"
+
+#: plpy_main.c:347
+#, c-format
+msgid "PL/Python function \"%s\""
+msgstr "функция PL/Python \"%s\""
+
+#: plpy_main.c:354
+#, c-format
+msgid "PL/Python anonymous code block"
+msgstr "анонимный блок кода PL/Python"
+
+#: plpy_planobject.c:126
+#, c-format
+msgid "plan.status takes no arguments"
+msgstr "plan.status не принимает аргументы"
+
+#: plpy_plpymodule.c:178 plpy_plpymodule.c:181
+#, c-format
+msgid "could not import \"plpy\" module"
+msgstr "не удалось импортировать модуль \"plpy\""
+
+#: plpy_plpymodule.c:196
+#, c-format
+msgid "could not add the spiexceptions module"
+msgstr "не удалось добавить модуль spiexceptions"
+
+#: plpy_plpymodule.c:217
+#, c-format
+msgid "could not create the base SPI exceptions"
+msgstr "не удалось создать базовые объекты исключений SPI"
+
+#: plpy_plpymodule.c:253 plpy_plpymodule.c:257
+#, c-format
+msgid "could not generate SPI exceptions"
+msgstr "не удалось сгенерировать исключения SPI"
+
+#: plpy_plpymodule.c:388
+#, c-format
+msgid "could not unpack arguments in plpy.elog"
+msgstr "не удалось распаковать аргументы в plpy.elog"
+
+#: plpy_plpymodule.c:396
+msgid "could not parse error message in plpy.elog"
+msgstr "не удалось разобрать сообщение об ошибке в plpy.elog"
+
+#: plpy_procedure.c:194
+#, c-format
+msgid "trigger functions can only be called as triggers"
+msgstr "триггерные функции могут вызываться только в триггерах"
+
+#: plpy_procedure.c:199 plpy_typeio.c:406
+#, c-format
+msgid "PL/Python functions cannot return type %s"
+msgstr "функции PL/Python не могут возвращать тип %s"
+
+#: plpy_procedure.c:281
+#, c-format
+msgid "PL/Python functions cannot accept type %s"
+msgstr "функции PL/Python не могут принимать тип %s"
+
+#: plpy_procedure.c:377
+#, c-format
+msgid "could not compile PL/Python function \"%s\""
+msgstr "не удалось скомпилировать функцию PL/Python \"%s\""
+
+#: plpy_procedure.c:380
+#, c-format
+msgid "could not compile anonymous PL/Python code block"
+msgstr "не удалось скомпилировать анонимный блок кода PL/Python"
+
+#: plpy_resultobject.c:145 plpy_resultobject.c:165 plpy_resultobject.c:185
+#, c-format
+msgid "command did not produce a result set"
+msgstr "команда не выдала результирующий набор"
+
+#: plpy_spi.c:56
+#, c-format
+msgid "second argument of plpy.prepare must be a sequence"
+msgstr "вторым аргументом plpy.prepare должна быть последовательность"
+
+#: plpy_spi.c:105
+#, c-format
+msgid "plpy.prepare: type name at ordinal position %d is not a string"
+msgstr "plpy.prepare: имя типа с порядковым номером %d не является строкой"
+
+#: plpy_spi.c:137
+#, c-format
+msgid "plpy.prepare does not support composite types"
+msgstr "plpy.prepare не поддерживает составные типы"
+
+#: plpy_spi.c:187
+#, c-format
+msgid "plpy.execute expected a query or a plan"
+msgstr "plpy.execute ожидает запрос или план"
+
+#: plpy_spi.c:206
+#, c-format
+msgid "plpy.execute takes a sequence as its second argument"
+msgstr "plpy.execute принимает в качестве второго аргумента последовательность"
+
+#: plpy_spi.c:330
+#, c-format
+msgid "SPI_execute_plan failed: %s"
+msgstr "ошибка в SPI_execute_plan: %s"
+
+#: plpy_spi.c:372
+#, c-format
+msgid "SPI_execute failed: %s"
+msgstr "ошибка в SPI_execute: %s"
+
+#: plpy_spi.c:439
+#, c-format
+msgid "unrecognized error in PLy_spi_execute_fetch_result"
+msgstr "нераспознанная ошибка в PLy_spi_execute_fetch_result"
+
+#: plpy_subxactobject.c:122
+#, c-format
+msgid "this subtransaction has already been entered"
+msgstr "эта подтранзакция уже начата"
+
+#: plpy_subxactobject.c:128 plpy_subxactobject.c:180
+#, c-format
+msgid "this subtransaction has already been exited"
+msgstr "эта подтранзакция уже закончена"
+
+#: plpy_subxactobject.c:174
+#, c-format
+msgid "this subtransaction has not been entered"
+msgstr "эта подтранзакция ещё не начата"
+
+#: plpy_subxactobject.c:186
+#, c-format
+msgid "there is no subtransaction to exit from"
+msgstr "нет подтранзакции, которую нужно закончить"
+
+#: plpy_typeio.c:291
+#, c-format
+msgid "could not create new dictionary"
+msgstr "не удалось создать словарь"
+
+#: plpy_typeio.c:408
+#, c-format
+msgid "PL/Python does not support conversion to arrays of row types."
+msgstr "PL/Python не поддерживает преобразование в массивы кортежей."
+
+#: plpy_typeio.c:584
+#, c-format
+msgid "cannot convert multidimensional array to Python list"
+msgstr "преобразовать многомерный массив в список Python нельзя"
+
+#: plpy_typeio.c:585
+#, c-format
+msgid "PL/Python only supports one-dimensional arrays."
+msgstr "PL/Python поддерживает только одномерные массивы."
+
+#: plpy_typeio.c:591
+#, c-format
+msgid "could not create new Python list"
+msgstr "не удалось создать список Python"
+
+#: plpy_typeio.c:650
+#, c-format
+msgid "could not create bytes representation of Python object"
+msgstr "не удалось создать байтовое представление объекта Python"
+
+#: plpy_typeio.c:742
+#, c-format
+msgid "could not create string representation of Python object"
+msgstr "не удалось создать строковое представление объекта Python"
+
+#: plpy_typeio.c:753
+#, c-format
+msgid ""
+"could not convert Python object into cstring: Python string representation "
+"appears to contain null bytes"
+msgstr ""
+"не удалось преобразовать объект Python в cstring: похоже, представление "
+"строки Python содержит нулевые байты"
+
+#: plpy_typeio.c:787
+#, c-format
+msgid ""
+"return value of function with array return type is not a Python sequence"
+msgstr ""
+"возвращаемое значение функции с результатом-массивом не является "
+"последовательностью"
+
+#: plpy_typeio.c:886
+#, c-format
+msgid "key \"%s\" not found in mapping"
+msgstr "ключ \"%s\" не найден в сопоставлении"
+
+#: plpy_typeio.c:887
+#, c-format
+msgid ""
+"To return null in a column, add the value None to the mapping with the key "
+"named after the column."
+msgstr ""
+"Чтобы присвоить колонке NULL, добавьте в сопоставление значение None с "
+"ключом-именем колонки."
+
+#: plpy_typeio.c:935
+#, c-format
+msgid "length of returned sequence did not match number of columns in row"
+msgstr "длина возвращённой последовательности не равна числу колонок в строке"
+
+#: plpy_typeio.c:1043
+#, c-format
+msgid "attribute \"%s\" does not exist in Python object"
+msgstr "в объекте Python не существует атрибут \"%s\""
+
+#: plpy_typeio.c:1044
+#, c-format
+msgid ""
+"To return null in a column, let the returned object have an attribute named "
+"after column with value None."
+msgstr ""
+"Чтобы присвоить колонке NULL, присвойте возвращаемому значению атрибут с "
+"именем колонки и значением None."
+
+#: plpy_util.c:70
+#, c-format
+msgid "could not convert Python Unicode object to bytes"
+msgstr "не удалось преобразовать объект Python Unicode в байты"
+
+#: plpy_util.c:75
+#, c-format
+msgid "could not extract bytes from encoded string"
+msgstr "не удалось извлечь байты из кодированной строки"
+
+#~ msgid "could not initialize plpy"
+#~ msgstr "не удалось инициализировать plpy"

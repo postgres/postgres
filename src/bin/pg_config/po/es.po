@@ -1,23 +1,77 @@
 # pg_config spanish translation
 #
-# Copyright (C) 2004-2010 PostgreSQL Global Development Group
+# Copyright (C) 2004-2012 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 #
-# Alvaro Herrera <alvherre@alvh.no-ip.org>, 2004-2010
-#
-# pgtranslation Id: pg_config.po,v 1.6 2010/08/31 04:57:53 alvherre Exp $
+# Alvaro Herrera <alvherre@alvh.no-ip.org>, 2004-2012
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_config (PostgreSQL 9.0)\n"
+"Project-Id-Version: pg_config (PostgreSQL 9.2)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-08-30 20:03+0000\n"
-"PO-Revision-Date: 2010-08-31 00:57-0400\n"
+"POT-Creation-Date: 2013-01-29 13:45+0000\n"
+"PO-Revision-Date: 2012-08-06 15:40-0400\n"
 "Last-Translator: Alvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: es <pgsql-es-ayuda@postgresql.org>\n"
+"Language: es\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+
+#: ../../port/exec.c:125 ../../port/exec.c:239 ../../port/exec.c:282
+#, c-format
+msgid "could not identify current directory: %s"
+msgstr "no se pudo identificar el directorio actual: %s"
+
+#: ../../port/exec.c:144
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "el binario «%s» no es válido"
+
+#: ../../port/exec.c:193
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "no se pudo leer el binario «%s»"
+
+#: ../../port/exec.c:200
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "no se pudo encontrar un «%s» para ejecutar"
+
+#: ../../port/exec.c:255 ../../port/exec.c:291
+#, c-format
+msgid "could not change directory to \"%s\""
+msgstr "no se pudo cambiar el directorio a «%s»"
+
+#: ../../port/exec.c:270
+#, c-format
+msgid "could not read symbolic link \"%s\""
+msgstr "no se pudo leer el enlace simbólico «%s»"
+
+#: ../../port/exec.c:526
+#, c-format
+msgid "child process exited with exit code %d"
+msgstr "el proceso hijo terminó con código de salida %d"
+
+#: ../../port/exec.c:530
+#, c-format
+msgid "child process was terminated by exception 0x%X"
+msgstr "el proceso hijo fue terminado por una excepción 0x%X"
+
+#: ../../port/exec.c:539
+#, c-format
+msgid "child process was terminated by signal %s"
+msgstr "el proceso hijo fue terminado por una señal %s"
+
+#: ../../port/exec.c:542
+#, c-format
+msgid "child process was terminated by signal %d"
+msgstr "el proceso hijo fue terminado por una señal %d"
+
+#: ../../port/exec.c:546
+#, c-format
+msgid "child process exited with unrecognized status %d"
+msgstr "el proceso hijo terminó con código no reconocido %d"
 
 #: pg_config.c:243 pg_config.c:259 pg_config.c:275 pg_config.c:291
 #: pg_config.c:307 pg_config.c:323 pg_config.c:339 pg_config.c:355
@@ -59,21 +113,17 @@ msgstr "Opciones:\n"
 #: pg_config.c:432
 #, c-format
 msgid "  --bindir              show location of user executables\n"
-msgstr ""
-"  --bindir              muestra la ubicación de ejecutables de usuario\n"
+msgstr "  --bindir              muestra la ubicación de ejecutables de usuario\n"
 
 #: pg_config.c:433
 #, c-format
 msgid "  --docdir              show location of documentation files\n"
-msgstr ""
-"  --docdir              muestra la ubicación de archivos de documentación\n"
+msgstr "  --docdir              muestra la ubicación de archivos de documentación\n"
 
 #: pg_config.c:434
 #, c-format
 msgid "  --htmldir             show location of HTML documentation files\n"
-msgstr ""
-"  --htmldir             muestra la ubicación de archivos de documentación "
-"HTML\n"
+msgstr "  --htmldir             muestra la ubicación de archivos de documentación HTML\n"
 
 #: pg_config.c:435
 #, c-format
@@ -93,8 +143,7 @@ msgstr ""
 
 #: pg_config.c:438
 #, c-format
-msgid ""
-"  --includedir-server   show location of C header files for the server\n"
+msgid "  --includedir-server   show location of C header files for the server\n"
 msgstr ""
 "  --includedir-server   muestra la ubicación de archivos de encabezados C\n"
 "                        del servidor\n"
@@ -109,8 +158,7 @@ msgstr ""
 #: pg_config.c:440
 #, c-format
 msgid "  --pkglibdir           show location of dynamically loadable modules\n"
-msgstr ""
-"  --pkglibdir           muestra la ubicación de módulos para carga dinámica\n"
+msgstr "  --pkglibdir           muestra la ubicación de módulos para carga dinámica\n"
 
 #: pg_config.c:441
 #, c-format
@@ -126,17 +174,14 @@ msgstr "  --mandir              muestra la ubicación de páginas de manual\n"
 
 #: pg_config.c:443
 #, c-format
-msgid ""
-"  --sharedir            show location of architecture-independent support "
-"files\n"
+msgid "  --sharedir            show location of architecture-independent support files\n"
 msgstr ""
 "  --sharedir            muestra la ubicación de archivos de soporte\n"
 "                        independientes de arquitectura\n"
 
 #: pg_config.c:444
 #, c-format
-msgid ""
-"  --sysconfdir          show location of system-wide configuration files\n"
+msgid "  --sysconfdir          show location of system-wide configuration files\n"
 msgstr ""
 "  --sysconfdir          muestra la ubicación de archivos de configuración\n"
 "                        global del sistema\n"
@@ -160,66 +205,53 @@ msgstr ""
 #: pg_config.c:448
 #, c-format
 msgid "  --cc                  show CC value used when PostgreSQL was built\n"
-msgstr ""
-"  --cc                  muestra el valor de CC cuando PostgreSQL fue "
-"construido\n"
+msgstr "  --cc                  muestra el valor de CC cuando PostgreSQL fue construido\n"
 
 #: pg_config.c:449
 #, c-format
-msgid ""
-"  --cppflags            show CPPFLAGS value used when PostgreSQL was built\n"
+msgid "  --cppflags            show CPPFLAGS value used when PostgreSQL was built\n"
 msgstr ""
 "  --cppflags            muestra el valor de CPPFLAGS cuando PostgreSQL fue\n"
 "                        construido\n"
 
 #: pg_config.c:450
 #, c-format
-msgid ""
-"  --cflags              show CFLAGS value used when PostgreSQL was built\n"
+msgid "  --cflags              show CFLAGS value used when PostgreSQL was built\n"
 msgstr ""
 "  --cflags              muestra el valor de CFLAGS cuando PostgreSQL fue\n"
 "                        construido\n"
 
 #: pg_config.c:451
 #, c-format
-msgid ""
-"  --cflags_sl           show CFLAGS_SL value used when PostgreSQL was built\n"
+msgid "  --cflags_sl           show CFLAGS_SL value used when PostgreSQL was built\n"
 msgstr ""
 "  --cflags_sl           muestra el valor de CFLAGS_SL cuando PostgreSQL fue\n"
 "                        construido\n"
 
 #: pg_config.c:452
 #, c-format
-msgid ""
-"  --ldflags             show LDFLAGS value used when PostgreSQL was built\n"
+msgid "  --ldflags             show LDFLAGS value used when PostgreSQL was built\n"
 msgstr ""
 "  --ldflags             muestra el valor de LDFLAGS cuando PostgreSQL fue\n"
 "                        construido\n"
 
 #: pg_config.c:453
 #, c-format
-msgid ""
-"  --ldflags_ex          show LDFLAGS_EX value used when PostgreSQL was "
-"built\n"
+msgid "  --ldflags_ex          show LDFLAGS_EX value used when PostgreSQL was built\n"
 msgstr ""
-"  --ldflags_ex          muestra el valor de LDFLAGS_EX cuando PostgreSQL "
-"fue\n"
+"  --ldflags_ex          muestra el valor de LDFLAGS_EX cuando PostgreSQL fue\n"
 "                        construido\n"
 
 #: pg_config.c:454
 #, c-format
-msgid ""
-"  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was "
-"built\n"
+msgid "  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was built\n"
 msgstr ""
-"  --ldflags_sl          muestra el valor de LDFLAGS_SL cuando PostgreSQL "
-"fue\n"
+"  --ldflags_sl          muestra el valor de LDFLAGS_SL cuando PostgreSQL fue\n"
 "                        construido\n"
 
 #: pg_config.c:455
 #, c-format
-msgid ""
-"  --libs                show LIBS value used when PostgreSQL was built\n"
+msgid "  --libs                show LIBS value used when PostgreSQL was built\n"
 msgstr ""
 "  --libs                muestra el valor de LIBS cuando PostgreSQL fue\n"
 "                        construido\n"
@@ -231,8 +263,8 @@ msgstr "  --version             muestra la versión de PostgreSQL\n"
 
 #: pg_config.c:457
 #, c-format
-msgid "  --help                show this help, then exit\n"
-msgstr "  --help                muestra esta ayuda y termina\n"
+msgid "  -?, --help            show this help, then exit\n"
+msgstr "  -?, --help            muestra esta ayuda, luego sale\n"
 
 #: pg_config.c:458
 #, c-format
@@ -264,58 +296,3 @@ msgstr "%s: no se pudo encontrar el ejecutable propio\n"
 #, c-format
 msgid "%s: invalid argument: %s\n"
 msgstr "%s: el argumento no es válido: %s\n"
-
-#: ../../port/exec.c:125 ../../port/exec.c:239 ../../port/exec.c:282
-#, c-format
-msgid "could not identify current directory: %s"
-msgstr "no se pudo identificar el directorio actual: %s"
-
-#: ../../port/exec.c:144
-#, c-format
-msgid "invalid binary \"%s\""
-msgstr "el binario «%s» no es válido"
-
-#: ../../port/exec.c:193
-#, c-format
-msgid "could not read binary \"%s\""
-msgstr "no se pudo leer el binario «%s»"
-
-#: ../../port/exec.c:200
-#, c-format
-msgid "could not find a \"%s\" to execute"
-msgstr "no se pudo encontrar un «%s» para ejecutar"
-
-#: ../../port/exec.c:255 ../../port/exec.c:291
-#, c-format
-msgid "could not change directory to \"%s\""
-msgstr "no se pudo cambiar el directorio a «%s»"
-
-#: ../../port/exec.c:270
-#, c-format
-msgid "could not read symbolic link \"%s\""
-msgstr "no se pudo leer el enlace simbólico «%s»"
-
-#: ../../port/exec.c:516
-#, c-format
-msgid "child process exited with exit code %d"
-msgstr "el proceso hijo terminó con código de salida %d"
-
-#: ../../port/exec.c:520
-#, c-format
-msgid "child process was terminated by exception 0x%X"
-msgstr "el proceso hijo fue terminado por una excepción 0x%X"
-
-#: ../../port/exec.c:529
-#, c-format
-msgid "child process was terminated by signal %s"
-msgstr "el proceso hijo fue terminado por una señal %s"
-
-#: ../../port/exec.c:532
-#, c-format
-msgid "child process was terminated by signal %d"
-msgstr "el proceso hijo fue terminado por una señal %d"
-
-#: ../../port/exec.c:536
-#, c-format
-msgid "child process exited with unrecognized status %d"
-msgstr "el proceso hijo terminó con código no reconocido %d"

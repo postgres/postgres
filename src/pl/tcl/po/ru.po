@@ -1,0 +1,61 @@
+# Russian message translation file for pltcl
+# Copyright (C) 2012 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# Alexander Lakhin <exclusion@gmail.com>, 2012.
+#
+# ChangeLog:
+#   - February 18, 2012: Complete translation for 9.1. Alexander Lakhin <exclusion@gmail.com>.
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 9.2\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2012-07-11 03:39+0000\n"
+"PO-Revision-Date: 2012-02-18 14:39+0400\n"
+"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
+"Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"X-Generator: Lokalize 1.4\n"
+
+#: pltcl.c:1150
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pltcl.c:1151
+#, c-format
+msgid ""
+"%s\n"
+"in PL/Tcl function \"%s\""
+msgstr ""
+"%s\n"
+"в функции PL/Tcl \"%s\""
+
+#: pltcl.c:1255 pltcl.c:1262
+#, c-format
+msgid "out of memory"
+msgstr "нехватка памяти"
+
+#: pltcl.c:1309
+#, c-format
+msgid "trigger functions can only be called as triggers"
+msgstr "триггерные функции могут вызываться только в триггерах"
+
+#: pltcl.c:1318
+#, c-format
+msgid "PL/Tcl functions cannot return type %s"
+msgstr "функции PL/Tcl не могут возвращать тип %s"
+
+#: pltcl.c:1330
+#, c-format
+msgid "PL/Tcl functions cannot return composite types"
+msgstr "функции PL/Tcl не могут возвращать составные типы"
+
+#: pltcl.c:1369
+#, c-format
+msgid "PL/Tcl functions cannot accept type %s"
+msgstr "функции PL/Tcl не могут принимать тип %s"

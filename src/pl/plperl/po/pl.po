@@ -1,0 +1,190 @@
+# Polish message translation file for plperl
+# Copyright (C) 2011 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# Begina Felicysym <begina.felicysym@wp.eu>, 2011, 2012.
+msgid ""
+msgstr ""
+"Project-Id-Version: plperl (PostgreSQL 9.1)\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2013-01-29 13:39+0000\n"
+"PO-Revision-Date: 2013-01-29 12:51-0300\n"
+"Last-Translator: Begina Felicysym <begina.felicysym@wp.eu>\n"
+"Language-Team: Begina Felicysym\n"
+"Language: pl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"X-Generator: Virtaal 0.7.1\n"
+
+#: plperl.c:386
+msgid "If true, trusted and untrusted Perl code will be compiled in strict mode."
+msgstr "Jeśli prawda, zaufanych i niezaufanych kod Perl zostanie skompilowany w trybie ścisłym."
+
+#: plperl.c:400
+msgid "Perl initialization code to execute when a Perl interpreter is initialized."
+msgstr "Kod inicjujący Perl do wykonania gdy inicjowany jest interpreter Perl."
+
+#: plperl.c:422
+msgid "Perl initialization code to execute once when plperl is first used."
+msgstr "Kod inicjujący Perl do jednokrotnego wykonania gdy plperl jest użyty po raz pierwszy."
+
+#: plperl.c:430
+msgid "Perl initialization code to execute once when plperlu is first used."
+msgstr "Kod inicjujący Perl do jednokrotnego wykonania gdy plperlu jest użyty po raz pierwszy."
+
+#: plperl.c:647 plperl.c:821 plperl.c:826 plperl.c:930 plperl.c:941
+#: plperl.c:982 plperl.c:1003 plperl.c:1992 plperl.c:2087 plperl.c:2149
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: plperl.c:648
+#, c-format
+msgid "while executing PostgreSQL::InServer::SPI::bootstrap"
+msgstr "podczas wykonania PostgreSQL::InServer::SPI::bootstrap"
+
+#: plperl.c:822
+#, c-format
+msgid "while parsing Perl initialization"
+msgstr "podczas przetwarzania inicjacji Perl"
+
+#: plperl.c:827
+#, c-format
+msgid "while running Perl initialization"
+msgstr "podczas wykonywania inicjacji Perl"
+
+#: plperl.c:931
+#, c-format
+msgid "while executing PLC_TRUSTED"
+msgstr "podczas wykonywania PLC_TRUSTED"
+
+#: plperl.c:942
+#, c-format
+msgid "while executing utf8fix"
+msgstr "podczas wykonywania utf8fix"
+
+#: plperl.c:983
+#, c-format
+msgid "while executing plperl.on_plperl_init"
+msgstr "podczas wykonania plperl.on_plperl_init"
+
+#: plperl.c:1004
+#, c-format
+msgid "while executing plperl.on_plperlu_init"
+msgstr "podczas wykonania plperl.on_plperlu_init"
+
+#: plperl.c:1048 plperl.c:1648
+#, c-format
+msgid "Perl hash contains nonexistent column \"%s\""
+msgstr "hasz Perl zawiera nieistniejącą kolumnę \"%s\""
+
+#: plperl.c:1133
+#, c-format
+msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
+msgstr "liczba wymiarów tablicy (%d) przekracza maksimum (%d)"
+
+#: plperl.c:1145 plperl.c:1162
+#, c-format
+msgid "multidimensional arrays must have array expressions with matching dimensions"
+msgstr "wielowymiarowe tablice muszą mieć wyrażenia tablicowe z pasującymi wymiarami"
+
+#: plperl.c:1199
+#, c-format
+msgid "cannot convert Perl array to non-array type %s"
+msgstr "nie można zmienić typu tablicowego Perl na typ nietablicowy %s"
+
+#: plperl.c:1295
+#, c-format
+msgid "cannot convert Perl hash to non-composite type %s"
+msgstr "nie można przekształcić Perlowego hasza na typ niezłożony %s"
+
+#: plperl.c:1306
+#, c-format
+msgid "function returning record called in context that cannot accept type record"
+msgstr "funkcja zwracająca rekord w wywołaniu, które nie akceptuje typów złożonych"
+
+#: plperl.c:1321
+#, c-format
+msgid "PL/Perl function must return reference to hash or array"
+msgstr "funkcja PL/Perl musi zwracać referencję do hasza lub tablicy"
+
+#: plperl.c:1625
+#, c-format
+msgid "$_TD->{new} does not exist"
+msgstr "$_TD->{new} nie istnieje"
+
+#: plperl.c:1629
+#, c-format
+msgid "$_TD->{new} is not a hash reference"
+msgstr "$_TD->{new} nie jest referencją haszu"
+
+#: plperl.c:1869 plperl.c:2568
+#, c-format
+msgid "PL/Perl functions cannot return type %s"
+msgstr "funkcje PL/Perl nie mogą zwracać wartości typu %s"
+
+#: plperl.c:1882 plperl.c:2613
+#, c-format
+msgid "PL/Perl functions cannot accept type %s"
+msgstr "funkcje PL/Perl nie obsługują typu %s"
+
+#: plperl.c:1996
+#, c-format
+msgid "didn't get a CODE reference from compiling function \"%s\""
+msgstr "nie udało się pobrać wskazania CODE z kompilowanej funkcji \"%s\""
+
+#: plperl.c:2194
+#, c-format
+msgid "set-valued function called in context that cannot accept a set"
+msgstr "funkcja zwracająca zbiór rekordów wywołana w kontekście, w którym nie jest to dopuszczalne"
+
+#: plperl.c:2238
+#, c-format
+msgid "set-returning PL/Perl function must return reference to array or use return_next"
+msgstr "funkcja PL/Perl zwracająca zbiór rekordów musi zwracać tablicę lub użyć return_next"
+
+#: plperl.c:2352
+#, c-format
+msgid "ignoring modified row in DELETE trigger"
+msgstr "ignorowanie modyfikacji wiersza w wyzwalaczy DELETE"
+
+#: plperl.c:2360
+#, c-format
+msgid "result of PL/Perl trigger function must be undef, \"SKIP\", or \"MODIFY\""
+msgstr "funkcja wyzwalacza PL/Perl musi zwracać undef, \"SKIP\", lub \"MODIFY\""
+
+#: plperl.c:2498 plperl.c:2508
+#, c-format
+msgid "out of memory"
+msgstr "brak pamięci"
+
+#: plperl.c:2560
+#, c-format
+msgid "trigger functions can only be called as triggers"
+msgstr "procedury wyzwalaczy mogą być wywoływane jedynie przez wyzwalacze"
+
+#: plperl.c:2933
+#, c-format
+msgid "cannot use return_next in a non-SETOF function"
+msgstr "nie można używać return_next w funkcji nie SETOF"
+
+#: plperl.c:2989
+#, c-format
+msgid "SETOF-composite-returning PL/Perl function must call return_next with reference to hash"
+msgstr "funkcja PL/Perl zwracająca grupę wartości złożonych musi wywołać return_next z referencją haszu"
+
+#: plperl.c:3700
+#, c-format
+msgid "PL/Perl function \"%s\""
+msgstr "funkcja PL/Perl \"%s\""
+
+#: plperl.c:3712
+#, c-format
+msgid "compilation of PL/Perl function \"%s\""
+msgstr "kompilacja funkcji PL/Perl \"%s\""
+
+#: plperl.c:3721
+#, c-format
+msgid "PL/Perl anonymous code block"
+msgstr "anonimowy blok kodu PL/Perl"

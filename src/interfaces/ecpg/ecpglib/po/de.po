@@ -1,18 +1,16 @@
 # German message translation file for ecpglib
-# Copyright (C) 2010 PostgreSQL Global Development Group
+# Copyright (C) 2013 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Peter Eisentraut, 2009 - 2010.
+# Peter Eisentraut, 2009 - 2013.
 #
-# pgtranslation Id: ecpglib.po,v 1.3 2010/03/18 19:08:26 petere Exp $
-#
-# Use these quotes: »%s«
+# Use these quotes: „%s“
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.0\n"
+"Project-Id-Version: PostgreSQL 9.3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2010-03-18 17:23+0000\n"
-"PO-Revision-Date: 2010-03-18 21:08+0200\n"
+"PO-Revision-Date: 2013-03-04 21:16-0500\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: Peter Eisentraut <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -40,7 +38,7 @@ msgstr "Speicher aufgebraucht auf Zeile %d"
 #: error.c:49
 #, c-format
 msgid "unsupported type \"%s\" on line %d"
-msgstr "nicht unterstützter Typ »%s« auf Zeile %d"
+msgstr "nicht unterstützter Typ „%s“ auf Zeile %d"
 
 #: error.c:59
 #, c-format
@@ -55,22 +53,22 @@ msgstr "zu wenige Argumente auf Zeile %d"
 #: error.c:79
 #, c-format
 msgid "invalid input syntax for type int: \"%s\", on line %d"
-msgstr "ungültige Eingabesyntax für Typ int: »%s«, auf Zeile %d"
+msgstr "ungültige Eingabesyntax für Typ int: „%s“, auf Zeile %d"
 
 #: error.c:89
 #, c-format
 msgid "invalid input syntax for type unsigned int: \"%s\", on line %d"
-msgstr "ungültige Eingabesyntax für Typ unsigned int: »%s«, auf Zeile %d"
+msgstr "ungültige Eingabesyntax für Typ unsigned int: „%s“, auf Zeile %d"
 
 #: error.c:99
 #, c-format
 msgid "invalid input syntax for floating-point type: \"%s\", on line %d"
-msgstr "ungültige Eingabesyntax für Gleitkommatyp: »%s«, auf Zeile %d"
+msgstr "ungültige Eingabesyntax für Gleitkommatyp: „%s“, auf Zeile %d"
 
 #: error.c:110
 #, c-format
 msgid "invalid syntax for type boolean: \"%s\", on line %d"
-msgstr "ungültige Syntax für Typ boolean: »%s«, auf Zeile %d"
+msgstr "ungültige Syntax für Typ boolean: „%s“, auf Zeile %d"
 
 #: error.c:118
 #, c-format
@@ -107,22 +105,22 @@ msgstr ""
 #: error.c:178
 #, c-format
 msgid "connection \"%s\" does not exist on line %d"
-msgstr "Verbindung »%s« existiert nicht auf Zeile %d"
+msgstr "Verbindung „%s“ existiert nicht auf Zeile %d"
 
 #: error.c:188
 #, c-format
 msgid "not connected to connection \"%s\" on line %d"
-msgstr "nicht mit Verbindung »%s« verbunden auf Zeile %d"
+msgstr "nicht mit Verbindung „%s“ verbunden auf Zeile %d"
 
 #: error.c:198
 #, c-format
 msgid "invalid statement name \"%s\" on line %d"
-msgstr "ungültiger Anweisungsname »%s« auf Zeile %d"
+msgstr "ungültiger Anweisungsname „%s“ auf Zeile %d"
 
 #: error.c:208
 #, c-format
 msgid "descriptor \"%s\" not found on line %d"
-msgstr "Deskriptor »%s« nicht gefunden auf Zeile %d"
+msgstr "Deskriptor „%s“ nicht gefunden auf Zeile %d"
 
 #: error.c:218
 #, c-format
@@ -132,7 +130,7 @@ msgstr "Deskriptorindex außerhalb des gültigen Bereichs auf Zeile %d"
 #: error.c:228
 #, c-format
 msgid "unrecognized descriptor item \"%s\" on line %d"
-msgstr "unbekanntes Deskriptorelement »%s« auf Zeile %d"
+msgstr "unbekanntes Deskriptorelement „%s“ auf Zeile %d"
 
 #: error.c:238
 #, c-format
@@ -152,7 +150,7 @@ msgstr "Fehler bei der Transaktionsverarbeitung auf Zeile %d"
 #: error.c:268
 #, c-format
 msgid "could not connect to database \"%s\" on line %d"
-msgstr "konnte nicht mit Datenbank »%s« verbinden auf Zeile %d"
+msgstr "konnte nicht mit Datenbank „%s“ verbinden auf Zeile %d"
 
 #: error.c:278
 #, c-format
