@@ -607,9 +607,7 @@
        </para>
 
        <para>
-        This allows more rapid detection of
-        connection failure. No longer set <link
-        linkend="guc-wal-receiver-status-interval"><varname>wal_receiver_status_interval</></link>?
+        This allows more rapid detection of connection failure.
        </para>
       </listitem>
 
