@@ -826,7 +826,8 @@ SELECT pg_start_backup('label');
      <function>pg_start_backup</> creates a <firstterm>backup label</> file,
      called <filename>backup_label</>, in the cluster directory with
      information about your backup, including the start time and label
-     string.
+     string.  The file is critical to the integrity of the backup, should
+     you need to restore from it.
     </para>
 
     <para>
@@ -945,9 +946,11 @@ SELECT pg_stop_backup();
     The backup label file includes the label string you gave to
     <function>pg_start_backup</>, as well as the time at which
     <function>pg_start_backup</> was run, and the name of the starting WAL
-    file.  In case of confusion it is
-    therefore possible to look inside a backup dump file and determine
-    exactly which backup session the dump file came from.
+    file.  In case of confusion it is therefore possible to look inside a
+    backup dump file and determine exactly which backup session the dump file
+    came from.  However, this file is not merely for your information; its
+    presence and contents are critical to the proper operation of the system's
+    recovery process.
    </para>
 
    <para>
