@@ -678,8 +678,7 @@ static Plan *
 create_append_plan(PlannerInfo *root, AppendPath *best_path)
 {
 	Append	   *plan;
-	RelOptInfo *rel = best_path->path.parent;
-	List	   *tlist = build_relation_tlist(rel);
+	List	   *tlist = build_relation_tlist(best_path->path.parent);
 	List	   *subplans = NIL;
 	ListCell   *subpaths;
 
@@ -694,30 +693,12 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path)
 	 */
 	if (best_path->subpaths == NIL)
 	{
-		/*
-		 * If this is a dummy path for a subquery, we have to wrap the
-		 * subquery's original plan in a SubqueryScan so that setrefs.c will
-		 * do the right things.  (In particular, it must pull up the
-		 * subquery's rangetable so that the executor will apply permissions
-		 * checks to those rels at runtime.)
-		 */
-		if (rel->rtekind == RTE_SUBQUERY)
-		{
-			Assert(is_dummy_plan(rel->subplan));
-			return (Plan *) make_subqueryscan(tlist,
-											  NIL,
-											  rel->relid,
-											  rel->subplan);
-		}
-		else
-		{
-			/* Generate a Result plan with constant-FALSE gating qual */
-			return (Plan *) make_result(root,
-										tlist,
-									 (Node *) list_make1(makeBoolConst(false,
-																	 false)),
-										NULL);
-		}
+		/* Generate a Result plan with constant-FALSE gating qual */
+		return (Plan *) make_result(root,
+									tlist,
+									(Node *) list_make1(makeBoolConst(false,
+																	  false)),
+									NULL);
 	}
 
 	/* Build the plan for each child */

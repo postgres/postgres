@@ -21,6 +21,7 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/planmain.h"
+#include "optimizer/planner.h"
 #include "optimizer/tlist.h"
 #include "tcop/utility.h"
 #include "utils/lsyscache.h"
@@ -81,6 +82,10 @@ typedef struct
 #define fix_scan_list(root, lst, rtoffset) \
 	((List *) fix_scan_expr(root, (Node *) (lst), rtoffset))
 
+static void add_rtes_to_flat_rtable(PlannerInfo *root, bool recursing);
+static void flatten_unplanned_rtes(PlannerGlobal *glob, RangeTblEntry *rte);
+static bool flatten_rtes_walker(Node *node, PlannerGlobal *glob);
+static void add_rte_to_flat_rtable(PlannerGlobal *glob, RangeTblEntry *rte);
 static Plan *set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset);
 static Plan *set_indexonlyscan_references(PlannerInfo *root,
 							 IndexOnlyScan *plan,
@@ -196,63 +201,11 @@ set_plan_references(PlannerInfo *root, Plan *plan)
 	ListCell   *lc;
 
 	/*
-	 * In the flat rangetable, we zero out substructure pointers that are not
-	 * needed by the executor; this reduces the storage space and copying cost
-	 * for cached plans.  We keep only the alias and eref Alias fields, which
-	 * are needed by EXPLAIN, and the selectedCols and modifiedCols bitmaps,
-	 * which are needed for executor-startup permissions checking and for
-	 * trigger event checking.
+	 * Add all the query's RTEs to the flattened rangetable.  The live ones
+	 * will have their rangetable indexes increased by rtoffset.  (Additional
+	 * RTEs, not referenced by the Plan tree, might get added after those.)
 	 */
-	foreach(lc, root->parse->rtable)
-	{
-		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
-		RangeTblEntry *newrte;
-
-		/* flat copy to duplicate all the scalar fields */
-		newrte = (RangeTblEntry *) palloc(sizeof(RangeTblEntry));
-		memcpy(newrte, rte, sizeof(RangeTblEntry));
-
-		/* zap unneeded sub-structure */
-		newrte->subquery = NULL;
-		newrte->joinaliasvars = NIL;
-		newrte->funcexpr = NULL;
-		newrte->funccoltypes = NIL;
-		newrte->funccoltypmods = NIL;
-		newrte->funccolcollations = NIL;
-		newrte->values_lists = NIL;
-		newrte->values_collations = NIL;
-		newrte->ctecoltypes = NIL;
-		newrte->ctecoltypmods = NIL;
-		newrte->ctecolcollations = NIL;
-
-		glob->finalrtable = lappend(glob->finalrtable, newrte);
-
-		/*
-		 * If it's a plain relation RTE, add the table to relationOids.
-		 *
-		 * We do this even though the RTE might be unreferenced in the plan
-		 * tree; this would correspond to cases such as views that were
-		 * expanded, child tables that were eliminated by constraint
-		 * exclusion, etc.	Schema invalidation on such a rel must still force
-		 * rebuilding of the plan.
-		 *
-		 * Note we don't bother to avoid duplicate list entries.  We could,
-		 * but it would probably cost more cycles than it would save.
-		 */
-		if (newrte->rtekind == RTE_RELATION)
-			glob->relationOids = lappend_oid(glob->relationOids,
-											 newrte->relid);
-	}
-
-	/*
-	 * Check for RT index overflow; it's very unlikely, but if it did happen,
-	 * the executor would get confused by varnos that match the special varno
-	 * values.
-	 */
-	if (IS_SPECIAL_VARNO(list_length(glob->finalrtable)))
-		ereport(ERROR,
-				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("too many range table entries")));
+	add_rtes_to_flat_rtable(root, false);
 
 	/*
 	 * Adjust RT indexes of PlanRowMarks and add to final rowmarks list
@@ -277,6 +230,192 @@ set_plan_references(PlannerInfo *root, Plan *plan)
 
 	/* Now fix the Plan tree */
 	return set_plan_refs(root, plan, rtoffset);
+}
+
+/*
+ * Extract RangeTblEntries from the plan's rangetable, and add to flat rtable
+ *
+ * This can recurse into subquery plans; "recursing" is true if so.
+ */
+static void
+add_rtes_to_flat_rtable(PlannerInfo *root, bool recursing)
+{
+	PlannerGlobal *glob = root->glob;
+	Index		rti;
+	ListCell   *lc;
+
+	/*
+	 * Add the query's own RTEs to the flattened rangetable.
+	 *
+	 * At top level, we must add all RTEs so that their indexes in the
+	 * flattened rangetable match up with their original indexes.  When
+	 * recursing, we only care about extracting relation RTEs.
+	 */
+	foreach(lc, root->parse->rtable)
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
+
+		if (!recursing || rte->rtekind == RTE_RELATION)
+			add_rte_to_flat_rtable(glob, rte);
+	}
+
+	/*
+	 * If there are any dead subqueries, they are not referenced in the Plan
+	 * tree, so we must add RTEs contained in them to the flattened rtable
+	 * separately.	(If we failed to do this, the executor would not perform
+	 * expected permission checks for tables mentioned in such subqueries.)
+	 *
+	 * Note: this pass over the rangetable can't be combined with the previous
+	 * one, because that would mess up the numbering of the live RTEs in the
+	 * flattened rangetable.
+	 */
+	rti = 1;
+	foreach(lc, root->parse->rtable)
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
+
+		/*
+		 * We should ignore inheritance-parent RTEs: their contents have been
+		 * pulled up into our rangetable already.  Also ignore any subquery
+		 * RTEs without matching RelOptInfos, as they likewise have been
+		 * pulled up.
+		 */
+		if (rte->rtekind == RTE_SUBQUERY && !rte->inh)
+		{
+			RelOptInfo *rel = root->simple_rel_array[rti];
+
+			if (rel != NULL)
+			{
+				Assert(rel->relid == rti);		/* sanity check on array */
+
+				/*
+				 * The subquery might never have been planned at all, if it
+				 * was excluded on the basis of self-contradictory constraints
+				 * in our query level.	In this case apply
+				 * flatten_unplanned_rtes.
+				 *
+				 * If it was planned but the plan is dummy, we assume that it
+				 * has been omitted from our plan tree (see
+				 * set_subquery_pathlist), and recurse to pull up its RTEs.
+				 *
+				 * Otherwise, it should be represented by a SubqueryScan node
+				 * somewhere in our plan tree, and we'll pull up its RTEs when
+				 * we process that plan node.
+				 *
+				 * However, if we're recursing, then we should pull up RTEs
+				 * whether the subplan is dummy or not, because we've found
+				 * that some upper query level is treating this one as dummy,
+				 * and so we won't scan this level's plan tree at all.
+				 */
+				if (rel->subplan == NULL)
+					flatten_unplanned_rtes(glob, rte);
+				else if (recursing || is_dummy_plan(rel->subplan))
+				{
+					Assert(rel->subroot != NULL);
+					add_rtes_to_flat_rtable(rel->subroot, true);
+				}
+			}
+		}
+		rti++;
+	}
+}
+
+/*
+ * Extract RangeTblEntries from a subquery that was never planned at all
+ */
+static void
+flatten_unplanned_rtes(PlannerGlobal *glob, RangeTblEntry *rte)
+{
+	/* Use query_tree_walker to find all RTEs in the parse tree */
+	(void) query_tree_walker(rte->subquery,
+							 flatten_rtes_walker,
+							 (void *) glob,
+							 QTW_EXAMINE_RTES);
+}
+
+static bool
+flatten_rtes_walker(Node *node, PlannerGlobal *glob)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, RangeTblEntry))
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) node;
+
+		/* As above, we need only save relation RTEs */
+		if (rte->rtekind == RTE_RELATION)
+			add_rte_to_flat_rtable(glob, rte);
+		return false;
+	}
+	if (IsA(node, Query))
+	{
+		/* Recurse into subselects */
+		return query_tree_walker((Query *) node,
+								 flatten_rtes_walker,
+								 (void *) glob,
+								 QTW_EXAMINE_RTES);
+	}
+	return expression_tree_walker(node, flatten_rtes_walker,
+								  (void *) glob);
+}
+
+/*
+ * Add (a copy of) the given RTE to the final rangetable
+ *
+ * In the flat rangetable, we zero out substructure pointers that are not
+ * needed by the executor; this reduces the storage space and copying cost
+ * for cached plans.  We keep only the alias and eref Alias fields, which
+ * are needed by EXPLAIN, and the selectedCols and modifiedCols bitmaps,
+ * which are needed for executor-startup permissions checking and for
+ * trigger event checking.
+ */
+static void
+add_rte_to_flat_rtable(PlannerGlobal *glob, RangeTblEntry *rte)
+{
+	RangeTblEntry *newrte;
+
+	/* flat copy to duplicate all the scalar fields */
+	newrte = (RangeTblEntry *) palloc(sizeof(RangeTblEntry));
+	memcpy(newrte, rte, sizeof(RangeTblEntry));
+
+	/* zap unneeded sub-structure */
+	newrte->subquery = NULL;
+	newrte->joinaliasvars = NIL;
+	newrte->funcexpr = NULL;
+	newrte->funccoltypes = NIL;
+	newrte->funccoltypmods = NIL;
+	newrte->funccolcollations = NIL;
+	newrte->values_lists = NIL;
+	newrte->values_collations = NIL;
+	newrte->ctecoltypes = NIL;
+	newrte->ctecoltypmods = NIL;
+	newrte->ctecolcollations = NIL;
+
+	glob->finalrtable = lappend(glob->finalrtable, newrte);
+
+	/*
+	 * Check for RT index overflow; it's very unlikely, but if it did happen,
+	 * the executor would get confused by varnos that match the special varno
+	 * values.
+	 */
+	if (IS_SPECIAL_VARNO(list_length(glob->finalrtable)))
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("too many range table entries")));
+
+	/*
+	 * If it's a plain relation RTE, add the table to relationOids.
+	 *
+	 * We do this even though the RTE might be unreferenced in the plan tree;
+	 * this would correspond to cases such as views that were expanded, child
+	 * tables that were eliminated by constraint exclusion, etc. Schema
+	 * invalidation on such a rel must still force rebuilding of the plan.
+	 *
+	 * Note we don't bother to avoid making duplicate list entries.  We could,
+	 * but it would probably cost more cycles than it would save.
+	 */
+	if (newrte->rtekind == RTE_RELATION)
+		glob->relationOids = lappend_oid(glob->relationOids, newrte->relid);
 }
 
 /*

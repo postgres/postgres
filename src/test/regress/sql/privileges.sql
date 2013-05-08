@@ -162,6 +162,21 @@ SELECT * FROM atestv2; -- fail
 SELECT * FROM atestv3; -- ok
 SELECT * FROM atestv0; -- fail
 
+-- Appendrels excluded by constraints failed to check permissions in 8.4-9.2.
+select * from
+  ((select a.q1 as x from int8_tbl a offset 0)
+   union all
+   (select b.q2 as x from int8_tbl b offset 0)) ss
+where false;
+
+set constraint_exclusion = on;
+select * from
+  ((select a.q1 as x, random() from int8_tbl a where q1 > 0)
+   union all
+   (select b.q2 as x, random() from int8_tbl b where q2 > 0)) ss
+where x < 0;
+reset constraint_exclusion;
+
 CREATE VIEW atestv4 AS SELECT * FROM atestv3; -- nested view
 SELECT * FROM atestv4; -- ok
 GRANT SELECT ON atestv4 TO regressuser2;
