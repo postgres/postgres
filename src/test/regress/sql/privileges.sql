@@ -147,8 +147,6 @@ CREATE VIEW atestv1 AS SELECT * FROM atest1; -- ok
 /* The next *should* fail, but it's not implemented that way yet. */
 CREATE VIEW atestv2 AS SELECT * FROM atest2;
 CREATE VIEW atestv3 AS SELECT * FROM atest3; -- ok
-/* Empty view is a corner case that failed in 9.2. */
-CREATE VIEW atestv0 AS SELECT 0 as x WHERE false; -- ok
 
 SELECT * FROM atestv1; -- ok
 SELECT * FROM atestv2; -- fail
@@ -160,7 +158,6 @@ SET SESSION AUTHORIZATION regressuser4;
 SELECT * FROM atestv1; -- ok
 SELECT * FROM atestv2; -- fail
 SELECT * FROM atestv3; -- ok
-SELECT * FROM atestv0; -- fail
 
 CREATE VIEW atestv4 AS SELECT * FROM atestv3; -- nested view
 SELECT * FROM atestv4; -- ok
@@ -831,7 +828,6 @@ drop sequence x_seq;
 DROP FUNCTION testfunc2(int);
 DROP FUNCTION testfunc4(boolean);
 
-DROP VIEW atestv0;
 DROP VIEW atestv1;
 DROP VIEW atestv2;
 -- this should cascade to drop atestv4
