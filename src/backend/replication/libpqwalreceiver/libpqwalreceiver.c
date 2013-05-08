@@ -224,8 +224,11 @@ libpqrcv_endstreaming(TimeLineID *next_tli)
 	res = PQgetResult(streamConn);
 	if (PQresultStatus(res) == PGRES_TUPLES_OK)
 	{
-		/* Read the next timeline's ID */
-		if (PQnfields(res) != 1 || PQntuples(res) != 1)
+		/*
+		 * Read the next timeline's ID. The server also sends the timeline's
+		 * starting point, but it is ignored.
+		 */
+		if (PQnfields(res) < 2 || PQntuples(res) != 1)
 			ereport(ERROR,
 					(errmsg("unexpected result set after end-of-streaming")));
 		*next_tli = pg_atoi(PQgetvalue(res, 0, 0), sizeof(uint32), 0);

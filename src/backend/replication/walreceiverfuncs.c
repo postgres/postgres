@@ -260,12 +260,13 @@ RequestXLogStreaming(TimeLineID tli, XLogRecPtr recptr, const char *conninfo)
 	walrcv->startTime = now;
 
 	/*
-	 * If this is the first startup of walreceiver, we initialize receivedUpto
-	 * and latestChunkStart to receiveStart.
+	 * If this is the first startup of walreceiver (on this timeline),
+	 * initialize receivedUpto and latestChunkStart to the starting point.
 	 */
-	if (walrcv->receiveStart == 0)
+	if (walrcv->receiveStart == 0 || walrcv->receivedTLI != tli)
 	{
 		walrcv->receivedUpto = recptr;
+		walrcv->receivedTLI = tli;
 		walrcv->latestChunkStart = recptr;
 	}
 	walrcv->receiveStart = recptr;

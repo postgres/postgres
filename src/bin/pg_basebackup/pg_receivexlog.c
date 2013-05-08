@@ -83,10 +83,12 @@ stop_streaming(XLogRecPtr xlogpos, uint32 timeline, bool segment_finished)
 				timeline);
 
 	/*
-	 * Note that we report the previous, not current, position here. That's
-	 * the exact location where the timeline switch happend. After the switch,
-	 * we restart streaming from the beginning of the segment, so xlogpos can
-	 * smaller than prevpos if we just switched to new timeline.
+	 * Note that we report the previous, not current, position here. After a
+	 * timeline switch, xlogpos points to the beginning of the segment because
+	 * that's where we always begin streaming. Reporting the end of previous
+	 * timeline isn't totally accurate, because the next timeline can begin
+	 * slightly before the end of the WAL that we received on the previous
+	 * timeline, but it's close enough for reporting purposes.
 	 */
 	if (prevtimeline != 0 && prevtimeline != timeline)
 		fprintf(stderr, _("%s: switched to timeline %u at %X/%X\n"),

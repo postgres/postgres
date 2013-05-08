@@ -1423,10 +1423,15 @@ The commands accepted in walsender mode are:
      <para>
       After streaming all the WAL on a timeline that is not the latest one,
       the server will end streaming by exiting the COPY mode. When the client
-      acknowledges this by also exiting COPY mode, the server sends a
-      single-row, single-column result set indicating the next timeline in
-      this server's history. That is followed by a CommandComplete message,
-      and the server is ready to accept a new command.
+      acknowledges this by also exiting COPY mode, the server sends a result
+      set with one row and two columns, indicating the next timeline in this
+      server's history. The first column is the next timeline's ID, and the
+      second column is the XLOG position where the switch happened. Usually,
+      the switch position is the end of the WAL that was streamed, but there
+      are corner cases where the server can send some WAL from the old
+      timeline that it has not itself replayed before promoting. Finally, the
+      server sends CommandComplete message, and is ready to accept a new
+      command.
      </para>
 
      <para>

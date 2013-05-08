@@ -9598,7 +9598,7 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 						}
 						else
 						{
-							ptr = RecPtr;
+							ptr = tliRecPtr;
 							tli = tliOfPointInHistory(tliRecPtr, expectedTLEs);
 
 							if (curFileTLI > 0 && tli < curFileTLI)
@@ -9607,7 +9607,8 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 									 tli, curFileTLI);
 						}
 						curFileTLI = tli;
-						RequestXLogStreaming(curFileTLI, ptr, PrimaryConnInfo);
+						RequestXLogStreaming(tli, ptr, PrimaryConnInfo);
+						receivedUpto = 0;
 					}
 					/*
 					 * Move to XLOG_FROM_STREAM state in either case. We'll get
