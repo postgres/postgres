@@ -660,6 +660,7 @@ SELECT user_relns() AS user_relns
  point_tbl
  polygon_tbl
  quad_point_tbl
+ radix_text_tbl
  ramp
  random_tbl
  real_city
@@ -671,7 +672,6 @@ SELECT user_relns() AS user_relns
  stud_emp
  student
  subselect_tbl
- suffix_text_tbl
  t
  tenk1
  tenk2

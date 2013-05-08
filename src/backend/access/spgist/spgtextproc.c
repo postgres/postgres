@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * spgtextproc.c
- *	  implementation of compressed-suffix tree over text
+ *	  implementation of radix tree (compressed trie) over text
  *
  *
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
@@ -23,7 +23,7 @@
 
 
 /*
- * In the worst case, a inner tuple in a text suffix tree could have as many
+ * In the worst case, a inner tuple in a text radix tree could have as many
  * as 256 nodes (one for each possible byte value).  Each node can take 16
  * bytes on MAXALIGN=8 machines.  The inner tuple must fit on an index page
  * of size BLCKSZ.	Rather than assuming we know the exact amount of overhead

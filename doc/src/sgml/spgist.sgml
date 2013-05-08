@@ -15,7 +15,7 @@
   <acronym>SP-GiST</acronym> is an abbreviation for space-partitioned
   <acronym>GiST</acronym>.  <acronym>SP-GiST</acronym> supports partitioned
   search trees, which facilitate development of a wide range of different
-  non-balanced data structures, such as quad-trees, k-d trees, and suffix
+  non-balanced data structures, such as quad-trees, k-d trees, and radix
   trees (tries).  The common feature of these structures is that they
   repeatedly divide the search space into partitions that need not be
   of equal size.  Searches that are well matched to the partitioning rule
@@ -81,9 +81,9 @@
   A node contains a downlink that leads to either another, lower-level inner
   tuple, or a short list of leaf tuples that all lie on the same index page.
   Each node has a <firstterm>label</> that describes it; for example,
-  in a suffix tree the node label could be the next character of the string
+  in a radix tree the node label could be the next character of the string
   value.  Optionally, an inner tuple can have a <firstterm>prefix</> value
-  that describes all its members.  In a suffix tree this could be the common
+  that describes all its members.  In a radix tree this could be the common
   prefix of the represented strings.  The prefix value is not necessarily
   really a prefix, but can be any data needed by the operator class;
   for example, in a quad-tree it can store the central point that the four
@@ -636,7 +636,7 @@ typedef struct spgLeafConsistentOut
   <para>
    Individual leaf tuples and inner tuples must fit on a single index page
    (8KB by default).  Therefore, when indexing values of variable-length
-   data types, long values can only be supported by methods such as suffix
+   data types, long values can only be supported by methods such as radix
    trees, in which each level of the tree includes a prefix that is short
    enough to fit on a page, and the final leaf level includes a suffix also
    short enough to fit on a page.  The operator class should set
@@ -740,7 +740,7 @@ typedef struct spgLeafConsistentOut
  <para>
   The <productname>PostgreSQL</productname> source distribution includes
   several examples of index operator classes for
-  <acronym>SP-GiST</acronym>.  The core system currently provides suffix
+  <acronym>SP-GiST</acronym>.  The core system currently provides radix
   trees over text columns and two types of trees over points: quad-tree and
   k-d tree.  Look into <filename>src/backend/access/spgist/</> to see the
   code.

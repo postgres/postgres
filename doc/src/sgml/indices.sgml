@@ -267,7 +267,7 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
    SP-GiST indexes, like GiST indexes, offer an infrastructure that supports
    various kinds of searches.  SP-GiST permits implementation of a wide range
    of different non-balanced disk-based data structures, such as quadtrees,
-   k-d trees, and suffix trees (tries).  As an example, the standard distribution of
+   k-d trees, and radix trees (tries).  As an example, the standard distribution of
    <productname>PostgreSQL</productname> includes SP-GiST operator classes
    for two-dimensional points, which support indexed
    queries using these operators:

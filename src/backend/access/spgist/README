@@ -2,7 +2,7 @@ src/backend/access/spgist/README
 
 SP-GiST is an abbreviation of space-partitioned GiST.  It provides a
 generalized infrastructure for implementing space-partitioned data
-structures, such as quadtrees, k-d trees, and suffix trees (tries).  When
+structures, such as quadtrees, k-d trees, and radix trees (tries).  When
 implemented in main memory, these structures are usually designed as a set of
 dynamically-allocated nodes linked by pointers.  This is not suitable for
 direct storing on disk, since the chains of pointers can be rather long and
@@ -56,18 +56,18 @@ Inner tuple consists of:
 
   optional prefix value - all successors must be consistent with it.
     Example:
-        suffix tree  - prefix value is a common prefix string
+        radix tree   - prefix value is a common prefix string
         quad tree    - centroid
         k-d tree     - one coordinate
 
   list of nodes, where node is a (label, pointer) pair.
-    Example of a label: a single character for suffix tree
+    Example of a label: a single character for radix tree
 
 Leaf tuple consists of:
 
   a leaf value
     Example:
-        suffix tree - the rest of string (postfix)
+        radix tree - the rest of string (postfix)
         quad and k-d tree - the point itself
 
   ItemPointer to the heap
@@ -122,7 +122,7 @@ space is as good as we can easily make it.
 (2) Current implementation allows to do picksplit and insert a new leaf tuple
 in one operation, if the new list of leaf tuples fits on one page. It's
 always possible for trees with small nodes like quad tree or k-d tree, but
-suffix trees may require another picksplit.
+radix trees may require another picksplit.
 
 (3) Addition of node must keep size of inner tuple small enough to fit on a
 page.  After addition, inner tuple could become too large to be stored on
@@ -132,14 +132,14 @@ another page, we can't change the numbers of other tuples on the page, else
 we'd make downlink pointers to them invalid. To prevent that, SP-GiST leaves
 a "placeholder" tuple, which can be reused later whenever another tuple is
 added to the page. See also Concurrency and Vacuum sections below. Right now
-only suffix trees could add a node to the tuple; quad trees and k-d trees
+only radix trees could add a node to the tuple; quad trees and k-d trees
 make all possible nodes at once in PickSplitFn() call.
 
 (4) Prefix value could only partially match a new value, so the SplitTuple
 action allows breaking the current tree branch into upper and lower sections.
 Another way to say it is that we can split the current inner tuple into
 "prefix" and "postfix" parts, where the prefix part is able to match the
-incoming new value. Consider example of insertion into a suffix tree. We use
+incoming new value. Consider example of insertion into a radix tree. We use
 the following notation, where tuple's id is just for discussion (no such id
 is actually stored):
 

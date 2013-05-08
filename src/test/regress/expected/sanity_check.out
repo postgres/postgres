@@ -137,6 +137,7 @@ SELECT relname, relhasindex
  point_tbl               | t
  polygon_tbl             | t
  quad_point_tbl          | t
+ radix_text_tbl          | t
  ramp                    | f
  real_city               | f
  reltime_tbl             | f
@@ -152,7 +153,6 @@ SELECT relname, relhasindex
  sql_sizing_profiles     | f
  stud_emp                | f
  student                 | f
- suffix_text_tbl         | t
  tenk1                   | t
  tenk2                   | t
  test_range_excl         | t
