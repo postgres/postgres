@@ -22,7 +22,8 @@ generate_old_dump(void)
 	 */
 	exec_prog(true,
 			  SYSTEMQUOTE "\"%s/pg_dumpall\" --port %d --username \"%s\" "
-			  "--schema-only --binary-upgrade -f \"%s/" ALL_DUMP_FILE "\""
+			  "--schema-only --quote-all-identifiers --binary-upgrade "
+			  "-f \"%s/" ALL_DUMP_FILE "\""
 			  SYSTEMQUOTE, new_cluster.bindir, old_cluster.port, os_info.user, os_info.cwd);
 	check_ok();
 }
