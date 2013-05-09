@@ -518,7 +518,11 @@ psql --username postgres --file script.sql postgres
    All failure, rebuild, and reindex cases will be reported by
    <application>pg_upgrade</> if they affect your installation;
    post-upgrade scripts to rebuild tables and indexes will be
-   generated automatically.
+   generated automatically.  If you are trying to automate the upgrade
+   of many clusters, you should find that clusters with identical database
+   schemas require the same post-upgrade steps for all cluster upgrades;
+   this is because the post-upgrade steps are based on the database
+   schemas, and not user data.
   </para>
 
   <para>
