@@ -22,7 +22,8 @@ generate_old_dump(void)
 
 	/* run new pg_dumpall binary for globals */
 	exec_prog(UTILITY_LOG_FILE, NULL, true,
-			  "\"%s/pg_dumpall\" %s --schema-only --globals-only --binary-upgrade %s -f %s",
+			  "\"%s/pg_dumpall\" %s --schema-only --globals-only "
+			  "--quote-all-identifiers --binary-upgrade %s -f %s",
 			  new_cluster.bindir, cluster_conn_opts(&old_cluster),
 			  log_opts.verbose ? "--verbose" : "",
 			  GLOBALS_DUMP_FILE);
@@ -30,26 +31,29 @@ generate_old_dump(void)
 
 	prep_status("Creating dump of database schemas\n");
 
- 	/* create per-db dump files */
+	/* create per-db dump files */
 	for (dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
 	{
-		char 		sql_file_name[MAXPGPATH], log_file_name[MAXPGPATH];
-		DbInfo     *old_db = &old_cluster.dbarr.dbs[dbnum];
+		char		sql_file_name[MAXPGPATH],
+					log_file_name[MAXPGPATH];
+		DbInfo	   *old_db = &old_cluster.dbarr.dbs[dbnum];
 
 		pg_log(PG_STATUS, "%s", old_db->db_name);
 		snprintf(sql_file_name, sizeof(sql_file_name), DB_DUMP_FILE_MASK, old_db->db_oid);
 		snprintf(log_file_name, sizeof(log_file_name), DB_DUMP_LOG_FILE_MASK, old_db->db_oid);
 
 		parallel_exec_prog(log_file_name, NULL,
-				  "\"%s/pg_dump\" %s --schema-only --binary-upgrade --format=custom %s --file=\"%s\" \"%s\"",
-				  new_cluster.bindir, cluster_conn_opts(&old_cluster),
-				  log_opts.verbose ? "--verbose" : "", sql_file_name, old_db->db_name);
+				   "\"%s/pg_dump\" %s --schema-only --quote-all-identifiers "
+				  "--binary-upgrade --format=custom %s --file=\"%s\" \"%s\"",
+						 new_cluster.bindir, cluster_conn_opts(&old_cluster),
+						   log_opts.verbose ? "--verbose" : "",
+						   sql_file_name, old_db->db_name);
 	}
 
 	/* reap all children */
 	while (reap_child(true) == true)
 		;
-	            
+
 	end_progress_output();
 	check_ok();
 }
