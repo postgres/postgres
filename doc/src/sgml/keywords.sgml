@@ -1645,6 +1645,13 @@
     <entry>reserved</entry>
    </row>
    <row>
+    <entry><token>EVENT</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
     <entry><token>EVERY</token></entry>
     <entry></entry>
     <entry>reserved</entry>
@@ -2653,6 +2660,13 @@
     <entry></entry>
    </row>
    <row>
+    <entry><token>MATERIALIZED</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
     <entry><token>MAX</token></entry>
     <entry></entry>
     <entry>reserved</entry>
@@ -3616,6 +3630,13 @@
     <entry></entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
+    <entry></entry>
+   </row>
+   <row>
+    <entry><token>REFRESH</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
     <entry></entry>
    </row>
    <row>
