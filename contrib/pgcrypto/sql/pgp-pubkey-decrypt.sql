@@ -426,6 +426,71 @@ hbt6LhKhCLUNdz/udIt0JAC6c/HdPLSW3HnmM3+iNj+Kug==
 -----END PGP PRIVATE KEY BLOCK-----
 ');
 
+insert into keytbl (id, name, pubkey, seckey)
+values (7, 'rsaenc2048-psw', '
+same key with password
+', '
+-----BEGIN PGP PRIVATE KEY BLOCK-----
+Version: GnuPG v1.4.11 (GNU/Linux)
+
+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
+=QFm5
+-----END PGP PRIVATE KEY BLOCK-----
+');
+
 
 -- elg1024 / aes128
 insert into encdata (id, data) values (1, '
@@ -534,6 +599,14 @@ from keytbl, encdata where keytbl.id=2 and encdata.id=1;
 -- sign-only key
 select pgp_pub_decrypt(dearmor(data), dearmor(seckey))
 from keytbl, encdata where keytbl.id=4 and encdata.id=1;
+
+-- rsa: password-protected secret key, wrong password
+select pgp_pub_decrypt(dearmor(data), dearmor(seckey), '123')
+from keytbl, encdata where keytbl.id=7 and encdata.id=4;
+
+-- rsa: password-protected secret key, right password
+select pgp_pub_decrypt(dearmor(data), dearmor(seckey), 'parool')
+from keytbl, encdata where keytbl.id=7 and encdata.id=4;
 
 -- password-protected secret key, no password
 select pgp_pub_decrypt(dearmor(data), dearmor(seckey))
