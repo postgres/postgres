@@ -408,16 +408,16 @@ process_secret_key(PullFilter *pkt, PGP_PubKey **pk_p,
 		case PGP_PUB_RSA_SIGN:
 		case PGP_PUB_RSA_ENCRYPT:
 		case PGP_PUB_RSA_ENCRYPT_SIGN:
-			res = pgp_mpi_read(pkt, &pk->sec.rsa.d);
+			res = pgp_mpi_read(pf_key, &pk->sec.rsa.d);
 			if (res < 0)
 				break;
-			res = pgp_mpi_read(pkt, &pk->sec.rsa.p);
+			res = pgp_mpi_read(pf_key, &pk->sec.rsa.p);
 			if (res < 0)
 				break;
-			res = pgp_mpi_read(pkt, &pk->sec.rsa.q);
+			res = pgp_mpi_read(pf_key, &pk->sec.rsa.q);
 			if (res < 0)
 				break;
-			res = pgp_mpi_read(pkt, &pk->sec.rsa.u);
+			res = pgp_mpi_read(pf_key, &pk->sec.rsa.u);
 			if (res < 0)
 				break;
 			break;
