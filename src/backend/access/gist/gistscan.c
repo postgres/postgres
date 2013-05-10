@@ -202,6 +202,8 @@ gistrescan(PG_FUNCTION_ARGS)
 	/* Update scan key, if a new one is given */
 	if (key && scan->numberOfKeys > 0)
 	{
+		void	  **fn_extras = NULL;
+
 		/*
 		 * If this isn't the first time through, preserve the fn_extra
 		 * pointers, so that if the consistentFns are using them to cache
@@ -209,13 +211,9 @@ gistrescan(PG_FUNCTION_ARGS)
 		 */
 		if (!first_time)
 		{
+			fn_extras = (void **) palloc(scan->numberOfKeys * sizeof(void *));
 			for (i = 0; i < scan->numberOfKeys; i++)
-			{
-				ScanKey		skey = scan->keyData + i;
-
-				so->giststate->consistentFn[skey->sk_attno - 1].fn_extra =
-					skey->sk_func.fn_extra;
-			}
+				fn_extras[i] = scan->keyData[i].sk_func.fn_extra;
 		}
 
 		memmove(scan->keyData, key,
@@ -231,10 +229,6 @@ gistrescan(PG_FUNCTION_ARGS)
 		 * Next, if any of keys is a NULL and that key is not marked with
 		 * SK_SEARCHNULL/SK_SEARCHNOTNULL then nothing can be found (ie, we
 		 * assume all indexable operators are strict).
-		 *
-		 * Note: we intentionally memcpy the FmgrInfo to sk_func rather than
-		 * using fmgr_info_copy.  This is so that the fn_extra field gets
-		 * preserved across multiple rescans.
 		 */
 		so->qual_ok = true;
 
@@ -242,7 +236,13 @@ gistrescan(PG_FUNCTION_ARGS)
 		{
 			ScanKey		skey = scan->keyData + i;
 
-			skey->sk_func = so->giststate->consistentFn[skey->sk_attno - 1];
+			fmgr_info_copy(&(skey->sk_func),
+						   &(so->giststate->consistentFn[skey->sk_attno - 1]),
+						   so->giststate->scanCxt);
+
+			/* Restore prior fn_extra pointers, if not first time */
+			if (!first_time)
+				skey->sk_func.fn_extra = fn_extras[i];
 
 			if (skey->sk_flags & SK_ISNULL)
 			{
@@ -250,21 +250,22 @@ gistrescan(PG_FUNCTION_ARGS)
 					so->qual_ok = false;
 			}
 		}
+
+		if (!first_time)
+			pfree(fn_extras);
 	}
 
 	/* Update order-by key, if a new one is given */
 	if (orderbys && scan->numberOfOrderBys > 0)
 	{
+		void	  **fn_extras = NULL;
+
 		/* As above, preserve fn_extra if not first time through */
 		if (!first_time)
 		{
+			fn_extras = (void **) palloc(scan->numberOfOrderBys * sizeof(void *));
 			for (i = 0; i < scan->numberOfOrderBys; i++)
-			{
-				ScanKey		skey = scan->orderByData + i;
-
-				so->giststate->distanceFn[skey->sk_attno - 1].fn_extra =
-					skey->sk_func.fn_extra;
-			}
+				fn_extras[i] = scan->orderByData[i].sk_func.fn_extra;
 		}
 
 		memmove(scan->orderByData, orderbys,
@@ -276,21 +277,27 @@ gistrescan(PG_FUNCTION_ARGS)
 		 * function in the form of its strategy number, which is available
 		 * from the sk_strategy field, and its subtype from the sk_subtype
 		 * field.
-		 *
-		 * See above comment about why we don't use fmgr_info_copy here.
 		 */
 		for (i = 0; i < scan->numberOfOrderBys; i++)
 		{
 			ScanKey		skey = scan->orderByData + i;
-
-			skey->sk_func = so->giststate->distanceFn[skey->sk_attno - 1];
+			FmgrInfo   *finfo = &(so->giststate->distanceFn[skey->sk_attno - 1]);
 
 			/* Check we actually have a distance function ... */
-			if (!OidIsValid(skey->sk_func.fn_oid))
+			if (!OidIsValid(finfo->fn_oid))
 				elog(ERROR, "missing support function %d for attribute %d of index \"%s\"",
 					 GIST_DISTANCE_PROC, skey->sk_attno,
 					 RelationGetRelationName(scan->indexRelation));
+
+			fmgr_info_copy(&(skey->sk_func), finfo, so->giststate->scanCxt);
+
+			/* Restore prior fn_extra pointers, if not first time */
+			if (!first_time)
+				skey->sk_func.fn_extra = fn_extras[i];
 		}
+
+		if (!first_time)
+			pfree(fn_extras);
 	}
 
 	PG_RETURN_VOID();
