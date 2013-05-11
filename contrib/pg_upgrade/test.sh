@@ -103,6 +103,10 @@ do
 	export PGPORT
 done
 
+# buildfarm may try to override port via EXTRA_REGRESS_OPTS ...
+EXTRA_REGRESS_OPTS="$EXTRA_REGRESS_OPTS --port=$PGPORT"
+export EXTRA_REGRESS_OPTS
+
 # enable echo so the user can see what is being executed
 set -x
 
