@@ -13,6 +13,11 @@ set -e
 
 : ${MAKE=make}
 
+# Guard against parallel make issues (see comments in pg_regress.c)
+unset MAKEFLAGS
+unset MAKELEVEL
+
+# Set listen_addresses desirably
 testhost=`uname -s`
 
 case $testhost in
@@ -65,6 +70,12 @@ PGDATA="$BASE_PGDATA.old"
 export PGDATA
 rm -rf "$BASE_PGDATA" "$PGDATA"
 
+logdir=$PWD/log
+rm -rf "$logdir"
+mkdir "$logdir"
+
+# Clear out any environment vars that might cause libpq to connect to
+# the wrong postmaster (cf pg_regress.c)
 unset PGDATABASE
 unset PGUSER
 unset PGSERVICE
@@ -74,9 +85,23 @@ unset PGCONNECT_TIMEOUT
 unset PGHOST
 unset PGHOSTADDR
 
-logdir=$PWD/log
-rm -rf "$logdir"
-mkdir "$logdir"
+# Select a non-conflicting port number, similarly to pg_regress.c
+PG_VERSION_NUM=`grep '#define PG_VERSION_NUM' $newsrc/src/include/pg_config.h | awk '{print $3}'`
+PGPORT=`expr $PG_VERSION_NUM % 16384 + 49152`
+export PGPORT
+
+i=0
+while psql -X postgres </dev/null 2>/dev/null
+do
+	i=`expr $i + 1`
+	if [ $i -eq 16 ]
+	then
+		echo port $PGPORT apparently in use
+		exit 1
+	fi
+	PGPORT=`expr $PGPORT + 1`
+	export PGPORT
+done
 
 # enable echo so the user can see what is being executed
 set -x
@@ -123,7 +148,7 @@ PGDATA=$BASE_PGDATA
 
 initdb -N
 
-pg_upgrade -d "${PGDATA}.old" -D "${PGDATA}" -b "$oldbindir" -B "$bindir"
+pg_upgrade -d "${PGDATA}.old" -D "${PGDATA}" -b "$oldbindir" -B "$bindir" -p "$PGPORT" -P "$PGPORT"
 
 pg_ctl start -l "$logdir/postmaster2.log" -o "$POSTMASTER_OPTS" -w
 
