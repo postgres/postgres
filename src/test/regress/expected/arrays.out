@@ -1542,6 +1542,15 @@ select unnest(array[1,2,3,null,4,null,null,5,6]::text[]);
  6
 (9 rows)
 
+select abs(unnest(array[1,2,null,-3]));
+ abs 
+-----
+   1
+   2
+    
+   3
+(4 rows)
+
 select array_remove(array[1,2,2,3], 2);
  array_remove 
 --------------

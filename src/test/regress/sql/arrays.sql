@@ -432,6 +432,7 @@ select unnest(array[1,2,3,4.5]::float8[]);
 select unnest(array[1,2,3,4.5]::numeric[]);
 select unnest(array[1,2,3,null,4,null,null,5,6]);
 select unnest(array[1,2,3,null,4,null,null,5,6]::text[]);
+select abs(unnest(array[1,2,null,-3]));
 select array_remove(array[1,2,2,3], 2);
 select array_remove(array[1,2,2,3], 5);
 select array_remove(array[1,NULL,NULL,3], NULL);
