@@ -381,11 +381,8 @@ usage(void)
 	printf("%s decodes and displays PostgreSQL transaction logs for debugging.\n\n",
 		   progname);
 	printf("Usage:\n");
-	printf("  %s [OPTION] [STARTSEG [ENDSEG]] \n", progname);
-	printf("\nGeneral options:\n");
-	printf("  -V, --version          output version information, then exit\n");
-	printf("  -?, --help             show this help, then exit\n");
-	printf("\nContent options:\n");
+	printf("  %s [OPTION]... [STARTSEG [ENDSEG]] \n", progname);
+	printf("\nOptions:\n");
 	printf("  -b, --bkp-details      output detailed information about backup blocks\n");
 	printf("  -e, --end=RECPTR       stop reading at log position RECPTR\n");
 	printf("  -n, --limit=N          number of records to display\n");
@@ -396,7 +393,9 @@ usage(void)
 	printf("  -s, --start=RECPTR     start reading at log position RECPTR\n");
 	printf("  -t, --timeline=TLI     timeline from which to read log records\n");
 	printf("                         (default: 1 or the value used in STARTSEG)\n");
+	printf("  -V, --version          output version information, then exit\n");
 	printf("  -x, --xid=XID          only show records with TransactionId XID\n");
+	printf("  -?, --help             show this help, then exit\n");
 }
 
 int
