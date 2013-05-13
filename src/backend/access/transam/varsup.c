@@ -451,18 +451,18 @@ GetNewObjectId(void)
 	 * iterations in GetNewOid.)  Note we are relying on unsigned comparison.
 	 *
 	 * During initdb, we start the OID generator at FirstBootstrapObjectId, so
-	 * we only enforce wrapping to that point when in bootstrap or standalone
-	 * mode.  The first time through this routine after normal postmaster
-	 * start, the counter will be forced up to FirstNormalObjectId. This
-	 * mechanism leaves the OIDs between FirstBootstrapObjectId and
-	 * FirstNormalObjectId available for automatic assignment during initdb,
-	 * while ensuring they will never conflict with user-assigned OIDs.
+	 * we only wrap if before that point when in bootstrap or standalone mode.
+	 * The first time through this routine after normal postmaster start, the
+	 * counter will be forced up to FirstNormalObjectId.  This mechanism
+	 * leaves the OIDs between FirstBootstrapObjectId and FirstNormalObjectId
+	 * available for automatic assignment during initdb, while ensuring they
+	 * will never conflict with user-assigned OIDs.
 	 */
 	if (ShmemVariableCache->nextOid < ((Oid) FirstNormalObjectId))
 	{
 		if (IsPostmasterEnvironment)
 		{
-			/* wraparound in normal environment */
+			/* wraparound, or first post-initdb assignment, in normal mode */
 			ShmemVariableCache->nextOid = FirstNormalObjectId;
 			ShmemVariableCache->oidCount = 0;
 		}
@@ -471,8 +471,8 @@ GetNewObjectId(void)
 			/* we may be bootstrapping, so don't enforce the full range */
 			if (ShmemVariableCache->nextOid < ((Oid) FirstBootstrapObjectId))
 			{
-				/* wraparound in standalone environment? */
-				ShmemVariableCache->nextOid = FirstBootstrapObjectId;
+				/* wraparound in standalone mode (unlikely but possible) */
+				ShmemVariableCache->nextOid = FirstNormalObjectId;
 				ShmemVariableCache->oidCount = 0;
 			}
 		}
