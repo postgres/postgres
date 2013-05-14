@@ -299,8 +299,7 @@ PostgreSQL documentation
         directory output format because this is the only output format where multiple processes
         can write their data at the same time.
        </para>
-       <para>
-        <application>pg_dump</> will open <replaceable class="parameter">njobs</replaceable>
+       <para><application>pg_dump</> will open <replaceable class="parameter">njobs</replaceable>
         + 1 connections to the database, so make sure your <xref linkend="guc-max-connections">
         setting is high enough to accommodate all connections.
        </para>

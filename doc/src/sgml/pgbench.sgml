@@ -693,8 +693,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       through its standard output.
      </para>
 
-     <para>
-      <replaceable>argument</> can be either a text constant or a
+     <para><replaceable>argument</> can be either a text constant or a
       <literal>:</><replaceable>variablename</> reference to a variable of
       any types. If you want to use <replaceable>argument</> starting with
       colons, you need to add an additional colon at the beginning of
