@@ -158,6 +158,18 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      </varlistentry>
 
      <varlistentry>
+      <term><option>-F</option> <replaceable>fillfactor</></term>
+      <listitem>
+       <para>
+        Create the <structname>pgbench_accounts</>,
+        <structname>pgbench_tellers</> and
+        <structname>pgbench_branches</> tables with the given fillfactor.
+        Default is 100.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-n</option></term>
       <listitem>
        <para>
@@ -167,13 +179,12 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-F</option> <replaceable>fillfactor</></term>
+      <term><option>-q</option></term>
       <listitem>
        <para>
-        Create the <structname>pgbench_accounts</>,
-        <structname>pgbench_tellers</> and
-        <structname>pgbench_branches</> tables with the given fillfactor.
-        Default is 100.
+        Switch logging to quiet mode, producing only one progress message per 5
+        seconds. The default logging prints one message each 100000 rows, which
+        often outputs many lines per second (especially on good hardware).
        </para>
       </listitem>
      </varlistentry>
@@ -190,17 +201,6 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
         will switch to using larger integers (<type>bigint</type>),
         in order to be big enough to hold the range of account
         identifiers.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-q</option></term>
-      <listitem>
-       <para>
-        Switch logging to quiet mode, producing only one progress message per 5
-        seconds. The default logging prints one message each 100000 rows, which
-        often outputs many lines per second (especially on good hardware).
        </para>
       </listitem>
      </varlistentry>
@@ -333,39 +333,6 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      </varlistentry>
 
      <varlistentry>
-      <term><option>--sampling-rate</option> <replaceable>rate</></term>
-      <listitem>
-       <para>
-        Sampling rate, used when writing data into the log, to reduce the
-        amount of log generated. If this option is given, only the specified
-        fraction of transactions are logged. 1.0 means all transactions will
-        be logged, 0.05 means only 5% of the transactions will be logged.
-       </para>
-       <para>
-        Remember to take the sampling rate into account when processing the
-        log file. For example, when computing tps values, you need to multiply
-        the numbers accordingly (e.g. with 0.01 sample rate, you'll only get
-        1/100 of the actual tps).
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>--aggregate-interval</option> <replaceable>seconds</></term>
-      <listitem>
-       <para>
-        Length of aggregation interval (in seconds). May be used only together
-        with <application>-l</application> - with this option, the log contains
-        per-interval summary (number of transactions, min/max latency and two
-        additional fields useful for variance estimation).
-       </para>
-       <para>
-        This option is not currently supported on Windows.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>-M</option> <replaceable>querymode</></term>
       <listitem>
        <para>
@@ -475,6 +442,39 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
         With neither <option>-n</> nor <option>-v</>, pgbench will vacuum the
         <structname>pgbench_tellers</> and <structname>pgbench_branches</>
         tables, and will truncate <structname>pgbench_history</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--aggregate-interval=<replaceable>seconds</></option></term>
+      <listitem>
+       <para>
+        Length of aggregation interval (in seconds). May be used only together
+        with <application>-l</application> - with this option, the log contains
+        per-interval summary (number of transactions, min/max latency and two
+        additional fields useful for variance estimation).
+       </para>
+       <para>
+        This option is not currently supported on Windows.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--sampling-rate=<replaceable>rate</></option></term>
+      <listitem>
+       <para>
+        Sampling rate, used when writing data into the log, to reduce the
+        amount of log generated. If this option is given, only the specified
+        fraction of transactions are logged. 1.0 means all transactions will
+        be logged, 0.05 means only 5% of the transactions will be logged.
+       </para>
+       <para>
+        Remember to take the sampling rate into account when processing the
+        log file. For example, when computing tps values, you need to multiply
+        the numbers accordingly (e.g. with 0.01 sample rate, you'll only get
+        1/100 of the actual tps).
        </para>
       </listitem>
      </varlistentry>
