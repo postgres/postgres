@@ -1088,6 +1088,7 @@ testdb=&gt;
       <varlistentry>
         <term><literal>\dE[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <term><literal>\di[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\dm[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <term><literal>\ds[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <term><literal>\dt[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <term><literal>\dv[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
@@ -1095,9 +1096,9 @@ testdb=&gt;
         <listitem>
         <para>
         In this group of commands, the letters <literal>E</literal>,
-        <literal>i</literal>, <literal>s</literal>,
+        <literal>i</literal>, <literal>m</literal>, <literal>s</literal>,
         <literal>t</literal>, and <literal>v</literal>
-        stand for foreign table, index, sequence, table, and view,
+        stand for foreign table, index, materialized view, sequence, table, and view,
         respectively.
         You can specify any or all of
         these letters, in any order, to obtain a listing of objects
