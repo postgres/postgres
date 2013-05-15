@@ -369,3 +369,17 @@ select c2, count(*) from "S 1"."T 1" where c2 < 500 group by 1 order by 1;
 commit;
 select c2, count(*) from ft2 where c2 < 500 group by 1 order by 1;
 select c2, count(*) from "S 1"."T 1" where c2 < 500 group by 1 order by 1;
+
+-- ===================================================================
+-- test serial columns (ie, sequence-based defaults)
+-- ===================================================================
+create table loc1 (f1 serial, f2 text);
+create foreign table rem1 (f1 serial, f2 text)
+  server loopback options(table_name 'loc1');
+select pg_catalog.setval('rem1_f1_seq', 10, false);
+insert into loc1(f2) values('hi');
+insert into rem1(f2) values('hi remote');
+insert into loc1(f2) values('bye');
+insert into rem1(f2) values('bye remote');
+select * from loc1;
+select * from rem1;
