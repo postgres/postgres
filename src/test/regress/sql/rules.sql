@@ -970,6 +970,7 @@ create rule r2 as on update to rules_src do also
 update rules_src set f2 = f2 / 10;
 select * from rules_src;
 select * from rules_log;
+create rule r3 as on delete to rules_src do notify rules_src_deletion;
 \d+ rules_src
 
 --

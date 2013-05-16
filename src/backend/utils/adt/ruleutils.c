@@ -2564,14 +2564,19 @@ set_deparse_for_query(deparse_namespace *dpns, Query *query,
 		dpns->rtable_columns = lappend(dpns->rtable_columns,
 									   palloc0(sizeof(deparse_columns)));
 
-	/* Detect whether global uniqueness of USING names is needed */
-	dpns->unique_using = has_unnamed_full_join_using((Node *) query->jointree);
+	/* If it's a utility query, it won't have a jointree */
+	if (query->jointree)
+	{
+		/* Detect whether global uniqueness of USING names is needed */
+		dpns->unique_using =
+			has_unnamed_full_join_using((Node *) query->jointree);
 
-	/*
-	 * Select names for columns merged by USING, via a recursive pass over the
-	 * query jointree.
-	 */
-	set_using_names(dpns, (Node *) query->jointree);
+		/*
+		 * Select names for columns merged by USING, via a recursive pass over
+		 * the query jointree.
+		 */
+		set_using_names(dpns, (Node *) query->jointree);
+	}
 
 	/*
 	 * Now assign remaining column aliases for each RTE.  We do this in a

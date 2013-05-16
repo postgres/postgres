@@ -2573,6 +2573,7 @@ select * from rules_log;
  11 |  13 | new
 (12 rows)
 
+create rule r3 as on delete to rules_src do notify rules_src_deletion;
 \d+ rules_src
                       Table "public.rules_src"
  Column |  Type   | Modifiers | Storage | Stats target | Description 
@@ -2584,6 +2585,9 @@ Rules:
     ON UPDATE TO rules_src DO  INSERT INTO rules_log (f1, f2, tag) VALUES (old.f1,old.f2,'old'::text), (new.f1,new.f2,'new'::text)
     r2 AS
     ON UPDATE TO rules_src DO  VALUES (old.f1,old.f2,'old'::text), (new.f1,new.f2,'new'::text)
+    r3 AS
+    ON DELETE TO rules_src DO 
+ NOTIFY rules_src_deletion
 Has OIDs: no
 
 --
