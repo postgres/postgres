@@ -164,29 +164,29 @@ SELECT regexp_matches('foobarbequebaz', $re$(barbeque$re$);
 SELECT regexp_matches('foobarbequebaz', $re$(bar)(beque){2,1}$re$);
 
 -- split string on regexp
-SELECT foo, length(foo) FROM regexp_split_to_table('the quick brown fox jumped over the lazy dog', $re$\s+$re$) AS foo;
-SELECT regexp_split_to_array('the quick brown fox jumped over the lazy dog', $re$\s+$re$);
+SELECT foo, length(foo) FROM regexp_split_to_table('the quick brown fox jumps over the lazy dog', $re$\s+$re$) AS foo;
+SELECT regexp_split_to_array('the quick brown fox jumps over the lazy dog', $re$\s+$re$);
 
-SELECT foo, length(foo) FROM regexp_split_to_table('the quick brown fox jumped over the lazy dog', $re$\s*$re$) AS foo;
-SELECT regexp_split_to_array('the quick brown fox jumped over the lazy dog', $re$\s*$re$);
-SELECT foo, length(foo) FROM regexp_split_to_table('the quick brown fox jumped over the lazy dog', '') AS foo;
-SELECT regexp_split_to_array('the quick brown fox jumped over the lazy dog', '');
+SELECT foo, length(foo) FROM regexp_split_to_table('the quick brown fox jumps over the lazy dog', $re$\s*$re$) AS foo;
+SELECT regexp_split_to_array('the quick brown fox jumps over the lazy dog', $re$\s*$re$);
+SELECT foo, length(foo) FROM regexp_split_to_table('the quick brown fox jumps over the lazy dog', '') AS foo;
+SELECT regexp_split_to_array('the quick brown fox jumps over the lazy dog', '');
 -- case insensitive
-SELECT foo, length(foo) FROM regexp_split_to_table('thE QUick bROWn FOx jUMPed ovEr THE lazy dOG', 'e', 'i') AS foo;
-SELECT regexp_split_to_array('thE QUick bROWn FOx jUMPed ovEr THE lazy dOG', 'e', 'i');
+SELECT foo, length(foo) FROM regexp_split_to_table('thE QUick bROWn FOx jUMPs ovEr The lazy dOG', 'e', 'i') AS foo;
+SELECT regexp_split_to_array('thE QUick bROWn FOx jUMPs ovEr The lazy dOG', 'e', 'i');
 -- no match of pattern
-SELECT foo, length(foo) FROM regexp_split_to_table('the quick brown fox jumped over the lazy dog', 'nomatch') AS foo;
-SELECT regexp_split_to_array('the quick brown fox jumped over the lazy dog', 'nomatch');
+SELECT foo, length(foo) FROM regexp_split_to_table('the quick brown fox jumps over the lazy dog', 'nomatch') AS foo;
+SELECT regexp_split_to_array('the quick brown fox jumps over the lazy dog', 'nomatch');
 -- some corner cases
 SELECT regexp_split_to_array('123456','1');
 SELECT regexp_split_to_array('123456','6');
 SELECT regexp_split_to_array('123456','.');
 -- errors
-SELECT foo, length(foo) FROM regexp_split_to_table('thE QUick bROWn FOx jUMPed ovEr THE lazy dOG', 'e', 'zippy') AS foo;
-SELECT regexp_split_to_array('thE QUick bROWn FOx jUMPed ovEr THE lazy dOG', 'e', 'iz');
+SELECT foo, length(foo) FROM regexp_split_to_table('thE QUick bROWn FOx jUMPs ovEr The lazy dOG', 'e', 'zippy') AS foo;
+SELECT regexp_split_to_array('thE QUick bROWn FOx jUMPs ovEr The lazy dOG', 'e', 'iz');
 -- global option meaningless for regexp_split
-SELECT foo, length(foo) FROM regexp_split_to_table('thE QUick bROWn FOx jUMPed ovEr THE lazy dOG', 'e', 'g') AS foo;
-SELECT regexp_split_to_array('thE QUick bROWn FOx jUMPed ovEr THE lazy dOG', 'e', 'g');
+SELECT foo, length(foo) FROM regexp_split_to_table('thE QUick bROWn FOx jUMPs ovEr The lazy dOG', 'e', 'g') AS foo;
+SELECT regexp_split_to_array('thE QUick bROWn FOx jUMPs ovEr The lazy dOG', 'e', 'g');
 
 -- change NULL-display back
 \pset null ''

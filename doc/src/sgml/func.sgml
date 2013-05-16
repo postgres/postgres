@@ -4048,24 +4048,24 @@ SELECT col1, (SELECT regexp_matches(col2, '(bar)(beque)')) FROM tab;
     Some examples:
 <programlisting>
 
-SELECT foo FROM regexp_split_to_table('the quick brown fox jumped over the lazy dog', E'\\s+') AS foo;
+SELECT foo FROM regexp_split_to_table('the quick brown fox jumps over the lazy dog', E'\\s+') AS foo;
   foo   
---------
+-------
  the    
  quick  
  brown  
  fox    
- jumped 
+ jumps 
  over   
  the    
  lazy   
  dog    
 (9 rows)
 
-SELECT regexp_split_to_array('the quick brown fox jumped over the lazy dog', E'\\s+');
+SELECT regexp_split_to_array('the quick brown fox jumps over the lazy dog', E'\\s+');
               regexp_split_to_array             
-------------------------------------------------
- {the,quick,brown,fox,jumped,over,the,lazy,dog}
+-----------------------------------------------
+ {the,quick,brown,fox,jumps,over,the,lazy,dog}
 (1 row)
 
 SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
