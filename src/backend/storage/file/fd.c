@@ -107,9 +107,15 @@ static int	max_safe_fds = 32;	/* default if not changed */
 /* Debugging.... */
 
 #ifdef FDDEBUG
-#define DO_DB(A) A
+#define DO_DB(A) \
+	do { \
+		int			_do_db_save_errno = errno; \
+		A; \
+		errno = _do_db_save_errno; \
+	} while (0)
 #else
-#define DO_DB(A)				/* A */
+#define DO_DB(A) \
+	((void) 0)
 #endif
 
 #define VFD_CLOSED (-1)
@@ -643,7 +649,7 @@ LruInsert(File file)
 		if (vfdP->fd < 0)
 		{
 			DO_DB(elog(LOG, "RE_OPEN FAILED: %d", errno));
-			return vfdP->fd;
+			return -1;
 		}
 		else
 		{
@@ -694,7 +700,7 @@ AllocateVfd(void)
 	Index		i;
 	File		file;
 
-	DO_DB(elog(LOG, "AllocateVfd. Size %lu", SizeVfdCache));
+	DO_DB(elog(LOG, "AllocateVfd. Size %lu", (unsigned long) SizeVfdCache));
 
 	Assert(SizeVfdCache > 0);	/* InitFileAccess not called? */
 
@@ -851,8 +857,11 @@ PathNameOpenFile(FileName fileName, int fileFlags, int fileMode)
 
 	if (vfdP->fd < 0)
 	{
+		int			save_errno = errno;
+
 		FreeVfd(file);
 		free(fnamecopy);
+		errno = save_errno;
 		return -1;
 	}
 	++nfile;
