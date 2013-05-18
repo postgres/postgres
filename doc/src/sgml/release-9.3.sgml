@@ -692,7 +692,9 @@
        </para>
 
        <para>
-        This allows C functions to be called when DDL commands are run.
+        This allows server-side functions written in event-enabled
+        languages, e.g. C, PL/pgSQL, to be called when DDL commands
+        are run.
        </para>
       </listitem>
 
