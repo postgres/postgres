@@ -5281,7 +5281,7 @@ StartupXLOG(void)
 			ereport(LOG,
 					(errmsg("database system was not properly shut down; "
 							"automatic recovery in progress")));
-			if (recoveryTargetTLI > 0)
+			if (recoveryTargetTLI > ControlFile->checkPointCopy.ThisTimeLineID)
 				ereport(LOG,
 					(errmsg("crash recovery starts in timeline %u "
 							"and has target timeline %u",
