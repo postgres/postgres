@@ -182,11 +182,13 @@ ROLLBACK;
     <term><literal>TIMING</literal></term>
     <listitem>
      <para>
-      Include the actual startup time and time spent in the node in the output.
+      Include actual startup time and time spent in each node in the output.
       The overhead of repeatedly reading the system clock can slow down the
       query significantly on some systems, so it may be useful to set this
-      parameter to <literal>FALSE</literal> when only actual row counts, and not
-      exact times, are needed.
+      parameter to <literal>FALSE</literal> when only actual row counts, and
+      not exact times, are needed.  Run time of the entire statement is
+      always measured, even when node-level timing is turned off with this
+      option.
       This parameter may only be used when <literal>ANALYZE</literal> is also
       enabled.  It defaults to <literal>TRUE</literal>.
      </para>
