@@ -1048,14 +1048,14 @@
 
       <listitem>
        <para>
-        Force cached functions to be replanned if the <link
+        Force cached plans to be replanned if the <link
         linkend="guc-search-path"><varname>search_path</></link> changes
         (Tom Lane)
        </para>
 
        <para>
-        Previously functions already run in the current session ignored
-        <varname>search_path</> changes.
+        Previously cached plans already generated in the current session
+        ignored <varname>search_path</> changes.
        </para>
       </listitem>
 
