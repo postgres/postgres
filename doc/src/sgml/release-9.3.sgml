@@ -743,7 +743,7 @@
       <listitem>
        <para>
         Allow <link linkend="SQL-DROPTABLE"><command>DROP TABLE IF
-        EXISTS</> to succeed when a non-existent schema is specified
+        EXISTS</></link> to succeed when a non-existent schema is specified
         in the table name (Bruce Momjian)
        </para>
 
