@@ -6104,7 +6104,7 @@ StartupXLOG(void)
 	 * than is appropriate now that we're not in standby mode anymore.
 	 */
 	if (fast_promoted)
-		RequestCheckpoint(0);
+		RequestCheckpoint(CHECKPOINT_FORCE);
 }
 
 /*
