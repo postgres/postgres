@@ -5970,6 +5970,17 @@ StartupXLOG(void)
 				if (record != NULL)
 				{
 					fast_promoted = true;
+
+					/*
+					 * Insert a special WAL record to mark the end of recovery,
+					 * since we aren't doing a checkpoint. That means that the
+					 * checkpointer process may likely be in the middle of a
+					 * time-smoothed restartpoint and could continue to be for
+					 * minutes after this. That sounds strange, but the effect
+					 * is roughly the same and it would be stranger to try to
+					 * come out of the restartpoint and then checkpoint.
+					 * We request a checkpoint later anyway, just for safety.
+					 */
 					CreateEndOfRecoveryRecord();
 				}
 			}
@@ -7465,7 +7476,16 @@ CreateRestartPoint(int flags)
 		 * after this, the pre-allocated WAL segments on this timeline will
 		 * not be used, and will go wasted until recycled on the next
 		 * restartpoint. We'll live with that.
+		 *
+		 * It's possible or perhaps even likely that we finish recovery while
+		 * a restartpoint is in progress. That means we may get to this point
+		 * some minutes afterwards. Setting ThisTimeLineID at that time would
+		 * actually set it backwards, so we don't want that to persist; if
+		 * we do reset it here, make sure to reset it back afterwards. This
+		 * doesn't look very clean or principled, but its the best of about
+		 * five different ways of handling this edge case.
 		 */
+		if (RecoveryInProgress())
 		(void) GetXLogReplayRecPtr(&ThisTimeLineID);
 
 		RemoveOldXlogFiles(_logSegNo, endptr);
@@ -7475,6 +7495,12 @@ CreateRestartPoint(int flags)
 		 * segments, since that may supply some of the needed files.)
 		 */
 		PreallocXlogFiles(endptr);
+
+		/*
+		 * Reset this always, in case we set ThisTimeLineID backwards above.
+		 * Requires no locking; see InitXLOGAccess()
+		 */
+		ThisTimeLineID = XLogCtl->ThisTimeLineID;
 	}
 
 	/*
