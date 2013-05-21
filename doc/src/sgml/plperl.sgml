@@ -201,7 +201,7 @@ select returns_array();
 
   <para>
    Perl passes <productname>PostgreSQL</productname> arrays as a blessed
-   PostgreSQL::InServer::ARRAY object. This object may be treated as an array
+   <type>PostgreSQL::InServer::ARRAY</type> object. This object may be treated as an array
    reference or a string, allowing for backward compatibility with Perl
    code written for <productname>PostgreSQL</productname> versions below 9.1 to
    run.  For example:
@@ -228,7 +228,7 @@ SELECT concat_array_elements(ARRAY['PL','/','Perl']);
 
   <note>
    <para>
-    Multi-dimensional arrays are represented as references to
+    Multidimensional arrays are represented as references to
     lower-dimensional arrays of references in a way common to every Perl
     programmer.
    </para>
@@ -278,7 +278,7 @@ SELECT * FROM perl_row();
   <para>
     PL/Perl functions can also return sets of either scalar or
     composite types.  Usually you'll want to return rows one at a
-    time, both to speed up startup time and to keep from queueing up
+    time, both to speed up startup time and to keep from queuing up
     the entire result set in memory.  You can do this with
     <function>return_next</function> as illustrated below.  Note that
     after the last <function>return_next</function>, you must put

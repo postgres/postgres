@@ -113,8 +113,8 @@
    <structfield>amoptionalkey</structfield> false.
    One reason that an index AM might set
    <structfield>amoptionalkey</structfield> false is if it doesn't index
-   NULLs.  Since most indexable operators are
-   strict and hence cannot return TRUE for NULL inputs,
+   null values.  Since most indexable operators are
+   strict and hence cannot return true for null inputs,
    it is at first sight attractive to not store index entries for null values:
    they could never be returned by an index scan anyway.  However, this
    argument fails when an index scan has no restriction clause for a given

@@ -700,7 +700,7 @@
 
       <listitem>
        <para>
-        Allow a multi-row <link
+        Allow a multirow <link
         linkend="SQL-VALUES"><literal>VALUES</></link> clause in a rule
         to reference <literal>OLD</>/<literal>NEW</> (Tom Lane)
        </para>
@@ -911,7 +911,7 @@
        <para>
         Allow text <link linkend="datatype-timezones">timezone
         designations</link>, e.g. <quote>America/Chicago</> when using
-        the <acronym>ISO</> <quote>T</> timestamptz format (Bruce Momjian)
+        the <acronym>ISO</> <quote>T</> <type>timestamptz</type> format (Bruce Momjian)
        </para>
       </listitem>
 
@@ -1128,7 +1128,7 @@
        </para>
 
        <para>
-        This allows plpy.debug(rv) to output something reasonable.
+        This allows <literal>plpy.debug(rv)</literal> to output something reasonable.
        </para>
       </listitem>
 
@@ -1538,7 +1538,7 @@
 
       <listitem>
        <para>
-        Add emacs macro to match <productname>PostgreSQL</> perltidy
+        Add Emacs macro to match <productname>PostgreSQL</> perltidy
         formatting (Peter Eisentraut)
        </para>
       </listitem>
@@ -1783,7 +1783,7 @@
 
       <listitem>
        <para>
-        Have <application>pg_upgrade</> create unix-domain sockets in
+        Have <application>pg_upgrade</> create Unix-domain sockets in
         the current directory (Bruce Momjian, Tom Lane)
        </para>
 

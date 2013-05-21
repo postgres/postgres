@@ -121,8 +121,8 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     <term><replaceable class="parameter">filename</replaceable></term>
     <listitem>
      <para>
-      The path name of the input or output file.  An input filename can be
-      an absolute or relative path, but an output filename must be an absolute
+      The path name of the input or output file.  An input file name can be
+      an absolute or relative path, but an output file name must be an absolute
       path.  Windows users might need to use an <literal>E''</> string and
       double any backslashes used in the path name.
      </para>

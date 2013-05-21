@@ -4098,7 +4098,7 @@ SET xmloption TO { DOCUMENT | CONTENT };
     representations of XML values, such as in the above examples.
     This would ordinarily mean that encoding declarations contained in
     XML data can become invalid as the character data is converted
-    to other encodings while travelling between client and server,
+    to other encodings while traveling between client and server,
     because the embedded encoding declaration is not changed.  To cope
     with this behavior, encoding declarations contained in
     character strings presented for input to the <type>xml</type> type

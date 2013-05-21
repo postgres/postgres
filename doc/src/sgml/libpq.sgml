@@ -2734,9 +2734,9 @@ char *PQresultErrorField(const PGresult *res, int fieldcode);
           <term><symbol>PG_DIAG_DATATYPE_NAME</></term>
           <listitem>
            <para>
-            If the error was associated with a specific datatype, the name
-            of the datatype.  (When this field is present, the schema name
-            field provides the name of the datatype's schema.)
+            If the error was associated with a specific data type, the name
+            of the data type.  (When this field is present, the schema name
+            field provides the name of the data type's schema.)
            </para>
           </listitem>
          </varlistentry>
@@ -2787,7 +2787,7 @@ char *PQresultErrorField(const PGresult *res, int fieldcode);
 
        <note>
         <para>
-         The fields for schema name, table name, column name, datatype
+         The fields for schema name, table name, column name, data type
          name, and constraint name are supplied only for a limited number
          of error types; see <xref linkend="errcodes-appendix">.
         </para>

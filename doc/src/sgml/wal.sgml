@@ -148,7 +148,7 @@
    there is little it can do to make sure the data has arrived at a truly
    non-volatile storage area. Rather, it is the
    administrator's responsibility to make certain that all storage components
-   ensure integrity for both data and filesystem metadata.
+   ensure integrity for both data and file-system metadata.
    Avoid disk controllers that have non-battery-backed write caches.
    At the drive level, disable write-back caching if the
    drive cannot guarantee the data will be written before shutdown.
@@ -200,8 +200,8 @@
     </listitem>
     <listitem>
      <para>
-      Internal data structures such as pg_clog, pg_subtrans, pg_multixact,
-      pg_serial, pg_notify, pg_stat, pg_snapshots are not directly
+      Internal data structures such as <filename>pg_clog</filename>, <filename>pg_subtrans</filename>, <filename>pg_multixact</filename>,
+      <filename>pg_serial</filename>, <filename>pg_notify</filename>, <filename>pg_stat</filename>, <filename>pg_snapshots</filename> are not directly
       checksummed, nor are pages protected by full page writes. However, where
       such data structures are persistent, WAL records are written that allow
       recent changes to be accurately rebuilt at crash recovery and those
@@ -210,7 +210,7 @@
     </listitem>
     <listitem>
      <para>
-      Individual state files in pg_twophase are protected by CRC-32.
+      Individual state files in <filename>pg_twophase</filename> are protected by CRC-32.
      </para>
     </listitem>
     <listitem>

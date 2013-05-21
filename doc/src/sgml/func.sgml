@@ -9928,7 +9928,7 @@ table2-mapping
          </indexterm>
          <literal>array_to_json(anyarray [, pretty_bool])</literal>
        </entry>
-       <entry>json</entry>
+       <entry><type>json</type></entry>
        <entry>
          Returns the array as JSON. A PostgreSQL multidimensional array
          becomes a JSON array of arrays. Line feeds will be added between
@@ -9944,7 +9944,7 @@ table2-mapping
          </indexterm>
          <literal>row_to_json(record [, pretty_bool])</literal>
        </entry>
-       <entry>json</entry>
+       <entry><type>json</type></entry>
        <entry>
          Returns the row as JSON. Line feeds will be added between level
          1 elements if <parameter>pretty_bool</parameter> is true.
@@ -9959,12 +9959,12 @@ table2-mapping
          </indexterm>
          <literal>to_json(anyelement)</literal>
        </entry>
-       <entry>json</entry>
+       <entry><type>json</type></entry>
        <entry>
-         Returns the value as JSON. If the data type is not builtin, and there
-         is a cast from the type to json, the cast function will be used to
+         Returns the value as JSON. If the data type is not built in, and there
+         is a cast from the type to <type>json</type>, the cast function will be used to
          perform the conversion. Otherwise, for any value other than a number,
-         a boolean or NULL, the text representation will be used, escaped and
+         a Boolean, or a null value, the text representation will be used, escaped and
          quoted so that it is legal JSON.
        </entry>
        <entry><literal>to_json('Fred said "Hi."'::text)</literal></entry>
@@ -9977,9 +9977,9 @@ table2-mapping
          </indexterm>
          <literal>json_array_length(json)</literal>
        </entry>
-       <entry>int</entry>
+       <entry><type>int</type></entry>
        <entry>
-         Returns the number of elements in the outermost json array.
+         Returns the number of elements in the outermost JSON array.
        </entry>
        <entry><literal>json_array_length('[1,2,3,{"f1":1,"f2":[5,6]},4]')</literal></entry>
        <entry><literal>5</literal></entry>
@@ -9991,9 +9991,9 @@ table2-mapping
          </indexterm>
          <literal>json_each(json)</literal>
        </entry>
-       <entry>SETOF key text, value json</entry>
+       <entry><type>SETOF key text, value json</type></entry>
        <entry>
-         Expands the outermost json object into a set of key/value pairs.
+         Expands the outermost JSON object into a set of key/value pairs.
        </entry>
        <entry><literal>select * from json_each('{"a":"foo", "b":"bar"}')</literal></entry>
        <entry>
@@ -10012,9 +10012,9 @@ table2-mapping
          </indexterm>
          <literal>json_each_text(from_json json)</literal>
        </entry>
-       <entry>SETOF key text, value text</entry>
+       <entry><type>SETOF key text, value text</type></entry>
        <entry>
-         Expands the outermost json object into a set of key/value pairs. The
+         Expands the outermost JSON object into a set of key/value pairs. The
          returned value will be of type text.
        </entry>
        <entry><literal>select * from json_each_text('{"a":"foo", "b":"bar"}')</literal></entry>
@@ -10034,9 +10034,9 @@ table2-mapping
          </indexterm>
          <literal>json_extract_path(from_json json, VARIADIC path_elems text[])</literal>
        </entry>
-       <entry>json</entry>
+       <entry><type>json</type></entry>
        <entry>
-         Returns json object pointed to by <parameter>path_elems</parameter>.
+         Returns JSON object pointed to by <parameter>path_elems</parameter>.
        </entry>
        <entry><literal>json_extract_path('{"f2":{"f3":1},"f4":{"f5":99,"f6":"foo"}}','f4')</literal></entry>
        <entry><literal>{"f5":99,"f6":"foo"}</literal></entry>
@@ -10048,9 +10048,9 @@ table2-mapping
          </indexterm>
          <literal>json_extract_path_text(from_json json, VARIADIC path_elems text[])</literal>
        </entry>
-       <entry>text</entry>
+       <entry><type>text</type></entry>
        <entry>
-         Returns json object pointed to by <parameter>path_elems</parameter>.
+         Returns JSON object pointed to by <parameter>path_elems</parameter>.
        </entry>
        <entry><literal>json_extract_path_text('{"f2":{"f3":1},"f4":{"f5":99,"f6":"foo"}}','f4', 'f6')</literal></entry>
        <entry><literal>foo</literal></entry>
@@ -10062,9 +10062,9 @@ table2-mapping
          </indexterm>
          <literal>json_object_keys(json)</literal>
        </entry>
-       <entry>SETOF text</entry>
+       <entry><type>SETOF text</type></entry>
        <entry>
-          Returns set of keys in the json object.  Only the "outer" object will be displayed.
+          Returns set of keys in the JSON object.  Only the <quote>outer</quote> object will be displayed.
        </entry>
        <entry><literal>json_object_keys('{"f1":"abc","f2":{"f3":"a", "f4":"b"}}')</literal></entry>
        <entry>
@@ -10083,11 +10083,11 @@ table2-mapping
          </indexterm>
          <literal>json_populate_record(base anyelement, from_json json, [, use_json_as_text bool=false]</literal>
        </entry>
-       <entry>anyelement</entry>
+       <entry><type>anyelement</type></entry>
        <entry>
-         Expands the object in from_json to a row whose columns match
+         Expands the object in <replaceable>from_json</replaceable> to a row whose columns match
          the record type defined by base. Conversion will be best
-         effort; columns in base with no corresponding key in from_json
+         effort; columns in base with no corresponding key in <replaceable>from_json</replaceable>
          will be left null.  A column may only be specified once.
        </entry>
        <entry><literal>select * from json_populate_record(null::x, '{"a":1,"b":2}')</literal></entry>
@@ -10106,12 +10106,12 @@ table2-mapping
          </indexterm>
          <literal>json_populate_recordset(base anyelement, from_json json, [, use_json_as_text bool=false]</literal>
        </entry>
-       <entry>SETOF anyelement</entry>
+       <entry><type>SETOF anyelement</type></entry>
        <entry>
-         Expands the outermost set of objects in from_json to a set
+         Expands the outermost set of objects in <replaceable>from_json</replaceable> to a set
          whose columns match the record type defined by base.
          Conversion will be best effort; columns in base with no
-         corresponding key in from_json will be left null.  A column
+         corresponding key in <replaceable>from_json</replaceable> will be left null.  A column
          may only be specified once.
        </entry>
        <entry><literal>select * from json_populate_recordset(null::x, '[{"a":1,"b":2},{"a":3,"b":4}]')</literal></entry>
@@ -10131,9 +10131,9 @@ table2-mapping
          </indexterm>
          <literal>json_array_elements(json)</literal>
        </entry>
-       <entry>SETOF json</entry>
+       <entry><type>SETOF json</type></entry>
        <entry>
-         Expands a json array to a set of json elements.
+         Expands a JSON array to a set of JSON elements.
        </entry>
        <entry><literal>json_array_elements('[1,true, [2,false]]')</literal></entry>
        <entry>
@@ -10152,8 +10152,8 @@ table2-mapping
 
   <note>
     <para>
-      The <xref linkend="hstore"> extension has a cast from hstore to
-      json, so that converted hstore values are represented as json objects,
+      The <xref linkend="hstore"> extension has a cast from <type>hstore</type> to
+      <type>json</type>, so that converted <type>hstore</type> values are represented as JSON objects,
       not as string values.
     </para>
   </note>
@@ -10161,7 +10161,7 @@ table2-mapping
   <para>
     See also <xref linkend="functions-aggregate"> about the aggregate
     function <function>json_agg</function> which aggregates record
-    values as json efficiently.
+    values as JSON efficiently.
   </para>
  </sect1>
 
@@ -11546,7 +11546,7 @@ SELECT NULLIF(value, '(none)') ...
       <entry>
        <type>json</type>
       </entry>
-      <entry>aggregates records as a json array of objects</entry>
+      <entry>aggregates records as a JSON array of objects</entry>
      </row>
 
      <row>
@@ -14904,7 +14904,7 @@ SELECT set_config('log_statement_stats', 'off', false);
   </sect2>
 
   <sect2 id="functions-admin-signal">
-   <title>Server Signalling Functions</title>
+   <title>Server Signaling Functions</title>
 
    <indexterm>
     <primary>pg_cancel_backend</primary>
@@ -14932,7 +14932,7 @@ SELECT set_config('log_statement_stats', 'off', false);
    </para>
 
    <table id="functions-admin-signal-table">
-    <title>Server Signalling Functions</title>
+    <title>Server Signaling Functions</title>
     <tgroup cols="3">
      <thead>
       <row><entry>Name</entry> <entry>Return Type</entry> <entry>Description</entry>

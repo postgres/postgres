@@ -1292,7 +1292,7 @@ EXECUTE 'UPDATE tbl SET '
     </para>
 
     <para>
-     Because <function>quote_literal</function> is labelled
+     Because <function>quote_literal</function> is labeled
      <literal>STRICT</literal>, it will always return null when called with a
      null argument.  In the above example, if <literal>newvalue</> or
      <literal>keyvalue</> were null, the entire dynamic query string would
@@ -2107,11 +2107,11 @@ EXIT <optional> <replaceable>label</replaceable> </optional> <optional> WHEN <re
         When used with a
         <literal>BEGIN</literal> block, <literal>EXIT</literal> passes
         control to the next statement after the end of the block.
-        Note that a label must be used for this purpose; an unlabelled
+        Note that a label must be used for this purpose; an unlabeled
         <literal>EXIT</literal> is never considered to match a
         <literal>BEGIN</literal> block.  (This is a change from
         pre-8.4 releases of <productname>PostgreSQL</productname>, which
-        would allow an unlabelled <literal>EXIT</literal> to match
+        would allow an unlabeled <literal>EXIT</literal> to match
         a <literal>BEGIN</literal> block.)
        </para>
 

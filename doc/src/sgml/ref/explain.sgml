@@ -75,7 +75,7 @@ EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="parameter">statement</replac
 
   <para>
    The <literal>ANALYZE</literal> option causes the statement to be actually
-   executed, not only planned.  Then actual runtime statistics are added to
+   executed, not only planned.  Then actual run time statistics are added to
    the display, including the total elapsed time expended within each plan
    node (in milliseconds) and the total number of rows it actually returned.
    This is useful for seeing whether the planner's estimates

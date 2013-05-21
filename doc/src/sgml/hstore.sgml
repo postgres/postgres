@@ -325,7 +325,7 @@ b
      <row>
       <entry><function>hstore_to_json(hstore)</function></entry>
       <entry><type>json</type></entry>
-      <entry>get <type>hstore</type> as a json value</entry>
+      <entry>get <type>hstore</type> as a <type>json</type> value</entry>
       <entry><literal>hstore_to_json('"a key"=&gt;1, b=&gt;t, c=&gt;null, d=&gt;12345, e=&gt;012345, f=&gt;1.234, g=&gt;2.345e+4')</literal></entry>
       <entry><literal>{"a key": "1", "b": "t", "c": null, "d": "12345", "e": "012345", "f": "1.234", "g": "2.345e+4"}</literal></entry>
      </row>
@@ -333,7 +333,7 @@ b
      <row>
       <entry><function>hstore_to_json_loose(hstore)</function></entry>
       <entry><type>json</type></entry>
-      <entry>get <type>hstore</type> as a json value, but attempting to distinguish numerical and boolean values so they are unquoted in the json</entry>
+      <entry>get <type>hstore</type> as a <type>json</type> value, but attempting to distinguish numerical and Boolean values so they are unquoted in the JSON</entry>
       <entry><literal>hstore_to_json_loose('"a key"=&gt;1, b=&gt;t, c=&gt;null, d=&gt;12345, e=&gt;012345, f=&gt;1.234, g=&gt;2.345e+4')</literal></entry>
       <entry><literal>{"a key": 1, "b": true, "c": null, "d": 12345, "e": "012345", "f": 1.234, "g": 2.345e+4}</literal></entry>
      </row>

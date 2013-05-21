@@ -263,9 +263,9 @@
    <important>
      <para>
        Some <productname>PostgreSQL</productname> data types and functions have
-       special rules regarding transactional behaviour.  In particular, changes
-       made to a <literal>SEQUENCE</literal> (and therefore the counter of a
-       column declared using <literal>SERIAL</literal>) are immediately visible
+       special rules regarding transactional behavior.  In particular, changes
+       made to a sequence (and therefore the counter of a
+       column declared using <type>serial</type>) are immediately visible
        to all other transactions and are not rolled back if the transaction
        that made the changes aborts.  See <xref linkend="functions-sequence">
        and <xref linkend="datatype-serial">.

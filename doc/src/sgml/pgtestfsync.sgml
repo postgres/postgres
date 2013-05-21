@@ -36,7 +36,7 @@
   difference in real database throughput, especially since many database servers
   are not speed-limited by their transaction logs.
   <application>pg_test_fsync</application> reports average file sync operation
-  time in microseconds for each wal_sync_method, which can also be used to
+  time in microseconds for each <literal>wal_sync_method</literal>, which can also be used to
   inform efforts to optimize the value of <xref linkend="guc-commit-delay">.
  </para>
  </refsect1>

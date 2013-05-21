@@ -105,7 +105,7 @@
        Returns a palloc'd array of keys given an item to be indexed.  The
        number of returned keys must be stored into <literal>*nkeys</>.
        If any of the keys can be null, also palloc an array of
-       <literal>*nkeys</> booleans, store its address at
+       <literal>*nkeys</> <type>bool</type> fields, store its address at
        <literal>*nullFlags</>, and set these null flags as needed.
        <literal>*nullFlags</> can be left <symbol>NULL</symbol> (its initial value)
        if all keys are non-null.
@@ -130,11 +130,11 @@
        <literal>query</> and the method it should use to extract key values.
        The number of returned keys must be stored into <literal>*nkeys</>.
        If any of the keys can be null, also palloc an array of
-       <literal>*nkeys</> booleans, store its address at
+       <literal>*nkeys</> <type>bool</type> fields, store its address at
        <literal>*nullFlags</>, and set these null flags as needed.
-       <literal>*nullFlags</> can be left NULL (its initial value)
+       <literal>*nullFlags</> can be left <symbol>NULL</symbol> (its initial value)
        if all keys are non-null.
-       The return value can be NULL if the <literal>query</> contains no keys.
+       The return value can be <symbol>NULL</symbol> if the <literal>query</> contains no keys.
       </para>
 
       <para>
@@ -168,8 +168,8 @@
        an array of <literal>*nkeys</> booleans and store its address at
        <literal>*pmatch</>.  Each element of the array should be set to TRUE
        if the corresponding key requires partial match, FALSE if not.
-       If <literal>*pmatch</> is set to NULL then GIN assumes partial match
-       is not required.  The variable is initialized to NULL before call,
+       If <literal>*pmatch</> is set to <symbol>NULL</symbol> then GIN assumes partial match
+       is not required.  The variable is initialized to <symbol>NULL</symbol> before call,
        so this argument can simply be ignored by operator classes that do
        not support partial match.
       </para>
@@ -181,7 +181,7 @@
        To use it, <function>extractQuery</> must allocate
        an array of <literal>*nkeys</> Pointers and store its address at
        <literal>*extra_data</>, then store whatever it wants to into the
-       individual pointers.  The variable is initialized to NULL before
+       individual pointers.  The variable is initialized to <symbol>NULL</symbol> before
        call, so this argument can simply be ignored by operator classes that
        do not require extra data.  If <literal>*extra_data</> is set, the
        whole array is passed to the <function>consistent</> method, and
@@ -215,7 +215,7 @@
        and so are the <literal>queryKeys[]</> and <literal>nullFlags[]</>
        arrays previously returned by <function>extractQuery</>.
        <literal>extra_data</> is the extra-data array returned by
-       <function>extractQuery</>, or NULL if none.
+       <function>extractQuery</>, or <symbol>NULL</symbol> if none.
       </para>
 
       <para>
@@ -261,7 +261,7 @@
        that generated the partial match query is provided, in case its
        semantics are needed to determine when to end the scan.  Also,
        <literal>extra_data</> is the corresponding element of the extra-data
-       array made by <function>extractQuery</>, or NULL if none.
+       array made by <function>extractQuery</>, or <symbol>NULL</symbol> if none.
        Null keys are never passed to this function.
       </para>
      </listitem>
@@ -305,9 +305,9 @@
  </para>
 
  <para>
-  As of <productname>PostgreSQL</productname> 9.1, NULL key values can be
-  included in the index.  Also, placeholder NULLs are included in the index
-  for indexed items that are NULL or contain no keys according to
+  As of <productname>PostgreSQL</productname> 9.1, null key values can be
+  included in the index.  Also, placeholder nulls are included in the index
+  for indexed items that are null or contain no keys according to
   <function>extractValue</>.  This allows searches that should find empty
   items to do so.
  </para>
@@ -471,11 +471,11 @@
 
  <para>
   <acronym>GIN</acronym> assumes that indexable operators are strict.  This
-  means that <function>extractValue</> will not be called at all on a NULL
+  means that <function>extractValue</> will not be called at all on a null
   item value (instead, a placeholder index entry is created automatically),
-  and <function>extractQuery</function> will not be called on a NULL query
+  and <function>extractQuery</function> will not be called on a null query
   value either (instead, the query is presumed to be unsatisfiable).  Note
-  however that NULL key values contained within a non-null composite item
+  however that null key values contained within a non-null composite item
   or query value are supported.
  </para>
 </sect1>

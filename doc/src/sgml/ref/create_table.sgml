@@ -364,7 +364,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       constraints copied by <literal>LIKE</> are not merged with similarly
       named columns and constraints.
       If the same name is specified explicitly or in another
-      <literal>LIKE</literal> clause, an error is signalled.
+      <literal>LIKE</literal> clause, an error is signaled.
      </para>
      <para>
       The <literal>LIKE</literal> clause can also be used to copy columns from

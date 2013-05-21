@@ -33,7 +33,7 @@
    a path from the root of a hierarchical tree to a particular node.  The
    length of a label path must be less than 65Kb, but keeping it under 2Kb is
    preferable.  In practice this is not a major limitation; for example,
-   the longest label path in the DMOZ catalogue (<ulink
+   the longest label path in the DMOZ catalog (<ulink
    url="http://www.dmoz.org"></ulink>) is about 240 bytes.
   </para>
 

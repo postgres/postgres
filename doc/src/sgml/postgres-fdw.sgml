@@ -236,11 +236,11 @@
 
    <para>
     When <literal>use_remote_estimate</literal> is true,
-    <filename>postgres_fdw</> obtains rowcount and cost estimates from the
+    <filename>postgres_fdw</> obtains row count and cost estimates from the
     remote server and then adds <literal>fdw_startup_cost</literal> and
     <literal>fdw_tuple_cost</literal> to the cost estimates.  When
     <literal>use_remote_estimate</literal> is false,
-    <filename>postgres_fdw</> performs local rowcount and cost estimation
+    <filename>postgres_fdw</> performs local row count and cost estimation
     and then adds <literal>fdw_startup_cost</literal> and
     <literal>fdw_tuple_cost</literal> to the cost estimates.  This local
     estimation is unlikely to be very accurate unless local copies of the

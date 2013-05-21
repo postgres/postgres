@@ -233,7 +233,7 @@ $ENV{PATH}=$ENV{PATH} . ';c:\some\where\bison\bin';
         spaces in the name, such as the default location on English
         installations <filename>C:\Program Files\GnuWin32</filename>.
         Consider installing into <filename>C:\GnuWin32</filename> or use the
-        NTFS shortname path to GnuWin32 in your PATH environment setting
+        NTFS short name path to GnuWin32 in your PATH environment setting
         (e.g. <filename>C:\PROGRA~1\GnuWin32</filename>).
        </para>
      </note>

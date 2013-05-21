@@ -675,7 +675,7 @@ EXPLAIN ANALYZE SELECT * FROM polygon_tbl WHERE f1 @&gt; polygon '(0.5,2.0)';
 
    <para>
     <command>EXPLAIN</> has a <literal>BUFFERS</> option that can be used with
-    <literal>ANALYZE</> to get even more runtime statistics:
+    <literal>ANALYZE</> to get even more run time statistics:
 
 <screen>
 EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM tenk1 WHERE unique1 &lt; 100 AND unique2 &gt; 9000;
@@ -735,7 +735,7 @@ ROLLBACK;
     So above, we see the same sort of bitmap table scan we've seen already,
     and its output is fed to an Update node that stores the updated rows.
     It's worth noting that although the data-modifying node can take a
-    considerable amount of runtime (here, it's consuming the lion's share
+    considerable amount of run time (here, it's consuming the lion's share
     of the time), the planner does not currently add anything to the cost
     estimates to account for that work.  That's because the work to be done is
     the same for every correct query plan, so it doesn't affect planning
@@ -811,7 +811,7 @@ EXPLAIN ANALYZE SELECT * FROM tenk1 WHERE unique1 &lt; 100 AND unique2 &gt; 9000
     the estimated cost and row count for the Index Scan node are shown as
     though it were run to completion.  But in reality the Limit node stopped
     requesting rows after it got two, so the actual row count is only 2 and
-    the runtime is less than the cost estimate would suggest.  This is not
+    the run time is less than the cost estimate would suggest.  This is not
     an estimation error, only a discrepancy in the way the estimates and true
     values are displayed.
    </para>

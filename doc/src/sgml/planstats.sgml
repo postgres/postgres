@@ -432,7 +432,7 @@ rows = (outer_cardinality * inner_cardinality) * selectivity
    <structname>tenk2</>.  But this is not the case: the join relation size
    is estimated before any particular join plan has been considered.  If
    everything is working well then the two ways of estimating the join
-   size will produce about the same answer, but due to roundoff error and
+   size will produce about the same answer, but due to round-off error and
    other factors they sometimes diverge significantly.
   </para>
 

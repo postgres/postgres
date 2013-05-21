@@ -136,7 +136,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
     be any type with an associated b-tree operator class (to determine the
     ordering of values for the range type).  Normally the subtype's default
     b-tree operator class is used to determine ordering; to use a non-default
-    opclass, specify its name with <replaceable
+    operator class, specify its name with <replaceable
     class="parameter">subtype_opclass</replaceable>.  If the subtype is
     collatable, and you want to use a non-default collation in the range's
     ordering, specify the desired collation with the <replaceable

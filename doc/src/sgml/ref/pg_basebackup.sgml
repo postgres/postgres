@@ -194,7 +194,7 @@ PostgreSQL documentation
       <listitem>
 
        <para>
-        Write a minimal recovery.conf in the output directory (or into
+        Write a minimal <filename>recovery.conf</filename> in the output directory (or into
         the base archive file when using tar format) to ease setting
         up a standby server.
        </para>

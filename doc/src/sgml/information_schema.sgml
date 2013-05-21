@@ -13,7 +13,7 @@
   information schema is defined in the SQL standard and can therefore
   be expected to be portable and remain stable &mdash; unlike the system
   catalogs, which are specific to
-  <productname>PostgreSQL</productname> and are modelled after
+  <productname>PostgreSQL</productname> and are modeled after
   implementation concerns.  The information schema views do not,
   however, contain information about
   <productname>PostgreSQL</productname>-specific features; to inquire

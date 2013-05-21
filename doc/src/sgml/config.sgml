@@ -223,7 +223,7 @@ include 'filename'
        <secondary>in configuration file</secondary>
       </indexterm>
         The <filename>postgresql.conf</> file can also contain
-        <firstterm>include_dir directives</>, which specify an entire directory
+        <literal>include_dir</literal> directives, which specify an entire directory
         of configuration files to include.  It is used similarly:
  <programlisting>
  include_dir 'directory'
@@ -234,7 +234,7 @@ include 'filename'
         names end with the suffix <literal>.conf</literal> will be included.  File
         names that start with the <literal>.</literal> character are also excluded,
         to prevent mistakes as they are hidden on some platforms.  Multiple files
-        within an include directory are processed in filename order. The filenames
+        within an include directory are processed in file name order. The file names
         are ordered by C locale rules, ie. numbers before letters, and uppercase
         letters before lowercase ones.
      </para>
@@ -1211,7 +1211,7 @@ include 'filename'
         Specifies the maximum amount of disk space that a session can use
         for temporary files, such as sort and hash temporary files, or the
         storage file for a held cursor.  A transaction attempting to exceed
-        this limit will be cancelled.
+        this limit will be canceled.
         The value is specified in kilobytes, and <literal>-1</> (the
         default) means no limit.
         Only superusers can change this setting.
@@ -3358,7 +3358,7 @@ local0.*    /var/log/postgresql
        <para>
         When <varname>logging_collector</varname> is enabled,
         this parameter sets the file names of the created log files.  The value
-        is treated as a <systemitem>strftime</systemitem> pattern,
+        is treated as a <function>strftime</function> pattern,
         so <literal>%</literal>-escapes can be used to specify time-varying
         file names.  (Note that if there are
         any time-zone-dependent <literal>%</literal>-escapes, the computation

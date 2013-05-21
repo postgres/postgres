@@ -450,7 +450,7 @@ ExecForeignInsert (EState *estate,
      query has a <literal>RETURNING</> clause.  Hence, the FDW could choose
      to optimize away returning some or all columns depending on the contents
      of the <literal>RETURNING</> clause.  However, some slot must be
-     returned to indicate success, or the query's reported rowcount will be
+     returned to indicate success, or the query's reported row count will be
      wrong.
     </para>
 
@@ -495,7 +495,7 @@ ExecForeignUpdate (EState *estate,
      query has a <literal>RETURNING</> clause.  Hence, the FDW could choose
      to optimize away returning some or all columns depending on the contents
      of the <literal>RETURNING</> clause.  However, some slot must be
-     returned to indicate success, or the query's reported rowcount will be
+     returned to indicate success, or the query's reported row count will be
      wrong.
     </para>
 
@@ -538,7 +538,7 @@ ExecForeignDelete (EState *estate,
      query has a <literal>RETURNING</> clause.  Hence, the FDW could choose
      to optimize away returning some or all columns depending on the contents
      of the <literal>RETURNING</> clause.  However, some slot must be
-     returned to indicate success, or the query's reported rowcount will be
+     returned to indicate success, or the query's reported row count will be
      wrong.
     </para>
 
