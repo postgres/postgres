@@ -44,7 +44,7 @@ extern void SyncRepCleanupAtProcExit(void);
 extern void SyncRepInitConfig(void);
 extern void SyncRepReleaseWaiters(void);
 
-/* called by wal writer */
+/* called by checkpointer */
 extern void SyncRepUpdateSyncStandbysDefined(void);
 
 /* called by various procs */
