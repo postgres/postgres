@@ -183,6 +183,7 @@ typedef struct CopyStateData
 	 */
 	StringInfoData line_buf;
 	bool		line_buf_converted;		/* converted to server encoding? */
+	bool		line_buf_valid;			/* contains the row being processed? */
 
 	/*
 	 * Finally, raw_buf holds raw data read from the data source (file or
@@ -292,7 +293,8 @@ static void CopyFromInsertBatch(CopyState cstate, EState *estate,
 					CommandId mycid, int hi_options,
 					ResultRelInfo *resultRelInfo, TupleTableSlot *myslot,
 					BulkInsertState bistate,
-					int nBufferedTuples, HeapTuple *bufferedTuples);
+					int nBufferedTuples, HeapTuple *bufferedTuples,
+					int firstBufferedLineNo);
 static bool CopyReadLine(CopyState cstate);
 static bool CopyReadLineText(CopyState cstate);
 static int	CopyReadAttributesText(CopyState cstate);
@@ -1923,8 +1925,18 @@ CopyFromErrorCallback(void *arg)
 		}
 		else
 		{
-			/* error is relevant to a particular line */
-			if (cstate->line_buf_converted || !cstate->need_transcoding)
+			/*
+			 * Error is relevant to a particular line.
+			 *
+			 * If line_buf still contains the correct line, and it's already
+			 * transcoded, print it. If it's still in a foreign encoding,
+			 * it's quite likely that the error is precisely a failure to do
+			 * encoding conversion (ie, bad data). We dare not try to convert
+			 * it, and at present there's no way to regurgitate it without
+			 * conversion. So we have to punt and just report the line number.
+			 */
+			if (cstate->line_buf_valid &&
+				(cstate->line_buf_converted || !cstate->need_transcoding))
 			{
 				char	   *lineval;
 
@@ -1935,14 +1947,6 @@ CopyFromErrorCallback(void *arg)
 			}
 			else
 			{
-				/*
-				 * Here, the line buffer is still in a foreign encoding, and
-				 * indeed it's quite likely that the error is precisely a
-				 * failure to do encoding conversion (ie, bad data).  We dare
-				 * not try to convert it, and at present there's no way to
-				 * regurgitate it without conversion.  So we have to punt and
-				 * just report the line number.
-				 */
 				errcontext("COPY %s, line %d",
 						   cstate->cur_relname, cstate->cur_lineno);
 			}
@@ -2012,6 +2016,7 @@ CopyFrom(CopyState cstate)
 #define MAX_BUFFERED_TUPLES 1000
 	HeapTuple  *bufferedTuples = NULL;	/* initialize to silence warning */
 	Size		bufferedTuplesSize = 0;
+	int			firstBufferedLineNo = 0;
 
 	Assert(cstate->rel);
 
@@ -2243,6 +2248,8 @@ CopyFrom(CopyState cstate)
 			if (useHeapMultiInsert)
 			{
 				/* Add this tuple to the tuple buffer */
+				if (nBufferedTuples == 0)
+					firstBufferedLineNo = cstate->cur_lineno;
 				bufferedTuples[nBufferedTuples++] = tuple;
 				bufferedTuplesSize += tuple->t_len;
 
@@ -2257,7 +2264,8 @@ CopyFrom(CopyState cstate)
 				{
 					CopyFromInsertBatch(cstate, estate, mycid, hi_options,
 										resultRelInfo, myslot, bistate,
-										nBufferedTuples, bufferedTuples);
+										nBufferedTuples, bufferedTuples,
+										firstBufferedLineNo);
 					nBufferedTuples = 0;
 					bufferedTuplesSize = 0;
 				}
@@ -2293,7 +2301,8 @@ CopyFrom(CopyState cstate)
 	if (nBufferedTuples > 0)
 		CopyFromInsertBatch(cstate, estate, mycid, hi_options,
 							resultRelInfo, myslot, bistate,
-							nBufferedTuples, bufferedTuples);
+							nBufferedTuples, bufferedTuples,
+							firstBufferedLineNo);
 
 	/* Done, clean up */
 	error_context_stack = errcallback.previous;
@@ -2336,10 +2345,19 @@ static void
 CopyFromInsertBatch(CopyState cstate, EState *estate, CommandId mycid,
 					int hi_options, ResultRelInfo *resultRelInfo,
 					TupleTableSlot *myslot, BulkInsertState bistate,
-					int nBufferedTuples, HeapTuple *bufferedTuples)
+					int nBufferedTuples, HeapTuple *bufferedTuples,
+					int firstBufferedLineNo)
 {
 	MemoryContext oldcontext;
 	int			i;
+	int			save_cur_lineno;
+
+	/*
+	 * Print error context information correctly, if one of the operations
+	 * below fail.
+	 */
+	cstate->line_buf_valid = false;
+	save_cur_lineno = cstate->cur_lineno;
 
 	/*
 	 * heap_multi_insert leaks memory, so switch to short-lived memory context
@@ -2364,6 +2382,7 @@ CopyFromInsertBatch(CopyState cstate, EState *estate, CommandId mycid,
 		{
 			List	   *recheckIndexes;
 
+			cstate->cur_lineno = firstBufferedLineNo + i;
 			ExecStoreTuple(bufferedTuples[i], myslot, InvalidBuffer, false);
 			recheckIndexes =
 				ExecInsertIndexTuples(myslot, &(bufferedTuples[i]->t_self),
@@ -2383,10 +2402,16 @@ CopyFromInsertBatch(CopyState cstate, EState *estate, CommandId mycid,
 			 resultRelInfo->ri_TrigDesc->trig_insert_after_row)
 	{
 		for (i = 0; i < nBufferedTuples; i++)
+		{
+			cstate->cur_lineno = firstBufferedLineNo + i;
 			ExecARInsertTriggers(estate, resultRelInfo,
 								 bufferedTuples[i],
 								 NIL);
+		}
 	}
+
+	/* reset cur_lineno to where we were */
+	cstate->cur_lineno = save_cur_lineno;
 }
 
 /*
@@ -2915,6 +2940,7 @@ CopyReadLine(CopyState cstate)
 	bool		result;
 
 	resetStringInfo(&cstate->line_buf);
+	cstate->line_buf_valid = true;
 
 	/* Mark that encoding conversion hasn't occurred yet */
 	cstate->line_buf_converted = false;
