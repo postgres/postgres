@@ -141,6 +141,27 @@ LOAD 'auto_explain';
 
    <varlistentry>
     <term>
+     <varname>auto_explain.log_timing</varname> (<type>boolean</type>)
+    </term>
+    <indexterm>
+     <primary><varname>auto_explain.log_timing</> configuration parameter</primary>
+    </indexterm>
+    <listitem>
+     <para>
+      <varname>auto_explain.log_timing</varname> causes <command>EXPLAIN
+      (ANALYZE, TIMING off)</> output, rather than just <command>EXPLAIN (ANALYZE)</>
+      output. The overhead of repeatedly reading the system clock can slow down the
+      query significantly on some systems, so it may be useful to set this
+      parameter to <literal>FALSE</literal> when only actual row counts, and not
+      exact times, are needed.
+      This parameter is only effective when <varname>auto_explain.log_analyze</varname>
+      is also enabled.  It defaults to <literal>TRUE</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+   
+   <varlistentry>
+    <term>
      <varname>auto_explain.log_nested_statements</varname> (<type>boolean</type>)
     </term>
     <indexterm>
