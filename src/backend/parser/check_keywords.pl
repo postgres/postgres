@@ -9,7 +9,7 @@
 use warnings;
 use strict;
 
-my $gram_filename = $ARGV[0];
+my $gram_filename   = $ARGV[0];
 my $kwlist_filename = $ARGV[1];
 
 my $errors = 0;
@@ -52,6 +52,7 @@ line: while (<GRAM>)
 
 	if (!($kcat))
 	{
+
 		# Is this the beginning of a keyword list?
 		foreach $k (keys %keyword_categories)
 		{
@@ -81,6 +82,7 @@ line: while (<GRAM>)
 		}
 		elsif ($arr[$fieldIndexer] eq '/*')
 		{
+
 			# start of a multiline comment
 			$comment = 1;
 			next;
@@ -92,6 +94,7 @@ line: while (<GRAM>)
 
 		if ($arr[$fieldIndexer] eq ';')
 		{
+
 			# end of keyword list
 			$kcat = '';
 			next;
@@ -116,6 +119,7 @@ foreach $kcat (keys %keyword_categories)
 
 	foreach $kword (@{ $keywords{$kcat} })
 	{
+
 		# Some keyword have a _P suffix. Remove it for the comparison.
 		$bare_kword = $kword;
 		$bare_kword =~ s/_P$//;
@@ -206,6 +210,7 @@ kwlist_line: while (<KWLIST>)
 			}
 			else
 			{
+
 				# Remove it from the hash, so that we can
 				# complain at the end if there's keywords left
 				# that were not found in kwlist.h

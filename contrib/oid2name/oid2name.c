@@ -215,7 +215,7 @@ add_one_elt(char *eltname, eary *eary)
 	{
 		eary	  ->alloc *= 2;
 		eary	  ->array = (char **) pg_realloc(eary->array,
-												 eary->alloc * sizeof(char *));
+											   eary->alloc * sizeof(char *));
 	}
 
 	eary	  ->array[eary->num] = pg_strdup(eltname);

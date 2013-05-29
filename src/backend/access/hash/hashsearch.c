@@ -210,7 +210,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 
 		/*
 		 * If the previous iteration of this loop locked what is still the
-		 * correct target bucket, we are done.  Otherwise, drop any old lock
+		 * correct target bucket, we are done.	Otherwise, drop any old lock
 		 * and lock what now appears to be the correct bucket.
 		 */
 		if (retry)

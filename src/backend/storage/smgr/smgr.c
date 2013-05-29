@@ -435,16 +435,16 @@ smgrdounlink(SMgrRelation reln, bool isRedo)
 void
 smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo)
 {
-	int		i = 0;
+	int			i = 0;
 	RelFileNodeBackend *rnodes;
-	ForkNumber  forknum;
+	ForkNumber	forknum;
 
 	if (nrels == 0)
 		return;
 
 	/*
-	 * create an array which contains all relations to be dropped, and
-	 * close each relation's forks at the smgr level while at it
+	 * create an array which contains all relations to be dropped, and close
+	 * each relation's forks at the smgr level while at it
 	 */
 	rnodes = palloc(sizeof(RelFileNodeBackend) * nrels);
 	for (i = 0; i < nrels; i++)
@@ -460,14 +460,14 @@ smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo)
 	}
 
 	/*
-	 * Get rid of any remaining buffers for the relations.  bufmgr will just
+	 * Get rid of any remaining buffers for the relations.	bufmgr will just
 	 * drop them without bothering to write the contents.
 	 */
 	DropRelFileNodesAllBuffers(rnodes, nrels);
 
 	/*
-	 * It'd be nice to tell the stats collector to forget them immediately, too.
-	 * But we can't because we don't know the OIDs.
+	 * It'd be nice to tell the stats collector to forget them immediately,
+	 * too. But we can't because we don't know the OIDs.
 	 */
 
 	/*
@@ -475,8 +475,8 @@ smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo)
 	 * dangling smgr references they may have for these rels.  We should do
 	 * this before starting the actual unlinking, in case we fail partway
 	 * through that step.  Note that the sinval messages will eventually come
-	 * back to this backend, too, and thereby provide a backstop that we closed
-	 * our own smgr rel.
+	 * back to this backend, too, and thereby provide a backstop that we
+	 * closed our own smgr rel.
 	 */
 	for (i = 0; i < nrels; i++)
 		CacheInvalidateSmgr(rnodes[i]);
@@ -491,7 +491,8 @@ smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo)
 
 	for (i = 0; i < nrels; i++)
 	{
-		int	which = rels[i]->smgr_which;
+		int			which = rels[i]->smgr_which;
+
 		for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
 			(*(smgrsw[which].smgr_unlink)) (rnodes[i], forknum, isRedo);
 	}

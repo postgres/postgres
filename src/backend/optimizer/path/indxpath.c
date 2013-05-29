@@ -250,7 +250,7 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 	 * If there are any rels that have LATERAL references to this one, we
 	 * cannot use join quals referencing them as index quals for this one,
 	 * since such rels would have to be on the inside not the outside of a
-	 * nestloop join relative to this one.  Create a Relids set listing all
+	 * nestloop join relative to this one.	Create a Relids set listing all
 	 * such rels, for use in checks of potential join clauses.
 	 */
 	lateral_referencers = NULL;
@@ -482,7 +482,7 @@ consider_index_join_clauses(PlannerInfo *root, RelOptInfo *rel,
 	 *
 	 * For simplicity in selecting relevant clauses, we represent each set of
 	 * outer rels as a maximum set of clause_relids --- that is, the indexed
-	 * relation itself is also included in the relids set.  considered_relids
+	 * relation itself is also included in the relids set.	considered_relids
 	 * lists all relids sets we've already tried.
 	 */
 	for (indexcol = 0; indexcol < index->ncolumns; indexcol++)
@@ -557,7 +557,7 @@ consider_index_join_outer_rels(PlannerInfo *root, RelOptInfo *rel,
 		 */
 		foreach(lc2, *considered_relids)
 		{
-			Relids	oldrelids = (Relids) lfirst(lc2);
+			Relids		oldrelids = (Relids) lfirst(lc2);
 
 			/*
 			 * If either is a subset of the other, no new set is possible.
@@ -571,7 +571,7 @@ consider_index_join_outer_rels(PlannerInfo *root, RelOptInfo *rel,
 			/*
 			 * If this clause was derived from an equivalence class, the
 			 * clause list may contain other clauses derived from the same
-			 * eclass.  We should not consider that combining this clause with
+			 * eclass.	We should not consider that combining this clause with
 			 * one of those clauses generates a usefully different
 			 * parameterization; so skip if any clause derived from the same
 			 * eclass would already have been included when using oldrelids.
@@ -654,9 +654,9 @@ get_join_index_paths(PlannerInfo *root, RelOptInfo *rel,
 		}
 
 		/*
-		 * Add applicable eclass join clauses.  The clauses generated for each
+		 * Add applicable eclass join clauses.	The clauses generated for each
 		 * column are redundant (cf generate_implied_equalities_for_column),
-		 * so we need at most one.  This is the only exception to the general
+		 * so we need at most one.	This is the only exception to the general
 		 * rule of using all available index clauses.
 		 */
 		foreach(lc, eclauseset->indexclauses[indexcol])
@@ -2630,8 +2630,8 @@ check_partial_indexes(PlannerInfo *root, RelOptInfo *rel)
 		return;
 
 	/*
-	 * Construct a list of clauses that we can assume true for the purpose
-	 * of proving the index(es) usable.  Restriction clauses for the rel are
+	 * Construct a list of clauses that we can assume true for the purpose of
+	 * proving the index(es) usable.  Restriction clauses for the rel are
 	 * always usable, and so are any join clauses that are "movable to" this
 	 * rel.  Also, we can consider any EC-derivable join clauses (which must
 	 * be "movable to" this rel, by definition).
@@ -2653,8 +2653,8 @@ check_partial_indexes(PlannerInfo *root, RelOptInfo *rel)
 	/*
 	 * Add on any equivalence-derivable join clauses.  Computing the correct
 	 * relid sets for generate_join_implied_equalities is slightly tricky
-	 * because the rel could be a child rel rather than a true baserel, and
-	 * in that case we must remove its parent's relid from all_baserels.
+	 * because the rel could be a child rel rather than a true baserel, and in
+	 * that case we must remove its parent's relid from all_baserels.
 	 */
 	if (rel->reloptkind == RELOPT_OTHER_MEMBER_REL)
 	{
@@ -2671,8 +2671,8 @@ check_partial_indexes(PlannerInfo *root, RelOptInfo *rel)
 		clauselist =
 			list_concat(clauselist,
 						generate_join_implied_equalities(root,
-														 bms_union(rel->relids,
-																   otherrels),
+													   bms_union(rel->relids,
+																 otherrels),
 														 otherrels,
 														 rel));
 

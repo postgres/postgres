@@ -47,16 +47,16 @@ typedef struct EventTriggerQueryState
 {
 	slist_head	SQLDropList;
 	bool		in_sql_drop;
-	MemoryContext	cxt;
+	MemoryContext cxt;
 	struct EventTriggerQueryState *previous;
 } EventTriggerQueryState;
 
-EventTriggerQueryState	*currentEventTriggerState = NULL;
+EventTriggerQueryState *currentEventTriggerState = NULL;
 
 typedef struct
 {
-	const char	   *obtypename;
-	bool			supported;
+	const char *obtypename;
+	bool		supported;
 } event_trigger_support_data;
 
 typedef enum
@@ -67,61 +67,61 @@ typedef enum
 } event_trigger_command_tag_check_result;
 
 static event_trigger_support_data event_trigger_support[] = {
-	{ "AGGREGATE", true },
-	{ "CAST", true },
-	{ "CONSTRAINT", true },
-	{ "COLLATION", true },
-	{ "CONVERSION", true },
-	{ "DATABASE", false },
-	{ "DOMAIN", true },
-	{ "EXTENSION", true },
-	{ "EVENT TRIGGER", false },
-	{ "FOREIGN DATA WRAPPER", true },
-	{ "FOREIGN TABLE", true },
-	{ "FUNCTION", true },
-	{ "INDEX", true },
-	{ "LANGUAGE", true },
-	{ "MATERIALIZED VIEW", true },
-	{ "OPERATOR", true },
-	{ "OPERATOR CLASS", true },
-	{ "OPERATOR FAMILY", true },
-	{ "ROLE", false },
-	{ "RULE", true },
-	{ "SCHEMA", true },
-	{ "SEQUENCE", true },
-	{ "SERVER", true },
-	{ "TABLE", true },
-	{ "TABLESPACE", false},
-	{ "TRIGGER", true },
-	{ "TEXT SEARCH CONFIGURATION", true },
-	{ "TEXT SEARCH DICTIONARY", true },
-	{ "TEXT SEARCH PARSER", true },
-	{ "TEXT SEARCH TEMPLATE", true },
-	{ "TYPE", true },
-	{ "USER MAPPING", true },
-	{ "VIEW", true },
-	{ NULL, false }
+	{"AGGREGATE", true},
+	{"CAST", true},
+	{"CONSTRAINT", true},
+	{"COLLATION", true},
+	{"CONVERSION", true},
+	{"DATABASE", false},
+	{"DOMAIN", true},
+	{"EXTENSION", true},
+	{"EVENT TRIGGER", false},
+	{"FOREIGN DATA WRAPPER", true},
+	{"FOREIGN TABLE", true},
+	{"FUNCTION", true},
+	{"INDEX", true},
+	{"LANGUAGE", true},
+	{"MATERIALIZED VIEW", true},
+	{"OPERATOR", true},
+	{"OPERATOR CLASS", true},
+	{"OPERATOR FAMILY", true},
+	{"ROLE", false},
+	{"RULE", true},
+	{"SCHEMA", true},
+	{"SEQUENCE", true},
+	{"SERVER", true},
+	{"TABLE", true},
+	{"TABLESPACE", false},
+	{"TRIGGER", true},
+	{"TEXT SEARCH CONFIGURATION", true},
+	{"TEXT SEARCH DICTIONARY", true},
+	{"TEXT SEARCH PARSER", true},
+	{"TEXT SEARCH TEMPLATE", true},
+	{"TYPE", true},
+	{"USER MAPPING", true},
+	{"VIEW", true},
+	{NULL, false}
 };
 
 /* Support for dropped objects */
 typedef struct SQLDropObject
 {
-	ObjectAddress	address;
-	const char	   *schemaname;
-	const char	   *objname;
-	const char	   *objidentity;
-	const char	   *objecttype;
-	slist_node		next;
+	ObjectAddress address;
+	const char *schemaname;
+	const char *objname;
+	const char *objidentity;
+	const char *objecttype;
+	slist_node	next;
 } SQLDropObject;
 
 static void AlterEventTriggerOwner_internal(Relation rel,
-											HeapTuple tup,
-											Oid newOwnerId);
+								HeapTuple tup,
+								Oid newOwnerId);
 static event_trigger_command_tag_check_result check_ddl_tag(const char *tag);
 static void error_duplicate_filter_variable(const char *defname);
 static Datum filter_list_to_array(List *filterlist);
 static Oid insert_event_trigger_tuple(char *trigname, char *eventname,
-									  Oid evtOwner, Oid funcoid, List *tags);
+						   Oid evtOwner, Oid funcoid, List *tags);
 static void validate_ddl_tags(const char *filtervar, List *taglist);
 static void EventTriggerInvoke(List *fn_oid_list, EventTriggerData *trigdata);
 
@@ -145,24 +145,24 @@ CreateEventTrigger(CreateEventTrigStmt *stmt)
 	 */
 	if (!superuser())
 		ereport(ERROR,
-			(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-			 errmsg("permission denied to create event trigger \"%s\"",
-					stmt->trigname),
-			 errhint("Must be superuser to create an event trigger.")));
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied to create event trigger \"%s\"",
+						stmt->trigname),
+				 errhint("Must be superuser to create an event trigger.")));
 
 	/* Validate event name. */
 	if (strcmp(stmt->eventname, "ddl_command_start") != 0 &&
 		strcmp(stmt->eventname, "ddl_command_end") != 0 &&
 		strcmp(stmt->eventname, "sql_drop") != 0)
 		ereport(ERROR,
-			(errcode(ERRCODE_SYNTAX_ERROR),
-			 errmsg("unrecognized event name \"%s\"",
-					stmt->eventname)));
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("unrecognized event name \"%s\"",
+						stmt->eventname)));
 
 	/* Validate filter conditions. */
-	foreach (lc, stmt->whenclause)
+	foreach(lc, stmt->whenclause)
 	{
-		DefElem	   *def = (DefElem *) lfirst(lc);
+		DefElem    *def = (DefElem *) lfirst(lc);
 
 		if (strcmp(def->defname, "tag") == 0)
 		{
@@ -172,8 +172,8 @@ CreateEventTrigger(CreateEventTrigStmt *stmt)
 		}
 		else
 			ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("unrecognized filter variable \"%s\"", def->defname)));
+					(errcode(ERRCODE_SYNTAX_ERROR),
+			   errmsg("unrecognized filter variable \"%s\"", def->defname)));
 	}
 
 	/* Validate tag list, if any. */
@@ -192,7 +192,7 @@ CreateEventTrigger(CreateEventTrigStmt *stmt)
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("event trigger \"%s\" already exists",
-					stmt->trigname)));
+						stmt->trigname)));
 
 	/* Find and validate the trigger function. */
 	funcoid = LookupFuncName(stmt->funcname, 0, NULL, false);
@@ -216,7 +216,7 @@ validate_ddl_tags(const char *filtervar, List *taglist)
 {
 	ListCell   *lc;
 
-	foreach (lc, taglist)
+	foreach(lc, taglist)
 	{
 		const char *tag = strVal(lfirst(lc));
 		event_trigger_command_tag_check_result result;
@@ -226,13 +226,13 @@ validate_ddl_tags(const char *filtervar, List *taglist)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("filter value \"%s\" not recognized for filter variable \"%s\"",
-						tag, filtervar)));
+							tag, filtervar)));
 		if (result == EVENT_TRIGGER_COMMAND_TAG_NOT_SUPPORTED)
 			ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 /* translator: %s represents an SQL statement name */
-				 errmsg("event triggers are not supported for %s",
-					tag)));
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			/* translator: %s represents an SQL statement name */
+					 errmsg("event triggers are not supported for %s",
+							tag)));
 	}
 }
 
@@ -240,7 +240,7 @@ static event_trigger_command_tag_check_result
 check_ddl_tag(const char *tag)
 {
 	const char *obtypename;
-	event_trigger_support_data	   *etsd;
+	event_trigger_support_data *etsd;
 
 	/*
 	 * Handle some idiosyncratic special cases.
@@ -287,7 +287,7 @@ error_duplicate_filter_variable(const char *defname)
 	ereport(ERROR,
 			(errcode(ERRCODE_SYNTAX_ERROR),
 			 errmsg("filter variable \"%s\" specified more than once",
-				defname)));
+					defname)));
 }
 
 /*
@@ -297,12 +297,13 @@ static Oid
 insert_event_trigger_tuple(char *trigname, char *eventname, Oid evtOwner,
 						   Oid funcoid, List *taglist)
 {
-	Relation tgrel;
-	Oid         trigoid;
+	Relation	tgrel;
+	Oid			trigoid;
 	HeapTuple	tuple;
 	Datum		values[Natts_pg_trigger];
 	bool		nulls[Natts_pg_trigger];
-	ObjectAddress myself, referenced;
+	ObjectAddress myself,
+				referenced;
 
 	/* Open pg_event_trigger. */
 	tgrel = heap_open(EventTriggerRelationId, RowExclusiveLock);
@@ -415,9 +416,9 @@ AlterEventTrigger(AlterEventTrigStmt *stmt)
 {
 	Relation	tgrel;
 	HeapTuple	tup;
-	Oid         trigoid;
+	Oid			trigoid;
 	Form_pg_event_trigger evtForm;
-	char        tgenabled = stmt->tgenabled;
+	char		tgenabled = stmt->tgenabled;
 
 	tgrel = heap_open(EventTriggerRelationId, RowExclusiveLock);
 
@@ -427,7 +428,7 @@ AlterEventTrigger(AlterEventTrigStmt *stmt)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("event trigger \"%s\" does not exist",
-					stmt->trigname)));
+						stmt->trigname)));
 
 	trigoid = HeapTupleGetOid(tup);
 
@@ -498,7 +499,7 @@ AlterEventTriggerOwner_oid(Oid trigOid, Oid newOwnerId)
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-		  errmsg("event trigger with OID %u does not exist", trigOid)));
+			   errmsg("event trigger with OID %u does not exist", trigOid)));
 
 	AlterEventTriggerOwner_internal(rel, tup, newOwnerId);
 
@@ -528,9 +529,9 @@ AlterEventTriggerOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 	if (!superuser_arg(newOwnerId))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied to change owner of event trigger \"%s\"",
-					NameStr(form->evtname)),
-				 errhint("The owner of an event trigger must be a superuser.")));
+		  errmsg("permission denied to change owner of event trigger \"%s\"",
+				 NameStr(form->evtname)),
+			 errhint("The owner of an event trigger must be a superuser.")));
 
 	form->evtowner = newOwnerId;
 	simple_heap_update(rel, &tup->t_self, tup);
@@ -570,7 +571,7 @@ get_event_trigger_oid(const char *trigname, bool missing_ok)
  * tags matching.
  */
 static bool
-filter_event_trigger(const char **tag, EventTriggerCacheItem  *item)
+filter_event_trigger(const char **tag, EventTriggerCacheItem *item)
 {
 	/*
 	 * Filter by session replication role, knowing that we never see disabled
@@ -598,7 +599,7 @@ filter_event_trigger(const char **tag, EventTriggerCacheItem  *item)
 }
 
 /*
- * Setup for running triggers for the given event.  Return value is an OID list
+ * Setup for running triggers for the given event.	Return value is an OID list
  * of functions to run; if there are any, trigdata is filled with an
  * appropriate EventTriggerData for them to receive.
  */
@@ -617,7 +618,7 @@ EventTriggerCommonSetup(Node *parsetree,
 	 * invoked to match up exactly with the list that CREATE EVENT TRIGGER
 	 * accepts.  This debugging cross-check will throw an error if this
 	 * function is invoked for a command tag that CREATE EVENT TRIGGER won't
-	 * accept.  (Unfortunately, there doesn't seem to be any simple, automated
+	 * accept.	(Unfortunately, there doesn't seem to be any simple, automated
 	 * way to verify that CREATE EVENT TRIGGER doesn't accept extra stuff that
 	 * never reaches this control point.)
 	 *
@@ -646,15 +647,15 @@ EventTriggerCommonSetup(Node *parsetree,
 	tag = CreateCommandTag(parsetree);
 
 	/*
-	 * Filter list of event triggers by command tag, and copy them into
-	 * our memory context.  Once we start running the command trigers, or
-	 * indeed once we do anything at all that touches the catalogs, an
-	 * invalidation might leave cachelist pointing at garbage, so we must
-	 * do this before we can do much else.
+	 * Filter list of event triggers by command tag, and copy them into our
+	 * memory context.	Once we start running the command trigers, or indeed
+	 * once we do anything at all that touches the catalogs, an invalidation
+	 * might leave cachelist pointing at garbage, so we must do this before we
+	 * can do much else.
 	 */
-	foreach (lc, cachelist)
+	foreach(lc, cachelist)
 	{
-		EventTriggerCacheItem  *item = lfirst(lc);
+		EventTriggerCacheItem *item = lfirst(lc);
 
 		if (filter_event_trigger(&tag, item))
 		{
@@ -682,7 +683,7 @@ void
 EventTriggerDDLCommandStart(Node *parsetree)
 {
 	List	   *runlist;
-	EventTriggerData	trigdata;
+	EventTriggerData trigdata;
 
 	/*
 	 * Event Triggers are completely disabled in standalone mode.  There are
@@ -704,7 +705,7 @@ EventTriggerDDLCommandStart(Node *parsetree)
 		return;
 
 	runlist = EventTriggerCommonSetup(parsetree,
-									  EVT_DDLCommandStart, "ddl_command_start",
+									EVT_DDLCommandStart, "ddl_command_start",
 									  &trigdata);
 	if (runlist == NIL)
 		return;
@@ -716,8 +717,8 @@ EventTriggerDDLCommandStart(Node *parsetree)
 	list_free(runlist);
 
 	/*
-	 * Make sure anything the event triggers did will be visible to
-	 * the main command.
+	 * Make sure anything the event triggers did will be visible to the main
+	 * command.
 	 */
 	CommandCounterIncrement();
 }
@@ -729,7 +730,7 @@ void
 EventTriggerDDLCommandEnd(Node *parsetree)
 {
 	List	   *runlist;
-	EventTriggerData	trigdata;
+	EventTriggerData trigdata;
 
 	/*
 	 * See EventTriggerDDLCommandStart for a discussion about why event
@@ -745,8 +746,8 @@ EventTriggerDDLCommandEnd(Node *parsetree)
 		return;
 
 	/*
-	 * Make sure anything the main command did will be visible to the
-	 * event triggers.
+	 * Make sure anything the main command did will be visible to the event
+	 * triggers.
 	 */
 	CommandCounterIncrement();
 
@@ -764,7 +765,7 @@ void
 EventTriggerSQLDrop(Node *parsetree)
 {
 	List	   *runlist;
-	EventTriggerData	trigdata;
+	EventTriggerData trigdata;
 
 	/*
 	 * See EventTriggerDDLCommandStart for a discussion about why event
@@ -774,10 +775,11 @@ EventTriggerSQLDrop(Node *parsetree)
 		return;
 
 	/*
-	 * Use current state to determine whether this event fires at all.  If there
-	 * are no triggers for the sql_drop event, then we don't have anything to do
-	 * here.  Note that dropped object collection is disabled if this is the case,
-	 * so even if we were to try to run, the list would be empty.
+	 * Use current state to determine whether this event fires at all.	If
+	 * there are no triggers for the sql_drop event, then we don't have
+	 * anything to do here.  Note that dropped object collection is disabled
+	 * if this is the case, so even if we were to try to run, the list would
+	 * be empty.
 	 */
 	if (!currentEventTriggerState ||
 		slist_is_empty(&currentEventTriggerState->SQLDropList))
@@ -786,24 +788,25 @@ EventTriggerSQLDrop(Node *parsetree)
 	runlist = EventTriggerCommonSetup(parsetree,
 									  EVT_SQLDrop, "sql_drop",
 									  &trigdata);
+
 	/*
-	 * Nothing to do if run list is empty.  Note this shouldn't happen, because
-	 * if there are no sql_drop events, then objects-to-drop wouldn't have been
-	 * collected in the first place and we would have quitted above.
+	 * Nothing to do if run list is empty.	Note this shouldn't happen,
+	 * because if there are no sql_drop events, then objects-to-drop wouldn't
+	 * have been collected in the first place and we would have quitted above.
 	 */
 	if (runlist == NIL)
 		return;
 
 	/*
-	 * Make sure anything the main command did will be visible to the
-	 * event triggers.
+	 * Make sure anything the main command did will be visible to the event
+	 * triggers.
 	 */
 	CommandCounterIncrement();
 
 	/*
-	 * Make sure pg_event_trigger_dropped_objects only works when running these
-	 * triggers.  Use PG_TRY to ensure in_sql_drop is reset even when one
-	 * trigger fails.  (This is perhaps not necessary, as the currentState
+	 * Make sure pg_event_trigger_dropped_objects only works when running
+	 * these triggers.	Use PG_TRY to ensure in_sql_drop is reset even when
+	 * one trigger fails.  (This is perhaps not necessary, as the currentState
 	 * variable will be removed shortly by our caller, but it seems better to
 	 * play safe.)
 	 */
@@ -832,17 +835,17 @@ EventTriggerSQLDrop(Node *parsetree)
 static void
 EventTriggerInvoke(List *fn_oid_list, EventTriggerData *trigdata)
 {
-	MemoryContext	context;
-	MemoryContext	oldcontext;
-	ListCell	   *lc;
-	bool			first = true;
+	MemoryContext context;
+	MemoryContext oldcontext;
+	ListCell   *lc;
+	bool		first = true;
 
 	/* Guard against stack overflow due to recursive event trigger */
 	check_stack_depth();
 
 	/*
-	 * Let's evaluate event triggers in their own memory context, so
-	 * that any leaks get cleaned up promptly.
+	 * Let's evaluate event triggers in their own memory context, so that any
+	 * leaks get cleaned up promptly.
 	 */
 	context = AllocSetContextCreate(CurrentMemoryContext,
 									"event trigger context",
@@ -852,18 +855,18 @@ EventTriggerInvoke(List *fn_oid_list, EventTriggerData *trigdata)
 	oldcontext = MemoryContextSwitchTo(context);
 
 	/* Call each event trigger. */
-	foreach (lc, fn_oid_list)
+	foreach(lc, fn_oid_list)
 	{
-		Oid		fnoid = lfirst_oid(lc);
-		FmgrInfo        flinfo;
+		Oid			fnoid = lfirst_oid(lc);
+		FmgrInfo	flinfo;
 		FunctionCallInfoData fcinfo;
 		PgStat_FunctionCallUsage fcusage;
 
 		/*
-		 * We want each event trigger to be able to see the results of
-		 * the previous event trigger's action.  Caller is responsible
-		 * for any command-counter increment that is needed between the
-		 * event trigger and anything else in the transaction.
+		 * We want each event trigger to be able to see the results of the
+		 * previous event trigger's action.  Caller is responsible for any
+		 * command-counter increment that is needed between the event trigger
+		 * and anything else in the transaction.
 		 */
 		if (first)
 			first = false;
@@ -987,6 +990,7 @@ EventTriggerSupportsObjectClass(ObjectClass objclass)
 			return true;
 
 		case MAX_OCLASS:
+
 			/*
 			 * This shouldn't ever happen, but we keep the case to avoid a
 			 * compiler warning without a "default" clause in the switch.
@@ -1008,7 +1012,7 @@ bool
 EventTriggerBeginCompleteQuery(void)
 {
 	EventTriggerQueryState *state;
-	MemoryContext	cxt;
+	MemoryContext cxt;
 
 	/*
 	 * Currently, sql_drop events are the only reason to have event trigger
@@ -1041,7 +1045,7 @@ EventTriggerBeginCompleteQuery(void)
  * returned false previously.
  *
  * Note: this might be called in the PG_CATCH block of a failing transaction,
- * so be wary of running anything unnecessary.  (In particular, it's probably
+ * so be wary of running anything unnecessary.	(In particular, it's probably
  * unwise to try to allocate memory.)
  */
 void
@@ -1092,8 +1096,8 @@ trackDroppedObjectsNeeded(void)
 void
 EventTriggerSQLDropAddObject(ObjectAddress *object)
 {
-	SQLDropObject  *obj;
-	MemoryContext	oldcxt;
+	SQLDropObject *obj;
+	MemoryContext oldcxt;
 
 	if (!currentEventTriggerState)
 		return;
@@ -1112,8 +1116,9 @@ EventTriggerSQLDropAddObject(ObjectAddress *object)
 
 	/*
 	 * Obtain schema names from the object's catalog tuple, if one exists;
-	 * this lets us skip objects in temp schemas.  We trust that ObjectProperty
-	 * contains all object classes that can be schema-qualified.
+	 * this lets us skip objects in temp schemas.  We trust that
+	 * ObjectProperty contains all object classes that can be
+	 * schema-qualified.
 	 */
 	if (is_objectclass_supported(object->classId))
 	{
@@ -1136,7 +1141,7 @@ EventTriggerSQLDropAddObject(ObjectAddress *object)
 									 RelationGetDescr(catalog), &isnull);
 				if (!isnull)
 				{
-					Oid		namespaceId;
+					Oid			namespaceId;
 
 					namespaceId = DatumGetObjectId(datum);
 					/* Don't report objects in temp namespaces */
@@ -1189,12 +1194,12 @@ EventTriggerSQLDropAddObject(ObjectAddress *object)
 Datum
 pg_event_trigger_dropped_objects(PG_FUNCTION_ARGS)
 {
-	ReturnSetInfo	   *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	TupleDesc			tupdesc;
-	Tuplestorestate	   *tupstore;
-	MemoryContext		per_query_ctx;
-	MemoryContext		oldcontext;
-	slist_iter			iter;
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	TupleDesc	tupdesc;
+	Tuplestorestate *tupstore;
+	MemoryContext per_query_ctx;
+	MemoryContext oldcontext;
+	slist_iter	iter;
 
 	/*
 	 * Protect this function from being called out of context
@@ -1203,8 +1208,8 @@ pg_event_trigger_dropped_objects(PG_FUNCTION_ARGS)
 		!currentEventTriggerState->in_sql_drop)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("%s can only be called in a sql_drop event trigger function",
-						"pg_event_trigger_dropped_objects()")));
+		 errmsg("%s can only be called in a sql_drop event trigger function",
+				"pg_event_trigger_dropped_objects()")));
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))

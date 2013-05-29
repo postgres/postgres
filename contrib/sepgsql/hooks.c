@@ -98,7 +98,7 @@ sepgsql_object_access(ObjectAccessType access,
 		case OAT_POST_CREATE:
 			{
 				ObjectAccessPostCreate *pc_arg = arg;
-				bool	is_internal;
+				bool		is_internal;
 
 				is_internal = pc_arg ? pc_arg->is_internal : false;
 
@@ -107,7 +107,7 @@ sepgsql_object_access(ObjectAccessType access,
 					case DatabaseRelationId:
 						Assert(!is_internal);
 						sepgsql_database_post_create(objectId,
-													 sepgsql_context_info.createdb_dtemplate);
+									sepgsql_context_info.createdb_dtemplate);
 						break;
 
 					case NamespaceRelationId:
@@ -190,8 +190,8 @@ sepgsql_object_access(ObjectAccessType access,
 
 		case OAT_POST_ALTER:
 			{
-				ObjectAccessPostAlter  *pa_arg = arg;
-				bool	is_internal = pa_arg->is_internal;
+				ObjectAccessPostAlter *pa_arg = arg;
+				bool		is_internal = pa_arg->is_internal;
 
 				switch (classId)
 				{
@@ -207,21 +207,21 @@ sepgsql_object_access(ObjectAccessType access,
 
 					case RelationRelationId:
 						if (subId == 0)
-                        {
+						{
 							/*
 							 * A case when we don't want to apply permission
 							 * check is that relation is internally altered
-							 * without user's intention. E.g, no need to
-							 * check on toast table/index to be renamed at
-							 * end of the table rewrites.
+							 * without user's intention. E.g, no need to check
+							 * on toast table/index to be renamed at end of
+							 * the table rewrites.
 							 */
 							if (is_internal)
-                                break;
+								break;
 
 							sepgsql_relation_setattr(objectId);
-                        }
-                        else
-                            sepgsql_attribute_setattr(objectId, subId);
+						}
+						else
+							sepgsql_attribute_setattr(objectId, subId);
 						break;
 
 					case ProcedureRelationId:
@@ -238,11 +238,11 @@ sepgsql_object_access(ObjectAccessType access,
 
 		case OAT_NAMESPACE_SEARCH:
 			{
-				ObjectAccessNamespaceSearch   *ns_arg = arg;
+				ObjectAccessNamespaceSearch *ns_arg = arg;
 
 				/*
-				 * If stacked extension already decided not to allow users
-				 * to search this schema, we just stick with that decision.
+				 * If stacked extension already decided not to allow users to
+				 * search this schema, we just stick with that decision.
 				 */
 				if (!ns_arg->result)
 					break;

@@ -48,8 +48,7 @@ GetConnection(void)
 
 	/*
 	 * Merge the connection info inputs given in form of connection string,
-	 * options and default values (dbname=replication, replication=true,
-	 * etc.)
+	 * options and default values (dbname=replication, replication=true, etc.)
 	 */
 	i = 0;
 	if (connection_string)

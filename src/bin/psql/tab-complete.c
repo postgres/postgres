@@ -360,7 +360,7 @@ static const SchemaQuery Query_for_list_of_constraints_with_schema = {
 	/* selcondition */
 	"c.conrelid <> 0",
 	/* viscondition */
-	"true",				/* there is no pg_constraint_is_visible */
+	"true",						/* there is no pg_constraint_is_visible */
 	/* namespace */
 	"c.connamespace",
 	/* result */
@@ -646,7 +646,7 @@ static const SchemaQuery Query_for_list_of_matviews = {
 "       and pg_catalog.pg_type_is_visible(t.oid)"
 
 /* the silly-looking length condition is just to eat up the current word */
-#define Query_for_list_of_tables_for_constraint	\
+#define Query_for_list_of_tables_for_constraint \
 "SELECT pg_catalog.quote_ident(relname) "\
 "  FROM pg_catalog.pg_class"\
 " WHERE (%d = pg_catalog.length('%s'))"\
@@ -1472,7 +1472,11 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev2_wd, "DROP") == 0 &&
 			 pg_strcasecmp(prev_wd, "COLUMN") == 0)
 		COMPLETE_WITH_ATTR(prev3_wd, "");
-	/* If we have ALTER TABLE <sth> DROP|RENAME|VALIDATE CONSTRAINT, provide list of constraints */
+
+	/*
+	 * If we have ALTER TABLE <sth> DROP|RENAME|VALIDATE CONSTRAINT, provide
+	 * list of constraints
+	 */
 	else if (pg_strcasecmp(prev5_wd, "ALTER") == 0 &&
 			 pg_strcasecmp(prev4_wd, "TABLE") == 0 &&
 			 (pg_strcasecmp(prev2_wd, "DROP") == 0 ||
@@ -1832,7 +1836,7 @@ psql_completion(char *text, int start, int end)
 	 * If we have CLUSTER VERBOSE <sth> USING, then add the index as well.
 	 */
 	else if (pg_strcasecmp(prev4_wd, "CLUSTER") == 0 &&
-             pg_strcasecmp(prev3_wd, "VERBOSE") == 0 &&
+			 pg_strcasecmp(prev3_wd, "VERBOSE") == 0 &&
 			 pg_strcasecmp(prev_wd, "USING") == 0)
 	{
 		completion_info_charp = prev2_wd;
@@ -2934,7 +2938,7 @@ psql_completion(char *text, int start, int end)
 		static const char *const list_SECURITY_LABEL[] =
 		{"LANGUAGE", "SCHEMA", "SEQUENCE", "TABLE", "TYPE", "VIEW",
 			"MATERIALIZED VIEW", "COLUMN", "AGGREGATE", "FUNCTION", "DOMAIN",
-			"LARGE OBJECT",	NULL};
+		"LARGE OBJECT", NULL};
 
 		COMPLETE_WITH_LIST(list_SECURITY_LABEL);
 	}

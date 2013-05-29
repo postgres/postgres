@@ -64,6 +64,7 @@
 #define F_FOLLOW_RIGHT		(1 << 3)	/* page to the right has no downlink */
 
 typedef XLogRecPtr GistNSN;
+
 /*
  * For on-disk compatibility with pre-9.3 servers, NSN is stored as two
  * 32-bit fields on disk, same as LSNs.
@@ -72,7 +73,7 @@ typedef PageXLogRecPtr PageGistNSN;
 
 typedef struct GISTPageOpaqueData
 {
-	PageGistNSN	nsn;			/* this value must change on page split */
+	PageGistNSN nsn;			/* this value must change on page split */
 	BlockNumber rightlink;		/* next page if any */
 	uint16		flags;			/* see bit definitions above */
 	uint16		gist_page_id;	/* for identification of GiST indexes */
@@ -97,11 +98,11 @@ typedef GISTPageOpaqueData *GISTPageOpaque;
  * the union keys for each side.
  *
  * If spl_ldatum_exists and spl_rdatum_exists are true, then we are performing
- * a "secondary split" using a non-first index column.  In this case some
+ * a "secondary split" using a non-first index column.	In this case some
  * decisions have already been made about a page split, and the set of tuples
  * being passed to PickSplit is just the tuples about which we are undecided.
  * spl_ldatum/spl_rdatum then contain the union keys for the tuples already
- * chosen to go left or right.  Ideally the PickSplit method should take those
+ * chosen to go left or right.	Ideally the PickSplit method should take those
  * keys into account while deciding what to do with the remaining tuples, ie
  * it should try to "build out" from those unions so as to minimally expand
  * them.  If it does so, it should union the given tuples' keys into the

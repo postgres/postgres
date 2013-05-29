@@ -1362,7 +1362,6 @@ done:
 int
 PGTYPESnumeric_cmp(numeric *var1, numeric *var2)
 {
-
 	/* use cmp_abs function to calculate the result */
 
 	/* both are positive: normal comparation with cmp_abs */

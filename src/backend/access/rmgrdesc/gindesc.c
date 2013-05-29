@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * gindesc.c
- *    rmgr descriptor routines for access/transam/gin/ginxlog.c
+ *	  rmgr descriptor routines for access/transam/gin/ginxlog.c
  *
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    src/backend/access/rmgrdesc/gindesc.c
+ *	  src/backend/access/rmgrdesc/gindesc.c
  *
  *-------------------------------------------------------------------------
  */

@@ -294,7 +294,7 @@ process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
 
 		/*
 		 * We add ec2's items to ec1, then set ec2's ec_merged link to point
-		 * to ec1 and remove ec2 from the eq_classes list.  We cannot simply
+		 * to ec1 and remove ec2 from the eq_classes list.	We cannot simply
 		 * delete ec2 because that could leave dangling pointers in existing
 		 * PathKeys.  We leave it behind with a link so that the merged EC can
 		 * be found.
@@ -2083,9 +2083,9 @@ generate_implied_equalities_for_column(PlannerInfo *root,
 			continue;
 
 		/*
-		 * Scan members, looking for a match to the target column.  Note
-		 * that child EC members are considered, but only when they belong to
-		 * the target relation.  (Unlike regular members, the same expression
+		 * Scan members, looking for a match to the target column.	Note that
+		 * child EC members are considered, but only when they belong to the
+		 * target relation.  (Unlike regular members, the same expression
 		 * could be a child member of more than one EC.  Therefore, it's
 		 * potentially order-dependent which EC a child relation's target
 		 * column gets matched to.	This is annoying but it only happens in

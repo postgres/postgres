@@ -43,7 +43,7 @@ typedef struct
 typedef struct
 {
 	char	  **setupsqls;
-	int         nsetupsqls;
+	int			nsetupsqls;
 	char	   *teardownsql;
 	Session   **sessions;
 	int			nsessions;

@@ -610,9 +610,9 @@ gistProcessItup(GISTBuildState *buildstate, IndexTuple itup,
 		newtup = gistgetadjusted(indexrel, idxtuple, itup, giststate);
 		if (newtup)
 		{
-			blkno  = gistbufferinginserttuples(buildstate, buffer, level,
-											   &newtup, 1, childoffnum,
-									  InvalidBlockNumber, InvalidOffsetNumber);
+			blkno = gistbufferinginserttuples(buildstate, buffer, level,
+											  &newtup, 1, childoffnum,
+									InvalidBlockNumber, InvalidOffsetNumber);
 			/* gistbufferinginserttuples() released the buffer */
 		}
 		else
@@ -680,7 +680,7 @@ gistbufferinginserttuples(GISTBuildState *buildstate, Buffer buffer, int level,
 	GISTBuildBuffers *gfbb = buildstate->gfbb;
 	List	   *splitinfo;
 	bool		is_split;
-	BlockNumber	placed_to_blk = InvalidBlockNumber;
+	BlockNumber placed_to_blk = InvalidBlockNumber;
 
 	is_split = gistplacetopage(buildstate->indexrel,
 							   buildstate->freespace,

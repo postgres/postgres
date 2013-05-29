@@ -1683,7 +1683,7 @@ get_am_name(Oid amOid)
  * Subroutine for ALTER OPERATOR CLASS SET SCHEMA/RENAME
  *
  * Is there an operator class with the given name and signature already
- * in the given namespace?  If so, raise an appropriate error message.
+ * in the given namespace?	If so, raise an appropriate error message.
  */
 void
 IsThereOpClassInNamespace(const char *opcname, Oid opcmethod,
@@ -1706,7 +1706,7 @@ IsThereOpClassInNamespace(const char *opcname, Oid opcmethod,
  * Subroutine for ALTER OPERATOR FAMILY SET SCHEMA/RENAME
  *
  * Is there an operator family with the given name and signature already
- * in the given namespace?  If so, raise an appropriate error message.
+ * in the given namespace?	If so, raise an appropriate error message.
  */
 void
 IsThereOpFamilyInNamespace(const char *opfname, Oid opfmethod,

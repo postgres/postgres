@@ -1732,7 +1732,7 @@ DATA(insert OID = 3964 (  "->"	   PGNSP PGUID b f f 114 23 114 0 0 json_array_el
 DESCR("get json array element");
 DATA(insert OID = 3965 (  "->>"    PGNSP PGUID b f f 114 23 25 0 0 json_array_element_text - - ));
 DESCR("get json array element as text");
-DATA(insert OID = 3966 (  "#>"     PGNSP PGUID b f f 114 1009 114 0 0 json_extract_path_op - - ));
+DATA(insert OID = 3966 (  "#>"	   PGNSP PGUID b f f 114 1009 114 0 0 json_extract_path_op - - ));
 DESCR("get value from json with path elements");
 DATA(insert OID = 3967 (  "#>>"    PGNSP PGUID b f f 114 1009 25 0 0 json_extract_path_text_op - - ));
 DESCR("get value from json as text with path elements");

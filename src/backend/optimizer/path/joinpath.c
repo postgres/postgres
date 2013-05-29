@@ -154,7 +154,7 @@ add_paths_to_joinrel(PlannerInfo *root,
 	 * However, when a LATERAL subquery is involved, we have to be a bit
 	 * laxer, because there will simply not be any paths for the joinrel that
 	 * aren't parameterized by whatever the subquery is parameterized by,
-	 * unless its parameterization is resolved within the joinrel.  Hence, add
+	 * unless its parameterization is resolved within the joinrel.	Hence, add
 	 * to param_source_rels anything that is laterally referenced in either
 	 * input and is not in the join already.
 	 */
@@ -507,7 +507,7 @@ sort_inner_and_outer(PlannerInfo *root,
 	 * sort.
 	 *
 	 * This function intentionally does not consider parameterized input
-	 * paths, except when the cheapest-total is parameterized.  If we did so,
+	 * paths, except when the cheapest-total is parameterized.	If we did so,
 	 * we'd have a combinatorial explosion of mergejoin paths of dubious
 	 * value.  This interacts with decisions elsewhere that also discriminate
 	 * against mergejoins with parameterized inputs; see comments in

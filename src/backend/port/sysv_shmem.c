@@ -54,7 +54,7 @@ typedef int IpcMemoryId;		/* shared memory ID returned by shmget(2) */
 #define MAP_HASSEMAPHORE		0
 #endif
 
-#define	PG_MMAP_FLAGS			(MAP_SHARED|MAP_ANONYMOUS|MAP_HASSEMAPHORE)
+#define PG_MMAP_FLAGS			(MAP_SHARED|MAP_ANONYMOUS|MAP_HASSEMAPHORE)
 
 /* Some really old systems don't define MAP_FAILED. */
 #ifndef MAP_FAILED
@@ -167,14 +167,14 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 					IPC_CREAT | IPC_EXCL | IPCProtection),
 				 (errno == EINVAL) ?
 				 errhint("This error usually means that PostgreSQL's request for a shared memory "
-		  "segment exceeded your kernel's SHMMAX parameter, or possibly that "
+		 "segment exceeded your kernel's SHMMAX parameter, or possibly that "
 						 "it is less than "
 						 "your kernel's SHMMIN parameter.\n"
 		"The PostgreSQL documentation contains more information about shared "
 						 "memory configuration.") : 0,
 				 (errno == ENOMEM) ?
 				 errhint("This error usually means that PostgreSQL's request for a shared "
-				   "memory segment exceeded your kernel's SHMALL parameter.  You may need "
+						 "memory segment exceeded your kernel's SHMALL parameter.  You may need "
 						 "to reconfigure the kernel with larger SHMALL.\n"
 		"The PostgreSQL documentation contains more information about shared "
 						 "memory configuration.") : 0,
@@ -183,7 +183,7 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 						 "It occurs either if all available shared memory IDs have been taken, "
 						 "in which case you need to raise the SHMMNI parameter in your kernel, "
 		  "or because the system's overall limit for shared memory has been "
-				 "reached.\n"
+						 "reached.\n"
 		"The PostgreSQL documentation contains more information about shared "
 						 "memory configuration.") : 0));
 	}
@@ -384,14 +384,14 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 	 * settings.
 	 *
 	 * However, we disable this logic in the EXEC_BACKEND case, and fall back
-	 * to the old method of allocating the entire segment using System V shared
-	 * memory, because there's no way to attach an mmap'd segment to a process
-	 * after exec().  Since EXEC_BACKEND is intended only for developer use,
-	 * this shouldn't be a big problem.
+	 * to the old method of allocating the entire segment using System V
+	 * shared memory, because there's no way to attach an mmap'd segment to a
+	 * process after exec().  Since EXEC_BACKEND is intended only for
+	 * developer use, this shouldn't be a big problem.
 	 */
 #ifndef EXEC_BACKEND
 	{
-		long	pagesize = sysconf(_SC_PAGE_SIZE);
+		long		pagesize = sysconf(_SC_PAGE_SIZE);
 
 		/*
 		 * Ensure request size is a multiple of pagesize.
@@ -406,23 +406,23 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 		/*
 		 * We assume that no one will attempt to run PostgreSQL 9.3 or later
 		 * on systems that are ancient enough that anonymous shared memory is
-		 * not supported, such as pre-2.4 versions of Linux.  If that turns out
-		 * to be false, we might need to add a run-time test here and do this
-		 * only if the running kernel supports it.
+		 * not supported, such as pre-2.4 versions of Linux.  If that turns
+		 * out to be false, we might need to add a run-time test here and do
+		 * this only if the running kernel supports it.
 		 */
-		AnonymousShmem = mmap(NULL, size, PROT_READ|PROT_WRITE, PG_MMAP_FLAGS,
+		AnonymousShmem = mmap(NULL, size, PROT_READ | PROT_WRITE, PG_MMAP_FLAGS,
 							  -1, 0);
 		if (AnonymousShmem == MAP_FAILED)
 			ereport(FATAL,
-			 (errmsg("could not map anonymous shared memory: %m"),
-			  (errno == ENOMEM) ?
-			   errhint("This error usually means that PostgreSQL's request "
-					   "for a shared memory segment exceeded available memory "
-					   "or swap space. To reduce the request size (currently "
-					   "%lu bytes), reduce PostgreSQL's shared memory usage, "
-					   "perhaps by reducing shared_buffers or "
-					   "max_connections.",
-					   (unsigned long) size) : 0));
+					(errmsg("could not map anonymous shared memory: %m"),
+					 (errno == ENOMEM) ?
+				errhint("This error usually means that PostgreSQL's request "
+					 "for a shared memory segment exceeded available memory "
+					  "or swap space. To reduce the request size (currently "
+					  "%lu bytes), reduce PostgreSQL's shared memory usage, "
+						"perhaps by reducing shared_buffers or "
+						"max_connections.",
+						(unsigned long) size) : 0));
 		AnonymousShmemSize = size;
 
 		/* Now we need only allocate a minimal-sized SysV shmem block. */
@@ -519,9 +519,9 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 
 	/*
 	 * If AnonymousShmem is NULL here, then we're not using anonymous shared
-	 * memory, and should return a pointer to the System V shared memory block.
-	 * Otherwise, the System V shared memory block is only a shim, and we must
-	 * return a pointer to the real block.
+	 * memory, and should return a pointer to the System V shared memory
+	 * block. Otherwise, the System V shared memory block is only a shim, and
+	 * we must return a pointer to the real block.
 	 */
 	if (AnonymousShmem == NULL)
 		return hdr;

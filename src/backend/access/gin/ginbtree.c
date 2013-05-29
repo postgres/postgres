@@ -173,7 +173,6 @@ void
 ginFindParents(GinBtree btree, GinBtreeStack *stack,
 			   BlockNumber rootBlkno)
 {
-
 	Page		page;
 	Buffer		buffer;
 	BlockNumber blkno,

@@ -194,10 +194,10 @@ static Selectivity prefix_selectivity(PlannerInfo *root,
 				   VariableStatData *vardata,
 				   Oid vartype, Oid opfamily, Const *prefixcon);
 static Selectivity like_selectivity(const char *patt, int pattlen,
-									bool case_insensitive);
+				 bool case_insensitive);
 static Selectivity regex_selectivity(const char *patt, int pattlen,
-									 bool case_insensitive,
-									 int fixed_prefix_len);
+				  bool case_insensitive,
+				  int fixed_prefix_len);
 static Datum string_to_datum(const char *str, Oid datatype);
 static Const *string_to_const(const char *str, Oid datatype);
 static Const *string_to_bytea_const(const char *str, size_t str_len);
@@ -1123,7 +1123,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 	Pattern_Prefix_Status pstatus;
 	Const	   *patt;
 	Const	   *prefix = NULL;
-	Selectivity	rest_selec = 0;
+	Selectivity rest_selec = 0;
 	double		result;
 
 	/*
@@ -1214,7 +1214,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 
 	/*
 	 * Pull out any fixed prefix implied by the pattern, and estimate the
-	 * fractional selectivity of the remainder of the pattern.  Unlike many of
+	 * fractional selectivity of the remainder of the pattern.	Unlike many of
 	 * the other functions in this file, we use the pattern operator's actual
 	 * collation for this step.  This is not because we expect the collation
 	 * to make a big difference in the selectivity estimate (it seldom would),
@@ -1867,17 +1867,17 @@ scalararraysel(PlannerInfo *root,
 				s2 = DatumGetFloat8(FunctionCall5Coll(&oprselproc,
 													  clause->inputcollid,
 													  PointerGetDatum(root),
-													  ObjectIdGetDatum(operator),
+												  ObjectIdGetDatum(operator),
 													  PointerGetDatum(args),
 													  Int16GetDatum(jointype),
-													  PointerGetDatum(sjinfo)));
+												   PointerGetDatum(sjinfo)));
 			else
 				s2 = DatumGetFloat8(FunctionCall4Coll(&oprselproc,
 													  clause->inputcollid,
 													  PointerGetDatum(root),
-													  ObjectIdGetDatum(operator),
+												  ObjectIdGetDatum(operator),
 													  PointerGetDatum(args),
-													  Int32GetDatum(varRelid)));
+												   Int32GetDatum(varRelid)));
 
 			if (useOr)
 			{
@@ -1934,17 +1934,17 @@ scalararraysel(PlannerInfo *root,
 				s2 = DatumGetFloat8(FunctionCall5Coll(&oprselproc,
 													  clause->inputcollid,
 													  PointerGetDatum(root),
-													  ObjectIdGetDatum(operator),
+												  ObjectIdGetDatum(operator),
 													  PointerGetDatum(args),
 													  Int16GetDatum(jointype),
-													  PointerGetDatum(sjinfo)));
+												   PointerGetDatum(sjinfo)));
 			else
 				s2 = DatumGetFloat8(FunctionCall4Coll(&oprselproc,
 													  clause->inputcollid,
 													  PointerGetDatum(root),
-													  ObjectIdGetDatum(operator),
+												  ObjectIdGetDatum(operator),
 													  PointerGetDatum(args),
-													  Int32GetDatum(varRelid)));
+												   Int32GetDatum(varRelid)));
 
 			if (useOr)
 			{
@@ -5293,7 +5293,7 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 
 		if (rest_selec != NULL)
 		{
-			char   *patt = TextDatumGetCString(patt_const->constvalue);
+			char	   *patt = TextDatumGetCString(patt_const->constvalue);
 
 			*rest_selec = regex_selectivity(patt, strlen(patt),
 											case_insensitive,
@@ -5315,7 +5315,7 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 		}
 		else
 		{
-			char   *patt = TextDatumGetCString(patt_const->constvalue);
+			char	   *patt = TextDatumGetCString(patt_const->constvalue);
 
 			*rest_selec = regex_selectivity(patt, strlen(patt),
 											case_insensitive,
@@ -5928,7 +5928,7 @@ string_to_bytea_const(const char *str, size_t str_len)
  * genericcostestimate is a general-purpose estimator that can be used for
  * most index types.  In some cases we use genericcostestimate as the base
  * code and then incorporate additional index-type-specific knowledge in
- * the type-specific calling function.  To avoid code duplication, we make
+ * the type-specific calling function.	To avoid code duplication, we make
  * genericcostestimate return a number of intermediate values as well as
  * its preliminary estimates of the output cost values.  The GenericCosts
  * struct includes all these values.
@@ -5941,15 +5941,15 @@ typedef struct
 {
 	/* These are the values the cost estimator must return to the planner */
 	Cost		indexStartupCost;		/* index-related startup cost */
-	Cost		indexTotalCost;			/* total index-related scan cost */
-	Selectivity	indexSelectivity;		/* selectivity of index */
+	Cost		indexTotalCost; /* total index-related scan cost */
+	Selectivity indexSelectivity;		/* selectivity of index */
 	double		indexCorrelation;		/* order correlation of index */
 
 	/* Intermediate values we obtain along the way */
-	double		numIndexPages;			/* number of leaf pages visited */
-	double		numIndexTuples;			/* number of leaf tuples visited */
+	double		numIndexPages;	/* number of leaf pages visited */
+	double		numIndexTuples; /* number of leaf tuples visited */
 	double		spc_random_page_cost;	/* relevant random_page_cost value */
-	double		num_sa_scans;			/* # indexscans from ScalarArrayOps */
+	double		num_sa_scans;	/* # indexscans from ScalarArrayOps */
 } GenericCosts;
 
 static void
@@ -5963,7 +5963,7 @@ genericcostestimate(PlannerInfo *root,
 	List	   *indexOrderBys = path->indexorderbys;
 	Cost		indexStartupCost;
 	Cost		indexTotalCost;
-	Selectivity	indexSelectivity;
+	Selectivity indexSelectivity;
 	double		indexCorrelation;
 	double		numIndexPages;
 	double		numIndexTuples;
@@ -6048,7 +6048,7 @@ genericcostestimate(PlannerInfo *root,
 	 *
 	 * In practice access to upper index levels is often nearly free because
 	 * those tend to stay in cache under load; moreover, the cost involved is
-	 * highly dependent on index type.  We therefore ignore such costs here
+	 * highly dependent on index type.	We therefore ignore such costs here
 	 * and leave it to the caller to add a suitable charge if needed.
 	 */
 	if (index->pages > 1 && index->tuples > 1)
@@ -6570,7 +6570,7 @@ hashcostestimate(PG_FUNCTION_ARGS)
 	 * because the hash AM makes sure that's always one page.
 	 *
 	 * Likewise, we could consider charging some CPU for each index tuple in
-	 * the bucket, if we knew how many there were.  But the per-tuple cost is
+	 * the bucket, if we knew how many there were.	But the per-tuple cost is
 	 * just a hash value comparison, not a general datatype-dependent
 	 * comparison, so any such charge ought to be quite a bit less than
 	 * cpu_operator_cost; which makes it probably not worth worrying about.
@@ -6617,7 +6617,7 @@ gistcostestimate(PG_FUNCTION_ARGS)
 	 * Although this computation isn't really expensive enough to require
 	 * caching, we might as well use index->tree_height to cache it.
 	 */
-	if (index->tree_height < 0)	/* unknown? */
+	if (index->tree_height < 0) /* unknown? */
 	{
 		if (index->pages > 1)	/* avoid computing log(0) */
 			index->tree_height = (int) (log(index->pages) / log(100.0));
@@ -6626,9 +6626,9 @@ gistcostestimate(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Add a CPU-cost component to represent the costs of initial descent.
-	 * We just use log(N) here not log2(N) since the branching factor isn't
-	 * necessarily two anyway.  As for btree, charge once per SA scan.
+	 * Add a CPU-cost component to represent the costs of initial descent. We
+	 * just use log(N) here not log2(N) since the branching factor isn't
+	 * necessarily two anyway.	As for btree, charge once per SA scan.
 	 */
 	if (index->tuples > 1)		/* avoid computing log(0) */
 	{
@@ -6679,7 +6679,7 @@ spgcostestimate(PG_FUNCTION_ARGS)
 	 * Although this computation isn't really expensive enough to require
 	 * caching, we might as well use index->tree_height to cache it.
 	 */
-	if (index->tree_height < 0)	/* unknown? */
+	if (index->tree_height < 0) /* unknown? */
 	{
 		if (index->pages > 1)	/* avoid computing log(0) */
 			index->tree_height = (int) (log(index->pages) / log(100.0));
@@ -6688,9 +6688,9 @@ spgcostestimate(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Add a CPU-cost component to represent the costs of initial descent.
-	 * We just use log(N) here not log2(N) since the branching factor isn't
-	 * necessarily two anyway.  As for btree, charge once per SA scan.
+	 * Add a CPU-cost component to represent the costs of initial descent. We
+	 * just use log(N) here not log2(N) since the branching factor isn't
+	 * necessarily two anyway.	As for btree, charge once per SA scan.
 	 */
 	if (index->tuples > 1)		/* avoid computing log(0) */
 	{
@@ -6801,14 +6801,14 @@ gincost_pattern(IndexOptInfo *index, int indexcol,
 		collation = DEFAULT_COLLATION_OID;
 
 	OidFunctionCall7Coll(extractProcOid,
-					 collation,
-					 query,
-					 PointerGetDatum(&nentries),
-					 UInt16GetDatum(strategy_op),
-					 PointerGetDatum(&partial_matches),
-					 PointerGetDatum(&extra_data),
-					 PointerGetDatum(&nullFlags),
-					 PointerGetDatum(&searchMode));
+						 collation,
+						 query,
+						 PointerGetDatum(&nentries),
+						 UInt16GetDatum(strategy_op),
+						 PointerGetDatum(&partial_matches),
+						 PointerGetDatum(&extra_data),
+						 PointerGetDatum(&nullFlags),
+						 PointerGetDatum(&searchMode));
 
 	if (nentries <= 0 && searchMode == GIN_SEARCH_MODE_DEFAULT)
 	{

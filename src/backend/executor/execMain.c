@@ -959,12 +959,13 @@ CheckValidResultRel(Relation resultRel, CmdType operation)
 							RelationGetRelationName(resultRel))));
 			break;
 		case RELKIND_VIEW:
+
 			/*
 			 * Okay only if there's a suitable INSTEAD OF trigger.  Messages
 			 * here should match rewriteHandler.c's rewriteTargetView, except
 			 * that we omit errdetail because we haven't got the information
-			 * handy (and given that we really shouldn't get here anyway,
-			 * it's not worth great exertion to get).
+			 * handy (and given that we really shouldn't get here anyway, it's
+			 * not worth great exertion to get).
 			 */
 			switch (operation)
 			{
@@ -1012,8 +1013,8 @@ CheckValidResultRel(Relation resultRel, CmdType operation)
 					if (fdwroutine->ExecForeignInsert == NULL)
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("cannot insert into foreign table \"%s\"",
-										RelationGetRelationName(resultRel))));
+							errmsg("cannot insert into foreign table \"%s\"",
+								   RelationGetRelationName(resultRel))));
 					break;
 				case CMD_UPDATE:
 					if (fdwroutine->ExecForeignUpdate == NULL)
@@ -1026,8 +1027,8 @@ CheckValidResultRel(Relation resultRel, CmdType operation)
 					if (fdwroutine->ExecForeignDelete == NULL)
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("cannot delete from foreign table \"%s\"",
-										RelationGetRelationName(resultRel))));
+							errmsg("cannot delete from foreign table \"%s\"",
+								   RelationGetRelationName(resultRel))));
 					break;
 				default:
 					elog(ERROR, "unrecognized CmdType: %d", (int) operation);
@@ -1391,7 +1392,8 @@ ExecEndPlan(PlanState *planstate, EState *estate)
 	}
 
 	/*
-	 * close any relations selected FOR [KEY] UPDATE/SHARE, again keeping locks
+	 * close any relations selected FOR [KEY] UPDATE/SHARE, again keeping
+	 * locks
 	 */
 	foreach(l, estate->es_rowMarks)
 	{
@@ -1546,9 +1548,9 @@ ExecRelCheck(ResultRelInfo *resultRelInfo,
 		qual = resultRelInfo->ri_ConstraintExprs[i];
 
 		/*
-		 * NOTE: SQL specifies that a NULL result from a constraint
-		 * expression is not to be treated as a failure.  Therefore, tell
-		 * ExecQual to return TRUE for NULL.
+		 * NOTE: SQL specifies that a NULL result from a constraint expression
+		 * is not to be treated as a failure.  Therefore, tell ExecQual to
+		 * return TRUE for NULL.
 		 */
 		if (!ExecQual(qual, econtext, true))
 			return check[i].ccname;
@@ -1901,13 +1903,13 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
 			/*
 			 * If tuple was inserted by our own transaction, we have to check
 			 * cmin against es_output_cid: cmin >= current CID means our
-			 * command cannot see the tuple, so we should ignore it.
-			 * Otherwise heap_lock_tuple() will throw an error, and so would
-			 * any later attempt to update or delete the tuple.  (We need not
-			 * check cmax because HeapTupleSatisfiesDirty will consider a
-			 * tuple deleted by our transaction dead, regardless of cmax.)
-			 * Wee just checked that priorXmax == xmin, so we can test that
-			 * variable instead of doing HeapTupleHeaderGetXmin again.
+			 * command cannot see the tuple, so we should ignore it. Otherwise
+			 * heap_lock_tuple() will throw an error, and so would any later
+			 * attempt to update or delete the tuple.  (We need not check cmax
+			 * because HeapTupleSatisfiesDirty will consider a tuple deleted
+			 * by our transaction dead, regardless of cmax.) Wee just checked
+			 * that priorXmax == xmin, so we can test that variable instead of
+			 * doing HeapTupleHeaderGetXmin again.
 			 */
 			if (TransactionIdIsCurrentTransactionId(priorXmax) &&
 				HeapTupleHeaderGetCmin(tuple.t_data) >= estate->es_output_cid)
@@ -1921,7 +1923,7 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
 			 */
 			test = heap_lock_tuple(relation, &tuple,
 								   estate->es_output_cid,
-								   lockmode, false /* wait */,
+								   lockmode, false /* wait */ ,
 								   false, &buffer, &hufd);
 			/* We now have two pins on the buffer, get rid of one */
 			ReleaseBuffer(buffer);
@@ -1929,6 +1931,7 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
 			switch (test)
 			{
 				case HeapTupleSelfUpdated:
+
 					/*
 					 * The target tuple was already updated or deleted by the
 					 * current command, or by a later command in the current

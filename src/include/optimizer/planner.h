@@ -36,7 +36,7 @@ extern Plan *subquery_planner(PlannerGlobal *glob, Query *parse,
 				 PlannerInfo **subroot);
 
 extern void add_tlist_costs_to_plan(PlannerInfo *root, Plan *plan,
-									List *tlist);
+						List *tlist);
 
 extern bool is_dummy_plan(Plan *plan);
 

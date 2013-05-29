@@ -42,8 +42,8 @@ static inline char *
 utf_e2u(const char *str)
 {
 	char	   *ret =
-		(char *) pg_do_encoding_conversion((unsigned char *) str, strlen(str),
-										   GetDatabaseEncoding(), PG_UTF8);
+	(char *) pg_do_encoding_conversion((unsigned char *) str, strlen(str),
+									   GetDatabaseEncoding(), PG_UTF8);
 
 	if (ret == str)
 		ret = pstrdup(ret);
@@ -89,8 +89,8 @@ sv2cstr(SV *sv)
 
 	/*
 	 * Request the string from Perl, in UTF-8 encoding; but if we're in a
-	 * SQL_ASCII database, just request the byte soup without trying to make it
-	 * UTF8, because that might fail.
+	 * SQL_ASCII database, just request the byte soup without trying to make
+	 * it UTF8, because that might fail.
 	 */
 	if (GetDatabaseEncoding() == PG_SQL_ASCII)
 		val = SvPV(sv, len);

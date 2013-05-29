@@ -129,7 +129,7 @@ typedef struct RewriteStateData
 										 * determine tuple visibility */
 	TransactionId rs_freeze_xid;/* Xid that will be used as freeze cutoff
 								 * point */
-	MultiXactId	rs_freeze_multi;/* MultiXactId that will be used as freeze
+	MultiXactId rs_freeze_multi;/* MultiXactId that will be used as freeze
 								 * cutoff point for multixacts */
 	MemoryContext rs_cxt;		/* for hash tables and entries and tuples in
 								 * them */

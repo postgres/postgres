@@ -26,7 +26,7 @@
  *		typedef struct FormData_pg_event_trigger
  * ----------------
  */
-#define EventTriggerRelationId  3466
+#define EventTriggerRelationId	3466
 
 CATALOG(pg_event_trigger,3466)
 {
@@ -36,8 +36,9 @@ CATALOG(pg_event_trigger,3466)
 	Oid			evtfoid;		/* OID of function to be called */
 	char		evtenabled;		/* trigger's firing configuration WRT
 								 * session_replication_role */
+
 #ifdef CATALOG_VARLEN
-	text        evttags[1];		/* command TAGs this event trigger targets */
+	text		evttags[1];		/* command TAGs this event trigger targets */
 #endif
 } FormData_pg_event_trigger;
 

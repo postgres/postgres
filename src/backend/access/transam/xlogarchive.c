@@ -87,9 +87,9 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	 * of log segments that weren't yet transferred to the archive.
 	 *
 	 * Notice that we don't actually overwrite any files when we copy back
-	 * from archive because the restore_command may inadvertently
-	 * restore inappropriate xlogs, or they may be corrupt, so we may wish to
-	 * fallback to the segments remaining in current XLOGDIR later. The
+	 * from archive because the restore_command may inadvertently restore
+	 * inappropriate xlogs, or they may be corrupt, so we may wish to fallback
+	 * to the segments remaining in current XLOGDIR later. The
 	 * copy-from-archive filename is always the same, ensuring that we don't
 	 * run out of disk space on long recoveries.
 	 */
@@ -433,19 +433,20 @@ KeepFileRestoredFromArchive(char *path, char *xlogfname)
 
 	if (stat(xlogfpath, &statbuf) == 0)
 	{
-		char oldpath[MAXPGPATH];
+		char		oldpath[MAXPGPATH];
+
 #ifdef WIN32
 		static unsigned int deletedcounter = 1;
+
 		/*
-		 * On Windows, if another process (e.g a walsender process) holds
-		 * the file open in FILE_SHARE_DELETE mode, unlink will succeed,
-		 * but the file will still show up in directory listing until the
-		 * last handle is closed, and we cannot rename the new file in its
-		 * place until that. To avoid that problem, rename the old file to
-		 * a temporary name first. Use a counter to create a unique
-		 * filename, because the same file might be restored from the
-		 * archive multiple times, and a walsender could still be holding
-		 * onto an old deleted version of it.
+		 * On Windows, if another process (e.g a walsender process) holds the
+		 * file open in FILE_SHARE_DELETE mode, unlink will succeed, but the
+		 * file will still show up in directory listing until the last handle
+		 * is closed, and we cannot rename the new file in its place until
+		 * that. To avoid that problem, rename the old file to a temporary
+		 * name first. Use a counter to create a unique filename, because the
+		 * same file might be restored from the archive multiple times, and a
+		 * walsender could still be holding onto an old deleted version of it.
 		 */
 		snprintf(oldpath, MAXPGPATH, "%s.deleted%u",
 				 xlogfpath, deletedcounter++);
@@ -474,17 +475,17 @@ KeepFileRestoredFromArchive(char *path, char *xlogfname)
 						path, xlogfpath)));
 
 	/*
-	 * Create .done file forcibly to prevent the restored segment from
-	 * being archived again later.
+	 * Create .done file forcibly to prevent the restored segment from being
+	 * archived again later.
 	 */
 	XLogArchiveForceDone(xlogfname);
 
 	/*
-	 * If the existing file was replaced, since walsenders might have it
-	 * open, request them to reload a currently-open segment. This is only
-	 * required for WAL segments, walsenders don't hold other files open, but
-	 * there's no harm in doing this too often, and we don't know what kind
-	 * of a file we're dealing with here.
+	 * If the existing file was replaced, since walsenders might have it open,
+	 * request them to reload a currently-open segment. This is only required
+	 * for WAL segments, walsenders don't hold other files open, but there's
+	 * no harm in doing this too often, and we don't know what kind of a file
+	 * we're dealing with here.
 	 */
 	if (reload)
 		WalSndRqstFileReload();

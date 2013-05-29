@@ -82,7 +82,7 @@ vacuumlo(const char *database, const struct _param * param)
 	 */
 	do
 	{
-#define PARAMS_ARRAY_SIZE      7
+#define PARAMS_ARRAY_SIZE	   7
 
 		const char *keywords[PARAMS_ARRAY_SIZE];
 		const char *values[PARAMS_ARRAY_SIZE];

@@ -64,7 +64,7 @@ EOF
 
 	# We have to use this flag on 32 bit targets because the 32bit perls
 	# are built with it and sometimes crash if we don't.
-	my $use_32bit_time_t = 
+	my $use_32bit_time_t =
 	  $self->{platform} eq 'Win32' ? '_USE_32BIT_TIME_T;' : '';
 
 	$self->WriteItemDefinitionGroup(
@@ -409,26 +409,26 @@ use base qw(MSBuildProject);
 
 sub new
 {
-    my $classname = shift;
-    my $self = $classname->SUPER::_new(@_);
-    bless($self, $classname);
+	my $classname = shift;
+	my $self      = $classname->SUPER::_new(@_);
+	bless($self, $classname);
 
-    $self->{vcver} = '11.00';
+	$self->{vcver} = '11.00';
 
-    return $self;
+	return $self;
 }
 
 # This override adds the <PlatformToolset> element
 # to the PropertyGroup labeled "Configuration"
 sub WriteConfigurationPropertyGroup
 {
-    my ($self, $f, $cfgname, $p) = @_;
-    my $cfgtype =
-      ($self->{type} eq "exe")
-      ?'Application'
-      :($self->{type} eq "dll"?'DynamicLibrary':'StaticLibrary');
+	my ($self, $f, $cfgname, $p) = @_;
+	my $cfgtype =
+	  ($self->{type} eq "exe")
+	  ? 'Application'
+	  : ($self->{type} eq "dll" ? 'DynamicLibrary' : 'StaticLibrary');
 
-    print $f <<EOF;
+	print $f <<EOF;
   <PropertyGroup Condition="'\$(Configuration)|\$(Platform)'=='$cfgname|$self->{platform}'" Label="Configuration">
     <ConfigurationType>$cfgtype</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>

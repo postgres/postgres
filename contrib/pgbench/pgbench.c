@@ -162,7 +162,8 @@ char	   *index_tablespace = NULL;
 
 bool		use_log;			/* log transaction latencies to a file */
 bool		use_quiet;			/* quiet logging onto stderr */
-int			agg_interval;		/* log aggregates instead of individual transactions */
+int			agg_interval;		/* log aggregates instead of individual
+								 * transactions */
 bool		is_connect;			/* establish connection for each transaction */
 bool		is_latencies;		/* report per-command latencies */
 int			main_pid;			/* main process id used in log filename */
@@ -261,13 +262,14 @@ typedef struct
 typedef struct
 {
 
-	long	start_time;			/* when does the interval start */
-	int 	cnt;				/* number of transactions */
-	double	min_duration;		/* min/max durations */
-	double	max_duration;
-	double	sum;				/* sum(duration), sum(duration^2) - for estimates */
-	double	sum2;
-	
+	long		start_time;		/* when does the interval start */
+	int			cnt;			/* number of transactions */
+	double		min_duration;	/* min/max durations */
+	double		max_duration;
+	double		sum;			/* sum(duration), sum(duration^2) - for
+								 * estimates */
+	double		sum2;
+
 } AggVals;
 
 static Command **sql_files[MAX_FILES];	/* SQL script files */
@@ -874,12 +876,13 @@ clientDone(CState *st, bool ok)
 }
 
 static
-void agg_vals_init(AggVals * aggs, instr_time start)
+void
+agg_vals_init(AggVals *aggs, instr_time start)
 {
 	/* basic counters */
-	aggs->cnt = 0;		/* number of transactions */
-	aggs->sum = 0;		/* SUM(duration) */
-	aggs->sum2 = 0;		/* SUM(duration*duration) */
+	aggs->cnt = 0;				/* number of transactions */
+	aggs->sum = 0;				/* SUM(duration) */
+	aggs->sum2 = 0;				/* SUM(duration*duration) */
 
 	/* min and max transaction duration */
 	aggs->min_duration = 0;
@@ -891,7 +894,7 @@ void agg_vals_init(AggVals * aggs, instr_time start)
 
 /* return false iff client should be disconnected */
 static bool
-doCustom(TState *thread, CState *st, instr_time *conn_time, FILE *logfile, AggVals * agg)
+doCustom(TState *thread, CState *st, instr_time *conn_time, FILE *logfile, AggVals *agg)
 {
 	PGresult   *res;
 	Command   **commands;
@@ -964,31 +967,39 @@ top:
 				/* should we aggregate the results or not? */
 				if (agg_interval > 0)
 				{
-					/* are we still in the same interval? if yes, accumulate the
-					* values (print them otherwise) */
+					/*
+					 * are we still in the same interval? if yes, accumulate
+					 * the values (print them otherwise)
+					 */
 					if (agg->start_time + agg_interval >= INSTR_TIME_GET_DOUBLE(now))
 					{
 						agg->cnt += 1;
-						agg->sum  += usec;
+						agg->sum += usec;
 						agg->sum2 += usec * usec;
 
 						/* first in this aggregation interval */
 						if ((agg->cnt == 1) || (usec < agg->min_duration))
-							agg->min_duration =  usec;
+							agg->min_duration = usec;
 
 						if ((agg->cnt == 1) || (usec > agg->max_duration))
 							agg->max_duration = usec;
 					}
 					else
 					{
-						/* Loop until we reach the interval of the current transaction (and
-						 * print all the empty intervals in between). */
+						/*
+						 * Loop until we reach the interval of the current
+						 * transaction (and print all the empty intervals in
+						 * between).
+						 */
 						while (agg->start_time + agg_interval < INSTR_TIME_GET_DOUBLE(now))
 						{
-							/* This is a non-Windows branch (thanks to the ifdef in usage), so
-							 * we don't need to handle this in a special way (see below). */
+							/*
+							 * This is a non-Windows branch (thanks to the
+							 * ifdef in usage), so we don't need to handle
+							 * this in a special way (see below).
+							 */
 							fprintf(logfile, "%ld %d %.0f %.0f %.0f %.0f\n",
-									agg->start_time, agg->cnt, agg->sum, agg->sum2,
+							  agg->start_time, agg->cnt, agg->sum, agg->sum2,
 									agg->min_duration, agg->max_duration);
 
 							/* move to the next inteval */
@@ -1002,7 +1013,10 @@ top:
 							agg->sum2 = 0;
 						}
 
-						/* and now update the reset values (include the current) */
+						/*
+						 * and now update the reset values (include the
+						 * current)
+						 */
 						agg->cnt = 1;
 						agg->min_duration = usec;
 						agg->max_duration = usec;
@@ -1014,12 +1028,20 @@ top:
 				{
 					/* no, print raw transactions */
 #ifndef WIN32
-					/* This is more than we really ought to know about instr_time */
+
+					/*
+					 * This is more than we really ought to know about
+					 * instr_time
+					 */
 					fprintf(logfile, "%d %d %.0f %d %ld %ld\n",
 							st->id, st->cnt, usec, st->use_file,
 							(long) now.tv_sec, (long) now.tv_usec);
 #else
-					/* On Windows, instr_time doesn't provide a timestamp anyway */
+
+					/*
+					 * On Windows, instr_time doesn't provide a timestamp
+					 * anyway
+					 */
 					fprintf(logfile, "%d %d %.0f %d 0 0\n",
 							st->id, st->cnt, usec, st->use_file);
 #endif
@@ -1234,11 +1256,11 @@ top:
 			}
 
 			/*
-			 * getrand() needs to be able to subtract max from min and add
-			 * one to the result without overflowing.  Since we know max > min,
-			 * we can detect overflow just by checking for a negative result.
-			 * But we must check both that the subtraction doesn't overflow,
-			 * and that adding one to the result doesn't overflow either.
+			 * getrand() needs to be able to subtract max from min and add one
+			 * to the result without overflowing.  Since we know max > min, we
+			 * can detect overflow just by checking for a negative result. But
+			 * we must check both that the subtraction doesn't overflow, and
+			 * that adding one to the result doesn't overflow either.
 			 */
 			if (max - min < 0 || (max - min) + 1 < 0)
 			{
@@ -1418,7 +1440,6 @@ disconnect_all(CState *state, int length)
 static void
 init(bool is_no_vacuum)
 {
-
 /* The scale factor at/beyond which 32bit integers are incapable of storing
  * 64bit values.
  *
@@ -1446,8 +1467,8 @@ init(bool is_no_vacuum)
 		{
 			"pgbench_history",
 			scale >= SCALE_32BIT_THRESHOLD
-				? "tid int,bid int,aid bigint,delta int,mtime timestamp,filler char(22)"
-				: "tid int,bid int,aid    int,delta int,mtime timestamp,filler char(22)",
+			? "tid int,bid int,aid bigint,delta int,mtime timestamp,filler char(22)"
+			: "tid int,bid int,aid    int,delta int,mtime timestamp,filler char(22)",
 			0
 		},
 		{
@@ -1458,8 +1479,8 @@ init(bool is_no_vacuum)
 		{
 			"pgbench_accounts",
 			scale >= SCALE_32BIT_THRESHOLD
-				? "aid bigint not null,bid int,abalance int,filler char(84)"
-				: "aid    int not null,bid int,abalance int,filler char(84)",
+			? "aid bigint not null,bid int,abalance int,filler char(84)"
+			: "aid    int not null,bid int,abalance int,filler char(84)",
 			1
 		},
 		{
@@ -1488,8 +1509,10 @@ init(bool is_no_vacuum)
 	int64		k;
 
 	/* used to track elapsed time and estimate of the remaining time */
-	instr_time	start, diff;
-	double		elapsed_sec, remaining_sec;
+	instr_time	start,
+				diff;
+	double		elapsed_sec,
+				remaining_sec;
 	int			log_interval = 1;
 
 	if ((con = doConnect()) == NULL)
@@ -1573,9 +1596,11 @@ init(bool is_no_vacuum)
 			exit(1);
 		}
 
-		/* If we want to stick with the original logging, print a message each
-		 * 100k inserted rows. */
-		if ((! use_quiet) && (j % 100000 == 0))
+		/*
+		 * If we want to stick with the original logging, print a message each
+		 * 100k inserted rows.
+		 */
+		if ((!use_quiet) && (j % 100000 == 0))
 		{
 			INSTR_TIME_SET_CURRENT(diff);
 			INSTR_TIME_SUBTRACT(diff, start);
@@ -1584,9 +1609,9 @@ init(bool is_no_vacuum)
 			remaining_sec = (scale * naccounts - j) * elapsed_sec / j;
 
 			fprintf(stderr, INT64_FORMAT " of " INT64_FORMAT " tuples (%d%%) done (elapsed %.2f s, remaining %.2f s).\n",
-							j, (int64)naccounts * scale,
-							(int) (((int64) j * 100) / (naccounts * scale)),
-							elapsed_sec, remaining_sec);
+					j, (int64) naccounts * scale,
+					(int) (((int64) j * 100) / (naccounts * scale)),
+					elapsed_sec, remaining_sec);
 		}
 		/* let's not call the timing for each row, but only each 100 rows */
 		else if (use_quiet && (j % 100 == 0))
@@ -1598,14 +1623,15 @@ init(bool is_no_vacuum)
 			remaining_sec = (scale * naccounts - j) * elapsed_sec / j;
 
 			/* have we reached the next interval (or end)? */
-			if ((j == scale * naccounts) || (elapsed_sec >= log_interval * LOG_STEP_SECONDS)) {
+			if ((j == scale * naccounts) || (elapsed_sec >= log_interval * LOG_STEP_SECONDS))
+			{
 
 				fprintf(stderr, INT64_FORMAT " of " INT64_FORMAT " tuples (%d%%) done (elapsed %.2f s, remaining %.2f s).\n",
-						j, (int64)naccounts * scale,
+						j, (int64) naccounts * scale,
 						(int) (((int64) j * 100) / (naccounts * scale)), elapsed_sec, remaining_sec);
 
 				/* skip to the next interval */
-				log_interval = (int)ceil(elapsed_sec/LOG_STEP_SECONDS);
+				log_interval = (int) ceil(elapsed_sec / LOG_STEP_SECONDS);
 			}
 		}
 
@@ -2393,17 +2419,20 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (agg_interval > 0 && (! use_log)) {
+	if (agg_interval > 0 && (!use_log))
+	{
 		fprintf(stderr, "log aggregation is allowed only when actually logging transactions\n");
 		exit(1);
 	}
 
-	if ((duration > 0) && (agg_interval > duration)) {
+	if ((duration > 0) && (agg_interval > duration))
+	{
 		fprintf(stderr, "number of seconds for aggregation (%d) must not be higher that test duration (%d)\n", agg_interval, duration);
 		exit(1);
 	}
 
-	if ((duration > 0) && (agg_interval > 0) && (duration % agg_interval != 0)) {
+	if ((duration > 0) && (agg_interval > 0) && (duration % agg_interval != 0))
+	{
 		fprintf(stderr, "duration (%d) must be a multiple of aggregation interval (%d)\n", duration, agg_interval);
 		exit(1);
 	}
@@ -2670,7 +2699,7 @@ threadRun(void *arg)
 	AggVals		aggs;
 
 	result = pg_malloc(sizeof(TResult));
-	
+
 	INSTR_TIME_SET_ZERO(result->conn_time);
 
 	/* open log file if requested */
@@ -2706,7 +2735,7 @@ threadRun(void *arg)
 	INSTR_TIME_SUBTRACT(result->conn_time, thread->start_time);
 
 	agg_vals_init(&aggs, thread->start_time);
-	
+
 	/* send start up queries in async manner */
 	for (i = 0; i < nstate; i++)
 	{

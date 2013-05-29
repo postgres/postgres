@@ -151,8 +151,8 @@ spg_range_quad_choose(PG_FUNCTION_ARGS)
 
 	/*
 	 * A node with no centroid divides ranges purely on whether they're empty
-	 * or not. All empty ranges go to child node 0, all non-empty ranges go
-	 * to node 1.
+	 * or not. All empty ranges go to child node 0, all non-empty ranges go to
+	 * node 1.
 	 */
 	if (!in->hasPrefix)
 	{
@@ -307,8 +307,8 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 
 	/*
 	 * For adjacent search we need also previous centroid (if any) to improve
-	 * the precision of the consistent check. In this case needPrevious flag is
-	 * set and centroid is passed into reconstructedValues. This is not the
+	 * the precision of the consistent check. In this case needPrevious flag
+	 * is set and centroid is passed into reconstructedValues. This is not the
 	 * intended purpose of reconstructedValues (because we already have the
 	 * full value available at the leaf), but it's a convenient place to store
 	 * state while traversing the tree.
@@ -370,18 +370,20 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 					break;
 
 				case RANGESTRAT_CONTAINS:
+
 					/*
-					 * All ranges contain an empty range. Only non-empty ranges
-					 * can contain a non-empty range.
+					 * All ranges contain an empty range. Only non-empty
+					 * ranges can contain a non-empty range.
 					 */
 					if (!empty)
 						which &= (1 << 2);
 					break;
 
 				case RANGESTRAT_CONTAINED_BY:
+
 					/*
-					 * Only an empty range is contained by an empty range. Both
-					 * empty and non-empty ranges can be contained by a
+					 * Only an empty range is contained by an empty range.
+					 * Both empty and non-empty ranges can be contained by a
 					 * non-empty range.
 					 */
 					if (empty)
@@ -438,11 +440,13 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 						upper;
 			bool		empty;
 			RangeType  *range = NULL;
+
 			/* Restrictions on range bounds according to scan strategy */
 			RangeBound *minLower = NULL,
 					   *maxLower = NULL,
 					   *minUpper = NULL,
 					   *maxUpper = NULL;
+
 			/* Are the restrictions on range bounds inclusive? */
 			bool		inclusive = true;
 			bool		strictEmpty = true;
@@ -482,9 +486,9 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 
 			/*
 			 * Most strategies are handled by forming a bounding box from the
-			 * search key, defined by a minLower, maxLower, minUpper, maxUpper.
-			 * Some modify 'which' directly, to specify exactly which quadrants
-			 * need to be visited.
+			 * search key, defined by a minLower, maxLower, minUpper,
+			 * maxUpper. Some modify 'which' directly, to specify exactly
+			 * which quadrants need to be visited.
 			 *
 			 * For most strategies, nothing matches an empty search key, and
 			 * an empty range never matches a non-empty key. If a strategy
@@ -494,6 +498,7 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 			switch (strategy)
 			{
 				case RANGESTRAT_BEFORE:
+
 					/*
 					 * Range A is before range B if upper bound of A is lower
 					 * than lower bound of B.
@@ -503,6 +508,7 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 					break;
 
 				case RANGESTRAT_OVERLEFT:
+
 					/*
 					 * Range A is overleft to range B if upper bound of A is
 					 * less or equal to upper bound of B.
@@ -511,6 +517,7 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 					break;
 
 				case RANGESTRAT_OVERLAPS:
+
 					/*
 					 * Non-empty ranges overlap, if lower bound of each range
 					 * is lower or equal to upper bound of the other range.
@@ -520,6 +527,7 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 					break;
 
 				case RANGESTRAT_OVERRIGHT:
+
 					/*
 					 * Range A is overright to range B if lower bound of A is
 					 * greater or equal to lower bound of B.
@@ -528,6 +536,7 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 					break;
 
 				case RANGESTRAT_AFTER:
+
 					/*
 					 * Range A is after range B if lower bound of A is greater
 					 * than upper bound of B.
@@ -538,12 +547,13 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 
 				case RANGESTRAT_ADJACENT:
 					if (empty)
-						break;				/* Skip to strictEmpty check. */
+						break;	/* Skip to strictEmpty check. */
 
 					/*
 					 * which1 is bitmask for possibility to be adjacent with
 					 * lower bound of argument. which2 is bitmask for
-					 * possibility to be adjacent with upper bound of argument.
+					 * possibility to be adjacent with upper bound of
+					 * argument.
 					 */
 					which1 = which2 = (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4);
 
@@ -622,9 +632,9 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 						/*
 						 * For a range's lower bound to be adjacent to the
 						 * argument's upper bound, it will be found along the
-						 * line adjacent to (and just right of)
-						 * X=upper. Therefore, if the argument's upper bound is
-						 * less than (and not adjacent to) the centroid's upper
+						 * line adjacent to (and just right of) X=upper.
+						 * Therefore, if the argument's upper bound is less
+						 * than (and not adjacent to) the centroid's upper
 						 * bound, the line falls in quadrants 3 and 4; if
 						 * greater or equal to, the line falls in quadrants 1
 						 * and 2.
@@ -649,6 +659,7 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 					break;
 
 				case RANGESTRAT_CONTAINS:
+
 					/*
 					 * Non-empty range A contains non-empty range B if lower
 					 * bound of A is lower or equal to lower bound of range B
@@ -682,6 +693,7 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 					break;
 
 				case RANGESTRAT_EQ:
+
 					/*
 					 * Equal range can be only in the same quadrant where
 					 * argument would be placed to.
@@ -717,10 +729,10 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 			if (minLower)
 			{
 				/*
-				 * If the centroid's lower bound is less than or equal to
-				 * the minimum lower bound, anything in the 3rd and 4th
-				 * quadrants will have an even smaller lower bound, and thus
-				 * can't match.
+				 * If the centroid's lower bound is less than or equal to the
+				 * minimum lower bound, anything in the 3rd and 4th quadrants
+				 * will have an even smaller lower bound, and thus can't
+				 * match.
 				 */
 				if (range_cmp_bounds(typcache, &centroidLower, minLower) <= 0)
 					which &= (1 << 1) | (1 << 2) | (1 << 5);
@@ -731,9 +743,9 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 				 * If the centroid's lower bound is greater than the maximum
 				 * lower bound, anything in the 1st and 2nd quadrants will
 				 * also have a greater than or equal lower bound, and thus
-				 * can't match. If the centroid's lower bound is equal to
-				 * the maximum lower bound, we can still exclude the 1st and
-				 * 2nd quadrants if we're looking for a value strictly greater
+				 * can't match. If the centroid's lower bound is equal to the
+				 * maximum lower bound, we can still exclude the 1st and 2nd
+				 * quadrants if we're looking for a value strictly greater
 				 * than the maximum.
 				 */
 				int			cmp;
@@ -745,10 +757,10 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 			if (minUpper)
 			{
 				/*
-				 * If the centroid's upper bound is less than or equal to
-				 * the minimum upper bound, anything in the 2nd and 3rd
-				 * quadrants will have an even smaller upper bound, and thus
-				 * can't match.
+				 * If the centroid's upper bound is less than or equal to the
+				 * minimum upper bound, anything in the 2nd and 3rd quadrants
+				 * will have an even smaller upper bound, and thus can't
+				 * match.
 				 */
 				if (range_cmp_bounds(typcache, &centroidUpper, minUpper) <= 0)
 					which &= (1 << 1) | (1 << 4) | (1 << 5);
@@ -759,9 +771,9 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 				 * If the centroid's upper bound is greater than the maximum
 				 * upper bound, anything in the 1st and 4th quadrants will
 				 * also have a greater than or equal upper bound, and thus
-				 * can't match. If the centroid's upper bound is equal to
-				 * the maximum upper bound, we can still exclude the 1st and
-				 * 4th quadrants if we're looking for a value strictly greater
+				 * can't match. If the centroid's upper bound is equal to the
+				 * maximum upper bound, we can still exclude the 1st and 4th
+				 * quadrants if we're looking for a value strictly greater
 				 * than the maximum.
 				 */
 				int			cmp;
@@ -848,7 +860,7 @@ spg_range_quad_leaf_consistent(PG_FUNCTION_ARGS)
 				break;
 			case RANGESTRAT_ADJACENT:
 				res = range_adjacent_internal(typcache, leafRange,
-										   DatumGetRangeType(keyDatum));
+											  DatumGetRangeType(keyDatum));
 				break;
 			case RANGESTRAT_CONTAINS:
 				res = range_contains_internal(typcache, leafRange,

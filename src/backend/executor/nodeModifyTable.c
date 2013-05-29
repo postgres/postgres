@@ -392,18 +392,19 @@ ldelete:;
 		result = heap_delete(resultRelationDesc, tupleid,
 							 estate->es_output_cid,
 							 estate->es_crosscheck_snapshot,
-							 true /* wait for commit */,
+							 true /* wait for commit */ ,
 							 &hufd);
 		switch (result)
 		{
 			case HeapTupleSelfUpdated:
+
 				/*
 				 * The target tuple was already updated or deleted by the
 				 * current command, or by a later command in the current
 				 * transaction.  The former case is possible in a join DELETE
-				 * where multiple tuples join to the same target tuple.
-				 * This is somewhat questionable, but Postgres has always
-				 * allowed it: we just ignore additional deletion attempts.
+				 * where multiple tuples join to the same target tuple. This
+				 * is somewhat questionable, but Postgres has always allowed
+				 * it: we just ignore additional deletion attempts.
 				 *
 				 * The latter case arises if the tuple is modified by a
 				 * command in a BEFORE trigger, or perhaps by a command in a
@@ -412,14 +413,14 @@ ldelete:;
 				 * proceed.  We don't want to discard the original DELETE
 				 * while keeping the triggered actions based on its deletion;
 				 * and it would be no better to allow the original DELETE
-				 * while discarding updates that it triggered.  The row update
+				 * while discarding updates that it triggered.	The row update
 				 * carries some information that might be important according
 				 * to business rules; so throwing an error is the only safe
 				 * course.
 				 *
-				 * If a trigger actually intends this type of interaction,
-				 * it can re-execute the DELETE and then return NULL to
-				 * cancel the outer delete.
+				 * If a trigger actually intends this type of interaction, it
+				 * can re-execute the DELETE and then return NULL to cancel
+				 * the outer delete.
 				 */
 				if (hufd.cmax != estate->es_output_cid)
 					ereport(ERROR,
@@ -646,7 +647,7 @@ ExecUpdate(ItemPointer tupleid,
 	}
 	else
 	{
-		LockTupleMode	lockmode;
+		LockTupleMode lockmode;
 
 		/*
 		 * Check the constraints of the tuple
@@ -673,19 +674,20 @@ lreplace:;
 		result = heap_update(resultRelationDesc, tupleid, tuple,
 							 estate->es_output_cid,
 							 estate->es_crosscheck_snapshot,
-							 true /* wait for commit */,
+							 true /* wait for commit */ ,
 							 &hufd, &lockmode);
 		switch (result)
 		{
 			case HeapTupleSelfUpdated:
+
 				/*
 				 * The target tuple was already updated or deleted by the
 				 * current command, or by a later command in the current
 				 * transaction.  The former case is possible in a join UPDATE
-				 * where multiple tuples join to the same target tuple.
-				 * This is pretty questionable, but Postgres has always
-				 * allowed it: we just execute the first update action and
-				 * ignore additional update attempts.
+				 * where multiple tuples join to the same target tuple. This
+				 * is pretty questionable, but Postgres has always allowed it:
+				 * we just execute the first update action and ignore
+				 * additional update attempts.
 				 *
 				 * The latter case arises if the tuple is modified by a
 				 * command in a BEFORE trigger, or perhaps by a command in a
@@ -697,9 +699,9 @@ lreplace:;
 				 * previous ones.  So throwing an error is the only safe
 				 * course.
 				 *
-				 * If a trigger actually intends this type of interaction,
-				 * it can re-execute the UPDATE (assuming it can figure out
-				 * how) and then return NULL to cancel the outer update.
+				 * If a trigger actually intends this type of interaction, it
+				 * can re-execute the UPDATE (assuming it can figure out how)
+				 * and then return NULL to cancel the outer update.
 				 */
 				if (hufd.cmax != estate->es_output_cid)
 					ereport(ERROR,

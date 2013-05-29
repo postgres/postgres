@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * mxactdesc.c
- *    rmgr descriptor routines for access/transam/multixact.c
+ *	  rmgr descriptor routines for access/transam/multixact.c
  *
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    src/backend/access/rmgrdesc/mxactdesc.c
+ *	  src/backend/access/rmgrdesc/mxactdesc.c
  *
  *-------------------------------------------------------------------------
  */

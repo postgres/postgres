@@ -443,10 +443,10 @@ ResolveRecoveryConflictWithBufferPin(void)
 	ProcWaitForSignal();
 
 	/*
-	 * Clear any timeout requests established above.  We assume here that
-	 * the Startup process doesn't have any other timeouts than what this
-	 * function uses.  If that stops being true, we could cancel the
-	 * timeouts individually, but that'd be slower.
+	 * Clear any timeout requests established above.  We assume here that the
+	 * Startup process doesn't have any other timeouts than what this function
+	 * uses.  If that stops being true, we could cancel the timeouts
+	 * individually, but that'd be slower.
 	 */
 	disable_all_timeouts(false);
 }

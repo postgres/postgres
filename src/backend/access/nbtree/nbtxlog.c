@@ -373,7 +373,7 @@ btree_xlog_split(bool onleft, bool isroot,
 			 * Note that this code ensures that the items remaining on the
 			 * left page are in the correct item number order, but it does not
 			 * reproduce the physical order they would have had.  Is this
-			 * worth changing?  See also _bt_restore_page().
+			 * worth changing?	See also _bt_restore_page().
 			 */
 			Page		lpage = (Page) BufferGetPage(lbuf);
 			BTPageOpaque lopaque = (BTPageOpaque) PageGetSpecialPointer(lpage);
@@ -606,18 +606,18 @@ btree_xlog_delete_get_latestRemovedXid(xl_btree_delete *xlrec)
 
 	/*
 	 * In what follows, we have to examine the previous state of the index
-	 * page, as well as the heap page(s) it points to.  This is only valid if
+	 * page, as well as the heap page(s) it points to.	This is only valid if
 	 * WAL replay has reached a consistent database state; which means that
-	 * the preceding check is not just an optimization, but is *necessary*.
-	 * We won't have let in any user sessions before we reach consistency.
+	 * the preceding check is not just an optimization, but is *necessary*. We
+	 * won't have let in any user sessions before we reach consistency.
 	 */
 	if (!reachedConsistency)
 		elog(PANIC, "btree_xlog_delete_get_latestRemovedXid: cannot operate with inconsistent data");
 
 	/*
-	 * Get index page.  If the DB is consistent, this should not fail, nor
+	 * Get index page.	If the DB is consistent, this should not fail, nor
 	 * should any of the heap page fetches below.  If one does, we return
-	 * InvalidTransactionId to cancel all HS transactions.  That's probably
+	 * InvalidTransactionId to cancel all HS transactions.	That's probably
 	 * overkill, but it's safe, and certainly better than panicking here.
 	 */
 	ibuffer = XLogReadBuffer(xlrec->node, xlrec->block, false);
@@ -701,10 +701,10 @@ btree_xlog_delete_get_latestRemovedXid(xl_btree_delete *xlrec)
 
 	/*
 	 * XXX If all heap tuples were LP_DEAD then we will be returning
-	 * InvalidTransactionId here, causing conflict for all HS
-	 * transactions. That should happen very rarely (reasoning please?). Also
-	 * note that caller can't tell the difference between this case and the
-	 * fast path exit above. May need to change that in future.
+	 * InvalidTransactionId here, causing conflict for all HS transactions.
+	 * That should happen very rarely (reasoning please?). Also note that
+	 * caller can't tell the difference between this case and the fast path
+	 * exit above. May need to change that in future.
 	 */
 	return latestRemovedXid;
 }
@@ -721,7 +721,7 @@ btree_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 	 * If we have any conflict processing to do, it must happen before we
 	 * update the page.
 	 *
-	 * Btree delete records can conflict with standby queries.  You might
+	 * Btree delete records can conflict with standby queries.	You might
 	 * think that vacuum records would conflict as well, but we've handled
 	 * that already.  XLOG_HEAP2_CLEANUP_INFO records provide the highest xid
 	 * cleaned by the vacuum of the heap and so we can resolve any conflicts

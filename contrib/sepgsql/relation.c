@@ -31,7 +31,7 @@
 
 #include "sepgsql.h"
 
-static void		sepgsql_index_modify(Oid indexOid);
+static void sepgsql_index_modify(Oid indexOid);
 
 /*
  * sepgsql_attribute_post_create
@@ -571,13 +571,13 @@ sepgsql_relation_relabel(Oid relOid, const char *seclabel)
 void
 sepgsql_relation_setattr(Oid relOid)
 {
-	Relation		rel;
-	ScanKeyData		skey;
-	SysScanDesc		sscan;
-	HeapTuple		oldtup;
-	HeapTuple		newtup;
-	Form_pg_class	oldform;
-	Form_pg_class	newform;
+	Relation	rel;
+	ScanKeyData skey;
+	SysScanDesc sscan;
+	HeapTuple	oldtup;
+	HeapTuple	newtup;
+	Form_pg_class oldform;
+	Form_pg_class newform;
 	ObjectAddress object;
 	char	   *audit_name;
 	uint16_t	tclass;
@@ -680,8 +680,8 @@ sepgsql_relation_setattr_extra(Relation catalog,
 							   AttrNumber anum_relation_id,
 							   AttrNumber anum_extra_id)
 {
-	ScanKeyData	skey;
-	SysScanDesc	sscan;
+	ScanKeyData skey;
+	SysScanDesc sscan;
 	HeapTuple	tuple;
 	Datum		datum;
 	bool		isnull;
@@ -708,7 +708,7 @@ sepgsql_relation_setattr_extra(Relation catalog,
 
 /*
  * sepgsql_index_modify
- * 		Handle index create, update, drop
+ *		Handle index create, update, drop
  *
  * Unlike other relation kinds, indexes do not have their own security labels,
  * so instead of doing checks directly, treat them as extra attributes of their

@@ -414,7 +414,7 @@ gistchoose(Relation r, Page p, IndexTuple it,	/* it has compressed entry */
 	 * some inserts to go to other equally-good subtrees.
 	 *
 	 * keep_current_best is -1 if we haven't yet had to make a random choice
-	 * whether to keep the current best tuple.  If we have done so, and
+	 * whether to keep the current best tuple.	If we have done so, and
 	 * decided to keep it, keep_current_best is 1; if we've decided to
 	 * replace, keep_current_best is 0.  (This state will be reset to -1 as
 	 * soon as we've made the replacement, but sometimes we make the choice in
@@ -810,8 +810,8 @@ gistGetFakeLSN(Relation rel)
 	if (rel->rd_rel->relpersistence == RELPERSISTENCE_TEMP)
 	{
 		/*
-		 * Temporary relations are only accessible in our session, so a
-		 * simple backend-local counter will do.
+		 * Temporary relations are only accessible in our session, so a simple
+		 * backend-local counter will do.
 		 */
 		return counter++;
 	}

@@ -60,10 +60,9 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 		 * table names change during ALTER TABLE ALTER COLUMN SET TYPE. In >=
 		 * 9.0, TOAST relation names always use heap table oids, hence we
 		 * cannot check relation names when upgrading from pre-9.0. Clusters
-		 * upgraded to 9.0 will get matching TOAST names.
-		 * If index names don't match primary key constraint names, this will
-		 * fail because pg_dump dumps constraint names and pg_upgrade checks
-		 * index names.
+		 * upgraded to 9.0 will get matching TOAST names. If index names don't
+		 * match primary key constraint names, this will fail because pg_dump
+		 * dumps constraint names and pg_upgrade checks index names.
 		 */
 		if (strcmp(old_rel->nspname, new_rel->nspname) != 0 ||
 			((GET_MAJOR_VERSION(old_cluster.major_version) >= 900 ||
@@ -79,7 +78,10 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 		num_maps++;
 	}
 
-	/* Do this check after the loop so hopefully we will produce a clearer error above */
+	/*
+	 * Do this check after the loop so hopefully we will produce a clearer
+	 * error above
+	 */
 	if (old_db->rel_arr.nrels != new_db->rel_arr.nrels)
 		pg_log(PG_FATAL, "old and new databases \"%s\" have a different number of relations\n",
 			   old_db->db_name);
@@ -285,8 +287,11 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 "LEFT OUTER JOIN pg_catalog.pg_index i "
 			 "	   ON c.oid = i.indexrelid "
 			 "WHERE relkind IN ('r', 'm', 'i'%s) AND "
-			/* pg_dump only dumps valid indexes;  testing indisready is
-			 * necessary in 9.2, and harmless in earlier/later versions. */
+
+	/*
+	 * pg_dump only dumps valid indexes;  testing indisready is necessary in
+	 * 9.2, and harmless in earlier/later versions.
+	 */
 			 " i.indisvalid IS DISTINCT FROM false AND "
 			 " i.indisready IS DISTINCT FROM false AND "
 	/* exclude possible orphaned temp tables */
@@ -309,8 +314,8 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	PQclear(executeQueryOrDie(conn, "%s", query));
 
 	/*
-	 *	Get TOAST tables and indexes;  we have to gather the TOAST tables in
-	 *	later steps because we can't schema-qualify TOAST tables.
+	 * Get TOAST tables and indexes;  we have to gather the TOAST tables in
+	 * later steps because we can't schema-qualify TOAST tables.
 	 */
 	PQclear(executeQueryOrDie(conn,
 							  "INSERT INTO info_rels "
@@ -335,8 +340,8 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	/* we preserve pg_class.oid so we sort by it to match old/new */
 			 "ORDER BY 1;",
 	/* 9.2 removed the spclocation column */
-		   (GET_MAJOR_VERSION(cluster->major_version) <= 901) ?
-		   "t.spclocation" : "pg_catalog.pg_tablespace_location(t.oid) AS spclocation");
+			 (GET_MAJOR_VERSION(cluster->major_version) <= 901) ?
+			 "t.spclocation" : "pg_catalog.pg_tablespace_location(t.oid) AS spclocation");
 
 	res = executeQueryOrDie(conn, "%s", query);
 
@@ -437,5 +442,5 @@ print_rel_infos(RelInfoArr *rel_arr)
 	for (relnum = 0; relnum < rel_arr->nrels; relnum++)
 		pg_log(PG_VERBOSE, "relname: %s.%s: reloid: %u reltblspace: %s\n",
 			   rel_arr->rels[relnum].nspname, rel_arr->rels[relnum].relname,
-			   rel_arr->rels[relnum].reloid, rel_arr->rels[relnum].tablespace);
+			 rel_arr->rels[relnum].reloid, rel_arr->rels[relnum].tablespace);
 }

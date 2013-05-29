@@ -18,7 +18,7 @@
 static void transfer_single_new_db(pageCnvCtx *pageConverter,
 					   FileNameMap *maps, int size, char *old_tablespace);
 static void transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
-							 const char *suffix);
+				 const char *suffix);
 
 
 /*
@@ -29,32 +29,32 @@ static void transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
  */
 void
 transfer_all_new_tablespaces(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
-					char *old_pgdata, char *new_pgdata)
+							 char *old_pgdata, char *new_pgdata)
 {
 	pg_log(PG_REPORT, "%s user relation files\n",
 	  user_opts.transfer_mode == TRANSFER_MODE_LINK ? "Linking" : "Copying");
 
 	/*
-	 *	Transfering files by tablespace is tricky because a single database
-	 *	can use multiple tablespaces.  For non-parallel mode, we just pass a
-	 *	NULL tablespace path, which matches all tablespaces.  In parallel mode,
-	 *	we pass the default tablespace and all user-created tablespaces
-	 *	and let those operations happen in parallel.
+	 * Transfering files by tablespace is tricky because a single database can
+	 * use multiple tablespaces.  For non-parallel mode, we just pass a NULL
+	 * tablespace path, which matches all tablespaces.	In parallel mode, we
+	 * pass the default tablespace and all user-created tablespaces and let
+	 * those operations happen in parallel.
 	 */
 	if (user_opts.jobs <= 1)
 		parallel_transfer_all_new_dbs(old_db_arr, new_db_arr, old_pgdata,
 									  new_pgdata, NULL);
 	else
 	{
-		int tblnum;
+		int			tblnum;
 
 		/* transfer default tablespace */
 		parallel_transfer_all_new_dbs(old_db_arr, new_db_arr, old_pgdata,
-							  new_pgdata, old_pgdata);
+									  new_pgdata, old_pgdata);
 
 		for (tblnum = 0; tblnum < os_info.num_old_tablespaces; tblnum++)
 			parallel_transfer_all_new_dbs(old_db_arr, new_db_arr, old_pgdata,
-								  new_pgdata, os_info.old_tablespaces[tblnum]);
+								new_pgdata, os_info.old_tablespaces[tblnum]);
 		/* reap all children */
 		while (reap_child(true) == true)
 			;
@@ -75,7 +75,7 @@ transfer_all_new_tablespaces(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
  */
 void
 transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
-					char *old_pgdata, char *new_pgdata, char *old_tablespace)
+					 char *old_pgdata, char *new_pgdata, char *old_tablespace)
 {
 	int			old_dbnum,
 				new_dbnum;
@@ -170,11 +170,11 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 {
 	int			mapnum;
 	bool		vm_crashsafe_match = true;
-	
+
 	/*
 	 * Do the old and new cluster disagree on the crash-safetiness of the vm
-     * files?  If so, do not copy them.
-     */
+	 * files?  If so, do not copy them.
+	 */
 	if (old_cluster.controldata.cat_ver < VISIBILITY_MAP_CRASHSAFE_CAT_VER &&
 		new_cluster.controldata.cat_ver >= VISIBILITY_MAP_CRASHSAFE_CAT_VER)
 		vm_crashsafe_match = false;
@@ -186,7 +186,7 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 		{
 			/* transfer primary file */
 			transfer_relfile(pageConverter, &maps[mapnum], "");
-	
+
 			/* fsm/vm files added in PG 8.4 */
 			if (GET_MAJOR_VERSION(old_cluster.major_version) >= 804)
 			{
@@ -217,13 +217,11 @@ transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
 	int			fd;
 	int			segno;
 	char		extent_suffix[65];
-	
+
 	/*
-	 * Now copy/link any related segments as well. Remember, PG breaks
-	 * large files into 1GB segments, the first segment has no extension,
-	 * subsequent segments are named relfilenode.1, relfilenode.2,
-	 * relfilenode.3.
-	 * copied.
+	 * Now copy/link any related segments as well. Remember, PG breaks large
+	 * files into 1GB segments, the first segment has no extension, subsequent
+	 * segments are named relfilenode.1, relfilenode.2, relfilenode.3. copied.
 	 */
 	for (segno = 0;; segno++)
 	{
@@ -233,12 +231,12 @@ transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
 			snprintf(extent_suffix, sizeof(extent_suffix), ".%d", segno);
 
 		snprintf(old_file, sizeof(old_file), "%s%s/%u/%u%s%s", map->old_tablespace,
-				 map->old_tablespace_suffix, map->old_db_oid, map->old_relfilenode,
+		   map->old_tablespace_suffix, map->old_db_oid, map->old_relfilenode,
 				 type_suffix, extent_suffix);
 		snprintf(new_file, sizeof(new_file), "%s%s/%u/%u%s%s", map->new_tablespace,
-				 map->new_tablespace_suffix, map->new_db_oid, map->new_relfilenode,
+		   map->new_tablespace_suffix, map->new_db_oid, map->new_relfilenode,
 				 type_suffix, extent_suffix);
-	
+
 		/* Is it an extent, fsm, or vm file? */
 		if (type_suffix[0] != '\0' || segno != 0)
 		{
@@ -257,18 +255,18 @@ transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
 		}
 
 		unlink(new_file);
-	
+
 		/* Copying files might take some time, so give feedback. */
 		pg_log(PG_STATUS, "%s", old_file);
-	
+
 		if ((user_opts.transfer_mode == TRANSFER_MODE_LINK) && (pageConverter != NULL))
 			pg_log(PG_FATAL, "This upgrade requires page-by-page conversion, "
 				   "you must use copy mode instead of link mode.\n");
-	
+
 		if (user_opts.transfer_mode == TRANSFER_MODE_COPY)
 		{
 			pg_log(PG_VERBOSE, "copying \"%s\" to \"%s\"\n", old_file, new_file);
-	
+
 			if ((msg = copyAndUpdateFile(pageConverter, old_file, new_file, true)) != NULL)
 				pg_log(PG_FATAL, "error while copying relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
 					   map->nspname, map->relname, old_file, new_file, msg);
@@ -276,14 +274,13 @@ transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
 		else
 		{
 			pg_log(PG_VERBOSE, "linking \"%s\" to \"%s\"\n", old_file, new_file);
-	
+
 			if ((msg = linkAndUpdateFile(pageConverter, old_file, new_file)) != NULL)
 				pg_log(PG_FATAL,
 					   "error while creating link for relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
 					   map->nspname, map->relname, old_file, new_file, msg);
 		}
-   }
+	}
 
 	return;
 }
-

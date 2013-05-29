@@ -173,7 +173,7 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 int
 GetIntoRelEFlags(IntoClause *intoClause)
 {
-	int		flags;
+	int			flags;
 
 	/*
 	 * We need to tell the executor whether it has to produce OIDs or not,
@@ -348,7 +348,7 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	if (is_matview)
 	{
 		/* StoreViewQuery scribbles on tree, so make a copy */
-		Query  *query = (Query *) copyObject(into->viewQuery);
+		Query	   *query = (Query *) copyObject(into->viewQuery);
 
 		StoreViewQuery(intoRelationId, query, false);
 		CommandCounterIncrement();

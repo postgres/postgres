@@ -71,8 +71,8 @@ extern Datum lastval(PG_FUNCTION_ARGS);
 
 extern Datum pg_sequence_parameters(PG_FUNCTION_ARGS);
 
-extern Oid DefineSequence(CreateSeqStmt *stmt);
-extern Oid AlterSequence(AlterSeqStmt *stmt);
+extern Oid	DefineSequence(CreateSeqStmt *stmt);
+extern Oid	AlterSequence(AlterSeqStmt *stmt);
 extern void ResetSequence(Oid seq_relid);
 
 extern void seq_redo(XLogRecPtr lsn, XLogRecord *rptr);

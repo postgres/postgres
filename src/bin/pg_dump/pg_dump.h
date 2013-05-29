@@ -236,7 +236,7 @@ typedef struct _tableInfo
 	char	   *relacl;
 	char		relkind;
 	char		relpersistence; /* relation persistence */
-	bool		relispopulated;	/* relation is populated */
+	bool		relispopulated; /* relation is populated */
 	char	   *reltablespace;	/* relation tablespace */
 	char	   *reloptions;		/* options specified by WITH (...) */
 	char	   *toast_reloptions;		/* ditto, for the TOAST table */

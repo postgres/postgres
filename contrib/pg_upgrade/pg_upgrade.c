@@ -134,7 +134,7 @@ main(int argc, char **argv)
 		disable_old_cluster();
 
 	transfer_all_new_tablespaces(&old_cluster.dbarr, &new_cluster.dbarr,
-						 old_cluster.pgdata, new_cluster.pgdata);
+								 old_cluster.pgdata, new_cluster.pgdata);
 
 	/*
 	 * Assuming OIDs are only used in system tables, there is no need to
@@ -193,14 +193,13 @@ setup(char *argv0, bool *live_check)
 	if (pid_lock_file_exists(old_cluster.pgdata))
 	{
 		/*
-		 *	If we have a postmaster.pid file, try to start the server.  If
-		 *	it starts, the pid file was stale, so stop the server.  If it
-		 *	doesn't start, assume the server is running.  If the pid file
-		 *	is left over from a server crash, this also allows any committed
-		 *	transactions stored in the WAL to be replayed so they are not
-		 *	lost, because WAL files are not transfered from old to new
-		 *	servers.
-		 */		
+		 * If we have a postmaster.pid file, try to start the server.  If it
+		 * starts, the pid file was stale, so stop the server.	If it doesn't
+		 * start, assume the server is running.  If the pid file is left over
+		 * from a server crash, this also allows any committed transactions
+		 * stored in the WAL to be replayed so they are not lost, because WAL
+		 * files are not transfered from old to new servers.
+		 */
 		if (start_postmaster(&old_cluster, false))
 			stop_postmaster(false);
 		else
@@ -220,7 +219,7 @@ setup(char *argv0, bool *live_check)
 			stop_postmaster(false);
 		else
 			pg_log(PG_FATAL, "There seems to be a postmaster servicing the new cluster.\n"
-			   "Please shutdown that postmaster and try again.\n");
+				   "Please shutdown that postmaster and try again.\n");
 	}
 
 	/* get path to pg_upgrade executable */
@@ -312,9 +311,9 @@ create_new_objects(void)
 	prep_status("Adding support functions to new cluster");
 
 	/*
-	 *	Technically, we only need to install these support functions in new
-	 *	databases that also exist in the old cluster, but for completeness
-	 *	we process all new databases.
+	 * Technically, we only need to install these support functions in new
+	 * databases that also exist in the old cluster, but for completeness we
+	 * process all new databases.
 	 */
 	for (dbnum = 0; dbnum < new_cluster.dbarr.ndbs; dbnum++)
 	{
@@ -330,21 +329,22 @@ create_new_objects(void)
 
 	for (dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
 	{
-		char sql_file_name[MAXPGPATH], log_file_name[MAXPGPATH];
-		DbInfo     *old_db = &old_cluster.dbarr.dbs[dbnum];
+		char		sql_file_name[MAXPGPATH],
+					log_file_name[MAXPGPATH];
+		DbInfo	   *old_db = &old_cluster.dbarr.dbs[dbnum];
 
 		pg_log(PG_STATUS, "%s", old_db->db_name);
 		snprintf(sql_file_name, sizeof(sql_file_name), DB_DUMP_FILE_MASK, old_db->db_oid);
 		snprintf(log_file_name, sizeof(log_file_name), DB_DUMP_LOG_FILE_MASK, old_db->db_oid);
 
 		/*
-		 *	pg_dump only produces its output at the end, so there is little
-		 *	parallelism if using the pipe.
+		 * pg_dump only produces its output at the end, so there is little
+		 * parallelism if using the pipe.
 		 */
 		parallel_exec_prog(log_file_name, NULL,
-				  "\"%s/pg_restore\" %s --exit-on-error --verbose --dbname \"%s\" \"%s\"",
-				  new_cluster.bindir, cluster_conn_opts(&new_cluster),
-				  old_db->db_name, sql_file_name);
+						   "\"%s/pg_restore\" %s --exit-on-error --verbose --dbname \"%s\" \"%s\"",
+						 new_cluster.bindir, cluster_conn_opts(&new_cluster),
+						   old_db->db_name, sql_file_name);
 	}
 
 	/* reap all children */
@@ -418,6 +418,7 @@ copy_clog_xlog_xid(void)
 		copy_subdir_files("pg_multixact/offsets");
 		copy_subdir_files("pg_multixact/members");
 		prep_status("Setting next multixact ID and offset for new cluster");
+
 		/*
 		 * we preserve all files and contents, so we must preserve both "next"
 		 * counters here and the oldest multi present on system.
@@ -434,6 +435,7 @@ copy_clog_xlog_xid(void)
 	else if (new_cluster.controldata.cat_ver >= MULTIXACT_FORMATCHANGE_CAT_VER)
 	{
 		prep_status("Setting oldest multixact ID on new cluster");
+
 		/*
 		 * We don't preserve files in this case, but it's important that the
 		 * oldest multi is set to the latest value used by the old system, so
@@ -549,7 +551,6 @@ set_frozenxids(void)
 static void
 cleanup(void)
 {
-
 	fclose(log_opts.internal);
 
 	/* Remove dump and log files? */
@@ -567,8 +568,9 @@ cleanup(void)
 		if (old_cluster.dbarr.dbs)
 			for (dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
 			{
-				char sql_file_name[MAXPGPATH], log_file_name[MAXPGPATH];
-				DbInfo     *old_db = &old_cluster.dbarr.dbs[dbnum];
+				char		sql_file_name[MAXPGPATH],
+							log_file_name[MAXPGPATH];
+				DbInfo	   *old_db = &old_cluster.dbarr.dbs[dbnum];
 
 				snprintf(sql_file_name, sizeof(sql_file_name), DB_DUMP_FILE_MASK, old_db->db_oid);
 				unlink(sql_file_name);

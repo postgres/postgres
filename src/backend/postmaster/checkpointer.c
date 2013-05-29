@@ -107,7 +107,7 @@
  */
 typedef struct
 {
-	RelFileNode	rnode;
+	RelFileNode rnode;
 	ForkNumber	forknum;
 	BlockNumber segno;			/* see md.c for special values */
 	/* might add a real request-type field later; not needed yet */
@@ -930,8 +930,8 @@ CheckpointerShmemInit(void)
 	{
 		/*
 		 * First time through, so initialize.  Note that we zero the whole
-		 * requests array; this is so that CompactCheckpointerRequestQueue
-		 * can assume that any pad bytes in the request structs are zeroes.
+		 * requests array; this is so that CompactCheckpointerRequestQueue can
+		 * assume that any pad bytes in the request structs are zeroes.
 		 */
 		MemSet(CheckpointerShmem, 0, size);
 		SpinLockInit(&CheckpointerShmem->ckpt_lck);

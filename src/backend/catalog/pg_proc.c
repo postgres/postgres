@@ -406,7 +406,7 @@ ProcedureCreate(const char *procedureName,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 					 errmsg("cannot change return type of existing function"),
 					 errhint("Use DROP FUNCTION %s first.",
-                             format_procedure(HeapTupleGetOid(oldtup)))));
+							 format_procedure(HeapTupleGetOid(oldtup)))));
 
 		/*
 		 * If it returns RECORD, check for possible change of record type
@@ -430,7 +430,7 @@ ProcedureCreate(const char *procedureName,
 					errmsg("cannot change return type of existing function"),
 				errdetail("Row type defined by OUT parameters is different."),
 						 errhint("Use DROP FUNCTION %s first.",
-                                 format_procedure(HeapTupleGetOid(oldtup)))));
+								 format_procedure(HeapTupleGetOid(oldtup)))));
 		}
 
 		/*
@@ -473,7 +473,7 @@ ProcedureCreate(const char *procedureName,
 					   errmsg("cannot change name of input parameter \"%s\"",
 							  old_arg_names[j]),
 							 errhint("Use DROP FUNCTION %s first.",
-                                     format_procedure(HeapTupleGetOid(oldtup)))));
+								format_procedure(HeapTupleGetOid(oldtup)))));
 			}
 		}
 
@@ -497,7 +497,7 @@ ProcedureCreate(const char *procedureName,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 						 errmsg("cannot remove parameter defaults from existing function"),
 						 errhint("Use DROP FUNCTION %s first.",
-                                 format_procedure(HeapTupleGetOid(oldtup)))));
+								 format_procedure(HeapTupleGetOid(oldtup)))));
 
 			proargdefaults = SysCacheGetAttr(PROCNAMEARGSNSP, oldtup,
 											 Anum_pg_proc_proargdefaults,
@@ -524,7 +524,7 @@ ProcedureCreate(const char *procedureName,
 							(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 							 errmsg("cannot change data type of existing parameter default value"),
 							 errhint("Use DROP FUNCTION %s first.",
-                                     format_procedure(HeapTupleGetOid(oldtup)))));
+								format_procedure(HeapTupleGetOid(oldtup)))));
 				newlc = lnext(newlc);
 			}
 		}

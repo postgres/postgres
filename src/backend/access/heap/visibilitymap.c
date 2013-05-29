@@ -292,7 +292,7 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
 				 */
 				if (DataChecksumsEnabled())
 				{
-					Page heapPage = BufferGetPage(heapBuf);
+					Page		heapPage = BufferGetPage(heapBuf);
 
 					/* caller is expected to set PD_ALL_VISIBLE first */
 					Assert(PageIsAllVisible(heapPage));

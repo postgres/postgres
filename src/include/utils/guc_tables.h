@@ -261,5 +261,4 @@ extern const char *config_enum_lookup_by_value(struct config_enum * record, int 
 extern bool config_enum_lookup_by_name(struct config_enum * record,
 						   const char *value, int *retval);
 
-
 #endif   /* GUC_TABLES_H */

@@ -75,7 +75,7 @@ typedef struct
 
 /*
  * The maximum workable length of a socket path is what will fit into
- * struct sockaddr_un.  This is usually only 100 or so bytes :-(.
+ * struct sockaddr_un.	This is usually only 100 or so bytes :-(.
  *
  * For consistency, always pass a MAXPGPATH-sized buffer to UNIXSOCK_PATH(),
  * then complain if the resulting string is >= UNIXSOCK_PATH_BUFLEN bytes.

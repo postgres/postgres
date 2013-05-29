@@ -93,7 +93,7 @@ typedef struct GinIndexStat
 {
 	int32		version;
 
-	BlockNumber	pending_pages;
+	BlockNumber pending_pages;
 	int64		pending_tuples;
 } GinIndexStat;
 
@@ -324,7 +324,7 @@ pgstatginindex(PG_FUNCTION_ARGS)
 	Relation	rel;
 	Buffer		buffer;
 	Page		page;
-	GinMetaPageData	*metadata;
+	GinMetaPageData *metadata;
 	GinIndexStat stats;
 	HeapTuple	tuple;
 	TupleDesc	tupleDesc;
@@ -351,7 +351,7 @@ pgstatginindex(PG_FUNCTION_ARGS)
 	if (RELATION_IS_OTHER_TEMP(rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot access temporary indexes of other sessions")));
+			   errmsg("cannot access temporary indexes of other sessions")));
 
 	/*
 	 * Read metapage

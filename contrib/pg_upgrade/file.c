@@ -127,14 +127,13 @@ linkAndUpdateFile(pageCnvCtx *pageConverter,
 static int
 copy_file(const char *srcfile, const char *dstfile, bool force)
 {
-
 #define COPY_BUF_SIZE (50 * BLCKSZ)
 
 	int			src_fd;
 	int			dest_fd;
 	char	   *buffer;
 	int			ret = 0;
-	int         save_errno = 0;
+	int			save_errno = 0;
 
 	if ((srcfile == NULL) || (dstfile == NULL))
 		return -1;

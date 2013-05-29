@@ -102,6 +102,4 @@ void		plperl_spi_freeplan(char *);
 void		plperl_spi_cursor_close(char *);
 char	   *plperl_sv_to_literal(SV *, char *);
 
-
-
 #endif   /* PL_PERL_H */

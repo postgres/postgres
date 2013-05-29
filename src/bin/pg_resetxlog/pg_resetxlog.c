@@ -192,6 +192,7 @@ main(int argc, char *argv[])
 					fprintf(stderr, _("%s: multitransaction ID (-m) must not be 0\n"), progname);
 					exit(1);
 				}
+
 				/*
 				 * XXX It'd be nice to have more sanity checks here, e.g. so
 				 * that oldest is not wrapped around w.r.t. nextMulti.

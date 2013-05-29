@@ -311,7 +311,6 @@ deccvlong(long lng, decimal *np)
 int
 decdiv(decimal *n1, decimal *n2, decimal *result)
 {
-
 	int			i;
 
 	errno = 0;

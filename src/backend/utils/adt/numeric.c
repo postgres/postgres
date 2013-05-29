@@ -3402,7 +3402,7 @@ init_var_from_num(Numeric num, NumericVar *dest)
 	dest->sign = NUMERIC_SIGN(num);
 	dest->dscale = NUMERIC_DSCALE(num);
 	dest->digits = NUMERIC_DIGITS(num);
-	dest->buf = NULL;	/* digits array is not palloc'd */
+	dest->buf = NULL;			/* digits array is not palloc'd */
 }
 
 

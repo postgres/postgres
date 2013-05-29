@@ -95,11 +95,11 @@ pg_signal_backend(int pid, int sig)
 
 	/*
 	 * BackendPidGetProc returns NULL if the pid isn't valid; but by the time
-	 * we reach kill(), a process for which we get a valid proc here might have
-	 * terminated on its own.  There's no way to acquire a lock on an arbitrary
-	 * process to prevent that. But since so far all the callers of this
-	 * mechanism involve some request for ending the process anyway, that it
-	 * might end on its own first is not a problem.
+	 * we reach kill(), a process for which we get a valid proc here might
+	 * have terminated on its own.	There's no way to acquire a lock on an
+	 * arbitrary process to prevent that. But since so far all the callers of
+	 * this mechanism involve some request for ending the process anyway, that
+	 * it might end on its own first is not a problem.
 	 */
 	if (proc == NULL)
 	{

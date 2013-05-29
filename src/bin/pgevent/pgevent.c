@@ -42,7 +42,6 @@ HRESULT
 DllInstall(BOOL bInstall,
 		   LPCWSTR pszCmdLine)
 {
-
 	if (pszCmdLine && *pszCmdLine != '\0')
 		wcstombs(event_source, pszCmdLine, sizeof(event_source));
 

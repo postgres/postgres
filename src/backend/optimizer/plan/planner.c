@@ -52,9 +52,9 @@ planner_hook_type planner_hook = NULL;
 #define EXPRKIND_QUAL			0
 #define EXPRKIND_TARGET			1
 #define EXPRKIND_RTFUNC			2
-#define EXPRKIND_RTFUNC_LATERAL	3
+#define EXPRKIND_RTFUNC_LATERAL 3
 #define EXPRKIND_VALUES			4
-#define EXPRKIND_VALUES_LATERAL	5
+#define EXPRKIND_VALUES_LATERAL 5
 #define EXPRKIND_LIMIT			6
 #define EXPRKIND_APPINFO		7
 #define EXPRKIND_PHV			8
@@ -571,9 +571,9 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 				returningLists = NIL;
 
 			/*
-			 * If there was a FOR [KEY] UPDATE/SHARE clause, the LockRows node will
-			 * have dealt with fetching non-locked marked rows, else we need
-			 * to have ModifyTable do that.
+			 * If there was a FOR [KEY] UPDATE/SHARE clause, the LockRows node
+			 * will have dealt with fetching non-locked marked rows, else we
+			 * need to have ModifyTable do that.
 			 */
 			if (parse->rowMarks)
 				rowMarks = NIL;
@@ -964,8 +964,8 @@ inheritance_planner(PlannerInfo *root)
 	root->simple_rel_array = save_rel_array;
 
 	/*
-	 * If there was a FOR [KEY] UPDATE/SHARE clause, the LockRows node will have
-	 * dealt with fetching non-locked marked rows, else we need to have
+	 * If there was a FOR [KEY] UPDATE/SHARE clause, the LockRows node will
+	 * have dealt with fetching non-locked marked rows, else we need to have
 	 * ModifyTable do that.
 	 */
 	if (parse->rowMarks)
@@ -1060,7 +1060,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		 */
 		current_pathkeys = make_pathkeys_for_sortclauses(root,
 														 set_sortclauses,
-													 result_plan->targetlist);
+													result_plan->targetlist);
 
 		/*
 		 * We should not need to call preprocess_targetlist, since we must be
@@ -1075,8 +1075,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 										tlist);
 
 		/*
-		 * Can't handle FOR [KEY] UPDATE/SHARE here (parser should have checked
-		 * already, but let's make sure).
+		 * Can't handle FOR [KEY] UPDATE/SHARE here (parser should have
+		 * checked already, but let's make sure).
 		 */
 		if (parse->rowMarks)
 			ereport(ERROR,
@@ -1485,7 +1485,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			 * it's not worth trying to avoid it.  In particular, think not to
 			 * skip adding the Result if the initial window_tlist matches the
 			 * top-level plan node's output, because we might change the tlist
-			 * inside the following loop.)  Note that on second and subsequent
+			 * inside the following loop.)	Note that on second and subsequent
 			 * passes through the following loop, the top-level node will be a
 			 * WindowAgg which we know can project; so we only need to check
 			 * once.
@@ -1500,14 +1500,14 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 			/*
 			 * The "base" targetlist for all steps of the windowing process is
-			 * a flat tlist of all Vars and Aggs needed in the result.  (In
+			 * a flat tlist of all Vars and Aggs needed in the result.	(In
 			 * some cases we wouldn't need to propagate all of these all the
 			 * way to the top, since they might only be needed as inputs to
 			 * WindowFuncs.  It's probably not worth trying to optimize that
 			 * though.)  We also add window partitioning and sorting
 			 * expressions to the base tlist, to ensure they're computed only
 			 * once at the bottom of the stack (that's critical for volatile
-			 * functions).  As we climb up the stack, we'll add outputs for
+			 * functions).	As we climb up the stack, we'll add outputs for
 			 * the WindowFuncs computed at each level.
 			 */
 			window_tlist = make_windowInputTargetList(root,
@@ -1516,7 +1516,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 			/*
 			 * The copyObject steps here are needed to ensure that each plan
-			 * node has a separately modifiable tlist.  (XXX wouldn't a
+			 * node has a separately modifiable tlist.	(XXX wouldn't a
 			 * shallow list copy do for that?)
 			 */
 			result_plan->targetlist = (List *) copyObject(window_tlist);
@@ -1543,7 +1543,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				 * plan's tlist for any partitioning or ordering columns that
 				 * aren't plain Vars.  (In theory, make_windowInputTargetList
 				 * should have provided all such columns, but let's not assume
-				 * that here.)  Furthermore, this way we can use existing
+				 * that here.)	Furthermore, this way we can use existing
 				 * infrastructure to identify which input columns are the
 				 * interesting ones.
 				 */
@@ -1741,9 +1741,9 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	}
 
 	/*
-	 * If there is a FOR [KEY] UPDATE/SHARE clause, add the LockRows node. (Note: we
-	 * intentionally test parse->rowMarks not root->rowMarks here. If there
-	 * are only non-locking rowmarks, they should be handled by the
+	 * If there is a FOR [KEY] UPDATE/SHARE clause, add the LockRows node.
+	 * (Note: we intentionally test parse->rowMarks not root->rowMarks here.
+	 * If there are only non-locking rowmarks, they should be handled by the
 	 * ModifyTable node instead.)
 	 */
 	if (parse->rowMarks)
@@ -1927,9 +1927,9 @@ preprocess_rowmarks(PlannerInfo *root)
 	if (parse->rowMarks)
 	{
 		/*
-		 * We've got trouble if FOR [KEY] UPDATE/SHARE appears inside grouping,
-		 * since grouping renders a reference to individual tuple CTIDs
-		 * invalid.  This is also checked at parse time, but that's
+		 * We've got trouble if FOR [KEY] UPDATE/SHARE appears inside
+		 * grouping, since grouping renders a reference to individual tuple
+		 * CTIDs invalid.  This is also checked at parse time, but that's
 		 * insufficient because of rule substitution, query pullup, etc.
 		 */
 		CheckSelectLocking(parse);
@@ -1937,7 +1937,8 @@ preprocess_rowmarks(PlannerInfo *root)
 	else
 	{
 		/*
-		 * We only need rowmarks for UPDATE, DELETE, or FOR [KEY] UPDATE/SHARE.
+		 * We only need rowmarks for UPDATE, DELETE, or FOR [KEY]
+		 * UPDATE/SHARE.
 		 */
 		if (parse->commandType != CMD_UPDATE &&
 			parse->commandType != CMD_DELETE)
@@ -2238,7 +2239,7 @@ preprocess_limit(PlannerInfo *root, double tuple_fraction,
  *
  * If we have constant-zero OFFSET and constant-null LIMIT, we can skip adding
  * a Limit node.  This is worth checking for because "OFFSET 0" is a common
- * locution for an optimization fence.  (Because other places in the planner
+ * locution for an optimization fence.	(Because other places in the planner
  * merely check whether parse->limitOffset isn't NULL, it will still work as
  * an optimization fence --- we're just suppressing unnecessary run-time
  * overhead.)
@@ -2273,7 +2274,7 @@ limit_needed(Query *parse)
 			/* Treat NULL as no offset; the executor would too */
 			if (!((Const *) node)->constisnull)
 			{
-				int64	offset = DatumGetInt64(((Const *) node)->constvalue);
+				int64		offset = DatumGetInt64(((Const *) node)->constvalue);
 
 				/* Executor would treat less-than-zero same as zero */
 				if (offset > 0)
@@ -3107,7 +3108,7 @@ select_active_windows(PlannerInfo *root, WindowFuncLists *wflists)
  *
  * When grouping_planner inserts one or more WindowAgg nodes into the plan,
  * this function computes the initial target list to be computed by the node
- * just below the first WindowAgg.  This list must contain all values needed
+ * just below the first WindowAgg.	This list must contain all values needed
  * to evaluate the window functions, compute the final target list, and
  * perform any required final sort step.  If multiple WindowAggs are needed,
  * each intermediate one adds its window function results onto this tlist;
@@ -3115,7 +3116,7 @@ select_active_windows(PlannerInfo *root, WindowFuncLists *wflists)
  *
  * This function is much like make_subplanTargetList, though not quite enough
  * like it to share code.  As in that function, we flatten most expressions
- * into their component variables.  But we do not want to flatten window
+ * into their component variables.	But we do not want to flatten window
  * PARTITION BY/ORDER BY clauses, since that might result in multiple
  * evaluations of them, which would be bad (possibly even resulting in
  * inconsistent answers, if they contain volatile functions).  Also, we must
@@ -3472,7 +3473,7 @@ plan_cluster_use_sort(Oid tableOid, Oid indexOid)
 	rte = makeNode(RangeTblEntry);
 	rte->rtekind = RTE_RELATION;
 	rte->relid = tableOid;
-	rte->relkind = RELKIND_RELATION;  /* Don't be too picky. */
+	rte->relkind = RELKIND_RELATION;	/* Don't be too picky. */
 	rte->lateral = false;
 	rte->inh = false;
 	rte->inFromCl = true;

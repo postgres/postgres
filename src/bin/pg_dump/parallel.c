@@ -110,9 +110,9 @@ static char *readMessageFromPipe(int fd);
 
 #ifdef WIN32
 static void shutdown_parallel_dump_utils(int code, void *unused);
-bool parallel_init_done = false;
+bool		parallel_init_done = false;
 static DWORD tls_index;
-DWORD mainThreadId;
+DWORD		mainThreadId;
 #endif
 
 
@@ -1141,7 +1141,6 @@ select_loop(int maxFd, fd_set *workerset)
 		if (i)
 			break;
 	}
-
 #else							/* UNIX */
 
 	for (;;)
@@ -1163,7 +1162,6 @@ select_loop(int maxFd, fd_set *workerset)
 			continue;
 		break;
 	}
-
 #endif
 
 	return i;
@@ -1330,7 +1328,7 @@ pgpipe(int handles[2])
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_port = htons(0);
 	serv_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-	if (bind(s, (SOCKADDR *) & serv_addr, len) == SOCKET_ERROR)
+	if (bind(s, (SOCKADDR *) &serv_addr, len) == SOCKET_ERROR)
 	{
 		write_msg(modulename, "pgpipe could not bind: %ui",
 				  WSAGetLastError());
@@ -1344,7 +1342,7 @@ pgpipe(int handles[2])
 		closesocket(s);
 		return -1;
 	}
-	if (getsockname(s, (SOCKADDR *) & serv_addr, &len) == SOCKET_ERROR)
+	if (getsockname(s, (SOCKADDR *) &serv_addr, &len) == SOCKET_ERROR)
 	{
 		write_msg(modulename, "pgpipe could not getsockname: %ui",
 				  WSAGetLastError());
@@ -1359,14 +1357,14 @@ pgpipe(int handles[2])
 		return -1;
 	}
 
-	if (connect(handles[1], (SOCKADDR *) & serv_addr, len) == SOCKET_ERROR)
+	if (connect(handles[1], (SOCKADDR *) &serv_addr, len) == SOCKET_ERROR)
 	{
 		write_msg(modulename, "pgpipe could not connect socket: %ui",
 				  WSAGetLastError());
 		closesocket(s);
 		return -1;
 	}
-	if ((handles[0] = accept(s, (SOCKADDR *) & serv_addr, &len)) == INVALID_SOCKET)
+	if ((handles[0] = accept(s, (SOCKADDR *) &serv_addr, &len)) == INVALID_SOCKET)
 	{
 		write_msg(modulename, "pgpipe could not accept socket: %ui",
 				  WSAGetLastError());

@@ -65,7 +65,7 @@ ecpg_type_name(enum ECPGttype typ)
 		default:
 			abort();
 	}
-	return ""; /* keep MSC compiler happy */
+	return "";					/* keep MSC compiler happy */
 }
 
 int

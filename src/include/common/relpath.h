@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * relpath.h
- * 		Declarations for relpath() and friends
+ *		Declarations for relpath() and friends
  *
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -38,4 +38,4 @@ extern char *relpathbackend(RelFileNode rnode, BackendId backend,
 #define relpathperm(rnode, forknum) \
 		relpathbackend((rnode), InvalidBackendId, (forknum))
 
-#endif		/* RELPATH_H */
+#endif   /* RELPATH_H */

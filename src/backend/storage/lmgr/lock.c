@@ -1210,7 +1210,7 @@ SetupLockInTable(LockMethod lockMethodTable, PGPROC *proc,
 static void
 RemoveLocalLock(LOCALLOCK *locallock)
 {
-	int i;
+	int			i;
 
 	for (i = locallock->numLockOwners - 1; i >= 0; i--)
 	{
@@ -1988,7 +1988,7 @@ LockReleaseAll(LOCKMETHODID lockmethodid, bool allLocks)
 			LOCALLOCKOWNER *lockOwners = locallock->lockOwners;
 
 			/* If session lock is above array position 0, move it down to 0 */
-			for (i = 0; i < locallock->numLockOwners ; i++)
+			for (i = 0; i < locallock->numLockOwners; i++)
 			{
 				if (lockOwners[i].owner == NULL)
 					lockOwners[0] = lockOwners[i];
@@ -2214,7 +2214,7 @@ LockReleaseCurrentOwner(LOCALLOCK **locallocks, int nlocks)
 	}
 	else
 	{
-		int i;
+		int			i;
 
 		for (i = nlocks - 1; i >= 0; i--)
 			ReleaseLockIfHeld(locallocks[i], false);
@@ -2313,7 +2313,7 @@ LockReassignCurrentOwner(LOCALLOCK **locallocks, int nlocks)
 	}
 	else
 	{
-		int i;
+		int			i;
 
 		for (i = nlocks - 1; i >= 0; i--)
 			LockReassignOwner(locallocks[i], parent);
@@ -2333,8 +2333,8 @@ LockReassignOwner(LOCALLOCK *locallock, ResourceOwner parent)
 	int			ip = -1;
 
 	/*
-	 * Scan to see if there are any locks belonging to current owner or
-	 * its parent
+	 * Scan to see if there are any locks belonging to current owner or its
+	 * parent
 	 */
 	lockOwners = locallock->lockOwners;
 	for (i = locallock->numLockOwners - 1; i >= 0; i--)
@@ -2346,7 +2346,7 @@ LockReassignOwner(LOCALLOCK *locallock, ResourceOwner parent)
 	}
 
 	if (ic < 0)
-		return;			/* no current locks */
+		return;					/* no current locks */
 
 	if (ip < 0)
 	{
@@ -2690,9 +2690,9 @@ GetLockConflicts(const LOCKTAG *locktag, LOCKMODE lockmode)
 			LWLockAcquire(proc->backendLock, LW_SHARED);
 
 			/*
-			 * If the target backend isn't referencing the same database as the
-			 * lock, then we needn't examine the individual relation IDs at
-			 * all; none of them can be relevant.
+			 * If the target backend isn't referencing the same database as
+			 * the lock, then we needn't examine the individual relation IDs
+			 * at all; none of them can be relevant.
 			 *
 			 * See FastPathTransferLocks() for discussion of why we do this
 			 * test after acquiring the lock.
@@ -3158,15 +3158,15 @@ PostPrepare_Locks(TransactionId xid)
 			/*
 			 * We cannot simply modify proclock->tag.myProc to reassign
 			 * ownership of the lock, because that's part of the hash key and
-			 * the proclock would then be in the wrong hash chain.  Instead
+			 * the proclock would then be in the wrong hash chain.	Instead
 			 * use hash_update_hash_key.  (We used to create a new hash entry,
 			 * but that risks out-of-memory failure if other processes are
-			 * busy making proclocks too.)  We must unlink the proclock from
+			 * busy making proclocks too.)	We must unlink the proclock from
 			 * our procLink chain and put it into the new proc's chain, too.
 			 *
 			 * Note: the updated proclock hash key will still belong to the
-			 * same hash partition, cf proclock_hash().  So the partition
-			 * lock we already hold is sufficient for this.
+			 * same hash partition, cf proclock_hash().  So the partition lock
+			 * we already hold is sufficient for this.
 			 */
 			SHMQueueDelete(&proclock->procLink);
 
@@ -3177,9 +3177,9 @@ PostPrepare_Locks(TransactionId xid)
 			proclocktag.myProc = newproc;
 
 			/*
-			 * Update the proclock.  We should not find any existing entry
-			 * for the same hash key, since there can be only one entry for
-			 * any given lock with my own proc.
+			 * Update the proclock.  We should not find any existing entry for
+			 * the same hash key, since there can be only one entry for any
+			 * given lock with my own proc.
 			 */
 			if (!hash_update_hash_key(LockMethodProcLockHash,
 									  (void *) proclock,

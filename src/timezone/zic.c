@@ -1792,7 +1792,7 @@ writezone(const char *name, const char *string)
 				if (print_abbrevs && pass == 2 &&
 					(ats[i] >= print_cutoff || i == typecnt - 1))
 				{
-					char *thisabbrev = &thischars[indmap[abbrinds[i]]];
+					char	   *thisabbrev = &thischars[indmap[abbrinds[i]]];
 
 					/* filter out assorted junk entries */
 					if (strcmp(thisabbrev, GRANDPARENTED) != 0 &&

@@ -80,7 +80,7 @@ wait_result_to_str(int exitstatus)
 	else
 		snprintf(str, sizeof(str),
 				 _("child process exited with unrecognized status %d"),
-				  exitstatus);
+				 exitstatus);
 
 	return pstrdup(str);
 }

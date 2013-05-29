@@ -319,7 +319,7 @@ format_procedure_qualified(Oid procedure_oid)
  * Routine to produce regprocedure names; see format_procedure above.
  *
  * force_qualify says whether to schema-qualify; if true, the name is always
- * qualified regardless of search_path visibility.  Otherwise the name is only
+ * qualified regardless of search_path visibility.	Otherwise the name is only
  * qualified if the function is not in path.
  */
 static char *
@@ -698,7 +698,8 @@ format_operator_internal(Oid operator_oid, bool force_qualify)
 
 		/*
 		 * Would this oper be found (given the right args) by regoperatorin?
-		 * If not, or if caller explicitely requests it, we need to qualify it.
+		 * If not, or if caller explicitely requests it, we need to qualify
+		 * it.
 		 */
 		if (force_qualify || !OperatorIsVisible(operator_oid))
 		{

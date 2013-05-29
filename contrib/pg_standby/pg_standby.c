@@ -593,7 +593,7 @@ main(int argc, char **argv)
 	 * There's no way to trigger failover via signal on Windows.
 	 */
 	(void) pqsignal(SIGUSR1, sighandler);
-	(void) pqsignal(SIGINT, sighandler);	/* deprecated, use SIGUSR1 */
+	(void) pqsignal(SIGINT, sighandler);		/* deprecated, use SIGUSR1 */
 	(void) pqsignal(SIGQUIT, sigquit_handler);
 #endif
 

@@ -24,7 +24,7 @@ extern		"C"
 #endif
 
 /* Callback Event Ids */
-			typedef enum
+typedef enum
 {
 	PGEVT_REGISTER,
 	PGEVT_CONNRESET,

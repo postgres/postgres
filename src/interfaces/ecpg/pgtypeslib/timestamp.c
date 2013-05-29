@@ -949,7 +949,6 @@ int
 PGTYPEStimestamp_add_interval(timestamp * tin, interval * span, timestamp * tout)
 {
 
-
 	if (TIMESTAMP_NOT_FINITE(*tin))
 		*tout = *tin;
 

@@ -51,7 +51,7 @@ static void libpqrcv_identify_system(TimeLineID *primary_tli);
 static void libpqrcv_readtimelinehistoryfile(TimeLineID tli, char **filename, char **content, int *len);
 static bool libpqrcv_startstreaming(TimeLineID tli, XLogRecPtr startpoint);
 static void libpqrcv_endstreaming(TimeLineID *next_tli);
-static int libpqrcv_receive(int timeout, char **buffer);
+static int	libpqrcv_receive(int timeout, char **buffer);
 static void libpqrcv_send(const char *buffer, int nbytes);
 static void libpqrcv_disconnect(void);
 
@@ -209,12 +209,13 @@ libpqrcv_endstreaming(TimeLineID *next_tli)
 
 	if (PQputCopyEnd(streamConn, NULL) <= 0 || PQflush(streamConn))
 		ereport(ERROR,
-				(errmsg("could not send end-of-streaming message to primary: %s",
-						PQerrorMessage(streamConn))));
+			(errmsg("could not send end-of-streaming message to primary: %s",
+					PQerrorMessage(streamConn))));
 
 	/*
 	 * After COPY is finished, we should receive a result set indicating the
-	 * next timeline's ID, or just CommandComplete if the server was shut down.
+	 * next timeline's ID, or just CommandComplete if the server was shut
+	 * down.
 	 *
 	 * If we had not yet received CopyDone from the backend, PGRES_COPY_IN
 	 * would also be possible. However, at the moment this function is only
@@ -456,7 +457,7 @@ libpqrcv_disconnect(void)
  *	 0 if no data was available within timeout, or wait was interrupted
  *	 by signal.
  *
- *   -1 if the server ended the COPY.
+ *	 -1 if the server ended the COPY.
  *
  * ereports on error.
  */

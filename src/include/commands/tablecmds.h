@@ -35,7 +35,7 @@ extern void ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing, L
 
 extern void AlterTableInternal(Oid relid, List *cmds, bool recurse);
 
-extern Oid AlterTableNamespace(AlterObjectSchemaStmt *stmt);
+extern Oid	AlterTableNamespace(AlterObjectSchemaStmt *stmt);
 
 extern void AlterTableNamespaceInternal(Relation rel, Oid oldNspOid,
 							Oid nspOid, ObjectAddresses *objsMoved);
@@ -51,11 +51,11 @@ extern void ExecuteTruncate(TruncateStmt *stmt);
 
 extern void SetRelationHasSubclass(Oid relationId, bool relhassubclass);
 
-extern Oid renameatt(RenameStmt *stmt);
+extern Oid	renameatt(RenameStmt *stmt);
 
-extern Oid RenameConstraint(RenameStmt *stmt);
+extern Oid	RenameConstraint(RenameStmt *stmt);
 
-extern Oid RenameRelation(RenameStmt *stmt);
+extern Oid	RenameRelation(RenameStmt *stmt);
 
 extern void RenameRelationInternal(Oid myrelid,
 					   const char *newrelname, bool is_internal);

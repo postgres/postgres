@@ -30,7 +30,7 @@
  * imposed by page headers, tuple headers, etc, we leave 100 bytes for that
  * (the actual overhead should be no more than 56 bytes at this writing, so
  * there is slop in this number).  So we can safely create prefixes up to
- * BLCKSZ - 256 * 16 - 100 bytes long.  Unfortunately, because 256 * 16 is
+ * BLCKSZ - 256 * 16 - 100 bytes long.	Unfortunately, because 256 * 16 is
  * already 4K, there is no safe prefix length when BLCKSZ is less than 8K;
  * it is always possible to get "SPGiST inner tuple size exceeds maximum"
  * if there are too many distinct next-byte values at a given place in the

@@ -127,7 +127,7 @@ lnext:
 				break;
 			default:
 				elog(ERROR, "unsupported rowmark type");
-				lockmode = LockTupleNoKeyExclusive;	/* keep compiler quiet */
+				lockmode = LockTupleNoKeyExclusive;		/* keep compiler quiet */
 				break;
 		}
 
@@ -139,6 +139,7 @@ lnext:
 		switch (test)
 		{
 			case HeapTupleSelfUpdated:
+
 				/*
 				 * The target tuple was already updated or deleted by the
 				 * current command, or by a later command in the current

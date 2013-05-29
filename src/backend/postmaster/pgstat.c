@@ -2586,7 +2586,7 @@ pgstat_report_activity(BackendState state, const char *cmd_str)
 		{
 			/*
 			 * track_activities is disabled, but we last reported a
-			 * non-disabled state.  As our final update, change the state and
+			 * non-disabled state.	As our final update, change the state and
 			 * clear fields we will not be updating anymore.
 			 */
 			beentry->st_changecount++;
@@ -4401,9 +4401,9 @@ pgstat_recv_inquiry(PgStat_MsgInquiry *msg, int len)
 	 * request's cutoff time, update it; otherwise there's nothing to do.
 	 *
 	 * Note that if a request is found, we return early and skip the below
-	 * check for clock skew.  This is okay, since the only way for a DB request
-	 * to be present in the list is that we have been here since the last write
-	 * round.
+	 * check for clock skew.  This is okay, since the only way for a DB
+	 * request to be present in the list is that we have been here since the
+	 * last write round.
 	 */
 	slist_foreach(iter, &last_statrequests)
 	{

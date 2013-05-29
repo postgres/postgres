@@ -25,10 +25,10 @@ typedef enum
 
 typedef struct
 {
-	Oid			fnoid;				/* function to be called */
-	char		enabled;			/* as SESSION_REPLICATION_ROLE_* */
-	int			ntags;				/* number of command tags */
-	char	  **tag;				/* command tags in SORTED order */
+	Oid			fnoid;			/* function to be called */
+	char		enabled;		/* as SESSION_REPLICATION_ROLE_* */
+	int			ntags;			/* number of command tags */
+	char	  **tag;			/* command tags in SORTED order */
 } EventTriggerCacheItem;
 
 extern List *EventCacheLookup(EventTriggerEvent event);

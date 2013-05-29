@@ -35,7 +35,7 @@ binaryheap_allocate(int capacity, binaryheap_comparator compare, void *arg)
 	int			sz;
 	binaryheap *heap;
 
-	sz = offsetof(binaryheap, bh_nodes) + sizeof(Datum) * capacity;
+	sz = offsetof(binaryheap, bh_nodes) +sizeof(Datum) * capacity;
 	heap = palloc(sz);
 	heap->bh_size = 0;
 	heap->bh_space = capacity;
@@ -203,7 +203,7 @@ binaryheap_replace_first(binaryheap *heap, Datum d)
 static inline void
 swap_nodes(binaryheap *heap, int a, int b)
 {
-	Datum	swap;
+	Datum		swap;
 
 	swap = heap->bh_nodes[a];
 	heap->bh_nodes[a] = heap->bh_nodes[b];

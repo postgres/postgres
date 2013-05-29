@@ -17,6 +17,6 @@
 
 #include "nodes/parsenodes.h"
 
-extern Oid CreateConversionCommand(CreateConversionStmt *parsetree);
+extern Oid	CreateConversionCommand(CreateConversionStmt *parsetree);
 
 #endif   /* CONVERSIONCMDS_H */

@@ -808,7 +808,7 @@ pq_set_nonblocking(bool nonblocking)
 	{
 		if (!pg_set_noblock(MyProcPort->sock))
 			ereport(COMMERROR,
-				  (errmsg("could not set socket to nonblocking mode: %m")));
+					(errmsg("could not set socket to nonblocking mode: %m")));
 	}
 	else
 	{

@@ -3622,7 +3622,7 @@ PostgresMain(int argc, char *argv[],
 			pqsignal(SIGQUIT, quickdie);		/* hard crash time */
 		else
 			pqsignal(SIGQUIT, die);		/* cancel current query and exit */
-		InitializeTimeouts();		/* establishes SIGALRM handler */
+		InitializeTimeouts();	/* establishes SIGALRM handler */
 
 		/*
 		 * Ignore failure to write to frontend. Note: if frontend closes

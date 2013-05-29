@@ -26,6 +26,7 @@ find({ wanted => \&wanted, no_chdir => 1 }, '.');
 
 sub wanted
 {
+
 	# prevent corruption of git indexes by ignoring any .git/
 	if (basename($_) eq '.git')
 	{
@@ -33,7 +34,7 @@ sub wanted
 		return;
 	}
 
-	return if ! -f $File::Find::name || -l $File::Find::name;
+	return if !-f $File::Find::name || -l $File::Find::name;
 
 	# skip file names with binary extensions
 	# How are these updated?  bjm 2012-01-02

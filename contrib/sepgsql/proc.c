@@ -236,16 +236,16 @@ sepgsql_proc_relabel(Oid functionId, const char *seclabel)
 void
 sepgsql_proc_setattr(Oid functionId)
 {
-	Relation		rel;
-	ScanKeyData		skey;
-	SysScanDesc		sscan;
-	HeapTuple		oldtup;
-	HeapTuple		newtup;
-	Form_pg_proc	oldform;
-	Form_pg_proc	newform;
-	uint32			required;
-	ObjectAddress	object;
-	char		   *audit_name;
+	Relation	rel;
+	ScanKeyData skey;
+	SysScanDesc sscan;
+	HeapTuple	oldtup;
+	HeapTuple	newtup;
+	Form_pg_proc oldform;
+	Form_pg_proc newform;
+	uint32		required;
+	ObjectAddress object;
+	char	   *audit_name;
 
 	/*
 	 * Fetch newer catalog
@@ -297,7 +297,7 @@ sepgsql_proc_setattr(Oid functionId)
 
 	sepgsql_avc_check_perms(&object,
 							SEPG_CLASS_DB_PROCEDURE,
-                            required,
+							required,
 							audit_name,
 							true);
 	/* cleanups */

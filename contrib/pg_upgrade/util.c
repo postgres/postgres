@@ -40,8 +40,8 @@ void
 end_progress_output(void)
 {
 	/*
-	 *	In case nothing printed; pass a space so gcc doesn't complain about
-	 *	empty format string.
+	 * In case nothing printed; pass a space so gcc doesn't complain about
+	 * empty format string.
 	 */
 	prep_status(" ");
 }
@@ -114,13 +114,13 @@ pg_log(eLogType type, char *fmt,...)
 			/* for output to a display, do leading truncation and append \r */
 			if (isatty(fileno(stdout)))
 				/* -2 because we use a 2-space indent */
-				printf("  %s%-*.*s\r", 
-						/* prefix with "..." if we do leading truncation */
-						strlen(message) <= MESSAGE_WIDTH - 2 ? "" : "...",
-						MESSAGE_WIDTH - 2, MESSAGE_WIDTH - 2,
-						/* optional leading truncation */
-						strlen(message) <= MESSAGE_WIDTH - 2 ? message :
-						message + strlen(message) - MESSAGE_WIDTH + 3 + 2);
+				printf("  %s%-*.*s\r",
+				/* prefix with "..." if we do leading truncation */
+					   strlen(message) <= MESSAGE_WIDTH - 2 ? "" : "...",
+					   MESSAGE_WIDTH - 2, MESSAGE_WIDTH - 2,
+				/* optional leading truncation */
+					   strlen(message) <= MESSAGE_WIDTH - 2 ? message :
+					   message + strlen(message) - MESSAGE_WIDTH + 3 + 2);
 			else
 				printf("  %s\n", _(message));
 			break;

@@ -132,7 +132,7 @@ InitScanRelation(SeqScanState *node, EState *estate, int eflags)
 	 * open that relation and acquire appropriate lock on it.
 	 */
 	currentRelation = ExecOpenScanRelation(estate,
-									 ((SeqScan *) node->ps.plan)->scanrelid,
+									  ((SeqScan *) node->ps.plan)->scanrelid,
 										   eflags);
 
 	/* initialize a heapscan */

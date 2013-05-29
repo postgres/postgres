@@ -35,11 +35,11 @@ typedef struct binaryheap
 	binaryheap_comparator bh_compare;
 	void	   *bh_arg;
 	Datum		bh_nodes[FLEXIBLE_ARRAY_MEMBER];
-}	binaryheap;
+} binaryheap;
 
 extern binaryheap *binaryheap_allocate(int capacity,
-								binaryheap_comparator compare,
-								void *arg);
+					binaryheap_comparator compare,
+					void *arg);
 extern void binaryheap_free(binaryheap *heap);
 extern void binaryheap_add_unordered(binaryheap *heap, Datum d);
 extern void binaryheap_build(binaryheap *heap);

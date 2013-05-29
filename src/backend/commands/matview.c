@@ -49,7 +49,7 @@ static void transientrel_receive(TupleTableSlot *slot, DestReceiver *self);
 static void transientrel_shutdown(DestReceiver *self);
 static void transientrel_destroy(DestReceiver *self);
 static void refresh_matview_datafill(DestReceiver *dest, Query *query,
-									 const char *queryString);
+						 const char *queryString);
 
 /*
  * SetMatViewPopulatedState
@@ -115,7 +115,7 @@ SetMatViewPopulatedState(Relation relation, bool newstate)
  */
 void
 ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
-				  ParamListInfo params, char *completionTag)
+				   ParamListInfo params, char *completionTag)
 {
 	Oid			matviewOid;
 	Relation	matviewRel;
@@ -130,8 +130,8 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	 * Get a lock until end of transaction.
 	 */
 	matviewOid = RangeVarGetRelidExtended(stmt->relation,
-										   AccessExclusiveLock, false, false,
-										   RangeVarCallbackOwnsTable, NULL);
+										  AccessExclusiveLock, false, false,
+										  RangeVarCallbackOwnsTable, NULL);
 	matviewRel = heap_open(matviewOid, NoLock);
 
 	/* Make sure it is a materialized view. */
@@ -226,7 +226,7 @@ static void
 refresh_matview_datafill(DestReceiver *dest, Query *query,
 						 const char *queryString)
 {
-	List       *rewritten;
+	List	   *rewritten;
 	PlannedStmt *plan;
 	QueryDesc  *queryDesc;
 
@@ -295,7 +295,7 @@ static void
 transientrel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 {
 	DR_transientrel *myState = (DR_transientrel *) self;
-	Relation transientrel;
+	Relation	transientrel;
 
 	transientrel = heap_open(myState->transientoid, NoLock);
 

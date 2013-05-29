@@ -41,7 +41,7 @@ timestamptz_to_time_t(TimestampTz t)
 
 /*
  * Stopgap implementation of timestamptz_to_str that doesn't depend on backend
- * infrastructure.  This will work for timestamps that are within the range
+ * infrastructure.	This will work for timestamps that are within the range
  * of the platform time_t type.  (pg_time_t is compatible except for possibly
  * being wider.)
  *
@@ -77,7 +77,7 @@ timestamptz_to_str(TimestampTz dt)
  * be linked/called.
  */
 void
-appendStringInfo(StringInfo str, const char *fmt, ...)
+appendStringInfo(StringInfo str, const char *fmt,...)
 {
 	va_list		args;
 

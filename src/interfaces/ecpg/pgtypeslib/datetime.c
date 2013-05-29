@@ -52,7 +52,6 @@ PGTYPESdate_from_timestamp(timestamp dt)
 date
 PGTYPESdate_from_asc(char *str, char **endptr)
 {
-
 	date		dDate;
 	fsec_t		fsec;
 	struct tm	tt,

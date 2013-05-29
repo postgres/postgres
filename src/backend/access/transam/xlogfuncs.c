@@ -545,8 +545,8 @@ pg_xlog_location_diff(PG_FUNCTION_ARGS)
 	 * XXX: this won't handle values higher than 2^63 correctly.
 	 */
 	result = DatumGetNumeric(DirectFunctionCall2(numeric_sub,
-	   DirectFunctionCall1(int8_numeric, Int64GetDatum((int64) bytes1)),
-	   DirectFunctionCall1(int8_numeric, Int64GetDatum((int64) bytes2))));
+			DirectFunctionCall1(int8_numeric, Int64GetDatum((int64) bytes1)),
+		  DirectFunctionCall1(int8_numeric, Int64GetDatum((int64) bytes2))));
 
 	PG_RETURN_NUMERIC(result);
 }
@@ -584,7 +584,7 @@ pg_backup_start_time(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not read file \"%s\": %m",
-						BACKUP_LABEL_FILE)));
+							BACKUP_LABEL_FILE)));
 		PG_RETURN_NULL();
 	}
 
@@ -602,13 +602,13 @@ pg_backup_start_time(PG_FUNCTION_ARGS)
 	if (ferror(lfp))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not read file \"%s\": %m", BACKUP_LABEL_FILE)));
+			   errmsg("could not read file \"%s\": %m", BACKUP_LABEL_FILE)));
 
 	/* Close the backup label file. */
 	if (FreeFile(lfp))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not close file \"%s\": %m", BACKUP_LABEL_FILE)));
+			  errmsg("could not close file \"%s\": %m", BACKUP_LABEL_FILE)));
 
 	if (strlen(backup_start_time) == 0)
 		ereport(ERROR,

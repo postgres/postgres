@@ -400,7 +400,7 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
 		pgxact->xmin = InvalidTransactionId;
 		/* must be cleared with xid/xmin: */
 		pgxact->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
-		pgxact->delayChkpt = false; /* be sure this is cleared in abort */
+		pgxact->delayChkpt = false;		/* be sure this is cleared in abort */
 		proc->recoveryConflictPending = false;
 
 		/* Clear the subtransaction-XID cache too while holding the lock */
@@ -427,7 +427,7 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
 		pgxact->xmin = InvalidTransactionId;
 		/* must be cleared with xid/xmin: */
 		pgxact->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
-		pgxact->delayChkpt = false; /* be sure this is cleared in abort */
+		pgxact->delayChkpt = false;		/* be sure this is cleared in abort */
 		proc->recoveryConflictPending = false;
 
 		Assert(pgxact->nxids == 0);
@@ -1429,11 +1429,11 @@ GetSnapshotData(Snapshot snapshot)
 		 * depending upon when the snapshot was taken, or change normal
 		 * snapshot processing so it matches.
 		 *
-		 * Note: It is possible for recovery to end before we finish taking the
-		 * snapshot, and for newly assigned transaction ids to be added to the
-		 * ProcArray.  xmax cannot change while we hold ProcArrayLock, so those
-		 * newly added transaction ids would be filtered away, so we need not
-		 * be concerned about them.
+		 * Note: It is possible for recovery to end before we finish taking
+		 * the snapshot, and for newly assigned transaction ids to be added to
+		 * the ProcArray.  xmax cannot change while we hold ProcArrayLock, so
+		 * those newly added transaction ids would be filtered away, so we
+		 * need not be concerned about them.
 		 */
 		subcount = KnownAssignedXidsGetAndSetXmin(snapshot->subxip, &xmin,
 												  xmax);
@@ -1688,8 +1688,8 @@ GetRunningTransactionData(void)
 
 				/*
 				 * Top-level XID of a transaction is always less than any of
-				 * its subxids, so we don't need to check if any of the subxids
-				 * are smaller than oldestRunningXid
+				 * its subxids, so we don't need to check if any of the
+				 * subxids are smaller than oldestRunningXid
 				 */
 			}
 		}
@@ -1811,9 +1811,9 @@ GetVirtualXIDsDelayingChkpt(int *nvxids)
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		int		pgprocno = arrayP->pgprocnos[index];
-		volatile PGPROC    *proc = &allProcs[pgprocno];
-		volatile PGXACT    *pgxact = &allPgXact[pgprocno];
+		int			pgprocno = arrayP->pgprocnos[index];
+		volatile PGPROC *proc = &allProcs[pgprocno];
+		volatile PGXACT *pgxact = &allPgXact[pgprocno];
 
 		if (pgxact->delayChkpt)
 		{
@@ -1853,9 +1853,9 @@ HaveVirtualXIDsDelayingChkpt(VirtualTransactionId *vxids, int nvxids)
 	{
 		for (index = 0; index < arrayP->numProcs; index++)
 		{
-			int		pgprocno = arrayP->pgprocnos[index];
-			volatile PGPROC    *proc = &allProcs[pgprocno];
-			volatile PGXACT    *pgxact = &allPgXact[pgprocno];
+			int			pgprocno = arrayP->pgprocnos[index];
+			volatile PGPROC *proc = &allProcs[pgprocno];
+			volatile PGXACT *pgxact = &allPgXact[pgprocno];
 			VirtualTransactionId vxid;
 
 			GET_VXID_FROM_PGPROC(vxid, *proc);

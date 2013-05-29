@@ -31,38 +31,38 @@
  */
 typedef enum ParseExprKind
 {
-	EXPR_KIND_NONE = 0,				/* "not in an expression" */
-	EXPR_KIND_OTHER,				/* reserved for extensions */
-	EXPR_KIND_JOIN_ON,				/* JOIN ON */
-	EXPR_KIND_JOIN_USING,			/* JOIN USING */
-	EXPR_KIND_FROM_SUBSELECT,		/* sub-SELECT in FROM clause */
-	EXPR_KIND_FROM_FUNCTION,		/* function in FROM clause */
-	EXPR_KIND_WHERE,				/* WHERE */
-	EXPR_KIND_HAVING,				/* HAVING */
-	EXPR_KIND_WINDOW_PARTITION,		/* window definition PARTITION BY */
-	EXPR_KIND_WINDOW_ORDER,			/* window definition ORDER BY */
-	EXPR_KIND_WINDOW_FRAME_RANGE,	/* window frame clause with RANGE */
+	EXPR_KIND_NONE = 0,			/* "not in an expression" */
+	EXPR_KIND_OTHER,			/* reserved for extensions */
+	EXPR_KIND_JOIN_ON,			/* JOIN ON */
+	EXPR_KIND_JOIN_USING,		/* JOIN USING */
+	EXPR_KIND_FROM_SUBSELECT,	/* sub-SELECT in FROM clause */
+	EXPR_KIND_FROM_FUNCTION,	/* function in FROM clause */
+	EXPR_KIND_WHERE,			/* WHERE */
+	EXPR_KIND_HAVING,			/* HAVING */
+	EXPR_KIND_WINDOW_PARTITION, /* window definition PARTITION BY */
+	EXPR_KIND_WINDOW_ORDER,		/* window definition ORDER BY */
+	EXPR_KIND_WINDOW_FRAME_RANGE,		/* window frame clause with RANGE */
 	EXPR_KIND_WINDOW_FRAME_ROWS,	/* window frame clause with ROWS */
-	EXPR_KIND_SELECT_TARGET,		/* SELECT target list item */
-	EXPR_KIND_INSERT_TARGET,		/* INSERT target list item */
-	EXPR_KIND_UPDATE_SOURCE,		/* UPDATE assignment source item */
-	EXPR_KIND_UPDATE_TARGET,		/* UPDATE assignment target item */
-	EXPR_KIND_GROUP_BY,				/* GROUP BY */
-	EXPR_KIND_ORDER_BY,				/* ORDER BY */
-	EXPR_KIND_DISTINCT_ON,			/* DISTINCT ON */
-	EXPR_KIND_LIMIT,				/* LIMIT */
-	EXPR_KIND_OFFSET,				/* OFFSET */
-	EXPR_KIND_RETURNING,			/* RETURNING */
-	EXPR_KIND_VALUES,				/* VALUES */
-	EXPR_KIND_CHECK_CONSTRAINT,		/* CHECK constraint for a table */
-	EXPR_KIND_DOMAIN_CHECK,			/* CHECK constraint for a domain */
-	EXPR_KIND_COLUMN_DEFAULT,		/* default value for a table column */
-	EXPR_KIND_FUNCTION_DEFAULT,		/* default parameter value for function */
-	EXPR_KIND_INDEX_EXPRESSION,		/* index expression */
-	EXPR_KIND_INDEX_PREDICATE,		/* index predicate */
-	EXPR_KIND_ALTER_COL_TRANSFORM,	/* transform expr in ALTER COLUMN TYPE */
+	EXPR_KIND_SELECT_TARGET,	/* SELECT target list item */
+	EXPR_KIND_INSERT_TARGET,	/* INSERT target list item */
+	EXPR_KIND_UPDATE_SOURCE,	/* UPDATE assignment source item */
+	EXPR_KIND_UPDATE_TARGET,	/* UPDATE assignment target item */
+	EXPR_KIND_GROUP_BY,			/* GROUP BY */
+	EXPR_KIND_ORDER_BY,			/* ORDER BY */
+	EXPR_KIND_DISTINCT_ON,		/* DISTINCT ON */
+	EXPR_KIND_LIMIT,			/* LIMIT */
+	EXPR_KIND_OFFSET,			/* OFFSET */
+	EXPR_KIND_RETURNING,		/* RETURNING */
+	EXPR_KIND_VALUES,			/* VALUES */
+	EXPR_KIND_CHECK_CONSTRAINT, /* CHECK constraint for a table */
+	EXPR_KIND_DOMAIN_CHECK,		/* CHECK constraint for a domain */
+	EXPR_KIND_COLUMN_DEFAULT,	/* default value for a table column */
+	EXPR_KIND_FUNCTION_DEFAULT, /* default parameter value for function */
+	EXPR_KIND_INDEX_EXPRESSION, /* index expression */
+	EXPR_KIND_INDEX_PREDICATE,	/* index predicate */
+	EXPR_KIND_ALTER_COL_TRANSFORM,		/* transform expr in ALTER COLUMN TYPE */
 	EXPR_KIND_EXECUTE_PARAMETER,	/* parameter value in EXECUTE */
-	EXPR_KIND_TRIGGER_WHEN			/* WHEN condition in CREATE TRIGGER */
+	EXPR_KIND_TRIGGER_WHEN		/* WHEN condition in CREATE TRIGGER */
 } ParseExprKind;
 
 
@@ -181,8 +181,8 @@ struct ParseState
  *
  * While processing the FROM clause, namespace items may appear with
  * p_lateral_only set, meaning they are visible only to LATERAL
- * subexpressions.  (The pstate's p_lateral_active flag tells whether we are
- * inside such a subexpression at the moment.)  If p_lateral_ok is not set,
+ * subexpressions.	(The pstate's p_lateral_active flag tells whether we are
+ * inside such a subexpression at the moment.)	If p_lateral_ok is not set,
  * it's an error to actually use such a namespace item.  One might think it
  * would be better to just exclude such items from visibility, but the wording
  * of SQL:2008 requires us to do it this way.
@@ -196,7 +196,7 @@ typedef struct ParseNamespaceItem
 {
 	RangeTblEntry *p_rte;		/* The relation's rangetable entry */
 	bool		p_rel_visible;	/* Relation name is visible? */
-	bool		p_cols_visible;	/* Column names visible as unqualified refs? */
+	bool		p_cols_visible; /* Column names visible as unqualified refs? */
 	bool		p_lateral_only; /* Is only visible to LATERAL expressions? */
 	bool		p_lateral_ok;	/* If so, does join type allow use? */
 } ParseNamespaceItem;

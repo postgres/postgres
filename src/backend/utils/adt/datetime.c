@@ -945,6 +945,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				break;
 
 			case DTK_TIME:
+
 				/*
 				 * This might be an ISO time following a "t" field.
 				 */
@@ -2180,7 +2181,7 @@ DecodeDate(char *str, int fmask, int *tmask, bool *is2digits,
 			str++;
 
 		if (*str == '\0')
-			return DTERR_BAD_FORMAT;		/* end of string after separator */
+			return DTERR_BAD_FORMAT;	/* end of string after separator */
 
 		field[nf] = str;
 		if (isdigit((unsigned char) *str))
@@ -2894,7 +2895,7 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 				Assert(*field[i] == '-' || *field[i] == '+');
 
 				/*
-				 * Check for signed hh:mm or hh:mm:ss.  If so, process exactly
+				 * Check for signed hh:mm or hh:mm:ss.	If so, process exactly
 				 * like DTK_TIME case above, plus handling the sign.
 				 */
 				if (strchr(field[i] + 1, ':') != NULL &&

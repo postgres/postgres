@@ -180,7 +180,7 @@ AddEnumLabel(Oid enumTypeOid,
 			 const char *newVal,
 			 const char *neighbor,
 			 bool newValIsAfter,
-	         bool skipIfExists)
+			 bool skipIfExists)
 {
 	Relation	pg_enum;
 	Oid			newOid;

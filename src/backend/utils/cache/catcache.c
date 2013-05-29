@@ -291,7 +291,7 @@ CatalogCacheComputeTupleHashValue(CatCache *cache, HeapTuple tuple)
 static void
 CatCachePrintStats(int code, Datum arg)
 {
-	slist_iter  iter;
+	slist_iter	iter;
 	long		cc_searches = 0;
 	long		cc_hits = 0;
 	long		cc_neg_hits = 0;
@@ -444,7 +444,7 @@ CatCacheRemoveCList(CatCache *cache, CatCList *cl)
 void
 CatalogCacheIdInvalidate(int cacheId, uint32 hashValue)
 {
-	slist_iter cache_iter;
+	slist_iter	cache_iter;
 
 	CACHE1_elog(DEBUG2, "CatalogCacheIdInvalidate: called");
 
@@ -554,12 +554,12 @@ AtEOXact_CatCache(bool isCommit)
 #ifdef USE_ASSERT_CHECKING
 	if (assert_enabled)
 	{
-		slist_iter  cache_iter;
+		slist_iter	cache_iter;
 
 		slist_foreach(cache_iter, &CacheHdr->ch_caches)
 		{
 			CatCache   *ccp = slist_container(CatCache, cc_next, cache_iter.cur);
-			dlist_iter  iter;
+			dlist_iter	iter;
 			int			i;
 
 			/* Check CatCLists */
@@ -649,7 +649,7 @@ ResetCatalogCache(CatCache *cache)
 void
 ResetCatalogCaches(void)
 {
-	slist_iter    iter;
+	slist_iter	iter;
 
 	CACHE1_elog(DEBUG2, "ResetCatalogCaches called");
 
@@ -679,7 +679,7 @@ ResetCatalogCaches(void)
 void
 CatalogCacheFlushCatalog(Oid catId)
 {
-	slist_iter  iter;
+	slist_iter	iter;
 
 	CACHE2_elog(DEBUG2, "CatalogCacheFlushCatalog called for %u", catId);
 
@@ -1343,7 +1343,7 @@ SearchCatCacheList(CatCache *cache,
 {
 	ScanKeyData cur_skey[CATCACHE_MAXKEYS];
 	uint32		lHashValue;
-	dlist_iter  iter;
+	dlist_iter	iter;
 	CatCList   *cl;
 	CatCTup    *ct;
 	List	   *volatile ctlist;
@@ -1789,7 +1789,7 @@ PrepareToInvalidateCacheTuple(Relation relation,
 							  HeapTuple newtuple,
 							  void (*function) (int, uint32, Oid))
 {
-	slist_iter  iter;
+	slist_iter	iter;
 	Oid			reloid;
 
 	CACHE1_elog(DEBUG2, "PrepareToInvalidateCacheTuple: called");

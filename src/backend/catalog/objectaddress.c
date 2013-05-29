@@ -94,10 +94,11 @@ typedef struct
 	AttrNumber	attnum_owner;	/* attnum of owner field */
 	AttrNumber	attnum_acl;		/* attnum of acl field */
 	AclObjectKind acl_kind;		/* ACL_KIND_* of this object type */
-	bool		is_nsp_name_unique;	/* can the nsp/name combination (or name
-									 * alone, if there's no namespace) be
-									 * considered an unique identifier for an
-									 * object of this class? */
+	bool		is_nsp_name_unique;		/* can the nsp/name combination (or
+										 * name alone, if there's no
+										 * namespace) be considered an unique
+										 * identifier for an object of this
+										 * class? */
 } ObjectPropertyType;
 
 static ObjectPropertyType ObjectProperty[] =
@@ -1443,7 +1444,7 @@ get_object_property_data(Oid class_id)
 	ereport(ERROR,
 			(errmsg_internal("unrecognized class id: %u", class_id)));
 
-	return NULL; /* keep MSC compiler happy */
+	return NULL;				/* keep MSC compiler happy */
 }
 
 /*
@@ -1463,14 +1464,14 @@ get_catalog_object_by_oid(Relation catalog, Oid objectId)
 	if (oidCacheId > 0)
 	{
 		tuple = SearchSysCacheCopy1(oidCacheId, ObjectIdGetDatum(objectId));
-		if (!HeapTupleIsValid(tuple))  /* should not happen */
+		if (!HeapTupleIsValid(tuple))	/* should not happen */
 			return NULL;
 	}
 	else
 	{
 		Oid			oidIndexId = get_object_oid_index(classId);
-		SysScanDesc	scan;
-		ScanKeyData	skey;
+		SysScanDesc scan;
+		ScanKeyData skey;
 
 		Assert(OidIsValid(oidIndexId));
 
@@ -2127,7 +2128,7 @@ getObjectDescription(const ObjectAddress *object)
 				break;
 			}
 
-        case OCLASS_EVENT_TRIGGER:
+		case OCLASS_EVENT_TRIGGER:
 			{
 				HeapTuple	tup;
 
@@ -2137,7 +2138,7 @@ getObjectDescription(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for event trigger %u",
 						 object->objectId);
 				appendStringInfo(&buffer, _("event trigger %s"),
-					 NameStr(((Form_pg_event_trigger) GETSTRUCT(tup))->evtname));
+				 NameStr(((Form_pg_event_trigger) GETSTRUCT(tup))->evtname));
 				ReleaseSysCache(tup);
 				break;
 			}
@@ -2355,22 +2356,22 @@ pg_identify_object(PG_FUNCTION_ARGS)
 										  RelationGetDescr(catalog), &isnull);
 				if (isnull)
 					elog(ERROR, "invalid null namespace in object %u/%u/%d",
-						 address.classId, address.objectId, address.objectSubId);
+					 address.classId, address.objectId, address.objectSubId);
 			}
 
 			/*
-			 * We only return the object name if it can be used (together
-			 * with the schema name, if any) as an unique identifier.
+			 * We only return the object name if it can be used (together with
+			 * the schema name, if any) as an unique identifier.
 			 */
 			if (get_object_namensp_unique(address.classId))
 			{
 				nameAttnum = get_object_attnum_name(address.classId);
 				if (nameAttnum != InvalidAttrNumber)
 				{
-					Datum	nameDatum;
+					Datum		nameDatum;
 
 					nameDatum = heap_getattr(objtup, nameAttnum,
-											 RelationGetDescr(catalog), &isnull);
+										 RelationGetDescr(catalog), &isnull);
 					if (isnull)
 						elog(ERROR, "invalid null name in object %u/%u/%d",
 							 address.classId, address.objectId, address.objectSubId);
@@ -2389,7 +2390,7 @@ pg_identify_object(PG_FUNCTION_ARGS)
 	/* schema name */
 	if (OidIsValid(schema_oid))
 	{
-		const char	*schema = quote_identifier(get_namespace_name(schema_oid));
+		const char *schema = quote_identifier(get_namespace_name(schema_oid));
 
 		values[1] = CStringGetTextDatum(schema);
 		nulls[1] = false;
@@ -2622,7 +2623,7 @@ getConstraintTypeDescription(StringInfo buffer, Oid constroid)
 {
 	Relation	constrRel;
 	HeapTuple	constrTup;
-	Form_pg_constraint	constrForm;
+	Form_pg_constraint constrForm;
 
 	constrRel = heap_open(ConstraintRelationId, AccessShareLock);
 	constrTup = get_catalog_object_by_oid(constrRel, constroid);
@@ -2651,7 +2652,7 @@ getProcedureTypeDescription(StringInfo buffer, Oid procid)
 	Form_pg_proc procForm;
 
 	procTup = SearchSysCache1(PROCOID,
-							 ObjectIdGetDatum(procid));
+							  ObjectIdGetDatum(procid));
 	if (!HeapTupleIsValid(procTup))
 		elog(ERROR, "cache lookup failed for procedure %u", procid);
 	procForm = (Form_pg_proc) GETSTRUCT(procTup);
@@ -2683,7 +2684,7 @@ getObjectIdentity(const ObjectAddress *object)
 			getRelationIdentity(&buffer, object->objectId);
 			if (object->objectSubId != 0)
 			{
-				char   *attr;
+				char	   *attr;
 
 				attr = get_relid_attribute_name(object->objectId,
 												object->objectSubId);
@@ -2718,8 +2719,8 @@ getObjectIdentity(const ObjectAddress *object)
 				castForm = (Form_pg_cast) GETSTRUCT(tup);
 
 				appendStringInfo(&buffer, "(%s AS %s)",
-								 format_type_be_qualified(castForm->castsource),
-								 format_type_be_qualified(castForm->casttarget));
+							  format_type_be_qualified(castForm->castsource),
+							 format_type_be_qualified(castForm->casttarget));
 
 				heap_close(castRel, AccessShareLock);
 				break;
@@ -2729,7 +2730,7 @@ getObjectIdentity(const ObjectAddress *object)
 			{
 				HeapTuple	collTup;
 				Form_pg_collation coll;
-				char   *schema;
+				char	   *schema;
 
 				collTup = SearchSysCache1(COLLOID,
 										  ObjectIdGetDatum(object->objectId));
@@ -2740,7 +2741,7 @@ getObjectIdentity(const ObjectAddress *object)
 				schema = get_namespace_name(coll->collnamespace);
 				appendStringInfoString(&buffer,
 									   quote_qualified_identifier(schema,
-																  NameStr(coll->collname)));
+												   NameStr(coll->collname)));
 				ReleaseSysCache(collTup);
 				break;
 			}
@@ -2765,7 +2766,7 @@ getObjectIdentity(const ObjectAddress *object)
 				}
 				else
 				{
-					ObjectAddress	domain;
+					ObjectAddress domain;
 
 					domain.classId = TypeRelationId;
 					domain.objectId = con->contypid;
@@ -2849,7 +2850,7 @@ getObjectIdentity(const ObjectAddress *object)
 						 object->objectId);
 				langForm = (Form_pg_language) GETSTRUCT(langTup);
 				appendStringInfo(&buffer, "%s",
-								 quote_identifier(NameStr(langForm->lanname)));
+							   quote_identifier(NameStr(langForm->lanname)));
 				ReleaseSysCache(langTup);
 				break;
 			}
@@ -2889,7 +2890,7 @@ getObjectIdentity(const ObjectAddress *object)
 				appendStringInfo(&buffer,
 								 "%s",
 								 quote_qualified_identifier(schema,
-															NameStr(opcForm->opcname)));
+												 NameStr(opcForm->opcname)));
 				appendStringInfo(&buffer, " for %s",
 								 quote_identifier(NameStr(amForm->amname)));
 
@@ -2935,8 +2936,8 @@ getObjectIdentity(const ObjectAddress *object)
 
 				appendStringInfo(&buffer, "operator %d (%s, %s) of %s",
 								 amopForm->amopstrategy,
-								 format_type_be_qualified(amopForm->amoplefttype),
-								 format_type_be_qualified(amopForm->amoprighttype),
+							format_type_be_qualified(amopForm->amoplefttype),
+						   format_type_be_qualified(amopForm->amoprighttype),
 								 opfam.data);
 
 				pfree(opfam.data);
@@ -2979,8 +2980,8 @@ getObjectIdentity(const ObjectAddress *object)
 
 				appendStringInfo(&buffer, "function %d (%s, %s) of %s",
 								 amprocForm->amprocnum,
-								 format_type_be_qualified(amprocForm->amproclefttype),
-								 format_type_be_qualified(amprocForm->amprocrighttype),
+						format_type_be_qualified(amprocForm->amproclefttype),
+					   format_type_be_qualified(amprocForm->amprocrighttype),
 								 opfam.data);
 
 				pfree(opfam.data);
@@ -3054,7 +3055,7 @@ getObjectIdentity(const ObjectAddress *object)
 		case OCLASS_TSPARSER:
 			{
 				HeapTuple	tup;
-				Form_pg_ts_parser	formParser;
+				Form_pg_ts_parser formParser;
 
 				tup = SearchSysCache1(TSPARSEROID,
 									  ObjectIdGetDatum(object->objectId));
@@ -3063,7 +3064,7 @@ getObjectIdentity(const ObjectAddress *object)
 						 object->objectId);
 				formParser = (Form_pg_ts_parser) GETSTRUCT(tup);
 				appendStringInfo(&buffer, "%s",
-								 quote_identifier(NameStr(formParser->prsname)));
+							 quote_identifier(NameStr(formParser->prsname)));
 				ReleaseSysCache(tup);
 				break;
 			}
@@ -3071,7 +3072,7 @@ getObjectIdentity(const ObjectAddress *object)
 		case OCLASS_TSDICT:
 			{
 				HeapTuple	tup;
-				Form_pg_ts_dict		formDict;
+				Form_pg_ts_dict formDict;
 
 				tup = SearchSysCache1(TSDICTOID,
 									  ObjectIdGetDatum(object->objectId));
@@ -3080,7 +3081,7 @@ getObjectIdentity(const ObjectAddress *object)
 						 object->objectId);
 				formDict = (Form_pg_ts_dict) GETSTRUCT(tup);
 				appendStringInfo(&buffer, "%s",
-								 quote_identifier(NameStr(formDict->dictname)));
+							  quote_identifier(NameStr(formDict->dictname)));
 				ReleaseSysCache(tup);
 				break;
 			}
@@ -3097,7 +3098,7 @@ getObjectIdentity(const ObjectAddress *object)
 						 object->objectId);
 				formTmpl = (Form_pg_ts_template) GETSTRUCT(tup);
 				appendStringInfo(&buffer, "%s",
-								 quote_identifier(NameStr(formTmpl->tmplname)));
+							  quote_identifier(NameStr(formTmpl->tmplname)));
 				ReleaseSysCache(tup);
 				break;
 			}
@@ -3121,7 +3122,7 @@ getObjectIdentity(const ObjectAddress *object)
 
 		case OCLASS_ROLE:
 			{
-				char   *username;
+				char	   *username;
 
 				username = GetUserNameFromId(object->objectId);
 				appendStringInfo(&buffer, "%s",
@@ -3229,11 +3230,11 @@ getObjectIdentity(const ObjectAddress *object)
 
 				appendStringInfo(&buffer,
 								 "for role %s",
-								 quote_identifier(GetUserNameFromId(defacl->defaclrole)));
+					quote_identifier(GetUserNameFromId(defacl->defaclrole)));
 
 				if (OidIsValid(defacl->defaclnamespace))
 				{
-					char   *schema;
+					char	   *schema;
 
 					schema = get_namespace_name(defacl->defaclnamespace);
 					appendStringInfo(&buffer,
@@ -3291,7 +3292,7 @@ getObjectIdentity(const ObjectAddress *object)
 						 object->objectId);
 				trigForm = (Form_pg_event_trigger) GETSTRUCT(tup);
 				appendStringInfo(&buffer, "%s",
-								 quote_identifier(NameStr(trigForm->evtname)));
+							   quote_identifier(NameStr(trigForm->evtname)));
 				ReleaseSysCache(tup);
 				break;
 			}

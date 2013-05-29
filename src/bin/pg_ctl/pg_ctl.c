@@ -285,7 +285,7 @@ readfile(const char *path)
 	int			i;
 	int			n;
 	int			len;
-	struct stat	statbuf;
+	struct stat statbuf;
 
 	/*
 	 * Slurp the file into memory.
@@ -344,8 +344,9 @@ readfile(const char *path)
 	{
 		if (buffer[i] == '\n')
 		{
-			int		slen = &buffer[i] - linebegin + 1;
-			char   *linebuf = pg_malloc(slen + 1);
+			int			slen = &buffer[i] - linebegin + 1;
+			char	   *linebuf = pg_malloc(slen + 1);
+
 			memcpy(linebuf, linebegin, slen);
 			linebuf[slen] = '\0';
 			result[n++] = linebuf;
@@ -1098,10 +1099,10 @@ do_promote(void)
 	}
 
 	/*
-	 * For 9.3 onwards, use fast promotion as the default option.
-	 * Promotion with a full checkpoint is still possible by writing
-	 * a file called "promote", e.g.
-	 * 	 snprintf(promote_file, MAXPGPATH, "%s/promote", pg_data);
+	 * For 9.3 onwards, use fast promotion as the default option. Promotion
+	 * with a full checkpoint is still possible by writing a file called
+	 * "promote", e.g. snprintf(promote_file, MAXPGPATH, "%s/promote",
+	 * pg_data);
 	 */
 	snprintf(promote_file, MAXPGPATH, "%s/fast_promote", pg_data);
 

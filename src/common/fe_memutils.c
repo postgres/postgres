@@ -49,18 +49,18 @@ pg_malloc0(size_t size)
 void *
 pg_realloc(void *ptr, size_t size)
 {
-   void       *tmp;
+	void	   *tmp;
 
-   /* Avoid unportable behavior of realloc(NULL, 0) */
-   if (ptr == NULL && size == 0)
-       size = 1;
-   tmp = realloc(ptr, size);
-   if (!tmp)
-   {
+	/* Avoid unportable behavior of realloc(NULL, 0) */
+	if (ptr == NULL && size == 0)
+		size = 1;
+	tmp = realloc(ptr, size);
+	if (!tmp)
+	{
 		fprintf(stderr, _("out of memory\n"));
 		exit(EXIT_FAILURE);
-   }
-   return tmp;
+	}
+	return tmp;
 }
 
 /*

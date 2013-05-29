@@ -1499,7 +1499,7 @@ xml_pstrdup(const char *string)
 /*
  * xmlPgEntityLoader --- entity loader callback function
  *
- * Silently prevent any external entity URL from being loaded.  We don't want
+ * Silently prevent any external entity URL from being loaded.	We don't want
  * to throw an error, so instead make the entity appear to expand to an empty
  * string.
  *
@@ -1609,6 +1609,7 @@ xml_errorHandler(void *data, xmlErrorPtr error)
 		case XML_FROM_NONE:
 		case XML_FROM_MEMORY:
 		case XML_FROM_IO:
+
 			/*
 			 * Suppress warnings about undeclared entities.  We need to do
 			 * this to avoid problems due to not loading DTD definitions.
@@ -2002,8 +2003,8 @@ map_sql_value_to_xml_value(Datum value, Oid type, bool xml_escape_strings)
 		char	   *str;
 
 		/*
-		 * Flatten domains; the special-case treatments below should apply
-		 * to, eg, domains over boolean not just boolean.
+		 * Flatten domains; the special-case treatments below should apply to,
+		 * eg, domains over boolean not just boolean.
 		 */
 		type = getBaseType(type);
 

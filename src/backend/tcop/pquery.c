@@ -1184,7 +1184,7 @@ PortalRunUtility(Portal portal, Node *utilityStmt, bool isTopLevel,
 
 	ProcessUtility(utilityStmt,
 				   portal->sourceText,
-				   isTopLevel ? PROCESS_UTILITY_TOPLEVEL : PROCESS_UTILITY_QUERY,
+			   isTopLevel ? PROCESS_UTILITY_TOPLEVEL : PROCESS_UTILITY_QUERY,
 				   portal->portalParams,
 				   dest,
 				   completionTag);

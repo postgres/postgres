@@ -447,7 +447,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 											  true,		/* islocal */
 											  0,		/* inhcount */
 											  true,		/* isnoinherit */
-											  isInternal);	/* is_internal */
+											  isInternal);		/* is_internal */
 	}
 
 	/*
@@ -1266,6 +1266,7 @@ renametrig(RenameStmt *stmt)
 	if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 	{
 		tgoid = HeapTupleGetOid(tuple);
+
 		/*
 		 * Update pg_trigger tuple with new tgname.
 		 */
@@ -2210,7 +2211,7 @@ ExecARDeleteTriggers(EState *estate, ResultRelInfo *relinfo,
 	if (trigdesc && trigdesc->trig_delete_after_row)
 	{
 		HeapTuple	trigtuple = GetTupleForTrigger(estate, NULL, relinfo,
-												   tupleid, LockTupleExclusive,
+												 tupleid, LockTupleExclusive,
 												   NULL);
 
 		AfterTriggerSaveEvent(estate, relinfo, TRIGGER_EVENT_DELETE,
@@ -2449,7 +2450,7 @@ ExecARUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 	if (trigdesc && trigdesc->trig_update_after_row)
 	{
 		HeapTuple	trigtuple = GetTupleForTrigger(estate, NULL, relinfo,
-												   tupleid, LockTupleExclusive,
+												 tupleid, LockTupleExclusive,
 												   NULL);
 
 		AfterTriggerSaveEvent(estate, relinfo, TRIGGER_EVENT_UPDATE,
@@ -2614,11 +2615,12 @@ ltrmark:;
 		tuple.t_self = *tid;
 		test = heap_lock_tuple(relation, &tuple,
 							   estate->es_output_cid,
-							   lockmode, false /* wait */,
+							   lockmode, false /* wait */ ,
 							   false, &buffer, &hufd);
 		switch (test)
 		{
 			case HeapTupleSelfUpdated:
+
 				/*
 				 * The target tuple was already updated or deleted by the
 				 * current command, or by a later command in the current

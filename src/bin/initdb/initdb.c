@@ -209,7 +209,7 @@ static char **filter_lines_with_token(char **lines, const char *token);
 #endif
 static char **readfile(const char *path);
 static void writefile(char *path, char **lines);
-static void walkdir(char *path, void (*action)(char *fname, bool isdir));
+static void walkdir(char *path, void (*action) (char *fname, bool isdir));
 static void pre_sync_fname(char *fname, bool isdir);
 static void fsync_fname(char *fname, bool isdir);
 static FILE *popen_check(const char *command, const char *mode);
@@ -249,17 +249,17 @@ static bool check_locale_name(int category, const char *locale,
 static bool check_locale_encoding(const char *locale, int encoding);
 static void setlocales(void);
 static void usage(const char *progname);
-void get_restricted_token(void);
-void setup_pgdata(void);
-void setup_bin_paths(const char *argv0);
-void setup_data_file_paths(void);
-void setup_locale_encoding(void);
-void setup_signals(void);
-void setup_text_search(void);
-void create_data_directory(void);
-void create_xlog_symlink(void);
-void warn_on_mount_point(int error);
-void initialize_data_directory(void);
+void		get_restricted_token(void);
+void		setup_pgdata(void);
+void		setup_bin_paths(const char *argv0);
+void		setup_data_file_paths(void);
+void		setup_locale_encoding(void);
+void		setup_signals(void);
+void		setup_text_search(void);
+void		create_data_directory(void);
+void		create_xlog_symlink(void);
+void		warn_on_mount_point(int error);
+void		initialize_data_directory(void);
 
 
 #ifdef WIN32
@@ -320,7 +320,8 @@ do { \
 static char *
 escape_quotes(const char *src)
 {
-	char *result = escape_single_quotes_ascii(src);
+	char	   *result = escape_single_quotes_ascii(src);
+
 	if (!result)
 	{
 		fprintf(stderr, _("%s: out of memory\n"), progname);
@@ -556,6 +557,7 @@ walkdir(char *path, void (*action) (char *fname, bool isdir))
 	}
 
 #ifdef WIN32
+
 	/*
 	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but not in
 	 * released version
@@ -576,7 +578,7 @@ walkdir(char *path, void (*action) (char *fname, bool isdir))
 	/*
 	 * It's important to fsync the destination directory itself as individual
 	 * file fsyncs don't guarantee that the directory entry for the file is
-	 * synced.  Recent versions of ext4 have made the window much wider but
+	 * synced.	Recent versions of ext4 have made the window much wider but
 	 * it's been an issue for ext3 and other filesystems in the past.
 	 */
 	(*action) (path, true);
@@ -590,7 +592,7 @@ pre_sync_fname(char *fname, bool isdir)
 {
 #if defined(HAVE_SYNC_FILE_RANGE) || \
 	(defined(USE_POSIX_FADVISE) && defined(POSIX_FADV_DONTNEED))
-	int fd;
+	int			fd;
 
 	fd = open(fname, O_RDONLY | PG_BINARY);
 
@@ -609,7 +611,7 @@ pre_sync_fname(char *fname, bool isdir)
 	}
 
 	/*
-	 * Prefer sync_file_range, else use posix_fadvise.  We ignore any error
+	 * Prefer sync_file_range, else use posix_fadvise.	We ignore any error
 	 * here since this operation is only a hint anyway.
 	 */
 #if defined(HAVE_SYNC_FILE_RANGE)
@@ -901,7 +903,7 @@ find_matching_ts_config(const char *lc_type)
 	 * underscore (usual case) or a hyphen (Windows "locale name"; see
 	 * comments at IsoLocaleName()).
 	 *
-	 * XXX Should ' ' be a stop character?  This would select "norwegian" for
+	 * XXX Should ' ' be a stop character?	This would select "norwegian" for
 	 * the Windows locale "Norwegian (Nynorsk)_Norway.1252".  If we do so, we
 	 * should also accept the "nn" and "nb" Unix locales.
 	 *
@@ -2819,6 +2821,7 @@ void
 get_restricted_token(void)
 {
 #ifdef WIN32
+
 	/*
 	 * Before we execute another program, make sure that we are running with a
 	 * restricted token. If not, re-execute ourselves with one.
@@ -2865,7 +2868,8 @@ get_restricted_token(void)
 void
 setup_pgdata(void)
 {
-	char	   *pgdata_get_env, *pgdata_set_env;
+	char	   *pgdata_get_env,
+			   *pgdata_set_env;
 
 	if (strlen(pg_data) == 0)
 	{
@@ -2905,7 +2909,7 @@ setup_pgdata(void)
 void
 setup_bin_paths(const char *argv0)
 {
-	int ret;
+	int			ret;
 
 	if ((ret = find_other_exec(argv0, "postgres", PG_BACKEND_VERSIONSTR,
 							   backend_exec)) < 0)
@@ -3149,7 +3153,7 @@ setup_signals(void)
 void
 create_data_directory(void)
 {
-	int ret;
+	int			ret;
 
 	switch ((ret = pg_check_dir(pg_data)))
 	{
@@ -3278,8 +3282,8 @@ create_xlog_symlink(void)
 					warn_on_mount_point(ret);
 				else
 					fprintf(stderr,
-					 _("If you want to store the transaction log there, either\n"
-					   "remove or empty the directory \"%s\".\n"),
+							_("If you want to store the transaction log there, either\n"
+							  "remove or empty the directory \"%s\".\n"),
 							xlog_dir);
 				exit_nicely();
 
@@ -3328,12 +3332,12 @@ warn_on_mount_point(int error)
 void
 initialize_data_directory(void)
 {
-	int i;
+	int			i;
 
 	setup_signals();
 
 	umask(S_IRWXG | S_IRWXO);
- 
+
 	create_data_directory();
 
 	create_xlog_symlink();
@@ -3587,7 +3591,7 @@ main(int argc, char *argv[])
 		perform_fsync();
 		return 0;
 	}
-	
+
 	if (pwprompt && pwfilename)
 	{
 		fprintf(stderr, _("%s: password prompt and password file cannot be specified together\n"), progname);
@@ -3607,7 +3611,7 @@ main(int argc, char *argv[])
 	setup_pgdata();
 
 	setup_bin_paths(argv[0]);
-	
+
 	effective_user = get_id();
 	if (strlen(username) == 0)
 		username = effective_user;
@@ -3629,11 +3633,11 @@ main(int argc, char *argv[])
 		printf(_("Data page checksums are enabled.\n"));
 	else
 		printf(_("Data page checksums are disabled.\n"));
-	
+
 	printf("\n");
 
 	initialize_data_directory();
-	
+
 	if (do_sync)
 		perform_fsync();
 	else

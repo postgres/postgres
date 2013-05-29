@@ -59,11 +59,11 @@ setupPageConverter(void)
 	if (newPageVersion != oldPageVersion)
 	{
 		/*
-		 * The clusters use differing page layouts, see if we can find a plugin
-		 * that knows how to convert from the old page layout to the new page
-		 * layout.
+		 * The clusters use differing page layouts, see if we can find a
+		 * plugin that knows how to convert from the old page layout to the
+		 * new page layout.
 		 */
-	
+
 		if ((converter = loadConverterPlugin(newPageVersion, oldPageVersion)) == NULL)
 			pg_log(PG_FATAL, "could not find plugin to convert from old page layout to new page layout\n");
 
@@ -160,7 +160,5 @@ loadConverterPlugin(uint16 newPageVersion, uint16 oldPageVersion)
 		return result;
 	}
 }
-
-
 
 #endif

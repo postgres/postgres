@@ -40,7 +40,7 @@ typedef enum
 
 typedef struct
 {
-	EventTriggerEvent	event;
+	EventTriggerEvent event;
 	List	   *triggerlist;
 } EventTriggerCacheEntry;
 
@@ -51,7 +51,7 @@ static EventTriggerCacheStateType EventTriggerCacheState = ETCS_NEEDS_REBUILD;
 static void BuildEventTriggerCache(void);
 static void InvalidateEventCacheCallback(Datum arg,
 							 int cacheid, uint32 hashvalue);
-static int DecodeTextArrayToCString(Datum array, char ***cstringp);
+static int	DecodeTextArrayToCString(Datum array, char ***cstringp);
 
 /*
  * Search the event cache by trigger event.
@@ -77,12 +77,12 @@ EventCacheLookup(EventTriggerEvent event)
 static void
 BuildEventTriggerCache(void)
 {
-	HASHCTL         ctl;
-	HTAB		   *cache;
-	MemoryContext	oldcontext;
-	Relation		rel;
-	Relation		irel;
-	SysScanDesc		scan;
+	HASHCTL		ctl;
+	HTAB	   *cache;
+	MemoryContext oldcontext;
+	Relation	rel;
+	Relation	irel;
+	SysScanDesc scan;
 
 	if (EventTriggerCacheContext != NULL)
 	{
@@ -96,8 +96,8 @@ BuildEventTriggerCache(void)
 	else
 	{
 		/*
-		 * This is our first time attempting to build the cache, so we need
-		 * to set up the memory context and register a syscache callback to
+		 * This is our first time attempting to build the cache, so we need to
+		 * set up the memory context and register a syscache callback to
 		 * capture future invalidation events.
 		 */
 		if (CacheMemoryContext == NULL)
@@ -129,24 +129,24 @@ BuildEventTriggerCache(void)
 						HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
 
 	/*
-	 * Prepare to scan pg_event_trigger in name order.  We use an MVCC
-	 * snapshot to avoid getting inconsistent results if the table is
-	 * being concurrently updated.
+	 * Prepare to scan pg_event_trigger in name order.	We use an MVCC
+	 * snapshot to avoid getting inconsistent results if the table is being
+	 * concurrently updated.
 	 */
 	rel = relation_open(EventTriggerRelationId, AccessShareLock);
 	irel = index_open(EventTriggerNameIndexId, AccessShareLock);
 	scan = systable_beginscan_ordered(rel, irel, GetLatestSnapshot(), 0, NULL);
 
 	/*
-	 * Build a cache item for each pg_event_trigger tuple, and append each
-	 * one to the appropriate cache entry.
+	 * Build a cache item for each pg_event_trigger tuple, and append each one
+	 * to the appropriate cache entry.
 	 */
 	for (;;)
 	{
-		HeapTuple		tup;
-		Form_pg_event_trigger	form;
+		HeapTuple	tup;
+		Form_pg_event_trigger form;
 		char	   *evtevent;
-		EventTriggerEvent	event;
+		EventTriggerEvent event;
 		EventTriggerCacheItem *item;
 		Datum		evttags;
 		bool		evttags_isnull;
@@ -257,9 +257,9 @@ static void
 InvalidateEventCacheCallback(Datum arg, int cacheid, uint32 hashvalue)
 {
 	/*
-	 * If the cache isn't valid, then there might be a rebuild in progress,
-	 * so we can't immediately blow it away.  But it's advantageous to do
-	 * this when possible, so as to immediately free memory.
+	 * If the cache isn't valid, then there might be a rebuild in progress, so
+	 * we can't immediately blow it away.  But it's advantageous to do this
+	 * when possible, so as to immediately free memory.
 	 */
 	if (EventTriggerCacheState == ETCS_VALID)
 	{

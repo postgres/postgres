@@ -327,7 +327,7 @@ typedef enum CoercionContext
  * NB: equal() ignores CoercionForm fields, therefore this *must* not carry
  * any semantically significant information.  We need that behavior so that
  * the planner will consider equivalent implicit and explicit casts to be
- * equivalent.  In cases where those actually behave differently, the coercion
+ * equivalent.	In cases where those actually behave differently, the coercion
  * function's arguments will be different.
  */
 typedef enum CoercionForm

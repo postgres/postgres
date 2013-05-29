@@ -1024,8 +1024,8 @@ RecordTransactionCommit(void)
 		 *
 		 * It's safe to change the delayChkpt flag of our own backend without
 		 * holding the ProcArrayLock, since we're the only one modifying it.
-		 * This makes checkpoint's determination of which xacts are delayChkpt a
-		 * bit fuzzy, but it doesn't matter.
+		 * This makes checkpoint's determination of which xacts are delayChkpt
+		 * a bit fuzzy, but it doesn't matter.
 		 */
 		START_CRIT_SECTION();
 		MyPgXact->delayChkpt = true;
@@ -4683,12 +4683,11 @@ xact_redo_commit_internal(TransactionId xid, XLogRecPtr lsn,
 	 * from the template database, and then commit the transaction. If we
 	 * crash after all the files have been copied but before the commit, you
 	 * have files in the data directory without an entry in pg_database. To
-	 * minimize the window
-	 * for that, we use ForceSyncCommit() to rush the commit record to disk as
-	 * quick as possible. We have the same window during recovery, and forcing
-	 * an XLogFlush() (which updates minRecoveryPoint during recovery) helps
-	 * to reduce that problem window, for any user that requested
-	 * ForceSyncCommit().
+	 * minimize the window for that, we use ForceSyncCommit() to rush the
+	 * commit record to disk as quick as possible. We have the same window
+	 * during recovery, and forcing an XLogFlush() (which updates
+	 * minRecoveryPoint during recovery) helps to reduce that problem window,
+	 * for any user that requested ForceSyncCommit().
 	 */
 	if (XactCompletionForceSyncCommit(xinfo))
 		XLogFlush(lsn);

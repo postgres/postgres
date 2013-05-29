@@ -342,8 +342,8 @@ PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth)
 static void
 PLy_get_spi_sqlerrcode(PyObject *exc, int *sqlerrcode)
 {
-	PyObject	*sqlstate;
-	char		*buffer;
+	PyObject   *sqlstate;
+	char	   *buffer;
 
 	sqlstate = PyObject_GetAttrString(exc, "sqlstate");
 	if (sqlstate == NULL)

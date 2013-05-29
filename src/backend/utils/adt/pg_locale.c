@@ -718,13 +718,13 @@ cache_locale_time(void)
  * Convert a Windows setlocale() argument to a Unix-style one.
  *
  * Regardless of platform, we install message catalogs under a Unix-style
- * LL[_CC][.ENCODING][@VARIANT] naming convention.  Only LC_MESSAGES settings
+ * LL[_CC][.ENCODING][@VARIANT] naming convention.	Only LC_MESSAGES settings
  * following that style will elicit localized interface strings.
  *
  * Before Visual Studio 2012 (msvcr110.dll), Windows setlocale() accepted "C"
  * (but not "c") and strings of the form <Language>[_<Country>][.<CodePage>],
  * case-insensitive.  setlocale() returns the fully-qualified form; for
- * example, setlocale("thaI") returns "Thai_Thailand.874".  Internally,
+ * example, setlocale("thaI") returns "Thai_Thailand.874".	Internally,
  * setlocale() and _create_locale() select a "locale identifier"[1] and store
  * it in an undocumented _locale_t field.  From that LCID, we can retrieve the
  * ISO 639 language and the ISO 3166 country.  Character encoding does not
@@ -735,12 +735,12 @@ cache_locale_time(void)
  * Studio 2012, setlocale() accepts locale names in addition to the strings it
  * accepted historically.  It does not standardize them; setlocale("Th-tH")
  * returns "Th-tH".  setlocale(category, "") still returns a traditional
- * string.  Furthermore, msvcr110.dll changed the undocumented _locale_t
+ * string.	Furthermore, msvcr110.dll changed the undocumented _locale_t
  * content to carry locale names instead of locale identifiers.
  *
  * MinGW headers declare _create_locale(), but msvcrt.dll lacks that symbol.
  * IsoLocaleName() always fails in a MinGW-built postgres.exe, so only
- * Unix-style values of the lc_messages GUC can elicit localized messages.  In
+ * Unix-style values of the lc_messages GUC can elicit localized messages.	In
  * particular, every lc_messages setting that initdb can select automatically
  * will yield only C-locale messages.  XXX This could be fixed by running the
  * fully-qualified locale name through a lookup table.
@@ -784,7 +784,7 @@ IsoLocaleName(const char *winlocname)
 		 * need not standardize letter case here.  So long as we do not ship
 		 * message catalogs for which it would matter, we also need not
 		 * translate the script/variant portion, e.g. uz-Cyrl-UZ to
-		 * uz_UZ@cyrillic.  Simply replace the hyphen with an underscore.
+		 * uz_UZ@cyrillic.	Simply replace the hyphen with an underscore.
 		 *
 		 * Note that the locale name can be less-specific than the value we
 		 * would derive under earlier Visual Studio releases.  For example,

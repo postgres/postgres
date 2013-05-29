@@ -1467,6 +1467,7 @@ getCopyDataMessage(PGconn *conn)
 			case 'd':			/* Copy Data, pass it back to caller */
 				return msgLength;
 			case 'c':
+
 				/*
 				 * If this is a CopyDone message, exit COPY_OUT mode and let
 				 * caller read status with PQgetResult().  If we're in
@@ -1478,6 +1479,7 @@ getCopyDataMessage(PGconn *conn)
 					conn->asyncStatus = PGASYNC_BUSY;
 				return -1;
 			default:			/* treat as end of copy */
+
 				/*
 				 * Any other message terminates either COPY_IN or COPY_BOTH
 				 * mode.

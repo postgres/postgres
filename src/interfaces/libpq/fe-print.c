@@ -329,7 +329,6 @@ do_field(const PQprintOpt *po, const PGresult *res,
 		 unsigned char *fieldNotNum, int *fieldMax,
 		 const int fieldMaxLen, FILE *fout)
 {
-
 	const char *pval,
 			   *p;
 	int			plen;
@@ -441,7 +440,6 @@ do_header(FILE *fout, const PQprintOpt *po, const int nFields, int *fieldMax,
 		  const char **fieldNames, unsigned char *fieldNotNum,
 		  const int fs_len, const PGresult *res)
 {
-
 	int			j;				/* for loop index */
 	char	   *border = NULL;
 
@@ -528,7 +526,6 @@ output_row(FILE *fout, const PQprintOpt *po, const int nFields, char **fields,
 		   unsigned char *fieldNotNum, int *fieldMax, char *border,
 		   const int row_index)
 {
-
 	int			field_index;	/* for loop index */
 
 	if (po->html3)

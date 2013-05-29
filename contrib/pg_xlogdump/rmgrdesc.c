@@ -33,4 +33,3 @@
 const RmgrDescData RmgrDescTable[RM_MAX_ID + 1] = {
 #include "access/rmgrlist.h"
 };
-

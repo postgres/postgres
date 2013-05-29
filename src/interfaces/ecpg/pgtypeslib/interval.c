@@ -801,7 +801,6 @@ AppendSeconds(char *cp, int sec, fsec_t fsec, int precision, bool fillzeros)
 int
 EncodeInterval(struct /* pg_ */ tm * tm, fsec_t fsec, int style, char *str)
 {
-
 	char	   *cp = str;
 	int			year = tm->tm_year;
 	int			mon = tm->tm_mon;

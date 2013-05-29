@@ -788,7 +788,7 @@ dropdb(const char *dbname, bool missing_ok)
 	pgdbrel = heap_open(DatabaseRelationId, RowExclusiveLock);
 
 	if (!get_db_info(dbname, AccessExclusiveLock, &db_id, NULL, NULL,
-					 &db_istemplate, NULL, NULL, NULL, NULL, NULL, NULL, NULL))
+				   &db_istemplate, NULL, NULL, NULL, NULL, NULL, NULL, NULL))
 	{
 		if (!missing_ok)
 		{
@@ -1043,7 +1043,7 @@ movedb(const char *dbname, const char *tblspcname)
 	pgdbrel = heap_open(DatabaseRelationId, RowExclusiveLock);
 
 	if (!get_db_info(dbname, AccessExclusiveLock, &db_id, NULL, NULL,
-					 NULL, NULL, NULL, NULL, NULL, &src_tblspcoid, NULL, NULL))
+				   NULL, NULL, NULL, NULL, NULL, &src_tblspcoid, NULL, NULL))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist", dbname)));
@@ -1334,7 +1334,7 @@ Oid
 AlterDatabase(AlterDatabaseStmt *stmt, bool isTopLevel)
 {
 	Relation	rel;
-	Oid         dboid;
+	Oid			dboid;
 	HeapTuple	tuple,
 				newtuple;
 	ScanKeyData scankey;
@@ -1882,8 +1882,11 @@ static int
 errdetail_busy_db(int notherbackends, int npreparedxacts)
 {
 	if (notherbackends > 0 && npreparedxacts > 0)
-		/* We don't deal with singular versus plural here, since gettext
-		 * doesn't support multiple plurals in one string. */
+
+		/*
+		 * We don't deal with singular versus plural here, since gettext
+		 * doesn't support multiple plurals in one string.
+		 */
 		errdetail("There are %d other session(s) and %d prepared transaction(s) using the database.",
 				  notherbackends, npreparedxacts);
 	else if (notherbackends > 0)
@@ -1893,7 +1896,7 @@ errdetail_busy_db(int notherbackends, int npreparedxacts)
 						 notherbackends);
 	else
 		errdetail_plural("There is %d prepared transaction using the database.",
-						 "There are %d prepared transactions using the database.",
+					"There are %d prepared transactions using the database.",
 						 npreparedxacts,
 						 npreparedxacts);
 	return 0;					/* just to keep ereport macro happy */

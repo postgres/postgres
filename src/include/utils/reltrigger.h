@@ -70,5 +70,4 @@ typedef struct TriggerDesc
 	bool		trig_truncate_after_statement;
 } TriggerDesc;
 
-
 #endif   /* RELTRIGGER_H */

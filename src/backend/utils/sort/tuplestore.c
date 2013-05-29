@@ -575,8 +575,8 @@ grow_memtuples(Tuplestorestate *state)
 		 * strategy and instead increase as much as we safely can.
 		 *
 		 * To stay within allowedMem, we can't increase memtupsize by more
-		 * than availMem / sizeof(void *) elements.	In practice, we want
-		 * to increase it by considerably less, because we need to leave some
+		 * than availMem / sizeof(void *) elements. In practice, we want to
+		 * increase it by considerably less, because we need to leave some
 		 * space for the tuples to which the new array slots will refer.  We
 		 * assume the new tuples will be about the same size as the tuples
 		 * we've already seen, and thus we can extrapolate from the space

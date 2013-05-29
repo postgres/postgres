@@ -382,7 +382,6 @@ gbt_ts_union(PG_FUNCTION_ARGS)
 Datum
 gbt_ts_penalty(PG_FUNCTION_ARGS)
 {
-
 	tsKEY	   *origentry = (tsKEY *) DatumGetPointer(((GISTENTRY *) PG_GETARG_POINTER(0))->key);
 	tsKEY	   *newentry = (tsKEY *) DatumGetPointer(((GISTENTRY *) PG_GETARG_POINTER(1))->key);
 	float	   *result = (float *) PG_GETARG_POINTER(2);

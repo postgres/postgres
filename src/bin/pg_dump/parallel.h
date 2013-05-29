@@ -30,14 +30,14 @@ typedef enum
 	WRKR_IDLE,
 	WRKR_WORKING,
 	WRKR_FINISHED
-}	T_WorkerStatus;
+} T_WorkerStatus;
 
 /* Arguments needed for a worker process */
 typedef struct ParallelArgs
 {
 	struct _archiveHandle *AH;
 	struct _tocEntry *te;
-}	ParallelArgs;
+} ParallelArgs;
 
 /* State for each parallel activity slot */
 typedef struct ParallelSlot

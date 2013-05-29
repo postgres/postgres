@@ -1300,7 +1300,7 @@ hstore_to_json_loose(PG_FUNCTION_ARGS)
 			 * digit as numeric - could be a zip code or similar
 			 */
 			if (src->len > 0 &&
-				!(src->data[0] == '0' && isdigit((unsigned char) src->data[1])) &&
+			!(src->data[0] == '0' && isdigit((unsigned char) src->data[1])) &&
 				strspn(src->data, "+-0123456789Ee.") == src->len)
 			{
 				/*
@@ -1308,9 +1308,9 @@ hstore_to_json_loose(PG_FUNCTION_ARGS)
 				 * value. Ignore any actual parsed value.
 				 */
 				char	   *endptr = "junk";
-				long        lval;
+				long		lval;
 
-				lval =  strtol(src->data, &endptr, 10);
+				lval = strtol(src->data, &endptr, 10);
 				(void) lval;
 				if (*endptr == '\0')
 				{
@@ -1323,7 +1323,7 @@ hstore_to_json_loose(PG_FUNCTION_ARGS)
 				else
 				{
 					/* not an int - try a double */
-					double dval;
+					double		dval;
 
 					dval = strtod(src->data, &endptr);
 					(void) dval;

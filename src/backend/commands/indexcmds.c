@@ -351,7 +351,7 @@ DefineIndex(IndexStmt *stmt,
 	 * (but not VACUUM).
 	 */
 	rel = heap_openrv(stmt->relation,
-					  (stmt->concurrent ? ShareUpdateExclusiveLock : ShareLock));
+				  (stmt->concurrent ? ShareUpdateExclusiveLock : ShareLock));
 
 	relationId = RelationGetRelid(rel);
 	namespaceId = RelationGetNamespace(rel);
@@ -774,7 +774,7 @@ DefineIndex(IndexStmt *stmt,
 	 * Drop the reference snapshot.  We must do this before waiting out other
 	 * snapshot holders, else we will deadlock against other processes also
 	 * doing CREATE INDEX CONCURRENTLY, which would see our snapshot as one
-	 * they must wait for.  But first, save the snapshot's xmin to use as
+	 * they must wait for.	But first, save the snapshot's xmin to use as
 	 * limitXmin for GetCurrentVirtualXIDs().
 	 */
 	limitXmin = snapshot->xmin;

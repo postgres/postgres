@@ -1570,7 +1570,7 @@ SPI_result_code_string(int code)
  * CachedPlanSources.
  *
  * This is exported so that pl/pgsql can use it (this beats letting pl/pgsql
- * look directly into the SPIPlan for itself).  It's not documented in
+ * look directly into the SPIPlan for itself).	It's not documented in
  * spi.sgml because we'd just as soon not have too many places using this.
  */
 List *
@@ -1586,7 +1586,7 @@ SPI_plan_get_plan_sources(SPIPlanPtr plan)
  * return NULL.  Caller is responsible for doing ReleaseCachedPlan().
  *
  * This is exported so that pl/pgsql can use it (this beats letting pl/pgsql
- * look directly into the SPIPlan for itself).  It's not documented in
+ * look directly into the SPIPlan for itself).	It's not documented in
  * spi.sgml because we'd just as soon not have too many places using this.
  */
 CachedPlan *
@@ -1971,7 +1971,7 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 				stmt_list = pg_analyze_and_rewrite_params(parsetree,
 														  src,
 														  plan->parserSetup,
-														  plan->parserSetupArg);
+													   plan->parserSetupArg);
 			}
 			else
 			{
@@ -1990,7 +1990,7 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 							   plan->parserSetup,
 							   plan->parserSetupArg,
 							   plan->cursor_options,
-							   false);		/* not fixed result */
+							   false);	/* not fixed result */
 		}
 
 		/*

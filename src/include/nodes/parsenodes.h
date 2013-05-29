@@ -573,7 +573,7 @@ typedef struct DefElem
 
 /*
  * LockingClause - raw representation of FOR [NO KEY] UPDATE/[KEY] SHARE
- * 		options
+ *		options
  *
  * Note: lockedRels == NIL means "all relations in query".	Otherwise it
  * is a list of RangeVar nodes.  (We use RangeVar mainly because it carries
@@ -1508,7 +1508,8 @@ typedef struct CreateStmt
 
 typedef enum ConstrType			/* types of constraints */
 {
-	CONSTR_NULL,				/* not standard SQL, but a lot of people expect it */
+	CONSTR_NULL,				/* not standard SQL, but a lot of people
+								 * expect it */
 	CONSTR_NOTNULL,
 	CONSTR_DEFAULT,
 	CONSTR_CHECK,

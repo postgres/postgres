@@ -4245,7 +4245,7 @@ text_format(PG_FUNCTION_ARGS)
 
 		/*
 		 * Get the appropriate typOutput function, reusing previous one if
-		 * same type as previous argument.  That's particularly useful in the
+		 * same type as previous argument.	That's particularly useful in the
 		 * variadic-array case, but often saves work even for ordinary calls.
 		 */
 		if (typid != prev_type)
@@ -4274,8 +4274,8 @@ text_format(PG_FUNCTION_ARGS)
 				/* should not get here, because of previous check */
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("unrecognized conversion type specifier \"%c\"",
-								*cp)));
+					  errmsg("unrecognized conversion type specifier \"%c\"",
+							 *cp)));
 				break;
 		}
 	}

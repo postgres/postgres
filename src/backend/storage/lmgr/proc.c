@@ -186,8 +186,8 @@ InitProcGlobal(void)
 	 * five separate consumers: (1) normal backends, (2) autovacuum workers
 	 * and the autovacuum launcher, (3) background workers, (4) auxiliary
 	 * processes, and (5) prepared transactions.  Each PGPROC structure is
-	 * dedicated to exactly one of these purposes, and they do not move between
-	 * groups.
+	 * dedicated to exactly one of these purposes, and they do not move
+	 * between groups.
 	 */
 	procs = (PGPROC *) ShmemAlloc(TotalProcs * sizeof(PGPROC));
 	ProcGlobal->allProcs = procs;
@@ -291,7 +291,7 @@ InitProcess(void)
 		elog(ERROR, "you already exist");
 
 	/*
-	 * Initialize process-local latch support.  This could fail if the kernel
+	 * Initialize process-local latch support.	This could fail if the kernel
 	 * is low on resources, and if so we want to exit cleanly before acquiring
 	 * any shared-memory resources.
 	 */
@@ -476,7 +476,7 @@ InitAuxiliaryProcess(void)
 		elog(ERROR, "you already exist");
 
 	/*
-	 * Initialize process-local latch support.  This could fail if the kernel
+	 * Initialize process-local latch support.	This could fail if the kernel
 	 * is low on resources, and if so we want to exit cleanly before acquiring
 	 * any shared-memory resources.
 	 */
@@ -1153,25 +1153,25 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 			{
 				int			pid = autovac->pid;
 				StringInfoData locktagbuf;
-				StringInfoData logbuf;		/* errdetail for server log */
+				StringInfoData logbuf;	/* errdetail for server log */
 
 				initStringInfo(&locktagbuf);
 				initStringInfo(&logbuf);
 				DescribeLockTag(&locktagbuf, &lock->tag);
 				appendStringInfo(&logbuf,
-					  _("Process %d waits for %s on %s."),
-						 MyProcPid,
-						 GetLockmodeName(lock->tag.locktag_lockmethodid,
-										 lockmode),
-						 locktagbuf.data);
+								 _("Process %d waits for %s on %s."),
+								 MyProcPid,
+							  GetLockmodeName(lock->tag.locktag_lockmethodid,
+											  lockmode),
+								 locktagbuf.data);
 
 				/* release lock as quickly as possible */
 				LWLockRelease(ProcArrayLock);
 
 				ereport(LOG,
-						(errmsg("sending cancel to blocking autovacuum PID %d",
-							pid),
-						 errdetail_log("%s", logbuf.data)));
+					  (errmsg("sending cancel to blocking autovacuum PID %d",
+							  pid),
+					   errdetail_log("%s", logbuf.data)));
 
 				pfree(logbuf.data);
 				pfree(locktagbuf.data);

@@ -1382,7 +1382,7 @@ shdepReassignOwned(List *roleids, Oid newrole)
 					AlterEventTriggerOwner_oid(sdepForm->objid, newrole);
 					break;
 
-				/* Generic alter owner cases */
+					/* Generic alter owner cases */
 				case CollationRelationId:
 				case ConversionRelationId:
 				case OperatorRelationId:

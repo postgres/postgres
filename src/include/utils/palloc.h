@@ -89,7 +89,7 @@ MemoryContextSwitchTo(MemoryContext context)
  * allocated in a context, not with malloc().
  */
 extern char *MemoryContextStrdup(MemoryContext context, const char *string);
-#endif /* !FRONTEND */
+#endif   /* !FRONTEND */
 
 extern char *pstrdup(const char *in);
 extern char *pnstrdup(const char *in, Size len);

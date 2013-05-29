@@ -35,7 +35,7 @@
  *	\copy ( select stmt ) to filename [options]
  *
  * where 'filename' can be one of the following:
- *  '<file path>' | PROGRAM '<command>' | stdin | stdout | pstdout | pstdout
+ *	'<file path>' | PROGRAM '<command>' | stdin | stdout | pstdout | pstdout
  *
  * An undocumented fact is that you can still write BINARY before the
  * tablename; this is a hangover from the pre-7.3 syntax.  The options
@@ -203,7 +203,7 @@ parse_slash_copy(const char *args)
 
 	if (pg_strcasecmp(token, "program") == 0)
 	{
-		int toklen;
+		int			toklen;
 
 		token = strtokx(NULL, whitespace, NULL, "'",
 						0, false, false, pset.encoding);
@@ -211,8 +211,8 @@ parse_slash_copy(const char *args)
 			goto error;
 
 		/*
-		 * The shell command must be quoted. This isn't fool-proof, but catches
-		 * most quoting errors.
+		 * The shell command must be quoted. This isn't fool-proof, but
+		 * catches most quoting errors.
 		 */
 		toklen = strlen(token);
 		if (token[0] != '\'' || toklen < 2 || token[toklen - 1] != '\'')
@@ -381,7 +381,8 @@ do_copy(const char *args)
 	{
 		if (options->program)
 		{
-			int pclose_rc = pclose(copystream);
+			int			pclose_rc = pclose(copystream);
+
 			if (pclose_rc != 0)
 			{
 				if (pclose_rc < 0)
@@ -389,7 +390,8 @@ do_copy(const char *args)
 							   strerror(errno));
 				else
 				{
-					char *reason = wait_result_to_str(pclose_rc);
+					char	   *reason = wait_result_to_str(pclose_rc);
+
 					psql_error("%s: %s\n", options->file,
 							   reason ? reason : "");
 					if (reason)

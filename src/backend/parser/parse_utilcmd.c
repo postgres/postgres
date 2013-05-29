@@ -525,7 +525,7 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 				if (cxt->isforeign)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("constraints are not supported on foreign tables"),
+					errmsg("constraints are not supported on foreign tables"),
 							 parser_errposition(cxt->pstate,
 												constraint->location)));
 				cxt->ckconstraints = lappend(cxt->ckconstraints, constraint);
@@ -536,7 +536,7 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 				if (cxt->isforeign)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("constraints are not supported on foreign tables"),
+					errmsg("constraints are not supported on foreign tables"),
 							 parser_errposition(cxt->pstate,
 												constraint->location)));
 				if (constraint->keys == NIL)
@@ -553,9 +553,10 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 				if (cxt->isforeign)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("constraints are not supported on foreign tables"),
+					errmsg("constraints are not supported on foreign tables"),
 							 parser_errposition(cxt->pstate,
 												constraint->location)));
+
 				/*
 				 * Fill in the current attribute's name and throw it into the
 				 * list of FK constraints to be processed later.
@@ -718,7 +719,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 	constr = tupleDesc->constr;
 
 	/*
-	 * Initialize column number map for map_variable_attnos().  We need this
+	 * Initialize column number map for map_variable_attnos().	We need this
 	 * since dropped columns in the source table aren't copied, so the new
 	 * table can have different column numbers.
 	 */
@@ -1273,8 +1274,8 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("cannot convert whole-row table reference"),
-					 errdetail("Index \"%s\" contains a whole-row table reference.",
-							   RelationGetRelationName(source_idx))));
+			  errdetail("Index \"%s\" contains a whole-row table reference.",
+						RelationGetRelationName(source_idx))));
 
 		index->whereClause = pred_tree;
 	}
@@ -1405,8 +1406,8 @@ transformIndexConstraints(CreateStmtContext *cxt)
 	/*
 	 * Scan the index list and remove any redundant index specifications. This
 	 * can happen if, for instance, the user writes UNIQUE PRIMARY KEY. A
-	 * strict reading of SQL would suggest raising an error instead, but
-	 * that strikes me as too anal-retentive. - tgl 2001-02-14
+	 * strict reading of SQL would suggest raising an error instead, but that
+	 * strikes me as too anal-retentive. - tgl 2001-02-14
 	 *
 	 * XXX in ALTER TABLE case, it'd be nice to look for duplicate
 	 * pre-existing indexes, too.

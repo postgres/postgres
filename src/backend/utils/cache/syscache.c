@@ -382,7 +382,7 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		256
 	},
-	{EventTriggerRelationId,			/* EVENTTRIGGERNAME */
+	{EventTriggerRelationId,	/* EVENTTRIGGERNAME */
 		EventTriggerNameIndexId,
 		1,
 		{
@@ -393,7 +393,7 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		8
 	},
-	{EventTriggerRelationId,			/* EVENTTRIGGEROID */
+	{EventTriggerRelationId,	/* EVENTTRIGGEROID */
 		EventTriggerOidIndexId,
 		1,
 		{

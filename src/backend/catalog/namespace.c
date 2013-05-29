@@ -293,9 +293,10 @@ RangeVarGetRelidExtended(const RangeVar *relation, LOCKMODE lockmode,
 					Oid			namespaceId;
 
 					namespaceId = LookupExplicitNamespace(relation->schemaname, missing_ok);
+
 					/*
-					 *	For missing_ok, allow a non-existant schema name to
-					 *	return InvalidOid.
+					 * For missing_ok, allow a non-existant schema name to
+					 * return InvalidOid.
 					 */
 					if (namespaceId != myTempNamespace)
 						ereport(ERROR,
@@ -2701,7 +2702,7 @@ LookupExplicitNamespace(const char *nspname, bool missing_ok)
 	namespaceId = get_namespace_oid(nspname, missing_ok);
 	if (missing_ok && !OidIsValid(namespaceId))
 		return InvalidOid;
-	
+
 	aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(), ACL_USAGE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,

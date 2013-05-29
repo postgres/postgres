@@ -293,7 +293,7 @@ trigger_out(PG_FUNCTION_ARGS)
 
 
 /*
- * event_trigger_in	- input routine for pseudo-type event_trigger.
+ * event_trigger_in - input routine for pseudo-type event_trigger.
  */
 Datum
 event_trigger_in(PG_FUNCTION_ARGS)

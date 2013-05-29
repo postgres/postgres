@@ -737,7 +737,7 @@ bounds_adjacent(TypeCacheEntry *typcache, RangeBound boundA, RangeBound boundB)
 	cmp = range_cmp_bound_values(typcache, &boundA, &boundB);
 	if (cmp < 0)
 	{
-		RangeType *r;
+		RangeType  *r;
 
 		/*
 		 * Bounds do not overlap; see if there are points in between.
@@ -764,7 +764,7 @@ bounds_adjacent(TypeCacheEntry *typcache, RangeBound boundA, RangeBound boundB)
 	else if (cmp == 0)
 		return boundA.inclusive != boundB.inclusive;
 	else
-		return false;		/* bounds overlap */
+		return false;			/* bounds overlap */
 }
 
 /* adjacent to (but not overlapping)? (internal version) */
@@ -1877,7 +1877,7 @@ range_parse_flags(const char *flags_str)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("invalid range bound flags"),
-				 errhint("Valid values are \"[]\", \"[)\", \"(]\", and \"()\".")));
+		   errhint("Valid values are \"[]\", \"[)\", \"(]\", and \"()\".")));
 
 	switch (flags_str[0])
 	{
@@ -1890,7 +1890,7 @@ range_parse_flags(const char *flags_str)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("invalid range bound flags"),
-				 errhint("Valid values are \"[]\", \"[)\", \"(]\", and \"()\".")));
+			errhint("Valid values are \"[]\", \"[)\", \"(]\", and \"()\".")));
 	}
 
 	switch (flags_str[1])
@@ -1904,7 +1904,7 @@ range_parse_flags(const char *flags_str)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("invalid range bound flags"),
-				 errhint("Valid values are \"[]\", \"[)\", \"(]\", and \"()\".")));
+			errhint("Valid values are \"[]\", \"[)\", \"(]\", and \"()\".")));
 	}
 
 	return flags;

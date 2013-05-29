@@ -5187,7 +5187,7 @@ array_unnest(PG_FUNCTION_ARGS)
  *
  * Find all array entries matching (not distinct from) search/search_isnull,
  * and delete them if remove is true, else replace them with
- * replace/replace_isnull.  Comparisons are done using the specified
+ * replace/replace_isnull.	Comparisons are done using the specified
  * collation.  fcinfo is passed only for caching purposes.
  */
 static ArrayType *
@@ -5250,8 +5250,8 @@ array_replace_internal(ArrayType *array,
 		if (!OidIsValid(typentry->eq_opr_finfo.fn_oid))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
-					 errmsg("could not identify an equality operator for type %s",
-							format_type_be(element_type))));
+				errmsg("could not identify an equality operator for type %s",
+					   format_type_be(element_type))));
 		fcinfo->flinfo->fn_extra = (void *) typentry;
 	}
 	typlen = typentry->typlen;
@@ -5259,7 +5259,7 @@ array_replace_internal(ArrayType *array,
 	typalign = typentry->typalign;
 
 	/*
-	 * Detoast values if they are toasted.  The replacement value must be
+	 * Detoast values if they are toasted.	The replacement value must be
 	 * detoasted for insertion into the result array, while detoasting the
 	 * search value only once saves cycles.
 	 */
@@ -5370,8 +5370,8 @@ array_replace_internal(ArrayType *array,
 				if (!AllocSizeIsValid(nbytes))
 					ereport(ERROR,
 							(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-							 errmsg("array size exceeds the maximum allowed (%d)",
-									(int) MaxAllocSize)));
+						errmsg("array size exceeds the maximum allowed (%d)",
+							   (int) MaxAllocSize)));
 			}
 			nresult++;
 		}

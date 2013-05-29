@@ -96,7 +96,7 @@ typedef enum
 	JSON_SEARCH_OBJECT = 1,
 	JSON_SEARCH_ARRAY,
 	JSON_SEARCH_PATH
-}	JsonSearch;
+} JsonSearch;
 
 /* state for json_object_keys */
 typedef struct okeysState
@@ -682,10 +682,10 @@ get_array_start(void *state)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("cannot extract field from a non-object")));
-	/* 
-	 * initialize array count for this nesting level 
-	 * Note: the lex_level seen by array_start is one less than that seen by
-	 * the elements of the array.
+
+	/*
+	 * initialize array count for this nesting level Note: the lex_level seen
+	 * by array_start is one less than that seen by the elements of the array.
 	 */
 	if (_state->search_type == JSON_SEARCH_PATH &&
 		lex_level < _state->npath)

@@ -44,7 +44,7 @@ typedef struct
 /*
  * prototypes for functions in pqcomm.c
  */
-extern int	StreamServerPort(int family, char *hostName,
+extern int StreamServerPort(int family, char *hostName,
 				 unsigned short portNumber, char *unixSocketDir,
 				 pgsocket ListenSocket[], int MaxListen);
 extern int	StreamConnection(pgsocket server_fd, Port *port);

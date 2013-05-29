@@ -246,7 +246,7 @@ PgArchiverMain(int argc, char *argv[])
 		elog(FATAL, "setsid() failed: %m");
 #endif
 
-	InitializeLatchSupport();		/* needed for latch waits */
+	InitializeLatchSupport();	/* needed for latch waits */
 
 	InitLatch(&mainloop_latch); /* initialize latch used in main loop */
 

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  * relpath.c
- * 		Shared frontend/backend code to find out pathnames of relation files
+ *		Shared frontend/backend code to find out pathnames of relation files
  *
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    src/common/relpath.c
+ *	  src/common/relpath.c
  *
  *-------------------------------------------------------------------------
  */
@@ -159,4 +159,3 @@ relpathbackend(RelFileNode rnode, BackendId backend, ForkNumber forknum)
 	}
 	return path;
 }
-

@@ -315,12 +315,12 @@ extract_lateral_references(PlannerInfo *root, RelOptInfo *brel, Index rtindex)
 	newvars = NIL;
 	foreach(lc, vars)
 	{
-		Node   *node = (Node *) lfirst(lc);
+		Node	   *node = (Node *) lfirst(lc);
 
 		node = copyObject(node);
 		if (IsA(node, Var))
 		{
-			Var	   *var = (Var *) node;
+			Var		   *var = (Var *) node;
 
 			/* Adjustment is easy since it's just one node */
 			var->varlevelsup = 0;
@@ -328,7 +328,7 @@ extract_lateral_references(PlannerInfo *root, RelOptInfo *brel, Index rtindex)
 		else if (IsA(node, PlaceHolderVar))
 		{
 			PlaceHolderVar *phv = (PlaceHolderVar *) node;
-			int		levelsup = phv->phlevelsup;
+			int			levelsup = phv->phlevelsup;
 
 			/* Have to work harder to adjust the contained expression too */
 			if (levelsup != 0)
@@ -389,7 +389,7 @@ create_lateral_join_info(PlannerInfo *root)
 	{
 		RelOptInfo *brel = root->simple_rel_array[rti];
 		Relids		lateral_relids;
-		ListCell *lc;
+		ListCell   *lc;
 
 		/* there may be empty slots corresponding to non-baserel RTEs */
 		if (brel == NULL)
@@ -406,11 +406,11 @@ create_lateral_join_info(PlannerInfo *root)
 		/* consider each laterally-referenced Var or PHV */
 		foreach(lc, brel->lateral_vars)
 		{
-			Node   *node = (Node *) lfirst(lc);
+			Node	   *node = (Node *) lfirst(lc);
 
 			if (IsA(node, Var))
 			{
-				Var	   *var = (Var *) node;
+				Var		   *var = (Var *) node;
 
 				add_lateral_info(root, rti, bms_make_singleton(var->varno));
 				lateral_relids = bms_add_member(lateral_relids,
@@ -439,7 +439,7 @@ create_lateral_join_info(PlannerInfo *root)
 		 * If it's an appendrel parent, copy its lateral_relids to each child
 		 * rel.  We intentionally give each child rel the same minimum
 		 * parameterization, even though it's quite possible that some don't
-		 * reference all the lateral rels.  This is because any append path
+		 * reference all the lateral rels.	This is because any append path
 		 * for the parent will have to have the same parameterization for
 		 * every child anyway, and there's no value in forcing extra
 		 * reparameterize_path() calls.
@@ -466,7 +466,7 @@ create_lateral_join_info(PlannerInfo *root)
  * add_lateral_info
  *		Add a LateralJoinInfo to root->lateral_info_list, if needed
  *
- * We suppress redundant list entries.  The passed lhs set must be freshly
+ * We suppress redundant list entries.	The passed lhs set must be freshly
  * made; we free it if not used in a new list entry.
  */
 static void
@@ -861,11 +861,11 @@ make_outerjoininfo(PlannerInfo *root,
 	Assert(jointype != JOIN_RIGHT);
 
 	/*
-	 * Presently the executor cannot support FOR [KEY] UPDATE/SHARE marking of rels
-	 * appearing on the nullable side of an outer join. (It's somewhat unclear
-	 * what that would mean, anyway: what should we mark when a result row is
-	 * generated from no element of the nullable relation?)  So, complain if
-	 * any nullable rel is FOR [KEY] UPDATE/SHARE.
+	 * Presently the executor cannot support FOR [KEY] UPDATE/SHARE marking of
+	 * rels appearing on the nullable side of an outer join. (It's somewhat
+	 * unclear what that would mean, anyway: what should we mark when a result
+	 * row is generated from no element of the nullable relation?)	So,
+	 * complain if any nullable rel is FOR [KEY] UPDATE/SHARE.
 	 *
 	 * You might be wondering why this test isn't made far upstream in the
 	 * parser.	It's because the parser hasn't got enough info --- consider
@@ -1721,7 +1721,7 @@ distribute_restrictinfo_to_rels(PlannerInfo *root,
  * that provides all its variables.
  *
  * "nullable_relids" is the set of relids used in the expressions that are
- * potentially nullable below the expressions.  (This has to be supplied by
+ * potentially nullable below the expressions.	(This has to be supplied by
  * caller because this function is used after deconstruct_jointree, so we
  * don't have knowledge of where the clause items came from.)
  *

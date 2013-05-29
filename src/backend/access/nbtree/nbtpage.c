@@ -532,8 +532,8 @@ _bt_log_reuse_page(Relation rel, BlockNumber blkno, TransactionId latestRemovedX
 	START_CRIT_SECTION();
 
 	/*
-	 * We don't do MarkBufferDirty here because we're about to initialise
-	 * the page, and nobody else can see it yet.
+	 * We don't do MarkBufferDirty here because we're about to initialise the
+	 * page, and nobody else can see it yet.
 	 */
 
 	/* XLOG stuff */
@@ -552,8 +552,8 @@ _bt_log_reuse_page(Relation rel, BlockNumber blkno, TransactionId latestRemovedX
 		XLogInsert(RM_BTREE_ID, XLOG_BTREE_REUSE_PAGE, rdata);
 
 		/*
-		 * We don't do PageSetLSN here because we're about to initialise
-		 * the page, so no need.
+		 * We don't do PageSetLSN here because we're about to initialise the
+		 * page, so no need.
 		 */
 	}
 

@@ -458,7 +458,7 @@ typedef Datum *DatumPtr;
 
 /*
  * MultiXactIdGetDatum
- * 		Returns datum representation for a multixact identifier.
+ *		Returns datum representation for a multixact identifier.
  */
 
 #define MultiXactIdGetDatum(X) ((Datum) SET_4_BYTES((X)))

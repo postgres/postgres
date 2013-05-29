@@ -444,7 +444,7 @@ progress_report(int tablespacenum, const char *filename)
 					VERBOSE_FILENAME_LENGTH + 5, "");
 		else
 		{
-			bool truncate = (strlen(filename) > VERBOSE_FILENAME_LENGTH);
+			bool		truncate = (strlen(filename) > VERBOSE_FILENAME_LENGTH);
 
 			fprintf(stderr,
 					ngettext("%*s/%s kB (%d%%), %d/%d tablespace (%s%-*.*s)",
@@ -453,11 +453,11 @@ progress_report(int tablespacenum, const char *filename)
 					(int) strlen(totalsize_str),
 					totaldone_str, totalsize_str, percent,
 					tablespacenum, tablespacecount,
-					/* Prefix with "..." if we do leading truncation */
+			/* Prefix with "..." if we do leading truncation */
 					truncate ? "..." : "",
-					truncate ? VERBOSE_FILENAME_LENGTH - 3 : VERBOSE_FILENAME_LENGTH,
-					truncate ? VERBOSE_FILENAME_LENGTH - 3 : VERBOSE_FILENAME_LENGTH,
-					/* Truncate filename at beginning if it's too long */
+			truncate ? VERBOSE_FILENAME_LENGTH - 3 : VERBOSE_FILENAME_LENGTH,
+			truncate ? VERBOSE_FILENAME_LENGTH - 3 : VERBOSE_FILENAME_LENGTH,
+			/* Truncate filename at beginning if it's too long */
 					truncate ? filename + strlen(filename) - VERBOSE_FILENAME_LENGTH + 3 : filename);
 		}
 	}
@@ -1145,7 +1145,7 @@ escapeConnectionParameter(const char *src)
 		return pg_strdup("''");
 
 	if (!need_quotes && !need_escaping)
-		return pg_strdup(src); /* no quoting or escaping needed */
+		return pg_strdup(src);	/* no quoting or escaping needed */
 
 	/*
 	 * Allocate a buffer large enough for the worst case that all the source
@@ -1320,8 +1320,8 @@ BaseBackup(void)
 		exit(1);
 
 	/*
-	 * Check server version. BASE_BACKUP command was introduced in 9.1, so
-	 * we can't work with servers older than 9.1.
+	 * Check server version. BASE_BACKUP command was introduced in 9.1, so we
+	 * can't work with servers older than 9.1.
 	 */
 	minServerMajor = 901;
 	maxServerMajor = PG_VERSION_NUM / 100;
@@ -1329,6 +1329,7 @@ BaseBackup(void)
 	if (serverMajor < minServerMajor || serverMajor > maxServerMajor)
 	{
 		const char *serverver = PQparameterStatus(conn, "server_version");
+
 		fprintf(stderr, _("%s: incompatible server version %s\n"),
 				progname, serverver ? serverver : "'unknown'");
 		disconnect_and_exit(1);
@@ -1409,9 +1410,11 @@ BaseBackup(void)
 	}
 
 	strcpy(xlogstart, PQgetvalue(res, 0, 0));
+
 	/*
 	 * 9.3 and later sends the TLI of the starting point. With older servers,
-	 * assume it's the same as the latest timeline reported by IDENTIFY_SYSTEM.
+	 * assume it's the same as the latest timeline reported by
+	 * IDENTIFY_SYSTEM.
 	 */
 	if (PQnfields(res) >= 2)
 		starttli = atoi(PQgetvalue(res, 0, 1));

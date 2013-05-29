@@ -440,7 +440,7 @@ extern int pqGethostbyname(const char *name,
 
 extern void pg_qsort(void *base, size_t nel, size_t elsize,
 		 int (*cmp) (const void *, const void *));
-extern int pg_qsort_strcmp(const void *a, const void *b);
+extern int	pg_qsort_strcmp(const void *a, const void *b);
 
 #define qsort(a,b,c,d) pg_qsort(a,b,c,d)
 

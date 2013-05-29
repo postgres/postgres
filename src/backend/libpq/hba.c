@@ -397,12 +397,12 @@ tokenize_file(const char *filename, FILE *file,
 
 	while (!feof(file) && !ferror(file))
 	{
-		char rawline[MAX_LINE];
-		char *lineptr;
+		char		rawline[MAX_LINE];
+		char	   *lineptr;
 
 		if (!fgets(rawline, sizeof(rawline), file))
 			break;
-		if (strlen(rawline) == MAX_LINE-1)
+		if (strlen(rawline) == MAX_LINE - 1)
 			/* Line too long! */
 			ereport(ERROR,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
@@ -411,9 +411,9 @@ tokenize_file(const char *filename, FILE *file,
 								line_number, filename)));
 
 		/* Strip trailing linebreak from rawline */
-		while (rawline[strlen(rawline)-1] == '\n' ||
-			   rawline[strlen(rawline)-1] == '\r')
-			rawline[strlen(rawline)-1] = '\0';
+		while (rawline[strlen(rawline) - 1] == '\n' ||
+			   rawline[strlen(rawline) - 1] == '\r')
+			rawline[strlen(rawline) - 1] = '\0';
 
 		lineptr = rawline;
 		while (strlen(lineptr) > 0)
@@ -1476,7 +1476,7 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline, int line_num)
 	{
 #ifdef LDAP_API_FEATURE_X_OPENLDAP
 		LDAPURLDesc *urldata;
-		int rc;
+		int			rc;
 #endif
 
 		REQUIRE_AUTH_OPTION(uaLDAP, "ldapurl", "ldap");
@@ -1485,8 +1485,8 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline, int line_num)
 		if (rc != LDAP_SUCCESS)
 		{
 			ereport(LOG,
-				 (errcode(ERRCODE_CONFIG_FILE_ERROR),
-				  errmsg("could not parse LDAP URL \"%s\": %s", val, ldap_err2string(rc))));
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("could not parse LDAP URL \"%s\": %s", val, ldap_err2string(rc))));
 			return false;
 		}
 
@@ -1494,7 +1494,7 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline, int line_num)
 		{
 			ereport(LOG,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-					 errmsg("unsupported LDAP URL scheme: %s", urldata->lud_scheme)));
+			errmsg("unsupported LDAP URL scheme: %s", urldata->lud_scheme)));
 			ldap_free_urldesc(urldata);
 			return false;
 		}
@@ -1504,7 +1504,7 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline, int line_num)
 		hbaline->ldapbasedn = pstrdup(urldata->lud_dn);
 
 		if (urldata->lud_attrs)
-			hbaline->ldapsearchattribute = pstrdup(urldata->lud_attrs[0]);  /* only use first one */
+			hbaline->ldapsearchattribute = pstrdup(urldata->lud_attrs[0]);		/* only use first one */
 		hbaline->ldapscope = urldata->lud_scope;
 		if (urldata->lud_filter)
 		{
@@ -1515,11 +1515,11 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline, int line_num)
 			return false;
 		}
 		ldap_free_urldesc(urldata);
-#else /* not OpenLDAP */
+#else							/* not OpenLDAP */
 		ereport(LOG,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("LDAP URLs not supported on this platform")));
-#endif /* not OpenLDAP */
+#endif   /* not OpenLDAP */
 	}
 	else if (strcmp(name, "ldaptls") == 0)
 	{
@@ -2023,7 +2023,7 @@ check_ident_usermap(IdentLine *identLine, const char *usermap_name,
 				ereport(LOG,
 						(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
 						 errmsg("regular expression \"%s\" has no subexpressions as requested by backreference in \"%s\"",
-								identLine->ident_user + 1, identLine->pg_role)));
+							identLine->ident_user + 1, identLine->pg_role)));
 				*error_p = true;
 				return;
 			}
@@ -2165,7 +2165,7 @@ load_ident(void)
 	MemoryContext linecxt;
 	MemoryContext oldcxt;
 	MemoryContext ident_context;
-	IdentLine	 *newline;
+	IdentLine  *newline;
 
 	file = AllocateFile(IdentFileName, "r");
 	if (file == NULL)
@@ -2183,10 +2183,10 @@ load_ident(void)
 
 	/* Now parse all the lines */
 	ident_context = AllocSetContextCreate(TopMemoryContext,
-								   "ident parser context",
-								   ALLOCSET_DEFAULT_MINSIZE,
-								   ALLOCSET_DEFAULT_MINSIZE,
-								   ALLOCSET_DEFAULT_MAXSIZE);
+										  "ident parser context",
+										  ALLOCSET_DEFAULT_MINSIZE,
+										  ALLOCSET_DEFAULT_MINSIZE,
+										  ALLOCSET_DEFAULT_MAXSIZE);
 	oldcxt = MemoryContextSwitchTo(ident_context);
 	forboth(line_cell, ident_lines, num_cell, ident_line_nums)
 	{

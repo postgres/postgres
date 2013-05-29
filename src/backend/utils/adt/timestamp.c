@@ -1296,7 +1296,7 @@ GetCurrentTimestamp(void)
 int64
 GetCurrentIntegerTimestamp(void)
 {
-	int64 result;
+	int64		result;
 	struct timeval tp;
 
 	gettimeofday(&tp, NULL);
@@ -3759,7 +3759,7 @@ interval_trunc(PG_FUNCTION_ARGS)
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 								 errmsg("interval units \"%s\" not supported "
-									"because months usually have fractional weeks",
+							  "because months usually have fractional weeks",
 										lowunits)));
 					else
 						ereport(ERROR,
@@ -4608,8 +4608,8 @@ timestamp_izone(PG_FUNCTION_ARGS)
 	if (zone->month != 0 || zone->day != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("interval time zone \"%s\" must not include months or days",
-						DatumGetCString(DirectFunctionCall1(interval_out,
+		  errmsg("interval time zone \"%s\" must not include months or days",
+				 DatumGetCString(DirectFunctionCall1(interval_out,
 												  PointerGetDatum(zone))))));
 
 #ifdef HAVE_INT64_TIMESTAMP
@@ -4781,8 +4781,8 @@ timestamptz_izone(PG_FUNCTION_ARGS)
 	if (zone->month != 0 || zone->day != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("interval time zone \"%s\" must not include months or days",
-						DatumGetCString(DirectFunctionCall1(interval_out,
+		  errmsg("interval time zone \"%s\" must not include months or days",
+				 DatumGetCString(DirectFunctionCall1(interval_out,
 												  PointerGetDatum(zone))))));
 
 #ifdef HAVE_INT64_TIMESTAMP

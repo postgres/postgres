@@ -21,9 +21,9 @@
 typedef struct EventTriggerData
 {
 	NodeTag		type;
-	const char *event;				/* event name */
-	Node	   *parsetree;			/* parse tree */
-	const char *tag;				/* command tag */
+	const char *event;			/* event name */
+	Node	   *parsetree;		/* parse tree */
+	const char *tag;			/* command tag */
 } EventTriggerData;
 
 /*
@@ -33,12 +33,12 @@ typedef struct EventTriggerData
 #define CALLED_AS_EVENT_TRIGGER(fcinfo) \
 	((fcinfo)->context != NULL && IsA((fcinfo)->context, EventTriggerData))
 
-extern Oid CreateEventTrigger(CreateEventTrigStmt *stmt);
+extern Oid	CreateEventTrigger(CreateEventTrigStmt *stmt);
 extern void RemoveEventTriggerById(Oid ctrigOid);
 extern Oid	get_event_trigger_oid(const char *trigname, bool missing_ok);
 
-extern Oid AlterEventTrigger(AlterEventTrigStmt *stmt);
-extern Oid AlterEventTriggerOwner(const char *name, Oid newOwnerId);
+extern Oid	AlterEventTrigger(AlterEventTrigStmt *stmt);
+extern Oid	AlterEventTriggerOwner(const char *name, Oid newOwnerId);
 extern void AlterEventTriggerOwner_oid(Oid, Oid newOwnerId);
 
 extern bool EventTriggerSupportsObjectType(ObjectType obtype);

@@ -137,7 +137,6 @@ gbt_num_union(GBT_NUMKEY *out, const GistEntryVector *entryvec, const gbtree_nin
 bool
 gbt_num_same(const GBT_NUMKEY *a, const GBT_NUMKEY *b, const gbtree_ninfo *tinfo)
 {
-
 	GBT_NUMKEY_R b1,
 				b2;
 
@@ -159,7 +158,6 @@ gbt_num_same(const GBT_NUMKEY *a, const GBT_NUMKEY *b, const gbtree_ninfo *tinfo
 void
 gbt_num_bin_union(Datum *u, GBT_NUMKEY *e, const gbtree_ninfo *tinfo)
 {
-
 	GBT_NUMKEY_R rd;
 
 	rd.lower = &e[0];

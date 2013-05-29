@@ -97,7 +97,6 @@ gbt_bit_xfrm(bytea *leaf)
 static GBT_VARKEY *
 gbt_bit_l2n(GBT_VARKEY *leaf)
 {
-
 	GBT_VARKEY *out = leaf;
 	GBT_VARKEY_R r = gbt_var_key_readable(leaf);
 	bytea	   *o;

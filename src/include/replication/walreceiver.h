@@ -60,17 +60,17 @@ typedef struct
 	pg_time_t	startTime;
 
 	/*
-	 * receiveStart and receiveStartTLI indicate the first byte position
-	 * and timeline that will be received. When startup process starts the
-	 * walreceiver, it sets these to the point where it wants the streaming
-	 * to begin.
+	 * receiveStart and receiveStartTLI indicate the first byte position and
+	 * timeline that will be received. When startup process starts the
+	 * walreceiver, it sets these to the point where it wants the streaming to
+	 * begin.
 	 */
 	XLogRecPtr	receiveStart;
 	TimeLineID	receiveStartTLI;
 
 	/*
 	 * receivedUpto-1 is the last byte position that has already been
-	 * received, and receivedTLI is the timeline it came from.  At the first
+	 * received, and receivedTLI is the timeline it came from.	At the first
 	 * startup of walreceiver, these are set to receiveStart and
 	 * receiveStartTLI. After that, walreceiver updates these whenever it
 	 * flushes the received WAL to disk.

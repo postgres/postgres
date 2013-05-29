@@ -152,7 +152,7 @@ typedef char *(*WorkerJobDumpPtr) (struct _archiveHandle * AH, struct _tocEntry 
 typedef char *(*MasterStartParallelItemPtr) (struct _archiveHandle * AH, struct _tocEntry * te,
 														 T_Action act);
 typedef int (*MasterEndParallelItemPtr) (struct _archiveHandle * AH, struct _tocEntry * te,
-										 const char *str, T_Action act);
+											  const char *str, T_Action act);
 
 typedef size_t (*CustomOutPtr) (struct _archiveHandle * AH, const void *buf, size_t len);
 
@@ -360,7 +360,7 @@ typedef struct _tocEntry
 	int			nLockDeps;		/* number of such dependencies */
 } TocEntry;
 
-extern int	parallel_restore(struct ParallelArgs * args);
+extern int	parallel_restore(struct ParallelArgs *args);
 extern void on_exit_close_archive(Archive *AHX);
 
 extern void warn_or_exit_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt,...) __attribute__((format(PG_PRINTF_ATTRIBUTE, 3, 4)));

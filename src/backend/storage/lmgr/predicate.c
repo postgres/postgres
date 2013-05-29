@@ -1575,8 +1575,8 @@ GetSerializableTransactionSnapshot(Snapshot snapshot)
 
 	/*
 	 * Can't use serializable mode while recovery is still active, as it is,
-	 * for example, on a hot standby.  We could get here despite the check
-	 * in check_XactIsoLevel() if default_transaction_isolation is set to
+	 * for example, on a hot standby.  We could get here despite the check in
+	 * check_XactIsoLevel() if default_transaction_isolation is set to
 	 * serializable, so phrase the hint accordingly.
 	 */
 	if (RecoveryInProgress())

@@ -678,7 +678,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	else
 	{
 		/*
-		 * Process INSERT ... VALUES with a single VALUES sublist.  We treat
+		 * Process INSERT ... VALUES with a single VALUES sublist.	We treat
 		 * this case separately for efficiency.  The sublist is just computed
 		 * directly as the Query's targetlist, with no VALUES RTE.  So it
 		 * works just like a SELECT without any FROM.
@@ -1178,7 +1178,7 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 	/*
 	 * Ordinarily there can't be any current-level Vars in the expression
 	 * lists, because the namespace was empty ... but if we're inside CREATE
-	 * RULE, then NEW/OLD references might appear.  In that case we have to
+	 * RULE, then NEW/OLD references might appear.	In that case we have to
 	 * mark the VALUES RTE as LATERAL.
 	 */
 	if (pstate->p_rtable != NIL &&
@@ -2158,7 +2158,7 @@ transformCreateTableAsStmt(ParseState *pstate, CreateTableAsStmt *stmt)
 
 		/*
 		 * A materialized view would either need to save parameters for use in
-		 * maintaining/loading the data or prohibit them entirely.  The latter
+		 * maintaining/loading the data or prohibit them entirely.	The latter
 		 * seems safer and more sane.
 		 */
 		if (query_contains_extern_params(query))
@@ -2167,10 +2167,10 @@ transformCreateTableAsStmt(ParseState *pstate, CreateTableAsStmt *stmt)
 					 errmsg("materialized views may not be defined using bound parameters")));
 
 		/*
-		 * For now, we disallow unlogged materialized views, because it
-		 * seems like a bad idea for them to just go to empty after a crash.
-		 * (If we could mark them as unpopulated, that would be better, but
-		 * that requires catalog changes which crash recovery can't presently
+		 * For now, we disallow unlogged materialized views, because it seems
+		 * like a bad idea for them to just go to empty after a crash. (If we
+		 * could mark them as unpopulated, that would be better, but that
+		 * requires catalog changes which crash recovery can't presently
 		 * handle.)
 		 */
 		if (stmt->into->rel->relpersistence == RELPERSISTENCE_UNLOGGED)
@@ -2211,23 +2211,23 @@ CheckSelectLocking(Query *qry)
 	if (qry->distinctClause != NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("row-level locks are not allowed with DISTINCT clause")));
+			errmsg("row-level locks are not allowed with DISTINCT clause")));
 	if (qry->groupClause != NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("row-level locks are not allowed with GROUP BY clause")));
+			errmsg("row-level locks are not allowed with GROUP BY clause")));
 	if (qry->havingQual != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		errmsg("row-level locks are not allowed with HAVING clause")));
+			  errmsg("row-level locks are not allowed with HAVING clause")));
 	if (qry->hasAggs)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("row-level locks are not allowed with aggregate functions")));
+		errmsg("row-level locks are not allowed with aggregate functions")));
 	if (qry->hasWindowFuncs)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("row-level locks are not allowed with window functions")));
+		   errmsg("row-level locks are not allowed with window functions")));
 	if (expression_returns_set((Node *) qry->targetList))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -2394,8 +2394,8 @@ applyLockingClause(Query *qry, Index rtindex,
 	{
 		/*
 		 * If the same RTE is specified for more than one locking strength,
-		 * treat is as the strongest.  (Reasonable, since you can't take both a
-		 * shared and exclusive lock at the same time; it'll end up being
+		 * treat is as the strongest.  (Reasonable, since you can't take both
+		 * a shared and exclusive lock at the same time; it'll end up being
 		 * exclusive anyway.)
 		 *
 		 * We also consider that NOWAIT wins if it's specified both ways. This

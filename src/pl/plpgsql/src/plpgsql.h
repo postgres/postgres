@@ -932,7 +932,7 @@ extern Datum plpgsql_exec_function(PLpgSQL_function *func,
 extern HeapTuple plpgsql_exec_trigger(PLpgSQL_function *func,
 					 TriggerData *trigdata);
 extern void plpgsql_exec_event_trigger(PLpgSQL_function *func,
-					 EventTriggerData *trigdata);
+						   EventTriggerData *trigdata);
 extern void plpgsql_xact_cb(XactEvent event, void *arg);
 extern void plpgsql_subxact_cb(SubXactEvent event, SubTransactionId mySubid,
 				   SubTransactionId parentSubid, void *arg);

@@ -59,7 +59,7 @@ get_tablespace_paths(void)
 
 	if ((os_info.num_old_tablespaces = PQntuples(res)) != 0)
 		os_info.old_tablespaces = (char **) pg_malloc(
-								   os_info.num_old_tablespaces * sizeof(char *));
+							   os_info.num_old_tablespaces * sizeof(char *));
 	else
 		os_info.old_tablespaces = NULL;
 

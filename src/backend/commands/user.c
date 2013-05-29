@@ -815,7 +815,7 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 {
 	HeapTuple	roletuple;
 	Oid			databaseid = InvalidOid;
-	Oid         roleid = InvalidOid;
+	Oid			roleid = InvalidOid;
 
 	if (stmt->role)
 	{

@@ -241,7 +241,7 @@ DefineQueryRewrite(char *rulename,
 	ListCell   *l;
 	Query	   *query;
 	bool		RelisBecomingView = false;
-	Oid         ruleId = InvalidOid;
+	Oid			ruleId = InvalidOid;
 
 	/*
 	 * If we are installing an ON SELECT rule, we had better grab
@@ -517,11 +517,11 @@ DefineQueryRewrite(char *rulename,
 	 * If the relation is becoming a view:
 	 * - delete the associated storage files
 	 * - get rid of any system attributes in pg_attribute; a view shouldn't
-	 *   have any of those
+	 *	 have any of those
 	 * - remove the toast table; there is no need for it anymore, and its
-	 *   presence would make vacuum slightly more complicated
+	 *	 presence would make vacuum slightly more complicated
 	 * - set relkind to RELKIND_VIEW, and adjust other pg_class fields
-	 *   to be appropriate for a view
+	 *	 to be appropriate for a view
 	 *
 	 * NB: we had better have AccessExclusiveLock to do this ...
 	 * ---------------------------------------------------------------------
@@ -541,9 +541,9 @@ DefineQueryRewrite(char *rulename,
 		DeleteSystemAttributeTuples(event_relid);
 
 		/*
-		 * Drop the toast table if any.  (This won't take care of updating
-		 * the toast fields in the relation's own pg_class entry; we handle
-		 * that below.)
+		 * Drop the toast table if any.  (This won't take care of updating the
+		 * toast fields in the relation's own pg_class entry; we handle that
+		 * below.)
 		 */
 		if (OidIsValid(toastrelid))
 		{

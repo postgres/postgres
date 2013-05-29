@@ -44,6 +44,7 @@ exec_prog(const char *log_file, const char *opt_log_file,
 {
 	int			result;
 	int			written;
+
 #define MAXCMDLEN (2 * MAXPGPATH)
 	char		cmd[MAXCMDLEN];
 	mode_t		old_umask = 0;
@@ -67,15 +68,15 @@ exec_prog(const char *log_file, const char *opt_log_file,
 
 #ifdef WIN32
 	{
-		/* 
-		 * "pg_ctl -w stop" might have reported that the server has
-		 * stopped because the postmaster.pid file has been removed,
-		 * but "pg_ctl -w start" might still be in the process of
-		 * closing and might still be holding its stdout and -l log
-		 * file descriptors open.  Therefore, try to open the log 
-		 * file a few more times.
+		/*
+		 * "pg_ctl -w stop" might have reported that the server has stopped
+		 * because the postmaster.pid file has been removed, but "pg_ctl -w
+		 * start" might still be in the process of closing and might still be
+		 * holding its stdout and -l log file descriptors open.  Therefore,
+		 * try to open the log file a few more times.
 		 */
-		int iter;
+		int			iter;
+
 		for (iter = 0; iter < 4 && log == NULL; iter++)
 		{
 			sleep(1);
@@ -122,12 +123,13 @@ exec_prog(const char *log_file, const char *opt_log_file,
 	}
 
 #ifndef WIN32
-	/* 
-	 *	We can't do this on Windows because it will keep the "pg_ctl start"
-	 *	output filename open until the server stops, so we do the \n\n above
-	 *	on that platform.  We use a unique filename for "pg_ctl start" that is
-	 *	never reused while the server is running, so it works fine.  We could
-	 *	log these commands to a third file, but that just adds complexity.
+
+	/*
+	 * We can't do this on Windows because it will keep the "pg_ctl start"
+	 * output filename open until the server stops, so we do the \n\n above on
+	 * that platform.  We use a unique filename for "pg_ctl start" that is
+	 * never reused while the server is running, so it works fine.	We could
+	 * log these commands to a third file, but that just adds complexity.
 	 */
 	if ((log = fopen_priv(log_file, "a")) == NULL)
 		pg_log(PG_FATAL, "cannot write to log file %s\n", log_file);
@@ -178,7 +180,6 @@ pid_lock_file_exists(const char *datadir)
 void
 verify_directories(void)
 {
-
 #ifndef WIN32
 	if (access(".", R_OK | W_OK | X_OK) != 0)
 #else

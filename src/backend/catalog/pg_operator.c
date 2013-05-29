@@ -92,11 +92,11 @@ validOperatorName(const char *name)
 		return false;
 
 	/*
-	 * For SQL standard compatibility, '+' and '-' cannot be the last char of a
-	 * multi-char operator unless the operator contains chars that are not in
-	 * SQL operators. The idea is to lex '=-' as two operators, but not to
-	 * forbid operator names like '?-' that could not be sequences of standard SQL
-	 * operators.
+	 * For SQL standard compatibility, '+' and '-' cannot be the last char of
+	 * a multi-char operator unless the operator contains chars that are not
+	 * in SQL operators. The idea is to lex '=-' as two operators, but not to
+	 * forbid operator names like '?-' that could not be sequences of standard
+	 * SQL operators.
 	 */
 	if (len > 1 &&
 		(name[len - 1] == '+' ||

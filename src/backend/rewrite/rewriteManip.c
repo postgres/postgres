@@ -1221,7 +1221,7 @@ replace_rte_variables_mutator(Node *node,
  * If the expression tree contains a whole-row Var for the target RTE,
  * the Var is not changed but *found_whole_row is returned as TRUE.
  * For most callers this is an error condition, but we leave it to the caller
- * to report the error so that useful context can be provided.  (In some
+ * to report the error so that useful context can be provided.	(In some
  * usages it would be appropriate to modify the Var's vartype and insert a
  * ConvertRowtypeExpr node to map back to the original vartype.  We might
  * someday extend this function's API to support that.  For now, the only
@@ -1235,10 +1235,10 @@ replace_rte_variables_mutator(Node *node,
 
 typedef struct
 {
-	int			target_varno;		/* RTE index to search for */
-	int			sublevels_up;		/* (current) nesting depth */
+	int			target_varno;	/* RTE index to search for */
+	int			sublevels_up;	/* (current) nesting depth */
 	const AttrNumber *attno_map;	/* map array for user attnos */
-	int			map_length;			/* number of entries in attno_map[] */
+	int			map_length;		/* number of entries in attno_map[] */
 	bool	   *found_whole_row;	/* output flag */
 } map_variable_attnos_context;
 
@@ -1256,8 +1256,8 @@ map_variable_attnos_mutator(Node *node,
 			var->varlevelsup == context->sublevels_up)
 		{
 			/* Found a matching variable, make the substitution */
-			Var	   *newvar = (Var *) palloc(sizeof(Var));
-			int		attno = var->varattno;
+			Var		   *newvar = (Var *) palloc(sizeof(Var));
+			int			attno = var->varattno;
 
 			*newvar = *var;
 			if (attno > 0)
@@ -1406,13 +1406,14 @@ ReplaceVarsFromTargetList_callback(Var *var,
 				return (Node *) var;
 
 			case REPLACEVARS_SUBSTITUTE_NULL:
+
 				/*
 				 * If Var is of domain type, we should add a CoerceToDomain
 				 * node, in case there is a NOT NULL domain constraint.
 				 */
 				return coerce_to_domain((Node *) makeNullConst(var->vartype,
 															   var->vartypmod,
-															   var->varcollid),
+															 var->varcollid),
 										InvalidOid, -1,
 										var->vartype,
 										COERCE_IMPLICIT_CAST,

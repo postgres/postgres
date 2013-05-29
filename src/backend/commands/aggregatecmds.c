@@ -217,13 +217,13 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters)
 	/*
 	 * Most of the argument-checking is done inside of AggregateCreate
 	 */
-	return AggregateCreate(aggName,	/* aggregate name */
+	return AggregateCreate(aggName,		/* aggregate name */
 						   aggNamespace,		/* namespace */
-						   aggArgTypes,	/* input data type(s) */
+						   aggArgTypes, /* input data type(s) */
 						   numArgs,
 						   transfuncName,		/* step function name */
 						   finalfuncName,		/* final function name */
 						   sortoperatorName,	/* sort operator name */
-						   transTypeId,	/* transition data type */
+						   transTypeId, /* transition data type */
 						   initval);	/* initial condition */
 }

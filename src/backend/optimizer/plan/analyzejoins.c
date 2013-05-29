@@ -355,7 +355,7 @@ remove_rel_from_query(PlannerInfo *root, int relid, Relids joinrelids)
 	 * Likewise remove references from LateralJoinInfo data structures.
 	 *
 	 * If we are deleting a LATERAL subquery, we can forget its
-	 * LateralJoinInfo altogether.  Otherwise, make sure the target is not
+	 * LateralJoinInfo altogether.	Otherwise, make sure the target is not
 	 * included in any lateral_lhs set.  (It probably can't be, since that
 	 * should have precluded deciding to remove it; but let's cope anyway.)
 	 */

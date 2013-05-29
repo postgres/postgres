@@ -968,8 +968,8 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 						   GetUserId(),
 						   languageOid,
 						   languageValidator,
-						   prosrc_str, /* converted to text later */
-						   probin_str, /* converted to text later */
+						   prosrc_str,	/* converted to text later */
+						   probin_str,	/* converted to text later */
 						   false,		/* not an aggregate */
 						   isWindowFunc,
 						   security,

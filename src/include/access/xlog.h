@@ -264,7 +264,7 @@ extern XLogRecPtr XLogInsert(RmgrId rmid, uint8 info, XLogRecData *rdata);
 extern void XLogFlush(XLogRecPtr RecPtr);
 extern bool XLogBackgroundFlush(void);
 extern bool XLogNeedsFlush(XLogRecPtr RecPtr);
-extern int XLogFileInit(XLogSegNo segno, bool *use_existent, bool use_lock);
+extern int	XLogFileInit(XLogSegNo segno, bool *use_existent, bool use_lock);
 extern int	XLogFileOpen(XLogSegNo segno);
 
 extern XLogRecPtr XLogSaveBufferForHint(Buffer buffer);

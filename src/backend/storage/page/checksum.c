@@ -23,7 +23,7 @@
  * for Fowler/Noll/Vo) The primitive of a plain FNV-1a hash folds in data 1
  * byte at a time according to the formula:
  *
- *     hash = (hash ^ value) * FNV_PRIME
+ *	   hash = (hash ^ value) * FNV_PRIME
  *
  * FNV-1a algorithm is described at http://www.isthe.com/chongo/tech/comp/fnv/
  *
@@ -36,7 +36,7 @@
  * avalanche into lower positions. For performance reasons we choose to combine
  * 4 bytes at a time. The actual hash formula used as the basis is:
  *
- *     hash = (hash ^ value) * FNV_PRIME ^ ((hash ^ value) >> 17)
+ *	   hash = (hash ^ value) * FNV_PRIME ^ ((hash ^ value) >> 17)
  *
  * The main bottleneck in this calculation is the multiplication latency. To
  * hide the latency and to make use of SIMD parallelism multiple hash values
@@ -131,19 +131,20 @@ static const uint32 checksumBaseOffsets[N_SUMS] = {
 uint32
 checksum_block(char *data, uint32 size)
 {
-	uint32 sums[N_SUMS];
-	uint32 (*dataArr)[N_SUMS] = (uint32 (*)[N_SUMS]) data;
-	uint32 result = 0;
-	int i, j;
+	uint32		sums[N_SUMS];
+	uint32		(*dataArr)[N_SUMS] = (uint32 (*)[N_SUMS]) data;
+	uint32		result = 0;
+	int			i,
+				j;
 
 	/* ensure that the size is compatible with the algorithm */
-	Assert((size % (sizeof(uint32)*N_SUMS)) == 0);
+	Assert((size % (sizeof(uint32) * N_SUMS)) == 0);
 
 	/* initialize partial checksums to their corresponding offsets */
 	memcpy(sums, checksumBaseOffsets, sizeof(checksumBaseOffsets));
 
 	/* main checksum calculation */
-	for (i = 0; i < size/sizeof(uint32)/N_SUMS; i++)
+	for (i = 0; i < size / sizeof(uint32) / N_SUMS; i++)
 		for (j = 0; j < N_SUMS; j++)
 			CHECKSUM_COMP(sums[j], dataArr[i][j]);
 

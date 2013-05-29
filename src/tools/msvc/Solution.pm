@@ -242,10 +242,12 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
 	}
 
 	if (IsNewer(
-			"src\\include\\pg_config_ext.h", "src\\include\\pg_config_ext.h.win32"))
+			"src\\include\\pg_config_ext.h",
+			"src\\include\\pg_config_ext.h.win32"))
 	{
 		print "Copying pg_config_ext.h...\n";
-		copyFile("src\\include\\pg_config_ext.h.win32",
+		copyFile(
+			"src\\include\\pg_config_ext.h.win32",
 			"src\\include\\pg_config_ext.h");
 	}
 
@@ -275,7 +277,9 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
 "perl -I ../catalog Gen_fmgrtab.pl ../../../src/include/catalog/pg_proc.h");
 		chdir('..\..\..');
 	}
-	if (IsNewer('src\include\utils\fmgroids.h', 'src\backend\utils\fmgroids.h'))
+	if (IsNewer(
+			'src\include\utils\fmgroids.h',
+			'src\backend\utils\fmgroids.h'))
 	{
 		copyFile('src\backend\utils\fmgroids.h',
 			'src\include\utils\fmgroids.h');
@@ -712,15 +716,15 @@ use base qw(Solution);
 
 sub new
 {
-    my $classname = shift;
-    my $self = $classname->SUPER::_new(@_);
-    bless($self, $classname);
+	my $classname = shift;
+	my $self      = $classname->SUPER::_new(@_);
+	bless($self, $classname);
 
-    $self->{solutionFileVersion} = '12.00';
-    $self->{vcver} = '11.00';
-    $self->{visualStudioName} = 'Visual Studio 2012';
+	$self->{solutionFileVersion} = '12.00';
+	$self->{vcver}               = '11.00';
+	$self->{visualStudioName}    = 'Visual Studio 2012';
 
-    return $self;
+	return $self;
 }
 
 1;

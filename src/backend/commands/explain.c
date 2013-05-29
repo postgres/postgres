@@ -415,8 +415,8 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 		instrument_option |= INSTRUMENT_BUFFERS;
 
 	/*
-	 * We always collect timing for the entire statement, even when
-	 * node-level timing is off, so we don't look at es->timing here.
+	 * We always collect timing for the entire statement, even when node-level
+	 * timing is off, so we don't look at es->timing here.
 	 */
 	INSTR_TIME_SET_CURRENT(starttime);
 

@@ -98,7 +98,7 @@ pg_euc2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 			*to |= *from++;
 			len -= 2;
 		}
-		else							/* must be ASCII */
+		else	/* must be ASCII */
 		{
 			*to = *from++;
 			len--;
@@ -513,7 +513,7 @@ pg_wchar2utf_with_len(const pg_wchar *from, unsigned char *to, int len)
 
 	while (len > 0 && *from)
 	{
-		int char_len;
+		int			char_len;
 
 		unicode_to_utf8(*from, to);
 		char_len = pg_utf_mblen(to);
@@ -1721,7 +1721,7 @@ pg_eucjp_increment(unsigned char *charptr, int length)
  *-------------------------------------------------------------------
  */
 pg_wchar_tbl pg_wchar_table[] = {
-	{pg_ascii2wchar_with_len, pg_wchar2single_with_len, pg_ascii_mblen, pg_ascii_dsplen, pg_ascii_verifier, 1},	/* PG_SQL_ASCII */
+	{pg_ascii2wchar_with_len, pg_wchar2single_with_len, pg_ascii_mblen, pg_ascii_dsplen, pg_ascii_verifier, 1}, /* PG_SQL_ASCII */
 	{pg_eucjp2wchar_with_len, pg_wchar2euc_with_len, pg_eucjp_mblen, pg_eucjp_dsplen, pg_eucjp_verifier, 3},	/* PG_EUC_JP */
 	{pg_euccn2wchar_with_len, pg_wchar2euc_with_len, pg_euccn_mblen, pg_euccn_dsplen, pg_euccn_verifier, 2},	/* PG_EUC_CN */
 	{pg_euckr2wchar_with_len, pg_wchar2euc_with_len, pg_euckr_mblen, pg_euckr_dsplen, pg_euckr_verifier, 3},	/* PG_EUC_KR */
@@ -1756,13 +1756,13 @@ pg_wchar_tbl pg_wchar_table[] = {
 	{pg_latin12wchar_with_len, pg_wchar2single_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* PG_WIN1255 */
 	{pg_latin12wchar_with_len, pg_wchar2single_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* PG_WIN1257 */
 	{pg_latin12wchar_with_len, pg_wchar2single_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* PG_KOI8U */
-	{0, 0, pg_sjis_mblen, pg_sjis_dsplen, pg_sjis_verifier, 2},	/* PG_SJIS */
-	{0, 0, pg_big5_mblen, pg_big5_dsplen, pg_big5_verifier, 2},	/* PG_BIG5 */
-	{0, 0, pg_gbk_mblen, pg_gbk_dsplen, pg_gbk_verifier, 2},		/* PG_GBK */
-	{0, 0, pg_uhc_mblen, pg_uhc_dsplen, pg_uhc_verifier, 2},		/* PG_UHC */
-	{0, 0, pg_gb18030_mblen, pg_gb18030_dsplen, pg_gb18030_verifier, 4},	/* PG_GB18030 */
-	{0, 0, pg_johab_mblen, pg_johab_dsplen, pg_johab_verifier, 3}, /* PG_JOHAB */
-	{0, 0, pg_sjis_mblen, pg_sjis_dsplen, pg_sjis_verifier, 2}		/* PG_SHIFT_JIS_2004 */
+	{0, 0, pg_sjis_mblen, pg_sjis_dsplen, pg_sjis_verifier, 2}, /* PG_SJIS */
+	{0, 0, pg_big5_mblen, pg_big5_dsplen, pg_big5_verifier, 2}, /* PG_BIG5 */
+	{0, 0, pg_gbk_mblen, pg_gbk_dsplen, pg_gbk_verifier, 2},	/* PG_GBK */
+	{0, 0, pg_uhc_mblen, pg_uhc_dsplen, pg_uhc_verifier, 2},	/* PG_UHC */
+	{0, 0, pg_gb18030_mblen, pg_gb18030_dsplen, pg_gb18030_verifier, 4},		/* PG_GB18030 */
+	{0, 0, pg_johab_mblen, pg_johab_dsplen, pg_johab_verifier, 3},		/* PG_JOHAB */
+	{0, 0, pg_sjis_mblen, pg_sjis_dsplen, pg_sjis_verifier, 2}	/* PG_SHIFT_JIS_2004 */
 };
 
 /* returns the byte length of a word for mule internal code */

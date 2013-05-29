@@ -49,7 +49,7 @@
 extern int	optind;
 extern char *optarg;
 
-uint32 bootstrap_data_checksum_version = 0;  /* No checksum */
+uint32		bootstrap_data_checksum_version = 0;		/* No checksum */
 
 
 #define ALLOC(t, c)		((t *) calloc((unsigned)(c), sizeof(t)))
@@ -67,7 +67,7 @@ static void cleanup(void);
  * ----------------
  */
 
-AuxProcType	MyAuxProcType = NotAnAuxProcess;	/* declared in miscadmin.h */
+AuxProcType MyAuxProcType = NotAnAuxProcess;	/* declared in miscadmin.h */
 
 Relation	boot_reldesc;		/* current relation descriptor */
 
@@ -389,7 +389,7 @@ AuxiliaryProcessMain(int argc, char *argv[])
 		/*
 		 * Assign the ProcSignalSlot for an auxiliary process.	Since it
 		 * doesn't have a BackendId, the slot is statically allocated based on
-		 * the auxiliary process type (MyAuxProcType).  Backends use slots
+		 * the auxiliary process type (MyAuxProcType).	Backends use slots
 		 * indexed in the range from 1 to MaxBackends (inclusive), so we use
 		 * MaxBackends + AuxProcType + 1 as the index of the slot for an
 		 * auxiliary process.

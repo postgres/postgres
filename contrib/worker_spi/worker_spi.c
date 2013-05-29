@@ -43,27 +43,27 @@
 
 PG_MODULE_MAGIC;
 
-void	_PG_init(void);
+void		_PG_init(void);
 
 /* flags set by signal handlers */
 static volatile sig_atomic_t got_sighup = false;
 static volatile sig_atomic_t got_sigterm = false;
 
 /* GUC variables */
-static int  worker_spi_naptime = 10;
-static int  worker_spi_total_workers = 2;
+static int	worker_spi_naptime = 10;
+static int	worker_spi_total_workers = 2;
 
 
 typedef struct worktable
 {
-	const char	   *schema;
-	const char	   *name;
+	const char *schema;
+	const char *name;
 } worktable;
 
 /*
  * Signal handler for SIGTERM
- * 		Set a flag to let the main loop to terminate, and set our latch to wake
- * 		it up.
+ *		Set a flag to let the main loop to terminate, and set our latch to wake
+ *		it up.
  */
 static void
 worker_spi_sigterm(SIGNAL_ARGS)
@@ -79,8 +79,8 @@ worker_spi_sigterm(SIGNAL_ARGS)
 
 /*
  * Signal handler for SIGHUP
- * 		Set a flag to let the main loop to reread the config file, and set
- * 		our latch to wake it up.
+ *		Set a flag to let the main loop to reread the config file, and set
+ *		our latch to wake it up.
  */
 static void
 worker_spi_sighup(SIGNAL_ARGS)
@@ -97,10 +97,10 @@ worker_spi_sighup(SIGNAL_ARGS)
 static void
 initialize_worker_spi(worktable *table)
 {
-	int		ret;
-	int		ntup;
-	bool	isnull;
-	StringInfoData	buf;
+	int			ret;
+	int			ntup;
+	bool		isnull;
+	StringInfoData buf;
 
 	SetCurrentStatementStartTimestamp();
 	StartTransactionCommand();
@@ -132,11 +132,11 @@ initialize_worker_spi(worktable *table)
 		appendStringInfo(&buf,
 						 "CREATE SCHEMA \"%s\" "
 						 "CREATE TABLE \"%s\" ("
-						 "		type text CHECK (type IN ('total', 'delta')), "
+			   "		type text CHECK (type IN ('total', 'delta')), "
 						 "		value	integer)"
-						 "CREATE UNIQUE INDEX \"%s_unique_total\" ON \"%s\" (type) "
+				  "CREATE UNIQUE INDEX \"%s_unique_total\" ON \"%s\" (type) "
 						 "WHERE type = 'total'",
-						 table->schema, table->name, table->name, table->name);
+					   table->schema, table->name, table->name, table->name);
 
 		/* set statement start time */
 		SetCurrentStatementStartTimestamp();
@@ -156,8 +156,8 @@ initialize_worker_spi(worktable *table)
 static void
 worker_spi_main(void *main_arg)
 {
-	worktable	   *table = (worktable *) main_arg;
-	StringInfoData	buf;
+	worktable  *table = (worktable *) main_arg;
+	StringInfoData buf;
 
 	/* We're now ready to receive signals */
 	BackgroundWorkerUnblockSignals();
@@ -170,7 +170,7 @@ worker_spi_main(void *main_arg)
 	initialize_worker_spi(table);
 
 	/*
-	 * Quote identifiers passed to us.  Note that this must be done after
+	 * Quote identifiers passed to us.	Note that this must be done after
 	 * initialize_worker_spi, because that routine assumes the names are not
 	 * quoted.
 	 *
@@ -200,8 +200,8 @@ worker_spi_main(void *main_arg)
 	 */
 	while (!got_sigterm)
 	{
-		int		ret;
-		int		rc;
+		int			ret;
+		int			rc;
 
 		/*
 		 * Background workers mustn't call usleep() or any direct equivalent:
@@ -221,27 +221,27 @@ worker_spi_main(void *main_arg)
 		/*
 		 * In case of a SIGHUP, just reload the configuration.
 		 */
-        if (got_sighup)
-        {
-            got_sighup = false;
-            ProcessConfigFile(PGC_SIGHUP);
-        }
+		if (got_sighup)
+		{
+			got_sighup = false;
+			ProcessConfigFile(PGC_SIGHUP);
+		}
 
 		/*
 		 * Start a transaction on which we can run queries.  Note that each
 		 * StartTransactionCommand() call should be preceded by a
 		 * SetCurrentStatementStartTimestamp() call, which sets both the time
 		 * for the statement we're about the run, and also the transaction
-		 * start time.  Also, each other query sent to SPI should probably be
+		 * start time.	Also, each other query sent to SPI should probably be
 		 * preceded by SetCurrentStatementStartTimestamp(), so that statement
 		 * start time is always up to date.
 		 *
 		 * The SPI_connect() call lets us run queries through the SPI manager,
-		 * and the PushActiveSnapshot() call creates an "active" snapshot which
-		 * is necessary for queries to have MVCC data to work on.
+		 * and the PushActiveSnapshot() call creates an "active" snapshot
+		 * which is necessary for queries to have MVCC data to work on.
 		 *
-		 * The pgstat_report_activity() call makes our activity visible through
-		 * the pgstat views.
+		 * The pgstat_report_activity() call makes our activity visible
+		 * through the pgstat views.
 		 */
 		SetCurrentStatementStartTimestamp();
 		StartTransactionCommand();
@@ -258,12 +258,12 @@ worker_spi_main(void *main_arg)
 
 		if (SPI_processed > 0)
 		{
-			bool	isnull;
-			int32	val;
+			bool		isnull;
+			int32		val;
 
 			val = DatumGetInt32(SPI_getbinval(SPI_tuptable->vals[0],
-											   SPI_tuptable->tupdesc,
-											   1, &isnull));
+											  SPI_tuptable->tupdesc,
+											  1, &isnull));
 			if (!isnull)
 				elog(LOG, "%s: count in %s.%s is now %d",
 					 MyBgworkerEntry->bgw_name,
@@ -291,36 +291,36 @@ worker_spi_main(void *main_arg)
 void
 _PG_init(void)
 {
-	BackgroundWorker	worker;
-	worktable		   *table;
-	unsigned int        i;
-	char                name[20];
+	BackgroundWorker worker;
+	worktable  *table;
+	unsigned int i;
+	char		name[20];
 
 	/* get the configuration */
 	DefineCustomIntVariable("worker_spi.naptime",
-				"Duration between each check (in seconds).",
-				NULL,
-				&worker_spi_naptime,
-				10,
-				1,
-				INT_MAX,
-				PGC_SIGHUP,
-				0,
-				NULL,
-				NULL,
-				NULL);
+							"Duration between each check (in seconds).",
+							NULL,
+							&worker_spi_naptime,
+							10,
+							1,
+							INT_MAX,
+							PGC_SIGHUP,
+							0,
+							NULL,
+							NULL,
+							NULL);
 	DefineCustomIntVariable("worker_spi.total_workers",
-				"Number of workers.",
-				NULL,
-				&worker_spi_total_workers,
-				2,
-				1,
-				100,
-				PGC_POSTMASTER,
-				0,
-				NULL,
-				NULL,
-				NULL);
+							"Number of workers.",
+							NULL,
+							&worker_spi_total_workers,
+							2,
+							1,
+							100,
+							PGC_POSTMASTER,
+							0,
+							NULL,
+							NULL,
+							NULL);
 
 	/* set up common data for all our workers */
 	worker.bgw_flags = BGWORKER_SHMEM_ACCESS |

@@ -604,7 +604,7 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
  * *top_rti: receives the rangetable index of top_rte.	(Ditto.)
  *
  * *namespace: receives a List of ParseNamespaceItems for the RTEs exposed
- * as table/column names by this item.  (The lateral_only flags in these items
+ * as table/column names by this item.	(The lateral_only flags in these items
  * are indeterminate and should be explicitly set by the caller before use.)
  */
 static Node *
@@ -715,8 +715,8 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		/*
 		 * Make the left-side RTEs available for LATERAL access within the
 		 * right side, by temporarily adding them to the pstate's namespace
-		 * list.  Per SQL:2008, if the join type is not INNER or LEFT then
-		 * the left-side names must still be exposed, but it's an error to
+		 * list.  Per SQL:2008, if the join type is not INNER or LEFT then the
+		 * left-side names must still be exposed, but it's an error to
 		 * reference them.	(Stupid design, but that's what it says.)  Hence,
 		 * we always push them into the namespace, but mark them as not
 		 * lateral_ok if the jointype is wrong.
@@ -980,7 +980,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		 *
 		 * Note: if there are nested alias-less JOINs, the lower-level ones
 		 * will remain in the list although they have neither p_rel_visible
-		 * nor p_cols_visible set.  We could delete such list items, but it's
+		 * nor p_cols_visible set.	We could delete such list items, but it's
 		 * unclear that it's worth expending cycles to do so.
 		 */
 		if (j->alias != NULL)
@@ -1282,20 +1282,20 @@ checkTargetlistEntrySQL92(ParseState *pstate, TargetEntry *tle,
 				contain_aggs_of_level((Node *) tle->expr, 0))
 				ereport(ERROR,
 						(errcode(ERRCODE_GROUPING_ERROR),
-						 /* translator: %s is name of a SQL construct, eg GROUP BY */
+				/* translator: %s is name of a SQL construct, eg GROUP BY */
 						 errmsg("aggregate functions are not allowed in %s",
 								ParseExprKindName(exprKind)),
 						 parser_errposition(pstate,
-											locate_agg_of_level((Node *) tle->expr, 0))));
+							   locate_agg_of_level((Node *) tle->expr, 0))));
 			if (pstate->p_hasWindowFuncs &&
 				contain_windowfuncs((Node *) tle->expr))
 				ereport(ERROR,
 						(errcode(ERRCODE_WINDOWING_ERROR),
-						 /* translator: %s is name of a SQL construct, eg GROUP BY */
+				/* translator: %s is name of a SQL construct, eg GROUP BY */
 						 errmsg("window functions are not allowed in %s",
 								ParseExprKindName(exprKind)),
 						 parser_errposition(pstate,
-											locate_windowfunc((Node *) tle->expr))));
+									locate_windowfunc((Node *) tle->expr))));
 			break;
 		case EXPR_KIND_ORDER_BY:
 			/* no extra checks needed */
@@ -1324,7 +1324,7 @@ checkTargetlistEntrySQL92(ParseState *pstate, TargetEntry *tle,
  *
  * node		the ORDER BY, GROUP BY, or DISTINCT ON expression to be matched
  * tlist	the target list (passed by reference so we can append to it)
- * exprKind	identifies clause type being processed
+ * exprKind identifies clause type being processed
  */
 static TargetEntry *
 findTargetlistEntrySQL92(ParseState *pstate, Node *node, List **tlist,
@@ -1491,7 +1491,7 @@ findTargetlistEntrySQL92(ParseState *pstate, Node *node, List **tlist,
  *
  * node		the ORDER BY, GROUP BY, etc expression to be matched
  * tlist	the target list (passed by reference so we can append to it)
- * exprKind	identifies clause type being processed
+ * exprKind identifies clause type being processed
  */
 static TargetEntry *
 findTargetlistEntrySQL99(ParseState *pstate, Node *node, List **tlist,

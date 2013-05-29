@@ -73,4 +73,4 @@ pqsignal(int signo, pqsigfunc func)
 #endif   /* !HAVE_POSIX_SIGNALS */
 }
 
-#endif /* !defined(WIN32) || defined(FRONTEND) */
+#endif   /* !defined(WIN32) || defined(FRONTEND) */

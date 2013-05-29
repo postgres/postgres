@@ -61,8 +61,10 @@ PLy_free(void *ptr)
 PyObject *
 PLyUnicode_Bytes(PyObject *unicode)
 {
-	PyObject	*bytes, *rv;
-	char		*utf8string, *encoded;
+	PyObject   *bytes,
+			   *rv;
+	char	   *utf8string,
+			   *encoded;
 
 	/* First encode the Python unicode object with UTF-8. */
 	bytes = PyUnicode_AsUTF8String(unicode);
@@ -70,7 +72,8 @@ PLyUnicode_Bytes(PyObject *unicode)
 		PLy_elog(ERROR, "could not convert Python Unicode object to bytes");
 
 	utf8string = PyBytes_AsString(bytes);
-	if (utf8string == NULL) {
+	if (utf8string == NULL)
+	{
 		Py_DECREF(bytes);
 		PLy_elog(ERROR, "could not extract bytes from encoded string");
 	}
@@ -88,10 +91,10 @@ PLyUnicode_Bytes(PyObject *unicode)
 		PG_TRY();
 		{
 			encoded = (char *) pg_do_encoding_conversion(
-				(unsigned char *) utf8string,
-				strlen(utf8string),
-				PG_UTF8,
-				GetDatabaseEncoding());
+												(unsigned char *) utf8string,
+														 strlen(utf8string),
+														 PG_UTF8,
+													  GetDatabaseEncoding());
 		}
 		PG_CATCH();
 		{

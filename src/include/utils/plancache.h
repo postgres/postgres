@@ -61,11 +61,11 @@
  * allows the query tree to be discarded easily when it is invalidated.
  *
  * Some callers wish to use the CachedPlan API even with one-shot queries
- * that have no reason to be saved at all.  We therefore support a "oneshot"
- * variant that does no data copying or invalidation checking.  In this case
+ * that have no reason to be saved at all.	We therefore support a "oneshot"
+ * variant that does no data copying or invalidation checking.	In this case
  * there are no separate memory contexts: the CachedPlanSource struct and
  * all subsidiary data live in the caller's CurrentMemoryContext, and there
- * is no way to free memory short of clearing that entire context.  A oneshot
+ * is no way to free memory short of clearing that entire context.	A oneshot
  * plan is always treated as unsaved.
  *
  * Note: the string referenced by commandTag is not subsidiary storage;
@@ -143,8 +143,8 @@ extern CachedPlanSource *CreateCachedPlan(Node *raw_parse_tree,
 				 const char *query_string,
 				 const char *commandTag);
 extern CachedPlanSource *CreateOneShotCachedPlan(Node *raw_parse_tree,
-				 const char *query_string,
-				 const char *commandTag);
+						const char *query_string,
+						const char *commandTag);
 extern void CompleteCachedPlan(CachedPlanSource *plansource,
 				   List *querytree_list,
 				   MemoryContext querytree_context,

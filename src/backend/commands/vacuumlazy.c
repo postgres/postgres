@@ -78,9 +78,9 @@
  * that the potential for improvement was great enough to merit the cost of
  * supporting them.
  */
-#define VACUUM_TRUNCATE_LOCK_CHECK_INTERVAL		20	/* ms */
-#define VACUUM_TRUNCATE_LOCK_WAIT_INTERVAL		50	/* ms */
-#define VACUUM_TRUNCATE_LOCK_TIMEOUT			5000		/* ms */
+#define VACUUM_TRUNCATE_LOCK_CHECK_INTERVAL		20		/* ms */
+#define VACUUM_TRUNCATE_LOCK_WAIT_INTERVAL		50		/* ms */
+#define VACUUM_TRUNCATE_LOCK_TIMEOUT			5000	/* ms */
 
 /*
  * Guesstimation of number of dead tuples per page.  This is used to
@@ -184,7 +184,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	double		new_rel_tuples;
 	BlockNumber new_rel_allvisible;
 	TransactionId new_frozen_xid;
-	MultiXactId	new_min_multi;
+	MultiXactId new_min_multi;
 
 	/* measure elapsed time iff autovacuum logging requires it */
 	if (IsAutoVacuumWorkerProcess() && Log_autovacuum_min_duration >= 0)
@@ -287,8 +287,8 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 
 	/* report results to the stats collector, too */
 	pgstat_report_vacuum(RelationGetRelid(onerel),
-						  onerel->rd_rel->relisshared,
-						  new_rel_tuples);
+						 onerel->rd_rel->relisshared,
+						 new_rel_tuples);
 
 	/* and log the action if appropriate */
 	if (IsAutoVacuumWorkerProcess() && Log_autovacuum_min_duration >= 0)
@@ -315,7 +315,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 							"pages: %d removed, %d remain\n"
 							"tuples: %.0f removed, %.0f remain\n"
 							"buffer usage: %d hits, %d misses, %d dirtied\n"
-					"avg read rate: %.3f MB/s, avg write rate: %.3f MB/s\n"
+					  "avg read rate: %.3f MB/s, avg write rate: %.3f MB/s\n"
 							"system usage: %s",
 							get_database_name(MyDatabaseId),
 							get_namespace_name(RelationGetNamespace(onerel)),
@@ -899,15 +899,15 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			/*
 			 * It should never be the case that the visibility map page is set
 			 * while the page-level bit is clear, but the reverse is allowed
-			 * (if checksums are not enabled).  Regardless, set the both bits
+			 * (if checksums are not enabled).	Regardless, set the both bits
 			 * so that we get back in sync.
 			 *
 			 * NB: If the heap page is all-visible but the VM bit is not set,
-			 * we don't need to dirty the heap page.  However, if checksums are
-			 * enabled, we do need to make sure that the heap page is dirtied
-			 * before passing it to visibilitymap_set(), because it may be
-			 * logged.  Given that this situation should only happen in rare
-			 * cases after a crash, it is not worth optimizing.
+			 * we don't need to dirty the heap page.  However, if checksums
+			 * are enabled, we do need to make sure that the heap page is
+			 * dirtied before passing it to visibilitymap_set(), because it
+			 * may be logged.  Given that this situation should only happen in
+			 * rare cases after a crash, it is not worth optimizing.
 			 */
 			PageSetAllVisible(page);
 			MarkBufferDirty(buf);
@@ -1116,7 +1116,7 @@ lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 	Page		page = BufferGetPage(buffer);
 	OffsetNumber unused[MaxOffsetNumber];
 	int			uncnt = 0;
-	TransactionId	visibility_cutoff_xid;
+	TransactionId visibility_cutoff_xid;
 
 	START_CRIT_SECTION();
 
@@ -1146,8 +1146,8 @@ lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 	MarkBufferDirty(buffer);
 
 	/*
-	 * Now that we have removed the dead tuples from the page, once again check
-	 * if the page has become all-visible.
+	 * Now that we have removed the dead tuples from the page, once again
+	 * check if the page has become all-visible.
 	 */
 	if (!visibilitymap_test(onerel, blkno, vmbuffer) &&
 		heap_page_is_all_visible(buffer, &visibility_cutoff_xid))
@@ -1155,7 +1155,7 @@ lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 		Assert(BufferIsValid(*vmbuffer));
 		PageSetAllVisible(page);
 		visibilitymap_set(onerel, blkno, buffer, InvalidXLogRecPtr, *vmbuffer,
-				visibility_cutoff_xid);
+						  visibility_cutoff_xid);
 	}
 
 	/* XLOG stuff */
@@ -1660,25 +1660,24 @@ vac_cmp_itemptr(const void *left, const void *right)
 static bool
 heap_page_is_all_visible(Buffer buf, TransactionId *visibility_cutoff_xid)
 {
-	Page		 page = BufferGetPage(buf);
+	Page		page = BufferGetPage(buf);
 	OffsetNumber offnum,
-				 maxoff;
-	bool		 all_visible = true;
+				maxoff;
+	bool		all_visible = true;
 
 	*visibility_cutoff_xid = InvalidTransactionId;
 
 	/*
 	 * This is a stripped down version of the line pointer scan in
-	 * lazy_scan_heap(). So if you change anything here, also check that
-	 * code.
+	 * lazy_scan_heap(). So if you change anything here, also check that code.
 	 */
 	maxoff = PageGetMaxOffsetNumber(page);
 	for (offnum = FirstOffsetNumber;
-			offnum <= maxoff && all_visible;
-			offnum = OffsetNumberNext(offnum))
+		 offnum <= maxoff && all_visible;
+		 offnum = OffsetNumberNext(offnum))
 	{
-		ItemId			itemid;
-		HeapTupleData	tuple;
+		ItemId		itemid;
+		HeapTupleData tuple;
 
 		itemid = PageGetItemId(page, offnum);
 
@@ -1689,8 +1688,8 @@ heap_page_is_all_visible(Buffer buf, TransactionId *visibility_cutoff_xid)
 		ItemPointerSet(&(tuple.t_self), BufferGetBlockNumber(buf), offnum);
 
 		/*
-		 * Dead line pointers can have index pointers pointing to them. So they
-		 * can't be treated as visible
+		 * Dead line pointers can have index pointers pointing to them. So
+		 * they can't be treated as visible
 		 */
 		if (ItemIdIsDead(itemid))
 		{
@@ -1716,8 +1715,8 @@ heap_page_is_all_visible(Buffer buf, TransactionId *visibility_cutoff_xid)
 					}
 
 					/*
-					 * The inserter definitely committed. But is it old
-					 * enough that everyone sees it as committed?
+					 * The inserter definitely committed. But is it old enough
+					 * that everyone sees it as committed?
 					 */
 					xmin = HeapTupleHeaderGetXmin(tuple.t_data);
 					if (!TransactionIdPrecedes(xmin, OldestXmin))
@@ -1743,7 +1742,7 @@ heap_page_is_all_visible(Buffer buf, TransactionId *visibility_cutoff_xid)
 				elog(ERROR, "unexpected HeapTupleSatisfiesVacuum result");
 				break;
 		}
-	}						/* scan along page */
+	}							/* scan along page */
 
 	return all_visible;
 }

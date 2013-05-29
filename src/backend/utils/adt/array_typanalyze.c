@@ -388,8 +388,8 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 
 				/*
 				 * If element type is pass-by-reference, we must copy it into
-				 * palloc'd space, so that we can release the array below.
-				 * (We do this so that the space needed for element values is
+				 * palloc'd space, so that we can release the array below. (We
+				 * do this so that the space needed for element values is
 				 * limited by the size of the hashtable; if we kept all the
 				 * array values around, it could be much more.)
 				 */

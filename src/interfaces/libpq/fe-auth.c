@@ -244,7 +244,7 @@ pg_krb5_sendauth(PGconn *conn)
 	}
 
 	retval = krb5_sendauth(info.pg_krb5_context, &auth_context,
-					   (krb5_pointer) &conn->sock, (char *) conn->krbsrvname,
+					  (krb5_pointer) & conn->sock, (char *) conn->krbsrvname,
 						   info.pg_krb5_client, server,
 						   AP_OPTS_MUTUAL_REQUIRED,
 						   NULL, 0,		/* no creds, use ccache instead */
@@ -285,7 +285,7 @@ pg_krb5_sendauth(PGconn *conn)
 		char		sebuf[256];
 
 		printfPQExpBuffer(&conn->errorMessage,
-		libpq_gettext("could not restore nonblocking mode on socket: %s\n"),
+		 libpq_gettext("could not restore nonblocking mode on socket: %s\n"),
 						  pqStrerror(errno, sebuf, sizeof(sebuf)));
 		ret = STATUS_ERROR;
 	}

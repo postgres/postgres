@@ -38,27 +38,28 @@ require IPC::Open2;
 # (We could get this from "git branches", but not worth the trouble.)
 # NB: master must be first!
 my @BRANCHES = qw(master
-    REL9_2_STABLE REL9_1_STABLE REL9_0_STABLE
-    REL8_4_STABLE REL8_3_STABLE REL8_2_STABLE REL8_1_STABLE REL8_0_STABLE
-    REL7_4_STABLE REL7_3_STABLE REL7_2_STABLE REL7_1_STABLE REL7_0_PATCHES
-    REL6_5_PATCHES REL6_4);
+  REL9_2_STABLE REL9_1_STABLE REL9_0_STABLE
+  REL8_4_STABLE REL8_3_STABLE REL8_2_STABLE REL8_1_STABLE REL8_0_STABLE
+  REL7_4_STABLE REL7_3_STABLE REL7_2_STABLE REL7_1_STABLE REL7_0_PATCHES
+  REL6_5_PATCHES REL6_4);
 
 # Might want to make this parameter user-settable.
 my $timestamp_slop = 600;
 
 my $details_after = 0;
-my $post_date = 0;
-my $master_only = 0;
-my $oldest_first = 0;
+my $post_date     = 0;
+my $master_only   = 0;
+my $oldest_first  = 0;
 my $since;
 my @output_buffer;
 my $output_line = '';
 
-Getopt::Long::GetOptions('details-after' => \$details_after,
-			 'master-only' => \$master_only,
-			 'post-date' => \$post_date,
-			 'oldest-first' => \$oldest_first,
-			 'since=s' => \$since) || usage();
+Getopt::Long::GetOptions(
+	'details-after' => \$details_after,
+	'master-only'   => \$master_only,
+	'post-date'     => \$post_date,
+	'oldest-first'  => \$oldest_first,
+	'since=s'       => \$since) || usage();
 usage() if @ARGV;
 
 my @git = qw(git log --format=fuller --date=iso);
@@ -70,15 +71,18 @@ my %rel_tags;
 {
 	my $cmd = "git for-each-ref refs/tags";
 	my $pid = IPC::Open2::open2(my $git_out, my $git_in, $cmd)
-		|| die "can't run $cmd: $!";
-	while (my $line = <$git_out>) {
-		if ($line =~ m|^([a-f0-9]+)\s+commit\s+refs/tags/(\S+)|) {
-		    my $commit = $1;
-		    my $tag = $2;
-		    if ($tag =~ /^REL\d+_\d+$/ ||
-			$tag =~ /^REL\d+_\d+_\d+$/) {
-			$rel_tags{$commit} = $tag;
-		    }
+	  || die "can't run $cmd: $!";
+	while (my $line = <$git_out>)
+	{
+		if ($line =~ m|^([a-f0-9]+)\s+commit\s+refs/tags/(\S+)|)
+		{
+			my $commit = $1;
+			my $tag    = $2;
+			if (   $tag =~ /^REL\d+_\d+$/
+				|| $tag =~ /^REL\d+_\d+_\d+$/)
+			{
+				$rel_tags{$commit} = $tag;
+			}
 		}
 	}
 	waitpid($pid, 0);
@@ -89,48 +93,60 @@ my %rel_tags;
 # Collect the commit data
 my %all_commits;
 my %all_commits_by_branch;
+
 # This remembers where each branch sprouted from master.  Note the values
 # will be wrong if --since terminates the log listing before the branch
 # sprouts; but in that case it doesn't matter since we also won't reach
 # the part of master where it would matter.
 my %sprout_tags;
 
-for my $branch (@BRANCHES) {
+for my $branch (@BRANCHES)
+{
 	my @cmd = @git;
-	if ($branch eq "master") {
-	    push @cmd, "origin/$branch";
-	} else {
-	    push @cmd, "--parents";
-	    push @cmd, "master..origin/$branch";
+	if ($branch eq "master")
+	{
+		push @cmd, "origin/$branch";
+	}
+	else
+	{
+		push @cmd, "--parents";
+		push @cmd, "master..origin/$branch";
 	}
 	my $pid = IPC::Open2::open2(my $git_out, my $git_in, @cmd)
-		|| die "can't run @cmd: $!";
+	  || die "can't run @cmd: $!";
 	my $last_tag = undef;
 	my $last_parent;
 	my %commit;
-	while (my $line = <$git_out>) {
-		if ($line =~ /^commit\s+(\S+)/) {
+	while (my $line = <$git_out>)
+	{
+		if ($line =~ /^commit\s+(\S+)/)
+		{
 			push_commit(\%commit) if %commit;
 			$last_tag = $rel_tags{$1} if defined $rel_tags{$1};
 			%commit = (
-				'branch' => $branch,
-				'commit' => $1,
+				'branch'   => $branch,
+				'commit'   => $1,
 				'last_tag' => $last_tag,
-				'message' => '',
-			);
-			if ($line =~ /^commit\s+\S+\s+(\S+)/) {
+				'message'  => '',);
+			if ($line =~ /^commit\s+\S+\s+(\S+)/)
+			{
 				$last_parent = $1;
-			} else {
+			}
+			else
+			{
 				$last_parent = undef;
 			}
 		}
-		elsif ($line =~ /^Author:\s+(.*)/) {
+		elsif ($line =~ /^Author:\s+(.*)/)
+		{
 			$commit{'author'} = $1;
 		}
-		elsif ($line =~ /^CommitDate:\s+(.*)/) {
+		elsif ($line =~ /^CommitDate:\s+(.*)/)
+		{
 			$commit{'date'} = $1;
 		}
-		elsif ($line =~ /^\s\s/) {
+		elsif ($line =~ /^\s\s/)
+		{
 			$commit{'message'} .= $line;
 		}
 	}
@@ -148,57 +164,70 @@ for my $branch (@BRANCHES) {
 {
 	my $last_tag = undef;
 	my %sprouted_branches;
-	for my $cc (@{$all_commits_by_branch{'master'}}) {
-	    my $commit = $cc->{'commit'};
-	    my $c = $cc->{'commits'}->[0];
-	    $last_tag = $rel_tags{$commit} if defined $rel_tags{$commit};
-	    if (defined $sprout_tags{$commit}) {
-		$last_tag = $sprout_tags{$commit};
-		# normalize branch names for making sprout tags
-		$last_tag =~ s/^(REL\d+_\d+).*/$1_BR/;
-	    }
-	    $c->{'last_tag'} = $last_tag;
-	    if ($post_date) {
-		if (defined $sprout_tags{$commit}) {
-		    $sprouted_branches{$sprout_tags{$commit}} = 1;
+	for my $cc (@{ $all_commits_by_branch{'master'} })
+	{
+		my $commit = $cc->{'commit'};
+		my $c      = $cc->{'commits'}->[0];
+		$last_tag = $rel_tags{$commit} if defined $rel_tags{$commit};
+		if (defined $sprout_tags{$commit})
+		{
+			$last_tag = $sprout_tags{$commit};
+
+			# normalize branch names for making sprout tags
+			$last_tag =~ s/^(REL\d+_\d+).*/$1_BR/;
 		}
-		# insert new commits between master and any other commits
-		my @new_commits = ( shift @{$cc->{'commits'}} );
-		for my $branch (reverse sort keys %sprouted_branches) {
-		    my $ccopy = {%{$c}};
-		    $ccopy->{'branch'} = $branch;
-		    push @new_commits, $ccopy;
+		$c->{'last_tag'} = $last_tag;
+		if ($post_date)
+		{
+			if (defined $sprout_tags{$commit})
+			{
+				$sprouted_branches{ $sprout_tags{$commit} } = 1;
+			}
+
+			# insert new commits between master and any other commits
+			my @new_commits = (shift @{ $cc->{'commits'} });
+			for my $branch (reverse sort keys %sprouted_branches)
+			{
+				my $ccopy = { %{$c} };
+				$ccopy->{'branch'} = $branch;
+				push @new_commits, $ccopy;
+			}
+			$cc->{'commits'} = [ @new_commits, @{ $cc->{'commits'} } ];
 		}
-		$cc->{'commits'} = [ @new_commits, @{$cc->{'commits'}} ];
-	    }
 	}
 }
 
 my %position;
-for my $branch (@BRANCHES) {
+for my $branch (@BRANCHES)
+{
 	$position{$branch} = 0;
 }
 
-while (1) {
+while (1)
+{
 	my $best_branch;
 	my $best_timestamp;
-	for my $branch (@BRANCHES) {
-		my $leader = $all_commits_by_branch{$branch}->[$position{$branch}];
+	for my $branch (@BRANCHES)
+	{
+		my $leader = $all_commits_by_branch{$branch}->[ $position{$branch} ];
 		next if !defined $leader;
-		if (!defined $best_branch ||
-		    $leader->{'timestamp'} > $best_timestamp) {
-			$best_branch = $branch;
+		if (!defined $best_branch
+			|| $leader->{'timestamp'} > $best_timestamp)
+		{
+			$best_branch    = $branch;
 			$best_timestamp = $leader->{'timestamp'};
 		}
 	}
 	last if !defined $best_branch;
 	my $winner =
-		$all_commits_by_branch{$best_branch}->[$position{$best_branch}];
+	  $all_commits_by_branch{$best_branch}->[ $position{$best_branch} ];
 
 	# check for master-only
-	if (! $master_only || ($winner->{'commits'}[0]->{'branch'} eq 'master' &&
-	    @{$winner->{'commits'}} == 1)) {
-		output_details($winner) if (! $details_after);
+	if (!$master_only
+		|| ($winner->{'commits'}[0]->{'branch'} eq 'master'
+			&& @{ $winner->{'commits'} } == 1))
+	{
+		output_details($winner) if (!$details_after);
 		output_str("%s", $winner->{'message'} . "\n");
 		output_details($winner) if ($details_after);
 		unshift(@output_buffer, $output_line) if ($oldest_first);
@@ -206,9 +235,11 @@ while (1) {
 	}
 
 	$winner->{'done'} = 1;
-	for my $branch (@BRANCHES) {
-		my $leader = $all_commits_by_branch{$branch}->[$position{$branch}];
-		if (defined $leader && $leader->{'done'}) {
+	for my $branch (@BRANCHES)
+	{
+		my $leader = $all_commits_by_branch{$branch}->[ $position{$branch} ];
+		if (defined $leader && $leader->{'done'})
+		{
 			++$position{$branch};
 			redo;
 		}
@@ -217,89 +248,105 @@ while (1) {
 
 print @output_buffer if ($oldest_first);
 
-sub push_commit {
+sub push_commit
+{
 	my ($c) = @_;
-	my $ht = hash_commit($c);
-	my $ts = parse_datetime($c->{'date'});
+	my $ht  = hash_commit($c);
+	my $ts  = parse_datetime($c->{'date'});
 	my $cc;
+
 	# Note that this code will never merge two commits on the same branch,
 	# even if they have the same hash (author/message) and nearby
 	# timestamps.  This means that there could be multiple potential
 	# matches when we come to add a commit from another branch.  Prefer
 	# the closest-in-time one.
-	for my $candidate (@{$all_commits{$ht}}) {
+	for my $candidate (@{ $all_commits{$ht} })
+	{
 		my $diff = abs($ts - $candidate->{'timestamp'});
-		if ($diff < $timestamp_slop &&
-		    !exists $candidate->{'branch_position'}{$c->{'branch'}})
+		if ($diff < $timestamp_slop
+			&& !exists $candidate->{'branch_position'}{ $c->{'branch'} })
 		{
-		    if (!defined $cc ||
-			$diff < abs($ts - $cc->{'timestamp'})) {
-			$cc = $candidate;
-		    }
+			if (!defined $cc
+				|| $diff < abs($ts - $cc->{'timestamp'}))
+			{
+				$cc = $candidate;
+			}
 		}
 	}
-	if (!defined $cc) {
+	if (!defined $cc)
+	{
 		$cc = {
-			'author' => $c->{'author'},
-			'message' => $c->{'message'},
-			'commit' => $c->{'commit'},
-			'commits' => [],
-			'timestamp' => $ts
-		};
-		push @{$all_commits{$ht}}, $cc;
+			'author'    => $c->{'author'},
+			'message'   => $c->{'message'},
+			'commit'    => $c->{'commit'},
+			'commits'   => [],
+			'timestamp' => $ts };
+		push @{ $all_commits{$ht} }, $cc;
 	}
+
 	# stash only the fields we'll need later
 	my $smallc = {
-	    'branch' => $c->{'branch'},
-	    'commit' => $c->{'commit'},
-	    'date' => $c->{'date'},
-	    'last_tag' => $c->{'last_tag'}
-	};
-	push @{$cc->{'commits'}}, $smallc;
-	push @{$all_commits_by_branch{$c->{'branch'}}}, $cc;
-	$cc->{'branch_position'}{$c->{'branch'}} =
-		-1+@{$all_commits_by_branch{$c->{'branch'}}};
+		'branch'   => $c->{'branch'},
+		'commit'   => $c->{'commit'},
+		'date'     => $c->{'date'},
+		'last_tag' => $c->{'last_tag'} };
+	push @{ $cc->{'commits'} }, $smallc;
+	push @{ $all_commits_by_branch{ $c->{'branch'} } }, $cc;
+	$cc->{'branch_position'}{ $c->{'branch'} } =
+	  -1 + @{ $all_commits_by_branch{ $c->{'branch'} } };
 }
 
-sub hash_commit {
+sub hash_commit
+{
 	my ($c) = @_;
 	return $c->{'author'} . "\0" . $c->{'message'};
 }
 
-sub parse_datetime {
+sub parse_datetime
+{
 	my ($dt) = @_;
-	$dt =~ /^(\d\d\d\d)-(\d\d)-(\d\d)\s+(\d\d):(\d\d):(\d\d)\s+([-+])(\d\d)(\d\d)$/;
-	my $gm = Time::Local::timegm($6, $5, $4, $3, $2-1, $1);
+	$dt =~
+/^(\d\d\d\d)-(\d\d)-(\d\d)\s+(\d\d):(\d\d):(\d\d)\s+([-+])(\d\d)(\d\d)$/;
+	my $gm = Time::Local::timegm($6, $5, $4, $3, $2 - 1, $1);
 	my $tzoffset = ($8 * 60 + $9) * 60;
-	$tzoffset = - $tzoffset if $7 eq '-';
+	$tzoffset = -$tzoffset if $7 eq '-';
 	return $gm - $tzoffset;
 }
 
-sub output_str {
+sub output_str
+{
 	($oldest_first) ? ($output_line .= sprintf(shift, @_)) : printf(@_);
 }
 
-sub output_details {
+sub output_details
+{
 	my $item = shift;
 
-	if ($details_after) {
+	if ($details_after)
+	{
 		$item->{'author'} =~ m{^(.*?)\s*<[^>]*>$};
+
 		# output only author name, not email address
 		output_str("(%s)\n", $1);
-	} else {
+	}
+	else
+	{
 		output_str("Author: %s\n", $item->{'author'});
 	}
-	foreach my $c (@{$item->{'commits'}}) {
-	    output_str("Branch: %s ", $c->{'branch'}) if (! $master_only);
-	    if (defined $c->{'last_tag'}) {
-		output_str("Release: %s ", $c->{'last_tag'});
-	    }
-	    output_str("[%s] %s\n", substr($c->{'commit'}, 0, 9), $c->{'date'});
+	foreach my $c (@{ $item->{'commits'} })
+	{
+		output_str("Branch: %s ", $c->{'branch'}) if (!$master_only);
+		if (defined $c->{'last_tag'})
+		{
+			output_str("Release: %s ", $c->{'last_tag'});
+		}
+		output_str("[%s] %s\n", substr($c->{'commit'}, 0, 9), $c->{'date'});
 	}
 	output_str("\n");
 }
 
-sub usage {
+sub usage
+{
 	print STDERR <<EOM;
 Usage: git_changelog [--details-after/-d] [--master-only/-m] [--oldest-first/-o] [--post-date/-p] [--since=SINCE]
     --details-after Show branch and author info after the commit description

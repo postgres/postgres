@@ -364,8 +364,9 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
 				item->blkno = ItemPointerGetBlockNumber(&it->t_tid);
 
 				/*
-				 * LSN of current page is lsn of parent page for child. We only
-				 * have a shared lock, so we need to get the LSN atomically.
+				 * LSN of current page is lsn of parent page for child. We
+				 * only have a shared lock, so we need to get the LSN
+				 * atomically.
 				 */
 				item->data.parentlsn = BufferGetLSNAtomic(buffer);
 			}

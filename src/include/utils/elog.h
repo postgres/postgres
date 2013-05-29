@@ -118,7 +118,7 @@
 		if (__builtin_constant_p(elevel) && (elevel) >= ERROR) \
 			pg_unreachable(); \
 	} while(0)
-#else /* !HAVE__BUILTIN_CONSTANT_P */
+#else							/* !HAVE__BUILTIN_CONSTANT_P */
 #define ereport_domain(elevel, domain, rest)	\
 	do { \
 		const int elevel_ = (elevel); \
@@ -127,7 +127,7 @@
 		if (elevel_ >= ERROR) \
 			pg_unreachable(); \
 	} while(0)
-#endif /* HAVE__BUILTIN_CONSTANT_P */
+#endif   /* HAVE__BUILTIN_CONSTANT_P */
 
 #define ereport(elevel, rest)	\
 	ereport_domain(elevel, TEXTDOMAIN, rest)
@@ -203,7 +203,7 @@ __attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
  * set_errcontext_domain() first sets the domain to be used, and
  * errcontext_msg() passes the actual message.
  */
-#define errcontext	set_errcontext_domain(TEXTDOMAIN),  errcontext_msg
+#define errcontext	set_errcontext_domain(TEXTDOMAIN),	errcontext_msg
 
 extern int	set_errcontext_domain(const char *domain);
 extern int
@@ -247,7 +247,7 @@ extern int	getinternalerrposition(void);
 		if (__builtin_constant_p(elevel) && (elevel) >= ERROR) \
 			pg_unreachable(); \
 	} while(0)
-#else /* !HAVE__BUILTIN_CONSTANT_P */
+#else							/* !HAVE__BUILTIN_CONSTANT_P */
 #define elog(elevel, ...)  \
 	do { \
 		int		elevel_; \
@@ -257,12 +257,12 @@ extern int	getinternalerrposition(void);
 		if (elevel_ >= ERROR) \
 			pg_unreachable(); \
 	} while(0)
-#endif /* HAVE__BUILTIN_CONSTANT_P */
-#else /* !HAVE__VA_ARGS */
+#endif   /* HAVE__BUILTIN_CONSTANT_P */
+#else							/* !HAVE__VA_ARGS */
 #define elog  \
 	elog_start(__FILE__, __LINE__, PG_FUNCNAME_MACRO), \
 	elog_finish
-#endif /* HAVE__VA_ARGS */
+#endif   /* HAVE__VA_ARGS */
 
 extern void elog_start(const char *filename, int lineno, const char *funcname);
 extern void
@@ -381,7 +381,7 @@ typedef struct ErrorData
 	int			lineno;			/* __LINE__ of ereport() call */
 	const char *funcname;		/* __func__ of ereport() call */
 	const char *domain;			/* message domain */
-	const char *context_domain;	/* message domain for context message */
+	const char *context_domain; /* message domain for context message */
 	int			sqlerrcode;		/* encoded ERRSTATE */
 	char	   *message;		/* primary error message */
 	char	   *detail;			/* detail error message */

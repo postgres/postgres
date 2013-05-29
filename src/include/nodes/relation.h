@@ -195,9 +195,9 @@ typedef struct PlannerInfo
 	List	   *full_join_clauses;		/* list of RestrictInfos for
 										 * mergejoinable full join clauses */
 
-	List	   *join_info_list;		/* list of SpecialJoinInfos */
+	List	   *join_info_list; /* list of SpecialJoinInfos */
 
-	List	   *lateral_info_list;	/* list of LateralJoinInfos */
+	List	   *lateral_info_list;		/* list of LateralJoinInfos */
 
 	List	   *append_rel_list;	/* list of AppendRelInfos */
 
@@ -227,7 +227,7 @@ typedef struct PlannerInfo
 	bool		hasInheritedTarget;		/* true if parse->resultRelation is an
 										 * inheritance child rel */
 	bool		hasJoinRTEs;	/* true if any RTEs are RTE_JOIN kind */
-	bool		hasLateralRTEs;	/* true if any RTEs are marked LATERAL */
+	bool		hasLateralRTEs; /* true if any RTEs are marked LATERAL */
 	bool		hasHavingQual;	/* true if havingQual was non-null */
 	bool		hasPseudoConstantQuals; /* true if any RestrictInfo has
 										 * pseudoconstant = true */
@@ -411,7 +411,7 @@ typedef struct RelOptInfo
 	int			width;			/* estimated avg width of result tuples */
 
 	/* per-relation planner control flags */
-	bool		consider_startup;	/* keep cheap-startup-cost paths? */
+	bool		consider_startup;		/* keep cheap-startup-cost paths? */
 
 	/* materialization information */
 	List	   *reltargetlist;	/* Vars to be output by scan of relation */
@@ -431,7 +431,7 @@ typedef struct RelOptInfo
 	Relids	   *attr_needed;	/* array indexed [min_attr .. max_attr] */
 	int32	   *attr_widths;	/* array indexed [min_attr .. max_attr] */
 	List	   *lateral_vars;	/* LATERAL Vars and PHVs referenced by rel */
-	Relids		lateral_relids;	/* minimum parameterization of rel */
+	Relids		lateral_relids; /* minimum parameterization of rel */
 	List	   *indexlist;		/* list of IndexOptInfo */
 	BlockNumber pages;			/* size estimates derived from pg_class */
 	double		tuples;
@@ -439,7 +439,7 @@ typedef struct RelOptInfo
 	/* use "struct Plan" to avoid including plannodes.h here */
 	struct Plan *subplan;		/* if subquery */
 	PlannerInfo *subroot;		/* if subquery */
-	List	   *subplan_params;	/* if subquery */
+	List	   *subplan_params; /* if subquery */
 	/* use "struct FdwRoutine" to avoid including fdwapi.h here */
 	struct FdwRoutine *fdwroutine;		/* if foreign table */
 	void	   *fdw_private;	/* if foreign table */
@@ -1531,7 +1531,7 @@ typedef struct MinMaxAggInfo
  *
  * A Var: the slot represents a variable of this level that must be passed
  * down because subqueries have outer references to it, or must be passed
- * from a NestLoop node to its inner scan.  The varlevelsup value in the Var
+ * from a NestLoop node to its inner scan.	The varlevelsup value in the Var
  * will always be zero.
  *
  * A PlaceHolderVar: this works much like the Var case, except that the

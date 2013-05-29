@@ -252,7 +252,7 @@ SysLoggerMain(int argc, char *argv[])
 		elog(FATAL, "setsid() failed: %m");
 #endif
 
-	InitializeLatchSupport();		/* needed for latch waits */
+	InitializeLatchSupport();	/* needed for latch waits */
 
 	/* Initialize private latch for use by signal handlers */
 	InitLatch(&sysLoggerLatch);
@@ -583,8 +583,8 @@ SysLogger_Start(void)
 
 	/*
 	 * The initial logfile is created right in the postmaster, to verify that
-	 * the Log_directory is writable.  We save the reference time so that
-	 * the syslogger child process can recompute this file name.
+	 * the Log_directory is writable.  We save the reference time so that the
+	 * syslogger child process can recompute this file name.
 	 *
 	 * It might look a bit strange to re-do this during a syslogger restart,
 	 * but we must do so since the postmaster closed syslogFile after the

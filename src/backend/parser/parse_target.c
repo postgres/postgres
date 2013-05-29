@@ -76,7 +76,7 @@ static int	FigureColnameInternal(Node *node, char **name);
  *
  * node		the (untransformed) parse tree for the value expression.
  * expr		the transformed expression, or NULL if caller didn't do it yet.
- * exprKind	expression kind (EXPR_KIND_SELECT_TARGET, etc)
+ * exprKind expression kind (EXPR_KIND_SELECT_TARGET, etc)
  * colname	the column name to be assigned, or NULL if none yet set.
  * resjunk	true if the target should be marked resjunk, ie, it is not
  *			wanted in the final projected tuple.
@@ -1130,7 +1130,7 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
  *		Transforms '*' (in the target list) into a list of targetlist entries.
  *
  * tlist entries are generated for each relation visible for unqualified
- * column name access.  We do not consider qualified-name-only entries because
+ * column name access.	We do not consider qualified-name-only entries because
  * that would include input tables of aliasless JOINs, NEW/OLD pseudo-entries,
  * etc.
  *

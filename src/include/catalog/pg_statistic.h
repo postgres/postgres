@@ -286,7 +286,7 @@ typedef FormData_pg_statistic *Form_pg_statistic;
  * Unlike a regular scalar histogram, this is actually two histograms combined
  * into a single array, with the lower bounds of each value forming a
  * histogram of lower bounds, and the upper bounds a histogram of upper
- * bounds.  Only non-NULL, non-empty ranges are included.
+ * bounds.	Only non-NULL, non-empty ranges are included.
  */
 #define STATISTIC_KIND_BOUNDS_HISTOGRAM  7
 

@@ -98,7 +98,7 @@ static void StoreRelCheck(Relation rel, char *ccname, Node *expr,
 			  bool is_validated, bool is_local, int inhcount,
 			  bool is_no_inherit, bool is_internal);
 static void StoreConstraints(Relation rel, List *cooked_constraints,
-							 bool is_internal);
+				 bool is_internal);
 static bool MergeWithExistingConstraint(Relation rel, char *ccname, Node *expr,
 							bool allow_merge, bool is_local,
 							bool is_no_inherit);
@@ -870,6 +870,7 @@ AddNewRelationTuple(Relation pg_class_desc,
 		 * that will do.
 		 */
 		new_rel_reltup->relfrozenxid = RecentXmin;
+
 		/*
 		 * Similarly, initialize the minimum Multixact to the first value that
 		 * could possibly be stored in tuples in the table.  Running
@@ -1915,10 +1916,10 @@ StoreAttrDefault(Relation rel, AttrNumber attnum,
 	/*
 	 * Post creation hook for attribute defaults.
 	 *
-	 * XXX. ALTER TABLE ALTER COLUMN SET/DROP DEFAULT is implemented
-	 * with a couple of deletion/creation of the attribute's default entry,
-	 * so the callee should check existence of an older version of this
-	 * entry if it needs to distinguish.
+	 * XXX. ALTER TABLE ALTER COLUMN SET/DROP DEFAULT is implemented with a
+	 * couple of deletion/creation of the attribute's default entry, so the
+	 * callee should check existence of an older version of this entry if it
+	 * needs to distinguish.
 	 */
 	InvokeObjectPostCreateHookArg(AttrDefaultRelationId,
 								  RelationGetRelid(rel), attnum, is_internal);
@@ -2018,7 +2019,7 @@ StoreRelCheck(Relation rel, char *ccname, Node *expr,
 						  is_local,		/* conislocal */
 						  inhcount,		/* coninhcount */
 						  is_no_inherit,		/* connoinherit */
-						  is_internal);	/* internally constructed? */
+						  is_internal); /* internally constructed? */
 
 	pfree(ccbin);
 	pfree(ccsrc);

@@ -51,7 +51,7 @@ SpinlockSemas(void)
 int
 SpinlockSemas(void)
 {
-	int		nsemas;
+	int			nsemas;
 
 	/*
 	 * It would be cleaner to distribute this logic into the affected modules,

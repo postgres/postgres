@@ -296,15 +296,15 @@ DefineOperator(List *names, List *parameters)
 	 * now have OperatorCreate do all the work..
 	 */
 	return
-		OperatorCreate(oprName,		/* operator name */
+		OperatorCreate(oprName, /* operator name */
 					   oprNamespace,	/* namespace */
-					   typeId1,		/* left type id */
-					   typeId2,		/* right type id */
-					   functionOid, /* function for operator */
-					   commutatorName,		/* optional commutator operator name */
-					   negatorName, /* optional negator operator name */
-					   restrictionOid,		/* optional restrict. sel. procedure */
-					   joinOid,		/* optional join sel. procedure name */
+					   typeId1, /* left type id */
+					   typeId2, /* right type id */
+					   functionOid,		/* function for operator */
+					   commutatorName,	/* optional commutator operator name */
+					   negatorName,		/* optional negator operator name */
+					   restrictionOid,	/* optional restrict. sel. procedure */
+					   joinOid, /* optional join sel. procedure name */
 					   canMerge,	/* operator merges */
 					   canHash);	/* operator hashes */
 }

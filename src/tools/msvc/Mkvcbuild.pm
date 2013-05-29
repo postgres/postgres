@@ -49,8 +49,7 @@ my $contrib_extraincludes =
   { 'tsearch2' => ['contrib/tsearch2'], 'dblink' => ['src/backend'] };
 my $contrib_extrasource = {
 	'cube' => [ 'cubescan.l', 'cubeparse.y' ],
-	'seg'  => [ 'segscan.l',  'segparse.y' ], 
-	};
+	'seg'  => [ 'segscan.l',  'segparse.y' ], };
 my @contrib_excludes = ('pgcrypto', 'intagg', 'sepgsql');
 
 sub mkvcbuild
@@ -75,10 +74,9 @@ sub mkvcbuild
 	  win32error.c win32setlocale.c);
 
 	our @pgcommonallfiles = qw(
-		relpath.c);
+	  relpath.c);
 
-	our @pgcommonfrontendfiles = (@pgcommonallfiles,
-		qw(fe_memutils.c));
+	our @pgcommonfrontendfiles = (@pgcommonallfiles, qw(fe_memutils.c));
 
 	our @pgcommonbkndfiles = @pgcommonallfiles;
 
@@ -103,7 +101,7 @@ sub mkvcbuild
 		'src\backend\port\win32_shmem.c');
 	$postgres->ReplaceFile('src\backend\port\pg_latch.c',
 		'src\backend\port\win32_latch.c');
-	$postgres->AddFiles('src\port', @pgportfiles);
+	$postgres->AddFiles('src\port',   @pgportfiles);
 	$postgres->AddFiles('src\common', @pgcommonbkndfiles);
 	$postgres->AddDir('src\timezone');
 	$postgres->AddFiles('src\backend\parser', 'scan.l', 'gram.y');
@@ -593,17 +591,19 @@ sub mkvcbuild
 
 	# fix up pg_xlogdump once it's been set up
 	# files symlinked on Unix are copied on windows
-	my $pg_xlogdump = (grep {$_->{name} eq 'pg_xlogdump'} 
-					   @{$solution->{projects}->{contrib}} )[0];
+	my $pg_xlogdump =
+	  (grep { $_->{name} eq 'pg_xlogdump' }
+		  @{ $solution->{projects}->{contrib} })[0];
 	$pg_xlogdump->AddDefine('FRONTEND');
-	foreach my $xf (glob('src/backend/access/rmgrdesc/*desc.c') )
+	foreach my $xf (glob('src/backend/access/rmgrdesc/*desc.c'))
 	{
 		my $bf = basename $xf;
-		copy($xf,"contrib/pg_xlogdump/$bf");
+		copy($xf, "contrib/pg_xlogdump/$bf");
 		$pg_xlogdump->AddFile("contrib\\pg_xlogdump\\$bf");
 	}
-	copy('src/backend/access/transam/xlogreader.c',
-		 'contrib/pg_xlogdump/xlogreader.c'); 
+	copy(
+		'src/backend/access/transam/xlogreader.c',
+		'contrib/pg_xlogdump/xlogreader.c');
 
 	$solution->Save();
 	return $solution->{vcver};

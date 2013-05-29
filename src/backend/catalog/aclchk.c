@@ -3419,7 +3419,7 @@ aclcheck_error_col(AclResult aclerr, AclObjectKind objectkind,
 void
 aclcheck_error_type(AclResult aclerr, Oid typeOid)
 {
-	Oid element_type = get_element_type(typeOid);
+	Oid			element_type = get_element_type(typeOid);
 
 	aclcheck_error(aclerr, ACL_KIND_TYPE, format_type_be(element_type ? element_type : typeOid));
 }

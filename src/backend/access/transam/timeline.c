@@ -15,7 +15,7 @@
  * <parentTLI> <switchpoint> <reason>
  *
  *	parentTLI	ID of the parent timeline
- *	switchpoint	XLogRecPtr of the WAL position where the switch happened
+ *	switchpoint XLogRecPtr of the WAL position where the switch happened
  *	reason		human-readable explanation of why the timeline was changed
  *
  * The fields are separated by tabs. Lines beginning with # are comments, and
@@ -49,7 +49,7 @@ restoreTimeLineHistoryFiles(TimeLineID begin, TimeLineID end)
 {
 	char		path[MAXPGPATH];
 	char		histfname[MAXFNAMELEN];
-	TimeLineID tli;
+	TimeLineID	tli;
 
 	for (tli = begin; tli < end; tli++)
 	{
@@ -179,8 +179,8 @@ readTimeLineHistory(TimeLineID targetTLI)
 			errhint("Timeline IDs must be less than child timeline's ID.")));
 
 	/*
-	 * Create one more entry for the "tip" of the timeline, which has no
-	 * entry in the history file.
+	 * Create one more entry for the "tip" of the timeline, which has no entry
+	 * in the history file.
 	 */
 	entry = (TimeLineHistoryEntry *) palloc(sizeof(TimeLineHistoryEntry));
 	entry->tli = targetTLI;
@@ -418,7 +418,7 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 
 	/*
 	 * Prefer link() to rename() here just to be really sure that we don't
-	 * overwrite an existing file.  However, there shouldn't be one, so
+	 * overwrite an existing file.	However, there shouldn't be one, so
 	 * rename() is an acceptable substitute except for the truly paranoid.
 	 */
 #if HAVE_WORKING_LINK
@@ -530,7 +530,7 @@ writeTimeLineHistoryFile(TimeLineID tli, char *content, int size)
 bool
 tliInHistory(TimeLineID tli, List *expectedTLEs)
 {
-	ListCell *cell;
+	ListCell   *cell;
 
 	foreach(cell, expectedTLEs)
 	{
@@ -548,11 +548,12 @@ tliInHistory(TimeLineID tli, List *expectedTLEs)
 TimeLineID
 tliOfPointInHistory(XLogRecPtr ptr, List *history)
 {
-	ListCell *cell;
+	ListCell   *cell;
 
 	foreach(cell, history)
 	{
 		TimeLineHistoryEntry *tle = (TimeLineHistoryEntry *) lfirst(cell);
+
 		if ((XLogRecPtrIsInvalid(tle->begin) || tle->begin <= ptr) &&
 			(XLogRecPtrIsInvalid(tle->end) || ptr < tle->end))
 		{
@@ -563,7 +564,7 @@ tliOfPointInHistory(XLogRecPtr ptr, List *history)
 
 	/* shouldn't happen. */
 	elog(ERROR, "timeline history was not contiguous");
-	return 0;	/* keep compiler quiet */
+	return 0;					/* keep compiler quiet */
 }
 
 /*
@@ -579,7 +580,7 @@ tliSwitchPoint(TimeLineID tli, List *history, TimeLineID *nextTLI)
 
 	if (nextTLI)
 		*nextTLI = 0;
-	foreach (cell, history)
+	foreach(cell, history)
 	{
 		TimeLineHistoryEntry *tle = (TimeLineHistoryEntry *) lfirst(cell);
 
@@ -592,5 +593,5 @@ tliSwitchPoint(TimeLineID tli, List *history, TimeLineID *nextTLI)
 	ereport(ERROR,
 			(errmsg("requested timeline %u is not in this server's history",
 					tli)));
-	return InvalidXLogRecPtr; /* keep compiler quiet */
+	return InvalidXLogRecPtr;	/* keep compiler quiet */
 }

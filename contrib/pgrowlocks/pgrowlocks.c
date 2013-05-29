@@ -124,7 +124,7 @@ pgrowlocks(PG_FUNCTION_ARGS)
 	/* scan the relation */
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
-		HTSU_Result	htsu;
+		HTSU_Result htsu;
 		TransactionId xmax;
 		uint16		infomask;
 
@@ -152,7 +152,7 @@ pgrowlocks(PG_FUNCTION_ARGS)
 			values = (char **) palloc(mydata->ncolumns * sizeof(char *));
 
 			values[Atnum_tid] = (char *) DirectFunctionCall1(tidout,
-															 PointerGetDatum(&tuple->t_self));
+											PointerGetDatum(&tuple->t_self));
 
 			values[Atnum_xmax] = palloc(NCHARS * sizeof(char));
 			snprintf(values[Atnum_xmax], NCHARS, "%d", xmax);
@@ -166,7 +166,7 @@ pgrowlocks(PG_FUNCTION_ARGS)
 				values[Atnum_ismulti] = pstrdup("true");
 
 				allow_old = !(infomask & HEAP_LOCK_MASK) &&
-							 (infomask & HEAP_XMAX_LOCK_ONLY);
+					(infomask & HEAP_XMAX_LOCK_ONLY);
 				nmembers = GetMultiXactIdMembers(xmax, &members, allow_old);
 				if (nmembers == -1)
 				{
@@ -280,8 +280,8 @@ pgrowlocks(PG_FUNCTION_ARGS)
 			result = HeapTupleGetDatum(tuple);
 
 			/*
-			 * no need to pfree what we allocated; it's on a short-lived memory
-			 * context anyway
+			 * no need to pfree what we allocated; it's on a short-lived
+			 * memory context anyway
 			 */
 
 			SRF_RETURN_NEXT(funcctx, result);

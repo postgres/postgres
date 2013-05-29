@@ -153,6 +153,7 @@ struct HeapTupleHeaderData
 
 	/* MORE DATA FOLLOWS AT END OF STRUCT */
 };
+
 /* typedef appears in tupbasics.h */
 
 /*
@@ -167,7 +168,7 @@ struct HeapTupleHeaderData
 #define HEAP_XMAX_EXCL_LOCK		0x0040	/* xmax is exclusive locker */
 #define HEAP_XMAX_LOCK_ONLY		0x0080	/* xmax, if valid, is only a locker */
 
-										/* xmax is a shared locker */
+ /* xmax is a shared locker */
 #define HEAP_XMAX_SHR_LOCK	(HEAP_XMAX_EXCL_LOCK | HEAP_XMAX_KEYSHR_LOCK)
 
 #define HEAP_LOCK_MASK	(HEAP_XMAX_SHR_LOCK | HEAP_XMAX_EXCL_LOCK | \
@@ -206,11 +207,11 @@ struct HeapTupleHeaderData
  * Use these to test whether a particular lock is applied to a tuple
  */
 #define HEAP_XMAX_IS_SHR_LOCKED(infomask) \
-    (((infomask) & HEAP_LOCK_MASK) == HEAP_XMAX_SHR_LOCK)
+	(((infomask) & HEAP_LOCK_MASK) == HEAP_XMAX_SHR_LOCK)
 #define HEAP_XMAX_IS_EXCL_LOCKED(infomask) \
-    (((infomask) & HEAP_LOCK_MASK) == HEAP_XMAX_EXCL_LOCK)
+	(((infomask) & HEAP_LOCK_MASK) == HEAP_XMAX_EXCL_LOCK)
 #define HEAP_XMAX_IS_KEYSHR_LOCKED(infomask) \
-    (((infomask) & HEAP_LOCK_MASK) == HEAP_XMAX_KEYSHR_LOCK)
+	(((infomask) & HEAP_LOCK_MASK) == HEAP_XMAX_KEYSHR_LOCK)
 
 /* turn these all off when Xmax is to change */
 #define HEAP_XMAX_BITS (HEAP_XMAX_COMMITTED | HEAP_XMAX_INVALID | \
@@ -527,6 +528,7 @@ struct MinimalTupleData
 
 	/* MORE DATA FOLLOWS AT END OF STRUCT */
 };
+
 /* typedef appears in htup.h */
 
 

@@ -202,8 +202,7 @@ print HFILE "
 
 
 #define QL_HELP_COUNT	"
-  . scalar(keys %entries)
-  . "		/* number of help items */
+  . scalar(keys %entries) . "		/* number of help items */
 #define QL_MAX_CMD_LEN	$maxlen		/* largest strlen(cmd) */
 
 

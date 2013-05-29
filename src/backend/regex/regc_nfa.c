@@ -1506,7 +1506,7 @@ compact(struct nfa * nfa,
 	for (s = nfa->states; s != NULL; s = s->next)
 	{
 		nstates++;
-		narcs += s->nouts + 1;		/* need one extra for endmarker */
+		narcs += s->nouts + 1;	/* need one extra for endmarker */
 	}
 
 	cnfa->stflags = (char *) MALLOC(nstates * sizeof(char));
@@ -1810,7 +1810,7 @@ dumpcstate(int st,
 		   struct cnfa * cnfa,
 		   FILE *f)
 {
-	struct carc * ca;
+	struct carc *ca;
 	int			pos;
 
 	fprintf(f, "%d%s", st, (cnfa->stflags[st] & CNFA_NOPROGRESS) ? ":" : ".");

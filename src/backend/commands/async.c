@@ -1147,7 +1147,7 @@ asyncQueueUnregister(void)
 
 	Assert(listenChannels == NIL);		/* else caller error */
 
-	if (!amRegisteredListener)			/* nothing to do */
+	if (!amRegisteredListener)	/* nothing to do */
 		return;
 
 	LWLockAcquire(AsyncQueueLock, LW_SHARED);
@@ -1519,7 +1519,7 @@ AtAbort_Notify(void)
 	/*
 	 * If we LISTEN but then roll back the transaction after PreCommit_Notify,
 	 * we have registered as a listener but have not made any entry in
-	 * listenChannels.  In that case, deregister again.
+	 * listenChannels.	In that case, deregister again.
 	 */
 	if (amRegisteredListener && listenChannels == NIL)
 		asyncQueueUnregister();

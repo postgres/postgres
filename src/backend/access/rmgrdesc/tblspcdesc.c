@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * tblspcdesc.c
- *    rmgr descriptor routines for commands/tablespace.c
+ *	  rmgr descriptor routines for commands/tablespace.c
  *
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    src/backend/access/rmgrdesc/tblspcdesc.c
+ *	  src/backend/access/rmgrdesc/tblspcdesc.c
  *
  *-------------------------------------------------------------------------
  */

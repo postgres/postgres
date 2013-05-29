@@ -814,8 +814,8 @@ static struct config_bool ConfigureNamesBool[] =
 			gettext_noop("Detection of a checksum failure normally causes PostgreSQL to "
 				"report an error, aborting the current transaction. Setting "
 						 "ignore_checksum_failure to true causes the system to ignore the failure "
-						 "(but still report a warning), and continue processing. This "
-						 "behavior could cause crashes or other serious problems. Only "
+			   "(but still report a warning), and continue processing. This "
+			  "behavior could cause crashes or other serious problems. Only "
 						 "has an effect if checksums are enabled."),
 			GUC_NOT_IN_SAMPLE
 		},

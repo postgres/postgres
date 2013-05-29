@@ -71,6 +71,6 @@ extern void deparseDeleteSql(StringInfo buf, PlannerInfo *root,
 				 List **retrieved_attrs);
 extern void deparseAnalyzeSizeSql(StringInfo buf, Relation rel);
 extern void deparseAnalyzeSql(StringInfo buf, Relation rel,
-							  List **retrieved_attrs);
+				  List **retrieved_attrs);
 
 #endif   /* POSTGRES_FDW_H */

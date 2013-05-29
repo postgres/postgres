@@ -351,9 +351,8 @@ sepgsql_fmgr_hook(FmgrHookEventType event,
 				 *
 				 * Also, db_procedure:entrypoint permission should be checked
 				 * whether this procedure can perform as an entrypoint of the
-				 * trusted procedure, or not.
-				 * Note that db_procedure:execute permission shall be checked
-				 * individually.
+				 * trusted procedure, or not. Note that db_procedure:execute
+				 * permission shall be checked individually.
 				 */
 				if (stack->new_label)
 				{

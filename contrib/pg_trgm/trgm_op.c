@@ -347,8 +347,8 @@ get_wildcard_part(const char *str, int lenstr,
 			else
 			{
 				/*
-				 * Back up endword to the escape character when stopping at
-				 * an escaped char, so that subsequent get_wildcard_part will
+				 * Back up endword to the escape character when stopping at an
+				 * escaped char, so that subsequent get_wildcard_part will
 				 * restart from the escape character.  We assume here that
 				 * escape chars are single-byte.
 				 */

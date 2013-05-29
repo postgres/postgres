@@ -3971,7 +3971,7 @@ evaluate_function(Oid funcid, Oid result_type, int32 result_typmod,
 	newexpr->funcresulttype = result_type;
 	newexpr->funcretset = false;
 	newexpr->funcvariadic = funcvariadic;
-	newexpr->funcformat = COERCE_EXPLICIT_CALL;	/* doesn't matter */
+	newexpr->funcformat = COERCE_EXPLICIT_CALL; /* doesn't matter */
 	newexpr->funccollid = result_collid;		/* doesn't matter */
 	newexpr->inputcollid = input_collid;
 	newexpr->args = args;

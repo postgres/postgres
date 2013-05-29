@@ -570,7 +570,7 @@ rebuild_relation(Relation OldHeap, Oid indexOid,
 	bool		is_system_catalog;
 	bool		swap_toast_by_content;
 	TransactionId frozenXid;
-	MultiXactId	frozenMulti;
+	MultiXactId frozenMulti;
 
 	/* Mark the correct index as clustered */
 	if (OidIsValid(indexOid))
@@ -746,7 +746,7 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 	bool		is_system_catalog;
 	TransactionId OldestXmin;
 	TransactionId FreezeXid;
-	MultiXactId	MultiXactFrzLimit;
+	MultiXactId MultiXactFrzLimit;
 	RewriteState rwstate;
 	bool		use_sort;
 	Tuplesortstate *tuplesort;

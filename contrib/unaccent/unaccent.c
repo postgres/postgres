@@ -40,7 +40,7 @@ typedef struct TrieChar
 static TrieChar *
 placeChar(TrieChar *node, unsigned char *str, int lenstr, char *replaceTo, int replacelen)
 {
-	TrieChar *curnode;
+	TrieChar   *curnode;
 
 	if (!node)
 	{
@@ -77,7 +77,7 @@ placeChar(TrieChar *node, unsigned char *str, int lenstr, char *replaceTo, int r
 static TrieChar *
 initTrie(char *filename)
 {
-	TrieChar *volatile rootTrie = NULL;
+	TrieChar   *volatile rootTrie = NULL;
 	MemoryContext ccxt = CurrentMemoryContext;
 	tsearch_readline_state trst;
 	volatile bool skip;
@@ -162,8 +162,8 @@ initTrie(char *filename)
 
 				if (state >= 3)
 					rootTrie = placeChar(rootTrie,
-											   (unsigned char *) src, srclen,
-											   trg, trglen);
+										 (unsigned char *) src, srclen,
+										 trg, trglen);
 
 				pfree(line);
 			}

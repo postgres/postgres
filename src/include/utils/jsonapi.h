@@ -31,7 +31,7 @@ typedef enum
 	JSON_TOKEN_FALSE,
 	JSON_TOKEN_NULL,
 	JSON_TOKEN_END,
-}	JsonTokenType;
+} JsonTokenType;
 
 
 /*
@@ -86,7 +86,8 @@ typedef struct jsonSemAction
 	json_aelem_action array_element_start;
 	json_aelem_action array_element_end;
 	json_scalar_action scalar;
-}	jsonSemAction, *JsonSemAction;
+} jsonSemAction,
+		   *JsonSemAction;
 
 /*
  * parse_json will parse the string in the lex calling the

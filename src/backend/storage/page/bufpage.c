@@ -18,9 +18,9 @@
 #include "access/xlog.h"
 #include "storage/checksum.h"
 
-bool ignore_checksum_failure = false;
+bool		ignore_checksum_failure = false;
 
-static char pageCopyData[BLCKSZ];	/* for checksum calculation */
+static char pageCopyData[BLCKSZ];		/* for checksum calculation */
 static Page pageCopy = pageCopyData;
 
 static uint16 PageCalcChecksum16(Page page, BlockNumber blkno);
@@ -101,16 +101,16 @@ PageIsVerified(Page page, BlockNumber blkno)
 		}
 
 		/*
-		 * The following checks don't prove the header is correct,
-		 * only that it looks sane enough to allow into the buffer pool.
-		 * Later usage of the block can still reveal problems,
-		 * which is why we offer the checksum option.
+		 * The following checks don't prove the header is correct, only that
+		 * it looks sane enough to allow into the buffer pool. Later usage of
+		 * the block can still reveal problems, which is why we offer the
+		 * checksum option.
 		 */
 		if ((p->pd_flags & ~PD_VALID_FLAG_BITS) == 0 &&
-			 p->pd_lower <= p->pd_upper &&
-			 p->pd_upper <= p->pd_special &&
-			 p->pd_special <= BLCKSZ &&
-			 p->pd_special == MAXALIGN(p->pd_special))
+			p->pd_lower <= p->pd_upper &&
+			p->pd_upper <= p->pd_special &&
+			p->pd_special <= BLCKSZ &&
+			p->pd_special == MAXALIGN(p->pd_special))
 			header_sane = true;
 
 		if (header_sane && !checksum_failure)
@@ -905,10 +905,10 @@ PageSetChecksumCopy(Page page, BlockNumber blkno)
 
 	/*
 	 * We make a copy iff we need to calculate a checksum because other
-	 * backends may set hint bits on this page while we write, which
-	 * would mean the checksum differs from the page contents. It doesn't
-	 * matter if we include or exclude hints during the copy, as long
-	 * as we write a valid page and associated checksum.
+	 * backends may set hint bits on this page while we write, which would
+	 * mean the checksum differs from the page contents. It doesn't matter if
+	 * we include or exclude hints during the copy, as long as we write a
+	 * valid page and associated checksum.
 	 */
 	memcpy((char *) pageCopy, (char *) page, BLCKSZ);
 	PageSetChecksumInplace(pageCopy, blkno);
@@ -931,6 +931,7 @@ PageSetChecksumInplace(Page page, BlockNumber blkno)
 	if (DataChecksumsEnabled())
 	{
 		PageHeader	p = (PageHeader) page;
+
 		p->pd_checksum = PageCalcChecksum16(page, blkno);
 	}
 
@@ -949,7 +950,7 @@ PageSetChecksumInplace(Page page, BlockNumber blkno)
 static uint16
 PageCalcChecksum16(Page page, BlockNumber blkno)
 {
-	PageHeader	phdr   = (PageHeader) page;
+	PageHeader	phdr = (PageHeader) page;
 	uint16		save_checksum;
 	uint32		checksum;
 
@@ -958,9 +959,8 @@ PageCalcChecksum16(Page page, BlockNumber blkno)
 
 	/*
 	 * Save pd_checksum and set it to zero, so that the checksum calculation
-	 * isn't affected by the checksum stored on the page. We do this to
-	 * allow optimization of the checksum calculation on the whole block
-	 * in one go.
+	 * isn't affected by the checksum stored on the page. We do this to allow
+	 * optimization of the checksum calculation on the whole block in one go.
 	 */
 	save_checksum = phdr->pd_checksum;
 	phdr->pd_checksum = 0;

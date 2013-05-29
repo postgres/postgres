@@ -299,8 +299,8 @@ main(int argc, char **argv)
 				dryrun = true;
 				break;
 			case 'x':
-				additional_ext = strdup(optarg);		/* Extension to remove from
-												 * xlogfile names */
+				additional_ext = strdup(optarg);		/* Extension to remove
+														 * from xlogfile names */
 				break;
 			default:
 				fprintf(stderr, "Try \"%s --help\" for more information.\n", progname);

@@ -216,7 +216,7 @@ CreateCachedPlan(Node *raw_parse_tree,
  * in that context.
  *
  * A one-shot plan cannot be saved or copied, since we make no effort to
- * preserve the raw parse tree unmodified.  There is also no support for
+ * preserve the raw parse tree unmodified.	There is also no support for
  * invalidation, so plan use must be completed in the current transaction,
  * and DDL that might invalidate the querytree_list must be avoided as well.
  *
@@ -373,9 +373,9 @@ CompleteCachedPlan(CachedPlanSource *plansource,
 								   &plansource->invalItems);
 
 		/*
-		 * Also save the current search_path in the query_context.  (This
+		 * Also save the current search_path in the query_context.	(This
 		 * should not generate much extra cruft either, since almost certainly
-		 * the path is already valid.)  Again, we don't really need this for
+		 * the path is already valid.)	Again, we don't really need this for
 		 * one-shot plans; and we *must* skip this for transaction control
 		 * commands, because this could result in catalog accesses.
 		 */
@@ -554,9 +554,9 @@ RevalidateCachedQuery(CachedPlanSource *plansource)
 	/*
 	 * For one-shot plans, we do not support revalidation checking; it's
 	 * assumed the query is parsed, planned, and executed in one transaction,
-	 * so that no lock re-acquisition is necessary.  Also, there is never
-	 * any need to revalidate plans for transaction control commands (and
-	 * we mustn't risk any catalog accesses when handling those).
+	 * so that no lock re-acquisition is necessary.  Also, there is never any
+	 * need to revalidate plans for transaction control commands (and we
+	 * mustn't risk any catalog accesses when handling those).
 	 */
 	if (plansource->is_oneshot || IsTransactionStmtPlan(plansource))
 	{
@@ -725,7 +725,7 @@ RevalidateCachedQuery(CachedPlanSource *plansource)
 							   &plansource->invalItems);
 
 	/*
-	 * Also save the current search_path in the query_context.  (This should
+	 * Also save the current search_path in the query_context.	(This should
 	 * not generate much extra cruft either, since almost certainly the path
 	 * is already valid.)
 	 */

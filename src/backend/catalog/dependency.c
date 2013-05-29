@@ -198,7 +198,7 @@ static void
 deleteObjectsInList(ObjectAddresses *targetObjects, Relation *depRel,
 					int flags)
 {
-	int		i;
+	int			i;
 
 	/*
 	 * Keep track of objects for event triggers, if necessary.

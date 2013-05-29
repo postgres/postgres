@@ -721,7 +721,7 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		 */
 		if (childrel->cheapest_total_path->param_info == NULL)
 			subpaths = accumulate_append_subpath(subpaths,
-											 childrel->cheapest_total_path);
+											  childrel->cheapest_total_path);
 		else
 			subpaths_valid = false;
 

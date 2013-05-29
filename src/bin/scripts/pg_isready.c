@@ -12,15 +12,17 @@
 #include "postgres_fe.h"
 #include "common.h"
 
-#define	DEFAULT_CONNECT_TIMEOUT "3"
+#define DEFAULT_CONNECT_TIMEOUT "3"
 
 static void
-help(const char *progname);
+			help(const char *progname);
 
 int
 main(int argc, char **argv)
 {
-	int c,optindex,opt_index = 2;
+	int			c,
+				optindex,
+				opt_index = 2;
 
 	const char *progname;
 
@@ -30,28 +32,29 @@ main(int argc, char **argv)
 	const char *pgdbname = NULL;
 	const char *connect_timeout = DEFAULT_CONNECT_TIMEOUT;
 
-	const char *keywords[7] = { NULL };
-	const char *values[7] = { NULL };
+	const char *keywords[7] = {NULL};
+	const char *values[7] = {NULL};
 
-	bool quiet = false;
+	bool		quiet = false;
 
-	PGPing rv;
-	PQconninfoOption *connect_options, *conn_opt_ptr;
+	PGPing		rv;
+	PQconninfoOption *connect_options,
+			   *conn_opt_ptr;
 
 	/*
-	 * We accept user and database as options to avoid
-	 * useless errors from connecting with invalid params
+	 * We accept user and database as options to avoid useless errors from
+	 * connecting with invalid params
 	 */
 
 	static struct option long_options[] = {
-			{"dbname", required_argument, NULL, 'd'},
-			{"host", required_argument, NULL, 'h'},
-			{"port", required_argument, NULL, 'p'},
-			{"quiet", no_argument, NULL, 'q'},
-			{"timeout", required_argument, NULL, 't'},
-			{"username", required_argument, NULL, 'U'},
-			{NULL, 0, NULL, 0}
-		};
+		{"dbname", required_argument, NULL, 'd'},
+		{"host", required_argument, NULL, 'h'},
+		{"port", required_argument, NULL, 'p'},
+		{"quiet", no_argument, NULL, 'q'},
+		{"timeout", required_argument, NULL, 't'},
+		{"username", required_argument, NULL, 'U'},
+		{NULL, 0, NULL, 0}
+	};
 
 	progname = get_progname(argv[0]);
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pgscripts"));
@@ -81,6 +84,7 @@ main(int argc, char **argv)
 				break;
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+
 				/*
 				 * We need to make sure we don't return 1 here because someone
 				 * checking the return code might infer unintended meaning
@@ -94,6 +98,7 @@ main(int argc, char **argv)
 		fprintf(stderr, _("%s: too many command-line arguments (first is \"%s\")\n"),
 				progname, argv[optind]);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+
 		/*
 		 * We need to make sure we don't return 1 here because someone
 		 * checking the return code might infer unintended meaning

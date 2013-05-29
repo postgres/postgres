@@ -81,6 +81,7 @@ sepgsql_schema_post_create(Oid namespaceId)
 									  tcontext,
 									  SEPG_CLASS_DB_SCHEMA,
 									  nsp_name);
+
 	/*
 	 * check db_schema:{create}
 	 */

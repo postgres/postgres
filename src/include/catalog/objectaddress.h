@@ -38,18 +38,18 @@ extern void check_object_ownership(Oid roleid,
 
 extern Oid	get_object_namespace(const ObjectAddress *address);
 
-extern bool				is_objectclass_supported(Oid class_id);
-extern Oid				get_object_oid_index(Oid class_id);
-extern int				get_object_catcache_oid(Oid class_id);
-extern int				get_object_catcache_name(Oid class_id);
-extern AttrNumber		get_object_attnum_name(Oid class_id);
-extern AttrNumber		get_object_attnum_namespace(Oid class_id);
-extern AttrNumber		get_object_attnum_owner(Oid class_id);
-extern AttrNumber		get_object_attnum_acl(Oid class_id);
-extern AclObjectKind	get_object_aclkind(Oid class_id);
-extern bool				get_object_namensp_unique(Oid class_id);
+extern bool is_objectclass_supported(Oid class_id);
+extern Oid	get_object_oid_index(Oid class_id);
+extern int	get_object_catcache_oid(Oid class_id);
+extern int	get_object_catcache_name(Oid class_id);
+extern AttrNumber get_object_attnum_name(Oid class_id);
+extern AttrNumber get_object_attnum_namespace(Oid class_id);
+extern AttrNumber get_object_attnum_owner(Oid class_id);
+extern AttrNumber get_object_attnum_acl(Oid class_id);
+extern AclObjectKind get_object_aclkind(Oid class_id);
+extern bool get_object_namensp_unique(Oid class_id);
 
-extern HeapTuple		get_catalog_object_by_oid(Relation catalog,
+extern HeapTuple get_catalog_object_by_oid(Relation catalog,
 						  Oid objectId);
 
 extern char *getObjectDescription(const ObjectAddress *object);

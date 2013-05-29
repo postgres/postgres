@@ -119,7 +119,7 @@ sub load_typedefs
 		$tdtry = "$tdtry/..";
 	}
 	die "cannot locate typedefs file \"$typedefs_file\"\n"
-		unless $typedefs_file && -f $typedefs_file;
+	  unless $typedefs_file && -f $typedefs_file;
 
 	open(my $typedefs_fh, '<', $typedefs_file)
 	  || die "cannot open typedefs file \"$typedefs_file\": $!\n";
@@ -144,7 +144,8 @@ sub process_exclude
 {
 	if ($excludes && @files)
 	{
-		open(my $eh, '<', $excludes) || die "cannot open exclude file \"$excludes\"\n";
+		open(my $eh, '<', $excludes)
+		  || die "cannot open exclude file \"$excludes\"\n";
 		while (my $line = <$eh>)
 		{
 			chomp $line;
@@ -205,7 +206,8 @@ sub pre_indent
 	# FILE: ../../../src/backend/rewrite/rewriteHandler.c
 	# Error@2259:
 	# Stuff missing from end of file
-	$source =~ s!(\}|[ \t])else[ \t]*(/\*)(.*\*/)[ \t]*$!$1else\n    $2 _PGMV$3!gm;
+	$source =~
+	  s!(\}|[ \t])else[ \t]*(/\*)(.*\*/)[ \t]*$!$1else\n    $2 _PGMV$3!gm;
 
 	# Indent multi-line after-'else' comment so BSD indent will move it
 	# properly. We already moved down single-line comments above.
@@ -442,20 +444,25 @@ sub run_build
 
 	chdir "$code_base/src/tools/pgindent";
 
-	my $typedefs_list_url = "http://buildfarm.postgresql.org/cgi-bin/typedefs.pl";
+	my $typedefs_list_url =
+	  "http://buildfarm.postgresql.org/cgi-bin/typedefs.pl";
 
 	my $rv = getstore($typedefs_list_url, "tmp_typedefs.list");
 
-	die "cannot fetch typedefs list from $typedefs_list_url\n" unless is_success($rv);
+	die "cannot fetch typedefs list from $typedefs_list_url\n"
+	  unless is_success($rv);
 
 	$ENV{PGTYPEDEFS} = abs_path('tmp_typedefs.list');
 
-	my $pg_bsd_indent_url = "ftp://ftp.postgresql.org/pub/dev/pg_bsd_indent-" . 
-				 $INDENT_VERSION . ".tar.gz";
+	my $pg_bsd_indent_url =
+	    "ftp://ftp.postgresql.org/pub/dev/pg_bsd_indent-"
+	  . $INDENT_VERSION
+	  . ".tar.gz";
 
 	$rv = getstore($pg_bsd_indent_url, "pg_bsd_indent.tgz");
 
-	die "cannot fetch BSD indent tarfile from $pg_bsd_indent_url\n" unless is_success($rv);
+	die "cannot fetch BSD indent tarfile from $pg_bsd_indent_url\n"
+	  unless is_success($rv);
 
 	# XXX add error checking here
 

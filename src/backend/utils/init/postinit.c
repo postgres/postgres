@@ -203,9 +203,9 @@ PerformAuthentication(Port *port)
 	{
 		/*
 		 * It is ok to continue if we fail to load the IDENT file, although it
-		 * means that you cannot log in using any of the authentication methods
-		 * that need a user name mapping. load_ident() already logged the
-		 * details of error to the log.
+		 * means that you cannot log in using any of the authentication
+		 * methods that need a user name mapping. load_ident() already logged
+		 * the details of error to the log.
 		 */
 	}
 #endif

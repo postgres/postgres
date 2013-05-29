@@ -13,7 +13,7 @@ extern char *pg_strdup(const char *in);
 extern void *pg_malloc(size_t size);
 extern void *pg_malloc0(size_t size);
 extern void *pg_realloc(void *pointer, size_t size);
-extern void  pg_free(void *pointer);
+extern void pg_free(void *pointer);
 
 #include "utils/palloc.h"
 

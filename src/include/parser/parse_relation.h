@@ -86,7 +86,7 @@ extern void addRTEtoQuery(ParseState *pstate, RangeTblEntry *rte,
 			  bool addToRelNameSpace, bool addToVarNameSpace);
 extern void errorMissingRTE(ParseState *pstate, RangeVar *relation) __attribute__((noreturn));
 extern void errorMissingColumn(ParseState *pstate,
-				   char *relname, char *colname, int location) __attribute__((noreturn));
+	   char *relname, char *colname, int location) __attribute__((noreturn));
 extern void expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 		  int location, bool include_dropped,
 		  List **colnames, List **colvars);

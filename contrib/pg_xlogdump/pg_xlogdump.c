@@ -73,7 +73,7 @@ fatal_error(const char *fmt,...)
 static void
 print_rmgr_list(void)
 {
-	int		i;
+	int			i;
 
 	for (i = 0; i < RM_MAX_ID + 1; i++)
 	{
@@ -88,7 +88,8 @@ print_rmgr_list(void)
 static bool
 verify_directory(const char *directory)
 {
-	DIR *dir = opendir(directory);
+	DIR		   *dir = opendir(directory);
+
 	if (dir == NULL)
 		return false;
 	closedir(dir);
@@ -113,7 +114,7 @@ split_path(const char *path, char **dir, char **fname)
 	if (sep != NULL)
 	{
 		*dir = pg_strdup(path);
-		(*dir)[(sep - path) + 1] = '\0';	/* no strndup */
+		(*dir)[(sep - path) + 1] = '\0';		/* no strndup */
 		*fname = pg_strdup(sep + 1);
 	}
 	/* local directory */
@@ -596,7 +597,7 @@ main(int argc, char **argv)
 		else if (!XLByteInSeg(private.startptr, segno))
 		{
 			fprintf(stderr,
-					"%s: start log position %X/%X is not inside file \"%s\"\n",
+				  "%s: start log position %X/%X is not inside file \"%s\"\n",
 					progname,
 					(uint32) (private.startptr >> 32),
 					(uint32) private.startptr,
@@ -672,9 +673,9 @@ main(int argc, char **argv)
 					(uint32) private.startptr);
 
 	/*
-	 * Display a message that we're skipping data if `from` wasn't a pointer to
-	 * the start of a record and also wasn't a pointer to the beginning of a
-	 * segment (e.g. we were used in file mode).
+	 * Display a message that we're skipping data if `from` wasn't a pointer
+	 * to the start of a record and also wasn't a pointer to the beginning of
+	 * a segment (e.g. we were used in file mode).
 	 */
 	if (first_record != private.startptr && (private.startptr % XLogSegSize) != 0)
 		printf("first record is after %X/%X, at %X/%X, skipping over %u bytes\n",

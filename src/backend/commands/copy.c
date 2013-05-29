@@ -126,7 +126,7 @@ typedef struct CopyStateData
 	List	   *force_notnull;	/* list of column names */
 	bool	   *force_notnull_flags;	/* per-column CSV FNN flags */
 	bool		convert_selectively;	/* do selective binary conversion? */
-	List	   *convert_select;	/* list of column names (can be NIL) */
+	List	   *convert_select; /* list of column names (can be NIL) */
 	bool	   *convert_select_flags;	/* per-column CSV/TEXT CS flags */
 
 	/* these are just for error messages, see CopyFromErrorCallback */
@@ -183,7 +183,7 @@ typedef struct CopyStateData
 	 */
 	StringInfoData line_buf;
 	bool		line_buf_converted;		/* converted to server encoding? */
-	bool		line_buf_valid;			/* contains the row being processed? */
+	bool		line_buf_valid; /* contains the row being processed? */
 
 	/*
 	 * Finally, raw_buf holds raw data read from the data source (file or
@@ -501,9 +501,9 @@ CopySendEndOfRow(CopyState cstate)
 						ClosePipeToProgram(cstate);
 
 						/*
-						 * If ClosePipeToProgram() didn't throw an error,
-						 * the program terminated normally, but closed the
-						 * pipe first. Restore errno, and throw an error.
+						 * If ClosePipeToProgram() didn't throw an error, the
+						 * program terminated normally, but closed the pipe
+						 * first. Restore errno, and throw an error.
 						 */
 						errno = EPIPE;
 					}
@@ -781,7 +781,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 	bool		is_from = stmt->is_from;
 	bool		pipe = (stmt->filename == NULL);
 	Relation	rel;
-	Oid         relid;
+	Oid			relid;
 
 	/* Disallow COPY to/from file or program except to superusers. */
 	if (!pipe && !superuser())
@@ -789,15 +789,15 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 		if (stmt->is_program)
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-			 errmsg("must be superuser to COPY to or from an external program"),
+					 errmsg("must be superuser to COPY to or from an external program"),
 					 errhint("Anyone can COPY to stdout or from stdin. "
-							 "psql's \\copy command also works for anyone.")));
+						   "psql's \\copy command also works for anyone.")));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must be superuser to COPY to or from a file"),
 					 errhint("Anyone can COPY to stdout or from stdin. "
-							 "psql's \\copy command also works for anyone.")));
+						   "psql's \\copy command also works for anyone.")));
 	}
 
 	if (stmt->relation)
@@ -1022,9 +1022,9 @@ ProcessCopyOptions(CopyState cstate,
 		else if (strcmp(defel->defname, "convert_selectively") == 0)
 		{
 			/*
-			 * Undocumented, not-accessible-from-SQL option: convert only
-			 * the named columns to binary form, storing the rest as NULLs.
-			 * It's allowed for the column list to be NIL.
+			 * Undocumented, not-accessible-from-SQL option: convert only the
+			 * named columns to binary form, storing the rest as NULLs. It's
+			 * allowed for the column list to be NIL.
 			 */
 			if (cstate->convert_selectively)
 				ereport(ERROR,
@@ -1403,7 +1403,7 @@ BeginCopy(bool is_from,
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 						 errmsg_internal("selected column \"%s\" not referenced by COPY",
-										 NameStr(tupDesc->attrs[attnum - 1]->attname))));
+							 NameStr(tupDesc->attrs[attnum - 1]->attname))));
 			cstate->convert_select_flags[attnum - 1] = true;
 		}
 	}
@@ -1436,7 +1436,7 @@ BeginCopy(bool is_from,
 static void
 ClosePipeToProgram(CopyState cstate)
 {
-	int pclose_rc;
+	int			pclose_rc;
 
 	Assert(cstate->is_program);
 
@@ -1482,7 +1482,7 @@ BeginCopyTo(Relation rel,
 			Node *query,
 			const char *queryString,
 			const char *filename,
-			bool  is_program,
+			bool is_program,
 			List *attnamelist,
 			List *options)
 {
@@ -1546,7 +1546,7 @@ BeginCopyTo(Relation rel,
 		}
 		else
 		{
-			mode_t		oumask;		/* Pre-existing umask value */
+			mode_t		oumask; /* Pre-existing umask value */
 			struct stat st;
 
 			/*
@@ -1556,7 +1556,7 @@ BeginCopyTo(Relation rel,
 			if (!is_absolute_path(filename))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_NAME),
-						 errmsg("relative path not allowed for COPY to file")));
+					  errmsg("relative path not allowed for COPY to file")));
 
 			oumask = umask(S_IWGRP | S_IWOTH);
 			cstate->copy_file = AllocateFile(cstate->filename, PG_BINARY_W);
@@ -1929,8 +1929,8 @@ CopyFromErrorCallback(void *arg)
 			 * Error is relevant to a particular line.
 			 *
 			 * If line_buf still contains the correct line, and it's already
-			 * transcoded, print it. If it's still in a foreign encoding,
-			 * it's quite likely that the error is precisely a failure to do
+			 * transcoded, print it. If it's still in a foreign encoding, it's
+			 * quite likely that the error is precisely a failure to do
 			 * encoding conversion (ie, bad data). We dare not try to convert
 			 * it, and at present there's no way to regurgitate it without
 			 * conversion. So we have to punt and just report the line number.
@@ -2096,23 +2096,22 @@ CopyFrom(CopyState cstate)
 	}
 
 	/*
-	 * Optimize if new relfilenode was created in this subxact or
-	 * one of its committed children and we won't see those rows later
-	 * as part of an earlier scan or command. This ensures that if this
-	 * subtransaction aborts then the frozen rows won't be visible
-	 * after xact cleanup. Note that the stronger test of exactly
-	 * which subtransaction created it is crucial for correctness
-	 * of this optimisation.
+	 * Optimize if new relfilenode was created in this subxact or one of its
+	 * committed children and we won't see those rows later as part of an
+	 * earlier scan or command. This ensures that if this subtransaction
+	 * aborts then the frozen rows won't be visible after xact cleanup. Note
+	 * that the stronger test of exactly which subtransaction created it is
+	 * crucial for correctness of this optimisation.
 	 */
 	if (cstate->freeze)
 	{
 		if (!ThereAreNoPriorRegisteredSnapshots() || !ThereAreNoReadyPortals())
 			ereport(ERROR,
 					(ERRCODE_INVALID_TRANSACTION_STATE,
-					errmsg("cannot perform FREEZE because of prior transaction activity")));
+					 errmsg("cannot perform FREEZE because of prior transaction activity")));
 
 		if (cstate->rel->rd_createSubid != GetCurrentSubTransactionId() &&
-			cstate->rel->rd_newRelfilenodeSubid != GetCurrentSubTransactionId())
+		 cstate->rel->rd_newRelfilenodeSubid != GetCurrentSubTransactionId())
 			ereport(ERROR,
 					(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE,
 					 errmsg("cannot perform FREEZE because the table was not created or truncated in the current subtransaction")));
@@ -2427,7 +2426,7 @@ CopyFromInsertBatch(CopyState cstate, EState *estate, CommandId mycid,
 CopyState
 BeginCopyFrom(Relation rel,
 			  const char *filename,
-			  bool	is_program,
+			  bool is_program,
 			  List *attnamelist,
 			  List *options)
 {

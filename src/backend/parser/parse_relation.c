@@ -285,7 +285,7 @@ isFutureCTE(ParseState *pstate, const char *refname)
  *
  * This is different from refnameRangeTblEntry in that it considers every
  * entry in the ParseState's rangetable(s), not only those that are currently
- * visible in the p_namespace list(s).  This behavior is invalid per the SQL
+ * visible in the p_namespace list(s).	This behavior is invalid per the SQL
  * spec, and it may give ambiguous results (there might be multiple equally
  * valid matches, but only one will be returned).  This must be used ONLY
  * as a heuristic in giving suitable error messages.  See errorMissingRTE.
@@ -639,7 +639,7 @@ colNameToVar(ParseState *pstate, char *colname, bool localonly,
  *
  * This is different from colNameToVar in that it considers every entry in
  * the ParseState's rangetable(s), not only those that are currently visible
- * in the p_namespace list(s).  This behavior is invalid per the SQL spec,
+ * in the p_namespace list(s).	This behavior is invalid per the SQL spec,
  * and it may give ambiguous results (there might be multiple equally valid
  * matches, but only one will be returned).  This must be used ONLY as a
  * heuristic in giving suitable error messages.  See errorMissingColumn.

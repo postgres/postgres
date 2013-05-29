@@ -22,7 +22,7 @@
 #define RULE_FIRES_ON_REPLICA	'R'
 #define RULE_DISABLED			'D'
 
-extern Oid DefineRule(RuleStmt *stmt, const char *queryString);
+extern Oid	DefineRule(RuleStmt *stmt, const char *queryString);
 
 extern Oid DefineQueryRewrite(char *rulename,
 				   Oid event_relid,

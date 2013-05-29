@@ -251,7 +251,7 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 						break;
 					default:
 						elog(ERROR, "unrecognized A_Expr kind: %d", a->kind);
-						result = NULL;		/* keep compiler quiet */
+						result = NULL;	/* keep compiler quiet */
 						break;
 				}
 				break;
@@ -1411,9 +1411,9 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 		return result;
 
 	/*
-	 * Check to see if the sublink is in an invalid place within the query.
-	 * We allow sublinks everywhere in SELECT/INSERT/UPDATE/DELETE, but
-	 * generally not in utility statements.
+	 * Check to see if the sublink is in an invalid place within the query. We
+	 * allow sublinks everywhere in SELECT/INSERT/UPDATE/DELETE, but generally
+	 * not in utility statements.
 	 */
 	err = NULL;
 	switch (pstate->p_expr_kind)
@@ -2031,7 +2031,7 @@ transformXmlSerialize(ParseState *pstate, XmlSerialize *xs)
 	xexpr = makeNode(XmlExpr);
 	xexpr->op = IS_XMLSERIALIZE;
 	xexpr->args = list_make1(coerce_to_specific_type(pstate,
-										transformExprRecurse(pstate, xs->expr),
+									  transformExprRecurse(pstate, xs->expr),
 													 XMLOID,
 													 "XMLSERIALIZE"));
 

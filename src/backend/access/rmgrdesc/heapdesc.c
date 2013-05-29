@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * heapdesc.c
- *    rmgr descriptor routines for access/heap/heapam.c
+ *	  rmgr descriptor routines for access/heap/heapam.c
  *
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    src/backend/access/rmgrdesc/heapdesc.c
+ *	  src/backend/access/rmgrdesc/heapdesc.c
  *
  *-------------------------------------------------------------------------
  */

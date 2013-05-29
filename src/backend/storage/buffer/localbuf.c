@@ -196,8 +196,8 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 	 */
 	if (bufHdr->flags & BM_DIRTY)
 	{
-		SMgrRelation	oreln;
-		Page			localpage = (char *) LocalBufHdrGetBlock(bufHdr);
+		SMgrRelation oreln;
+		Page		localpage = (char *) LocalBufHdrGetBlock(bufHdr);
 
 		/* Find smgr relation for buffer */
 		oreln = smgropen(bufHdr->tag.rnode, MyBackendId);
@@ -509,7 +509,7 @@ AtEOXact_LocalBuffers(bool isCommit)
 		{
 			if (LocalRefCount[i] != 0)
 			{
-				Buffer	b = -i - 1;
+				Buffer		b = -i - 1;
 
 				PrintBufferLeakWarning(b);
 				RefCountErrors++;
@@ -541,7 +541,7 @@ AtProcExit_LocalBuffers(void)
 		{
 			if (LocalRefCount[i] != 0)
 			{
-				Buffer	b = -i - 1;
+				Buffer		b = -i - 1;
 
 				PrintBufferLeakWarning(b);
 				RefCountErrors++;

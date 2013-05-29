@@ -1,14 +1,14 @@
 /*--------------------------------------------------------------------
  * bgworker.h
- * 		POSTGRES pluggable background workers interface
+ *		POSTGRES pluggable background workers interface
  *
  * A background worker is a process able to run arbitrary, user-supplied code,
  * including normal transactions.
  *
  * Any external module loaded via shared_preload_libraries can register a
- * worker.  Then, at the appropriate time, the worker process is forked from
+ * worker.	Then, at the appropriate time, the worker process is forked from
  * the postmaster and runs the user-supplied "main" function.  This code may
- * connect to a database and run transactions.  Once started, it stays active
+ * connect to a database and run transactions.	Once started, it stays active
  * until shutdown or crash.  The process should sleep during periods of
  * inactivity.
  *
@@ -28,7 +28,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- * 		src/include/postmaster/bgworker.h
+ *		src/include/postmaster/bgworker.h
  *--------------------------------------------------------------------
  */
 #ifndef BGWORKER_H
@@ -52,8 +52,8 @@
 #define BGWORKER_BACKEND_DATABASE_CONNECTION		0x0002
 
 
-typedef void (*bgworker_main_type)(void *main_arg);
-typedef void (*bgworker_sighdlr_type)(SIGNAL_ARGS);
+typedef void (*bgworker_main_type) (void *main_arg);
+typedef void (*bgworker_sighdlr_type) (SIGNAL_ARGS);
 
 /*
  * Points in time at which a bgworker can request to be started
@@ -71,10 +71,10 @@ typedef enum
 typedef struct BackgroundWorker
 {
 	char	   *bgw_name;
-	int         bgw_flags;
+	int			bgw_flags;
 	BgWorkerStartTime bgw_start_time;
 	int			bgw_restart_time;		/* in seconds, or BGW_NEVER_RESTART */
-	bgworker_main_type	bgw_main;
+	bgworker_main_type bgw_main;
 	void	   *bgw_main_arg;
 	bgworker_sighdlr_type bgw_sighup;
 	bgworker_sighdlr_type bgw_sigterm;
@@ -101,4 +101,4 @@ extern void BackgroundWorkerInitializeConnection(char *dbname, char *username);
 extern void BackgroundWorkerBlockSignals(void);
 extern void BackgroundWorkerUnblockSignals(void);
 
-#endif /* BGWORKER_H */
+#endif   /* BGWORKER_H */

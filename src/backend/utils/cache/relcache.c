@@ -2313,7 +2313,7 @@ AtEOXact_RelationCache(bool isCommit)
 	 * For simplicity, eoxact_list[] entries are not deleted till end of
 	 * top-level transaction, even though we could remove them at
 	 * subtransaction end in some cases, or remove relations from the list if
-	 * they are cleared for other reasons.  Therefore we should expect the
+	 * they are cleared for other reasons.	Therefore we should expect the
 	 * case that list entries are not found in the hashtable; if not, there's
 	 * nothing to do for them.
 	 */
@@ -2354,66 +2354,66 @@ AtEOXact_RelationCache(bool isCommit)
 static void
 AtEOXact_cleanup(Relation relation, bool isCommit)
 {
-		/*
-		 * The relcache entry's ref count should be back to its normal
-		 * not-in-a-transaction state: 0 unless it's nailed in cache.
-		 *
-		 * In bootstrap mode, this is NOT true, so don't check it --- the
-		 * bootstrap code expects relations to stay open across start/commit
-		 * transaction calls.  (That seems bogus, but it's not worth fixing.)
-		 *
-		 * Note: ideally this check would be applied to every relcache entry,
-		 * not just those that have eoxact work to do.	But it's not worth
-		 * forcing a scan of the whole relcache just for this.	(Moreover,
-		 * doing so would mean that assert-enabled testing never tests the
-		 * hash_search code path above, which seems a bad idea.)
-		 */
+	/*
+	 * The relcache entry's ref count should be back to its normal
+	 * not-in-a-transaction state: 0 unless it's nailed in cache.
+	 *
+	 * In bootstrap mode, this is NOT true, so don't check it --- the
+	 * bootstrap code expects relations to stay open across start/commit
+	 * transaction calls.  (That seems bogus, but it's not worth fixing.)
+	 *
+	 * Note: ideally this check would be applied to every relcache entry, not
+	 * just those that have eoxact work to do.	But it's not worth forcing a
+	 * scan of the whole relcache just for this.  (Moreover, doing so would
+	 * mean that assert-enabled testing never tests the hash_search code path
+	 * above, which seems a bad idea.)
+	 */
 #ifdef USE_ASSERT_CHECKING
-		if (!IsBootstrapProcessingMode())
-		{
-			int			expected_refcnt;
+	if (!IsBootstrapProcessingMode())
+	{
+		int			expected_refcnt;
 
-			expected_refcnt = relation->rd_isnailed ? 1 : 0;
-			Assert(relation->rd_refcnt == expected_refcnt);
-		}
+		expected_refcnt = relation->rd_isnailed ? 1 : 0;
+		Assert(relation->rd_refcnt == expected_refcnt);
+	}
 #endif
 
-		/*
-		 * Is it a relation created in the current transaction?
-		 *
-		 * During commit, reset the flag to zero, since we are now out of the
-		 * creating transaction.  During abort, simply delete the relcache
-		 * entry --- it isn't interesting any longer.  (NOTE: if we have
-		 * forgotten the new-ness of a new relation due to a forced cache
-		 * flush, the entry will get deleted anyway by shared-cache-inval
-		 * processing of the aborted pg_class insertion.)
-		 */
-		if (relation->rd_createSubid != InvalidSubTransactionId)
+	/*
+	 * Is it a relation created in the current transaction?
+	 *
+	 * During commit, reset the flag to zero, since we are now out of the
+	 * creating transaction.  During abort, simply delete the relcache entry
+	 * --- it isn't interesting any longer.  (NOTE: if we have forgotten the
+	 * new-ness of a new relation due to a forced cache flush, the entry will
+	 * get deleted anyway by shared-cache-inval processing of the aborted
+	 * pg_class insertion.)
+	 */
+	if (relation->rd_createSubid != InvalidSubTransactionId)
+	{
+		if (isCommit)
+			relation->rd_createSubid = InvalidSubTransactionId;
+		else
 		{
-			if (isCommit)
-				relation->rd_createSubid = InvalidSubTransactionId;
-			else
-			{
-				RelationClearRelation(relation, false);
-				return;
-			}
+			RelationClearRelation(relation, false);
+			return;
 		}
+	}
 
-		/*
-		 * Likewise, reset the hint about the relfilenode being new.
-		 */
-		relation->rd_newRelfilenodeSubid = InvalidSubTransactionId;
+	/*
+	 * Likewise, reset the hint about the relfilenode being new.
+	 */
+	relation->rd_newRelfilenodeSubid = InvalidSubTransactionId;
 
-		/*
-		 * Flush any temporary index list.
-		 */
-		if (relation->rd_indexvalid == 2)
-		{
-			list_free(relation->rd_indexlist);
-			relation->rd_indexlist = NIL;
-			relation->rd_oidindex = InvalidOid;
-			relation->rd_indexvalid = 0;
-		}
+	/*
+	 * Flush any temporary index list.
+	 */
+	if (relation->rd_indexvalid == 2)
+	{
+		list_free(relation->rd_indexlist);
+		relation->rd_indexlist = NIL;
+		relation->rd_oidindex = InvalidOid;
+		relation->rd_indexvalid = 0;
+	}
 }
 
 /*
@@ -2474,45 +2474,44 @@ static void
 AtEOSubXact_cleanup(Relation relation, bool isCommit,
 					SubTransactionId mySubid, SubTransactionId parentSubid)
 {
-		/*
-		 * Is it a relation created in the current subtransaction?
-		 *
-		 * During subcommit, mark it as belonging to the parent, instead.
-		 * During subabort, simply delete the relcache entry.
-		 */
-		if (relation->rd_createSubid == mySubid)
+	/*
+	 * Is it a relation created in the current subtransaction?
+	 *
+	 * During subcommit, mark it as belonging to the parent, instead. During
+	 * subabort, simply delete the relcache entry.
+	 */
+	if (relation->rd_createSubid == mySubid)
+	{
+		if (isCommit)
+			relation->rd_createSubid = parentSubid;
+		else
 		{
-			if (isCommit)
-				relation->rd_createSubid = parentSubid;
-			else
-			{
-				RelationClearRelation(relation, false);
-				return;
-			}
+			RelationClearRelation(relation, false);
+			return;
 		}
+	}
 
-		/*
-		 * Likewise, update or drop any new-relfilenode-in-subtransaction
-		 * hint.
-		 */
-		if (relation->rd_newRelfilenodeSubid == mySubid)
-		{
-			if (isCommit)
-				relation->rd_newRelfilenodeSubid = parentSubid;
-			else
-				relation->rd_newRelfilenodeSubid = InvalidSubTransactionId;
-		}
+	/*
+	 * Likewise, update or drop any new-relfilenode-in-subtransaction hint.
+	 */
+	if (relation->rd_newRelfilenodeSubid == mySubid)
+	{
+		if (isCommit)
+			relation->rd_newRelfilenodeSubid = parentSubid;
+		else
+			relation->rd_newRelfilenodeSubid = InvalidSubTransactionId;
+	}
 
-		/*
-		 * Flush any temporary index list.
-		 */
-		if (relation->rd_indexvalid == 2)
-		{
-			list_free(relation->rd_indexlist);
-			relation->rd_indexlist = NIL;
-			relation->rd_oidindex = InvalidOid;
-			relation->rd_indexvalid = 0;
-		}
+	/*
+	 * Flush any temporary index list.
+	 */
+	if (relation->rd_indexvalid == 2)
+	{
+		list_free(relation->rd_indexlist);
+		relation->rd_indexlist = NIL;
+		relation->rd_oidindex = InvalidOid;
+		relation->rd_indexvalid = 0;
+	}
 }
 
 
@@ -2699,8 +2698,8 @@ RelationBuildLocalRelation(const char *relname,
 	RelationCacheInsert(rel);
 
 	/*
-	 * Flag relation as needing eoxact cleanup (to clear rd_createSubid).
-	 * We can't do this before storing relid in it.
+	 * Flag relation as needing eoxact cleanup (to clear rd_createSubid). We
+	 * can't do this before storing relid in it.
 	 */
 	EOXactListAdd(rel);
 
@@ -3847,8 +3846,8 @@ RelationGetIndexAttrBitmap(Relation relation, bool keyAttrs)
 
 		/* Can this index be referenced by a foreign key? */
 		isKey = indexInfo->ii_Unique &&
-				indexInfo->ii_Expressions == NIL &&
-				indexInfo->ii_Predicate == NIL;
+			indexInfo->ii_Expressions == NIL &&
+			indexInfo->ii_Predicate == NIL;
 
 		/* Collect simple attribute references */
 		for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
@@ -3861,7 +3860,7 @@ RelationGetIndexAttrBitmap(Relation relation, bool keyAttrs)
 							   attrnum - FirstLowInvalidHeapAttributeNumber);
 				if (isKey)
 					uindexattrs = bms_add_member(uindexattrs,
-												 attrnum - FirstLowInvalidHeapAttributeNumber);
+							   attrnum - FirstLowInvalidHeapAttributeNumber);
 			}
 		}
 
@@ -4030,7 +4029,7 @@ errtable(Relation rel)
 					   get_namespace_name(RelationGetNamespace(rel)));
 	err_generic_string(PG_DIAG_TABLE_NAME, RelationGetRelationName(rel));
 
-	return 0;			/* return value does not matter */
+	return 0;					/* return value does not matter */
 }
 
 /*
@@ -4061,7 +4060,7 @@ errtablecol(Relation rel, int attnum)
  * given directly rather than extracted from the relation's catalog data.
  *
  * Don't use this directly unless errtablecol() is inconvenient for some
- * reason.  This might possibly be needed during intermediate states in ALTER
+ * reason.	This might possibly be needed during intermediate states in ALTER
  * TABLE, for instance.
  */
 int
@@ -4070,7 +4069,7 @@ errtablecolname(Relation rel, const char *colname)
 	errtable(rel);
 	err_generic_string(PG_DIAG_COLUMN_NAME, colname);
 
-	return 0;			/* return value does not matter */
+	return 0;					/* return value does not matter */
 }
 
 /*
@@ -4083,7 +4082,7 @@ errtableconstraint(Relation rel, const char *conname)
 	errtable(rel);
 	err_generic_string(PG_DIAG_CONSTRAINT_NAME, conname);
 
-	return 0;			/* return value does not matter */
+	return 0;					/* return value does not matter */
 }
 
 

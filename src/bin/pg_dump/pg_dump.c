@@ -675,8 +675,8 @@ main(int argc, char **argv)
 	if (numWorkers > 1 && fout->remoteVersion < 90200
 		&& !no_synchronized_snapshots)
 		exit_horribly(NULL,
-					  "Synchronized snapshots are not supported by this server version.\n"
-					  "Run with --no-synchronized-snapshots instead if you do not need\n"
+		 "Synchronized snapshots are not supported by this server version.\n"
+		  "Run with --no-synchronized-snapshots instead if you do not need\n"
 					  "synchronized snapshots.\n");
 
 	/* Find the last built-in OID, if needed */
@@ -13098,8 +13098,8 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			appendPQExpBuffer(q, "\nOPTIONS (\n    %s\n)", ftoptions);
 
 		/*
-		 * For materialized views, create the AS clause just like a view.
-		 * At this point, we always mark the view as not populated.
+		 * For materialized views, create the AS clause just like a view. At
+		 * this point, we always mark the view as not populated.
 		 */
 		if (tbinfo->relkind == RELKIND_MATVIEW)
 		{
@@ -14663,7 +14663,7 @@ getExtensionMembership(Archive *fout, ExtensionInfo extinfo[],
 					/* check table explicitly requested */
 					if (table_include_oids.head != NULL &&
 						simple_oid_list_member(&table_include_oids,
-												configtbloid))
+											   configtbloid))
 						dumpobj = true;
 
 					/* check table's schema explicitly requested */
@@ -14674,19 +14674,19 @@ getExtensionMembership(Archive *fout, ExtensionInfo extinfo[],
 				/* check table excluded by an exclusion switch */
 				if (table_exclude_oids.head != NULL &&
 					simple_oid_list_member(&table_exclude_oids,
-											configtbloid))
+										   configtbloid))
 					dumpobj = false;
 
 				/* check schema excluded by an exclusion switch */
 				if (simple_oid_list_member(&schema_exclude_oids,
-					configtbl->dobj.namespace->dobj.catId.oid))
+								  configtbl->dobj.namespace->dobj.catId.oid))
 					dumpobj = false;
 
 				if (dumpobj)
 				{
 					/*
-					 * Note: config tables are dumped without OIDs regardless of
-					 * the --oids setting.	This is because row filtering
+					 * Note: config tables are dumped without OIDs regardless
+					 * of the --oids setting.  This is because row filtering
 					 * conditions aren't compatible with dumping OIDs.
 					 */
 					makeTableDataInfo(configtbl, false);

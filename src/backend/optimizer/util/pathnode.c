@@ -207,12 +207,12 @@ compare_path_costs_fuzzily(Path *path1, Path *path2, double fuzz_factor,
  *
  * cheapest_total_path is normally the cheapest-total-cost unparameterized
  * path; but if there are no unparameterized paths, we assign it to be the
- * best (cheapest least-parameterized) parameterized path.  However, only
+ * best (cheapest least-parameterized) parameterized path.	However, only
  * unparameterized paths are considered candidates for cheapest_startup_path,
  * so that will be NULL if there are no unparameterized paths.
  *
  * The cheapest_parameterized_paths list collects all parameterized paths
- * that have survived the add_path() tournament for this relation.  (Since
+ * that have survived the add_path() tournament for this relation.	(Since
  * add_path ignores pathkeys and startup cost for a parameterized path,
  * these will be paths that have best total cost or best row count for their
  * parameterization.)  cheapest_parameterized_paths always includes the
@@ -282,6 +282,7 @@ set_cheapest(RelOptInfo *parent_rel)
 						/* old path is less-parameterized, keep it */
 						break;
 					case BMS_DIFFERENT:
+
 						/*
 						 * This means that neither path has the least possible
 						 * parameterization for the rel.  We'll sit on the old
@@ -328,8 +329,8 @@ set_cheapest(RelOptInfo *parent_rel)
 		parameterized_paths = lcons(cheapest_total_path, parameterized_paths);
 
 	/*
-	 * If there is no unparameterized path, use the best parameterized path
-	 * as cheapest_total_path (but not as cheapest_startup_path).
+	 * If there is no unparameterized path, use the best parameterized path as
+	 * cheapest_total_path (but not as cheapest_startup_path).
 	 */
 	if (cheapest_total_path == NULL)
 		cheapest_total_path = best_param_path;
@@ -501,7 +502,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 									accept_new = false; /* old dominates new */
 								else if (compare_path_costs_fuzzily(new_path,
 																	old_path,
-																	1.0000000001,
+																1.0000000001,
 																	parent_rel->consider_startup) == COSTS_BETTER1)
 									remove_old = true;	/* new dominates old */
 								else
@@ -1022,7 +1023,7 @@ create_result_path(List *quals)
 
 	pathnode->path.pathtype = T_Result;
 	pathnode->path.parent = NULL;
-	pathnode->path.param_info = NULL;		/* there are no other rels... */
+	pathnode->path.param_info = NULL;	/* there are no other rels... */
 	pathnode->path.pathkeys = NIL;
 	pathnode->quals = quals;
 

@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * clogdesc.c
- *    rmgr descriptor routines for access/transam/clog.c
+ *	  rmgr descriptor routines for access/transam/clog.c
  *
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    src/backend/access/rmgrdesc/clogdesc.c
+ *	  src/backend/access/rmgrdesc/clogdesc.c
  *
  *-------------------------------------------------------------------------
  */

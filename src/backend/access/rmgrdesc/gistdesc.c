@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * gistdesc.c
- *    rmgr descriptor routines for access/gist/gistxlog.c
+ *	  rmgr descriptor routines for access/gist/gistxlog.c
  *
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    src/backend/access/rmgrdesc/gistdesc.c
+ *	  src/backend/access/rmgrdesc/gistdesc.c
  *
  *-------------------------------------------------------------------------
  */

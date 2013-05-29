@@ -505,13 +505,12 @@ smgr_redo(XLogRecPtr lsn, XLogRecord *record)
 		smgrcreate(reln, MAIN_FORKNUM, true);
 
 		/*
-		 * Before we perform the truncation, update minimum recovery point
-		 * to cover this WAL record. Once the relation is truncated, there's
-		 * no going back. The buffer manager enforces the WAL-first rule
-		 * for normal updates to relation files, so that the minimum recovery
-		 * point is always updated before the corresponding change in the
-		 * data file is flushed to disk. We have to do the same manually
-		 * here.
+		 * Before we perform the truncation, update minimum recovery point to
+		 * cover this WAL record. Once the relation is truncated, there's no
+		 * going back. The buffer manager enforces the WAL-first rule for
+		 * normal updates to relation files, so that the minimum recovery
+		 * point is always updated before the corresponding change in the data
+		 * file is flushed to disk. We have to do the same manually here.
 		 *
 		 * Doing this before the truncation means that if the truncation fails
 		 * for some reason, you cannot start up the system even after restart,

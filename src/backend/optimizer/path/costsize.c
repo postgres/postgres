@@ -69,7 +69,7 @@
 #include "postgres.h"
 
 #ifdef _MSC_VER
-#include <float.h> /* for _isnan */
+#include <float.h>				/* for _isnan */
 #endif
 #include <math.h>
 
@@ -3745,7 +3745,7 @@ set_subquery_size_estimates(PlannerInfo *root, RelOptInfo *rel)
 		 * The subquery could be an expansion of a view that's had columns
 		 * added to it since the current query was parsed, so that there are
 		 * non-junk tlist columns in it that don't correspond to any column
-		 * visible at our query level.  Ignore such columns.
+		 * visible at our query level.	Ignore such columns.
 		 */
 		if (te->resno < rel->min_attr || te->resno > rel->max_attr)
 			continue;

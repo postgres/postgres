@@ -62,8 +62,8 @@ typedef struct ResourceOwnerData
 	int			maxbuffers;		/* currently allocated array size */
 
 	/* We can remember up to MAX_RESOWNER_LOCKS references to local locks. */
-	int			nlocks;		/* number of owned locks */
-	LOCALLOCK  *locks[MAX_RESOWNER_LOCKS];	/* list of owned locks */
+	int			nlocks;			/* number of owned locks */
+	LOCALLOCK  *locks[MAX_RESOWNER_LOCKS];		/* list of owned locks */
 
 	/* We have built-in support for remembering catcache references */
 	int			ncatrefs;		/* number of owned catcache pins */
@@ -641,10 +641,10 @@ ResourceOwnerForgetBuffer(ResourceOwner owner, Buffer buffer)
  * the entry.
  */
 void
-ResourceOwnerRememberLock(ResourceOwner owner, LOCALLOCK * locallock)
+ResourceOwnerRememberLock(ResourceOwner owner, LOCALLOCK *locallock)
 {
 	if (owner->nlocks > MAX_RESOWNER_LOCKS)
-		return;		/* we have already overflowed */
+		return;					/* we have already overflowed */
 
 	if (owner->nlocks < MAX_RESOWNER_LOCKS)
 		owner->locks[owner->nlocks] = locallock;
@@ -664,7 +664,7 @@ ResourceOwnerForgetLock(ResourceOwner owner, LOCALLOCK *locallock)
 	int			i;
 
 	if (owner->nlocks > MAX_RESOWNER_LOCKS)
-		return;		/* we have overflowed */
+		return;					/* we have overflowed */
 
 	Assert(owner->nlocks > 0);
 	for (i = owner->nlocks - 1; i >= 0; i--)

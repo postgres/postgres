@@ -1045,7 +1045,6 @@ suff_search(char *str, KeySuffix *suf, int type)
 static void
 NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 {
-
 	if (n->type != NODE_TYPE_ACTION)
 		return;
 
@@ -2535,7 +2534,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					strcpy(s, str_toupper_z(localized_full_months[tm->tm_mon - 1], collid));
 				else
 					sprintf(s, "%*s", S_FM(n->suffix) ? 0 : -9,
-						 asc_toupper_z(months_full[tm->tm_mon - 1]));
+							asc_toupper_z(months_full[tm->tm_mon - 1]));
 				s += strlen(s);
 				break;
 			case DCH_Month:
@@ -3561,17 +3560,17 @@ do_to_timestamp(text *date_txt, text *fmt,
 			}
 			else
 				/* find century year for dates ending in "00" */
-				tm->tm_year = tmfc.cc * 100 + ((tmfc.cc >= 0) ? 0 : 1);			
+				tm->tm_year = tmfc.cc * 100 + ((tmfc.cc >= 0) ? 0 : 1);
 		}
 		else
-		/* If a 4-digit year is provided, we use that and ignore CC. */
+			/* If a 4-digit year is provided, we use that and ignore CC. */
 		{
 			tm->tm_year = tmfc.year;
 			if (tmfc.bc && tm->tm_year > 0)
 				tm->tm_year = -(tm->tm_year - 1);
 		}
 	}
-	else if (tmfc.cc)	/* use first year of century */
+	else if (tmfc.cc)			/* use first year of century */
 	{
 		if (tmfc.bc)
 			tmfc.cc = -tmfc.cc;
@@ -3606,7 +3605,7 @@ do_to_timestamp(text *date_txt, text *fmt,
 	if (tmfc.w)
 		tmfc.dd = (tmfc.w - 1) * 7 + 1;
 	if (tmfc.d)
-		tm->tm_wday = tmfc.d - 1;	/* convert to native numbering */
+		tm->tm_wday = tmfc.d - 1;		/* convert to native numbering */
 	if (tmfc.dd)
 		tm->tm_mday = tmfc.dd;
 	if (tmfc.ddd)

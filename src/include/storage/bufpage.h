@@ -96,7 +96,7 @@ typedef struct
 #define PageXLogRecPtrGet(val) \
 	((uint64) (val).xlogid << 32 | (val).xrecoff)
 #define PageXLogRecPtrSet(ptr, lsn) \
-	((ptr).xlogid = (uint32) ((lsn) >> 32),	(ptr).xrecoff = (uint32) (lsn))
+	((ptr).xlogid = (uint32) ((lsn) >> 32), (ptr).xrecoff = (uint32) (lsn))
 
 /*
  * disk page organization
@@ -104,7 +104,7 @@ typedef struct
  * space management information generic to any page
  *
  *		pd_lsn		- identifies xlog record for last change to this page.
- *		pd_checksum	- page checksum, if set.
+ *		pd_checksum - page checksum, if set.
  *		pd_flags	- flag bits.
  *		pd_lower	- offset to start of free space.
  *		pd_upper	- offset to end of free space.
@@ -147,7 +147,7 @@ typedef struct
 typedef struct PageHeaderData
 {
 	/* XXX LSN is member of *any* block, not only page-organized ones */
-	PageXLogRecPtr	pd_lsn;		/* LSN: next byte after last byte of xlog
+	PageXLogRecPtr pd_lsn;		/* LSN: next byte after last byte of xlog
 								 * record for last change to this page */
 	uint16		pd_checksum;	/* checksum */
 	uint16		pd_flags;		/* flag bits, see below */

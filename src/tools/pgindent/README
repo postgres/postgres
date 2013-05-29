@@ -29,18 +29,7 @@ This can format all PostgreSQL *.c and *.h files, but excludes *.y, and
 7) Remove any files that generate errors and restore their original
    versions.
 
-8) Do a full test build:
-
-	> run configure
-	# stop is only necessary if it's going to install in a location with an
-	# already running server
-	pg_ctl stop
-	gmake -C src install
-	gmake -C contrib install
-	pg_ctl start
-	gmake installcheck-world
-
-9) Indent the Perl code:
+8) Indent the Perl code:
 
 	(
 		find . -name \*.pl -o -name \*.pm
@@ -51,6 +40,19 @@ This can format all PostgreSQL *.c and *.h files, but excludes *.y, and
 	) |
 	sort -u |
 	xargs perltidy --profile=src/tools/pgindent/perltidyrc
+
+9) Do a full test build:
+
+	> run configure
+	# stop is only necessary if it's going to install in a location with an
+	# already running server
+	pg_ctl stop
+	gmake -C src install
+	gmake -C contrib install
+	pg_ctl start
+	gmake installcheck-world
+
+10) Remove Perl backup files after testing
 
 ---------------------------------------------------------------------------
 

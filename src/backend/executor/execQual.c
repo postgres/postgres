@@ -4278,7 +4278,7 @@ ExecEvalCurrentOfExpr(ExprState *exprstate, ExprContext *econtext,
 {
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("WHERE CURRENT OF is not supported for this table type")));
+		   errmsg("WHERE CURRENT OF is not supported for this table type")));
 	return 0;					/* keep compiler quiet */
 }
 

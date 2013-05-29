@@ -472,10 +472,10 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	pg_free(lc_messages);
 
 	/*
-	 * Before 9.3, pg_resetxlog reported the xlogid and segno of the first
-	 * log file after reset as separate lines. Starting with 9.3, it reports
-	 * the WAL file name. If the old cluster is older than 9.3, we construct
-	 * the WAL file name from the xlogid and segno.
+	 * Before 9.3, pg_resetxlog reported the xlogid and segno of the first log
+	 * file after reset as separate lines. Starting with 9.3, it reports the
+	 * WAL file name. If the old cluster is older than 9.3, we construct the
+	 * WAL file name from the xlogid and segno.
 	 */
 	if (GET_MAJOR_VERSION(cluster->major_version) <= 902)
 	{
@@ -499,8 +499,8 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 		!got_date_is_int || !got_float8_pass_by_value || !got_data_checksum_version)
 	{
 		pg_log(PG_REPORT,
-			"The %s cluster lacks some required control information:\n",
-			CLUSTER_NAME(cluster));
+			   "The %s cluster lacks some required control information:\n",
+			   CLUSTER_NAME(cluster));
 
 		if (!got_xid)
 			pg_log(PG_REPORT, "  checkpoint next XID\n");
@@ -576,7 +576,7 @@ check_control_data(ControlData *oldctrl,
 {
 	if (oldctrl->align == 0 || oldctrl->align != newctrl->align)
 		pg_log(PG_FATAL,
-			   "old and new pg_controldata alignments are invalid or do not match\n"
+		"old and new pg_controldata alignments are invalid or do not match\n"
 			   "Likely one cluster is a 32-bit install, the other 64-bit\n");
 
 	if (oldctrl->blocksz == 0 || oldctrl->blocksz != newctrl->blocksz)
@@ -621,7 +621,10 @@ check_control_data(ControlData *oldctrl,
 			   "options.\n");
 	}
 
-	/* We might eventually allow upgrades from checksum to no-checksum clusters. */
+	/*
+	 * We might eventually allow upgrades from checksum to no-checksum
+	 * clusters.
+	 */
 	if (oldctrl->data_checksum_version != newctrl->data_checksum_version)
 	{
 		pg_log(PG_FATAL,

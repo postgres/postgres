@@ -1042,9 +1042,9 @@ hash_update_hash_key(HTAB *hashp,
 			 hashp->tabname);
 
 	/*
-	 * Lookup the existing element using its saved hash value.  We need to
-	 * do this to be able to unlink it from its hash chain, but as a side
-	 * benefit we can verify the validity of the passed existingEntry pointer.
+	 * Lookup the existing element using its saved hash value.	We need to do
+	 * this to be able to unlink it from its hash chain, but as a side benefit
+	 * we can verify the validity of the passed existingEntry pointer.
 	 */
 	bucket = calc_bucket(hctl, existingElement->hashvalue);
 
@@ -1074,8 +1074,8 @@ hash_update_hash_key(HTAB *hashp,
 	oldPrevPtr = prevBucketPtr;
 
 	/*
-	 * Now perform the equivalent of a HASH_ENTER operation to locate the
-	 * hash chain we want to put the entry into.
+	 * Now perform the equivalent of a HASH_ENTER operation to locate the hash
+	 * chain we want to put the entry into.
 	 */
 	newhashvalue = hashp->hash(newKeyPtr, hashp->keysize);
 
@@ -1119,7 +1119,7 @@ hash_update_hash_key(HTAB *hashp,
 	/*
 	 * If old and new hash values belong to the same bucket, we need not
 	 * change any chain links, and indeed should not since this simplistic
-	 * update will corrupt the list if currBucket is the last element.  (We
+	 * update will corrupt the list if currBucket is the last element.	(We
 	 * cannot fall out earlier, however, since we need to scan the bucket to
 	 * check for duplicate keys.)
 	 */

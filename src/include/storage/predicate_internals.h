@@ -486,5 +486,4 @@ typedef struct TwoPhasePredicateRecord
  */
 extern PredicateLockData *GetPredicateLockStatusData(void);
 
-
 #endif   /* PREDICATE_INTERNALS_H */

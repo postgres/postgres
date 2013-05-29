@@ -3812,7 +3812,7 @@ get_next_work_item(ArchiveHandle *AH, TocEntry *ready_list,
  * our work is finished, the master process will assign us a new work item.
  */
 int
-parallel_restore(ParallelArgs * args)
+parallel_restore(ParallelArgs *args)
 {
 	ArchiveHandle *AH = args->AH;
 	TocEntry   *te = args->te;

@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * relmapdesc.c
- *    rmgr descriptor routines for utils/cache/relmapper.c
+ *	  rmgr descriptor routines for utils/cache/relmapper.c
  *
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    src/backend/access/rmgrdesc/relmapdesc.c
+ *	  src/backend/access/rmgrdesc/relmapdesc.c
  *
  *-------------------------------------------------------------------------
  */

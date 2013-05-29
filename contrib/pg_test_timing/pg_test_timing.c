@@ -18,7 +18,7 @@ static uint64 test_timing(int32);
 static void output(uint64 loop_count);
 
 /* record duration in powers of 2 microseconds */
-int64 histogram[32];
+int64		histogram[32];
 
 int
 main(int argc, char *argv[])
@@ -110,8 +110,11 @@ test_timing(int32 duration)
 	uint64		total_time;
 	int64		time_elapsed = 0;
 	uint64		loop_count = 0;
-	uint64		prev, cur;
-	instr_time	start_time, end_time, temp;
+	uint64		prev,
+				cur;
+	instr_time	start_time,
+				end_time,
+				temp;
 
 	total_time = duration > 0 ? duration * 1000000 : 0;
 
@@ -120,7 +123,8 @@ test_timing(int32 duration)
 
 	while (time_elapsed < total_time)
 	{
-		int32		diff, bits = 0;
+		int32		diff,
+					bits = 0;
 
 		prev = cur;
 		INSTR_TIME_SET_CURRENT(temp);
@@ -163,12 +167,13 @@ test_timing(int32 duration)
 static void
 output(uint64 loop_count)
 {
-	int64		max_bit = 31, i;
+	int64		max_bit = 31,
+				i;
 
 	/* find highest bit value */
 	while (max_bit > 0 && histogram[max_bit] == 0)
 		max_bit--;
-		
+
 	printf("Histogram of timing durations:\n");
 	printf("%6s   %10s %10s\n", "< usec", "% of total", "count");
 
@@ -179,6 +184,6 @@ output(uint64 loop_count)
 		/* lame hack to work around INT64_FORMAT deficiencies */
 		snprintf(buf, sizeof(buf), INT64_FORMAT, histogram[i]);
 		printf("%6ld    %9.5f %10s\n", 1l << i,
-				(double) histogram[i] * 100 / loop_count, buf);
+			   (double) histogram[i] * 100 / loop_count, buf);
 	}
 }

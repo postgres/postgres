@@ -135,7 +135,7 @@ describeTablespaces(const char *pattern, bool verbose)
 	if (pset.sversion < 80000)
 	{
 		psql_error("The server (version %d.%d) does not support tablespaces.\n",
-				pset.sversion / 10000, (pset.sversion / 100) % 100);
+				   pset.sversion / 10000, (pset.sversion / 100) % 100);
 		return true;
 	}
 
@@ -228,7 +228,7 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 	if (showWindow && pset.sversion < 80400)
 	{
 		psql_error("\\df does not take a \"w\" option with server version %d.%d\n",
-				pset.sversion / 10000, (pset.sversion / 100) % 100);
+				   pset.sversion / 10000, (pset.sversion / 100) % 100);
 		return true;
 	}
 
@@ -330,7 +330,7 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 
 	if (verbose)
 		appendPQExpBuffer(&buf,
-						  ",\n CASE WHEN prosecdef THEN '%s' ELSE '%s' END AS \"%s\""
+				  ",\n CASE WHEN prosecdef THEN '%s' ELSE '%s' END AS \"%s\""
 						  ",\n CASE\n"
 						  "  WHEN p.provolatile = 'i' THEN '%s'\n"
 						  "  WHEN p.provolatile = 's' THEN '%s'\n"
@@ -807,7 +807,7 @@ listDefaultACLs(const char *pattern)
 	if (pset.sversion < 90000)
 	{
 		psql_error("The server (version %d.%d) does not support altering default privileges.\n",
-				pset.sversion / 10000, (pset.sversion / 100) % 100);
+				   pset.sversion / 10000, (pset.sversion / 100) % 100);
 		return true;
 	}
 
@@ -1078,7 +1078,7 @@ describeTableDetails(const char *pattern, bool verbose, bool showSystem)
 	{
 		if (!pset.quiet)
 			psql_error("Did not find any relation named \"%s\".\n",
-					pattern);
+					   pattern);
 		PQclear(res);
 		return false;
 	}
@@ -2565,7 +2565,7 @@ listDbRoleSettings(const char *pattern, const char *pattern2)
 		bool		havewhere;
 
 		printfPQExpBuffer(&buf, "SELECT rolname AS \"%s\", datname AS \"%s\",\n"
-				"pg_catalog.array_to_string(setconfig, E'\\n') AS \"%s\"\n"
+				  "pg_catalog.array_to_string(setconfig, E'\\n') AS \"%s\"\n"
 						  "FROM pg_db_role_setting AS s\n"
 				   "LEFT JOIN pg_database ON pg_database.oid = setdatabase\n"
 						  "LEFT JOIN pg_roles ON pg_roles.oid = setrole\n",
@@ -3020,7 +3020,7 @@ listEventTriggers(const char *pattern, bool verbose)
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
 	static const bool translate_columns[] =
-		{false, false, false, true, false, false, false};
+	{false, false, false, true, false, false, false};
 
 	initPQExpBuffer(&buf);
 
@@ -3034,7 +3034,7 @@ listEventTriggers(const char *pattern, bool verbose)
 					  "  when 'D' then 'disabled' end as  \"%s\", "
 					  "e.evtfoid::regproc as \"%s\", "
 					  "array_to_string(array(select x "
-					  "      from unnest(evttags) as t(x)), ', ') as  \"%s\" ",
+					"      from unnest(evttags) as t(x)), ', ') as  \"%s\" ",
 					  gettext_noop("Name"),
 					  gettext_noop("Event"),
 					  gettext_noop("Owner"),
@@ -3043,7 +3043,7 @@ listEventTriggers(const char *pattern, bool verbose)
 					  gettext_noop("Tags"));
 	if (verbose)
 		appendPQExpBuffer(&buf,
-						  ",\npg_catalog.obj_description(e.oid, 'pg_event_trigger') as \"%s\"",
+		",\npg_catalog.obj_description(e.oid, 'pg_event_trigger') as \"%s\"",
 						  gettext_noop("Description"));
 	appendPQExpBuffer(&buf,
 					  "\nFROM pg_event_trigger e ");
@@ -3183,7 +3183,7 @@ listCollations(const char *pattern, bool verbose, bool showSystem)
 	if (pset.sversion < 90100)
 	{
 		psql_error("The server (version %d.%d) does not support collations.\n",
-				pset.sversion / 10000, (pset.sversion / 100) % 100);
+				   pset.sversion / 10000, (pset.sversion / 100) % 100);
 		return true;
 	}
 
@@ -3314,7 +3314,7 @@ listTSParsers(const char *pattern, bool verbose)
 	if (pset.sversion < 80300)
 	{
 		psql_error("The server (version %d.%d) does not support full text search.\n",
-				pset.sversion / 10000, (pset.sversion / 100) % 100);
+				   pset.sversion / 10000, (pset.sversion / 100) % 100);
 		return true;
 	}
 
@@ -3391,7 +3391,7 @@ listTSParsersVerbose(const char *pattern)
 	{
 		if (!pset.quiet)
 			psql_error("Did not find any text search parser named \"%s\".\n",
-					pattern);
+					   pattern);
 		PQclear(res);
 		return false;
 	}
@@ -3547,7 +3547,7 @@ listTSDictionaries(const char *pattern, bool verbose)
 	if (pset.sversion < 80300)
 	{
 		psql_error("The server (version %d.%d) does not support full text search.\n",
-				pset.sversion / 10000, (pset.sversion / 100) % 100);
+				   pset.sversion / 10000, (pset.sversion / 100) % 100);
 		return true;
 	}
 
@@ -3615,7 +3615,7 @@ listTSTemplates(const char *pattern, bool verbose)
 	if (pset.sversion < 80300)
 	{
 		psql_error("The server (version %d.%d) does not support full text search.\n",
-				pset.sversion / 10000, (pset.sversion / 100) % 100);
+				   pset.sversion / 10000, (pset.sversion / 100) % 100);
 		return true;
 	}
 
@@ -3683,7 +3683,7 @@ listTSConfigs(const char *pattern, bool verbose)
 	if (pset.sversion < 80300)
 	{
 		psql_error("The server (version %d.%d) does not support full text search.\n",
-				pset.sversion / 10000, (pset.sversion / 100) % 100);
+				   pset.sversion / 10000, (pset.sversion / 100) % 100);
 		return true;
 	}
 
@@ -3761,7 +3761,7 @@ listTSConfigsVerbose(const char *pattern)
 	{
 		if (!pset.quiet)
 			psql_error("Did not find any text search configuration named \"%s\".\n",
-					pattern);
+					   pattern);
 		PQclear(res);
 		return false;
 	}
@@ -3881,7 +3881,7 @@ listForeignDataWrappers(const char *pattern, bool verbose)
 	if (pset.sversion < 80400)
 	{
 		psql_error("The server (version %d.%d) does not support foreign-data wrappers.\n",
-				pset.sversion / 10000, (pset.sversion / 100) % 100);
+				   pset.sversion / 10000, (pset.sversion / 100) % 100);
 		return true;
 	}
 
@@ -3961,7 +3961,7 @@ listForeignServers(const char *pattern, bool verbose)
 	if (pset.sversion < 80400)
 	{
 		psql_error("The server (version %d.%d) does not support foreign servers.\n",
-				pset.sversion / 10000, (pset.sversion / 100) % 100);
+				   pset.sversion / 10000, (pset.sversion / 100) % 100);
 		return true;
 	}
 
@@ -4040,7 +4040,7 @@ listUserMappings(const char *pattern, bool verbose)
 	if (pset.sversion < 80400)
 	{
 		psql_error("The server (version %d.%d) does not support user mappings.\n",
-				pset.sversion / 10000, (pset.sversion / 100) % 100);
+				   pset.sversion / 10000, (pset.sversion / 100) % 100);
 		return true;
 	}
 
@@ -4098,7 +4098,7 @@ listForeignTables(const char *pattern, bool verbose)
 	if (pset.sversion < 90100)
 	{
 		psql_error("The server (version %d.%d) does not support foreign tables.\n",
-				pset.sversion / 10000, (pset.sversion / 100) % 100);
+				   pset.sversion / 10000, (pset.sversion / 100) % 100);
 		return true;
 	}
 
@@ -4172,7 +4172,7 @@ listExtensions(const char *pattern)
 	if (pset.sversion < 90100)
 	{
 		psql_error("The server (version %d.%d) does not support extensions.\n",
-				pset.sversion / 10000, (pset.sversion / 100) % 100);
+				   pset.sversion / 10000, (pset.sversion / 100) % 100);
 		return true;
 	}
 
@@ -4226,7 +4226,7 @@ listExtensionContents(const char *pattern)
 	if (pset.sversion < 90100)
 	{
 		psql_error("The server (version %d.%d) does not support extensions.\n",
-				pset.sversion / 10000, (pset.sversion / 100) % 100);
+				   pset.sversion / 10000, (pset.sversion / 100) % 100);
 		return true;
 	}
 
@@ -4253,7 +4253,7 @@ listExtensionContents(const char *pattern)
 		{
 			if (pattern)
 				psql_error("Did not find any extension named \"%s\".\n",
-						pattern);
+						   pattern);
 			else
 				psql_error("Did not find any extensions.\n");
 		}
