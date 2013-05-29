@@ -442,7 +442,8 @@ psql --username postgres --file script.sql postgres
     <para>
      Because optimizer statistics are not transferred by <command>pg_upgrade</>, you will
      be instructed to run a command to regenerate that information at the end
-     of the upgrade.
+     of the upgrade.  You might need to set connection parameters to
+     match your new cluster.
     </para>
    </step>
 
