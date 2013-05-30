@@ -570,17 +570,19 @@
 #exit_on_error = off			# terminate session on any error?
 #restart_after_crash = on		# reinitialize after backend crash?
 
+
 #------------------------------------------------------------------------------
 # CONFIG FILE INCLUDES
 #------------------------------------------------------------------------------
 
 # These options allow settings to be loaded from files other than the
-# default postgresql.conf
+# default postgresql.conf.
 
 #include_dir = 'conf.d'			# include files ending in '.conf' from
 					# directory 'conf.d'
 #include_if_exists = 'exists.conf'	# include file only if it exists
 #include = 'special.conf'		# include file
+
 
 #------------------------------------------------------------------------------
 # CUSTOMIZED OPTIONS
