@@ -33,7 +33,7 @@ NOTIFY <replaceable class="PARAMETER">channel</replaceable> [ , <replaceable cla
    with an optional <quote>payload</> string to each client application that
    has previously executed
    <command>LISTEN <replaceable class="parameter">channel</></command>
-   for the specified channel name in the current database. 
+   for the specified channel name in the current database.
    Notifications are visible to all users.
   </para>
 

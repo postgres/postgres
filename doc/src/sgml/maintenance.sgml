@@ -632,7 +632,7 @@ HINT:  Stop the postmaster and use a standalone backend to VACUUM in "mydb".
     <varname>autovacuum_max_workers</> databases to be processed,
     the next database will be processed as soon as the first worker finishes.
     Each worker process will check each table within its database and
-    execute <command>VACUUM</> and/or <command>ANALYZE</> as needed. 
+    execute <command>VACUUM</> and/or <command>ANALYZE</> as needed.
     <varname>log_autovacuum_min_duration</varname> can be used to monitor
     autovacuum activity.
    </para>

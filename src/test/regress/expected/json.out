@@ -466,15 +466,15 @@ INSERT INTO test_json VALUES
 ('scalar','"a scalar"'),
 ('array','["zero", "one","two",null,"four","five"]'),
 ('object','{"field1":"val1","field2":"val2","field3":null}');
-SELECT test_json -> 'x' 
+SELECT test_json -> 'x'
 FROM test_json
 WHERE json_type = 'scalar';
 ERROR:  cannot extract element from a scalar
-SELECT test_json -> 'x' 
+SELECT test_json -> 'x'
 FROM test_json
 WHERE json_type = 'array';
 ERROR:  cannot extract field from a non-object
-SELECT test_json -> 'x' 
+SELECT test_json -> 'x'
 FROM test_json
 WHERE json_type = 'object';
  ?column? 
@@ -490,7 +490,7 @@ WHERE json_type = 'object';
  "val2"
 (1 row)
 
-SELECT test_json->>'field2' 
+SELECT test_json->>'field2'
 FROM test_json
 WHERE json_type = 'object';
  ?column? 
@@ -498,11 +498,11 @@ WHERE json_type = 'object';
  val2
 (1 row)
 
-SELECT test_json -> 2 
+SELECT test_json -> 2
 FROM test_json
 WHERE json_type = 'scalar';
 ERROR:  cannot extract element from a scalar
-SELECT test_json -> 2 
+SELECT test_json -> 2
 FROM test_json
 WHERE json_type = 'array';
  ?column? 

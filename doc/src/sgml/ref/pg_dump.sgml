@@ -324,7 +324,7 @@ PostgreSQL documentation
         For a consistent backup, the database server needs to support synchronized snapshots,
         a feature that was introduced in <productname>PostgreSQL</productname> 9.2. With this
         feature, database clients can ensure they see the same data set even though they use
-        different connections. <command>pg_dump -j</command> uses multiple database 
+        different connections. <command>pg_dump -j</command> uses multiple database
         connections; it connects to the database once with the master process and
         once again for each worker job. Without the synchronized snapshot feature, the
         different worker jobs wouldn't be guaranteed to see the same data in each connection,

@@ -139,15 +139,15 @@ INSERT INTO test_json VALUES
 ('array','["zero", "one","two",null,"four","five"]'),
 ('object','{"field1":"val1","field2":"val2","field3":null}');
 
-SELECT test_json -> 'x' 
+SELECT test_json -> 'x'
 FROM test_json
 WHERE json_type = 'scalar';
 
-SELECT test_json -> 'x' 
+SELECT test_json -> 'x'
 FROM test_json
 WHERE json_type = 'array';
 
-SELECT test_json -> 'x' 
+SELECT test_json -> 'x'
 FROM test_json
 WHERE json_type = 'object';
 
@@ -155,15 +155,15 @@ SELECT test_json->'field2'
 FROM test_json
 WHERE json_type = 'object';
 
-SELECT test_json->>'field2' 
+SELECT test_json->>'field2'
 FROM test_json
 WHERE json_type = 'object';
 
-SELECT test_json -> 2 
+SELECT test_json -> 2
 FROM test_json
 WHERE json_type = 'scalar';
 
-SELECT test_json -> 2 
+SELECT test_json -> 2
 FROM test_json
 WHERE json_type = 'array';
 

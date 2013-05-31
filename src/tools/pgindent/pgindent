@@ -310,7 +310,7 @@ sub post_indent
 	$source =~ s!
 			(\n$ident[^(\n]*)\n                  # e.g. static void
 			(
-				$ident\(\n?                      # func_name( 
+				$ident\(\n?                      # func_name(
 				(.*,([ \t]*$comment)?\n)*        # args b4 final ln
 				.*\);([ \t]*$comment)?$          # final line
 			)

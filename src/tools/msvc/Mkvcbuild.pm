@@ -523,8 +523,8 @@ sub mkvcbuild
 		my $mf = Project::read_file(
 			'src\backend\utils\mb\conversion_procs\\' . $sub . '\Makefile');
 		my $p = $solution->AddProject($sub, 'dll', 'conversion procs');
-		$p->AddFile('src\backend\utils\mb\conversion_procs\\' 
-			  . $sub . '\\' 
+		$p->AddFile('src\backend\utils\mb\conversion_procs\\'
+			  . $sub . '\\'
 			  . $sub
 			  . '.c');
 		if ($mf =~ m{^SRCS\s*\+=\s*(.*)$}m)

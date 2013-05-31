@@ -788,10 +788,10 @@ CREATE OR REPLACE FUNCTION
   pg_start_backup(label text, fast boolean DEFAULT false)
   RETURNS text STRICT VOLATILE LANGUAGE internal AS 'pg_start_backup';
 
-CREATE OR REPLACE FUNCTION 
+CREATE OR REPLACE FUNCTION
   json_populate_record(base anyelement, from_json json, use_json_as_text boolean DEFAULT false)
   RETURNS anyelement LANGUAGE internal STABLE AS 'json_populate_record';
 
-CREATE OR REPLACE FUNCTION 
+CREATE OR REPLACE FUNCTION
   json_populate_recordset(base anyelement, from_json json, use_json_as_text boolean DEFAULT false)
   RETURNS SETOF anyelement LANGUAGE internal STABLE ROWS 100  AS 'json_populate_recordset';
