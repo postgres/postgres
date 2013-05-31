@@ -678,7 +678,7 @@ WalRcvFetchTimeLineHistoryFiles(TimeLineID first, TimeLineID last)
 			if (strcmp(fname, expectedfname) != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-						 errmsg_internal("primary reported unexpected filename for timeline history file of timeline %u",
+						 errmsg_internal("primary reported unexpected file name for timeline history file of timeline %u",
 										 tli)));
 
 			/*
