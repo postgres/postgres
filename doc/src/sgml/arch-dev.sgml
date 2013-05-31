@@ -181,7 +181,7 @@
 
     <para>
      The parser has to check the query string (which arrives as plain
-     ASCII text) for valid syntax. If the syntax is correct a
+     text) for valid syntax. If the syntax is correct a
      <firstterm>parse tree</firstterm> is built up and handed back;
      otherwise an error is returned. The parser and lexer are
      implemented using the well-known Unix tools <application>bison</>
