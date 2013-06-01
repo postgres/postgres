@@ -4,20 +4,6 @@
  <title>Conventions</title>
 
  <para>
-  This book uses the following typographical conventions to mark
-  certain portions of text: new terms, foreign phrases, and other
-  important passages are emphasized in <emphasis>italics</>.
-  Everything that represents input or output of the computer, in
-  particular commands, program code, and screen output, is shown in a
-  monospaced font (<literal>example</literal>).  Within such
-  passages, italics (<replaceable>example</replaceable>) indicate
-  placeholders; you must insert an actual value instead of the placeholder.
-  On occasion, parts of program code are emphasized in bold face
-  (<emphasis role="bold"><literal>example</></>), if they have been
-  added or changed since the preceding example.
- </para>
-
- <para>
   The following conventions are used in the synopsis of a command:
   brackets (<literal>[</literal> and <literal>]</literal>) indicate
   optional parts.  (In the synopsis of a Tcl command, question marks
