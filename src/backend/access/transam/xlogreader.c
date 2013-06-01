@@ -903,7 +903,7 @@ ValidXLogPageHeader(XLogReaderState *state, XLogRecPtr recptr,
 /*
  * Find the first record with at an lsn >= RecPtr.
  *
- * Useful for checking wether RecPtr is a valid xlog address for reading and to
+ * Useful for checking whether RecPtr is a valid xlog address for reading and to
  * find the first valid address after some address when dumping records for
  * debugging purposes.
  */

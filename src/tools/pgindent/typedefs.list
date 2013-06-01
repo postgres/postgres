@@ -326,6 +326,7 @@ CopyStmt
 Cost
 CostSelector
 Counters
+CoverExt
 CoverPos
 CreateCastStmt
 CreateConversionStmt
@@ -487,7 +488,6 @@ ExtensionBehavior
 ExtensionControlFile
 ExtensionInfo
 ExtensionVersionInfo
-Extention
 FDWCollateState
 FD_SET
 FILE

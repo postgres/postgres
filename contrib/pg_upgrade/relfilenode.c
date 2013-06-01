@@ -258,7 +258,7 @@ transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
 				if (errno == ENOENT)
 					return;
 				else
-					pg_log(PG_FATAL, "error while checking for file existance \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
+					pg_log(PG_FATAL, "error while checking for file existence \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
 						   map->nspname, map->relname, old_file, new_file,
 						   getErrorText(errno));
 			}
