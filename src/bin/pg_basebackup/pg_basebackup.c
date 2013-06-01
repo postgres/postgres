@@ -1134,7 +1134,7 @@ escapeConnectionParameter(const char *src)
 
 	for (p = src; *p; p++)
 	{
-		if (isspace(*p))
+		if (isspace((unsigned char) *p))
 		{
 			need_quotes = true;
 			break;
