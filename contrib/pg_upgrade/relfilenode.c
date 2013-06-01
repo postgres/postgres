@@ -53,8 +53,11 @@ transfer_all_new_tablespaces(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 									  new_pgdata, old_pgdata);
 
 		for (tblnum = 0; tblnum < os_info.num_old_tablespaces; tblnum++)
-			parallel_transfer_all_new_dbs(old_db_arr, new_db_arr, old_pgdata,
-								new_pgdata, os_info.old_tablespaces[tblnum]);
+			parallel_transfer_all_new_dbs(old_db_arr,
+										  new_db_arr,
+										  old_pgdata,
+										  new_pgdata,
+										  os_info.old_tablespaces[tblnum]);
 		/* reap all children */
 		while (reap_child(true) == true)
 			;
@@ -230,12 +233,20 @@ transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
 		else
 			snprintf(extent_suffix, sizeof(extent_suffix), ".%d", segno);
 
-		snprintf(old_file, sizeof(old_file), "%s%s/%u/%u%s%s", map->old_tablespace,
-		   map->old_tablespace_suffix, map->old_db_oid, map->old_relfilenode,
-				 type_suffix, extent_suffix);
-		snprintf(new_file, sizeof(new_file), "%s%s/%u/%u%s%s", map->new_tablespace,
-		   map->new_tablespace_suffix, map->new_db_oid, map->new_relfilenode,
-				 type_suffix, extent_suffix);
+		snprintf(old_file, sizeof(old_file), "%s%s/%u/%u%s%s",
+				 map->old_tablespace,
+				 map->old_tablespace_suffix,
+				 map->old_db_oid,
+				 map->old_relfilenode,
+				 type_suffix,
+				 extent_suffix);
+		snprintf(new_file, sizeof(new_file), "%s%s/%u/%u%s%s",
+				 map->new_tablespace,
+				 map->new_tablespace_suffix,
+				 map->new_db_oid,
+				 map->new_relfilenode,
+				 type_suffix,
+				 extent_suffix);
 
 		/* Is it an extent, fsm, or vm file? */
 		if (type_suffix[0] != '\0' || segno != 0)

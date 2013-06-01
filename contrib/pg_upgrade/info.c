@@ -441,6 +441,8 @@ print_rel_infos(RelInfoArr *rel_arr)
 
 	for (relnum = 0; relnum < rel_arr->nrels; relnum++)
 		pg_log(PG_VERBOSE, "relname: %s.%s: reloid: %u reltblspace: %s\n",
-			   rel_arr->rels[relnum].nspname, rel_arr->rels[relnum].relname,
-			 rel_arr->rels[relnum].reloid, rel_arr->rels[relnum].tablespace);
+			   rel_arr->rels[relnum].nspname,
+			   rel_arr->rels[relnum].relname,
+			   rel_arr->rels[relnum].reloid,
+			   rel_arr->rels[relnum].tablespace);
 }

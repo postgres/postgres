@@ -948,7 +948,6 @@ PGTYPEStimestamp_defmt_asc(char *str, const char *fmt, timestamp * d)
 int
 PGTYPEStimestamp_add_interval(timestamp * tin, interval * span, timestamp * tout)
 {
-
 	if (TIMESTAMP_NOT_FINITE(*tin))
 		*tout = *tin;
 

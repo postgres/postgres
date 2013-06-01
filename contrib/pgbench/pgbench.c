@@ -999,8 +999,12 @@ top:
 							 * this in a special way (see below).
 							 */
 							fprintf(logfile, "%ld %d %.0f %.0f %.0f %.0f\n",
-							  agg->start_time, agg->cnt, agg->sum, agg->sum2,
-									agg->min_duration, agg->max_duration);
+									agg->start_time,
+									agg->cnt,
+									agg->sum,
+									agg->sum2,
+									agg->min_duration,
+									agg->max_duration);
 
 							/* move to the next inteval */
 							agg->start_time = agg->start_time + agg_interval;
@@ -1625,7 +1629,6 @@ init(bool is_no_vacuum)
 			/* have we reached the next interval (or end)? */
 			if ((j == scale * naccounts) || (elapsed_sec >= log_interval * LOG_STEP_SECONDS))
 			{
-
 				fprintf(stderr, INT64_FORMAT " of " INT64_FORMAT " tuples (%d%%) done (elapsed %.2f s, remaining %.2f s).\n",
 						j, (int64) naccounts * scale,
 						(int) (((int64) j * 100) / (naccounts * scale)), elapsed_sec, remaining_sec);

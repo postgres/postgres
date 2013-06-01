@@ -705,7 +705,8 @@ EventTriggerDDLCommandStart(Node *parsetree)
 		return;
 
 	runlist = EventTriggerCommonSetup(parsetree,
-									EVT_DDLCommandStart, "ddl_command_start",
+									  EVT_DDLCommandStart,
+									  "ddl_command_start",
 									  &trigdata);
 	if (runlist == NIL)
 		return;

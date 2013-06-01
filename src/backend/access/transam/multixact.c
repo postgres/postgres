@@ -432,8 +432,8 @@ MultiXactIdExpand(MultiXactId multi, TransactionId xid, MultiXactStatus status)
 	/*
 	 * Determine which of the members of the MultiXactId are still of
 	 * interest. This is any running transaction, and also any transaction
-	 * that grabbed something stronger than just a lock and was committed.
-	 * (An update that aborted is of no interest here.)
+	 * that grabbed something stronger than just a lock and was committed. (An
+	 * update that aborted is of no interest here.)
 	 *
 	 * (Removing dead members is just an optimization, but a useful one. Note
 	 * we have the same race condition here as above: j could be 0 at the end
@@ -1349,7 +1349,9 @@ mXactCacheGetById(MultiXactId multi, MultiXactMember **members)
 			memcpy(ptr, entry->members, size);
 
 			debug_elog3(DEBUG2, "CacheGet: found %s",
-					 mxid_to_string(multi, entry->nmembers, entry->members));
+						mxid_to_string(multi,
+									   entry->nmembers,
+									   entry->members));
 			return entry->nmembers;
 		}
 	}

@@ -1546,7 +1546,8 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible, bool xlog_switch)
 		 */
 		if (LogwrtResult.Write >= XLogCtl->xlblocks[curridx])
 			elog(PANIC, "xlog write request %X/%X is past end of log %X/%X",
-			(uint32) (LogwrtResult.Write >> 32), (uint32) LogwrtResult.Write,
+				 (uint32) (LogwrtResult.Write >> 32),
+				 (uint32) LogwrtResult.Write,
 				 (uint32) (XLogCtl->xlblocks[curridx] >> 32),
 				 (uint32) XLogCtl->xlblocks[curridx]);
 
@@ -7381,7 +7382,8 @@ CreateRestartPoint(int flags)
 	{
 		ereport(DEBUG2,
 				(errmsg("skipping restartpoint, already performed at %X/%X",
-		(uint32) (lastCheckPoint.redo >> 32), (uint32) lastCheckPoint.redo)));
+						(uint32) (lastCheckPoint.redo >> 32),
+						(uint32) lastCheckPoint.redo)));
 
 		UpdateMinRecoveryPoint(InvalidXLogRecPtr, true);
 		if (flags & CHECKPOINT_IS_SHUTDOWN)

@@ -3182,8 +3182,9 @@ l2:
 				 * we weren't looking, start over.
 				 */
 				if ((oldtup.t_data->t_infomask & HEAP_XMAX_IS_MULTI) ||
-				!TransactionIdEquals(HeapTupleHeaderGetRawXmax(oldtup.t_data),
-									 xwait))
+					!TransactionIdEquals(
+									HeapTupleHeaderGetRawXmax(oldtup.t_data),
+										 xwait))
 					goto l2;
 
 				can_continue = true;
@@ -3201,8 +3202,9 @@ l2:
 				 * this point. Check for xmax change, and start over if so.
 				 */
 				if ((oldtup.t_data->t_infomask & HEAP_XMAX_IS_MULTI) ||
-				!TransactionIdEquals(HeapTupleHeaderGetRawXmax(oldtup.t_data),
-									 xwait))
+					!TransactionIdEquals(
+									HeapTupleHeaderGetRawXmax(oldtup.t_data),
+										 xwait))
 					goto l2;
 
 				/* Otherwise check if it committed or aborted */
@@ -4183,8 +4185,9 @@ l3:
 
 				/* if the xmax changed in the meantime, start over */
 				if ((tuple->t_data->t_infomask & HEAP_XMAX_IS_MULTI) ||
-				!TransactionIdEquals(HeapTupleHeaderGetRawXmax(tuple->t_data),
-									 xwait))
+					!TransactionIdEquals(
+									HeapTupleHeaderGetRawXmax(tuple->t_data),
+										 xwait))
 					goto l3;
 				/* otherwise, we're good */
 				require_sleep = false;
@@ -4246,8 +4249,9 @@ l3:
 				 * for xmax change, and start over if so.
 				 */
 				if (!(tuple->t_data->t_infomask & HEAP_XMAX_IS_MULTI) ||
-				!TransactionIdEquals(HeapTupleHeaderGetRawXmax(tuple->t_data),
-									 xwait))
+					!TransactionIdEquals(
+									HeapTupleHeaderGetRawXmax(tuple->t_data),
+										 xwait))
 					goto l3;
 
 				/*
@@ -4300,8 +4304,9 @@ l3:
 				 * this point.	Check for xmax change, and start over if so.
 				 */
 				if ((tuple->t_data->t_infomask & HEAP_XMAX_IS_MULTI) ||
-				!TransactionIdEquals(HeapTupleHeaderGetRawXmax(tuple->t_data),
-									 xwait))
+					!TransactionIdEquals(
+									HeapTupleHeaderGetRawXmax(tuple->t_data),
+										 xwait))
 					goto l3;
 
 				/*

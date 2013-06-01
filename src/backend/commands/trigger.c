@@ -2210,8 +2210,11 @@ ExecARDeleteTriggers(EState *estate, ResultRelInfo *relinfo,
 
 	if (trigdesc && trigdesc->trig_delete_after_row)
 	{
-		HeapTuple	trigtuple = GetTupleForTrigger(estate, NULL, relinfo,
-												 tupleid, LockTupleExclusive,
+		HeapTuple	trigtuple = GetTupleForTrigger(estate,
+												   NULL,
+												   relinfo,
+												   tupleid,
+												   LockTupleExclusive,
 												   NULL);
 
 		AfterTriggerSaveEvent(estate, relinfo, TRIGGER_EVENT_DELETE,
@@ -2449,8 +2452,11 @@ ExecARUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 
 	if (trigdesc && trigdesc->trig_update_after_row)
 	{
-		HeapTuple	trigtuple = GetTupleForTrigger(estate, NULL, relinfo,
-												 tupleid, LockTupleExclusive,
+		HeapTuple	trigtuple = GetTupleForTrigger(estate,
+												   NULL,
+												   relinfo,
+												   tupleid,
+												   LockTupleExclusive,
 												   NULL);
 
 		AfterTriggerSaveEvent(estate, relinfo, TRIGGER_EVENT_UPDATE,

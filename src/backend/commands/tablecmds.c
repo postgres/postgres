@@ -9985,7 +9985,8 @@ AlterTableNamespaceInternal(Relation rel, Oid oldNspOid, Oid nspOid,
 void
 AlterRelationNamespaceInternal(Relation classRel, Oid relOid,
 							   Oid oldNspOid, Oid newNspOid,
-							 bool hasDependEntry, ObjectAddresses *objsMoved)
+							   bool hasDependEntry,
+							   ObjectAddresses *objsMoved)
 {
 	HeapTuple	classTup;
 	Form_pg_class classForm;
@@ -10024,8 +10025,11 @@ AlterRelationNamespaceInternal(Relation classRel, Oid relOid,
 
 		/* Update dependency on schema if caller said so */
 		if (hasDependEntry &&
-			changeDependencyFor(RelationRelationId, relOid,
-							 NamespaceRelationId, oldNspOid, newNspOid) != 1)
+			changeDependencyFor(RelationRelationId,
+								relOid,
+								NamespaceRelationId,
+								oldNspOid,
+								newNspOid) != 1)
 			elog(ERROR, "failed to change schema dependency for relation \"%s\"",
 				 NameStr(classForm->relname));
 

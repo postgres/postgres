@@ -610,9 +610,14 @@ gistProcessItup(GISTBuildState *buildstate, IndexTuple itup,
 		newtup = gistgetadjusted(indexrel, idxtuple, itup, giststate);
 		if (newtup)
 		{
-			blkno = gistbufferinginserttuples(buildstate, buffer, level,
-											  &newtup, 1, childoffnum,
-									InvalidBlockNumber, InvalidOffsetNumber);
+			blkno = gistbufferinginserttuples(buildstate,
+											  buffer,
+											  level,
+											  &newtup,
+											  1,
+											  childoffnum,
+											  InvalidBlockNumber,
+											  InvalidOffsetNumber);
 			/* gistbufferinginserttuples() released the buffer */
 		}
 		else
