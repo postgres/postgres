@@ -5398,6 +5398,14 @@ array_replace_internal(ArrayType *array,
 		return array;
 	}
 
+	/* If all elements were removed return an empty array */
+	if (nresult == 0)
+	{
+		pfree(values);
+		pfree(nulls);
+		return construct_empty_array(element_type);
+	}
+
 	/* Allocate and initialize the result array */
 	if (hasnulls)
 	{
