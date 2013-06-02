@@ -1639,8 +1639,7 @@ FROM manufacturers m, LATERAL get_product_names(m.id) pname;
 <programlisting>
 SELECT m.name AS mname, pname
 FROM manufacturers m LEFT JOIN LATERAL get_product_names(m.id) pname ON true;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>
