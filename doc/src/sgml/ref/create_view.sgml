@@ -307,8 +307,7 @@ CREATE RECURSIVE VIEW nums_1_100 (n) AS
     VALUES (1)
 UNION ALL
     SELECT n+1 FROM nums_1_100 WHERE n < 100;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

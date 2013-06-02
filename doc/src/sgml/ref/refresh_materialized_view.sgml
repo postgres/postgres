@@ -87,8 +87,7 @@ REFRESH MATERIALIZED VIEW order_summary;
    state:
 <programlisting>
 REFRESH MATERIALIZED VIEW annual_statistics_basis WITH NO DATA;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>
