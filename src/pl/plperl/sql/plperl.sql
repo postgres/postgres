@@ -405,7 +405,7 @@ DO $$ qx("/nonesuch"); $$ LANGUAGE plperl;
 DO $$ open my $fh, "</nonesuch"; $$ LANGUAGE plperl;
 
 -- check that eval is allowed and eval'd restricted ops are caught
-DO $$ eval q{chdir '.'}; warn "Caught: $@"; $$ LANGUAGE plperl;
+DO $$ eval q{chdir '.';}; warn "Caught: $@"; $$ LANGUAGE plperl;
 
 -- check that compiling do (dofile opcode) is allowed
 -- but that executing it for a file not already loaded (via require) dies
