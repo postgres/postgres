@@ -7463,6 +7463,7 @@ CreateRestartPoint(int flags)
 	{
 		XLogRecPtr	receivePtr;
 		XLogRecPtr	replayPtr;
+		TimeLineID	replayTLI;
 		XLogRecPtr	endptr;
 
 		/*
@@ -7470,32 +7471,27 @@ CreateRestartPoint(int flags)
 		 * later.
 		 */
 		receivePtr = GetWalRcvWriteRecPtr(NULL, NULL);
-		replayPtr = GetXLogReplayRecPtr(NULL);
+		replayPtr = GetXLogReplayRecPtr(&replayTLI);
 		endptr = (receivePtr < replayPtr) ? replayPtr : receivePtr;
 
 		KeepLogSeg(endptr, &_logSegNo);
 		_logSegNo--;
 
 		/*
-		 * Update ThisTimeLineID to the timeline we're currently replaying, so
-		 * that we install any recycled segments on that timeline.
+		 * Try to recycle segments on a useful timeline. If we've been promoted
+		 * since the beginning of this restartpoint, use the new timeline
+		 * chosen at end of recovery (RecoveryInProgress() sets ThisTimeLineID
+		 * in that case). If we're still in recovery, use the timeline we're
+		 * currently replaying.
 		 *
 		 * There is no guarantee that the WAL segments will be useful on the
 		 * current timeline; if recovery proceeds to a new timeline right
 		 * after this, the pre-allocated WAL segments on this timeline will
 		 * not be used, and will go wasted until recycled on the next
 		 * restartpoint. We'll live with that.
-		 *
-		 * It's possible or perhaps even likely that we finish recovery while
-		 * a restartpoint is in progress. That means we may get to this point
-		 * some minutes afterwards. Setting ThisTimeLineID at that time would
-		 * actually set it backwards, so we don't want that to persist; if we
-		 * do reset it here, make sure to reset it back afterwards. This
-		 * doesn't look very clean or principled, but its the best of about
-		 * five different ways of handling this edge case.
 		 */
 		if (RecoveryInProgress())
-			(void) GetXLogReplayRecPtr(&ThisTimeLineID);
+			ThisTimeLineID = replayTLI;
 
 		RemoveOldXlogFiles(_logSegNo, endptr);
 
@@ -7506,10 +7502,14 @@ CreateRestartPoint(int flags)
 		PreallocXlogFiles(endptr);
 
 		/*
-		 * Reset this always, in case we set ThisTimeLineID backwards above.
-		 * Requires no locking; see InitXLOGAccess()
+		 * ThisTimeLineID is normally not set when we're still in recovery.
+		 * However, recycling/preallocating segments above needed
+		 * ThisTimeLineID to determine which timeline to install the segments
+		 * on. Reset it now, to restore the normal state of affairs for
+		 * debugging purposes.
 		 */
-		ThisTimeLineID = XLogCtl->ThisTimeLineID;
+		if (RecoveryInProgress())
+			ThisTimeLineID = 0;
 	}
 
 	/*
