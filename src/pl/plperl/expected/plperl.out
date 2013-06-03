@@ -626,8 +626,8 @@ DO $$ open my $fh, "</nonesuch"; $$ LANGUAGE plperl;
 ERROR:  'open' trapped by operation mask at line 1.
 CONTEXT:  PL/Perl anonymous code block
 -- check that eval is allowed and eval'd restricted ops are caught
-DO $$ eval q{chdir '.'}; warn "Caught: $@"; $$ LANGUAGE plperl;
-WARNING:  Caught: 'chdir' trapped by operation mask at line 2.
+DO $$ eval q{chdir '.';}; warn "Caught: $@"; $$ LANGUAGE plperl;
+WARNING:  Caught: 'chdir' trapped by operation mask at line 1.
 CONTEXT:  PL/Perl anonymous code block
 -- check that compiling do (dofile opcode) is allowed
 -- but that executing it for a file not already loaded (via require) dies
