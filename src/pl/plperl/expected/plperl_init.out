@@ -1,14 +1,14 @@
 -- test plperl.on_plperl_init errors are fatal
 -- This test tests setting on_plperl_init after loading plperl
 LOAD 'plperl';
-SET SESSION plperl.on_plperl_init = ' system("/nonesuch") ';
+SET SESSION plperl.on_plperl_init = ' system("/nonesuch"); ';
 SHOW plperl.on_plperl_init;
- plperl.on_plperl_init 
------------------------
-  system("/nonesuch") 
+ plperl.on_plperl_init  
+------------------------
+  system("/nonesuch"); 
 (1 row)
 
 DO $$ warn 42 $$ language plperl;
-ERROR:  'system' trapped by operation mask at line 2.
+ERROR:  'system' trapped by operation mask at line 1.
 CONTEXT:  while executing plperl.on_plperl_init
 PL/Perl anonymous code block
