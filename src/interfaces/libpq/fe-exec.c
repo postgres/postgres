@@ -279,7 +279,7 @@ PQsetResultAttrs(PGresult *res, int numAttributes, PGresAttDesc *attDescs)
  *	 PG_COPYRES_ATTRS - Copy the source result's attributes
  *
  *	 PG_COPYRES_TUPLES - Copy the source result's tuples.  This implies
- *	 copying the attrs, seeeing how the attrs are needed by the tuples.
+ *	 copying the attrs, seeing how the attrs are needed by the tuples.
  *
  *	 PG_COPYRES_EVENTS - Copy the source result's events.
  *

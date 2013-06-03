@@ -161,7 +161,7 @@ window_percent_rank(PG_FUNCTION_ARGS)
 
 /*
  * cume_dist
- * return fraction betweeen 0 and 1 inclusive,
+ * return fraction between 0 and 1 inclusive,
  * which is described as NP / NR, where NP is the number of rows preceding or
  * peers to the current row, and NR is the total number of rows, per spec.
  */

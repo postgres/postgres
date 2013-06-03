@@ -46,7 +46,7 @@ Lehman and Yao don't require read locks, but assume that in-memory
 copies of tree pages are unshared.  Postgres shares in-memory buffers
 among backends.  As a result, we do page-level read locking on btree
 pages in order to guarantee that no record is modified while we are
-examining it.  This reduces concurrency but guaranteees correct
+examining it.  This reduces concurrency but guarantees correct
 behavior.  An advantage is that when trading in a read lock for a
 write lock, we need not re-read the page after getting the write lock.
 Since we're also holding a pin on the shared buffer containing the

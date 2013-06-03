@@ -429,8 +429,8 @@ algorithm is:
 	(this requires read/update/write/release of fore and aft siblings)
 	pin meta page and take buffer content lock in shared mode
 	determine which bitmap page contains the free space bit for page
-	relase meta page buffer content lock
-	pin bitmap page and take buffer content lock in exclusie mode
+	release meta page buffer content lock
+	pin bitmap page and take buffer content lock in exclusive mode
 	update bitmap bit
 	mark bitmap page dirty and release buffer content lock and pin
 	if page number is less than what we saw as first-free-bit in meta:
