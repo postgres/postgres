@@ -246,13 +246,26 @@ heap_create(const char *relname,
 			char relkind,
 			char relpersistence,
 			bool shared_relation,
-			bool mapped_relation)
+			bool mapped_relation,
+			bool allow_system_table_mods)
 {
 	bool		create_storage;
 	Relation	rel;
 
 	/* The caller must have provided an OID for the relation. */
 	Assert(OidIsValid(relid));
+
+	/*
+	 * sanity checks
+	 */
+	if (!allow_system_table_mods &&
+		(IsSystemNamespace(relnamespace) || IsToastNamespace(relnamespace)) &&
+		IsNormalProcessingMode())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied to create \"%s.%s\"",
+						get_namespace_name(relnamespace), relname),
+		errdetail("System catalog modifications are currently disallowed.")));
 
 	/*
 	 * Decide if we need storage or not, and handle a couple other special
@@ -1132,7 +1145,8 @@ heap_create_with_catalog(const char *relname,
 							   relkind,
 							   relpersistence,
 							   shared_relation,
-							   mapped_relation);
+							   mapped_relation,
+							   allow_system_table_mods);
 
 	Assert(relid == RelationGetRelid(new_rel_desc));
 
