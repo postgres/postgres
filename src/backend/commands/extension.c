@@ -1394,12 +1394,16 @@ CreateExtension(CreateExtensionStmt *stmt)
 		 */
 		List	   *search_path = fetch_search_path(false);
 
-		if (search_path == NIL) /* probably can't happen */
-			elog(ERROR, "there is no default creation target");
+		if (search_path == NIL)	/* nothing valid in search_path? */
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_SCHEMA),
+					 errmsg("no schema has been selected to create in")));
 		schemaOid = linitial_oid(search_path);
 		schemaName = get_namespace_name(schemaOid);
 		if (schemaName == NULL) /* recently-deleted namespace? */
-			elog(ERROR, "there is no default creation target");
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_SCHEMA),
+					 errmsg("no schema has been selected to create in")));
 
 		list_free(search_path);
 	}
