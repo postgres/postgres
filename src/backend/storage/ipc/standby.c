@@ -865,16 +865,11 @@ LogStandbySnapshot(void)
 
 	/*
 	 * Get details of any AccessExclusiveLocks being held at the moment.
-	 *
-	 * XXX GetRunningTransactionLocks() currently holds a lock on all
-	 * partitions though it is possible to further optimise the locking. By
-	 * reference counting locks and storing the value on the ProcArray entry
-	 * for each backend we can easily tell if any locks need recording without
-	 * trying to acquire the partition locks and scanning the lock table.
 	 */
 	locks = GetRunningTransactionLocks(&nlocks);
 	if (nlocks > 0)
 		LogAccessExclusiveLocks(nlocks, locks);
+	pfree(locks);
 
 	/*
 	 * Log details of all in-progress transactions. This should be the last
