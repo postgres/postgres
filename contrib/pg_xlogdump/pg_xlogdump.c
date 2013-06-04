@@ -75,7 +75,7 @@ print_rmgr_list(void)
 {
 	int			i;
 
-	for (i = 0; i < RM_MAX_ID + 1; i++)
+	for (i = 0; i <= RM_MAX_ID; i++)
 	{
 		printf("%s\n", RmgrDescTable[i].rm_name);
 	}
@@ -492,7 +492,7 @@ main(int argc, char **argv)
 						exit(EXIT_SUCCESS);
 					}
 
-					for (i = 0; i < RM_MAX_ID; i++)
+					for (i = 0; i <= RM_MAX_ID; i++)
 					{
 						if (pg_strcasecmp(optarg, RmgrDescTable[i].rm_name) == 0)
 						{
