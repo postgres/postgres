@@ -166,3 +166,23 @@ ORDER BY 1;
 
 -- This should fail, but it should produce an error cursor
 SELECT '3.4'::numeric UNION SELECT 'foo';
+
+-- Test that we push quals into UNION sub-selects only when it's safe
+SELECT * FROM
+  (SELECT 1 AS t, 2 AS x
+   UNION
+   SELECT 2 AS t, 4 AS x) ss
+WHERE x < 4;
+
+SELECT * FROM
+  (SELECT 1 AS t, generate_series(1,10) AS x
+   UNION
+   SELECT 2 AS t, 4 AS x) ss
+WHERE x < 4
+ORDER BY x;
+
+SELECT * FROM
+  (SELECT 1 AS t, (random()*3)::int AS x
+   UNION
+   SELECT 2 AS t, 4 AS x) ss
+WHERE x > 3;
