@@ -5441,7 +5441,7 @@ StartupXLOG(void)
 		 * recoveryLastXTime.
 		 *
 		 * This is slightly confusing if we're starting from an online
-		 * checkpoint; we've just read and replayed the chekpoint record, but
+		 * checkpoint; we've just read and replayed the checkpoint record, but
 		 * we're going to start replay from its redo pointer, which precedes
 		 * the location of the checkpoint record itself. So even though the
 		 * last record we've replayed is indeed ReadRecPtr, we haven't
