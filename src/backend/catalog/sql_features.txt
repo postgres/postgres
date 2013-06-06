@@ -134,7 +134,7 @@ E151	Transaction support	02	ROLLBACK statement	YES
 E152	Basic SET TRANSACTION statement			YES	
 E152	Basic SET TRANSACTION statement	01	SET TRANSACTION statement: ISOLATION LEVEL SERIALIZABLE clause	YES	
 E152	Basic SET TRANSACTION statement	02	SET TRANSACTION statement: READ ONLY and READ WRITE clauses	YES	
-E153	Updatable queries with subqueries			NO	
+E153	Updatable queries with subqueries			YES	
 E161	SQL comments using leading double minus			YES	
 E171	SQLSTATE support			YES	
 E182	Module language			NO	
@@ -475,7 +475,7 @@ T441	ABS and MOD functions			YES
 T461	Symmetric BETWEEN predicate			YES	
 T471	Result sets return value			NO	
 T472	DESCRIBE CURSOR			NO	
-T491	LATERAL derived table			NO	
+T491	LATERAL derived table			YES	
 T495	Combined data change and retrieval			NO	different syntax
 T501	Enhanced EXISTS predicate			YES	
 T502	Period predicates			NO	
@@ -516,7 +516,7 @@ M005	Foreign schema support			NO
 M006	GetSQLString routine			NO	
 M007	TransmitRequest			NO	
 M009	GetOpts and GetStatistics routines			NO	
-M010	Foreign data wrapper support			NO	
+M010	Foreign data wrapper support			NO	different API
 M011	Datalinks via Ada			NO	
 M012	Datalinks via C			NO	
 M013	Datalinks via COBOL			NO	
@@ -525,7 +525,7 @@ M015	Datalinks via M			NO
 M016	Datalinks via Pascal			NO	
 M017	Datalinks via PL/I			NO	
 M018	Foreign data wrapper interface routines in Ada			NO	
-M019	Foreign data wrapper interface routines in C			NO	
+M019	Foreign data wrapper interface routines in C			NO	different API
 M020	Foreign data wrapper interface routines in COBOL			NO	
 M021	Foreign data wrapper interface routines in Fortran			NO	
 M022	Foreign data wrapper interface routines in MUMPS			NO	
