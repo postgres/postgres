@@ -663,6 +663,24 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			/* empty pages are always all-visible */
 			if (!PageIsAllVisible(page))
 			{
+				/*
+				 * It's possible that another backend has extended the heap,
+				 * initialized the page, and then failed to WAL-log the page
+				 * due to an ERROR.  Since heap extension is not WAL-logged,
+				 * recovery might try to replay our record setting the
+				 * page all-visible and find that the page isn't initialized,
+				 * which will cause a PANIC.  To prevent that, check whether
+				 * the page has been previously WAL-logged, and if not, do that
+				 * now.
+				 *
+				 * XXX: It would be nice to use a logging method supporting
+				 * standard buffers here since log_newpage_buffer() will write
+				 * the full block instead of omitting the hole.
+				 */
+				if (RelationNeedsWAL(onerel) &&
+					PageGetLSN(page) == InvalidXLogRecPtr)
+					log_newpage_buffer(buf);
+
 				PageSetAllVisible(page);
 				MarkBufferDirty(buf);
 				visibilitymap_set(onerel, blkno, buf, InvalidXLogRecPtr,
