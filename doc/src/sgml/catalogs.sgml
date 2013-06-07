@@ -5024,7 +5024,7 @@
       <entry><structfield>ev_attr</structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
-      <entry>The column this rule is for (currently, always zero to
+      <entry>The column this rule is for (currently, always -1 to
       indicate the whole table)</entry>
      </row>
 
