@@ -1609,7 +1609,16 @@ SELECT 3, 'three';
    <literal>VALUES</> table.  The column names are not specified by the
    SQL standard and different database systems do it differently, so
    it's usually better to override the default names with a table alias
-   list.
+   list, like this:
+<programlisting>
+=> SELECT * FROM (VALUES (1, 'one'), (2, 'two'), (3, 'three')) AS t (num,letter);
+ num | letter
+-----+--------
+   1 | one
+   2 | two
+   3 | three
+(3 rows)
+</programlisting>
   </para>
 
   <para>
