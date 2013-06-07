@@ -654,8 +654,8 @@ HAVING <replaceable class="parameter">condition</replaceable>
 WINDOW <replaceable class="parameter">window_name</replaceable> AS ( <replaceable class="parameter">window_definition</replaceable> ) [, ...]
 </synopsis>
     where <replaceable class="parameter">window_name</replaceable> is
-    a name that can be referenced from subsequent window definitions or
-    <literal>OVER</> clauses, and
+    a name that can be referenced from <literal>OVER</> clauses or
+    subsequent window definitions, and
     <replaceable class="parameter">window_definition</replaceable> is
 <synopsis>
 [ <replaceable class="parameter">existing_window_name</replaceable> ]
