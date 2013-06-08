@@ -859,10 +859,7 @@ SELECT plainto_tsquery('english', 'The Fat &amp; Rats:C');
       </indexterm>
 
       <term>
-<synopsis>
-ts_rank(<optional> <replaceable class="PARAMETER">weights</replaceable> <type>float4[]</>, </optional> <replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>,
-        <replaceable class="PARAMETER">query</replaceable> <type>tsquery</> <optional>, <replaceable class="PARAMETER">normalization</replaceable> <type>integer</> </optional>) returns <type>float4</>
-</synopsis>
+       <literal>ts_rank(<optional> <replaceable class="PARAMETER">weights</replaceable> <type>float4[]</>, </optional> <replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>, <replaceable class="PARAMETER">query</replaceable> <type>tsquery</> <optional>, <replaceable class="PARAMETER">normalization</replaceable> <type>integer</> </optional>) returns <type>float4</></literal>
       </term>
 
       <listitem>
@@ -879,10 +876,7 @@ ts_rank(<optional> <replaceable class="PARAMETER">weights</replaceable> <type>fl
       </indexterm>
 
       <term>
-<synopsis>
-ts_rank_cd(<optional> <replaceable class="PARAMETER">weights</replaceable> <type>float4[]</>, </optional> <replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>,
-           <replaceable class="PARAMETER">query</replaceable> <type>tsquery</> <optional>, <replaceable class="PARAMETER">normalization</replaceable> <type>integer</> </optional>) returns <type>float4</>
-</synopsis>
+       <literal>ts_rank_cd(<optional> <replaceable class="PARAMETER">weights</replaceable> <type>float4[]</>, </optional> <replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>, <replaceable class="PARAMETER">query</replaceable> <type>tsquery</> <optional>, <replaceable class="PARAMETER">normalization</replaceable> <type>integer</> </optional>) returns <type>float4</></literal>
       </term>
 
       <listitem>
@@ -1226,9 +1220,7 @@ FROM (SELECT id, body, q, ts_rank_cd(ti, q) AS rank
      </indexterm>
 
      <term>
-<synopsis>
-<type>tsvector</> || <type>tsvector</>
-</synopsis>
+      <literal><type>tsvector</> || <type>tsvector</></literal>
      </term>
 
      <listitem>
@@ -1267,9 +1259,7 @@ FROM (SELECT id, body, q, ts_rank_cd(ti, q) AS rank
      </indexterm>
 
      <term>
-<synopsis>
-setweight(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>, <replaceable class="PARAMETER">weight</replaceable> <type>"char"</>) returns <type>tsvector</>
-</synopsis>
+      <literal>setweight(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>, <replaceable class="PARAMETER">weight</replaceable> <type>"char"</>) returns <type>tsvector</></literal>
      </term>
 
      <listitem>
@@ -1297,9 +1287,7 @@ setweight(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>,
      </indexterm>
 
      <term>
-<synopsis>
-length(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>) returns <type>integer</>
-</synopsis>
+      <literal>length(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>) returns <type>integer</></literal>
      </term>
 
      <listitem>
@@ -1316,9 +1304,7 @@ length(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>) re
      </indexterm>
 
      <term>
-<synopsis>
-strip(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>) returns <type>tsvector</>
-</synopsis>
+      <literal>strip(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>) returns <type>tsvector</></literal>
      </term>
 
      <listitem>
@@ -1352,9 +1338,7 @@ strip(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>) ret
     <varlistentry>
 
      <term>
-<synopsis>
-<type>tsquery</> &amp;&amp; <type>tsquery</>
-</synopsis>
+      <literal><type>tsquery</> &amp;&amp; <type>tsquery</></literal>
      </term>
 
      <listitem>
@@ -1368,9 +1352,7 @@ strip(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>) ret
     <varlistentry>
 
      <term>
-<synopsis>
-<type>tsquery</> || <type>tsquery</>
-</synopsis>
+      <literal><type>tsquery</> || <type>tsquery</></literal>
      </term>
 
      <listitem>
@@ -1384,9 +1366,7 @@ strip(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>) ret
     <varlistentry>
 
      <term>
-<synopsis>
-!! <type>tsquery</>
-</synopsis>
+      <literal>!! <type>tsquery</></literal>
      </term>
 
      <listitem>
@@ -1404,9 +1384,7 @@ strip(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>) ret
      </indexterm>
 
      <term>
-<synopsis>
-numnode(<replaceable class="PARAMETER">query</replaceable> <type>tsquery</>) returns <type>integer</>
-</synopsis>
+      <literal>numnode(<replaceable class="PARAMETER">query</replaceable> <type>tsquery</>) returns <type>integer</></literal>
      </term>
 
      <listitem>
@@ -1440,9 +1418,7 @@ SELECT numnode('foo &amp; bar'::tsquery);
      </indexterm>
 
      <term>
-<synopsis>
-querytree(<replaceable class="PARAMETER">query</replaceable> <type>tsquery</>) returns <type>text</>
-</synopsis>
+      <literal>querytree(<replaceable class="PARAMETER">query</replaceable> <type>tsquery</>) returns <type>text</></literal>
      </term>
 
      <listitem>
@@ -1495,9 +1471,7 @@ SELECT querytree(to_tsquery('!defined'));
      <varlistentry>
 
       <term>
-<synopsis>
-ts_rewrite (<replaceable class="PARAMETER">query</replaceable> <type>tsquery</>, <replaceable class="PARAMETER">target</replaceable> <type>tsquery</>, <replaceable class="PARAMETER">substitute</replaceable> <type>tsquery</>) returns <type>tsquery</>
-</synopsis>
+       <literal>ts_rewrite (<replaceable class="PARAMETER">query</replaceable> <type>tsquery</>, <replaceable class="PARAMETER">target</replaceable> <type>tsquery</>, <replaceable class="PARAMETER">substitute</replaceable> <type>tsquery</>) returns <type>tsquery</></literal>
       </term>
 
       <listitem>
@@ -1521,9 +1495,7 @@ SELECT ts_rewrite('a &amp; b'::tsquery, 'a'::tsquery, 'c'::tsquery);
      <varlistentry>
 
       <term>
-<synopsis>
-ts_rewrite (<replaceable class="PARAMETER">query</> <type>tsquery</>, <replaceable class="PARAMETER">select</> <type>text</>) returns <type>tsquery</>
-</synopsis>
+       <literal>ts_rewrite (<replaceable class="PARAMETER">query</> <type>tsquery</>, <replaceable class="PARAMETER">select</> <type>text</>) returns <type>tsquery</></literal>
       </term>
 
       <listitem>
@@ -3239,9 +3211,7 @@ SELECT plainto_tsquery('supernovae stars');
      </indexterm>
 
      <term>
-<synopsis>
-CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING gist(<replaceable>column</replaceable>);
-</synopsis>
+      <literal>CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING gist(<replaceable>column</replaceable>);</literal>
      </term>
 
      <listitem>
@@ -3262,9 +3232,7 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
      </indexterm>
 
      <term>
-<synopsis>
-CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING gin(<replaceable>column</replaceable>);
-</synopsis>
+      <literal>CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING gin(<replaceable>column</replaceable>);</literal>
      </term>
 
      <listitem>
@@ -3414,7 +3382,7 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
 
   <variablelist>
    <varlistentry>
-    <term><synopsis>\dF<optional>+</optional> <optional>PATTERN</optional></synopsis></term>
+    <term><literal>\dF<optional>+</optional> <optional>PATTERN</optional></literal></term>
     <listitem>
      <para>
       List text search configurations (add <literal>+</> for more detail).
@@ -3455,7 +3423,7 @@ Parser: "pg_catalog.default"
    </varlistentry>
 
    <varlistentry>
-    <term><synopsis>\dFd<optional>+</optional> <optional>PATTERN</optional></synopsis></term>
+    <term><literal>\dFd<optional>+</optional> <optional>PATTERN</optional></literal></term>
     <listitem>
      <para>
       List text search dictionaries (add <literal>+</> for more detail).
@@ -3486,7 +3454,7 @@ Parser: "pg_catalog.default"
    </varlistentry>
 
    <varlistentry>
-   <term><synopsis>\dFp<optional>+</optional> <optional>PATTERN</optional></synopsis></term>
+   <term><literal>\dFp<optional>+</optional> <optional>PATTERN</optional></literal></term>
     <listitem>
      <para>
       List text search parsers (add <literal>+</> for more detail).
@@ -3539,7 +3507,7 @@ Parser: "pg_catalog.default"
    </varlistentry>
 
    <varlistentry>
-   <term><synopsis>\dFt<optional>+</optional> <optional>PATTERN</optional></synopsis></term>
+   <term><literal>\dFt<optional>+</optional> <optional>PATTERN</optional></literal></term>
     <listitem>
      <para>
       List text search templates (add <literal>+</> for more detail).
