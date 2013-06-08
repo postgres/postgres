@@ -920,3 +920,26 @@ select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":[100,200,3
 ERROR:  cannot call json_populate_recordset on a nested object
 select * from json_populate_recordset(row('def',99,null)::jpop,'[{"c":[100,200,300],"x":43.2},{"a":{"z":true},"b":3,"c":"2012-01-20 10:42:53"}]') q;
 ERROR:  cannot call json_populate_recordset on a nested object
+-- handling of unicode surrogate pairs
+select json '{ "a":  "\ud83d\ude04\ud83d\udc36" }' -> 'a' as correct;
+          correct           
+----------------------------
+ "\ud83d\ude04\ud83d\udc36"
+(1 row)
+
+select json '{ "a":  "\ud83d\ud83d" }' -> 'a'; -- 2 high surrogates in a row
+ERROR:  invalid input syntax for type json
+DETAIL:  high order surrogate must not follow a high order surrogate.
+CONTEXT:  JSON data, line 1: { "a":...
+select json '{ "a":  "\ude04\ud83d" }' -> 'a'; -- surrogates in wrong order
+ERROR:  invalid input syntax for type json
+DETAIL:  low order surrogate must follow a high order surrogate.
+CONTEXT:  JSON data, line 1: { "a":...
+select json '{ "a":  "\ud83dX" }' -> 'a'; -- orphan high surrogate
+ERROR:  invalid input syntax for type json
+DETAIL:  low order surrogate must follow a high order surrogate.
+CONTEXT:  JSON data, line 1: { "a":...
+select json '{ "a":  "\ude04X" }' -> 'a'; -- orphan low surrogate
+ERROR:  invalid input syntax for type json
+DETAIL:  low order surrogate must follow a high order surrogate.
+CONTEXT:  JSON data, line 1: { "a":...

@@ -10152,6 +10152,15 @@ table2-mapping
 
   <note>
     <para>
+      The <type>json</type> functions and operators can impose stricter validity requirements
+      than the type's input functions. In particular, they check much more closely that any use
+      of Unicode surrogate pairs to designate characters outside the Unicode Basic Multilingual
+      Plane is correct.
+    </para>
+  </note>
+
+  <note>
+    <para>
       The <xref linkend="hstore"> extension has a cast from <type>hstore</type> to
       <type>json</type>, so that converted <type>hstore</type> values are represented as JSON objects,
       not as string values.

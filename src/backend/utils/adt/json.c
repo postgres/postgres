@@ -646,6 +646,7 @@ json_lex_string(JsonLexContext *lex)
 {
 	char	   *s;
 	int			len;
+	int			hi_surrogate = -1;
 
 	if (lex->strval != NULL)
 		resetStringInfo(lex->strval);
@@ -718,6 +719,36 @@ json_lex_string(JsonLexContext *lex)
 					int			utf8len;
 					char	   *converted;
 
+					if (ch >= 0xd800 && ch <= 0xdbff)
+					{
+						if (hi_surrogate != -1)
+							ereport(ERROR,
+							   (errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+								errmsg("invalid input syntax for type json"),
+								errdetail("high order surrogate must not follow a high order surrogate."),
+								report_json_context(lex)));
+						hi_surrogate = (ch & 0x3ff) << 10;
+						continue;
+					}
+					else if (ch >= 0xdc00 && ch <= 0xdfff)
+					{
+						if (hi_surrogate == -1)
+							ereport(ERROR,
+							   (errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+								errmsg("invalid input syntax for type json"),
+								errdetail("low order surrogate must follow a high order surrogate."),
+								report_json_context(lex)));
+						ch = 0x10000 + hi_surrogate + (ch & 0x3ff);
+						hi_surrogate = -1;
+					}
+
+					if (hi_surrogate != -1)
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+								 errmsg("invalid input syntax for type json"),
+								 errdetail("low order surrogate must follow a high order surrogate."),
+								 report_json_context(lex)));
+
 					unicode_to_utf8(ch, (unsigned char *) utf8str);
 					utf8len = pg_utf_mblen((unsigned char *) utf8str);
 					utf8str[utf8len] = '\0';
@@ -730,6 +761,13 @@ json_lex_string(JsonLexContext *lex)
 			}
 			else if (lex->strval != NULL)
 			{
+				if (hi_surrogate != -1)
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+							 errmsg("invalid input syntax for type json"),
+							 errdetail("low order surrogate must follow a high order surrogate."),
+							 report_json_context(lex)));
+
 				switch (*s)
 				{
 					case '"':
@@ -784,10 +822,24 @@ json_lex_string(JsonLexContext *lex)
 		}
 		else if (lex->strval != NULL)
 		{
+			if (hi_surrogate != -1)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+						 errmsg("invalid input syntax for type json"),
+						 errdetail("low order surrogate must follow a high order surrogate."),
+						 report_json_context(lex)));
+
 			appendStringInfoChar(lex->strval, *s);
 		}
 
 	}
+
+	if (hi_surrogate != -1)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for type json"),
+		errdetail("low order surrogate must follow a high order surrogate."),
+				 report_json_context(lex)));
 
 	/* Hooray, we found the end of the string! */
 	lex->prev_token_terminator = lex->token_terminator;

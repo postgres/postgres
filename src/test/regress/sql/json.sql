@@ -296,3 +296,11 @@ select * from json_populate_recordset(null::jpop,'[{"a":"blurfl","x":43.2},{"b":
 select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]') q;
 select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":[100,200,300],"x":43.2},{"a":{"z":true},"b":3,"c":"2012-01-20 10:42:53"}]') q;
 select * from json_populate_recordset(row('def',99,null)::jpop,'[{"c":[100,200,300],"x":43.2},{"a":{"z":true},"b":3,"c":"2012-01-20 10:42:53"}]') q;
+
+-- handling of unicode surrogate pairs
+
+select json '{ "a":  "\ud83d\ude04\ud83d\udc36" }' -> 'a' as correct;
+select json '{ "a":  "\ud83d\ud83d" }' -> 'a'; -- 2 high surrogates in a row
+select json '{ "a":  "\ude04\ud83d" }' -> 'a'; -- surrogates in wrong order
+select json '{ "a":  "\ud83dX" }' -> 'a'; -- orphan high surrogate
+select json '{ "a":  "\ude04X" }' -> 'a'; -- orphan low surrogate
