@@ -121,8 +121,8 @@ REVOKE [ GRANT OPTION FOR ]
     <term><replaceable>schema_name</replaceable></term>
     <listitem>
      <para>
-      The name of an existing schema.  Each <replaceable>target_role</>
-      must have <literal>CREATE</> privileges for each specified schema.
+      The name of an existing schema.  If specified, the default privileges
+      are altered for objects later created in that schema.
       If <literal>IN SCHEMA</> is omitted, the global default privileges
       are altered.
      </para>
