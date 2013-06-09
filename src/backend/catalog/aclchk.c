@@ -1039,27 +1039,26 @@ SetDefaultACLsInSchemas(InternalDefaultACL *iacls, List *nspnames)
 	}
 	else
 	{
-		/* Look up the schema OIDs and do permissions checks */
+		/* Look up the schema OIDs and set permissions for each one */
 		ListCell   *nspcell;
 
 		foreach(nspcell, nspnames)
 		{
 			char	   *nspname = strVal(lfirst(nspcell));
-			AclResult	aclresult;
 
-			/*
-			 * Note that we must do the permissions check against the target
-			 * role not the calling user.  We require CREATE privileges, since
-			 * without CREATE you won't be able to do anything using the
-			 * default privs anyway.
-			 */
 			iacls->nspid = get_namespace_oid(nspname, false);
 
-			aclresult = pg_namespace_aclcheck(iacls->nspid, iacls->roleid,
-											  ACL_CREATE);
-			if (aclresult != ACLCHECK_OK)
-				aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
-							   nspname);
+			/*
+			 * We used to insist that the target role have CREATE privileges
+			 * on the schema, since without that it wouldn't be able to create
+			 * an object for which these default privileges would apply.
+			 * However, this check proved to be more confusing than helpful,
+			 * and it also caused certain database states to not be
+			 * dumpable/restorable, since revoking CREATE doesn't cause
+			 * default privileges for the schema to go away.  So now, we just
+			 * allow the ALTER; if the user lacks CREATE he'll find out when
+			 * he tries to create an object.
+			 */
 
 			SetDefaultACL(iacls);
 		}
