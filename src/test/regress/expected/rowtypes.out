@@ -208,6 +208,25 @@ ERROR:  could not determine interpretation of row comparison operator ~~
 LINE 1: select ROW('ABC','DEF') ~~ ROW('DEF','ABC') as fail;
                                 ^
 HINT:  Row comparison operators must be associated with btree operator families.
+-- Comparisons of ROW() expressions can cope with some type mismatches
+select ROW(1,2) = ROW(1,2::int8);
+ ?column? 
+----------
+ t
+(1 row)
+
+select ROW(1,2) in (ROW(3,4), ROW(1,2));
+ ?column? 
+----------
+ t
+(1 row)
+
+select ROW(1,2) in (ROW(3,4), ROW(1,2::int8));
+ ?column? 
+----------
+ t
+(1 row)
+
 -- Check row comparison with a subselect
 select unique1, unique2 from tenk1
 where (unique1, unique2) < any (select ten, ten from tenk1 where hundred < 3)
@@ -251,6 +270,17 @@ order by thousand, tenthous;
       999 |     8999
       999 |     9999
 (25 rows)
+
+-- Check row comparisons with IN
+select * from int8_tbl i8 where i8 in (row(123,456));  -- fail, type mismatch
+ERROR:  cannot compare dissimilar column types bigint and integer at record column 1
+select * from int8_tbl i8
+where i8 in (row(123,456)::int8_tbl, '(4567890123456789,123)');
+        q1        | q2  
+------------------+-----
+              123 | 456
+ 4567890123456789 | 123
+(2 rows)
 
 -- Check some corner cases involving empty rowtypes
 select ROW();

@@ -762,7 +762,7 @@ transformAExprOp(ParseState *pstate, A_Expr *a)
 	else if (lexpr && IsA(lexpr, RowExpr) &&
 			 rexpr && IsA(rexpr, RowExpr))
 	{
-		/* "row op row" */
+		/* ROW() op ROW() is handled specially */
 		lexpr = transformExpr(pstate, lexpr);
 		rexpr = transformExpr(pstate, rexpr);
 		Assert(IsA(lexpr, RowExpr));
@@ -867,7 +867,7 @@ transformAExprDistinct(ParseState *pstate, A_Expr *a)
 	if (lexpr && IsA(lexpr, RowExpr) &&
 		rexpr && IsA(rexpr, RowExpr))
 	{
-		/* "row op row" */
+		/* ROW() op ROW() is handled specially */
 		return make_row_distinct_op(pstate, a->name,
 									(RowExpr *) lexpr,
 									(RowExpr *) rexpr,
@@ -957,7 +957,6 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 	List	   *rvars;
 	List	   *rnonvars;
 	bool		useOr;
-	bool		haveRowExpr;
 	ListCell   *l;
 
 	/*
@@ -970,24 +969,21 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 
 	/*
 	 * We try to generate a ScalarArrayOpExpr from IN/NOT IN, but this is only
-	 * possible if the inputs are all scalars (no RowExprs) and there is a
-	 * suitable array type available.  If not, we fall back to a boolean
-	 * condition tree with multiple copies of the lefthand expression. Also,
-	 * any IN-list items that contain Vars are handled as separate boolean
-	 * conditions, because that gives the planner more scope for optimization
-	 * on such clauses.
+	 * possible if there is a suitable array type available.  If not, we fall
+	 * back to a boolean condition tree with multiple copies of the lefthand
+	 * expression.	Also, any IN-list items that contain Vars are handled as
+	 * separate boolean conditions, because that gives the planner more scope
+	 * for optimization on such clauses.
 	 *
-	 * First step: transform all the inputs, and detect whether any are
-	 * RowExprs or contain Vars.
+	 * First step: transform all the inputs, and detect whether any contain
+	 * Vars.
 	 */
 	lexpr = transformExpr(pstate, a->lexpr);
-	haveRowExpr = (lexpr && IsA(lexpr, RowExpr));
 	rexprs = rvars = rnonvars = NIL;
 	foreach(l, (List *) a->rexpr)
 	{
 		Node	   *rexpr = transformExpr(pstate, lfirst(l));
 
-		haveRowExpr |= (rexpr && IsA(rexpr, RowExpr));
 		rexprs = lappend(rexprs, rexpr);
 		if (contain_vars_of_level(rexpr, 0))
 			rvars = lappend(rvars, rexpr);
@@ -997,9 +993,9 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 
 	/*
 	 * ScalarArrayOpExpr is only going to be useful if there's more than one
-	 * non-Var righthand item.	Also, it won't work for RowExprs.
+	 * non-Var righthand item.
 	 */
-	if (!haveRowExpr && list_length(rnonvars) > 1)
+	if (list_length(rnonvars) > 1)
 	{
 		List	   *allexprs;
 		Oid			scalar_type;
@@ -1015,8 +1011,13 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 		allexprs = list_concat(list_make1(lexpr), rnonvars);
 		scalar_type = select_common_type(pstate, allexprs, NULL, NULL);
 
-		/* Do we have an array type to use? */
-		if (OidIsValid(scalar_type))
+		/*
+		 * Do we have an array type to use?  Aside from the case where there
+		 * isn't one, we don't risk using ScalarArrayOpExpr when the common
+		 * type is RECORD, because the RowExpr comparison logic below can cope
+		 * with some cases of non-identical row types.
+		 */
+		if (OidIsValid(scalar_type) && scalar_type != RECORDOID)
 			array_type = get_array_type(scalar_type);
 		else
 			array_type = InvalidOid;
@@ -1066,14 +1067,10 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 		Node	   *rexpr = (Node *) lfirst(l);
 		Node	   *cmp;
 
-		if (haveRowExpr)
+		if (IsA(lexpr, RowExpr) &&
+			IsA(rexpr, RowExpr))
 		{
-			if (!IsA(lexpr, RowExpr) ||
-				!IsA(rexpr, RowExpr))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-				   errmsg("arguments of row IN must all be row expressions"),
-						 parser_errposition(pstate, a->location)));
+			/* ROW() op ROW() is handled specially */
 			cmp = make_row_comparison_op(pstate,
 										 a->name,
 							  (List *) copyObject(((RowExpr *) lexpr)->args),
@@ -1081,11 +1078,14 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 										 a->location);
 		}
 		else
+		{
+			/* Ordinary scalar operator */
 			cmp = (Node *) make_op(pstate,
 								   a->name,
 								   copyObject(lexpr),
 								   rexpr,
 								   a->location);
+		}
 
 		cmp = coerce_to_boolean(pstate, cmp, "IN");
 		if (result == NULL)
