@@ -202,10 +202,6 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 		write_msg(NULL, "reading table inheritance information\n");
 	inhinfo = getInherits(fout, &numInherits);
 
-	if (g_verbose)
-		write_msg(NULL, "reading rewrite rules\n");
-	getRules(fout, &numRules);
-
 	/*
 	 * Identify extension member objects and mark them as not to be dumped.
 	 * This must happen after reading all objects that can be direct members
@@ -239,6 +235,10 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	if (g_verbose)
 		write_msg(NULL, "reading triggers\n");
 	getTriggers(fout, tblinfo, numTables);
+
+	if (g_verbose)
+		write_msg(NULL, "reading rewrite rules\n");
+	getRules(fout, &numRules);
 
 	*numTablesPtr = numTables;
 	return tblinfo;
