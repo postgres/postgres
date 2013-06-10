@@ -203,8 +203,8 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	inhinfo = getInherits(fout, &numInherits);
 
 	if (g_verbose)
-		write_msg(NULL, "reading rewrite rules\n");
-	getRules(fout, &numRules);
+		write_msg(NULL, "reading event triggers\n");
+	getEventTriggers(fout, &numEventTriggers);
 
 	/*
 	 * Identify extension member objects and mark them as not to be dumped.
@@ -241,8 +241,8 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	getTriggers(fout, tblinfo, numTables);
 
 	if (g_verbose)
-		write_msg(NULL, "reading event triggers\n");
-	getEventTriggers(fout, &numEventTriggers);
+		write_msg(NULL, "reading rewrite rules\n");
+	getRules(fout, &numRules);
 
 	*numTablesPtr = numTables;
 	return tblinfo;
