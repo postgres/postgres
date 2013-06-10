@@ -20,9 +20,7 @@ static void
 int
 main(int argc, char **argv)
 {
-	int			c,
-				optindex,
-				opt_index = 2;
+	int			c;
 
 	const char *progname;
 
@@ -32,14 +30,22 @@ main(int argc, char **argv)
 	const char *pgdbname = NULL;
 	const char *connect_timeout = DEFAULT_CONNECT_TIMEOUT;
 
-	const char *keywords[7] = {NULL};
-	const char *values[7] = {NULL};
+	const char *pghost_str = NULL;
+	const char *pgport_str = NULL;
+
+#define PARAMS_ARRAY_SIZE	7
+
+	const char *keywords[PARAMS_ARRAY_SIZE];
+	const char *values[PARAMS_ARRAY_SIZE];
 
 	bool		quiet = false;
 
-	PGPing		rv;
-	PQconninfoOption *connect_options,
-			   *conn_opt_ptr;
+	PGPing rv;
+	PQconninfoOption *opts = NULL;
+	PQconninfoOption *defs = NULL;
+	PQconninfoOption *opt;
+	PQconninfoOption *def;
+	char	   *errmsg = NULL;
 
 	/*
 	 * We accept user and database as options to avoid useless errors from
@@ -60,7 +66,7 @@ main(int argc, char **argv)
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pgscripts"));
 	handle_help_version_opts(argc, argv, progname, help);
 
-	while ((c = getopt_long(argc, argv, "d:h:p:qt:U:V", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "d:h:p:qt:U:", long_options, NULL)) != -1)
 	{
 		switch (c)
 		{
@@ -106,66 +112,74 @@ main(int argc, char **argv)
 		exit(PQPING_NO_ATTEMPT);
 	}
 
-	/*
-	 * Set connection options
-	 */
+	keywords[0] = "host";
+	values[0] = pghost;
+	keywords[1] = "port";
+	values[1] = pgport;
+	keywords[2] = "user";
+	values[2] = pguser;
+	keywords[3] = "dbname";
+	values[3] = pgdbname;
+	keywords[4] = "connect_timeout";
+	values[4] = connect_timeout;
+	keywords[5] = "fallback_application_name";
+	values[5] = progname;
+	keywords[6] = NULL;
+	values[6] = NULL;
 
-	keywords[0] = "connect_timeout";
-	values[0] = connect_timeout;
-	keywords[1] = "fallback_application_name";
-	values[1] = progname;
-	if (pguser)
-	{
-		keywords[opt_index] = "user";
-		values[opt_index] = pguser;
-		opt_index++;
-	}
+	/*
+	 * Get the host and port so we can display them in our output
+	 */
 	if (pgdbname)
 	{
-		keywords[opt_index] = "dbname";
-		values[opt_index] = pgdbname;
-		opt_index++;
+		opts = PQconninfoParse(pgdbname, &errmsg);
+		if (opts == NULL)
+		{
+			fprintf(stderr, _("%s: %s\n"), progname, errmsg);
+			exit(PQPING_NO_ATTEMPT);
+		}
 	}
 
-	/*
-	 * Get the default host and port so we can display them in our output
-	 */
-	connect_options = PQconndefaults();
-	conn_opt_ptr = connect_options;
-	while (conn_opt_ptr->keyword)
+	defs = PQconndefaults();
+	if (defs == NULL)
 	{
-		if (strncmp(conn_opt_ptr->keyword, "host", 5) == 0)
+		fprintf(stderr, _("%s: cannot fetch default options\n"), progname);
+		exit(PQPING_NO_ATTEMPT);
+	}
+
+	for (opt = opts, def = defs; def->keyword; def++)
+	{
+		if (strcmp(def->keyword, "hostaddr") == 0 ||
+			strcmp(def->keyword, "host") == 0)
 		{
-			if (pghost)
-			{
-				keywords[opt_index] = conn_opt_ptr->keyword;
-				values[opt_index] = pghost;
-				opt_index++;
-			}
-			else if (conn_opt_ptr->val)
-				pghost = conn_opt_ptr->val;
+			if (opt && opt->val)
+				pghost_str = opt->val;
+			else if (pghost)
+				pghost_str = pghost;
+			else if (def->val)
+				pghost_str = def->val;
 			else
-				pghost = DEFAULT_PGSOCKET_DIR;
+				pghost_str = DEFAULT_PGSOCKET_DIR;
 		}
-		else if (strncmp(conn_opt_ptr->keyword, "port", 5) == 0)
+		else if (strcmp(def->keyword, "port") == 0)
 		{
-			if (pgport)
-			{
-				keywords[opt_index] = conn_opt_ptr->keyword;
-				values[opt_index] = pgport;
-				opt_index++;
-			}
-			else if (conn_opt_ptr->val)
-				pgport = conn_opt_ptr->val;
+			if (opt && opt->val)
+				pgport_str = opt->val;
+			else if (pgport)
+				pgport_str = pgport;
+			else if (def->val)
+				pgport_str = def->val;
 		}
-		conn_opt_ptr++;
+
+		if (opt)
+			opt++;
 	}
 
 	rv = PQpingParams(keywords, values, 1);
 
 	if (!quiet)
 	{
-		printf("%s:%s - ", pghost, pgport);
+		printf("%s:%s - ", pghost_str, pgport_str);
 
 		switch (rv)
 		{
@@ -185,8 +199,6 @@ main(int argc, char **argv)
 				printf("unknown\n");
 		}
 	}
-
-	PQconninfoFree(connect_options);
 
 	exit(rv);
 }
