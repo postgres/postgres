@@ -646,6 +646,9 @@ cache_record_field_properties(TypeCacheEntry *typentry)
 			load_typcache_tupdesc(typentry);
 		tupdesc = typentry->tupDesc;
 
+		/* Must bump the refcount while we do additional catalog lookups */
+		IncrTupleDescRefCount(tupdesc);
+
 		/* Have each property if all non-dropped fields have the property */
 		newflags = (TCFLAGS_HAVE_FIELD_EQUALITY |
 					TCFLAGS_HAVE_FIELD_COMPARE);
@@ -669,6 +672,8 @@ cache_record_field_properties(TypeCacheEntry *typentry)
 				break;
 		}
 		typentry->flags |= newflags;
+
+		DecrTupleDescRefCount(tupdesc);
 	}
 	typentry->flags |= TCFLAGS_CHECKED_FIELD_PROPERTIES;
 }
