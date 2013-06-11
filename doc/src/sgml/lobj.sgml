@@ -527,10 +527,14 @@ int lo_unlink(PGconn *conn, Oid lobjId);
 
   <para>
    There are server-side functions callable from SQL that correspond to
-   each of the client-side functions described above; indeed, for the
-   most part the client-side functions are simply interfaces to the
-   equivalent server-side functions.  The ones that are actually useful
-   to call via SQL commands are
+   each of the client-side functions described above(please note
+   that the server side function
+   for <function>lo_read</function> is <function>loread</function> and
+   the server side function for <function>lo_write</function>
+   is <function>lowrite</function>); indeed, for the most part the
+   client-side functions are simply interfaces to the equivalent
+   server-side functions.  The ones that are actually useful to call
+   via SQL commands are
    <function>lo_creat</function><indexterm><primary>lo_creat</></>,
    <function>lo_create</function><indexterm><primary>lo_create</></>,
    <function>lo_unlink</function><indexterm><primary>lo_unlink</></>,
