@@ -411,9 +411,9 @@ tokenize_file(const char *filename, FILE *file,
 								line_number, filename)));
 
 		/* Strip trailing linebreak from rawline */
-		while (rawline[strlen(rawline) - 1] == '\n' ||
-			   rawline[strlen(rawline) - 1] == '\r')
-			rawline[strlen(rawline) - 1] = '\0';
+		lineptr = rawline + strlen(rawline) - 1;
+		while (lineptr >= rawline && (*lineptr == '\n' || *lineptr == '\r'))
+			*lineptr-- = '\0';
 
 		lineptr = rawline;
 		while (strlen(lineptr) > 0)
