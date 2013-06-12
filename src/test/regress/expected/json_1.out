@@ -922,11 +922,9 @@ select * from json_populate_recordset(row('def',99,null)::jpop,'[{"c":[100,200,3
 ERROR:  cannot call json_populate_recordset on a nested object
 -- handling of unicode surrogate pairs
 select json '{ "a":  "\ud83d\ude04\ud83d\udc36" }' -> 'a' as correct_in_utf8;
-      correct_in_utf8       
-----------------------------
- "\ud83d\ude04\ud83d\udc36"
-(1 row)
-
+ERROR:  invalid input syntax for type json
+DETAIL:  Unicode escape for code points higher than U+007F not permitted in non-UTF8 encoding
+CONTEXT:  JSON data, line 1: { "a":...
 select json '{ "a":  "\ud83d\ud83d" }' -> 'a'; -- 2 high surrogates in a row
 ERROR:  invalid input syntax for type json
 DETAIL:  high order surrogate must not follow a high order surrogate.
@@ -945,11 +943,9 @@ DETAIL:  low order surrogate must follow a high order surrogate.
 CONTEXT:  JSON data, line 1: { "a":...
 --handling of simple unicode escapes
 select json '{ "a":  "the Copyright \u00a9 sign" }' ->> 'a' as correct_in_utf8;
-   correct_in_utf8    
-----------------------
- the Copyright © sign
-(1 row)
-
+ERROR:  invalid input syntax for type json
+DETAIL:  Unicode escape for code points higher than U+007F not permitted in non-UTF8 encoding
+CONTEXT:  JSON data, line 1: { "a":...
 select json '{ "a":  "dollar \u0024 character" }' ->> 'a' as correct_everywhere;
  correct_everywhere 
 --------------------

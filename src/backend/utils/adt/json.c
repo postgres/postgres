@@ -717,7 +717,6 @@ json_lex_string(JsonLexContext *lex)
 				{
 					char		utf8str[5];
 					int			utf8len;
-					char	   *converted;
 
 					if (ch >= 0xd800 && ch <= 0xdbff)
 					{
@@ -749,13 +748,40 @@ json_lex_string(JsonLexContext *lex)
 								 errdetail("low order surrogate must follow a high order surrogate."),
 								 report_json_context(lex)));
 
-					unicode_to_utf8(ch, (unsigned char *) utf8str);
-					utf8len = pg_utf_mblen((unsigned char *) utf8str);
-					utf8str[utf8len] = '\0';
-					converted = pg_any_to_server(utf8str, utf8len, PG_UTF8);
-					appendStringInfoString(lex->strval, converted);
-					if (converted != utf8str)
-						pfree(converted);
+					/*
+					 * For UTF8, replace the escape sequence by the actual utf8
+					 * character in lex->strval. Do this also for other encodings
+					 * if the escape designates an ASCII character, otherwise
+					 * raise an error. We don't ever unescape a \u0000, since that
+					 * would result in an impermissible nul byte.
+					 */
+
+					if (ch == 0)
+					{
+						appendStringInfoString(lex->strval, "\\u0000");
+					}
+					else if (GetDatabaseEncoding() == PG_UTF8)
+					{
+						unicode_to_utf8(ch, (unsigned char *) utf8str);
+						utf8len = pg_utf_mblen((unsigned char *) utf8str);
+						appendBinaryStringInfo(lex->strval, utf8str, utf8len);
+					}
+					else if (ch <= 0x007f)
+					{
+						/*
+						 * This is the only way to designate things like a form feed
+						 * character in JSON, so it's useful in all encodings.
+						 */
+						appendStringInfoChar(lex->strval, (char) ch);
+					}
+					else
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+								 errmsg("invalid input syntax for type json"),
+								 errdetail("Unicode escape for code points higher than U+007F not permitted in non-UTF8 encoding"),
+								 report_json_context(lex)));
+					}
 
 				}
 			}
