@@ -2014,6 +2014,7 @@ view_is_auto_updatable(Relation view)
 	base_rte = rt_fetch(rtr->rtindex, viewquery->rtable);
 	if (base_rte->rtekind != RTE_RELATION ||
 		(base_rte->relkind != RELKIND_RELATION &&
+		 base_rte->relkind != RELKIND_FOREIGN_TABLE &&
 		 base_rte->relkind != RELKIND_VIEW))
 		return gettext_noop("Views that do not select from a single table or view are not automatically updatable.");
 
@@ -2058,49 +2059,56 @@ view_is_auto_updatable(Relation view)
 
 
 /*
- * relation_is_updatable - test if the specified relation is updatable.
+ * relation_is_updatable - determine which update events the specified
+ * relation supports.
  *
  * This is used for the information_schema views, which have separate concepts
  * of "updatable" and "trigger updatable".	A relation is "updatable" if it
  * can be updated without the need for triggers (either because it has a
  * suitable RULE, or because it is simple enough to be automatically updated).
- *
  * A relation is "trigger updatable" if it has a suitable INSTEAD OF trigger.
  * The SQL standard regards this as not necessarily updatable, presumably
  * because there is no way of knowing what the trigger will actually do.
- * That's currently handled directly in the information_schema views, so
- * need not be considered here.
+ * The information_schema views therefore call this function with
+ * include_triggers = false.  However, other callers might only care whether
+ * data-modifying SQL will work, so they can pass include_triggers = true
+ * to have trigger updatability included in the result.
  *
- * In the case of an automatically updatable view, the base relation must
- * also be updatable.
- *
- * reloid is the pg_class OID to examine.  req_events is a bitmask of
- * rule event numbers; the relation is considered rule-updatable if it has
- * all the specified rules.  (We do it this way so that we can test for
- * UPDATE plus DELETE rules in a single call.)
+ * The return value is a bitmask of rule event numbers indicating which of
+ * the INSERT, UPDATE and DELETE operations are supported.	(We do it this way
+ * so that we can test for UPDATE plus DELETE support in a single call.)
  */
-bool
-relation_is_updatable(Oid reloid, int req_events)
+int
+relation_is_updatable(Oid reloid, bool include_triggers)
 {
+	int			events = 0;
 	Relation	rel;
 	RuleLock   *rulelocks;
+
+#define ALL_EVENTS ((1 << CMD_INSERT) | (1 << CMD_UPDATE) | (1 << CMD_DELETE))
 
 	rel = try_relation_open(reloid, AccessShareLock);
 
 	/*
-	 * If the relation doesn't exist, say "false" rather than throwing an
+	 * If the relation doesn't exist, return zero rather than throwing an
 	 * error.  This is helpful since scanning an information_schema view under
 	 * MVCC rules can result in referencing rels that were just deleted
 	 * according to a SnapshotNow probe.
 	 */
 	if (rel == NULL)
-		return false;
+		return 0;
+
+	/* If the relation is a table, it is always updatable */
+	if (rel->rd_rel->relkind == RELKIND_RELATION)
+	{
+		relation_close(rel, AccessShareLock);
+		return ALL_EVENTS;
+	}
 
 	/* Look for unconditional DO INSTEAD rules, and note supported events */
 	rulelocks = rel->rd_rules;
 	if (rulelocks != NULL)
 	{
-		int			events = 0;
 		int			i;
 
 		for (i = 0; i < rulelocks->numLocks; i++)
@@ -2108,16 +2116,61 @@ relation_is_updatable(Oid reloid, int req_events)
 			if (rulelocks->rules[i]->isInstead &&
 				rulelocks->rules[i]->qual == NULL)
 			{
-				events |= 1 << rulelocks->rules[i]->event;
+				events |= ((1 << rulelocks->rules[i]->event) & ALL_EVENTS);
 			}
 		}
 
-		/* If we have all rules needed, say "yes" */
-		if ((events & req_events) == req_events)
+		/* If we have rules for all events, we're done */
+		if (events == ALL_EVENTS)
 		{
 			relation_close(rel, AccessShareLock);
-			return true;
+			return events;
 		}
+	}
+
+	/* Similarly look for INSTEAD OF triggers, if they are to be included */
+	if (include_triggers)
+	{
+		TriggerDesc *trigDesc = rel->trigdesc;
+
+		if (trigDesc)
+		{
+			if (trigDesc->trig_insert_instead_row)
+				events |= (1 << CMD_INSERT);
+			if (trigDesc->trig_update_instead_row)
+				events |= (1 << CMD_UPDATE);
+			if (trigDesc->trig_delete_instead_row)
+				events |= (1 << CMD_DELETE);
+
+			/* If we have triggers for all events, we're done */
+			if (events == ALL_EVENTS)
+			{
+				relation_close(rel, AccessShareLock);
+				return events;
+			}
+		}
+	}
+
+	/* If this is a foreign table, check which update events it supports */
+	if (rel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
+	{
+		FdwRoutine *fdwroutine = GetFdwRoutineForRelation(rel, false);
+
+		if (fdwroutine->IsForeignRelUpdatable != NULL)
+			events |= fdwroutine->IsForeignRelUpdatable(rel);
+		else
+		{
+			/* Assume presence of executor functions is sufficient */
+			if (fdwroutine->ExecForeignInsert != NULL)
+				events |= (1 << CMD_INSERT);
+			if (fdwroutine->ExecForeignUpdate != NULL)
+				events |= (1 << CMD_UPDATE);
+			if (fdwroutine->ExecForeignDelete != NULL)
+				events |= (1 << CMD_DELETE);
+		}
+
+		relation_close(rel, AccessShareLock);
+		return events;
 	}
 
 	/* Check if this is an automatically updatable view */
@@ -2133,25 +2186,26 @@ relation_is_updatable(Oid reloid, int req_events)
 		viewquery = get_view_query(rel);
 		rtr = (RangeTblRef *) linitial(viewquery->jointree->fromlist);
 		base_rte = rt_fetch(rtr->rtindex, viewquery->rtable);
+		Assert(base_rte->rtekind == RTE_RELATION);
 
 		if (base_rte->relkind == RELKIND_RELATION)
 		{
 			/* Tables are always updatable */
 			relation_close(rel, AccessShareLock);
-			return true;
+			return ALL_EVENTS;
 		}
 		else
 		{
 			/* Do a recursive check for any other kind of base relation */
 			baseoid = base_rte->relid;
 			relation_close(rel, AccessShareLock);
-			return relation_is_updatable(baseoid, req_events);
+			return relation_is_updatable(baseoid, include_triggers);
 		}
 	}
 
-	/* If we reach here, the relation is not updatable */
+	/* If we reach here, the relation may support some update commands */
 	relation_close(rel, AccessShareLock);
-	return false;
+	return events;
 }
 
 

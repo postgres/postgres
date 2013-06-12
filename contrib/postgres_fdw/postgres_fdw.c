@@ -277,6 +277,7 @@ static TupleTableSlot *postgresExecForeignDelete(EState *estate,
 						  TupleTableSlot *planSlot);
 static void postgresEndForeignModify(EState *estate,
 						 ResultRelInfo *resultRelInfo);
+static int	postgresIsForeignRelUpdatable(Relation rel);
 static void postgresExplainForeignScan(ForeignScanState *node,
 						   ExplainState *es);
 static void postgresExplainForeignModify(ModifyTableState *mtstate,
@@ -355,6 +356,7 @@ postgres_fdw_handler(PG_FUNCTION_ARGS)
 	routine->ExecForeignUpdate = postgresExecForeignUpdate;
 	routine->ExecForeignDelete = postgresExecForeignDelete;
 	routine->EndForeignModify = postgresEndForeignModify;
+	routine->IsForeignRelUpdatable = postgresIsForeignRelUpdatable;
 
 	/* Support functions for EXPLAIN */
 	routine->ExplainForeignScan = postgresExplainForeignScan;
@@ -1594,6 +1596,51 @@ postgresEndForeignModify(EState *estate,
 	/* Release remote connection */
 	ReleaseConnection(fmstate->conn);
 	fmstate->conn = NULL;
+}
+
+/*
+ * postgresIsForeignRelUpdatable
+ *		Determine whether a foreign table supports INSERT, UPDATE and/or
+ *		DELETE.
+ */
+static int
+postgresIsForeignRelUpdatable(Relation rel)
+{
+	bool		updatable;
+	ForeignTable *table;
+	ForeignServer *server;
+	ListCell   *lc;
+
+	/*
+	 * By default, all postgres_fdw foreign tables are assumed updatable. This
+	 * can be overridden by a per-server setting, which in turn can be
+	 * overridden by a per-table setting.
+	 */
+	updatable = true;
+
+	table = GetForeignTable(RelationGetRelid(rel));
+	server = GetForeignServer(table->serverid);
+
+	foreach(lc, server->options)
+	{
+		DefElem    *def = (DefElem *) lfirst(lc);
+
+		if (strcmp(def->defname, "updatable") == 0)
+			updatable = defGetBoolean(def);
+	}
+	foreach(lc, table->options)
+	{
+		DefElem    *def = (DefElem *) lfirst(lc);
+
+		if (strcmp(def->defname, "updatable") == 0)
+			updatable = defGetBoolean(def);
+	}
+
+	/*
+	 * Currently "updatable" means support for INSERT, UPDATE and DELETE.
+	 */
+	return updatable ?
+		(1 << CMD_INSERT) | (1 << CMD_UPDATE) | (1 << CMD_DELETE) : 0;
 }
 
 /*

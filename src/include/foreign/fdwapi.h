@@ -80,6 +80,8 @@ typedef TupleTableSlot *(*ExecForeignDelete_function) (EState *estate,
 typedef void (*EndForeignModify_function) (EState *estate,
 													   ResultRelInfo *rinfo);
 
+typedef int (*IsForeignRelUpdatable_function) (Relation rel);
+
 typedef void (*ExplainForeignScan_function) (ForeignScanState *node,
 													struct ExplainState *es);
 
@@ -134,6 +136,7 @@ typedef struct FdwRoutine
 	ExecForeignUpdate_function ExecForeignUpdate;
 	ExecForeignDelete_function ExecForeignDelete;
 	EndForeignModify_function EndForeignModify;
+	IsForeignRelUpdatable_function IsForeignRelUpdatable;
 
 	/* Support functions for EXPLAIN */
 	ExplainForeignScan_function ExplainForeignScan;

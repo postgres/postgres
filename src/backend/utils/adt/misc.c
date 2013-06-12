@@ -528,30 +528,49 @@ pg_collation_for(PG_FUNCTION_ARGS)
 
 
 /*
- * information_schema support functions
+ * pg_relation_is_updatable - determine which update events the specified
+ * relation supports.
  *
- * Test whether a view (identified by pg_class OID) is insertable-into or
- * updatable.  The latter requires delete capability too.  This is an
- * artifact of the way the SQL standard defines the information_schema views:
- * if we defined separate functions for update and delete, we'd double the
- * work required to compute the view columns.
- *
- * These rely on relation_is_updatable(), which is in rewriteHandler.c.
+ * This relies on relation_is_updatable() in rewriteHandler.c, which see
+ * for additional information.
  */
 Datum
-pg_view_is_insertable(PG_FUNCTION_ARGS)
+pg_relation_is_updatable(PG_FUNCTION_ARGS)
 {
-	Oid			viewoid = PG_GETARG_OID(0);
-	int			req_events = (1 << CMD_INSERT);
+	Oid			reloid = PG_GETARG_OID(0);
+	bool		include_triggers = PG_GETARG_BOOL(1);
 
-	PG_RETURN_BOOL(relation_is_updatable(viewoid, req_events));
+	PG_RETURN_INT32(relation_is_updatable(reloid, include_triggers));
 }
 
+/*
+ * pg_column_is_updatable - determine whether a column is updatable
+ *
+ * Currently we just check whether the column's relation is updatable.
+ * Eventually we might allow views to have some updatable and some
+ * non-updatable columns.
+ *
+ * Also, this function encapsulates the decision about just what
+ * information_schema.columns.is_updatable actually means.	It's not clear
+ * whether deletability of the column's relation should be required, so
+ * we want that decision in C code where we could change it without initdb.
+ */
 Datum
-pg_view_is_updatable(PG_FUNCTION_ARGS)
+pg_column_is_updatable(PG_FUNCTION_ARGS)
 {
-	Oid			viewoid = PG_GETARG_OID(0);
-	int			req_events = (1 << CMD_UPDATE) | (1 << CMD_DELETE);
+	Oid			reloid = PG_GETARG_OID(0);
+	AttrNumber	attnum = PG_GETARG_INT16(1);
+	bool		include_triggers = PG_GETARG_BOOL(2);
+	int			events;
 
-	PG_RETURN_BOOL(relation_is_updatable(viewoid, req_events));
+	/* System columns are never updatable */
+	if (attnum <= 0)
+		PG_RETURN_BOOL(false);
+
+	events = relation_is_updatable(reloid, include_triggers);
+
+	/* We require both updatability and deletability of the relation */
+#define REQ_EVENTS ((1 << CMD_UPDATE) | (1 << CMD_DELETE))
+
+	PG_RETURN_BOOL((events & REQ_EVENTS) == REQ_EVENTS);
 }

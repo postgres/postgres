@@ -565,6 +565,33 @@ EndForeignModify (EState *estate,
      <literal>NULL</>, no action is taken during executor shutdown.
     </para>
 
+    <para>
+<programlisting>
+int
+IsForeignRelUpdatable (Relation rel);
+</programlisting>
+
+     Report which update operations the specified foreign table supports.
+     The return value should be a bitmask of rule event numbers indicating
+     which operations are supported by the foreign table, using the
+     <literal>CmdType</> enumeration; that is,
+     <literal>(1 << CMD_UPDATE) = 4</> for <command>UPDATE</>,
+     <literal>(1 << CMD_INSERT) = 8</> for <command>INSERT</>, and
+     <literal>(1 << CMD_DELETE) = 16</> for <command>DELETE</>.
+    </para>
+
+    <para>
+     If the <function>IsForeignRelUpdatable</> pointer is set to
+     <literal>NULL</>, foreign tables are assumed to be insertable, updatable,
+     or deletable if the FDW provides <function>ExecForeignInsert</>,
+     <function>ExecForeignUpdate</>, or <function>ExecForeignDelete</>
+     respectively.  This function is only needed if the FDW supports some
+     tables that are updatable and some that are not.  (Even then, it's
+     permissible to throw an error in the execution routine instead of
+     checking in this function.  However, this function is used to determine
+     updatability for display in the <literal>information_schema</> views.)
+    </para>
+
    </sect2>
 
    <sect2 id="fdw-callbacks-explain">

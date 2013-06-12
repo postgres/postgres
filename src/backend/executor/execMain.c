@@ -1015,6 +1015,12 @@ CheckValidResultRel(Relation resultRel, CmdType operation)
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							errmsg("cannot insert into foreign table \"%s\"",
 								   RelationGetRelationName(resultRel))));
+					if (fdwroutine->IsForeignRelUpdatable != NULL &&
+						(fdwroutine->IsForeignRelUpdatable(resultRel) & (1 << CMD_INSERT)) == 0)
+						ereport(ERROR,
+						  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						errmsg("foreign table \"%s\" does not allow inserts",
+							   RelationGetRelationName(resultRel))));
 					break;
 				case CMD_UPDATE:
 					if (fdwroutine->ExecForeignUpdate == NULL)
@@ -1022,6 +1028,12 @@ CheckValidResultRel(Relation resultRel, CmdType operation)
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 								 errmsg("cannot update foreign table \"%s\"",
 										RelationGetRelationName(resultRel))));
+					if (fdwroutine->IsForeignRelUpdatable != NULL &&
+						(fdwroutine->IsForeignRelUpdatable(resultRel) & (1 << CMD_UPDATE)) == 0)
+						ereport(ERROR,
+						  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						errmsg("foreign table \"%s\" does not allow updates",
+							   RelationGetRelationName(resultRel))));
 					break;
 				case CMD_DELETE:
 					if (fdwroutine->ExecForeignDelete == NULL)
@@ -1029,6 +1041,12 @@ CheckValidResultRel(Relation resultRel, CmdType operation)
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							errmsg("cannot delete from foreign table \"%s\"",
 								   RelationGetRelationName(resultRel))));
+					if (fdwroutine->IsForeignRelUpdatable != NULL &&
+						(fdwroutine->IsForeignRelUpdatable(resultRel) & (1 << CMD_DELETE)) == 0)
+						ereport(ERROR,
+						  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						errmsg("foreign table \"%s\" does not allow deletes",
+							   RelationGetRelationName(resultRel))));
 					break;
 				default:
 					elog(ERROR, "unrecognized CmdType: %d", (int) operation);

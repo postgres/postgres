@@ -731,7 +731,8 @@ CREATE VIEW columns AS
            CAST(null AS character_data) AS generation_expression,
 
            CAST(CASE WHEN c.relkind = 'r' OR
-                          (c.relkind = 'v' AND pg_view_is_updatable(c.oid))
+                          (c.relkind IN ('v', 'f') AND
+                           pg_column_is_updatable(c.oid, a.attnum, false))
                 THEN 'YES' ELSE 'NO' END AS yes_or_no) AS is_updatable
 
     FROM (pg_attribute a LEFT JOIN pg_attrdef ad ON attrelid = adrelid AND attnum = adnum)
@@ -1895,7 +1896,9 @@ CREATE VIEW tables AS
            CAST(t.typname AS sql_identifier) AS user_defined_type_name,
 
            CAST(CASE WHEN c.relkind = 'r' OR
-                          (c.relkind = 'v' AND pg_view_is_insertable(c.oid))
+                          (c.relkind IN ('v', 'f') AND
+                           -- 1 << CMD_INSERT
+                           pg_relation_is_updatable(c.oid, false) & 8 = 8)
                 THEN 'YES' ELSE 'NO' END AS yes_or_no) AS is_insertable_into,
 
            CAST(CASE WHEN t.typname IS NOT NULL THEN 'YES' ELSE 'NO' END AS yes_or_no) AS is_typed,
@@ -2494,11 +2497,15 @@ CREATE VIEW views AS
            CAST('NONE' AS character_data) AS check_option,
 
            CAST(
-             CASE WHEN pg_view_is_updatable(c.oid) THEN 'YES' ELSE 'NO' END
+             -- (1 << CMD_UPDATE) + (1 << CMD_DELETE)
+             CASE WHEN pg_relation_is_updatable(c.oid, false) & 20 = 20
+                  THEN 'YES' ELSE 'NO' END
              AS yes_or_no) AS is_updatable,
 
            CAST(
-             CASE WHEN pg_view_is_insertable(c.oid) THEN 'YES' ELSE 'NO' END
+             -- 1 << CMD_INSERT
+             CASE WHEN pg_relation_is_updatable(c.oid, false) & 8 = 8
+                  THEN 'YES' ELSE 'NO' END
              AS yes_or_no) AS is_insertable_into,
 
            CAST(

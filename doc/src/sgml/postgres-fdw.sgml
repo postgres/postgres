@@ -254,6 +254,43 @@
    </para>
 
   </sect3>
+
+  <sect3>
+   <title>Updatability Options</title>
+
+   <para>
+    By default all foreign tables using <filename>postgres_fdw</> are assumed
+    to be updatable.  This may be overridden using the following option:
+   </para>
+
+   <variablelist>
+
+    <varlistentry>
+     <term><literal>updatable</literal></term>
+     <listitem>
+      <para>
+       This option controls whether <filename>postgres_fdw</> allows foreign
+       tables to be modified using <command>INSERT</>, <command>UPDATE</> and
+       <command>DELETE</> commands.  It can be specified for a foreign table
+       or a foreign server.  A table-level option overrides a server-level
+       option.
+       The default is <literal>true</>.
+      </para>
+
+      <para>
+       Of course, if the remote table is not in fact updatable, an error
+       would occur anyway.  Use of this option primarily allows the error to
+       be thrown locally without querying the remote server.  Note however
+       that the <literal>information_schema</> views will report a
+       <filename>postgres_fdw</> foreign table to be updatable (or not)
+       according to the setting of this option, without any check of the
+       remote server.
+      </para>
+     </listitem>
+    </varlistentry>
+
+   </variablelist>
+  </sect3>
  </sect2>
 
  <sect2>

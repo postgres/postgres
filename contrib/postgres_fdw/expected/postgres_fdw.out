@@ -79,6 +79,7 @@ ALTER FOREIGN TABLE ft2 DROP COLUMN cx;
 -- configure options
 ALTER SERVER testserver1 OPTIONS (
 	use_remote_estimate 'false',
+	updatable 'true',
 	fdw_startup_cost '123.456',
 	fdw_tuple_cost '0.123',
 	service 'value',
