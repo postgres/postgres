@@ -1849,32 +1849,30 @@ HaveVirtualXIDsDelayingChkpt(VirtualTransactionId *vxids, int nvxids)
 
 	LWLockAcquire(ProcArrayLock, LW_SHARED);
 
-	while (VirtualTransactionIdIsValid(*vxids))
+	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		for (index = 0; index < arrayP->numProcs; index++)
-		{
-			int			pgprocno = arrayP->pgprocnos[index];
-			volatile PGPROC *proc = &allProcs[pgprocno];
-			volatile PGXACT *pgxact = &allPgXact[pgprocno];
-			VirtualTransactionId vxid;
+		int			pgprocno = arrayP->pgprocnos[index];
+		volatile PGPROC *proc = &allProcs[pgprocno];
+		volatile PGXACT *pgxact = &allPgXact[pgprocno];
+		VirtualTransactionId vxid;
 
-			GET_VXID_FROM_PGPROC(vxid, *proc);
-			if (VirtualTransactionIdIsValid(vxid))
+		GET_VXID_FROM_PGPROC(vxid, *proc);
+
+		if (pgxact->delayChkpt && VirtualTransactionIdIsValid(vxid))
+		{
+			int			i;
+
+			for (i = 0; i < nvxids; i++)
 			{
-				if (VirtualTransactionIdEquals(vxid, *vxids) &&
-					pgxact->delayChkpt)
+				if (VirtualTransactionIdEquals(vxid, vxids[i]))
 				{
 					result = true;
 					break;
 				}
 			}
+			if (result)
+				break;
 		}
-
-		if (result)
-			break;
-
-		/* The virtual transaction is gone now, wait for the next one */
-		vxids++;
 	}
 
 	LWLockRelease(ProcArrayLock);
