@@ -598,7 +598,7 @@ json_lex(JsonLexContext *lex)
 					 * the whole word as an unexpected token, rather than just
 					 * some unintuitive prefix thereof.
 					 */
-					for (p = s; JSON_ALPHANUMERIC_CHAR(*p) && p - s < lex->input_length - len; p++)
+					for (p = s; p - s < lex->input_length - len && JSON_ALPHANUMERIC_CHAR(*p); p++)
 						 /* skip */ ;
 
 					/*
@@ -651,16 +651,21 @@ json_lex_string(JsonLexContext *lex)
 	if (lex->strval != NULL)
 		resetStringInfo(lex->strval);
 
+	Assert(lex->input_length > 0);
+	s = lex->token_start;
 	len = lex->token_start - lex->input;
-	len++;
-	for (s = lex->token_start + 1; *s != '"'; s++, len++)
+	for (;;)
 	{
+		s++;
+		len++;
 		/* Premature end of the string. */
 		if (len >= lex->input_length)
 		{
 			lex->token_terminator = s;
 			report_invalid_token(lex);
 		}
+		else if (*s == '"')
+			break;
 		else if ((unsigned char) *s < 32)
 		{
 			/* Per RFC4627, these characters MUST be escaped. */
@@ -921,7 +926,7 @@ json_lex_number(JsonLexContext *lex, char *s)
 		{
 			s++;
 			len++;
-		} while (*s >= '0' && *s <= '9' && len < lex->input_length);
+		} while (len < lex->input_length && *s >= '0' && *s <= '9');
 	}
 	else
 		error = true;
@@ -939,7 +944,7 @@ json_lex_number(JsonLexContext *lex, char *s)
 			{
 				s++;
 				len++;
-			} while (*s >= '0' && *s <= '9' && len < lex->input_length);
+			} while (len < lex->input_length && *s >= '0' && *s <= '9');
 		}
 	}
 
@@ -970,7 +975,7 @@ json_lex_number(JsonLexContext *lex, char *s)
 	 * here should be considered part of the token for error-reporting
 	 * purposes.
 	 */
-	for (p = s; JSON_ALPHANUMERIC_CHAR(*p) && len < lex->input_length; p++, len++)
+	for (p = s; len < lex->input_length && JSON_ALPHANUMERIC_CHAR(*p); p++, len++)
 		error = true;
 	lex->prev_token_terminator = lex->token_terminator;
 	lex->token_terminator = p;
@@ -1138,8 +1143,8 @@ report_json_context(JsonLexContext *lex)
 	line_number = 1;
 	for (;;)
 	{
-		/* Always advance over newlines (context_end test is just paranoia) */
-		if (*context_start == '\n' && context_start < context_end)
+		/* Always advance over newlines */
+		if (context_start < context_end && *context_start == '\n')
 		{
 			context_start++;
 			line_start = context_start;
