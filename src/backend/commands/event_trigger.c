@@ -302,6 +302,8 @@ insert_event_trigger_tuple(char *trigname, char *eventname, Oid evtOwner,
 	HeapTuple	tuple;
 	Datum		values[Natts_pg_trigger];
 	bool		nulls[Natts_pg_trigger];
+	NameData	evtnamedata,
+				evteventdata;
 	ObjectAddress myself,
 				referenced;
 
@@ -310,8 +312,10 @@ insert_event_trigger_tuple(char *trigname, char *eventname, Oid evtOwner,
 
 	/* Build the new pg_trigger tuple. */
 	memset(nulls, false, sizeof(nulls));
-	values[Anum_pg_event_trigger_evtname - 1] = NameGetDatum(trigname);
-	values[Anum_pg_event_trigger_evtevent - 1] = NameGetDatum(eventname);
+	namestrcpy(&evtnamedata, trigname);
+	values[Anum_pg_event_trigger_evtname - 1] = NameGetDatum(&evtnamedata);
+	namestrcpy(&evteventdata, eventname);
+	values[Anum_pg_event_trigger_evtevent - 1] = NameGetDatum(&evteventdata);
 	values[Anum_pg_event_trigger_evtowner - 1] = ObjectIdGetDatum(evtOwner);
 	values[Anum_pg_event_trigger_evtfoid - 1] = ObjectIdGetDatum(funcoid);
 	values[Anum_pg_event_trigger_evtenabled - 1] =
