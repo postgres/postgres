@@ -50,7 +50,7 @@ extern Oid	AlterFunction(AlterFunctionStmt *stmt);
 extern Oid	CreateCast(CreateCastStmt *stmt);
 extern void DropCastById(Oid castOid);
 extern void IsThereFunctionInNamespace(const char *proname, int pronargs,
-						   oidvector proargtypes, Oid nspOid);
+						   oidvector *proargtypes, Oid nspOid);
 extern void ExecuteDoStmt(DoStmt *stmt);
 extern Oid	get_cast_oid(Oid sourcetypeid, Oid targettypeid, bool missing_ok);
 

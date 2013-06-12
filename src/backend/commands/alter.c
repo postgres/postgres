@@ -231,7 +231,7 @@ AlterObjectRename_internal(Relation rel, Oid objectId, const char *new_name)
 		Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(oldtup);
 
 		IsThereFunctionInNamespace(new_name, proc->pronargs,
-								   proc->proargtypes, proc->pronamespace);
+								   &proc->proargtypes, proc->pronamespace);
 	}
 	else if (classId == CollationRelationId)
 	{
@@ -611,7 +611,7 @@ AlterObjectNamespace_internal(Relation rel, Oid objid, Oid nspOid)
 		Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(tup);
 
 		IsThereFunctionInNamespace(NameStr(proc->proname), proc->pronargs,
-								   proc->proargtypes, nspOid);
+								   &proc->proargtypes, nspOid);
 	}
 	else if (classId == CollationRelationId)
 	{
