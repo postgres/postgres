@@ -478,7 +478,8 @@ PortalStart(Portal portal, ParamListInfo params,
 	PG_TRY();
 	{
 		ActivePortal = portal;
-		CurrentResourceOwner = portal->resowner;
+		if (portal->resowner)
+			CurrentResourceOwner = portal->resowner;
 		PortalContext = PortalGetHeapMemory(portal);
 
 		oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
@@ -762,7 +763,8 @@ PortalRun(Portal portal, long count, bool isTopLevel,
 	PG_TRY();
 	{
 		ActivePortal = portal;
-		CurrentResourceOwner = portal->resowner;
+		if (portal->resowner)
+			CurrentResourceOwner = portal->resowner;
 		PortalContext = PortalGetHeapMemory(portal);
 
 		MemoryContextSwitchTo(PortalContext);
@@ -1411,7 +1413,8 @@ PortalRunFetch(Portal portal,
 	PG_TRY();
 	{
 		ActivePortal = portal;
-		CurrentResourceOwner = portal->resowner;
+		if (portal->resowner)
+			CurrentResourceOwner = portal->resowner;
 		PortalContext = PortalGetHeapMemory(portal);
 
 		oldContext = MemoryContextSwitchTo(PortalContext);

@@ -274,7 +274,8 @@ PortalCleanup(Portal portal)
 			saveResourceOwner = CurrentResourceOwner;
 			PG_TRY();
 			{
-				CurrentResourceOwner = portal->resowner;
+				if (portal->resowner)
+					CurrentResourceOwner = portal->resowner;
 				ExecutorFinish(queryDesc);
 				ExecutorEnd(queryDesc);
 				FreeQueryDesc(queryDesc);
@@ -349,7 +350,8 @@ PersistHoldablePortal(Portal portal)
 	PG_TRY();
 	{
 		ActivePortal = portal;
-		CurrentResourceOwner = portal->resowner;
+		if (portal->resowner)
+			CurrentResourceOwner = portal->resowner;
 		PortalContext = PortalGetHeapMemory(portal);
 
 		MemoryContextSwitchTo(PortalContext);
