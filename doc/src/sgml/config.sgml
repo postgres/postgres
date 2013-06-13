@@ -1252,66 +1252,6 @@ include 'filename'
        </para>
       </listitem>
      </varlistentry>
-
-     <varlistentry id="guc-shared-preload-libraries" xreflabel="shared_preload_libraries">
-      <term><varname>shared_preload_libraries</varname> (<type>string</type>)</term>
-      <indexterm>
-       <primary><varname>shared_preload_libraries</> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        This variable specifies one or more shared libraries
-        to be preloaded at server start. For example,
-        <literal>'$libdir/mylib'</literal> would cause
-        <literal>mylib.so</> (or on some platforms,
-        <literal>mylib.sl</>) to be preloaded from the installation's
-        standard library directory.
-        All library names are converted to lower case unless double-quoted.
-        If more than one library is to be loaded, separate their names
-        with commas.  This parameter can only be set at server start.
-       </para>
-
-       <para>
-        <productname>PostgreSQL</productname> procedural language
-        libraries can be preloaded in this way, typically by using the
-        syntax <literal>'$libdir/plXXX'</literal> where
-        <literal>XXX</literal> is <literal>pgsql</>, <literal>perl</>,
-        <literal>tcl</>, or <literal>python</>.
-       </para>
-
-       <para>
-        By preloading a shared library, the library startup time is avoided
-        when the library is first used.  However, the time to start each new
-        server process might increase slightly, even if that process never
-        uses the library.  So this parameter is recommended only for
-        libraries that will be used in most sessions.
-       </para>
-
-     <note>
-      <para>
-        On Windows hosts, preloading a library at server start will not reduce
-        the time required to start each new server process; each server process
-        will re-load all preload libraries.  However, <varname>shared_preload_libraries
-        </varname> is still useful on Windows hosts because some shared libraries may
-        need to perform certain operations that only take place at postmaster start
-        (for example, a shared library may need to reserve lightweight locks
-        or shared memory and you can't do that after the postmaster has started).
-       </para>
-      </note>
-       <para>
-        If a specified library is not found,
-        the server will fail to start.
-       </para>
-
-       <para>
-        Every  PostgreSQL-supported library has a <quote>magic
-        block</> that is checked to guarantee compatibility.
-        For this reason, non-PostgreSQL libraries cannot be
-        loaded in this way.
-       </para>
-      </listitem>
-     </varlistentry>
-
      </variablelist>
     </sect2>
 
@@ -5514,6 +5454,171 @@ SET XML OPTION { DOCUMENT | CONTENT };
      </variablelist>
 
     </sect2>
+
+    <sect2 id="runtime-config-client-preload">
+     <title>Shared Library Preloading</title>
+
+     <para>
+      Several settings are available for preloading shared libraries into the
+      server, in order to load additional functionality or achieve performance
+      benefits.  For example, a setting of
+      <literal>'$libdir/mylib'</literal> would cause
+      <literal>mylib.so</> (or on some platforms,
+      <literal>mylib.sl</>) to be preloaded from the installation's standard
+      library directory.  The differences between the settings are when they
+      take effect and what privileges are required to change them.
+     </para>
+
+     <para>
+      <productname>PostgreSQL</productname> procedural language libraries can
+      be preloaded in this way, typically by using the
+      syntax <literal>'$libdir/plXXX'</literal> where
+      <literal>XXX</literal> is <literal>pgsql</>, <literal>perl</>,
+      <literal>tcl</>, or <literal>python</>.
+     </para>
+
+     <para>
+      For each parameter, if more than one library is to be loaded, separate
+      their names with commas.  All library names are converted to lower case
+      unless double-quoted.
+     </para>
+
+     <para>
+      Only shared libraries specifically intended to be used with PostgreSQL
+      can be loaded this way.  Every PostgreSQL-supported library has
+      a <quote>magic block</> that is checked to guarantee compatibility.  For
+      this reason, non-PostgreSQL libraries cannot be loaded in this way.  You
+      might be able to use operating-system facilities such
+      as <envar>LD_PRELOAD</envar> for that.
+     </para>
+
+     <para>
+      In general, refer to the documentation of a specific module for the
+      recommended way to load that module.
+     </para>
+
+     <variablelist>
+     <varlistentry id="guc-local-preload-libraries" xreflabel="local_preload_libraries">
+      <term><varname>local_preload_libraries</varname> (<type>string</type>)</term>
+      <indexterm>
+       <primary><varname>local_preload_libraries</> configuration parameter</primary>
+      </indexterm>
+      <indexterm>
+       <primary><filename>$libdir/plugins</></primary>
+      </indexterm>
+      <listitem>
+       <para>
+        This variable specifies one or more shared libraries that are to be
+        preloaded at connection start.  This parameter cannot be changed after
+        the start of a particular session.  If a specified library is not
+        found, the connection attempt will fail.
+       </para>
+
+       <para>
+        This option can be set by any user.  Because of that, the libraries
+        that can be loaded are restricted to those appearing in the
+        <filename>plugins</> subdirectory of the installation's
+        standard library directory.  (It is the database administrator's
+        responsibility to ensure that only <quote>safe</> libraries
+        are installed there.)  Entries in <varname>local_preload_libraries</>
+        can specify this directory explicitly, for example
+        <literal>$libdir/plugins/mylib</literal>, or just specify
+        the library name &mdash; <literal>mylib</literal> would have
+        the same effect as <literal>$libdir/plugins/mylib</literal>.
+       </para>
+
+       <para>
+        Unless a module is specifically designed to be used in this way by
+        non-superusers, this is usually not the right setting to use.  Look
+        at <xref linkend="guc-session-preload-libraries"> instead.
+       </para>
+      </listitem>
+     </varlistentry>
+
+
+     <varlistentry id="guc-session-preload-libraries" xreflabel="session_preload_libraries">
+      <term><varname>session_preload_libraries</varname> (<type>string</type>)</term>
+      <indexterm>
+       <primary><varname>session_preload_libraries</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        This variable specifies one or more shared libraries that are to be
+        preloaded at connection start.  Only superusers can change this setting.
+        The parameter value only takes effect at the start of the connection.
+        Subsequent changes have no effect.  If a specified library is not
+        found, the connection attempt will fail.
+       </para>
+
+       <para>
+        The intent of this feature is to allow debugging or
+        performance-measurement libraries to be loaded into specific sessions
+        without an explicit
+        <command>LOAD</> command being given.  For
+        example, <xref linkend="auto-explain"> could be enabled for all
+        sessions under a given user name by setting this parameter
+        with <command>ALTER ROLE SET</>.  Also, this parameter can be changed
+        without restarting the server (but changes only take effect when a new
+        session is started), so it is easier to add new modules this way, even
+        if they should apply to all sessions.
+       </para>
+
+       <para>
+        Unlike <xref linkend="guc-shared-preload-libraries">, there is no large
+        performance advantage to loading a library at session start rather than
+        when it is first used.  There is some advantage, however, when
+        connection pooling is used.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-shared-preload-libraries" xreflabel="shared_preload_libraries">
+      <term><varname>shared_preload_libraries</varname> (<type>string</type>)</term>
+      <indexterm>
+       <primary><varname>shared_preload_libraries</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        This variable specifies one or more shared libraries to be preloaded at
+        server start.  with commas.  This parameter can only be set at server
+        start.  If a specified library is not found, the server will fail to
+        start.
+       </para>
+
+       <para>
+        Some libraries need to perform certain operations that can only take
+        place at postmaster start, such as allocating shared memory, reserving
+        light-weight locks, or starting background workers.  Those libraries
+        must be loaded at server start through this parameter.  See the
+        documentation of each library for details.
+       </para>
+
+       <para>
+        Other libraries can also be preloaded.  By preloading a shared library,
+        the library startup time is avoided when the library is first used.
+        However, the time to start each new server process might increase
+        slightly, even if that process never uses the library.  So this
+        parameter is recommended only for libraries that will be used in most
+        sessions.  Also, changing this parameter requires a server restart, so
+        this is not the right setting to use for short-term debugging tasks,
+        say.  Use <xref linkend="guc-session-preload-libraries"> for that
+        instead.
+       </para>
+
+      <note>
+       <para>
+        On Windows hosts, preloading a library at server start will not reduce
+        the time required to start each new server process; each server process
+        will re-load all preload libraries.  However, <varname>shared_preload_libraries
+        </varname> is still useful on Windows hosts for libraries that need to
+        perform operations at postmaster start time..
+       </para>
+      </note>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </sect2>
+
      <sect2 id="runtime-config-client-other">
      <title>Other Defaults</title>
 
@@ -5581,62 +5686,6 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
        <para>
         Soft upper limit of the size of the set returned by GIN index scans. For more
         information see <xref linkend="gin-tips">.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-local-preload-libraries" xreflabel="local_preload_libraries">
-      <term><varname>local_preload_libraries</varname> (<type>string</type>)</term>
-      <indexterm>
-       <primary><varname>local_preload_libraries</> configuration parameter</primary>
-      </indexterm>
-      <indexterm>
-       <primary><filename>$libdir/plugins</></primary>
-      </indexterm>
-      <listitem>
-       <para>
-        This variable specifies one or more shared libraries that are
-        to be preloaded at connection start.  If more than one library
-        is to be loaded, separate their names with commas.  All library
-        names are converted to lower case unless double-quoted.
-        This parameter cannot be changed after the start of a particular
-        session.
-       </para>
-
-       <para>
-        Because this is not a superuser-only option, the libraries
-        that can be loaded are restricted to those appearing in the
-        <filename>plugins</> subdirectory of the installation's
-        standard library directory.  (It is the database administrator's
-        responsibility to ensure that only <quote>safe</> libraries
-        are installed there.)  Entries in <varname>local_preload_libraries</>
-        can specify this directory explicitly, for example
-        <literal>$libdir/plugins/mylib</literal>, or just specify
-        the library name &mdash; <literal>mylib</literal> would have
-        the same effect as <literal>$libdir/plugins/mylib</literal>.
-       </para>
-
-       <para>
-        Unlike <xref linkend="guc-shared-preload-libraries">, there is no
-        performance advantage to loading a library at session
-        start rather than when it is first used.  Rather, the intent of
-        this feature is to allow debugging or performance-measurement
-        libraries to be loaded into specific sessions without an explicit
-        <command>LOAD</> command being given.  For example, debugging could
-        be enabled for all sessions under a given user name by setting
-        this parameter with <command>ALTER ROLE SET</>.
-       </para>
-
-       <para>
-        If a specified library is not found,
-        the connection attempt will fail.
-       </para>
-
-       <para>
-        Every  PostgreSQL-supported library has a <quote>magic
-        block</> that is checked to guarantee compatibility.
-        For this reason, non-PostgreSQL libraries cannot be
-        loaded in this way.
        </para>
       </listitem>
      </varlistentry>

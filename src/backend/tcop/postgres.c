@@ -3743,7 +3743,7 @@ PostgresMain(int argc, char *argv[],
 	 * process any libraries that should be preloaded at backend start (this
 	 * likewise can't be done until GUC settings are complete)
 	 */
-	process_local_preload_libraries();
+	process_session_preload_libraries();
 
 	/*
 	 * Send this backend's cancellation info to the frontend.

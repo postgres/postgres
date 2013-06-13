@@ -24,7 +24,8 @@ LOAD 'auto_explain';
 </programlisting>
 
   (You must be superuser to do that.)  More typical usage is to preload
-  it into all sessions by including <literal>auto_explain</> in
+  it into some or all sessions by including <literal>auto_explain</> in
+  <xref linkend="guc-session-preload-libraries"> or
   <xref linkend="guc-shared-preload-libraries"> in
   <filename>postgresql.conf</>.  Then you can track unexpectedly slow queries
   no matter when they happen.  Of course there is a price in overhead for
@@ -185,7 +186,7 @@ LOAD 'auto_explain';
 
 <programlisting>
 # postgresql.conf
-shared_preload_libraries = 'auto_explain'
+session_preload_libraries = 'auto_explain'
 
 auto_explain.log_min_duration = '3s'
 </programlisting>
