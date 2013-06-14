@@ -285,11 +285,7 @@ errstart(int elevel, const char *filename, int lineno,
 	 */
 
 	/* Determine whether message is enabled for server log output */
-	if (IsPostmasterEnvironment)
-		output_to_server = is_log_level_output(elevel, log_min_messages);
-	else
-		/* In bootstrap/standalone case, do not sort LOG out-of-order */
-		output_to_server = (elevel >= log_min_messages);
+	output_to_server = is_log_level_output(elevel, log_min_messages);
 
 	/* Determine whether message is enabled for client output */
 	if (whereToSendOutput == DestRemote && elevel != COMMERROR)
