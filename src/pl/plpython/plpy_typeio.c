@@ -200,7 +200,7 @@ PLy_output_tuple_funcs(PLyTypeInfo *arg, TupleDesc desc)
 		if (arg->out.r.atts)
 			PLy_free(arg->out.r.atts);
 		arg->out.r.natts = desc->natts;
-		arg->out.r.atts = PLy_malloc0(desc->natts * sizeof(PLyDatumToOb));
+		arg->out.r.atts = PLy_malloc0(desc->natts * sizeof(PLyObToDatum));
 	}
 
 	Assert(OidIsValid(desc->tdtypeid));
