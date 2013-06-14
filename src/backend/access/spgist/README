@@ -201,17 +201,31 @@ space utilization, but doesn't change the basis of the algorithm.
 CONCURRENCY
 
 While descending the tree, the insertion algorithm holds exclusive lock on
-two tree levels at a time, ie both parent and child pages (parent and child
-pages can be the same, see notes above). There is a possibility of deadlock
-between two insertions if there are cross-referenced pages in different
-branches.  That is, if inner tuple on page M has a child on page N while
-an inner tuple from another branch is on page N and has a child on page M,
-then two insertions descending the two branches could deadlock.  To prevent
-deadlocks we introduce a concept of "triple parity" of pages: if inner tuple
-is on page with BlockNumber N, then its child tuples should be placed on the
-same page, or else on a page with BlockNumber M where (N+1) mod 3 == M mod 3.
-This rule guarantees that tuples on page M will have no children on page N,
-since (M+1) mod 3 != N mod 3.
+two tree levels at a time, ie both parent and child pages (but parent and
+child pages can be the same, see notes above).  There is a possibility of
+deadlock between two insertions if there are cross-referenced pages in
+different branches.  That is, if inner tuple on page M has a child on page N
+while an inner tuple from another branch is on page N and has a child on
+page M, then two insertions descending the two branches could deadlock,
+since they will each hold their parent page's lock while trying to get the
+child page's lock.
+
+Currently, we deal with this by conditionally locking buffers as we descend
+the tree.  If we fail to get lock on a buffer, we release both buffers and
+restart the insertion process.  This is potentially inefficient, but the
+locking costs of a more deterministic approach seem very high.
+
+To reduce the number of cases where that happens, we introduce a concept of
+"triple parity" of pages: if inner tuple is on page with BlockNumber N, then
+its child tuples should be placed on the same page, or else on a page with
+BlockNumber M where (N+1) mod 3 == M mod 3.  This rule ensures that tuples
+on page M will have no children on page N, since (M+1) mod 3 != N mod 3.
+That makes it unlikely that two insertion processes will conflict against
+each other while descending the tree.  It's not perfect though: in the first
+place, we could still get a deadlock among three or more insertion processes,
+and in the second place, it's impractical to preserve this invariant in every
+case when we expand or split an inner tuple.  So we still have to allow for
+deadlocks.
 
 Insertion may also need to take locks on an additional inner and/or leaf page
 to add tuples of the right type(s), when there's not enough room on the pages
