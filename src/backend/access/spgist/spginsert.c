@@ -45,7 +45,10 @@ spgistBuildCallback(Relation index, HeapTuple htup, Datum *values,
 	/* Work in temp context, and reset it after each tuple */
 	oldCtx = MemoryContextSwitchTo(buildstate->tmpCtx);
 
-	spgdoinsert(index, &buildstate->spgstate, &htup->t_self, *values, *isnull);
+	/* No concurrent insertions can be happening, so failure is unexpected */
+	if (!spgdoinsert(index, &buildstate->spgstate, &htup->t_self,
+					 *values, *isnull))
+		elog(ERROR, "unexpected spgdoinsert() failure");
 
 	MemoryContextSwitchTo(oldCtx);
 	MemoryContextReset(buildstate->tmpCtx);
@@ -219,7 +222,17 @@ spginsert(PG_FUNCTION_ARGS)
 
 	initSpGistState(&spgstate, index);
 
-	spgdoinsert(index, &spgstate, ht_ctid, *values, *isnull);
+	/*
+	 * We might have to repeat spgdoinsert() multiple times, if conflicts
+	 * occur with concurrent insertions.  If so, reset the insertCtx each time
+	 * to avoid cumulative memory consumption.	That means we also have to
+	 * redo initSpGistState(), but it's cheap enough not to matter.
+	 */
+	while (!spgdoinsert(index, &spgstate, ht_ctid, *values, *isnull))
+	{
+		MemoryContextReset(insertCtx);
+		initSpGistState(&spgstate, index);
+	}
 
 	SpGistUpdateMetaPage(index);
 

@@ -652,7 +652,7 @@ extern void spgPageIndexMultiDelete(SpGistState *state, Page page,
 						OffsetNumber *itemnos, int nitems,
 						int firststate, int reststate,
 						BlockNumber blkno, OffsetNumber offnum);
-extern void spgdoinsert(Relation index, SpGistState *state,
+extern bool spgdoinsert(Relation index, SpGistState *state,
 			ItemPointer heapPtr, Datum datum, bool isnull);
 
 #endif   /* SPGIST_PRIVATE_H */

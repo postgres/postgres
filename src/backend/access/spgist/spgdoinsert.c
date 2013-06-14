@@ -1836,9 +1836,13 @@ spgSplitNodeAction(Relation index, SpGistState *state,
 }
 
 /*
- * Insert one item into the index
+ * Insert one item into the index.
+ *
+ * Returns true on success, false if we failed to complete the insertion
+ * because of conflict with a concurrent insert.  In the latter case,
+ * caller should re-call spgdoinsert() with the same args.
  */
-void
+bool
 spgdoinsert(Relation index, SpGistState *state,
 			ItemPointer heapPtr, Datum datum, bool isnull)
 {
@@ -1927,11 +1931,31 @@ spgdoinsert(Relation index, SpGistState *state,
 								&isNew);
 			current.blkno = BufferGetBlockNumber(current.buffer);
 		}
-		else if (parent.buffer == InvalidBuffer ||
-				 current.blkno != parent.blkno)
+		else if (parent.buffer == InvalidBuffer)
 		{
+			/* we hold no parent-page lock, so no deadlock is possible */
 			current.buffer = ReadBuffer(index, current.blkno);
 			LockBuffer(current.buffer, BUFFER_LOCK_EXCLUSIVE);
+		}
+		else if (current.blkno != parent.blkno)
+		{
+			/* descend to a new child page */
+			current.buffer = ReadBuffer(index, current.blkno);
+
+			/*
+			 * Attempt to acquire lock on child page.  We must beware of
+			 * deadlock against another insertion process descending from that
+			 * page to our parent page (see README).  If we fail to get lock,
+			 * abandon the insertion and tell our caller to start over.  XXX
+			 * this could be improved; perhaps it'd be worth sleeping a bit
+			 * before giving up?
+			 */
+			if (!ConditionalLockBuffer(current.buffer))
+			{
+				ReleaseBuffer(current.buffer);
+				UnlockReleaseBuffer(parent.buffer);
+				return false;
+			}
 		}
 		else
 		{
@@ -2131,4 +2155,6 @@ spgdoinsert(Relation index, SpGistState *state,
 		SpGistSetLastUsedPage(index, parent.buffer);
 		UnlockReleaseBuffer(parent.buffer);
 	}
+
+	return true;
 }
