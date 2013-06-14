@@ -3,7 +3,6 @@
  * checksum.h
  *	  Checksum implementation for data pages.
  *
- *
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -14,10 +13,12 @@
 #ifndef CHECKSUM_H
 #define CHECKSUM_H
 
+#include "storage/block.h"
+
 /*
- * Fowler-Noll-Vo 1a block checksum algorithm. The data argument should be
- * aligned on a 4-byte boundary.
+ * Compute the checksum for a Postgres page.  The page must be aligned on a
+ * 4-byte boundary.
  */
-extern uint32 checksum_block(char *data, uint32 size);
+extern uint16 pg_checksum_page(char *page, BlockNumber blkno);
 
 #endif   /* CHECKSUM_H */
