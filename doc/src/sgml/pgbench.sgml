@@ -600,12 +600,38 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
    Variables can be set by the command-line <option>-D</> option,
    explained above, or by the meta commands explained below.
    In addition to any variables preset by <option>-D</> command-line options,
-   the variable <literal>scale</> is preset to the current scale factor.
+   there are a few variables that are preset automatically, listed in
+   <xref linkend="pgbench-automatic-variables">. A value specified for these
+   variables using <option>-D</> takes precedence over the automatic presets.
    Once set, a variable's
    value can be inserted into a SQL command by writing
    <literal>:</><replaceable>variablename</>.  When running more than
    one client session, each session has its own set of variables.
   </para>
+
+   <table id="pgbench-automatic-variables">
+    <title>Automatic variables</title>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Variable</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry> <literal>scale</literal> </entry>
+       <entry>current scale factor</entry>
+      </row>
+
+      <row>
+       <entry> <literal>client_id</literal> </entry>
+       <entry>unique number identifying the client session (starts from zero)</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
 
   <para>
    Script file meta commands begin with a backslash (<literal>\</>).

@@ -2544,6 +2544,20 @@ main(int argc, char **argv)
 		}
 	}
 
+	/*
+	 * Define a :client_id variable that is unique per connection. But don't
+	 * override an explicit -D switch.
+	 */
+	if (getVariable(&state[0], "client_id") == NULL)
+	{
+		for (i = 0; i < nclients; i++)
+		{
+			snprintf(val, sizeof(val), "%d", i);
+			if (!putVariable(&state[i], "startup", "client_id", val))
+				exit(1);
+		}
+	}
+
 	if (!is_no_vacuum)
 	{
 		fprintf(stderr, "starting vacuum...");
