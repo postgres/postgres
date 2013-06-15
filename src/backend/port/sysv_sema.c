@@ -405,8 +405,8 @@ PGSemaphoreLock(PGSemaphore sema, bool interruptOK)
 	 * it's necessary for cancel/die interrupts to be serviced directly by the
 	 * signal handler.	On these platforms the behavior is really the same
 	 * whether the signal arrives just before the semop() begins, or while it
-	 * is waiting.	The loop on EINTR is thus important only for other types
-	 * of interrupts.
+	 * is waiting.	The loop on EINTR is thus important only for platforms
+	 * without SA_RESTART.
 	 */
 	do
 	{
