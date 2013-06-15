@@ -927,6 +927,9 @@ PrintTOCSummary(Archive *AHX, RestoreOptions *ropt)
 		case archCustom:
 			fmtName = "CUSTOM";
 			break;
+		case archDirectory:
+			fmtName = "DIRECTORY";
+			break;
 		case archTar:
 			fmtName = "TAR";
 			break;
