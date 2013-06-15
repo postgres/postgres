@@ -384,16 +384,16 @@ pg_sleep(PG_FUNCTION_ARGS)
 	float8		endtime;
 
 	/*
-	 * We break the requested sleep into segments of no more than 1 second, to
-	 * put an upper bound on how long it will take us to respond to a cancel
-	 * or die interrupt.  (Note that pg_usleep is interruptible by signals on
-	 * some platforms but not others.)	Also, this method avoids exposing
-	 * pg_usleep's upper bound on allowed delays.
+	 * We sleep using WaitLatch, to ensure that we'll wake up promptly if an
+	 * important signal (such as SIGALRM or SIGINT) arrives.  Because
+	 * WaitLatch's upper limit of delay is INT_MAX milliseconds, and the user
+	 * might ask for more than that, we sleep for at most 10 minutes and then
+	 * loop.
 	 *
 	 * By computing the intended stop time initially, we avoid accumulation of
 	 * extra delay across multiple sleeps.	This also ensures we won't delay
-	 * less than the specified time if pg_usleep is interrupted by other
-	 * signals such as SIGHUP.
+	 * less than the specified time when WaitLatch is terminated early by a
+	 * non-query-cancelling signal such as SIGHUP.
 	 */
 
 #ifdef HAVE_INT64_TIMESTAMP
@@ -407,15 +407,22 @@ pg_sleep(PG_FUNCTION_ARGS)
 	for (;;)
 	{
 		float8		delay;
+		long		delay_ms;
 
 		CHECK_FOR_INTERRUPTS();
+
 		delay = endtime - GetNowFloat();
-		if (delay >= 1.0)
-			pg_usleep(1000000L);
+		if (delay >= 600.0)
+			delay_ms = 600000;
 		else if (delay > 0.0)
-			pg_usleep((long) ceil(delay * 1000000.0));
+			delay_ms = (long) ceil(delay * 1000.0);
 		else
 			break;
+
+		(void) WaitLatch(&MyProc->procLatch,
+						 WL_LATCH_SET | WL_TIMEOUT,
+						 delay_ms);
+		ResetLatch(&MyProc->procLatch);
 	}
 
 	PG_RETURN_VOID();
