@@ -18,7 +18,8 @@ res = _timezone / 60;
   [pgac_cv_var_int_timezone=yes],
   [pgac_cv_var_int_timezone=no])])
 if test x"$pgac_cv_var_int_timezone" = xyes ; then
-  AC_DEFINE(HAVE_INT_TIMEZONE,, [Define to 1 if you have the global variable 'int timezone'.])
+  AC_DEFINE(HAVE_INT_TIMEZONE, 1,
+            [Define to 1 if you have the global variable 'int timezone'.])
 fi])# PGAC_VAR_INT_TIMEZONE
 
 
@@ -68,7 +69,8 @@ gettimeofday(tp,tzp);],
 [pgac_cv_func_gettimeofday_1arg=no],
 [pgac_cv_func_gettimeofday_1arg=yes])])
 if test x"$pgac_cv_func_gettimeofday_1arg" = xyes ; then
-  AC_DEFINE(GETTIMEOFDAY_1ARG,, [Define to 1 if gettimeofday() takes only 1 argument.])
+  AC_DEFINE(GETTIMEOFDAY_1ARG, 1,
+            [Define to 1 if gettimeofday() takes only 1 argument.])
 fi
 AH_VERBATIM(GETTIMEOFDAY_1ARG_,
 [@%:@ifdef GETTIMEOFDAY_1ARG
@@ -95,7 +97,8 @@ getpwuid_r(uid, space, buf, bufsize, result);],
 [pgac_cv_func_getpwuid_r_5arg=yes],
 [pgac_cv_func_getpwuid_r_5arg=no])])
 if test x"$pgac_cv_func_getpwuid_r_5arg" = xyes ; then
-  AC_DEFINE(GETPWUID_R_5ARG,, [Define to 1 if getpwuid_r() takes a 5th argument.])
+  AC_DEFINE(GETPWUID_R_5ARG, 1,
+            [Define to 1 if getpwuid_r() takes a 5th argument.])
 fi
 ])# PGAC_FUNC_GETPWUID_R_5ARG
 
@@ -117,7 +120,8 @@ int strerror_r();
 [pgac_cv_func_strerror_r_int=yes],
 [pgac_cv_func_strerror_r_int=no])])
 if test x"$pgac_cv_func_strerror_r_int" = xyes ; then
-  AC_DEFINE(STRERROR_R_INT,, [Define to 1 if strerror_r() returns a int.])
+  AC_DEFINE(STRERROR_R_INT, 1,
+            [Define to 1 if strerror_r() returns a int.])
 fi
 ])# PGAC_FUNC_STRERROR_R_INT
 
@@ -210,7 +214,8 @@ sigaction(0, &act, &oact);],
 [pgac_cv_func_posix_signals=yes],
 [pgac_cv_func_posix_signals=no])])
 if test x"$pgac_cv_func_posix_signals" = xyes ; then
-  AC_DEFINE(HAVE_POSIX_SIGNALS,, [Define to 1 if you have the POSIX signal interface.])
+  AC_DEFINE(HAVE_POSIX_SIGNALS, 1,
+            [Define to 1 if you have the POSIX signal interface.])
 fi
 HAVE_POSIX_SIGNALS=$pgac_cv_func_posix_signals
 AC_SUBST(HAVE_POSIX_SIGNALS)])# PGAC_FUNC_POSIX_SIGNALS

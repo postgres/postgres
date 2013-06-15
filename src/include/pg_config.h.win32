@@ -185,7 +185,7 @@
 //#define HAVE_INTTYPES_H 1
 
 /* Define to 1 if you have the global variable 'int timezone'. */
-#define HAVE_INT_TIMEZONE
+#define HAVE_INT_TIMEZONE 1
 
 /* Define to 1 if you have support for IPv6. */
 #define HAVE_IPV6 1
@@ -663,7 +663,7 @@
 /* #undef USE_UNNAMED_POSIX_SEMAPHORES */
 
 /* Define to select Win32-style semaphores. */
-#define USE_WIN32_SEMAPHORES
+#define USE_WIN32_SEMAPHORES 1
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */

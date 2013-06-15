@@ -19492,7 +19492,7 @@ $as_echo "$pgac_cv_var_int_timezone" >&6; }
 if test x"$pgac_cv_var_int_timezone" = xyes ; then
 
 cat >>confdefs.h <<\_ACEOF
-#define HAVE_INT_TIMEZONE /**/
+#define HAVE_INT_TIMEZONE 1
 _ACEOF
 
 fi
@@ -19660,7 +19660,7 @@ $as_echo "$pgac_cv_func_gettimeofday_1arg" >&6; }
 if test x"$pgac_cv_func_gettimeofday_1arg" = xyes ; then
 
 cat >>confdefs.h <<\_ACEOF
-#define GETTIMEOFDAY_1ARG /**/
+#define GETTIMEOFDAY_1ARG 1
 _ACEOF
 
 fi
@@ -20676,7 +20676,7 @@ $as_echo "$pgac_cv_var_PS_STRINGS" >&6; }
 if test "$pgac_cv_var_PS_STRINGS" = yes ; then
 
 cat >>confdefs.h <<\_ACEOF
-#define HAVE_PS_STRINGS /**/
+#define HAVE_PS_STRINGS 1
 _ACEOF
 
 fi
@@ -23937,7 +23937,7 @@ $as_echo "$pgac_cv_func_getpwuid_r_5arg" >&6; }
 if test x"$pgac_cv_func_getpwuid_r_5arg" = xyes ; then
 
 cat >>confdefs.h <<\_ACEOF
-#define GETPWUID_R_5ARG /**/
+#define GETPWUID_R_5ARG 1
 _ACEOF
 
 fi
@@ -24000,7 +24000,7 @@ $as_echo "$pgac_cv_func_strerror_r_int" >&6; }
 if test x"$pgac_cv_func_strerror_r_int" = xyes ; then
 
 cat >>confdefs.h <<\_ACEOF
-#define STRERROR_R_INT /**/
+#define STRERROR_R_INT 1
 _ACEOF
 
 fi
@@ -28638,7 +28638,7 @@ $as_echo "$pgac_cv_func_posix_signals" >&6; }
 if test x"$pgac_cv_func_posix_signals" = xyes ; then
 
 cat >>confdefs.h <<\_ACEOF
-#define HAVE_POSIX_SIGNALS /**/
+#define HAVE_POSIX_SIGNALS 1
 _ACEOF
 
 fi
