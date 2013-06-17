@@ -121,7 +121,7 @@ SetHintBits(HeapTupleHeader tuple, Buffer buffer,
 	}
 
 	tuple->t_infomask |= infomask;
-	MarkBufferDirtyHint(buffer);
+	MarkBufferDirtyHint(buffer, true);
 }
 
 /*

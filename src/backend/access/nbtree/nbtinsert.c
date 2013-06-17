@@ -413,9 +413,9 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 					 * crucial. Be sure to mark the proper buffer dirty.
 					 */
 					if (nbuf != InvalidBuffer)
-						MarkBufferDirtyHint(nbuf);
+						MarkBufferDirtyHint(nbuf, true);
 					else
-						MarkBufferDirtyHint(buf);
+						MarkBufferDirtyHint(buf, true);
 				}
 			}
 		}
