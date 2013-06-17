@@ -2587,7 +2587,7 @@ IncrBufferRefCount(Buffer buffer)
  *	  (due to a race condition), so it cannot be used for important changes.
  */
 void
-MarkBufferDirtyHint(Buffer buffer)
+MarkBufferDirtyHint(Buffer buffer, bool buffer_std)
 {
 	volatile BufferDesc *bufHdr;
 	Page		page = BufferGetPage(buffer);
@@ -2671,7 +2671,7 @@ MarkBufferDirtyHint(Buffer buffer)
 			 * rather than full transactionids.
 			 */
 			MyPgXact->delayChkpt = delayChkpt = true;
-			lsn = XLogSaveBufferForHint(buffer);
+			lsn = XLogSaveBufferForHint(buffer, buffer_std);
 		}
 
 		LockBufHdr(bufHdr);

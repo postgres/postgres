@@ -287,7 +287,7 @@ hashgettuple(PG_FUNCTION_ARGS)
 			/*
 			 * Since this can be redone later if needed, mark as a hint.
 			 */
-			MarkBufferDirtyHint(buf);
+			MarkBufferDirtyHint(buf, true);
 		}
 
 		/*
