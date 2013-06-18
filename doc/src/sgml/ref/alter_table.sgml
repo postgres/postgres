@@ -324,9 +324,13 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
       as <literal>NOT VALID</literal>, by scanning the table to ensure there
       are no rows for which the constraint is not satisfied.
       Nothing happens if the constraint is already marked valid.
-      The value of separating validation from initial creation of the
-      constraint is that validation requires a lesser lock on the table
-      than constraint creation does.
+     </para>
+     <para>
+      Validation can be a long process on larger tables and currently requires
+      an <literal>ACCESS EXCLUSIVE</literal> lock.  The value of separating
+      validation from initial creation is that you can defer validation to less
+      busy times, or can be used to give additional time to correct pre-existing
+      errors while preventing new errors.
      </para>
     </listitem>
    </varlistentry>
