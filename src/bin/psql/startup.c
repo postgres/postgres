@@ -162,12 +162,9 @@ main(int argc, char *argv[])
 	}
 
 	/* Bail out if -1 was specified but will be ignored. */
-	if (options.single_txn && options.action != ACT_FILE)
+	if (options.single_txn && options.action != ACT_FILE && options.action == ACT_NOTHING)
 	{
-		if (options.action == ACT_NOTHING)
-			fprintf(stderr, _("%s: -1 can only be used in non-interactive mode\n"), pset.progname);
-		else
-			fprintf(stderr, _("%s: -1 is incompatible with -c and -l\n"), pset.progname);
+		fprintf(stderr, _("%s: -1 can only be used in non-interactive mode\n"), pset.progname);
 		exit(EXIT_FAILURE);
 	}
 
