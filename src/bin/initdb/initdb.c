@@ -3629,6 +3629,8 @@ main(int argc, char *argv[])
 
 	setup_text_search();
 
+	printf("\n");
+
 	if (data_checksums)
 		printf(_("Data page checksums are enabled.\n"));
 	else
