@@ -8,7 +8,7 @@ XFLAGS =
 CFLAGS = -O $(XFLAGS)
 LIBS =
 
-$(TARGET): entab.o halt.o
+$(TARGET): entab.o
 	$(CC) -o $@ $(CFLAGS) $^ $(LIBS)
 
 clean:

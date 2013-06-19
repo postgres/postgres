@@ -1,15 +1,8 @@
 /*
-**		entab.c			- add tabs to a text file
-**		by Bruce Momjian (root@candle.pha.pa.us)
-**
-** src/tools/entab/entab.c
-**
-**	version 1.3
-**
-**		tabsize = 4
-**
-*/
+ * entab.c - adds/removes tabs from text files
+ */
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,7 +15,7 @@
 #define PG_BINARY_R "r"
 #endif
 
-#define NUL				'\0'
+#define NUL		'\0'
 
 #ifndef TRUE
 #define TRUE	1
@@ -30,8 +23,6 @@
 #ifndef FALSE
 #define FALSE	0
 #endif
-
-void		halt();
 
 extern char *optarg;
 extern int	optind;
@@ -84,13 +75,14 @@ main(int argc, char **argv)
 				break;
 			case 'h':
 			case '?':
-				halt("USAGE: %s [ -cdqst ] [file ...]\n\
+				fprintf(stderr, "USAGE: %s [ -cdqst ] [file ...]\n\
 	-c (clip trailing whitespace)\n\
 	-d (delete tabs)\n\
 	-q (protect quotes)\n\
 	-s minimum_spaces\n\
 	-t tab_width\n",
 					 cp);
+				exit(0);
 		}
 
 	argv += optind;
@@ -103,7 +95,10 @@ main(int argc, char **argv)
 		else
 		{
 			if ((in_file = fopen(*argv, PG_BINARY_R)) == NULL)
-				halt("PERROR:  Cannot open file %s\n", argv[0]);
+			{
+				fprintf(stderr, "Cannot open file %s: %s\n", argv[0], strerror(errno));
+				exit(1);
+			}
 			argv++;
 		}
 
@@ -219,7 +214,10 @@ main(int argc, char **argv)
 				*(dst++) = ' ';
 			*dst = NUL;
 			if (fputs(out_line, stdout) == EOF)
-				halt("PERROR:  Error writing output.\n");
+			{
+				fprintf(stderr, "Cannot write to output file %s: %s\n", argv[0], strerror(errno));
+				exit(1);
+			}
 		}
 	} while (--argc > 0);
 	return 0;
