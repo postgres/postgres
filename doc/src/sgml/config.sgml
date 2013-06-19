@@ -39,7 +39,7 @@
      For convenience,
      a different unit can also be specified explicitly.  Valid memory units
      are <literal>kB</literal> (kilobytes), <literal>MB</literal>
-     (megabytes), and <literal>GB</literal> (gigabytes); valid time units
+     (megabytes), <literal>GB</literal> (gigabytes), and <literal>TB</literal> (terabytes); valid time units
      are <literal>ms</literal> (milliseconds), <literal>s</literal>
      (seconds), <literal>min</literal> (minutes), <literal>h</literal>
      (hours), and <literal>d</literal> (days).  Note that the multiplier

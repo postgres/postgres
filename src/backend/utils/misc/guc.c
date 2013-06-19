@@ -105,6 +105,7 @@
 
 #define KB_PER_MB (1024)
 #define KB_PER_GB (1024*1024)
+#define KB_PER_TB (1024*1024*1024)
 
 #define MS_PER_S 1000
 #define S_PER_MIN 60
@@ -4837,7 +4838,7 @@ parse_int(const char *value, int *result, int flags, const char **hintmsg)
 		{
 			/* Set hint for use if no match or trailing garbage */
 			if (hintmsg)
-				*hintmsg = gettext_noop("Valid units for this parameter are \"kB\", \"MB\", and \"GB\".");
+				*hintmsg = gettext_noop("Valid units for this parameter are \"kB\", \"MB\", \"GB\", and \"TB\".");
 
 #if BLCKSZ < 1024 || BLCKSZ > (1024*1024)
 #error BLCKSZ must be between 1KB and 1MB
@@ -4888,6 +4889,22 @@ parse_int(const char *value, int *result, int flags, const char **hintmsg)
 						break;
 					case GUC_UNIT_XBLOCKS:
 						val *= KB_PER_GB / (XLOG_BLCKSZ / 1024);
+						break;
+				}
+			}
+			else if (strncmp(endptr, "TB", 2) == 0)
+			{
+				endptr += 2;
+				switch (flags & GUC_UNIT_MEMORY)
+				{
+					case GUC_UNIT_KB:
+						val *= KB_PER_TB;
+						break;
+					case GUC_UNIT_BLOCKS:
+						val *= KB_PER_TB / (BLCKSZ / 1024);
+						break;
+					case GUC_UNIT_XBLOCKS:
+						val *= KB_PER_TB / (XLOG_BLCKSZ / 1024);
 						break;
 				}
 			}
@@ -7384,7 +7401,12 @@ _ShowOption(struct config_generic * record, bool use_units)
 								break;
 						}
 
-						if (result % KB_PER_GB == 0)
+						if (result % KB_PER_TB == 0)
+						{
+							result /= KB_PER_TB;
+							unit = "TB";
+						}
+						else if (result % KB_PER_GB == 0)
 						{
 							result /= KB_PER_GB;
 							unit = "GB";
