@@ -119,7 +119,7 @@ CREATE [ OR REPLACE ] FUNCTION
 
      <listitem>
       <para>
-       The name of an argument. Some languages (currently only PL/pgSQL) let
+       The name of an argument. Some languages (including PL/pgSQL, but currently not SQL) let
        you use the name in the function body.  For other languages the
        name of an input argument is just extra documentation.  But the name
        of an output argument is significant, since it defines the column
