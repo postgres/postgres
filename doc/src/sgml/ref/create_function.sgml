@@ -134,8 +134,7 @@ CREATE [ OR REPLACE ] FUNCTION
 
      <listitem>
       <para>
-       The name of an argument. Some languages (currently only SQL and
-       PL/pgSQL)
+       The name of an argument. Some languages (including SQL and PL/pgSQL)
        let you use the name in the function body.  For other languages the
        name of an input argument is just extra documentation, so far as
        the function itself is concerned; but you can use input argument names
