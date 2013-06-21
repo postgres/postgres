@@ -581,17 +581,17 @@ HINT:  To avoid a database shutdown, execute a database-wide VACUUM in "mydb".
 
 <programlisting>
 ERROR:  database is not accepting commands to avoid wraparound data loss in database "mydb"
-HINT:  Stop the postmaster and use a standalone backend to VACUUM in "mydb".
+HINT:  Stop the postmaster and vacuum that database in single-user mode.
 </programlisting>
 
     The 1-million-transaction safety margin exists to let the
     administrator recover without data loss, by manually executing the
     required <command>VACUUM</> commands.  However, since the system will not
     execute commands once it has gone into the safety shutdown mode,
-    the only way to do this is to stop the server and use a single-user
-    backend to execute <command>VACUUM</>.  The shutdown mode is not enforced
-    by a single-user backend.  See the <xref linkend="app-postgres"> reference
-    page for details about using a single-user backend.
+    the only way to do this is to stop the server and start the server in single-user
+    mode to execute <command>VACUUM</>.  The shutdown mode is not enforced
+    in single-user mode.  See the <xref linkend="app-postgres"> reference
+    page for details about using single-user mode.
    </para>
 
   </sect2>

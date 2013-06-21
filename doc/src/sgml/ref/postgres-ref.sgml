@@ -529,6 +529,10 @@ PostgreSQL documentation
    <refsect2>
     <title>Options for Single-User Mode</title>
 
+    <indexterm>
+     <primary>single-user mode</primary>
+    </indexterm>
+
     <para>
      The following options only apply to the single-user mode.
     </para>

@@ -73,7 +73,7 @@ GetNewTransactionId(bool isSubXact)
 	 * If we're past xidVacLimit, start trying to force autovacuum cycles.
 	 * If we're past xidWarnLimit, start issuing warnings.
 	 * If we're past xidStopLimit, refuse to execute transactions, unless
-	 * we are running in a standalone backend (which gives an escape hatch
+	 * we are running in single-user mode (which gives an escape hatch
 	 * to the DBA who somehow got past the earlier defenses).
 	 *
 	 * Note that this coding also appears in GetNewMultiXactId.
@@ -114,14 +114,14 @@ GetNewTransactionId(bool isSubXact)
 						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 						 errmsg("database is not accepting commands to avoid wraparound data loss in database \"%s\"",
 								oldest_datname),
-						 errhint("Stop the postmaster and use a standalone backend to vacuum that database.\n"
+						 errhint("Stop the postmaster and vacuum that database in single-user mode.\n"
 								 "You might also need to commit or roll back old prepared transactions.")));
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 						 errmsg("database is not accepting commands to avoid wraparound data loss in database with OID %u",
 								oldest_datoid),
-						 errhint("Stop the postmaster and use a standalone backend to vacuum that database.\n"
+						 errhint("Stop the postmaster and vacuum that database in single-user mode.\n"
 								 "You might also need to commit or roll back old prepared transactions.")));
 		}
 		else if (TransactionIdFollowsOrEquals(xid, xidWarnLimit))
