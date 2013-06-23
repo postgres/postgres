@@ -5391,6 +5391,9 @@ StartupXLOG(void)
 				oldestActiveXID = checkPoint.oldestActiveXid;
 			Assert(TransactionIdIsValid(oldestActiveXID));
 
+			/* Tell procarray about the range of xids it has to deal with */
+			ProcArrayInitRecovery(ShmemVariableCache->nextXid);
+
 			/*
 			 * Startup commit log and subtrans only. Other SLRUs are not
 			 * maintained during recovery and need not be started yet.
