@@ -470,6 +470,28 @@ ProcArrayClearTransaction(PGPROC *proc)
 }
 
 /*
+ * ProcArrayInitRecovery -- initialize recovery xid mgmt environment
+ *
+ * Remember up to where the startup process initialized the CLOG and subtrans
+ * so we can ensure its initialized gaplessly up to the point where necessary
+ * while in recovery.
+ */
+void
+ProcArrayInitRecovery(TransactionId initializedUptoXID)
+{
+	Assert(standbyState == STANDBY_INITIALIZED);
+	Assert(TransactionIdIsNormal(initializedUptoXID));
+
+	/*
+	 * we set latestObservedXid to the xid SUBTRANS has been initialized upto
+	 * so we can extend it from that point onwards when we reach a consistent
+	 * state in ProcArrayApplyRecoveryInfo().
+	 */
+	latestObservedXid = initializedUptoXID;
+	TransactionIdRetreat(latestObservedXid);
+}
+
+/*
  * ProcArrayApplyRecoveryInfo -- apply recovery info about xids
  *
  * Takes us through 3 states: Initialized, Pending and Ready.
@@ -564,7 +586,10 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 	Assert(standbyState == STANDBY_INITIALIZED);
 
 	/*
-	 * OK, we need to initialise from the RunningTransactionsData record
+	 * OK, we need to initialise from the RunningTransactionsData record.
+	 *
+	 * NB: this can be reached at least twice, so make sure new code can deal
+	 * with that.
 	 */
 
 	/*
@@ -636,20 +661,32 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 	pfree(xids);
 
 	/*
+	 * latestObservedXid is set to the the point where SUBTRANS was started up
+	 * to, initialize subtrans from thereon, up to nextXid - 1.
+	 */
+	Assert(TransactionIdIsNormal(latestObservedXid));
+	while (TransactionIdPrecedes(latestObservedXid, running->nextXid))
+	{
+		ExtendCLOG(latestObservedXid);
+		ExtendSUBTRANS(latestObservedXid);
+
+		TransactionIdAdvance(latestObservedXid);
+	}
+
+	/* ----------
 	 * Now we've got the running xids we need to set the global values that
 	 * are used to track snapshots as they evolve further.
 	 *
-	 * - latestCompletedXid which will be the xmax for snapshots -
-	 * lastOverflowedXid which shows whether snapshots overflow - nextXid
+	 * - latestCompletedXid which will be the xmax for snapshots
+	 * - lastOverflowedXid which shows whether snapshots overflow
+	 * - nextXid
 	 *
 	 * If the snapshot overflowed, then we still initialise with what we know,
 	 * but the recovery snapshot isn't fully valid yet because we know there
 	 * are some subxids missing. We don't know the specific subxids that are
 	 * missing, so conservatively assume the last one is latestObservedXid.
+	 * ----------
 	 */
-	latestObservedXid = running->nextXid;
-	TransactionIdRetreat(latestObservedXid);
-
 	if (running->subxid_overflow)
 	{
 		standbyState = STANDBY_SNAPSHOT_PENDING;
@@ -718,6 +755,10 @@ ProcArrayApplyXidAssignment(TransactionId topxid,
 	int			i;
 
 	Assert(standbyState >= STANDBY_INITIALIZED);
+
+	/* can't do anything useful unless we have more state setup */
+	if (standbyState == STANDBY_INITIALIZED)
+		return;
 
 	max_xid = TransactionIdLatest(topxid, nsubxids, subxids);
 
