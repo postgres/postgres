@@ -1485,7 +1485,9 @@ msgstr "no se pudo obtener el nombre de usuario actual: %s\n"
 msgid ""
 "psql is the PostgreSQL interactive terminal.\n"
 "\n"
-msgstr "psql es el terminal interactivo de PostgreSQL.\n"
+msgstr ""
+"psql es el terminal interactivo de PostgreSQL.\n"
+"\n"
 
 #: help.c:83
 #, c-format
@@ -2037,7 +2039,7 @@ msgstr "  \\dE[S+] [PATRÓN]  listar tablas foráneas\n"
 #: help.c:236
 #, c-format
 msgid "  \\dx[+]  [PATTERN]      list extensions\n"
-msgstr "  \\dx[S]  [PATRÓN]  listar extensiones\n"
+msgstr "  \\dx[+]  [PATRÓN]  listar extensiones\n"
 
 #: help.c:237
 #, c-format
@@ -2229,6 +2231,7 @@ msgstr ""
 "Descripción: %s\n"
 "Sintaxis:\n"
 "%s\n"
+"\n"
 
 #: help.c:429
 #, c-format

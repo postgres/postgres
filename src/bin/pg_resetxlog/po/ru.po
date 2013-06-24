@@ -27,8 +27,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9 current\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-04-23 11:17+0000\n"
-"PO-Revision-Date: 2013-04-23 16:36+0400\n"
+"POT-Creation-Date: 2013-05-20 02:17+0000\n"
+"PO-Revision-Date: 2013-05-20 20:11+0400\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -352,7 +352,7 @@ msgstr "числа с плавающей точкой"
 #: pg_resetxlog.c:623
 #, c-format
 msgid "Float4 argument passing:              %s\n"
-msgstr "передача аргумента Float4:            %s\n"
+msgstr "Передача аргумента Float4:            %s\n"
 
 #: pg_resetxlog.c:624 pg_resetxlog.c:626
 msgid "by reference"
@@ -365,20 +365,12 @@ msgstr "по значению"
 #: pg_resetxlog.c:625
 #, c-format
 msgid "Float8 argument passing:              %s\n"
-msgstr "передача аргумента Float8:            %s\n"
+msgstr "Передача аргумента Float8:            %s\n"
 
 #: pg_resetxlog.c:627
 #, c-format
-msgid "Data page checksums:                  %s\n"
-msgstr "Контроль целостности страниц:         %s\n"
-
-#: pg_resetxlog.c:628
-msgid "disabled"
-msgstr "отключен"
-
-#: pg_resetxlog.c:628
-msgid "enabled"
-msgstr "включен"
+msgid "Data page checksum version:           %u\n"
+msgstr "Версия контрольных сумм страниц:      %u\n"
 
 #: pg_resetxlog.c:689
 #, c-format
@@ -521,6 +513,12 @@ msgid ""
 msgstr ""
 "\n"
 "Об ошибках сообщайте по адресу <pgsql-bugs@postgresql.org>.\n"
+
+#~ msgid "disabled"
+#~ msgstr "отключен"
+
+#~ msgid "enabled"
+#~ msgstr "включен"
 
 #~ msgid "First log file ID after reset:        %u\n"
 #~ msgstr "ID первого журнала после сброса:      %u\n"

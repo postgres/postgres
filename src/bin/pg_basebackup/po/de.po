@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-04-25 21:18+0000\n"
-"PO-Revision-Date: 2013-04-29 22:27-0400\n"
+"POT-Creation-Date: 2013-06-05 20:18+0000\n"
+"PO-Revision-Date: 2013-06-05 22:04-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -208,8 +208,8 @@ msgstr ""
 msgid "%s: could not read from ready pipe: %s\n"
 msgstr "%s: konnte nicht aus bereiter Pipe lesen: %s\n"
 
-#: pg_basebackup.c:188 pg_basebackup.c:280 pg_basebackup.c:1518
-#: pg_receivexlog.c:264
+#: pg_basebackup.c:188 pg_basebackup.c:280 pg_basebackup.c:1598
+#: pg_receivexlog.c:266
 #, c-format
 msgid "%s: could not parse transaction log location \"%s\"\n"
 msgstr "%s: konnte Transaktionslogposition „%s“ nicht interpretieren\n"
@@ -270,7 +270,7 @@ msgstr[1] "%*s/%s kB (%d%%), %d/%d Tablespaces"
 msgid "%s: could not write to compressed file \"%s\": %s\n"
 msgstr "%s: konnte nicht in komprimierte Datei „%s“ schreiben: %s\n"
 
-#: pg_basebackup.c:503 pg_basebackup.c:1071 pg_basebackup.c:1212
+#: pg_basebackup.c:503 pg_basebackup.c:1071 pg_basebackup.c:1289
 #, c-format
 msgid "%s: could not write to file \"%s\": %s\n"
 msgstr "%s: konnte nicht in Datei „%s“ schreiben: %s\n"
@@ -285,7 +285,7 @@ msgstr "%s: konnte Komprimierungsniveau %d nicht setzen: %s\n"
 msgid "%s: could not create compressed file \"%s\": %s\n"
 msgstr "%s: konnte komprimierte Datei „%s“ nicht erzeugen: %s\n"
 
-#: pg_basebackup.c:638 pg_basebackup.c:1031 pg_basebackup.c:1205
+#: pg_basebackup.c:638 pg_basebackup.c:1031 pg_basebackup.c:1282
 #, c-format
 msgid "%s: could not create file \"%s\": %s\n"
 msgstr "%s: konnte Datei „%s“ nicht erzeugen: %s\n"
@@ -300,12 +300,12 @@ msgstr "%s: konnte COPY-Datenstrom nicht empfangen: %s"
 msgid "%s: could not close compressed file \"%s\": %s\n"
 msgstr "%s: konnte komprimierte Datei „%s“ nicht schließen: %s\n"
 
-#: pg_basebackup.c:720 receivelog.c:158 receivelog.c:346 receivelog.c:701
+#: pg_basebackup.c:720 receivelog.c:161 receivelog.c:349 receivelog.c:723
 #, c-format
 msgid "%s: could not close file \"%s\": %s\n"
 msgstr "%s: konnte Datei „%s“ nicht schließen: %s\n"
 
-#: pg_basebackup.c:731 pg_basebackup.c:922 receivelog.c:861
+#: pg_basebackup.c:731 pg_basebackup.c:922 receivelog.c:936
 #, c-format
 msgid "%s: could not read COPY data: %s"
 msgstr "%s: konnte COPY-Daten nicht lesen: %s"
@@ -350,181 +350,181 @@ msgstr "%s: konnte Rechte der Datei „%s“ nicht setzen: %s\n"
 msgid "%s: COPY stream ended before last file was finished\n"
 msgstr "%s: COPY-Strom endete vor dem Ende der letzten Datei\n"
 
-#: pg_basebackup.c:1119 pg_basebackup.c:1137 pg_basebackup.c:1144
-#: pg_basebackup.c:1182
+#: pg_basebackup.c:1183 pg_basebackup.c:1203 pg_basebackup.c:1210
+#: pg_basebackup.c:1257
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: Speicher aufgebraucht\n"
 
-#: pg_basebackup.c:1255
+#: pg_basebackup.c:1333
 #, c-format
 msgid "%s: incompatible server version %s\n"
 msgstr "%s: inkompatible Serverversion %s\n"
 
-#: pg_basebackup.c:1282 pg_basebackup.c:1311 pg_receivexlog.c:249
-#: receivelog.c:526 receivelog.c:571 receivelog.c:610
+#: pg_basebackup.c:1360 pg_basebackup.c:1389 pg_receivexlog.c:251
+#: receivelog.c:530 receivelog.c:575 receivelog.c:614
 #, c-format
 msgid "%s: could not send replication command \"%s\": %s"
 msgstr "%s: konnte Replikationsbefehl „%s“ nicht senden: %s"
 
-#: pg_basebackup.c:1289 pg_receivexlog.c:256 receivelog.c:534
+#: pg_basebackup.c:1367 pg_receivexlog.c:258 receivelog.c:538
 #, c-format
 msgid "%s: could not identify system: got %d rows and %d fields, expected %d rows and %d fields\n"
 msgstr "%s: konnte System nicht identifizieren: %d Zeilen und %d Felder erhalten, %d Zeilen und %d Felder erwartet\n"
 
-#: pg_basebackup.c:1322
+#: pg_basebackup.c:1400
 #, c-format
 msgid "%s: could not initiate base backup: %s"
 msgstr "%s: konnte Basissicherung nicht starten: %s"
 
-#: pg_basebackup.c:1329
+#: pg_basebackup.c:1407
 #, c-format
 msgid "%s: server returned unexpected response to BASE_BACKUP command; got %d rows and %d fields, expected %d rows and %d fields\n"
 msgstr "%s: unerwartete Antwort auf Befehl BASE_BACKUP: %d Zeilen und %d Felder erhalten, %d Zeilen und %d Felder erwartet\n"
 
-#: pg_basebackup.c:1347
+#: pg_basebackup.c:1427
 #, c-format
 msgid "transaction log start point: %s on timeline %u\n"
 msgstr "Transaktionslog-Startpunkt: %s auf Zeitleiste %u\n"
 
-#: pg_basebackup.c:1356
+#: pg_basebackup.c:1436
 #, c-format
 msgid "%s: could not get backup header: %s"
 msgstr "%s: konnte Kopf der Sicherung nicht empfangen: %s"
 
-#: pg_basebackup.c:1362
+#: pg_basebackup.c:1442
 #, c-format
 msgid "%s: no data returned from server\n"
 msgstr "%s: keine Daten vom Server zurückgegeben\n"
 
-#: pg_basebackup.c:1391
+#: pg_basebackup.c:1471
 #, c-format
 msgid "%s: can only write single tablespace to stdout, database has %d\n"
 msgstr "%s: kann nur einen einzelnen Tablespace auf die Standardausgabe schreiben, Datenbank hat %d\n"
 
-#: pg_basebackup.c:1403
+#: pg_basebackup.c:1483
 #, c-format
 msgid "%s: starting background WAL receiver\n"
 msgstr "%s: Hintergrund-WAL-Receiver wird gestartet\n"
 
-#: pg_basebackup.c:1433
+#: pg_basebackup.c:1513
 #, c-format
 msgid "%s: could not get transaction log end position from server: %s"
 msgstr "%s: konnte Transaktionslogendposition nicht vom Server empfangen: %s"
 
-#: pg_basebackup.c:1440
+#: pg_basebackup.c:1520
 #, c-format
 msgid "%s: no transaction log end position returned from server\n"
 msgstr "%s: kein Transaktionslogendpunkt vom Server zurückgegeben\n"
 
-#: pg_basebackup.c:1452
+#: pg_basebackup.c:1532
 #, c-format
 msgid "%s: final receive failed: %s"
 msgstr "%s: letztes Empfangen fehlgeschlagen: %s"
 
-#: pg_basebackup.c:1470
+#: pg_basebackup.c:1550
 #, c-format
 msgid "%s: waiting for background process to finish streaming ...\n"
 msgstr "%s: warte bis Hintergrundprozess Streaming beendet hat ...\n"
 
-#: pg_basebackup.c:1476
+#: pg_basebackup.c:1556
 #, c-format
 msgid "%s: could not send command to background pipe: %s\n"
 msgstr "%s: konnte Befehl nicht an Hintergrund-Pipe senden: %s\n"
 
-#: pg_basebackup.c:1485
+#: pg_basebackup.c:1565
 #, c-format
 msgid "%s: could not wait for child process: %s\n"
 msgstr "%s: konnte nicht auf Kindprozess warten: %s\n"
 
-#: pg_basebackup.c:1491
+#: pg_basebackup.c:1571
 #, c-format
 msgid "%s: child %d died, expected %d\n"
 msgstr "%s: Kindprozess %d endete, aber %d wurde erwartet\n"
 
-#: pg_basebackup.c:1497
+#: pg_basebackup.c:1577
 #, c-format
 msgid "%s: child process did not exit normally\n"
 msgstr "%s: Kindprozess hat nicht normal beendet\n"
 
-#: pg_basebackup.c:1503
+#: pg_basebackup.c:1583
 #, c-format
 msgid "%s: child process exited with error %d\n"
 msgstr "%s: Kindprozess hat mit Fehler %d beendet\n"
 
-#: pg_basebackup.c:1530
+#: pg_basebackup.c:1610
 #, c-format
 msgid "%s: could not wait for child thread: %s\n"
 msgstr "%s: konnte nicht auf Kind-Thread warten: %s\n"
 
-#: pg_basebackup.c:1537
+#: pg_basebackup.c:1617
 #, c-format
 msgid "%s: could not get child thread exit status: %s\n"
 msgstr "%s: konnte Statuscode des Kind-Threads nicht ermitteln: %s\n"
 
-#: pg_basebackup.c:1543
+#: pg_basebackup.c:1623
 #, c-format
 msgid "%s: child thread exited with error %u\n"
 msgstr "%s: Kind-Thread hat mit Fehler %u beendet\n"
 
-#: pg_basebackup.c:1629
+#: pg_basebackup.c:1709
 #, c-format
 msgid "%s: invalid output format \"%s\", must be \"plain\" or \"tar\"\n"
 msgstr "%s: ungültiges Ausgabeformat „%s“, muss „plain“ oder „tar“ sein\n"
 
-#: pg_basebackup.c:1641 pg_basebackup.c:1653
+#: pg_basebackup.c:1721 pg_basebackup.c:1733
 #, c-format
 msgid "%s: cannot specify both --xlog and --xlog-method\n"
 msgstr "%s: --xlog und --xlog-method können nicht zusammen verwendet werden\n"
 
-#: pg_basebackup.c:1668
+#: pg_basebackup.c:1748
 #, c-format
 msgid "%s: invalid xlog-method option \"%s\", must be \"fetch\" or \"stream\"\n"
 msgstr "%s: ungültige Option „%s“ für --xlog-method, muss „fetch“ oder „stream“ sein\n"
 
-#: pg_basebackup.c:1687
+#: pg_basebackup.c:1767
 #, c-format
 msgid "%s: invalid compression level \"%s\"\n"
 msgstr "%s: ungültiges Komprimierungsniveau „%s“\n"
 
-#: pg_basebackup.c:1699
+#: pg_basebackup.c:1779
 #, c-format
 msgid "%s: invalid checkpoint argument \"%s\", must be \"fast\" or \"spread\"\n"
 msgstr "%s: ungültiges Checkpoint-Argument „%s“, muss „fast“ oder „spread“ sein\n"
 
-#: pg_basebackup.c:1726 pg_receivexlog.c:390
+#: pg_basebackup.c:1806 pg_receivexlog.c:392
 #, c-format
 msgid "%s: invalid status interval \"%s\"\n"
 msgstr "%s: ungültiges Statusinterval „%s“\n"
 
-#: pg_basebackup.c:1742 pg_basebackup.c:1756 pg_basebackup.c:1767
-#: pg_basebackup.c:1780 pg_basebackup.c:1790 pg_receivexlog.c:406
-#: pg_receivexlog.c:420 pg_receivexlog.c:431
+#: pg_basebackup.c:1822 pg_basebackup.c:1836 pg_basebackup.c:1847
+#: pg_basebackup.c:1860 pg_basebackup.c:1870 pg_receivexlog.c:408
+#: pg_receivexlog.c:422 pg_receivexlog.c:433
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Versuchen Sie „%s --help“ für weitere Informationen.\n"
 
-#: pg_basebackup.c:1754 pg_receivexlog.c:418
+#: pg_basebackup.c:1834 pg_receivexlog.c:420
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: zu viele Kommandozeilenargumente (das erste ist „%s“)\n"
 
-#: pg_basebackup.c:1766 pg_receivexlog.c:430
+#: pg_basebackup.c:1846 pg_receivexlog.c:432
 #, c-format
 msgid "%s: no target directory specified\n"
 msgstr "%s: kein Zielverzeichnis angegeben\n"
 
-#: pg_basebackup.c:1778
+#: pg_basebackup.c:1858
 #, c-format
 msgid "%s: only tar mode backups can be compressed\n"
 msgstr "%s: nur Sicherungen im Tar-Modus können komprimiert werden\n"
 
-#: pg_basebackup.c:1788
+#: pg_basebackup.c:1868
 #, c-format
 msgid "%s: WAL streaming can only be used in plain mode\n"
 msgstr "%s: WAL-Streaming kann nur im „plain“-Modus verwendet werden\n"
 
-#: pg_basebackup.c:1799
+#: pg_basebackup.c:1879
 #, c-format
 msgid "%s: this build does not support compression\n"
 msgstr "%s: diese Installation unterstützt keine Komprimierung\n"
@@ -562,222 +562,242 @@ msgstr "  -n, --no-loop          bei Verbindungsverlust nicht erneut probieren\n
 msgid "%s: finished segment at %X/%X (timeline %u)\n"
 msgstr "%s: Segment bei %X/%X abgeschlossen (Zeitleiste %u)\n"
 
-#: pg_receivexlog.c:92
+#: pg_receivexlog.c:94
 #, c-format
 msgid "%s: switched to timeline %u at %X/%X\n"
 msgstr "%s: auf Zeitleiste %u umgeschaltet bei %X/%X\n"
 
-#: pg_receivexlog.c:101
+#: pg_receivexlog.c:103
 #, c-format
 msgid "%s: received interrupt signal, exiting\n"
 msgstr "%s: Interrupt-Signal erhalten, beende\n"
 
-#: pg_receivexlog.c:126
+#: pg_receivexlog.c:128
 #, c-format
 msgid "%s: could not open directory \"%s\": %s\n"
 msgstr "%s: konnte Verzeichnis „%s“ nicht öffnen: %s\n"
 
-#: pg_receivexlog.c:155
+#: pg_receivexlog.c:157
 #, c-format
 msgid "%s: could not parse transaction log file name \"%s\"\n"
 msgstr "%s: konnte Transaktionslogdateinamen „%s“ nicht interpretieren\n"
 
-#: pg_receivexlog.c:165
+#: pg_receivexlog.c:167
 #, c-format
 msgid "%s: could not stat file \"%s\": %s\n"
 msgstr "%s: konnte „stat“ für Datei „%s“ nicht ausführen: %s\n"
 
-#: pg_receivexlog.c:183
+#: pg_receivexlog.c:185
 #, c-format
 msgid "%s: segment file \"%s\" has incorrect size %d, skipping\n"
 msgstr "%s: Segmentdatei „%s“ hat falsche Größe %d, wird übersprungen\n"
 
-#: pg_receivexlog.c:291
+#: pg_receivexlog.c:293
 #, c-format
 msgid "%s: starting log streaming at %X/%X (timeline %u)\n"
 msgstr "%s: starte Log-Streaming bei %X/%X (Zeitleiste %u)\n"
 
-#: pg_receivexlog.c:371
+#: pg_receivexlog.c:373
 #, c-format
 msgid "%s: invalid port number \"%s\"\n"
 msgstr "%s: ungültige Portnummer „%s“\n"
 
-#: pg_receivexlog.c:453
+#: pg_receivexlog.c:455
 #, c-format
 msgid "%s: disconnected\n"
 msgstr "%s: Verbindung beendet\n"
 
 #. translator: check source for value for %d
-#: pg_receivexlog.c:460
+#: pg_receivexlog.c:462
 #, c-format
 msgid "%s: disconnected; waiting %d seconds to try again\n"
 msgstr "%s: Verbindung beendet; erneuter Versuch in %d Sekunden\n"
 
-#: receivelog.c:66
+#: receivelog.c:69
 #, c-format
 msgid "%s: could not open transaction log file \"%s\": %s\n"
 msgstr "%s: konnte Transaktionslogdatei „%s“ nicht öffnen: %s\n"
 
-#: receivelog.c:78
+#: receivelog.c:81
 #, c-format
 msgid "%s: could not stat transaction log file \"%s\": %s\n"
 msgstr "%s: konnte „stat“ für Transaktionslogdatei „%s“ nicht ausführen: %s\n"
 
-#: receivelog.c:92
+#: receivelog.c:95
 #, c-format
 msgid "%s: transaction log file \"%s\" has %d bytes, should be 0 or %d\n"
 msgstr "%s: Transaktionslogdatei „%s“ hat %d Bytes, sollte 0 oder %d sein\n"
 
-#: receivelog.c:105
+#: receivelog.c:108
 #, c-format
 msgid "%s: could not pad transaction log file \"%s\": %s\n"
 msgstr "%s: konnte Transaktionslogdatei „%s“ nicht auffüllen: %s\n"
 
-#: receivelog.c:118
+#: receivelog.c:121
 #, c-format
 msgid "%s: could not seek to beginning of transaction log file \"%s\": %s\n"
 msgstr "%s: konnte Positionszeiger nicht an den Anfang der Transaktionslogdatei „%s“ setzen: %s\n"
 
-#: receivelog.c:144
+#: receivelog.c:147
 #, c-format
 msgid "%s: could not determine seek position in file \"%s\": %s\n"
 msgstr "%s: konnte Positionszeiger in Datei „%s“ nicht ermitteln: %s\n"
 
-#: receivelog.c:151 receivelog.c:339
+#: receivelog.c:154 receivelog.c:342
 #, c-format
 msgid "%s: could not fsync file \"%s\": %s\n"
 msgstr "%s: konnte Datei „%s“ nicht fsyncen: %s\n"
 
-#: receivelog.c:178
+#: receivelog.c:181
 #, c-format
 msgid "%s: could not rename file \"%s\": %s\n"
 msgstr "%s: konnte Datei „%s“ nicht umbenennen: %s\n"
 
-#: receivelog.c:185
+#: receivelog.c:188
 #, c-format
 msgid "%s: not renaming \"%s%s\", segment is not complete\n"
 msgstr "%s: „%s%s“ wird nicht umbenannt, Segment ist noch nicht vollständig\n"
 
-#: receivelog.c:274
+#: receivelog.c:277
 #, c-format
 msgid "%s: could not open timeline history file \"%s\": %s\n"
 msgstr "%s: konnte Zeitleisten-History-Datei „%s“ nicht öffnen: %s\n"
 
-#: receivelog.c:301
+#: receivelog.c:304
 #, c-format
 msgid "%s: server reported unexpected history file name for timeline %u: %s\n"
 msgstr "%s: Server berichtete unerwarteten History-Dateinamen für Zeitleiste %u: %s\n"
 
-#: receivelog.c:316
+#: receivelog.c:319
 #, c-format
 msgid "%s: could not create timeline history file \"%s\": %s\n"
 msgstr "%s: konnte Zeitleisten-History-Datei „%s“ nicht erzeugen: %s\n"
 
-#: receivelog.c:332
+#: receivelog.c:335
 #, c-format
 msgid "%s: could not write timeline history file \"%s\": %s\n"
 msgstr "%s: konnte Zeitleisten-History-Datei „%s“ nicht schreiben: %s\n"
 
-#: receivelog.c:358
+#: receivelog.c:361
 #, c-format
 msgid "%s: could not rename file \"%s\" to \"%s\": %s\n"
 msgstr "%s: konnte Datei „%s“ nicht in „%s“ umbenennen: %s\n"
 
-#: receivelog.c:431
+#: receivelog.c:434
 #, c-format
 msgid "%s: could not send feedback packet: %s"
 msgstr "%s: konnte Rückmeldungspaket nicht senden: %s"
 
-#: receivelog.c:464
+#: receivelog.c:468
 #, c-format
 msgid "%s: incompatible server version %s; streaming is only supported with server version %s\n"
 msgstr "%s: inkompatible Serverversion %s; Streaming wird nur mit Serverversion %s unterstützt\n"
 
-#: receivelog.c:542
+#: receivelog.c:546
 #, c-format
 msgid "%s: system identifier does not match between base backup and streaming connection\n"
 msgstr "%s: Systemidentifikator stimmt nicht zwischen Basissicherung und Streaming-Verbindung überein\n"
 
-#: receivelog.c:550
+#: receivelog.c:554
 #, c-format
 msgid "%s: starting timeline %u is not present in the server\n"
 msgstr "%s: Startzeitleiste %u ist auf dem Server nicht vorhanden\n"
 
-#: receivelog.c:584
+#: receivelog.c:588
 #, c-format
 msgid "%s: unexpected response to TIMELINE_HISTORY command: got %d rows and %d fields, expected %d rows and %d fields\n"
 msgstr "%s: unerwartete Antwort auf Befehl TIMELINE_HISTORY: %d Zeilen und %d Felder erhalten, %d Zeilen und %d Felder erwartet\n"
 
-#: receivelog.c:658 receivelog.c:693
+#: receivelog.c:661
+#, c-format
+msgid "%s: server reported unexpected next timeline %u, following timeline %u\n"
+msgstr "%s: Server berichtete unerwartete nächste Zeitleiste %u, folgend auf Zeitleiste %u\n"
+
+#: receivelog.c:668
+#, c-format
+msgid "%s: server stopped streaming timeline %u at %X/%X, but reported next timeline %u to begin at %X/%X\n"
+msgstr "%s: Server beendete Streaming von Zeitleiste %u bei %X/%X, aber gab an, dass nächste Zeitleiste %u bei %X/%X beginnt\n"
+
+#: receivelog.c:680 receivelog.c:715
 #, c-format
 msgid "%s: unexpected termination of replication stream: %s"
 msgstr "%s: unerwarteter Abbruch des Replikations-Streams: %s"
 
-#: receivelog.c:684
+#: receivelog.c:706
 #, c-format
 msgid "%s: replication stream was terminated before stop point\n"
 msgstr "%s: Replikationsstrom wurde vor Stopppunkt abgebrochen\n"
 
-#: receivelog.c:752 receivelog.c:848 receivelog.c:1011
+#: receivelog.c:754
+#, c-format
+msgid "%s: unexpected result set after end-of-timeline: got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr "%s: unerwartete Ergebnismenge nach Ende der Zeitleiste: %d Zeilen und %d Felder erhalten, %d Zeilen und %d Felder erwartet\n"
+
+#: receivelog.c:764
+#, c-format
+msgid "%s: could not parse next timeline's starting point \"%s\"\n"
+msgstr "%s: konnte Startpunkt der nächsten Zeitleiste („%s“) nicht interpretieren\n"
+
+#: receivelog.c:819 receivelog.c:921 receivelog.c:1086
 #, c-format
 msgid "%s: could not send copy-end packet: %s"
 msgstr "%s: konnte COPY-Ende-Paket nicht senden: %s"
 
-#: receivelog.c:819
+#: receivelog.c:886
 #, c-format
 msgid "%s: select() failed: %s\n"
 msgstr "%s: select() fehlgeschlagen: %s\n"
 
-#: receivelog.c:827
+#: receivelog.c:894
 #, c-format
 msgid "%s: could not receive data from WAL stream: %s"
 msgstr "%s: konnte keine Daten vom WAL-Stream empfangen: %s"
 
-#: receivelog.c:883 receivelog.c:918
+#: receivelog.c:958 receivelog.c:993
 #, c-format
 msgid "%s: streaming header too small: %d\n"
 msgstr "%s: Streaming-Header zu klein: %d\n"
 
-#: receivelog.c:937
+#: receivelog.c:1012
 #, c-format
 msgid "%s: received transaction log record for offset %u with no file open\n"
 msgstr "%s: Transaktionslogeintrag für Offset %u erhalten ohne offene Datei\n"
 
-#: receivelog.c:949
+#: receivelog.c:1024
 #, c-format
 msgid "%s: got WAL data offset %08x, expected %08x\n"
 msgstr "%s: WAL-Daten-Offset %08x erhalten, %08x erwartet\n"
 
-#: receivelog.c:986
+#: receivelog.c:1061
 #, c-format
 msgid "%s: could not write %u bytes to WAL file \"%s\": %s\n"
 msgstr "%s: konnte %u Bytes nicht in WAL-Datei „%s“ schreiben: %s\n"
 
-#: receivelog.c:1024
+#: receivelog.c:1099
 #, c-format
 msgid "%s: unrecognized streaming header: \"%c\"\n"
 msgstr "%s: unbekannter Streaming-Header: „%c“\n"
 
-#: streamutil.c:136
+#: streamutil.c:135
 msgid "Password: "
 msgstr "Passwort: "
 
-#: streamutil.c:149
+#: streamutil.c:148
 #, c-format
 msgid "%s: could not connect to server\n"
 msgstr "%s: konnte nicht mit Server verbinden\n"
 
-#: streamutil.c:165
+#: streamutil.c:164
 #, c-format
 msgid "%s: could not connect to server: %s\n"
 msgstr "%s: konnte nicht mit Server verbinden: %s\n"
 
-#: streamutil.c:189
+#: streamutil.c:188
 #, c-format
 msgid "%s: could not determine server setting for integer_datetimes\n"
 msgstr "%s: konnte Servereinstellung für integer_datetimes nicht ermitteln\n"
 
-#: streamutil.c:202
+#: streamutil.c:201
 #, c-format
 msgid "%s: integer_datetimes compile flag does not match server\n"
 msgstr "%s: Kompilieroption „integer_datetimes“ stimmt nicht mit Server überein\n"

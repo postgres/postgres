@@ -9629,7 +9629,9 @@ msgstr "%s: WSAStartup falló: %d\n"
 msgid ""
 "%s is the PostgreSQL server.\n"
 "\n"
-msgstr "%s es el servidor PostgreSQL.\n"
+msgstr ""
+"%s es el servidor PostgreSQL.\n"
+"\n"
 
 #: main/main.c:275
 #, c-format
@@ -9640,6 +9642,7 @@ msgid ""
 msgstr ""
 "Empleo:\n"
 "  %s [OPCION]...\n"
+"\n"
 
 #: main/main.c:276
 #, c-format

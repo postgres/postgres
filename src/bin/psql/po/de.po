@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-04-25 21:17+0000\n"
-"PO-Revision-Date: 2013-04-25 22:36-0400\n"
+"POT-Creation-Date: 2013-06-06 15:47+0000\n"
+"PO-Revision-Date: 2013-06-06 20:37-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../common/fe_memutils.c:33 ../../common/fe_memutils.c:60
 #: ../../common/fe_memutils.c:83 command.c:1130 input.c:204 mainloop.c:72
-#: mainloop.c:234 tab-complete.c:3821
+#: mainloop.c:234 tab-complete.c:3825
 #, c-format
 msgid "out of memory\n"
 msgstr "Speicher aufgebraucht\n"
@@ -144,7 +144,7 @@ msgstr "Sie sind verbunden mit der Datenbank „%s“ als Benutzer „%s“ auf 
 msgid "no query buffer\n"
 msgstr "kein Anfragepuffer\n"
 
-#: command.c:549 command.c:2811
+#: command.c:549 command.c:2826
 #, c-format
 msgid "invalid line number: %s\n"
 msgstr "ungültige Zeilennummer: %s\n"
@@ -230,7 +230,7 @@ msgstr "Zeitmessung ist aus."
 
 #: command.c:1410 command.c:1430 command.c:2027 command.c:2034 command.c:2043
 #: command.c:2053 command.c:2062 command.c:2076 command.c:2093 command.c:2152
-#: common.c:74 copy.c:342 copy.c:393 copy.c:408 psqlscan.l:1674
+#: common.c:74 copy.c:342 copy.c:395 copy.c:410 psqlscan.l:1674
 #: psqlscan.l:1685 psqlscan.l:1695
 #, c-format
 msgid "%s: %s\n"
@@ -255,8 +255,8 @@ msgstr "Passwort für Benutzer %s: "
 msgid "All connection parameters must be supplied because no database connection exists\n"
 msgstr "Alle Verbindungsparameter müssen angegeben werden, weil keine Datenbankverbindung besteht\n"
 
-#: command.c:1673 command.c:2845 common.c:120 common.c:413 common.c:478
-#: common.c:894 common.c:919 common.c:1016 copy.c:502 copy.c:689
+#: command.c:1673 command.c:2860 common.c:120 common.c:413 common.c:478
+#: common.c:894 common.c:919 common.c:1016 copy.c:504 copy.c:691
 #: large_obj.c:158 large_obj.c:193 large_obj.c:255 psqlscan.l:1946
 #, c-format
 msgid "%s"
@@ -489,7 +489,7 @@ msgstr "\\pset: unbekannte Option: %s\n"
 msgid "\\!: failed\n"
 msgstr "\\!: fehlgeschlagen\n"
 
-#: command.c:2597 command.c:2652
+#: command.c:2597 command.c:2656
 #, c-format
 msgid "\\watch cannot be used with an empty query\n"
 msgstr "\\watch kann nicht mit einer leeren Anfrage verwendet werden\n"
@@ -498,6 +498,16 @@ msgstr "\\watch kann nicht mit einer leeren Anfrage verwendet werden\n"
 #, c-format
 msgid "Watch every %lds\t%s"
 msgstr "\\watch alle %lds\t%s"
+
+#: command.c:2663
+#, c-format
+msgid "\\watch cannot be used with COPY\n"
+msgstr "\\watch kann nicht mit COPY verwendet werden\n"
+
+#: command.c:2669
+#, c-format
+msgid "unexpected result status for \\watch\n"
+msgstr "unerwarteter Ergebnisstatus für \\watch\n"
 
 #: common.c:287
 #, c-format
@@ -613,26 +623,26 @@ msgstr "konnte Befehl „%s“ nicht ausführen: %s\n"
 msgid "%s: cannot copy from/to a directory\n"
 msgstr "%s: ein Verzeichnis kann nicht kopiert werden\n"
 
-#: copy.c:388
+#: copy.c:389
 #, c-format
 msgid "could not close pipe to external command: %s\n"
 msgstr "konnte Pipe zu externem Befehl nicht schließen: %s\n"
 
-#: copy.c:455 copy.c:465
+#: copy.c:457 copy.c:467
 #, c-format
 msgid "could not write COPY data: %s\n"
 msgstr "konnte COPY-Daten nicht schreiben: %s\n"
 
-#: copy.c:472
+#: copy.c:474
 #, c-format
 msgid "COPY data transfer failed: %s"
 msgstr "Datentransfer mit COPY fehlgeschlagen: %s"
 
-#: copy.c:542
+#: copy.c:544
 msgid "canceled by user"
 msgstr "vom Benutzer abgebrochen"
 
-#: copy.c:552
+#: copy.c:554
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
@@ -640,11 +650,11 @@ msgstr ""
 "Geben Sie die zu kopierenden Daten ein, gefolgt von einem Zeilenende.\n"
 "Beenden Sie mit einem Backslash und einem Punkt alleine auf einer Zeile."
 
-#: copy.c:665
+#: copy.c:667
 msgid "aborted because of read failure"
 msgstr "abgebrochen wegen Lesenfehlers"
 
-#: copy.c:685
+#: copy.c:687
 msgid "trying to exit copy mode"
 msgstr "versuche, den COPY-Modus zu verlassen"
 
@@ -4325,7 +4335,7 @@ msgstr "Versuchen Sie „%s --help“ für weitere Informationen.\n"
 msgid "%s: warning: extra command-line argument \"%s\" ignored\n"
 msgstr "%s: Warnung: überflüssiges Kommandozeilenargument „%s“ ignoriert\n"
 
-#: tab-complete.c:3956
+#: tab-complete.c:3960
 #, c-format
 msgid ""
 "tab completion query failed: %s\n"
