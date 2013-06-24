@@ -1209,7 +1209,6 @@ typedef enum AlterTableType
 	AT_AddConstraint,			/* add constraint */
 	AT_AddConstraintRecurse,	/* internal to commands/tablecmds.c */
 	AT_ReAddConstraint,			/* internal to commands/tablecmds.c */
-	AT_AlterConstraint,			/* alter constraint */
 	AT_ValidateConstraint,		/* validate constraint */
 	AT_ValidateConstraintRecurse,		/* internal to commands/tablecmds.c */
 	AT_ProcessedConstraint,		/* pre-processed add constraint (local in

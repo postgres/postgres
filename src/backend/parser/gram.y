@@ -1941,21 +1941,6 @@ alter_table_cmd:
 					n->def = $2;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <name> ALTER CONSTRAINT ... */
-			| ALTER CONSTRAINT name ConstraintAttributeSpec
-				{
-					AlterTableCmd *n = makeNode(AlterTableCmd);
-					Constraint *c = makeNode(Constraint);
-					n->subtype = AT_AlterConstraint;
-					n->def = (Node *) c;
-					c->contype = CONSTR_FOREIGN; /* others not supported, yet */
-					c->conname = $3;
-					processCASbits($4, @4, "ALTER CONSTRAINT statement",
-									&c->deferrable,
-									&c->initdeferred,
-									NULL, NULL, yyscanner);
-					$$ = (Node *)n;
-				}
 			/* ALTER TABLE <name> VALIDATE CONSTRAINT ... */
 			| VALIDATE CONSTRAINT name
 				{

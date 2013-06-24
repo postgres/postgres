@@ -275,8 +275,6 @@ static void AlterIndexNamespaces(Relation classRel, Relation rel,
 static void AlterSeqNamespaces(Relation classRel, Relation rel,
 				   Oid oldNspOid, Oid newNspOid, ObjectAddresses *objsMoved,
 				   LOCKMODE lockmode);
-static void ATExecAlterConstraint(Relation rel, AlterTableCmd *cmd,
-						 bool recurse, bool recursing, LOCKMODE lockmode);
 static void ATExecValidateConstraint(Relation rel, char *constrName,
 						 bool recurse, bool recursing, LOCKMODE lockmode);
 static int transformColumnNameList(Oid relId, List *colList,
@@ -2888,7 +2886,6 @@ AlterTableGetLockLevel(List *cmds)
 			case AT_SetOptions:
 			case AT_ResetOptions:
 			case AT_SetStorage:
-			case AT_AlterConstraint:
 			case AT_ValidateConstraint:
 				cmd_lockmode = ShareUpdateExclusiveLock;
 				break;
@@ -3127,9 +3124,6 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			ATPrepAddInherit(rel);
 			pass = AT_PASS_MISC;
 			break;
-		case AT_AlterConstraint:		/* ALTER CONSTRAINT */
-			ATSimplePermissions(rel, ATT_TABLE);
-			break;
 		case AT_ValidateConstraint:		/* VALIDATE CONSTRAINT */
 			ATSimplePermissions(rel, ATT_TABLE);
 			/* Recursion occurs during execution phase */
@@ -3307,9 +3301,6 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			break;
 		case AT_AddIndexConstraint:		/* ADD CONSTRAINT USING INDEX */
 			ATExecAddIndexConstraint(tab, rel, (IndexStmt *) cmd->def, lockmode);
-			break;
-		case AT_AlterConstraint:		/* ALTER CONSTRAINT */
-			ATExecAlterConstraint(rel, cmd, false, false, lockmode);
 			break;
 		case AT_ValidateConstraint:		/* VALIDATE CONSTRAINT */
 			ATExecValidateConstraint(rel, cmd->name, false, false, lockmode);
@@ -6180,135 +6171,6 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 	 * Close pk table, but keep lock until we've committed.
 	 */
 	heap_close(pkrel, NoLock);
-}
-
-/*
- * ALTER TABLE ALTER CONSTRAINT
- *
- * Update the attributes of a constraint.
- *
- * Currently only works for Foreign Key constraints.
- * Foreign keys do not inherit, so we purposely ignore the
- * recursion bit here, but we keep the API the same for when
- * other constraint types are supported.
- */
-static void
-ATExecAlterConstraint(Relation rel, AlterTableCmd *cmd,
-						 bool recurse, bool recursing, LOCKMODE lockmode)
-{
-	Relation	conrel;
-	SysScanDesc scan;
-	ScanKeyData key;
-	HeapTuple	contuple;
-	Form_pg_constraint currcon = NULL;
-	Constraint	*cmdcon = NULL;
-	bool		found = false;
-
-	Assert(IsA(cmd->def, Constraint));
-	cmdcon = (Constraint *) cmd->def;
-
-	conrel = heap_open(ConstraintRelationId, RowExclusiveLock);
-
-	/*
-	 * Find and check the target constraint
-	 */
-	ScanKeyInit(&key,
-				Anum_pg_constraint_conrelid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(RelationGetRelid(rel)));
-	scan = systable_beginscan(conrel, ConstraintRelidIndexId,
-							  true, SnapshotNow, 1, &key);
-
-	while (HeapTupleIsValid(contuple = systable_getnext(scan)))
-	{
-		currcon = (Form_pg_constraint) GETSTRUCT(contuple);
-		if (strcmp(NameStr(currcon->conname), cmdcon->conname) == 0)
-		{
-			found = true;
-			break;
-		}
-	}
-
-	if (!found)
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("constraint \"%s\" of relation \"%s\" does not exist",
-						cmdcon->conname, RelationGetRelationName(rel))));
-
-	if (currcon->contype != CONSTRAINT_FOREIGN)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("constraint \"%s\" of relation \"%s\" is not a foreign key constraint",
-						cmdcon->conname, RelationGetRelationName(rel))));
-
-	if (currcon->condeferrable != cmdcon->deferrable ||
-		currcon->condeferred != cmdcon->initdeferred)
-	{
-		HeapTuple	copyTuple;
-		HeapTuple	tgtuple;
-		Form_pg_constraint copy_con;
-		Form_pg_trigger copy_tg;
-		ScanKeyData tgkey;
-		SysScanDesc tgscan;
-		Relation	tgrel;
-
-		/*
-		 * Now update the catalog, while we have the door open.
-		 */
-		copyTuple = heap_copytuple(contuple);
-		copy_con = (Form_pg_constraint) GETSTRUCT(copyTuple);
-		copy_con->condeferrable = cmdcon->deferrable;
-		copy_con->condeferred = cmdcon->initdeferred;
-		simple_heap_update(conrel, &copyTuple->t_self, copyTuple);
-		CatalogUpdateIndexes(conrel, copyTuple);
-
-		InvokeObjectPostAlterHook(ConstraintRelationId,
-								  HeapTupleGetOid(contuple), 0);
-
-		heap_freetuple(copyTuple);
-
-		/*
-		 * Now we need to update the multiple entries in pg_trigger
-		 * that implement the constraint.
-		 */
-		tgrel = heap_open(TriggerRelationId, RowExclusiveLock);
-
-		ScanKeyInit(&tgkey,
-					Anum_pg_trigger_tgconstraint,
-					BTEqualStrategyNumber, F_OIDEQ,
-					ObjectIdGetDatum(HeapTupleGetOid(contuple)));
-
-		tgscan = systable_beginscan(tgrel, TriggerConstraintIndexId, true,
-									SnapshotNow, 1, &tgkey);
-
-		while (HeapTupleIsValid(tgtuple = systable_getnext(tgscan)))
-		{
-			copyTuple = heap_copytuple(tgtuple);
-			copy_tg = (Form_pg_trigger) GETSTRUCT(copyTuple);
-			copy_tg->tgdeferrable = cmdcon->deferrable;
-			copy_tg->tginitdeferred = cmdcon->initdeferred;
-			simple_heap_update(tgrel, &copyTuple->t_self, copyTuple);
-			CatalogUpdateIndexes(tgrel, copyTuple);
-
-			InvokeObjectPostAlterHook(TriggerRelationId,
-										HeapTupleGetOid(tgtuple), 0);
-
-			heap_freetuple(copyTuple);
-		}
-
-		systable_endscan(tgscan);
-
-		heap_close(tgrel, RowExclusiveLock);
-
-		/*
-		 * Invalidate relcache so that others see the new attributes.
-		 */
-		CacheInvalidateRelcache(rel);
-	}
-
-	systable_endscan(scan);
-
-	heap_close(conrel, RowExclusiveLock);
 }
 
 /*
