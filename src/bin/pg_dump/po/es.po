@@ -1465,12 +1465,12 @@ msgstr "  --inserts                extrae los datos usando INSERT, en vez de COP
 #: pg_dump.c:856 pg_dumpall.c:560
 #, c-format
 msgid "  --no-security-labels         do not dump security label assignments\n"
-msgstr "  -no-security-labels      no volcar asignaciones de etiquetas de seguridad\n"
+msgstr "  --no-security-labels     no volcar asignaciones de etiquetas de seguridad\n"
 
 #: pg_dump.c:857 pg_dumpall.c:561
 #, c-format
 msgid "  --no-tablespaces             do not dump tablespace assignments\n"
-msgstr "  -no-tablespaces          no volcar asignaciones de tablespace\n"
+msgstr "  --no-tablespaces         no volcar asignaciones de tablespace\n"
 
 #: pg_dump.c:858 pg_dumpall.c:562
 #, c-format
@@ -2006,6 +2006,7 @@ msgid ""
 msgstr ""
 "%s extrae un cluster de bases de datos de PostgreSQL en un archivo\n"
 "guión (script) SQL.\n"
+"\n"
 
 #: pg_dumpall.c:537
 #, c-format
@@ -2163,6 +2164,7 @@ msgid ""
 msgstr ""
 "%s reestablece una base de datos de PostgreSQL usando un archivo\n"
 "creado por pg_dump.\n"
+"\n"
 
 #: pg_restore.c:402
 #, c-format

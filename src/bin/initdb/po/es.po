@@ -731,6 +731,7 @@ msgid ""
 msgstr ""
 "Los archivos de este cluster serán de propiedad del usuario «%s».\n"
 "Este usuario también debe ser quien ejecute el proceso servidor.\n"
+"\n"
 
 #: initdb.c:2987
 #, c-format

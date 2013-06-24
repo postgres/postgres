@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9 current\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-04-27 22:17+0000\n"
-"PO-Revision-Date: 2013-04-28 07:18+0400\n"
+"POT-Creation-Date: 2013-05-20 02:17+0000\n"
+"PO-Revision-Date: 2013-05-20 19:53+0400\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -225,7 +225,7 @@ msgid "%s: could not read from ready pipe: %s\n"
 msgstr "%s: не удалось прочитать из готового канала: %s\n"
 
 #: pg_basebackup.c:188 pg_basebackup.c:280 pg_basebackup.c:1518
-#: pg_receivexlog.c:264
+#: pg_receivexlog.c:266
 #, c-format
 msgid "%s: could not parse transaction log location \"%s\"\n"
 msgstr "%s: не удалось разобрать положение в журнале транзакций \"%s\"\n"
@@ -319,12 +319,12 @@ msgstr "%s: не удалось получить поток данных COPY: %
 msgid "%s: could not close compressed file \"%s\": %s\n"
 msgstr "%s: не удалось закрыть сжатый файл \"%s\": %s\n"
 
-#: pg_basebackup.c:720 receivelog.c:158 receivelog.c:346 receivelog.c:701
+#: pg_basebackup.c:720 receivelog.c:161 receivelog.c:349 receivelog.c:722
 #, c-format
 msgid "%s: could not close file \"%s\": %s\n"
 msgstr "%s: не удалось закрыть файл \"%s\": %s\n"
 
-#: pg_basebackup.c:731 pg_basebackup.c:922 receivelog.c:861
+#: pg_basebackup.c:731 pg_basebackup.c:922 receivelog.c:935
 #, c-format
 msgid "%s: could not read COPY data: %s"
 msgstr "%s: не удалось прочитать данные COPY: %s"
@@ -380,13 +380,13 @@ msgstr "%s: нехватка памяти\n"
 msgid "%s: incompatible server version %s\n"
 msgstr "%s: несовместимая версия сервера %s\n"
 
-#: pg_basebackup.c:1282 pg_basebackup.c:1311 pg_receivexlog.c:249
-#: receivelog.c:526 receivelog.c:571 receivelog.c:610
+#: pg_basebackup.c:1282 pg_basebackup.c:1311 pg_receivexlog.c:251
+#: receivelog.c:529 receivelog.c:574 receivelog.c:613
 #, c-format
 msgid "%s: could not send replication command \"%s\": %s"
 msgstr "%s: не удалось передать команду репликации \"%s\": %s"
 
-#: pg_basebackup.c:1289 pg_receivexlog.c:256 receivelog.c:534
+#: pg_basebackup.c:1289 pg_receivexlog.c:258 receivelog.c:537
 #, c-format
 msgid ""
 "%s: could not identify system: got %d rows and %d fields, expected %d rows "
@@ -528,24 +528,24 @@ msgstr ""
 "%s: неверный аргумент режима контрольных точек \"%s\", должен быть \"fast\" "
 "или \"spread\"\n"
 
-#: pg_basebackup.c:1726 pg_receivexlog.c:390
+#: pg_basebackup.c:1726 pg_receivexlog.c:392
 #, c-format
 msgid "%s: invalid status interval \"%s\"\n"
 msgstr "%s: неверный интервал сообщений о состоянии \"%s\"\n"
 
 #: pg_basebackup.c:1742 pg_basebackup.c:1756 pg_basebackup.c:1767
-#: pg_basebackup.c:1780 pg_basebackup.c:1790 pg_receivexlog.c:406
-#: pg_receivexlog.c:420 pg_receivexlog.c:431
+#: pg_basebackup.c:1780 pg_basebackup.c:1790 pg_receivexlog.c:408
+#: pg_receivexlog.c:422 pg_receivexlog.c:433
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Для дополнительной информации попробуйте \"%s --help\".\n"
 
-#: pg_basebackup.c:1754 pg_receivexlog.c:418
+#: pg_basebackup.c:1754 pg_receivexlog.c:420
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: слишком много аргументов командной строки (первый: \"%s\")\n"
 
-#: pg_basebackup.c:1766 pg_receivexlog.c:430
+#: pg_basebackup.c:1766 pg_receivexlog.c:432
 #, c-format
 msgid "%s: no target directory specified\n"
 msgstr "%s: целевой каталог не указан\n"
@@ -601,137 +601,137 @@ msgstr "  -n, --no-loop           прерывать работу при пот�
 msgid "%s: finished segment at %X/%X (timeline %u)\n"
 msgstr "%s: завершён сегмент %X/%X (линия времени %u)\n"
 
-#: pg_receivexlog.c:92
+#: pg_receivexlog.c:94
 #, c-format
 msgid "%s: switched to timeline %u at %X/%X\n"
 msgstr "%s: переключение на линию времени %u (позиция %X/%X)\n"
 
-#: pg_receivexlog.c:101
+#: pg_receivexlog.c:103
 #, c-format
 msgid "%s: received interrupt signal, exiting\n"
 msgstr "%s: получен сигнал прерывания, работа завершается\n"
 
-#: pg_receivexlog.c:126
+#: pg_receivexlog.c:128
 #, c-format
 msgid "%s: could not open directory \"%s\": %s\n"
 msgstr "%s: не удалось открыть каталог \"%s\": %s\n"
 
-#: pg_receivexlog.c:155
+#: pg_receivexlog.c:157
 #, c-format
 msgid "%s: could not parse transaction log file name \"%s\"\n"
 msgstr "%s: не удалось разобрать имя файла журнала транзакций \"%s\"\n"
 
-#: pg_receivexlog.c:165
+#: pg_receivexlog.c:167
 #, c-format
 msgid "%s: could not stat file \"%s\": %s\n"
 msgstr "%s: не удалось получить информацию о файле \"%s\": %s\n"
 
-#: pg_receivexlog.c:183
+#: pg_receivexlog.c:185
 #, c-format
 msgid "%s: segment file \"%s\" has incorrect size %d, skipping\n"
 msgstr ""
 "%s: файл сегмента \"%s\" имеет неправильный размер %d, файл пропускается\n"
 
-#: pg_receivexlog.c:291
+#: pg_receivexlog.c:293
 #, c-format
 msgid "%s: starting log streaming at %X/%X (timeline %u)\n"
 msgstr "%s: начало передачи журнала с позиции %X/%X (линия времени %u)\n"
 
-#: pg_receivexlog.c:371
+#: pg_receivexlog.c:373
 #, c-format
 msgid "%s: invalid port number \"%s\"\n"
 msgstr "%s: неверный номер порта \"%s\"\n"
 
-#: pg_receivexlog.c:453
+#: pg_receivexlog.c:455
 #, c-format
 msgid "%s: disconnected\n"
 msgstr "%s: отключение\n"
 
 #. translator: check source for value for %d
-#: pg_receivexlog.c:460
+#: pg_receivexlog.c:462
 #, c-format
 msgid "%s: disconnected; waiting %d seconds to try again\n"
 msgstr "%s: отключение; через %d сек. последует повторное подключение\n"
 
-#: receivelog.c:66
+#: receivelog.c:69
 #, c-format
 msgid "%s: could not open transaction log file \"%s\": %s\n"
 msgstr "%s: не удалось открыть файл журнала транзакций \"%s\": %s\n"
 
-#: receivelog.c:78
+#: receivelog.c:81
 #, c-format
 msgid "%s: could not stat transaction log file \"%s\": %s\n"
 msgstr "%s: не удалось проверить файл журнала транзакций \"%s\": %s\n"
 
-#: receivelog.c:92
+#: receivelog.c:95
 #, c-format
 msgid "%s: transaction log file \"%s\" has %d bytes, should be 0 or %d\n"
 msgstr ""
 "%s: файл журнала транзакций \"%s\" имеет размер %d Б, а должен - 0 или %d\n"
 
-#: receivelog.c:105
+#: receivelog.c:108
 #, c-format
 msgid "%s: could not pad transaction log file \"%s\": %s\n"
 msgstr "%s: не удалось дополнить файл журнала транзакций \"%s\": %s\n"
 
-#: receivelog.c:118
+#: receivelog.c:121
 #, c-format
 msgid "%s: could not seek to beginning of transaction log file \"%s\": %s\n"
 msgstr "%s: не удалось перейти к началу файла журнала транзакций \"%s\": %s\n"
 
-#: receivelog.c:144
+#: receivelog.c:147
 #, c-format
 msgid "%s: could not determine seek position in file \"%s\": %s\n"
 msgstr "%s: не удалось определить текущую позицию в файле \"%s\": %s\n"
 
-#: receivelog.c:151 receivelog.c:339
+#: receivelog.c:154 receivelog.c:342
 #, c-format
 msgid "%s: could not fsync file \"%s\": %s\n"
 msgstr "%s: не удалось синхронизировать с ФС файл \"%s\": %s\n"
 
-#: receivelog.c:178
+#: receivelog.c:181
 #, c-format
 msgid "%s: could not rename file \"%s\": %s\n"
 msgstr "%s: не удалось переименовать файл \"%s\": %s\n"
 
-#: receivelog.c:185
+#: receivelog.c:188
 #, c-format
 msgid "%s: not renaming \"%s%s\", segment is not complete\n"
 msgstr ""
 "%s: файл \"%s%s\" не переименовывается, так как это не полный сегмент\n"
 
-#: receivelog.c:274
+#: receivelog.c:277
 #, c-format
 msgid "%s: could not open timeline history file \"%s\": %s\n"
 msgstr "%s: не удалось открыть файл истории линии времени \"%s\": %s\n"
 
-#: receivelog.c:301
+#: receivelog.c:304
 #, c-format
 msgid "%s: server reported unexpected history file name for timeline %u: %s\n"
 msgstr ""
 "%s: сервер сообщил неожиданное имя файла истории для линии времени %u: %s\n"
 
-#: receivelog.c:316
+#: receivelog.c:319
 #, c-format
 msgid "%s: could not create timeline history file \"%s\": %s\n"
 msgstr "%s: не удалось создать файл истории линии времени \"%s\": %s\n"
 
-#: receivelog.c:332
+#: receivelog.c:335
 #, c-format
 msgid "%s: could not write timeline history file \"%s\": %s\n"
 msgstr "%s: не удалось записать файл истории линии времени \"%s\": %s\n"
 
-#: receivelog.c:358
+#: receivelog.c:361
 #, c-format
 msgid "%s: could not rename file \"%s\" to \"%s\": %s\n"
 msgstr "%s: не удалось переименовать файл \"%s\" в \"%s\": %s\n"
 
-#: receivelog.c:431
+#: receivelog.c:434
 #, c-format
 msgid "%s: could not send feedback packet: %s"
 msgstr "%s: не удалось отправить пакет отзыва: %s"
 
-#: receivelog.c:464
+#: receivelog.c:467
 #, c-format
 msgid ""
 "%s: incompatible server version %s; streaming is only supported with server "
@@ -740,7 +740,7 @@ msgstr ""
 "%s: несовместимая версия сервера %s; потоковая передача поддерживается "
 "только с версией %s\n"
 
-#: receivelog.c:542
+#: receivelog.c:545
 #, c-format
 msgid ""
 "%s: system identifier does not match between base backup and streaming "
@@ -749,12 +749,12 @@ msgstr ""
 "%s: системный идентификатор базовой резервной копии отличается от "
 "идентификатора потоковой передачи\n"
 
-#: receivelog.c:550
+#: receivelog.c:553
 #, c-format
 msgid "%s: starting timeline %u is not present in the server\n"
 msgstr "%s: на сервере нет начальной линии времени %u\n"
 
-#: receivelog.c:584
+#: receivelog.c:587
 #, c-format
 msgid ""
 "%s: unexpected response to TIMELINE_HISTORY command: got %d rows and %d "
@@ -763,53 +763,84 @@ msgstr ""
 "%s: сервер вернул неожиданный ответ на команду TIMELINE_HISTORY; получено "
 "строк: %d, полей: %d, а ожидалось строк: %d, полей: %d\n"
 
-#: receivelog.c:658 receivelog.c:693
+#: receivelog.c:660
+#, c-format
+msgid ""
+"%s: server reported unexpected next timeline %u, following timeline %u\n"
+msgstr ""
+"%s: сервер неожиданно сообщил линию времени %u после линии времени %u\n"
+
+#: receivelog.c:667
+#, c-format
+msgid ""
+"%s: server stopped streaming timeline %u at %X/%X, but reported next "
+"timeline %u to begin at %X/%X\n"
+msgstr ""
+"%s: сервер прекратил передачу линии времени %u в %X/%X, но сообщил, что "
+"следующая линии времени %u начнётся в %X/%X\n"
+
+#: receivelog.c:679 receivelog.c:714
 #, c-format
 msgid "%s: unexpected termination of replication stream: %s"
 msgstr "%s: неожиданный конец потока репликации: %s"
 
-#: receivelog.c:684
+#: receivelog.c:705
 #, c-format
 msgid "%s: replication stream was terminated before stop point\n"
 msgstr "%s: поток репликации закончился до точки останова\n"
 
-#: receivelog.c:752 receivelog.c:848 receivelog.c:1011
+#: receivelog.c:753
+#, c-format
+msgid ""
+"%s: unexpected result set after end-of-timeline: got %d rows and %d fields, "
+"expected %d rows and %d fields\n"
+msgstr ""
+"%s: сервер вернул неожиданный набор данных после конца линии времени - "
+"получено строк: %d, полей: %d, а ожидалось строк: %d, полей: %d\n"
+
+#: receivelog.c:763
+#, c-format
+msgid "%s: could not parse next timeline's starting point \"%s\"\n"
+msgstr ""
+"%s: не удалось разобрать начальную точку следующей линии времени \"%s\"\n"
+
+#: receivelog.c:818 receivelog.c:920 receivelog.c:1085
 #, c-format
 msgid "%s: could not send copy-end packet: %s"
 msgstr "%s: не удалось отправить пакет \"конец COPY\": %s"
 
-#: receivelog.c:819
+#: receivelog.c:885
 #, c-format
 msgid "%s: select() failed: %s\n"
 msgstr "%s: ошибка в select(): %s\n"
 
-#: receivelog.c:827
+#: receivelog.c:893
 #, c-format
 msgid "%s: could not receive data from WAL stream: %s"
 msgstr "%s: не удалось получить данные из потока WAL: %s"
 
-#: receivelog.c:883 receivelog.c:918
+#: receivelog.c:957 receivelog.c:992
 #, c-format
 msgid "%s: streaming header too small: %d\n"
 msgstr "%s: заголовок потока слишком мал: %d\n"
 
-#: receivelog.c:937
+#: receivelog.c:1011
 #, c-format
 msgid "%s: received transaction log record for offset %u with no file open\n"
 msgstr ""
 "%s: получена запись журнала транзакций по смещению %u, но файл не открыт\n"
 
-#: receivelog.c:949
+#: receivelog.c:1023
 #, c-format
 msgid "%s: got WAL data offset %08x, expected %08x\n"
 msgstr "%s: получено смещение данных WAL %08x, но ожидалось %08x\n"
 
-#: receivelog.c:986
+#: receivelog.c:1060
 #, c-format
 msgid "%s: could not write %u bytes to WAL file \"%s\": %s\n"
 msgstr "%s: не удалось записать %u байт в файл WAL \"%s\": %s\n"
 
-#: receivelog.c:1024
+#: receivelog.c:1098
 #, c-format
 msgid "%s: unrecognized streaming header: \"%c\"\n"
 msgstr "%s: нераспознанный заголовок потока: \"%c\"\n"

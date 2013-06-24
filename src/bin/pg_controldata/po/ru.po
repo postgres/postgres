@@ -20,8 +20,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9 current\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-04-23 11:18+0000\n"
-"PO-Revision-Date: 2013-04-23 16:01+0400\n"
+"POT-Creation-Date: 2013-05-20 02:18+0000\n"
+"PO-Revision-Date: 2013-05-20 20:10+0400\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -407,7 +407,7 @@ msgstr "числа с плавающей точкой"
 #: pg_controldata.c:286
 #, c-format
 msgid "Float4 argument passing:              %s\n"
-msgstr "передача аргумента Float4:            %s\n"
+msgstr "Передача аргумента Float4:            %s\n"
 
 #: pg_controldata.c:287 pg_controldata.c:289
 msgid "by reference"
@@ -420,20 +420,18 @@ msgstr "по значению"
 #: pg_controldata.c:288
 #, c-format
 msgid "Float8 argument passing:              %s\n"
-msgstr "передача аргумента Float8:            %s\n"
+msgstr "Передача аргумента Float8:            %s\n"
 
 #: pg_controldata.c:290
 #, c-format
-msgid "Data page checksums:                  %s\n"
-msgstr "Контроль целостности страниц:         %s\n"
+msgid "Data page checksum version:           %u\n"
+msgstr "Версия контрольных сумм страниц:      %u\n"
 
-#: pg_controldata.c:291
-msgid "disabled"
-msgstr "отключен"
+#~ msgid "disabled"
+#~ msgstr "отключен"
 
-#: pg_controldata.c:291
-msgid "enabled"
-msgstr "включен"
+#~ msgid "enabled"
+#~ msgstr "включен"
 
 #~ msgid ""
 #~ "Usage:\n"

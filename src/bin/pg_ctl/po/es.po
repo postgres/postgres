@@ -658,7 +658,6 @@ msgid "  immediate   quit without complete shutdown; will lead to recovery on re
 msgstr ""
 "  immediate   salir sin apagado completo; se ejecutará recuperación\n"
 "              en el próximo inicio\n"
-"\n"
 
 #: pg_ctl.c:1834
 #, c-format

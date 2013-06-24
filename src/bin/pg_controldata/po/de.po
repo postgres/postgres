@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-04-27 03:18+0000\n"
-"PO-Revision-Date: 2013-04-27 22:37-0400\n"
+"POT-Creation-Date: 2013-06-06 15:49+0000\n"
+"PO-Revision-Date: 2013-06-06 20:30-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -407,13 +407,5 @@ msgstr "Übergabe von Float8-Argumenten:             %s\n"
 
 #: pg_controldata.c:290
 #, c-format
-msgid "Data page checksums:                  %s\n"
-msgstr "Datenseitenprüfsummen:                      %s\n"
-
-#: pg_controldata.c:291
-msgid "disabled"
-msgstr "ausgeschaltet"
-
-#: pg_controldata.c:291
-msgid "enabled"
-msgstr "eingeschaltet"
+msgid "Data page checksum version:           %u\n"
+msgstr "Datenseitenprüfsummenversion:               %u\n"

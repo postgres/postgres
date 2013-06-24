@@ -143,6 +143,7 @@ msgstr ""
 "almacenado en el archivo. Puede ser que el archivo esté corrupto, o\n"
 "bien tiene una estructura diferente de la que este programa está\n"
 "esperando.  Los resultados presentados a continuación no son confiables.\n"
+"\n"
 
 #: pg_controldata.c:180
 #, c-format

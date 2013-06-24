@@ -916,7 +916,9 @@ msgstr "%s: limpiando la base de datos «%s»\n"
 msgid ""
 "%s cleans and analyzes a PostgreSQL database.\n"
 "\n"
-msgstr "%s limpia (VACUUM) y analiza una base de datos PostgreSQL.\n"
+msgstr ""
+"%s limpia (VACUUM) y analiza una base de datos PostgreSQL.\n"
+"\n"
 
 #: vacuumdb.c:345
 #, c-format
