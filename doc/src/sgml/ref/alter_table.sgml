@@ -46,6 +46,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }
     ADD <replaceable class="PARAMETER">table_constraint</replaceable> [ NOT VALID ]
     ADD <replaceable class="PARAMETER">table_constraint_using_index</replaceable>
+    ALTER CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> [ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
     VALIDATE CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable>
     DROP CONSTRAINT [ IF EXISTS ]  <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
     DISABLE TRIGGER [ <replaceable class="PARAMETER">trigger_name</replaceable> | ALL | USER ]
@@ -313,6 +314,16 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
        official constraint using this syntax.  See the example below.
       </para>
      </note>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>ALTER CONSTRAINT</literal></term>
+    <listitem>
+     <para>
+      This form alters the attributes of a constraint that was previously
+      created. Currently only foreign key constraints may be altered.
+     </para>
     </listitem>
    </varlistentry>
 

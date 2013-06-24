@@ -818,6 +818,13 @@ CREATE TEMP TABLE fktable (
     fk int references pktable deferrable initially deferred
 );
 
+-- check ALTER CONSTRAINT
+ALTER TABLE fktable ALTER CONSTRAINT fktable_fk_fkey NOT DEFERRABLE;
+-- illegal option
+ALTER TABLE fktable ALTER CONSTRAINT fktable_fk_fkey NOT DEFERRABLE INITIALLY DEFERRED;
+-- reset
+ALTER TABLE fktable ALTER CONSTRAINT fktable_fk_fkey DEFERRABLE INITIALLY DEFERRED;
+
 INSERT INTO pktable VALUES (5, 10);
 
 BEGIN;
@@ -830,6 +837,19 @@ UPDATE fktable SET id = id + 1;
 
 -- should catch error from initial INSERT
 COMMIT;
+
+-- change the constraint definition and retest
+ALTER TABLE fktable ALTER CONSTRAINT fktable_fk_fkey DEFERRABLE INITIALLY IMMEDIATE;
+
+BEGIN;
+
+-- doesn't match PK, should throw error now
+INSERT INTO fktable VALUES (0, 20);
+
+COMMIT;
+
+-- reset
+ALTER TABLE fktable ALTER CONSTRAINT fktable_fk_fkey DEFERRABLE INITIALLY DEFERRED;
 
 -- check same case when insert is in a different subtransaction than update
 
