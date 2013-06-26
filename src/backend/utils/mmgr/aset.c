@@ -308,6 +308,37 @@ AllocSetFreeIndex(Size size)
 	return idx;
 }
 
+#ifdef CLOBBER_FREED_MEMORY
+
+/* Wipe freed memory for debugging purposes */
+static void
+wipe_mem(void *ptr, size_t size)
+{
+	memset(ptr, 0x7F, size);
+}
+#endif
+
+#ifdef MEMORY_CONTEXT_CHECKING
+static void
+set_sentinel(void *base, Size offset)
+{
+	char	   *ptr = (char *) base + offset;
+
+	*ptr = 0x7E;
+}
+
+static bool
+sentinel_ok(const void *base, Size offset)
+{
+	const char *ptr = (const char *) base + offset;
+	bool		ret;
+
+	ret = *ptr == 0x7E;
+
+	return ret;
+}
+#endif
+
 #ifdef RANDOMIZE_ALLOCATED_MEMORY
 
 /*
@@ -492,8 +523,7 @@ AllocSetReset(MemoryContext context)
 			char	   *datastart = ((char *) block) + ALLOC_BLOCKHDRSZ;
 
 #ifdef CLOBBER_FREED_MEMORY
-			/* Wipe freed memory for debugging purposes */
-			memset(datastart, 0x7F, block->freeptr - datastart);
+			wipe_mem(datastart, block->freeptr - datastart);
 #endif
 			block->freeptr = datastart;
 			block->next = NULL;
@@ -502,8 +532,7 @@ AllocSetReset(MemoryContext context)
 		{
 			/* Normal case, release the block */
 #ifdef CLOBBER_FREED_MEMORY
-			/* Wipe freed memory for debugging purposes */
-			memset(block, 0x7F, block->freeptr - ((char *) block));
+			wipe_mem(block, block->freeptr - ((char *) block));
 #endif
 			free(block);
 		}
@@ -545,8 +574,7 @@ AllocSetDelete(MemoryContext context)
 		AllocBlock	next = block->next;
 
 #ifdef CLOBBER_FREED_MEMORY
-		/* Wipe freed memory for debugging purposes */
-		memset(block, 0x7F, block->freeptr - ((char *) block));
+		wipe_mem(block, block->freeptr - ((char *) block));
 #endif
 		free(block);
 		block = next;
@@ -598,7 +626,7 @@ AllocSetAlloc(MemoryContext context, Size size)
 		chunk->requested_size = size;
 		/* set mark to catch clobber of "unused" space */
 		if (size < chunk_size)
-			((char *) AllocChunkGetPointer(chunk))[size] = 0x7E;
+			set_sentinel(AllocChunkGetPointer(chunk), size);
 #endif
 #ifdef RANDOMIZE_ALLOCATED_MEMORY
 		/* fill the allocated space with junk */
@@ -644,7 +672,7 @@ AllocSetAlloc(MemoryContext context, Size size)
 		chunk->requested_size = size;
 		/* set mark to catch clobber of "unused" space */
 		if (size < chunk->size)
-			((char *) AllocChunkGetPointer(chunk))[size] = 0x7E;
+			set_sentinel(AllocChunkGetPointer(chunk), size);
 #endif
 #ifdef RANDOMIZE_ALLOCATED_MEMORY
 		/* fill the allocated space with junk */
@@ -801,7 +829,7 @@ AllocSetAlloc(MemoryContext context, Size size)
 	chunk->requested_size = size;
 	/* set mark to catch clobber of "unused" space */
 	if (size < chunk->size)
-		((char *) AllocChunkGetPointer(chunk))[size] = 0x7E;
+		set_sentinel(AllocChunkGetPointer(chunk), size);
 #endif
 #ifdef RANDOMIZE_ALLOCATED_MEMORY
 	/* fill the allocated space with junk */
@@ -827,7 +855,7 @@ AllocSetFree(MemoryContext context, void *pointer)
 #ifdef MEMORY_CONTEXT_CHECKING
 	/* Test for someone scribbling on unused space in chunk */
 	if (chunk->requested_size < chunk->size)
-		if (((char *) pointer)[chunk->requested_size] != 0x7E)
+		if (!sentinel_ok(pointer, chunk->requested_size))
 			elog(WARNING, "detected write past chunk end in %s %p",
 				 set->header.name, chunk);
 #endif
@@ -860,8 +888,7 @@ AllocSetFree(MemoryContext context, void *pointer)
 		else
 			prevblock->next = block->next;
 #ifdef CLOBBER_FREED_MEMORY
-		/* Wipe freed memory for debugging purposes */
-		memset(block, 0x7F, block->freeptr - ((char *) block));
+		wipe_mem(block, block->freeptr - ((char *) block));
 #endif
 		free(block);
 	}
@@ -873,8 +900,7 @@ AllocSetFree(MemoryContext context, void *pointer)
 		chunk->aset = (void *) set->freelist[fidx];
 
 #ifdef CLOBBER_FREED_MEMORY
-		/* Wipe freed memory for debugging purposes */
-		memset(pointer, 0x7F, chunk->size);
+		wipe_mem(pointer, chunk->size);
 #endif
 
 #ifdef MEMORY_CONTEXT_CHECKING
@@ -901,7 +927,7 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 #ifdef MEMORY_CONTEXT_CHECKING
 	/* Test for someone scribbling on unused space in chunk */
 	if (chunk->requested_size < oldsize)
-		if (((char *) pointer)[chunk->requested_size] != 0x7E)
+		if (!sentinel_ok(pointer, chunk->requested_size))
 			elog(WARNING, "detected write past chunk end in %s %p",
 				 set->header.name, chunk);
 #endif
@@ -924,7 +950,7 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 		chunk->requested_size = size;
 		/* set mark to catch clobber of "unused" space */
 		if (size < oldsize)
-			((char *) pointer)[size] = 0x7E;
+			set_sentinel(pointer, size);
 #endif
 		return pointer;
 	}
@@ -987,7 +1013,7 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 		chunk->requested_size = size;
 		/* set mark to catch clobber of "unused" space */
 		if (size < chunk->size)
-			((char *) AllocChunkGetPointer(chunk))[size] = 0x7E;
+			set_sentinel(AllocChunkGetPointer(chunk), size);
 #endif
 
 		return AllocChunkGetPointer(chunk);
@@ -1136,11 +1162,9 @@ AllocSetCheck(MemoryContext context)
 			AllocChunk	chunk = (AllocChunk) bpoz;
 			Size		chsize,
 						dsize;
-			char	   *chdata_end;
 
 			chsize = chunk->size;		/* aligned chunk size */
 			dsize = chunk->requested_size;		/* real data */
-			chdata_end = ((char *) chunk) + (ALLOC_CHUNKHDRSZ + dsize);
 
 			/*
 			 * Check chunk size
@@ -1170,7 +1194,8 @@ AllocSetCheck(MemoryContext context)
 			/*
 			 * Check for overwrite of "unallocated" space in chunk
 			 */
-			if (dsize > 0 && dsize < chsize && *chdata_end != 0x7E)
+			if (dsize > 0 && dsize < chsize &&
+				!sentinel_ok(chunk, ALLOC_CHUNKHDRSZ + dsize))
 				elog(WARNING, "problem in alloc set %s: detected write past chunk end in block %p, chunk %p",
 					 name, block, chunk);
 
