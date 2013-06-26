@@ -145,7 +145,7 @@ FindStreamingStart(uint32 *tli)
 		 * characters.
 		 */
 		if (strlen(dirent->d_name) != 24 ||
-			!strspn(dirent->d_name, "0123456789ABCDEF") == 24)
+			strspn(dirent->d_name, "0123456789ABCDEF") != 24)
 			continue;
 
 		/*
