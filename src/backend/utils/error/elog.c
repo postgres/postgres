@@ -1814,6 +1814,22 @@ write_syslog(int level, const char *line)
 
 #ifdef WIN32
 /*
+ * Get the PostgreSQL equivalent of the Windows ANSI code page.  "ANSI" system
+ * interfaces (e.g. CreateFileA()) expect string arguments in this encoding.
+ * Every process in a given system will find the same value at all times.
+ */
+static int
+GetACPEncoding(void)
+{
+	static int	encoding = -2;
+
+	if (encoding == -2)
+		encoding = pg_codepage_to_encoding(GetACP());
+
+	return encoding;
+}
+
+/*
  * Write a message line to the windows event log
  */
 static void
@@ -1858,16 +1874,18 @@ write_eventlog(int level, const char *line, int len)
 	}
 
 	/*
-	 * Convert message to UTF16 text and write it with ReportEventW, but
-	 * fall-back into ReportEventA if conversion failed.
+	 * If message character encoding matches the encoding expected by
+	 * ReportEventA(), call it to avoid the hazards of conversion.  Otherwise,
+	 * try to convert the message to UTF16 and write it with ReportEventW().
+	 * Fall back on ReportEventA() if conversion failed.
 	 *
 	 * Also verify that we are not on our way into error recursion trouble due
-	 * to error messages thrown deep inside pgwin32_toUTF16().
+	 * to error messages thrown deep inside pgwin32_message_to_UTF16().
 	 */
-	if (GetDatabaseEncoding() != GetPlatformEncoding() &&
-		!in_error_recursion_trouble())
+	if (!in_error_recursion_trouble() &&
+		GetMessageEncoding() != GetACPEncoding())
 	{
-		utf16 = pgwin32_toUTF16(line, len, NULL);
+		utf16 = pgwin32_message_to_UTF16(line, len, NULL);
 		if (utf16)
 		{
 			ReportEventW(evtHandle,
@@ -1879,6 +1897,7 @@ write_eventlog(int level, const char *line, int len)
 						 0,
 						 (LPCWSTR *) &utf16,
 						 NULL);
+			/* XXX Try ReportEventA() when ReportEventW() fails? */
 
 			pfree(utf16);
 			return;
@@ -1904,22 +1923,30 @@ write_console(const char *line, int len)
 #ifdef WIN32
 
 	/*
-	 * WriteConsoleW() will fail if stdout is redirected, so just fall through
+	 * Try to convert the message to UTF16 and write it with WriteConsoleW().
+	 * Fall back on write() if anything fails.
+	 *
+	 * In contrast to write_eventlog(), don't skip straight to write() based
+	 * on the applicable encodings.  Unlike WriteConsoleW(), write() depends
+	 * on the suitability of the console output code page.  Since we put
+	 * stderr into binary mode in SubPostmasterMain(), write() skips the
+	 * necessary translation anyway.
+	 *
+	 * WriteConsoleW() will fail if stderr is redirected, so just fall through
 	 * to writing unconverted to the logfile in this case.
 	 *
 	 * Since we palloc the structure required for conversion, also fall
 	 * through to writing unconverted if we have not yet set up
 	 * CurrentMemoryContext.
 	 */
-	if (GetDatabaseEncoding() != GetPlatformEncoding() &&
-		!in_error_recursion_trouble() &&
+	if (!in_error_recursion_trouble() &&
 		!redirection_done &&
 		CurrentMemoryContext != NULL)
 	{
 		WCHAR	   *utf16;
 		int			utf16len;
 
-		utf16 = pgwin32_toUTF16(line, len, &utf16len);
+		utf16 = pgwin32_message_to_UTF16(line, len, &utf16len);
 		if (utf16 != NULL)
 		{
 			HANDLE		stdHandle;

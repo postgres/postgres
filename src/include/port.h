@@ -452,6 +452,10 @@ extern void qsort_arg(void *base, size_t nel, size_t elsize,
 /* port/chklocale.c */
 extern int	pg_get_encoding_from_locale(const char *ctype, bool write_message);
 
+#if defined(WIN32) && !defined(FRONTEND)
+extern int	pg_codepage_to_encoding(UINT cp);
+#endif
+
 /* port/inet_net_ntop.c */
 extern char *inet_net_ntop(int af, const void *src, int bits,
 			  char *dst, size_t size);

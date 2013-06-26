@@ -235,6 +235,32 @@ win32_langinfo(const char *ctype)
 
 	return r;
 }
+
+#ifndef FRONTEND
+/*
+ * Given a Windows code page identifier, find the corresponding PostgreSQL
+ * encoding.  Issue a warning and return -1 if none found.
+ */
+int
+pg_codepage_to_encoding(UINT cp)
+{
+	char		sys[16];
+	int			i;
+
+	sprintf(sys, "CP%u", cp);
+
+	/* Check the table */
+	for (i = 0; encoding_match_list[i].system_enc_name; i++)
+		if (pg_strcasecmp(sys, encoding_match_list[i].system_enc_name) == 0)
+			return encoding_match_list[i].pg_enc_code;
+
+	ereport(WARNING,
+			(errmsg("could not determine encoding for codeset \"%s\"", sys),
+		   errdetail("Please report this to <pgsql-bugs@postgresql.org>.")));
+
+	return -1;
+}
+#endif
 #endif   /* WIN32 */
 
 #if (defined(HAVE_LANGINFO_H) && defined(CODESET)) || defined(WIN32)
@@ -248,6 +274,9 @@ win32_langinfo(const char *ctype)
  *
  * If the result is PG_SQL_ASCII, callers should treat it as being compatible
  * with any desired encoding.
+ *
+ * If running in the backend and write_message is false, this function must
+ * cope with the possibility that elog() and palloc() are not yet usable.
  */
 int
 pg_get_encoding_from_locale(const char *ctype, bool write_message)

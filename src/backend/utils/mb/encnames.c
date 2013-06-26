@@ -352,10 +352,13 @@ pg_enc2name pg_enc2name_tbl[] =
 
 /* ----------
  * These are encoding names for gettext.
+ *
+ * This covers all encodings except MULE_INTERNAL, which is alien to gettext.
  * ----------
  */
 pg_enc2gettext pg_enc2gettext_tbl[] =
 {
+	{PG_SQL_ASCII, "US-ASCII"},
 	{PG_UTF8, "UTF-8"},
 	{PG_LATIN1, "LATIN1"},
 	{PG_LATIN2, "LATIN2"},
@@ -389,6 +392,13 @@ pg_enc2gettext pg_enc2gettext_tbl[] =
 	{PG_EUC_KR, "EUC-KR"},
 	{PG_EUC_TW, "EUC-TW"},
 	{PG_EUC_JIS_2004, "EUC-JP"},
+	{PG_SJIS, "SHIFT-JIS"},
+	{PG_BIG5, "BIG5"},
+	{PG_GBK, "GBK"},
+	{PG_UHC, "UHC"},
+	{PG_GB18030, "GB18030"},
+	{PG_JOHAB, "JOHAB"},
+	{PG_SHIFT_JIS_2004, "SHIFT_JISX0213"},
 	{0, NULL}
 };
 

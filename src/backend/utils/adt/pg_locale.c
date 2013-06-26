@@ -131,14 +131,16 @@ static char *IsoLocaleName(const char *);		/* MSVC specific */
 /*
  * pg_perm_setlocale
  *
- * This is identical to the libc function setlocale(), with the addition
- * that if the operation is successful, the corresponding LC_XXX environment
- * variable is set to match.  By setting the environment variable, we ensure
- * that any subsequent use of setlocale(..., "") will preserve the settings
- * made through this routine.  Of course, LC_ALL must also be unset to fully
- * ensure that, but that has to be done elsewhere after all the individual
- * LC_XXX variables have been set correctly.  (Thank you Perl for making this
- * kluge necessary.)
+ * This wraps the libc function setlocale(), with two additions.  First, when
+ * changing LC_CTYPE, update gettext's encoding for the current message
+ * domain.  GNU gettext automatically tracks LC_CTYPE on most platforms, but
+ * not on Windows.  Second, if the operation is successful, the corresponding
+ * LC_XXX environment variable is set to match.  By setting the environment
+ * variable, we ensure that any subsequent use of setlocale(..., "") will
+ * preserve the settings made through this routine.  Of course, LC_ALL must
+ * also be unset to fully ensure that, but that has to be done elsewhere after
+ * all the individual LC_XXX variables have been set correctly.  (Thank you
+ * Perl for making this kluge necessary.)
  */
 char *
 pg_perm_setlocale(int category, const char *locale)
@@ -171,6 +173,22 @@ pg_perm_setlocale(int category, const char *locale)
 
 	if (result == NULL)
 		return result;			/* fall out immediately on failure */
+
+	/*
+	 * Use the right encoding in translated messages.  Under ENABLE_NLS, let
+	 * pg_bind_textdomain_codeset() figure it out.  Under !ENABLE_NLS, message
+	 * format strings are ASCII, but database-encoding strings may enter the
+	 * message via %s.  This makes the overall message encoding equal to the
+	 * database encoding.
+	 */
+	if (category == LC_CTYPE)
+	{
+#ifdef ENABLE_NLS
+		SetMessageEncoding(pg_bind_textdomain_codeset(textdomain(NULL)));
+#else
+		SetMessageEncoding(GetDatabaseEncoding());
+#endif
+	}
 
 	switch (category)
 	{

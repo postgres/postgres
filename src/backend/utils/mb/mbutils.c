@@ -53,11 +53,11 @@ static FmgrInfo *ToServerConvProc = NULL;
 static FmgrInfo *ToClientConvProc = NULL;
 
 /*
- * These variables track the currently selected FE and BE encodings.
+ * These variables track the currently-selected encodings.
  */
 static pg_enc2name *ClientEncoding = &pg_enc2name_tbl[PG_SQL_ASCII];
 static pg_enc2name *DatabaseEncoding = &pg_enc2name_tbl[PG_SQL_ASCII];
-static pg_enc2name *PlatformEncoding = NULL;
+static pg_enc2name *MessageEncoding = &pg_enc2name_tbl[PG_SQL_ASCII];
 
 /*
  * During backend startup we can't set client encoding because we (a)
@@ -881,46 +881,102 @@ SetDatabaseEncoding(int encoding)
 	Assert(DatabaseEncoding->encoding == encoding);
 }
 
-/*
- * Bind gettext to the codeset equivalent with the database encoding.
- */
 void
-pg_bind_textdomain_codeset(const char *domainname)
+SetMessageEncoding(int encoding)
 {
-#if defined(ENABLE_NLS)
-	int			encoding = GetDatabaseEncoding();
+	/* Some calls happen before we can elog()! */
+	Assert(PG_VALID_ENCODING(encoding));
+
+	MessageEncoding = &pg_enc2name_tbl[encoding];
+	Assert(MessageEncoding->encoding == encoding);
+}
+
+#ifdef ENABLE_NLS
+/*
+ * Make one bind_textdomain_codeset() call, translating a pg_enc to a gettext
+ * codeset.  Fails for MULE_INTERNAL, an encoding unknown to gettext; can also
+ * fail for gettext-internal causes like out-of-memory.
+ */
+static bool
+raw_pg_bind_textdomain_codeset(const char *domainname, int encoding)
+{
+	bool		elog_ok = (CurrentMemoryContext != NULL);
 	int			i;
-
-	/*
-	 * gettext() uses the codeset specified by LC_CTYPE by default, so if that
-	 * matches the database encoding we don't need to do anything. In CREATE
-	 * DATABASE, we enforce or trust that the locale's codeset matches
-	 * database encoding, except for the C locale. In C locale, we bind
-	 * gettext() explicitly to the right codeset.
-	 *
-	 * On Windows, though, gettext() tends to get confused so we always bind
-	 * it.
-	 */
-#ifndef WIN32
-	const char *ctype = setlocale(LC_CTYPE, NULL);
-
-	if (pg_strcasecmp(ctype, "C") != 0 && pg_strcasecmp(ctype, "POSIX") != 0)
-		return;
-#endif
 
 	for (i = 0; pg_enc2gettext_tbl[i].name != NULL; i++)
 	{
 		if (pg_enc2gettext_tbl[i].encoding == encoding)
 		{
 			if (bind_textdomain_codeset(domainname,
-										pg_enc2gettext_tbl[i].name) == NULL)
+										pg_enc2gettext_tbl[i].name) != NULL)
+				return true;
+
+			if (elog_ok)
 				elog(LOG, "bind_textdomain_codeset failed");
+			else
+				write_stderr("bind_textdomain_codeset failed");
+
 			break;
 		}
 	}
-#endif
+
+	return false;
 }
 
+/*
+ * Bind a gettext message domain to the codeset corresponding to the database
+ * encoding.  For SQL_ASCII, instead bind to the codeset implied by LC_CTYPE.
+ * Return the MessageEncoding implied by the new settings.
+ *
+ * On most platforms, gettext defaults to the codeset implied by LC_CTYPE.
+ * When that matches the database encoding, we don't need to do anything.  In
+ * CREATE DATABASE, we enforce or trust that the locale's codeset matches the
+ * database encoding, except for the C locale.  (On Windows, we also permit a
+ * discrepancy under the UTF8 encoding.)  For the C locale, explicitly bind
+ * gettext to the right codeset.
+ *
+ * On Windows, gettext defaults to the Windows ANSI code page.  This is a
+ * convenient departure for software that passes the strings to Windows ANSI
+ * APIs, but we don't do that.  Compel gettext to use database encoding or,
+ * failing that, the LC_CTYPE encoding as it would on other platforms.
+ *
+ * This function is called before elog() and palloc() are usable.
+ */
+int
+pg_bind_textdomain_codeset(const char *domainname)
+{
+	bool		elog_ok = (CurrentMemoryContext != NULL);
+	int			encoding = GetDatabaseEncoding();
+	int			new_msgenc;
+
+#ifndef WIN32
+	const char *ctype = setlocale(LC_CTYPE, NULL);
+
+	if (pg_strcasecmp(ctype, "C") == 0 || pg_strcasecmp(ctype, "POSIX") == 0)
+#endif
+		if (encoding != PG_SQL_ASCII &&
+			raw_pg_bind_textdomain_codeset(domainname, encoding))
+			return encoding;
+
+	new_msgenc = pg_get_encoding_from_locale(NULL, elog_ok);
+	if (new_msgenc < 0)
+		new_msgenc = PG_SQL_ASCII;
+
+#ifdef WIN32
+	if (!raw_pg_bind_textdomain_codeset(domainname, new_msgenc))
+		/* On failure, the old message encoding remains valid. */
+		return GetMessageEncoding();
+#endif
+
+	return new_msgenc;
+}
+#endif
+
+/*
+ * The database encoding, also called the server encoding, represents the
+ * encoding of data stored in text-like data types.  Affected types include
+ * cstring, text, varchar, name, xml, and json.
+ */
 int
 GetDatabaseEncoding(void)
 {
@@ -949,19 +1005,17 @@ pg_client_encoding(PG_FUNCTION_ARGS)
 	return DirectFunctionCall1(namein, CStringGetDatum(ClientEncoding->name));
 }
 
+/*
+ * gettext() returns messages in this encoding.  This often matches the
+ * database encoding, but it differs for SQL_ASCII databases, for processes
+ * not attached to a database, and under a database encoding lacking iconv
+ * support (MULE_INTERNAL).
+ */
 int
-GetPlatformEncoding(void)
+GetMessageEncoding(void)
 {
-	if (PlatformEncoding == NULL)
-	{
-		/* try to determine encoding of server's environment locale */
-		int			encoding = pg_get_encoding_from_locale("", true);
-
-		if (encoding < 0)
-			encoding = PG_SQL_ASCII;
-		PlatformEncoding = &pg_enc2name_tbl[encoding];
-	}
-	return PlatformEncoding->encoding;
+	Assert(MessageEncoding);
+	return MessageEncoding->encoding;
 }
 
 #ifdef WIN32
@@ -971,13 +1025,13 @@ GetPlatformEncoding(void)
  * is also passed to utf16len if not null. Returns NULL iff failed.
  */
 WCHAR *
-pgwin32_toUTF16(const char *str, int len, int *utf16len)
+pgwin32_message_to_UTF16(const char *str, int len, int *utf16len)
 {
 	WCHAR	   *utf16;
 	int			dstlen;
 	UINT		codepage;
 
-	codepage = pg_enc2name_tbl[GetDatabaseEncoding()].codepage;
+	codepage = pg_enc2name_tbl[GetMessageEncoding()].codepage;
 
 	/*
 	 * Use MultiByteToWideChar directly if there is a corresponding codepage,
@@ -994,7 +1048,7 @@ pgwin32_toUTF16(const char *str, int len, int *utf16len)
 		char	   *utf8;
 
 		utf8 = (char *) pg_do_encoding_conversion((unsigned char *) str,
-										len, GetDatabaseEncoding(), PG_UTF8);
+										 len, GetMessageEncoding(), PG_UTF8);
 		if (utf8 != str)
 			len = strlen(utf8);
 

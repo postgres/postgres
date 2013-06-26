@@ -265,6 +265,10 @@ startup_hacks(const char *progname)
 /*
  * Help display should match the options accepted by PostmasterMain()
  * and PostgresMain().
+ *
+ * XXX On Windows, non-ASCII localizations of these messages only display
+ * correctly if the console output code page covers the necessary characters.
+ * Messages emitted in write_console() do not exhibit this problem.
  */
 static void
 help(const char *progname)

@@ -481,8 +481,12 @@ extern const char *pg_get_client_encoding_name(void);
 extern void SetDatabaseEncoding(int encoding);
 extern int	GetDatabaseEncoding(void);
 extern const char *GetDatabaseEncodingName(void);
-extern int	GetPlatformEncoding(void);
-extern void pg_bind_textdomain_codeset(const char *domainname);
+extern void SetMessageEncoding(int encoding);
+extern int	GetMessageEncoding(void);
+
+#ifdef ENABLE_NLS
+extern int	pg_bind_textdomain_codeset(const char *domainname);
+#endif
 
 extern int	pg_valid_client_encoding(const char *name);
 extern int	pg_valid_server_encoding(const char *name);
@@ -542,7 +546,7 @@ extern void mic2latin_with_table(const unsigned char *mic, unsigned char *p,
 extern bool pg_utf8_islegal(const unsigned char *source, int length);
 
 #ifdef WIN32
-extern WCHAR *pgwin32_toUTF16(const char *str, int len, int *utf16len);
+extern WCHAR *pgwin32_message_to_UTF16(const char *str, int len, int *utf16len);
 #endif
 
 #endif   /* PG_WCHAR_H */
