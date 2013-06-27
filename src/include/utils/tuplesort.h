@@ -106,7 +106,7 @@ extern void tuplesort_get_stats(Tuplesortstate *state,
 					const char **spaceType,
 					long *spaceUsed);
 
-extern int	tuplesort_merge_order(long allowedMem);
+extern int	tuplesort_merge_order(Size allowedMem);
 
 /*
  * These routines may only be called if randomAccess was specified 'true'.

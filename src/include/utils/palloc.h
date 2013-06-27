@@ -51,6 +51,10 @@ extern void *MemoryContextAlloc(MemoryContext context, Size size);
 extern void *MemoryContextAllocZero(MemoryContext context, Size size);
 extern void *MemoryContextAllocZeroAligned(MemoryContext context, Size size);
 
+/* Higher-limit allocators. */
+extern void *MemoryContextAllocHuge(MemoryContext context, Size size);
+extern void *repalloc_huge(void *pointer, Size size);
+
 /*
  * The result of palloc() is always word-aligned, so we can skip testing
  * alignment of the pointer when deciding which MemSet variant to use.

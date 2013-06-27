@@ -211,8 +211,8 @@ struct Tuplesortstate
 								 * tuples to return? */
 	bool		boundUsed;		/* true if we made use of a bounded heap */
 	int			bound;			/* if bounded, the maximum number of tuples */
-	long		availMem;		/* remaining memory available, in bytes */
-	long		allowedMem;		/* total memory allowed, in bytes */
+	Size		availMem;		/* remaining memory available, in bytes */
+	Size		allowedMem;		/* total memory allowed, in bytes */
 	int			maxTapes;		/* number of tapes (Knuth's T) */
 	int			tapeRange;		/* maxTapes-1 (Knuth's P) */
 	MemoryContext sortcontext;	/* memory context holding all sort data */
@@ -308,7 +308,7 @@ struct Tuplesortstate
 	int		   *mergenext;		/* first preread tuple for each source */
 	int		   *mergelast;		/* last preread tuple for each source */
 	int		   *mergeavailslots;	/* slots left for prereading each tape */
-	long	   *mergeavailmem;	/* availMem for prereading each tape */
+	Size	   *mergeavailmem;	/* availMem for prereading each tape */
 	int			mergefreelist;	/* head of freelist of recycled slots */
 	int			mergefirstfree; /* first slot never used in this merge */
 
@@ -961,25 +961,26 @@ tuplesort_end(Tuplesortstate *state)
 }
 
 /*
- * Grow the memtuples[] array, if possible within our memory constraint.
- * Return TRUE if we were able to enlarge the array, FALSE if not.
+ * Grow the memtuples[] array, if possible within our memory constraint.  We
+ * must not exceed INT_MAX tuples in memory or the caller-provided memory
+ * limit.  Return TRUE if we were able to enlarge the array, FALSE if not.
  *
- * Normally, at each increment we double the size of the array.  When we no
- * longer have enough memory to do that, we attempt one last, smaller increase
- * (and then clear the growmemtuples flag so we don't try any more).  That
- * allows us to use allowedMem as fully as possible; sticking to the pure
- * doubling rule could result in almost half of allowedMem going unused.
- * Because availMem moves around with tuple addition/removal, we need some
- * rule to prevent making repeated small increases in memtupsize, which would
- * just be useless thrashing.  The growmemtuples flag accomplishes that and
- * also prevents useless recalculations in this function.
+ * Normally, at each increment we double the size of the array.  When doing
+ * that would exceed a limit, we attempt one last, smaller increase (and then
+ * clear the growmemtuples flag so we don't try any more).  That allows us to
+ * use memory as fully as permitted; sticking to the pure doubling rule could
+ * result in almost half going unused.  Because availMem moves around with
+ * tuple addition/removal, we need some rule to prevent making repeated small
+ * increases in memtupsize, which would just be useless thrashing.  The
+ * growmemtuples flag accomplishes that and also prevents useless
+ * recalculations in this function.
  */
 static bool
 grow_memtuples(Tuplesortstate *state)
 {
 	int			newmemtupsize;
 	int			memtupsize = state->memtupsize;
-	long		memNowUsed = state->allowedMem - state->availMem;
+	Size		memNowUsed = state->allowedMem - state->availMem;
 
 	/* Forget it if we've already maxed out memtuples, per comment above */
 	if (!state->growmemtuples)
@@ -989,14 +990,16 @@ grow_memtuples(Tuplesortstate *state)
 	if (memNowUsed <= state->availMem)
 	{
 		/*
-		 * It is surely safe to double memtupsize if we've used no more than
-		 * half of allowedMem.
-		 *
-		 * Note: it might seem that we need to worry about memtupsize * 2
-		 * overflowing an int, but the MaxAllocSize clamp applied below
-		 * ensures the existing memtupsize can't be large enough for that.
+		 * We've used no more than half of allowedMem; double our usage,
+		 * clamping at INT_MAX.
 		 */
-		newmemtupsize = memtupsize * 2;
+		if (memtupsize < INT_MAX / 2)
+			newmemtupsize = memtupsize * 2;
+		else
+		{
+			newmemtupsize = INT_MAX;
+			state->growmemtuples = false;
+		}
 	}
 	else
 	{
@@ -1012,7 +1015,8 @@ grow_memtuples(Tuplesortstate *state)
 		 * we've already seen, and thus we can extrapolate from the space
 		 * consumption so far to estimate an appropriate new size for the
 		 * memtuples array.  The optimal value might be higher or lower than
-		 * this estimate, but it's hard to know that in advance.
+		 * this estimate, but it's hard to know that in advance.  We again
+		 * clamp at INT_MAX tuples.
 		 *
 		 * This calculation is safe against enlarging the array so much that
 		 * LACKMEM becomes true, because the memory currently used includes
@@ -1020,16 +1024,18 @@ grow_memtuples(Tuplesortstate *state)
 		 * new array elements even if no other memory were currently used.
 		 *
 		 * We do the arithmetic in float8, because otherwise the product of
-		 * memtupsize and allowedMem could overflow.  (A little algebra shows
-		 * that grow_ratio must be less than 2 here, so we are not risking
-		 * integer overflow this way.)	Any inaccuracy in the result should be
-		 * insignificant; but even if we computed a completely insane result,
-		 * the checks below will prevent anything really bad from happening.
+		 * memtupsize and allowedMem could overflow.  Any inaccuracy in the
+		 * result should be insignificant; but even if we computed a
+		 * completely insane result, the checks below will prevent anything
+		 * really bad from happening.
 		 */
 		double		grow_ratio;
 
 		grow_ratio = (double) state->allowedMem / (double) memNowUsed;
-		newmemtupsize = (int) (memtupsize * grow_ratio);
+		if (memtupsize * grow_ratio < INT_MAX)
+			newmemtupsize = (int) (memtupsize * grow_ratio);
+		else
+			newmemtupsize = INT_MAX;
 
 		/* We won't make any further enlargement attempts */
 		state->growmemtuples = false;
@@ -1040,12 +1046,13 @@ grow_memtuples(Tuplesortstate *state)
 		goto noalloc;
 
 	/*
-	 * On a 64-bit machine, allowedMem could be more than MaxAllocSize.  Clamp
-	 * to ensure our request won't be rejected by palloc.
+	 * On a 32-bit machine, allowedMem could exceed MaxAllocHugeSize.  Clamp
+	 * to ensure our request won't be rejected.  Note that we can easily
+	 * exhaust address space before facing this outcome.
 	 */
-	if ((Size) newmemtupsize >= MaxAllocSize / sizeof(SortTuple))
+	if ((Size) newmemtupsize >= MaxAllocHugeSize / sizeof(SortTuple))
 	{
-		newmemtupsize = (int) (MaxAllocSize / sizeof(SortTuple));
+		newmemtupsize = (int) (MaxAllocHugeSize / sizeof(SortTuple));
 		state->growmemtuples = false;	/* can't grow any more */
 	}
 
@@ -1060,15 +1067,15 @@ grow_memtuples(Tuplesortstate *state)
 	 * palloc would be treating both old and new arrays as separate chunks.
 	 * But we'll check LACKMEM explicitly below just in case.)
 	 */
-	if (state->availMem < (long) ((newmemtupsize - memtupsize) * sizeof(SortTuple)))
+	if (state->availMem < (Size) ((newmemtupsize - memtupsize) * sizeof(SortTuple)))
 		goto noalloc;
 
 	/* OK, do it */
 	FREEMEM(state, GetMemoryChunkSpace(state->memtuples));
 	state->memtupsize = newmemtupsize;
 	state->memtuples = (SortTuple *)
-		repalloc(state->memtuples,
-				 state->memtupsize * sizeof(SortTuple));
+		repalloc_huge(state->memtuples,
+					  state->memtupsize * sizeof(SortTuple));
 	USEMEM(state, GetMemoryChunkSpace(state->memtuples));
 	if (LACKMEM(state))
 		elog(ERROR, "unexpected out-of-memory situation during sort");
@@ -1715,7 +1722,7 @@ tuplesort_getdatum(Tuplesortstate *state, bool forward,
  * This is exported for use by the planner.  allowedMem is in bytes.
  */
 int
-tuplesort_merge_order(long allowedMem)
+tuplesort_merge_order(Size allowedMem)
 {
 	int			mOrder;
 
@@ -1749,7 +1756,7 @@ inittapes(Tuplesortstate *state)
 	int			maxTapes,
 				ntuples,
 				j;
-	long		tapeSpace;
+	Size		tapeSpace;
 
 	/* Compute number of tapes to use: merge order plus 1 */
 	maxTapes = tuplesort_merge_order(state->allowedMem) + 1;
@@ -1798,7 +1805,7 @@ inittapes(Tuplesortstate *state)
 	state->mergenext = (int *) palloc0(maxTapes * sizeof(int));
 	state->mergelast = (int *) palloc0(maxTapes * sizeof(int));
 	state->mergeavailslots = (int *) palloc0(maxTapes * sizeof(int));
-	state->mergeavailmem = (long *) palloc0(maxTapes * sizeof(long));
+	state->mergeavailmem = (Size *) palloc0(maxTapes * sizeof(Size));
 	state->tp_fib = (int *) palloc0(maxTapes * sizeof(int));
 	state->tp_runs = (int *) palloc0(maxTapes * sizeof(int));
 	state->tp_dummy = (int *) palloc0(maxTapes * sizeof(int));
@@ -2026,7 +2033,7 @@ mergeonerun(Tuplesortstate *state)
 	int			srcTape;
 	int			tupIndex;
 	SortTuple  *tup;
-	long		priorAvail,
+	Size		priorAvail,
 				spaceFreed;
 
 	/*
@@ -2100,7 +2107,7 @@ beginmerge(Tuplesortstate *state)
 	int			tapenum;
 	int			srcTape;
 	int			slotsPerTape;
-	long		spacePerTape;
+	Size		spacePerTape;
 
 	/* Heap should be empty here */
 	Assert(state->memtupcount == 0);
@@ -2221,7 +2228,7 @@ mergeprereadone(Tuplesortstate *state, int srcTape)
 	unsigned int tuplen;
 	SortTuple	stup;
 	int			tupIndex;
-	long		priorAvail,
+	Size		priorAvail,
 				spaceUsed;
 
 	if (!state->mergeactive[srcTape])

@@ -21,25 +21,29 @@
 
 
 /*
- * MaxAllocSize
- *		Quasi-arbitrary limit on size of allocations.
+ * MaxAllocSize, MaxAllocHugeSize
+ *		Quasi-arbitrary limits on size of allocations.
  *
  * Note:
- *		There is no guarantee that allocations smaller than MaxAllocSize
- *		will succeed.  Allocation requests larger than MaxAllocSize will
- *		be summarily denied.
+ *		There is no guarantee that smaller allocations will succeed, but
+ *		larger requests will be summarily denied.
  *
- * XXX This is deliberately chosen to correspond to the limiting size
- * of varlena objects under TOAST.	See VARSIZE_4B() and related macros
- * in postgres.h.  Many datatypes assume that any allocatable size can
- * be represented in a varlena header.
- *
- * XXX Also, various places in aset.c assume they can compute twice an
- * allocation's size without overflow, so beware of raising this.
+ * palloc() enforces MaxAllocSize, chosen to correspond to the limiting size
+ * of varlena objects under TOAST.  See VARSIZE_4B() and related macros in
+ * postgres.h.  Many datatypes assume that any allocatable size can be
+ * represented in a varlena header.  This limit also permits a caller to use
+ * an "int" variable for an index into or length of an allocation.  Callers
+ * careful to avoid these hazards can access the higher limit with
+ * MemoryContextAllocHuge().  Both limits permit code to assume that it may
+ * compute twice an allocation's size without overflow.
  */
 #define MaxAllocSize	((Size) 0x3fffffff)		/* 1 gigabyte - 1 */
 
 #define AllocSizeIsValid(size)	((Size) (size) <= MaxAllocSize)
+
+#define MaxAllocHugeSize	((Size) -1 >> 1)	/* SIZE_MAX / 2 */
+
+#define AllocHugeSizeIsValid(size)	((Size) (size) <= MaxAllocHugeSize)
 
 /*
  * All chunks allocated by any memory context manager are required to be

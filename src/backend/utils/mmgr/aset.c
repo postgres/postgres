@@ -458,6 +458,7 @@ AllocSetContextCreate(MemoryContext parent,
 	maxBlockSize = MAXALIGN(maxBlockSize);
 	if (maxBlockSize < initBlockSize)
 		maxBlockSize = initBlockSize;
+	Assert(AllocHugeSizeIsValid(maxBlockSize)); /* must be safe to double */
 	context->initBlockSize = initBlockSize;
 	context->maxBlockSize = maxBlockSize;
 	context->nextBlockSize = initBlockSize;
@@ -643,6 +644,10 @@ AllocSetDelete(MemoryContext context)
  * AllocSetAlloc
  *		Returns pointer to allocated memory of given size; memory is added
  *		to the set.
+ *
+ * No request may exceed:
+ *		MAXALIGN_DOWN(SIZE_MAX) - ALLOC_BLOCKHDRSZ - ALLOC_CHUNKHDRSZ
+ * All callers use a much-lower limit.
  */
 static void *
 AllocSetAlloc(MemoryContext context, Size size)

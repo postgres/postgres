@@ -455,14 +455,7 @@ MemoryContextContains(MemoryContext context, void *pointer)
 	header = (StandardChunkHeader *)
 		((char *) pointer - STANDARDCHUNKHEADERSIZE);
 
-	/*
-	 * If the context link doesn't match then we certainly have a non-member
-	 * chunk.  Also check for a reasonable-looking size as extra guard against
-	 * being fooled by bogus pointers.
-	 */
-	if (header->context == context && AllocSizeIsValid(header->size))
-		return true;
-	return false;
+	return header->context == context;
 }
 
 /*--------------------
@@ -729,6 +722,71 @@ repalloc(void *pointer, Size size)
 	void	   *ret;
 
 	if (!AllocSizeIsValid(size))
+		elog(ERROR, "invalid memory alloc request size %lu",
+			 (unsigned long) size);
+
+	/*
+	 * Try to detect bogus pointers handed to us, poorly though we can.
+	 * Presumably, a pointer that isn't MAXALIGNED isn't pointing at an
+	 * allocated chunk.
+	 */
+	Assert(pointer != NULL);
+	Assert(pointer == (void *) MAXALIGN(pointer));
+
+	/*
+	 * OK, it's probably safe to look at the chunk header.
+	 */
+	context = ((StandardChunkHeader *)
+			   ((char *) pointer - STANDARDCHUNKHEADERSIZE))->context;
+
+	AssertArg(MemoryContextIsValid(context));
+
+	/* isReset must be false already */
+	Assert(!context->isReset);
+
+	ret = (*context->methods->realloc) (context, pointer, size);
+	VALGRIND_MEMPOOL_CHANGE(context, pointer, ret, size);
+
+	return ret;
+}
+
+/*
+ * MemoryContextAllocHuge
+ *		Allocate (possibly-expansive) space within the specified context.
+ *
+ * See considerations in comment at MaxAllocHugeSize.
+ */
+void *
+MemoryContextAllocHuge(MemoryContext context, Size size)
+{
+	void	   *ret;
+
+	AssertArg(MemoryContextIsValid(context));
+
+	if (!AllocHugeSizeIsValid(size))
+		elog(ERROR, "invalid memory alloc request size %lu",
+			 (unsigned long) size);
+
+	context->isReset = false;
+
+	ret = (*context->methods->alloc) (context, size);
+	VALGRIND_MEMPOOL_ALLOC(context, ret, size);
+
+	return ret;
+}
+
+/*
+ * repalloc_huge
+ *		Adjust the size of a previously allocated chunk, permitting a large
+ *		value.  The previous allocation need not have been "huge".
+ */
+void *
+repalloc_huge(void *pointer, Size size)
+{
+	MemoryContext context;
+	void	   *ret;
+
+	if (!AllocHugeSizeIsValid(size))
 		elog(ERROR, "invalid memory alloc request size %lu",
 			 (unsigned long) size);
 
