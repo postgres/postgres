@@ -207,6 +207,21 @@
  */
 
 /*
+ * Include Valgrind "client requests", mostly in the memory allocator, so
+ * Valgrind understands PostgreSQL memory contexts.  This permits detecting
+ * memory errors that Valgrind would not detect on a vanilla build.  See also
+ * src/tools/valgrind.supp.  "make installcheck" runs 20-30x longer under
+ * Valgrind.  Note that USE_VALGRIND slowed older versions of Valgrind by an
+ * additional order of magnitude; Valgrind 3.8.1 does not have this problem.
+ * The client requests fall in hot code paths, so USE_VALGRIND also slows
+ * native execution by a few percentage points.
+ *
+ * You should normally use MEMORY_CONTEXT_CHECKING with USE_VALGRIND;
+ * instrumentation of repalloc() is inferior without it.
+ */
+/* #define USE_VALGRIND */
+
+/*
  * Define this to cause pfree()'d memory to be cleared immediately, to
  * facilitate catching bugs that refer to already-freed values.
  * Right now, this gets defined automatically if --enable-cassert.
@@ -218,9 +233,9 @@
 /*
  * Define this to check memory allocation errors (scribbling on more
  * bytes than were allocated).	Right now, this gets defined
- * automatically if --enable-cassert.
+ * automatically if --enable-cassert or USE_VALGRIND.
  */
-#ifdef USE_ASSERT_CHECKING
+#if defined(USE_ASSERT_CHECKING) || defined(USE_VALGRIND)
 #define MEMORY_CONTEXT_CHECKING
 #endif
 

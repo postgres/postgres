@@ -59,11 +59,34 @@
  *	the requested space whenever the request is less than the actual chunk
  *	size, and verifies that the byte is undamaged when the chunk is freed.
  *
+ *
+ *	About USE_VALGRIND and Valgrind client requests:
+ *
+ *	Valgrind provides "client request" macros that exchange information with
+ *	the host Valgrind (if any).  Under !USE_VALGRIND, memdebug.h stubs out
+ *	currently-used macros.
+ *
+ *	When running under Valgrind, we want a NOACCESS memory region both before
+ *	and after the allocation.  The chunk header is tempting as the preceding
+ *	region, but mcxt.c expects to able to examine the standard chunk header
+ *	fields.  Therefore, we use, when available, the requested_size field and
+ *	any subsequent padding.  requested_size is made NOACCESS before returning
+ *	a chunk pointer to a caller.  However, to reduce client request traffic,
+ *	it is kept DEFINED in chunks on the free list.
+ *
+ *	The rounded-up capacity of the chunk usually acts as a post-allocation
+ *	NOACCESS region.  If the request consumes precisely the entire chunk,
+ *	there is no such region; another chunk header may immediately follow.  In
+ *	that case, Valgrind will not detect access beyond the end of the chunk.
+ *
+ *	See also the cooperating Valgrind client requests in mcxt.c.
+ *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include "utils/memdebug.h"
 #include "utils/memutils.h"
 
 /* Define this to detail debug alloc information */
@@ -115,6 +138,19 @@
 
 #define ALLOC_BLOCKHDRSZ	MAXALIGN(sizeof(AllocBlockData))
 #define ALLOC_CHUNKHDRSZ	MAXALIGN(sizeof(AllocChunkData))
+
+/* Portion of ALLOC_CHUNKHDRSZ examined outside aset.c. */
+#define ALLOC_CHUNK_PUBLIC	\
+	(offsetof(AllocChunkData, size) + sizeof(Size))
+
+/* Portion of ALLOC_CHUNKHDRSZ excluding trailing padding. */
+#ifdef MEMORY_CONTEXT_CHECKING
+#define ALLOC_CHUNK_USED	\
+	(offsetof(AllocChunkData, requested_size) + sizeof(Size))
+#else
+#define ALLOC_CHUNK_USED	\
+	(offsetof(AllocChunkData, size) + sizeof(Size))
+#endif
 
 typedef struct AllocBlockData *AllocBlock;		/* forward reference */
 typedef struct AllocChunkData *AllocChunk;
@@ -314,7 +350,9 @@ AllocSetFreeIndex(Size size)
 static void
 wipe_mem(void *ptr, size_t size)
 {
+	VALGRIND_MAKE_MEM_UNDEFINED(ptr, size);
 	memset(ptr, 0x7F, size);
+	VALGRIND_MAKE_MEM_NOACCESS(ptr, size);
 }
 #endif
 
@@ -324,7 +362,9 @@ set_sentinel(void *base, Size offset)
 {
 	char	   *ptr = (char *) base + offset;
 
+	VALGRIND_MAKE_MEM_UNDEFINED(ptr, 1);
 	*ptr = 0x7E;
+	VALGRIND_MAKE_MEM_NOACCESS(ptr, 1);
 }
 
 static bool
@@ -333,7 +373,9 @@ sentinel_ok(const void *base, Size offset)
 	const char *ptr = (const char *) base + offset;
 	bool		ret;
 
+	VALGRIND_MAKE_MEM_DEFINED(ptr, 1);
 	ret = *ptr == 0x7E;
+	VALGRIND_MAKE_MEM_NOACCESS(ptr, 1);
 
 	return ret;
 }
@@ -346,20 +388,29 @@ sentinel_ok(const void *base, Size offset)
  * very random, just a repeating sequence with a length that's prime.  What
  * we mainly want out of it is to have a good probability that two palloc's
  * of the same number of bytes start out containing different data.
+ *
+ * The region may be NOACCESS, so make it UNDEFINED first to avoid errors as
+ * we fill it.  Filling the region makes it DEFINED, so make it UNDEFINED
+ * again afterward.  Whether to finally make it UNDEFINED or NOACCESS is
+ * fairly arbitrary.  UNDEFINED is more convenient for AllocSetRealloc(), and
+ * other callers have no preference.
  */
 static void
 randomize_mem(char *ptr, size_t size)
 {
 	static int	save_ctr = 1;
+	size_t		remaining = size;
 	int			ctr;
 
 	ctr = save_ctr;
-	while (size-- > 0)
+	VALGRIND_MAKE_MEM_UNDEFINED(ptr, size);
+	while (remaining-- > 0)
 	{
 		*ptr++ = ctr;
 		if (++ctr > 251)
 			ctr = 1;
 	}
+	VALGRIND_MAKE_MEM_UNDEFINED(ptr - size, size);
 	save_ctr = ctr;
 }
 #endif   /* RANDOMIZE_ALLOCATED_MEMORY */
@@ -455,6 +506,10 @@ AllocSetContextCreate(MemoryContext parent,
 		context->blocks = block;
 		/* Mark block as not to be released at reset time */
 		context->keeper = block;
+
+		/* Mark unallocated space NOACCESS; leave the block header alone. */
+		VALGRIND_MAKE_MEM_NOACCESS(block->freeptr,
+								   blksize - ALLOC_BLOCKHDRSZ);
 	}
 
 	return (MemoryContext) context;
@@ -524,6 +579,9 @@ AllocSetReset(MemoryContext context)
 
 #ifdef CLOBBER_FREED_MEMORY
 			wipe_mem(datastart, block->freeptr - datastart);
+#else
+			/* wipe_mem() would have done this */
+			VALGRIND_MAKE_MEM_NOACCESS(datastart, block->freeptr - datastart);
 #endif
 			block->freeptr = datastart;
 			block->next = NULL;
@@ -623,6 +681,7 @@ AllocSetAlloc(MemoryContext context, Size size)
 		chunk->aset = set;
 		chunk->size = chunk_size;
 #ifdef MEMORY_CONTEXT_CHECKING
+		/* Valgrind: Will be made NOACCESS below. */
 		chunk->requested_size = size;
 		/* set mark to catch clobber of "unused" space */
 		if (size < chunk_size)
@@ -649,6 +708,16 @@ AllocSetAlloc(MemoryContext context, Size size)
 		}
 
 		AllocAllocInfo(set, chunk);
+
+		/*
+		 * Chunk header public fields remain DEFINED.  The requested
+		 * allocation itself can be NOACCESS or UNDEFINED; our caller will
+		 * soon make it UNDEFINED.  Make extra space at the end of the chunk,
+		 * if any, NOACCESS.
+		 */
+		VALGRIND_MAKE_MEM_NOACCESS((char *) chunk + ALLOC_CHUNK_PUBLIC,
+						 chunk_size + ALLOC_CHUNKHDRSZ - ALLOC_CHUNK_PUBLIC);
+
 		return AllocChunkGetPointer(chunk);
 	}
 
@@ -669,7 +738,10 @@ AllocSetAlloc(MemoryContext context, Size size)
 		chunk->aset = (void *) set;
 
 #ifdef MEMORY_CONTEXT_CHECKING
+		/* Valgrind: Free list requested_size should be DEFINED. */
 		chunk->requested_size = size;
+		VALGRIND_MAKE_MEM_NOACCESS(&chunk->requested_size,
+								   sizeof(chunk->requested_size));
 		/* set mark to catch clobber of "unused" space */
 		if (size < chunk->size)
 			set_sentinel(AllocChunkGetPointer(chunk), size);
@@ -729,6 +801,9 @@ AllocSetAlloc(MemoryContext context, Size size)
 				}
 
 				chunk = (AllocChunk) (block->freeptr);
+
+				/* Prepare to initialize the chunk header. */
+				VALGRIND_MAKE_MEM_UNDEFINED(chunk, ALLOC_CHUNK_USED);
 
 				block->freeptr += (availchunk + ALLOC_CHUNKHDRSZ);
 				availspace -= (availchunk + ALLOC_CHUNKHDRSZ);
@@ -811,6 +886,10 @@ AllocSetAlloc(MemoryContext context, Size size)
 		if (set->keeper == NULL && blksize == set->initBlockSize)
 			set->keeper = block;
 
+		/* Mark unallocated space NOACCESS. */
+		VALGRIND_MAKE_MEM_NOACCESS(block->freeptr,
+								   blksize - ALLOC_BLOCKHDRSZ);
+
 		block->next = set->blocks;
 		set->blocks = block;
 	}
@@ -820,6 +899,9 @@ AllocSetAlloc(MemoryContext context, Size size)
 	 */
 	chunk = (AllocChunk) (block->freeptr);
 
+	/* Prepare to initialize the chunk header. */
+	VALGRIND_MAKE_MEM_UNDEFINED(chunk, ALLOC_CHUNK_USED);
+
 	block->freeptr += (chunk_size + ALLOC_CHUNKHDRSZ);
 	Assert(block->freeptr <= block->endptr);
 
@@ -827,6 +909,8 @@ AllocSetAlloc(MemoryContext context, Size size)
 	chunk->size = chunk_size;
 #ifdef MEMORY_CONTEXT_CHECKING
 	chunk->requested_size = size;
+	VALGRIND_MAKE_MEM_NOACCESS(&chunk->requested_size,
+							   sizeof(chunk->requested_size));
 	/* set mark to catch clobber of "unused" space */
 	if (size < chunk->size)
 		set_sentinel(AllocChunkGetPointer(chunk), size);
@@ -853,6 +937,8 @@ AllocSetFree(MemoryContext context, void *pointer)
 	AllocFreeInfo(set, chunk);
 
 #ifdef MEMORY_CONTEXT_CHECKING
+	VALGRIND_MAKE_MEM_DEFINED(&chunk->requested_size,
+							  sizeof(chunk->requested_size));
 	/* Test for someone scribbling on unused space in chunk */
 	if (chunk->requested_size < chunk->size)
 		if (!sentinel_ok(pointer, chunk->requested_size))
@@ -916,6 +1002,11 @@ AllocSetFree(MemoryContext context, void *pointer)
  *		Returns new pointer to allocated memory of given size; this memory
  *		is added to the set.  Memory associated with given pointer is copied
  *		into the new memory, and the old memory is freed.
+ *
+ * Without MEMORY_CONTEXT_CHECKING, we don't know the old request size.  This
+ * makes our Valgrind client requests less-precise, hazarding false negatives.
+ * (In principle, we could use VALGRIND_GET_VBITS() to rediscover the old
+ * request size.)
  */
 static void *
 AllocSetRealloc(MemoryContext context, void *pointer, Size size)
@@ -925,6 +1016,8 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 	Size		oldsize = chunk->size;
 
 #ifdef MEMORY_CONTEXT_CHECKING
+	VALGRIND_MAKE_MEM_DEFINED(&chunk->requested_size,
+							  sizeof(chunk->requested_size));
 	/* Test for someone scribbling on unused space in chunk */
 	if (chunk->requested_size < oldsize)
 		if (!sentinel_ok(pointer, chunk->requested_size))
@@ -940,18 +1033,44 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 	if (oldsize >= size)
 	{
 #ifdef MEMORY_CONTEXT_CHECKING
+		Size		oldrequest = chunk->requested_size;
+
 #ifdef RANDOMIZE_ALLOCATED_MEMORY
 		/* We can only fill the extra space if we know the prior request */
-		if (size > chunk->requested_size)
-			randomize_mem((char *) AllocChunkGetPointer(chunk) + chunk->requested_size,
-						  size - chunk->requested_size);
+		if (size > oldrequest)
+			randomize_mem((char *) pointer + oldrequest,
+						  size - oldrequest);
 #endif
 
 		chunk->requested_size = size;
+		VALGRIND_MAKE_MEM_NOACCESS(&chunk->requested_size,
+								   sizeof(chunk->requested_size));
+
+		/*
+		 * If this is an increase, mark any newly-available part UNDEFINED.
+		 * Otherwise, mark the obsolete part NOACCESS.
+		 */
+		if (size > oldrequest)
+			VALGRIND_MAKE_MEM_UNDEFINED((char *) pointer + oldrequest,
+										size - oldrequest);
+		else
+			VALGRIND_MAKE_MEM_NOACCESS((char *) pointer + size,
+									   oldsize - size);
+
 		/* set mark to catch clobber of "unused" space */
 		if (size < oldsize)
 			set_sentinel(pointer, size);
+#else							/* !MEMORY_CONTEXT_CHECKING */
+
+		/*
+		 * We don't have the information to determine whether we're growing
+		 * the old request or shrinking it, so we conservatively mark the
+		 * entire new allocation DEFINED.
+		 */
+		VALGRIND_MAKE_MEM_NOACCESS(pointer, oldsize);
+		VALGRIND_MAKE_MEM_DEFINED(pointer, size);
 #endif
+
 		return pointer;
 	}
 
@@ -997,6 +1116,7 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 
 		/* Update pointers since block has likely been moved */
 		chunk = (AllocChunk) (((char *) block) + ALLOC_BLOCKHDRSZ);
+		pointer = AllocChunkGetPointer(chunk);
 		if (prevblock == NULL)
 			set->blocks = block;
 		else
@@ -1006,16 +1126,37 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 #ifdef MEMORY_CONTEXT_CHECKING
 #ifdef RANDOMIZE_ALLOCATED_MEMORY
 		/* We can only fill the extra space if we know the prior request */
-		randomize_mem((char *) AllocChunkGetPointer(chunk) + chunk->requested_size,
+		randomize_mem((char *) pointer + chunk->requested_size,
 					  size - chunk->requested_size);
 #endif
 
+		/*
+		 * realloc() (or randomize_mem()) will have left the newly-allocated
+		 * part UNDEFINED, but we may need to adjust trailing bytes from the
+		 * old allocation.
+		 */
+		VALGRIND_MAKE_MEM_UNDEFINED((char *) pointer + chunk->requested_size,
+									oldsize - chunk->requested_size);
+
 		chunk->requested_size = size;
+		VALGRIND_MAKE_MEM_NOACCESS(&chunk->requested_size,
+								   sizeof(chunk->requested_size));
+
 		/* set mark to catch clobber of "unused" space */
 		if (size < chunk->size)
 			set_sentinel(AllocChunkGetPointer(chunk), size);
+#else							/* !MEMORY_CONTEXT_CHECKING */
+
+		/*
+		 * We don't know how much of the old chunk size was the actual
+		 * allocation; it could have been as small as one byte.  We have to be
+		 * conservative and just mark the entire old portion DEFINED.
+		 */
+		VALGRIND_MAKE_MEM_DEFINED(pointer, oldsize);
 #endif
 
+		/* Make any trailing alignment padding NOACCESS. */
+		VALGRIND_MAKE_MEM_NOACCESS((char *) pointer + size, chksize - size);
 		return AllocChunkGetPointer(chunk);
 	}
 	else
@@ -1035,6 +1176,20 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 
 		/* allocate new chunk */
 		newPointer = AllocSetAlloc((MemoryContext) set, size);
+
+		/*
+		 * AllocSetAlloc() just made the region NOACCESS.  Change it to
+		 * UNDEFINED for the moment; memcpy() will then transfer definedness
+		 * from the old allocation to the new.  If we know the old allocation,
+		 * copy just that much.  Otherwise, make the entire old chunk defined
+		 * to avoid errors as we copy the currently-NOACCESS trailing bytes.
+		 */
+		VALGRIND_MAKE_MEM_UNDEFINED(newPointer, size);
+#ifdef MEMORY_CONTEXT_CHECKING
+		oldsize = chunk->requested_size;
+#else
+		VALGRIND_MAKE_MEM_DEFINED(pointer, oldsize);
+#endif
 
 		/* transfer existing data (certain to fit) */
 		memcpy(newPointer, pointer, oldsize);
@@ -1164,7 +1319,12 @@ AllocSetCheck(MemoryContext context)
 						dsize;
 
 			chsize = chunk->size;		/* aligned chunk size */
+			VALGRIND_MAKE_MEM_DEFINED(&chunk->requested_size,
+									  sizeof(chunk->requested_size));
 			dsize = chunk->requested_size;		/* real data */
+			if (dsize > 0)		/* not on a free list */
+				VALGRIND_MAKE_MEM_NOACCESS(&chunk->requested_size,
+										   sizeof(chunk->requested_size));
 
 			/*
 			 * Check chunk size

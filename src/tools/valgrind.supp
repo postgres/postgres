@@ -1,0 +1,94 @@
+# This is a suppression file for use with Valgrind tools.  File format
+# documentation:
+#	http://valgrind.org/docs/manual/mc-manual.html#mc-manual.suppfiles
+
+# The libc symbol that implements a particular standard interface is
+# implementation-dependent.  For example, strncpy() shows up as "__GI_strncpy"
+# on some platforms.  Use wildcards to avoid mentioning such specific names.
+
+
+# We have occasion to write raw binary structures to disk or to the network.
+# These may contain uninitialized padding bytes.  Since recipients also ignore
+# those bytes as padding, this is harmless.
+
+{
+	padding_pgstat_send
+	Memcheck:Param
+	socketcall.send(msg)
+
+	fun:*send*
+	fun:pgstat_send
+}
+
+{
+	padding_pgstat_sendto
+	Memcheck:Param
+	socketcall.sendto(msg)
+
+	fun:*send*
+	fun:pgstat_send
+}
+
+{
+	padding_pgstat_write
+	Memcheck:Param
+	write(buf)
+
+	...
+	fun:pgstat_write_statsfiles
+}
+
+{
+	padding_XLogRecData_CRC
+	Memcheck:Value8
+
+	fun:XLogInsert
+}
+
+{
+	padding_XLogRecData_write
+	Memcheck:Param
+	write(buf)
+
+    ...
+	fun:XLogWrite
+}
+
+{
+	padding_relcache
+	Memcheck:Param
+	write(buf)
+
+	...
+	fun:write_relcache_init_file
+}
+
+
+# resolve_polymorphic_tupdesc(), a subroutine of internal_get_result_type(),
+# can instigate a memcpy() call where the two pointer arguments are exactly
+# equal.  The behavior thereof is formally undefined, but implementations
+# where it's anything other than a no-op are thought unlikely.
+{
+	noopmemcpy_internal_get_result_type
+	Memcheck:Overlap
+
+	fun:*strncpy*
+	fun:namestrcpy
+	fun:TupleDescInitEntry
+	...
+	fun:internal_get_result_type
+}
+
+
+# gcc on ppc64 can generate a four-byte read to fetch the final "char" fields
+# of a FormData_pg_cast.  This is valid compiler behavior, because a proper
+# FormData_pg_cast has trailing padding.  Tuples we treat as structures omit
+# that padding, so Valgrind reports an invalid read.  Practical trouble would
+# entail the missing pad bytes falling in a different memory page.  So long as
+# the structure is aligned, that will not happen.
+{
+	overread_tuplestruct_pg_cast
+	Memcheck:Addr4
+
+	fun:IsBinaryCoercible
+}

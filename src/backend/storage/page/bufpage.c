@@ -17,6 +17,7 @@
 #include "access/htup_details.h"
 #include "access/xlog.h"
 #include "storage/checksum.h"
+#include "utils/memdebug.h"
 #include "utils/memutils.h"
 
 
@@ -296,6 +297,20 @@ PageAddItem(Page page,
 
 	/* set the item pointer */
 	ItemIdSetNormal(itemId, upper, size);
+
+	/*
+	 * Items normally contain no uninitialized bytes.  Core bufpage consumers
+	 * conform, but this is not a necessary coding rule; a new index AM could
+	 * opt to depart from it.  However, data type input functions and other
+	 * C-language functions that synthesize datums should initialize all
+	 * bytes; datumIsEqual() relies on this.  Testing here, along with the
+	 * similar check in printtup(), helps to catch such mistakes.
+	 *
+	 * Values of the "name" type retrieved via index-only scans may contain
+	 * uninitialized bytes; see comment in btrescan().  Valgrind will report
+	 * this as an error, but it is safe to ignore.
+	 */
+	VALGRIND_CHECK_MEM_IS_DEFINED(item, size);
 
 	/* copy the item's data onto the page */
 	memcpy((char *) page + upper, item, size);

@@ -20,6 +20,7 @@
 #include "libpq/pqformat.h"
 #include "tcop/pquery.h"
 #include "utils/lsyscache.h"
+#include "utils/memdebug.h"
 
 
 static void printtup_startup(DestReceiver *self, int operation,
@@ -324,9 +325,26 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 		/*
 		 * If we have a toasted datum, forcibly detoast it here to avoid
 		 * memory leakage inside the type's output routine.
+		 *
+		 * Here we catch undefined bytes in tuples that are returned to the
+		 * client without hitting disk; see comments at the related check in
+		 * PageAddItem().  Whether to test before or after detoast is somewhat
+		 * arbitrary, as is whether to test external/compressed data at all.
+		 * Undefined bytes in the pre-toast datum will have triggered Valgrind
+		 * errors in the compressor or toaster; any error detected here for
+		 * such datums would indicate an (unlikely) bug in a type-independent
+		 * facility.  Therefore, this test is most useful for uncompressed,
+		 * non-external datums.
+		 *
+		 * We don't presently bother checking non-varlena datums for undefined
+		 * data.  PageAddItem() does check them.
 		 */
 		if (thisState->typisvarlena)
+		{
+			VALGRIND_CHECK_MEM_IS_DEFINED(origattr, VARSIZE_ANY(origattr));
+
 			attr = PointerGetDatum(PG_DETOAST_DATUM(origattr));
+		}
 		else
 			attr = origattr;
 
