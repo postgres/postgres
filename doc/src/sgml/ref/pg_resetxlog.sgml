@@ -27,7 +27,7 @@ PostgreSQL documentation
    <arg choice="opt"><option>-o</option> <replaceable class="parameter">oid</replaceable></arg>
    <arg choice="opt"><option>-x</option> <replaceable class="parameter">xid</replaceable></arg>
    <arg choice="opt"><option>-e</option> <replaceable class="parameter">xid_epoch</replaceable></arg>
-   <arg choice="opt"><option>-m</option> <replaceable class="parameter">mxid</replaceable></arg>
+   <arg choice="opt"><option>-m</option> <replaceable class="parameter">mxid</replaceable>,<replaceable class="parameter">mxid</replaceable></arg>
    <arg choice="opt"><option>-O</option> <replaceable class="parameter">mxoff</replaceable></arg>
    <arg choice="opt"><option>-l</option> <replaceable class="parameter">xlogfile</replaceable></arg>
    <arg choice="plain"><replaceable>datadir</replaceable></arg>
@@ -81,7 +81,7 @@ PostgreSQL documentation
    <option>-m</>, <option>-O</>,
    and <option>-l</>
    options allow the next OID, next transaction ID, next transaction ID's
-   epoch, next multitransaction ID, next multitransaction offset, and WAL
+   epoch, next and oldest multitransaction ID, next multitransaction offset, and WAL
    starting address values to be set manually.  These are only needed when
    <command>pg_resetxlog</command> is unable to determine appropriate values
    by reading <filename>pg_control</>.  Safe values can be determined as
@@ -104,12 +104,16 @@ PostgreSQL documentation
 
     <listitem>
      <para>
-      A safe value for the next multitransaction ID (<option>-m</>)
+      A safe value for the next multitransaction ID (first part of <option>-m</>)
       can be determined by looking for the numerically largest
       file name in the directory <filename>pg_multixact/offsets</> under the
-      data directory, adding one, and then multiplying by 65536.  As above,
-      the file names are in hexadecimal, so the easiest way to do this is to
-      specify the option value in hexadecimal and add four zeroes.
+      data directory, adding one, and then multiplying by 65536.
+      Conversely, a safe value for the oldest multitransaction ID (second part of
+      <option>-m</>)
+      can be determined by looking for the numerically smallest
+      file name in the same directory and multiplying by 65536.
+      As above, the file names are in hexadecimal, so the easiest way to do
+      this is to specify the option value in hexadecimal and append four zeroes.
      </para>
     </listitem>
 
@@ -118,9 +122,9 @@ PostgreSQL documentation
       A safe value for the next multitransaction offset (<option>-O</>)
       can be determined by looking for the numerically largest
       file name in the directory <filename>pg_multixact/members</> under the
-      data directory, adding one, and then multiplying by 65536.  As above,
-      the file names are in hexadecimal, so the easiest way to do this is to
-      specify the option value in hexadecimal and add four zeroes.
+      data directory, adding one, and then multiplying by 52352.  As above,
+      the file names are in hexadecimal.  There is no simple recipe such as
+      the ones above of appending zeroes.
      </para>
     </listitem>
 
