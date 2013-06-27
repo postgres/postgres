@@ -329,48 +329,45 @@ usage(void)
 		   "Usage:\n"
 		   "  %s [OPTION]... [DBNAME]\n"
 		   "\nInitialization options:\n"
-		   "  -i           invokes initialization mode\n"
-		   "  -F NUM       fill factor\n"
-		   "  -n           do not run VACUUM after initialization\n"
-		   "  -q           quiet logging (one message each 5 seconds)\n"
-		   "  -s NUM       scaling factor\n"
-		   "  --foreign-keys\n"
-		   "               create foreign key constraints between tables\n"
+		   "  -i, --initialize         invokes initialization mode\n"
+		   "  -F, --fillfactor=NUM     set fill factor\n"
+		   "  -n, --no-vacuum          do not run VACUUM after initialization\n"
+		   "  -q, --quiet              quiet logging (one message each 5 seconds)\n"
+		   "  -s NUM, --scale NUM      scaling factor\n"
+		   "  --foreign-keys           create foreign key constraints between tables\n"
 		   "  --index-tablespace=TABLESPACE\n"
-		   "               create indexes in the specified tablespace\n"
-		   "  --tablespace=TABLESPACE\n"
-		   "               create tables in the specified tablespace\n"
-		   "  --unlogged-tables\n"
-		   "               create tables as unlogged tables\n"
+		   "                           create indexes in the specified tablespace\n"
+		   "  --tablespace=TABLESPACE  create tables in the specified tablespace\n"
+		   "  --unlogged-tables        create tables as unlogged tables\n"
 		   "\nBenchmarking options:\n"
-		"  -c NUM       number of concurrent database clients (default: 1)\n"
-		   "  -C           establish new connection for each transaction\n"
-		   "  -D VARNAME=VALUE\n"
-		   "               define variable for use by custom script\n"
-		   "  -f FILENAME  read transaction script from FILENAME\n"
-		   "  -j NUM       number of threads (default: 1)\n"
-		   "  -l           write transaction times to log file\n"
-		   "  -M simple|extended|prepared\n"
-		   "               protocol for submitting queries to server (default: simple)\n"
-		   "  -n           do not run VACUUM before tests\n"
-		   "  -N           do not update tables \"pgbench_tellers\" and \"pgbench_branches\"\n"
-		   "  -r           report average latency per command\n"
-		   "  -s NUM       report this scale factor in output\n"
-		   "  -S           perform SELECT-only transactions\n"
-	 "  -t NUM       number of transactions each client runs (default: 10)\n"
-		   "  -T NUM       duration of benchmark test in seconds\n"
-		   "  -v           vacuum all four standard tables before tests\n"
-		   "  --aggregate-interval=NUM\n"
-		   "               aggregate data over NUM seconds\n"
-		   "  --sampling-rate=NUM\n"
-		   "               fraction of transactions to log (e.g. 0.01 for 1%% sample)\n"
+		   "  -c, --client=NUM         number of concurrent database clients (default: 1)\n"
+		   "  -C, --connect            establish new connection for each transaction\n"
+		   "  -D, --define=VARNAME=VALUE\n"
+		   "                           define variable for use by custom script\n"
+		   "  -f, --file=FILENAME      read transaction script from FILENAME\n"
+		   "  -j, --jobs=NUM           number of threads (default: 1)\n"
+		   "  -l, --log                write transaction times to log file\n"
+		   "  -M, --protocol=simple|extended|prepared\n"
+		   "                           protocol for submitting queries "
+		                                           "(default: simple)\n"
+		   "  -n, --no-vacuum          do not run VACUUM before tests\n"
+		   "  -N, --skip-some-updates  skip updates of pgbench_tellers and pgbench_branches\n"
+		   "  -r, --report-latencies   report average latency per command\n"
+		   "  -s, --scale=NUM          report this scale factor in output\n"
+		   "  -S, --select-only        perform SELECT-only transactions\n"
+		   "  -t, --transactions       number of transactions each client runs "
+		                                             "(default: 10)\n"
+		   "  -T, --time=NUM           duration of benchmark test in seconds\n"
+		   "  -v, --vacuum-all         vacuum all four standard tables before tests\n"
+		   "  --aggregate-interval=NUM aggregate data over NUM seconds\n"
+		   "  --sampling-rate=NUM      fraction of transactions to log (e.g. 0.01 for 1%%)\n"
 		   "\nCommon options:\n"
-		   "  -d             print debugging output\n"
-		   "  -h HOSTNAME    database server host or socket directory\n"
-		   "  -p PORT        database server port number\n"
-		   "  -U USERNAME    connect as specified database user\n"
-		   "  -V, --version  output version information, then exit\n"
-		   "  -?, --help     show this help, then exit\n"
+		   "  -d, --debug              print debugging output\n"
+		   "  -h, --host=HOSTNAME      database server host or socket directory\n"
+		   "  -p, --port=PORT          database server port number\n"
+		   "  -U, --username=USERNAME  connect as specified database user\n"
+		   "  -V, --version            output version information, then exit\n"
+		   "  -?, --help               show this help, then exit\n"
 		   "\n"
 		   "Report bugs to <pgsql-bugs@postgresql.org>.\n",
 		   progname, progname);
@@ -2109,6 +2106,30 @@ int
 main(int argc, char **argv)
 {
 	static struct option long_options[] = {
+		/* systematic long/short named options*/
+		{"client", required_argument, NULL, 'c'},
+		{"connect", no_argument, NULL, 'C'},
+		{"debug", no_argument, NULL, 'd'},
+		{"define", required_argument, NULL, 'D'},
+		{"file", required_argument, NULL, 'f'},
+		{"fillfactor", required_argument, NULL, 'F'},
+		{"host", required_argument, NULL, 'h'},
+		{"initialize", no_argument, NULL, 'i'},
+		{"jobs", required_argument, NULL, 'j'},
+		{"log", no_argument, NULL, 'l'},
+		{"no-vacuum", no_argument, NULL, 'n'},
+		{"port", required_argument, NULL, 'p'},
+		{"protocol", required_argument, NULL, 'M'},
+		{"quiet", no_argument, NULL, 'q'},
+		{"report-latencies", no_argument, NULL, 'r'},
+		{"scale", required_argument, NULL, 's'},
+		{"select-only", no_argument, NULL, 'S'},
+		{"skip-some-updates", no_argument, NULL, 'N'},
+		{"time", required_argument, NULL, 'T'},
+		{"transactions", required_argument, NULL, 't'},
+		{"username", required_argument, NULL, 'U'},
+		{"vacuum-all", no_argument, NULL, 'v'},
+		/* long-named only options */
 		{"foreign-keys", no_argument, &foreign_keys, 1},
 		{"index-tablespace", required_argument, NULL, 3},
 		{"tablespace", required_argument, NULL, 2},
