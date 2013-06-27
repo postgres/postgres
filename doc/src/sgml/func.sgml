@@ -10205,12 +10205,11 @@ table2-mapping
   </indexterm>
 
   <para>
-   This section describes <productname>PostgreSQL</productname>'s
-   functions for operating on <firstterm>sequence objects</firstterm>.
-   Sequence objects (also called sequence generators or just
-   sequences) are special single-row tables created with <xref
+   This section describes functions for operating on <firstterm>sequence
+   objects</firstterm>, also called sequence generators or just sequences.
+   Sequence objects are special single-row tables created with <xref
    linkend="sql-createsequence">.
-   A sequence object is usually used to generate unique identifiers
+   Sequence objects are commonly used to generate unique identifiers
    for rows of a table.  The sequence functions, listed in <xref
    linkend="functions-sequence-table">, provide simple, multiuser-safe
    methods for obtaining successive sequence values from sequence
