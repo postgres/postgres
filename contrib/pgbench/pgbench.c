@@ -333,7 +333,7 @@ usage(void)
 		   "  -F, --fillfactor=NUM     set fill factor\n"
 		   "  -n, --no-vacuum          do not run VACUUM after initialization\n"
 		   "  -q, --quiet              quiet logging (one message each 5 seconds)\n"
-		   "  -s NUM, --scale NUM      scaling factor\n"
+		   "  -s, --scale=NUM          scaling factor\n"
 		   "  --foreign-keys           create foreign key constraints between tables\n"
 		   "  --index-tablespace=TABLESPACE\n"
 		   "                           create indexes in the specified tablespace\n"
