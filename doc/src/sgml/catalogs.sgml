@@ -1885,6 +1885,19 @@
      </row>
 
      <row>
+      <entry><structfield>relminmxid</structfield></entry>
+      <entry><type>xid</type></entry>
+      <entry></entry>
+      <entry>
+       All multitransaction IDs before this one have been replaced by a
+       transaction ID in this table.  This is used to track
+       whether the table needs to be vacuumed in order to prevent multitransaction ID
+       ID wraparound or to allow <literal>pg_clog</> to be shrunk.  Zero
+       (<symbol>InvalidTransactionId</symbol>) if the relation is not a table.
+      </entry>
+     </row>
+
+     <row>
       <entry><structfield>relacl</structfield></entry>
       <entry><type>aclitem[]</type></entry>
       <entry></entry>
@@ -2618,6 +2631,20 @@
        transaction ID wraparound or to allow <literal>pg_clog</> to be shrunk.
        It is the minimum of the per-table
        <structname>pg_class</>.<structfield>relfrozenxid</> values.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>datminmxid</structfield></entry>
+      <entry><type>xid</type></entry>
+      <entry></entry>
+      <entry>
+       All multitransaction IDs before this one have been replaced with a
+       transaction ID in this database.  This is used to
+       track whether the database needs to be vacuumed in order to prevent
+       transaction ID wraparound or to allow <literal>pg_clog</> to be shrunk.
+       It is the minimum of the per-table
+       <structname>pg_class</>.<structfield>relminmxid</> values.
       </entry>
      </row>
 
