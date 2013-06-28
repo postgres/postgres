@@ -172,6 +172,7 @@ parseCommandLine(int argc, char *argv[])
 			case 'U':
 				pg_free(os_info.user);
 				os_info.user = pg_strdup(optarg);
+				os_info.user_specified = true;
 
 				/*
 				 * Push the user name into the environment so pre-9.1

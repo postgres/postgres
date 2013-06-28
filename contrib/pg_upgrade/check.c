@@ -459,6 +459,13 @@ void
 create_script_for_cluster_analyze(char **analyze_script_file_name)
 {
 	FILE	   *script = NULL;
+	char	   *user_specification = "";
+
+	if (os_info.user_specified)
+	{
+		user_specification = pg_malloc(strlen(os_info.user) + 7);
+		sprintf(user_specification, "-U \"%s\" ", os_info.user);
+	}
 
 	*analyze_script_file_name = pg_malloc(MAXPGPATH);
 
@@ -501,7 +508,8 @@ create_script_for_cluster_analyze(char **analyze_script_file_name)
 			ECHO_QUOTE, ECHO_QUOTE);
 	fprintf(script, "echo %sthis script and run:%s\n",
 			ECHO_QUOTE, ECHO_QUOTE);
-	fprintf(script, "echo %s    \"%s/vacuumdb\" --all %s%s\n", ECHO_QUOTE, new_cluster.bindir,
+	fprintf(script, "echo %s    \"%s/vacuumdb\" %s--all %s%s\n", ECHO_QUOTE,
+			new_cluster.bindir, user_specification,
 	/* Did we copy the free space files? */
 			(GET_MAJOR_VERSION(old_cluster.major_version) >= 804) ?
 			"--analyze-only" : "--analyze", ECHO_QUOTE);
@@ -522,7 +530,8 @@ create_script_for_cluster_analyze(char **analyze_script_file_name)
 			ECHO_QUOTE, ECHO_QUOTE);
 	fprintf(script, "echo %s--------------------------------------------------%s\n",
 			ECHO_QUOTE, ECHO_QUOTE);
-	fprintf(script, "\"%s/vacuumdb\" --all --analyze-only\n", new_cluster.bindir);
+	fprintf(script, "\"%s/vacuumdb\" %s--all --analyze-only\n",
+			new_cluster.bindir, user_specification);
 	fprintf(script, "echo%s\n", ECHO_BLANK);
 	fprintf(script, "echo %sThe server is now available with minimal optimizer statistics.%s\n",
 			ECHO_QUOTE, ECHO_QUOTE);
@@ -543,7 +552,8 @@ create_script_for_cluster_analyze(char **analyze_script_file_name)
 			ECHO_QUOTE, ECHO_QUOTE);
 	fprintf(script, "echo %s---------------------------------------------------%s\n",
 			ECHO_QUOTE, ECHO_QUOTE);
-	fprintf(script, "\"%s/vacuumdb\" --all --analyze-only\n", new_cluster.bindir);
+	fprintf(script, "\"%s/vacuumdb\" %s--all --analyze-only\n",
+			new_cluster.bindir, user_specification);
 	fprintf(script, "echo%s\n\n", ECHO_BLANK);
 
 #ifndef WIN32
@@ -556,7 +566,8 @@ create_script_for_cluster_analyze(char **analyze_script_file_name)
 			ECHO_QUOTE, ECHO_QUOTE);
 	fprintf(script, "echo %s-------------------------------------------------------------%s\n",
 			ECHO_QUOTE, ECHO_QUOTE);
-	fprintf(script, "\"%s/vacuumdb\" --all %s\n", new_cluster.bindir,
+	fprintf(script, "\"%s/vacuumdb\" %s--all %s\n", new_cluster.bindir,
+			user_specification,
 	/* Did we copy the free space files? */
 			(GET_MAJOR_VERSION(old_cluster.major_version) >= 804) ?
 			"--analyze-only" : "--analyze");
@@ -572,6 +583,9 @@ create_script_for_cluster_analyze(char **analyze_script_file_name)
 		pg_log(PG_FATAL, "Could not add execute permission to file \"%s\": %s\n",
 			   *analyze_script_file_name, getErrorText(errno));
 #endif
+
+	if (os_info.user_specified)
+		pg_free(user_specification);
 
 	check_ok();
 }
