@@ -573,6 +573,9 @@ typedef NameData *Name;
 #define AssertMacro(condition)	((void)true)
 #define AssertArg(condition)
 #define AssertState(condition)
+#define Trap(condition, errorType)
+#define TrapMacro(condition, errorType)	(true)
+
 #elif defined(FRONTEND)
 
 #include <assert.h>
