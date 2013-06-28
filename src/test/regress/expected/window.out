@@ -989,9 +989,9 @@ ERROR:  window functions are not allowed in GROUP BY
 LINE 1: SELECT rank() OVER (ORDER BY 1), count(*) FROM empsalary GRO...
                ^
 SELECT * FROM rank() OVER (ORDER BY random());
-ERROR:  window functions are not allowed in functions in FROM
+ERROR:  syntax error at or near "ORDER"
 LINE 1: SELECT * FROM rank() OVER (ORDER BY random());
-                      ^
+                                   ^
 DELETE FROM empsalary WHERE (rank() OVER (ORDER BY random())) > 10;
 ERROR:  window functions are not allowed in WHERE
 LINE 1: DELETE FROM empsalary WHERE (rank() OVER (ORDER BY random())...

@@ -401,7 +401,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <node>	columnDef columnOptions
 %type <defelt>	def_elem reloption_elem old_aggr_elem
 %type <node>	def_arg columnElem where_clause where_or_current_clause
-				a_expr b_expr c_expr func_expr AexprConst indirection_el
+				a_expr b_expr c_expr AexprConst indirection_el
 				columnref in_expr having_clause func_table array_expr
 				ExclusionWhereClause
 %type <list>	ExclusionConstraintList ExclusionConstraintElem
@@ -481,6 +481,8 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <ival>	document_or_content
 %type <boolean> xml_whitespace_option
 
+%type <node>	func_application func_expr_common_subexpr
+%type <node>	func_expr func_expr_windowless
 %type <node>	common_table_expr
 %type <with>	with_clause opt_with_clause
 %type <list>	cte_list
@@ -6132,7 +6134,7 @@ index_elem:	ColId opt_collate opt_class opt_asc_desc opt_nulls_order
 					$$->ordering = $4;
 					$$->nulls_ordering = $5;
 				}
-			| func_expr opt_collate opt_class opt_asc_desc opt_nulls_order
+			| func_expr_windowless opt_collate opt_class opt_asc_desc opt_nulls_order
 				{
 					$$ = makeNode(IndexElem);
 					$$->name = NULL;
@@ -9894,8 +9896,7 @@ relation_expr_opt_alias: relation_expr					%prec UMINUS
 				}
 		;
 
-
-func_table: func_expr								{ $$ = $1; }
+func_table: func_expr_windowless					{ $$ = $1; }
 		;
 
 
@@ -11079,15 +11080,7 @@ c_expr:		columnref								{ $$ = $1; }
 				}
 		;
 
-/*
- * func_expr is split out from c_expr just so that we have a classification
- * for "everything that is a function call or looks like one".  This isn't
- * very important, but it saves us having to document which variants are
- * legal in the backwards-compatible functional-index syntax for CREATE INDEX.
- * (Note that many of the special SQL functions wouldn't actually make any
- * sense as functional index entries, but we ignore that consideration here.)
- */
-func_expr:	func_name '(' ')' over_clause
+func_application: func_name '(' ')'
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
@@ -11096,11 +11089,11 @@ func_expr:	func_name '(' ')' over_clause
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
-					n->over = $4;
+					n->over = NULL;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
-			| func_name '(' func_arg_list ')' over_clause
+			| func_name '(' func_arg_list ')'
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
@@ -11109,11 +11102,11 @@ func_expr:	func_name '(' ')' over_clause
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
-					n->over = $5;
+					n->over = NULL;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
-			| func_name '(' VARIADIC func_arg_expr ')' over_clause
+			| func_name '(' VARIADIC func_arg_expr ')'
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
@@ -11122,11 +11115,11 @@ func_expr:	func_name '(' ')' over_clause
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = TRUE;
-					n->over = $6;
+					n->over = NULL;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
-			| func_name '(' func_arg_list ',' VARIADIC func_arg_expr ')' over_clause
+			| func_name '(' func_arg_list ',' VARIADIC func_arg_expr ')'
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
@@ -11135,11 +11128,11 @@ func_expr:	func_name '(' ')' over_clause
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = TRUE;
-					n->over = $8;
+					n->over = NULL;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
-			| func_name '(' func_arg_list sort_clause ')' over_clause
+			| func_name '(' func_arg_list sort_clause ')'
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
@@ -11148,11 +11141,11 @@ func_expr:	func_name '(' ')' over_clause
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
-					n->over = $6;
+					n->over = NULL;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
-			| func_name '(' ALL func_arg_list opt_sort_clause ')' over_clause
+			| func_name '(' ALL func_arg_list opt_sort_clause ')'
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
@@ -11165,11 +11158,11 @@ func_expr:	func_name '(' ')' over_clause
 					 * for that in FuncCall at the moment.
 					 */
 					n->func_variadic = FALSE;
-					n->over = $7;
+					n->over = NULL;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
-			| func_name '(' DISTINCT func_arg_list opt_sort_clause ')' over_clause
+			| func_name '(' DISTINCT func_arg_list opt_sort_clause ')'
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
@@ -11178,11 +11171,11 @@ func_expr:	func_name '(' ')' over_clause
 					n->agg_star = FALSE;
 					n->agg_distinct = TRUE;
 					n->func_variadic = FALSE;
-					n->over = $7;
+					n->over = NULL;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
-			| func_name '(' '*' ')' over_clause
+			| func_name '(' '*' ')'
 				{
 					/*
 					 * We consider AGGREGATE(*) to invoke a parameterless
@@ -11201,11 +11194,48 @@ func_expr:	func_name '(' ')' over_clause
 					n->agg_star = TRUE;
 					n->agg_distinct = FALSE;
 					n->func_variadic = FALSE;
-					n->over = $5;
+					n->over = NULL;
 					n->location = @1;
 					$$ = (Node *)n;
 				}
-			| COLLATION FOR '(' a_expr ')'
+        ;
+
+
+/*
+ * func_expr and its cousin func_expr_windowless is split out from c_expr just 
+ * so that we have classifications for "everything that is a function call or 
+ * looks like one".  This isn't very important, but it saves us having to document 
+ * which variants are legal in the backwards-compatible functional-index syntax 
+ * for CREATE INDEX.
+ * (Note that many of the special SQL functions wouldn't actually make any
+ * sense as functional index entries, but we ignore that consideration here.)
+ */
+func_expr: func_application over_clause 
+				{
+              		FuncCall *n = (FuncCall*)$1;
+					n->over = $2;
+					$$ = (Node*)n;
+				} 
+			| func_expr_common_subexpr
+				{ $$ = $1; }
+		;
+
+/* 
+ * As func_expr but does not accept WINDOW functions directly (they
+ * can still be contained in arguments for functions etc.)
+ * Use this when window expressions are not allowed, so to disambiguate 
+ * the grammar. (e.g. in CREATE INDEX)
+ */
+func_expr_windowless: 
+			func_application						{ $$ = $1; }
+			| func_expr_common_subexpr 				{ $$ = $1; }
+		;
+
+/*
+ * Special expression 
+ */
+func_expr_common_subexpr:	
+			COLLATION FOR '(' a_expr ')'
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("pg_collation_for");
@@ -12794,6 +12824,7 @@ unreserved_keyword:
 			| OPERATOR
 			| OPTION
 			| OPTIONS
+			| OVER
 			| OWNED
 			| OWNER
 			| PARSER
@@ -12992,7 +13023,6 @@ type_func_name_keyword:
 			| NATURAL
 			| NOTNULL
 			| OUTER_P
-			| OVER
 			| OVERLAPS
 			| RIGHT
 			| SIMILAR
