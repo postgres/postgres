@@ -181,7 +181,6 @@
 
      <varlistentry>
       <term><option>-?</option></term>
-      <term><option>-h</option></term>
       <term><option>--help</option></term>
       <listitem><para>show help, then exit</para></listitem>
      </varlistentry>
