@@ -48,7 +48,7 @@ parseCommandLine(int argc, char *argv[])
 		{"old-port", required_argument, NULL, 'p'},
 		{"new-port", required_argument, NULL, 'P'},
 
-		{"user", required_argument, NULL, 'u'},
+		{"username", required_argument, NULL, 'U'},
 		{"check", no_argument, NULL, 'c'},
 		{"link", no_argument, NULL, 'k'},
 		{"retain", no_argument, NULL, 'r'},
@@ -102,7 +102,7 @@ parseCommandLine(int argc, char *argv[])
 	if ((log_opts.internal = fopen_priv(INTERNAL_LOG_FILE, "a")) == NULL)
 		pg_log(PG_FATAL, "cannot write to log file %s\n", INTERNAL_LOG_FILE);
 
-	while ((option = getopt_long(argc, argv, "d:D:b:B:cj:ko:O:p:P:ru:v",
+	while ((option = getopt_long(argc, argv, "d:D:b:B:cj:ko:O:p:P:rU:v",
 								 long_options, &optindex)) != -1)
 	{
 		switch (option)
@@ -170,7 +170,7 @@ parseCommandLine(int argc, char *argv[])
 				log_opts.retain = true;
 				break;
 
-			case 'u':
+			case 'U':
 				pg_free(os_info.user);
 				os_info.user = pg_strdup(optarg);
 
@@ -241,7 +241,7 @@ Options:\n\
   -p, --old-port=OLDPORT        old cluster port number (default %d)\n\
   -P, --new-port=NEWPORT        new cluster port number (default %d)\n\
   -r, --retain                  retain SQL and log files after success\n\
-  -u, --user=NAME               cluster superuser (default \"%s\")\n\
+  -U, --username=NAME           cluster superuser (default \"%s\")\n\
   -v, --verbose                 enable verbose internal logging\n\
   -V, --version                 display version information, then exit\n\
   -?, -h, --help                show this help, then exit\n\
