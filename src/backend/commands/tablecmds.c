@@ -126,6 +126,7 @@ static List *on_commits = NIL;
  * a pass determined by subcommand type.
  */
 
+#define AT_PASS_UNSET			-1		/* UNSET will cause ERROR */
 #define AT_PASS_DROP			0		/* DROP (all flavors) */
 #define AT_PASS_ALTER_TYPE		1		/* ALTER COLUMN TYPE */
 #define AT_PASS_OLD_INDEX		2		/* re-add existing indexes */
@@ -2947,7 +2948,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		  bool recurse, bool recursing, LOCKMODE lockmode)
 {
 	AlteredTableInfo *tab;
-	int			pass;
+	int			pass = AT_PASS_UNSET;
 
 	/* Find or create work queue entry for this table */
 	tab = ATGetQueueEntry(wqueue, rel);
@@ -3160,9 +3161,10 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		default:				/* oops */
 			elog(ERROR, "unrecognized alter table type: %d",
 				 (int) cmd->subtype);
-			pass = 0;			/* keep compiler quiet */
+			pass = AT_PASS_UNSET;		/* keep compiler quiet */
 			break;
 	}
+	Assert(pass > AT_PASS_UNSET);
 
 	/* Add the subcommand to the appropriate list for phase 2 */
 	tab->subcmds[pass] = lappend(tab->subcmds[pass], cmd);
