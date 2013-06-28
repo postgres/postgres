@@ -1362,11 +1362,11 @@ echo -1000 > /proc/self/oom_score_adj
      <listitem>
       <para>
       This is the <firstterm>Immediate Shutdown</firstterm> mode.
-      The master <command>postgres</command> process will send a
-      <systemitem>SIGQUIT</systemitem> to all child processes and exit
-      immediately, without properly shutting itself down. The child processes
-      likewise exit immediately upon receiving
-      <systemitem>SIGQUIT</systemitem>. This will lead to recovery (by
+      The server will send <systemitem>SIGQUIT</systemitem> to all child
+      processes and wait for them to terminate.  Those that don't terminate
+      within 5 seconds, will be sent <systemitem>SIGKILL</systemitem> by the
+      master <command>postgres</command> process, which will then terminate
+      without further waiting.  This will lead to recovery (by
       replaying the WAL log) upon next start-up. This is recommended
       only in emergencies.
       </para>

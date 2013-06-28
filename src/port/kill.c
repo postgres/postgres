@@ -38,6 +38,26 @@ pgkill(int pid, int sig)
 		errno = EINVAL;
 		return -1;
 	}
+
+	/* special case for SIGKILL: just ask the system to terminate the target */
+	if (sig == SIGKILL)
+	{
+		HANDLE prochandle;
+
+		if ((prochandle = OpenProcess(PROCESS_TERMINATE, FALSE, (DWORD) pid)) == NULL)
+		{
+			errno = ESRCH;
+			return -1;
+		}
+		if (!TerminateProcess(prochandle, 255))
+		{
+			_dosmaperr(GetLastError());
+			CloseHandle(prochandle);
+			return -1;
+		}
+		CloseHandle(prochandle);
+		return 0;
+	}
 	snprintf(pipename, sizeof(pipename), "\\\\.\\pipe\\pgsignal_%u", pid);
 
 	if (CallNamedPipe(pipename, &sigData, 1, &sigRet, 1, &bytes, 1000))
