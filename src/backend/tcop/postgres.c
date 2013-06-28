@@ -2900,7 +2900,7 @@ ProcessInterrupts(void)
 			DisableNotifyInterrupt();
 			DisableCatchupInterrupt();
 			ereport(ERROR,
-					(errcode(ERRCODE_QUERY_CANCELED),
+					(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
 					 errmsg("canceling statement due to lock timeout")));
 		}
 		if (get_timeout_indicator(STATEMENT_TIMEOUT, true))
