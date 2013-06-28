@@ -79,15 +79,15 @@
     <variablelist>
 
      <varlistentry>
-      <term><option>-b</option> <replaceable>old_bindir</></term>
-      <term><option>--old-bindir=</option><replaceable>old_bindir</></term>
+      <term><option>-b</option> <replaceable>bindir</></term>
+      <term><option>--old-bindir=</option><replaceable>bindir</></term>
       <listitem><para>the old cluster executable directory;
       environment variable <envar>PGBINOLD</></para></listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-B</option> <replaceable>new_bindir</></term>
-      <term><option>--new-bindir=</option><replaceable>new_bindir</></term>
+      <term><option>-B</option> <replaceable>bindir</></term>
+      <term><option>--new-bindir=</option><replaceable>bindir</></term>
       <listitem><para>the new cluster executable directory;
       environment variable <envar>PGBINNEW</></para></listitem>
      </varlistentry>
@@ -99,15 +99,15 @@
      </varlistentry>
 
      <varlistentry>
-      <term><option>-d</option> <replaceable>old_datadir</></term>
-      <term><option>--old-datadir=</option><replaceable>old_datadir</></term>
+      <term><option>-d</option> <replaceable>datadir</></term>
+      <term><option>--old-datadir=</option><replaceable>datadir</></term>
       <listitem><para>the old cluster data directory; environment
       variable <envar>PGDATAOLD</></para></listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-D</option> <replaceable>new_datadir</></term>
-      <term><option>--new-datadir=</option><replaceable>new_datadir</></term>
+      <term><option>-D</option> <replaceable>datadir</></term>
+      <term><option>--new-datadir=</option><replaceable>datadir</></term>
       <listitem><para>the new cluster data directory; environment
       variable <envar>PGDATANEW</></para></listitem>
      </varlistentry>
@@ -140,15 +140,15 @@
      </varlistentry>
 
      <varlistentry>
-      <term><option>-p</option> <replaceable>old_port_number</></term>
-      <term><option>--old-port=</option><replaceable>old_portnum</></term>
+      <term><option>-p</option> <replaceable>port</></term>
+      <term><option>--old-port=</option><replaceable>port</></term>
       <listitem><para>the old cluster port number; environment
       variable <envar>PGPORTOLD</></para></listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-P</option> <replaceable>new_port_number</></term>
-      <term><option>--new-port=</option><replaceable>new_portnum</></term>
+      <term><option>-P</option> <replaceable>port</></term>
+      <term><option>--new-port=</option><replaceable>port</></term>
       <listitem><para>the new cluster port number; environment
       variable <envar>PGPORTNEW</></para></listitem>
      </varlistentry>
@@ -161,8 +161,8 @@
      </varlistentry>
 
      <varlistentry>
-      <term><option>-U</option> <replaceable>user_name</></term>
-      <term><option>--username=</option><replaceable>user_name</></term>
+      <term><option>-U</option> <replaceable>username</></term>
+      <term><option>--username=</option><replaceable>username</></term>
       <listitem><para>cluster's super user name; environment
       variable <envar>PGUSER</></para></listitem>
      </varlistentry>

@@ -229,17 +229,17 @@ usage(void)
   pg_upgrade [OPTION]...\n\
 \n\
 Options:\n\
-  -b, --old-bindir=OLDBINDIR    old cluster executable directory\n\
-  -B, --new-bindir=NEWBINDIR    new cluster executable directory\n\
+  -b, --old-bindir=BINDIR      old cluster executable directory\n\
+  -B, --new-bindir=BINDIR       new cluster executable directory\n\
   -c, --check                   check clusters only, don't change any data\n\
-  -d, --old-datadir=OLDDATADIR  old cluster data directory\n\
-  -D, --new-datadir=NEWDATADIR  new cluster data directory\n\
+  -d, --old-datadir=DATADIR     old cluster data directory\n\
+  -D, --new-datadir=DATADIR     new cluster data directory\n\
   -j, --jobs                    number of simultaneous processes or threads to use\n\
   -k, --link                    link instead of copying files to new cluster\n\
   -o, --old-options=OPTIONS     old cluster options to pass to the server\n\
   -O, --new-options=OPTIONS     new cluster options to pass to the server\n\
-  -p, --old-port=OLDPORT        old cluster port number (default %d)\n\
-  -P, --new-port=NEWPORT        new cluster port number (default %d)\n\
+  -p, --old-port=PORT           old cluster port number (default %d)\n\
+  -P, --new-port=PORT           new cluster port number (default %d)\n\
   -r, --retain                  retain SQL and log files after success\n\
   -U, --username=NAME           cluster superuser (default \"%s\")\n\
   -v, --verbose                 enable verbose internal logging\n\
@@ -252,10 +252,10 @@ Before running pg_upgrade you must:\n\
   shutdown the postmaster servicing the new cluster\n\
 \n\
 When you run pg_upgrade, you must provide the following information:\n\
-  the data directory for the old cluster  (-d OLDDATADIR)\n\
-  the data directory for the new cluster  (-D NEWDATADIR)\n\
-  the \"bin\" directory for the old version (-b OLDBINDIR)\n\
-  the \"bin\" directory for the new version (-B NEWBINDIR)\n\
+  the data directory for the old cluster  (-d DATADIR)\n\
+  the data directory for the new cluster  (-D DATADIR)\n\
+  the \"bin\" directory for the old version (-b BINDIR)\n\
+  the \"bin\" directory for the new version (-B BINDIR)\n\
 \n\
 For example:\n\
   pg_upgrade -d oldCluster/data -D newCluster/data -b oldCluster/bin -B newCluster/bin\n\
