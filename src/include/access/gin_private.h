@@ -530,7 +530,6 @@ extern void ginEntryFillRoot(GinBtree btree, Buffer root, Buffer lbuf, Buffer rb
 extern IndexTuple ginPageGetLinkItup(Buffer buf);
 
 /* gindatapage.c */
-extern int	ginCompareItemPointers(ItemPointer a, ItemPointer b);
 extern uint32 ginMergeItemPointers(ItemPointerData *dst,
 					 ItemPointerData *a, uint32 na,
 					 ItemPointerData *b, uint32 nb);
@@ -723,5 +722,29 @@ extern void ginHeapTupleFastCollect(GinState *ginstate,
 						ItemPointer ht_ctid);
 extern void ginInsertCleanup(GinState *ginstate,
 				 bool vac_delay, IndexBulkDeleteResult *stats);
+
+/*
+ * Merging the results of several gin scans compares item pointers a lot,
+ * so we want this to be inlined. But if the compiler doesn't support that,
+ * fall back on the non-inline version from itemptr.c. See STATIC_IF_INLINE in
+ * c.h.
+ */
+#ifdef PG_USE_INLINE
+static inline int
+ginCompareItemPointers(ItemPointer a, ItemPointer b)
+{
+	uint64 ia = (uint64) a->ip_blkid.bi_hi << 32 | (uint64) a->ip_blkid.bi_lo << 16 | a->ip_posid;
+	uint64 ib = (uint64) b->ip_blkid.bi_hi << 32 | (uint64) b->ip_blkid.bi_lo << 16 | b->ip_posid;
+
+	if (ia == ib)
+		return 0;
+	else if (ia > ib)
+		return 1;
+	else
+		return -1;
+}
+#else
+#define ginCompareItemPointers(a, b) ItemPointerCompare(a, b)
+#endif   /* PG_USE_INLINE */
 
 #endif   /* GIN_PRIVATE_H */
