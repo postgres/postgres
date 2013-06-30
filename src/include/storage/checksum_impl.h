@@ -141,7 +141,7 @@ pg_checksum_block(char *data, uint32 size)
 	uint32		sums[N_SUMS];
 	uint32		(*dataArr)[N_SUMS] = (uint32 (*)[N_SUMS]) data;
 	uint32		result = 0;
-	int			i,
+	uint32		i,
 				j;
 
 	/* ensure that the size is compatible with the algorithm */
