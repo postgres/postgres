@@ -171,7 +171,7 @@ main(int argc, char *const argv[])
 				regression_mode = true;
 				break;
 			case 'o':
-				output_filename = strdup(optarg);
+				output_filename = mm_strdup(optarg);
 				if (strcmp(output_filename, "-") == 0)
 					yyout = stdout;
 				else
@@ -320,7 +320,7 @@ main(int argc, char *const argv[])
 					yyout = stdout;
 				else
 				{
-					output_filename = strdup(input_filename);
+					output_filename = mm_strdup(input_filename);
 
 					ptr2ext = strrchr(output_filename, '.');
 					/* make extension = .c resp. .h */

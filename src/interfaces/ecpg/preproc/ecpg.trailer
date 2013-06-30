@@ -1428,13 +1428,13 @@ action : CONTINUE_P
 		| SQL_GOTO name
 		{
 			$<action>$.code = W_GOTO;
-			$<action>$.command = strdup($2);
+			$<action>$.command = mm_strdup($2);
 			$<action>$.str = cat2_str(mm_strdup("goto "), $2);
 		}
 		| SQL_GO TO name
 		{
 			$<action>$.code = W_GOTO;
-			$<action>$.command = strdup($3);
+			$<action>$.command = mm_strdup($3);
 			$<action>$.str = cat2_str(mm_strdup("goto "), $3);
 		}
 		| DO name '(' c_args ')'

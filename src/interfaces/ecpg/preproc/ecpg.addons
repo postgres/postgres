@@ -377,9 +377,9 @@ ECPG: opt_array_boundsopt_array_bounds'['']' block
 		$$.index1 = $1.index1;
 		$$.index2 = $1.index2;
 		if (strcmp($1.index1, "-1") == 0)
-			$$.index1 = strdup($3);
+			$$.index1 = mm_strdup($3);
 		else if (strcmp($1.index2, "-1") == 0)
-			$$.index2 = strdup($3);
+			$$.index2 = mm_strdup($3);
 		$$.str = cat_str(4, $1.str, mm_strdup("["), $3, mm_strdup("]"));
 	}
 ECPG: opt_array_bounds
