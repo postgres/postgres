@@ -415,13 +415,23 @@ libpq_pgport = -L$(top_builddir)/src/port -lpgport \
 			   -L$(top_builddir)/src/common -lpgcommon $(libpq)
 endif
 
-
+# If PGXS is not defined, build libpq and libpgport dependancies as required.
+# If the build is with PGXS, then these are supposed to be already built and
+# installed, and we just ensure that the expected files exist.
+ifndef PGXS
 submake-libpq:
 	$(MAKE) -C $(libpq_builddir) all
+else
+submake-libpq: $(libdir)/libpq.so ;
+endif
 
+ifndef PGXS
 submake-libpgport:
 	$(MAKE) -C $(top_builddir)/src/port all
 	$(MAKE) -C $(top_builddir)/src/common all
+else
+submake-libpgport: $(libdir)/libpgport.a $(libdir)/libpgcommon.a ;
+endif
 
 .PHONY: submake-libpq submake-libpgport
 
