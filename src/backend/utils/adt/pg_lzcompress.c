@@ -112,7 +112,7 @@
  *			of identical bytes like trailing spaces) and for bigger ones
  *			our 4K maximum look-back distance is too small.
  *
- *			The compressor creates a table for 8192 lists of positions.
+ *			The compressor creates a table for lists of positions.
  *			For each input position (except the last 3), a hash key is
  *			built from the 4 next input bytes and the position remembered
  *			in the appropriate list. Thus, the table points to linked
@@ -120,9 +120,12 @@
  *			matching strings. This is done on the fly while the input
  *			is compressed into the output area.  Table entries are only
  *			kept for the last 4096 input positions, since we cannot use
- *			back-pointers larger than that anyway.
+ *			back-pointers larger than that anyway.  The size of the hash
+ *			table is chosen based on the size of the input - a larger table
+ *			has a larger startup cost, as it needs to be initialized to
+ *			zero, but reduces the number of hash collisions on long inputs.
  *
- *			For each byte in the input, it's hash key (built from this
+ *			For each byte in the input, its hash key (built from this
  *			byte and the next 3) is used to find the appropriate list
  *			in the table. The lists remember the positions of all bytes
  *			that had the same hash key in the past in increasing backward
@@ -180,8 +183,7 @@
  * Local definitions
  * ----------
  */
-#define PGLZ_HISTORY_LISTS		8192	/* must be power of 2 */
-#define PGLZ_HISTORY_MASK		(PGLZ_HISTORY_LISTS - 1)
+#define PGLZ_MAX_HISTORY_LISTS	8192	/* must be power of 2 */
 #define PGLZ_HISTORY_SIZE		4096
 #define PGLZ_MAX_MATCH			273
 
@@ -241,9 +243,15 @@ const PGLZ_Strategy *const PGLZ_strategy_always = &strategy_always_data;
  * Statically allocated work arrays for history
  * ----------
  */
-static PGLZ_HistEntry *hist_start[PGLZ_HISTORY_LISTS];
-static PGLZ_HistEntry hist_entries[PGLZ_HISTORY_SIZE];
+static int16 hist_start[PGLZ_MAX_HISTORY_LISTS];
+static PGLZ_HistEntry hist_entries[PGLZ_HISTORY_SIZE + 1];
 
+/*
+ * Element 0 in hist_entries is unused, and means 'invalid'. Likewise,
+ * INVALID_ENTRY_PTR in next/prev pointers mean 'invalid'.
+ */
+#define INVALID_ENTRY			0
+#define INVALID_ENTRY_PTR		(&hist_entries[INVALID_ENTRY])
 
 /* ----------
  * pglz_hist_idx -
@@ -257,10 +265,10 @@ static PGLZ_HistEntry hist_entries[PGLZ_HISTORY_SIZE];
  * hash keys more.
  * ----------
  */
-#define pglz_hist_idx(_s,_e) (												\
+#define pglz_hist_idx(_s,_e, _mask) (										\
 			((((_e) - (_s)) < 4) ? (int) (_s)[0] :							\
-			 (((_s)[0] << 9) ^ ((_s)[1] << 6) ^								\
-			  ((_s)[2] << 3) ^ (_s)[3])) & (PGLZ_HISTORY_MASK)				\
+			 (((_s)[0] << 6) ^ ((_s)[1] << 4) ^								\
+			  ((_s)[2] << 2) ^ (_s)[3])) & (_mask)				\
 		)
 
 
@@ -276,28 +284,35 @@ static PGLZ_HistEntry hist_entries[PGLZ_HISTORY_SIZE];
  * _hn and _recycle are modified in the macro.
  * ----------
  */
-#define pglz_hist_add(_hs,_he,_hn,_recycle,_s,_e) \
+#define pglz_hist_add(_hs,_he,_hn,_recycle,_s,_e, _mask)	\
 do {									\
-			int __hindex = pglz_hist_idx((_s),(_e));						\
-			PGLZ_HistEntry **__myhsp = &(_hs)[__hindex];					\
+			int __hindex = pglz_hist_idx((_s),(_e), (_mask));				\
+			int16 *__myhsp = &(_hs)[__hindex];								\
 			PGLZ_HistEntry *__myhe = &(_he)[_hn];							\
 			if (_recycle) {													\
 				if (__myhe->prev == NULL)									\
-					(_hs)[__myhe->hindex] = __myhe->next;					\
+					(_hs)[__myhe->hindex] = __myhe->next - (_he);			\
 				else														\
 					__myhe->prev->next = __myhe->next;						\
 				if (__myhe->next != NULL)									\
 					__myhe->next->prev = __myhe->prev;						\
 			}																\
-			__myhe->next = *__myhsp;										\
+			__myhe->next = &(_he)[*__myhsp];								\
 			__myhe->prev = NULL;											\
 			__myhe->hindex = __hindex;										\
 			__myhe->pos  = (_s);											\
-			if (*__myhsp != NULL)											\
-				(*__myhsp)->prev = __myhe;									\
-			*__myhsp = __myhe;												\
-			if (++(_hn) >= PGLZ_HISTORY_SIZE) {								\
-				(_hn) = 0;													\
+			/* If there was an existing entry in this hash slot, link */	\
+			/* this new entry to it. However, the 0th entry in the */		\
+			/* entries table is unused, so we can freely scribble on it. */ \
+			/* So don't bother checking if the slot was used - we'll */		\
+			/* scribble on the unused entry if it was not, but that's */	\
+			/* harmless. Avoiding the branch in this critical path */		\
+			/* speeds this up a little bit. */								\
+			/* if (*__myhsp != INVALID_ENTRY) */							\
+				(_he)[(*__myhsp)].prev = __myhe;							\
+			*__myhsp = _hn;													\
+			if (++(_hn) >= PGLZ_HISTORY_SIZE + 1) {							\
+				(_hn) = 1;													\
 				(_recycle) = true;											\
 			}																\
 } while (0)
@@ -372,18 +387,20 @@ do { \
  * ----------
  */
 static inline int
-pglz_find_match(PGLZ_HistEntry **hstart, const char *input, const char *end,
-				int *lenp, int *offp, int good_match, int good_drop)
+pglz_find_match(int16 *hstart, const char *input, const char *end,
+				int *lenp, int *offp, int good_match, int good_drop, int mask)
 {
 	PGLZ_HistEntry *hent;
+	int16		hentno;
 	int32		len = 0;
 	int32		off = 0;
 
 	/*
 	 * Traverse the linked history list until a good enough match is found.
 	 */
-	hent = hstart[pglz_hist_idx(input, end)];
-	while (hent)
+	hentno = hstart[pglz_hist_idx(input, end, mask)];
+	hent = &hist_entries[hentno];
+	while (hent != INVALID_ENTRY_PTR)
 	{
 		const char *ip = input;
 		const char *hp = hent->pos;
@@ -484,7 +501,7 @@ pglz_compress(const char *source, int32 slen, PGLZ_Header *dest,
 {
 	unsigned char *bp = ((unsigned char *) dest) + sizeof(PGLZ_Header);
 	unsigned char *bstart = bp;
-	int			hist_next = 0;
+	int			hist_next = 1;
 	bool		hist_recycle = false;
 	const char *dp = source;
 	const char *dend = source + slen;
@@ -500,6 +517,8 @@ pglz_compress(const char *source, int32 slen, PGLZ_Header *dest,
 	int32		result_size;
 	int32		result_max;
 	int32		need_rate;
+	int			hashsz;
+	int			mask;
 
 	/*
 	 * Our fallback strategy is the default.
@@ -556,10 +575,28 @@ pglz_compress(const char *source, int32 slen, PGLZ_Header *dest,
 		result_max = (slen * (100 - need_rate)) / 100;
 
 	/*
+	 * Experiments suggest that these hash sizes work pretty well. A large
+	 * hash table minimizes collision, but has a higher startup cost. For
+	 * a small input, the startup cost dominates. The table size must be
+	 * a power of two.
+	 */
+	if (slen < 128)
+		hashsz = 512;
+	else if (slen < 256)
+		hashsz = 1024;
+	else if (slen < 512)
+		hashsz = 2048;
+	else if (slen < 1024)
+		hashsz = 4096;
+	else
+		hashsz = 8192;
+	mask = hashsz - 1;
+
+	/*
 	 * Initialize the history lists to empty.  We do not need to zero the
 	 * hist_entries[] array; its entries are initialized as they are used.
 	 */
-	memset(hist_start, 0, sizeof(hist_start));
+	memset(hist_start, 0, hashsz * sizeof(int16));
 
 	/*
 	 * Compress the source directly into the output buffer.
@@ -589,7 +626,7 @@ pglz_compress(const char *source, int32 slen, PGLZ_Header *dest,
 		 * Try to find a match in the history
 		 */
 		if (pglz_find_match(hist_start, dp, dend, &match_len,
-							&match_off, good_match, good_drop))
+							&match_off, good_match, good_drop, mask))
 		{
 			/*
 			 * Create the tag and add history entries for all matched
@@ -600,7 +637,7 @@ pglz_compress(const char *source, int32 slen, PGLZ_Header *dest,
 			{
 				pglz_hist_add(hist_start, hist_entries,
 							  hist_next, hist_recycle,
-							  dp, dend);
+							  dp, dend, mask);
 				dp++;			/* Do not do this ++ in the line above! */
 				/* The macro would do it four times - Jan.	*/
 			}
@@ -614,7 +651,7 @@ pglz_compress(const char *source, int32 slen, PGLZ_Header *dest,
 			pglz_out_literal(ctrlp, ctrlb, ctrl, bp, *dp);
 			pglz_hist_add(hist_start, hist_entries,
 						  hist_next, hist_recycle,
-						  dp, dend);
+						  dp, dend, mask);
 			dp++;				/* Do not do this ++ in the line above! */
 			/* The macro would do it four times - Jan.	*/
 		}
