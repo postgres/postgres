@@ -1205,8 +1205,7 @@ do_status(void)
 	/*
 	 * The Linux Standard Base Core Specification 3.1 says this should return
 	 * '3'
-	 * http://refspecs.freestandards.org/LSB_3.1.1/LSB-Core-generic/LSB-Core-ge
-	 * neric/iniscrptact.html
+	 * https://refspecs.linuxbase.org/LSB_3.1.0/LSB-Core-generic/LSB-Core-generic/iniscrptact.html
 	 */
 	exit(3);
 }
