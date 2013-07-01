@@ -285,6 +285,11 @@ typedef struct CollateClause
  * construct *must* be an aggregate call.  Otherwise, it might be either an
  * aggregate or some other kind of function.  However, if OVER is present
  * it had better be an aggregate or window function.
+ *
+ * Normally, you'd initialize this via makeFuncCall() and then only
+ * change the parts of the struct its defaults don't match afterwards
+ * if needed.
+ *
  */
 typedef struct FuncCall
 {

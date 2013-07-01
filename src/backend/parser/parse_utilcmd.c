@@ -448,16 +448,9 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 		castnode->typeName = SystemTypeName("regclass");
 		castnode->arg = (Node *) snamenode;
 		castnode->location = -1;
-		funccallnode = makeNode(FuncCall);
-		funccallnode->funcname = SystemFuncName("nextval");
-		funccallnode->args = list_make1(castnode);
-		funccallnode->agg_order = NIL;
-		funccallnode->agg_star = false;
-		funccallnode->agg_distinct = false;
-		funccallnode->func_variadic = false;
-		funccallnode->over = NULL;
-		funccallnode->location = -1;
-
+		funccallnode = makeFuncCall(SystemFuncName("nextval"),
+									list_make1(castnode),
+									-1);
 		constraint = makeNode(Constraint);
 		constraint->contype = CONSTR_DEFAULT;
 		constraint->location = -1;
