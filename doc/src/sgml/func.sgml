@@ -5645,6 +5645,10 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
         <entry><literal>tz</literal></entry>
         <entry>lower case time-zone name</entry>
        </row>
+       <row>
+        <entry><literal>OF</literal></entry>
+        <entry>time-zone offset</entry>
+       </row>
       </tbody>
      </tgroup>
     </table>
