@@ -1224,7 +1224,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
    like
 
 <screen>
-<prompt>$</prompt> <userinput>pg_dump -t '"MixedCaseName"' mydb &gt; mytab.sql</userinput>
+<prompt>$</prompt> <userinput>pg_dump -t "\"MixedCaseName\"" mydb &gt; mytab.sql</userinput>
 </screen></para>
 
  </refsect1>
