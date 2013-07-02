@@ -24,6 +24,7 @@
  *	* invalidate a relcache entry for a specific logical relation
  *	* invalidate an smgr cache entry for a specific physical relation
  *	* invalidate the mapped-relation mapping for a given database
+ *	* invalidate any saved snapshot that might be used to scan a given relation
  * More types could be added if needed.  The message type is identified by
  * the first "int8" field of the message struct.  Zero or positive means a
  * specific-catcache inval message (and also serves as the catcache ID field).
@@ -43,11 +44,11 @@
  * catcache inval messages must be generated for each of its caches, since
  * the hash keys will generally be different.
  *
- * Catcache and relcache invalidations are transactional, and so are sent
- * to other backends upon commit.  Internally to the generating backend,
- * they are also processed at CommandCounterIncrement so that later commands
- * in the same transaction see the new state.  The generating backend also
- * has to process them at abort, to flush out any cache state it's loaded
+ * Catcache, relcache, and snapshot invalidations are transactional, and so
+ * are sent to other backends upon commit.  Internally to the generating
+ * backend, they are also processed at CommandCounterIncrement so that later
+ * commands in the same transaction see the new state.  The generating backend
+ * also has to process them at abort, to flush out any cache state it's loaded
  * from no-longer-valid entries.
  *
  * smgr and relation mapping invalidations are non-transactional: they are
@@ -98,6 +99,15 @@ typedef struct
 	Oid			dbId;			/* database ID, or 0 for shared catalogs */
 } SharedInvalRelmapMsg;
 
+#define SHAREDINVALSNAPSHOT_ID	(-5)
+
+typedef struct
+{
+	int8		id;				/* type field --- must be first */
+	Oid			dbId;			/* database ID, or 0 if a shared relation */
+	Oid			relId;			/* relation ID */
+} SharedInvalSnapshotMsg;
+
 typedef union
 {
 	int8		id;				/* type field --- must be first */
@@ -106,6 +116,7 @@ typedef union
 	SharedInvalRelcacheMsg rc;
 	SharedInvalSmgrMsg sm;
 	SharedInvalRelmapMsg rm;
+	SharedInvalSnapshotMsg sn;
 } SharedInvalidationMessage;
 
 

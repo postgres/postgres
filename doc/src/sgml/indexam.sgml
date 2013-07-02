@@ -713,7 +713,7 @@ amrestrpos (IndexScanDesc scan);
    When using an MVCC-compliant snapshot, there is no problem because
    the new occupant of the slot is certain to be too new to pass the
    snapshot test.  However, with a non-MVCC-compliant snapshot (such as
-   <literal>SnapshotNow</>), it would be possible to accept and return
+   <literal>SnapshotAny</>), it would be possible to accept and return
    a row that does not in fact match the scan keys.  We could defend
    against this scenario by requiring the scan keys to be rechecked
    against the heap row in all cases, but that is too expensive.  Instead,

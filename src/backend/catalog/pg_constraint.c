@@ -412,7 +412,7 @@ ConstraintNameIsUsed(ConstraintCategory conCat, Oid objId,
 				ObjectIdGetDatum(objNamespace));
 
 	conscan = systable_beginscan(conDesc, ConstraintNameNspIndexId, true,
-								 SnapshotNow, 2, skey);
+								 NULL, 2, skey);
 
 	while (HeapTupleIsValid(tup = systable_getnext(conscan)))
 	{
@@ -506,7 +506,7 @@ ChooseConstraintName(const char *name1, const char *name2,
 						ObjectIdGetDatum(namespaceid));
 
 			conscan = systable_beginscan(conDesc, ConstraintNameNspIndexId, true,
-										 SnapshotNow, 2, skey);
+										 NULL, 2, skey);
 
 			found = (HeapTupleIsValid(systable_getnext(conscan)));
 
@@ -699,7 +699,7 @@ AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
 					ObjectIdGetDatum(ownerId));
 
 		scan = systable_beginscan(conRel, ConstraintTypidIndexId, true,
-								  SnapshotNow, 1, key);
+								  NULL, 1, key);
 	}
 	else
 	{
@@ -709,7 +709,7 @@ AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
 					ObjectIdGetDatum(ownerId));
 
 		scan = systable_beginscan(conRel, ConstraintRelidIndexId, true,
-								  SnapshotNow, 1, key);
+								  NULL, 1, key);
 	}
 
 	while (HeapTupleIsValid((tup = systable_getnext(scan))))
@@ -778,7 +778,7 @@ get_relation_constraint_oid(Oid relid, const char *conname, bool missing_ok)
 				ObjectIdGetDatum(relid));
 
 	scan = systable_beginscan(pg_constraint, ConstraintRelidIndexId, true,
-							  SnapshotNow, 1, skey);
+							  NULL, 1, skey);
 
 	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
 	{
@@ -836,7 +836,7 @@ get_domain_constraint_oid(Oid typid, const char *conname, bool missing_ok)
 				ObjectIdGetDatum(typid));
 
 	scan = systable_beginscan(pg_constraint, ConstraintTypidIndexId, true,
-							  SnapshotNow, 1, skey);
+							  NULL, 1, skey);
 
 	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
 	{
@@ -903,7 +903,7 @@ check_functional_grouping(Oid relid,
 				ObjectIdGetDatum(relid));
 
 	scan = systable_beginscan(pg_constraint, ConstraintRelidIndexId, true,
-							  SnapshotNow, 1, skey);
+							  NULL, 1, skey);
 
 	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
 	{

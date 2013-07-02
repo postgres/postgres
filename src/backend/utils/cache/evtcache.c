@@ -129,13 +129,11 @@ BuildEventTriggerCache(void)
 						HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
 
 	/*
-	 * Prepare to scan pg_event_trigger in name order.	We use an MVCC
-	 * snapshot to avoid getting inconsistent results if the table is being
-	 * concurrently updated.
+	 * Prepare to scan pg_event_trigger in name order.
 	 */
 	rel = relation_open(EventTriggerRelationId, AccessShareLock);
 	irel = index_open(EventTriggerNameIndexId, AccessShareLock);
-	scan = systable_beginscan_ordered(rel, irel, GetLatestSnapshot(), 0, NULL);
+	scan = systable_beginscan_ordered(rel, irel, NULL, 0, NULL);
 
 	/*
 	 * Build a cache item for each pg_event_trigger tuple, and append each one

@@ -218,20 +218,16 @@ IsReservedName(const char *name)
  *		Given the OID of a relation, determine whether it's supposed to be
  *		shared across an entire database cluster.
  *
- * Hard-wiring this list is pretty grotty, but we really need it so that
- * we can compute the locktag for a relation (and then lock it) without
- * having already read its pg_class entry.	If we try to retrieve relisshared
- * from pg_class with no pre-existing lock, there is a race condition against
- * anyone who is concurrently committing a change to the pg_class entry:
- * since we read system catalog entries under SnapshotNow, it's possible
- * that both the old and new versions of the row are invalid at the instants
- * we scan them.  We fix this by insisting that updaters of a pg_class
- * row must hold exclusive lock on the corresponding rel, and that users
- * of a relation must hold at least AccessShareLock on the rel *before*
- * trying to open its relcache entry.  But to lock a rel, you have to
- * know if it's shared.  Fortunately, the set of shared relations is
- * fairly static, so a hand-maintained list of their OIDs isn't completely
- * impractical.
+ * In older releases, this had to be hard-wired so that we could compute the
+ * locktag for a relation and lock it before examining its catalog entry.
+ * Since we now have MVCC catalog access, the race conditions that made that
+ * a hard requirement are gone, so we could look at relaxing this restriction.
+ * However, if we scanned the pg_class entry to find relisshared, and only
+ * then locked the relation, pg_class could get updated in the meantime,
+ * forcing us to scan the relation again, which would definitely be complex
+ * and might have undesirable performance consequences.  Fortunately, the set
+ * of shared relations is fairly static, so a hand-maintained list of their
+ * OIDs isn't completely impractical.
  */
 bool
 IsSharedRelation(Oid relationId)

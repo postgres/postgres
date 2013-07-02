@@ -921,7 +921,7 @@ makeConfigurationDependencies(HeapTuple tuple, bool removeOld,
 					ObjectIdGetDatum(myself.objectId));
 
 		scan = systable_beginscan(mapRel, TSConfigMapIndexId, true,
-								  SnapshotNow, 1, &skey);
+								  NULL, 1, &skey);
 
 		while (HeapTupleIsValid((maptup = systable_getnext(scan))))
 		{
@@ -1059,7 +1059,7 @@ DefineTSConfiguration(List *names, List *parameters)
 					ObjectIdGetDatum(sourceOid));
 
 		scan = systable_beginscan(mapRel, TSConfigMapIndexId, true,
-								  SnapshotNow, 1, &skey);
+								  NULL, 1, &skey);
 
 		while (HeapTupleIsValid((maptup = systable_getnext(scan))))
 		{
@@ -1138,7 +1138,7 @@ RemoveTSConfigurationById(Oid cfgId)
 				ObjectIdGetDatum(cfgId));
 
 	scan = systable_beginscan(relMap, TSConfigMapIndexId, true,
-							  SnapshotNow, 1, &skey);
+							  NULL, 1, &skey);
 
 	while (HeapTupleIsValid((tup = systable_getnext(scan))))
 	{
@@ -1294,7 +1294,7 @@ MakeConfigurationMapping(AlterTSConfigurationStmt *stmt,
 						Int32GetDatum(tokens[i]));
 
 			scan = systable_beginscan(relMap, TSConfigMapIndexId, true,
-									  SnapshotNow, 2, skey);
+									  NULL, 2, skey);
 
 			while (HeapTupleIsValid((maptup = systable_getnext(scan))))
 			{
@@ -1333,7 +1333,7 @@ MakeConfigurationMapping(AlterTSConfigurationStmt *stmt,
 					ObjectIdGetDatum(cfgId));
 
 		scan = systable_beginscan(relMap, TSConfigMapIndexId, true,
-								  SnapshotNow, 1, skey);
+								  NULL, 1, skey);
 
 		while (HeapTupleIsValid((maptup = systable_getnext(scan))))
 		{
@@ -1450,7 +1450,7 @@ DropConfigurationMapping(AlterTSConfigurationStmt *stmt,
 					Int32GetDatum(tokens[i]));
 
 		scan = systable_beginscan(relMap, TSConfigMapIndexId, true,
-								  SnapshotNow, 2, skey);
+								  NULL, 2, skey);
 
 		while (HeapTupleIsValid((maptup = systable_getnext(scan))))
 		{

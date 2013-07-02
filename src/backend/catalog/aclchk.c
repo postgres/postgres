@@ -788,7 +788,7 @@ objectsInSchemaToOids(GrantObjectType objtype, List *nspnames)
 								ObjectIdGetDatum(namespaceId));
 
 					rel = heap_open(ProcedureRelationId, AccessShareLock);
-					scan = heap_beginscan(rel, SnapshotNow, 1, key);
+					scan = heap_beginscan_catalog(rel, 1, key);
 
 					while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 					{
@@ -833,7 +833,7 @@ getRelationsInNamespace(Oid namespaceId, char relkind)
 				CharGetDatum(relkind));
 
 	rel = heap_open(RelationRelationId, AccessShareLock);
-	scan = heap_beginscan(rel, SnapshotNow, 2, key);
+	scan = heap_beginscan_catalog(rel, 2, key);
 
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
@@ -1332,7 +1332,7 @@ RemoveRoleFromObjectACL(Oid roleid, Oid classid, Oid objid)
 					ObjectIdGetDatum(objid));
 
 		scan = systable_beginscan(rel, DefaultAclOidIndexId, true,
-								  SnapshotNow, 1, skey);
+								  NULL, 1, skey);
 
 		tuple = systable_getnext(scan);
 
@@ -1452,7 +1452,7 @@ RemoveDefaultACLById(Oid defaclOid)
 				ObjectIdGetDatum(defaclOid));
 
 	scan = systable_beginscan(rel, DefaultAclOidIndexId, true,
-							  SnapshotNow, 1, skey);
+							  NULL, 1, skey);
 
 	tuple = systable_getnext(scan);
 
@@ -2705,7 +2705,7 @@ ExecGrant_Largeobject(InternalGrant *istmt)
 
 		scan = systable_beginscan(relation,
 								  LargeObjectMetadataOidIndexId, true,
-								  SnapshotNow, 1, entry);
+								  NULL, 1, entry);
 
 		tuple = systable_getnext(scan);
 		if (!HeapTupleIsValid(tuple))
@@ -3468,7 +3468,7 @@ pg_aclmask(AclObjectKind objkind, Oid table_oid, AttrNumber attnum, Oid roleid,
 			return pg_language_aclmask(table_oid, roleid, mask, how);
 		case ACL_KIND_LARGEOBJECT:
 			return pg_largeobject_aclmask_snapshot(table_oid, roleid,
-												   mask, how, SnapshotNow);
+												   mask, how, NULL);
 		case ACL_KIND_NAMESPACE:
 			return pg_namespace_aclmask(table_oid, roleid, mask, how);
 		case ACL_KIND_TABLESPACE:
@@ -3856,10 +3856,13 @@ pg_language_aclmask(Oid lang_oid, Oid roleid,
  * Exported routine for examining a user's privileges for a largeobject
  *
  * When a large object is opened for reading, it is opened relative to the
- * caller's snapshot, but when it is opened for writing, it is always relative
- * to SnapshotNow, as documented in doc/src/sgml/lobj.sgml.  This function
- * takes a snapshot argument so that the permissions check can be made relative
- * to the same snapshot that will be used to read the underlying data.
+ * caller's snapshot, but when it is opened for writing, a current
+ * MVCC snapshot will be used.  See doc/src/sgml/lobj.sgml.  This function
+ * takes a snapshot argument so that the permissions check can be made
+ * relative to the same snapshot that will be used to read the underlying
+ * data.  The caller will actually pass NULL for an instantaneous MVCC
+ * snapshot, since all we do with the snapshot argument is pass it through
+ * to systable_beginscan().  
  */
 AclMode
 pg_largeobject_aclmask_snapshot(Oid lobj_oid, Oid roleid,
@@ -4644,7 +4647,7 @@ pg_language_ownercheck(Oid lan_oid, Oid roleid)
  * Ownership check for a largeobject (specified by OID)
  *
  * This is only used for operations like ALTER LARGE OBJECT that are always
- * relative to SnapshotNow.
+ * relative to an up-to-date snapshot.
  */
 bool
 pg_largeobject_ownercheck(Oid lobj_oid, Oid roleid)
@@ -4670,7 +4673,7 @@ pg_largeobject_ownercheck(Oid lobj_oid, Oid roleid)
 
 	scan = systable_beginscan(pg_lo_meta,
 							  LargeObjectMetadataOidIndexId, true,
-							  SnapshotNow, 1, entry);
+							  NULL, 1, entry);
 
 	tuple = systable_getnext(scan);
 	if (!HeapTupleIsValid(tuple))
@@ -5032,7 +5035,7 @@ pg_extension_ownercheck(Oid ext_oid, Oid roleid)
 
 	scan = systable_beginscan(pg_extension,
 							  ExtensionOidIndexId, true,
-							  SnapshotNow, 1, entry);
+							  NULL, 1, entry);
 
 	tuple = systable_getnext(scan);
 	if (!HeapTupleIsValid(tuple))

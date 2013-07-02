@@ -69,11 +69,14 @@ xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 				appendStringInfo(buf, " catalog %u", msg->cat.catId);
 			else if (msg->id == SHAREDINVALRELCACHE_ID)
 				appendStringInfo(buf, " relcache %u", msg->rc.relId);
-			/* remaining cases not expected, but print something anyway */
+			/* not expected, but print something anyway */
 			else if (msg->id == SHAREDINVALSMGR_ID)
 				appendStringInfo(buf, " smgr");
+			/* not expected, but print something anyway */
 			else if (msg->id == SHAREDINVALRELMAP_ID)
 				appendStringInfo(buf, " relmap");
+			else if (msg->id == SHAREDINVALSNAPSHOT_ID)
+				appendStringInfo(buf, " snapshot %u", msg->sn.relId);
 			else
 				appendStringInfo(buf, " unknown id %d", msg->id);
 		}

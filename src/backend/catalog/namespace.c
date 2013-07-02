@@ -4013,8 +4013,8 @@ fetch_search_path_array(Oid *sarray, int sarray_len)
  * a nonexistent object OID, rather than failing.  This is to avoid race
  * condition errors when a query that's scanning a catalog using an MVCC
  * snapshot uses one of these functions.  The underlying IsVisible functions
- * operate on SnapshotNow semantics and so might see the object as already
- * gone when it's still visible to the MVCC snapshot.  (There is no race
+ * always use an up-to-date snapshot and so might see the object as already
+ * gone when it's still visible to the transaction snapshot.  (There is no race
  * condition in the current coding because we don't accept sinval messages
  * between the SearchSysCacheExists test and the subsequent lookup.)
  */

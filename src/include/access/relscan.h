@@ -32,6 +32,7 @@ typedef struct HeapScanDescData
 	bool		rs_pageatatime; /* verify visibility page-at-a-time? */
 	bool		rs_allow_strat; /* allow or disallow use of access strategy */
 	bool		rs_allow_sync;	/* allow or disallow use of syncscan */
+	bool		rs_temp_snap;	/* unregister snapshot at scan end? */
 
 	/* state set up at initscan time */
 	BlockNumber rs_nblocks;		/* number of blocks to scan */
@@ -101,6 +102,7 @@ typedef struct SysScanDescData
 	Relation	irel;			/* NULL if doing heap scan */
 	HeapScanDesc scan;			/* only valid in heap-scan case */
 	IndexScanDesc iscan;		/* only valid in index-scan case */
+	Snapshot	snapshot;		/* snapshot to unregister at end of scan */
 }	SysScanDescData;
 
 #endif   /* RELSCAN_H */

@@ -1481,7 +1481,7 @@ get_catalog_object_by_oid(Relation catalog, Oid objectId)
 					ObjectIdGetDatum(objectId));
 
 		scan = systable_beginscan(catalog, oidIndexId, true,
-								  SnapshotNow, 1, &skey);
+								  NULL, 1, &skey);
 		tuple = systable_getnext(scan);
 		if (!HeapTupleIsValid(tuple))
 		{
@@ -1544,7 +1544,7 @@ getObjectDescription(const ObjectAddress *object)
 							ObjectIdGetDatum(object->objectId));
 
 				rcscan = systable_beginscan(castDesc, CastOidIndexId, true,
-											SnapshotNow, 1, skey);
+											NULL, 1, skey);
 
 				tup = systable_getnext(rcscan);
 
@@ -1644,7 +1644,7 @@ getObjectDescription(const ObjectAddress *object)
 							ObjectIdGetDatum(object->objectId));
 
 				adscan = systable_beginscan(attrdefDesc, AttrDefaultOidIndexId,
-											true, SnapshotNow, 1, skey);
+											true, NULL, 1, skey);
 
 				tup = systable_getnext(adscan);
 
@@ -1750,7 +1750,7 @@ getObjectDescription(const ObjectAddress *object)
 							ObjectIdGetDatum(object->objectId));
 
 				amscan = systable_beginscan(amopDesc, AccessMethodOperatorOidIndexId, true,
-											SnapshotNow, 1, skey);
+											NULL, 1, skey);
 
 				tup = systable_getnext(amscan);
 
@@ -1800,7 +1800,7 @@ getObjectDescription(const ObjectAddress *object)
 							ObjectIdGetDatum(object->objectId));
 
 				amscan = systable_beginscan(amprocDesc, AccessMethodProcedureOidIndexId, true,
-											SnapshotNow, 1, skey);
+											NULL, 1, skey);
 
 				tup = systable_getnext(amscan);
 
@@ -1848,7 +1848,7 @@ getObjectDescription(const ObjectAddress *object)
 							ObjectIdGetDatum(object->objectId));
 
 				rcscan = systable_beginscan(ruleDesc, RewriteOidIndexId, true,
-											SnapshotNow, 1, skey);
+											NULL, 1, skey);
 
 				tup = systable_getnext(rcscan);
 
@@ -1883,7 +1883,7 @@ getObjectDescription(const ObjectAddress *object)
 							ObjectIdGetDatum(object->objectId));
 
 				tgscan = systable_beginscan(trigDesc, TriggerOidIndexId, true,
-											SnapshotNow, 1, skey);
+											NULL, 1, skey);
 
 				tup = systable_getnext(tgscan);
 
@@ -2064,7 +2064,7 @@ getObjectDescription(const ObjectAddress *object)
 							ObjectIdGetDatum(object->objectId));
 
 				rcscan = systable_beginscan(defaclrel, DefaultAclOidIndexId,
-											true, SnapshotNow, 1, skey);
+											true, NULL, 1, skey);
 
 				tup = systable_getnext(rcscan);
 
@@ -2816,7 +2816,7 @@ getObjectIdentity(const ObjectAddress *object)
 							ObjectIdGetDatum(object->objectId));
 
 				adscan = systable_beginscan(attrdefDesc, AttrDefaultOidIndexId,
-											true, SnapshotNow, 1, skey);
+											true, NULL, 1, skey);
 
 				tup = systable_getnext(adscan);
 
@@ -2921,7 +2921,7 @@ getObjectIdentity(const ObjectAddress *object)
 							ObjectIdGetDatum(object->objectId));
 
 				amscan = systable_beginscan(amopDesc, AccessMethodOperatorOidIndexId, true,
-											SnapshotNow, 1, skey);
+											NULL, 1, skey);
 
 				tup = systable_getnext(amscan);
 
@@ -2965,7 +2965,7 @@ getObjectIdentity(const ObjectAddress *object)
 							ObjectIdGetDatum(object->objectId));
 
 				amscan = systable_beginscan(amprocDesc, AccessMethodProcedureOidIndexId, true,
-											SnapshotNow, 1, skey);
+											NULL, 1, skey);
 
 				tup = systable_getnext(amscan);
 
@@ -3218,7 +3218,7 @@ getObjectIdentity(const ObjectAddress *object)
 							ObjectIdGetDatum(object->objectId));
 
 				rcscan = systable_beginscan(defaclrel, DefaultAclOidIndexId,
-											true, SnapshotNow, 1, skey);
+											true, NULL, 1, skey);
 
 				tup = systable_getnext(rcscan);
 

@@ -697,7 +697,7 @@ pg_size_pretty_numeric(PG_FUNCTION_ARGS)
  * That leads to a couple of choices.  We work from the pg_class row alone
  * rather than actually opening each relation, for efficiency.	We don't
  * fail if we can't find the relation --- some rows might be visible in
- * the query's MVCC snapshot but already dead according to SnapshotNow.
+ * the query's MVCC snapshot even though the relations have been dropped.
  * (Note: we could avoid using the catcache, but there's little point
  * because the relation mapper also works "in the now".)  We also don't
  * fail if the relation doesn't have storage.  In all these cases it

@@ -614,7 +614,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 					ObjectIdGetDatum(amoid));
 
 		scan = systable_beginscan(rel, OpclassAmNameNspIndexId, true,
-								  SnapshotNow, 1, skey);
+								  NULL, 1, skey);
 
 		while (HeapTupleIsValid(tup = systable_getnext(scan)))
 		{
@@ -1622,7 +1622,7 @@ RemoveAmOpEntryById(Oid entryOid)
 	rel = heap_open(AccessMethodOperatorRelationId, RowExclusiveLock);
 
 	scan = systable_beginscan(rel, AccessMethodOperatorOidIndexId, true,
-							  SnapshotNow, 1, skey);
+							  NULL, 1, skey);
 
 	/* we expect exactly one match */
 	tup = systable_getnext(scan);
@@ -1651,7 +1651,7 @@ RemoveAmProcEntryById(Oid entryOid)
 	rel = heap_open(AccessMethodProcedureRelationId, RowExclusiveLock);
 
 	scan = systable_beginscan(rel, AccessMethodProcedureOidIndexId, true,
-							  SnapshotNow, 1, skey);
+							  NULL, 1, skey);
 
 	/* we expect exactly one match */
 	tup = systable_getnext(scan);

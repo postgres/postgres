@@ -28,6 +28,9 @@ extern Snapshot GetTransactionSnapshot(void);
 extern Snapshot GetLatestSnapshot(void);
 extern void SnapshotSetCommandId(CommandId curcid);
 
+extern Snapshot GetCatalogSnapshot(Oid relid);
+extern void InvalidateCatalogSnapshot(void);
+
 extern void PushActiveSnapshot(Snapshot snapshot);
 extern void PushCopiedSnapshot(Snapshot snapshot);
 extern void UpdateActiveSnapshotCommandId(void);

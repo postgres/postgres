@@ -28,6 +28,7 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
+#include "utils/snapmgr.h"
 #include "utils/tqual.h"
 
 
@@ -231,7 +232,7 @@ BuildIndexValueDescription(Relation indexRelation,
  *	rel: catalog to scan, already opened and suitably locked
  *	indexId: OID of index to conditionally use
  *	indexOK: if false, forces a heap scan (see notes below)
- *	snapshot: time qual to use (usually should be SnapshotNow)
+ *	snapshot: time qual to use (NULL for a recent catalog snapshot)
  *	nkeys, key: scan keys
  *
  * The attribute numbers in the scan key should be set for the heap case.
@@ -265,6 +266,19 @@ systable_beginscan(Relation heapRelation,
 
 	sysscan->heap_rel = heapRelation;
 	sysscan->irel = irel;
+
+	if (snapshot == NULL)
+	{
+		Oid		relid = RelationGetRelid(heapRelation);
+
+		snapshot = RegisterSnapshot(GetCatalogSnapshot(relid));
+		sysscan->snapshot = snapshot;
+	}
+	else
+	{
+		/* Caller is responsible for any snapshot. */
+		sysscan->snapshot = NULL;
+	}
 
 	if (irel)
 	{
@@ -401,6 +415,9 @@ systable_endscan(SysScanDesc sysscan)
 	else
 		heap_endscan(sysscan->scan);
 
+	if (sysscan->snapshot)
+		UnregisterSnapshot(sysscan->snapshot);
+
 	pfree(sysscan);
 }
 
@@ -443,6 +460,19 @@ systable_beginscan_ordered(Relation heapRelation,
 
 	sysscan->heap_rel = heapRelation;
 	sysscan->irel = indexRelation;
+
+	if (snapshot == NULL)
+	{
+		Oid		relid = RelationGetRelid(heapRelation);
+
+		snapshot = RegisterSnapshot(GetCatalogSnapshot(relid));
+		sysscan->snapshot = snapshot;
+	}
+	else
+	{
+		/* Caller is responsible for any snapshot. */
+		sysscan->snapshot = NULL;
+	}
 
 	/* Change attribute numbers to be index column numbers. */
 	for (i = 0; i < nkeys; i++)
@@ -494,5 +524,7 @@ systable_endscan_ordered(SysScanDesc sysscan)
 {
 	Assert(sysscan->irel);
 	index_endscan(sysscan->iscan);
+	if (sysscan->snapshot)
+		UnregisterSnapshot(sysscan->snapshot);
 	pfree(sysscan);
 }

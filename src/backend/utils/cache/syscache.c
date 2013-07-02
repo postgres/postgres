@@ -33,7 +33,10 @@
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_conversion.h"
 #include "catalog/pg_database.h"
+#include "catalog/pg_db_role_setting.h"
 #include "catalog/pg_default_acl.h"
+#include "catalog/pg_depend.h"
+#include "catalog/pg_description.h"
 #include "catalog/pg_enum.h"
 #include "catalog/pg_event_trigger.h"
 #include "catalog/pg_foreign_data_wrapper.h"
@@ -47,6 +50,10 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_range.h"
 #include "catalog/pg_rewrite.h"
+#include "catalog/pg_seclabel.h"
+#include "catalog/pg_shdepend.h"
+#include "catalog/pg_shdescription.h"
+#include "catalog/pg_shseclabel.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_ts_config.h"
@@ -796,6 +803,10 @@ static CatCache *SysCache[
 static int	SysCacheSize = lengthof(cacheinfo);
 static bool CacheInitialized = false;
 
+static Oid SysCacheRelationOid[lengthof(cacheinfo)];
+static int SysCacheRelationOidSize;
+
+static int oid_compare(const void *a, const void *b);
 
 /*
  * InitCatalogCache - initialize the caches
@@ -809,6 +820,8 @@ void
 InitCatalogCache(void)
 {
 	int			cacheId;
+	int			i,
+				j = 0;
 
 	Assert(!CacheInitialized);
 
@@ -825,10 +838,22 @@ InitCatalogCache(void)
 		if (!PointerIsValid(SysCache[cacheId]))
 			elog(ERROR, "could not initialize cache %u (%d)",
 				 cacheinfo[cacheId].reloid, cacheId);
+		SysCacheRelationOid[SysCacheRelationOidSize++] =
+			cacheinfo[cacheId].reloid;
+		/* see comments for RelationInvalidatesSnapshotsOnly */
+		Assert(!RelationInvalidatesSnapshotsOnly(cacheinfo[cacheId].reloid));
 	}
+
+	/* Sort and dedup OIDs. */
+	pg_qsort(SysCacheRelationOid, SysCacheRelationOidSize,
+			 sizeof(Oid), oid_compare);
+	for (i = 1; i < SysCacheRelationOidSize; ++i)
+		if (SysCacheRelationOid[i] != SysCacheRelationOid[j])
+			SysCacheRelationOid[++j] = SysCacheRelationOid[i];
+	SysCacheRelationOidSize = j + 1;
+
 	CacheInitialized = true;
 }
-
 
 /*
  * InitCatalogCachePhase2 - finish initializing the caches
@@ -1112,4 +1137,74 @@ SearchSysCacheList(int cacheId, int nkeys,
 
 	return SearchCatCacheList(SysCache[cacheId], nkeys,
 							  key1, key2, key3, key4);
+}
+
+/*
+ * Certain relations that do not have system caches send snapshot invalidation
+ * messages in lieu of catcache messages.  This is for the benefit of
+ * GetCatalogSnapshot(), which can then reuse its existing MVCC snapshot
+ * for scanning one of those catalogs, rather than taking a new one, if no
+ * invalidation has been received.
+ *
+ * Relations that have syscaches need not (and must not) be listed here.  The
+ * catcache invalidation messages will also flush the snapshot.  If you add a
+ * syscache for one of these relations, remove it from this list.
+ */
+bool
+RelationInvalidatesSnapshotsOnly(Oid relid)
+{
+	switch (relid)
+	{
+		case DbRoleSettingRelationId:
+		case DependRelationId:
+		case SharedDependRelationId:
+		case DescriptionRelationId:
+		case SharedDescriptionRelationId:
+		case SecLabelRelationId:
+		case SharedSecLabelRelationId:
+			return true;
+		default:
+			break;
+	}
+
+	return false;
+}
+
+/*
+ * Test whether a relation has a system cache.
+ */
+bool
+RelationHasSysCache(Oid relid)
+{
+	int		low = 0,
+			high = SysCacheRelationOidSize - 1;
+
+	while (low <= high)
+	{
+		int middle = low + (high - low) / 2;
+
+		if (SysCacheRelationOid[middle] == relid)
+			return true;
+		if (SysCacheRelationOid[middle] < relid)
+			low = middle + 1;
+		else
+			high = middle - 1;
+	}
+
+	return false;
+}
+
+
+/*
+ * OID comparator for pg_qsort
+ */
+static int
+oid_compare(const void *a, const void *b)
+{
+	Oid		oa = *((Oid *) a);
+	Oid		ob = *((Oid *) b);
+
+	if (oa == ob)
+		return 0;
+	return (oa > ob) ? 1 : -1;
 }

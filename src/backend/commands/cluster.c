@@ -480,6 +480,11 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck, LOCKMOD
  * against concurrent SnapshotNow scans of pg_index.  Therefore this is unsafe
  * to execute with less than full exclusive lock on the parent table;
  * otherwise concurrent executions of RelationGetIndexList could miss indexes.
+ *
+ * XXX: Now that we have MVCC catalog access, SnapshotNow scans of pg_index
+ * shouldn't be common enough to worry about.  The above comment needs
+ * to be updated, and it may be possible to simplify the logic here in other
+ * ways also.
  */
 void
 mark_index_clustered(Relation rel, Oid indexOid, bool is_internal)
@@ -1583,7 +1588,7 @@ get_tables_to_cluster(MemoryContext cluster_context)
 				Anum_pg_index_indisclustered,
 				BTEqualStrategyNumber, F_BOOLEQ,
 				BoolGetDatum(true));
-	scan = heap_beginscan(indRelation, SnapshotNow, 1, &entry);
+	scan = heap_beginscan_catalog(indRelation, 1, &entry);
 	while ((indexTuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		index = (Form_pg_index) GETSTRUCT(indexTuple);

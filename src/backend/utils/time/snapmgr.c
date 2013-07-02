@@ -46,10 +46,12 @@
 #include "storage/predicate.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
+#include "storage/sinval.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
 #include "utils/resowner_private.h"
 #include "utils/snapmgr.h"
+#include "utils/syscache.h"
 #include "utils/tqual.h"
 
 
@@ -58,17 +60,26 @@
  * mode, and to the latest one taken in a read-committed transaction.
  * SecondarySnapshot is a snapshot that's always up-to-date as of the current
  * instant, even in transaction-snapshot mode.	It should only be used for
- * special-purpose code (say, RI checking.)
+ * special-purpose code (say, RI checking.)  CatalogSnapshot points to an
+ * MVCC snapshot intended to be used for catalog scans; we must refresh it
+ * whenever a system catalog change occurs.
  *
  * These SnapshotData structs are static to simplify memory allocation
  * (see the hack in GetSnapshotData to avoid repeated malloc/free).
  */
 static SnapshotData CurrentSnapshotData = {HeapTupleSatisfiesMVCC};
 static SnapshotData SecondarySnapshotData = {HeapTupleSatisfiesMVCC};
+static SnapshotData CatalogSnapshotData = {HeapTupleSatisfiesMVCC};
 
 /* Pointers to valid snapshots */
 static Snapshot CurrentSnapshot = NULL;
 static Snapshot SecondarySnapshot = NULL;
+static Snapshot CatalogSnapshot = NULL;
+
+/*
+ * Staleness detection for CatalogSnapshot.
+ */
+static bool CatalogSnapshotStale = true;
 
 /*
  * These are updated by GetSnapshotData.  We initialize them this way
@@ -177,12 +188,18 @@ GetTransactionSnapshot(void)
 		else
 			CurrentSnapshot = GetSnapshotData(&CurrentSnapshotData);
 
+		/* Don't allow catalog snapshot to be older than xact snapshot. */
+		CatalogSnapshotStale = true;
+
 		FirstSnapshotSet = true;
 		return CurrentSnapshot;
 	}
 
 	if (IsolationUsesXactSnapshot())
 		return CurrentSnapshot;
+
+	/* Don't allow catalog snapshot to be older than xact snapshot. */
+	CatalogSnapshotStale = true;
 
 	CurrentSnapshot = GetSnapshotData(&CurrentSnapshotData);
 
@@ -204,6 +221,54 @@ GetLatestSnapshot(void)
 	SecondarySnapshot = GetSnapshotData(&SecondarySnapshotData);
 
 	return SecondarySnapshot;
+}
+
+/*
+ * GetCatalogSnapshot
+ *		Get a snapshot that is sufficiently up-to-date for scan of the
+ *		system catalog with the specified OID.
+ */
+Snapshot
+GetCatalogSnapshot(Oid relid)
+{
+	/*
+	 * If the caller is trying to scan a relation that has no syscache,
+	 * no catcache invalidations will be sent when it is updated.  For a
+	 * a few key relations, snapshot invalidations are sent instead.  If
+	 * we're trying to scan a relation for which neither catcache nor
+	 * snapshot invalidations are sent, we must refresh the snapshot every
+	 * time.
+	 */
+	if (!CatalogSnapshotStale && !RelationInvalidatesSnapshotsOnly(relid) &&
+		!RelationHasSysCache(relid))
+		CatalogSnapshotStale = true;
+
+	if (CatalogSnapshotStale)
+	{
+		/* Get new snapshot. */
+		CatalogSnapshot = GetSnapshotData(&CatalogSnapshotData);
+
+		/*
+		 * Mark new snapshost as valid.  We must do this last, in case an
+		 * ERROR occurs inside GetSnapshotData().
+		 */
+		CatalogSnapshotStale = false;
+	}
+
+	return CatalogSnapshot;
+}
+
+/*
+ * Mark the current catalog snapshot as invalid.  We could change this API
+ * to allow the caller to provide more fine-grained invalidation details, so
+ * that a change to relation A wouldn't prevent us from using our cached
+ * snapshot to scan relation B, but so far there's no evidence that the CPU
+ * cycles we spent tracking such fine details would be well-spent.
+ */
+void
+InvalidateCatalogSnapshot()
+{
+	CatalogSnapshotStale = true;
 }
 
 /*

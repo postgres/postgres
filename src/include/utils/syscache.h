@@ -125,6 +125,9 @@ struct catclist;
 extern struct catclist *SearchSysCacheList(int cacheId, int nkeys,
 				   Datum key1, Datum key2, Datum key3, Datum key4);
 
+extern bool RelationInvalidatesSnapshotsOnly(Oid);
+extern bool RelationHasSysCache(Oid);
+
 /*
  * The use of the macros below rather than direct calls to the corresponding
  * functions is encouraged, as it insulates the caller from changes in the

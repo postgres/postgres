@@ -80,7 +80,7 @@ static HeapScanDesc heap_beginscan_internal(Relation relation,
 						Snapshot snapshot,
 						int nkeys, ScanKey key,
 						bool allow_strat, bool allow_sync,
-						bool is_bitmapscan);
+						bool is_bitmapscan, bool temp_snap);
 static HeapTuple heap_prepare_insert(Relation relation, HeapTuple tup,
 					TransactionId xid, CommandId cid, int options);
 static XLogRecPtr log_heap_update(Relation reln, Buffer oldbuf,
@@ -1286,7 +1286,17 @@ heap_beginscan(Relation relation, Snapshot snapshot,
 			   int nkeys, ScanKey key)
 {
 	return heap_beginscan_internal(relation, snapshot, nkeys, key,
-								   true, true, false);
+								   true, true, false, false);
+}
+
+HeapScanDesc
+heap_beginscan_catalog(Relation relation, int nkeys, ScanKey key)
+{
+	Oid			relid = RelationGetRelid(relation);
+	Snapshot	snapshot = RegisterSnapshot(GetCatalogSnapshot(relid));
+
+	return heap_beginscan_internal(relation, snapshot, nkeys, key,
+								   true, true, false, true);
 }
 
 HeapScanDesc
@@ -1295,7 +1305,7 @@ heap_beginscan_strat(Relation relation, Snapshot snapshot,
 					 bool allow_strat, bool allow_sync)
 {
 	return heap_beginscan_internal(relation, snapshot, nkeys, key,
-								   allow_strat, allow_sync, false);
+								   allow_strat, allow_sync, false, false);
 }
 
 HeapScanDesc
@@ -1303,14 +1313,14 @@ heap_beginscan_bm(Relation relation, Snapshot snapshot,
 				  int nkeys, ScanKey key)
 {
 	return heap_beginscan_internal(relation, snapshot, nkeys, key,
-								   false, false, true);
+								   false, false, true, false);
 }
 
 static HeapScanDesc
 heap_beginscan_internal(Relation relation, Snapshot snapshot,
 						int nkeys, ScanKey key,
 						bool allow_strat, bool allow_sync,
-						bool is_bitmapscan)
+						bool is_bitmapscan, bool temp_snap)
 {
 	HeapScanDesc scan;
 
@@ -1335,6 +1345,7 @@ heap_beginscan_internal(Relation relation, Snapshot snapshot,
 	scan->rs_strategy = NULL;	/* set in initscan */
 	scan->rs_allow_strat = allow_strat;
 	scan->rs_allow_sync = allow_sync;
+	scan->rs_temp_snap = temp_snap;
 
 	/*
 	 * we can use page-at-a-time mode if it's an MVCC-safe snapshot
@@ -1420,6 +1431,9 @@ heap_endscan(HeapScanDesc scan)
 
 	if (scan->rs_strategy != NULL)
 		FreeAccessStrategy(scan->rs_strategy);
+
+	if (scan->rs_temp_snap)
+		UnregisterSnapshot(scan->rs_snapshot);
 
 	pfree(scan);
 }

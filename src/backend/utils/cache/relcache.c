@@ -265,8 +265,10 @@ static void unlink_initfile(const char *initfilename);
  *		This is used by RelationBuildDesc to find a pg_class
  *		tuple matching targetRelId.  The caller must hold at least
  *		AccessShareLock on the target relid to prevent concurrent-update
- *		scenarios --- else our SnapshotNow scan might fail to find any
- *		version that it thinks is live.
+ *		scenarios; it isn't guaranteed that all scans used to build the
+ *		relcache entry will use the same snapshot.  If, for example,
+ *		an attribute were to be added after scanning pg_class and before
+ *		scanning pg_attribute, relnatts wouldn't match.
  *
  *		NB: the returned tuple has been copied into palloc'd storage
  *		and must eventually be freed with heap_freetuple.
@@ -305,7 +307,7 @@ ScanPgRelation(Oid targetRelId, bool indexOK)
 	pg_class_desc = heap_open(RelationRelationId, AccessShareLock);
 	pg_class_scan = systable_beginscan(pg_class_desc, ClassOidIndexId,
 									   indexOK && criticalRelcachesBuilt,
-									   SnapshotNow,
+									   NULL,
 									   1, key);
 
 	pg_class_tuple = systable_getnext(pg_class_scan);
@@ -480,7 +482,7 @@ RelationBuildTupleDesc(Relation relation)
 	pg_attribute_scan = systable_beginscan(pg_attribute_desc,
 										   AttributeRelidNumIndexId,
 										   criticalRelcachesBuilt,
-										   SnapshotNow,
+										   NULL,
 										   2, skey);
 
 	/*
@@ -663,7 +665,7 @@ RelationBuildRuleLock(Relation relation)
 	rewrite_tupdesc = RelationGetDescr(rewrite_desc);
 	rewrite_scan = systable_beginscan(rewrite_desc,
 									  RewriteRelRulenameIndexId,
-									  true, SnapshotNow,
+									  true, NULL,
 									  1, &key);
 
 	while (HeapTupleIsValid(rewrite_tuple = systable_getnext(rewrite_scan)))
@@ -1313,7 +1315,7 @@ LookupOpclassInfo(Oid operatorClassOid,
 				ObjectIdGetDatum(operatorClassOid));
 	rel = heap_open(OperatorClassRelationId, AccessShareLock);
 	scan = systable_beginscan(rel, OpclassOidIndexId, indexOK,
-							  SnapshotNow, 1, skey);
+							  NULL, 1, skey);
 
 	if (HeapTupleIsValid(htup = systable_getnext(scan)))
 	{
@@ -1348,7 +1350,7 @@ LookupOpclassInfo(Oid operatorClassOid,
 					ObjectIdGetDatum(opcentry->opcintype));
 		rel = heap_open(AccessMethodProcedureRelationId, AccessShareLock);
 		scan = systable_beginscan(rel, AccessMethodProcedureIndexId, indexOK,
-								  SnapshotNow, 3, skey);
+								  NULL, 3, skey);
 
 		while (HeapTupleIsValid(htup = systable_getnext(scan)))
 		{
@@ -3317,7 +3319,7 @@ AttrDefaultFetch(Relation relation)
 
 	adrel = heap_open(AttrDefaultRelationId, AccessShareLock);
 	adscan = systable_beginscan(adrel, AttrDefaultIndexId, true,
-								SnapshotNow, 1, &skey);
+								NULL, 1, &skey);
 	found = 0;
 
 	while (HeapTupleIsValid(htup = systable_getnext(adscan)))
@@ -3384,7 +3386,7 @@ CheckConstraintFetch(Relation relation)
 
 	conrel = heap_open(ConstraintRelationId, AccessShareLock);
 	conscan = systable_beginscan(conrel, ConstraintRelidIndexId, true,
-								 SnapshotNow, 1, skey);
+								 NULL, 1, skey);
 
 	while (HeapTupleIsValid(htup = systable_getnext(conscan)))
 	{
@@ -3487,7 +3489,7 @@ RelationGetIndexList(Relation relation)
 
 	indrel = heap_open(IndexRelationId, AccessShareLock);
 	indscan = systable_beginscan(indrel, IndexIndrelidIndexId, true,
-								 SnapshotNow, 1, &skey);
+								 NULL, 1, &skey);
 
 	while (HeapTupleIsValid(htup = systable_getnext(indscan)))
 	{
@@ -3938,7 +3940,7 @@ RelationGetExclusionInfo(Relation indexRelation,
 
 	conrel = heap_open(ConstraintRelationId, AccessShareLock);
 	conscan = systable_beginscan(conrel, ConstraintRelidIndexId, true,
-								 SnapshotNow, 1, skey);
+								 NULL, 1, skey);
 	found = false;
 
 	while (HeapTupleIsValid(htup = systable_getnext(conscan)))

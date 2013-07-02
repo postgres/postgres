@@ -2092,8 +2092,8 @@ relation_is_updatable(Oid reloid, bool include_triggers)
 	/*
 	 * If the relation doesn't exist, return zero rather than throwing an
 	 * error.  This is helpful since scanning an information_schema view under
-	 * MVCC rules can result in referencing rels that were just deleted
-	 * according to a SnapshotNow probe.
+	 * MVCC rules can result in referencing rels that have actually been
+	 * deleted already.
 	 */
 	if (rel == NULL)
 		return 0;

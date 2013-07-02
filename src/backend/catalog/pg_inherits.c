@@ -81,7 +81,7 @@ find_inheritance_children(Oid parentrelId, LOCKMODE lockmode)
 				ObjectIdGetDatum(parentrelId));
 
 	scan = systable_beginscan(relation, InheritsParentIndexId, true,
-							  SnapshotNow, 1, key);
+							  NULL, 1, key);
 
 	while ((inheritsTuple = systable_getnext(scan)) != NULL)
 	{
@@ -325,7 +325,7 @@ typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId)
 					ObjectIdGetDatum(this_relid));
 
 		inhscan = systable_beginscan(inhrel, InheritsRelidSeqnoIndexId, true,
-									 SnapshotNow, 1, &skey);
+									 NULL, 1, &skey);
 
 		while ((inhtup = systable_getnext(inhscan)) != NULL)
 		{

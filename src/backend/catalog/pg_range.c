@@ -126,7 +126,7 @@ RangeDelete(Oid rangeTypeOid)
 				ObjectIdGetDatum(rangeTypeOid));
 
 	scan = systable_beginscan(pg_range, RangeTypidIndexId, true,
-							  SnapshotNow, 1, key);
+							  NULL, 1, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{

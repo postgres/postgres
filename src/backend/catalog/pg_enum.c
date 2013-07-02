@@ -156,7 +156,7 @@ EnumValuesDelete(Oid enumTypeOid)
 				ObjectIdGetDatum(enumTypeOid));
 
 	scan = systable_beginscan(pg_enum, EnumTypIdLabelIndexId, true,
-							  SnapshotNow, 1, key);
+							  NULL, 1, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
@@ -483,6 +483,9 @@ restart:
  * (for example, enum_in and enum_out do so).  The worst that can happen
  * is a transient failure to find any valid value of the row.  This is
  * judged acceptable in view of the infrequency of use of RenumberEnumType.
+ *
+ * XXX. Now that we have MVCC catalog scans, the above reasoning is no longer
+ * correct.  Should we revisit any decisions here?
  */
 static void
 RenumberEnumType(Relation pg_enum, HeapTuple *existing, int nelems)

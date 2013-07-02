@@ -220,7 +220,7 @@ shdepChangeDep(Relation sdepRel,
 				Int32GetDatum(objsubid));
 
 	scan = systable_beginscan(sdepRel, SharedDependDependerIndexId, true,
-							  SnapshotNow, 4, key);
+							  NULL, 4, key);
 
 	while ((scantup = systable_getnext(scan)) != NULL)
 	{
@@ -554,7 +554,7 @@ checkSharedDependencies(Oid classId, Oid objectId,
 				ObjectIdGetDatum(objectId));
 
 	scan = systable_beginscan(sdepRel, SharedDependReferenceIndexId, true,
-							  SnapshotNow, 2, key);
+							  NULL, 2, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
@@ -729,7 +729,7 @@ copyTemplateDependencies(Oid templateDbId, Oid newDbId)
 				ObjectIdGetDatum(templateDbId));
 
 	scan = systable_beginscan(sdepRel, SharedDependDependerIndexId, true,
-							  SnapshotNow, 1, key);
+							  NULL, 1, key);
 
 	/* Set up to copy the tuples except for inserting newDbId */
 	memset(values, 0, sizeof(values));
@@ -792,7 +792,7 @@ dropDatabaseDependencies(Oid databaseId)
 	/* We leave the other index fields unspecified */
 
 	scan = systable_beginscan(sdepRel, SharedDependDependerIndexId, true,
-							  SnapshotNow, 1, key);
+							  NULL, 1, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
@@ -936,7 +936,7 @@ shdepDropDependency(Relation sdepRel,
 	}
 
 	scan = systable_beginscan(sdepRel, SharedDependDependerIndexId, true,
-							  SnapshotNow, nkeys, key);
+							  NULL, nkeys, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
@@ -1125,7 +1125,7 @@ isSharedObjectPinned(Oid classId, Oid objectId, Relation sdepRel)
 				ObjectIdGetDatum(objectId));
 
 	scan = systable_beginscan(sdepRel, SharedDependReferenceIndexId, true,
-							  SnapshotNow, 2, key);
+							  NULL, 2, key);
 
 	/*
 	 * Since we won't generate additional pg_shdepend entries for pinned
@@ -1212,7 +1212,7 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 					ObjectIdGetDatum(roleid));
 
 		scan = systable_beginscan(sdepRel, SharedDependReferenceIndexId, true,
-								  SnapshotNow, 2, key);
+								  NULL, 2, key);
 
 		while ((tuple = systable_getnext(scan)) != NULL)
 		{
@@ -1319,7 +1319,7 @@ shdepReassignOwned(List *roleids, Oid newrole)
 					ObjectIdGetDatum(roleid));
 
 		scan = systable_beginscan(sdepRel, SharedDependReferenceIndexId, true,
-								  SnapshotNow, 2, key);
+								  NULL, 2, key);
 
 		while ((tuple = systable_getnext(scan)) != NULL)
 		{

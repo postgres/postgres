@@ -704,7 +704,7 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 				ObjectIdGetDatum(trigid));
 
 	tgscan = systable_beginscan(tgrel, TriggerOidIndexId, true,
-								SnapshotNow, 1, skey);
+								NULL, 1, skey);
 
 	ht_trig = systable_getnext(tgscan);
 
@@ -1796,7 +1796,7 @@ pg_get_serial_sequence(PG_FUNCTION_ARGS)
 				Int32GetDatum(attnum));
 
 	scan = systable_beginscan(depRel, DependReferenceIndexId, true,
-							  SnapshotNow, 3, key);
+							  NULL, 3, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{

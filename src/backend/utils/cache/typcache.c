@@ -1082,12 +1082,7 @@ load_enum_cache_data(TypeCacheEntry *tcache)
 	items = (EnumItem *) palloc(sizeof(EnumItem) * maxitems);
 	numitems = 0;
 
-	/*
-	 * Scan pg_enum for the members of the target enum type.  We use a current
-	 * MVCC snapshot, *not* SnapshotNow, so that we see a consistent set of
-	 * rows even if someone commits a renumbering of the enum meanwhile. See
-	 * comments for RenumberEnumType in catalog/pg_enum.c for more info.
-	 */
+	/* Scan pg_enum for the members of the target enum type. */
 	ScanKeyInit(&skey,
 				Anum_pg_enum_enumtypid,
 				BTEqualStrategyNumber, F_OIDEQ,
@@ -1096,7 +1091,7 @@ load_enum_cache_data(TypeCacheEntry *tcache)
 	enum_rel = heap_open(EnumRelationId, AccessShareLock);
 	enum_scan = systable_beginscan(enum_rel,
 								   EnumTypIdLabelIndexId,
-								   true, GetLatestSnapshot(),
+								   true, NULL,
 								   1, &skey);
 
 	while (HeapTupleIsValid(enum_tuple = systable_getnext(enum_scan)))

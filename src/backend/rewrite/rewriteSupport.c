@@ -143,7 +143,7 @@ get_rewrite_oid_without_relid(const char *rulename,
 				CStringGetDatum(rulename));
 
 	RewriteRelation = heap_open(RewriteRelationId, AccessShareLock);
-	scanDesc = heap_beginscan(RewriteRelation, SnapshotNow, 1, &scanKeyData);
+	scanDesc = heap_beginscan_catalog(RewriteRelation, 1, &scanKeyData);
 
 	htup = heap_getnext(scanDesc, ForwardScanDirection);
 	if (!HeapTupleIsValid(htup))

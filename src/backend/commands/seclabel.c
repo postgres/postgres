@@ -167,7 +167,7 @@ GetSharedSecurityLabel(const ObjectAddress *object, const char *provider)
 	pg_shseclabel = heap_open(SharedSecLabelRelationId, AccessShareLock);
 
 	scan = systable_beginscan(pg_shseclabel, SharedSecLabelObjectIndexId, true,
-							  SnapshotNow, 3, keys);
+							  NULL, 3, keys);
 
 	tuple = systable_getnext(scan);
 	if (HeapTupleIsValid(tuple))
@@ -224,7 +224,7 @@ GetSecurityLabel(const ObjectAddress *object, const char *provider)
 	pg_seclabel = heap_open(SecLabelRelationId, AccessShareLock);
 
 	scan = systable_beginscan(pg_seclabel, SecLabelObjectIndexId, true,
-							  SnapshotNow, 4, keys);
+							  NULL, 4, keys);
 
 	tuple = systable_getnext(scan);
 	if (HeapTupleIsValid(tuple))
@@ -284,7 +284,7 @@ SetSharedSecurityLabel(const ObjectAddress *object,
 	pg_shseclabel = heap_open(SharedSecLabelRelationId, RowExclusiveLock);
 
 	scan = systable_beginscan(pg_shseclabel, SharedSecLabelObjectIndexId, true,
-							  SnapshotNow, 3, keys);
+							  NULL, 3, keys);
 
 	oldtup = systable_getnext(scan);
 	if (HeapTupleIsValid(oldtup))
@@ -375,7 +375,7 @@ SetSecurityLabel(const ObjectAddress *object,
 	pg_seclabel = heap_open(SecLabelRelationId, RowExclusiveLock);
 
 	scan = systable_beginscan(pg_seclabel, SecLabelObjectIndexId, true,
-							  SnapshotNow, 4, keys);
+							  NULL, 4, keys);
 
 	oldtup = systable_getnext(scan);
 	if (HeapTupleIsValid(oldtup))
@@ -434,7 +434,7 @@ DeleteSharedSecurityLabel(Oid objectId, Oid classId)
 	pg_shseclabel = heap_open(SharedSecLabelRelationId, RowExclusiveLock);
 
 	scan = systable_beginscan(pg_shseclabel, SharedSecLabelObjectIndexId, true,
-							  SnapshotNow, 2, skey);
+							  NULL, 2, skey);
 	while (HeapTupleIsValid(oldtup = systable_getnext(scan)))
 		simple_heap_delete(pg_shseclabel, &oldtup->t_self);
 	systable_endscan(scan);
@@ -485,7 +485,7 @@ DeleteSecurityLabel(const ObjectAddress *object)
 	pg_seclabel = heap_open(SecLabelRelationId, RowExclusiveLock);
 
 	scan = systable_beginscan(pg_seclabel, SecLabelObjectIndexId, true,
-							  SnapshotNow, nkeys, skey);
+							  NULL, nkeys, skey);
 	while (HeapTupleIsValid(oldtup = systable_getnext(scan)))
 		simple_heap_delete(pg_seclabel, &oldtup->t_self);
 	systable_endscan(scan);

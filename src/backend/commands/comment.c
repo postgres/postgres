@@ -187,7 +187,7 @@ CreateComments(Oid oid, Oid classoid, int32 subid, char *comment)
 	description = heap_open(DescriptionRelationId, RowExclusiveLock);
 
 	sd = systable_beginscan(description, DescriptionObjIndexId, true,
-							SnapshotNow, 3, skey);
+							NULL, 3, skey);
 
 	while ((oldtuple = systable_getnext(sd)) != NULL)
 	{
@@ -281,7 +281,7 @@ CreateSharedComments(Oid oid, Oid classoid, char *comment)
 	shdescription = heap_open(SharedDescriptionRelationId, RowExclusiveLock);
 
 	sd = systable_beginscan(shdescription, SharedDescriptionObjIndexId, true,
-							SnapshotNow, 2, skey);
+							NULL, 2, skey);
 
 	while ((oldtuple = systable_getnext(sd)) != NULL)
 	{
@@ -363,7 +363,7 @@ DeleteComments(Oid oid, Oid classoid, int32 subid)
 	description = heap_open(DescriptionRelationId, RowExclusiveLock);
 
 	sd = systable_beginscan(description, DescriptionObjIndexId, true,
-							SnapshotNow, nkeys, skey);
+							NULL, nkeys, skey);
 
 	while ((oldtuple = systable_getnext(sd)) != NULL)
 		simple_heap_delete(description, &oldtuple->t_self);
@@ -399,7 +399,7 @@ DeleteSharedComments(Oid oid, Oid classoid)
 	shdescription = heap_open(SharedDescriptionRelationId, RowExclusiveLock);
 
 	sd = systable_beginscan(shdescription, SharedDescriptionObjIndexId, true,
-							SnapshotNow, 2, skey);
+							NULL, 2, skey);
 
 	while ((oldtuple = systable_getnext(sd)) != NULL)
 		simple_heap_delete(shdescription, &oldtuple->t_self);
@@ -442,7 +442,7 @@ GetComment(Oid oid, Oid classoid, int32 subid)
 	tupdesc = RelationGetDescr(description);
 
 	sd = systable_beginscan(description, DescriptionObjIndexId, true,
-							SnapshotNow, 3, skey);
+							NULL, 3, skey);
 
 	comment = NULL;
 	while ((tuple = systable_getnext(sd)) != NULL)

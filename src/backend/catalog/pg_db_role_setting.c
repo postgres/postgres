@@ -43,7 +43,7 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(roleid));
 	scan = systable_beginscan(rel, DbRoleSettingDatidRolidIndexId, true,
-							  SnapshotNow, 2, scankey);
+							  NULL, 2, scankey);
 	tuple = systable_getnext(scan);
 
 	/*
@@ -205,7 +205,7 @@ DropSetting(Oid databaseid, Oid roleid)
 		numkeys++;
 	}
 
-	scan = heap_beginscan(relsetting, SnapshotNow, numkeys, keys);
+	scan = heap_beginscan_catalog(relsetting, numkeys, keys);
 	while (HeapTupleIsValid(tup = heap_getnext(scan, ForwardScanDirection)))
 	{
 		simple_heap_delete(relsetting, &tup->t_self);
@@ -226,7 +226,8 @@ DropSetting(Oid databaseid, Oid roleid)
  * databaseid/roleid.
  */
 void
-ApplySetting(Oid databaseid, Oid roleid, Relation relsetting, GucSource source)
+ApplySetting(Snapshot snapshot, Oid databaseid, Oid roleid,
+			 Relation relsetting, GucSource source)
 {
 	SysScanDesc scan;
 	ScanKeyData keys[2];
@@ -244,7 +245,7 @@ ApplySetting(Oid databaseid, Oid roleid, Relation relsetting, GucSource source)
 				ObjectIdGetDatum(roleid));
 
 	scan = systable_beginscan(relsetting, DbRoleSettingDatidRolidIndexId, true,
-							  SnapshotNow, 2, keys);
+							  snapshot, 2, keys);
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
 		bool		isnull;

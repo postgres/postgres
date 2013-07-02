@@ -166,7 +166,7 @@ RemoveCollationById(Oid collationOid)
 				ObjectIdGetDatum(collationOid));
 
 	scandesc = systable_beginscan(rel, CollationOidIndexId, true,
-								  SnapshotNow, 1, &scanKeyData);
+								  NULL, 1, &scanKeyData);
 
 	tuple = systable_getnext(scandesc);
 

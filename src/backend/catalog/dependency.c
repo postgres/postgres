@@ -558,7 +558,7 @@ findDependentObjects(const ObjectAddress *object,
 		nkeys = 2;
 
 	scan = systable_beginscan(*depRel, DependDependerIndexId, true,
-							  SnapshotNow, nkeys, key);
+							  NULL, nkeys, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
@@ -733,7 +733,7 @@ findDependentObjects(const ObjectAddress *object,
 		nkeys = 2;
 
 	scan = systable_beginscan(*depRel, DependReferenceIndexId, true,
-							  SnapshotNow, nkeys, key);
+							  NULL, nkeys, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
@@ -1069,7 +1069,7 @@ deleteOneObject(const ObjectAddress *object, Relation *depRel, int flags)
 		nkeys = 2;
 
 	scan = systable_beginscan(*depRel, DependDependerIndexId, true,
-							  SnapshotNow, nkeys, key);
+							  NULL, nkeys, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{

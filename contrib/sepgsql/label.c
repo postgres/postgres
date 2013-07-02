@@ -727,7 +727,7 @@ exec_object_restorecon(struct selabel_handle * sehnd, Oid catalogId)
 	rel = heap_open(catalogId, AccessShareLock);
 
 	sscan = systable_beginscan(rel, InvalidOid, false,
-							   SnapshotNow, 0, NULL);
+							   NULL, 0, NULL);
 	while (HeapTupleIsValid(tuple = systable_getnext(sscan)))
 	{
 		Form_pg_database datForm;

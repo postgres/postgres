@@ -58,7 +58,7 @@ RemoveRewriteRuleById(Oid ruleOid)
 				ObjectIdGetDatum(ruleOid));
 
 	rcscan = systable_beginscan(RewriteRelation, RewriteOidIndexId, true,
-								SnapshotNow, 1, skey);
+								NULL, 1, skey);
 
 	tuple = systable_getnext(rcscan);
 

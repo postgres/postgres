@@ -484,7 +484,7 @@ lookup_ts_config_cache(Oid cfgId)
 		maprel = heap_open(TSConfigMapRelationId, AccessShareLock);
 		mapidx = index_open(TSConfigMapIndexId, AccessShareLock);
 		mapscan = systable_beginscan_ordered(maprel, mapidx,
-											 SnapshotNow, 1, &mapskey);
+											 NULL, 1, &mapskey);
 
 		while ((maptup = systable_getnext_ordered(mapscan, ForwardScanDirection)) != NULL)
 		{

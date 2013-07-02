@@ -455,7 +455,7 @@ find_language_template(const char *languageName)
 				BTEqualStrategyNumber, F_NAMEEQ,
 				NameGetDatum(languageName));
 	scan = systable_beginscan(rel, PLTemplateNameIndexId, true,
-							  SnapshotNow, 1, &key);
+							  NULL, 1, &key);
 
 	tup = systable_getnext(scan);
 	if (HeapTupleIsValid(tup))

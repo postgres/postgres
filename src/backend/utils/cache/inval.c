@@ -9,8 +9,8 @@
  *	consider that it is *still valid* so long as we are in the same command,
  *	ie, until the next CommandCounterIncrement() or transaction commit.
  *	(See utils/time/tqual.c, and note that system catalogs are generally
- *	scanned under SnapshotNow rules by the system, or plain user snapshots
- *	for user queries.)	At the command boundary, the old tuple stops
+ *	scanned under the most current snapshot available, rather than the
+ *	transaction snapshot.)	At the command boundary, the old tuple stops
  *	being valid and the new version, if any, becomes valid.  Therefore,
  *	we cannot simply flush a tuple from the system caches during heap_update()
  *	or heap_delete().  The tuple is still good at that point; what's more,
@@ -106,6 +106,7 @@
 #include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/relmapper.h"
+#include "utils/snapmgr.h"
 #include "utils/syscache.h"
 
 
@@ -373,6 +374,29 @@ AddRelcacheInvalidationMessage(InvalidationListHeader *hdr,
 }
 
 /*
+ * Add a snapshot inval entry
+ */
+static void
+AddSnapshotInvalidationMessage(InvalidationListHeader *hdr,
+							   Oid dbId, Oid relId)
+{
+	SharedInvalidationMessage msg;
+
+	/* Don't add a duplicate item */
+	/* We assume dbId need not be checked because it will never change */
+	ProcessMessageList(hdr->rclist,
+					   if (msg->sn.id == SHAREDINVALSNAPSHOT_ID &&
+						   msg->sn.relId == relId)
+					   return);
+
+	/* OK, add the item */
+	msg.sn.id = SHAREDINVALSNAPSHOT_ID;
+	msg.sn.dbId = dbId;
+	msg.sn.relId = relId;
+	AddInvalidationMessage(&hdr->rclist, &msg);
+}
+
+/*
  * Append one list of invalidation messages to another, resetting
  * the source list to empty.
  */
@@ -469,6 +493,19 @@ RegisterRelcacheInvalidation(Oid dbId, Oid relId)
 }
 
 /*
+ * RegisterSnapshotInvalidation
+ *
+ * Register a invalidation event for MVCC scans against a given catalog.
+ * Only needed for catalogs that don't have catcaches.
+ */
+static void
+RegisterSnapshotInvalidation(Oid dbId, Oid relId)
+{
+	AddSnapshotInvalidationMessage(&transInvalInfo->CurrentCmdInvalidMsgs,
+								   dbId, relId);
+}
+
+/*
  * LocalExecuteInvalidationMessage
  *
  * Process a single invalidation message (which could be of any type).
@@ -482,6 +519,8 @@ LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg)
 	{
 		if (msg->cc.dbId == MyDatabaseId || msg->cc.dbId == InvalidOid)
 		{
+			InvalidateCatalogSnapshot();
+
 			CatalogCacheIdInvalidate(msg->cc.id, msg->cc.hashValue);
 
 			CallSyscacheCallbacks(msg->cc.id, msg->cc.hashValue);
@@ -491,6 +530,8 @@ LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg)
 	{
 		if (msg->cat.dbId == MyDatabaseId || msg->cat.dbId == InvalidOid)
 		{
+			InvalidateCatalogSnapshot();
+
 			CatalogCacheFlushCatalog(msg->cat.catId);
 
 			/* CatalogCacheFlushCatalog calls CallSyscacheCallbacks as needed */
@@ -532,6 +573,14 @@ LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg)
 		else if (msg->rm.dbId == MyDatabaseId)
 			RelationMapInvalidate(false);
 	}
+	else if (msg->id == SHAREDINVALSNAPSHOT_ID)
+	{
+		/* We only care about our own database and shared catalogs */
+		if (msg->rm.dbId == InvalidOid)
+			InvalidateCatalogSnapshot();
+		else if (msg->rm.dbId == MyDatabaseId)
+			InvalidateCatalogSnapshot();
+	}
 	else
 		elog(FATAL, "unrecognized SI message ID: %d", msg->id);
 }
@@ -552,6 +601,7 @@ InvalidateSystemCaches(void)
 {
 	int			i;
 
+	InvalidateCatalogSnapshot();
 	ResetCatalogCaches();
 	RelationCacheInvalidate();	/* gets smgr and relmap too */
 
@@ -1006,8 +1056,15 @@ CacheInvalidateHeapTuple(Relation relation,
 	/*
 	 * First let the catcache do its thing
 	 */
-	PrepareToInvalidateCacheTuple(relation, tuple, newtuple,
-								  RegisterCatcacheInvalidation);
+	tupleRelId = RelationGetRelid(relation);
+	if (RelationInvalidatesSnapshotsOnly(tupleRelId))
+	{
+		databaseId = IsSharedRelation(tupleRelId) ? InvalidOid : MyDatabaseId;
+		RegisterSnapshotInvalidation(databaseId, tupleRelId);
+	}
+	else
+		PrepareToInvalidateCacheTuple(relation, tuple, newtuple,
+									  RegisterCatcacheInvalidation);
 
 	/*
 	 * Now, is this tuple one of the primary definers of a relcache entry?
@@ -1015,8 +1072,6 @@ CacheInvalidateHeapTuple(Relation relation,
 	 * Note we ignore newtuple here; we assume an update cannot move a tuple
 	 * from being part of one relcache entry to being part of another.
 	 */
-	tupleRelId = RelationGetRelid(relation);
-
 	if (tupleRelId == RelationRelationId)
 	{
 		Form_pg_class classtup = (Form_pg_class) GETSTRUCT(tuple);
