@@ -5366,6 +5366,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
         partially-significant digits; this is especially useful for dumping
         float data that needs to be restored exactly.  Or it can be set
         negative to suppress unwanted digits.
+        See also <xref linkend="datatype-float">.
        </para>
       </listitem>
      </varlistentry>
