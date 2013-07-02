@@ -190,7 +190,7 @@ start_postmaster(ClusterInfo *cluster, bool throw_error)
 #ifdef HAVE_UNIX_SOCKETS
 	/* prevent TCP/IP connections, restrict socket access */
 	strcat(socket_string,
-		   " -c listen_addresses=\"\" -c unix_socket_permissions=0700");
+		   " -c listen_addresses='' -c unix_socket_permissions=0700");
 
 	/* Have a sockdir?	Tell the postmaster. */
 	if (cluster->sockdir)
