@@ -681,6 +681,17 @@ NUMERIC
      from zero will cause an underflow error.
     </para>
 
+    <note>
+     <para>
+      The <xref linkend="guc-extra-float-digits"> setting controls the
+      number of extra significant digits included when a floating point
+      value is converted to text for output.  With the default value of
+      <literal>0</literal>, the output is the same on every platform
+      supported by PostgreSQL.  Increasing it will produce output that
+      more accurately represents the stored value, but may be unportable.
+     </para>
+    </note>
+
     <indexterm>
      <primary>not a number</primary>
      <secondary>double precision</secondary>
