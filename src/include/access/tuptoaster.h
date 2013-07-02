@@ -94,6 +94,11 @@
 	 sizeof(int32) -									\
 	 VARHDRSZ)
 
+/* Size of an EXTERNAL datum that contains a standard TOAST pointer */
+#define TOAST_POINTER_SIZE (VARHDRSZ_EXTERNAL + sizeof(struct varatt_external))
+
+/* Size of an indirect datum that contains an indirect TOAST pointer */
+#define INDIRECT_POINTER_SIZE (VARHDRSZ_EXTERNAL + sizeof(struct varatt_indirect))
 
 /* ----------
  * toast_insert_or_update -

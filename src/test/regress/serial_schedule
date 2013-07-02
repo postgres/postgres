@@ -117,6 +117,7 @@ test: xmlmap
 test: functional_deps
 test: advisory_lock
 test: json
+test: indirect_toast
 test: plancache
 test: limit
 test: plpgsql
