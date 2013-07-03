@@ -473,16 +473,16 @@ CREATE VIEW pg_statio_all_tables AS
             pg_stat_get_blocks_fetched(T.oid) -
                     pg_stat_get_blocks_hit(T.oid) AS toast_blks_read,
             pg_stat_get_blocks_hit(T.oid) AS toast_blks_hit,
-            pg_stat_get_blocks_fetched(X.oid) -
-                    pg_stat_get_blocks_hit(X.oid) AS tidx_blks_read,
-            pg_stat_get_blocks_hit(X.oid) AS tidx_blks_hit
+            sum(pg_stat_get_blocks_fetched(X.indexrelid) -
+                    pg_stat_get_blocks_hit(X.indexrelid))::bigint AS tidx_blks_read,
+            sum(pg_stat_get_blocks_hit(X.indexrelid))::bigint AS tidx_blks_hit
     FROM pg_class C LEFT JOIN
             pg_index I ON C.oid = I.indrelid LEFT JOIN
             pg_class T ON C.reltoastrelid = T.oid LEFT JOIN
-            pg_class X ON T.reltoastidxid = X.oid
+            pg_index X ON T.oid = X.indrelid
             LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace)
     WHERE C.relkind IN ('r', 't', 'm')
-    GROUP BY C.oid, N.nspname, C.relname, T.oid, X.oid;
+    GROUP BY C.oid, N.nspname, C.relname, T.oid, X.indrelid;
 
 CREATE VIEW pg_statio_sys_tables AS
     SELECT * FROM pg_statio_all_tables

@@ -86,7 +86,6 @@ Join pg_catalog.pg_class.relowner => pg_catalog.pg_authid.oid
 Join pg_catalog.pg_class.relam => pg_catalog.pg_am.oid
 Join pg_catalog.pg_class.reltablespace => pg_catalog.pg_tablespace.oid
 Join pg_catalog.pg_class.reltoastrelid => pg_catalog.pg_class.oid
-Join pg_catalog.pg_class.reltoastidxid => pg_catalog.pg_class.oid
 Join pg_catalog.pg_collation.collnamespace => pg_catalog.pg_namespace.oid
 Join pg_catalog.pg_collation.collowner => pg_catalog.pg_authid.oid
 Join pg_catalog.pg_constraint.connamespace => pg_catalog.pg_namespace.oid

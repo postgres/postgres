@@ -872,7 +872,7 @@ create rule "_RETURN" as on select to fooview do instead
 select * from fooview;
 select xmin, * from fooview;  -- fail, views don't have such a column
 
-select reltoastrelid, reltoastidxid, relkind, relfrozenxid
+select reltoastrelid, relkind, relfrozenxid
   from pg_class where oid = 'fooview'::regclass;
 
 drop view fooview;

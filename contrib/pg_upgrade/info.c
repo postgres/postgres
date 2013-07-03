@@ -321,12 +321,19 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 							  "INSERT INTO info_rels "
 							  "SELECT reltoastrelid "
 							  "FROM info_rels i JOIN pg_catalog.pg_class c "
-							  "		ON i.reloid = c.oid"));
+							  "		ON i.reloid = c.oid "
+							  "		AND c.reltoastrelid != %u", InvalidOid));
 	PQclear(executeQueryOrDie(conn,
 							  "INSERT INTO info_rels "
-							  "SELECT reltoastidxid "
-							  "FROM info_rels i JOIN pg_catalog.pg_class c "
-							  "		ON i.reloid = c.oid"));
+							  "SELECT indexrelid "
+							  "FROM pg_index "
+							  "WHERE indisvalid "
+							  "    AND indrelid IN (SELECT reltoastrelid "
+							  "        FROM info_rels i "
+							  "            JOIN pg_catalog.pg_class c "
+							  "            ON i.reloid = c.oid "
+							  "            AND c.reltoastrelid != %u)",
+							  InvalidOid));
 
 	snprintf(query, sizeof(query),
 			 "SELECT c.oid, n.nspname, c.relname, "

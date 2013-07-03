@@ -2778,19 +2778,19 @@ binary_upgrade_set_pg_class_oids(Archive *fout,
 	PQExpBuffer upgrade_query = createPQExpBuffer();
 	PGresult   *upgrade_res;
 	Oid			pg_class_reltoastrelid;
-	Oid			pg_class_reltoastidxid;
+	Oid			pg_index_indexrelid;
 
 	appendPQExpBuffer(upgrade_query,
-					  "SELECT c.reltoastrelid, t.reltoastidxid "
+					  "SELECT c.reltoastrelid, i.indexrelid "
 					  "FROM pg_catalog.pg_class c LEFT JOIN "
-					  "pg_catalog.pg_class t ON (c.reltoastrelid = t.oid) "
+					  "pg_catalog.pg_index i ON (c.reltoastrelid = i.indrelid AND i.indisvalid) "
 					  "WHERE c.oid = '%u'::pg_catalog.oid;",
 					  pg_class_oid);
 
 	upgrade_res = ExecuteSqlQueryForSingleRow(fout, upgrade_query->data);
 
 	pg_class_reltoastrelid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "reltoastrelid")));
-	pg_class_reltoastidxid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "reltoastidxid")));
+	pg_index_indexrelid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "indexrelid")));
 
 	appendPQExpBuffer(upgrade_buffer,
 				   "\n-- For binary upgrade, must preserve pg_class oids\n");
@@ -2819,7 +2819,7 @@ binary_upgrade_set_pg_class_oids(Archive *fout,
 			/* every toast table has an index */
 			appendPQExpBuffer(upgrade_buffer,
 							  "SELECT binary_upgrade.set_next_index_pg_class_oid('%u'::pg_catalog.oid);\n",
-							  pg_class_reltoastidxid);
+							  pg_index_indexrelid);
 		}
 	}
 	else
@@ -13126,7 +13126,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		 * attislocal correctly, plus fix up any inherited CHECK constraints.
 		 * Analogously, we set up typed tables using ALTER TABLE / OF here.
 		 */
-		if (binary_upgrade && (tbinfo->relkind == RELKIND_RELATION || 
+		if (binary_upgrade && (tbinfo->relkind == RELKIND_RELATION ||
 							   tbinfo->relkind == RELKIND_FOREIGN_TABLE) )
 		{
 			for (j = 0; j < tbinfo->numatts; j++)
@@ -13151,7 +13151,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 					else
 						appendPQExpBuffer(q, "ALTER FOREIGN TABLE %s ",
 										  fmtId(tbinfo->dobj.name));
-						
+
 					appendPQExpBuffer(q, "DROP COLUMN %s;\n",
 									  fmtId(tbinfo->attnames[j]));
 				}

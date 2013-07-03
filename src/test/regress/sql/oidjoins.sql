@@ -177,10 +177,6 @@ SELECT	ctid, reltoastrelid
 FROM	pg_catalog.pg_class fk
 WHERE	reltoastrelid != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.reltoastrelid);
-SELECT	ctid, reltoastidxid
-FROM	pg_catalog.pg_class fk
-WHERE	reltoastidxid != 0 AND
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.reltoastidxid);
 SELECT	ctid, collnamespace
 FROM	pg_catalog.pg_collation fk
 WHERE	collnamespace != 0 AND

@@ -1163,12 +1163,12 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
     <row>
      <entry><structfield>tidx_blks_read</></entry>
      <entry><type>bigint</></entry>
-     <entry>Number of disk blocks read from this table's TOAST table index (if any)</entry>
+     <entry>Number of disk blocks read from this table's TOAST table indexes (if any)</entry>
     </row>
     <row>
      <entry><structfield>tidx_blks_hit</></entry>
      <entry><type>bigint</></entry>
-     <entry>Number of buffer hits in this table's TOAST table index (if any)</entry>
+     <entry>Number of buffer hits in this table's TOAST table indexes (if any)</entry>
     </row>
    </tbody>
    </tgroup>

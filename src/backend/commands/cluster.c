@@ -21,6 +21,7 @@
 #include "access/relscan.h"
 #include "access/rewriteheap.h"
 #include "access/transam.h"
+#include "access/tuptoaster.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
@@ -1177,8 +1178,6 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 			swaptemp = relform1->reltoastrelid;
 			relform1->reltoastrelid = relform2->reltoastrelid;
 			relform2->reltoastrelid = swaptemp;
-
-			/* we should NOT swap reltoastidxid */
 		}
 	}
 	else
@@ -1398,18 +1397,30 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 
 	/*
 	 * If we're swapping two toast tables by content, do the same for their
-	 * indexes.
+	 * valid index. The swap can actually be safely done only if the relations
+	 * have indexes.
 	 */
 	if (swap_toast_by_content &&
-		relform1->reltoastidxid && relform2->reltoastidxid)
-		swap_relation_files(relform1->reltoastidxid,
-							relform2->reltoastidxid,
+		relform1->relkind == RELKIND_TOASTVALUE &&
+		relform2->relkind == RELKIND_TOASTVALUE)
+	{
+		Oid			toastIndex1, toastIndex2;
+
+		/* Get valid index for each relation */
+		toastIndex1 = toast_get_valid_index(r1,
+											AccessExclusiveLock);
+		toastIndex2 = toast_get_valid_index(r2,
+											AccessExclusiveLock);
+
+		swap_relation_files(toastIndex1,
+							toastIndex2,
 							target_is_pg_class,
 							swap_toast_by_content,
 							is_internal,
 							InvalidTransactionId,
 							InvalidMultiXactId,
 							mapped_tables);
+	}
 
 	/* Clean up. */
 	heap_freetuple(reltup1);
@@ -1533,14 +1544,12 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 		newrel = heap_open(OIDOldHeap, NoLock);
 		if (OidIsValid(newrel->rd_rel->reltoastrelid))
 		{
-			Relation	toastrel;
 			Oid			toastidx;
 			char		NewToastName[NAMEDATALEN];
 
-			toastrel = relation_open(newrel->rd_rel->reltoastrelid,
-									 AccessShareLock);
-			toastidx = toastrel->rd_rel->reltoastidxid;
-			relation_close(toastrel, AccessShareLock);
+			/* Get the associated valid index to be renamed */
+			toastidx = toast_get_valid_index(newrel->rd_rel->reltoastrelid,
+											 AccessShareLock);
 
 			/* rename the toast table ... */
 			snprintf(NewToastName, NAMEDATALEN, "pg_toast_%u",
@@ -1548,9 +1557,10 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 			RenameRelationInternal(newrel->rd_rel->reltoastrelid,
 								   NewToastName, true);
 
-			/* ... and its index too */
+			/* ... and its valid index too. */
 			snprintf(NewToastName, NAMEDATALEN, "pg_toast_%u_index",
 					 OIDOldHeap);
+
 			RenameRelationInternal(toastidx,
 								   NewToastName, true);
 		}

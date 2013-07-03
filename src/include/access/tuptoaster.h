@@ -15,6 +15,7 @@
 
 #include "access/htup_details.h"
 #include "utils/relcache.h"
+#include "storage/lock.h"
 
 /*
  * This enables de-toasting of index entries.  Needed until VACUUM is
@@ -192,5 +193,13 @@ extern Size toast_raw_datum_size(Datum value);
  * ----------
  */
 extern Size toast_datum_size(Datum value);
+
+/* ----------
+ * toast_get_valid_index -
+ *
+ *	Return OID of valid index associated to a toast relation
+ * ----------
+ */
+extern Oid toast_get_valid_index(Oid toastoid, LOCKMODE lock);
 
 #endif   /* TUPTOASTER_H */

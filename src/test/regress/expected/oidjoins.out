@@ -353,14 +353,6 @@ WHERE	reltoastrelid != 0 AND
 ------+---------------
 (0 rows)
 
-SELECT	ctid, reltoastidxid
-FROM	pg_catalog.pg_class fk
-WHERE	reltoastidxid != 0 AND
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.reltoastidxid);
- ctid | reltoastidxid 
-------+---------------
-(0 rows)
-
 SELECT	ctid, collnamespace
 FROM	pg_catalog.pg_collation fk
 WHERE	collnamespace != 0 AND

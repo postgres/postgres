@@ -8878,7 +8878,6 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 	Relation	rel;
 	Oid			oldTableSpace;
 	Oid			reltoastrelid;
-	Oid			reltoastidxid;
 	Oid			newrelfilenode;
 	RelFileNode newrnode;
 	SMgrRelation dstrel;
@@ -8886,6 +8885,8 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 	HeapTuple	tuple;
 	Form_pg_class rd_rel;
 	ForkNumber	forkNum;
+	List	   *reltoastidxids = NIL;
+	ListCell   *lc;
 
 	/*
 	 * Need lock here in case we are recursing to toast table or index
@@ -8932,7 +8933,13 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 				 errmsg("cannot move temporary tables of other sessions")));
 
 	reltoastrelid = rel->rd_rel->reltoastrelid;
-	reltoastidxid = rel->rd_rel->reltoastidxid;
+	/* Fetch the list of indexes on toast relation if necessary */
+	if (OidIsValid(reltoastrelid))
+	{
+		Relation toastRel = relation_open(reltoastrelid, lockmode);
+		reltoastidxids = RelationGetIndexList(toastRel);
+		relation_close(toastRel, lockmode);
+	}
 
 	/* Get a modifiable copy of the relation's pg_class row */
 	pg_class = heap_open(RelationRelationId, RowExclusiveLock);
@@ -9010,11 +9017,14 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 	/* Make sure the reltablespace change is visible */
 	CommandCounterIncrement();
 
-	/* Move associated toast relation and/or index, too */
+	/* Move associated toast relation and/or indexes, too */
 	if (OidIsValid(reltoastrelid))
 		ATExecSetTableSpace(reltoastrelid, newTableSpace, lockmode);
-	if (OidIsValid(reltoastidxid))
-		ATExecSetTableSpace(reltoastidxid, newTableSpace, lockmode);
+	foreach(lc, reltoastidxids)
+		ATExecSetTableSpace(lfirst_oid(lc), newTableSpace, lockmode);
+
+	/* Clean up */
+	list_free(reltoastidxids);
 }
 
 /*

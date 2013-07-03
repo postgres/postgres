@@ -579,8 +579,8 @@ DefineQueryRewrite(char *rulename,
 
 		/*
 		 * Fix pg_class entry to look like a normal view's, including setting
-		 * the correct relkind and removal of reltoastrelid/reltoastidxid of
-		 * the toast table we potentially removed above.
+		 * the correct relkind and removal of reltoastrelid of the toast table
+		 * we potentially removed above.
 		 */
 		classTup = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(event_relid));
 		if (!HeapTupleIsValid(classTup))
@@ -592,7 +592,6 @@ DefineQueryRewrite(char *rulename,
 		classForm->reltuples = 0;
 		classForm->relallvisible = 0;
 		classForm->reltoastrelid = InvalidOid;
-		classForm->reltoastidxid = InvalidOid;
 		classForm->relhasindex = false;
 		classForm->relkind = RELKIND_VIEW;
 		classForm->relhasoids = false;

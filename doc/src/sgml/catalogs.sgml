@@ -1745,15 +1745,6 @@
      </row>
 
      <row>
-      <entry><structfield>reltoastidxid</structfield></entry>
-      <entry><type>oid</type></entry>
-      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
-      <entry>
-       For a TOAST table, the OID of its index.  0 if not a TOAST table.
-      </entry>
-     </row>
-
-     <row>
       <entry><structfield>relhasindex</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
