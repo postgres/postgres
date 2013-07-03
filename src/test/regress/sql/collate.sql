@@ -231,6 +231,50 @@ SELECT collation for ('foo'::text);
 SELECT collation for ((SELECT a FROM collate_test1 LIMIT 1)); -- non-collatable type - error
 SELECT collation for ((SELECT b FROM collate_test1 LIMIT 1));
 
+-- CREATE COLLATE tests
+CREATE COLLATION collate_coll2 FROM "C";
+
+-- Ensure non-OWNER ROLEs are not able to ALTER/DROP COLLATION
+CREATE ROLE regress_rol_col1;
+GRANT USAGE ON SCHEMA collate_tests TO regress_rol_col1;
+SET ROLE regress_rol_col1;
+DROP COLLATION IF EXISTS collate_tests.collate_coll2;
+RESET ROLE;
+
+-- Ensure ALTER COLLATION SET SCHEMA works as expected
+CREATE SCHEMA collate_tests2;
+ALTER COLLATION collate_coll2 SET SCHEMA collate_tests2;
+DROP COLLATION collate_tests2.collate_coll2;
+DROP SCHEMA collate_tests2;
+
+-- Should work. Classic cases of CREATE/ALTER COLLATION
+CREATE COLLATION collate_coll3 (LOCALE = 'C');
+ALTER COLLATION collate_coll3 OWNER TO regress_rol_col1;
+ALTER COLLATION collate_coll3 RENAME TO collate_coll33;
+DROP COLLATION collate_coll33;
+
+-- Should fail. Give redundant options
+CREATE COLLATION collate_coll3a (LOCALE = 'C', LC_COLLATE = 'C', LC_CTYPE= 'C');
+
+-- Should fail. LC_COLLATE must be specified
+CREATE COLLATION collate_coll5 (LC_CTYPE= 'C');
+
+-- Should fail. Give value options without value
+CREATE COLLATION collate_coll4a (LC_COLLATE = '');
+CREATE COLLATION collate_coll5a (LC_CTYPE= '');
+
+-- Should fail. Give invalid option name
+CREATE COLLATION collate_coll6 (ASDF = 'C');
+
+-- Ensure ROLEs without USAGE access can't CREATE/ALTER COLLATION
+CREATE SCHEMA collate_tests4;
+CREATE COLLATION collate_tests4.collate_coll9 (LOCALE = 'C');
+REVOKE USAGE ON SCHEMA collate_tests4 FROM regress_rol_col1;
+SET ROLE regress_rol_col1;
+ALTER COLLATION collate_tests4.collate_coll9 RENAME TO collate_coll9b;
+CREATE COLLATION collate_tests4.collate_coll10 (LOCALE = 'C');
+RESET ROLE;
+DROP SCHEMA collate_tests4 CASCADE;
 
 --
 -- Clean up.  Many of these table names will be re-used if the user is
@@ -238,3 +282,4 @@ SELECT collation for ((SELECT b FROM collate_test1 LIMIT 1));
 -- must get rid of them.
 --
 DROP SCHEMA collate_tests CASCADE;
+DROP ROLE regress_rol_col1;
