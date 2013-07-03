@@ -314,6 +314,20 @@ main(int argc, char **argv)
 		opts->useDB = 1;
 	}
 
+	if (opts->dataOnly && opts->schemaOnly)
+	{
+		fprintf(stderr, _("%s: options -s/--schema-only and -a/--data-only cannot be used together\n"),
+				progname);
+		exit_nicely(1);
+	}
+
+	if (opts->dataOnly && opts->dropSchema)
+	{
+		fprintf(stderr, _("%s: options -c/--clean and -a/--data-only cannot be used together\n"),
+				progname);
+		exit_nicely(1);
+	}
+
 	/* Can't do single-txn mode with multiple connections */
 	if (opts->single_txn && numWorkers > 1)
 	{
