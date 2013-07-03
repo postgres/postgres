@@ -566,9 +566,9 @@ CREATE TRIGGER view_insert
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createfunction"></member>
    <member><xref linkend="sql-altertrigger"></member>
    <member><xref linkend="sql-droptrigger"></member>
+   <member><xref linkend="sql-createfunction"></member>
    <member><xref linkend="sql-set-constraints"></member>
   </simplelist>
  </refsect1>
