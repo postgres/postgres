@@ -134,7 +134,7 @@ endif # PROGRAM
 
 installcontrol: $(addsuffix .control, $(EXTENSION))
 ifneq (,$(EXTENSION))
-	$(INSTALL_DATA) $< '$(DESTDIR)$(datadir)/extension/'
+	$(INSTALL_DATA) $^ '$(DESTDIR)$(datadir)/extension/'
 endif
 
 installdata: $(DATA) $(DATA_built)
