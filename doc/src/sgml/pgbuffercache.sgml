@@ -84,7 +84,8 @@
       <entry><structfield>relforknumber</structfield></entry>
       <entry><type>smallint</type></entry>
       <entry></entry>
-      <entry>Fork number within the relation</entry>
+      <entry>Fork number within the relation;  see
+      <filename>include/storage/relfilenode.h</></entry>
      </row>
 
      <row>
@@ -98,7 +99,7 @@
       <entry><structfield>usagecount</structfield></entry>
       <entry><type>smallint</type></entry>
       <entry></entry>
-      <entry>Page LRU count</entry>
+      <entry>Clock-sweep access count</entry>
      </row>
 
     </tbody>
