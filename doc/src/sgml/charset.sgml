@@ -1500,17 +1500,6 @@ RESET client_encoding;
 
      <variablelist>
       <varlistentry>
-       <term><ulink url="http://www.i18ngurus.com/docs/984813247.html"></ulink></term>
-
-       <listitem>
-        <para>
-         An extensive collection of documents about character sets, encodings,
-         and code pages.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
        <term><citetitle>CJKV Information Processing: Chinese, Japanese, Korean &amp; Vietnamese Computing</citetitle></term>
 
        <listitem>
