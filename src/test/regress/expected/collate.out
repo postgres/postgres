@@ -626,51 +626,6 @@ SELECT collation for ((SELECT b FROM collate_test1 LIMIT 1));
  "C"
 (1 row)
 
--- CREATE COLLATE tests
-CREATE COLLATION collate_coll2 FROM "C";
--- Ensure non-OWNER ROLEs are not able to ALTER/DROP COLLATION
-CREATE ROLE regress_rol_col1;
-GRANT USAGE ON SCHEMA collate_tests TO regress_rol_col1;
-SET ROLE regress_rol_col1;
-DROP COLLATION IF EXISTS collate_tests.collate_coll2;
-ERROR:  must be owner of collation collate_tests.collate_coll2
-RESET ROLE;
--- Ensure ALTER COLLATION SET SCHEMA works as expected
-CREATE SCHEMA collate_tests2;
-ALTER COLLATION collate_coll2 SET SCHEMA collate_tests2;
-DROP COLLATION collate_tests2.collate_coll2;
-DROP SCHEMA collate_tests2;
--- Should work. Classic cases of CREATE/ALTER COLLATION
-CREATE COLLATION collate_coll3 (LOCALE = 'C');
-ALTER COLLATION collate_coll3 OWNER TO regress_rol_col1;
-ALTER COLLATION collate_coll3 RENAME TO collate_coll33;
-DROP COLLATION collate_coll33;
--- Should fail. Give redundant options
-CREATE COLLATION collate_coll3a (LOCALE = 'C', LC_COLLATE = 'C', LC_CTYPE= 'C');
-ERROR:  conflicting or redundant options
--- Should fail. LC_COLLATE must be specified
-CREATE COLLATION collate_coll5 (LC_CTYPE= 'C');
-ERROR:  parameter "lc_collate" must be specified
--- Should fail. Give value options without value
-CREATE COLLATION collate_coll4a (LC_COLLATE = '');
-ERROR:  parameter "lc_ctype" must be specified
-CREATE COLLATION collate_coll5a (LC_CTYPE= '');
-ERROR:  parameter "lc_collate" must be specified
--- Should fail. Give invalid option name
-CREATE COLLATION collate_coll6 (ASDF = 'C');
-ERROR:  collation attribute "asdf" not recognized
--- Ensure ROLEs without USAGE access can't CREATE/ALTER COLLATION
-CREATE SCHEMA collate_tests4;
-CREATE COLLATION collate_tests4.collate_coll9 (LOCALE = 'C');
-REVOKE USAGE ON SCHEMA collate_tests4 FROM regress_rol_col1;
-SET ROLE regress_rol_col1;
-ALTER COLLATION collate_tests4.collate_coll9 RENAME TO collate_coll9b;
-ERROR:  permission denied for schema collate_tests4
-CREATE COLLATION collate_tests4.collate_coll10 (LOCALE = 'C');
-ERROR:  permission denied for schema collate_tests4
-RESET ROLE;
-DROP SCHEMA collate_tests4 CASCADE;
-NOTICE:  drop cascades to collation collate_coll9
 --
 -- Clean up.  Many of these table names will be re-used if the user is
 -- trying to run any platform-specific collation tests later, so we
@@ -693,4 +648,3 @@ drop cascades to function dup(anyelement)
 drop cascades to table collate_test20
 drop cascades to table collate_test21
 drop cascades to table collate_test22
-DROP ROLE regress_rol_col1;
