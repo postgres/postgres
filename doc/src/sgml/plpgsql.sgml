@@ -2665,9 +2665,34 @@ GET STACKED DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>item<
          <entry>the SQLSTATE error code of the exception</entry>
         </row>
         <row>
+         <entry><literal>COLUMN_NAME</literal></entry>
+         <entry>text</entry>
+         <entry>the name of column related to exception</entry>
+        </row>
+        <row>
+         <entry><literal>CONSTRAINT_NAME</literal></entry>
+         <entry>text</entry>
+         <entry>the name of constraint related to exception</entry>
+        </row>
+        <row>
+         <entry><literal>PG_DATATYPE_NAME</literal></entry>
+         <entry>text</entry>
+         <entry>the name of datatype related to exception</entry>
+        </row>
+        <row>
          <entry><literal>MESSAGE_TEXT</literal></entry>
          <entry>text</entry>
          <entry>the text of the exception's primary message</entry>
+        </row>
+        <row>
+         <entry><literal>TABLE_NAME</literal></entry>
+         <entry>text</entry>
+         <entry>the name of table related to exception</entry>
+        </row>
+        <row>
+         <entry><literal>SCHEMA_NAME</literal></entry>
+         <entry>text</entry>
+         <entry>the name of schema related to exception</entry>
         </row>
         <row>
          <entry><literal>PG_EXCEPTION_DETAIL</literal></entry>
@@ -3353,6 +3378,17 @@ RAISE NOTICE 'Calling cs_create_job(%)', v_job_id;
        <para>Specifies the error code (SQLSTATE) to report, either by condition
         name, as shown in <xref linkend="errcodes-appendix">, or directly as a
         five-character SQLSTATE code.</para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>COLUMN</literal></term>
+      <term><literal>CONSTRAINT</literal></term>
+      <term><literal>DATATYPE</literal></term>
+      <term><literal>TABLE</literal></term>
+      <term><literal>SCHEMA</literal></term>
+      <listitem>
+       <para>Supplies the name of a related object.</para>
       </listitem>
      </varlistentry>
     </variablelist>

@@ -3974,6 +3974,40 @@ select raise_test();
 NOTICE:  22012
 ERROR:  substitute message
 drop function raise_test();
+-- test passing column_name, constraint_name, datatype_name, table_name
+-- and schema_name error fields
+create or replace function stacked_diagnostics_test() returns void as $$
+declare _column_name text;
+        _constraint_name text;
+        _datatype_name text;
+        _table_name text;
+        _schema_name text;
+begin
+  raise exception using
+    column = '>>some column name<<',
+    constraint = '>>some constraint name<<',
+    datatype = '>>some datatype name<<',
+    table = '>>some table name<<',
+    schema = '>>some schema name<<';
+exception when others then
+  get stacked diagnostics
+        _column_name = column_name,
+        _constraint_name = constraint_name,
+        _datatype_name = pg_datatype_name,
+        _table_name = table_name,
+        _schema_name = schema_name;
+  raise notice 'column %, constraint %, type %, table %, schema %',
+    _column_name, _constraint_name, _datatype_name, _table_name, _schema_name;
+end;
+$$ language plpgsql;
+select stacked_diagnostics_test();
+NOTICE:  column >>some column name<<, constraint >>some constraint name<<, type >>some datatype name<<, table >>some table name<<, schema >>some schema name<<
+ stacked_diagnostics_test 
+--------------------------
+ 
+(1 row)
+
+drop function stacked_diagnostics_test();
 -- test CASE statement
 create or replace function case_test(bigint) returns text as $$
 declare a int = 10;
