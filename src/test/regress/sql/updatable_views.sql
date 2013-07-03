@@ -509,3 +509,35 @@ UPDATE rw_view1 SET arr[1] = 42, arr[2] = 77 WHERE a = 3;
 SELECT * FROM rw_view1;
 
 DROP TABLE base_tbl CASCADE;
+
+-- inheritance tests
+
+CREATE TABLE base_tbl_parent (a int);
+CREATE TABLE base_tbl_child (CHECK (a > 0)) INHERITS (base_tbl_parent);
+INSERT INTO base_tbl_parent SELECT * FROM generate_series(-8, -1);
+INSERT INTO base_tbl_child SELECT * FROM generate_series(1, 8);
+
+CREATE VIEW rw_view1 AS SELECT * FROM base_tbl_parent;
+CREATE VIEW rw_view2 AS SELECT * FROM ONLY base_tbl_parent;
+
+SELECT * FROM rw_view1 ORDER BY a;
+SELECT * FROM ONLY rw_view1 ORDER BY a;
+SELECT * FROM rw_view2 ORDER BY a;
+
+INSERT INTO rw_view1 VALUES (-100), (100);
+INSERT INTO rw_view2 VALUES (-200), (200);
+
+UPDATE rw_view1 SET a = a*10 WHERE a IN (-1, 1); -- Should produce -10 and 10
+UPDATE ONLY rw_view1 SET a = a*10 WHERE a IN (-2, 2); -- Should produce -20 and 20
+UPDATE rw_view2 SET a = a*10 WHERE a IN (-3, 3); -- Should produce -30 only
+UPDATE ONLY rw_view2 SET a = a*10 WHERE a IN (-4, 4); -- Should produce -40 only
+
+DELETE FROM rw_view1 WHERE a IN (-5, 5); -- Should delete -5 and 5
+DELETE FROM ONLY rw_view1 WHERE a IN (-6, 6); -- Should delete -6 and 6
+DELETE FROM rw_view2 WHERE a IN (-7, 7); -- Should delete -7 only
+DELETE FROM ONLY rw_view2 WHERE a IN (-8, 8); -- Should delete -8 only
+
+SELECT * FROM ONLY base_tbl_parent ORDER BY a;
+SELECT * FROM base_tbl_child ORDER BY a;
+
+DROP TABLE base_tbl_parent, base_tbl_child CASCADE;
