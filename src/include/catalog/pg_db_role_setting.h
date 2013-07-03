@@ -23,6 +23,7 @@
 
 #include "utils/guc.h"
 #include "utils/relcache.h"
+#include "utils/snapshot.h"
 
 /* ----------------
  *		pg_db_role_setting definition.	cpp turns this into
