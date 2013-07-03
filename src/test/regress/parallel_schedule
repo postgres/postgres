@@ -88,7 +88,7 @@ test: privileges security_label collate matview
 # ----------
 # Another group of parallel tests
 # ----------
-test: alter_generic misc psql
+test: alter_generic misc psql async
 
 # rules cannot run concurrently with any test that creates a view
 test: rules

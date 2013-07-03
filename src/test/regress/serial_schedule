@@ -99,6 +99,7 @@ test: matview
 test: alter_generic
 test: misc
 test: psql
+test: async
 test: rules
 test: event_trigger
 test: select_views
