@@ -4788,8 +4788,8 @@ message.
 <listitem>
 <para>
         Table name: if the error was associated with a specific table, the
-        name of the table.  (When this field is present, the schema name field
-        provides the name of the table's schema.)
+        name of the table.  (Refer to the schema name field for the name of
+        the table's schema.)
 </para>
 </listitem>
 </varlistentry>
@@ -4801,8 +4801,8 @@ message.
 <listitem>
 <para>
         Column name: if the error was associated with a specific table column,
-        the name of the column.  (When this field is present, the schema and
-        table name fields identify the table.)
+        the name of the column.  (Refer to the schema and table name fields to
+        identify the table.)
 </para>
 </listitem>
 </varlistentry>
@@ -4814,8 +4814,8 @@ message.
 <listitem>
 <para>
         Data type name: if the error was associated with a specific data type,
-        the name of the data type.  (When this field is present, the schema
-        name field provides the name of the data type's schema.)
+        the name of the data type.  (Refer to the schema name field for the
+        name of the data type's schema.)
 </para>
 </listitem>
 </varlistentry>
@@ -4827,10 +4827,10 @@ message.
 <listitem>
 <para>
         Constraint name: if the error was associated with a specific
-        constraint, the name of the constraint.  The table or domain that the
-        constraint belongs to is reported using the fields listed above.  (For
-        this purpose, indexes are treated as constraints, even if they weren't
-        created with constraint syntax.)
+        constraint, the name of the constraint.  Refer to fields listed above
+        for the associated table or domain.  (For this purpose, indexes are
+        treated as constraints, even if they weren't created with constraint
+        syntax.)
 </para>
 </listitem>
 </varlistentry>
@@ -4876,7 +4876,12 @@ message.
  <para>
   The fields for schema name, table name, column name, data type name, and
   constraint name are supplied only for a limited number of error types;
-  see <xref linkend="errcodes-appendix">.
+  see <xref linkend="errcodes-appendix">.  Frontends should not assume that
+  the presence of any of these fields guarantees the presence of another
+  field.  Core error sources observe the interrelationships noted above, but
+  user-defined functions may use these fields in other ways.  In the same
+  vein, clients should not assume that these fields denote contemporary
+  objects in the current database.
  </para>
 </note>
 
