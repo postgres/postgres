@@ -2594,6 +2594,7 @@ reaper(SIGNAL_ARGS)
 			 * Startup succeeded, commence normal operations
 			 */
 			FatalError = false;
+			AbortStartTime = 0;
 			ReachedNormalRunning = true;
 			pmState = PM_RUN;
 
@@ -4711,6 +4712,7 @@ sigusr1_handler(SIGNAL_ARGS)
 	{
 		/* WAL redo has started. We're out of reinitialization. */
 		FatalError = false;
+		AbortStartTime = 0;
 
 		/*
 		 * Crank up the background tasks.  It doesn't matter if this fails,
