@@ -64,7 +64,10 @@ typedef struct BackgroundWorker
    <literal>BGWORKER_SHMEM_ACCESS</literal> (requesting shared memory access)
    and <literal>BGWORKER_BACKEND_DATABASE_CONNECTION</literal> (requesting the
    ability to establish a database connection, through which it can later run
-   transactions and queries).
+   transactions and queries). A background worker using
+   <literal>BGWORKER_BACKEND_DATABASE_CONNECTION</literal> to connect to
+   a database must also attach shared memory using
+   <literal>BGWORKER_SHMEM_ACCESS</literal>, or worker start-up will fail.
   </para>
 
   <para>
