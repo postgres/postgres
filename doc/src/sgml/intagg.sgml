@@ -18,6 +18,14 @@
  <sect2>
   <title>Functions</title>
 
+ <indexterm>
+  <primary>int_array_aggregate</primary>
+ </indexterm>
+
+ <indexterm>
+  <primary>array_agg</primary>
+ </indexterm>
+
  <para>
   The aggregator is an aggregate function
   <function>int_array_aggregate(integer)</>
@@ -26,6 +34,10 @@
   This is a wrapper around <function>array_agg</>,
   which does the same thing for any array type.
  </para>
+
+ <indexterm>
+  <primary>int_array_enum</primary>
+ </indexterm>
 
  <para>
   The enumerator is a function

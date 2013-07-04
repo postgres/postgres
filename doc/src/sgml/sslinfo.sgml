@@ -24,9 +24,12 @@
 
   <variablelist>
    <varlistentry>
-    <term><function>
-ssl_is_used() returns boolean
-    </function></term>
+    <indexterm>
+     <primary>ssl_is_used</primary>
+    </indexterm>
+    <term>
+     <function>ssl_is_used() returns boolean</function>
+    </term>
     <listitem>
     <para>
      Returns TRUE if current connection to server uses SSL, and FALSE
@@ -36,9 +39,12 @@ ssl_is_used() returns boolean
    </varlistentry>
 
    <varlistentry>
-    <term><function>
-ssl_version() returns text
-    </function></term>
+    <indexterm>
+     <primary>ssl_version</primary>
+    </indexterm>
+    <term>
+     <function>ssl_version() returns text</function>
+    </term>
     <listitem>
     <para>
      Returns the name of the protocol used for the SSL connection (e.g. SSLv2,
@@ -48,9 +54,12 @@ ssl_version() returns text
    </varlistentry>
 
    <varlistentry>
-    <term><function>
-ssl_cipher() returns text
-    </function></term>
+    <indexterm>
+     <primary>ssl_cipher</primary>
+    </indexterm>
+    <term>
+     <function>ssl_cipher() returns text</function>
+    </term>
     <listitem>
     <para>
      Returns the name of the cipher used for the SSL connection
@@ -60,9 +69,12 @@ ssl_cipher() returns text
    </varlistentry>
 
    <varlistentry>
-    <term><function>
-ssl_client_cert_present() returns boolean
-    </function></term>
+    <indexterm>
+     <primary>ssl_client_cert_present</primary>
+    </indexterm>
+    <term>
+     <function>ssl_client_cert_present() returns boolean</function>
+    </term>
     <listitem>
     <para>
      Returns TRUE if current client has presented a valid SSL client
@@ -73,9 +85,12 @@ ssl_client_cert_present() returns boolean
    </varlistentry>
 
    <varlistentry>
-    <term><function>
-ssl_client_serial() returns numeric
-    </function></term>
+    <indexterm>
+     <primary>ssl_client_serial</primary>
+    </indexterm>
+    <term>
+     <function>ssl_client_serial() returns numeric</function>
+    </term>
     <listitem>
     <para>
      Returns serial number of current client certificate.  The combination of
@@ -94,9 +109,12 @@ ssl_client_serial() returns numeric
    </varlistentry>
 
    <varlistentry>
-    <term><function>
-ssl_client_dn() returns text
-    </function></term>
+    <indexterm>
+     <primary>ssl_client_dn</primary>
+    </indexterm>
+    <term>
+     <function>ssl_client_dn() returns text</function>
+    </term>
     <listitem>
     <para>
      Returns the full subject of the current client certificate, converting
@@ -114,9 +132,12 @@ ssl_client_dn() returns text
    </varlistentry>
 
    <varlistentry>
-    <term><function>
-ssl_issuer_dn() returns text
-    </function></term>
+    <indexterm>
+     <primary>ssl_issuer_dn</primary>
+    </indexterm>
+    <term>
+     <function>ssl_issuer_dn() returns text</function>
+    </term>
     <listitem>
     <para>
      Returns the full issuer name of the current client certificate, converting
@@ -136,9 +157,12 @@ ssl_issuer_dn() returns text
    </varlistentry>
 
    <varlistentry>
-    <term><function>
-ssl_client_dn_field(fieldname text) returns text
-    </function></term>
+    <indexterm>
+     <primary>ssl_client_dn_field</primary>
+    </indexterm>
+    <term>
+     <function>ssl_client_dn_field(fieldname text) returns text</function>
+    </term>
     <listitem>
     <para>
      This function returns the value of the specified field in the
@@ -182,9 +206,12 @@ emailAddress
    </varlistentry>
 
    <varlistentry>
-    <term><function>
-ssl_issuer_field(fieldname text) returns text
-    </function></term>
+    <indexterm>
+     <primary>ssl_issuer_field</primary>
+    </indexterm>
+    <term>
+     <function>ssl_issuer_field(fieldname text) returns text</function>
+    </term>
     <listitem>
     <para>
      Same as <function>ssl_client_dn_field</>, but for the certificate issuer

@@ -86,6 +86,7 @@
         [, text orderby_fld ], text start_with, int max_depth
         [, text branch_delim ])
        </function>
+       <indexterm><primary>connectby</primary></indexterm>
       </entry>
       <entry><type>setof record</></entry>
       <entry>
@@ -98,6 +99,10 @@
 
   <sect3>
    <title><function>normal_rand</function></title>
+
+   <indexterm>
+    <primary>normal_rand</primary>
+   </indexterm>
 
 <synopsis>
 normal_rand(int numvals, float8 mean, float8 stddev) returns setof float8
@@ -141,6 +146,10 @@ test=# SELECT * FROM normal_rand(1000, 5, 3);
 
   <sect3>
    <title><function>crosstab(text)</function></title>
+
+   <indexterm>
+    <primary>crosstab</primary>
+   </indexterm>
 
 <synopsis>
 crosstab(text sql)
@@ -289,6 +298,10 @@ AS ct(row_name text, category_1 text, category_2 text, category_3 text);
   <sect3>
    <title><function>crosstab<replaceable>N</>(text)</function></title>
 
+   <indexterm>
+    <primary>crosstab</primary>
+   </indexterm>
+
 <synopsis>
 crosstab<replaceable>N</>(text sql)
 </synopsis>
@@ -395,6 +408,10 @@ CREATE OR REPLACE FUNCTION crosstab_float8_5_cols(
 
   <sect3>
    <title><function>crosstab(text, text)</function></title>
+
+   <indexterm>
+    <primary>crosstab</primary>
+   </indexterm>
 
 <synopsis>
 crosstab(text source_sql, text category_sql)
@@ -601,6 +618,10 @@ AS
 
   <sect3>
    <title><function>connectby</function></title>
+
+   <indexterm>
+    <primary>connectby</primary>
+   </indexterm>
 
 <synopsis>
 connectby(text relname, text keyid_fld, text parent_keyid_fld

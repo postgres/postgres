@@ -15,6 +15,10 @@
  <sect2>
   <title>Overview</title>
 
+  <indexterm>
+   <primary>pgrowlocks</primary>
+  </indexterm>
+
 <synopsis>
 pgrowlocks(text) returns setof record
 </synopsis>

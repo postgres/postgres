@@ -29,6 +29,10 @@
    <refpurpose>opens a persistent connection to a remote database</refpurpose>
   </refnamediv>
 
+  <indexterm>
+   <primary>dblink_connect</primary>
+  </indexterm>
+
   <refsynopsisdiv>
 <synopsis>
 dblink_connect(text connstr) returns text
@@ -189,6 +193,10 @@ DROP SERVER fdtest;
    <refpurpose>opens a persistent connection to a remote database, insecurely</refpurpose>
   </refnamediv>
 
+  <indexterm>
+   <primary>dblink_connect_u</primary>
+  </indexterm>
+
   <refsynopsisdiv>
 <synopsis>
 dblink_connect_u(text connstr) returns text
@@ -241,6 +249,10 @@ dblink_connect_u(text connname, text connstr) returns text
    <refname>dblink_disconnect</refname>
    <refpurpose>closes a persistent connection to a remote database</refpurpose>
   </refnamediv>
+
+  <indexterm>
+   <primary>dblink_disconnect</primary>
+  </indexterm>
 
   <refsynopsisdiv>
 <synopsis>
@@ -312,6 +324,10 @@ SELECT dblink_disconnect('myconn');
    <refname>dblink</refname>
    <refpurpose>executes a query in a remote database</refpurpose>
   </refnamediv>
+
+  <indexterm>
+   <primary>dblink</primary>
+  </indexterm>
 
   <refsynopsisdiv>
 <synopsis>
@@ -527,6 +543,10 @@ SELECT * FROM dblink('myconn', 'select proname, prosrc from pg_proc')
    <refpurpose>executes a command in a remote database</refpurpose>
   </refnamediv>
 
+  <indexterm>
+   <primary>dblink_exec</primary>
+  </indexterm>
+
   <refsynopsisdiv>
 <synopsis>
 dblink_exec(text connname, text sql [, bool fail_on_error]) returns text
@@ -660,6 +680,10 @@ DETAIL:  ERROR:  null value in column "relnamespace" violates not-null constrain
    <refpurpose>opens a cursor in a remote database</refpurpose>
   </refnamediv>
 
+  <indexterm>
+   <primary>dblink_open</primary>
+  </indexterm>
+
   <refsynopsisdiv>
 <synopsis>
 dblink_open(text cursorname, text sql [, bool fail_on_error]) returns text
@@ -779,6 +803,10 @@ SELECT dblink_open('foo', 'select proname, prosrc from pg_proc');
    <refname>dblink_fetch</refname>
    <refpurpose>returns rows from an open cursor in a remote database</refpurpose>
   </refnamediv>
+
+  <indexterm>
+   <primary>dblink_fetch</primary>
+  </indexterm>
 
   <refsynopsisdiv>
 <synopsis>
@@ -929,6 +957,10 @@ SELECT * FROM dblink_fetch('foo', 5) AS (funcname name, source text);
    <refpurpose>closes a cursor in a remote database</refpurpose>
   </refnamediv>
 
+  <indexterm>
+   <primary>dblink_close</primary>
+  </indexterm>
+
   <refsynopsisdiv>
 <synopsis>
 dblink_close(text cursorname [, bool fail_on_error]) returns text
@@ -1036,6 +1068,10 @@ SELECT dblink_close('foo');
    <refpurpose>returns the names of all open named dblink connections</refpurpose>
   </refnamediv>
 
+  <indexterm>
+   <primary>dblink_get_connections</primary>
+  </indexterm>
+
   <refsynopsisdiv>
 <synopsis>
 dblink_get_connections() returns text[]
@@ -1076,6 +1112,10 @@ SELECT dblink_get_connections();
    <refname>dblink_error_message</refname>
    <refpurpose>gets last error message on the named connection</refpurpose>
   </refnamediv>
+
+  <indexterm>
+   <primary>dblink_error_message</primary>
+  </indexterm>
 
   <refsynopsisdiv>
 <synopsis>
@@ -1135,6 +1175,10 @@ SELECT dblink_error_message('dtest1');
    <refname>dblink_send_query</refname>
    <refpurpose>sends an async query to a remote database</refpurpose>
   </refnamediv>
+
+  <indexterm>
+   <primary>dblink_send_query</primary>
+  </indexterm>
 
   <refsynopsisdiv>
 <synopsis>
@@ -1214,6 +1258,10 @@ SELECT dblink_send_query('dtest1', 'SELECT * FROM foo WHERE f1 &lt; 3');
    <refpurpose>checks if connection is busy with an async query</refpurpose>
   </refnamediv>
 
+  <indexterm>
+   <primary>dblink_is_busy</primary>
+  </indexterm>
+
   <refsynopsisdiv>
 <synopsis>
 dblink_is_busy(text connname) returns int
@@ -1272,6 +1320,10 @@ SELECT dblink_is_busy('dtest1');
    <refname>dblink_get_notify</refname>
    <refpurpose>retrieve async notifications on a connection</refpurpose>
   </refnamediv>
+
+  <indexterm>
+   <primary>dblink_get_notify</primary>
+  </indexterm>
 
   <refsynopsisdiv>
 <synopsis>
@@ -1350,6 +1402,10 @@ SELECT * FROM dblink_get_notify();
    <refname>dblink_get_result</refname>
    <refpurpose>gets an async query result</refpurpose>
   </refnamediv>
+
+  <indexterm>
+   <primary>dblink_get_result</primary>
+  </indexterm>
 
   <refsynopsisdiv>
 <synopsis>
@@ -1511,6 +1567,10 @@ contrib_regression=# SELECT * FROM dblink_get_result('dtest1') AS t1(f1 int, f2 
    <refpurpose>cancels any active query on the named connection</refpurpose>
   </refnamediv>
 
+  <indexterm>
+   <primary>dblink_cancel_query</primary>
+  </indexterm>
+
   <refsynopsisdiv>
 <synopsis>
 dblink_cancel_query(text connname) returns text
@@ -1576,6 +1636,10 @@ SELECT dblink_cancel_query('dtest1');
     primary key fields
    </refpurpose>
   </refnamediv>
+
+  <indexterm>
+   <primary>dblink_get_pkey</primary>
+  </indexterm>
 
   <refsynopsisdiv>
 <synopsis>
@@ -1665,6 +1729,10 @@ SELECT * FROM dblink_get_pkey('foobar');
     primary key field values with alternative supplied values
    </refpurpose>
   </refnamediv>
+
+  <indexterm>
+   <primary>dblink_build_sql_insert</primary>
+  </indexterm>
 
   <refsynopsisdiv>
 <synopsis>
@@ -1796,6 +1864,10 @@ SELECT dblink_build_sql_insert('foo', '1 2', 2, '{"1", "a"}', '{"1", "b''a"}');
    </refpurpose>
   </refnamediv>
 
+  <indexterm>
+   <primary>dblink_build_sql_delete</primary>
+  </indexterm>
+
   <refsynopsisdiv>
 <synopsis>
 dblink_build_sql_delete(text relname,
@@ -1909,6 +1981,10 @@ SELECT dblink_build_sql_delete('"MyFoo"', '1 2', 2, '{"1", "b"}');
     the primary key field values with alternative supplied values
    </refpurpose>
   </refnamediv>
+
+  <indexterm>
+   <primary>dblink_build_sql_update</primary>
+  </indexterm>
 
   <refsynopsisdiv>
 <synopsis>

@@ -25,6 +25,9 @@
 
   <variablelist>
    <varlistentry>
+    <indexterm>
+     <primary>pg_freespace</primary>
+    </indexterm>
     <term>
      <function>pg_freespace(rel regclass IN, blkno bigint IN) returns int2</function>
     </term>

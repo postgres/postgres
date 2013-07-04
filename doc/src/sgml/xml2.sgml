@@ -197,6 +197,10 @@
  <sect2>
   <title><literal>xpath_table</literal></title>
 
+  <indexterm>
+   <primary>xpath_table</primary>
+  </indexterm>
+
 <synopsis>
 xpath_table(text key, text document, text relation, text xpaths, text criteria) returns setof record
 </synopsis>
@@ -422,6 +426,10 @@ ORDER BY doc_num, line_num;
 
   <sect3>
    <title><literal>xslt_process</literal></title>
+
+  <indexterm>
+   <primary>xslt_process</primary>
+  </indexterm>
 
 <synopsis>
 xslt_process(text document, text stylesheet, text paramlist) returns text

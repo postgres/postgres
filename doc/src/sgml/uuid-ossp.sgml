@@ -42,7 +42,7 @@
     </thead>
     <tbody>
      <row>
-      <entry><literal>uuid_generate_v1()</literal></entry>
+      <entry><function>uuid_generate_v1()</function><indexterm><primary>uuid_generate_v1</primary></indexterm></entry>
       <entry>
        <para>
         This function generates a version 1 UUID.  This involves the MAC
@@ -54,7 +54,7 @@
       </entry>
      </row>
      <row>
-      <entry><literal>uuid_generate_v1mc()</literal></entry>
+      <entry><function>uuid_generate_v1mc()</function><indexterm><primary>uuid_generate_v1mc</primary></indexterm></entry>
       <entry>
        <para>
         This function generates a version 1 UUID but uses a random multicast
@@ -63,7 +63,7 @@
       </entry>
      </row>
      <row>
-      <entry><literal>uuid_generate_v3(namespace uuid, name text)</literal></entry>
+      <entry><function>uuid_generate_v3(namespace uuid, name text)</function><indexterm><primary>uuid_generate_v3</primary></indexterm></entry>
       <entry>
        <para>
         This function generates a version 3 UUID in the given namespace using

@@ -17,6 +17,10 @@
 
   <variablelist>
    <varlistentry>
+   <indexterm>
+    <primary>pgstattuple</primary>
+   </indexterm>
+
     <term>
      <function>pgstattuple(text) returns record</>
     </term>
@@ -134,6 +138,9 @@ free_percent       | 1.95
 
    <varlistentry>
     <term>
+    <indexterm>
+     <primary>pgstatindex</primary>
+    </indexterm>
      <function>pgstatindex(text) returns record</>
     </term>
 
@@ -246,6 +253,9 @@ leaf_fragmentation | 0
 
    <varlistentry>
     <term>
+     <indexterm>
+      <primary>pgstatginindex</primary>
+     </indexterm>
      <function>pgstatginindex(regclass) returns record</>
     </term>
 
@@ -303,6 +313,9 @@ pending_tuples | 0
 
    <varlistentry>
     <term>
+     <indexterm>
+      <primary>pg_relpages</primary>
+     </indexterm>
      <function>pg_relpages(text) returns bigint</>
     </term>
 
