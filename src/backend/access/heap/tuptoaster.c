@@ -1374,7 +1374,7 @@ toast_save_datum(Relation rel, Datum value,
 	toastrel = heap_open(rel->rd_rel->reltoastrelid, RowExclusiveLock);
 	toasttupDesc = toastrel->rd_att;
 
-	/* Open all the toast indexes and look for the valid */
+	/* Open all the toast indexes and look for the valid one */
 	validIndex = toast_open_indexes(toastrel,
 									RowExclusiveLock,
 									&toastidxs,
@@ -1546,7 +1546,7 @@ toast_save_datum(Relation rel, Datum value,
 		 */
 		for (i = 0; i < num_indexes; i++)
 		{
-			/* Only index relations marked as ready can updated */
+			/* Only index relations marked as ready can be updated */
 			if (IndexIsReady(toastidxs[i]->rd_index))
 				index_insert(toastidxs[i], t_values, t_isnull,
 							 &(toasttup->t_self),
