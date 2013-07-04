@@ -23,6 +23,10 @@
   <sect3>
    <title><function>digest()</function></title>
 
+   <indexterm>
+    <primary>digest</primary>
+   </indexterm>
+
 <synopsis>
 digest(data text, type text) returns bytea
 digest(data bytea, type text) returns bytea
@@ -52,6 +56,10 @@ $$ LANGUAGE SQL STRICT IMMUTABLE;
 
   <sect3>
    <title><function>hmac()</function></title>
+
+   <indexterm>
+    <primary>hmac</primary>
+   </indexterm>
 
 <synopsis>
 hmac(data text, key text, type text) returns bytea
@@ -173,6 +181,10 @@ hmac(data bytea, key text, type text) returns bytea
   <sect3>
    <title><function>crypt()</></title>
 
+   <indexterm>
+    <primary>crypt</primary>
+   </indexterm>
+
 <synopsis>
 crypt(password text, salt text) returns text
 </synopsis>
@@ -201,6 +213,10 @@ SELECT pswhash = crypt('entered password', pswhash) FROM ... ;
 
   <sect3>
    <title><function>gen_salt()</></title>
+
+  <indexterm>
+   <primary>gen_salt</primary>
+  </indexterm>
 
 <synopsis>
 gen_salt(type text [, iter_count integer ]) returns text
@@ -497,6 +513,14 @@ gen_salt(type text [, iter_count integer ]) returns text
   <sect3>
    <title><function>pgp_sym_encrypt()</function></title>
 
+   <indexterm>
+    <primary>pgp_sym_encrypt</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>pgp_sym_encrypt_bytea</primary>
+   </indexterm>
+
 <synopsis>
 pgp_sym_encrypt(data text, psw text [, options text ]) returns bytea
 pgp_sym_encrypt_bytea(data bytea, psw text [, options text ]) returns bytea
@@ -510,6 +534,14 @@ pgp_sym_encrypt_bytea(data bytea, psw text [, options text ]) returns bytea
 
   <sect3>
    <title><function>pgp_sym_decrypt()</function></title>
+
+   <indexterm>
+    <primary>pgp_sym_decrypt</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>pgp_sym_decrypt_bytea</primary>
+   </indexterm>
 
 <synopsis>
 pgp_sym_decrypt(msg bytea, psw text [, options text ]) returns text
@@ -532,6 +564,14 @@ pgp_sym_decrypt_bytea(msg bytea, psw text [, options text ]) returns bytea
   <sect3>
    <title><function>pgp_pub_encrypt()</function></title>
 
+   <indexterm>
+    <primary>pgp_pub_encrypt</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>pgp_pub_encrypt_bytea</primary>
+   </indexterm>
+
 <synopsis>
 pgp_pub_encrypt(data text, key bytea [, options text ]) returns bytea
 pgp_pub_encrypt_bytea(data bytea, key bytea [, options text ]) returns bytea
@@ -548,6 +588,14 @@ pgp_pub_encrypt_bytea(data bytea, key bytea [, options text ]) returns bytea
 
   <sect3>
    <title><function>pgp_pub_decrypt()</function></title>
+
+   <indexterm>
+    <primary>pgp_pub_decrypt</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>pgp_pub_decrypt_bytea</primary>
+   </indexterm>
 
 <synopsis>
 pgp_pub_decrypt(msg bytea, key bytea [, psw text [, options text ]]) returns text
@@ -573,6 +621,10 @@ pgp_pub_decrypt_bytea(msg bytea, key bytea [, psw text [, options text ]]) retur
 
   <sect3>
    <title><function>pgp_key_id()</function></title>
+
+   <indexterm>
+    <primary>pgp_key_id</primary>
+   </indexterm>
 
 <synopsis>
 pgp_key_id(bytea) returns text
@@ -615,6 +667,14 @@ pgp_key_id(bytea) returns text
 
   <sect3>
    <title><function>armor()</function>, <function>dearmor()</function></title>
+
+   <indexterm>
+    <primary>armor</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>dearmor</primary>
+   </indexterm>
 
 <synopsis>
 armor(data bytea) returns text
@@ -913,6 +973,22 @@ gpg -a --export-secret-keys KEYID > secret.key
    encryption functions is discouraged.
   </para>
 
+  <indexterm>
+   <primary>encrypt</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>decrypt</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>encrypt_iv</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>decrypt_iv</primary>
+  </indexterm>
+
 <synopsis>
 encrypt(data bytea, key bytea, type text) returns bytea
 decrypt(data bytea, key bytea, type text) returns bytea
@@ -981,6 +1057,10 @@ encrypt(data, 'fooz', 'bf-cbc/pad:pkcs')
 
  <sect2>
   <title>Random-Data Functions</title>
+
+  <indexterm>
+   <primary>gen_random_bytes</primary>
+  </indexterm>
 
 <synopsis>
 gen_random_bytes(count integer) returns bytea

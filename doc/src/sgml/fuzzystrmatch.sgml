@@ -35,6 +35,14 @@
    for working with Soundex codes:
   </para>
 
+  <indexterm>
+   <primary>soundex</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>difference</primary>
+  </indexterm>
+
 <synopsis>
 soundex(text) returns text
 difference(text, text) returns int
@@ -80,6 +88,14 @@ SELECT * FROM s WHERE difference(s.nm, 'john') &gt; 2;
   <para>
    This function calculates the Levenshtein distance between two strings:
   </para>
+
+  <indexterm>
+   <primary>levenshtein</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>levenshtein_less_equal</primary>
+  </indexterm>
 
 <synopsis>
 levenshtein(text source, text target, int ins_cost, int del_cost, int sub_cost) returns int
@@ -145,6 +161,10 @@ test=# SELECT levenshtein_less_equal('extensive', 'exhaustive',4);
    This function calculates the metaphone code of an input string:
   </para>
 
+  <indexterm>
+   <primary>metaphone</primary>
+  </indexterm>
+
 <synopsis>
 metaphone(text source, int max_output_length) returns text
 </synopsis>
@@ -179,6 +199,14 @@ test=# SELECT metaphone('GUMBO', 4);
    names especially they can be a bit different, depending on pronunciation.
    These functions compute the primary and alternate codes:
   </para>
+
+  <indexterm>
+   <primary>dmetaphone</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>dmetaphone_alt</primary>
+  </indexterm>
 
 <synopsis>
 dmetaphone(text source) returns text

@@ -381,7 +381,7 @@ Europe &amp; Russia*@ &amp; !Transportation
 
     <tbody>
      <row>
-      <entry><function>subltree(ltree, int start, int end)</function></entry>
+      <entry><function>subltree(ltree, int start, int end)</function><indexterm><primary>subltree</primary></indexterm></entry>
       <entry><type>ltree</type></entry>
       <entry>subpath of <type>ltree</> from position <parameter>start</> to
        position <parameter>end</>-1 (counting from 0)</entry>
@@ -390,7 +390,7 @@ Europe &amp; Russia*@ &amp; !Transportation
      </row>
 
      <row>
-      <entry><function>subpath(ltree, int offset, int len)</function></entry>
+      <entry><function>subpath(ltree, int offset, int len)</function><indexterm><primary>subpath</primary></indexterm></entry>
       <entry><type>ltree</type></entry>
       <entry>subpath of <type>ltree</> starting at position
        <parameter>offset</>, length <parameter>len</>.
@@ -413,7 +413,7 @@ Europe &amp; Russia*@ &amp; !Transportation
      </row>
 
      <row>
-      <entry><function>nlevel(ltree)</function></entry>
+      <entry><function>nlevel(ltree)</function><indexterm><primary>nlevel</primary></indexterm></entry>
       <entry><type>integer</type></entry>
       <entry>number of labels in path</entry>
       <entry><literal>nlevel('Top.Child1.Child2')</literal></entry>
@@ -421,7 +421,7 @@ Europe &amp; Russia*@ &amp; !Transportation
      </row>
 
      <row>
-      <entry><function>index(ltree a, ltree b)</function></entry>
+      <entry><function>index(ltree a, ltree b)</function><indexterm><primary>index</primary></indexterm></entry>
       <entry><type>integer</type></entry>
       <entry>position of first occurrence of <parameter>b</> in
        <parameter>a</>; -1 if not found</entry>
@@ -441,7 +441,7 @@ Europe &amp; Russia*@ &amp; !Transportation
      </row>
 
      <row>
-      <entry><function>text2ltree(text)</function></entry>
+      <entry><function>text2ltree(text)</function><indexterm><primary>text2ltree</primary></indexterm></entry>
       <entry><type>ltree</type></entry>
       <entry>cast <type>text</> to <type>ltree</></entry>
       <entry><literal></literal></entry>
@@ -449,7 +449,7 @@ Europe &amp; Russia*@ &amp; !Transportation
      </row>
 
      <row>
-      <entry><function>ltree2text(ltree)</function></entry>
+      <entry><function>ltree2text(ltree)</function><indexterm><primary>ltree2text</primary></indexterm></entry>
       <entry><type>text</type></entry>
       <entry>cast <type>ltree</> to <type>text</></entry>
       <entry><literal></literal></entry>
@@ -457,7 +457,7 @@ Europe &amp; Russia*@ &amp; !Transportation
      </row>
 
      <row>
-      <entry><function>lca(ltree, ltree, ...)</function></entry>
+      <entry><function>lca(ltree, ltree, ...)</function><indexterm><primary>lca</primary></indexterm></entry>
       <entry><type>ltree</type></entry>
       <entry>lowest common ancestor, i.e., longest common prefix of paths
        (up to 8 arguments supported)</entry>

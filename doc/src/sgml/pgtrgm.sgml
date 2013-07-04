@@ -75,7 +75,7 @@
 
     <tbody>
      <row>
-      <entry><function>similarity(text, text)</function></entry>
+      <entry><function>similarity(text, text)</function><indexterm><primary>similarity</primary></indexterm></entry>
       <entry><type>real</type></entry>
       <entry>
        Returns a number that indicates how similar the two arguments are.
@@ -85,7 +85,7 @@
       </entry>
      </row>
      <row>
-      <entry><function>show_trgm(text)</function></entry>
+      <entry><function>show_trgm(text)</function><indexterm><primary>show_trgm</primary></indexterm></entry>
       <entry><type>text[]</type></entry>
       <entry>
        Returns an array of all the trigrams in the given string.
@@ -93,7 +93,7 @@
       </entry>
      </row>
      <row>
-      <entry><function>show_limit()</function></entry>
+      <entry><function>show_limit()</function><indexterm><primary>show_limit</primary></indexterm></entry>
       <entry><type>real</type></entry>
       <entry>
        Returns the current similarity threshold used by the <literal>%</>
@@ -103,7 +103,7 @@
       </entry>
      </row>
      <row>
-      <entry><function>set_limit(real)</function></entry>
+      <entry><function>set_limit(real)</function><indexterm><primary>set_limit</primary></indexterm></entry>
       <entry><type>real</type></entry>
       <entry>
        Sets the current similarity threshold that is used by the <literal>%</>

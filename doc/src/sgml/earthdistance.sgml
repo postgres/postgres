@@ -71,12 +71,12 @@
     </thead>
     <tbody>
      <row>
-      <entry><function>earth()</function></entry>
+      <entry><function>earth()</function><indexterm><primary>earth</primary></indexterm></entry>
       <entry><type>float8</type></entry>
       <entry>Returns the assumed radius of the Earth.</entry>
      </row>
      <row>
-      <entry><function>sec_to_gc(float8)</function></entry>
+      <entry><function>sec_to_gc(float8)</function><indexterm><primary>sec_to_gc</primary></indexterm></entry>
       <entry><type>float8</type></entry>
       <entry>Converts the normal straight line
        (secant) distance between two points on the surface of the Earth
@@ -84,7 +84,7 @@
       </entry>
      </row>
      <row>
-      <entry><function>gc_to_sec(float8)</function></entry>
+      <entry><function>gc_to_sec(float8)</function><indexterm><primary>gc_to_sec</primary></indexterm></entry>
       <entry><type>float8</type></entry>
       <entry>Converts the great circle distance between two points on the
        surface of the Earth to the normal straight line (secant) distance
@@ -92,35 +92,35 @@
       </entry>
      </row>
      <row>
-      <entry><function>ll_to_earth(float8, float8)</function></entry>
+      <entry><function>ll_to_earth(float8, float8)</function><indexterm><primary>ll_to_earth</primary></indexterm></entry>
       <entry><type>earth</type></entry>
       <entry>Returns the location of a point on the surface of the Earth given
        its latitude (argument 1) and longitude (argument 2) in degrees.
       </entry>
      </row>
      <row>
-      <entry><function>latitude(earth)</function></entry>
+      <entry><function>latitude(earth)</function><indexterm><primary>latitude</primary></indexterm></entry>
       <entry><type>float8</type></entry>
       <entry>Returns the latitude in degrees of a point on the surface of the
        Earth.
       </entry>
      </row>
      <row>
-      <entry><function>longitude(earth)</function></entry>
+      <entry><function>longitude(earth)</function><indexterm><primary>longitude</primary></indexterm></entry>
       <entry><type>float8</type></entry>
       <entry>Returns the longitude in degrees of a point on the surface of the
        Earth.
       </entry>
      </row>
      <row>
-      <entry><function>earth_distance(earth, earth)</function></entry>
+      <entry><function>earth_distance(earth, earth)</function><indexterm><primary>earth_distance</primary></indexterm></entry>
       <entry><type>float8</type></entry>
       <entry>Returns the great circle distance between two points on the
        surface of the Earth.
       </entry>
      </row>
      <row>
-      <entry><function>earth_box(earth, float8)</function></entry>
+      <entry><function>earth_box(earth, float8)</function><indexterm><primary>earth_box</primary></indexterm></entry>
       <entry><type>cube</type></entry>
       <entry>Returns a box suitable for an indexed search using the cube
        <literal>@&gt;</>

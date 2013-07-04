@@ -49,7 +49,7 @@
 
     <tbody>
      <row>
-      <entry><function>icount(int[])</function></entry>
+      <entry><function>icount(int[])</function><indexterm><primary>icount</primary></indexterm></entry>
       <entry><type>int</type></entry>
       <entry>number of elements in array</entry>
       <entry><literal>icount('{1,2,3}'::int[])</literal></entry>
@@ -57,7 +57,7 @@
      </row>
 
      <row>
-      <entry><function>sort(int[], text dir)</function></entry>
+      <entry><function>sort(int[], text dir)</function><indexterm><primary>sort</primary></indexterm></entry>
       <entry><type>int[]</type></entry>
       <entry>sort array &mdash; <parameter>dir</> must be <literal>asc</> or <literal>desc</></entry>
       <entry><literal>sort('{1,2,3}'::int[], 'desc')</literal></entry>
@@ -73,7 +73,7 @@
      </row>
 
      <row>
-      <entry><function>sort_asc(int[])</function></entry>
+      <entry><function>sort_asc(int[])</function><indexterm><primary>sort_asc</primary></indexterm></entry>
       <entry><type>int[]</type></entry>
       <entry>sort in ascending order</entry>
       <entry><literal></literal></entry>
@@ -81,7 +81,7 @@
      </row>
 
      <row>
-      <entry><function>sort_desc(int[])</function></entry>
+      <entry><function>sort_desc(int[])</function><indexterm><primary>sort_desc</primary></indexterm></entry>
       <entry><type>int[]</type></entry>
       <entry>sort in descending order</entry>
       <entry><literal></literal></entry>
@@ -89,7 +89,7 @@
      </row>
 
      <row>
-      <entry><function>uniq(int[])</function></entry>
+      <entry><function>uniq(int[])</function><indexterm><primary>uniq</primary></indexterm></entry>
       <entry><type>int[]</type></entry>
       <entry>remove adjacent duplicates</entry>
       <entry><literal>uniq(sort('{1,2,3,2,1}'::int[]))</literal></entry>
@@ -97,7 +97,7 @@
      </row>
 
      <row>
-      <entry><function>idx(int[], int item)</function></entry>
+      <entry><function>idx(int[], int item)</function><indexterm><primary>idx</primary></indexterm></entry>
       <entry><type>int</type></entry>
       <entry>index of first element matching <parameter>item</> (0 if none)</entry>
       <entry><literal>idx(array[11,22,33,22,11], 22)</literal></entry>
@@ -105,7 +105,7 @@
      </row>
 
      <row>
-      <entry><function>subarray(int[], int start, int len)</function></entry>
+      <entry><function>subarray(int[], int start, int len)</function><indexterm><primary>subarray</primary></indexterm></entry>
       <entry><type>int[]</type></entry>
       <entry>portion of array starting at position <parameter>start</>, <parameter>len</> elements</entry>
       <entry><literal>subarray('{1,2,3,2,1}'::int[], 2, 3)</literal></entry>
@@ -121,7 +121,7 @@
      </row>
 
      <row>
-      <entry><function>intset(int)</function></entry>
+      <entry><function>intset(int)</function><indexterm><primary>intset</primary></indexterm></entry>
       <entry><type>int[]</type></entry>
       <entry>make single-element array</entry>
       <entry><literal>intset(42)</literal></entry>

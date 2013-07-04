@@ -12,6 +12,10 @@
   examining what's happening in the shared buffer cache in real time.
  </para>
 
+ <indexterm>
+  <primary>pg_buffercache_pages</primary>
+ </indexterm>
+
  <para>
   The module provides a C function <function>pg_buffercache_pages</function>
   that returns a set of records, plus a view

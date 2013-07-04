@@ -235,6 +235,10 @@
 
   <variablelist>
    <varlistentry>
+   <indexterm>
+    <primary>pg_stat_statements_reset</primary>
+   </indexterm>
+
     <term>
      <function>pg_stat_statements_reset() returns void</function>
     </term>
