@@ -635,6 +635,11 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary)
 				/* check for EOF marker, but not on a partial line */
 				if (firstload)
 				{
+					/*
+					 * This code erroneously assumes '\.' on a line alone
+					 * inside a quoted CSV string terminates the \copy.
+					 * http://www.postgresql.org/message-id/E1TdNVQ-0001ju-GO@wrigleys.postgresql.org
+					 */
 					if (strcmp(buf, "\\.\n") == 0 ||
 						strcmp(buf, "\\.\r\n") == 0)
 					{
