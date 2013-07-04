@@ -685,7 +685,7 @@ typedef struct EventTriggerData
      </varlistentry>
 
      <varlistentry>
-      <term><structfield>tg_event</></term>
+      <term><structfield>event</></term>
       <listitem>
        <para>
         Describes the event for which the function is called, one of
