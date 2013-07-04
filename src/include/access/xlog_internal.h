@@ -55,7 +55,7 @@ typedef struct BkpBlock
 /*
  * Each page of XLOG file has a header like this:
  */
-#define XLOG_PAGE_MAGIC 0xD075	/* can be used as WAL version indicator */
+#define XLOG_PAGE_MAGIC 0xD076	/* can be used as WAL version indicator */
 
 typedef struct XLogPageHeaderData
 {
@@ -205,6 +205,7 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
 typedef struct xl_parameter_change
 {
 	int			MaxConnections;
+	int			max_worker_processes;
 	int			max_prepared_xacts;
 	int			max_locks_per_xact;
 	int			wal_level;

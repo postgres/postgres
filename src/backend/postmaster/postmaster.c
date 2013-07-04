@@ -402,7 +402,6 @@ static void reaper(SIGNAL_ARGS);
 static void sigusr1_handler(SIGNAL_ARGS);
 static void startup_die(SIGNAL_ARGS);
 static void dummy_handler(SIGNAL_ARGS);
-static int	GetNumRegisteredBackgroundWorkers(int flags);
 static void StartupPacketTimeoutHandler(void);
 static void CleanupBackend(int pid, int exitstatus);
 static bool CleanupBackgroundWorker(int pid, int exitstatus);
@@ -5212,7 +5211,7 @@ int
 MaxLivePostmasterChildren(void)
 {
 	return 2 * (MaxConnections + autovacuum_max_workers + 1 +
-				GetNumRegisteredBackgroundWorkers(0));
+				max_worker_processes);
 }
 
 /*
@@ -5226,7 +5225,6 @@ RegisterBackgroundWorker(BackgroundWorker *worker)
 {
 	RegisteredBgWorker *rw;
 	int			namelen = strlen(worker->bgw_name);
-	static int	maxworkers;
 	static int	numworkers = 0;
 
 #ifdef EXEC_BACKEND
@@ -5237,11 +5235,6 @@ RegisterBackgroundWorker(BackgroundWorker *worker)
 	 */
 	static int	BackgroundWorkerCookie = 1;
 #endif
-
-	/* initialize upper limit on first call */
-	if (numworkers == 0)
-		maxworkers = MAX_BACKENDS -
-			(MaxConnections + autovacuum_max_workers + 1);
 
 	if (!IsUnderPostmaster)
 		ereport(LOG,
@@ -5298,17 +5291,17 @@ RegisterBackgroundWorker(BackgroundWorker *worker)
 	/*
 	 * Enforce maximum number of workers.  Note this is overly restrictive: we
 	 * could allow more non-shmem-connected workers, because these don't count
-	 * towards the MAX_BACKENDS limit elsewhere.  This doesn't really matter
-	 * for practical purposes; several million processes would need to run on
-	 * a single server.
+	 * towards the MAX_BACKENDS limit elsewhere.  For now, it doesn't seem
+	 * important to relax this restriction.
 	 */
-	if (++numworkers > maxworkers)
+	if (++numworkers > max_worker_processes)
 	{
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIGURATION_LIMIT_EXCEEDED),
 				 errmsg("too many background workers"),
 				 errdetail("Up to %d background workers can be registered with the current settings.",
-						   maxworkers)));
+						   max_worker_processes),
+				 errhint("Consider increasing the configuration parameter \"max_worker_processes\".")));
 		return;
 	}
 
@@ -5587,41 +5580,6 @@ do_start_bgworker(void)
 
 	/* ... and if it returns, we're done */
 	proc_exit(0);
-}
-
-/*
- * Return the number of background workers registered that have at least
- * one of the passed flag bits set.
- */
-static int
-GetNumRegisteredBackgroundWorkers(int flags)
-{
-	slist_iter	iter;
-	int			count = 0;
-
-	slist_foreach(iter, &BackgroundWorkerList)
-	{
-		RegisteredBgWorker *rw;
-
-		rw = slist_container(RegisteredBgWorker, rw_lnode, iter.cur);
-
-		if (flags != 0 &&
-			!(rw->rw_worker.bgw_flags & flags))
-			continue;
-
-		count++;
-	}
-
-	return count;
-}
-
-/*
- * Return the number of bgworkers that need to have PGPROC entries.
- */
-int
-GetNumShmemAttachedBgworkers(void)
-{
-	return GetNumRegisteredBackgroundWorkers(BGWORKER_SHMEM_ACCESS);
 }
 
 #ifdef EXEC_BACKEND

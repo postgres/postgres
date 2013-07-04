@@ -140,10 +140,8 @@ ProcGlobalSemas(void)
  *	  running out when trying to start another backend is a common failure.
  *	  So, now we grab enough semaphores to support the desired max number
  *	  of backends immediately at initialization --- if the sysadmin has set
- *	  MaxConnections or autovacuum_max_workers higher than his kernel will
- *	  support, he'll find out sooner rather than later.  (The number of
- *	  background worker processes registered by loadable modules is also taken
- *	  into consideration.)
+ *	  MaxConnections, max_worker_processes, or autovacuum_max_workers higher
+ *	  than his kernel will support, he'll find out sooner rather than later.
  *
  *	  Another reason for creating semaphores here is that the semaphore
  *	  implementation typically requires us to create semaphores in the

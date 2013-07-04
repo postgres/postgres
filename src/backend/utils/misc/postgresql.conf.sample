@@ -152,6 +152,7 @@
 # - Asynchronous Behavior -
 
 #effective_io_concurrency = 1		# 1-1000; 0 disables prefetching
+#max_worker_processes = 8
 
 
 #------------------------------------------------------------------------------

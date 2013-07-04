@@ -260,6 +260,8 @@ main(int argc, char *argv[])
 		   wal_level_str(ControlFile.wal_level));
 	printf(_("Current max_connections setting:      %d\n"),
 		   ControlFile.MaxConnections);
+	printf(_("Current max_worker_processes setting: %d\n"),
+		   ControlFile.max_worker_processes);
 	printf(_("Current max_prepared_xacts setting:   %d\n"),
 		   ControlFile.max_prepared_xacts);
 	printf(_("Current max_locks_per_xact setting:   %d\n"),

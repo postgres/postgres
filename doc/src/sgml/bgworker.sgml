@@ -146,4 +146,9 @@ typedef struct BackgroundWorker
    The <filename>worker_spi</> contrib module contains a working example,
    which demonstrates some useful techniques.
   </para>
+
+  <para>
+   The maximum number of registered background workers is limited by
+   <xref linkend="guc-max-worker-processes">.
+  </para>
 </chapter>

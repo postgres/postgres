@@ -117,8 +117,9 @@ xlog_desc(StringInfo buf, uint8 xl_info, char *rec)
 			}
 		}
 
-		appendStringInfo(buf, "parameter change: max_connections=%d max_prepared_xacts=%d max_locks_per_xact=%d wal_level=%s",
+		appendStringInfo(buf, "parameter change: max_connections=%d max_worker_processes=%d max_prepared_xacts=%d max_locks_per_xact=%d wal_level=%s",
 						 xlrec.MaxConnections,
+						 xlrec.max_worker_processes,
 						 xlrec.max_prepared_xacts,
 						 xlrec.max_locks_per_xact,
 						 wal_level_str);

@@ -172,6 +172,7 @@ typedef struct ControlFileData
 	 */
 	int			wal_level;
 	int			MaxConnections;
+	int			max_worker_processes;
 	int			max_prepared_xacts;
 	int			max_locks_per_xact;
 
