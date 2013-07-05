@@ -534,7 +534,7 @@
     examine this information is to execute queries such as:
 
 <programlisting>
-SELECT relname, age(relfrozenxid) FROM pg_class WHERE relkind = 'r';
+SELECT relname, age(relfrozenxid) FROM pg_class WHERE relkind IN ('r', 'm');
 SELECT datname, age(datfrozenxid) FROM pg_database;
 </programlisting>
 
