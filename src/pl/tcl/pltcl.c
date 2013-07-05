@@ -504,7 +504,7 @@ pltcl_init_load_unknown(Tcl_Interp *interp)
 									 AccessShareLock, true);
 	if (pmrel == NULL)
 		return;
-	/* must be table or view, else ignore */
+	/* sanity-check the relation kind */
 	if (!(pmrel->rd_rel->relkind == RELKIND_RELATION ||
 		  pmrel->rd_rel->relkind == RELKIND_MATVIEW ||
 		  pmrel->rd_rel->relkind == RELKIND_VIEW))

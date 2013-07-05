@@ -10696,7 +10696,7 @@ RangeVarCallbackForAlterRelation(const RangeVar *rv, Oid relid, Oid oldrelid,
 		relkind != RELKIND_FOREIGN_TABLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-			errmsg("\"%s\" is not a table, view, sequence, or foreign table",
+			errmsg("\"%s\" is not a table, view, materialized view, sequence, or foreign table",
 				   rv->relname)));
 
 	ReleaseSysCache(tuple);

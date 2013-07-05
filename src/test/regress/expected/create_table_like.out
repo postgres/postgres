@@ -221,7 +221,7 @@ NOTICE:  drop cascades to table inhe
 CREATE TABLE ctlt4 (a int, b text);
 CREATE SEQUENCE ctlseq1;
 CREATE TABLE ctlt10 (LIKE ctlseq1);  -- fail
-ERROR:  "ctlseq1" is not a table, view, composite type, or foreign table
+ERROR:  "ctlseq1" is not a table, view, materialized view, composite type, or foreign table
 LINE 1: CREATE TABLE ctlt10 (LIKE ctlseq1);
                                   ^
 CREATE VIEW ctlv1 AS SELECT * FROM ctlt4;

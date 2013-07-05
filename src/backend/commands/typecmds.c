@@ -2820,7 +2820,14 @@ get_rels_with_domain(Oid domainOid, LOCKMODE lockmode)
 												 NULL,
 												 format_type_be(domainOid));
 
-			/* Otherwise we can ignore views, composite types, etc */
+			/*
+			 * Otherwise, we can ignore relations except those with both
+			 * storage and user-chosen column types.
+			 *
+			 * XXX If an index-only scan could satisfy "col::some_domain" from
+			 * a suitable expression index, this should also check expression
+			 * index columns.
+			 */
 			if (rel->rd_rel->relkind != RELKIND_RELATION &&
 				rel->rd_rel->relkind != RELKIND_MATVIEW)
 			{

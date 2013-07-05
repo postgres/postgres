@@ -683,7 +683,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 		relation->rd_rel->relkind != RELKIND_FOREIGN_TABLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a table, view, composite type, or foreign table",
+				 errmsg("\"%s\" is not a table, view, materialized view, composite type, or foreign table",
 						RelationGetRelationName(relation))));
 
 	cancel_parser_errposition_callback(&pcbstate);

@@ -761,7 +761,6 @@ objectsInSchemaToOids(GrantObjectType objtype, List *nspnames)
 		switch (objtype)
 		{
 			case ACL_OBJECT_RELATION:
-				/* Process regular tables, views and foreign tables */
 				objs = getRelationsInNamespace(namespaceId, RELKIND_RELATION);
 				objects = list_concat(objects, objs);
 				objs = getRelationsInNamespace(namespaceId, RELKIND_VIEW);

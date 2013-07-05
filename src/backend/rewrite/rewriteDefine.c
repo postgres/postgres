@@ -258,6 +258,8 @@ DefineQueryRewrite(char *rulename,
 
 	/*
 	 * Verify relation is of a type that rules can sensibly be applied to.
+	 * Internal callers can target materialized views, but transformRuleStmt()
+	 * blocks them for users.  Don't mention them in the error message.
 	 */
 	if (event_relation->rd_rel->relkind != RELKIND_RELATION &&
 		event_relation->rd_rel->relkind != RELKIND_MATVIEW &&
