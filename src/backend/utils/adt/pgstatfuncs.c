@@ -34,6 +34,7 @@ extern Datum pg_stat_get_tuples_deleted(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_tuples_hot_updated(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_live_tuples(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_dead_tuples(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_mod_since_analyze(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_blocks_fetched(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_blocks_hit(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_last_vacuum_time(PG_FUNCTION_ARGS);
@@ -260,6 +261,22 @@ pg_stat_get_dead_tuples(PG_FUNCTION_ARGS)
 		result = 0;
 	else
 		result = (int64) (tabentry->n_dead_tuples);
+
+	PG_RETURN_INT64(result);
+}
+
+
+Datum
+pg_stat_get_mod_since_analyze(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	int64		result;
+	PgStat_StatTabEntry *tabentry;
+
+	if ((tabentry = pgstat_fetch_stat_tabentry(relid)) == NULL)
+		result = 0;
+	else
+		result = (int64) (tabentry->changes_since_analyze);
 
 	PG_RETURN_INT64(result);
 }

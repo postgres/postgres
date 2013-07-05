@@ -951,6 +951,11 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      <entry>Estimated number of dead rows</entry>
     </row>
     <row>
+     <entry><structfield>n_mod_since_analyze</></entry>
+     <entry><type>bigint</></entry>
+     <entry>Estimated number of rows modified since this table was last analyzed</entry>
+    </row>
+    <row>
      <entry><structfield>last_vacuum</></entry>
      <entry><type>timestamp with time zone</></entry>
      <entry>Last time at which this table was manually vacuumed

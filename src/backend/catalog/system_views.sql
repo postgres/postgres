@@ -405,6 +405,7 @@ CREATE VIEW pg_stat_all_tables AS
             pg_stat_get_tuples_hot_updated(C.oid) AS n_tup_hot_upd,
             pg_stat_get_live_tuples(C.oid) AS n_live_tup,
             pg_stat_get_dead_tuples(C.oid) AS n_dead_tup,
+            pg_stat_get_mod_since_analyze(C.oid) AS n_mod_since_analyze,
             pg_stat_get_last_vacuum_time(C.oid) as last_vacuum,
             pg_stat_get_last_autovacuum_time(C.oid) as last_autovacuum,
             pg_stat_get_last_analyze_time(C.oid) as last_analyze,
