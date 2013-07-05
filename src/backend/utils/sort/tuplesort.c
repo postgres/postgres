@@ -211,8 +211,8 @@ struct Tuplesortstate
 								 * tuples to return? */
 	bool		boundUsed;		/* true if we made use of a bounded heap */
 	int			bound;			/* if bounded, the maximum number of tuples */
-	Size		availMem;		/* remaining memory available, in bytes */
-	Size		allowedMem;		/* total memory allowed, in bytes */
+	int64		availMem;		/* remaining memory available, in bytes */
+	int64		allowedMem;		/* total memory allowed, in bytes */
 	int			maxTapes;		/* number of tapes (Knuth's T) */
 	int			tapeRange;		/* maxTapes-1 (Knuth's P) */
 	MemoryContext sortcontext;	/* memory context holding all sort data */
@@ -308,7 +308,7 @@ struct Tuplesortstate
 	int		   *mergenext;		/* first preread tuple for each source */
 	int		   *mergelast;		/* last preread tuple for each source */
 	int		   *mergeavailslots;	/* slots left for prereading each tape */
-	Size	   *mergeavailmem;	/* availMem for prereading each tape */
+	int64	   *mergeavailmem;	/* availMem for prereading each tape */
 	int			mergefreelist;	/* head of freelist of recycled slots */
 	int			mergefirstfree; /* first slot never used in this merge */
 
@@ -565,7 +565,7 @@ tuplesort_begin_common(int workMem, bool randomAccess)
 	state->randomAccess = randomAccess;
 	state->bounded = false;
 	state->boundUsed = false;
-	state->allowedMem = workMem * 1024L;
+	state->allowedMem = workMem * (int64) 1024;
 	state->availMem = state->allowedMem;
 	state->sortcontext = sortcontext;
 	state->tapeset = NULL;
@@ -980,7 +980,7 @@ grow_memtuples(Tuplesortstate *state)
 {
 	int			newmemtupsize;
 	int			memtupsize = state->memtupsize;
-	Size		memNowUsed = state->allowedMem - state->availMem;
+	int64		memNowUsed = state->allowedMem - state->availMem;
 
 	/* Forget it if we've already maxed out memtuples, per comment above */
 	if (!state->growmemtuples)
@@ -991,7 +991,7 @@ grow_memtuples(Tuplesortstate *state)
 	{
 		/*
 		 * We've used no more than half of allowedMem; double our usage,
-		 * clamping at INT_MAX.
+		 * clamping at INT_MAX tuples.
 		 */
 		if (memtupsize < INT_MAX / 2)
 			newmemtupsize = memtupsize * 2;
@@ -1048,7 +1048,9 @@ grow_memtuples(Tuplesortstate *state)
 	/*
 	 * On a 32-bit machine, allowedMem could exceed MaxAllocHugeSize.  Clamp
 	 * to ensure our request won't be rejected.  Note that we can easily
-	 * exhaust address space before facing this outcome.
+	 * exhaust address space before facing this outcome.  (This is presently
+	 * impossible due to guc.c's MAX_KILOBYTES limitation on work_mem, but
+	 * don't rely on that at this distance.)
 	 */
 	if ((Size) newmemtupsize >= MaxAllocHugeSize / sizeof(SortTuple))
 	{
@@ -1067,7 +1069,7 @@ grow_memtuples(Tuplesortstate *state)
 	 * palloc would be treating both old and new arrays as separate chunks.
 	 * But we'll check LACKMEM explicitly below just in case.)
 	 */
-	if (state->availMem < (Size) ((newmemtupsize - memtupsize) * sizeof(SortTuple)))
+	if (state->availMem < (int64) ((newmemtupsize - memtupsize) * sizeof(SortTuple)))
 		goto noalloc;
 
 	/* OK, do it */
@@ -1722,7 +1724,7 @@ tuplesort_getdatum(Tuplesortstate *state, bool forward,
  * This is exported for use by the planner.  allowedMem is in bytes.
  */
 int
-tuplesort_merge_order(Size allowedMem)
+tuplesort_merge_order(int64 allowedMem)
 {
 	int			mOrder;
 
@@ -1756,7 +1758,7 @@ inittapes(Tuplesortstate *state)
 	int			maxTapes,
 				ntuples,
 				j;
-	Size		tapeSpace;
+	int64		tapeSpace;
 
 	/* Compute number of tapes to use: merge order plus 1 */
 	maxTapes = tuplesort_merge_order(state->allowedMem) + 1;
@@ -1805,7 +1807,7 @@ inittapes(Tuplesortstate *state)
 	state->mergenext = (int *) palloc0(maxTapes * sizeof(int));
 	state->mergelast = (int *) palloc0(maxTapes * sizeof(int));
 	state->mergeavailslots = (int *) palloc0(maxTapes * sizeof(int));
-	state->mergeavailmem = (Size *) palloc0(maxTapes * sizeof(Size));
+	state->mergeavailmem = (int64 *) palloc0(maxTapes * sizeof(int64));
 	state->tp_fib = (int *) palloc0(maxTapes * sizeof(int));
 	state->tp_runs = (int *) palloc0(maxTapes * sizeof(int));
 	state->tp_dummy = (int *) palloc0(maxTapes * sizeof(int));
@@ -2033,7 +2035,7 @@ mergeonerun(Tuplesortstate *state)
 	int			srcTape;
 	int			tupIndex;
 	SortTuple  *tup;
-	Size		priorAvail,
+	int64		priorAvail,
 				spaceFreed;
 
 	/*
@@ -2107,7 +2109,7 @@ beginmerge(Tuplesortstate *state)
 	int			tapenum;
 	int			srcTape;
 	int			slotsPerTape;
-	Size		spacePerTape;
+	int64		spacePerTape;
 
 	/* Heap should be empty here */
 	Assert(state->memtupcount == 0);
@@ -2228,7 +2230,7 @@ mergeprereadone(Tuplesortstate *state, int srcTape)
 	unsigned int tuplen;
 	SortTuple	stup;
 	int			tupIndex;
-	Size		priorAvail,
+	int64		priorAvail,
 				spaceUsed;
 
 	if (!state->mergeactive[srcTape])

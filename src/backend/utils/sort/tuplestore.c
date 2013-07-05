@@ -104,8 +104,8 @@ struct Tuplestorestate
 	bool		backward;		/* store extra length words in file? */
 	bool		interXact;		/* keep open through transactions? */
 	bool		truncated;		/* tuplestore_trim has removed tuples? */
-	Size		availMem;		/* remaining memory available, in bytes */
-	Size		allowedMem;		/* total memory allowed, in bytes */
+	int64		availMem;		/* remaining memory available, in bytes */
+	int64		allowedMem;		/* total memory allowed, in bytes */
 	BufFile    *myfile;			/* underlying file, or NULL if none */
 	MemoryContext context;		/* memory context for holding tuples */
 	ResourceOwner resowner;		/* resowner for holding temp files */
@@ -550,7 +550,7 @@ grow_memtuples(Tuplestorestate *state)
 {
 	int			newmemtupsize;
 	int			memtupsize = state->memtupsize;
-	Size		memNowUsed = state->allowedMem - state->availMem;
+	int64		memNowUsed = state->allowedMem - state->availMem;
 
 	/* Forget it if we've already maxed out memtuples, per comment above */
 	if (!state->growmemtuples)
@@ -561,7 +561,7 @@ grow_memtuples(Tuplestorestate *state)
 	{
 		/*
 		 * We've used no more than half of allowedMem; double our usage,
-		 * clamping at INT_MAX.
+		 * clamping at INT_MAX tuples.
 		 */
 		if (memtupsize < INT_MAX / 2)
 			newmemtupsize = memtupsize * 2;
@@ -618,7 +618,9 @@ grow_memtuples(Tuplestorestate *state)
 	/*
 	 * On a 32-bit machine, allowedMem could exceed MaxAllocHugeSize.  Clamp
 	 * to ensure our request won't be rejected.  Note that we can easily
-	 * exhaust address space before facing this outcome.
+	 * exhaust address space before facing this outcome.  (This is presently
+	 * impossible due to guc.c's MAX_KILOBYTES limitation on work_mem, but
+	 * don't rely on that at this distance.)
 	 */
 	if ((Size) newmemtupsize >= MaxAllocHugeSize / sizeof(void *))
 	{
@@ -637,7 +639,7 @@ grow_memtuples(Tuplestorestate *state)
 	 * palloc would be treating both old and new arrays as separate chunks.
 	 * But we'll check LACKMEM explicitly below just in case.)
 	 */
-	if (state->availMem < (Size) ((newmemtupsize - memtupsize) * sizeof(void *)))
+	if (state->availMem < (int64) ((newmemtupsize - memtupsize) * sizeof(void *)))
 		goto noalloc;
 
 	/* OK, do it */
