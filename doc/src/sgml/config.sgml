@@ -1596,7 +1596,7 @@ include 'filename'
        </listitem>
       </varlistentry>
 
-      <varlistentry id="guc-max-worker-processes" xreflabel="max_worrker_processes">
+      <varlistentry id="guc-max-worker-processes" xreflabel="max_worker_processes">
        <term><varname>max_worker_processes</varname> (<type>integer</type>)</term>
        <indexterm>
         <primary><varname>max_worker_processes</> configuration parameter</primary>
