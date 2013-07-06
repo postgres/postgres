@@ -2941,22 +2941,22 @@ drop table tabwithcols;
 -- Tests for composite-type results
 --
 
-create type footype as (x int, y varchar);
+create type compostype as (x int, y varchar);
 
 -- test: use of variable of composite type in return statement
-create or replace function foo() returns footype as $$
+create or replace function compos() returns compostype as $$
 declare
-  v footype;
+  v compostype;
 begin
   v := (1, 'hello');
   return v;
 end;
 $$ language plpgsql;
 
-select foo();
+select compos();
 
 -- test: use of variable of record type in return statement
-create or replace function foo() returns footype as $$
+create or replace function compos() returns compostype as $$
 declare
   v record;
 begin
@@ -2965,39 +2965,39 @@ begin
 end;
 $$ language plpgsql;
 
-select foo();
+select compos();
 
 -- test: use of row expr in return statement
-create or replace function foo() returns footype as $$
+create or replace function compos() returns compostype as $$
 begin
   return (1, 'hello'::varchar);
 end;
 $$ language plpgsql;
 
-select foo();
+select compos();
 
 -- this does not work currently (no implicit casting)
-create or replace function foo() returns footype as $$
+create or replace function compos() returns compostype as $$
 begin
   return (1, 'hello');
 end;
 $$ language plpgsql;
 
-select foo();
+select compos();
 
 -- ... but this does
-create or replace function foo() returns footype as $$
+create or replace function compos() returns compostype as $$
 begin
-  return (1, 'hello')::footype;
+  return (1, 'hello')::compostype;
 end;
 $$ language plpgsql;
 
-select foo();
+select compos();
 
-drop function foo();
+drop function compos();
 
 -- test: return a row expr as record.
-create or replace function foorec() returns record as $$
+create or replace function composrec() returns record as $$
 declare
   v record;
 begin
@@ -3006,46 +3006,46 @@ begin
 end;
 $$ language plpgsql;
 
-select foorec();
+select composrec();
 
 -- test: return row expr in return statement.
-create or replace function foorec() returns record as $$
+create or replace function composrec() returns record as $$
 begin
   return (1, 'hello');
 end;
 $$ language plpgsql;
 
-select foorec();
+select composrec();
 
-drop function foorec();
+drop function composrec();
 
 -- test: row expr in RETURN NEXT statement.
-create or replace function foo() returns setof footype as $$
+create or replace function compos() returns setof compostype as $$
 begin
   for i in 1..3
   loop
     return next (1, 'hello'::varchar);
   end loop;
-  return next null::footype;
-  return next (2, 'goodbye')::footype;
+  return next null::compostype;
+  return next (2, 'goodbye')::compostype;
 end;
 $$ language plpgsql;
 
-select * from foo();
+select * from compos();
 
-drop function foo();
+drop function compos();
 
 -- test: use invalid expr in return statement.
-create or replace function foo() returns footype as $$
+create or replace function compos() returns compostype as $$
 begin
   return 1 + 1;
 end;
 $$ language plpgsql;
 
-select foo();
+select compos();
 
-drop function foo();
-drop type footype;
+drop function compos();
+drop type compostype;
 
 --
 -- Tests for 8.4's new RAISE features

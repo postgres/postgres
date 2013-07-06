@@ -3627,24 +3627,24 @@ drop table tabwithcols;
 --
 -- Tests for composite-type results
 --
-create type footype as (x int, y varchar);
+create type compostype as (x int, y varchar);
 -- test: use of variable of composite type in return statement
-create or replace function foo() returns footype as $$
+create or replace function compos() returns compostype as $$
 declare
-  v footype;
+  v compostype;
 begin
   v := (1, 'hello');
   return v;
 end;
 $$ language plpgsql;
-select foo();
-    foo    
+select compos();
+  compos   
 -----------
  (1,hello)
 (1 row)
 
 -- test: use of variable of record type in return statement
-create or replace function foo() returns footype as $$
+create or replace function compos() returns compostype as $$
 declare
   v record;
 begin
@@ -3652,49 +3652,49 @@ begin
   return v;
 end;
 $$ language plpgsql;
-select foo();
-    foo    
+select compos();
+  compos   
 -----------
  (1,hello)
 (1 row)
 
 -- test: use of row expr in return statement
-create or replace function foo() returns footype as $$
+create or replace function compos() returns compostype as $$
 begin
   return (1, 'hello'::varchar);
 end;
 $$ language plpgsql;
-select foo();
-    foo    
+select compos();
+  compos   
 -----------
  (1,hello)
 (1 row)
 
 -- this does not work currently (no implicit casting)
-create or replace function foo() returns footype as $$
+create or replace function compos() returns compostype as $$
 begin
   return (1, 'hello');
 end;
 $$ language plpgsql;
-select foo();
+select compos();
 ERROR:  returned record type does not match expected record type
 DETAIL:  Returned type unknown does not match expected type character varying in column 2.
-CONTEXT:  PL/pgSQL function foo() while casting return value to function's return type
+CONTEXT:  PL/pgSQL function compos() while casting return value to function's return type
 -- ... but this does
-create or replace function foo() returns footype as $$
+create or replace function compos() returns compostype as $$
 begin
-  return (1, 'hello')::footype;
+  return (1, 'hello')::compostype;
 end;
 $$ language plpgsql;
-select foo();
-    foo    
+select compos();
+  compos   
 -----------
  (1,hello)
 (1 row)
 
-drop function foo();
+drop function compos();
 -- test: return a row expr as record.
-create or replace function foorec() returns record as $$
+create or replace function composrec() returns record as $$
 declare
   v record;
 begin
@@ -3702,37 +3702,37 @@ begin
   return v;
 end;
 $$ language plpgsql;
-select foorec();
-  foorec   
+select composrec();
+ composrec 
 -----------
  (1,hello)
 (1 row)
 
 -- test: return row expr in return statement.
-create or replace function foorec() returns record as $$
+create or replace function composrec() returns record as $$
 begin
   return (1, 'hello');
 end;
 $$ language plpgsql;
-select foorec();
-  foorec   
+select composrec();
+ composrec 
 -----------
  (1,hello)
 (1 row)
 
-drop function foorec();
+drop function composrec();
 -- test: row expr in RETURN NEXT statement.
-create or replace function foo() returns setof footype as $$
+create or replace function compos() returns setof compostype as $$
 begin
   for i in 1..3
   loop
     return next (1, 'hello'::varchar);
   end loop;
-  return next null::footype;
-  return next (2, 'goodbye')::footype;
+  return next null::compostype;
+  return next (2, 'goodbye')::compostype;
 end;
 $$ language plpgsql;
-select * from foo();
+select * from compos();
  x |    y    
 ---+---------
  1 | hello
@@ -3742,18 +3742,18 @@ select * from foo();
  2 | goodbye
 (5 rows)
 
-drop function foo();
+drop function compos();
 -- test: use invalid expr in return statement.
-create or replace function foo() returns footype as $$
+create or replace function compos() returns compostype as $$
 begin
   return 1 + 1;
 end;
 $$ language plpgsql;
-select foo();
+select compos();
 ERROR:  cannot return non-composite value from function returning composite type
-CONTEXT:  PL/pgSQL function foo() line 3 at RETURN
-drop function foo();
-drop type footype;
+CONTEXT:  PL/pgSQL function compos() line 3 at RETURN
+drop function compos();
+drop type compostype;
 --
 -- Tests for 8.4's new RAISE features
 --
