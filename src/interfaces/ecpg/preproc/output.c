@@ -95,7 +95,7 @@ hashline_number(void)
 #endif
 		)
 	{
-		/* "* 2" here is for escaping \s below */
+		/* "* 2" here is for escaping '\' and '"' below */
 		char	   *line = mm_alloc(strlen("\n#line %d \"%s\"\n") + sizeof(int) * CHAR_BIT * 10 / 3 + strlen(input_filename) * 2);
 		char	   *src,
 				   *dest;
@@ -105,7 +105,7 @@ hashline_number(void)
 		dest = line + strlen(line);
 		while (*src)
 		{
-			if (*src == '\\')
+			if (*src == '\\' || *src == '"')
 				*dest++ = '\\';
 			*dest++ = *src++;
 		}
