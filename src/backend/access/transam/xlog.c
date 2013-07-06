@@ -2259,6 +2259,7 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent, bool use_lock)
 	XLogSegNo	installed_segno;
 	int			max_advance;
 	int			fd;
+	bool		zero_fill = true;
 
 	XLogFilePath(path, ThisTimeLineID, logsegno);
 
@@ -2301,24 +2302,18 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent, bool use_lock)
 				 errmsg("could not create file \"%s\": %m", tmppath)));
 
 #ifdef HAVE_POSIX_FALLOCATE
-	{
-		errno = posix_fallocate(fd, 0, XLogSegSize);
+	/*
+	 * If posix_fallocate() is available and succeeds, then the file is
+	 * properly allocated and we don't need to zero-fill it (which is less
+	 * efficient).  In case of an error, fall back to writing zeros, because on
+	 * some platforms posix_fallocate() is available but will not always
+	 * succeed in cases where zero-filling will.
+	 */
+	if (posix_fallocate(fd, 0, XLogSegSize) == 0)
+		zero_fill = false;
+#endif /* HAVE_POSIX_FALLOCATE */
 
-		if (errno)
-		{
-			int errno_saved = errno;
-
-			close(fd);
-			unlink(tmppath);
-			errno = errno_saved;
-
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not allocate space for file \"%s\" using posix_fallocate: %m",
-							tmppath)));
-		}
-	}
-#else /* !HAVE_POSIX_FALLOCATE */
+	if (zero_fill)
 	{
 		/*
 		 * Allocate a buffer full of zeros. This is done before opening the
@@ -2366,7 +2361,6 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent, bool use_lock)
 		}
 		pfree(zbuffer);
 	}
-#endif /* HAVE_POSIX_FALLOCATE */
 
 	if (pg_fsync(fd) != 0)
 	{
