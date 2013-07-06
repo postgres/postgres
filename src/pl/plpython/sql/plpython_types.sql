@@ -86,14 +86,19 @@ SELECT * FROM test_type_conversion_int8(null);
 
 
 CREATE FUNCTION test_type_conversion_numeric(x numeric) RETURNS numeric AS $$
-plpy.info(x, type(x))
+# print just the class name, not the type, to avoid differences
+# between decimal and cdecimal
+plpy.info(x, x.__class__.__name__)
 return x
 $$ LANGUAGE plpythonu;
 
-/* The current implementation converts numeric to float. */
 SELECT * FROM test_type_conversion_numeric(100);
 SELECT * FROM test_type_conversion_numeric(-100);
+SELECT * FROM test_type_conversion_numeric(100.0);
+SELECT * FROM test_type_conversion_numeric(100.00);
 SELECT * FROM test_type_conversion_numeric(5000000000.5);
+SELECT * FROM test_type_conversion_numeric(1234567890.0987654321);
+SELECT * FROM test_type_conversion_numeric(-1234567890.0987654321);
 SELECT * FROM test_type_conversion_numeric(null);
 
 
