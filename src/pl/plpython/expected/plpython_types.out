@@ -215,11 +215,11 @@ CONTEXT:  PL/Python function "test_type_conversion_int8"
 CREATE FUNCTION test_type_conversion_numeric(x numeric) RETURNS numeric AS $$
 # print just the class name, not the type, to avoid differences
 # between decimal and cdecimal
-plpy.info(x, x.__class__.__name__)
+plpy.info(str(x), x.__class__.__name__)
 return x
 $$ LANGUAGE plpythonu;
 SELECT * FROM test_type_conversion_numeric(100);
-INFO:  (Decimal('100'), 'Decimal')
+INFO:  ('100', 'Decimal')
 CONTEXT:  PL/Python function "test_type_conversion_numeric"
  test_type_conversion_numeric 
 ------------------------------
@@ -227,7 +227,7 @@ CONTEXT:  PL/Python function "test_type_conversion_numeric"
 (1 row)
 
 SELECT * FROM test_type_conversion_numeric(-100);
-INFO:  (Decimal('-100'), 'Decimal')
+INFO:  ('-100', 'Decimal')
 CONTEXT:  PL/Python function "test_type_conversion_numeric"
  test_type_conversion_numeric 
 ------------------------------
@@ -235,7 +235,7 @@ CONTEXT:  PL/Python function "test_type_conversion_numeric"
 (1 row)
 
 SELECT * FROM test_type_conversion_numeric(100.0);
-INFO:  (Decimal('100.0'), 'Decimal')
+INFO:  ('100.0', 'Decimal')
 CONTEXT:  PL/Python function "test_type_conversion_numeric"
  test_type_conversion_numeric 
 ------------------------------
@@ -243,7 +243,7 @@ CONTEXT:  PL/Python function "test_type_conversion_numeric"
 (1 row)
 
 SELECT * FROM test_type_conversion_numeric(100.00);
-INFO:  (Decimal('100.00'), 'Decimal')
+INFO:  ('100.00', 'Decimal')
 CONTEXT:  PL/Python function "test_type_conversion_numeric"
  test_type_conversion_numeric 
 ------------------------------
@@ -251,7 +251,7 @@ CONTEXT:  PL/Python function "test_type_conversion_numeric"
 (1 row)
 
 SELECT * FROM test_type_conversion_numeric(5000000000.5);
-INFO:  (Decimal('5000000000.5'), 'Decimal')
+INFO:  ('5000000000.5', 'Decimal')
 CONTEXT:  PL/Python function "test_type_conversion_numeric"
  test_type_conversion_numeric 
 ------------------------------
@@ -259,7 +259,7 @@ CONTEXT:  PL/Python function "test_type_conversion_numeric"
 (1 row)
 
 SELECT * FROM test_type_conversion_numeric(1234567890.0987654321);
-INFO:  (Decimal('1234567890.0987654321'), 'Decimal')
+INFO:  ('1234567890.0987654321', 'Decimal')
 CONTEXT:  PL/Python function "test_type_conversion_numeric"
  test_type_conversion_numeric 
 ------------------------------
@@ -267,7 +267,7 @@ CONTEXT:  PL/Python function "test_type_conversion_numeric"
 (1 row)
 
 SELECT * FROM test_type_conversion_numeric(-1234567890.0987654321);
-INFO:  (Decimal('-1234567890.0987654321'), 'Decimal')
+INFO:  ('-1234567890.0987654321', 'Decimal')
 CONTEXT:  PL/Python function "test_type_conversion_numeric"
  test_type_conversion_numeric 
 ------------------------------
@@ -275,7 +275,7 @@ CONTEXT:  PL/Python function "test_type_conversion_numeric"
 (1 row)
 
 SELECT * FROM test_type_conversion_numeric(null);
-INFO:  (None, 'NoneType')
+INFO:  ('None', 'NoneType')
 CONTEXT:  PL/Python function "test_type_conversion_numeric"
  test_type_conversion_numeric 
 ------------------------------

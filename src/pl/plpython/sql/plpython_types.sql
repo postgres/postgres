@@ -88,7 +88,7 @@ SELECT * FROM test_type_conversion_int8(null);
 CREATE FUNCTION test_type_conversion_numeric(x numeric) RETURNS numeric AS $$
 # print just the class name, not the type, to avoid differences
 # between decimal and cdecimal
-plpy.info(x, x.__class__.__name__)
+plpy.info(str(x), x.__class__.__name__)
 return x
 $$ LANGUAGE plpythonu;
 
