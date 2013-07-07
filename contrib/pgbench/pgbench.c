@@ -2950,6 +2950,7 @@ pthread_create(pthread_t *thread,
 {
 	fork_pthread *th;
 	void	   *ret;
+	int			rc;
 
 	th = (fork_pthread *) pg_malloc(sizeof(fork_pthread));
 	if (pipe(th->pipes) < 0)
@@ -2979,7 +2980,8 @@ pthread_create(pthread_t *thread,
 		setalarm(duration);
 
 	ret = start_routine(arg);
-	write(th->pipes[1], ret, sizeof(TResult));
+	rc = write(th->pipes[1], ret, sizeof(TResult));
+	(void) rc;
 	close(th->pipes[1]);
 	free(th);
 	exit(0);
