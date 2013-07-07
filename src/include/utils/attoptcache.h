@@ -10,8 +10,8 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef SPCCACHE_H
-#define SPCCACHE_H
+#ifndef ATTOPTCACHE_H
+#define ATTOPTCACHE_H
 
 /*
  * Attribute options.
@@ -25,4 +25,4 @@ typedef struct AttributeOpts
 
 AttributeOpts *get_attribute_options(Oid spcid, int attnum);
 
-#endif   /* SPCCACHE_H */
+#endif   /* ATTOPTCACHE_H */
