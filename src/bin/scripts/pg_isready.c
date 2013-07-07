@@ -220,6 +220,6 @@ help(const char *progname)
 	printf(_("  -h, --host=HOSTNAME      database server host or socket directory\n"));
 	printf(_("  -p, --port=PORT          database server port\n"));
 	printf(_("  -t, --timeout=SECS       seconds to wait when attempting connection, 0 disables (default: %s)\n"), DEFAULT_CONNECT_TIMEOUT);
-	printf(_("  -U, --username=USERNAME  database username\n"));
+	printf(_("  -U, --username=USERNAME  user name to connect as\n"));
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
