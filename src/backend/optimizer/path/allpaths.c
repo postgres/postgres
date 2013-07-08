@@ -68,6 +68,9 @@ static void set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 static void generate_mergeappend_paths(PlannerInfo *root, RelOptInfo *rel,
 						   List *live_childrels,
 						   List *all_child_pathkeys);
+static Path *get_cheapest_parameterized_child_path(PlannerInfo *root,
+									  RelOptInfo *rel,
+									  Relids required_outer);
 static List *accumulate_append_subpath(List *subpaths, Path *path);
 static void set_dummy_rel_pathlist(RelOptInfo *rel);
 static void set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
@@ -831,28 +834,18 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		foreach(lcr, live_childrels)
 		{
 			RelOptInfo *childrel = (RelOptInfo *) lfirst(lcr);
-			Path	   *cheapest_total;
+			Path	   *subpath;
 
-			cheapest_total =
-				get_cheapest_path_for_pathkeys(childrel->pathlist,
-											   NIL,
-											   required_outer,
-											   TOTAL_COST);
-			Assert(cheapest_total != NULL);
-
-			/* Children must have exactly the desired parameterization */
-			if (!bms_equal(PATH_REQ_OUTER(cheapest_total), required_outer))
+			subpath = get_cheapest_parameterized_child_path(root,
+															childrel,
+															required_outer);
+			if (subpath == NULL)
 			{
-				cheapest_total = reparameterize_path(root, cheapest_total,
-													 required_outer, 1.0);
-				if (cheapest_total == NULL)
-				{
-					subpaths_valid = false;
-					break;
-				}
+				/* failed to make a suitable path for this child */
+				subpaths_valid = false;
+				break;
 			}
-
-			subpaths = accumulate_append_subpath(subpaths, cheapest_total);
+			subpaths = accumulate_append_subpath(subpaths, subpath);
 		}
 
 		if (subpaths_valid)
@@ -960,6 +953,79 @@ generate_mergeappend_paths(PlannerInfo *root, RelOptInfo *rel,
 															pathkeys,
 															NULL));
 	}
+}
+
+/*
+ * get_cheapest_parameterized_child_path
+ *		Get cheapest path for this relation that has exactly the requested
+ *		parameterization.
+ *
+ * Returns NULL if unable to create such a path.
+ */
+static Path *
+get_cheapest_parameterized_child_path(PlannerInfo *root, RelOptInfo *rel,
+									  Relids required_outer)
+{
+	Path	   *cheapest;
+	ListCell   *lc;
+
+	/*
+	 * Look up the cheapest existing path with no more than the needed
+	 * parameterization.  If it has exactly the needed parameterization, we're
+	 * done.
+	 */
+	cheapest = get_cheapest_path_for_pathkeys(rel->pathlist,
+											  NIL,
+											  required_outer,
+											  TOTAL_COST);
+	Assert(cheapest != NULL);
+	if (bms_equal(PATH_REQ_OUTER(cheapest), required_outer))
+		return cheapest;
+
+	/*
+	 * Otherwise, we can "reparameterize" an existing path to match the given
+	 * parameterization, which effectively means pushing down additional
+	 * joinquals to be checked within the path's scan.  However, some existing
+	 * paths might check the available joinquals already while others don't;
+	 * therefore, it's not clear which existing path will be cheapest after
+	 * reparameterization.	We have to go through them all and find out.
+	 */
+	cheapest = NULL;
+	foreach(lc, rel->pathlist)
+	{
+		Path	   *path = (Path *) lfirst(lc);
+
+		/* Can't use it if it needs more than requested parameterization */
+		if (!bms_is_subset(PATH_REQ_OUTER(path), required_outer))
+			continue;
+
+		/*
+		 * Reparameterization can only increase the path's cost, so if it's
+		 * already more expensive than the current cheapest, forget it.
+		 */
+		if (cheapest != NULL &&
+			compare_path_costs(cheapest, path, TOTAL_COST) <= 0)
+			continue;
+
+		/* Reparameterize if needed, then recheck cost */
+		if (!bms_equal(PATH_REQ_OUTER(path), required_outer))
+		{
+			path = reparameterize_path(root, path, required_outer, 1.0);
+			if (path == NULL)
+				continue;		/* failed to reparameterize this one */
+			Assert(bms_equal(PATH_REQ_OUTER(path), required_outer));
+
+			if (cheapest != NULL &&
+				compare_path_costs(cheapest, path, TOTAL_COST) <= 0)
+				continue;
+		}
+
+		/* We have a new best path */
+		cheapest = path;
+	}
+
+	/* Return the best path, or NULL if we found no suitable candidate */
+	return cheapest;
 }
 
 /*

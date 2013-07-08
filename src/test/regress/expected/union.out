@@ -603,3 +603,37 @@ WHERE x > 3;
  2 | 4
 (1 row)
 
+-- Test proper handling of parameterized appendrel paths when the
+-- potential join qual is expensive
+create function expensivefunc(int) returns int
+language plpgsql immutable strict cost 10000
+as $$begin return $1; end$$;
+create temp table t3 as select generate_series(-1000,1000) as x;
+create index t3i on t3 (expensivefunc(x));
+analyze t3;
+explain (costs off)
+select * from
+  (select * from t3 a union all select * from t3 b) ss
+  join int4_tbl on f1 = expensivefunc(x);
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Nested Loop
+   ->  Seq Scan on int4_tbl
+   ->  Append
+         ->  Index Scan using t3i on t3 a
+               Index Cond: (expensivefunc(x) = int4_tbl.f1)
+         ->  Index Scan using t3i on t3 b
+               Index Cond: (expensivefunc(x) = int4_tbl.f1)
+(7 rows)
+
+select * from
+  (select * from t3 a union all select * from t3 b) ss
+  join int4_tbl on f1 = expensivefunc(x);
+ x | f1 
+---+----
+ 0 |  0
+ 0 |  0
+(2 rows)
+
+drop table t3;
+drop function expensivefunc(int);
