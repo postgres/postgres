@@ -103,7 +103,7 @@ test=# SELECT * FROM page_header(get_raw_page('pg_class', 0));
 test=# SELECT * FROM heap_page_items(get_raw_page('pg_class', 0));
 </screen>
       See <filename>src/include/storage/itemid.h</> and
-      <filename>src/include/access/htup.h</> for explanations of the fields
+      <filename>src/include/access/htup_details.h</> for explanations of the fields
       returned.
      </para>
     </listitem>
