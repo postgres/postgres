@@ -5074,7 +5074,8 @@ XLOGShmemInit(void)
 
 	ControlFile = (ControlFileData *)
 		ShmemInitStruct("Control File", sizeof(ControlFileData), &foundCFile);
-	allocptr = ShmemInitStruct("XLOG Ctl", XLOGShmemSize(), &foundXLog);
+	XLogCtl = (XLogCtlData *)
+		ShmemInitStruct("XLOG Ctl", XLOGShmemSize(), &foundXLog);
 
 	if (foundCFile || foundXLog)
 	{
@@ -5082,7 +5083,6 @@ XLOGShmemInit(void)
 		Assert(foundCFile && foundXLog);
 		return;
 	}
-	XLogCtl = (XLogCtlData *) allocptr;
 	memset(XLogCtl, 0, sizeof(XLogCtlData));
 
 	/*
@@ -5090,7 +5090,7 @@ XLOGShmemInit(void)
 	 * multiple of the alignment for same, so no extra alignment padding is
 	 * needed here.
 	 */
-	allocptr += sizeof(XLogCtlData);
+	allocptr = ((char *) XLogCtl) + sizeof(XLogCtlData);
 	XLogCtl->xlblocks = (XLogRecPtr *) allocptr;
 	memset(XLogCtl->xlblocks, 0, sizeof(XLogRecPtr) * XLOGbuffers);
 	allocptr += sizeof(XLogRecPtr) * XLOGbuffers;
