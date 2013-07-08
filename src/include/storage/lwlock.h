@@ -53,7 +53,7 @@ typedef enum LWLockId
 	ProcArrayLock,
 	SInvalReadLock,
 	SInvalWriteLock,
-	WALInsertLock,
+	WALBufMappingLock,
 	WALWriteLock,
 	ControlFileLock,
 	CheckpointLock,

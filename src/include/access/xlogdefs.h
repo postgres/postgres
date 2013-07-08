@@ -93,14 +93,4 @@ typedef uint32 TimeLineID;
 #define DEFAULT_SYNC_METHOD		SYNC_METHOD_FSYNC
 #endif
 
-/*
- * Limitation of buffer-alignment for direct IO depends on OS and filesystem,
- * but XLOG_BLCKSZ is assumed to be enough for it.
- */
-#ifdef O_DIRECT
-#define ALIGNOF_XLOG_BUFFER		XLOG_BLCKSZ
-#else
-#define ALIGNOF_XLOG_BUFFER		ALIGNOF_BUFFER
-#endif
-
 #endif   /* XLOG_DEFS_H */

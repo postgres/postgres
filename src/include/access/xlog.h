@@ -190,6 +190,7 @@ extern char *XLogArchiveCommand;
 extern bool EnableHotStandby;
 extern bool fullPageWrites;
 extern bool log_checkpoints;
+extern int	num_xloginsert_slots;
 
 /* WAL levels */
 typedef enum WalLevel
