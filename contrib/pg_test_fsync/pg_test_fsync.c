@@ -206,7 +206,7 @@ prepare_buf(void)
 	for (ops = 0; ops < XLOG_SEG_SIZE; ops++)
 		full_buf[ops] = random();
 
-	buf = (char *) TYPEALIGN(ALIGNOF_XLOG_BUFFER, full_buf);
+	buf = (char *) TYPEALIGN(XLOG_BLCKSZ, full_buf);
 }
 
 static void
