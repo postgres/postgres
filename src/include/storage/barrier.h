@@ -53,6 +53,7 @@ extern slock_t dummy_spinlock;
 /*
  * icc defines __GNUC__, but doesn't support gcc's inline asm syntax
  */
+#include <emmintrin.h>
 #define pg_memory_barrier()		_mm_mfence()
 #define pg_compiler_barrier()	__memory_barrier()
 #elif defined(__GNUC__)
