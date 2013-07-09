@@ -32,6 +32,8 @@
  * Internal routines
  */
 
+enum path_delim { PATH_NONE, PATH_OPEN, PATH_CLOSED };
+
 static int	point_inside(Point *p, int npts, Point *plist);
 static int	lseg_crossing(double x, double y, double px, double py);
 static BOX *box_construct(double x1, double x2, double y1, double y2);
@@ -57,7 +59,7 @@ static int	pair_decode(char *str, float8 *x, float8 *y, char **s);
 static int	pair_encode(float8 x, float8 y, char *str);
 static int	pair_count(char *s, char delim);
 static int	path_decode(int opentype, int npts, char *str, int *isopen, char **ss, Point *p);
-static char *path_encode(bool closed, int npts, Point *pt);
+static char *path_encode(enum path_delim path_delim, int npts, Point *pt);
 static void statlseg_construct(LSEG *lseg, Point *pt1, Point *pt2);
 static double box_ar(BOX *box);
 static void box_cn(Point *center, BOX *box);
@@ -280,7 +282,7 @@ path_decode(int opentype, int npts, char *str, int *isopen, char **ss, Point *p)
 }	/* path_decode() */
 
 static char *
-path_encode(bool closed, int npts, Point *pt)
+path_encode(enum path_delim path_delim, int npts, Point *pt)
 {
 	int			size = npts * (P_MAXLEN + 3) + 2;
 	char	   *result;
@@ -296,15 +298,15 @@ path_encode(bool closed, int npts, Point *pt)
 	result = palloc(size);
 
 	cp = result;
-	switch (closed)
+	switch (path_delim)
 	{
-		case TRUE:
+		case PATH_CLOSED:
 			*cp++ = LDELIM;
 			break;
-		case FALSE:
+		case PATH_OPEN:
 			*cp++ = LDELIM_EP;
 			break;
-		default:
+		case PATH_NONE:
 			break;
 	}
 
@@ -322,15 +324,15 @@ path_encode(bool closed, int npts, Point *pt)
 		pt++;
 	}
 	cp--;
-	switch (closed)
+	switch (path_delim)
 	{
-		case TRUE:
+		case PATH_CLOSED:
 			*cp++ = RDELIM;
 			break;
-		case FALSE:
+		case PATH_OPEN:
 			*cp++ = RDELIM_EP;
 			break;
-		default:
+		case PATH_NONE:
 			break;
 	}
 	*cp = '\0';
@@ -415,7 +417,7 @@ box_out(PG_FUNCTION_ARGS)
 {
 	BOX		   *box = PG_GETARG_BOX_P(0);
 
-	PG_RETURN_CSTRING(path_encode(-1, 2, &(box->high)));
+	PG_RETURN_CSTRING(path_encode(PATH_NONE, 2, &(box->high)));
 }
 
 /*
@@ -1018,7 +1020,7 @@ line_out(PG_FUNCTION_ARGS)
 	{
 	}
 
-	return path_encode(TRUE, 2, (Point *) &(ls->p[0]));
+	return path_encode(PATH_CLOSED, 2, (Point *) &(ls->p[0]));
 #else
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1441,7 +1443,7 @@ path_out(PG_FUNCTION_ARGS)
 {
 	PATH	   *path = PG_GETARG_PATH_P(0);
 
-	PG_RETURN_CSTRING(path_encode(path->closed, path->npts, path->p));
+	PG_RETURN_CSTRING(path_encode(path->closed ? PATH_CLOSED : PATH_OPEN, path->npts, path->p));
 }
 
 /*
@@ -1823,7 +1825,7 @@ point_out(PG_FUNCTION_ARGS)
 {
 	Point	   *pt = PG_GETARG_POINT_P(0);
 
-	PG_RETURN_CSTRING(path_encode(-1, 1, pt));
+	PG_RETURN_CSTRING(path_encode(PATH_NONE, 1, pt));
 }
 
 /*
@@ -2051,7 +2053,7 @@ lseg_out(PG_FUNCTION_ARGS)
 {
 	LSEG	   *ls = PG_GETARG_LSEG_P(0);
 
-	PG_RETURN_CSTRING(path_encode(FALSE, 2, (Point *) &(ls->p[0])));
+	PG_RETURN_CSTRING(path_encode(PATH_OPEN, 2, (Point *) &(ls->p[0])));
 }
 
 /*
@@ -3494,7 +3496,7 @@ poly_out(PG_FUNCTION_ARGS)
 {
 	POLYGON    *poly = PG_GETARG_POLYGON_P(0);
 
-	PG_RETURN_CSTRING(path_encode(TRUE, poly->npts, poly->p));
+	PG_RETURN_CSTRING(path_encode(PATH_CLOSED, poly->npts, poly->p));
 }
 
 /*
