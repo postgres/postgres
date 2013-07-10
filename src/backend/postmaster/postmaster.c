@@ -5227,8 +5227,10 @@ RegisterBackgroundWorker(BackgroundWorker *worker)
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIGURATION_LIMIT_EXCEEDED),
 				 errmsg("too many background workers"),
-				 errdetail("Up to %d background workers can be registered with the current settings.",
-						   maxworkers)));
+				 errdetail_plural("Up to %d background worker can be registered with the current settings.",
+								  "Up to %d background workers can be registered with the current settings.",
+								  maxworkers,
+								  maxworkers)));
 		return;
 	}
 
