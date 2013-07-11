@@ -867,7 +867,7 @@ pg_ctl start | rotatelogs /var/log/pgsql_log 86400
   </para>
 
   <para>
-   <ulink url="http://pgfouine.projects.postgresql.org/"><productname>pgFouine</productname></ulink>
+   <ulink url="http://dalibo.github.io/pgbadger/"><productname>pgBadger</productname></ulink>
    is an external project that does sophisticated log file analysis.
    <ulink
    url="http://bucardo.org/wiki/Check_postgres"><productname>check_postgres</productname></ulink>
