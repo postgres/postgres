@@ -122,6 +122,9 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	RewriteRule *rule;
 	List	   *actions;
 	Query	   *dataQuery;
+	Oid			save_userid;
+	int			save_sec_context;
+	int			save_nestlevel;
 	Oid			tableSpace;
 	Oid			OIDNewHeap;
 	DestReceiver *dest;
@@ -192,6 +195,16 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	CheckTableNotInUse(matviewRel, "REFRESH MATERIALIZED VIEW");
 
 	/*
+	 * Switch to the owner's userid, so that any functions are run as that
+	 * user.  Also lock down security-restricted operations and arrange to
+	 * make GUC variable changes local to this command.
+	 */
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	SetUserIdAndSecContext(matviewRel->rd_rel->relowner,
+						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
+	save_nestlevel = NewGUCNestLevel();
+
+	/*
 	 * Tentatively mark the matview as populated or not (this will roll back
 	 * if we fail later).
 	 */
@@ -217,6 +230,12 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 					 RecentXmin, ReadNextMultiXactId());
 
 	RelationCacheInvalidateEntry(matviewOid);
+
+	/* Roll back any GUC changes */
+	AtEOXact_GUC(false, save_nestlevel);
+
+	/* Restore userid and security context */
+	SetUserIdAndSecContext(save_userid, save_sec_context);
 }
 
 /*
