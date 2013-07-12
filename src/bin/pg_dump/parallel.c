@@ -140,7 +140,7 @@ init_parallel_dump_utils(void)
 		err = WSAStartup(MAKEWORD(2, 2), &wsaData);
 		if (err != 0)
 		{
-			fprintf(stderr, _("WSAStartup failed: %d\n"), err);
+			fprintf(stderr, _("%s: WSAStartup failed: %d\n"), progname, err);
 			exit_nicely(1);
 		}
 		on_exit_nicely(shutdown_parallel_dump_utils, NULL);
@@ -532,7 +532,7 @@ ParallelBackupStart(ArchiveHandle *AH, RestoreOptions *ropt)
 
 		if (pgpipe(pipeMW) < 0 || pgpipe(pipeWM) < 0)
 			exit_horribly(modulename,
-						  "Cannot create communication channels: %s\n",
+						  "could not create communication channels: %s\n",
 						  strerror(errno));
 
 		pstate->parallelSlot[i].workerStatus = WRKR_IDLE;
@@ -819,7 +819,7 @@ lockTableNoWait(ArchiveHandle *AH, TocEntry *te)
 
 	if (!res || PQresultStatus(res) != PGRES_TUPLES_OK)
 		exit_horribly(modulename,
-					  "could not get relation name for oid %d: %s\n",
+					  "could not get relation name for OID %u: %s\n",
 					  te->catalogId.oid, PQerrorMessage(AH->connection));
 
 	resetPQExpBuffer(query);
@@ -836,9 +836,9 @@ lockTableNoWait(ArchiveHandle *AH, TocEntry *te)
 
 	if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
 		exit_horribly(modulename,
-					  "could not obtain lock on relation \"%s\". This "
-			 "usually means that someone requested an ACCESS EXCLUSIVE lock "
-			  "on the table after the pg_dump parent process has gotten the "
+					  "could not obtain lock on relation \"%s\"\n"
+					  "This usually means that someone requested an ACCESS EXCLUSIVE lock "
+					  "on the table after the pg_dump parent process had gotten the "
 					  "initial ACCESS SHARE lock on the table.\n", qualId);
 
 	PQclear(res);
@@ -920,7 +920,7 @@ WaitForCommands(ArchiveHandle *AH, int pipefd[2])
 		}
 		else
 			exit_horribly(modulename,
-						  "Unknown command on communication channel: %s\n",
+						  "unrecognized command on communication channel: %s\n",
 						  command);
 	}
 }
@@ -950,7 +950,7 @@ ListenToWorkers(ArchiveHandle *AH, ParallelState *pstate, bool do_wait)
 	if (!msg)
 	{
 		if (do_wait)
-			exit_horribly(modulename, "A worker process died unexpectedly\n");
+			exit_horribly(modulename, "a worker process died unexpectedly\n");
 		return;
 	}
 
@@ -977,7 +977,7 @@ ListenToWorkers(ArchiveHandle *AH, ParallelState *pstate, bool do_wait)
 		}
 		else
 			exit_horribly(modulename,
-						  "Invalid message received from worker: %s\n", msg);
+						  "invalid message received from worker: %s\n", msg);
 	}
 	else if (messageStartsWith(msg, "ERROR "))
 	{
@@ -986,7 +986,7 @@ ListenToWorkers(ArchiveHandle *AH, ParallelState *pstate, bool do_wait)
 		exit_horribly(modulename, "%s", msg + strlen("ERROR "));
 	}
 	else
-		exit_horribly(modulename, "Invalid message received from worker: %s\n", msg);
+		exit_horribly(modulename, "invalid message received from worker: %s\n", msg);
 
 	/* both Unix and Win32 return pg_malloc()ed space, so we free it */
 	free(msg);
@@ -1035,7 +1035,7 @@ EnsureIdleWorker(ArchiveHandle *AH, ParallelState *pstate)
 		while ((ret_worker = ReapWorkerStatus(pstate, &work_status)) != NO_SLOT)
 		{
 			if (work_status != 0)
-				exit_horribly(modulename, "Error processing a parallel work item.\n");
+				exit_horribly(modulename, "error processing a parallel work item\n");
 
 			nTerm++;
 		}
@@ -1079,7 +1079,7 @@ EnsureWorkersFinished(ArchiveHandle *AH, ParallelState *pstate)
 			ListenToWorkers(AH, pstate, true);
 		else if (work_status != 0)
 			exit_horribly(modulename,
-						  "Error processing a parallel work item\n");
+						  "error processing a parallel work item\n");
 	}
 }
 
@@ -1107,7 +1107,7 @@ sendMessageToMaster(int pipefd[2], const char *str)
 
 	if (pipewrite(pipefd[PIPE_WRITE], str, len) != len)
 		exit_horribly(modulename,
-					  "Error writing to the communication channel: %s\n",
+					  "could not write to the communication channel: %s\n",
 					  strerror(errno));
 }
 
@@ -1208,7 +1208,7 @@ getMessageFromWorker(ParallelState *pstate, bool do_wait, int *worker)
 	}
 
 	if (i < 0)
-		exit_horribly(modulename, "Error in ListenToWorkers(): %s", strerror(errno));
+		exit_horribly(modulename, "error in ListenToWorkers(): %s\n", strerror(errno));
 
 	for (i = 0; i < pstate->numWorkers; i++)
 	{
@@ -1245,7 +1245,7 @@ sendMessageToWorker(ParallelState *pstate, int worker, const char *str)
 		if (!aborting)
 #endif
 			exit_horribly(modulename,
-						  "Error writing to the communication channel: %s\n",
+						  "could not write to the communication channel: %s\n",
 						  strerror(errno));
 	}
 }
@@ -1319,7 +1319,7 @@ pgpipe(int handles[2])
 
 	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
 	{
-		write_msg(modulename, "pgpipe could not create socket: %ui",
+		write_msg(modulename, "pgpipe: could not create socket: error code %d\n",
 				  WSAGetLastError());
 		return -1;
 	}
@@ -1330,28 +1330,28 @@ pgpipe(int handles[2])
 	serv_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 	if (bind(s, (SOCKADDR *) &serv_addr, len) == SOCKET_ERROR)
 	{
-		write_msg(modulename, "pgpipe could not bind: %ui",
+		write_msg(modulename, "pgpipe: could not bind: error code %d\n",
 				  WSAGetLastError());
 		closesocket(s);
 		return -1;
 	}
 	if (listen(s, 1) == SOCKET_ERROR)
 	{
-		write_msg(modulename, "pgpipe could not listen: %ui",
+		write_msg(modulename, "pgpipe: could not listen: error code %d\n",
 				  WSAGetLastError());
 		closesocket(s);
 		return -1;
 	}
 	if (getsockname(s, (SOCKADDR *) &serv_addr, &len) == SOCKET_ERROR)
 	{
-		write_msg(modulename, "pgpipe could not getsockname: %ui",
+		write_msg(modulename, "pgpipe: getsockname() failed: error code %d\n",
 				  WSAGetLastError());
 		closesocket(s);
 		return -1;
 	}
 	if ((handles[1] = socket(PF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
 	{
-		write_msg(modulename, "pgpipe could not create socket 2: %ui",
+		write_msg(modulename, "pgpipe: could not create second socket: error code %d\n",
 				  WSAGetLastError());
 		closesocket(s);
 		return -1;
@@ -1359,14 +1359,14 @@ pgpipe(int handles[2])
 
 	if (connect(handles[1], (SOCKADDR *) &serv_addr, len) == SOCKET_ERROR)
 	{
-		write_msg(modulename, "pgpipe could not connect socket: %ui",
+		write_msg(modulename, "pgpipe: could not connect socket: error code %d\n",
 				  WSAGetLastError());
 		closesocket(s);
 		return -1;
 	}
 	if ((handles[0] = accept(s, (SOCKADDR *) &serv_addr, &len)) == INVALID_SOCKET)
 	{
-		write_msg(modulename, "pgpipe could not accept socket: %ui",
+		write_msg(modulename, "pgpipe: could not accept connection: error code %d\n",
 				  WSAGetLastError());
 		closesocket(handles[1]);
 		handles[1] = INVALID_SOCKET;

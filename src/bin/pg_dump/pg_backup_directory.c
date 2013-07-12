@@ -797,7 +797,7 @@ _WorkerJobDumpDirectory(ArchiveHandle *AH, TocEntry *te)
 
 	/* This should never happen */
 	if (!tctx)
-		exit_horribly(modulename, "Error during backup\n");
+		exit_horribly(modulename, "error during backup\n");
 
 	/*
 	 * This function returns void. We either fail and die horribly or
