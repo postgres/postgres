@@ -4446,7 +4446,6 @@ exec_eval_datum(PLpgSQL_execstate *estate,
 							 errmsg("record \"%s\" has no field \"%s\"",
 									rec->refname, recfield->fieldname)));
 				*typeid = SPI_gettypeid(rec->tupdesc, fno);
-				/* XXX there's no SPI_gettypmod, for some reason */
 				if (fno > 0)
 					*typetypmod = rec->tupdesc->attrs[fno - 1]->atttypmod;
 				else
@@ -4623,12 +4622,10 @@ exec_get_datum_type_info(PLpgSQL_execstate *estate,
 							 errmsg("record \"%s\" has no field \"%s\"",
 									rec->refname, recfield->fieldname)));
 				*typeid = SPI_gettypeid(rec->tupdesc, fno);
-				/* XXX there's no SPI_gettypmod, for some reason */
 				if (fno > 0)
 					*typmod = rec->tupdesc->attrs[fno - 1]->atttypmod;
 				else
 					*typmod = -1;
-				/* XXX there's no SPI_getcollation either */
 				if (fno > 0)
 					*collation = rec->tupdesc->attrs[fno - 1]->attcollation;
 				else	/* no system column types have collation */

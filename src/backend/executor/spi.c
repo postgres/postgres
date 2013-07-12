@@ -940,6 +940,12 @@ SPI_gettype(TupleDesc tupdesc, int fnumber)
 	return result;
 }
 
+/*
+ * Get the data type OID for a column.
+ *
+ * There's nothing similar for typmod and typcollation.  The rare consumers
+ * thereof should inspect the TupleDesc directly.
+ */
 Oid
 SPI_gettypeid(TupleDesc tupdesc, int fnumber)
 {
