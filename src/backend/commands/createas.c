@@ -33,6 +33,7 @@
 #include "commands/prepare.h"
 #include "commands/tablecmds.h"
 #include "commands/view.h"
+#include "miscadmin.h"
 #include "parser/parse_clause.h"
 #include "rewrite/rewriteHandler.h"
 #include "storage/smgr.h"
@@ -69,7 +70,11 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 {
 	Query	   *query = (Query *) stmt->query;
 	IntoClause *into = stmt->into;
+	bool		is_matview = (into->viewQuery != NULL);
 	DestReceiver *dest;
+	Oid			save_userid = InvalidOid;
+	int			save_sec_context = 0;
+	int			save_nestlevel = 0;
 	List	   *rewritten;
 	PlannedStmt *plan;
 	QueryDesc  *queryDesc;
@@ -90,11 +95,27 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	{
 		ExecuteStmt *estmt = (ExecuteStmt *) query->utilityStmt;
 
+		Assert(!is_matview);	/* excluded by syntax */
 		ExecuteQuery(estmt, into, queryString, params, dest, completionTag);
 
 		return;
 	}
 	Assert(query->commandType == CMD_SELECT);
+
+	/*
+	 * For materialized views, lock down security-restricted operations and
+	 * arrange to make GUC variable changes local to this command.	This is
+	 * not necessary for security, but this keeps the behavior similar to
+	 * REFRESH MATERIALIZED VIEW.  Otherwise, one could create a materialized
+	 * view not possible to refresh.
+	 */
+	if (is_matview)
+	{
+		GetUserIdAndSecContext(&save_userid, &save_sec_context);
+		SetUserIdAndSecContext(save_userid,
+						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
+		save_nestlevel = NewGUCNestLevel();
+	}
 
 	/*
 	 * Parse analysis was done already, but we still have to run the rule
@@ -160,6 +181,15 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	FreeQueryDesc(queryDesc);
 
 	PopActiveSnapshot();
+
+	if (is_matview)
+	{
+		/* Roll back any GUC changes */
+		AtEOXact_GUC(false, save_nestlevel);
+
+		/* Restore userid and security context */
+		SetUserIdAndSecContext(save_userid, save_sec_context);
+	}
 }
 
 /*

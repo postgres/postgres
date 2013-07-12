@@ -105,7 +105,9 @@ CREATE MATERIALIZED VIEW <replaceable>table_name</replaceable>
     <listitem>
      <para>
       A <xref linkend="sql-select">, <link linkend="sql-table">TABLE</link>,
-      or <xref linkend="sql-values"> command.
+      or <xref linkend="sql-values"> command.  This query will run within a
+      security-restricted operation; in particular, calls to functions that
+      themselves create temporary tables will fail.
      </para>
     </listitem>
    </varlistentry>
