@@ -329,6 +329,7 @@ writeTimeLineHistoryFile(char *basedir, TimeLineID tli, char *filename, char *co
 		/*
 		 * If we fail to make the file, delete it to release disk space
 		 */
+		close(fd);
 		unlink(tmppath);
 		errno = save_errno;
 
@@ -339,6 +340,7 @@ writeTimeLineHistoryFile(char *basedir, TimeLineID tli, char *filename, char *co
 
 	if (fsync(fd) != 0)
 	{
+		close(fd);
 		fprintf(stderr, _("%s: could not fsync file \"%s\": %s\n"),
 				progname, tmppath, strerror(errno));
 		return false;
