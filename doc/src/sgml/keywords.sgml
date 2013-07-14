@@ -3200,7 +3200,7 @@
    </row>
    <row>
     <entry><token>OVER</token></entry>
-    <entry>reserved (can be function or type)</entry>
+    <entry>non-reserved</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
     <entry></entry>
