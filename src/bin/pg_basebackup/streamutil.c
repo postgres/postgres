@@ -57,7 +57,7 @@ GetConnection(void)
 		if (conn_opts == NULL)
 		{
 			fprintf(stderr, "%s: %s\n", progname, err_msg);
-			return NULL;
+			exit(1);
 		}
 
 		for (conn_opt = conn_opts; conn_opt->keyword != NULL; conn_opt++)
