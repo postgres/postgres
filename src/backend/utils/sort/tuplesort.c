@@ -1788,7 +1788,7 @@ inittapes(Tuplesortstate *state)
 	 * account for tuple space, so we don't care if LACKMEM becomes
 	 * inaccurate.)
 	 */
-	tapeSpace = maxTapes * TAPE_BUFFER_OVERHEAD;
+	tapeSpace = (int64) maxTapes * TAPE_BUFFER_OVERHEAD;
 	if (tapeSpace + GetMemoryChunkSpace(state->memtuples) < state->allowedMem)
 		USEMEM(state, tapeSpace);
 
