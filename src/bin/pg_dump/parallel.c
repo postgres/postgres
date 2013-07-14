@@ -922,6 +922,9 @@ WaitForCommands(ArchiveHandle *AH, int pipefd[2])
 			exit_horribly(modulename,
 						  "unrecognized command on communication channel: %s\n",
 						  command);
+
+		/* command was pg_malloc'd and we are responsible for free()ing it. */
+		free(command);
 	}
 }
 
