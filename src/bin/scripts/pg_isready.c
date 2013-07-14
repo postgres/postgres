@@ -143,7 +143,7 @@ main(int argc, char **argv)
 	defs = PQconndefaults();
 	if (defs == NULL)
 	{
-		fprintf(stderr, _("%s: cannot fetch default options\n"), progname);
+		fprintf(stderr, _("%s: could not fetch default options\n"), progname);
 		exit(PQPING_NO_ATTEMPT);
 	}
 
