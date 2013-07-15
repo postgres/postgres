@@ -96,6 +96,7 @@ test: privileges
 test: security_label
 test: collate
 test: matview
+test: lock
 test: alter_generic
 test: misc
 test: psql
