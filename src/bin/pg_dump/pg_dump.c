@@ -5746,7 +5746,7 @@ EventTriggerInfo *
 getEventTriggers(Archive *fout, int *numEventTriggers)
 {
 	int			i;
-	PQExpBuffer query = createPQExpBuffer();
+	PQExpBuffer query;
 	PGresult   *res;
 	EventTriggerInfo *evtinfo;
 	int			i_tableoid,
@@ -5765,6 +5765,8 @@ getEventTriggers(Archive *fout, int *numEventTriggers)
 		*numEventTriggers = 0;
 		return NULL;
 	}
+
+	query = createPQExpBuffer();
 
 	/* Make sure we are in proper schema */
 	selectSourceSchema(fout, "pg_catalog");
