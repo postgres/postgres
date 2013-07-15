@@ -290,74 +290,101 @@ vacuumlo(const char *database, const struct _param * param)
 	PQclear(res);
 
 	buf[0] = '\0';
-	strcat(buf, "SELECT lo FROM vacuum_l");
+	strcat(buf,
+		   "DECLARE myportal CURSOR WITH HOLD FOR SELECT lo FROM vacuum_l");
 	res = PQexec(conn, buf);
-	if (PQresultStatus(res) != PGRES_TUPLES_OK)
+	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
-		fprintf(stderr, "Failed to read temp table:\n");
-		fprintf(stderr, "%s", PQerrorMessage(conn));
+		fprintf(stderr, "DECLARE CURSOR failed: %s", PQerrorMessage(conn));
 		PQclear(res);
 		PQfinish(conn);
 		return -1;
 	}
+	PQclear(res);
 
-	matched = PQntuples(res);
+	snprintf(buf, BUFSIZE, "FETCH FORWARD %ld IN myportal",
+			 param->transaction_limit > 0 ? param->transaction_limit : 1000L);
+
 	deleted = 0;
-	for (i = 0; i < matched; i++)
-	{
-		Oid			lo = atooid(PQgetvalue(res, i, 0));
 
-		if (param->verbose)
+	while (1)
+	{
+		res = PQexec(conn, buf);
+		if (PQresultStatus(res) != PGRES_TUPLES_OK)
 		{
-			fprintf(stdout, "\rRemoving lo %6u   ", lo);
-			fflush(stdout);
+			fprintf(stderr, "FETCH FORWARD failed: %s", PQerrorMessage(conn));
+			PQclear(res);
+			PQfinish(conn);
+			return -1;
 		}
 
-		if (param->dry_run == 0)
+		matched = PQntuples(res);
+		if (matched <= 0)
 		{
-			if (lo_unlink(conn, lo) < 0)
+			/* at end of resultset */
+			PQclear(res);
+			break;
+		}
+
+		for (i = 0; i < matched; i++)
+		{
+			Oid			lo = atooid(PQgetvalue(res, i, 0));
+
+			if (param->verbose)
 			{
-				fprintf(stderr, "\nFailed to remove lo %u: ", lo);
-				fprintf(stderr, "%s", PQerrorMessage(conn));
-				if (PQtransactionStatus(conn) == PQTRANS_INERROR)
+				fprintf(stdout, "\rRemoving lo %6u   ", lo);
+				fflush(stdout);
+			}
+
+			if (param->dry_run == 0)
+			{
+				if (lo_unlink(conn, lo) < 0)
 				{
-					success = false;
-					break;
+					fprintf(stderr, "\nFailed to remove lo %u: ", lo);
+					fprintf(stderr, "%s", PQerrorMessage(conn));
+					if (PQtransactionStatus(conn) == PQTRANS_INERROR)
+					{
+						success = false;
+						PQclear(res);
+						break;
+					}
 				}
+				else
+					deleted++;
 			}
 			else
 				deleted++;
-		}
-		else
-			deleted++;
-		if (param->transaction_limit > 0 &&
-			(deleted % param->transaction_limit) == 0)
-		{
-			res2 = PQexec(conn, "commit");
-			if (PQresultStatus(res2) != PGRES_COMMAND_OK)
+
+			if (param->transaction_limit > 0 &&
+				(deleted % param->transaction_limit) == 0)
 			{
-				fprintf(stderr, "Failed to commit transaction:\n");
-				fprintf(stderr, "%s", PQerrorMessage(conn));
+				res2 = PQexec(conn, "commit");
+				if (PQresultStatus(res2) != PGRES_COMMAND_OK)
+				{
+					fprintf(stderr, "Failed to commit transaction:\n");
+					fprintf(stderr, "%s", PQerrorMessage(conn));
+					PQclear(res2);
+					PQclear(res);
+					PQfinish(conn);
+					return -1;
+				}
 				PQclear(res2);
-				PQclear(res);
-				PQfinish(conn);
-				return -1;
-			}
-			PQclear(res2);
-			res2 = PQexec(conn, "begin");
-			if (PQresultStatus(res2) != PGRES_COMMAND_OK)
-			{
-				fprintf(stderr, "Failed to start transaction:\n");
-				fprintf(stderr, "%s", PQerrorMessage(conn));
+				res2 = PQexec(conn, "begin");
+				if (PQresultStatus(res2) != PGRES_COMMAND_OK)
+				{
+					fprintf(stderr, "Failed to start transaction:\n");
+					fprintf(stderr, "%s", PQerrorMessage(conn));
+					PQclear(res2);
+					PQclear(res);
+					PQfinish(conn);
+					return -1;
+				}
 				PQclear(res2);
-				PQclear(res);
-				PQfinish(conn);
-				return -1;
 			}
-			PQclear(res2);
 		}
+
+		PQclear(res);
 	}
-	PQclear(res);
 
 	/*
 	 * That's all folks!
