@@ -509,7 +509,15 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 	if (PQgetisnull(res, rownum, 0))
 		strcpy(current_path, basedir);
 	else
+	{
+		if (PQgetlength(res, rownum, 1) >= MAXPGPATH)
+		{
+			fprintf(stderr, _("%s: received invalid directory (too long): %s"),
+					progname, PQgetvalue(res, rownum, 1));
+			disconnect_and_exit(1);
+		}
 		strcpy(current_path, PQgetvalue(res, rownum, 1));
+	}
 
 	/*
 	 * Make sure we're unpacking into an empty directory
@@ -814,8 +822,6 @@ BaseBackup(void)
 	char		current_path[MAXPGPATH];
 	char		escaped_label[MAXPGPATH];
 	int			i;
-	char		xlogstart[64];
-	char		xlogend[64];
 	int			minServerMajor,
 				maxServerMajor;
 	int			serverMajor;
@@ -877,11 +883,9 @@ BaseBackup(void)
 				progname);
 		disconnect_and_exit(1);
 	}
-	strcpy(xlogstart, PQgetvalue(res, 0, 0));
 	if (verbose && includewal)
-		fprintf(stderr, "xlog start point: %s\n", xlogstart);
+		fprintf(stderr, "xlog start point: %s\n", PQgetvalue(res, 0, 0));
 	PQclear(res);
-	MemSet(xlogend, 0, sizeof(xlogend));
 
 	/*
 	 * Get the header
@@ -962,9 +966,8 @@ BaseBackup(void)
 				progname);
 		disconnect_and_exit(1);
 	}
-	strcpy(xlogend, PQgetvalue(res, 0, 0));
 	if (verbose && includewal)
-		fprintf(stderr, "xlog end point: %s\n", xlogend);
+		fprintf(stderr, "xlog end point: %s\n", PQgetvalue(res, 0, 0));
 	PQclear(res);
 
 	res = PQgetResult(conn);
