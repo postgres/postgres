@@ -166,7 +166,7 @@ reached_end_position(XLogRecPtr segendpos, uint32 timeline,
 			char		xlogend[64];
 
 			MemSet(xlogend, 0, sizeof(xlogend));
-			r = read(bgpipe[0], xlogend, sizeof(xlogend));
+			r = read(bgpipe[0], xlogend, sizeof(xlogend)-1);
 			if (r < 0)
 			{
 				fprintf(stderr, _("%s: could not read from ready pipe: %s\n"),
