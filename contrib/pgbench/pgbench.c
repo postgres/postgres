@@ -74,7 +74,7 @@ static int	pthread_join(pthread_t th, void **thread_return);
 #include <pthread.h>
 #else
 /* Use emulation with fork. Rename pthread identifiers to avoid conflicts */
-
+#define PTHREAD_FORK_EMULATION
 #include <sys/wait.h>
 
 #define pthread_t				pg_pthread_t
@@ -164,6 +164,8 @@ bool		use_log;			/* log transaction latencies to a file */
 bool		use_quiet;			/* quiet logging onto stderr */
 int			agg_interval;		/* log aggregates instead of individual
 								 * transactions */
+int			progress = 0;       /* thread progress report every this seconds */
+int         progress_nclients = 0; /* number of clients for progress report */
 bool		is_connect;			/* establish connection for each transaction */
 bool		is_latencies;		/* report per-command latencies */
 int			main_pid;			/* main process id used in log filename */
@@ -352,6 +354,7 @@ usage(void)
 		                                           "(default: simple)\n"
 		   "  -n, --no-vacuum          do not run VACUUM before tests\n"
 		   "  -N, --skip-some-updates  skip updates of pgbench_tellers and pgbench_branches\n"
+		   "  -P, --progress NUM       show thread progress report every NUM seconds\n"
 		   "  -r, --report-latencies   report average latency per command\n"
 		   "  -s, --scale=NUM          report this scale factor in output\n"
 		   "  -S, --select-only        perform SELECT-only transactions\n"
@@ -2119,6 +2122,7 @@ main(int argc, char **argv)
 		{"log", no_argument, NULL, 'l'},
 		{"no-vacuum", no_argument, NULL, 'n'},
 		{"port", required_argument, NULL, 'p'},
+		{"progress", required_argument, NULL, 'P'},
 		{"protocol", required_argument, NULL, 'M'},
 		{"quiet", no_argument, NULL, 'q'},
 		{"report-latencies", no_argument, NULL, 'r'},
@@ -2202,7 +2206,7 @@ main(int argc, char **argv)
 	state = (CState *) pg_malloc(sizeof(CState));
 	memset(state, 0, sizeof(CState));
 
-	while ((c = getopt_long(argc, argv, "ih:nvp:dqSNc:j:Crs:t:T:U:lf:D:F:M:", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "ih:nvp:dqSNc:j:Crs:t:T:U:lf:D:F:M:P:", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
@@ -2357,6 +2361,16 @@ main(int argc, char **argv)
 					exit(1);
 				}
 				break;
+			case 'P':
+				progress = atoi(optarg);
+				if (progress <= 0)
+				{
+					fprintf(stderr,
+					   "thread progress delay (-P) must be positive (%s)\n",
+							optarg);
+					exit(1);
+				}
+				break;
 			case 0:
 				/* This covers long options which take no argument. */
 				break;
@@ -2482,6 +2496,7 @@ main(int argc, char **argv)
 	 * changed after fork.
 	 */
 	main_pid = (int) getpid();
+	progress_nclients = nclients;
 
 	if (nclients > 1)
 	{
@@ -2733,6 +2748,11 @@ threadRun(void *arg)
 	int			nstate = thread->nstate;
 	int			remains = nstate;		/* number of remaining clients */
 	int			i;
+	/* for reporting progress: */
+	int64       thread_start = INSTR_TIME_GET_MICROSEC(thread->start_time);
+	int64		last_report = thread_start;
+	int64		next_report = last_report + progress * 1000000;
+	int64		last_count = 0;
 
 	AggVals		aggs;
 
@@ -2896,6 +2916,68 @@ threadRun(void *arg)
 				st->con = NULL;
 			}
 		}
+
+#ifdef PTHREAD_FORK_EMULATION
+		/* each process reports its own progression */
+		if (progress)
+		{
+			instr_time now_time;
+			int64 now;
+			INSTR_TIME_SET_CURRENT(now_time);
+			now = INSTR_TIME_GET_MICROSEC(now_time);
+			if (now >= next_report)
+			{
+				/* generate and show report */
+				int64 count = 0;
+				int64 run = now - last_report;
+				float tps, total_run, latency;
+
+				for (i = 0 ; i < nstate ; i++)
+					count += state[i].cnt;
+
+				total_run = (now - thread_start) / 1000000.0;
+				tps = 1000000.0 * (count - last_count) / run;
+				latency = 1000.0 * nstate / tps;
+
+				fprintf(stderr, "progress %d: %.1f s, %.1f tps, %.3f ms lat\n",
+						thread->tid, total_run, tps, latency);
+
+				last_count = count;
+				last_report = now;
+				next_report += progress * 1000000;
+			}
+		}
+#else
+		/* progress report by thread 0 for all threads */
+		if (progress && thread->tid == 0)
+		{
+			instr_time now_time;
+			int64 now;
+			INSTR_TIME_SET_CURRENT(now_time);
+			now = INSTR_TIME_GET_MICROSEC(now_time);
+			if (now >= next_report)
+			{
+				/* generate and show report */
+				int64 count = 0;
+				int64 run = now - last_report;
+				float tps, total_run, latency;
+
+				for (i = 0 ; i < progress_nclients ; i++)
+					count += state[i].cnt;
+
+				total_run = (now - thread_start) / 1000000.0;
+				tps = 1000000.0 * (count - last_count) / run;
+				latency = 1000.0 * progress_nclients / tps;
+
+				fprintf(stderr, "progress: %.1f s, %.1f tps, %.3f ms lat\n",
+						total_run, tps, latency);
+
+				last_count = count;
+				last_report = now;
+				next_report += progress * 1000000;
+			}
+		}
+#endif /* PTHREAD_FORK_EMULATION */
 	}
 
 done:

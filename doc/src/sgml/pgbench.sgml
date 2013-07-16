@@ -408,6 +408,16 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      </varlistentry>
 
      <varlistentry>
+      <term><option>-P</option> <replaceable>sec</></term>
+      <term><option>--progress</option> <replaceable>sec</></term>
+      <listitem>
+       <para>
+	Show progress report about every <literal>sec</> seconds.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-s</option> <replaceable>scale_factor</></term>
       <term><option>--scale=</option><replaceable>scale_factor</></term>
       <listitem>
