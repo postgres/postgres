@@ -56,7 +56,7 @@ GetConnection(void)
 		conn_opts = PQconninfoParse(connection_string, &err_msg);
 		if (conn_opts == NULL)
 		{
-			fprintf(stderr, "%s: %s\n", progname, err_msg);
+			fprintf(stderr, "%s: %s", progname, err_msg);
 			exit(1);
 		}
 
