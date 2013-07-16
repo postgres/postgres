@@ -135,7 +135,7 @@ main(int argc, char **argv)
 		opts = PQconninfoParse(pgdbname, &errmsg);
 		if (opts == NULL)
 		{
-			fprintf(stderr, _("%s: %s\n"), progname, errmsg);
+			fprintf(stderr, _("%s: %s"), progname, errmsg);
 			exit(PQPING_NO_ATTEMPT);
 		}
 	}

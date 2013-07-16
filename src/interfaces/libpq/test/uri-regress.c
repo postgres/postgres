@@ -33,7 +33,7 @@ main(int argc, char *argv[])
 	opts = PQconninfoParse(argv[1], &errmsg);
 	if (opts == NULL)
 	{
-		fprintf(stderr, "uri-regress: %s\n", errmsg);
+		fprintf(stderr, "uri-regress: %s", errmsg);
 		return 1;
 	}
 

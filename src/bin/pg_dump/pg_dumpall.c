@@ -1752,7 +1752,7 @@ connectDatabase(const char *dbname, const char *connection_string,
 			conn_opts = PQconninfoParse(connection_string, &err_msg);
 			if (conn_opts == NULL)
 			{
-				fprintf(stderr, "%s: %s\n", progname, err_msg);
+				fprintf(stderr, "%s: %s", progname, err_msg);
 				exit_nicely(1);
 			}
 
