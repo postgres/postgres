@@ -103,7 +103,7 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "postmaster/autovacuum.h"
-#include "postmaster/bgworker.h"
+#include "postmaster/bgworker_internals.h"
 #include "postmaster/fork_process.h"
 #include "postmaster/pgarch.h"
 #include "postmaster/postmaster.h"
@@ -117,6 +117,7 @@
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/datetime.h"
+#include "utils/dynamic_loader.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
 #include "utils/timeout.h"
@@ -177,29 +178,6 @@ static dlist_head BackendList = DLIST_STATIC_INIT(BackendList);
 #ifdef EXEC_BACKEND
 static Backend *ShmemBackendArray;
 #endif
-
-
-/*
- * List of background workers.
- *
- * A worker that requests a database connection during registration will have
- * rw_backend set, and will be present in BackendList.	Note: do not rely on
- * rw_backend being non-NULL for shmem-connected workers!
- */
-typedef struct RegisteredBgWorker
-{
-	BackgroundWorker rw_worker; /* its registry entry */
-	Backend    *rw_backend;		/* its BackendList entry, or NULL */
-	pid_t		rw_pid;			/* 0 if not running */
-	int			rw_child_slot;
-	TimestampTz rw_crashed_at;	/* if not 0, time it last crashed */
-#ifdef EXEC_BACKEND
-	int			rw_cookie;
-#endif
-	slist_node	rw_lnode;		/* list link */
-} RegisteredBgWorker;
-
-static slist_head BackgroundWorkerList = SLIST_STATIC_INIT(BackgroundWorkerList);
 
 BackgroundWorker *MyBgworkerEntry = NULL;
 
@@ -532,8 +510,6 @@ static bool save_backend_variables(BackendParameters *param, Port *port,
 
 static void ShmemBackendArrayAdd(Backend *bn);
 static void ShmemBackendArrayRemove(Backend *bn);
-
-static BackgroundWorker *find_bgworker_entry(int cookie);
 #endif   /* EXEC_BACKEND */
 
 #define StartupDataBase()		StartChildProcess(StartupProcess)
@@ -1456,7 +1432,7 @@ DetermineSleepTime(struct timeval * timeout)
 
 	if (HaveCrashedWorker)
 	{
-		slist_iter	siter;
+		slist_mutable_iter	siter;
 
 		/*
 		 * When there are crashed bgworkers, we sleep just long enough that
@@ -1464,7 +1440,7 @@ DetermineSleepTime(struct timeval * timeout)
 		 * determine the minimum of all wakeup times according to most recent
 		 * crash time and requested restart interval.
 		 */
-		slist_foreach(siter, &BackgroundWorkerList)
+		slist_foreach_modify(siter, &BackgroundWorkerList)
 		{
 			RegisteredBgWorker *rw;
 			TimestampTz this_wakeup;
@@ -1475,7 +1451,10 @@ DetermineSleepTime(struct timeval * timeout)
 				continue;
 
 			if (rw->rw_worker.bgw_restart_time == BGW_NEVER_RESTART)
+			{
+				ForgetBackgroundWorker(rw);
 				continue;
+			}
 
 			this_wakeup = TimestampTzPlusMilliseconds(rw->rw_crashed_at,
 									 1000L * rw->rw_worker.bgw_restart_time);
@@ -4619,7 +4598,7 @@ SubPostmasterMain(int argc, char *argv[])
 	}
 	if (strncmp(argv[1], "--forkbgworker=", 15) == 0)
 	{
-		int			cookie;
+		int			shmem_slot;
 
 		/* Close the postmaster's sockets */
 		ClosePostmasterPorts(false);
@@ -4633,8 +4612,8 @@ SubPostmasterMain(int argc, char *argv[])
 		/* Attach process to shared data structures */
 		CreateSharedMemoryAndSemaphores(false, 0);
 
-		cookie = atoi(argv[1] + 15);
-		MyBgworkerEntry = find_bgworker_entry(cookie);
+		shmem_slot = atoi(argv[1] + 15);
+		MyBgworkerEntry = BackgroundWorkerEntry(shmem_slot);
 		do_start_bgworker();
 	}
 	if (strcmp(argv[1], "--forkarch") == 0)
@@ -4697,8 +4676,16 @@ static void
 sigusr1_handler(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
+	bool		start_bgworker = false;
 
 	PG_SETMASK(&BlockSig);
+
+	/* Process background worker state change. */
+	if (CheckPostmasterSignal(PMSIGNAL_BACKGROUND_WORKER_CHANGE))
+	{
+		BackgroundWorkerStateChange();
+		start_bgworker = true;
+	}
 
 	/*
 	 * RECOVERY_STARTED and BEGIN_HOT_STANDBY signals are ignored in
@@ -4737,10 +4724,12 @@ sigusr1_handler(SIGNAL_ARGS)
 		(errmsg("database system is ready to accept read only connections")));
 
 		pmState = PM_HOT_STANDBY;
-
 		/* Some workers may be scheduled to start now */
-		StartOneBackgroundWorker();
+		start_bgworker = true;
 	}
+
+	if (start_bgworker)
+		StartOneBackgroundWorker();
 
 	if (CheckPostmasterSignal(PMSIGNAL_WAKEN_ARCHIVER) &&
 		PgArchPID != 0)
@@ -5215,126 +5204,6 @@ MaxLivePostmasterChildren(void)
 }
 
 /*
- * Register a new background worker.
- *
- * This can only be called in the _PG_init function of a module library
- * that's loaded by shared_preload_libraries; otherwise it has no effect.
- */
-void
-RegisterBackgroundWorker(BackgroundWorker *worker)
-{
-	RegisteredBgWorker *rw;
-	int			namelen = strlen(worker->bgw_name);
-	static int	numworkers = 0;
-
-#ifdef EXEC_BACKEND
-
-	/*
-	 * Use 1 here, not 0, to avoid confusing a possible bogus cookie read by
-	 * atoi() in SubPostmasterMain.
-	 */
-	static int	BackgroundWorkerCookie = 1;
-#endif
-
-	if (!IsUnderPostmaster)
-		ereport(LOG,
-			(errmsg("registering background worker: %s", worker->bgw_name)));
-
-	if (!process_shared_preload_libraries_in_progress)
-	{
-		if (!IsUnderPostmaster)
-			ereport(LOG,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("background worker \"%s\": must be registered in shared_preload_libraries",
-							worker->bgw_name)));
-		return;
-	}
-
-	/* sanity check for flags */
-	if (worker->bgw_flags & BGWORKER_BACKEND_DATABASE_CONNECTION)
-	{
-		if (!(worker->bgw_flags & BGWORKER_SHMEM_ACCESS))
-		{
-			if (!IsUnderPostmaster)
-				ereport(LOG,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("background worker \"%s\": must attach to shared memory in order to request a database connection",
-								worker->bgw_name)));
-			return;
-		}
-
-		if (worker->bgw_start_time == BgWorkerStart_PostmasterStart)
-		{
-			if (!IsUnderPostmaster)
-				ereport(LOG,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("background worker \"%s\": cannot request database access if starting at postmaster start",
-								worker->bgw_name)));
-			return;
-		}
-
-		/* XXX other checks? */
-	}
-
-	if ((worker->bgw_restart_time < 0 &&
-		 worker->bgw_restart_time != BGW_NEVER_RESTART) ||
-		(worker->bgw_restart_time > USECS_PER_DAY / 1000))
-	{
-		if (!IsUnderPostmaster)
-			ereport(LOG,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("background worker \"%s\": invalid restart interval",
-						worker->bgw_name)));
-		return;
-	}
-
-	/*
-	 * Enforce maximum number of workers.  Note this is overly restrictive: we
-	 * could allow more non-shmem-connected workers, because these don't count
-	 * towards the MAX_BACKENDS limit elsewhere.  For now, it doesn't seem
-	 * important to relax this restriction.
-	 */
-	if (++numworkers > max_worker_processes)
-	{
-		ereport(LOG,
-				(errcode(ERRCODE_CONFIGURATION_LIMIT_EXCEEDED),
-				 errmsg("too many background workers"),
-				 errdetail_plural("Up to %d background worker can be registered with the current settings.",
-								  "Up to %d background workers can be registered with the current settings.",
-								  max_worker_processes,
-								  max_worker_processes),
-				 errhint("Consider increasing the configuration parameter \"max_worker_processes\".")));
-		return;
-	}
-
-	/*
-	 * Copy the registration data into the registered workers list.
-	 */
-	rw = malloc(sizeof(RegisteredBgWorker) + namelen + 1);
-	if (rw == NULL)
-	{
-		ereport(LOG,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
-		return;
-	}
-
-	rw->rw_worker = *worker;
-	rw->rw_worker.bgw_name = ((char *) rw) + sizeof(RegisteredBgWorker);
-	strlcpy(rw->rw_worker.bgw_name, worker->bgw_name, namelen + 1);
-
-	rw->rw_backend = NULL;
-	rw->rw_pid = 0;
-	rw->rw_child_slot = 0;
-	rw->rw_crashed_at = 0;
-#ifdef EXEC_BACKEND
-	rw->rw_cookie = BackgroundWorkerCookie++;
-#endif
-
-	slist_push_head(&BackgroundWorkerList, &rw->rw_lnode);
-}
-
-/*
  * Connect background worker to a database.
  */
 void
@@ -5371,25 +5240,6 @@ BackgroundWorkerUnblockSignals(void)
 {
 	PG_SETMASK(&UnBlockSig);
 }
-
-#ifdef EXEC_BACKEND
-static BackgroundWorker *
-find_bgworker_entry(int cookie)
-{
-	slist_iter	iter;
-
-	slist_foreach(iter, &BackgroundWorkerList)
-	{
-		RegisteredBgWorker *rw;
-
-		rw = slist_container(RegisteredBgWorker, rw_lnode, iter.cur);
-		if (rw->rw_cookie == cookie)
-			return &rw->rw_worker;
-	}
-
-	return NULL;
-}
-#endif
 
 static void
 bgworker_quickdie(SIGNAL_ARGS)
@@ -5453,6 +5303,7 @@ do_start_bgworker(void)
 	sigjmp_buf	local_sigjmp_buf;
 	char		buf[MAXPGPATH];
 	BackgroundWorker *worker = MyBgworkerEntry;
+	bgworker_main_type entrypt;
 
 	if (worker == NULL)
 		elog(FATAL, "unable to find bgworker entry");
@@ -5569,6 +5420,23 @@ do_start_bgworker(void)
 #endif
 
 	/*
+	 * If bgw_main is set, we use that value as the initial entrypoint.
+	 * However, if the library containing the entrypoint wasn't loaded at
+	 * postmaster startup time, passing it as a direct function pointer is
+	 * not possible.  To work around that, we allow callers for whom a
+	 * function pointer is not available to pass a library name (which will
+	 * be loaded, if necessary) and a function name (which will be looked up
+	 * in the named library).
+	 */
+	if (worker->bgw_main != NULL)
+		entrypt = worker->bgw_main;
+	else
+		entrypt = (bgworker_main_type)
+			load_external_function(worker->bgw_library_name,
+								   worker->bgw_function_name,
+								   true, NULL);
+
+	/*
 	 * Note that in normal processes, we would call InitPostgres here.	For a
 	 * worker, however, we don't know what database to connect to, yet; so we
 	 * need to wait until the user code does it via
@@ -5578,7 +5446,7 @@ do_start_bgworker(void)
 	/*
 	 * Now invoke the user-defined worker code
 	 */
-	worker->bgw_main(worker->bgw_main_arg);
+	entrypt(worker->bgw_main_arg);
 
 	/* ... and if it returns, we're done */
 	proc_exit(0);
@@ -5586,13 +5454,13 @@ do_start_bgworker(void)
 
 #ifdef EXEC_BACKEND
 static pid_t
-bgworker_forkexec(int cookie)
+bgworker_forkexec(int shmem_slot)
 {
 	char	   *av[10];
 	int			ac = 0;
 	char		forkav[MAXPGPATH];
 
-	snprintf(forkav, MAXPGPATH, "--forkbgworker=%d", cookie);
+	snprintf(forkav, MAXPGPATH, "--forkbgworker=%d", shmem_slot);
 
 	av[ac++] = "postgres";
 	av[ac++] = forkav;
@@ -5621,7 +5489,7 @@ start_bgworker(RegisteredBgWorker *rw)
 					rw->rw_worker.bgw_name)));
 
 #ifdef EXEC_BACKEND
-	switch ((worker_pid = bgworker_forkexec(rw->rw_cookie)))
+	switch ((worker_pid = bgworker_forkexec(rw->rw_shmem_slot)))
 #else
 	switch ((worker_pid = fork_process()))
 #endif
@@ -5749,7 +5617,7 @@ assign_backendlist_entry(RegisteredBgWorker *rw)
 static void
 StartOneBackgroundWorker(void)
 {
-	slist_iter	iter;
+	slist_mutable_iter	iter;
 	TimestampTz now = 0;
 
 	if (FatalError)
@@ -5761,7 +5629,7 @@ StartOneBackgroundWorker(void)
 
 	HaveCrashedWorker = false;
 
-	slist_foreach(iter, &BackgroundWorkerList)
+	slist_foreach_modify(iter, &BackgroundWorkerList)
 	{
 		RegisteredBgWorker *rw;
 
@@ -5781,7 +5649,10 @@ StartOneBackgroundWorker(void)
 		if (rw->rw_crashed_at != 0)
 		{
 			if (rw->rw_worker.bgw_restart_time == BGW_NEVER_RESTART)
+			{
+				ForgetBackgroundWorker(rw);
 				continue;
+			}
 
 			if (now == 0)
 				now = GetCurrentTimestamp();

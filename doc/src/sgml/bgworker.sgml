@@ -30,23 +30,35 @@
  </warning>
 
  <para>
-  Only modules listed in <varname>shared_preload_libraries</> can run
-  background workers.  A module wishing to run a background worker needs
-  to register it by calling
+  Background workers can be initialized at the time that
+  <productname>PostgreSQL</> is started including the module name in
+  <varname>shared_preload_libraries</>.  A module wishing to run a background
+  worker can register it by calling
   <function>RegisterBackgroundWorker(<type>BackgroundWorker *worker</type>)</function>
-  from its <function>_PG_init()</>.
+  from its <function>_PG_init()</>.  Background workers can also be started
+  after the system is up and running by calling the function
+  <function>RegisterDynamicBackgroundWorker</function>(<type>BackgroundWorker
+  *worker</type>).  Unlike <function>RegisterBackgroundWorker</>, which can
+  only be called from within the postmaster,
+  <function>RegisterDynamicBackgroundWorker</function> must be called from
+  a regular backend.
+ </para>
+
+ <para>
   The structure <structname>BackgroundWorker</structname> is defined thus:
 <programlisting>
 typedef void (*bgworker_main_type)(void *main_arg);
 typedef void (*bgworker_sighdlr_type)(SIGNAL_ARGS);
 typedef struct BackgroundWorker
 {
-    char       *bgw_name;
+    char        bgw_name[BGW_MAXLEN];
     int         bgw_flags;
     BgWorkerStartTime bgw_start_time;
     int         bgw_restart_time;       /* in seconds, or BGW_NEVER_RESTART */
-    bgworker_main_type  bgw_main;
-    void       *bgw_main_arg;
+    bgworker_main_type bgw_main;
+    char        bgw_library_name[BGW_MAXLEN];   /* only if bgw_main is NULL */
+    char        bgw_function_name[BGW_MAXLEN];  /* only if bgw_main is NULL */
+    Datum       bgw_main_arg;
     bgworker_sighdlr_type bgw_sighup;
     bgworker_sighdlr_type bgw_sigterm;
 } BackgroundWorker;
@@ -101,7 +113,29 @@ typedef struct BackgroundWorker
    <structfield>bgw_main_arg</structfield> will be passed to it as its only
    argument.  Note that the global variable <literal>MyBgworkerEntry</literal>
    points to a copy of the <structname>BackgroundWorker</structname> structure
-   passed at registration time.
+   passed at registration time. <structfield>bgw_main</structfield> may be
+   NULL; in that case, <structfield>bgw_library_name</structfield> and
+   <structfield>bgw_function_name</structfield> will be used to determine
+   the entrypoint.  This is useful for background workers launched after
+   postmaster startup, where the postmaster does not have the requisite
+   library loaded.
+  </para>
+
+  <para>
+   <structfield>bgw_library_name</structfield> is the name of a library in
+   which the initial entrypoint for the background worker should be sought.
+   It is ignored unless <structfield>bgw_main</structfield> is NULL.
+   But if <structfield>bgw_main</structfield> is NULL, then the named library
+   will be dynamically loaded by the worker process and
+   <structfield>bgw_function_name</structfield> will be used to identify
+   the function to be called.
+  </para>
+
+  <para>
+   <structfield>bgw_function_name</structfield> is the name of a function in
+   a dynamically loaded library which should be used as the initial entrypoint
+   for a new background worker.  It is ignored unless
+   <structfield>bgw_main</structfield> is NULL.
   </para>
 
   <para>
@@ -109,7 +143,10 @@ typedef struct BackgroundWorker
    pointers to functions that will be installed as signal handlers for the new
    process.  If <structfield>bgw_sighup</> is NULL, then <literal>SIG_IGN</>
    is used; if <structfield>bgw_sigterm</> is NULL, a handler is installed that
-   will terminate the process after logging a suitable message.
+   will terminate the process after logging a suitable message.  These
+   fields should not be used if <structfield>bgw_main</> is NULL; instead,
+   the worker process should set its own signal handlers before calling
+   <function>BackgroundWorkerUnblockSignals()</function>.
   </para>
 
   <para>Once running, the process can connect to a database by calling

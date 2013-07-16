@@ -1,0 +1,5 @@
+# worker_spi extension
+comment = 'Sample background worker'
+default_version = '1.0'
+module_pathname = '$libdir/worker_spi'
+relocatable = true
