@@ -3541,7 +3541,8 @@ ATRewriteTables(List **wqueue, LOCKMODE lockmode)
 			heap_close(OldHeap, NoLock);
 
 			/* Create transient table that will receive the modified data */
-			OIDNewHeap = make_new_heap(tab->relid, NewTableSpace);
+			OIDNewHeap = make_new_heap(tab->relid, NewTableSpace, false,
+									   AccessExclusiveLock);
 
 			/*
 			 * Copy the heap data into the new table with the desired

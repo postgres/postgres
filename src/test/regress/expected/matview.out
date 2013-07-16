@@ -73,6 +73,8 @@ SELECT * FROM tvm;
 
 CREATE MATERIALIZED VIEW tmm AS SELECT sum(totamt) AS grandtot FROM tm;
 CREATE MATERIALIZED VIEW tvmm AS SELECT sum(totamt) AS grandtot FROM tvm;
+CREATE UNIQUE INDEX tvmm_expr ON tvmm ((grandtot > 0));
+CREATE UNIQUE INDEX tvmm_pred ON tvmm (grandtot) WHERE grandtot < 0;
 CREATE VIEW tvv AS SELECT sum(totamt) AS grandtot FROM tv;
 EXPLAIN (costs off)
   CREATE MATERIALIZED VIEW tvvm AS SELECT * FROM tvv;
@@ -141,6 +143,9 @@ ALTER MATERIALIZED VIEW tvm SET SCHEMA mvschema;
   Column  |  Type   | Modifiers | Storage | Stats target | Description 
 ----------+---------+-----------+---------+--------------+-------------
  grandtot | numeric |           | main    |              | 
+Indexes:
+    "tvmm_expr" UNIQUE, btree ((grandtot > 0::numeric))
+    "tvmm_pred" UNIQUE, btree (grandtot) WHERE grandtot < 0::numeric
 View definition:
  SELECT sum(tvm.totamt) AS grandtot
    FROM mvschema.tvm;
@@ -177,7 +182,7 @@ SELECT * FROM tvm ORDER BY type;
  z    |     11
 (3 rows)
 
-REFRESH MATERIALIZED VIEW tm;
+REFRESH MATERIALIZED VIEW CONCURRENTLY tm;
 REFRESH MATERIALIZED VIEW tvm;
 SELECT * FROM tm ORDER BY type;
  type | totamt 
@@ -237,6 +242,9 @@ SELECT * FROM tvvm;
 (1 row)
 
 REFRESH MATERIALIZED VIEW tmm;
+REFRESH MATERIALIZED VIEW CONCURRENTLY tvmm;
+ERROR:  cannot refresh materialized view "public.tvmm" concurrently
+HINT:  Create a UNIQUE index with no WHERE clause on one or more columns of the materialized view.
 REFRESH MATERIALIZED VIEW tvmm;
 REFRESH MATERIALIZED VIEW tvvm;
 EXPLAIN (costs off)
@@ -281,6 +289,9 @@ SELECT * FROM tvvm;
 -- test diemv when the mv does not exist
 DROP MATERIALIZED VIEW IF EXISTS no_such_mv;
 NOTICE:  materialized view "no_such_mv" does not exist, skipping
+-- make sure invalid comination of options is prohibited
+REFRESH MATERIALIZED VIEW CONCURRENTLY tvmm WITH NO DATA;
+ERROR:  CONCURRENTLY and WITH NO DATA options cannot be used together
 -- test join of mv and view
 SELECT type, m.totamt AS mtot, v.totamt AS vtot FROM tm m LEFT JOIN tv v USING (type) ORDER BY type;
  type | mtot | vtot 
@@ -385,3 +396,28 @@ SELECT * FROM hogeview WHERE i < 10;
 
 DROP TABLE hoge CASCADE;
 NOTICE:  drop cascades to materialized view hogeview
+-- test that duplicate values on unique index prevent refresh
+CREATE TABLE foo(a, b) AS VALUES(1, 10);
+CREATE MATERIALIZED VIEW mv AS SELECT * FROM foo;
+CREATE UNIQUE INDEX ON mv(a);
+INSERT INTO foo SELECT * FROM foo;
+REFRESH MATERIALIZED VIEW mv;
+ERROR:  could not create unique index "mv_a_idx"
+DETAIL:  Key (a)=(1) is duplicated.
+REFRESH MATERIALIZED VIEW CONCURRENTLY mv;
+ERROR:  new data for "mv" contains duplicate rows without any NULL columns
+DETAIL:  Row: (1,10)
+DROP TABLE foo CASCADE;
+NOTICE:  drop cascades to materialized view mv
+-- make sure that all indexes covered by unique indexes works
+CREATE TABLE foo(a, b, c) AS VALUES(1, 2, 3);
+CREATE MATERIALIZED VIEW mv AS SELECT * FROM foo;
+CREATE UNIQUE INDEX ON mv (a);
+CREATE UNIQUE INDEX ON mv (b);
+CREATE UNIQUE INDEX on mv (c);
+INSERT INTO foo VALUES(2, 3, 4);
+INSERT INTO foo VALUES(3, 4, 5);
+REFRESH MATERIALIZED VIEW mv;
+REFRESH MATERIALIZED VIEW CONCURRENTLY mv;
+DROP TABLE foo CASCADE;
+NOTICE:  drop cascades to materialized view mv

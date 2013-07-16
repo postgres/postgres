@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-REFRESH MATERIALIZED VIEW <replaceable class="PARAMETER">name</replaceable>
+REFRESH MATERIALIZED VIEW [ CONCURRENTLY ] <replaceable class="PARAMETER">name</replaceable>
     [ WITH [ NO ] DATA ]
 </synopsis>
  </refsynopsisdiv>
@@ -38,12 +38,44 @@ REFRESH MATERIALIZED VIEW <replaceable class="PARAMETER">name</replaceable>
    data is generated and the materialized view is left in an unscannable
    state.
   </para>
+  <para>
+   <literal>CONCURRENTLY</literal> and <literal>WITH NO DATA</literal> may not
+   be specified together.
+  </para>
  </refsect1>
 
  <refsect1>
   <title>Parameters</title>
 
   <variablelist>
+   <varlistentry>
+    <term><literal>CONCURRENTLY</literal></term>
+    <listitem>
+     <para>
+      Refresh the materialized view without locking out concurrent selects on
+      the materialized view.  Without this option a refresh which affects a
+      lot of rows will tend to use fewer resources and complete more quickly,
+      but could block other connections which are trying to read from the
+      materialized view.  This option may be faster in cases where a small
+      number of rows are affected.
+     </para>
+     <para>
+      This option is only allowed if there is at least one
+      <literal>UNIQUE</literal> index on the materialized view which uses only
+      column names and includes all rows; that is, it must not index on any
+      expressions nor include a <literal>WHERE</literal> clause.
+     </para>
+     <para>
+      This option may not be used when the materialized view is not already
+      populated.
+     </para>
+     <para>
+      Even with this option only one <literal>REFRESH</literal> at a time may
+      run against any one materialized view.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry>
     <term><replaceable class="PARAMETER">name</replaceable></term>
     <listitem>

@@ -928,8 +928,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
         </para>
 
         <para>
-         This lock mode is not automatically acquired on tables by any
-         <productname>PostgreSQL</productname> command.
+         Acquired by <command>REFRESH MATERIALIZED VIEW CONCURRENTLY</command>.
         </para>
        </listitem>
       </varlistentry>

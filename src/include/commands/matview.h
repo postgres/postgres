@@ -27,4 +27,6 @@ extern void ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString
 
 extern DestReceiver *CreateTransientRelDestReceiver(Oid oid);
 
+extern bool MatViewIncrementalMaintenanceIsEnabled(void);
+
 #endif   /* MATVIEW_H */

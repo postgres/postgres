@@ -589,7 +589,8 @@ rebuild_relation(Relation OldHeap, Oid indexOid,
 	heap_close(OldHeap, NoLock);
 
 	/* Create the transient table that will receive the re-ordered data */
-	OIDNewHeap = make_new_heap(tableOid, tableSpace);
+	OIDNewHeap = make_new_heap(tableOid, tableSpace, false,
+							   AccessExclusiveLock);
 
 	/* Copy the heap data into the new table in the desired order */
 	copy_heap_data(OIDNewHeap, tableOid, indexOid,
@@ -616,7 +617,8 @@ rebuild_relation(Relation OldHeap, Oid indexOid,
  * data, then call finish_heap_swap to complete the operation.
  */
 Oid
-make_new_heap(Oid OIDOldHeap, Oid NewTableSpace)
+make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, bool forcetemp,
+			  LOCKMODE lockmode)
 {
 	TupleDesc	OldHeapDesc;
 	char		NewHeapName[NAMEDATALEN];
@@ -626,8 +628,10 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace)
 	HeapTuple	tuple;
 	Datum		reloptions;
 	bool		isNull;
+	Oid			namespaceid;
+	char		relpersistence;
 
-	OldHeap = heap_open(OIDOldHeap, AccessExclusiveLock);
+	OldHeap = heap_open(OIDOldHeap, lockmode);
 	OldHeapDesc = RelationGetDescr(OldHeap);
 
 	/*
@@ -648,6 +652,17 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace)
 	if (isNull)
 		reloptions = (Datum) 0;
 
+	if (forcetemp)
+	{
+		namespaceid = LookupCreationNamespace("pg_temp");
+		relpersistence = RELPERSISTENCE_TEMP;
+	}
+	else
+	{
+		namespaceid = RelationGetNamespace(OldHeap);
+		relpersistence = OldHeap->rd_rel->relpersistence;
+	}
+
 	/*
 	 * Create the new heap, using a temporary name in the same namespace as
 	 * the existing table.	NOTE: there is some risk of collision with user
@@ -663,7 +678,7 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace)
 	snprintf(NewHeapName, sizeof(NewHeapName), "pg_temp_%u", OIDOldHeap);
 
 	OIDNewHeap = heap_create_with_catalog(NewHeapName,
-										  RelationGetNamespace(OldHeap),
+										  namespaceid,
 										  NewTableSpace,
 										  InvalidOid,
 										  InvalidOid,
@@ -671,8 +686,8 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace)
 										  OldHeap->rd_rel->relowner,
 										  OldHeapDesc,
 										  NIL,
-										  OldHeap->rd_rel->relkind,
-										  OldHeap->rd_rel->relpersistence,
+										  RELKIND_RELATION,
+										  relpersistence,
 										  false,
 										  RelationIsMapped(OldHeap),
 										  true,
