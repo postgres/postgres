@@ -361,6 +361,10 @@ systable_getnext(SysScanDesc sysscan)
 /*
  * systable_recheck_tuple --- recheck visibility of most-recently-fetched tuple
  *
+ * In particular, determine if this tuple would be visible to a catalog scan
+ * that started now.  We don't handle the case of a non-MVCC scan snapshot,
+ * because no caller needs that yet.
+ *
  * This is useful to test whether an object was deleted while we waited to
  * acquire lock on it.
  *
@@ -370,30 +374,38 @@ systable_getnext(SysScanDesc sysscan)
 bool
 systable_recheck_tuple(SysScanDesc sysscan, HeapTuple tup)
 {
+	Snapshot	freshsnap;
 	bool		result;
+
+	/*
+	 * Trust that LockBuffer() and HeapTupleSatisfiesMVCC() do not themselves
+	 * acquire snapshots, so we need not register the snapshot.  Those
+	 * facilities are too low-level to have any business scanning tables.
+	 */
+	freshsnap = GetCatalogSnapshot(RelationGetRelid(sysscan->heap_rel));
 
 	if (sysscan->irel)
 	{
 		IndexScanDesc scan = sysscan->iscan;
 
+		Assert(IsMVCCSnapshot(scan->xs_snapshot));
 		Assert(tup == &scan->xs_ctup);
 		Assert(BufferIsValid(scan->xs_cbuf));
 		/* must hold a buffer lock to call HeapTupleSatisfiesVisibility */
 		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_SHARE);
-		result = HeapTupleSatisfiesVisibility(tup, scan->xs_snapshot,
-											  scan->xs_cbuf);
+		result = HeapTupleSatisfiesVisibility(tup, freshsnap, scan->xs_cbuf);
 		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_UNLOCK);
 	}
 	else
 	{
 		HeapScanDesc scan = sysscan->scan;
 
+		Assert(IsMVCCSnapshot(scan->rs_snapshot));
 		Assert(tup == &scan->rs_ctup);
 		Assert(BufferIsValid(scan->rs_cbuf));
 		/* must hold a buffer lock to call HeapTupleSatisfiesVisibility */
 		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
-		result = HeapTupleSatisfiesVisibility(tup, scan->rs_snapshot,
-											  scan->rs_cbuf);
+		result = HeapTupleSatisfiesVisibility(tup, freshsnap, scan->rs_cbuf);
 		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
 	}
 	return result;
