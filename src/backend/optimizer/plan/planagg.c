@@ -314,14 +314,28 @@ find_minmax_aggs_walker(Node *node, List **context)
 		ListCell   *l;
 
 		Assert(aggref->agglevelsup == 0);
-		if (list_length(aggref->args) != 1 || aggref->aggorder != NIL)
+		if (list_length(aggref->args) != 1)
 			return true;		/* it couldn't be MIN/MAX */
+		/*
+		 * ORDER BY is usually irrelevant for MIN/MAX, but it can change the
+		 * outcome if the aggsortop's operator class recognizes non-identical
+		 * values as equal.  For example, 4.0 and 4.00 are equal according to
+		 * numeric_ops, yet distinguishable.  If MIN() receives more than one
+		 * value equal to 4.0 and no value less than 4.0, it is unspecified
+		 * which of those equal values MIN() returns.  An ORDER BY expression
+		 * that differs for each of those equal values of the argument
+		 * expression makes the result predictable once again.  This is a
+		 * niche requirement, and we do not implement it with subquery paths.
+		 */
+		if (aggref->aggorder != NIL)
+			return true;
 		/* note: we do not care if DISTINCT is mentioned ... */
-		curTarget = (TargetEntry *) linitial(aggref->args);
 
 		aggsortop = fetch_agg_sort_op(aggref->aggfnoid);
 		if (!OidIsValid(aggsortop))
 			return true;		/* not a MIN/MAX aggregate */
+
+		curTarget = (TargetEntry *) linitial(aggref->args);
 
 		if (contain_mutable_functions((Node *) curTarget->expr))
 			return true;		/* not potentially indexable */
