@@ -1322,8 +1322,8 @@ ReserveXLogInsertLocation(int size, XLogRecPtr *StartPos, XLogRecPtr *EndPos,
  *
  * A log-switch record is handled slightly differently. The rest of the
  * segment will be reserved for this insertion, as indicated by the returned
- * *EndPos_p value. However, if we are already at the beginning of the current
- * segment, *StartPos_p and *EndPos_p are set to the current location without
+ * *EndPos value. However, if we are already at the beginning of the current
+ * segment, *StartPos and *EndPos are set to the current location without
  * reserving any space, and the function returns false.
 */
 static bool
@@ -1575,7 +1575,9 @@ WALInsertSlotAcquireOne(int slotno)
 	/*
 	 * Lock out cancel/die interrupts until we exit the code section protected
 	 * by the slot.  This ensures that interrupts will not interfere with
-	 * manipulations of data structures in shared memory.
+	 * manipulations of data structures in shared memory. There is no cleanup
+	 * mechanism to release the slot if the backend dies while holding one,
+	 * so make this a critical section.
 	 */
 	START_CRIT_SECTION();
 
