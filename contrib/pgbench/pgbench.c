@@ -354,7 +354,7 @@ usage(void)
 		                                           "(default: simple)\n"
 		   "  -n, --no-vacuum          do not run VACUUM before tests\n"
 		   "  -N, --skip-some-updates  skip updates of pgbench_tellers and pgbench_branches\n"
-		   "  -P, --progress NUM       show thread progress report every NUM seconds\n"
+		   "  -P, --progress=NUM       show thread progress report every NUM seconds\n"
 		   "  -r, --report-latencies   report average latency per command\n"
 		   "  -s, --scale=NUM          report this scale factor in output\n"
 		   "  -S, --select-only        perform SELECT-only transactions\n"
