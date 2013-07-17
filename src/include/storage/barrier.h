@@ -55,7 +55,7 @@ extern slock_t dummy_spinlock;
  */
 #if defined(__ia64__) || defined(__ia64)
 #define pg_memory_barrier()		__mf()
-#else if defined(__i386__) || defined(__x86_64__)
+#elif defined(__i386__) || defined(__x86_64__)
 #define pg_memory_barrier()		_mm_mfence()
 #endif
 
@@ -119,6 +119,10 @@ extern slock_t dummy_spinlock;
 #define pg_memory_barrier()		__asm__ __volatile__ ("mb" : : : "memory")
 #define pg_read_barrier()		__asm__ __volatile__ ("rmb" : : : "memory")
 #define pg_write_barrier()		__asm__ __volatile__ ("wmb" : : : "memory")
+#elif defined(__hppa) || defined(__hppa__)		/* HP PA-RISC */
+
+/* HPPA doesn't do either read or write reordering */
+#define pg_memory_barrier()		pg_compiler_barrier()
 #elif __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 1)
 
 /*
@@ -153,7 +157,7 @@ extern slock_t dummy_spinlock;
  * fence.  But all of our actual implementations seem OK in this regard.
  */
 #if !defined(pg_memory_barrier)
-#define pg_memory_barrier(x) \
+#define pg_memory_barrier() \
 	do { S_LOCK(&dummy_spinlock); S_UNLOCK(&dummy_spinlock); } while (0)
 #endif
 
