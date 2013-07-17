@@ -466,7 +466,7 @@ pglz_find_match(int16 *hstart, const char *input, const char *end,
 		 * Be happy with lesser good matches the more entries we visited. But
 		 * no point in doing calculation if we're at end of list.
 		 */
-		if (hent)
+		if (hent != INVALID_ENTRY_PTR)
 		{
 			if (len >= good_match)
 				break;
