@@ -1546,6 +1546,7 @@ JumbleExpr(pgssJumbleState *jstate, Node *node)
 				JumbleExpr(jstate, (Node *) expr->args);
 				JumbleExpr(jstate, (Node *) expr->aggorder);
 				JumbleExpr(jstate, (Node *) expr->aggdistinct);
+				JumbleExpr(jstate, (Node *) expr->aggfilter);
 			}
 			break;
 		case T_WindowFunc:
@@ -1555,6 +1556,7 @@ JumbleExpr(pgssJumbleState *jstate, Node *node)
 				APP_JUMB(expr->winfnoid);
 				APP_JUMB(expr->winref);
 				JumbleExpr(jstate, (Node *) expr->args);
+				JumbleExpr(jstate, (Node *) expr->aggfilter);
 			}
 			break;
 		case T_ArrayRef:

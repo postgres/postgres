@@ -264,5 +264,13 @@ SELECT ntile(0) OVER (ORDER BY ten), ten, four FROM tenk1;
 
 SELECT nth_value(four, 0) OVER (ORDER BY ten), ten, four FROM tenk1;
 
+-- filter
+
+SELECT sum(salary), row_number() OVER (ORDER BY depname), sum(
+    sum(salary) FILTER (WHERE enroll_date > '2007-01-01')
+) FILTER (WHERE depname <> 'sales') OVER (ORDER BY depname DESC) AS "filtered_sum",
+    depname
+FROM empsalary GROUP BY depname;
+
 -- cleanup
 DROP TABLE empsalary;

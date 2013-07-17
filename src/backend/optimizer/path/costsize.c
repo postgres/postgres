@@ -1590,6 +1590,14 @@ cost_windowagg(Path *path, PlannerInfo *root,
 		startup_cost += argcosts.startup;
 		wfunccost += argcosts.per_tuple;
 
+		/*
+		 * Add the filter's cost to per-input-row costs.  XXX We should reduce
+		 * input expression costs according to filter selectivity.
+		 */
+		cost_qual_eval_node(&argcosts, (Node *) wfunc->aggfilter, root);
+		startup_cost += argcosts.startup;
+		wfunccost += argcosts.per_tuple;
+
 		total_cost += wfunccost * input_tuples;
 	}
 

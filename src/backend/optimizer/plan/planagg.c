@@ -329,6 +329,12 @@ find_minmax_aggs_walker(Node *node, List **context)
 		 */
 		if (aggref->aggorder != NIL)
 			return true;
+		/*
+		 * We might implement the optimization when a FILTER clause is present
+		 * by adding the filter to the quals of the generated subquery.
+		 */
+		if (aggref->aggfilter != NULL)
+			return true;
 		/* note: we do not care if DISTINCT is mentioned ... */
 
 		aggsortop = fetch_agg_sort_op(aggref->aggfnoid);

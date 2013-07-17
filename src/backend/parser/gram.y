@@ -492,6 +492,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 				opt_frame_clause frame_extent frame_bound
 %type <str>		opt_existing_window_name
 %type <boolean> opt_if_not_exists
+%type <node>    filter_clause
 
 /*
  * Non-keyword token types.  These are hard-wired into the "flex" lexer.
@@ -538,8 +539,8 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	EXCLUDE EXCLUDING EXCLUSIVE EXECUTE EXISTS EXPLAIN
 	EXTENSION EXTERNAL EXTRACT
 
-	FALSE_P FAMILY FETCH FIRST_P FLOAT_P FOLLOWING FOR FORCE FOREIGN FORWARD
-	FREEZE FROM FULL FUNCTION FUNCTIONS
+	FALSE_P FAMILY FETCH FILTER FIRST_P FLOAT_P FOLLOWING FOR
+	FORCE FOREIGN FORWARD FREEZE FROM FULL FUNCTION FUNCTIONS
 
 	GLOBAL GRANT GRANTED GREATEST GROUP_P
 
@@ -11112,10 +11113,11 @@ func_application: func_name '(' ')'
  * (Note that many of the special SQL functions wouldn't actually make any
  * sense as functional index entries, but we ignore that consideration here.)
  */
-func_expr: func_application over_clause 
+func_expr: func_application filter_clause over_clause 
 				{
               		FuncCall *n = (FuncCall*)$1;
-					n->over = $2;
+					n->agg_filter = $2;
+					n->over = $3;
 					$$ = (Node*)n;
 				} 
 			| func_expr_common_subexpr
@@ -11525,6 +11527,11 @@ window_definition:
 					$$ = n;
 				}
 		;
+
+filter_clause:
+             FILTER '(' WHERE a_expr ')'            { $$ = $4; }
+             | /*EMPTY*/                            { $$ = NULL; }
+         ;
 
 over_clause: OVER window_specification
 				{ $$ = $2; }
@@ -12500,6 +12507,7 @@ unreserved_keyword:
 			| EXTENSION
 			| EXTERNAL
 			| FAMILY
+			| FILTER
 			| FIRST_P
 			| FOLLOWING
 			| FORCE

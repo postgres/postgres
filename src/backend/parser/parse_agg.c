@@ -44,7 +44,7 @@ typedef struct
 	int			sublevels_up;
 } check_ungrouped_columns_context;
 
-static int	check_agg_arguments(ParseState *pstate, List *args);
+static int	check_agg_arguments(ParseState *pstate, List *args, Expr *filter);
 static bool check_agg_arguments_walker(Node *node,
 						   check_agg_arguments_context *context);
 static void check_ungrouped_columns(Node *node, ParseState *pstate, Query *qry,
@@ -160,7 +160,7 @@ transformAggregateCall(ParseState *pstate, Aggref *agg,
 	 * Check the arguments to compute the aggregate's level and detect
 	 * improper nesting.
 	 */
-	min_varlevel = check_agg_arguments(pstate, agg->args);
+	min_varlevel = check_agg_arguments(pstate, agg->args, agg->aggfilter);
 	agg->agglevelsup = min_varlevel;
 
 	/* Mark the correct pstate level as having aggregates */
@@ -206,6 +206,9 @@ transformAggregateCall(ParseState *pstate, Aggref *agg,
 			break;
 		case EXPR_KIND_HAVING:
 			/* okay */
+			break;
+		case EXPR_KIND_FILTER:
+			errkind = true;
 			break;
 		case EXPR_KIND_WINDOW_PARTITION:
 			/* okay */
@@ -299,8 +302,8 @@ transformAggregateCall(ParseState *pstate, Aggref *agg,
  *	  one is its parent, etc).
  *
  * The aggregate's level is the same as the level of the lowest-level variable
- * or aggregate in its arguments; or if it contains no variables at all, we
- * presume it to be local.
+ * or aggregate in its arguments or filter expression; or if it contains no
+ * variables at all, we presume it to be local.
  *
  * We also take this opportunity to detect any aggregates or window functions
  * nested within the arguments.  We can throw error immediately if we find
@@ -309,7 +312,7 @@ transformAggregateCall(ParseState *pstate, Aggref *agg,
  * which we can't know until we finish scanning the arguments.
  */
 static int
-check_agg_arguments(ParseState *pstate, List *args)
+check_agg_arguments(ParseState *pstate, List *args, Expr *filter)
 {
 	int			agglevel;
 	check_agg_arguments_context context;
@@ -320,6 +323,10 @@ check_agg_arguments(ParseState *pstate, List *args)
 	context.sublevels_up = 0;
 
 	(void) expression_tree_walker((Node *) args,
+								  check_agg_arguments_walker,
+								  (void *) &context);
+
+	(void) expression_tree_walker((Node *) filter,
 								  check_agg_arguments_walker,
 								  (void *) &context);
 
@@ -479,6 +486,9 @@ transformWindowFuncCall(ParseState *pstate, WindowFunc *wfunc,
 			errkind = true;
 			break;
 		case EXPR_KIND_HAVING:
+			errkind = true;
+			break;
+		case EXPR_KIND_FILTER:
 			errkind = true;
 			break;
 		case EXPR_KIND_WINDOW_PARTITION:
@@ -807,11 +817,10 @@ check_ungrouped_columns_walker(Node *node,
 
 	/*
 	 * If we find an aggregate call of the original level, do not recurse into
-	 * its arguments; ungrouped vars in the arguments are not an error. We can
-	 * also skip looking at the arguments of aggregates of higher levels,
-	 * since they could not possibly contain Vars that are of concern to us
-	 * (see transformAggregateCall).  We do need to look into the arguments of
-	 * aggregates of lower levels, however.
+	 * its arguments or filter; ungrouped vars there are not an error. We can
+	 * also skip looking at aggregates of higher levels, since they could not
+	 * possibly contain Vars of concern to us (see transformAggregateCall).
+	 * We do need to look at aggregates of lower levels, however.
 	 */
 	if (IsA(node, Aggref) &&
 		(int) ((Aggref *) node)->agglevelsup >= context->sublevels_up)

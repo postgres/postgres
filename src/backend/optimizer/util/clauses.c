@@ -495,6 +495,15 @@ count_agg_clauses_walker(Node *node, count_agg_clauses_context *context)
 		costs->transCost.startup += argcosts.startup;
 		costs->transCost.per_tuple += argcosts.per_tuple;
 
+		/*
+		 * Add the filter's cost to per-input-row costs.  XXX We should reduce
+		 * input expression costs according to filter selectivity.
+		 */
+		cost_qual_eval_node(&argcosts, (Node *) aggref->aggfilter,
+							context->root);
+		costs->transCost.startup += argcosts.startup;
+		costs->transCost.per_tuple += argcosts.per_tuple;
+
 		/* extract argument types (ignoring any ORDER BY expressions) */
 		inputTypes = (Oid *) palloc(sizeof(Oid) * list_length(aggref->args));
 		numArguments = 0;
@@ -565,7 +574,8 @@ count_agg_clauses_walker(Node *node, count_agg_clauses_context *context)
 
 		/*
 		 * Complain if the aggregate's arguments contain any aggregates;
-		 * nested agg functions are semantically nonsensical.
+		 * nested agg functions are semantically nonsensical.  Aggregates in
+		 * the FILTER clause are detected in transformAggregateCall().
 		 */
 		if (contain_agg_clause((Node *) aggref->args))
 			ereport(ERROR,
@@ -639,7 +649,8 @@ find_window_functions_walker(Node *node, WindowFuncLists *lists)
 
 		/*
 		 * Complain if the window function's arguments contain window
-		 * functions
+		 * functions.  Window functions in the FILTER clause are detected in
+		 * transformAggregateCall().
 		 */
 		if (contain_window_function((Node *) wfunc->args))
 			ereport(ERROR,

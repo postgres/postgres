@@ -649,9 +649,9 @@ get_last_attnums(Node *node, ProjectionInfo *projInfo)
 	}
 
 	/*
-	 * Don't examine the arguments of Aggrefs or WindowFuncs, because those do
-	 * not represent expressions to be evaluated within the overall
-	 * targetlist's econtext.
+	 * Don't examine the arguments or filters of Aggrefs or WindowFuncs,
+	 * because those do not represent expressions to be evaluated within the
+	 * overall targetlist's econtext.
 	 */
 	if (IsA(node, Aggref))
 		return false;

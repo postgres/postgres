@@ -227,8 +227,22 @@ advance_windowaggregate(WindowAggState *winstate,
 	int			i;
 	MemoryContext oldContext;
 	ExprContext *econtext = winstate->tmpcontext;
+	ExprState  *filter = wfuncstate->aggfilter;
 
 	oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
+
+	/* Skip anything FILTERed out */
+	if (filter)
+	{
+		bool		isnull;
+		Datum		res = ExecEvalExpr(filter, econtext, &isnull, NULL);
+
+		if (isnull || !DatumGetBool(res))
+		{
+			MemoryContextSwitchTo(oldContext);
+			return;
+		}
+	}
 
 	/* We start from 1, since the 0th arg will be the transition value */
 	i = 1;

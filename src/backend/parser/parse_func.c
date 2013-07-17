@@ -56,13 +56,13 @@ static Node *ParseComplexProjection(ParseState *pstate, char *funcname,
  *	Also, when is_column is true, we return NULL on failure rather than
  *	reporting a no-such-function error.
  *
- *	The argument expressions (in fargs) must have been transformed already.
- *	But the agg_order expressions, if any, have not been.
+ *	The argument expressions (in fargs) and filter must have been transformed
+ *	already.  But the agg_order expressions, if any, have not been.
  */
 Node *
 ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
-				  List *agg_order, bool agg_star, bool agg_distinct,
-				  bool func_variadic,
+				  List *agg_order, Expr *agg_filter,
+				  bool agg_star, bool agg_distinct, bool func_variadic,
 				  WindowDef *over, bool is_column, int location)
 {
 	Oid			rettype;
@@ -174,8 +174,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 * the "function call" could be a projection.  We also check that there
 	 * wasn't any aggregate or variadic decoration, nor an argument name.
 	 */
-	if (nargs == 1 && agg_order == NIL && !agg_star && !agg_distinct &&
-		over == NULL && !func_variadic && argnames == NIL &&
+	if (nargs == 1 && agg_order == NIL && agg_filter == NULL && !agg_star &&
+		!agg_distinct && over == NULL && !func_variadic && argnames == NIL &&
 		list_length(funcname) == 1)
 	{
 		Oid			argtype = actual_arg_types[0];
@@ -250,6 +250,12 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 			errmsg("ORDER BY specified, but %s is not an aggregate function",
 				   NameListToString(funcname)),
+					 parser_errposition(pstate, location)));
+		if (agg_filter)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+			  errmsg("FILTER specified, but %s is not an aggregate function",
+					 NameListToString(funcname)),
 					 parser_errposition(pstate, location)));
 		if (over)
 			ereport(ERROR,
@@ -402,6 +408,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		/* aggcollid and inputcollid will be set by parse_collate.c */
 		/* args, aggorder, aggdistinct will be set by transformAggregateCall */
 		aggref->aggstar = agg_star;
+		aggref->aggfilter = agg_filter;
 		/* agglevelsup will be set by transformAggregateCall */
 		aggref->location = location;
 
@@ -460,6 +467,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		/* winref will be set by transformWindowFuncCall */
 		wfunc->winstar = agg_star;
 		wfunc->winagg = (fdresult == FUNCDETAIL_AGGREGATE);
+		wfunc->aggfilter = agg_filter;
 		wfunc->location = location;
 
 		/*
@@ -480,6 +488,16 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("%s(*) must be used to call a parameterless aggregate function",
 							NameListToString(funcname)),
+					 parser_errposition(pstate, location)));
+
+		/*
+		 * Reject window functions which are not aggregates in the case of
+		 * FILTER.
+		 */
+		if (!wfunc->winagg && agg_filter)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("FILTER is not implemented in non-aggregate window functions"),
 					 parser_errposition(pstate, location)));
 
 		/*

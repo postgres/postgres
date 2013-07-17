@@ -22,6 +22,7 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/var.h"
 #include "parser/analyze.h"
+#include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_collate.h"
 #include "parser/parse_expr.h"
@@ -462,7 +463,7 @@ transformIndirection(ParseState *pstate, Node *basenode, List *indirection)
 			newresult = ParseFuncOrColumn(pstate,
 										  list_make1(n),
 										  list_make1(result),
-										  NIL, false, false, false,
+										  NIL, NULL, false, false, false,
 										  NULL, true, location);
 			if (newresult == NULL)
 				unknown_attribute(pstate, result, strVal(n), location);
@@ -630,7 +631,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					node = ParseFuncOrColumn(pstate,
 											 list_make1(makeString(colname)),
 											 list_make1(node),
-											 NIL, false, false, false,
+											 NIL, NULL, false, false, false,
 											 NULL, true, cref->location);
 				}
 				break;
@@ -675,7 +676,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					node = ParseFuncOrColumn(pstate,
 											 list_make1(makeString(colname)),
 											 list_make1(node),
-											 NIL, false, false, false,
+											 NIL, NULL, false, false, false,
 											 NULL, true, cref->location);
 				}
 				break;
@@ -733,7 +734,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					node = ParseFuncOrColumn(pstate,
 											 list_make1(makeString(colname)),
 											 list_make1(node),
-											 NIL, false, false, false,
+											 NIL, NULL, false, false, false,
 											 NULL, true, cref->location);
 				}
 				break;
@@ -1241,6 +1242,7 @@ transformFuncCall(ParseState *pstate, FuncCall *fn)
 {
 	List	   *targs;
 	ListCell   *args;
+	Expr	   *tagg_filter;
 
 	/* Transform the list of arguments ... */
 	targs = NIL;
@@ -1250,11 +1252,22 @@ transformFuncCall(ParseState *pstate, FuncCall *fn)
 													(Node *) lfirst(args)));
 	}
 
+	/*
+	 * Transform the aggregate filter using transformWhereClause(), to which
+	 * FILTER is virtually identical...
+	 */
+	tagg_filter = NULL;
+	if (fn->agg_filter != NULL)
+		tagg_filter = (Expr *)
+			transformWhereClause(pstate, (Node *) fn->agg_filter,
+								 EXPR_KIND_FILTER, "FILTER");
+
 	/* ... and hand off to ParseFuncOrColumn */
 	return ParseFuncOrColumn(pstate,
 							 fn->funcname,
 							 targs,
 							 fn->agg_order,
+							 tagg_filter,
 							 fn->agg_star,
 							 fn->agg_distinct,
 							 fn->func_variadic,
@@ -1430,6 +1443,7 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 		case EXPR_KIND_FROM_FUNCTION:
 		case EXPR_KIND_WHERE:
 		case EXPR_KIND_HAVING:
+		case EXPR_KIND_FILTER:
 		case EXPR_KIND_WINDOW_PARTITION:
 		case EXPR_KIND_WINDOW_ORDER:
 		case EXPR_KIND_WINDOW_FRAME_RANGE:
@@ -2579,6 +2593,8 @@ ParseExprKindName(ParseExprKind exprKind)
 			return "WHERE";
 		case EXPR_KIND_HAVING:
 			return "HAVING";
+		case EXPR_KIND_FILTER:
+			return "FILTER";
 		case EXPR_KIND_WINDOW_PARTITION:
 			return "window PARTITION BY";
 		case EXPR_KIND_WINDOW_ORDER:

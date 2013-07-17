@@ -598,6 +598,11 @@ GROUP BY <replaceable class="parameter">expression</replaceable> [, ...]
     making up each group, producing a separate value for each group
     (whereas without <literal>GROUP BY</literal>, an aggregate
     produces a single value computed across all the selected rows).
+    The set of rows fed to the aggregate function can be further filtered by
+    attaching a <literal>FILTER</literal> clause to the aggregate function
+    call; see <xref linkend="syntax-aggregates"> for more information.  When
+    a <literal>FILTER</literal> clause is present, only those rows matching it
+    are included.
     When <literal>GROUP BY</literal> is present, it is not valid for
     the <command>SELECT</command> list expressions to refer to
     ungrouped columns except within aggregate functions or if the
