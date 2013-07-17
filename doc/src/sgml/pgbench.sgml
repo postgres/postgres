@@ -412,7 +412,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       <term><option>--progress=</option> <replaceable>sec</></term>
       <listitem>
        <para>
-	      Show progress report every <literal>sec</> seconds.
+        Show progress report every <literal>sec</> seconds.
        </para>
       </listitem>
      </varlistentry>
