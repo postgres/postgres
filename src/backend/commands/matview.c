@@ -634,7 +634,7 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid)
 
 			/* Skip partial indexes. */
 			indexRel = index_open(index->indexrelid, RowExclusiveLock);
-			if (indexRel->rd_indpred != NIL)
+			if (RelationGetIndexPredicate(indexRel) != NIL)
 			{
 				index_close(indexRel, NoLock);
 				ReleaseSysCache(indexTuple);
