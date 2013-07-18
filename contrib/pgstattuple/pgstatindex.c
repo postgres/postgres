@@ -39,12 +39,24 @@
 #include "utils/rel.h"
 
 
+/*
+ * Because of backward-compatibility issue, we have decided to have
+ * two types of interfaces, with regclass-type input arg and text-type
+ * input arg, for each function.
+ *
+ * Those functions which have text-type input arg will be deprecated
+ * in the future release.
+ */
 extern Datum pgstatindex(PG_FUNCTION_ARGS);
+extern Datum pgstatindexbyid(PG_FUNCTION_ARGS);
 extern Datum pg_relpages(PG_FUNCTION_ARGS);
+extern Datum pg_relpagesbyid(PG_FUNCTION_ARGS);
 extern Datum pgstatginindex(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(pgstatindex);
+PG_FUNCTION_INFO_V1(pgstatindexbyid);
 PG_FUNCTION_INFO_V1(pg_relpages);
+PG_FUNCTION_INFO_V1(pg_relpagesbyid);
 PG_FUNCTION_INFO_V1(pgstatginindex);
 
 #define IS_INDEX(r) ((r)->rd_rel->relkind == RELKIND_INDEX)
@@ -97,6 +109,8 @@ typedef struct GinIndexStat
 	int64		pending_tuples;
 } GinIndexStat;
 
+static Datum pgstatindex_impl(Relation rel, FunctionCallInfo fcinfo);
+
 /* ------------------------------------------------------
  * pgstatindex()
  *
@@ -109,11 +123,6 @@ pgstatindex(PG_FUNCTION_ARGS)
 	text	   *relname = PG_GETARG_TEXT_P(0);
 	Relation	rel;
 	RangeVar   *relrv;
-	Datum		result;
-	BlockNumber nblocks;
-	BlockNumber blkno;
-	BTIndexStat indexStat;
-	BufferAccessStrategy bstrategy = GetAccessStrategy(BAS_BULKREAD);
 
 	if (!superuser())
 		ereport(ERROR,
@@ -122,6 +131,34 @@ pgstatindex(PG_FUNCTION_ARGS)
 
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = relation_openrv(relrv, AccessShareLock);
+
+	PG_RETURN_DATUM(pgstatindex_impl(rel, fcinfo));
+}
+
+Datum
+pgstatindexbyid(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	Relation	rel;
+
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to use pgstattuple functions"))));
+
+	rel = relation_open(relid, AccessShareLock);
+
+	PG_RETURN_DATUM(pgstatindex_impl(rel, fcinfo));
+}
+
+static Datum
+pgstatindex_impl(Relation rel, FunctionCallInfo fcinfo)
+{
+	Datum		result;
+	BlockNumber nblocks;
+	BlockNumber blkno;
+	BTIndexStat indexStat;
+	BufferAccessStrategy bstrategy = GetAccessStrategy(BAS_BULKREAD);
 
 	if (!IS_INDEX(rel) || !IS_BTREE(rel))
 		elog(ERROR, "relation \"%s\" is not a btree index",
@@ -274,7 +311,7 @@ pgstatindex(PG_FUNCTION_ARGS)
 		result = HeapTupleGetDatum(tuple);
 	}
 
-	PG_RETURN_DATUM(result);
+	return result;
 }
 
 /* --------------------------------------------------------
@@ -301,6 +338,29 @@ pg_relpages(PG_FUNCTION_ARGS)
 
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = relation_openrv(relrv, AccessShareLock);
+
+	/* note: this will work OK on non-local temp tables */
+
+	relpages = RelationGetNumberOfBlocks(rel);
+
+	relation_close(rel, AccessShareLock);
+
+	PG_RETURN_INT64(relpages);
+}
+
+Datum
+pg_relpagesbyid(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	int64		relpages;
+	Relation	rel;
+
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to use pgstattuple functions"))));
+
+	rel = relation_open(relid, AccessShareLock);
 
 	/* note: this will work OK on non-local temp tables */
 

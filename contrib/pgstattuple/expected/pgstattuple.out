@@ -5,7 +5,19 @@ CREATE EXTENSION pgstattuple;
 -- indexes should be that.
 --
 create table test (a int primary key, b int[]);
+select * from pgstattuple('test');
+ table_len | tuple_count | tuple_len | tuple_percent | dead_tuple_count | dead_tuple_len | dead_tuple_percent | free_space | free_percent 
+-----------+-------------+-----------+---------------+------------------+----------------+--------------------+------------+--------------
+         0 |           0 |         0 |             0 |                0 |              0 |                  0 |          0 |            0
+(1 row)
+
 select * from pgstattuple('test'::text);
+ table_len | tuple_count | tuple_len | tuple_percent | dead_tuple_count | dead_tuple_len | dead_tuple_percent | free_space | free_percent 
+-----------+-------------+-----------+---------------+------------------+----------------+--------------------+------------+--------------
+         0 |           0 |         0 |             0 |                0 |              0 |                  0 |          0 |            0
+(1 row)
+
+select * from pgstattuple('test'::name);
  table_len | tuple_count | tuple_len | tuple_percent | dead_tuple_count | dead_tuple_len | dead_tuple_percent | free_space | free_percent 
 -----------+-------------+-----------+---------------+------------------+----------------+--------------------+------------+--------------
          0 |           0 |         0 |             0 |                0 |              0 |                  0 |          0 |            0
@@ -17,10 +29,52 @@ select * from pgstattuple('test'::regclass);
          0 |           0 |         0 |             0 |                0 |              0 |                  0 |          0 |            0
 (1 row)
 
+select pgstattuple(oid) from pg_class where relname = 'test';
+     pgstattuple     
+---------------------
+ (0,0,0,0,0,0,0,0,0)
+(1 row)
+
+select pgstattuple(relname) from pg_class where relname = 'test';
+     pgstattuple     
+---------------------
+ (0,0,0,0,0,0,0,0,0)
+(1 row)
+
 select * from pgstatindex('test_pkey');
  version | tree_level | index_size | root_block_no | internal_pages | leaf_pages | empty_pages | deleted_pages | avg_leaf_density | leaf_fragmentation 
 ---------+------------+------------+---------------+----------------+------------+-------------+---------------+------------------+--------------------
        2 |          0 |          0 |             0 |              0 |          0 |           0 |             0 |              NaN |                NaN
+(1 row)
+
+select * from pgstatindex('test_pkey'::text);
+ version | tree_level | index_size | root_block_no | internal_pages | leaf_pages | empty_pages | deleted_pages | avg_leaf_density | leaf_fragmentation 
+---------+------------+------------+---------------+----------------+------------+-------------+---------------+------------------+--------------------
+       2 |          0 |          0 |             0 |              0 |          0 |           0 |             0 |              NaN |                NaN
+(1 row)
+
+select * from pgstatindex('test_pkey'::name);
+ version | tree_level | index_size | root_block_no | internal_pages | leaf_pages | empty_pages | deleted_pages | avg_leaf_density | leaf_fragmentation 
+---------+------------+------------+---------------+----------------+------------+-------------+---------------+------------------+--------------------
+       2 |          0 |          0 |             0 |              0 |          0 |           0 |             0 |              NaN |                NaN
+(1 row)
+
+select * from pgstatindex('test_pkey'::regclass);
+ version | tree_level | index_size | root_block_no | internal_pages | leaf_pages | empty_pages | deleted_pages | avg_leaf_density | leaf_fragmentation 
+---------+------------+------------+---------------+----------------+------------+-------------+---------------+------------------+--------------------
+       2 |          0 |          0 |             0 |              0 |          0 |           0 |             0 |              NaN |                NaN
+(1 row)
+
+select pgstatindex(oid) from pg_class where relname = 'test_pkey';
+        pgstatindex        
+---------------------------
+ (2,0,0,0,0,0,0,0,NaN,NaN)
+(1 row)
+
+select pgstatindex(relname) from pg_class where relname = 'test_pkey';
+        pgstatindex        
+---------------------------
+ (2,0,0,0,0,0,0,0,NaN,NaN)
 (1 row)
 
 select pg_relpages('test');
@@ -30,6 +84,36 @@ select pg_relpages('test');
 (1 row)
 
 select pg_relpages('test_pkey');
+ pg_relpages 
+-------------
+           1
+(1 row)
+
+select pg_relpages('test_pkey'::text);
+ pg_relpages 
+-------------
+           1
+(1 row)
+
+select pg_relpages('test_pkey'::name);
+ pg_relpages 
+-------------
+           1
+(1 row)
+
+select pg_relpages('test_pkey'::regclass);
+ pg_relpages 
+-------------
+           1
+(1 row)
+
+select pg_relpages(oid) from pg_class where relname = 'test_pkey';
+ pg_relpages 
+-------------
+           1
+(1 row)
+
+select pg_relpages(relname) from pg_class where relname = 'test_pkey';
  pg_relpages 
 -------------
            1
