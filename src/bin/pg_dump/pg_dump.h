@@ -239,6 +239,7 @@ typedef struct _tableInfo
 	bool		relispopulated; /* relation is populated */
 	char	   *reltablespace;	/* relation tablespace */
 	char	   *reloptions;		/* options specified by WITH (...) */
+	char	   *checkoption;	/* WITH CHECK OPTION */
 	char	   *toast_reloptions;		/* ditto, for the TOAST table */
 	bool		hasindex;		/* does it have any indexes? */
 	bool		hasrules;		/* does it have any rules? */

@@ -541,3 +541,202 @@ SELECT * FROM ONLY base_tbl_parent ORDER BY a;
 SELECT * FROM base_tbl_child ORDER BY a;
 
 DROP TABLE base_tbl_parent, base_tbl_child CASCADE;
+
+-- simple WITH CHECK OPTION
+
+CREATE TABLE base_tbl (a int, b int DEFAULT 10);
+INSERT INTO base_tbl VALUES (1,2), (2,3), (1,-1);
+
+CREATE VIEW rw_view1 AS SELECT * FROM base_tbl WHERE a < b
+  WITH LOCAL CHECK OPTION;
+\d+ rw_view1
+SELECT * FROM information_schema.views WHERE table_name = 'rw_view1';
+
+INSERT INTO rw_view1 VALUES(3,4); -- ok
+INSERT INTO rw_view1 VALUES(4,3); -- should fail
+INSERT INTO rw_view1 VALUES(5,null); -- should fail
+UPDATE rw_view1 SET b = 5 WHERE a = 3; -- ok
+UPDATE rw_view1 SET b = -5 WHERE a = 3; -- should fail
+INSERT INTO rw_view1(a) VALUES (9); -- ok
+INSERT INTO rw_view1(a) VALUES (10); -- should fail
+SELECT * FROM base_tbl;
+
+DROP TABLE base_tbl CASCADE;
+
+-- WITH LOCAL/CASCADED CHECK OPTION
+
+CREATE TABLE base_tbl (a int);
+
+CREATE VIEW rw_view1 AS SELECT * FROM base_tbl WHERE a > 0;
+CREATE VIEW rw_view2 AS SELECT * FROM rw_view1 WHERE a < 10
+  WITH CHECK OPTION; -- implicitly cascaded
+\d+ rw_view2
+SELECT * FROM information_schema.views WHERE table_name = 'rw_view2';
+
+INSERT INTO rw_view2 VALUES (-5); -- should fail
+INSERT INTO rw_view2 VALUES (5); -- ok
+INSERT INTO rw_view2 VALUES (15); -- should fail
+SELECT * FROM base_tbl;
+
+UPDATE rw_view2 SET a = a - 10; -- should fail
+UPDATE rw_view2 SET a = a + 10; -- should fail
+
+CREATE OR REPLACE VIEW rw_view2 AS SELECT * FROM rw_view1 WHERE a < 10
+  WITH LOCAL CHECK OPTION;
+\d+ rw_view2
+SELECT * FROM information_schema.views WHERE table_name = 'rw_view2';
+
+INSERT INTO rw_view2 VALUES (-10); -- ok, but not in view
+INSERT INTO rw_view2 VALUES (20); -- should fail
+SELECT * FROM base_tbl;
+
+ALTER VIEW rw_view1 SET (check_option=here); -- invalid
+ALTER VIEW rw_view1 SET (check_option=local);
+
+INSERT INTO rw_view2 VALUES (-20); -- should fail
+INSERT INTO rw_view2 VALUES (30); -- should fail
+
+ALTER VIEW rw_view2 RESET (check_option);
+\d+ rw_view2
+SELECT * FROM information_schema.views WHERE table_name = 'rw_view2';
+INSERT INTO rw_view2 VALUES (30); -- ok, but not in view
+SELECT * FROM base_tbl;
+
+DROP TABLE base_tbl CASCADE;
+
+-- WITH CHECK OPTION with no local view qual
+
+CREATE TABLE base_tbl (a int);
+
+CREATE VIEW rw_view1 AS SELECT * FROM base_tbl WITH CHECK OPTION;
+CREATE VIEW rw_view2 AS SELECT * FROM rw_view1 WHERE a > 0;
+CREATE VIEW rw_view3 AS SELECT * FROM rw_view2 WITH CHECK OPTION;
+SELECT * FROM information_schema.views WHERE table_name LIKE E'rw\_view_' ORDER BY table_name;
+
+INSERT INTO rw_view1 VALUES (-1); -- ok
+INSERT INTO rw_view1 VALUES (1); -- ok
+INSERT INTO rw_view2 VALUES (-2); -- ok, but not in view
+INSERT INTO rw_view2 VALUES (2); -- ok
+INSERT INTO rw_view3 VALUES (-3); -- should fail
+INSERT INTO rw_view3 VALUES (3); -- ok
+
+DROP TABLE base_tbl CASCADE;
+
+-- WITH CHECK OPTION with subquery
+
+CREATE TABLE base_tbl (a int);
+CREATE TABLE ref_tbl (a int PRIMARY KEY);
+INSERT INTO ref_tbl SELECT * FROM generate_series(1,10);
+
+CREATE VIEW rw_view1 AS
+  SELECT * FROM base_tbl b
+  WHERE EXISTS(SELECT 1 FROM ref_tbl r WHERE r.a = b.a)
+  WITH CHECK OPTION;
+
+INSERT INTO rw_view1 VALUES (5); -- ok
+INSERT INTO rw_view1 VALUES (15); -- should fail
+
+UPDATE rw_view1 SET a = a + 5; -- ok
+UPDATE rw_view1 SET a = a + 5; -- should fail
+
+EXPLAIN (costs off) INSERT INTO rw_view1 VALUES (5);
+EXPLAIN (costs off) UPDATE rw_view1 SET a = a + 5;
+
+DROP TABLE base_tbl, ref_tbl CASCADE;
+
+-- WITH CHECK OPTION with BEFORE trigger on base table
+
+CREATE TABLE base_tbl (a int, b int);
+
+CREATE FUNCTION base_tbl_trig_fn()
+RETURNS trigger AS
+$$
+BEGIN
+  NEW.b := 10;
+  RETURN NEW;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER base_tbl_trig BEFORE INSERT OR UPDATE ON base_tbl
+  FOR EACH ROW EXECUTE PROCEDURE base_tbl_trig_fn();
+
+CREATE VIEW rw_view1 AS SELECT * FROM base_tbl WHERE a < b WITH CHECK OPTION;
+
+INSERT INTO rw_view1 VALUES (5,0); -- ok
+INSERT INTO rw_view1 VALUES (15, 20); -- should fail
+UPDATE rw_view1 SET a = 20, b = 30; -- should fail
+
+DROP TABLE base_tbl CASCADE;
+DROP FUNCTION base_tbl_trig_fn();
+
+-- WITH LOCAL CHECK OPTION with INSTEAD OF trigger on base view
+
+CREATE TABLE base_tbl (a int, b int);
+
+CREATE VIEW rw_view1 AS SELECT a FROM base_tbl WHERE a < b;
+
+CREATE FUNCTION rw_view1_trig_fn()
+RETURNS trigger AS
+$$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    INSERT INTO base_tbl VALUES (NEW.a, 10);
+    RETURN NEW;
+  ELSIF TG_OP = 'UPDATE' THEN
+    UPDATE base_tbl SET a=NEW.a WHERE a=OLD.a;
+    RETURN NEW;
+  ELSIF TG_OP = 'DELETE' THEN
+    DELETE FROM base_tbl WHERE a=OLD.a;
+    RETURN OLD;
+  END IF;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER rw_view1_trig
+  INSTEAD OF INSERT OR UPDATE OR DELETE ON rw_view1
+  FOR EACH ROW EXECUTE PROCEDURE rw_view1_trig_fn();
+
+CREATE VIEW rw_view2 AS
+  SELECT * FROM rw_view1 WHERE a > 0 WITH LOCAL CHECK OPTION;
+
+INSERT INTO rw_view2 VALUES (-5); -- should fail
+INSERT INTO rw_view2 VALUES (5); -- ok
+INSERT INTO rw_view2 VALUES (50); -- ok, but not in view
+UPDATE rw_view2 SET a = a - 10; -- should fail
+SELECT * FROM base_tbl;
+
+-- Check option won't cascade down to base view with INSTEAD OF triggers
+
+ALTER VIEW rw_view2 SET (check_option=cascaded);
+INSERT INTO rw_view2 VALUES (100); -- ok, but not in view (doesn't fail rw_view1's check)
+UPDATE rw_view2 SET a = 200 WHERE a = 5; -- ok, but not in view (doesn't fail rw_view1's check)
+SELECT * FROM base_tbl;
+
+-- Neither local nor cascaded check options work with INSTEAD rules
+
+DROP TRIGGER rw_view1_trig ON rw_view1;
+CREATE RULE rw_view1_ins_rule AS ON INSERT TO rw_view1
+  DO INSTEAD INSERT INTO base_tbl VALUES (NEW.a, 10);
+CREATE RULE rw_view1_upd_rule AS ON UPDATE TO rw_view1
+  DO INSTEAD UPDATE base_tbl SET a=NEW.a WHERE a=OLD.a;
+INSERT INTO rw_view2 VALUES (-10); -- ok, but not in view (doesn't fail rw_view2's check)
+INSERT INTO rw_view2 VALUES (5); -- ok
+INSERT INTO rw_view2 VALUES (20); -- ok, but not in view (doesn't fail rw_view1's check)
+UPDATE rw_view2 SET a = 30 WHERE a = 5; -- ok, but not in view (doesn't fail rw_view1's check)
+INSERT INTO rw_view2 VALUES (5); -- ok
+UPDATE rw_view2 SET a = -5 WHERE a = 5; -- ok, but not in view (doesn't fail rw_view2's check)
+SELECT * FROM base_tbl;
+
+DROP TABLE base_tbl CASCADE;
+DROP FUNCTION rw_view1_trig_fn();
+
+CREATE TABLE base_tbl (a int);
+CREATE VIEW rw_view1 AS SELECT a,10 AS b FROM base_tbl;
+CREATE RULE rw_view1_ins_rule AS ON INSERT TO rw_view1
+  DO INSTEAD INSERT INTO base_tbl VALUES (NEW.a);
+CREATE VIEW rw_view2 AS
+  SELECT * FROM rw_view1 WHERE a > b WITH LOCAL CHECK OPTION;
+INSERT INTO rw_view2 VALUES (2,3); -- ok, but not in view (doesn't fail rw_view2's check)
+DROP TABLE base_tbl CASCADE;

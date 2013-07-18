@@ -1624,6 +1624,49 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 }
 
 /*
+ * ExecWithCheckOptions -- check that tuple satisfies any WITH CHECK OPTIONs
+ */
+void
+ExecWithCheckOptions(ResultRelInfo *resultRelInfo,
+					 TupleTableSlot *slot, EState *estate)
+{
+	ExprContext *econtext;
+	ListCell   *l1, *l2;
+
+	/*
+	 * We will use the EState's per-tuple context for evaluating constraint
+	 * expressions (creating it if it's not already there).
+	 */
+	econtext = GetPerTupleExprContext(estate);
+
+	/* Arrange for econtext's scan tuple to be the tuple under test */
+	econtext->ecxt_scantuple = slot;
+
+	/* Check each of the constraints */
+	forboth(l1, resultRelInfo->ri_WithCheckOptions,
+			l2, resultRelInfo->ri_WithCheckOptionExprs)
+	{
+		WithCheckOption *wco = (WithCheckOption *) lfirst(l1);
+		ExprState	   *wcoExpr = (ExprState *) lfirst(l2);
+
+		/*
+		 * WITH CHECK OPTION checks are intended to ensure that the new tuple
+		 * is visible in the view.  If the view's qual evaluates to NULL, then
+		 * the new tuple won't be included in the view.  Therefore we need to
+		 * tell ExecQual to return FALSE for NULL (the opposite of what we do
+		 * above for CHECK constraints).
+		 */
+		if (!ExecQual((List *) wcoExpr, econtext, false))
+			ereport(ERROR,
+					(errcode(ERRCODE_WITH_CHECK_OPTION_VIOLATION),
+					 errmsg("new row violates WITH CHECK OPTION for view \"%s\"",
+							wco->viewname),
+					 errdetail("Failing row contains %s.",
+							   ExecBuildSlotValueDescription(slot, 64))));
+	}
+}
+
+/*
  * ExecBuildSlotValueDescription -- construct a string representing a tuple
  *
  * This is intentionally very similar to BuildIndexValueDescription, but

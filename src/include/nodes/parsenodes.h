@@ -128,6 +128,8 @@ typedef struct Query
 
 	List	   *targetList;		/* target list (of TargetEntry) */
 
+	List	   *withCheckOptions; /* a list of WithCheckOption's */
+
 	List	   *returningList;	/* return-values list (of TargetEntry) */
 
 	List	   *groupClause;	/* a list of SortGroupClause's */
@@ -782,6 +784,19 @@ typedef struct RangeTblEntry
 	Bitmapset  *selectedCols;	/* columns needing SELECT permission */
 	Bitmapset  *modifiedCols;	/* columns needing INSERT/UPDATE permission */
 } RangeTblEntry;
+
+/*
+ * WithCheckOption -
+ *		representation of WITH CHECK OPTION checks to be applied to new tuples
+ *		when inserting/updating an auto-updatable view.
+ */
+typedef struct WithCheckOption
+{
+	NodeTag		type;
+	char	   *viewname;	/* name of view that specified the WCO */
+	Node	   *qual;		/* constraint qual to check */
+	bool		cascaded;	/* true = WITH CASCADED CHECK OPTION */
+} WithCheckOption;
 
 /*
  * SortGroupClause -
@@ -2333,6 +2348,13 @@ typedef struct AlterEnumStmt
  *		Create View Statement
  * ----------------------
  */
+typedef enum ViewCheckOption
+{
+	NO_CHECK_OPTION,
+	LOCAL_CHECK_OPTION,
+	CASCADED_CHECK_OPTION
+} ViewCheckOption;
+
 typedef struct ViewStmt
 {
 	NodeTag		type;
@@ -2341,6 +2363,7 @@ typedef struct ViewStmt
 	Node	   *query;			/* the SELECT query */
 	bool		replace;		/* replace an existing view? */
 	List	   *options;		/* options from WITH clause */
+	ViewCheckOption	withCheckOption; /* WITH CHECK OPTION */
 } ViewStmt;
 
 /* ----------------------

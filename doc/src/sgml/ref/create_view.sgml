@@ -24,6 +24,12 @@ PostgreSQL documentation
 CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] [ RECURSIVE ] VIEW <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] ) ]
     [ WITH ( <replaceable class="PARAMETER">view_option_name</replaceable> [= <replaceable class="PARAMETER">view_option_value</replaceable>] [, ... ] ) ]
     AS <replaceable class="PARAMETER">query</replaceable>
+    [ WITH [ CASCADED | LOCAL ] CHECK OPTION ]
+
+<phrase>where <replaceable class="parameter">view_option_name</replaceable> can be one of:</phrase>
+
+    security_barrier [ <replaceable class="parameter">boolean</replaceable> ]
+    check_option [ <replaceable class="parameter">text</replaceable> (<literal>local</literal> or <literal>cascaded</literal>) ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -120,10 +126,33 @@ CREATE VIEW <replaceable>name</> AS WITH RECURSIVE <replaceable>name</> (<replac
     <term><literal>WITH ( <replaceable class="PARAMETER">view_option_name</replaceable> [= <replaceable class="PARAMETER">view_option_value</replaceable>] [, ... ] )</literal></term>
     <listitem>
      <para>
-      This clause specifies optional parameters for a view; currently, the
-      only supported parameter name is <literal>security_barrier</literal>,
-      which should be enabled when a view is intended to provide row-level
-      security.  See <xref linkend="rules-privileges"> for full details.
+      This clause specifies optional parameters for a view; the following
+      parameters are supported:
+
+      <variablelist>
+       <varlistentry>
+        <term><literal>security_barrier(boolean)</literal></term>
+        <listitem>
+         <para>
+          This should be used if the view is intended to provide row-level
+          security.  See <xref linkend="rules-privileges"> for full details.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term><literal>check_option(text)</literal></term>
+        <listitem>
+         <para>
+          This parameter may be either <literal>local</> or
+          <literal>cascaded</>, and is equivalent to specifying
+          <literal>WITH [ CASCADED | LOCAL ] CHECK OPTION</> (see below).
+          This option can be changed on existing views using <xref
+          linkend="sql-alterview">.
+         </para>
+        </listitem>
+       </varlistentry>
+      </variablelist>
      </para>
     </listitem>
    </varlistentry>
@@ -135,6 +164,77 @@ CREATE VIEW <replaceable>name</> AS WITH RECURSIVE <replaceable>name</> (<replac
       A <xref linkend="sql-select"> or
       <xref linkend="sql-values"> command
       which will provide the columns and rows of the view.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>WITH [ CASCADED | LOCAL ] CHECK OPTION</literal></term>
+    <listitem>
+     <para>
+      <indexterm zone="SQL-CREATEVIEW">
+       <primary>CHECK OPTION</primary>
+      </indexterm>
+      <indexterm zone="SQL-CREATEVIEW">
+       <primary>WITH CHECK OPTION</primary>
+      </indexterm>
+      This option controls the behavior of automatically updatable views.  When
+      this option is specified, <command>INSERT</> and <command>UPDATE</>
+      commands on the view will be checked to ensure that new rows satisfy the
+      view-defining condition (that is, the new rows are checked to ensure that
+      they are visible through the view).  If they are not, the update will be
+      rejected.  If the <literal>CHECK OPTION</> is not specified,
+      <command>INSERT</> and <command>UPDATE</> commands on the view are
+      allowed to create rows that are not visible through the view.  The
+      following check options are supported:
+
+      <variablelist>
+       <varlistentry>
+        <term><literal>LOCAL</literal></term>
+        <listitem>
+         <para>
+          New rows are only checked against the conditions defined directly in
+          the view itself.  Any conditions defined on underlying base views are
+          not checked (unless they also specify the <literal>CHECK OPTION</>).
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term><literal>CASCADED</literal></term>
+        <listitem>
+         <para>
+          New rows are checked against the conditions of the view and all
+          underlying base views.  If the <literal>CHECK OPTION</> is specified,
+          and neither <literal>LOCAL</> nor <literal>CASCADED</> is specified,
+          then <literal>CASCADED</> is assumed.
+         </para>
+        </listitem>
+       </varlistentry>
+      </variablelist>
+     </para>
+
+     <para>
+      The <literal>CHECK OPTION</> may not be used with <literal>RECURSIVE</>
+      views.
+     </para>
+
+     <para>
+      Note that the <literal>CHECK OPTION</> is only supported on views that
+      are automatically updatable, and do not have <literal>INSTEAD OF</>
+      triggers or <literal>INSTEAD</> rules.  If an automatically updatable
+      view is defined on top of a base view that has <literal>INSTEAD OF</>
+      triggers, then the <literal>LOCAL CHECK OPTION</> may be used to check
+      the conditions on the automatically updatable view, but the conditions
+      on the base view with <literal>INSTEAD OF</> triggers will not be
+      checked (a cascaded check option will not cascade down to a
+      trigger-updatable view, and any check options defined directly on a
+      trigger-updatable view will be ignored).  If the view or any of its base
+      relations has an <literal>INSTEAD</> rule that causes the
+      <command>INSERT</> or <command>UPDATE</> command to be rewritten, then
+      all check options will be ignored in the rewritten query, including any
+      checks from automatically updatable views defined on top of the relation
+      with the <literal>INSTEAD</> rule.
      </para>
     </listitem>
    </varlistentry>
@@ -256,7 +356,9 @@ CREATE VIEW vista AS SELECT text 'Hello World' AS hello;
     condition, and thus is no longer visible through the view.  Similarly,
     an <command>INSERT</> command can potentially insert base-relation rows
     that do not satisfy the <literal>WHERE</> condition and thus are not
-    visible through the view.
+    visible through the view.  The <literal>CHECK OPTION</> may be used to
+    prevent <command>INSERT</> and <command>UPDATE</> commands from creating
+    such rows that are not visible through the view.
    </para>
 
    <para>
@@ -301,6 +403,38 @@ CREATE VIEW comedies AS
   </para>
 
   <para>
+   Create a view with <literal>LOCAL CHECK OPTION</>:
+
+<programlisting>
+CREATE VIEW universal_comedies AS
+    SELECT *
+    FROM comedies
+    WHERE classification = 'U'
+    WITH LOCAL CHECK OPTION;
+</programlisting>
+   This will create a view based on the <literal>comedies</> view, showing
+   only films with <literal>kind = 'Comedy'</> and
+   <literal>classification = 'U'</>. Any attempt to <command>INSERT</> or
+   <command>UPDATE</> a row in the view will be rejected if the new row
+   doesn't have <literal>classification = 'U'</>, but the film
+   <literal>kind</> will not be checked.
+  </para>
+
+  <para>
+   Create a view with <literal>CASCADED CHECK OPTION</>:
+
+<programlisting>
+CREATE VIEW pg_comedies AS
+    SELECT *
+    FROM comedies
+    WHERE classification = 'PG'
+    WITH CASCADED CHECK OPTION;
+</programlisting>
+   This will create a view that checks both the <literal>kind</> and
+   <literal>classification</> of new rows.
+  </para>
+
+  <para>
    Create a recursive view consisting of the numbers from 1 to 100:
 <programlisting>
 CREATE RECURSIVE VIEW nums_1_100 (n) AS
@@ -314,63 +448,10 @@ UNION ALL
   <title>Compatibility</title>
 
   <para>
-   The SQL standard specifies some additional capabilities for the
-   <command>CREATE VIEW</command> statement:
-<synopsis>
-CREATE VIEW <replaceable class="parameter">name</replaceable> [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ]
-    AS <replaceable class="PARAMETER">query</replaceable>
-    [ WITH [ CASCADED | LOCAL ] CHECK OPTION ]
-</synopsis>
-  </para>
-
-  <para>
-   The optional clauses for the full SQL command are:
-
-   <variablelist>
-     <varlistentry>
-      <term><literal>CHECK OPTION</literal></term>
-      <listitem>
-       <para>
-        This option controls the behavior of automatically updatable views.
-        When given, <command>INSERT</> and <command>UPDATE</> commands on
-        the view will be checked to ensure new rows satisfy the
-        view-defining condition (that is, the new rows would be visible
-        through the view). If they do not, the update will be rejected.
-        Without <literal>CHECK OPTION</literal>, <command>INSERT</> and
-        <command>UPDATE</> commands on the view are allowed to create rows
-        that are not visible through the view.  (The latter behavior is the
-        only one currently provided by <productname>PostgreSQL</>.)
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><literal>LOCAL</literal></term>
-      <listitem>
-       <para>
-        Check for integrity on this view.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><literal>CASCADED</literal></term>
-      <listitem>
-       <para>
-        Check for integrity on this view and on any dependent
-        view. <literal>CASCADED</> is assumed if neither
-        <literal>CASCADED</> nor <literal>LOCAL</> is specified.
-       </para>
-      </listitem>
-     </varlistentry>
-   </variablelist>
-  </para>
-
-  <para>
    <command>CREATE OR REPLACE VIEW</command> is a
    <productname>PostgreSQL</productname> language extension.
    So is the concept of a temporary view.
-   The <literal>WITH</> clause is an extension as well.
+   The <literal>WITH ( ... )</> clause is an extension as well.
   </para>
  </refsect1>
 

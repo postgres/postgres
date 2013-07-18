@@ -1556,6 +1556,8 @@ expression_tree_walker(Node *node,
 		case T_SortGroupClause:
 			/* primitive node types with no expression subnodes */
 			break;
+		case T_WithCheckOption:
+			return walker(((WithCheckOption *) node)->qual, context);
 		case T_Aggref:
 			{
 				Aggref	   *expr = (Aggref *) node;
@@ -1873,6 +1875,8 @@ query_tree_walker(Query *query,
 
 	if (walker((Node *) query->targetList, context))
 		return true;
+	if (walker((Node *) query->withCheckOptions, context))
+		return true;
 	if (walker((Node *) query->returningList, context))
 		return true;
 	if (walker((Node *) query->jointree, context))
@@ -2074,6 +2078,15 @@ expression_tree_mutator(Node *node,
 		case T_RangeTblRef:
 		case T_SortGroupClause:
 			return (Node *) copyObject(node);
+		case T_WithCheckOption:
+			{
+				WithCheckOption	   *wco = (WithCheckOption *) node;
+				WithCheckOption	   *newnode;
+
+				FLATCOPY(newnode, wco, WithCheckOption);
+				MUTATE(newnode->qual, wco->qual, Node *);
+				return (Node *) newnode;
+			}
 		case T_Aggref:
 			{
 				Aggref	   *aggref = (Aggref *) node;
@@ -2589,6 +2602,7 @@ query_tree_mutator(Query *query,
 	}
 
 	MUTATE(query->targetList, query->targetList, List *);
+	MUTATE(query->withCheckOptions, query->withCheckOptions, List *);
 	MUTATE(query->returningList, query->returningList, List *);
 	MUTATE(query->jointree, query->jointree, FromExpr *);
 	MUTATE(query->setOperations, query->setOperations, Node *);

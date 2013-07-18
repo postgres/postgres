@@ -2494,7 +2494,13 @@ CREATE VIEW views AS
                   ELSE null END
              AS character_data) AS view_definition,
 
-           CAST('NONE' AS character_data) AS check_option,
+           CAST(
+             CASE WHEN 'check_option=cascaded' = ANY (c.reloptions)
+                  THEN 'CASCADED'
+                  WHEN 'check_option=local' = ANY (c.reloptions)
+                  THEN 'LOCAL'
+                  ELSE 'NONE' END
+             AS character_data) AS check_option,
 
            CAST(
              -- (1 << CMD_UPDATE) + (1 << CMD_DELETE)

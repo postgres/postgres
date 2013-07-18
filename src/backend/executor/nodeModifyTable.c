@@ -281,6 +281,10 @@ ExecInsert(TupleTableSlot *slot,
 
 	list_free(recheckIndexes);
 
+	/* Check any WITH CHECK OPTION constraints */
+	if (resultRelInfo->ri_WithCheckOptions != NIL)
+		ExecWithCheckOptions(resultRelInfo, slot, estate);
+
 	/* Process RETURNING if present */
 	if (resultRelInfo->ri_projectReturning)
 		return ExecProcessReturning(resultRelInfo->ri_projectReturning,
@@ -777,6 +781,10 @@ lreplace:;
 
 	list_free(recheckIndexes);
 
+	/* Check any WITH CHECK OPTION constraints */
+	if (resultRelInfo->ri_WithCheckOptions != NIL)
+		ExecWithCheckOptions(resultRelInfo, slot, estate);
+
 	/* Process RETURNING if present */
 	if (resultRelInfo->ri_projectReturning)
 		return ExecProcessReturning(resultRelInfo->ri_projectReturning,
@@ -1128,6 +1136,31 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	}
 
 	estate->es_result_relation_info = saved_resultRelInfo;
+
+	/*
+	 * Initialize any WITH CHECK OPTION constraints if needed.
+	 */
+	resultRelInfo = mtstate->resultRelInfo;
+	i = 0;
+	foreach(l, node->withCheckOptionLists)
+	{
+		List	   *wcoList = (List *) lfirst(l);
+		List	   *wcoExprs = NIL;
+		ListCell   *ll;
+
+		foreach(ll, wcoList)
+		{
+			WithCheckOption *wco = (WithCheckOption *) lfirst(ll);
+			ExprState  *wcoExpr = ExecInitExpr((Expr *) wco->qual,
+											   mtstate->mt_plans[i]);
+			wcoExprs = lappend(wcoExprs, wcoExpr);
+		}
+
+		resultRelInfo->ri_WithCheckOptions = wcoList;
+		resultRelInfo->ri_WithCheckOptionExprs = wcoExprs;
+		resultRelInfo++;
+		i++;
+	}
 
 	/*
 	 * Initialize RETURNING projections if needed.
