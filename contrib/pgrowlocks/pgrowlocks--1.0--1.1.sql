@@ -1,7 +1,7 @@
 /* contrib/pgrowlocks/pgrowlocks--1.0--1.1.sql */
 
--- complain if script is sourced in psql, rather than via CREATE EXTENSION
-\echo Use "CREATE EXTENSION pgrowlocks" to load this file. \quit
+-- complain if script is sourced in psql, rather than via ALTER EXTENSION
+\echo Use "ALTER EXTENSION pgrowlocks UPDATE TO '1.1'" to load this file. \quit
 
 ALTER EXTENSION pgrowlocks DROP FUNCTION pgrowlocks(text);
 DROP FUNCTION pgrowlocks(text);
