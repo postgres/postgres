@@ -47,8 +47,8 @@ select quote_literal(e'\\');
 -- check variadic labeled argument
 select concat(variadic array[1,2,3]);
 select concat_ws(',', variadic array[1,2,3]);
-select concat_ws(',', variadic NULL);
-select concat(variadic NULL) is NULL;
+select concat_ws(',', variadic NULL::int[]);
+select concat(variadic NULL::int[]) is NULL;
 select concat(variadic '{}'::int[]) = '';
 --should fail
 select concat_ws(',', variadic 10);
@@ -93,8 +93,8 @@ select format('%s, %s', variadic array[true, false]::text[]);
 -- check variadic with positional placeholders
 select format('%2$s, %1$s', variadic array['first', 'second']);
 select format('%2$s, %1$s', variadic array[1, 2]);
--- variadic argument can be NULL, but should not be referenced
-select format('Hello', variadic NULL);
+-- variadic argument can be array type NULL, but should not be referenced
+select format('Hello', variadic NULL::int[]);
 -- variadic argument allows simulating more than FUNC_MAX_ARGS parameters
 select format(string_agg('%s',','), variadic array_agg(i))
 from generate_series(1,200) g(i);

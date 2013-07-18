@@ -3820,7 +3820,6 @@ concat_internal(const char *sepstr, int argidx,
 	 */
 	if (get_fn_expr_variadic(fcinfo->flinfo))
 	{
-		Oid			arr_typid;
 		ArrayType  *arr;
 
 		/* Should have just the one argument */
@@ -3831,20 +3830,16 @@ concat_internal(const char *sepstr, int argidx,
 			return NULL;
 
 		/*
-		 * Non-null argument had better be an array.  The parser doesn't
-		 * enforce this for VARIADIC ANY functions (maybe it should?), so that
-		 * check uses ereport not just elog.
+		 * Non-null argument had better be an array
+		 *
+		 * Correct values are ensured by parser check, but this function
+		 * can be called directly, bypassing the parser, so we should do
+		 * some minimal check too - this form of call requires correctly set
+		 * expr argtype in flinfo.
 		 */
-		arr_typid = get_fn_expr_argtype(fcinfo->flinfo, argidx);
-		if (!OidIsValid(arr_typid))
-			elog(ERROR, "could not determine data type of concat() input");
+		Assert(OidIsValid(get_fn_expr_argtype(fcinfo->flinfo, argidx)));
+		Assert(OidIsValid(get_element_type(get_fn_expr_argtype(fcinfo->flinfo, argidx))));
 
-		if (!OidIsValid(get_element_type(arr_typid)))
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("VARIADIC argument must be an array")));
-
-		/* OK, safe to fetch the array value */
 		arr = PG_GETARG_ARRAYTYPE_P(argidx);
 
 		/*
@@ -4049,7 +4044,6 @@ text_format(PG_FUNCTION_ARGS)
 	/* If argument is marked VARIADIC, expand array into elements */
 	if (get_fn_expr_variadic(fcinfo->flinfo))
 	{
-		Oid			arr_typid;
 		ArrayType  *arr;
 		int16		elmlen;
 		bool		elmbyval;
@@ -4065,20 +4059,16 @@ text_format(PG_FUNCTION_ARGS)
 		else
 		{
 			/*
-			 * Non-null argument had better be an array.  The parser doesn't
-			 * enforce this for VARIADIC ANY functions (maybe it should?), so
-			 * that check uses ereport not just elog.
+			 * Non-null argument had better be an array
+			 *
+			 * Correct values are ensured by parser check, but this function
+			 * can be called directly, bypassing the parser, so we should do
+			 * some minimal check too - this form of call requires correctly set
+			 * expr argtype in flinfo.
 			 */
-			arr_typid = get_fn_expr_argtype(fcinfo->flinfo, 1);
-			if (!OidIsValid(arr_typid))
-				elog(ERROR, "could not determine data type of format() input");
+			Assert(OidIsValid(get_fn_expr_argtype(fcinfo->flinfo, 1)));
+			Assert(OidIsValid(get_element_type(get_fn_expr_argtype(fcinfo->flinfo, 1))));
 
-			if (!OidIsValid(get_element_type(arr_typid)))
-				ereport(ERROR,
-						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("VARIADIC argument must be an array")));
-
-			/* OK, safe to fetch the array value */
 			arr = PG_GETARG_ARRAYTYPE_P(1);
 
 			/* Get info about array element type */
