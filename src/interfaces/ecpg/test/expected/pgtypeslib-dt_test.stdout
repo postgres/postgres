@@ -6,6 +6,7 @@ date seems to get encoded to julian -622
 m: 4, d: 19, y: 1998
 date_day of 2003-12-04 17:34:29 is 4
 Above date in format "(ddd), mmm. dd, yyyy, repeat: (ddd), mmm. dd, yyyy. end" is "(Thu), Dec. 04, 2003, repeat: (Thu), Dec. 04, 2003. end"
+Which is day number 338 in 2003.
 date_defmt_asc1: 1995-12-25
 date_defmt_asc2: 0095-12-25
 date_defmt_asc3: 0095-12-25
