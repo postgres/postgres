@@ -173,3 +173,18 @@ select 'a' ~ '((((((a+|)+|)+|)+|)+|)+|)';
  t
 (1 row)
 
+-- Test backref in combination with non-greedy quantifier
+-- https://core.tcl.tk/tcl/tktview/6585b21ca8fa6f3678d442b97241fdd43dba2ec0
+select 'Programmer' ~ '(\w).*?\1' as t;
+ t 
+---
+ t
+(1 row)
+
+select regexp_matches('Programmer', '(\w)(.*?\1)', 'g');
+ regexp_matches 
+----------------
+ {r,ogr}
+ {m,m}
+(2 rows)
+

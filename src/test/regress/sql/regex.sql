@@ -41,3 +41,8 @@ select 'a' ~ '($|^)*';
 -- Test for infinite loop in fixempties() (Tcl bugs 3604074, 3606683)
 select 'a' ~ '((((((a)*)*)*)*)*)*';
 select 'a' ~ '((((((a+|)+|)+|)+|)+|)+|)';
+
+-- Test backref in combination with non-greedy quantifier
+-- https://core.tcl.tk/tcl/tktview/6585b21ca8fa6f3678d442b97241fdd43dba2ec0
+select 'Programmer' ~ '(\w).*?\1' as t;
+select regexp_matches('Programmer', '(\w)(.*?\1)', 'g');

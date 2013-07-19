@@ -487,19 +487,21 @@ cfindloop(struct vars * v,
 					*coldp = cold;
 					return er;
 				}
-				if ((shorter) ? end == estop : end == begin)
-				{
-					/* no point in trying again */
-					*coldp = cold;
-					return REG_NOMATCH;
-				}
-				/* go around and try again */
+				/* try next shorter/longer match with same begin point */
 				if (shorter)
+				{
+					if (end == estop)
+						break;	/* NOTE BREAK OUT */
 					estart = end + 1;
+				}
 				else
+				{
+					if (end == begin)
+						break;	/* NOTE BREAK OUT */
 					estop = end - 1;
-			}
-		}
+				}
+			}					/* end loop over endpoint positions */
+		}						/* end loop over beginning positions */
 	} while (close < v->stop);
 
 	*coldp = cold;
