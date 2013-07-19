@@ -147,6 +147,12 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 	free(text);
 	free(out);
 
+	out = (char*) malloc(48);
+	i = PGTYPEStimestamp_fmt_asc(&ts1, out, 47, "Which is day number %j in %Y.");
+	printf("%s\n", out);
+	free(out);
+
+
 	/* rdate_defmt_asc() */
 
 	date1 = 0; text = "";
@@ -431,16 +437,16 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 	free(text);
 
 	{ ECPGtrans(__LINE__, NULL, "rollback");
-#line 359 "dt_test.pgc"
+#line 365 "dt_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint ( );}
-#line 359 "dt_test.pgc"
+#line 365 "dt_test.pgc"
 
         { ECPGdisconnect(__LINE__, "CURRENT");
-#line 360 "dt_test.pgc"
+#line 366 "dt_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint ( );}
-#line 360 "dt_test.pgc"
+#line 366 "dt_test.pgc"
 
 
 	return (0);
