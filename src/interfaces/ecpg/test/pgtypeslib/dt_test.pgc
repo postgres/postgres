@@ -73,6 +73,12 @@ main(void)
 	free(text);
 	free(out);
 
+	out = (char*) malloc(48);
+	i = PGTYPEStimestamp_fmt_asc(&ts1, out, 47, "Which is day number %j in %Y.");
+	printf("%s\n", out);
+	free(out);
+
+
 	/* rdate_defmt_asc() */
 
 	date1 = 0; text = "";
