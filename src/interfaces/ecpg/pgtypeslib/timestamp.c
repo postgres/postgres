@@ -255,6 +255,8 @@ recalc_t:
 			*tzn = NULL;
 	}
 
+	tm->tm_yday = dDate - date2j(tm->tm_year, 1, 1) + 1;
+
 	return 0;
 }	/* timestamp2tm() */
 
