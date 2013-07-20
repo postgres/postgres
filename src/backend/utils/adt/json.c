@@ -51,11 +51,11 @@ typedef enum					/* contexts of JSON parser */
 static inline void json_lex(JsonLexContext *lex);
 static inline void json_lex_string(JsonLexContext *lex);
 static inline void json_lex_number(JsonLexContext *lex, char *s);
-static inline void parse_scalar(JsonLexContext *lex, JsonSemAction sem);
-static void parse_object_field(JsonLexContext *lex, JsonSemAction sem);
-static void parse_object(JsonLexContext *lex, JsonSemAction sem);
-static void parse_array_element(JsonLexContext *lex, JsonSemAction sem);
-static void parse_array(JsonLexContext *lex, JsonSemAction sem);
+static inline void parse_scalar(JsonLexContext *lex, JsonSemAction *sem);
+static void parse_object_field(JsonLexContext *lex, JsonSemAction *sem);
+static void parse_object(JsonLexContext *lex, JsonSemAction *sem);
+static void parse_array_element(JsonLexContext *lex, JsonSemAction *sem);
+static void parse_array(JsonLexContext *lex, JsonSemAction *sem);
 static void report_parse_error(JsonParseContext ctx, JsonLexContext *lex);
 static void report_invalid_token(JsonLexContext *lex);
 static int	report_json_context(JsonLexContext *lex);
@@ -70,12 +70,11 @@ static void array_to_json_internal(Datum array, StringInfo result,
 					   bool use_line_feeds);
 
 /* the null action object used for pure validation */
-static jsonSemAction nullSemAction =
+static JsonSemAction nullSemAction =
 {
 	NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL
 };
-static JsonSemAction NullSemAction = &nullSemAction;
 
 /* Recursive Descent parser support routines */
 
@@ -170,7 +169,7 @@ json_in(PG_FUNCTION_ARGS)
 
 	/* validate it */
 	lex = makeJsonLexContext(result, false);
-	pg_parse_json(lex, NullSemAction);
+	pg_parse_json(lex, &nullSemAction);
 
 	/* Internal representation is the same as text, for now */
 	PG_RETURN_TEXT_P(result);
@@ -222,7 +221,7 @@ json_recv(PG_FUNCTION_ARGS)
 
 	/* Validate it. */
 	lex = makeJsonLexContext(result, false);
-	pg_parse_json(lex, NullSemAction);
+	pg_parse_json(lex, &nullSemAction);
 
 	PG_RETURN_TEXT_P(result);
 }
@@ -260,7 +259,7 @@ makeJsonLexContext(text *json, bool need_escapes)
  * pointer to a state object to be passed to those routines.
  */
 void
-pg_parse_json(JsonLexContext *lex, JsonSemAction sem)
+pg_parse_json(JsonLexContext *lex, JsonSemAction *sem)
 {
 	JsonTokenType tok;
 
@@ -296,7 +295,7 @@ pg_parse_json(JsonLexContext *lex, JsonSemAction sem)
  *	  - object field
  */
 static inline void
-parse_scalar(JsonLexContext *lex, JsonSemAction sem)
+parse_scalar(JsonLexContext *lex, JsonSemAction *sem)
 {
 	char	   *val = NULL;
 	json_scalar_action sfunc = sem->scalar;
@@ -332,7 +331,7 @@ parse_scalar(JsonLexContext *lex, JsonSemAction sem)
 }
 
 static void
-parse_object_field(JsonLexContext *lex, JsonSemAction sem)
+parse_object_field(JsonLexContext *lex, JsonSemAction *sem)
 {
 	/*
 	 * an object field is "fieldname" : value where value can be a scalar,
@@ -380,7 +379,7 @@ parse_object_field(JsonLexContext *lex, JsonSemAction sem)
 }
 
 static void
-parse_object(JsonLexContext *lex, JsonSemAction sem)
+parse_object(JsonLexContext *lex, JsonSemAction *sem)
 {
 	/*
 	 * an object is a possibly empty sequence of object fields, separated by
@@ -428,7 +427,7 @@ parse_object(JsonLexContext *lex, JsonSemAction sem)
 }
 
 static void
-parse_array_element(JsonLexContext *lex, JsonSemAction sem)
+parse_array_element(JsonLexContext *lex, JsonSemAction *sem)
 {
 	json_aelem_action astart = sem->array_element_start;
 	json_aelem_action aend = sem->array_element_end;
@@ -459,7 +458,7 @@ parse_array_element(JsonLexContext *lex, JsonSemAction sem)
 }
 
 static void
-parse_array(JsonLexContext *lex, JsonSemAction sem)
+parse_array(JsonLexContext *lex, JsonSemAction *sem)
 {
 	/*
 	 * an array is a possibly empty sequence of array elements, separated by
