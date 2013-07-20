@@ -99,17 +99,17 @@ typedef enum
 } JsonSearch;
 
 /* state for json_object_keys */
-typedef struct okeysState
+typedef struct OkeysState
 {
 	JsonLexContext *lex;
 	char	  **result;
 	int			result_size;
 	int			result_count;
 	int			sent_count;
-}	okeysState, *OkeysState;
+}	OkeysState;
 
 /* state for json_get* functions */
-typedef struct getState
+typedef struct GetState
 {
 	JsonLexContext *lex;
 	JsonSearch	search_type;
@@ -127,17 +127,17 @@ typedef struct getState
 	bool	   *pathok;
 	int		   *array_level_index;
 	int		   *path_level_index;
-}	getState, *GetState;
+}	GetState;
 
 /* state for json_array_length */
-typedef struct alenState
+typedef struct AlenState
 {
 	JsonLexContext *lex;
 	int			count;
-}	alenState, *AlenState;
+}	AlenState;
 
 /* state for json_each */
-typedef struct eachState
+typedef struct EachState
 {
 	JsonLexContext *lex;
 	Tuplestorestate *tuple_store;
@@ -147,20 +147,20 @@ typedef struct eachState
 	bool		normalize_results;
 	bool		next_scalar;
 	char	   *normalized_scalar;
-}	eachState, *EachState;
+}	EachState;
 
 /* state for json_array_elements */
-typedef struct elementsState
+typedef struct ElementsState
 {
 	JsonLexContext *lex;
 	Tuplestorestate *tuple_store;
 	TupleDesc	ret_tdesc;
 	MemoryContext tmp_cxt;
 	char	   *result_start;
-}	elementsState, *ElementsState;
+}	ElementsState;
 
 /* state for get_json_object_as_hash */
-typedef struct jhashState
+typedef struct JhashState
 {
 	JsonLexContext *lex;
 	HTAB	   *hash;
@@ -168,16 +168,16 @@ typedef struct jhashState
 	char	   *save_json_start;
 	bool		use_json_as_text;
 	char	   *function_name;
-}	jhashState, *JHashState;
+}	JHashState;
 
 /* used to build the hashtable */
-typedef struct jsonHashEntry
+typedef struct JsonHashEntry
 {
 	char		fname[NAMEDATALEN];
 	char	   *val;
 	char	   *json;
 	bool		isnull;
-}	jsonHashEntry, *JsonHashEntry;
+}	JsonHashEntry;
 
 /* these two are stolen from hstore / record_out, used in populate_record* */
 typedef struct ColumnIOData
@@ -197,7 +197,7 @@ typedef struct RecordIOData
 } RecordIOData;
 
 /* state for populate_recordset */
-typedef struct populateRecordsetState
+typedef struct PopulateRecordsetState
 {
 	JsonLexContext *lex;
 	HTAB	   *json_hash;
@@ -209,7 +209,7 @@ typedef struct populateRecordsetState
 	HeapTupleHeader rec;
 	RecordIOData *my_extra;
 	MemoryContext fn_mcxt;		/* used to stash IO funcs */
-}	populateRecordsetState, *PopulateRecordsetState;
+}	PopulateRecordsetState;
 
 /*
  * SQL function json_object-keys
@@ -229,22 +229,22 @@ Datum
 json_object_keys(PG_FUNCTION_ARGS)
 {
 	FuncCallContext *funcctx;
-	OkeysState	state;
+	OkeysState *state;
 	int			i;
 
 	if (SRF_IS_FIRSTCALL())
 	{
 		text	   *json = PG_GETARG_TEXT_P(0);
 		JsonLexContext *lex = makeJsonLexContext(json, true);
-		JsonSemAction sem;
+		JsonSemAction *sem;
 
 		MemoryContext oldcontext;
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		state = palloc(sizeof(okeysState));
-		sem = palloc0(sizeof(jsonSemAction));
+		state = palloc(sizeof(OkeysState));
+		sem = palloc0(sizeof(JsonSemAction));
 
 		state->lex = lex;
 		state->result_size = 256;
@@ -272,7 +272,7 @@ json_object_keys(PG_FUNCTION_ARGS)
 	}
 
 	funcctx = SRF_PERCALL_SETUP();
-	state = (OkeysState) funcctx->user_fctx;
+	state = (OkeysState *) funcctx->user_fctx;
 
 	if (state->sent_count < state->result_count)
 	{
@@ -293,7 +293,7 @@ json_object_keys(PG_FUNCTION_ARGS)
 static void
 okeys_object_field_start(void *state, char *fname, bool isnull)
 {
-	OkeysState	_state = (OkeysState) state;
+	OkeysState *_state = (OkeysState *) state;
 
 	/* only collecting keys for the top level object */
 	if (_state->lex->lex_level != 1)
@@ -314,7 +314,7 @@ okeys_object_field_start(void *state, char *fname, bool isnull)
 static void
 okeys_array_start(void *state)
 {
-	OkeysState	_state = (OkeysState) state;
+	OkeysState *_state = (OkeysState *) state;
 
 	/* top level must be a json object */
 	if (_state->lex->lex_level == 0)
@@ -326,7 +326,7 @@ okeys_array_start(void *state)
 static void
 okeys_scalar(void *state, char *token, JsonTokenType tokentype)
 {
-	OkeysState	_state = (OkeysState) state;
+	OkeysState *_state = (OkeysState *) state;
 
 	/* top level must be a json object */
 	if (_state->lex->lex_level == 0)
@@ -491,16 +491,16 @@ get_worker(text *json,
 		   int npath,
 		   bool normalize_results)
 {
-	GetState	state;
+	GetState   *state;
 	JsonLexContext *lex = makeJsonLexContext(json, true);
-	JsonSemAction sem;
+	JsonSemAction *sem;
 
 	/* only allowed to use one of these */
 	Assert(elem_index < 0 || (tpath == NULL && ipath == NULL && field == NULL));
 	Assert(tpath == NULL || field == NULL);
 
-	state = palloc0(sizeof(getState));
-	sem = palloc0(sizeof(jsonSemAction));
+	state = palloc0(sizeof(GetState));
+	sem = palloc0(sizeof(JsonSemAction));
 
 	state->lex = lex;
 	/* is it "_as_text" variant? */
@@ -560,7 +560,7 @@ get_worker(text *json,
 static void
 get_object_start(void *state)
 {
-	GetState	_state = (GetState) state;
+	GetState   *_state = (GetState *) state;
 
 	/* json structure check */
 	if (_state->lex->lex_level == 0 && _state->search_type == JSON_SEARCH_ARRAY)
@@ -572,7 +572,7 @@ get_object_start(void *state)
 static void
 get_object_field_start(void *state, char *fname, bool isnull)
 {
-	GetState	_state = (GetState) state;
+	GetState   *_state = (GetState *) state;
 	bool		get_next = false;
 	int			lex_level = _state->lex->lex_level;
 
@@ -624,7 +624,7 @@ get_object_field_start(void *state, char *fname, bool isnull)
 static void
 get_object_field_end(void *state, char *fname, bool isnull)
 {
-	GetState	_state = (GetState) state;
+	GetState   *_state = (GetState *) state;
 	bool		get_last = false;
 	int			lex_level = _state->lex->lex_level;
 
@@ -674,7 +674,7 @@ get_object_field_end(void *state, char *fname, bool isnull)
 static void
 get_array_start(void *state)
 {
-	GetState	_state = (GetState) state;
+	GetState   *_state = (GetState *) state;
 	int			lex_level = _state->lex->lex_level;
 
 	/* json structure check */
@@ -695,7 +695,7 @@ get_array_start(void *state)
 static void
 get_array_element_start(void *state, bool isnull)
 {
-	GetState	_state = (GetState) state;
+	GetState   *_state = (GetState *) state;
 	bool		get_next = false;
 	int			lex_level = _state->lex->lex_level;
 
@@ -754,7 +754,7 @@ get_array_element_start(void *state, bool isnull)
 static void
 get_array_element_end(void *state, bool isnull)
 {
-	GetState	_state = (GetState) state;
+	GetState   *_state = (GetState *) state;
 	bool		get_last = false;
 	int			lex_level = _state->lex->lex_level;
 
@@ -792,7 +792,7 @@ get_array_element_end(void *state, bool isnull)
 static void
 get_scalar(void *state, char *token, JsonTokenType tokentype)
 {
-	GetState	_state = (GetState) state;
+	GetState   *_state = (GetState *) state;
 
 	if (_state->lex->lex_level == 0 && _state->search_type != JSON_SEARCH_PATH)
 		ereport(ERROR,
@@ -816,12 +816,12 @@ json_array_length(PG_FUNCTION_ARGS)
 {
 	text	   *json = PG_GETARG_TEXT_P(0);
 
-	AlenState	state;
+	AlenState  *state;
 	JsonLexContext *lex = makeJsonLexContext(json, false);
-	JsonSemAction sem;
+	JsonSemAction *sem;
 
-	state = palloc0(sizeof(alenState));
-	sem = palloc0(sizeof(jsonSemAction));
+	state = palloc0(sizeof(AlenState));
+	sem = palloc0(sizeof(JsonSemAction));
 
 	/* palloc0 does this for us */
 #if 0
@@ -847,7 +847,7 @@ json_array_length(PG_FUNCTION_ARGS)
 static void
 alen_object_start(void *state)
 {
-	AlenState	_state = (AlenState) state;
+	AlenState  *_state = (AlenState *) state;
 
 	/* json structure check */
 	if (_state->lex->lex_level == 0)
@@ -859,7 +859,7 @@ alen_object_start(void *state)
 static void
 alen_scalar(void *state, char *token, JsonTokenType tokentype)
 {
-	AlenState	_state = (AlenState) state;
+	AlenState  *_state = (AlenState *) state;
 
 	/* json structure check */
 	if (_state->lex->lex_level == 0)
@@ -871,7 +871,7 @@ alen_scalar(void *state, char *token, JsonTokenType tokentype)
 static void
 alen_array_element_start(void *state, bool isnull)
 {
-	AlenState	_state = (AlenState) state;
+	AlenState  *_state = (AlenState *) state;
 
 	/* just count up all the level 1 elements */
 	if (_state->lex->lex_level == 1)
@@ -905,14 +905,14 @@ each_worker(PG_FUNCTION_ARGS, bool as_text)
 {
 	text	   *json = PG_GETARG_TEXT_P(0);
 	JsonLexContext *lex = makeJsonLexContext(json, true);
-	JsonSemAction sem;
+	JsonSemAction *sem;
 	ReturnSetInfo *rsi;
 	MemoryContext old_cxt;
 	TupleDesc	tupdesc;
-	EachState	state;
+	EachState  *state;
 
-	state = palloc0(sizeof(eachState));
-	sem = palloc0(sizeof(jsonSemAction));
+	state = palloc0(sizeof(EachState));
+	sem = palloc0(sizeof(JsonSemAction));
 
 	rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 
@@ -968,7 +968,7 @@ each_worker(PG_FUNCTION_ARGS, bool as_text)
 static void
 each_object_field_start(void *state, char *fname, bool isnull)
 {
-	EachState	_state = (EachState) state;
+	EachState  *_state = (EachState *) state;
 
 	/* save a pointer to where the value starts */
 	if (_state->lex->lex_level == 1)
@@ -988,7 +988,7 @@ each_object_field_start(void *state, char *fname, bool isnull)
 static void
 each_object_field_end(void *state, char *fname, bool isnull)
 {
-	EachState	_state = (EachState) state;
+	EachState  *_state = (EachState *) state;
 	MemoryContext old_cxt;
 	int			len;
 	text	   *val;
@@ -1035,7 +1035,7 @@ each_object_field_end(void *state, char *fname, bool isnull)
 static void
 each_array_start(void *state)
 {
-	EachState	_state = (EachState) state;
+	EachState  *_state = (EachState *) state;
 
 	/* json structure check */
 	if (_state->lex->lex_level == 0)
@@ -1047,7 +1047,7 @@ each_array_start(void *state)
 static void
 each_scalar(void *state, char *token, JsonTokenType tokentype)
 {
-	EachState	_state = (EachState) state;
+	EachState  *_state = (EachState *) state;
 
 	/* json structure check */
 	if (_state->lex->lex_level == 0)
@@ -1074,14 +1074,14 @@ json_array_elements(PG_FUNCTION_ARGS)
 
 	/* elements doesn't need any escaped strings, so use false here */
 	JsonLexContext *lex = makeJsonLexContext(json, false);
-	JsonSemAction sem;
+	JsonSemAction *sem;
 	ReturnSetInfo *rsi;
 	MemoryContext old_cxt;
 	TupleDesc	tupdesc;
-	ElementsState state;
+	ElementsState *state;
 
-	state = palloc0(sizeof(elementsState));
-	sem = palloc0(sizeof(jsonSemAction));
+	state = palloc0(sizeof(ElementsState));
+	sem = palloc0(sizeof(JsonSemAction));
 
 	rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 
@@ -1134,7 +1134,7 @@ json_array_elements(PG_FUNCTION_ARGS)
 static void
 elements_array_element_start(void *state, bool isnull)
 {
-	ElementsState _state = (ElementsState) state;
+	ElementsState *_state = (ElementsState *) state;
 
 	/* save a pointer to where the value starts */
 	if (_state->lex->lex_level == 1)
@@ -1144,7 +1144,7 @@ elements_array_element_start(void *state, bool isnull)
 static void
 elements_array_element_end(void *state, bool isnull)
 {
-	ElementsState _state = (ElementsState) state;
+	ElementsState *_state = (ElementsState *) state;
 	MemoryContext old_cxt;
 	int			len;
 	text	   *val;
@@ -1176,7 +1176,7 @@ elements_array_element_end(void *state, bool isnull)
 static void
 elements_object_start(void *state)
 {
-	ElementsState _state = (ElementsState) state;
+	ElementsState *_state = (ElementsState *) state;
 
 	/* json structure check */
 	if (_state->lex->lex_level == 0)
@@ -1188,7 +1188,7 @@ elements_object_start(void *state)
 static void
 elements_scalar(void *state, char *token, JsonTokenType tokentype)
 {
-	ElementsState _state = (ElementsState) state;
+	ElementsState *_state = (ElementsState *) state;
 
 	/* json structure check */
 	if (_state->lex->lex_level == 0)
@@ -1232,7 +1232,7 @@ json_populate_record(PG_FUNCTION_ARGS)
 	Datum	   *values;
 	bool	   *nulls;
 	char		fname[NAMEDATALEN];
-	JsonHashEntry hashentry;
+	JsonHashEntry *hashentry;
 
 	use_json_as_text = PG_ARGISNULL(2) ? false : PG_GETARG_BOOL(2);
 
@@ -1423,21 +1423,21 @@ get_json_object_as_hash(text *json, char *funcname, bool use_json_as_text)
 {
 	HASHCTL		ctl;
 	HTAB	   *tab;
-	JHashState	state;
+	JHashState *state;
 	JsonLexContext *lex = makeJsonLexContext(json, true);
-	JsonSemAction sem;
+	JsonSemAction *sem;
 
 	memset(&ctl, 0, sizeof(ctl));
 	ctl.keysize = NAMEDATALEN;
-	ctl.entrysize = sizeof(jsonHashEntry);
+	ctl.entrysize = sizeof(JsonHashEntry);
 	ctl.hcxt = CurrentMemoryContext;
 	tab = hash_create("json object hashtable",
 					  100,
 					  &ctl,
 					  HASH_ELEM | HASH_CONTEXT);
 
-	state = palloc0(sizeof(jhashState));
-	sem = palloc0(sizeof(jsonSemAction));
+	state = palloc0(sizeof(JHashState));
+	sem = palloc0(sizeof(JsonSemAction));
 
 	state->function_name = funcname;
 	state->hash = tab;
@@ -1458,7 +1458,7 @@ get_json_object_as_hash(text *json, char *funcname, bool use_json_as_text)
 static void
 hash_object_field_start(void *state, char *fname, bool isnull)
 {
-	JHashState	_state = (JHashState) state;
+	JHashState *_state = (JHashState *) state;
 
 	if (_state->lex->lex_level > 1)
 		return;
@@ -1483,8 +1483,8 @@ hash_object_field_start(void *state, char *fname, bool isnull)
 static void
 hash_object_field_end(void *state, char *fname, bool isnull)
 {
-	JHashState	_state = (JHashState) state;
-	JsonHashEntry hashentry;
+	JHashState *_state = (JHashState *) state;
+	JsonHashEntry *hashentry;
 	bool		found;
 	char		name[NAMEDATALEN];
 
@@ -1525,7 +1525,7 @@ hash_object_field_end(void *state, char *fname, bool isnull)
 static void
 hash_array_start(void *state)
 {
-	JHashState	_state = (JHashState) state;
+	JHashState *_state = (JHashState *) state;
 
 	if (_state->lex->lex_level == 0)
 		ereport(ERROR,
@@ -1536,7 +1536,7 @@ hash_array_start(void *state)
 static void
 hash_scalar(void *state, char *token, JsonTokenType tokentype)
 {
-	JHashState	_state = (JHashState) state;
+	JHashState *_state = (JHashState *) state;
 
 	if (_state->lex->lex_level == 0)
 		ereport(ERROR,
@@ -1573,8 +1573,8 @@ json_populate_recordset(PG_FUNCTION_ARGS)
 	RecordIOData *my_extra;
 	int			ncolumns;
 	JsonLexContext *lex;
-	JsonSemAction sem;
-	PopulateRecordsetState state;
+	JsonSemAction *sem;
+	PopulateRecordsetState *state;
 
 	use_json_as_text = PG_ARGISNULL(2) ? false : PG_GETARG_BOOL(2);
 
@@ -1602,8 +1602,8 @@ json_populate_recordset(PG_FUNCTION_ARGS)
 	 */
 	(void) get_call_result_type(fcinfo, NULL, &tupdesc);
 
-	state = palloc0(sizeof(populateRecordsetState));
-	sem = palloc0(sizeof(jsonSemAction));
+	state = palloc0(sizeof(PopulateRecordsetState));
+	sem = palloc0(sizeof(JsonSemAction));
 
 
 	/* make these in a sufficiently long-lived memory context */
@@ -1690,7 +1690,7 @@ json_populate_recordset(PG_FUNCTION_ARGS)
 static void
 populate_recordset_object_start(void *state)
 {
-	PopulateRecordsetState _state = (PopulateRecordsetState) state;
+	PopulateRecordsetState *_state = (PopulateRecordsetState *) state;
 	int			lex_level = _state->lex->lex_level;
 	HASHCTL		ctl;
 
@@ -1706,7 +1706,7 @@ populate_recordset_object_start(void *state)
 	/* set up a new hash for this entry */
 	memset(&ctl, 0, sizeof(ctl));
 	ctl.keysize = NAMEDATALEN;
-	ctl.entrysize = sizeof(jsonHashEntry);
+	ctl.entrysize = sizeof(JsonHashEntry);
 	ctl.hcxt = CurrentMemoryContext;
 	_state->json_hash = hash_create("json object hashtable",
 									100,
@@ -1717,7 +1717,7 @@ populate_recordset_object_start(void *state)
 static void
 populate_recordset_object_end(void *state)
 {
-	PopulateRecordsetState _state = (PopulateRecordsetState) state;
+	PopulateRecordsetState *_state = (PopulateRecordsetState *) state;
 	HTAB	   *json_hash = _state->json_hash;
 	Datum	   *values;
 	bool	   *nulls;
@@ -1726,7 +1726,7 @@ populate_recordset_object_end(void *state)
 	RecordIOData *my_extra = _state->my_extra;
 	int			ncolumns = my_extra->ncolumns;
 	TupleDesc	tupdesc = _state->ret_tdesc;
-	JsonHashEntry hashentry;
+	JsonHashEntry *hashentry;
 	HeapTupleHeader rec = _state->rec;
 	HeapTuple	rettuple;
 
@@ -1830,7 +1830,7 @@ populate_recordset_object_end(void *state)
 static void
 populate_recordset_array_element_start(void *state, bool isnull)
 {
-	PopulateRecordsetState _state = (PopulateRecordsetState) state;
+	PopulateRecordsetState *_state = (PopulateRecordsetState *) state;
 
 	if (_state->lex->lex_level == 1 &&
 		_state->lex->token_type != JSON_TOKEN_OBJECT_START)
@@ -1842,7 +1842,7 @@ populate_recordset_array_element_start(void *state, bool isnull)
 static void
 populate_recordset_array_start(void *state)
 {
-	PopulateRecordsetState _state = (PopulateRecordsetState) state;
+	PopulateRecordsetState *_state = (PopulateRecordsetState *) state;
 
 	if (_state->lex->lex_level != 0 && !_state->use_json_as_text)
 		ereport(ERROR,
@@ -1853,7 +1853,7 @@ populate_recordset_array_start(void *state)
 static void
 populate_recordset_scalar(void *state, char *token, JsonTokenType tokentype)
 {
-	PopulateRecordsetState _state = (PopulateRecordsetState) state;
+	PopulateRecordsetState *_state = (PopulateRecordsetState *) state;
 
 	if (_state->lex->lex_level == 0)
 		ereport(ERROR,
@@ -1867,7 +1867,7 @@ populate_recordset_scalar(void *state, char *token, JsonTokenType tokentype)
 static void
 populate_recordset_object_field_start(void *state, char *fname, bool isnull)
 {
-	PopulateRecordsetState _state = (PopulateRecordsetState) state;
+	PopulateRecordsetState *_state = (PopulateRecordsetState *) state;
 
 	if (_state->lex->lex_level > 2)
 		return;
@@ -1890,8 +1890,8 @@ populate_recordset_object_field_start(void *state, char *fname, bool isnull)
 static void
 populate_recordset_object_field_end(void *state, char *fname, bool isnull)
 {
-	PopulateRecordsetState _state = (PopulateRecordsetState) state;
-	JsonHashEntry hashentry;
+	PopulateRecordsetState *_state = (PopulateRecordsetState *) state;
+	JsonHashEntry *hashentry;
 	bool		found;
 	char		name[NAMEDATALEN];
 

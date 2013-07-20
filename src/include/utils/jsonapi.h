@@ -74,7 +74,7 @@ typedef void (*json_scalar_action) (void *state, char *token, JsonTokenType toke
  * to doing a pure parse with no side-effects, and is therefore exactly
  * what the json input routines do.
  */
-typedef struct jsonSemAction
+typedef struct JsonSemAction
 {
 	void	   *semstate;
 	json_struct_action object_start;
@@ -86,8 +86,7 @@ typedef struct jsonSemAction
 	json_aelem_action array_element_start;
 	json_aelem_action array_element_end;
 	json_scalar_action scalar;
-} jsonSemAction,
-		   *JsonSemAction;
+} JsonSemAction;
 
 /*
  * parse_json will parse the string in the lex calling the
@@ -98,7 +97,7 @@ typedef struct jsonSemAction
  * points to. If the action pointers are NULL the parser
  * does nothing and just continues.
  */
-extern void pg_parse_json(JsonLexContext *lex, JsonSemAction sem);
+extern void pg_parse_json(JsonLexContext *lex, JsonSemAction *sem);
 
 /*
  * constructor for JsonLexContext, with or without strval element.
