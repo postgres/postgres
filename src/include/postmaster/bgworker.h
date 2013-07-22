@@ -53,7 +53,6 @@
 
 
 typedef void (*bgworker_main_type) (void *main_arg);
-typedef void (*bgworker_sighdlr_type) (SIGNAL_ARGS);
 
 /*
  * Points in time at which a bgworker can request to be started
@@ -76,8 +75,6 @@ typedef struct BackgroundWorker
 	int			bgw_restart_time;		/* in seconds, or BGW_NEVER_RESTART */
 	bgworker_main_type bgw_main;
 	void	   *bgw_main_arg;
-	bgworker_sighdlr_type bgw_sighup;
-	bgworker_sighdlr_type bgw_sigterm;
 } BackgroundWorker;
 
 /* Register a new bgworker */

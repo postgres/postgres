@@ -159,6 +159,10 @@ worker_spi_main(void *main_arg)
 	worktable  *table = (worktable *) main_arg;
 	StringInfoData buf;
 
+	/* Establish signal handlers before unblocking signals. */
+	pqsignal(SIGHUP, worker_spi_sighup);
+	pqsignal(SIGTERM, worker_spi_sigterm);
+
 	/* We're now ready to receive signals */
 	BackgroundWorkerUnblockSignals();
 
@@ -328,8 +332,6 @@ _PG_init(void)
 	worker.bgw_start_time = BgWorkerStart_RecoveryFinished;
 	worker.bgw_restart_time = BGW_NEVER_RESTART;
 	worker.bgw_main = worker_spi_main;
-	worker.bgw_sighup = worker_spi_sighup;
-	worker.bgw_sigterm = worker_spi_sigterm;
 
 	/*
 	 * Now fill in worker-specific data, and do the actual registrations.
