@@ -1138,10 +1138,11 @@ acquire_sample_rows(Relation onerel, int elevel,
 
 			ItemPointerSet(&targtuple.t_self, targblock, targoffset);
 
+			targtuple.t_tableOid = RelationGetRelid(onerel);
 			targtuple.t_data = (HeapTupleHeader) PageGetItem(targpage, itemid);
 			targtuple.t_len = ItemIdGetLength(itemid);
 
-			switch (HeapTupleSatisfiesVacuum(targtuple.t_data,
+			switch (HeapTupleSatisfiesVacuum(&targtuple,
 											 OldestXmin,
 											 targbuffer))
 			{

@@ -27,8 +27,8 @@ typedef struct SnapshotData *Snapshot;
  * The specific semantics of a snapshot are encoded by the "satisfies"
  * function.
  */
-typedef bool (*SnapshotSatisfiesFunc) (HeapTupleHeader tuple,
-										   Snapshot snapshot, Buffer buffer);
+typedef bool (*SnapshotSatisfiesFunc) (HeapTuple htup,
+									   Snapshot snapshot, Buffer buffer);
 
 typedef struct SnapshotData
 {

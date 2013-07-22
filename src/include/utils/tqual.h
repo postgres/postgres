@@ -52,7 +52,7 @@ extern PGDLLIMPORT SnapshotData SnapshotToastData;
  *	if so, the indicated buffer is marked dirty.
  */
 #define HeapTupleSatisfiesVisibility(tuple, snapshot, buffer) \
-	((*(snapshot)->satisfies) ((tuple)->t_data, snapshot, buffer))
+	((*(snapshot)->satisfies) (tuple, snapshot, buffer))
 
 /* Result codes for HeapTupleSatisfiesVacuum */
 typedef enum
@@ -65,25 +65,25 @@ typedef enum
 } HTSV_Result;
 
 /* These are the "satisfies" test routines for the various snapshot types */
-extern bool HeapTupleSatisfiesMVCC(HeapTupleHeader tuple,
+extern bool HeapTupleSatisfiesMVCC(HeapTuple htup,
 					   Snapshot snapshot, Buffer buffer);
-extern bool HeapTupleSatisfiesNow(HeapTupleHeader tuple,
+extern bool HeapTupleSatisfiesNow(HeapTuple htup,
 					  Snapshot snapshot, Buffer buffer);
-extern bool HeapTupleSatisfiesSelf(HeapTupleHeader tuple,
+extern bool HeapTupleSatisfiesSelf(HeapTuple htup,
 					   Snapshot snapshot, Buffer buffer);
-extern bool HeapTupleSatisfiesAny(HeapTupleHeader tuple,
+extern bool HeapTupleSatisfiesAny(HeapTuple htup,
 					  Snapshot snapshot, Buffer buffer);
-extern bool HeapTupleSatisfiesToast(HeapTupleHeader tuple,
+extern bool HeapTupleSatisfiesToast(HeapTuple htup,
 						Snapshot snapshot, Buffer buffer);
-extern bool HeapTupleSatisfiesDirty(HeapTupleHeader tuple,
+extern bool HeapTupleSatisfiesDirty(HeapTuple htup,
 						Snapshot snapshot, Buffer buffer);
 
 /* Special "satisfies" routines with different APIs */
-extern HTSU_Result HeapTupleSatisfiesUpdate(HeapTupleHeader tuple,
+extern HTSU_Result HeapTupleSatisfiesUpdate(HeapTuple htup,
 						 CommandId curcid, Buffer buffer);
-extern HTSV_Result HeapTupleSatisfiesVacuum(HeapTupleHeader tuple,
+extern HTSV_Result HeapTupleSatisfiesVacuum(HeapTuple htup,
 						 TransactionId OldestXmin, Buffer buffer);
-extern bool HeapTupleIsSurelyDead(HeapTupleHeader tuple,
+extern bool HeapTupleIsSurelyDead(HeapTuple htup,
 					  TransactionId OldestXmin);
 
 extern void HeapTupleSetHintBits(HeapTupleHeader tuple, Buffer buffer,

@@ -163,8 +163,12 @@ HeapTupleSetHintBits(HeapTupleHeader tuple, Buffer buffer,
  *			 Xmax is not committed)))			that has not been committed
  */
 bool
-HeapTupleSatisfiesSelf(HeapTupleHeader tuple, Snapshot snapshot, Buffer buffer)
+HeapTupleSatisfiesSelf(HeapTuple htup, Snapshot snapshot, Buffer buffer)
 {
+	HeapTupleHeader tuple = htup->t_data;
+	Assert(ItemPointerIsValid(&htup->t_self));
+	Assert(htup->t_tableOid != InvalidOid);
+
 	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
 	{
 		if (tuple->t_infomask & HEAP_XMIN_INVALID)
@@ -351,8 +355,12 @@ HeapTupleSatisfiesSelf(HeapTupleHeader tuple, Snapshot snapshot, Buffer buffer)
  *
  */
 bool
-HeapTupleSatisfiesNow(HeapTupleHeader tuple, Snapshot snapshot, Buffer buffer)
+HeapTupleSatisfiesNow(HeapTuple htup, Snapshot snapshot, Buffer buffer)
 {
+	HeapTupleHeader tuple = htup->t_data;
+	Assert(ItemPointerIsValid(&htup->t_self));
+	Assert(htup->t_tableOid != InvalidOid);
+
 	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
 	{
 		if (tuple->t_infomask & HEAP_XMIN_INVALID)
@@ -526,7 +534,7 @@ HeapTupleSatisfiesNow(HeapTupleHeader tuple, Snapshot snapshot, Buffer buffer)
  *		Dummy "satisfies" routine: any tuple satisfies SnapshotAny.
  */
 bool
-HeapTupleSatisfiesAny(HeapTupleHeader tuple, Snapshot snapshot, Buffer buffer)
+HeapTupleSatisfiesAny(HeapTuple htup, Snapshot snapshot, Buffer buffer)
 {
 	return true;
 }
@@ -546,9 +554,13 @@ HeapTupleSatisfiesAny(HeapTupleHeader tuple, Snapshot snapshot, Buffer buffer)
  * table.
  */
 bool
-HeapTupleSatisfiesToast(HeapTupleHeader tuple, Snapshot snapshot,
+HeapTupleSatisfiesToast(HeapTuple htup, Snapshot snapshot,
 						Buffer buffer)
 {
+	HeapTupleHeader tuple = htup->t_data;
+	Assert(ItemPointerIsValid(&htup->t_self));
+	Assert(htup->t_tableOid != InvalidOid);
+
 	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
 	{
 		if (tuple->t_infomask & HEAP_XMIN_INVALID)
@@ -627,9 +639,13 @@ HeapTupleSatisfiesToast(HeapTupleHeader tuple, Snapshot snapshot,
  *	distinguish that case must test for it themselves.)
  */
 HTSU_Result
-HeapTupleSatisfiesUpdate(HeapTupleHeader tuple, CommandId curcid,
+HeapTupleSatisfiesUpdate(HeapTuple htup, CommandId curcid,
 						 Buffer buffer)
 {
+	HeapTupleHeader tuple = htup->t_data;
+	Assert(ItemPointerIsValid(&htup->t_self));
+	Assert(htup->t_tableOid != InvalidOid);
+
 	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
 	{
 		if (tuple->t_infomask & HEAP_XMIN_INVALID)
@@ -849,9 +865,13 @@ HeapTupleSatisfiesUpdate(HeapTupleHeader tuple, CommandId curcid,
  * for snapshot->xmax and the tuple's xmax.
  */
 bool
-HeapTupleSatisfiesDirty(HeapTupleHeader tuple, Snapshot snapshot,
+HeapTupleSatisfiesDirty(HeapTuple htup, Snapshot snapshot,
 						Buffer buffer)
 {
+	HeapTupleHeader tuple = htup->t_data;
+	Assert(ItemPointerIsValid(&htup->t_self));
+	Assert(htup->t_tableOid != InvalidOid);
+
 	snapshot->xmin = snapshot->xmax = InvalidTransactionId;
 
 	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
@@ -1040,9 +1060,13 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple, Snapshot snapshot,
  * can't see it.)
  */
 bool
-HeapTupleSatisfiesMVCC(HeapTupleHeader tuple, Snapshot snapshot,
+HeapTupleSatisfiesMVCC(HeapTuple htup, Snapshot snapshot,
 					   Buffer buffer)
 {
+	HeapTupleHeader tuple = htup->t_data;
+	Assert(ItemPointerIsValid(&htup->t_self));
+	Assert(htup->t_tableOid != InvalidOid);
+
 	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
 	{
 		if (tuple->t_infomask & HEAP_XMIN_INVALID)
@@ -1233,9 +1257,13 @@ HeapTupleSatisfiesMVCC(HeapTupleHeader tuple, Snapshot snapshot,
  * even if we see that the deleting transaction has committed.
  */
 HTSV_Result
-HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin,
+HeapTupleSatisfiesVacuum(HeapTuple htup, TransactionId OldestXmin,
 						 Buffer buffer)
 {
+	HeapTupleHeader tuple = htup->t_data;
+	Assert(ItemPointerIsValid(&htup->t_self));
+	Assert(htup->t_tableOid != InvalidOid);
+
 	/*
 	 * Has inserting transaction committed?
 	 *
@@ -1466,8 +1494,12 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin,
  *	just whether or not the tuple is surely dead).
  */
 bool
-HeapTupleIsSurelyDead(HeapTupleHeader tuple, TransactionId OldestXmin)
+HeapTupleIsSurelyDead(HeapTuple htup, TransactionId OldestXmin)
 {
+	HeapTupleHeader tuple = htup->t_data;
+	Assert(ItemPointerIsValid(&htup->t_self));
+	Assert(htup->t_tableOid != InvalidOid);
+
 	/*
 	 * If the inserting transaction is marked invalid, then it aborted, and
 	 * the tuple is definitely dead.  If it's marked neither committed nor

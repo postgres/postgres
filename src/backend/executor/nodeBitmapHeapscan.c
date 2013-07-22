@@ -258,6 +258,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 
 		scan->rs_ctup.t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
 		scan->rs_ctup.t_len = ItemIdGetLength(lp);
+		scan->rs_ctup.t_tableOid = scan->rs_rd->rd_id;
 		ItemPointerSet(&scan->rs_ctup.t_self, tbmres->blockno, targoffset);
 
 		pgstat_count_heap_fetch(scan->rs_rd);

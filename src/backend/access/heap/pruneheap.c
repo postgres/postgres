@@ -339,6 +339,9 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 	OffsetNumber chainitems[MaxHeapTuplesPerPage];
 	int			nchain = 0,
 				i;
+	HeapTupleData tup;
+
+	tup.t_tableOid = RelationGetRelid(relation);
 
 	rootlp = PageGetItemId(dp, rootoffnum);
 
@@ -348,6 +351,12 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 	if (ItemIdIsNormal(rootlp))
 	{
 		htup = (HeapTupleHeader) PageGetItem(dp, rootlp);
+
+		tup.t_data = htup;
+		tup.t_len = ItemIdGetLength(rootlp);
+		tup.t_tableOid = RelationGetRelid(relation);
+		ItemPointerSet(&(tup.t_self), BufferGetBlockNumber(buffer), rootoffnum);
+
 		if (HeapTupleHeaderIsHeapOnly(htup))
 		{
 			/*
@@ -368,7 +377,7 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 			 * either here or while following a chain below.  Whichever path
 			 * gets there first will mark the tuple unused.
 			 */
-			if (HeapTupleSatisfiesVacuum(htup, OldestXmin, buffer)
+			if (HeapTupleSatisfiesVacuum(&tup, OldestXmin, buffer)
 				== HEAPTUPLE_DEAD && !HeapTupleHeaderIsHotUpdated(htup))
 			{
 				heap_prune_record_unused(prstate, rootoffnum);
@@ -431,6 +440,10 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 		Assert(ItemIdIsNormal(lp));
 		htup = (HeapTupleHeader) PageGetItem(dp, lp);
 
+		tup.t_data = htup;
+		tup.t_len = ItemIdGetLength(lp);
+		ItemPointerSet(&(tup.t_self), BufferGetBlockNumber(buffer), offnum);
+
 		/*
 		 * Check the tuple XMIN against prior XMAX, if any
 		 */
@@ -448,7 +461,7 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 		 */
 		tupdead = recent_dead = false;
 
-		switch (HeapTupleSatisfiesVacuum(htup, OldestXmin, buffer))
+		switch (HeapTupleSatisfiesVacuum(&tup, OldestXmin, buffer))
 		{
 			case HEAPTUPLE_DEAD:
 				tupdead = true;
