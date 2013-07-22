@@ -48,7 +48,6 @@
   The structure <structname>BackgroundWorker</structname> is defined thus:
 <programlisting>
 typedef void (*bgworker_main_type)(void *main_arg);
-typedef void (*bgworker_sighdlr_type)(SIGNAL_ARGS);
 typedef struct BackgroundWorker
 {
     char        bgw_name[BGW_MAXLEN];
@@ -59,8 +58,6 @@ typedef struct BackgroundWorker
     char        bgw_library_name[BGW_MAXLEN];   /* only if bgw_main is NULL */
     char        bgw_function_name[BGW_MAXLEN];  /* only if bgw_main is NULL */
     Datum       bgw_main_arg;
-    bgworker_sighdlr_type bgw_sighup;
-    bgworker_sighdlr_type bgw_sigterm;
 } BackgroundWorker;
 </programlisting>
   </para>
@@ -138,17 +135,6 @@ typedef struct BackgroundWorker
    <structfield>bgw_main</structfield> is NULL.
   </para>
 
-  <para>
-   <structfield>bgw_sighup</structfield> and <structfield>bgw_sigterm</> are
-   pointers to functions that will be installed as signal handlers for the new
-   process.  If <structfield>bgw_sighup</> is NULL, then <literal>SIG_IGN</>
-   is used; if <structfield>bgw_sigterm</> is NULL, a handler is installed that
-   will terminate the process after logging a suitable message.  These
-   fields should not be used if <structfield>bgw_main</> is NULL; instead,
-   the worker process should set its own signal handlers before calling
-   <function>BackgroundWorkerUnblockSignals()</function>.
-  </para>
-
   <para>Once running, the process can connect to a database by calling
    <function>BackgroundWorkerInitializeConnection(<parameter>char *dbname</parameter>, <parameter>char *username</parameter>)</function>.
    This allows the process to run transactions and queries using the
@@ -163,7 +149,7 @@ typedef struct BackgroundWorker
   <para>
    Signals are initially blocked when control reaches the
    <structfield>bgw_main</> function, and must be unblocked by it; this is to
-   allow the process to further customize its signal handlers, if necessary.
+   allow the process to customize its signal handlers, if necessary.
    Signals can be unblocked in the new process by calling
    <function>BackgroundWorkerUnblockSignals</> and blocked by calling
    <function>BackgroundWorkerBlockSignals</>.

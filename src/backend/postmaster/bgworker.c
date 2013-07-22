@@ -247,8 +247,6 @@ BackgroundWorkerStateChange(void)
 		rw->rw_worker.bgw_restart_time = slot->worker.bgw_restart_time;
 		rw->rw_worker.bgw_main = slot->worker.bgw_main;
 		rw->rw_worker.bgw_main_arg = slot->worker.bgw_main_arg;
-		rw->rw_worker.bgw_sighup = slot->worker.bgw_sighup;
-		rw->rw_worker.bgw_sigterm = slot->worker.bgw_sigterm;
 
 		/* Initialize postmaster bookkeeping. */
 		rw->rw_backend = NULL;

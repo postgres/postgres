@@ -344,8 +344,6 @@ _PG_init(void)
 	worker.bgw_start_time = BgWorkerStart_RecoveryFinished;
 	worker.bgw_restart_time = BGW_NEVER_RESTART;
 	worker.bgw_main = worker_spi_main;
-	worker.bgw_sighup = NULL;
-	worker.bgw_sigterm = NULL;
 
 	/*
 	 * Now fill in worker-specific data, and do the actual registrations.
@@ -375,8 +373,6 @@ worker_spi_launch(PG_FUNCTION_ARGS)
 	worker.bgw_main = NULL;		/* new worker might not have library loaded */
 	sprintf(worker.bgw_library_name, "worker_spi");
 	sprintf(worker.bgw_function_name, "worker_spi_main");
-	worker.bgw_sighup = NULL;	/* new worker might not have library loaded */
-	worker.bgw_sigterm = NULL;	/* new worker might not have library loaded */
 	snprintf(worker.bgw_name, BGW_MAXLEN, "worker %d", i);
 	worker.bgw_main_arg = Int32GetDatum(i);
 

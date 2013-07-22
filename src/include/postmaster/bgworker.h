@@ -53,7 +53,6 @@
 
 
 typedef void (*bgworker_main_type) (Datum main_arg);
-typedef void (*bgworker_sighdlr_type) (SIGNAL_ARGS);
 
 /*
  * Points in time at which a bgworker can request to be started
@@ -79,8 +78,6 @@ typedef struct BackgroundWorker
 	char		bgw_library_name[BGW_MAXLEN];	/* only if bgw_main is NULL */
 	char		bgw_function_name[BGW_MAXLEN];	/* only if bgw_main is NULL */
 	Datum		bgw_main_arg;
-	bgworker_sighdlr_type bgw_sighup;
-	bgworker_sighdlr_type bgw_sigterm;
 } BackgroundWorker;
 
 /* Register a new bgworker during shared_preload_libraries */

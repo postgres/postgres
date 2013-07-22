@@ -5357,17 +5357,8 @@ do_start_bgworker(void)
 		pqsignal(SIGUSR1, bgworker_sigusr1_handler);
 		pqsignal(SIGFPE, SIG_IGN);
 	}
-
-	/* SIGTERM and SIGHUP are configurable */
-	if (worker->bgw_sigterm)
-		pqsignal(SIGTERM, worker->bgw_sigterm);
-	else
-		pqsignal(SIGTERM, bgworker_die);
-
-	if (worker->bgw_sighup)
-		pqsignal(SIGHUP, worker->bgw_sighup);
-	else
-		pqsignal(SIGHUP, SIG_IGN);
+	pqsignal(SIGTERM, bgworker_die);
+	pqsignal(SIGHUP, SIG_IGN);
 
 	pqsignal(SIGQUIT, bgworker_quickdie);
 	InitializeTimeouts();		/* establishes SIGALRM handler */
