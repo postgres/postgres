@@ -409,10 +409,56 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
 
      <varlistentry>
       <term><option>-P</option> <replaceable>sec</></term>
-      <term><option>--progress=</option> <replaceable>sec</></term>
+      <term><option>--progress=</option><replaceable>sec</></term>
       <listitem>
        <para>
         Show progress report every <literal>sec</> seconds.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-R</option> <replaceable>rate</></term>
+      <term><option>--rate=</option><replaceable>rate</></term>
+      <listitem>
+       <para>
+        Execute transactions targeting the specified rate instead of running
+        as fast as possible (the default).  The rate is given in transactions
+        per second.  If the targeted rate is above the maximum possible rate,
+        the rate limit won't impact the results.
+       </para>
+       <para>
+        The rate is targeted by starting transactions along a
+        Poisson-distributed schedule time line.  The expected finish time
+        schedule moves forward based on when the client first started, not
+        when the previous transaction ended.  That approach means that when
+        transactions go past their original scheduled end time, it is
+        possible for later ones to catch up again.
+       </para>
+       <para>        
+        When throttling is active, the average and maximum transaction
+        schedule lag time are reported in ms.  This is the delay between
+        the original scheduled transaction time and the actual transaction
+        start times.  The schedule lag shows whether a transaction was
+        started on time or late.  Once a client starts running behind its
+        schedule, every following transaction can continue to be penalized
+        for schedule lag.  If faster transactions are able to catch up, it's
+        possible for them to get back on schedule again.  The lag measurement
+        of every transaction is shown when pgbench is run with debugging
+        output.
+       </para>
+       <para>
+        High rate limit schedule lag values, that is lag values that are large
+        compared to the actual transaction latency, indicate that something is
+        amiss in the throttling process.  High schedule lag can highlight a subtle
+        problem there even if the target rate limit is met in the end.  One
+        possible cause of schedule lag is insufficient pgbench threads to
+        handle all of the clients.  To improve that, consider reducing the
+        number of clients, increasing the number of threads in pgbench, or
+        running pgbench on a separate host.  Another possibility is that the
+        database is not keeping up with the load at some point.  When that
+        happens, you will have to reduce the expected transaction rate to
+        lower schedule lag.
        </para>
       </listitem>
      </varlistentry>
