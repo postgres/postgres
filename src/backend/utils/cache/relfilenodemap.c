@@ -210,7 +210,7 @@ RelidByRelfilenode(Oid reltablespace, Oid relfilenode)
 
 	while (HeapTupleIsValid(ntp = systable_getnext(scandesc)))
 	{
-		bool isnull;
+		bool isnull PG_USED_FOR_ASSERTS_ONLY;
 
 		if (found)
 			elog(ERROR,
