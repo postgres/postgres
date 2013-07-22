@@ -28,6 +28,7 @@
 #include "utils/builtins.h"
 #include "utils/numeric.h"
 #include "utils/rel.h"
+#include "utils/relfilenodemap.h"
 #include "utils/relmapper.h"
 #include "utils/syscache.h"
 
@@ -753,6 +754,33 @@ pg_relation_filenode(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	PG_RETURN_OID(result);
+}
+
+/*
+ * Get the relation via (reltablespace, relfilenode)
+ *
+ * This is expected to be used when somebody wants to match an individual file
+ * on the filesystem back to its table. Thats not trivially possible via
+ * pg_class because that doesn't contain the relfilenodes of shared and nailed
+ * tables.
+ *
+ * We don't fail but return NULL if we cannot find a mapping.
+ *
+ * Instead of knowing DEFAULTTABLESPACE_OID you can pass 0.
+ */
+Datum
+pg_filenode_relation(PG_FUNCTION_ARGS)
+{
+	Oid			reltablespace = PG_GETARG_OID(0);
+	Oid			relfilenode = PG_GETARG_OID(1);
+	Oid			heaprel = InvalidOid;
+
+	heaprel = RelidByRelfilenode(reltablespace, relfilenode);
+
+	if (!OidIsValid(heaprel))
+		PG_RETURN_NULL();
+	else
+		PG_RETURN_OID(heaprel);
 }
 
 /*

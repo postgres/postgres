@@ -15748,6 +15748,9 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
    <indexterm>
     <primary>pg_relation_filepath</primary>
    </indexterm>
+   <indexterm>
+    <primary>pg_filenode_relation</primary>
+   </indexterm>
 
    <table id="functions-admin-dblocation">
     <title>Database Object Location Functions</title>
@@ -15776,6 +15779,15 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         File path name of the specified relation
        </entry>
       </row>
+      <row>
+       <entry>
+        <literal><function>pg_filenode_relation(<parameter>tablespace</parameter> <type>oid</type>, <parameter>filenode</parameter> <type>oid</type>)</function></literal>
+        </entry>
+       <entry><type>regclass</type></entry>
+       <entry>
+        Find the relation associated with a given tablespace and filenode
+       </entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
@@ -15797,6 +15809,13 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
     <function>pg_relation_filenode</>, but it returns the entire file path name
     (relative to the database cluster's data directory <varname>PGDATA</>) of
     the relation.
+   </para>
+
+   <para>
+    <function>pg_filenode_relation</> is the reverse of
+    <function>pg_relation_filenode</>. Given a <quote>tablespace</> OID and
+    a <quote>filenode</> it returns the associated relation. The default
+    tablespace can be specified as 0.
    </para>
 
   </sect2>

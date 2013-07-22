@@ -1544,3 +1544,17 @@ ALTER TABLE IF EXISTS tt8 SET SCHEMA alter2;
 
 DROP TABLE alter2.tt8;
 DROP SCHEMA alter2;
+
+-- Check that we map relation oids to filenodes and back correctly.
+-- Don't display all the mappings so the test output doesn't change
+-- all the time, but make sure we actually do test some values.
+SELECT
+    SUM((mapped_oid != oid OR mapped_oid IS NULL)::int) incorrectly_mapped,
+    count(*) > 200 have_mappings
+FROM (
+    SELECT
+        oid, reltablespace, relfilenode, relname,
+        pg_filenode_relation(reltablespace, pg_relation_filenode(oid)) mapped_oid
+    FROM pg_class
+    WHERE relkind IN ('r', 'i', 'S', 't', 'm')
+    ) mapped;

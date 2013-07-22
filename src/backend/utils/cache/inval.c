@@ -178,7 +178,7 @@ static int	maxSharedInvalidMessagesArray;
  */
 
 #define MAX_SYSCACHE_CALLBACKS 32
-#define MAX_RELCACHE_CALLBACKS 5
+#define MAX_RELCACHE_CALLBACKS 10
 
 static struct SYSCACHECALLBACK
 {

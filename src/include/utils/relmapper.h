@@ -36,6 +36,8 @@ typedef struct xl_relmap_update
 
 extern Oid	RelationMapOidToFilenode(Oid relationId, bool shared);
 
+extern Oid	RelationMapFilenodeToOid(Oid relationId, bool shared);
+
 extern void RelationMapUpdateMap(Oid relationId, Oid fileNode, bool shared,
 					 bool immediate);
 

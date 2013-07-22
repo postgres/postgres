@@ -460,6 +460,7 @@ extern Datum pg_size_pretty_numeric(PG_FUNCTION_ARGS);
 extern Datum pg_table_size(PG_FUNCTION_ARGS);
 extern Datum pg_indexes_size(PG_FUNCTION_ARGS);
 extern Datum pg_relation_filenode(PG_FUNCTION_ARGS);
+extern Datum pg_filenode_relation(PG_FUNCTION_ARGS);
 extern Datum pg_relation_filepath(PG_FUNCTION_ARGS);
 
 /* genfile.c */

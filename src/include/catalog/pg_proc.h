@@ -3448,6 +3448,8 @@ DATA(insert OID = 2998 ( pg_indexes_size		PGNSP PGUID 12 1 0 0 0 f f f f t f v 1
 DESCR("disk space usage for all indexes attached to the specified table");
 DATA(insert OID = 2999 ( pg_relation_filenode	PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 26 "2205" _null_ _null_ _null_ _null_ pg_relation_filenode _null_ _null_ _null_ ));
 DESCR("filenode identifier of relation");
+DATA(insert OID = 3454 ( pg_filenode_relation PGNSP PGUID 12 1 0 0 0 f f f f t f s 2 0 2205 "26 26" _null_ _null_ _null_ _null_ pg_filenode_relation _null_ _null_ _null_ ));
+DESCR("relation OID for filenode and tablespace");
 DATA(insert OID = 3034 ( pg_relation_filepath	PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 25 "2205" _null_ _null_ _null_ _null_ pg_relation_filepath _null_ _null_ _null_ ));
 DESCR("file path of relation");
 
