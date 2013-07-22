@@ -154,10 +154,17 @@ initialize_worker_spi(worktable *table)
 }
 
 static void
-worker_spi_main(void *main_arg)
+worker_spi_main(Datum main_arg)
 {
-	worktable  *table = (worktable *) main_arg;
+	int			index = DatumGetInt32(main_arg);
+	worktable  *table;
 	StringInfoData buf;
+	char		name[20];
+
+	table = palloc(sizeof(worktable));
+	sprintf(name, "schema%d", index);
+	table->schema = pstrdup(name);
+	table->name = pstrdup("counted");
 
 	/* Establish signal handlers before unblocking signals. */
 	pqsignal(SIGHUP, worker_spi_sighup);
@@ -296,9 +303,7 @@ void
 _PG_init(void)
 {
 	BackgroundWorker worker;
-	worktable  *table;
 	unsigned int i;
-	char		name[20];
 
 	/* get the configuration */
 	DefineCustomIntVariable("worker_spi.naptime",
@@ -338,14 +343,8 @@ _PG_init(void)
 	 */
 	for (i = 1; i <= worker_spi_total_workers; i++)
 	{
-		sprintf(name, "worker %d", i);
-		worker.bgw_name = pstrdup(name);
-
-		table = palloc(sizeof(worktable));
-		sprintf(name, "schema%d", i);
-		table->schema = pstrdup(name);
-		table->name = pstrdup("counted");
-		worker.bgw_main_arg = (void *) table;
+		snprintf(worker.bgw_name, BGW_MAXLEN, "worker %d", i);
+		worker.bgw_main_arg = Int32GetDatum(i);
 
 		RegisterBackgroundWorker(&worker);
 	}

@@ -5247,9 +5247,6 @@ RegisterBackgroundWorker(BackgroundWorker *worker)
 	}
 
 	rw->rw_worker = *worker;
-	rw->rw_worker.bgw_name = ((char *) rw) + sizeof(RegisteredBgWorker);
-	strlcpy(rw->rw_worker.bgw_name, worker->bgw_name, namelen + 1);
-
 	rw->rw_backend = NULL;
 	rw->rw_pid = 0;
 	rw->rw_child_slot = 0;

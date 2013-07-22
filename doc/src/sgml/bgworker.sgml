@@ -40,12 +40,12 @@
 typedef void (*bgworker_main_type)(void *main_arg);
 typedef struct BackgroundWorker
 {
-    char       *bgw_name;
+    char        bgw_name[BGW_MAXLEN];
     int         bgw_flags;
     BgWorkerStartTime bgw_start_time;
     int         bgw_restart_time;       /* in seconds, or BGW_NEVER_RESTART */
-    bgworker_main_type  bgw_main;
-    void       *bgw_main_arg;
+    bgworker_main_type bgw_main;
+    Datum       bgw_main_arg;
 } BackgroundWorker;
 </programlisting>
   </para>

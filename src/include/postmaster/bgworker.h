@@ -52,7 +52,7 @@
 #define BGWORKER_BACKEND_DATABASE_CONNECTION		0x0002
 
 
-typedef void (*bgworker_main_type) (void *main_arg);
+typedef void (*bgworker_main_type) (Datum main_arg);
 
 /*
  * Points in time at which a bgworker can request to be started
@@ -66,15 +66,16 @@ typedef enum
 
 #define BGW_DEFAULT_RESTART_INTERVAL	60
 #define BGW_NEVER_RESTART				-1
+#define BGW_MAXLEN						64
 
 typedef struct BackgroundWorker
 {
-	char	   *bgw_name;
+	char	    bgw_name[BGW_MAXLEN];
 	int			bgw_flags;
 	BgWorkerStartTime bgw_start_time;
 	int			bgw_restart_time;		/* in seconds, or BGW_NEVER_RESTART */
 	bgworker_main_type bgw_main;
-	void	   *bgw_main_arg;
+	Datum		bgw_main_arg;
 } BackgroundWorker;
 
 /* Register a new bgworker */
