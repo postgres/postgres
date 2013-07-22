@@ -141,6 +141,7 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	List	   *actions;
 	Query	   *dataQuery;
 	Oid			tableSpace;
+	Oid			owner;
 	Oid			OIDNewHeap;
 	DestReceiver *dest;
 	bool		concurrent;
@@ -238,6 +239,8 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	else
 		tableSpace = matviewRel->rd_rel->reltablespace;
 
+	owner = matviewRel->rd_rel->relowner;
+
 	heap_close(matviewRel, NoLock);
 
 	/* Create the transient table that will receive the regenerated data. */
@@ -247,8 +250,7 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 
 	/* Generate the data, if wanted. */
 	if (!stmt->skipData)
-		refresh_matview_datafill(dest, dataQuery, queryString,
-								 matviewRel->rd_rel->relowner);
+		refresh_matview_datafill(dest, dataQuery, queryString, owner);
 
 	/* Make the matview match the newly generated data. */
 	if (concurrent)
