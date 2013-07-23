@@ -292,6 +292,7 @@ markTargetListOrigin(ParseState *pstate, TargetEntry *tle,
 
 				Assert(attnum > 0 && attnum <= list_length(rte->joinaliasvars));
 				aliasvar = (Var *) list_nth(rte->joinaliasvars, attnum - 1);
+				/* We intentionally don't strip implicit coercions here */
 				markTargetListOrigin(pstate, tle, aliasvar, netlevelsup);
 			}
 			break;
@@ -1329,6 +1330,8 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 			/* Join RTE --- recursively inspect the alias variable */
 			Assert(attnum > 0 && attnum <= list_length(rte->joinaliasvars));
 			expr = (Node *) list_nth(rte->joinaliasvars, attnum - 1);
+			Assert(expr != NULL);
+			/* We intentionally don't strip implicit coercions here */
 			if (IsA(expr, Var))
 				return expandRecordVariable(pstate, (Var *) expr, netlevelsup);
 			/* else fall through to inspect the expression */
