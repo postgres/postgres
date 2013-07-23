@@ -3870,7 +3870,8 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 				Var		   *aliasvar;
 
 				aliasvar = (Var *) list_nth(rte->joinaliasvars, attnum - 1);
-				if (IsA(aliasvar, Var))
+				/* we intentionally don't strip implicit coercions here */
+				if (aliasvar && IsA(aliasvar, Var))
 				{
 					return get_variable(aliasvar, var->varlevelsup + levelsup,
 										istoplevel, context);
@@ -4162,6 +4163,8 @@ get_name_for_var_field(Var *var, int fieldno,
 				elog(ERROR, "cannot decompile join alias var in plan tree");
 			Assert(attnum > 0 && attnum <= list_length(rte->joinaliasvars));
 			expr = (Node *) list_nth(rte->joinaliasvars, attnum - 1);
+			Assert(expr != NULL);
+			/* we intentionally don't strip implicit coercions here */
 			if (IsA(expr, Var))
 				return get_name_for_var_field((Var *) expr, fieldno,
 											  var->varlevelsup + levelsup,
