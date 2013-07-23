@@ -1243,6 +1243,34 @@ select pg_get_viewdef('vv4', true);
     FULL JOIN tt8 tt8y(x_1, z, z2) USING (x_1);
 (1 row)
 
+-- Implicit coercions in a JOIN USING create issues similar to FULL JOIN
+create table tt7a (x date, xx int, y int);
+alter table tt7a drop column xx;
+create table tt8a (x timestamptz, z int);
+create view vv2a as
+select * from (values(now(),2,3,now(),5)) v(a,b,c,d,e)
+union all
+select * from tt7a left join tt8a using (x), tt8a tt8ax;
+select pg_get_viewdef('vv2a', true);
+                         pg_get_viewdef                         
+----------------------------------------------------------------
+          SELECT v.a,                                          +
+             v.b,                                              +
+             v.c,                                              +
+             v.d,                                              +
+             v.e                                               +
+            FROM ( VALUES (now(),2,3,now(),5)) v(a, b, c, d, e)+
+ UNION ALL                                                     +
+          SELECT x AS a,                                       +
+             tt7a.y AS b,                                      +
+             tt8a.z AS c,                                      +
+             tt8ax.x_1 AS d,                                   +
+             tt8ax.z AS e                                      +
+            FROM tt7a                                          +
+       LEFT JOIN tt8a USING (x),                               +
+        tt8a tt8ax(x_1, z);
+(1 row)
+
 --
 -- Also check dropping a column that existed when the view was made
 --

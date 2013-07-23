@@ -389,6 +389,19 @@ select pg_get_viewdef('vv2', true);
 select pg_get_viewdef('vv3', true);
 select pg_get_viewdef('vv4', true);
 
+-- Implicit coercions in a JOIN USING create issues similar to FULL JOIN
+
+create table tt7a (x date, xx int, y int);
+alter table tt7a drop column xx;
+create table tt8a (x timestamptz, z int);
+
+create view vv2a as
+select * from (values(now(),2,3,now(),5)) v(a,b,c,d,e)
+union all
+select * from tt7a left join tt8a using (x), tt8a tt8ax;
+
+select pg_get_viewdef('vv2a', true);
+
 --
 -- Also check dropping a column that existed when the view was made
 --
