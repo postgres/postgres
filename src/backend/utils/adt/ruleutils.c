@@ -235,6 +235,7 @@ typedef struct
 	 * child RTE's attno and rightattnos[i] is zero; and conversely for a
 	 * column of the right child.  But for merged columns produced by JOIN
 	 * USING/NATURAL JOIN, both leftattnos[i] and rightattnos[i] are nonzero.
+	 * Also, if the column has been dropped, both are zero.
 	 *
 	 * If it's a JOIN USING, usingNames holds the alias names selected for the
 	 * merged columns (these might be different from the original USING list,
@@ -3053,6 +3054,13 @@ set_join_column_names(deparse_namespace *dpns, RangeTblEntry *rte,
 		char	   *colname = colinfo->colnames[i];
 		char	   *real_colname;
 
+		/* Ignore dropped column (only possible for non-merged column) */
+		if (colinfo->leftattnos[i] == 0 && colinfo->rightattnos[i] == 0)
+		{
+			Assert(colname == NULL);
+			continue;
+		}
+
 		/* Get the child column name */
 		if (colinfo->leftattnos[i] > 0)
 			real_colname = leftcolinfo->colnames[colinfo->leftattnos[i] - 1];
@@ -3061,15 +3069,9 @@ set_join_column_names(deparse_namespace *dpns, RangeTblEntry *rte,
 		else
 		{
 			/* We're joining system columns --- use eref name */
-			real_colname = (char *) list_nth(rte->eref->colnames, i);
+			real_colname = strVal(list_nth(rte->eref->colnames, i));
 		}
-
-		/* Ignore dropped columns (only possible for non-merged column) */
-		if (real_colname == NULL)
-		{
-			Assert(colname == NULL);
-			continue;
-		}
+		Assert(real_colname != NULL);
 
 		/* In an unnamed join, just report child column names as-is */
 		if (rte->alias == NULL)
@@ -3402,7 +3404,14 @@ identify_join_columns(JoinExpr *j, RangeTblEntry *jrte,
 	{
 		Var		   *aliasvar = (Var *) lfirst(lc);
 
-		if (IsA(aliasvar, Var))
+		/* get rid of any implicit coercion above the Var */
+		aliasvar = (Var *) strip_implicit_coercions((Node *) aliasvar);
+
+		if (aliasvar == NULL)
+		{
+			/* It's a dropped column; nothing to do here */
+		}
+		else if (IsA(aliasvar, Var))
 		{
 			Assert(aliasvar->varlevelsup == 0);
 			Assert(aliasvar->varattno != 0);
@@ -3422,15 +3431,8 @@ identify_join_columns(JoinExpr *j, RangeTblEntry *jrte,
 			 */
 		}
 		else
-		{
-			/*
-			 * Although NULL constants can appear in joinaliasvars lists
-			 * during planning, we shouldn't see any here, since the Query
-			 * tree hasn't been through AcquireRewriteLocks().
-			 */
 			elog(ERROR, "unrecognized node type in join alias vars: %d",
 				 (int) nodeTag(aliasvar));
-		}
 
 		i++;
 	}
@@ -5359,7 +5361,8 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 			Var		   *aliasvar;
 
 			aliasvar = (Var *) list_nth(rte->joinaliasvars, attnum - 1);
-			if (IsA(aliasvar, Var))
+			/* we intentionally don't strip implicit coercions here */
+			if (aliasvar && IsA(aliasvar, Var))
 			{
 				return get_variable(aliasvar, var->varlevelsup + levelsup,
 									istoplevel, context);
@@ -5670,6 +5673,8 @@ get_name_for_var_field(Var *var, int fieldno,
 				elog(ERROR, "cannot decompile join alias var in plan tree");
 			Assert(attnum > 0 && attnum <= list_length(rte->joinaliasvars));
 			expr = (Node *) list_nth(rte->joinaliasvars, attnum - 1);
+			Assert(expr != NULL);
+			/* we intentionally don't strip implicit coercions here */
 			if (IsA(expr, Var))
 				return get_name_for_var_field((Var *) expr, fieldno,
 											  var->varlevelsup + levelsup,

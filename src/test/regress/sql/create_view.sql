@@ -389,6 +389,21 @@ select pg_get_viewdef('vv2', true);
 select pg_get_viewdef('vv3', true);
 select pg_get_viewdef('vv4', true);
 
+--
+-- Also check dropping a column that existed when the view was made
+--
+
+create table tt9 (x int, xx int, y int);
+create table tt10 (x int, z int);
+
+create view vv5 as select x,y,z from tt9 join tt10 using(x);
+
+select pg_get_viewdef('vv5', true);
+
+alter table tt9 drop column xx;
+
+select pg_get_viewdef('vv5', true);
+
 -- clean up all the random objects we made above
 set client_min_messages = warning;
 DROP SCHEMA temp_view_test CASCADE;
