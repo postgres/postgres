@@ -26,6 +26,7 @@
 #include "optimizer/prep.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/var.h"
+#include "parser/analyze.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/lsyscache.h"
 
@@ -883,7 +884,10 @@ make_outerjoininfo(PlannerInfo *root,
 			(jointype == JOIN_FULL && bms_is_member(rc->rti, left_rels)))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("row-level locks cannot be applied to the nullable side of an outer join")));
+					 /*------
+					  translator: %s is a SQL row locking clause such as FOR UPDATE */
+					 errmsg("%s cannot be applied to the nullable side of an outer join",
+							LCS_asString(rc->strength))));
 	}
 
 	sjinfo->syn_lefthand = left_rels;

@@ -1107,7 +1107,11 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		if (parse->rowMarks)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("row-level locks are not allowed with UNION/INTERSECT/EXCEPT")));
+					 /*------
+					   translator: %s is a SQL row locking clause such as FOR UPDATE */
+					 errmsg("%s is not allowed with UNION/INTERSECT/EXCEPT",
+							LCS_asString(((RowMarkClause *)
+										  linitial(parse->rowMarks))->strength))));
 
 		/*
 		 * Calculate pathkeys that represent result ordering requirements
