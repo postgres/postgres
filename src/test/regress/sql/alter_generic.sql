@@ -266,6 +266,173 @@ SELECT nspname, opcname, amname, rolname
     AND n.nspname IN ('alt_nsp1', 'alt_nsp2')
   ORDER BY nspname, opcname;
 
+-- ALTER OPERATOR FAMILY ... ADD/DROP
+
+-- Should work. Textbook case of CREATE / ALTER ADD / ALTER DROP / DROP
+BEGIN TRANSACTION;
+CREATE OPERATOR FAMILY alt_opf4 USING btree;
+ALTER OPERATOR FAMILY alt_opf4 USING btree ADD
+  -- int4 vs int2
+  OPERATOR 1 < (int4, int2) ,
+  OPERATOR 2 <= (int4, int2) ,
+  OPERATOR 3 = (int4, int2) ,
+  OPERATOR 4 >= (int4, int2) ,
+  OPERATOR 5 > (int4, int2) ,
+  FUNCTION 1 btint42cmp(int4, int2);
+
+ALTER OPERATOR FAMILY alt_opf4 USING btree DROP
+  -- int4 vs int2
+  OPERATOR 1 (int4, int2) ,
+  OPERATOR 2 (int4, int2) ,
+  OPERATOR 3 (int4, int2) ,
+  OPERATOR 4 (int4, int2) ,
+  OPERATOR 5 (int4, int2) ,
+  FUNCTION 1 (int4, int2) ;
+DROP OPERATOR FAMILY alt_opf4 USING btree;
+ROLLBACK;
+
+-- Should fail. Invalid values for ALTER OPERATOR FAMILY .. ADD / DROP
+CREATE OPERATOR FAMILY alt_opf4 USING btree;
+ALTER OPERATOR FAMILY alt_opf4 USING invalid_index_method ADD  OPERATOR 1 < (int4, int2); -- invalid indexing_method
+ALTER OPERATOR FAMILY alt_opf4 USING btree ADD OPERATOR 6 < (int4, int2); -- operator number should be between 1 and 5
+ALTER OPERATOR FAMILY alt_opf4 USING btree ADD OPERATOR 0 < (int4, int2); -- operator number should be between 1 and 5
+ALTER OPERATOR FAMILY alt_opf4 USING btree ADD OPERATOR 1 < ; -- operator without argument types
+ALTER OPERATOR FAMILY alt_opf4 USING btree ADD FUNCTION 0 btint42cmp(int4, int2); -- function number should be between 1 and 5
+ALTER OPERATOR FAMILY alt_opf4 USING btree ADD FUNCTION 6 btint42cmp(int4, int2); -- function number should be between 1 and 5
+ALTER OPERATOR FAMILY alt_opf4 USING btree ADD STORAGE invalid_storage; -- Ensure STORAGE is not a part of ALTER OPERATOR FAMILY
+DROP OPERATOR FAMILY alt_opf4 USING btree;
+
+-- Should fail. Need to be SUPERUSER to do ALTER OPERATOR FAMILY .. ADD / DROP
+BEGIN TRANSACTION;
+CREATE ROLE regtest_alter_user5 NOSUPERUSER;
+CREATE OPERATOR FAMILY alt_opf5 USING btree;
+SET ROLE regtest_alter_user5;
+ALTER OPERATOR FAMILY alt_opf5 USING btree ADD OPERATOR 1 < (int4, int2), FUNCTION 1 btint42cmp(int4, int2);
+RESET ROLE;
+DROP OPERATOR FAMILY alt_opf5 USING btree;
+ROLLBACK;
+
+-- Should fail. Need rights to namespace for ALTER OPERATOR FAMILY .. ADD / DROP
+BEGIN TRANSACTION;
+CREATE ROLE regtest_alter_user6;
+CREATE SCHEMA alt_nsp6;
+REVOKE ALL ON SCHEMA alt_nsp6 FROM regtest_alter_user6;
+CREATE OPERATOR FAMILY alt_nsp6.alt_opf6 USING btree;
+SET ROLE regtest_alter_user6;
+ALTER OPERATOR FAMILY alt_nsp6.alt_opf6 USING btree ADD OPERATOR 1 < (int4, int2);
+ROLLBACK;
+
+-- Should fail. Only two arguments required for ALTER OPERATOR FAMILY ... DROP OPERATOR
+CREATE OPERATOR FAMILY alt_opf7 USING btree;
+ALTER OPERATOR FAMILY alt_opf7 USING btree ADD OPERATOR 1 < (int4, int2);
+ALTER OPERATOR FAMILY alt_opf7 USING btree DROP OPERATOR 1 (int4, int2, int8);
+DROP OPERATOR FAMILY alt_opf7 USING btree;
+
+-- Should work. During ALTER OPERATOR FAMILY ... DROP OPERATOR
+-- when left type is the same as right type, a DROP with only one argument type should work
+CREATE OPERATOR FAMILY alt_opf8 USING btree;
+ALTER OPERATOR FAMILY alt_opf8 USING btree ADD OPERATOR 1 < (int4, int4);
+DROP OPERATOR FAMILY alt_opf8 USING btree;
+
+-- Should work. Textbook case of ALTER OPERATOR FAMILY ... ADD OPERATOR with FOR ORDER BY
+CREATE OPERATOR FAMILY alt_opf9 USING gist;
+ALTER OPERATOR FAMILY alt_opf9 USING gist ADD OPERATOR 1 < (int4, int4) FOR ORDER BY float_ops;
+DROP OPERATOR FAMILY alt_opf9 USING gist;
+
+-- Should fail. Ensure correct ordering methods in ALTER OPERATOR FAMILY ... ADD OPERATOR .. FOR ORDER BY
+CREATE OPERATOR FAMILY alt_opf10 USING btree;
+ALTER OPERATOR FAMILY alt_opf10 USING btree ADD OPERATOR 1 < (int4, int4) FOR ORDER BY float_ops;
+DROP OPERATOR FAMILY alt_opf10 USING btree;
+
+-- Should work. Textbook case of ALTER OPERATOR FAMILY ... ADD OPERATOR with FOR ORDER BY
+CREATE OPERATOR FAMILY alt_opf11 USING gist;
+ALTER OPERATOR FAMILY alt_opf11 USING gist ADD OPERATOR 1 < (int4, int4) FOR ORDER BY float_ops;
+ALTER OPERATOR FAMILY alt_opf11 USING gist DROP OPERATOR 1 (int4, int4);
+DROP OPERATOR FAMILY alt_opf11 USING gist;
+
+-- Should fail. btree comparison functions should return INTEGER in ALTER OPERATOR FAMILY ... ADD FUNCTION
+BEGIN TRANSACTION;
+CREATE OPERATOR FAMILY alt_opf12 USING btree;
+CREATE FUNCTION fn_opf12  (int4, int2) RETURNS BIGINT AS 'SELECT NULL::BIGINT;' LANGUAGE SQL;
+ALTER OPERATOR FAMILY alt_opf12 USING btree ADD FUNCTION 1 fn_opf12(int4, int2);
+DROP OPERATOR FAMILY alt_opf12 USING btree;
+ROLLBACK;
+
+-- Should fail. hash comparison functions should return INTEGER in ALTER OPERATOR FAMILY ... ADD FUNCTION
+BEGIN TRANSACTION;
+CREATE OPERATOR FAMILY alt_opf13 USING hash;
+CREATE FUNCTION fn_opf13  (int4) RETURNS BIGINT AS 'SELECT NULL::BIGINT;' LANGUAGE SQL;
+ALTER OPERATOR FAMILY alt_opf13 USING hash ADD FUNCTION 1 fn_opf13(int4);
+DROP OPERATOR FAMILY alt_opf13 USING hash;
+ROLLBACK;
+
+-- Should fail. btree comparison functions should have two arguments in ALTER OPERATOR FAMILY ... ADD FUNCTION
+BEGIN TRANSACTION;
+CREATE OPERATOR FAMILY alt_opf14 USING btree;
+CREATE FUNCTION fn_opf14 (int4) RETURNS BIGINT AS 'SELECT NULL::BIGINT;' LANGUAGE SQL;
+ALTER OPERATOR FAMILY alt_opf14 USING btree ADD FUNCTION 1 fn_opf14(int4);
+DROP OPERATOR FAMILY alt_opf14 USING btree;
+ROLLBACK;
+
+-- Should fail. hash comparison functions should have one argument in ALTER OPERATOR FAMILY ... ADD FUNCTION
+BEGIN TRANSACTION;
+CREATE OPERATOR FAMILY alt_opf15 USING hash;
+CREATE FUNCTION fn_opf15 (int4, int2) RETURNS BIGINT AS 'SELECT NULL::BIGINT;' LANGUAGE SQL;
+ALTER OPERATOR FAMILY alt_opf15 USING hash ADD FUNCTION 1 fn_opf15(int4, int2);
+DROP OPERATOR FAMILY alt_opf15 USING hash;
+ROLLBACK;
+
+-- Should fail. In gist throw an error when giving different data types for function argument 
+-- without defining left / right type in ALTER OPERATOR FAMILY ... ADD FUNCTION
+CREATE OPERATOR FAMILY alt_opf16 USING gist;
+ALTER OPERATOR FAMILY alt_opf16 USING gist ADD FUNCTION 1 btint42cmp(int4, int2);
+DROP OPERATOR FAMILY alt_opf16 USING gist;
+
+-- Should fail. duplicate operator number / function number in ALTER OPERATOR FAMILY ... ADD FUNCTION
+CREATE OPERATOR FAMILY alt_opf17 USING btree;
+ALTER OPERATOR FAMILY alt_opf17 USING btree ADD OPERATOR 1 < (int4, int4), OPERATOR 1 < (int4, int4); -- operator # appears twice in same statment
+ALTER OPERATOR FAMILY alt_opf17 USING btree ADD OPERATOR 1 < (int4, int4); -- operator 1 requested first-time
+ALTER OPERATOR FAMILY alt_opf17 USING btree ADD OPERATOR 1 < (int4, int4); -- operator 1 requested again in separate statement
+ALTER OPERATOR FAMILY alt_opf17 USING btree ADD
+  OPERATOR 1 < (int4, int2) ,
+  OPERATOR 2 <= (int4, int2) ,
+  OPERATOR 3 = (int4, int2) ,
+  OPERATOR 4 >= (int4, int2) ,
+  OPERATOR 5 > (int4, int2) ,
+  FUNCTION 1 btint42cmp(int4, int2) ,
+  FUNCTION 1 btint42cmp(int4, int2);    -- procedure 1 appears twice in same statement
+ALTER OPERATOR FAMILY alt_opf17 USING btree ADD
+  OPERATOR 1 < (int4, int2) ,
+  OPERATOR 2 <= (int4, int2) ,
+  OPERATOR 3 = (int4, int2) ,
+  OPERATOR 4 >= (int4, int2) ,
+  OPERATOR 5 > (int4, int2) ,
+  FUNCTION 1 btint42cmp(int4, int2);    -- procedure 1 appears first time
+ALTER OPERATOR FAMILY alt_opf17 USING btree ADD
+  OPERATOR 1 < (int4, int2) ,
+  OPERATOR 2 <= (int4, int2) ,
+  OPERATOR 3 = (int4, int2) ,
+  OPERATOR 4 >= (int4, int2) ,
+  OPERATOR 5 > (int4, int2) ,
+  FUNCTION 1 btint42cmp(int4, int2);    -- procedure 1 requested again in separate statement
+DROP OPERATOR FAMILY alt_opf17 USING btree;
+
+
+-- Should fail. Ensure that DROP requests for missing OPERATOR / FUNCTIONS
+-- return appropriate message in ALTER OPERATOR FAMILY ... DROP OPERATOR / FUNCTION
+CREATE OPERATOR FAMILY alt_opf18 USING btree;
+ALTER OPERATOR FAMILY alt_opf18 USING btree DROP OPERATOR 1 (int4, int4);
+ALTER OPERATOR FAMILY alt_opf18 USING btree ADD
+  OPERATOR 1 < (int4, int2) ,
+  OPERATOR 2 <= (int4, int2) ,
+  OPERATOR 3 = (int4, int2) ,
+  OPERATOR 4 >= (int4, int2) ,
+  OPERATOR 5 > (int4, int2) ,
+  FUNCTION 1 btint42cmp(int4, int2);
+ALTER OPERATOR FAMILY alt_opf18 USING btree DROP FUNCTION 2 (int4, int4);
+DROP OPERATOR FAMILY alt_opf18 USING btree;
+
+
 --
 -- Text Search Dictionary
 --
