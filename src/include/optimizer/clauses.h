@@ -77,8 +77,6 @@ extern int	NumRelids(Node *clause);
 extern void CommuteOpExpr(OpExpr *clause);
 extern void CommuteRowCompareExpr(RowCompareExpr *clause);
 
-extern Node *strip_implicit_coercions(Node *node);
-
 extern Node *eval_const_expressions(PlannerInfo *root, Node *node);
 
 extern Node *estimate_expression_value(PlannerInfo *root, Node *node);

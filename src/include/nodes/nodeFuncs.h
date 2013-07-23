@@ -30,6 +30,7 @@ extern Oid	exprType(const Node *expr);
 extern int32 exprTypmod(const Node *expr);
 extern bool exprIsLengthCoercion(const Node *expr, int32 *coercedTypmod);
 extern Node *relabel_to_typmod(Node *expr, int32 typmod);
+extern Node *strip_implicit_coercions(Node *node);
 extern bool expression_returns_set(Node *clause);
 
 extern Oid	exprCollation(const Node *expr);

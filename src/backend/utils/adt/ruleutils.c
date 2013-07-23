@@ -38,7 +38,6 @@
 #include "funcapi.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
-#include "optimizer/clauses.h"
 #include "optimizer/tlist.h"
 #include "parser/keywords.h"
 #include "parser/parse_func.h"
