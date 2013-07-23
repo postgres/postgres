@@ -18,9 +18,6 @@
 #include "pgtypes_date.h"
 
 
-int PGTYPEStimestamp_defmt_scan(char **, const char *, timestamp *, int *, int *, int *,
-							int *, int *, int *, int *);
-
 #ifdef HAVE_INT64_TIMESTAMP
 static int64
 time2t(const int hour, const int min, const int sec, const fsec_t fsec)
