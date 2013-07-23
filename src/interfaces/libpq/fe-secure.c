@@ -1131,7 +1131,17 @@ initialize_SSL(PGconn *conn)
 		{
 			/* Colon, but not in second character, treat as engine:key */
 			char	   *engine_str = strdup(conn->sslkey);
-			char	   *engine_colon = strchr(engine_str, ':');
+			char	   *engine_colon;
+
+			if (engine_str == NULL)
+			{
+				printfPQExpBuffer(&conn->errorMessage,
+								  libpq_gettext("out of memory\n"));
+				return -1;
+			}
+
+			/* cannot return NULL because we already checked before strdup */
+			engine_colon = strchr(engine_str, ':');
 
 			*engine_colon = '\0';		/* engine_str now has engine name */
 			engine_colon++;		/* engine_colon now has key name */
