@@ -24,6 +24,7 @@
 #include "funcapi.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
+#include "optimizer/clauses.h"
 #include "parser/parsetree.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_type.h"
@@ -749,14 +750,15 @@ markRTEForSelectPriv(ParseState *pstate, RangeTblEntry *rte,
 			 * The aliasvar could be either a Var or a COALESCE expression,
 			 * but in the latter case we should already have marked the two
 			 * referent variables as being selected, due to their use in the
-			 * JOIN clause.  So we need only be concerned with the simple Var
-			 * case.
+			 * JOIN clause.  So we need only be concerned with the Var case.
+			 * But we do need to drill down through implicit coercions.
 			 */
 			Var		   *aliasvar;
 
 			Assert(col > 0 && col <= list_length(rte->joinaliasvars));
 			aliasvar = (Var *) list_nth(rte->joinaliasvars, col - 1);
-			if (IsA(aliasvar, Var))
+			aliasvar = (Var *) strip_implicit_coercions((Node *) aliasvar);
+			if (aliasvar && IsA(aliasvar, Var))
 				markVarForSelectPriv(pstate, aliasvar, NULL);
 		}
 	}
@@ -1841,10 +1843,10 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 					 * deleted columns in the join; but we have to check since
 					 * this routine is also used by the rewriter, and joins
 					 * found in stored rules might have join columns for
-					 * since-deleted columns.  This will be signaled by a NULL
-					 * Const in the alias-vars list.
+					 * since-deleted columns.  This will be signaled by a null
+					 * pointer in the alias-vars list.
 					 */
-					if (IsA(avar, Const))
+					if (avar == NULL)
 					{
 						if (include_dropped)
 						{
@@ -1852,8 +1854,16 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 								*colnames = lappend(*colnames,
 													makeString(pstrdup("")));
 							if (colvars)
+							{
+								/*
+								 * Can't use join's column type here (it might
+								 * be dropped!); but it doesn't really matter
+								 * what type the Const claims to be.
+								 */
 								*colvars = lappend(*colvars,
-												   copyObject(avar));
+												   makeNullConst(INT4OID, -1,
+																 InvalidOid));
+							}
 						}
 						continue;
 					}
@@ -2242,6 +2252,7 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 
 				Assert(attnum > 0 && attnum <= list_length(rte->joinaliasvars));
 				aliasvar = (Node *) list_nth(rte->joinaliasvars, attnum - 1);
+				Assert(aliasvar != NULL);
 				*vartype = exprType(aliasvar);
 				*vartypmod = exprTypmod(aliasvar);
 				*varcollid = exprCollation(aliasvar);
@@ -2304,7 +2315,7 @@ get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 				 * but one in a stored rule might contain columns that were
 				 * dropped from the underlying tables, if said columns are
 				 * nowhere explicitly referenced in the rule.  This will be
-				 * signaled to us by a NULL Const in the joinaliasvars list.
+				 * signaled to us by a null pointer in the joinaliasvars list.
 				 */
 				Var		   *aliasvar;
 
@@ -2313,7 +2324,7 @@ get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 					elog(ERROR, "invalid varattno %d", attnum);
 				aliasvar = (Var *) list_nth(rte->joinaliasvars, attnum - 1);
 
-				result = IsA(aliasvar, Const);
+				result = (aliasvar == NULL);
 			}
 			break;
 		case RTE_FUNCTION:

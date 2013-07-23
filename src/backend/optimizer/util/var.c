@@ -654,7 +654,7 @@ flatten_join_alias_vars_mutator(Node *node,
 				newvar = (Node *) lfirst(lv);
 				attnum++;
 				/* Ignore dropped columns */
-				if (IsA(newvar, Const))
+				if (newvar == NULL)
 					continue;
 				newvar = copyObject(newvar);
 
@@ -687,6 +687,7 @@ flatten_join_alias_vars_mutator(Node *node,
 		/* Expand join alias reference */
 		Assert(var->varattno > 0);
 		newvar = (Node *) list_nth(rte->joinaliasvars, var->varattno - 1);
+		Assert(newvar != NULL);
 		newvar = copyObject(newvar);
 
 		/*

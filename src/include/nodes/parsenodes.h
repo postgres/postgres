@@ -660,7 +660,7 @@ typedef struct XmlSerialize
  *	  a stored rule might contain entries for columns dropped since the rule
  *	  was created.	(This is only possible for columns not actually referenced
  *	  in the rule.)  When loading a stored rule, we replace the joinaliasvars
- *	  items for any such columns with NULL Consts.	(We can't simply delete
+ *	  items for any such columns with null pointers.  (We can't simply delete
  *	  them from the joinaliasvars list, because that would affect the attnums
  *	  of Vars referencing the rest of the list.)
  *
@@ -731,13 +731,19 @@ typedef struct RangeTblEntry
 	/*
 	 * Fields valid for a join RTE (else NULL/zero):
 	 *
-	 * joinaliasvars is a list of Vars or COALESCE expressions corresponding
-	 * to the columns of the join result.  An alias Var referencing column K
-	 * of the join result can be replaced by the K'th element of joinaliasvars
-	 * --- but to simplify the task of reverse-listing aliases correctly, we
-	 * do not do that until planning time.	In a Query loaded from a stored
-	 * rule, it is also possible for joinaliasvars items to be NULL Consts,
-	 * denoting columns dropped since the rule was made.
+	 * joinaliasvars is a list of (usually) Vars corresponding to the columns
+	 * of the join result.	An alias Var referencing column K of the join
+	 * result can be replaced by the K'th element of joinaliasvars --- but to
+	 * simplify the task of reverse-listing aliases correctly, we do not do
+	 * that until planning time.  In detail: an element of joinaliasvars can
+	 * be a Var of one of the join's input relations, or such a Var with an
+	 * implicit coercion to the join's output column type, or a COALESCE
+	 * expression containing the two input column Vars (possibly coerced).
+	 * Within a Query loaded from a stored rule, it is also possible for
+	 * joinaliasvars items to be null pointers, which are placeholders for
+	 * (necessarily unreferenced) columns dropped since the rule was made.
+	 * Also, once planning begins, joinaliasvars items can be almost anything,
+	 * as a result of subquery-flattening substitutions.
 	 */
 	JoinType	jointype;		/* type of join */
 	List	   *joinaliasvars;	/* list of alias-var expansions */
