@@ -244,7 +244,7 @@ parallel_transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 		strcpy(new_arg->new_pgdata, new_pgdata);
 		strcpy(new_arg->old_tablespace, old_tablespace);
 
-		child = (HANDLE) _beginthreadex(NULL, 0, (void *) win32_exec_prog,
+		child = (HANDLE) _beginthreadex(NULL, 0, (void *) win32_transfer_all_new_dbs,
 										new_arg, 0, NULL);
 		if (child == 0)
 			pg_log(PG_FATAL, "could not create worker thread: %s\n", strerror(errno));
