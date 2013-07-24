@@ -1529,30 +1529,28 @@ booltestsel(PlannerInfo *root, BoolTestType booltesttype, Node *arg,
 			/*
 			 * No most-common-value info available. Still have null fraction
 			 * information, so use it for IS [NOT] UNKNOWN. Otherwise adjust
-			 * for null fraction and assume an even split for boolean tests.
+			 * for null fraction and assume a 50-50 split of TRUE and FALSE.
 			 */
 			switch (booltesttype)
 			{
 				case IS_UNKNOWN:
-
-					/*
-					 * Use freq_null directly.
-					 */
+					/* select only NULL values */
 					selec = freq_null;
 					break;
 				case IS_NOT_UNKNOWN:
-
-					/*
-					 * Select not unknown (not null) values. Calculate from
-					 * freq_null.
-					 */
+					/* select non-NULL values */
 					selec = 1.0 - freq_null;
 					break;
 				case IS_TRUE:
-				case IS_NOT_TRUE:
 				case IS_FALSE:
-				case IS_NOT_FALSE:
+					/* Assume we select half of the non-NULL values */
 					selec = (1.0 - freq_null) / 2.0;
+					break;
+				case IS_NOT_TRUE:
+				case IS_NOT_FALSE:
+					/* Assume we select NULLs plus half of the non-NULLs */
+					/* equiv. to freq_null + (1.0 - freq_null) / 2.0 */
+					selec = (freq_null + 1.0) / 2.0;
 					break;
 				default:
 					elog(ERROR, "unrecognized booltesttype: %d",
