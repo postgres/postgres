@@ -267,14 +267,19 @@ BackgroundWorkerStateChange(void)
 /*
  * Forget about a background worker that's no longer needed.
  *
- * At present, this only happens when a background worker marked
- * BGW_NEVER_RESTART exits.  This function should only be invoked in
- * the postmaster.
+ * The worker must be identified by passing an slist_mutable_iter that
+ * points to it.  This convention allows deletion of workers during
+ * searches of the worker list, and saves having to search the list again.
+ *
+ * This function must be invoked only in the postmaster.
  */
 void
-ForgetBackgroundWorker(RegisteredBgWorker *rw)
+ForgetBackgroundWorker(slist_mutable_iter *cur)
 {
+	RegisteredBgWorker *rw;
 	BackgroundWorkerSlot *slot;
+
+	rw = slist_container(RegisteredBgWorker, rw_lnode, cur->cur);
 
 	Assert(rw->rw_shmem_slot < max_worker_processes);
 	slot = &BackgroundWorkerData->slot[rw->rw_shmem_slot];
@@ -284,7 +289,7 @@ ForgetBackgroundWorker(RegisteredBgWorker *rw)
 			(errmsg("unregistering background worker: %s",
 				rw->rw_worker.bgw_name)));
 
-	slist_delete(&BackgroundWorkerList, &rw->rw_lnode);
+	slist_delete_current(cur);
 	free(rw);
 }
 

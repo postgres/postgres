@@ -3602,6 +3602,13 @@ pgstat_write_statsfiles(bool permanent, bool allDbs)
 	{
 		slist_mutable_iter iter;
 
+		/*
+		 * Strictly speaking we should do slist_delete_current() before
+		 * freeing each request struct.  We skip that and instead
+		 * re-initialize the list header at the end.  Nonetheless, we must use
+		 * slist_foreach_modify, not just slist_foreach, since we will free
+		 * the node's storage before advancing.
+		 */
 		slist_foreach_modify(iter, &last_statrequests)
 		{
 			DBWriteRequest *req;

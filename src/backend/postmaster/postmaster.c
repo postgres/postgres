@@ -1452,7 +1452,7 @@ DetermineSleepTime(struct timeval * timeout)
 
 			if (rw->rw_worker.bgw_restart_time == BGW_NEVER_RESTART)
 			{
-				ForgetBackgroundWorker(rw);
+				ForgetBackgroundWorker(&siter);
 				continue;
 			}
 
@@ -5641,7 +5641,7 @@ StartOneBackgroundWorker(void)
 		{
 			if (rw->rw_worker.bgw_restart_time == BGW_NEVER_RESTART)
 			{
-				ForgetBackgroundWorker(rw);
+				ForgetBackgroundWorker(&iter);
 				continue;
 			}
 

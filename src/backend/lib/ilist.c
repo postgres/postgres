@@ -28,7 +28,7 @@
  *
  * It is not allowed to delete a 'node' which is is not in the list 'head'
  *
- * Caution: this is O(n)
+ * Caution: this is O(n); consider using slist_delete_current() instead.
  */
 void
 slist_delete(slist_head *head, slist_node *node)

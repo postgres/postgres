@@ -39,7 +39,7 @@ extern slist_head BackgroundWorkerList;
 extern Size BackgroundWorkerShmemSize(void);
 extern void BackgroundWorkerShmemInit(void);
 extern void BackgroundWorkerStateChange(void);
-extern void ForgetBackgroundWorker(RegisteredBgWorker *);
+extern void ForgetBackgroundWorker(slist_mutable_iter *cur);
 
 #ifdef EXEC_BACKEND
 extern BackgroundWorker *BackgroundWorkerEntry(int slotno);
