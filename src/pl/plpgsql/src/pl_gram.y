@@ -303,6 +303,7 @@ static	List			*read_raise_options(void);
 %token <keyword>	K_OPTION
 %token <keyword>	K_OR
 %token <keyword>	K_PERFORM
+%token <keyword>	K_PG_CONTEXT
 %token <keyword>	K_PG_DATATYPE_NAME
 %token <keyword>	K_PG_EXCEPTION_CONTEXT
 %token <keyword>	K_PG_EXCEPTION_DETAIL
@@ -894,6 +895,7 @@ stmt_getdiag	: K_GET getdiag_area_opt K_DIAGNOSTICS getdiag_list ';'
 								/* these fields are disallowed in stacked case */
 								case PLPGSQL_GETDIAG_ROW_COUNT:
 								case PLPGSQL_GETDIAG_RESULT_OID:
+								case PLPGSQL_GETDIAG_CONTEXT:
 									if (new->is_stacked)
 										ereport(ERROR,
 												(errcode(ERRCODE_SYNTAX_ERROR),
@@ -976,6 +978,9 @@ getdiag_item :
 						else if (tok_is_keyword(tok, &yylval,
 												K_RESULT_OID, "result_oid"))
 							$$ = PLPGSQL_GETDIAG_RESULT_OID;
+						else if (tok_is_keyword(tok, &yylval,
+												K_PG_CONTEXT, "pg_context"))
+							$$ = PLPGSQL_GETDIAG_CONTEXT;
 						else if (tok_is_keyword(tok, &yylval,
 												K_PG_EXCEPTION_DETAIL, "pg_exception_detail"))
 							$$ = PLPGSQL_GETDIAG_ERROR_DETAIL;
@@ -2287,6 +2292,7 @@ unreserved_keyword	:
 				| K_NO
 				| K_NOTICE
 				| K_OPTION
+				| K_PG_CONTEXT
 				| K_PG_DATATYPE_NAME
 				| K_PG_EXCEPTION_CONTEXT
 				| K_PG_EXCEPTION_DETAIL

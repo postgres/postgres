@@ -277,6 +277,8 @@ plpgsql_getdiag_kindname(int kind)
 			return "ROW_COUNT";
 		case PLPGSQL_GETDIAG_RESULT_OID:
 			return "RESULT_OID";
+		case PLPGSQL_GETDIAG_CONTEXT:
+			return "PG_CONTEXT";
 		case PLPGSQL_GETDIAG_ERROR_CONTEXT:
 			return "PG_EXCEPTION_CONTEXT";
 		case PLPGSQL_GETDIAG_ERROR_DETAIL:

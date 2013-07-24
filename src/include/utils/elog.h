@@ -406,6 +406,8 @@ extern void FlushErrorState(void);
 extern void ReThrowError(ErrorData *edata) __attribute__((noreturn));
 extern void pg_re_throw(void) __attribute__((noreturn));
 
+extern char *GetErrorContextStack(void);
+
 /* Hook for intercepting messages before they are sent to the server log */
 typedef void (*emit_log_hook_type) (ErrorData *edata);
 extern PGDLLIMPORT emit_log_hook_type emit_log_hook;

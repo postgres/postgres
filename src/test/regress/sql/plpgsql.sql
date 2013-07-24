@@ -3880,3 +3880,36 @@ select testoa(1,2,1); -- fail at update
 
 drop function arrayassign1();
 drop function testoa(x1 int, x2 int, x3 int);
+
+-- access to call stack
+create function inner_func(int)
+returns int as $$
+declare _context text;
+begin
+  get diagnostics _context = pg_context;
+  raise notice '***%***', _context;
+  return 2 * $1;
+end;
+$$ language plpgsql;
+
+create or replace function outer_func(int)
+returns int as $$
+begin
+  return inner_func($1);
+end;
+$$ language plpgsql;
+
+create or replace function outer_outer_func(int)
+returns int as $$
+begin
+  return outer_func($1);
+end;
+$$ language plpgsql;
+
+select outer_outer_func(10);
+-- repeated call should to work
+select outer_outer_func(20);
+
+drop function outer_outer_func(int);
+drop function outer_func(int);
+drop function inner_func(int);

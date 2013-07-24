@@ -1599,6 +1599,16 @@ exec_stmt_getdiag(PLpgSQL_execstate *estate, PLpgSQL_stmt_getdiag *stmt)
 									 estate->cur_error->schema_name);
 				break;
 
+			case PLPGSQL_GETDIAG_CONTEXT:
+				{
+					char *contextstackstr = GetErrorContextStack();
+
+					exec_assign_c_string(estate, var, contextstackstr);
+
+					pfree(contextstackstr);
+				}
+				break;
+
 			default:
 				elog(ERROR, "unrecognized diagnostic item kind: %d",
 					 diag_item->kind);

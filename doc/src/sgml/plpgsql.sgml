@@ -2613,6 +2613,15 @@ SELECT merge_db(1, 'dennis');
      expected.
     </para>
     </example>
+  </sect2>
+
+   <sect2 id="plpgsql-diagnostics">
+    <title>Getting Diagnostics Information</title>
+
+    <indexterm>
+     <primary>diagnostics</primary>
+     <secondary>in PL/pgSQL</secondary>
+    </indexterm>
 
    <sect3 id="plpgsql-exception-diagnostics">
     <title>Obtaining information about an error</title>
@@ -2736,6 +2745,54 @@ END;
 </programlisting>
     </para>
    </sect3>
+
+  <sect3 id="plpgsql-get-diagnostics-context">
+   <title>Obtaining the call stack context information</title>
+
+   <para>
+
+<synopsis>
+GET <optional> CURRENT </optional> DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>PG_CONTEXT</replaceable> <optional> , ... </optional>;
+</synopsis>
+
+
+    Calling <command>GET DIAGNOSTICS</command> with status
+    item <varname>PG_CONTEXT</> will return a text string with line(s) of
+    text describing the call stack.  The first row refers to the
+    current function and currently executing <command>GET DIAGNOSTICS</command>
+    command.  The second and any subsequent rows refer to the calling functions
+    up the call stack.
+
+<programlisting>
+CREATE OR REPLACE FUNCTION public.outer_func() RETURNS integer AS $$
+BEGIN
+  RETURN inner_func();
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION public.inner_func() RETURNS integer AS  $$
+DECLARE
+  stack text;
+BEGIN
+  GET DIAGNOSTICS stack = PG_CONTEXT;
+  RAISE NOTICE e'--- Call Stack ---\n%', stack;
+  RETURN 1;
+END;
+$$ LANGUAGE plpgsql;
+
+SELECT outer_func();
+
+NOTICE:  --- Call Stack ---
+PL/pgSQL function inner_func() line 4 at GET DIAGNOSTICS
+PL/pgSQL function outer_func() line 3 at RETURN
+ outer_func
+ ------------
+           1
+(1 row)
+</programlisting>
+
+   </para>
+  </sect3>
   </sect2>
   </sect1>
 

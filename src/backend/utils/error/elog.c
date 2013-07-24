@@ -1627,6 +1627,75 @@ pg_re_throw(void)
 
 
 /*
+ * GetErrorContextStack - Return the error context stack
+ *
+ * Returns a pstrdup'd string in the caller's context which includes the full
+ * call stack.  It is the caller's responsibility to ensure this string is
+ * pfree'd (or its context cleaned up) when done.
+ *
+ * This information is collected by traversing the error contexts and calling
+ * each context's callback function, each of which is expected to call
+ * errcontext() to return a string which can be presented to the user.
+ */
+char *
+GetErrorContextStack(void)
+{
+	char				   *result = NULL;
+	ErrorData			   *edata;
+	ErrorContextCallback   *econtext;
+	MemoryContext			oldcontext = CurrentMemoryContext;
+
+	/* this function should not be called from an exception handler */
+	Assert(recursion_depth == 0);
+
+	/* Check that we have enough room on the stack for ourselves */
+	if (++errordata_stack_depth >= ERRORDATA_STACK_SIZE)
+	{
+		/*
+		 * Stack not big enough..	Something bad has happened, therefore
+		 * PANIC as we may be in an infinite loop.
+		 */
+		errordata_stack_depth = -1;		/* make room on stack */
+		ereport(PANIC, (errmsg_internal("ERRORDATA_STACK_SIZE exceeded")));
+	}
+
+	/* Initialize data for this error frame */
+	edata = &errordata[errordata_stack_depth];
+	MemSet(edata, 0, sizeof(ErrorData));
+
+	/* Use ErrorContext as a short lived context for the callbacks */
+	MemoryContextSwitchTo(ErrorContext);
+
+	/*
+	 * Call any context callback functions to collect the context information
+	 * into edata->context.
+	 *
+	 * Errors occurring in callback functions should go through the regular
+	 * error handling code which should handle any recursive errors.
+	 */
+	for (econtext = error_context_stack;
+		 econtext != NULL;
+		 econtext = econtext->previous)
+		(*econtext->callback) (econtext->arg);
+
+	MemoryContextSwitchTo(oldcontext);
+
+	/*
+	 * Copy out the string into the caller's context, so we can free our
+	 * error context and reset the error stack.  Caller is expected to
+	 * pfree() the result or throw away the context.
+	 */
+	if (edata->context)
+		result = pstrdup(edata->context);
+
+	/* Reset error stack */
+	FlushErrorState();
+
+	return result;
+}
+
+
+/*
  * Initialization of error output file
  */
 void
