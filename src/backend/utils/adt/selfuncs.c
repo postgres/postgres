@@ -133,6 +133,7 @@
 #include "utils/pg_locale.h"
 #include "utils/rel.h"
 #include "utils/selfuncs.h"
+#include "utils/snapmgr.h"
 #include "utils/spccache.h"
 #include "utils/syscache.h"
 #include "utils/timestamp.h"
@@ -4989,8 +4990,8 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 			/* If min is requested ... */
 			if (min)
 			{
-				index_scan = index_beginscan(heapRel, indexRel, SnapshotNow,
-											 1, 0);
+				index_scan = index_beginscan(heapRel, indexRel,
+											 GetActiveSnapshot(), 1, 0);
 				index_rescan(index_scan, scankeys, 1, NULL, 0);
 
 				/* Fetch first tuple in sortop's direction */
@@ -5021,8 +5022,8 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 			/* If max is requested, and we didn't find the index is empty */
 			if (max && have_data)
 			{
-				index_scan = index_beginscan(heapRel, indexRel, SnapshotNow,
-											 1, 0);
+				index_scan = index_beginscan(heapRel, indexRel,
+											 GetActiveSnapshot(), 1, 0);
 				index_rescan(index_scan, scankeys, 1, NULL, 0);
 
 				/* Fetch first tuple in reverse direction */
