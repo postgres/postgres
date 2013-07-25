@@ -87,6 +87,24 @@ parallel_exec_prog(const char *log_file, const char *opt_log_file,
 	{
 		/* parallel */
 #ifdef WIN32
+		if (thread_handles == NULL)
+			thread_handles = pg_malloc(user_opts.jobs * sizeof(HANDLE));
+
+		if (exec_thread_args == NULL)
+		{
+			int			i;
+
+			exec_thread_args = pg_malloc(user_opts.jobs * sizeof(exec_thread_arg *));
+
+			/*
+			 * For safety and performance, we keep the args allocated during
+			 * the entire life of the process, and we don't free the args in a
+			 * thread different from the one that allocated it.
+			 */
+			for (i = 0; i < user_opts.jobs; i++)
+				exec_thread_args[i] = pg_malloc0(sizeof(exec_thread_arg));
+		}
+
 		cur_thread_args = (void **) exec_thread_args;
 #endif
 		/* harvest any dead children */
@@ -112,24 +130,6 @@ parallel_exec_prog(const char *log_file, const char *opt_log_file,
 			/* fork failed */
 			pg_log(PG_FATAL, "could not create worker process: %s\n", strerror(errno));
 #else
-		if (thread_handles == NULL)
-			thread_handles = pg_malloc(user_opts.jobs * sizeof(HANDLE));
-
-		if (exec_thread_args == NULL)
-		{
-			int			i;
-
-			exec_thread_args = pg_malloc(user_opts.jobs * sizeof(exec_thread_arg *));
-
-			/*
-			 * For safety and performance, we keep the args allocated during
-			 * the entire life of the process, and we don't free the args in a
-			 * thread different from the one that allocated it.
-			 */
-			for (i = 0; i < user_opts.jobs; i++)
-				exec_thread_args[i] = pg_malloc0(sizeof(exec_thread_arg));
-		}
-
 		/* use first empty array element */
 		new_arg = exec_thread_args[parallel_jobs - 1];
 
@@ -196,6 +196,24 @@ parallel_transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 	{
 		/* parallel */
 #ifdef WIN32
+		if (thread_handles == NULL)
+			thread_handles = pg_malloc(user_opts.jobs * sizeof(HANDLE));
+
+		if (transfer_thread_args == NULL)
+		{
+			int			i;
+
+			transfer_thread_args = pg_malloc(user_opts.jobs * sizeof(transfer_thread_arg *));
+
+			/*
+			 * For safety and performance, we keep the args allocated during
+			 * the entire life of the process, and we don't free the args in a
+			 * thread different from the one that allocated it.
+			 */
+			for (i = 0; i < user_opts.jobs; i++)
+				transfer_thread_args[i] = pg_malloc0(sizeof(transfer_thread_arg));
+		}
+
 		cur_thread_args = (void **) transfer_thread_args;
 #endif
 		/* harvest any dead children */
@@ -226,24 +244,6 @@ parallel_transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 			/* fork failed */
 			pg_log(PG_FATAL, "could not create worker process: %s\n", strerror(errno));
 #else
-		if (thread_handles == NULL)
-			thread_handles = pg_malloc(user_opts.jobs * sizeof(HANDLE));
-
-		if (transfer_thread_args == NULL)
-		{
-			int			i;
-
-			transfer_thread_args = pg_malloc(user_opts.jobs * sizeof(transfer_thread_arg *));
-
-			/*
-			 * For safety and performance, we keep the args allocated during
-			 * the entire life of the process, and we don't free the args in a
-			 * thread different from the one that allocated it.
-			 */
-			for (i = 0; i < user_opts.jobs; i++)
-				transfer_thread_args[i] = pg_malloc0(sizeof(transfer_thread_arg));
-		}
-
 		/* use first empty array element */
 		new_arg = transfer_thread_args[parallel_jobs - 1];
 
