@@ -47,11 +47,8 @@ exec_prog(const char *log_file, const char *opt_log_file,
 
 #define MAXCMDLEN (2 * MAXPGPATH)
 	char		cmd[MAXCMDLEN];
-	mode_t		old_umask = 0;
 	FILE	   *log;
 	va_list		ap;
-
-	old_umask = umask(S_IRWXG | S_IRWXO);
 
 	written = strlcpy(cmd, SYSTEMQUOTE, sizeof(cmd));
 	va_start(ap, fmt);
@@ -64,7 +61,7 @@ exec_prog(const char *log_file, const char *opt_log_file,
 	if (written >= MAXCMDLEN)
 		pg_log(PG_FATAL, "command too long\n");
 
-	log = fopen_priv(log_file, "a");
+	log = fopen(log_file, "a");
 
 #ifdef WIN32
 	{
@@ -80,7 +77,7 @@ exec_prog(const char *log_file, const char *opt_log_file,
 		for (iter = 0; iter < 4 && log == NULL; iter++)
 		{
 			sleep(1);
-			log = fopen_priv(log_file, "a");
+			log = fopen(log_file, "a");
 		}
 	}
 #endif
@@ -100,8 +97,6 @@ exec_prog(const char *log_file, const char *opt_log_file,
 	fclose(log);
 
 	result = system(cmd);
-
-	umask(old_umask);
 
 	if (result != 0)
 	{
@@ -131,7 +126,7 @@ exec_prog(const char *log_file, const char *opt_log_file,
 	 * never reused while the server is running, so it works fine.	We could
 	 * log these commands to a third file, but that just adds complexity.
 	 */
-	if ((log = fopen_priv(log_file, "a")) == NULL)
+	if ((log = fopen(log_file, "a")) == NULL)
 		pg_log(PG_FATAL, "cannot write to log file %s\n", log_file);
 	fprintf(log, "\n\n");
 	fclose(log);
