@@ -30,6 +30,7 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/rel.h"
+#include "utils/snapmgr.h"
 #include "utils/tqual.h"
 
 
@@ -332,6 +333,7 @@ currtid_byreloid(PG_FUNCTION_ARGS)
 	ItemPointer result;
 	Relation	rel;
 	AclResult	aclresult;
+	Snapshot	snapshot;
 
 	result = (ItemPointer) palloc(sizeof(ItemPointerData));
 	if (!reloid)
@@ -352,7 +354,10 @@ currtid_byreloid(PG_FUNCTION_ARGS)
 		return currtid_for_view(rel, tid);
 
 	ItemPointerCopy(tid, result);
-	heap_get_latest_tid(rel, SnapshotNow, result);
+
+	snapshot = RegisterSnapshot(GetLatestSnapshot());
+	heap_get_latest_tid(rel, snapshot, result);
+	UnregisterSnapshot(snapshot);
 
 	heap_close(rel, AccessShareLock);
 
@@ -368,6 +373,7 @@ currtid_byrelname(PG_FUNCTION_ARGS)
 	RangeVar   *relrv;
 	Relation	rel;
 	AclResult	aclresult;
+	Snapshot	snapshot;
 
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = heap_openrv(relrv, AccessShareLock);
@@ -384,7 +390,9 @@ currtid_byrelname(PG_FUNCTION_ARGS)
 	result = (ItemPointer) palloc(sizeof(ItemPointerData));
 	ItemPointerCopy(tid, result);
 
-	heap_get_latest_tid(rel, SnapshotNow, result);
+	snapshot = RegisterSnapshot(GetLatestSnapshot());
+	heap_get_latest_tid(rel, snapshot, result);
+	UnregisterSnapshot(snapshot);
 
 	heap_close(rel, AccessShareLock);
 
