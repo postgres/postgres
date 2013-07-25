@@ -1202,7 +1202,13 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 			 */
 			SPI_restore_connection();
 
-			/* Must clean up the econtext too */
+			/*
+			 * Must clean up the econtext too.	However, any tuple table made
+			 * in the subxact will have been thrown away by SPI during subxact
+			 * abort, so we don't need to (and mustn't try to) free the
+			 * eval_tuptable.
+			 */
+			estate->eval_tuptable = NULL;
 			exec_eval_cleanup(estate);
 
 			/* Look for a matching exception handler */

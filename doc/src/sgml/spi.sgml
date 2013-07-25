@@ -3934,8 +3934,8 @@ void SPI_freetuptable(SPITupleTable * <parameter>tuptable</parameter>)
   <para>
    <function>SPI_freetuptable</function> frees a row set created by a
    prior SPI command execution function, such as
-   <function>SPI_execute</>.  Therefore, this function is usually called
-   with the global variable <varname>SPI_tupletable</varname> as
+   <function>SPI_execute</>.  Therefore, this function is often called
+   with the global variable <varname>SPI_tuptable</varname> as
    argument.
   </para>
 
@@ -3944,6 +3944,16 @@ void SPI_freetuptable(SPITupleTable * <parameter>tuptable</parameter>)
    multiple commands and does not want to keep the results of earlier
    commands around until it ends.  Note that any unfreed row sets will
    be freed anyway at <function>SPI_finish</>.
+   Also, if a subtransaction is started and then aborted within execution
+   of a SPI procedure, SPI automatically frees any row sets created while
+   the subtransaction was running.
+  </para>
+
+  <para>
+   Beginning in <productname>PostgreSQL</> 9.3,
+   <function>SPI_freetuptable</function> contains guard logic to protect
+   against duplicate deletion requests for the same row set.  In previous
+   releases, duplicate deletions would lead to crashes.
   </para>
  </refsect1>
 
@@ -3955,7 +3965,7 @@ void SPI_freetuptable(SPITupleTable * <parameter>tuptable</parameter>)
     <term><literal>SPITupleTable * <parameter>tuptable</parameter></literal></term>
     <listitem>
      <para>
-      pointer to row set to free
+      pointer to row set to free, or NULL to do nothing
      </para>
     </listitem>
    </varlistentry>

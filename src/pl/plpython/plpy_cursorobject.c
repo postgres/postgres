@@ -377,8 +377,6 @@ PLy_cursor_iternext(PyObject *self)
 	}
 	PG_CATCH();
 	{
-		SPI_freetuptable(SPI_tuptable);
-
 		PLy_spi_subtransaction_abort(oldcontext, oldowner);
 		return NULL;
 	}
@@ -461,8 +459,6 @@ PLy_cursor_fetch(PyObject *self, PyObject *args)
 	}
 	PG_CATCH();
 	{
-		SPI_freetuptable(SPI_tuptable);
-
 		PLy_spi_subtransaction_abort(oldcontext, oldowner);
 		return NULL;
 	}

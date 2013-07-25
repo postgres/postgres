@@ -439,7 +439,6 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, int rows, int status)
 		{
 			MemoryContextSwitchTo(oldcontext);
 			PLy_typeinfo_dealloc(&args);
-			SPI_freetuptable(tuptable);
 			Py_DECREF(result);
 			PG_RE_THROW();
 		}

@@ -13,6 +13,7 @@
 #ifndef SPI_H
 #define SPI_H
 
+#include "lib/ilist.h"
 #include "nodes/parsenodes.h"
 #include "utils/portal.h"
 
@@ -24,6 +25,8 @@ typedef struct SPITupleTable
 	uint32		free;			/* # of free vals */
 	TupleDesc	tupdesc;		/* tuple descriptor */
 	HeapTuple  *vals;			/* tuples */
+	slist_node	next;			/* link for internal bookkeeping */
+	SubTransactionId subid;		/* subxact in which tuptable was created */
 } SPITupleTable;
 
 /* Plans are opaque structs for standard users of SPI */
