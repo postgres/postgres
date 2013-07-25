@@ -3888,21 +3888,35 @@ declare _context text;
 begin
   get diagnostics _context = pg_context;
   raise notice '***%***', _context;
+  -- lets do it again, just for fun..
+  get diagnostics _context = pg_context;
+  raise notice '***%***', _context;
+  raise notice 'lets make sure we didnt break anything';
   return 2 * $1;
 end;
 $$ language plpgsql;
 
 create or replace function outer_func(int)
 returns int as $$
+declare
+  myresult int;
 begin
-  return inner_func($1);
+  raise notice 'calling down into inner_func()';
+  myresult := inner_func($1);
+  raise notice 'inner_func() done';
+  return myresult;
 end;
 $$ language plpgsql;
 
 create or replace function outer_outer_func(int)
 returns int as $$
+declare
+  myresult int;
 begin
-  return outer_func($1);
+  raise notice 'calling down into outer_func()';
+  myresult := outer_func($1);
+  raise notice 'outer_func() done';
+  return myresult;
 end;
 $$ language plpgsql;
 

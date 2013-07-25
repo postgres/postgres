@@ -1627,11 +1627,15 @@ pg_re_throw(void)
 
 
 /*
- * GetErrorContextStack - Return the error context stack
+ * GetErrorContextStack - Return the context stack, for display/diags
  *
- * Returns a pstrdup'd string in the caller's context which includes the full
+ * Returns a pstrdup'd string in the caller's context which includes the PG
  * call stack.  It is the caller's responsibility to ensure this string is
  * pfree'd (or its context cleaned up) when done.
+ *
+ * Note that this function may *not* be called from any existing error case
+ * and is not for error-reporting (use ereport() and friends instead, which
+ * will also produce a stack trace).
  *
  * This information is collected by traversing the error contexts and calling
  * each context's callback function, each of which is expected to call
@@ -1648,22 +1652,36 @@ GetErrorContextStack(void)
 	/* this function should not be called from an exception handler */
 	Assert(recursion_depth == 0);
 
-	/* Check that we have enough room on the stack for ourselves */
-	if (++errordata_stack_depth >= ERRORDATA_STACK_SIZE)
+	/*
+	 * This function should never be called from an exception handler and
+	 * therefore will only ever be the top item on the errordata stack
+	 * (which is set up so that the calls to the callback functions are
+	 * able to use it).
+	 *
+	 * Better safe than sorry, so double-check that we are not being called
+	 * from an exception handler.
+	 */
+	if (errordata_stack_depth != -1)
 	{
-		/*
-		 * Stack not big enough..	Something bad has happened, therefore
-		 * PANIC as we may be in an infinite loop.
-		 */
 		errordata_stack_depth = -1;		/* make room on stack */
-		ereport(PANIC, (errmsg_internal("ERRORDATA_STACK_SIZE exceeded")));
+		ereport(PANIC,
+		        (errmsg_internal("GetErrorContextStack called from exception handler")));
 	}
 
-	/* Initialize data for this error frame */
+	/*
+	 * Initialize data for the top, and only at this point, error frame as the
+	 * callback functions we're about to call will turn around and call
+	 * errcontext(), which expects to find a valid errordata stack.
+	 */
+	errordata_stack_depth = 0;
 	edata = &errordata[errordata_stack_depth];
 	MemSet(edata, 0, sizeof(ErrorData));
 
-	/* Use ErrorContext as a short lived context for the callbacks */
+	/*
+	 * Use ErrorContext as a short lived context for calling the callbacks;
+	 * the callbacks will use it through errcontext() even if we don't call
+	 * them with it, so we have to clean it up below either way.
+	 */
 	MemoryContextSwitchTo(ErrorContext);
 
 	/*
@@ -1671,7 +1689,8 @@ GetErrorContextStack(void)
 	 * into edata->context.
 	 *
 	 * Errors occurring in callback functions should go through the regular
-	 * error handling code which should handle any recursive errors.
+	 * error handling code which should handle any recursive errors and must
+	 * never call back to us.
 	 */
 	for (econtext = error_context_stack;
 		 econtext != NULL;
@@ -1688,7 +1707,12 @@ GetErrorContextStack(void)
 	if (edata->context)
 		result = pstrdup(edata->context);
 
-	/* Reset error stack */
+	/*
+	 * Reset error stack- note that we should be the only item on the error
+	 * stack at this point and therefore it's safe to clean up the whole stack.
+	 * This function is not intended nor able to be called from exception
+	 * handlers.
+	 */
 	FlushErrorState();
 
 	return result;
