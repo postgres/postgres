@@ -118,7 +118,7 @@ free_percent       | 1.95
 
     <para>
      <function>pgstattuple</function> judges a tuple is <quote>dead</> if
-     <function>HeapTupleSatisfiesNow</> returns false.
+     <function>HeapTupleSatisfiesDirty</> returns false.
     </para>
     </listitem>
    </varlistentry>
