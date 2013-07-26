@@ -81,14 +81,14 @@
      <varlistentry>
       <term><option>-b</option> <replaceable>bindir</></term>
       <term><option>--old-bindir=</option><replaceable>bindir</></term>
-      <listitem><para>the old cluster executable directory;
+      <listitem><para>the old PostgreSQL executable directory;
       environment variable <envar>PGBINOLD</></para></listitem>
      </varlistentry>
 
      <varlistentry>
       <term><option>-B</option> <replaceable>bindir</></term>
       <term><option>--new-bindir=</option><replaceable>bindir</></term>
-      <listitem><para>the new cluster executable directory;
+      <listitem><para>the new PostgreSQL executable directory;
       environment variable <envar>PGBINNEW</></para></listitem>
      </varlistentry>
 
@@ -254,7 +254,8 @@ gmake prefix=/usr/local/pgsql.new install
 
     <para>
      Install the <application>pg_upgrade</> binary and
-     <application>pg_upgrade_support</> library in the new PostgreSQL cluster.
+     <application>pg_upgrade_support</> library in the new PostgreSQL
+     installation.
     </para>
    </step>
 
