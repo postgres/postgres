@@ -37,18 +37,28 @@ static int	win32_check_directory_write_permissions(void);
  * If throw_error is true, this raises a PG_FATAL error and pg_upgrade
  * terminates; otherwise it is just reported as PG_REPORT and exec_prog()
  * returns false.
+ *
+ * The code requires it be called first from the primary thread on Windows.
  */
 bool
 exec_prog(const char *log_file, const char *opt_log_file,
 		  bool throw_error, const char *fmt,...)
 {
-	int			result;
+	int			result = 0;
 	int			written;
 
 #define MAXCMDLEN (2 * MAXPGPATH)
 	char		cmd[MAXCMDLEN];
 	FILE	   *log;
 	va_list		ap;
+
+#ifdef WIN32
+static DWORD       mainThreadId = 0;
+
+	/* We assume we are called from the primary thread first */
+	if (mainThreadId == 0)
+		mainThreadId = GetCurrentThreadId();
+#endif
 
 	written = strlcpy(cmd, SYSTEMQUOTE, sizeof(cmd));
 	va_start(ap, fmt);
@@ -60,6 +70,22 @@ exec_prog(const char *log_file, const char *opt_log_file,
 						" >> \"%s\" 2>&1" SYSTEMQUOTE, log_file);
 	if (written >= MAXCMDLEN)
 		pg_log(PG_FATAL, "command too long\n");
+
+	pg_log(PG_VERBOSE, "%s\n", cmd);
+
+#ifdef WIN32
+	/*
+	 * For some reason, Windows issues a file-in-use error if we write data
+	 * to the log file from a non-primary thread just before we create a
+	 * subprocess that also writes to the same log file.  One fix is to
+	 * sleep for 100ms.  A cleaner fix is to write to the log file _after_
+	 * the subprocess has completed, so we do this only when writing from
+	 * a non-primary thread.  fflush(), running system() twice, and
+	 * pre-creating the file do not see to help.
+	 */
+	if (mainThreadId != GetCurrentThreadId())
+		result = system(cmd);
+#endif
 
 	log = fopen(log_file, "a");
 
@@ -84,11 +110,18 @@ exec_prog(const char *log_file, const char *opt_log_file,
 
 	if (log == NULL)
 		pg_log(PG_FATAL, "cannot write to log file %s\n", log_file);
+
 #ifdef WIN32
-	fprintf(log, "\n\n");
+	/* Are we printing "command:" before its output? */
+	if (mainThreadId == GetCurrentThreadId())
+		fprintf(log, "\n\n");
 #endif
-	pg_log(PG_VERBOSE, "%s\n", cmd);
 	fprintf(log, "command: %s\n", cmd);
+#ifdef WIN32
+	/* Are we printing "command:" after its output? */
+	if (mainThreadId != GetCurrentThreadId())
+		fprintf(log, "\n\n");
+#endif
 
 	/*
 	 * In Windows, we must close the log file at this point so the file is not
@@ -96,7 +129,11 @@ exec_prog(const char *log_file, const char *opt_log_file,
 	 */
 	fclose(log);
 
-	result = system(cmd);
+#ifdef WIN32
+	/* see comment above */
+	if (mainThreadId == GetCurrentThreadId())
+#endif
+		result = system(cmd);
 
 	if (result != 0)
 	{
@@ -118,7 +155,6 @@ exec_prog(const char *log_file, const char *opt_log_file,
 	}
 
 #ifndef WIN32
-
 	/*
 	 * We can't do this on Windows because it will keep the "pg_ctl start"
 	 * output filename open until the server stops, so we do the \n\n above on
