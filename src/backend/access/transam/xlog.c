@@ -3721,7 +3721,7 @@ XLogFileOpen(XLogSegNo segno)
 	if (fd < 0)
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("could not open xlog file \"%s\": %m", path)));
+				 errmsg("could not open transaction log file \"%s\": %m", path)));
 
 	return fd;
 }
@@ -6281,7 +6281,7 @@ StartupXLOG(void)
 		ereport(FATAL,
 				(errmsg("requested timeline %u is not a child of this server's history",
 						recoveryTargetTLI),
-				 errdetail("Latest checkpoint is at %X/%X on timeline %u, but in the history of the requested timeline, the server forked off from that timeline at %X/%X",
+				 errdetail("Latest checkpoint is at %X/%X on timeline %u, but in the history of the requested timeline, the server forked off from that timeline at %X/%X.",
 						   (uint32) (ControlFile->checkPoint >> 32),
 						   (uint32) ControlFile->checkPoint,
 						   ControlFile->checkPointCopy.ThisTimeLineID,
@@ -9027,7 +9027,7 @@ checkTimeLineSwitch(XLogRecPtr lsn, TimeLineID newTLI, TimeLineID prevTLI)
 	/* Check that the record agrees on what the current (old) timeline is */
 	if (prevTLI != ThisTimeLineID)
 		ereport(PANIC,
-				(errmsg("unexpected prev timeline ID %u (current timeline ID %u) in checkpoint record",
+				(errmsg("unexpected previous timeline ID %u (current timeline ID %u) in checkpoint record",
 						prevTLI, ThisTimeLineID)));
 
 	/*

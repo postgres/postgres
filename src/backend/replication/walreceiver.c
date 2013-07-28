@@ -438,7 +438,7 @@ WalReceiverMain(void)
 						{
 							ereport(LOG,
 									(errmsg("replication terminated by primary server"),
-									 errdetail("End of WAL reached on timeline %u at %X/%X",
+									 errdetail("End of WAL reached on timeline %u at %X/%X.",
 											   startpointTLI,
 											   (uint32) (LogstreamResult.Write >> 32), (uint32) LogstreamResult.Write)));
 							endofwal = true;
@@ -927,7 +927,7 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 			if (lseek(recvFile, (off_t) startoff, SEEK_SET) < 0)
 				ereport(PANIC,
 						(errcode_for_file_access(),
-				 errmsg("could not seek in log segment %s, to offset %u: %m",
+				 errmsg("could not seek in log segment %s to offset %u: %m",
 						XLogFileNameP(recvFileTLI, recvSegNo),
 						startoff)));
 			recvOff = startoff;
