@@ -485,7 +485,7 @@ StartReplication(StartReplicationCmd *cmd)
 								(uint32) (cmd->startpoint >> 32),
 								(uint32) (cmd->startpoint),
 								cmd->timeline),
-						 errdetail("This server's history forked from timeline %u at %X/%X",
+						 errdetail("This server's history forked from timeline %u at %X/%X.",
 								   cmd->timeline,
 								   (uint32) (switchpoint >> 32),
 								   (uint32) (switchpoint))));

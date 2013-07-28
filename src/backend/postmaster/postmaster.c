@@ -5185,7 +5185,7 @@ RegisterBackgroundWorker(BackgroundWorker *worker)
 			if (!IsUnderPostmaster)
 				ereport(LOG,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("background worker \"%s\": must attach to shared memory in order to request a database connection",
+						 errmsg("background worker \"%s\": must attach to shared memory in order to be able to request a database connection",
 								worker->bgw_name)));
 			return;
 		}

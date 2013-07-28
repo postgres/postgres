@@ -150,7 +150,7 @@ readTimeLineHistory(TimeLineID targetTLI)
 		if (nfields != 3)
 			ereport(FATAL,
 					(errmsg("syntax error in history file: %s", fline),
-					 errhint("Expected an XLOG switchpoint location.")));
+					 errhint("Expected a transaction log switchpoint location.")));
 
 		if (result && tli <= lasttli)
 			ereport(FATAL,
