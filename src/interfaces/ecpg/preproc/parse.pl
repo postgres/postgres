@@ -43,6 +43,7 @@ my %replace_token = (
 # or in the block
 my %replace_string = (
 	'WITH_TIME'    => 'with time',
+	'WITH_ORDINALITY' => 'with ordinality',
 	'NULLS_FIRST'  => 'nulls first',
 	'NULLS_LAST'   => 'nulls last',
 	'TYPECAST'     => '::',

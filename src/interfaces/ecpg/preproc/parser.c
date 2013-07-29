@@ -108,6 +108,9 @@ filtered_base_yylex(void)
 				case TIME:
 					cur_token = WITH_TIME;
 					break;
+				case ORDINALITY:
+					cur_token = WITH_ORDINALITY;
+					break;
 				default:
 					/* save the lookahead token for next time */
 					lookahead_token = next_token;

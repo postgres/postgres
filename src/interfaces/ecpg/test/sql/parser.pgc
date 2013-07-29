@@ -19,9 +19,9 @@ int main() {
 
   EXEC SQL CREATE TABLE T ( Item1 int, Item2 int );
 
-  EXEC SQL INSERT INTO T VALUES ( 1, null );
-  EXEC SQL INSERT INTO T VALUES ( 1, 1 );
-  EXEC SQL INSERT INTO T VALUES ( 1, 2 );
+  EXEC SQL INSERT INTO t 
+           SELECT 1,nullif(y-1,0) 
+             FROM generate_series(1,3) WITH ORDINALITY AS series(x,y);
 
   EXEC SQL SELECT Item2 INTO :item:ind FROM T ORDER BY Item2 NULLS LAST;
 
