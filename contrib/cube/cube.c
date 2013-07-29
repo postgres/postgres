@@ -26,8 +26,8 @@ PG_MODULE_MAGIC;
 #define ARRPTR(x)  ( (double *) ARR_DATA_PTR(x) )
 #define ARRNELEMS(x)  ArrayGetNItems( ARR_NDIM(x), ARR_DIMS(x))
 
-extern int	cube_yyparse();
-extern void cube_yyerror(const char *message);
+extern int	cube_yyparse(NDBOX **result);
+extern void cube_yyerror(NDBOX **result, const char *message);
 extern void cube_scanner_init(const char *str);
 extern void cube_scanner_finish(void);
 
@@ -156,12 +156,12 @@ Datum
 cube_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
-	void	   *result;
+	NDBOX	   *result;
 
 	cube_scanner_init(str);
 
 	if (cube_yyparse(&result) != 0)
-		cube_yyerror("bogus input");
+		cube_yyerror(&result, "bogus input");
 
 	cube_scanner_finish();
 
