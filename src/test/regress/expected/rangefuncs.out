@@ -18,7 +18,131 @@ CREATE TABLE foo2(fooid int, f2 int);
 INSERT INTO foo2 VALUES(1, 11);
 INSERT INTO foo2 VALUES(2, 22);
 INSERT INTO foo2 VALUES(1, 111);
-CREATE FUNCTION foot(int) returns setof foo2 as 'SELECT * FROM foo2 WHERE fooid = $1;' LANGUAGE SQL;
+CREATE FUNCTION foot(int) returns setof foo2 as 'SELECT * FROM foo2 WHERE fooid = $1 ORDER BY f2;' LANGUAGE SQL;
+-- function with ORDINALITY
+select * from foot(1) with ordinality as z(a,b,ord);
+ a |  b  | ord 
+---+-----+-----
+ 1 |  11 |   1
+ 1 | 111 |   2
+(2 rows)
+
+select * from foot(1) with ordinality as z(a,b,ord) where b > 100;   -- ordinal 2, not 1
+ a |  b  | ord 
+---+-----+-----
+ 1 | 111 |   2
+(1 row)
+
+-- ordinality vs. column names and types
+select a,b,ord from foot(1) with ordinality as z(a,b,ord);
+ a |  b  | ord 
+---+-----+-----
+ 1 |  11 |   1
+ 1 | 111 |   2
+(2 rows)
+
+select a,ord from unnest(array['a','b']) with ordinality as z(a,ord);
+ a | ord 
+---+-----
+ a |   1
+ b |   2
+(2 rows)
+
+select * from unnest(array['a','b']) with ordinality as z(a,ord);
+ a | ord 
+---+-----
+ a |   1
+ b |   2
+(2 rows)
+
+select a,ord from unnest(array[1.0::float8]) with ordinality as z(a,ord);
+ a | ord 
+---+-----
+ 1 |   1
+(1 row)
+
+select * from unnest(array[1.0::float8]) with ordinality as z(a,ord);
+ a | ord 
+---+-----
+ 1 |   1
+(1 row)
+
+-- ordinality vs. views
+create temporary view vw_ord as select * from (values (1)) v(n) join foot(1) with ordinality as z(a,b,ord) on (n=ord);
+select * from vw_ord;
+ n | a | b  | ord 
+---+---+----+-----
+ 1 | 1 | 11 |   1
+(1 row)
+
+select definition from pg_views where viewname='vw_ord';
+                            definition                             
+-------------------------------------------------------------------
+  SELECT v.n,                                                     +
+     z.a,                                                         +
+     z.b,                                                         +
+     z.ord                                                        +
+    FROM (( VALUES (1)) v(n)                                      +
+    JOIN foot(1) WITH ORDINALITY z(a, b, ord) ON ((v.n = z.ord)));
+(1 row)
+
+drop view vw_ord;
+-- ordinality vs. rewind and reverse scan
+begin;
+declare foo scroll cursor for select * from generate_series(1,5) with ordinality as g(i,o);
+fetch all from foo;
+ i | o 
+---+---
+ 1 | 1
+ 2 | 2
+ 3 | 3
+ 4 | 4
+ 5 | 5
+(5 rows)
+
+fetch backward all from foo;
+ i | o 
+---+---
+ 5 | 5
+ 4 | 4
+ 3 | 3
+ 2 | 2
+ 1 | 1
+(5 rows)
+
+fetch all from foo;
+ i | o 
+---+---
+ 1 | 1
+ 2 | 2
+ 3 | 3
+ 4 | 4
+ 5 | 5
+(5 rows)
+
+fetch next from foo;
+ i | o 
+---+---
+(0 rows)
+
+fetch next from foo;
+ i | o 
+---+---
+(0 rows)
+
+fetch prior from foo;
+ i | o 
+---+---
+ 5 | 5
+(1 row)
+
+fetch absolute 1 from foo;
+ i | o 
+---+---
+ 1 | 1
+(1 row)
+
+commit;
 -- function with implicit LATERAL
 select * from foo2, foot(foo2.fooid) z where foo2.f2 = z.f2;
  fooid | f2  | fooid | f2  
@@ -26,6 +150,15 @@ select * from foo2, foot(foo2.fooid) z where foo2.f2 = z.f2;
      1 |  11 |     1 |  11
      2 |  22 |     2 |  22
      1 | 111 |     1 | 111
+(3 rows)
+
+-- function with implicit LATERAL and explicit ORDINALITY
+select * from foo2, foot(foo2.fooid) with ordinality as z(fooid,f2,ord) where foo2.f2 = z.f2;
+ fooid | f2  | fooid | f2  | ord 
+-------+-----+-------+-----+-----
+     1 |  11 |     1 |  11 |   1
+     2 |  22 |     2 |  22 |   1
+     1 | 111 |     1 | 111 |   2
 (3 rows)
 
 -- function in subselect
@@ -73,11 +206,25 @@ SELECT * FROM getfoo(1) AS t1;
   1
 (1 row)
 
+SELECT * FROM getfoo(1) WITH ORDINALITY AS t1(v,o);
+ v | o 
+---+---
+ 1 | 1
+(1 row)
+
 CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1);
 SELECT * FROM vw_getfoo;
  getfoo 
 --------
       1
+(1 row)
+
+DROP VIEW vw_getfoo;
+CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1) WITH ORDINALITY as t1(v,o);
+SELECT * FROM vw_getfoo;
+ v | o 
+---+---
+ 1 | 1
 (1 row)
 
 -- sql, proretset = t, prorettype = b
@@ -91,12 +238,28 @@ SELECT * FROM getfoo(1) AS t1;
   1
 (2 rows)
 
+SELECT * FROM getfoo(1) WITH ORDINALITY AS t1(v,o);
+ v | o 
+---+---
+ 1 | 1
+ 1 | 2
+(2 rows)
+
 CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1);
 SELECT * FROM vw_getfoo;
  getfoo 
 --------
       1
       1
+(2 rows)
+
+DROP VIEW vw_getfoo;
+CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1) WITH ORDINALITY AS t1(v,o);
+SELECT * FROM vw_getfoo;
+ v | o 
+---+---
+ 1 | 1
+ 1 | 2
 (2 rows)
 
 -- sql, proretset = t, prorettype = b
@@ -110,12 +273,28 @@ SELECT * FROM getfoo(1) AS t1;
  Ed
 (2 rows)
 
+SELECT * FROM getfoo(1) WITH ORDINALITY AS t1(v,o);
+  v  | o 
+-----+---
+ Joe | 1
+ Ed  | 2
+(2 rows)
+
 CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1);
 SELECT * FROM vw_getfoo;
  getfoo 
 --------
  Joe
  Ed
+(2 rows)
+
+DROP VIEW vw_getfoo;
+CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1) WITH ORDINALITY AS t1(v,o);
+SELECT * FROM vw_getfoo;
+  v  | o 
+-----+---
+ Joe | 1
+ Ed  | 2
 (2 rows)
 
 -- sql, proretset = f, prorettype = c
@@ -128,11 +307,25 @@ SELECT * FROM getfoo(1) AS t1;
      1 |        1 | Joe
 (1 row)
 
+SELECT * FROM getfoo(1) WITH ORDINALITY AS t1(a,b,c,o);
+ a | b |  c  | o 
+---+---+-----+---
+ 1 | 1 | Joe | 1
+(1 row)
+
 CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1);
 SELECT * FROM vw_getfoo;
  fooid | foosubid | fooname 
 -------+----------+---------
      1 |        1 | Joe
+(1 row)
+
+DROP VIEW vw_getfoo;
+CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1) WITH ORDINALITY AS t1(a,b,c,o);
+SELECT * FROM vw_getfoo;
+ a | b |  c  | o 
+---+---+-----+---
+ 1 | 1 | Joe | 1
 (1 row)
 
 -- sql, proretset = t, prorettype = c
@@ -146,6 +339,13 @@ SELECT * FROM getfoo(1) AS t1;
      1 |        2 | Ed
 (2 rows)
 
+SELECT * FROM getfoo(1) WITH ORDINALITY AS t1(a,b,c,o);
+ a | b |  c  | o 
+---+---+-----+---
+ 1 | 1 | Joe | 1
+ 1 | 2 | Ed  | 2
+(2 rows)
+
 CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1);
 SELECT * FROM vw_getfoo;
  fooid | foosubid | fooname 
@@ -154,6 +354,16 @@ SELECT * FROM vw_getfoo;
      1 |        2 | Ed
 (2 rows)
 
+DROP VIEW vw_getfoo;
+CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1) WITH ORDINALITY AS t1(a,b,c,o);
+SELECT * FROM vw_getfoo;
+ a | b |  c  | o 
+---+---+-----+---
+ 1 | 1 | Joe | 1
+ 1 | 2 | Ed  | 2
+(2 rows)
+
+-- ordinality not supported for returns record yet
 -- sql, proretset = f, prorettype = record
 DROP VIEW vw_getfoo;
 DROP FUNCTION getfoo(int);
@@ -202,11 +412,25 @@ SELECT * FROM getfoo(1) AS t1;
   1
 (1 row)
 
+SELECT * FROM getfoo(1) WITH ORDINALITY AS t1(v,o);
+ v | o 
+---+---
+ 1 | 1
+(1 row)
+
 CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1);
 SELECT * FROM vw_getfoo;
  getfoo 
 --------
       1
+(1 row)
+
+DROP VIEW vw_getfoo;
+CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1) WITH ORDINALITY AS t1(v,o);
+SELECT * FROM vw_getfoo;
+ v | o 
+---+---
+ 1 | 1
 (1 row)
 
 -- plpgsql, proretset = f, prorettype = c
@@ -219,6 +443,12 @@ SELECT * FROM getfoo(1) AS t1;
      1 |        1 | Joe
 (1 row)
 
+SELECT * FROM getfoo(1) WITH ORDINALITY AS t1(a,b,c,o);
+ a | b |  c  | o 
+---+---+-----+---
+ 1 | 1 | Joe | 1
+(1 row)
+
 CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1);
 SELECT * FROM vw_getfoo;
  fooid | foosubid | fooname 
@@ -227,181 +457,622 @@ SELECT * FROM vw_getfoo;
 (1 row)
 
 DROP VIEW vw_getfoo;
+CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1) WITH ORDINALITY AS t1(a,b,c,o);
+SELECT * FROM vw_getfoo;
+ a | b |  c  | o 
+---+---+-----+---
+ 1 | 1 | Joe | 1
+(1 row)
+
+DROP VIEW vw_getfoo;
 DROP FUNCTION getfoo(int);
 DROP FUNCTION foot(int);
 DROP TABLE foo2;
 DROP TABLE foo;
 -- Rescan tests --
-CREATE TABLE foorescan (fooid int, foosubid int, fooname text, primary key(fooid,foosubid));
-INSERT INTO foorescan values(5000,1,'abc.5000.1');
-INSERT INTO foorescan values(5001,1,'abc.5001.1');
-INSERT INTO foorescan values(5002,1,'abc.5002.1');
-INSERT INTO foorescan values(5003,1,'abc.5003.1');
-INSERT INTO foorescan values(5004,1,'abc.5004.1');
-INSERT INTO foorescan values(5005,1,'abc.5005.1');
-INSERT INTO foorescan values(5006,1,'abc.5006.1');
-INSERT INTO foorescan values(5007,1,'abc.5007.1');
-INSERT INTO foorescan values(5008,1,'abc.5008.1');
-INSERT INTO foorescan values(5009,1,'abc.5009.1');
-INSERT INTO foorescan values(5000,2,'abc.5000.2');
-INSERT INTO foorescan values(5001,2,'abc.5001.2');
-INSERT INTO foorescan values(5002,2,'abc.5002.2');
-INSERT INTO foorescan values(5003,2,'abc.5003.2');
-INSERT INTO foorescan values(5004,2,'abc.5004.2');
-INSERT INTO foorescan values(5005,2,'abc.5005.2');
-INSERT INTO foorescan values(5006,2,'abc.5006.2');
-INSERT INTO foorescan values(5007,2,'abc.5007.2');
-INSERT INTO foorescan values(5008,2,'abc.5008.2');
-INSERT INTO foorescan values(5009,2,'abc.5009.2');
-INSERT INTO foorescan values(5000,3,'abc.5000.3');
-INSERT INTO foorescan values(5001,3,'abc.5001.3');
-INSERT INTO foorescan values(5002,3,'abc.5002.3');
-INSERT INTO foorescan values(5003,3,'abc.5003.3');
-INSERT INTO foorescan values(5004,3,'abc.5004.3');
-INSERT INTO foorescan values(5005,3,'abc.5005.3');
-INSERT INTO foorescan values(5006,3,'abc.5006.3');
-INSERT INTO foorescan values(5007,3,'abc.5007.3');
-INSERT INTO foorescan values(5008,3,'abc.5008.3');
-INSERT INTO foorescan values(5009,3,'abc.5009.3');
-INSERT INTO foorescan values(5000,4,'abc.5000.4');
-INSERT INTO foorescan values(5001,4,'abc.5001.4');
-INSERT INTO foorescan values(5002,4,'abc.5002.4');
-INSERT INTO foorescan values(5003,4,'abc.5003.4');
-INSERT INTO foorescan values(5004,4,'abc.5004.4');
-INSERT INTO foorescan values(5005,4,'abc.5005.4');
-INSERT INTO foorescan values(5006,4,'abc.5006.4');
-INSERT INTO foorescan values(5007,4,'abc.5007.4');
-INSERT INTO foorescan values(5008,4,'abc.5008.4');
-INSERT INTO foorescan values(5009,4,'abc.5009.4');
-INSERT INTO foorescan values(5000,5,'abc.5000.5');
-INSERT INTO foorescan values(5001,5,'abc.5001.5');
-INSERT INTO foorescan values(5002,5,'abc.5002.5');
-INSERT INTO foorescan values(5003,5,'abc.5003.5');
-INSERT INTO foorescan values(5004,5,'abc.5004.5');
-INSERT INTO foorescan values(5005,5,'abc.5005.5');
-INSERT INTO foorescan values(5006,5,'abc.5006.5');
-INSERT INTO foorescan values(5007,5,'abc.5007.5');
-INSERT INTO foorescan values(5008,5,'abc.5008.5');
-INSERT INTO foorescan values(5009,5,'abc.5009.5');
-CREATE FUNCTION foorescan(int,int) RETURNS setof foorescan AS 'SELECT * FROM foorescan WHERE fooid >= $1 and fooid < $2 ;' LANGUAGE SQL;
---invokes ExecReScanFunctionScan
-SELECT * FROM foorescan f WHERE f.fooid IN (SELECT fooid FROM foorescan(5002,5004)) ORDER BY 1,2;
- fooid | foosubid |  fooname   
--------+----------+------------
-  5002 |        1 | abc.5002.1
-  5002 |        2 | abc.5002.2
-  5002 |        3 | abc.5002.3
-  5002 |        4 | abc.5002.4
-  5002 |        5 | abc.5002.5
-  5003 |        1 | abc.5003.1
-  5003 |        2 | abc.5003.2
-  5003 |        3 | abc.5003.3
-  5003 |        4 | abc.5003.4
-  5003 |        5 | abc.5003.5
-(10 rows)
+CREATE TEMPORARY SEQUENCE foo_rescan_seq;
+CREATE TYPE foo_rescan_t AS (i integer, s bigint);
+CREATE FUNCTION foo_sql(int,int) RETURNS setof foo_rescan_t AS 'SELECT i, nextval(''foo_rescan_seq'') FROM generate_series($1,$2) i;' LANGUAGE SQL;
+-- plpgsql functions use materialize mode
+CREATE FUNCTION foo_mat(int,int) RETURNS setof foo_rescan_t AS 'begin for i in $1..$2 loop return next (i, nextval(''foo_rescan_seq'')); end loop; end;' LANGUAGE plpgsql;
+--invokes ExecReScanFunctionScan - all these cases should materialize the function only once
+-- LEFT JOIN on a condition that the planner can't prove to be true is used to ensure the function
+-- is on the inner path of a nestloop join
+SELECT setval('foo_rescan_seq',1,false);
+ setval 
+--------
+      1
+(1 row)
 
-CREATE VIEW vw_foorescan AS SELECT * FROM foorescan(5002,5004);
---invokes ExecReScanFunctionScan
-SELECT * FROM foorescan f WHERE f.fooid IN (SELECT fooid FROM vw_foorescan) ORDER BY 1,2;
- fooid | foosubid |  fooname   
--------+----------+------------
-  5002 |        1 | abc.5002.1
-  5002 |        2 | abc.5002.2
-  5002 |        3 | abc.5002.3
-  5002 |        4 | abc.5002.4
-  5002 |        5 | abc.5002.5
-  5003 |        1 | abc.5003.1
-  5003 |        2 | abc.5003.2
-  5003 |        3 | abc.5003.3
-  5003 |        4 | abc.5003.4
-  5003 |        5 | abc.5003.5
-(10 rows)
+SELECT * FROM (VALUES (1),(2),(3)) v(r) LEFT JOIN foo_sql(11,13) ON (r+i)<100;
+ r | i  | s 
+---+----+---
+ 1 | 11 | 1
+ 1 | 12 | 2
+ 1 | 13 | 3
+ 2 | 11 | 1
+ 2 | 12 | 2
+ 2 | 13 | 3
+ 3 | 11 | 1
+ 3 | 12 | 2
+ 3 | 13 | 3
+(9 rows)
 
-CREATE TABLE barrescan (fooid int primary key);
-INSERT INTO barrescan values(5003);
-INSERT INTO barrescan values(5004);
-INSERT INTO barrescan values(5005);
-INSERT INTO barrescan values(5006);
-INSERT INTO barrescan values(5007);
-INSERT INTO barrescan values(5008);
-CREATE FUNCTION foorescan(int) RETURNS setof foorescan AS 'SELECT * FROM foorescan WHERE fooid = $1;' LANGUAGE SQL;
---invokes ExecReScanFunctionScan with chgParam != NULL
-SELECT f.* FROM barrescan b, foorescan f WHERE f.fooid = b.fooid AND b.fooid IN (SELECT fooid FROM foorescan(b.fooid)) ORDER BY 1,2;
- fooid | foosubid |  fooname   
--------+----------+------------
-  5003 |        1 | abc.5003.1
-  5003 |        2 | abc.5003.2
-  5003 |        3 | abc.5003.3
-  5003 |        4 | abc.5003.4
-  5003 |        5 | abc.5003.5
-  5004 |        1 | abc.5004.1
-  5004 |        2 | abc.5004.2
-  5004 |        3 | abc.5004.3
-  5004 |        4 | abc.5004.4
-  5004 |        5 | abc.5004.5
-  5005 |        1 | abc.5005.1
-  5005 |        2 | abc.5005.2
-  5005 |        3 | abc.5005.3
-  5005 |        4 | abc.5005.4
-  5005 |        5 | abc.5005.5
-  5006 |        1 | abc.5006.1
-  5006 |        2 | abc.5006.2
-  5006 |        3 | abc.5006.3
-  5006 |        4 | abc.5006.4
-  5006 |        5 | abc.5006.5
-  5007 |        1 | abc.5007.1
-  5007 |        2 | abc.5007.2
-  5007 |        3 | abc.5007.3
-  5007 |        4 | abc.5007.4
-  5007 |        5 | abc.5007.5
-  5008 |        1 | abc.5008.1
-  5008 |        2 | abc.5008.2
-  5008 |        3 | abc.5008.3
-  5008 |        4 | abc.5008.4
-  5008 |        5 | abc.5008.5
-(30 rows)
+SELECT setval('foo_rescan_seq',1,false);
+ setval 
+--------
+      1
+(1 row)
 
-SELECT b.fooid, max(f.foosubid) FROM barrescan b, foorescan f WHERE f.fooid = b.fooid AND b.fooid IN (SELECT fooid FROM foorescan(b.fooid)) GROUP BY b.fooid ORDER BY 1,2;
- fooid | max 
--------+-----
-  5003 |   5
-  5004 |   5
-  5005 |   5
-  5006 |   5
-  5007 |   5
-  5008 |   5
+SELECT * FROM (VALUES (1),(2),(3)) v(r) LEFT JOIN foo_sql(11,13) WITH ORDINALITY AS f(i,s,o) ON (r+i)<100;
+ r | i  | s | o 
+---+----+---+---
+ 1 | 11 | 1 | 1
+ 1 | 12 | 2 | 2
+ 1 | 13 | 3 | 3
+ 2 | 11 | 1 | 1
+ 2 | 12 | 2 | 2
+ 2 | 13 | 3 | 3
+ 3 | 11 | 1 | 1
+ 3 | 12 | 2 | 2
+ 3 | 13 | 3 | 3
+(9 rows)
+
+SELECT setval('foo_rescan_seq',1,false);
+ setval 
+--------
+      1
+(1 row)
+
+SELECT * FROM (VALUES (1),(2),(3)) v(r) LEFT JOIN foo_mat(11,13) ON (r+i)<100;
+ r | i  | s 
+---+----+---
+ 1 | 11 | 1
+ 1 | 12 | 2
+ 1 | 13 | 3
+ 2 | 11 | 1
+ 2 | 12 | 2
+ 2 | 13 | 3
+ 3 | 11 | 1
+ 3 | 12 | 2
+ 3 | 13 | 3
+(9 rows)
+
+SELECT setval('foo_rescan_seq',1,false);
+ setval 
+--------
+      1
+(1 row)
+
+SELECT * FROM (VALUES (1),(2),(3)) v(r) LEFT JOIN foo_mat(11,13) WITH ORDINALITY AS f(i,s,o) ON (r+i)<100;
+ r | i  | s | o 
+---+----+---+---
+ 1 | 11 | 1 | 1
+ 1 | 12 | 2 | 2
+ 1 | 13 | 3 | 3
+ 2 | 11 | 1 | 1
+ 2 | 12 | 2 | 2
+ 2 | 13 | 3 | 3
+ 3 | 11 | 1 | 1
+ 3 | 12 | 2 | 2
+ 3 | 13 | 3 | 3
+(9 rows)
+
+SELECT * FROM (VALUES (1),(2),(3)) v(r) LEFT JOIN generate_series(11,13) f(i) ON (r+i)<100;
+ r | i  
+---+----
+ 1 | 11
+ 1 | 12
+ 1 | 13
+ 2 | 11
+ 2 | 12
+ 2 | 13
+ 3 | 11
+ 3 | 12
+ 3 | 13
+(9 rows)
+
+SELECT * FROM (VALUES (1),(2),(3)) v(r) LEFT JOIN generate_series(11,13) WITH ORDINALITY AS f(i,o) ON (r+i)<100;
+ r | i  | o 
+---+----+---
+ 1 | 11 | 1
+ 1 | 12 | 2
+ 1 | 13 | 3
+ 2 | 11 | 1
+ 2 | 12 | 2
+ 2 | 13 | 3
+ 3 | 11 | 1
+ 3 | 12 | 2
+ 3 | 13 | 3
+(9 rows)
+
+SELECT * FROM (VALUES (1),(2),(3)) v(r) LEFT JOIN unnest(array[10,20,30]) f(i) ON (r+i)<100;
+ r | i  
+---+----
+ 1 | 10
+ 1 | 20
+ 1 | 30
+ 2 | 10
+ 2 | 20
+ 2 | 30
+ 3 | 10
+ 3 | 20
+ 3 | 30
+(9 rows)
+
+SELECT * FROM (VALUES (1),(2),(3)) v(r) LEFT JOIN unnest(array[10,20,30]) WITH ORDINALITY AS f(i,o) ON (r+i)<100;
+ r | i  | o 
+---+----+---
+ 1 | 10 | 1
+ 1 | 20 | 2
+ 1 | 30 | 3
+ 2 | 10 | 1
+ 2 | 20 | 2
+ 2 | 30 | 3
+ 3 | 10 | 1
+ 3 | 20 | 2
+ 3 | 30 | 3
+(9 rows)
+
+--invokes ExecReScanFunctionScan with chgParam != NULL (using implied LATERAL)
+SELECT setval('foo_rescan_seq',1,false);
+ setval 
+--------
+      1
+(1 row)
+
+SELECT * FROM (VALUES (1),(2),(3)) v(r), foo_sql(10+r,13);
+ r | i  | s 
+---+----+---
+ 1 | 11 | 1
+ 1 | 12 | 2
+ 1 | 13 | 3
+ 2 | 12 | 4
+ 2 | 13 | 5
+ 3 | 13 | 6
 (6 rows)
 
-CREATE VIEW fooview1 AS SELECT f.* FROM barrescan b, foorescan f WHERE f.fooid = b.fooid AND b.fooid IN (SELECT fooid FROM foorescan(b.fooid)) ORDER BY 1,2;
-SELECT * FROM fooview1 AS fv WHERE fv.fooid = 5004;
- fooid | foosubid |  fooname   
--------+----------+------------
-  5004 |        1 | abc.5004.1
-  5004 |        2 | abc.5004.2
-  5004 |        3 | abc.5004.3
-  5004 |        4 | abc.5004.4
-  5004 |        5 | abc.5004.5
-(5 rows)
+SELECT setval('foo_rescan_seq',1,false);
+ setval 
+--------
+      1
+(1 row)
 
-CREATE VIEW fooview2 AS SELECT b.fooid, max(f.foosubid) AS maxsubid FROM barrescan b, foorescan f WHERE f.fooid = b.fooid AND b.fooid IN (SELECT fooid FROM foorescan(b.fooid)) GROUP BY b.fooid ORDER BY 1,2;
-SELECT * FROM fooview2 AS fv WHERE fv.maxsubid = 5;
- fooid | maxsubid 
--------+----------
-  5003 |        5
-  5004 |        5
-  5005 |        5
-  5006 |        5
-  5007 |        5
-  5008 |        5
+SELECT * FROM (VALUES (1),(2),(3)) v(r), foo_sql(10+r,13) WITH ORDINALITY AS f(i,s,o);
+ r | i  | s | o 
+---+----+---+---
+ 1 | 11 | 1 | 1
+ 1 | 12 | 2 | 2
+ 1 | 13 | 3 | 3
+ 2 | 12 | 4 | 1
+ 2 | 13 | 5 | 2
+ 3 | 13 | 6 | 1
 (6 rows)
 
-DROP VIEW vw_foorescan;
-DROP VIEW fooview1;
-DROP VIEW fooview2;
-DROP FUNCTION foorescan(int,int);
-DROP FUNCTION foorescan(int);
-DROP TABLE foorescan;
-DROP TABLE barrescan;
+SELECT setval('foo_rescan_seq',1,false);
+ setval 
+--------
+      1
+(1 row)
+
+SELECT * FROM (VALUES (1),(2),(3)) v(r), foo_sql(11,10+r);
+ r | i  | s 
+---+----+---
+ 1 | 11 | 1
+ 2 | 11 | 2
+ 2 | 12 | 3
+ 3 | 11 | 4
+ 3 | 12 | 5
+ 3 | 13 | 6
+(6 rows)
+
+SELECT setval('foo_rescan_seq',1,false);
+ setval 
+--------
+      1
+(1 row)
+
+SELECT * FROM (VALUES (1),(2),(3)) v(r), foo_sql(11,10+r) WITH ORDINALITY AS f(i,s,o);
+ r | i  | s | o 
+---+----+---+---
+ 1 | 11 | 1 | 1
+ 2 | 11 | 2 | 1
+ 2 | 12 | 3 | 2
+ 3 | 11 | 4 | 1
+ 3 | 12 | 5 | 2
+ 3 | 13 | 6 | 3
+(6 rows)
+
+SELECT setval('foo_rescan_seq',1,false);
+ setval 
+--------
+      1
+(1 row)
+
+SELECT * FROM (VALUES (11,12),(13,15),(16,20)) v(r1,r2), foo_sql(r1,r2);
+ r1 | r2 | i  | s  
+----+----+----+----
+ 11 | 12 | 11 |  1
+ 11 | 12 | 12 |  2
+ 13 | 15 | 13 |  3
+ 13 | 15 | 14 |  4
+ 13 | 15 | 15 |  5
+ 16 | 20 | 16 |  6
+ 16 | 20 | 17 |  7
+ 16 | 20 | 18 |  8
+ 16 | 20 | 19 |  9
+ 16 | 20 | 20 | 10
+(10 rows)
+
+SELECT setval('foo_rescan_seq',1,false);
+ setval 
+--------
+      1
+(1 row)
+
+SELECT * FROM (VALUES (11,12),(13,15),(16,20)) v(r1,r2), foo_sql(r1,r2) WITH ORDINALITY AS f(i,s,o);
+ r1 | r2 | i  | s  | o 
+----+----+----+----+---
+ 11 | 12 | 11 |  1 | 1
+ 11 | 12 | 12 |  2 | 2
+ 13 | 15 | 13 |  3 | 1
+ 13 | 15 | 14 |  4 | 2
+ 13 | 15 | 15 |  5 | 3
+ 16 | 20 | 16 |  6 | 1
+ 16 | 20 | 17 |  7 | 2
+ 16 | 20 | 18 |  8 | 3
+ 16 | 20 | 19 |  9 | 4
+ 16 | 20 | 20 | 10 | 5
+(10 rows)
+
+SELECT setval('foo_rescan_seq',1,false);
+ setval 
+--------
+      1
+(1 row)
+
+SELECT * FROM (VALUES (1),(2),(3)) v(r), foo_mat(10+r,13);
+ r | i  | s 
+---+----+---
+ 1 | 11 | 1
+ 1 | 12 | 2
+ 1 | 13 | 3
+ 2 | 12 | 4
+ 2 | 13 | 5
+ 3 | 13 | 6
+(6 rows)
+
+SELECT setval('foo_rescan_seq',1,false);
+ setval 
+--------
+      1
+(1 row)
+
+SELECT * FROM (VALUES (1),(2),(3)) v(r), foo_mat(10+r,13) WITH ORDINALITY AS f(i,s,o);
+ r | i  | s | o 
+---+----+---+---
+ 1 | 11 | 1 | 1
+ 1 | 12 | 2 | 2
+ 1 | 13 | 3 | 3
+ 2 | 12 | 4 | 1
+ 2 | 13 | 5 | 2
+ 3 | 13 | 6 | 1
+(6 rows)
+
+SELECT setval('foo_rescan_seq',1,false);
+ setval 
+--------
+      1
+(1 row)
+
+SELECT * FROM (VALUES (1),(2),(3)) v(r), foo_mat(11,10+r);
+ r | i  | s 
+---+----+---
+ 1 | 11 | 1
+ 2 | 11 | 2
+ 2 | 12 | 3
+ 3 | 11 | 4
+ 3 | 12 | 5
+ 3 | 13 | 6
+(6 rows)
+
+SELECT setval('foo_rescan_seq',1,false);
+ setval 
+--------
+      1
+(1 row)
+
+SELECT * FROM (VALUES (1),(2),(3)) v(r), foo_mat(11,10+r) WITH ORDINALITY AS f(i,s,o);
+ r | i  | s | o 
+---+----+---+---
+ 1 | 11 | 1 | 1
+ 2 | 11 | 2 | 1
+ 2 | 12 | 3 | 2
+ 3 | 11 | 4 | 1
+ 3 | 12 | 5 | 2
+ 3 | 13 | 6 | 3
+(6 rows)
+
+SELECT setval('foo_rescan_seq',1,false);
+ setval 
+--------
+      1
+(1 row)
+
+SELECT * FROM (VALUES (11,12),(13,15),(16,20)) v(r1,r2), foo_mat(r1,r2);
+ r1 | r2 | i  | s  
+----+----+----+----
+ 11 | 12 | 11 |  1
+ 11 | 12 | 12 |  2
+ 13 | 15 | 13 |  3
+ 13 | 15 | 14 |  4
+ 13 | 15 | 15 |  5
+ 16 | 20 | 16 |  6
+ 16 | 20 | 17 |  7
+ 16 | 20 | 18 |  8
+ 16 | 20 | 19 |  9
+ 16 | 20 | 20 | 10
+(10 rows)
+
+SELECT setval('foo_rescan_seq',1,false);
+ setval 
+--------
+      1
+(1 row)
+
+SELECT * FROM (VALUES (11,12),(13,15),(16,20)) v(r1,r2), foo_mat(r1,r2) WITH ORDINALITY AS f(i,s,o);
+ r1 | r2 | i  | s  | o 
+----+----+----+----+---
+ 11 | 12 | 11 |  1 | 1
+ 11 | 12 | 12 |  2 | 2
+ 13 | 15 | 13 |  3 | 1
+ 13 | 15 | 14 |  4 | 2
+ 13 | 15 | 15 |  5 | 3
+ 16 | 20 | 16 |  6 | 1
+ 16 | 20 | 17 |  7 | 2
+ 16 | 20 | 18 |  8 | 3
+ 16 | 20 | 19 |  9 | 4
+ 16 | 20 | 20 | 10 | 5
+(10 rows)
+
+SELECT * FROM (VALUES (1),(2),(3)) v(r), generate_series(10+r,20-r) f(i);
+ r | i  
+---+----
+ 1 | 11
+ 1 | 12
+ 1 | 13
+ 1 | 14
+ 1 | 15
+ 1 | 16
+ 1 | 17
+ 1 | 18
+ 1 | 19
+ 2 | 12
+ 2 | 13
+ 2 | 14
+ 2 | 15
+ 2 | 16
+ 2 | 17
+ 2 | 18
+ 3 | 13
+ 3 | 14
+ 3 | 15
+ 3 | 16
+ 3 | 17
+(21 rows)
+
+SELECT * FROM (VALUES (1),(2),(3)) v(r), generate_series(10+r,20-r) WITH ORDINALITY AS f(i,o);
+ r | i  | o 
+---+----+---
+ 1 | 11 | 1
+ 1 | 12 | 2
+ 1 | 13 | 3
+ 1 | 14 | 4
+ 1 | 15 | 5
+ 1 | 16 | 6
+ 1 | 17 | 7
+ 1 | 18 | 8
+ 1 | 19 | 9
+ 2 | 12 | 1
+ 2 | 13 | 2
+ 2 | 14 | 3
+ 2 | 15 | 4
+ 2 | 16 | 5
+ 2 | 17 | 6
+ 2 | 18 | 7
+ 3 | 13 | 1
+ 3 | 14 | 2
+ 3 | 15 | 3
+ 3 | 16 | 4
+ 3 | 17 | 5
+(21 rows)
+
+SELECT * FROM (VALUES (1),(2),(3)) v(r), unnest(array[r*10,r*20,r*30]) f(i);
+ r | i  
+---+----
+ 1 | 10
+ 1 | 20
+ 1 | 30
+ 2 | 20
+ 2 | 40
+ 2 | 60
+ 3 | 30
+ 3 | 60
+ 3 | 90
+(9 rows)
+
+SELECT * FROM (VALUES (1),(2),(3)) v(r), unnest(array[r*10,r*20,r*30]) WITH ORDINALITY AS f(i,o);
+ r | i  | o 
+---+----+---
+ 1 | 10 | 1
+ 1 | 20 | 2
+ 1 | 30 | 3
+ 2 | 20 | 1
+ 2 | 40 | 2
+ 2 | 60 | 3
+ 3 | 30 | 1
+ 3 | 60 | 2
+ 3 | 90 | 3
+(9 rows)
+
+-- deep nesting
+SELECT * FROM (VALUES (1),(2),(3)) v1(r1),
+              LATERAL (SELECT r1, * FROM (VALUES (10),(20),(30)) v2(r2)
+                                         LEFT JOIN generate_series(21,23) f(i) ON ((r2+i)<100) OFFSET 0) s1;
+ r1 | r1 | r2 | i  
+----+----+----+----
+  1 |  1 | 10 | 21
+  1 |  1 | 10 | 22
+  1 |  1 | 10 | 23
+  1 |  1 | 20 | 21
+  1 |  1 | 20 | 22
+  1 |  1 | 20 | 23
+  1 |  1 | 30 | 21
+  1 |  1 | 30 | 22
+  1 |  1 | 30 | 23
+  2 |  2 | 10 | 21
+  2 |  2 | 10 | 22
+  2 |  2 | 10 | 23
+  2 |  2 | 20 | 21
+  2 |  2 | 20 | 22
+  2 |  2 | 20 | 23
+  2 |  2 | 30 | 21
+  2 |  2 | 30 | 22
+  2 |  2 | 30 | 23
+  3 |  3 | 10 | 21
+  3 |  3 | 10 | 22
+  3 |  3 | 10 | 23
+  3 |  3 | 20 | 21
+  3 |  3 | 20 | 22
+  3 |  3 | 20 | 23
+  3 |  3 | 30 | 21
+  3 |  3 | 30 | 22
+  3 |  3 | 30 | 23
+(27 rows)
+
+SELECT * FROM (VALUES (1),(2),(3)) v1(r1),
+              LATERAL (SELECT r1, * FROM (VALUES (10),(20),(30)) v2(r2)
+                                         LEFT JOIN generate_series(20+r1,23) f(i) ON ((r2+i)<100) OFFSET 0) s1;
+ r1 | r1 | r2 | i  
+----+----+----+----
+  1 |  1 | 10 | 21
+  1 |  1 | 10 | 22
+  1 |  1 | 10 | 23
+  1 |  1 | 20 | 21
+  1 |  1 | 20 | 22
+  1 |  1 | 20 | 23
+  1 |  1 | 30 | 21
+  1 |  1 | 30 | 22
+  1 |  1 | 30 | 23
+  2 |  2 | 10 | 22
+  2 |  2 | 10 | 23
+  2 |  2 | 20 | 22
+  2 |  2 | 20 | 23
+  2 |  2 | 30 | 22
+  2 |  2 | 30 | 23
+  3 |  3 | 10 | 23
+  3 |  3 | 20 | 23
+  3 |  3 | 30 | 23
+(18 rows)
+
+SELECT * FROM (VALUES (1),(2),(3)) v1(r1),
+              LATERAL (SELECT r1, * FROM (VALUES (10),(20),(30)) v2(r2)
+                                         LEFT JOIN generate_series(r2,r2+3) f(i) ON ((r2+i)<100) OFFSET 0) s1;
+ r1 | r1 | r2 | i  
+----+----+----+----
+  1 |  1 | 10 | 10
+  1 |  1 | 10 | 11
+  1 |  1 | 10 | 12
+  1 |  1 | 10 | 13
+  1 |  1 | 20 | 20
+  1 |  1 | 20 | 21
+  1 |  1 | 20 | 22
+  1 |  1 | 20 | 23
+  1 |  1 | 30 | 30
+  1 |  1 | 30 | 31
+  1 |  1 | 30 | 32
+  1 |  1 | 30 | 33
+  2 |  2 | 10 | 10
+  2 |  2 | 10 | 11
+  2 |  2 | 10 | 12
+  2 |  2 | 10 | 13
+  2 |  2 | 20 | 20
+  2 |  2 | 20 | 21
+  2 |  2 | 20 | 22
+  2 |  2 | 20 | 23
+  2 |  2 | 30 | 30
+  2 |  2 | 30 | 31
+  2 |  2 | 30 | 32
+  2 |  2 | 30 | 33
+  3 |  3 | 10 | 10
+  3 |  3 | 10 | 11
+  3 |  3 | 10 | 12
+  3 |  3 | 10 | 13
+  3 |  3 | 20 | 20
+  3 |  3 | 20 | 21
+  3 |  3 | 20 | 22
+  3 |  3 | 20 | 23
+  3 |  3 | 30 | 30
+  3 |  3 | 30 | 31
+  3 |  3 | 30 | 32
+  3 |  3 | 30 | 33
+(36 rows)
+
+SELECT * FROM (VALUES (1),(2),(3)) v1(r1),
+              LATERAL (SELECT r1, * FROM (VALUES (10),(20),(30)) v2(r2)
+                                         LEFT JOIN generate_series(r1,2+r2/5) f(i) ON ((r2+i)<100) OFFSET 0) s1;
+ r1 | r1 | r2 | i 
+----+----+----+---
+  1 |  1 | 10 | 1
+  1 |  1 | 10 | 2
+  1 |  1 | 10 | 3
+  1 |  1 | 10 | 4
+  1 |  1 | 20 | 1
+  1 |  1 | 20 | 2
+  1 |  1 | 20 | 3
+  1 |  1 | 20 | 4
+  1 |  1 | 20 | 5
+  1 |  1 | 20 | 6
+  1 |  1 | 30 | 1
+  1 |  1 | 30 | 2
+  1 |  1 | 30 | 3
+  1 |  1 | 30 | 4
+  1 |  1 | 30 | 5
+  1 |  1 | 30 | 6
+  1 |  1 | 30 | 7
+  1 |  1 | 30 | 8
+  2 |  2 | 10 | 2
+  2 |  2 | 10 | 3
+  2 |  2 | 10 | 4
+  2 |  2 | 20 | 2
+  2 |  2 | 20 | 3
+  2 |  2 | 20 | 4
+  2 |  2 | 20 | 5
+  2 |  2 | 20 | 6
+  2 |  2 | 30 | 2
+  2 |  2 | 30 | 3
+  2 |  2 | 30 | 4
+  2 |  2 | 30 | 5
+  2 |  2 | 30 | 6
+  2 |  2 | 30 | 7
+  2 |  2 | 30 | 8
+  3 |  3 | 10 | 3
+  3 |  3 | 10 | 4
+  3 |  3 | 20 | 3
+  3 |  3 | 20 | 4
+  3 |  3 | 20 | 5
+  3 |  3 | 20 | 6
+  3 |  3 | 30 | 3
+  3 |  3 | 30 | 4
+  3 |  3 | 30 | 5
+  3 |  3 | 30 | 6
+  3 |  3 | 30 | 7
+  3 |  3 | 30 | 8
+(45 rows)
+
+DROP FUNCTION foo_sql(int,int);
+DROP FUNCTION foo_mat(int,int);
+DROP SEQUENCE foo_rescan_seq;
 --
 -- Test cases involving OUT parameters
 --
@@ -875,6 +1546,13 @@ SELECT * FROM get_users();
 --------+--------+---------
  id     | email  | t
  id2    | email2 | t
+(2 rows)
+
+SELECT * FROM get_users() WITH ORDINALITY;   -- make sure ordinality copes
+ userid | email  | enabled | ordinality 
+--------+--------+---------+------------
+ id     | email  | t       |          1
+ id2    | email2 | t       |          2
 (2 rows)
 
 drop function get_first_user();

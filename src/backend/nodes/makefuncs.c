@@ -126,6 +126,10 @@ makeVarFromTargetEntry(Index varno,
  * returning a non-composite result type, we produce a normal Var referencing
  * the function's result directly, instead of the single-column composite
  * value that the whole-row notation might otherwise suggest.
+ *
+ * We also handle the specific case of function RTEs with ordinality,
+ * where the additional column has to be added. This forces the result
+ * to be composite and RECORD type.
  */
 Var *
 makeWholeRowVar(RangeTblEntry *rte,
@@ -151,9 +155,33 @@ makeWholeRowVar(RangeTblEntry *rte,
 							 InvalidOid,
 							 varlevelsup);
 			break;
+
 		case RTE_FUNCTION:
+			/*
+			 * RTE is a function with or without ordinality. We map the
+			 * cases as follows:
+			 *
+			 * If ordinality is set, we return a composite var even if
+			 * the function is a scalar. This var is always of RECORD type.
+			 *
+			 * If ordinality is not set but the function returns a row,
+			 * we keep the function's return type.
+			 *
+			 * If the function is a scalar, we do what allowScalar requests.
+			 */
 			toid = exprType(rte->funcexpr);
-			if (type_is_rowtype(toid))
+
+			if (rte->funcordinality)
+			{
+				/* ORDINALITY always produces an anonymous RECORD result */
+				result = makeVar(varno,
+								 InvalidAttrNumber,
+								 RECORDOID,
+								 -1,
+								 InvalidOid,
+								 varlevelsup);
+			}
+			else if (type_is_rowtype(toid))
 			{
 				/* func returns composite; same as relation case */
 				result = makeVar(varno,
@@ -184,8 +212,8 @@ makeWholeRowVar(RangeTblEntry *rte,
 								 varlevelsup);
 			}
 			break;
-		default:
 
+		default:
 			/*
 			 * RTE is a join, subselect, or VALUES.  We represent this as a
 			 * whole-row Var of RECORD type. (Note that in most cases the Var

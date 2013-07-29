@@ -133,7 +133,7 @@ base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
 		case WITH:
 
 			/*
-			 * WITH TIME must be reduced to one token
+			 * WITH TIME and WITH ORDINALITY must each be reduced to one token
 			 */
 			cur_yylval = lvalp->core_yystype;
 			cur_yylloc = *llocp;
@@ -142,6 +142,9 @@ base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
 			{
 				case TIME:
 					cur_token = WITH_TIME;
+					break;
+				case ORDINALITY:
+					cur_token = WITH_ORDINALITY;
 					break;
 				default:
 					/* save the lookahead token for next time */

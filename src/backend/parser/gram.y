@@ -566,7 +566,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	NULLS_P NUMERIC
 
 	OBJECT_P OF OFF OFFSET OIDS ON ONLY OPERATOR OPTION OPTIONS OR
-	ORDER OUT_P OUTER_P OVER OVERLAPS OVERLAY OWNED OWNER
+	ORDER ORDINALITY OUT_P OUTER_P OVER OVERLAPS OVERLAY OWNED OWNER
 
 	PARSER PARTIAL PARTITION PASSING PASSWORD PLACING PLANS POSITION
 	PRECEDING PRECISION PRESERVE PREPARE PREPARED PRIMARY
@@ -609,8 +609,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
  * list and so can never be entered directly.  The filter in parser.c
  * creates these tokens when required.
  */
-%token			NULLS_FIRST NULLS_LAST WITH_TIME
-
+%token			NULLS_FIRST NULLS_LAST WITH_ORDINALITY WITH_TIME
 
 /* Precedence: lowest to highest */
 %nonassoc	SET				/* see relation_expr_opt_alias */
@@ -9588,18 +9587,40 @@ table_ref:	relation_expr opt_alias_clause
 				{
 					RangeFunction *n = makeNode(RangeFunction);
 					n->lateral = false;
+					n->ordinality = false;
 					n->funccallnode = $1;
 					n->alias = linitial($2);
 					n->coldeflist = lsecond($2);
+					$$ = (Node *) n;
+				}
+			| func_table WITH_ORDINALITY func_alias_clause
+				{
+					RangeFunction *n = makeNode(RangeFunction);
+					n->lateral = false;
+					n->ordinality = true;
+					n->funccallnode = $1;
+					n->alias = linitial($3);
+					n->coldeflist = lsecond($3);
 					$$ = (Node *) n;
 				}
 			| LATERAL_P func_table func_alias_clause
 				{
 					RangeFunction *n = makeNode(RangeFunction);
 					n->lateral = true;
+					n->ordinality = false;
 					n->funccallnode = $2;
 					n->alias = linitial($3);
 					n->coldeflist = lsecond($3);
+					$$ = (Node *) n;
+				}
+			| LATERAL_P func_table WITH_ORDINALITY func_alias_clause
+				{
+					RangeFunction *n = makeNode(RangeFunction);
+					n->lateral = true;
+					n->ordinality = true;
+					n->funccallnode = $2;
+					n->alias = linitial($4);
+					n->coldeflist = lsecond($4);
 					$$ = (Node *) n;
 				}
 			| select_with_parens opt_alias_clause
@@ -12575,6 +12596,7 @@ unreserved_keyword:
 			| OPERATOR
 			| OPTION
 			| OPTIONS
+			| ORDINALITY
 			| OVER
 			| OWNED
 			| OWNER

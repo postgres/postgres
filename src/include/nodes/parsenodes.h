@@ -471,6 +471,7 @@ typedef struct RangeFunction
 {
 	NodeTag		type;
 	bool		lateral;		/* does it have LATERAL prefix? */
+	bool		ordinality;		/* does it have WITH ORDINALITY suffix? */
 	Node	   *funccallnode;	/* untransformed function call tree */
 	Alias	   *alias;			/* table alias & optional column aliases */
 	List	   *coldeflist;		/* list of ColumnDef nodes to describe result
@@ -651,8 +652,13 @@ typedef struct XmlSerialize
  *	  dropped columns.	Note however that a stored rule may have nonempty
  *	  colnames for columns dropped since the rule was created (and for that
  *	  matter the colnames might be out of date due to column renamings).
+ *
  *	  The same comments apply to FUNCTION RTEs when the function's return type
- *	  is a named composite type.
+ *	  is a named composite type. In addition, for all return types, FUNCTION
+ *    RTEs with ORDINALITY must always have the last colname entry being the
+ *    one for the ordinal column; this is enforced when constructing the RTE.
+ *    Thus when ORDINALITY is used, there will be exactly one more colname
+ *    than would have been present otherwise.
  *
  *	  In JOIN RTEs, the colnames in both alias and eref are one-to-one with
  *	  joinaliasvars entries.  A JOIN RTE will omit columns of its inputs when
@@ -751,15 +757,21 @@ typedef struct RangeTblEntry
 	/*
 	 * Fields valid for a function RTE (else NULL):
 	 *
-	 * If the function returns RECORD, funccoltypes lists the column types
-	 * declared in the RTE's column type specification, funccoltypmods lists
-	 * their declared typmods, funccolcollations their collations.	Otherwise,
-	 * those fields are NIL.
+	 * If the function returns an otherwise-unspecified RECORD, funccoltypes
+	 * lists the column types declared in the RTE's column type specification,
+	 * funccoltypmods lists their declared typmods, funccolcollations their
+	 * collations.  Note that in this case, ORDINALITY is not permitted, so
+	 * there is no extra ordinal column to be allowed for.
+	 *
+     * Otherwise, those fields are NIL, and the result column types must be
+	 * derived from the funcexpr while treating the ordinal column, if
+	 * present, as a special case.  (see get_rte_attribute_*)
 	 */
 	Node	   *funcexpr;		/* expression tree for func call */
 	List	   *funccoltypes;	/* OID list of column type OIDs */
 	List	   *funccoltypmods; /* integer list of column typmods */
 	List	   *funccolcollations;		/* OID list of column collation OIDs */
+	bool		funcordinality;	/* is this called WITH ORDINALITY? */
 
 	/*
 	 * Fields valid for a values RTE (else NIL):

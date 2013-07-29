@@ -787,18 +787,24 @@ markVarForSelectPriv(ParseState *pstate, Var *var, RangeTblEntry *rte)
  * buildRelationAliases
  *		Construct the eref column name list for a relation RTE.
  *		This code is also used for the case of a function RTE returning
- *		a named composite type.
+ *		a named composite type or a registered RECORD type.
  *
  * tupdesc: the physical column information
  * alias: the user-supplied alias, or NULL if none
  * eref: the eref Alias to store column names in
+ * ordinality: true if an ordinality column is to be added
  *
  * eref->colnames is filled in.  Also, alias->colnames is rebuilt to insert
  * empty strings for any dropped columns, so that it will be one-to-one with
  * physical column numbers.
+ *
+ * If we add an ordinality column, its colname comes from the alias if there
+ * is one, otherwise we default it. (We don't add it to alias->colnames.)
+ *
+ * It is an error for there to be more aliases present than required.
  */
 static void
-buildRelationAliases(TupleDesc tupdesc, Alias *alias, Alias *eref)
+buildRelationAliases(TupleDesc tupdesc, Alias *alias, Alias *eref, bool ordinality)
 {
 	int			maxattrs = tupdesc->natts;
 	ListCell   *aliaslc;
@@ -850,12 +856,33 @@ buildRelationAliases(TupleDesc tupdesc, Alias *alias, Alias *eref)
 		eref->colnames = lappend(eref->colnames, attrname);
 	}
 
+	/* tack on the ordinality column at the end */
+	if (ordinality)
+	{
+		Value *attrname;
+
+		if (aliaslc)
+		{
+			attrname = (Value *) lfirst(aliaslc);
+			aliaslc = lnext(aliaslc);
+			alias->colnames = lappend(alias->colnames, attrname);
+		}
+		else
+		{
+			attrname = makeString(pstrdup("ordinality"));
+		}
+
+		eref->colnames = lappend(eref->colnames, attrname);
+	}
+
 	/* Too many user-supplied aliases? */
 	if (aliaslc)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 				 errmsg("table \"%s\" has %d columns available but %d columns specified",
-						eref->aliasname, maxattrs - numdropped, numaliases)));
+						eref->aliasname,
+						maxattrs - numdropped + (ordinality ? 1 : 0),
+						numaliases)));
 }
 
 /*
@@ -867,48 +894,60 @@ buildRelationAliases(TupleDesc tupdesc, Alias *alias, Alias *eref)
  * funcname: function name (used only for error message)
  * alias: the user-supplied alias, or NULL if none
  * eref: the eref Alias to store column names in
+ * ordinality: whether to add an ordinality column
  *
  * eref->colnames is filled in.
+ *
+ * The caller must have previously filled in eref->aliasname, which will
+ * be used as the result column name if no alias is given.
+ *
+ * A user-supplied Alias can contain up to two column alias names; one for
+ * the function result, and one for the ordinality column; it is an error
+ * to specify more aliases than required.
  */
 static void
 buildScalarFunctionAlias(Node *funcexpr, char *funcname,
-						 Alias *alias, Alias *eref)
+						 Alias *alias, Alias *eref, bool ordinality)
 {
-	char	   *pname;
-
 	Assert(eref->colnames == NIL);
 
 	/* Use user-specified column alias if there is one. */
 	if (alias && alias->colnames != NIL)
 	{
-		if (list_length(alias->colnames) != 1)
+		if (list_length(alias->colnames) > (ordinality ? 2 : 1))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 				  errmsg("too many column aliases specified for function %s",
 						 funcname)));
+
 		eref->colnames = copyObject(alias->colnames);
-		return;
 	}
-
-	/*
-	 * If the expression is a simple function call, and the function has a
-	 * single OUT parameter that is named, use the parameter's name.
-	 */
-	if (funcexpr && IsA(funcexpr, FuncExpr))
+	else
 	{
-		pname = get_func_result_name(((FuncExpr *) funcexpr)->funcid);
-		if (pname)
-		{
-			eref->colnames = list_make1(makeString(pname));
-			return;
-		}
+		char	   *pname = NULL;
+
+		/*
+		 * If the expression is a simple function call, and the function has a
+		 * single OUT parameter that is named, use the parameter's name.
+		 */
+		if (funcexpr && IsA(funcexpr, FuncExpr))
+			pname = get_func_result_name(((FuncExpr *) funcexpr)->funcid);
+
+		/*
+		 * Otherwise, use the previously-determined alias name provided by the
+		 * caller (which is not necessarily the function name!)
+		 */
+		if (!pname)
+			pname = eref->aliasname;
+
+		eref->colnames = list_make1(makeString(pname));
 	}
 
-	/*
-	 * Otherwise use the previously-determined alias (not necessarily the
-	 * function name!)
-	 */
-	eref->colnames = list_make1(makeString(eref->aliasname));
+	/* If we don't have a name for the ordinality column yet, supply a default. */
+	if (ordinality && list_length(eref->colnames) < 2)
+		eref->colnames = lappend(eref->colnames, makeString(pstrdup("ordinality")));
+
+	return;
 }
 
 /*
@@ -1004,7 +1043,7 @@ addRangeTableEntry(ParseState *pstate,
 	 * and/or actual column names.
 	 */
 	rte->eref = makeAlias(refname, NIL);
-	buildRelationAliases(rel->rd_att, alias, rte->eref);
+	buildRelationAliases(rel->rd_att, alias, rte->eref, false);
 
 	/*
 	 * Drop the rel refcount, but keep the access lock till end of transaction
@@ -1064,7 +1103,7 @@ addRangeTableEntryForRelation(ParseState *pstate,
 	 * and/or actual column names.
 	 */
 	rte->eref = makeAlias(refname, NIL);
-	buildRelationAliases(rel->rd_att, alias, rte->eref);
+	buildRelationAliases(rel->rd_att, alias, rte->eref, false);
 
 	/*
 	 * Set flags and access permissions.
@@ -1235,16 +1274,22 @@ addRangeTableEntryForFunction(ParseState *pstate,
 		/* Composite data type, e.g. a table's row type */
 		Assert(tupdesc);
 		/* Build the column alias list */
-		buildRelationAliases(tupdesc, alias, eref);
+		buildRelationAliases(tupdesc, alias, eref, rangefunc->ordinality);
 	}
 	else if (functypclass == TYPEFUNC_SCALAR)
 	{
 		/* Base data type, i.e. scalar */
-		buildScalarFunctionAlias(funcexpr, funcname, alias, eref);
+		buildScalarFunctionAlias(funcexpr, funcname, alias, eref, rangefunc->ordinality);
 	}
 	else if (functypclass == TYPEFUNC_RECORD)
 	{
 		ListCell   *col;
+
+		if (rangefunc->ordinality)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("WITH ORDINALITY is not supported for functions returning \"record\""),
+					 parser_errposition(pstate, exprLocation(funcexpr))));
 
 		/*
 		 * Use the column definition list to form the alias list and
@@ -1288,6 +1333,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 	 * permissions mechanism).
 	 */
 	rte->lateral = lateral;
+	rte->funcordinality = rangefunc->ordinality;
 	rte->inh = false;			/* never true for functions */
 	rte->inFromCl = inFromCl;
 
@@ -1643,6 +1689,11 @@ addRTEtoQuery(ParseState *pstate, RangeTblEntry *rte,
  * The output lists go into *colnames and *colvars.
  * If only one of the two kinds of output list is needed, pass NULL for the
  * output pointer for the unwanted one.
+ *
+ * For function RTEs with ORDINALITY, this expansion includes the
+ * ordinal column, whose type (bigint) had better match the type assumed in the
+ * executor. The colname for the ordinality column must have been set up already
+ * in the RTE; it is always last.
  */
 void
 expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
@@ -1711,6 +1762,7 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 				TypeFuncClass functypclass;
 				Oid			funcrettype;
 				TupleDesc	tupdesc;
+				int         ordinality_attno = 0;
 
 				functypclass = get_expr_result_type(rte->funcexpr,
 													&funcrettype,
@@ -1719,9 +1771,16 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 				{
 					/* Composite data type, e.g. a table's row type */
 					Assert(tupdesc);
+
+					/*
+					 * we rely here on the fact that expandTupleDesc doesn't
+					 * care about being passed more aliases than it needs.
+					 */
 					expandTupleDesc(tupdesc, rte->eref,
 									rtindex, sublevels_up, location,
 									include_dropped, colnames, colvars);
+
+					ordinality_attno = tupdesc->natts + 1;
 				}
 				else if (functypclass == TYPEFUNC_SCALAR)
 				{
@@ -1742,6 +1801,8 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 
 						*colvars = lappend(*colvars, varnode);
 					}
+
+					ordinality_attno = 2;
 				}
 				else if (functypclass == TYPEFUNC_RECORD)
 				{
@@ -1774,11 +1835,33 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 							*colvars = lappend(*colvars, varnode);
 						}
 					}
+
+					/* note, ordinality is not allowed in this case */
 				}
 				else
 				{
 					/* addRangeTableEntryForFunction should've caught this */
 					elog(ERROR, "function in FROM has unsupported return type");
+				}
+
+				/* tack on the extra ordinality column if present */
+				if (rte->funcordinality)
+				{
+					Assert(ordinality_attno > 0);
+
+					if (colnames)
+						*colnames = lappend(*colnames, llast(rte->eref->colnames));
+
+					if (colvars)
+					{
+						Var *varnode = makeVar(rtindex,
+											   ordinality_attno,
+											   INT8OID,
+											   -1,
+											   InvalidOid,
+											   sublevels_up);
+						*colvars = lappend(*colvars, varnode);
+					}
 				}
 			}
 			break;
@@ -1955,6 +2038,9 @@ expandRelation(Oid relid, Alias *eref, int rtindex, int sublevels_up,
 
 /*
  * expandTupleDesc -- expandRTE subroutine
+ *
+ * Only the required number of column names are used from the Alias;
+ * it is not an error to supply too many. (ordinality depends on this)
  */
 static void
 expandTupleDesc(TupleDesc tupdesc, Alias *eref,
@@ -2114,6 +2200,9 @@ get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum)
 /*
  * get_rte_attribute_type
  *		Get attribute type/typmod/collation information from a RangeTblEntry
+ *
+ * Once again, for function RTEs we may have to synthesize the
+ * ordinality column with the correct type.
  */
 void
 get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
@@ -2172,6 +2261,20 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 				Oid			funcrettype;
 				TupleDesc	tupdesc;
 
+				/*
+				 * if ordinality, then a reference to the last column
+				 * in the name list must be referring to the
+				 * ordinality column
+				 */
+				if (rte->funcordinality
+					&& attnum == list_length(rte->eref->colnames))
+				{
+					*vartype = INT8OID;
+					*vartypmod = -1;
+					*varcollid = InvalidOid;
+					break;
+				}
+
 				functypclass = get_expr_result_type(rte->funcexpr,
 													&funcrettype,
 													&tupdesc);
@@ -2182,6 +2285,7 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 					Form_pg_attribute att_tup;
 
 					Assert(tupdesc);
+
 					/* this is probably a can't-happen case */
 					if (attnum < 1 || attnum > tupdesc->natts)
 						ereport(ERROR,
@@ -2208,6 +2312,8 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 				}
 				else if (functypclass == TYPEFUNC_SCALAR)
 				{
+					Assert(attnum == 1);
+
 					/* Base data type, i.e. scalar */
 					*vartype = funcrettype;
 					*vartypmod = -1;
@@ -2332,7 +2438,17 @@ get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 				Oid			funcrettype = exprType(rte->funcexpr);
 				Oid			funcrelid = typeidTypeRelid(funcrettype);
 
-				if (OidIsValid(funcrelid))
+				/*
+				 * if ordinality, then a reference to the last column
+				 * in the name list must be referring to the
+				 * ordinality column, which is not dropped
+				 */
+				if (rte->funcordinality
+					&& attnum == list_length(rte->eref->colnames))
+				{
+					result = false;
+				}
+				else if (OidIsValid(funcrelid))
 				{
 					/*
 					 * Composite data type, i.e. a table's row type
