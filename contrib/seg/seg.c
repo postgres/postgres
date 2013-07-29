@@ -23,8 +23,8 @@
 
 PG_MODULE_MAGIC;
 
-extern int	seg_yyparse();
-extern void seg_yyerror(const char *message);
+extern int	seg_yyparse(SEG *result);
+extern void seg_yyerror(SEG *result, const char *message);
 extern void seg_scanner_init(const char *str);
 extern void seg_scanner_finish(void);
 
@@ -126,7 +126,7 @@ seg_in(PG_FUNCTION_ARGS)
 	seg_scanner_init(str);
 
 	if (seg_yyparse(result) != 0)
-		seg_yyerror("bogus input");
+		seg_yyerror(result, "bogus input");
 
 	seg_scanner_finish();
 

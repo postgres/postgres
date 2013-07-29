@@ -1,5 +1,5 @@
 %{
-#define YYPARSE_PARAM result  /* need this to pass a pointer (void *) to yyparse */
+/* contrib/seg/segparse.y */
 
 #include "postgres.h"
 
@@ -24,8 +24,8 @@ extern int seg_yylex(void);
 
 extern int significant_digits(char *str);		/* defined in seg.c */
 
-void seg_yyerror(const char *message);
-int seg_yyparse(void *result);
+extern int	seg_yyparse(SEG *result);
+extern void seg_yyerror(SEG *result, const char *message);
 
 static float seg_atof(char *value);
 
@@ -40,6 +40,7 @@ static char strbuf[25] = {
 %}
 
 /* BISON Declarations */
+%parse-param {SEG *result}
 %expect 0
 %name-prefix="seg_yy"
 
@@ -65,59 +66,59 @@ static char strbuf[25] = {
 
 range: boundary PLUMIN deviation
 	{
-		((SEG *)result)->lower = $1.val - $3.val;
-		((SEG *)result)->upper = $1.val + $3.val;
-		sprintf(strbuf, "%g", ((SEG *)result)->lower);
-		((SEG *)result)->l_sigd = Max(Min(6, significant_digits(strbuf)), Max($1.sigd, $3.sigd));
-		sprintf(strbuf, "%g", ((SEG *)result)->upper);
-		((SEG *)result)->u_sigd = Max(Min(6, significant_digits(strbuf)), Max($1.sigd, $3.sigd));
-		((SEG *)result)->l_ext = '\0';
-		((SEG *)result)->u_ext = '\0';
+		result->lower = $1.val - $3.val;
+		result->upper = $1.val + $3.val;
+		sprintf(strbuf, "%g", result->lower);
+		result->l_sigd = Max(Min(6, significant_digits(strbuf)), Max($1.sigd, $3.sigd));
+		sprintf(strbuf, "%g", result->upper);
+		result->u_sigd = Max(Min(6, significant_digits(strbuf)), Max($1.sigd, $3.sigd));
+		result->l_ext = '\0';
+		result->u_ext = '\0';
 	}
 
 	| boundary RANGE boundary
 	{
-		((SEG *)result)->lower = $1.val;
-		((SEG *)result)->upper = $3.val;
-		if ( ((SEG *)result)->lower > ((SEG *)result)->upper ) {
+		result->lower = $1.val;
+		result->upper = $3.val;
+		if ( result->lower > result->upper ) {
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("swapped boundaries: %g is greater than %g",
-							((SEG *)result)->lower, ((SEG *)result)->upper)));
+							result->lower, result->upper)));
 
 			YYERROR;
 		}
-		((SEG *)result)->l_sigd = $1.sigd;
-		((SEG *)result)->u_sigd = $3.sigd;
-		((SEG *)result)->l_ext = ( $1.ext ? $1.ext : '\0' );
-		((SEG *)result)->u_ext = ( $3.ext ? $3.ext : '\0' );
+		result->l_sigd = $1.sigd;
+		result->u_sigd = $3.sigd;
+		result->l_ext = ( $1.ext ? $1.ext : '\0' );
+		result->u_ext = ( $3.ext ? $3.ext : '\0' );
 	}
 
 	| boundary RANGE
 	{
-		((SEG *)result)->lower = $1.val;
-		((SEG *)result)->upper = HUGE_VAL;
-		((SEG *)result)->l_sigd = $1.sigd;
-		((SEG *)result)->u_sigd = 0;
-		((SEG *)result)->l_ext = ( $1.ext ? $1.ext : '\0' );
-		((SEG *)result)->u_ext = '-';
+		result->lower = $1.val;
+		result->upper = HUGE_VAL;
+		result->l_sigd = $1.sigd;
+		result->u_sigd = 0;
+		result->l_ext = ( $1.ext ? $1.ext : '\0' );
+		result->u_ext = '-';
 	}
 
 	| RANGE boundary
 	{
-		((SEG *)result)->lower = -HUGE_VAL;
-		((SEG *)result)->upper = $2.val;
-		((SEG *)result)->l_sigd = 0;
-		((SEG *)result)->u_sigd = $2.sigd;
-		((SEG *)result)->l_ext = '-';
-		((SEG *)result)->u_ext = ( $2.ext ? $2.ext : '\0' );
+		result->lower = -HUGE_VAL;
+		result->upper = $2.val;
+		result->l_sigd = 0;
+		result->u_sigd = $2.sigd;
+		result->l_ext = '-';
+		result->u_ext = ( $2.ext ? $2.ext : '\0' );
 	}
 
 	| boundary
 	{
-		((SEG *)result)->lower = ((SEG *)result)->upper = $1.val;
-		((SEG *)result)->l_sigd = ((SEG *)result)->u_sigd = $1.sigd;
-		((SEG *)result)->l_ext = ((SEG *)result)->u_ext = ( $1.ext ? $1.ext : '\0' );
+		result->lower = result->upper = $1.val;
+		result->l_sigd = result->u_sigd = $1.sigd;
+		result->l_ext = result->u_ext = ( $1.ext ? $1.ext : '\0' );
 	}
 	;
 
