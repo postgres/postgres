@@ -55,7 +55,7 @@ float        ({integer}|{real})([eE]{integer})?
 %%
 
 void
-yyerror(const char *message)
+yyerror(NDBOX **result, const char *message)
 {
 	if (*yytext == YY_END_OF_BUFFER_CHAR)
 	{
