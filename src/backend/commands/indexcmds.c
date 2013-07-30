@@ -1768,7 +1768,9 @@ ReindexTable(RangeVar *relation)
 	heapOid = RangeVarGetRelidExtended(relation, ShareLock, false, false,
 									   RangeVarCallbackOwnsTable, NULL);
 
-	if (!reindex_relation(heapOid, REINDEX_REL_PROCESS_TOAST))
+	if (!reindex_relation(heapOid,
+						  REINDEX_REL_PROCESS_TOAST |
+						  REINDEX_REL_CHECK_CONSTRAINTS))
 		ereport(NOTICE,
 				(errmsg("table \"%s\" has no indexes",
 						relation->relname)));
@@ -1884,7 +1886,9 @@ ReindexDatabase(const char *databaseName, bool do_system, bool do_user)
 		StartTransactionCommand();
 		/* functions in indexes may want a snapshot set */
 		PushActiveSnapshot(GetTransactionSnapshot());
-		if (reindex_relation(relid, REINDEX_REL_PROCESS_TOAST))
+		if (reindex_relation(relid,
+							 REINDEX_REL_PROCESS_TOAST |
+							 REINDEX_REL_CHECK_CONSTRAINTS))
 			ereport(NOTICE,
 					(errmsg("table \"%s.%s\" was reindexed",
 							get_namespace_name(get_rel_namespace(relid)),
