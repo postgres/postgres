@@ -2298,9 +2298,13 @@ COMMIT;
 BEGIN;
 CREATE INDEX std_index on concur_heap(f2);
 COMMIT;
--- check to make sure that the failed indexes were cleaned up properly and the
--- successful indexes are created properly. Notably that they do NOT have the
--- "invalid" flag set.
+-- Failed builds are left invalid by VACUUM FULL, fixed by REINDEX
+VACUUM FULL concur_heap;
+REINDEX TABLE concur_heap;
+ERROR:  could not create unique index "concur_index3"
+DETAIL:  Key (f2)=(b) is duplicated.
+DELETE FROM concur_heap WHERE f1 = 'b';
+VACUUM FULL concur_heap;
 \d concur_heap
 Table "public.concur_heap"
  Column | Type | Modifiers 
@@ -2310,6 +2314,22 @@ Table "public.concur_heap"
 Indexes:
     "concur_index2" UNIQUE, btree (f1)
     "concur_index3" UNIQUE, btree (f2) INVALID
+    "concur_heap_expr_idx" btree ((f2 || f1))
+    "concur_index1" btree (f2, f1)
+    "concur_index4" btree (f2) WHERE f1 = 'a'::text
+    "concur_index5" btree (f2) WHERE f1 = 'x'::text
+    "std_index" btree (f2)
+
+REINDEX TABLE concur_heap;
+\d concur_heap
+Table "public.concur_heap"
+ Column | Type | Modifiers 
+--------+------+-----------
+ f1     | text | 
+ f2     | text | 
+Indexes:
+    "concur_index2" UNIQUE, btree (f1)
+    "concur_index3" UNIQUE, btree (f2)
     "concur_heap_expr_idx" btree ((f2 || f1))
     "concur_index1" btree (f2, f1)
     "concur_index4" btree (f2) WHERE f1 = 'a'::text

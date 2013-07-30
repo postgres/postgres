@@ -721,10 +721,13 @@ BEGIN;
 CREATE INDEX std_index on concur_heap(f2);
 COMMIT;
 
--- check to make sure that the failed indexes were cleaned up properly and the
--- successful indexes are created properly. Notably that they do NOT have the
--- "invalid" flag set.
-
+-- Failed builds are left invalid by VACUUM FULL, fixed by REINDEX
+VACUUM FULL concur_heap;
+REINDEX TABLE concur_heap;
+DELETE FROM concur_heap WHERE f1 = 'b';
+VACUUM FULL concur_heap;
+\d concur_heap
+REINDEX TABLE concur_heap;
 \d concur_heap
 
 --
