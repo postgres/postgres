@@ -440,6 +440,64 @@ SELECT regexp_matches('foobarbequebaz', $re$barbeque$re$);
  {barbeque}
 (1 row)
 
+-- start/end-of-line matches are of zero length
+SELECT regexp_matches('foo' || chr(10) || 'bar' || chr(10) || 'bequq' || chr(10) || 'baz', '^', 'mg');
+ regexp_matches 
+----------------
+ {""}
+ {""}
+ {""}
+ {""}
+(4 rows)
+
+SELECT regexp_matches('foo' || chr(10) || 'bar' || chr(10) || 'bequq' || chr(10) || 'baz', '$', 'mg');
+ regexp_matches 
+----------------
+ {""}
+ {""}
+ {""}
+ {""}
+(4 rows)
+
+SELECT regexp_matches('1' || chr(10) || '2' || chr(10) || '3' || chr(10) || '4' || chr(10), '^.?', 'mg');
+ regexp_matches 
+----------------
+ {1}
+ {2}
+ {3}
+ {4}
+ {""}
+(5 rows)
+
+SELECT regexp_matches(chr(10) || '1' || chr(10) || '2' || chr(10) || '3' || chr(10) || '4' || chr(10), '.?$', 'mg');
+ regexp_matches 
+----------------
+ {""}
+ {1}
+ {""}
+ {2}
+ {""}
+ {3}
+ {""}
+ {4}
+ {""}
+ {""}
+(10 rows)
+
+SELECT regexp_matches(chr(10) || '1' || chr(10) || '2' || chr(10) || '3' || chr(10) || '4', '.?$', 'mg');
+ regexp_matches 
+----------------
+ {""}
+ {1}
+ {""}
+ {2}
+ {""}
+ {3}
+ {""}
+ {4}
+ {""}
+(9 rows)
+
 -- give me errors
 SELECT regexp_matches('foobarbequebaz', $re$(bar)(beque)$re$, 'gz');
 ERROR:  invalid regexp option: "z"
