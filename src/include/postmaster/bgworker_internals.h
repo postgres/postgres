@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		src/include/postmaster/bgworker.h
+ *		src/include/postmaster/bgworker_internals.h
  *--------------------------------------------------------------------
  */
 #ifndef BGWORKER_INTERNALS_H
@@ -45,4 +45,4 @@ extern void ForgetBackgroundWorker(slist_mutable_iter *cur);
 extern BackgroundWorker *BackgroundWorkerEntry(int slotno);
 #endif
 
-#endif   /* BGWORKER_INTERNLS_H */
+#endif   /* BGWORKER_INTERNALS_H */
