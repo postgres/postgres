@@ -12761,7 +12761,6 @@ createViewAsClause(Archive *fout, TableInfo *tbinfo)
 		appendPQExpBuffer(query, "SELECT definition AS viewdef "
 						  "FROM pg_views WHERE viewname = ");
 		appendStringLiteralAH(query, tbinfo->dobj.name, fout);
-		appendPQExpBuffer(query, ";");
 	}
 
 	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
