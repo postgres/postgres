@@ -214,7 +214,7 @@ SInvalShmemSize(void)
 }
 
 /*
- * SharedInvalBufferInit
+ * CreateSharedInvalidationState
  *		Create and initialize the SI message buffer
  */
 void
