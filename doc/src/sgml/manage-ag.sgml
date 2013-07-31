@@ -479,7 +479,8 @@ CREATE TABLE foo(i int);
 
   <para>
    To determine the set of existing tablespaces, examine the
-   <structname>pg_tablespace</> system catalog, for example
+   <link linkend="catalog-pg-tablespace"><structname>pg_tablespace</structname>
+   </link> system catalog, for example
 <synopsis>
 SELECT spcname FROM pg_tablespace;
 </synopsis>
@@ -498,11 +499,11 @@ SELECT spcname FROM pg_tablespace;
    The directory <filename>$PGDATA/pg_tblspc</> contains symbolic links that
    point to each of the non-built-in tablespaces defined in the cluster.
    Although not recommended, it is possible to adjust the tablespace
-   layout by hand by redefining these links.  Two warnings: do not do so
-   while the server is running; and after you restart the server,
-   update the <structname>pg_tablespace</> catalog with the new
-   locations.  (If you do not, <literal>pg_dump</> will continue to output
-   the old tablespace locations.)
+   layout by hand by redefining these links. Under no circumstances perform
+   this operation while the server is running. Note that in PostgreSQL 9.1
+   and earlier you will also need to update the <structname>pg_tablespace</>
+   catalog with the new locations. (If you do not, <literal>pg_dump</> will
+   continue to output the old tablespace locations.)
   </para>
 
  </sect1>
