@@ -158,6 +158,13 @@ SELECT regexp_matches('foobarbequebaz', $re$(bar)(.+)?(beque)$re$);
 -- no capture groups
 SELECT regexp_matches('foobarbequebaz', $re$barbeque$re$);
 
+-- start/end-of-line matches are of zero length
+SELECT regexp_matches('foo' || chr(10) || 'bar' || chr(10) || 'bequq' || chr(10) || 'baz', '^', 'mg');
+SELECT regexp_matches('foo' || chr(10) || 'bar' || chr(10) || 'bequq' || chr(10) || 'baz', '$', 'mg');
+SELECT regexp_matches('1' || chr(10) || '2' || chr(10) || '3' || chr(10) || '4' || chr(10), '^.?', 'mg');
+SELECT regexp_matches(chr(10) || '1' || chr(10) || '2' || chr(10) || '3' || chr(10) || '4' || chr(10), '.?$', 'mg');
+SELECT regexp_matches(chr(10) || '1' || chr(10) || '2' || chr(10) || '3' || chr(10) || '4', '.?$', 'mg');
+
 -- give me errors
 SELECT regexp_matches('foobarbequebaz', $re$(bar)(beque)$re$, 'gz');
 SELECT regexp_matches('foobarbequebaz', $re$(barbeque$re$);
