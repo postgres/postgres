@@ -957,14 +957,13 @@ setup_regexp_matches(text *orig_str, text *pattern, text *flags,
 			break;
 
 		/*
-		 * Advance search position.  Normally we start just after the end of
-		 * the previous match, but always advance at least one character (the
-		 * special case can occur if the pattern matches zero characters just
-		 * after the prior match or at the end of the string).
+		 * Advance search position.  Normally we start the next search at the
+		 * end of the previous match; but if the match was of zero length, we
+		 * have to advance by one character, or we'd just find the same match
+		 * again.
 		 */
-		if (start_search < pmatch[0].rm_eo)
-			start_search = pmatch[0].rm_eo;
-		else
+		start_search = prev_match_end;
+		if (pmatch[0].rm_so == pmatch[0].rm_eo)
 			start_search++;
 		if (start_search > wide_len)
 			break;

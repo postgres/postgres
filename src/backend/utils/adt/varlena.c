@@ -3083,7 +3083,10 @@ replace_text_regexp(text *src_text, void *regexp,
 			break;
 
 		/*
-		 * Search from next character when the matching text is zero width.
+		 * Advance search position.  Normally we start the next search at the
+		 * end of the previous match; but if the match was of zero length, we
+		 * have to advance by one character, or we'd just find the same match
+		 * again.
 		 */
 		search_start = data_pos;
 		if (pmatch[0].rm_so == pmatch[0].rm_eo)
