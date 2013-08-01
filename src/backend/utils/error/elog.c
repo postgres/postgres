@@ -87,7 +87,7 @@ err_gettext(const char *str)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
 __attribute__((format_arg(1)));
-static void set_errdata_field(char **ptr, const char *str);
+static void set_errdata_field(MemoryContextData *cxt, char **ptr, const char *str);
 
 /* Global variables */
 ErrorContextCallback *error_context_stack = NULL;
@@ -372,6 +372,11 @@ errstart(int elevel, const char *filename, int lineno,
 		edata->sqlerrcode = ERRCODE_SUCCESSFUL_COMPLETION;
 	/* errno is saved here so that error parameter eval can't change it */
 	edata->saved_errno = errno;
+
+	/*
+	 * Any allocations for this error state level should go into ErrorContext
+	 */
+	edata->assoc_context = ErrorContext;
 
 	recursion_depth--;
 	return true;
@@ -786,7 +791,7 @@ errmsg(const char *fmt,...)
 
 	recursion_depth++;
 	CHECK_STACK_DEPTH();
-	oldcontext = MemoryContextSwitchTo(ErrorContext);
+	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
 
 	EVALUATE_MESSAGE(edata->domain, message, false, true);
 
@@ -815,7 +820,7 @@ errmsg_internal(const char *fmt,...)
 
 	recursion_depth++;
 	CHECK_STACK_DEPTH();
-	oldcontext = MemoryContextSwitchTo(ErrorContext);
+	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
 
 	EVALUATE_MESSAGE(edata->domain, message, false, false);
 
@@ -838,7 +843,7 @@ errmsg_plural(const char *fmt_singular, const char *fmt_plural,
 
 	recursion_depth++;
 	CHECK_STACK_DEPTH();
-	oldcontext = MemoryContextSwitchTo(ErrorContext);
+	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
 
 	EVALUATE_MESSAGE_PLURAL(edata->domain, message, false);
 
@@ -859,7 +864,7 @@ errdetail(const char *fmt,...)
 
 	recursion_depth++;
 	CHECK_STACK_DEPTH();
-	oldcontext = MemoryContextSwitchTo(ErrorContext);
+	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
 
 	EVALUATE_MESSAGE(edata->domain, detail, false, true);
 
@@ -886,7 +891,7 @@ errdetail_internal(const char *fmt,...)
 
 	recursion_depth++;
 	CHECK_STACK_DEPTH();
-	oldcontext = MemoryContextSwitchTo(ErrorContext);
+	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
 
 	EVALUATE_MESSAGE(edata->domain, detail, false, false);
 
@@ -907,7 +912,7 @@ errdetail_log(const char *fmt,...)
 
 	recursion_depth++;
 	CHECK_STACK_DEPTH();
-	oldcontext = MemoryContextSwitchTo(ErrorContext);
+	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
 
 	EVALUATE_MESSAGE(edata->domain, detail_log, false, true);
 
@@ -930,7 +935,7 @@ errdetail_plural(const char *fmt_singular, const char *fmt_plural,
 
 	recursion_depth++;
 	CHECK_STACK_DEPTH();
-	oldcontext = MemoryContextSwitchTo(ErrorContext);
+	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
 
 	EVALUATE_MESSAGE_PLURAL(edata->domain, detail, false);
 
@@ -951,7 +956,7 @@ errhint(const char *fmt,...)
 
 	recursion_depth++;
 	CHECK_STACK_DEPTH();
-	oldcontext = MemoryContextSwitchTo(ErrorContext);
+	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
 
 	EVALUATE_MESSAGE(edata->domain, hint, false, true);
 
@@ -976,7 +981,7 @@ errcontext_msg(const char *fmt,...)
 
 	recursion_depth++;
 	CHECK_STACK_DEPTH();
-	oldcontext = MemoryContextSwitchTo(ErrorContext);
+	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
 
 	EVALUATE_MESSAGE(edata->context_domain, context, true, true);
 
@@ -1102,7 +1107,7 @@ internalerrquery(const char *query)
 	}
 
 	if (query)
-		edata->internalquery = MemoryContextStrdup(ErrorContext, query);
+		edata->internalquery = MemoryContextStrdup(edata->assoc_context, query);
 
 	return 0;					/* return value does not matter */
 }
@@ -1128,19 +1133,19 @@ err_generic_string(int field, const char *str)
 	switch (field)
 	{
 		case PG_DIAG_SCHEMA_NAME:
-			set_errdata_field(&edata->schema_name, str);
+			set_errdata_field(edata->assoc_context, &edata->schema_name, str);
 			break;
 		case PG_DIAG_TABLE_NAME:
-			set_errdata_field(&edata->table_name, str);
+			set_errdata_field(edata->assoc_context, &edata->table_name, str);
 			break;
 		case PG_DIAG_COLUMN_NAME:
-			set_errdata_field(&edata->column_name, str);
+			set_errdata_field(edata->assoc_context, &edata->column_name, str);
 			break;
 		case PG_DIAG_DATATYPE_NAME:
-			set_errdata_field(&edata->datatype_name, str);
+			set_errdata_field(edata->assoc_context, &edata->datatype_name, str);
 			break;
 		case PG_DIAG_CONSTRAINT_NAME:
-			set_errdata_field(&edata->constraint_name, str);
+			set_errdata_field(edata->assoc_context, &edata->constraint_name, str);
 			break;
 		default:
 			elog(ERROR, "unsupported ErrorData field id: %d", field);
@@ -1154,10 +1159,10 @@ err_generic_string(int field, const char *str)
  * set_errdata_field --- set an ErrorData string field
  */
 static void
-set_errdata_field(char **ptr, const char *str)
+set_errdata_field(MemoryContextData *cxt, char **ptr, const char *str)
 {
 	Assert(*ptr == NULL);
-	*ptr = MemoryContextStrdup(ErrorContext, str);
+	*ptr = MemoryContextStrdup(cxt, str);
 }
 
 /*
@@ -1257,6 +1262,9 @@ elog_start(const char *filename, int lineno, const char *funcname)
 	edata->funcname = funcname;
 	/* errno is saved now so that error parameter eval can't change it */
 	edata->saved_errno = errno;
+
+	/* Use ErrorContext for any allocations done at this level. */
+	edata->assoc_context = ErrorContext;
 }
 
 /*
@@ -1282,7 +1290,7 @@ elog_finish(int elevel, const char *fmt,...)
 	 * Format error message just like errmsg_internal().
 	 */
 	recursion_depth++;
-	oldcontext = MemoryContextSwitchTo(ErrorContext);
+	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
 
 	EVALUATE_MESSAGE(edata->domain, message, false, false);
 
@@ -1366,7 +1374,7 @@ EmitErrorReport(void)
 
 	recursion_depth++;
 	CHECK_STACK_DEPTH();
-	oldcontext = MemoryContextSwitchTo(ErrorContext);
+	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
 
 	/*
 	 * Call hook before sending message to log.  The hook function is allowed
@@ -1445,6 +1453,9 @@ CopyErrorData(void)
 		newedata->constraint_name = pstrdup(newedata->constraint_name);
 	if (newedata->internalquery)
 		newedata->internalquery = pstrdup(newedata->internalquery);
+
+	/* Use the calling context for string allocation */
+	newedata->assoc_context = CurrentMemoryContext;
 
 	return newedata;
 }
@@ -1563,6 +1574,9 @@ ReThrowError(ErrorData *edata)
 	if (newedata->internalquery)
 		newedata->internalquery = pstrdup(newedata->internalquery);
 
+	/* Reset the assoc_context to be ErrorContext */
+	newedata->assoc_context = ErrorContext;
+
 	recursion_depth--;
 	PG_RE_THROW();
 }
@@ -1630,12 +1644,8 @@ pg_re_throw(void)
  * GetErrorContextStack - Return the context stack, for display/diags
  *
  * Returns a pstrdup'd string in the caller's context which includes the PG
- * call stack.  It is the caller's responsibility to ensure this string is
- * pfree'd (or its context cleaned up) when done.
- *
- * Note that this function may *not* be called from any existing error case
- * and is not for error-reporting (use ereport() and friends instead, which
- * will also produce a stack trace).
+ * error call stack.  It is the caller's responsibility to ensure this string
+ * is pfree'd (or its context cleaned up) when done.
  *
  * This information is collected by traversing the error contexts and calling
  * each context's callback function, each of which is expected to call
@@ -1644,78 +1654,64 @@ pg_re_throw(void)
 char *
 GetErrorContextStack(void)
 {
-	char				   *result = NULL;
 	ErrorData			   *edata;
 	ErrorContextCallback   *econtext;
-	MemoryContext			oldcontext = CurrentMemoryContext;
-
-	/* this function should not be called from an exception handler */
-	Assert(recursion_depth == 0);
 
 	/*
-	 * This function should never be called from an exception handler and
-	 * therefore will only ever be the top item on the errordata stack
-	 * (which is set up so that the calls to the callback functions are
-	 * able to use it).
-	 *
-	 * Better safe than sorry, so double-check that we are not being called
-	 * from an exception handler.
+	 * Okay, crank up a stack entry to store the info in.
 	 */
-	if (errordata_stack_depth != -1)
+	recursion_depth++;
+
+	if (++errordata_stack_depth >= ERRORDATA_STACK_SIZE)
 	{
+		/*
+		 * Wups, stack not big enough.	We treat this as a PANIC condition
+		 * because it suggests an infinite loop of errors during error
+		 * recovery.
+		 */
 		errordata_stack_depth = -1;		/* make room on stack */
-		ereport(PANIC,
-		        (errmsg_internal("GetErrorContextStack called from exception handler")));
+		ereport(PANIC, (errmsg_internal("ERRORDATA_STACK_SIZE exceeded")));
 	}
 
 	/*
-	 * Initialize data for the top, and only at this point, error frame as the
-	 * callback functions we're about to call will turn around and call
-	 * errcontext(), which expects to find a valid errordata stack.
+	 * Things look good so far, so initialize our error frame
 	 */
-	errordata_stack_depth = 0;
 	edata = &errordata[errordata_stack_depth];
 	MemSet(edata, 0, sizeof(ErrorData));
 
 	/*
-	 * Use ErrorContext as a short lived context for calling the callbacks;
-	 * the callbacks will use it through errcontext() even if we don't call
-	 * them with it, so we have to clean it up below either way.
+	 * Set up assoc_context to be the caller's context, so any allocations
+	 * done (which will include edata->context) will use their context.
 	 */
-	MemoryContextSwitchTo(ErrorContext);
+	edata->assoc_context = CurrentMemoryContext;
 
 	/*
 	 * Call any context callback functions to collect the context information
 	 * into edata->context.
 	 *
 	 * Errors occurring in callback functions should go through the regular
-	 * error handling code which should handle any recursive errors and must
-	 * never call back to us.
+	 * error handling code which should handle any recursive errors, though
+	 * we double-check above, just in case.
 	 */
 	for (econtext = error_context_stack;
 		 econtext != NULL;
 		 econtext = econtext->previous)
 		(*econtext->callback) (econtext->arg);
 
-	MemoryContextSwitchTo(oldcontext);
+	/*
+	 * Clean ourselves off the stack, any allocations done should have been
+	 * using edata->assoc_context, which we set up earlier to be the caller's
+	 * context, so we're free to just remove our entry off the stack and
+	 * decrement recursion depth and exit.
+	 */
+	errordata_stack_depth--;
+	recursion_depth--;
 
 	/*
-	 * Copy out the string into the caller's context, so we can free our
-	 * error context and reset the error stack.  Caller is expected to
-	 * pfree() the result or throw away the context.
+	 * Return a pointer to the string the caller asked for, which should have
+	 * been allocated in their context.
 	 */
-	if (edata->context)
-		result = pstrdup(edata->context);
-
-	/*
-	 * Reset error stack- note that we should be the only item on the error
-	 * stack at this point and therefore it's safe to clean up the whole stack.
-	 * This function is not intended nor able to be called from exception
-	 * handlers.
-	 */
-	FlushErrorState();
-
-	return result;
+	return edata->context;
 }
 
 

@@ -895,7 +895,6 @@ stmt_getdiag	: K_GET getdiag_area_opt K_DIAGNOSTICS getdiag_list ';'
 								/* these fields are disallowed in stacked case */
 								case PLPGSQL_GETDIAG_ROW_COUNT:
 								case PLPGSQL_GETDIAG_RESULT_OID:
-								case PLPGSQL_GETDIAG_CONTEXT:
 									if (new->is_stacked)
 										ereport(ERROR,
 												(errcode(ERRCODE_SYNTAX_ERROR),
@@ -920,6 +919,9 @@ stmt_getdiag	: K_GET getdiag_area_opt K_DIAGNOSTICS getdiag_list ';'
 												 errmsg("diagnostics item %s is not allowed in GET CURRENT DIAGNOSTICS",
 														plpgsql_getdiag_kindname(ditem->kind)),
 												 parser_errposition(@1)));
+									break;
+								/* these fields are allowed in either case */
+								case PLPGSQL_GETDIAG_CONTEXT:
 									break;
 								default:
 									elog(ERROR, "unrecognized diagnostic item kind: %d",
