@@ -134,17 +134,15 @@ BackgroundWorkerShmemInit(void)
 		Assert(found);
 }
 
+/*
+ * Search the postmaster's backend-private list of RegisteredBgWorker objects
+ * for the one that maps to the given slot number.
+ */
 static RegisteredBgWorker *
 FindRegisteredWorkerBySlotNumber(int slotno)
 {
 	slist_iter	siter;
 
-	/*
-	 * Copy contents of worker list into shared memory.  Record the
-	 * shared memory slot assigned to each worker.  This ensures
-	 * a 1-to-1 correspondence betwen the postmaster's private list and
-	 * the array in shared memory.
-	 */
 	slist_foreach(siter, &BackgroundWorkerList)
 	{
 		RegisteredBgWorker *rw;
@@ -158,7 +156,7 @@ FindRegisteredWorkerBySlotNumber(int slotno)
 }
 
 /*
- * Notice changes to shared_memory made by other backends.  This code
+ * Notice changes to shared memory made by other backends.  This code
  * runs in the postmaster, so we must be very careful not to assume that
  * shared memory contents are sane.  Otherwise, a rogue backend could take
  * out the postmaster.

@@ -6,11 +6,13 @@
  * including normal transactions.
  *
  * Any external module loaded via shared_preload_libraries can register a
- * worker.	Then, at the appropriate time, the worker process is forked from
- * the postmaster and runs the user-supplied "main" function.  This code may
- * connect to a database and run transactions.	Once started, it stays active
- * until shutdown or crash.  The process should sleep during periods of
- * inactivity.
+ * worker.	Workers can also be registered dynamically at runtime.  In either
+ * case, the worker process is forked from the postmaster and runs the
+ * user-supplied "main" function.  This code may connect to a database and
+ * run transactions.  Once started, it stays active until shutdown or crash;
+ * unless the restart interval is declared as BGW_NEVER_RESTART and the
+ * process exits with a return code of 1; workers that do this are
+ * automatically unregistered by the postmaster.
  *
  * If the fork() call fails in the postmaster, it will try again later.  Note
  * that the failure can only be transient (fork failure due to high load,
