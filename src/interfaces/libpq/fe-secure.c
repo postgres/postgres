@@ -261,7 +261,11 @@ pqsecure_open_client(PGconn *conn)
 
 #ifdef ENABLE_THREAD_SAFETY
 		if (pthread_mutex_lock(&ssl_config_mutex))
-			return -1;
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+				   libpq_gettext("unable to acquire mutex\n"));
+			return PGRES_POLLING_FAILED;
+		}
 #endif
 		/* Create a connection-specific SSL object */
 		if (!(conn->ssl = SSL_new(SSL_context)) ||
@@ -1112,7 +1116,11 @@ initialize_SSL(PGconn *conn)
 		 */
 #ifdef ENABLE_THREAD_SAFETY
 		if (pthread_mutex_lock(&ssl_config_mutex))
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+				   libpq_gettext("unable to acquire mutex\n"));
 			return -1;
+		}
 #endif
 		if (SSL_CTX_use_certificate_chain_file(SSL_context, fnbuf) != 1)
 		{
@@ -1326,7 +1334,11 @@ initialize_SSL(PGconn *conn)
 
 #ifdef ENABLE_THREAD_SAFETY
 		if (pthread_mutex_lock(&ssl_config_mutex))
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+				   libpq_gettext("unable to acquire mutex\n"));
 			return -1;
+		}
 #endif
 		if (SSL_CTX_load_verify_locations(SSL_context, fnbuf, NULL) != 1)
 		{
