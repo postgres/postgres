@@ -1258,10 +1258,8 @@ index_constraint_create(Relation heapRelation,
 	/*
 	 * If needed, mark the index as primary and/or deferred in pg_index.
 	 *
-	 * Note: since this is a transactional update, it's unsafe against
-	 * concurrent SnapshotNow scans of pg_index.  When making an existing
-	 * index into a constraint, caller must have a table lock that prevents
-	 * concurrent table updates; if it's less than a full exclusive lock,
+	 * Note: When making an existing index into a constraint, caller must
+	 * have a table lock that prevents concurrent table updates; otherwise,
 	 * there is a risk that concurrent readers of the table will miss seeing
 	 * this index at all.
 	 */
@@ -2989,17 +2987,18 @@ validate_index_heapscan(Relation heapRelation,
  * index_set_state_flags - adjust pg_index state flags
  *
  * This is used during CREATE/DROP INDEX CONCURRENTLY to adjust the pg_index
- * flags that denote the index's state.  We must use an in-place update of
- * the pg_index tuple, because we do not have exclusive lock on the parent
- * table and so other sessions might concurrently be doing SnapshotNow scans
- * of pg_index to identify the table's indexes.  A transactional update would
- * risk somebody not seeing the index at all.  Because the update is not
+ * flags that denote the index's state.  Because the update is not
  * transactional and will not roll back on error, this must only be used as
  * the last step in a transaction that has not made any transactional catalog
  * updates!
  *
  * Note that heap_inplace_update does send a cache inval message for the
  * tuple, so other sessions will hear about the update as soon as we commit.
+ *
+ * NB: In releases prior to PostgreSQL 9.4, the use of a non-transactional
+ * update here would have been unsafe; now that MVCC rules apply even for
+ * system catalog scans, we could potentially use a transactional update here
+ * instead.
  */
 void
 index_set_state_flags(Oid indexId, IndexStateFlagsAction action)
@@ -3206,14 +3205,6 @@ reindex_index(Oid indexId, bool skip_constraint_checks)
 	 * the index was dead.	It probably shouldn't happen otherwise, but let's
 	 * be conservative.)  In this case advancing the usability horizon is
 	 * appropriate.
-	 *
-	 * Note that if we have to update the tuple, there is a risk of concurrent
-	 * transactions not seeing it during their SnapshotNow scans of pg_index.
-	 * While not especially desirable, this is safe because no such
-	 * transaction could be trying to update the table (since we have
-	 * ShareLock on it).  The worst case is that someone might transiently
-	 * fail to use the index for a query --- but it was probably unusable
-	 * before anyway, if we are updating the tuple.
 	 *
 	 * Another reason for avoiding unnecessary updates here is that while
 	 * reindexing pg_index itself, we must not try to update tuples in it.

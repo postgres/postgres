@@ -19,12 +19,10 @@
 
 
 /* Static variables representing various special snapshot semantics */
-extern PGDLLIMPORT SnapshotData SnapshotNowData;
 extern PGDLLIMPORT SnapshotData SnapshotSelfData;
 extern PGDLLIMPORT SnapshotData SnapshotAnyData;
 extern PGDLLIMPORT SnapshotData SnapshotToastData;
 
-#define SnapshotNow			(&SnapshotNowData)
 #define SnapshotSelf		(&SnapshotSelfData)
 #define SnapshotAny			(&SnapshotAnyData)
 #define SnapshotToast		(&SnapshotToastData)
@@ -67,8 +65,6 @@ typedef enum
 /* These are the "satisfies" test routines for the various snapshot types */
 extern bool HeapTupleSatisfiesMVCC(HeapTuple htup,
 					   Snapshot snapshot, Buffer buffer);
-extern bool HeapTupleSatisfiesNow(HeapTuple htup,
-					  Snapshot snapshot, Buffer buffer);
 extern bool HeapTupleSatisfiesSelf(HeapTuple htup,
 					   Snapshot snapshot, Buffer buffer);
 extern bool HeapTupleSatisfiesAny(HeapTuple htup,

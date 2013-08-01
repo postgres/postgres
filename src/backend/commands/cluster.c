@@ -476,16 +476,6 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck, LOCKMOD
  * mark_index_clustered: mark the specified index as the one clustered on
  *
  * With indexOid == InvalidOid, will mark all indexes of rel not-clustered.
- *
- * Note: we do transactional updates of the pg_index rows, which are unsafe
- * against concurrent SnapshotNow scans of pg_index.  Therefore this is unsafe
- * to execute with less than full exclusive lock on the parent table;
- * otherwise concurrent executions of RelationGetIndexList could miss indexes.
- *
- * XXX: Now that we have MVCC catalog access, SnapshotNow scans of pg_index
- * shouldn't be common enough to worry about.  The above comment needs
- * to be updated, and it may be possible to simplify the logic here in other
- * ways also.
  */
 void
 mark_index_clustered(Relation rel, Oid indexOid, bool is_internal)
