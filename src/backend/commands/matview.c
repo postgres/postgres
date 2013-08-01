@@ -816,6 +816,24 @@ refresh_by_heap_swap(Oid matviewOid, Oid OIDNewHeap)
 	RelationCacheInvalidateEntry(matviewOid);
 }
 
+
+/*
+ * This should be used to test whether the backend is in a context where it is
+ * OK to allow DML statements to modify materialized views.  We only want to
+ * allow that for internal code driven by the materialized view definition,
+ * not for arbitrary user-supplied code.
+ *
+ * While the function names reflect the fact that their main intended use is
+ * incremental maintenance of materialized views (in response to changes to
+ * the data in referenced relations), they are initially used to allow REFRESH
+ * without blocking concurrent reads.
+ */
+bool
+MatViewIncrementalMaintenanceIsEnabled(void)
+{
+	return matview_maintenance_depth > 0;
+}
+
 static void
 OpenMatViewIncrementalMaintenance(void)
 {
@@ -827,16 +845,4 @@ CloseMatViewIncrementalMaintenance(void)
 {
 	matview_maintenance_depth--;
 	Assert(matview_maintenance_depth >= 0);
-}
-
-/*
- * This should be used to test whether the backend is in a context where it is
- * OK to allow DML statements to modify materialized views.  We only want to
- * allow that for internal code driven by the materialized view definition,
- * not for arbitrary user-supplied code.
- */
-bool
-MatViewIncrementalMaintenanceIsEnabled(void)
-{
-	return matview_maintenance_depth > 0;
 }
