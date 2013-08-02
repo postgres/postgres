@@ -1962,7 +1962,8 @@ preprocess_rowmarks(PlannerInfo *root)
 		 * CTIDs invalid.  This is also checked at parse time, but that's
 		 * insufficient because of rule substitution, query pullup, etc.
 		 */
-		CheckSelectLocking(parse);
+		CheckSelectLocking(parse, ((RowMarkClause *)
+							linitial(parse->rowMarks))->strength);
 	}
 	else
 	{

@@ -292,6 +292,9 @@ NOTICE:  materialized view "no_such_mv" does not exist, skipping
 -- make sure invalid comination of options is prohibited
 REFRESH MATERIALIZED VIEW CONCURRENTLY tvmm WITH NO DATA;
 ERROR:  CONCURRENTLY and WITH NO DATA options cannot be used together
+-- no tuple locks on materialized views
+SELECT * FROM tvvm FOR SHARE;
+ERROR:  cannot lock rows in materialized view "tvvm"
 -- test join of mv and view
 SELECT type, m.totamt AS mtot, v.totamt AS vtot FROM tm m LEFT JOIN tv v USING (type) ORDER BY type;
  type | mtot | vtot 

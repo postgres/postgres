@@ -95,6 +95,9 @@ DROP MATERIALIZED VIEW IF EXISTS no_such_mv;
 -- make sure invalid comination of options is prohibited
 REFRESH MATERIALIZED VIEW CONCURRENTLY tvmm WITH NO DATA;
 
+-- no tuple locks on materialized views
+SELECT * FROM tvvm FOR SHARE;
+
 -- test join of mv and view
 SELECT type, m.totamt AS mtot, v.totamt AS vtot FROM tm m LEFT JOIN tv v USING (type) ORDER BY type;
 

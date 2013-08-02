@@ -2243,7 +2243,7 @@ LCS_asString(LockClauseStrength strength)
  * exported so planner can check again after rewriting, query pullup, etc
  */
 void
-CheckSelectLocking(Query *qry)
+CheckSelectLocking(Query *qry, LockClauseStrength strength)
 {
 	if (qry->setOperations)
 		ereport(ERROR,
@@ -2251,56 +2251,49 @@ CheckSelectLocking(Query *qry)
 				 /*------
 				   translator: %s is a SQL row locking clause such as FOR UPDATE */
 				 errmsg("%s is not allowed with UNION/INTERSECT/EXCEPT",
-						LCS_asString(((RowMarkClause *)
-									  linitial(qry->rowMarks))->strength))));
+						LCS_asString(strength))));
 	if (qry->distinctClause != NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 /*------
 				   translator: %s is a SQL row locking clause such as FOR UPDATE */
 				 errmsg("%s is not allowed with DISTINCT clause",
-						LCS_asString(((RowMarkClause *)
-									  linitial(qry->rowMarks))->strength))));
+						LCS_asString(strength))));
 	if (qry->groupClause != NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 /*------
 				   translator: %s is a SQL row locking clause such as FOR UPDATE */
 				 errmsg("%s is not allowed with GROUP BY clause",
-						LCS_asString(((RowMarkClause *)
-									  linitial(qry->rowMarks))->strength))));
+						LCS_asString(strength))));
 	if (qry->havingQual != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 /*------
 				   translator: %s is a SQL row locking clause such as FOR UPDATE */
 				 errmsg("%s is not allowed with HAVING clause",
-						LCS_asString(((RowMarkClause *)
-									  linitial(qry->rowMarks))->strength))));
+						LCS_asString(strength))));
 	if (qry->hasAggs)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 /*------
 				   translator: %s is a SQL row locking clause such as FOR UPDATE */
 				 errmsg("%s is not allowed with aggregate functions",
-						LCS_asString(((RowMarkClause *)
-									  linitial(qry->rowMarks))->strength))));
+						LCS_asString(strength))));
 	if (qry->hasWindowFuncs)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 /*------
 				   translator: %s is a SQL row locking clause such as FOR UPDATE */
 				 errmsg("%s is not allowed with window functions",
-						LCS_asString(((RowMarkClause *)
-									  linitial(qry->rowMarks))->strength))));
+						LCS_asString(strength))));
 	if (expression_returns_set((Node *) qry->targetList))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 /*------
 				   translator: %s is a SQL row locking clause such as FOR UPDATE */
 				 errmsg("%s is not allowed with set-returning functions in the target list",
-						LCS_asString(((RowMarkClause *)
-									  linitial(qry->rowMarks))->strength))));
+						LCS_asString(strength))));
 }
 
 /*
@@ -2321,7 +2314,7 @@ transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc,
 	Index		i;
 	LockingClause *allrels;
 
-	CheckSelectLocking(qry);
+	CheckSelectLocking(qry, lc->strength);
 
 	/* make a clause we can pass down to subqueries to select all rels */
 	allrels = makeNode(LockingClause);
