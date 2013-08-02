@@ -24,8 +24,8 @@
 #define XLOG_BLCKSZ_K	(XLOG_BLCKSZ / 1024)
 
 #define LABEL_FORMAT		"        %-32s"
-#define NA_FORMAT			"%18s"
-#define OPS_FORMAT			"%9.3f ops/sec  %6.0f usecs/op"
+#define NA_FORMAT			"%20s"
+#define OPS_FORMAT			"%11.3f ops/sec  %6.0f usecs/op"
 #define USECS_SEC			1000000
 
 /* These are macros to avoid timing the function call overhead. */
