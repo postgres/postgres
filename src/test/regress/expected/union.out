@@ -317,6 +317,8 @@ SELECT q1 FROM int8_tbl EXCEPT ALL SELECT DISTINCT q2 FROM int8_tbl;
               123
 (3 rows)
 
+SELECT q1 FROM int8_tbl EXCEPT ALL SELECT q1 FROM int8_tbl FOR NO KEY UPDATE;
+ERROR:  FOR NO KEY UPDATE is not allowed with UNION/INTERSECT/EXCEPT
 --
 -- Mixed types
 --

@@ -447,6 +447,9 @@ BEGIN;
 DECLARE c1 CURSOR FOR SELECT * FROM uctest;
 DELETE FROM uctest WHERE CURRENT OF c1; -- fail, no current row
 ROLLBACK;
+BEGIN;
+DECLARE c1 CURSOR FOR SELECT MIN(f1) FROM uctest FOR UPDATE;
+ROLLBACK;
 
 -- WHERE CURRENT OF may someday work with views, but today is not that day.
 -- For now, just make sure it errors out cleanly.

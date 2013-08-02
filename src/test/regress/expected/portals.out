@@ -1226,6 +1226,10 @@ DECLARE c1 CURSOR FOR SELECT * FROM uctest;
 DELETE FROM uctest WHERE CURRENT OF c1; -- fail, no current row
 ERROR:  cursor "c1" is not positioned on a row
 ROLLBACK;
+BEGIN;
+DECLARE c1 CURSOR FOR SELECT MIN(f1) FROM uctest FOR UPDATE;
+ERROR:  FOR UPDATE is not allowed with aggregate functions
+ROLLBACK;
 -- WHERE CURRENT OF may someday work with views, but today is not that day.
 -- For now, just make sure it errors out cleanly.
 CREATE TEMP VIEW ucview AS SELECT * FROM uctest;
