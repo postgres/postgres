@@ -853,7 +853,8 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple, Snapshot snapshot,
 
 	if (TransactionIdIsInProgress(HeapTupleHeaderGetXmax(tuple)))
 	{
-		snapshot->xmax = HeapTupleHeaderGetXmax(tuple);
+		if (!(tuple->t_infomask & HEAP_IS_LOCKED))
+			snapshot->xmax = HeapTupleHeaderGetXmax(tuple);
 		return true;
 	}
 
