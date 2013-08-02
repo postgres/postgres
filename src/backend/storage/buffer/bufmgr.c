@@ -2221,7 +2221,7 @@ DropRelFileNodesAllBuffers(RelFileNodeBackend *rnodes, int nnodes)
 	/*
 	 * For low number of relations to drop just use a simple walk through, to
 	 * save the bsearch overhead. The threshold to use is rather a guess than
-	 * a exactly determined value, as it depends on many factors (CPU and RAM
+	 * an exactly determined value, as it depends on many factors (CPU and RAM
 	 * speeds, amount of shared buffers etc.).
 	 */
 	use_bsearch = n > DROP_RELS_BSEARCH_THRESHOLD;
