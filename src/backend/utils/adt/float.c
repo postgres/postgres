@@ -175,11 +175,7 @@ is_infinite(double val)
 
 
 /*
- *		float4in		- converts "num" to float
- *						  restricted syntax:
- *						  {<sp>} [+|-] {digit} [.{digit}] [<exp>]
- *						  where <sp> is a space, digit is 0-9,
- *						  <exp> is "e" or "E" followed by an integer.
+ *		float4in		- converts "num" to float4
  */
 Datum
 float4in(PG_FUNCTION_ARGS)
@@ -196,6 +192,10 @@ float4in(PG_FUNCTION_ARGS)
 	 */
 	orig_num = num;
 
+	/* skip leading whitespace */
+	while (*num != '\0' && isspace((unsigned char) *num))
+		num++;
+
 	/*
 	 * Check for an empty-string input to begin with, to avoid the vagaries of
 	 * strtod() on different platforms.
@@ -206,20 +206,23 @@ float4in(PG_FUNCTION_ARGS)
 				 errmsg("invalid input syntax for type real: \"%s\"",
 						orig_num)));
 
-	/* skip leading whitespace */
-	while (*num != '\0' && isspace((unsigned char) *num))
-		num++;
-
 	errno = 0;
 	val = strtod(num, &endptr);
 
 	/* did we not see anything that looks like a double? */
 	if (endptr == num || errno != 0)
 	{
+		int			save_errno = errno;
+
 		/*
-		 * C99 requires that strtod() accept NaN and [-]Infinity, but not all
-		 * platforms support that yet (and some accept them but set ERANGE
-		 * anyway...)  Therefore, we check for these inputs ourselves.
+		 * C99 requires that strtod() accept NaN, [+-]Infinity, and [+-]Inf,
+		 * but not all platforms support all of these (and some accept them
+		 * but set ERANGE anyway...)  Therefore, we check for these inputs
+		 * ourselves if strtod() fails.
+		 *
+		 * Note: C99 also requires hexadecimal input as well as some extended
+		 * forms of NaN, but we consider these forms unportable and don't try
+		 * to support them.  You can use 'em if your strtod() takes 'em.
 		 */
 		if (pg_strncasecmp(num, "NaN", 3) == 0)
 		{
@@ -231,12 +234,32 @@ float4in(PG_FUNCTION_ARGS)
 			val = get_float4_infinity();
 			endptr = num + 8;
 		}
+		else if (pg_strncasecmp(num, "+Infinity", 9) == 0)
+		{
+			val = get_float4_infinity();
+			endptr = num + 9;
+		}
 		else if (pg_strncasecmp(num, "-Infinity", 9) == 0)
 		{
 			val = -get_float4_infinity();
 			endptr = num + 9;
 		}
-		else if (errno == ERANGE)
+		else if (pg_strncasecmp(num, "inf", 3) == 0)
+		{
+			val = get_float4_infinity();
+			endptr = num + 3;
+		}
+		else if (pg_strncasecmp(num, "+inf", 4) == 0)
+		{
+			val = get_float4_infinity();
+			endptr = num + 4;
+		}
+		else if (pg_strncasecmp(num, "-inf", 4) == 0)
+		{
+			val = -get_float4_infinity();
+			endptr = num + 4;
+		}
+		else if (save_errno == ERANGE)
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("\"%s\" is out of range for type real",
@@ -273,6 +296,11 @@ float4in(PG_FUNCTION_ARGS)
 		{
 			val = get_float4_infinity();
 			endptr = num + 8;
+		}
+		else if (pg_strncasecmp(num, "+Infinity", 9) == 0)
+		{
+			val = get_float4_infinity();
+			endptr = num + 9;
 		}
 		else if (pg_strncasecmp(num, "-Infinity", 9) == 0)
 		{
@@ -369,10 +397,6 @@ float4send(PG_FUNCTION_ARGS)
 
 /*
  *		float8in		- converts "num" to float8
- *						  restricted syntax:
- *						  {<sp>} [+|-] {digit} [.{digit}] [<exp>]
- *						  where <sp> is a space, digit is 0-9,
- *						  <exp> is "e" or "E" followed by an integer.
  */
 Datum
 float8in(PG_FUNCTION_ARGS)
@@ -389,6 +413,10 @@ float8in(PG_FUNCTION_ARGS)
 	 */
 	orig_num = num;
 
+	/* skip leading whitespace */
+	while (*num != '\0' && isspace((unsigned char) *num))
+		num++;
+
 	/*
 	 * Check for an empty-string input to begin with, to avoid the vagaries of
 	 * strtod() on different platforms.
@@ -399,20 +427,23 @@ float8in(PG_FUNCTION_ARGS)
 			 errmsg("invalid input syntax for type double precision: \"%s\"",
 					orig_num)));
 
-	/* skip leading whitespace */
-	while (*num != '\0' && isspace((unsigned char) *num))
-		num++;
-
 	errno = 0;
 	val = strtod(num, &endptr);
 
 	/* did we not see anything that looks like a double? */
 	if (endptr == num || errno != 0)
 	{
+		int			save_errno = errno;
+
 		/*
-		 * C99 requires that strtod() accept NaN and [-]Infinity, but not all
-		 * platforms support that yet (and some accept them but set ERANGE
-		 * anyway...)  Therefore, we check for these inputs ourselves.
+		 * C99 requires that strtod() accept NaN, [+-]Infinity, and [+-]Inf,
+		 * but not all platforms support all of these (and some accept them
+		 * but set ERANGE anyway...)  Therefore, we check for these inputs
+		 * ourselves if strtod() fails.
+		 *
+		 * Note: C99 also requires hexadecimal input as well as some extended
+		 * forms of NaN, but we consider these forms unportable and don't try
+		 * to support them.  You can use 'em if your strtod() takes 'em.
 		 */
 		if (pg_strncasecmp(num, "NaN", 3) == 0)
 		{
@@ -424,12 +455,32 @@ float8in(PG_FUNCTION_ARGS)
 			val = get_float8_infinity();
 			endptr = num + 8;
 		}
+		else if (pg_strncasecmp(num, "+Infinity", 9) == 0)
+		{
+			val = get_float8_infinity();
+			endptr = num + 9;
+		}
 		else if (pg_strncasecmp(num, "-Infinity", 9) == 0)
 		{
 			val = -get_float8_infinity();
 			endptr = num + 9;
 		}
-		else if (errno == ERANGE)
+		else if (pg_strncasecmp(num, "inf", 3) == 0)
+		{
+			val = get_float8_infinity();
+			endptr = num + 3;
+		}
+		else if (pg_strncasecmp(num, "+inf", 4) == 0)
+		{
+			val = get_float8_infinity();
+			endptr = num + 4;
+		}
+		else if (pg_strncasecmp(num, "-inf", 4) == 0)
+		{
+			val = -get_float8_infinity();
+			endptr = num + 4;
+		}
+		else if (save_errno == ERANGE)
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				   errmsg("\"%s\" is out of range for type double precision",
@@ -466,6 +517,11 @@ float8in(PG_FUNCTION_ARGS)
 		{
 			val = get_float8_infinity();
 			endptr = num + 8;
+		}
+		else if (pg_strncasecmp(num, "+Infinity", 9) == 0)
+		{
+			val = get_float8_infinity();
+			endptr = num + 9;
 		}
 		else if (pg_strncasecmp(num, "-Infinity", 9) == 0)
 		{
