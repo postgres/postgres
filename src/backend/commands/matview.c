@@ -496,19 +496,14 @@ mv_GenerateOper(StringInfo buf, Oid opoid)
  * columns equal.  The behavior of NULLs on equality tests and on UNIQUE
  * indexes turns out to be quite convenient here; the tests we need to make
  * are consistent with default behavior.  If there is at least one UNIQUE
- * index on the materialized view, we have exactly the guarantee we need.  By
- * joining based on equality on all columns which are part of any unique
- * index, we identify the rows on which we can use UPDATE without any problem.
- * If any column is NULL in either the old or new version of a row (or both),
- * we must use DELETE and INSERT, since there could be multiple rows which are
- * NOT DISTINCT FROM each other, and we could otherwise end up with the wrong
- * number of occurrences in the updated relation.  The temporary table used to
- * hold the diff results contains just the TID of the old record (if matched)
- * and the ROW from the new table as a single column of complex record type
- * (if matched).
+ * index on the materialized view, we have exactly the guarantee we need.
  *
- * Once we have the diff table, we perform set-based DELETE, UPDATE, and
- * INSERT operations against the materialized view, and discard both temporary
+ * The temporary table used to hold the diff results contains just the TID of
+ * the old record (if matched) and the ROW from the new table as a single
+ * column of complex record type (if matched).
+ *
+ * Once we have the diff table, we perform set-based DELETE and INSERT
+ * operations against the materialized view, and discard both temporary
  * tables.
  *
  * Everything from the generation of the new data to applying the differences
@@ -567,9 +562,12 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid)
 	 */
 	resetStringInfo(&querybuf);
 	appendStringInfo(&querybuf,
-					 "SELECT x FROM %s x WHERE x IS NOT NULL AND EXISTS "
-					 "(SELECT * FROM %s y WHERE y IS NOT NULL "
-					 "AND (y.*) = (x.*) AND y.ctid <> x.ctid) LIMIT 1",
+					 "SELECT newdata FROM %s newdata "
+					 "WHERE newdata IS NOT NULL AND EXISTS "
+					 "(SELECT * FROM %s newdata2 WHERE newdata2 IS NOT NULL "
+					 "AND newdata2 OPERATOR(pg_catalog.=) newdata "
+					 "AND newdata2.ctid OPERATOR(pg_catalog.<>) "
+					 "newdata.ctid) LIMIT 1",
 					 tempname, tempname);
 	if (SPI_execute(querybuf.data, false, 1) != SPI_OK_SELECT)
 		elog(ERROR, "SPI_exec failed: %s", querybuf.data);
@@ -587,7 +585,8 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid)
 	resetStringInfo(&querybuf);
 	appendStringInfo(&querybuf,
 					 "CREATE TEMP TABLE %s AS "
-					 "SELECT x.ctid AS tid, y FROM %s x FULL JOIN %s y ON (",
+					 "SELECT mv.ctid AS tid, newdata "
+					 "FROM %s mv FULL JOIN %s newdata ON (",
 					 diffname, matviewname, tempname);
 
 	/*
@@ -603,52 +602,45 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid)
 	foreach(indexoidscan, indexoidlist)
 	{
 		Oid			indexoid = lfirst_oid(indexoidscan);
+		Relation	indexRel;
 		HeapTuple	indexTuple;
-		Form_pg_index index;
+		Form_pg_index indexStruct;
 
+		indexRel = index_open(indexoid, RowExclusiveLock);
 		indexTuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexoid));
 		if (!HeapTupleIsValid(indexTuple))		/* should not happen */
 			elog(ERROR, "cache lookup failed for index %u", indexoid);
-		index = (Form_pg_index) GETSTRUCT(indexTuple);
+		indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
 
 		/* We're only interested if it is unique and valid. */
-		if (index->indisunique && IndexIsValid(index))
+		if (indexStruct->indisunique && IndexIsValid(indexStruct))
 		{
-			int			numatts = index->indnatts;
+			int			numatts = indexStruct->indnatts;
 			int			i;
-			bool		expr = false;
-			Relation	indexRel;
 
 			/* Skip any index on an expression. */
-			for (i = 0; i < numatts; i++)
+			if (RelationGetIndexExpressions(indexRel) != NIL)
 			{
-				if (index->indkey.values[i] == 0)
-				{
-					expr = true;
-					break;
-				}
-			}
-			if (expr)
-			{
+				index_close(indexRel, NoLock);
 				ReleaseSysCache(indexTuple);
 				continue;
 			}
 
 			/* Skip partial indexes. */
-			indexRel = index_open(index->indexrelid, RowExclusiveLock);
 			if (RelationGetIndexPredicate(indexRel) != NIL)
 			{
 				index_close(indexRel, NoLock);
 				ReleaseSysCache(indexTuple);
 				continue;
 			}
+
 			/* Hold the locks, since we're about to run DML which needs them. */
 			index_close(indexRel, NoLock);
 
 			/* Add quals for all columns from this index. */
 			for (i = 0; i < numatts; i++)
 			{
-				int			attnum = index->indkey.values[i];
+				int			attnum = indexStruct->indkey.values[i];
 				Oid			type;
 				Oid			op;
 				const char *colname;
@@ -671,11 +663,11 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid)
 					appendStringInfoString(&querybuf, " AND ");
 
 				colname = quote_identifier(NameStr((tupdesc->attrs[attnum - 1])->attname));
-				appendStringInfo(&querybuf, "y.%s ", colname);
+				appendStringInfo(&querybuf, "newdata.%s ", colname);
 				type = attnumTypeId(matviewRel, attnum);
 				op = lookup_type_cache(type, TYPECACHE_EQ_OPR)->eq_opr;
 				mv_GenerateOper(&querybuf, op);
-				appendStringInfo(&querybuf, " x.%s", colname);
+				appendStringInfo(&querybuf, " mv.%s", colname);
 
 				foundUniqueIndex = true;
 			}
@@ -693,7 +685,7 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid)
 				 errhint("Create a UNIQUE index with no WHERE clause on one or more columns of the materialized view.")));
 
 	appendStringInfoString(&querybuf,
-						   " AND y = x) WHERE (y.*) IS DISTINCT FROM (x.*)"
+						   " AND newdata = mv) WHERE newdata IS NULL OR mv IS NULL"
 						   " ORDER BY tid");
 
 	/* Create the temporary "diff" table. */
@@ -726,56 +718,19 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid)
 	/* Deletes must come before inserts; do them first. */
 	resetStringInfo(&querybuf);
 	appendStringInfo(&querybuf,
-					 "DELETE FROM %s WHERE ctid IN "
-					 "(SELECT d.tid FROM %s d "
-					 "WHERE d.tid IS NOT NULL "
-					 "AND (d.y) IS NOT DISTINCT FROM NULL)",
+					 "DELETE FROM %s mv WHERE ctid OPERATOR(pg_catalog.=) ANY "
+					 "(SELECT diff.tid FROM %s diff "
+					 "WHERE diff.tid IS NOT NULL "
+					 "AND diff.newdata IS NULL)",
 					 matviewname, diffname);
 	if (SPI_exec(querybuf.data, 0) != SPI_OK_DELETE)
 		elog(ERROR, "SPI_exec failed: %s", querybuf.data);
 
-	/* Updates before inserts gives a better chance at HOT updates. */
-	resetStringInfo(&querybuf);
-	appendStringInfo(&querybuf, "UPDATE %s x SET ", matviewname);
-
-	{
-		int			i;
-		bool		targetColFound = false;
-
-		for (i = 0; i < tupdesc->natts; i++)
-		{
-			const char *colname;
-
-			if (tupdesc->attrs[i]->attisdropped)
-				continue;
-
-			if (usedForQual[i])
-				continue;
-
-			if (targetColFound)
-				appendStringInfoString(&querybuf, ", ");
-			targetColFound = true;
-
-			colname = quote_identifier(NameStr((tupdesc->attrs[i])->attname));
-			appendStringInfo(&querybuf, "%s = (d.y).%s", colname, colname);
-		}
-
-		if (targetColFound)
-		{
-			appendStringInfo(&querybuf,
-							 " FROM %s d "
-							 "WHERE d.tid IS NOT NULL AND x.ctid = d.tid",
-							 diffname);
-
-			if (SPI_exec(querybuf.data, 0) != SPI_OK_UPDATE)
-				elog(ERROR, "SPI_exec failed: %s", querybuf.data);
-		}
-	}
-
 	/* Inserts go last. */
 	resetStringInfo(&querybuf);
 	appendStringInfo(&querybuf,
-					 "INSERT INTO %s SELECT (y).* FROM %s WHERE tid IS NULL",
+					 "INSERT INTO %s SELECT (diff.newdata).* "
+					 "FROM %s diff WHERE tid IS NULL",
 					 matviewname, diffname);
 	if (SPI_exec(querybuf.data, 0) != SPI_OK_INSERT)
 		elog(ERROR, "SPI_exec failed: %s", querybuf.data);
