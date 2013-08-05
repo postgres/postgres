@@ -27,11 +27,8 @@ typedef void (*query_pathkeys_callback) (PlannerInfo *root, void *extra);
 /*
  * prototypes for plan/planmain.c
  */
-extern void query_planner(PlannerInfo *root, List *tlist,
-			  double tuple_fraction, double limit_tuples,
-			  query_pathkeys_callback qp_callback, void *qp_extra,
-			  Path **cheapest_path, Path **sorted_path,
-			  double *num_groups);
+extern RelOptInfo *query_planner(PlannerInfo *root, List *tlist,
+			  query_pathkeys_callback qp_callback, void *qp_extra);
 
 /*
  * prototypes for plan/planagg.c

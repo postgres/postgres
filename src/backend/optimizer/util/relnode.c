@@ -677,6 +677,36 @@ subbuild_joinrel_joinlist(RelOptInfo *joinrel,
 
 
 /*
+ * build_empty_join_rel
+ *		Build a dummy join relation describing an empty set of base rels.
+ *
+ * This is used for queries with empty FROM clauses, such as "SELECT 2+2" or
+ * "INSERT INTO foo VALUES(...)".  We don't try very hard to make the empty
+ * joinrel completely valid, since no real planning will be done with it ---
+ * we just need it to carry a simple Result path out of query_planner().
+ */
+RelOptInfo *
+build_empty_join_rel(PlannerInfo *root)
+{
+	RelOptInfo *joinrel;
+
+	/* The dummy join relation should be the only one ... */
+	Assert(root->join_rel_list == NIL);
+
+	joinrel = makeNode(RelOptInfo);
+	joinrel->reloptkind = RELOPT_JOINREL;
+	joinrel->relids = NULL;		/* empty set */
+	joinrel->rows = 1;			/* we produce one row for such cases */
+	joinrel->width = 0;			/* it contains no Vars */
+	joinrel->rtekind = RTE_JOIN;
+
+	root->join_rel_list = lappend(root->join_rel_list, joinrel);
+
+	return joinrel;
+}
+
+
+/*
  * find_childrel_appendrelinfo
  *		Get the AppendRelInfo associated with an appendrel child rel.
  *

@@ -39,6 +39,7 @@
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/rel.h"
+#include "utils/selfuncs.h"
 
 
 /* GUC parameter */
@@ -1125,10 +1126,10 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	{
 		/* No set operations, do regular planning */
 		List	   *sub_tlist;
-		double		sub_limit_tuples;
 		AttrNumber *groupColIdx = NULL;
 		bool		need_tlist_eval = true;
 		standard_qp_extra qp_extra;
+		RelOptInfo *final_rel;
 		Path	   *cheapest_path;
 		Path	   *sorted_path;
 		Path	   *best_path;
@@ -1204,6 +1205,9 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			preprocess_minmax_aggregates(root, tlist);
 		}
 
+		/* Make tuple_fraction accessible to lower-level routines */
+		root->tuple_fraction = tuple_fraction;
+
 		/*
 		 * Figure out whether there's a hard limit on the number of rows that
 		 * query_planner's result subplan needs to return.  Even if we know a
@@ -1215,9 +1219,9 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			parse->hasAggs ||
 			parse->hasWindowFuncs ||
 			root->hasHavingQual)
-			sub_limit_tuples = -1.0;
+			root->limit_tuples = -1.0;
 		else
-			sub_limit_tuples = limit_tuples;
+			root->limit_tuples = limit_tuples;
 
 		/* Set up data needed by standard_qp_callback */
 		qp_extra.tlist = tlist;
@@ -1225,31 +1229,164 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 		/*
 		 * Generate the best unsorted and presorted paths for this Query (but
-		 * note there may not be any presorted path).  We also generate (in
+		 * note there may not be any presorted paths).	We also generate (in
 		 * standard_qp_callback) pathkey representations of the query's sort
-		 * clause, distinct clause, etc.  query_planner will also estimate the
-		 * number of groups in the query.
+		 * clause, distinct clause, etc.
 		 */
-		query_planner(root, sub_tlist, tuple_fraction, sub_limit_tuples,
-					  standard_qp_callback, &qp_extra,
-					  &cheapest_path, &sorted_path, &dNumGroups);
+		final_rel = query_planner(root, sub_tlist,
+								  standard_qp_callback, &qp_extra);
 
 		/*
-		 * Extract rowcount and width estimates for possible use in grouping
-		 * decisions.  Beware here of the possibility that
-		 * cheapest_path->parent is NULL (ie, there is no FROM clause).
+		 * Extract rowcount and width estimates for use below.
 		 */
-		if (cheapest_path->parent)
+		path_rows = final_rel->rows;
+		path_width = final_rel->width;
+
+		/*
+		 * If there's grouping going on, estimate the number of result groups.
+		 * We couldn't do this any earlier because it depends on relation size
+		 * estimates that are created within query_planner().
+		 *
+		 * Then convert tuple_fraction to fractional form if it is absolute,
+		 * and if grouping or aggregation is involved, adjust tuple_fraction
+		 * to describe the fraction of the underlying un-aggregated tuples
+		 * that will be fetched.
+		 */
+		dNumGroups = 1;			/* in case not grouping */
+
+		if (parse->groupClause)
 		{
-			path_rows = cheapest_path->parent->rows;
-			path_width = cheapest_path->parent->width;
+			List	   *groupExprs;
+
+			groupExprs = get_sortgrouplist_exprs(parse->groupClause,
+												 parse->targetList);
+			dNumGroups = estimate_num_groups(root, groupExprs, path_rows);
+
+			/*
+			 * In GROUP BY mode, an absolute LIMIT is relative to the number
+			 * of groups not the number of tuples.	If the caller gave us a
+			 * fraction, keep it as-is.  (In both cases, we are effectively
+			 * assuming that all the groups are about the same size.)
+			 */
+			if (tuple_fraction >= 1.0)
+				tuple_fraction /= dNumGroups;
+
+			/*
+			 * If both GROUP BY and ORDER BY are specified, we will need two
+			 * levels of sort --- and, therefore, certainly need to read all
+			 * the tuples --- unless ORDER BY is a subset of GROUP BY.
+			 * Likewise if we have both DISTINCT and GROUP BY, or if we have a
+			 * window specification not compatible with the GROUP BY.
+			 */
+			if (!pathkeys_contained_in(root->sort_pathkeys,
+									   root->group_pathkeys) ||
+				!pathkeys_contained_in(root->distinct_pathkeys,
+									   root->group_pathkeys) ||
+				!pathkeys_contained_in(root->window_pathkeys,
+									   root->group_pathkeys))
+				tuple_fraction = 0.0;
+		}
+		else if (parse->hasAggs || root->hasHavingQual)
+		{
+			/*
+			 * Ungrouped aggregate will certainly want to read all the tuples,
+			 * and it will deliver a single result row (so leave dNumGroups
+			 * set to 1).
+			 */
+			tuple_fraction = 0.0;
+		}
+		else if (parse->distinctClause)
+		{
+			/*
+			 * Since there was no grouping or aggregation, it's reasonable to
+			 * assume the UNIQUE filter has effects comparable to GROUP BY.
+			 * (If DISTINCT is used with grouping, we ignore its effects for
+			 * rowcount estimation purposes; this amounts to assuming the
+			 * grouped rows are distinct already.)
+			 */
+			List	   *distinctExprs;
+
+			distinctExprs = get_sortgrouplist_exprs(parse->distinctClause,
+													parse->targetList);
+			dNumGroups = estimate_num_groups(root, distinctExprs, path_rows);
+
+			/*
+			 * Adjust tuple_fraction the same way as for GROUP BY, too.
+			 */
+			if (tuple_fraction >= 1.0)
+				tuple_fraction /= dNumGroups;
 		}
 		else
 		{
-			path_rows = 1;		/* assume non-set result */
-			path_width = 100;	/* arbitrary */
+			/*
+			 * Plain non-grouped, non-aggregated query: an absolute tuple
+			 * fraction can be divided by the number of tuples.
+			 */
+			if (tuple_fraction >= 1.0)
+				tuple_fraction /= path_rows;
 		}
 
+		/*
+		 * Pick out the cheapest-total path as well as the cheapest presorted
+		 * path for the requested pathkeys (if there is one).  We should take
+		 * the tuple fraction into account when selecting the cheapest
+		 * presorted path, but not when selecting the cheapest-total path,
+		 * since if we have to sort then we'll have to fetch all the tuples.
+		 * (But there's a special case: if query_pathkeys is NIL, meaning
+		 * order doesn't matter, then the "cheapest presorted" path will be
+		 * the cheapest overall for the tuple fraction.)
+		 */
+		cheapest_path = final_rel->cheapest_total_path;
+
+		sorted_path =
+			get_cheapest_fractional_path_for_pathkeys(final_rel->pathlist,
+													  root->query_pathkeys,
+													  NULL,
+													  tuple_fraction);
+
+		/* Don't consider same path in both guises; just wastes effort */
+		if (sorted_path == cheapest_path)
+			sorted_path = NULL;
+
+		/*
+		 * Forget about the presorted path if it would be cheaper to sort the
+		 * cheapest-total path.  Here we need consider only the behavior at
+		 * the tuple_fraction point.  Also, limit_tuples is only relevant if
+		 * not grouping/aggregating, so use root->limit_tuples in the
+		 * cost_sort call.
+		 */
+		if (sorted_path)
+		{
+			Path		sort_path;		/* dummy for result of cost_sort */
+
+			if (root->query_pathkeys == NIL ||
+				pathkeys_contained_in(root->query_pathkeys,
+									  cheapest_path->pathkeys))
+			{
+				/* No sort needed for cheapest path */
+				sort_path.startup_cost = cheapest_path->startup_cost;
+				sort_path.total_cost = cheapest_path->total_cost;
+			}
+			else
+			{
+				/* Figure cost for sorting */
+				cost_sort(&sort_path, root, root->query_pathkeys,
+						  cheapest_path->total_cost,
+						  path_rows, path_width,
+						  0.0, work_mem, root->limit_tuples);
+			}
+
+			if (compare_fractional_path_costs(sorted_path, &sort_path,
+											  tuple_fraction) > 0)
+			{
+				/* Presorted path is a loser */
+				sorted_path = NULL;
+			}
+		}
+
+		/*
+		 * Consider whether we want to use hashing instead of sorting.
+		 */
 		if (parse->groupClause)
 		{
 			/*
@@ -1288,7 +1425,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		/*
 		 * Select the best path.  If we are doing hashed grouping, we will
 		 * always read all the input tuples, so use the cheapest-total path.
-		 * Otherwise, trust query_planner's decision about which to use.
+		 * Otherwise, the comparison above is correct.
 		 */
 		if (use_hashed_grouping || use_hashed_distinct || !sorted_path)
 			best_path = cheapest_path;
@@ -1658,7 +1795,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		 * If there was grouping or aggregation, use the current number of
 		 * rows as the estimated number of DISTINCT rows (ie, assume the
 		 * result was already mostly unique).  If not, use the number of
-		 * distinct-groups calculated by query_planner.
+		 * distinct-groups calculated previously.
 		 */
 		if (parse->groupClause || root->hasHavingQual || parse->hasAggs)
 			dNumDistinctRows = result_plan->plan_rows;
@@ -2576,8 +2713,8 @@ choose_hashed_grouping(PlannerInfo *root,
 	 * We need to consider cheapest_path + hashagg [+ final sort] versus
 	 * either cheapest_path [+ sort] + group or agg [+ final sort] or
 	 * presorted_path + group or agg [+ final sort] where brackets indicate a
-	 * step that may not be needed. We assume query_planner() will have
-	 * returned a presorted path only if it's a winner compared to
+	 * step that may not be needed.  We assume grouping_planner() will have
+	 * passed us a presorted path only if it's a winner compared to
 	 * cheapest_path for this purpose.
 	 *
 	 * These path variables are dummies that just hold cost fields; we don't
@@ -2630,12 +2767,8 @@ choose_hashed_grouping(PlannerInfo *root,
 				  0.0, work_mem, limit_tuples);
 
 	/*
-	 * Now make the decision using the top-level tuple fraction.  First we
-	 * have to convert an absolute count (LIMIT) into fractional form.
+	 * Now make the decision using the top-level tuple fraction.
 	 */
-	if (tuple_fraction >= 1.0)
-		tuple_fraction /= dNumGroups;
-
 	if (compare_fractional_path_costs(&hashed_p, &sorted_p,
 									  tuple_fraction) < 0)
 	{
@@ -2781,12 +2914,8 @@ choose_hashed_distinct(PlannerInfo *root,
 				  0.0, work_mem, limit_tuples);
 
 	/*
-	 * Now make the decision using the top-level tuple fraction.  First we
-	 * have to convert an absolute count (LIMIT) into fractional form.
+	 * Now make the decision using the top-level tuple fraction.
 	 */
-	if (tuple_fraction >= 1.0)
-		tuple_fraction /= dNumDistinctRows;
-
 	if (compare_fractional_path_costs(&hashed_p, &sorted_p,
 									  tuple_fraction) < 0)
 	{

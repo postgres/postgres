@@ -1333,15 +1333,16 @@ is_simple_subquery(Query *subquery, RangeTblEntry *rte,
 		return false;
 
 	/*
-	 * Hack: don't try to pull up a subquery with an empty jointree.
-	 * query_planner() will correctly generate a Result plan for a jointree
-	 * that's totally empty, but I don't think the right things happen if an
-	 * empty FromExpr appears lower down in a jointree.  It would pose a
-	 * problem for the PlaceHolderVar mechanism too, since we'd have no way to
-	 * identify where to evaluate a PHV coming out of the subquery. Not worth
-	 * working hard on this, just to collapse SubqueryScan/Result into Result;
-	 * especially since the SubqueryScan can often be optimized away by
-	 * setrefs.c anyway.
+	 * Don't pull up a subquery with an empty jointree.  query_planner() will
+	 * correctly generate a Result plan for a jointree that's totally empty,
+	 * but we can't cope with an empty FromExpr appearing lower down in a
+	 * jointree: we identify join rels via baserelid sets, so we couldn't
+	 * distinguish a join containing such a FromExpr from one without it.
+	 * This would for example break the PlaceHolderVar mechanism, since we'd
+	 * have no way to identify where to evaluate a PHV coming out of the
+	 * subquery.  Not worth working hard on this, just to collapse
+	 * SubqueryScan/Result into Result; especially since the SubqueryScan can
+	 * often be optimized away by setrefs.c anyway.
 	 */
 	if (subquery->jointree->fromlist == NIL)
 		return false;

@@ -372,10 +372,10 @@ generated during the optimization process are marked with their sort order
 
 It is also possible to avoid an explicit sort step to implement a user's
 ORDER BY clause if the final path has the right ordering already, so the
-sort ordering is of interest even at the top level.  query_planner() will
+sort ordering is of interest even at the top level.  grouping_planner() will
 look for the cheapest path with a sort order matching the desired order,
-and grouping_planner() will compare its cost to the cost of using the
-cheapest-overall path and doing an explicit sort.
+then compare its cost to the cost of using the cheapest-overall path and
+doing an explicit sort on that.
 
 When we are generating paths for a particular RelOptInfo, we discard a path
 if it is more expensive than another known path that has the same or better
