@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# src/tools/pgtest
+# src/tools/pgtest [-n] [...]
 
 # This runs a build/initdb/regression test suite
 #
@@ -18,11 +18,14 @@ trap "rm -rf /tmp/$$" 0 1 2 3 15
 mkdir /tmp/$$
 TMP="/tmp/$$"
 
-[ "X$1" != "X-n" ] && PGCLEAN=clean
+if [ "X$1" != "X-n" ]
+then	PGCLEAN=clean
+else	shift
+fi
 
 # Run "make check" and store return code in $TMP/ret.
 # Display output but also capture it in $TMP/0.
-($MAKE $PGCLEAN check 2>&1; echo "$?" > $TMP/ret) | tee  $TMP/0
+($MAKE "$@" $PGCLEAN check 2>&1; echo "$?" > $TMP/ret) | tee  $TMP/0
 
 # If success, display warnings
 if [ $(cat $TMP/ret) -eq 0 ]
