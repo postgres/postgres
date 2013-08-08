@@ -5165,7 +5165,7 @@ RegisterBackgroundWorker(BackgroundWorker *worker)
 
 	if (!IsUnderPostmaster)
 		ereport(LOG,
-			(errmsg("registering background worker: %s", worker->bgw_name)));
+			(errmsg("registering background worker \"%s\"", worker->bgw_name)));
 
 	if (!process_shared_preload_libraries_in_progress)
 	{
@@ -5277,7 +5277,7 @@ BackgroundWorkerInitializeConnection(char *dbname, char *username)
 	/* it had better not gotten out of "init" mode yet */
 	if (!IsInitProcessingMode())
 		ereport(ERROR,
-				(errmsg("invalid processing mode in bgworker")));
+				(errmsg("invalid processing mode in background worker")));
 	SetProcessingMode(NormalProcessing);
 }
 
