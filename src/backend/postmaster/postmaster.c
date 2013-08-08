@@ -5224,7 +5224,7 @@ BackgroundWorkerInitializeConnection(char *dbname, char *username)
 	/* it had better not gotten out of "init" mode yet */
 	if (!IsInitProcessingMode())
 		ereport(ERROR,
-				(errmsg("invalid processing mode in bgworker")));
+				(errmsg("invalid processing mode in background worker")));
 	SetProcessingMode(NormalProcessing);
 }
 

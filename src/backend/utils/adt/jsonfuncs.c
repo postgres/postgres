@@ -1836,7 +1836,7 @@ populate_recordset_array_element_start(void *state, bool isnull)
 		_state->lex->token_type != JSON_TOKEN_OBJECT_START)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			 errmsg("must call populate_recordset on an array of objects")));
+			 errmsg("must call json_populate_recordset on an array of objects")));
 }
 
 static void

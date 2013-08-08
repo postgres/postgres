@@ -1607,7 +1607,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"wal_receiver_timeout", PGC_SIGHUP, REPLICATION_STANDBY,
-			gettext_noop("Sets the maximum wait time to receive data from master."),
+			gettext_noop("Sets the maximum wait time to receive data from the primary."),
 			NULL,
 			GUC_UNIT_MS
 		},

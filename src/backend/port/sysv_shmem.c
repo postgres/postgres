@@ -174,7 +174,7 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 						 "memory configuration.") : 0,
 				 (errno == ENOMEM) ?
 				 errhint("This error usually means that PostgreSQL's request for a shared "
-						 "memory segment exceeded your kernel's SHMALL parameter.  You may need "
+						 "memory segment exceeded your kernel's SHMALL parameter.  You might need "
 						 "to reconfigure the kernel with larger SHMALL.\n"
 		"The PostgreSQL documentation contains more information about shared "
 						 "memory configuration.") : 0,
