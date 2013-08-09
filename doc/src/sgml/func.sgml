@@ -5623,7 +5623,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
        <row>
         <entry><literal>J</literal></entry>
-        <entry>Julian Day (days since November 24, 4714 BC at midnight)</entry>
+        <entry>Julian Day (integer days since November 24, 4714 BC at midnight)</entry>
        </row>
        <row>
         <entry><literal>Q</literal></entry>
