@@ -940,14 +940,18 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
 			/* complain even if that DB has disappeared */
 			if (oldest_datname)
 				ereport(WARNING,
-						(errmsg("database \"%s\" must be vacuumed before %u more MultiXactIds are used",
+						(errmsg_plural("database \"%s\" must be vacuumed before %u more MultiXactId is used",
+									   "database \"%s\" must be vacuumed before %u more MultiXactIds are used",
+									   multiWrapLimit - result,
 								oldest_datname,
 								multiWrapLimit - result),
 				 errhint("Execute a database-wide VACUUM in that database.\n"
 						 "You might also need to commit or roll back old prepared transactions.")));
 			else
 				ereport(WARNING,
-						(errmsg("database with OID %u must be vacuumed before %u more MultiXactIds are used",
+						(errmsg_plural("database with OID %u must be vacuumed before %u more MultiXactId is used",
+									   "database with OID %u must be vacuumed before %u more MultiXactIds are used",
+									   multiWrapLimit - result,
 								oldest_datoid,
 								multiWrapLimit - result),
 				 errhint("Execute a database-wide VACUUM in that database.\n"
@@ -1982,14 +1986,18 @@ SetMultiXactIdLimit(MultiXactId oldest_datminmxid, Oid oldest_datoid)
 
 		if (oldest_datname)
 			ereport(WARNING,
-					(errmsg("database \"%s\" must be vacuumed before %u more MultiXactIds are used",
+					(errmsg_plural("database \"%s\" must be vacuumed before %u more MultiXactId is used",
+								   "database \"%s\" must be vacuumed before %u more MultiXactIds are used",
+								   multiWrapLimit - curMulti,
 							oldest_datname,
 							multiWrapLimit - curMulti),
 					 errhint("To avoid a database shutdown, execute a database-wide VACUUM in that database.\n"
 							 "You might also need to commit or roll back old prepared transactions.")));
 		else
 			ereport(WARNING,
-					(errmsg("database with OID %u must be vacuumed before %u more MultiXactIds are used",
+					(errmsg_plural("database with OID %u must be vacuumed before %u more MultiXactId is used",
+								   "database with OID %u must be vacuumed before %u more MultiXactIds are used",
+								   multiWrapLimit - curMulti,
 							oldest_datoid,
 							multiWrapLimit - curMulti),
 					 errhint("To avoid a database shutdown, execute a database-wide VACUUM in that database.\n"
