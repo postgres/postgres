@@ -728,7 +728,7 @@ json_lex_string(JsonLexContext *lex)
 							ereport(ERROR,
 							   (errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 								errmsg("invalid input syntax for type json"),
-								errdetail("high order surrogate must not follow a high order surrogate."),
+								errdetail("Unicode high surrogate must not follow a high surrogate."),
 								report_json_context(lex)));
 						hi_surrogate = (ch & 0x3ff) << 10;
 						continue;
@@ -739,7 +739,7 @@ json_lex_string(JsonLexContext *lex)
 							ereport(ERROR,
 							   (errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 								errmsg("invalid input syntax for type json"),
-								errdetail("low order surrogate must follow a high order surrogate."),
+								errdetail("Unicode low surrogate must follow a high surrogate."),
 								report_json_context(lex)));
 						ch = 0x10000 + hi_surrogate + (ch & 0x3ff);
 						hi_surrogate = -1;
@@ -749,7 +749,7 @@ json_lex_string(JsonLexContext *lex)
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 								 errmsg("invalid input syntax for type json"),
-								 errdetail("low order surrogate must follow a high order surrogate."),
+								 errdetail("Unicode low surrogate must follow a high surrogate."),
 								 report_json_context(lex)));
 
 					/*
@@ -783,7 +783,7 @@ json_lex_string(JsonLexContext *lex)
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 								 errmsg("invalid input syntax for type json"),
-								 errdetail("Unicode escape for code points higher than U+007F not permitted in non-UTF8 encoding"),
+								 errdetail("Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8."),
 								 report_json_context(lex)));
 					}
 
@@ -795,7 +795,7 @@ json_lex_string(JsonLexContext *lex)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 							 errmsg("invalid input syntax for type json"),
-							 errdetail("low order surrogate must follow a high order surrogate."),
+							 errdetail("Unicode low surrogate must follow a high surrogate."),
 							 report_json_context(lex)));
 
 				switch (*s)
@@ -856,7 +856,7 @@ json_lex_string(JsonLexContext *lex)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 						 errmsg("invalid input syntax for type json"),
-						 errdetail("low order surrogate must follow a high order surrogate."),
+						 errdetail("Unicode low surrogate must follow a high surrogate."),
 						 report_json_context(lex)));
 
 			appendStringInfoChar(lex->strval, *s);
@@ -868,7 +868,7 @@ json_lex_string(JsonLexContext *lex)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type json"),
-		errdetail("low order surrogate must follow a high order surrogate."),
+		errdetail("Unicode low surrogate must follow a high surrogate."),
 				 report_json_context(lex)));
 
 	/* Hooray, we found the end of the string! */

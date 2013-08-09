@@ -923,28 +923,28 @@ ERROR:  cannot call json_populate_recordset on a nested object
 -- handling of unicode surrogate pairs
 select json '{ "a":  "\ud83d\ude04\ud83d\udc36" }' -> 'a' as correct_in_utf8;
 ERROR:  invalid input syntax for type json
-DETAIL:  Unicode escape for code points higher than U+007F not permitted in non-UTF8 encoding
+DETAIL:  Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8.
 CONTEXT:  JSON data, line 1: { "a":...
 select json '{ "a":  "\ud83d\ud83d" }' -> 'a'; -- 2 high surrogates in a row
 ERROR:  invalid input syntax for type json
-DETAIL:  high order surrogate must not follow a high order surrogate.
+DETAIL:  Unicode high surrogate must not follow a high surrogate.
 CONTEXT:  JSON data, line 1: { "a":...
 select json '{ "a":  "\ude04\ud83d" }' -> 'a'; -- surrogates in wrong order
 ERROR:  invalid input syntax for type json
-DETAIL:  low order surrogate must follow a high order surrogate.
+DETAIL:  Unicode low surrogate must follow a high surrogate.
 CONTEXT:  JSON data, line 1: { "a":...
 select json '{ "a":  "\ud83dX" }' -> 'a'; -- orphan high surrogate
 ERROR:  invalid input syntax for type json
-DETAIL:  low order surrogate must follow a high order surrogate.
+DETAIL:  Unicode low surrogate must follow a high surrogate.
 CONTEXT:  JSON data, line 1: { "a":...
 select json '{ "a":  "\ude04X" }' -> 'a'; -- orphan low surrogate
 ERROR:  invalid input syntax for type json
-DETAIL:  low order surrogate must follow a high order surrogate.
+DETAIL:  Unicode low surrogate must follow a high surrogate.
 CONTEXT:  JSON data, line 1: { "a":...
 --handling of simple unicode escapes
 select json '{ "a":  "the Copyright \u00a9 sign" }' ->> 'a' as correct_in_utf8;
 ERROR:  invalid input syntax for type json
-DETAIL:  Unicode escape for code points higher than U+007F not permitted in non-UTF8 encoding
+DETAIL:  Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8.
 CONTEXT:  JSON data, line 1: { "a":...
 select json '{ "a":  "dollar \u0024 character" }' ->> 'a' as correct_everywhere;
  correct_everywhere 

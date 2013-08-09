@@ -929,19 +929,19 @@ select json '{ "a":  "\ud83d\ude04\ud83d\udc36" }' -> 'a' as correct_in_utf8;
 
 select json '{ "a":  "\ud83d\ud83d" }' -> 'a'; -- 2 high surrogates in a row
 ERROR:  invalid input syntax for type json
-DETAIL:  high order surrogate must not follow a high order surrogate.
+DETAIL:  Unicode high surrogate must not follow a high surrogate.
 CONTEXT:  JSON data, line 1: { "a":...
 select json '{ "a":  "\ude04\ud83d" }' -> 'a'; -- surrogates in wrong order
 ERROR:  invalid input syntax for type json
-DETAIL:  low order surrogate must follow a high order surrogate.
+DETAIL:  Unicode low surrogate must follow a high surrogate.
 CONTEXT:  JSON data, line 1: { "a":...
 select json '{ "a":  "\ud83dX" }' -> 'a'; -- orphan high surrogate
 ERROR:  invalid input syntax for type json
-DETAIL:  low order surrogate must follow a high order surrogate.
+DETAIL:  Unicode low surrogate must follow a high surrogate.
 CONTEXT:  JSON data, line 1: { "a":...
 select json '{ "a":  "\ude04X" }' -> 'a'; -- orphan low surrogate
 ERROR:  invalid input syntax for type json
-DETAIL:  low order surrogate must follow a high order surrogate.
+DETAIL:  Unicode low surrogate must follow a high surrogate.
 CONTEXT:  JSON data, line 1: { "a":...
 --handling of simple unicode escapes
 select json '{ "a":  "the Copyright \u00a9 sign" }' ->> 'a' as correct_in_utf8;
