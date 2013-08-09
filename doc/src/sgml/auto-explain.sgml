@@ -153,10 +153,10 @@ LOAD 'auto_explain';
       (ANALYZE, TIMING off)</> output, rather than just <command>EXPLAIN (ANALYZE)</>
       output. The overhead of repeatedly reading the system clock can slow down the
       query significantly on some systems, so it may be useful to set this
-      parameter to <literal>FALSE</literal> when only actual row counts, and not
-      exact times, are needed.
+      parameter to off when only actual row counts, and not exact times, are needed.
       This parameter is only effective when <varname>auto_explain.log_analyze</varname>
-      is also enabled.  It defaults to <literal>TRUE</literal>.
+      is also enabled.  This parameter is on by default.
+      Only superusers can change this setting.
      </para>
     </listitem>
    </varlistentry>
