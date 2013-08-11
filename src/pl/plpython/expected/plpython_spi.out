@@ -269,10 +269,10 @@ plan = plpy.prepare(cmd)
 result = plpy.execute(plan)
 return str(result)
 $$ LANGUAGE plpythonu;
-SELECT result_str_test($$SELECT 1 AS foo, '11'::text AS bar UNION SELECT 2, '22'$$);
-                                   result_str_test                                    
---------------------------------------------------------------------------------------
- <PLyResult status=5 nrows=2 rows=[{'foo': 1, 'bar': '11'}, {'foo': 2, 'bar': '22'}]>
+SELECT result_str_test($$SELECT 1 AS foo UNION SELECT 2$$);
+                      result_str_test                       
+------------------------------------------------------------
+ <PLyResult status=5 nrows=2 rows=[{'foo': 1}, {'foo': 2}]>
 (1 row)
 
 SELECT result_str_test($$CREATE TEMPORARY TABLE foo1 (a int, b text)$$);

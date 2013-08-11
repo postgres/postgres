@@ -176,7 +176,7 @@ result = plpy.execute(plan)
 return str(result)
 $$ LANGUAGE plpythonu;
 
-SELECT result_str_test($$SELECT 1 AS foo, '11'::text AS bar UNION SELECT 2, '22'$$);
+SELECT result_str_test($$SELECT 1 AS foo UNION SELECT 2$$);
 SELECT result_str_test($$CREATE TEMPORARY TABLE foo1 (a int, b text)$$);
 
 -- cursor objects
