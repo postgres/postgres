@@ -109,6 +109,7 @@ emit_log_hook_type emit_log_hook = NULL;
 int			Log_error_verbosity = PGERROR_VERBOSE;
 char	   *Log_line_prefix = NULL;		/* format for extra log line info */
 int			Log_destination = LOG_DESTINATION_STDERR;
+char	   *Log_destination_string = NULL;
 
 #ifdef HAVE_SYSLOG
 
