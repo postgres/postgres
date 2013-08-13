@@ -700,6 +700,14 @@
 
       <listitem>
        <para>
+        Allow <link linkend="SQL-CREATEFOREIGNDATAWRAPPER">foreign data
+        wrappers</link> to support writes (inserts/updates/deletes) on foreign
+        tables (KaiGai Kohei)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Allow a multirow <link
         linkend="SQL-VALUES"><literal>VALUES</></link> clause in a rule
         to reference <literal>OLD</>/<literal>NEW</> (Tom Lane)
@@ -1678,14 +1686,6 @@
     <title>Additional Modules</title>
 
     <itemizedlist>
-
-      <listitem>
-       <para>
-        Allow <link linkend="SQL-CREATEFOREIGNDATAWRAPPER">foreign data
-        wrappers</link> to support writes (inserts/updates/deletes) on foreign
-        tables (KaiGai Kohei)
-       </para>
-      </listitem>
 
       <listitem>
        <para>
