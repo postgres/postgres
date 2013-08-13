@@ -634,6 +634,20 @@ SysLogger_Start(void)
 			/* now we redirect stderr, if not done already */
 			if (!redirection_done)
 			{
+#ifdef WIN32
+				int			fd;
+#endif
+
+				/*
+				 * Leave a breadcrumb trail when redirecting, in case the user
+				 * forgets that redirection is active and looks only at the
+				 * original stderr target file.
+				 */
+				ereport(LOG,
+						(errmsg("redirecting log output to logging collector process"),
+						 errhint("Future log output will appear in directory \"%s\".",
+								 Log_directory)));
+
 #ifndef WIN32
 				fflush(stdout);
 				if (dup2(syslogPipe[1], fileno(stdout)) < 0)
@@ -649,8 +663,6 @@ SysLogger_Start(void)
 				close(syslogPipe[1]);
 				syslogPipe[1] = -1;
 #else
-				int			fd;
-
 				/*
 				 * open the pipe in binary mode and make sure stderr is binary
 				 * after it's been dup'ed into, to avoid disturbing the pipe

@@ -444,8 +444,6 @@ int			tcp_keepalives_count;
  * cases provide the value for SHOW to display.  The real state is elsewhere
  * and is kept in sync by assign_hooks.
  */
-static char *log_destination_string;
-
 static char *syslog_ident_str;
 static bool phony_autocommit;
 static bool session_auth_is_superuser;
@@ -2871,7 +2869,7 @@ static struct config_string ConfigureNamesString[] =
 						 "depending on the platform."),
 			GUC_LIST_INPUT
 		},
-		&log_destination_string,
+		&Log_destination_string,
 		"stderr",
 		check_log_destination, assign_log_destination, NULL
 	},
