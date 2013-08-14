@@ -1296,6 +1296,25 @@
       <row>
        <entry>
         <indexterm>
+         <primary>trim</primary>
+        </indexterm>
+        <literal><function>trim(<optional>leading | trailing
+        | both</optional> <optional>from</optional>
+        <parameter>string</parameter>
+        <optional><parameter>, characters</parameter></optional>
+        )</function></literal>
+       </entry>
+       <entry><type>text</type></entry>
+       <entry>
+        Non-standard version of <function>trim()</>
+       </entry>
+       <entry><literal>trim(both from 'xTomxx', 'x')</literal></entry>
+       <entry><literal>Tom</literal></entry>
+      </row>
+
+      <row>
+       <entry>
+        <indexterm>
          <primary>upper</primary>
         </indexterm>
         <literal><function>upper(<parameter>string</parameter>)</function></literal>
