@@ -155,10 +155,9 @@ build_base_rel_tlists(PlannerInfo *root, List *final_tlist)
  *	  The list may also contain PlaceHolderVars.  These don't necessarily
  *	  have a single owning relation; we keep their attr_needed info in
  *	  root->placeholder_list instead.  If create_new_ph is true, it's OK
- *	  to create new PlaceHolderInfos, and we also have to update ph_may_need;
- *	  otherwise, the PlaceHolderInfos must already exist, and we should only
- *	  update their ph_needed.  (It should be true before deconstruct_jointree
- *	  begins, and false after that.)
+ *	  to create new PlaceHolderInfos; otherwise, the PlaceHolderInfos must
+ *	  already exist, and we should only update their ph_needed.  (This should
+ *	  be true before deconstruct_jointree begins, and false after that.)
  */
 void
 add_vars_to_targetlist(PlannerInfo *root, List *vars,
@@ -196,20 +195,8 @@ add_vars_to_targetlist(PlannerInfo *root, List *vars,
 			PlaceHolderInfo *phinfo = find_placeholder_info(root, phv,
 															create_new_ph);
 
-			/* Always adjust ph_needed */
 			phinfo->ph_needed = bms_add_members(phinfo->ph_needed,
 												where_needed);
-
-			/*
-			 * If we are creating PlaceHolderInfos, mark them with the correct
-			 * maybe-needed locations.	Otherwise, it's too late to change
-			 * that, so we'd better not have set ph_needed to more than
-			 * ph_may_need.
-			 */
-			if (create_new_ph)
-				mark_placeholder_maybe_needed(root, phinfo, where_needed);
-			else
-				Assert(bms_is_subset(phinfo->ph_needed, phinfo->ph_may_need));
 		}
 		else
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(node));
@@ -235,7 +222,7 @@ add_vars_to_targetlist(PlannerInfo *root, List *vars,
  * means setting suitable where_needed values for them.
  *
  * This has to run before deconstruct_jointree, since it might result in
- * creation of PlaceHolderInfos or extension of their ph_may_need sets.
+ * creation of PlaceHolderInfos.
  */
 void
 find_lateral_references(PlannerInfo *root)
@@ -1005,11 +992,11 @@ make_outerjoininfo(PlannerInfo *root,
 
 	/*
 	 * Examine PlaceHolderVars.  If a PHV is supposed to be evaluated within
-	 * this join's nullable side, and it may get used above this join, then
-	 * ensure that min_righthand contains the full eval_at set of the PHV.
-	 * This ensures that the PHV actually can be evaluated within the RHS.
-	 * Note that this works only because we should already have determined the
-	 * final eval_at level for any PHV syntactically within this join.
+	 * this join's nullable side, then ensure that min_righthand contains the
+	 * full eval_at set of the PHV.  This ensures that the PHV actually can be
+	 * evaluated within the RHS.  Note that this works only because we should
+	 * already have determined the final eval_at level for any PHV
+	 * syntactically within this join.
 	 */
 	foreach(l, root->placeholder_list)
 	{
@@ -1018,11 +1005,6 @@ make_outerjoininfo(PlannerInfo *root,
 
 		/* Ignore placeholder if it didn't syntactically come from RHS */
 		if (!bms_is_subset(ph_syn_level, right_rels))
-			continue;
-
-		/* We can also ignore it if it's certainly not used above this join */
-		/* XXX this test is probably overly conservative */
-		if (bms_is_subset(phinfo->ph_may_need, min_righthand))
 			continue;
 
 		/* Else, prevent join from being formed before we eval the PHV */
