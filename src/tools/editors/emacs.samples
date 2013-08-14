@@ -1,121 +1,71 @@
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; This file contains several examples of how to set up emacs and/or xemacs
-;;; to edit PostgreSQL code.
-;;;
-;;; Whichever set you choose would go in your .emacs file or equivalent.
-;;;
-;;; You only need one of these.
-;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; -*- mode: emacs-lisp -*-
+
+;; This file contains code to set up Emacs to edit PostgreSQL source
+;; code.  Copy these snippets into your .emacs file or equivalent, or
+;; use load-file to load this file directly.
+;;
+;; Note also that there is a .dir-locals.el file at the top of the
+;; PostgreSQL source tree, which contains many of the settings shown
+;; here (but not all, mainly because not all settings are allowed as
+;; local variables).  So for light editing, you might not need any
+;; additional Emacs configuration.
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; C files
 
-;;; Mode for C files to match src/tools/pgindent/pgindent formatting
-
-;;; This set is known to work with old versions of emacs
-
-(setq auto-mode-alist
-  (cons '("\\(postgres\\|pgsql\\).*\\.[ch]\\'" . pgsql-c-mode)
-        auto-mode-alist))
-(setq auto-mode-alist
-  (cons '("\\(postgres\\|pgsql\\).*\\.cc\\'" . pgsql-c-mode)
-        auto-mode-alist))
-
-(defun pgsql-c-mode ()
-  ;; sets up formatting for PostgreSQL C code
-  (interactive)
-  (c-mode)
-  (setq-default tab-width 4)
-  (c-set-style "bsd")             ; set c-basic-offset to 4, plus other stuff
-  (c-set-offset 'case-label '+)   ; tweak case indent to match PG custom
-  (setq fill-column 79)           ; matches what pgindent does
-  (setq indent-tabs-mode t))      ; make sure we keep tabs when indenting
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;; Similar approach, known to work with xemacs
-;;; Use of a named style makes it easy to use the style elsewhere
-
-(c-add-style "pgsql"
-                      '("bsd"
-                                 (fill-column . 79)
-                                 (indent-tabs-mode . t)
-                                 (c-basic-offset   . 4)
-                                 (tab-width . 4)
-                                 (c-offsets-alist .
-                                            ((case-label . +)))
-                      )
-                      nil ) ; t = set this mode, nil = don't
-
-(defun pgsql-c-mode ()
-  (c-mode)
-  (c-set-style "pgsql")
-)
-
-(setq auto-mode-alist
-  (cons '("\\(postgres\\|pgsql\\).*\\.[chyl]\\'" . pgsql-c-mode)
-        auto-mode-alist))
-(setq auto-mode-alist
-  (cons '("\\(postgres\\|pgsql\\).*\\.cc\\'" . pgsql-c-mode)
-        auto-mode-alist))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;; Slightly different approach - use a hook instead of a mode
+;; Style that matches the formatting used by
+;; src/tools/pgindent/pgindent.  Many extension projects also use this
+;; style.
+(c-add-style "postgresql"
+             '("bsd"
+               (c-auto-align-backslashes . nil)
+               (c-basic-offset . 4)
+               (c-offsets-alist . ((case-label . +)
+                                   (label . -)
+                                   (statement-case-open . +)))
+               (fill-column . 78)
+               (indent-tabs-mode . t)
+               (tab-width . 4)))
 
 (add-hook 'c-mode-hook
-	  (function
-	   (lambda nil
-	     (if (string-match "postgresql" buffer-file-name)
-		 (progn
-		   (c-set-style "bsd")
-		   (setq c-basic-offset 4)
-		   (setq tab-width 4)
-		   (c-set-offset 'case-label '+)
-		   (setq fill-column 79)
-		   (setq indent-tabs-mode t)
-		   )
-	       ))))
+          (defun postgresql-c-mode-hook ()
+            (when (string-match "/postgres\\(ql\\)?/" buffer-file-name)
+              (c-set-style "postgresql"))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;; Mode for Perl files to match src/tools/pgindent/perltidyrc formatting
+;;; Perl files
 
+;; Style that matches the formatting used by
+;; src/tools/pgindent/perltidyrc.
 (defun pgsql-perl-style ()
   "Perl style adjusted for PostgreSQL project"
   (interactive)
-  (setq tab-width 4)
-  (setq perl-indent-level 4)
-  (setq perl-continued-statement-offset 4)
-  (setq perl-continued-brace-offset 4)
-  (setq perl-brace-offset 0)
   (setq perl-brace-imaginary-offset 0)
-  (setq perl-label-offset -2))
+  (setq perl-brace-offset 0)
+  (setq perl-continued-brace-offset 4)
+  (setq perl-continued-statement-offset 4)
+  (setq perl-indent-level 4)
+  (setq perl-label-offset -2)
+  (setq tab-width 4))
 
 (add-hook 'perl-mode-hook
-           (lambda ()
-             (if (string-match "postgresql" buffer-file-name)
-                 (pgsql-perl-style))))
+          (defun postgresql-perl-mode-hook ()
+             (when (string-match "/postgres\\(ql\\)?/" buffer-file-name)
+               (pgsql-perl-style))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;; To work on the documentation, the following (or a variant, as above)
-;;; can be helpful.
+;;; documentation files
 
-(defun pgsql-sgml-mode ()
-  "SGML mode adjusted for PostgreSQL project"
-  (interactive)
-  (sgml-mode)
+(add-hook 'sgml-mode-hook
+          (defun postgresql-sgml-mode-hook ()
+             (when (string-match "/postgres\\(ql\\)?/" buffer-file-name)
+               (setq fill-column 78)
+               (setq indent-tabs-mode nil)
+               (setq sgml-basic-offset 1))))
 
-  (setq indent-tabs-mode nil)
-  (setq sgml-basic-offset 1)
-)
 
-(setq auto-mode-alist
-  (cons '("\\(postgres\\|pgsql\\).*\\.sgml\\'" . pgsql-sgml-mode)
-        auto-mode-alist))
+;;; Makefiles
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; use GNU make mode instead of plain make mode
+(add-to-list 'auto-mode-alist '("/postgres\\(ql\\)?/.*Makefile.*" . makefile-gmake-mode))
+(add-to-list 'auto-mode-alist '("/postgres\\(ql\\)?/.*\\.mk\\'" . makefile-gmake-mode))
