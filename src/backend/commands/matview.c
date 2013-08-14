@@ -178,9 +178,6 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("CONCURRENTLY and WITH NO DATA options cannot be used together")));
 
-	/* We're not using materialized views in the system catalogs. */
-	Assert(!IsSystemRelation(matviewRel));
-
 	/* We don't allow an oid column for a materialized view. */
 	Assert(!matviewRel->rd_rel->relhasoids);
 
