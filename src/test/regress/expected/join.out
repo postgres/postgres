@@ -3617,6 +3617,58 @@ select * from
          Output: (COALESCE((COALESCE(b.q2, 42::bigint)), d.q2))
 (26 rows)
 
+-- case that breaks the old ph_may_need optimization
+explain (verbose, costs off)
+select c.*,a.*,ss1.q1,ss2.q1,ss3.* from
+  int8_tbl c left join (
+    int8_tbl a left join
+      (select q1, coalesce(q2,f1) as x from int8_tbl b, int4_tbl b2
+       where q1 < f1) ss1
+      on a.q2 = ss1.q1
+    cross join
+    lateral (select q1, coalesce(ss1.x,q2) as y from int8_tbl d) ss2
+  ) on c.q2 = ss2.q1,
+  lateral (select * from int4_tbl i where ss2.y > f1) ss3;
+                                        QUERY PLAN                                         
+-------------------------------------------------------------------------------------------
+ Hash Right Join
+   Output: c.q1, c.q2, a.q1, a.q2, b.q1, d.q1, i.f1
+   Hash Cond: (d.q1 = c.q2)
+   Filter: ((COALESCE((COALESCE(b.q2, (b2.f1)::bigint)), d.q2)) > i.f1)
+   ->  Nested Loop
+         Output: a.q1, a.q2, b.q1, d.q1, COALESCE((COALESCE(b.q2, (b2.f1)::bigint)), d.q2)
+         ->  Hash Right Join
+               Output: a.q1, a.q2, b.q1, (COALESCE(b.q2, (b2.f1)::bigint))
+               Hash Cond: (b.q1 = a.q2)
+               ->  Nested Loop
+                     Output: b.q1, COALESCE(b.q2, (b2.f1)::bigint)
+                     Join Filter: (b.q1 < b2.f1)
+                     ->  Seq Scan on public.int8_tbl b
+                           Output: b.q1, b.q2
+                     ->  Materialize
+                           Output: b2.f1
+                           ->  Seq Scan on public.int4_tbl b2
+                                 Output: b2.f1
+               ->  Hash
+                     Output: a.q1, a.q2
+                     ->  Seq Scan on public.int8_tbl a
+                           Output: a.q1, a.q2
+         ->  Materialize
+               Output: d.q1, d.q2
+               ->  Seq Scan on public.int8_tbl d
+                     Output: d.q1, d.q2
+   ->  Hash
+         Output: c.q1, c.q2, i.f1
+         ->  Nested Loop
+               Output: c.q1, c.q2, i.f1
+               ->  Seq Scan on public.int8_tbl c
+                     Output: c.q1, c.q2
+               ->  Materialize
+                     Output: i.f1
+                     ->  Seq Scan on public.int4_tbl i
+                           Output: i.f1
+(36 rows)
+
 -- test some error cases where LATERAL should have been used but wasn't
 select f1,g from int4_tbl a, (select f1 as g) ss;
 ERROR:  column "f1" does not exist

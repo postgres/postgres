@@ -388,8 +388,6 @@ remove_rel_from_query(PlannerInfo *root, int relid, Relids joinrelids)
 			phinfo->ph_eval_at = bms_add_member(phinfo->ph_eval_at, relid);
 
 		phinfo->ph_needed = bms_del_member(phinfo->ph_needed, relid);
-		/* ph_may_need probably isn't used after this, but fix it anyway */
-		phinfo->ph_may_need = bms_del_member(phinfo->ph_may_need, relid);
 	}
 
 	/*
