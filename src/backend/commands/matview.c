@@ -144,11 +144,7 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 				 errmsg("\"%s\" is not a materialized view",
 						RelationGetRelationName(matviewRel))));
 
-	/*
-	 * We're not using materialized views in the system catalogs.
-	 */
-	Assert(!IsSystemRelation(matviewRel));
-
+	/* We don't allow an oid column for a materialized view. */
 	Assert(!matviewRel->rd_rel->relhasoids);
 
 	/*
