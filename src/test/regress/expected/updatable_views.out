@@ -136,83 +136,83 @@ SELECT table_name, column_name, is_updatable
 DELETE FROM ro_view1;
 ERROR:  cannot delete from view "ro_view1"
 DETAIL:  Views containing DISTINCT are not automatically updatable.
-HINT:  To make the view updatable, provide an unconditional ON DELETE DO INSTEAD rule or an INSTEAD OF DELETE trigger.
+HINT:  To enable deleting from the view, provide an INSTEAD OF DELETE trigger or an unconditional ON DELETE DO INSTEAD rule.
 DELETE FROM ro_view2;
 ERROR:  cannot delete from view "ro_view2"
 DETAIL:  Views containing GROUP BY are not automatically updatable.
-HINT:  To make the view updatable, provide an unconditional ON DELETE DO INSTEAD rule or an INSTEAD OF DELETE trigger.
+HINT:  To enable deleting from the view, provide an INSTEAD OF DELETE trigger or an unconditional ON DELETE DO INSTEAD rule.
 DELETE FROM ro_view3;
 ERROR:  cannot delete from view "ro_view3"
 DETAIL:  Views containing HAVING are not automatically updatable.
-HINT:  To make the view updatable, provide an unconditional ON DELETE DO INSTEAD rule or an INSTEAD OF DELETE trigger.
+HINT:  To enable deleting from the view, provide an INSTEAD OF DELETE trigger or an unconditional ON DELETE DO INSTEAD rule.
 DELETE FROM ro_view4;
 ERROR:  cannot delete from view "ro_view4"
 DETAIL:  Views that return columns that are not columns of their base relation are not automatically updatable.
-HINT:  To make the view updatable, provide an unconditional ON DELETE DO INSTEAD rule or an INSTEAD OF DELETE trigger.
+HINT:  To enable deleting from the view, provide an INSTEAD OF DELETE trigger or an unconditional ON DELETE DO INSTEAD rule.
 DELETE FROM ro_view5;
 ERROR:  cannot delete from view "ro_view5"
 DETAIL:  Views that return columns that are not columns of their base relation are not automatically updatable.
-HINT:  To make the view updatable, provide an unconditional ON DELETE DO INSTEAD rule or an INSTEAD OF DELETE trigger.
+HINT:  To enable deleting from the view, provide an INSTEAD OF DELETE trigger or an unconditional ON DELETE DO INSTEAD rule.
 DELETE FROM ro_view6;
 ERROR:  cannot delete from view "ro_view6"
 DETAIL:  Views containing UNION, INTERSECT, or EXCEPT are not automatically updatable.
-HINT:  To make the view updatable, provide an unconditional ON DELETE DO INSTEAD rule or an INSTEAD OF DELETE trigger.
+HINT:  To enable deleting from the view, provide an INSTEAD OF DELETE trigger or an unconditional ON DELETE DO INSTEAD rule.
 UPDATE ro_view7 SET a=a+1;
 ERROR:  cannot update view "ro_view7"
 DETAIL:  Views containing WITH are not automatically updatable.
-HINT:  To make the view updatable, provide an unconditional ON UPDATE DO INSTEAD rule or an INSTEAD OF UPDATE trigger.
+HINT:  To enable updating the view, provide an INSTEAD OF UPDATE trigger or an unconditional ON UPDATE DO INSTEAD rule.
 UPDATE ro_view8 SET a=a+1;
 ERROR:  cannot update view "ro_view8"
 DETAIL:  Views containing LIMIT or OFFSET are not automatically updatable.
-HINT:  To make the view updatable, provide an unconditional ON UPDATE DO INSTEAD rule or an INSTEAD OF UPDATE trigger.
+HINT:  To enable updating the view, provide an INSTEAD OF UPDATE trigger or an unconditional ON UPDATE DO INSTEAD rule.
 UPDATE ro_view9 SET a=a+1;
 ERROR:  cannot update view "ro_view9"
 DETAIL:  Views containing LIMIT or OFFSET are not automatically updatable.
-HINT:  To make the view updatable, provide an unconditional ON UPDATE DO INSTEAD rule or an INSTEAD OF UPDATE trigger.
+HINT:  To enable updating the view, provide an INSTEAD OF UPDATE trigger or an unconditional ON UPDATE DO INSTEAD rule.
 UPDATE ro_view10 SET a=a+1;
 ERROR:  cannot update view "ro_view10"
 DETAIL:  Views that do not select from a single table or view are not automatically updatable.
-HINT:  To make the view updatable, provide an unconditional ON UPDATE DO INSTEAD rule or an INSTEAD OF UPDATE trigger.
+HINT:  To enable updating the view, provide an INSTEAD OF UPDATE trigger or an unconditional ON UPDATE DO INSTEAD rule.
 UPDATE ro_view11 SET a=a+1;
 ERROR:  cannot update view "ro_view11"
 DETAIL:  Views that do not select from a single table or view are not automatically updatable.
-HINT:  To make the view updatable, provide an unconditional ON UPDATE DO INSTEAD rule or an INSTEAD OF UPDATE trigger.
+HINT:  To enable updating the view, provide an INSTEAD OF UPDATE trigger or an unconditional ON UPDATE DO INSTEAD rule.
 UPDATE ro_view12 SET a=a+1;
 ERROR:  cannot update view "ro_view12"
 DETAIL:  Views that do not select from a single table or view are not automatically updatable.
-HINT:  To make the view updatable, provide an unconditional ON UPDATE DO INSTEAD rule or an INSTEAD OF UPDATE trigger.
+HINT:  To enable updating the view, provide an INSTEAD OF UPDATE trigger or an unconditional ON UPDATE DO INSTEAD rule.
 INSERT INTO ro_view13 VALUES (3, 'Row 3');
 ERROR:  cannot insert into view "ro_view13"
 DETAIL:  Views that do not select from a single table or view are not automatically updatable.
-HINT:  To make the view insertable, provide an unconditional ON INSERT DO INSTEAD rule or an INSTEAD OF INSERT trigger.
+HINT:  To enable inserting into the view, provide an INSTEAD OF INSERT trigger or an unconditional ON INSERT DO INSTEAD rule.
 INSERT INTO ro_view14 VALUES (null);
 ERROR:  cannot insert into view "ro_view14"
 DETAIL:  Views that return system columns are not automatically updatable.
-HINT:  To make the view insertable, provide an unconditional ON INSERT DO INSTEAD rule or an INSTEAD OF INSERT trigger.
+HINT:  To enable inserting into the view, provide an INSTEAD OF INSERT trigger or an unconditional ON INSERT DO INSTEAD rule.
 INSERT INTO ro_view15 VALUES (3, 'ROW 3');
 ERROR:  cannot insert into view "ro_view15"
 DETAIL:  Views that return columns that are not columns of their base relation are not automatically updatable.
-HINT:  To make the view insertable, provide an unconditional ON INSERT DO INSTEAD rule or an INSTEAD OF INSERT trigger.
+HINT:  To enable inserting into the view, provide an INSTEAD OF INSERT trigger or an unconditional ON INSERT DO INSTEAD rule.
 INSERT INTO ro_view16 VALUES (3, 'Row 3', 3);
 ERROR:  cannot insert into view "ro_view16"
 DETAIL:  Views that return the same column more than once are not automatically updatable.
-HINT:  To make the view insertable, provide an unconditional ON INSERT DO INSTEAD rule or an INSTEAD OF INSERT trigger.
+HINT:  To enable inserting into the view, provide an INSTEAD OF INSERT trigger or an unconditional ON INSERT DO INSTEAD rule.
 INSERT INTO ro_view17 VALUES (3, 'ROW 3');
 ERROR:  cannot insert into view "ro_view1"
 DETAIL:  Views containing DISTINCT are not automatically updatable.
-HINT:  To make the view insertable, provide an unconditional ON INSERT DO INSTEAD rule or an INSTEAD OF INSERT trigger.
+HINT:  To enable inserting into the view, provide an INSTEAD OF INSERT trigger or an unconditional ON INSERT DO INSTEAD rule.
 INSERT INTO ro_view18 VALUES (3, 'ROW 3');
 ERROR:  cannot insert into view "ro_view18"
 DETAIL:  Security-barrier views are not automatically updatable.
-HINT:  To make the view insertable, provide an unconditional ON INSERT DO INSTEAD rule or an INSTEAD OF INSERT trigger.
+HINT:  To enable inserting into the view, provide an INSTEAD OF INSERT trigger or an unconditional ON INSERT DO INSTEAD rule.
 DELETE FROM ro_view19;
 ERROR:  cannot delete from view "ro_view19"
 DETAIL:  Views that do not select from a single table or view are not automatically updatable.
-HINT:  To make the view updatable, provide an unconditional ON DELETE DO INSTEAD rule or an INSTEAD OF DELETE trigger.
+HINT:  To enable deleting from the view, provide an INSTEAD OF DELETE trigger or an unconditional ON DELETE DO INSTEAD rule.
 UPDATE ro_view20 SET max_value=1000;
 ERROR:  cannot update view "ro_view20"
 DETAIL:  Views that do not select from a single table or view are not automatically updatable.
-HINT:  To make the view updatable, provide an unconditional ON UPDATE DO INSTEAD rule or an INSTEAD OF UPDATE trigger.
+HINT:  To enable updating the view, provide an INSTEAD OF UPDATE trigger or an unconditional ON UPDATE DO INSTEAD rule.
 DROP TABLE base_tbl CASCADE;
 NOTICE:  drop cascades to 16 other objects
 DETAIL:  drop cascades to view ro_view1

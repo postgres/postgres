@@ -2344,7 +2344,7 @@ rewriteTargetView(Query *parsetree, Relation view)
 						 errmsg("cannot insert into view \"%s\"",
 								RelationGetRelationName(view)),
 						 errdetail_internal("%s", _(auto_update_detail)),
-						 errhint("To make the view insertable, provide an unconditional ON INSERT DO INSTEAD rule or an INSTEAD OF INSERT trigger.")));
+						 errhint("To enable inserting into the view, provide an INSTEAD OF INSERT trigger or an unconditional ON INSERT DO INSTEAD rule.")));
 				break;
 			case CMD_UPDATE:
 				ereport(ERROR,
@@ -2352,7 +2352,7 @@ rewriteTargetView(Query *parsetree, Relation view)
 						 errmsg("cannot update view \"%s\"",
 								RelationGetRelationName(view)),
 						 errdetail_internal("%s", _(auto_update_detail)),
-						 errhint("To make the view updatable, provide an unconditional ON UPDATE DO INSTEAD rule or an INSTEAD OF UPDATE trigger.")));
+						 errhint("To enable updating the view, provide an INSTEAD OF UPDATE trigger or an unconditional ON UPDATE DO INSTEAD rule.")));
 				break;
 			case CMD_DELETE:
 				ereport(ERROR,
@@ -2360,7 +2360,7 @@ rewriteTargetView(Query *parsetree, Relation view)
 						 errmsg("cannot delete from view \"%s\"",
 								RelationGetRelationName(view)),
 						 errdetail_internal("%s", _(auto_update_detail)),
-						 errhint("To make the view updatable, provide an unconditional ON DELETE DO INSTEAD rule or an INSTEAD OF DELETE trigger.")));
+						 errhint("To enable deleting from the view, provide an INSTEAD OF DELETE trigger or an unconditional ON DELETE DO INSTEAD rule.")));
 				break;
 			default:
 				elog(ERROR, "unrecognized CmdType: %d",
