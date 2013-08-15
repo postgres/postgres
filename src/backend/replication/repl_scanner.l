@@ -83,8 +83,8 @@ TIMELINE_HISTORY	{ return K_TIMELINE_HISTORY; }
 " "				;
 
 {digit}+		{
-					yylval.intval = pg_atoi(yytext, sizeof(int32), 0);
-					return ICONST;
+					yylval.uintval = strtoul(yytext, NULL, 10);
+					return UCONST;
 				}
 
 {hexdigit}+\/{hexdigit}+		{
