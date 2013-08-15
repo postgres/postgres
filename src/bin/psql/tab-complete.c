@@ -894,7 +894,7 @@ psql_completion(char *text, int start, int end)
 		"\\a", "\\connect", "\\conninfo", "\\C", "\\cd", "\\copy", "\\copyright",
 		"\\d", "\\da", "\\db", "\\dc", "\\dC", "\\dd", "\\dD", "\\des", "\\det", "\\deu", "\\dew", "\\df",
 		"\\dF", "\\dFd", "\\dFp", "\\dFt", "\\dg", "\\di", "\\dl", "\\dL",
-		"\\dn", "\\do", "\\dp", "\\drds", "\\ds", "\\dS", "\\dt", "\\dT", "\\dv", "\\du",
+		"\\dn", "\\do", "\\dp", "\\drds", "\\ds", "\\dS", "\\dt", "\\dT", "\\dv", "\\du", "\\dx",
 		"\\e", "\\echo", "\\ef", "\\encoding",
 		"\\f", "\\g", "\\gset", "\\h", "\\help", "\\H", "\\i", "\\ir", "\\l",
 		"\\lo_import", "\\lo_export", "\\lo_list", "\\lo_unlink",
@@ -3320,6 +3320,8 @@ psql_completion(char *text, int start, int end)
 		COMPLETE_WITH_QUERY(Query_for_list_of_roles);
 	else if (strncmp(prev_wd, "\\dv", strlen("\\dv")) == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_views, NULL);
+	else if (strncmp(prev_wd, "\\dx", strlen("\\dx")) == 0)
+		COMPLETE_WITH_QUERY(Query_for_list_of_extensions);
 	else if (strncmp(prev_wd, "\\dm", strlen("\\dm")) == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_matviews, NULL);
 
