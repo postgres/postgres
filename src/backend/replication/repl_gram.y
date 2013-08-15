@@ -56,7 +56,7 @@ Node *replication_parse_result;
 %union {
 		char					*str;
 		bool					boolval;
-		int32					intval;
+		uint32					uintval;
 
 		XLogRecPtr				recptr;
 		Node					*node;
@@ -66,7 +66,7 @@ Node *replication_parse_result;
 
 /* Non-keyword tokens */
 %token <str> SCONST
-%token <intval> ICONST
+%token <uintval> UCONST
 %token <recptr> RECPTR
 
 /* Keyword tokens. */
@@ -85,7 +85,7 @@ Node *replication_parse_result;
 %type <node>	base_backup start_replication identify_system timeline_history
 %type <list>	base_backup_opt_list
 %type <defelt>	base_backup_opt
-%type <intval>	opt_timeline
+%type <uintval>	opt_timeline
 %%
 
 firstcmd: command opt_semicolon
@@ -175,12 +175,12 @@ start_replication:
 			;
 
 opt_timeline:
-			K_TIMELINE ICONST
+			K_TIMELINE UCONST
 				{
 					if ($2 <= 0)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-								 (errmsg("invalid timeline %d", $2))));
+								 (errmsg("invalid timeline %u", $2))));
 					$$ = $2;
 				}
 				| /* nothing */			{ $$ = 0; }
@@ -190,14 +190,14 @@ opt_timeline:
  * TIMELINE_HISTORY %d
  */
 timeline_history:
-			K_TIMELINE_HISTORY ICONST
+			K_TIMELINE_HISTORY UCONST
 				{
 					TimeLineHistoryCmd *cmd;
 
 					if ($2 <= 0)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-								 (errmsg("invalid timeline %d", $2))));
+								 (errmsg("invalid timeline %u", $2))));
 
 					cmd = makeNode(TimeLineHistoryCmd);
 					cmd->timeline = $2;
