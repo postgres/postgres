@@ -6,7 +6,7 @@
 
   <note>
    <title>Release Date</title>
-   <simpara>2013-XX-XX, CURRENT AS OF 2013-05-03</simpara>
+   <simpara>2013-XX-XX, CURRENT AS OF 2013-08-16</simpara>
   </note>
 
   <sect2>
@@ -136,6 +136,33 @@
         Previously, <acronym>WAL</> files with names ending in <literal>FF</>
         were not used.  If you have <acronym>WAL</> backup or restore scripts
         that took that skipping into account, they will need to be adjusted.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow <link
+        linkend="functions-formatting-table"><function>to_char()</></link>
+        to properly handle <literal>D</> (locale-specific decimal point) and
+        <literal>FM</> (fill mode) specifications in locales where a
+        period is a group separator and not a decimal point (Tom Lane)
+       </para>
+
+       <para>
+        Previously, a period group separator would be misinterpreted as
+        a decimal point in such locales.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Fix <literal>STRICT</> non-set-returning functions that take
+        set-returning functions as arguments to properly return null
+        rows (Tom Lane)
+       </para>
+
+       <para>
+        Previously, rows with null values were suppressed.
        </para>
       </listitem>
 
@@ -1118,6 +1145,14 @@
 
       <listitem>
        <para>
+        Allow PL/pgSQL to access <link
+        linkend="libpq-pqresulterrorfield">constraint violation
+        details</link> as separate fields (Pavel Stehule)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Allow greater flexibility in where keywords can be used in PL/pgSQL (Tom Lane)
        </para>
       </listitem>
@@ -1773,7 +1808,7 @@
       <listitem>
        <para>
         Allow <application>pg_upgrade</> <option>--jobs</> to do
-        parallelism (Bruce Momjian)
+        parallelism (Bruce Momjian, Andrew Dunstan)
        </para>
 
        <para>
