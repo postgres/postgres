@@ -1938,7 +1938,7 @@ CheckPAMAuth(Port *port, char *user, char *password)
 	pam_port_cludge = port;
 
 	/*
-	 * Set the application data portion of the conversation struct This is
+	 * Set the application data portion of the conversation struct.  This is
 	 * later used inside the PAM conversation to pass the password to the
 	 * authentication module.
 	 */
