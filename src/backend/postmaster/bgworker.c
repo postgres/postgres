@@ -12,13 +12,24 @@
 
 #include "postgres.h"
 
+#include <unistd.h>
+#include <time.h>
+
 #include "miscadmin.h"
+#include "libpq/pqsignal.h"
 #include "postmaster/bgworker_internals.h"
 #include "storage/barrier.h"
+#include "storage/ipc.h"
+#include "storage/latch.h"
 #include "storage/lwlock.h"
 #include "storage/pmsignal.h"
+#include "storage/proc.h"
+#include "storage/procsignal.h"
 #include "storage/shmem.h"
+#include "tcop/tcopprot.h"
 #include "utils/ascii.h"
+#include "utils/ps_status.h"
+#include "utils/timeout.h"
 
 /*
  * The postmaster's list of registered background workers, in private memory.
@@ -352,6 +363,214 @@ SanityCheckBackgroundWorker(BackgroundWorker *worker, int elevel)
 	}
 
 	return true;
+}
+
+static void
+bgworker_quickdie(SIGNAL_ARGS)
+{
+	sigaddset(&BlockSig, SIGQUIT);      /* prevent nested calls */
+	PG_SETMASK(&BlockSig);
+
+	/*
+	 * We DO NOT want to run proc_exit() callbacks -- we're here because
+	 * shared memory may be corrupted, so we don't want to try to clean up our
+	 * transaction.  Just nail the windows shut and get out of town.  Now that
+	 * there's an atexit callback to prevent third-party code from breaking
+	 * things by calling exit() directly, we have to reset the callbacks
+	 * explicitly to make this work as intended.
+	 */
+	on_exit_reset();
+
+	/*
+	 * Note we do exit(0) here, not exit(2) like quickdie.  The reason is that
+	 * we don't want to be seen this worker as independently crashed, because
+	 * then postmaster would delay restarting it again afterwards.  If some
+	 * idiot DBA manually sends SIGQUIT to a random bgworker, the "dead man
+	 * switch" will ensure that postmaster sees this as a crash.
+	 */
+	exit(0);
+}
+
+/*
+ * Standard SIGTERM handler for background workers
+ */
+static void
+bgworker_die(SIGNAL_ARGS)
+{
+	PG_SETMASK(&BlockSig);
+
+	ereport(FATAL,
+			(errcode(ERRCODE_ADMIN_SHUTDOWN),
+			 errmsg("terminating background worker \"%s\" due to administrator command",
+					MyBgworkerEntry->bgw_name)));
+}
+
+/*
+ * Standard SIGUSR1 handler for unconnected workers
+ *
+ * Here, we want to make sure an unconnected worker will at least heed
+ * latch activity.
+ */
+static void
+bgworker_sigusr1_handler(SIGNAL_ARGS)
+{
+	int         save_errno = errno;
+
+	latch_sigusr1_handler();
+
+	errno = save_errno;
+}
+
+/*
+ * Start a new background worker
+ *
+ * This is the main entry point for background worker, to be called from
+ * postmaster.
+ */
+void
+StartBackgroundWorker(void)
+{
+	sigjmp_buf	local_sigjmp_buf;
+	char		buf[MAXPGPATH];
+	BackgroundWorker *worker = MyBgworkerEntry;
+	bgworker_main_type entrypt;
+
+	if (worker == NULL)
+		elog(FATAL, "unable to find bgworker entry");
+
+	/* we are a postmaster subprocess now */
+	IsUnderPostmaster = true;
+	IsBackgroundWorker = true;
+
+	/* reset MyProcPid */
+	MyProcPid = getpid();
+
+	/* record Start Time for logging */
+	MyStartTime = time(NULL);
+
+	/* Identify myself via ps */
+	snprintf(buf, MAXPGPATH, "bgworker: %s", worker->bgw_name);
+	init_ps_display(buf, "", "", "");
+
+	SetProcessingMode(InitProcessing);
+
+	/* Apply PostAuthDelay */
+	if (PostAuthDelay > 0)
+		pg_usleep(PostAuthDelay * 1000000L);
+
+	/*
+	 * If possible, make this process a group leader, so that the postmaster
+	 * can signal any child processes too.
+	 */
+#ifdef HAVE_SETSID
+	if (setsid() < 0)
+		elog(FATAL, "setsid() failed: %m");
+#endif
+
+	/*
+	 * Set up signal handlers.
+	 */
+	if (worker->bgw_flags & BGWORKER_BACKEND_DATABASE_CONNECTION)
+	{
+		/*
+		 * SIGINT is used to signal canceling the current action
+		 */
+		pqsignal(SIGINT, StatementCancelHandler);
+		pqsignal(SIGUSR1, procsignal_sigusr1_handler);
+		pqsignal(SIGFPE, FloatExceptionHandler);
+
+		/* XXX Any other handlers needed here? */
+	}
+	else
+	{
+		pqsignal(SIGINT, SIG_IGN);
+		pqsignal(SIGUSR1, bgworker_sigusr1_handler);
+		pqsignal(SIGFPE, SIG_IGN);
+	}
+	pqsignal(SIGTERM, bgworker_die);
+	pqsignal(SIGHUP, SIG_IGN);
+
+	pqsignal(SIGQUIT, bgworker_quickdie);
+	InitializeTimeouts();       /* establishes SIGALRM handler */
+
+	pqsignal(SIGPIPE, SIG_IGN);
+	pqsignal(SIGUSR2, SIG_IGN);
+	pqsignal(SIGCHLD, SIG_DFL);
+
+	/*
+	 * If an exception is encountered, processing resumes here.
+	 *
+	 * See notes in postgres.c about the design of this coding.
+	 */
+	if (sigsetjmp(local_sigjmp_buf, 1) != 0)
+	{
+		/* Since not using PG_TRY, must reset error stack by hand */
+		error_context_stack = NULL;
+
+		/* Prevent interrupts while cleaning up */
+		HOLD_INTERRUPTS();
+
+		/* Report the error to the server log */
+		EmitErrorReport();
+
+		/*
+		 * Do we need more cleanup here?  For shmem-connected bgworkers, we
+		 * will call InitProcess below, which will install ProcKill as exit
+		 * callback.  That will take care of releasing locks, etc.
+		 */
+
+		/* and go away */
+		proc_exit(1);
+	}
+
+	/* We can now handle ereport(ERROR) */
+	PG_exception_stack = &local_sigjmp_buf;
+
+	/* Early initialization */
+	BaseInit();
+
+	/*
+	 * If necessary, create a per-backend PGPROC struct in shared memory,
+	 * except in the EXEC_BACKEND case where this was done in
+	 * SubPostmasterMain. We must do this before we can use LWLocks (and in
+	 * the EXEC_BACKEND case we already had to do some stuff with LWLocks).
+	 */
+#ifndef EXEC_BACKEND
+	if (worker->bgw_flags & BGWORKER_SHMEM_ACCESS)
+		InitProcess();
+#endif
+
+	/*
+	 * If bgw_main is set, we use that value as the initial entrypoint.
+	 * However, if the library containing the entrypoint wasn't loaded at
+	 * postmaster startup time, passing it as a direct function pointer is
+	 * not possible.  To work around that, we allow callers for whom a
+	 * function pointer is not available to pass a library name (which will
+	 * be loaded, if necessary) and a function name (which will be looked up
+	 * in the named library).
+	 */
+	if (worker->bgw_main != NULL)
+		entrypt = worker->bgw_main;
+	else
+		entrypt = (bgworker_main_type)
+			load_external_function(worker->bgw_library_name,
+								   worker->bgw_function_name,
+								   true, NULL);
+
+	/*
+	 * Note that in normal processes, we would call InitPostgres here.  For a
+	 * worker, however, we don't know what database to connect to, yet; so we
+	 * need to wait until the user code does it via
+	 * BackgroundWorkerInitializeConnection().
+	 */
+
+	/*
+	 * Now invoke the user-defined worker code
+	 */
+	entrypt(worker->bgw_main_arg);
+
+	/* ... and if it returns, we're done */
+	proc_exit(0);
 }
 
 /*

@@ -41,6 +41,9 @@ extern void BackgroundWorkerShmemInit(void);
 extern void BackgroundWorkerStateChange(void);
 extern void ForgetBackgroundWorker(slist_mutable_iter *cur);
 
+/* Function to start a background worker, called from postmaster.c */
+extern void StartBackgroundWorker(void);
+
 #ifdef EXEC_BACKEND
 extern BackgroundWorker *BackgroundWorkerEntry(int slotno);
 #endif
