@@ -16,11 +16,91 @@
     Major enhancements include:
    </para>
 
-    <!-- This list duplicates items below, but without authors or details-->
+   <!-- This list duplicates items below, but without authors or details-->
 
-   <para>
-    ADD HERE ...
-   </para>
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Add <link linkend="SQL-CREATEMATERIALIZEDVIEW">materialized
+      views</link>
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make simple views <link
+      linkend="SQL-CREATEVIEW-updatable-views">auto-updatable</link>
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Many <type>JSON</> improvements, including the addition of <link
+      linkend="functions-json">operators and functions</link> to extract
+      values from <type>JSON</> data strings
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Implement <acronym>SQL</>-standard <link
+      linkend="queries-lateral"><literal>LATERAL</></link> option for
+      <literal>FROM</>-clause subqueries and function calls
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow <link linkend="SQL-CREATEFOREIGNDATAWRAPPER">foreign data
+      wrappers</link> to support writes (inserts/updates/deletes) on foreign
+      tables
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add a <productname>Postgres</> <link linkend="postgres-fdw">foreign
+      data wrapper</link> contrib module (Shigeru Hanada)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add support for <link linkend="event-triggers">event triggers</link>
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add optional ability to <link
+      linkend="app-initdb-data-checksums">checksum</link> data pages and
+      report corruption
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow a streaming replication standby to <link
+      linkend="protocol-replication">follow a timeline switch</link>,
+      and faster failover
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Dramatically reduce System V <link linkend="sysvipc">shared
+      memory</link> requirements
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent non-key-field row updates from locking foreign key rows
+     </para>
+    </listitem>
+
+   </itemizedlist>
 
    <para>
     The above items are explained in more detail in the sections below.
@@ -1132,6 +1212,14 @@
 
       <listitem>
        <para>
+        Allow PL/pgSQL to access <link
+        linkend="libpq-pqresulterrorfield">constraint violation
+        details</link> as separate fields (Pavel Stehule)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Allow PL/pgSQL to access the number of rows processed by
         <link linkend="SQL-COPY"><command>COPY</></link> (Pavel Stehule)
        </para>
@@ -1140,14 +1228,6 @@
         The command is <link
         linkend="plpgsql-statements-diagnostics"><command>GET DIAGNOSTICS
         x = ROW_COUNT</></link>.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow PL/pgSQL to access <link
-        linkend="libpq-pqresulterrorfield">constraint violation
-        details</link> as separate fields (Pavel Stehule)
        </para>
       </listitem>
 
@@ -1270,8 +1350,9 @@
 
       <listitem>
        <para>
-        Allow the <application>psql</> <option>--single-transaction</> mode to work when
-        reading from standard input (Fabien Coelho, Robert Haas)
+        Allow the <application>psql</> <option>--single-transaction</>
+        mode to work when reading from standard input (Fabien Coelho,
+        Robert Haas)
        </para>
 
        <para>
