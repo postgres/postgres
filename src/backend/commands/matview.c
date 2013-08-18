@@ -764,8 +764,6 @@ refresh_by_heap_swap(Oid matviewOid, Oid OIDNewHeap)
 {
 	finish_heap_swap(matviewOid, OIDNewHeap, false, false, true, true,
 					 RecentXmin, ReadNextMultiXactId());
-
-	RelationCacheInvalidateEntry(matviewOid);
 }
 
 
