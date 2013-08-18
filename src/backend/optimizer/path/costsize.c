@@ -3943,10 +3943,9 @@ set_rel_width(PlannerInfo *root, RelOptInfo *rel)
 
 		/*
 		 * Ordinarily, a Var in a rel's reltargetlist must belong to that rel;
-		 * but there are corner cases involving LATERAL references in
-		 * appendrel members where that isn't so (see set_append_rel_size()).
-		 * If the Var has the wrong varno, fall through to the generic case
-		 * (it doesn't seem worth the trouble to be any smarter).
+		 * but there are corner cases involving LATERAL references where that
+		 * isn't so.  If the Var has the wrong varno, fall through to the
+		 * generic case (it doesn't seem worth the trouble to be any smarter).
 		 */
 		if (IsA(node, Var) &&
 			((Var *) node)->varno == rel->relid)

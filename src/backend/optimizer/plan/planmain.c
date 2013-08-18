@@ -144,12 +144,6 @@ query_planner(PlannerInfo *root, List *tlist,
 	joinlist = deconstruct_jointree(root);
 
 	/*
-	 * Create the LateralJoinInfo list now that we have finalized
-	 * PlaceHolderVar eval levels.
-	 */
-	create_lateral_join_info(root);
-
-	/*
 	 * Reconsider any postponed outer-join quals now that we have built up
 	 * equivalence classes.  (This could result in further additions or
 	 * mergings of classes.)
@@ -192,6 +186,13 @@ query_planner(PlannerInfo *root, List *tlist,
 	 * placeholder is evaluatable at a base rel.
 	 */
 	add_placeholders_to_base_rels(root);
+
+	/*
+	 * Create the LateralJoinInfo list now that we have finalized
+	 * PlaceHolderVar eval levels and made any necessary additions to the
+	 * lateral_vars lists for lateral references within PlaceHolderVars.
+	 */
+	create_lateral_join_info(root);
 
 	/*
 	 * We should now have size estimates for every actual table involved in

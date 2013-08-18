@@ -161,8 +161,13 @@ pull_varnos_walker(Node *node, pull_varnos_context *context)
 	if (IsA(node, PlaceHolderVar))
 	{
 		/*
-		 * Normally, we can just take the varnos in the contained expression.
-		 * But if it is variable-free, use the PHV's syntactic relids.
+		 * A PlaceHolderVar acts as a variable of its syntactic scope, or
+		 * lower than that if it references only a subset of the rels in its
+		 * syntactic scope.  It might also contain lateral references, but we
+		 * should ignore such references when computing the set of varnos in
+		 * an expression tree.	Also, if the PHV contains no variables within
+		 * its syntactic scope, it will be forced to be evaluated exactly at
+		 * the syntactic scope, so take that as the relid set.
 		 */
 		PlaceHolderVar *phv = (PlaceHolderVar *) node;
 		pull_varnos_context subcontext;
@@ -170,12 +175,15 @@ pull_varnos_walker(Node *node, pull_varnos_context *context)
 		subcontext.varnos = NULL;
 		subcontext.sublevels_up = context->sublevels_up;
 		(void) pull_varnos_walker((Node *) phv->phexpr, &subcontext);
-
-		if (bms_is_empty(subcontext.varnos) &&
-			phv->phlevelsup == context->sublevels_up)
-			context->varnos = bms_add_members(context->varnos, phv->phrels);
-		else
-			context->varnos = bms_join(context->varnos, subcontext.varnos);
+		if (phv->phlevelsup == context->sublevels_up)
+		{
+			subcontext.varnos = bms_int_members(subcontext.varnos,
+												phv->phrels);
+			if (bms_is_empty(subcontext.varnos))
+				context->varnos = bms_add_members(context->varnos,
+												  phv->phrels);
+		}
+		context->varnos = bms_join(context->varnos, subcontext.varnos);
 		return false;
 	}
 	if (IsA(node, Query))

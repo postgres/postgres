@@ -540,7 +540,6 @@ postgresGetForeignPaths(PlannerInfo *root,
 {
 	PgFdwRelationInfo *fpinfo = (PgFdwRelationInfo *) baserel->fdw_private;
 	ForeignPath *path;
-	Relids		lateral_referencers;
 	List	   *join_quals;
 	Relids		required_outer;
 	double		rows;
@@ -579,34 +578,13 @@ postgresGetForeignPaths(PlannerInfo *root,
 	 * consider combinations of clauses, probably.
 	 */
 
-	/*
-	 * If there are any rels that have LATERAL references to this one, we
-	 * cannot use join quals referencing them as remote quals for this one,
-	 * since such rels would have to be on the inside not the outside of a
-	 * nestloop join relative to this one.	Create a Relids set listing all
-	 * such rels, for use in checks of potential join clauses.
-	 */
-	lateral_referencers = NULL;
-	foreach(lc, root->lateral_info_list)
-	{
-		LateralJoinInfo *ljinfo = (LateralJoinInfo *) lfirst(lc);
-
-		if (bms_is_member(baserel->relid, ljinfo->lateral_lhs))
-			lateral_referencers = bms_add_member(lateral_referencers,
-												 ljinfo->lateral_rhs);
-	}
-
 	/* Scan the rel's join clauses */
 	foreach(lc, baserel->joininfo)
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
 
 		/* Check if clause can be moved to this rel */
-		if (!join_clause_is_movable_to(rinfo, baserel->relid))
-			continue;
-
-		/* Not useful if it conflicts with any LATERAL references */
-		if (bms_overlap(rinfo->clause_relids, lateral_referencers))
+		if (!join_clause_is_movable_to(rinfo, baserel))
 			continue;
 
 		/* See if it is safe to send to remote */
@@ -667,7 +645,7 @@ postgresGetForeignPaths(PlannerInfo *root,
 															 baserel,
 												   ec_member_matches_foreign,
 															 (void *) &arg,
-														lateral_referencers);
+											   baserel->lateral_referencers);
 
 			/* Done if there are no more expressions in the foreign rel */
 			if (arg.current == NULL)
@@ -682,11 +660,8 @@ postgresGetForeignPaths(PlannerInfo *root,
 				RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
 
 				/* Check if clause can be moved to this rel */
-				if (!join_clause_is_movable_to(rinfo, baserel->relid))
+				if (!join_clause_is_movable_to(rinfo, baserel))
 					continue;
-
-				/* Shouldn't conflict with any LATERAL references */
-				Assert(!bms_overlap(rinfo->clause_relids, lateral_referencers));
 
 				/* See if it is safe to send to remote */
 				if (!is_foreign_expr(root, baserel, rinfo->clause))

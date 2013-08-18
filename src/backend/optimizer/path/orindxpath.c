@@ -103,7 +103,7 @@ create_or_index_quals(PlannerInfo *root, RelOptInfo *rel)
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(i);
 
 		if (restriction_is_or_clause(rinfo) &&
-			join_clause_is_movable_to(rinfo, rel->relid))
+			join_clause_is_movable_to(rinfo, rel))
 		{
 			/*
 			 * Use the generate_bitmap_or_paths() machinery to estimate the

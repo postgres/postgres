@@ -995,6 +995,47 @@ select v.* from
   left join int4_tbl z on z.f1 = x.q2,
   lateral (select x.q1,y.q1 from dual union all select x.q2,y.q2 from dual) v(vx,vy);
 
+explain (verbose, costs off)
+select * from
+  int8_tbl a left join
+  lateral (select *, a.q2 as x from int8_tbl b) ss on a.q2 = ss.q1;
+select * from
+  int8_tbl a left join
+  lateral (select *, a.q2 as x from int8_tbl b) ss on a.q2 = ss.q1;
+explain (verbose, costs off)
+select * from
+  int8_tbl a left join
+  lateral (select *, coalesce(a.q2, 42) as x from int8_tbl b) ss on a.q2 = ss.q1;
+select * from
+  int8_tbl a left join
+  lateral (select *, coalesce(a.q2, 42) as x from int8_tbl b) ss on a.q2 = ss.q1;
+
+-- lateral can result in join conditions appearing below their
+-- real semantic level
+explain (verbose, costs off)
+select * from int4_tbl i left join
+  lateral (select * from int2_tbl j where i.f1 = j.f1) k on true;
+select * from int4_tbl i left join
+  lateral (select * from int2_tbl j where i.f1 = j.f1) k on true;
+explain (verbose, costs off)
+select * from int4_tbl i left join
+  lateral (select coalesce(i) from int2_tbl j where i.f1 = j.f1) k on true;
+select * from int4_tbl i left join
+  lateral (select coalesce(i) from int2_tbl j where i.f1 = j.f1) k on true;
+
+-- lateral reference in a PlaceHolderVar evaluated at join level
+explain (verbose, costs off)
+select * from
+  int8_tbl a left join lateral
+  (select b.q1 as bq1, c.q1 as cq1, least(a.q1,b.q1,c.q1) from
+   int8_tbl b cross join int8_tbl c) ss
+  on a.q2 = ss.bq1;
+select * from
+  int8_tbl a left join lateral
+  (select b.q1 as bq1, c.q1 as cq1, least(a.q1,b.q1,c.q1) from
+   int8_tbl b cross join int8_tbl c) ss
+  on a.q2 = ss.bq1;
+
 -- case requiring nested PlaceHolderVars
 explain (verbose, costs off)
 select * from

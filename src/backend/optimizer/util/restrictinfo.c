@@ -651,24 +651,32 @@ extract_actual_join_clauses(List *restrictinfo_list,
  * outer join, as that would change the results (rows would be suppressed
  * rather than being null-extended).
  *
- * And the target relation must not be in the clause's nullable_relids, i.e.,
+ * Also the target relation must not be in the clause's nullable_relids, i.e.,
  * there must not be an outer join below the clause that would null the Vars
  * coming from the target relation.  Otherwise the clause might give results
  * different from what it would give at its normal semantic level.
+ *
+ * Also, the join clause must not use any relations that have LATERAL
+ * references to the target relation, since we could not put such rels on
+ * the outer side of a nestloop with the target relation.
  */
 bool
-join_clause_is_movable_to(RestrictInfo *rinfo, Index baserelid)
+join_clause_is_movable_to(RestrictInfo *rinfo, RelOptInfo *baserel)
 {
 	/* Clause must physically reference target rel */
-	if (!bms_is_member(baserelid, rinfo->clause_relids))
+	if (!bms_is_member(baserel->relid, rinfo->clause_relids))
 		return false;
 
 	/* Cannot move an outer-join clause into the join's outer side */
-	if (bms_is_member(baserelid, rinfo->outer_relids))
+	if (bms_is_member(baserel->relid, rinfo->outer_relids))
 		return false;
 
 	/* Target rel must not be nullable below the clause */
-	if (bms_is_member(baserelid, rinfo->nullable_relids))
+	if (bms_is_member(baserel->relid, rinfo->nullable_relids))
+		return false;
+
+	/* Clause must not use any rels with LATERAL references to this rel */
+	if (bms_overlap(baserel->lateral_referencers, rinfo->clause_relids))
 		return false;
 
 	return true;
@@ -694,6 +702,11 @@ join_clause_is_movable_to(RestrictInfo *rinfo, Index baserelid)
  * a unique place in a parameterized join tree.  And we check that we're
  * not pushing the clause into its outer-join outer side, nor down into
  * a lower outer join's inner side.
+ *
+ * There's no check here equivalent to join_clause_is_movable_to's test on
+ * lateral_relids.	We assume the caller wouldn't be inquiring unless it'd
+ * verified that the proposed outer rels don't have lateral references to
+ * the current rel(s).
  *
  * Note: get_joinrel_parampathinfo depends on the fact that if
  * current_and_outer is NULL, this function will always return false

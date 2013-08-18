@@ -339,6 +339,7 @@ typedef struct PlannerInfo
  *					   Vars and PlaceHolderVars)
  *		lateral_relids - required outer rels for LATERAL, as a Relids set
  *						 (for child rels this can be more than lateral_vars)
+ *		lateral_referencers - relids of rels that reference this one laterally
  *		indexlist - list of IndexOptInfo nodes for relation's indexes
  *					(always NIL if it's not a table)
  *		pages - number of disk pages in relation (zero if not a table)
@@ -432,6 +433,7 @@ typedef struct RelOptInfo
 	int32	   *attr_widths;	/* array indexed [min_attr .. max_attr] */
 	List	   *lateral_vars;	/* LATERAL Vars and PHVs referenced by rel */
 	Relids		lateral_relids; /* minimum parameterization of rel */
+	Relids		lateral_referencers;	/* rels that reference me laterally */
 	List	   *indexlist;		/* list of IndexOptInfo */
 	BlockNumber pages;			/* size estimates derived from pg_class */
 	double		tuples;
@@ -1344,30 +1346,38 @@ typedef struct SpecialJoinInfo
 /*
  * "Lateral join" info.
  *
- * Lateral references in subqueries constrain the join order in a way that's
- * somewhat like outer joins, though different in detail.  We construct one or
- * more LateralJoinInfos for each RTE with lateral references, and add them to
- * the PlannerInfo node's lateral_info_list.
+ * Lateral references constrain the join order in a way that's somewhat like
+ * outer joins, though different in detail.  We construct a LateralJoinInfo
+ * for each lateral cross-reference, placing them in the PlannerInfo node's
+ * lateral_info_list.
  *
- * lateral_rhs is the relid of a baserel with lateral references, and
- * lateral_lhs is a set of relids of baserels it references, all of which
- * must be present on the LHS to compute a parameter needed by the RHS.
- * Typically, lateral_lhs is a singleton, but it can include multiple rels
- * if the RHS references a PlaceHolderVar with a multi-rel ph_eval_at level.
- * We disallow joining to only part of the LHS in such cases, since that would
- * result in a join tree with no convenient place to compute the PHV.
+ * For unflattened LATERAL RTEs, we generate LateralJoinInfo(s) in which
+ * lateral_rhs is the relid of the LATERAL baserel, and lateral_lhs is a set
+ * of relids of baserels it references, all of which must be present on the
+ * LHS to compute a parameter needed by the RHS.  Typically, lateral_lhs is
+ * a singleton, but it can include multiple rels if the RHS references a
+ * PlaceHolderVar with a multi-rel ph_eval_at level.  We disallow joining to
+ * only part of the LHS in such cases, since that would result in a join tree
+ * with no convenient place to compute the PHV.
  *
  * When an appendrel contains lateral references (eg "LATERAL (SELECT x.col1
  * UNION ALL SELECT y.col2)"), the LateralJoinInfos reference the parent
  * baserel not the member otherrels, since it is the parent relid that is
  * considered for joining purposes.
+ *
+ * If any LATERAL RTEs were flattened into the parent query, it is possible
+ * that the query now contains PlaceHolderVars containing lateral references,
+ * representing expressions that need to be evaluated at particular spots in
+ * the jointree but contain lateral references to Vars from elsewhere.	These
+ * give rise to LateralJoinInfos in which lateral_rhs is the evaluation point
+ * of a PlaceHolderVar and lateral_lhs is the set of lateral rels it needs.
  */
 
 typedef struct LateralJoinInfo
 {
 	NodeTag		type;
-	Index		lateral_rhs;	/* a baserel containing lateral refs */
-	Relids		lateral_lhs;	/* some base relids it references */
+	Relids		lateral_lhs;	/* rels needed to compute a lateral value */
+	Relids		lateral_rhs;	/* rel where lateral value is needed */
 } LateralJoinInfo;
 
 /*
@@ -1465,6 +1475,10 @@ typedef struct AppendRelInfo
  * then allow it to bubble up like a Var until the ph_needed join level.
  * ph_needed has the same definition as attr_needed for a regular Var.
  *
+ * The PlaceHolderVar's expression might contain LATERAL references to vars
+ * coming from outside its syntactic scope.  If so, those rels are *not*
+ * included in ph_eval_at, but they are recorded in ph_lateral.
+ *
  * Notice that when ph_eval_at is a join rather than a single baserel, the
  * PlaceHolderInfo may create constraints on join order: the ph_eval_at join
  * has to be formed below any outer joins that should null the PlaceHolderVar.
@@ -1481,6 +1495,7 @@ typedef struct PlaceHolderInfo
 	Index		phid;			/* ID for PH (unique within planner run) */
 	PlaceHolderVar *ph_var;		/* copy of PlaceHolderVar tree */
 	Relids		ph_eval_at;		/* lowest level we can evaluate value at */
+	Relids		ph_lateral;		/* relids of contained lateral refs, if any */
 	Relids		ph_needed;		/* highest level the value is needed at */
 	int32		ph_width;		/* estimated attribute width */
 } PlaceHolderInfo;
