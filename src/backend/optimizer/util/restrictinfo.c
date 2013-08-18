@@ -704,9 +704,9 @@ join_clause_is_movable_to(RestrictInfo *rinfo, RelOptInfo *baserel)
  * a lower outer join's inner side.
  *
  * There's no check here equivalent to join_clause_is_movable_to's test on
- * lateral_relids.	We assume the caller wouldn't be inquiring unless it'd
- * verified that the proposed outer rels don't have lateral references to
- * the current rel(s).
+ * lateral_referencers.  We assume the caller wouldn't be inquiring unless
+ * it'd verified that the proposed outer rels don't have lateral references
+ * to the current rel(s).
  *
  * Note: get_joinrel_parampathinfo depends on the fact that if
  * current_and_outer is NULL, this function will always return false
