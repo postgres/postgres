@@ -255,8 +255,7 @@ create_tidscan_paths(PlannerInfo *root, RelOptInfo *rel)
 	/*
 	 * We don't support pushing join clauses into the quals of a tidscan, but
 	 * it could still have required parameterization due to LATERAL refs in
-	 * its tlist.  (That can only happen if the tidscan is on a relation
-	 * pulled up out of a UNION ALL appendrel.)
+	 * its tlist.
 	 */
 	required_outer = rel->lateral_relids;
 

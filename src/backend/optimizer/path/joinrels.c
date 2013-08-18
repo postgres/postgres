@@ -526,7 +526,7 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 	{
 		LateralJoinInfo *ljinfo = (LateralJoinInfo *) lfirst(l);
 
-		if (bms_is_member(ljinfo->lateral_rhs, rel2->relids) &&
+		if (bms_is_subset(ljinfo->lateral_rhs, rel2->relids) &&
 			bms_overlap(ljinfo->lateral_lhs, rel1->relids))
 		{
 			/* has to be implemented as nestloop with rel1 on left */
@@ -539,7 +539,7 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 				(reversed || match_sjinfo->jointype == JOIN_FULL))
 				return false;	/* not implementable as nestloop */
 		}
-		if (bms_is_member(ljinfo->lateral_rhs, rel1->relids) &&
+		if (bms_is_subset(ljinfo->lateral_rhs, rel1->relids) &&
 			bms_overlap(ljinfo->lateral_lhs, rel2->relids))
 		{
 			/* has to be implemented as nestloop with rel2 on left */
@@ -829,10 +829,10 @@ have_join_order_restriction(PlannerInfo *root,
 	{
 		LateralJoinInfo *ljinfo = (LateralJoinInfo *) lfirst(l);
 
-		if (bms_is_member(ljinfo->lateral_rhs, rel2->relids) &&
+		if (bms_is_subset(ljinfo->lateral_rhs, rel2->relids) &&
 			bms_overlap(ljinfo->lateral_lhs, rel1->relids))
 			return true;
-		if (bms_is_member(ljinfo->lateral_rhs, rel1->relids) &&
+		if (bms_is_subset(ljinfo->lateral_rhs, rel1->relids) &&
 			bms_overlap(ljinfo->lateral_lhs, rel2->relids))
 			return true;
 	}
@@ -928,7 +928,7 @@ has_join_restriction(PlannerInfo *root, RelOptInfo *rel)
 	{
 		LateralJoinInfo *ljinfo = (LateralJoinInfo *) lfirst(l);
 
-		if (bms_is_member(ljinfo->lateral_rhs, rel->relids) ||
+		if (bms_is_subset(ljinfo->lateral_rhs, rel->relids) ||
 			bms_overlap(ljinfo->lateral_lhs, rel->relids))
 			return true;
 	}

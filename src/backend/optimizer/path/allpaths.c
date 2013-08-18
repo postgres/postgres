@@ -386,8 +386,7 @@ set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	/*
 	 * We don't support pushing join clauses into the quals of a seqscan, but
 	 * it could still have required parameterization due to LATERAL refs in
-	 * its tlist.  (That can only happen if the seqscan is on a relation
-	 * pulled up out of a UNION ALL appendrel.)
+	 * its tlist.
 	 */
 	required_outer = rel->lateral_relids;
 
@@ -550,8 +549,8 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		 * Note: the resulting childrel->reltargetlist may contain arbitrary
 		 * expressions, which otherwise would not occur in a reltargetlist.
 		 * Code that might be looking at an appendrel child must cope with
-		 * such.  Note in particular that "arbitrary expression" can include
-		 * "Var belonging to another relation", due to LATERAL references.
+		 * such.  (Normally, a reltargetlist would only include Vars and
+		 * PlaceHolderVars.)
 		 */
 		childrel->joininfo = (List *)
 			adjust_appendrel_attrs(root,
@@ -1355,8 +1354,7 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	/*
 	 * We don't support pushing join clauses into the quals of a CTE scan, but
 	 * it could still have required parameterization due to LATERAL refs in
-	 * its tlist.  (That can only happen if the CTE scan is on a relation
-	 * pulled up out of a UNION ALL appendrel.)
+	 * its tlist.
 	 */
 	required_outer = rel->lateral_relids;
 
@@ -1408,10 +1406,8 @@ set_worktable_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	/*
 	 * We don't support pushing join clauses into the quals of a worktable
 	 * scan, but it could still have required parameterization due to LATERAL
-	 * refs in its tlist.  (That can only happen if the worktable scan is on a
-	 * relation pulled up out of a UNION ALL appendrel.  I'm not sure this is
-	 * actually possible given the restrictions on recursive references, but
-	 * it's easy enough to support.)
+	 * refs in its tlist.  (I'm not sure this is actually possible given the
+	 * restrictions on recursive references, but it's easy enough to support.)
 	 */
 	required_outer = rel->lateral_relids;
 

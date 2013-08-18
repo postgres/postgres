@@ -141,12 +141,10 @@ static void match_restriction_clauses_to_index(RelOptInfo *rel,
 								   IndexClauseSet *clauseset);
 static void match_join_clauses_to_index(PlannerInfo *root,
 							RelOptInfo *rel, IndexOptInfo *index,
-							Relids lateral_referencers,
 							IndexClauseSet *clauseset,
 							List **joinorclauses);
 static void match_eclass_clauses_to_index(PlannerInfo *root,
 							  IndexOptInfo *index,
-							  Relids lateral_referencers,
 							  IndexClauseSet *clauseset);
 static void match_clauses_to_index(IndexOptInfo *index,
 					   List *clauses,
@@ -220,14 +218,14 @@ static Const *string_to_const(const char *str, Oid datatype);
  *
  * Note: check_partial_indexes() must have been run previously for this rel.
  *
- * Note: in corner cases involving LATERAL appendrel children, it's possible
- * that rel->lateral_relids is nonempty.  Currently, we include lateral_relids
- * into the parameterization reported for each path, but don't take it into
- * account otherwise.  The fact that any such rels *must* be available as
- * parameter sources perhaps should influence our choices of index quals ...
- * but for now, it doesn't seem worth troubling over.  In particular, comments
- * below about "unparameterized" paths should be read as meaning
- * "unparameterized so far as the indexquals are concerned".
+ * Note: in cases involving LATERAL references in the relation's tlist, it's
+ * possible that rel->lateral_relids is nonempty.  Currently, we include
+ * lateral_relids into the parameterization reported for each path, but don't
+ * take it into account otherwise.	The fact that any such rels *must* be
+ * available as parameter sources perhaps should influence our choices of
+ * index quals ... but for now, it doesn't seem worth troubling over.
+ * In particular, comments below about "unparameterized" paths should be read
+ * as meaning "unparameterized so far as the indexquals are concerned".
  */
 void
 create_index_paths(PlannerInfo *root, RelOptInfo *rel)
@@ -236,7 +234,6 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 	List	   *bitindexpaths;
 	List	   *bitjoinpaths;
 	List	   *joinorclauses;
-	Relids		lateral_referencers;
 	IndexClauseSet rclauseset;
 	IndexClauseSet jclauseset;
 	IndexClauseSet eclauseset;
@@ -245,23 +242,6 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 	/* Skip the whole mess if no indexes */
 	if (rel->indexlist == NIL)
 		return;
-
-	/*
-	 * If there are any rels that have LATERAL references to this one, we
-	 * cannot use join quals referencing them as index quals for this one,
-	 * since such rels would have to be on the inside not the outside of a
-	 * nestloop join relative to this one.	Create a Relids set listing all
-	 * such rels, for use in checks of potential join clauses.
-	 */
-	lateral_referencers = NULL;
-	foreach(lc, root->lateral_info_list)
-	{
-		LateralJoinInfo *ljinfo = (LateralJoinInfo *) lfirst(lc);
-
-		if (bms_is_member(rel->relid, ljinfo->lateral_lhs))
-			lateral_referencers = bms_add_member(lateral_referencers,
-												 ljinfo->lateral_rhs);
-	}
 
 	/* Bitmap paths are collected and then dealt with at the end */
 	bitindexpaths = bitjoinpaths = joinorclauses = NIL;
@@ -303,7 +283,7 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 		 * EquivalenceClasses.	Also, collect join OR clauses for later.
 		 */
 		MemSet(&jclauseset, 0, sizeof(jclauseset));
-		match_join_clauses_to_index(root, rel, index, lateral_referencers,
+		match_join_clauses_to_index(root, rel, index,
 									&jclauseset, &joinorclauses);
 
 		/*
@@ -311,7 +291,7 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 		 * the index.
 		 */
 		MemSet(&eclauseset, 0, sizeof(eclauseset));
-		match_eclass_clauses_to_index(root, index, lateral_referencers,
+		match_eclass_clauses_to_index(root, index,
 									  &eclauseset);
 
 		/*
@@ -1957,7 +1937,6 @@ match_restriction_clauses_to_index(RelOptInfo *rel, IndexOptInfo *index,
 static void
 match_join_clauses_to_index(PlannerInfo *root,
 							RelOptInfo *rel, IndexOptInfo *index,
-							Relids lateral_referencers,
 							IndexClauseSet *clauseset,
 							List **joinorclauses)
 {
@@ -1969,11 +1948,7 @@ match_join_clauses_to_index(PlannerInfo *root,
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
 
 		/* Check if clause can be moved to this rel */
-		if (!join_clause_is_movable_to(rinfo, rel->relid))
-			continue;
-
-		/* Not useful if it conflicts with any LATERAL references */
-		if (bms_overlap(rinfo->clause_relids, lateral_referencers))
+		if (!join_clause_is_movable_to(rinfo, rel))
 			continue;
 
 		/* Potentially usable, so see if it matches the index or is an OR */
@@ -1991,7 +1966,6 @@ match_join_clauses_to_index(PlannerInfo *root,
  */
 static void
 match_eclass_clauses_to_index(PlannerInfo *root, IndexOptInfo *index,
-							  Relids lateral_referencers,
 							  IndexClauseSet *clauseset)
 {
 	int			indexcol;
@@ -2012,7 +1986,7 @@ match_eclass_clauses_to_index(PlannerInfo *root, IndexOptInfo *index,
 														 index->rel,
 												  ec_member_matches_indexcol,
 														 (void *) &arg,
-														 lateral_referencers);
+											index->rel->lateral_referencers);
 
 		/*
 		 * We have to check whether the results actually do match the index,
@@ -2644,7 +2618,7 @@ check_partial_indexes(PlannerInfo *root, RelOptInfo *rel)
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
 
 		/* Check if clause can be moved to this rel */
-		if (!join_clause_is_movable_to(rinfo, rel->relid))
+		if (!join_clause_is_movable_to(rinfo, rel))
 			continue;
 
 		clauselist = lappend(clauselist, rinfo);
