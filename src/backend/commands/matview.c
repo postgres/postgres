@@ -225,8 +225,6 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	finish_heap_swap(matviewOid, OIDNewHeap, false, false, true, true,
 					 RecentXmin, ReadNextMultiXactId());
 
-	RelationCacheInvalidateEntry(matviewOid);
-
 	/* Roll back any GUC changes */
 	AtEOXact_GUC(false, save_nestlevel);
 
