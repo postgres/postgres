@@ -256,14 +256,18 @@ pqsecure_open_client(PGconn *conn)
 	/* First time through? */
 	if (conn->ssl == NULL)
 	{
+#ifdef ENABLE_THREAD_SAFETY
+		int rc;
+#endif
+
 		/* We cannot use MSG_NOSIGNAL to block SIGPIPE when using SSL */
 		conn->sigpipe_flag = false;
 
 #ifdef ENABLE_THREAD_SAFETY
-		if (pthread_mutex_lock(&ssl_config_mutex))
+		if ((rc = pthread_mutex_lock(&ssl_config_mutex)))
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-				   libpq_gettext("unable to acquire mutex\n"));
+							  libpq_gettext("could not acquire mutex: %s\n"), strerror(rc));
 			return PGRES_POLLING_FAILED;
 		}
 #endif
@@ -1115,10 +1119,12 @@ initialize_SSL(PGconn *conn)
 		 * SSL_context struct.
 		 */
 #ifdef ENABLE_THREAD_SAFETY
-		if (pthread_mutex_lock(&ssl_config_mutex))
+		int rc;
+
+		if ((rc = pthread_mutex_lock(&ssl_config_mutex)))
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-				   libpq_gettext("unable to acquire mutex\n"));
+							  libpq_gettext("could not acquire mutex: %s\n"), strerror(rc));
 			return -1;
 		}
 #endif
@@ -1333,10 +1339,12 @@ initialize_SSL(PGconn *conn)
 		X509_STORE *cvstore;
 
 #ifdef ENABLE_THREAD_SAFETY
-		if (pthread_mutex_lock(&ssl_config_mutex))
+		int rc;
+
+		if ((rc = pthread_mutex_lock(&ssl_config_mutex)))
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-				   libpq_gettext("unable to acquire mutex\n"));
+							  libpq_gettext("could not acquire mutex: %s\n"), strerror(rc));
 			return -1;
 		}
 #endif
