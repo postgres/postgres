@@ -1723,6 +1723,46 @@ ZeroMultiXactMemberPage(int pageno, bool writeXlog)
 }
 
 /*
+ * MaybeExtendOffsetSlru
+ *		Extend the offsets SLRU area, if necessary
+ *
+ * After a binary upgrade from <= 9.2, the pg_multixact/offset SLRU area might
+ * contain files that are shorter than necessary; this would occur if the old
+ * installation had used multixacts beyond the first page (files cannot be
+ * copied, because the on-disk representation is different).  pg_upgrade would
+ * update pg_control to set the next offset value to be at that position, so
+ * that tuples marked as locked by such MultiXacts would be seen as visible
+ * without having to consult multixact.  However, trying to create and use a
+ * new MultiXactId would result in an error because the page on which the new
+ * value would reside does not exist.  This routine is in charge of creating
+ * such pages.
+ */
+static void
+MaybeExtendOffsetSlru(void)
+{
+	int			pageno;
+
+	pageno = MultiXactIdToOffsetPage(MultiXactState->nextMXact);
+
+	LWLockAcquire(MultiXactOffsetControlLock, LW_EXCLUSIVE);
+
+	if (!SimpleLruDoesPhysicalPageExist(MultiXactOffsetCtl, pageno))
+	{
+		int		slotno;
+
+		/*
+		 * Fortunately for us, SimpleLruWritePage is already prepared to deal
+		 * with creating a new segment file even if the page we're writing is
+		 * not the first in it, so this is enough.
+		 */
+		slotno = ZeroMultiXactOffsetPage(pageno, false);
+		SimpleLruWritePage(MultiXactOffsetCtl, slotno);
+	}
+
+	LWLockRelease(MultiXactOffsetControlLock);
+}
+
+/*
  * This must be called ONCE during postmaster or standalone-backend startup.
  *
  * StartupXLOG has already established nextMXact/nextOffset by calling
@@ -1741,6 +1781,13 @@ StartupMultiXact(void)
 	int			pageno;
 	int			entryno;
 	int			flagsoff;
+
+	/*
+	 * During a binary upgrade, make sure that the offsets SLRU is large
+	 * enough to contain the next value that would be created.
+	 */
+	if (IsBinaryUpgrade)
+		MaybeExtendOffsetSlru();
 
 	/* Clean up offsets state */
 	LWLockAcquire(MultiXactOffsetControlLock, LW_EXCLUSIVE);
