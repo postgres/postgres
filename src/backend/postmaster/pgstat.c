@@ -566,31 +566,29 @@ pgstat_reset_remove_files(const char *directory)
 	dir = AllocateDir(directory);
 	while ((entry = ReadDir(dir, directory)) != NULL)
 	{
-		int		nitems;
-		Oid		tmp_oid;
-		char	tmp_type[8];
-		char	tmp_rest[2];
-
-		if (strncmp(entry->d_name, ".", 2) == 0 ||
-			strncmp(entry->d_name, "..", 3) == 0)
-			continue;
+		int			nchars;
+		Oid			tmp_oid;
 
 		/*
 		 * Skip directory entries that don't match the file names we write.
 		 * See get_dbstat_filename for the database-specific pattern.
 		 */
-		nitems = sscanf(entry->d_name, "db_%u.%5s%1s",
-						&tmp_oid, tmp_type, tmp_rest);
-		if (nitems != 2)
+		if (strncmp(entry->d_name, "global.", 7) == 0)
+			nchars = 7;
+		else
 		{
-			nitems = sscanf(entry->d_name, "global.%5s%1s",
-							tmp_type, tmp_rest);
-			if (nitems != 1)
+			nchars = 0;
+			(void) sscanf(entry->d_name, "db_%u.%n",
+						  &tmp_oid, &nchars);
+			if (nchars <= 0)
+				continue;
+			/* %u allows leading whitespace, so reject that */
+			if (strchr("0123456789", entry->d_name[3]) == NULL)
 				continue;
 		}
 
-		if (strncmp(tmp_type, "tmp", 4) != 0 &&
-			strncmp(tmp_type, "stat", 5) != 0)
+		if (strcmp(entry->d_name + nchars, "tmp") != 0 &&
+			strcmp(entry->d_name + nchars, "stat") != 0)
 			continue;
 
 		snprintf(fname, MAXPGPATH, "%s/%s", directory,
