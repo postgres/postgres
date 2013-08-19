@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-07-22 04:16+0000\n"
+"POT-Creation-Date: 2013-08-16 22:18+0000\n"
 "PO-Revision-Date: 2012-07-22 20:48+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: PostgreSQLfr <pgsql-fr-generale@postgresql.org>\n"
@@ -18,72 +18,43 @@ msgstr ""
 "Content-Type: text/plain; charset=ISO-8859-15\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../../port/exec.c:125
-#: ../../port/exec.c:239
-#: ../../port/exec.c:282
+#: ../../port/exec.c:127 ../../port/exec.c:241 ../../port/exec.c:284
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "n'a pas pu identifier le répertoire courant : %s"
 
-#: ../../port/exec.c:144
+#: ../../port/exec.c:146
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "binaire « %s » invalide"
 
-#: ../../port/exec.c:193
+#: ../../port/exec.c:195
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "n'a pas pu lire le binaire « %s »"
 
-#: ../../port/exec.c:200
+#: ../../port/exec.c:202
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "n'a pas pu trouver un « %s » à exécuter"
 
-#: ../../port/exec.c:255
-#: ../../port/exec.c:291
+#: ../../port/exec.c:257 ../../port/exec.c:293
 #, c-format
-msgid "could not change directory to \"%s\""
-msgstr "n'a pas pu accéder au répertoire « %s »"
+msgid "could not change directory to \"%s\": %s"
+msgstr "n'a pas pu changer le répertoire par « %s » : %s"
 
-#: ../../port/exec.c:270
+#: ../../port/exec.c:272
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "n'a pas pu lire le lien symbolique « %s »"
 
-#: ../../port/exec.c:518
+#: ../../port/exec.c:523
 #, c-format
-msgid "child process exited with exit code %d"
-msgstr "le processus fils a quitté avec le code de sortie %d"
+msgid "pclose failed: %s"
+msgstr "échec de pclose : %s"
 
-#: ../../port/exec.c:522
-#, c-format
-msgid "child process was terminated by exception 0x%X"
-msgstr "le processus fils a été terminé par l'exception 0x%X"
-
-#: ../../port/exec.c:531
-#, c-format
-msgid "child process was terminated by signal %s"
-msgstr "le processus fils a été terminé par le signal %s"
-
-#: ../../port/exec.c:534
-#, c-format
-msgid "child process was terminated by signal %d"
-msgstr "le processus fils a été terminé par le signal %d"
-
-#: ../../port/exec.c:538
-#, c-format
-msgid "child process exited with unrecognized status %d"
-msgstr "le processus fils a quitté avec un statut %d non reconnu"
-
-#: pg_config.c:243
-#: pg_config.c:259
-#: pg_config.c:275
-#: pg_config.c:291
-#: pg_config.c:307
-#: pg_config.c:323
-#: pg_config.c:339
-#: pg_config.c:355
+#: pg_config.c:243 pg_config.c:259 pg_config.c:275 pg_config.c:291
+#: pg_config.c:307 pg_config.c:323 pg_config.c:339 pg_config.c:355
 #: pg_config.c:371
 #, c-format
 msgid "not recorded\n"
@@ -310,3 +281,21 @@ msgstr "%s : argument invalide : %s\n"
 
 #~ msgid "  --help                show this help, then exit\n"
 #~ msgstr "  --help                affiche cette aide puis quitte\n"
+
+#~ msgid "child process exited with unrecognized status %d"
+#~ msgstr "le processus fils a quitté avec un statut %d non reconnu"
+
+#~ msgid "child process was terminated by signal %d"
+#~ msgstr "le processus fils a été terminé par le signal %d"
+
+#~ msgid "child process was terminated by signal %s"
+#~ msgstr "le processus fils a été terminé par le signal %s"
+
+#~ msgid "child process was terminated by exception 0x%X"
+#~ msgstr "le processus fils a été terminé par l'exception 0x%X"
+
+#~ msgid "child process exited with exit code %d"
+#~ msgstr "le processus fils a quitté avec le code de sortie %d"
+
+#~ msgid "could not change directory to \"%s\""
+#~ msgstr "n'a pas pu accéder au répertoire « %s »"

@@ -22,8 +22,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9 current\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-06-14 21:20+0000\n"
-"PO-Revision-Date: 2013-06-16 14:05+0400\n"
+"POT-Creation-Date: 2013-08-10 02:20+0000\n"
+"PO-Revision-Date: 2013-08-10 07:22+0400\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -787,12 +787,12 @@ msgstr ""
 
 #: pg_isready.c:138
 #, c-format
-msgid "%s: %s\n"
-msgstr "%s: %s\n"
+msgid "%s: %s"
+msgstr "%s: %s"
 
 #: pg_isready.c:146
 #, c-format
-msgid "%s: cannot fetch default options\n"
+msgid "%s: could not fetch default options\n"
 msgstr "%s: не удалось получить параметры по умолчанию\n"
 
 #: pg_isready.c:209
@@ -851,8 +851,9 @@ msgstr ""
 
 #: pg_isready.c:223
 #, c-format
-msgid "  -U, --username=USERNAME  database username\n"
-msgstr "  -U, --username=ИМЯ       имя пользователя\n"
+msgid "  -U, --username=USERNAME  user name to connect as\n"
+msgstr ""
+"  -U, --username=ИМЯ       имя пользователя для подключения к серверу\n"
 
 #: reindexdb.c:149
 #, c-format
@@ -1084,6 +1085,9 @@ msgid ""
 msgstr ""
 "\n"
 "Подробнее об очистке вы можете узнать в описании SQL-команды VACUUM.\n"
+
+#~ msgid "  -U, --username=USERNAME  database username\n"
+#~ msgstr "  -U, --username=ИМЯ       имя пользователя\n"
 
 #~ msgid "%s: out of memory\n"
 #~ msgstr "%s: нехватка памяти\n"
