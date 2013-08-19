@@ -803,11 +803,10 @@ still expected to enforce any join clauses that can be pushed down to it,
 so that all paths of the same parameterization have the same rowcount.
 
 We also allow LATERAL subqueries to be flattened (pulled up into the parent
-query) by the optimizer, but only when they don't contain any lateral
-references to relations outside the lowest outer join that can null the
-LATERAL subquery.  This restriction prevents lateral references from being
-introduced into outer-join qualifications, which would create semantic
-confusion.  Note that even with this restriction, pullup of a LATERAL
+query) by the optimizer, but only when this does not introduce lateral
+references into JOIN/ON quals that would refer to relations outside the
+lowest outer join at/above that qual.  The semantics of such a qual would
+be unclear.  Note that even with this restriction, pullup of a LATERAL
 subquery can result in creating PlaceHolderVars that contain lateral
 references to relations outside their syntactic scope.  We still evaluate
 such PHVs at their syntactic location or lower, but the presence of such a

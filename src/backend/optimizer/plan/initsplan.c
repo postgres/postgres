@@ -36,12 +36,21 @@ int			from_collapse_limit;
 int			join_collapse_limit;
 
 
+/* Elements of the postponed_qual_list used during deconstruct_recurse */
+typedef struct PostponedQual
+{
+	Node	   *qual;			/* a qual clause waiting to be processed */
+	Relids		relids;			/* the set of baserels it references */
+} PostponedQual;
+
+
 static void extract_lateral_references(PlannerInfo *root, RelOptInfo *brel,
 						   Index rtindex);
 static void add_lateral_info(PlannerInfo *root, Relids lhs, Relids rhs);
 static List *deconstruct_recurse(PlannerInfo *root, Node *jtnode,
 					bool below_outer_join,
-					Relids *qualscope, Relids *inner_join_rels);
+					Relids *qualscope, Relids *inner_join_rels,
+					List **postponed_qual_list);
 static SpecialJoinInfo *make_outerjoininfo(PlannerInfo *root,
 				   Relids left_rels, Relids right_rels,
 				   Relids inner_join_rels,
@@ -53,7 +62,8 @@ static void distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 						Relids qualscope,
 						Relids ojscope,
 						Relids outerjoin_nonnullable,
-						Relids deduced_nullable_relids);
+						Relids deduced_nullable_relids,
+						List **postponed_qual_list);
 static bool check_outerjoin_delay(PlannerInfo *root, Relids *relids_p,
 					  Relids *nullable_relids_p, bool is_pushed_down);
 static bool check_equivalence_delay(PlannerInfo *root,
@@ -630,15 +640,23 @@ add_lateral_info(PlannerInfo *root, Relids lhs, Relids rhs)
 List *
 deconstruct_jointree(PlannerInfo *root)
 {
+	List	   *result;
 	Relids		qualscope;
 	Relids		inner_join_rels;
+	List	   *postponed_qual_list = NIL;
 
 	/* Start recursion at top of jointree */
 	Assert(root->parse->jointree != NULL &&
 		   IsA(root->parse->jointree, FromExpr));
 
-	return deconstruct_recurse(root, (Node *) root->parse->jointree, false,
-							   &qualscope, &inner_join_rels);
+	result = deconstruct_recurse(root, (Node *) root->parse->jointree, false,
+								 &qualscope, &inner_join_rels,
+								 &postponed_qual_list);
+
+	/* Shouldn't be any leftover quals */
+	Assert(postponed_qual_list == NIL);
+
+	return result;
 }
 
 /*
@@ -656,13 +674,16 @@ deconstruct_jointree(PlannerInfo *root)
  *	*inner_join_rels gets the set of base Relids syntactically included in
  *		inner joins appearing at or below this jointree node (do not modify
  *		or free this, either)
+ *	*postponed_qual_list is a list of PostponedQual structs, which we can
+ *		add quals to if they turn out to belong to a higher join level
  *	Return value is the appropriate joinlist for this jointree node
  *
  * In addition, entries will be added to root->join_info_list for outer joins.
  */
 static List *
 deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
-					Relids *qualscope, Relids *inner_join_rels)
+					Relids *qualscope, Relids *inner_join_rels,
+					List **postponed_qual_list)
 {
 	List	   *joinlist;
 
@@ -685,6 +706,7 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 	else if (IsA(jtnode, FromExpr))
 	{
 		FromExpr   *f = (FromExpr *) jtnode;
+		List	   *child_postponed_quals = NIL;
 		int			remaining;
 		ListCell   *l;
 
@@ -707,7 +729,8 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 			sub_joinlist = deconstruct_recurse(root, lfirst(l),
 											   below_outer_join,
 											   &sub_qualscope,
-											   inner_join_rels);
+											   inner_join_rels,
+											   &child_postponed_quals);
 			*qualscope = bms_add_members(*qualscope, sub_qualscope);
 			sub_members = list_length(sub_joinlist);
 			remaining--;
@@ -729,6 +752,23 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 			*inner_join_rels = *qualscope;
 
 		/*
+		 * Try to process any quals postponed by children.	If they need
+		 * further postponement, add them to my output postponed_qual_list.
+		 */
+		foreach(l, child_postponed_quals)
+		{
+			PostponedQual *pq = (PostponedQual *) lfirst(l);
+
+			if (bms_is_subset(pq->relids, *qualscope))
+				distribute_qual_to_rels(root, pq->qual,
+										false, below_outer_join, JOIN_INNER,
+										*qualscope, NULL, NULL, NULL,
+										NULL);
+			else
+				*postponed_qual_list = lappend(*postponed_qual_list, pq);
+		}
+
+		/*
 		 * Now process the top-level quals.
 		 */
 		foreach(l, (List *) f->quals)
@@ -737,12 +777,14 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 
 			distribute_qual_to_rels(root, qual,
 									false, below_outer_join, JOIN_INNER,
-									*qualscope, NULL, NULL, NULL);
+									*qualscope, NULL, NULL, NULL,
+									postponed_qual_list);
 		}
 	}
 	else if (IsA(jtnode, JoinExpr))
 	{
 		JoinExpr   *j = (JoinExpr *) jtnode;
+		List	   *child_postponed_quals = NIL;
 		Relids		leftids,
 					rightids,
 					left_inners,
@@ -771,10 +813,12 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 			case JOIN_INNER:
 				leftjoinlist = deconstruct_recurse(root, j->larg,
 												   below_outer_join,
-												   &leftids, &left_inners);
+												   &leftids, &left_inners,
+												   &child_postponed_quals);
 				rightjoinlist = deconstruct_recurse(root, j->rarg,
 													below_outer_join,
-													&rightids, &right_inners);
+													&rightids, &right_inners,
+													&child_postponed_quals);
 				*qualscope = bms_union(leftids, rightids);
 				*inner_join_rels = *qualscope;
 				/* Inner join adds no restrictions for quals */
@@ -784,10 +828,12 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 			case JOIN_ANTI:
 				leftjoinlist = deconstruct_recurse(root, j->larg,
 												   below_outer_join,
-												   &leftids, &left_inners);
+												   &leftids, &left_inners,
+												   &child_postponed_quals);
 				rightjoinlist = deconstruct_recurse(root, j->rarg,
 													true,
-													&rightids, &right_inners);
+													&rightids, &right_inners,
+													&child_postponed_quals);
 				*qualscope = bms_union(leftids, rightids);
 				*inner_join_rels = bms_union(left_inners, right_inners);
 				nonnullable_rels = leftids;
@@ -795,10 +841,12 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 			case JOIN_SEMI:
 				leftjoinlist = deconstruct_recurse(root, j->larg,
 												   below_outer_join,
-												   &leftids, &left_inners);
+												   &leftids, &left_inners,
+												   &child_postponed_quals);
 				rightjoinlist = deconstruct_recurse(root, j->rarg,
 													below_outer_join,
-													&rightids, &right_inners);
+													&rightids, &right_inners,
+													&child_postponed_quals);
 				*qualscope = bms_union(leftids, rightids);
 				*inner_join_rels = bms_union(left_inners, right_inners);
 				/* Semi join adds no restrictions for quals */
@@ -807,10 +855,12 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 			case JOIN_FULL:
 				leftjoinlist = deconstruct_recurse(root, j->larg,
 												   true,
-												   &leftids, &left_inners);
+												   &leftids, &left_inners,
+												   &child_postponed_quals);
 				rightjoinlist = deconstruct_recurse(root, j->rarg,
 													true,
-													&rightids, &right_inners);
+													&rightids, &right_inners,
+													&child_postponed_quals);
 				*qualscope = bms_union(leftids, rightids);
 				*inner_join_rels = bms_union(left_inners, right_inners);
 				/* each side is both outer and inner */
@@ -853,7 +903,32 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 			ojscope = NULL;
 		}
 
-		/* Process the qual clauses */
+		/*
+		 * Try to process any quals postponed by children.	If they need
+		 * further postponement, add them to my output postponed_qual_list.
+		 */
+		foreach(l, child_postponed_quals)
+		{
+			PostponedQual *pq = (PostponedQual *) lfirst(l);
+
+			if (bms_is_subset(pq->relids, *qualscope))
+				distribute_qual_to_rels(root, pq->qual,
+										false, below_outer_join, j->jointype,
+										*qualscope,
+										ojscope, nonnullable_rels, NULL,
+										NULL);
+			else
+			{
+				/*
+				 * We should not be postponing any quals past an outer join.
+				 * If this Assert fires, pull_up_subqueries() messed up.
+				 */
+				Assert(j->jointype == JOIN_INNER);
+				*postponed_qual_list = lappend(*postponed_qual_list, pq);
+			}
+		}
+
+		/* Process the JOIN's qual clauses */
 		foreach(l, (List *) j->quals)
 		{
 			Node	   *qual = (Node *) lfirst(l);
@@ -861,7 +936,8 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 			distribute_qual_to_rels(root, qual,
 									false, below_outer_join, j->jointype,
 									*qualscope,
-									ojscope, nonnullable_rels, NULL);
+									ojscope, nonnullable_rels, NULL,
+									postponed_qual_list);
 		}
 
 		/* Now we can add the SpecialJoinInfo to join_info_list */
@@ -1154,7 +1230,8 @@ make_outerjoininfo(PlannerInfo *root,
  *	  the appropriate list for each rel.  Alternatively, if the clause uses a
  *	  mergejoinable operator and is not delayed by outer-join rules, enter
  *	  the left- and right-side expressions into the query's list of
- *	  EquivalenceClasses.
+ *	  EquivalenceClasses.  Alternatively, if the clause needs to be treated
+ *	  as belonging to a higher join level, just add it to postponed_qual_list.
  *
  * 'clause': the qual clause to be distributed
  * 'is_deduced': TRUE if the qual came from implied-equality deduction
@@ -1170,6 +1247,9 @@ make_outerjoininfo(PlannerInfo *root,
  *		equal qualscope)
  * 'deduced_nullable_relids': if is_deduced is TRUE, the nullable relids to
  *		impute to the clause; otherwise NULL
+ * 'postponed_qual_list': list of PostponedQual structs, which we can add
+ *		this qual to if it turns out to belong to a higher join level.
+ *		Can be NULL if caller knows postponement is impossible.
  *
  * 'qualscope' identifies what level of JOIN the qual came from syntactically.
  * 'ojscope' is needed if we decide to force the qual up to the outer-join
@@ -1190,7 +1270,8 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 						Relids qualscope,
 						Relids ojscope,
 						Relids outerjoin_nonnullable,
-						Relids deduced_nullable_relids)
+						Relids deduced_nullable_relids,
+						List **postponed_qual_list)
 {
 	Relids		relids;
 	bool		is_pushed_down;
@@ -1207,20 +1288,33 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	relids = pull_varnos(clause);
 
 	/*
-	 * Normally relids is a subset of qualscope, and we like to check that
-	 * here as a crosscheck on the parser and rewriter.  That need not be the
-	 * case when there are LATERAL RTEs, however: the clause could contain
-	 * references to rels outside its syntactic scope as a consequence of
-	 * pull-up of such references from a LATERAL subquery below it.  So, only
-	 * check if the query contains no LATERAL RTEs.
-	 *
-	 * However, if it's an outer-join clause, we always insist that relids be
-	 * a subset of ojscope.  This is safe because is_simple_subquery()
-	 * disallows pullup of LATERAL subqueries that could cause the restriction
-	 * to be violated.
+	 * In ordinary SQL, a WHERE or JOIN/ON clause can't reference any rels
+	 * that aren't within its syntactic scope; however, if we pulled up a
+	 * LATERAL subquery then we might find such references in quals that have
+	 * been pulled up.	We need to treat such quals as belonging to the join
+	 * level that includes every rel they reference.  Although we could make
+	 * pull_up_subqueries() place such quals correctly to begin with, it's
+	 * easier to handle it here.  When we find a clause that contains Vars
+	 * outside its syntactic scope, we add it to the postponed-quals list, and
+	 * process it once we've recursed back up to the appropriate join level.
 	 */
-	if (!root->hasLateralRTEs && !bms_is_subset(relids, qualscope))
-		elog(ERROR, "JOIN qualification cannot refer to other relations");
+	if (!bms_is_subset(relids, qualscope))
+	{
+		PostponedQual *pq = (PostponedQual *) palloc(sizeof(PostponedQual));
+
+		Assert(root->hasLateralRTEs);	/* shouldn't happen otherwise */
+		Assert(jointype == JOIN_INNER); /* mustn't postpone past outer join */
+		Assert(!is_deduced);	/* shouldn't be deduced, either */
+		pq->qual = clause;
+		pq->relids = relids;
+		*postponed_qual_list = lappend(*postponed_qual_list, pq);
+		return;
+	}
+
+	/*
+	 * If it's an outer-join clause, also check that relids is a subset of
+	 * ojscope.  (This should not fail if the syntactic scope check passed.)
+	 */
 	if (ojscope && !bms_is_subset(relids, ojscope))
 		elog(ERROR, "JOIN qualification cannot refer to other relations");
 
@@ -1874,7 +1968,8 @@ process_implied_equality(PlannerInfo *root,
 	 */
 	distribute_qual_to_rels(root, (Node *) clause,
 							true, below_outer_join, JOIN_INNER,
-							qualscope, NULL, NULL, nullable_relids);
+							qualscope, NULL, NULL, nullable_relids,
+							NULL);
 }
 
 /*
