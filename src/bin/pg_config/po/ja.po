@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0 beta 3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-08-11 16:51+0900\n"
+"POT-Creation-Date: 2013-08-18 11:27+0900\n"
 "PO-Revision-Date: 2012-08-11 16:53+0900\n"
 "Last-Translator: HOTTA Michihide <hotta@net-newbie.com>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
@@ -15,60 +15,40 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../../port/exec.c:125 ../../port/exec.c:239 ../../port/exec.c:282
+#: ../../port/exec.c:127 ../../port/exec.c:241 ../../port/exec.c:284
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "現在のディレクトリを認識できませんでした: %s"
 
-#: ../../port/exec.c:144
+#: ../../port/exec.c:146
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "バイナリ\"%s\"は無効です"
 
-#: ../../port/exec.c:193
+#: ../../port/exec.c:195
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "バイナリ\"%s\"を読み取れませんでした"
 
-#: ../../port/exec.c:200
+#: ../../port/exec.c:202
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "実行する\"%s\"がありませんでした"
 
-#: ../../port/exec.c:255 ../../port/exec.c:291
+#: ../../port/exec.c:257 ../../port/exec.c:293
 #, c-format
-msgid "could not change directory to \"%s\""
-msgstr "ディレクトリ\"%s\"に移動できませんでした"
+msgid "could not change directory to \"%s\": %s"
+msgstr "ディレクトリ\"%s\"に移動できませんでした: %s"
 
-#: ../../port/exec.c:270
+#: ../../port/exec.c:272
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "シンボリックリンク\"%s\"を読み取ることができませんでした"
 
-#: ../../port/exec.c:526
+#: ../../port/exec.c:523
 #, c-format
-msgid "child process exited with exit code %d"
-msgstr "子プロセスが終了コード%dで終了しました"
-
-#: ../../port/exec.c:530
-#, c-format
-msgid "child process was terminated by exception 0x%X"
-msgstr "子プロセスが例外0x%Xで終了しました"
-
-#: ../../port/exec.c:539
-#, c-format
-msgid "child process was terminated by signal %s"
-msgstr "子プロセスがシグナル%sで終了しました"
-
-#: ../../port/exec.c:542
-#, c-format
-msgid "child process was terminated by signal %d"
-msgstr "子プロセスがシグナル%dで終了しました"
-
-#: ../../port/exec.c:546
-#, c-format
-msgid "child process exited with unrecognized status %d"
-msgstr "子プロセスが未知のステータス%dで終了しました"
+msgid "pclose failed: %s"
+msgstr "pcloseが失敗しました: %s"
 
 #: pg_config.c:243 pg_config.c:259 pg_config.c:275 pg_config.c:291
 #: pg_config.c:307 pg_config.c:323 pg_config.c:339 pg_config.c:355
@@ -264,3 +244,21 @@ msgstr "%s: 無効な引数です: %s\n"
 
 #~ msgid "  --help                show this help, then exit\n"
 #~ msgstr "  --help                ヘルプを表示し、終了します\n"
+
+#~ msgid "could not change directory to \"%s\""
+#~ msgstr "ディレクトリ\"%s\"に移動できませんでした"
+
+#~ msgid "child process was terminated by signal %s"
+#~ msgstr "子プロセスがシグナル%sで終了しました"
+
+#~ msgid "child process was terminated by exception 0x%X"
+#~ msgstr "子プロセスが例外0x%Xで終了しました"
+
+#~ msgid "child process exited with exit code %d"
+#~ msgstr "子プロセスが終了コード%dで終了しました"
+
+#~ msgid "child process exited with unrecognized status %d"
+#~ msgstr "子プロセスが未知のステータス%dで終了しました"
+
+#~ msgid "child process was terminated by signal %d"
+#~ msgstr "子プロセスがシグナル%dで終了しました"

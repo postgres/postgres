@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2013-06-05 20:18+0000\n"
-"PO-Revision-Date: 2013-06-05 22:04-0400\n"
+"PO-Revision-Date: 2013-08-07 21:43-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -495,7 +495,7 @@ msgstr "%s: ungültiges Checkpoint-Argument „%s“, muss „fast“ oder „sp
 #: pg_basebackup.c:1806 pg_receivexlog.c:392
 #, c-format
 msgid "%s: invalid status interval \"%s\"\n"
-msgstr "%s: ungültiges Statusinterval „%s“\n"
+msgstr "%s: ungültiges Statusintervall „%s“\n"
 
 #: pg_basebackup.c:1822 pg_basebackup.c:1836 pg_basebackup.c:1847
 #: pg_basebackup.c:1860 pg_basebackup.c:1870 pg_receivexlog.c:408

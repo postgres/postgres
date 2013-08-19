@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-08-18 17:45-0300\n"
+"POT-Creation-Date: 2013-08-17 16:07-0300\n"
 "PO-Revision-Date: 2005-10-06 00:21-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -31,13 +31,15 @@ msgstr "não pode duplicar ponteiro nulo (erro interno)\n"
 #: createlang.c:89 createlang.c:119 createlang.c:172 createuser.c:163
 #: createuser.c:178 dropdb.c:94 dropdb.c:103 dropdb.c:111 droplang.c:88
 #: droplang.c:118 droplang.c:172 dropuser.c:89 dropuser.c:104 dropuser.c:115
-#: reindexdb.c:120 reindexdb.c:139 vacuumdb.c:134 vacuumdb.c:154
+#: pg_isready.c:92 pg_isready.c:106 reindexdb.c:120 reindexdb.c:139
+#: vacuumdb.c:134 vacuumdb.c:154
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Tente \"%s --help\" para obter informações adicionais.\n"
 
 #: clusterdb.c:127 createdb.c:136 createlang.c:117 createuser.c:176
-#: dropdb.c:109 droplang.c:116 dropuser.c:102 reindexdb.c:137 vacuumdb.c:152
+#: dropdb.c:109 droplang.c:116 dropuser.c:102 pg_isready.c:104 reindexdb.c:137
+#: vacuumdb.c:152
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: muitos argumentos para linha de comando (primeiro é \"%s\")\n"
@@ -77,7 +79,8 @@ msgstr ""
 "\n"
 
 #: clusterdb.c:262 createdb.c:252 createlang.c:234 createuser.c:329
-#: dropdb.c:155 droplang.c:235 dropuser.c:156 reindexdb.c:342 vacuumdb.c:358
+#: dropdb.c:155 droplang.c:235 dropuser.c:156 pg_isready.c:210 reindexdb.c:342
+#: vacuumdb.c:358
 #, c-format
 msgid "Usage:\n"
 msgstr "Uso:\n"
@@ -88,7 +91,8 @@ msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [OPÇÃO]... [NOMEBD]\n"
 
 #: clusterdb.c:264 createdb.c:254 createlang.c:236 createuser.c:331
-#: dropdb.c:157 droplang.c:237 dropuser.c:158 reindexdb.c:344 vacuumdb.c:360
+#: dropdb.c:157 droplang.c:237 dropuser.c:158 pg_isready.c:213 reindexdb.c:344
+#: vacuumdb.c:360
 #, c-format
 msgid ""
 "\n"
@@ -132,16 +136,17 @@ msgstr "  -v, --verbose             mostra muitas mensagens\n"
 #: droplang.c:241 dropuser.c:162 reindexdb.c:352
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
-msgstr "  -V, --version                mostra informação sobre a versão e termina\n"
+msgstr "  -V, --version             mostra informação sobre a versão e termina\n"
 
 #: clusterdb.c:272 createlang.c:241 createuser.c:353 dropdb.c:162
 #: droplang.c:242 dropuser.c:164 reindexdb.c:353
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
-msgstr "  -?, --help                   mostra essa ajuda e termina\n"
+msgstr "  -?, --help                mostra essa ajuda e termina\n"
 
 #: clusterdb.c:273 createdb.c:265 createlang.c:242 createuser.c:354
-#: dropdb.c:163 droplang.c:243 dropuser.c:165 reindexdb.c:354 vacuumdb.c:373
+#: dropdb.c:163 droplang.c:243 dropuser.c:165 pg_isready.c:219 reindexdb.c:354
+#: vacuumdb.c:373
 #, c-format
 msgid ""
 "\n"
@@ -195,7 +200,8 @@ msgstr ""
 "Leia a descrição do comando SQL CLUSTER para obter detalhes.\n"
 
 #: clusterdb.c:281 createdb.c:273 createlang.c:248 createuser.c:360
-#: dropdb.c:170 droplang.c:249 dropuser.c:171 reindexdb.c:362 vacuumdb.c:381
+#: dropdb.c:170 droplang.c:249 dropuser.c:171 pg_isready.c:224 reindexdb.c:362
+#: vacuumdb.c:381
 #, c-format
 msgid ""
 "\n"
@@ -387,7 +393,7 @@ msgstr "  -W, --password            pergunta senha\n"
 #: createdb.c:271
 #, c-format
 msgid "  --maintenance-db=DBNAME      alternate maintenance database\n"
-msgstr "  --maintenance-db=NOMEBD      especifica um banco de dados para manutenção\n"
+msgstr "  --maintenance-db=NOMEBD   especifica um banco de dados para manutenção\n"
 
 #: createdb.c:272
 #, c-format
@@ -721,6 +727,70 @@ msgstr "  --if-exists               não relata erro se usuário não existir\n"
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as (not the one to drop)\n"
 msgstr "  -U, --username=USUÁRIO    nome do usuário para se conectar (não é o usuário a ser removido)\n"
+
+#: pg_isready.c:138
+#, c-format
+msgid "%s: %s"
+msgstr "%s: %s"
+
+#: pg_isready.c:146
+#, c-format
+msgid "%s: could not fetch default options\n"
+msgstr "%s: não pôde obter opções padrão\n"
+
+#: pg_isready.c:209
+#, c-format
+msgid ""
+"%s issues a connection check to a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s envia uma verificação de conexão para um banco de dados PostgreSQL.\n"
+"\n"
+
+#: pg_isready.c:211
+#, c-format
+msgid "  %s [OPTION]...\n"
+msgstr "  %s [OPÇÃO]...\n"
+
+#: pg_isready.c:214
+#, c-format
+msgid "  -d, --dbname=DBNAME      database name\n"
+msgstr "  -d, --dbname=NOMEBD      nome do banco de dados\n"
+
+#: pg_isready.c:215
+#, c-format
+msgid "  -q, --quiet              run quietly\n"
+msgstr "  -q, --quiet              executa silenciosamente\n"
+
+#: pg_isready.c:216
+#, c-format
+msgid "  -V, --version            output version information, then exit\n"
+msgstr "  -V, --version            mostra informação sobre a versão e termina\n"
+
+#: pg_isready.c:217
+#, c-format
+msgid "  -?, --help               show this help, then exit\n"
+msgstr "  -?, --help               mostra essa ajuda e termina\n"
+
+#: pg_isready.c:220
+#, c-format
+msgid "  -h, --host=HOSTNAME      database server host or socket directory\n"
+msgstr "  -h, --host=MÁQUINA       máquina do servidor de banco de dados ou diretório do soquete\n"
+
+#: pg_isready.c:221
+#, c-format
+msgid "  -p, --port=PORT          database server port\n"
+msgstr "  -p, --port=PORTA         porta do servidor de banco de dados\n"
+
+#: pg_isready.c:222
+#, c-format
+msgid "  -t, --timeout=SECS       seconds to wait when attempting connection, 0 disables (default: %s)\n"
+msgstr "  -t, --timeout=SEGS       segundos a esperar ao tentar conexão, 0 desabilita (padrão: %s)\n"
+
+#: pg_isready.c:223
+#, c-format
+msgid "  -U, --username=USERNAME  user name to connect as\n"
+msgstr "  -U, --username=USUÁRIO   nome do usuário para se conectar\n"
 
 #: reindexdb.c:149
 #, c-format

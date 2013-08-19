@@ -27,8 +27,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL) 9.3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-06-14 21:20+0000\n"
-"PO-Revision-Date: 2013-06-17 16:57+0100\n"
+"POT-Creation-Date: 2013-08-16 22:20+0000\n"
+"PO-Revision-Date: 2013-08-18 19:47+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "Language: it\n"
@@ -36,7 +36,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Poedit-SourceCharset: utf-8\n"
-"X-Generator: Poedit 1.5.4\n"
+"X-Generator: Poedit 1.5.7\n"
 
 #: ../../common/fe_memutils.c:33 ../../common/fe_memutils.c:60
 #: ../../common/fe_memutils.c:83
@@ -757,13 +757,13 @@ msgstr ""
 
 #: pg_isready.c:138
 #, c-format
-msgid "%s: %s\n"
-msgstr "%s: %s\n"
+msgid "%s: %s"
+msgstr "%s: %s"
 
 #: pg_isready.c:146
 #, c-format
-msgid "%s: cannot fetch default options\n"
-msgstr "%s: impossibile caricare opzioni di default\n"
+msgid "%s: could not fetch default options\n"
+msgstr "%s: caricamento delle opzioni di default fallito\n"
 
 #: pg_isready.c:209
 #, c-format
@@ -816,8 +816,8 @@ msgstr "  -t, --timeout=SEC        secondi di attesa tentando una connessione, 0
 
 #: pg_isready.c:223
 #, c-format
-msgid "  -U, --username=USERNAME  database username\n"
-msgstr "  -U, --username=UTENTE    nome utente del database\n"
+msgid "  -U, --username=USERNAME  user name to connect as\n"
+msgstr "  -U, --username=UTENTE    nome utente con cui connettersi\n"
 
 #: reindexdb.c:149
 #, c-format

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-06-06 15:47+0000\n"
-"PO-Revision-Date: 2013-06-06 20:31-0400\n"
+"POT-Creation-Date: 2013-07-08 03:19+0000\n"
+"PO-Revision-Date: 2013-07-08 22:05-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -433,10 +433,9 @@ msgid "  -l XLOGFILE      force minimum WAL starting location for new transactio
 msgstr "  -l XLOGDATEI     minimale WAL-Startposition für neuen Log erzwingen\n"
 
 #: pg_resetxlog.c:1039
-#, fuzzy, c-format
-#| msgid "  -m XID           set next multitransaction ID\n"
-msgid "  -m XID,OLDEST    set next multitransaction ID and oldest value\n"
-msgstr "  -m XID           nächste Multitransaktions-ID setzen\n"
+#, c-format
+msgid "  -m MXID,MXID     set next and oldest multitransaction ID\n"
+msgstr "  -m MXID,MXID     nächste und älteste Multitransaktions-ID setzen\n"
 
 #: pg_resetxlog.c:1040
 #, c-format
