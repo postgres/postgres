@@ -563,6 +563,50 @@ SimpleLruWritePage(SlruCtl ctl, int slotno)
 	SlruInternalWritePage(ctl, slotno, NULL);
 }
 
+/*
+ * Return whether the given page exists on disk.
+ *
+ * A false return means that either the file does not exist, or that it's not
+ * large enough to contain the given page.
+ */
+bool
+SimpleLruDoesPhysicalPageExist(SlruCtl ctl, int pageno)
+{
+	int			segno = pageno / SLRU_PAGES_PER_SEGMENT;
+	int			rpageno = pageno % SLRU_PAGES_PER_SEGMENT;
+	int			offset = rpageno * BLCKSZ;
+	char		path[MAXPGPATH];
+	int			fd;
+	bool		result;
+	off_t		endpos;
+
+	SlruFileName(ctl, path, segno);
+
+	fd = OpenTransientFile(path, O_RDWR | PG_BINARY, S_IRUSR | S_IWUSR);
+	if (fd < 0)
+	{
+		/* expected: file doesn't exist */
+		if (errno == ENOENT)
+			return false;
+
+		/* report error normally */
+		slru_errcause = SLRU_OPEN_FAILED;
+		slru_errno = errno;
+		SlruReportIOError(ctl, pageno, 0);
+	}
+
+	if ((endpos = lseek(fd, 0, SEEK_END)) < 0)
+	{
+		slru_errcause = SLRU_OPEN_FAILED;
+		slru_errno = errno;
+		SlruReportIOError(ctl, pageno, 0);
+	}
+
+	result = endpos >= (off_t) (offset + BLCKSZ);
+
+	CloseTransientFile(fd);
+	return result;
+}
 
 /*
  * Physical read of a (previously existing) page into a buffer slot
