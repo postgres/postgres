@@ -66,8 +66,8 @@ extern uint32 bootstrap_data_checksum_version;
 /* File path names (all relative to $PGDATA) */
 #define RECOVERY_COMMAND_FILE	"recovery.conf"
 #define RECOVERY_COMMAND_DONE	"recovery.done"
-#define PROMOTE_SIGNAL_FILE "promote"
-#define FAST_PROMOTE_SIGNAL_FILE "fast_promote"
+#define PROMOTE_SIGNAL_FILE		"promote"
+#define FALLBACK_PROMOTE_SIGNAL_FILE "fallback_promote"
 
 
 /* User-settable parameters */
@@ -11082,19 +11082,20 @@ CheckForStandbyTrigger(void)
 	{
 		/*
 		 * In 9.1 and 9.2 the postmaster unlinked the promote file inside the
-		 * signal handler. We now leave the file in place and let the Startup
-		 * process do the unlink. This allows Startup to know whether we're
-		 * doing fast or normal promotion. Fast promotion takes precedence.
+		 * signal handler. It now leaves the file in place and lets the
+		 * Startup process do the unlink. This allows Startup to know whether
+		 * it should create a full checkpoint before starting up (fallback
+		 * mode). Fast promotion takes precedence.
 		 */
-		if (stat(FAST_PROMOTE_SIGNAL_FILE, &stat_buf) == 0)
+		if (stat(PROMOTE_SIGNAL_FILE, &stat_buf) == 0)
 		{
-			unlink(FAST_PROMOTE_SIGNAL_FILE);
 			unlink(PROMOTE_SIGNAL_FILE);
+			unlink(FALLBACK_PROMOTE_SIGNAL_FILE);
 			fast_promote = true;
 		}
-		else if (stat(PROMOTE_SIGNAL_FILE, &stat_buf) == 0)
+		else if (stat(FALLBACK_PROMOTE_SIGNAL_FILE, &stat_buf) == 0)
 		{
-			unlink(PROMOTE_SIGNAL_FILE);
+			unlink(FALLBACK_PROMOTE_SIGNAL_FILE);
 			fast_promote = false;
 		}
 
@@ -11130,7 +11131,7 @@ CheckPromoteSignal(void)
 	struct stat stat_buf;
 
 	if (stat(PROMOTE_SIGNAL_FILE, &stat_buf) == 0 ||
-		stat(FAST_PROMOTE_SIGNAL_FILE, &stat_buf) == 0)
+		stat(FALLBACK_PROMOTE_SIGNAL_FILE, &stat_buf) == 0)
 		return true;
 
 	return false;

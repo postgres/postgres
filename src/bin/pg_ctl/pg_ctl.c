@@ -1099,12 +1099,11 @@ do_promote(void)
 	}
 
 	/*
-	 * For 9.3 onwards, use fast promotion as the default option. Promotion
+	 * For 9.3 onwards, "fast" promotion is performed. Promotion
 	 * with a full checkpoint is still possible by writing a file called
-	 * "promote", e.g. snprintf(promote_file, MAXPGPATH, "%s/promote",
-	 * pg_data);
+	 * "fallback_promote" instead of "promote"
 	 */
-	snprintf(promote_file, MAXPGPATH, "%s/fast_promote", pg_data);
+	snprintf(promote_file, MAXPGPATH, "%s/promote", pg_data);
 
 	if ((prmfile = fopen(promote_file, "w")) == NULL)
 	{
