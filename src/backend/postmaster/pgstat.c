@@ -563,15 +563,37 @@ pgstat_reset_remove_files(const char *directory)
 	struct dirent *entry;
 	char		fname[MAXPGPATH];
 
-	dir = AllocateDir(pgstat_stat_directory);
-	while ((entry = ReadDir(dir, pgstat_stat_directory)) != NULL)
+	dir = AllocateDir(directory);
+	while ((entry = ReadDir(dir, directory)) != NULL)
 	{
-		if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+		int		nitems;
+		Oid		tmp_oid;
+		char	tmp_type[8];
+		char	tmp_rest[2];
+
+		if (strncmp(entry->d_name, ".", 2) == 0 ||
+			strncmp(entry->d_name, "..", 3) == 0)
 			continue;
 
-		/* XXX should we try to ignore files other than the ones we write? */
+		/*
+		 * Skip directory entries that don't match the file names we write.
+		 * See get_dbstat_filename for the database-specific pattern.
+		 */
+		nitems = sscanf(entry->d_name, "db_%u.%5s%1s",
+						&tmp_oid, tmp_type, tmp_rest);
+		if (nitems != 2)
+		{
+			nitems = sscanf(entry->d_name, "global.%5s%1s",
+							tmp_type, tmp_rest);
+			if (nitems != 1)
+				continue;
+		}
 
-		snprintf(fname, MAXPGPATH, "%s/%s", pgstat_stat_directory,
+		if (strncmp(tmp_type, "tmp", 4) != 0 &&
+			strncmp(tmp_type, "stat", 5) != 0)
+			continue;
+
+		snprintf(fname, MAXPGPATH, "%s/%s", directory,
 				 entry->d_name);
 		unlink(fname);
 	}
@@ -3631,6 +3653,7 @@ get_dbstat_filename(bool permanent, bool tempname, Oid databaseid,
 {
 	int			printed;
 
+	/* NB -- pgstat_reset_remove_files knows about the pattern this uses */
 	printed = snprintf(filename, len, "%s/db_%u.%s",
 					   permanent ? PGSTAT_STAT_PERMANENT_DIRECTORY :
 					   pgstat_stat_directory,
