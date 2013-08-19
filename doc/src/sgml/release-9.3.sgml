@@ -61,7 +61,7 @@
     <listitem>
      <para>
       Add a <productname>Postgres</> <link linkend="postgres-fdw">foreign
-      data wrapper</link> contrib module (Shigeru Hanada)
+      data wrapper</link> contrib module
      </para>
     </listitem>
 
