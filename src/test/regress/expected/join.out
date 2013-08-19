@@ -3161,7 +3161,7 @@ explain (costs off)
  Nested Loop Left Join
    ->  Seq Scan on int4_tbl x
    ->  Index Scan using tenk1_unique1 on tenk1
-         Index Cond: (unique1 = x.f1)
+         Index Cond: (x.f1 = unique1)
 (4 rows)
 
 -- check scoping of lateral versus parent references
@@ -3648,12 +3648,12 @@ select * from int4_tbl i left join
   lateral (select * from int2_tbl j where i.f1 = j.f1) k on true;
                 QUERY PLAN                 
 -------------------------------------------
- Nested Loop Left Join
+ Hash Left Join
    Output: i.f1, j.f1
-   Filter: (i.f1 = j.f1)
+   Hash Cond: (i.f1 = j.f1)
    ->  Seq Scan on public.int4_tbl i
          Output: i.f1
-   ->  Materialize
+   ->  Hash
          Output: j.f1
          ->  Seq Scan on public.int2_tbl j
                Output: j.f1
@@ -3661,10 +3661,14 @@ select * from int4_tbl i left join
 
 select * from int4_tbl i left join
   lateral (select * from int2_tbl j where i.f1 = j.f1) k on true;
- f1 | f1 
-----+----
-  0 |  0
-(1 row)
+     f1      | f1 
+-------------+----
+           0 |  0
+      123456 |   
+     -123456 |   
+  2147483647 |   
+ -2147483647 |   
+(5 rows)
 
 explain (verbose, costs off)
 select * from int4_tbl i left join
@@ -3690,6 +3694,62 @@ select * from int4_tbl i left join
   2147483647 | 
  -2147483647 | 
 (5 rows)
+
+explain (verbose, costs off)
+select * from int4_tbl a,
+  lateral (
+    select * from int4_tbl b left join int8_tbl c on (b.f1 = q1 and a.f1 = q2)
+  ) ss;
+                   QUERY PLAN                    
+-------------------------------------------------
+ Nested Loop
+   Output: a.f1, b.f1, c.q1, c.q2
+   ->  Seq Scan on public.int4_tbl a
+         Output: a.f1
+   ->  Hash Left Join
+         Output: b.f1, c.q1, c.q2
+         Hash Cond: (b.f1 = c.q1)
+         ->  Seq Scan on public.int4_tbl b
+               Output: b.f1
+         ->  Hash
+               Output: c.q1, c.q2
+               ->  Seq Scan on public.int8_tbl c
+                     Output: c.q1, c.q2
+                     Filter: (a.f1 = c.q2)
+(14 rows)
+
+select * from int4_tbl a,
+  lateral (
+    select * from int4_tbl b left join int8_tbl c on (b.f1 = q1 and a.f1 = q2)
+  ) ss;
+     f1      |     f1      | q1 | q2 
+-------------+-------------+----+----
+           0 |           0 |    |   
+           0 |      123456 |    |   
+           0 |     -123456 |    |   
+           0 |  2147483647 |    |   
+           0 | -2147483647 |    |   
+      123456 |           0 |    |   
+      123456 |      123456 |    |   
+      123456 |     -123456 |    |   
+      123456 |  2147483647 |    |   
+      123456 | -2147483647 |    |   
+     -123456 |           0 |    |   
+     -123456 |      123456 |    |   
+     -123456 |     -123456 |    |   
+     -123456 |  2147483647 |    |   
+     -123456 | -2147483647 |    |   
+  2147483647 |           0 |    |   
+  2147483647 |      123456 |    |   
+  2147483647 |     -123456 |    |   
+  2147483647 |  2147483647 |    |   
+  2147483647 | -2147483647 |    |   
+ -2147483647 |           0 |    |   
+ -2147483647 |      123456 |    |   
+ -2147483647 |     -123456 |    |   
+ -2147483647 |  2147483647 |    |   
+ -2147483647 | -2147483647 |    |   
+(25 rows)
 
 -- lateral reference in a PlaceHolderVar evaluated at join level
 explain (verbose, costs off)

@@ -84,6 +84,8 @@ static bool is_simple_union_all(Query *subquery);
 static bool is_simple_union_all_recurse(Node *setOp, Query *setOpQuery,
 							List *colTypes);
 static bool is_safe_append_member(Query *subquery);
+static bool jointree_contains_lateral_outer_refs(Node *jtnode, bool restricted,
+									 Relids safe_upper_varnos);
 static void replace_vars_in_jointree(Node *jtnode,
 						 pullup_replace_vars_context *context,
 						 JoinExpr *lowest_nulling_outer_join);
@@ -1303,20 +1305,58 @@ is_simple_subquery(Query *subquery, RangeTblEntry *rte,
 		return false;
 
 	/*
-	 * If the subquery is LATERAL, and we're below any outer join, and the
-	 * subquery contains lateral references to rels outside the outer join,
-	 * don't pull up.  Doing so would risk creating outer-join quals that
-	 * contain references to rels outside the outer join, which is a semantic
-	 * mess that doesn't seem worth addressing at the moment.
+	 * If the subquery is LATERAL, check for pullup restrictions from that.
 	 */
-	if (rte->lateral && lowest_outer_join != NULL)
+	if (rte->lateral)
 	{
-		Relids		lvarnos = pull_varnos_of_level((Node *) subquery, 1);
-		Relids		jvarnos = get_relids_in_jointree((Node *) lowest_outer_join,
-													 true);
+		bool		restricted;
+		Relids		safe_upper_varnos;
 
-		if (!bms_is_subset(lvarnos, jvarnos))
+		/*
+		 * The subquery's WHERE and JOIN/ON quals mustn't contain any lateral
+		 * references to rels outside a higher outer join (including the case
+		 * where the outer join is within the subquery itself).  In such a
+		 * case, pulling up would result in a situation where we need to
+		 * postpone quals from below an outer join to above it, which is
+		 * probably completely wrong and in any case is a complication that
+		 * doesn't seem worth addressing at the moment.
+		 */
+		if (lowest_outer_join != NULL)
+		{
+			restricted = true;
+			safe_upper_varnos = get_relids_in_jointree((Node *) lowest_outer_join,
+													   true);
+		}
+		else
+		{
+			restricted = false;
+			safe_upper_varnos = NULL;	/* doesn't matter */
+		}
+
+		if (jointree_contains_lateral_outer_refs((Node *) subquery->jointree,
+											  restricted, safe_upper_varnos))
 			return false;
+
+		/*
+		 * If there's an outer join above the LATERAL subquery, also disallow
+		 * pullup if the subquery's targetlist has any references to rels
+		 * outside the outer join, since these might get pulled into quals
+		 * above the subquery (but in or below the outer join) and then lead
+		 * to qual-postponement issues similar to the case checked for above.
+		 * (We wouldn't need to prevent pullup if no such references appear in
+		 * outer-query quals, but we don't have enough info here to check
+		 * that.  Also, maybe this restriction could be removed if we forced
+		 * such refs to be wrapped in PlaceHolderVars, even when they're below
+		 * the nearest outer join?	But it's a pretty hokey usage, so not
+		 * clear this is worth sweating over.)
+		 */
+		if (lowest_outer_join != NULL)
+		{
+			Relids		lvarnos = pull_varnos_of_level((Node *) subquery->targetList, 1);
+
+			if (!bms_is_subset(lvarnos, safe_upper_varnos))
+				return false;
+		}
 	}
 
 	/*
@@ -1344,12 +1384,12 @@ is_simple_subquery(Query *subquery, RangeTblEntry *rte,
 	 * correctly generate a Result plan for a jointree that's totally empty,
 	 * but we can't cope with an empty FromExpr appearing lower down in a
 	 * jointree: we identify join rels via baserelid sets, so we couldn't
-	 * distinguish a join containing such a FromExpr from one without it.
-	 * This would for example break the PlaceHolderVar mechanism, since we'd
-	 * have no way to identify where to evaluate a PHV coming out of the
-	 * subquery.  Not worth working hard on this, just to collapse
-	 * SubqueryScan/Result into Result; especially since the SubqueryScan can
-	 * often be optimized away by setrefs.c anyway.
+	 * distinguish a join containing such a FromExpr from one without it. This
+	 * would for example break the PlaceHolderVar mechanism, since we'd have
+	 * no way to identify where to evaluate a PHV coming out of the subquery.
+	 * Not worth working hard on this, just to collapse SubqueryScan/Result
+	 * into Result; especially since the SubqueryScan can often be optimized
+	 * away by setrefs.c anyway.
 	 */
 	if (subquery->jointree->fromlist == NIL)
 		return false;
@@ -1464,6 +1504,80 @@ is_safe_append_member(Query *subquery)
 		return false;
 
 	return true;
+}
+
+/*
+ * jointree_contains_lateral_outer_refs
+ *		Check for disallowed lateral references in a jointree's quals
+ *
+ * If restricted is false, all level-1 Vars are allowed (but we still must
+ * search the jointree, since it might contain outer joins below which there
+ * will be restrictions).  If restricted is true, return TRUE when any qual
+ * in the jointree contains level-1 Vars coming from outside the rels listed
+ * in safe_upper_varnos.
+ */
+static bool
+jointree_contains_lateral_outer_refs(Node *jtnode, bool restricted,
+									 Relids safe_upper_varnos)
+{
+	if (jtnode == NULL)
+		return false;
+	if (IsA(jtnode, RangeTblRef))
+		return false;
+	else if (IsA(jtnode, FromExpr))
+	{
+		FromExpr   *f = (FromExpr *) jtnode;
+		ListCell   *l;
+
+		/* First, recurse to check child joins */
+		foreach(l, f->fromlist)
+		{
+			if (jointree_contains_lateral_outer_refs(lfirst(l),
+													 restricted,
+													 safe_upper_varnos))
+				return true;
+		}
+
+		/* Then check the top-level quals */
+		if (restricted &&
+			!bms_is_subset(pull_varnos_of_level(f->quals, 1),
+						   safe_upper_varnos))
+			return true;
+	}
+	else if (IsA(jtnode, JoinExpr))
+	{
+		JoinExpr   *j = (JoinExpr *) jtnode;
+
+		/*
+		 * If this is an outer join, we mustn't allow any upper lateral
+		 * references in or below it.
+		 */
+		if (j->jointype != JOIN_INNER)
+		{
+			restricted = true;
+			safe_upper_varnos = NULL;
+		}
+
+		/* Check the child joins */
+		if (jointree_contains_lateral_outer_refs(j->larg,
+												 restricted,
+												 safe_upper_varnos))
+			return true;
+		if (jointree_contains_lateral_outer_refs(j->rarg,
+												 restricted,
+												 safe_upper_varnos))
+			return true;
+
+		/* Check the JOIN's qual clauses */
+		if (restricted &&
+			!bms_is_subset(pull_varnos_of_level(j->quals, 1),
+						   safe_upper_varnos))
+			return true;
+	}
+	else
+		elog(ERROR, "unrecognized node type: %d",
+			 (int) nodeTag(jtnode));
+	return false;
 }
 
 /*
