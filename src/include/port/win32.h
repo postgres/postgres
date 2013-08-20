@@ -272,36 +272,26 @@ typedef int pid_t;
 #undef EINTR
 #define EINTR WSAEINTR
 #define EAGAIN WSAEWOULDBLOCK
-#ifndef EMSGSIZE
+#undef EMSGSIZE
 #define EMSGSIZE WSAEMSGSIZE
-#endif
-#ifndef EAFNOSUPPORT
+#undef EAFNOSUPPORT
 #define EAFNOSUPPORT WSAEAFNOSUPPORT
-#endif
-#ifndef EWOULDBLOCK
+#undef EWOULDBLOCK
 #define EWOULDBLOCK WSAEWOULDBLOCK
-#endif
-#ifndef ECONNRESET
+#undef ECONNRESET
 #define ECONNRESET WSAECONNRESET
-#endif
-#ifndef EINPROGRESS
+#undef EINPROGRESS
 #define EINPROGRESS WSAEINPROGRESS
-#endif
-#ifndef ENOBUFS
+#undef ENOBUFS
 #define ENOBUFS WSAENOBUFS
-#endif
-#ifndef EPROTONOSUPPORT
+#undef EPROTONOSUPPORT
 #define EPROTONOSUPPORT WSAEPROTONOSUPPORT
-#endif
-#ifndef ECONNREFUSED
+#undef ECONNREFUSED
 #define ECONNREFUSED WSAECONNREFUSED
-#endif
-#ifndef EBADFD
+#undef EBADFD
 #define EBADFD WSAENOTSOCK
-#endif
-#ifndef EOPNOTSUPP
+#undef EOPNOTSUPP
 #define EOPNOTSUPP WSAEOPNOTSUPP
-#endif
 
 /*
  * For Microsoft Visual Studio 2010 and above we intentionally redefine
