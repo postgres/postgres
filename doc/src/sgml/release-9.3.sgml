@@ -1213,7 +1213,7 @@
       <listitem>
        <para>
         Allow PL/pgSQL to access <link
-        linkend="libpq-pqresulterrorfield">constraint violation
+        linkend="plpgsql-exception-diagnostics">constraint violation
         details</link> as separate fields (Pavel Stehule)
        </para>
       </listitem>
