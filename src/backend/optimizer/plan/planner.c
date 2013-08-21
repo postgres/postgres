@@ -2848,7 +2848,11 @@ choose_hashed_distinct(PlannerInfo *root,
 	 * Don't do it if it doesn't look like the hashtable will fit into
 	 * work_mem.
 	 */
+
+	/* Estimate per-hash-entry space at tuple width... */
 	hashentrysize = MAXALIGN(path_width) + MAXALIGN(sizeof(MinimalTupleData));
+	/* plus the per-hash-entry overhead */
+	hashentrysize += hash_agg_entry_size(0);
 
 	if (hashentrysize * dNumDistinctRows > work_mem * 1024L)
 		return false;
