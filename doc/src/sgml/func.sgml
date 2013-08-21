@@ -1295,9 +1295,6 @@
 
       <row>
        <entry>
-        <indexterm>
-         <primary>trim</primary>
-        </indexterm>
         <literal><function>trim(<optional>leading | trailing
         | both</optional> <optional>from</optional>
         <parameter>string</parameter>
