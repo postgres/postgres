@@ -19,6 +19,7 @@
 
 extern TargetEntry *tlist_member(Node *node, List *targetlist);
 extern TargetEntry *tlist_member_ignore_relabel(Node *node, List *targetlist);
+extern TargetEntry *tlist_member_match_var(Var *var, List *targetlist);
 
 extern List *flatten_tlist(List *tlist, PVCAggregateBehavior aggbehavior,
 			  PVCPlaceHolderBehavior phbehavior);
