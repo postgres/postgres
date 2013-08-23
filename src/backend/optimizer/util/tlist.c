@@ -72,6 +72,35 @@ tlist_member_ignore_relabel(Node *node, List *targetlist)
 }
 
 /*
+ * tlist_member_match_var
+ *	  Same as above, except that we match the provided Var on the basis
+ *	  of varno/varattno/varlevelsup only, rather than using full equal().
+ *
+ * This is needed in some cases where we can't be sure of an exact typmod
+ * match.  It's probably a good idea to check the vartype anyway, but
+ * we leave it to the caller to apply any suitable sanity checks.
+ */
+TargetEntry *
+tlist_member_match_var(Var *var, List *targetlist)
+{
+	ListCell   *temp;
+
+	foreach(temp, targetlist)
+	{
+		TargetEntry *tlentry = (TargetEntry *) lfirst(temp);
+		Var		   *tlvar = (Var *) tlentry->expr;
+
+		if (!tlvar || !IsA(tlvar, Var))
+			continue;
+		if (var->varno == tlvar->varno &&
+			var->varattno == tlvar->varattno &&
+			var->varlevelsup == tlvar->varlevelsup)
+			return tlentry;
+	}
+	return NULL;
+}
+
+/*
  * flatten_tlist
  *	  Create a target list that only contains unique variables.
  *

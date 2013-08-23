@@ -330,6 +330,13 @@ AS $$ SELECT a, b
 SELECT * FROM foo(3);
 DROP FUNCTION foo(int);
 
+-- case that causes change of typmod knowledge during inlining
+CREATE OR REPLACE FUNCTION foo()
+RETURNS TABLE(a varchar(5))
+AS $$ SELECT 'hello'::varchar(5) $$ LANGUAGE sql STABLE;
+SELECT * FROM foo() GROUP BY 1;
+DROP FUNCTION foo();
+
 --
 -- some tests on SQL functions with RETURNING
 --
