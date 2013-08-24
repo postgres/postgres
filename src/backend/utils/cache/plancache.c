@@ -54,6 +54,7 @@
 #include "executor/executor.h"
 #include "executor/spi.h"
 #include "nodes/nodeFuncs.h"
+#include "optimizer/cost.h"
 #include "optimizer/planmain.h"
 #include "optimizer/prep.h"
 #include "parser/analyze.h"
@@ -91,7 +92,7 @@ static CachedPlan *BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 				ParamListInfo boundParams);
 static bool choose_custom_plan(CachedPlanSource *plansource,
 				   ParamListInfo boundParams);
-static double cached_plan_cost(CachedPlan *plan);
+static double cached_plan_cost(CachedPlan *plan, bool include_planner);
 static void AcquireExecutorLocks(List *stmt_list, bool acquire);
 static void AcquirePlannerLocks(List *stmt_list, bool acquire);
 static void ScanQueryForLocks(Query *parsetree, bool acquire);
@@ -998,15 +999,16 @@ choose_custom_plan(CachedPlanSource *plansource, ParamListInfo boundParams)
 	avg_custom_cost = plansource->total_custom_cost / plansource->num_custom_plans;
 
 	/*
-	 * Prefer generic plan if it's less than 10% more expensive than average
-	 * custom plan.  This threshold is a bit arbitrary; it'd be better if we
-	 * had some means of comparing planning time to the estimated runtime cost
-	 * differential.
+	 * Prefer generic plan if it's less expensive than the average custom
+	 * plan.  (Because we include a charge for cost of planning in the
+	 * custom-plan costs, this means the generic plan only has to be less
+	 * expensive than the execution cost plus replan cost of the custom
+	 * plans.)
 	 *
 	 * Note that if generic_cost is -1 (indicating we've not yet determined
 	 * the generic plan cost), we'll always prefer generic at this point.
 	 */
-	if (plansource->generic_cost < avg_custom_cost * 1.1)
+	if (plansource->generic_cost < avg_custom_cost)
 		return false;
 
 	return true;
@@ -1014,9 +1016,13 @@ choose_custom_plan(CachedPlanSource *plansource, ParamListInfo boundParams)
 
 /*
  * cached_plan_cost: calculate estimated cost of a plan
+ *
+ * If include_planner is true, also include the estimated cost of constructing
+ * the plan.  (We must factor that into the cost of using a custom plan, but
+ * we don't count it for a generic plan.)
  */
 static double
-cached_plan_cost(CachedPlan *plan)
+cached_plan_cost(CachedPlan *plan, bool include_planner)
 {
 	double		result = 0;
 	ListCell   *lc;
@@ -1029,6 +1035,34 @@ cached_plan_cost(CachedPlan *plan)
 			continue;			/* Ignore utility statements */
 
 		result += plannedstmt->planTree->total_cost;
+
+		if (include_planner)
+		{
+			/*
+			 * Currently we use a very crude estimate of planning effort based
+			 * on the number of relations in the finished plan's rangetable.
+			 * Join planning effort actually scales much worse than linearly
+			 * in the number of relations --- but only until the join collapse
+			 * limits kick in.	Also, while inheritance child relations surely
+			 * add to planning effort, they don't make the join situation
+			 * worse.  So the actual shape of the planning cost curve versus
+			 * number of relations isn't all that obvious.  It will take
+			 * considerable work to arrive at a less crude estimate, and for
+			 * now it's not clear that's worth doing.
+			 *
+			 * The other big difficulty here is that we don't have any very
+			 * good model of how planning cost compares to execution costs.
+			 * The current multiplier of 1000 * cpu_operator_cost is probably
+			 * on the low side, but we'll try this for awhile before making a
+			 * more aggressive correction.
+			 *
+			 * If we ever do write a more complicated estimator, it should
+			 * probably live in src/backend/optimizer/ not here.
+			 */
+			int			nrelations = list_length(plannedstmt->rtable);
+
+			result += 1000.0 * cpu_operator_cost * (nrelations + 1);
+		}
 	}
 
 	return result;
@@ -1104,7 +1138,7 @@ GetCachedPlan(CachedPlanSource *plansource, ParamListInfo boundParams,
 								MemoryContextGetParent(plansource->context));
 			}
 			/* Update generic_cost whenever we make a new generic plan */
-			plansource->generic_cost = cached_plan_cost(plan);
+			plansource->generic_cost = cached_plan_cost(plan, false);
 
 			/*
 			 * If, based on the now-known value of generic_cost, we'd not have
@@ -1133,7 +1167,7 @@ GetCachedPlan(CachedPlanSource *plansource, ParamListInfo boundParams,
 		/* Accumulate total costs of custom plans, but 'ware overflow */
 		if (plansource->num_custom_plans < INT_MAX)
 		{
-			plansource->total_custom_cost += cached_plan_cost(plan);
+			plansource->total_custom_cost += cached_plan_cost(plan, true);
 			plansource->num_custom_plans++;
 		}
 	}
