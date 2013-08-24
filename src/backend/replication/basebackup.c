@@ -304,6 +304,14 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 		qsort(walFiles, nWalFiles, sizeof(char *), compareWalFileNames);
 
 		/*
+		 * There must be at least one xlog file in the pg_xlog directory,
+		 * since we are doing backup-including-xlog.
+		 */
+		if (nWalFiles < 1)
+			ereport(ERROR,
+					(errmsg("could not find any WAL files")));
+
+		/*
 		 * Sanity check: the first and last segment should cover startptr and
 		 * endptr, with no gaps in between.
 		 */
