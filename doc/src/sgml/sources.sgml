@@ -143,6 +143,13 @@ ereport(ERROR,
    </para>
 
    <para>
+    If the severity level is <literal>ERROR</> or higher,
+    <function>ereport</> aborts the execution of the user-defined
+    function and does not return to the caller. If the severity level is
+    lower than <literal>ERROR</>, <function>ereport</> returns normally.
+   </para>
+    
+   <para>
     The available auxiliary routines for <function>ereport</> are:
   <itemizedlist>
    <listitem>
