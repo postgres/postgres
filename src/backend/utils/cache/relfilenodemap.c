@@ -180,6 +180,9 @@ RelidByRelfilenode(Oid reltablespace, Oid relfilenode)
 	if (found)
 		return entry->relid;
 
+	/* initialize empty/negative cache entry before doing the actual lookup */
+	entry->relid = InvalidOid;
+
 	/* ok, no previous cache entry, do it the hard way */
 
 	/* check shared tables */
