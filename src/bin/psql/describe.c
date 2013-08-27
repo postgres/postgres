@@ -2372,10 +2372,9 @@ add_tablespace_footer(printTableContent *const cont, char relkind,
 					/* Append the tablespace to the latest footer */
 					printfPQExpBuffer(&buf, "%s", cont->footer->data);
 
-					/*
-					 * translator: before this string there's an index
-					 * description like '"foo_pkey" PRIMARY KEY, btree (a)'
-					 */
+					/*-------
+					   translator: before this string there's an index description like
+					   '"foo_pkey" PRIMARY KEY, btree (a)' */
 					appendPQExpBuffer(&buf, _(", tablespace \"%s\""),
 									  PQgetvalue(result, 0, 0));
 					printTableSetFooter(cont, buf.data);
