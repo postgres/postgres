@@ -2456,12 +2456,12 @@ _tocEntryRequired(TocEntry *te, teSection curSection, RestoreOptions *ropt)
 	}
 
 	/* Check options for selective dump/restore */
-	if (ropt->schemaNames)
+	if (ropt->schemaNames.head != NULL)
 	{
 		/* If no namespace is specified, it means all. */
 		if (!te->namespace)
 			return 0;
-		if (strcmp(ropt->schemaNames, te->namespace) != 0)
+		if (!(simple_string_list_member(&ropt->schemaNames, te->namespace)))
 			return 0;
 	}
 
@@ -2479,21 +2479,21 @@ _tocEntryRequired(TocEntry *te, teSection curSection, RestoreOptions *ropt)
 		{
 			if (!ropt->selIndex)
 				return 0;
-			if (ropt->indexNames && strcmp(ropt->indexNames, te->tag) != 0)
+			if (ropt->indexNames.head != NULL && (!(simple_string_list_member(&ropt->indexNames, te->tag))))
 				return 0;
 		}
 		else if (strcmp(te->desc, "FUNCTION") == 0)
 		{
 			if (!ropt->selFunction)
 				return 0;
-			if (ropt->functionNames && strcmp(ropt->functionNames, te->tag) != 0)
+			if (ropt->functionNames.head != NULL && (!(simple_string_list_member(&ropt->functionNames, te->tag))))
 				return 0;
 		}
 		else if (strcmp(te->desc, "TRIGGER") == 0)
 		{
 			if (!ropt->selTrigger)
 				return 0;
-			if (ropt->triggerNames && strcmp(ropt->triggerNames, te->tag) != 0)
+			if (ropt->triggerNames.head != NULL && (!(simple_string_list_member(&ropt->triggerNames, te->tag))))
 				return 0;
 		}
 		else

@@ -196,7 +196,7 @@ main(int argc, char **argv)
 				break;
 
 			case 'n':			/* Dump data for this schema only */
-				opts->schemaNames = pg_strdup(optarg);
+				simple_string_list_append(&opts->schemaNames, optarg);
 				break;
 
 			case 'O':
@@ -213,17 +213,17 @@ main(int argc, char **argv)
 			case 'P':			/* Function */
 				opts->selTypes = 1;
 				opts->selFunction = 1;
-				opts->functionNames = pg_strdup(optarg);
+				simple_string_list_append(&opts->functionNames, optarg);
 				break;
 			case 'I':			/* Index */
 				opts->selTypes = 1;
 				opts->selIndex = 1;
-				opts->indexNames = pg_strdup(optarg);
+				simple_string_list_append(&opts->indexNames, optarg);
 				break;
 			case 'T':			/* Trigger */
 				opts->selTypes = 1;
 				opts->selTrigger = 1;
-				opts->triggerNames = pg_strdup(optarg);
+				simple_string_list_append(&opts->triggerNames, optarg);
 				break;
 			case 's':			/* dump schema only */
 				opts->schemaOnly = 1;

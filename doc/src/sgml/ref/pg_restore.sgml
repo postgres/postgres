@@ -230,7 +230,8 @@
       <term><option>--index=<replaceable class="parameter">index</replaceable></option></term>
       <listitem>
        <para>
-        Restore definition of named index only.
+        Restore definition of named index only.  Multiple indexes
+        may be specified with multiple <option>-I</> switches.
        </para>
       </listitem>
      </varlistentry>
@@ -314,7 +315,8 @@
       <term><option>--schema=<replaceable class="parameter">schema</replaceable></option></term>
       <listitem>
        <para>
-        Restore only objects that are in the named schema.  This can be
+        Restore only objects that are in the named schema.  Multiple schemas
+        may be specified with multiple <option>-n</> switches.  This can be
         combined with the <option>-t</option> option to restore just a
         specific table.
        </para>
@@ -348,7 +350,8 @@
        <para>
         Restore the named function only.  Be careful to spell the function
         name and arguments exactly as they appear in the dump file's table
-        of contents.
+        of contents.  Multiple functions may be specified with multiple
+        <option>-P</> switches.
        </para>
       </listitem>
      </varlistentry>
@@ -413,7 +416,8 @@
       <term><option>--trigger=<replaceable class="parameter">trigger</replaceable></option></term>
       <listitem>
        <para>
-        Restore named trigger only.
+        Restore named trigger only.  Multiple triggers may be specified with
+        multiple <option>-T</> switches.
        </para>
       </listitem>
      </varlistentry>
