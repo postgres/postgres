@@ -365,6 +365,9 @@ worker_spi_launch(PG_FUNCTION_ARGS)
 {
 	int32		i = PG_GETARG_INT32(0);
 	BackgroundWorker worker;
+	BackgroundWorkerHandle *handle;
+	BgwHandleStatus	status;
+	pid_t		pid;
 
 	worker.bgw_flags = BGWORKER_SHMEM_ACCESS |
 		BGWORKER_BACKEND_DATABASE_CONNECTION;
@@ -375,6 +378,25 @@ worker_spi_launch(PG_FUNCTION_ARGS)
 	sprintf(worker.bgw_function_name, "worker_spi_main");
 	snprintf(worker.bgw_name, BGW_MAXLEN, "worker %d", i);
 	worker.bgw_main_arg = Int32GetDatum(i);
+	/* set bgw_notify_pid so that we can use WaitForBackgroundWorkerStartup */
+	worker.bgw_notify_pid = MyProcPid;
 
-	PG_RETURN_BOOL(RegisterDynamicBackgroundWorker(&worker));
+	if (!RegisterDynamicBackgroundWorker(&worker, &handle))
+		PG_RETURN_NULL();
+
+	status = WaitForBackgroundWorkerStartup(handle, &pid);
+
+	if (status == BGWH_STOPPED)
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_RESOURCES),
+				 errmsg("could not start background process"),
+				 errhint("More details may be available in the server log.")));
+	if (status == BGWH_POSTMASTER_DIED)
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_RESOURCES),
+				 errmsg("cannot start background processes without postmaster"),
+				 errhint("Kill all remaining database processes and restart the database.")));
+	Assert(status == BGWH_STARTED);
+
+	PG_RETURN_INT32(pid);
 }

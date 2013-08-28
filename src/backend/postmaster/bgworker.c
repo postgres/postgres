@@ -18,6 +18,7 @@
 #include "miscadmin.h"
 #include "libpq/pqsignal.h"
 #include "postmaster/bgworker_internals.h"
+#include "postmaster/postmaster.h"
 #include "storage/barrier.h"
 #include "storage/ipc.h"
 #include "storage/latch.h"
@@ -66,6 +67,8 @@ slist_head BackgroundWorkerList = SLIST_STATIC_INIT(BackgroundWorkerList);
 typedef struct BackgroundWorkerSlot
 {
 	bool	in_use;
+	pid_t	pid;				/* InvalidPid = not started yet; 0 = dead */
+	uint64	generation;			/* incremented when slot is recycled */
 	BackgroundWorker worker;
 } BackgroundWorkerSlot;
 
@@ -74,6 +77,12 @@ typedef struct BackgroundWorkerArray
 	int		total_slots;
 	BackgroundWorkerSlot slot[FLEXIBLE_ARRAY_MEMBER];
 } BackgroundWorkerArray;
+
+struct BackgroundWorkerHandle
+{
+	int		slot;
+	uint64	generation;
+};
 
 BackgroundWorkerArray *BackgroundWorkerData;
 
@@ -125,7 +134,10 @@ BackgroundWorkerShmemInit(void)
 			rw = slist_container(RegisteredBgWorker, rw_lnode, siter.cur);
 			Assert(slotno < max_worker_processes);
 			slot->in_use = true;
+			slot->pid = InvalidPid;
+			slot->generation = 0;
 			rw->rw_shmem_slot = slotno;
+			rw->rw_worker.bgw_notify_pid = 0; /* might be reinit after crash */
 			memcpy(&slot->worker, &rw->rw_worker, sizeof(BackgroundWorker));
 			++slotno;
 		}
@@ -244,7 +256,7 @@ BackgroundWorkerStateChange(void)
 						   slot->worker.bgw_function_name, BGW_MAXLEN);
 
 		/*
-		 * Copy remaining fields.
+		 * Copy various fixed-size fields.
 		 *
 		 * flags, start_time, and restart_time are examined by the
 		 * postmaster, but nothing too bad will happen if they are
@@ -256,6 +268,23 @@ BackgroundWorkerStateChange(void)
 		rw->rw_worker.bgw_restart_time = slot->worker.bgw_restart_time;
 		rw->rw_worker.bgw_main = slot->worker.bgw_main;
 		rw->rw_worker.bgw_main_arg = slot->worker.bgw_main_arg;
+
+		/*
+		 * Copy the PID to be notified about state changes, but only if
+		 * the postmaster knows about a backend with that PID.  It isn't
+		 * an error if the postmaster doesn't know about the PID, because
+		 * the backend that requested the worker could have died (or been
+		 * killed) just after doing so.  Nonetheless, at least until we get
+		 * some experience with how this plays out in the wild, log a message
+		 * at a relative high debug level.
+		 */
+		rw->rw_worker.bgw_notify_pid = slot->worker.bgw_notify_pid;
+		if (!PostmasterMarkPIDForWorkerNotify(rw->rw_worker.bgw_notify_pid))
+		{
+			elog(DEBUG1, "worker notification PID %u is not valid",
+				 rw->rw_worker.bgw_notify_pid);
+			rw->rw_worker.bgw_notify_pid = 0;
+		}
 
 		/* Initialize postmaster bookkeeping. */
 		rw->rw_backend = NULL;
@@ -300,6 +329,44 @@ ForgetBackgroundWorker(slist_mutable_iter *cur)
 
 	slist_delete_current(cur);
 	free(rw);
+}
+
+/*
+ * Report the PID of a newly-launched background worker in shared memory.
+ *
+ * This function should only be called from the postmaster.
+ */
+void
+ReportBackgroundWorkerPID(RegisteredBgWorker *rw)
+{
+	BackgroundWorkerSlot *slot;
+
+	Assert(rw->rw_shmem_slot < max_worker_processes);
+	slot = &BackgroundWorkerData->slot[rw->rw_shmem_slot];
+	slot->pid = rw->rw_pid;
+
+	if (rw->rw_worker.bgw_notify_pid != 0)
+		kill(rw->rw_worker.bgw_notify_pid, SIGUSR1);
+}
+
+/*
+ * Cancel SIGUSR1 notifications for a PID belonging to an exiting backend.
+ *
+ * This function should only be called from the postmaster.
+ */
+void
+BackgroundWorkerStopNotifications(pid_t pid)
+{
+	slist_iter	siter;
+
+	slist_foreach(siter, &BackgroundWorkerList)
+	{
+		RegisteredBgWorker *rw;
+
+		rw = slist_container(RegisteredBgWorker, rw_lnode, siter.cur);
+		if (rw->rw_worker.bgw_notify_pid == pid)
+			rw->rw_worker.bgw_notify_pid = 0;
+	}
 }
 
 #ifdef EXEC_BACKEND
@@ -602,6 +669,15 @@ RegisterBackgroundWorker(BackgroundWorker *worker)
 	if (!SanityCheckBackgroundWorker(worker, LOG))
 		return;
 
+	if (worker->bgw_notify_pid != 0)
+	{
+		ereport(LOG,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("background worker \"%s\": only dynamic background workers can request notification",
+					worker->bgw_name)));
+		return;
+	}
+
 	/*
 	 * Enforce maximum number of workers.  Note this is overly restrictive: we
 	 * could allow more non-shmem-connected workers, because these don't count
@@ -647,12 +723,18 @@ RegisterBackgroundWorker(BackgroundWorker *worker)
  *
  * Returns true on success and false on failure.  Failure typically indicates
  * that no background worker slots are currently available.
+ *
+ * If handle != NULL, we'll set *handle to a pointer that can subsequently
+ * be used as an argument to GetBackgroundWorkerPid().  The caller can
+ * free this pointer using pfree(), if desired.
  */
 bool
-RegisterDynamicBackgroundWorker(BackgroundWorker *worker)
+RegisterDynamicBackgroundWorker(BackgroundWorker *worker,
+								BackgroundWorkerHandle **handle)
 {
 	int		slotno;
 	bool	success = false;
+	uint64	generation;
 
 	/*
 	 * We can't register dynamic background workers from the postmaster.
@@ -680,6 +762,9 @@ RegisterDynamicBackgroundWorker(BackgroundWorker *worker)
 		if (!slot->in_use)
 		{
 			memcpy(&slot->worker, worker, sizeof(BackgroundWorker));
+			slot->pid = InvalidPid;		/* indicates not started yet */
+			slot->generation++;
+			generation = slot->generation;
 
 			/*
 			 * Make sure postmaster doesn't see the slot as in use before
@@ -699,5 +784,122 @@ RegisterDynamicBackgroundWorker(BackgroundWorker *worker)
 	if (success)
 		SendPostmasterSignal(PMSIGNAL_BACKGROUND_WORKER_CHANGE);
 
+	/*
+	 * If we found a slot and the user has provided a handle, initialize it.
+	 */
+	if (success && handle)
+	{
+		*handle = palloc(sizeof(BackgroundWorkerHandle));
+		(*handle)->slot = slotno;
+		(*handle)->generation = generation;
+	}
+
 	return success;
+}
+
+/*
+ * Get the PID of a dynamically-registered background worker.
+ *
+ * If the worker is determined to be running, the return value will be
+ * BGWH_STARTED and *pidp will get the PID of the worker process.
+ * Otherwise, the return value will be BGWH_NOT_YET_STARTED if the worker
+ * hasn't been started yet, and BGWH_STOPPED if the worker was previously
+ * running but is no longer.
+ *
+ * In the latter case, the worker may be stopped temporarily (if it is
+ * configured for automatic restart, or if it exited with code 0) or gone
+ * for good (if it is configured not to restart and exited with code 1).
+ */
+BgwHandleStatus
+GetBackgroundWorkerPid(BackgroundWorkerHandle *handle, pid_t *pidp)
+{
+	BackgroundWorkerSlot *slot;
+	pid_t	pid;
+
+	Assert(handle->slot < max_worker_processes);
+	slot = &BackgroundWorkerData->slot[handle->slot];
+
+	/*
+	 * We could probably arrange to synchronize access to data using
+	 * memory barriers only, but for now, let's just keep it simple and
+	 * grab the lock.  It seems unlikely that there will be enough traffic
+	 * here to result in meaningful contention.
+	 */
+	LWLockAcquire(BackgroundWorkerLock, LW_SHARED);
+
+	/*
+	 * The generation number can't be concurrently changed while we hold the
+	 * lock.  The pid, which is updated by the postmaster, can change at any
+	 * time, but we assume such changes are atomic.  So the value we read
+	 * won't be garbage, but it might be out of date by the time the caller
+	 * examines it (but that's unavoidable anyway).
+	 */
+	if (handle->generation != slot->generation)
+		pid = 0;
+	else
+		pid = slot->pid;
+
+	/* All done. */
+	LWLockRelease(BackgroundWorkerLock);
+
+	if (pid == 0)
+		return BGWH_STOPPED;
+	else if (pid == InvalidPid)
+		return BGWH_NOT_YET_STARTED;
+	*pidp = pid;
+	return BGWH_STARTED;
+}
+
+/*
+ * Wait for a background worker to start up.
+ * 
+ * This is like GetBackgroundWorkerPid(), except that if the worker has not
+ * yet started, we wait for it to do so; thus, BGWH_NOT_YET_STARTED is never
+ * returned.  However, if the postmaster has died, we give up and return
+ * BGWH_POSTMASTER_DIED, since it that case we know that startup will not
+ * take place.
+ */
+BgwHandleStatus
+WaitForBackgroundWorkerStartup(BackgroundWorkerHandle *handle, pid_t *pidp)
+{
+	BgwHandleStatus	status;
+	pid_t	pid;
+	int		rc;
+	bool	save_set_latch_on_sigusr1;
+
+	save_set_latch_on_sigusr1 = set_latch_on_sigusr1;
+	set_latch_on_sigusr1 = true;
+
+	PG_TRY();
+	{
+		for (;;)
+		{
+			CHECK_FOR_INTERRUPTS();
+
+			status = GetBackgroundWorkerPid(handle, &pid);
+			if (status != BGWH_NOT_YET_STARTED)
+				break;
+
+			rc = WaitLatch(&MyProc->procLatch,
+						   WL_LATCH_SET | WL_POSTMASTER_DEATH, 0);
+
+			if (rc & WL_POSTMASTER_DEATH)
+			{
+				status = BGWH_POSTMASTER_DIED;
+				break;
+			}
+
+			ResetLatch(&MyProc->procLatch);
+		}
+	}
+	PG_CATCH();
+	{
+		set_latch_on_sigusr1 = save_set_latch_on_sigusr1;
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	set_latch_on_sigusr1 = save_set_latch_on_sigusr1;
+	*pidp = pid;
+	return status;
 }

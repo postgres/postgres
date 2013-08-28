@@ -170,6 +170,7 @@ typedef struct bkend
 	 */
 	int			bkend_type;
 	bool		dead_end;		/* is it going to send an error and quit? */
+	bool		bgworker_notify; /* gets bgworker start/stop notifications */
 	dlist_node	elem;			/* list link in BackendList */
 } Backend;
 
@@ -2877,11 +2878,20 @@ CleanupBackgroundWorker(int pid,
 #ifdef EXEC_BACKEND
 			ShmemBackendArrayRemove(rw->rw_backend);
 #endif
+			/*
+			 * It's possible that this background worker started some OTHER
+			 * background worker and asked to be notified when that worker
+			 * started or stopped.  If so, cancel any notifications destined
+			 * for the now-dead backend.
+			 */
+			if (rw->rw_backend->bgworker_notify)
+				BackgroundWorkerStopNotifications(rw->rw_pid);
 			free(rw->rw_backend);
 			rw->rw_backend = NULL;
 		}
 		rw->rw_pid = 0;
 		rw->rw_child_slot = 0;
+		ReportBackgroundWorkerPID(rw);		/* report child death */
 
 		LogChildExit(LOG, namebuf, pid, exitstatus);
 
@@ -2955,6 +2965,18 @@ CleanupBackend(int pid,
 				ShmemBackendArrayRemove(bp);
 #endif
 			}
+			if (bp->bgworker_notify)
+			{
+				/*
+				 * This backend may have been slated to receive SIGUSR1
+				 * when some background worker started or stopped.  Cancel
+				 * those notifications, as we don't want to signal PIDs that
+				 * are not PostgreSQL backends.  This gets skipped in the
+				 * (probably very common) case where the backend has never
+				 * requested any such notifications.
+				 */
+				BackgroundWorkerStopNotifications(bp->pid);
+			}
 			dlist_delete(iter.cur);
 			free(bp);
 			break;
@@ -3018,6 +3040,7 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 			rw->rw_pid = 0;
 			rw->rw_child_slot = 0;
 			/* don't reset crashed_at */
+			/* don't report child stop, either */
 			/* Keep looping so we can signal remaining workers */
 		}
 		else
@@ -3711,6 +3734,9 @@ BackendStartup(Port *port)
 		bn->child_slot = MyPMChildSlot = AssignPostmasterChildSlot();
 	else
 		bn->child_slot = 0;
+
+	/* Hasn't asked to be notified about any bgworkers yet */
+	bn->bgworker_notify = false;
 
 #ifdef EXEC_BACKEND
 	pid = backend_forkexec(port);
@@ -5122,6 +5148,7 @@ StartAutovacuumWorker(void)
 			/* Autovac workers are not dead_end and need a child slot */
 			bn->dead_end = false;
 			bn->child_slot = MyPMChildSlot = AssignPostmasterChildSlot();
+			bn->bgworker_notify = false;
 
 			bn->pid = StartAutoVacWorker();
 			if (bn->pid > 0)
@@ -5318,6 +5345,7 @@ do_start_bgworker(RegisteredBgWorker *rw)
 			rw->rw_pid = worker_pid;
 			if (rw->rw_backend)
 				rw->rw_backend->pid = rw->rw_pid;
+			ReportBackgroundWorkerPID(rw);
 	}
 }
 
@@ -5400,6 +5428,7 @@ assign_backendlist_entry(RegisteredBgWorker *rw)
 	bn->child_slot = MyPMChildSlot = AssignPostmasterChildSlot();
 	bn->bkend_type = BACKEND_TYPE_BGWORKER;
 	bn->dead_end = false;
+	bn->bgworker_notify = false;
 
 	rw->rw_backend = bn;
 	rw->rw_child_slot = bn->child_slot;
@@ -5508,6 +5537,29 @@ maybe_start_bgworker(void)
 
 	/* no runnable worker found */
 	StartWorkerNeeded = false;
+}
+
+/*
+ * When a backend asks to be notified about worker state changes, we
+ * set a flag in its backend entry.  The background worker machinery needs
+ * to know when such backends exit.
+ */
+bool
+PostmasterMarkPIDForWorkerNotify(int pid)
+{
+	dlist_iter	iter;
+	Backend    *bp;
+
+	dlist_foreach(iter, &BackendList)
+	{
+		bp = dlist_container(Backend, elem, iter.cur);
+		if (bp->pid == pid)
+		{
+			bp->bgworker_notify = true;
+			return true;
+		}
+	}
+	return false;
 }
 
 #ifdef EXEC_BACKEND

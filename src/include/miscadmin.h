@@ -28,6 +28,8 @@
 
 #define PG_BACKEND_VERSIONSTR "postgres (PostgreSQL) " PG_VERSION "\n"
 
+#define InvalidPid				(-1)
+
 
 /*****************************************************************************
  *	  System interrupt and critical section handling

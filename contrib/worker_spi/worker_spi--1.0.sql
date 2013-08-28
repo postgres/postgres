@@ -4,6 +4,6 @@
 \echo Use "CREATE EXTENSION worker_spi" to load this file. \quit
 
 CREATE FUNCTION worker_spi_launch(pg_catalog.int4)
-RETURNS pg_catalog.bool STRICT
+RETURNS pg_catalog.int4 STRICT
 AS 'MODULE_PATHNAME'
 LANGUAGE C;

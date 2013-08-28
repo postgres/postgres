@@ -52,6 +52,7 @@ extern void ClosePostmasterPorts(bool am_syslogger);
 extern int	MaxLivePostmasterChildren(void);
 
 extern int	GetNumShmemAttachedBgworkers(void);
+extern bool PostmasterMarkPIDForWorkerNotify(int);
 
 #ifdef EXEC_BACKEND
 extern pid_t postmaster_forkexec(int argc, char *argv[]);

@@ -80,13 +80,32 @@ typedef struct BackgroundWorker
 	char		bgw_library_name[BGW_MAXLEN];	/* only if bgw_main is NULL */
 	char		bgw_function_name[BGW_MAXLEN];	/* only if bgw_main is NULL */
 	Datum		bgw_main_arg;
+	pid_t		bgw_notify_pid;		/* SIGUSR1 this backend on start/stop */
 } BackgroundWorker;
+
+typedef enum BgwHandleStatus
+{
+	BGWH_STARTED,				/* worker is running */
+	BGWH_NOT_YET_STARTED,		/* worker hasn't been started yet */
+	BGWH_STOPPED,				/* worker has exited */
+	BGWH_POSTMASTER_DIED		/* postmaster died; worker status unclear */
+} BgwHandleStatus;
+
+struct BackgroundWorkerHandle;
+typedef struct BackgroundWorkerHandle BackgroundWorkerHandle;
 
 /* Register a new bgworker during shared_preload_libraries */
 extern void RegisterBackgroundWorker(BackgroundWorker *worker);
 
 /* Register a new bgworker from a regular backend */
-extern bool RegisterDynamicBackgroundWorker(BackgroundWorker *worker);
+extern bool RegisterDynamicBackgroundWorker(BackgroundWorker *worker,
+											BackgroundWorkerHandle **handle);
+
+/* Query the status of a bgworker */
+extern BgwHandleStatus GetBackgroundWorkerPid(BackgroundWorkerHandle *handle,
+					   pid_t *pidp);
+extern BgwHandleStatus WaitForBackgroundWorkerStartup(BackgroundWorkerHandle *
+							   handle, pid_t *pid);
 
 /* This is valid in a running worker */
 extern BackgroundWorker *MyBgworkerEntry;

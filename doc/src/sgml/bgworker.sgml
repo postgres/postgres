@@ -37,11 +37,11 @@
   <function>RegisterBackgroundWorker(<type>BackgroundWorker *worker</type>)</function>
   from its <function>_PG_init()</>.  Background workers can also be started
   after the system is up and running by calling the function
-  <function>RegisterDynamicBackgroundWorker</function>(<type>BackgroundWorker
-  *worker</type>).  Unlike <function>RegisterBackgroundWorker</>, which can
-  only be called from within the postmaster,
-  <function>RegisterDynamicBackgroundWorker</function> must be called from
-  a regular backend.
+  <function>RegisterDynamicBackgroundWorker(<type>BackgroundWorker
+  *worker, BackgroundWorkerHandle **handle</type>)</function>.  Unlike
+  <function>RegisterBackgroundWorker</>, which can only be called from within
+  the postmaster, <function>RegisterDynamicBackgroundWorker</function> must be
+  called from a regular backend.
  </para>
 
  <para>
@@ -58,6 +58,7 @@ typedef struct BackgroundWorker
     char        bgw_library_name[BGW_MAXLEN];   /* only if bgw_main is NULL */
     char        bgw_function_name[BGW_MAXLEN];  /* only if bgw_main is NULL */
     Datum       bgw_main_arg;
+    int         bgw_notify_pid;
 } BackgroundWorker;
 </programlisting>
   </para>
@@ -135,6 +136,15 @@ typedef struct BackgroundWorker
    <structfield>bgw_main</structfield> is NULL.
   </para>
 
+  <para>
+   <structfield>bgw_notify_pid</structfield> is the PID of a PostgreSQL
+   backend process to which the postmaster should send <literal>SIGUSR1</>
+   when the process is started or exits.  It should be 0 for workers registered
+   at postmaster startup time, or when the backend registering the worker does
+   not wish to wait for the worker to start up.  Otherwise, it should be
+   initialized to <literal>MyProcPid</>.
+  </para>
+
   <para>Once running, the process can connect to a database by calling
    <function>BackgroundWorkerInitializeConnection(<parameter>char *dbname</parameter>, <parameter>char *username</parameter>)</function>.
    This allows the process to run transactions and queries using the
@@ -163,6 +173,40 @@ typedef struct BackgroundWorker
    <literal>WL_POSTMASTER_DEATH</> flag is set when calling that function, and
    verify the return code for a prompt exit in the emergency case that
    <command>postgres</> itself has terminated.
+  </para>
+
+  <para>
+   When a background worker is registered using the
+   <function>RegisterDynamicBackgroundWorker</function> function, it is
+   possible for the backend performing the registration to obtain information
+   the status of the worker.  Backends wishing to do this should pass the
+   address of a <type>BackgroundWorkerHandle *</type> as the second argument
+   to <function>RegisterDynamicBackgroundWorker</function>.  If the worker
+   is successfully registered, this pointer will be initialized with an
+   opaque handle that can subsequently be passed to
+   <function>GetBackgroundWorkerPid(<parameter>BackgroundWorkerHandle *</parameter>, <parameter>pid_t *</parameter>)</function>.
+   This function can be used to poll the status of the worker: a return
+   value of <literal>BGWH_NOT_YET_STARTED</> indicates that the worker has not
+   yet been started by the postmaster; <literal>BGWH_STOPPED</literal>
+   indicates that it has been started but is no longer running; and
+   <literal>BGWH_STARTED</literal> indicates that it is currently running.
+   In this last case, the PID will also be returned via the second argument.
+  </para>
+
+  <para>
+   In some cases, a process which registers a background worker may wish to
+   wait for the worker to start up.  This can be accomplished by initializing
+   <structfield>bgw_notify_pid</structfield> to <literal>MyProcPid</> and
+   then passing the <type>BackgroundWorkerHandle *</type> obtained at
+   registration time to
+   <function>WaitForBackgroundWorkerStartup(<parameter>BackgroundWorkerHandle
+   *handle</parameter>, <parameter>pid_t *</parameter>)</function> function.
+   This function will block until the postmaster has attempted to start the
+   background worker, or until the postmaster dies.  If the background runner
+   is running, the return value will <literal>BGWH_STARTED</>, and
+   the PID will be written to the provided address.  Otherwise, the return
+   value will be <literal>BGWH_STOPPED</literal> or
+   <literal>BGWH_POSTMASTER_DIED</literal>.
   </para>
 
   <para>

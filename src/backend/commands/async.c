@@ -207,8 +207,6 @@ typedef struct QueueBackendStatus
 	QueuePosition pos;			/* backend has read queue up to here */
 } QueueBackendStatus;
 
-#define InvalidPid				(-1)
-
 /*
  * Shared memory state for LISTEN/NOTIFY (excluding its SLRU stuff)
  *

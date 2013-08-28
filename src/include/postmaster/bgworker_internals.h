@@ -40,6 +40,8 @@ extern Size BackgroundWorkerShmemSize(void);
 extern void BackgroundWorkerShmemInit(void);
 extern void BackgroundWorkerStateChange(void);
 extern void ForgetBackgroundWorker(slist_mutable_iter *cur);
+extern void ReportBackgroundWorkerPID(RegisteredBgWorker *);
+extern void BackgroundWorkerStopNotifications(pid_t pid);
 
 /* Function to start a background worker, called from postmaster.c */
 extern void StartBackgroundWorker(void);
