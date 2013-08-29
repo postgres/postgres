@@ -145,6 +145,12 @@ tas(volatile slock_t *lock)
 	 * Use a non-locking test before asserting the bus lock.  Note that the
 	 * extra test appears to be a small loss on some x86 platforms and a small
 	 * win on others; it's by no means clear that we should keep it.
+	 *
+	 * When this was last tested, we didn't have separate TAS() and TAS_SPIN()
+	 * macros.  Nowadays it probably would be better to do a non-locking test
+	 * in TAS_SPIN() but not in TAS(), like on x86_64, but no-one's done the
+	 * testing to verify that.  Without some empirical evidence, better to
+	 * leave it alone.
 	 */
 	__asm__ __volatile__(
 		"	cmpb	$0,%1	\n"
@@ -200,16 +206,22 @@ typedef unsigned char slock_t;
 
 #define TAS(lock) tas(lock)
 
+/*
+ * On Intel EM64T, it's a win to use a non-locking test before the xchg proper,
+ * but only when spinning.
+ *
+ * See also Implementing Scalable Atomic Locks for Multi-Core Intel(tm) EM64T
+ * and IA32, by Michael Chynoweth and Mary R. Lee. As of this writing, it is
+ * available at:
+ * http://software.intel.com/en-us/articles/implementing-scalable-atomic-locks-for-multi-core-intel-em64t-and-ia32-architectures
+ */
+#define TAS_SPIN(lock)    (*(lock) ? 1 : TAS(lock))
+
 static __inline__ int
 tas(volatile slock_t *lock)
 {
 	register slock_t _res = 1;
 
-	/*
-	 * On Opteron, using a non-locking test before the locking instruction
-	 * is a huge loss.  On EM64T, it appears to be a wash or small loss,
-	 * so we needn't bother to try to distinguish the sub-architectures.
-	 */
 	__asm__ __volatile__(
 		"	lock			\n"
 		"	xchgb	%0,%1	\n"
