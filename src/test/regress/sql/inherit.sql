@@ -439,6 +439,26 @@ SELECT x, y FROM
    SELECT unique2 AS x, unique2 AS y FROM tenk1 b) s
 ORDER BY x, y;
 
+-- exercise rescan code path via a repeatedly-evaluated subquery
+explain (costs off)
+SELECT
+    (SELECT g.i FROM (
+        (SELECT * FROM generate_series(1, 2) ORDER BY 1)
+        UNION ALL
+        (SELECT * FROM generate_series(1, 2) ORDER BY 1)
+    ) f(i)
+    ORDER BY f.i LIMIT 1)
+FROM generate_series(1, 3) g(i);
+
+SELECT
+    (SELECT g.i FROM (
+        (SELECT * FROM generate_series(1, 2) ORDER BY 1)
+        UNION ALL
+        (SELECT * FROM generate_series(1, 2) ORDER BY 1)
+    ) f(i)
+    ORDER BY f.i LIMIT 1)
+FROM generate_series(1, 3) g(i);
+
 reset enable_seqscan;
 reset enable_indexscan;
 reset enable_bitmapscan;
