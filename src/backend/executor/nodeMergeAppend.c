@@ -297,5 +297,6 @@ ExecReScanMergeAppend(MergeAppendState *node)
 		if (subnode->chgParam == NULL)
 			ExecReScan(subnode);
 	}
+	binaryheap_reset(node->ms_heap);
 	node->ms_initialized = false;
 }

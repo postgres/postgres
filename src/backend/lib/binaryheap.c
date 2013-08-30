@@ -36,14 +36,28 @@ binaryheap_allocate(int capacity, binaryheap_comparator compare, void *arg)
 	binaryheap *heap;
 
 	sz = offsetof(binaryheap, bh_nodes) +sizeof(Datum) * capacity;
-	heap = palloc(sz);
-	heap->bh_size = 0;
+	heap = (binaryheap *) palloc(sz);
 	heap->bh_space = capacity;
-	heap->bh_has_heap_property = true;
 	heap->bh_compare = compare;
 	heap->bh_arg = arg;
 
+	heap->bh_size = 0;
+	heap->bh_has_heap_property = true;
+
 	return heap;
+}
+
+/*
+ * binaryheap_reset
+ *
+ * Resets the heap to an empty state, losing its data content but not the
+ * parameters passed at allocation.
+ */
+void
+binaryheap_reset(binaryheap *heap)
+{
+	heap->bh_size = 0;
+	heap->bh_has_heap_property = true;
 }
 
 /*
