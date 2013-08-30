@@ -40,6 +40,7 @@ typedef struct binaryheap
 extern binaryheap *binaryheap_allocate(int capacity,
 					binaryheap_comparator compare,
 					void *arg);
+extern void binaryheap_reset(binaryheap *heap);
 extern void binaryheap_free(binaryheap *heap);
 extern void binaryheap_add_unordered(binaryheap *heap, Datum d);
 extern void binaryheap_build(binaryheap *heap);
