@@ -6,14 +6,14 @@
 
   <note>
    <title>Release Date</title>
-   <simpara>2013-XX-XX, CURRENT AS OF 2013-08-16</simpara>
+   <simpara>2013-09-09</simpara>
   </note>
 
   <sect2>
    <title>Overview</title>
 
    <para>
-    Major enhancements include:
+    Major enhancements in <productname>PostgreSQL</> 9.3 include:
    </para>
 
    <!-- This list duplicates items below, but without authors or details-->
@@ -36,9 +36,9 @@
 
     <listitem>
      <para>
-      Many <type>JSON</> improvements, including the addition of <link
-      linkend="functions-json">operators and functions</link> to extract
-      values from <type>JSON</> data strings
+      Add many features for the <type>JSON</> data type,
+      including <link linkend="functions-json">operators and functions</link>
+      to extract elements from <type>JSON</> values
      </para>
     </listitem>
 
@@ -60,8 +60,9 @@
 
     <listitem>
      <para>
-      Add a <productname>Postgres</> <link linkend="postgres-fdw">foreign
-      data wrapper</link> contrib module
+      Add a <link linkend="postgres-fdw"><productname>Postgres</> foreign
+      data wrapper</link> to allow access to
+      other <productname>Postgres</> servers
      </para>
     </listitem>
 
@@ -81,22 +82,14 @@
 
     <listitem>
      <para>
-      Allow a streaming replication standby to <link
-      linkend="protocol-replication">follow a timeline switch</link>,
-      and faster failover
+      Prevent non-key-field row updates from blocking foreign key checks
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Dramatically reduce System V <link linkend="sysvipc">shared
+      Greatly reduce System V <link linkend="sysvipc">shared
       memory</link> requirements
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Prevent non-key-field row updates from locking foreign key rows
      </para>
     </listitem>
 
@@ -158,7 +151,7 @@
        <para>
         Users who have set <link
         linkend="guc-work-mem"><varname>work_mem</></link> based on the
-        previous behavior should revisit that setting.
+        previous behavior may need to revisit that setting.
        </para>
       </listitem>
 
@@ -173,35 +166,82 @@
 
       <listitem>
        <para>
-        Throw an error if expiring tuple is again updated or deleted (Kevin Grittner)
-        DETAILS?
+        Throw an error if a tuple to be updated or deleted has already been
+        updated or deleted by a <literal>BEFORE</> trigger (Kevin Grittner)
+       </para>
+
+       <para>
+        Formerly, the originally-intended update was silently skipped,
+        resulting in logical inconsistency since the trigger might have
+        propagated data to other places based on the intended update.
+        Now an error is thrown to prevent the inconsistent results from being
+        committed.  If this change affects your application, the best solution
+        is usually to move the data-propagation actions to
+        an <literal>AFTER</> trigger.
+       </para>
+
+       <para>
+        This error will also be thrown if a query invokes a volatile function
+        that modifies rows that are later modified by the query itself.
+        Such cases likewise previously resulted in silently skipping updates.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Change <link linkend="SQL-CREATETABLE"><literal>ON UPDATE
+        Change multicolumn <link linkend="SQL-CREATETABLE"><literal>ON UPDATE
         SET NULL/SET DEFAULT</></link> foreign key actions to affect
-        all referenced columns, not just those referenced in the
+        all columns of the constraint, not just those changed in the
         <command>UPDATE</> (Tom Lane)
        </para>
 
        <para>
-        Previously only columns referenced in the <command>UPDATE</> were
-        set to null or <literal>DEFAULT</>.
+        Previously, we would set only those referencing columns that
+        correspond to referenced columns that were changed by
+        the <command>UPDATE</>.  This was what was required by SQL-92,
+        but more recent editions of the SQL standard specify the new behavior.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Internally store default foreign key matches (non-<literal>FULL</>,
-        non-<literal>PARTIAL</>) as <quote>simple</> (Tom Lane)
+        Force cached plans to be replanned if the <link
+        linkend="guc-search-path"><varname>search_path</></link> changes
+        (Tom Lane)
        </para>
 
        <para>
-        These were previously stored as "&lt;unspecified&gt;".
-        This changes the value stored in system column <link
-        linkend="catalog-pg-constraint"><structname>pg_constraint.confmatchtype</></link>.
+        Previously, cached plans already generated in the current session were
+        not redone if the query was re-executed with a
+        new <varname>search_path</> setting, resulting in surprising behavior.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Fix <link
+        linkend="functions-formatting-table"><function>to_number()</></link>
+        to properly handle a period used as a thousands separator (Tom Lane)
+       </para>
+
+       <para>
+        Previously, a period was considered to be a decimal point even when
+        the locale says it isn't and the <literal>D</> format code is used to
+        specify use of the locale-specific decimal point.  This resulted in
+        wrong answers if <literal>FM</> format was also used.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Fix <literal>STRICT</> non-set-returning functions that have
+        set-returning functions in their arguments to properly return null
+        rows (Tom Lane)
+       </para>
+
+       <para>
+        A null value passed to the strict function should result in a null
+        output, but instead, that output row was suppressed entirely.
        </para>
       </listitem>
 
@@ -214,35 +254,24 @@
 
        <para>
         Previously, <acronym>WAL</> files with names ending in <literal>FF</>
-        were not used.  If you have <acronym>WAL</> backup or restore scripts
-        that took that skipping into account, they will need to be adjusted.
+        were not used because of this skipping.  If you have <acronym>WAL</>
+        backup or restore scripts that took this behavior into account, they
+        will need to be adjusted.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow <link
-        linkend="functions-formatting-table"><function>to_char()</></link>
-        to properly handle <literal>D</> (locale-specific decimal point) and
-        <literal>FM</> (fill mode) specifications in locales where a
-        period is a group separator and not a decimal point (Tom Lane)
+        In <link
+        linkend="catalog-pg-constraint"><structname>pg_constraint.confmatchtype</></link>,
+        store the default foreign key match type (non-<literal>FULL</>,
+        non-<literal>PARTIAL</>) as <literal>s</> for <quote>simple</>
+        (Tom Lane)
        </para>
 
        <para>
-        Previously, a period group separator would be misinterpreted as
-        a decimal point in such locales.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Fix <literal>STRICT</> non-set-returning functions that take
-        set-returning functions as arguments to properly return null
-        rows (Tom Lane)
-       </para>
-
-       <para>
-        Previously, rows with null values were suppressed.
+        Previously this case was represented by <literal>u</>
+        for <quote>unspecified</>.
        </para>
       </listitem>
 
@@ -271,36 +300,28 @@
 
       <listitem>
        <para>
-        Prevent non-key-field row updates from locking foreign key rows
+        Prevent non-key-field row updates from blocking foreign key checks
         (&Aacute;lvaro Herrera, Noah Misch, Andres Freund, Alexander
-        Shulgin, Marti Raudsepp)
+        Shulgin, Marti Raudsepp, Alexander Shulgin)
        </para>
 
        <para>
-        This improves concurrency and reduces the probability of deadlocks.
-        <command>UPDATE</>s on non-key columns use the new <command>SELECT
-        FOR NO KEY UPDATE</> lock type, and foreign key checks use the
-        new <command>SELECT FOR KEY SHARE</> lock mode.
+        This change improves concurrency and reduces the probability of
+        deadlocks when updating tables involved in a foreign-key constraint.
+        <command>UPDATE</>s that do not change any columns referenced in a
+        foreign key now take the new <literal>NO KEY UPDATE</> lock mode on
+        the row, while foreign key checks use the new <literal>KEY SHARE</>
+        lock mode, which does not conflict with <literal>NO KEY UPDATE</>.
+        So there is no blocking unless a foreign-key column is changed.
        </para>
       </listitem>
 
       <listitem>
        <para>
         Add configuration variable <link
-        linkend="guc-lock-timeout"><varname>lock_timeout</></link> to limit
-        lock wait duration (Zolt&aacute;n B&ouml;sz&ouml;rm&eacute;nyi)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add cache of local locks (Jeff Janes)
-       </para>
-
-       <para>
-        This speeds lock release at statement completion in
-        transactions that hold many locks; it is particularly useful
-        for <application>pg_dump</> and the restoration of such dumps.
+        linkend="guc-lock-timeout"><varname>lock_timeout</></link> to
+        allow limiting how long a session will wait to acquire any one lock
+        (Zolt&aacute;n B&ouml;sz&ouml;rm&eacute;nyi)
        </para>
       </listitem>
 
@@ -315,21 +336,29 @@
 
       <listitem>
        <para>
-        Add <link linkend="rangetypes-indexing"><type>SP-GiST</></link>
+        Add <link linkend="rangetypes-indexing"><acronym>SP-GiST</></link>
         support for range data types (Alexander Korotkov)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow unlogged <link linkend="SPGiST"><type>GiST</></link> indexes
-        (Jeevan Chalke)
+        Allow <link linkend="GiST"><acronym>GiST</></link> indexes to be
+        unlogged (Jeevan Chalke)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Improve concurrency of hash indexes (Robert Haas)
+        Improve performance of <acronym>GiST</> index insertion by randomizing
+        the choice of which page to descend to when there are multiple equally
+        good alternatives (Heikki Linnakangas)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Improve concurrency of hash index operations (Robert Haas)
        </para>
       </listitem>
 
@@ -344,21 +373,37 @@
 
       <listitem>
        <para>
-        Collect and use histograms for <link linkend="rangetypes">range
-        types</link> (Alexander Korotkov)
+        Collect and use histograms of upper and lower bounds, as well as range
+        lengths, for <link linkend="rangetypes">range types</link>
+        (Alexander Korotkov)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Reduce optimizer overhead by discarding plans with unneeded cheaper
-        startup costs (Tom Lane)
+        Improve optimizer's cost estimation for index access (Tom Lane)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Improve optimizer cost estimation for index access (Tom Lane)
+        Improve optimizer's hash table size estimate for
+        doing <literal>DISTINCT</> via hash aggregation (Tom Lane)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Suppress no-op Result and Limit plan nodes
+        (Kyotaro Horiguchi, Amit Kapila, Tom Lane)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Reduce optimizer overhead by not keeping plans on the basis of cheap
+        startup cost when the optimizer only cares about total cost overall
+        (Tom Lane)
        </para>
       </listitem>
 
@@ -374,7 +419,7 @@
       <listitem>
        <para>
         Add <link linkend="SQL-COPY"><command>COPY FREEZE</></link>
-        option to avoid the overhead of marking tuples as committed later
+        option to avoid the overhead of marking tuples as frozen later
         (Simon Riggs, Jeff Davis)
        </para>
       </listitem>
@@ -389,21 +434,13 @@
 
       <listitem>
        <para>
-        Improve grouping of sessions waiting for <link
+        Improve synchronization of sessions waiting for <link
         linkend="guc-commit-delay"><varname>commit_delay</></link>
         (Peter Geoghegan)
        </para>
 
        <para>
-        This improves the usefulness and behavior of
-        <varname>commit_delay</>.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Improve performance for transactions creating, rebuilding, or
-        dropping many relations (Jeff Janes, Tomas Vondra)
+        This greatly improves the usefulness of <varname>commit_delay</>.
        </para>
       </listitem>
 
@@ -411,14 +448,15 @@
        <para>
         Improve performance of the <link
         linkend="SQL-CREATETABLE"><command>CREATE TEMPORARY TABLE ... ON
-        COMMIT DELETE ROWS</></link> clause by only issuing delete if
-        the temporary table was accessed (Heikki Linnakangas)
+        COMMIT DELETE ROWS</></link> option by not truncating such temporary
+        tables in transactions that haven't touched any temporary tables
+        (Heikki Linnakangas)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Have vacuum recheck visibility after it has removed expired tuples
+        Make vacuum recheck visibility after it has removed expired tuples
         (Pavan Deolasee)
        </para>
 
@@ -429,13 +467,32 @@
 
       <listitem>
        <para>
-        Split the <link
-        linkend="guc-stats-temp-directory"><filename>pg_stat_tmp</></link>
-        statistics file into per-database and global files (Tomas Vondra)
+        Add per-resource-owner lock caches (Jeff Janes)
        </para>
 
        <para>
-        This reduces the I/O overhead for statistics tracking.
+        This speeds up lock bookkeeping at statement completion in
+        multi-statement transactions that hold many locks; it is particularly
+        useful for <application>pg_dump</>.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Avoid scanning the entire relation cache at commit of a transaction
+        that creates a new relation (Jeff Janes)
+       </para>
+
+       <para>
+        This speeds up sessions that create many tables in successive
+        small transactions, such as a <application>pg_restore</> run.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Improve performance of transactions that drop many relations
+        (Tomas Vondra)
        </para>
       </listitem>
 
@@ -463,27 +520,38 @@
 
       <listitem>
        <para>
-        Allow <link
-        linkend="functions-admin-signal-table"><function>pg_terminate_backend()</></link>
-        to terminate other backends with the same role (Dan Farina)
+        Split the <link linkend="monitoring-stats">statistics collector's</link>
+        data file into separate global and per-database files (Tomas Vondra)
        </para>
 
        <para>
-        Previously, only superusers could terminate other sessions.
+        This reduces the I/O required for statistics tracking.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow the <link
-        linkend="runtime-config-statistics-collector">statistics
-        collector</link> to operate properly in cases where the system
-        clock goes backwards (Tom Lane)
+        Fix the statistics collector to operate properly in cases where the
+        system clock goes backwards (Tom Lane)
        </para>
 
        <para>
-        Previously statistics collection would stop until the time again
-        reached the previously-stored latest time.
+        Previously, statistics collection would stop until the time again
+        reached the latest time previously recorded.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Emit an informative message to postmaster standard error when we
+        are about to stop logging there
+        (Tom Lane)
+       </para>
+
+       <para>
+        This should help reduce user confusion about where to look for log
+        output in common configurations that log to standard error only during
+        postmaster startup.
        </para>
       </listitem>
 
@@ -498,6 +566,15 @@
 
       <listitem>
        <para>
+        When an authentication failure occurs, log the relevant
+        <link linkend="auth-pg-hba-conf"><filename>pg_hba.conf</></link>
+        line, to ease debugging of unintended failures
+        (Magnus Hagander)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Improve <link linkend="auth-ldap"><acronym>LDAP</></link> error
         reporting and documentation (Peter Eisentraut)
        </para>
@@ -505,8 +582,8 @@
 
       <listitem>
        <para>
-        Add support for <acronym>LDAP</> authentication to be specified
-        in <acronym>URL</> format (Peter Eisentraut)
+        Add support for specifying <acronym>LDAP</> authentication parameters
+        in <acronym>URL</> format, per RFC 4516 (Peter Eisentraut)
        </para>
       </listitem>
 
@@ -519,7 +596,7 @@
        </para>
 
        <para>
-        It is assumed <literal>DEFAULT</> is more appropriate cipher set.
+        This should yield a more appropriate SSL cipher set.
        </para>
       </listitem>
 
@@ -531,9 +608,7 @@
        </para>
 
        <para>
-        This is similar to how <link
-        linkend="auth-pg-hba-conf"><filename>pg_hba.conf</></link>
-        is processed.
+        This is similar to how <filename>pg_hba.conf</> is processed.
        </para>
       </listitem>
 
@@ -548,14 +623,14 @@
 
       <listitem>
        <para>
-        Dramatically reduce System V <link linkend="sysvipc">shared
+        Greatly reduce System V <link linkend="sysvipc">shared
         memory</link> requirements (Robert Haas)
        </para>
 
        <para>
-        Instead, on Unix-like systems, <function>mmap()</> is used for
-        shared memory.  For most users, this will eliminate the need to
-        adjust kernel parameters for shared memory.
+        On Unix-like systems, <function>mmap()</> is now used for most
+        of <productname>PostgreSQL</>'s shared memory.  For most users, this
+        will eliminate any need to adjust kernel parameters for shared memory.
        </para>
       </listitem>
 
@@ -604,7 +679,8 @@
       <listitem>
        <para>
         Remove the <link linkend="guc-external-pid-file">external
-        <acronym>PID</> file</link> on postmaster exit (Peter Eisentraut)
+        <acronym>PID</> file</link>, if any, on postmaster exit
+        (Peter Eisentraut)
        </para>
       </listitem>
 
@@ -627,9 +703,9 @@
        </para>
 
        <para>
-        This allows streaming standbys to feed from newly-promoted slaves.
-        Previously slaves required access to a <acronym>WAL</> archive directory to
-        accomplish this.
+        This allows streaming standby servers to receive WAL data from a slave
+        newly promoted to master status.  Previously, other standbys would
+        require a resync to begin following the new master.
        </para>
       </listitem>
 
@@ -670,8 +746,8 @@
        </para>
 
        <para>
-        This information is useful for determining the <acronym>WAL</>
-        files needed for restore.
+        This information is useful for determining which <acronym>WAL</>
+        files are needed for restore.
        </para>
       </listitem>
 
@@ -693,10 +769,10 @@
 
       <listitem>
        <para>
-        Have <link
+        Make <link
         linkend="app-pgbasebackup"><application>pg_basebackup</></link>
         <option>--write-recovery-conf</> output a
-        minimal <filename>recovery.conf</> (Zolt&aacute;n
+        minimal <filename>recovery.conf</> file (Zolt&aacute;n
         B&ouml;sz&ouml;rm&eacute;nyi, Magnus Hagander)
        </para>
 
@@ -720,7 +796,7 @@
        <para>
         Add <link
         linkend="guc-wal-receiver-timeout"><varname>wal_receiver_timeout</></link>
-        parameter to control the <acronym>WAL</> receiver timeout
+        parameter to control the <acronym>WAL</> receiver's timeout
         (Amit Kapila)
        </para>
 
@@ -729,18 +805,10 @@
        </para>
       </listitem>
 
-     </itemizedlist>
-
-    <sect4>
-     <title><link linkend="wal">Write-Ahead Log</link>
-     (<acronym>WAL</>)</title>
-
-     <itemizedlist>
-
       <listitem>
        <para>
-        Change the <acronym>WAL</> record format to allow splitting the record header
-        across pages (Heikki Linnakangas)
+        Change the <link linkend="wal"><acronym>WAL</></link> record format to
+        allow splitting the record header across pages (Heikki Linnakangas)
        </para>
 
        <para>
@@ -750,8 +818,6 @@
       </listitem>
 
      </itemizedlist>
-
-    </sect4>
 
    </sect3>
 
@@ -779,7 +845,15 @@
         Add support for piping <link
         linkend="SQL-COPY"><command>COPY</></link> and <link
         linkend="APP-PSQL"><application>psql</></link> <command>\copy</>
-        to/from an external program (Etsuro Fujita)
+        data to/from an external program (Etsuro Fujita)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow a multirow <link
+        linkend="SQL-VALUES"><literal>VALUES</></link> clause in a rule
+        to reference <literal>OLD</>/<literal>NEW</> (Tom Lane)
        </para>
       </listitem>
 
@@ -800,8 +874,7 @@
 
        <para>
         This allows server-side functions written in event-enabled
-        languages, e.g. C, PL/pgSQL, to be called when DDL commands
-        are run.
+        languages to be called when DDL commands are run.
        </para>
       </listitem>
 
@@ -815,14 +888,6 @@
 
       <listitem>
        <para>
-        Allow a multirow <link
-        linkend="SQL-VALUES"><literal>VALUES</></link> clause in a rule
-        to reference <literal>OLD</>/<literal>NEW</> (Tom Lane)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Add <link linkend="SQL-CREATESCHEMA"><command>CREATE SCHEMA ... IF
         NOT EXISTS</></link> clause (Fabr&iacute;zio de Royes Mello)
        </para>
@@ -830,22 +895,24 @@
 
       <listitem>
        <para>
-        Have <link linkend="SQL-REASSIGN-OWNED"><command>REASSIGN
+        Make <link linkend="SQL-REASSIGN-OWNED"><command>REASSIGN
         OWNED</></link> also change ownership of shared objects
         (&Aacute;lvaro Herrera)
        </para>
       </listitem>
 
-     </itemizedlist>
-
-    <sect4>
-     <title><link linkend="SQL-CREATETABLE"><command>CREATE TABLE</></link></title>
-
-     <itemizedlist>
+      <listitem>
+       <para>
+        Make <link linkend="sql-createaggregate"><command>CREATE
+        AGGREGATE</></link> complain if the given initial value string is not
+        valid input for the transition datatype (Tom Lane)
+       </para>
+      </listitem>
 
       <listitem>
        <para>
-        Suppress messages about implicit index and sequence creation
+        Suppress <link linkend="SQL-CREATETABLE"><command>CREATE
+        TABLE</></link>'s messages about implicit index and sequence creation
         (Robert Haas)
        </para>
 
@@ -867,15 +934,6 @@
        </para>
       </listitem>
 
-     </itemizedlist>
-
-    </sect4>
-
-    <sect4>
-     <title>Constraints</title>
-
-     <itemizedlist>
-
       <listitem>
        <para>
         Provide clients with <link
@@ -884,16 +942,14 @@
        </para>
 
        <para>
-        This allows clients to retrieve table, column, data type, or constraint
-        name error details.  Previously such information had to be extracted from
-        error strings.  Client library support is required to access these
-        fields.
+        This allows clients to retrieve table, column, data type, or
+        constraint name error details.  Previously such information had to be
+        extracted from error strings.  Client library support is required to
+        access these fields.
        </para>
       </listitem>
 
      </itemizedlist>
-
-    </sect4>
 
     <sect4>
      <title><command>ALTER</></title>
@@ -915,7 +971,7 @@
       <listitem>
        <para>
         Add <link linkend="SQL-ALTERROLE"><command>ALTER ROLE ALL
-        SET</></link> to add settings to all users (Peter Eisentraut)
+        SET</></link> to establish settings for all users (Peter Eisentraut)
        </para>
 
        <para>
@@ -975,6 +1031,18 @@
 
       <listitem>
        <para>
+        Add <link linkend="SQL-CREATEVIEW"><command>CREATE RECURSIVE
+        VIEW</></link> syntax (Peter Eisentraut)
+       </para>
+
+       <para>
+        Internally this is translated into <command>CREATE VIEW ... WITH
+        RECURSIVE ...</>.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Improve view/rule printing code to handle cases where referenced
         tables are renamed, or columns are renamed, added, or dropped
         (Tom Lane)
@@ -983,20 +1051,9 @@
        <para>
         Table and column renamings can produce cases where, if we merely
         substitute the new name into the original text of a rule or view, the
-        result is ambiguous.  This patch fixes the rule-dumping code to insert
-        table and column aliases if needed to preserve the original semantics.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add <link linkend="SQL-CREATEVIEW"><command>CREATE RECURSIVE
-        VIEW</></link> syntax (Peter Eisentraut)
-       </para>
-
-       <para>
-        Internally this is translated into <command>CREATE VIEW ... WITH
-        RECURSIVE ...</>.
+        result is ambiguous.  This change fixes the rule-dumping code to insert
+        manufactured table and column aliases when needed to preserve the
+        original semantics.
        </para>
       </listitem>
 
@@ -1013,21 +1070,22 @@
 
       <listitem>
        <para>
-        Increase the maximum length of <link linkend="lo-open">large
+        Increase the maximum size of <link linkend="largeObjects">large
         objects</link> from 2GB to 4TB (Nozomi Anzai, Yugo Nagata)
        </para>
 
        <para>
-        This change includes new libpq and server-side 64-bit-capable
-        large object access functions.
+        This change includes adding 64-bit-capable large object access
+        functions, both in the server and in libpq.
        </para>
       </listitem>
 
       <listitem>
        <para>
         Allow text <link linkend="datatype-timezones">timezone
-        designations</link>, e.g. <quote>America/Chicago</> when using
-        the <acronym>ISO</> <quote>T</> <type>timestamptz</type> format (Bruce Momjian)
+        designations</link>, e.g. <quote>America/Chicago</>, in the
+        <quote>T</> field of <acronym>ISO</>-format <type>timestamptz</type>
+        input (Bruce Momjian)
        </para>
       </listitem>
 
@@ -1041,13 +1099,13 @@
       <listitem>
        <para>
         Add <link linkend="functions-json">operators and functions</link>
-        to extract values from <type>JSON</> data strings (Andrew Dunstan)
+        to extract elements from <type>JSON</> values (Andrew Dunstan)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow <type>JSON</> data strings to be <link
+        Allow <type>JSON</> values to be <link
         linkend="functions-json-table">converted into records</link>
         (Andrew Dunstan)
        </para>
@@ -1055,9 +1113,9 @@
 
       <listitem>
        <para>
-        Add <link linkend="functions-json-table">functions</link>
-        to convert values, records, and hstore data to <type>JSON</>
-        (Andrew Dunstan)
+        Add <link linkend="functions-json-table">functions</link> to convert
+        scalars, records, and <type>hstore</> values to <type>JSON</> (Andrew
+        Dunstan)
        </para>
       </listitem>
 
@@ -1098,32 +1156,32 @@
        <para>
         Improve <link
         linkend="functions-string-format"><function>format()</></link>
-        to handle field width and left/right alignment (Pavel Stehule)
+        to provide field width and left/right alignment options (Pavel Stehule)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Have <link
+        Make <link
         linkend="functions-formatting-table"><function>to_char()</></link>,
         <link
         linkend="functions-formatting-table"><function>to_date()</></link>,
         and <link
         linkend="functions-formatting-table"><function>to_timestamp()</></link>
-        properly handle negative century designations (<literal>CC</>)
+        handle negative (BC) century values properly
         (Bruce Momjian)
        </para>
 
        <para>
         Previously the behavior was either wrong or inconsistent
-        with positive/<acronym>AD</> handling, e.g. format mask
+        with positive/<acronym>AD</> handling, e.g. with the format mask
         <quote>IYYY-IW-DY</>.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Have <link
+        Make <link
         linkend="functions-formatting-table"><function>to_date()</></link>
         and <link
         linkend="functions-formatting-table"><function>to_timestamp()</></link>
@@ -1136,9 +1194,8 @@
        <para>
         Cause <link
         linkend="functions-info-catalog-table"><function>pg_get_viewdef()</></link>
-        to start a new line by default after each <link
-        linkend="SQL-SELECT"><command>SELECT</></link> target list entry and
-        <literal>FROM</> entry (Marko Tiikkaja)
+        to start a new line by default after each <literal>SELECT</> target
+        list entry and <literal>FROM</> entry (Marko Tiikkaja)
        </para>
 
        <para>
@@ -1161,37 +1218,12 @@
        </para>
       </listitem>
 
-      <listitem>
-       <para>
-        Force cached plans to be replanned if the <link
-        linkend="guc-search-path"><varname>search_path</></link> changes
-        (Tom Lane)
-       </para>
-
-       <para>
-        Previously cached plans already generated in the current session
-        ignored <varname>search_path</> changes.
-       </para>
-      </listitem>
-
      </itemizedlist>
 
    </sect3>
 
    <sect3>
     <title>Server-Side Languages</title>
-
-     <itemizedlist>
-
-      <listitem>
-       <para>
-        Allow <link linkend="spi-spi-execute"><acronym>SPI</></link>
-        functions to access the number of rows processed by
-        <link linkend="SQL-COPY"><command>COPY</></link> (Pavel Stehule)
-       </para>
-      </listitem>
-
-     </itemizedlist>
 
     <sect4>
      <title><link linkend="plpgsql">PL/pgSQL</link> Server-Side Language</title>
@@ -1225,7 +1257,8 @@
        </para>
 
        <para>
-        The command is <link
+        A <command>COPY</> executed in a PL/pgSQL function now updates the
+        value retrieved by <link
         linkend="plpgsql-statements-diagnostics"><command>GET DIAGNOSTICS
         x = ROW_COUNT</></link>.
        </para>
@@ -1233,7 +1266,13 @@
 
       <listitem>
        <para>
-        Allow greater flexibility in where keywords can be used in PL/pgSQL (Tom Lane)
+        Allow unreserved keywords to be used as identifiers everywhere in
+        PL/pgSQL (Tom Lane)
+       </para>
+
+       <para>
+        In certain places in the PL/pgSQL grammar, keywords had to be quoted
+        to be used as identifiers, even if they were nominally unreserved.
        </para>
       </listitem>
 
@@ -1278,6 +1317,41 @@
    </sect3>
 
    <sect3>
+    <title>Server Programming Interface (<link linkend="spi">SPI</link>)</title>
+
+     <itemizedlist>
+
+      <listitem>
+       <para>
+        Prevent leakage of <acronym>SPI</> tuple tables during subtransaction
+        abort (Tom Lane)
+       </para>
+
+       <para>
+        At the end of any failed subtransaction, the core SPI code now
+        releases any SPI tuple tables that were created during that
+        subtransaction.  This avoids the need for SPI-using code to keep track
+        of such tuple tables and release them manually in error-recovery code.
+        Failure to do so caused a number of transaction-lifespan memory leakage
+        issues in PL/pgSQL and perhaps other SPI clients.  <link
+        linkend="spi-spi-freetupletable"><function>SPI_freetuptable()</></link>
+        now protects itself against multiple freeing requests, so any existing
+        code that did take care to clean up shouldn't be broken by this change.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow <acronym>SPI</> functions to access the number of rows processed
+        by <link linkend="SQL-COPY"><command>COPY</></link> (Pavel Stehule)
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+   </sect3>
+
+   <sect3>
     <title>Client Applications</title>
 
     <itemizedlist>
@@ -1301,9 +1375,9 @@
        </para>
 
        <para>
-        This is similar to the <link
-        linkend="APP-PGDUMP"><application>pg_dump</></link> <option>--table</>
-        option.
+        This is similar to the way <link
+        linkend="APP-PGDUMP"><application>pg_dump</></link>'s
+        <option>--table</> option works.
        </para>
       </listitem>
 
@@ -1314,7 +1388,7 @@
         linkend="app-pgbasebackup"><application>pg_basebackup</></link>, and
         <link
         linkend="app-pgreceivexlog"><application>pg_receivexlog</></link>
-        to specify the connection string (Amit Kapila)
+        to allow specifying a connection string (Amit Kapila)
        </para>
       </listitem>
 
@@ -1337,14 +1411,14 @@
       <listitem>
        <para>
         Adjust function cost settings so <application>psql</> tab
-        completion and pattern searching is more efficient (Tom Lane)
+        completion and pattern searching are more efficient (Tom Lane)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Improve <application>psql</> tab completion coverage (Jeff Janes,
-        Peter Eisentraut)
+        Improve <application>psql</>'s tab completion coverage (Jeff Janes,
+        Dean Rasheed, Peter Eisentraut, Magnus Hagander)
        </para>
       </listitem>
 
@@ -1367,21 +1441,22 @@
        </para>
 
        <para>
-        The warning when connecting to a newer server was retained.
+        A warning is still issued when connecting to a server of a newer major
+        version than <application>psql</>'s.
        </para>
       </listitem>
 
      </itemizedlist>
 
     <sect5>
-     <title><link linkend="R2-APP-PSQL-4">Backslash Commands</link></title>
+     <title><link linkend="APP-PSQL-meta-commands">Backslash Commands</link></title>
 
      <itemizedlist>
 
       <listitem>
        <para>
-        Add <application>psql</> <command>\watch</> command to repeatedly
-        execute commands (Will Leinweber)
+        Add <application>psql</> command <command>\watch</> to repeatedly
+        execute a SQL command (Will Leinweber)
        </para>
       </listitem>
 
@@ -1401,14 +1476,14 @@
 
       <listitem>
        <para>
-        Add <quote>Security</> label to <application>psql</> <command>\df+</>
-        output (Jon Erdman)
+        Add <quote>Security</> column to <application>psql</>'s
+        <command>\df+</> output (Jon Erdman)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow <application>psql</> <command>\l</> to accept a database
+        Allow <application>psql</> command <command>\l</> to accept a database
         name pattern (Peter Eisentraut)
        </para>
       </listitem>
@@ -1426,8 +1501,9 @@
 
       <listitem>
        <para>
-        Properly reset state if the SQL command executed with
-        <application>psql</>'s <quote>\g file</> fails (Tom Lane)
+        Properly reset state after failure of a SQL command executed with
+        <application>psql</>'s <literal>\g</> <replaceable>file</>
+        (Tom Lane)
        </para>
 
        <para>
@@ -1465,15 +1541,15 @@
 
       <listitem>
        <para>
-        In <application>psql</> tuples-only and expanded modes, no longer
-        output <quote>(No rows)</> (Peter Eisentraut)
+        In <application>psql</>'s tuples-only and expanded output modes, no
+        longer emit <quote>(No rows)</> for zero rows (Peter Eisentraut)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        In <application>psql</>, no longer print an empty line for
-        unaligned, expanded output for zero rows (Peter Eisentraut)
+        In <application>psql</>'s unaligned, expanded output mode, no longer
+        print an empty line for zero rows (Peter Eisentraut)
        </para>
       </listitem>
 
@@ -1497,15 +1573,14 @@
 
       <listitem>
        <para>
-        Have <application>pg_dump</> output functions in a more predictable
+        Make <application>pg_dump</> output functions in a more predictable
         order (Joel Jacobson)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Fix tar files emitted by <application>pg_dump</> and <link
-        linkend="app-pgbasebackup"><application>pg_basebackup</></link>
+        Fix tar files emitted by <application>pg_dump</>
         to be <acronym>POSIX</> conformant (Brian Weaver, Tom Lane)
        </para>
       </listitem>
@@ -1532,11 +1607,12 @@
 
       <listitem>
        <para>
-        Have initdb fsync the newly created data directory (Jeff Davis)
+        Make initdb fsync the newly created data directory (Jeff Davis)
        </para>
 
        <para>
-        This can be disabled by using <option>--nosync</>.
+        This insures data integrity in event of a system crash shortly after
+        initdb.  This can be disabled by using <option>--nosync</>.
        </para>
       </listitem>
 
@@ -1554,7 +1630,7 @@
 
       <listitem>
        <para>
-        Have initdb issue a warning about placing the data directory at the
+        Make initdb issue a warning about placing the data directory at the
         top of a file system mount point (Bruce Momjian)
        </para>
       </listitem>
@@ -1572,13 +1648,7 @@
 
       <listitem>
        <para>
-        Add an embedded list interface (Andres Freund)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add infrastructure to better support plug-in <link
+        Add infrastructure to allow plug-in <link
         linkend="bgworker">background worker processes</link>
         (&Aacute;lvaro Herrera)
        </para>
@@ -1598,19 +1668,54 @@
        </para>
 
        <para>
-        This allows libpgport to be used solely for porting code.
+        This allows libpgport to be used solely for portability-related code.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Standardize on naming of client-side memory allocation functions (Tom Lane)
+        Add support for list links embedded in larger structs (Andres Freund)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add compiler designations to indicate some <function>ereport()</>
+        Use <literal>SA_RESTART</> for all signals,
+        including <literal>SIGALRM</> (Tom Lane)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Ensure that the correct text domain is used when
+        translating <function>errcontext()</> messages
+        (Heikki Linnakangas)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Standardize naming of client-side memory allocation functions (Tom Lane)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Provide support for <quote>static assertions</> that will fail at
+        compile time if some compile-time-constant condition is not met
+        (Andres Freund, Tom Lane)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Support <function>Assert()</> in client-side code (Andrew Dunstan)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add decoration to inform the C compiler that some <function>ereport()</>
         and <function>elog()</> calls do not return (Peter Eisentraut,
         Andres Freund, Tom Lane, Heikki Linnakangas)
        </para>
@@ -1650,8 +1755,8 @@
       <listitem>
        <para>
         Remove <link linkend="configure">configure</link> flag
-        <option>--disable-shared</>, as it is no longer used (Bruce
-        Momjian)
+        <option>--disable-shared</>, as it is no longer supported
+        (Bruce Momjian)
        </para>
       </listitem>
 
@@ -1663,15 +1768,22 @@
 
       <listitem>
        <para>
-        Add Emacs macro to match <productname>PostgreSQL</> perltidy
-        formatting (Peter Eisentraut)
+        Provide Emacs macro to set Perl formatting to
+        match <productname>PostgreSQL</>'s perltidy settings (Peter Eisentraut)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Run tool to check the keyword list when the backend grammar is
+        Run tool to check the keyword list whenever the backend grammar is
         changed (Tom Lane)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Change the way <literal>UESCAPE</> is lexed, to significantly reduce
+        the size of the lexer tables (Heikki Linnakangas)
        </para>
       </listitem>
 
@@ -1688,13 +1800,7 @@
 
       <listitem>
        <para>
-        Support <function>Assert()</> in client-side code (Andrew Dunstan)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Change many internal backend functions to return <type>OID</>s
+        Change many internal backend functions to return object <type>OID</>s
         rather than void (Dimitri Fontaine)
        </para>
 
@@ -1719,8 +1825,8 @@
        <para>
         Add function <link
         linkend="functions-info-catalog-table"><function>pg_identify_object()</></link>
-        to dump an object in machine-readable format (&Aacute;lvaro
-        Herrera)
+        to produce a machine-readable description of a database object
+        (&Aacute;lvaro Herrera)
        </para>
       </listitem>
 
@@ -1739,14 +1845,15 @@
 
       <listitem>
        <para>
-        Improve ability to detect official timezone abbreviation changes
+        Provide a tool to help detect timezone abbreviation changes when
+        updating the <filename>src/timezone/data</> files
         (Tom Lane)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add <application>pkg-config</> support <application>libpq</>
+        Add <application>pkg-config</> support for <application>libpq</>
         and <application>ecpg</> libraries (Peter Eisentraut)
        </para>
       </listitem>
@@ -1805,8 +1912,9 @@
 
       <listitem>
        <para>
-        Add a <productname>Postgres</> <link linkend="postgres-fdw">foreign
-        data wrapper</link> contrib module (Shigeru Hanada)
+        Add a <link linkend="postgres-fdw"><productname>Postgres</> foreign
+        data wrapper</link> contrib module to allow access to
+        other <productname>Postgres</> servers (Shigeru Hanada)
        </para>
 
        <para>
@@ -1831,21 +1939,29 @@
 
       <listitem>
        <para>
-        Improve <link linkend="pgtrgm"><productname>pg_trgm</></link>
+        Improve <link linkend="pgtrgm"><productname>pg_trgm</></link>'s
         handling of multibyte characters (Tom Lane)
        </para>
-      </listitem>
 
-      <listitem>
        <para>
-        Add <link linkend="pgstattuple">pgstattuple function</link> to report the
-        size of the <type>GIN</> pending index insertion list (Fujii Masao)
+        On a platform that does not have the wcstombs() or towlower() library
+        functions, this could result in an incompatible change in the contents
+        of <productname>pg_trgm</> indexes for non-ASCII data.  In such cases,
+        <command>REINDEX</> those indexes to ensure correct search results.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Have <link linkend="oid2name"><application>oid2name</></link>,
+        Add a <link linkend="pgstattuple">pgstattuple</link> function to report
+        the size of the pending-insertions list of a <acronym>GIN</> index
+        (Fujii Masao)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Make <link linkend="oid2name"><application>oid2name</></link>,
         <link linkend="pgbench"><application>pgbench</></link>, and
         <link linkend="vacuumlo"><application>vacuumlo</></link> set
         <varname>fallback_application_name</> (Amit Kapila)
@@ -1870,12 +1986,15 @@
 
       <listitem>
        <para>
-        Improve <link linkend="dblink">dblink</link> option validator
-        (Tom Lane)
+        Create a dedicated foreign data wrapper, with its own option validator
+        function, for <link linkend="dblink">dblink</link> (Shigeru Hanada)
        </para>
 
        <para>
-        Details?
+        When using this FDW to define the target of a <application>dblink</>
+        connection, instead of using a hard-wired list of connection options,
+        the underlying <application>libpq</> library is consulted to see what
+        connection options it supports.
        </para>
       </listitem>
 
@@ -1888,19 +2007,20 @@
 
       <listitem>
        <para>
-        Allow <application>pg_upgrade</> <option>--jobs</> to do
-        parallelism (Bruce Momjian, Andrew Dunstan)
+        Allow <application>pg_upgrade</> to do dumps and restores in
+        parallel (Bruce Momjian, Andrew Dunstan)
        </para>
 
        <para>
         This allows parallel schema dump/restore of databases, as well as
-        parallel copy/link of data files per tablespace.
+        parallel copy/link of data files per tablespace.  Use the
+        <option>--jobs</> option to specify the level of parallelism.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Have <application>pg_upgrade</> create Unix-domain sockets in
+        Make <application>pg_upgrade</> create Unix-domain sockets in
         the current directory (Bruce Momjian, Tom Lane)
        </para>
 
@@ -1912,7 +2032,7 @@
 
       <listitem>
        <para>
-        Have <application>pg_upgrade</> <option>--check</> mode properly
+        Make <application>pg_upgrade</> <option>--check</> mode properly
         detect the location of non-default socket directories (Bruce
         Momjian, Tom Lane)
        </para>
@@ -1927,8 +2047,8 @@
 
       <listitem>
        <para>
-        Increase <application>pg_upgrade</> logging content by showing
-        executed command (&Aacute;lvaro Herrera)
+        Improve <application>pg_upgrade</>'s logs by showing
+        executed commands (&Aacute;lvaro Herrera)
        </para>
       </listitem>
 
@@ -1999,7 +2119,9 @@
 
       <listitem>
        <para>
-        Allow <application>pgbench</> to use a larger scale factor
+        Allow <application>pgbench</> to use much larger scale factors,
+        by changing relevant columns from <type>integer</> to <type>bigint</>
+        when the requested scale factor exceeds 20000
         (Greg Smith)
        </para>
       </listitem>
@@ -2032,13 +2154,13 @@
       <listitem>
        <para>
         Improve <link linkend="tutorial-window"><literal>WINDOW</>
-        function</link> documentation (Bruce Momjian, Tom Lane)
+        function</link> documentation (Bruce Momjian, Florian Pflug)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add <link linkend="docguide">instructions</link> for setting
+        Add <link linkend="docguide-toolsets">instructions</link> for setting
         up the documentation tool chain on Mac <productname>OS X</>
         (Peter Eisentraut)
        </para>
