@@ -1,4 +1,4 @@
 # src/bin/pg_resetxlog/nls.mk
 CATALOG_NAME     = pg_resetxlog
-AVAIL_LANGUAGES  = cs de es fr it ja ko pl pt_BR ro ru sv ta tr zh_CN zh_TW
+AVAIL_LANGUAGES  = cs de es fr it ja pl pt_BR ru zh_CN
 GETTEXT_FILES    = pg_resetxlog.c
