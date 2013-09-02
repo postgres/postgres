@@ -1,18 +1,21 @@
-# <pre>
+# TZ zone descriptions
+#
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 #
-# TZ zone descriptions
-#
-# From Paul Eggert (1996-08-05):
+# From Paul Eggert (2013-05-27):
 #
 # This file contains a table with the following columns:
 # 1.  ISO 3166 2-character country code.  See the file `iso3166.tab'.
+#     This identifies a country that overlaps the zone.  The country may
+#     overlap other zones and the zone may overlap other countries.
 # 2.  Latitude and longitude of the zone's principal location
 #     in ISO 6709 sign-degrees-minutes-seconds format,
 #     either +-DDMM+-DDDMM or +-DDMMSS+-DDDMMSS,
 #     first latitude (+ is north), then longitude (+ is east).
+#     This location need not lie within the column-1 country.
 # 3.  Zone name used in value of TZ environment variable.
+#     Please see the 'Theory' file for how zone names are chosen.
 # 4.  Comments; present if and only if the country has multiple rows.
 #
 # Columns are separated by a single tab.
@@ -21,6 +24,10 @@
 # (2) puts the most populous zones first, where that does not contradict (1).
 #
 # Lines beginning with `#' are comments.
+#
+# This table is intended as an aid for users, to help them select time
+# zone data appropriate for their practical needs.  It is not intended
+# to take or endorse any position on legal or territorial claims.
 #
 #country-
 #code	coordinates	TZ			comments
@@ -42,7 +49,6 @@ AQ	-6617+11031	Antarctica/Casey	Casey Station, Bailey Peninsula
 AQ	-7824+10654	Antarctica/Vostok	Vostok Station, Lake Vostok
 AQ	-6640+14001	Antarctica/DumontDUrville	Dumont-d'Urville Station, Terre Adelie
 AQ	-690022+0393524	Antarctica/Syowa	Syowa Station, E Ongul I
-AQ	-5430+15857	Antarctica/Macquarie	Macquarie Island Station, Macquarie Island
 AR	-3436-05827	America/Argentina/Buenos_Aires	Buenos Aires (BA, CF)
 AR	-3124-06411	America/Argentina/Cordoba	most locations (CB, CC, CN, ER, FM, MN, SE, SF)
 AR	-2447-06525	America/Argentina/Salta	(SA, LP, NQ, RN)
@@ -58,6 +64,7 @@ AR	-5448-06818	America/Argentina/Ushuaia	Tierra del Fuego (TF)
 AS	-1416-17042	Pacific/Pago_Pago
 AT	+4813+01620	Europe/Vienna
 AU	-3133+15905	Australia/Lord_Howe	Lord Howe Island
+AU	-5430+15857	Antarctica/Macquarie	Macquarie Island
 AU	-4253+14719	Australia/Hobart	Tasmania - most locations
 AU	-3956+14352	Australia/Currie	Tasmania - King Island
 AU	-3749+14458	Australia/Melbourne	Victoria
@@ -216,7 +223,7 @@ ID	-0002+10920	Asia/Pontianak	west & central Borneo
 ID	-0507+11924	Asia/Makassar	east & south Borneo, Sulawesi (Celebes), Bali, Nusa Tengarra, west Timor
 ID	-0232+14042	Asia/Jayapura	west New Guinea (Irian Jaya) & Malukus (Moluccas)
 IE	+5320-00615	Europe/Dublin
-IL	+3146+03514	Asia/Jerusalem
+IL	+314650+0351326	Asia/Jerusalem
 IM	+5409-00428	Europe/Isle_of_Man
 IN	+2232+08822	Asia/Kolkata
 IO	-0720+07225	Indian/Chagos
