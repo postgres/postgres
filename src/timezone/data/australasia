@@ -218,9 +218,32 @@ Zone Australia/Lord_Howe 10:36:20 -	LMT	1895 Feb
 # no times are set
 #
 # Macquarie
-# permanent occupation (scientific station) since 1948;
-# sealing and penguin oil station operated 1888/1917
-# like Australia/Hobart
+# Permanent occupation (scientific station) 1911-1915 and since 25 March 1948;
+# sealing and penguin oil station operated Nov 1899 to Apr 1919.  See the
+# Tasmania Parks & Wildlife Service history of sealing at Macquarie Island
+# <http://www.parks.tas.gov.au/index.aspx?base=1828>
+# <http://www.parks.tas.gov.au/index.aspx?base=1831>.
+# Guess that it was like Australia/Hobart while inhabited before 2010.
+#
+# From Steffen Thorsen (2010-03-10):
+# We got these changes from the Australian Antarctic Division:
+# - Macquarie Island will stay on UTC+11 for winter and therefore not
+# switch back from daylight savings time when other parts of Australia do
+# on 4 April.
+#
+# From Arthur David Olson (2013-05-23):
+# The 1919 transition is overspecified below so pre-2013 zics
+# will produce a binary file with an EST-type as the first 32-bit type;
+# this is required for correct handling of times before 1916 by
+# pre-2013 versions of localtime.
+Zone Antarctica/Macquarie 0	-	zzz	1899 Nov
+			10:00	-	EST	1916 Oct 1 2:00
+			10:00	1:00	EST	1917 Feb
+			10:00	Aus	EST	1919 Apr 1 0:00s
+			0	-	zzz	1948 Mar 25
+			10:00	Aus	EST	1967
+			10:00	AT	EST	2010 Apr 4 3:00
+			11:00	-	MIST	# Macquarie I Standard Time
 
 # Christmas
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
@@ -1458,12 +1481,12 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # From Paul Eggert (2000-01-08):
 # IATA SSIM (1999-09) says DST ends 0100 local time.  Go with McDow.
 
-# From the BBC World Service (1998-10-31 11:32 UTC):
+# From the BBC World Service in
+# http://news.bbc.co.uk/2/hi/asia-pacific/205226.stm (1998-10-31 16:03 UTC):
 # The Fijiian government says the main reasons for the time change is to
-# improve productivity and reduce road accidents.  But correspondents say it
-# also hopes the move will boost Fiji's ability to compete with other pacific
-# islands in the effort to attract tourists to witness the dawning of the new
-# millenium.
+# improve productivity and reduce road accidents.... [T]he move is also
+# intended to boost Fiji's ability to attract tourists to witness the dawning
+# of the new millennium.
 
 # http://www.fiji.gov.fj/press/2000_09/2000_09_13-05.shtml (2000-09-13)
 # reports that Fiji has discontinued DST.
@@ -1608,7 +1631,7 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # Shanks & Pottenger say the transition was on 1968-10-01; go with Mundell.
 
 # From Eric Ulevik (1999-05-03):
-# Tonga's director of tourism, who is also secretary of the National Millenium
+# Tonga's director of tourism, who is also secretary of the National Millennium
 # Committee, has a plan to get Tonga back in front.
 # He has proposed a one-off move to tropical daylight saving for Tonga from
 # October to March, which has won approval in principle from the Tongan
