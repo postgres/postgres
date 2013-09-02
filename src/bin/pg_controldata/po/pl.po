@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_controldata (PostgreSQL 9.1)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-03-03 16:49+0000\n"
-"PO-Revision-Date: 2013-03-04 21:59+0200\n"
+"POT-Creation-Date: 2013-08-29 23:20+0000\n"
+"PO-Revision-Date: 2013-08-30 09:21+0200\n"
 "Last-Translator: Begina Felicysym <begina.felicysym@wp.eu>\n"
 "Language-Team: Begina Felicysym\n"
 "Language: pl\n"
@@ -198,7 +198,6 @@ msgstr "Najnowsza lokalizacja punktu kontrolnego REDO:   %X/%X\n"
 
 #: pg_controldata.c:214
 #, c-format
-#| msgid "Latest checkpoint's REDO location:    %X/%X\n"
 msgid "Latest checkpoint's REDO WAL file:    %s\n"
 msgstr "Najnowszy plik WAL REDO punktu kontrolnego:       %s\n"
 
@@ -209,7 +208,6 @@ msgstr "TimeLineID najnowszego punktu kontrolnego:        %u\n"
 
 #: pg_controldata.c:218
 #, c-format
-#| msgid "Latest checkpoint's TimeLineID:       %u\n"
 msgid "Latest checkpoint's PrevTimeLineID:   %u\n"
 msgstr "PrevTimeLineID najnowszego punktu kontrolnego:    %u\n"
 
@@ -263,13 +261,11 @@ msgstr "oldestActiveXID najnowszego punktu kontrolnego:  %u\n"
 
 #: pg_controldata.c:237
 #, c-format
-#| msgid "Latest checkpoint's oldestActiveXID:  %u\n"
 msgid "Latest checkpoint's oldestMultiXid:   %u\n"
 msgstr "oldestMultiXid najnowszego punktu kontrolnego:   %u\n"
 
 #: pg_controldata.c:239
 #, c-format
-#| msgid "Latest checkpoint's oldestXID's DB:   %u\n"
 msgid "Latest checkpoint's oldestMulti's DB: %u\n"
 msgstr "DB oldestMulti'u najnowszego punktu kontrolnego: %u\n"
 
@@ -285,13 +281,12 @@ msgstr "Fałszywy licznik LSN dla niezalogowanych rel:    %X/%X\n"
 
 #: pg_controldata.c:246
 #, c-format
-#| msgid "Minimum recovery ending location:     %X/%X\n"
-msgid "Min recovery ending location:         %X/%X\n"
+#| msgid "Min recovery ending location:         %X/%X\n"
+msgid "Minimum recovery ending location:     %X/%X\n"
 msgstr "Położenie zakończenia odzyskiwania minimalnego:  %X/%X\n"
 
 #: pg_controldata.c:249
 #, c-format
-#| msgid "Minimum recovery ending location:     %X/%X\n"
 msgid "Min recovery ending loc's timeline:   %u\n"
 msgstr "Położenie odzyskiwania min. zak. linii czasu:    %u\n"
 
@@ -408,3 +403,9 @@ msgstr "przez wartość"
 #, c-format
 msgid "Float8 argument passing:              %s\n"
 msgstr "Przekazywanie parametru float8:                  %s\n"
+
+#: pg_controldata.c:290
+#, c-format
+#| msgid "Catalog version number:               %u\n"
+msgid "Data page checksum version:           %u\n"
+msgstr "Suma kontrolna strony danych w wersji numer:     %u\n"

@@ -25,8 +25,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9 current\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-08-10 02:12+0000\n"
-"PO-Revision-Date: 2013-08-10 08:56+0400\n"
+"POT-Creation-Date: 2013-08-25 16:42+0000\n"
+"PO-Revision-Date: 2013-08-26 09:57+0400\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -533,7 +533,7 @@ msgstr ""
 "база данных не принимает команды, создающие новые MultiXactId, во избежание "
 "потери данных из-за наложения в базе данных с OID %u"
 
-#: access/transam/multixact.c:943 access/transam/multixact.c:1989
+#: access/transam/multixact.c:943 access/transam/multixact.c:2036
 #, c-format
 msgid "database \"%s\" must be vacuumed before %u more MultiXactId is used"
 msgid_plural ""
@@ -548,7 +548,7 @@ msgstr[2] ""
 "база данных \"%s\" должна быть очищена, прежде чем будут использованы "
 "оставшиеся MultiXactId (%u)"
 
-#: access/transam/multixact.c:952 access/transam/multixact.c:1998
+#: access/transam/multixact.c:952 access/transam/multixact.c:2045
 #, c-format
 msgid ""
 "database with OID %u must be vacuumed before %u more MultiXactId is used"
@@ -574,14 +574,14 @@ msgstr "MultiXactId %u прекратил существование: видим
 msgid "MultiXactId %u has not been created yet -- apparent wraparound"
 msgstr "MultiXactId %u ещё не был создан: видимо, произошло наложение"
 
-#: access/transam/multixact.c:1954
+#: access/transam/multixact.c:2001
 #, c-format
 msgid "MultiXactId wrap limit is %u, limited by database with OID %u"
 msgstr ""
 "предел наложения MultiXactId равен %u, источник ограничения - база данных с "
 "OID %u"
 
-#: access/transam/multixact.c:1994 access/transam/multixact.c:2003
+#: access/transam/multixact.c:2041 access/transam/multixact.c:2050
 #: access/transam/varsup.c:137 access/transam/varsup.c:144
 #: access/transam/varsup.c:373 access/transam/varsup.c:380
 #, c-format
@@ -595,59 +595,59 @@ msgstr ""
 "Возможно, вам также придётся зафиксировать или откатить старые "
 "подготовленные транзакции."
 
-#: access/transam/multixact.c:2451
+#: access/transam/multixact.c:2498
 #, c-format
 msgid "invalid MultiXactId: %u"
 msgstr "неверный MultiXactId: %u"
 
-#: access/transam/slru.c:607
+#: access/transam/slru.c:651
 #, c-format
 msgid "file \"%s\" doesn't exist, reading as zeroes"
 msgstr "файл \"%s\" не существует, считается нулевым"
 
-#: access/transam/slru.c:837 access/transam/slru.c:843
-#: access/transam/slru.c:850 access/transam/slru.c:857
-#: access/transam/slru.c:864 access/transam/slru.c:871
+#: access/transam/slru.c:881 access/transam/slru.c:887
+#: access/transam/slru.c:894 access/transam/slru.c:901
+#: access/transam/slru.c:908 access/transam/slru.c:915
 #, c-format
 msgid "could not access status of transaction %u"
 msgstr "не удалось получить состояние транзакции %u"
 
-#: access/transam/slru.c:838
+#: access/transam/slru.c:882
 #, c-format
 msgid "Could not open file \"%s\": %m."
 msgstr "Не удалось открыть файл \"%s\": %m."
 
-#: access/transam/slru.c:844
+#: access/transam/slru.c:888
 #, c-format
 msgid "Could not seek in file \"%s\" to offset %u: %m."
 msgstr "не удалось переместиться в файле \"%s\" к смещению %u: %m"
 
-#: access/transam/slru.c:851
+#: access/transam/slru.c:895
 #, c-format
 msgid "Could not read from file \"%s\" at offset %u: %m."
 msgstr "не удалось прочитать файл \"%s\" (по смещению %u): %m"
 
-#: access/transam/slru.c:858
+#: access/transam/slru.c:902
 #, c-format
 msgid "Could not write to file \"%s\" at offset %u: %m."
 msgstr "не удалось записать в файл \"%s\" (по смещению %u): %m"
 
-#: access/transam/slru.c:865
+#: access/transam/slru.c:909
 #, c-format
 msgid "Could not fsync file \"%s\": %m."
 msgstr "Не удалось синхронизировать с ФС файл \"%s\": %m."
 
-#: access/transam/slru.c:872
+#: access/transam/slru.c:916
 #, c-format
 msgid "Could not close file \"%s\": %m."
 msgstr "не удалось закрыть файл \"%s\": %m"
 
-#: access/transam/slru.c:1127
+#: access/transam/slru.c:1171
 #, c-format
 msgid "could not truncate directory \"%s\": apparent wraparound"
 msgstr "не удалось очистить каталог \"%s\": видимо, произошло наложение"
 
-#: access/transam/slru.c:1201 access/transam/slru.c:1219
+#: access/transam/slru.c:1245 access/transam/slru.c:1263
 #, c-format
 msgid "removing file \"%s\""
 msgstr "удаляется файл \"%s\""
@@ -656,10 +656,10 @@ msgstr "удаляется файл \"%s\""
 #: access/transam/timeline.c:333 access/transam/xlog.c:2271
 #: access/transam/xlog.c:2384 access/transam/xlog.c:2421
 #: access/transam/xlog.c:2696 access/transam/xlog.c:2774
-#: replication/basebackup.c:366 replication/basebackup.c:992
+#: replication/basebackup.c:374 replication/basebackup.c:1000
 #: replication/walsender.c:368 replication/walsender.c:1326
 #: storage/file/copydir.c:158 storage/file/copydir.c:248 storage/smgr/md.c:587
-#: storage/smgr/md.c:845 utils/error/elog.c:1649 utils/init/miscinit.c:1063
+#: storage/smgr/md.c:845 utils/error/elog.c:1650 utils/init/miscinit.c:1063
 #: utils/init/miscinit.c:1192
 #, c-format
 msgid "could not open file \"%s\": %m"
@@ -705,7 +705,7 @@ msgstr ""
 #: access/transam/timeline.c:314 access/transam/timeline.c:471
 #: access/transam/xlog.c:2305 access/transam/xlog.c:2436
 #: access/transam/xlog.c:8687 access/transam/xlog.c:9004
-#: postmaster/postmaster.c:4080 storage/file/copydir.c:165
+#: postmaster/postmaster.c:4090 storage/file/copydir.c:165
 #: storage/smgr/md.c:305 utils/time/snapmgr.c:861
 #, c-format
 msgid "could not create file \"%s\": %m"
@@ -723,10 +723,10 @@ msgstr "не удалось прочитать файл \"%s\": %m"
 
 #: access/transam/timeline.c:366 access/transam/timeline.c:400
 #: access/transam/timeline.c:487 access/transam/xlog.c:2335
-#: access/transam/xlog.c:2468 postmaster/postmaster.c:4090
-#: postmaster/postmaster.c:4100 storage/file/copydir.c:190
+#: access/transam/xlog.c:2468 postmaster/postmaster.c:4100
+#: postmaster/postmaster.c:4110 storage/file/copydir.c:190
 #: utils/init/miscinit.c:1128 utils/init/miscinit.c:1137
-#: utils/init/miscinit.c:1144 utils/misc/guc.c:7598 utils/misc/guc.c:7612
+#: utils/init/miscinit.c:1144 utils/misc/guc.c:7596 utils/misc/guc.c:7610
 #: utils/time/snapmgr.c:866 utils/time/snapmgr.c:873
 #, c-format
 msgid "could not write to file \"%s\": %m"
@@ -1422,7 +1422,7 @@ msgstr "не удалось открыть файл команд восстан�
 
 #: access/transam/xlog.c:4221 access/transam/xlog.c:4312
 #: access/transam/xlog.c:4323 commands/extension.c:527
-#: commands/extension.c:535 utils/misc/guc.c:5377
+#: commands/extension.c:535 utils/misc/guc.c:5375
 #, c-format
 msgid "parameter \"%s\" requires a Boolean value"
 msgstr "параметр \"%s\" требует логическое значение"
@@ -1646,10 +1646,10 @@ msgstr "начинается восстановление архива"
 
 #: access/transam/xlog.c:4999 commands/sequence.c:1035 lib/stringinfo.c:266
 #: libpq/auth.c:1025 libpq/auth.c:1381 libpq/auth.c:1449 libpq/auth.c:1851
-#: postmaster/postmaster.c:2134 postmaster/postmaster.c:2165
-#: postmaster/postmaster.c:3622 postmaster/postmaster.c:4305
-#: postmaster/postmaster.c:4391 postmaster/postmaster.c:5069
-#: postmaster/postmaster.c:5245 postmaster/postmaster.c:5662
+#: postmaster/postmaster.c:2144 postmaster/postmaster.c:2175
+#: postmaster/postmaster.c:3632 postmaster/postmaster.c:4315
+#: postmaster/postmaster.c:4401 postmaster/postmaster.c:5079
+#: postmaster/postmaster.c:5255 postmaster/postmaster.c:5672
 #: storage/buffer/buf_init.c:154 storage/buffer/localbuf.c:397
 #: storage/file/fd.c:403 storage/file/fd.c:800 storage/file/fd.c:918
 #: storage/file/fd.c:1531 storage/ipc/procarray.c:894
@@ -1661,7 +1661,7 @@ msgstr "начинается восстановление архива"
 #: utils/hash/dynahash.c:456 utils/hash/dynahash.c:970
 #: utils/init/miscinit.c:151 utils/init/miscinit.c:172
 #: utils/init/miscinit.c:182 utils/mb/mbutils.c:374 utils/mb/mbutils.c:675
-#: utils/misc/guc.c:3396 utils/misc/guc.c:3412 utils/misc/guc.c:3425
+#: utils/misc/guc.c:3394 utils/misc/guc.c:3410 utils/misc/guc.c:3423
 #: utils/misc/tzparser.c:455 utils/mmgr/aset.c:416 utils/mmgr/aset.c:587
 #: utils/mmgr/aset.c:765 utils/mmgr/aset.c:966
 #, c-format
@@ -2117,7 +2117,7 @@ msgstr ""
 
 #: access/transam/xlog.c:8672 access/transam/xlog.c:8843
 #: access/transam/xlogarchive.c:106 access/transam/xlogarchive.c:265
-#: replication/basebackup.c:372 replication/basebackup.c:427
+#: replication/basebackup.c:380 replication/basebackup.c:435
 #: storage/file/copydir.c:75 storage/file/copydir.c:118 utils/adt/dbsize.c:68
 #: utils/adt/dbsize.c:218 utils/adt/dbsize.c:298 utils/adt/genfile.c:108
 #: utils/adt/genfile.c:280 guc-file.l:771
@@ -2158,13 +2158,13 @@ msgstr "не удалось стереть файл \"%s\": %m"
 msgid "invalid data in file \"%s\""
 msgstr "неверные данные в файле \"%s\""
 
-#: access/transam/xlog.c:8903 replication/basebackup.c:826
+#: access/transam/xlog.c:8903 replication/basebackup.c:834
 #, c-format
 msgid "the standby was promoted during online backup"
 msgstr ""
 "дежурный сервер был повышен в процессе резервного копирования \"на ходу\""
 
-#: access/transam/xlog.c:8904 replication/basebackup.c:827
+#: access/transam/xlog.c:8904 replication/basebackup.c:835
 #, c-format
 msgid ""
 "This means that the backup being taken is corrupt and should not be used. "
@@ -2260,12 +2260,12 @@ msgstr "не удалось переместиться в сегменте жу�
 msgid "could not read from log segment %s, offset %u: %m"
 msgstr "не удалось прочитать сегмент журнала %s, смещение %u: %m"
 
-#: access/transam/xlog.c:9946
+#: access/transam/xlog.c:9947
 #, c-format
 msgid "received promote request"
 msgstr "получен запрос повышения статуса"
 
-#: access/transam/xlog.c:9959
+#: access/transam/xlog.c:9960
 #, c-format
 msgid "trigger file found: %s"
 msgstr "найден файл триггера: %s"
@@ -2995,9 +2995,9 @@ msgstr "удалить объект %s нельзя, так как от него
 #: catalog/dependency.c:978 catalog/dependency.c:989 catalog/dependency.c:990
 #: catalog/objectaddress.c:751 commands/tablecmds.c:737 commands/user.c:988
 #: port/win32/security.c:51 storage/lmgr/deadlock.c:955
-#: storage/lmgr/proc.c:1174 utils/misc/guc.c:5474 utils/misc/guc.c:5809
-#: utils/misc/guc.c:8170 utils/misc/guc.c:8204 utils/misc/guc.c:8238
-#: utils/misc/guc.c:8272 utils/misc/guc.c:8307
+#: storage/lmgr/proc.c:1174 utils/misc/guc.c:5472 utils/misc/guc.c:5807
+#: utils/misc/guc.c:8168 utils/misc/guc.c:8202 utils/misc/guc.c:8236
+#: utils/misc/guc.c:8270 utils/misc/guc.c:8305
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -3359,7 +3359,7 @@ msgid "cannot create temporary tables during recovery"
 msgstr "создавать временные таблицы в процессе восстановления нельзя"
 
 #: catalog/namespace.c:3850 commands/tablespace.c:1079 commands/variable.c:61
-#: replication/syncrep.c:676 utils/misc/guc.c:8337
+#: replication/syncrep.c:676 utils/misc/guc.c:8335
 #, c-format
 msgid "List syntax is invalid."
 msgstr "Ошибка синтаксиса в списке."
@@ -7668,7 +7668,7 @@ msgid "tablespace \"%s\" already exists"
 msgstr "табличное пространство \"%s\" уже существует"
 
 #: commands/tablespace.c:372 commands/tablespace.c:530
-#: replication/basebackup.c:162 replication/basebackup.c:913
+#: replication/basebackup.c:162 replication/basebackup.c:921
 #: utils/adt/misc.c:372
 #, c-format
 msgid "tablespaces are not supported on this platform"
@@ -7723,8 +7723,8 @@ msgid "could not create symbolic link \"%s\": %m"
 msgstr "не удалось создать символическую ссылку \"%s\": %m"
 
 #: commands/tablespace.c:690 commands/tablespace.c:700
-#: postmaster/postmaster.c:1307 replication/basebackup.c:265
-#: replication/basebackup.c:553 storage/file/copydir.c:56
+#: postmaster/postmaster.c:1317 replication/basebackup.c:265
+#: replication/basebackup.c:561 storage/file/copydir.c:56
 #: storage/file/copydir.c:99 storage/file/fd.c:1896 utils/adt/genfile.c:354
 #: utils/adt/misc.c:272 utils/misc/tzparser.c:323
 #, c-format
@@ -8593,7 +8593,7 @@ msgstr "\"%s\": усечение (было страниц: %u, стало: %u)"
 msgid "\"%s\": suspending truncate due to conflicting lock request"
 msgstr "\"%s\": приостановка усечения из-за конфликтующего запроса блокировки"
 
-#: commands/variable.c:162 utils/misc/guc.c:8361
+#: commands/variable.c:162 utils/misc/guc.c:8359
 #, c-format
 msgid "Unrecognized key word: \"%s\"."
 msgstr "нераспознанное ключевое слово: \"%s\"."
@@ -8808,11 +8808,11 @@ msgstr "вставить данные в представление \"%s\" не�
 #: executor/execMain.c:978 rewrite/rewriteHandler.c:2321
 #, c-format
 msgid ""
-"To make the view insertable, provide an unconditional ON INSERT DO INSTEAD "
-"rule or an INSTEAD OF INSERT trigger."
+"To enable inserting into the view, provide an INSTEAD OF INSERT trigger or "
+"an unconditional ON INSERT DO INSTEAD rule."
 msgstr ""
-"Чтобы представление допускало добавление данных, определите безусловное "
-"правило ON INSERT DO INSTEAD или триггер INSTEAD OF INSERT."
+"Чтобы представление допускало добавление данных, установите триггер INSTEAD "
+"OF INSERT trigger или безусловное правило ON INSERT DO INSTEAD."
 
 #: executor/execMain.c:984 rewrite/rewriteHandler.c:2326
 #, c-format
@@ -8822,11 +8822,11 @@ msgstr "изменить данные в представлении \"%s\" не�
 #: executor/execMain.c:986 rewrite/rewriteHandler.c:2329
 #, c-format
 msgid ""
-"To make the view updatable, provide an unconditional ON UPDATE DO INSTEAD "
-"rule or an INSTEAD OF UPDATE trigger."
+"To enable updating the view, provide an INSTEAD OF UPDATE trigger or an "
+"unconditional ON UPDATE DO INSTEAD rule."
 msgstr ""
-"Чтобы представление допускало изменение данных, определите безусловное "
-"правило ON UPDATE DO INSTEAD или триггер INSTEAD OF UPDATE."
+"Чтобы представление допускало изменение данных, установите триггер INSTEAD "
+"OF UPDATE или безусловное правило ON UPDATE DO INSTEAD."
 
 #: executor/execMain.c:992 rewrite/rewriteHandler.c:2334
 #, c-format
@@ -8836,11 +8836,11 @@ msgstr "удалить данные из представления \"%s\" не�
 #: executor/execMain.c:994 rewrite/rewriteHandler.c:2337
 #, c-format
 msgid ""
-"To make the view updatable, provide an unconditional ON DELETE DO INSTEAD "
-"rule or an INSTEAD OF DELETE trigger."
+"To enable deleting from the view, provide an INSTEAD OF DELETE trigger or an "
+"unconditional ON DELETE DO INSTEAD rule."
 msgstr ""
-"Чтобы представление допускало удаление данных, определите безусловное "
-"правило ON DELETE DO INSTEAD или триггер INSTEAD OF DELETE."
+"Чтобы представление допускало удаление данных, установите триггер INSTEAD OF "
+"DELETE или безусловное правило ON DELETE DO INSTEAD."
 
 #: executor/execMain.c:1004
 #, c-format
@@ -10993,7 +10993,7 @@ msgstr ""
 "слиянием или хэш-соединение"
 
 #. translator: %s is a SQL row locking clause such as FOR UPDATE
-#: optimizer/plan/initsplan.c:889
+#: optimizer/plan/initsplan.c:1057
 #, c-format
 msgid "%s cannot be applied to the nullable side of an outer join"
 msgstr "%s не может применяться к NULL-содержащей стороне внешнего соединения"
@@ -11025,22 +11025,22 @@ msgstr ""
 msgid "could not implement DISTINCT"
 msgstr "не удалось реализовать DISTINCT"
 
-#: optimizer/plan/planner.c:3271
+#: optimizer/plan/planner.c:3290
 #, c-format
 msgid "could not implement window PARTITION BY"
 msgstr "не удалось реализовать PARTITION BY для окна"
 
-#: optimizer/plan/planner.c:3272
+#: optimizer/plan/planner.c:3291
 #, c-format
 msgid "Window partitioning columns must be of sortable datatypes."
 msgstr "Колонки, разбивающие окна, должны иметь сортируемые типы данных."
 
-#: optimizer/plan/planner.c:3276
+#: optimizer/plan/planner.c:3295
 #, c-format
 msgid "could not implement window ORDER BY"
 msgstr "не удалось реализовать ORDER BY для окна"
 
-#: optimizer/plan/planner.c:3277
+#: optimizer/plan/planner.c:3296
 #, c-format
 msgid "Window ordering columns must be of sortable datatypes."
 msgstr "Колонки, сортирующие окна, должны иметь сортируемые типы данных."
@@ -13006,7 +13006,7 @@ msgstr "Команда архивации с ошибкой: %s"
 msgid "archive command was terminated by exception 0x%X"
 msgstr "команда архивации была прервана исключением 0x%X"
 
-#: postmaster/pgarch.c:620 postmaster/postmaster.c:3221
+#: postmaster/pgarch.c:620 postmaster/postmaster.c:3231
 #, c-format
 msgid ""
 "See C include file \"ntstatus.h\" for a description of the hexadecimal value."
@@ -13108,67 +13108,67 @@ msgstr ""
 msgid "disabling statistics collector for lack of working socket"
 msgstr "сборщик статистики отключается из-за нехватки рабочего сокета"
 
-#: postmaster/pgstat.c:664
+#: postmaster/pgstat.c:684
 #, c-format
 msgid "could not fork statistics collector: %m"
 msgstr "не удалось породить процесс сборщика статистики: %m"
 
-#: postmaster/pgstat.c:1200 postmaster/pgstat.c:1224 postmaster/pgstat.c:1255
+#: postmaster/pgstat.c:1220 postmaster/pgstat.c:1244 postmaster/pgstat.c:1275
 #, c-format
 msgid "must be superuser to reset statistics counters"
 msgstr "для сброса счётчиков статистики нужно быть суперпользователем"
 
-#: postmaster/pgstat.c:1231
+#: postmaster/pgstat.c:1251
 #, c-format
 msgid "unrecognized reset target: \"%s\""
 msgstr "запрошен сброс неизвестного счётчика: \"%s\""
 
-#: postmaster/pgstat.c:1232
+#: postmaster/pgstat.c:1252
 #, c-format
 msgid "Target must be \"bgwriter\"."
 msgstr "Допустимый счётчик: \"bgwriter\"."
 
-#: postmaster/pgstat.c:3177
+#: postmaster/pgstat.c:3197
 #, c-format
 msgid "could not read statistics message: %m"
 msgstr "не удалось прочитать сообщение статистики: %m"
 
-#: postmaster/pgstat.c:3506 postmaster/pgstat.c:3676
+#: postmaster/pgstat.c:3526 postmaster/pgstat.c:3697
 #, c-format
 msgid "could not open temporary statistics file \"%s\": %m"
 msgstr "не удалось открыть временный файл статистики \"%s\": %m"
 
-#: postmaster/pgstat.c:3568 postmaster/pgstat.c:3721
+#: postmaster/pgstat.c:3588 postmaster/pgstat.c:3742
 #, c-format
 msgid "could not write temporary statistics file \"%s\": %m"
 msgstr "не удалось записать во временный файл статистики \"%s\": %m"
 
-#: postmaster/pgstat.c:3577 postmaster/pgstat.c:3730
+#: postmaster/pgstat.c:3597 postmaster/pgstat.c:3751
 #, c-format
 msgid "could not close temporary statistics file \"%s\": %m"
 msgstr "не удалось закрыть временный файл статистики \"%s\": %m"
 
-#: postmaster/pgstat.c:3585 postmaster/pgstat.c:3738
+#: postmaster/pgstat.c:3605 postmaster/pgstat.c:3759
 #, c-format
 msgid "could not rename temporary statistics file \"%s\" to \"%s\": %m"
 msgstr ""
 "не удалось переименовать временный файл статистики из \"%s\" в \"%s\": %m"
 
-#: postmaster/pgstat.c:3819 postmaster/pgstat.c:3994 postmaster/pgstat.c:4148
+#: postmaster/pgstat.c:3840 postmaster/pgstat.c:4015 postmaster/pgstat.c:4169
 #, c-format
 msgid "could not open statistics file \"%s\": %m"
 msgstr "не удалось открыть файл статистики \"%s\": %m"
 
-#: postmaster/pgstat.c:3831 postmaster/pgstat.c:3841 postmaster/pgstat.c:3862
-#: postmaster/pgstat.c:3877 postmaster/pgstat.c:3935 postmaster/pgstat.c:4006
-#: postmaster/pgstat.c:4026 postmaster/pgstat.c:4044 postmaster/pgstat.c:4060
-#: postmaster/pgstat.c:4078 postmaster/pgstat.c:4094 postmaster/pgstat.c:4160
-#: postmaster/pgstat.c:4172 postmaster/pgstat.c:4197 postmaster/pgstat.c:4219
+#: postmaster/pgstat.c:3852 postmaster/pgstat.c:3862 postmaster/pgstat.c:3883
+#: postmaster/pgstat.c:3898 postmaster/pgstat.c:3956 postmaster/pgstat.c:4027
+#: postmaster/pgstat.c:4047 postmaster/pgstat.c:4065 postmaster/pgstat.c:4081
+#: postmaster/pgstat.c:4099 postmaster/pgstat.c:4115 postmaster/pgstat.c:4181
+#: postmaster/pgstat.c:4193 postmaster/pgstat.c:4218 postmaster/pgstat.c:4240
 #, c-format
 msgid "corrupted statistics file \"%s\""
 msgstr "файл статистики \"%s\" испорчен"
 
-#: postmaster/pgstat.c:4646
+#: postmaster/pgstat.c:4667
 #, c-format
 msgid "database hash table corrupted during cleanup --- abort"
 msgstr "таблица хэша базы данных испорчена при очистке --- прерывание"
@@ -13273,17 +13273,27 @@ msgstr "%s: не удалось поменять права для внешне�
 msgid "%s: could not write external PID file \"%s\": %s\n"
 msgstr "%s: не удалось записать внешний файл PID \"%s\": %s\n"
 
-#: postmaster/postmaster.c:1210 utils/init/postinit.c:199
+#: postmaster/postmaster.c:1193
+#, c-format
+msgid "ending log output to stderr"
+msgstr "завершение вывода в stderr"
+
+#: postmaster/postmaster.c:1194
+#, c-format
+msgid "Future log output will go to log destination \"%s\"."
+msgstr "В дальнейшем протокол будет выводиться в \"%s\"."
+
+#: postmaster/postmaster.c:1220 utils/init/postinit.c:199
 #, c-format
 msgid "could not load pg_hba.conf"
 msgstr "не удалось загрузить pg_hba.conf"
 
-#: postmaster/postmaster.c:1286
+#: postmaster/postmaster.c:1296
 #, c-format
 msgid "%s: could not locate matching postgres executable"
 msgstr "%s: подходящий исполняемый файл postgres не найден"
 
-#: postmaster/postmaster.c:1309 utils/misc/tzparser.c:325
+#: postmaster/postmaster.c:1319 utils/misc/tzparser.c:325
 #, c-format
 msgid ""
 "This may indicate an incomplete PostgreSQL installation, or that the file "
@@ -13292,43 +13302,43 @@ msgstr ""
 "Возможно, PostgreSQL установлен не полностью или файла \"%s\" нет в "
 "положенном месте."
 
-#: postmaster/postmaster.c:1337
+#: postmaster/postmaster.c:1347
 #, c-format
 msgid "data directory \"%s\" does not exist"
 msgstr "каталог данных \"%s\" не существует"
 
-#: postmaster/postmaster.c:1342
+#: postmaster/postmaster.c:1352
 #, c-format
 msgid "could not read permissions of directory \"%s\": %m"
 msgstr "не удалось считать права на каталог \"%s\": %m"
 
-#: postmaster/postmaster.c:1350
+#: postmaster/postmaster.c:1360
 #, c-format
 msgid "specified data directory \"%s\" is not a directory"
 msgstr "указанный каталог данных \"%s\" не существует"
 
-#: postmaster/postmaster.c:1366
+#: postmaster/postmaster.c:1376
 #, c-format
 msgid "data directory \"%s\" has wrong ownership"
 msgstr "владелец каталога данных \"%s\" определён неверно"
 
-#: postmaster/postmaster.c:1368
+#: postmaster/postmaster.c:1378
 #, c-format
 msgid "The server must be started by the user that owns the data directory."
 msgstr ""
 "Сервер должен запускать пользователь, являющийся владельцем каталога данных."
 
-#: postmaster/postmaster.c:1388
+#: postmaster/postmaster.c:1398
 #, c-format
 msgid "data directory \"%s\" has group or world access"
 msgstr "к каталогу данных \"%s\" имеют доступ все или группа"
 
-#: postmaster/postmaster.c:1390
+#: postmaster/postmaster.c:1400
 #, c-format
 msgid "Permissions should be u=rwx (0700)."
 msgstr "Права должны быть: u=rwx (0700)."
 
-#: postmaster/postmaster.c:1401
+#: postmaster/postmaster.c:1411
 #, c-format
 msgid ""
 "%s: could not find the database system\n"
@@ -13339,299 +13349,299 @@ msgstr ""
 "Ожидалось найти её в каталоге \"%s\",\n"
 "но открыть файл \"%s\" не удалось: %s\n"
 
-#: postmaster/postmaster.c:1553
+#: postmaster/postmaster.c:1563
 #, c-format
 msgid "select() failed in postmaster: %m"
 msgstr "сбой select() в postmaster'е: %m"
 
-#: postmaster/postmaster.c:1723 postmaster/postmaster.c:1754
+#: postmaster/postmaster.c:1733 postmaster/postmaster.c:1764
 #, c-format
 msgid "incomplete startup packet"
 msgstr "неполный стартовый пакет"
 
-#: postmaster/postmaster.c:1735
+#: postmaster/postmaster.c:1745
 #, c-format
 msgid "invalid length of startup packet"
 msgstr "неверная длина стартового пакета"
 
-#: postmaster/postmaster.c:1792
+#: postmaster/postmaster.c:1802
 #, c-format
 msgid "failed to send SSL negotiation response: %m"
 msgstr "не удалось отправить ответ в процессе SSL-согласования: %m"
 
-#: postmaster/postmaster.c:1821
+#: postmaster/postmaster.c:1831
 #, c-format
 msgid "unsupported frontend protocol %u.%u: server supports %u.0 to %u.%u"
 msgstr ""
 "неподдерживаемый протокол клиентского приложения %u.%u; сервер поддерживает "
 "%u.0 - %u.%u "
 
-#: postmaster/postmaster.c:1872
+#: postmaster/postmaster.c:1882
 #, c-format
 msgid "invalid value for boolean option \"replication\""
 msgstr "неверное значение логического параметра \"replication\""
 
-#: postmaster/postmaster.c:1892
+#: postmaster/postmaster.c:1902
 #, c-format
 msgid "invalid startup packet layout: expected terminator as last byte"
 msgstr ""
 "неверная структура стартового пакета: последним байтом должен быть терминатор"
 
-#: postmaster/postmaster.c:1920
+#: postmaster/postmaster.c:1930
 #, c-format
 msgid "no PostgreSQL user name specified in startup packet"
 msgstr "в стартовом пакете не указано имя пользователя PostgreSQL"
 
-#: postmaster/postmaster.c:1977
+#: postmaster/postmaster.c:1987
 #, c-format
 msgid "the database system is starting up"
 msgstr "система баз данных запускается"
 
-#: postmaster/postmaster.c:1982
+#: postmaster/postmaster.c:1992
 #, c-format
 msgid "the database system is shutting down"
 msgstr "система баз данных останавливается"
 
-#: postmaster/postmaster.c:1987
+#: postmaster/postmaster.c:1997
 #, c-format
 msgid "the database system is in recovery mode"
 msgstr "система баз данных в режиме восстановления"
 
-#: postmaster/postmaster.c:1992 storage/ipc/procarray.c:278
+#: postmaster/postmaster.c:2002 storage/ipc/procarray.c:278
 #: storage/ipc/sinvaladt.c:304 storage/lmgr/proc.c:339
 #, c-format
 msgid "sorry, too many clients already"
 msgstr "извините, уже слишком много клиентов"
 
-#: postmaster/postmaster.c:2054
+#: postmaster/postmaster.c:2064
 #, c-format
 msgid "wrong key in cancel request for process %d"
 msgstr "неправильный ключ в запросе на отмену процесса %d"
 
-#: postmaster/postmaster.c:2062
+#: postmaster/postmaster.c:2072
 #, c-format
 msgid "PID %d in cancel request did not match any process"
 msgstr "процесс с кодом %d, полученным в запросе на отмену, не найден"
 
-#: postmaster/postmaster.c:2282
+#: postmaster/postmaster.c:2292
 #, c-format
 msgid "received SIGHUP, reloading configuration files"
 msgstr "получен SIGHUP, файлы конфигурации перезагружаются"
 
-#: postmaster/postmaster.c:2308
+#: postmaster/postmaster.c:2318
 #, c-format
 msgid "pg_hba.conf not reloaded"
 msgstr "pg_hba.conf не перезагружен"
 
-#: postmaster/postmaster.c:2312
+#: postmaster/postmaster.c:2322
 #, c-format
 msgid "pg_ident.conf not reloaded"
 msgstr "pg_ident.conf не перезагружен"
 
-#: postmaster/postmaster.c:2353
+#: postmaster/postmaster.c:2363
 #, c-format
 msgid "received smart shutdown request"
 msgstr "получен запрос на \"вежливое\" выключение"
 
-#: postmaster/postmaster.c:2406
+#: postmaster/postmaster.c:2416
 #, c-format
 msgid "received fast shutdown request"
 msgstr "получен запрос на быстрое выключение"
 
-#: postmaster/postmaster.c:2432
+#: postmaster/postmaster.c:2442
 #, c-format
 msgid "aborting any active transactions"
 msgstr "прерывание всех активных транзакций"
 
-#: postmaster/postmaster.c:2462
+#: postmaster/postmaster.c:2472
 #, c-format
 msgid "received immediate shutdown request"
 msgstr "получен запрос на немедленное выключение"
 
-#: postmaster/postmaster.c:2533 postmaster/postmaster.c:2554
+#: postmaster/postmaster.c:2543 postmaster/postmaster.c:2564
 msgid "startup process"
 msgstr "стартовый процесс"
 
-#: postmaster/postmaster.c:2536
+#: postmaster/postmaster.c:2546
 #, c-format
 msgid "aborting startup due to startup process failure"
 msgstr "прерывание запуска из-за ошибки в стартовом процессе"
 
-#: postmaster/postmaster.c:2593
+#: postmaster/postmaster.c:2603
 #, c-format
 msgid "database system is ready to accept connections"
 msgstr "система БД готова принимать подключения"
 
-#: postmaster/postmaster.c:2608
+#: postmaster/postmaster.c:2618
 msgid "background writer process"
 msgstr "процесс фоновой записи"
 
-#: postmaster/postmaster.c:2662
+#: postmaster/postmaster.c:2672
 msgid "checkpointer process"
 msgstr "процесс контрольных точек"
 
-#: postmaster/postmaster.c:2678
+#: postmaster/postmaster.c:2688
 msgid "WAL writer process"
 msgstr "процесс записи WAL"
 
-#: postmaster/postmaster.c:2692
+#: postmaster/postmaster.c:2702
 msgid "WAL receiver process"
 msgstr "процесс считывания WAL"
 
-#: postmaster/postmaster.c:2707
+#: postmaster/postmaster.c:2717
 msgid "autovacuum launcher process"
 msgstr "процесс запуска автоочистки"
 
-#: postmaster/postmaster.c:2722
+#: postmaster/postmaster.c:2732
 msgid "archiver process"
 msgstr "процесс архивации"
 
-#: postmaster/postmaster.c:2738
+#: postmaster/postmaster.c:2748
 msgid "statistics collector process"
 msgstr "процесс сбора статистики"
 
-#: postmaster/postmaster.c:2752
+#: postmaster/postmaster.c:2762
 msgid "system logger process"
 msgstr "процесс системного протоколирования"
 
-#: postmaster/postmaster.c:2814
+#: postmaster/postmaster.c:2824
 msgid "worker process"
 msgstr "рабочий процесс"
 
-#: postmaster/postmaster.c:2884 postmaster/postmaster.c:2903
-#: postmaster/postmaster.c:2910 postmaster/postmaster.c:2928
+#: postmaster/postmaster.c:2894 postmaster/postmaster.c:2913
+#: postmaster/postmaster.c:2920 postmaster/postmaster.c:2938
 msgid "server process"
 msgstr "процесс сервера"
 
-#: postmaster/postmaster.c:2964
+#: postmaster/postmaster.c:2974
 #, c-format
 msgid "terminating any other active server processes"
 msgstr "завершение всех остальных активных серверных процессов"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:3209
+#: postmaster/postmaster.c:3219
 #, c-format
 msgid "%s (PID %d) exited with exit code %d"
 msgstr "%s (PID %d) завершился с кодом выхода %d"
 
-#: postmaster/postmaster.c:3211 postmaster/postmaster.c:3222
-#: postmaster/postmaster.c:3233 postmaster/postmaster.c:3242
-#: postmaster/postmaster.c:3252
+#: postmaster/postmaster.c:3221 postmaster/postmaster.c:3232
+#: postmaster/postmaster.c:3243 postmaster/postmaster.c:3252
+#: postmaster/postmaster.c:3262
 #, c-format
 msgid "Failed process was running: %s"
 msgstr "Завершившийся процесс выполнял действие: %s"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:3219
+#: postmaster/postmaster.c:3229
 #, c-format
 msgid "%s (PID %d) was terminated by exception 0x%X"
 msgstr "%s (PID %d) был прерван исключением 0x%X"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:3229
+#: postmaster/postmaster.c:3239
 #, c-format
 msgid "%s (PID %d) was terminated by signal %d: %s"
 msgstr "%s (PID %d) был завершён по сигналу %d: %s"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:3240
+#: postmaster/postmaster.c:3250
 #, c-format
 msgid "%s (PID %d) was terminated by signal %d"
 msgstr "%s (PID %d) был завершён по сигналу %d"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:3250
+#: postmaster/postmaster.c:3260
 #, c-format
 msgid "%s (PID %d) exited with unrecognized status %d"
 msgstr "%s (PID %d) завершился с неизвестным кодом состояния %d"
 
-#: postmaster/postmaster.c:3435
+#: postmaster/postmaster.c:3445
 #, c-format
 msgid "abnormal database system shutdown"
 msgstr "аварийное выключение системы БД"
 
-#: postmaster/postmaster.c:3474
+#: postmaster/postmaster.c:3484
 #, c-format
 msgid "all server processes terminated; reinitializing"
 msgstr "все серверные процессы завершены... переинициализация"
 
-#: postmaster/postmaster.c:3690
+#: postmaster/postmaster.c:3700
 #, c-format
 msgid "could not fork new process for connection: %m"
 msgstr "породить новый процесс для соединения не удалось: %m"
 
-#: postmaster/postmaster.c:3732
+#: postmaster/postmaster.c:3742
 msgid "could not fork new process for connection: "
 msgstr "породить новый процесс для соединения не удалось: "
 
-#: postmaster/postmaster.c:3839
+#: postmaster/postmaster.c:3849
 #, c-format
 msgid "connection received: host=%s port=%s"
 msgstr "принято подключение: узел=%s порт=%s"
 
-#: postmaster/postmaster.c:3844
+#: postmaster/postmaster.c:3854
 #, c-format
 msgid "connection received: host=%s"
 msgstr "принято подключение: узел=%s"
 
-#: postmaster/postmaster.c:4119
+#: postmaster/postmaster.c:4129
 #, c-format
 msgid "could not execute server process \"%s\": %m"
 msgstr "запустить серверный процесс \"%s\" не удалось: %m"
 
-#: postmaster/postmaster.c:4658
+#: postmaster/postmaster.c:4668
 #, c-format
 msgid "database system is ready to accept read only connections"
 msgstr "система БД готова к подключениям в режиме \"только чтение\""
 
-#: postmaster/postmaster.c:4969
+#: postmaster/postmaster.c:4979
 #, c-format
 msgid "could not fork startup process: %m"
 msgstr "породить стартовый процесс не удалось: %m"
 
-#: postmaster/postmaster.c:4973
+#: postmaster/postmaster.c:4983
 #, c-format
 msgid "could not fork background writer process: %m"
 msgstr "породить процесс фоновой записи не удалось: %m"
 
-#: postmaster/postmaster.c:4977
+#: postmaster/postmaster.c:4987
 #, c-format
 msgid "could not fork checkpointer process: %m"
 msgstr "породить процесс контрольных точек не удалось: %m"
 
-#: postmaster/postmaster.c:4981
+#: postmaster/postmaster.c:4991
 #, c-format
 msgid "could not fork WAL writer process: %m"
 msgstr "породить процесс записи WAL не удалось: %m"
 
-#: postmaster/postmaster.c:4985
+#: postmaster/postmaster.c:4995
 #, c-format
 msgid "could not fork WAL receiver process: %m"
 msgstr "породить процесс считывания WAL не удалось: %m"
 
-#: postmaster/postmaster.c:4989
+#: postmaster/postmaster.c:4999
 #, c-format
 msgid "could not fork process: %m"
 msgstr "породить процесс не удалось: %m"
 
-#: postmaster/postmaster.c:5168
+#: postmaster/postmaster.c:5178
 #, c-format
 msgid "registering background worker \"%s\""
 msgstr "регистрация фонового процесса \"%s\""
 
-#: postmaster/postmaster.c:5175
+#: postmaster/postmaster.c:5185
 #, c-format
 msgid ""
 "background worker \"%s\": must be registered in shared_preload_libraries"
 msgstr ""
 "фоновой процесс \"%s\" должен быть зарегистрирован в shared_preload_libraries"
 
-#: postmaster/postmaster.c:5188
+#: postmaster/postmaster.c:5198
 #, c-format
 msgid ""
 "background worker \"%s\": must attach to shared memory in order to be able "
@@ -13640,7 +13650,7 @@ msgstr ""
 "фоновый процесс \"%s\" должен иметь доступ к общей памяти, чтобы он мог "
 "запросить подключение к БД"
 
-#: postmaster/postmaster.c:5198
+#: postmaster/postmaster.c:5208
 #, c-format
 msgid ""
 "background worker \"%s\": cannot request database access if starting at "
@@ -13649,17 +13659,17 @@ msgstr ""
 "фоновый процесс \"%s\" не может получить доступ к БД, если он запущен при "
 "старте главного процесса"
 
-#: postmaster/postmaster.c:5213
+#: postmaster/postmaster.c:5223
 #, c-format
 msgid "background worker \"%s\": invalid restart interval"
 msgstr "фоновый процесс \"%s\": неправильный интервал перезапуска"
 
-#: postmaster/postmaster.c:5229
+#: postmaster/postmaster.c:5239
 #, c-format
 msgid "too many background workers"
 msgstr "слишком много фоновых процессов"
 
-#: postmaster/postmaster.c:5230
+#: postmaster/postmaster.c:5240
 #, c-format
 msgid "Up to %d background worker can be registered with the current settings."
 msgid_plural ""
@@ -13671,82 +13681,82 @@ msgstr[1] ""
 msgstr[2] ""
 "Максимально возможное число фоновых процессов при текущих параметрах: %d."
 
-#: postmaster/postmaster.c:5273
+#: postmaster/postmaster.c:5283
 #, c-format
 msgid "database connection requirement not indicated during registration"
 msgstr ""
 "при регистрации фонового процесса не указывалось, что ему требуется "
 "подключение к БД"
 
-#: postmaster/postmaster.c:5280
+#: postmaster/postmaster.c:5290
 #, c-format
 msgid "invalid processing mode in background worker"
 msgstr "неправильный режим обработки в фоновом процессе"
 
-#: postmaster/postmaster.c:5354
+#: postmaster/postmaster.c:5364
 #, c-format
 msgid "terminating background worker \"%s\" due to administrator command"
 msgstr "завершение фонового процесса \"%s\" по команде администратора"
 
-#: postmaster/postmaster.c:5571
+#: postmaster/postmaster.c:5581
 #, c-format
 msgid "starting background worker process \"%s\""
 msgstr "запуск фонового рабочего процесса \"%s\""
 
-#: postmaster/postmaster.c:5582
+#: postmaster/postmaster.c:5592
 #, c-format
 msgid "could not fork worker process: %m"
 msgstr "породить рабочий процесс не удалось: %m"
 
-#: postmaster/postmaster.c:5934
+#: postmaster/postmaster.c:5944
 #, c-format
 msgid "could not duplicate socket %d for use in backend: error code %d"
 msgstr ""
 "продублировать сокет %d для серверного процесса не удалось: код ошибки %d"
 
-#: postmaster/postmaster.c:5966
+#: postmaster/postmaster.c:5976
 #, c-format
 msgid "could not create inherited socket: error code %d\n"
 msgstr "создать наследуемый сокет не удалось: код ошибки %d\n"
 
-#: postmaster/postmaster.c:5995 postmaster/postmaster.c:6002
+#: postmaster/postmaster.c:6005 postmaster/postmaster.c:6012
 #, c-format
 msgid "could not read from backend variables file \"%s\": %s\n"
 msgstr "прочитать файл серверных переменных \"%s\" не удалось: %s\n"
 
-#: postmaster/postmaster.c:6011
+#: postmaster/postmaster.c:6021
 #, c-format
 msgid "could not remove file \"%s\": %s\n"
 msgstr "не удалось стереть файл \"%s\": %s\n"
 
-#: postmaster/postmaster.c:6028
+#: postmaster/postmaster.c:6038
 #, c-format
 msgid "could not map view of backend variables: error code %lu\n"
 msgstr "отобразить файл серверных переменных не удалось: код ошибки %lu\n"
 
-#: postmaster/postmaster.c:6037
+#: postmaster/postmaster.c:6047
 #, c-format
 msgid "could not unmap view of backend variables: error code %lu\n"
 msgstr ""
 "отключить отображение файла серверных переменных не удалось: код ошибки %lu\n"
 
-#: postmaster/postmaster.c:6044
+#: postmaster/postmaster.c:6054
 #, c-format
 msgid "could not close handle to backend parameter variables: error code %lu\n"
 msgstr ""
 "закрыть указатель файла серверных переменных не удалось: код ошибки %lu\n"
 
-#: postmaster/postmaster.c:6200
+#: postmaster/postmaster.c:6210
 #, c-format
 msgid "could not read exit code for process\n"
 msgstr "прочитать код завершения процесса не удалось\n"
 
-#: postmaster/postmaster.c:6205
+#: postmaster/postmaster.c:6215
 #, c-format
 msgid "could not post child completion status\n"
 msgstr "отправить состояние завершения потомка не удалось\n"
 
-#: postmaster/syslogger.c:468 postmaster/syslogger.c:1055
+#: postmaster/syslogger.c:468 postmaster/syslogger.c:1067
 #, c-format
 msgid "could not read from logger pipe: %m"
 msgstr "не удалось прочитать из канала протоколирования: %m"
@@ -13766,27 +13776,37 @@ msgstr "не удалось создать канал для syslog: %m"
 msgid "could not fork system logger: %m"
 msgstr "не удалось породить процесс системного протоколирования: %m"
 
-#: postmaster/syslogger.c:642
+#: postmaster/syslogger.c:647
+#, c-format
+msgid "redirecting log output to logging collector process"
+msgstr "передача вывода в протокол процессу сбора протоколов"
+
+#: postmaster/syslogger.c:648
+#, c-format
+msgid "Future log output will appear in directory \"%s\"."
+msgstr "В дальнейшем протоколы будут выводиться в каталог \"%s\"."
+
+#: postmaster/syslogger.c:656
 #, c-format
 msgid "could not redirect stdout: %m"
 msgstr "не удалось перенаправить stdout: %m"
 
-#: postmaster/syslogger.c:647 postmaster/syslogger.c:665
+#: postmaster/syslogger.c:661 postmaster/syslogger.c:677
 #, c-format
 msgid "could not redirect stderr: %m"
 msgstr "не удалось перенаправить stderr: %m "
 
-#: postmaster/syslogger.c:1010
+#: postmaster/syslogger.c:1022
 #, c-format
 msgid "could not write to log file: %s\n"
 msgstr "не удалось записать в файл протокола: %s\n"
 
-#: postmaster/syslogger.c:1150
+#: postmaster/syslogger.c:1162
 #, c-format
 msgid "could not open log file \"%s\": %m"
 msgstr "не удалось открыть файл протокола \"%s\": %m"
 
-#: postmaster/syslogger.c:1212 postmaster/syslogger.c:1256
+#: postmaster/syslogger.c:1224 postmaster/syslogger.c:1268
 #, c-format
 msgid "disabling automatic rotation (use SIGHUP to re-enable)"
 msgstr "отключение автопрокрутки (чтобы включить, передайте SIGHUP)"
@@ -13798,13 +13818,13 @@ msgstr ""
 "не удалось определить, какое правило сортировки использовать для регулярного "
 "выражения"
 
-#: replication/basebackup.c:135 replication/basebackup.c:893
+#: replication/basebackup.c:135 replication/basebackup.c:901
 #: utils/adt/misc.c:360
 #, c-format
 msgid "could not read symbolic link \"%s\": %m"
 msgstr "не удалось прочитать символическую ссылку \"%s\": %m"
 
-#: replication/basebackup.c:142 replication/basebackup.c:897
+#: replication/basebackup.c:142 replication/basebackup.c:905
 #: utils/adt/misc.c:364
 #, c-format
 msgid "symbolic link \"%s\" target is too long"
@@ -13815,42 +13835,47 @@ msgstr "целевой путь символической ссылки \"%s\" �
 msgid "could not stat control file \"%s\": %m"
 msgstr "не удалось найти управляющий файл \"%s\": %m"
 
-#: replication/basebackup.c:317 replication/basebackup.c:331
-#: replication/basebackup.c:340
+#: replication/basebackup.c:312
+#, c-format
+msgid "could not find any WAL files"
+msgstr "не удалось найти ни одного файла WAL"
+
+#: replication/basebackup.c:325 replication/basebackup.c:339
+#: replication/basebackup.c:348
 #, c-format
 msgid "could not find WAL file \"%s\""
 msgstr "не удалось найти файл WAL \"%s\""
 
-#: replication/basebackup.c:379 replication/basebackup.c:402
+#: replication/basebackup.c:387 replication/basebackup.c:410
 #, c-format
 msgid "unexpected WAL file size \"%s\""
 msgstr "неприемлемый размер файла WAL \"%s\""
 
-#: replication/basebackup.c:390 replication/basebackup.c:1011
+#: replication/basebackup.c:398 replication/basebackup.c:1019
 #, c-format
 msgid "base backup could not send data, aborting backup"
 msgstr ""
 "в процессе базового резервного копирования не удалось передать данные, "
 "копирование прерывается"
 
-#: replication/basebackup.c:474 replication/basebackup.c:483
-#: replication/basebackup.c:492 replication/basebackup.c:501
-#: replication/basebackup.c:510
+#: replication/basebackup.c:482 replication/basebackup.c:491
+#: replication/basebackup.c:500 replication/basebackup.c:509
+#: replication/basebackup.c:518
 #, c-format
 msgid "duplicate option \"%s\""
 msgstr "повторяющийся параметр \"%s\""
 
-#: replication/basebackup.c:763 replication/basebackup.c:847
+#: replication/basebackup.c:771 replication/basebackup.c:855
 #, c-format
 msgid "could not stat file or directory \"%s\": %m"
 msgstr "не удалось получить информацию о файле или каталоге \"%s\": %m"
 
-#: replication/basebackup.c:947
+#: replication/basebackup.c:955
 #, c-format
 msgid "skipping special file \"%s\""
 msgstr "специальный файл \"%s\" пропускается"
 
-#: replication/basebackup.c:1001
+#: replication/basebackup.c:1009
 #, c-format
 msgid "archive member \"%s\" too large for tar format"
 msgstr "архивируемый файл \"%s\" слишком велик для формата tar"
@@ -18385,7 +18410,7 @@ msgstr "для типа %s нет функции ввода"
 msgid "no output function available for type %s"
 msgstr "для типа %s нет функции вывода"
 
-#: utils/cache/plancache.c:695
+#: utils/cache/plancache.c:696
 #, c-format
 msgid "cached plan must not change result type"
 msgstr "в кэшированном плане не должен изменяться тип результата"
@@ -18467,96 +18492,96 @@ msgstr "ЛОВУШКА: Исключительное условие: невер�
 msgid "TRAP: %s(\"%s\", File: \"%s\", Line: %d)\n"
 msgstr "ЛОВУШКА: %s(\"%s\", файл: \"%s\", строка: %d)\n"
 
-#: utils/error/elog.c:1659
+#: utils/error/elog.c:1660
 #, c-format
 msgid "could not reopen file \"%s\" as stderr: %m"
 msgstr "открыть файл \"%s\" как stderr не удалось: %m"
 
-#: utils/error/elog.c:1672
+#: utils/error/elog.c:1673
 #, c-format
 msgid "could not reopen file \"%s\" as stdout: %m"
 msgstr "открыть файл \"%s\" как stdout не удалось: %m"
 
-#: utils/error/elog.c:2061 utils/error/elog.c:2071 utils/error/elog.c:2081
+#: utils/error/elog.c:2062 utils/error/elog.c:2072 utils/error/elog.c:2082
 msgid "[unknown]"
 msgstr "[н/д]"
 
-#: utils/error/elog.c:2429 utils/error/elog.c:2728 utils/error/elog.c:2836
+#: utils/error/elog.c:2430 utils/error/elog.c:2729 utils/error/elog.c:2837
 msgid "missing error text"
 msgstr "отсутствует текст ошибки"
 
-#: utils/error/elog.c:2432 utils/error/elog.c:2435 utils/error/elog.c:2839
-#: utils/error/elog.c:2842
+#: utils/error/elog.c:2433 utils/error/elog.c:2436 utils/error/elog.c:2840
+#: utils/error/elog.c:2843
 #, c-format
 msgid " at character %d"
 msgstr " (символ %d)"
 
-#: utils/error/elog.c:2445 utils/error/elog.c:2452
+#: utils/error/elog.c:2446 utils/error/elog.c:2453
 msgid "DETAIL:  "
 msgstr "ПОДРОБНОСТИ:  "
 
-#: utils/error/elog.c:2459
+#: utils/error/elog.c:2460
 msgid "HINT:  "
 msgstr "ПОДСКАЗКА:  "
 
-#: utils/error/elog.c:2466
+#: utils/error/elog.c:2467
 msgid "QUERY:  "
 msgstr "ЗАПРОС:  "
 
-#: utils/error/elog.c:2473
+#: utils/error/elog.c:2474
 msgid "CONTEXT:  "
 msgstr "КОНТЕКСТ:  "
 
-#: utils/error/elog.c:2483
+#: utils/error/elog.c:2484
 #, c-format
 msgid "LOCATION:  %s, %s:%d\n"
 msgstr "ПОЛОЖЕНИЕ: %s, %s:%d\n"
 
-#: utils/error/elog.c:2490
+#: utils/error/elog.c:2491
 #, c-format
 msgid "LOCATION:  %s:%d\n"
 msgstr "ПОЛОЖЕНИЕ: %s:%d\n"
 
-#: utils/error/elog.c:2504
+#: utils/error/elog.c:2505
 msgid "STATEMENT:  "
 msgstr "ОПЕРАТОР:  "
 
 #. translator: This string will be truncated at 47
 #. characters expanded.
-#: utils/error/elog.c:2951
+#: utils/error/elog.c:2952
 #, c-format
 msgid "operating system error %d"
 msgstr "ошибка операционной системы %d"
 
-#: utils/error/elog.c:2974
+#: utils/error/elog.c:2975
 msgid "DEBUG"
 msgstr "ОТЛАДКА"
 
-#: utils/error/elog.c:2978
+#: utils/error/elog.c:2979
 msgid "LOG"
 msgstr "ОТМЕТКА"
 
-#: utils/error/elog.c:2981
+#: utils/error/elog.c:2982
 msgid "INFO"
 msgstr "ИНФОРМАЦИЯ"
 
-#: utils/error/elog.c:2984
+#: utils/error/elog.c:2985
 msgid "NOTICE"
 msgstr "ЗАМЕЧАНИЕ"
 
-#: utils/error/elog.c:2987
+#: utils/error/elog.c:2988
 msgid "WARNING"
 msgstr "ПРЕДУПРЕЖДЕНИЕ"
 
-#: utils/error/elog.c:2990
+#: utils/error/elog.c:2991
 msgid "ERROR"
 msgstr "ОШИБКА"
 
-#: utils/error/elog.c:2993
+#: utils/error/elog.c:2994
 msgid "FATAL"
 msgstr "ВАЖНО"
 
-#: utils/error/elog.c:2996
+#: utils/error/elog.c:2997
 msgid "PANIC"
 msgstr "ПАНИКА"
 
@@ -18696,7 +18721,7 @@ msgstr "не удалось определить описание строки �
 msgid "could not change directory to \"%s\": %m"
 msgstr "не удалось перейти в каталог \"%s\": %m"
 
-#: utils/init/miscinit.c:382 utils/misc/guc.c:5327
+#: utils/init/miscinit.c:382 utils/misc/guc.c:5325
 #, c-format
 msgid "cannot set parameter \"%s\" within security-restricted operation"
 msgstr ""
@@ -18814,7 +18839,7 @@ msgstr ""
 msgid "could not write lock file \"%s\": %m"
 msgstr "не удалось записать файл блокировки \"%s\": %m"
 
-#: utils/init/miscinit.c:1072 utils/misc/guc.c:7683
+#: utils/init/miscinit.c:1072 utils/misc/guc.c:7681
 #, c-format
 msgid "could not read from file \"%s\": %m"
 msgstr "не удалось прочитать файл \"%s\": %m"
@@ -19062,260 +19087,260 @@ msgstr ""
 "для символа с последовательностью байт %s из кодировки \"%s\" нет "
 "эквивалента в \"%s\""
 
-#: utils/misc/guc.c:521
+#: utils/misc/guc.c:519
 msgid "Ungrouped"
 msgstr "Разное"
 
-#: utils/misc/guc.c:523
+#: utils/misc/guc.c:521
 msgid "File Locations"
 msgstr "Расположения файлов"
 
-#: utils/misc/guc.c:525
+#: utils/misc/guc.c:523
 msgid "Connections and Authentication"
 msgstr "Подключения и аутентификация"
 
-#: utils/misc/guc.c:527
+#: utils/misc/guc.c:525
 msgid "Connections and Authentication / Connection Settings"
 msgstr "Подключения и аутентификация / Параметры подключения"
 
-#: utils/misc/guc.c:529
+#: utils/misc/guc.c:527
 msgid "Connections and Authentication / Security and Authentication"
 msgstr "Подключения и аутентификация / Безопасность и аутентификация"
 
-#: utils/misc/guc.c:531
+#: utils/misc/guc.c:529
 msgid "Resource Usage"
 msgstr "Использование ресурсов"
 
-#: utils/misc/guc.c:533
+#: utils/misc/guc.c:531
 msgid "Resource Usage / Memory"
 msgstr "Использование ресурсов / Память"
 
-#: utils/misc/guc.c:535
+#: utils/misc/guc.c:533
 msgid "Resource Usage / Disk"
 msgstr "Использование ресурсов / Диск"
 
-#: utils/misc/guc.c:537
+#: utils/misc/guc.c:535
 msgid "Resource Usage / Kernel Resources"
 msgstr "Использование ресурсов / Ресурсы ядра"
 
-#: utils/misc/guc.c:539
+#: utils/misc/guc.c:537
 msgid "Resource Usage / Cost-Based Vacuum Delay"
 msgstr "Использование ресурсов / Задержка очистки по стоимости"
 
-#: utils/misc/guc.c:541
+#: utils/misc/guc.c:539
 msgid "Resource Usage / Background Writer"
 msgstr "Использование ресурсов / Фоновая запись"
 
-#: utils/misc/guc.c:543
+#: utils/misc/guc.c:541
 msgid "Resource Usage / Asynchronous Behavior"
 msgstr "Использование ресурсов / Асинхронное поведение"
 
-#: utils/misc/guc.c:545
+#: utils/misc/guc.c:543
 msgid "Write-Ahead Log"
 msgstr "Журнал WAL"
 
-#: utils/misc/guc.c:547
+#: utils/misc/guc.c:545
 msgid "Write-Ahead Log / Settings"
 msgstr "Журнал WAL / Настройки"
 
-#: utils/misc/guc.c:549
+#: utils/misc/guc.c:547
 msgid "Write-Ahead Log / Checkpoints"
 msgstr "Журнал WAL / Контрольные точки"
 
-#: utils/misc/guc.c:551
+#: utils/misc/guc.c:549
 msgid "Write-Ahead Log / Archiving"
 msgstr "Журнал WAL / Архивация"
 
-#: utils/misc/guc.c:553
+#: utils/misc/guc.c:551
 msgid "Replication"
 msgstr "Репликация"
 
-#: utils/misc/guc.c:555
+#: utils/misc/guc.c:553
 msgid "Replication / Sending Servers"
 msgstr "Репликация / Передающие серверы"
 
-#: utils/misc/guc.c:557
+#: utils/misc/guc.c:555
 msgid "Replication / Master Server"
 msgstr "Репликация / Главный сервер"
 
-#: utils/misc/guc.c:559
+#: utils/misc/guc.c:557
 msgid "Replication / Standby Servers"
 msgstr "Репликация / Резервные серверы"
 
-#: utils/misc/guc.c:561
+#: utils/misc/guc.c:559
 msgid "Query Tuning"
 msgstr "Настройка запросов"
 
-#: utils/misc/guc.c:563
+#: utils/misc/guc.c:561
 msgid "Query Tuning / Planner Method Configuration"
 msgstr "Настройка запросов / Конфигурация методов планировщика"
 
-#: utils/misc/guc.c:565
+#: utils/misc/guc.c:563
 msgid "Query Tuning / Planner Cost Constants"
 msgstr "Настройка запросов / Оценочные константы планировщика"
 
-#: utils/misc/guc.c:567
+#: utils/misc/guc.c:565
 msgid "Query Tuning / Genetic Query Optimizer"
 msgstr "Настройка запросов / Генетический оптимизатор запросов"
 
-#: utils/misc/guc.c:569
+#: utils/misc/guc.c:567
 msgid "Query Tuning / Other Planner Options"
 msgstr "Настройка запросов / Другие параметры планировщика"
 
-#: utils/misc/guc.c:571
+#: utils/misc/guc.c:569
 msgid "Reporting and Logging"
 msgstr "Отчёты и протоколы"
 
-#: utils/misc/guc.c:573
+#: utils/misc/guc.c:571
 msgid "Reporting and Logging / Where to Log"
 msgstr "Отчёты и протоколы / Куда записывать"
 
-#: utils/misc/guc.c:575
+#: utils/misc/guc.c:573
 msgid "Reporting and Logging / When to Log"
 msgstr "Отчёты и протоколы / Когда записывать"
 
-#: utils/misc/guc.c:577
+#: utils/misc/guc.c:575
 msgid "Reporting and Logging / What to Log"
 msgstr "Отчёты и протоколы / Что записывать"
 
-#: utils/misc/guc.c:579
+#: utils/misc/guc.c:577
 msgid "Statistics"
 msgstr "Статистика"
 
-#: utils/misc/guc.c:581
+#: utils/misc/guc.c:579
 msgid "Statistics / Monitoring"
 msgstr "Статистика / Мониторинг"
 
-#: utils/misc/guc.c:583
+#: utils/misc/guc.c:581
 msgid "Statistics / Query and Index Statistics Collector"
 msgstr "Статистика / Сборщик статистики запросов и индексов"
 
-#: utils/misc/guc.c:585
+#: utils/misc/guc.c:583
 msgid "Autovacuum"
 msgstr "Автоочистка"
 
-#: utils/misc/guc.c:587
+#: utils/misc/guc.c:585
 msgid "Client Connection Defaults"
 msgstr "Параметры клиентских подключений по умолчанию"
 
-#: utils/misc/guc.c:589
+#: utils/misc/guc.c:587
 msgid "Client Connection Defaults / Statement Behavior"
 msgstr "Параметры клиентских подключений по умолчанию / Поведение команд"
 
-#: utils/misc/guc.c:591
+#: utils/misc/guc.c:589
 msgid "Client Connection Defaults / Locale and Formatting"
 msgstr ""
 "Параметры клиентских подключений по умолчанию / Языковая среда и форматы"
 
-#: utils/misc/guc.c:593
+#: utils/misc/guc.c:591
 msgid "Client Connection Defaults / Other Defaults"
 msgstr "Параметры клиентских подключений по умолчанию / Другие параметры"
 
-#: utils/misc/guc.c:595
+#: utils/misc/guc.c:593
 msgid "Lock Management"
 msgstr "Управление блокировками"
 
-#: utils/misc/guc.c:597
+#: utils/misc/guc.c:595
 msgid "Version and Platform Compatibility"
 msgstr "Версия и совместимость платформ"
 
-#: utils/misc/guc.c:599
+#: utils/misc/guc.c:597
 msgid "Version and Platform Compatibility / Previous PostgreSQL Versions"
 msgstr "Версия и совместимость платформ / Предыдущие версии PostgreSQL"
 
-#: utils/misc/guc.c:601
+#: utils/misc/guc.c:599
 msgid "Version and Platform Compatibility / Other Platforms and Clients"
 msgstr "Версия и совместимость платформ / Другие платформы и клиенты"
 
-#: utils/misc/guc.c:603
+#: utils/misc/guc.c:601
 msgid "Error Handling"
 msgstr "Обработка ошибок"
 
-#: utils/misc/guc.c:605
+#: utils/misc/guc.c:603
 msgid "Preset Options"
 msgstr "Предопределённые параметры"
 
-#: utils/misc/guc.c:607
+#: utils/misc/guc.c:605
 msgid "Customized Options"
 msgstr "Настраиваемые параметры"
 
-#: utils/misc/guc.c:609
+#: utils/misc/guc.c:607
 msgid "Developer Options"
 msgstr "Параметры для разработчиков"
 
-#: utils/misc/guc.c:663
+#: utils/misc/guc.c:661
 msgid "Enables the planner's use of sequential-scan plans."
 msgstr ""
 "Разрешает планировщику использовать планы последовательного сканирования."
 
-#: utils/misc/guc.c:672
+#: utils/misc/guc.c:670
 msgid "Enables the planner's use of index-scan plans."
 msgstr "Разрешает планировщику использовать планы сканирования по индексу."
 
-#: utils/misc/guc.c:681
+#: utils/misc/guc.c:679
 msgid "Enables the planner's use of index-only-scan plans."
 msgstr ""
 "Разрешает планировщику использовать планы сканирования только по индексу."
 
-#: utils/misc/guc.c:690
+#: utils/misc/guc.c:688
 msgid "Enables the planner's use of bitmap-scan plans."
 msgstr ""
 "Разрешает планировщику использовать планы сканирования по битовой карте."
 
-#: utils/misc/guc.c:699
+#: utils/misc/guc.c:697
 msgid "Enables the planner's use of TID scan plans."
 msgstr "Разрешает планировщику использовать планы сканирования TID."
 
-#: utils/misc/guc.c:708
+#: utils/misc/guc.c:706
 msgid "Enables the planner's use of explicit sort steps."
 msgstr "Разрешает планировщику использовать шаги с явной сортировкой."
 
-#: utils/misc/guc.c:717
+#: utils/misc/guc.c:715
 msgid "Enables the planner's use of hashed aggregation plans."
 msgstr "Разрешает планировщику использовать планы агрегирования по хэшу."
 
-#: utils/misc/guc.c:726
+#: utils/misc/guc.c:724
 msgid "Enables the planner's use of materialization."
 msgstr "Разрешает планировщику использовать материализацию."
 
-#: utils/misc/guc.c:735
+#: utils/misc/guc.c:733
 msgid "Enables the planner's use of nested-loop join plans."
 msgstr ""
 "Разрешает планировщику использовать планы соединений с вложенными циклами."
 
-#: utils/misc/guc.c:744
+#: utils/misc/guc.c:742
 msgid "Enables the planner's use of merge join plans."
 msgstr "Разрешает планировщику использовать планы соединений слиянием."
 
-#: utils/misc/guc.c:753
+#: utils/misc/guc.c:751
 msgid "Enables the planner's use of hash join plans."
 msgstr "Разрешает планировщику использовать планы соединений по хэшу."
 
-#: utils/misc/guc.c:762
+#: utils/misc/guc.c:760
 msgid "Enables genetic query optimization."
 msgstr "Включает генетическую оптимизацию запросов."
 
-#: utils/misc/guc.c:763
+#: utils/misc/guc.c:761
 msgid "This algorithm attempts to do planning without exhaustive searching."
 msgstr "Этот алгоритм пытается построить план без полного перебора."
 
-#: utils/misc/guc.c:773
+#: utils/misc/guc.c:771
 msgid "Shows whether the current user is a superuser."
 msgstr "Показывает, является ли текущий пользователь суперпользователем."
 
-#: utils/misc/guc.c:783
+#: utils/misc/guc.c:781
 msgid "Enables advertising the server via Bonjour."
 msgstr "Включает объявление сервера в Bonjour."
 
-#: utils/misc/guc.c:792
+#: utils/misc/guc.c:790
 msgid "Enables SSL connections."
 msgstr "Включает SSL-подключения."
 
-#: utils/misc/guc.c:801
+#: utils/misc/guc.c:799
 msgid "Forces synchronization of updates to disk."
 msgstr "Принудительная запись изменений на диск."
 
-#: utils/misc/guc.c:802
+#: utils/misc/guc.c:800
 msgid ""
 "The server will use the fsync() system call in several places to make sure "
 "that updates are physically written to disk. This insures that a database "
@@ -19326,11 +19351,11 @@ msgstr ""
 "физической записи данных на диск. Это позволит привести кластер БД в "
 "целостное состояние после отказа ОС или оборудования."
 
-#: utils/misc/guc.c:813
+#: utils/misc/guc.c:811
 msgid "Continues processing after a checksum failure."
 msgstr "Продолжает обработку при ошибке контрольной суммы."
 
-#: utils/misc/guc.c:814
+#: utils/misc/guc.c:812
 msgid ""
 "Detection of a checksum failure normally causes PostgreSQL to report an "
 "error, aborting the current transaction. Setting ignore_checksum_failure to "
@@ -19344,11 +19369,11 @@ msgstr ""
 "что может привести к сбоям или другим серьёзным проблемам. Это имеет место, "
 "только если включен контроль целостности страниц."
 
-#: utils/misc/guc.c:828
+#: utils/misc/guc.c:826
 msgid "Continues processing past damaged page headers."
 msgstr "Продолжает обработку при повреждении заголовков страниц."
 
-#: utils/misc/guc.c:829
+#: utils/misc/guc.c:827
 msgid ""
 "Detection of a damaged page header normally causes PostgreSQL to report an "
 "error, aborting the current transaction. Setting zero_damaged_pages to true "
@@ -19362,12 +19387,12 @@ msgstr ""
 "продолжит работу. Это приведёт к потере данных, а именно строк в "
 "повреждённой странице."
 
-#: utils/misc/guc.c:842
+#: utils/misc/guc.c:840
 msgid "Writes full pages to WAL when first modified after a checkpoint."
 msgstr ""
 "Запись полных страниц в WAL при первом изменении после контрольной точки."
 
-#: utils/misc/guc.c:843
+#: utils/misc/guc.c:841
 msgid ""
 "A page write in process during an operating system crash might be only "
 "partially written to disk.  During recovery, the row changes stored in WAL "
@@ -19380,81 +19405,81 @@ msgstr ""
 "при первом изменении после контрольной точки, что позволяет полностью "
 "восстановить данные."
 
-#: utils/misc/guc.c:855
+#: utils/misc/guc.c:853
 msgid "Logs each checkpoint."
 msgstr "Отмечать каждую контрольную точку."
 
-#: utils/misc/guc.c:864
+#: utils/misc/guc.c:862
 msgid "Logs each successful connection."
 msgstr "Фиксировать установленные соединения."
 
-#: utils/misc/guc.c:873
+#: utils/misc/guc.c:871
 msgid "Logs end of a session, including duration."
 msgstr "Фиксировать конец сеанса, отмечая длительность."
 
-#: utils/misc/guc.c:882
+#: utils/misc/guc.c:880
 msgid "Turns on various assertion checks."
 msgstr "Включает различные проверки истинности."
 
-#: utils/misc/guc.c:883
+#: utils/misc/guc.c:881
 msgid "This is a debugging aid."
 msgstr "Полезно при отладке."
 
-#: utils/misc/guc.c:897
+#: utils/misc/guc.c:895
 msgid "Terminate session on any error."
 msgstr "Завершать сеансы при любой ошибке."
 
-#: utils/misc/guc.c:906
+#: utils/misc/guc.c:904
 msgid "Reinitialize server after backend crash."
 msgstr "Перезапускать систему БД при аварии серверного процесса."
 
-#: utils/misc/guc.c:916
+#: utils/misc/guc.c:914
 msgid "Logs the duration of each completed SQL statement."
 msgstr "Фиксировать длительность каждого выполненного SQL-оператора."
 
-#: utils/misc/guc.c:925
+#: utils/misc/guc.c:923
 msgid "Logs each query's parse tree."
 msgstr "Фиксировать дерево разбора для каждого запроса."
 
-#: utils/misc/guc.c:934
+#: utils/misc/guc.c:932
 msgid "Logs each query's rewritten parse tree."
 msgstr "Фиксировать перезаписанное дерево разбора для каждого запроса."
 
-#: utils/misc/guc.c:943
+#: utils/misc/guc.c:941
 msgid "Logs each query's execution plan."
 msgstr "Фиксировать план выполнения каждого запроса."
 
-#: utils/misc/guc.c:952
+#: utils/misc/guc.c:950
 msgid "Indents parse and plan tree displays."
 msgstr "Отступы при отображении деревьев разбора и плана запросов."
 
-#: utils/misc/guc.c:961
+#: utils/misc/guc.c:959
 msgid "Writes parser performance statistics to the server log."
 msgstr "Запись статистики разбора запросов в протокол сервера."
 
-#: utils/misc/guc.c:970
+#: utils/misc/guc.c:968
 msgid "Writes planner performance statistics to the server log."
 msgstr "Запись статистики планирования в протокол сервера."
 
-#: utils/misc/guc.c:979
+#: utils/misc/guc.c:977
 msgid "Writes executor performance statistics to the server log."
 msgstr "Запись статистики выполнения запросов в протокол сервера."
 
-#: utils/misc/guc.c:988
+#: utils/misc/guc.c:986
 msgid "Writes cumulative performance statistics to the server log."
 msgstr "Запись общей статистики производительности в протокол сервера."
 
-#: utils/misc/guc.c:998 utils/misc/guc.c:1072 utils/misc/guc.c:1082
-#: utils/misc/guc.c:1092 utils/misc/guc.c:1102 utils/misc/guc.c:1849
-#: utils/misc/guc.c:1859
+#: utils/misc/guc.c:996 utils/misc/guc.c:1070 utils/misc/guc.c:1080
+#: utils/misc/guc.c:1090 utils/misc/guc.c:1100 utils/misc/guc.c:1847
+#: utils/misc/guc.c:1857
 msgid "No description available."
 msgstr "Без описания."
 
-#: utils/misc/guc.c:1010
+#: utils/misc/guc.c:1008
 msgid "Collects information about executing commands."
 msgstr "Собирает информацию о выполняющихся командах."
 
-#: utils/misc/guc.c:1011
+#: utils/misc/guc.c:1009
 msgid ""
 "Enables the collection of information on the currently executing command of "
 "each session, along with the time at which that command began execution."
@@ -19462,41 +19487,41 @@ msgstr ""
 "Включает сбор информации о командах, выполняющихся во всех сеансах, а также "
 "время запуска команды."
 
-#: utils/misc/guc.c:1021
+#: utils/misc/guc.c:1019
 msgid "Collects statistics on database activity."
 msgstr "Собирает статистику активности в БД."
 
-#: utils/misc/guc.c:1030
+#: utils/misc/guc.c:1028
 msgid "Collects timing statistics for database I/O activity."
 msgstr "Собирает статистику по времени активности ввода/вывода."
 
-#: utils/misc/guc.c:1040
+#: utils/misc/guc.c:1038
 msgid "Updates the process title to show the active SQL command."
 msgstr "Выводит в заголовок процесса активную SQL-команду."
 
-#: utils/misc/guc.c:1041
+#: utils/misc/guc.c:1039
 msgid ""
 "Enables updating of the process title every time a new SQL command is "
 "received by the server."
 msgstr "Отражает в заголовке процесса каждую SQL-команду, поступающую серверу."
 
-#: utils/misc/guc.c:1050
+#: utils/misc/guc.c:1048
 msgid "Starts the autovacuum subprocess."
 msgstr "Запускает подпроцесс автоочистки."
 
-#: utils/misc/guc.c:1060
+#: utils/misc/guc.c:1058
 msgid "Generates debugging output for LISTEN and NOTIFY."
 msgstr "Генерирует отладочные сообщения для LISTEN и NOTIFY."
 
-#: utils/misc/guc.c:1114
+#: utils/misc/guc.c:1112
 msgid "Logs long lock waits."
 msgstr "Фиксирует длительные ожидания в блокировках."
 
-#: utils/misc/guc.c:1124
+#: utils/misc/guc.c:1122
 msgid "Logs the host name in the connection logs."
 msgstr "Фиксирует имя узла в протоколах подключений."
 
-#: utils/misc/guc.c:1125
+#: utils/misc/guc.c:1123
 msgid ""
 "By default, connection logs only show the IP address of the connecting host. "
 "If you want them to show the host name you can turn this on, but depending "
@@ -19508,15 +19533,15 @@ msgstr ""
 "параметр, но учтите, что это может значительно повлиять на "
 "производительность."
 
-#: utils/misc/guc.c:1136
+#: utils/misc/guc.c:1134
 msgid "Causes subtables to be included by default in various commands."
 msgstr "Выбирает режим включения подчинённых таблиц по умолчанию."
 
-#: utils/misc/guc.c:1145
+#: utils/misc/guc.c:1143
 msgid "Encrypt passwords."
 msgstr "Шифровать пароли."
 
-#: utils/misc/guc.c:1146
+#: utils/misc/guc.c:1144
 msgid ""
 "When a password is specified in CREATE USER or ALTER USER without writing "
 "either ENCRYPTED or UNENCRYPTED, this parameter determines whether the "
@@ -19525,11 +19550,11 @@ msgstr ""
 "Этот параметр определяет, нужно ли шифровать пароли, заданные в CREATE USER "
 "или ALTER USER без указания ENCRYPTED или UNENCRYPTED."
 
-#: utils/misc/guc.c:1156
+#: utils/misc/guc.c:1154
 msgid "Treats \"expr=NULL\" as \"expr IS NULL\"."
 msgstr "Обрабатывать \"expr=NULL\" как \"expr IS NULL\"."
 
-#: utils/misc/guc.c:1157
+#: utils/misc/guc.c:1155
 msgid ""
 "When turned on, expressions of the form expr = NULL (or NULL = expr) are "
 "treated as expr IS NULL, that is, they return true if expr evaluates to the "
@@ -19541,15 +19566,15 @@ msgstr ""
 "совпадает с NULL, и false в противном случае. По правилам expr = NULL всегда "
 "должно возвращать null (неопределённость)."
 
-#: utils/misc/guc.c:1169
+#: utils/misc/guc.c:1167
 msgid "Enables per-database user names."
 msgstr "Включает связывание имён пользователей с базами данных."
 
-#: utils/misc/guc.c:1179
+#: utils/misc/guc.c:1177
 msgid "This parameter doesn't do anything."
 msgstr "Этот параметр ничего не делает."
 
-#: utils/misc/guc.c:1180
+#: utils/misc/guc.c:1178
 msgid ""
 "It's just here so that we won't choke on SET AUTOCOMMIT TO ON from 7.3-"
 "vintage clients."
@@ -19557,21 +19582,21 @@ msgstr ""
 "Он сохранён только для того, чтобы не обидеть винтажных клиентов 7.3-, "
 "пожелавших SET AUTOCOMMIT TO ON."
 
-#: utils/misc/guc.c:1189
+#: utils/misc/guc.c:1187
 msgid "Sets the default read-only status of new transactions."
 msgstr ""
 "Устанавливает режим \"только чтение\" по умолчанию для новых транзакций."
 
-#: utils/misc/guc.c:1198
+#: utils/misc/guc.c:1196
 msgid "Sets the current transaction's read-only status."
 msgstr "Устанавливает режим \"только чтение\" для текущей транзакции."
 
-#: utils/misc/guc.c:1208
+#: utils/misc/guc.c:1206
 msgid "Sets the default deferrable status of new transactions."
 msgstr ""
 "Устанавливает режим отложенного выполнения по умолчанию для новых транзакций."
 
-#: utils/misc/guc.c:1217
+#: utils/misc/guc.c:1215
 msgid ""
 "Whether to defer a read-only serializable transaction until it can be "
 "executed with no possible serialization failures."
@@ -19579,15 +19604,15 @@ msgstr ""
 "Определяет, откладывать ли сериализуемую транзакцию \"только чтение\" до "
 "момента, когда сбой сериализации будет исключён."
 
-#: utils/misc/guc.c:1227
+#: utils/misc/guc.c:1225
 msgid "Check function bodies during CREATE FUNCTION."
 msgstr "Проверять тело функций в момент CREATE FUNCTION."
 
-#: utils/misc/guc.c:1236
+#: utils/misc/guc.c:1234
 msgid "Enable input of NULL elements in arrays."
 msgstr "Разрешать ввод элементов NULL в массивах."
 
-#: utils/misc/guc.c:1237
+#: utils/misc/guc.c:1235
 msgid ""
 "When turned on, unquoted NULL in an array input value means a null value; "
 "otherwise it is taken literally."
@@ -19595,72 +19620,72 @@ msgstr ""
 "Когда этот параметр включен, NULL без кавычек при вводе в массив "
 "воспринимается как значение NULL, иначе - как строка."
 
-#: utils/misc/guc.c:1247
+#: utils/misc/guc.c:1245
 msgid "Create new tables with OIDs by default."
 msgstr "По умолчанию создавать новые таблицы с колонкой OID."
 
-#: utils/misc/guc.c:1256
+#: utils/misc/guc.c:1254
 msgid ""
 "Start a subprocess to capture stderr output and/or csvlogs into log files."
 msgstr ""
 "Запускает подпроцесс для чтения stderr и/или csv-файлов и записи в файлы "
 "протоколов."
 
-#: utils/misc/guc.c:1265
+#: utils/misc/guc.c:1263
 msgid "Truncate existing log files of same name during log rotation."
 msgstr ""
 "Очищать уже существующий файл с тем же именем при прокручивании протокола."
 
-#: utils/misc/guc.c:1276
+#: utils/misc/guc.c:1274
 msgid "Emit information about resource usage in sorting."
 msgstr "Выдавать сведения об использовании ресурсов при сортировке."
 
-#: utils/misc/guc.c:1290
+#: utils/misc/guc.c:1288
 msgid "Generate debugging output for synchronized scanning."
 msgstr "Выдавать отладочные сообщения для синхронного сканирования."
 
-#: utils/misc/guc.c:1305
+#: utils/misc/guc.c:1303
 msgid "Enable bounded sorting using heap sort."
 msgstr ""
 "Разрешить ограниченную сортировку с применением пирамидальной сортировки."
 
-#: utils/misc/guc.c:1318
+#: utils/misc/guc.c:1316
 msgid "Emit WAL-related debugging output."
 msgstr "Выдавать отладочные сообщения, связанные с WAL."
 
-#: utils/misc/guc.c:1330
+#: utils/misc/guc.c:1328
 msgid "Datetimes are integer based."
 msgstr "Целочисленная реализация даты/времени."
 
-#: utils/misc/guc.c:1345
+#: utils/misc/guc.c:1343
 msgid ""
 "Sets whether Kerberos and GSSAPI user names should be treated as case-"
 "insensitive."
 msgstr ""
 "Включает регистро-независимую обработку имён пользователей Kerberos и GSSAPI."
 
-#: utils/misc/guc.c:1355
+#: utils/misc/guc.c:1353
 msgid "Warn about backslash escapes in ordinary string literals."
 msgstr "Предупреждения о спецсимволах '\\' в обычных строках."
 
-#: utils/misc/guc.c:1365
+#: utils/misc/guc.c:1363
 msgid "Causes '...' strings to treat backslashes literally."
 msgstr "Включает буквальную обработку символов '\\' в строках '...'."
 
-#: utils/misc/guc.c:1376
+#: utils/misc/guc.c:1374
 msgid "Enable synchronized sequential scans."
 msgstr "Включить синхронизацию последовательного сканирования."
 
-#: utils/misc/guc.c:1386
+#: utils/misc/guc.c:1384
 msgid "Allows archiving of WAL files using archive_command."
 msgstr "Разрешает архивацию файлов WAL командой archive_command."
 
-#: utils/misc/guc.c:1396
+#: utils/misc/guc.c:1394
 msgid "Allows connections and queries during recovery."
 msgstr ""
 "Разрешает принимать новые подключения и запросы в процессе восстановления."
 
-#: utils/misc/guc.c:1406
+#: utils/misc/guc.c:1404
 msgid ""
 "Allows feedback from a hot standby to the primary that will avoid query "
 "conflicts."
@@ -19668,15 +19693,15 @@ msgstr ""
 "Разрешает обратную связь сервера горячего резерва с основным для "
 "предотвращения конфликтов при длительных запросах."
 
-#: utils/misc/guc.c:1416
+#: utils/misc/guc.c:1414
 msgid "Allows modifications of the structure of system tables."
 msgstr "Разрешает модифицировать структуру системных таблиц."
 
-#: utils/misc/guc.c:1427
+#: utils/misc/guc.c:1425
 msgid "Disables reading from system indexes."
 msgstr "Запрещает использование системных индексов."
 
-#: utils/misc/guc.c:1428
+#: utils/misc/guc.c:1426
 msgid ""
 "It does not prevent updating the indexes, so it is safe to use.  The worst "
 "consequence is slowness."
@@ -19684,14 +19709,14 @@ msgstr ""
 "При этом индексы продолжают обновляться, так что данное поведение безопасно. "
 "Худшее следствие - замедление."
 
-#: utils/misc/guc.c:1439
+#: utils/misc/guc.c:1437
 msgid ""
 "Enables backward compatibility mode for privilege checks on large objects."
 msgstr ""
 "Включает режим обратной совместимости при проверке привилегий для больших "
 "объектов."
 
-#: utils/misc/guc.c:1440
+#: utils/misc/guc.c:1438
 msgid ""
 "Skips privilege checks when reading or modifying large objects, for "
 "compatibility with PostgreSQL releases prior to 9.0."
@@ -19699,12 +19724,12 @@ msgstr ""
 "Пропускает проверки привилегий при чтении или изменении больших объектов "
 "(для совместимости с версиями PostgreSQL до 9.0)."
 
-#: utils/misc/guc.c:1450
+#: utils/misc/guc.c:1448
 msgid "When generating SQL fragments, quote all identifiers."
 msgstr ""
 "Генерируя SQL-фрагменты, заключать все идентификаторы в двойные кавычки."
 
-#: utils/misc/guc.c:1469
+#: utils/misc/guc.c:1467
 msgid ""
 "Forces a switch to the next xlog file if a new file has not been started "
 "within N seconds."
@@ -19712,19 +19737,19 @@ msgstr ""
 "Принудительно переключаться на следующий файл xlog, если начать новый файл "
 "за N секунд не удалось."
 
-#: utils/misc/guc.c:1480
+#: utils/misc/guc.c:1478
 msgid "Waits N seconds on connection startup after authentication."
 msgstr "Ждать N секунд при подключении после проверки подлинности."
 
-#: utils/misc/guc.c:1481 utils/misc/guc.c:1963
+#: utils/misc/guc.c:1479 utils/misc/guc.c:1961
 msgid "This allows attaching a debugger to the process."
 msgstr "Это позволяет подключить к процессу отладчик."
 
-#: utils/misc/guc.c:1490
+#: utils/misc/guc.c:1488
 msgid "Sets the default statistics target."
 msgstr "Устанавливает целевое ограничение статистики по умолчанию."
 
-#: utils/misc/guc.c:1491
+#: utils/misc/guc.c:1489
 msgid ""
 "This applies to table columns that have not had a column-specific target set "
 "via ALTER TABLE SET STATISTICS."
@@ -19732,13 +19757,13 @@ msgstr ""
 "Это значение распространяется на колонки таблицы, для которых целевое "
 "ограничение не задано явно через ALTER TABLE SET STATISTICS."
 
-#: utils/misc/guc.c:1500
+#: utils/misc/guc.c:1498
 msgid "Sets the FROM-list size beyond which subqueries are not collapsed."
 msgstr ""
 "Задаёт предел для списка FROM, при превышении которого подзапросы не "
 "сворачиваются."
 
-#: utils/misc/guc.c:1502
+#: utils/misc/guc.c:1500
 msgid ""
 "The planner will merge subqueries into upper queries if the resulting FROM "
 "list would have no more than this many items."
@@ -19746,13 +19771,13 @@ msgstr ""
 "Планировщик объединит вложенные запросы с внешними, если в полученном списке "
 "FROM будет не больше заданного числа элементов."
 
-#: utils/misc/guc.c:1512
+#: utils/misc/guc.c:1510
 msgid "Sets the FROM-list size beyond which JOIN constructs are not flattened."
 msgstr ""
 "Задаёт предел для списка FROM, при превышении которого конструкции JOIN "
 "сохраняются."
 
-#: utils/misc/guc.c:1514
+#: utils/misc/guc.c:1512
 msgid ""
 "The planner will flatten explicit JOIN constructs into lists of FROM items "
 "whenever a list of no more than this many items would result."
@@ -19760,34 +19785,34 @@ msgstr ""
 "Планировщик будет сносить явные конструкции JOIN в списки FROM, пока в "
 "результирующем списке не больше заданного числа элементов."
 
-#: utils/misc/guc.c:1524
+#: utils/misc/guc.c:1522
 msgid "Sets the threshold of FROM items beyond which GEQO is used."
 msgstr ""
 "Задаёт предел для списка FROM, при превышении которого применяется GEQO."
 
-#: utils/misc/guc.c:1533
+#: utils/misc/guc.c:1531
 msgid "GEQO: effort is used to set the default for other GEQO parameters."
 msgstr ""
 "GEQO: оценка усилий для планирования, задающая значения по умолчанию для "
 "других параметров GEQO."
 
-#: utils/misc/guc.c:1542
+#: utils/misc/guc.c:1540
 msgid "GEQO: number of individuals in the population."
 msgstr "GEQO: число индивидуалов в популяции."
 
-#: utils/misc/guc.c:1543 utils/misc/guc.c:1552
+#: utils/misc/guc.c:1541 utils/misc/guc.c:1550
 msgid "Zero selects a suitable default value."
 msgstr "При нуле выбирается подходящее значение по умолчанию."
 
-#: utils/misc/guc.c:1551
+#: utils/misc/guc.c:1549
 msgid "GEQO: number of iterations of the algorithm."
 msgstr "GEQO: число итераций алгоритма."
 
-#: utils/misc/guc.c:1562
+#: utils/misc/guc.c:1560
 msgid "Sets the time to wait on a lock before checking for deadlock."
 msgstr "Задаёт интервал ожидания в блокировке до проверки на взаимоблокировку."
 
-#: utils/misc/guc.c:1573
+#: utils/misc/guc.c:1571
 msgid ""
 "Sets the maximum delay before canceling queries when a hot standby server is "
 "processing archived WAL data."
@@ -19795,7 +19820,7 @@ msgstr ""
 "Задаёт максимальную задержку до отмены запроса, когда сервер горячего "
 "резерва обрабатывает данные WAL из архива."
 
-#: utils/misc/guc.c:1584
+#: utils/misc/guc.c:1582
 msgid ""
 "Sets the maximum delay before canceling queries when a hot standby server is "
 "processing streamed WAL data."
@@ -19803,42 +19828,42 @@ msgstr ""
 "Задаёт максимальную задержку до отмены запроса, когда сервер горячего "
 "резерва обрабатывает данные WAL из потока."
 
-#: utils/misc/guc.c:1595
+#: utils/misc/guc.c:1593
 msgid ""
 "Sets the maximum interval between WAL receiver status reports to the primary."
 msgstr "Задаёт максимальный интервал для отчётов о состоянии получателей WAL."
 
-#: utils/misc/guc.c:1606
+#: utils/misc/guc.c:1604
 msgid "Sets the maximum wait time to receive data from the primary."
 msgstr ""
 "Задаёт предельное время ожидания для получения данных с главного сервера."
 
-#: utils/misc/guc.c:1617
+#: utils/misc/guc.c:1615
 msgid "Sets the maximum number of concurrent connections."
 msgstr "Задаёт максимально возможное число подключений."
 
-#: utils/misc/guc.c:1627
+#: utils/misc/guc.c:1625
 msgid "Sets the number of connection slots reserved for superusers."
 msgstr ""
 "Определяет, сколько слотов подключений забронировано для суперпользователей."
 
-#: utils/misc/guc.c:1641
+#: utils/misc/guc.c:1639
 msgid "Sets the number of shared memory buffers used by the server."
 msgstr "Задаёт количество буферов в разделяемой памяти, используемых сервером."
 
-#: utils/misc/guc.c:1652
+#: utils/misc/guc.c:1650
 msgid "Sets the maximum number of temporary buffers used by each session."
 msgstr "Задаёт предельное число временных буферов на один сеанс."
 
-#: utils/misc/guc.c:1663
+#: utils/misc/guc.c:1661
 msgid "Sets the TCP port the server listens on."
 msgstr "Задаёт TCP-порт для работы сервера."
 
-#: utils/misc/guc.c:1673
+#: utils/misc/guc.c:1671
 msgid "Sets the access permissions of the Unix-domain socket."
 msgstr "Задаёт права доступа для доменного сокета Unix."
 
-#: utils/misc/guc.c:1674
+#: utils/misc/guc.c:1672
 msgid ""
 "Unix-domain sockets use the usual Unix file system permission set. The "
 "parameter value is expected to be a numeric mode specification in the form "
@@ -19850,11 +19875,11 @@ msgstr ""
 "воспринимаемом системными функциями chmod и umask. (Чтобы использовать "
 "привычный восьмеричный формат, добавьте в начало ноль (0).)"
 
-#: utils/misc/guc.c:1688
+#: utils/misc/guc.c:1686
 msgid "Sets the file permissions for log files."
 msgstr "Задаёт права доступа к файлам протоколов."
 
-#: utils/misc/guc.c:1689
+#: utils/misc/guc.c:1687
 msgid ""
 "The parameter value is expected to be a numeric mode specification in the "
 "form accepted by the chmod and umask system calls. (To use the customary "
@@ -19864,11 +19889,11 @@ msgstr ""
 "функциями chmod и umask. (Чтобы использовать привычный восьмеричный формат, "
 "добавьте в начало ноль (0).) "
 
-#: utils/misc/guc.c:1702
+#: utils/misc/guc.c:1700
 msgid "Sets the maximum memory to be used for query workspaces."
 msgstr "Задаёт предельный объём памяти для рабочих пространств запросов."
 
-#: utils/misc/guc.c:1703
+#: utils/misc/guc.c:1701
 msgid ""
 "This much memory can be used by each internal sort operation and hash table "
 "before switching to temporary disk files."
@@ -19876,92 +19901,92 @@ msgstr ""
 "Такой объём памяти может использоваться каждой внутренней операцией "
 "сортировки и таблицей хэшей до переключения на временные файлы на диске."
 
-#: utils/misc/guc.c:1715
+#: utils/misc/guc.c:1713
 msgid "Sets the maximum memory to be used for maintenance operations."
 msgstr "Задаёт предельный объём памяти для операций по обслуживанию."
 
-#: utils/misc/guc.c:1716
+#: utils/misc/guc.c:1714
 msgid "This includes operations such as VACUUM and CREATE INDEX."
 msgstr "Подразумеваются в частности операции VACUUM и CREATE INDEX."
 
-#: utils/misc/guc.c:1731
+#: utils/misc/guc.c:1729
 msgid "Sets the maximum stack depth, in kilobytes."
 msgstr "Задаёт максимальную глубину стека (в КБ)."
 
-#: utils/misc/guc.c:1742
+#: utils/misc/guc.c:1740
 msgid "Limits the total size of all temporary files used by each session."
 msgstr ""
 "Ограничивает общий размер всех временных файлов, доступный для каждого "
 "сеанса."
 
-#: utils/misc/guc.c:1743
+#: utils/misc/guc.c:1741
 msgid "-1 means no limit."
 msgstr "-1 отключает ограничение."
 
-#: utils/misc/guc.c:1753
+#: utils/misc/guc.c:1751
 msgid "Vacuum cost for a page found in the buffer cache."
 msgstr "Стоимость очистки для страницы, найденной в кэше."
 
-#: utils/misc/guc.c:1763
+#: utils/misc/guc.c:1761
 msgid "Vacuum cost for a page not found in the buffer cache."
 msgstr "Стоимость очистки для страницы, не найденной в кэше."
 
-#: utils/misc/guc.c:1773
+#: utils/misc/guc.c:1771
 msgid "Vacuum cost for a page dirtied by vacuum."
 msgstr "Стоимость очистки для страницы, которая не была \"грязной\"."
 
-#: utils/misc/guc.c:1783
+#: utils/misc/guc.c:1781
 msgid "Vacuum cost amount available before napping."
 msgstr "Суммарная стоимость очистки, при которой нужна передышка."
 
-#: utils/misc/guc.c:1793
+#: utils/misc/guc.c:1791
 msgid "Vacuum cost delay in milliseconds."
 msgstr "Задержка очистки (в миллисекундах)."
 
-#: utils/misc/guc.c:1804
+#: utils/misc/guc.c:1802
 msgid "Vacuum cost delay in milliseconds, for autovacuum."
 msgstr "Задержка очистки для автоочистки (в миллисекундах)."
 
-#: utils/misc/guc.c:1815
+#: utils/misc/guc.c:1813
 msgid "Vacuum cost amount available before napping, for autovacuum."
 msgstr ""
 "Суммарная стоимость очистки, при которой нужна передышка, для автоочистки."
 
-#: utils/misc/guc.c:1825
+#: utils/misc/guc.c:1823
 msgid ""
 "Sets the maximum number of simultaneously open files for each server process."
 msgstr ""
 "Задаёт предельное число одновременно открытых файлов для каждого серверного "
 "процесса."
 
-#: utils/misc/guc.c:1838
+#: utils/misc/guc.c:1836
 msgid "Sets the maximum number of simultaneously prepared transactions."
 msgstr "Задаёт предельное число одновременно подготовленных транзакций."
 
-#: utils/misc/guc.c:1871
+#: utils/misc/guc.c:1869
 msgid "Sets the maximum allowed duration of any statement."
 msgstr "Задаёт предельную длительность для любого оператора."
 
-#: utils/misc/guc.c:1872 utils/misc/guc.c:1883
+#: utils/misc/guc.c:1870 utils/misc/guc.c:1881
 msgid "A value of 0 turns off the timeout."
 msgstr "Нулевое значение отключает таймаут."
 
-#: utils/misc/guc.c:1882
+#: utils/misc/guc.c:1880
 msgid "Sets the maximum allowed duration of any wait for a lock."
 msgstr "Задаёт максимальную продолжительность ожидания блокировок."
 
-#: utils/misc/guc.c:1893
+#: utils/misc/guc.c:1891
 msgid "Minimum age at which VACUUM should freeze a table row."
 msgstr ""
 "Минимальный возраст строк таблицы, при котором VACUUM может их заморозить."
 
-#: utils/misc/guc.c:1903
+#: utils/misc/guc.c:1901
 msgid "Age at which VACUUM should scan whole table to freeze tuples."
 msgstr ""
 "Возраст, при котором VACUUM должен сканировать всю таблицу с целью "
 "заморозить кортежи."
 
-#: utils/misc/guc.c:1913
+#: utils/misc/guc.c:1911
 msgid ""
 "Number of transactions by which VACUUM and HOT cleanup should be deferred, "
 "if any."
@@ -19969,11 +19994,11 @@ msgstr ""
 "Определяет, на сколько транзакций следует задержать старые строки, выполняя "
 "VACUUM или \"горячее\" обновление."
 
-#: utils/misc/guc.c:1926
+#: utils/misc/guc.c:1924
 msgid "Sets the maximum number of locks per transaction."
 msgstr "Задаёт предельное число блокировок на транзакцию."
 
-#: utils/misc/guc.c:1927
+#: utils/misc/guc.c:1925
 msgid ""
 "The shared lock table is sized on the assumption that at most "
 "max_locks_per_transaction * max_connections distinct objects will need to be "
@@ -19983,11 +20008,11 @@ msgstr ""
 "один момент времени потребуется заблокировать не больше чем "
 "max_locks_per_transaction * max_connections различных объектов."
 
-#: utils/misc/guc.c:1938
+#: utils/misc/guc.c:1936
 msgid "Sets the maximum number of predicate locks per transaction."
 msgstr "Задаёт предельное число предикатных блокировок на транзакцию."
 
-#: utils/misc/guc.c:1939
+#: utils/misc/guc.c:1937
 msgid ""
 "The shared predicate lock table is sized on the assumption that at most "
 "max_pred_locks_per_transaction * max_connections distinct objects will need "
@@ -19997,38 +20022,38 @@ msgstr ""
 "предположения, что в один момент времени потребуется заблокировать не больше "
 "чем max_pred_locks_per_transaction * max_connections различных объектов."
 
-#: utils/misc/guc.c:1950
+#: utils/misc/guc.c:1948
 msgid "Sets the maximum allowed time to complete client authentication."
 msgstr "Ограничивает время, за которое клиент должен пройти аутентификацию."
 
-#: utils/misc/guc.c:1962
+#: utils/misc/guc.c:1960
 msgid "Waits N seconds on connection startup before authentication."
 msgstr "Ждать N секунд при подключении до проверки подлинности."
 
-#: utils/misc/guc.c:1973
+#: utils/misc/guc.c:1971
 msgid "Sets the number of WAL files held for standby servers."
 msgstr "Определяет, сколько файлов WAL нужно сохранить для резервных серверов."
 
-#: utils/misc/guc.c:1983
+#: utils/misc/guc.c:1981
 msgid ""
 "Sets the maximum distance in log segments between automatic WAL checkpoints."
 msgstr ""
 "Задаёт максимальное расстояние в сегментах журнала между автоматическими "
 "контрольными точками WAL."
 
-#: utils/misc/guc.c:1993
+#: utils/misc/guc.c:1991
 msgid "Sets the maximum time between automatic WAL checkpoints."
 msgstr ""
 "Задаёт максимальное время между автоматическими контрольными точками WAL."
 
-#: utils/misc/guc.c:2004
+#: utils/misc/guc.c:2002
 msgid ""
 "Enables warnings if checkpoint segments are filled more frequently than this."
 msgstr ""
 "Выдаёт предупреждения, когда сегменты контрольных точек заполняются за это "
 "время."
 
-#: utils/misc/guc.c:2006
+#: utils/misc/guc.c:2004
 msgid ""
 "Write a message to the server log if checkpoints caused by the filling of "
 "checkpoint segment files happens more frequently than this number of "
@@ -20038,24 +20063,24 @@ msgstr ""
 "переполнением файлов сегментов, происходят за столько секунд. Нулевое "
 "значение отключает эти предупреждения."
 
-#: utils/misc/guc.c:2018
+#: utils/misc/guc.c:2016
 msgid "Sets the number of disk-page buffers in shared memory for WAL."
 msgstr "Задаёт число буферов дисковых страниц в разделяемой памяти для WAL."
 
-#: utils/misc/guc.c:2029
+#: utils/misc/guc.c:2027
 msgid "WAL writer sleep time between WAL flushes."
 msgstr "Время простоя в процессе записи WAL после сброса буферов на диск."
 
-#: utils/misc/guc.c:2041
+#: utils/misc/guc.c:2039
 msgid "Sets the maximum number of simultaneously running WAL sender processes."
 msgstr ""
 "Задаёт предельное число одновременно работающих процессов передачи WAL."
 
-#: utils/misc/guc.c:2051
+#: utils/misc/guc.c:2049
 msgid "Sets the maximum time to wait for WAL replication."
 msgstr "Задаёт предельное время ожидания репликации WAL."
 
-#: utils/misc/guc.c:2062
+#: utils/misc/guc.c:2060
 msgid ""
 "Sets the delay in microseconds between transaction commit and flushing WAL "
 "to disk."
@@ -20063,18 +20088,18 @@ msgstr ""
 "Задаёт задержку в микросекундах между фиксированием транзакций и сбросом WAL "
 "на диск."
 
-#: utils/misc/guc.c:2074
+#: utils/misc/guc.c:2072
 msgid ""
 "Sets the minimum concurrent open transactions before performing commit_delay."
 msgstr ""
 "Задаёт минимальное число одновременно открытых транзакций для применения "
 "commit_delay."
 
-#: utils/misc/guc.c:2085
+#: utils/misc/guc.c:2083
 msgid "Sets the number of digits displayed for floating-point values."
 msgstr "Задаёт число выводимых цифр для чисел с плавающей точкой."
 
-#: utils/misc/guc.c:2086
+#: utils/misc/guc.c:2084
 msgid ""
 "This affects real, double precision, and geometric data types. The parameter "
 "value is added to the standard number of digits (FLT_DIG or DBL_DIG as "
@@ -20083,17 +20108,17 @@ msgstr ""
 "Этот параметр относится к типам real, double и geometric. Значение параметра "
 "добавляется к стандартному числу цифр (FLT_DIG или DBL_DIG)."
 
-#: utils/misc/guc.c:2097
+#: utils/misc/guc.c:2095
 msgid "Sets the minimum execution time above which statements will be logged."
 msgstr ""
 "Задаёт предельное время выполнения оператора, при превышении которого он "
 "фиксируется в протоколе."
 
-#: utils/misc/guc.c:2099
+#: utils/misc/guc.c:2097
 msgid "Zero prints all queries. -1 turns this feature off."
 msgstr "При 0 протоколируются все запросы; -1 отключает эти сообщения."
 
-#: utils/misc/guc.c:2109
+#: utils/misc/guc.c:2107
 msgid ""
 "Sets the minimum execution time above which autovacuum actions will be "
 "logged."
@@ -20101,22 +20126,22 @@ msgstr ""
 "Задаёт предельное время выполнения автоочистки, при превышении которого эта "
 "операция фиксируется в протоколе."
 
-#: utils/misc/guc.c:2111
+#: utils/misc/guc.c:2109
 msgid "Zero prints all actions. -1 turns autovacuum logging off."
 msgstr ""
 "При 0 протоколируются все операции автоочистки; -1 отключает эти сообщения."
 
-#: utils/misc/guc.c:2121
+#: utils/misc/guc.c:2119
 msgid "Background writer sleep time between rounds."
 msgstr "Время простоя в процессе фоновой записи между подходами."
 
-#: utils/misc/guc.c:2132
+#: utils/misc/guc.c:2130
 msgid "Background writer maximum number of LRU pages to flush per round."
 msgstr ""
 "Максимальное число LRU-страниц, сбрасываемых за один подход, в процессе "
 "фоновой записи."
 
-#: utils/misc/guc.c:2148
+#: utils/misc/guc.c:2146
 msgid ""
 "Number of simultaneous requests that can be handled efficiently by the disk "
 "subsystem."
@@ -20124,72 +20149,72 @@ msgstr ""
 "Число одновременных запросов, которые могут быть эффективно обработаны "
 "дисковой подсистемой."
 
-#: utils/misc/guc.c:2149
+#: utils/misc/guc.c:2147
 msgid ""
 "For RAID arrays, this should be approximately the number of drive spindles "
 "in the array."
 msgstr ""
 "Для RAID-массивов это примерно равно числу физических дисков в массиве."
 
-#: utils/misc/guc.c:2162
+#: utils/misc/guc.c:2160
 msgid "Automatic log file rotation will occur after N minutes."
 msgstr "Автоматическая прокрутка файла протокола через каждые N минут."
 
-#: utils/misc/guc.c:2173
+#: utils/misc/guc.c:2171
 msgid "Automatic log file rotation will occur after N kilobytes."
 msgstr ""
 "Автоматическая прокрутка файла протокола при выходе за предел N килобайт."
 
-#: utils/misc/guc.c:2184
+#: utils/misc/guc.c:2182
 msgid "Shows the maximum number of function arguments."
 msgstr "Показывает максимально возможное число аргументов функций."
 
-#: utils/misc/guc.c:2195
+#: utils/misc/guc.c:2193
 msgid "Shows the maximum number of index keys."
 msgstr "Показывает максимально возможное число ключей в индексе."
 
-#: utils/misc/guc.c:2206
+#: utils/misc/guc.c:2204
 msgid "Shows the maximum identifier length."
 msgstr "Показывает максимально возможную длину идентификатора."
 
-#: utils/misc/guc.c:2217
+#: utils/misc/guc.c:2215
 msgid "Shows the size of a disk block."
 msgstr "Показывает размер дискового блока."
 
-#: utils/misc/guc.c:2228
+#: utils/misc/guc.c:2226
 msgid "Shows the number of pages per disk file."
 msgstr "Показывает число страниц в одном файле."
 
-#: utils/misc/guc.c:2239
+#: utils/misc/guc.c:2237
 msgid "Shows the block size in the write ahead log."
 msgstr "Показывает размер блока в журнале WAL."
 
-#: utils/misc/guc.c:2250
+#: utils/misc/guc.c:2248
 msgid "Shows the number of pages per write ahead log segment."
 msgstr "Показывает число страниц в одном сегменте журнала WAL."
 
-#: utils/misc/guc.c:2263
+#: utils/misc/guc.c:2261
 msgid "Time to sleep between autovacuum runs."
 msgstr "Время простоя между запусками автоочистки."
 
-#: utils/misc/guc.c:2273
+#: utils/misc/guc.c:2271
 msgid "Minimum number of tuple updates or deletes prior to vacuum."
 msgstr "Минимальное число изменений или удалений кортежей, вызывающее очистку."
 
-#: utils/misc/guc.c:2282
+#: utils/misc/guc.c:2280
 msgid "Minimum number of tuple inserts, updates, or deletes prior to analyze."
 msgstr ""
 "Минимальное число добавлений, изменений или удалений кортежей, вызывающее "
 "анализ."
 
-#: utils/misc/guc.c:2292
+#: utils/misc/guc.c:2290
 msgid ""
 "Age at which to autovacuum a table to prevent transaction ID wraparound."
 msgstr ""
 "Возраст, при котором необходима автоочистка таблицы для предотвращения "
 "наложений ID транзакций."
 
-#: utils/misc/guc.c:2303
+#: utils/misc/guc.c:2301
 msgid ""
 "Sets the maximum number of simultaneously running autovacuum worker "
 "processes."
@@ -20197,19 +20222,19 @@ msgstr ""
 "Задаёт предельное число одновременно выполняющихся рабочих процессов "
 "автоочистки."
 
-#: utils/misc/guc.c:2313
+#: utils/misc/guc.c:2311
 msgid "Time between issuing TCP keepalives."
 msgstr "Интервал между TCP-пакетами пульса (keep-alive)."
 
-#: utils/misc/guc.c:2314 utils/misc/guc.c:2325
+#: utils/misc/guc.c:2312 utils/misc/guc.c:2323
 msgid "A value of 0 uses the system default."
 msgstr "При нулевом значении действует системный параметр."
 
-#: utils/misc/guc.c:2324
+#: utils/misc/guc.c:2322
 msgid "Time between TCP keepalive retransmits."
 msgstr "Интервал между повторениями TCP-пакетов пульса (keep-alive)."
 
-#: utils/misc/guc.c:2335
+#: utils/misc/guc.c:2333
 msgid ""
 "Set the amount of traffic to send and receive before renegotiating the "
 "encryption keys."
@@ -20217,11 +20242,11 @@ msgstr ""
 "Ограничивает объём трафика, передаваемого и принимаемого до повторного "
 "согласования ключей шифрования."
 
-#: utils/misc/guc.c:2346
+#: utils/misc/guc.c:2344
 msgid "Maximum number of TCP keepalive retransmits."
 msgstr "Максимальное число повторений TCP-пакетов пульса (keep-alive)."
 
-#: utils/misc/guc.c:2347
+#: utils/misc/guc.c:2345
 msgid ""
 "This controls the number of consecutive keepalive retransmits that can be "
 "lost before a connection is considered dead. A value of 0 uses the system "
@@ -20231,15 +20256,15 @@ msgstr ""
 "прежде чем соединение будет считаться пропавшим. При нулевом значении "
 "действует системный параметр."
 
-#: utils/misc/guc.c:2358
+#: utils/misc/guc.c:2356
 msgid "Sets the maximum allowed result for exact search by GIN."
 msgstr "Ограничивает результат точного поиска с использованием GIN."
 
-#: utils/misc/guc.c:2369
+#: utils/misc/guc.c:2367
 msgid "Sets the planner's assumption about the size of the disk cache."
 msgstr "Подсказывает планировщику примерный размер дискового кэша."
 
-#: utils/misc/guc.c:2370
+#: utils/misc/guc.c:2368
 msgid ""
 "That is, the portion of the kernel's disk cache that will be used for "
 "PostgreSQL data files. This is measured in disk pages, which are normally 8 "
@@ -20248,31 +20273,31 @@ msgstr ""
 "Подразумевается часть дискового кэша в ядре ОС, которую займут файлы данных "
 "PostgreSQL. Размер задаётся в дисковых страницах (обычно это 8 КБ)."
 
-#: utils/misc/guc.c:2383
+#: utils/misc/guc.c:2381
 msgid "Shows the server version as an integer."
 msgstr "Показывает версию сервера в виде целого числа."
 
-#: utils/misc/guc.c:2394
+#: utils/misc/guc.c:2392
 msgid "Log the use of temporary files larger than this number of kilobytes."
 msgstr ""
 "Фиксирует в протоколе превышение временными файлами заданного размера (в КБ)."
 
-#: utils/misc/guc.c:2395
+#: utils/misc/guc.c:2393
 msgid "Zero logs all files. The default is -1 (turning this feature off)."
 msgstr ""
 "При 0 отмечаются все файлы; при -1 эти сообщения отключаются (по умолчанию)."
 
-#: utils/misc/guc.c:2405
+#: utils/misc/guc.c:2403
 msgid "Sets the size reserved for pg_stat_activity.query, in bytes."
 msgstr "Задаёт размер, резервируемый для pg_stat_activity.query (в байтах)."
 
-#: utils/misc/guc.c:2424
+#: utils/misc/guc.c:2422
 msgid ""
 "Sets the planner's estimate of the cost of a sequentially fetched disk page."
 msgstr ""
 "Задаёт для планировщика ориентир стоимости последовательного чтения страницы."
 
-#: utils/misc/guc.c:2434
+#: utils/misc/guc.c:2432
 msgid ""
 "Sets the planner's estimate of the cost of a nonsequentially fetched disk "
 "page."
@@ -20280,13 +20305,13 @@ msgstr ""
 "Задаёт для планировщика ориентир стоимости непоследовательного чтения "
 "страницы."
 
-#: utils/misc/guc.c:2444
+#: utils/misc/guc.c:2442
 msgid "Sets the planner's estimate of the cost of processing each tuple (row)."
 msgstr ""
 "Задаёт для планировщика ориентир стоимости обработки каждого кортежа "
 "(строки)."
 
-#: utils/misc/guc.c:2454
+#: utils/misc/guc.c:2452
 msgid ""
 "Sets the planner's estimate of the cost of processing each index entry "
 "during an index scan."
@@ -20294,7 +20319,7 @@ msgstr ""
 "Задаёт для планировщика ориентир стоимости обработки каждого элемента "
 "индекса в процессе сканирования индекса."
 
-#: utils/misc/guc.c:2464
+#: utils/misc/guc.c:2462
 msgid ""
 "Sets the planner's estimate of the cost of processing each operator or "
 "function call."
@@ -20302,32 +20327,32 @@ msgstr ""
 "Задаёт для планировщика ориентир стоимости обработки каждого оператора или "
 "вызова функции."
 
-#: utils/misc/guc.c:2475
+#: utils/misc/guc.c:2473
 msgid ""
 "Sets the planner's estimate of the fraction of a cursor's rows that will be "
 "retrieved."
 msgstr ""
 "Задаёт для планировщика ориентир доли требуемых строк курсора в общем числе."
 
-#: utils/misc/guc.c:2486
+#: utils/misc/guc.c:2484
 msgid "GEQO: selective pressure within the population."
 msgstr "GEQO: выборочное давление в популяции."
 
-#: utils/misc/guc.c:2496
+#: utils/misc/guc.c:2494
 msgid "GEQO: seed for random path selection."
 msgstr "GEQO: отправное значение для случайного выбора пути."
 
-#: utils/misc/guc.c:2506
+#: utils/misc/guc.c:2504
 msgid "Multiple of the average buffer usage to free per round."
 msgstr ""
 "Множитель для среднего числа использованных буферов, определяющий число "
 "буферов, освобождаемых за один подход."
 
-#: utils/misc/guc.c:2516
+#: utils/misc/guc.c:2514
 msgid "Sets the seed for random-number generation."
 msgstr "Задаёт отправное значение для генератора случайных чисел."
 
-#: utils/misc/guc.c:2527
+#: utils/misc/guc.c:2525
 msgid ""
 "Number of tuple updates or deletes prior to vacuum as a fraction of "
 "reltuples."
@@ -20335,7 +20360,7 @@ msgstr ""
 "Отношение числа обновлений или удалений кортежей к reltuples, определяющее "
 "потребность в очистке."
 
-#: utils/misc/guc.c:2536
+#: utils/misc/guc.c:2534
 msgid ""
 "Number of tuple inserts, updates, or deletes prior to analyze as a fraction "
 "of reltuples."
@@ -20343,7 +20368,7 @@ msgstr ""
 "Отношение числа добавлений, обновлений или удалений кортежей к reltuples, "
 "определяющее потребность в анализе."
 
-#: utils/misc/guc.c:2546
+#: utils/misc/guc.c:2544
 msgid ""
 "Time spent flushing dirty buffers during checkpoint, as fraction of "
 "checkpoint interval."
@@ -20351,53 +20376,53 @@ msgstr ""
 "Отношение продолжительности сброса \"грязных\" буферов во время контрольной "
 "точки к интервалу контрольных точек."
 
-#: utils/misc/guc.c:2565
+#: utils/misc/guc.c:2563
 msgid "Sets the shell command that will be called to archive a WAL file."
 msgstr "Задаёт команду оболочки, вызываемую для архивации файла WAL."
 
-#: utils/misc/guc.c:2575
+#: utils/misc/guc.c:2573
 msgid "Sets the client's character set encoding."
 msgstr "Задаёт кодировку символов, используемую клиентом."
 
-#: utils/misc/guc.c:2586
+#: utils/misc/guc.c:2584
 msgid "Controls information prefixed to each log line."
 msgstr "Определяет содержимое префикса каждой строки протокола."
 
-#: utils/misc/guc.c:2587
+#: utils/misc/guc.c:2585
 msgid "If blank, no prefix is used."
 msgstr "При пустом значении префикс также отсутствует."
 
-#: utils/misc/guc.c:2596
+#: utils/misc/guc.c:2594
 msgid "Sets the time zone to use in log messages."
 msgstr "Задаёт часовой пояс для вывода времени в сообщениях протокола."
 
-#: utils/misc/guc.c:2606
+#: utils/misc/guc.c:2604
 msgid "Sets the display format for date and time values."
 msgstr "Устанавливает формат вывода дат и времени."
 
-#: utils/misc/guc.c:2607
+#: utils/misc/guc.c:2605
 msgid "Also controls interpretation of ambiguous date inputs."
 msgstr "Также помогает разбирать неоднозначно заданные вводимые даты."
 
-#: utils/misc/guc.c:2618
+#: utils/misc/guc.c:2616
 msgid "Sets the default tablespace to create tables and indexes in."
 msgstr ""
 "Задаёт табличное пространство по умолчанию для новых таблиц и индексов."
 
-#: utils/misc/guc.c:2619
+#: utils/misc/guc.c:2617
 msgid "An empty string selects the database's default tablespace."
 msgstr "При пустом значении используется табличное пространство базы данных."
 
-#: utils/misc/guc.c:2629
+#: utils/misc/guc.c:2627
 msgid "Sets the tablespace(s) to use for temporary tables and sort files."
 msgstr ""
 "Задаёт табличное пространство(а) для временных таблиц и файлов сортировки."
 
-#: utils/misc/guc.c:2640
+#: utils/misc/guc.c:2638
 msgid "Sets the path for dynamically loadable modules."
 msgstr "Задаёт путь для динамически загружаемых модулей."
 
-#: utils/misc/guc.c:2641
+#: utils/misc/guc.c:2639
 msgid ""
 "If a dynamically loadable module needs to be opened and the specified name "
 "does not have a directory component (i.e., the name does not contain a "
@@ -20407,77 +20432,77 @@ msgstr ""
 "указан путь (нет символа '/'), система будет искать этот файл в заданном "
 "пути."
 
-#: utils/misc/guc.c:2654
+#: utils/misc/guc.c:2652
 msgid "Sets the location of the Kerberos server key file."
 msgstr "Задаёт размещение файла с ключом Kerberos для данного сервера."
 
-#: utils/misc/guc.c:2665
+#: utils/misc/guc.c:2663
 msgid "Sets the name of the Kerberos service."
 msgstr "Задаёт название службы Kerberos."
 
-#: utils/misc/guc.c:2675
+#: utils/misc/guc.c:2673
 msgid "Sets the Bonjour service name."
 msgstr "Задаёт название службы Bonjour."
 
-#: utils/misc/guc.c:2687
+#: utils/misc/guc.c:2685
 msgid "Shows the collation order locale."
 msgstr "Показывает правило сортировки."
 
-#: utils/misc/guc.c:2698
+#: utils/misc/guc.c:2696
 msgid "Shows the character classification and case conversion locale."
 msgstr "Показывает правило классификации символов и преобразования регистра."
 
-#: utils/misc/guc.c:2709
+#: utils/misc/guc.c:2707
 msgid "Sets the language in which messages are displayed."
 msgstr "Задаёт язык выводимых сообщений."
 
-#: utils/misc/guc.c:2719
+#: utils/misc/guc.c:2717
 msgid "Sets the locale for formatting monetary amounts."
 msgstr "Задаёт локаль для форматирования денежных сумм."
 
-#: utils/misc/guc.c:2729
+#: utils/misc/guc.c:2727
 msgid "Sets the locale for formatting numbers."
 msgstr "Задаёт локаль для форматирования чисел."
 
-#: utils/misc/guc.c:2739
+#: utils/misc/guc.c:2737
 msgid "Sets the locale for formatting date and time values."
 msgstr "Задаёт локаль для форматирования дат и времени."
 
-#: utils/misc/guc.c:2749
+#: utils/misc/guc.c:2747
 msgid "Lists shared libraries to preload into server."
 msgstr "Список разделяемых библиотек, заранее загружаемых в память сервера."
 
-#: utils/misc/guc.c:2760
+#: utils/misc/guc.c:2758
 msgid "Lists shared libraries to preload into each backend."
 msgstr ""
 "Список разделяемых библиотек, заранее загружаемых в каждый обслуживающий "
 "процесс."
 
-#: utils/misc/guc.c:2771
+#: utils/misc/guc.c:2769
 msgid "Sets the schema search order for names that are not schema-qualified."
 msgstr "Задаёт порядок просмотра схемы при поиске неполных имён."
 
-#: utils/misc/guc.c:2783
+#: utils/misc/guc.c:2781
 msgid "Sets the server (database) character set encoding."
 msgstr "Задаёт кодировку символов сервера (баз данных)."
 
-#: utils/misc/guc.c:2795
+#: utils/misc/guc.c:2793
 msgid "Shows the server version."
 msgstr "Показывает версию сервера."
 
-#: utils/misc/guc.c:2807
+#: utils/misc/guc.c:2805
 msgid "Sets the current role."
 msgstr "Задаёт текущую роль."
 
-#: utils/misc/guc.c:2819
+#: utils/misc/guc.c:2817
 msgid "Sets the session user name."
 msgstr "Задаёт имя пользователя в сеансе."
 
-#: utils/misc/guc.c:2830
+#: utils/misc/guc.c:2828
 msgid "Sets the destination for server log output."
 msgstr "Определяет, куда будет выводиться протокол сервера."
 
-#: utils/misc/guc.c:2831
+#: utils/misc/guc.c:2829
 msgid ""
 "Valid values are combinations of \"stderr\", \"syslog\", \"csvlog\", and "
 "\"eventlog\", depending on the platform."
@@ -20485,24 +20510,24 @@ msgstr ""
 "Значение может включать сочетание слов \"stderr\", \"syslog\", \"csvlog\" и "
 "\"eventlog\", в зависимости от платформы."
 
-#: utils/misc/guc.c:2842
+#: utils/misc/guc.c:2840
 msgid "Sets the destination directory for log files."
 msgstr "Задаёт целевой каталог для файлов протоколов."
 
-#: utils/misc/guc.c:2843
+#: utils/misc/guc.c:2841
 msgid "Can be specified as relative to the data directory or as absolute path."
 msgstr ""
 "Путь может быть абсолютным или указываться относительно каталога данных."
 
-#: utils/misc/guc.c:2853
+#: utils/misc/guc.c:2851
 msgid "Sets the file name pattern for log files."
 msgstr "Задаёт шаблон имени для файлов протоколов."
 
-#: utils/misc/guc.c:2864
+#: utils/misc/guc.c:2862
 msgid "Sets the program name used to identify PostgreSQL messages in syslog."
 msgstr "Задаёт имя программы для идентификации сообщений PostgreSQL в syslog."
 
-#: utils/misc/guc.c:2875
+#: utils/misc/guc.c:2873
 msgid ""
 "Sets the application name used to identify PostgreSQL messages in the event "
 "log."
@@ -20510,108 +20535,108 @@ msgstr ""
 "Задаёт имя приложения для идентификации сообщений PostgreSQL в журнале "
 "событий."
 
-#: utils/misc/guc.c:2886
+#: utils/misc/guc.c:2884
 msgid "Sets the time zone for displaying and interpreting time stamps."
 msgstr ""
 "Задаёт часовой пояс для вывода и разбора строкового представления времени."
 
-#: utils/misc/guc.c:2896
+#: utils/misc/guc.c:2894
 msgid "Selects a file of time zone abbreviations."
 msgstr "Выбирает файл с сокращёнными названиями часовых поясов."
 
-#: utils/misc/guc.c:2906
+#: utils/misc/guc.c:2904
 msgid "Sets the current transaction's isolation level."
 msgstr "Задаёт текущий уровень изоляции транзакций."
 
-#: utils/misc/guc.c:2917
+#: utils/misc/guc.c:2915
 msgid "Sets the owning group of the Unix-domain socket."
 msgstr "Задаёт группу-владельца доменного сокета Unix."
 
-#: utils/misc/guc.c:2918
+#: utils/misc/guc.c:2916
 msgid ""
 "The owning user of the socket is always the user that starts the server."
 msgstr ""
 "Собственно владельцем сокета всегда будет пользователь, запускающий сервер."
 
-#: utils/misc/guc.c:2928
+#: utils/misc/guc.c:2926
 msgid "Sets the directories where Unix-domain sockets will be created."
 msgstr "Задаёт каталоги, где будут создаваться доменные сокеты Unix."
 
-#: utils/misc/guc.c:2943
+#: utils/misc/guc.c:2941
 msgid "Sets the host name or IP address(es) to listen to."
 msgstr "Задаёт имя узла или IP-адрес(а) для привязки."
 
-#: utils/misc/guc.c:2954
+#: utils/misc/guc.c:2952
 msgid "Sets the server's data directory."
 msgstr "Определяет каталог данных сервера."
 
-#: utils/misc/guc.c:2965
+#: utils/misc/guc.c:2963
 msgid "Sets the server's main configuration file."
 msgstr "Определяет основной файл конфигурации сервера."
 
-#: utils/misc/guc.c:2976
+#: utils/misc/guc.c:2974
 msgid "Sets the server's \"hba\" configuration file."
 msgstr "Задаёт путь к файлу конфигурации \"hba\"."
 
-#: utils/misc/guc.c:2987
+#: utils/misc/guc.c:2985
 msgid "Sets the server's \"ident\" configuration file."
 msgstr "Задаёт путь к файлу конфигурации \"ident\"."
 
-#: utils/misc/guc.c:2998
+#: utils/misc/guc.c:2996
 msgid "Writes the postmaster PID to the specified file."
 msgstr "Файл, в который будет записан код процесса postmaster."
 
-#: utils/misc/guc.c:3009
+#: utils/misc/guc.c:3007
 msgid "Location of the SSL server certificate file."
 msgstr "Размещение файла сертификата сервера для SSL."
 
-#: utils/misc/guc.c:3019
+#: utils/misc/guc.c:3017
 msgid "Location of the SSL server private key file."
 msgstr "Размещение файла с закрытым ключом сервера для SSL."
 
-#: utils/misc/guc.c:3029
+#: utils/misc/guc.c:3027
 msgid "Location of the SSL certificate authority file."
 msgstr "Размещение файла центра сертификации для SSL."
 
-#: utils/misc/guc.c:3039
+#: utils/misc/guc.c:3037
 msgid "Location of the SSL certificate revocation list file."
 msgstr "Размещение файла со списком отзыва сертификатов для SSL."
 
-#: utils/misc/guc.c:3049
+#: utils/misc/guc.c:3047
 msgid "Writes temporary statistics files to the specified directory."
 msgstr "Каталог, в который будут записываться временные файлы статистики."
 
-#: utils/misc/guc.c:3060
+#: utils/misc/guc.c:3058
 msgid "List of names of potential synchronous standbys."
 msgstr "Список имён потенциально синхронных резервных серверов."
 
-#: utils/misc/guc.c:3071
+#: utils/misc/guc.c:3069
 msgid "Sets default text search configuration."
 msgstr "Задаёт конфигурацию текстового поиска по умолчанию."
 
-#: utils/misc/guc.c:3081
+#: utils/misc/guc.c:3079
 msgid "Sets the list of allowed SSL ciphers."
 msgstr "Задаёт список допустимых алгоритмов шифрования для SSL."
 
-#: utils/misc/guc.c:3096
+#: utils/misc/guc.c:3094
 msgid "Sets the application name to be reported in statistics and logs."
 msgstr ""
 "Задаёт имя приложения, которое будет выводиться в статистике и протоколах."
 
-#: utils/misc/guc.c:3116
+#: utils/misc/guc.c:3114
 msgid "Sets whether \"\\'\" is allowed in string literals."
 msgstr "Определяет, можно ли использовать \"\\'\" в текстовых строках."
 
-#: utils/misc/guc.c:3126
+#: utils/misc/guc.c:3124
 msgid "Sets the output format for bytea."
 msgstr "Задаёт формат вывода данных типа bytea."
 
-#: utils/misc/guc.c:3136
+#: utils/misc/guc.c:3134
 msgid "Sets the message levels that are sent to the client."
 msgstr "Ограничивает уровень сообщений, передаваемых клиенту."
 
-#: utils/misc/guc.c:3137 utils/misc/guc.c:3190 utils/misc/guc.c:3201
-#: utils/misc/guc.c:3257
+#: utils/misc/guc.c:3135 utils/misc/guc.c:3188 utils/misc/guc.c:3199
+#: utils/misc/guc.c:3255
 msgid ""
 "Each level includes all the levels that follow it. The later the level, the "
 "fewer messages are sent."
@@ -20619,12 +20644,12 @@ msgstr ""
 "Каждый уровень включает все последующие. Чем выше уровень, тем меньше "
 "сообщений."
 
-#: utils/misc/guc.c:3147
+#: utils/misc/guc.c:3145
 msgid "Enables the planner to use constraints to optimize queries."
 msgstr ""
 "Разрешает планировщику оптимизировать запросы, полагаясь на ограничения."
 
-#: utils/misc/guc.c:3148
+#: utils/misc/guc.c:3146
 msgid ""
 "Table scans will be skipped if their constraints guarantee that no rows "
 "match the query."
@@ -20632,68 +20657,68 @@ msgstr ""
 "Сканирование таблицы не будет выполняться, если её ограничения гарантируют, "
 "что запросу не удовлетворяют никакие строки."
 
-#: utils/misc/guc.c:3158
+#: utils/misc/guc.c:3156
 msgid "Sets the transaction isolation level of each new transaction."
 msgstr "Задаёт уровень изоляции транзакций для новых транзакций."
 
-#: utils/misc/guc.c:3168
+#: utils/misc/guc.c:3166
 msgid "Sets the display format for interval values."
 msgstr "Задаёт формат отображения для внутренних значений."
 
-#: utils/misc/guc.c:3179
+#: utils/misc/guc.c:3177
 msgid "Sets the verbosity of logged messages."
 msgstr "Задаёт детализацию протоколируемых сообщений."
 
-#: utils/misc/guc.c:3189
+#: utils/misc/guc.c:3187
 msgid "Sets the message levels that are logged."
 msgstr "Ограничивает уровни протоколируемых сообщений."
 
-#: utils/misc/guc.c:3200
+#: utils/misc/guc.c:3198
 msgid ""
 "Causes all statements generating error at or above this level to be logged."
 msgstr ""
 "Включает протоколирование для SQL-операторов, выполненных с ошибкой этого "
 "или большего уровня."
 
-#: utils/misc/guc.c:3211
+#: utils/misc/guc.c:3209
 msgid "Sets the type of statements logged."
 msgstr "Задаёт тип протоколируемых операторов."
 
-#: utils/misc/guc.c:3221
+#: utils/misc/guc.c:3219
 msgid "Sets the syslog \"facility\" to be used when syslog enabled."
 msgstr "Задаёт получателя сообщений, отправляемых в syslog."
 
-#: utils/misc/guc.c:3236
+#: utils/misc/guc.c:3234
 msgid "Sets the session's behavior for triggers and rewrite rules."
 msgstr ""
 "Задаёт режим срабатывания триггеров и правил перезаписи для текущего сеанса."
 
-#: utils/misc/guc.c:3246
+#: utils/misc/guc.c:3244
 msgid "Sets the current transaction's synchronization level."
 msgstr "Задаёт уровень синхронизации текущей транзакции."
 
-#: utils/misc/guc.c:3256
+#: utils/misc/guc.c:3254
 msgid "Enables logging of recovery-related debugging information."
 msgstr ""
 "Включает протоколирование отладочной информации, связанной с репликацией."
 
-#: utils/misc/guc.c:3272
+#: utils/misc/guc.c:3270
 msgid "Collects function-level statistics on database activity."
 msgstr "Включает сбор статистики активности в БД на уровне функций."
 
-#: utils/misc/guc.c:3282
+#: utils/misc/guc.c:3280
 msgid "Set the level of information written to the WAL."
 msgstr "Задаёт уровень информации, записываемой в WAL."
 
-#: utils/misc/guc.c:3292
+#: utils/misc/guc.c:3290
 msgid "Selects the method used for forcing WAL updates to disk."
 msgstr "Выбирает метод принудительной записи изменений в WAL на диск."
 
-#: utils/misc/guc.c:3302
+#: utils/misc/guc.c:3300
 msgid "Sets how binary values are to be encoded in XML."
 msgstr "Определяет, как должны кодироваться двоичные значения в XML."
 
-#: utils/misc/guc.c:3312
+#: utils/misc/guc.c:3310
 msgid ""
 "Sets whether XML data in implicit parsing and serialization operations is to "
 "be considered as documents or content fragments."
@@ -20701,7 +20726,7 @@ msgstr ""
 "Определяет, следует ли рассматривать XML-данные в неявных операциях разбора "
 "и сериализации как документы или как фрагменты содержания."
 
-#: utils/misc/guc.c:4126
+#: utils/misc/guc.c:4124
 #, c-format
 msgid ""
 "%s does not know where to find the server configuration file.\n"
@@ -20712,12 +20737,12 @@ msgstr ""
 "Вы должны указать его расположение в параметре --config-file или -D, либо "
 "установить переменную окружения PGDATA.\n"
 
-#: utils/misc/guc.c:4145
+#: utils/misc/guc.c:4143
 #, c-format
 msgid "%s cannot access the server configuration file \"%s\": %s\n"
 msgstr "%s не может открыть файл конфигурации сервера \"%s\": %s\n"
 
-#: utils/misc/guc.c:4166
+#: utils/misc/guc.c:4164
 #, c-format
 msgid ""
 "%s does not know where to find the database system data.\n"
@@ -20728,7 +20753,7 @@ msgstr ""
 "Их расположение можно задать как значение \"data_directory\" в файле \"%s\", "
 "либо передать в параметре -D, либо установить переменную окружения PGDATA.\n"
 
-#: utils/misc/guc.c:4206
+#: utils/misc/guc.c:4204
 #, c-format
 msgid ""
 "%s does not know where to find the \"hba\" configuration file.\n"
@@ -20739,7 +20764,7 @@ msgstr ""
 "Его расположение можно задать как значение \"hba_file\" в файле \"%s\", либо "
 "передать в параметре -D, либо установить переменную окружения PGDATA.\n"
 
-#: utils/misc/guc.c:4229
+#: utils/misc/guc.c:4227
 #, c-format
 msgid ""
 "%s does not know where to find the \"ident\" configuration file.\n"
@@ -20750,124 +20775,124 @@ msgstr ""
 "Его расположение можно задать как значение \"ident_file\" в файле \"%s\", "
 "либо передать в параметре -D, либо установить переменную окружения PGDATA.\n"
 
-#: utils/misc/guc.c:4821 utils/misc/guc.c:4985
+#: utils/misc/guc.c:4819 utils/misc/guc.c:4983
 msgid "Value exceeds integer range."
 msgstr "Значение выходит за рамки целых чисел."
 
-#: utils/misc/guc.c:4840
+#: utils/misc/guc.c:4838
 msgid "Valid units for this parameter are \"kB\", \"MB\", and \"GB\"."
 msgstr ""
 "Допустимые единицы измерения для этого параметра - \"kB\", \"MB\" и \"GB\"."
 
-#: utils/misc/guc.c:4899
+#: utils/misc/guc.c:4897
 msgid ""
 "Valid units for this parameter are \"ms\", \"s\", \"min\", \"h\", and \"d\"."
 msgstr ""
 "Допустимые единицы измерения для этого параметра - \"ms\", \"s\", \"min\", "
 "\"h\" и \"d\"."
 
-#: utils/misc/guc.c:5192 utils/misc/guc.c:5974 utils/misc/guc.c:6026
-#: utils/misc/guc.c:6759 utils/misc/guc.c:6918 utils/misc/guc.c:8087
+#: utils/misc/guc.c:5190 utils/misc/guc.c:5972 utils/misc/guc.c:6024
+#: utils/misc/guc.c:6757 utils/misc/guc.c:6916 utils/misc/guc.c:8085
 #, c-format
 msgid "unrecognized configuration parameter \"%s\""
 msgstr "нераспознанный параметр конфигурации: \"%s\""
 
-#: utils/misc/guc.c:5207
+#: utils/misc/guc.c:5205
 #, c-format
 msgid "parameter \"%s\" cannot be changed"
 msgstr "параметр \"%s\" нельзя изменить"
 
-#: utils/misc/guc.c:5230 utils/misc/guc.c:5406 utils/misc/guc.c:5510
-#: utils/misc/guc.c:5611 utils/misc/guc.c:5732 utils/misc/guc.c:5840
+#: utils/misc/guc.c:5228 utils/misc/guc.c:5404 utils/misc/guc.c:5508
+#: utils/misc/guc.c:5609 utils/misc/guc.c:5730 utils/misc/guc.c:5838
 #: guc-file.l:227
 #, c-format
 msgid "parameter \"%s\" cannot be changed without restarting the server"
 msgstr "параметр \"%s\" изменяется только при перезапуске сервера"
 
-#: utils/misc/guc.c:5240
+#: utils/misc/guc.c:5238
 #, c-format
 msgid "parameter \"%s\" cannot be changed now"
 msgstr "параметр \"%s\" нельзя изменить сейчас"
 
-#: utils/misc/guc.c:5271
+#: utils/misc/guc.c:5269
 #, c-format
 msgid "parameter \"%s\" cannot be set after connection start"
 msgstr "параметр \"%s\" нельзя задать после установления соединения"
 
-#: utils/misc/guc.c:5281 utils/misc/guc.c:8103
+#: utils/misc/guc.c:5279 utils/misc/guc.c:8101
 #, c-format
 msgid "permission denied to set parameter \"%s\""
 msgstr "нет прав для изменения параметра \"%s\""
 
-#: utils/misc/guc.c:5319
+#: utils/misc/guc.c:5317
 #, c-format
 msgid "cannot set parameter \"%s\" within security-definer function"
 msgstr ""
 "параметр \"%s\" нельзя задать в функции с контекстом безопасности "
 "определившего"
 
-#: utils/misc/guc.c:5472 utils/misc/guc.c:5807 utils/misc/guc.c:8267
-#: utils/misc/guc.c:8301
+#: utils/misc/guc.c:5470 utils/misc/guc.c:5805 utils/misc/guc.c:8265
+#: utils/misc/guc.c:8299
 #, c-format
 msgid "invalid value for parameter \"%s\": \"%s\""
 msgstr "неверное значение для параметра \"%s\": \"%s\""
 
-#: utils/misc/guc.c:5481
+#: utils/misc/guc.c:5479
 #, c-format
 msgid "%d is outside the valid range for parameter \"%s\" (%d .. %d)"
 msgstr "%d вне диапазона, допустимого для параметра \"%s\" (%d .. %d)"
 
-#: utils/misc/guc.c:5574
+#: utils/misc/guc.c:5572
 #, c-format
 msgid "parameter \"%s\" requires a numeric value"
 msgstr "параметр \"%s\" требует числовое значение"
 
-#: utils/misc/guc.c:5582
+#: utils/misc/guc.c:5580
 #, c-format
 msgid "%g is outside the valid range for parameter \"%s\" (%g .. %g)"
 msgstr "%g вне диапазона, допустимого для параметра \"%s\" (%g .. %g)"
 
-#: utils/misc/guc.c:5982 utils/misc/guc.c:6030 utils/misc/guc.c:6922
+#: utils/misc/guc.c:5980 utils/misc/guc.c:6028 utils/misc/guc.c:6920
 #, c-format
 msgid "must be superuser to examine \"%s\""
 msgstr "прочитать \"%s\" может только суперпользователь"
 
-#: utils/misc/guc.c:6096
+#: utils/misc/guc.c:6094
 #, c-format
 msgid "SET %s takes only one argument"
 msgstr "SET %s принимает только один аргумент"
 
-#: utils/misc/guc.c:6267
+#: utils/misc/guc.c:6265
 #, c-format
 msgid "SET LOCAL TRANSACTION SNAPSHOT is not implemented"
 msgstr "SET LOCAL TRANSACTION SNAPSHOT не реализовано"
 
-#: utils/misc/guc.c:6347
+#: utils/misc/guc.c:6345
 #, c-format
 msgid "SET requires parameter name"
 msgstr "SET требует имя параметра"
 
-#: utils/misc/guc.c:6461
+#: utils/misc/guc.c:6459
 #, c-format
 msgid "attempt to redefine parameter \"%s\""
 msgstr "попытка переопределить параметр \"%s\""
 
-#: utils/misc/guc.c:7806
+#: utils/misc/guc.c:7804
 #, c-format
 msgid "could not parse setting for parameter \"%s\""
 msgstr "не удалось разобрать значение параметра \"%s\""
 
-#: utils/misc/guc.c:8165 utils/misc/guc.c:8199
+#: utils/misc/guc.c:8163 utils/misc/guc.c:8197
 #, c-format
 msgid "invalid value for parameter \"%s\": %d"
 msgstr "неверное значение параметра \"%s\": %d"
 
-#: utils/misc/guc.c:8233
+#: utils/misc/guc.c:8231
 #, c-format
 msgid "invalid value for parameter \"%s\": %g"
 msgstr "неверное значение параметра \"%s\": %g"
 
-#: utils/misc/guc.c:8423
+#: utils/misc/guc.c:8421
 #, c-format
 msgid ""
 "\"temp_buffers\" cannot be changed after any temporary tables have been "
@@ -20876,33 +20901,33 @@ msgstr ""
 "параметр \"temp_buffers\" нельзя изменить после обращения к временным "
 "таблицам в текущем сеансе."
 
-#: utils/misc/guc.c:8435
+#: utils/misc/guc.c:8433
 #, c-format
 msgid "SET AUTOCOMMIT TO OFF is no longer supported"
 msgstr "SET AUTOCOMMIT TO OFF больше не поддерживается"
 
-#: utils/misc/guc.c:8447
+#: utils/misc/guc.c:8445
 #, c-format
 msgid "assertion checking is not supported by this build"
 msgstr "в данной сборке не поддерживаются проверки истинности"
 
-#: utils/misc/guc.c:8460
+#: utils/misc/guc.c:8458
 #, c-format
 msgid "Bonjour is not supported by this build"
 msgstr "Bonjour не поддерживается в данной сборке"
 
-#: utils/misc/guc.c:8473
+#: utils/misc/guc.c:8471
 #, c-format
 msgid "SSL is not supported by this build"
 msgstr "SSL не поддерживается в данной сборке"
 
-#: utils/misc/guc.c:8485
+#: utils/misc/guc.c:8483
 #, c-format
 msgid "Cannot enable parameter when \"log_statement_stats\" is true."
 msgstr ""
 "Этот параметр нельзя включить, когда \"log_statement_stats\" равен true."
 
-#: utils/misc/guc.c:8497
+#: utils/misc/guc.c:8495
 #, c-format
 msgid ""
 "Cannot enable \"log_statement_stats\" when \"log_parser_stats\", "
@@ -21412,8 +21437,8 @@ msgstr "открыть каталог конфигурации \"%s\" не уд�
 
 #: repl_gram.y:183 repl_gram.y:200
 #, c-format
-msgid "invalid timeline %d"
-msgstr "неверная линия времени %d"
+msgid "invalid timeline %u"
+msgstr "неверная линия времени %u"
 
 #: repl_scanner.l:94
 msgid "invalid streaming start location"
@@ -21559,6 +21584,20 @@ msgstr "нестандартное использование спецсимво
 #, c-format
 msgid "Use the escape string syntax for escapes, e.g., E'\\r\\n'."
 msgstr "Используйте для записи спецсимволов синтаксис спецстрок E'\\r\\n'."
+
+#~ msgid ""
+#~ "To make the view insertable, provide an unconditional ON INSERT DO "
+#~ "INSTEAD rule or an INSTEAD OF INSERT trigger."
+#~ msgstr ""
+#~ "Чтобы представление допускало добавление данных, определите безусловное "
+#~ "правило ON INSERT DO INSTEAD или триггер INSTEAD OF INSERT."
+
+#~ msgid ""
+#~ "To make the view updatable, provide an unconditional ON DELETE DO INSTEAD "
+#~ "rule or an INSTEAD OF DELETE trigger."
+#~ msgstr ""
+#~ "Чтобы представление допускало удаление данных, определите безусловное "
+#~ "правило ON DELETE DO INSTEAD или триггер INSTEAD OF DELETE."
 
 #~ msgid ""
 #~ "database \"%s\" must be vacuumed before %u more MultiXactIds are used"
