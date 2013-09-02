@@ -534,7 +534,12 @@
     examine this information is to execute queries such as:
 
 <programlisting>
-SELECT relname, age(relfrozenxid) FROM pg_class WHERE relkind IN ('r', 'm');
+SELECT c.oid::regclass as table_name,
+       greatest(age(c.relfrozenxid),age(t.relfrozenxid)) as age
+FROM pg_class c
+LEFT JOIN pg_class t ON c.reltoastrelid = t.oid
+WHERE c.relkind IN ('r', 'm');
+
 SELECT datname, age(datfrozenxid) FROM pg_database;
 </programlisting>
 
