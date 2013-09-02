@@ -1212,39 +1212,21 @@ Rule	Zion	2011	only	-	Oct	 2	2:00	0	S
 Rule	Zion	2012	only	-	Mar	Fri>=26	2:00	1:00	D
 Rule	Zion	2012	only	-	Sep	23	2:00	0	S
 
-# From Ephraim Silverberg (2012-10-18):
-# Yesterday, the Interior Ministry Committee, after more than a year
-# past, approved sending the proposed June 2011 changes to the Time
-# Decree Law back to the Knesset for second and third (final) votes
-# before the upcoming elections on Jan. 22, 2013.  Hence, although the
-# changes are not yet law, they are expected to be so before February 2013.
+# From Ephraim Silverberg (2013-06-27):
+# On June 23, 2013, the Israeli government approved changes to the
+# Time Decree Law.  The next day, the changes passed the First Reading
+# in the Knesset.  The law is expected to pass the Second and Third
+# (final) Readings by the beginning of September 2013.
 #
-# As of 2013, DST starts at 02:00 on the Friday before the last Sunday in March.
-# DST ends at 02:00 on the first Sunday after October 1, unless it occurs on the
-# second day of the Jewish Rosh Hashana holiday, in which case DST ends a day
-# later (i.e. at 02:00 the first Monday after October 2).
-# [Rosh Hashana holidays are factored in until 2100.]
-
-# From Ephraim Silverberg (2012-11-05):
-# The Knesset passed today (in second and final readings) the amendment to the
-# Time Decree Law making the changes ... law.
+# As of 2013, DST starts at 02:00 on the Friday before the last Sunday
+# in March.  DST ends at 02:00 on the last Sunday of October.
 
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Zion	2013	max	-	Mar	Fri>=23	2:00	1:00	D
-Rule	Zion	2013	2026	-	Oct	Sun>=2	2:00	0	S
-Rule	Zion	2027	only	-	Oct	Mon>=3	2:00	0	S
-Rule	Zion	2028	max	-	Oct	Sun>=2	2:00	0	S
-# The following rules are commented out for now, as they break older
-# versions of zic that support only signed 32-bit timestamps, i.e.,
-# through 2038-01-19 03:14:07 UTC.
-#Rule	Zion	2028	2053	-	Oct	Sun>=2	2:00	0	S
-#Rule	Zion	2054	only	-	Oct	Mon>=3	2:00	0	S
-#Rule	Zion	2055	2080	-	Oct	Sun>=2	2:00	0	S
-#Rule	Zion	2081	only	-	Oct	Mon>=3	2:00	0	S
-#Rule	Zion	2082	max	-	Oct	Sun>=2	2:00	0	S
+Rule	Zion	2013	max	-	Oct	lastSun	2:00	0	S
 
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
-Zone	Asia/Jerusalem	2:20:56 -	LMT	1880
+Zone	Asia/Jerusalem	2:20:54 -	LMT	1880
 			2:20:40	-	JMT	1918	# Jerusalem Mean Time?
 			2:00	Zion	I%sT
 
@@ -2291,11 +2273,20 @@ Zone	Asia/Karachi	4:28:12 -	LMT	1907
 # http://www.timeanddate.com/news/time/gaza-west-bank-dst-2012.html
 # </a>
 
-# From Arthur David Olson (2012-03-27):
-# The timeanddate article for 2012 says that "the end date has not yet been
-# announced" and that "Last year, both...paused daylight saving time during...
-# Ramadan. It is not yet known [for] 2012."
-# For now, assume both switch back on the last Friday in September. XXX
+# From Steffen Thorsen (2013-03-26):
+# The following news sources tells that Palestine will "start daylight saving
+# time from midnight on Friday, March 29, 2013" (translated).
+# [These are in Arabic and are for Gaza and for Ramallah, respectively.]
+# http://www.samanews.com/index.php?act=Show&id=154120
+# http://safa.ps/details/news/99844/%D8%B1%D8%A7%D9%85-%D8%A7%D9%84%D9%84%D9%87-%D8%A8%D8%AF%D8%A1-%D8%A7%D9%84%D8%AA%D9%88%D9%82%D9%8A%D8%AA-%D8%A7%D9%84%D8%B5%D9%8A%D9%81%D9%8A-29-%D8%A7%D9%84%D8%AC%D8%A7%D8%B1%D9%8A.html
+
+# From Paul Eggert (2013-04-15):
+# For future dates, guess the last Thursday in March at 24:00 through
+# the first Friday on or after September 21 at 01:00.  This is consistent with
+# the predictions in today's editions of the following URLs,
+# which are for Gaza and Hebron respectively:
+# http://www.timeanddate.com/worldclock/timezone.html?n=702
+# http://www.timeanddate.com/worldclock/timezone.html?n=2364
 
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule EgyptAsia	1957	only	-	May	10	0:00	1:00	S
@@ -2309,19 +2300,20 @@ Rule Palestine	1999	2005	-	Apr	Fri>=15	0:00	1:00	S
 Rule Palestine	1999	2003	-	Oct	Fri>=15	0:00	0	-
 Rule Palestine	2004	only	-	Oct	 1	1:00	0	-
 Rule Palestine	2005	only	-	Oct	 4	2:00	0	-
-Rule Palestine	2006	2008	-	Apr	 1	0:00	1:00	S
+Rule Palestine	2006	2007	-	Apr	 1	0:00	1:00	S
 Rule Palestine	2006	only	-	Sep	22	0:00	0	-
 Rule Palestine	2007	only	-	Sep	Thu>=8	2:00	0	-
-Rule Palestine	2008	only	-	Aug	lastFri	0:00	0	-
-Rule Palestine	2009	only	-	Mar	lastFri	0:00	1:00	S
-Rule Palestine	2009	only	-	Sep	Fri>=1	2:00	0	-
-Rule Palestine	2010	only	-	Mar	lastSat	0:01	1:00	S
+Rule Palestine	2008	2009	-	Mar	lastFri	0:00	1:00	S
+Rule Palestine	2008	only	-	Sep	 1	0:00	0	-
+Rule Palestine	2009	only	-	Sep	Fri>=1	1:00	0	-
+Rule Palestine	2010	only	-	Mar	26	0:00	1:00	S
 Rule Palestine	2010	only	-	Aug	11	0:00	0	-
-
-# From Arthur David Olson (2011-09-20):
-# 2011 transitions per http://www.timeanddate.com as of 2011-09-20.
-# From Paul Eggert (2012-10-12):
-# 2012 transitions per http://www.timeanddate.com as of 2012-10-12.
+Rule Palestine	2011	only	-	Apr	 1	0:01	1:00	S
+Rule Palestine	2011	only	-	Aug	 1	0:00	0	-
+Rule Palestine	2011	only	-	Aug	30	0:00	1:00	S
+Rule Palestine	2011	only	-	Sep	30	0:00	0	-
+Rule Palestine	2012	max	-	Mar	lastThu	24:00	1:00	S
+Rule Palestine	2012	max	-	Sep	Fri>=21	1:00	0	-
 
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Asia/Gaza	2:17:52	-	LMT	1900 Oct
@@ -2329,26 +2321,20 @@ Zone	Asia/Gaza	2:17:52	-	LMT	1900 Oct
 			2:00 EgyptAsia	EE%sT	1967 Jun  5
 			2:00	Zion	I%sT	1996
 			2:00	Jordan	EE%sT	1999
-			2:00 Palestine	EE%sT	2011 Apr  2 12:01
-			2:00	1:00	EEST	2011 Aug  1
-			2:00	-	EET	2012 Mar 30
-			2:00	1:00	EEST	2012 Sep 21 1:00
-			2:00	-	EET
+			2:00 Palestine	EE%sT	2008 Aug 29 0:00
+			2:00	-	EET	2008 Sep
+			2:00 Palestine	EE%sT	2010
+			2:00	-	EET	2010 Mar 27 0:01
+			2:00 Palestine	EE%sT	2011 Aug  1
+			2:00	-	EET	2012
+			2:00 Palestine	EE%sT
 
 Zone	Asia/Hebron	2:20:23	-	LMT	1900 Oct
 			2:00	Zion	EET	1948 May 15
 			2:00 EgyptAsia	EE%sT	1967 Jun  5
 			2:00	Zion	I%sT	1996
 			2:00	Jordan	EE%sT	1999
-			2:00 Palestine	EE%sT	2008 Aug
-			2:00 	1:00	EEST	2008 Sep
-			2:00 Palestine	EE%sT	2011 Apr  1 12:01
-			2:00	1:00	EEST	2011 Aug  1
-			2:00	-	EET	2011 Aug 30
-			2:00	1:00	EEST	2011 Sep 30 3:00
-			2:00	-	EET	2012 Mar 30
-			2:00	1:00	EEST	2012 Sep 21 1:00
-			2:00	-	EET
+			2:00 Palestine	EE%sT
 
 # Paracel Is
 # no information
@@ -2543,8 +2529,8 @@ Rule	Syria	2006	only	-	Sep	22	0:00	0	-
 Rule	Syria	2007	only	-	Mar	lastFri	0:00	1:00	S
 # From Jesper Norgard (2007-10-27):
 # The sister center ICARDA of my work CIMMYT is confirming that Syria DST will
-# not take place 1.st November at 0:00 o'clock but 1.st November at 24:00 or
-# rather Midnight between Thursday and Friday. This does make more sence than
+# not take place 1st November at 0:00 o'clock but 1st November at 24:00 or
+# rather Midnight between Thursday and Friday. This does make more sense than
 # having it between Wednesday and Thursday (two workdays in Syria) since the
 # weekend in Syria is not Saturday and Sunday, but Friday and Saturday. So now
 # it is implemented at midnight of the last workday before weekend...
