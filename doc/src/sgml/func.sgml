@@ -6431,7 +6431,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
         </entry>
         <entry><type>interval</type></entry>
         <entry>Subtract arguments, producing a <quote>symbolic</> result that
-        uses years and months</entry>
+        uses years and months</entry>, rather than just days
         <entry><literal>age(timestamp '2001-04-10', timestamp '1957-06-13')</literal></entry>
         <entry><literal>43 years 9 mons 27 days</literal></entry>
        </row>
@@ -6793,6 +6793,36 @@ SELECT (DATE '2001-10-30', DATE '2001-10-30') OVERLAPS
    <literal>1 mon 1 day</>, while using May would yield <literal>1 mon 2
    days</> because May has 31 days, while April has only 30.
   </para>
+
+  <para>
+   Subtraction of dates and timestamps can also be complex.  The most
+   accurate way to perform subtraction is to convert each value to a number
+   of seconds using <literal>EXTRACT(EPOCH FROM  ...)</> and compute the
+   number of <emphasis>seconds</> between the two values.  This will adjust
+   for the number of days in each month, timezone changes, and daylight
+   saving time adjustments.  Operator subtraction of date or timestamp
+   values returns the number of days (24-hours) and hours/minutes/seconds
+   between the values, making the same adjustments.  The <function>age</>
+   function returns years, months, days, and hours/minutes/seconds,
+   performing field-by-field subtraction and then adjusting for negative
+   field values.  The following queries, produced with <literal>timezone
+   = 'US/Eastern'</> and including a daylight saving time change,
+   illustrates these issues:
+  </para>
+
+<screen>
+SELECT EXTRACT(EPOCH FROM timestamptz '2013-07-01 12:00:00') -
+       EXTRACT(EPOCH FROM timestamptz '2013-03-01 12:00:00');
+<lineannotation>Result: </lineannotation><computeroutput>10537200</computeroutput>
+SELECT (EXTRACT(EPOCH FROM timestamptz '2013-07-01 12:00:00') -
+        EXTRACT(EPOCH FROM timestamptz '2013-03-01 12:00:00')) 
+        / 60 / 60 / 24;
+<lineannotation>Result: </lineannotation><computeroutput>121.958333333333</computeroutput>
+SELECT timestamptz '2013-07-01 12:00:00' - timestamptz '2013-03-01 12:00:00';
+<lineannotation>Result: </lineannotation><computeroutput>121 days 23:00:00</computeroutput>
+SELECT age(timestamptz '2013-07-01 12:00:00', timestamptz '2013-03-01 12:00:00');
+<lineannotation>Result: </lineannotation><computeroutput>4 mons</computeroutput>
+</screen>
 
   <sect2 id="functions-datetime-extract">
    <title><function>EXTRACT</function>, <function>date_part</function></title>
