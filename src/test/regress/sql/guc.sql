@@ -257,3 +257,21 @@ set work_mem = '1MB';
 select myfunc(0);
 select current_setting('work_mem');
 select myfunc(1), current_setting('work_mem');
+
+-- Normally, CREATE FUNCTION should complain about invalid values in
+-- function SET options; but not if check_function_bodies is off,
+-- because that creates ordering hazards for pg_dump
+
+create function func_with_bad_set() returns int as $$ select 1 $$
+language sql
+set default_text_search_config = no_such_config;
+
+set check_function_bodies = off;
+
+create function func_with_bad_set() returns int as $$ select 1 $$
+language sql
+set default_text_search_config = no_such_config;
+
+select func_with_bad_set();
+
+reset check_function_bodies;
