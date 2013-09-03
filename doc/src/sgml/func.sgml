@@ -6769,9 +6769,9 @@ SELECT (DATE '2001-10-30', DATE '2001-10-30') OVERLAPS
   <para>
    When adding an <type>interval</type> value to (or subtracting an
    <type>interval</type> value from) a <type>timestamp with time zone</type>
-   value, the days component advances (or decrements) the date of the
+   value, the days component advances or decrements the date of the
    <type>timestamp with time zone</type> by the indicated number of days.
-   Across daylight saving time changes (with the session time zone set to a
+   Across daylight saving time changes (when the session time zone is set to a
    time zone that recognizes DST), this means <literal>interval '1 day'</literal>
    does not necessarily equal <literal>interval '24 hours'</literal>.
    For example, with the session time zone set to <literal>CST7CDT</literal>,
@@ -6785,8 +6785,8 @@ SELECT (DATE '2001-10-30', DATE '2001-10-30') OVERLAPS
   </para>
 
   <para>
-   Note there can be ambiguity in the <literal>months</> returned by
-   <function>age</> because different months have a different number of
+   Note there can be ambiguity in the <literal>months</> field returned by
+   <function>age</> because different months have different numbers of
    days.  <productname>PostgreSQL</>'s approach uses the month from the
    earlier of the two dates when calculating partial months.  For example,
    <literal>age('2004-06-01', '2004-04-30')</> uses April to yield
@@ -6795,19 +6795,22 @@ SELECT (DATE '2001-10-30', DATE '2001-10-30') OVERLAPS
   </para>
 
   <para>
-   Subtraction of dates and timestamps can also be complex.  The most
-   accurate way to perform subtraction is to convert each value to a number
-   of seconds using <literal>EXTRACT(EPOCH FROM  ...)</> and compute the
+   Subtraction of dates and timestamps can also be complex.  One conceptually
+   simple way to perform subtraction is to convert each value to a number
+   of seconds using <literal>EXTRACT(EPOCH FROM ...)</>, then subtract the
+   results; this produces the
    number of <emphasis>seconds</> between the two values.  This will adjust
    for the number of days in each month, timezone changes, and daylight
-   saving time adjustments.  Operator subtraction of date or timestamp
-   values returns the number of days (24-hours) and hours/minutes/seconds
+   saving time adjustments.  Subtraction of date or timestamp
+   values with the <quote><literal>-</></quote> operator
+   returns the number of days (24-hours) and hours/minutes/seconds
    between the values, making the same adjustments.  The <function>age</>
    function returns years, months, days, and hours/minutes/seconds,
    performing field-by-field subtraction and then adjusting for negative
-   field values.  The following queries, produced with <literal>timezone
-   = 'US/Eastern'</> and including a daylight saving time change,
-   illustrates these issues:
+   field values.  The following queries illustrate the differences in these
+   approaches.  The sample results were produced with <literal>timezone
+   = 'US/Eastern'</>; there is a daylight saving time change between the
+   two dates used:
   </para>
 
 <screen>
@@ -6815,7 +6818,7 @@ SELECT EXTRACT(EPOCH FROM timestamptz '2013-07-01 12:00:00') -
        EXTRACT(EPOCH FROM timestamptz '2013-03-01 12:00:00');
 <lineannotation>Result: </lineannotation><computeroutput>10537200</computeroutput>
 SELECT (EXTRACT(EPOCH FROM timestamptz '2013-07-01 12:00:00') -
-        EXTRACT(EPOCH FROM timestamptz '2013-03-01 12:00:00')) 
+        EXTRACT(EPOCH FROM timestamptz '2013-03-01 12:00:00'))
         / 60 / 60 / 24;
 <lineannotation>Result: </lineannotation><computeroutput>121.958333333333</computeroutput>
 SELECT timestamptz '2013-07-01 12:00:00' - timestamptz '2013-03-01 12:00:00';
