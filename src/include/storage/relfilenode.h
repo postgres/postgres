@@ -32,7 +32,7 @@ typedef enum ForkNumber
 
 	/*
 	 * NOTE: if you add a new fork, change MAX_FORKNUM below and update the
-	 * forkNames array in catalog.c
+	 * forkNames array in src/common/relpath.c
 	 */
 } ForkNumber;
 
