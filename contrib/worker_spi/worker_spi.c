@@ -123,7 +123,7 @@ initialize_worker_spi(worktable *table)
 	if (SPI_processed != 1)
 		elog(FATAL, "not a singleton result");
 
-	ntup = DatumGetInt32(SPI_getbinval(SPI_tuptable->vals[0],
+	ntup = DatumGetInt64(SPI_getbinval(SPI_tuptable->vals[0],
 									   SPI_tuptable->tupdesc,
 									   1, &isnull));
 	if (isnull)
