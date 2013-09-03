@@ -1034,11 +1034,11 @@ set semsys:seminfo_semmsl=32
 
      <varlistentry>
       <term><systemitem class="osname">Solaris</> 2.10 (Solaris
-      10)</term>
+      10) and later</term>
       <term><systemitem class="osname">OpenSolaris</></term>
       <listitem>
        <para>
-        In Solaris 10 and OpenSolaris, the default shared memory and
+        In Solaris 10 and later, and OpenSolaris, the default shared memory and
         semaphore settings are good enough for most
         <productname>PostgreSQL</> applications.  Solaris now defaults
         to a <varname>SHMMAX</> of one-quarter of system <acronym>RAM</>.
@@ -1074,7 +1074,7 @@ project.max-msg-ids=(priv,4096,deny)
         Additionally, if you are running <productname>PostgreSQL</>
         inside a zone, you may need to raise the zone resource usage
         limits as well.  See "Chapter2:  Projects and Tasks" in the
-        <citetitle>Solaris 10 System Administrator's Guide</> for more
+        <citetitle>System Administrator's Guide</> for more
         information on <literal>projects</> and <command>prctl</>.
        </para>
       </listitem>
