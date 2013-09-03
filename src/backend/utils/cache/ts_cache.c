@@ -604,11 +604,8 @@ check_TSCurrentConfig(char **newval, void **extra, GucSource source)
 		cfgId = get_ts_config_oid(stringToQualifiedNameList(*newval), true);
 
 		/*
-		 * When source == PGC_S_TEST, we are checking the argument of an ALTER
-		 * DATABASE SET or ALTER USER SET command.	It could be that the
-		 * intended use of the setting is for some other database, so we
-		 * should not error out if the text search configuration is not
-		 * present in the current database.  We issue a NOTICE instead.
+		 * When source == PGC_S_TEST, don't throw a hard error for a
+		 * nonexistent configuration, only a NOTICE.  See comments in guc.h.
 		 */
 		if (!OidIsValid(cfgId))
 		{
