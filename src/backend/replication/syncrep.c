@@ -21,8 +21,9 @@
  *
  * Replication is either synchronous or not synchronous (async). If it is
  * async, we just fastpath out of here. If it is sync, then we wait for
- * the write or flush location on the standby before releasing the waiting backend.
- * Further complexity in that interaction is expected in later releases.
+ * the write or flush location on the standby before releasing the waiting
+ * backend. Further complexity in that interaction is expected in later
+ * releases.
  *
  * The best performing way to manage the waiting backends is to have a
  * single ordered queue of waiting backends, so that we can avoid
@@ -116,7 +117,7 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 	 * set.  See SyncRepUpdateSyncStandbysDefined.
 	 *
 	 * Also check that the standby hasn't already replied. Unlikely race
-	 * condition but we'll be fetching that cache line anyway so its likely to
+	 * condition but we'll be fetching that cache line anyway so it's likely to
 	 * be a low cost check.
 	 */
 	if (!WalSndCtl->sync_standbys_defined ||
