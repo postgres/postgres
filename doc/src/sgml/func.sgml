@@ -6431,7 +6431,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
         </entry>
         <entry><type>interval</type></entry>
         <entry>Subtract arguments, producing a <quote>symbolic</> result that
-        uses years and months</entry>, rather than just days
+        uses years and months, rather than just days</entry>
         <entry><literal>age(timestamp '2001-04-10', timestamp '1957-06-13')</literal></entry>
         <entry><literal>43 years 9 mons 27 days</literal></entry>
        </row>
