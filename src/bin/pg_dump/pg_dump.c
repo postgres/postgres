@@ -229,7 +229,8 @@ static void getTableData(TableInfo *tblinfo, int numTables, bool oids);
 static void makeTableDataInfo(TableInfo *tbinfo, bool oids);
 static void buildMatViewRefreshDependencies(Archive *fout);
 static void getTableDataFKConstraints(void);
-static char *format_function_arguments(FuncInfo *finfo, char *funcargs);
+static char *format_function_arguments(FuncInfo *finfo, char *funcargs,
+									   bool is_agg);
 static char *format_function_arguments_old(Archive *fout,
 							  FuncInfo *finfo, int nallargs,
 							  char **allargtypes,
@@ -9365,15 +9366,20 @@ dumpProcLang(Archive *fout, ProcLangInfo *plang)
  * format_function_arguments: generate function name and argument list
  *
  * This is used when we can rely on pg_get_function_arguments to format
- * the argument list.
+ * the argument list.  Note, however, that pg_get_function_arguments
+ * does not special-case zero-argument aggregates.
  */
 static char *
-format_function_arguments(FuncInfo *finfo, char *funcargs)
+format_function_arguments(FuncInfo *finfo, char *funcargs, bool is_agg)
 {
 	PQExpBufferData fn;
 
 	initPQExpBuffer(&fn);
-	appendPQExpBuffer(&fn, "%s(%s)", fmtId(finfo->dobj.name), funcargs);
+	appendPQExpBuffer(&fn, "%s", fmtId(finfo->dobj.name));
+	if (is_agg && finfo->nargs == 0)
+		appendPQExpBuffer(&fn, "(*)");
+	else
+		appendPQExpBuffer(&fn, "(%s)", funcargs);
 	return fn.data;
 }
 
@@ -9804,8 +9810,8 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	if (funcargs)
 	{
 		/* 8.4 or later; we rely on server-side code for most of the work */
-		funcfullsig = format_function_arguments(finfo, funcargs);
-		funcsig = format_function_arguments(finfo, funciargs);
+		funcfullsig = format_function_arguments(finfo, funcargs, false);
+		funcsig = format_function_arguments(finfo, funciargs, false);
 	}
 	else
 	{
@@ -11405,7 +11411,8 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	PQExpBuffer delq;
 	PQExpBuffer labelq;
 	PQExpBuffer details;
-	char	   *aggsig;
+	char	   *aggsig;			/* identity signature */
+	char	   *aggfullsig;		/* full signature */
 	char	   *aggsig_tag;
 	PGresult   *res;
 	int			i_aggtransfn;
@@ -11435,14 +11442,28 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	selectSourceSchema(fout, agginfo->aggfn.dobj.namespace->dobj.name);
 
 	/* Get aggregate-specific details */
-	if (fout->remoteVersion >= 80100)
+	if (fout->remoteVersion >= 80400)
+	{
+		appendPQExpBuffer(query, "SELECT aggtransfn, "
+						  "aggfinalfn, aggtranstype::pg_catalog.regtype, "
+						  "aggsortop::pg_catalog.regoperator, "
+						  "agginitval, "
+						  "'t'::boolean AS convertok, "
+						  "pg_catalog.pg_get_function_arguments(p.oid) AS funcargs, "
+						  "pg_catalog.pg_get_function_identity_arguments(p.oid) AS funciargs "
+					  "FROM pg_catalog.pg_aggregate a, pg_catalog.pg_proc p "
+						  "WHERE a.aggfnoid = p.oid "
+						  "AND p.oid = '%u'::pg_catalog.oid",
+						  agginfo->aggfn.dobj.catId.oid);
+	}
+	else if (fout->remoteVersion >= 80100)
 	{
 		appendPQExpBuffer(query, "SELECT aggtransfn, "
 						  "aggfinalfn, aggtranstype::pg_catalog.regtype, "
 						  "aggsortop::pg_catalog.regoperator, "
 						  "agginitval, "
 						  "'t'::boolean AS convertok "
-					  "FROM pg_catalog.pg_aggregate a, pg_catalog.pg_proc p "
+						  "FROM pg_catalog.pg_aggregate a, pg_catalog.pg_proc p "
 						  "WHERE a.aggfnoid = p.oid "
 						  "AND p.oid = '%u'::pg_catalog.oid",
 						  agginfo->aggfn.dobj.catId.oid);
@@ -11499,7 +11520,24 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	agginitval = PQgetvalue(res, 0, i_agginitval);
 	convertok = (PQgetvalue(res, 0, i_convertok)[0] == 't');
 
-	aggsig = format_aggregate_signature(agginfo, fout, true);
+	if (fout->remoteVersion >= 80400)
+	{
+		/* 8.4 or later; we rely on server-side code for most of the work */
+		char	   *funcargs;
+		char	   *funciargs;
+
+		funcargs = PQgetvalue(res, 0, PQfnumber(res, "funcargs"));
+		funciargs = PQgetvalue(res, 0, PQfnumber(res, "funciargs"));
+		aggfullsig = format_function_arguments(&agginfo->aggfn, funcargs, true);
+		aggsig = format_function_arguments(&agginfo->aggfn, funciargs, true);
+	}
+	else
+	{
+		/* pre-8.4, do it ourselves */
+		aggsig = format_aggregate_signature(agginfo, fout, true);
+		aggfullsig = aggsig;
+	}
+
 	aggsig_tag = format_aggregate_signature(agginfo, fout, false);
 
 	if (!convertok)
@@ -11559,7 +11597,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 					  aggsig);
 
 	appendPQExpBuffer(q, "CREATE AGGREGATE %s (\n%s\n);\n",
-					  aggsig, details->data);
+					  aggfullsig, details->data);
 
 	appendPQExpBuffer(labelq, "AGGREGATE %s", aggsig);
 

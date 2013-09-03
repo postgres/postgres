@@ -170,6 +170,42 @@ SELECT attrelid::regclass, array_accum(atttypid::regtype)
   </para>
 
   <para>
+   An aggregate function can be made to accept a varying number of arguments
+   by declaring its last argument as a <literal>VARIADIC</> array, in much
+   the same fashion as for regular functions; see
+   <xref linkend="xfunc-sql-variadic-functions">.  The aggregate's transition
+   function must have the same array type as its last argument.  The
+   transition function typically would also be marked <literal>VARIADIC</>,
+   but this is not strictly required.
+  </para>
+
+  <note>
+   <para>
+    Variadic aggregates are easily misused in connection with
+    the <literal>ORDER BY</> option (see <xref linkend="syntax-aggregates">),
+    since the parser cannot tell whether the wrong number of actual arguments
+    have been given in such a combination.  Keep in mind that everything to
+    the right of <literal>ORDER BY</> is a sort key, not an argument to the
+    aggregate.  For example, in
+<programlisting>
+SELECT myaggregate(a ORDER BY a, b, c) FROM ...
+</programlisting>
+    the parser will see this as a single aggregate function argument and
+    three sort keys.  However, the user might have intended
+<programlisting>
+SELECT myaggregate(a, b, c ORDER BY a) FROM ...
+</programlisting>
+    If <literal>myaggregate</> is variadic, both these calls could be
+    perfectly valid.
+   </para>
+
+   <para>
+    For the same reason, it's wise to think twice before creating aggregate
+    functions with the same names and different numbers of regular arguments.
+   </para>
+  </note>
+
+  <para>
    A function written in C can detect that it is being called as an
    aggregate transition or final function by calling
    <function>AggCheckCallContext</>, for example:

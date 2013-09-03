@@ -674,6 +674,8 @@ ORDER BY 1, 2;
 -- to avoid this because it opens the door for confusion in connection with
 -- ORDER BY: novices frequently put the ORDER BY in the wrong place.
 -- See the fate of the single-argument form of string_agg() for history.
+-- (Note: we don't forbid users from creating such aggregates; the policy is
+-- just to think twice before creating built-in aggregates like this.)
 -- The only aggregates that should show up here are count(x) and count(*).
 
 SELECT p1.oid::regprocedure, p2.oid::regprocedure
@@ -683,7 +685,13 @@ WHERE p1.oid < p2.oid AND p1.proname = p2.proname AND
     array_dims(p1.proargtypes) != array_dims(p2.proargtypes)
 ORDER BY 1;
 
--- For the same reason, aggregates with default arguments are no good.
+-- For the same reason, we avoid creating built-in variadic aggregates.
+
+SELECT oid, proname
+FROM pg_proc AS p
+WHERE proisagg AND provariadic != 0;
+
+-- For the same reason, built-in aggregates with default arguments are no good.
 
 SELECT oid, proname
 FROM pg_proc AS p

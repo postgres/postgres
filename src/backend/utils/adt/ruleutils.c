@@ -7405,6 +7405,7 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
 	Oid			argtypes[FUNC_MAX_ARGS];
 	List	   *arglist;
 	int			nargs;
+	bool		use_variadic;
 	ListCell   *l;
 
 	/* Extract the regular arguments, ignoring resjunk stuff for the moment */
@@ -7430,13 +7431,26 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
 	appendStringInfo(buf, "%s(%s",
 					 generate_function_name(aggref->aggfnoid, nargs,
 											NIL, argtypes,
-											false, NULL),
+											aggref->aggvariadic,
+											&use_variadic),
 					 (aggref->aggdistinct != NIL) ? "DISTINCT " : "");
+
 	/* aggstar can be set only in zero-argument aggregates */
 	if (aggref->aggstar)
 		appendStringInfoChar(buf, '*');
 	else
-		get_rule_expr((Node *) arglist, context, true);
+	{
+		nargs = 0;
+		foreach(l, arglist)
+		{
+			if (nargs++ > 0)
+				appendStringInfoString(buf, ", ");
+			if (use_variadic && lnext(l) == NULL)
+				appendStringInfoString(buf, "VARIADIC ");
+			get_rule_expr((Node *) lfirst(l), context, true);
+		}
+	}
+
 	if (aggref->aggorder != NIL)
 	{
 		appendStringInfoString(buf, " ORDER BY ");
@@ -8581,7 +8595,7 @@ generate_relation_name(Oid relid, List *namespaces)
  *		types.	(Those matter because of ambiguous-function resolution rules.)
  *
  * If we're dealing with a potentially variadic function (in practice, this
- * means a FuncExpr and not some other way of calling the function), then
+ * means a FuncExpr or Aggref, not some other way of calling a function), then
  * was_variadic must specify whether VARIADIC appeared in the original call,
  * and *use_variadic_p will be set to indicate whether to print VARIADIC in
  * the output.	For non-FuncExpr cases, was_variadic should be FALSE and

@@ -2524,6 +2524,13 @@ SELECT concat_lower_or_upper('Hello', 'World', uppercase := true);
     having numerous parameters that have default values, named or mixed
     notation can save a great deal of writing and reduce chances for error.
    </para>
+
+   <note>
+    <para>
+     Named and mixed call notations can currently be used only with regular
+     functions, not with aggregate functions or window functions.
+    </para>
+   </note>
   </sect2>
  </sect1>
 

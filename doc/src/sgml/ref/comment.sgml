@@ -23,7 +23,7 @@ PostgreSQL documentation
 <synopsis>
 COMMENT ON
 {
-  AGGREGATE <replaceable class="PARAMETER">agg_name</replaceable> (<replaceable class="PARAMETER">agg_type</replaceable> [, ...] ) |
+  AGGREGATE <replaceable class="PARAMETER">agg_name</replaceable> ( [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">agg_type</replaceable> [, ...] ) |
   CAST (<replaceable>source_type</replaceable> AS <replaceable>target_type</replaceable>) |
   COLLATION <replaceable class="PARAMETER">object_name</replaceable> |
   COLUMN <replaceable class="PARAMETER">relation_name</replaceable>.<replaceable class="PARAMETER">column_name</replaceable> |
@@ -126,7 +126,7 @@ COMMENT ON
      <para>
       An input data type on which the aggregate function operates.
       To reference a zero-argument aggregate function, write <literal>*</>
-      in place of the list of input data types.
+      in place of the list of argument specifications.
      </para>
     </listitem>
    </varlistentry>
@@ -156,7 +156,7 @@ COMMENT ON
       The mode of a function argument: <literal>IN</>, <literal>OUT</>,
       <literal>INOUT</>, or <literal>VARIADIC</>.
       If omitted, the default is <literal>IN</>.
-      Note that <command>COMMENT ON FUNCTION</command> does not actually pay
+      Note that <command>COMMENT</command> does not actually pay
       any attention to <literal>OUT</> arguments, since only the input
       arguments are needed to determine the function's identity.
       So it is sufficient to list the <literal>IN</>, <literal>INOUT</>,
@@ -170,7 +170,7 @@ COMMENT ON
     <listitem>
      <para>
       The name of a function argument.
-      Note that <command>COMMENT ON FUNCTION</command> does not actually pay
+      Note that <command>COMMENT</command> does not actually pay
       any attention to argument names, since only the argument data
       types are needed to determine the function's identity.
      </para>

@@ -30,7 +30,7 @@ ALTER EXTENSION <replaceable class="PARAMETER">name</replaceable> DROP <replacea
 
 <phrase>where <replaceable class="PARAMETER">member_object</replaceable> is:</phrase>
 
-  AGGREGATE <replaceable class="PARAMETER">agg_name</replaceable> (<replaceable class="PARAMETER">agg_type</replaceable> [, ...] ) |
+  AGGREGATE <replaceable class="PARAMETER">agg_name</replaceable> ( [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">agg_type</replaceable> [, ...] ) |
   CAST (<replaceable>source_type</replaceable> AS <replaceable>target_type</replaceable>) |
   COLLATION <replaceable class="PARAMETER">object_name</replaceable> |
   CONVERSION <replaceable class="PARAMETER">object_name</replaceable> |
@@ -179,7 +179,7 @@ ALTER EXTENSION <replaceable class="PARAMETER">name</replaceable> DROP <replacea
       <para>
        An input data type on which the aggregate function operates.
        To reference a zero-argument aggregate function, write <literal>*</>
-       in place of the list of input data types.
+       in place of the list of argument specifications.
       </para>
      </listitem>
     </varlistentry>

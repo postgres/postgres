@@ -45,8 +45,12 @@ static Oid lookup_agg_function(List *fnName, int nargs, Oid *input_types,
 Oid
 AggregateCreate(const char *aggName,
 				Oid aggNamespace,
-				Oid *aggArgTypes,
 				int numArgs,
+				oidvector *parameterTypes,
+				Datum allParameterTypes,
+				Datum parameterModes,
+				Datum parameterNames,
+				List *parameterDefaults,
 				List *aggtransfnName,
 				List *aggfinalfnName,
 				List *aggsortopName,
@@ -61,6 +65,7 @@ AggregateCreate(const char *aggName,
 	Oid			transfn;
 	Oid			finalfn = InvalidOid;	/* can be omitted */
 	Oid			sortop = InvalidOid;	/* can be omitted */
+	Oid		   *aggArgTypes = parameterTypes->values;
 	bool		hasPolyArg;
 	bool		hasInternalArg;
 	Oid			rettype;
@@ -244,12 +249,11 @@ AggregateCreate(const char *aggName,
 							  false,	/* isStrict (not needed for agg) */
 							  PROVOLATILE_IMMUTABLE,	/* volatility (not
 														 * needed for agg) */
-							  buildoidvector(aggArgTypes,
-											 numArgs),	/* paramTypes */
-							  PointerGetDatum(NULL),	/* allParamTypes */
-							  PointerGetDatum(NULL),	/* parameterModes */
-							  PointerGetDatum(NULL),	/* parameterNames */
-							  NIL,		/* parameterDefaults */
+							  parameterTypes,	/* paramTypes */
+							  allParameterTypes,		/* allParamTypes */
+							  parameterModes,	/* parameterModes */
+							  parameterNames,	/* parameterNames */
+							  parameterDefaults,		/* parameterDefaults */
 							  PointerGetDatum(NULL),	/* proconfig */
 							  1,	/* procost */
 							  0);		/* prorows */

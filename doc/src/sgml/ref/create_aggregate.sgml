@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> ( <replaceable class="PARAMETER">input_data_type</replaceable> [ , ... ] ) (
+CREATE AGGREGATE <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">arg_name</replaceable> ] <replaceable class="parameter">arg_data_type</replaceable> [ , ... ] ) (
     SFUNC = <replaceable class="PARAMETER">sfunc</replaceable>,
     STYPE = <replaceable class="PARAMETER">state_data_type</replaceable>
     [ , FINALFUNC = <replaceable class="PARAMETER">ffunc</replaceable> ]
@@ -118,7 +118,7 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
    Note that this behavior is only available when
    <replaceable class="PARAMETER">state_data_type</replaceable>
    is the same as the first
-   <replaceable class="PARAMETER">input_data_type</replaceable>.
+   <replaceable class="PARAMETER">arg_data_type</replaceable>.
    When these types are different, you must supply a nonnull initial
    condition or use a nonstrict transition function.
   </para>
@@ -187,12 +187,36 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">input_data_type</replaceable></term>
+    <term><replaceable class="parameter">argmode</replaceable></term>
+
+    <listitem>
+     <para>
+      The mode of an argument: <literal>IN</> or <literal>VARIADIC</>.
+      (Aggregate functions do not support <literal>OUT</> arguments.)
+      If omitted, the default is <literal>IN</>.  Only the last argument
+      can be marked <literal>VARIADIC</>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">arg_name</replaceable></term>
+
+    <listitem>
+     <para>
+      The name of an argument.  This is currently only useful for
+      documentation purposes.  If omitted, the argument has no name.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">arg_data_type</replaceable></term>
     <listitem>
      <para>
       An input data type on which this aggregate function operates.
       To create a zero-argument aggregate function, write <literal>*</>
-      in place of the list of input data types.  (An example of such an
+      in place of the list of argument specifications.  (An example of such an
       aggregate is <function>count(*)</function>.)
      </para>
     </listitem>
@@ -205,8 +229,8 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
       In the old syntax for <command>CREATE AGGREGATE</>, the input data type
       is specified by a <literal>basetype</> parameter rather than being
       written next to the aggregate name.  Note that this syntax allows
-      only one input parameter.  To define a zero-argument aggregate function,
-      specify the <literal>basetype</> as
+      only one input parameter.  To define a zero-argument aggregate function
+      with this syntax, specify the <literal>basetype</> as
       <literal>"ANY"</> (not <literal>*</>).
      </para>
     </listitem>

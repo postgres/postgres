@@ -1249,3 +1249,16 @@ select aggfns(distinct a,b,c order by a,c using ~<~,b) filter (where a > 1)
  {"(2,2,bar)","(3,1,baz)"}
 (1 row)
 
+-- variadic aggregates
+select least_agg(q1,q2) from int8_tbl;
+     least_agg     
+-------------------
+ -4567890123456789
+(1 row)
+
+select least_agg(variadic array[q1,q2]) from int8_tbl;
+     least_agg     
+-------------------
+ -4567890123456789
+(1 row)
+

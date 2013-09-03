@@ -88,7 +88,6 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 
 	typtup = LookupTypeName(NULL, returnType, NULL);
 
-
 	if (typtup)
 	{
 		if (!((Form_pg_type) GETSTRUCT(typtup))->typisdefined)
@@ -158,22 +157,31 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 }
 
 /*
- * Interpret the parameter list of the CREATE FUNCTION statement.
+ * Interpret the function parameter list of a CREATE FUNCTION or
+ * CREATE AGGREGATE statement.
+ *
+ * Input parameters:
+ * parameters: list of FunctionParameter structs
+ * languageOid: OID of function language (InvalidOid if it's CREATE AGGREGATE)
+ * is_aggregate: needed only to determine error handling
+ * queryString: likewise, needed only for error handling
  *
  * Results are stored into output parameters.  parameterTypes must always
  * be created, but the other arrays are set to NULL if not needed.
  * requiredResultType is set to InvalidOid if there are no OUT parameters,
  * else it is set to the OID of the implied result type.
  */
-static void
-examine_parameter_list(List *parameters, Oid languageOid,
-					   const char *queryString,
-					   oidvector **parameterTypes,
-					   ArrayType **allParameterTypes,
-					   ArrayType **parameterModes,
-					   ArrayType **parameterNames,
-					   List **parameterDefaults,
-					   Oid *requiredResultType)
+void
+interpret_function_parameter_list(List *parameters,
+								  Oid languageOid,
+								  bool is_aggregate,
+								  const char *queryString,
+								  oidvector **parameterTypes,
+								  ArrayType **allParameterTypes,
+								  ArrayType **parameterModes,
+								  ArrayType **parameterNames,
+								  List **parameterDefaults,
+								  Oid *requiredResultType)
 {
 	int			parameterCount = list_length(parameters);
 	Oid		   *inTypes;
@@ -223,6 +231,12 @@ examine_parameter_list(List *parameters, Oid languageOid,
 							(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 						   errmsg("SQL function cannot accept shell type %s",
 								  TypeNameToString(t))));
+				/* We don't allow creating aggregates on shell types either */
+				else if (is_aggregate)
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+							 errmsg("aggregate cannot accept shell type %s",
+									TypeNameToString(t))));
 				else
 					ereport(NOTICE,
 							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -246,9 +260,16 @@ examine_parameter_list(List *parameters, Oid languageOid,
 			aclcheck_error_type(aclresult, toid);
 
 		if (t->setof)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("functions cannot accept set arguments")));
+		{
+			if (is_aggregate)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+						 errmsg("aggregates cannot accept set arguments")));
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+						 errmsg("functions cannot accept set arguments")));
+		}
 
 		/* handle input parameters */
 		if (fp->mode != FUNC_PARAM_OUT && fp->mode != FUNC_PARAM_TABLE)
@@ -890,13 +911,16 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 	 * Convert remaining parameters of CREATE to form wanted by
 	 * ProcedureCreate.
 	 */
-	examine_parameter_list(stmt->parameters, languageOid, queryString,
-						   &parameterTypes,
-						   &allParameterTypes,
-						   &parameterModes,
-						   &parameterNames,
-						   &parameterDefaults,
-						   &requiredResultType);
+	interpret_function_parameter_list(stmt->parameters,
+									  languageOid,
+									  false,	/* not an aggregate */
+									  queryString,
+									  &parameterTypes,
+									  &allParameterTypes,
+									  &parameterModes,
+									  &parameterNames,
+									  &parameterDefaults,
+									  &requiredResultType);
 
 	if (stmt->returnType)
 	{

@@ -21,7 +21,9 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP AGGREGATE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> ( <replaceable class="PARAMETER">argtype</replaceable> [ , ... ] ) [ CASCADE | RESTRICT ]
+DROP AGGREGATE [ IF EXISTS ]
+  <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">arg_name</replaceable> ] <replaceable class="parameter">arg_data_type</replaceable> [ , ... ] )
+  [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -60,12 +62,36 @@ DROP AGGREGATE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> (
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">argtype</replaceable></term>
+    <term><replaceable class="parameter">argmode</replaceable></term>
+
+    <listitem>
+     <para>
+      The mode of an argument: <literal>IN</> or <literal>VARIADIC</>.
+      If omitted, the default is <literal>IN</>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">arg_name</replaceable></term>
+
+    <listitem>
+     <para>
+      The name of an argument.
+      Note that <command>DROP AGGREGATE</command> does not actually pay
+      any attention to argument names, since only the argument data
+      types are needed to determine the aggregate function's identity.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">arg_data_type</replaceable></term>
     <listitem>
      <para>
       An input data type on which the aggregate function operates.
       To reference a zero-argument aggregate function, write <literal>*</>
-      in place of the list of input data types.
+      in place of the list of argument specifications.
      </para>
     </listitem>
    </varlistentry>

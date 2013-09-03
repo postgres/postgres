@@ -385,7 +385,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	}
 
 	/*
-	 * When function is called an explicit VARIADIC labeled parameter,
+	 * When function is called with an explicit VARIADIC labeled parameter,
 	 * and the declared_arg_type is "any", then sanity check the actual
 	 * parameter type now - it must be an array.
 	 */
@@ -425,8 +425,9 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		aggref->aggtype = rettype;
 		/* aggcollid and inputcollid will be set by parse_collate.c */
 		/* args, aggorder, aggdistinct will be set by transformAggregateCall */
-		aggref->aggstar = agg_star;
 		aggref->aggfilter = agg_filter;
+		aggref->aggstar = agg_star;
+		aggref->aggvariadic = func_variadic;
 		/* agglevelsup will be set by transformAggregateCall */
 		aggref->location = location;
 
@@ -448,10 +449,13 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					 parser_errposition(pstate, location)));
 
 		/*
-		 * Currently it's not possible to define an aggregate with named
-		 * arguments, so this case should be impossible.  Check anyway because
-		 * the planner and executor wouldn't cope with NamedArgExprs in an
-		 * Aggref node.
+		 * We might want to support named arguments later, but disallow it for
+		 * now.  We'd need to figure out the parsed representation (should the
+		 * NamedArgExprs go above or below the TargetEntry nodes?) and then
+		 * teach the planner to reorder the list properly.	Or maybe we could
+		 * make transformAggregateCall do that?  However, if you'd also like
+		 * to allow default arguments for aggregates, we'd need to do it in
+		 * planning to avoid semantic problems.
 		 */
 		if (argnames != NIL)
 			ereport(ERROR,

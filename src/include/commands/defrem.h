@@ -15,6 +15,7 @@
 #define DEFREM_H
 
 #include "nodes/parsenodes.h"
+#include "utils/array.h"
 
 /* commands/dropcmds.c */
 extern void RemoveObjects(DropStmt *stmt);
@@ -53,6 +54,16 @@ extern void IsThereFunctionInNamespace(const char *proname, int pronargs,
 						   oidvector *proargtypes, Oid nspOid);
 extern void ExecuteDoStmt(DoStmt *stmt);
 extern Oid	get_cast_oid(Oid sourcetypeid, Oid targettypeid, bool missing_ok);
+extern void interpret_function_parameter_list(List *parameters,
+								  Oid languageOid,
+								  bool is_aggregate,
+								  const char *queryString,
+								  oidvector **parameterTypes,
+								  ArrayType **allParameterTypes,
+								  ArrayType **parameterModes,
+								  ArrayType **parameterNames,
+								  List **parameterDefaults,
+								  Oid *requiredResultType);
 
 /* commands/operatorcmds.c */
 extern Oid	DefineOperator(List *names, List *parameters);
@@ -60,7 +71,7 @@ extern void RemoveOperatorById(Oid operOid);
 
 /* commands/aggregatecmds.c */
 extern Oid DefineAggregate(List *name, List *args, bool oldstyle,
-				List *parameters);
+				List *parameters, const char *queryString);
 
 /* commands/opclasscmds.c */
 extern Oid	DefineOpClass(CreateOpClassStmt *stmt);
