@@ -668,24 +668,34 @@ ProcedureCreate(const char *procedureName,
 	/* Verify function body */
 	if (OidIsValid(languageValidator))
 	{
-		ArrayType  *set_items;
-		int			save_nestlevel;
+		ArrayType  *set_items = NULL;
+		int			save_nestlevel = 0;
 
 		/* Advance command counter so new tuple can be seen by validator */
 		CommandCounterIncrement();
 
-		/* Set per-function configuration parameters */
-		set_items = (ArrayType *) DatumGetPointer(proconfig);
-		if (set_items)			/* Need a new GUC nesting level */
+		/*
+		 * Set per-function configuration parameters so that the validation is
+		 * done with the environment the function expects.	However, if
+		 * check_function_bodies is off, we don't do this, because that would
+		 * create dump ordering hazards that pg_dump doesn't know how to deal
+		 * with.  (For example, a SET clause might refer to a not-yet-created
+		 * text search configuration.)	This means that the validator
+		 * shouldn't complain about anything that might depend on a GUC
+		 * parameter when check_function_bodies is off.
+		 */
+		if (check_function_bodies)
 		{
-			save_nestlevel = NewGUCNestLevel();
-			ProcessGUCArray(set_items,
-							(superuser() ? PGC_SUSET : PGC_USERSET),
-							PGC_S_SESSION,
-							GUC_ACTION_SAVE);
+			set_items = (ArrayType *) DatumGetPointer(proconfig);
+			if (set_items)		/* Need a new GUC nesting level */
+			{
+				save_nestlevel = NewGUCNestLevel();
+				ProcessGUCArray(set_items,
+								(superuser() ? PGC_SUSET : PGC_USERSET),
+								PGC_S_SESSION,
+								GUC_ACTION_SAVE);
+			}
 		}
-		else
-			save_nestlevel = 0; /* keep compiler quiet */
 
 		OidFunctionCall1(languageValidator, ObjectIdGetDatum(retval));
 

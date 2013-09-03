@@ -200,6 +200,13 @@ CREATE LANGUAGE plsample
     of having a validator is not to let the call handler omit checks, but
     to notify the user immediately if there are obvious errors in a
     <command>CREATE FUNCTION</> command.)
+    While the choice of exactly what to check is mostly left to the
+    discretion of the validator function, note that the core
+    <command>CREATE FUNCTION</> code only executes <literal>SET</> clauses
+    attached to a function when <varname>check_function_bodies</> is on.
+    Therefore, checks whose results might be affected by GUC parameters
+    definitely should be skipped when <varname>check_function_bodies</> is
+    off, to avoid false failures when reloading a dump.
    </para>
 
    <para>
