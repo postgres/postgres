@@ -200,6 +200,17 @@
 #endif
 
 /*
+ * Assumed cache line size. This doesn't affect correctness, but can be
+ * used for low-level optimizations. Currently, this is only used to pad
+ * some data structures in xlog.c, to ensure that highly-contended fields
+ * are on different cache lines. Too small a value can hurt performance due
+ * to false sharing, while the only downside of too large a value is a few
+ * bytes of wasted memory. The default is 128, which should be large enough
+ * for all supported platforms.
+ */
+#define CACHE_LINE_SIZE		128
+
+/*
  *------------------------------------------------------------------------
  * The following symbols are for enabling debugging code, not for
  * controlling user-visible features or resource limits.

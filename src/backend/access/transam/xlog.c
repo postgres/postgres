@@ -408,7 +408,7 @@ typedef struct
 typedef union XLogInsertSlotPadded
 {
 	XLogInsertSlot slot;
-	char		pad[64];
+	char		pad[CACHE_LINE_SIZE];
 } XLogInsertSlotPadded;
 
 /*
@@ -428,8 +428,14 @@ typedef struct XLogCtlInsert
 	uint64		CurrBytePos;
 	uint64		PrevBytePos;
 
-	/* insertion slots, see above for details */
-	XLogInsertSlotPadded *insertSlots;
+	/*
+	 * Make sure the above heavily-contended spinlock and byte positions are
+	 * on their own cache line. In particular, the RedoRecPtr and full page
+	 * write variables below should be on a different cache line. They are
+	 * read on every WAL insertion, but updated rarely, and we don't want
+	 * those reads to steal the cache line containing Curr/PrevBytePos.
+	 */
+	char		pad[CACHE_LINE_SIZE];
 
 	/*
 	 * fullPageWrites is the master copy used by all backends to determine
@@ -455,6 +461,9 @@ typedef struct XLogCtlInsert
 	bool		exclusiveBackup;
 	int			nonExclusiveBackups;
 	XLogRecPtr	lastBackupStart;
+
+	/* insertion slots, see XLogInsertSlot struct above for details */
+	XLogInsertSlotPadded *insertSlots;
 } XLogCtlInsert;
 
 /*
