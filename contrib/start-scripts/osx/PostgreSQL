@@ -24,11 +24,7 @@
 #
 # POSTGRESQL=-NO-
 #
-# For more information on Darwin/Mac OS X startup bundles, see this article:
-#
-#  http://www.opensource.apple.com/projects/documentation/howto/html/SystemStarter_HOWTO.html
-#
-# Created by David Wheeler, 2002.
+# Created by David Wheeler, 2002
 
 # modified by Ray Aspeitia 12-03-2003 :
 # added log rotation script to db startup
