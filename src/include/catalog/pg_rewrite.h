@@ -35,7 +35,6 @@ CATALOG(pg_rewrite,2618)
 {
 	NameData	rulename;
 	Oid			ev_class;
-	int16		ev_attr;
 	char		ev_type;
 	char		ev_enabled;
 	bool		is_instead;
@@ -57,14 +56,13 @@ typedef FormData_pg_rewrite *Form_pg_rewrite;
  *		compiler constants for pg_rewrite
  * ----------------
  */
-#define Natts_pg_rewrite				8
+#define Natts_pg_rewrite				7
 #define Anum_pg_rewrite_rulename		1
 #define Anum_pg_rewrite_ev_class		2
-#define Anum_pg_rewrite_ev_attr			3
-#define Anum_pg_rewrite_ev_type			4
-#define Anum_pg_rewrite_ev_enabled		5
-#define Anum_pg_rewrite_is_instead		6
-#define Anum_pg_rewrite_ev_qual			7
-#define Anum_pg_rewrite_ev_action		8
+#define Anum_pg_rewrite_ev_type			3
+#define Anum_pg_rewrite_ev_enabled		4
+#define Anum_pg_rewrite_is_instead		5
+#define Anum_pg_rewrite_ev_qual			6
+#define Anum_pg_rewrite_ev_action		7
 
 #endif   /* PG_REWRITE_H */

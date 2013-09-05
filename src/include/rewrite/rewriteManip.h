@@ -49,8 +49,6 @@ extern void IncrementVarSublevelsUp_rtable(List *rtable,
 
 extern bool rangeTableEntry_used(Node *node, int rt_index,
 					 int sublevels_up);
-extern bool attribute_used(Node *node, int rt_index, int attno,
-			   int sublevels_up);
 
 extern Query *getInsertSelectQuery(Query *parsetree, Query ***subquery_ptr);
 

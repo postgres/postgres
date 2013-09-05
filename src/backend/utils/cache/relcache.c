@@ -682,7 +682,6 @@ RelationBuildRuleLock(Relation relation)
 		rule->ruleId = HeapTupleGetOid(rewrite_tuple);
 
 		rule->event = rewrite_form->ev_type - '0';
-		rule->attrno = rewrite_form->ev_attr;
 		rule->enabled = rewrite_form->ev_enabled;
 		rule->isInstead = rewrite_form->is_instead;
 
@@ -797,8 +796,6 @@ equalRuleLocks(RuleLock *rlock1, RuleLock *rlock2)
 			if (rule1->ruleId != rule2->ruleId)
 				return false;
 			if (rule1->event != rule2->event)
-				return false;
-			if (rule1->attrno != rule2->attrno)
 				return false;
 			if (rule1->enabled != rule2->enabled)
 				return false;

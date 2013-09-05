@@ -58,7 +58,6 @@ static Oid
 InsertRule(char *rulname,
 		   int evtype,
 		   Oid eventrel_oid,
-		   AttrNumber evslot_index,
 		   bool evinstead,
 		   Node *event_qual,
 		   List *action,
@@ -86,7 +85,6 @@ InsertRule(char *rulname,
 	namestrcpy(&rname, rulname);
 	values[Anum_pg_rewrite_rulename - 1] = NameGetDatum(&rname);
 	values[Anum_pg_rewrite_ev_class - 1] = ObjectIdGetDatum(eventrel_oid);
-	values[Anum_pg_rewrite_ev_attr - 1] = Int16GetDatum(evslot_index);
 	values[Anum_pg_rewrite_ev_type - 1] = CharGetDatum(evtype + '0');
 	values[Anum_pg_rewrite_ev_enabled - 1] = CharGetDatum(RULE_FIRES_ON_ORIGIN);
 	values[Anum_pg_rewrite_is_instead - 1] = BoolGetDatum(evinstead);
@@ -117,7 +115,6 @@ InsertRule(char *rulname,
 		 * When replacing, we don't need to replace every attribute
 		 */
 		MemSet(replaces, false, sizeof(replaces));
-		replaces[Anum_pg_rewrite_ev_attr - 1] = true;
 		replaces[Anum_pg_rewrite_ev_type - 1] = true;
 		replaces[Anum_pg_rewrite_is_instead - 1] = true;
 		replaces[Anum_pg_rewrite_ev_qual - 1] = true;
@@ -238,7 +235,6 @@ DefineQueryRewrite(char *rulename,
 				   List *action)
 {
 	Relation	event_relation;
-	int			event_attno;
 	ListCell   *l;
 	Query	   *query;
 	bool		RelisBecomingView = false;
@@ -495,7 +491,6 @@ DefineQueryRewrite(char *rulename,
 	/*
 	 * This rule is allowed - prepare to install it.
 	 */
-	event_attno = -1;
 
 	/* discard rule if it's null action and not INSTEAD; it's a no-op */
 	if (action != NIL || is_instead)
@@ -503,7 +498,6 @@ DefineQueryRewrite(char *rulename,
 		ruleId = InsertRule(rulename,
 							event_type,
 							event_relid,
-							event_attno,
 							is_instead,
 							event_qual,
 							action,

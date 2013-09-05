@@ -25,7 +25,6 @@ typedef struct RewriteRule
 {
 	Oid			ruleId;
 	CmdType		event;
-	AttrNumber	attrno;
 	Node	   *qual;
 	List	   *actions;
 	char		enabled;

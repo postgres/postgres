@@ -1955,7 +1955,6 @@ adjust_appendrel_attrs_context
 allocfunc
 array_unnest_fctx
 assign_collations_context
-attribute_used_context
 autovac_table
 av_relation
 avl_dbase
