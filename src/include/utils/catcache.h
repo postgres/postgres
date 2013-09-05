@@ -66,8 +66,8 @@ typedef struct catcache
 	long		cc_lsearches;	/* total # list-searches */
 	long		cc_lhits;		/* # of matches against existing lists */
 #endif
-	dlist_head	cc_bucket[1];	/* hash buckets --- VARIABLE LENGTH ARRAY */
-} CatCache;						/* VARIABLE LENGTH STRUCT */
+	dlist_head *cc_bucket;		/* hash buckets */
+} CatCache;
 
 
 typedef struct catctup
