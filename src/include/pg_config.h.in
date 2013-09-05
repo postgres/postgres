@@ -369,9 +369,6 @@
 /* Define to 1 if you have the `posix_fadvise' function. */
 #undef HAVE_POSIX_FADVISE
 
-/* Define to 1 if you have the `posix_fallocate' function. */
-#undef HAVE_POSIX_FALLOCATE
-
 /* Define to 1 if you have the POSIX signal interface. */
 #undef HAVE_POSIX_SIGNALS
 
