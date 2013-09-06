@@ -69,7 +69,6 @@
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
 #include "utils/lsyscache.h"
-#include "utils/memdebug.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
 #include "utils/snapmgr.h"
@@ -846,10 +845,6 @@ exec_simple_query(const char *query_string)
 	pgstat_report_activity(STATE_RUNNING, query_string);
 
 	TRACE_POSTGRESQL_QUERY_START(query_string);
-
-#ifdef USE_VALGRIND
-	VALGRIND_PRINTF("statement: %s\n", query_string);
-#endif
 
 	/*
 	 * We use save_log_statement_stats so ShowUsage doesn't report incorrect
