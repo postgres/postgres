@@ -246,6 +246,13 @@ resize_intArrayType(ArrayType *a, int num)
 	int			nbytes = ARR_DATA_OFFSET(a) + sizeof(int) * num;
 	int			i;
 
+	/* if no elements, return a zero-dimensional array */
+	if (num == 0)
+	{
+		ARR_NDIM(a) = 0;
+		return a;
+	}
+
 	if (num == ARRNELEMS(a))
 		return a;
 
