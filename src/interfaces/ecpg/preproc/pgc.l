@@ -1354,6 +1354,7 @@ parse_include(void)
 			/* if the command was "include_next" we have to disregard the first hit */
 			if (yyin && include_next)
 			{
+				fclose (yyin);
 				yyin = NULL;
 				include_next = false;
 			}
