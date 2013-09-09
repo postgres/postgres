@@ -368,6 +368,7 @@ typedef uint32 MultiXactOffset;
 typedef uint32 CommandId;
 
 #define FirstCommandId	((CommandId) 0)
+#define InvalidCommandId	(~(CommandId)0)
 
 /*
  * Array indexing support
