@@ -64,7 +64,4 @@ extern void CacheRegisterRelcacheCallback(RelcacheCallbackFunction func,
 
 extern void CallSyscacheCallbacks(int cacheid, uint32 hashvalue);
 
-extern void inval_twophase_postcommit(TransactionId xid, uint16 info,
-						  void *recdata, uint32 len);
-
 #endif   /* INVAL_H */
