@@ -196,7 +196,7 @@ parse_slash_copy(const char *args)
 		goto error;
 
 	/* { 'filename' | PROGRAM 'command' | STDIN | STDOUT | PSTDIN | PSTDOUT } */
-	token = strtokx(NULL, whitespace, NULL, "'",
+	token = strtokx(NULL, whitespace, ";", "'",
 					0, false, false, pset.encoding);
 	if (!token)
 		goto error;
@@ -205,7 +205,7 @@ parse_slash_copy(const char *args)
 	{
 		int			toklen;
 
-		token = strtokx(NULL, whitespace, NULL, "'",
+		token = strtokx(NULL, whitespace, ";", "'",
 						0, false, false, pset.encoding);
 		if (!token)
 			goto error;
