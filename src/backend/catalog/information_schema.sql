@@ -1502,7 +1502,9 @@ CREATE VIEW schemata AS
            CAST(null AS sql_identifier) AS default_character_set_name,
            CAST(null AS character_data) AS sql_path
     FROM pg_namespace n, pg_authid u
-    WHERE n.nspowner = u.oid AND pg_has_role(n.nspowner, 'USAGE');
+    WHERE n.nspowner = u.oid
+          AND (pg_has_role(n.nspowner, 'USAGE')
+               OR has_schema_privilege(n.oid, 'CREATE, USAGE'));
 
 GRANT SELECT ON schemata TO PUBLIC;
 

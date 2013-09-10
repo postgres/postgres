@@ -4547,8 +4547,9 @@ ORDER BY c.ordinal_position;
   <title><literal>schemata</literal></title>
 
   <para>
-   The view <literal>schemata</literal> contains all schemas in the
-   current database that are owned by a currently enabled role.
+   The view <literal>schemata</literal> contains all schemas in the current
+   database that the current user has access to (by way of being the owner or
+   having some privilege).
   </para>
 
   <table>
