@@ -1171,7 +1171,7 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 	if (cont->cells[0] == NULL && cont->opt->start_table &&
 		cont->opt->stop_table)
 	{
-		if (!opt_tuples_only)
+		if (!opt_tuples_only && cont->opt->default_footer)
 			fprintf(fout, _("(No rows)\n"));
 		return;
 	}
