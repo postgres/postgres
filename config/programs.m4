@@ -197,6 +197,11 @@ AC_DEFUN([PGAC_CHECK_GETTEXT],
   if test -z "$MSGFMT"; then
     AC_MSG_ERROR([msgfmt is required for NLS])
   fi
+  AC_CACHE_CHECK([for msgfmt flags], pgac_cv_msgfmt_flags,
+[if test x"$MSGFMT" != x"" && "$MSGFMT" --version 2>&1 | grep "GNU" >/dev/null; then
+    pgac_cv_msgfmt_flags=-c
+fi])
+  AC_SUBST(MSGFMT_FLAGS, $pgac_cv_msgfmt_flags)
   AC_CHECK_PROGS(MSGMERGE, msgmerge)
   AC_CHECK_PROGS(XGETTEXT, xgettext)
 ])# PGAC_CHECK_GETTEXT

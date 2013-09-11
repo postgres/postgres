@@ -68,7 +68,7 @@ BACKEND_COMMON_GETTEXT_FLAGS = \
 all-po: $(MO_FILES)
 
 %.mo: %.po
-	$(MSGFMT) -o $@ $<
+	$(MSGFMT) $(MSGFMT_FLAGS) -o $@ $<
 
 ifeq ($(word 1,$(GETTEXT_FILES)),+)
 po/$(CATALOG_NAME).pot: $(word 2, $(GETTEXT_FILES)) $(MAKEFILE_LIST)
@@ -113,12 +113,6 @@ clean-po:
 	rm -f po/$(CATALOG_NAME).pot
 
 
-maintainer-check-po: $(ALL_PO_FILES)
-	for file in $^; do \
-	  $(MSGFMT) -c -v -o /dev/null $$file || exit 1; \
-	done
-
-
 init-po: po/$(CATALOG_NAME).pot
 
 
@@ -155,7 +149,6 @@ install: install-po
 installdirs: installdirs-po
 uninstall: uninstall-po
 clean distclean maintainer-clean: clean-po
-maintainer-check: maintainer-check-po
 
 .PHONY: all-po install-po installdirs-po uninstall-po clean-po \
-        maintainer-check-po init-po update-po
+        init-po update-po

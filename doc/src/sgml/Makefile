@@ -22,9 +22,9 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 
-all: html man
+all: check-tabs html man
 
-distprep: html distprep-man
+distprep: check-tabs html distprep-man
 
 
 ifndef JADE
@@ -301,7 +301,7 @@ MAKEINFO = makeinfo
 ##
 
 # Quick syntax check without style processing
-check maintainer-check: postgres.sgml $(ALMOSTALLSGML) check-tabs
+check: postgres.sgml $(ALMOSTALLSGML) check-tabs
 	$(NSGMLS) $(SPFLAGS) $(SGMLINCLUDE) -s $<
 
 

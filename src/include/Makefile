@@ -75,6 +75,3 @@ clean:
 
 distclean maintainer-clean: clean
 	rm -f pg_config.h pg_config_ext.h pg_config_os.h dynloader.h stamp-h stamp-ext-h
-
-maintainer-check:
-	cd catalog && ./duplicate_oids

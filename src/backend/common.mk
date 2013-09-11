@@ -45,4 +45,4 @@ clean: clean-local
 clean-local:
 	rm -f $(subsysfilename) $(OBJS)
 
-$(call recurse,coverage maintainer-check)
+$(call recurse,coverage)

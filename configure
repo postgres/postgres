@@ -659,6 +659,7 @@ TCL_CONFIG_SH
 TCLSH
 XGETTEXT
 MSGMERGE
+MSGFMT_FLAGS
 MSGFMT
 HAVE_POSIX_SIGNALS
 LDAP_LIBS_BE
@@ -29346,6 +29347,19 @@ done
 $as_echo "$as_me: error: msgfmt is required for NLS" >&2;}
    { (exit 1); exit 1; }; }
   fi
+  { $as_echo "$as_me:$LINENO: checking for msgfmt flags" >&5
+$as_echo_n "checking for msgfmt flags... " >&6; }
+if test "${pgac_cv_msgfmt_flags+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  if test x"$MSGFMT" != x"" && "$MSGFMT" --version 2>&1 | grep "GNU" >/dev/null; then
+    pgac_cv_msgfmt_flags=-c
+fi
+fi
+{ $as_echo "$as_me:$LINENO: result: $pgac_cv_msgfmt_flags" >&5
+$as_echo "$pgac_cv_msgfmt_flags" >&6; }
+  MSGFMT_FLAGS=$pgac_cv_msgfmt_flags
+
   for ac_prog in msgmerge
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
