@@ -7906,12 +7906,17 @@ main(int argc, char **argv)
  *
  *   INSERT INTO TBL1 VALUES (10);
  */
+
+#ifdef WIN32
+#include <windows.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <sys/time.h>
-#include <libpq-fe.h>
+#include <sys/types.h>
+#include "libpq-fe.h"
 
 static void
 exit_nicely(PGconn *conn)
@@ -8045,11 +8050,17 @@ main(int argc, char **argv)
  *  t = (8 bytes) 'ho there'
  *  b = (5 bytes) \004\003\002\001\000
  */
+
+#ifdef WIN32
+#include <windows.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include <sys/types.h>
-#include <libpq-fe.h>
+#include "libpq-fe.h"
 
 /* for ntohl/htonl */
 #include <netinet/in.h>
@@ -8160,10 +8171,10 @@ main(int argc, char **argv)
      * out-of-line parameters, as well as binary transmission of data.
      *
      * This first example transmits the parameters as text, but receives the
-     * results in binary format.  By using out-of-line parameters we can
-     * avoid a lot of tedious mucking about with quoting and escaping, even
-     * though the data is text.  Notice how we don't have to do anything
-     * special with the quote mark in the parameter value.
+     * results in binary format.  By using out-of-line parameters we can avoid
+     * a lot of tedious mucking about with quoting and escaping, even though
+     * the data is text.  Notice how we don't have to do anything special with
+     * the quote mark in the parameter value.
      */
 
     /* Here is our out-of-line parameter value */
@@ -8190,8 +8201,8 @@ main(int argc, char **argv)
     PQclear(res);
 
     /*
-     * In this second example we transmit an integer parameter in binary
-     * form, and again retrieve the results in binary form.
+     * In this second example we transmit an integer parameter in binary form,
+     * and again retrieve the results in binary form.
      *
      * Although we tell PQexecParams we are letting the backend deduce
      * parameter type, we really force the decision by casting the parameter
