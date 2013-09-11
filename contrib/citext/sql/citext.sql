@@ -127,6 +127,8 @@ VALUES ('aardvark'),
        ('ABC'),
        ('abd');
 
+CREATE INDEX srt_name ON srt (name);
+
 -- Check the min() and max() aggregates, with and without index.
 set enable_seqscan = off;
 SELECT MIN(name) AS "AAA" FROM srt;
