@@ -10,7 +10,7 @@
  * Information on using Double Metaphone can be found at
  *	 http://www.codeproject.com/string/dmetaphone1.asp
  * and the original article describing it can be found at
- *	 http://www.cuj.com/documents/s=8038/cuj0006philips/
+ *	 http://drdobbs.com/184401251
  *
  * For PostgreSQL we provide 2 functions - one for the primary and one for
  * the alternate. That way the functions are pure text->text mappings that
