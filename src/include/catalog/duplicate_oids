@@ -1,30 +1,36 @@
-#!/bin/sh
-#
-# duplicate_oids
-#
-# src/include/catalog/duplicate_oids
-#
-# finds manually-assigned oids that are duplicated in the system tables.
-#
-# run this script in src/include/catalog.
-#
+#!/usr/bin/perl
 
-# note: we exclude BKI_BOOTSTRAP relations since they are expected to have
-# matching DATA lines in pg_class.h and pg_type.h
+use strict;
+use warnings;
 
-cat pg_*.h toasting.h indexing.h | \
-egrep -v -e '^CATALOG\(.*BKI_BOOTSTRAP' | \
-sed -n	-e 's/^DATA(insert *OID *= *\([0-9][0-9]*\).*$/\1/p' \
-	-e 's/^CATALOG([^,]*, *\([0-9][0-9]*\).*BKI_ROWTYPE_OID(\([0-9][0-9]*\)).*$/\1,\2/p' \
-	-e 's/^CATALOG([^,]*, *\([0-9][0-9]*\).*$/\1/p' \
-	-e 's/^DECLARE_INDEX([^,]*, *\([0-9][0-9]*\).*$/\1/p' \
-	-e 's/^DECLARE_UNIQUE_INDEX([^,]*, *\([0-9][0-9]*\).*$/\1/p' \
-	-e 's/^DECLARE_TOAST([^,]*, *\([0-9][0-9]*\), *\([0-9][0-9]*\).*$/\1,\2/p' | \
-tr ',' '\n' | \
-sort -n | \
-uniq -d | \
-grep '.'
+BEGIN
+{
+	@ARGV = (glob("pg_*.h"), qw(indexing.h toasting.h));
+}
 
-# nonzero exit code if lines were produced
-[ $? -eq 1 ]
-exit
+my %oidcounts;
+
+while(<>)
+{
+	next if /^CATALOG\(.*BKI_BOOTSTRAP/;
+	next unless
+		/^DATA\(insert *OID *= *(\d+)/ ||
+		/^CATALOG\([^,]*, *(\d+).*BKI_ROWTYPE_OID\((\d+)\)/ ||
+		/^CATALOG\([^,]*, *(\d+)/ ||
+		/^DECLARE_INDEX\([^,]*, *(\d+)/ ||
+		/^DECLARE_UNIQUE_INDEX\([^,]*, *(\d+)/ ||
+		/^DECLARE_TOAST\([^,]*, *(\d+), *(\d+)/;
+	$oidcounts{$1}++;
+	$oidcounts{$2}++ if $2;
+}
+
+my $found = 0;
+
+foreach my $oid (sort {$a <=> $b} keys %oidcounts)
+{
+	next unless $oidcounts{$oid} > 1;
+	$found = 1;
+	print "$oid\n";
+}
+
+exit $found;
