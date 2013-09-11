@@ -1,30 +1,6 @@
 <!-- doc/src/sgml/geqo.sgml -->
 
  <chapter id="geqo">
-  <chapterinfo>
-   <author>
-    <firstname>Martin</firstname>
-    <surname>Utesch</surname>
-    <affiliation>
-     <orgname>
-      University of Mining and Technology
-     </orgname>
-     <orgdiv>
-      Institute of Automatic Control
-     </orgdiv>
-     <address>
-      <city>
-       Freiberg
-      </city>
-      <country>
-       Germany
-      </country>
-     </address>
-    </affiliation>
-   </author>
-   <date>1997-10-02</date>
-  </chapterinfo>
-
   <title>Genetic Query Optimizer</title>
 
   <para>

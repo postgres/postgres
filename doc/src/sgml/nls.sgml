@@ -1,13 +1,6 @@
 <!-- doc/src/sgml/nls.sgml -->
 
 <chapter id="nls">
- <chapterinfo>
-  <author>
-   <firstname>Peter</firstname>
-   <surname>Eisentraut</surname>
-  </author>
- </chapterinfo>
-
  <title>Native Language Support</title>
 
  <sect1 id="nls-translator">

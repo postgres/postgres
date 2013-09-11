@@ -268,11 +268,23 @@ xslthtml-stamp: stylesheet.xsl postgres.xml
 htmlhelp: stylesheet-hh.xsl postgres.xml
 	$(XSLTPROC) $(XSLTPROCFLAGS) $^
 
-%-A4.fo: stylesheet-fo.xsl %.xml
+%-A4.fo.tmp: stylesheet-fo.xsl %.xml
 	$(XSLTPROC) $(XSLTPROCFLAGS) --stringparam paper.type A4 -o $@ $^
 
-%-US.fo: stylesheet-fo.xsl %.xml
+%-US.fo.tmp: stylesheet-fo.xsl %.xml
 	$(XSLTPROC) $(XSLTPROCFLAGS) --stringparam paper.type USletter -o $@ $^
+
+FOP = fop
+XMLLINT = xmllint
+
+# reformat FO output so that locations of errors are easier to find
+%.fo: %.fo.tmp
+	$(XMLLINT) --format --output $@ $^
+
+.SECONDARY: postgres-A4.fo postgres-US.fo
+
+%-fop.pdf: %.fo
+	$(FOP) -fo $< -pdf $@
 
 epub: postgres.epub
 postgres.epub: postgres.xml
@@ -391,7 +403,7 @@ clean:
 # index
 	rm -f HTML.index $(GENERATED_SGML)
 # XSLT
-	rm -f postgres.xml postgres.xmltmp htmlhelp.hhp toc.hhc index.hhk *.fo
+	rm -f postgres.xml postgres.xmltmp htmlhelp.hhp toc.hhc index.hhk *.fo *.fo.tmp
 # EPUB
 	rm -f postgres.epub
 # Texinfo
