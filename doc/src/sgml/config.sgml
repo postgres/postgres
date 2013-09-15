@@ -5611,7 +5611,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
         the time required to start each new server process; each server process
         will re-load all preload libraries.  However, <varname>shared_preload_libraries
         </varname> is still useful on Windows hosts for libraries that need to
-        perform operations at postmaster start time..
+        perform operations at postmaster start time.
        </para>
       </note>
       </listitem>

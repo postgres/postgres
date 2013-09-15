@@ -311,7 +311,7 @@ PostgreSQL documentation
         make sure that nobody deletes them and makes them go away while the dump is running.
         If another client then requests an exclusive lock on a table, that lock will not be
         granted but will be queued waiting for the shared lock of the master process to be
-        released.. Consequently any other access to the table will not be granted either and
+        released. Consequently any other access to the table will not be granted either and
         will queue after the exclusive lock request. This includes the worker process trying
         to dump the table. Without any precautions this would be a classic deadlock situation.
         To detect this conflict, the <application>pg_dump</> worker process requests another
