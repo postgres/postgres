@@ -6171,6 +6171,19 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-data-checksums" xreflabel="data_checksums">
+      <term><varname>data_checksums</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary><varname>data_checksums</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Reports whether data checksums are enabled for this cluster.
+        See <xref linkend="app-initdb-data-checksums"> for more information.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-integer-datetimes" xreflabel="integer_datetimes">
       <term><varname>integer_datetimes</varname> (<type>boolean</type>)</term>
       <indexterm>

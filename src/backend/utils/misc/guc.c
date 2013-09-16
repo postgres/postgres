@@ -464,6 +464,7 @@ static int	max_identifier_length;
 static int	block_size;
 static int	segment_size;
 static int	wal_block_size;
+static bool	data_checksums;
 static int	wal_segment_size;
 static bool integer_datetimes;
 static int	effective_io_concurrency;
@@ -1449,6 +1450,17 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL,
 		},
 		&quote_all_identifiers,
+		false,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"data_checksums", PGC_INTERNAL, PRESET_OPTIONS,
+			gettext_noop("Shows whether data checksums are turned on for this cluster"),
+			NULL,
+			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+		},
+		&data_checksums,
 		false,
 		NULL, NULL, NULL
 	},
