@@ -32,6 +32,6 @@ extern void finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 				 bool check_constraints,
 				 bool is_internal,
 				 TransactionId frozenXid,
-				 MultiXactId frozenMulti);
+				 MultiXactId minMulti);
 
 #endif   /* CLUSTER_H */

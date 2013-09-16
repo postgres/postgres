@@ -1069,7 +1069,7 @@ GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
 	 * We check known limits on MultiXact before resorting to the SLRU area.
 	 *
 	 * An ID older than MultiXactState->oldestMultiXactId cannot possibly be
-	 * useful; it should have already been frozen by vacuum.  We've truncated
+	 * useful; it should have already been removed by vacuum.  We've truncated
 	 * the on-disk structures anyway.  Returning the wrong values could lead
 	 * to an incorrect visibility result.  However, to support pg_upgrade we
 	 * need to allow an empty set to be returned regardless, if the caller is

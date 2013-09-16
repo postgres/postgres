@@ -163,7 +163,7 @@ typedef struct avw_dbase
 	Oid			adw_datid;
 	char	   *adw_name;
 	TransactionId adw_frozenxid;
-	MultiXactId adw_frozenmulti;
+	MultiXactId adw_minmulti;
 	PgStat_StatDBEntry *adw_entry;
 } avw_dbase;
 
@@ -1176,11 +1176,10 @@ do_start_worker(void)
 		}
 		else if (for_xid_wrap)
 			continue;			/* ignore not-at-risk DBs */
-		else if (MultiXactIdPrecedes(tmp->adw_frozenmulti, multiForceLimit))
+		else if (MultiXactIdPrecedes(tmp->adw_minmulti, multiForceLimit))
 		{
 			if (avdb == NULL ||
-				MultiXactIdPrecedes(tmp->adw_frozenmulti,
-									avdb->adw_frozenmulti))
+				MultiXactIdPrecedes(tmp->adw_minmulti, avdb->adw_minmulti))
 				avdb = tmp;
 			for_multi_wrap = true;
 			continue;
@@ -1876,7 +1875,7 @@ get_database_list(void)
 		avdb->adw_datid = HeapTupleGetOid(tup);
 		avdb->adw_name = pstrdup(NameStr(pgdatabase->datname));
 		avdb->adw_frozenxid = pgdatabase->datfrozenxid;
-		avdb->adw_frozenmulti = pgdatabase->datminmxid;
+		avdb->adw_minmulti = pgdatabase->datminmxid;
 		/* this gets set later: */
 		avdb->adw_entry = NULL;
 

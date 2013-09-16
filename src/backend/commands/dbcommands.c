@@ -1691,7 +1691,7 @@ get_db_info(const char *name, LOCKMODE lockmode,
 				/* limit of frozen XIDs */
 				if (dbFrozenXidP)
 					*dbFrozenXidP = dbform->datfrozenxid;
-				/* limit of frozen Multixacts */
+				/* minimum MultixactId */
 				if (dbMinMultiP)
 					*dbMinMultiP = dbform->datminmxid;
 				/* default tablespace for this database */
