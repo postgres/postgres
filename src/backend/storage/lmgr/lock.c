@@ -906,7 +906,7 @@ LockAcquireExtended(const LOCKTAG *locktag,
 		status = STATUS_FOUND;
 	else
 		status = LockCheckConflicts(lockMethodTable, lockmode,
-									lock, proclock, MyProc);
+									lock, proclock);
 
 	if (status == STATUS_OK)
 	{
@@ -1256,8 +1256,7 @@ int
 LockCheckConflicts(LockMethod lockMethodTable,
 				   LOCKMODE lockmode,
 				   LOCK *lock,
-				   PROCLOCK *proclock,
-				   PGPROC *proc)
+				   PROCLOCK *proclock)
 {
 	int			numLockModes = lockMethodTable->numLockModes;
 	LOCKMASK	myLocks;
