@@ -2103,7 +2103,7 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf,
 /*
  * process_file
  *
- * Read commands from filename and then them to the main processing loop
+ * Reads commands from filename and passes them to the main processing loop.
  * Handler for \i and \ir, but can be used for other things as well.  Returns
  * MainLoop() error code.
  *
