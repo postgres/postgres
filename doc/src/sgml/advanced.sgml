@@ -659,7 +659,7 @@ SELECT name, altitude
    <para>
     On the other hand, the  following  query  finds
     all  the cities that are not state capitals and
-    are situated at an altitude of 500 feet or higher:
+    are situated at an altitude over 500 feet:
 
 <programlisting>
 SELECT name, altitude
