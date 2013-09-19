@@ -863,7 +863,6 @@ BgwHandleStatus
 WaitForBackgroundWorkerStartup(BackgroundWorkerHandle *handle, pid_t *pidp)
 {
 	BgwHandleStatus	status;
-	pid_t	pid;
 	int		rc;
 	bool	save_set_latch_on_sigusr1;
 
@@ -874,9 +873,13 @@ WaitForBackgroundWorkerStartup(BackgroundWorkerHandle *handle, pid_t *pidp)
 	{
 		for (;;)
 		{
+			pid_t	pid;
+
 			CHECK_FOR_INTERRUPTS();
 
 			status = GetBackgroundWorkerPid(handle, &pid);
+			if (status == BGWH_STARTED)
+				*pidp = pid;
 			if (status != BGWH_NOT_YET_STARTED)
 				break;
 
@@ -900,6 +903,5 @@ WaitForBackgroundWorkerStartup(BackgroundWorkerHandle *handle, pid_t *pidp)
 	PG_END_TRY();
 
 	set_latch_on_sigusr1 = save_set_latch_on_sigusr1;
-	*pidp = pid;
 	return status;
 }
