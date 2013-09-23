@@ -127,6 +127,28 @@ INSERT INTO INSERT_TBL VALUES (null, null, null);
 SELECT '' AS nine, * FROM INSERT_TBL;
 
 --
+-- Check constraints on system columns
+--
+
+CREATE TABLE SYS_COL_CHECK_TBL (city text, state text, is_capital bool,
+                  altitude int,
+                  CHECK (NOT (is_capital AND tableoid::regclass::text = 'sys_col_check_tbl')));
+
+INSERT INTO SYS_COL_CHECK_TBL VALUES ('Seattle', 'Washington', false, 100);
+INSERT INTO SYS_COL_CHECK_TBL VALUES ('Olympia', 'Washington', true, 100);
+
+SELECT *, tableoid::regclass::text FROM SYS_COL_CHECK_TBL;
+
+DROP TABLE SYS_COL_CHECK_TBL;
+
+--
+-- Check constraints on system columns other then TableOid should return error
+--
+CREATE TABLE SYS_COL_CHECK_TBL (city text, state text, is_capital bool,
+                  altitude int,
+				  CHECK (NOT (is_capital AND ctid::text = 'sys_col_check_tbl')));
+
+--
 -- Check inheritance of defaults and constraints
 --
 

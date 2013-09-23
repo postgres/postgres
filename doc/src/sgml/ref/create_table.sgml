@@ -430,7 +430,8 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
      <para>
       Currently, <literal>CHECK</literal> expressions cannot contain
       subqueries nor refer to variables other than columns of the
-      current row.
+      current row.  The system column <literal>tableoid</literal>
+      may be referenced, but not any other system column.
      </para>
 
      <para>

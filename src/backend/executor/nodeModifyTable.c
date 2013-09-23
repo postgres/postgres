@@ -247,6 +247,12 @@ ExecInsert(TupleTableSlot *slot,
 	else
 	{
 		/*
+		 * Constraints might reference the tableoid column, so initialize
+		 * t_tableOid before evaluating them.
+		 */
+		tuple->t_tableOid = RelationGetRelid(resultRelationDesc);
+
+		/*
 		 * Check the constraints of the tuple
 		 */
 		if (resultRelationDesc->rd_att->constr)
@@ -652,6 +658,12 @@ ExecUpdate(ItemPointer tupleid,
 	else
 	{
 		LockTupleMode lockmode;
+
+		/*
+		 * Constraints might reference the tableoid column, so initialize
+		 * t_tableOid before evaluating them.
+		 */
+		tuple->t_tableOid = RelationGetRelid(resultRelationDesc);
 
 		/*
 		 * Check the constraints of the tuple

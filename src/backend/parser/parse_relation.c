@@ -551,6 +551,16 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname,
 	{
 		/* quick check to see if name could be a system column */
 		attnum = specialAttNum(colname);
+
+		/* In constraint check, no system column is allowed except tableOid */
+		if (pstate->p_expr_kind == EXPR_KIND_CHECK_CONSTRAINT &&
+			attnum < InvalidAttrNumber && attnum !=  TableOidAttributeNumber)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+					 errmsg("system column \"%s\" reference in check constraint is invalid",
+						colname),
+					 parser_errposition(pstate, location)));
+
 		if (attnum != InvalidAttrNumber)
 		{
 			/* now check to see if column actually is defined */

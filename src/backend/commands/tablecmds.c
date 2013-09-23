@@ -3857,6 +3857,12 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 				/* Preserve OID, if any */
 				if (newTupDesc->tdhasoid)
 					HeapTupleSetOid(tuple, tupOid);
+
+				/*
+				 * Constraints might reference the tableoid column, so initialize
+				 * t_tableOid before evaluating them.
+				 */
+				tuple->t_tableOid = RelationGetRelid(oldrel);
 			}
 
 			/* Now check any constraints on the possibly-changed tuple */

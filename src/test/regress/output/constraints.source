@@ -205,6 +205,30 @@ SELECT '' AS nine, * FROM INSERT_TBL;
 (7 rows)
 
 --
+-- Check constraints on system columns
+--
+CREATE TABLE SYS_COL_CHECK_TBL (city text, state text, is_capital bool,
+                  altitude int,
+                  CHECK (NOT (is_capital AND tableoid::regclass::text = 'sys_col_check_tbl')));
+INSERT INTO SYS_COL_CHECK_TBL VALUES ('Seattle', 'Washington', false, 100);
+INSERT INTO SYS_COL_CHECK_TBL VALUES ('Olympia', 'Washington', true, 100);
+ERROR:  new row for relation "sys_col_check_tbl" violates check constraint "sys_col_check_tbl_check"
+DETAIL:  Failing row contains (Olympia, Washington, t, 100).
+SELECT *, tableoid::regclass::text FROM SYS_COL_CHECK_TBL;
+  city   |   state    | is_capital | altitude |     tableoid      
+---------+------------+------------+----------+-------------------
+ Seattle | Washington | f          |      100 | sys_col_check_tbl
+(1 row)
+
+DROP TABLE SYS_COL_CHECK_TBL;
+--
+-- Check constraints on system columns other then TableOid should return error
+--
+CREATE TABLE SYS_COL_CHECK_TBL (city text, state text, is_capital bool,
+                  altitude int,
+				  CHECK (NOT (is_capital AND ctid::text = 'sys_col_check_tbl')));
+ERROR:  system column "ctid" reference in check constraint is invalid
+--
 -- Check inheritance of defaults and constraints
 --
 CREATE TABLE INSERT_CHILD (cx INT default 42,

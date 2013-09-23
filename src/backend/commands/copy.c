@@ -2217,6 +2217,12 @@ CopyFrom(CopyState cstate)
 		if (loaded_oid != InvalidOid)
 			HeapTupleSetOid(tuple, loaded_oid);
 
+		/*
+		 * Constraints might reference the tableoid column, so initialize
+		 * t_tableOid before evaluating them.
+		 */
+		tuple->t_tableOid = RelationGetRelid(resultRelInfo->ri_RelationDesc);
+
 		/* Triggers and stuff need to be invoked in query context. */
 		MemoryContextSwitchTo(oldcontext);
 
