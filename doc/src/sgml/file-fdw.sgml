@@ -112,6 +112,14 @@
  </variablelist>
 
  <para>
+  Note that while <command>COPY</> allows options such as OIDS and HEADER 
+  to be specified without a corresponding value, the foreign data wrapper
+  syntax requires a value to be present in all cases.  To activate 
+  <command>COPY</> options normally supplied without a value, you can
+  instead pass the value TRUE. 
+ </para>
+
+ <para>
   A column of a foreign table created using this wrapper can have the
   following options:
  </para>
