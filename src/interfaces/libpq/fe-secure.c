@@ -282,10 +282,11 @@ pqsecure_open_client(PGconn *conn)
 				   libpq_gettext("could not establish SSL connection: %s\n"),
 							  err);
 			SSLerrfree(err);
-			close_SSL(conn);
 #ifdef ENABLE_THREAD_SAFETY
 			pthread_mutex_unlock(&ssl_config_mutex);
 #endif
+			close_SSL(conn);
+
 			return PGRES_POLLING_FAILED;
 		}
 #ifdef ENABLE_THREAD_SAFETY
@@ -1537,15 +1538,23 @@ open_client_SSL(PGconn *conn)
 static void
 close_SSL(PGconn *conn)
 {
+	bool destroy_needed = false;
+
 	if (conn->ssl)
 	{
 		DECLARE_SIGPIPE_INFO(spinfo);
+
+		/*
+		 * We can't destroy everything SSL-related here due to the possible
+		 * later calls to OpenSSL routines which may need our thread
+		 * callbacks, so set a flag here and check at the end.
+		 */
+		destroy_needed = true;
 
 		DISABLE_SIGPIPE(conn, spinfo, (void) 0);
 		SSL_shutdown(conn->ssl);
 		SSL_free(conn->ssl);
 		conn->ssl = NULL;
-		pqsecure_destroy();
 		/* We have to assume we got EPIPE */
 		REMEMBER_EPIPE(spinfo, true);
 		RESTORE_SIGPIPE(conn, spinfo);
@@ -1565,6 +1574,17 @@ close_SSL(PGconn *conn)
 		conn->engine = NULL;
 	}
 #endif
+
+	/*
+	 * This will remove our SSL locking hooks, if this is the last SSL
+	 * connection, which means we must wait to call it until after all
+	 * SSL calls have been made, otherwise we can end up with a race
+	 * condition and possible deadlocks.
+	 *
+	 * See comments above destroy_ssl_system().
+	 */
+	if (destroy_needed)
+		pqsecure_destroy();
 }
 
 /*
