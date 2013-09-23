@@ -30,7 +30,7 @@ ERROR:  no security label providers have been loaded
 SECURITY LABEL ON TABLE seclabel_tbl3 IS 'unclassified';			-- fail
 ERROR:  no security label providers have been loaded
 -- Load dummy external security provider
-LOAD '@abs_builddir@/dummy_seclabel@DLSUFFIX@';
+LOAD '@libdir@/dummy_seclabel@DLSUFFIX@';
 --
 -- Test of SECURITY LABEL statement with a plugin
 --
