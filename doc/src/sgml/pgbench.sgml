@@ -429,7 +429,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
        </para>
        <para>
         The rate is targeted by starting transactions along a
-        Poisson-distributed schedule time line.  The expected finish time
+        Poisson-distributed schedule time line.  The expected start time
         schedule moves forward based on when the client first started, not
         when the previous transaction ended.  That approach means that when
         transactions go past their original scheduled end time, it is
