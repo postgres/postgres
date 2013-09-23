@@ -433,7 +433,7 @@ old_8_3_rebuild_tsvector_tables(ClusterInfo *cluster, bool check_mode)
 /*
  * old_8_3_invalidate_hash_gin_indexes()
  *	8.3 -> 8.4
- *	Hash, Gin, and GiST index binary format changed from 8.3->8.4
+ *	Hash and GIN index binary format changed from 8.3->8.4
  */
 void
 old_8_3_invalidate_hash_gin_indexes(ClusterInfo *cluster, bool check_mode)
