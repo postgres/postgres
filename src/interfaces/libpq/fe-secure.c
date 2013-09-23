@@ -1430,13 +1430,22 @@ open_client_SSL(PGconn *conn)
 static void
 close_SSL(PGconn *conn)
 {
+	bool destroy_needed = false;
+
 	if (conn->ssl)
 	{
 		DISABLE_SIGPIPE((void) 0);
+
+		/*
+		 * We can't destroy everything SSL-related here due to the possible
+		 * later calls to OpenSSL routines which may need our thread
+		 * callbacks, so set a flag here and check at the end.
+		 */
+		destroy_needed = true;
+
 		SSL_shutdown(conn->ssl);
 		SSL_free(conn->ssl);
 		conn->ssl = NULL;
-		pqsecure_destroy();
 		/* We have to assume we got EPIPE */
 		REMEMBER_EPIPE(true);
 		RESTORE_SIGPIPE();
@@ -1456,6 +1465,17 @@ close_SSL(PGconn *conn)
 		conn->engine = NULL;
 	}
 #endif
+
+	/*
+	 * This will remove our SSL locking hooks, if this is the last SSL
+	 * connection, which means we must wait to call it until after all
+	 * SSL calls have been made, otherwise we can end up with a race
+	 * condition and possible deadlocks.
+	 *
+	 * See comments above destroy_ssl_system().
+	 */
+	if (destroy_needed)
+		pqsecure_destroy();
 }
 
 /*
