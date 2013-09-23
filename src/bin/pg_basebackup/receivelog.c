@@ -166,8 +166,7 @@ close_walfile(char *basedir, char *partial_suffix)
 	walfile = -1;
 
 	/*
-	 * Rename the .partial file only if we've completed writing the whole
-	 * segment or segment_complete is true.
+	 * If we finished writing a .partial file, rename it into place.
 	 */
 	if (currpos == XLOG_SEG_SIZE && partial_suffix)
 	{
@@ -306,6 +305,8 @@ writeTimeLineHistoryFile(char *basedir, TimeLineID tli, char *filename, char *co
 		return false;
 	}
 
+	snprintf(path, sizeof(path), "%s/%s", basedir, histfname);
+
 	/*
 	 * Write into a temp file name.
 	 */
@@ -356,8 +357,6 @@ writeTimeLineHistoryFile(char *basedir, TimeLineID tli, char *filename, char *co
 	/*
 	 * Now move the completed history file into place with its final name.
 	 */
-
-	snprintf(path, sizeof(path), "%s/%s", basedir, histfname);
 	if (rename(tmppath, path) < 0)
 	{
 		fprintf(stderr, _("%s: could not rename file \"%s\" to \"%s\": %s\n"),
