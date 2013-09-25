@@ -1125,16 +1125,22 @@ range_cmp(PG_FUNCTION_ARGS)
 
 	/* For b-tree use, empty ranges sort before all else */
 	if (empty1 && empty2)
-		PG_RETURN_INT32(0);
+		cmp = 0;
 	else if (empty1)
-		PG_RETURN_INT32(-1);
+		cmp = -1;
 	else if (empty2)
-		PG_RETURN_INT32(1);
+		cmp = 1;
+	else
+	{
+		cmp = range_cmp_bounds(typcache, &lower1, &lower2);
+		if (cmp == 0)
+			cmp = range_cmp_bounds(typcache, &upper1, &upper2);
+	}
 
-	if ((cmp = range_cmp_bounds(typcache, &lower1, &lower2)) != 0)
-		PG_RETURN_INT32(cmp);
+	PG_FREE_IF_COPY(r1, 0);
+	PG_FREE_IF_COPY(r2, 1);
 
-	PG_RETURN_INT32(range_cmp_bounds(typcache, &upper1, &upper2));
+	PG_RETURN_INT32(cmp);
 }
 
 /* inequality operators using the range_cmp function */
