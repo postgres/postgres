@@ -10141,7 +10141,7 @@ table2-mapping
          Expands the object in <replaceable>from_json</replaceable> to a row whose columns match
          the record type defined by base. Conversion will be best
          effort; columns in base with no corresponding key in <replaceable>from_json</replaceable>
-         will be left null.  A column may only be specified once.
+         will be left null. If a column is specified more than once, the last value is used.
        </entry>
        <entry><literal>select * from json_populate_record(null::x, '{"a":1,"b":2}')</literal></entry>
        <entry>
@@ -10164,8 +10164,8 @@ table2-mapping
          Expands the outermost set of objects in <replaceable>from_json</replaceable> to a set
          whose columns match the record type defined by base.
          Conversion will be best effort; columns in base with no
-         corresponding key in <replaceable>from_json</replaceable> will be left null.  A column
-         may only be specified once.
+         corresponding key in <replaceable>from_json</replaceable> will be left null.
+         If a column is specified more than once, the last value is used.
        </entry>
        <entry><literal>select * from json_populate_recordset(null::x, '[{"a":1,"b":2},{"a":3,"b":4}]')</literal></entry>
        <entry>
