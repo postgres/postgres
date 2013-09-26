@@ -929,13 +929,17 @@ top:
 		 * that the series of delays will approximate a Poisson distribution
 		 * centered on the throttle_delay time.
                  *
-                 * 1000 implies a 6.9 (-log(1/1000)) to 0.0 (log 1.0) delay multiplier.
+		 * 10000 implies a 9.2 (-log(1/10000)) to 0.0 (log 1) delay multiplier,
+		 * and results in a 0.055 % target underestimation bias:
+		 *
+		 * SELECT 1.0/AVG(-LN(i/10000.0)) FROM generate_series(1,10000) AS i;
+		 * = 1.000552717032611116335474
 		 *
 		 * If transactions are too slow or a given wait is shorter than
 		 * a transaction, the next transaction will start right away.
 		 */
-		int64 wait = (int64)
-			throttle_delay * -log(getrand(thread, 1, 1000)/1000.0);
+		int64 wait = (int64) (throttle_delay *
+			1.00055271703 * -log(getrand(thread, 1, 10000)/10000.0));
 
 		thread->throttle_trigger += wait;
 
