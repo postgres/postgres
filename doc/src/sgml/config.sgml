@@ -3941,8 +3941,14 @@ local0.*    /var/log/postgresql
          that are replaced with status information as outlined below.
          Unrecognized escapes are ignored. Other
          characters are copied straight to the log line. Some escapes are
-         only recognized by session processes, and are ignored by
-         background processes such as the main server process.
+         only recognized by session processes, and will be treated as empty by
+         background processes such as the main server process. Status
+         information may be aligned either left or right by specifying a
+         numeric literal after the % and before the option. A negative
+         value will cause the status information to be padded on the
+         right with spaces to give it a minimum width, whereas a positive
+         value will pad on the left. Padding can be useful to aid human
+         readability in log files.
          This parameter can only be set in the <filename>postgresql.conf</>
          file or on the server command line. The default is an empty string.
 
