@@ -1323,7 +1323,6 @@ index_drop(Oid indexId, bool concurrent)
 				indexrelid;
 	LOCKTAG		heaplocktag;
 	LOCKMODE	lockmode;
-	VirtualTransactionId *old_lockholders;
 
 	/*
 	 * To drop an index safely, we must grab exclusive lock on its parent
@@ -1445,11 +1444,8 @@ index_drop(Oid indexId, bool concurrent)
 
 		/*
 		 * Now we must wait until no running transaction could be using the
-		 * index for a query.  To do this, inquire which xacts currently would
-		 * conflict with AccessExclusiveLock on the table -- ie, which ones
-		 * have a lock of any kind on the table. Then wait for each of these
-		 * xacts to commit or abort. Note we do not need to worry about xacts
-		 * that open the table for reading after this point; they will see the
+		 * index for a query. Note we do not need to worry about xacts that
+		 * open the table for reading after this point; they will see the
 		 * index as invalid when they open the relation.
 		 *
 		 * Note: the reason we use actual lock acquisition here, rather than
@@ -1457,18 +1453,8 @@ index_drop(Oid indexId, bool concurrent)
 		 * possible if one of the transactions in question is blocked trying
 		 * to acquire an exclusive lock on our table.  The lock code will
 		 * detect deadlock and error out properly.
-		 *
-		 * Note: GetLockConflicts() never reports our own xid, hence we need
-		 * not check for that.	Also, prepared xacts are not reported, which
-		 * is fine since they certainly aren't going to do anything more.
 		 */
-		old_lockholders = GetLockConflicts(&heaplocktag, AccessExclusiveLock);
-
-		while (VirtualTransactionIdIsValid(*old_lockholders))
-		{
-			VirtualXactLock(*old_lockholders, true);
-			old_lockholders++;
-		}
+		WaitForLockers(heaplocktag, AccessExclusiveLock);
 
 		/*
 		 * No more predicate locks will be acquired on this index, and we're
@@ -1510,15 +1496,9 @@ index_drop(Oid indexId, bool concurrent)
 
 		/*
 		 * Wait till every transaction that saw the old index state has
-		 * finished.  The logic here is the same as above.
+		 * finished.
 		 */
-		old_lockholders = GetLockConflicts(&heaplocktag, AccessExclusiveLock);
-
-		while (VirtualTransactionIdIsValid(*old_lockholders))
-		{
-			VirtualXactLock(*old_lockholders, true);
-			old_lockholders++;
-		}
+		WaitForLockers(heaplocktag, AccessExclusiveLock);
 
 		/*
 		 * Re-open relations to allow us to complete our actions.

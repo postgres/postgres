@@ -321,7 +321,6 @@ DefineIndex(IndexStmt *stmt,
 	IndexInfo  *indexInfo;
 	int			numberOfAttributes;
 	TransactionId limitXmin;
-	VirtualTransactionId *old_lockholders;
 	VirtualTransactionId *old_snapshots;
 	int			n_old_snapshots;
 	LockRelId	heaprelid;
@@ -652,30 +651,17 @@ DefineIndex(IndexStmt *stmt,
 	 * for an overview of how this works)
 	 *
 	 * Now we must wait until no running transaction could have the table open
-	 * with the old list of indexes.  To do this, inquire which xacts
-	 * currently would conflict with ShareLock on the table -- ie, which ones
-	 * have a lock that permits writing the table.	Then wait for each of
-	 * these xacts to commit or abort.	Note we do not need to worry about
-	 * xacts that open the table for writing after this point; they will see
-	 * the new index when they open it.
+	 * with the old list of indexes. Note we do not need to worry about xacts
+	 * that open the table for writing after this point; they will see the new
+	 * index when they open it.
 	 *
 	 * Note: the reason we use actual lock acquisition here, rather than just
 	 * checking the ProcArray and sleeping, is that deadlock is possible if
 	 * one of the transactions in question is blocked trying to acquire an
 	 * exclusive lock on our table.  The lock code will detect deadlock and
 	 * error out properly.
-	 *
-	 * Note: GetLockConflicts() never reports our own xid, hence we need not
-	 * check for that.	Also, prepared xacts are not reported, which is fine
-	 * since they certainly aren't going to do anything more.
 	 */
-	old_lockholders = GetLockConflicts(&heaplocktag, ShareLock);
-
-	while (VirtualTransactionIdIsValid(*old_lockholders))
-	{
-		VirtualXactLock(*old_lockholders, true);
-		old_lockholders++;
-	}
+	WaitForLockers(heaplocktag, ShareLock);
 
 	/*
 	 * At this moment we are sure that there are no transactions with the
@@ -739,13 +725,7 @@ DefineIndex(IndexStmt *stmt,
 	 * We once again wait until no transaction can have the table open with
 	 * the index marked as read-only for updates.
 	 */
-	old_lockholders = GetLockConflicts(&heaplocktag, ShareLock);
-
-	while (VirtualTransactionIdIsValid(*old_lockholders))
-	{
-		VirtualXactLock(*old_lockholders, true);
-		old_lockholders++;
-	}
+	WaitForLockers(heaplocktag, ShareLock);
 
 	/*
 	 * Now take the "reference snapshot" that will be used by validate_index()
