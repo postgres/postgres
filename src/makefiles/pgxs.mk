@@ -124,7 +124,7 @@ all: all-lib
 endif # MODULE_big
 
 
-install: all installdirs installcontrol installdata installdatatsearch installdocs installscripts
+install: all installcontrol installdata installdatatsearch installdocs installscripts | installdirs
 ifdef MODULES
 	$(INSTALL_SHLIB) $(addsuffix $(DLSUFFIX), $(MODULES)) '$(DESTDIR)$(pkglibdir)/'
 endif # MODULES
