@@ -1537,11 +1537,13 @@ init(bool is_no_vacuum)
 	/*
 	 * Note: TPC-B requires at least 100 bytes per row, and the "filler"
 	 * fields in these table declarations were intended to comply with that.
-	 * But because they default to NULLs, they don't actually take any space.
-	 * We could fix that by giving them non-null default values. However, that
-	 * would completely break comparability of pgbench results with prior
-	 * versions.  Since pgbench has never pretended to be fully TPC-B
-	 * compliant anyway, we stick with the historical behavior.
+	 * The pgbench_accounts table complies with that because the "filler"
+	 * column is set to blank-padded empty string. But for all other tables the
+	 * column defaults to NULL and so don't actually take any space.  We could
+	 * fix that by giving them non-null default values.  However, that would
+	 * completely break comparability of pgbench results with prior versions.
+	 * Since pgbench has never pretended to be fully TPC-B compliant anyway, we
+	 * stick with the historical behavior.
 	 */
 	struct ddlinfo
 	{
@@ -1640,12 +1642,14 @@ init(bool is_no_vacuum)
 
 	for (i = 0; i < nbranches * scale; i++)
 	{
+		/* "filler" column defaults to NULL */
 		snprintf(sql, 256, "insert into pgbench_branches(bid,bbalance) values(%d,0)", i + 1);
 		executeStatement(con, sql);
 	}
 
 	for (i = 0; i < ntellers * scale; i++)
 	{
+		/* "filler" column defaults to NULL */
 		snprintf(sql, 256, "insert into pgbench_tellers(tid,bid,tbalance) values (%d,%d,0)",
 				 i + 1, i / ntellers + 1);
 		executeStatement(con, sql);
@@ -1675,6 +1679,7 @@ init(bool is_no_vacuum)
 	{
 		int64		j = k + 1;
 
+		/* "filler" column defaults to blank padded empty string */
 		snprintf(sql, 256, INT64_FORMAT "\t" INT64_FORMAT "\t%d\t\n", j, k / naccounts + 1, 0);
 		if (PQputline(con, sql))
 		{
