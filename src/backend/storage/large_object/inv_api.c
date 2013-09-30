@@ -240,29 +240,18 @@ LargeObjectDesc *
 inv_open(Oid lobjId, int flags, MemoryContext mcxt)
 {
 	LargeObjectDesc *retval;
-
-	retval = (LargeObjectDesc *) MemoryContextAlloc(mcxt,
-													sizeof(LargeObjectDesc));
-
-	retval->id = lobjId;
-	retval->subid = GetCurrentSubTransactionId();
-	retval->offset = 0;
+	Snapshot	snapshot = NULL;
+	int			descflags = 0;
 
 	if (flags & INV_WRITE)
 	{
-		retval->snapshot = NULL;		/* instantaneous MVCC snapshot */
-		retval->flags = IFS_WRLOCK | IFS_RDLOCK;
+		snapshot = NULL;		/* instantaneous MVCC snapshot */
+		descflags = IFS_WRLOCK | IFS_RDLOCK;
 	}
 	else if (flags & INV_READ)
 	{
-		/*
-		 * We must register the snapshot in TopTransaction's resowner, because
-		 * it must stay alive until the LO is closed rather than until the
-		 * current portal shuts down.
-		 */
-		retval->snapshot = RegisterSnapshotOnOwner(GetActiveSnapshot(),
-												TopTransactionResourceOwner);
-		retval->flags = IFS_RDLOCK;
+		snapshot = GetActiveSnapshot();
+		descflags = IFS_RDLOCK;
 	}
 	else
 		ereport(ERROR,
@@ -271,10 +260,29 @@ inv_open(Oid lobjId, int flags, MemoryContext mcxt)
 						flags)));
 
 	/* Can't use LargeObjectExists here because we need to specify snapshot */
-	if (!myLargeObjectExists(lobjId, retval->snapshot))
+	if (!myLargeObjectExists(lobjId, snapshot))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("large object %u does not exist", lobjId)));
+
+	/*
+	 * We must register the snapshot in TopTransaction's resowner, because
+	 * it must stay alive until the LO is closed rather than until the
+	 * current portal shuts down. Do this after checking that the LO exists,
+	 * to avoid leaking the snapshot if an error is thrown.
+	 */
+	if (snapshot)
+		snapshot = RegisterSnapshotOnOwner(snapshot,
+										   TopTransactionResourceOwner);
+
+	/* All set, create a descriptor */
+	retval = (LargeObjectDesc *) MemoryContextAlloc(mcxt,
+													sizeof(LargeObjectDesc));
+	retval->id = lobjId;
+	retval->subid = GetCurrentSubTransactionId();
+	retval->offset = 0;
+	retval->snapshot = snapshot;
+	retval->flags = descflags;
 
 	return retval;
 }
