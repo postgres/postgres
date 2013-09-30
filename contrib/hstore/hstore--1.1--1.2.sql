@@ -18,6 +18,7 @@ BEGIN
    FROM pg_proc p
        JOIN  pg_depend d
           ON p.proname = 'hstore_to_json_loose'
+            AND d.classid = 'pg_proc'::regclass
             AND d.objid = p.oid
             AND d.refclassid = 'pg_extension'::regclass
        JOIN pg_extension x
