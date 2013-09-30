@@ -632,21 +632,20 @@ bms_add_member(Bitmapset *a, int x)
 		return bms_make_singleton(x);
 	wordnum = WORDNUM(x);
 	bitnum = BITNUM(x);
+
+	/* enlarge the set if necessary */
 	if (wordnum >= a->nwords)
 	{
-		/* Slow path: make a larger set and union the input set into it */
-		Bitmapset  *result;
-		int			nwords;
+		int			oldnwords = a->nwords;
 		int			i;
 
-		result = bms_make_singleton(x);
-		nwords = a->nwords;
-		for (i = 0; i < nwords; i++)
-			result->words[i] |= a->words[i];
-		pfree(a);
-		return result;
+		a = (Bitmapset *) repalloc(a, BITMAPSET_SIZE(wordnum + 1));
+		a->nwords = wordnum + 1;
+		/* zero out the enlarged portion */
+		for (i = oldnwords; i < a->nwords; i++)
+			a->words[i] = 0;
 	}
-	/* Fast path: x fits in existing set */
+
 	a->words[wordnum] |= ((bitmapword) 1 << bitnum);
 	return a;
 }
