@@ -62,8 +62,20 @@ top_builddir := $(dir $(PGXS))../..
 include $(top_builddir)/src/Makefile.global
 
 top_srcdir = $(top_builddir)
+# If USE_VPATH is set or Makefile is not in current directory we are building
+# the extension with VPATH so we set the variable here
+ifdef USE_VPATH
+srcdir = $(USE_VPATH)
+VPATH = $(USE_VPATH)
+else
+ifeq ($(CURDIR),$(dir $(firstword $(MAKEFILE_LIST))))
 srcdir = .
 VPATH =
+else
+srcdir = $(dir $(firstword $(MAKEFILE_LIST)))
+VPATH = $(srcdir)
+endif
+endif
 
 # These might be set in Makefile.global, but if they were not found
 # during the build of PostgreSQL, supply default values so that users
@@ -112,33 +124,40 @@ all: all-lib
 endif # MODULE_big
 
 
-install: all installdirs
-ifneq (,$(EXTENSION))
-	$(INSTALL_DATA) $(addprefix $(srcdir)/, $(addsuffix .control, $(EXTENSION))) '$(DESTDIR)$(datadir)/extension/'
-endif # EXTENSION
-ifneq (,$(DATA)$(DATA_built))
-	$(INSTALL_DATA) $(addprefix $(srcdir)/, $(DATA)) $(DATA_built) '$(DESTDIR)$(datadir)/$(datamoduledir)/'
-endif # DATA
-ifneq (,$(DATA_TSEARCH))
-	$(INSTALL_DATA) $(addprefix $(srcdir)/, $(DATA_TSEARCH)) '$(DESTDIR)$(datadir)/tsearch_data/'
-endif # DATA_TSEARCH
+install: all installdirs installcontrol installdata installdatatsearch installdocs installscripts
 ifdef MODULES
 	$(INSTALL_SHLIB) $(addsuffix $(DLSUFFIX), $(MODULES)) '$(DESTDIR)$(pkglibdir)/'
 endif # MODULES
-ifdef DOCS
-ifdef docdir
-	$(INSTALL_DATA) $(addprefix $(srcdir)/, $(DOCS)) '$(DESTDIR)$(docdir)/$(docmoduledir)/'
-endif # docdir
-endif # DOCS
 ifdef PROGRAM
 	$(INSTALL_PROGRAM) $(PROGRAM)$(X) '$(DESTDIR)$(bindir)'
 endif # PROGRAM
+
+installcontrol: $(addsuffix .control, $(EXTENSION)) | installdirs
+ifneq (,$(EXTENSION))
+	$(INSTALL_DATA) $^ '$(DESTDIR)$(datadir)/extension/'
+endif
+
+installdata: $(DATA) $(DATA_built) | installdirs
+ifneq (,$(DATA)$(DATA_built))
+	$(INSTALL_DATA) $^ '$(DESTDIR)$(datadir)/$(datamoduledir)/'
+endif
+
+installdatatsearch: $(DATA_TSEARCH) | installdirs
+ifneq (,$(DATA_TSEARCH))
+	$(INSTALL_DATA) $^ '$(DESTDIR)$(datadir)/tsearch_data/'
+endif
+
+installdocs: $(DOCS) | installdirs
+ifdef DOCS
+ifdef docdir
+	$(INSTALL_DATA) $^ '$(DESTDIR)$(docdir)/$(docmoduledir)/'
+endif # docdir
+endif # DOCS
+
+installscripts: $(SCRIPTS) $(SCRIPTS_built) | installdirs
 ifdef SCRIPTS
-	$(INSTALL_SCRIPT) $(addprefix $(srcdir)/, $(SCRIPTS)) '$(DESTDIR)$(bindir)/'
+	$(INSTALL_SCRIPT) $^ '$(DESTDIR)$(bindir)/'
 endif # SCRIPTS
-ifdef SCRIPTS_built
-	$(INSTALL_SCRIPT) $(SCRIPTS_built) '$(DESTDIR)$(bindir)/'
-endif # SCRIPTS_built
 
 ifdef MODULE_big
 install: install-lib
@@ -263,6 +282,7 @@ test_files_build := $(patsubst $(srcdir)/%, $(abs_builddir)/%, $(test_files_src)
 
 all: $(test_files_build)
 $(test_files_build): $(abs_builddir)/%: $(srcdir)/%
+	$(MKDIR_P) $(dir $@)
 	ln -s $< $@
 endif # VPATH
 
