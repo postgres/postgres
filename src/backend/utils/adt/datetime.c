@@ -822,11 +822,11 @@ DecodeDateTime(char **field, int *ftype, int nf,
 		switch (ftype[i])
 		{
 			case DTK_DATE:
-				/***
+				/*
 				 * Integral julian day with attached time zone?
 				 * All other forms with JD will be separated into
 				 * distinct fields, so we handle just this case here.
-				 ***/
+				 */
 				if (ptype == DTK_JULIAN)
 				{
 					char	   *cp;
@@ -852,7 +852,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 					ptype = 0;
 					break;
 				}
-				/***
+				/*
 				 * Already have a date? Then this might be a time zone name
 				 * with embedded punctuation (e.g. "America/New_York") or a
 				 * run-together time with trailing time zone (e.g. hhmmss-zz).
@@ -861,7 +861,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				 * We consider it a time zone if we already have month & day.
 				 * This is to allow the form "mmm dd hhmmss tz year", which
 				 * we've historically accepted.
-				 ***/
+				 */
 				else if (ptype != 0 ||
 						 ((fmask & (DTK_M(MONTH) | DTK_M(DAY))) ==
 						  (DTK_M(MONTH) | DTK_M(DAY))))
