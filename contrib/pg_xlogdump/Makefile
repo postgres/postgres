@@ -13,15 +13,14 @@ RMGRDESCOBJS = $(patsubst %.c,%.o,$(RMGRDESCSOURCES))
 EXTRA_CLEAN = $(RMGRDESCSOURCES) xlogreader.c
 
 ifdef USE_PGXS
-PG_CONFIG = pg_config
-PGXS := $(shell $(PG_CONFIG) --pgxs)
-include $(PGXS)
-else
+$(error "pg_xlogdump cannot be built with PGXS")
+endif
+
 subdir = contrib/pg_xlogdump
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
-endif
+
 
 override CPPFLAGS := -DFRONTEND $(CPPFLAGS)
 
