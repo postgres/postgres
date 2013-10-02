@@ -132,7 +132,7 @@ PostgreSQL documentation
        </para>
        <para>
         The option is called <literal>--dbname</> for consistency with other
-        client applications, but because <application>pg_basebackup</application>
+        client applications, but because <application>pg_receivexlog</application>
         doesn't connect to any particular database in the cluster, database
         name in the connection string will be ignored.
        </para>
