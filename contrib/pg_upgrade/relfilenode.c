@@ -107,7 +107,7 @@ transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 		}
 
 		if (new_dbnum >= new_db_arr->ndbs)
-			pg_log(PG_FATAL, "old database \"%s\" not found in the new cluster\n",
+			pg_fatal("old database \"%s\" not found in the new cluster\n",
 				   old_db->db_name);
 
 		n_maps = 0;
@@ -258,7 +258,7 @@ transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
 				if (errno == ENOENT)
 					return;
 				else
-					pg_log(PG_FATAL, "error while checking for file existence \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
+					pg_fatal("error while checking for file existence \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
 						   map->nspname, map->relname, old_file, new_file,
 						   getErrorText(errno));
 			}
@@ -271,7 +271,7 @@ transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
 		pg_log(PG_STATUS, "%s", old_file);
 
 		if ((user_opts.transfer_mode == TRANSFER_MODE_LINK) && (pageConverter != NULL))
-			pg_log(PG_FATAL, "This upgrade requires page-by-page conversion, "
+			pg_fatal("This upgrade requires page-by-page conversion, "
 				   "you must use copy mode instead of link mode.\n");
 
 		if (user_opts.transfer_mode == TRANSFER_MODE_COPY)
@@ -279,7 +279,7 @@ transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
 			pg_log(PG_VERBOSE, "copying \"%s\" to \"%s\"\n", old_file, new_file);
 
 			if ((msg = copyAndUpdateFile(pageConverter, old_file, new_file, true)) != NULL)
-				pg_log(PG_FATAL, "error while copying relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
+				pg_fatal("error while copying relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
 					   map->nspname, map->relname, old_file, new_file, msg);
 		}
 		else
@@ -287,8 +287,7 @@ transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
 			pg_log(PG_VERBOSE, "linking \"%s\" to \"%s\"\n", old_file, new_file);
 
 			if ((msg = linkAndUpdateFile(pageConverter, old_file, new_file)) != NULL)
-				pg_log(PG_FATAL,
-					   "error while creating link for relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
+				pg_fatal("error while creating link for relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
 					   map->nspname, map->relname, old_file, new_file, msg);
 		}
 	}

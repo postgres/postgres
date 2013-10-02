@@ -449,8 +449,11 @@ void
 report_status(eLogType type, const char *fmt,...)
 __attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
 void
-pg_log(eLogType type, char *fmt,...)
+pg_log(eLogType type, const char *fmt,...)
 __attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
+void
+pg_fatal(const char *fmt,...)
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2),noreturn));
 void		end_progress_output(void);
 void
 prep_status(const char *fmt,...)

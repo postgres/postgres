@@ -96,10 +96,10 @@ parseCommandLine(int argc, char *argv[])
 
 	/* Allow help and version to be run as root, so do the test here. */
 	if (os_user_effective_id == 0)
-		pg_log(PG_FATAL, "%s: cannot be run as root\n", os_info.progname);
+		pg_fatal("%s: cannot be run as root\n", os_info.progname);
 
 	if ((log_opts.internal = fopen_priv(INTERNAL_LOG_FILE, "a")) == NULL)
-		pg_log(PG_FATAL, "cannot write to log file %s\n", INTERNAL_LOG_FILE);
+		pg_fatal("cannot write to log file %s\n", INTERNAL_LOG_FILE);
 
 	while ((option = getopt_long(argc, argv, "d:D:b:B:cj:ko:O:p:P:rU:v",
 								 long_options, &optindex)) != -1)
@@ -152,7 +152,7 @@ parseCommandLine(int argc, char *argv[])
 			case 'p':
 				if ((old_cluster.port = atoi(optarg)) <= 0)
 				{
-					pg_log(PG_FATAL, "invalid old port number\n");
+					pg_fatal("invalid old port number\n");
 					exit(1);
 				}
 				break;
@@ -160,7 +160,7 @@ parseCommandLine(int argc, char *argv[])
 			case 'P':
 				if ((new_cluster.port = atoi(optarg)) <= 0)
 				{
-					pg_log(PG_FATAL, "invalid new port number\n");
+					pg_fatal("invalid new port number\n");
 					exit(1);
 				}
 				break;
@@ -187,8 +187,7 @@ parseCommandLine(int argc, char *argv[])
 				break;
 
 			default:
-				pg_log(PG_FATAL,
-					   "Try \"%s --help\" for more information.\n",
+				pg_fatal("Try \"%s --help\" for more information.\n",
 					   os_info.progname);
 				break;
 		}
@@ -198,7 +197,7 @@ parseCommandLine(int argc, char *argv[])
 	for (filename = output_files; *filename != NULL; filename++)
 	{
 		if ((fp = fopen_priv(*filename, "a")) == NULL)
-			pg_log(PG_FATAL, "cannot write to log file %s\n", *filename);
+			pg_fatal("cannot write to log file %s\n", *filename);
 
 		/* Start with newline because we might be appending to a file. */
 		fprintf(fp, "\n"
@@ -308,7 +307,7 @@ check_required_directory(char **dirpath, char **configpath,
 				*configpath = pg_strdup(envVar);
 		}
 		else
-			pg_log(PG_FATAL, "You must identify the directory where the %s.\n"
+			pg_fatal("You must identify the directory where the %s.\n"
 				   "Please use the %s command-line option or the %s environment variable.\n",
 				   description, cmdLineOption, envVarName);
 	}
@@ -371,7 +370,7 @@ adjust_data_dir(ClusterInfo *cluster)
 
 	if ((output = popen(cmd, "r")) == NULL ||
 		fgets(cmd_output, sizeof(cmd_output), output) == NULL)
-		pg_log(PG_FATAL, "Could not get data directory using %s: %s\n",
+		pg_fatal("Could not get data directory using %s: %s\n",
 			   cmd, getErrorText(errno));
 
 	pclose(output);
@@ -410,7 +409,7 @@ get_sock_dir(ClusterInfo *cluster, bool live_check)
 			/* Use the current directory for the socket */
 			cluster->sockdir = pg_malloc(MAXPGPATH);
 			if (!getcwd(cluster->sockdir, MAXPGPATH))
-				pg_log(PG_FATAL, "cannot find current directory\n");
+				pg_fatal("cannot find current directory\n");
 		}
 		else
 		{
@@ -428,14 +427,14 @@ get_sock_dir(ClusterInfo *cluster, bool live_check)
 			snprintf(filename, sizeof(filename), "%s/postmaster.pid",
 					 cluster->pgdata);
 			if ((fp = fopen(filename, "r")) == NULL)
-				pg_log(PG_FATAL, "Cannot open file %s: %m\n", filename);
+				pg_fatal("Cannot open file %s: %m\n", filename);
 
 			for (lineno = 1;
 			   lineno <= Max(LOCK_FILE_LINE_PORT, LOCK_FILE_LINE_SOCKET_DIR);
 				 lineno++)
 			{
 				if (fgets(line, sizeof(line), fp) == NULL)
-					pg_log(PG_FATAL, "Cannot read line %d from %s: %m\n", lineno, filename);
+					pg_fatal("Cannot read line %d from %s: %m\n", lineno, filename);
 
 				/* potentially overwrite user-supplied value */
 				if (lineno == LOCK_FILE_LINE_PORT)

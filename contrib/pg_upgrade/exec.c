@@ -65,11 +65,11 @@ static DWORD       mainThreadId = 0;
 	written += vsnprintf(cmd + written, MAXCMDLEN - written, fmt, ap);
 	va_end(ap);
 	if (written >= MAXCMDLEN)
-		pg_log(PG_FATAL, "command too long\n");
+		pg_fatal("command too long\n");
 	written += snprintf(cmd + written, MAXCMDLEN - written,
 						" >> \"%s\" 2>&1" SYSTEMQUOTE, log_file);
 	if (written >= MAXCMDLEN)
-		pg_log(PG_FATAL, "command too long\n");
+		pg_fatal("command too long\n");
 
 	pg_log(PG_VERBOSE, "%s\n", cmd);
 
@@ -109,7 +109,7 @@ static DWORD       mainThreadId = 0;
 #endif
 
 	if (log == NULL)
-		pg_log(PG_FATAL, "cannot write to log file %s\n", log_file);
+		pg_fatal("cannot write to log file %s\n", log_file);
 
 #ifdef WIN32
 	/* Are we printing "command:" before its output? */
@@ -163,7 +163,7 @@ static DWORD       mainThreadId = 0;
 	 * log these commands to a third file, but that just adds complexity.
 	 */
 	if ((log = fopen(log_file, "a")) == NULL)
-		pg_log(PG_FATAL, "cannot write to log file %s\n", log_file);
+		pg_fatal("cannot write to log file %s\n", log_file);
 	fprintf(log, "\n\n");
 	fclose(log);
 #endif
@@ -189,7 +189,7 @@ pid_lock_file_exists(const char *datadir)
 	{
 		/* ENOTDIR means we will throw a more useful error later */
 		if (errno != ENOENT && errno != ENOTDIR)
-			pg_log(PG_FATAL, "could not open file \"%s\" for reading: %s\n",
+			pg_fatal("could not open file \"%s\" for reading: %s\n",
 				   path, getErrorText(errno));
 
 		return false;
@@ -216,8 +216,7 @@ verify_directories(void)
 #else
 	if (win32_check_directory_write_permissions() != 0)
 #endif
-		pg_log(PG_FATAL,
-		  "You must have read and write access in the current directory.\n");
+		pg_fatal("You must have read and write access in the current directory.\n");
 
 	check_bin_dir(&old_cluster);
 	check_data_dir(old_cluster.pgdata);
@@ -350,10 +349,10 @@ validate_exec(const char *dir, const char *cmdName)
 	 * Ensure that the file exists and is a regular file.
 	 */
 	if (stat(path, &buf) < 0)
-		pg_log(PG_FATAL, "check for \"%s\" failed: %s\n",
+		pg_fatal("check for \"%s\" failed: %s\n",
 			   path, getErrorText(errno));
 	else if (!S_ISREG(buf.st_mode))
-		pg_log(PG_FATAL, "check for \"%s\" failed: not an executable file\n",
+		pg_fatal("check for \"%s\" failed: not an executable file\n",
 			   path);
 
 	/*
@@ -365,7 +364,7 @@ validate_exec(const char *dir, const char *cmdName)
 #else
 	if ((buf.st_mode & S_IRUSR) == 0)
 #endif
-		pg_log(PG_FATAL, "check for \"%s\" failed: cannot read file (permission denied)\n",
+		pg_fatal("check for \"%s\" failed: cannot read file (permission denied)\n",
 			   path);
 
 #ifndef WIN32
@@ -373,6 +372,6 @@ validate_exec(const char *dir, const char *cmdName)
 #else
 	if ((buf.st_mode & S_IXUSR) == 0)
 #endif
-		pg_log(PG_FATAL, "check for \"%s\" failed: cannot execute (permission denied)\n",
+		pg_fatal("check for \"%s\" failed: cannot execute (permission denied)\n",
 			   path);
 }

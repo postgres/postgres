@@ -216,8 +216,7 @@ get_loadable_libraries(void)
 	}
 
 	if (found_public_plpython_handler)
-		pg_log(PG_FATAL,
-		 "Remove the problem functions from the old cluster to continue.\n");
+		pg_fatal("Remove the problem functions from the old cluster to continue.\n");
 
 	totaltups++;				/* reserve for pg_upgrade_support */
 
@@ -324,11 +323,10 @@ check_loadable_libraries(void)
 
 			/* exit and report missing support library with special message */
 			if (strcmp(lib, PG_UPGRADE_SUPPORT) == 0)
-				pg_log(PG_FATAL,
-					   "The pg_upgrade_support module must be created and installed in the new cluster.\n");
+				pg_fatal("The pg_upgrade_support module must be created and installed in the new cluster.\n");
 
 			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-				pg_log(PG_FATAL, "Could not open file \"%s\": %s\n",
+				pg_fatal("Could not open file \"%s\": %s\n",
 					   output_path, getErrorText(errno));
 			fprintf(script, "Could not load library \"%s\"\n%s\n",
 					lib,
@@ -344,8 +342,7 @@ check_loadable_libraries(void)
 	{
 		fclose(script);
 		pg_log(PG_REPORT, "fatal\n");
-		pg_log(PG_FATAL,
-			   "Your installation references loadable libraries that are missing from the\n"
+		pg_fatal("Your installation references loadable libraries that are missing from the\n"
 			   "new installation.  You can add these libraries to the new installation,\n"
 			   "or remove the functions using them from the old installation.  A list of\n"
 			   "problem libraries is in the file:\n"

@@ -205,7 +205,7 @@ setup(char *argv0, bool *live_check)
 		else
 		{
 			if (!user_opts.check)
-				pg_log(PG_FATAL, "There seems to be a postmaster servicing the old cluster.\n"
+				pg_fatal("There seems to be a postmaster servicing the old cluster.\n"
 					   "Please shutdown that postmaster and try again.\n");
 			else
 				*live_check = true;
@@ -218,13 +218,13 @@ setup(char *argv0, bool *live_check)
 		if (start_postmaster(&new_cluster, false))
 			stop_postmaster(false);
 		else
-			pg_log(PG_FATAL, "There seems to be a postmaster servicing the new cluster.\n"
+			pg_fatal("There seems to be a postmaster servicing the new cluster.\n"
 				   "Please shutdown that postmaster and try again.\n");
 	}
 
 	/* get path to pg_upgrade executable */
 	if (find_my_exec(argv0, exec_path) < 0)
-		pg_log(PG_FATAL, "Could not get path name to pg_upgrade: %s\n", getErrorText(errno));
+		pg_fatal("Could not get path name to pg_upgrade: %s\n", getErrorText(errno));
 
 	/* Trim off program name and keep just path */
 	*last_dir_separator(exec_path) = '\0';
@@ -378,7 +378,7 @@ copy_subdir_files(char *subdir)
 	snprintf(old_path, sizeof(old_path), "%s/%s", old_cluster.pgdata, subdir);
 	snprintf(new_path, sizeof(new_path), "%s/%s", new_cluster.pgdata, subdir);
 	if (!rmtree(new_path, true))
-		pg_log(PG_FATAL, "could not delete directory \"%s\"\n", new_path);
+		pg_fatal("could not delete directory \"%s\"\n", new_path);
 	check_ok();
 
 	prep_status("Copying old %s to new server", subdir);

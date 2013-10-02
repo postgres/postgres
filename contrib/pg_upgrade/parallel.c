@@ -128,7 +128,7 @@ parallel_exec_prog(const char *log_file, const char *opt_log_file,
 			_exit(!exec_prog(log_file, opt_log_file, true, "%s", cmd));
 		else if (child < 0)
 			/* fork failed */
-			pg_log(PG_FATAL, "could not create worker process: %s\n", strerror(errno));
+			pg_fatal("could not create worker process: %s\n", strerror(errno));
 #else
 		/* empty array element are always at the end */
 		new_arg = exec_thread_args[parallel_jobs - 1];
@@ -147,7 +147,7 @@ parallel_exec_prog(const char *log_file, const char *opt_log_file,
 		child = (HANDLE) _beginthreadex(NULL, 0, (void *) win32_exec_prog,
 										new_arg, 0, NULL);
 		if (child == 0)
-			pg_log(PG_FATAL, "could not create worker thread: %s\n", strerror(errno));
+			pg_fatal("could not create worker thread: %s\n", strerror(errno));
 
 		thread_handles[parallel_jobs - 1] = child;
 #endif
@@ -242,7 +242,7 @@ parallel_transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 		}
 		else if (child < 0)
 			/* fork failed */
-			pg_log(PG_FATAL, "could not create worker process: %s\n", strerror(errno));
+			pg_fatal("could not create worker process: %s\n", strerror(errno));
 #else
 		/* empty array element are always at the end */
 		new_arg = transfer_thread_args[parallel_jobs - 1];
@@ -263,7 +263,7 @@ parallel_transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 		child = (HANDLE) _beginthreadex(NULL, 0, (void *) win32_transfer_all_new_dbs,
 										new_arg, 0, NULL);
 		if (child == 0)
-			pg_log(PG_FATAL, "could not create worker thread: %s\n", strerror(errno));
+			pg_fatal("could not create worker thread: %s\n", strerror(errno));
 
 		thread_handles[parallel_jobs - 1] = child;
 #endif
@@ -311,7 +311,7 @@ reap_child(bool wait_for_child)
 		return false;
 
 	if (WEXITSTATUS(work_status) != 0)
-		pg_log(PG_FATAL, "child worker exited abnormally: %s\n", strerror(errno));
+		pg_fatal("child worker exited abnormally: %s\n", strerror(errno));
 #else
 	/* wait for one to finish */
 	thread_num = WaitForMultipleObjects(parallel_jobs, thread_handles,
@@ -326,7 +326,7 @@ reap_child(bool wait_for_child)
 	/* get the result */
 	GetExitCodeThread(thread_handles[thread_num], &res);
 	if (res != 0)
-		pg_log(PG_FATAL, "child worker exited abnormally: %s\n", strerror(errno));
+		pg_fatal("child worker exited abnormally: %s\n", strerror(errno));
 
 	/* dispose of handle to stop leaks */
 	CloseHandle(thread_handles[thread_num]);

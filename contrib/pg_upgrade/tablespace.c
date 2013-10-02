@@ -25,8 +25,7 @@ init_tablespaces(void)
 
 	if (os_info.num_old_tablespaces > 0 &&
 	strcmp(old_cluster.tablespace_suffix, new_cluster.tablespace_suffix) == 0)
-		pg_log(PG_FATAL,
-			   "Cannot upgrade to/from the same system catalog version when\n"
+		pg_fatal("Cannot upgrade to/from the same system catalog version when\n"
 			   "using tablespaces.\n");
 }
 

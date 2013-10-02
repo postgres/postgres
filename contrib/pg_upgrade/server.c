@@ -149,12 +149,12 @@ get_major_server_version(ClusterInfo *cluster)
 	snprintf(ver_filename, sizeof(ver_filename), "%s/PG_VERSION",
 			 cluster->pgdata);
 	if ((version_fd = fopen(ver_filename, "r")) == NULL)
-		pg_log(PG_FATAL, "could not open version file: %s\n", ver_filename);
+		pg_fatal("could not open version file: %s\n", ver_filename);
 
 	if (fscanf(version_fd, "%63s", cluster->major_version_str) == 0 ||
 		sscanf(cluster->major_version_str, "%d.%d", &integer_version,
 			   &fractional_version) != 2)
-		pg_log(PG_FATAL, "could not get version from %s\n", cluster->pgdata);
+		pg_fatal("could not get version from %s\n", cluster->pgdata);
 
 	fclose(version_fd);
 
@@ -270,7 +270,7 @@ start_postmaster(ClusterInfo *cluster, bool throw_error)
 			   PQerrorMessage(conn));
 		if (conn)
 			PQfinish(conn);
-		pg_log(PG_FATAL, "could not connect to %s postmaster started with the command:\n"
+		pg_fatal("could not connect to %s postmaster started with the command:\n"
 			   "%s\n",
 			   CLUSTER_NAME(cluster), cmd);
 	}
@@ -281,7 +281,7 @@ start_postmaster(ClusterInfo *cluster, bool throw_error)
 	 * enabled, fail now.  This could happen if the server was already running.
 	 */
 	if (!pg_ctl_return)
-		pg_log(PG_FATAL, "pg_ctl failed to start the %s server, or connection failed\n",
+		pg_fatal("pg_ctl failed to start the %s server, or connection failed\n",
 			   CLUSTER_NAME(cluster));
 
 	return true;
@@ -336,8 +336,7 @@ check_pghost_envvar(void)
 			/* check for 'local' host values */
 				(strcmp(value, "localhost") != 0 && strcmp(value, "127.0.0.1") != 0 &&
 				 strcmp(value, "::1") != 0 && value[0] != '/'))
-				pg_log(PG_FATAL,
-					   "libpq environment variable %s has a non-local server value: %s\n",
+				pg_fatal("libpq environment variable %s has a non-local server value: %s\n",
 					   option->envvar, value);
 		}
 	}

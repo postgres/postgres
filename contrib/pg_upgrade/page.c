@@ -65,7 +65,7 @@ setupPageConverter(void)
 		 */
 
 		if ((converter = loadConverterPlugin(newPageVersion, oldPageVersion)) == NULL)
-			pg_log(PG_FATAL, "could not find plugin to convert from old page layout to new page layout\n");
+			pg_fatal("could not find plugin to convert from old page layout to new page layout\n");
 
 		return converter;
 	}
@@ -91,10 +91,10 @@ getPageVersion(uint16 *version, const char *pathName)
 	ssize_t		bytesRead;
 
 	if ((relfd = open(pathName, O_RDONLY, 0)) < 0)
-		pg_log(PG_FATAL, "could not open relation %s\n", pathName);
+		pg_fatal("could not open relation %s\n", pathName);
 
 	if ((bytesRead = read(relfd, &page, sizeof(page))) != sizeof(page))
-		pg_log(PG_FATAL, "could not read page header of %s\n", pathName);
+		pg_fatal("could not read page header of %s\n", pathName);
 
 	*version = PageGetPageLayoutVersion(&page);
 

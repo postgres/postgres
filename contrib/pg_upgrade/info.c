@@ -51,7 +51,7 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 		RelInfo    *new_rel = &new_db->rel_arr.rels[relnum];
 
 		if (old_rel->reloid != new_rel->reloid)
-			pg_log(PG_FATAL, "Mismatch of relation OID in database \"%s\": old OID %d, new OID %d\n",
+			pg_fatal("Mismatch of relation OID in database \"%s\": old OID %d, new OID %d\n",
 				   old_db->db_name, old_rel->reloid, new_rel->reloid);
 
 		/*
@@ -68,7 +68,7 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 			((GET_MAJOR_VERSION(old_cluster.major_version) >= 900 ||
 			  strcmp(old_rel->nspname, "pg_toast") != 0) &&
 			 strcmp(old_rel->relname, new_rel->relname) != 0))
-			pg_log(PG_FATAL, "Mismatch of relation names in database \"%s\": "
+			pg_fatal("Mismatch of relation names in database \"%s\": "
 				   "old name \"%s.%s\", new name \"%s.%s\"\n",
 				   old_db->db_name, old_rel->nspname, old_rel->relname,
 				   new_rel->nspname, new_rel->relname);
@@ -83,7 +83,7 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 	 * error above
 	 */
 	if (old_db->rel_arr.nrels != new_db->rel_arr.nrels)
-		pg_log(PG_FATAL, "old and new databases \"%s\" have a different number of relations\n",
+		pg_fatal("old and new databases \"%s\" have a different number of relations\n",
 			   old_db->db_name);
 
 	*nmaps = num_maps;

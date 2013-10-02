@@ -73,7 +73,7 @@ old_8_3_check_for_name_data_type_usage(ClusterInfo *cluster)
 		{
 			found = true;
 			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-				pg_log(PG_FATAL, "could not open file \"%s\": %s\n", output_path, getErrorText(errno));
+				pg_fatal("could not open file \"%s\": %s\n", output_path, getErrorText(errno));
 			if (!db_used)
 			{
 				fprintf(script, "Database: %s\n", active_db->db_name);
@@ -96,8 +96,7 @@ old_8_3_check_for_name_data_type_usage(ClusterInfo *cluster)
 	if (found)
 	{
 		pg_log(PG_REPORT, "fatal\n");
-		pg_log(PG_FATAL,
-			   "Your installation contains the \"name\" data type in user tables.  This\n"
+		pg_fatal("Your installation contains the \"name\" data type in user tables.  This\n"
 		"data type changed its internal alignment between your old and new\n"
 			   "clusters so this cluster cannot currently be upgraded.  You can remove\n"
 		"the problem tables and restart the upgrade.  A list of the problem\n"
@@ -164,7 +163,7 @@ old_8_3_check_for_tsquery_usage(ClusterInfo *cluster)
 		{
 			found = true;
 			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-				pg_log(PG_FATAL, "could not open file \"%s\": %s\n", output_path, getErrorText(errno));
+				pg_fatal("could not open file \"%s\": %s\n", output_path, getErrorText(errno));
 			if (!db_used)
 			{
 				fprintf(script, "Database: %s\n", active_db->db_name);
@@ -187,8 +186,7 @@ old_8_3_check_for_tsquery_usage(ClusterInfo *cluster)
 	if (found)
 	{
 		pg_log(PG_REPORT, "fatal\n");
-		pg_log(PG_FATAL,
-			   "Your installation contains the \"tsquery\" data type.    This data type\n"
+		pg_fatal("Your installation contains the \"tsquery\" data type.    This data type\n"
 			   "added a new internal field between your old and new clusters so this\n"
 		"cluster cannot currently be upgraded.  You can remove the problem\n"
 			   "columns and restart the upgrade.  A list of the problem columns is in the\n"
@@ -243,7 +241,7 @@ old_8_3_check_ltree_usage(ClusterInfo *cluster)
 		{
 			found = true;
 			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-				pg_log(PG_FATAL, "Could not open file \"%s\": %s\n",
+				pg_fatal("Could not open file \"%s\": %s\n",
 					   output_path, getErrorText(errno));
 			if (!db_used)
 			{
@@ -266,8 +264,7 @@ old_8_3_check_ltree_usage(ClusterInfo *cluster)
 	if (found)
 	{
 		pg_log(PG_REPORT, "fatal\n");
-		pg_log(PG_FATAL,
-			   "Your installation contains the \"ltree\" data type.  This data type\n"
+		pg_fatal("Your installation contains the \"ltree\" data type.  This data type\n"
 			   "changed its internal storage format between your old and new clusters so this\n"
 			   "cluster cannot currently be upgraded.  You can manually upgrade databases\n"
 			   "that use \"contrib/ltree\" facilities and remove \"contrib/ltree\" from the old\n"
@@ -364,7 +361,7 @@ old_8_3_rebuild_tsvector_tables(ClusterInfo *cluster, bool check_mode)
 			if (!check_mode)
 			{
 				if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-					pg_log(PG_FATAL, "could not open file \"%s\": %s\n", output_path, getErrorText(errno));
+					pg_fatal("could not open file \"%s\": %s\n", output_path, getErrorText(errno));
 				if (!db_used)
 				{
 					fprintf(script, "\\connect %s\n\n",
@@ -480,7 +477,7 @@ old_8_3_invalidate_hash_gin_indexes(ClusterInfo *cluster, bool check_mode)
 			if (!check_mode)
 			{
 				if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-					pg_log(PG_FATAL, "could not open file \"%s\": %s\n", output_path, getErrorText(errno));
+					pg_fatal("could not open file \"%s\": %s\n", output_path, getErrorText(errno));
 				if (!db_used)
 				{
 					fprintf(script, "\\connect %s\n",
@@ -599,7 +596,7 @@ old_8_3_invalidate_bpchar_pattern_ops_indexes(ClusterInfo *cluster,
 			if (!check_mode)
 			{
 				if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-					pg_log(PG_FATAL, "could not open file \"%s\": %s\n", output_path, getErrorText(errno));
+					pg_fatal("could not open file \"%s\": %s\n", output_path, getErrorText(errno));
 				if (!db_used)
 				{
 					fprintf(script, "\\connect %s\n",
@@ -721,7 +718,7 @@ old_8_3_create_sequence_script(ClusterInfo *cluster)
 			found = true;
 
 			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-				pg_log(PG_FATAL, "could not open file \"%s\": %s\n", output_path, getErrorText(errno));
+				pg_fatal("could not open file \"%s\": %s\n", output_path, getErrorText(errno));
 			if (!db_used)
 			{
 				fprintf(script, "\\connect %s\n\n",

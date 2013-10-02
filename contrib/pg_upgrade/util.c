@@ -80,15 +80,14 @@ prep_status(const char *fmt,...)
 }
 
 
+static
+ __attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 0)))
 void
-pg_log(eLogType type, char *fmt,...)
+pg_log_v(eLogType type, const char *fmt, va_list ap)
 {
-	va_list		args;
 	char		message[MAX_STRING];
 
-	va_start(args, fmt);
-	vsnprintf(message, sizeof(message), fmt, args);
-	va_end(args);
+	vsnprintf(message, sizeof(message), fmt, ap);
 
 	/* PG_VERBOSE and PG_STATUS are only output in verbose mode */
 	/* fopen() on log_opts.internal might have failed, so check it */
@@ -132,14 +131,36 @@ pg_log(eLogType type, char *fmt,...)
 
 		case PG_FATAL:
 			printf("\n%s", _(message));
-			printf("Failure, exiting\n");
-			exit(1);
 			break;
 
 		default:
 			break;
 	}
 	fflush(stdout);
+}
+
+
+void
+pg_log(eLogType type, const char *fmt,...)
+{
+	va_list		args;
+
+	va_start(args, fmt);
+	pg_log_v(type, fmt, args);
+	va_end(args);
+}
+
+
+void
+pg_fatal(const char *fmt,...)
+{
+	va_list		args;
+
+	va_start(args, fmt);
+	pg_log_v(PG_FATAL, fmt, args);
+	va_end(args);
+	printf("Failure, exiting\n");
+	exit(1);
 }
 
 
