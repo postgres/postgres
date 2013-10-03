@@ -232,10 +232,14 @@ typedef signed char GinNullCategory;
 #define GinDataPageGetRightBound(page)	((ItemPointer) PageGetContents(page))
 #define GinDataPageGetData(page)	\
 	(PageGetContents(page) + MAXALIGN(sizeof(ItemPointerData)))
+/* non-leaf pages contain PostingItems */
+#define GinDataPageGetPostingItem(page, i)	\
+	((PostingItem *) (GinDataPageGetData(page) + ((i)-1) * sizeof(PostingItem)))
+/* leaf pages contain ItemPointers */
+#define GinDataPageGetItemPointer(page, i)	\
+	((ItemPointer) (GinDataPageGetData(page) + ((i)-1) * sizeof(ItemPointerData)))
 #define GinSizeOfDataPageItem(page) \
 	(GinPageIsLeaf(page) ? sizeof(ItemPointerData) : sizeof(PostingItem))
-#define GinDataPageGetItem(page,i)	\
-	(GinDataPageGetData(page) + ((i)-1) * GinSizeOfDataPageItem(page))
 
 #define GinDataPageGetFreeSpace(page)	\
 	(BLCKSZ - MAXALIGN(SizeOfPageHeaderData) \
@@ -534,7 +538,8 @@ extern uint32 ginMergeItemPointers(ItemPointerData *dst,
 					 ItemPointerData *a, uint32 na,
 					 ItemPointerData *b, uint32 nb);
 
-extern void GinDataPageAddItem(Page page, void *data, OffsetNumber offset);
+extern void GinDataPageAddItemPointer(Page page, ItemPointer data, OffsetNumber offset);
+extern void GinDataPageAddPostingItem(Page page, PostingItem *data, OffsetNumber offset);
 extern void GinPageDeletePostingItem(Page page, OffsetNumber offset);
 
 typedef struct

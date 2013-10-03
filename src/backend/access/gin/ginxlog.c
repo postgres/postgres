@@ -189,7 +189,7 @@ ginRedoInsert(XLogRecPtr lsn, XLogRecord *record)
 				Assert(data->updateBlkno == InvalidBlockNumber);
 
 				for (i = 0; i < data->nitem; i++)
-					GinDataPageAddItem(page, items + i, data->offset + i);
+					GinDataPageAddItemPointer(page, &items[i], data->offset + i);
 			}
 			else
 			{
@@ -200,13 +200,13 @@ ginRedoInsert(XLogRecPtr lsn, XLogRecord *record)
 				if (data->updateBlkno != InvalidBlockNumber)
 				{
 					/* update link to right page after split */
-					pitem = (PostingItem *) GinDataPageGetItem(page, data->offset);
+					pitem = GinDataPageGetPostingItem(page, data->offset);
 					PostingItemSetBlockNumber(pitem, data->updateBlkno);
 				}
 
 				pitem = (PostingItem *) (XLogRecGetData(record) + sizeof(ginxlogInsert));
 
-				GinDataPageAddItem(page, pitem, data->offset);
+				GinDataPageAddPostingItem(page, pitem, data->offset);
 			}
 		}
 		else
@@ -286,22 +286,28 @@ ginRedoSplit(XLogRecPtr lsn, XLogRecord *record)
 
 		for (i = 0; i < data->separator; i++)
 		{
-			GinDataPageAddItem(lpage, ptr, InvalidOffsetNumber);
+			if (data->isLeaf)
+				GinDataPageAddItemPointer(lpage, (ItemPointer) ptr, InvalidOffsetNumber);
+			else
+				GinDataPageAddPostingItem(lpage, (PostingItem *) ptr, InvalidOffsetNumber);
 			ptr += sizeofitem;
 		}
 
 		for (i = data->separator; i < data->nitem; i++)
 		{
-			GinDataPageAddItem(rpage, ptr, InvalidOffsetNumber);
+			if (data->isLeaf)
+				GinDataPageAddItemPointer(rpage, (ItemPointer) ptr, InvalidOffsetNumber);
+			else
+				GinDataPageAddPostingItem(rpage, (PostingItem *) ptr, InvalidOffsetNumber);
 			ptr += sizeofitem;
 		}
 
 		/* set up right key */
 		bound = GinDataPageGetRightBound(lpage);
 		if (data->isLeaf)
-			*bound = *(ItemPointerData *) GinDataPageGetItem(lpage, GinPageGetOpaque(lpage)->maxoff);
+			*bound = *GinDataPageGetItemPointer(lpage, GinPageGetOpaque(lpage)->maxoff);
 		else
-			*bound = ((PostingItem *) GinDataPageGetItem(lpage, GinPageGetOpaque(lpage)->maxoff))->key;
+			*bound = GinDataPageGetPostingItem(lpage, GinPageGetOpaque(lpage)->maxoff)->key;
 
 		bound = GinDataPageGetRightBound(rpage);
 		*bound = data->rightbound;
@@ -803,11 +809,11 @@ ginContinueSplit(ginIncompleteSplit *split)
 
 		PostingItemSetBlockNumber(&(btree.pitem), split->leftBlkno);
 		if (GinPageIsLeaf(page))
-			btree.pitem.key = *(ItemPointerData *) GinDataPageGetItem(page,
-											 GinPageGetOpaque(page)->maxoff);
+			btree.pitem.key = *GinDataPageGetItemPointer(page,
+														 GinPageGetOpaque(page)->maxoff);
 		else
-			btree.pitem.key = ((PostingItem *) GinDataPageGetItem(page,
-									   GinPageGetOpaque(page)->maxoff))->key;
+			btree.pitem.key = GinDataPageGetPostingItem(page,
+														GinPageGetOpaque(page)->maxoff)->key;
 	}
 
 	btree.rightblkno = split->rightBlkno;

@@ -83,7 +83,7 @@ findItemInPostingPage(Page page, ItemPointer item, OffsetNumber *off)
 	 */
 	for (*off = FirstOffsetNumber; *off <= maxoff; (*off)++)
 	{
-		res = ginCompareItemPointers(item, (ItemPointer) GinDataPageGetItem(page, *off));
+		res = ginCompareItemPointers(item, GinDataPageGetItemPointer(page, *off));
 
 		if (res <= 0)
 			return true;
@@ -154,7 +154,7 @@ scanPostingTree(Relation index, GinScanEntry scanEntry,
 			GinPageGetOpaque(page)->maxoff >= FirstOffsetNumber)
 		{
 			tbm_add_tuples(scanEntry->matchBitmap,
-				   (ItemPointer) GinDataPageGetItem(page, FirstOffsetNumber),
+						   GinDataPageGetItemPointer(page, FirstOffsetNumber),
 						   GinPageGetOpaque(page)->maxoff, false);
 			scanEntry->predictNumberResult += GinPageGetOpaque(page)->maxoff;
 		}
@@ -467,7 +467,8 @@ restartScanEntry:
 			 */
 			entry->list = (ItemPointerData *) palloc(BLCKSZ);
 			entry->nlist = GinPageGetOpaque(page)->maxoff;
-			memcpy(entry->list, GinDataPageGetItem(page, FirstOffsetNumber),
+			memcpy(entry->list,
+				   GinDataPageGetItemPointer(page, FirstOffsetNumber),
 				   GinPageGetOpaque(page)->maxoff * sizeof(ItemPointerData));
 
 			LockBuffer(entry->buffer, GIN_UNLOCK);
@@ -587,8 +588,9 @@ entryGetNextItem(GinState *ginstate, GinScanEntry entry)
 				 * Found position equal to or greater than stored
 				 */
 				entry->nlist = GinPageGetOpaque(page)->maxoff;
-				memcpy(entry->list, GinDataPageGetItem(page, FirstOffsetNumber),
-				   GinPageGetOpaque(page)->maxoff * sizeof(ItemPointerData));
+				memcpy(entry->list,
+					   GinDataPageGetItemPointer(page, FirstOffsetNumber),
+					   GinPageGetOpaque(page)->maxoff * sizeof(ItemPointerData));
 
 				LockBuffer(entry->buffer, GIN_UNLOCK);
 

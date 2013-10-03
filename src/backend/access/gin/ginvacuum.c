@@ -210,7 +210,7 @@ ginVacuumPostingTreeLeaves(GinVacuumState *gvs, BlockNumber blkno, bool isRoot, 
 
 		for (i = FirstOffsetNumber; i <= GinPageGetOpaque(page)->maxoff; i++)
 		{
-			PostingItem *pitem = (PostingItem *) GinDataPageGetItem(page, i);
+			PostingItem *pitem = GinDataPageGetPostingItem(page, i);
 
 			if (ginVacuumPostingTreeLeaves(gvs, PostingItemGetBlockNumber(pitem), FALSE, NULL))
 				isChildHasVoid = TRUE;
@@ -283,7 +283,7 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 #ifdef USE_ASSERT_CHECKING
 	do
 	{
-		PostingItem *tod = (PostingItem *) GinDataPageGetItem(parentPage, myoff);
+		PostingItem *tod = GinDataPageGetPostingItem(parentPage, myoff);
 
 		Assert(PostingItemGetBlockNumber(tod) == deleteBlkno);
 	} while (0);
@@ -422,7 +422,7 @@ ginScanToDelete(GinVacuumState *gvs, BlockNumber blkno, bool isRoot, DataPageDel
 		me->blkno = blkno;
 		for (i = FirstOffsetNumber; i <= GinPageGetOpaque(page)->maxoff; i++)
 		{
-			PostingItem *pitem = (PostingItem *) GinDataPageGetItem(page, i);
+			PostingItem *pitem = GinDataPageGetPostingItem(page, i);
 
 			if (ginScanToDelete(gvs, PostingItemGetBlockNumber(pitem), FALSE, me, i))
 				i--;
