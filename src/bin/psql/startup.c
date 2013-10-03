@@ -111,8 +111,6 @@ main(int argc, char *argv[])
 	setvbuf(stderr, NULL, _IONBF, 0);
 #endif
 
-	setup_cancel_handler();
-
 	pset.progname = get_progname(argv[0]);
 
 	pset.db = NULL;
@@ -245,6 +243,8 @@ main(int argc, char *argv[])
 		PQfinish(pset.db);
 		exit(EXIT_BADCONN);
 	}
+
+	setup_cancel_handler();
 
 	PQsetNoticeProcessor(pset.db, NoticeProcessor, NULL);
 
