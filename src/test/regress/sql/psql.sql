@@ -37,3 +37,6 @@ select 10 as test01, 20 as test02 from generate_series(1,3) \gset
 select 10 as test01, 20 as test02 from generate_series(1,0) \gset
 
 \unset FETCH_COUNT
+
+-- show all pset options
+\pset

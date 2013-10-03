@@ -2272,13 +2272,10 @@ lo_import 152801
         </para>
         </tip>
 
-        <note>
         <para>
-        It is an error to call <command>\pset</command> without any
-        arguments. In the future this case might show the current status
+        <command>\pset</command> without any arguments displays the current status
         of all printing options.
         </para>
-        </note>
 
         </listitem>
       </varlistentry>
