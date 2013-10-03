@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DISCARD { ALL | PLANS | TEMPORARY | TEMP }
+DISCARD { ALL | PLANS | SEQUENCES | TEMPORARY | TEMP }
 </synopsis>
  </refsynopsisdiv>
 
@@ -67,6 +67,15 @@ DISCARD { ALL | PLANS | TEMPORARY | TEMP }
    </varlistentry>
 
    <varlistentry>
+    <term><literal>SEQUENCES</literal></term>
+    <listitem>
+     <para>
+      Discards all cached sequence values.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><literal>ALL</literal></term>
     <listitem>
      <para>
@@ -83,6 +92,7 @@ UNLISTEN *;
 SELECT pg_advisory_unlock_all();
 DISCARD PLANS;
 DISCARD TEMP;
+DISCARD SEQUENCES;
 </programlisting></para>
     </listitem>
    </varlistentry>

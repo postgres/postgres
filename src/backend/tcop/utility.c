@@ -2190,6 +2190,9 @@ CreateCommandTag(Node *parsetree)
 				case DISCARD_TEMP:
 					tag = "DISCARD TEMP";
 					break;
+				case DISCARD_SEQUENCES:
+					tag = "DISCARD SEQUENCES";
+					break;
 				default:
 					tag = "???";
 			}

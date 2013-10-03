@@ -163,6 +163,9 @@ SELECT nextval('sequence_test'::text);
       99
 (1 row)
 
+DISCARD SEQUENCES;
+SELECT currval('sequence_test'::regclass);
+ERROR:  currval of sequence "sequence_test" is not yet defined in this session
 DROP SEQUENCE sequence_test;
 -- renaming sequences
 CREATE SEQUENCE foo_seq;

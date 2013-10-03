@@ -2378,7 +2378,7 @@ psql_completion(char *text, int start, int end)
 	else if (pg_strcasecmp(prev_wd, "DISCARD") == 0)
 	{
 		static const char *const list_DISCARD[] =
-		{"ALL", "PLANS", "TEMP", NULL};
+		{"ALL", "PLANS", "SEQUENCES", "TEMP", NULL};
 
 		COMPLETE_WITH_LIST(list_DISCARD);
 	}
