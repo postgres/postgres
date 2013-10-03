@@ -512,7 +512,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 	{
 		if (PQgetlength(res, rownum, 1) >= MAXPGPATH)
 		{
-			fprintf(stderr, _("%s: received invalid directory (too long): %s"),
+			fprintf(stderr, _("%s: received invalid directory (too long): %s\n"),
 					progname, PQgetvalue(res, rownum, 1));
 			disconnect_and_exit(1);
 		}
