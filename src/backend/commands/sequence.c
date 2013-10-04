@@ -1615,6 +1615,6 @@ ResetSequenceCaches(void)
 	{
 		next = seqtab->next;
 		free(seqtab);
-		seqtab = seqtab->next;
+		seqtab = next;
 	}
 }
