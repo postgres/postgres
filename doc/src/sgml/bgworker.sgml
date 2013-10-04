@@ -31,7 +31,7 @@
 
  <para>
   Background workers can be initialized at the time that
-  <productname>PostgreSQL</> is started including the module name in
+  <productname>PostgreSQL</> is started by including the module name in
   <varname>shared_preload_libraries</>.  A module wishing to run a background
   worker can register it by calling
   <function>RegisterBackgroundWorker(<type>BackgroundWorker *worker</type>)</function>
@@ -179,10 +179,10 @@ typedef struct BackgroundWorker
    When a background worker is registered using the
    <function>RegisterDynamicBackgroundWorker</function> function, it is
    possible for the backend performing the registration to obtain information
-   the status of the worker.  Backends wishing to do this should pass the
-   address of a <type>BackgroundWorkerHandle *</type> as the second argument
-   to <function>RegisterDynamicBackgroundWorker</function>.  If the worker
-   is successfully registered, this pointer will be initialized with an
+   regarding the status of the worker.  Backends wishing to do this should
+   pass the address of a <type>BackgroundWorkerHandle *</type> as the second
+   argument to <function>RegisterDynamicBackgroundWorker</function>.  If the
+   worker is successfully registered, this pointer will be initialized with an
    opaque handle that can subsequently be passed to
    <function>GetBackgroundWorkerPid(<parameter>BackgroundWorkerHandle *</parameter>, <parameter>pid_t *</parameter>)</function>.
    This function can be used to poll the status of the worker: a return
