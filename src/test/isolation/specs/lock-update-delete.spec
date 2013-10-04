@@ -1,10 +1,23 @@
-# If we update a tuple, and then delete (or update that touches the key) it,
-# and later somebody tries to come along and traverse that update chain,
-# he should get an error when locking the latest version, if the delete
-# committed; or succeed, when the deleting transaction rolls back.
+# This test verifies behavior when traversing an update chain during
+# locking an old version of the tuple.  There are three tests here:
+# 1. update the tuple, then delete it; a second transaction locks the
+# first version.  This should raise an error if the DELETE succeeds,
+# but be allowed to continue if it aborts.
+# 2. Same as (1), except that instead of deleting the tuple, we merely
+# update its key.  The behavior should be the same as for (1).
+# 3. Same as (2), except that we update the tuple without modifying its
+# key. In this case, no error should be raised.
+# When run in REPEATABLE READ or SERIALIZABLE transaction isolation levels, all
+# permutations that commit s2 cause a serializability error; all permutations
+# that rollback s2 can get through.
+#
+# We use an advisory lock (which is locked during s1's setup) to let s2 obtain
+# its snapshot early and only allow it to actually traverse the update chain
+# when s1 is done creating it.
 
 setup
 {
+  DROP TABLE IF EXISTS foo;
   CREATE TABLE foo (
 	key		int PRIMARY KEY,
 	value	int
@@ -19,20 +32,30 @@ teardown
 }
 
 session "s1"
-step "s1b"	{ BEGIN ISOLATION LEVEL REPEATABLE READ; }
-step "s1s"	{ SELECT * FROM foo; }	# obtain snapshot
-step "s1l"	{ SELECT * FROM foo FOR KEY SHARE; } # obtain lock
-step "s1c"	{ COMMIT; }
+# obtain lock on the tuple, traversing its update chain
+step "s1l"	{ SELECT * FROM foo WHERE pg_advisory_xact_lock(0) IS NOT NULL AND key = 1 FOR KEY SHARE; }
 
 session "s2"
+setup		{ SELECT pg_advisory_lock(0); }
 step "s2b"	{ BEGIN; }
 step "s2u"	{ UPDATE foo SET value = 2 WHERE key = 1; }
-step "s2d"	{ DELETE FROM foo; }
-step "s2u2"	{ UPDATE foo SET key = 2 WHERE key = 1; }
+step "s2_blocker1"	{ DELETE FROM foo; }
+step "s2_blocker2"	{ UPDATE foo SET key = 2 WHERE key = 1; }
+step "s2_blocker3"	{ UPDATE foo SET value = 2 WHERE key = 1; }
+step "s2_unlock" { SELECT pg_advisory_unlock(0); }
 step "s2c"	{ COMMIT; }
 step "s2r"	{ ROLLBACK; }
 
-permutation "s1b" "s2b" "s1s" "s2u" "s2d" "s1l" "s2c" "s1c"
-permutation "s1b" "s2b" "s1s" "s2u" "s2d" "s1l" "s2r" "s1c"
-permutation "s1b" "s2b" "s1s" "s2u" "s2u2" "s1l" "s2c" "s1c"
-permutation "s1b" "s2b" "s1s" "s2u" "s2u2" "s1l" "s2r" "s1c"
+permutation "s2b" "s1l" "s2u" "s2_blocker1" "s2_unlock" "s2c"
+permutation "s2b" "s1l" "s2u" "s2_blocker2" "s2_unlock" "s2c"
+permutation "s2b" "s1l" "s2u" "s2_blocker3" "s2_unlock" "s2c"
+permutation "s2b" "s1l" "s2u" "s2_blocker1" "s2_unlock" "s2r"
+permutation "s2b" "s1l" "s2u" "s2_blocker2" "s2_unlock" "s2r"
+permutation "s2b" "s1l" "s2u" "s2_blocker3" "s2_unlock" "s2r"
+
+permutation "s2b" "s1l" "s2u" "s2_blocker1" "s2c" "s2_unlock"
+permutation "s2b" "s1l" "s2u" "s2_blocker2" "s2c" "s2_unlock"
+permutation "s2b" "s1l" "s2u" "s2_blocker3" "s2c" "s2_unlock"
+permutation "s2b" "s1l" "s2u" "s2_blocker1" "s2r" "s2_unlock"
+permutation "s2b" "s1l" "s2u" "s2_blocker2" "s2r" "s2_unlock"
+permutation "s2b" "s1l" "s2u" "s2_blocker3" "s2r" "s2_unlock"
