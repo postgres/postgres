@@ -29,6 +29,7 @@ SELECT '2006-08-13 12:34:56'::timestamptz;
 
 -- SET LOCAL has no effect outside of a transaction
 SET LOCAL vacuum_cost_delay TO 50;
+ERROR:  SET LOCAL can only be used in transaction blocks
 SHOW vacuum_cost_delay;
  vacuum_cost_delay 
 -------------------
@@ -36,6 +37,7 @@ SHOW vacuum_cost_delay;
 (1 row)
 
 SET LOCAL datestyle = 'SQL';
+ERROR:  SET LOCAL can only be used in transaction blocks
 SHOW datestyle;
  DateStyle 
 -----------

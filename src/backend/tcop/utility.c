@@ -688,7 +688,7 @@ standard_ProcessUtility(Node *parsetree,
 			break;
 
 		case T_VariableSetStmt:
-			ExecSetVariableStmt((VariableSetStmt *) parsetree);
+			ExecSetVariableStmt((VariableSetStmt *) parsetree, isTopLevel);
 			break;
 
 		case T_VariableShowStmt:
@@ -754,6 +754,7 @@ standard_ProcessUtility(Node *parsetree,
 			break;
 
 		case T_ConstraintsSetStmt:
+			RequireTransactionChain(isTopLevel, "SET CONSTRAINTS");
 			AfterTriggerSetState((ConstraintsSetStmt *) parsetree);
 			break;
 

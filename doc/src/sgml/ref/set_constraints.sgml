@@ -102,7 +102,7 @@ SET CONSTRAINTS { ALL | <replaceable class="parameter">name</replaceable> [, ...
    current transaction. Thus, if you execute this command outside of a
    transaction block
    (<command>BEGIN</command>/<command>COMMIT</command> pair), it will
-   not appear to have any effect.
+   generate an error.
   </para>
  </refsect1>
 

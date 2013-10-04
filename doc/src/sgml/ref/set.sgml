@@ -110,10 +110,9 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
      <para>
       Specifies that the command takes effect for only the current
       transaction.  After <command>COMMIT</> or <command>ROLLBACK</>,
-      the session-level setting takes effect again.  Note that
-      <command>SET LOCAL</> will appear to have no effect if it is
-      executed outside a <command>BEGIN</> block, since the
-      transaction will end immediately.
+      the session-level setting takes effect again.
+      <productname>PostgreSQL</productname> reports an error if
+      <command>SET LOCAL</> is used outside a transaction block.
      </para>
     </listitem>
    </varlistentry>
