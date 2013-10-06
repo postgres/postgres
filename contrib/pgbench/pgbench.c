@@ -2896,7 +2896,16 @@ main(int argc, char **argv)
 	}
 	disconnect_all(state, nclients);
 
-	/* get end time */
+	/*
+	 * XXX We compute results as though every client of every thread started
+	 * and finished at the same time.  That model can diverge noticeably from
+	 * reality for a short benchmark run involving relatively many threads.
+	 * The first thread may process notably many transactions before the last
+	 * thread begins.  Improving the model alone would bring limited benefit,
+	 * because performance during those periods of partial thread count can
+	 * easily exceed steady state performance.  This is one of the many ways
+	 * short runs convey deceptive performance figures.
+	 */
 	INSTR_TIME_SET_CURRENT(total_time);
 	INSTR_TIME_SUBTRACT(total_time, start_time);
 	printResults(ttype, total_xacts, nclients, threads, nthreads,
