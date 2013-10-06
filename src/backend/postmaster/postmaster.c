@@ -1422,9 +1422,9 @@ DetermineSleepTime(struct timeval * timeout)
 	{
 		if (AbortStartTime > 0)
 		{
-			/* remaining time, but at least 1 second */
-			timeout->tv_sec = Min(SIGKILL_CHILDREN_AFTER_SECS -
-								  (time(NULL) - AbortStartTime), 1);
+			/* time left to abort; clamp to 0 in case it already expired */
+			timeout->tv_sec = Max(SIGKILL_CHILDREN_AFTER_SECS -
+								  (time(NULL) - AbortStartTime), 0);
 			timeout->tv_usec = 0;
 		}
 		else
@@ -1676,10 +1676,13 @@ ServerLoop(void)
 		 * Note we also do this during recovery from a process crash.
 		 */
 		if ((Shutdown >= ImmediateShutdown || (FatalError && !SendStop)) &&
+			AbortStartTime > 0 &&
 			now - AbortStartTime >= SIGKILL_CHILDREN_AFTER_SECS)
 		{
 			/* We were gentle with them before. Not anymore */
 			TerminateChildren(SIGKILL);
+			/* reset flag so we don't SIGKILL again */
+			AbortStartTime = 0;
 
 			/*
 			 * Additionally, unless we're recovering from a process crash, it's
@@ -2584,7 +2587,7 @@ reaper(SIGNAL_ARGS)
 			 * Startup succeeded, commence normal operations
 			 */
 			FatalError = false;
-			AbortStartTime = 0;
+			Assert(AbortStartTime == 0);
 			ReachedNormalRunning = true;
 			pmState = PM_RUN;
 
@@ -3544,6 +3547,8 @@ PostmasterStateMachine(void)
 		StartupPID = StartupDataBase();
 		Assert(StartupPID != 0);
 		pmState = PM_STARTUP;
+		/* crash recovery started, reset SIGKILL flag */
+		AbortStartTime = 0;
 	}
 }
 
@@ -4737,7 +4742,7 @@ sigusr1_handler(SIGNAL_ARGS)
 	{
 		/* WAL redo has started. We're out of reinitialization. */
 		FatalError = false;
-		AbortStartTime = 0;
+		Assert(AbortStartTime == 0);
 
 		/*
 		 * Crank up the background tasks.  It doesn't matter if this fails,
