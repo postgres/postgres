@@ -1003,7 +1003,7 @@ msgstr ""
 #: help.c:195
 #, c-format
 msgid "  \\da[S]  [PATTERN]      list aggregates\n"
-msgstr "  \\da[+] [MODÈLE]      affiche les aggrégats\n"
+msgstr "  \\da[S] [MODÈLE]      affiche les aggrégats\n"
 
 #: help.c:196
 #, c-format
@@ -1172,7 +1172,7 @@ msgstr "  \\dE[S+] [MODÈLE]     affiche la liste des tables distantes\n"
 #: help.c:226
 #, c-format
 msgid "  \\dx[+]  [PATTERN]      list extensions\n"
-msgstr "  \\dx[S] [MODÈLE]      affiche la liste des extensions\n"
+msgstr "  \\dx[+] [MODÈLE]      affiche la liste des extensions\n"
 
 #: help.c:227
 #, c-format

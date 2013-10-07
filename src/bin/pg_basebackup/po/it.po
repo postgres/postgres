@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL) 9.1\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-01-29 13:57+0000\n"
-"PO-Revision-Date: 2012-12-03 17:44+0100\n"
+"POT-Creation-Date: 2013-10-03 02:00+0000\n"
+"PO-Revision-Date: 2013-10-04 01:25+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "Language: it\n"
@@ -166,7 +166,7 @@ msgstr ""
 "\n"
 "Puoi segnalare eventuali bug a <pgsql-bugs@postgresql.org>.\n"
 
-#: pg_basebackup.c:167 pg_basebackup.c:613
+#: pg_basebackup.c:167 pg_basebackup.c:621
 #, c-format
 msgid "%s: could not create directory \"%s\": %s\n"
 msgstr "%s: creazione della directory \"%s\" fallita: %s\n"
@@ -212,12 +212,12 @@ msgstr "%s: non è stato possibile impostare il livello di compressione %i: %s\n
 msgid "%s: could not create compressed file \"%s\": %s\n"
 msgstr "%s: creazione del file compresso \"%s\" fallita: %s\n"
 
-#: pg_basebackup.c:367 pg_basebackup.c:652
+#: pg_basebackup.c:367 pg_basebackup.c:660
 #, c-format
 msgid "%s: could not create file \"%s\": %s\n"
 msgstr "%s: creazione del file \"%s\" fallita: %s\n"
 
-#: pg_basebackup.c:379 pg_basebackup.c:525
+#: pg_basebackup.c:379 pg_basebackup.c:533
 #, c-format
 msgid "%s: could not get COPY data stream: %s"
 msgstr "%s: non è stato possibile ottenere lo stream di dati COPY: %s"
@@ -227,7 +227,7 @@ msgstr "%s: non è stato possibile ottenere lo stream di dati COPY: %s"
 msgid "%s: could not write to compressed file \"%s\": %s\n"
 msgstr "%s: scrittura nel file compresso \"%s\" fallita: %s\n"
 
-#: pg_basebackup.c:421 pg_basebackup.c:475 pg_basebackup.c:692
+#: pg_basebackup.c:421 pg_basebackup.c:475 pg_basebackup.c:700
 #, c-format
 msgid "%s: could not write to file \"%s\": %s\n"
 msgstr "%s: scrittura nel file \"%s\" fallita: %s\n"
@@ -242,142 +242,152 @@ msgstr "%s: chiusura del file compresso \"%s\" fallita: %s\n"
 msgid "%s: could not close file \"%s\": %s\n"
 msgstr "%s: chiusura del file \"%s\" fallita: %s\n"
 
-#: pg_basebackup.c:455 pg_basebackup.c:554
+#: pg_basebackup.c:455 pg_basebackup.c:562
 #, c-format
 msgid "%s: could not read COPY data: %s"
 msgstr "%s: lettura dei dati COPY fallita: %s"
 
-#: pg_basebackup.c:568
+#: pg_basebackup.c:515
+#, c-format
+msgid "%s: received invalid directory (too long): %s\n"
+msgstr "%s: ricevuta directory non valida (troppo lunga): %s\n"
+
+#: pg_basebackup.c:576
 #, c-format
 msgid "%s: invalid tar block header size: %i\n"
 msgstr "%s: dimensione del blocco di intestazione del file tar non valida: %i\n"
 
-#: pg_basebackup.c:576
+#: pg_basebackup.c:584
 #, c-format
 msgid "%s: could not parse file size\n"
 msgstr "%s: interpretazione della dimensione del file fallita\n"
 
-#: pg_basebackup.c:584
+#: pg_basebackup.c:592
 #, c-format
 msgid "%s: could not parse file mode\n"
 msgstr "%s: interpretazione della modalità del file fallita\n"
 
-#: pg_basebackup.c:619
+#: pg_basebackup.c:627
 #, c-format
 msgid "%s: could not set permissions on directory \"%s\": %s\n"
 msgstr "%s: impostazione dei permessi sulla directory \"%s\" fallita: %s\n"
 
-#: pg_basebackup.c:632
+#: pg_basebackup.c:640
 #, c-format
 msgid "%s: could not create symbolic link from \"%s\" to \"%s\": %s\n"
 msgstr "%s: creazione del link simbolico da \"%s\" a \"%s\" fallita: %s\n"
 
-#: pg_basebackup.c:639
+#: pg_basebackup.c:647
 #, c-format
 msgid "%s: unrecognized link indicator \"%c\"\n"
 msgstr "%s: indicatore di link sconosciuto \"%c\"\n"
 
-#: pg_basebackup.c:659
+#: pg_basebackup.c:667
 #, c-format
 msgid "%s: could not set permissions on file \"%s\": %s\n"
 msgstr "%s: impostazione dei permessi sul file \"%s\" fallita: %s\n"
 
-#: pg_basebackup.c:717
+#: pg_basebackup.c:725
 #, c-format
 msgid "%s: COPY stream ended before last file was finished\n"
 msgstr "%s: lo stream COPY è terminato prima che l'ultimo file fosse finito\n"
 
-#: pg_basebackup.c:778
+#: pg_basebackup.c:786
 msgid "Password: "
 msgstr "Password: "
 
-#: pg_basebackup.c:798
+#: pg_basebackup.c:806
 #, c-format
 msgid "%s: could not connect to server: %s"
 msgstr "%s: non è stato possibile connettersi al server: %s"
 
-#: pg_basebackup.c:838
+#: pg_basebackup.c:847
+#, c-format
+msgid "%s: unsupported server version %s\n"
+msgstr "%s: versione server %s non supportata\n"
+
+#: pg_basebackup.c:865
 #, c-format
 msgid "%s: could not send base backup command: %s"
 msgstr "%s: non è stato possibile inviare il comando di backup di base: %s"
 
-#: pg_basebackup.c:849
+#: pg_basebackup.c:876
 #, c-format
 msgid "%s: could not initiate base backup: %s"
 msgstr "%s: avvio del backup di base fallito: %s"
 
-#: pg_basebackup.c:855
+#: pg_basebackup.c:882
 #, c-format
 msgid "%s: no start point returned from server\n"
 msgstr "%s: nessun punto di avvio restituito dal server\n"
 
-#: pg_basebackup.c:871
+#: pg_basebackup.c:896
 #, c-format
 msgid "%s: could not get backup header: %s"
 msgstr "%s: non è stato possibile ottenere l'intestazione del backup: %s"
 
-#: pg_basebackup.c:877
+#: pg_basebackup.c:902
 #, c-format
 msgid "%s: no data returned from server\n"
 msgstr "%s: nessun dato restituito dal server\n"
 
-#: pg_basebackup.c:905
+#: pg_basebackup.c:930
 #, c-format
 msgid "%s: can only write single tablespace to stdout, database has %i\n"
 msgstr "%s: è possibile scrivere solo un singolo tablespace su stdout, il database ne ha %i\n"
 
-#: pg_basebackup.c:934
+#: pg_basebackup.c:959
 #, c-format
 msgid "%s: could not get WAL end position from server: %s"
 msgstr "%s: non è stato possibile ottenere la posizione finale del WAL dal server: %s"
 
-#: pg_basebackup.c:940
+#: pg_basebackup.c:965
 #, c-format
 msgid "%s: no WAL end position returned from server\n"
 msgstr "%s: nessuna posizione finale del WAL restituita dal server\n"
 
-#: pg_basebackup.c:952
+#: pg_basebackup.c:976
 #, c-format
 msgid "%s: final receive failed: %s"
 msgstr "%s: ricezione finale fallita: %s"
 
-#: pg_basebackup.c:1026
+#: pg_basebackup.c:1050
 #, c-format
 msgid "%s: invalid output format \"%s\", must be \"plain\" or \"tar\"\n"
 msgstr "%s: formato di output \"%s\" non valido, deve essere \"plain\" oppure \"tar\"\n"
 
-#: pg_basebackup.c:1048
+#: pg_basebackup.c:1072
 #, c-format
 msgid "%s: invalid compression level \"%s\"\n"
 msgstr "%s: livello di compressione non valido \"%s\"\n"
 
-#: pg_basebackup.c:1060
+#: pg_basebackup.c:1084
 #, c-format
 msgid "%s: invalid checkpoint argument \"%s\", must be \"fast\" or \"spread\"\n"
 msgstr "%s: argomento di checkpoint \"%s\" non valido, deve essere \"fast\" oppure \"spread\"\n"
 
-#: pg_basebackup.c:1091 pg_basebackup.c:1105 pg_basebackup.c:1116
-#: pg_basebackup.c:1129
+#: pg_basebackup.c:1115 pg_basebackup.c:1129 pg_basebackup.c:1140
+#: pg_basebackup.c:1153
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Prova \"%s --help\" per maggiori informazioni.\n"
 
-#: pg_basebackup.c:1103
+#: pg_basebackup.c:1127
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: troppi argomenti nella riga di comando (il primo è \"%s\")\n"
 
-#: pg_basebackup.c:1115
+#: pg_basebackup.c:1139
 #, c-format
 msgid "%s: no target directory specified\n"
 msgstr "%s: nessuna directory di destinazione specificata\n"
 
-#: pg_basebackup.c:1127
+#: pg_basebackup.c:1151
 #, c-format
 msgid "%s: only tar mode backups can be compressed\n"
 msgstr "%s: solo i backup in modalità tar possono essere compressi\n"
 
-#: pg_basebackup.c:1138
+#: pg_basebackup.c:1162
 #, c-format
 msgid "%s: this build does not support compression\n"
 msgstr "%s: questo binario compilato non supporta la compressione\n"

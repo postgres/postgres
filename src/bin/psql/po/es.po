@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL 9.1)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-01-29 13:56+0000\n"
-"PO-Revision-Date: 2012-02-21 22:55-0300\n"
+"POT-Creation-Date: 2013-08-26 19:44+0000\n"
+"PO-Revision-Date: 2013-06-05 01:24-0400\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL Español <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
@@ -1138,7 +1138,7 @@ msgstr "  \\dE[S+] [PATRÓN]  listar tablas foráneas\n"
 #: help.c:231
 #, c-format
 msgid "  \\dx[+]  [PATTERN]      list extensions\n"
-msgstr "  \\dx[S]  [PATRÓN]  listar extensiones\n"
+msgstr "  \\dx[+]  [PATRÓN]  listar extensiones\n"
 
 #: help.c:232
 #, c-format
@@ -3036,9 +3036,9 @@ msgstr "valor"
 msgid "target_role"
 msgstr "rol_destino"
 
-#: sql_help.c:152 sql_help.c:1575 sql_help.c:2430 sql_help.c:2437
-#: sql_help.c:2449 sql_help.c:2455 sql_help.c:2684 sql_help.c:2691
-#: sql_help.c:2703 sql_help.c:2709
+#: sql_help.c:152 sql_help.c:1309 sql_help.c:1575 sql_help.c:2430
+#: sql_help.c:2437 sql_help.c:2449 sql_help.c:2455 sql_help.c:2684
+#: sql_help.c:2691 sql_help.c:2703 sql_help.c:2709
 msgid "schema_name"
 msgstr "nombre_de_esquema"
 
@@ -3562,10 +3562,6 @@ msgstr "restricción"
 #: sql_help.c:1295
 msgid "where constraint is:"
 msgstr "donde restricción es:"
-
-#: sql_help.c:1309
-msgid "schema"
-msgstr "esquema"
 
 #: sql_help.c:1310
 msgid "version"
@@ -4102,3 +4098,6 @@ msgstr "el proceso hijo fue terminado por una señal %d"
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "el proceso hijo terminó con código no reconocido %d"
+
+#~ msgid "schema"
+#~ msgstr "esquema"

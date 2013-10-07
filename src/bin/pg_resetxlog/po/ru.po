@@ -329,7 +329,7 @@ msgstr "числа с плавающей точкой"
 #: pg_resetxlog.c:606
 #, c-format
 msgid "Float4 argument passing:              %s\n"
-msgstr "передача аргумента Float4:            %s\n"
+msgstr "Передача аргумента Float4:            %s\n"
 
 #: pg_resetxlog.c:607 pg_resetxlog.c:609
 msgid "by value"
@@ -342,7 +342,7 @@ msgstr "по ссылке"
 #: pg_resetxlog.c:608
 #, c-format
 msgid "Float8 argument passing:              %s\n"
-msgstr "передача аргумента Float8:            %s\n"
+msgstr "Передача аргумента Float8:            %s\n"
 
 #: pg_resetxlog.c:671
 #, c-format
