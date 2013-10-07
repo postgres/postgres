@@ -4279,8 +4279,8 @@ CheckForSerializableConflictIn(Relation relation, HeapTuple tuple,
 		SET_PREDICATELOCKTARGETTAG_TUPLE(targettag,
 										 relation->rd_node.dbNode,
 										 relation->rd_id,
-						 ItemPointerGetBlockNumber(&(tuple->t_data->t_ctid)),
-						ItemPointerGetOffsetNumber(&(tuple->t_data->t_ctid)));
+								  ItemPointerGetBlockNumber(&(tuple->t_self)),
+								ItemPointerGetOffsetNumber(&(tuple->t_self)));
 		CheckTargetForConflictsIn(&targettag);
 	}
 
