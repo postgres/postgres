@@ -1555,6 +1555,8 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 	offnum = ItemPointerGetOffsetNumber(tid);
 	at_chain_start = true;
 
+	heapTuple->t_self = *tid;
+
 	/* Scan through possible multiple members of HOT-chain */
 	for (;;)
 	{
@@ -1586,6 +1588,7 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 		heapTuple.t_len = ItemIdGetLength(lp);
 		heapTuple.t_tableOid = relation->rd_id;
 		heapTuple.t_self = *tid;
+		ItemPointerSetOffsetNumber(&heapTuple.t_self, offnum);
 
 		/*
 		 * Shouldn't see a HEAP_ONLY tuple at chain start.
