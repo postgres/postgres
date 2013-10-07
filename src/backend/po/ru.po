@@ -5962,7 +5962,7 @@ msgstr "неверные аргументы командной строки дл
 #: tcop/postgres.c:3364 tcop/postgres.c:3378
 #, c-format
 msgid "Try \"%s --help\" for more information."
-msgstr "Подробнее об аргументах вы можете узнать, выполнив \"%s --help\" ."
+msgstr "Для дополнительной информации попробуйте \"%s --help\"."
 
 #: tcop/postgres.c:3376
 #, c-format
