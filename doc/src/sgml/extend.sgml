@@ -935,7 +935,7 @@ include $(PGXS)
     To use the <acronym>PGXS</acronym> infrastructure for your extension,
     you must write a simple makefile.
     In the makefile, you need to set some variables
-    and finally include the global <acronym>PGXS</acronym> makefile.
+    and include the global <acronym>PGXS</acronym> makefile.
     Here is an example that builds an extension module named
     <literal>isbn_issn</literal>, consisting of a shared library containing
     some C code, an extension control file, a SQL script, and a documentation
@@ -1170,6 +1170,33 @@ include $(PGXS)
      to select the installation to build against.
     </para>
    </caution>
+
+   <para>
+    You can also run <literal>make</literal> in a directory outside the source
+    tree of your extension, if you want to keep the build directory separate.
+    This procedure is also called a
+    <indexterm><primary>VPATH</primary></indexterm><firstterm>VPATH</firstterm>
+    build.  Here's how:
+    <screen>
+      <userinput>mkdir build_dir</userinput>
+      <userinput>cd build_dir</userinput>
+      <userinput>make -f /path/to/extension/source/tree/Makefile</userinput>
+      <userinput>make -f /path/to/extension/source/tree/Makefile install</userinput>
+    </screen>
+   </para>
+
+   <para>
+    Alternatively, you can set up a directory for a VPATH build in a similar
+    way to how it is done for the core code. One way to to this is using the
+    core script <filename>config/prep_buildtree</>. Once this has been done
+    you can build by setting the <literal>make</literal> variable
+    <varname>USE_VPATH</varname> like this:
+    <screen>
+      <userinput>make USE_VPATH=/path/to/extension/source/tree</userinput>
+      <userinput>make USE_VPATH=/path/to/extension/source/tree install</userinput>
+    </screen>
+    This procedure can work with a greater variety of directory layouts.
+   </para>
 
    <para>
     The scripts listed in the <varname>REGRESS</> variable are used for
