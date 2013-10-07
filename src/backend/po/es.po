@@ -59,7 +59,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL server 9.3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2013-08-29 23:13+0000\n"
-"PO-Revision-Date: 2013-08-30 13:05-0400\n"
+"PO-Revision-Date: 2013-09-20 10:14-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL Español <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
@@ -1372,7 +1372,7 @@ msgstr "Ejecute pg_xlog_replay_resume() para continuar."
 #: access/transam/xlog.c:4795
 #, c-format
 msgid "hot standby is not possible because %s = %d is a lower setting than on the master server (its value was %d)"
-msgstr "hoy standby no es posible puesto que %s = %d es una configuración menor que en el servidor maestro (su valor era %d)"
+msgstr "hot standby no es posible puesto que %s = %d es una configuración menor que en el servidor maestro (su valor era %d)"
 
 #: access/transam/xlog.c:4817
 #, c-format

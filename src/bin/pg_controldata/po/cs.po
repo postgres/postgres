@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-03-17 18:48+0000\n"
-"PO-Revision-Date: 2013-03-17 21:52+0100\n"
-"Last-Translator: \n"
+"POT-Creation-Date: 2013-09-23 20:20+0000\n"
+"PO-Revision-Date: 2013-09-24 20:38+0200\n"
+"Last-Translator: Tomas Vondra\n"
 "Language-Team: Czech <kde-i18n-doc@kde.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -201,7 +201,6 @@ msgstr "Poslední umístění REDO checkpointu:    %X/%X\n"
 
 #: pg_controldata.c:214
 #, c-format
-#| msgid "Latest checkpoint's REDO location:    %X/%X\n"
 msgid "Latest checkpoint's REDO WAL file:    %s\n"
 msgstr "REDO WAL file posledního checkpointu:    %s\n"
 
@@ -212,7 +211,6 @@ msgstr "TimeLineID posledního checkpointu:     %u\n"
 
 #: pg_controldata.c:218
 #, c-format
-#| msgid "Latest checkpoint's TimeLineID:       %u\n"
 msgid "Latest checkpoint's PrevTimeLineID:   %u\n"
 msgstr "PrevTimeLineID posledního checkpointu:   %u\n"
 
@@ -266,13 +264,11 @@ msgstr "oldestActiveXID posledního checkpointu:          %u\n"
 
 #: pg_controldata.c:237
 #, c-format
-#| msgid "Latest checkpoint's oldestActiveXID:  %u\n"
 msgid "Latest checkpoint's oldestMultiXid:   %u\n"
 msgstr "oldestMultiXid posledního checkpointu:   %u\n"
 
 #: pg_controldata.c:239
 #, c-format
-#| msgid "Latest checkpoint's oldestXID's DB:   %u\n"
 msgid "Latest checkpoint's oldestMulti's DB: %u\n"
 msgstr "oldestMulti's DB posledního checkpointu: %u\n"
 
@@ -293,9 +289,8 @@ msgstr "Minimální pozice ukončení obnovy:     %X/%X\n"
 
 #: pg_controldata.c:249
 #, c-format
-#| msgid "Minimum recovery ending location:     %X/%X\n"
 msgid "Min recovery ending loc's timeline:   %u\n"
-msgstr ""
+msgstr "Timeline minimální pozice ukončení obnovy:   %u\n"
 
 #: pg_controldata.c:251
 #, c-format
@@ -410,6 +405,12 @@ msgstr "hodnotou"
 #, c-format
 msgid "Float8 argument passing:              %s\n"
 msgstr "Způsob předávání float8 hodnot:        %s\n"
+
+#: pg_controldata.c:290
+#, c-format
+#| msgid "Catalog version number:               %u\n"
+msgid "Data page checksum version:           %u\n"
+msgstr "Verze kontrolních součtů datových stránek:               %u\n"
 
 #~ msgid ""
 #~ "Usage:\n"

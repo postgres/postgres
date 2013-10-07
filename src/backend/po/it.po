@@ -16,8 +16,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgres (PostgreSQL) 9.3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-08-16 22:12+0000\n"
-"PO-Revision-Date: 2013-08-18 19:34+0100\n"
+"POT-Creation-Date: 2013-10-03 02:42+0000\n"
+"PO-Revision-Date: 2013-10-04 01:18+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "Language: it\n"
@@ -26,7 +26,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Poedit-SourceCharset: utf-8\n"
-"X-Generator: Poedit 1.5.7\n"
+"X-Generator: Poedit 1.5.4\n"
 
 #: ../port/chklocale.c:351 ../port/chklocale.c:357
 #, c-format
@@ -487,14 +487,14 @@ msgstr ""
 msgid "database is not accepting commands that generate new MultiXactIds to avoid wraparound data loss in database with OID %u"
 msgstr "il database non sta accettando comandi che generano nuovi MultiXactIds per evitare perdite di dati per wraparound nel database con OID %u"
 
-#: access/transam/multixact.c:943 access/transam/multixact.c:1989
+#: access/transam/multixact.c:943 access/transam/multixact.c:2036
 #, c-format
 msgid "database \"%s\" must be vacuumed before %u more MultiXactId is used"
 msgid_plural "database \"%s\" must be vacuumed before %u more MultiXactIds are used"
 msgstr[0] "il database \"%s\" deve ricevere un vacuum prima che altri %u MultiXactIds siano usati"
 msgstr[1] "il database \"%s\" deve ricevere un vacuum prima che altri %u MultiXactIds siano usati"
 
-#: access/transam/multixact.c:952 access/transam/multixact.c:1998
+#: access/transam/multixact.c:952 access/transam/multixact.c:2045
 #, c-format
 msgid "database with OID %u must be vacuumed before %u more MultiXactId is used"
 msgid_plural "database with OID %u must be vacuumed before %u more MultiXactIds are used"
@@ -511,12 +511,12 @@ msgstr "il MultiXactId %u non esiste più -- sembra ci sia stato un wraparound"
 msgid "MultiXactId %u has not been created yet -- apparent wraparound"
 msgstr "il MultiXactId %u non è stato ancora creato -- sembra ci sia stato un wraparound"
 
-#: access/transam/multixact.c:1954
+#: access/transam/multixact.c:2001
 #, c-format
 msgid "MultiXactId wrap limit is %u, limited by database with OID %u"
 msgstr "il limite di wrap di MultiXactId è %u, limitato dal database con OID %u"
 
-#: access/transam/multixact.c:1994 access/transam/multixact.c:2003
+#: access/transam/multixact.c:2041 access/transam/multixact.c:2050
 #: access/transam/varsup.c:137 access/transam/varsup.c:144
 #: access/transam/varsup.c:373 access/transam/varsup.c:380
 #, c-format
@@ -527,59 +527,59 @@ msgstr ""
 "Per evitare lo spegnimento del database, si deve eseguire un VACUUM su tutto il database.\n"
 "Potrebbe essere necessario inoltre effettuare il COMMIT o il ROLLBACK di vecchie transazioni preparate."
 
-#: access/transam/multixact.c:2451
+#: access/transam/multixact.c:2498
 #, c-format
 msgid "invalid MultiXactId: %u"
 msgstr "MultiXactId non valido: %u"
 
-#: access/transam/slru.c:607
+#: access/transam/slru.c:651
 #, c-format
 msgid "file \"%s\" doesn't exist, reading as zeroes"
 msgstr "il file \"%s\" non esiste, interpretato come zeri"
 
-#: access/transam/slru.c:837 access/transam/slru.c:843
-#: access/transam/slru.c:850 access/transam/slru.c:857
-#: access/transam/slru.c:864 access/transam/slru.c:871
+#: access/transam/slru.c:881 access/transam/slru.c:887
+#: access/transam/slru.c:894 access/transam/slru.c:901
+#: access/transam/slru.c:908 access/transam/slru.c:915
 #, c-format
 msgid "could not access status of transaction %u"
 msgstr "non è stato possibile accedere allo stato della transazione %u"
 
-#: access/transam/slru.c:838
+#: access/transam/slru.c:882
 #, c-format
 msgid "Could not open file \"%s\": %m."
 msgstr "Apertura del file \"%s\" fallita: %m."
 
-#: access/transam/slru.c:844
+#: access/transam/slru.c:888
 #, c-format
 msgid "Could not seek in file \"%s\" to offset %u: %m."
 msgstr "Spostamento nel file \"%s\" all'offset %u fallito: %m."
 
-#: access/transam/slru.c:851
+#: access/transam/slru.c:895
 #, c-format
 msgid "Could not read from file \"%s\" at offset %u: %m."
 msgstr "Lettura dal file \"%s\" all'offset %u fallita: %m."
 
-#: access/transam/slru.c:858
+#: access/transam/slru.c:902
 #, c-format
 msgid "Could not write to file \"%s\" at offset %u: %m."
 msgstr "Scrittura nel file \"%s\" all'offset %u fallita: %m."
 
-#: access/transam/slru.c:865
+#: access/transam/slru.c:909
 #, c-format
 msgid "Could not fsync file \"%s\": %m."
 msgstr "fsync del file \"%s\" fallito: %m."
 
-#: access/transam/slru.c:872
+#: access/transam/slru.c:916
 #, c-format
 msgid "Could not close file \"%s\": %m."
 msgstr "Chiusura del file \"%s\" fallita: %m."
 
-#: access/transam/slru.c:1127
+#: access/transam/slru.c:1171
 #, c-format
 msgid "could not truncate directory \"%s\": apparent wraparound"
 msgstr "troncamento della directory \"%s\" fallito: probabile wraparound"
 
-#: access/transam/slru.c:1201 access/transam/slru.c:1219
+#: access/transam/slru.c:1245 access/transam/slru.c:1263
 #, c-format
 msgid "removing file \"%s\""
 msgstr "cancellazione del file \"%s\""
@@ -588,7 +588,7 @@ msgstr "cancellazione del file \"%s\""
 #: access/transam/timeline.c:333 access/transam/xlog.c:2271
 #: access/transam/xlog.c:2384 access/transam/xlog.c:2421
 #: access/transam/xlog.c:2696 access/transam/xlog.c:2774
-#: replication/basebackup.c:366 replication/basebackup.c:992
+#: replication/basebackup.c:374 replication/basebackup.c:1000
 #: replication/walsender.c:368 replication/walsender.c:1326
 #: storage/file/copydir.c:158 storage/file/copydir.c:248 storage/smgr/md.c:587
 #: storage/smgr/md.c:845 utils/error/elog.c:1650 utils/init/miscinit.c:1063
@@ -635,7 +635,7 @@ msgstr "Gli ID della timeline devono avere valori inferiori degli ID della timel
 #: access/transam/timeline.c:314 access/transam/timeline.c:471
 #: access/transam/xlog.c:2305 access/transam/xlog.c:2436
 #: access/transam/xlog.c:8687 access/transam/xlog.c:9004
-#: postmaster/postmaster.c:4090 storage/file/copydir.c:165
+#: postmaster/postmaster.c:4092 storage/file/copydir.c:165
 #: storage/smgr/md.c:305 utils/time/snapmgr.c:861
 #, c-format
 msgid "could not create file \"%s\": %m"
@@ -653,8 +653,8 @@ msgstr "lettura de file \"%s\" fallita: %m"
 
 #: access/transam/timeline.c:366 access/transam/timeline.c:400
 #: access/transam/timeline.c:487 access/transam/xlog.c:2335
-#: access/transam/xlog.c:2468 postmaster/postmaster.c:4100
-#: postmaster/postmaster.c:4110 storage/file/copydir.c:190
+#: access/transam/xlog.c:2468 postmaster/postmaster.c:4102
+#: postmaster/postmaster.c:4112 storage/file/copydir.c:190
 #: utils/init/miscinit.c:1128 utils/init/miscinit.c:1137
 #: utils/init/miscinit.c:1144 utils/misc/guc.c:7596 utils/misc/guc.c:7610
 #: utils/time/snapmgr.c:866 utils/time/snapmgr.c:873
@@ -1432,10 +1432,10 @@ msgstr "avvio del ripristino dell'archivio"
 
 #: access/transam/xlog.c:4999 commands/sequence.c:1035 lib/stringinfo.c:266
 #: libpq/auth.c:1025 libpq/auth.c:1381 libpq/auth.c:1449 libpq/auth.c:1851
-#: postmaster/postmaster.c:2144 postmaster/postmaster.c:2175
-#: postmaster/postmaster.c:3632 postmaster/postmaster.c:4315
-#: postmaster/postmaster.c:4401 postmaster/postmaster.c:5079
-#: postmaster/postmaster.c:5255 postmaster/postmaster.c:5672
+#: postmaster/postmaster.c:2146 postmaster/postmaster.c:2177
+#: postmaster/postmaster.c:3634 postmaster/postmaster.c:4317
+#: postmaster/postmaster.c:4403 postmaster/postmaster.c:5081
+#: postmaster/postmaster.c:5257 postmaster/postmaster.c:5674
 #: storage/buffer/buf_init.c:154 storage/buffer/localbuf.c:397
 #: storage/file/fd.c:403 storage/file/fd.c:800 storage/file/fd.c:918
 #: storage/file/fd.c:1531 storage/ipc/procarray.c:894
@@ -1838,7 +1838,7 @@ msgstr "Ciò vuol dire che il backup che sta venendo preso sullo standby è corr
 
 #: access/transam/xlog.c:8672 access/transam/xlog.c:8843
 #: access/transam/xlogarchive.c:106 access/transam/xlogarchive.c:265
-#: replication/basebackup.c:372 replication/basebackup.c:427
+#: replication/basebackup.c:380 replication/basebackup.c:435
 #: storage/file/copydir.c:75 storage/file/copydir.c:118 utils/adt/dbsize.c:68
 #: utils/adt/dbsize.c:218 utils/adt/dbsize.c:298 utils/adt/genfile.c:108
 #: utils/adt/genfile.c:280 guc-file.l:771
@@ -1875,12 +1875,12 @@ msgstr "rimozione del file \"%s\" fallita: %m"
 msgid "invalid data in file \"%s\""
 msgstr "i dati nel file \"%s\" non sono validi"
 
-#: access/transam/xlog.c:8903 replication/basebackup.c:826
+#: access/transam/xlog.c:8903 replication/basebackup.c:834
 #, c-format
 msgid "the standby was promoted during online backup"
 msgstr "lo standby è stato promosso durante il backup online"
 
-#: access/transam/xlog.c:8904 replication/basebackup.c:827
+#: access/transam/xlog.c:8904 replication/basebackup.c:835
 #, c-format
 msgid "This means that the backup being taken is corrupt and should not be used. Try taking another online backup."
 msgstr "Ciò vuol dire che il backup che stava venendo salvato è corrotto e non dovrebbe essere usato. Prova ad effettuare un altro backup online."
@@ -1951,12 +1951,12 @@ msgstr "spostamento nel segmento di log %s alla posizione %u fallito: %m"
 msgid "could not read from log segment %s, offset %u: %m"
 msgstr "lettura del segmento di log %s, posizione %u fallita: %m"
 
-#: access/transam/xlog.c:9946
+#: access/transam/xlog.c:9947
 #, c-format
 msgid "received promote request"
 msgstr "richiesta di promozione ricevuta"
 
-#: access/transam/xlog.c:9959
+#: access/transam/xlog.c:9960
 #, c-format
 msgid "trigger file found: %s"
 msgstr "trovato il file trigger: %s"
@@ -2052,12 +2052,12 @@ msgstr "Le funzioni di controllo del recupero possono essere eseguite solo duran
 msgid "invalid input syntax for transaction log location: \"%s\""
 msgstr "sintassi di input non valida per la posizione del log delle transazioni: \"%s\""
 
-#: bootstrap/bootstrap.c:286 postmaster/postmaster.c:764 tcop/postgres.c:3446
+#: bootstrap/bootstrap.c:286 postmaster/postmaster.c:764 tcop/postgres.c:3453
 #, c-format
 msgid "--%s requires a value"
 msgstr "--%s richiede un valore"
 
-#: bootstrap/bootstrap.c:291 postmaster/postmaster.c:769 tcop/postgres.c:3451
+#: bootstrap/bootstrap.c:291 postmaster/postmaster.c:769 tcop/postgres.c:3458
 #, c-format
 msgid "-c %s requires a value"
 msgstr "-c %s richiede un valore"
@@ -2185,7 +2185,7 @@ msgstr "i privilegi della colonna sono validi solo per le relazioni"
 
 #: catalog/aclchk.c:688 catalog/aclchk.c:3901 catalog/aclchk.c:4678
 #: catalog/objectaddress.c:575 catalog/pg_largeobject.c:113
-#: storage/large_object/inv_api.c:277
+#: storage/large_object/inv_api.c:266
 #, c-format
 msgid "large object %u does not exist"
 msgstr "il large object %u non esiste"
@@ -3650,22 +3650,22 @@ msgstr "la funzione \"%s\" è una funzione finestra"
 msgid "function \"%s\" is not a window function"
 msgstr "la funzione \"%s\" non è una funzione finestra"
 
-#: catalog/pg_proc.c:733
+#: catalog/pg_proc.c:743
 #, c-format
 msgid "there is no built-in function named \"%s\""
 msgstr "non c'è nessuna funzione predefinita chiamata \"%s\""
 
-#: catalog/pg_proc.c:825
+#: catalog/pg_proc.c:835
 #, c-format
 msgid "SQL functions cannot return type %s"
 msgstr "Le funzioni SQL non possono restituire il tipo %s"
 
-#: catalog/pg_proc.c:840
+#: catalog/pg_proc.c:850
 #, c-format
 msgid "SQL functions cannot have arguments of type %s"
 msgstr "le funzioni SQL non possono avere argomenti di tipo %s"
 
-#: catalog/pg_proc.c:926 executor/functions.c:1411
+#: catalog/pg_proc.c:936 executor/functions.c:1411
 #, c-format
 msgid "SQL function \"%s\""
 msgstr "funzione SQL \"%s\""
@@ -3994,27 +3994,27 @@ msgstr "non è possibile raggruppare sull'indice parziale \"%s\""
 msgid "cannot cluster on invalid index \"%s\""
 msgstr "non è possibile raggruppare sull'indice non valido \"%s\""
 
-#: commands/cluster.c:909
+#: commands/cluster.c:910
 #, c-format
 msgid "clustering \"%s.%s\" using index scan on \"%s\""
 msgstr "raggruppamento di \"%s.%s\" usando una scansione sull'indice \"%s\""
 
-#: commands/cluster.c:915
+#: commands/cluster.c:916
 #, c-format
 msgid "clustering \"%s.%s\" using sequential scan and sort"
 msgstr "raggruppamento di \"%s.%s\" usando una scansione sequenziale e ordinamento"
 
-#: commands/cluster.c:920 commands/vacuumlazy.c:411
+#: commands/cluster.c:921 commands/vacuumlazy.c:411
 #, c-format
 msgid "vacuuming \"%s.%s\""
 msgstr "pulizia di \"%s.%s\""
 
-#: commands/cluster.c:1079
+#: commands/cluster.c:1080
 #, c-format
 msgid "\"%s\": found %.0f removable, %.0f nonremovable row versions in %u pages"
 msgstr "\"%s\": trovate %.0f versioni di riga removibili, %.0f non removibili in %u pagine"
 
-#: commands/cluster.c:1083
+#: commands/cluster.c:1084
 #, c-format
 msgid ""
 "%.0f dead row versions cannot be removed yet.\n"
@@ -7019,7 +7019,7 @@ msgid "tablespace \"%s\" already exists"
 msgstr "il tablespace \"%s\" esiste già"
 
 #: commands/tablespace.c:372 commands/tablespace.c:530
-#: replication/basebackup.c:162 replication/basebackup.c:913
+#: replication/basebackup.c:162 replication/basebackup.c:921
 #: utils/adt/misc.c:372
 #, c-format
 msgid "tablespaces are not supported on this platform"
@@ -7073,8 +7073,8 @@ msgid "could not create symbolic link \"%s\": %m"
 msgstr "creazione del link simbolico \"%s\" fallita: %m"
 
 #: commands/tablespace.c:690 commands/tablespace.c:700
-#: postmaster/postmaster.c:1317 replication/basebackup.c:265
-#: replication/basebackup.c:553 storage/file/copydir.c:56
+#: postmaster/postmaster.c:1319 replication/basebackup.c:265
+#: replication/basebackup.c:561 storage/file/copydir.c:56
 #: storage/file/copydir.c:99 storage/file/fd.c:1896 utils/adt/genfile.c:354
 #: utils/adt/misc.c:272 utils/misc/tzparser.c:323
 #, c-format
@@ -7824,17 +7824,17 @@ msgstr ""
 msgid "relation \"%s\" page %u is uninitialized --- fixing"
 msgstr "la relazione \"%s\" pagina %u non è inizializzata --- in correzione"
 
-#: commands/vacuumlazy.c:1033
+#: commands/vacuumlazy.c:1034
 #, c-format
 msgid "\"%s\": removed %.0f row versions in %u pages"
 msgstr "\"%s\": %.0f versioni di riga rimosse in %u pagine"
 
-#: commands/vacuumlazy.c:1038
+#: commands/vacuumlazy.c:1039
 #, c-format
 msgid "\"%s\": found %.0f removable, %.0f nonremovable row versions in %u out of %u pages"
 msgstr "\"%s\": trovate %.0f versioni di riga removibili, %.0f non removibili in %u pagine su %u"
 
-#: commands/vacuumlazy.c:1042
+#: commands/vacuumlazy.c:1043
 #, c-format
 msgid ""
 "%.0f dead row versions cannot be removed yet.\n"
@@ -7847,28 +7847,28 @@ msgstr ""
 "%u pagine sono completamente vuote.\n"
 "%s."
 
-#: commands/vacuumlazy.c:1113
+#: commands/vacuumlazy.c:1114
 #, c-format
 msgid "\"%s\": removed %d row versions in %d pages"
 msgstr "\"%s\": %d versioni di riga rimosse in %d pagine"
 
-#: commands/vacuumlazy.c:1116 commands/vacuumlazy.c:1272
-#: commands/vacuumlazy.c:1443
+#: commands/vacuumlazy.c:1117 commands/vacuumlazy.c:1273
+#: commands/vacuumlazy.c:1444
 #, c-format
 msgid "%s."
 msgstr "%s."
 
-#: commands/vacuumlazy.c:1269
+#: commands/vacuumlazy.c:1270
 #, c-format
 msgid "scanned index \"%s\" to remove %d row versions"
 msgstr "effettuata la scansione dell'indice \"%s\" per rimuovere %d versioni di riga"
 
-#: commands/vacuumlazy.c:1314
+#: commands/vacuumlazy.c:1315
 #, c-format
 msgid "index \"%s\" now contains %.0f row versions in %u pages"
 msgstr "l'indice \"%s\" ora contiene %.0f versioni di riga in %u pagine"
 
-#: commands/vacuumlazy.c:1318
+#: commands/vacuumlazy.c:1319
 #, c-format
 msgid ""
 "%.0f index row versions were removed.\n"
@@ -7879,17 +7879,17 @@ msgstr ""
 "%u pagine dell'indice sono state cancellate, %u sono attualmente riusabili.\n"
 "%s."
 
-#: commands/vacuumlazy.c:1375
+#: commands/vacuumlazy.c:1376
 #, c-format
 msgid "\"%s\": stopping truncate due to conflicting lock request"
 msgstr "\"%s\": truncate interrotto a causa di una richiesta di lock in conflitto"
 
-#: commands/vacuumlazy.c:1440
+#: commands/vacuumlazy.c:1441
 #, c-format
 msgid "\"%s\": truncated %u to %u pages"
 msgstr "\"%s\": %u pagine ridotte a %u"
 
-#: commands/vacuumlazy.c:1496
+#: commands/vacuumlazy.c:1497
 #, c-format
 msgid "\"%s\": suspending truncate due to conflicting lock request"
 msgstr "\"%s\": annullamento del troncamento a causa di richieste di lock in conflitto"
@@ -10122,7 +10122,7 @@ msgid "FULL JOIN is only supported with merge-joinable or hash-joinable join con
 msgstr "FULL JOIN è supportato solo con condizioni di join realizzabili con merge o hash"
 
 #. translator: %s is a SQL row locking clause such as FOR UPDATE
-#: optimizer/plan/initsplan.c:876
+#: optimizer/plan/initsplan.c:1057
 #, c-format
 msgid "%s cannot be applied to the nullable side of an outer join"
 msgstr "%s non può essere applicato sul lato che può essere nullo di un join esterno"
@@ -10150,22 +10150,22 @@ msgstr "Alcuni dei tipi di dati supportano solo l'hashing, mentre altri supporta
 msgid "could not implement DISTINCT"
 msgstr "non è stato possibile implementare DISTINCT"
 
-#: optimizer/plan/planner.c:3271
+#: optimizer/plan/planner.c:3290
 #, c-format
 msgid "could not implement window PARTITION BY"
 msgstr "non è stato possibile implementare PARTITION BY della finestra"
 
-#: optimizer/plan/planner.c:3272
+#: optimizer/plan/planner.c:3291
 #, c-format
 msgid "Window partitioning columns must be of sortable datatypes."
 msgstr "La colonna di partizionamento della finestra dev'essere un tipo di dato ordinabile."
 
-#: optimizer/plan/planner.c:3276
+#: optimizer/plan/planner.c:3295
 #, c-format
 msgid "could not implement window ORDER BY"
 msgstr "non è stato possibile implementare ORDER BY della finestra"
 
-#: optimizer/plan/planner.c:3277
+#: optimizer/plan/planner.c:3296
 #, c-format
 msgid "Window ordering columns must be of sortable datatypes."
 msgstr "La colonna di ordinamento della finestra dev'essere un tipo di dato ordinabile."
@@ -11800,42 +11800,42 @@ msgstr "esecutore di autovacuum avviato"
 msgid "autovacuum launcher shutting down"
 msgstr "arresto dell'esecutore di autovacuum"
 
-#: postmaster/autovacuum.c:1447
+#: postmaster/autovacuum.c:1446
 #, c-format
 msgid "could not fork autovacuum worker process: %m"
 msgstr "fork del processo di lavoro di autovacuum fallito: %m"
 
-#: postmaster/autovacuum.c:1666
+#: postmaster/autovacuum.c:1665
 #, c-format
 msgid "autovacuum: processing database \"%s\""
 msgstr "autovacuum: elaborazione del database \"%s\""
 
-#: postmaster/autovacuum.c:2060
+#: postmaster/autovacuum.c:2059
 #, c-format
 msgid "autovacuum: dropping orphan temp table \"%s\".\"%s\" in database \"%s\""
 msgstr "autovacuum: eliminazione della tabella temporanea orfana \"%s\".\"%s\" nel database \"%s\""
 
-#: postmaster/autovacuum.c:2072
+#: postmaster/autovacuum.c:2071
 #, c-format
 msgid "autovacuum: found orphan temp table \"%s\".\"%s\" in database \"%s\""
 msgstr "autovacuum: trovata tabella temporanea orfana \"%s\".\"%s\" nel database \"%s\""
 
-#: postmaster/autovacuum.c:2336
+#: postmaster/autovacuum.c:2335
 #, c-format
 msgid "automatic vacuum of table \"%s.%s.%s\""
 msgstr "pulizia automatica della tabella \"%s.%s.%s\""
 
-#: postmaster/autovacuum.c:2339
+#: postmaster/autovacuum.c:2338
 #, c-format
 msgid "automatic analyze of table \"%s.%s.%s\""
 msgstr "analisi automatica della tabella \"%s.%s.%s\""
 
-#: postmaster/autovacuum.c:2835
+#: postmaster/autovacuum.c:2834
 #, c-format
 msgid "autovacuum not started because of misconfiguration"
 msgstr "autovacuum non avviato a causa di configurazione errata"
 
-#: postmaster/autovacuum.c:2836
+#: postmaster/autovacuum.c:2835
 #, c-format
 msgid "Enable the \"track_counts\" option."
 msgstr "Abilita l'opzione \"track_counts\"."
@@ -11903,7 +11903,7 @@ msgstr "Il comando di archiviazione fallito era: %s"
 msgid "archive command was terminated by exception 0x%X"
 msgstr "comando di archiviazione terminato da eccezione 0x%X"
 
-#: postmaster/pgarch.c:620 postmaster/postmaster.c:3231
+#: postmaster/pgarch.c:620 postmaster/postmaster.c:3233
 #, c-format
 msgid "See C include file \"ntstatus.h\" for a description of the hexadecimal value."
 msgstr "Consulta il file include C \"ntstatus.h\" per una spiegazione del valore esadecimale."
@@ -11998,66 +11998,66 @@ msgstr "impostazione del socket per il raccoglitore di statistiche in modalità 
 msgid "disabling statistics collector for lack of working socket"
 msgstr "raccoglitore di statistiche disabilitato per mancanza di un socket funzionante"
 
-#: postmaster/pgstat.c:664
+#: postmaster/pgstat.c:684
 #, c-format
 msgid "could not fork statistics collector: %m"
 msgstr "fork del raccoglitore di statistiche fallito: %m"
 
-#: postmaster/pgstat.c:1200 postmaster/pgstat.c:1224 postmaster/pgstat.c:1255
+#: postmaster/pgstat.c:1220 postmaster/pgstat.c:1244 postmaster/pgstat.c:1275
 #, c-format
 msgid "must be superuser to reset statistics counters"
 msgstr "occorre essere un superutente per resettare i contatori delle statistiche"
 
-#: postmaster/pgstat.c:1231
+#: postmaster/pgstat.c:1251
 #, c-format
 msgid "unrecognized reset target: \"%s\""
 msgstr "obiettivo del reset sconosciuto: \"%s\""
 
-#: postmaster/pgstat.c:1232
+#: postmaster/pgstat.c:1252
 #, c-format
 msgid "Target must be \"bgwriter\"."
 msgstr "L'obiettivo deve essere \"bgwriter\"."
 
-#: postmaster/pgstat.c:3177
+#: postmaster/pgstat.c:3197
 #, c-format
 msgid "could not read statistics message: %m"
 msgstr "lettura del messaggio delle statistiche fallito: %m"
 
-#: postmaster/pgstat.c:3506 postmaster/pgstat.c:3676
+#: postmaster/pgstat.c:3526 postmaster/pgstat.c:3697
 #, c-format
 msgid "could not open temporary statistics file \"%s\": %m"
 msgstr "apertura del file temporaneo delle statistiche \"%s\" fallita: %m"
 
-#: postmaster/pgstat.c:3568 postmaster/pgstat.c:3721
+#: postmaster/pgstat.c:3588 postmaster/pgstat.c:3742
 #, c-format
 msgid "could not write temporary statistics file \"%s\": %m"
 msgstr "scrittura del file temporaneo delle statistiche \"%s\" fallita: %m"
 
-#: postmaster/pgstat.c:3577 postmaster/pgstat.c:3730
+#: postmaster/pgstat.c:3597 postmaster/pgstat.c:3751
 #, c-format
 msgid "could not close temporary statistics file \"%s\": %m"
 msgstr "chiusura del file temporaneo delle statistiche \"%s\" fallita: %m"
 
-#: postmaster/pgstat.c:3585 postmaster/pgstat.c:3738
+#: postmaster/pgstat.c:3605 postmaster/pgstat.c:3759
 #, c-format
 msgid "could not rename temporary statistics file \"%s\" to \"%s\": %m"
 msgstr "non è stato possibile rinominare il file temporaneo delle statistiche \"%s\" in \"%s\": %m"
 
-#: postmaster/pgstat.c:3819 postmaster/pgstat.c:3994 postmaster/pgstat.c:4148
+#: postmaster/pgstat.c:3840 postmaster/pgstat.c:4015 postmaster/pgstat.c:4169
 #, c-format
 msgid "could not open statistics file \"%s\": %m"
 msgstr "apertura del file delle statistiche \"%s\" fallita: %m"
 
-#: postmaster/pgstat.c:3831 postmaster/pgstat.c:3841 postmaster/pgstat.c:3862
-#: postmaster/pgstat.c:3877 postmaster/pgstat.c:3935 postmaster/pgstat.c:4006
-#: postmaster/pgstat.c:4026 postmaster/pgstat.c:4044 postmaster/pgstat.c:4060
-#: postmaster/pgstat.c:4078 postmaster/pgstat.c:4094 postmaster/pgstat.c:4160
-#: postmaster/pgstat.c:4172 postmaster/pgstat.c:4197 postmaster/pgstat.c:4219
+#: postmaster/pgstat.c:3852 postmaster/pgstat.c:3862 postmaster/pgstat.c:3883
+#: postmaster/pgstat.c:3898 postmaster/pgstat.c:3956 postmaster/pgstat.c:4027
+#: postmaster/pgstat.c:4047 postmaster/pgstat.c:4065 postmaster/pgstat.c:4081
+#: postmaster/pgstat.c:4099 postmaster/pgstat.c:4115 postmaster/pgstat.c:4181
+#: postmaster/pgstat.c:4193 postmaster/pgstat.c:4218 postmaster/pgstat.c:4240
 #, c-format
 msgid "corrupted statistics file \"%s\""
 msgstr "file delle statistiche corrotto \"%s\""
 
-#: postmaster/pgstat.c:4646
+#: postmaster/pgstat.c:4667
 #, c-format
 msgid "database hash table corrupted during cleanup --- abort"
 msgstr "tabella hash del database corrotta durante la pulizia --- interruzione"
@@ -12102,117 +12102,113 @@ msgstr "lo streaming dei WAL (max_wal_senders > 0) richiede  wal_level \"archive
 msgid "%s: invalid datetoken tables, please fix\n"
 msgstr "%s: datetoken tables non valido, per favore correggilo\n"
 
-#: postmaster/postmaster.c:930
+#: postmaster/postmaster.c:930 postmaster/postmaster.c:1028
+#: utils/init/miscinit.c:1259
 #, c-format
-msgid "invalid list syntax for \"listen_addresses\""
-msgstr "sintassi della lista non valida per \"listen_addresses\""
+msgid "invalid list syntax in parameter \"%s\""
+msgstr "sintassi di lista non valida nel parametro \"%s\""
 
-#: postmaster/postmaster.c:960
+#: postmaster/postmaster.c:961
 #, c-format
 msgid "could not create listen socket for \"%s\""
 msgstr "creazione del socket di ascolto per \"%s\" fallita"
 
-#: postmaster/postmaster.c:966
+#: postmaster/postmaster.c:967
 #, c-format
 msgid "could not create any TCP/IP sockets"
 msgstr "non è stato possibile creare alcun socket TCP/IP"
 
-#: postmaster/postmaster.c:1027
-#, c-format
-msgid "invalid list syntax for \"unix_socket_directories\""
-msgstr "sintassi non valida per \"unix_socket_directories\""
-
-#: postmaster/postmaster.c:1048
+#: postmaster/postmaster.c:1050
 #, c-format
 msgid "could not create Unix-domain socket in directory \"%s\""
 msgstr "creazione del socket di dominio Unix fallita nella directory \"%s\""
 
-#: postmaster/postmaster.c:1054
+#: postmaster/postmaster.c:1056
 #, c-format
 msgid "could not create any Unix-domain sockets"
 msgstr "creazione del socket di dominio Unix fallita"
 
-#: postmaster/postmaster.c:1066
+#: postmaster/postmaster.c:1068
 #, c-format
 msgid "no socket created for listening"
 msgstr "nessun socket per l'ascolto è stato creato"
 
-#: postmaster/postmaster.c:1106
+#: postmaster/postmaster.c:1108
 #, c-format
 msgid "could not create I/O completion port for child queue"
 msgstr "creazione della porta di completamento I/O per la coda dei figli fallita"
 
-#: postmaster/postmaster.c:1135
+#: postmaster/postmaster.c:1137
 #, c-format
 msgid "%s: could not change permissions of external PID file \"%s\": %s\n"
 msgstr "%s: modifica dei permessi del file PID esterno \"%s\" fallita: %s\n"
 
-#: postmaster/postmaster.c:1139
+#: postmaster/postmaster.c:1141
 #, c-format
 msgid "%s: could not write external PID file \"%s\": %s\n"
 msgstr "%s: scrittura del file PID esterno \"%s\" fallita: %s\n"
 
-#: postmaster/postmaster.c:1193
+#: postmaster/postmaster.c:1195
 #, c-format
 msgid "ending log output to stderr"
 msgstr "terminazione dell'output del log su stderr"
 
-#: postmaster/postmaster.c:1194
+#: postmaster/postmaster.c:1196
 #, c-format
 msgid "Future log output will go to log destination \"%s\"."
 msgstr "L'output dei prossimi log andrà su \"%s\"."
 
-#: postmaster/postmaster.c:1220 utils/init/postinit.c:199
+#: postmaster/postmaster.c:1222 utils/init/postinit.c:199
 #, c-format
 msgid "could not load pg_hba.conf"
 msgstr "caricamento di pg_hba.conf fallito"
 
-#: postmaster/postmaster.c:1296
+#: postmaster/postmaster.c:1298
 #, c-format
 msgid "%s: could not locate matching postgres executable"
 msgstr "%s: eseguibile postgres corrispondente non trovato"
 
-#: postmaster/postmaster.c:1319 utils/misc/tzparser.c:325
+#: postmaster/postmaster.c:1321 utils/misc/tzparser.c:325
 #, c-format
 msgid "This may indicate an incomplete PostgreSQL installation, or that the file \"%s\" has been moved away from its proper location."
 msgstr "Questo potrebbe indicare una installazione di PostgreSQL incompleta, o che il file \"%s\" sia stato spostato dalla sua posizione corretta."
 
-#: postmaster/postmaster.c:1347
+#: postmaster/postmaster.c:1349
 #, c-format
 msgid "data directory \"%s\" does not exist"
 msgstr "la directory dei dati \"%s\" non esiste"
 
-#: postmaster/postmaster.c:1352
+#: postmaster/postmaster.c:1354
 #, c-format
 msgid "could not read permissions of directory \"%s\": %m"
 msgstr "lettura dei permessi della directory \"%s\" fallita: %m"
 
-#: postmaster/postmaster.c:1360
+#: postmaster/postmaster.c:1362
 #, c-format
 msgid "specified data directory \"%s\" is not a directory"
 msgstr "la directory dei dati specificata \"%s\" non è una directory"
 
-#: postmaster/postmaster.c:1376
+#: postmaster/postmaster.c:1378
 #, c-format
 msgid "data directory \"%s\" has wrong ownership"
 msgstr "la directory dei dati \"%s\" ha il proprietario errato"
 
-#: postmaster/postmaster.c:1378
+#: postmaster/postmaster.c:1380
 #, c-format
 msgid "The server must be started by the user that owns the data directory."
 msgstr "Il server deve essere avviato dall'utente che possiede la directory dei dati."
 
-#: postmaster/postmaster.c:1398
+#: postmaster/postmaster.c:1400
 #, c-format
 msgid "data directory \"%s\" has group or world access"
 msgstr "la directory dei dati \"%s\" è accessibile dal gruppo o da tutti"
 
-#: postmaster/postmaster.c:1400
+#: postmaster/postmaster.c:1402
 #, c-format
 msgid "Permissions should be u=rwx (0700)."
 msgstr "I permessi dovrebbero essere u=rwx (0700)."
 
-#: postmaster/postmaster.c:1411
+#: postmaster/postmaster.c:1413
 #, c-format
 msgid ""
 "%s: could not find the database system\n"
@@ -12223,386 +12219,386 @@ msgstr ""
 "Sarebbe dovuto essere nella directory \"%s\",\n"
 "ma l'apertura del file \"%s\" è fallita: %s\n"
 
-#: postmaster/postmaster.c:1563
+#: postmaster/postmaster.c:1565
 #, c-format
 msgid "select() failed in postmaster: %m"
 msgstr "select() fallita in postmaster: %m"
 
-#: postmaster/postmaster.c:1733 postmaster/postmaster.c:1764
+#: postmaster/postmaster.c:1735 postmaster/postmaster.c:1766
 #, c-format
 msgid "incomplete startup packet"
 msgstr "pacchetto di avvio incompleto"
 
-#: postmaster/postmaster.c:1745
+#: postmaster/postmaster.c:1747
 #, c-format
 msgid "invalid length of startup packet"
 msgstr "dimensione del pacchetto di avvio non valida"
 
-#: postmaster/postmaster.c:1802
+#: postmaster/postmaster.c:1804
 #, c-format
 msgid "failed to send SSL negotiation response: %m"
 msgstr "invio della risposta di negoziazione SSL fallito: %m"
 
-#: postmaster/postmaster.c:1831
+#: postmaster/postmaster.c:1833
 #, c-format
 msgid "unsupported frontend protocol %u.%u: server supports %u.0 to %u.%u"
 msgstr "protocollo frontend non supportato %u.%u: il server supporta da %u.0 a %u.%u"
 
-#: postmaster/postmaster.c:1882
+#: postmaster/postmaster.c:1884
 #, c-format
 msgid "invalid value for boolean option \"replication\""
 msgstr "valore per l'opzione booleana \"replication\" non valido"
 
-#: postmaster/postmaster.c:1902
+#: postmaster/postmaster.c:1904
 #, c-format
 msgid "invalid startup packet layout: expected terminator as last byte"
 msgstr "formato del pacchetto di avvio non valido: atteso il terminatore all'ultimo byte"
 
-#: postmaster/postmaster.c:1930
+#: postmaster/postmaster.c:1932
 #, c-format
 msgid "no PostgreSQL user name specified in startup packet"
 msgstr "nessun utente PostgreSQL specificato nel pacchetto di avvio"
 
-#: postmaster/postmaster.c:1987
+#: postmaster/postmaster.c:1989
 #, c-format
 msgid "the database system is starting up"
 msgstr "il database si sta avviando"
 
-#: postmaster/postmaster.c:1992
+#: postmaster/postmaster.c:1994
 #, c-format
 msgid "the database system is shutting down"
 msgstr "il database si sta spegnendo"
 
-#: postmaster/postmaster.c:1997
+#: postmaster/postmaster.c:1999
 #, c-format
 msgid "the database system is in recovery mode"
 msgstr "il database è in modalità di ripristino"
 
-#: postmaster/postmaster.c:2002 storage/ipc/procarray.c:278
+#: postmaster/postmaster.c:2004 storage/ipc/procarray.c:278
 #: storage/ipc/sinvaladt.c:304 storage/lmgr/proc.c:339
 #, c-format
 msgid "sorry, too many clients already"
 msgstr "spiacente, troppi client già connessi"
 
-#: postmaster/postmaster.c:2064
+#: postmaster/postmaster.c:2066
 #, c-format
 msgid "wrong key in cancel request for process %d"
 msgstr "chiave sbagliata nella richiesta di annullamento per il processo %d"
 
-#: postmaster/postmaster.c:2072
+#: postmaster/postmaster.c:2074
 #, c-format
 msgid "PID %d in cancel request did not match any process"
 msgstr "il PID %d nella richiesta di annullamento non corrisponde ad alcun processo"
 
-#: postmaster/postmaster.c:2292
+#: postmaster/postmaster.c:2294
 #, c-format
 msgid "received SIGHUP, reloading configuration files"
 msgstr "SIGHUP ricevuto, sto ricaricando i file di configurazione"
 
-#: postmaster/postmaster.c:2318
+#: postmaster/postmaster.c:2320
 #, c-format
 msgid "pg_hba.conf not reloaded"
 msgstr "pg_hba.conf non è stato ricaricato"
 
-#: postmaster/postmaster.c:2322
+#: postmaster/postmaster.c:2324
 #, c-format
 msgid "pg_ident.conf not reloaded"
 msgstr "pg_ident.conf non è stato ricaricato"
 
-#: postmaster/postmaster.c:2363
+#: postmaster/postmaster.c:2365
 #, c-format
 msgid "received smart shutdown request"
 msgstr "richiesta di arresto smart ricevuta"
 
-#: postmaster/postmaster.c:2416
+#: postmaster/postmaster.c:2418
 #, c-format
 msgid "received fast shutdown request"
 msgstr "richiesta di arresto fast ricevuta"
 
-#: postmaster/postmaster.c:2442
+#: postmaster/postmaster.c:2444
 #, c-format
 msgid "aborting any active transactions"
 msgstr "interruzione di tutte le transazioni attive"
 
-#: postmaster/postmaster.c:2472
+#: postmaster/postmaster.c:2474
 #, c-format
 msgid "received immediate shutdown request"
 msgstr "richiesta di arresto immediate ricevuta"
 
-#: postmaster/postmaster.c:2543 postmaster/postmaster.c:2564
+#: postmaster/postmaster.c:2545 postmaster/postmaster.c:2566
 msgid "startup process"
 msgstr "avvio del processo"
 
-#: postmaster/postmaster.c:2546
+#: postmaster/postmaster.c:2548
 #, c-format
 msgid "aborting startup due to startup process failure"
 msgstr "avvio interrotto a causa del fallimento del processo di avvio"
 
-#: postmaster/postmaster.c:2603
+#: postmaster/postmaster.c:2605
 #, c-format
 msgid "database system is ready to accept connections"
 msgstr "il database è pronto ad accettare connessioni"
 
-#: postmaster/postmaster.c:2618
+#: postmaster/postmaster.c:2620
 msgid "background writer process"
 msgstr "processo di scrittura in background"
 
-#: postmaster/postmaster.c:2672
+#: postmaster/postmaster.c:2674
 msgid "checkpointer process"
 msgstr "processo di creazione checkpoint"
 
-#: postmaster/postmaster.c:2688
+#: postmaster/postmaster.c:2690
 msgid "WAL writer process"
 msgstr "processo di scrittura WAL"
 
-#: postmaster/postmaster.c:2702
+#: postmaster/postmaster.c:2704
 msgid "WAL receiver process"
 msgstr "processo di ricezione WAL"
 
-#: postmaster/postmaster.c:2717
+#: postmaster/postmaster.c:2719
 msgid "autovacuum launcher process"
 msgstr "processo del lanciatore di autovacuum"
 
-#: postmaster/postmaster.c:2732
+#: postmaster/postmaster.c:2734
 msgid "archiver process"
 msgstr "processo di archiviazione"
 
-#: postmaster/postmaster.c:2748
+#: postmaster/postmaster.c:2750
 msgid "statistics collector process"
 msgstr "processo del raccoglitore di statistiche"
 
-#: postmaster/postmaster.c:2762
+#: postmaster/postmaster.c:2764
 msgid "system logger process"
 msgstr "processo del logger di sistema"
 
-#: postmaster/postmaster.c:2824
+#: postmaster/postmaster.c:2826
 msgid "worker process"
 msgstr "processo di lavoro"
 
-#: postmaster/postmaster.c:2894 postmaster/postmaster.c:2913
-#: postmaster/postmaster.c:2920 postmaster/postmaster.c:2938
+#: postmaster/postmaster.c:2896 postmaster/postmaster.c:2915
+#: postmaster/postmaster.c:2922 postmaster/postmaster.c:2940
 msgid "server process"
 msgstr "processo del server"
 
-#: postmaster/postmaster.c:2974
+#: postmaster/postmaster.c:2976
 #, c-format
 msgid "terminating any other active server processes"
 msgstr "interruzione di tutti gli altri processi attivi del server"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:3219
+#: postmaster/postmaster.c:3221
 #, c-format
 msgid "%s (PID %d) exited with exit code %d"
 msgstr "%s (PID %d) è uscito con codice di uscita %d"
 
-#: postmaster/postmaster.c:3221 postmaster/postmaster.c:3232
-#: postmaster/postmaster.c:3243 postmaster/postmaster.c:3252
-#: postmaster/postmaster.c:3262
+#: postmaster/postmaster.c:3223 postmaster/postmaster.c:3234
+#: postmaster/postmaster.c:3245 postmaster/postmaster.c:3254
+#: postmaster/postmaster.c:3264
 #, c-format
 msgid "Failed process was running: %s"
 msgstr "Il processo fallito stava eseguendo: %s"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:3229
+#: postmaster/postmaster.c:3231
 #, c-format
 msgid "%s (PID %d) was terminated by exception 0x%X"
 msgstr "%s (PID %d) è stato terminato dall'eccezione 0x%X"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:3239
+#: postmaster/postmaster.c:3241
 #, c-format
 msgid "%s (PID %d) was terminated by signal %d: %s"
 msgstr "%s (PID %d) è stato terminato dal segnale %d: %s"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:3250
+#: postmaster/postmaster.c:3252
 #, c-format
 msgid "%s (PID %d) was terminated by signal %d"
 msgstr "%s (PID %d) è stato terminato dal segnale %d"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
-#: postmaster/postmaster.c:3260
+#: postmaster/postmaster.c:3262
 #, c-format
 msgid "%s (PID %d) exited with unrecognized status %d"
 msgstr "%s (PID %d) uscito con stato sconosciuto %d"
 
-#: postmaster/postmaster.c:3445
+#: postmaster/postmaster.c:3447
 #, c-format
 msgid "abnormal database system shutdown"
 msgstr "spegnimento anormale del database"
 
-#: postmaster/postmaster.c:3484
+#: postmaster/postmaster.c:3486
 #, c-format
 msgid "all server processes terminated; reinitializing"
 msgstr "tutti i processi server sono terminati; re-inizializzazione"
 
-#: postmaster/postmaster.c:3700
+#: postmaster/postmaster.c:3702
 #, c-format
 msgid "could not fork new process for connection: %m"
 msgstr "fork del nuovo processo per la connessione fallito: %m"
 
-#: postmaster/postmaster.c:3742
+#: postmaster/postmaster.c:3744
 msgid "could not fork new process for connection: "
 msgstr "fork del nuovo processo per la connessione fallito: "
 
-#: postmaster/postmaster.c:3849
+#: postmaster/postmaster.c:3851
 #, c-format
 msgid "connection received: host=%s port=%s"
 msgstr "connessione ricevuta: host=%s porta=%s"
 
-#: postmaster/postmaster.c:3854
+#: postmaster/postmaster.c:3856
 #, c-format
 msgid "connection received: host=%s"
 msgstr "connessione ricevuta: host=%s"
 
-#: postmaster/postmaster.c:4129
+#: postmaster/postmaster.c:4131
 #, c-format
 msgid "could not execute server process \"%s\": %m"
 msgstr "esecuzione del processo del server \"%s\" fallita: %m"
 
-#: postmaster/postmaster.c:4668
+#: postmaster/postmaster.c:4670
 #, c-format
 msgid "database system is ready to accept read only connections"
 msgstr "il database è pronto ad accettare connessioni in sola lettura"
 
-#: postmaster/postmaster.c:4979
+#: postmaster/postmaster.c:4981
 #, c-format
 msgid "could not fork startup process: %m"
 msgstr "fork del processo di avvio fallito: %m"
 
-#: postmaster/postmaster.c:4983
+#: postmaster/postmaster.c:4985
 #, c-format
 msgid "could not fork background writer process: %m"
 msgstr "fork del processo di scrittura in background fallito: %m"
 
-#: postmaster/postmaster.c:4987
+#: postmaster/postmaster.c:4989
 #, c-format
 msgid "could not fork checkpointer process: %m"
 msgstr "fork del processo di creazione dei checkpoint fallito: %m"
 
-#: postmaster/postmaster.c:4991
+#: postmaster/postmaster.c:4993
 #, c-format
 msgid "could not fork WAL writer process: %m"
 msgstr "fork del processo di scrittura dei WAL fallito: %m"
 
-#: postmaster/postmaster.c:4995
+#: postmaster/postmaster.c:4997
 #, c-format
 msgid "could not fork WAL receiver process: %m"
 msgstr "fork del processo di ricezione dei WAL fallito: %m"
 
-#: postmaster/postmaster.c:4999
+#: postmaster/postmaster.c:5001
 #, c-format
 msgid "could not fork process: %m"
 msgstr "fork del processo fallito: %m"
 
-#: postmaster/postmaster.c:5178
+#: postmaster/postmaster.c:5180
 #, c-format
 msgid "registering background worker \"%s\""
 msgstr "registrazione del processo di lavoro in background \"%s\""
 
-#: postmaster/postmaster.c:5185
+#: postmaster/postmaster.c:5187
 #, c-format
 msgid "background worker \"%s\": must be registered in shared_preload_libraries"
 msgstr "processo di lavoro in background \"%s\": deve essere registrato in shared_preload_libraries"
 
-#: postmaster/postmaster.c:5198
+#: postmaster/postmaster.c:5200
 #, c-format
 msgid "background worker \"%s\": must attach to shared memory in order to be able to request a database connection"
 msgstr "processo di lavoro in background \"%s\": deve essere attaccato alla memoria condivisa per poter richiedere una connessione di database"
 
-#: postmaster/postmaster.c:5208
+#: postmaster/postmaster.c:5210
 #, c-format
 msgid "background worker \"%s\": cannot request database access if starting at postmaster start"
 msgstr "processo di lavoro in background \"%s\": non è possibile richiedere accesso al database se avviato all'avvio di postmaster"
 
-#: postmaster/postmaster.c:5223
+#: postmaster/postmaster.c:5225
 #, c-format
 msgid "background worker \"%s\": invalid restart interval"
 msgstr "processo di lavoro in background \"%s\": intervallo di riavvio non valido"
 
-#: postmaster/postmaster.c:5239
+#: postmaster/postmaster.c:5241
 #, c-format
 msgid "too many background workers"
 msgstr "troppi processi di lavoro in background"
 
-#: postmaster/postmaster.c:5240
+#: postmaster/postmaster.c:5242
 #, c-format
 msgid "Up to %d background worker can be registered with the current settings."
 msgid_plural "Up to %d background workers can be registered with the current settings."
 msgstr[0] "Le impostazioni correnti consentono la registrazione di un massimo di %d processi di lavoro in background."
 msgstr[1] "Le impostazioni correnti consentono la registrazione di un massimo di %d processi di lavoro in background."
 
-#: postmaster/postmaster.c:5283
+#: postmaster/postmaster.c:5285
 #, c-format
 msgid "database connection requirement not indicated during registration"
 msgstr "requisiti di connessione a database non indicati durante la registrazione"
 
-#: postmaster/postmaster.c:5290
+#: postmaster/postmaster.c:5292
 #, c-format
 msgid "invalid processing mode in background worker"
 msgstr "modalità di processo non valida nel processo di lavoro in background"
 
-#: postmaster/postmaster.c:5364
+#: postmaster/postmaster.c:5366
 #, c-format
 msgid "terminating background worker \"%s\" due to administrator command"
 msgstr "interruzione del processo di lavoro in background \"%s\" a causa di comando amministrativo"
 
-#: postmaster/postmaster.c:5581
+#: postmaster/postmaster.c:5583
 #, c-format
 msgid "starting background worker process \"%s\""
 msgstr "avvio del processo di lavoro in background \"%s\""
 
-#: postmaster/postmaster.c:5592
+#: postmaster/postmaster.c:5594
 #, c-format
 msgid "could not fork worker process: %m"
 msgstr "fork del processo di lavoro in background fallito: %m"
 
-#: postmaster/postmaster.c:5944
+#: postmaster/postmaster.c:5946
 #, c-format
 msgid "could not duplicate socket %d for use in backend: error code %d"
 msgstr "duplicazione del socket %d da usare nel backend fallita: codice errore %d"
 
-#: postmaster/postmaster.c:5976
+#: postmaster/postmaster.c:5978
 #, c-format
 msgid "could not create inherited socket: error code %d\n"
 msgstr "creazione del socket ereditato fallita: codice errore %d\n"
 
-#: postmaster/postmaster.c:6005 postmaster/postmaster.c:6012
+#: postmaster/postmaster.c:6007 postmaster/postmaster.c:6014
 #, c-format
 msgid "could not read from backend variables file \"%s\": %s\n"
 msgstr "lettura dal file delle variabili del backend \"%s\" fallita: %s\n"
 
-#: postmaster/postmaster.c:6021
+#: postmaster/postmaster.c:6023
 #, c-format
 msgid "could not remove file \"%s\": %s\n"
 msgstr "rimozione del file \"%s\" fallita: %s\n"
 
-#: postmaster/postmaster.c:6038
+#: postmaster/postmaster.c:6040
 #, c-format
 msgid "could not map view of backend variables: error code %lu\n"
 msgstr "non è stato possibile mappare la vista delle variabili del backend: codice errore %lu\n"
 
-#: postmaster/postmaster.c:6047
+#: postmaster/postmaster.c:6049
 #, c-format
 msgid "could not unmap view of backend variables: error code %lu\n"
 msgstr "non è stato possibile rimuovere la mappa della vista delle variabili del backend: codice errore %lu\n"
 
-#: postmaster/postmaster.c:6054
+#: postmaster/postmaster.c:6056
 #, c-format
 msgid "could not close handle to backend parameter variables: error code %lu\n"
 msgstr "chiusura dell'handle dei parametri variabili del backend fallita: codice errore %lu\n"
 
-#: postmaster/postmaster.c:6210
+#: postmaster/postmaster.c:6212
 #, c-format
 msgid "could not read exit code for process\n"
 msgstr "lettura del codice di uscita del processo fallita\n"
 
-#: postmaster/postmaster.c:6215
+#: postmaster/postmaster.c:6217
 #, c-format
 msgid "could not post child completion status\n"
 msgstr "invio dello stato di completamento del figlio fallito\n"
@@ -12667,13 +12663,13 @@ msgstr "rotazione automatica disabilitata (usa SIGHUP per abilitarla di nuovo)"
 msgid "could not determine which collation to use for regular expression"
 msgstr "non è stato possibile determinare quale ordinamento usare per le espressioni regolari"
 
-#: replication/basebackup.c:135 replication/basebackup.c:893
+#: replication/basebackup.c:135 replication/basebackup.c:901
 #: utils/adt/misc.c:360
 #, c-format
 msgid "could not read symbolic link \"%s\": %m"
 msgstr "lettura del link simbolico \"%s\" fallita: %m"
 
-#: replication/basebackup.c:142 replication/basebackup.c:897
+#: replication/basebackup.c:142 replication/basebackup.c:905
 #: utils/adt/misc.c:364
 #, c-format
 msgid "symbolic link \"%s\" target is too long"
@@ -12684,40 +12680,45 @@ msgstr "la destinazione del link simbolico \"%s\" è troppo lunga"
 msgid "could not stat control file \"%s\": %m"
 msgstr "non è stato possibile ottenere informazioni sul file di controllo \"%s\": %m"
 
-#: replication/basebackup.c:317 replication/basebackup.c:331
-#: replication/basebackup.c:340
+#: replication/basebackup.c:312
+#, c-format
+msgid "could not find any WAL files"
+msgstr "nessun file WAL trovato"
+
+#: replication/basebackup.c:325 replication/basebackup.c:339
+#: replication/basebackup.c:348
 #, c-format
 msgid "could not find WAL file \"%s\""
 msgstr "file WAL \"%s\" non trovato"
 
-#: replication/basebackup.c:379 replication/basebackup.c:402
+#: replication/basebackup.c:387 replication/basebackup.c:410
 #, c-format
 msgid "unexpected WAL file size \"%s\""
 msgstr "dimensione inaspettata del file WAL \"%s\""
 
-#: replication/basebackup.c:390 replication/basebackup.c:1011
+#: replication/basebackup.c:398 replication/basebackup.c:1019
 #, c-format
 msgid "base backup could not send data, aborting backup"
 msgstr "invio dati da parte del backup di base fallito, backup interrotto"
 
-#: replication/basebackup.c:474 replication/basebackup.c:483
-#: replication/basebackup.c:492 replication/basebackup.c:501
-#: replication/basebackup.c:510
+#: replication/basebackup.c:482 replication/basebackup.c:491
+#: replication/basebackup.c:500 replication/basebackup.c:509
+#: replication/basebackup.c:518
 #, c-format
 msgid "duplicate option \"%s\""
 msgstr "opzione duplicata \"%s\""
 
-#: replication/basebackup.c:763 replication/basebackup.c:847
+#: replication/basebackup.c:771 replication/basebackup.c:855
 #, c-format
 msgid "could not stat file or directory \"%s\": %m"
 msgstr "non è stato possibile ottenere informazioni sul file o directory \"%s\": %m"
 
-#: replication/basebackup.c:947
+#: replication/basebackup.c:955
 #, c-format
 msgid "skipping special file \"%s\""
 msgstr "file speciale \"%s\" saltato"
 
-#: replication/basebackup.c:1001
+#: replication/basebackup.c:1009
 #, c-format
 msgid "archive member \"%s\" too large for tar format"
 msgstr "il membro \"%s\" dell'archivio è troppo grande per il formato tar"
@@ -13418,7 +13419,7 @@ msgstr "La dimensione di ShmemIndex è errata per la struttura di dati \"%s\": a
 msgid "requested shared memory size overflows size_t"
 msgstr "la dimensione richiesta di memoria condivisa supera size_t"
 
-#: storage/ipc/standby.c:499 tcop/postgres.c:2936
+#: storage/ipc/standby.c:499 tcop/postgres.c:2943
 #, c-format
 msgid "canceling statement due to conflict with recovery"
 msgstr "annullamento dell'istruzione a causa di un conflitto con il ripristino"
@@ -13428,17 +13429,17 @@ msgstr "annullamento dell'istruzione a causa di un conflitto con il ripristino"
 msgid "User transaction caused buffer deadlock with recovery."
 msgstr "La transazione utente ha causato un deadlock del buffer con il ripristino."
 
-#: storage/large_object/inv_api.c:270
+#: storage/large_object/inv_api.c:259
 #, c-format
 msgid "invalid flags for opening a large object: %d"
 msgstr "flag non validi per l'apertura di un large object: %d"
 
-#: storage/large_object/inv_api.c:410
+#: storage/large_object/inv_api.c:418
 #, c-format
 msgid "invalid whence setting: %d"
 msgstr "impostazione \"da dove\" non valida: %d"
 
-#: storage/large_object/inv_api.c:573
+#: storage/large_object/inv_api.c:581
 #, c-format
 msgid "invalid large object write request size: %d"
 msgstr "dimensione della richiesta di scrittura large object non valida: %d"
@@ -13808,7 +13809,7 @@ msgid "incorrect binary data format in function argument %d"
 msgstr "formato dei dati binari non corretto nell'argomento %d della funzione"
 
 #: tcop/postgres.c:426 tcop/postgres.c:438 tcop/postgres.c:449
-#: tcop/postgres.c:461 tcop/postgres.c:4223
+#: tcop/postgres.c:461 tcop/postgres.c:4230
 #, c-format
 msgid "invalid frontend message type %d"
 msgstr "messaggio frontend di tipo %d non valido"
@@ -13931,137 +13932,137 @@ msgstr "L'utente potrebbe aver avuto bisogno di vedere versioni di righe che dev
 msgid "User was connected to a database that must be dropped."
 msgstr "L'utente era connesso ad un database che deve essere eliminato."
 
-#: tcop/postgres.c:2542
+#: tcop/postgres.c:2549
 #, c-format
 msgid "terminating connection because of crash of another server process"
 msgstr "la connessione è stata terminata a causa del crash di un altro processo del server"
 
-#: tcop/postgres.c:2543
+#: tcop/postgres.c:2550
 #, c-format
 msgid "The postmaster has commanded this server process to roll back the current transaction and exit, because another server process exited abnormally and possibly corrupted shared memory."
 msgstr "Il postmaster ha obbligato questo processo del server di attuare il roll back della transazione corrente e di uscire, perché un altro processo del server è terminato anormalmente e con possibile corruzione della memoria condivisa."
 
-#: tcop/postgres.c:2547 tcop/postgres.c:2931
+#: tcop/postgres.c:2554 tcop/postgres.c:2938
 #, c-format
 msgid "In a moment you should be able to reconnect to the database and repeat your command."
 msgstr "In un momento sarai in grado di riconnetterti al database e di ripetere il comando."
 
-#: tcop/postgres.c:2660
+#: tcop/postgres.c:2667
 #, c-format
 msgid "floating-point exception"
 msgstr "eccezione floating-point"
 
-#: tcop/postgres.c:2661
+#: tcop/postgres.c:2668
 #, c-format
 msgid "An invalid floating-point operation was signaled. This probably means an out-of-range result or an invalid operation, such as division by zero."
 msgstr "Un'operazione in floating-point non valida è stata segnalata. Questo probabilmente sta a significare che il risultato è un valore fuori limite o l'operazione non è valida, ad esempio una divisione per zero."
 
-#: tcop/postgres.c:2835
+#: tcop/postgres.c:2842
 #, c-format
 msgid "terminating autovacuum process due to administrator command"
 msgstr "interruzione del processo autovacuum su comando dell'amministratore"
 
-#: tcop/postgres.c:2841 tcop/postgres.c:2851 tcop/postgres.c:2929
+#: tcop/postgres.c:2848 tcop/postgres.c:2858 tcop/postgres.c:2936
 #, c-format
 msgid "terminating connection due to conflict with recovery"
 msgstr "interruzione della connessione a causa di conflitto con il ripristino"
 
-#: tcop/postgres.c:2857
+#: tcop/postgres.c:2864
 #, c-format
 msgid "terminating connection due to administrator command"
 msgstr "interruzione della connessione su comando dell'amministratore"
 
-#: tcop/postgres.c:2869
+#: tcop/postgres.c:2876
 #, c-format
 msgid "connection to client lost"
 msgstr "connessione al client persa"
 
-#: tcop/postgres.c:2884
+#: tcop/postgres.c:2891
 #, c-format
 msgid "canceling authentication due to timeout"
 msgstr "annullamento dell'autenticazione a causa di timeout"
 
-#: tcop/postgres.c:2899
+#: tcop/postgres.c:2906
 #, c-format
 msgid "canceling statement due to lock timeout"
 msgstr "annullamento dell'istruzione a causa di timeout di lock"
 
-#: tcop/postgres.c:2908
+#: tcop/postgres.c:2915
 #, c-format
 msgid "canceling statement due to statement timeout"
 msgstr "annullamento dell'istruzione a causa di timeout"
 
-#: tcop/postgres.c:2917
+#: tcop/postgres.c:2924
 #, c-format
 msgid "canceling autovacuum task"
 msgstr "annullamento del task di autovacuum"
 
-#: tcop/postgres.c:2952
+#: tcop/postgres.c:2959
 #, c-format
 msgid "canceling statement due to user request"
 msgstr "annullamento dell'istruzione su richiesta dell'utente"
 
-#: tcop/postgres.c:3080 tcop/postgres.c:3102
+#: tcop/postgres.c:3087 tcop/postgres.c:3109
 #, c-format
 msgid "stack depth limit exceeded"
 msgstr "limite di profondità dello stack superato"
 
-#: tcop/postgres.c:3081 tcop/postgres.c:3103
+#: tcop/postgres.c:3088 tcop/postgres.c:3110
 #, c-format
 msgid "Increase the configuration parameter \"max_stack_depth\" (currently %dkB), after ensuring the platform's stack depth limit is adequate."
 msgstr "Incrementa il parametro di configurazione \"max_stack_depth\" (attualmente %dkB), dopo esserti assicurato che il limite dello stack della piattaforma sia adeguato."
 
-#: tcop/postgres.c:3119
+#: tcop/postgres.c:3126
 #, c-format
 msgid "\"max_stack_depth\" must not exceed %ldkB."
 msgstr "\"max_stack_depth\" non deve superare %ldkB"
 
-#: tcop/postgres.c:3121
+#: tcop/postgres.c:3128
 #, c-format
 msgid "Increase the platform's stack depth limit via \"ulimit -s\" or local equivalent."
 msgstr "Incrementa il limite dello stack della piattaforma usando \"ulimit -s\" on un comando equivalente."
 
-#: tcop/postgres.c:3485
+#: tcop/postgres.c:3492
 #, c-format
 msgid "invalid command-line argument for server process: %s"
 msgstr "argomento della riga di comando non valido per il processo server: %s"
 
-#: tcop/postgres.c:3486 tcop/postgres.c:3492
+#: tcop/postgres.c:3493 tcop/postgres.c:3499
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "Prova \"%s --help\" per maggiori informazioni."
 
-#: tcop/postgres.c:3490
+#: tcop/postgres.c:3497
 #, c-format
 msgid "%s: invalid command-line argument: %s"
 msgstr "%s: argomento della riga di comando non valido: %s"
 
-#: tcop/postgres.c:3577
+#: tcop/postgres.c:3584
 #, c-format
 msgid "%s: no database nor user name specified"
 msgstr "%s: nessun database né nome utente specificato"
 
-#: tcop/postgres.c:4131
+#: tcop/postgres.c:4138
 #, c-format
 msgid "invalid CLOSE message subtype %d"
 msgstr "sottotipo %d del messaggio CLOSE non valido"
 
-#: tcop/postgres.c:4166
+#: tcop/postgres.c:4173
 #, c-format
 msgid "invalid DESCRIBE message subtype %d"
 msgstr "sottotipo %d del messaggio DESCRIBE non valido"
 
-#: tcop/postgres.c:4244
+#: tcop/postgres.c:4251
 #, c-format
 msgid "fastpath function calls not supported in a replication connection"
 msgstr "le chiamate di funzione fastpath non sono supportate in una connessione di replica"
 
-#: tcop/postgres.c:4248
+#: tcop/postgres.c:4255
 #, c-format
 msgid "extended query protocol not supported in a replication connection"
 msgstr "il protocollo di query esteso non è supportato in una connessione di replica"
 
-#: tcop/postgres.c:4418
+#: tcop/postgres.c:4425
 #, c-format
 msgid "disconnection: session time: %d:%02d:%02d.%03d user=%s database=%s host=%s%s%s"
 msgstr "disconnessione: tempo della sessione: %d:%02d:%02d.%03d utente=%s database=%s host=%s%s%s"
@@ -14624,7 +14625,7 @@ msgstr "in questo contesto non è consentito un elemento di array nullo"
 msgid "cannot compare arrays of different element types"
 msgstr "non è possibile confrontare array con elementi di tipo diverso"
 
-#: utils/adt/arrayfuncs.c:3568 utils/adt/rangetypes.c:1206
+#: utils/adt/arrayfuncs.c:3568 utils/adt/rangetypes.c:1212
 #, c-format
 msgid "could not identify a hash function for type %s"
 msgstr "non è stato possibile trovare una funzione di hash per il tipo %s"
@@ -16105,57 +16106,57 @@ msgstr "il risultato della differenza di intervalli non sarebbe continuo"
 msgid "result of range union would not be contiguous"
 msgstr "il risultato dell'unione di intervalli non sarebbe continuo"
 
-#: utils/adt/rangetypes.c:1496
+#: utils/adt/rangetypes.c:1502
 #, c-format
 msgid "range lower bound must be less than or equal to range upper bound"
 msgstr "il limite inferiore dell'intervallo dev'essere minore o uguale del limite superiore"
 
-#: utils/adt/rangetypes.c:1879 utils/adt/rangetypes.c:1892
-#: utils/adt/rangetypes.c:1906
+#: utils/adt/rangetypes.c:1885 utils/adt/rangetypes.c:1898
+#: utils/adt/rangetypes.c:1912
 #, c-format
 msgid "invalid range bound flags"
 msgstr "flag di limiti dell'intervallo non valido"
 
-#: utils/adt/rangetypes.c:1880 utils/adt/rangetypes.c:1893
-#: utils/adt/rangetypes.c:1907
+#: utils/adt/rangetypes.c:1886 utils/adt/rangetypes.c:1899
+#: utils/adt/rangetypes.c:1913
 #, c-format
 msgid "Valid values are \"[]\", \"[)\", \"(]\", and \"()\"."
 msgstr "I valori validi sono \"[]\", \"[)\", \"(]\" e \"()\"."
 
-#: utils/adt/rangetypes.c:1972 utils/adt/rangetypes.c:1989
-#: utils/adt/rangetypes.c:2002 utils/adt/rangetypes.c:2020
-#: utils/adt/rangetypes.c:2031 utils/adt/rangetypes.c:2075
-#: utils/adt/rangetypes.c:2083
+#: utils/adt/rangetypes.c:1978 utils/adt/rangetypes.c:1995
+#: utils/adt/rangetypes.c:2008 utils/adt/rangetypes.c:2026
+#: utils/adt/rangetypes.c:2037 utils/adt/rangetypes.c:2081
+#: utils/adt/rangetypes.c:2089
 #, c-format
 msgid "malformed range literal: \"%s\""
 msgstr "letterale di intervallo non definito correttamente: \"%s\""
 
-#: utils/adt/rangetypes.c:1974
+#: utils/adt/rangetypes.c:1980
 #, c-format
 msgid "Junk after \"empty\" key word."
 msgstr "Dati spuri dopo la parola chiave \"empty\"."
 
-#: utils/adt/rangetypes.c:1991
+#: utils/adt/rangetypes.c:1997
 #, c-format
 msgid "Missing left parenthesis or bracket."
 msgstr "Manca la parentesi aperta."
 
-#: utils/adt/rangetypes.c:2004
+#: utils/adt/rangetypes.c:2010
 #, c-format
 msgid "Missing comma after lower bound."
 msgstr "Manca la virgola dopo il limite inferiore."
 
-#: utils/adt/rangetypes.c:2022
+#: utils/adt/rangetypes.c:2028
 #, c-format
 msgid "Too many commas."
 msgstr "Troppe virgole."
 
-#: utils/adt/rangetypes.c:2033
+#: utils/adt/rangetypes.c:2039
 #, c-format
 msgid "Junk after right parenthesis or bracket."
 msgstr "Caratteri spuri dopo la parentesi chiusa."
 
-#: utils/adt/rangetypes.c:2077 utils/adt/rangetypes.c:2085
+#: utils/adt/rangetypes.c:2083 utils/adt/rangetypes.c:2091
 #: utils/adt/rowtypes.c:206 utils/adt/rowtypes.c:214
 #, c-format
 msgid "Unexpected end of input."
@@ -16949,7 +16950,7 @@ msgstr "nessuna funzione di input disponibile per il tipo %s"
 msgid "no output function available for type %s"
 msgstr "nessuna funzione di output disponibile per il tipo %s"
 
-#: utils/cache/plancache.c:695
+#: utils/cache/plancache.c:696
 #, c-format
 msgid "cached plan must not change result type"
 msgstr "il cached plan non deve cambiare il tipo del risultato"
@@ -17381,11 +17382,6 @@ msgstr "Potrebbe essere necessario eseguire initdb."
 #, c-format
 msgid "The data directory was initialized by PostgreSQL version %ld.%ld, which is not compatible with this version %s."
 msgstr "La directory dati è stata inizializzata da PostgreSQL versione %ld.%ld, che non è compatibile con questa versione %s."
-
-#: utils/init/miscinit.c:1259
-#, c-format
-msgid "invalid list syntax in parameter \"%s\""
-msgstr "sintassi di lista non valida nel parametro \"%s\""
 
 #: utils/init/miscinit.c:1296
 #, c-format

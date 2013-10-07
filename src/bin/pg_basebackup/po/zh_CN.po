@@ -1,33 +1,35 @@
 # LANGUAGE message translation file for pg_basebackup
 # Copyright (C) 2012 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2012.
 #
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2012, 2013.
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.2\n"
+"Project-Id-Version: pg_basebackup (PostgreSQL) 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-09-23 20:18+0000\n"
-"PO-Revision-Date: 2013-10-07 14:23-0400\n"
-"Last-Translator: Tomas Vondra\n"
-"Language-Team: Czech <kde-i18n-doc@kde.org>\n"
-"Language: cs\n"
+"POT-Creation-Date: 2013-09-02 00:26+0000\n"
+"PO-Revision-Date: 2013-09-02 13:16+0800\n"
+"Last-Translator: Xiong He <iihero@qq.com>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Generator: Lokalize 1.5\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 1.5.4\n"
 
 #: ../../common/fe_memutils.c:33 ../../common/fe_memutils.c:60
 #: ../../common/fe_memutils.c:83
 #, c-format
 msgid "out of memory\n"
-msgstr "nedostatek paměti\n"
+msgstr "内存溢出\n"
 
+# common.c:78
 #: ../../common/fe_memutils.c:77
 #, c-format
+#| msgid "pg_strdup: cannot duplicate null pointer (internal error)\n"
 msgid "cannot duplicate null pointer (internal error)\n"
-msgstr "nelze duplikovat null pointer (interní chyba)\n"
+msgstr "无法复制空指针 (内部错误)\n"
 
 #: pg_basebackup.c:106
 #, c-format
@@ -35,18 +37,18 @@ msgid ""
 "%s takes a base backup of a running PostgreSQL server.\n"
 "\n"
 msgstr ""
-"%s vytvoří base backup běžícího PostgreSQL serveru.\n"
+"%s 在运行的PostgreSQL服务器上执行基础备份.\n"
 "\n"
 
 #: pg_basebackup.c:108 pg_receivexlog.c:53
 #, c-format
 msgid "Usage:\n"
-msgstr "Použití:\n"
+msgstr "使用方法:\n"
 
 #: pg_basebackup.c:109 pg_receivexlog.c:54
 #, c-format
 msgid "  %s [OPTION]...\n"
-msgstr "  %s [VOLBA]...\n"
+msgstr "  %s [选项]...\n"
 
 #: pg_basebackup.c:110
 #, c-format
@@ -55,33 +57,36 @@ msgid ""
 "Options controlling the output:\n"
 msgstr ""
 "\n"
-"Volby ovlivňující výstup:\n"
+"控制输出的选项:\n"
 
 #: pg_basebackup.c:111
 #, c-format
 msgid "  -D, --pgdata=DIRECTORY receive base backup into directory\n"
-msgstr "  -D, --pgdata=ADRESÁŘ   ulož base backup do adresáře\n"
+msgstr " -D, --pgdata=DIRECTORY 接收基础备份到指定目录\n"
 
 #: pg_basebackup.c:112
 #, c-format
 msgid "  -F, --format=p|t       output format (plain (default), tar)\n"
-msgstr "  -F, --format=p|t         výstupní formát (plain (výchozí), tar)\n"
+msgstr "  -F, --format=p|t       输出格式 (纯文本 (缺省值), tar压缩格式)\n"
 
+# help.c:121
 #: pg_basebackup.c:113
 #, c-format
+#| msgid ""
+#| "  -0, --record-separator-zero\n"
+#| "                           set record separator to zero byte\n"
 msgid ""
 "  -R, --write-recovery-conf\n"
 "                         write recovery.conf after backup\n"
 msgstr ""
 "  -R, --write-recovery-conf\n"
-"                         po zálohování zapíše recovery.conf\n"
+"                           备份后对文件recovery.conf进行写操作\n"
 
 #: pg_basebackup.c:115
 #, c-format
 msgid ""
 "  -x, --xlog             include required WAL files in backup (fetch mode)\n"
-msgstr ""
-"  -x, --xlog             zahrne potřebné WAL soubory do zálohy (fetch mód)\n"
+msgstr "  -x, --xlog             在备份中包含必需的WAL文件(fetch 模式)\n"
 
 #: pg_basebackup.c:116
 #, c-format
@@ -90,19 +95,18 @@ msgid ""
 "                         include required WAL files with specified method\n"
 msgstr ""
 "  -X, --xlog-method=fetch|stream\n"
-"                         zahrne potřebné WAL soubory do zálohy\n"
+"                         按指定的模式包含必需的WAL日志文件\n"
 
 #: pg_basebackup.c:118
 #, c-format
 msgid "  -z, --gzip             compress tar output\n"
-msgstr "  -z, --gzip               komprimuj výstup taru\n"
+msgstr "  -z, --gzip             对tar文件进行压缩输出\n"
 
 #: pg_basebackup.c:119
 #, c-format
 msgid ""
 "  -Z, --compress=0-9     compress tar output with given compression level\n"
-msgstr ""
-"  -Z, --compress=0-9       komprimuj výstup taru zvolenou úrovní komprese\n"
+msgstr "  -Z, --compress=0-9     按给定的压缩级别对tar文件进行压缩输出\n"
 
 #: pg_basebackup.c:120
 #, c-format
@@ -111,7 +115,7 @@ msgid ""
 "General options:\n"
 msgstr ""
 "\n"
-"Obecné volby:\n"
+"一般选项:\n"
 
 #: pg_basebackup.c:121
 #, c-format
@@ -120,32 +124,32 @@ msgid ""
 "                         set fast or spread checkpointing\n"
 msgstr ""
 "  -c, --checkpoint=fast|spread\n"
-"                           nastavte fast nebo spread checkpointing\n"
+"                         设置检查点方式(fast或者spread)\n"
 
 #: pg_basebackup.c:123
 #, c-format
 msgid "  -l, --label=LABEL      set backup label\n"
-msgstr "  -l, --label=NÁZEV        nastav jmenovku zálohy\n"
+msgstr "  -l, --label=LABEL      设置备份标签\n"
 
 #: pg_basebackup.c:124
 #, c-format
 msgid "  -P, --progress         show progress information\n"
-msgstr "  -P, --progress           zobrazuj informace o průběhu\n"
+msgstr "  -P, --progress         显示进度信息\n"
 
 #: pg_basebackup.c:125 pg_receivexlog.c:58
 #, c-format
 msgid "  -v, --verbose          output verbose messages\n"
-msgstr "  -v, --verbose            zobrazuj podrobnější zprávy\n"
+msgstr "  -v, --verbose          输出详细的消息\n"
 
 #: pg_basebackup.c:126 pg_receivexlog.c:59
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
-msgstr "  -V, --version             vypiš informace o verzi, potom skonči\n"
+msgstr "  -V, --version          输出版本信息, 然后退出\n"
 
 #: pg_basebackup.c:127 pg_receivexlog.c:60
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
-msgstr "  -?, --help                ukaž tuto nápovědu, potom skonči\n"
+msgstr "  -?, --help             显示帮助, 然后退出\n"
 
 #: pg_basebackup.c:128 pg_receivexlog.c:61
 #, c-format
@@ -154,24 +158,23 @@ msgid ""
 "Connection options:\n"
 msgstr ""
 "\n"
-"Volby spojení:\n"
+"联接选项:\n"
 
 #: pg_basebackup.c:129 pg_receivexlog.c:62
 #, c-format
+#| msgid "  -d, --dbname=NAME        connect to database name\n"
 msgid "  -d, --dbname=CONNSTR   connection string\n"
-msgstr "  -d, --dbname=CONNSTR   connection string\n"
+msgstr "  -d, --dbname=CONNSTR        连接串\n"
 
 #: pg_basebackup.c:130 pg_receivexlog.c:63
 #, c-format
 msgid "  -h, --host=HOSTNAME    database server host or socket directory\n"
-msgstr ""
-"  -h, --host=HOSTNAME      host databázového serveru nebo adresář se "
-"sockety\n"
+msgstr "  -h, --host=HOSTNAME    数据库服务器主机或者是socket目录\n"
 
 #: pg_basebackup.c:131 pg_receivexlog.c:64
 #, c-format
 msgid "  -p, --port=PORT        database server port number\n"
-msgstr "  -p, --port=PORT          port databázového serveru\n"
+msgstr "  -p, --port=PORT        数据库服务器端口号\n"
 
 #: pg_basebackup.c:132 pg_receivexlog.c:65
 #, c-format
@@ -181,28 +184,24 @@ msgid ""
 "seconds)\n"
 msgstr ""
 "  -s, --status-interval=INTERVAL\n"
-"                         čas mezi zasíláním packetů se stavem na server (ve "
-"vteřinách)\n"
+"                         发往服务器的状态包的时间间隔 (以秒计)\n"
 
 #: pg_basebackup.c:134 pg_receivexlog.c:67
 #, c-format
 msgid "  -U, --username=NAME    connect as specified database user\n"
-msgstr ""
-"  -U, --username=JMÉNO      připoj se jako uvedený databázový uživatel\n"
+msgstr "  -U, --username=NAME    指定连接所需的数据库用户名\n"
 
 #: pg_basebackup.c:135 pg_receivexlog.c:68
 #, c-format
 msgid "  -w, --no-password      never prompt for password\n"
-msgstr "  -w, --no-password        nikdy se neptej na heslo\n"
+msgstr "  -w, --no-password      禁用输入密码的提示\n"
 
 #: pg_basebackup.c:136 pg_receivexlog.c:69
 #, c-format
 msgid ""
 "  -W, --password         force password prompt (should happen "
 "automatically)\n"
-msgstr ""
-"  -W, --password           vynuť dotaz na heslo (mělo by se dít "
-"automaticky)\n"
+msgstr "  -W, --password         强制提示输入密码 (应该自动发生)\n"
 
 #: pg_basebackup.c:137 pg_receivexlog.c:70
 #, c-format
@@ -211,348 +210,354 @@ msgid ""
 "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr ""
 "\n"
-"Chyby hlaste na adresu <pgsql-bugs@postgresql.org>.\n"
+"错误报告至 <pgsql-bugs@postgresql.org>.\n"
 
 #: pg_basebackup.c:180
 #, c-format
 msgid "%s: could not read from ready pipe: %s\n"
-msgstr "%s: nelze číst z ready roury: %s\n"
+msgstr "%s: 无法从准备就绪的管道: %s读\n"
 
 #: pg_basebackup.c:188 pg_basebackup.c:280 pg_basebackup.c:1598
-#: pg_receivexlog.c:290
+#: pg_receivexlog.c:266
 #, c-format
 msgid "%s: could not parse transaction log location \"%s\"\n"
-msgstr "%s: nelze naparsovat koncovou pozici v transakčním logu \"%s\"\n"
+msgstr "%s: 无法解析来自 \"%s\"的事务日志\n"
 
 #: pg_basebackup.c:293
 #, c-format
 msgid "%s: could not create pipe for background process: %s\n"
-msgstr "%s: nelze vytvořit roury pro background procesy: %s\n"
+msgstr "%s: 无法为后台进程: %s创建管道\n"
 
 #: pg_basebackup.c:326
 #, c-format
 msgid "%s: could not create background process: %s\n"
-msgstr "%s: nelze vytvořit background procesy: %s\n"
+msgstr "%s: 无法创建后台进程: %s\n"
 
 #: pg_basebackup.c:338
 #, c-format
 msgid "%s: could not create background thread: %s\n"
-msgstr "%s: nelze vytvořit background vlákno: %s\n"
+msgstr "%s: 无法创建后台线程: %s\n"
 
 #: pg_basebackup.c:363 pg_basebackup.c:989
 #, c-format
 msgid "%s: could not create directory \"%s\": %s\n"
-msgstr "%s: nelze vytvořít adresář \"%s\": %s\n"
+msgstr "%s: 无法创建目录 \"%s\": %s\n"
 
 #: pg_basebackup.c:382
 #, c-format
 msgid "%s: directory \"%s\" exists but is not empty\n"
-msgstr "%s: adresář \"%s\" existuje, ale není prázdný\n"
+msgstr "%s: 目录\"%s\"已存在，但不是空的\n"
 
 #: pg_basebackup.c:390
 #, c-format
 msgid "%s: could not access directory \"%s\": %s\n"
-msgstr "%s: nelze přístoupit k adresáři \"%s\": %s\n"
+msgstr "%s: 无法访问目录 \"%s\": %s\n"
 
 #: pg_basebackup.c:438
 #, c-format
+#| msgid "%s/%s kB (100%%), %d/%d tablespace %35s"
+#| msgid_plural "%s/%s kB (100%%), %d/%d tablespaces %35s"
 msgid "%*s/%s kB (100%%), %d/%d tablespace %*s"
 msgid_plural "%*s/%s kB (100%%), %d/%d tablespaces %*s"
-msgstr[0] "%*s/%s kB (100%%), %d/%d tablespace %*s"
-msgstr[1] "%*s/%s kB (100%%), %d/%d tablespacy %*s"
-msgstr[2] "%*s/%s kB (100%%), %d/%d tablespacy %*s"
+msgstr[0] "%*s/%s kB (100%%), %d/%d 表空间 %*s"
 
 #: pg_basebackup.c:450
 #, c-format
+#| msgid "%s/%s kB (%d%%), %d/%d tablespace (%-30.30s)"
+#| msgid_plural "%s/%s kB (%d%%), %d/%d tablespaces (%-30.30s)"
 msgid "%*s/%s kB (%d%%), %d/%d tablespace (%s%-*.*s)"
 msgid_plural "%*s/%s kB (%d%%), %d/%d tablespaces (%s%-*.*s)"
-msgstr[0] "%*s/%s kB (%d%%), %d/%d tablespace (%s%-*.*s)"
-msgstr[1] "%*s/%s kB (%d%%), %d/%d tablespace (%s%-*.*s)"
-msgstr[2] "%*s/%s kB (%d%%), %d/%d tablespace (%s%-*.*s)"
+msgstr[0] "%*s/%s kB (%d%%), %d/%d 表空间 (%s%-*.*s)"
 
 #: pg_basebackup.c:466
 #, c-format
+#| msgid "%s/%s kB (%d%%), %d/%d tablespace"
+#| msgid_plural "%s/%s kB (%d%%), %d/%d tablespaces"
 msgid "%*s/%s kB (%d%%), %d/%d tablespace"
 msgid_plural "%*s/%s kB (%d%%), %d/%d tablespaces"
-msgstr[0] "%*s/%s kB (%d%%), %d/%d tablespace"
-msgstr[1] "%*s/%s kB (%d%%), %d/%d tablespaces"
-msgstr[2] "%*s/%s kB (%d%%), %d/%d tablespaces"
+msgstr[0] "%*s/%s kB (%d%%), %d/%d 表空间"
 
 #: pg_basebackup.c:493
 #, c-format
 msgid "%s: could not write to compressed file \"%s\": %s\n"
-msgstr "%s: nelze zapsat do komprimovaného souboru \"%s\": %s\n"
+msgstr "%s: 无法往压缩文件里写\"%s\": %s\n"
 
 #: pg_basebackup.c:503 pg_basebackup.c:1071 pg_basebackup.c:1289
 #, c-format
 msgid "%s: could not write to file \"%s\": %s\n"
-msgstr "%s: nelze zapsat do souboru \"%s\": %s\n"
+msgstr "%s: 无法写文件 \"%s\": %s\n"
 
 #: pg_basebackup.c:558 pg_basebackup.c:578 pg_basebackup.c:606
 #, c-format
 msgid "%s: could not set compression level %d: %s\n"
-msgstr "%s: nelze nastavit úroveň komprese %d: %s\n"
+msgstr "%s: 无法设置压缩级别 %d: %s\n"
 
 #: pg_basebackup.c:627
 #, c-format
 msgid "%s: could not create compressed file \"%s\": %s\n"
-msgstr "%s: nelze vytvořit komprimovaný soubor \"%s\": %s\n"
+msgstr "%s: 无法创建压缩文件 \"%s\": %s\n"
 
 #: pg_basebackup.c:638 pg_basebackup.c:1031 pg_basebackup.c:1282
 #, c-format
 msgid "%s: could not create file \"%s\": %s\n"
-msgstr "%s: nelze vytvořit soubor \"%s\": %s\n"
+msgstr "%s: 无法创建文件 \"%s\": %s\n"
 
 #: pg_basebackup.c:650 pg_basebackup.c:893
 #, c-format
 msgid "%s: could not get COPY data stream: %s"
-msgstr "%s: nelze získat COPY data stream: %s"
+msgstr "%s: 无法得到复制数据流: %s"
 
 #: pg_basebackup.c:707
 #, c-format
 msgid "%s: could not close compressed file \"%s\": %s\n"
-msgstr "%s: nelze uzavřít komprimovaný soubor \"%s\": %s\n"
+msgstr "%s: 无法关闭压缩文件 \"%s\": %s\n"
 
-#: pg_basebackup.c:720 receivelog.c:161 receivelog.c:352 receivelog.c:724
+#: pg_basebackup.c:720 receivelog.c:161 receivelog.c:351 receivelog.c:725
 #, c-format
 msgid "%s: could not close file \"%s\": %s\n"
-msgstr "%s: nelze uzavřít soubor \"%s\": %s\n"
+msgstr "%s: 无法关闭文件 \"%s\": %s\n"
 
-#: pg_basebackup.c:731 pg_basebackup.c:922 receivelog.c:937
+#: pg_basebackup.c:731 pg_basebackup.c:922 receivelog.c:938
 #, c-format
 msgid "%s: could not read COPY data: %s"
-msgstr "%s: nelze číst COPY data: %s"
+msgstr "%s: 无法读取复制数据: %s"
 
 #: pg_basebackup.c:936
 #, c-format
 msgid "%s: invalid tar block header size: %d\n"
-msgstr "%s: neplatná velikost hlavičky tar bloku: %d\n"
+msgstr "%s: 无效的tar压缩块头大小: %d\n"
 
 #: pg_basebackup.c:944
 #, c-format
 msgid "%s: could not parse file size\n"
-msgstr "%s: nelze načíst velikost souboru\n"
+msgstr "%s: 无法解析文件大小\n"
 
 #: pg_basebackup.c:952
 #, c-format
 msgid "%s: could not parse file mode\n"
-msgstr "%s: nelze načíst mód souboru\n"
+msgstr "%s: 无法解析文件模式\n"
 
 #: pg_basebackup.c:997
 #, c-format
 msgid "%s: could not set permissions on directory \"%s\": %s\n"
-msgstr "%s: nelze nastavit přístupová práva na adresáři \"%s\": %s\n"
+msgstr "%s: 无法设置目录权限 \"%s\": %s\n"
 
 #: pg_basebackup.c:1010
 #, c-format
 msgid "%s: could not create symbolic link from \"%s\" to \"%s\": %s\n"
-msgstr "%s: nelze vytvořit symbolický odkaz z \"%s\" na \"%s\": %s\n"
+msgstr "%s: 无法创建从 \"%s\" 到 \"%s\"的符号链接: %s\n"
 
 #: pg_basebackup.c:1018
 #, c-format
 msgid "%s: unrecognized link indicator \"%c\"\n"
-msgstr "%s: nerozpoznaný indikátor odkazu \"%c\"\n"
+msgstr "%s: 无法识别的链接标识符 \"%c\"\n"
 
 #: pg_basebackup.c:1038
 #, c-format
 msgid "%s: could not set permissions on file \"%s\": %s\n"
-msgstr "%s: nelze nastavit přístupová práva na souboru \"%s\": %s\n"
+msgstr "%s: 无法设置文件 \"%s\"的访问权限: %s\n"
 
 #: pg_basebackup.c:1097
 #, c-format
 msgid "%s: COPY stream ended before last file was finished\n"
-msgstr "%s: COPY stream skončil před dokončením posledního souboru\n"
+msgstr "%s: 复制流在最后一个文件结束前终止\n"
 
 #: pg_basebackup.c:1183 pg_basebackup.c:1203 pg_basebackup.c:1210
 #: pg_basebackup.c:1257
 #, c-format
 msgid "%s: out of memory\n"
-msgstr "%s: nedostatek paměti\n"
+msgstr "%s: 内存溢出\n"
 
 #: pg_basebackup.c:1333
 #, c-format
+#| msgid "%s: could not parse server version \"%s\"\n"
 msgid "%s: incompatible server version %s\n"
-msgstr "%s: nekompatibilní verze serveru %s\n"
+msgstr "%s: 不兼容的服务器版本号 %s\n"
 
-#: pg_basebackup.c:1360 pg_basebackup.c:1389 pg_receivexlog.c:275
-#: receivelog.c:531 receivelog.c:576 receivelog.c:615
+#: pg_basebackup.c:1360 pg_basebackup.c:1389 pg_receivexlog.c:251
+#: receivelog.c:532 receivelog.c:577 receivelog.c:616
 #, c-format
 msgid "%s: could not send replication command \"%s\": %s"
-msgstr "%s: nelze zaslat replikační příkaz \"%s\": %s"
+msgstr "%s: 无法发送复制命令 \"%s\": %s"
 
-#: pg_basebackup.c:1367 pg_receivexlog.c:282 receivelog.c:539
+#: pg_basebackup.c:1367 pg_receivexlog.c:258 receivelog.c:540
 #, c-format
 msgid ""
 "%s: could not identify system: got %d rows and %d fields, expected %d rows "
 "and %d fields\n"
-msgstr ""
-"%s: nelze identifikovat systém, načteno %d řádek a %d položek, očekáváno %d "
-"řádek a %d položek\n"
+msgstr "%s: 无法识别系统: 得到 %d 行和 %d 列, 期望值为: %d 行和 %d 列\n"
 
 #: pg_basebackup.c:1400
 #, c-format
 msgid "%s: could not initiate base backup: %s"
-msgstr "%s: nelze inicializovat base backup: %s"
+msgstr "%s: 无法发起基础备份: %s"
 
 #: pg_basebackup.c:1407
 #, c-format
+#| msgid ""
+#| "%s: could not identify system: got %d rows and %d fields, expected %d "
+#| "rows and %d fields\n"
 msgid ""
 "%s: server returned unexpected response to BASE_BACKUP command; got %d rows "
 "and %d fields, expected %d rows and %d fields\n"
 msgstr ""
-"%s: server vrátil neočekávanou odpověď na BASE_BACKUP příkaz; přišlo %d "
-"řádeka %d položek, ořekáváno %d řádek a %d položek\n"
+"%s: 服务器对BASE_BACKUP命令返回意外的响应; 得到 %d 行和 %d 列, 期望值为: %d "
+"行和 %d 列\n"
 
 #: pg_basebackup.c:1427
 #, c-format
+#| msgid "%s: starting log streaming at %X/%X (timeline %u)\n"
 msgid "transaction log start point: %s on timeline %u\n"
-msgstr "transaction log start point: %s v timeline %u\n"
+msgstr "事务日志起始于时间点: %s, 基于时间表%u \n"
 
 #: pg_basebackup.c:1436
 #, c-format
 msgid "%s: could not get backup header: %s"
-msgstr "%s: nelze získat hlavičku zálohy: %s"
+msgstr "%s: 无法得到备份头: %s"
 
 #: pg_basebackup.c:1442
 #, c-format
 msgid "%s: no data returned from server\n"
-msgstr "%s: ze serveru nebyla vrácena žádná data\n"
+msgstr "%s: 服务器没有数据返回\n"
 
+# Here, we need to understand what's the content "database has"?
+# Is it the stdout fd? or anything else? Please correct me here.
 #: pg_basebackup.c:1471
 #, c-format
 msgid "%s: can only write single tablespace to stdout, database has %d\n"
-msgstr "%s: na stdout lze zapsat jen jeden tablespace, databáze má %d\n"
+msgstr "%s: 只能把表空间写往标准输出, 数据库拥有标准输出: %d\n"
 
 #: pg_basebackup.c:1483
 #, c-format
 msgid "%s: starting background WAL receiver\n"
-msgstr "%s: starting background WAL receiver\n"
+msgstr "%s: 启动后台 WAL 接收进程\n"
 
 #: pg_basebackup.c:1513
 #, c-format
 msgid "%s: could not get transaction log end position from server: %s"
-msgstr "%s: ze serveru nelze získat koncovou pozici v transakčním logu: %s"
+msgstr "%s: 无法得到来自服务器的事务日志终止位置: %s"
 
 #: pg_basebackup.c:1520
 #, c-format
 msgid "%s: no transaction log end position returned from server\n"
-msgstr ""
-"%s: ze serveru nebyla vrácena žádná koncová pozice v transakčním logu\n"
+msgstr "%s: 服务器端没有返回事务日志的终止位置\n"
 
 #: pg_basebackup.c:1532
 #, c-format
 msgid "%s: final receive failed: %s"
-msgstr "%s: závěrečný receive selhal: %s"
+msgstr "%s: 最终接收失败: %s"
 
 #: pg_basebackup.c:1550
 #, c-format
+#| msgid "%s: waiting for background process to finish streaming...\n"
 msgid "%s: waiting for background process to finish streaming ...\n"
-msgstr "%s: čekám na background proces pro ukočení streamování ...\n"
+msgstr "%s: 等待后台进程结束流操作...\n"
 
 #: pg_basebackup.c:1556
 #, c-format
 msgid "%s: could not send command to background pipe: %s\n"
-msgstr "%s: nelze zaslat příkaz přes background rouru: %s\n"
+msgstr "%s: 无法发送命令到后台管道: %s\n"
 
 #: pg_basebackup.c:1565
 #, c-format
 msgid "%s: could not wait for child process: %s\n"
-msgstr "%s: nelze počkat na podřízený (child) proces: %s\n"
+msgstr "%s: 无法等待子进程: %s\n"
 
 #: pg_basebackup.c:1571
 #, c-format
 msgid "%s: child %d died, expected %d\n"
-msgstr "%s: potomek %d zemřel, očekáváno %d\n"
+msgstr "%s: 子进程 %d 已终止, 期望值为 %d\n"
 
 #: pg_basebackup.c:1577
 #, c-format
 msgid "%s: child process did not exit normally\n"
-msgstr "%s: podřízený proces neskončil standardně\n"
+msgstr "%s: 子进程没有正常退出\n"
 
 #: pg_basebackup.c:1583
 #, c-format
 msgid "%s: child process exited with error %d\n"
-msgstr "%s: podřízený proces skončil s chybou %d\n"
+msgstr "%s: 子进程退出, 错误码为: %d\n"
 
 #: pg_basebackup.c:1610
 #, c-format
 msgid "%s: could not wait for child thread: %s\n"
-msgstr "%s: nelze počkat na podřízené (child) vlákno: %s\n"
+msgstr "%s: 无法等待子线程: %s\n"
 
 #: pg_basebackup.c:1617
 #, c-format
 msgid "%s: could not get child thread exit status: %s\n"
-msgstr "%s: nelze získat návratový kód podřízeného vlákna: %s\n"
+msgstr "%s: 无法得到子线程退出状态: %s\n"
 
 #: pg_basebackup.c:1623
 #, c-format
 msgid "%s: child thread exited with error %u\n"
-msgstr "%s: podřízené vlákno skončilo s chybou %u\n"
+msgstr "%s: 子线程退出, 错误码为: %u\n"
 
 #: pg_basebackup.c:1709
 #, c-format
 msgid "%s: invalid output format \"%s\", must be \"plain\" or \"tar\"\n"
-msgstr "%s: chybný formát výstupu \"%s\", musí být \"plain\" nebo \"tar\"\n"
+msgstr "%s: 无效输出格式: \"%s\", 有效值为: \"plain\" 或者 \"tar\"\n"
 
 #: pg_basebackup.c:1721 pg_basebackup.c:1733
 #, c-format
 msgid "%s: cannot specify both --xlog and --xlog-method\n"
-msgstr "%s: volby --xlog a --xlog-method nelze zadat společně\n"
+msgstr "%s: 不能同时指定两个选项: --xlog and --xlog-method\n"
 
 #: pg_basebackup.c:1748
 #, c-format
 msgid ""
 "%s: invalid xlog-method option \"%s\", must be \"fetch\" or \"stream\"\n"
-msgstr "%s: neplatná xlog-metoda \"%s\", musí být \"fetch\" nebo \"stream\"\n"
+msgstr ""
+"%s: 无效的xlog-method 选项: \"%s\", 必须是: \"fetch\" 或者 \"stream\"\n"
 
 #: pg_basebackup.c:1767
 #, c-format
 msgid "%s: invalid compression level \"%s\"\n"
-msgstr "%s: chybná úroveň komprese \"%s\"\n"
+msgstr "%s: 无效的压缩级别值: \"%s\"\n"
 
 #: pg_basebackup.c:1779
 #, c-format
 msgid ""
 "%s: invalid checkpoint argument \"%s\", must be \"fast\" or \"spread\"\n"
-msgstr ""
-"%s: chybný checkpoint argument \"%s\", musí být \"fast\" nebo \"spread\"\n"
+msgstr "%s: 无效的检查点参数: \"%s\", 必须是: \"fast\" 或 \"spread\"\n"
 
-#: pg_basebackup.c:1806 pg_receivexlog.c:416
+#: pg_basebackup.c:1806 pg_receivexlog.c:392
 #, c-format
 msgid "%s: invalid status interval \"%s\"\n"
-msgstr "%s: neplatný interval zasílání stavu \"%s\"\n"
+msgstr "%s: 无效的状态间隔值: \"%s\"\n"
 
 #: pg_basebackup.c:1822 pg_basebackup.c:1836 pg_basebackup.c:1847
-#: pg_basebackup.c:1860 pg_basebackup.c:1870 pg_receivexlog.c:432
-#: pg_receivexlog.c:446 pg_receivexlog.c:457
+#: pg_basebackup.c:1860 pg_basebackup.c:1870 pg_receivexlog.c:408
+#: pg_receivexlog.c:422 pg_receivexlog.c:433
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Zkuste \"%s --help\" pro více informací.\n"
+msgstr "请用 \"%s --help\" 获取更多的信息.\n"
 
-#: pg_basebackup.c:1834 pg_receivexlog.c:444
+#: pg_basebackup.c:1834 pg_receivexlog.c:420
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s: příliš mnoho argumentů v příkazové řádce (první je \"%s\")\n"
+msgstr "%s: 命令行参数太多 (第一个是 \"%s\")\n"
 
-#: pg_basebackup.c:1846 pg_receivexlog.c:456
+#: pg_basebackup.c:1846 pg_receivexlog.c:432
 #, c-format
 msgid "%s: no target directory specified\n"
-msgstr "%s: nebyl zadán cílový adresář\n"
+msgstr "%s: 没有指定目标目录\n"
 
 #: pg_basebackup.c:1858
 #, c-format
 msgid "%s: only tar mode backups can be compressed\n"
-msgstr "%s: pouze tar zálohy mohou být komprimované\n"
+msgstr "%s: 只有tar模式备份才能进行压缩\n"
 
 #: pg_basebackup.c:1868
 #, c-format
+#| msgid "%s: wal streaming can only be used in plain mode\n"
 msgid "%s: WAL streaming can only be used in plain mode\n"
-msgstr "%s: WAL streaming lze použít pouze v plain módu\n"
+msgstr "%s: WAL 流操作只能在plain模式下使用\n"
 
 #: pg_basebackup.c:1879
 #, c-format
 msgid "%s: this build does not support compression\n"
-msgstr "%s: tento build nepodporuje kompresi\n"
+msgstr "%s: 这个编译版本不支持压缩\n"
 
 #: pg_receivexlog.c:51
 #, c-format
@@ -560,7 +565,7 @@ msgid ""
 "%s receives PostgreSQL streaming transaction logs.\n"
 "\n"
 msgstr ""
-"%s přijímá PostgreSQL streamované transakční logy\n"
+"%s 接收PostgreSQL的流事务日志.\n"
 "\n"
 
 #: pg_receivexlog.c:55
@@ -570,345 +575,304 @@ msgid ""
 "Options:\n"
 msgstr ""
 "\n"
-"Obecné volby:\n"
+"选项:\n"
 
 #: pg_receivexlog.c:56
 #, c-format
 msgid ""
 "  -D, --directory=DIR    receive transaction log files into this directory\n"
-msgstr ""
-"  -D, --directory=DIR    soubory transakčního logu ukládej do tohoto "
-"adresáře\n"
+msgstr "  -D, --directory=DIR    接收事务日志到指定的目录\n"
 
 #: pg_receivexlog.c:57
 #, c-format
 msgid "  -n, --no-loop          do not loop on connection lost\n"
-msgstr ""
-"  -n, --no-loop          neopakovat pokus o spojení v případě selhání\n"
+msgstr "  -n, --no-loop          连接丢失时不进行循环处理\n"
 
 #: pg_receivexlog.c:81
 #, c-format
 msgid "%s: finished segment at %X/%X (timeline %u)\n"
-msgstr "%s: dokončen segment na %X/%X (timeline %u)\n"
+msgstr "%s: finished segment at %X/%X (timeline %u)\n"
 
 #: pg_receivexlog.c:94
 #, c-format
 msgid "%s: switched to timeline %u at %X/%X\n"
-msgstr "%s: přepnuto na timeline %u v %X/%X\n"
+msgstr "%s: 切换到时间表 %u 在 %X/%X\n"
 
 #: pg_receivexlog.c:103
 #, c-format
+#| msgid "%s: received interrupt signal, exiting.\n"
 msgid "%s: received interrupt signal, exiting\n"
-msgstr "%s: přijat signál k přerušení, ukončuji.\n"
+msgstr "%s: 接收到终断信号, 正在退出\n"
 
-#: pg_receivexlog.c:129
+#: pg_receivexlog.c:128
 #, c-format
 msgid "%s: could not open directory \"%s\": %s\n"
-msgstr "%s: nelze otevřít adresář \"%s\": %s\n"
+msgstr "%s: 无法打开目录 \"%s\": %s\n"
 
-#: pg_receivexlog.c:170
+#: pg_receivexlog.c:157
 #, c-format
 msgid "%s: could not parse transaction log file name \"%s\"\n"
-msgstr "%s: nelze naparsovat jméno souboru transakčního logu \"%s\"\n"
+msgstr "%s: 无法解析事务日志文件名: \"%s\"\n"
 
-#: pg_receivexlog.c:188
+#: pg_receivexlog.c:167
 #, c-format
 msgid "%s: could not stat file \"%s\": %s\n"
-msgstr "%s: nelze načíst stav souboru \"%s\": %s\n"
+msgstr "%s: 无法统计文件: \"%s\": %s\n"
 
-#: pg_receivexlog.c:196
+#: pg_receivexlog.c:185
 #, c-format
 msgid "%s: segment file \"%s\" has incorrect size %d, skipping\n"
-msgstr "%s: segment soubor \"%s\" má neplatnou velikost %d, přeskakuji\n"
+msgstr "%s: 段文件 \"%s\" 大小值: %d不正确, 跳过\n"
 
-#: pg_receivexlog.c:317
+#: pg_receivexlog.c:293
 #, c-format
 msgid "%s: starting log streaming at %X/%X (timeline %u)\n"
-msgstr "%s: začínám streamování logu na %X/%X (timeline %u)\n"
+msgstr "%s: 在时间点: %X/%X (时间安排%u)启动日志的流操作 \n"
 
-#: pg_receivexlog.c:397
+#: pg_receivexlog.c:373
 #, c-format
 msgid "%s: invalid port number \"%s\"\n"
-msgstr "%s: neplatné číslo portu \"%s\"\n"
+msgstr "%s: 无效端口号 \"%s\"\n"
 
-#: pg_receivexlog.c:479
-#, c-format
+#: pg_receivexlog.c:455
+#, fuzzy, c-format
+#| msgid "%s: disconnected.\n"
 msgid "%s: disconnected\n"
-msgstr "%s: odpojeno.\n"
+msgstr "%s: 连接已断开.\n"
 
 #. translator: check source for value for %d
-#: pg_receivexlog.c:486
+#: pg_receivexlog.c:462
 #, c-format
+#| msgid "%s: disconnected. Waiting %d seconds to try again.\n"
 msgid "%s: disconnected; waiting %d seconds to try again\n"
-msgstr "%s: odpojeno; čekám %d vteřin pro další pokus\n"
+msgstr "%s: 连接已断开, 将于%d 秒后尝试重连.\n"
 
 #: receivelog.c:69
 #, c-format
 msgid "%s: could not open transaction log file \"%s\": %s\n"
-msgstr "%s: nelze otevřít souboru transakčního logu \"%s\": %s\n"
+msgstr "%s: 无法打开事务日志文件 \"%s\": %s\n"
 
 #: receivelog.c:81
 #, c-format
 msgid "%s: could not stat transaction log file \"%s\": %s\n"
-msgstr "%s: nelze udělat stat souboru transakčního logu \"%s\": %s\n"
+msgstr "%s: 无法统计事务日志文件 \"%s\": %s\n"
 
 #: receivelog.c:95
 #, c-format
 msgid "%s: transaction log file \"%s\" has %d bytes, should be 0 or %d\n"
-msgstr "%s: soubor transakčního logu \"%s\" má %d bytů, měl by mít 0 nebo %d\n"
+msgstr "%s: 事务日志文件 \"%s\" 大小为 %d 字节, 正确值应该是 0 或 %d字节\n"
 
 #: receivelog.c:108
 #, c-format
 msgid "%s: could not pad transaction log file \"%s\": %s\n"
-msgstr "%s: nelze doplnit soubor transakčního logu \"%s\": %s\n"
+msgstr "%s: 无法填充事务日志文件 \"%s\": %s\n"
 
 #: receivelog.c:121
 #, c-format
 msgid "%s: could not seek to beginning of transaction log file \"%s\": %s\n"
-msgstr ""
-"%s: nelze skočit zpět na začátek souboru transakčního logu \"%s\": %s\n"
+msgstr "%s: 无法定位事务日志文件 \"%s\"的开始位置: %s\n"
 
 #: receivelog.c:147
 #, c-format
 msgid "%s: could not determine seek position in file \"%s\": %s\n"
-msgstr "%s: nelze určit pozici pro seek v souboru \"%s\": %s\n"
+msgstr "%s: 无法确定文件 \"%s\"的当前位置: %s\n"
 
-#: receivelog.c:154 receivelog.c:345
+#: receivelog.c:154 receivelog.c:344
 #, c-format
 msgid "%s: could not fsync file \"%s\": %s\n"
-msgstr "%s: nelze provést fsync souboru \"%s\": %s\n"
+msgstr "%s: 无法对文件 \"%s\"进行fsync同步: %s\n"
 
-#: receivelog.c:180
+#: receivelog.c:181
 #, c-format
 msgid "%s: could not rename file \"%s\": %s\n"
-msgstr "%s: nelze přejmenovat soubor \"%s\": %s\n"
+msgstr "%s: 无法重命名文件 \"%s\": %s\n"
 
-#: receivelog.c:187
+#: receivelog.c:188
 #, c-format
+#| msgid "%s: not renaming \"%s\", segment is not complete\n"
 msgid "%s: not renaming \"%s%s\", segment is not complete\n"
-msgstr "%s: nepřejmenovávám \"%s%s\", segment není kompletní.\n"
+msgstr "%s: 没有重命名 \"%s%s\", 段不完整\n"
 
-#: receivelog.c:276
+# command.c:1148
+#: receivelog.c:277
 #, c-format
-#| msgid "%s: could not open timeline history file \"%s\": %s"
+#| msgid "%s: could not open log file \"%s\": %s\n"
 msgid "%s: could not open timeline history file \"%s\": %s\n"
-msgstr "%s: nelze otevřít soubor s historií timeline \"%s\": %s\n"
+msgstr "%s：无法打开时间表历史文件\"%s\"：%s\n"
 
-#: receivelog.c:303
+#: receivelog.c:304
 #, c-format
-#| msgid "%s: server reported unexpected history file name for timeline %u: %s"
 msgid "%s: server reported unexpected history file name for timeline %u: %s\n"
-msgstr ""
-"%s: server ohlásil neočekávané jméno souboru s historií pro timeline %u: %s\n"
+msgstr "%s: 服务器为时间表报告生成的意外历史文件名 %u:%s\n"
 
-#: receivelog.c:320
+#: receivelog.c:319
 #, c-format
+#| msgid "%s: could not create file \"%s\": %s\n"
 msgid "%s: could not create timeline history file \"%s\": %s\n"
-msgstr "%s: nelze vytvořit soubor s timeline historií \"%s\": %s\n"
+msgstr "%s: 无法创建时间表历史文件 \"%s\": %s\n"
 
-#: receivelog.c:337
+#: receivelog.c:336
 #, c-format
+#| msgid "%s: could not write to file \"%s\": %s\n"
 msgid "%s: could not write timeline history file \"%s\": %s\n"
-msgstr "%s: nelze zapsat do souboru s timeline historií \"%s\": %s\n"
+msgstr "%s: 无法写时间表历史文件 \"%s\": %s\n"
 
-#: receivelog.c:362
+#: receivelog.c:363
 #, c-format
+#| msgid "could not rename file \"%s\" to \"%s\": %m"
 msgid "%s: could not rename file \"%s\" to \"%s\": %s\n"
-msgstr "%s: nelze přejmenovat soubor \"%s\" na \"%s\": %s\n"
+msgstr "%s: 无法将文件 \"%s\" 重命名为 \"%s\":%s\n"
 
-#: receivelog.c:435
+#: receivelog.c:436
 #, c-format
 msgid "%s: could not send feedback packet: %s"
-msgstr "%s: nelze zaslat packet se zpětnou vazbou: %s"
+msgstr "%s: 无法发送回馈包: %s"
 
-#: receivelog.c:469
+#: receivelog.c:470
 #, c-format
+#| msgid "No per-database role settings support in this server version.\n"
 msgid ""
 "%s: incompatible server version %s; streaming is only supported with server "
 "version %s\n"
-msgstr ""
-"%s: nekompatibilní verze serveru %s; streaming je podporování pouze se "
-"serverem version %s\n"
+msgstr "%s: 不兼容的服备器版本号 %s; 只有在版本为%s的服务器中才支持流操作\n"
 
-#: receivelog.c:547
+#: receivelog.c:548
 #, c-format
 msgid ""
 "%s: system identifier does not match between base backup and streaming "
 "connection\n"
-msgstr ""
-"%s: identifikátor systému mezi base backupem a streamovacím spojením "
-"neodpovídá\n"
+msgstr "%s: 基础备份和流连接的系统标识符不匹配\n"
 
-#: receivelog.c:555
+#: receivelog.c:556
 #, c-format
 msgid "%s: starting timeline %u is not present in the server\n"
-msgstr "%s: počáteční timeline %u není přitomna na serveru\n"
+msgstr "%s: 服务器上没有起始时间表 %u\n"
 
-#: receivelog.c:589
+#: receivelog.c:590
 #, c-format
+#| msgid ""
+#| "%s: could not identify system: got %d rows and %d fields, expected %d "
+#| "rows and %d fields\n"
 msgid ""
 "%s: unexpected response to TIMELINE_HISTORY command: got %d rows and %d "
 "fields, expected %d rows and %d fields\n"
 msgstr ""
-"%s: neočekávaná odpověď na TIMELINE_HISTORY příkaz: načteno %d řádek a %d "
-"položek, očekáváno %d řádek a %d položek\n"
+"%s: 获得命令TIMELINE_HISTORY的意外响应: 得到 %d 行和 %d 列, 期望值为: %d 行"
+"和 %d 列\n"
 
-#: receivelog.c:662
+#: receivelog.c:663
 #, c-format
-#| msgid "%s: server reported unexpected history file name for timeline %u: %s"
 msgid ""
 "%s: server reported unexpected next timeline %u, following timeline %u\n"
-msgstr ""
-"%s: server ohlásil neočekávanou další timeline %u, následující timeline %u\n"
+msgstr "%s: 服务器报出的下次意外时间表 %u, 紧跟时间表 %u之后\n"
 
-#: receivelog.c:669
+#: receivelog.c:670
 #, c-format
 msgid ""
 "%s: server stopped streaming timeline %u at %X/%X, but reported next "
 "timeline %u to begin at %X/%X\n"
 msgstr ""
-"%s: server přestal streamovat timeline %u at %X/%X, ale začátek další timeline"
-"oznámil %u na %X/%X\n"
+"%s: 服务器在%X/%X时停止流操作时间表%u, 但是报出将在%X/%X时开始下一个时间"
+"表%u\n"
 
-#: receivelog.c:681 receivelog.c:716
+#: receivelog.c:682 receivelog.c:717
 #, c-format
 msgid "%s: unexpected termination of replication stream: %s"
-msgstr "%s: neočekávané ukončení replikačního streamu: %s"
+msgstr "%s: 流复制异常终止: %s"
 
-#: receivelog.c:707
+#: receivelog.c:708
 #, c-format
 msgid "%s: replication stream was terminated before stop point\n"
-msgstr "%s: replikační stream byl ukončen před bodem zastavení (stop point)\n"
+msgstr "%s: 流复制在停止点之前异常终止\n"
 
-#: receivelog.c:755
+#: receivelog.c:756
 #, c-format
 #| msgid ""
-#| "%s: unexpected response to TIMELINE_HISTORY command: got %d rows and %d "
-#| "fields, expected %d rows and %d fields\n"
+#| "%s: could not identify system: got %d rows and %d fields, expected %d "
+#| "rows and %d fields\n"
 msgid ""
 "%s: unexpected result set after end-of-timeline: got %d rows and %d fields, "
 "expected %d rows and %d fields\n"
 msgstr ""
-"%s: neočekávaný výsledek po konci timeline: získáno %d řádek a %d položek, "
-"očekáváno %d řádek a %d položek\n"
+"%s: 终点时间表的意外结果集: 得到 %d 行和 %d 列, 期望值为: %d 行和 %d 列\n"
 
-#: receivelog.c:765
+#: receivelog.c:766
 #, c-format
 #| msgid "%s: could not parse transaction log location \"%s\"\n"
 msgid "%s: could not parse next timeline's starting point \"%s\"\n"
-msgstr "%s: nelze naparsovat počáteční bod další timeline \"%s\"\n"
+msgstr "%s: 无法解析下次时间表的起始点\"%s\"\n"
 
-#: receivelog.c:820 receivelog.c:922 receivelog.c:1087
+#: receivelog.c:821 receivelog.c:923 receivelog.c:1088
 #, c-format
+#| msgid "%s: could not send feedback packet: %s"
 msgid "%s: could not send copy-end packet: %s"
-msgstr "%s: nelze zaslat ukončovací packet: %s"
+msgstr "%s: 无法发送副本结束包: %s"
 
-#: receivelog.c:887
+#: receivelog.c:888
 #, c-format
 msgid "%s: select() failed: %s\n"
-msgstr "%s: select() selhal: %s\n"
+msgstr "%s: select() 失败: %s\n"
 
-#: receivelog.c:895
+#: receivelog.c:896
 #, c-format
 msgid "%s: could not receive data from WAL stream: %s"
-msgstr "%s: nelze získat data z WAL streamu: %s"
+msgstr "%s: 无法接收来自WAL流的数据: %s"
 
-#: receivelog.c:959 receivelog.c:994
+#: receivelog.c:960 receivelog.c:995
 #, c-format
 msgid "%s: streaming header too small: %d\n"
-msgstr "%s: hlavička streamu je příliš malá: %d\n"
+msgstr "%s: 流头大小: %d 值太小\n"
 
-#: receivelog.c:1013
+#: receivelog.c:1014
 #, c-format
 msgid "%s: received transaction log record for offset %u with no file open\n"
-msgstr ""
-"%s: přijat záznam z transakčního logu pro offset %u bez otevřeného souboru\n"
+msgstr "%s: 偏移位置 %u 处接收到的事务日志记录没有打开文件\n"
 
-#: receivelog.c:1025
+#: receivelog.c:1026
 #, c-format
 msgid "%s: got WAL data offset %08x, expected %08x\n"
-msgstr "%s: získán WAL data offset %08x, očekáván %08x\n"
+msgstr "%s: 得到WAL数据偏移 %08x, 期望值为 %08x\n"
 
-#: receivelog.c:1062
+#: receivelog.c:1063
 #, c-format
 msgid "%s: could not write %u bytes to WAL file \"%s\": %s\n"
-msgstr "%s: nelze zapsat %u bytů do WAL souboru %s: %s\n"
+msgstr "%s: 无法写入 %u 字节到 WAL 文件 \"%s\": %s\n"
 
-#: receivelog.c:1100
+#: receivelog.c:1101
 #, c-format
 msgid "%s: unrecognized streaming header: \"%c\"\n"
-msgstr "%s: nerozpoznaná hlavička streamu: \"%c\"\n"
+msgstr "%s: 无法识别的流头: \"%c\"\n"
 
 #: streamutil.c:135
 msgid "Password: "
-msgstr "Heslo: "
+msgstr "口令: "
 
 #: streamutil.c:148
 #, c-format
 msgid "%s: could not connect to server\n"
-msgstr "%s: nelze se připojit k serveru\n"
+msgstr "%s: 无法连接到服务器\n"
 
 #: streamutil.c:164
 #, c-format
 msgid "%s: could not connect to server: %s\n"
-msgstr "%s: nelze se připojit k serveru: %s\n"
+msgstr "%s: 无法连接到服务器: %s\n"
 
 #: streamutil.c:188
 #, c-format
 msgid "%s: could not determine server setting for integer_datetimes\n"
-msgstr "%s: nelze zjistit nastavení volby integer_datetimes na serveru\n"
+msgstr "%s: 无法确定服务器上integer_datetimes的配置\n"
 
 #: streamutil.c:201
 #, c-format
 msgid "%s: integer_datetimes compile flag does not match server\n"
-msgstr "%s: integer_datetimes přepínač kompilace neodpovídá serveru\n"
+msgstr "%s: integer_datetimes编译开关与服务器端不匹配\n"
 
-#~ msgid "%s: no start point returned from server\n"
-#~ msgstr "%s: server nevráti žádný počáteční bod (start point)\n"
+#~ msgid "%s: keepalive message has incorrect size %d\n"
+#~ msgstr "%s: keepalive(保持活连接)的消息大小 %d 不正确 \n"
 
 #~ msgid ""
 #~ "%s: timeline does not match between base backup and streaming connection\n"
-#~ msgstr ""
-#~ "%s: timeline mezi base backupem a streamovacím spojením neodpovídá\n"
+#~ msgstr "%s: 基础备份和流连接的时间安排不匹配\n"
 
-#~ msgid "  --help                   show this help, then exit\n"
-#~ msgstr "  --help                   zobraz tuto nápovědu, poté skonči\n"
-
-#~ msgid "  --version                output version information, then exit\n"
-#~ msgstr "  --version                zobraz informaci o verzi, poté skonči\n"
-
-#~ msgid "%s: invalid format of xlog location: %s\n"
-#~ msgstr "%s: neplatný formát xlog pozice: %s\n"
-
-#~ msgid "%s: could not identify system: %s"
-#~ msgstr "%s: nelze identifikovat systém: %s"
-
-#~ msgid "%s: could not send base backup command: %s"
-#~ msgstr "%s: nelze poslat base backup příkaz: %s"
-
-#~ msgid "  -v, --verbose             output verbose messages\n"
-#~ msgstr "  -v, --verbose             vypisuj podrobnější zprávy\n"
-
-#~ msgid "%s: could not identify system: %s\n"
-#~ msgstr "%s: nelze identifikovat systém: %s\n"
-
-#~ msgid "%s: could not parse log start position from value \"%s\"\n"
-#~ msgstr "%s: nelze naparsovat počáteční pozici logu z hodnoty \"%s\"\n"
-
-#~ msgid "%s: Could not open WAL segment %s: %s\n"
-#~ msgstr "%s: nelze otevřít WAL segment %s: %s\n"
-
-#~ msgid "%s: could not stat WAL segment %s: %s\n"
-#~ msgstr "%s: nelze načíst stav WAL segmentu %s: %s\n"
-
-#~ msgid "%s: could not pad WAL segment %s: %s\n"
-#~ msgstr "%s: nelze doplnit WAL segment %s: %s\n"
-
-#~ msgid "%s: could not get current position in file %s: %s\n"
-#~ msgstr "%s: nelze získat aktuální pozici v souboru %s: %s\n"
-
-#~ msgid "%s: could not close file %s: %s\n"
-#~ msgstr "%s: nelze zavřít soubor %s: %s\n"
-
-#~ msgid "%s: could not read copy data: %s\n"
-#~ msgstr "%s: nelze načíst copy data: %s\n"
+#~ msgid "%s: no start point returned from server\n"
+#~ msgstr "%s: 服务器没有返回起始点\n"
