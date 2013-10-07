@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_resetxlog (PostgreSQL 9.2)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-01-29 13:46+0000\n"
+"POT-Creation-Date: 2013-08-26 19:32+0000\n"
 "PO-Revision-Date: 2012-08-03 11:22-0400\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: Español <pgsql-es-ayuda@postgresql.org>\n"
@@ -114,7 +114,8 @@ msgid ""
 "Is a server running?  If not, delete the lock file and try again.\n"
 msgstr ""
 "%s: el archivo candado «%s» existe\n"
-"¿Hay un servidor corriendo? Si no, borre el archivo candado e inténtelo de nuevo\n"
+"¿Hay un servidor corriendo? Si no, borre el archivo candado e inténtelo de "
+"nuevo\n"
 
 #: pg_resetxlog.c:353
 #, c-format
@@ -160,12 +161,14 @@ msgstr "%s: no se pudo leer el archivo «%s»: %s\n"
 #: pg_resetxlog.c:444
 #, c-format
 msgid "%s: pg_control exists but has invalid CRC; proceed with caution\n"
-msgstr "%s: existe pg_control pero tiene un CRC no válido, proceda con precaución\n"
+msgstr ""
+"%s: existe pg_control pero tiene un CRC no válido, proceda con precaución\n"
 
 #: pg_resetxlog.c:453
 #, c-format
 msgid "%s: pg_control exists but is broken or unknown version; ignoring it\n"
-msgstr "%s: existe pg_control pero está roto o se desconoce su versión; ignorándolo\n"
+msgstr ""
+"%s: existe pg_control pero está roto o se desconoce su versión; ignorándolo\n"
 
 #: pg_resetxlog.c:548
 #, c-format
@@ -336,8 +339,12 @@ msgstr "Paso de parámetros float8:                       %s\n"
 
 #: pg_resetxlog.c:675
 #, c-format
-msgid "%s: internal error -- sizeof(ControlFileData) is too large ... fix PG_CONTROL_SIZE\n"
-msgstr "%s: error interno -- sizeof(ControlFileData) es demasiado grande ... corrija PG_CONTROL_SIZE\n"
+msgid ""
+"%s: internal error -- sizeof(ControlFileData) is too large ... fix "
+"PG_CONTROL_SIZE\n"
+msgstr ""
+"%s: error interno -- sizeof(ControlFileData) es demasiado grande ... corrija "
+"PG_CONTROL_SIZE\n"
 
 #: pg_resetxlog.c:690
 #, c-format
@@ -416,7 +423,9 @@ msgstr "  -f              fuerza que la actualización sea hecha\n"
 
 #: pg_resetxlog.c:1031
 #, c-format
-msgid "  -l TLI,FILE,SEG  force minimum WAL starting location for new transaction log\n"
+msgid ""
+"  -l TLI,FILE,SEG  force minimum WAL starting location for new transaction "
+"log\n"
 msgstr ""
 "  -l TLI,FILE,SEG fuerza una posición mínima de inicio de WAL para una\n"
 "                  nueva transacción\n"
@@ -428,9 +437,12 @@ msgstr "  -m XID          asigna el siguiente ID de multitransacción\n"
 
 #: pg_resetxlog.c:1033
 #, c-format
-msgid "  -n               no update, just show extracted control values (for testing)\n"
+msgid ""
+"  -n               no update, just show extracted control values (for "
+"testing)\n"
 msgstr ""
-"  -n              no actualiza, sólo muestra los valores de control extraídos\n"
+"  -n              no actualiza, sólo muestra los valores de control "
+"extraídos\n"
 "                  (para prueba)\n"
 
 #: pg_resetxlog.c:1034

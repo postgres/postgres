@@ -165,11 +165,11 @@ msgstr "Le tampon de requête est vide."
 
 #: command.c:898
 msgid "Enter new password: "
-msgstr "Saisissez le nouveau mot de passe :"
+msgstr "Saisissez le nouveau mot de passe : "
 
 #: command.c:899
 msgid "Enter it again: "
-msgstr "Saisissez-le à nouveau :"
+msgstr "Saisissez-le à nouveau : "
 
 #: command.c:903
 #, c-format
@@ -1900,7 +1900,7 @@ msgid ""
 "  -0, --record-separator-zero\n"
 "                           set record separator to zero byte\n"
 msgstr ""
-"  -O, --record-separator-zero\n"
+"  -0, --record-separator-zero\n"
 "                  initialise le séparateur d'enregistrements à l'octet zéro\n"
 
 #: help.c:131
@@ -2114,7 +2114,7 @@ msgstr ""
 #: help.c:205
 #, c-format
 msgid "  \\da[S]  [PATTERN]      list aggregates\n"
-msgstr "  \\da[+] [MODÈLE]      affiche les aggrégats\n"
+msgstr "  \\da[S] [MODÈLE]      affiche les aggrégats\n"
 
 #: help.c:206
 #, c-format
@@ -2285,7 +2285,7 @@ msgstr "  \\dE[S+] [MODÈLE]     affiche la liste des tables distantes\n"
 #: help.c:236
 #, c-format
 msgid "  \\dx[+]  [PATTERN]      list extensions\n"
-msgstr "  \\dx[S] [MODÈLE]      affiche la liste des extensions\n"
+msgstr "  \\dx[+] [MODÈLE]      affiche la liste des extensions\n"
 
 #: help.c:237
 #, c-format

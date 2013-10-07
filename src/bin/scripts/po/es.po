@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL 9.1)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-01-29 13:47+0000\n"
+"POT-Creation-Date: 2013-08-26 19:33+0000\n"
 "PO-Revision-Date: 2012-08-03 13:54-0400\n"
 "Last-Translator: Ávaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: Castellano <pgsql-es-ayuda@postgresql.org>\n"
@@ -112,8 +112,10 @@ msgstr "  -d, --dbname=BASE         base de datos a reordenar\n"
 #: clusterdb.c:254 createlang.c:238 createuser.c:335 dropdb.c:158
 #: droplang.c:239 dropuser.c:159 reindexdb.c:333
 #, c-format
-msgid "  -e, --echo                show the commands being sent to the server\n"
-msgstr "  -e, --echo                mostrar las órdenes a medida que se ejecutan\n"
+msgid ""
+"  -e, --echo                show the commands being sent to the server\n"
+msgstr ""
+"  -e, --echo                mostrar las órdenes a medida que se ejecutan\n"
 
 #: clusterdb.c:255 reindexdb.c:335
 #, c-format
@@ -156,7 +158,8 @@ msgstr ""
 #: droplang.c:244 dropuser.c:166 reindexdb.c:341 vacuumdb.c:358
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
-msgstr "  -h, --host=ANFITRIÓN      nombre del servidor o directorio del socket\n"
+msgstr ""
+"  -h, --host=ANFITRIÓN      nombre del servidor o directorio del socket\n"
 
 #: clusterdb.c:262 createlang.c:244 createuser.c:356 dropdb.c:165
 #: droplang.c:245 dropuser.c:167 reindexdb.c:342 vacuumdb.c:359
@@ -194,7 +197,8 @@ msgid ""
 "Read the description of the SQL command CLUSTER for details.\n"
 msgstr ""
 "\n"
-"Lea la descripción de la orden CLUSTER de SQL para obtener mayores detalles.\n"
+"Lea la descripción de la orden CLUSTER de SQL para obtener mayores "
+"detalles.\n"
 
 #: clusterdb.c:268 createdb.c:273 createlang.c:248 createuser.c:360
 #: dropdb.c:170 droplang.c:249 dropuser.c:171 reindexdb.c:348 vacuumdb.c:365
@@ -333,11 +337,13 @@ msgstr "  %s [OPCIÓN]... [NOMBRE] [DESCRIPCIÓN]\n"
 #: createdb.c:255
 #, c-format
 msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"
-msgstr "  -D, --tablespace=TBLSPC   tablespace por omisión de la base de datos\n"
+msgstr ""
+"  -D, --tablespace=TBLSPC   tablespace por omisión de la base de datos\n"
 
 #: createdb.c:256
 #, c-format
-msgid "  -e, --echo                   show the commands being sent to the server\n"
+msgid ""
+"  -e, --echo                   show the commands being sent to the server\n"
 msgstr "  -e, --echo                mostrar las órdenes enviadas al servidor\n"
 
 #: createdb.c:257
@@ -348,22 +354,26 @@ msgstr "  -E, --encoding=CODIF      codificación para la base de datos\n"
 #: createdb.c:258
 #, c-format
 msgid "  -l, --locale=LOCALE          locale settings for the database\n"
-msgstr "  -l, --locale=LOCALE       configuración regional para la base de datos\n"
+msgstr ""
+"  -l, --locale=LOCALE       configuración regional para la base de datos\n"
 
 #: createdb.c:259
 #, c-format
 msgid "      --lc-collate=LOCALE      LC_COLLATE setting for the database\n"
-msgstr "      --lc-collate=LOCALE   configuración LC_COLLATE para la base de datos\n"
+msgstr ""
+"      --lc-collate=LOCALE   configuración LC_COLLATE para la base de datos\n"
 
 #: createdb.c:260
 #, c-format
 msgid "      --lc-ctype=LOCALE        LC_CTYPE setting for the database\n"
-msgstr "      --lc-ctype=LOCALE     configuración LC_CTYPE para la base de datos\n"
+msgstr ""
+"      --lc-ctype=LOCALE     configuración LC_CTYPE para la base de datos\n"
 
 #: createdb.c:261
 #, c-format
 msgid "  -O, --owner=OWNER            database user to own the new database\n"
-msgstr "  -O, --owner=DUEÑO         usuario que será dueño de la base de datos\n"
+msgstr ""
+"  -O, --owner=DUEÑO         usuario que será dueño de la base de datos\n"
 
 #: createdb.c:262
 #, c-format
@@ -382,8 +392,10 @@ msgstr "  -?, --help                mostrar esta ayuda y salir\n"
 
 #: createdb.c:266
 #, c-format
-msgid "  -h, --host=HOSTNAME          database server host or socket directory\n"
-msgstr "  -h, --host=ANFITRIÓN      nombre del servidor o directorio del socket\n"
+msgid ""
+"  -h, --host=HOSTNAME          database server host or socket directory\n"
+msgstr ""
+"  -h, --host=ANFITRIÓN      nombre del servidor o directorio del socket\n"
 
 #: createdb.c:267
 #, c-format
@@ -474,12 +486,15 @@ msgstr "  %s [OPCIÓN]... LENGUAJE [BASE-DE-DATOS]\n"
 #: createlang.c:237
 #, c-format
 msgid "  -d, --dbname=DBNAME       database to install language in\n"
-msgstr "  -d, --dbname=BASE         base de datos en que instalar el lenguaje\n"
+msgstr ""
+"  -d, --dbname=BASE         base de datos en que instalar el lenguaje\n"
 
 #: createlang.c:239 droplang.c:240
 #, c-format
-msgid "  -l, --list                show a list of currently installed languages\n"
-msgstr "  -l, --list                listar los lenguajes instalados actualmente\n"
+msgid ""
+"  -l, --list                show a list of currently installed languages\n"
+msgstr ""
+"  -l, --list                listar los lenguajes instalados actualmente\n"
 
 #: createuser.c:185
 msgid "Enter name of role to add: "
@@ -538,7 +553,8 @@ msgstr "  %s [OPCIÓN]... [ROL]\n"
 
 #: createuser.c:332
 #, c-format
-msgid "  -c, --connection-limit=N  connection limit for role (default: no limit)\n"
+msgid ""
+"  -c, --connection-limit=N  connection limit for role (default: no limit)\n"
 msgstr ""
 "  -c, --connection-limit=N  límite de conexiones para el rol\n"
 "                            (predeterminado: sin límite)\n"
@@ -551,7 +567,9 @@ msgstr "  -d, --createdb            el rol podrá crear bases de datos\n"
 #: createuser.c:334
 #, c-format
 msgid "  -D, --no-createdb         role cannot create databases (default)\n"
-msgstr "  -D, --no-createdb         el rol no podrá crear bases de datos (predeterm.)\n"
+msgstr ""
+"  -D, --no-createdb         el rol no podrá crear bases de datos "
+"(predeterm.)\n"
 
 #: createuser.c:336
 #, c-format
@@ -600,7 +618,9 @@ msgstr "  -r, --createrole          el rol podrá crear otros roles\n"
 #: createuser.c:345
 #, c-format
 msgid "  -R, --no-createrole       role cannot create roles (default)\n"
-msgstr "  -R, --no-createrole       el rol no podrá crear otros roles (predeterminado)\n"
+msgstr ""
+"  -R, --no-createrole       el rol no podrá crear otros roles "
+"(predeterminado)\n"
 
 #: createuser.c:346
 #, c-format
@@ -610,15 +630,18 @@ msgstr "  -s, --superuser           el rol será un superusuario\n"
 #: createuser.c:347
 #, c-format
 msgid "  -S, --no-superuser        role will not be superuser (default)\n"
-msgstr "  -S, --no-superuser        el rol no será un superusuario (predeterminado)\n"
+msgstr ""
+"  -S, --no-superuser        el rol no será un superusuario (predeterminado)\n"
 
 #: createuser.c:349
 #, c-format
 msgid ""
-"  --interactive             prompt for missing role name and attributes rather\n"
+"  --interactive             prompt for missing role name and attributes "
+"rather\n"
 "                            than using defaults\n"
 msgstr ""
-"  --interactive             preguntar los nombres y atributos de rol faltantes\n"
+"  --interactive             preguntar los nombres y atributos de rol "
+"faltantes\n"
 "                            en lugar de asumir los valores por omisión\n"
 
 #: createuser.c:351
@@ -633,7 +656,8 @@ msgstr "  --no-replication          el rol no podrá iniciar replicación\n"
 
 #: createuser.c:357
 #, c-format
-msgid "  -U, --username=USERNAME   user name to connect as (not the one to create)\n"
+msgid ""
+"  -U, --username=USERNAME   user name to connect as (not the one to create)\n"
 msgstr ""
 "  -U, --username=NOMBRE     nombre de usuario con el cual conectarse\n"
 "                            (no el usuario a crear)\n"
@@ -678,8 +702,10 @@ msgstr "  -i, --interactive         preguntar antes de eliminar\n"
 
 #: dropdb.c:161
 #, c-format
-msgid "  --if-exists               don't report error if database doesn't exist\n"
-msgstr "  --if-exists               no reportar error si la base de datos no existe\n"
+msgid ""
+"  --if-exists               don't report error if database doesn't exist\n"
+msgstr ""
+"  --if-exists               no reportar error si la base de datos no existe\n"
 
 #: droplang.c:201
 #, c-format
@@ -702,7 +728,8 @@ msgstr ""
 
 #: droplang.c:238
 #, c-format
-msgid "  -d, --dbname=DBNAME       database from which to remove the language\n"
+msgid ""
+"  -d, --dbname=DBNAME       database from which to remove the language\n"
 msgstr ""
 "  -d, --dbname=BASE         nombre de la base de datos de la cual\n"
 "                            eliminar el lenguaje\n"
@@ -749,11 +776,13 @@ msgstr ""
 #: dropuser.c:163
 #, c-format
 msgid "  --if-exists               don't report error if user doesn't exist\n"
-msgstr "  --if-exists               no reportar error si el usuario no existe\n"
+msgstr ""
+"  --if-exists               no reportar error si el usuario no existe\n"
 
 #: dropuser.c:168
 #, c-format
-msgid "  -U, --username=USERNAME   user name to connect as (not the one to drop)\n"
+msgid ""
+"  -U, --username=USERNAME   user name to connect as (not the one to drop)\n"
 msgstr ""
 "  -U, --username=USUARIO    nombre del usuario con el cual conectarse\n"
 "                            (no el usuario a eliminar)\n"
@@ -775,23 +804,27 @@ msgstr ""
 #: reindexdb.c:159
 #, c-format
 msgid "%s: cannot reindex a specific table in all databases\n"
-msgstr "%s: no se puede reindexar una tabla específica en todas las bases de datos\n"
+msgstr ""
+"%s: no se puede reindexar una tabla específica en todas las bases de datos\n"
 
 #: reindexdb.c:164
 #, c-format
 msgid "%s: cannot reindex a specific index in all databases\n"
-msgstr "%s: no se puede reindexar un índice específico en todas las bases de datos\n"
+msgstr ""
+"%s: no se puede reindexar un índice específico en todas las bases de datos\n"
 
 #: reindexdb.c:175
 #, c-format
-msgid "%s: cannot reindex a specific table and system catalogs at the same time\n"
+msgid ""
+"%s: cannot reindex a specific table and system catalogs at the same time\n"
 msgstr ""
 "%s: no se puede reindexar una tabla específica y los catálogos\n"
 "del sistema simultáneamente\n"
 
 #: reindexdb.c:180
 #, c-format
-msgid "%s: cannot reindex a specific index and system catalogs at the same time\n"
+msgid ""
+"%s: cannot reindex a specific index and system catalogs at the same time\n"
 msgstr ""
 "%s: no se puede reindexar un índice específico y los catálogos\n"
 "del sistema simultáneamente\n"
@@ -799,7 +832,8 @@ msgstr ""
 #: reindexdb.c:250
 #, c-format
 msgid "%s: reindexing of table \"%s\" in database \"%s\" failed: %s"
-msgstr "%s: falló la reindexación de la tabla «%s» en la base de datos «%s»: %s"
+msgstr ""
+"%s: falló la reindexación de la tabla «%s» en la base de datos «%s»: %s"
 
 #: reindexdb.c:253
 #, c-format
@@ -862,7 +896,8 @@ msgid ""
 "Read the description of the SQL command REINDEX for details.\n"
 msgstr ""
 "\n"
-"Lea la descripción de la orden REINDEX de SQL para obtener mayores detalles.\n"
+"Lea la descripción de la orden REINDEX de SQL para obtener mayores "
+"detalles.\n"
 
 #: vacuumdb.c:161
 #, c-format
@@ -930,7 +965,9 @@ msgstr "  -d, --dbname=BASE         base de datos a limpiar\n"
 
 #: vacuumdb.c:347
 #, c-format
-msgid "  -e, --echo                      show the commands being sent to the server\n"
+msgid ""
+"  -e, --echo                      show the commands being sent to the "
+"server\n"
 msgstr "  -e, --echo                mostrar las órdenes enviadas al servidor\n"
 
 #: vacuumdb.c:348
@@ -962,18 +999,22 @@ msgstr "  -v, --verbose             desplegar varios mensajes informativos\n"
 
 #: vacuumdb.c:353
 #, c-format
-msgid "  -V, --version                   output version information, then exit\n"
+msgid ""
+"  -V, --version                   output version information, then exit\n"
 msgstr "  -V, --version             mostrar información de versión y salir\n"
 
 #: vacuumdb.c:354
 #, c-format
 msgid "  -z, --analyze                   update optimizer statistics\n"
-msgstr "  -z, --analyze             actualizar las estadísticas del optimizador\n"
+msgstr ""
+"  -z, --analyze             actualizar las estadísticas del optimizador\n"
 
 #: vacuumdb.c:355
 #, c-format
 msgid "  -Z, --analyze-only              only update optimizer statistics\n"
-msgstr "  -Z, --analyze-only        actualizar sólo las estadísticas del optimizador\n"
+msgstr ""
+"  -Z, --analyze-only        actualizar sólo las estadísticas del "
+"optimizador\n"
 
 #: vacuumdb.c:356
 #, c-format

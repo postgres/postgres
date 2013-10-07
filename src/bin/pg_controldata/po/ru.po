@@ -374,7 +374,7 @@ msgstr "числа с плавающей точкой"
 #: pg_controldata.c:263
 #, c-format
 msgid "Float4 argument passing:              %s\n"
-msgstr "передача аргумента Float4:            %s\n"
+msgstr "Передача аргумента Float4:            %s\n"
 
 #: pg_controldata.c:264 pg_controldata.c:266
 msgid "by reference"
@@ -387,7 +387,7 @@ msgstr "по значению"
 #: pg_controldata.c:265
 #, c-format
 msgid "Float8 argument passing:              %s\n"
-msgstr "передача аргумента Float8:            %s\n"
+msgstr "Передача аргумента Float8:            %s\n"
 
 #~ msgid ""
 #~ "Usage:\n"

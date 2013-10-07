@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_ctl (PostgreSQL 9.2)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-01-29 13:46+0000\n"
+"POT-Creation-Date: 2013-08-26 19:32+0000\n"
 "PO-Revision-Date: 2012-08-03 13:28-0400\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL Español <pgsql-es-ayuda@postgresql.org>\n"
@@ -95,7 +95,8 @@ msgid ""
 "%s: -w option is not supported when starting a pre-9.1 server\n"
 msgstr ""
 "\n"
-"%s: la opción -w no está soportada cuando se inicia un servidor anterior a 9.1\n"
+"%s: la opción -w no está soportada cuando se inicia un servidor anterior a "
+"9.1\n"
 
 #: pg_ctl.c:580
 #, c-format
@@ -113,7 +114,8 @@ msgid ""
 "%s: this data directory appears to be running a pre-existing postmaster\n"
 msgstr ""
 "\n"
-"%s: este directorio de datos parece estar ejecutando un postmaster pre-existente\n"
+"%s: este directorio de datos parece estar ejecutando un postmaster pre-"
+"existente\n"
 
 #: pg_ctl.c:678
 #, c-format
@@ -162,7 +164,9 @@ msgstr "%s: falló la creación de la base de datos\n"
 #: pg_ctl.c:810
 #, c-format
 msgid "%s: another server might be running; trying to start server anyway\n"
-msgstr "%s: otro servidor puede estar en ejecución; tratando de iniciarlo de todas formas.\n"
+msgstr ""
+"%s: otro servidor puede estar en ejecución; tratando de iniciarlo de todas "
+"formas.\n"
 
 #: pg_ctl.c:847
 #, c-format
@@ -205,7 +209,8 @@ msgstr " falló\n"
 #: pg_ctl.c:875
 #, c-format
 msgid "%s: could not wait for server because of misconfiguration\n"
-msgstr "%s: no se pudo esperar al servidor debido a un error de configuración\n"
+msgstr ""
+"%s: no se pudo esperar al servidor debido a un error de configuración\n"
 
 #: pg_ctl.c:881
 msgid "server starting\n"
@@ -243,7 +248,8 @@ msgid ""
 "\n"
 msgstr ""
 "ATENCIÓN: el modo de respaldo en línea está activo\n"
-"El apagado no se completará hasta que se invoque la función pg_stop_backup().\n"
+"El apagado no se completará hasta que se invoque la función pg_stop_backup"
+"().\n"
 "\n"
 
 #: pg_ctl.c:937 pg_ctl.c:1025
@@ -421,7 +427,8 @@ msgstr "%s: no se pudo iniciar el servicio «%s»: código de error %lu\n"
 #: pg_ctl.c:1615
 #, c-format
 msgid "%s: WARNING: cannot create restricted tokens on this platform\n"
-msgstr "%s: ATENCIÓN: no se pueden crear tokens restrigidos en esta plataforma\n"
+msgstr ""
+"%s: ATENCIÓN: no se pueden crear tokens restrigidos en esta plataforma\n"
 
 #: pg_ctl.c:1624
 #, c-format
@@ -441,7 +448,9 @@ msgstr "%s: no se pudo crear el token restringido: código de error %lu\n"
 #: pg_ctl.c:1694
 #, c-format
 msgid "%s: WARNING: could not locate all job object functions in system API\n"
-msgstr "%s: ATENCIÓN: no fue posible encontrar todas las funciones de gestión de tareas en la API del sistema\n"
+msgstr ""
+"%s: ATENCIÓN: no fue posible encontrar todas las funciones de gestión de "
+"tareas en la API del sistema\n"
 
 #: pg_ctl.c:1780
 #, c-format
@@ -470,8 +479,12 @@ msgstr "  %s init[db]               [-D DATADIR] [-s] [-o \"OPCIONES\"]\n"
 
 #: pg_ctl.c:1791
 #, c-format
-msgid "  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"
-msgstr "  %s start   [-w] [-t SEGS] [-D DATADIR] [-s] [-l ARCHIVO] [-o \"OPCIONES\"]\n"
+msgid ""
+"  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS"
+"\"]\n"
+msgstr ""
+"  %s start   [-w] [-t SEGS] [-D DATADIR] [-s] [-l ARCHIVO] [-o \"OPCIONES"
+"\"]\n"
 
 #: pg_ctl.c:1792
 #, c-format
@@ -533,17 +546,20 @@ msgstr ""
 #: pg_ctl.c:1806
 #, c-format
 msgid "  -D, --pgdata=DATADIR   location of the database storage area\n"
-msgstr "  -D, --pgdata DATADIR   ubicación del área de almacenamiento de datos\n"
+msgstr ""
+"  -D, --pgdata DATADIR   ubicación del área de almacenamiento de datos\n"
 
 #: pg_ctl.c:1807
 #, c-format
 msgid "  -s, --silent           only print errors, no informational messages\n"
-msgstr "  -s, --silent           mostrar sólo errores, no mensajes de información\n"
+msgstr ""
+"  -s, --silent           mostrar sólo errores, no mensajes de información\n"
 
 #: pg_ctl.c:1808
 #, c-format
 msgid "  -t, --timeout=SECS     seconds to wait when using -w option\n"
-msgstr "  -t, --timeout=SEGS     segundos a esperar cuando se use la opción -w\n"
+msgstr ""
+"  -t, --timeout=SEGS     segundos a esperar cuando se use la opción -w\n"
 
 #: pg_ctl.c:1809
 #, c-format
@@ -553,12 +569,15 @@ msgstr "  -V, --version          mostrar información de versión, luego salir\n
 #: pg_ctl.c:1810
 #, c-format
 msgid "  -w                     wait until operation completes\n"
-msgstr "  -w                     esperar hasta que la operación se haya completado\n"
+msgstr ""
+"  -w                     esperar hasta que la operación se haya completado\n"
 
 #: pg_ctl.c:1811
 #, c-format
 msgid "  -W                     do not wait until operation completes\n"
-msgstr "  -W                     no esperar hasta que la operación se haya completado\n"
+msgstr ""
+"  -W                     no esperar hasta que la operación se haya "
+"completado\n"
 
 #: pg_ctl.c:1812
 #, c-format
@@ -571,7 +590,8 @@ msgid ""
 "(The default is to wait for shutdown, but not for start or restart.)\n"
 "\n"
 msgstr ""
-"(Por omisión se espera para las detenciones, pero no los inicios o reinicios)\n"
+"(Por omisión se espera para las detenciones, pero no los inicios o "
+"reinicios)\n"
 "\n"
 
 #: pg_ctl.c:1814
@@ -603,7 +623,8 @@ msgstr "  -c, --core-files       no aplicable en esta plataforma\n"
 #: pg_ctl.c:1822
 #, c-format
 msgid "  -l, --log=FILENAME     write (or append) server log to FILENAME\n"
-msgstr "  -l  --log=ARCHIVO      guardar el registro del servidor en ARCHIVO.\n"
+msgstr ""
+"  -l  --log=ARCHIVO      guardar el registro del servidor en ARCHIVO.\n"
 
 #: pg_ctl.c:1823
 #, c-format
@@ -630,7 +651,8 @@ msgstr ""
 
 #: pg_ctl.c:1827
 #, c-format
-msgid "  -m, --mode=MODE        MODE can be \"smart\", \"fast\", or \"immediate\"\n"
+msgid ""
+"  -m, --mode=MODE        MODE can be \"smart\", \"fast\", or \"immediate\"\n"
 msgstr "  -m, --mode=MODO        puede ser «smart», «fast» o «immediate»\n"
 
 #: pg_ctl.c:1829
@@ -645,7 +667,8 @@ msgstr ""
 #: pg_ctl.c:1830
 #, c-format
 msgid "  smart       quit after all clients have disconnected\n"
-msgstr "  smart       salir después que todos los clientes se hayan desconectado\n"
+msgstr ""
+"  smart       salir después que todos los clientes se hayan desconectado\n"
 
 #: pg_ctl.c:1831
 #, c-format
@@ -654,7 +677,9 @@ msgstr "  fast        salir directamente, con apagado apropiado\n"
 
 #: pg_ctl.c:1832
 #, c-format
-msgid "  immediate   quit without complete shutdown; will lead to recovery on restart\n"
+msgid ""
+"  immediate   quit without complete shutdown; will lead to recovery on "
+"restart\n"
 msgstr ""
 "  immediate   salir sin apagado completo; se ejecutará recuperación\n"
 "              en el próximo inicio\n"
@@ -680,7 +705,8 @@ msgstr ""
 
 #: pg_ctl.c:1839
 #, c-format
-msgid "  -N SERVICENAME  service name with which to register PostgreSQL server\n"
+msgid ""
+"  -N SERVICENAME  service name with which to register PostgreSQL server\n"
 msgstr ""
 "  -N SERVICIO            nombre de servicio con el cual registrar\n"
 "                         el servidor PostgreSQL\n"
@@ -717,8 +743,10 @@ msgstr ""
 
 #: pg_ctl.c:1845
 #, c-format
-msgid "  auto       start service automatically during system startup (default)\n"
-msgstr "  auto       iniciar automáticamente al inicio del sistema (por omisión)\n"
+msgid ""
+"  auto       start service automatically during system startup (default)\n"
+msgstr ""
+"  auto       iniciar automáticamente al inicio del sistema (por omisión)\n"
 
 #: pg_ctl.c:1846
 #, c-format
@@ -752,7 +780,8 @@ msgstr "%s: tipo de inicio «%s» no reconocido\n"
 #: pg_ctl.c:1976
 #, c-format
 msgid "%s: could not determine the data directory using command \"%s\"\n"
-msgstr "%s: no se pudo determinar el directorio de datos usando la orden «%s»\n"
+msgstr ""
+"%s: no se pudo determinar el directorio de datos usando la orden «%s»\n"
 
 #: pg_ctl.c:2049
 #, c-format
@@ -792,14 +821,18 @@ msgstr "%s: no se especificó operación\n"
 
 #: pg_ctl.c:2240
 #, c-format
-msgid "%s: no database directory specified and environment variable PGDATA unset\n"
-msgstr "%s: no se especificó directorio de datos y la variable PGDATA no está definida\n"
+msgid ""
+"%s: no database directory specified and environment variable PGDATA unset\n"
+msgstr ""
+"%s: no se especificó directorio de datos y la variable PGDATA no está "
+"definida\n"
 
-#~ msgid "  --version              output version information, then exit\n"
-#~ msgstr "  --version              mostrar información sobre versión y salir\n"
+#~ msgid "%s: could not open process token: %lu\n"
+#~ msgstr "%s: no se pudo abrir el token de proceso: %lu\n"
 
 #~ msgid "  --help                 show this help, then exit\n"
 #~ msgstr "  --help                 mostrar este texto y salir\n"
 
-#~ msgid "%s: could not open process token: %lu\n"
-#~ msgstr "%s: no se pudo abrir el token de proceso: %lu\n"
+#~ msgid "  --version              output version information, then exit\n"
+#~ msgstr ""
+#~ "  --version              mostrar información sobre versión y salir\n"

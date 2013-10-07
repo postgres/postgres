@@ -1572,7 +1572,7 @@ msgstr ""
 #: pg_dump.c:854
 #, c-format
 msgid "  --exclude-table-data=TABLE   do NOT dump data for the named table(s)\n"
-msgstr "  --exclude-table=TABLE        ne sauvegarde pas la table indiquée\n"
+msgstr "  --exclude-table-data=TABLE   ne sauvegarde pas la table indiquée\n"
 
 #: pg_dump.c:855
 #: pg_dumpall.c:559

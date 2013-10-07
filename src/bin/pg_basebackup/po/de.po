@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2013-03-28 19:58+0000\n"
-"PO-Revision-Date: 2013-03-28 22:18-0400\n"
+"PO-Revision-Date: 2013-08-07 21:44-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -439,7 +439,7 @@ msgstr "%s: ungültiges Ausgabeformat »%s«, muss »plain« oder »tar« sein\n
 #: pg_basebackup.c:1319 pg_basebackup.c:1331
 #, c-format
 msgid "%s: cannot specify both --xlog and --xlog-method\n"
-msgstr "%s: --single-transaction --xlog-method können nicht zusammen verwendet werden\n"
+msgstr "%s: --xlog und --xlog-method können nicht zusammen verwendet werden\n"
 
 #: pg_basebackup.c:1346
 #, c-format
@@ -459,7 +459,7 @@ msgstr "%s: ungültiges Checkpoint-Argument »%s«, muss »fast« oder »spread�
 #: pg_basebackup.c:1401 pg_receivexlog.c:388
 #, c-format
 msgid "%s: invalid status interval \"%s\"\n"
-msgstr "%s: ungültiges Statusinterval »%s«\n"
+msgstr "%s: ungültiges Statusintervall »%s«\n"
 
 #: pg_basebackup.c:1417 pg_basebackup.c:1431 pg_basebackup.c:1442
 #: pg_basebackup.c:1455 pg_basebackup.c:1465 pg_receivexlog.c:404
