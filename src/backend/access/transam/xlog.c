@@ -1482,7 +1482,7 @@ CopyXLogRecordToWAL(int write_len, bool isLogSwitch, XLogRecData *rdata,
 	Assert(written == write_len);
 
 	/* Align the end position, so that the next record starts aligned */
-	CurrPos = MAXALIGN(CurrPos);
+	CurrPos = MAXALIGN64(CurrPos);
 
 	/*
 	 * If this was an xlog-switch, it's not enough to write the switch record,
