@@ -16,8 +16,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgres (PostgreSQL) 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-03-13 11:51+0000\n"
-"PO-Revision-Date: 2013-03-16 13:16+0100\n"
+"POT-Creation-Date: 2013-04-29 19:14+0000\n"
+"PO-Revision-Date: 2013-04-29 22:46+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "Language: it\n"
@@ -363,12 +363,12 @@ msgstr "%s: argomento non valido per l'opzione -f: \"%s\"\n"
 msgid "%s: invalid argument for option -t: \"%s\"\n"
 msgstr "%s: argomento non valido per l'opzione -t: \"%s\"\n"
 
-#: postmaster/postmaster.c:676 bootstrap/bootstrap.c:272 tcop/postgres.c:3447
+#: postmaster/postmaster.c:676 bootstrap/bootstrap.c:272 tcop/postgres.c:3450
 #, c-format
 msgid "--%s requires a value"
 msgstr "--%s richiede un valore"
 
-#: postmaster/postmaster.c:681 bootstrap/bootstrap.c:277 tcop/postgres.c:3452
+#: postmaster/postmaster.c:681 bootstrap/bootstrap.c:277 tcop/postgres.c:3455
 #, c-format
 msgid "-c %s requires a value"
 msgstr "-c %s richiede un valore"
@@ -585,8 +585,8 @@ msgid "PID %d in cancel request did not match any process"
 msgstr "il PID %d nella richiesta di annullamento non corrisponde ad alcun processo"
 
 #: postmaster/postmaster.c:1984 postmaster/postmaster.c:2017
-#: postmaster/postmaster.c:3204 postmaster/postmaster.c:3886
-#: postmaster/postmaster.c:3972 postmaster/postmaster.c:4563
+#: postmaster/postmaster.c:3204 postmaster/postmaster.c:3881
+#: postmaster/postmaster.c:3967 postmaster/postmaster.c:4558
 #: utils/hash/dynahash.c:367 utils/hash/dynahash.c:444
 #: utils/hash/dynahash.c:956 utils/misc/guc.c:2915 utils/misc/guc.c:2928
 #: utils/misc/guc.c:2941 utils/init/miscinit.c:149 utils/init/miscinit.c:170
@@ -740,7 +740,7 @@ msgstr "connessione ricevuta: host=%s porta=%s"
 msgid "connection received: host=%s"
 msgstr "connessione ricevuta: host=%s"
 
-#: postmaster/postmaster.c:3661 access/transam/xlog.c:2335
+#: postmaster/postmaster.c:3656 access/transam/xlog.c:2335
 #: access/transam/xlog.c:2468 access/transam/xlog.c:4344
 #: access/transam/xlog.c:8581 access/transam/xlog.c:8736
 #: storage/file/copydir.c:172 storage/smgr/md.c:284
@@ -748,7 +748,7 @@ msgstr "connessione ricevuta: host=%s"
 msgid "could not create file \"%s\": %m"
 msgstr "creazione del file \"%s\" fallita: %m"
 
-#: postmaster/postmaster.c:3671 postmaster/postmaster.c:3681
+#: postmaster/postmaster.c:3666 postmaster/postmaster.c:3676
 #: utils/misc/guc.c:7054 utils/misc/guc.c:7079 utils/init/miscinit.c:1054
 #: utils/init/miscinit.c:1063 utils/init/miscinit.c:1070
 #: access/transam/xlog.c:2367 access/transam/xlog.c:2500
@@ -758,80 +758,80 @@ msgstr "creazione del file \"%s\" fallita: %m"
 msgid "could not write to file \"%s\": %m"
 msgstr "scrittura nel file \"%s\" fallita: %m"
 
-#: postmaster/postmaster.c:3700
+#: postmaster/postmaster.c:3695
 #, c-format
 msgid "could not execute server process \"%s\": %m"
 msgstr "esecuzione del processo del server \"%s\" fallita: %m"
 
-#: postmaster/postmaster.c:4222
+#: postmaster/postmaster.c:4217
 msgid "database system is ready to accept read only connections"
 msgstr "il database è pronto ad accettare connessioni in sola lettura"
 
-#: postmaster/postmaster.c:4466
+#: postmaster/postmaster.c:4461
 #, c-format
 msgid "could not fork startup process: %m"
 msgstr "fork del processo di avvio fallito: %m"
 
-#: postmaster/postmaster.c:4470
+#: postmaster/postmaster.c:4465
 #, c-format
 msgid "could not fork background writer process: %m"
 msgstr "fork del processo di scrittura in background fallito: %m"
 
-#: postmaster/postmaster.c:4474
+#: postmaster/postmaster.c:4469
 #, c-format
 msgid "could not fork WAL writer process: %m"
 msgstr "fork del processo di scrittura dei WAL fallito: %m"
 
-#: postmaster/postmaster.c:4478
+#: postmaster/postmaster.c:4473
 #, c-format
 msgid "could not fork WAL receiver process: %m"
 msgstr "fork del processo di ricezione dei WAL fallito: %m"
 
-#: postmaster/postmaster.c:4482
+#: postmaster/postmaster.c:4477
 #, c-format
 msgid "could not fork process: %m"
 msgstr "fork del processo fallito: %m"
 
-#: postmaster/postmaster.c:4766
+#: postmaster/postmaster.c:4761
 #, c-format
 msgid "could not duplicate socket %d for use in backend: error code %d"
 msgstr "duplicazione del socket %d da usare nel backend fallita: codice errore %d"
 
-#: postmaster/postmaster.c:4798
+#: postmaster/postmaster.c:4793
 #, c-format
 msgid "could not create inherited socket: error code %d\n"
 msgstr "creazione del socket ereditato fallita: codice errore %d\n"
 
-#: postmaster/postmaster.c:4827 postmaster/postmaster.c:4834
+#: postmaster/postmaster.c:4822 postmaster/postmaster.c:4829
 #, c-format
 msgid "could not read from backend variables file \"%s\": %s\n"
 msgstr "lettura dal file delle variabili del backend \"%s\" fallita: %s\n"
 
-#: postmaster/postmaster.c:4843
+#: postmaster/postmaster.c:4838
 #, c-format
 msgid "could not remove file \"%s\": %s\n"
 msgstr "rimozione del file \"%s\" fallita: %s\n"
 
-#: postmaster/postmaster.c:4860
+#: postmaster/postmaster.c:4855
 #, c-format
 msgid "could not map view of backend variables: error code %d\n"
 msgstr "non è stato possibile mappare la vista delle variabili del backend: codice errore %d\n"
 
-#: postmaster/postmaster.c:4869
+#: postmaster/postmaster.c:4864
 #, c-format
 msgid "could not unmap view of backend variables: error code %d\n"
 msgstr "non è stato possibile rimuovere la mappa della vista delle variabili del backend: codice errore %d\n"
 
-#: postmaster/postmaster.c:4876
+#: postmaster/postmaster.c:4871
 #, c-format
 msgid "could not close handle to backend parameter variables: error code %d\n"
 msgstr "non è stato possibile chiudere l'handle dei parametri variabili del backend: codice errore %d\n"
 
-#: postmaster/postmaster.c:5020
+#: postmaster/postmaster.c:5015
 msgid "could not read exit code for process\n"
 msgstr "lettura del codice di uscita del processo fallita\n"
 
-#: postmaster/postmaster.c:5025
+#: postmaster/postmaster.c:5020
 msgid "could not post child completion status\n"
 msgstr "invio dello stato di completamento del figlio fallito\n"
 
@@ -841,7 +841,7 @@ msgstr "invio dello stato di completamento del figlio fallito\n"
 msgid "text search configuration \"%s\" does not exist"
 msgstr "la configurazione di ricerca di testo \"%s\" non esiste"
 
-#: utils/cache/plancache.c:589
+#: utils/cache/plancache.c:606
 msgid "cached plan must not change result type"
 msgstr "il cached plan non deve cambiare il tipo del risultato"
 
@@ -4120,7 +4120,7 @@ msgstr "il database con OID %u non esiste"
 
 #: utils/adt/dbsize.c:248 utils/adt/acl.c:4134 commands/tablecmds.c:432
 #: commands/tablecmds.c:6839 commands/dbcommands.c:437
-#: commands/dbcommands.c:1064 commands/indexcmds.c:222 commands/comment.c:737
+#: commands/dbcommands.c:1064 commands/indexcmds.c:223 commands/comment.c:737
 #: commands/tablespace.c:410 commands/tablespace.c:832
 #: commands/tablespace.c:899 commands/tablespace.c:1004
 #: commands/tablespace.c:1068 commands/tablespace.c:1201
@@ -4633,7 +4633,7 @@ msgid "text search configuration name \"%s\" must be schema-qualified"
 msgstr "la configurazione di ricerca di testo \"%s\" deve avere uno schema"
 
 #: utils/adt/tsvector_op.c:1371 commands/tablecmds.c:1262
-#: commands/tablecmds.c:1980 commands/copy.c:3459 commands/indexcmds.c:873
+#: commands/tablecmds.c:1980 commands/copy.c:3459 commands/indexcmds.c:880
 #: parser/parse_expr.c:760
 #, c-format
 msgid "column \"%s\" does not exist"
@@ -5703,16 +5703,16 @@ msgstr "\"max_stack_depth\" non deve superare %ldkB"
 msgid "Increase the platform's stack depth limit via \"ulimit -s\" or local equivalent."
 msgstr "Incrementa il limite dello stack della piattaforma usando \"ulimit -s\" on un comando equivalente."
 
-#: tcop/postgres.c:3478
+#: tcop/postgres.c:3483
 msgid "invalid command-line arguments for server process"
 msgstr "argomento della riga di comando non valido per il processo server"
 
-#: tcop/postgres.c:3479 tcop/postgres.c:3485
+#: tcop/postgres.c:3484 tcop/postgres.c:3490
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "Prova \"%s --help\" per maggiori informazioni."
 
-#: tcop/postgres.c:3483
+#: tcop/postgres.c:3488
 #, c-format
 msgid "%s: invalid command-line arguments"
 msgstr "%s: parametri della riga di comando non validi"
@@ -7267,7 +7267,7 @@ msgid "This may be because of a non-immutable index expression."
 msgstr "Ciò potrebbe essere causato da un'espressione dell'indice non immutabile."
 
 #: access/index/indexam.c:149 commands/tablecmds.c:213
-#: commands/tablecmds.c:2272 commands/indexcmds.c:1560 commands/comment.c:559
+#: commands/tablecmds.c:2272 commands/indexcmds.c:1567 commands/comment.c:559
 #, c-format
 msgid "\"%s\" is not an index"
 msgstr "\"%s\" non è un indice"
@@ -7316,8 +7316,8 @@ msgid "relation \"%s.%s\" does not exist"
 msgstr "la relazione \"%s.%s\" non esiste"
 
 #: commands/lockcmds.c:149 commands/tablecmds.c:195 commands/tablecmds.c:1098
-#: commands/tablecmds.c:3274 commands/indexcmds.c:184
-#: commands/indexcmds.c:1592 commands/comment.c:573 commands/trigger.c:149
+#: commands/tablecmds.c:3274 commands/indexcmds.c:185
+#: commands/indexcmds.c:1599 commands/comment.c:573 commands/trigger.c:149
 #: commands/trigger.c:1070 catalog/toasting.c:91
 #, c-format
 msgid "\"%s\" is not a table"
@@ -7548,7 +7548,7 @@ msgstr "ON COMMIT può essere usato solo con le tabelle temporanee"
 msgid "cannot create temporary table within security-restricted operation"
 msgstr "non è possibile creare la tabella temporanea nell'ambito di operazioni a sicurezza ristretta"
 
-#: commands/tablecmds.c:457 commands/tablecmds.c:7030 commands/indexcmds.c:253
+#: commands/tablecmds.c:457 commands/tablecmds.c:7030 commands/indexcmds.c:254
 #: executor/execMain.c:2259
 msgid "only shared relations can be placed in pg_global tablespace"
 msgstr "solo le relazioni condivise possono essere poste nel tablespace pg_global"
@@ -8897,7 +8897,7 @@ msgstr "non è possibile ripulire tabelle temporanee di altre sessioni"
 msgid "clustering \"%s.%s\""
 msgstr "raggruppamento di \"%s.%s\""
 
-#: commands/cluster.c:390 commands/vacuumlazy.c:361
+#: commands/cluster.c:390 commands/vacuumlazy.c:354
 #, c-format
 msgid "vacuuming \"%s.%s\""
 msgstr "pulizia di \"%s.%s\""
@@ -8942,7 +8942,7 @@ msgstr "non è possibile raggruppare sull'indice funzionale \"%s\" perché il su
 msgid "cannot cluster on invalid index \"%s\""
 msgstr "non è possibile raggruppare sull'indice non valido \"%s\""
 
-#: commands/vacuumlazy.c:276
+#: commands/vacuumlazy.c:269
 #, c-format
 msgid ""
 "automatic vacuum of table \"%s.%s.%s\": index scans: %d\n"
@@ -8955,22 +8955,22 @@ msgstr ""
 "tuple: %.0f rimosse, %.0f restanti\n"
 "utilizzo del sistema: %s"
 
-#: commands/vacuumlazy.c:530
+#: commands/vacuumlazy.c:523
 #, c-format
 msgid "relation \"%s\" page %u is uninitialized --- fixing"
 msgstr "la relazione \"%s\" pagina %u non è inizializzata --- in correzione"
 
-#: commands/vacuumlazy.c:889
+#: commands/vacuumlazy.c:882
 #, c-format
 msgid "\"%s\": removed %.0f row versions in %u pages"
 msgstr "\"%s\": %.0f versioni di riga rimosse in %u pagine"
 
-#: commands/vacuumlazy.c:894
+#: commands/vacuumlazy.c:887
 #, c-format
 msgid "\"%s\": found %.0f removable, %.0f nonremovable row versions in %u out of %u pages"
 msgstr "\"%s\": trovate %.0f versioni di riga removibili, %.0f non removibili in %u pagine su %u"
 
-#: commands/vacuumlazy.c:898
+#: commands/vacuumlazy.c:891
 #, c-format
 msgid ""
 "%.0f dead row versions cannot be removed yet.\n"
@@ -8983,28 +8983,28 @@ msgstr ""
 "%u pagine sono completamente vuote.\n"
 "%s."
 
-#: commands/vacuumlazy.c:956
+#: commands/vacuumlazy.c:949
 #, c-format
 msgid "\"%s\": removed %d row versions in %d pages"
 msgstr "\"%s\": %d versioni di riga rimosse in %d pagine"
 
-#: commands/vacuumlazy.c:959 commands/vacuumlazy.c:1051
-#: commands/vacuumlazy.c:1225
+#: commands/vacuumlazy.c:952 commands/vacuumlazy.c:1044
+#: commands/vacuumlazy.c:1211
 #, c-format
 msgid "%s."
 msgstr "%s."
 
-#: commands/vacuumlazy.c:1048
+#: commands/vacuumlazy.c:1041
 #, c-format
 msgid "scanned index \"%s\" to remove %d row versions"
 msgstr "effettuata la scansione dell'indice \"%s\" per rimuovere %d versioni di riga"
 
-#: commands/vacuumlazy.c:1089
+#: commands/vacuumlazy.c:1082
 #, c-format
 msgid "index \"%s\" now contains %.0f row versions in %u pages"
 msgstr "l'indice \"%s\" ora contiene %.0f versioni di riga in %u pagine"
 
-#: commands/vacuumlazy.c:1093
+#: commands/vacuumlazy.c:1086
 #, c-format
 msgid ""
 "%.0f index row versions were removed.\n"
@@ -9015,17 +9015,17 @@ msgstr ""
 "%u pagine dell'indice sono state cancellate, %u sono attualmente riusabili.\n"
 "%s."
 
-#: commands/vacuumlazy.c:1153
+#: commands/vacuumlazy.c:1143
 #, c-format
-msgid "automatic vacuum of table \"%s.%s.%s\": could not (re)acquire exclusive lock for truncate scan"
-msgstr "vacuum automatico della tabella \"%s.%s.%s\": (ri)acquisizione del lock esclusivo per troncamento fallita"
+msgid "\"%s\": stopping truncate due to conflicting lock request"
+msgstr "\"%s\": truncate interrotto a causa di una richiesta di lock in conflitto"
 
-#: commands/vacuumlazy.c:1222
+#: commands/vacuumlazy.c:1208
 #, c-format
 msgid "\"%s\": truncated %u to %u pages"
 msgstr "\"%s\": %u pagine ridotte a %u"
 
-#: commands/vacuumlazy.c:1277
+#: commands/vacuumlazy.c:1264
 #, c-format
 msgid "\"%s\": suspending truncate due to conflicting lock request"
 msgstr "\"%s\": annullamento del troncamento a causa di richieste di lock in conflitto"
@@ -9214,24 +9214,24 @@ msgstr "opzione di EXPLAIN non riconosciuta \"%s\""
 msgid "EXPLAIN option BUFFERS requires ANALYZE"
 msgstr "l'opzione BUFFERS di EXPLAIN richiede ANALYZE"
 
-#: commands/indexcmds.c:159
+#: commands/indexcmds.c:160
 msgid "must specify at least one column"
 msgstr "occorre specificare almeno una colonna"
 
-#: commands/indexcmds.c:163
+#: commands/indexcmds.c:164
 #, c-format
 msgid "cannot use more than %d columns in an index"
 msgstr "non è possibile usare più di %d colonne in un indice"
 
-#: commands/indexcmds.c:193
+#: commands/indexcmds.c:194
 msgid "cannot create indexes on temporary tables of other sessions"
 msgstr "non è possibile creare indici su tabelle temporanee di altre sessioni"
 
-#: commands/indexcmds.c:284
+#: commands/indexcmds.c:285
 msgid "substituting access method \"gist\" for obsolete method \"rtree\""
 msgstr "sostituzione del metodo di accesso \"gist\" per il metodo obsoleto \"rtree\""
 
-#: commands/indexcmds.c:292 commands/opclasscmds.c:281
+#: commands/indexcmds.c:293 commands/opclasscmds.c:281
 #: commands/opclasscmds.c:669 commands/opclasscmds.c:769
 #: commands/opclasscmds.c:1495 commands/opclasscmds.c:1556
 #: commands/opclasscmds.c:1718 commands/opclasscmds.c:1812
@@ -9241,104 +9241,104 @@ msgstr "sostituzione del metodo di accesso \"gist\" per il metodo obsoleto \"rtr
 msgid "access method \"%s\" does not exist"
 msgstr "Il metodo di accesso \"%s\" non esiste"
 
-#: commands/indexcmds.c:301
+#: commands/indexcmds.c:302
 #, c-format
 msgid "access method \"%s\" does not support unique indexes"
 msgstr "il metodo di accesso \"%s\" non supporta gli indici univoci"
 
-#: commands/indexcmds.c:306
+#: commands/indexcmds.c:307
 #, c-format
 msgid "access method \"%s\" does not support multicolumn indexes"
 msgstr "il metodo di accesso \"%s\" non supporta gli indici multicolonna"
 
-#: commands/indexcmds.c:311
+#: commands/indexcmds.c:312
 #, c-format
 msgid "access method \"%s\" does not support exclusion constraints"
 msgstr "il metodo di accesso \"%s\" non supporta i vincoli di esclusione"
 
-#: commands/indexcmds.c:344 parser/parse_utilcmd.c:1268
+#: commands/indexcmds.c:345 parser/parse_utilcmd.c:1268
 #: parser/parse_utilcmd.c:1354
 #, c-format
 msgid "multiple primary keys for table \"%s\" are not allowed"
 msgstr "non è possibile avere più di una chiave primaria per la tabella \"%s\""
 
-#: commands/indexcmds.c:361
+#: commands/indexcmds.c:362
 msgid "primary keys cannot be expressions"
 msgstr "le chiavi primarie non possono essere delle espressioni"
 
-#: commands/indexcmds.c:391 commands/indexcmds.c:868
+#: commands/indexcmds.c:392 commands/indexcmds.c:875
 #: parser/parse_utilcmd.c:1501
 #, c-format
 msgid "column \"%s\" named in key does not exist"
 msgstr "la colonna \"%s\" nominata nella chiave non esiste"
 
-#: commands/indexcmds.c:465
+#: commands/indexcmds.c:466
 #, c-format
 msgid "%s %s will create implicit index \"%s\" for table \"%s\""
 msgstr "%s %s creerà un indice implicito \"%s\" per la tabella \"%s\""
 
-#: commands/indexcmds.c:792
+#: commands/indexcmds.c:799
 msgid "cannot use subquery in index predicate"
 msgstr "non è possibile usare sottoquery nel predicato dell'indice"
 
-#: commands/indexcmds.c:796
+#: commands/indexcmds.c:803
 msgid "cannot use aggregate in index predicate"
 msgstr "non si possono usare funzioni di aggregazione nel predicato dell'indice"
 
-#: commands/indexcmds.c:805
+#: commands/indexcmds.c:812
 msgid "functions in index predicate must be marked IMMUTABLE"
 msgstr "le funzioni nel predicato dell'indice devono essere marcate IMMUTABLE"
 
-#: commands/indexcmds.c:907
+#: commands/indexcmds.c:914
 msgid "cannot use subquery in index expression"
 msgstr "non si possono usare sottoquery nell'espressione dell'indice"
 
-#: commands/indexcmds.c:911
+#: commands/indexcmds.c:918
 msgid "cannot use aggregate function in index expression"
 msgstr "non si possono usare funzioni di aggregazione nell'espressione dell'indice"
 
-#: commands/indexcmds.c:921
+#: commands/indexcmds.c:928
 msgid "functions in index expression must be marked IMMUTABLE"
 msgstr "le funzioni nell'espressione dell'indice devono essere marcate IMMUTABLE"
 
-#: commands/indexcmds.c:956
+#: commands/indexcmds.c:963
 #, c-format
 msgid "operator %s is not commutative"
 msgstr "l'operatore %s non è commutativo"
 
-#: commands/indexcmds.c:958
+#: commands/indexcmds.c:965
 msgid "Only commutative operators can be used in exclusion constraints."
 msgstr "Solo operatori commutativi possono essere usati nei vincoli di esclusione."
 
-#: commands/indexcmds.c:984
+#: commands/indexcmds.c:991
 #, c-format
 msgid "operator %s is not a member of operator family \"%s\""
 msgstr "l'operatore %s non è membro della famiglia di operatori \"%s\""
 
-#: commands/indexcmds.c:987
+#: commands/indexcmds.c:994
 msgid "The exclusion operator must be related to the index operator class for the constraint."
 msgstr "L'operatore di esclusione dev'essere correlato alla classe di operatori dell'indice per il vincolo."
 
-#: commands/indexcmds.c:1022
+#: commands/indexcmds.c:1029
 #, c-format
 msgid "access method \"%s\" does not support ASC/DESC options"
 msgstr "il metodo di accesso \"%s\" non supporta le opzioni ASC/DESC"
 
-#: commands/indexcmds.c:1027
+#: commands/indexcmds.c:1034
 #, c-format
 msgid "access method \"%s\" does not support NULLS FIRST/LAST options"
 msgstr "il metodo di accesso \"%s\" non supporta le opzioni NULLS FIRST/LAST"
 
-#: commands/indexcmds.c:1083
+#: commands/indexcmds.c:1090
 #, c-format
 msgid "data type %s has no default operator class for access method \"%s\""
 msgstr "il tipo di dati %s non ha una classe di operatori predefinita per il metodo di accesso \"%s\""
 
-#: commands/indexcmds.c:1085
+#: commands/indexcmds.c:1092
 msgid "You must specify an operator class for the index or define a default operator class for the data type."
 msgstr "Devi specificare una classe di operatori per l'indice o definire una classe di operatori predefinita per il tipo di dati"
 
-#: commands/indexcmds.c:1114 commands/indexcmds.c:1122
+#: commands/indexcmds.c:1121 commands/indexcmds.c:1129
 #: commands/opclasscmds.c:1507 commands/opclasscmds.c:1511
 #: commands/opclasscmds.c:1739 commands/opclasscmds.c:1750
 #: commands/opclasscmds.c:1926 commands/opclasscmds.c:1937
@@ -9347,26 +9347,26 @@ msgstr "Devi specificare una classe di operatori per l'indice o definire una cla
 msgid "operator class \"%s\" does not exist for access method \"%s\""
 msgstr "la classe di operatori \"%s\" non esiste per il metodo di accesso \"%s\""
 
-#: commands/indexcmds.c:1135
+#: commands/indexcmds.c:1142
 #, c-format
 msgid "operator class \"%s\" does not accept data type %s"
 msgstr "la classe di operatori \"%s\" non accetta il tipo di dati %s"
 
-#: commands/indexcmds.c:1225
+#: commands/indexcmds.c:1232
 #, c-format
 msgid "there are multiple default operator classes for data type %s"
 msgstr "il tipo di dati %s ha più di una classe di operatori predefinita"
 
-#: commands/indexcmds.c:1604
+#: commands/indexcmds.c:1611
 #, c-format
 msgid "table \"%s\" has no indexes"
 msgstr "la tabella \"%s\" non ha indici"
 
-#: commands/indexcmds.c:1632
+#: commands/indexcmds.c:1639
 msgid "can only reindex the currently open database"
 msgstr "è possibile reindicizzare solo il database corrente"
 
-#: commands/indexcmds.c:1717
+#: commands/indexcmds.c:1724
 #, c-format
 msgid "table \"%s.%s\" was reindexed"
 msgstr "la tabella \"%s.%s\" è stata reindicizzata"

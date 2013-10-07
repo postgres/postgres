@@ -25,8 +25,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-03-11 00:02+0000\n"
-"PO-Revision-Date: 2013-03-13 15:08+0400\n"
+"POT-Creation-Date: 2013-05-16 19:44+0000\n"
+"PO-Revision-Date: 2013-05-20 19:06+0400\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -387,12 +387,12 @@ msgstr "%s: неверный аргумент для параметра -f: \"%s
 msgid "%s: invalid argument for option -t: \"%s\"\n"
 msgstr "%s: неверный аргумент для параметра -t: \"%s\"\n"
 
-#: postmaster/postmaster.c:676 bootstrap/bootstrap.c:272 tcop/postgres.c:3447
+#: postmaster/postmaster.c:676 bootstrap/bootstrap.c:272 tcop/postgres.c:3450
 #, c-format
 msgid "--%s requires a value"
 msgstr "для --%s требуется значение"
 
-#: postmaster/postmaster.c:681 bootstrap/bootstrap.c:277 tcop/postgres.c:3452
+#: postmaster/postmaster.c:681 bootstrap/bootstrap.c:277 tcop/postgres.c:3455
 #, c-format
 msgid "-c %s requires a value"
 msgstr "для -c %s требуется значение"
@@ -482,7 +482,7 @@ msgstr "%s: подходящий исполняемый файл postgres не �
 
 #: postmaster/postmaster.c:1153 utils/misc/tzparser.c:345 utils/adt/misc.c:213
 #: utils/adt/genfile.c:244 commands/tablespace.c:684 commands/tablespace.c:694
-#: storage/file/fd.c:1600 storage/file/copydir.c:67 storage/file/copydir.c:106
+#: storage/file/fd.c:1609 storage/file/copydir.c:67 storage/file/copydir.c:106
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "не удалось открыть каталог \"%s\": %m"
@@ -627,8 +627,8 @@ msgid "PID %d in cancel request did not match any process"
 msgstr "процесс с кодом %d, полученным в запросе на отмену, не найден"
 
 #: postmaster/postmaster.c:1984 postmaster/postmaster.c:2017
-#: postmaster/postmaster.c:3204 postmaster/postmaster.c:3886
-#: postmaster/postmaster.c:3972 postmaster/postmaster.c:4563
+#: postmaster/postmaster.c:3204 postmaster/postmaster.c:3881
+#: postmaster/postmaster.c:3967 postmaster/postmaster.c:4558
 #: utils/hash/dynahash.c:367 utils/hash/dynahash.c:444
 #: utils/hash/dynahash.c:956 utils/misc/guc.c:2915 utils/misc/guc.c:2928
 #: utils/misc/guc.c:2941 utils/init/miscinit.c:149 utils/init/miscinit.c:170
@@ -639,7 +639,7 @@ msgstr "процесс с кодом %d, полученным в запросе 
 #: utils/adt/formatting.c:1491 utils/adt/formatting.c:1547
 #: utils/adt/formatting.c:1604 lib/stringinfo.c:266 commands/sequence.c:941
 #: libpq/auth.c:1020 libpq/auth.c:1380 libpq/auth.c:1448 libpq/auth.c:2032
-#: storage/file/fd.c:356 storage/file/fd.c:739 storage/file/fd.c:857
+#: storage/file/fd.c:362 storage/file/fd.c:745 storage/file/fd.c:863
 #: storage/ipc/procarray.c:803 storage/ipc/procarray.c:1193
 #: storage/ipc/procarray.c:1200 storage/ipc/procarray.c:1440
 #: storage/ipc/procarray.c:1891 storage/buffer/localbuf.c:348
@@ -782,7 +782,7 @@ msgstr "принято подключение: узел=%s порт=%s"
 msgid "connection received: host=%s"
 msgstr "принято подключение: узел=%s"
 
-#: postmaster/postmaster.c:3661 access/transam/xlog.c:2335
+#: postmaster/postmaster.c:3656 access/transam/xlog.c:2335
 #: access/transam/xlog.c:2468 access/transam/xlog.c:4344
 #: access/transam/xlog.c:8581 access/transam/xlog.c:8736
 #: storage/file/copydir.c:172 storage/smgr/md.c:284
@@ -790,7 +790,7 @@ msgstr "принято подключение: узел=%s"
 msgid "could not create file \"%s\": %m"
 msgstr "создать файл \"%s\" не удалось: %m"
 
-#: postmaster/postmaster.c:3671 postmaster/postmaster.c:3681
+#: postmaster/postmaster.c:3666 postmaster/postmaster.c:3676
 #: utils/misc/guc.c:7054 utils/misc/guc.c:7079 utils/init/miscinit.c:1054
 #: utils/init/miscinit.c:1063 utils/init/miscinit.c:1070
 #: access/transam/xlog.c:2367 access/transam/xlog.c:2500
@@ -800,83 +800,83 @@ msgstr "создать файл \"%s\" не удалось: %m"
 msgid "could not write to file \"%s\": %m"
 msgstr "записать в файл \"%s\" не удалось: %m"
 
-#: postmaster/postmaster.c:3700
+#: postmaster/postmaster.c:3695
 #, c-format
 msgid "could not execute server process \"%s\": %m"
 msgstr "запустить серверный процесс \"%s\" не удалось: %m"
 
-#: postmaster/postmaster.c:4222
+#: postmaster/postmaster.c:4217
 msgid "database system is ready to accept read only connections"
 msgstr "система БД готова к подключениям в режиме \"только чтение\""
 
-#: postmaster/postmaster.c:4466
+#: postmaster/postmaster.c:4461
 #, c-format
 msgid "could not fork startup process: %m"
 msgstr "породить стартовый процесс не удалось: %m"
 
-#: postmaster/postmaster.c:4470
+#: postmaster/postmaster.c:4465
 #, c-format
 msgid "could not fork background writer process: %m"
 msgstr "породить процесс фоновой записи не удалось: %m"
 
-#: postmaster/postmaster.c:4474
+#: postmaster/postmaster.c:4469
 #, c-format
 msgid "could not fork WAL writer process: %m"
 msgstr "породить процесс записи WAL не удалось: %m"
 
-#: postmaster/postmaster.c:4478
+#: postmaster/postmaster.c:4473
 #, c-format
 msgid "could not fork WAL receiver process: %m"
 msgstr "породить процесс считывания WAL не удалось: %m"
 
-#: postmaster/postmaster.c:4482
+#: postmaster/postmaster.c:4477
 #, c-format
 msgid "could not fork process: %m"
 msgstr "породить процесс не удалось: %m"
 
-#: postmaster/postmaster.c:4766
+#: postmaster/postmaster.c:4761
 #, c-format
 msgid "could not duplicate socket %d for use in backend: error code %d"
 msgstr ""
 "продублировать сокет %d для серверного процесса не удалось: код ошибки %d"
 
-#: postmaster/postmaster.c:4798
+#: postmaster/postmaster.c:4793
 #, c-format
 msgid "could not create inherited socket: error code %d\n"
 msgstr "создать наследуемый сокет не удалось: код ошибки %d\n"
 
-#: postmaster/postmaster.c:4827 postmaster/postmaster.c:4834
+#: postmaster/postmaster.c:4822 postmaster/postmaster.c:4829
 #, c-format
 msgid "could not read from backend variables file \"%s\": %s\n"
 msgstr "прочитать файл серверных переменных \"%s\" не удалось: %s\n"
 
-#: postmaster/postmaster.c:4843
+#: postmaster/postmaster.c:4838
 #, c-format
 msgid "could not remove file \"%s\": %s\n"
 msgstr "не удалось стереть файл \"%s\": %s\n"
 
-#: postmaster/postmaster.c:4860
+#: postmaster/postmaster.c:4855
 #, c-format
 msgid "could not map view of backend variables: error code %d\n"
 msgstr "отобразить файл серверных переменных не удалось: код ошибки %d\n"
 
-#: postmaster/postmaster.c:4869
+#: postmaster/postmaster.c:4864
 #, c-format
 msgid "could not unmap view of backend variables: error code %d\n"
 msgstr ""
 "отключить отображение файла серверных переменных не удалось: код ошибки %d\n"
 
-#: postmaster/postmaster.c:4876
+#: postmaster/postmaster.c:4871
 #, c-format
 msgid "could not close handle to backend parameter variables: error code %d\n"
 msgstr ""
 "закрыть указатель файла серверных переменных не удалось: код ошибки %d\n"
 
-#: postmaster/postmaster.c:5020
+#: postmaster/postmaster.c:5015
 msgid "could not read exit code for process\n"
 msgstr "прочитать код завершения процесса не удалось\n"
 
-#: postmaster/postmaster.c:5025
+#: postmaster/postmaster.c:5020
 msgid "could not post child completion status\n"
 msgstr "отправить состояние завершения потомка не удалось\n"
 
@@ -886,7 +886,7 @@ msgstr "отправить состояние завершения потомк�
 msgid "text search configuration \"%s\" does not exist"
 msgstr "конфигурация текстового поиска \"%s\" не существует"
 
-#: utils/cache/plancache.c:589
+#: utils/cache/plancache.c:606
 msgid "cached plan must not change result type"
 msgstr "в кэшированном плане не должен изменяться тип результата"
 
@@ -3982,11 +3982,11 @@ msgstr "часовой пояс \"%s\" не распознан"
 msgid "interval time zone \"%s\" must not specify month"
 msgstr "интервал \"%s\", задающий часовой пояс, не должен содержать месяцев"
 
-#: utils/adt/selfuncs.c:4843
+#: utils/adt/selfuncs.c:4851
 msgid "case insensitive matching not supported on type bytea"
 msgstr "регистро-независимое сравнение не поддерживается для типа bytea"
 
-#: utils/adt/selfuncs.c:4938
+#: utils/adt/selfuncs.c:4946
 msgid "regular-expression matching not supported on type bytea"
 msgstr "сравнение с регулярными выражениями не поддерживается для типа bytea "
 
@@ -4578,7 +4578,7 @@ msgstr "база данных с OID %u не существует"
 
 #: utils/adt/dbsize.c:248 utils/adt/acl.c:4134 commands/tablecmds.c:432
 #: commands/tablecmds.c:6839 commands/dbcommands.c:437
-#: commands/dbcommands.c:1064 commands/indexcmds.c:222 commands/comment.c:737
+#: commands/dbcommands.c:1064 commands/indexcmds.c:223 commands/comment.c:737
 #: commands/tablespace.c:410 commands/tablespace.c:832
 #: commands/tablespace.c:899 commands/tablespace.c:1004
 #: commands/tablespace.c:1068 commands/tablespace.c:1201
@@ -5095,7 +5095,7 @@ msgid "text search configuration name \"%s\" must be schema-qualified"
 msgstr "имя конфигурации текстового поиска \"%s\" должно указываться со схемой"
 
 #: utils/adt/tsvector_op.c:1371 commands/tablecmds.c:1262
-#: commands/tablecmds.c:1980 commands/copy.c:3459 commands/indexcmds.c:873
+#: commands/tablecmds.c:1980 commands/copy.c:3459 commands/indexcmds.c:880
 #: parser/parse_expr.c:760
 #, c-format
 msgid "column \"%s\" does not exist"
@@ -6237,16 +6237,16 @@ msgstr ""
 "Увеличьте предел глубины стека в системе с помощью команды \"ulimit -s\" или "
 "эквивалента в вашей ОС."
 
-#: tcop/postgres.c:3478
+#: tcop/postgres.c:3483
 msgid "invalid command-line arguments for server process"
 msgstr "неверные аргументы командной строки для серверного процесса"
 
-#: tcop/postgres.c:3479 tcop/postgres.c:3485
+#: tcop/postgres.c:3484 tcop/postgres.c:3490
 #, c-format
 msgid "Try \"%s --help\" for more information."
-msgstr "Подробнее об аргументах вы можете узнать, выполнив \"%s --help\" ."
+msgstr "Для дополнительной информации попробуйте \"%s --help\"."
 
-#: tcop/postgres.c:3483
+#: tcop/postgres.c:3488
 #, c-format
 msgid "%s: invalid command-line arguments"
 msgstr "%s: неверные аргументы командной строки"
@@ -8033,7 +8033,7 @@ msgid "This may be because of a non-immutable index expression."
 msgstr "Возможно, это вызвано переменной природой индексного выражения."
 
 #: access/index/indexam.c:149 commands/tablecmds.c:213
-#: commands/tablecmds.c:2272 commands/indexcmds.c:1560 commands/comment.c:559
+#: commands/tablecmds.c:2272 commands/indexcmds.c:1567 commands/comment.c:559
 #, c-format
 msgid "\"%s\" is not an index"
 msgstr "\"%s\" - это не индекс"
@@ -8094,8 +8094,8 @@ msgid "relation \"%s.%s\" does not exist"
 msgstr "отношение \"%s.%s\" не существует"
 
 #: commands/lockcmds.c:149 commands/tablecmds.c:195 commands/tablecmds.c:1098
-#: commands/tablecmds.c:3274 commands/indexcmds.c:184
-#: commands/indexcmds.c:1592 commands/comment.c:573 commands/trigger.c:149
+#: commands/tablecmds.c:3274 commands/indexcmds.c:185
+#: commands/indexcmds.c:1599 commands/comment.c:573 commands/trigger.c:149
 #: commands/trigger.c:1070 catalog/toasting.c:91
 #, c-format
 msgid "\"%s\" is not a table"
@@ -8332,7 +8332,7 @@ msgstr ""
 "в рамках операции с ограничениями по безопасности нельзя создать временную "
 "таблицу"
 
-#: commands/tablecmds.c:457 commands/tablecmds.c:7030 commands/indexcmds.c:253
+#: commands/tablecmds.c:457 commands/tablecmds.c:7030 commands/indexcmds.c:254
 #: executor/execMain.c:2259
 msgid "only shared relations can be placed in pg_global tablespace"
 msgstr ""
@@ -9754,7 +9754,7 @@ msgstr "очищать временные таблицы других сеанс
 msgid "clustering \"%s.%s\""
 msgstr "кластеризация \"%s.%s\""
 
-#: commands/cluster.c:390 commands/vacuumlazy.c:361
+#: commands/cluster.c:390 commands/vacuumlazy.c:354
 #, c-format
 msgid "vacuuming \"%s.%s\""
 msgstr "очистка \"%s.%s\""
@@ -9817,7 +9817,7 @@ msgstr ""
 msgid "cannot cluster on invalid index \"%s\""
 msgstr "нельзя кластеризовать таблицу по неверному индексу \"%s\""
 
-#: commands/vacuumlazy.c:276
+#: commands/vacuumlazy.c:269
 #, c-format
 msgid ""
 "automatic vacuum of table \"%s.%s.%s\": index scans: %d\n"
@@ -9830,18 +9830,18 @@ msgstr ""
 "кортежей удалено: %.0f, осталось: %.0f\n"
 "нагрузка системы: %s"
 
-#: commands/vacuumlazy.c:530
+#: commands/vacuumlazy.c:523
 #, c-format
 msgid "relation \"%s\" page %u is uninitialized --- fixing"
 msgstr ""
 "в отношении \"%s\" не инициализирована страница %u --- ситуация исправляется"
 
-#: commands/vacuumlazy.c:889
+#: commands/vacuumlazy.c:882
 #, c-format
 msgid "\"%s\": removed %.0f row versions in %u pages"
 msgstr "\"%s\": удалено версий строк: %.0f, обработано страниц: %u"
 
-#: commands/vacuumlazy.c:894
+#: commands/vacuumlazy.c:887
 #, c-format
 msgid ""
 "\"%s\": found %.0f removable, %.0f nonremovable row versions in %u out of %u "
@@ -9850,7 +9850,7 @@ msgstr ""
 "\"%s\": найдено удаляемых версий строк: %.0f, неудаляемых - %.0f, обработано "
 "страниц: %u, всего страниц: %u"
 
-#: commands/vacuumlazy.c:898
+#: commands/vacuumlazy.c:891
 #, c-format
 msgid ""
 "%.0f dead row versions cannot be removed yet.\n"
@@ -9863,28 +9863,28 @@ msgstr ""
 "Полностью пустых страниц: %u.\n"
 "%s."
 
-#: commands/vacuumlazy.c:956
+#: commands/vacuumlazy.c:949
 #, c-format
 msgid "\"%s\": removed %d row versions in %d pages"
 msgstr "\"%s\": удалено версий строк: %d, обработано страниц: %d"
 
-#: commands/vacuumlazy.c:959 commands/vacuumlazy.c:1051
-#: commands/vacuumlazy.c:1225
+#: commands/vacuumlazy.c:952 commands/vacuumlazy.c:1044
+#: commands/vacuumlazy.c:1211
 #, c-format
 msgid "%s."
 msgstr "%s."
 
-#: commands/vacuumlazy.c:1048
+#: commands/vacuumlazy.c:1041
 #, c-format
 msgid "scanned index \"%s\" to remove %d row versions"
 msgstr "просканирован индекс \"%s\", удалено версий строк: %d"
 
-#: commands/vacuumlazy.c:1089
+#: commands/vacuumlazy.c:1082
 #, c-format
 msgid "index \"%s\" now contains %.0f row versions in %u pages"
 msgstr "индекс \"%s\" теперь содержит версий строк: %.0f, в страницах: %u"
 
-#: commands/vacuumlazy.c:1093
+#: commands/vacuumlazy.c:1086
 #, c-format
 msgid ""
 "%.0f index row versions were removed.\n"
@@ -9895,21 +9895,17 @@ msgstr ""
 "Удалено индексных страниц: %u, пригодно для повторного использования: %u.\n"
 "%s."
 
-#: commands/vacuumlazy.c:1153
+#: commands/vacuumlazy.c:1143
 #, c-format
-msgid ""
-"automatic vacuum of table \"%s.%s.%s\": could not (re)acquire exclusive lock "
-"for truncate scan"
-msgstr ""
-"автоматическая очистка таблицы \"%s.%s.%s\": получить исключительную "
-"блокировку для сканирования отсекаемых страниц не удалось"
+msgid "\"%s\": stopping truncate due to conflicting lock request"
+msgstr "\"%s\": остановка усечения из-за конфликтующего запроса блокировки"
 
-#: commands/vacuumlazy.c:1222
+#: commands/vacuumlazy.c:1208
 #, c-format
 msgid "\"%s\": truncated %u to %u pages"
 msgstr "\"%s\": усечение (было страниц: %u, стало: %u)"
 
-#: commands/vacuumlazy.c:1277
+#: commands/vacuumlazy.c:1264
 #, c-format
 msgid "\"%s\": suspending truncate due to conflicting lock request"
 msgstr "\"%s\": приостановка усечения из-за конфликтующего запроса блокировки"
@@ -10135,24 +10131,24 @@ msgstr "нераспознанный параметр EXPLAIN: \"%s\""
 msgid "EXPLAIN option BUFFERS requires ANALYZE"
 msgstr "параметр BUFFERS оператора EXPLAIN требует указания ANALYZE"
 
-#: commands/indexcmds.c:159
+#: commands/indexcmds.c:160
 msgid "must specify at least one column"
 msgstr "нужно указать минимум одну колонку"
 
-#: commands/indexcmds.c:163
+#: commands/indexcmds.c:164
 #, c-format
 msgid "cannot use more than %d columns in an index"
 msgstr "число колонок в индексе не может превышать %d"
 
-#: commands/indexcmds.c:193
+#: commands/indexcmds.c:194
 msgid "cannot create indexes on temporary tables of other sessions"
 msgstr "создавать индексы во временных таблицах других сеансов нельзя"
 
-#: commands/indexcmds.c:284
+#: commands/indexcmds.c:285
 msgid "substituting access method \"gist\" for obsolete method \"rtree\""
 msgstr "устаревший метод доступа \"rtree\" подменяется методом \"gist\""
 
-#: commands/indexcmds.c:292 commands/opclasscmds.c:281
+#: commands/indexcmds.c:293 commands/opclasscmds.c:281
 #: commands/opclasscmds.c:669 commands/opclasscmds.c:769
 #: commands/opclasscmds.c:1495 commands/opclasscmds.c:1556
 #: commands/opclasscmds.c:1718 commands/opclasscmds.c:1812
@@ -10162,83 +10158,83 @@ msgstr "устаревший метод доступа \"rtree\" подменя�
 msgid "access method \"%s\" does not exist"
 msgstr "метод доступа \"%s\" не существует"
 
-#: commands/indexcmds.c:301
+#: commands/indexcmds.c:302
 #, c-format
 msgid "access method \"%s\" does not support unique indexes"
 msgstr "метод доступа \"%s\" не поддерживает уникальные индексы"
 
-#: commands/indexcmds.c:306
+#: commands/indexcmds.c:307
 #, c-format
 msgid "access method \"%s\" does not support multicolumn indexes"
 msgstr "метод доступа \"%s\" не поддерживает индексы по многим колонкам"
 
-#: commands/indexcmds.c:311
+#: commands/indexcmds.c:312
 #, c-format
 msgid "access method \"%s\" does not support exclusion constraints"
 msgstr "метод доступа \"%s\" не поддерживает ограничения-исключения"
 
-#: commands/indexcmds.c:344 parser/parse_utilcmd.c:1268
+#: commands/indexcmds.c:345 parser/parse_utilcmd.c:1268
 #: parser/parse_utilcmd.c:1354
 #, c-format
 msgid "multiple primary keys for table \"%s\" are not allowed"
 msgstr "таблица \"%s\" не может иметь несколько первичных ключей"
 
-#: commands/indexcmds.c:361
+#: commands/indexcmds.c:362
 msgid "primary keys cannot be expressions"
 msgstr "первичные ключи не могут быть выражениями"
 
-#: commands/indexcmds.c:391 commands/indexcmds.c:868
+#: commands/indexcmds.c:392 commands/indexcmds.c:875
 #: parser/parse_utilcmd.c:1501
 #, c-format
 msgid "column \"%s\" named in key does not exist"
 msgstr "указанная в ключе колонка \"%s\" не существует"
 
-#: commands/indexcmds.c:465
+#: commands/indexcmds.c:466
 #, c-format
 msgid "%s %s will create implicit index \"%s\" for table \"%s\""
 msgstr "%s %s создаст неявный индекс \"%s\" для таблицы \"%s\""
 
-#: commands/indexcmds.c:792
+#: commands/indexcmds.c:799
 msgid "cannot use subquery in index predicate"
 msgstr "в предикате индекса нельзя использовать подзапросы"
 
-#: commands/indexcmds.c:796
+#: commands/indexcmds.c:803
 msgid "cannot use aggregate in index predicate"
 msgstr "в предикате индекса нельзя использовать агрегатные функции"
 
-#: commands/indexcmds.c:805
+#: commands/indexcmds.c:812
 msgid "functions in index predicate must be marked IMMUTABLE"
 msgstr "функции в предикате индекса должны быть помечены как IMMUTABLE"
 
-#: commands/indexcmds.c:907
+#: commands/indexcmds.c:914
 msgid "cannot use subquery in index expression"
 msgstr "в индексном выражении нельзя использовать подзапросы"
 
-#: commands/indexcmds.c:911
+#: commands/indexcmds.c:918
 msgid "cannot use aggregate function in index expression"
 msgstr "в индексном выражении нельзя использовать агрегатные функции"
 
-#: commands/indexcmds.c:921
+#: commands/indexcmds.c:928
 msgid "functions in index expression must be marked IMMUTABLE"
 msgstr "функции в индексном выражении должны быть помечены как IMMUTABLE"
 
-#: commands/indexcmds.c:956
+#: commands/indexcmds.c:963
 #, c-format
 msgid "operator %s is not commutative"
 msgstr "оператор %s не коммутативен"
 
-#: commands/indexcmds.c:958
+#: commands/indexcmds.c:965
 msgid "Only commutative operators can be used in exclusion constraints."
 msgstr ""
 "В ограничениях-исключениях могут использоваться только коммутативные "
 "операторы."
 
-#: commands/indexcmds.c:984
+#: commands/indexcmds.c:991
 #, c-format
 msgid "operator %s is not a member of operator family \"%s\""
 msgstr "оператор \"%s\" не входит в семейство операторов \"%s\""
 
-#: commands/indexcmds.c:987
+#: commands/indexcmds.c:994
 msgid ""
 "The exclusion operator must be related to the index operator class for the "
 "constraint."
@@ -10246,24 +10242,24 @@ msgstr ""
 "Оператор исключения для ограничения должен относиться к классу операторов "
 "индекса."
 
-#: commands/indexcmds.c:1022
+#: commands/indexcmds.c:1029
 #, c-format
 msgid "access method \"%s\" does not support ASC/DESC options"
 msgstr "метод доступа \"%s\" не поддерживает сортировку ASC/DESC"
 
-#: commands/indexcmds.c:1027
+#: commands/indexcmds.c:1034
 #, c-format
 msgid "access method \"%s\" does not support NULLS FIRST/LAST options"
 msgstr "метод доступа \"%s\" не поддерживает параметр NULLS FIRST/LAST"
 
-#: commands/indexcmds.c:1083
+#: commands/indexcmds.c:1090
 #, c-format
 msgid "data type %s has no default operator class for access method \"%s\""
 msgstr ""
 "для типа данных %s не определён класс операторов по умолчанию для метода "
 "доступа \"%s\""
 
-#: commands/indexcmds.c:1085
+#: commands/indexcmds.c:1092
 msgid ""
 "You must specify an operator class for the index or define a default "
 "operator class for the data type."
@@ -10271,7 +10267,7 @@ msgstr ""
 "Вы должны указать класс операторов для индекса или определить класс "
 "операторов по умолчанию для этого типа данных."
 
-#: commands/indexcmds.c:1114 commands/indexcmds.c:1122
+#: commands/indexcmds.c:1121 commands/indexcmds.c:1129
 #: commands/opclasscmds.c:1507 commands/opclasscmds.c:1511
 #: commands/opclasscmds.c:1739 commands/opclasscmds.c:1750
 #: commands/opclasscmds.c:1926 commands/opclasscmds.c:1937
@@ -10280,27 +10276,27 @@ msgstr ""
 msgid "operator class \"%s\" does not exist for access method \"%s\""
 msgstr "класс операторов \"%s\" для метода доступа \"%s\" не существует"
 
-#: commands/indexcmds.c:1135
+#: commands/indexcmds.c:1142
 #, c-format
 msgid "operator class \"%s\" does not accept data type %s"
 msgstr "класс операторов \"%s\" не принимает тип данных %s"
 
-#: commands/indexcmds.c:1225
+#: commands/indexcmds.c:1232
 #, c-format
 msgid "there are multiple default operator classes for data type %s"
 msgstr ""
 "для типа данных %s определено несколько классов операторов по умолчанию"
 
-#: commands/indexcmds.c:1604
+#: commands/indexcmds.c:1611
 #, c-format
 msgid "table \"%s\" has no indexes"
 msgstr "таблица \"%s\" не имеет индексов"
 
-#: commands/indexcmds.c:1632
+#: commands/indexcmds.c:1639
 msgid "can only reindex the currently open database"
 msgstr "переиндексировать можно только текущую базу данных"
 
-#: commands/indexcmds.c:1717
+#: commands/indexcmds.c:1724
 #, c-format
 msgid "table \"%s.%s\" was reindexed"
 msgstr "таблица \"%s.%s\" переиндексирована"
@@ -13345,31 +13341,31 @@ msgstr "не удалось создать файл сервера \"%s\": %m"
 msgid "could not write server file \"%s\": %m"
 msgstr "не удалось записать файл сервера \"%s\": %m"
 
-#: storage/file/fd.c:403
+#: storage/file/fd.c:409
 #, c-format
 msgid "getrlimit failed: %m"
 msgstr "ошибка в getrlimit(): %m"
 
-#: storage/file/fd.c:493
+#: storage/file/fd.c:499
 msgid "insufficient file descriptors available to start server process"
 msgstr "недостаточно дескрипторов файлов для запуска серверного процесса"
 
-#: storage/file/fd.c:494
+#: storage/file/fd.c:500
 #, c-format
 msgid "System allows %d, we need at least %d."
 msgstr "Система выделяет: %d, а требуется минимум: %d."
 
-#: storage/file/fd.c:535 storage/file/fd.c:1446 storage/file/fd.c:1561
+#: storage/file/fd.c:541 storage/file/fd.c:1455 storage/file/fd.c:1570
 #, c-format
 msgid "out of file descriptors: %m; release and retry"
 msgstr "нехватка дескрипторов файлов: %m; освободите их и повторите попытку"
 
-#: storage/file/fd.c:1088
+#: storage/file/fd.c:1097
 #, c-format
 msgid "temporary file: path \"%s\", size %lu"
 msgstr "временный файл: путь \"%s\", размер %lu"
 
-#: storage/file/fd.c:1620
+#: storage/file/fd.c:1629
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "не удалось прочитать каталог \"%s\": %m"
@@ -17289,3 +17285,10 @@ msgstr "дочерний процесс завершён по сигналу %d"
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "дочерний процесс завершился с нераспознанным состоянием %d"
+
+#~ msgid ""
+#~ "automatic vacuum of table \"%s.%s.%s\": could not (re)acquire exclusive "
+#~ "lock for truncate scan"
+#~ msgstr ""
+#~ "автоматическая очистка таблицы \"%s.%s.%s\": получить исключительную "
+#~ "блокировку для сканирования отсекаемых страниц не удалось"

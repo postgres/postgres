@@ -975,7 +975,7 @@ msgstr ""
 #: help.c:199
 #, c-format
 msgid "  \\da[S]  [PATTERN]      list aggregates\n"
-msgstr "  \\da[+] [MODÈLE]      affiche les aggrégats\n"
+msgstr "  \\da[S] [MODÈLE]      affiche les aggrégats\n"
 
 #: help.c:200
 #, c-format
