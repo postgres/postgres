@@ -1077,6 +1077,30 @@ END;
     </para>
 
     <para>
+     If <literal>print_strict_params</> is enabled for the function,
+     you will get information about the parameters passed to the
+     query in the <literal>DETAIL</> part of the error message produced
+     when the requirements of STRICT are not met.  You can change this
+     setting on a system-wide basis by setting
+     <varname>plpgsql.print_strict_params</>, though only subsequent
+     function compilations will be affected.  You can also enable it
+     on a per-function basis by using a compiler option:
+<programlisting>
+CREATE FUNCTION get_userid(username text) RETURNS int
+AS $$
+#print_strict_params on
+DECLARE
+userid int;
+BEGIN
+    SELECT users.userid INTO STRICT userid
+        FROM users WHERE users.username = get_userid.username;
+    RETURN userid;
+END
+$$ LANGUAGE plpgsql;
+</programlisting>
+    </para>
+
+    <para>
      For <command>INSERT</>/<command>UPDATE</>/<command>DELETE</> with
      <literal>RETURNING</>, <application>PL/pgSQL</application> reports
      an error for more than one returned row, even when

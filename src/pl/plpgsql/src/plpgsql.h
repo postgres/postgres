@@ -737,6 +737,8 @@ typedef struct PLpgSQL_function
 
 	PLpgSQL_resolve_option resolve_option;
 
+	bool		print_strict_params;
+
 	int			ndatums;
 	PLpgSQL_datum **datums;
 	PLpgSQL_stmt_block *action;
@@ -872,6 +874,8 @@ typedef enum
 extern IdentifierLookup plpgsql_IdentifierLookup;
 
 extern int	plpgsql_variable_conflict;
+
+extern bool plpgsql_print_strict_params;
 
 extern bool plpgsql_check_syntax;
 extern bool plpgsql_DumpExecTree;

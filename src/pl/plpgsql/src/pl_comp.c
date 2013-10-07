@@ -351,6 +351,7 @@ do_compile(FunctionCallInfo fcinfo,
 	function->fn_cxt = func_cxt;
 	function->out_param_varno = -1;		/* set up for no OUT param */
 	function->resolve_option = plpgsql_variable_conflict;
+	function->print_strict_params = plpgsql_print_strict_params;
 
 	if (is_dml_trigger)
 		function->fn_is_trigger = PLPGSQL_DML_TRIGGER;
@@ -847,6 +848,7 @@ plpgsql_compile_inline(char *proc_source)
 	function->fn_cxt = func_cxt;
 	function->out_param_varno = -1;		/* set up for no OUT param */
 	function->resolve_option = plpgsql_variable_conflict;
+	function->print_strict_params = plpgsql_print_strict_params;
 
 	plpgsql_ns_init();
 	plpgsql_ns_push(func_name);

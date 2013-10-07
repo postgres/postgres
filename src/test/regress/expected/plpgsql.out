@@ -3104,6 +3104,110 @@ select footest();
 ERROR:  query returned more than one row
 CONTEXT:  PL/pgSQL function footest() line 5 at EXECUTE statement
 drop function footest();
+-- test printing parameters after failure due to STRICT
+set plpgsql.print_strict_params to true;
+create or replace function footest() returns void as $$
+declare
+x record;
+p1 int := 2;
+p3 text := 'foo';
+begin
+  -- no rows
+  select * from foo where f1 = p1 and f1::text = p3 into strict x;
+  raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
+end$$ language plpgsql;
+select footest();
+ERROR:  query returned no rows
+DETAIL:  parameters: p1 = '2', p3 = 'foo'
+CONTEXT:  PL/pgSQL function footest() line 8 at SQL statement
+create or replace function footest() returns void as $$
+declare
+x record;
+p1 int := 2;
+p3 text := 'foo';
+begin
+  -- too many rows
+  select * from foo where f1 > p1 or f1::text = p3  into strict x;
+  raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
+end$$ language plpgsql;
+select footest();
+ERROR:  query returned more than one row
+DETAIL:  parameters: p1 = '2', p3 = 'foo'
+CONTEXT:  PL/pgSQL function footest() line 8 at SQL statement
+create or replace function footest() returns void as $$
+declare x record;
+begin
+  -- too many rows, no params
+  select * from foo where f1 > 3 into strict x;
+  raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
+end$$ language plpgsql;
+select footest();
+ERROR:  query returned more than one row
+CONTEXT:  PL/pgSQL function footest() line 5 at SQL statement
+create or replace function footest() returns void as $$
+declare x record;
+begin
+  -- no rows
+  execute 'select * from foo where f1 = $1 or f1::text = $2' using 0, 'foo' into strict x;
+  raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
+end$$ language plpgsql;
+select footest();
+ERROR:  query returned no rows
+DETAIL:  parameters: $1 = '0', $2 = 'foo'
+CONTEXT:  PL/pgSQL function footest() line 5 at EXECUTE statement
+create or replace function footest() returns void as $$
+declare x record;
+begin
+  -- too many rows
+  execute 'select * from foo where f1 > $1' using 1 into strict x;
+  raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
+end$$ language plpgsql;
+select footest();
+ERROR:  query returned more than one row
+DETAIL:  parameters: $1 = '1'
+CONTEXT:  PL/pgSQL function footest() line 5 at EXECUTE statement
+create or replace function footest() returns void as $$
+declare x record;
+begin
+  -- too many rows, no parameters
+  execute 'select * from foo where f1 > 3' into strict x;
+  raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
+end$$ language plpgsql;
+select footest();
+ERROR:  query returned more than one row
+CONTEXT:  PL/pgSQL function footest() line 5 at EXECUTE statement
+create or replace function footest() returns void as $$
+-- override the global
+#print_strict_params off
+declare
+x record;
+p1 int := 2;
+p3 text := 'foo';
+begin
+  -- too many rows
+  select * from foo where f1 > p1 or f1::text = p3  into strict x;
+  raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
+end$$ language plpgsql;
+select footest();
+ERROR:  query returned more than one row
+CONTEXT:  PL/pgSQL function footest() line 10 at SQL statement
+reset plpgsql.print_strict_params;
+create or replace function footest() returns void as $$
+-- override the global
+#print_strict_params on
+declare
+x record;
+p1 int := 2;
+p3 text := 'foo';
+begin
+  -- too many rows
+  select * from foo where f1 > p1 or f1::text = p3  into strict x;
+  raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
+end$$ language plpgsql;
+select footest();
+ERROR:  query returned more than one row
+DETAIL:  parameters: p1 = '2', p3 = 'foo'
+CONTEXT:  PL/pgSQL function footest() line 10 at SQL statement
 -- test scrollable cursor support
 create function sc_test() returns setof integer as $$
 declare

@@ -185,7 +185,7 @@ static	List			*read_raise_options(void);
 %type <forvariable>	for_variable
 %type <stmt>	for_control
 
-%type <str>		any_identifier opt_block_label opt_label
+%type <str>		any_identifier opt_block_label opt_label option_value 
 
 %type <list>	proc_sect proc_stmts stmt_elsifs stmt_else
 %type <loop_body>	loop_body
@@ -308,6 +308,7 @@ static	List			*read_raise_options(void);
 %token <keyword>	K_PG_EXCEPTION_CONTEXT
 %token <keyword>	K_PG_EXCEPTION_DETAIL
 %token <keyword>	K_PG_EXCEPTION_HINT
+%token <keyword>	K_PRINT_STRICT_PARAMS
 %token <keyword>	K_PRIOR
 %token <keyword>	K_QUERY
 %token <keyword>	K_RAISE
@@ -354,6 +355,15 @@ comp_option		: '#' K_OPTION K_DUMP
 					{
 						plpgsql_DumpExecTree = true;
 					}
+				| '#' K_PRINT_STRICT_PARAMS option_value
+					{
+						if (strcmp($3, "on") == 0)
+							plpgsql_curr_compile->print_strict_params = true;
+						else if (strcmp($3, "off") == 0)
+							plpgsql_curr_compile->print_strict_params = false;
+						else
+							elog(ERROR, "unrecognized print_strict_params option %s", $3);
+					}
 				| '#' K_VARIABLE_CONFLICT K_ERROR
 					{
 						plpgsql_curr_compile->resolve_option = PLPGSQL_RESOLVE_ERROR;
@@ -367,6 +377,15 @@ comp_option		: '#' K_OPTION K_DUMP
 						plpgsql_curr_compile->resolve_option = PLPGSQL_RESOLVE_COLUMN;
 					}
 				;
+
+option_value : T_WORD
+				{
+					$$ = $1.ident;
+				}
+			 | unreserved_keyword
+				{
+					$$ = pstrdup($1);
+				}
 
 opt_semi		:
 				| ';'
@@ -2300,6 +2319,7 @@ unreserved_keyword	:
 				| K_PG_EXCEPTION_DETAIL
 				| K_PG_EXCEPTION_HINT
 				| K_PRIOR
+				| K_PRINT_STRICT_PARAMS
 				| K_QUERY
 				| K_RELATIVE
 				| K_RESULT_OID

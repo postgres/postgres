@@ -37,6 +37,8 @@ static const struct config_enum_entry variable_conflict_options[] = {
 
 int			plpgsql_variable_conflict = PLPGSQL_RESOLVE_ERROR;
 
+bool		plpgsql_print_strict_params = false;
+
 /* Hook for plugins */
 PLpgSQL_plugin **plugin_ptr = NULL;
 
@@ -64,6 +66,14 @@ _PG_init(void)
 							 PLPGSQL_RESOLVE_ERROR,
 							 variable_conflict_options,
 							 PGC_SUSET, 0,
+							 NULL, NULL, NULL);
+
+	DefineCustomBoolVariable("plpgsql.print_strict_params",
+							 gettext_noop("Print information about parameters in the DETAIL part of the error messages generated on INTO .. STRICT failures."),
+							 NULL,
+							 &plpgsql_print_strict_params,
+							 false,
+							 PGC_USERSET, 0,
 							 NULL, NULL, NULL);
 
 	EmitWarningsOnPlaceholders("plpgsql");
