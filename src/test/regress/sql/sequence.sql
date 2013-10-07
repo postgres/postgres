@@ -154,6 +154,8 @@ SELECT nextval('seq');
 SELECT lastval();
 SELECT setval('seq', 99);
 SELECT lastval();
+DISCARD SEQUENCES;
+SELECT lastval();
 
 CREATE SEQUENCE seq2;
 SELECT nextval('seq2');

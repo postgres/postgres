@@ -344,6 +344,9 @@ SELECT lastval();
       99
 (1 row)
 
+DISCARD SEQUENCES;
+SELECT lastval();
+ERROR:  lastval is not yet defined in this session
 CREATE SEQUENCE seq2;
 SELECT nextval('seq2');
  nextval 

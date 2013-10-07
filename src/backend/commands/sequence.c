@@ -1617,4 +1617,6 @@ ResetSequenceCaches(void)
 		free(seqtab);
 		seqtab = next;
 	}
+
+	last_used_seq = NULL;
 }
