@@ -10,7 +10,7 @@ ALTER EXTENSION unaccent ADD function unaccent_lexize(internal,internal,internal
 ALTER EXTENSION unaccent ADD text search template unaccent;
 ALTER EXTENSION unaccent ADD text search dictionary unaccent;
 
--- These functions are marked as stable in 9.1, were not before:
+-- These functions were marked as stable in 9.1; they were now marked as immutable
 
-ALTER FUNCTION unaccent(regdictionary, text) STABLE;
-ALTER FUNCTION unaccent(text) STABLE;
+ALTER FUNCTION unaccent(regdictionary, text) IMMUTABLE;
+ALTER FUNCTION unaccent(text) IMMUTABLE;
