@@ -1,6 +1,92 @@
 <!-- doc/src/sgml/release-9.3.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-3-1">
+  <title>Release 9.3.1</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2013-10-10</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 9.3.0.
+   For information about new features in the 9.3 major release, see
+   <xref linkend="release-9-3">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.3.1</title>
+
+   <para>
+    A dump/restore is not required for those running 9.3.X.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Update hstore extension with JSON functionality (Andrew Dunstan)
+     </para>
+
+     <para>
+      Users who installed hstore prior to 9.3.1 must execute:
+<programlisting>
+ALTER EXTENSION hstore UPDATE;
+</programlisting>
+      to add two new JSON functions and a cast.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix memory leak when creating range indexes (Heikki Linnakangas)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Serializable snapshot fixes (Kevin Grittner, Heikki Linnakangas)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix libpq SSL deadlock bug (Stephen Frost)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix timeline handling bugs in <application>pg_receivexlog</>
+      (Heikki Linnakangas, Andrew Gierth)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent <command>CREATE FUNCTION</> from checking <command>SET</>
+      variables unless function body checking is enabled (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Remove rare inaccurate warning during vacuum of index-less tables
+      (Heikki Linnakangas)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-3">
   <title>Release 9.3</title>
 
