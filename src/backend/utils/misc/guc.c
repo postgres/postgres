@@ -2410,8 +2410,8 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_BLOCKS,
 		},
 		&effective_cache_size,
-		DEFAULT_EFFECTIVE_CACHE_SIZE, 1, INT_MAX,
-		NULL, NULL, NULL
+		-1, -1, INT_MAX,
+		check_effective_cache_size, NULL, NULL
 	},
 
 	{

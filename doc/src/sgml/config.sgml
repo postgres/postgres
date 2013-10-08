@@ -2758,7 +2758,7 @@ include 'filename'
 
        <para>
         Random access to mechanical disk storage is normally much more expensive
-        than four-times sequential access.  However, a lower default is used
+        than four times sequential access.  However, a lower default is used
         (4.0) because the majority of random accesses to disk, such as indexed
         reads, are assumed to be in cache.  The default value can be thought of
         as modeling random access as 40 times slower than sequential, while
@@ -2841,9 +2841,17 @@ include 'filename'
       <listitem>
        <para>
         Sets the planner's assumption about the effective size of the
-        disk cache that is available to a single query.  This is
-        factored into estimates of the cost of using an index; a
-        higher value makes it more likely index scans will be used, a
+        disk cache that is available to a single query.  The default
+        setting of -1 selects a size equal to four times the size of <xref
+        linkend="guc-shared-buffers">, but not less than the size of one
+        shared buffer page, typically <literal>8kB</literal>.  This value
+        can be set manually if the automatic choice is too large or too
+        small.
+       </para>
+
+       <para>
+        This value is factored into estimates of the cost of using an index;
+        a higher value makes it more likely index scans will be used, a
         lower value makes it more likely sequential scans will be
         used. When setting this parameter you should consider both
         <productname>PostgreSQL</productname>'s shared buffers and the
@@ -2855,8 +2863,10 @@ include 'filename'
         memory allocated by <productname>PostgreSQL</productname>, nor
         does it reserve kernel disk cache; it is used only for estimation
         purposes.  The system also does not assume data remains in
-        the disk cache between queries.  The default is 128 megabytes
-        (<literal>128MB</>).
+        the disk cache between queries.  The auto-tuning
+        selected by the default setting of -1 should give reasonable
+        results if this database cluster is can utilize most of the memory
+        on this server.
        </para>
       </listitem>
      </varlistentry>

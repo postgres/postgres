@@ -87,6 +87,7 @@
 #include "optimizer/planmain.h"
 #include "optimizer/restrictinfo.h"
 #include "parser/parsetree.h"
+#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/selfuncs.h"
 #include "utils/spccache.h"
@@ -95,14 +96,13 @@
 
 #define LOG2(x)  (log(x) / 0.693147180559945)
 
-
 double		seq_page_cost = DEFAULT_SEQ_PAGE_COST;
 double		random_page_cost = DEFAULT_RANDOM_PAGE_COST;
 double		cpu_tuple_cost = DEFAULT_CPU_TUPLE_COST;
 double		cpu_index_tuple_cost = DEFAULT_CPU_INDEX_TUPLE_COST;
 double		cpu_operator_cost = DEFAULT_CPU_OPERATOR_COST;
 
-int			effective_cache_size = DEFAULT_EFFECTIVE_CACHE_SIZE;
+int			effective_cache_size = -1;
 
 Cost		disable_cost = 1.0e10;
 
@@ -454,6 +454,52 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count)
 
 	path->path.startup_cost = startup_cost;
 	path->path.total_cost = startup_cost + run_cost;
+}
+
+void
+set_default_effective_cache_size(void)
+{
+	/*
+	 * If the value of effective_cache_size is -1, use the preferred
+	 * auto-tune value.
+	 */
+	if (effective_cache_size == -1)
+	{
+		char		buf[32];
+
+		snprintf(buf, sizeof(buf), "%d", NBuffers * DEFAULT_EFFECTIVE_CACHE_SIZE_MULTI);
+		SetConfigOption("effective_cache_size", buf, PGC_POSTMASTER, PGC_S_OVERRIDE);
+	}
+	Assert(effective_cache_size > 0);
+}
+
+/*
+ * GUC check_hook for effective_cache_size
+ */
+bool
+check_effective_cache_size(int *newval, void **extra, GucSource source)
+{
+	/*
+	 * -1 indicates a request for auto-tune.
+	 */
+	if (*newval == -1)
+	{
+		/*
+		 * If we haven't yet changed the boot_val default of -1, just let it
+		 * be.	We'll fix it in index_pages_fetched
+		 */
+		if (effective_cache_size == -1)
+			return true;
+
+		/* Otherwise, substitute the auto-tune value */
+		*newval = NBuffers * DEFAULT_EFFECTIVE_CACHE_SIZE_MULTI;
+	}
+
+	/* set minimum? */
+	if (*newval < 1)
+		*newval = 1;
+
+	return true;
 }
 
 /*
