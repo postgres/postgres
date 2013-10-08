@@ -1555,8 +1555,6 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 	offnum = ItemPointerGetOffsetNumber(tid);
 	at_chain_start = true;
 
-	heapTuple->t_self = *tid;
-
 	/* Scan through possible multiple members of HOT-chain */
 	for (;;)
 	{
