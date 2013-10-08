@@ -89,16 +89,26 @@ Starting a New Development Cycle
 Creating Back-Branch Release Notes
 ==================================
 
-* Run src/tools/git_changelog to generate a list of relevant commits
+* Run src/tools/git_changelog to generate a list of relevant commits. 
+  You can also run 'git log' in each branch.  Be sure to use the --since
+  branch tag and not the release date, as commits could have been done
+  between branch stamping and the release date.
 
 * On the git master branch, edit and create SGML markup for the most recent
   branch in that branch's release-N.N.sgml file
 
 * Copy this into older branches' release-N.N.sgml files, then remove
-  items that do not apply based on commit logs for that branch (and add
-  any that are needed)
+  items that do not apply based on commit logs for that branch.  
 
-* Copy the appropriate release-N.N.sgml files into each back branch
+* Add any older branch commits not in the newest branch.  This can be 
+  accomplished by diff'ing the newest and older branch commit logs and
+  looking for lines that only appear in the older branch, e.g.:
+
+       diff commit-N.N.log commit-O.O.log | grep '^>'
+
+* Copy the appropriate release-N.N.sgml files into each back branch SGML
+  directory.
+
 
 
 ---------------------------------------------------------------------------
