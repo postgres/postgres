@@ -2865,7 +2865,7 @@ include 'filename'
         purposes.  The system also does not assume data remains in
         the disk cache between queries.  The auto-tuning
         selected by the default setting of -1 should give reasonable
-        results if this database cluster is can utilize most of the memory
+        results if this database cluster can utilize most of the memory
         on this server.
        </para>
       </listitem>
