@@ -1,6 +1,327 @@
 <!-- doc/src/sgml/release-9.1.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-1-10">
+  <title>Release 9.1.10</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2013-10-10</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 9.1.9.
+   For information about new features in the 9.1 major release, see
+   <xref linkend="release-9-1">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.1.10</title>
+
+   <para>
+    A dump/restore is not required for those running 9.1.X.
+   </para>
+
+   <para>
+    Also, if you are upgrading from a version earlier than 9.1.6,
+    see the release notes for 9.1.6.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Prevent downcasing of non-ASCII non-double-quoted identifiers in
+      multi-byte encodings (Andrew Dunstan)
+     </para>
+
+     <para>
+      The previous behavior was wrong and confusing.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix checkpoint memory leak in background writer when <literal>wal_level =
+      hot_standby</> (Naoya Anzai)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix memory leak caused by <function>lo_open()</function> failure
+      (Heikki Linnakangas)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix memory overcommit bug when <varname>work_mem</> is using more
+      than 24GB of memory (Stephen Frost)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Serializable snapshot fixes (Kevin Grittner, Heikki Linnakangas)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix libpq SSL deadlock bug (Stephen Frost)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible SSL network stack corruption in threaded libpq applications
+      (Nick Phillips, Stephen Frost)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Properly compute row estimates for boolean columns containing many NULL
+      values (Andrew Gierth)
+     </para>
+
+     <para>
+      Previously tests like <literal>col IS NOT TRUE</> and <literal>col IS
+      NOT FALSE</> did not properly factor in NULL values when estimating
+      plan costs.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent pushing down <literal>WHERE</> clauses into unsafe
+      <literal>UNION/INTERSECT</> subqueries (Tom Lane)
+     </para>
+
+     <para>
+      Previously such push downs could generate errors.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix rare <literal>GROUP BY</> query error caused by improperly processed date type
+      modifiers (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_dump</> of foreign tables with dropped columns (Andrew Dunstan)
+     </para>
+
+     <para>
+      Previously such cases could cause a <application>pg_upgrade</> error.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Reorder <application>pg_dump</> processing of extension-related
+      rules and event triggers (Joe Conway)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Force dumping of extension tables if specified by <command>pg_dump
+      -t</> or <literal>-n</> (Joe Conway)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow view dump code to better handle dropped columns on base tables
+      (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <command>pg_restore -l</> with the directory archive to display
+      the correct format name (Fujii Masao)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Properly record index comments created using <literal>UNIQUE</>
+      and <literal>PRIMARY KEY</> syntax (Andres Freund)
+     </para>
+
+     <para>
+      This fixes a parallel <application>pg_restore</> failure.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Properly guarantee transmission of WAL files before clean switchover
+      (Fujii Masao)
+     </para>
+
+     <para>
+      Previously, the streaming replication connection might close before all
+      WAL files had been replayed on the standby.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve WAL segment timeline handling during recovery (Heikki
+      Linnakangas)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <command>REINDEX TABLE</> and <command>REINDEX DATABASE</>
+      to properly revalidate constraints and mark invalidated indexes as
+      valid (Noah Misch)
+     </para>
+
+     <para>
+      <command>REINDEX INDEX</> has always worked properly.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible deadlock during concurrent <command>CREATE INDEX
+      CONCURRENTLY</> operations (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <function>regexp_matches()</> handling of zero-length matches
+      (Jeevan Chalke)
+     </para>
+
+     <para>
+      Previously, zero-length matches like '^' could return too many matches.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix crash for overly-complex regular expressions (Heikki Linnakangas)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix regular expression match failures for back references combined with
+      non-greedy quantifiers (Jeevan Chalke)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent <command>CREATE FUNCTION</> from checking <command>SET</>
+      variables unless function body checking is enabled (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow <command>ALTER DEFAULT PRIVILEGES</> to operate on schemas
+      without requiring CREATE permission (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Loosen restriction on keywords used in queries (Tom Lane)
+     </para>
+
+     <para>
+      Specifically, lessen keyword restrictions for role names, language
+      names, <command>EXPLAIN</> and <command>COPY</> options, and
+      <command>SET</> values.  This allows <literal>COPY ...  (FORMAT
+      BINARY)</> previously <literal>BINARY</> required single-quotes.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <function>pgp_pub_decrypt()</> so it works for secret keys with
+      passwords (Marko Kreen)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Have <application>pg_upgrade</> use <command>>pg_dump
+      --quote-all-identifiers</> to avoid problems with keyword changes
+      between releases (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Remove rare inaccurate warning during vacuum of index-less tables
+      (Heikki Linnakangas)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve analyze statistics generation after a cancelled file truncate
+      request (Kevin Grittner)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid possible failure when performing transaction control commands (e.g
+      <command>ROLLBACK</>) in prepared queries (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow various spellings of infinity on all platforms (Tom Lane)
+     </para>
+
+     <para>
+      Supported infinity values are "inf", "+inf", "-inf", "infinity",
+      "+infinity", and "-infinity".
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Expand ability to compare rows to records and arrays (Rafal Rzepecki,
+      Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2013d
+      for DST law changes in DST law changes in Israel, Morocco, Palestine,
+      Paraguay.  Also, historical zone data corrections for Macquarie Island
+      (Tom Lane)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-1-9">
   <title>Release 9.1.9</title>
 
