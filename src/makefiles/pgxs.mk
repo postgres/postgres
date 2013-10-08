@@ -124,7 +124,7 @@ all: all-lib
 endif # MODULE_big
 
 
-install: all installdirs installcontrol installdata installdatatsearch installdocs installscripts
+install: all installcontrol installdata installdatatsearch installdocs installscripts | installdirs
 ifdef MODULES
 	$(INSTALL_SHLIB) $(addsuffix $(DLSUFFIX), $(MODULES)) '$(DESTDIR)$(pkglibdir)/'
 endif # MODULES
@@ -132,29 +132,29 @@ ifdef PROGRAM
 	$(INSTALL_PROGRAM) $(PROGRAM)$(X) '$(DESTDIR)$(bindir)'
 endif # PROGRAM
 
-installcontrol: $(addsuffix .control, $(EXTENSION)) | installdirs
+installcontrol: $(addsuffix .control, $(EXTENSION))
 ifneq (,$(EXTENSION))
 	$(INSTALL_DATA) $^ '$(DESTDIR)$(datadir)/extension/'
 endif
 
-installdata: $(DATA) $(DATA_built) | installdirs
+installdata: $(DATA) $(DATA_built)
 ifneq (,$(DATA)$(DATA_built))
 	$(INSTALL_DATA) $^ '$(DESTDIR)$(datadir)/$(datamoduledir)/'
 endif
 
-installdatatsearch: $(DATA_TSEARCH) | installdirs
+installdatatsearch: $(DATA_TSEARCH)
 ifneq (,$(DATA_TSEARCH))
 	$(INSTALL_DATA) $^ '$(DESTDIR)$(datadir)/tsearch_data/'
 endif
 
-installdocs: $(DOCS) | installdirs
+installdocs: $(DOCS)
 ifdef DOCS
 ifdef docdir
 	$(INSTALL_DATA) $^ '$(DESTDIR)$(docdir)/$(docmoduledir)/'
 endif # docdir
 endif # DOCS
 
-installscripts: $(SCRIPTS) $(SCRIPTS_built) | installdirs
+installscripts: $(SCRIPTS) $(SCRIPTS_built)
 ifdef SCRIPTS
 	$(INSTALL_SCRIPT) $^ '$(DESTDIR)$(bindir)/'
 endif # SCRIPTS
