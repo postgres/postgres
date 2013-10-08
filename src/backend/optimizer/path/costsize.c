@@ -486,7 +486,7 @@ check_effective_cache_size(int *newval, void **extra, GucSource source)
 	{
 		/*
 		 * If we haven't yet changed the boot_val default of -1, just let it
-		 * be.	We'll fix it in index_pages_fetched
+		 * be.	We'll fix it later.
 		 */
 		if (effective_cache_size == -1)
 			return true;
