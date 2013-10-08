@@ -95,8 +95,8 @@ hmac(data bytea, key text, type text) returns bytea
   </para>
 
   <para>
-   The algorithms in <function>crypt()</> differ from usual hashing algorithms
-   like MD5 or SHA1 in the following respects:
+   The algorithms in <function>crypt()</> differ from the usual 
+   MD5 or SHA1 hashing algorithms in the following respects:
   </para>
 
   <orderedlist>
@@ -142,6 +142,7 @@ hmac(data bytea, key text, type text) returns bytea
       <entry>Max Password Length</entry>
       <entry>Adaptive?</entry>
       <entry>Salt Bits</entry>
+      <entry>Output length</entry>
       <entry>Description</entry>
      </row>
     </thead>
@@ -151,6 +152,7 @@ hmac(data bytea, key text, type text) returns bytea
       <entry>72</entry>
       <entry>yes</entry>
       <entry>128</entry>
+      <entry>60</entry>
       <entry>Blowfish-based, variant 2a</entry>
      </row>
      <row>
@@ -158,6 +160,7 @@ hmac(data bytea, key text, type text) returns bytea
       <entry>unlimited</entry>
       <entry>no</entry>
       <entry>48</entry>
+      <entry>34</entry>
       <entry>MD5-based crypt</entry>
      </row>
      <row>
@@ -165,6 +168,7 @@ hmac(data bytea, key text, type text) returns bytea
       <entry>8</entry>
       <entry>yes</entry>
       <entry>24</entry>
+      <entry>20</entry>
       <entry>Extended DES</entry>
      </row>
      <row>
@@ -172,6 +176,7 @@ hmac(data bytea, key text, type text) returns bytea
       <entry>8</entry>
       <entry>no</entry>
       <entry>12</entry>
+      <entry>13</entry>
       <entry>Original UNIX crypt</entry>
      </row>
     </tbody>
@@ -205,7 +210,7 @@ UPDATE ... SET pswhash = crypt('new password', gen_salt('md5'));
    <para>
     Example of authentication:
 <programlisting>
-SELECT pswhash = crypt('entered password', pswhash) FROM ... ;
+SELECT (pswhash = crypt('entered password', pswhash)) AS pswmatch FROM ... ;
 </programlisting>
     This returns <literal>true</> if the entered password is correct.
    </para>
@@ -353,7 +358,7 @@ gen_salt(type text [, iter_count integer ]) returns text
        <entry>12 years</entry>
       </row>
       <row>
-       <entry><literal>md5</></entry>
+       <entry><literal>md5 hash</></entry>
        <entry>2345086</entry>
        <entry>1 day</entry>
        <entry>3 years</entry>
@@ -380,7 +385,7 @@ gen_salt(type text [, iter_count integer ]) returns text
     </listitem>
     <listitem>
      <para>
-      <literal>md5</> numbers are from mdcrack 1.2.
+      <literal>md5 hash</> numbers are from mdcrack 1.2.
      </para>
     </listitem>
     <listitem>
@@ -1343,7 +1348,7 @@ gen_random_bytes(count integer) returns bytea
       <entry>OpenBSD sys/crypto</entry>
      </row>
      <row>
-      <entry>MD5 and SHA1</entry>
+      <entry>MD5 hash and SHA1</entry>
       <entry>WIDE Project</entry>
       <entry>KAME kame/sys/crypto</entry>
      </row>
