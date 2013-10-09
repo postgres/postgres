@@ -312,6 +312,8 @@ AuxiliaryProcessMain(int argc, char *argv[])
 		proc_exit(1);
 	}
 
+	set_default_effective_cache_size();
+	
 	/*
 	 * Identify myself via ps
 	 */

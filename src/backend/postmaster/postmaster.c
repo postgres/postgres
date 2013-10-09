@@ -778,6 +778,8 @@ PostmasterMain(int argc, char *argv[])
 		ExitPostmaster(1);
 	}
 
+	set_default_effective_cache_size();
+
 	/*
 	 * Locate the proper configuration files and data directory, and read
 	 * postgresql.conf for the first time.
@@ -4475,8 +4477,6 @@ SubPostmasterMain(int argc, char *argv[])
 	/* Read in the variables file */
 	memset(&port, 0, sizeof(Port));
 	read_backend_variables(argv[2], &port);
-
-	set_default_effective_cache_size();
 
 	/*
 	 * Set reference point for stack-depth checking
