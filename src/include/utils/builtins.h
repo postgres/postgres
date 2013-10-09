@@ -631,6 +631,13 @@ extern Datum record_gt(PG_FUNCTION_ARGS);
 extern Datum record_le(PG_FUNCTION_ARGS);
 extern Datum record_ge(PG_FUNCTION_ARGS);
 extern Datum btrecordcmp(PG_FUNCTION_ARGS);
+extern Datum record_image_eq(PG_FUNCTION_ARGS);
+extern Datum record_image_ne(PG_FUNCTION_ARGS);
+extern Datum record_image_lt(PG_FUNCTION_ARGS);
+extern Datum record_image_gt(PG_FUNCTION_ARGS);
+extern Datum record_image_le(PG_FUNCTION_ARGS);
+extern Datum record_image_ge(PG_FUNCTION_ARGS);
+extern Datum btrecordimagecmp(PG_FUNCTION_ARGS);
 
 /* ruleutils.c */
 extern bool quote_all_identifiers;

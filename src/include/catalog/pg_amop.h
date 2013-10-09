@@ -493,6 +493,16 @@ DATA(insert (	2994  2249 2249 4 s 2993	403 0 ));
 DATA(insert (	2994  2249 2249 5 s 2991	403 0 ));
 
 /*
+ *	btree record_image_ops
+ */
+
+DATA(insert (	3194  2249 2249 1 s 3190	403 0 ));
+DATA(insert (	3194  2249 2249 2 s 3192	403 0 ));
+DATA(insert (	3194  2249 2249 3 s 3188	403 0 ));
+DATA(insert (	3194  2249 2249 4 s 3193	403 0 ));
+DATA(insert (	3194  2249 2249 5 s 3191	403 0 ));
+
+/*
  * btree uuid_ops
  */
 

@@ -562,7 +562,7 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid)
 					 "SELECT newdata FROM %s newdata "
 					 "WHERE newdata IS NOT NULL AND EXISTS "
 					 "(SELECT * FROM %s newdata2 WHERE newdata2 IS NOT NULL "
-					 "AND newdata2 OPERATOR(pg_catalog.=) newdata "
+					 "AND newdata2 OPERATOR(pg_catalog.*=) newdata "
 					 "AND newdata2.ctid OPERATOR(pg_catalog.<>) "
 					 "newdata.ctid) LIMIT 1",
 					 tempname, tempname);
@@ -645,9 +645,6 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid)
 				/*
 				 * Only include the column once regardless of how many times
 				 * it shows up in how many indexes.
-				 *
-				 * This is also useful later to omit columns which can not
-				 * have changed from the SET clause of the UPDATE statement.
 				 */
 				if (usedForQual[attnum - 1])
 					continue;
@@ -682,8 +679,9 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid)
 				 errhint("Create a UNIQUE index with no WHERE clause on one or more columns of the materialized view.")));
 
 	appendStringInfoString(&querybuf,
-						   " AND newdata = mv) WHERE newdata IS NULL OR mv IS NULL"
-						   " ORDER BY tid");
+						   " AND newdata OPERATOR(pg_catalog.*=) mv) "
+						   "WHERE newdata IS NULL OR mv IS NULL "
+						   "ORDER BY tid");
 
 	/* Create the temporary "diff" table. */
 	if (SPI_exec(querybuf.data, 0) != SPI_OK_UTILITY)

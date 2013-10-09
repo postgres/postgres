@@ -1036,13 +1036,18 @@ FROM pg_amop p1 LEFT JOIN pg_operator p2 ON amopopr = p2.oid
 ORDER BY 1, 2, 3;
  amopmethod | amopstrategy | oprname 
 ------------+--------------+---------
+        403 |            1 | *<
         403 |            1 | <
         403 |            1 | ~<~
+        403 |            2 | *<=
         403 |            2 | <=
         403 |            2 | ~<=~
+        403 |            3 | *=
         403 |            3 | =
+        403 |            4 | *>=
         403 |            4 | >=
         403 |            4 | ~>=~
+        403 |            5 | *>
         403 |            5 | >
         403 |            5 | ~>~
         405 |            1 | =
@@ -1098,7 +1103,7 @@ ORDER BY 1, 2, 3;
        4000 |           15 | >
        4000 |           16 | @>
        4000 |           18 | =
-(62 rows)
+(67 rows)
 
 -- Check that all opclass search operators have selectivity estimators.
 -- This is not absolutely required, but it seems a reasonable thing

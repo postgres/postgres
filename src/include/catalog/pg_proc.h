@@ -4470,7 +4470,7 @@ DESCR("get set of in-progress txids in snapshot");
 DATA(insert OID = 2948 (  txid_visible_in_snapshot	PGNSP PGUID 12 1  0 0 0 f f f f t f i 2 0 16 "20 2970" _null_ _null_ _null_ _null_ txid_visible_in_snapshot _null_ _null_ _null_ ));
 DESCR("is txid visible in snapshot?");
 
-/* record comparison */
+/* record comparison using normal comparison rules */
 DATA(insert OID = 2981 (  record_eq		   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "2249 2249" _null_ _null_ _null_ _null_ record_eq _null_ _null_ _null_ ));
 DATA(insert OID = 2982 (  record_ne		   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "2249 2249" _null_ _null_ _null_ _null_ record_ne _null_ _null_ _null_ ));
 DATA(insert OID = 2983 (  record_lt		   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "2249 2249" _null_ _null_ _null_ _null_ record_lt _null_ _null_ _null_ ));
@@ -4479,6 +4479,16 @@ DATA(insert OID = 2985 (  record_le		   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0
 DATA(insert OID = 2986 (  record_ge		   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "2249 2249" _null_ _null_ _null_ _null_ record_ge _null_ _null_ _null_ ));
 DATA(insert OID = 2987 (  btrecordcmp	   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 23 "2249 2249" _null_ _null_ _null_ _null_ btrecordcmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
+
+/* record comparison using raw byte images */
+DATA(insert OID = 3181 (  record_image_eq	   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "2249 2249" _null_ _null_ _null_ _null_ record_image_eq _null_ _null_ _null_ ));
+DATA(insert OID = 3182 (  record_image_ne	   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "2249 2249" _null_ _null_ _null_ _null_ record_image_ne _null_ _null_ _null_ ));
+DATA(insert OID = 3183 (  record_image_lt	   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "2249 2249" _null_ _null_ _null_ _null_ record_image_lt _null_ _null_ _null_ ));
+DATA(insert OID = 3184 (  record_image_gt	   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "2249 2249" _null_ _null_ _null_ _null_ record_image_gt _null_ _null_ _null_ ));
+DATA(insert OID = 3185 (  record_image_le	   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "2249 2249" _null_ _null_ _null_ _null_ record_image_le _null_ _null_ _null_ ));
+DATA(insert OID = 3186 (  record_image_ge	   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "2249 2249" _null_ _null_ _null_ _null_ record_image_ge _null_ _null_ _null_ ));
+DATA(insert OID = 3187 (  btrecordimagecmp	   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 23 "2249 2249" _null_ _null_ _null_ _null_ btrecordimagecmp _null_ _null_ _null_ ));
+DESCR("less-equal-greater based on byte images");
 
 /* Extensions */
 DATA(insert OID = 3082 (  pg_available_extensions		PGNSP PGUID 12 10 100 0 0 f f f f t t s 0 0 2249 "" "{19,25,25}" "{o,o,o}" "{name,default_version,comment}" _null_ pg_available_extensions _null_ _null_ _null_ ));

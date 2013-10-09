@@ -143,7 +143,7 @@ REFRESH MATERIALIZED VIEW mv;
 REFRESH MATERIALIZED VIEW CONCURRENTLY mv;
 DROP TABLE foo CASCADE;
 
--- make sure that all indexes covered by unique indexes works
+-- make sure that all columns covered by unique indexes works
 CREATE TABLE foo(a, b, c) AS VALUES(1, 2, 3);
 CREATE MATERIALIZED VIEW mv AS SELECT * FROM foo;
 CREATE UNIQUE INDEX ON mv (a);
@@ -154,3 +154,16 @@ INSERT INTO foo VALUES(3, 4, 5);
 REFRESH MATERIALIZED VIEW mv;
 REFRESH MATERIALIZED VIEW CONCURRENTLY mv;
 DROP TABLE foo CASCADE;
+
+-- make sure that types with unusual equality tests work
+CREATE TABLE boxes (id serial primary key, b box);
+INSERT INTO boxes (b) VALUES
+  ('(32,32),(31,31)'),
+  ('(2.0000004,2.0000004),(1,1)'),
+  ('(1.9999996,1.9999996),(1,1)');
+CREATE MATERIALIZED VIEW boxmv AS SELECT * FROM boxes;
+CREATE UNIQUE INDEX boxmv_id ON boxmv (id);
+UPDATE boxes SET b = '(2,2),(1,1)' WHERE id = 2;
+REFRESH MATERIALIZED VIEW CONCURRENTLY boxmv;
+SELECT * FROM boxmv ORDER BY id;
+DROP TABLE boxes CASCADE;

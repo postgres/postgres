@@ -1672,6 +1672,20 @@ DESCR("less than or equal");
 DATA(insert OID = 2993 (  ">="	   PGNSP PGUID b f f 2249 2249 16 2992 2990 record_ge scalargtsel scalargtjoinsel ));
 DESCR("greater than or equal");
 
+/* byte-oriented tests for identical rows and fast sorting */
+DATA(insert OID = 3188 (  "*="	   PGNSP PGUID b t f 2249 2249 16 3188 3189 record_image_eq eqsel eqjoinsel ));
+DESCR("identical");
+DATA(insert OID = 3189 (  "*<>"   PGNSP PGUID b f f 2249 2249 16 3189 3188 record_image_ne neqsel neqjoinsel ));
+DESCR("not identical");
+DATA(insert OID = 3190 (  "*<"	   PGNSP PGUID b f f 2249 2249 16 3191 3193 record_image_lt scalarltsel scalarltjoinsel ));
+DESCR("less than");
+DATA(insert OID = 3191 (  "*>"	   PGNSP PGUID b f f 2249 2249 16 3190 3192 record_image_gt scalargtsel scalargtjoinsel ));
+DESCR("greater than");
+DATA(insert OID = 3192 (  "*<="   PGNSP PGUID b f f 2249 2249 16 3193 3191 record_image_le scalarltsel scalarltjoinsel ));
+DESCR("less than or equal");
+DATA(insert OID = 3193 (  "*>="   PGNSP PGUID b f f 2249 2249 16 3192 3190 record_image_ge scalargtsel scalargtjoinsel ));
+DESCR("greater than or equal");
+
 /* generic range type operators */
 DATA(insert OID = 3882 (  "="	   PGNSP PGUID b t t 3831 3831 16 3882 3883 range_eq eqsel eqjoinsel ));
 DESCR("equal");

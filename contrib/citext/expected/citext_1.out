@@ -2276,3 +2276,44 @@ SELECT like_escape( name::text, ''::citext ) = like_escape( name::text, '' ) AS 
  t
 (5 rows)
 
+-- Ensure correct behavior for citext with materialized views.
+CREATE TABLE citext_table (
+  id serial primary key,
+  name citext
+);
+INSERT INTO citext_table (name)
+  VALUES ('one'), ('two'), ('three'), (NULL), (NULL);
+CREATE MATERIALIZED VIEW citext_matview AS
+  SELECT * FROM citext_table;
+CREATE UNIQUE INDEX citext_matview_id
+  ON citext_matview (id);
+SELECT *
+  FROM citext_matview m
+  FULL JOIN citext_table t ON (t.id = m.id AND t *= m)
+  WHERE t.id IS NULL OR m.id IS NULL;
+ id | name | id | name 
+----+------+----+------
+(0 rows)
+
+UPDATE citext_table SET name = 'Two' WHERE name = 'TWO';
+SELECT *
+  FROM citext_matview m
+  FULL JOIN citext_table t ON (t.id = m.id AND t *= m)
+  WHERE t.id IS NULL OR m.id IS NULL;
+ id | name | id | name 
+----+------+----+------
+    |      |  2 | Two
+  2 | two  |    | 
+(2 rows)
+
+REFRESH MATERIALIZED VIEW CONCURRENTLY citext_matview;
+SELECT * FROM citext_matview ORDER BY id;
+ id | name  
+----+-------
+  1 | one
+  2 | Two
+  3 | three
+  4 | 
+  5 | 
+(5 rows)
+

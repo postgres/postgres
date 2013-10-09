@@ -122,6 +122,7 @@ DATA(insert (	1989   26 26 1 356 ));
 DATA(insert (	1989   26 26 2 3134 ));
 DATA(insert (	1991   30 30 1 404 ));
 DATA(insert (	2994   2249 2249 1 2987 ));
+DATA(insert (	3194   2249 2249 1 3187 ));
 DATA(insert (	1994   25 25 1 360 ));
 DATA(insert (	1996   1083 1083 1 1107 ));
 DATA(insert (	2000   1266 1266 1 1358 ));
