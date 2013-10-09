@@ -785,6 +785,8 @@ PostmasterMain(int argc, char *argv[])
 	if (!SelectConfigFiles(userDoption, progname))
 		ExitPostmaster(2);
 
+	set_default_effective_cache_size();
+
 	if (output_config_variable != NULL)
 	{
 		/*
@@ -794,8 +796,6 @@ PostmasterMain(int argc, char *argv[])
 		puts(GetConfigOption(output_config_variable, false, false));
 		ExitPostmaster(0);
 	}
-
-	set_default_effective_cache_size();
 
 	/* Verify that DataDir looks reasonable */
 	checkDataDir();
