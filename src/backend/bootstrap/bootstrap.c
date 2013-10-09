@@ -350,8 +350,6 @@ AuxiliaryProcessMain(int argc, char *argv[])
 			proc_exit(1);
 	}
 
-	set_default_effective_cache_size();
-	
 	/* Validate we have been given a reasonable-looking DataDir */
 	Assert(DataDir);
 	ValidatePgVersion(DataDir);

@@ -3592,8 +3592,6 @@ PostgresMain(int argc, char *argv[],
 			proc_exit(1);
 	}
 
-	set_default_effective_cache_size();
-	    
 	/*
 	 * You might expect to see a setsid() call here, but it's not needed,
 	 * because if we are under a postmaster then BackendInitialize() did it.

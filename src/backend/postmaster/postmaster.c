@@ -785,8 +785,6 @@ PostmasterMain(int argc, char *argv[])
 	if (!SelectConfigFiles(userDoption, progname))
 		ExitPostmaster(2);
 
-	set_default_effective_cache_size();
-
 	if (output_config_variable != NULL)
 	{
 		/*
