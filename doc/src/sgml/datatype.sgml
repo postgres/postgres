@@ -3051,9 +3051,7 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
    <para>
     Geometric data types represent two-dimensional spatial
     objects. <xref linkend="datatype-geo-table"> shows the geometric
-    types available in <productname>PostgreSQL</productname>.  The
-    most fundamental type, the point, forms the basis for all of the
-    other types.
+    types available in <productname>PostgreSQL</productname>.
    </para>
 
     <table id="datatype-geo-table">
@@ -3063,8 +3061,8 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
        <row>
         <entry>Name</entry>
         <entry>Storage Size</entry>
-        <entry>Representation</entry>
         <entry>Description</entry>
+        <entry>Representation</entry>
        </row>
       </thead>
       <tbody>
@@ -3077,8 +3075,8 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
        <row>
         <entry><type>line</type></entry>
         <entry>32 bytes</entry>
-        <entry>Infinite line (not fully implemented)</entry>
-        <entry>((x1,y1),(x2,y2))</entry>
+        <entry>Infinite line</entry>
+        <entry>{A,B,C}</entry>
        </row>
        <row>
         <entry><type>lseg</type></entry>
@@ -3149,6 +3147,38 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
 
     <para>
      Points are output using the first syntax.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Lines</title>
+
+    <indexterm>
+     <primary>line</primary>
+    </indexterm>
+
+    <para>
+     Lines (<type>line</type>) are represented by the linear equation Ax + By
+     + C = 0, where A and B are not both zero.  Values of
+     type <type>line</type> is input and output in the following form:
+<synopsis>
+{ <replaceable>A</replaceable>, <replaceable>B</replaceable>, <replaceable>C</replaceable> }
+</synopsis>
+
+     Alternatively, any of the following forms can be used for input:
+
+<synopsis>
+[ ( <replaceable>x1</replaceable> , <replaceable>y1</replaceable> ) , ( <replaceable>x2</replaceable> , <replaceable>y2</replaceable> ) ]
+( ( <replaceable>x1</replaceable> , <replaceable>y1</replaceable> ) , ( <replaceable>x2</replaceable> , <replaceable>y2</replaceable> ) )
+  ( <replaceable>x1</replaceable> , <replaceable>y1</replaceable> ) , ( <replaceable>x2</replaceable> , <replaceable>y2</replaceable> )
+    <replaceable>x1</replaceable> , <replaceable>y1</replaceable>   ,   <replaceable>x2</replaceable> , <replaceable>y2</replaceable>
+</synopsis>
+
+     where
+     <literal>(<replaceable>x1</replaceable>,<replaceable>y1</replaceable>)</literal>
+     and
+     <literal>(<replaceable>x2</replaceable>,<replaceable>y2</replaceable>)</literal>
+     are two (different) points on the line.
     </para>
    </sect2>
 

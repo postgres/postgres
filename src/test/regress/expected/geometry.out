@@ -146,9 +146,6 @@ SELECT '' AS thirty, p.f1, l.s, p.f1 ## l.s AS closest
 (30 rows)
 
 --
--- Lines
---
---
 -- Boxes
 --
 SELECT '' as six, box(f1) AS box FROM CIRCLE_TBL;

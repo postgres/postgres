@@ -926,41 +926,81 @@ box_diagonal(PG_FUNCTION_ARGS)
 /***********************************************************************
  **
  **		Routines for 2D lines.
- **				Lines are not intended to be used as ADTs per se,
- **				but their ops are useful tools for other ADT ops.  Thus,
- **				there are few relops.
  **
  ***********************************************************************/
+
+static bool
+line_decode(const char *str, LINE *line)
+{
+	char	   *tail;
+
+	while (isspace((unsigned char) *str))
+		str++;
+	if (*str++ != '{')
+		return false;
+	line->A = strtod(str, &tail);
+	if (tail <= str)
+		return false;
+	str = tail;
+	while (isspace((unsigned char) *str))
+		str++;
+	if (*str++ != DELIM)
+		return false;
+	line->B = strtod(str, &tail);
+	if (tail <= str)
+		return false;
+	str = tail;
+	while (isspace((unsigned char) *str))
+		str++;
+	if (*str++ != DELIM)
+		return false;
+	line->C = strtod(str, &tail);
+	if (tail <= str)
+		return false;
+	str = tail;
+	while (isspace((unsigned char) *str))
+		str++;
+	if (*str++ != '}')
+		return false;
+	while (isspace((unsigned char) *str))
+		str++;
+	if (*str)
+		return false;
+
+	return true;
+}
 
 Datum
 line_in(PG_FUNCTION_ARGS)
 {
-#ifdef ENABLE_LINE_TYPE
 	char	   *str = PG_GETARG_CSTRING(0);
-#endif
 	LINE	   *line;
-
-#ifdef ENABLE_LINE_TYPE
-	/* when fixed, modify "not implemented", catalog/pg_type.h and SGML */
 	LSEG		lseg;
 	int			isopen;
 	char	   *s;
 
-	if ((!path_decode(TRUE, 2, str, &isopen, &s, &(lseg.p[0])))
-		|| (*s != '\0'))
+	line = (LINE *) palloc(sizeof(LINE));
+
+	if (path_decode(TRUE, 2, str, &isopen, &s, &(lseg.p[0])) && *s == '\0')
+	{
+		if (FPeq(lseg.p[0].x, lseg.p[1].x) && FPeq(lseg.p[0].y, lseg.p[1].y))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("invalid line specification: must be two distinct points")));
+
+		line_construct_pts(line, &lseg.p[0], &lseg.p[1]);
+	}
+	else if (line_decode(str, line))
+	{
+		if (FPzero(line->A) && FPzero(line->B))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("invalid line specification: A and B cannot both be zero")));
+	}
+	else
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type line: \"%s\"", str)));
-
-	line = (LINE *) palloc(sizeof(LINE));
-	line_construct_pts(line, &lseg.p[0], &lseg.p[1]);
-#else
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("type \"line\" not yet implemented")));
-
-	line = NULL;
-#endif
 
 	PG_RETURN_LINE_P(line);
 }
@@ -969,66 +1009,17 @@ line_in(PG_FUNCTION_ARGS)
 Datum
 line_out(PG_FUNCTION_ARGS)
 {
-#ifdef ENABLE_LINE_TYPE
 	LINE	   *line = PG_GETARG_LINE_P(0);
-#endif
-	char	   *result;
+	char	   *buf;
+	int			ndig = DBL_DIG + extra_float_digits;
 
-#ifdef ENABLE_LINE_TYPE
-	/* when fixed, modify "not implemented", catalog/pg_type.h and SGML */
-	LSEG		lseg;
+	if (ndig < 1)
+		ndig = 1;
 
-	if (FPzero(line->B))
-	{							/* vertical */
-		/* use "x = C" */
-		result->A = -1;
-		result->B = 0;
-		result->C = pt1->x;
-#ifdef GEODEBUG
-		printf("line_out- line is vertical\n");
-#endif
-#ifdef NOT_USED
-		result->m = DBL_MAX;
-#endif
+	buf = palloc(ndig * 3 + 5);
+	sprintf(buf, "{%.*g,%.*g,%.*g}", ndig, line->A, ndig, line->B, ndig, line->C);
 
-	}
-	else if (FPzero(line->A))
-	{							/* horizontal */
-		/* use "x = C" */
-		result->A = 0;
-		result->B = -1;
-		result->C = pt1->y;
-#ifdef GEODEBUG
-		printf("line_out- line is horizontal\n");
-#endif
-#ifdef NOT_USED
-		result->m = 0.0;
-#endif
-
-	}
-	else
-	{
-	}
-
-	if (FPzero(line->A))		/* horizontal? */
-	{
-	}
-	else if (FPzero(line->B))	/* vertical? */
-	{
-	}
-	else
-	{
-	}
-
-	return path_encode(PATH_CLOSED, 2, (Point *) &(ls->p[0]));
-#else
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("type \"line\" not yet implemented")));
-	result = NULL;
-#endif
-
-	PG_RETURN_CSTRING(result);
+	PG_RETURN_CSTRING(buf);
 }
 
 /*
@@ -1037,10 +1028,16 @@ line_out(PG_FUNCTION_ARGS)
 Datum
 line_recv(PG_FUNCTION_ARGS)
 {
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("type \"line\" not yet implemented")));
-	return 0;
+	StringInfo  buf = (StringInfo) PG_GETARG_POINTER(0);
+	LINE	   *line;
+
+	line = (LINE *) palloc(sizeof(LINE));
+
+	line->A = pq_getmsgfloat8(buf);
+	line->B = pq_getmsgfloat8(buf);
+	line->C = pq_getmsgfloat8(buf);
+
+	PG_RETURN_LINE_P(line);
 }
 
 /*
@@ -1049,10 +1046,14 @@ line_recv(PG_FUNCTION_ARGS)
 Datum
 line_send(PG_FUNCTION_ARGS)
 {
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("type \"line\" not yet implemented")));
-	return 0;
+	LINE	   *line = PG_GETARG_LINE_P(0);
+	StringInfoData buf;
+
+	pq_begintypsend(&buf);
+	pq_sendfloat8(&buf, line->A);
+	pq_sendfloat8(&buf, line->B);
+	pq_sendfloat8(&buf, line->C);
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
 
@@ -1084,10 +1085,6 @@ line_construct_pm(Point *pt, double m)
 		result->C = pt->y - m * pt->x;
 	}
 
-#ifdef NOT_USED
-	result->m = m;
-#endif
-
 	return result;
 }
 
@@ -1103,9 +1100,6 @@ line_construct_pts(LINE *line, Point *pt1, Point *pt2)
 		line->A = -1;
 		line->B = 0;
 		line->C = pt1->x;
-#ifdef NOT_USED
-		line->m = DBL_MAX;
-#endif
 #ifdef GEODEBUG
 		printf("line_construct_pts- line is vertical\n");
 #endif
@@ -1116,9 +1110,6 @@ line_construct_pts(LINE *line, Point *pt1, Point *pt2)
 		line->A = 0;
 		line->B = -1;
 		line->C = pt1->y;
-#ifdef NOT_USED
-		line->m = 0.0;
-#endif
 #ifdef GEODEBUG
 		printf("line_construct_pts- line is horizontal\n");
 #endif
@@ -1129,9 +1120,6 @@ line_construct_pts(LINE *line, Point *pt1, Point *pt2)
 		line->A = (pt2->y - pt1->y) / (pt2->x - pt1->x);
 		line->B = -1.0;
 		line->C = pt1->y - line->A * pt1->x;
-#ifdef NOT_USED
-		line->m = line->A;
-#endif
 #ifdef GEODEBUG
 		printf("line_construct_pts- line is neither vertical nor horizontal (diffs x=%.*g, y=%.*g\n",
 			   DBL_DIG, (pt2->x - pt1->x), DBL_DIG, (pt2->y - pt1->y));
@@ -1175,9 +1163,6 @@ line_parallel(PG_FUNCTION_ARGS)
 	LINE	   *l1 = PG_GETARG_LINE_P(0);
 	LINE	   *l2 = PG_GETARG_LINE_P(1);
 
-#ifdef NOT_USED
-	PG_RETURN_BOOL(FPeq(l1->m, l2->m));
-#endif
 	if (FPzero(l1->B))
 		PG_RETURN_BOOL(FPzero(l2->B));
 
@@ -1190,12 +1175,6 @@ line_perp(PG_FUNCTION_ARGS)
 	LINE	   *l1 = PG_GETARG_LINE_P(0);
 	LINE	   *l2 = PG_GETARG_LINE_P(1);
 
-#ifdef NOT_USED
-	if (l1->m)
-		PG_RETURN_BOOL(FPeq(l2->m / l1->m, -1.0));
-	else if (l2->m)
-		PG_RETURN_BOOL(FPeq(l1->m / l2->m, -1.0));
-#endif
 	if (FPzero(l1->A))
 		PG_RETURN_BOOL(FPzero(l2->B));
 	else if (FPzero(l1->B))
@@ -1306,18 +1285,6 @@ line_interpt_internal(LINE *l1, LINE *l2)
 										 LinePGetDatum(l1),
 										 LinePGetDatum(l2))))
 		return NULL;
-
-#ifdef NOT_USED
-	if (FPzero(l1->B))			/* l1 vertical? */
-		result = point_construct(l2->m * l1->C + l2->C, l1->C);
-	else if (FPzero(l2->B))		/* l2 vertical? */
-		result = point_construct(l1->m * l2->C + l1->C, l2->C);
-	else
-	{
-		x = (l1->C - l2->C) / (l2->A - l1->A);
-		result = point_construct(x, l1->m * x + l1->C);
-	}
-#endif
 
 	if (FPzero(l1->B))			/* l1 vertical? */
 	{
@@ -2449,8 +2416,8 @@ dist_pl(PG_FUNCTION_ARGS)
 static double
 dist_pl_internal(Point *pt, LINE *line)
 {
-	return (line->A * pt->x + line->B * pt->y + line->C) /
-		HYPOT(line->A, line->B);
+	return fabs((line->A * pt->x + line->B * pt->y + line->C) /
+				HYPOT(line->A, line->B));
 }
 
 Datum
@@ -2771,11 +2738,6 @@ close_pl(PG_FUNCTION_ARGS)
 
 	result = (Point *) palloc(sizeof(Point));
 
-#ifdef NOT_USED
-	if (FPeq(line->A, -1.0) && FPzero(line->B))
-	{							/* vertical */
-	}
-#endif
 	if (FPzero(line->B))		/* vertical? */
 	{
 		result->x = line->C;
@@ -2789,9 +2751,7 @@ close_pl(PG_FUNCTION_ARGS)
 		PG_RETURN_POINT_P(result);
 	}
 	/* drop a perpendicular and find the intersection point */
-#ifdef NOT_USED
-	invm = -1.0 / line->m;
-#endif
+
 	/* invert and flip the sign on the slope to get a perpendicular */
 	invm = line->B / line->A;
 	tmp = line_construct_pm(pt, invm);
@@ -3038,6 +2998,7 @@ close_pb(PG_FUNCTION_ARGS)
 Datum
 close_sl(PG_FUNCTION_ARGS)
 {
+#ifdef NOT_USED
 	LSEG	   *lseg = PG_GETARG_LSEG_P(0);
 	LINE	   *line = PG_GETARG_LINE_P(1);
 	Point	   *result;
@@ -3056,6 +3017,13 @@ close_sl(PG_FUNCTION_ARGS)
 		result = point_copy(&lseg->p[1]);
 
 	PG_RETURN_POINT_P(result);
+#endif
+
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("function \"close_sl\" not implemented")));
+
+	PG_RETURN_NULL();
 }
 
 /* close_ls()

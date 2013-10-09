@@ -8123,6 +8123,12 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <entry><literal>circle(polygon '((0,0),(1,1),(2,0))')</literal></entry>
        </row>
        <row>
+        <entry><literal><function>line(<type>point</type>, <type>point</type>)</function></literal></entry>
+        <entry><type>line</type></entry>
+        <entry>points to line</entry>
+        <entry><literal>line(point '(-1,0)', point '(1,0)')</literal></entry>
+       </row>
+       <row>
         <entry>
          <indexterm>
           <primary>lseg</primary>
