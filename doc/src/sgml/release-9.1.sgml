@@ -111,8 +111,8 @@
 
     <listitem>
      <para>
-      Fix rare <literal>GROUP BY</> query error caused by improperly processed date type
-      modifiers (Tom Lane)
+      Fix rare <literal>GROUP BY</> query error caused by improperly
+      processed data type modifiers (Tom Lane)
      </para>
     </listitem>
 
