@@ -778,8 +778,6 @@ PostmasterMain(int argc, char *argv[])
 		ExitPostmaster(1);
 	}
 
-	set_default_effective_cache_size();
-
 	/*
 	 * Locate the proper configuration files and data directory, and read
 	 * postgresql.conf for the first time.
@@ -796,6 +794,8 @@ PostmasterMain(int argc, char *argv[])
 		puts(GetConfigOption(output_config_variable, false, false));
 		ExitPostmaster(0);
 	}
+
+	set_default_effective_cache_size();
 
 	/* Verify that DataDir looks reasonable */
 	checkDataDir();
