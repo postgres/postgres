@@ -182,6 +182,7 @@ const char *subdirs[] = {
 	"pg_xlog",
 	"pg_xlog/archive_status",
 	"pg_clog",
+	"pg_dynshmem",
 	"pg_notify",
 	"pg_serial",
 	"pg_snapshots",

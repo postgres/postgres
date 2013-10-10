@@ -61,6 +61,7 @@
 #include "replication/walreceiver.h"
 #include "replication/walsender.h"
 #include "storage/bufmgr.h"
+#include "storage/dsm_impl.h"
 #include "storage/standby.h"
 #include "storage/fd.h"
 #include "storage/proc.h"
@@ -385,6 +386,7 @@ static const struct config_enum_entry synchronous_commit_options[] = {
  */
 extern const struct config_enum_entry wal_level_options[];
 extern const struct config_enum_entry sync_method_options[];
+extern const struct config_enum_entry dynamic_shared_memory_options[];
 
 /*
  * GUC option variables that are exported from this module
@@ -3332,6 +3334,16 @@ static struct config_enum ConfigureNamesEnum[] =
 		},
 		&wal_level,
 		WAL_LEVEL_MINIMAL, wal_level_options,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"dynamic_shared_memory_type", PGC_POSTMASTER, RESOURCES_MEM,
+			gettext_noop("Selects the dynamic shared memory implementation used."),
+			NULL
+		},
+		&dynamic_shared_memory_type,
+		DEFAULT_DYNAMIC_SHARED_MEMORY_TYPE, dynamic_shared_memory_options,
 		NULL, NULL, NULL
 	},
 

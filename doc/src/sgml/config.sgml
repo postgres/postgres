@@ -1194,6 +1194,32 @@ include 'filename'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-dynamic-shared-memory-type" xreflabel="dynamic_shared_memory_type">
+      <term><varname>dynamic_shared_memory_type</varname> (<type>enum</type>)</term>
+      <indexterm>
+       <primary><varname>dynamic_shared_memory_type</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Specifies the dynamic shared memory implementation that the server
+        should use.  Possible values are <literal>posix</> (for POSIX shared
+        memory allocated using <literal>shm_open</>), <literal>sysv</literal>
+        (for System V shared memory allocated via <literal>shmget</>),
+        <literal>windows</> (for Windows shared memory), <literal>mmap</>
+        (to simulate shared memory using memory-mapped files stored in the
+        data directory), and <literal>none</> (to disable this feature).
+        Not all values are supported on all platforms; the first supported
+        option is the default for that platform.  The use of the
+        <literal>mmap</> option, which is not the default on any platform,
+        is generally discouraged because the operating system may write
+        modified pages back to disk repeatedly, increasing system I/O load;
+        however, it may be useful for debugging, when the
+        <literal>pg_dynshmem</> directory is stored on a RAM disk, or when
+        other shared memory facilities are not available.
+       </para>
+      </listitem>
+     </varlistentry>
+
      </variablelist>
      </sect2>
 

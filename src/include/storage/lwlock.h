@@ -80,6 +80,7 @@ typedef enum LWLockId
 	OldSerXidLock,
 	SyncRepLock,
 	BackgroundWorkerLock,
+	DynamicSharedMemoryControlLock,
 	/* Individual lock IDs end here */
 	FirstBufMappingLock,
 	FirstLockMgrLock = FirstBufMappingLock + NUM_BUFFER_PARTITIONS,

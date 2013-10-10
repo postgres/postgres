@@ -16,6 +16,7 @@
 #ifndef RESOWNER_PRIVATE_H
 #define RESOWNER_PRIVATE_H
 
+#include "storage/dsm.h"
 #include "storage/fd.h"
 #include "storage/lock.h"
 #include "utils/catcache.h"
@@ -79,5 +80,12 @@ extern void ResourceOwnerRememberFile(ResourceOwner owner,
 						  File file);
 extern void ResourceOwnerForgetFile(ResourceOwner owner,
 						File file);
+
+/* support for dynamic shared memory management */
+extern void ResourceOwnerEnlargeDSMs(ResourceOwner owner);
+extern void ResourceOwnerRememberDSM(ResourceOwner owner,
+						  dsm_segment *);
+extern void ResourceOwnerForgetDSM(ResourceOwner owner,
+						dsm_segment *);
 
 #endif   /* RESOWNER_PRIVATE_H */
