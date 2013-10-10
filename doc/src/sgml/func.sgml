@@ -10095,7 +10095,7 @@ table2-mapping
        </entry>
        <entry><type>json</type></entry>
        <entry>
-         Returns JSON object pointed to by <parameter>path_elems</parameter>.
+         Returns JSON value pointed to by <parameter>path_elems</parameter>.
        </entry>
        <entry><literal>json_extract_path('{"f2":{"f3":1},"f4":{"f5":99,"f6":"foo"}}','f4')</literal></entry>
        <entry><literal>{"f5":99,"f6":"foo"}</literal></entry>
@@ -10109,7 +10109,7 @@ table2-mapping
        </entry>
        <entry><type>text</type></entry>
        <entry>
-         Returns JSON object pointed to by <parameter>path_elems</parameter>.
+         Returns JSON value pointed to by <parameter>path_elems</parameter>.
        </entry>
        <entry><literal>json_extract_path_text('{"f2":{"f3":1},"f4":{"f5":99,"f6":"foo"}}','f4', 'f6')</literal></entry>
        <entry><literal>foo</literal></entry>
@@ -10192,7 +10192,7 @@ table2-mapping
        </entry>
        <entry><type>SETOF json</type></entry>
        <entry>
-         Expands a JSON array to a set of JSON elements.
+         Expands a JSON array to a set of JSON values.
        </entry>
        <entry><literal>json_array_elements('[1,true, [2,false]]')</literal></entry>
        <entry>
@@ -10204,6 +10204,23 @@ table2-mapping
  [2,false]
 </programlisting>
        </entry>
+      </row>
+      <row>
+       <entry>
+         <indexterm>
+          <primary>json_typeof</primary>
+         </indexterm>
+         <literal>json_typeof(json)</literal>
+       </entry>
+       <entry><type>text</type></entry>
+       <entry>
+         Returns the type of the outermost JSON value as a text string.  The types are
+         <literal>object</>, <literal>array</>, <literal>string</>, <literal>number</>,
+         <literal>boolean</>, and <literal>null</>.  (See note below regarding the
+         distinction between a JSON <literal>null</> and a SQL NULL.)
+       </entry>
+       <entry><literal>json_typeof('-123.4')</literal></entry>
+       <entry><literal>number</literal></entry>
       </row>
      </tbody>
     </tgroup>
@@ -10234,6 +10251,14 @@ table2-mapping
       The <xref linkend="hstore"> extension has a cast from <type>hstore</type> to
       <type>json</type>, so that converted <type>hstore</type> values are represented as JSON objects,
       not as string values.
+    </para>
+  </note>
+
+  <note>
+    <para>
+      The <literal>json_typeof</> function's <literal>null</> return value should not be confused
+      with a SQL NULL.  While calling <literal>json_typeof('null'::json)</> will return <literal>null</>,
+      calling <literal>json_typeof(NULL::json)</> will return a SQL NULL.
     </para>
   </note>
 

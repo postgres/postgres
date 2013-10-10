@@ -310,3 +310,18 @@ select json '{ "a":  "\ude04X" }' -> 'a'; -- orphan low surrogate
 select json '{ "a":  "the Copyright \u00a9 sign" }' ->> 'a' as correct_in_utf8;
 select json '{ "a":  "dollar \u0024 character" }' ->> 'a' as correct_everywhere;
 select json '{ "a":  "null \u0000 escape" }' ->> 'a' as not_unescaped;
+
+--json_typeof() function
+select value, json_typeof(value)
+  from (values (json '123.4'), 
+               (json '-1'), 
+               (json '"foo"'), 
+               (json 'true'), 
+               (json 'false'), 
+               (json 'null'),
+               (json '[1, 2, 3]'), 
+               (json '[]'), 
+               (json '{"x":"foo", "y":123}'), 
+               (json '{}'), 
+               (NULL::json))
+      as data(value);

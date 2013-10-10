@@ -962,3 +962,32 @@ select json '{ "a":  "null \u0000 escape" }' ->> 'a' as not_unescaped;
  null \u0000 escape
 (1 row)
 
+--json_typeof() function
+select value, json_typeof(value)
+  from (values (json '123.4'), 
+               (json '-1'), 
+               (json '"foo"'), 
+               (json 'true'), 
+               (json 'false'), 
+               (json 'null'),
+               (json '[1, 2, 3]'), 
+               (json '[]'), 
+               (json '{"x":"foo", "y":123}'), 
+               (json '{}'), 
+               (NULL::json))
+      as data(value);
+        value         | json_typeof 
+----------------------+-------------
+ 123.4                | number
+ -1                   | number
+ "foo"                | string
+ true                 | boolean
+ false                | boolean
+ null                 | null
+ [1, 2, 3]            | array
+ []                   | array
+ {"x":"foo", "y":123} | object
+ {}                   | object
+                      | 
+(11 rows)
+
