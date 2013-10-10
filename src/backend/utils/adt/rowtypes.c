@@ -1464,9 +1464,8 @@ record_image_cmp(PG_FUNCTION_ARGS)
 			}
 			else if (tupdesc1->attrs[i1]->attbyval)
 			{
-				cmpresult = memcmp(&(values1[i1]),
-								   &(values2[i2]),
-								   tupdesc1->attrs[i1]->attlen);
+				if (values1[i1] != values2[i2])
+					cmpresult = (values1[i1] < values2[i2]) ? -1 : 1;
 			}
 			else
 			{
@@ -1695,9 +1694,7 @@ record_image_eq(PG_FUNCTION_ARGS)
 			}
 			else if (tupdesc1->attrs[i1]->attbyval)
 			{
-				result = (memcmp(&(values1[i1]),
-								 &(values2[i2]),
-								 tupdesc1->attrs[i1]->attlen) == 0);
+				result = (values1[i1] == values2[i2]);
 			}
 			else
 			{
