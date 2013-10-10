@@ -864,7 +864,7 @@ dsm_impl_mmap(dsm_op op, dsm_handle handle, uint64 request_size,
 		save_errno = errno;
 		close(fd);
 		if (op == DSM_OP_CREATE)
-			shm_unlink(name);
+			unlink(name);
 		errno = save_errno;
 
 		ereport(elevel,
