@@ -135,14 +135,14 @@ hmac(data bytea, key text, type text) returns bytea
 
   <table id="pgcrypto-crypt-algorithms">
    <title>Supported Algorithms for <function>crypt()</></title>
-   <tgroup cols="5">
+   <tgroup cols="6">
     <thead>
      <row>
       <entry>Algorithm</entry>
       <entry>Max Password Length</entry>
       <entry>Adaptive?</entry>
       <entry>Salt Bits</entry>
-      <entry>Output length</entry>
+      <entry>Output Length</entry>
       <entry>Description</entry>
      </row>
     </thead>
