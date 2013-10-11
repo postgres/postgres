@@ -93,6 +93,11 @@ typedef struct
 #endif
 
 /*
+ * SSL renegotiations
+ */
+extern int	ssl_renegotiation_limit;
+
+/*
  * This is used by the postmaster in its communication with frontends.	It
  * contains all state information needed during this communication before the
  * backend is run.	The Port structure is kept in malloc'd memory and is

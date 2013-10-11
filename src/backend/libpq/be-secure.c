@@ -101,6 +101,9 @@ char	   *ssl_crl_file;
  */
 int			ssl_renegotiation_limit;
 
+/* are we in the middle of a renegotiation? */
+static bool in_ssl_renegotiation = false;
+
 #ifdef USE_SSL
 static SSL_CTX *SSL_context = NULL;
 static bool ssl_loaded_verify_locations = false;
@@ -322,29 +325,55 @@ secure_write(Port *port, void *ptr, size_t len)
 	{
 		int			err;
 
-		if (ssl_renegotiation_limit && port->count > ssl_renegotiation_limit * 1024L)
+		/*
+		 * If SSL renegotiations are enabled and we're getting close to the
+		 * limit, start one now; but avoid it if there's one already in
+		 * progress.  Request the renegotiation 1kB before the limit has
+		 * actually expired.
+		 */
+		if (ssl_renegotiation_limit && !in_ssl_renegotiation &&
+			port->count > (ssl_renegotiation_limit - 1) * 1024L)
 		{
+			in_ssl_renegotiation = true;
+
+			/*
+			 * The way we determine that a renegotiation has completed is by
+			 * observing OpenSSL's internal renegotiation counter.  Make sure
+			 * we start out at zero, and assume that the renegotiation is
+			 * complete when the counter advances.
+			 *
+			 * OpenSSL provides SSL_renegotiation_pending(), but this doesn't
+			 * seem to work in testing.
+			 */
+			SSL_clear_num_renegotiations(port->ssl);
+
 			SSL_set_session_id_context(port->ssl, (void *) &SSL_context,
 									   sizeof(SSL_context));
 			if (SSL_renegotiate(port->ssl) <= 0)
 				ereport(COMMERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-						 errmsg("SSL renegotiation failure")));
-			if (SSL_do_handshake(port->ssl) <= 0)
-				ereport(COMMERROR,
-						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-						 errmsg("SSL renegotiation failure")));
-			if (port->ssl->state != SSL_ST_OK)
-				ereport(COMMERROR,
-						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-						 errmsg("SSL failed to send renegotiation request")));
-			port->ssl->state |= SSL_ST_ACCEPT;
-			SSL_do_handshake(port->ssl);
-			if (port->ssl->state != SSL_ST_OK)
-				ereport(COMMERROR,
-						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-						 errmsg("SSL renegotiation failure")));
-			port->count = 0;
+						 errmsg("SSL failure during renegotiation start")));
+			else
+			{
+				int			retries;
+
+				/*
+				 * A handshake can fail, so be prepared to retry it, but only
+				 * a few times.
+				 */
+				for (retries = 0; retries++;)
+				{
+					if (SSL_do_handshake(port->ssl) > 0)
+						break;	/* done */
+					ereport(COMMERROR,
+							(errcode(ERRCODE_PROTOCOL_VIOLATION),
+							 errmsg("SSL handshake failure on renegotiation, retrying")));
+					if (retries >= 20)
+						ereport(FATAL,
+								(errcode(ERRCODE_PROTOCOL_VIOLATION),
+								 errmsg("unable to complete SSL handshake")));
+				}
+			}
 		}
 
 wloop:
@@ -390,6 +419,25 @@ wloop:
 				n = -1;
 				break;
 		}
+
+		/* is renegotiation complete? */
+		if (in_ssl_renegotiation &&
+			SSL_num_renegotiations(port->ssl) >= 1)
+		{
+			in_ssl_renegotiation = false;
+			port->count = 0;
+		}
+
+		/*
+		 * if renegotiation is still ongoing, and we've gone beyond the limit,
+		 * kill the connection now -- continuing to use it can be considered a
+		 * security problem.
+		 */
+		if (in_ssl_renegotiation &&
+			port->count > ssl_renegotiation_limit * 1024L)
+			ereport(FATAL,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("SSL failed to renegotiate connection before limit expired")));
 	}
 	else
 #endif
