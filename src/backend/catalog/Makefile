@@ -63,7 +63,7 @@ schemapg.h: postgres.bki ;
 # will achieve the goal of updating the version number when it
 # changes.
 postgres.bki: genbki.pl Catalog.pm $(POSTGRES_BKI_SRCS) $(top_srcdir)/configure $(top_srcdir)/src/include/catalog/duplicate_oids
-	cd $(top_srcdir)/src/include/catalog && ./duplicate_oids
+	cd $(top_srcdir)/src/include/catalog && $(PERL) ./duplicate_oids
 	$(PERL) -I $(catalogdir) $< $(pg_includes) --set-version=$(MAJORVERSION) $(POSTGRES_BKI_SRCS)
 
 .PHONY: install-data
