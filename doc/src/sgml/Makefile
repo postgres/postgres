@@ -251,7 +251,7 @@ regress_README.html: regress.sgml
 # $(srcdir) on the postgres.sgml dependency in this rule.  gmake bug?
 postgres.xml: $(srcdir)/postgres.sgml $(ALMOSTALLSGML)
 	$(OSX) -D. -x lower $< >postgres.xmltmp
-	$(PERL) -p -e 's/\[(amp|copy|egrave|gt|lt|mdash|nbsp|ouml|pi|quot|uuml) *\]/\&\1;/g;' \
+	$(PERL) -p -e 's/\[(aacute|acirc|aelig|agrave|amp|aring|atilde|auml|bull|copy|eacute|egrave|gt|iacute|lt|mdash|nbsp|ntilde|oacute|ocirc|oslash|ouml|pi|quot|scaron|uuml) *\]/\&\1;/gi;' \
 	           -e '$$_ .= qq{<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">\n} if $$. == 1;' \
 	  <postgres.xmltmp > $@
 	rm postgres.xmltmp
