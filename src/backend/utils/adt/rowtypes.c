@@ -898,8 +898,6 @@ record_cmp(FunctionCallInfo fcinfo)
 	{
 		TypeCacheEntry *typentry;
 		Oid			collation;
-		FunctionCallInfoData locfcinfo;
-		int32		cmpresult;
 
 		/*
 		 * Skip dropped columns
@@ -959,6 +957,9 @@ record_cmp(FunctionCallInfo fcinfo)
 		 */
 		if (!nulls1[i1] || !nulls2[i2])
 		{
+			FunctionCallInfoData locfcinfo;
+			int32		cmpresult;
+
 			if (nulls1[i1])
 			{
 				/* arg1 is greater than arg2 */
@@ -1295,12 +1296,12 @@ btrecordcmp(PG_FUNCTION_ARGS)
  * identical.  As an example, for the citext type 'A' and 'a' are equal, but
  * they are not identical.
  */
-static bool
-record_image_cmp(PG_FUNCTION_ARGS)
+static int
+record_image_cmp(FunctionCallInfo fcinfo)
 {
 	HeapTupleHeader record1 = PG_GETARG_HEAPTUPLEHEADER(0);
 	HeapTupleHeader record2 = PG_GETARG_HEAPTUPLEHEADER(1);
-	int32		result = 0;
+	int			result = 0;
 	Oid			tupType1;
 	Oid			tupType2;
 	int32		tupTypmod1;
@@ -1418,6 +1419,12 @@ record_image_cmp(PG_FUNCTION_ARGS)
 							format_type_be(tupdesc2->attrs[i2]->atttypid),
 							j + 1)));
 
+			/*
+			 * The same type should have the same length (or both should be variable).
+			 */
+			Assert(tupdesc1->attrs[i1]->attlen ==
+				   tupdesc2->attrs[i2]->attlen);
+
 		/*
 		 * We consider two NULLs equal; NULL > not-NULL.
 		 */
@@ -1453,7 +1460,7 @@ record_image_cmp(PG_FUNCTION_ARGS)
 
 				cmpresult = memcmp(VARDATA_ANY(arg1val),
 								   VARDATA_ANY(arg2val),
-								   len1 - VARHDRSZ);
+								   Min(len1, len2) - VARHDRSZ);
 				if ((cmpresult == 0) && (len1 != len2))
 					cmpresult = (len1 < len2) ? -1 : 1;
 
@@ -1464,8 +1471,45 @@ record_image_cmp(PG_FUNCTION_ARGS)
 			}
 			else if (tupdesc1->attrs[i1]->attbyval)
 			{
-				if (values1[i1] != values2[i2])
-					cmpresult = (values1[i1] < values2[i2]) ? -1 : 1;
+				switch (tupdesc1->attrs[i1]->attlen)
+				{
+					case 1:
+						if (GET_1_BYTE(values1[i1]) !=
+							GET_1_BYTE(values2[i2]))
+						{
+							cmpresult = (GET_1_BYTE(values1[i1]) <
+										 GET_1_BYTE(values2[i2])) ? -1 : 1;
+						}
+						break;
+					case 2:
+						if (GET_2_BYTES(values1[i1]) !=
+							GET_2_BYTES(values2[i2]))
+						{
+							cmpresult = (GET_2_BYTES(values1[i1]) <
+										 GET_2_BYTES(values2[i2])) ? -1 : 1;
+						}
+						break;
+					case 4:
+						if (GET_4_BYTES(values1[i1]) !=
+							GET_4_BYTES(values2[i2]))
+						{
+							cmpresult = (GET_4_BYTES(values1[i1]) <
+										 GET_4_BYTES(values2[i2])) ? -1 : 1;
+						}
+						break;
+#if SIZEOF_DATUM == 8
+					case 8:
+						if (GET_8_BYTES(values1[i1]) !=
+							GET_8_BYTES(values2[i2]))
+						{
+							cmpresult = (GET_8_BYTES(values1[i1]) <
+										 GET_8_BYTES(values2[i2])) ? -1 : 1;
+						}
+						break;
+#endif
+					default:
+						Assert(false);	/* cannot happen */
+				}
 			}
 			else
 			{
@@ -1694,7 +1738,29 @@ record_image_eq(PG_FUNCTION_ARGS)
 			}
 			else if (tupdesc1->attrs[i1]->attbyval)
 			{
-				result = (values1[i1] == values2[i2]);
+				switch (tupdesc1->attrs[i1]->attlen)
+				{
+					case 1:
+						result = (GET_1_BYTE(values1[i1]) ==
+								  GET_1_BYTE(values2[i2]));
+						break;
+					case 2:
+						result = (GET_2_BYTES(values1[i1]) ==
+								  GET_2_BYTES(values2[i2]));
+						break;
+					case 4:
+						result = (GET_4_BYTES(values1[i1]) ==
+								  GET_4_BYTES(values2[i2]));
+						break;
+#if SIZEOF_DATUM == 8
+					case 8:
+						result = (GET_8_BYTES(values1[i1]) ==
+								  GET_8_BYTES(values2[i2]));
+						break;
+#endif
+					default:
+						Assert(false);	/* cannot happen */
+				}
 			}
 			else
 			{
