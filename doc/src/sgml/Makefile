@@ -22,9 +22,9 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 
-all: check-tabs html man
+all: html man
 
-distprep: check-tabs html distprep-man
+distprep: html distprep-man
 
 
 ifndef JADE
@@ -100,6 +100,7 @@ draft: postgres.sgml $(ALMOSTALLSGML) stylesheet.dsl
 html: html-stamp
 
 html-stamp: postgres.sgml $(ALLSGML) stylesheet.dsl
+	$(MAKE) check-tabs
 	$(MKDIR_P) html
 	$(JADE.html.call) -i include-index $<
 	cp $(srcdir)/stylesheet.css html/
