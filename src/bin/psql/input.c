@@ -298,11 +298,7 @@ initializeInput(int flags)
 		if (histfile == NULL)
 		{
 			if (get_home_path(home))
-			{
-				psql_history = pg_malloc(strlen(home) + 1 +
-										 strlen(PSQLHISTORY) + 1);
-				snprintf(psql_history, MAXPGPATH, "%s/%s", home, PSQLHISTORY);
-			}
+				pg_asprintf(&psql_history, "%s/%s", home, PSQLHISTORY);
 		}
 		else
 		{

@@ -3822,7 +3822,6 @@ static char **
 complete_from_variables(char *text, const char *prefix, const char *suffix)
 {
 	char	  **matches;
-	int			overhead = strlen(prefix) + strlen(suffix) + 1;
 	char	  **varnames;
 	int			nvars = 0;
 	int			maxvars = 100;
@@ -3847,8 +3846,7 @@ complete_from_variables(char *text, const char *prefix, const char *suffix)
 			}
 		}
 
-		buffer = (char *) pg_malloc(strlen(ptr->name) + overhead);
-		sprintf(buffer, "%s%s%s", prefix, ptr->name, suffix);
+		pg_asprintf(&buffer, "%s%s%s", prefix, ptr->name, suffix);
 		varnames[nvars++] = buffer;
 	}
 

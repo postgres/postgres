@@ -74,7 +74,6 @@ forkname_chars(const char *str, ForkNumber *fork)
 char *
 relpathbackend(RelFileNode rnode, BackendId backend, ForkNumber forknum)
 {
-	int			pathlen;
 	char	   *path;
 
 	if (rnode.spcNode == GLOBALTABLESPACE_OID)
@@ -82,41 +81,33 @@ relpathbackend(RelFileNode rnode, BackendId backend, ForkNumber forknum)
 		/* Shared system relations live in {datadir}/global */
 		Assert(rnode.dbNode == 0);
 		Assert(backend == InvalidBackendId);
-		pathlen = 7 + OIDCHARS + 1 + FORKNAMECHARS + 1;
-		path = (char *) palloc(pathlen);
 		if (forknum != MAIN_FORKNUM)
-			snprintf(path, pathlen, "global/%u_%s",
+			path = psprintf("global/%u_%s",
 					 rnode.relNode, forkNames[forknum]);
 		else
-			snprintf(path, pathlen, "global/%u", rnode.relNode);
+			path = psprintf("global/%u", rnode.relNode);
 	}
 	else if (rnode.spcNode == DEFAULTTABLESPACE_OID)
 	{
 		/* The default tablespace is {datadir}/base */
 		if (backend == InvalidBackendId)
 		{
-			pathlen = 5 + OIDCHARS + 1 + OIDCHARS + 1 + FORKNAMECHARS + 1;
-			path = (char *) palloc(pathlen);
 			if (forknum != MAIN_FORKNUM)
-				snprintf(path, pathlen, "base/%u/%u_%s",
+				path = psprintf("base/%u/%u_%s",
 						 rnode.dbNode, rnode.relNode,
 						 forkNames[forknum]);
 			else
-				snprintf(path, pathlen, "base/%u/%u",
+				path = psprintf("base/%u/%u",
 						 rnode.dbNode, rnode.relNode);
 		}
 		else
 		{
-			/* OIDCHARS will suffice for an integer, too */
-			pathlen = 5 + OIDCHARS + 2 + OIDCHARS + 1 + OIDCHARS + 1
-				+ FORKNAMECHARS + 1;
-			path = (char *) palloc(pathlen);
 			if (forknum != MAIN_FORKNUM)
-				snprintf(path, pathlen, "base/%u/t%d_%u_%s",
+				path = psprintf("base/%u/t%d_%u_%s",
 						 rnode.dbNode, backend, rnode.relNode,
 						 forkNames[forknum]);
 			else
-				snprintf(path, pathlen, "base/%u/t%d_%u",
+				path = psprintf("base/%u/t%d_%u",
 						 rnode.dbNode, backend, rnode.relNode);
 		}
 	}
@@ -125,34 +116,25 @@ relpathbackend(RelFileNode rnode, BackendId backend, ForkNumber forknum)
 		/* All other tablespaces are accessed via symlinks */
 		if (backend == InvalidBackendId)
 		{
-			pathlen = 9 + 1 + OIDCHARS + 1
-				+ strlen(TABLESPACE_VERSION_DIRECTORY) + 1 + OIDCHARS + 1
-				+ OIDCHARS + 1 + FORKNAMECHARS + 1;
-			path = (char *) palloc(pathlen);
 			if (forknum != MAIN_FORKNUM)
-				snprintf(path, pathlen, "pg_tblspc/%u/%s/%u/%u_%s",
+				path = psprintf("pg_tblspc/%u/%s/%u/%u_%s",
 						 rnode.spcNode, TABLESPACE_VERSION_DIRECTORY,
 						 rnode.dbNode, rnode.relNode,
 						 forkNames[forknum]);
 			else
-				snprintf(path, pathlen, "pg_tblspc/%u/%s/%u/%u",
+				path = psprintf("pg_tblspc/%u/%s/%u/%u",
 						 rnode.spcNode, TABLESPACE_VERSION_DIRECTORY,
 						 rnode.dbNode, rnode.relNode);
 		}
 		else
 		{
-			/* OIDCHARS will suffice for an integer, too */
-			pathlen = 9 + 1 + OIDCHARS + 1
-				+ strlen(TABLESPACE_VERSION_DIRECTORY) + 1 + OIDCHARS + 2
-				+ OIDCHARS + 1 + OIDCHARS + 1 + FORKNAMECHARS + 1;
-			path = (char *) palloc(pathlen);
 			if (forknum != MAIN_FORKNUM)
-				snprintf(path, pathlen, "pg_tblspc/%u/%s/%u/t%d_%u_%s",
+				path = psprintf("pg_tblspc/%u/%s/%u/t%d_%u_%s",
 						 rnode.spcNode, TABLESPACE_VERSION_DIRECTORY,
 						 rnode.dbNode, backend, rnode.relNode,
 						 forkNames[forknum]);
 			else
-				snprintf(path, pathlen, "pg_tblspc/%u/%s/%u/t%d_%u",
+				path = psprintf("pg_tblspc/%u/%s/%u/t%d_%u",
 						 rnode.spcNode, TABLESPACE_VERSION_DIRECTORY,
 						 rnode.dbNode, backend, rnode.relNode);
 		}

@@ -242,11 +242,6 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 
 		fctx = palloc(sizeof(ts_db_fctx));
 
-		/*
-		 * size = tablespace dirname length + dir sep char + oid + terminator
-		 */
-		fctx->location = (char *) palloc(9 + 1 + OIDCHARS + 1 +
-								   strlen(TABLESPACE_VERSION_DIRECTORY) + 1);
 		if (tablespaceOid == GLOBALTABLESPACE_OID)
 		{
 			fctx->dirdesc = NULL;
@@ -256,9 +251,9 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 		else
 		{
 			if (tablespaceOid == DEFAULTTABLESPACE_OID)
-				sprintf(fctx->location, "base");
+				fctx->location = psprintf("base");
 			else
-				sprintf(fctx->location, "pg_tblspc/%u/%s", tablespaceOid,
+				fctx->location = psprintf("pg_tblspc/%u/%s", tablespaceOid,
 						TABLESPACE_VERSION_DIRECTORY);
 
 			fctx->dirdesc = AllocateDir(fctx->location);
@@ -297,9 +292,7 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 
 		/* if database subdir is empty, don't report tablespace as used */
 
-		/* size = path length + dir sep char + file name + terminator */
-		subdir = palloc(strlen(fctx->location) + 1 + strlen(de->d_name) + 1);
-		sprintf(subdir, "%s/%s", fctx->location, de->d_name);
+		subdir = psprintf("%s/%s", fctx->location, de->d_name);
 		dirdesc = AllocateDir(subdir);
 		while ((de = ReadDir(dirdesc, subdir)) != NULL)
 		{

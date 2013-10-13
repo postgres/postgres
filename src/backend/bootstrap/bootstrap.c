@@ -249,9 +249,9 @@ AuxiliaryProcessMain(int argc, char *argv[])
 			case 'd':
 				{
 					/* Turn on debugging for the bootstrap process. */
-					char	   *debugstr = palloc(strlen("debug") + strlen(optarg) + 1);
+					char	   *debugstr;
 
-					sprintf(debugstr, "debug%s", optarg);
+					debugstr = psprintf("debug%s", optarg);
 					SetConfigOption("log_min_messages", debugstr,
 									PGC_POSTMASTER, PGC_S_ARGV);
 					SetConfigOption("client_min_messages", debugstr,

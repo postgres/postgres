@@ -200,12 +200,12 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 		char	   *cmdbuf;
 		char	   *bufptr;
 		size_t		slen = strlen(comment_arg);
+		int			rv;
 
-		cmdbuf = malloc(slen * 2 + 256);
-		if (!cmdbuf)
+		rv = asprintf(&cmdbuf, "COMMENT ON LARGE OBJECT %u IS '", loid);
+		if (rv < 0)
 			return fail_lo_xact("\\lo_import", own_transaction);
-		sprintf(cmdbuf, "COMMENT ON LARGE OBJECT %u IS '", loid);
-		bufptr = cmdbuf + strlen(cmdbuf);
+		bufptr = cmdbuf + rv;
 		bufptr += PQescapeStringConn(pset.db, bufptr, comment_arg, slen, NULL);
 		strcpy(bufptr, "'");
 

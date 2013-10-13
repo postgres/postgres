@@ -79,9 +79,7 @@ xstrcat(char **var, const char *more)
 {
 	char	   *newvar;
 
-	newvar = pg_malloc(strlen(*var) + strlen(more) + 1);
-	strcpy(newvar, *var);
-	strcat(newvar, more);
+	pg_asprintf(&newvar, "%s%s", *var, more);
 	free(*var);
 	*var = newvar;
 }

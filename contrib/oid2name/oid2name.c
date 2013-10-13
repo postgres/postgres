@@ -508,8 +508,7 @@ sql_exec_searchtables(PGconn *conn, struct options * opts)
 	free(comma_filenodes);
 
 	/* now build the query */
-	todo = (char *) pg_malloc(650 + strlen(qualifiers));
-	snprintf(todo, 650 + strlen(qualifiers),
+	pg_asprintf(&todo,
 			 "SELECT pg_catalog.pg_relation_filenode(c.oid) as \"Filenode\", relname as \"Table Name\" %s\n"
 			 "FROM pg_catalog.pg_class c \n"
 		 "	LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace \n"

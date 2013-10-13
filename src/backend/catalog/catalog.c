@@ -75,35 +75,23 @@ forkname_to_number(char *forkName)
 char *
 GetDatabasePath(Oid dbNode, Oid spcNode)
 {
-	int			pathlen;
-	char	   *path;
-
 	if (spcNode == GLOBALTABLESPACE_OID)
 	{
 		/* Shared system relations live in {datadir}/global */
 		Assert(dbNode == 0);
-		pathlen = 6 + 1;
-		path = (char *) palloc(pathlen);
-		snprintf(path, pathlen, "global");
+		return pstrdup("global");
 	}
 	else if (spcNode == DEFAULTTABLESPACE_OID)
 	{
 		/* The default tablespace is {datadir}/base */
-		pathlen = 5 + OIDCHARS + 1;
-		path = (char *) palloc(pathlen);
-		snprintf(path, pathlen, "base/%u",
-				 dbNode);
+		return psprintf("base/%u", dbNode);
 	}
 	else
 	{
 		/* All other tablespaces are accessed via symlinks */
-		pathlen = 9 + 1 + OIDCHARS + 1 + strlen(TABLESPACE_VERSION_DIRECTORY) +
-			1 + OIDCHARS + 1;
-		path = (char *) palloc(pathlen);
-		snprintf(path, pathlen, "pg_tblspc/%u/%s/%u",
-				 spcNode, TABLESPACE_VERSION_DIRECTORY, dbNode);
+		return psprintf("pg_tblspc/%u/%s/%u",
+						spcNode, TABLESPACE_VERSION_DIRECTORY, dbNode);
 	}
-	return path;
 }
 
 

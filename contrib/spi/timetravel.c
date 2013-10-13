@@ -540,8 +540,7 @@ find_plan(char *ident, EPlan **eplan, int *nplans)
 		(*nplans) = i = 0;
 	}
 
-	newp->ident = (char *) malloc(strlen(ident) + 1);
-	strcpy(newp->ident, ident);
+	newp->ident = strdup(ident);
 	newp->splan = NULL;
 	(*nplans)++;
 

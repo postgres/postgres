@@ -487,10 +487,9 @@ cfopen_read(const char *path, const char *mode)
 #ifdef HAVE_LIBZ
 		if (fp == NULL)
 		{
-			int			fnamelen = strlen(path) + 4;
-			char	   *fname = pg_malloc(fnamelen);
+			char	   *fname;
 
-			snprintf(fname, fnamelen, "%s%s", path, ".gz");
+			pg_asprintf(&fname, "%s.gz", path);
 			fp = cfopen(fname, mode, 1);
 			free(fname);
 		}
@@ -518,10 +517,9 @@ cfopen_write(const char *path, const char *mode, int compression)
 	else
 	{
 #ifdef HAVE_LIBZ
-		int			fnamelen = strlen(path) + 4;
-		char	   *fname = pg_malloc(fnamelen);
+		char	   *fname;
 
-		snprintf(fname, fnamelen, "%s%s", path, ".gz");
+		pg_asprintf(&fname, "%s.gz", path);
 		fp = cfopen(fname, mode, 1);
 		free(fname);
 #else

@@ -675,9 +675,9 @@ old_8_3_create_sequence_script(ClusterInfo *cluster)
 	int			dbnum;
 	FILE	   *script = NULL;
 	bool		found = false;
-	char	   *output_path = pg_malloc(MAXPGPATH);
+	char	   *output_path;
 
-	snprintf(output_path, MAXPGPATH, "adjust_sequences.sql");
+	output_path = pg_strdup("adjust_sequences.sql");
 
 	prep_status("Creating script to adjust sequences");
 

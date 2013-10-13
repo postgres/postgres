@@ -627,18 +627,14 @@ pg_size_pretty_numeric(PG_FUNCTION_ARGS)
 	Numeric		size = PG_GETARG_NUMERIC(0);
 	Numeric		limit,
 				limit2;
-	char	   *buf,
-			   *result;
+	char	   *result;
 
 	limit = int64_to_numeric(10 * 1024);
 	limit2 = int64_to_numeric(10 * 1024 * 2 - 1);
 
 	if (numeric_is_less(size, limit))
 	{
-		buf = numeric_to_cstring(size);
-		result = palloc(strlen(buf) + 7);
-		strcpy(result, buf);
-		strcat(result, " bytes");
+		result = psprintf("%s bytes", numeric_to_cstring(size));
 	}
 	else
 	{
@@ -650,10 +646,7 @@ pg_size_pretty_numeric(PG_FUNCTION_ARGS)
 		{
 			/* size = (size + 1) / 2 */
 			size = numeric_plus_one_over_two(size);
-			buf = numeric_to_cstring(size);
-			result = palloc(strlen(buf) + 4);
-			strcpy(result, buf);
-			strcat(result, " kB");
+			result = psprintf("%s kB", numeric_to_cstring(size));
 		}
 		else
 		{
@@ -663,10 +656,7 @@ pg_size_pretty_numeric(PG_FUNCTION_ARGS)
 			{
 				/* size = (size + 1) / 2 */
 				size = numeric_plus_one_over_two(size);
-				buf = numeric_to_cstring(size);
-				result = palloc(strlen(buf) + 4);
-				strcpy(result, buf);
-				strcat(result, " MB");
+				result = psprintf("%s MB", numeric_to_cstring(size));
 			}
 			else
 			{
@@ -677,10 +667,7 @@ pg_size_pretty_numeric(PG_FUNCTION_ARGS)
 				{
 					/* size = (size + 1) / 2 */
 					size = numeric_plus_one_over_two(size);
-					buf = numeric_to_cstring(size);
-					result = palloc(strlen(buf) + 4);
-					strcpy(result, buf);
-					strcat(result, " GB");
+					result = psprintf("%s GB", numeric_to_cstring(size));
 				}
 				else
 				{
@@ -688,10 +675,7 @@ pg_size_pretty_numeric(PG_FUNCTION_ARGS)
 					size = numeric_shift_right(size, 10);
 					/* size = (size + 1) / 2 */
 					size = numeric_plus_one_over_two(size);
-					buf = numeric_to_cstring(size);
-					result = palloc(strlen(buf) + 4);
-					strcpy(result, buf);
-					strcat(result, " TB");
+					result = psprintf("%s TB", numeric_to_cstring(size));
 				}
 			}
 		}

@@ -654,9 +654,9 @@ get_expectfile(const char *testname, const char *file)
 static void
 doputenv(const char *var, const char *val)
 {
-	char	   *s = malloc(strlen(var) + strlen(val) + 2);
+	char	   *s;
 
-	sprintf(s, "%s=%s", var, val);
+	pg_asprintf(&s, "%s=%s", var, val);
 	putenv(s);
 }
 
@@ -671,16 +671,11 @@ add_to_path(const char *pathname, char separator, const char *addval)
 	char	   *newval;
 
 	if (!oldval || !oldval[0])
-	{
 		/* no previous value */
-		newval = malloc(strlen(pathname) + strlen(addval) + 2);
-		sprintf(newval, "%s=%s", pathname, addval);
-	}
+		pg_asprintf(&newval, "%s=%s", pathname, addval);
 	else
-	{
-		newval = malloc(strlen(pathname) + strlen(addval) + strlen(oldval) + 3);
-		sprintf(newval, "%s=%s%c%s", pathname, addval, separator, oldval);
-	}
+		pg_asprintf(&newval, "%s=%s%c%s", pathname, addval, separator, oldval);
+
 	putenv(newval);
 }
 
@@ -747,8 +742,7 @@ initialize_environment(void)
 
 		if (!old_pgoptions)
 			old_pgoptions = "";
-		new_pgoptions = malloc(strlen(old_pgoptions) + strlen(my_pgoptions) + 12);
-		sprintf(new_pgoptions, "PGOPTIONS=%s %s", old_pgoptions, my_pgoptions);
+		pg_asprintf(&new_pgoptions, "PGOPTIONS=%s %s", old_pgoptions, my_pgoptions);
 		putenv(new_pgoptions);
 	}
 
@@ -798,16 +792,13 @@ initialize_environment(void)
 		/*
 		 * Adjust path variables to point into the temp-install tree
 		 */
-		tmp = malloc(strlen(temp_install) + 32 + strlen(bindir));
-		sprintf(tmp, "%s/install/%s", temp_install, bindir);
+		pg_asprintf(&tmp, "%s/install/%s", temp_install, bindir);
 		bindir = tmp;
 
-		tmp = malloc(strlen(temp_install) + 32 + strlen(libdir));
-		sprintf(tmp, "%s/install/%s", temp_install, libdir);
+		pg_asprintf(&tmp, "%s/install/%s", temp_install, libdir);
 		libdir = tmp;
 
-		tmp = malloc(strlen(temp_install) + 32 + strlen(datadir));
-		sprintf(tmp, "%s/install/%s", temp_install, datadir);
+		pg_asprintf(&tmp, "%s/install/%s", temp_install, datadir);
 		datadir = tmp;
 
 		/* psql will be installed into temp-install bindir */
@@ -961,9 +952,9 @@ spawn_process(const char *cmdline)
 		 * "exec" the command too.	This saves two useless processes per
 		 * parallel test case.
 		 */
-		char	   *cmdline2 = malloc(strlen(cmdline) + 6);
+		char	   *cmdline2;
 
-		sprintf(cmdline2, "exec %s", cmdline);
+		pg_asprintf(&cmdline2, "exec %s", cmdline);
 		execl(shellprog, shellprog, "-c", cmdline2, (char *) NULL);
 		fprintf(stderr, _("%s: could not exec \"%s\": %s\n"),
 				progname, shellprog, strerror(errno));
@@ -1040,8 +1031,7 @@ spawn_process(const char *cmdline)
 		exit(2);
 	}
 
-	cmdline2 = malloc(strlen(cmdline) + 8);
-	sprintf(cmdline2, "cmd /c %s", cmdline);
+	pg_asprintf(&cmdline2, "cmd /c %s", cmdline);
 
 #ifndef __CYGWIN__
 	AddUserToTokenDacl(restrictedToken);
@@ -1862,8 +1852,7 @@ make_absolute_path(const char *in)
 			}
 		}
 
-		result = malloc(strlen(cwdbuf) + strlen(in) + 2);
-		sprintf(result, "%s/%s", cwdbuf, in);
+		pg_asprintf(&result, "%s/%s", cwdbuf, in);
 	}
 
 	canonicalize_path(result);

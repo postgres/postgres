@@ -1015,17 +1015,15 @@ pg_GSS_recvauth(Port *port)
 		 */
 		if (getenv("KRB5_KTNAME") == NULL)
 		{
-			size_t		kt_len = strlen(pg_krb_server_keyfile) + 14;
-			char	   *kt_path = malloc(kt_len);
+			char	   *kt_path;
 
-			if (!kt_path)
+			if (asprintf(&kt_path, "KRB5_KTNAME=%s", pg_krb_server_keyfile) < 0)
 			{
 				ereport(LOG,
 						(errcode(ERRCODE_OUT_OF_MEMORY),
 						 errmsg("out of memory")));
 				return STATUS_ERROR;
 			}
-			snprintf(kt_path, kt_len, "KRB5_KTNAME=%s", pg_krb_server_keyfile);
 			putenv(kt_path);
 		}
 	}
@@ -1488,8 +1486,7 @@ pg_SSPI_recvauth(Port *port)
 		char	   *namebuf;
 		int			retval;
 
-		namebuf = palloc(strlen(accountname) + strlen(domainname) + 2);
-		sprintf(namebuf, "%s@%s", accountname, domainname);
+		namebuf = psprintf("%s@%s", accountname, domainname);
 		retval = check_usermap(port->hba->usermap, port->user_name, namebuf, true);
 		pfree(namebuf);
 		return retval;
@@ -2209,8 +2206,7 @@ CheckLDAPAuth(Port *port)
 		attributes[0] = port->hba->ldapsearchattribute ? port->hba->ldapsearchattribute : "uid";
 		attributes[1] = NULL;
 
-		filter = palloc(strlen(attributes[0]) + strlen(port->user_name) + 4);
-		sprintf(filter, "(%s=%s)",
+		filter = psprintf("(%s=%s)",
 				attributes[0],
 				port->user_name);
 
@@ -2299,17 +2295,10 @@ CheckLDAPAuth(Port *port)
 		}
 	}
 	else
-	{
-		fulluser = palloc((port->hba->ldapprefix ? strlen(port->hba->ldapprefix) : 0) +
-						  strlen(port->user_name) +
-				(port->hba->ldapsuffix ? strlen(port->hba->ldapsuffix) : 0) +
-						  1);
-
-		sprintf(fulluser, "%s%s%s",
+		fulluser = psprintf("%s%s%s",
 				port->hba->ldapprefix ? port->hba->ldapprefix : "",
 				port->user_name,
 				port->hba->ldapsuffix ? port->hba->ldapsuffix : "");
-	}
 
 	r = ldap_simple_bind_s(ldap, fulluser, passwd);
 	ldap_unbind(ldap);

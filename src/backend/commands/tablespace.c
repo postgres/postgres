@@ -541,12 +541,11 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 static void
 create_tablespace_directories(const char *location, const Oid tablespaceoid)
 {
-	char	   *linkloc = palloc(OIDCHARS + OIDCHARS + 1);
-	char	   *location_with_version_dir = palloc(strlen(location) + 1 +
-								   strlen(TABLESPACE_VERSION_DIRECTORY) + 1);
+	char	   *linkloc;
+	char	   *location_with_version_dir;
 
-	sprintf(linkloc, "pg_tblspc/%u", tablespaceoid);
-	sprintf(location_with_version_dir, "%s/%s", location,
+	linkloc = psprintf("pg_tblspc/%u", tablespaceoid);
+	location_with_version_dir = psprintf("%s/%s", location,
 			TABLESPACE_VERSION_DIRECTORY);
 
 	/*
@@ -652,9 +651,7 @@ destroy_tablespace_directories(Oid tablespaceoid, bool redo)
 	char	   *subfile;
 	struct stat st;
 
-	linkloc_with_version_dir = palloc(9 + 1 + OIDCHARS + 1 +
-									  strlen(TABLESPACE_VERSION_DIRECTORY));
-	sprintf(linkloc_with_version_dir, "pg_tblspc/%u/%s", tablespaceoid,
+	linkloc_with_version_dir = psprintf("pg_tblspc/%u/%s", tablespaceoid,
 			TABLESPACE_VERSION_DIRECTORY);
 
 	/*
@@ -711,8 +708,7 @@ destroy_tablespace_directories(Oid tablespaceoid, bool redo)
 			strcmp(de->d_name, "..") == 0)
 			continue;
 
-		subfile = palloc(strlen(linkloc_with_version_dir) + 1 + strlen(de->d_name) + 1);
-		sprintf(subfile, "%s/%s", linkloc_with_version_dir, de->d_name);
+		subfile = psprintf("%s/%s", linkloc_with_version_dir, de->d_name);
 
 		/* This check is just to deliver a friendlier error message */
 		if (!redo && !directory_is_empty(subfile))

@@ -7938,8 +7938,7 @@ GUCArrayAdd(ArrayType *array, const char *name, const char *value)
 		name = record->name;
 
 	/* build new item for array */
-	newval = palloc(strlen(name) + 1 + strlen(value) + 1);
-	sprintf(newval, "%s=%s", name, value);
+	newval = psprintf("%s=%s", name, value);
 	datum = CStringGetTextDatum(newval);
 
 	if (array)

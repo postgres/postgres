@@ -466,8 +466,7 @@ report_two_error_messages(Step * step1, Step * step2)
 {
 	char	   *prefix;
 
-	prefix = malloc(strlen(step1->name) + strlen(step2->name) + 2);
-	sprintf(prefix, "%s %s", step1->name, step2->name);
+	pg_asprintf(&prefix, "%s %s", step1->name, step2->name);
 
 	if (step1->errormsg)
 	{
@@ -795,12 +794,9 @@ try_complete_step(Step * step, int flags)
 													PG_DIAG_MESSAGE_PRIMARY);
 
 					if (sev && msg)
-					{
-						step->errormsg = malloc(5 + strlen(sev) + strlen(msg));
-						sprintf(step->errormsg, "%s:  %s", sev, msg);
-					}
+						pg_asprintf(&step->errormsg, "%s:  %s", sev, msg);
 					else
-						step->errormsg = strdup(PQresultErrorMessage(res));
+						step->errormsg = pg_strdup(PQresultErrorMessage(res));
 				}
 				break;
 			default:

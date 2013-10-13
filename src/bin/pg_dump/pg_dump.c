@@ -10439,8 +10439,7 @@ convertOperatorReference(Archive *fout, const char *opr)
 		/* If not schema-qualified, don't need to add OPERATOR() */
 		if (!sawdot)
 			return name;
-		oname = pg_malloc(strlen(name) + 11);
-		sprintf(oname, "OPERATOR(%s)", name);
+		pg_asprintf(&oname, "OPERATOR(%s)", name);
 		free(name);
 		return oname;
 	}
@@ -12754,8 +12753,7 @@ dumpTable(Archive *fout, TableInfo *tbinfo)
 				char	   *acltag;
 
 				attnamecopy = pg_strdup(fmtId(attname));
-				acltag = pg_malloc(strlen(tbinfo->dobj.name) + strlen(attname) + 2);
-				sprintf(acltag, "%s.%s", tbinfo->dobj.name, attname);
+				pg_asprintf(&acltag, "%s.%s", tbinfo->dobj.name, attname);
 				/* Column's GRANT type is always TABLE */
 				dumpACL(fout, tbinfo->dobj.catId, tbinfo->dobj.dumpId, "TABLE",
 						namecopy, attnamecopy, acltag,

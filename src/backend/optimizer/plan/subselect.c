@@ -1119,8 +1119,7 @@ SS_process_ctes(PlannerInfo *root)
 		root->cte_plan_ids = lappend_int(root->cte_plan_ids, splan->plan_id);
 
 		/* Label the subplan for EXPLAIN purposes */
-		splan->plan_name = palloc(4 + strlen(cte->ctename) + 1);
-		sprintf(splan->plan_name, "CTE %s", cte->ctename);
+		splan->plan_name = psprintf("CTE %s", cte->ctename);
 
 		/* Lastly, fill in the cost estimates for use later */
 		cost_subplan(root, splan, plan);

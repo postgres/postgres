@@ -448,10 +448,7 @@ fetch_finfo_record(void *filehandle, char *funcname)
 	const Pg_finfo_record *inforec;
 	static Pg_finfo_record default_inforec = {0};
 
-	/* Compute name of info func */
-	infofuncname = (char *) palloc(strlen(funcname) + 10);
-	strcpy(infofuncname, "pg_finfo_");
-	strcat(infofuncname, funcname);
+	infofuncname = psprintf("pg_finfo_%s", funcname);
 
 	/* Try to look up the info function */
 	infofunc = (PGFInfoFunction) lookup_external_function(filehandle,

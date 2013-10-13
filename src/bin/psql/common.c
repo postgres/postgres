@@ -594,9 +594,7 @@ StoreQueryTuple(const PGresult *result)
 			char	   *value;
 
 			/* concate prefix and column name */
-			varname = pg_malloc(strlen(pset.gset_prefix) + strlen(colname) + 1);
-			strcpy(varname, pset.gset_prefix);
-			strcat(varname, colname);
+			pg_asprintf(&varname, "%s%s", pset.gset_prefix, colname);
 
 			if (!PQgetisnull(result, 0, i))
 				value = PQgetvalue(result, 0, i);
@@ -1687,10 +1685,7 @@ expand_tilde(char **filename)
 		{
 			char	   *newfn;
 
-			newfn = pg_malloc(strlen(home) + strlen(p) + 1);
-			strcpy(newfn, home);
-			strcat(newfn, p);
-
+			pg_asprintf(&newfn, "%s%s", home, p);
 			free(fn);
 			*filename = newfn;
 		}

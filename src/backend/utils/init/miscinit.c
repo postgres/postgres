@@ -165,12 +165,10 @@ make_absolute_path(const char *path)
 			}
 		}
 
-		new = malloc(strlen(buf) + strlen(path) + 2);
-		if (!new)
+		if (asprintf(&new, "%s/%s", buf, path) < 0)
 			ereport(FATAL,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("out of memory")));
-		sprintf(new, "%s/%s", buf, path);
 		free(buf);
 	}
 	else
@@ -1286,9 +1284,7 @@ load_libraries(const char *libraries, const char *gucname, bool restricted)
 		{
 			char	   *expanded;
 
-			expanded = palloc(strlen("$libdir/plugins/") + strlen(filename) + 1);
-			strcpy(expanded, "$libdir/plugins/");
-			strcat(expanded, filename);
+			expanded = psprintf("$libdir/plugins/%s", filename);
 			pfree(filename);
 			filename = expanded;
 		}

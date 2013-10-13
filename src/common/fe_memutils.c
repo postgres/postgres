@@ -93,6 +93,25 @@ pg_free(void *ptr)
 		free(ptr);
 }
 
+int
+pg_asprintf(char **ret, const char *format, ...)
+{
+	va_list		ap;
+	int			rc;
+
+	va_start(ap, format);
+	rc = vasprintf(ret, format, ap);
+	va_end(ap);
+
+	if (rc < 0)
+	{
+		fprintf(stderr, _("out of memory\n"));
+		exit(EXIT_FAILURE);
+	}
+
+	return rc;
+}
+
 /*
  * Frontend emulation of backend memory management functions.  Useful for
  * programs that compile backend files.
@@ -125,4 +144,24 @@ void *
 repalloc(void *pointer, Size size)
 {
 	return pg_realloc(pointer, size);
+}
+
+char *
+psprintf(const char *format, ...)
+{
+	va_list     ap;
+	int         rc;
+	char	   *ret;
+
+	va_start(ap, format);
+	rc = vasprintf(&ret, format, ap);
+	va_end(ap);
+
+	if (rc < 0)
+	{
+		fprintf(stderr, _("out of memory\n"));
+		exit(EXIT_FAILURE);
+	}
+
+	return ret;
 }
