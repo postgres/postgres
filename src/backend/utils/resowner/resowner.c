@@ -1301,7 +1301,7 @@ ResourceOwnerRememberDSM(ResourceOwner owner, dsm_segment *seg)
 }
 
 /*
- * Forget that a temporary file is owned by a ResourceOwner
+ * Forget that a dynamic shmem segment is owned by a ResourceOwner
  */
 void
 ResourceOwnerForgetDSM(ResourceOwner owner, dsm_segment *seg)

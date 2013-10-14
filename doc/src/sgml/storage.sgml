@@ -73,6 +73,12 @@ Item
 </row>
 
 <row>
+ <entry><filename>pg_dynshmem</></entry>
+ <entry>Subdirectory containing files used by the dynamic shared memory
+  subsystem</entry>
+</row>
+
+<row>
  <entry><filename>pg_multixact</></entry>
  <entry>Subdirectory containing multitransaction status data
   (used for shared row locks)</entry>
