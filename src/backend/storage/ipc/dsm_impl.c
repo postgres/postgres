@@ -694,10 +694,6 @@ dsm_impl_windows(dsm_op op, dsm_handle handle, uint64 request_size,
 			 * modified.
 			 */
 			CloseHandle(hmap);
-			ereport(elevel,
-					(errcode_for_dynamic_shared_memory(),
-					 errmsg("could not open shared memory segment \"%s\": %m",
-						name)));
 			return false;
 		}
 	}
