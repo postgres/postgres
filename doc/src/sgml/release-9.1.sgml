@@ -179,8 +179,13 @@
 
     <listitem>
      <para>
-      Improve WAL segment timeline handling during recovery (Heikki
-      Linnakangas)
+      Fix WAL segment timeline handling during recovery (Mitsumasa Kondo,
+      Heikki Linnakangas)
+     </para>
+
+     <para>
+      WAL file recycling during standby recovery could lead to premature
+      recovery completion, resulting in data loss.
      </para>
     </listitem>
 
