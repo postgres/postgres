@@ -1161,7 +1161,17 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						if (dterr < 0)
 							return dterr;
 					}
-					else if (flen > 4)
+					/*
+					 * Is this a YMD or HMS specification, or a year number?
+					 * YMD and HMS are required to be six digits or more, so
+					 * if it is 5 digits, it is a year.  If it is six or more
+					 * more digits, we assume it is YMD or HMS unless no date
+					 * and no time values have been specified.  This forces
+					 * 6+ digit years to be at the end of the string, or to use
+					 * the ISO date specification.
+					 */
+					else if (flen >= 6 && (!(fmask & DTK_DATE_M) ||
+							 !(fmask & DTK_TIME_M)))
 					{
 						dterr = DecodeNumberField(flen, field[i], fmask,
 												  &tmask, tm,
@@ -2647,29 +2657,20 @@ DecodeNumberField(int len, char *str, int fmask,
 	/* No decimal point and no complete date yet? */
 	else if ((fmask & DTK_DATE_M) != DTK_DATE_M)
 	{
-		/* yyyymmdd? */
-		if (len == 8)
+		if (len >= 6)
 		{
 			*tmask = DTK_DATE_M;
-
-			tm->tm_mday = atoi(str + 6);
-			*(str + 6) = '\0';
-			tm->tm_mon = atoi(str + 4);
-			*(str + 4) = '\0';
-			tm->tm_year = atoi(str + 0);
-
-			return DTK_DATE;
-		}
-		/* yymmdd? */
-		else if (len == 6)
-		{
-			*tmask = DTK_DATE_M;
-			tm->tm_mday = atoi(str + 4);
-			*(str + 4) = '\0';
-			tm->tm_mon = atoi(str + 2);
-			*(str + 2) = '\0';
-			tm->tm_year = atoi(str + 0);
-			*is2digits = TRUE;
+			/*
+			 * Start from end and consider first 2 as Day, next 2 as Month,
+			 * and the rest as Year.
+			 */
+			tm->tm_mday = atoi(str + (len - 2));
+			*(str + (len - 2)) = '\0';
+			tm->tm_mon = atoi(str + (len - 4));
+			*(str + (len - 4)) = '\0';
+			tm->tm_year = atoi(str);
+			if ((len - 4) == 2)
+				*is2digits = TRUE;
 
 			return DTK_DATE;
 		}
@@ -2686,7 +2687,7 @@ DecodeNumberField(int len, char *str, int fmask,
 			*(str + 4) = '\0';
 			tm->tm_min = atoi(str + 2);
 			*(str + 2) = '\0';
-			tm->tm_hour = atoi(str + 0);
+			tm->tm_hour = atoi(str);
 
 			return DTK_TIME;
 		}
@@ -2697,7 +2698,7 @@ DecodeNumberField(int len, char *str, int fmask,
 			tm->tm_sec = 0;
 			tm->tm_min = atoi(str + 2);
 			*(str + 2) = '\0';
-			tm->tm_hour = atoi(str + 0);
+			tm->tm_hour = atoi(str);
 
 			return DTK_TIME;
 		}
