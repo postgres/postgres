@@ -410,10 +410,9 @@ libpq = -L$(libpq_builddir) -lpq
 # pgport before libpq.  This does cause duplicate -lpgport's to appear
 # on client link lines.
 ifdef PGXS
-libpq_pgport = -L$(libdir) -lpgport -lpgcommon $(libpq)
+libpq_pgport = -L$(libdir) -lpgcommon -lpgport $(libpq)
 else
-libpq_pgport = -L$(top_builddir)/src/port -lpgport \
-			   -L$(top_builddir)/src/common -lpgcommon $(libpq)
+libpq_pgport = -L$(top_builddir)/src/common -lpgcommon -L$(top_builddir)/src/port -lpgport $(libpq)
 endif
 
 # If PGXS is not defined, build libpq and libpgport dependancies as required.
