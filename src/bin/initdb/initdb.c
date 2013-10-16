@@ -1161,6 +1161,7 @@ test_config_settings(void)
 				 SYSTEMQUOTE "\"%s\" --boot -x0 %s "
 				 "-c max_connections=%d "
 				 "-c shared_buffers=%d "
+				 "-c dynamic_shared_memory_type=none "
 				 "< \"%s\" > \"%s\" 2>&1" SYSTEMQUOTE,
 				 backend_exec, boot_options,
 				 test_conns, test_buffs,
