@@ -247,36 +247,6 @@ _success:						\n\
 	);
 }
 #endif   /* __m68k__ && !__linux__ */
-#else							/* not __GNUC__ */
-
-/*
- * All non gcc
- */
-
-
-#if defined(sun3)
-static void
-tas_dummy()						/* really means: extern int tas(slock_t
-								 * *lock); */
-{
-	asm("LLA0:");
-	asm("   .data");
-	asm("   .text");
-	asm("|#PROC# 04");
-	asm("   .globl  _tas");
-	asm("_tas:");
-	asm("|#PROLOGUE# 1");
-	asm("   movel   sp@(0x4),a0");
-	asm("   tas a0@");
-	asm("   beq LLA1");
-	asm("   moveq   #-128,d0");
-	asm("   rts");
-	asm("LLA1:");
-	asm("   moveq   #0,d0");
-	asm("   rts");
-	asm("   .data");
-}
-#endif   /* sun3 */
 #endif   /* not __GNUC__ */
 #endif   /* HAVE_SPINLOCKS */
 

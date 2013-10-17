@@ -1953,7 +1953,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
    In general, <productname>PostgreSQL</> can be expected to work on
    these CPU architectures: x86, x86_64, IA64, PowerPC,
    PowerPC 64, S/390, S/390x, Sparc, Sparc 64, Alpha, ARM, MIPS, MIPSEL, M68K,
-   and PA-RISC.  Code support exists for M32R, NS32K, and VAX, but these
+   and PA-RISC.  Code support exists for M32R and VAX, but these
    architectures are not known to have been tested recently.  It is often
    possible to build on an unsupported CPU type by configuring with
    <option>--disable-spinlocks</option>, but performance will be poor.

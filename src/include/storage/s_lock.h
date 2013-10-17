@@ -551,31 +551,6 @@ tas(volatile slock_t *lock)
 
 #endif	 /* __vax__ */
 
-
-#if defined(__ns32k__)		/* National Semiconductor 32K */
-#define HAS_TEST_AND_SET
-
-typedef unsigned char slock_t;
-
-#define TAS(lock) tas(lock)
-
-static __inline__ int
-tas(volatile slock_t *lock)
-{
-	register int	_res;
-
-	__asm__ __volatile__(
-		"	sbitb	0, %1	\n"
-		"	sfsd	%0		\n"
-:		"=r"(_res), "+m"(*lock)
-:
-:		"memory");
-	return _res;
-}
-
-#endif	 /* __ns32k__ */
-
-
 #if defined(__alpha) || defined(__alpha__)	/* Alpha */
 /*
  * Correct multi-processor locking methods are explained in section 5.5.3
@@ -886,25 +861,6 @@ typedef unsigned long slock_t;
 #define S_LOCK_FREE(lock)	(test_then_add(lock,0) == 0)
 #endif	 /* __sgi */
 
-
-#if defined(sinix)		/* Sinix */
-/*
- * SINIX / Reliant UNIX
- * slock_t is defined as a struct abilock_t, which has a single unsigned long
- * member. (Basically same as SGI)
- */
-#define HAS_TEST_AND_SET
-
-#include "abi_mutex.h"
-typedef abilock_t slock_t;
-
-#define TAS(lock)	(!acquire_lock(lock))
-#define S_UNLOCK(lock)	release_lock(lock)
-#define S_INIT_LOCK(lock)	init_lock(lock)
-#define S_LOCK_FREE(lock)	(stat_lock(lock) == UNLOCKED)
-#endif	 /* sinix */
-
-
 #if defined(_AIX)	/* AIX */
 /*
  * AIX (POWER)
@@ -921,14 +877,6 @@ typedef int slock_t;
 
 
 /* These are in s_lock.c */
-
-
-#if defined(sun3)		/* Sun3 */
-#define HAS_TEST_AND_SET
-
-typedef unsigned char slock_t;
-#endif
-
 
 #if defined(__SUNPRO_C) && (defined(__i386) || defined(__x86_64__) || defined(__sparc__) || defined(__sparc))
 #define HAS_TEST_AND_SET
