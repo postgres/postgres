@@ -101,10 +101,10 @@ char	   *ssl_crl_file;
  */
 int			ssl_renegotiation_limit;
 
+#ifdef USE_SSL
 /* are we in the middle of a renegotiation? */
 static bool in_ssl_renegotiation = false;
 
-#ifdef USE_SSL
 static SSL_CTX *SSL_context = NULL;
 static bool ssl_loaded_verify_locations = false;
 #endif
