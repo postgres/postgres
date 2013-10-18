@@ -319,7 +319,7 @@ sub mkvcbuild
 	$ecpg->AddDefine('MINOR_VERSION=10');
 	$ecpg->AddDefine('PATCHLEVEL=0');
 	$ecpg->AddDefine('ECPG_COMPILE');
-	$ecpg->AddReference($libpgport, $libpgcommon);
+	$ecpg->AddReference($libpgcommon, $libpgport);
 
 	my $pgregress_ecpg =
 	  $solution->AddProject('pg_regress_ecpg', 'exe', 'misc');
@@ -329,7 +329,7 @@ sub mkvcbuild
 	$pgregress_ecpg->AddIncludeDir('src\test\regress');
 	$pgregress_ecpg->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
 	$pgregress_ecpg->AddDefine('FRONTEND');
-	$pgregress_ecpg->AddReference($libpgport, $libpgcommon);
+	$pgregress_ecpg->AddReference($libpgcommon, $libpgport);
 
 	my $isolation_tester =
 	  $solution->AddProject('isolationtester', 'exe', 'misc');
@@ -354,7 +354,7 @@ sub mkvcbuild
 	$pgregress_isolation->AddIncludeDir('src\test\regress');
 	$pgregress_isolation->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
 	$pgregress_isolation->AddDefine('FRONTEND');
-	$pgregress_isolation->AddReference($libpgport, $libpgcommon);
+	$pgregress_isolation->AddReference($libpgcommon, $libpgport);
 
 	# src/bin
 	my $initdb = AddSimpleFrontend('initdb');
@@ -432,7 +432,7 @@ sub mkvcbuild
 	my $zic = $solution->AddProject('zic', 'exe', 'utils');
 	$zic->AddFiles('src\timezone', 'zic.c', 'ialloc.c', 'scheck.c',
 		'localtime.c');
-	$zic->AddReference($libpgport, $libpgcommon);
+	$zic->AddReference($libpgcommon, $libpgport);
 
 	if ($solution->{options}->{xml})
 	{
@@ -572,7 +572,7 @@ sub mkvcbuild
 		$proj->AddIncludeDir('src\interfaces\libpq');
 		$proj->AddIncludeDir('src\bin\pg_dump');
 		$proj->AddIncludeDir('src\bin\psql');
-		$proj->AddReference($libpq, $libpgport, $libpgcommon);
+		$proj->AddReference($libpq, $libpgcommon, $libpgport);
 		$proj->AddResourceFile('src\bin\scripts', 'PostgreSQL Utility');
 		$proj->AddLibrary('ws2_32.lib');
 	}
@@ -587,7 +587,7 @@ sub mkvcbuild
 	$pgregress->AddFile('src\test\regress\pg_regress_main.c');
 	$pgregress->AddIncludeDir('src\port');
 	$pgregress->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
-	$pgregress->AddReference($libpgport, $libpgcommon);
+	$pgregress->AddReference($libpgcommon, $libpgport);
 
 	# fix up pg_xlogdump once it's been set up
 	# files symlinked on Unix are copied on windows
@@ -621,7 +621,7 @@ sub AddSimpleFrontend
 
 	my $p = $solution->AddProject($n, 'exe', 'bin');
 	$p->AddDir('src\bin\\' . $n);
-	$p->AddReference($libpgport, $libpgcommon);
+	$p->AddReference($libpgcommon, $libpgport);
 	if ($uselibpq)
 	{
 		$p->AddIncludeDir('src\interfaces\libpq');
