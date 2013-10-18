@@ -184,13 +184,18 @@ typedef struct BackgroundWorker
    argument to <function>RegisterDynamicBackgroundWorker</function>.  If the
    worker is successfully registered, this pointer will be initialized with an
    opaque handle that can subsequently be passed to
-   <function>GetBackgroundWorkerPid(<parameter>BackgroundWorkerHandle *</parameter>, <parameter>pid_t *</parameter>)</function>.
-   This function can be used to poll the status of the worker: a return
-   value of <literal>BGWH_NOT_YET_STARTED</> indicates that the worker has not
-   yet been started by the postmaster; <literal>BGWH_STOPPED</literal>
-   indicates that it has been started but is no longer running; and
-   <literal>BGWH_STARTED</literal> indicates that it is currently running.
-   In this last case, the PID will also be returned via the second argument.
+   <function>GetBackgroundWorkerPid(<parameter>BackgroundWorkerHandle *</parameter>, <parameter>pid_t *</parameter>)</function> or
+   <function>TerminateBackgroundWorker(<parameter>BackgroundWorkerHandle *</parameter>)</function>.
+   <function>GetBackgroundWorker</> can be used to poll the status of the
+   worker: a return value of <literal>BGWH_NOT_YET_STARTED</> indicates that
+   the worker has not yet been started by the postmaster;
+   <literal>BGWH_STOPPED</literal> indicates that it has been started but is
+   no longer running; and <literal>BGWH_STARTED</literal> indicates that it is
+   currently running.  In this last case, the PID will also be returned via the
+   second argument.
+   <function>TerminateBackgroundWorker</> causes the postmaster to send
+   <literal>SIGTERM</> to the worker if it is running, and to unregister it
+   as soon as it is not.
   </para>
 
   <para>

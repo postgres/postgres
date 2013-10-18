@@ -55,6 +55,11 @@ slist_head BackgroundWorkerList = SLIST_STATIC_INIT(BackgroundWorkerList);
  * must fully initialize the slot - and insert a write memory barrier - before
  * marking it as in use.
  *
+ * As an exception, however, even when the slot is in use, regular backends
+ * may set the 'terminate' flag for a slot, telling the postmaster not
+ * to restart it.  Once the background worker is no longer running, the slot
+ * will be released for reuse.
+ *
  * In addition to coordinating with the postmaster, backends modifying this
  * data structure must coordinate with each other.  Since they can take locks,
  * this is straightforward: any backend wishing to manipulate a slot must
@@ -67,6 +72,7 @@ slist_head BackgroundWorkerList = SLIST_STATIC_INIT(BackgroundWorkerList);
 typedef struct BackgroundWorkerSlot
 {
 	bool	in_use;
+	bool	terminate;
 	pid_t	pid;				/* InvalidPid = not started yet; 0 = dead */
 	uint64	generation;			/* incremented when slot is recycled */
 	BackgroundWorker worker;
@@ -134,6 +140,7 @@ BackgroundWorkerShmemInit(void)
 			rw = slist_container(RegisteredBgWorker, rw_lnode, siter.cur);
 			Assert(slotno < max_worker_processes);
 			slot->in_use = true;
+			slot->terminate = false;
 			slot->pid = InvalidPid;
 			slot->generation = 0;
 			rw->rw_shmem_slot = slotno;
@@ -223,14 +230,29 @@ BackgroundWorkerStateChange(void)
 		 */
 		pg_read_barrier();
 
-		/*
-		 * See whether we already know about this worker.  If not, we need
-		 * to update our backend-private BackgroundWorkerList to match shared
-		 * memory.
-		 */
+		/* See whether we already know about this worker. */
 		rw = FindRegisteredWorkerBySlotNumber(slotno);
 		if (rw != NULL)
+		{
+			/*
+			 * In general, the worker data can't change after it's initially
+			 * registered.  However, someone can set the terminate flag.
+			 */
+			if (slot->terminate && !rw->rw_terminate)
+			{
+				rw->rw_terminate = true;
+				if (rw->rw_pid != 0)
+					kill(rw->rw_pid, SIGTERM);
+			}
 			continue;
+		}
+
+		/* If it's already flagged as do not restart, just release the slot. */
+		if (slot->terminate)
+		{
+			slot->in_use = false;
+			continue;
+		}
 
 		/*
 		 * Copy the registration data into the registered workers list.
@@ -292,6 +314,7 @@ BackgroundWorkerStateChange(void)
 		rw->rw_child_slot = 0;
 		rw->rw_crashed_at = 0;
 		rw->rw_shmem_slot = slotno;
+		rw->rw_terminate = false;
 
 		/* Log it! */
 		ereport(LOG,
@@ -714,6 +737,7 @@ RegisterBackgroundWorker(BackgroundWorker *worker)
 	rw->rw_pid = 0;
 	rw->rw_child_slot = 0;
 	rw->rw_crashed_at = 0;
+	rw->rw_terminate = false;
 
 	slist_push_head(&BackgroundWorkerList, &rw->rw_lnode);
 }
@@ -764,6 +788,7 @@ RegisterDynamicBackgroundWorker(BackgroundWorker *worker,
 			memcpy(&slot->worker, worker, sizeof(BackgroundWorker));
 			slot->pid = InvalidPid;		/* indicates not started yet */
 			slot->generation++;
+			slot->terminate = false;
 			generation = slot->generation;
 
 			/*
@@ -904,4 +929,34 @@ WaitForBackgroundWorkerStartup(BackgroundWorkerHandle *handle, pid_t *pidp)
 
 	set_latch_on_sigusr1 = save_set_latch_on_sigusr1;
 	return status;
+}
+
+/*
+ * Instruct the postmaster to terminate a background worker.
+ *
+ * Note that it's safe to do this without regard to whether the worker is
+ * still running, or even if the worker may already have existed and been
+ * unregistered.
+ */
+void
+TerminateBackgroundWorker(BackgroundWorkerHandle *handle)
+{
+	BackgroundWorkerSlot *slot;
+	bool	signal_postmaster = false;
+
+	Assert(handle->slot < max_worker_processes);
+	slot = &BackgroundWorkerData->slot[handle->slot];
+
+	/* Set terminate flag in shared memory, unless slot has been reused. */
+	LWLockAcquire(BackgroundWorkerLock, LW_EXCLUSIVE);
+	if (handle->generation == slot->generation)
+	{
+		slot->terminate = true;
+		signal_postmaster = true;
+	}
+	LWLockRelease(BackgroundWorkerLock);
+
+	/* Make sure the postmaster notices the change to shared memory. */
+	if (signal_postmaster)
+		SendPostmasterSignal(PMSIGNAL_BACKGROUND_WORKER_CHANGE);
 }

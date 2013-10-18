@@ -9,17 +9,22 @@
  * worker.	Workers can also be registered dynamically at runtime.  In either
  * case, the worker process is forked from the postmaster and runs the
  * user-supplied "main" function.  This code may connect to a database and
- * run transactions.  Once started, it stays active until shutdown or crash;
- * unless the restart interval is declared as BGW_NEVER_RESTART and the
- * process exits with a return code of 1; workers that do this are
- * automatically unregistered by the postmaster.
+ * run transactions.  Workers can remain active indefinitely, but will be
+ * terminated if a shutdown or crash occurs.
  *
  * If the fork() call fails in the postmaster, it will try again later.  Note
  * that the failure can only be transient (fork failure due to high load,
  * memory pressure, too many processes, etc); more permanent problems, like
  * failure to connect to a database, are detected later in the worker and dealt
- * with just by having the worker exit normally.  Postmaster will launch a new
- * worker again later.
+ * with just by having the worker exit normally.  A worker which exits with a
+ * return code of 0 will be immediately restarted by the postmaster.  A worker
+ * which exits with a return code of 1 will be restarted after the configured
+ * restart interval, or never if that interval is set to BGW_NEVER_RESTART.
+ * The TerminateBackgroundWorker() function can be used to terminate a
+ * dynamically registered background worker; the worker will be sent a SIGTERM
+ * and will not be restarted after it exits.  Whenever the postmaster knows
+ * that a worker will not be restarted, it unregisters the worker, freeing up
+ * that worker's slot for use by a new worker.
  *
  * Note that there might be more than one worker in a database concurrently,
  * and the same module may request more than one worker running the same (or
@@ -106,6 +111,9 @@ extern BgwHandleStatus GetBackgroundWorkerPid(BackgroundWorkerHandle *handle,
 					   pid_t *pidp);
 extern BgwHandleStatus WaitForBackgroundWorkerStartup(BackgroundWorkerHandle *
 							   handle, pid_t *pid);
+
+/* Terminate a bgworker */
+extern void TerminateBackgroundWorker(BackgroundWorkerHandle *handle);
 
 /* This is valid in a running worker */
 extern BackgroundWorker *MyBgworkerEntry;

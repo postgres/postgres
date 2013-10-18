@@ -31,6 +31,7 @@ typedef struct RegisteredBgWorker
 	int			rw_child_slot;
 	TimestampTz rw_crashed_at;	/* if not 0, time it last crashed */
 	int			rw_shmem_slot;
+	bool		rw_terminate;
 	slist_node	rw_lnode;		/* list link */
 } RegisteredBgWorker;
 
