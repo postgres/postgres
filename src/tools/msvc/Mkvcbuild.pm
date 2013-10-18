@@ -344,7 +344,7 @@ sub mkvcbuild
 	$isolation_tester->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
 	$isolation_tester->AddDefine('FRONTEND');
 	$isolation_tester->AddLibrary('wsock32.lib');
-	$isolation_tester->AddReference($libpq, $libpgport);
+	$isolation_tester->AddReference($libpq, $libpgcommon, $libpgport);
 
 	my $pgregress_isolation =
 	  $solution->AddProject('pg_isolation_regress', 'exe', 'misc');
