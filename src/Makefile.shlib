@@ -215,16 +215,6 @@ ifeq ($(PORTNAME), hpux)
   endif
 endif
 
-ifeq ($(PORTNAME), irix)
-  ifdef SO_MAJOR_VERSION
-    shlib		= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
-  endif
-  LINK.shared		= $(COMPILER) -shared
-  ifdef soname
-    LINK.shared		+= -Wl,-set_version,sgi$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  endif
-endif
-
 ifeq ($(PORTNAME), linux)
   LINK.shared		= $(COMPILER) -shared
   ifdef soname

@@ -60,7 +60,6 @@ case $host_os in
 dragonfly*) template=netbsd ;;
  freebsd*) template=freebsd ;;
     hpux*) template=hpux ;;
-    irix*) template=irix ;;
  linux*|gnu*|k*bsd*-gnu)
            template=linux ;;
    mingw*) template=win32 ;;
@@ -350,7 +349,6 @@ PGAC_ARG_REQ(with, CC, [CMD], [set compiler (deprecated)], [CC=$with_CC])
 
 case $template in
   aix) pgac_cc_list="gcc xlc";;
- irix) pgac_cc_list="cc";; # no gcc
     *) pgac_cc_list="gcc cc";;
 esac
 

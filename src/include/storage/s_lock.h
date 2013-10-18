@@ -836,31 +836,6 @@ typedef unsigned int slock_t;
 
 #endif	/* HPUX on IA64, non gcc */
 
-
-#if defined(__sgi)	/* SGI compiler */
-/*
- * SGI IRIX 5
- * slock_t is defined as a unsigned long. We use the standard SGI
- * mutex API.
- *
- * The following comment is left for historical reasons, but is probably
- * not a good idea since the mutex ABI is supported.
- *
- * This stuff may be supplemented in the future with Masato Kataoka's MIPS-II
- * assembly from his NECEWS SVR4 port, but we probably ought to retain this
- * for the R3000 chips out there.
- */
-#define HAS_TEST_AND_SET
-
-typedef unsigned long slock_t;
-
-#include "mutex.h"
-#define TAS(lock)	(test_and_set(lock,1))
-#define S_UNLOCK(lock)	(test_then_and(lock,0))
-#define S_INIT_LOCK(lock)	(test_then_and(lock,0))
-#define S_LOCK_FREE(lock)	(test_then_add(lock,0) == 0)
-#endif	 /* __sgi */
-
 #if defined(_AIX)	/* AIX */
 /*
  * AIX (POWER)

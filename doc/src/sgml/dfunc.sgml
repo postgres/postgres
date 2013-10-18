@@ -101,22 +101,6 @@ ld -b -o foo.sl foo.o
    </varlistentry>
 
    <varlistentry>
-    <term><systemitem class="osname">IRIX</></term>
-    <indexterm><primary>IRIX</><secondary>shared library</></>
-    <listitem>
-     <para>
-      <acronym>PIC</acronym> is the default, no special compiler
-      options are necessary.  The linker option to produce shared
-      libraries is <option>-shared</option>.
-<programlisting>
-cc -c foo.c
-ld -shared -o foo.so foo.o
-</programlisting>
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
     <term><systemitem class="osname">Linux</></term>
     <indexterm><primary>Linux</><secondary>shared library</></>
     <listitem>
