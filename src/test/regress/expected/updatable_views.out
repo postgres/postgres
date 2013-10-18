@@ -1,7 +1,8 @@
 --
 -- UPDATABLE VIEWS
 --
--- check that non-updatable views are rejected with useful error messages
+-- check that non-updatable views and columns are rejected with useful error
+-- messages
 CREATE TABLE base_tbl (a int PRIMARY KEY, b text DEFAULT 'Unspecified');
 INSERT INTO base_tbl SELECT i, 'Row ' || i FROM generate_series(-2, 2) g(i);
 CREATE VIEW ro_view1 AS SELECT DISTINCT a, b FROM base_tbl; -- DISTINCT not supported
@@ -17,18 +18,19 @@ CREATE VIEW ro_view10 AS SELECT 1 AS a; -- No base relations
 CREATE VIEW ro_view11 AS SELECT b1.a, b2.b FROM base_tbl b1, base_tbl b2; -- Multiple base relations
 CREATE VIEW ro_view12 AS SELECT * FROM generate_series(1, 10) AS g(a); -- SRF in rangetable
 CREATE VIEW ro_view13 AS SELECT a, b FROM (SELECT * FROM base_tbl) AS t; -- Subselect in rangetable
-CREATE VIEW ro_view14 AS SELECT ctid FROM base_tbl; -- System columns not supported
-CREATE VIEW ro_view15 AS SELECT a, upper(b) FROM base_tbl; -- Expression/function in targetlist
-CREATE VIEW ro_view16 AS SELECT a, b, a AS aa FROM base_tbl; -- Repeated column
+CREATE VIEW rw_view14 AS SELECT ctid, a, b FROM base_tbl; -- System columns may be part of an updatable view
+CREATE VIEW rw_view15 AS SELECT a, upper(b) FROM base_tbl; -- Expression/function may be part of an updatable view
+CREATE VIEW rw_view16 AS SELECT a, b, a AS aa FROM base_tbl; -- Repeated column may be part of an updatable view
 CREATE VIEW ro_view17 AS SELECT * FROM ro_view1; -- Base relation not updatable
 CREATE VIEW ro_view18 WITH (security_barrier = true)
   AS SELECT * FROM base_tbl; -- Security barrier views not updatable
 CREATE VIEW ro_view19 AS SELECT * FROM (VALUES(1)) AS tmp(a); -- VALUES in rangetable
 CREATE SEQUENCE seq;
 CREATE VIEW ro_view20 AS SELECT * FROM seq; -- View based on a sequence
+CREATE VIEW ro_view21 AS SELECT a, b, generate_series(1, a) g FROM base_tbl; -- SRF in targetlist not supported
 SELECT table_name, is_insertable_into
   FROM information_schema.tables
- WHERE table_name LIKE 'ro_view%'
+ WHERE table_name LIKE E'r_\\_view%'
  ORDER BY table_name;
  table_name | is_insertable_into 
 ------------+--------------------
@@ -37,14 +39,12 @@ SELECT table_name, is_insertable_into
  ro_view11  | NO
  ro_view12  | NO
  ro_view13  | NO
- ro_view14  | NO
- ro_view15  | NO
- ro_view16  | NO
  ro_view17  | NO
  ro_view18  | NO
  ro_view19  | NO
  ro_view2   | NO
  ro_view20  | NO
+ ro_view21  | NO
  ro_view3   | NO
  ro_view4   | NO
  ro_view5   | NO
@@ -52,11 +52,14 @@ SELECT table_name, is_insertable_into
  ro_view7   | NO
  ro_view8   | NO
  ro_view9   | NO
-(20 rows)
+ rw_view14  | YES
+ rw_view15  | YES
+ rw_view16  | YES
+(21 rows)
 
 SELECT table_name, is_updatable, is_insertable_into
   FROM information_schema.views
- WHERE table_name LIKE 'ro_view%'
+ WHERE table_name LIKE E'r_\\_view%'
  ORDER BY table_name;
  table_name | is_updatable | is_insertable_into 
 ------------+--------------+--------------------
@@ -65,14 +68,12 @@ SELECT table_name, is_updatable, is_insertable_into
  ro_view11  | NO           | NO
  ro_view12  | NO           | NO
  ro_view13  | NO           | NO
- ro_view14  | NO           | NO
- ro_view15  | NO           | NO
- ro_view16  | NO           | NO
  ro_view17  | NO           | NO
  ro_view18  | NO           | NO
  ro_view19  | NO           | NO
  ro_view2   | NO           | NO
  ro_view20  | NO           | NO
+ ro_view21  | NO           | NO
  ro_view3   | NO           | NO
  ro_view4   | NO           | NO
  ro_view5   | NO           | NO
@@ -80,11 +81,14 @@ SELECT table_name, is_updatable, is_insertable_into
  ro_view7   | NO           | NO
  ro_view8   | NO           | NO
  ro_view9   | NO           | NO
-(20 rows)
+ rw_view14  | YES          | YES
+ rw_view15  | YES          | YES
+ rw_view16  | YES          | YES
+(21 rows)
 
 SELECT table_name, column_name, is_updatable
   FROM information_schema.columns
- WHERE table_name LIKE 'ro_view%'
+ WHERE table_name LIKE E'r_\\_view%'
  ORDER BY table_name, ordinal_position;
  table_name |  column_name  | is_updatable 
 ------------+---------------+--------------
@@ -96,12 +100,6 @@ SELECT table_name, column_name, is_updatable
  ro_view12  | a             | NO
  ro_view13  | a             | NO
  ro_view13  | b             | NO
- ro_view14  | ctid          | NO
- ro_view15  | a             | NO
- ro_view15  | upper         | NO
- ro_view16  | a             | NO
- ro_view16  | b             | NO
- ro_view16  | aa            | NO
  ro_view17  | a             | NO
  ro_view17  | b             | NO
  ro_view18  | a             | NO
@@ -119,6 +117,9 @@ SELECT table_name, column_name, is_updatable
  ro_view20  | log_cnt       | NO
  ro_view20  | is_cycled     | NO
  ro_view20  | is_called     | NO
+ ro_view21  | a             | NO
+ ro_view21  | b             | NO
+ ro_view21  | g             | NO
  ro_view3   | ?column?      | NO
  ro_view4   | count         | NO
  ro_view5   | a             | NO
@@ -131,8 +132,17 @@ SELECT table_name, column_name, is_updatable
  ro_view8   | b             | NO
  ro_view9   | a             | NO
  ro_view9   | b             | NO
-(43 rows)
+ rw_view14  | ctid          | NO
+ rw_view14  | a             | YES
+ rw_view14  | b             | YES
+ rw_view15  | a             | YES
+ rw_view15  | upper         | NO
+ rw_view16  | a             | YES
+ rw_view16  | b             | YES
+ rw_view16  | aa            | YES
+(48 rows)
 
+-- Read-only views
 DELETE FROM ro_view1;
 ERROR:  cannot delete from view "ro_view1"
 DETAIL:  Views containing DISTINCT are not automatically updatable.
@@ -147,11 +157,11 @@ DETAIL:  Views containing HAVING are not automatically updatable.
 HINT:  To enable deleting from the view, provide an INSTEAD OF DELETE trigger or an unconditional ON DELETE DO INSTEAD rule.
 DELETE FROM ro_view4;
 ERROR:  cannot delete from view "ro_view4"
-DETAIL:  Views that return columns that are not columns of their base relation are not automatically updatable.
+DETAIL:  Views that return aggregate functions are not automatically updatable
 HINT:  To enable deleting from the view, provide an INSTEAD OF DELETE trigger or an unconditional ON DELETE DO INSTEAD rule.
 DELETE FROM ro_view5;
 ERROR:  cannot delete from view "ro_view5"
-DETAIL:  Views that return columns that are not columns of their base relation are not automatically updatable.
+DETAIL:  Views that return window functions are not automatically updatable
 HINT:  To enable deleting from the view, provide an INSTEAD OF DELETE trigger or an unconditional ON DELETE DO INSTEAD rule.
 DELETE FROM ro_view6;
 ERROR:  cannot delete from view "ro_view6"
@@ -185,18 +195,75 @@ INSERT INTO ro_view13 VALUES (3, 'Row 3');
 ERROR:  cannot insert into view "ro_view13"
 DETAIL:  Views that do not select from a single table or view are not automatically updatable.
 HINT:  To enable inserting into the view, provide an INSTEAD OF INSERT trigger or an unconditional ON INSERT DO INSTEAD rule.
-INSERT INTO ro_view14 VALUES (null);
-ERROR:  cannot insert into view "ro_view14"
-DETAIL:  Views that return system columns are not automatically updatable.
-HINT:  To enable inserting into the view, provide an INSTEAD OF INSERT trigger or an unconditional ON INSERT DO INSTEAD rule.
-INSERT INTO ro_view15 VALUES (3, 'ROW 3');
-ERROR:  cannot insert into view "ro_view15"
-DETAIL:  Views that return columns that are not columns of their base relation are not automatically updatable.
-HINT:  To enable inserting into the view, provide an INSTEAD OF INSERT trigger or an unconditional ON INSERT DO INSTEAD rule.
-INSERT INTO ro_view16 VALUES (3, 'Row 3', 3);
-ERROR:  cannot insert into view "ro_view16"
-DETAIL:  Views that return the same column more than once are not automatically updatable.
-HINT:  To enable inserting into the view, provide an INSTEAD OF INSERT trigger or an unconditional ON INSERT DO INSTEAD rule.
+-- Partially updatable view
+INSERT INTO rw_view14 VALUES (null, 3, 'Row 3'); -- should fail
+ERROR:  cannot insert into column "ctid" of view "rw_view14"
+DETAIL:  View columns that refer to system columns are not updatable.
+INSERT INTO rw_view14 (a, b) VALUES (3, 'Row 3'); -- should be OK
+UPDATE rw_view14 SET ctid=null WHERE a=3; -- should fail
+ERROR:  cannot update column "ctid" of view "rw_view14"
+DETAIL:  View columns that refer to system columns are not updatable.
+UPDATE rw_view14 SET b='ROW 3' WHERE a=3; -- should be OK
+SELECT * FROM base_tbl;
+ a  |   b    
+----+--------
+ -2 | Row -2
+ -1 | Row -1
+  0 | Row 0
+  1 | Row 1
+  2 | Row 2
+  3 | ROW 3
+(6 rows)
+
+DELETE FROM rw_view14 WHERE a=3; -- should be OK
+-- Partially updatable view
+INSERT INTO rw_view15 VALUES (3, 'ROW 3'); -- should fail
+ERROR:  cannot insert into column "upper" of view "rw_view15"
+DETAIL:  View columns that are not columns of their base relation are not updatable.
+INSERT INTO rw_view15 (a) VALUES (3); -- should be OK
+ALTER VIEW rw_view15 ALTER COLUMN upper SET DEFAULT 'NOT SET';
+INSERT INTO rw_view15 (a) VALUES (4); -- should fail
+ERROR:  cannot insert into column "upper" of view "rw_view15"
+DETAIL:  View columns that are not columns of their base relation are not updatable.
+UPDATE rw_view15 SET upper='ROW 3' WHERE a=3; -- should fail
+ERROR:  cannot update column "upper" of view "rw_view15"
+DETAIL:  View columns that are not columns of their base relation are not updatable.
+UPDATE rw_view15 SET upper=DEFAULT WHERE a=3; -- should fail
+ERROR:  cannot update column "upper" of view "rw_view15"
+DETAIL:  View columns that are not columns of their base relation are not updatable.
+UPDATE rw_view15 SET a=4 WHERE a=3; -- should be OK
+SELECT * FROM base_tbl;
+ a  |      b      
+----+-------------
+ -2 | Row -2
+ -1 | Row -1
+  0 | Row 0
+  1 | Row 1
+  2 | Row 2
+  4 | Unspecified
+(6 rows)
+
+DELETE FROM rw_view15 WHERE a=4; -- should be OK
+-- Partially updatable view
+INSERT INTO rw_view16 VALUES (3, 'Row 3', 3); -- should fail
+ERROR:  multiple assignments to same column "a"
+INSERT INTO rw_view16 (a, b) VALUES (3, 'Row 3'); -- should be OK
+UPDATE rw_view16 SET a=3, aa=-3 WHERE a=3; -- should fail
+ERROR:  multiple assignments to same column "a"
+UPDATE rw_view16 SET aa=-3 WHERE a=3; -- should be OK
+SELECT * FROM base_tbl;
+ a  |   b    
+----+--------
+ -2 | Row -2
+ -1 | Row -1
+  0 | Row 0
+  1 | Row 1
+  2 | Row 2
+ -3 | Row 3
+(6 rows)
+
+DELETE FROM rw_view16 WHERE a=-3; -- should be OK
+-- Read-only views
 INSERT INTO ro_view17 VALUES (3, 'ROW 3');
 ERROR:  cannot insert into view "ro_view1"
 DETAIL:  Views containing DISTINCT are not automatically updatable.
@@ -213,8 +280,12 @@ UPDATE ro_view20 SET max_value=1000;
 ERROR:  cannot update view "ro_view20"
 DETAIL:  Views that do not select from a single table or view are not automatically updatable.
 HINT:  To enable updating the view, provide an INSTEAD OF UPDATE trigger or an unconditional ON UPDATE DO INSTEAD rule.
+UPDATE ro_view21 SET b=upper(b);
+ERROR:  cannot update view "ro_view21"
+DETAIL:  Views that return set-returning functions are not automatically updatable.
+HINT:  To enable updating the view, provide an INSTEAD OF UPDATE trigger or an unconditional ON UPDATE DO INSTEAD rule.
 DROP TABLE base_tbl CASCADE;
-NOTICE:  drop cascades to 16 other objects
+NOTICE:  drop cascades to 17 other objects
 DETAIL:  drop cascades to view ro_view1
 drop cascades to view ro_view17
 drop cascades to view ro_view2
@@ -226,11 +297,12 @@ drop cascades to view ro_view8
 drop cascades to view ro_view9
 drop cascades to view ro_view11
 drop cascades to view ro_view13
-drop cascades to view ro_view15
-drop cascades to view ro_view16
+drop cascades to view rw_view15
+drop cascades to view rw_view16
 drop cascades to view ro_view18
+drop cascades to view ro_view21
 drop cascades to view ro_view4
-drop cascades to view ro_view14
+drop cascades to view rw_view14
 DROP VIEW ro_view10, ro_view12, ro_view19;
 DROP SEQUENCE seq CASCADE;
 NOTICE:  drop cascades to view ro_view20
@@ -1063,6 +1135,148 @@ SELECT * FROM rw_view1;
 
 DROP TABLE base_tbl CASCADE;
 NOTICE:  drop cascades to view rw_view1
+-- views with updatable and non-updatable columns
+CREATE TABLE base_tbl(a float);
+INSERT INTO base_tbl SELECT i/10.0 FROM generate_series(1,10) g(i);
+CREATE VIEW rw_view1 AS
+  SELECT ctid, sin(a) s, a, cos(a) c
+  FROM base_tbl
+  WHERE a != 0
+  ORDER BY abs(a);
+INSERT INTO rw_view1 VALUES (null, null, 1.1, null); -- should fail
+ERROR:  cannot insert into column "ctid" of view "rw_view1"
+DETAIL:  View columns that refer to system columns are not updatable.
+INSERT INTO rw_view1 (s, c, a) VALUES (null, null, 1.1); -- should fail
+ERROR:  cannot insert into column "s" of view "rw_view1"
+DETAIL:  View columns that are not columns of their base relation are not updatable.
+INSERT INTO rw_view1 (a) VALUES (1.1) RETURNING a, s, c; -- OK
+  a  |         s         |         c         
+-----+-------------------+-------------------
+ 1.1 | 0.891207360061435 | 0.453596121425577
+(1 row)
+
+UPDATE rw_view1 SET s = s WHERE a = 1.1; -- should fail
+ERROR:  cannot update column "s" of view "rw_view1"
+DETAIL:  View columns that are not columns of their base relation are not updatable.
+UPDATE rw_view1 SET a = 1.05 WHERE a = 1.1 RETURNING s; -- OK
+         s         
+-------------------
+ 0.867423225594017
+(1 row)
+
+DELETE FROM rw_view1 WHERE a = 1.05; -- OK
+CREATE VIEW rw_view2 AS
+  SELECT s, c, s/c t, a base_a, ctid
+  FROM rw_view1;
+INSERT INTO rw_view2 VALUES (null, null, null, 1.1, null); -- should fail
+ERROR:  cannot insert into column "t" of view "rw_view2"
+DETAIL:  View columns that are not columns of their base relation are not updatable.
+INSERT INTO rw_view2(s, c, base_a) VALUES (null, null, 1.1); -- should fail
+ERROR:  cannot insert into column "s" of view "rw_view1"
+DETAIL:  View columns that are not columns of their base relation are not updatable.
+INSERT INTO rw_view2(base_a) VALUES (1.1) RETURNING t; -- OK
+        t         
+------------------
+ 1.96475965724865
+(1 row)
+
+UPDATE rw_view2 SET s = s WHERE base_a = 1.1; -- should fail
+ERROR:  cannot update column "s" of view "rw_view1"
+DETAIL:  View columns that are not columns of their base relation are not updatable.
+UPDATE rw_view2 SET t = t WHERE base_a = 1.1; -- should fail
+ERROR:  cannot update column "t" of view "rw_view2"
+DETAIL:  View columns that are not columns of their base relation are not updatable.
+UPDATE rw_view2 SET base_a = 1.05 WHERE base_a = 1.1; -- OK
+DELETE FROM rw_view2 WHERE base_a = 1.05 RETURNING base_a, s, c, t; -- OK
+ base_a |         s         |         c         |        t         
+--------+-------------------+-------------------+------------------
+   1.05 | 0.867423225594017 | 0.497571047891727 | 1.74331530998317
+(1 row)
+
+CREATE VIEW rw_view3 AS
+  SELECT s, c, s/c t, ctid
+  FROM rw_view1;
+INSERT INTO rw_view3 VALUES (null, null, null, null); -- should fail
+ERROR:  cannot insert into column "t" of view "rw_view3"
+DETAIL:  View columns that are not columns of their base relation are not updatable.
+INSERT INTO rw_view3(s) VALUES (null); -- should fail
+ERROR:  cannot insert into column "s" of view "rw_view1"
+DETAIL:  View columns that are not columns of their base relation are not updatable.
+UPDATE rw_view3 SET s = s; -- should fail
+ERROR:  cannot update column "s" of view "rw_view1"
+DETAIL:  View columns that are not columns of their base relation are not updatable.
+DELETE FROM rw_view3 WHERE s = sin(0.1); -- should be OK
+SELECT * FROM base_tbl ORDER BY a;
+  a  
+-----
+ 0.2
+ 0.3
+ 0.4
+ 0.5
+ 0.6
+ 0.7
+ 0.8
+ 0.9
+   1
+(9 rows)
+
+SELECT table_name, is_insertable_into
+  FROM information_schema.tables
+ WHERE table_name LIKE E'r_\\_view%'
+ ORDER BY table_name;
+ table_name | is_insertable_into 
+------------+--------------------
+ rw_view1   | YES
+ rw_view2   | YES
+ rw_view3   | NO
+(3 rows)
+
+SELECT table_name, is_updatable, is_insertable_into
+  FROM information_schema.views
+ WHERE table_name LIKE E'r_\\_view%'
+ ORDER BY table_name;
+ table_name | is_updatable | is_insertable_into 
+------------+--------------+--------------------
+ rw_view1   | YES          | YES
+ rw_view2   | YES          | YES
+ rw_view3   | NO           | NO
+(3 rows)
+
+SELECT table_name, column_name, is_updatable
+  FROM information_schema.columns
+ WHERE table_name LIKE E'r_\\_view%'
+ ORDER BY table_name, ordinal_position;
+ table_name | column_name | is_updatable 
+------------+-------------+--------------
+ rw_view1   | ctid        | NO
+ rw_view1   | s           | NO
+ rw_view1   | a           | YES
+ rw_view1   | c           | NO
+ rw_view2   | s           | NO
+ rw_view2   | c           | NO
+ rw_view2   | t           | NO
+ rw_view2   | base_a      | YES
+ rw_view2   | ctid        | NO
+ rw_view3   | s           | NO
+ rw_view3   | c           | NO
+ rw_view3   | t           | NO
+ rw_view3   | ctid        | NO
+(13 rows)
+
+SELECT events & 4 != 0 AS upd,
+       events & 8 != 0 AS ins,
+       events & 16 != 0 AS del
+  FROM pg_catalog.pg_relation_is_updatable('rw_view3'::regclass, false) t(events);
+ upd | ins | del 
+-----+-----+-----
+ f   | f   | t
+(1 row)
+
+DROP TABLE base_tbl CASCADE;
+NOTICE:  drop cascades to 3 other objects
+DETAIL:  drop cascades to view rw_view1
+drop cascades to view rw_view2
+drop cascades to view rw_view3
 -- inheritance tests
 CREATE TABLE base_tbl_parent (a int);
 CREATE TABLE base_tbl_child (CHECK (a > 0)) INHERITS (base_tbl_parent);
@@ -1339,7 +1553,7 @@ CREATE TABLE base_tbl (a int);
 CREATE VIEW rw_view1 AS SELECT * FROM base_tbl WITH CHECK OPTION;
 CREATE VIEW rw_view2 AS SELECT * FROM rw_view1 WHERE a > 0;
 CREATE VIEW rw_view3 AS SELECT * FROM rw_view2 WITH CHECK OPTION;
-SELECT * FROM information_schema.views WHERE table_name LIKE E'rw\_view_' ORDER BY table_name;
+SELECT * FROM information_schema.views WHERE table_name LIKE E'rw\\_view_' ORDER BY table_name;
  table_catalog | table_schema | table_name |      view_definition      | check_option | is_updatable | is_insertable_into | is_trigger_updatable | is_trigger_deletable | is_trigger_insertable_into 
 ---------------+--------------+------------+---------------------------+--------------+--------------+--------------------+----------------------+----------------------+----------------------------
  regression    | public       | rw_view1   |  SELECT base_tbl.a       +| CASCADED     | YES          | YES                | NO                   | NO                   | NO

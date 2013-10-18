@@ -319,16 +319,8 @@ CREATE VIEW vista AS SELECT text 'Hello World' AS hello;
 
      <listitem>
       <para>
-       All columns in the view's select list must be simple references to
-       columns of the underlying relation.  They cannot be expressions,
-       literals or functions.  System columns cannot be referenced, either.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       No column of the underlying relation can appear more than once in
-       the view's select list.
+       The view's select list must not contain any aggregates, window functions
+       or set-returning functions.
       </para>
      </listitem>
 
@@ -338,6 +330,14 @@ CREATE VIEW vista AS SELECT text 'Hello World' AS hello;
       </para>
      </listitem>
     </itemizedlist>
+   </para>
+
+   <para>
+    An automatically updatable view may contain a mix of updatable and
+    non-updatable columns.  A column is updatable if it is a simple reference
+    to an updatable column of the underlying base relation; otherwise the
+    column is read-only, and an error will be raised if an <command>INSERT</>
+    or <command>UPDATE</> statement attempts to assign a value to it.
    </para>
 
    <para>
@@ -432,6 +432,25 @@ CREATE VIEW pg_comedies AS
 </programlisting>
    This will create a view that checks both the <literal>kind</> and
    <literal>classification</> of new rows.
+  </para>
+
+  <para>
+   Create a view with a mix of updatable and non-updatable columns:
+
+<programlisting>
+CREATE VIEW comedies AS
+    SELECT f.*,
+           country_code_to_name(f.country_code) AS country,
+           (SELECT avg(r.rating)
+            FROM user_ratings r
+            WHERE r.film_id = f.id) AS avg_rating
+    FROM films f
+    WHERE f.kind = 'Comedy';
+</programlisting>
+   This view will support <command>INSERT</>, <command>UPDATE</> and
+   <command>DELETE</>.  All the columns from the <literal>films</> table will
+   be updatable, whereas the computed columns <literal>country</> and
+   <literal>avg_rating</> will be read-only.
   </para>
 
   <para>

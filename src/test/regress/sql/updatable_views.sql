@@ -2,7 +2,8 @@
 -- UPDATABLE VIEWS
 --
 
--- check that non-updatable views are rejected with useful error messages
+-- check that non-updatable views and columns are rejected with useful error
+-- messages
 
 CREATE TABLE base_tbl (a int PRIMARY KEY, b text DEFAULT 'Unspecified');
 INSERT INTO base_tbl SELECT i, 'Row ' || i FROM generate_series(-2, 2) g(i);
@@ -20,31 +21,33 @@ CREATE VIEW ro_view10 AS SELECT 1 AS a; -- No base relations
 CREATE VIEW ro_view11 AS SELECT b1.a, b2.b FROM base_tbl b1, base_tbl b2; -- Multiple base relations
 CREATE VIEW ro_view12 AS SELECT * FROM generate_series(1, 10) AS g(a); -- SRF in rangetable
 CREATE VIEW ro_view13 AS SELECT a, b FROM (SELECT * FROM base_tbl) AS t; -- Subselect in rangetable
-CREATE VIEW ro_view14 AS SELECT ctid FROM base_tbl; -- System columns not supported
-CREATE VIEW ro_view15 AS SELECT a, upper(b) FROM base_tbl; -- Expression/function in targetlist
-CREATE VIEW ro_view16 AS SELECT a, b, a AS aa FROM base_tbl; -- Repeated column
+CREATE VIEW rw_view14 AS SELECT ctid, a, b FROM base_tbl; -- System columns may be part of an updatable view
+CREATE VIEW rw_view15 AS SELECT a, upper(b) FROM base_tbl; -- Expression/function may be part of an updatable view
+CREATE VIEW rw_view16 AS SELECT a, b, a AS aa FROM base_tbl; -- Repeated column may be part of an updatable view
 CREATE VIEW ro_view17 AS SELECT * FROM ro_view1; -- Base relation not updatable
 CREATE VIEW ro_view18 WITH (security_barrier = true)
   AS SELECT * FROM base_tbl; -- Security barrier views not updatable
 CREATE VIEW ro_view19 AS SELECT * FROM (VALUES(1)) AS tmp(a); -- VALUES in rangetable
 CREATE SEQUENCE seq;
 CREATE VIEW ro_view20 AS SELECT * FROM seq; -- View based on a sequence
+CREATE VIEW ro_view21 AS SELECT a, b, generate_series(1, a) g FROM base_tbl; -- SRF in targetlist not supported
 
 SELECT table_name, is_insertable_into
   FROM information_schema.tables
- WHERE table_name LIKE 'ro_view%'
+ WHERE table_name LIKE E'r_\\_view%'
  ORDER BY table_name;
 
 SELECT table_name, is_updatable, is_insertable_into
   FROM information_schema.views
- WHERE table_name LIKE 'ro_view%'
+ WHERE table_name LIKE E'r_\\_view%'
  ORDER BY table_name;
 
 SELECT table_name, column_name, is_updatable
   FROM information_schema.columns
- WHERE table_name LIKE 'ro_view%'
+ WHERE table_name LIKE E'r_\\_view%'
  ORDER BY table_name, ordinal_position;
 
+-- Read-only views
 DELETE FROM ro_view1;
 DELETE FROM ro_view2;
 DELETE FROM ro_view3;
@@ -58,13 +61,36 @@ UPDATE ro_view10 SET a=a+1;
 UPDATE ro_view11 SET a=a+1;
 UPDATE ro_view12 SET a=a+1;
 INSERT INTO ro_view13 VALUES (3, 'Row 3');
-INSERT INTO ro_view14 VALUES (null);
-INSERT INTO ro_view15 VALUES (3, 'ROW 3');
-INSERT INTO ro_view16 VALUES (3, 'Row 3', 3);
+-- Partially updatable view
+INSERT INTO rw_view14 VALUES (null, 3, 'Row 3'); -- should fail
+INSERT INTO rw_view14 (a, b) VALUES (3, 'Row 3'); -- should be OK
+UPDATE rw_view14 SET ctid=null WHERE a=3; -- should fail
+UPDATE rw_view14 SET b='ROW 3' WHERE a=3; -- should be OK
+SELECT * FROM base_tbl;
+DELETE FROM rw_view14 WHERE a=3; -- should be OK
+-- Partially updatable view
+INSERT INTO rw_view15 VALUES (3, 'ROW 3'); -- should fail
+INSERT INTO rw_view15 (a) VALUES (3); -- should be OK
+ALTER VIEW rw_view15 ALTER COLUMN upper SET DEFAULT 'NOT SET';
+INSERT INTO rw_view15 (a) VALUES (4); -- should fail
+UPDATE rw_view15 SET upper='ROW 3' WHERE a=3; -- should fail
+UPDATE rw_view15 SET upper=DEFAULT WHERE a=3; -- should fail
+UPDATE rw_view15 SET a=4 WHERE a=3; -- should be OK
+SELECT * FROM base_tbl;
+DELETE FROM rw_view15 WHERE a=4; -- should be OK
+-- Partially updatable view
+INSERT INTO rw_view16 VALUES (3, 'Row 3', 3); -- should fail
+INSERT INTO rw_view16 (a, b) VALUES (3, 'Row 3'); -- should be OK
+UPDATE rw_view16 SET a=3, aa=-3 WHERE a=3; -- should fail
+UPDATE rw_view16 SET aa=-3 WHERE a=3; -- should be OK
+SELECT * FROM base_tbl;
+DELETE FROM rw_view16 WHERE a=-3; -- should be OK
+-- Read-only views
 INSERT INTO ro_view17 VALUES (3, 'ROW 3');
 INSERT INTO ro_view18 VALUES (3, 'ROW 3');
 DELETE FROM ro_view19;
 UPDATE ro_view20 SET max_value=1000;
+UPDATE ro_view21 SET b=upper(b);
 
 DROP TABLE base_tbl CASCADE;
 DROP VIEW ro_view10, ro_view12, ro_view19;
@@ -510,6 +536,68 @@ SELECT * FROM rw_view1;
 
 DROP TABLE base_tbl CASCADE;
 
+-- views with updatable and non-updatable columns
+
+CREATE TABLE base_tbl(a float);
+INSERT INTO base_tbl SELECT i/10.0 FROM generate_series(1,10) g(i);
+
+CREATE VIEW rw_view1 AS
+  SELECT ctid, sin(a) s, a, cos(a) c
+  FROM base_tbl
+  WHERE a != 0
+  ORDER BY abs(a);
+
+INSERT INTO rw_view1 VALUES (null, null, 1.1, null); -- should fail
+INSERT INTO rw_view1 (s, c, a) VALUES (null, null, 1.1); -- should fail
+INSERT INTO rw_view1 (a) VALUES (1.1) RETURNING a, s, c; -- OK
+UPDATE rw_view1 SET s = s WHERE a = 1.1; -- should fail
+UPDATE rw_view1 SET a = 1.05 WHERE a = 1.1 RETURNING s; -- OK
+DELETE FROM rw_view1 WHERE a = 1.05; -- OK
+
+CREATE VIEW rw_view2 AS
+  SELECT s, c, s/c t, a base_a, ctid
+  FROM rw_view1;
+
+INSERT INTO rw_view2 VALUES (null, null, null, 1.1, null); -- should fail
+INSERT INTO rw_view2(s, c, base_a) VALUES (null, null, 1.1); -- should fail
+INSERT INTO rw_view2(base_a) VALUES (1.1) RETURNING t; -- OK
+UPDATE rw_view2 SET s = s WHERE base_a = 1.1; -- should fail
+UPDATE rw_view2 SET t = t WHERE base_a = 1.1; -- should fail
+UPDATE rw_view2 SET base_a = 1.05 WHERE base_a = 1.1; -- OK
+DELETE FROM rw_view2 WHERE base_a = 1.05 RETURNING base_a, s, c, t; -- OK
+
+CREATE VIEW rw_view3 AS
+  SELECT s, c, s/c t, ctid
+  FROM rw_view1;
+
+INSERT INTO rw_view3 VALUES (null, null, null, null); -- should fail
+INSERT INTO rw_view3(s) VALUES (null); -- should fail
+UPDATE rw_view3 SET s = s; -- should fail
+DELETE FROM rw_view3 WHERE s = sin(0.1); -- should be OK
+SELECT * FROM base_tbl ORDER BY a;
+
+SELECT table_name, is_insertable_into
+  FROM information_schema.tables
+ WHERE table_name LIKE E'r_\\_view%'
+ ORDER BY table_name;
+
+SELECT table_name, is_updatable, is_insertable_into
+  FROM information_schema.views
+ WHERE table_name LIKE E'r_\\_view%'
+ ORDER BY table_name;
+
+SELECT table_name, column_name, is_updatable
+  FROM information_schema.columns
+ WHERE table_name LIKE E'r_\\_view%'
+ ORDER BY table_name, ordinal_position;
+
+SELECT events & 4 != 0 AS upd,
+       events & 8 != 0 AS ins,
+       events & 16 != 0 AS del
+  FROM pg_catalog.pg_relation_is_updatable('rw_view3'::regclass, false) t(events);
+
+DROP TABLE base_tbl CASCADE;
+
 -- inheritance tests
 
 CREATE TABLE base_tbl_parent (a int);
@@ -611,7 +699,7 @@ CREATE TABLE base_tbl (a int);
 CREATE VIEW rw_view1 AS SELECT * FROM base_tbl WITH CHECK OPTION;
 CREATE VIEW rw_view2 AS SELECT * FROM rw_view1 WHERE a > 0;
 CREATE VIEW rw_view3 AS SELECT * FROM rw_view2 WITH CHECK OPTION;
-SELECT * FROM information_schema.views WHERE table_name LIKE E'rw\_view_' ORDER BY table_name;
+SELECT * FROM information_schema.views WHERE table_name LIKE E'rw\\_view_' ORDER BY table_name;
 
 INSERT INTO rw_view1 VALUES (-1); -- ok
 INSERT INTO rw_view1 VALUES (1); -- ok

@@ -61,6 +61,8 @@ static List *matchLocks(CmdType event, RuleLock *rulelocks,
 		   int varno, Query *parsetree);
 static Query *fireRIRrules(Query *parsetree, List *activeRIRs,
 			 bool forUpdatePushedDown);
+static bool view_has_instead_trigger(Relation view, CmdType event);
+static Bitmapset *adjust_view_column_set(Bitmapset *cols, List *targetlist);
 
 
 /*
@@ -616,12 +618,18 @@ adjustJoinTreeList(Query *parsetree, bool removert, int rt_index)
  * and UPDATE, replace explicit DEFAULT specifications with column default
  * expressions.
  *
- * 2. For an UPDATE on a view, add tlist entries for any unassigned-to
- * attributes, assigning them their old values.  These will later get
- * expanded to the output values of the view.  (This is equivalent to what
- * the planner's expand_targetlist() will do for UPDATE on a regular table,
- * but it's more convenient to do it here while we still have easy access
- * to the view's original RT index.)
+ * 2. For an UPDATE on a trigger-updatable view, add tlist entries for any
+ * unassigned-to attributes, assigning them their old values.  These will
+ * later get expanded to the output values of the view.  (This is equivalent
+ * to what the planner's expand_targetlist() will do for UPDATE on a regular
+ * table, but it's more convenient to do it here while we still have easy
+ * access to the view's original RT index.)  This is only necessary for
+ * trigger-updatable views, for which the view remains the result relation of
+ * the query.  For auto-updatable views we must not do this, since it might
+ * add assignments to non-updatable view columns.  For rule-updatable views it
+ * is unnecessary extra work, since the query will be rewritten with a
+ * different result relation which will be processed when we recurse via
+ * RewriteQuery.
  *
  * 3. Merge multiple entries for the same target attribute, or declare error
  * if we can't.  Multiple entries are only allowed for INSERT/UPDATE of
@@ -783,11 +791,12 @@ rewriteTargetListIU(Query *parsetree, Relation target_relation,
 		}
 
 		/*
-		 * For an UPDATE on a view, provide a dummy entry whenever there is no
-		 * explicit assignment.
+		 * For an UPDATE on a trigger-updatable view, provide a dummy entry
+		 * whenever there is no explicit assignment.
 		 */
 		if (new_tle == NULL && commandType == CMD_UPDATE &&
-			target_relation->rd_rel->relkind == RELKIND_VIEW)
+			target_relation->rd_rel->relkind == RELKIND_VIEW &&
+			view_has_instead_trigger(target_relation, CMD_UPDATE))
 		{
 			Node	   *new_expr;
 
@@ -1880,7 +1889,8 @@ get_view_query(Relation view)
  * view_has_instead_trigger - does view have an INSTEAD OF trigger for event?
  *
  * If it does, we don't want to treat it as auto-updatable.  This test can't
- * be folded into view_is_auto_updatable because it's not an error condition.
+ * be folded into view_query_is_auto_updatable because it's not an error
+ * condition.
  */
 static bool
 view_has_instead_trigger(Relation view, CmdType event)
@@ -1910,55 +1920,64 @@ view_has_instead_trigger(Relation view, CmdType event)
 
 
 /*
- * view_is_auto_updatable -
- *    Retrive the view definition and options and then determine if the view
- *    can be auto-updated by calling view_query_is_auto_updatable().  Returns
- *    NULL or a message string giving the reason the view is not auto
- *    updateable.  See view_query_is_auto_updatable() for details.
+ * view_col_is_auto_updatable - test whether the specified column of a view
+ * is auto-updatable. Returns NULL (if the column can be updated) or a message
+ * string giving the reason that it cannot be.
  *
- *    The only view option which affects if a view can be auto-updated, today,
- *    is the security_barrier option.  If other options are added later, they
- *    will also need to be handled here.
- *
- * Caller must have verified that the relation is a view!
- *
- * Note that the checks performed here are local to this view.	We do not
- * check whether the view's underlying base relation is updatable; that
- * will be dealt with in later, recursive processing.
- *
- * Also note that we don't check for INSTEAD triggers or rules here; those
- * also prevent auto-update, but they must be checked for by the caller.
+ * Note that the checks performed here are local to this view. We do not check
+ * whether the referenced column of the underlying base relation is updatable.
  */
-const char *
-view_is_auto_updatable(Relation view)
+static const char *
+view_col_is_auto_updatable(RangeTblRef *rtr, TargetEntry *tle)
 {
-	Query	   *viewquery = get_view_query(view);
-	bool		security_barrier = RelationIsSecurityView(view);
+	Var		   *var = (Var *) tle->expr;
 
-	return view_query_is_auto_updatable(viewquery, security_barrier);
+	/*
+	 * For now, the only updatable columns we support are those that are Vars
+	 * referring to user columns of the underlying base relation.
+	 *
+	 * The view targetlist may contain resjunk columns (e.g., a view defined
+	 * like "SELECT * FROM t ORDER BY a+b" is auto-updatable) but such columns
+	 * are not auto-updatable, and in fact should never appear in the outer
+	 * query's targetlist.
+	 */
+	if (tle->resjunk)
+		return gettext_noop("Junk view columns are not updatable.");
+
+	if (!IsA(var, Var) ||
+		var->varno != rtr->rtindex ||
+		var->varlevelsup != 0)
+		return gettext_noop("View columns that are not columns of their base relation are not updatable.");
+
+	if (var->varattno < 0)
+		return gettext_noop("View columns that refer to system columns are not updatable.");
+
+	if (var->varattno == 0)
+		return gettext_noop("View columns that return whole-row references are not updatable.");
+
+	return NULL;				/* the view column is updatable */
 }
 
 
 /*
- * view_query_is_auto_updatable -
- *	  Test if the specified view definition can be automatically updated, given
- *    the view's options (currently only security_barrier affects a view's
- *    auto-updatable status).
+ * view_query_is_auto_updatable - test whether the specified view definition
+ * represents an auto-updatable view. Returns NULL (if the view can be updated)
+ * or a message string giving the reason that it cannot be.
  *
- *    This will either return NULL (if the view can be updated) or a message
- *    string giving the reason that it cannot be.
+ * If check_cols is true, the view is required to have at least one updatable
+ * column (necessary for INSERT/UPDATE). Otherwise the view's columns are not
+ * checked for updatability. See also view_cols_are_auto_updatable.
  *
- * Note that the checks performed here are only based on the view
- * definition. We do not check whether any base relations referred to by
- * the view are updatable.
+ * Note that the checks performed here are only based on the view definition.
+ * We do not check whether any base relations referred to by the view are
+ * updatable.
  */
 const char *
-view_query_is_auto_updatable(Query *viewquery, bool security_barrier)
+view_query_is_auto_updatable(Query *viewquery, bool security_barrier,
+							 bool check_cols)
 {
 	RangeTblRef *rtr;
 	RangeTblEntry *base_rte;
-	Bitmapset  *bms;
-	ListCell   *cell;
 
 	/*----------
 	 * Check if the view is simply updatable.  According to SQL-92 this means:
@@ -1975,11 +1994,18 @@ view_query_is_auto_updatable(Query *viewquery, bool security_barrier)
 	 * arise in Postgres, since any such sub-query will not see any updates
 	 * executed by the outer query anyway, thanks to MVCC snapshotting.)
 	 *
+	 * We also relax the second restriction by supporting part of SQL:1999
+	 * feature T111, which allows for a mix of updatable and non-updatable
+	 * columns, provided that an INSERT or UPDATE doesn't attempt to assign to
+	 * a non-updatable column.
+	 *
 	 * In addition we impose these constraints, involving features that are
 	 * not part of SQL-92:
 	 *	- No CTEs (WITH clauses).
 	 *	- No OFFSET or LIMIT clauses (this matches a SQL:2008 restriction).
 	 *	- No system columns (including whole-row references) in the tlist.
+	 *	- No window functions in the tlist.
+	 *	- No set-returning functions in the tlist.
 	 *
 	 * Note that we do these checks without recursively expanding the view.
 	 * If the base relation is a view, we'll recursively deal with it later.
@@ -2002,6 +2028,24 @@ view_query_is_auto_updatable(Query *viewquery, bool security_barrier)
 
 	if (viewquery->limitOffset != NULL || viewquery->limitCount != NULL)
 		return gettext_noop("Views containing LIMIT or OFFSET are not automatically updatable.");
+
+	/*
+	 * We must not allow window functions or set returning functions in the
+	 * targetlist. Otherwise we might end up inserting them into the quals of
+	 * the main query. We must also check for aggregates in the targetlist in
+	 * case they appear without a GROUP BY.
+	 *
+	 * These restrictions ensure that each row of the view corresponds to a
+	 * unique row in the underlying base relation.
+	 */
+	if (viewquery->hasAggs)
+		return gettext_noop("Views that return aggregate functions are not automatically updatable");
+
+	if (viewquery->hasWindowFuncs)
+		return gettext_noop("Views that return window functions are not automatically updatable");
+
+	if (expression_returns_set((Node *) viewquery->targetList))
+		return gettext_noop("Views that return set-returning functions are not automatically updatable.");
 
 	/*
 	 * For now, we also don't support security-barrier views, because of the
@@ -2030,48 +2074,116 @@ view_query_is_auto_updatable(Query *viewquery, bool security_barrier)
 		return gettext_noop("Views that do not select from a single table or view are not automatically updatable.");
 
 	/*
-	 * The view's targetlist entries should all be Vars referring to user
-	 * columns of the base relation, and no two should refer to the same
-	 * column.
-	 *
-	 * Note however that we should ignore resjunk entries.	This proviso is
-	 * relevant because ORDER BY is not disallowed, and we shouldn't reject a
-	 * view defined like "SELECT * FROM t ORDER BY a+b".
+	 * Check that the view has at least one updatable column. This is required
+	 * for INSERT/UPDATE but not for DELETE.
 	 */
-	bms = NULL;
+	if (check_cols)
+	{
+		ListCell   *cell;
+		bool		found;
+
+		found = false;
+		foreach(cell, viewquery->targetList)
+		{
+			TargetEntry *tle = (TargetEntry *) lfirst(cell);
+
+			if (view_col_is_auto_updatable(rtr, tle) == NULL)
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if (!found)
+			return gettext_noop("Views that have no updatable columns are not automatically updatable.");
+	}
+
+	return NULL;				/* the view is updatable */
+}
+
+
+/*
+ * view_cols_are_auto_updatable - test whether all of the required columns of
+ * an auto-updatable view are actually updatable. Returns NULL (if all the
+ * required columns can be updated) or a message string giving the reason that
+ * they cannot be.
+ *
+ * This should be used for INSERT/UPDATE to ensure that we don't attempt to
+ * assign to any non-updatable columns.
+ *
+ * Additionally it may be used to retrieve the set of updatable columns in the
+ * view, or if one or more of the required columns is not updatable, the name
+ * of the first offending non-updatable column.
+ *
+ * The caller must have already verified that this is an auto-updatable view
+ * using view_query_is_auto_updatable.
+ *
+ * Note that the checks performed here are only based on the view definition.
+ * We do not check whether the referenced columns of the base relation are
+ * updatable.
+ */
+static const char *
+view_cols_are_auto_updatable(Query *viewquery,
+							 Bitmapset *required_cols,
+							 Bitmapset **updatable_cols,
+							 char **non_updatable_col)
+{
+	RangeTblRef *rtr;
+	AttrNumber	col;
+	ListCell   *cell;
+
+	/*
+	 * The caller should have verified that this view is auto-updatable and
+	 * so there should be a single base relation.
+	 */
+	Assert(list_length(viewquery->jointree->fromlist) == 1);
+	rtr = (RangeTblRef *) linitial(viewquery->jointree->fromlist);
+	Assert(IsA(rtr, RangeTblRef));
+
+	/* Initialize the optional return values */
+	if (updatable_cols != NULL)
+		*updatable_cols = NULL;
+	if (non_updatable_col != NULL)
+		*non_updatable_col = NULL;
+
+	/* Test each view column for updatability */
+	col = -FirstLowInvalidHeapAttributeNumber;
 	foreach(cell, viewquery->targetList)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(cell);
-		Var		   *var = (Var *) tle->expr;
+		const char *col_update_detail;
 
-		if (tle->resjunk)
-			continue;
+		col++;
+		col_update_detail = view_col_is_auto_updatable(rtr, tle);
 
-		if (!IsA(var, Var) ||
-			var->varno != rtr->rtindex ||
-			var->varlevelsup != 0)
-			return gettext_noop("Views that return columns that are not columns of their base relation are not automatically updatable.");
-
-		if (var->varattno < 0)
-			return gettext_noop("Views that return system columns are not automatically updatable.");
-
-		if (var->varattno == 0)
-			return gettext_noop("Views that return whole-row references are not automatically updatable.");
-
-		if (bms_is_member(var->varattno, bms))
-			return gettext_noop("Views that return the same column more than once are not automatically updatable.");
-
-		bms = bms_add_member(bms, var->varattno);
+		if (col_update_detail == NULL)
+		{
+			/* The column is updatable */
+			if (updatable_cols != NULL)
+				*updatable_cols = bms_add_member(*updatable_cols, col);
+		}
+		else if (bms_is_member(col, required_cols))
+		{
+			/* The required column is not updatable */
+			if (non_updatable_col != NULL)
+				*non_updatable_col = tle->resname;
+			return col_update_detail;
+		}
 	}
-	bms_free(bms);				/* just for cleanliness */
 
-	return NULL;				/* the view is simply updatable */
+	return NULL;			/* all the required view columns are updatable */
 }
 
 
 /*
  * relation_is_updatable - determine which update events the specified
  * relation supports.
+ *
+ * Note that views may contain a mix of updatable and non-updatable columns.
+ * For a view to support INSERT/UPDATE it must have at least one updatable
+ * column, but there is no such restriction for DELETE. If include_cols is
+ * non-NULL, then only the specified columns are considered when testing for
+ * updatability.
  *
  * This is used for the information_schema views, which have separate concepts
  * of "updatable" and "trigger updatable".	A relation is "updatable" if it
@@ -2090,7 +2202,9 @@ view_query_is_auto_updatable(Query *viewquery, bool security_barrier)
  * so that we can test for UPDATE plus DELETE support in a single call.)
  */
 int
-relation_is_updatable(Oid reloid, bool include_triggers)
+relation_is_updatable(Oid reloid,
+					  bool include_triggers,
+					  Bitmapset *include_cols)
 {
 	int			events = 0;
 	Relation	rel;
@@ -2185,32 +2299,57 @@ relation_is_updatable(Oid reloid, bool include_triggers)
 	}
 
 	/* Check if this is an automatically updatable view */
-	if (rel->rd_rel->relkind == RELKIND_VIEW &&
-		view_is_auto_updatable(rel) == NULL)
+	if (rel->rd_rel->relkind == RELKIND_VIEW)
 	{
-		Query	   *viewquery;
-		RangeTblRef *rtr;
-		RangeTblEntry *base_rte;
-		Oid			baseoid;
+		Query	   *viewquery = get_view_query(rel);
 
-		/* The base relation must also be updatable */
-		viewquery = get_view_query(rel);
-		rtr = (RangeTblRef *) linitial(viewquery->jointree->fromlist);
-		base_rte = rt_fetch(rtr->rtindex, viewquery->rtable);
-		Assert(base_rte->rtekind == RTE_RELATION);
+		if (view_query_is_auto_updatable(viewquery,
+										 RelationIsSecurityView(rel),
+										 false) == NULL)
+		{
+			Bitmapset  *updatable_cols;
+			int			auto_events;
+			RangeTblRef *rtr;
+			RangeTblEntry *base_rte;
+			Oid			baseoid;
 
-		if (base_rte->relkind == RELKIND_RELATION)
-		{
-			/* Tables are always updatable */
-			relation_close(rel, AccessShareLock);
-			return ALL_EVENTS;
-		}
-		else
-		{
-			/* Do a recursive check for any other kind of base relation */
-			baseoid = base_rte->relid;
-			relation_close(rel, AccessShareLock);
-			return relation_is_updatable(baseoid, include_triggers);
+			/*
+			 * Determine which of the view's columns are updatable. If there
+			 * are none within the set of of columns we are looking at, then
+			 * the view doesn't support INSERT/UPDATE, but it may still
+			 * support DELETE.
+			 */
+			view_cols_are_auto_updatable(viewquery, NULL,
+										 &updatable_cols, NULL);
+
+			if (include_cols != NULL)
+				updatable_cols = bms_int_members(updatable_cols, include_cols);
+
+			if (bms_is_empty(updatable_cols))
+				auto_events = (1 << CMD_DELETE); /* May support DELETE */
+			else
+				auto_events = ALL_EVENTS; /* May support all events */
+
+			/*
+			 * The base relation must also support these update commands.
+			 * Tables are always updatable, but for any other kind of base
+			 * relation we must do a recursive check limited to the columns
+			 * referenced by the locally updatable columns in this view.
+			 */
+			rtr = (RangeTblRef *) linitial(viewquery->jointree->fromlist);
+			base_rte = rt_fetch(rtr->rtindex, viewquery->rtable);
+			Assert(base_rte->rtekind == RTE_RELATION);
+
+			if (base_rte->relkind != RELKIND_RELATION)
+			{
+				baseoid = base_rte->relid;
+				include_cols = adjust_view_column_set(updatable_cols,
+													  viewquery->targetList);
+				auto_events &= relation_is_updatable(baseoid,
+													 include_triggers,
+													 include_cols);
+			}
+			events |= auto_events;
 		}
 	}
 
@@ -2226,7 +2365,7 @@ relation_is_updatable(Oid reloid, bool include_triggers)
  * This is used with simply-updatable views to map column-permissions sets for
  * the view columns onto the matching columns in the underlying base relation.
  * The targetlist is expected to be a list of plain Vars of the underlying
- * relation (as per the checks above in view_is_auto_updatable).
+ * relation (as per the checks above in view_query_is_auto_updatable).
  */
 static Bitmapset *
 adjust_view_column_set(Bitmapset *cols, List *targetlist)
@@ -2304,8 +2443,8 @@ adjust_view_column_set(Bitmapset *cols, List *targetlist)
 static Query *
 rewriteTargetView(Query *parsetree, Relation view)
 {
-	const char *auto_update_detail;
 	Query	   *viewquery;
+	const char *auto_update_detail;
 	RangeTblRef *rtr;
 	int			base_rt_index;
 	int			new_rt_index;
@@ -2316,8 +2455,14 @@ rewriteTargetView(Query *parsetree, Relation view)
 	List	   *view_targetlist;
 	ListCell   *lc;
 
-	/* The view must be simply updatable, else fail */
-	auto_update_detail = view_is_auto_updatable(view);
+	/* The view must be updatable, else fail */
+	viewquery = get_view_query(view);
+
+	auto_update_detail =
+		view_query_is_auto_updatable(viewquery,
+									 RelationIsSecurityView(view),
+									 parsetree->commandType != CMD_DELETE);
+
 	if (auto_update_detail)
 	{
 		/* messages here should match execMain.c's CheckValidResultRel */
@@ -2354,15 +2499,70 @@ rewriteTargetView(Query *parsetree, Relation view)
 		}
 	}
 
+	/*
+	 * For INSERT/UPDATE the modified columns must all be updatable. Note that
+	 * we get the modified columns from the query's targetlist, not from the
+	 * result RTE's modifiedCols set, since rewriteTargetListIU may have added
+	 * additional targetlist entries for view defaults, and these must also be
+	 * updatable.
+	 */
+	if (parsetree->commandType != CMD_DELETE)
+	{
+		Bitmapset  *modified_cols = NULL;
+		char	   *non_updatable_col;
+
+		foreach(lc, parsetree->targetList)
+		{
+			TargetEntry *tle = (TargetEntry *) lfirst(lc);
+
+			if (!tle->resjunk)
+				modified_cols = bms_add_member(modified_cols,
+							tle->resno - FirstLowInvalidHeapAttributeNumber);
+		}
+
+		auto_update_detail = view_cols_are_auto_updatable(viewquery,
+														  modified_cols,
+														  NULL,
+														  &non_updatable_col);
+		if (auto_update_detail)
+		{
+			/*
+			 * This is a different error, caused by an attempt to update a
+			 * non-updatable column in an otherwise updatable view.
+			 */
+			switch (parsetree->commandType)
+			{
+				case CMD_INSERT:
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("cannot insert into column \"%s\" of view \"%s\"",
+									non_updatable_col,
+									RelationGetRelationName(view)),
+							 errdetail_internal("%s", _(auto_update_detail))));
+					break;
+				case CMD_UPDATE:
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("cannot update column \"%s\" of view \"%s\"",
+									non_updatable_col,
+									RelationGetRelationName(view)),
+							 errdetail_internal("%s", _(auto_update_detail))));
+					break;
+				default:
+					elog(ERROR, "unrecognized CmdType: %d",
+						 (int) parsetree->commandType);
+					break;
+			}
+		}
+	}
+
 	/* Locate RTE describing the view in the outer query */
 	view_rte = rt_fetch(parsetree->resultRelation, parsetree->rtable);
 
 	/*
-	 * If we get here, view_is_auto_updatable() has verified that the view
-	 * contains a single base relation.
+	 * If we get here, view_query_is_auto_updatable() has verified that the
+	 * view contains a single base relation.
 	 */
-	viewquery = get_view_query(view);
-
 	Assert(list_length(viewquery->jointree->fromlist) == 1);
 	rtr = (RangeTblRef *) linitial(viewquery->jointree->fromlist);
 	Assert(IsA(rtr, RangeTblRef));

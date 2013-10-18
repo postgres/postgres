@@ -8806,7 +8806,8 @@ ATExecSetRelOptions(Relation rel, List *defList, AlterTableType operation,
 		if (check_option)
 		{   
 			const char *view_updatable_error =
-				view_query_is_auto_updatable(view_query, security_barrier);
+				view_query_is_auto_updatable(view_query,
+											 security_barrier, true);
 
 			if (view_updatable_error)
 				ereport(ERROR,

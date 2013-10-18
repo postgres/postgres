@@ -20,6 +20,7 @@
 #include <math.h>
 #include <unistd.h>
 
+#include "access/sysattr.h"
 #include "catalog/catalog.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
@@ -540,17 +541,13 @@ pg_relation_is_updatable(PG_FUNCTION_ARGS)
 	Oid			reloid = PG_GETARG_OID(0);
 	bool		include_triggers = PG_GETARG_BOOL(1);
 
-	PG_RETURN_INT32(relation_is_updatable(reloid, include_triggers));
+	PG_RETURN_INT32(relation_is_updatable(reloid, include_triggers, NULL));
 }
 
 /*
  * pg_column_is_updatable - determine whether a column is updatable
  *
- * Currently we just check whether the column's relation is updatable.
- * Eventually we might allow views to have some updatable and some
- * non-updatable columns.
- *
- * Also, this function encapsulates the decision about just what
+ * This function encapsulates the decision about just what
  * information_schema.columns.is_updatable actually means.	It's not clear
  * whether deletability of the column's relation should be required, so
  * we want that decision in C code where we could change it without initdb.
@@ -560,6 +557,7 @@ pg_column_is_updatable(PG_FUNCTION_ARGS)
 {
 	Oid			reloid = PG_GETARG_OID(0);
 	AttrNumber	attnum = PG_GETARG_INT16(1);
+	AttrNumber	col = attnum - FirstLowInvalidHeapAttributeNumber;
 	bool		include_triggers = PG_GETARG_BOOL(2);
 	int			events;
 
@@ -567,7 +565,8 @@ pg_column_is_updatable(PG_FUNCTION_ARGS)
 	if (attnum <= 0)
 		PG_RETURN_BOOL(false);
 
-	events = relation_is_updatable(reloid, include_triggers);
+	events = relation_is_updatable(reloid, include_triggers,
+								   bms_make_singleton(col));
 
 	/* We require both updatability and deletability of the relation */
 #define REQ_EVENTS ((1 << CMD_UPDATE) | (1 << CMD_DELETE))
