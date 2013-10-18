@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  src/port/wait_error.c
+ *	  src/common/wait_error.c
  *
  *-------------------------------------------------------------------------
  */

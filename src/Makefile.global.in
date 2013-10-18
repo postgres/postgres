@@ -510,7 +510,7 @@ endif
 
 LIBOBJS = @LIBOBJS@
 
-LIBS := -lpgport -lpgcommon $(LIBS)
+LIBS := -lpgcommon -lpgport $(LIBS)
 
 # to make ws2_32.lib the last library, and always link with shfolder,
 # so SHGetFolderName isn't picked up from shell32.dll

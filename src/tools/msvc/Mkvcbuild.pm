@@ -67,14 +67,14 @@ sub mkvcbuild
 	our @pgportfiles = qw(
 	  asprintf.c chklocale.c crypt.c fls.c fseeko.c getrusage.c inet_aton.c random.c
 	  srandom.c getaddrinfo.c gettimeofday.c inet_net_ntop.c kill.c open.c
-	  erand48.c snprintf.c strlcat.c strlcpy.c dirmod.c exec.c noblock.c path.c
+	  erand48.c snprintf.c strlcat.c strlcpy.c dirmod.c noblock.c path.c
 	  pgcheckdir.c pg_crc.c pgmkdirp.c pgsleep.c pgstrcasecmp.c pqsignal.c
 	  qsort.c qsort_arg.c quotes.c
-	  sprompt.c tar.c thread.c wait_error.c getopt.c getopt_long.c dirent.c rint.c win32env.c
+	  sprompt.c tar.c thread.c getopt.c getopt_long.c dirent.c rint.c win32env.c
 	  win32error.c win32setlocale.c);
 
 	our @pgcommonallfiles = qw(
-	  relpath.c);
+	  exec.c relpath.c wait_error.c);
 
 	our @pgcommonfrontendfiles = (@pgcommonallfiles, qw(fe_memutils.c));
 
