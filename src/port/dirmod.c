@@ -28,7 +28,6 @@
 #endif
 
 #include <unistd.h>
-#include <dirent.h>
 #include <sys/stat.h>
 
 #if defined(WIN32) || defined(__CYGWIN__)
@@ -350,95 +349,6 @@ pgwin32_is_junction(char *path)
 	return ((attr & FILE_ATTRIBUTE_REPARSE_POINT) == FILE_ATTRIBUTE_REPARSE_POINT);
 }
 #endif   /* defined(WIN32) && !defined(__CYGWIN__) */
-
-
-/*
- * pgfnames
- *
- * return a list of the names of objects in the argument directory.  Caller
- * must call pgfnames_cleanup later to free the memory allocated by this
- * function.
- */
-char	  **
-pgfnames(const char *path)
-{
-	DIR		   *dir;
-	struct dirent *file;
-	char	  **filenames;
-	int			numnames = 0;
-	int			fnsize = 200;	/* enough for many small dbs */
-
-	dir = opendir(path);
-	if (dir == NULL)
-	{
-#ifndef FRONTEND
-		elog(WARNING, "could not open directory \"%s\": %m", path);
-#else
-		fprintf(stderr, _("could not open directory \"%s\": %s\n"),
-				path, strerror(errno));
-#endif
-		return NULL;
-	}
-
-	filenames = (char **) palloc(fnsize * sizeof(char *));
-
-	errno = 0;
-	while ((file = readdir(dir)) != NULL)
-	{
-		if (strcmp(file->d_name, ".") != 0 && strcmp(file->d_name, "..") != 0)
-		{
-			if (numnames + 1 >= fnsize)
-			{
-				fnsize *= 2;
-				filenames = (char **) repalloc(filenames,
-											   fnsize * sizeof(char *));
-			}
-			filenames[numnames++] = pstrdup(file->d_name);
-		}
-		errno = 0;
-	}
-#ifdef WIN32
-
-	/*
-	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but not in
-	 * released version
-	 */
-	if (GetLastError() == ERROR_NO_MORE_FILES)
-		errno = 0;
-#endif
-	if (errno)
-	{
-#ifndef FRONTEND
-		elog(WARNING, "could not read directory \"%s\": %m", path);
-#else
-		fprintf(stderr, _("could not read directory \"%s\": %s\n"),
-				path, strerror(errno));
-#endif
-	}
-
-	filenames[numnames] = NULL;
-
-	closedir(dir);
-
-	return filenames;
-}
-
-
-/*
- *	pgfnames_cleanup
- *
- *	deallocate memory used for filenames
- */
-void
-pgfnames_cleanup(char **filenames)
-{
-	char	  **fn;
-
-	for (fn = filenames; *fn; fn++)
-		pfree(*fn);
-
-	pfree(filenames);
-}
 
 
 /*

@@ -74,7 +74,7 @@ sub mkvcbuild
 	  win32error.c win32setlocale.c);
 
 	our @pgcommonallfiles = qw(
-	  exec.c relpath.c wait_error.c);
+	  exec.c pgfnames.c relpath.c wait_error.c);
 
 	our @pgcommonfrontendfiles = (@pgcommonallfiles, qw(fe_memutils.c));
 

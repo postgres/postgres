@@ -23,7 +23,7 @@ include $(top_builddir)/src/Makefile.global
 override CPPFLAGS := -DFRONTEND $(CPPFLAGS)
 LIBS += $(PTHREAD_LIBS)
 
-OBJS_COMMON = exec.o relpath.o wait_error.o
+OBJS_COMMON = exec.o pgfnames.o relpath.o wait_error.o
 
 OBJS_FRONTEND = $(OBJS_COMMON) fe_memutils.o
 
