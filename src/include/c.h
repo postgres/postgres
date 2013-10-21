@@ -486,7 +486,7 @@ typedef NameData *Name;
  *		True iff pointer is properly aligned to point to the given type.
  */
 #define PointerIsAligned(pointer, type) \
-		(((intptr_t)(pointer) % (sizeof (type))) == 0)
+		(((uintptr_t)(pointer) % (sizeof (type))) == 0)
 
 #define OidIsValid(objectId)  ((bool) ((objectId) != InvalidOid))
 
@@ -532,7 +532,7 @@ typedef NameData *Name;
  */
 
 #define TYPEALIGN(ALIGNVAL,LEN)  \
-	(((intptr_t) (LEN) + ((ALIGNVAL) - 1)) & ~((intptr_t) ((ALIGNVAL) - 1)))
+	(((uintptr_t) (LEN) + ((ALIGNVAL) - 1)) & ~((uintptr_t) ((ALIGNVAL) - 1)))
 
 #define SHORTALIGN(LEN)			TYPEALIGN(ALIGNOF_SHORT, (LEN))
 #define INTALIGN(LEN)			TYPEALIGN(ALIGNOF_INT, (LEN))
@@ -543,7 +543,7 @@ typedef NameData *Name;
 #define BUFFERALIGN(LEN)		TYPEALIGN(ALIGNOF_BUFFER, (LEN))
 
 #define TYPEALIGN_DOWN(ALIGNVAL,LEN)  \
-	(((intptr_t) (LEN)) & ~((intptr_t) ((ALIGNVAL) - 1)))
+	(((uintptr_t) (LEN)) & ~((uintptr_t) ((ALIGNVAL) - 1)))
 
 #define SHORTALIGN_DOWN(LEN)	TYPEALIGN_DOWN(ALIGNOF_SHORT, (LEN))
 #define INTALIGN_DOWN(LEN)		TYPEALIGN_DOWN(ALIGNOF_INT, (LEN))
@@ -552,7 +552,7 @@ typedef NameData *Name;
 #define MAXALIGN_DOWN(LEN)		TYPEALIGN_DOWN(MAXIMUM_ALIGNOF, (LEN))
 
 /*
- * The above macros will not work with types wider than intptr_t, like with
+ * The above macros will not work with types wider than uintptr_t, like with
  * uint64 on 32-bit platforms.  That's not problem for the usual use where a
  * pointer or a length is aligned, but for the odd case that you need to
  * align something (potentially) wider, use TYPEALIGN64.
@@ -763,7 +763,7 @@ typedef NameData *Name;
 		int		_val = (val); \
 		Size	_len = (len); \
 \
-		if ((((intptr_t) _vstart) & LONG_ALIGN_MASK) == 0 && \
+		if ((((uintptr_t) _vstart) & LONG_ALIGN_MASK) == 0 && \
 			(_len & LONG_ALIGN_MASK) == 0 && \
 			_val == 0 && \
 			_len <= MEMSET_LOOP_LIMIT && \

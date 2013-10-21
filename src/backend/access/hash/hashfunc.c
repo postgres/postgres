@@ -314,7 +314,7 @@ hash_any(register const unsigned char *k, register int keylen)
 	a = b = c = 0x9e3779b9 + len + 3923095;
 
 	/* If the source pointer is word-aligned, we use word-wide fetches */
-	if (((intptr_t) k & UINT32_ALIGN_MASK) == 0)
+	if (((uintptr_t) k & UINT32_ALIGN_MASK) == 0)
 	{
 		/* Code path for aligned source data */
 		register const uint32 *ka = (const uint32 *) k;

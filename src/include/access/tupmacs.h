@@ -101,7 +101,7 @@
 #define att_align_datum(cur_offset, attalign, attlen, attdatum) \
 ( \
 	((attlen) == -1 && VARATT_IS_SHORT(DatumGetPointer(attdatum))) ? \
-	(intptr_t) (cur_offset) : \
+	(uintptr_t) (cur_offset) : \
 	att_align_nominal(cur_offset, attalign) \
 )
 
@@ -116,13 +116,13 @@
  * aligned 4-byte length word; in either case we need not align.)
  *
  * Note: some callers pass a "char *" pointer for cur_offset.  This is
- * a bit of a hack but should work all right as long as intptr_t is the
+ * a bit of a hack but should work all right as long as uintptr_t is the
  * correct width.
  */
 #define att_align_pointer(cur_offset, attalign, attlen, attptr) \
 ( \
 	((attlen) == -1 && VARATT_NOT_PAD_BYTE(attptr)) ? \
-	(intptr_t) (cur_offset) : \
+	(uintptr_t) (cur_offset) : \
 	att_align_nominal(cur_offset, attalign) \
 )
 
@@ -144,7 +144,7 @@
 #define att_align_nominal(cur_offset, attalign) \
 ( \
 	((attalign) == 'i') ? INTALIGN(cur_offset) : \
-	 (((attalign) == 'c') ? (intptr_t) (cur_offset) : \
+	 (((attalign) == 'c') ? (uintptr_t) (cur_offset) : \
 	  (((attalign) == 'd') ? DOUBLEALIGN(cur_offset) : \
 	   ( \
 			AssertMacro((attalign) == 's'), \
