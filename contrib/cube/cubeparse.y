@@ -175,11 +175,12 @@ write_box(unsigned int dim, char *str1, char *str2)
 	NDBOX	   *bp;
 	char	   *s;
 	int			i;
-	int			size = offsetof(NDBOX, x[0]) + sizeof(double) * dim * 2;
+	int			size = CUBE_SIZE(dim);
+	bool		point = true;
 
 	bp = palloc0(size);
 	SET_VARSIZE(bp, size);
-	bp->dim = dim;
+	SET_DIM(bp, dim);
 
 	s = str1;
 	bp->x[i=0] = strtod(s, NULL);
@@ -191,10 +192,28 @@ write_box(unsigned int dim, char *str1, char *str2)
 
 	s = str2;
 	bp->x[i=dim] = strtod(s, NULL);
+	if (bp->x[dim] != bp->x[0])
+		point = false;
 	while ((s = strchr(s, ',')) != NULL)
 	{
 		s++; i++;
 		bp->x[i] = strtod(s, NULL);
+		if (bp->x[i] != bp->x[i-dim])
+			point = false;
+	}
+
+	if (point)
+	{
+		/*
+		 * The value turned out to be a point, ie. all the upper-right
+		 * coordinates were equal to the lower-left coordinates. Resize the
+		 * the cube we constructed. Note: we don't bother to repalloc() it
+		 * smaller, it's unlikely that the tiny amount of memory free'd that
+		 * way would be useful.
+		 */
+		size = POINT_SIZE(dim);
+		SET_VARSIZE(bp, size);
+		SET_POINT_BIT(bp);
 	}
 
 	return(bp);
@@ -203,31 +222,29 @@ write_box(unsigned int dim, char *str1, char *str2)
 static NDBOX *
 write_point_as_box(char *str, int dim)
 {
-  NDBOX		   *bp;
-  int			i,
+	NDBOX		*bp;
+	int			i,
 				size;
-  double		x;
-  char		   *s = str;
+	double		x;
+	char		*s = str;
 
-  size = offsetof(NDBOX, x[0]) + sizeof(double) * dim * 2;
+	size = POINT_SIZE(dim);
+	bp = palloc0(size);
+	SET_VARSIZE(bp, size);
+	SET_DIM(bp, dim);
+	SET_POINT_BIT(bp);
 
-  bp = palloc0(size);
-  SET_VARSIZE(bp, size);
-  bp->dim = dim;
+	i = 0;
+	x = strtod(s, NULL);
+	bp->x[0] = x;
+	while ((s = strchr(s, ',')) != NULL)
+	{
+		s++; i++;
+		x = strtod(s, NULL);
+		bp->x[i] = x;
+	}
 
-  i = 0;
-  x = strtod(s, NULL);
-  bp->x[0] = x;
-  bp->x[dim] = x;
-  while ((s = strchr(s, ',')) != NULL)
-  {
-	  s++; i++;
-	  x = strtod(s, NULL);
-	  bp->x[i] = x;
-	  bp->x[i+dim] = x;
-  }
-
-  return(bp);
+	return(bp);
 }
 
 #include "cubescan.c"

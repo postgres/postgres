@@ -473,8 +473,85 @@ SELECT cube_subset(cube('(1,3,5),(6,7,8)'), ARRAY[3,2,1,1]);
  (5, 3, 1, 1),(8, 7, 6, 6)
 (1 row)
 
+SELECT cube_subset(cube('(1,3,5),(1,3,5)'), ARRAY[3,2,1,1]);
+ cube_subset  
+--------------
+ (5, 3, 1, 1)
+(1 row)
+
 SELECT cube_subset(cube('(1,3,5),(6,7,8)'), ARRAY[4,0]);
 ERROR:  Index out of bounds
+SELECT cube_subset(cube('(6,7,8),(6,7,8)'), ARRAY[4,0]);
+ERROR:  Index out of bounds
+--
+-- Test point processing
+--
+SELECT cube('(1,2),(1,2)'); -- cube_in
+  cube  
+--------
+ (1, 2)
+(1 row)
+
+SELECT cube('{0,1,2}'::float[], '{0,1,2}'::float[]); -- cube_a_f8_f8
+   cube    
+-----------
+ (0, 1, 2)
+(1 row)
+
+SELECT cube('{5,6,7,8}'::float[]); -- cube_a_f8
+     cube     
+--------------
+ (5, 6, 7, 8)
+(1 row)
+
+SELECT cube(1.37); -- cube_f8
+  cube  
+--------
+ (1.37)
+(1 row)
+
+SELECT cube(1.37, 1.37); -- cube_f8_f8
+  cube  
+--------
+ (1.37)
+(1 row)
+
+SELECT cube(cube(1,1), 42); -- cube_c_f8
+  cube   
+---------
+ (1, 42)
+(1 row)
+
+SELECT cube(cube(1,2), 42); -- cube_c_f8
+      cube       
+-----------------
+ (1, 42),(2, 42)
+(1 row)
+
+SELECT cube(cube(1,1), 42, 42); -- cube_c_f8_f8
+  cube   
+---------
+ (1, 42)
+(1 row)
+
+SELECT cube(cube(1,1), 42, 24); -- cube_c_f8_f8
+      cube       
+-----------------
+ (1, 42),(1, 24)
+(1 row)
+
+SELECT cube(cube(1,2), 42, 42); -- cube_c_f8_f8
+      cube       
+-----------------
+ (1, 42),(2, 42)
+(1 row)
+
+SELECT cube(cube(1,2), 42, 24); -- cube_c_f8_f8
+      cube       
+-----------------
+ (1, 42),(2, 24)
+(1 row)
+
 --
 -- Testing limit of CUBE_MAX_DIM dimensions check in cube_in.
 --
@@ -878,6 +955,24 @@ SELECT cube_distance('(0)'::cube,'(.3,.4)'::cube);
            0.5
 (1 row)
 
+SELECT cube_distance('(2,3,4)'::cube,'(2,3,4)'::cube);
+ cube_distance 
+---------------
+             0
+(1 row)
+
+SELECT cube_distance('(42,42,42,42)'::cube,'(137,137,137,137)'::cube);
+ cube_distance 
+---------------
+           190
+(1 row)
+
+SELECT cube_distance('(42,42,42)'::cube,'(137,137)'::cube);
+  cube_distance   
+------------------
+ 140.762210837994
+(1 row)
+
 -- Test of cube function (text to cube)
 --
 SELECT cube('(1,1.2)'::text);
@@ -912,6 +1007,18 @@ SELECT cube_dim('(0,0,0)'::cube);
         3
 (1 row)
 
+SELECT cube_dim('(42,42,42),(42,42,42)'::cube);
+ cube_dim 
+----------
+        3
+(1 row)
+
+SELECT cube_dim('(4,8,15,16,23),(4,8,15,16,23)'::cube);
+ cube_dim 
+----------
+        5
+(1 row)
+
 -- Test of cube_ll_coord function (retrieves LL coodinate values)
 --
 SELECT cube_ll_coord('(-1,1),(2,-2)'::cube, 1);
@@ -932,6 +1039,42 @@ SELECT cube_ll_coord('(-1,1),(2,-2)'::cube, 3);
              0
 (1 row)
 
+SELECT cube_ll_coord('(1,2),(1,2)'::cube, 1);
+ cube_ll_coord 
+---------------
+             1
+(1 row)
+
+SELECT cube_ll_coord('(1,2),(1,2)'::cube, 2);
+ cube_ll_coord 
+---------------
+             2
+(1 row)
+
+SELECT cube_ll_coord('(1,2),(1,2)'::cube, 3);
+ cube_ll_coord 
+---------------
+             0
+(1 row)
+
+SELECT cube_ll_coord('(42,137)'::cube, 1);
+ cube_ll_coord 
+---------------
+            42
+(1 row)
+
+SELECT cube_ll_coord('(42,137)'::cube, 2);
+ cube_ll_coord 
+---------------
+           137
+(1 row)
+
+SELECT cube_ll_coord('(42,137)'::cube, 3);
+ cube_ll_coord 
+---------------
+             0
+(1 row)
+
 -- Test of cube_ur_coord function (retrieves UR coodinate values)
 --
 SELECT cube_ur_coord('(-1,1),(2,-2)'::cube, 1);
@@ -947,6 +1090,42 @@ SELECT cube_ur_coord('(-1,1),(2,-2)'::cube, 2);
 (1 row)
 
 SELECT cube_ur_coord('(-1,1),(2,-2)'::cube, 3);
+ cube_ur_coord 
+---------------
+             0
+(1 row)
+
+SELECT cube_ur_coord('(1,2),(1,2)'::cube, 1);
+ cube_ur_coord 
+---------------
+             1
+(1 row)
+
+SELECT cube_ur_coord('(1,2),(1,2)'::cube, 2);
+ cube_ur_coord 
+---------------
+             2
+(1 row)
+
+SELECT cube_ur_coord('(1,2),(1,2)'::cube, 3);
+ cube_ur_coord 
+---------------
+             0
+(1 row)
+
+SELECT cube_ur_coord('(42,137)'::cube, 1);
+ cube_ur_coord 
+---------------
+            42
+(1 row)
+
+SELECT cube_ur_coord('(42,137)'::cube, 2);
+ cube_ur_coord 
+---------------
+           137
+(1 row)
+
+SELECT cube_ur_coord('(42,137)'::cube, 3);
  cube_ur_coord 
 ---------------
              0
@@ -1098,6 +1277,108 @@ SELECT cube_enlarge('(2,-2),(-3,7)'::cube, -3, 2);
     cube_enlarge     
 ---------------------
  (-0.5, 1),(-0.5, 4)
+(1 row)
+
+SELECT cube_enlarge('(42,-23,-23),(42,23,23)'::cube, -23, 5);
+ cube_enlarge 
+--------------
+ (42, 0, 0)
+(1 row)
+
+SELECT cube_enlarge('(42,-23,-23),(42,23,23)'::cube, -24, 5);
+ cube_enlarge 
+--------------
+ (42, 0, 0)
+(1 row)
+
+-- Test of cube_union (MBR for two cubes)
+--
+SELECT cube_union('(1,2),(3,4)'::cube, '(5,6,7),(8,9,10)'::cube);
+      cube_union      
+----------------------
+ (1, 2, 0),(8, 9, 10)
+(1 row)
+
+SELECT cube_union('(1,2)'::cube, '(4,2,0,0)'::cube);
+        cube_union         
+---------------------------
+ (1, 2, 0, 0),(4, 2, 0, 0)
+(1 row)
+
+SELECT cube_union('(1,2),(1,2)'::cube, '(4,2),(4,2)'::cube);
+  cube_union   
+---------------
+ (1, 2),(4, 2)
+(1 row)
+
+SELECT cube_union('(1,2),(1,2)'::cube, '(1,2),(1,2)'::cube);
+ cube_union 
+------------
+ (1, 2)
+(1 row)
+
+SELECT cube_union('(1,2),(1,2)'::cube, '(1,2,0),(1,2,0)'::cube);
+ cube_union 
+------------
+ (1, 2, 0)
+(1 row)
+
+-- Test of cube_inter
+--
+SELECT cube_inter('(1,2),(10,11)'::cube, '(3,4), (16,15)'::cube); -- intersects
+   cube_inter    
+-----------------
+ (3, 4),(10, 11)
+(1 row)
+
+SELECT cube_inter('(1,2),(10,11)'::cube, '(3,4), (6,5)'::cube); -- includes
+  cube_inter   
+---------------
+ (3, 4),(6, 5)
+(1 row)
+
+SELECT cube_inter('(1,2),(10,11)'::cube, '(13,14), (16,15)'::cube); -- no intersection
+    cube_inter     
+-------------------
+ (13, 14),(10, 11)
+(1 row)
+
+SELECT cube_inter('(1,2),(10,11)'::cube, '(3,14), (16,15)'::cube); -- no intersection, but one dimension intersects
+    cube_inter    
+------------------
+ (3, 14),(10, 11)
+(1 row)
+
+SELECT cube_inter('(1,2),(10,11)'::cube, '(10,11), (16,15)'::cube); -- point intersection
+ cube_inter 
+------------
+ (10, 11)
+(1 row)
+
+SELECT cube_inter('(1,2,3)'::cube, '(1,2,3)'::cube); -- point args
+ cube_inter 
+------------
+ (1, 2, 3)
+(1 row)
+
+SELECT cube_inter('(1,2,3)'::cube, '(5,6,3)'::cube); -- point args
+     cube_inter      
+---------------------
+ (5, 6, 3),(1, 2, 3)
+(1 row)
+
+-- Test of cube_size
+--
+SELECT cube_size('(4,8),(15,16)'::cube);
+ cube_size 
+-----------
+        88
+(1 row)
+
+SELECT cube_size('(42,137)'::cube);
+ cube_size 
+-----------
+         0
 (1 row)
 
 -- Load some example data and build the index

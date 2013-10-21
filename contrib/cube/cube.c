@@ -144,6 +144,7 @@ bool		g_cube_internal_consistent(NDBOX *key, NDBOX *query, StrategyNumber strate
 ** Auxiliary funxtions
 */
 static double distance_1D(double a1, double a2, double b1, double b2);
+static bool	cube_is_point_internal(NDBOX *cube);
 
 
 /*****************************************************************************
@@ -181,6 +182,7 @@ cube_a_f8_f8(PG_FUNCTION_ARGS)
 	int			i;
 	int			dim;
 	int			size;
+	bool		point;
 	double	   *dur,
 			   *dll;
 
@@ -198,16 +200,32 @@ cube_a_f8_f8(PG_FUNCTION_ARGS)
 	dur = ARRPTR(ur);
 	dll = ARRPTR(ll);
 
-	size = offsetof(NDBOX, x[0]) +sizeof(double) * 2 * dim;
-	result = (NDBOX *) palloc0(size);
-	SET_VARSIZE(result, size);
-	result->dim = dim;
-
+	/* Check if it's a point */
+	point = true;
 	for (i = 0; i < dim; i++)
 	{
-		result->x[i] = dur[i];
-		result->x[i + dim] = dll[i];
+		if (dur[i] != dll[i])
+		{
+			point = false;
+			break;
+		}
 	}
+
+	size = point ? POINT_SIZE(dim) : CUBE_SIZE(dim);
+	result = (NDBOX *) palloc0(size);
+	SET_VARSIZE(result, size);
+	SET_DIM(result, dim);
+
+	for (i = 0; i < dim; i++)
+		result->x[i] = dur[i];
+
+	if (!point)
+	{
+		for (i = 0; i < dim; i++)
+			result->x[i + dim] = dll[i];
+	}
+	else
+		SET_POINT_BIT(result);
 
 	PG_RETURN_NDBOX(result);
 }
@@ -234,16 +252,14 @@ cube_a_f8(PG_FUNCTION_ARGS)
 
 	dur = ARRPTR(ur);
 
-	size = offsetof(NDBOX, x[0]) +sizeof(double) * 2 * dim;
+	size = POINT_SIZE(dim);
 	result = (NDBOX *) palloc0(size);
 	SET_VARSIZE(result, size);
-	result->dim = dim;
+	SET_DIM(result, dim);
+	SET_POINT_BIT(result);
 
 	for (i = 0; i < dim; i++)
-	{
 		result->x[i] = dur[i];
-		result->x[i + dim] = dur[i];
-	}
 
 	PG_RETURN_NDBOX(result);
 }
@@ -267,14 +283,17 @@ cube_subset(PG_FUNCTION_ARGS)
 	dx = (int32 *) ARR_DATA_PTR(idx);
 
 	dim = ARRNELEMS(idx);
-	size = offsetof(NDBOX, x[0]) +sizeof(double) * 2 * dim;
+	size = IS_POINT(c) ? POINT_SIZE(dim) : CUBE_SIZE(dim);
 	result = (NDBOX *) palloc0(size);
 	SET_VARSIZE(result, size);
-	result->dim = dim;
+	SET_DIM(result, dim);
+
+	if (IS_POINT(c))
+		SET_POINT_BIT(result);
 
 	for (i = 0; i < dim; i++)
 	{
-		if ((dx[i] <= 0) || (dx[i] > c->dim))
+		if ((dx[i] <= 0) || (dx[i] > DIM(c)))
 		{
 			pfree(result);
 			ereport(ERROR,
@@ -282,7 +301,8 @@ cube_subset(PG_FUNCTION_ARGS)
 					 errmsg("Index out of bounds")));
 		}
 		result->x[i] = c->x[dx[i] - 1];
-		result->x[i + dim] = c->x[dx[i] + c->dim - 1];
+		if (!IS_POINT(c))
+			result->x[i + dim] = c->x[dx[i] + DIM(c) - 1];
 	}
 
 	PG_FREE_IF_COPY(c, 0);
@@ -294,8 +314,7 @@ cube_out(PG_FUNCTION_ARGS)
 {
 	NDBOX	   *cube = PG_GETARG_NDBOX(0);
 	StringInfoData buf;
-	int			dim = cube->dim;
-	bool		equal = true;
+	int			dim = DIM(cube);
 	int			i;
 	int			ndig;
 
@@ -317,20 +336,18 @@ cube_out(PG_FUNCTION_ARGS)
 	{
 		if (i > 0)
 			appendStringInfo(&buf, ", ");
-		appendStringInfo(&buf, "%.*g", ndig, cube->x[i]);
-		if (cube->x[i] != cube->x[i + dim])
-			equal = false;
+		appendStringInfo(&buf, "%.*g", ndig, LL_COORD(cube, i));
 	}
 	appendStringInfoChar(&buf, ')');
 
-	if (!equal)
+	if (!cube_is_point_internal(cube))
 	{
 		appendStringInfo(&buf, ",(");
 		for (i = 0; i < dim; i++)
 		{
 			if (i > 0)
 				appendStringInfo(&buf, ", ");
-			appendStringInfo(&buf, "%.*g", ndig, cube->x[i + dim]);
+			appendStringInfo(&buf, "%.*g", ndig, UR_COORD(cube, i));
 		}
 		appendStringInfoChar(&buf, ')');
 	}
@@ -729,51 +746,60 @@ cube_union_v0(NDBOX *a, NDBOX *b)
 {
 	int			i;
 	NDBOX	   *result;
+	int			dim;
+	int			size;
 
-	if (a->dim >= b->dim)
-	{
-		result = palloc0(VARSIZE(a));
-		SET_VARSIZE(result, VARSIZE(a));
-		result->dim = a->dim;
-	}
-	else
-	{
-		result = palloc0(VARSIZE(b));
-		SET_VARSIZE(result, VARSIZE(b));
-		result->dim = b->dim;
-	}
+	/* trivial case */
+	if (a == b)
+		return a;
 
-	/* swap the box pointers if needed */
-	if (a->dim < b->dim)
+	/* swap the arguments if needed, so that 'a' is always larger than 'b' */
+	if (DIM(a) < DIM(b))
 	{
 		NDBOX	   *tmp = b;
 
 		b = a;
 		a = tmp;
 	}
+	dim = DIM(a);
+
+	size = CUBE_SIZE(dim);
+	result = palloc0(size);
+	SET_VARSIZE(result, size);
+	SET_DIM(result, dim);
+
+	 /* First compute the union of the dimensions present in both args */
+	for (i = 0; i < DIM(b); i++)
+	{
+		result->x[i] = Min(
+			Min(LL_COORD(a, i), UR_COORD(a, i)),
+			Min(LL_COORD(b, i), UR_COORD(b, i))
+		);
+		result->x[i + DIM(a)] = Max(
+			Max(LL_COORD(a, i), UR_COORD(a, i)),
+			Max(LL_COORD(b, i), UR_COORD(b, i))
+		);
+	}
+	/* continue on the higher dimensions only present in 'a' */
+	for (; i < DIM(a); i++)
+	{
+		result->x[i] = Min(0,
+			Min(LL_COORD(a, i), UR_COORD(a, i))
+		);
+		result->x[i + dim] = Max(0,
+			Max(LL_COORD(a, i), UR_COORD(a, i))
+		);
+	}
 
 	/*
-	 * use the potentially smaller of the two boxes (b) to fill in the result,
-	 * padding absent dimensions with zeroes
+	 * Check if the result was in fact a point, and set the flag in the datum
+	 * accordingly. (we don't bother to repalloc it smaller)
 	 */
-	for (i = 0; i < b->dim; i++)
+	if (cube_is_point_internal(result))
 	{
-		result->x[i] = Min(b->x[i], b->x[i + b->dim]);
-		result->x[i + a->dim] = Max(b->x[i], b->x[i + b->dim]);
-	}
-	for (i = b->dim; i < a->dim; i++)
-	{
-		result->x[i] = 0;
-		result->x[i + a->dim] = 0;
-	}
-
-	/* compute the union */
-	for (i = 0; i < a->dim; i++)
-	{
-		result->x[i] =
-			Min(Min(a->x[i], a->x[i + a->dim]), result->x[i]);
-		result->x[i + a->dim] = Max(Max(a->x[i],
-								   a->x[i + a->dim]), result->x[i + a->dim]);
+		size = POINT_SIZE(dim);
+		SET_VARSIZE(result, size);
+		SET_POINT_BIT(result);
 	}
 
 	return (result);
@@ -802,52 +828,57 @@ cube_inter(PG_FUNCTION_ARGS)
 	NDBOX	   *result;
 	bool		swapped = false;
 	int			i;
+	int			dim;
+	int			size;
 
-	if (a->dim >= b->dim)
-	{
-		result = palloc0(VARSIZE(a));
-		SET_VARSIZE(result, VARSIZE(a));
-		result->dim = a->dim;
-	}
-	else
-	{
-		result = palloc0(VARSIZE(b));
-		SET_VARSIZE(result, VARSIZE(b));
-		result->dim = b->dim;
-	}
-
-	/* swap the box pointers if needed */
-	if (a->dim < b->dim)
+	/* swap the arguments if needed, so that 'a' is always larger than 'b' */
+	if (DIM(a) < DIM(b))
 	{
 		NDBOX	   *tmp = b;
-
 		b = a;
 		a = tmp;
 		swapped = true;
 	}
+	dim = DIM(a);
+
+	size = CUBE_SIZE(dim);
+	result = (NDBOX *) palloc0(size);
+	SET_VARSIZE(result, size);
+	SET_DIM(result, dim);
+
+	 /* First compute intersection of the dimensions present in both args */
+	for (i = 0; i < DIM(b); i++)
+	{
+		result->x[i] = Max(
+			Min(LL_COORD(a, i), UR_COORD(a, i)),
+			Min(LL_COORD(b, i), UR_COORD(b, i))
+		);
+		result->x[i + DIM(a)] = Min(
+			Max(LL_COORD(a, i), UR_COORD(a, i)),
+			Max(LL_COORD(b, i), UR_COORD(b, i))
+		);
+	}
+	/* continue on the higher dimemsions only present in 'a' */
+	for (; i < DIM(a); i++)
+	{
+		result->x[i] = Max(0,
+			Min(LL_COORD(a, i), UR_COORD(a, i))
+		);
+		result->x[i + DIM(a)] = Min(0,
+			Max(LL_COORD(a, i), UR_COORD(a, i))
+		);
+	}
 
 	/*
-	 * use the potentially	smaller of the two boxes (b) to fill in the
-	 * result, padding absent dimensions with zeroes
+	 * Check if the result was in fact a point, and set the flag in the datum
+	 * accordingly. (we don't bother to repalloc it smaller)
 	 */
-	for (i = 0; i < b->dim; i++)
+	if (cube_is_point_internal(result))
 	{
-		result->x[i] = Min(b->x[i], b->x[i + b->dim]);
-		result->x[i + a->dim] = Max(b->x[i], b->x[i + b->dim]);
-	}
-	for (i = b->dim; i < a->dim; i++)
-	{
-		result->x[i] = 0;
-		result->x[i + a->dim] = 0;
-	}
-
-	/* compute the intersection */
-	for (i = 0; i < a->dim; i++)
-	{
-		result->x[i] =
-			Max(Min(a->x[i], a->x[i + a->dim]), result->x[i]);
-		result->x[i + a->dim] = Min(Max(a->x[i],
-								   a->x[i + a->dim]), result->x[i + a->dim]);
+		size = POINT_SIZE(dim);
+		result = repalloc(result, size);
+		SET_VARSIZE(result, size);
+		SET_POINT_BIT(result);
 	}
 
 	if (swapped)
@@ -873,12 +904,11 @@ cube_size(PG_FUNCTION_ARGS)
 {
 	NDBOX	   *a = PG_GETARG_NDBOX(0);
 	double		result;
-	int			i,
-				j;
+	int			i;
 
 	result = 1.0;
-	for (i = 0, j = a->dim; i < a->dim; i++, j++)
-		result = result * Abs((a->x[j] - a->x[i]));
+	for (i = 0; i < DIM(a); i++)
+		result = result * Abs((LL_COORD(a, i) - UR_COORD(a, i)));
 
 	PG_FREE_IF_COPY(a, 0);
 	PG_RETURN_FLOAT8(result);
@@ -887,16 +917,15 @@ cube_size(PG_FUNCTION_ARGS)
 void
 rt_cube_size(NDBOX *a, double *size)
 {
-	int			i,
-				j;
+	int			i;
 
 	if (a == (NDBOX *) NULL)
 		*size = 0.0;
 	else
 	{
 		*size = 1.0;
-		for (i = 0, j = a->dim; i < a->dim; i++, j++)
-			*size = (*size) * Abs((a->x[j] - a->x[i]));
+		for (i = 0; i < DIM(a); i++)
+			*size = (*size) * Abs(UR_COORD(a, i) - LL_COORD(a, i));
 	}
 	return;
 }
@@ -909,43 +938,43 @@ cube_cmp_v0(NDBOX *a, NDBOX *b)
 	int			i;
 	int			dim;
 
-	dim = Min(a->dim, b->dim);
+	dim = Min(DIM(a), DIM(b));
 
 	/* compare the common dimensions */
 	for (i = 0; i < dim; i++)
 	{
-		if (Min(a->x[i], a->x[a->dim + i]) >
-			Min(b->x[i], b->x[b->dim + i]))
+		if (Min(LL_COORD(a, i), UR_COORD(a, i)) >
+			Min(LL_COORD(b, i), UR_COORD(b, i)))
 			return 1;
-		if (Min(a->x[i], a->x[a->dim + i]) <
-			Min(b->x[i], b->x[b->dim + i]))
+		if (Min(LL_COORD(a, i), UR_COORD(a, i)) <
+			Min(LL_COORD(b, i), UR_COORD(b, i)))
 			return -1;
 	}
 	for (i = 0; i < dim; i++)
 	{
-		if (Max(a->x[i], a->x[a->dim + i]) >
-			Max(b->x[i], b->x[b->dim + i]))
+		if (Max(LL_COORD(a, i), UR_COORD(a, i)) >
+			Max(LL_COORD(b, i), UR_COORD(b, i)))
 			return 1;
-		if (Max(a->x[i], a->x[a->dim + i]) <
-			Max(b->x[i], b->x[b->dim + i]))
+		if (Max(LL_COORD(a, i), UR_COORD(a, i)) <
+			Max(LL_COORD(b, i), UR_COORD(b, i)))
 			return -1;
 	}
 
 	/* compare extra dimensions to zero */
-	if (a->dim > b->dim)
+	if (DIM(a) > DIM(b))
 	{
-		for (i = dim; i < a->dim; i++)
+		for (i = dim; i < DIM(a); i++)
 		{
-			if (Min(a->x[i], a->x[a->dim + i]) > 0)
+			if (Min(LL_COORD(a, i), UR_COORD(a, i)) > 0)
 				return 1;
-			if (Min(a->x[i], a->x[a->dim + i]) < 0)
+			if (Min(LL_COORD(a, i), UR_COORD(a, i)) < 0)
 				return -1;
 		}
-		for (i = dim; i < a->dim; i++)
+		for (i = dim; i < DIM(a); i++)
 		{
-			if (Max(a->x[i], a->x[a->dim + i]) > 0)
+			if (Max(LL_COORD(a, i), UR_COORD(a, i)) > 0)
 				return 1;
-			if (Max(a->x[i], a->x[a->dim + i]) < 0)
+			if (Max(LL_COORD(a, i), UR_COORD(a, i)) < 0)
 				return -1;
 		}
 
@@ -955,20 +984,20 @@ cube_cmp_v0(NDBOX *a, NDBOX *b)
 		 */
 		return 1;
 	}
-	if (a->dim < b->dim)
+	if (DIM(a) < DIM(b))
 	{
-		for (i = dim; i < b->dim; i++)
+		for (i = dim; i < DIM(b); i++)
 		{
-			if (Min(b->x[i], b->x[b->dim + i]) > 0)
+			if (Min(LL_COORD(b, i), UR_COORD(b, i)) > 0)
 				return -1;
-			if (Min(b->x[i], b->x[b->dim + i]) < 0)
+			if (Min(LL_COORD(b, i), UR_COORD(b, i)) < 0)
 				return 1;
 		}
-		for (i = dim; i < b->dim; i++)
+		for (i = dim; i < DIM(b); i++)
 		{
-			if (Max(b->x[i], b->x[b->dim + i]) > 0)
+			if (Max(LL_COORD(b, i), UR_COORD(b, i)) > 0)
 				return -1;
-			if (Max(b->x[i], b->x[b->dim + i]) < 0)
+			if (Max(LL_COORD(b, i), UR_COORD(b, i)) < 0)
 				return 1;
 		}
 
@@ -1098,30 +1127,30 @@ cube_contains_v0(NDBOX *a, NDBOX *b)
 	if ((a == NULL) || (b == NULL))
 		return (FALSE);
 
-	if (a->dim < b->dim)
+	if (DIM(a) < DIM(b))
 	{
 		/*
 		 * the further comparisons will make sense if the excess dimensions of
 		 * (b) were zeroes Since both UL and UR coordinates must be zero, we
 		 * can check them all without worrying about which is which.
 		 */
-		for (i = a->dim; i < b->dim; i++)
+		for (i = DIM(a); i < DIM(b); i++)
 		{
-			if (b->x[i] != 0)
+			if (LL_COORD(b, i) != 0)
 				return (FALSE);
-			if (b->x[i + b->dim] != 0)
+			if (UR_COORD(b, i) != 0)
 				return (FALSE);
 		}
 	}
 
 	/* Can't care less about the excess dimensions of (a), if any */
-	for (i = 0; i < Min(a->dim, b->dim); i++)
+	for (i = 0; i < Min(DIM(a), DIM(b)); i++)
 	{
-		if (Min(a->x[i], a->x[a->dim + i]) >
-			Min(b->x[i], b->x[b->dim + i]))
+		if (Min(LL_COORD(a, i), UR_COORD(a, i)) >
+			Min(LL_COORD(b, i), UR_COORD(b, i)))
 			return (FALSE);
-		if (Max(a->x[i], a->x[a->dim + i]) <
-			Max(b->x[i], b->x[b->dim + i]))
+		if (Max(LL_COORD(a, i), UR_COORD(a, i)) <
+			Max(LL_COORD(b, i), UR_COORD(b, i)))
 			return (FALSE);
 	}
 
@@ -1173,7 +1202,7 @@ cube_overlap_v0(NDBOX *a, NDBOX *b)
 		return (FALSE);
 
 	/* swap the box pointers if needed */
-	if (a->dim < b->dim)
+	if (DIM(a) < DIM(b))
 	{
 		NDBOX	   *tmp = b;
 
@@ -1182,22 +1211,20 @@ cube_overlap_v0(NDBOX *a, NDBOX *b)
 	}
 
 	/* compare within the dimensions of (b) */
-	for (i = 0; i < b->dim; i++)
+	for (i = 0; i < DIM(b); i++)
 	{
-		if (Min(a->x[i], a->x[a->dim + i]) >
-			Max(b->x[i], b->x[b->dim + i]))
+		if (Min(LL_COORD(a, i), UR_COORD(a, i)) > Max(LL_COORD(b, i), UR_COORD(b, i)))
 			return (FALSE);
-		if (Max(a->x[i], a->x[a->dim + i]) <
-			Min(b->x[i], b->x[b->dim + i]))
+		if (Max(LL_COORD(a, i), UR_COORD(a, i)) < Min(LL_COORD(b, i), UR_COORD(b, i)))
 			return (FALSE);
 	}
 
 	/* compare to zero those dimensions in (a) absent in (b) */
-	for (i = b->dim; i < a->dim; i++)
+	for (i = DIM(b); i < DIM(a); i++)
 	{
-		if (Min(a->x[i], a->x[a->dim + i]) > 0)
+		if (Min(LL_COORD(a, i), UR_COORD(a, i)) > 0)
 			return (FALSE);
-		if (Max(a->x[i], a->x[a->dim + i]) < 0)
+		if (Max(LL_COORD(a, i), UR_COORD(a, i)) < 0)
 			return (FALSE);
 	}
 
@@ -1236,7 +1263,7 @@ cube_distance(PG_FUNCTION_ARGS)
 	int			i;
 
 	/* swap the box pointers if needed */
-	if (a->dim < b->dim)
+	if (DIM(a) < DIM(b))
 	{
 		NDBOX	   *tmp = b;
 
@@ -1247,16 +1274,16 @@ cube_distance(PG_FUNCTION_ARGS)
 
 	distance = 0.0;
 	/* compute within the dimensions of (b) */
-	for (i = 0; i < b->dim; i++)
+	for (i = 0; i < DIM(b); i++)
 	{
-		d = distance_1D(a->x[i], a->x[i + a->dim], b->x[i], b->x[i + b->dim]);
+		d = distance_1D(LL_COORD(a,i), UR_COORD(a,i), LL_COORD(b,i), UR_COORD(b,i));
 		distance += d * d;
 	}
 
 	/* compute distance to zero for those dimensions in (a) absent in (b) */
-	for (i = b->dim; i < a->dim; i++)
+	for (i = DIM(b); i < DIM(a); i++)
 	{
-		d = distance_1D(a->x[i], a->x[i + a->dim], 0.0, 0.0);
+		d = distance_1D(LL_COORD(a,i), UR_COORD(a,i), 0.0, 0.0);
 		distance += d * d;
 	}
 
@@ -1293,18 +1320,35 @@ distance_1D(double a1, double a2, double b1, double b2)
 Datum
 cube_is_point(PG_FUNCTION_ARGS)
 {
-	NDBOX	   *a = PG_GETARG_NDBOX(0);
-	int			i,
-				j;
+	NDBOX	   *cube = PG_GETARG_NDBOX(0);
+	bool		result;
 
-	for (i = 0, j = a->dim; i < a->dim; i++, j++)
+	result = cube_is_point_internal(cube);
+	PG_FREE_IF_COPY(cube, 0);
+	PG_RETURN_BOOL(result);
+}
+
+static bool
+cube_is_point_internal(NDBOX *cube)
+{
+	int			i;
+
+	if (IS_POINT(cube))
+		return true;
+
+	/*
+	 * Even if the point-flag is not set, all the lower-left coordinates
+	 * might match the upper-right coordinates, so that the value is in
+	 * fact a point. Such values don't arise with current code - the point
+	 * flag is always set if appropriate - but they might be present on-disk
+	 * in clusters upgraded from pre-9.4 versions.
+	 */
+	for (i = 0; i < DIM(cube); i++)
 	{
-		if (a->x[i] != a->x[j])
-			PG_RETURN_BOOL(FALSE);
+		if (LL_COORD(cube, i) != UR_COORD(cube, i))
+			return false;
 	}
-
-	PG_FREE_IF_COPY(a, 0);
-	PG_RETURN_BOOL(TRUE);
+	return true;
 }
 
 /* Return dimensions in use in the data structure */
@@ -1312,8 +1356,7 @@ Datum
 cube_dim(PG_FUNCTION_ARGS)
 {
 	NDBOX	   *c = PG_GETARG_NDBOX(0);
-	int			dim = c->dim;
-
+	int			dim = DIM(c);
 	PG_FREE_IF_COPY(c, 0);
 	PG_RETURN_INT32(dim);
 }
@@ -1326,8 +1369,8 @@ cube_ll_coord(PG_FUNCTION_ARGS)
 	int			n = PG_GETARG_INT16(1);
 	double		result;
 
-	if (c->dim >= n && n > 0)
-		result = Min(c->x[n - 1], c->x[c->dim + n - 1]);
+	if (DIM(c) >= n && n > 0)
+		result = Min(LL_COORD(c, n-1), UR_COORD(c, n-1));
 	else
 		result = 0;
 
@@ -1343,8 +1386,8 @@ cube_ur_coord(PG_FUNCTION_ARGS)
 	int			n = PG_GETARG_INT16(1);
 	double		result;
 
-	if (c->dim >= n && n > 0)
-		result = Max(c->x[n - 1], c->x[c->dim + n - 1]);
+	if (DIM(c) >= n && n > 0)
+		result = Max(LL_COORD(c, n-1), UR_COORD(c, n-1));
 	else
 		result = 0;
 
@@ -1363,30 +1406,31 @@ cube_enlarge(PG_FUNCTION_ARGS)
 	int			dim = 0;
 	int			size;
 	int			i,
-				j,
-				k;
+				j;
 
 	if (n > CUBE_MAX_DIM)
 		n = CUBE_MAX_DIM;
 	if (r > 0 && n > 0)
 		dim = n;
-	if (a->dim > dim)
-		dim = a->dim;
-	size = offsetof(NDBOX, x[0]) +sizeof(double) * dim * 2;
+	if (DIM(a) > dim)
+		dim = DIM(a);
+
+	size = CUBE_SIZE(dim);
 	result = (NDBOX *) palloc0(size);
 	SET_VARSIZE(result, size);
-	result->dim = dim;
-	for (i = 0, j = dim, k = a->dim; i < a->dim; i++, j++, k++)
+	SET_DIM(result, dim);
+
+	for (i = 0, j = dim; i < DIM(a); i++, j++)
 	{
-		if (a->x[i] >= a->x[k])
+		if (LL_COORD(a,i) >= UR_COORD(a,i))
 		{
-			result->x[i] = a->x[k] - r;
-			result->x[j] = a->x[i] + r;
+			result->x[i] = UR_COORD(a,i) - r;
+			result->x[j] = LL_COORD(a,i) + r;
 		}
 		else
 		{
-			result->x[i] = a->x[i] - r;
-			result->x[j] = a->x[k] + r;
+			result->x[i] = LL_COORD(a,i) - r;
+			result->x[j] = UR_COORD(a,i) + r;
 		}
 		if (result->x[i] > result->x[j])
 		{
@@ -1401,6 +1445,17 @@ cube_enlarge(PG_FUNCTION_ARGS)
 		result->x[j] = r;
 	}
 
+	/*
+	 * Check if the result was in fact a point, and set the flag in the datum
+	 * accordingly. (we don't bother to repalloc it smaller)
+	 */
+	if (cube_is_point_internal(result))
+	{
+		size = POINT_SIZE(dim);
+		SET_VARSIZE(result, size);
+		SET_POINT_BIT(result);
+	}
+
 	PG_FREE_IF_COPY(a, 0);
 	PG_RETURN_NDBOX(result);
 }
@@ -1413,11 +1468,12 @@ cube_f8(PG_FUNCTION_ARGS)
 	NDBOX	   *result;
 	int			size;
 
-	size = offsetof(NDBOX, x[0]) +sizeof(double) * 2;
+	size = POINT_SIZE(1);
 	result = (NDBOX *) palloc0(size);
 	SET_VARSIZE(result, size);
-	result->dim = 1;
-	result->x[0] = result->x[1] = x;
+	SET_DIM(result, 1);
+	SET_POINT_BIT(result);
+	result->x[0] = x;
 
 	PG_RETURN_NDBOX(result);
 }
@@ -1431,12 +1487,24 @@ cube_f8_f8(PG_FUNCTION_ARGS)
 	NDBOX	   *result;
 	int			size;
 
-	size = offsetof(NDBOX, x[0]) +sizeof(double) * 2;
-	result = (NDBOX *) palloc0(size);
-	SET_VARSIZE(result, size);
-	result->dim = 1;
-	result->x[0] = x0;
-	result->x[1] = x1;
+	if (x0 == x1)
+	{
+		size = POINT_SIZE(1);
+		result = (NDBOX *) palloc0(size);
+		SET_VARSIZE(result, size);
+		SET_DIM(result, 1);
+		SET_POINT_BIT(result);
+		result->x[0] = x0;
+	}
+	else
+	{
+		size = CUBE_SIZE(1);
+		result = (NDBOX *) palloc0(size);
+		SET_VARSIZE(result, size);
+		SET_DIM(result, 1);
+		result->x[0] = x0;
+		result->x[1] = x1;
+	}
 
 	PG_RETURN_NDBOX(result);
 }
@@ -1446,25 +1514,39 @@ cube_f8_f8(PG_FUNCTION_ARGS)
 Datum
 cube_c_f8(PG_FUNCTION_ARGS)
 {
-	NDBOX	   *c = PG_GETARG_NDBOX(0);
+	NDBOX	   *cube = PG_GETARG_NDBOX(0);
 	double		x = PG_GETARG_FLOAT8(1);
 	NDBOX	   *result;
 	int			size;
 	int			i;
 
-	size = offsetof(NDBOX, x[0]) +sizeof(double) * (c->dim + 1) *2;
-	result = (NDBOX *) palloc0(size);
-	SET_VARSIZE(result, size);
-	result->dim = c->dim + 1;
-	for (i = 0; i < c->dim; i++)
+	if (IS_POINT(cube))
 	{
-		result->x[i] = c->x[i];
-		result->x[result->dim + i] = c->x[c->dim + i];
+		size = POINT_SIZE((DIM(cube) + 1));
+		result = (NDBOX *) palloc0(size);
+		SET_VARSIZE(result, size);
+		SET_DIM(result, DIM(cube) + 1);
+		SET_POINT_BIT(result);
+		for (i = 0; i < DIM(cube); i++)
+			result->x[i] = cube->x[i];
+		result->x[DIM(result) - 1] = x;
 	}
-	result->x[result->dim - 1] = x;
-	result->x[2 * result->dim - 1] = x;
+	else
+	{
+		size = CUBE_SIZE((DIM(cube) + 1));
+		result = (NDBOX *) palloc0(size);
+		SET_VARSIZE(result, size);
+		SET_DIM(result, DIM(cube) + 1);
+		for (i = 0; i < DIM(cube); i++)
+		{
+			result->x[i] = cube->x[i];
+			result->x[DIM(result) + i] = cube->x[DIM(cube) + i];
+		}
+		result->x[DIM(result) - 1] = x;
+		result->x[2*DIM(result) - 1] = x;
+	}
 
-	PG_FREE_IF_COPY(c, 0);
+	PG_FREE_IF_COPY(cube, 0);
 	PG_RETURN_NDBOX(result);
 }
 
@@ -1472,25 +1554,38 @@ cube_c_f8(PG_FUNCTION_ARGS)
 Datum
 cube_c_f8_f8(PG_FUNCTION_ARGS)
 {
-	NDBOX	   *c = PG_GETARG_NDBOX(0);
+	NDBOX	   *cube = PG_GETARG_NDBOX(0);
 	double		x1 = PG_GETARG_FLOAT8(1);
 	double		x2 = PG_GETARG_FLOAT8(2);
 	NDBOX	   *result;
 	int			size;
 	int			i;
 
-	size = offsetof(NDBOX, x[0]) +sizeof(double) * (c->dim + 1) *2;
-	result = (NDBOX *) palloc0(size);
-	SET_VARSIZE(result, size);
-	result->dim = c->dim + 1;
-	for (i = 0; i < c->dim; i++)
-	{
-		result->x[i] = c->x[i];
-		result->x[result->dim + i] = c->x[c->dim + i];
+	if (IS_POINT(cube) && (x1 == x2)){
+		size = POINT_SIZE((DIM(cube) + 1));
+		result = (NDBOX *) palloc0(size);
+		SET_VARSIZE(result, size);
+		SET_DIM(result, DIM(cube) + 1);
+		SET_POINT_BIT(result);
+		for (i = 0; i < DIM(cube); i++)
+			result->x[i] = cube->x[i];
+		result->x[DIM(result) - 1] = x1;
 	}
-	result->x[result->dim - 1] = x1;
-	result->x[2 * result->dim - 1] = x2;
+	else
+	{
+		size = CUBE_SIZE((DIM(cube) + 1));
+		result = (NDBOX *) palloc0(size);
+		SET_VARSIZE(result, size);
+		SET_DIM(result, DIM(cube) + 1);
+		for (i = 0; i < DIM(cube); i++)
+		{
+			result->x[i] = LL_COORD(cube, i);
+			result->x[DIM(result) + i] = UR_COORD(cube, i);
+		}
+		result->x[DIM(result) - 1] = x1;
+		result->x[2 * DIM(result) - 1] = x2;
+	}
 
-	PG_FREE_IF_COPY(c, 0);
+	PG_FREE_IF_COPY(cube, 0);
 	PG_RETURN_NDBOX(result);
 }
