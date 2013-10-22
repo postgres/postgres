@@ -2364,10 +2364,7 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 							 */
 
 							char *hostport;
-							int alloclen = strlen(MyProcPort->remote_host) +
-								 strlen(MyProcPort->remote_port) + 3; 
-							hostport = palloc(alloclen);
-							sprintf(hostport, "%s(%s)", MyProcPort->remote_host, MyProcPort->remote_port);
+							hostport = psprintf("%s(%s)", MyProcPort->remote_host, MyProcPort->remote_port);
 							appendStringInfo(buf, "%*s", padding, hostport);
 							pfree(hostport);
 						}
