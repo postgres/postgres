@@ -278,7 +278,7 @@ pg_putenv(const char *var, const char *val)
 #ifndef WIN32
 		char	   *envstr;
 
-		pg_asprintf(&envstr, "%s=%s", var, val);
+		envstr = psprintf("%s=%s", var, val);
 		putenv(envstr);
 
 		/*

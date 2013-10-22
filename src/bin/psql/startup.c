@@ -182,8 +182,8 @@ main(int argc, char *argv[])
 	if (options.username == NULL)
 		password_prompt = pg_strdup(_("Password: "));
 	else
-		pg_asprintf(&password_prompt, _("Password for user %s: "),
-					options.username);
+		password_prompt = psprintf(_("Password for user %s: "),
+								   options.username);
 
 	if (pset.getPassword == TRI_YES)
 		password = simple_prompt(password_prompt, 100, false);
@@ -638,8 +638,8 @@ process_psqlrc_file(char *filename)
 #define R_OK 4
 #endif
 
-	pg_asprintf(&psqlrc_minor, "%s-%s", filename, PG_VERSION);
-	pg_asprintf(&psqlrc_major, "%s-%s", filename, PG_MAJORVERSION);
+	psqlrc_minor = psprintf("%s-%s", filename, PG_VERSION);
+	psqlrc_major = psprintf("%s-%s", filename, PG_MAJORVERSION);
 
 	/* check for minor version first, then major, then no version */
 	if (access(psqlrc_minor, R_OK) == 0)

@@ -1188,7 +1188,7 @@ exec_command(const char *cmd,
 			/* Set variable to the value of the next argument */
 			char	   *newval;
 
-			pg_asprintf(&newval, "%s=%s", envvar, envval);
+			newval = psprintf("%s=%s", envvar, envval);
 			putenv(newval);
 			success = true;
 
@@ -1549,7 +1549,7 @@ prompt_for_password(const char *username)
 	{
 		char	   *prompt_text;
 
-		pg_asprintf(&prompt_text, _("Password for user %s: "), username);
+		prompt_text = psprintf(_("Password for user %s: "), username);
 		result = simple_prompt(prompt_text, 100, false);
 		free(prompt_text);
 	}
@@ -1929,17 +1929,17 @@ editFile(const char *fname, int lineno)
 	 */
 #ifndef WIN32
 	if (lineno > 0)
-		pg_asprintf(&sys, "exec %s %s%d '%s'",
+		sys = psprintf("exec %s %s%d '%s'",
 					editorName, editor_lineno_arg, lineno, fname);
 	else
-		pg_asprintf(&sys, "exec %s '%s'",
+		sys = psprintf("exec %s '%s'",
 					editorName, fname);
 #else
 	if (lineno > 0)
-		pg_asprintf(&sys, SYSTEMQUOTE "\"%s\" %s%d \"%s\"" SYSTEMQUOTE,
+		sys = psprintf(SYSTEMQUOTE "\"%s\" %s%d \"%s\"" SYSTEMQUOTE,
 				editorName, editor_lineno_arg, lineno, fname);
 	else
-		pg_asprintf(&sys, SYSTEMQUOTE "\"%s\" \"%s\"" SYSTEMQUOTE,
+		sys = psprintf(SYSTEMQUOTE "\"%s\" \"%s\"" SYSTEMQUOTE,
 					editorName, fname);
 #endif
 	result = system(sys);
@@ -2635,9 +2635,9 @@ do_shell(const char *command)
 
 		/* See EDITOR handling comment for an explanation */
 #ifndef WIN32
-		pg_asprintf(&sys, "exec %s", shellName);
+		sys = psprintf("exec %s", shellName);
 #else
-		pg_asprintf(&sys, SYSTEMQUOTE "\"%s\"" SYSTEMQUOTE, shellName);
+		sys = psprintf(SYSTEMQUOTE "\"%s\"" SYSTEMQUOTE, shellName);
 #endif
 		result = system(sys);
 		free(sys);

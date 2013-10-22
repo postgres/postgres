@@ -298,7 +298,7 @@ initializeInput(int flags)
 		if (histfile == NULL)
 		{
 			if (get_home_path(home))
-				pg_asprintf(&psql_history, "%s/%s", home, PSQLHISTORY);
+				psql_history = psprintf("%s/%s", home, PSQLHISTORY);
 		}
 		else
 		{

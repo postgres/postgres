@@ -466,7 +466,7 @@ report_two_error_messages(Step * step1, Step * step2)
 {
 	char	   *prefix;
 
-	pg_asprintf(&prefix, "%s %s", step1->name, step2->name);
+	prefix = psprintf("%s %s", step1->name, step2->name);
 
 	if (step1->errormsg)
 	{
@@ -794,7 +794,7 @@ try_complete_step(Step * step, int flags)
 													PG_DIAG_MESSAGE_PRIMARY);
 
 					if (sev && msg)
-						pg_asprintf(&step->errormsg, "%s:  %s", sev, msg);
+						step->errormsg = psprintf("%s:  %s", sev, msg);
 					else
 						step->errormsg = pg_strdup(PQresultErrorMessage(res));
 				}

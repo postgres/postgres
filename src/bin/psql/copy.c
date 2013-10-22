@@ -79,7 +79,7 @@ xstrcat(char **var, const char *more)
 {
 	char	   *newvar;
 
-	pg_asprintf(&newvar, "%s%s", *var, more);
+	newvar = psprintf("%s%s", *var, more);
 	free(*var);
 	*var = newvar;
 }

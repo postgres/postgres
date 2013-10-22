@@ -2049,7 +2049,7 @@ main(int argc, char **argv)
 
 						pgdata_D = pg_strdup(optarg);
 						canonicalize_path(pgdata_D);
-						pg_asprintf(&env_var, "PGDATA=%s", pgdata_D);
+						env_var = psprintf("PGDATA=%s", pgdata_D);
 						putenv(env_var);
 
 						/*
@@ -2057,7 +2057,7 @@ main(int argc, char **argv)
 						 * variable but we do -D too for clearer postmaster
 						 * 'ps' display
 						 */
-						pg_asprintf(&pgdata_opt,  "-D \"%s\" ", pgdata_D);
+						pgdata_opt = psprintf("-D \"%s\" ", pgdata_D);
 						break;
 					}
 				case 'l':
@@ -2098,7 +2098,7 @@ main(int argc, char **argv)
 						register_username = pg_strdup(optarg);
 					else
 						/* Prepend .\ for local accounts */
-						pg_asprintf(&register_username, ".\\%s", optarg);
+						register_username = psprintf(".\\%s", optarg);
 					break;
 				case 'w':
 					do_wait = true;

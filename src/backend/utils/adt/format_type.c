@@ -32,10 +32,6 @@ static char *format_type_internal(Oid type_oid, int32 typemod,
 					 bool typemod_given, bool allow_invalid,
 					 bool force_qualify);
 static char *printTypmod(const char *typname, int32 typmod, Oid typmodout);
-static char *
-psnprintf(size_t len, const char *fmt,...)
-/* This lets gcc check the format string for consistency. */
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
 
 
 /*
@@ -320,7 +316,7 @@ format_type_internal(Oid type_oid, int32 typemod,
 	}
 
 	if (is_array)
-		buf = psnprintf(strlen(buf) + 3, "%s[]", buf);
+		buf = psprintf("%s[]", buf);
 
 	ReleaseSysCache(tuple);
 
@@ -342,8 +338,7 @@ printTypmod(const char *typname, int32 typmod, Oid typmodout)
 	if (typmodout == InvalidOid)
 	{
 		/* Default behavior: just print the integer typmod with parens */
-		res = psnprintf(strlen(typname) + MAX_INT32_LEN + 3, "%s(%d)",
-						typname, (int) typmod);
+		res = psprintf("%s(%d)", typname, (int) typmod);
 	}
 	else
 	{
@@ -352,8 +347,7 @@ printTypmod(const char *typname, int32 typmod, Oid typmodout)
 
 		tmstr = DatumGetCString(OidFunctionCall1(typmodout,
 												 Int32GetDatum(typmod)));
-		res = psnprintf(strlen(typname) + strlen(tmstr) + 1, "%s%s",
-						typname, tmstr);
+		res = psprintf("%s%s", typname, tmstr);
 	}
 
 	return res;
@@ -447,21 +441,4 @@ oidvectortypes(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_TEXT_P(cstring_to_text(result));
-}
-
-
-/* snprintf into a palloc'd string */
-static char *
-psnprintf(size_t len, const char *fmt,...)
-{
-	va_list		ap;
-	char	   *buf;
-
-	buf = palloc(len);
-
-	va_start(ap, fmt);
-	vsnprintf(buf, len, fmt, ap);
-	va_end(ap);
-
-	return buf;
 }

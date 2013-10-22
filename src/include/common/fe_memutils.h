@@ -14,7 +14,6 @@ extern void *pg_malloc(size_t size);
 extern void *pg_malloc0(size_t size);
 extern void *pg_realloc(void *pointer, size_t size);
 extern void pg_free(void *pointer);
-extern int pg_asprintf(char **ret, const char *format, ...) __attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
 
 #include "utils/palloc.h"
 

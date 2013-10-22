@@ -3832,8 +3832,6 @@ complete_from_variables(char *text, const char *prefix, const char *suffix)
 
 	for (ptr = pset.vars->next; ptr; ptr = ptr->next)
 	{
-		char	   *buffer;
-
 		if (nvars >= maxvars)
 		{
 			maxvars *= 2;
@@ -3846,8 +3844,7 @@ complete_from_variables(char *text, const char *prefix, const char *suffix)
 			}
 		}
 
-		pg_asprintf(&buffer, "%s%s%s", prefix, ptr->name, suffix);
-		varnames[nvars++] = buffer;
+		varnames[nvars++] = psprintf("%s%s%s", prefix, ptr->name, suffix);
 	}
 
 	varnames[nvars] = NULL;
