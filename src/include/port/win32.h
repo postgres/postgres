@@ -238,15 +238,6 @@ int			setitimer(int which, const struct itimerval * value, struct itimerval * ov
 #endif
 
 /*
- * Supplement to <stdarg.h>
- */
-
-/* Visual Studios 2012 and earlier don't have va_copy() */
-#if defined(_MSC_VER) && _MSC_VER <= 1700
-#define va_copy(dest, src) ((dest) = (src))
-#endif
-
-/*
  * Supplement to <sys/types.h>.
  *
  * Perl already has typedefs for uid_t and gid_t.

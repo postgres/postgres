@@ -420,6 +420,7 @@ pg_GSS_startup(PGconn *conn)
 {
 	OM_uint32	maj_stat,
 				min_stat;
+	int			maxlen;
 	gss_buffer_desc temp_gbuf;
 
 	if (!(conn->pghost && conn->pghost[0] != '\0'))
@@ -440,14 +441,16 @@ pg_GSS_startup(PGconn *conn)
 	 * Import service principal name so the proper ticket can be acquired by
 	 * the GSSAPI system.
 	 */
-	if (asprintf((char **)&temp_gbuf.value, "%s@%s",
-				 conn->krbsrvname, conn->pghost) < 0)
+	maxlen = NI_MAXHOST + strlen(conn->krbsrvname) + 2;
+	temp_gbuf.value = (char *) malloc(maxlen);
+	if (!temp_gbuf.value)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("out of memory"));
+						  libpq_gettext("out of memory\n"));
 		return STATUS_ERROR;
 	}
-
+	snprintf(temp_gbuf.value, maxlen, "%s@%s",
+			 conn->krbsrvname, conn->pghost);
 	temp_gbuf.length = strlen(temp_gbuf.value);
 
 	maj_stat = gss_import_name(&min_stat, &temp_gbuf,
@@ -659,11 +662,13 @@ pg_SSPI_startup(PGconn *conn, int use_negotiate)
 						  libpq_gettext("host name must be specified\n"));
 		return STATUS_ERROR;
 	}
-	if (asprintf(&conn->sspitarget, "%s/%s", conn->krbsrvname, conn->pghost) < 0)
+	conn->sspitarget = malloc(strlen(conn->krbsrvname) + strlen(conn->pghost) + 2);
+	if (!conn->sspitarget)
 	{
 		printfPQExpBuffer(&conn->errorMessage, libpq_gettext("out of memory\n"));
 		return STATUS_ERROR;
 	}
+	sprintf(conn->sspitarget, "%s/%s", conn->krbsrvname, conn->pghost);
 
 	/*
 	 * Indicate that we're in SSPI authentication mode to make sure that

@@ -1015,15 +1015,17 @@ pg_GSS_recvauth(Port *port)
 		 */
 		if (getenv("KRB5_KTNAME") == NULL)
 		{
-			char	   *kt_path;
+			size_t		kt_len = strlen(pg_krb_server_keyfile) + 14;
+			char	   *kt_path = malloc(kt_len);
 
-			if (asprintf(&kt_path, "KRB5_KTNAME=%s", pg_krb_server_keyfile) < 0)
+			if (!kt_path)
 			{
 				ereport(LOG,
 						(errcode(ERRCODE_OUT_OF_MEMORY),
 						 errmsg("out of memory")));
 				return STATUS_ERROR;
 			}
+			snprintf(kt_path, kt_len, "KRB5_KTNAME=%s", pg_krb_server_keyfile);
 			putenv(kt_path);
 		}
 	}

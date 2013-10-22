@@ -97,11 +97,15 @@ extern char *MemoryContextStrdup(MemoryContext context, const char *string);
 
 extern char *pstrdup(const char *in);
 extern char *pnstrdup(const char *in, Size len);
+
+/* sprintf into a palloc'd buffer */
+extern char *psprintf(const char *fmt,...)
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
+
+/* basic memory allocation functions */
 extern void *palloc(Size size);
 extern void *palloc0(Size size);
 extern void pfree(void *pointer);
 extern void *repalloc(void *pointer, Size size);
-extern char *psprintf(const char *format, ...) __attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
-extern char *pvsprintf(const char *format, va_list ap) __attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 0)));
 
 #endif   /* PALLOC_H */

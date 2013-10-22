@@ -404,11 +404,6 @@ extern double rint(double x);
 extern int	inet_aton(const char *cp, struct in_addr * addr);
 #endif
 
-#ifndef HAVE_ASPRINTF
-extern int asprintf(char **ret, const char *fmt, ...) __attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
-extern int vasprintf(char **ret, const char *fmt, va_list ap) __attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 0)));
-#endif
-
 #if !HAVE_DECL_STRLCAT
 extern size_t strlcat(char *dst, const char *src, size_t siz);
 #endif

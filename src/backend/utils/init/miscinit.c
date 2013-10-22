@@ -165,10 +165,12 @@ make_absolute_path(const char *path)
 			}
 		}
 
-		if (asprintf(&new, "%s/%s", buf, path) < 0)
+		new = malloc(strlen(buf) + strlen(path) + 2);
+		if (!new)
 			ereport(FATAL,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("out of memory")));
+		sprintf(new, "%s/%s", buf, path);
 		free(buf);
 	}
 	else
