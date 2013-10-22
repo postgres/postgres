@@ -1430,7 +1430,7 @@ record_image_cmp(FunctionCallInfo fcinfo)
 		 */
 		if (!nulls1[i1] || !nulls2[i2])
 		{
-			int			cmpresult;
+			int			cmpresult = 0;
 
 			if (nulls1[i1])
 			{
