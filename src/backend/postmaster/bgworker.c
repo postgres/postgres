@@ -758,7 +758,7 @@ RegisterDynamicBackgroundWorker(BackgroundWorker *worker,
 {
 	int		slotno;
 	bool	success = false;
-	uint64	generation;
+	uint64	generation = 0;
 
 	/*
 	 * We can't register dynamic background workers from the postmaster.
