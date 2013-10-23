@@ -369,47 +369,12 @@ static const SchemaQuery Query_for_list_of_constraints_with_schema = {
 	NULL
 };
 
-/* The bit masks for the following three functions come from
- * src/include/catalog/pg_trigger.h.
- */
-static const SchemaQuery Query_for_list_of_insertables = {
-	/* catname */
-	"pg_catalog.pg_class c",
-	/* selcondition */
-	"(c.relkind = 'r' OR (c.relkind = 'v' AND c.relhastriggers AND EXISTS "
-	"(SELECT 1 FROM pg_catalog.pg_trigger t WHERE t.tgrelid = c.oid AND t.tgtype & (1 << 2) <> 0)))",
-	/* viscondition */
-	"pg_catalog.pg_table_is_visible(c.oid)",
-	/* namespace */
-	"c.relnamespace",
-	/* result */
-	"pg_catalog.quote_ident(c.relname)",
-	/* qualresult */
-	NULL
-};
-
-static const SchemaQuery Query_for_list_of_deletables = {
-	/* catname */
-	"pg_catalog.pg_class c",
-	/* selcondition */
-	"(c.relkind = 'r' OR (c.relkind = 'v' AND c.relhastriggers AND EXISTS "
-	"(SELECT 1 FROM pg_catalog.pg_trigger t WHERE t.tgrelid = c.oid AND t.tgtype & (1 << 3) <> 0)))",
-	/* viscondition */
-	"pg_catalog.pg_table_is_visible(c.oid)",
-	/* namespace */
-	"c.relnamespace",
-	/* result */
-	"pg_catalog.quote_ident(c.relname)",
-	/* qualresult */
-	NULL
-};
-
+/* Relations supporting INSERT, UPDATE or DELETE */
 static const SchemaQuery Query_for_list_of_updatables = {
 	/* catname */
 	"pg_catalog.pg_class c",
 	/* selcondition */
-	"(c.relkind = 'r' OR (c.relkind = 'v' AND c.relhastriggers AND EXISTS "
-	"(SELECT 1 FROM pg_catalog.pg_trigger t WHERE t.tgrelid = c.oid AND t.tgtype & (1 << 4) <> 0)))",
+	"c.relkind IN ('r', 'f', 'v')",
 	/* viscondition */
 	"pg_catalog.pg_table_is_visible(c.oid)",
 	/* namespace */
@@ -2362,7 +2327,7 @@ psql_completion(char *text, int start, int end)
 	/* Complete DELETE FROM with a list of tables */
 	else if (pg_strcasecmp(prev2_wd, "DELETE") == 0 &&
 			 pg_strcasecmp(prev_wd, "FROM") == 0)
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_deletables, NULL);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_updatables, NULL);
 	/* Complete DELETE FROM <table> */
 	else if (pg_strcasecmp(prev3_wd, "DELETE") == 0 &&
 			 pg_strcasecmp(prev2_wd, "FROM") == 0)
@@ -2732,7 +2697,7 @@ psql_completion(char *text, int start, int end)
 	/* Complete INSERT INTO with table names */
 	else if (pg_strcasecmp(prev2_wd, "INSERT") == 0 &&
 			 pg_strcasecmp(prev_wd, "INTO") == 0)
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_insertables, NULL);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_updatables, NULL);
 	/* Complete "INSERT INTO <table> (" with attribute names */
 	else if (pg_strcasecmp(prev4_wd, "INSERT") == 0 &&
 			 pg_strcasecmp(prev3_wd, "INTO") == 0 &&
