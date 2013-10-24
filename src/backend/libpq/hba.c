@@ -2235,7 +2235,7 @@ load_ident(void)
 	}
 
 	/* Loaded new file successfully, replace the one we use */
-	if (parsed_ident_lines != NULL)
+	if (parsed_ident_lines != NIL)
 	{
 		foreach(parsed_line_cell, parsed_ident_lines)
 		{
@@ -2243,8 +2243,10 @@ load_ident(void)
 			if (newline->ident_user[0] == '/')
 				pg_regfree(&newline->re);
 		}
-		MemoryContextDelete(parsed_ident_context);
 	}
+	if (parsed_ident_context != NULL)
+		MemoryContextDelete(parsed_ident_context);
+
 	parsed_ident_context = ident_context;
 	parsed_ident_lines = new_parsed_lines;
 
