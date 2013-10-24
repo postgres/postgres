@@ -161,7 +161,7 @@ allocate_recordbuf(XLogReaderState *state, uint32 reclength)
 /*
  * Attempt to read an XLOG record.
  *
- * If RecPtr is not NULL, try to read a record at that position.  Otherwise
+ * If RecPtr is valid, try to read a record at that position.  Otherwise
  * try to read a record just after the last one previously read.
  *
  * If the read_page callback fails to read the requested data, NULL is
@@ -901,10 +901,10 @@ ValidXLogPageHeader(XLogReaderState *state, XLogRecPtr recptr,
  */
 
 /*
- * Find the first record with at an lsn >= RecPtr.
+ * Find the first record with an lsn >= RecPtr.
  *
- * Useful for checking whether RecPtr is a valid xlog address for reading and to
- * find the first valid address after some address when dumping records for
+ * Useful for checking whether RecPtr is a valid xlog address for reading, and
+ * to find the first valid address after some address when dumping records for
  * debugging purposes.
  */
 XLogRecPtr
