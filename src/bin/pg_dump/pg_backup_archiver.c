@@ -1183,29 +1183,33 @@ archputs(const char *s, Archive *AH)
 int
 archprintf(Archive *AH, const char *fmt,...)
 {
-	char	   *p = NULL;
-	va_list		ap;
-	int			bSize = strlen(fmt) + 256;
-	int			cnt = -1;
+	char	   *p;
+	size_t		len = 128;		/* initial assumption about buffer size */
+	size_t		cnt;
 
-	/*
-	 * This is paranoid: deal with the possibility that vsnprintf is willing
-	 * to ignore trailing null or returns > 0 even if string does not fit. It
-	 * may be the case that it returns cnt = bufsize
-	 */
-	while (cnt < 0 || cnt >= (bSize - 1))
+	for (;;)
 	{
-		if (p != NULL)
-			free(p);
-		bSize *= 2;
-		p = (char *) pg_malloc(bSize);
-		va_start(ap, fmt);
-		cnt = vsnprintf(p, bSize, fmt, ap);
-		va_end(ap);
+		va_list		args;
+
+		/* Allocate work buffer. */
+		p = (char *) pg_malloc(len);
+
+		/* Try to format the data. */
+		va_start(args, fmt);
+		cnt = pvsnprintf(p, len, fmt, args);
+		va_end(args);
+
+		if (cnt < len)
+			break;				/* success */
+
+		/* Release buffer and loop around to try again with larger len. */
+		free(p);
+		len = cnt;
 	}
+
 	WriteData(AH, p, cnt);
 	free(p);
-	return cnt;
+	return (int) cnt;
 }
 
 
@@ -1312,29 +1316,33 @@ RestoreOutput(ArchiveHandle *AH, OutputContext savedContext)
 int
 ahprintf(ArchiveHandle *AH, const char *fmt,...)
 {
-	char	   *p = NULL;
-	va_list		ap;
-	int			bSize = strlen(fmt) + 256;		/* Usually enough */
-	int			cnt = -1;
+	char	   *p;
+	size_t		len = 128;		/* initial assumption about buffer size */
+	size_t		cnt;
 
-	/*
-	 * This is paranoid: deal with the possibility that vsnprintf is willing
-	 * to ignore trailing null or returns > 0 even if string does not fit. It
-	 * may be the case that it returns cnt = bufsize.
-	 */
-	while (cnt < 0 || cnt >= (bSize - 1))
+	for (;;)
 	{
-		if (p != NULL)
-			free(p);
-		bSize *= 2;
-		p = (char *) pg_malloc(bSize);
-		va_start(ap, fmt);
-		cnt = vsnprintf(p, bSize, fmt, ap);
-		va_end(ap);
+		va_list		args;
+
+		/* Allocate work buffer. */
+		p = (char *) pg_malloc(len);
+
+		/* Try to format the data. */
+		va_start(args, fmt);
+		cnt = pvsnprintf(p, len, fmt, args);
+		va_end(args);
+
+		if (cnt < len)
+			break;				/* success */
+
+		/* Release buffer and loop around to try again with larger len. */
+		free(p);
+		len = cnt;
 	}
+
 	ahwrite(p, 1, cnt, AH);
 	free(p);
-	return cnt;
+	return (int) cnt;
 }
 
 void

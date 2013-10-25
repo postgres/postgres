@@ -101,11 +101,12 @@ __attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
  * appendStringInfoVA
  * Attempt to format text data under the control of fmt (an sprintf-style
  * format string) and append it to whatever is already in str.	If successful
- * return true; if not (because there's not enough space), return false
- * without modifying str.  Typically the caller would enlarge str and retry
- * on false return --- see appendStringInfo for standard usage pattern.
+ * return zero; if not (because there's not enough space), return an estimate
+ * of the space needed, without modifying str.  Typically the caller should
+ * pass the return value to enlargeStringInfo() before trying again; see
+ * appendStringInfo for standard usage pattern.
  */
-extern bool
+extern int
 appendStringInfoVA(StringInfo str, const char *fmt, va_list args)
 __attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 0)));
 

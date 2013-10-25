@@ -715,13 +715,13 @@ errcode_for_socket_access(void)
 		for (;;) \
 		{ \
 			va_list		args; \
-			bool		success; \
+			int			needed; \
 			va_start(args, fmt); \
-			success = appendStringInfoVA(&buf, fmtbuf, args); \
+			needed = appendStringInfoVA(&buf, fmtbuf, args); \
 			va_end(args); \
-			if (success) \
+			if (needed == 0) \
 				break; \
-			enlargeStringInfo(&buf, buf.maxlen); \
+			enlargeStringInfo(&buf, needed); \
 		} \
 		/* Done with expanded fmt */ \
 		pfree(fmtbuf); \
@@ -758,13 +758,13 @@ errcode_for_socket_access(void)
 		for (;;) \
 		{ \
 			va_list		args; \
-			bool		success; \
+			int			needed; \
 			va_start(args, n); \
-			success = appendStringInfoVA(&buf, fmtbuf, args); \
+			needed = appendStringInfoVA(&buf, fmtbuf, args); \
 			va_end(args); \
-			if (success) \
+			if (needed == 0) \
 				break; \
-			enlargeStringInfo(&buf, buf.maxlen); \
+			enlargeStringInfo(&buf, needed); \
 		} \
 		/* Done with expanded fmt */ \
 		pfree(fmtbuf); \

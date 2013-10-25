@@ -80,18 +80,18 @@ appendStringInfo(StringInfo str, const char *fmt,...)
 	for (;;)
 	{
 		va_list		args;
-		bool		success;
+		int			needed;
 
 		/* Try to format the data. */
 		va_start(args, fmt);
-		success = appendStringInfoVA(str, fmt, args);
+		needed = appendStringInfoVA(str, fmt, args);
 		va_end(args);
 
-		if (success)
-			break;
+		if (needed == 0)
+			break;				/* success */
 
-		/* Double the buffer size and try again. */
-		enlargeStringInfo(str, str->maxlen);
+		/* Increase the buffer size and try again. */
+		enlargeStringInfo(str, needed);
 	}
 }
 
@@ -100,59 +100,51 @@ appendStringInfo(StringInfo str, const char *fmt,...)
  *
  * Attempt to format text data under the control of fmt (an sprintf-style
  * format string) and append it to whatever is already in str.	If successful
- * return true; if not (because there's not enough space), return false
- * without modifying str.  Typically the caller would enlarge str and retry
- * on false return --- see appendStringInfo for standard usage pattern.
+ * return zero; if not (because there's not enough space), return an estimate
+ * of the space needed, without modifying str.  Typically the caller should
+ * pass the return value to enlargeStringInfo() before trying again; see
+ * appendStringInfo for standard usage pattern.
  *
  * XXX This API is ugly, but there seems no alternative given the C spec's
  * restrictions on what can portably be done with va_list arguments: you have
  * to redo va_start before you can rescan the argument list, and we can't do
  * that from here.
  */
-bool
+int
 appendStringInfoVA(StringInfo str, const char *fmt, va_list args)
 {
-	int			avail,
-				nprinted;
+	int			avail;
+	size_t		nprinted;
 
 	Assert(str != NULL);
 
 	/*
 	 * If there's hardly any space, don't bother trying, just fail to make the
-	 * caller enlarge the buffer first.
+	 * caller enlarge the buffer first.  We have to guess at how much to
+	 * enlarge, since we're skipping the formatting work.
 	 */
-	avail = str->maxlen - str->len - 1;
+	avail = str->maxlen - str->len;
 	if (avail < 16)
-		return false;
+		return 32;
 
-	/*
-	 * Assert check here is to catch buggy vsnprintf that overruns the
-	 * specified buffer length.  Solaris 7 in 64-bit mode is an example of a
-	 * platform with such a bug.
-	 */
-#ifdef USE_ASSERT_CHECKING
-	str->data[str->maxlen - 1] = '\0';
-#endif
+	nprinted = pvsnprintf(str->data + str->len, (size_t) avail, fmt, args);
 
-	nprinted = vsnprintf(str->data + str->len, avail, fmt, args);
-
-	Assert(str->data[str->maxlen - 1] == '\0');
-
-	/*
-	 * Note: some versions of vsnprintf return the number of chars actually
-	 * stored, but at least one returns -1 on failure. Be conservative about
-	 * believing whether the print worked.
-	 */
-	if (nprinted >= 0 && nprinted < avail - 1)
+	if (nprinted < (size_t) avail)
 	{
 		/* Success.  Note nprinted does not include trailing null. */
-		str->len += nprinted;
-		return true;
+		str->len += (int) nprinted;
+		return 0;
 	}
 
 	/* Restore the trailing null so that str is unmodified. */
 	str->data[str->len] = '\0';
-	return false;
+
+	/*
+	 * Return pvsnprintf's estimate of the space needed.  (Although this is
+	 * given as a size_t, we know it will fit in int because it's not more
+	 * than MaxAllocSize.)
+	 */
+	return (int) nprinted;
 }
 
 /*

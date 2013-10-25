@@ -70,14 +70,14 @@ PLy_elog(int elevel, const char *fmt,...)
 		for (;;)
 		{
 			va_list		ap;
-			bool		success;
+			int			needed;
 
 			va_start(ap, fmt);
-			success = appendStringInfoVA(&emsg, dgettext(TEXTDOMAIN, fmt), ap);
+			needed = appendStringInfoVA(&emsg, dgettext(TEXTDOMAIN, fmt), ap);
 			va_end(ap);
-			if (success)
+			if (needed == 0)
 				break;
-			enlargeStringInfo(&emsg, emsg.maxlen);
+			enlargeStringInfo(&emsg, needed);
 		}
 		primary = emsg.data;
 
