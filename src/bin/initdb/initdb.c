@@ -3197,6 +3197,11 @@ setup_signals(void)
 #ifdef SIGPIPE
 	pqsignal(SIGPIPE, SIG_IGN);
 #endif
+
+	/* Prevent SIGSYS so we can probe for kernel calls that might not work */
+#ifdef SIGSYS
+	pqsignal(SIGSYS, SIG_IGN);
+#endif
 }
 
 
