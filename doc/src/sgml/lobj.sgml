@@ -600,7 +600,7 @@ int lo_unlink(PGconn *conn, Oid lobjId);
    client-side functions are simply interfaces to the equivalent server-side
    functions.  The ones just as convenient to call via SQL commands are
    <function>lo_creat</function><indexterm><primary>lo_creat</></>,
-   <function>lo_create</function><indexterm><primary>lo_create</></>,
+   <function>lo_create</function>,
    <function>lo_unlink</function><indexterm><primary>lo_unlink</></>,
    <function>lo_import</function><indexterm><primary>lo_import</></>, and
    <function>lo_export</function><indexterm><primary>lo_export</></>.
