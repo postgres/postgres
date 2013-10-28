@@ -526,11 +526,79 @@ int lo_unlink(PGconn *conn, Oid lobjId);
 <title>Server-side Functions</title>
 
   <para>
-   There are server-side functions callable from SQL that correspond to
-   each of the client-side functions described above; indeed, for the
-   most part the client-side functions are simply interfaces to the
-   equivalent server-side functions.  The ones that are actually useful
-   to call via SQL commands are
+   Server-side functions tailored for manipulating large objects from SQL are
+   listed in <xref linkend="lo-funcs-table">.
+  </para>
+
+  <table id="lo-funcs-table">
+   <title>SQL-oriented Large Object Functions</title>
+   <tgroup cols="5">
+    <thead>
+     <row>
+      <entry>Function</entry>
+      <entry>Return Type</entry>
+      <entry>Description</entry>
+      <entry>Example</entry>
+      <entry>Result</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>
+       <indexterm>
+        <primary>lo_create</primary>
+       </indexterm>
+       <literal><function>lo_create(<parameter>loid</parameter> <type>oid</type>, <parameter>string</parameter> <type>bytea</type>)</function></literal>
+      </entry>
+      <entry><type>oid</type></entry>
+      <entry>
+       Create a large object and store data there, returning its OID.
+       Pass <literal>0</> to have the system choose an OID.
+      </entry>
+      <entry><literal>lo_create(0, E'\\xffffff00')</literal></entry>
+      <entry><literal>24528</literal></entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>lo_put</primary>
+       </indexterm>
+       <literal><function>lo_put(<parameter>loid</parameter> <type>oid</type>, <parameter>offset</parameter> <type>bigint</type>, <parameter>str</parameter> <type>bytea</type>)</function></literal>
+      </entry>
+      <entry><type>void</type></entry>
+      <entry>
+       Write data at the given offset.
+      </entry>
+      <entry><literal>lo_put(24528, 1, E'\\xaa')</literal></entry>
+      <entry></entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>lo_get</primary>
+       </indexterm>
+       <literal><function>lo_get(<parameter>loid</parameter> <type>oid</type> <optional>, <parameter>from</parameter> <type>bigint</type>, <parameter>for</parameter> <type>int</type></optional>)</function></literal>
+      </entry>
+      <entry><type>bytea</type></entry>
+      <entry>
+       Extract contents or a substring thereof.
+      </entry>
+      <entry><literal>lo_get(24528, 0, 3)</literal></entry>
+      <entry><literal>\xffaaff</literal></entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   There are additional server-side functions corresponding to each of the
+   client-side functions described earlier; indeed, for the most part the
+   client-side functions are simply interfaces to the equivalent server-side
+   functions.  The ones just as convenient to call via SQL commands are
    <function>lo_creat</function><indexterm><primary>lo_creat</></>,
    <function>lo_create</function><indexterm><primary>lo_create</></>,
    <function>lo_unlink</function><indexterm><primary>lo_unlink</></>,

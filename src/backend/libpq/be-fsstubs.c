@@ -754,3 +754,154 @@ deleteLOfd(int fd)
 {
 	cookies[fd] = NULL;
 }
+
+/*****************************************************************************
+ *	Wrappers oriented toward SQL callers
+ *****************************************************************************/
+
+/*
+ * Read [offset, offset+nbytes) within LO; when nbytes is -1, read to end.
+ */
+static bytea *
+lo_get_fragment_internal(Oid loOid, int64 offset, int32 nbytes)
+{
+	LargeObjectDesc *loDesc;
+	int64		loSize;
+	int64		result_length;
+	int			total_read PG_USED_FOR_ASSERTS_ONLY;
+	bytea	   *result = NULL;
+
+	/*
+	 * We don't actually need to store into fscxt, but create it anyway to
+	 * ensure that AtEOXact_LargeObject knows there is state to clean up
+	 */
+	CreateFSContext();
+
+	loDesc = inv_open(loOid, INV_READ, fscxt);
+
+	/* Permission check */
+	if (!lo_compat_privileges &&
+		pg_largeobject_aclcheck_snapshot(loDesc->id,
+										 GetUserId(),
+										 ACL_SELECT,
+										 loDesc->snapshot) != ACLCHECK_OK)
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied for large object %u",
+						loDesc->id)));
+
+	/*
+	 * Compute number of bytes we'll actually read, accommodating nbytes == -1
+	 * and reads beyond the end of the LO.
+	 */
+	loSize = inv_seek(loDesc, 0, SEEK_END);
+	if (loSize > offset)
+	{
+		if (nbytes >= 0 && nbytes <= loSize - offset)
+			result_length = nbytes;		/* request is wholly inside LO */
+		else
+			result_length = loSize - offset;	/* adjust to end of LO */
+	}
+	else
+		result_length = 0;		/* request is wholly outside LO */
+
+	/*
+	 * A result_length calculated from loSize may not fit in a size_t.  Check
+	 * that the size will satisfy this and subsequently-enforced size limits.
+	 */
+	if (result_length > MaxAllocSize - VARHDRSZ)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("large object read request is too large")));
+
+	result = (bytea *) palloc(VARHDRSZ + result_length);
+
+	inv_seek(loDesc, offset, SEEK_SET);
+	total_read = inv_read(loDesc, VARDATA(result), result_length);
+	Assert(total_read == result_length);
+	SET_VARSIZE(result, result_length + VARHDRSZ);
+
+	inv_close(loDesc);
+
+	return result;
+}
+
+/*
+ * Read entire LO
+ */
+Datum
+lo_get(PG_FUNCTION_ARGS)
+{
+	Oid			loOid = PG_GETARG_OID(0);
+	bytea	   *result;
+
+	result = lo_get_fragment_internal(loOid, 0, -1);
+
+	PG_RETURN_BYTEA_P(result);
+}
+
+/*
+ * Read range within LO
+ */
+Datum
+lo_get_fragment(PG_FUNCTION_ARGS)
+{
+	Oid			loOid = PG_GETARG_OID(0);
+	int64		offset = PG_GETARG_INT64(1);
+	int32		nbytes = PG_GETARG_INT32(2);
+	bytea	   *result;
+
+	if (nbytes < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("requested length cannot be negative")));
+
+	result = lo_get_fragment_internal(loOid, offset, nbytes);
+
+	PG_RETURN_BYTEA_P(result);
+}
+
+/*
+ * Create LO with initial contents
+ */
+Datum
+lo_create_bytea(PG_FUNCTION_ARGS)
+{
+	Oid			loOid = PG_GETARG_OID(0);
+	bytea	   *str = PG_GETARG_BYTEA_PP(1);
+	LargeObjectDesc *loDesc;
+	int			written PG_USED_FOR_ASSERTS_ONLY;
+
+	CreateFSContext();
+
+	loOid = inv_create(loOid);
+	loDesc = inv_open(loOid, INV_WRITE, fscxt);
+	written = inv_write(loDesc, VARDATA_ANY(str), VARSIZE_ANY_EXHDR(str));
+	Assert(written == VARSIZE_ANY_EXHDR(str));
+	inv_close(loDesc);
+
+	PG_RETURN_OID(loOid);
+}
+
+/*
+ * Update range within LO
+ */
+Datum
+lo_put(PG_FUNCTION_ARGS)
+{
+	Oid			loOid = PG_GETARG_OID(0);
+	int64		offset = PG_GETARG_INT64(1);
+	bytea	   *str = PG_GETARG_BYTEA_PP(2);
+	LargeObjectDesc *loDesc;
+	int			written PG_USED_FOR_ASSERTS_ONLY;
+
+	CreateFSContext();
+
+	loDesc = inv_open(loOid, INV_WRITE, fscxt);
+	inv_seek(loDesc, offset, SEEK_SET);
+	written = inv_write(loDesc, VARDATA_ANY(str), VARSIZE_ANY_EXHDR(str));
+	Assert(written == VARSIZE_ANY_EXHDR(str));
+	inv_close(loDesc);
+
+	PG_RETURN_VOID();
+}

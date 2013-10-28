@@ -3420,7 +3420,8 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
 
   <para>
    See also the aggregate function <function>string_agg</function> in
-   <xref linkend="functions-aggregate">.
+   <xref linkend="functions-aggregate"> and the large object functions
+   in <xref linkend="lo-funcs">.
   </para>
  </sect1>
 

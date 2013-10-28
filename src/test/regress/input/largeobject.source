@@ -203,5 +203,26 @@ SELECT pageno, data FROM pg_largeobject WHERE loid = :newloid;
 SELECT lo_unlink(loid) FROM lotest_stash_values;
 \lo_unlink :newloid
 
+\lo_import 'results/lotest.txt'
+
+\set newloid_1 :LASTOID
+
+SELECT lo_create(0, lo_get(:newloid_1)) AS newloid_2
+\gset
+
+SELECT md5(lo_get(:newloid_1)) = md5(lo_get(:newloid_2));
+
+SELECT lo_get(:newloid_1, 0, 20);
+SELECT lo_get(:newloid_1, 10, 20);
+SELECT lo_put(:newloid_1, 5, decode('afafafaf', 'hex'));
+SELECT lo_get(:newloid_1, 0, 20);
+
+SELECT lo_put(:newloid_1, 4294967310, 'foo');
+SELECT lo_get(:newloid_1);
+SELECT lo_get(:newloid_1, 4294967294, 100);
+
+\lo_unlink :newloid_1
+\lo_unlink :newloid_2
+
 TRUNCATE lotest_stash_values;
 DROP ROLE regresslo;

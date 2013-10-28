@@ -391,5 +391,55 @@ SELECT lo_unlink(loid) FROM lotest_stash_values;
 (1 row)
 
 \lo_unlink :newloid
+\lo_import 'results/lotest.txt'
+\set newloid_1 :LASTOID
+SELECT lo_create(0, lo_get(:newloid_1)) AS newloid_2
+\gset
+SELECT md5(lo_get(:newloid_1)) = md5(lo_get(:newloid_2));
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT lo_get(:newloid_1, 0, 20);
+                  lo_get                   
+-------------------------------------------
+ 8800\0110\0110\0110\0110\0110\0110\011800
+(1 row)
+
+SELECT lo_get(:newloid_1, 10, 20);
+                  lo_get                   
+-------------------------------------------
+ \0110\0110\0110\011800\011800\0113800\011
+(1 row)
+
+SELECT lo_put(:newloid_1, 5, decode('afafafaf', 'hex'));
+ lo_put 
+--------
+ 
+(1 row)
+
+SELECT lo_get(:newloid_1, 0, 20);
+                     lo_get                      
+-------------------------------------------------
+ 8800\011\257\257\257\2570\0110\0110\0110\011800
+(1 row)
+
+SELECT lo_put(:newloid_1, 4294967310, 'foo');
+ lo_put 
+--------
+ 
+(1 row)
+
+SELECT lo_get(:newloid_1);
+ERROR:  large object read request is too large
+SELECT lo_get(:newloid_1, 4294967294, 100);
+                               lo_get                                
+---------------------------------------------------------------------
+ \000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000foo
+(1 row)
+
+\lo_unlink :newloid_1
+\lo_unlink :newloid_2
 TRUNCATE lotest_stash_values;
 DROP ROLE regresslo;
