@@ -67,14 +67,20 @@ PGDATA="$BASE_PGDATA.old"
 export PGDATA
 rm -rf "$BASE_PGDATA" "$PGDATA"
 
-unset PGDATABASE
-unset PGUSER
-unset PGSERVICE
-unset PGSSLMODE
-unset PGREQUIRESSL
-unset PGCONNECT_TIMEOUT
-unset PGHOST
-unset PGHOSTADDR
+# Clear out any environment vars that might cause libpq to connect to
+# the wrong postmaster (cf pg_regress.c)
+#
+# Some shells, such as NetBSD's, return non-zero from unset if the variable
+# is already unset. Since we are operating under 'set -e', this causes the
+# script to fail. To guard against this, set them all to an empty string first.
+PGDATABASE="";        unset PGDATABASE
+PGUSER="";            unset PGUSER
+PGSERVICE="";         unset PGSERVICE
+PGSSLMODE=""          unset PGSSLMODE
+PGREQUIRESSL="";      unset PGREQUIRESSL
+PGCONNECT_TIMEOUT=""; unset PGCONNECT_TIMEOUT
+PGHOST=""             unset PGHOST
+PGHOSTADDR="";        unset PGHOSTADDR
 
 logdir=$PWD/log
 rm -rf "$logdir"
