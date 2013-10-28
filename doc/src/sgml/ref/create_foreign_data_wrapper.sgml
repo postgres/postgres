@@ -80,11 +80,11 @@ CREATE FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable>
    <varlistentry>
     <term><literal>VALIDATOR <replaceable class="parameter">validator_function</replaceable></literal></term>
     <listitem>
-     <para><replaceable class="parameter">validator_function</replaceable> is the
-      name of a previously registered function that will be called to
+     <para><replaceable class="parameter">validator_function</replaceable>
+      is the name of a previously registered function that will be called to
       check the generic options given to the foreign-data wrapper, as
-      well as options for foreign servers and user mappings using the
-      foreign-data wrapper.  If no validator function or <literal>NO
+      well as options for foreign servers, user mappings and foreign tables
+      using the foreign-data wrapper.  If no validator function or <literal>NO
       VALIDATOR</literal> is specified, then options will not be
       checked at creation time.  (Foreign-data wrappers will possibly
       ignore or reject invalid option specifications at run time,
