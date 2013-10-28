@@ -76,14 +76,18 @@ mkdir "$logdir"
 
 # Clear out any environment vars that might cause libpq to connect to
 # the wrong postmaster (cf pg_regress.c)
-unset PGDATABASE
-unset PGUSER
-unset PGSERVICE
-unset PGSSLMODE
-unset PGREQUIRESSL
-unset PGCONNECT_TIMEOUT
-unset PGHOST
-unset PGHOSTADDR
+#
+# Some shells, such as NetBSD's, return non-zero from unset if the variable
+# is already unset. Since we are operating under 'set -e', this causes the
+# script to fail. To guard against this, set them all to an empty string first.
+PGDATABASE="";        unset PGDATABASE
+PGUSER="";            unset PGUSER
+PGSERVICE="";         unset PGSERVICE
+PGSSLMODE=""          unset PGSSLMODE
+PGREQUIRESSL="";      unset PGREQUIRESSL
+PGCONNECT_TIMEOUT=""; unset PGCONNECT_TIMEOUT
+PGHOST=""             unset PGHOST
+PGHOSTADDR="";        unset PGHOSTADDR
 
 # Select a non-conflicting port number, similarly to pg_regress.c
 PG_VERSION_NUM=`grep '#define PG_VERSION_NUM' $newsrc/src/include/pg_config.h | awk '{print $3}'`
