@@ -91,11 +91,13 @@ ALTER FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable> REN
      </para>
 
      <para>
-      Note that it is possible that after changing the validator the
-      options to the foreign-data wrapper, servers, and user mappings
-      have become invalid.   It is up to the user to make sure that
-      these options are correct before using the foreign-data
-      wrapper.
+      Note that it is possible that pre-existing options of the foreign-data
+      wrapper, or of dependent servers, user mappings, or foreign tables, are
+      invalid according to the new validator.  <productname>PostgreSQL</> does
+      not check for this.  It is up to the user to make sure that these
+      options are correct before using the modified foreign-data wrapper.
+      However, any options specified in this <command>ALTER FOREIGN DATA
+      WRAPPER</> command will be checked using the new validator.
      </para>
     </listitem>
    </varlistentry>
