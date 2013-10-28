@@ -67,7 +67,7 @@ struct dsm_segment
 	uint32		control_slot;		/* Slot in control segment. */
 	void       *impl_private;		/* Implementation-specific private data. */
 	void	   *mapped_address;		/* Mapping address, or NULL if unmapped. */
-	uint64		mapped_size;		/* Size of our mapping. */
+	Size		mapped_size;		/* Size of our mapping. */
 };
 
 /* Shared-memory state for a dynamic shared memory segment. */
@@ -94,7 +94,7 @@ static void dsm_postmaster_shutdown(int code, Datum arg);
 static void dsm_backend_shutdown(int code, Datum arg);
 static dsm_segment *dsm_create_descriptor(void);
 static bool dsm_control_segment_sane(dsm_control_header *control,
-						 uint64 mapped_size);
+						 Size mapped_size);
 static uint64 dsm_control_bytes_needed(uint32 nitems);
 
 /* Has this backend initialized the dynamic shared memory system yet? */
@@ -128,7 +128,7 @@ static dlist_head dsm_segment_list = DLIST_STATIC_INIT(dsm_segment_list);
  */
 static dsm_handle dsm_control_handle;
 static dsm_control_header *dsm_control;
-static uint64 dsm_control_mapped_size = 0;
+static Size dsm_control_mapped_size = 0;
 static void	*dsm_control_impl_private = NULL;
 
 /*
@@ -142,7 +142,7 @@ dsm_postmaster_startup(void)
 {
 	void	   *dsm_control_address = NULL;
 	uint32		maxitems;
-	uint64		segsize;
+	Size		segsize;
 
 	Assert(!IsUnderPostmaster);
 
@@ -214,8 +214,8 @@ dsm_cleanup_using_control_segment(void)
 	void	   *junk_mapped_address = NULL;
 	void	   *impl_private = NULL;
 	void	   *junk_impl_private = NULL;
-	uint64		mapped_size = 0;
-	uint64		junk_mapped_size = 0;
+	Size		mapped_size = 0;
+	Size		junk_mapped_size = 0;
 	uint32		nitems;
 	uint32		i;
 	dsm_handle	old_control_handle;
@@ -453,7 +453,7 @@ dsm_postmaster_shutdown(int code, Datum arg)
 	void	   *dsm_control_address;
 	void	   *junk_mapped_address = NULL;
 	void	   *junk_impl_private = NULL;
-	uint64		junk_mapped_size = 0;
+	Size		junk_mapped_size = 0;
 
 	/*
 	 * If some other backend exited uncleanly, it might have corrupted the
@@ -562,7 +562,7 @@ dsm_backend_startup(void)
  * Create a new dynamic shared memory segment.
  */
 dsm_segment *
-dsm_create(uint64 size)
+dsm_create(Size size)
 {
 	dsm_segment	   *seg = dsm_create_descriptor();
 	uint32			i;
@@ -733,7 +733,7 @@ dsm_backend_shutdown(int code, Datum arg)
  * address.  For the caller's convenience, we return the mapped address.
  */
 void *
-dsm_resize(dsm_segment *seg, uint64 size)
+dsm_resize(dsm_segment *seg, Size size)
 {
 	Assert(seg->control_slot != INVALID_CONTROL_SLOT);
 	dsm_impl_op(DSM_OP_RESIZE, seg->handle, size, &seg->impl_private,
@@ -887,7 +887,7 @@ dsm_segment_address(dsm_segment *seg)
 /*
  * Get the size of a mapping.
  */
-uint64
+Size
 dsm_segment_map_length(dsm_segment *seg)
 {
 	Assert(seg->mapped_address != NULL);
@@ -947,7 +947,7 @@ dsm_create_descriptor(void)
  * our segments at all.
  */
 static bool
-dsm_control_segment_sane(dsm_control_header *control, uint64 mapped_size)
+dsm_control_segment_sane(dsm_control_header *control, Size mapped_size)
 {
 	if (mapped_size < offsetof(dsm_control_header, item))
 		return false;			/* Mapped size too short to read header. */

@@ -65,8 +65,8 @@ typedef enum
 } dsm_op;
 
 /* Create, attach to, detach from, resize, or destroy a segment. */
-extern bool dsm_impl_op(dsm_op op, dsm_handle handle, uint64 request_size,
-			void **impl_private, void **mapped_address, uint64 *mapped_size,
+extern bool dsm_impl_op(dsm_op op, dsm_handle handle, Size request_size,
+			void **impl_private, void **mapped_address, Size *mapped_size,
 			int elevel);
 
 /* Some implementations cannot resize segments.  Can this one? */

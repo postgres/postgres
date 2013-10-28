@@ -21,9 +21,9 @@ typedef struct dsm_segment dsm_segment;
 extern void dsm_postmaster_startup(void);
 
 /* Functions that create, update, or remove mappings. */
-extern dsm_segment *dsm_create(uint64 size);
+extern dsm_segment *dsm_create(Size size);
 extern dsm_segment *dsm_attach(dsm_handle h);
-extern void *dsm_resize(dsm_segment *seg, uint64 size);
+extern void *dsm_resize(dsm_segment *seg, Size size);
 extern void *dsm_remap(dsm_segment *seg);
 extern void dsm_detach(dsm_segment *seg);
 
@@ -33,7 +33,7 @@ extern dsm_segment *dsm_find_mapping(dsm_handle h);
 
 /* Informational functions. */
 extern void *dsm_segment_address(dsm_segment *seg);
-extern uint64 dsm_segment_map_length(dsm_segment *seg);
+extern Size dsm_segment_map_length(dsm_segment *seg);
 extern dsm_handle dsm_segment_handle(dsm_segment *seg);
 
 #endif   /* DSM_H */
