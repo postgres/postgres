@@ -468,6 +468,12 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
  *		This function initializes a single attribute structure in
  *		a previously allocated tuple descriptor.
  *
+ * If attributeName is NULL, the attname field is set to an empty string
+ * (this is for cases where we don't know or need a name for the field).
+ * Also, some callers use this function to change the datatype-related fields
+ * in an existing tupdesc; they pass attributeName = NameStr(att->attname)
+ * to indicate that the attname field shouldn't be modified.
+ *
  * Note that attcollation is set to the default for the specified datatype.
  * If a nondefault collation is needed, insert it afterwards using
  * TupleDescInitEntryCollation.
@@ -501,12 +507,12 @@ TupleDescInitEntry(TupleDesc desc,
 	/*
 	 * Note: attributeName can be NULL, because the planner doesn't always
 	 * fill in valid resname values in targetlists, particularly for resjunk
-	 * attributes.
+	 * attributes. Also, do nothing if caller wants to re-use the old attname.
 	 */
-	if (attributeName != NULL)
-		namestrcpy(&(att->attname), attributeName);
-	else
+	if (attributeName == NULL)
 		MemSet(NameStr(att->attname), 0, NAMEDATALEN);
+	else if (attributeName != NameStr(att->attname))
+		namestrcpy(&(att->attname), attributeName);
 
 	att->attstattarget = -1;
 	att->attcacheoff = -1;

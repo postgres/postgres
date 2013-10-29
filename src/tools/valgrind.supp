@@ -64,22 +64,6 @@
 }
 
 
-# resolve_polymorphic_tupdesc(), a subroutine of internal_get_result_type(),
-# can instigate a memcpy() call where the two pointer arguments are exactly
-# equal.  The behavior thereof is formally undefined, but implementations
-# where it's anything other than a no-op are thought unlikely.
-{
-	noopmemcpy_internal_get_result_type
-	Memcheck:Overlap
-
-	fun:*strncpy*
-	fun:namestrcpy
-	fun:TupleDescInitEntry
-	...
-	fun:internal_get_result_type
-}
-
-
 # gcc on ppc64 can generate a four-byte read to fetch the final "char" fields
 # of a FormData_pg_cast.  This is valid compiler behavior, because a proper
 # FormData_pg_cast has trailing padding.  Tuples we treat as structures omit
