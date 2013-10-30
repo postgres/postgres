@@ -673,8 +673,17 @@ dsm_impl_windows(dsm_op op, dsm_handle handle, Size request_size,
 	/* Create new segment or open an existing one for attach. */
 	if (op == DSM_OP_CREATE)
 	{
-		DWORD		size_high = (DWORD) (request_size >> 32);
-		DWORD		size_low = (DWORD) request_size;
+		DWORD		size_high;
+		DWORD		size_low;
+
+		/* Shifts >= the width of the type are undefined. */
+#ifdef _WIN64
+		size_high = request_size >> 32;
+#else
+		size_high = 0;
+#endif
+		size_low = (DWORD) request_size;
+
 		hmap = CreateFileMapping(INVALID_HANDLE_VALUE,	/* Use the pagefile */
 								 NULL,			/* Default security attrs */
 								 PAGE_READWRITE,	/* Memory is read/write */
