@@ -335,18 +335,18 @@ cube_out(PG_FUNCTION_ARGS)
 	for (i = 0; i < dim; i++)
 	{
 		if (i > 0)
-			appendStringInfo(&buf, ", ");
+			appendStringInfoString(&buf, ", ");
 		appendStringInfo(&buf, "%.*g", ndig, LL_COORD(cube, i));
 	}
 	appendStringInfoChar(&buf, ')');
 
 	if (!cube_is_point_internal(cube))
 	{
-		appendStringInfo(&buf, ",(");
+		appendStringInfoString(&buf, ",(");
 		for (i = 0; i < dim; i++)
 		{
 			if (i > 0)
-				appendStringInfo(&buf, ", ");
+				appendStringInfoString(&buf, ", ");
 			appendStringInfo(&buf, "%.*g", ndig, UR_COORD(cube, i));
 		}
 		appendStringInfoChar(&buf, ')');

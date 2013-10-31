@@ -1972,7 +1972,7 @@ printSourceNFA(regex_t *regex, TrgmColorInfo *colors, int ncolors)
 
 	initStringInfo(&buf);
 
-	appendStringInfo(&buf, "\ndigraph sourceNFA {\n");
+	appendStringInfoString(&buf, "\ndigraph sourceNFA {\n");
 
 	for (state = 0; state < nstates; state++)
 	{
@@ -1982,8 +1982,8 @@ printSourceNFA(regex_t *regex, TrgmColorInfo *colors, int ncolors)
 
 		appendStringInfo(&buf, "s%d", state);
 		if (pg_reg_getfinalstate(regex) == state)
-			appendStringInfo(&buf, " [shape = doublecircle]");
-		appendStringInfo(&buf, ";\n");
+			appendStringInfoString(&buf, " [shape = doublecircle]");
+		appendStringInfoString(&buf, ";\n");
 
 		arcsCount = pg_reg_getnumoutarcs(regex, state);
 		arcs = (regex_arc_t *) palloc(sizeof(regex_arc_t) * arcsCount);
@@ -1998,13 +1998,13 @@ printSourceNFA(regex_t *regex, TrgmColorInfo *colors, int ncolors)
 		pfree(arcs);
 	}
 
-	appendStringInfo(&buf, " node [shape = point ]; initial;\n");
+	appendStringInfoString(&buf, " node [shape = point ]; initial;\n");
 	appendStringInfo(&buf, " initial -> s%d;\n",
 					 pg_reg_getinitialstate(regex));
 
 	/* Print colors */
-	appendStringInfo(&buf, " { rank = sink;\n");
-	appendStringInfo(&buf, "  Colors [shape = none, margin=0, label=<\n");
+	appendStringInfoString(&buf, " { rank = sink;\n");
+	appendStringInfoString(&buf, "  Colors [shape = none, margin=0, label=<\n");
 
 	for (i = 0; i < ncolors; i++)
 	{
@@ -2020,17 +2020,17 @@ printSourceNFA(regex_t *regex, TrgmColorInfo *colors, int ncolors)
 
 				memcpy(s, color->wordChars[j].bytes, MAX_MULTIBYTE_CHAR_LEN);
 				s[MAX_MULTIBYTE_CHAR_LEN] = '\0';
-				appendStringInfo(&buf, "%s", s);
+				appendStringInfoString(&buf, s);
 			}
 		}
 		else
-			appendStringInfo(&buf, "not expandable");
-		appendStringInfo(&buf, "\n");
+			appendStringInfoString(&buf, "not expandable");
+		appendStringInfoChar(&buf, '\n');
 	}
 
-	appendStringInfo(&buf, "  >];\n");
-	appendStringInfo(&buf, " }\n");
-	appendStringInfo(&buf, "}\n");
+	appendStringInfoString(&buf, "  >];\n");
+	appendStringInfoString(&buf, " }\n");
+	appendStringInfoString(&buf, "}\n");
 
 	{
 		/* dot -Tpng -o /tmp/source.png < /tmp/source.dot */
@@ -2056,7 +2056,7 @@ printTrgmNFA(TrgmNFA *trgmNFA)
 
 	initStringInfo(&buf);
 
-	appendStringInfo(&buf, "\ndigraph transformedNFA {\n");
+	appendStringInfoString(&buf, "\ndigraph transformedNFA {\n");
 
 	hash_seq_init(&scan_status, trgmNFA->states);
 	while ((state = (TrgmState *) hash_seq_search(&scan_status)) != NULL)
@@ -2065,11 +2065,11 @@ printTrgmNFA(TrgmNFA *trgmNFA)
 
 		appendStringInfo(&buf, "s%p", (void *) state);
 		if (state->fin)
-			appendStringInfo(&buf, " [shape = doublecircle]");
+			appendStringInfoString(&buf, " [shape = doublecircle]");
 		if (state->init)
 			initstate = state;
 		appendStringInfo(&buf, " [label = \"%d\"]", state->stateKey.nstate);
-		appendStringInfo(&buf, ";\n");
+		appendStringInfoString(&buf, ";\n");
 
 		foreach(cell, state->arcs)
 		{
@@ -2078,21 +2078,21 @@ printTrgmNFA(TrgmNFA *trgmNFA)
 			appendStringInfo(&buf, "  s%p -> s%p [label = \"",
 							 (void *) state, (void *) arc->target);
 			printTrgmColor(&buf, arc->ctrgm.colors[0]);
-			appendStringInfo(&buf, " ");
+			appendStringInfoChar(&buf, ' ');
 			printTrgmColor(&buf, arc->ctrgm.colors[1]);
-			appendStringInfo(&buf, " ");
+			appendStringInfoChar(&buf, ' ');
 			printTrgmColor(&buf, arc->ctrgm.colors[2]);
-			appendStringInfo(&buf, "\"];\n");
+			appendStringInfoString(&buf, "\"];\n");
 		}
 	}
 
 	if (initstate)
 	{
-		appendStringInfo(&buf, " node [shape = point ]; initial;\n");
+		appendStringInfoString(&buf, " node [shape = point ]; initial;\n");
 		appendStringInfo(&buf, " initial -> s%p;\n", (void *) initstate);
 	}
 
-	appendStringInfo(&buf, "}\n");
+	appendStringInfoString(&buf, "}\n");
 
 	{
 		/* dot -Tpng -o /tmp/transformed.png < /tmp/transformed.dot */
@@ -2112,9 +2112,9 @@ static void
 printTrgmColor(StringInfo buf, TrgmColor co)
 {
 	if (co == COLOR_UNKNOWN)
-		appendStringInfo(buf, "u");
+		appendStringInfoChar(buf, 'u');
 	else if (co == COLOR_BLANK)
-		appendStringInfo(buf, "b");
+		appendStringInfoChar(buf, 'b');
 	else
 		appendStringInfo(buf, "%d", (int) co);
 }
@@ -2131,7 +2131,7 @@ printTrgmPackedGraph(TrgmPackedGraph *packedGraph, TRGM *trigrams)
 
 	initStringInfo(&buf);
 
-	appendStringInfo(&buf, "\ndigraph packedGraph {\n");
+	appendStringInfoString(&buf, "\ndigraph packedGraph {\n");
 
 	for (i = 0; i < packedGraph->statesCount; i++)
 	{
@@ -2140,7 +2140,7 @@ printTrgmPackedGraph(TrgmPackedGraph *packedGraph, TRGM *trigrams)
 
 		appendStringInfo(&buf, " s%d", i);
 		if (i == 1)
-			appendStringInfo(&buf, " [shape = doublecircle]");
+			appendStringInfoString(&buf, " [shape = doublecircle]");
 
 		appendStringInfo(&buf, " [label = <s%d>];\n", i);
 
@@ -2153,12 +2153,12 @@ printTrgmPackedGraph(TrgmPackedGraph *packedGraph, TRGM *trigrams)
 		}
 	}
 
-	appendStringInfo(&buf, " node [shape = point ]; initial;\n");
+	appendStringInfoString(&buf, " node [shape = point ]; initial;\n");
 	appendStringInfo(&buf, " initial -> s%d;\n", 0);
 
 	/* Print trigrams */
-	appendStringInfo(&buf, " { rank = sink;\n");
-	appendStringInfo(&buf, "  Trigrams [shape = none, margin=0, label=<\n");
+	appendStringInfoString(&buf, " { rank = sink;\n");
+	appendStringInfoString(&buf, "  Trigrams [shape = none, margin=0, label=<\n");
 
 	p = GETARR(trigrams);
 	for (i = 0; i < packedGraph->colorTrigramsCount; i++)
@@ -2171,7 +2171,7 @@ printTrgmPackedGraph(TrgmPackedGraph *packedGraph, TRGM *trigrams)
 		for (j = 0; j < count; j++)
 		{
 			if (j > 0)
-				appendStringInfo(&buf, ", ");
+				appendStringInfoString(&buf, ", ");
 
 			/*
 			 * XXX This representation is nice only for all-ASCII trigrams.
@@ -2181,9 +2181,9 @@ printTrgmPackedGraph(TrgmPackedGraph *packedGraph, TRGM *trigrams)
 		}
 	}
 
-	appendStringInfo(&buf, "  >];\n");
-	appendStringInfo(&buf, " }\n");
-	appendStringInfo(&buf, "}\n");
+	appendStringInfoString(&buf, "  >];\n");
+	appendStringInfoString(&buf, " }\n");
+	appendStringInfoString(&buf, "}\n");
 
 	{
 		/* dot -Tpng -o /tmp/packed.png < /tmp/packed.dot */

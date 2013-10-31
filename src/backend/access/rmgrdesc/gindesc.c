@@ -33,15 +33,15 @@ gin_desc(StringInfo buf, uint8 xl_info, char *rec)
 	switch (info)
 	{
 		case XLOG_GIN_CREATE_INDEX:
-			appendStringInfo(buf, "Create index, ");
+			appendStringInfoString(buf, "Create index, ");
 			desc_node(buf, *(RelFileNode *) rec, GIN_ROOT_BLKNO);
 			break;
 		case XLOG_GIN_CREATE_PTREE:
-			appendStringInfo(buf, "Create posting tree, ");
+			appendStringInfoString(buf, "Create posting tree, ");
 			desc_node(buf, ((ginxlogCreatePostingTree *) rec)->node, ((ginxlogCreatePostingTree *) rec)->blkno);
 			break;
 		case XLOG_GIN_INSERT:
-			appendStringInfo(buf, "Insert item, ");
+			appendStringInfoString(buf, "Insert item, ");
 			desc_node(buf, ((ginxlogInsert *) rec)->node, ((ginxlogInsert *) rec)->blkno);
 			appendStringInfo(buf, " offset: %u nitem: %u isdata: %c isleaf %c isdelete %c updateBlkno:%u",
 							 ((ginxlogInsert *) rec)->offset,
@@ -52,24 +52,24 @@ gin_desc(StringInfo buf, uint8 xl_info, char *rec)
 							 ((ginxlogInsert *) rec)->updateBlkno);
 			break;
 		case XLOG_GIN_SPLIT:
-			appendStringInfo(buf, "Page split, ");
+			appendStringInfoString(buf, "Page split, ");
 			desc_node(buf, ((ginxlogSplit *) rec)->node, ((ginxlogSplit *) rec)->lblkno);
 			appendStringInfo(buf, " isrootsplit: %c", (((ginxlogSplit *) rec)->isRootSplit) ? 'T' : 'F');
 			break;
 		case XLOG_GIN_VACUUM_PAGE:
-			appendStringInfo(buf, "Vacuum page, ");
+			appendStringInfoString(buf, "Vacuum page, ");
 			desc_node(buf, ((ginxlogVacuumPage *) rec)->node, ((ginxlogVacuumPage *) rec)->blkno);
 			break;
 		case XLOG_GIN_DELETE_PAGE:
-			appendStringInfo(buf, "Delete page, ");
+			appendStringInfoString(buf, "Delete page, ");
 			desc_node(buf, ((ginxlogDeletePage *) rec)->node, ((ginxlogDeletePage *) rec)->blkno);
 			break;
 		case XLOG_GIN_UPDATE_META_PAGE:
-			appendStringInfo(buf, "Update metapage, ");
+			appendStringInfoString(buf, "Update metapage, ");
 			desc_node(buf, ((ginxlogUpdateMeta *) rec)->node, GIN_METAPAGE_BLKNO);
 			break;
 		case XLOG_GIN_INSERT_LISTPAGE:
-			appendStringInfo(buf, "Insert new list page, ");
+			appendStringInfoString(buf, "Insert new list page, ");
 			desc_node(buf, ((ginxlogInsertListPage *) rec)->node, ((ginxlogInsertListPage *) rec)->blkno);
 			break;
 		case XLOG_GIN_DELETE_LISTPAGE:

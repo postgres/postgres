@@ -36,5 +36,5 @@ tblspc_desc(StringInfo buf, uint8 xl_info, char *rec)
 		appendStringInfo(buf, "drop tablespace: %u", xlrec->ts_id);
 	}
 	else
-		appendStringInfo(buf, "UNKNOWN");
+		appendStringInfoString(buf, "UNKNOWN");
 }

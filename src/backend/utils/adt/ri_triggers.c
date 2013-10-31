@@ -427,7 +427,7 @@ RI_FKey_check(TriggerData *trigdata)
 			querysep = "AND";
 			queryoids[i] = fk_type;
 		}
-		appendStringInfo(&querybuf, " FOR KEY SHARE OF x");
+		appendStringInfoString(&querybuf, " FOR KEY SHARE OF x");
 
 		/* Prepare and save the plan */
 		qplan = ri_PlanCheck(querybuf.data, riinfo->nkeys, queryoids,
@@ -562,7 +562,7 @@ ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
 			querysep = "AND";
 			queryoids[i] = pk_type;
 		}
-		appendStringInfo(&querybuf, " FOR KEY SHARE OF x");
+		appendStringInfoString(&querybuf, " FOR KEY SHARE OF x");
 
 		/* Prepare and save the plan */
 		qplan = ri_PlanCheck(querybuf.data, riinfo->nkeys, queryoids,
@@ -754,7 +754,7 @@ ri_restrict_del(TriggerData *trigdata, bool is_no_action)
 					querysep = "AND";
 					queryoids[i] = pk_type;
 				}
-				appendStringInfo(&querybuf, " FOR KEY SHARE OF x");
+				appendStringInfoString(&querybuf, " FOR KEY SHARE OF x");
 
 				/* Prepare and save the plan */
 				qplan = ri_PlanCheck(querybuf.data, riinfo->nkeys, queryoids,
@@ -977,7 +977,7 @@ ri_restrict_upd(TriggerData *trigdata, bool is_no_action)
 					querysep = "AND";
 					queryoids[i] = pk_type;
 				}
-				appendStringInfo(&querybuf, " FOR KEY SHARE OF x");
+				appendStringInfoString(&querybuf, " FOR KEY SHARE OF x");
 
 				/* Prepare and save the plan */
 				qplan = ri_PlanCheck(querybuf.data, riinfo->nkeys, queryoids,
@@ -2319,7 +2319,7 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 	 *----------
 	 */
 	initStringInfo(&querybuf);
-	appendStringInfo(&querybuf, "SELECT ");
+	appendStringInfoString(&querybuf, "SELECT ");
 	sep = "";
 	for (i = 0; i < riinfo->nkeys; i++)
 	{
@@ -2391,7 +2391,7 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 				break;
 		}
 	}
-	appendStringInfo(&querybuf, ")");
+	appendStringInfoChar(&querybuf, ')');
 
 	/*
 	 * Temporarily increase work_mem so that the check query can be executed

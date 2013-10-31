@@ -42,5 +42,5 @@ smgr_desc(StringInfo buf, uint8 xl_info, char *rec)
 		pfree(path);
 	}
 	else
-		appendStringInfo(buf, "UNKNOWN");
+		appendStringInfoString(buf, "UNKNOWN");
 }

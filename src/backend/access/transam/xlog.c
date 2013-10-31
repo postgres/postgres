@@ -1248,7 +1248,7 @@ begin:;
 		xlog_outrec(&buf, rechdr);
 		if (rdata->data != NULL)
 		{
-			appendStringInfo(&buf, " - ");
+			appendStringInfoString(&buf, " - ");
 			RmgrTable[rechdr->xl_rmid].rm_desc(&buf, rechdr->xl_info, rdata->data);
 		}
 		elog(LOG, "%s", buf.data);
@@ -6677,7 +6677,7 @@ StartupXLOG(void)
 							(uint32) (ReadRecPtr >> 32), (uint32) ReadRecPtr,
 							 (uint32) (EndRecPtr >> 32), (uint32) EndRecPtr);
 					xlog_outrec(&buf, record);
-					appendStringInfo(&buf, " - ");
+					appendStringInfoString(&buf, " - ");
 					RmgrTable[record->xl_rmid].rm_desc(&buf,
 													   record->xl_info,
 													 XLogRecGetData(record));

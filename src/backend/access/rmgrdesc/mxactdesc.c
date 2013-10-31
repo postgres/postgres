@@ -76,5 +76,5 @@ multixact_desc(StringInfo buf, uint8 xl_info, char *rec)
 			out_member(buf, &xlrec->members[i]);
 	}
 	else
-		appendStringInfo(buf, "UNKNOWN");
+		appendStringInfoString(buf, "UNKNOWN");
 }

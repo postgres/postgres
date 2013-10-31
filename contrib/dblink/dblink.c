@@ -2169,14 +2169,14 @@ get_sql_insert(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals
 			continue;
 
 		if (needComma)
-			appendStringInfo(&buf, ",");
+			appendStringInfoChar(&buf, ',');
 
 		appendStringInfoString(&buf,
 					  quote_ident_cstr(NameStr(tupdesc->attrs[i]->attname)));
 		needComma = true;
 	}
 
-	appendStringInfo(&buf, ") VALUES(");
+	appendStringInfoString(&buf, ") VALUES(");
 
 	/*
 	 * Note: i is physical column number (counting from 0).
@@ -2188,7 +2188,7 @@ get_sql_insert(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals
 			continue;
 
 		if (needComma)
-			appendStringInfo(&buf, ",");
+			appendStringInfoChar(&buf, ',');
 
 		key = get_attnum_pk_pos(pkattnums, pknumatts, i);
 
@@ -2203,10 +2203,10 @@ get_sql_insert(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals
 			pfree(val);
 		}
 		else
-			appendStringInfo(&buf, "NULL");
+			appendStringInfoString(&buf, "NULL");
 		needComma = true;
 	}
-	appendStringInfo(&buf, ")");
+	appendStringInfoChar(&buf, ')');
 
 	return (buf.data);
 }
@@ -2232,7 +2232,7 @@ get_sql_delete(Relation rel, int *pkattnums, int pknumatts, char **tgt_pkattvals
 		int			pkattnum = pkattnums[i];
 
 		if (i > 0)
-			appendStringInfo(&buf, " AND ");
+			appendStringInfoString(&buf, " AND ");
 
 		appendStringInfoString(&buf,
 			   quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum]->attname)));
@@ -2241,7 +2241,7 @@ get_sql_delete(Relation rel, int *pkattnums, int pknumatts, char **tgt_pkattvals
 			appendStringInfo(&buf, " = %s",
 							 quote_literal_cstr(tgt_pkattvals[i]));
 		else
-			appendStringInfo(&buf, " IS NULL");
+			appendStringInfoString(&buf, " IS NULL");
 	}
 
 	return (buf.data);
@@ -2286,7 +2286,7 @@ get_sql_update(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals
 			continue;
 
 		if (needComma)
-			appendStringInfo(&buf, ", ");
+			appendStringInfoString(&buf, ", ");
 
 		appendStringInfo(&buf, "%s = ",
 					  quote_ident_cstr(NameStr(tupdesc->attrs[i]->attname)));
@@ -2308,16 +2308,16 @@ get_sql_update(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals
 		needComma = true;
 	}
 
-	appendStringInfo(&buf, " WHERE ");
+	appendStringInfoString(&buf, " WHERE ");
 
 	for (i = 0; i < pknumatts; i++)
 	{
 		int			pkattnum = pkattnums[i];
 
 		if (i > 0)
-			appendStringInfo(&buf, " AND ");
+			appendStringInfoString(&buf, " AND ");
 
-		appendStringInfo(&buf, "%s",
+		appendStringInfoString(&buf,
 			   quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum]->attname)));
 
 		val = tgt_pkattvals[i];
@@ -2325,7 +2325,7 @@ get_sql_update(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals
 		if (val != NULL)
 			appendStringInfo(&buf, " = %s", quote_literal_cstr(val));
 		else
-			appendStringInfo(&buf, " IS NULL");
+			appendStringInfoString(&buf, " IS NULL");
 	}
 
 	return (buf.data);
@@ -2419,7 +2419,7 @@ get_tuple_of_interest(Relation rel, int *pkattnums, int pknumatts, char **src_pk
 		int			pkattnum = pkattnums[i];
 
 		if (i > 0)
-			appendStringInfo(&buf, " AND ");
+			appendStringInfoString(&buf, " AND ");
 
 		appendStringInfoString(&buf,
 			   quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum]->attname)));
@@ -2428,7 +2428,7 @@ get_tuple_of_interest(Relation rel, int *pkattnums, int pknumatts, char **src_pk
 			appendStringInfo(&buf, " = %s",
 							 quote_literal_cstr(src_pkattvals[i]));
 		else
-			appendStringInfo(&buf, " IS NULL");
+			appendStringInfoString(&buf, " IS NULL");
 	}
 
 	/*

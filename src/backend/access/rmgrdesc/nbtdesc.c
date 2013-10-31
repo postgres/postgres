@@ -36,7 +36,7 @@ btree_desc(StringInfo buf, uint8 xl_info, char *rec)
 			{
 				xl_btree_insert *xlrec = (xl_btree_insert *) rec;
 
-				appendStringInfo(buf, "insert: ");
+				appendStringInfoString(buf, "insert: ");
 				out_target(buf, &(xlrec->target));
 				break;
 			}
@@ -44,7 +44,7 @@ btree_desc(StringInfo buf, uint8 xl_info, char *rec)
 			{
 				xl_btree_insert *xlrec = (xl_btree_insert *) rec;
 
-				appendStringInfo(buf, "insert_upper: ");
+				appendStringInfoString(buf, "insert_upper: ");
 				out_target(buf, &(xlrec->target));
 				break;
 			}
@@ -52,7 +52,7 @@ btree_desc(StringInfo buf, uint8 xl_info, char *rec)
 			{
 				xl_btree_insert *xlrec = (xl_btree_insert *) rec;
 
-				appendStringInfo(buf, "insert_meta: ");
+				appendStringInfoString(buf, "insert_meta: ");
 				out_target(buf, &(xlrec->target));
 				break;
 			}
@@ -130,7 +130,7 @@ btree_desc(StringInfo buf, uint8 xl_info, char *rec)
 			{
 				xl_btree_delete_page *xlrec = (xl_btree_delete_page *) rec;
 
-				appendStringInfo(buf, "delete_page: ");
+				appendStringInfoString(buf, "delete_page: ");
 				out_target(buf, &(xlrec->target));
 				appendStringInfo(buf, "; dead %u; left %u; right %u",
 							xlrec->deadblk, xlrec->leftblk, xlrec->rightblk);
@@ -156,7 +156,7 @@ btree_desc(StringInfo buf, uint8 xl_info, char *rec)
 				break;
 			}
 		default:
-			appendStringInfo(buf, "UNKNOWN");
+			appendStringInfoString(buf, "UNKNOWN");
 			break;
 	}
 }

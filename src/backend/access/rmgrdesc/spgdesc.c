@@ -64,7 +64,7 @@ spg_desc(StringInfo buf, uint8 xl_info, char *rec)
 			break;
 		case XLOG_SPGIST_PICKSPLIT:
 			out_target(buf, ((spgxlogPickSplit *) rec)->node);
-			appendStringInfo(buf, "split leaf page");
+			appendStringInfoString(buf, "split leaf page");
 			break;
 		case XLOG_SPGIST_VACUUM_LEAF:
 			out_target(buf, ((spgxlogVacuumLeaf *) rec)->node);

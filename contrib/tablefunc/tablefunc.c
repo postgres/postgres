@@ -1340,7 +1340,7 @@ build_tuplestore_recursively(char *key_fld,
 		for (i = 0; i < proc; i++)
 		{
 			/* initialize branch for this pass */
-			appendStringInfo(&branchstr, "%s", branch);
+			appendStringInfoString(&branchstr, branch);
 			appendStringInfo(&chk_branchstr, "%s%s%s", branch_delim, branch, branch_delim);
 
 			/* get the next sql result tuple */

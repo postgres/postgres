@@ -372,7 +372,7 @@ incompatible_module_error(const char *libname,
 	}
 
 	if (details.len == 0)
-		appendStringInfo(&details,
+		appendStringInfoString(&details,
 			  _("Magic block has unexpected length or padding difference."));
 
 	ereport(ERROR,

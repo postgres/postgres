@@ -6187,7 +6187,7 @@ flatten_set_variable_args(const char *name, List *args)
 		A_Const    *con;
 
 		if (l != list_head(args))
-			appendStringInfo(&buf, ", ");
+			appendStringInfoString(&buf, ", ");
 
 		if (IsA(arg, TypeCast))
 		{

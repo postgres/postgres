@@ -787,7 +787,7 @@ postgresGetForeignPlan(PlannerInfo *root,
 		 root->parse->commandType == CMD_DELETE))
 	{
 		/* Relation is UPDATE/DELETE target, so use FOR UPDATE */
-		appendStringInfo(&sql, " FOR UPDATE");
+		appendStringInfoString(&sql, " FOR UPDATE");
 	}
 	else
 	{
@@ -808,11 +808,11 @@ postgresGetForeignPlan(PlannerInfo *root,
 			{
 				case LCS_FORKEYSHARE:
 				case LCS_FORSHARE:
-					appendStringInfo(&sql, " FOR SHARE");
+					appendStringInfoString(&sql, " FOR SHARE");
 					break;
 				case LCS_FORNOKEYUPDATE:
 				case LCS_FORUPDATE:
-					appendStringInfo(&sql, " FOR UPDATE");
+					appendStringInfoString(&sql, " FOR UPDATE");
 					break;
 			}
 		}

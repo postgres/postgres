@@ -29,15 +29,15 @@ static void
 out_infobits(StringInfo buf, uint8 infobits)
 {
 	if (infobits & XLHL_XMAX_IS_MULTI)
-		appendStringInfo(buf, "IS_MULTI ");
+		appendStringInfoString(buf, "IS_MULTI ");
 	if (infobits & XLHL_XMAX_LOCK_ONLY)
-		appendStringInfo(buf, "LOCK_ONLY ");
+		appendStringInfoString(buf, "LOCK_ONLY ");
 	if (infobits & XLHL_XMAX_EXCL_LOCK)
-		appendStringInfo(buf, "EXCL_LOCK ");
+		appendStringInfoString(buf, "EXCL_LOCK ");
 	if (infobits & XLHL_XMAX_KEYSHR_LOCK)
-		appendStringInfo(buf, "KEYSHR_LOCK ");
+		appendStringInfoString(buf, "KEYSHR_LOCK ");
 	if (infobits & XLHL_KEYS_UPDATED)
-		appendStringInfo(buf, "KEYS_UPDATED ");
+		appendStringInfoString(buf, "KEYS_UPDATED ");
 }
 
 void
@@ -51,16 +51,16 @@ heap_desc(StringInfo buf, uint8 xl_info, char *rec)
 		xl_heap_insert *xlrec = (xl_heap_insert *) rec;
 
 		if (xl_info & XLOG_HEAP_INIT_PAGE)
-			appendStringInfo(buf, "insert(init): ");
+			appendStringInfoString(buf, "insert(init): ");
 		else
-			appendStringInfo(buf, "insert: ");
+			appendStringInfoString(buf, "insert: ");
 		out_target(buf, &(xlrec->target));
 	}
 	else if (info == XLOG_HEAP_DELETE)
 	{
 		xl_heap_delete *xlrec = (xl_heap_delete *) rec;
 
-		appendStringInfo(buf, "delete: ");
+		appendStringInfoString(buf, "delete: ");
 		out_target(buf, &(xlrec->target));
 		appendStringInfoChar(buf, ' ');
 		out_infobits(buf, xlrec->infobits_set);
@@ -70,9 +70,9 @@ heap_desc(StringInfo buf, uint8 xl_info, char *rec)
 		xl_heap_update *xlrec = (xl_heap_update *) rec;
 
 		if (xl_info & XLOG_HEAP_INIT_PAGE)
-			appendStringInfo(buf, "update(init): ");
+			appendStringInfoString(buf, "update(init): ");
 		else
-			appendStringInfo(buf, "update: ");
+			appendStringInfoString(buf, "update: ");
 		out_target(buf, &(xlrec->target));
 		appendStringInfo(buf, " xmax %u ", xlrec->old_xmax);
 		out_infobits(buf, xlrec->old_infobits_set);
@@ -86,9 +86,9 @@ heap_desc(StringInfo buf, uint8 xl_info, char *rec)
 		xl_heap_update *xlrec = (xl_heap_update *) rec;
 
 		if (xl_info & XLOG_HEAP_INIT_PAGE)		/* can this case happen? */
-			appendStringInfo(buf, "hot_update(init): ");
+			appendStringInfoString(buf, "hot_update(init): ");
 		else
-			appendStringInfo(buf, "hot_update: ");
+			appendStringInfoString(buf, "hot_update: ");
 		out_target(buf, &(xlrec->target));
 		appendStringInfo(buf, " xmax %u ", xlrec->old_xmax);
 		out_infobits(buf, xlrec->old_infobits_set);
@@ -119,11 +119,11 @@ heap_desc(StringInfo buf, uint8 xl_info, char *rec)
 	{
 		xl_heap_inplace *xlrec = (xl_heap_inplace *) rec;
 
-		appendStringInfo(buf, "inplace: ");
+		appendStringInfoString(buf, "inplace: ");
 		out_target(buf, &(xlrec->target));
 	}
 	else
-		appendStringInfo(buf, "UNKNOWN");
+		appendStringInfoString(buf, "UNKNOWN");
 }
 void
 heap2_desc(StringInfo buf, uint8 xl_info, char *rec)
@@ -169,9 +169,9 @@ heap2_desc(StringInfo buf, uint8 xl_info, char *rec)
 		xl_heap_multi_insert *xlrec = (xl_heap_multi_insert *) rec;
 
 		if (xl_info & XLOG_HEAP_INIT_PAGE)
-			appendStringInfo(buf, "multi-insert (init): ");
+			appendStringInfoString(buf, "multi-insert (init): ");
 		else
-			appendStringInfo(buf, "multi-insert: ");
+			appendStringInfoString(buf, "multi-insert: ");
 		appendStringInfo(buf, "rel %u/%u/%u; blk %u; %d tuples",
 				xlrec->node.spcNode, xlrec->node.dbNode, xlrec->node.relNode,
 						 xlrec->blkno, xlrec->ntuples);
@@ -185,5 +185,5 @@ heap2_desc(StringInfo buf, uint8 xl_info, char *rec)
 		out_target(buf, &(xlrec->target));
 	}
 	else
-		appendStringInfo(buf, "UNKNOWN");
+		appendStringInfoString(buf, "UNKNOWN");
 }

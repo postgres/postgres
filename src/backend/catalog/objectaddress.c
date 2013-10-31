@@ -2439,15 +2439,15 @@ getObjectTypeDescription(const ObjectAddress *object)
 			break;
 
 		case OCLASS_TYPE:
-			appendStringInfo(&buffer, "type");
+			appendStringInfoString(&buffer, "type");
 			break;
 
 		case OCLASS_CAST:
-			appendStringInfo(&buffer, "cast");
+			appendStringInfoString(&buffer, "cast");
 			break;
 
 		case OCLASS_COLLATION:
-			appendStringInfo(&buffer, "collation");
+			appendStringInfoString(&buffer, "collation");
 			break;
 
 		case OCLASS_CONSTRAINT:
@@ -2455,103 +2455,103 @@ getObjectTypeDescription(const ObjectAddress *object)
 			break;
 
 		case OCLASS_CONVERSION:
-			appendStringInfo(&buffer, "conversion");
+			appendStringInfoString(&buffer, "conversion");
 			break;
 
 		case OCLASS_DEFAULT:
-			appendStringInfo(&buffer, "default value");
+			appendStringInfoString(&buffer, "default value");
 			break;
 
 		case OCLASS_LANGUAGE:
-			appendStringInfo(&buffer, "language");
+			appendStringInfoString(&buffer, "language");
 			break;
 
 		case OCLASS_LARGEOBJECT:
-			appendStringInfo(&buffer, "large object");
+			appendStringInfoString(&buffer, "large object");
 			break;
 
 		case OCLASS_OPERATOR:
-			appendStringInfo(&buffer, "operator");
+			appendStringInfoString(&buffer, "operator");
 			break;
 
 		case OCLASS_OPCLASS:
-			appendStringInfo(&buffer, "operator class");
+			appendStringInfoString(&buffer, "operator class");
 			break;
 
 		case OCLASS_OPFAMILY:
-			appendStringInfo(&buffer, "operator family");
+			appendStringInfoString(&buffer, "operator family");
 			break;
 
 		case OCLASS_AMOP:
-			appendStringInfo(&buffer, "operator of access method");
+			appendStringInfoString(&buffer, "operator of access method");
 			break;
 
 		case OCLASS_AMPROC:
-			appendStringInfo(&buffer, "function of access method");
+			appendStringInfoString(&buffer, "function of access method");
 			break;
 
 		case OCLASS_REWRITE:
-			appendStringInfo(&buffer, "rule");
+			appendStringInfoString(&buffer, "rule");
 			break;
 
 		case OCLASS_TRIGGER:
-			appendStringInfo(&buffer, "trigger");
+			appendStringInfoString(&buffer, "trigger");
 			break;
 
 		case OCLASS_SCHEMA:
-			appendStringInfo(&buffer, "schema");
+			appendStringInfoString(&buffer, "schema");
 			break;
 
 		case OCLASS_TSPARSER:
-			appendStringInfo(&buffer, "text search parser");
+			appendStringInfoString(&buffer, "text search parser");
 			break;
 
 		case OCLASS_TSDICT:
-			appendStringInfo(&buffer, "text search dictionary");
+			appendStringInfoString(&buffer, "text search dictionary");
 			break;
 
 		case OCLASS_TSTEMPLATE:
-			appendStringInfo(&buffer, "text search template");
+			appendStringInfoString(&buffer, "text search template");
 			break;
 
 		case OCLASS_TSCONFIG:
-			appendStringInfo(&buffer, "text search configuration");
+			appendStringInfoString(&buffer, "text search configuration");
 			break;
 
 		case OCLASS_ROLE:
-			appendStringInfo(&buffer, "role");
+			appendStringInfoString(&buffer, "role");
 			break;
 
 		case OCLASS_DATABASE:
-			appendStringInfo(&buffer, "database");
+			appendStringInfoString(&buffer, "database");
 			break;
 
 		case OCLASS_TBLSPACE:
-			appendStringInfo(&buffer, "tablespace");
+			appendStringInfoString(&buffer, "tablespace");
 			break;
 
 		case OCLASS_FDW:
-			appendStringInfo(&buffer, "foreign-data wrapper");
+			appendStringInfoString(&buffer, "foreign-data wrapper");
 			break;
 
 		case OCLASS_FOREIGN_SERVER:
-			appendStringInfo(&buffer, "server");
+			appendStringInfoString(&buffer, "server");
 			break;
 
 		case OCLASS_USER_MAPPING:
-			appendStringInfo(&buffer, "user mapping");
+			appendStringInfoString(&buffer, "user mapping");
 			break;
 
 		case OCLASS_DEFACL:
-			appendStringInfo(&buffer, "default acl");
+			appendStringInfoString(&buffer, "default acl");
 			break;
 
 		case OCLASS_EXTENSION:
-			appendStringInfo(&buffer, "extension");
+			appendStringInfoString(&buffer, "extension");
 			break;
 
 		case OCLASS_EVENT_TRIGGER:
-			appendStringInfo(&buffer, "event trigger");
+			appendStringInfoString(&buffer, "event trigger");
 			break;
 
 		default:
@@ -2580,37 +2580,37 @@ getRelationTypeDescription(StringInfo buffer, Oid relid, int32 objectSubId)
 	switch (relForm->relkind)
 	{
 		case RELKIND_RELATION:
-			appendStringInfo(buffer, "table");
+			appendStringInfoString(buffer, "table");
 			break;
 		case RELKIND_INDEX:
-			appendStringInfo(buffer, "index");
+			appendStringInfoString(buffer, "index");
 			break;
 		case RELKIND_SEQUENCE:
-			appendStringInfo(buffer, "sequence");
+			appendStringInfoString(buffer, "sequence");
 			break;
 		case RELKIND_TOASTVALUE:
-			appendStringInfo(buffer, "toast table");
+			appendStringInfoString(buffer, "toast table");
 			break;
 		case RELKIND_VIEW:
-			appendStringInfo(buffer, "view");
+			appendStringInfoString(buffer, "view");
 			break;
 		case RELKIND_MATVIEW:
-			appendStringInfo(buffer, "materialized view");
+			appendStringInfoString(buffer, "materialized view");
 			break;
 		case RELKIND_COMPOSITE_TYPE:
-			appendStringInfo(buffer, "composite type");
+			appendStringInfoString(buffer, "composite type");
 			break;
 		case RELKIND_FOREIGN_TABLE:
-			appendStringInfo(buffer, "foreign table");
+			appendStringInfoString(buffer, "foreign table");
 			break;
 		default:
 			/* shouldn't get here */
-			appendStringInfo(buffer, "relation");
+			appendStringInfoString(buffer, "relation");
 			break;
 	}
 
 	if (objectSubId != 0)
-		appendStringInfo(buffer, " column");
+		appendStringInfoString(buffer, " column");
 
 	ReleaseSysCache(relTup);
 }
@@ -2658,9 +2658,9 @@ getProcedureTypeDescription(StringInfo buffer, Oid procid)
 	procForm = (Form_pg_proc) GETSTRUCT(procTup);
 
 	if (procForm->proisagg)
-		appendStringInfo(buffer, "aggregate");
+		appendStringInfoString(buffer, "aggregate");
 	else
-		appendStringInfo(buffer, "function");
+		appendStringInfoString(buffer, "function");
 
 	ReleaseSysCache(procTup);
 }
@@ -2693,12 +2693,12 @@ getObjectIdentity(const ObjectAddress *object)
 			break;
 
 		case OCLASS_PROC:
-			appendStringInfo(&buffer, "%s",
+			appendStringInfoString(&buffer, 
 							 format_procedure_qualified(object->objectId));
 			break;
 
 		case OCLASS_TYPE:
-			appendStringInfo(&buffer, "%s",
+			appendStringInfoString(&buffer,
 							 format_type_be_qualified(object->objectId));
 			break;
 
@@ -2792,7 +2792,7 @@ getObjectIdentity(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for conversion %u",
 						 object->objectId);
 				conForm = (Form_pg_conversion) GETSTRUCT(conTup);
-				appendStringInfo(&buffer, "%s",
+				appendStringInfoString(&buffer,
 								 quote_identifier(NameStr(conForm->conname)));
 				ReleaseSysCache(conTup);
 				break;
@@ -2849,7 +2849,7 @@ getObjectIdentity(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for language %u",
 						 object->objectId);
 				langForm = (Form_pg_language) GETSTRUCT(langTup);
-				appendStringInfo(&buffer, "%s",
+				appendStringInfoString(&buffer,
 							   quote_identifier(NameStr(langForm->lanname)));
 				ReleaseSysCache(langTup);
 				break;
@@ -2860,7 +2860,7 @@ getObjectIdentity(const ObjectAddress *object)
 			break;
 
 		case OCLASS_OPERATOR:
-			appendStringInfo(&buffer, "%s",
+			appendStringInfoString(&buffer,
 							 format_operator_qualified(object->objectId));
 			break;
 
@@ -2887,8 +2887,7 @@ getObjectIdentity(const ObjectAddress *object)
 						 opcForm->opcmethod);
 				amForm = (Form_pg_am) GETSTRUCT(amTup);
 
-				appendStringInfo(&buffer,
-								 "%s",
+				appendStringInfoString(&buffer,
 								 quote_qualified_identifier(schema,
 												 NameStr(opcForm->opcname)));
 				appendStringInfo(&buffer, " for %s",
@@ -3047,7 +3046,7 @@ getObjectIdentity(const ObjectAddress *object)
 				if (!nspname)
 					elog(ERROR, "cache lookup failed for namespace %u",
 						 object->objectId);
-				appendStringInfo(&buffer, "%s",
+				appendStringInfoString(&buffer,
 								 quote_identifier(nspname));
 				break;
 			}
@@ -3063,7 +3062,7 @@ getObjectIdentity(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for text search parser %u",
 						 object->objectId);
 				formParser = (Form_pg_ts_parser) GETSTRUCT(tup);
-				appendStringInfo(&buffer, "%s",
+				appendStringInfoString(&buffer,
 							 quote_identifier(NameStr(formParser->prsname)));
 				ReleaseSysCache(tup);
 				break;
@@ -3080,7 +3079,7 @@ getObjectIdentity(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for text search dictionary %u",
 						 object->objectId);
 				formDict = (Form_pg_ts_dict) GETSTRUCT(tup);
-				appendStringInfo(&buffer, "%s",
+				appendStringInfoString(&buffer,
 							  quote_identifier(NameStr(formDict->dictname)));
 				ReleaseSysCache(tup);
 				break;
@@ -3097,7 +3096,7 @@ getObjectIdentity(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for text search template %u",
 						 object->objectId);
 				formTmpl = (Form_pg_ts_template) GETSTRUCT(tup);
-				appendStringInfo(&buffer, "%s",
+				appendStringInfoString(&buffer,
 							  quote_identifier(NameStr(formTmpl->tmplname)));
 				ReleaseSysCache(tup);
 				break;
@@ -3114,7 +3113,7 @@ getObjectIdentity(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for text search configuration %u",
 						 object->objectId);
 				formCfg = (Form_pg_ts_config) GETSTRUCT(tup);
-				appendStringInfo(&buffer, "%s",
+				appendStringInfoString(&buffer,
 								 quote_identifier(NameStr(formCfg->cfgname)));
 				ReleaseSysCache(tup);
 				break;
@@ -3125,7 +3124,7 @@ getObjectIdentity(const ObjectAddress *object)
 				char	   *username;
 
 				username = GetUserNameFromId(object->objectId);
-				appendStringInfo(&buffer, "%s",
+				appendStringInfoString(&buffer,
 								 quote_identifier(username));
 				break;
 			}
@@ -3138,7 +3137,7 @@ getObjectIdentity(const ObjectAddress *object)
 				if (!datname)
 					elog(ERROR, "cache lookup failed for database %u",
 						 object->objectId);
-				appendStringInfo(&buffer, "%s",
+				appendStringInfoString(&buffer,
 								 quote_identifier(datname));
 				break;
 			}
@@ -3151,7 +3150,7 @@ getObjectIdentity(const ObjectAddress *object)
 				if (!tblspace)
 					elog(ERROR, "cache lookup failed for tablespace %u",
 						 object->objectId);
-				appendStringInfo(&buffer, "%s",
+				appendStringInfoString(&buffer,
 								 quote_identifier(tblspace));
 				break;
 			}
@@ -3161,8 +3160,7 @@ getObjectIdentity(const ObjectAddress *object)
 				ForeignDataWrapper *fdw;
 
 				fdw = GetForeignDataWrapper(object->objectId);
-				appendStringInfo(&buffer, "%s",
-								 quote_identifier(fdw->fdwname));
+				appendStringInfoString(&buffer, quote_identifier(fdw->fdwname));
 				break;
 			}
 
@@ -3171,7 +3169,7 @@ getObjectIdentity(const ObjectAddress *object)
 				ForeignServer *srv;
 
 				srv = GetForeignServer(object->objectId);
-				appendStringInfo(&buffer, "%s",
+				appendStringInfoString(&buffer,
 								 quote_identifier(srv->servername));
 				break;
 			}
@@ -3197,7 +3195,7 @@ getObjectIdentity(const ObjectAddress *object)
 				else
 					usename = "public";
 
-				appendStringInfo(&buffer, "%s", usename);
+				appendStringInfoString(&buffer, usename);
 				break;
 			}
 
@@ -3275,8 +3273,7 @@ getObjectIdentity(const ObjectAddress *object)
 				if (!extname)
 					elog(ERROR, "cache lookup failed for extension %u",
 						 object->objectId);
-				appendStringInfo(&buffer, "%s",
-								 quote_identifier(extname));
+				appendStringInfoString(&buffer, quote_identifier(extname));
 				break;
 			}
 
@@ -3291,7 +3288,7 @@ getObjectIdentity(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for event trigger %u",
 						 object->objectId);
 				trigForm = (Form_pg_event_trigger) GETSTRUCT(tup);
-				appendStringInfo(&buffer, "%s",
+				appendStringInfoString(&buffer, 
 							   quote_identifier(NameStr(trigForm->evtname)));
 				ReleaseSysCache(tup);
 				break;
@@ -3356,7 +3353,7 @@ getRelationIdentity(StringInfo buffer, Oid relid)
 	relForm = (Form_pg_class) GETSTRUCT(relTup);
 
 	schema = get_namespace_name(relForm->relnamespace);
-	appendStringInfo(buffer, "%s",
+	appendStringInfoString(buffer,
 					 quote_qualified_identifier(schema,
 												NameStr(relForm->relname)));
 

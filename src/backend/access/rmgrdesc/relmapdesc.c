@@ -29,5 +29,5 @@ relmap_desc(StringInfo buf, uint8 xl_info, char *rec)
 						 xlrec->dbid, xlrec->tsid, xlrec->nbytes);
 	}
 	else
-		appendStringInfo(buf, "UNKNOWN");
+		appendStringInfoString(buf, "UNKNOWN");
 }

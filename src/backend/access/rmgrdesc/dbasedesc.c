@@ -39,5 +39,5 @@ dbase_desc(StringInfo buf, uint8 xl_info, char *rec)
 						 xlrec->db_id, xlrec->tablespace_id);
 	}
 	else
-		appendStringInfo(buf, "UNKNOWN");
+		appendStringInfoString(buf, "UNKNOWN");
 }

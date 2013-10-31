@@ -33,7 +33,7 @@ xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 
 	if (xlrec->nrels > 0)
 	{
-		appendStringInfo(buf, "; rels:");
+		appendStringInfoString(buf, "; rels:");
 		for (i = 0; i < xlrec->nrels; i++)
 		{
 			char	   *path = relpathperm(xlrec->xnodes[i], MAIN_FORKNUM);
@@ -44,7 +44,7 @@ xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 	}
 	if (xlrec->nsubxacts > 0)
 	{
-		appendStringInfo(buf, "; subxacts:");
+		appendStringInfoString(buf, "; subxacts:");
 		for (i = 0; i < xlrec->nsubxacts; i++)
 			appendStringInfo(buf, " %u", subxacts[i]);
 	}
@@ -58,7 +58,7 @@ xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 			appendStringInfo(buf, "; relcache init file inval dbid %u tsid %u",
 							 xlrec->dbId, xlrec->tsId);
 
-		appendStringInfo(buf, "; inval msgs:");
+		appendStringInfoString(buf, "; inval msgs:");
 		for (i = 0; i < xlrec->nmsgs; i++)
 		{
 			SharedInvalidationMessage *msg = &msgs[i];
@@ -71,10 +71,10 @@ xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 				appendStringInfo(buf, " relcache %u", msg->rc.relId);
 			/* not expected, but print something anyway */
 			else if (msg->id == SHAREDINVALSMGR_ID)
-				appendStringInfo(buf, " smgr");
+				appendStringInfoString(buf, " smgr");
 			/* not expected, but print something anyway */
 			else if (msg->id == SHAREDINVALRELMAP_ID)
-				appendStringInfo(buf, " relmap");
+				appendStringInfoString(buf, " relmap");
 			else if (msg->id == SHAREDINVALSNAPSHOT_ID)
 				appendStringInfo(buf, " snapshot %u", msg->sn.relId);
 			else
@@ -92,7 +92,7 @@ xact_desc_commit_compact(StringInfo buf, xl_xact_commit_compact *xlrec)
 
 	if (xlrec->nsubxacts > 0)
 	{
-		appendStringInfo(buf, "; subxacts:");
+		appendStringInfoString(buf, "; subxacts:");
 		for (i = 0; i < xlrec->nsubxacts; i++)
 			appendStringInfo(buf, " %u", xlrec->subxacts[i]);
 	}
@@ -106,7 +106,7 @@ xact_desc_abort(StringInfo buf, xl_xact_abort *xlrec)
 	appendStringInfoString(buf, timestamptz_to_str(xlrec->xact_time));
 	if (xlrec->nrels > 0)
 	{
-		appendStringInfo(buf, "; rels:");
+		appendStringInfoString(buf, "; rels:");
 		for (i = 0; i < xlrec->nrels; i++)
 		{
 			char	   *path = relpathperm(xlrec->xnodes[i], MAIN_FORKNUM);
@@ -120,7 +120,7 @@ xact_desc_abort(StringInfo buf, xl_xact_abort *xlrec)
 		TransactionId *xacts = (TransactionId *)
 		&xlrec->xnodes[xlrec->nrels];
 
-		appendStringInfo(buf, "; subxacts:");
+		appendStringInfoString(buf, "; subxacts:");
 		for (i = 0; i < xlrec->nsubxacts; i++)
 			appendStringInfo(buf, " %u", xacts[i]);
 	}
@@ -131,7 +131,7 @@ xact_desc_assignment(StringInfo buf, xl_xact_assignment *xlrec)
 {
 	int			i;
 
-	appendStringInfo(buf, "subxacts:");
+	appendStringInfoString(buf, "subxacts:");
 
 	for (i = 0; i < xlrec->nsubxacts; i++)
 		appendStringInfo(buf, " %u", xlrec->xsub[i]);
@@ -146,26 +146,26 @@ xact_desc(StringInfo buf, uint8 xl_info, char *rec)
 	{
 		xl_xact_commit_compact *xlrec = (xl_xact_commit_compact *) rec;
 
-		appendStringInfo(buf, "commit: ");
+		appendStringInfoString(buf, "commit: ");
 		xact_desc_commit_compact(buf, xlrec);
 	}
 	else if (info == XLOG_XACT_COMMIT)
 	{
 		xl_xact_commit *xlrec = (xl_xact_commit *) rec;
 
-		appendStringInfo(buf, "commit: ");
+		appendStringInfoString(buf, "commit: ");
 		xact_desc_commit(buf, xlrec);
 	}
 	else if (info == XLOG_XACT_ABORT)
 	{
 		xl_xact_abort *xlrec = (xl_xact_abort *) rec;
 
-		appendStringInfo(buf, "abort: ");
+		appendStringInfoString(buf, "abort: ");
 		xact_desc_abort(buf, xlrec);
 	}
 	else if (info == XLOG_XACT_PREPARE)
 	{
-		appendStringInfo(buf, "prepare");
+		appendStringInfoString(buf, "prepare");
 	}
 	else if (info == XLOG_XACT_COMMIT_PREPARED)
 	{
@@ -194,5 +194,5 @@ xact_desc(StringInfo buf, uint8 xl_info, char *rec)
 		xact_desc_assignment(buf, xlrec);
 	}
 	else
-		appendStringInfo(buf, "UNKNOWN");
+		appendStringInfoString(buf, "UNKNOWN");
 }

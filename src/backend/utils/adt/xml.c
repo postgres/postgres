@@ -442,9 +442,9 @@ xmlcomment(PG_FUNCTION_ARGS)
 				 errmsg("invalid XML comment")));
 
 	initStringInfo(&buf);
-	appendStringInfo(&buf, "<!--");
+	appendStringInfoString(&buf, "<!--");
 	appendStringInfoText(&buf, arg);
-	appendStringInfo(&buf, "-->");
+	appendStringInfoString(&buf, "-->");
 
 	PG_RETURN_XML_P(stringinfo_to_xmltype(&buf));
 #else
@@ -1852,19 +1852,19 @@ map_sql_identifier_to_xml_name(char *ident, bool fully_escaped,
 	for (p = ident; *p; p += pg_mblen(p))
 	{
 		if (*p == ':' && (p == ident || fully_escaped))
-			appendStringInfo(&buf, "_x003A_");
+			appendStringInfoString(&buf, "_x003A_");
 		else if (*p == '_' && *(p + 1) == 'x')
-			appendStringInfo(&buf, "_x005F_");
+			appendStringInfoString(&buf, "_x005F_");
 		else if (fully_escaped && p == ident &&
 				 pg_strncasecmp(p, "xml", 3) == 0)
 		{
 			if (*p == 'x')
-				appendStringInfo(&buf, "_x0078_");
+				appendStringInfoString(&buf, "_x0078_");
 			else
-				appendStringInfo(&buf, "_x0058_");
+				appendStringInfoString(&buf, "_x0058_");
 		}
 		else if (escape_period && *p == '.')
-			appendStringInfo(&buf, "_x002E_");
+			appendStringInfoString(&buf, "_x002E_");
 		else
 		{
 			pg_wchar	u = sqlchar_to_unicode(p);
@@ -2438,9 +2438,9 @@ xmldata_root_element_start(StringInfo result, const char *eltname,
 		if (strlen(targetns) > 0)
 			appendStringInfo(result, " xsi:schemaLocation=\"%s #\"", targetns);
 		else
-			appendStringInfo(result, " xsi:noNamespaceSchemaLocation=\"#\"");
+			appendStringInfoString(result, " xsi:noNamespaceSchemaLocation=\"#\"");
 	}
-	appendStringInfo(result, ">\n");
+	appendStringInfoString(result, ">\n");
 }
 
 
@@ -2945,7 +2945,7 @@ map_multipart_sql_identifier_to_xml_name(char *a, char *b, char *c, char *d)
 	initStringInfo(&result);
 
 	if (a)
-		appendStringInfo(&result, "%s",
+		appendStringInfoString(&result,
 						 map_sql_identifier_to_xml_name(a, true, true));
 	if (b)
 		appendStringInfo(&result, ".%s",
@@ -3212,71 +3212,71 @@ map_sql_type_to_xml_name(Oid typeoid, int typmod)
 	{
 		case BPCHAROID:
 			if (typmod == -1)
-				appendStringInfo(&result, "CHAR");
+				appendStringInfoString(&result, "CHAR");
 			else
 				appendStringInfo(&result, "CHAR_%d", typmod - VARHDRSZ);
 			break;
 		case VARCHAROID:
 			if (typmod == -1)
-				appendStringInfo(&result, "VARCHAR");
+				appendStringInfoString(&result, "VARCHAR");
 			else
 				appendStringInfo(&result, "VARCHAR_%d", typmod - VARHDRSZ);
 			break;
 		case NUMERICOID:
 			if (typmod == -1)
-				appendStringInfo(&result, "NUMERIC");
+				appendStringInfoString(&result, "NUMERIC");
 			else
 				appendStringInfo(&result, "NUMERIC_%d_%d",
 								 ((typmod - VARHDRSZ) >> 16) & 0xffff,
 								 (typmod - VARHDRSZ) & 0xffff);
 			break;
 		case INT4OID:
-			appendStringInfo(&result, "INTEGER");
+			appendStringInfoString(&result, "INTEGER");
 			break;
 		case INT2OID:
-			appendStringInfo(&result, "SMALLINT");
+			appendStringInfoString(&result, "SMALLINT");
 			break;
 		case INT8OID:
-			appendStringInfo(&result, "BIGINT");
+			appendStringInfoString(&result, "BIGINT");
 			break;
 		case FLOAT4OID:
-			appendStringInfo(&result, "REAL");
+			appendStringInfoString(&result, "REAL");
 			break;
 		case FLOAT8OID:
-			appendStringInfo(&result, "DOUBLE");
+			appendStringInfoString(&result, "DOUBLE");
 			break;
 		case BOOLOID:
-			appendStringInfo(&result, "BOOLEAN");
+			appendStringInfoString(&result, "BOOLEAN");
 			break;
 		case TIMEOID:
 			if (typmod == -1)
-				appendStringInfo(&result, "TIME");
+				appendStringInfoString(&result, "TIME");
 			else
 				appendStringInfo(&result, "TIME_%d", typmod);
 			break;
 		case TIMETZOID:
 			if (typmod == -1)
-				appendStringInfo(&result, "TIME_WTZ");
+				appendStringInfoString(&result, "TIME_WTZ");
 			else
 				appendStringInfo(&result, "TIME_WTZ_%d", typmod);
 			break;
 		case TIMESTAMPOID:
 			if (typmod == -1)
-				appendStringInfo(&result, "TIMESTAMP");
+				appendStringInfoString(&result, "TIMESTAMP");
 			else
 				appendStringInfo(&result, "TIMESTAMP_%d", typmod);
 			break;
 		case TIMESTAMPTZOID:
 			if (typmod == -1)
-				appendStringInfo(&result, "TIMESTAMP_WTZ");
+				appendStringInfoString(&result, "TIMESTAMP_WTZ");
 			else
 				appendStringInfo(&result, "TIMESTAMP_WTZ_%d", typmod);
 			break;
 		case DATEOID:
-			appendStringInfo(&result, "DATE");
+			appendStringInfoString(&result, "DATE");
 			break;
 		case XMLOID:
-			appendStringInfo(&result, "XML");
+			appendStringInfoString(&result, "XML");
 			break;
 		default:
 			{
@@ -3370,7 +3370,7 @@ map_sql_type_to_xmlschema_type(Oid typeoid, int typmod)
 
 	if (typeoid == XMLOID)
 	{
-		appendStringInfo(&result,
+		appendStringInfoString(&result,
 						 "<xsd:complexType mixed=\"true\">\n"
 						 "  <xsd:sequence>\n"
 						 "    <xsd:any name=\"element\" minOccurs=\"0\" maxOccurs=\"unbounded\" processContents=\"skip\"/>\n"
@@ -3393,8 +3393,7 @@ map_sql_type_to_xmlschema_type(Oid typeoid, int typmod)
 					appendStringInfo(&result,
 									 "    <xsd:maxLength value=\"%d\"/>\n",
 									 typmod - VARHDRSZ);
-				appendStringInfo(&result,
-								 "  </xsd:restriction>\n");
+				appendStringInfoString(&result, "  </xsd:restriction>\n");
 				break;
 
 			case BYTEAOID:
@@ -3444,17 +3443,17 @@ map_sql_type_to_xmlschema_type(Oid typeoid, int typmod)
 				break;
 
 			case FLOAT4OID:
-				appendStringInfo(&result,
+				appendStringInfoString(&result,
 				"  <xsd:restriction base=\"xsd:float\"></xsd:restriction>\n");
 				break;
 
 			case FLOAT8OID:
-				appendStringInfo(&result,
+				appendStringInfoString(&result,
 								 "  <xsd:restriction base=\"xsd:double\"></xsd:restriction>\n");
 				break;
 
 			case BOOLOID:
-				appendStringInfo(&result,
+				appendStringInfoString(&result,
 								 "  <xsd:restriction base=\"xsd:boolean\"></xsd:restriction>\n");
 				break;
 
@@ -3505,7 +3504,7 @@ map_sql_type_to_xmlschema_type(Oid typeoid, int typmod)
 				}
 
 			case DATEOID:
-				appendStringInfo(&result,
+				appendStringInfoString(&result,
 								 "  <xsd:restriction base=\"xsd:date\">\n"
 								 "    <xsd:pattern value=\"\\p{Nd}{4}-\\p{Nd}{2}-\\p{Nd}{2}\"/>\n"
 								 "  </xsd:restriction>\n");
@@ -3525,8 +3524,7 @@ map_sql_type_to_xmlschema_type(Oid typeoid, int typmod)
 				}
 				break;
 		}
-		appendStringInfo(&result,
-						 "</xsd:simpleType>\n");
+		appendStringInfoString(&result, "</xsd:simpleType>\n");
 	}
 
 	return result.data;

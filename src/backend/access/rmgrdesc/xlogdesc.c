@@ -62,7 +62,7 @@ xlog_desc(StringInfo buf, uint8 xl_info, char *rec)
 	}
 	else if (info == XLOG_NOOP)
 	{
-		appendStringInfo(buf, "xlog no-op");
+		appendStringInfoString(buf, "xlog no-op");
 	}
 	else if (info == XLOG_NEXTOID)
 	{
@@ -73,7 +73,7 @@ xlog_desc(StringInfo buf, uint8 xl_info, char *rec)
 	}
 	else if (info == XLOG_SWITCH)
 	{
-		appendStringInfo(buf, "xlog switch");
+		appendStringInfoString(buf, "xlog switch");
 	}
 	else if (info == XLOG_RESTORE_POINT)
 	{
@@ -141,5 +141,5 @@ xlog_desc(StringInfo buf, uint8 xl_info, char *rec)
 						 timestamptz_to_str(xlrec.end_time));
 	}
 	else
-		appendStringInfo(buf, "UNKNOWN");
+		appendStringInfoString(buf, "UNKNOWN");
 }

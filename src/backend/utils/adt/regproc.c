@@ -716,7 +716,7 @@ format_operator_internal(Oid operator_oid, bool force_qualify)
 							 format_type_be_qualified(operform->oprleft) :
 							 format_type_be(operform->oprleft));
 		else
-			appendStringInfo(&buf, "NONE,");
+			appendStringInfoString(&buf, "NONE,");
 
 		if (operform->oprright)
 			appendStringInfo(&buf, "%s)",
@@ -724,7 +724,7 @@ format_operator_internal(Oid operator_oid, bool force_qualify)
 							 format_type_be_qualified(operform->oprright) :
 							 format_type_be(operform->oprright));
 		else
-			appendStringInfo(&buf, "NONE)");
+			appendStringInfoString(&buf, "NONE)");
 
 		result = buf.data;
 

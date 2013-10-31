@@ -4343,7 +4343,7 @@ ShowUsage(const char *title)
 	 */
 	initStringInfo(&str);
 
-	appendStringInfo(&str, "! system usage stats:\n");
+	appendStringInfoString(&str, "! system usage stats:\n");
 	appendStringInfo(&str,
 				"!\t%ld.%06ld elapsed %ld.%06ld user %ld.%06ld system sec\n",
 					 (long) (elapse_t.tv_sec - Save_t.tv_sec),

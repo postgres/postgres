@@ -1523,7 +1523,7 @@ serialize_deflist(List *deflist)
 		}
 		appendStringInfoChar(&buf, '\'');
 		if (lnext(l) != NULL)
-			appendStringInfo(&buf, ", ");
+			appendStringInfoString(&buf, ", ");
 	}
 
 	result = cstring_to_text_with_len(buf.data, buf.len);
