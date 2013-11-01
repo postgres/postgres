@@ -302,6 +302,7 @@ assign_timezone(const char *value, bool doit, GucSource source)
 #else
 			CTimeZone = -interval->time;
 #endif
+			session_timezone = pg_tzset_offset(CTimeZone);
 
 			HasCTZSet = true;
 		}
@@ -319,6 +320,7 @@ assign_timezone(const char *value, bool doit, GucSource source)
 			{
 				/* Here we change from SQL to Unix sign convention */
 				CTimeZone = -hours * SECS_PER_HOUR;
+				session_timezone = pg_tzset_offset(CTimeZone);
 				HasCTZSet = true;
 			}
 		}
