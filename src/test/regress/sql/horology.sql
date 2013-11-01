@@ -461,3 +461,19 @@ SELECT to_timestamp('199711xy', 'YYYYMMDD');
 
 -- Input that doesn't fit in an int:
 SELECT to_timestamp('10000000000', 'FMYYYY');
+
+--
+-- Check behavior with SQL-style fixed-GMT-offset time zone (cf bug #8572)
+--
+
+SET TIME ZONE 'America/New_York';
+SET TIME ZONE '-1.5';
+
+SHOW TIME ZONE;
+
+SELECT '2012-12-12 12:00'::timestamptz;
+SELECT '2012-12-12 12:00 America/New_York'::timestamptz;
+
+SELECT to_char('2012-12-12 12:00'::timestamptz, 'YYYY-MM-DD HH:MI:SS TZ');
+
+RESET TIME ZONE;

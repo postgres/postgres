@@ -288,6 +288,46 @@ pg_tzset(const char *name)
 	return &tzp->tz;
 }
 
+/*
+ * Load a fixed-GMT-offset timezone.
+ * This is used for SQL-spec SET TIME ZONE INTERVAL 'foo' cases.
+ * It's otherwise equivalent to pg_tzset().
+ *
+ * The GMT offset is specified in seconds, positive values meaning west of
+ * Greenwich (ie, POSIX not ISO sign convention).  However, we use ISO
+ * sign convention in the displayable abbreviation for the zone.
+ */
+pg_tz *
+pg_tzset_offset(long gmtoffset)
+{
+	long		absoffset = (gmtoffset < 0) ? -gmtoffset : gmtoffset;
+	char		offsetstr[64];
+	char		tzname[128];
+
+	snprintf(offsetstr, sizeof(offsetstr),
+			 "%02ld", absoffset / SECSPERHOUR);
+	absoffset %= SECSPERHOUR;
+	if (absoffset != 0)
+	{
+		snprintf(offsetstr + strlen(offsetstr),
+				 sizeof(offsetstr) - strlen(offsetstr),
+				 ":%02ld", absoffset / SECSPERMIN);
+		absoffset %= SECSPERMIN;
+		if (absoffset != 0)
+			snprintf(offsetstr + strlen(offsetstr),
+					 sizeof(offsetstr) - strlen(offsetstr),
+					 ":%02ld", absoffset);
+	}
+	if (gmtoffset > 0)
+		snprintf(tzname, sizeof(tzname), "<-%s>+%s",
+				 offsetstr, offsetstr);
+	else
+		snprintf(tzname, sizeof(tzname), "<+%s>-%s",
+				 offsetstr, offsetstr);
+
+	return pg_tzset(tzname);
+}
+
 
 /*
  * Initialize timezone library

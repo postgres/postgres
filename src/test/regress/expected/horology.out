@@ -2935,3 +2935,33 @@ DETAIL:  Value must be an integer.
 SELECT to_timestamp('10000000000', 'FMYYYY');
 ERROR:  value for "YYYY" in source string is out of range
 DETAIL:  Value must be in the range -2147483648 to 2147483647.
+--
+-- Check behavior with SQL-style fixed-GMT-offset time zone (cf bug #8572)
+--
+SET TIME ZONE 'America/New_York';
+SET TIME ZONE '-1.5';
+SHOW TIME ZONE;
+       TimeZone       
+----------------------
+ @ 1 hour 30 mins ago
+(1 row)
+
+SELECT '2012-12-12 12:00'::timestamptz;
+           timestamptz           
+---------------------------------
+ Wed Dec 12 12:00:00 2012 -01:30
+(1 row)
+
+SELECT '2012-12-12 12:00 America/New_York'::timestamptz;
+           timestamptz           
+---------------------------------
+ Wed Dec 12 15:30:00 2012 -01:30
+(1 row)
+
+SELECT to_char('2012-12-12 12:00'::timestamptz, 'YYYY-MM-DD HH:MI:SS TZ');
+       to_char        
+----------------------
+ 2012-12-12 12:00:00 
+(1 row)
+
+RESET TIME ZONE;

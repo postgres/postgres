@@ -68,6 +68,7 @@ extern pg_tz *log_timezone;
 
 extern void pg_timezone_initialize(void);
 extern pg_tz *pg_tzset(const char *tzname);
+extern pg_tz *pg_tzset_offset(long gmtoffset);
 
 extern pg_tzenum *pg_tzenumerate_start(void);
 extern pg_tz *pg_tzenumerate_next(pg_tzenum *dir);
