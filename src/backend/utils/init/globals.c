@@ -93,8 +93,6 @@ bool		ExitOnAnyError = false;
 int			DateStyle = USE_ISO_DATES;
 int			DateOrder = DATEORDER_MDY;
 int			IntervalStyle = INTSTYLE_POSTGRES;
-bool		HasCTZSet = false;
-int			CTimeZone = 0;
 
 bool		enableFsync = true;
 bool		allowSystemTableMods = false;

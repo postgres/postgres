@@ -243,7 +243,16 @@ SELECT setseed(<replaceable>value</replaceable>);
          </listitem>
         </varlistentry>
        </variablelist>
+      </para>
 
+      <para>
+       Timezone settings given as numbers or intervals are internally
+       translated to POSIX timezone syntax.  For example, after
+       <literal>SET TIME ZONE -7</>, <command>SHOW TIME ZONE</> would
+       report <literal>&lt;-07&gt;+07</>.
+      </para>
+
+      <para>
        See <xref linkend="datatype-timezones"> for more information
        about time zones.
       </para>

@@ -243,33 +243,16 @@ assign_datestyle(const char *newval, void *extra)
  * TIMEZONE
  */
 
-typedef struct
-{
-	pg_tz	   *session_timezone;
-	int			CTimeZone;
-	bool		HasCTZSet;
-} timezone_extra;
-
 /*
  * check_timezone: GUC check_hook for timezone
  */
 bool
 check_timezone(char **newval, void **extra, GucSource source)
 {
-	timezone_extra myextra;
+	pg_tz	   *new_tz;
+	long		gmtoffset;
 	char	   *endptr;
 	double		hours;
-
-	/*
-	 * Initialize the "extra" struct that will be passed to assign_timezone.
-	 * We don't want to change any of the three global variables except as
-	 * specified by logic below.  To avoid leaking memory during failure
-	 * returns, we set up the struct contents in a local variable, and only
-	 * copy it to *extra at the end.
-	 */
-	myextra.session_timezone = session_timezone;
-	myextra.CTimeZone = CTimeZone;
-	myextra.HasCTZSet = HasCTZSet;
 
 	if (pg_strncasecmp(*newval, "interval", 8) == 0)
 	{
@@ -323,12 +306,11 @@ check_timezone(char **newval, void **extra, GucSource source)
 
 		/* Here we change from SQL to Unix sign convention */
 #ifdef HAVE_INT64_TIMESTAMP
-		myextra.CTimeZone = -(interval->time / USECS_PER_SEC);
+		gmtoffset = -(interval->time / USECS_PER_SEC);
 #else
-		myextra.CTimeZone = -interval->time;
+		gmtoffset = -interval->time;
 #endif
-		myextra.session_timezone = pg_tzset_offset(myextra.CTimeZone);
-		myextra.HasCTZSet = true;
+		new_tz = pg_tzset_offset(gmtoffset);
 
 		pfree(interval);
 	}
@@ -341,17 +323,14 @@ check_timezone(char **newval, void **extra, GucSource source)
 		if (endptr != *newval && *endptr == '\0')
 		{
 			/* Here we change from SQL to Unix sign convention */
-			myextra.CTimeZone = -hours * SECS_PER_HOUR;
-			myextra.session_timezone = pg_tzset_offset(myextra.CTimeZone);
-			myextra.HasCTZSet = true;
+			gmtoffset = -hours * SECS_PER_HOUR;
+			new_tz = pg_tzset_offset(gmtoffset);
 		}
 		else
 		{
 			/*
 			 * Otherwise assume it is a timezone name, and try to load it.
 			 */
-			pg_tz	   *new_tz;
-
 			new_tz = pg_tzset(*newval);
 
 			if (!new_tz)
@@ -367,40 +346,16 @@ check_timezone(char **newval, void **extra, GucSource source)
 				GUC_check_errdetail("PostgreSQL does not support leap seconds.");
 				return false;
 			}
-
-			myextra.session_timezone = new_tz;
-			myextra.HasCTZSet = false;
 		}
-	}
-
-	/*
-	 * Prepare the canonical string to return.	GUC wants it malloc'd.
-	 *
-	 * Note: the result string should be something that we'd accept as input.
-	 * We use the numeric format for interval cases, because it's simpler to
-	 * reload.	In the named-timezone case, *newval is already OK and need not
-	 * be changed; it might not have the canonical casing, but that's taken
-	 * care of by show_timezone.
-	 */
-	if (myextra.HasCTZSet)
-	{
-		char	   *result = (char *) malloc(64);
-
-		if (!result)
-			return false;
-		snprintf(result, 64, "%.5f",
-				 (double) (-myextra.CTimeZone) / (double) SECS_PER_HOUR);
-		free(*newval);
-		*newval = result;
 	}
 
 	/*
 	 * Pass back data for assign_timezone to use
 	 */
-	*extra = malloc(sizeof(timezone_extra));
+	*extra = malloc(sizeof(pg_tz *));
 	if (!*extra)
 		return false;
-	memcpy(*extra, &myextra, sizeof(timezone_extra));
+	*((pg_tz **) *extra) = new_tz;
 
 	return true;
 }
@@ -411,43 +366,19 @@ check_timezone(char **newval, void **extra, GucSource source)
 void
 assign_timezone(const char *newval, void *extra)
 {
-	timezone_extra *myextra = (timezone_extra *) extra;
-
-	session_timezone = myextra->session_timezone;
-	CTimeZone = myextra->CTimeZone;
-	HasCTZSet = myextra->HasCTZSet;
+	session_timezone = *((pg_tz **) extra);
 }
 
 /*
  * show_timezone: GUC show_hook for timezone
- *
- * We wouldn't need this, except that historically interval values have been
- * shown without an INTERVAL prefix, so the display format isn't what would
- * be accepted as input.  Otherwise we could have check_timezone return the
- * preferred string to begin with.
  */
 const char *
 show_timezone(void)
 {
 	const char *tzn;
 
-	if (HasCTZSet)
-	{
-		Interval	interval;
-
-		interval.month = 0;
-		interval.day = 0;
-#ifdef HAVE_INT64_TIMESTAMP
-		interval.time = -(CTimeZone * USECS_PER_SEC);
-#else
-		interval.time = -CTimeZone;
-#endif
-
-		tzn = DatumGetCString(DirectFunctionCall1(interval_out,
-											  IntervalPGetDatum(&interval)));
-	}
-	else
-		tzn = pg_get_timezone_name(session_timezone);
+	/* Always show the zone's canonical name */
+	tzn = pg_get_timezone_name(session_timezone);
 
 	if (tzn != NULL)
 		return tzn;
@@ -497,7 +428,7 @@ check_log_timezone(char **newval, void **extra, GucSource source)
 	*extra = malloc(sizeof(pg_tz *));
 	if (!*extra)
 		return false;
-	memcpy(*extra, &new_tz, sizeof(pg_tz *));
+	*((pg_tz **) *extra) = new_tz;
 
 	return true;
 }
@@ -519,6 +450,7 @@ show_log_timezone(void)
 {
 	const char *tzn;
 
+	/* Always show the zone's canonical name */
 	tzn = pg_get_timezone_name(log_timezone);
 
 	if (tzn != NULL)

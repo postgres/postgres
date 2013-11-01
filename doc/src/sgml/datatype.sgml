@@ -2419,8 +2419,11 @@ January 8 04:05:06 1999 PST
         optional daylight-savings zone abbreviation, assumed to stand for one
         hour ahead of the given offset. For example, if <literal>EST5EDT</>
         were not already a recognized zone name, it would be accepted and would
-        be functionally equivalent to United States East Coast time.  When a
-        daylight-savings zone name is present, it is assumed to be used
+        be functionally equivalent to United States East Coast time.  In this
+        syntax, a zone abbreviation can be a string of letters, or an
+        arbitrary string surrounded by angle brackets (<literal>&lt;&gt;</>).
+        When a daylight-savings zone abbreviation is present,
+        it is assumed to be used
         according to the same daylight-savings transition rules used in the
         <literal>zoneinfo</> time zone database's <filename>posixrules</> entry.
         In a standard <productname>PostgreSQL</productname> installation,
