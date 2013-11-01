@@ -55,6 +55,8 @@ extern size_t pg_strftime(char *s, size_t max, const char *format,
 extern void pg_timezone_pre_initialize(void);
 extern void pg_timezone_initialize(void);
 extern pg_tz *pg_tzset(const char *tzname);
+extern pg_tz *pg_tzset_offset(long gmtoffset);
+
 extern bool tz_acceptable(pg_tz *tz);
 extern bool pg_get_timezone_offset(const pg_tz *tz, long int *gmtoff);
 extern const char *pg_get_timezone_name(pg_tz *tz);
