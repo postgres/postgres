@@ -2959,9 +2959,9 @@ SELECT '2012-12-12 12:00 America/New_York'::timestamptz;
 (1 row)
 
 SELECT to_char('2012-12-12 12:00'::timestamptz, 'YYYY-MM-DD HH:MI:SS TZ');
-       to_char        
-----------------------
- 2012-12-12 12:00:00 
+          to_char           
+----------------------------
+ 2012-12-12 12:00:00 -01:30
 (1 row)
 
 RESET TIME ZONE;

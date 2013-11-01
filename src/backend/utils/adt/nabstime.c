@@ -100,15 +100,7 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct pg_tm * tm, char **tzn)
 	pg_time_t	time = (pg_time_t) _time;
 	struct pg_tm *tx;
 
-	/*
-	 * If HasCTZSet is true then we have a brute force time zone specified. Go
-	 * ahead and rotate to the local time zone since we will later bypass any
-	 * calls which adjust the tm fields.
-	 */
-	if (HasCTZSet && (tzp != NULL))
-		time -= CTimeZone;
-
-	if (!HasCTZSet && tzp != NULL)
+	if (tzp != NULL)
 		tx = pg_localtime(&time, session_timezone);
 	else
 		tx = pg_gmtime(&time);
@@ -126,21 +118,6 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct pg_tm * tm, char **tzn)
 
 	if (tzp != NULL)
 	{
-		/*
-		 * We have a brute force time zone per SQL99? Then use it without
-		 * change since we have already rotated to the time zone.
-		 */
-		if (HasCTZSet)
-		{
-			*tzp = CTimeZone;
-			tm->tm_gmtoff = CTimeZone;
-			tm->tm_isdst = 0;
-			tm->tm_zone = NULL;
-			if (tzn != NULL)
-				*tzn = NULL;
-		}
-		else
-		{
 			*tzp = -tm->tm_gmtoff;		/* tm_gmtoff is Sun/DEC-ism */
 
 			/*
@@ -161,7 +138,6 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct pg_tm * tm, char **tzn)
 							 errmsg("invalid time zone name: \"%s\"",
 									tm->tm_zone)));
 			}
-		}
 	}
 	else
 		tm->tm_isdst = -1;

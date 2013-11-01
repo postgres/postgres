@@ -1498,8 +1498,7 @@ dt2time(Timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
  *	 0 on success
  *	-1 on out of range
  *
- * If attimezone is NULL, the global timezone (including possibly brute forced
- * timezone) will be used.
+ * If attimezone is NULL, the global timezone setting will be used.
  */
 int
 timestamp2tm(Timestamp dt, int *tzp, struct pg_tm * tm, fsec_t *fsec, const char **tzn, pg_tz *attimezone)
@@ -1508,19 +1507,9 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm * tm, fsec_t *fsec, const char
 	Timestamp	time;
 	pg_time_t	utime;
 
-	/*
-	 * If HasCTZSet is true then we have a brute force time zone specified. Go
-	 * ahead and rotate to the local time zone since we will later bypass any
-	 * calls which adjust the tm fields.
-	 */
-	if (attimezone == NULL && HasCTZSet && tzp != NULL)
-	{
-#ifdef HAVE_INT64_TIMESTAMP
-		dt -= CTimeZone * USECS_PER_SEC;
-#else
-		dt -= CTimeZone;
-#endif
-	}
+	/* Use session timezone if caller asks for default */
+	if (attimezone == NULL)
+		attimezone = session_timezone;
 
 #ifdef HAVE_INT64_TIMESTAMP
 	time = dt;
@@ -1590,21 +1579,6 @@ recalc_t:
 	}
 
 	/*
-	 * We have a brute force time zone per SQL99? Then use it without change
-	 * since we have already rotated to the time zone.
-	 */
-	if (attimezone == NULL && HasCTZSet)
-	{
-		*tzp = CTimeZone;
-		tm->tm_isdst = 0;
-		tm->tm_gmtoff = CTimeZone;
-		tm->tm_zone = NULL;
-		if (tzn != NULL)
-			*tzn = NULL;
-		return 0;
-	}
-
-	/*
 	 * If the time falls within the range of pg_time_t, use pg_localtime() to
 	 * rotate to the local time zone.
 	 *
@@ -1624,8 +1598,7 @@ recalc_t:
 	utime = (pg_time_t) dt;
 	if ((Timestamp) utime == dt)
 	{
-		struct pg_tm *tx = pg_localtime(&utime,
-								 attimezone ? attimezone : session_timezone);
+		struct pg_tm *tx = pg_localtime(&utime, attimezone);
 
 		tm->tm_year = tx->tm_year + 1900;
 		tm->tm_mon = tx->tm_mon + 1;
