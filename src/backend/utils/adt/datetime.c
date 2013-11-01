@@ -1465,12 +1465,6 @@ DetermineTimeZoneOffset(struct pg_tm * tm, pg_tz *tzp)
 				after_isdst;
 	int			res;
 
-	if (tzp == session_timezone && HasCTZSet)
-	{
-		tm->tm_isdst = 0;		/* for lack of a better idea */
-		return CTimeZone;
-	}
-
 	/*
 	 * First, generate the pg_time_t value corresponding to the given
 	 * y/m/d/h/m/s taken as GMT time.  If this overflows, punt and decide the
