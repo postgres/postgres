@@ -23,8 +23,10 @@
  * will go away automatically at transaction end.  If the underlying
  * virtual File is made with OpenTemporaryFile, then all resources for
  * the file are certain to be cleaned up even if processing is aborted
- * by ereport(ERROR).	To avoid confusion, the caller should take care that
- * all calls for a single BufFile are made in the same palloc context.
+ * by ereport(ERROR).  The data structures required are made in the
+ * palloc context that was current when the BufFile was created, and
+ * any external resources such as temp files are owned by the ResourceOwner
+ * that was current at that time.
  *
  * BufFile also supports temporary files that exceed the OS file size limit
  * (by opening multiple fd.c temporary files).	This is an essential feature
@@ -38,6 +40,7 @@
 #include "storage/fd.h"
 #include "storage/buffile.h"
 #include "storage/buf_internals.h"
+#include "utils/resowner.h"
 
 /*
  * We break BufFiles into gigabyte-sized segments, regardless of RELSEG_SIZE.
@@ -67,6 +70,13 @@ struct BufFile
 	bool		isTemp;			/* can only add files if this is TRUE */
 	bool		isInterXact;	/* keep open over transactions? */
 	bool		dirty;			/* does buffer need to be written? */
+
+	/*
+	 * resowner is the ResourceOwner to use for underlying temp files.	(We
+	 * don't need to remember the memory context we're using explicitly,
+	 * because after creation we only repalloc our arrays larger.)
+	 */
+	ResourceOwner resowner;
 
 	/*
 	 * "current pos" is position of start of buffer within the logical file.
@@ -103,6 +113,7 @@ makeBufFile(File firstfile)
 	file->isTemp = false;
 	file->isInterXact = false;
 	file->dirty = false;
+	file->resowner = CurrentResourceOwner;
 	file->curFile = 0;
 	file->curOffset = 0L;
 	file->pos = 0;
@@ -118,10 +129,17 @@ static void
 extendBufFile(BufFile *file)
 {
 	File		pfile;
+	ResourceOwner oldowner;
+
+	/* Be sure to associate the file with the BufFile's resource owner */
+	oldowner = CurrentResourceOwner;
+	CurrentResourceOwner = file->resowner;
 
 	Assert(file->isTemp);
 	pfile = OpenTemporaryFile(file->isInterXact);
 	Assert(pfile >= 0);
+
+	CurrentResourceOwner = oldowner;
 
 	file->files = (File *) repalloc(file->files,
 									(file->numFiles + 1) * sizeof(File));
@@ -141,7 +159,8 @@ extendBufFile(BufFile *file)
  * at end of transaction.
  *
  * Note: if interXact is true, the caller had better be calling us in a
- * memory context that will survive across transaction boundaries.
+ * memory context, and with a resource owner, that will survive across
+ * transaction boundaries.
  */
 BufFile *
 BufFileCreateTemp(bool interXact)
