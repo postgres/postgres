@@ -865,7 +865,8 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		 * it is a parameterless subplan (not initplan), we suggest that it be
 		 * prepared to handle REWIND efficiently; otherwise there is no need.
 		 */
-		sp_eflags = eflags & EXEC_FLAG_EXPLAIN_ONLY;
+		sp_eflags = eflags
+			& (EXEC_FLAG_EXPLAIN_ONLY | EXEC_FLAG_WITH_NO_DATA);
 		if (bms_is_member(i, plannedstmt->rewindPlanIDs))
 			sp_eflags |= EXEC_FLAG_REWIND;
 

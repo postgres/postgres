@@ -155,6 +155,12 @@ REFRESH MATERIALIZED VIEW mv;
 REFRESH MATERIALIZED VIEW CONCURRENTLY mv;
 DROP TABLE foo CASCADE;
 
+-- allow subquery to reference unpopulated matview if WITH NO DATA is specified
+CREATE MATERIALIZED VIEW mv1 AS SELECT 1 AS col1 WITH NO DATA;
+CREATE MATERIALIZED VIEW mv2 AS SELECT * FROM mv1
+  WHERE col1 = (SELECT LEAST(col1) FROM mv1) WITH NO DATA;
+DROP MATERIALIZED VIEW mv1 CASCADE;
+
 -- make sure that types with unusual equality tests work
 CREATE TABLE boxes (id serial primary key, b box);
 INSERT INTO boxes (b) VALUES
