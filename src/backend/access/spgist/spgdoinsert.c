@@ -1946,9 +1946,12 @@ spgdoinsert(Relation index, SpGistState *state,
 			 * Attempt to acquire lock on child page.  We must beware of
 			 * deadlock against another insertion process descending from that
 			 * page to our parent page (see README).  If we fail to get lock,
-			 * abandon the insertion and tell our caller to start over.  XXX
-			 * this could be improved; perhaps it'd be worth sleeping a bit
-			 * before giving up?
+			 * abandon the insertion and tell our caller to start over.
+			 *
+			 * XXX this could be improved, because failing to get lock on a
+			 * buffer is not proof of a deadlock situation; the lock might be
+			 * held by a reader, or even just background writer/checkpointer
+			 * process.  Perhaps it'd be worth retrying after sleeping a bit?
 			 */
 			if (!ConditionalLockBuffer(current.buffer))
 			{

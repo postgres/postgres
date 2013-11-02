@@ -45,10 +45,17 @@ spgistBuildCallback(Relation index, HeapTuple htup, Datum *values,
 	/* Work in temp context, and reset it after each tuple */
 	oldCtx = MemoryContextSwitchTo(buildstate->tmpCtx);
 
-	/* No concurrent insertions can be happening, so failure is unexpected */
-	if (!spgdoinsert(index, &buildstate->spgstate, &htup->t_self,
-					 *values, *isnull))
-		elog(ERROR, "unexpected spgdoinsert() failure");
+	/*
+	 * Even though no concurrent insertions can be happening, we still might
+	 * get a buffer-locking failure due to bgwriter or checkpointer taking a
+	 * lock on some buffer.  So we need to be willing to retry.  We can flush
+	 * any temp data when retrying.
+	 */
+	while (!spgdoinsert(index, &buildstate->spgstate, &htup->t_self,
+						*values, *isnull))
+	{
+		MemoryContextReset(buildstate->tmpCtx);
+	}
 
 	MemoryContextSwitchTo(oldCtx);
 	MemoryContextReset(buildstate->tmpCtx);
