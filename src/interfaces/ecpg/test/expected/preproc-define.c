@@ -125,16 +125,20 @@ if (sqlca.sqlcode < 0) sqlprint();}
 	for (i=0, j=sqlca.sqlerrd[2]; i<j; i++)
 	{
 		/* exec sql begin declare section */
-		    
+		 
+		   
 		   
 		
 #line 48 "define.pgc"
- char n [ 8 ] , l = letter [ i ] [ 0 ] ;
+ string n ;
  
 #line 49 "define.pgc"
+ char l = letter [ i ] [ 0 ] ;
+ 
+#line 50 "define.pgc"
  int a = amount [ i ] ;
 /* exec sql end declare section */
-#line 50 "define.pgc"
+#line 51 "define.pgc"
 
 
 		strncpy(n, name[i],  8);
@@ -142,22 +146,22 @@ if (sqlca.sqlcode < 0) sqlprint();}
 	}
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table test", ECPGt_EOIT, ECPGt_EORT);
-#line 56 "define.pgc"
+#line 57 "define.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 56 "define.pgc"
+#line 57 "define.pgc"
 
 	{ ECPGtrans(__LINE__, NULL, "commit");
-#line 57 "define.pgc"
+#line 58 "define.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 57 "define.pgc"
+#line 58 "define.pgc"
 
 	{ ECPGdisconnect(__LINE__, "CURRENT");
-#line 58 "define.pgc"
+#line 59 "define.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 58 "define.pgc"
+#line 59 "define.pgc"
 
 
 	return (0);
