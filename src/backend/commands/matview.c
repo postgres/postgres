@@ -283,6 +283,7 @@ refresh_matview_datafill(DestReceiver *dest, Query *query,
 	Oid			save_userid;
 	int			save_sec_context;
 	int			save_nestlevel;
+	Query	   *copied_query;
 
 	/*
 	 * Switch to the owner's userid, so that any functions are run as that
@@ -294,8 +295,10 @@ refresh_matview_datafill(DestReceiver *dest, Query *query,
 						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
 	save_nestlevel = NewGUCNestLevel();
 
-	/* Rewrite, copying the given Query to make sure it's not changed */
-	rewritten = QueryRewrite((Query *) copyObject(query));
+	/* Lock and rewrite, using a copy to preserve the original query. */
+	copied_query = copyObject(query);
+	AcquireRewriteLocks(copied_query, false);
+	rewritten = QueryRewrite(copied_query);
 
 	/* SELECT should never rewrite to more or less than one SELECT query */
 	if (list_length(rewritten) != 1)
