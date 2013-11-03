@@ -869,9 +869,7 @@ SPI_fname(TupleDesc tupdesc, int fnumber)
 char *
 SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 {
-	char	   *result;
-	Datum		origval,
-				val;
+	Datum		val;
 	bool		isnull;
 	Oid			typoid,
 				foutoid;
@@ -886,7 +884,7 @@ SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 		return NULL;
 	}
 
-	origval = heap_getattr(tuple, fnumber, tupdesc, &isnull);
+	val = heap_getattr(tuple, fnumber, tupdesc, &isnull);
 	if (isnull)
 		return NULL;
 
@@ -897,22 +895,7 @@ SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 
 	getTypeOutputInfo(typoid, &foutoid, &typisvarlena);
 
-	/*
-	 * If we have a toasted datum, forcibly detoast it here to avoid memory
-	 * leakage inside the type's output routine.
-	 */
-	if (typisvarlena)
-		val = PointerGetDatum(PG_DETOAST_DATUM(origval));
-	else
-		val = origval;
-
-	result = OidOutputFunctionCall(foutoid, val);
-
-	/* Clean up detoasted copy, if any */
-	if (val != origval)
-		pfree(DatumGetPointer(val));
-
-	return result;
+	return OidOutputFunctionCall(foutoid, val);
 }
 
 Datum
