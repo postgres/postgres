@@ -242,9 +242,12 @@ refresh_matview_datafill(DestReceiver *dest, Query *query,
 	List	   *rewritten;
 	PlannedStmt *plan;
 	QueryDesc  *queryDesc;
+	Query	   *copied_query;
 
-	/* Rewrite, copying the given Query to make sure it's not changed */
-	rewritten = QueryRewrite((Query *) copyObject(query));
+	/* Lock and rewrite, using a copy to preserve the original query. */
+	copied_query = copyObject(query);
+	AcquireRewriteLocks(copied_query, false);
+	rewritten = QueryRewrite(copied_query);
 
 	/* SELECT should never rewrite to more or less than one SELECT query */
 	if (list_length(rewritten) != 1)
