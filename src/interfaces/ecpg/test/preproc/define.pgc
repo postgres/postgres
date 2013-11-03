@@ -45,7 +45,8 @@ exec sql end declare section;
 	for (i=0, j=sqlca.sqlerrd[2]; i<j; i++)
 	{
 		exec sql begin declare section;
-		char n[8], l = letter[i][0];
+		string n;
+		char l = letter[i][0];
 		int a = amount[i];
 		exec sql end declare section;
 
