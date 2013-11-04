@@ -192,8 +192,9 @@ dsm_postmaster_startup(void)
 	}
 	dsm_control = dsm_control_address;
 	on_shmem_exit(dsm_postmaster_shutdown, 0);
-	elog(DEBUG2, "created dynamic shared memory control segment %u ("
-		UINT64_FORMAT " bytes)", dsm_control_handle, segsize);
+	elog(DEBUG2,
+		 "created dynamic shared memory control segment %u (%lu bytes)",
+		 dsm_control_handle, (unsigned long) segsize);
 	dsm_write_state_file(dsm_control_handle);
 
 	/* Initialize control segment. */
