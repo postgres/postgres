@@ -391,3 +391,24 @@ CREATE MATERIALIZED VIEW mv2 AS SELECT * FROM mv1
   WHERE col1 = (SELECT LEAST(col1) FROM mv1) WITH NO DATA;
 DROP MATERIALIZED VIEW mv1 CASCADE;
 NOTICE:  drop cascades to materialized view mv2
+-- make sure that column names are handled correctly
+CREATE TABLE v (i int, j int);
+CREATE MATERIALIZED VIEW mv_v (ii) AS SELECT i, j AS jj FROM v;
+ALTER TABLE v RENAME COLUMN i TO x;
+INSERT INTO v values (1, 2);
+CREATE UNIQUE INDEX mv_v_ii ON mv_v (ii);
+REFRESH MATERIALIZED VIEW mv_v;
+SELECT * FROM v;
+ x | j 
+---+---
+ 1 | 2
+(1 row)
+
+SELECT * FROM mv_v;
+ ii | jj 
+----+----
+  1 |  2
+(1 row)
+
+DROP TABLE v CASCADE;
+NOTICE:  drop cascades to materialized view mv_v
