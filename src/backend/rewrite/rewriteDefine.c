@@ -44,7 +44,7 @@
 
 
 static void checkRuleResultList(List *targetList, TupleDesc resultDesc,
-					bool isSelect);
+					bool isSelect, bool requireColumnNameMatch);
 static bool setRuleCheckAsUser_walker(Node *node, Oid *context);
 static void setRuleCheckAsUser_Query(Query *qry, Oid userid);
 
@@ -355,7 +355,9 @@ DefineQueryRewrite(char *rulename,
 		 */
 		checkRuleResultList(query->targetList,
 							RelationGetDescr(event_relation),
-							true);
+							true,
+							event_relation->rd_rel->relkind !=
+								RELKIND_MATVIEW);
 
 		/*
 		 * ... there must not be another ON SELECT rule already ...
@@ -484,7 +486,7 @@ DefineQueryRewrite(char *rulename,
 						 errmsg("RETURNING lists are not supported in non-INSTEAD rules")));
 			checkRuleResultList(query->returningList,
 								RelationGetDescr(event_relation),
-								false);
+								false, false);
 		}
 	}
 
@@ -613,14 +615,19 @@ DefineQueryRewrite(char *rulename,
  *		Verify that targetList produces output compatible with a tupledesc
  *
  * The targetList might be either a SELECT targetlist, or a RETURNING list;
- * isSelect tells which.  (This is mostly used for choosing error messages,
- * but also we don't enforce column name matching for RETURNING.)
+ * isSelect tells which.  This is used for choosing error messages.
+ *
+ * A SELECT targetlist may optionally require that column names match.
  */
 static void
-checkRuleResultList(List *targetList, TupleDesc resultDesc, bool isSelect)
+checkRuleResultList(List *targetList, TupleDesc resultDesc, bool isSelect,
+					bool requireColumnNameMatch)
 {
 	ListCell   *tllist;
 	int			i;
+
+	/* Only a SELECT may require a column name match. */
+	Assert(isSelect || !requireColumnNameMatch);
 
 	i = 0;
 	foreach(tllist, targetList)
@@ -657,7 +664,7 @@ checkRuleResultList(List *targetList, TupleDesc resultDesc, bool isSelect)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("cannot convert relation containing dropped columns to view")));
 
-		if (isSelect && strcmp(tle->resname, attname) != 0)
+		if (requireColumnNameMatch && strcmp(tle->resname, attname) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 					 errmsg("SELECT rule's target entry %d has different column name from \"%s\"", i, attname)));
