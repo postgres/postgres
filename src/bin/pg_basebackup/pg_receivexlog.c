@@ -134,8 +134,6 @@ FindStreamingStart(uint32 *tli)
 	while ((dirent = readdir(dir)) != NULL)
 	{
 		uint32		tli;
-		unsigned int log,
-					seg;
 		XLogSegNo	segno;
 		bool		ispartial;
 
@@ -164,14 +162,7 @@ FindStreamingStart(uint32 *tli)
 		/*
 		 * Looks like an xlog file. Parse its position.
 		 */
-		if (sscanf(dirent->d_name, "%08X%08X%08X", &tli, &log, &seg) != 3)
-		{
-			fprintf(stderr,
-				 _("%s: could not parse transaction log file name \"%s\"\n"),
-					progname, dirent->d_name);
-			disconnect_and_exit(1);
-		}
-		segno = ((uint64) log) << 32 | seg;
+		XLogFromFileName(dirent->d_name, &tli, &segno);
 
 		/*
 		 * Check that the segment has the right size, if it's supposed to be
