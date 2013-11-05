@@ -297,9 +297,6 @@ planner()
   handle UNION/INTERSECT/EXCEPT, GROUP BY, HAVING, aggregates,
 	ORDER BY, DISTINCT, LIMIT
 --query_planner()
-   pull out constant quals, which can be used to gate execution of the
-	whole plan (if any are found, we make a top-level Result node
-	to do the gating)
    make list of base relations used in query
    split up the qual into restrictions (a=1) and joins (b=c)
    find qual clauses that enable merge and hash joins
@@ -318,11 +315,11 @@ planner()
       Back at standard_join_search(), apply set_cheapest() to extract the
       cheapest path for each newly constructed joinrel.
       Loop back if this wasn't the top join level.
-   Back at query_planner:
-    put back any constant quals by adding a Result node
  Back at grouping_planner:
+ convert Path tree returned by query_planner into a Plan tree
  do grouping(GROUP)
  do aggregates
+ do window functions
  make unique(DISTINCT)
  make sort(ORDER BY)
  make limit(LIMIT/OFFSET)
