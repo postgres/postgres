@@ -289,11 +289,6 @@ exec_command(const char *cmd,
 			success = false;
 		}
 
-		if (pset.dirname)
-			free(pset.dirname);
-		pset.dirname = pg_strdup(dir);
-		canonicalize_path(pset.dirname);
-
 		if (opt)
 			free(opt);
 	}
@@ -1102,8 +1097,7 @@ exec_command(const char *cmd,
 		/* This scrolls off the screen when using /dev/tty */
 		success = saveHistory(fname ? fname : DEVTTY, -1, false, false);
 		if (success && !pset.quiet && fname)
-			printf(gettext("Wrote history to file \"%s/%s\".\n"),
-				   pset.dirname ? pset.dirname : ".", fname);
+			printf(_("Wrote history to file \"%s\".\n"), fname);
 		if (!fname)
 			putchar('\n');
 		free(fname);
