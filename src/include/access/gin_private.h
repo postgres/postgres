@@ -533,10 +533,9 @@ extern void ginEntryFillRoot(GinBtree btree, Buffer root, Buffer lbuf, Buffer rb
 extern IndexTuple ginPageGetLinkItup(Buffer buf);
 
 /* gindatapage.c */
-extern uint32 ginMergeItemPointers(ItemPointerData *dst,
-					 ItemPointerData *a, uint32 na,
-					 ItemPointerData *b, uint32 nb);
-
+extern BlockNumber createPostingTree(Relation index,
+				  ItemPointerData *items, uint32 nitems,
+				  GinStatsData *buildStats);
 extern void GinDataPageAddItemPointer(Page page, ItemPointer data, OffsetNumber offset);
 extern void GinDataPageAddPostingItem(Page page, PostingItem *data, OffsetNumber offset);
 extern void GinPageDeletePostingItem(Page page, OffsetNumber offset);
@@ -726,6 +725,12 @@ extern void ginHeapTupleFastCollect(GinState *ginstate,
 						ItemPointer ht_ctid);
 extern void ginInsertCleanup(GinState *ginstate,
 				 bool vac_delay, IndexBulkDeleteResult *stats);
+
+/* ginpostinglist.c */
+extern uint32 ginMergeItemPointers(ItemPointerData *dst,
+					 ItemPointerData *a, uint32 na,
+					 ItemPointerData *b, uint32 nb);
+
 
 /*
  * Merging the results of several gin scans compares item pointers a lot,
