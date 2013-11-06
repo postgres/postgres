@@ -264,7 +264,7 @@ ginFindParents(GinBtree btree, GinBtreeStack *stack,
  * Insert value (stored in GinBtree) to tree described by stack
  *
  * During an index build, buildStats is non-null and the counters
- * it contains should be incremented as needed.
+ * it contains are incremented as needed.
  *
  * NB: the passed-in stack is freed, as though by freeGinBtreeStack.
  */
@@ -290,15 +290,15 @@ ginInsertValue(GinBtree btree, GinBtreeStack *stack, GinStatsData *buildStats)
 	{
 		XLogRecData *rdata;
 		BlockNumber savedRightLink;
+		bool		fit;
 
 		page = BufferGetPage(stack->buffer);
 		savedRightLink = GinPageGetOpaque(page)->rightlink;
 
-		if (btree->isEnoughSpace(btree, stack->buffer, stack->off))
+		START_CRIT_SECTION();
+		fit = btree->placeToPage(btree, stack->buffer, stack->off, &rdata);
+		if (fit)
 		{
-			START_CRIT_SECTION();
-			btree->placeToPage(btree, stack->buffer, stack->off, &rdata);
-
 			MarkBufferDirty(stack->buffer);
 
 			if (RelationNeedsWAL(btree->index))
@@ -318,12 +318,17 @@ ginInsertValue(GinBtree btree, GinBtreeStack *stack, GinStatsData *buildStats)
 		}
 		else
 		{
-			Buffer		rbuffer = GinNewBuffer(btree->index);
+			/* Didn't fit, have to split */
+			Buffer		rbuffer;
 			Page		newlpage;
 
+			END_CRIT_SECTION();
+
+			rbuffer = GinNewBuffer(btree->index);
+
 			/*
-			 * newlpage is a pointer to memory page, it doesn't associate with
-			 * buffer, stack->buffer should be untouched
+			 * newlpage is a pointer to memory page, it is not associated with
+			 * a buffer. stack->buffer is not touched yet.
 			 */
 			newlpage = btree->splitPage(btree, stack->buffer, rbuffer, stack->off, &rdata);
 

@@ -104,7 +104,7 @@ a few thousand entries can be much faster than retail insertion.  (The win
 comes mainly from not having to do multiple searches/insertions when the
 same key appears in multiple new heap tuples.)
 
-Key entries are nominally of the same IndexEntry format as used in other
+Key entries are nominally of the same IndexTuple format as used in other
 index types, but since a leaf key entry typically refers to multiple heap
 tuples, there are significant differences.  (See GinFormTuple, which works
 by building a "normal" index tuple and then modifying it.)  The points to

@@ -485,8 +485,7 @@ typedef struct GinBtreeData
 	/* insert methods */
 	OffsetNumber (*findChildPtr) (GinBtree, Page, BlockNumber, OffsetNumber);
 	BlockNumber (*getLeftMostPage) (GinBtree, Page);
-	bool		(*isEnoughSpace) (GinBtree, Buffer, OffsetNumber);
-	void		(*placeToPage) (GinBtree, Buffer, OffsetNumber, XLogRecData **);
+	bool		(*placeToPage) (GinBtree, Buffer, OffsetNumber, XLogRecData **);
 	Page		(*splitPage) (GinBtree, Buffer, Buffer, OffsetNumber, XLogRecData **);
 	void		(*fillRoot) (GinBtree, Buffer, Buffer, Buffer);
 

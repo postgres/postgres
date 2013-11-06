@@ -486,9 +486,12 @@ entryPreparePage(GinBtree btree, Page page, OffsetNumber off)
 
 /*
  * Place tuple on page and fills WAL record
+ *
+ * If the tuple doesn't fit, returns false without modifying the page.
  */
-static void
-entryPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off, XLogRecData **prdata)
+static bool
+entryPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off,
+				 XLogRecData **prdata)
 {
 	Page		page = BufferGetPage(buf);
 	OffsetNumber placed;
@@ -497,6 +500,10 @@ entryPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off, XLogRecData **prd
 	/* these must be static so they can be returned to caller */
 	static XLogRecData rdata[3];
 	static ginxlogInsert data;
+
+	/* quick exit if it doesn't fit */
+	if (!entryIsEnoughSpace(btree, buf, off))
+		return false;
 
 	*prdata = rdata;
 	data.updateBlkno = entryPreparePage(btree, page, off);
@@ -543,6 +550,8 @@ entryPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off, XLogRecData **prd
 	rdata[cnt].next = NULL;
 
 	btree->entry = NULL;
+
+	return true;
 }
 
 /*
@@ -724,7 +733,6 @@ ginPrepareEntryScan(GinBtree btree, OffsetNumber attnum,
 	btree->findItem = entryLocateLeafEntry;
 	btree->findChildPtr = entryFindChildPtr;
 	btree->getLeftMostPage = entryGetLeftMostPage;
-	btree->isEnoughSpace = entryIsEnoughSpace;
 	btree->placeToPage = entryPlaceToPage;
 	btree->splitPage = entrySplitPage;
 	btree->fillRoot = ginEntryFillRoot;

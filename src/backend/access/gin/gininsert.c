@@ -35,64 +35,6 @@ typedef struct
 	BuildAccumulator accum;
 } GinBuildState;
 
-/*
- * Creates new posting tree with one page, containing the given TIDs.
- * Returns the page number (which will be the root of this posting tree).
- *
- * items[] must be in sorted order with no duplicates.
- */
-static BlockNumber
-createPostingTree(Relation index, ItemPointerData *items, uint32 nitems)
-{
-	BlockNumber blkno;
-	Buffer		buffer = GinNewBuffer(index);
-	Page		page;
-
-	/* Assert that the items[] array will fit on one page */
-	Assert(nitems <= GinMaxLeafDataItems);
-
-	START_CRIT_SECTION();
-
-	GinInitBuffer(buffer, GIN_DATA | GIN_LEAF);
-	page = BufferGetPage(buffer);
-	blkno = BufferGetBlockNumber(buffer);
-
-	memcpy(GinDataPageGetData(page), items, sizeof(ItemPointerData) * nitems);
-	GinPageGetOpaque(page)->maxoff = nitems;
-
-	MarkBufferDirty(buffer);
-
-	if (RelationNeedsWAL(index))
-	{
-		XLogRecPtr	recptr;
-		XLogRecData rdata[2];
-		ginxlogCreatePostingTree data;
-
-		data.node = index->rd_node;
-		data.blkno = blkno;
-		data.nitem = nitems;
-
-		rdata[0].buffer = InvalidBuffer;
-		rdata[0].data = (char *) &data;
-		rdata[0].len = sizeof(ginxlogCreatePostingTree);
-		rdata[0].next = &rdata[1];
-
-		rdata[1].buffer = InvalidBuffer;
-		rdata[1].data = (char *) items;
-		rdata[1].len = sizeof(ItemPointerData) * nitems;
-		rdata[1].next = NULL;
-
-		recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_CREATE_PTREE, rdata);
-		PageSetLSN(page, recptr);
-	}
-
-	UnlockReleaseBuffer(buffer);
-
-	END_CRIT_SECTION();
-
-	return blkno;
-}
-
 
 /*
  * Adds array of item pointers to tuple's posting list, or
@@ -148,11 +90,8 @@ addItemPointersToLeafTuple(GinState *ginstate,
 		 */
 		postingRoot = createPostingTree(ginstate->index,
 										GinGetPosting(old),
-										GinGetNPosting(old));
-
-		/* During index build, count the newly-added data page */
-		if (buildStats)
-			buildStats->nDataPages++;
+										GinGetNPosting(old),
+										buildStats);
 
 		/* Now insert the TIDs-to-be-added into the posting tree */
 		gdi = ginPrepareScanPostingTree(ginstate->index, postingRoot, FALSE);
@@ -186,7 +125,7 @@ buildFreshLeafTuple(GinState *ginstate,
 {
 	IndexTuple	res;
 
-	/* try to build tuple with room for all the items */
+	/* try to build a posting list tuple with all the items */
 	res = GinFormTuple(ginstate, attnum, key, category,
 					   items, nitem, false);
 
@@ -202,32 +141,9 @@ buildFreshLeafTuple(GinState *ginstate,
 		res = GinFormTuple(ginstate, attnum, key, category, NULL, 0, true);
 
 		/*
-		 * Initialize posting tree with as many TIDs as will fit on the first
-		 * page.
+		 * Initialize a new posting tree with the TIDs.
 		 */
-		postingRoot = createPostingTree(ginstate->index,
-										items,
-										Min(nitem, GinMaxLeafDataItems));
-
-		/* During index build, count the newly-added data page */
-		if (buildStats)
-			buildStats->nDataPages++;
-
-		/* Add any remaining TIDs to the posting tree */
-		if (nitem > GinMaxLeafDataItems)
-		{
-			GinPostingTreeScan *gdi;
-
-			gdi = ginPrepareScanPostingTree(ginstate->index, postingRoot, FALSE);
-			gdi->btree.isBuild = (buildStats != NULL);
-
-			ginInsertItemPointers(gdi,
-								  items + GinMaxLeafDataItems,
-								  nitem - GinMaxLeafDataItems,
-								  buildStats);
-
-			pfree(gdi);
-		}
+		postingRoot = createPostingTree(ginstate->index, items, nitem);
 
 		/* And save the root link in the result tuple */
 		GinSetPostingTree(res, postingRoot);

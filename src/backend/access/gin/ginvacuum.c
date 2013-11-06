@@ -33,23 +33,26 @@ typedef struct
 
 
 /*
- * Cleans array of ItemPointer (removes dead pointers)
- * Results are always stored in *cleaned, which will be allocated
- * if it's needed. In case of *cleaned!=NULL caller is responsible to
- * have allocated enough space. *cleaned and items may point to the same
- * memory address.
+ * Vacuums a list of item pointers. The original size of the list is 'nitem',
+ * returns the number of items remaining afterwards.
+ *
+ * If *cleaned == NULL on entry, the original array is left unmodified; if
+ * any items are removed, a palloc'd copy of the result is stored in *cleaned.
+ * Otherwise *cleaned should point to the original array, in which case it's
+ * modified directly.
  */
-
-static uint32
-ginVacuumPostingList(GinVacuumState *gvs, ItemPointerData *items, uint32 nitem, ItemPointerData **cleaned)
+static int
+ginVacuumPostingList(GinVacuumState *gvs, ItemPointerData *items, int nitem,
+					 ItemPointerData **cleaned)
 {
-	uint32		i,
+	int			i,
 				j = 0;
+
+	Assert(*cleaned == NULL || *cleaned == items);
 
 	/*
 	 * just scan over ItemPointer array
 	 */
-
 	for (i = 0; i < nitem; i++)
 	{
 		if (gvs->callback(items + i, gvs->callback_state))
@@ -385,7 +388,8 @@ typedef struct DataPageDeleteStack
  * scans posting tree and deletes empty pages
  */
 static bool
-ginScanToDelete(GinVacuumState *gvs, BlockNumber blkno, bool isRoot, DataPageDeleteStack *parent, OffsetNumber myoff)
+ginScanToDelete(GinVacuumState *gvs, BlockNumber blkno, bool isRoot,
+				DataPageDeleteStack *parent, OffsetNumber myoff)
 {
 	DataPageDeleteStack *me;
 	Buffer		buffer;
@@ -431,15 +435,13 @@ ginScanToDelete(GinVacuumState *gvs, BlockNumber blkno, bool isRoot, DataPageDel
 
 	if (GinPageGetOpaque(page)->maxoff < FirstOffsetNumber)
 	{
+		/* the page is empty */
 		if (!(me->leftBlkno == InvalidBlockNumber && GinPageRightMost(page)))
 		{
 			/* we never delete right most branch */
 			Assert(!isRoot);
-			if (GinPageGetOpaque(page)->maxoff < FirstOffsetNumber)
-			{
-				ginDeletePage(gvs, blkno, me->leftBlkno, me->parent->blkno, myoff, me->parent->isRoot);
-				meDelete = TRUE;
-			}
+			ginDeletePage(gvs, blkno, me->leftBlkno, me->parent->blkno, myoff, me->parent->isRoot);
+			meDelete = TRUE;
 		}
 	}
 
@@ -517,11 +519,12 @@ ginVacuumEntryPage(GinVacuumState *gvs, Buffer buffer, BlockNumber *roots, uint3
 		else if (GinGetNPosting(itup) > 0)
 		{
 			/*
-			 * if we already create temporary page, we will make changes in
-			 * place
+			 * if we already created a temporary page, make changes in place
 			 */
 			ItemPointerData *cleaned = (tmppage == origpage) ? NULL : GinGetPosting(itup);
-			uint32		newN = ginVacuumPostingList(gvs, GinGetPosting(itup), GinGetNPosting(itup), &cleaned);
+			int			newN;
+
+			newN = ginVacuumPostingList(gvs, GinGetPosting(itup), GinGetNPosting(itup), &cleaned);
 
 			if (GinGetNPosting(itup) != newN)
 			{
@@ -530,15 +533,13 @@ ginVacuumEntryPage(GinVacuumState *gvs, Buffer buffer, BlockNumber *roots, uint3
 				GinNullCategory category;
 
 				/*
-				 * Some ItemPointers was deleted, so we should remake our
-				 * tuple
+				 * Some ItemPointers were deleted, recreate tuple.
 				 */
-
 				if (tmppage == origpage)
 				{
 					/*
-					 * On first difference we create temporary page in memory
-					 * and copies content in to it.
+					 * On first difference, create a temporary copy of the
+					 * page and copy the tuple's posting list to it.
 					 */
 					tmppage = PageGetTempPageCopy(origpage);
 
