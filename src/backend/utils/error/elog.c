@@ -173,6 +173,7 @@ static void send_message_to_server_log(ErrorData *edata);
 static void send_message_to_frontend(ErrorData *edata);
 static char *expand_fmt_string(const char *fmt, ErrorData *edata);
 static const char *useful_strerror(int errnum);
+static const char *get_errno_symbol(int errnum);
 static const char *error_severity(int elevel);
 static void append_with_tabs(StringInfo buf, const char *str);
 static bool is_log_level_output(int elevel, int log_min_level);
@@ -3206,7 +3207,7 @@ expand_fmt_string(const char *fmt, ErrorData *edata)
 static const char *
 useful_strerror(int errnum)
 {
-	/* this buffer is only used if errno has a bogus value */
+	/* this buffer is only used if strerror() and get_errno_symbol() fail */
 	static char errorstr_buf[48];
 	const char *str;
 
@@ -3218,10 +3219,16 @@ useful_strerror(int errnum)
 	str = strerror(errnum);
 
 	/*
-	 * Some strerror()s return an empty string for out-of-range errno. This is
-	 * ANSI C spec compliant, but not exactly useful.
+	 * Some strerror()s return an empty string for out-of-range errno.	This
+	 * is ANSI C spec compliant, but not exactly useful.  Also, we may get
+	 * back strings of question marks if libc cannot transcode the message to
+	 * the codeset specified by LC_CTYPE.  If we get nothing useful, first try
+	 * get_errno_symbol(), and if that fails, print the numeric errno.
 	 */
-	if (str == NULL || *str == '\0')
+	if (str == NULL || *str == '\0' || *str == '?')
+		str = get_errno_symbol(errnum);
+
+	if (str == NULL)
 	{
 		snprintf(errorstr_buf, sizeof(errorstr_buf),
 		/*------
@@ -3232,6 +3239,152 @@ useful_strerror(int errnum)
 	}
 
 	return str;
+}
+
+/*
+ * Returns a symbol (e.g. "ENOENT") for an errno code.
+ * Returns NULL if the code is unrecognized.
+ */
+static const char *
+get_errno_symbol(int errnum)
+{
+	switch (errnum)
+	{
+		case E2BIG:
+			return "E2BIG";
+		case EACCES:
+			return "EACCES";
+		case EADDRINUSE:
+			return "EADDRINUSE";
+		case EADDRNOTAVAIL:
+			return "EADDRNOTAVAIL";
+		case EAFNOSUPPORT:
+			return "EAFNOSUPPORT";
+#ifdef EAGAIN
+		case EAGAIN:
+			return "EAGAIN";
+#endif
+		case EALREADY:
+			return "EALREADY";
+		case EBADF:
+			return "EBADF";
+		case EBADMSG:
+			return "EBADMSG";
+		case EBUSY:
+			return "EBUSY";
+		case ECHILD:
+			return "ECHILD";
+		case ECONNABORTED:
+			return "ECONNABORTED";
+		case ECONNREFUSED:
+			return "ECONNREFUSED";
+#ifdef ECONNRESET
+		case ECONNRESET:
+			return "ECONNRESET";
+#endif
+		case EDEADLK:
+			return "EDEADLK";
+		case EDOM:
+			return "EDOM";
+		case EEXIST:
+			return "EEXIST";
+		case EFAULT:
+			return "EFAULT";
+		case EFBIG:
+			return "EFBIG";
+		case EHOSTUNREACH:
+			return "EHOSTUNREACH";
+		case EIDRM:
+			return "EIDRM";
+		case EINPROGRESS:
+			return "EINPROGRESS";
+		case EINTR:
+			return "EINTR";
+		case EINVAL:
+			return "EINVAL";
+		case EIO:
+			return "EIO";
+		case EISCONN:
+			return "EISCONN";
+		case EISDIR:
+			return "EISDIR";
+		case ELOOP:
+			return "ELOOP";
+		case EMFILE:
+			return "EMFILE";
+		case EMLINK:
+			return "EMLINK";
+		case EMSGSIZE:
+			return "EMSGSIZE";
+		case ENAMETOOLONG:
+			return "ENAMETOOLONG";
+		case ENFILE:
+			return "ENFILE";
+		case ENOBUFS:
+			return "ENOBUFS";
+		case ENODEV:
+			return "ENODEV";
+		case ENOENT:
+			return "ENOENT";
+		case ENOEXEC:
+			return "ENOEXEC";
+		case ENOMEM:
+			return "ENOMEM";
+		case ENOSPC:
+			return "ENOSPC";
+		case ENOSYS:
+			return "ENOSYS";
+		case ENOTCONN:
+			return "ENOTCONN";
+		case ENOTDIR:
+			return "ENOTDIR";
+#if defined(ENOTEMPTY) && (ENOTEMPTY != EEXIST) /* same code on AIX */
+		case ENOTEMPTY:
+			return "ENOTEMPTY";
+#endif
+		case ENOTSOCK:
+			return "ENOTSOCK";
+#ifdef ENOTSUP
+		case ENOTSUP:
+			return "ENOTSUP";
+#endif
+		case ENOTTY:
+			return "ENOTTY";
+		case ENXIO:
+			return "ENXIO";
+#if defined(EOPNOTSUPP) && (!defined(ENOTSUP) || (EOPNOTSUPP != ENOTSUP))
+		case EOPNOTSUPP:
+			return "EOPNOTSUPP";
+#endif
+		case EOVERFLOW:
+			return "EOVERFLOW";
+		case EPERM:
+			return "EPERM";
+		case EPIPE:
+			return "EPIPE";
+		case EPROTONOSUPPORT:
+			return "EPROTONOSUPPORT";
+		case ERANGE:
+			return "ERANGE";
+#ifdef EROFS
+		case EROFS:
+			return "EROFS";
+#endif
+		case ESRCH:
+			return "ESRCH";
+		case ETIMEDOUT:
+			return "ETIMEDOUT";
+		case ETXTBSY:
+			return "ETXTBSY";
+#if defined(EWOULDBLOCK) && (!defined(EAGAIN) || (EWOULDBLOCK != EAGAIN))
+		case EWOULDBLOCK:
+			return "EWOULDBLOCK";
+#endif
+		case EXDEV:
+			return "EXDEV";
+	}
+
+	return NULL;
 }
 
 
