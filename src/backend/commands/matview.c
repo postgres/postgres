@@ -239,8 +239,6 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 
 	owner = matviewRel->rd_rel->relowner;
 
-	heap_close(matviewRel, NoLock);
-
 	/*
 	 * Create the transient table that will receive the regenerated data.
 	 * Lock it against access by any other process until commit (by which time
@@ -254,6 +252,8 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	/* Generate the data, if wanted. */
 	if (!stmt->skipData)
 		refresh_matview_datafill(dest, dataQuery, queryString, owner);
+
+	heap_close(matviewRel, NoLock);
 
 	/* Make the matview match the newly generated data. */
 	if (concurrent)
