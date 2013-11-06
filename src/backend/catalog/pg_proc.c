@@ -284,6 +284,12 @@ ProcedureCreate(const char *procedureName,
 		}
 	}
 
+	/* Guard against a case the planner doesn't handle yet */
+	if (isWindowFunc && parameterDefaults != NIL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("window functions cannot have default arguments")));
+
 	/*
 	 * All seems OK; prepare the data to be inserted into pg_proc.
 	 */
