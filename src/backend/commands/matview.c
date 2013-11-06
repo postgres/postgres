@@ -208,8 +208,6 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 
 	tableSpace = matviewRel->rd_rel->reltablespace;
 
-	heap_close(matviewRel, NoLock);
-
 	/* Create the transient table that will receive the regenerated data. */
 	OIDNewHeap = make_new_heap(matviewOid, tableSpace);
 	dest = CreateTransientRelDestReceiver(OIDNewHeap);
@@ -217,6 +215,8 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 	/* Generate the data, if wanted. */
 	if (!stmt->skipData)
 		refresh_matview_datafill(dest, dataQuery, queryString);
+
+	heap_close(matviewRel, NoLock);
 
 	/*
 	 * Swap the physical files of the target and transient tables, then
