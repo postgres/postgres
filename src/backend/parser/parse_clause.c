@@ -1735,11 +1735,16 @@ transformWindowDefinitions(ParseState *pstate,
 		/*
 		 * Per spec, a windowdef that references a previous one copies the
 		 * previous partition clause (and mustn't specify its own).  It can
-		 * specify its own ordering clause. but only if the previous one had
+		 * specify its own ordering clause, but only if the previous one had
 		 * none.  It always specifies its own frame clause, and the previous
-		 * one must not have a frame clause.  (Yeah, it's bizarre that each of
+		 * one must not have a frame clause.  Yeah, it's bizarre that each of
 		 * these cases works differently, but SQL:2008 says so; see 7.11
-		 * <window clause> syntax rule 10 and general rule 1.)
+		 * <window clause> syntax rule 10 and general rule 1.  The frame
+		 * clause rule is especially bizarre because it makes "OVER foo"
+		 * different from "OVER (foo)", and requires the latter to throw an
+		 * error if foo has a nondefault frame clause.	Well, ours not to
+		 * reason why, but we do go out of our way to throw a useful error
+		 * message for such cases.
 		 */
 		if (refwc)
 		{
@@ -1778,11 +1783,27 @@ transformWindowDefinitions(ParseState *pstate,
 			wc->copiedOrder = false;
 		}
 		if (refwc && refwc->frameOptions != FRAMEOPTION_DEFAULTS)
+		{
+			/*
+			 * Use this message if this is a WINDOW clause, or if it's an OVER
+			 * clause that includes ORDER BY or framing clauses.  (We already
+			 * rejected PARTITION BY above, so no need to check that.)
+			 */
+			if (windef->name ||
+				orderClause || windef->frameOptions != FRAMEOPTION_DEFAULTS)
+				ereport(ERROR,
+						(errcode(ERRCODE_WINDOWING_ERROR),
+						 errmsg("cannot copy window \"%s\" because it has a frame clause",
+								windef->refname),
+						 parser_errposition(pstate, windef->location)));
+			/* Else this clause is just OVER (foo), so say this: */
 			ereport(ERROR,
 					(errcode(ERRCODE_WINDOWING_ERROR),
-					 errmsg("cannot override frame clause of window \"%s\"",
-							windef->refname),
+			errmsg("cannot copy window \"%s\" because it has a frame clause",
+				   windef->refname),
+					 errhint("Omit the parentheses in this OVER clause."),
 					 parser_errposition(pstate, windef->location)));
+		}
 		wc->frameOptions = windef->frameOptions;
 		/* Process frame offset expressions */
 		wc->startOffset = transformFrameOffset(pstate, wc->frameOptions,

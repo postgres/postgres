@@ -1730,10 +1730,10 @@ SELECT string_agg(a ORDER BY a, ',') FROM table;  -- incorrect
     The syntax of a window function call is one of the following:
 
 <synopsis>
-<replaceable>function_name</replaceable> (<optional><replaceable>expression</replaceable> <optional>, <replaceable>expression</replaceable> ... </optional></optional>) [ FILTER ( WHERE <replaceable>filter_clause</replaceable> ) ] OVER ( <replaceable class="parameter">window_definition</replaceable> )
 <replaceable>function_name</replaceable> (<optional><replaceable>expression</replaceable> <optional>, <replaceable>expression</replaceable> ... </optional></optional>) [ FILTER ( WHERE <replaceable>filter_clause</replaceable> ) ] OVER <replaceable>window_name</replaceable>
-<replaceable>function_name</replaceable> ( * ) [ FILTER ( WHERE <replaceable>filter_clause</replaceable> ) ] OVER ( <replaceable class="parameter">window_definition</replaceable> )
+<replaceable>function_name</replaceable> (<optional><replaceable>expression</replaceable> <optional>, <replaceable>expression</replaceable> ... </optional></optional>) [ FILTER ( WHERE <replaceable>filter_clause</replaceable> ) ] OVER ( <replaceable class="parameter">window_definition</replaceable> )
 <replaceable>function_name</replaceable> ( * ) [ FILTER ( WHERE <replaceable>filter_clause</replaceable> ) ] OVER <replaceable>window_name</replaceable>
+<replaceable>function_name</replaceable> ( * ) [ FILTER ( WHERE <replaceable>filter_clause</replaceable> ) ] OVER ( <replaceable class="parameter">window_definition</replaceable> )
 </synopsis>
     where <replaceable class="parameter">window_definition</replaceable>
     has the syntax
@@ -1768,15 +1768,14 @@ UNBOUNDED FOLLOWING
    <para>
     <replaceable>window_name</replaceable> is a reference to a named window
     specification defined in the query's <literal>WINDOW</literal> clause.
-    Named window specifications are usually referenced with just
-    <literal>OVER</> <replaceable>window_name</replaceable>, but it is
-    also possible to write a window name inside the parentheses and then
-    optionally supply an ordering clause and/or frame clause (the referenced
-    window must lack these clauses, if they are supplied here).
-    This latter syntax follows the same rules as modifying an existing
-    window name within the <literal>WINDOW</literal> clause; see the
-    <xref linkend="sql-select"> reference
-    page for details.
+    Alternatively, a full <replaceable>window_definition</replaceable> can
+    be given within parentheses, using the same syntax as for defining a
+    named window in the <literal>WINDOW</literal> clause; see the
+    <xref linkend="sql-select"> reference page for details.  It's worth
+    pointing out that <literal>OVER wname</> is not exactly equivalent to
+    <literal>OVER (wname)</>; the latter implies copying and modifying the
+    window definition, and will be rejected if the referenced window
+    specification includes a frame clause.
    </para>
 
    <para>
@@ -1854,11 +1853,18 @@ UNBOUNDED FOLLOWING
    </para>
 
    <para>
+    If <literal>FILTER</literal> is specified, then only the input
+    rows for which the <replaceable>filter_clause</replaceable>
+    evaluates to true are fed to the window function; other rows
+    are discarded.  Only aggregate window functions accept
+    a <literal>FILTER</literal> clause.
+   </para>
+
+   <para>
     The built-in window functions are described in <xref
     linkend="functions-window-table">.  Other window functions can be added by
     the user.  Also, any built-in or user-defined aggregate function can be
-    used as a window function.  Only aggregate window functions accept
-    a <literal>FILTER</literal> clause.
+    used as a window function.
    </para>
 
    <para>
