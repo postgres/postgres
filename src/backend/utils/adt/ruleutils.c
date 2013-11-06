@@ -7461,6 +7461,7 @@ get_windowfunc_expr(WindowFunc *wfunc, deparse_context *context)
 	StringInfo	buf = context->buf;
 	Oid			argtypes[FUNC_MAX_ARGS];
 	int			nargs;
+	List	   *argnames;
 	ListCell   *l;
 
 	if (list_length(wfunc->args) > FUNC_MAX_ARGS)
@@ -7468,18 +7469,20 @@ get_windowfunc_expr(WindowFunc *wfunc, deparse_context *context)
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
 				 errmsg("too many arguments")));
 	nargs = 0;
+	argnames = NIL;
 	foreach(l, wfunc->args)
 	{
 		Node	   *arg = (Node *) lfirst(l);
 
-		Assert(!IsA(arg, NamedArgExpr));
+		if (IsA(arg, NamedArgExpr))
+			argnames = lappend(argnames, ((NamedArgExpr *) arg)->name);
 		argtypes[nargs] = exprType(arg);
 		nargs++;
 	}
 
 	appendStringInfo(buf, "%s(",
 					 generate_function_name(wfunc->winfnoid, nargs,
-											NIL, argtypes,
+											argnames, argtypes,
 											false, NULL));
 	/* winstar can be set only in zero-argument aggregates */
 	if (wfunc->winstar)

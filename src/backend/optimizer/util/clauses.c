@@ -2251,6 +2251,56 @@ eval_const_expressions_mutator(Node *node,
 				 */
 				return (Node *) copyObject(param);
 			}
+		case T_WindowFunc:
+			{
+				WindowFunc *expr = (WindowFunc *) node;
+				Oid			funcid = expr->winfnoid;
+				List	   *args;
+				Expr	   *aggfilter;
+				HeapTuple	func_tuple;
+				WindowFunc *newexpr;
+
+				/*
+				 * We can't really simplify a WindowFunc node, but we mustn't
+				 * just fall through to the default processing, because we
+				 * have to apply expand_function_arguments to its argument
+				 * list.  That takes care of inserting default arguments and
+				 * expanding named-argument notation.
+				 */
+				func_tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+				if (!HeapTupleIsValid(func_tuple))
+					elog(ERROR, "cache lookup failed for function %u", funcid);
+
+				args = expand_function_arguments(expr->args, expr->wintype,
+												 func_tuple);
+
+				ReleaseSysCache(func_tuple);
+
+				/* Now, recursively simplify the args (which are a List) */
+				args = (List *)
+					expression_tree_mutator((Node *) args,
+											eval_const_expressions_mutator,
+											(void *) context);
+				/* ... and the filter expression, which isn't */
+				aggfilter = (Expr *)
+					eval_const_expressions_mutator((Node *) expr->aggfilter,
+												   context);
+
+				/* And build the replacement WindowFunc node */
+				newexpr = makeNode(WindowFunc);
+				newexpr->winfnoid = expr->winfnoid;
+				newexpr->wintype = expr->wintype;
+				newexpr->wincollid = expr->wincollid;
+				newexpr->inputcollid = expr->inputcollid;
+				newexpr->args = args;
+				newexpr->aggfilter = aggfilter;
+				newexpr->winref = expr->winref;
+				newexpr->winstar = expr->winstar;
+				newexpr->winagg = expr->winagg;
+				newexpr->location = expr->location;
+
+				return (Node *) newexpr;
+			}
 		case T_FuncExpr:
 			{
 				FuncExpr   *expr = (FuncExpr *) node;

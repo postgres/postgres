@@ -537,17 +537,6 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					 errmsg("window functions cannot return sets"),
 					 parser_errposition(pstate, location)));
 
-		/*
-		 * We might want to support this later, but for now reject it because
-		 * the planner and executor wouldn't cope with NamedArgExprs in a
-		 * WindowFunc node.
-		 */
-		if (argnames != NIL)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("window functions cannot use named arguments"),
-					 parser_errposition(pstate, location)));
-
 		/* parse_agg.c does additional window-func-specific processing */
 		transformWindowFuncCall(pstate, wfunc, over);
 

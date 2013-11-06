@@ -2533,8 +2533,9 @@ SELECT concat_lower_or_upper('Hello', 'World', uppercase := true);
 
    <note>
     <para>
-     Named and mixed call notations can currently be used only with regular
-     functions, not with aggregate functions or window functions.
+     Named and mixed call notations currently cannot be used when calling an
+     aggregate function (but they do work when an aggregate function is used
+     as a window function).
     </para>
    </note>
   </sect2>

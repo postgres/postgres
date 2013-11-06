@@ -1035,3 +1035,38 @@ FROM empsalary GROUP BY depname;
 
 -- cleanup
 DROP TABLE empsalary;
+-- test user-defined window function with named args and default args
+CREATE FUNCTION nth_value_def(val anyelement, n integer = 1) RETURNS anyelement
+  LANGUAGE internal WINDOW IMMUTABLE STRICT AS 'window_nth_value';
+SELECT nth_value_def(n := 2, val := ten) OVER (PARTITION BY four), ten, four
+  FROM (SELECT * FROM tenk1 WHERE unique2 < 10 ORDER BY four, ten) s;
+ nth_value_def | ten | four 
+---------------+-----+------
+             0 |   0 |    0
+             0 |   0 |    0
+             0 |   4 |    0
+             1 |   1 |    1
+             1 |   1 |    1
+             1 |   7 |    1
+             1 |   9 |    1
+               |   0 |    2
+             3 |   1 |    3
+             3 |   3 |    3
+(10 rows)
+
+SELECT nth_value_def(ten) OVER (PARTITION BY four), ten, four
+  FROM (SELECT * FROM tenk1 WHERE unique2 < 10 ORDER BY four, ten) s;
+ nth_value_def | ten | four 
+---------------+-----+------
+             0 |   0 |    0
+             0 |   0 |    0
+             0 |   4 |    0
+             1 |   1 |    1
+             1 |   1 |    1
+             1 |   7 |    1
+             1 |   9 |    1
+             0 |   0 |    2
+             1 |   1 |    3
+             1 |   3 |    3
+(10 rows)
+
