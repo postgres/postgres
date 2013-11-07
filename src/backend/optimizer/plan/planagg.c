@@ -39,6 +39,7 @@
 #include "optimizer/planmain.h"
 #include "optimizer/planner.h"
 #include "optimizer/subselect.h"
+#include "optimizer/tlist.h"
 #include "parser/parsetree.h"
 #include "parser/parse_clause.h"
 #include "utils/lsyscache.h"
@@ -545,7 +546,27 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *mminfo)
 	 */
 	plan = create_plan(subroot, mminfo->path);
 
-	plan->targetlist = subparse->targetList;
+	/*
+	 * If the top-level plan node is one that cannot do expression evaluation
+	 * and its existing target list isn't already what we need, we must insert
+	 * a Result node to project the desired tlist.
+	 */
+	if (!is_projection_capable_plan(plan) &&
+		!tlist_same_exprs(subparse->targetList, plan->targetlist))
+	{
+		plan = (Plan *) make_result(subroot,
+									subparse->targetList,
+									NULL,
+									plan);
+	}
+	else
+	{
+		/*
+		 * Otherwise, just replace the subplan's flat tlist with the desired
+		 * tlist.
+		 */
+		plan->targetlist = subparse->targetList;
+	}
 
 	plan = (Plan *) make_limit(plan,
 							   subparse->limitOffset,
