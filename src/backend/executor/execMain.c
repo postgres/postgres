@@ -83,6 +83,7 @@ static void ExecutePlan(EState *estate, PlanState *planstate,
 static bool ExecCheckRTEPerms(RangeTblEntry *rte);
 static void ExecCheckXactReadOnly(PlannedStmt *plannedstmt);
 static char *ExecBuildSlotValueDescription(TupleTableSlot *slot,
+							  TupleDesc tupdesc,
 							  int maxfieldlen);
 static void EvalPlanQualStart(EPQState *epqstate, EState *parentestate,
 				  Plan *planTree);
@@ -1586,25 +1587,28 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 				TupleTableSlot *slot, EState *estate)
 {
 	Relation	rel = resultRelInfo->ri_RelationDesc;
-	TupleConstr *constr = rel->rd_att->constr;
+	TupleDesc	tupdesc = RelationGetDescr(rel);
+	TupleConstr *constr = tupdesc->constr;
 
 	Assert(constr);
 
 	if (constr->has_not_null)
 	{
-		int			natts = rel->rd_att->natts;
+		int			natts = tupdesc->natts;
 		int			attrChk;
 
 		for (attrChk = 1; attrChk <= natts; attrChk++)
 		{
-			if (rel->rd_att->attrs[attrChk - 1]->attnotnull &&
+			if (tupdesc->attrs[attrChk - 1]->attnotnull &&
 				slot_attisnull(slot, attrChk))
 				ereport(ERROR,
 						(errcode(ERRCODE_NOT_NULL_VIOLATION),
 						 errmsg("null value in column \"%s\" violates not-null constraint",
-						  NameStr(rel->rd_att->attrs[attrChk - 1]->attname)),
+							  NameStr(tupdesc->attrs[attrChk - 1]->attname)),
 						 errdetail("Failing row contains %s.",
-								   ExecBuildSlotValueDescription(slot, 64)),
+								   ExecBuildSlotValueDescription(slot,
+																 tupdesc,
+																 64)),
 						 errtablecol(rel, attrChk)));
 		}
 	}
@@ -1619,7 +1623,9 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 					 errmsg("new row for relation \"%s\" violates check constraint \"%s\"",
 							RelationGetRelationName(rel), failed),
 					 errdetail("Failing row contains %s.",
-							   ExecBuildSlotValueDescription(slot, 64)),
+							   ExecBuildSlotValueDescription(slot,
+															 tupdesc,
+															 64)),
 					 errtableconstraint(rel, failed)));
 	}
 }
@@ -1663,7 +1669,9 @@ ExecWithCheckOptions(ResultRelInfo *resultRelInfo,
 					 errmsg("new row violates WITH CHECK OPTION for view \"%s\"",
 							wco->viewname),
 					 errdetail("Failing row contains %s.",
-							   ExecBuildSlotValueDescription(slot, 64))));
+							   ExecBuildSlotValueDescription(slot,
+							RelationGetDescr(resultRelInfo->ri_RelationDesc),
+															 64))));
 	}
 }
 
@@ -1671,15 +1679,22 @@ ExecWithCheckOptions(ResultRelInfo *resultRelInfo,
  * ExecBuildSlotValueDescription -- construct a string representing a tuple
  *
  * This is intentionally very similar to BuildIndexValueDescription, but
- * unlike that function, we truncate long field values.  That seems necessary
- * here since heap field values could be very long, whereas index entries
- * typically aren't so wide.
+ * unlike that function, we truncate long field values (to at most maxfieldlen
+ * bytes).	That seems necessary here since heap field values could be very
+ * long, whereas index entries typically aren't so wide.
+ *
+ * Also, unlike the case with index entries, we need to be prepared to ignore
+ * dropped columns.  We used to use the slot's tuple descriptor to decode the
+ * data, but the slot's descriptor doesn't identify dropped columns, so we
+ * now need to be passed the relation's descriptor.
  */
 static char *
-ExecBuildSlotValueDescription(TupleTableSlot *slot, int maxfieldlen)
+ExecBuildSlotValueDescription(TupleTableSlot *slot,
+							  TupleDesc tupdesc,
+							  int maxfieldlen)
 {
 	StringInfoData buf;
-	TupleDesc	tupdesc = slot->tts_tupleDescriptor;
+	bool		write_comma = false;
 	int			i;
 
 	/* Make sure the tuple is fully deconstructed */
@@ -1694,6 +1709,10 @@ ExecBuildSlotValueDescription(TupleTableSlot *slot, int maxfieldlen)
 		char	   *val;
 		int			vallen;
 
+		/* ignore dropped columns */
+		if (tupdesc->attrs[i]->attisdropped)
+			continue;
+
 		if (slot->tts_isnull[i])
 			val = "null";
 		else
@@ -1706,8 +1725,10 @@ ExecBuildSlotValueDescription(TupleTableSlot *slot, int maxfieldlen)
 			val = OidOutputFunctionCall(foutoid, slot->tts_values[i]);
 		}
 
-		if (i > 0)
+		if (write_comma)
 			appendStringInfoString(&buf, ", ");
+		else
+			write_comma = true;
 
 		/* truncate if needed */
 		vallen = strlen(val);
