@@ -382,11 +382,15 @@ insert into matest3 (name) values ('Test 6');
 set enable_indexscan = off;  -- force use of seqscan/sort, so no merge
 explain (verbose, costs off) select * from matest0 order by 1-id;
 select * from matest0 order by 1-id;
+explain (verbose, costs off) select min(1-id) from matest0;
+select min(1-id) from matest0;
 reset enable_indexscan;
 
 set enable_seqscan = off;  -- plan with fewest seqscans should be merge
 explain (verbose, costs off) select * from matest0 order by 1-id;
 select * from matest0 order by 1-id;
+explain (verbose, costs off) select min(1-id) from matest0;
+select min(1-id) from matest0;
 reset enable_seqscan;
 
 drop table matest0 cascade;
