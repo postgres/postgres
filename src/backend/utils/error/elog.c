@@ -3254,28 +3254,38 @@ get_errno_symbol(int errnum)
 			return "E2BIG";
 		case EACCES:
 			return "EACCES";
+#ifdef EADDRINUSE
 		case EADDRINUSE:
 			return "EADDRINUSE";
+#endif
+#ifdef EADDRNOTAVAIL
 		case EADDRNOTAVAIL:
 			return "EADDRNOTAVAIL";
+#endif
 		case EAFNOSUPPORT:
 			return "EAFNOSUPPORT";
 #ifdef EAGAIN
 		case EAGAIN:
 			return "EAGAIN";
 #endif
+#ifdef EALREADY
 		case EALREADY:
 			return "EALREADY";
+#endif
 		case EBADF:
 			return "EBADF";
+#ifdef EBADMSG
 		case EBADMSG:
 			return "EBADMSG";
+#endif
 		case EBUSY:
 			return "EBUSY";
 		case ECHILD:
 			return "ECHILD";
+#ifdef ECONNABORTED
 		case ECONNABORTED:
 			return "ECONNABORTED";
+#endif
 		case ECONNREFUSED:
 			return "ECONNREFUSED";
 #ifdef ECONNRESET
@@ -3292,8 +3302,10 @@ get_errno_symbol(int errnum)
 			return "EFAULT";
 		case EFBIG:
 			return "EFBIG";
+#ifdef EHOSTUNREACH
 		case EHOSTUNREACH:
 			return "EHOSTUNREACH";
+#endif
 		case EIDRM:
 			return "EIDRM";
 		case EINPROGRESS:
@@ -3304,12 +3316,16 @@ get_errno_symbol(int errnum)
 			return "EINVAL";
 		case EIO:
 			return "EIO";
+#ifdef EISCONN
 		case EISCONN:
 			return "EISCONN";
+#endif
 		case EISDIR:
 			return "EISDIR";
+#ifdef ELOOP
 		case ELOOP:
 			return "ELOOP";
+#endif
 		case EMFILE:
 			return "EMFILE";
 		case EMLINK:
@@ -3334,16 +3350,20 @@ get_errno_symbol(int errnum)
 			return "ENOSPC";
 		case ENOSYS:
 			return "ENOSYS";
+#ifdef ENOTCONN
 		case ENOTCONN:
 			return "ENOTCONN";
+#endif
 		case ENOTDIR:
 			return "ENOTDIR";
 #if defined(ENOTEMPTY) && (ENOTEMPTY != EEXIST) /* same code on AIX */
 		case ENOTEMPTY:
 			return "ENOTEMPTY";
 #endif
+#ifdef ENOTSOCK
 		case ENOTSOCK:
 			return "ENOTSOCK";
+#endif
 #ifdef ENOTSUP
 		case ENOTSUP:
 			return "ENOTSUP";
@@ -3356,8 +3376,10 @@ get_errno_symbol(int errnum)
 		case EOPNOTSUPP:
 			return "EOPNOTSUPP";
 #endif
+#ifdef EOVERFLOW
 		case EOVERFLOW:
 			return "EOVERFLOW";
+#endif
 		case EPERM:
 			return "EPERM";
 		case EPIPE:
@@ -3372,10 +3394,14 @@ get_errno_symbol(int errnum)
 #endif
 		case ESRCH:
 			return "ESRCH";
+#ifdef ETIMEDOUT
 		case ETIMEDOUT:
 			return "ETIMEDOUT";
+#endif
+#ifdef ETXTBSY
 		case ETXTBSY:
 			return "ETXTBSY";
+#endif
 #if defined(EWOULDBLOCK) && (!defined(EAGAIN) || (EWOULDBLOCK != EAGAIN))
 		case EWOULDBLOCK:
 			return "EWOULDBLOCK";
