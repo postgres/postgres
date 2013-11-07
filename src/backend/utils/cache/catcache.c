@@ -566,8 +566,9 @@ AtEOXact_CatCache(bool isCommit)
 			/* Check CatCLists */
 			dlist_foreach(iter, &ccp->cc_lists)
 			{
-				CatCList   *cl = dlist_container(CatCList, cache_elem, iter.cur);
+				CatCList   *cl;
 
+				cl = dlist_container(CatCList, cache_elem, iter.cur);
 				Assert(cl->cl_magic == CL_MAGIC);
 				Assert(cl->refcount == 0);
 				Assert(!cl->dead);
@@ -580,8 +581,9 @@ AtEOXact_CatCache(bool isCommit)
 
 				dlist_foreach(iter, bucket)
 				{
-					CatCTup    *ct = dlist_container(CatCTup, cache_elem, iter.cur);
+					CatCTup    *ct;
 
+					ct = dlist_container(CatCTup, cache_elem, iter.cur);
 					Assert(ct->ct_magic == CT_MAGIC);
 					Assert(ct->refcount == 0);
 					Assert(!ct->dead);
