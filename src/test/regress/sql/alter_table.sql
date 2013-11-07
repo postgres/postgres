@@ -874,6 +874,15 @@ select * from atacc1;
 
 drop table atacc1;
 
+-- test constraint error reporting in presence of dropped columns
+create table atacc1 (id serial primary key, value int check (value < 10));
+insert into atacc1(value) values (100);
+alter table atacc1 drop column value;
+alter table atacc1 add column value int check (value < 10);
+insert into atacc1(value) values (100);
+insert into atacc1(id, value) values (null, 0);
+drop table atacc1;
+
 -- test inheritance
 create table parent (a int, b int, c int);
 insert into parent values (1, 2, 3);
