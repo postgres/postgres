@@ -1207,6 +1207,28 @@ select * from matest0 order by 1-id;
   1 | Test 1
 (6 rows)
 
+explain (verbose, costs off) select min(1-id) from matest0;
+               QUERY PLAN               
+----------------------------------------
+ Aggregate
+   Output: min((1 - matest0.id))
+   ->  Append
+         ->  Seq Scan on public.matest0
+               Output: matest0.id
+         ->  Seq Scan on public.matest1
+               Output: matest1.id
+         ->  Seq Scan on public.matest2
+               Output: matest2.id
+         ->  Seq Scan on public.matest3
+               Output: matest3.id
+(11 rows)
+
+select min(1-id) from matest0;
+ min 
+-----
+  -5
+(1 row)
+
 reset enable_indexscan;
 set enable_seqscan = off;  -- plan with fewest seqscans should be merge
 explain (verbose, costs off) select * from matest0 order by 1-id;
@@ -1237,6 +1259,42 @@ select * from matest0 order by 1-id;
   2 | Test 2
   1 | Test 1
 (6 rows)
+
+explain (verbose, costs off) select min(1-id) from matest0;
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
+ Result
+   Output: $0
+   InitPlan 1 (returns $0)
+     ->  Limit
+           Output: ((1 - matest0.id))
+           ->  Result
+                 Output: ((1 - matest0.id))
+                 ->  Merge Append
+                       Sort Key: ((1 - matest0.id))
+                       ->  Index Scan using matest0i on public.matest0
+                             Output: matest0.id, (1 - matest0.id)
+                             Index Cond: ((1 - matest0.id) IS NOT NULL)
+                       ->  Index Scan using matest1i on public.matest1
+                             Output: matest1.id, (1 - matest1.id)
+                             Index Cond: ((1 - matest1.id) IS NOT NULL)
+                       ->  Sort
+                             Output: matest2.id, ((1 - matest2.id))
+                             Sort Key: ((1 - matest2.id))
+                             ->  Bitmap Heap Scan on public.matest2
+                                   Output: matest2.id, (1 - matest2.id)
+                                   Filter: ((1 - matest2.id) IS NOT NULL)
+                                   ->  Bitmap Index Scan on matest2_pkey
+                       ->  Index Scan using matest3i on public.matest3
+                             Output: matest3.id, (1 - matest3.id)
+                             Index Cond: ((1 - matest3.id) IS NOT NULL)
+(25 rows)
+
+select min(1-id) from matest0;
+ min 
+-----
+  -5
+(1 row)
 
 reset enable_seqscan;
 drop table matest0 cascade;
