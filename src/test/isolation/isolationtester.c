@@ -85,13 +85,16 @@ main(int argc, char **argv)
 	PQExpBufferData wait_query;
 	int			opt;
 
-	while ((opt = getopt(argc, argv, "n")) != -1)
+	while ((opt = getopt(argc, argv, "nV")) != -1)
 	{
 		switch (opt)
 		{
 			case 'n':
 				dry_run = true;
 				break;
+			case 'V':
+				puts("isolationtester (PostgreSQL) " PG_VERSION);
+				exit(0);
 			default:
 				fprintf(stderr, "Usage: isolationtester [-n] [CONNINFO]\n");
 				return EXIT_FAILURE;

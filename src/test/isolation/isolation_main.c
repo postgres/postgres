@@ -12,6 +12,9 @@
 
 #include "pg_regress.h"
 
+char isolation_exec[MAXPGPATH];
+#define PG_ISOLATION_VERSIONSTR "isolationtester (PostgreSQL) " PG_VERSION "\n"
+
 /*
  * start an isolation tester process for specified file (including
  * redirection), and return process ID
@@ -58,7 +61,8 @@ isolation_start_test(const char *testname,
 						   "%s ", launcher);
 
 	snprintf(psql_cmd + offset, sizeof(psql_cmd) - offset,
-			 SYSTEMQUOTE "\"./isolationtester\" \"dbname=%s\" < \"%s\" > \"%s\" 2>&1" SYSTEMQUOTE,
+			 SYSTEMQUOTE "\"%s\" \"dbname=%s\" < \"%s\" > \"%s\" 2>&1" SYSTEMQUOTE,
+			 isolation_exec,
 			 dblist->str,
 			 infile,
 			 outfile);
@@ -76,8 +80,16 @@ isolation_start_test(const char *testname,
 }
 
 static void
-isolation_init(void)
+isolation_init(int argc, char **argv)
 {
+	/* look for isolationtester binary */
+	if (find_other_exec(argv[0], "isolationtester",
+						PG_ISOLATION_VERSIONSTR, isolation_exec) != 0)
+	{
+		fprintf(stderr, _("could not find proper isolationtester binary\n"));
+		exit(2);
+	}
+
 	/* set default regression database name */
 	add_stringlist_item(&dblist, "isolationtest");
 }

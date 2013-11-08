@@ -84,7 +84,7 @@ psql_start_test(const char *testname,
 }
 
 static void
-psql_init(void)
+psql_init(int argc, char **argv)
 {
 	/* set default regression database name */
 	add_stringlist_item(&dblist, "regression");
