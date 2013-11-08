@@ -833,8 +833,8 @@ contain_subplans_walker(Node *node, void *context)
  * mistakenly think that something like "WHERE random() < 0.5" can be treated
  * as a constant qualification.
  *
- * XXX we do not examine sub-selects to see if they contain uses of
- * mutable functions.  It's not real clear if that is correct or not...
+ * We will recursively look into Query nodes (i.e., SubLink sub-selects)
+ * but not into SubPlans.  See comments for contain_volatile_functions().
  */
 bool
 contain_mutable_functions(Node *clause)
@@ -931,6 +931,13 @@ contain_mutable_functions_walker(Node *node, void *context)
 		}
 		/* else fall through to check args */
 	}
+	else if (IsA(node, Query))
+	{
+		/* Recurse into subselects */
+		return query_tree_walker((Query *) node,
+								 contain_mutable_functions_walker,
+								 context, 0);
+	}
 	return expression_tree_walker(node, contain_mutable_functions_walker,
 								  context);
 }
@@ -945,11 +952,18 @@ contain_mutable_functions_walker(Node *node, void *context)
  *	  Recursively search for volatile functions within a clause.
  *
  * Returns true if any volatile function (or operator implemented by a
- * volatile function) is found. This test prevents invalid conversions
- * of volatile expressions into indexscan quals.
+ * volatile function) is found. This test prevents, for example,
+ * invalid conversions of volatile expressions into indexscan quals.
  *
- * XXX we do not examine sub-selects to see if they contain uses of
- * volatile functions.	It's not real clear if that is correct or not...
+ * We will recursively look into Query nodes (i.e., SubLink sub-selects)
+ * but not into SubPlans.  This is a bit odd, but intentional.	If we are
+ * looking at a SubLink, we are probably deciding whether a query tree
+ * transformation is safe, and a contained sub-select should affect that;
+ * for example, duplicating a sub-select containing a volatile function
+ * would be bad.  However, once we've got to the stage of having SubPlans,
+ * subsequent planning need not consider volatility within those, since
+ * the executor won't change its evaluation rules for a SubPlan based on
+ * volatility.
  */
 bool
 contain_volatile_functions(Node *clause)
@@ -1046,6 +1060,13 @@ contain_volatile_functions_walker(Node *node, void *context)
 				return true;
 		}
 		/* else fall through to check args */
+	}
+	else if (IsA(node, Query))
+	{
+		/* Recurse into subselects */
+		return query_tree_walker((Query *) node,
+								 contain_volatile_functions_walker,
+								 context, 0);
 	}
 	return expression_tree_walker(node, contain_volatile_functions_walker,
 								  context);
