@@ -2506,18 +2506,22 @@ BeginCopyFrom(Relation rel,
 		{
 			/* attribute is NOT to be copied from input */
 			/* use default value if one exists */
-			Node	   *defexpr = build_column_default(cstate->rel, attnum);
+			Expr	   *defexpr = (Expr *) build_column_default(cstate->rel,
+																attnum);
 
 			if (defexpr != NULL)
 			{
-				/* Initialize expressions in copycontext. */
-				defexprs[num_defaults] = ExecInitExpr(
-								 expression_planner((Expr *) defexpr), NULL);
+				/* Run the expression through planner */
+				defexpr = expression_planner(defexpr);
+
+				/* Initialize executable expression in copycontext */
+				defexprs[num_defaults] = ExecInitExpr(defexpr, NULL);
 				defmap[num_defaults] = attnum - 1;
 				num_defaults++;
 
+				/* Check to see if we have any volatile expressions */
 				if (!volatile_defexprs)
-					volatile_defexprs = contain_volatile_functions(defexpr);
+					volatile_defexprs = contain_volatile_functions((Node *) defexpr);
 			}
 		}
 	}
