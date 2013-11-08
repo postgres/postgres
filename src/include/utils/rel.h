@@ -111,6 +111,13 @@ typedef struct RelationData
 	TriggerDesc *trigdesc;		/* Trigger info, or NULL if rel has none */
 
 	/*
+	 * The index chosen as the relation's replication identity or
+	 * InvalidOid. Only set correctly if RelationGetIndexList has been
+	 * called/rd_indexvalid > 0.
+	 */
+	Oid rd_replidindex;
+
+	/*
 	 * rd_options is set whenever rd_rel is loaded into the relcache entry.
 	 * Note that you can NOT look into rd_rel for this data.  NULL means "use
 	 * defaults".

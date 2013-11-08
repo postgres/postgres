@@ -1863,6 +1863,19 @@
      </row>
 
      <row>
+      <entry><structfield>relreplident</structfield></entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>
+       Columns used to form <quote>replica identity</> for rows:
+       <literal>d</> = default (primary key, if any),
+       <literal>n</> = nothing,
+       <literal>f</> = all columns
+       <literal>i</> = index with indisreplident set, or default
+      </entry>
+     </row>
+
+     <row>
       <entry><structfield>relfrozenxid</structfield></entry>
       <entry><type>xid</type></entry>
       <entry></entry>
@@ -3654,6 +3667,17 @@
       <entry>
        If false, the index is in process of being dropped, and should be
        ignored for all purposes (including HOT-safety decisions)
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>indisreplident</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       If true this index has been chosen as <quote>replica identity</>
+       using <command>ALTER TABLE ... REPLICA IDENTITY USING INDEX
+       ...</>
       </entry>
      </row>
 

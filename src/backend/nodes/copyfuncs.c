@@ -3270,6 +3270,17 @@ _copyRefreshMatViewStmt(const RefreshMatViewStmt *from)
 	return newnode;
 }
 
+static ReplicaIdentityStmt *
+_copyReplicaIdentityStmt(const ReplicaIdentityStmt *from)
+{
+	ReplicaIdentityStmt *newnode = makeNode(ReplicaIdentityStmt);
+
+	COPY_SCALAR_FIELD(identity_type);
+	COPY_STRING_FIELD(name);
+
+	return newnode;
+}
+
 static CreateSeqStmt *
 _copyCreateSeqStmt(const CreateSeqStmt *from)
 {
@@ -4342,6 +4353,9 @@ copyObject(const void *from)
 			break;
 		case T_RefreshMatViewStmt:
 			retval = _copyRefreshMatViewStmt(from);
+			break;
+		case T_ReplicaIdentityStmt:
+			retval = _copyReplicaIdentityStmt(from);
 			break;
 		case T_CreateSeqStmt:
 			retval = _copyCreateSeqStmt(from);

@@ -4221,6 +4221,7 @@ getTables(Archive *fout, int *numTables)
 	int			i_toastfrozenxid;
 	int			i_relpersistence;
 	int			i_relispopulated;
+	int			i_relreplident;
 	int			i_owning_tab;
 	int			i_owning_col;
 	int			i_reltablespace;
@@ -4253,7 +4254,7 @@ getTables(Archive *fout, int *numTables)
 	 * we cannot correctly identify inherited columns, owned sequences, etc.
 	 */
 
-	if (fout->remoteVersion >= 90300)
+	if (fout->remoteVersion >= 90400)
 	{
 		/*
 		 * Left join to pick up dependency info linking sequences to their
@@ -4268,7 +4269,46 @@ getTables(Archive *fout, int *numTables)
 						  "c.relfrozenxid, tc.oid AS toid, "
 						  "tc.relfrozenxid AS tfrozenxid, "
 						  "c.relpersistence, c.relispopulated, "
-						  "c.relpages, "
+						  "c.relreplident, c.relpages, "
+						  "CASE WHEN c.reloftype <> 0 THEN c.reloftype::pg_catalog.regtype ELSE NULL END AS reloftype, "
+						  "d.refobjid AS owning_tab, "
+						  "d.refobjsubid AS owning_col, "
+						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
+						"array_to_string(array_remove(array_remove(c.reloptions,'check_option=local'),'check_option=cascaded'), ', ') AS reloptions, "
+						  "CASE WHEN 'check_option=local' = ANY (c.reloptions) THEN 'LOCAL'::text "
+							   "WHEN 'check_option=cascaded' = ANY (c.reloptions) THEN 'CASCADED'::text ELSE NULL END AS checkoption, "
+						  "array_to_string(array(SELECT 'toast.' || x FROM unnest(tc.reloptions) x), ', ') AS toast_reloptions "
+						  "FROM pg_class c "
+						  "LEFT JOIN pg_depend d ON "
+						  "(c.relkind = '%c' AND "
+						  "d.classid = c.tableoid AND d.objid = c.oid AND "
+						  "d.objsubid = 0 AND "
+						  "d.refclassid = c.tableoid AND d.deptype = 'a') "
+					   "LEFT JOIN pg_class tc ON (c.reltoastrelid = tc.oid) "
+				   "WHERE c.relkind in ('%c', '%c', '%c', '%c', '%c', '%c') "
+						  "ORDER BY c.oid",
+						  username_subquery,
+						  RELKIND_SEQUENCE,
+						  RELKIND_RELATION, RELKIND_SEQUENCE,
+						  RELKIND_VIEW, RELKIND_COMPOSITE_TYPE,
+						  RELKIND_MATVIEW, RELKIND_FOREIGN_TABLE);
+	}
+	else if (fout->remoteVersion >= 90300)
+	{
+		/*
+		 * Left join to pick up dependency info linking sequences to their
+		 * owning column, if any (note this dependency is AUTO as of 8.2)
+		 */
+		appendPQExpBuffer(query,
+						  "SELECT c.tableoid, c.oid, c.relname, "
+						  "c.relacl, c.relkind, c.relnamespace, "
+						  "(%s c.relowner) AS rolname, "
+						  "c.relchecks, c.relhastriggers, "
+						  "c.relhasindex, c.relhasrules, c.relhasoids, "
+						  "c.relfrozenxid, tc.oid AS toid, "
+						  "tc.relfrozenxid AS tfrozenxid, "
+						  "c.relpersistence, c.relispopulated, "
+						  "'d' AS relreplident, c.relpages, "
 						  "CASE WHEN c.reloftype <> 0 THEN c.reloftype::pg_catalog.regtype ELSE NULL END AS reloftype, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
@@ -4307,7 +4347,7 @@ getTables(Archive *fout, int *numTables)
 						  "c.relfrozenxid, tc.oid AS toid, "
 						  "tc.relfrozenxid AS tfrozenxid, "
 						  "c.relpersistence, 't' as relispopulated, "
-						  "c.relpages, "
+						  "'d' AS relreplident, c.relpages, "
 						  "CASE WHEN c.reloftype <> 0 THEN c.reloftype::pg_catalog.regtype ELSE NULL END AS reloftype, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
@@ -4344,7 +4384,7 @@ getTables(Archive *fout, int *numTables)
 						  "c.relfrozenxid, tc.oid AS toid, "
 						  "tc.relfrozenxid AS tfrozenxid, "
 						  "'p' AS relpersistence, 't' as relispopulated, "
-						  "c.relpages, "
+						  "'d' AS relreplident, c.relpages, "
 						  "CASE WHEN c.reloftype <> 0 THEN c.reloftype::pg_catalog.regtype ELSE NULL END AS reloftype, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
@@ -4380,7 +4420,7 @@ getTables(Archive *fout, int *numTables)
 						  "c.relfrozenxid, tc.oid AS toid, "
 						  "tc.relfrozenxid AS tfrozenxid, "
 						  "'p' AS relpersistence, 't' as relispopulated, "
-						  "c.relpages, "
+						  "'d' AS relreplident, c.relpages, "
 						  "NULL AS reloftype, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
@@ -4416,7 +4456,7 @@ getTables(Archive *fout, int *numTables)
 						  "c.relfrozenxid, tc.oid AS toid, "
 						  "tc.relfrozenxid AS tfrozenxid, "
 						  "'p' AS relpersistence, 't' as relispopulated, "
-						  "c.relpages, "
+						  "'d' AS relreplident, c.relpages, "
 						  "NULL AS reloftype, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
@@ -4453,7 +4493,7 @@ getTables(Archive *fout, int *numTables)
 						  "0 AS toid, "
 						  "0 AS tfrozenxid, "
 						  "'p' AS relpersistence, 't' as relispopulated, "
-						  "relpages, "
+						  "'d' AS relreplident, relpages, "
 						  "NULL AS reloftype, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
@@ -4489,7 +4529,7 @@ getTables(Archive *fout, int *numTables)
 						  "0 AS toid, "
 						  "0 AS tfrozenxid, "
 						  "'p' AS relpersistence, 't' as relispopulated, "
-						  "relpages, "
+						  "'d' AS relreplident, relpages, "
 						  "NULL AS reloftype, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
@@ -4521,7 +4561,7 @@ getTables(Archive *fout, int *numTables)
 						  "0 AS toid, "
 						  "0 AS tfrozenxid, "
 						  "'p' AS relpersistence, 't' as relispopulated, "
-						  "relpages, "
+						  "'d' AS relreplident, relpages, "
 						  "NULL AS reloftype, "
 						  "NULL::oid AS owning_tab, "
 						  "NULL::int4 AS owning_col, "
@@ -4548,7 +4588,7 @@ getTables(Archive *fout, int *numTables)
 						  "0 AS toid, "
 						  "0 AS tfrozenxid, "
 						  "'p' AS relpersistence, 't' as relispopulated, "
-						  "relpages, "
+						  "'d' AS relreplident, relpages, "
 						  "NULL AS reloftype, "
 						  "NULL::oid AS owning_tab, "
 						  "NULL::int4 AS owning_col, "
@@ -4585,7 +4625,7 @@ getTables(Archive *fout, int *numTables)
 						  "0 AS toid, "
 						  "0 AS tfrozenxid, "
 						  "'p' AS relpersistence, 't' as relispopulated, "
-						  "0 AS relpages, "
+						  "'d' AS relreplident, 0 AS relpages, "
 						  "NULL AS reloftype, "
 						  "NULL::oid AS owning_tab, "
 						  "NULL::int4 AS owning_col, "
@@ -4634,6 +4674,7 @@ getTables(Archive *fout, int *numTables)
 	i_toastfrozenxid = PQfnumber(res, "tfrozenxid");
 	i_relpersistence = PQfnumber(res, "relpersistence");
 	i_relispopulated = PQfnumber(res, "relispopulated");
+	i_relreplident = PQfnumber(res, "relreplident");
 	i_relpages = PQfnumber(res, "relpages");
 	i_owning_tab = PQfnumber(res, "owning_tab");
 	i_owning_col = PQfnumber(res, "owning_col");
@@ -4678,6 +4719,7 @@ getTables(Archive *fout, int *numTables)
 		tblinfo[i].hastriggers = (strcmp(PQgetvalue(res, i, i_relhastriggers), "t") == 0);
 		tblinfo[i].hasoids = (strcmp(PQgetvalue(res, i, i_relhasoids), "t") == 0);
 		tblinfo[i].relispopulated = (strcmp(PQgetvalue(res, i, i_relispopulated), "t") == 0);
+		tblinfo[i].relreplident = *(PQgetvalue(res, i, i_relreplident));
 		tblinfo[i].relpages = atoi(PQgetvalue(res, i, i_relpages));
 		tblinfo[i].frozenxid = atooid(PQgetvalue(res, i, i_relfrozenxid));
 		tblinfo[i].toast_oid = atooid(PQgetvalue(res, i, i_toastoid));
@@ -4863,6 +4905,7 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 				i_indnkeys,
 				i_indkey,
 				i_indisclustered,
+				i_indisreplident,
 				i_contype,
 				i_conname,
 				i_condeferrable,
@@ -4909,7 +4952,7 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 		 * is not.
 		 */
 		resetPQExpBuffer(query);
-		if (fout->remoteVersion >= 90000)
+		if (fout->remoteVersion >= 90400)
 		{
 			/*
 			 * the test on indisready is necessary in 9.2, and harmless in
@@ -4921,7 +4964,38 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 					 "pg_catalog.pg_get_indexdef(i.indexrelid) AS indexdef, "
 							  "t.relnatts AS indnkeys, "
 							  "i.indkey, i.indisclustered, "
-							  "t.relpages, "
+							  "i.indisreplident, t.relpages, "
+							  "c.contype, c.conname, "
+							  "c.condeferrable, c.condeferred, "
+							  "c.tableoid AS contableoid, "
+							  "c.oid AS conoid, "
+				  "pg_catalog.pg_get_constraintdef(c.oid, false) AS condef, "
+							  "(SELECT spcname FROM pg_catalog.pg_tablespace s WHERE s.oid = t.reltablespace) AS tablespace, "
+							"array_to_string(t.reloptions, ', ') AS options "
+							  "FROM pg_catalog.pg_index i "
+					  "JOIN pg_catalog.pg_class t ON (t.oid = i.indexrelid) "
+							  "LEFT JOIN pg_catalog.pg_constraint c "
+							  "ON (i.indrelid = c.conrelid AND "
+							  "i.indexrelid = c.conindid AND "
+							  "c.contype IN ('p','u','x')) "
+							  "WHERE i.indrelid = '%u'::pg_catalog.oid "
+							  "AND i.indisvalid AND i.indisready "
+							  "ORDER BY indexname",
+							  tbinfo->dobj.catId.oid);
+		}
+		else if (fout->remoteVersion >= 90000)
+		{
+			/*
+			 * the test on indisready is necessary in 9.2, and harmless in
+			 * earlier/later versions
+			 */
+			appendPQExpBuffer(query,
+							  "SELECT t.tableoid, t.oid, "
+							  "t.relname AS indexname, "
+					 "pg_catalog.pg_get_indexdef(i.indexrelid) AS indexdef, "
+							  "t.relnatts AS indnkeys, "
+							  "i.indkey, i.indisclustered, "
+							  "false AS indisreplident, t.relpages, "
 							  "c.contype, c.conname, "
 							  "c.condeferrable, c.condeferred, "
 							  "c.tableoid AS contableoid, "
@@ -4948,7 +5022,7 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 					 "pg_catalog.pg_get_indexdef(i.indexrelid) AS indexdef, "
 							  "t.relnatts AS indnkeys, "
 							  "i.indkey, i.indisclustered, "
-							  "t.relpages, "
+							  "false AS indisreplident, t.relpages, "
 							  "c.contype, c.conname, "
 							  "c.condeferrable, c.condeferred, "
 							  "c.tableoid AS contableoid, "
@@ -4978,7 +5052,7 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 					 "pg_catalog.pg_get_indexdef(i.indexrelid) AS indexdef, "
 							  "t.relnatts AS indnkeys, "
 							  "i.indkey, i.indisclustered, "
-							  "t.relpages, "
+							  "false AS indisreplident, t.relpages, "
 							  "c.contype, c.conname, "
 							  "c.condeferrable, c.condeferred, "
 							  "c.tableoid AS contableoid, "
@@ -5007,7 +5081,7 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 					 "pg_catalog.pg_get_indexdef(i.indexrelid) AS indexdef, "
 							  "t.relnatts AS indnkeys, "
 							  "i.indkey, i.indisclustered, "
-							  "t.relpages, "
+							  "false AS indisreplident, t.relpages, "
 							  "c.contype, c.conname, "
 							  "c.condeferrable, c.condeferred, "
 							  "c.tableoid AS contableoid, "
@@ -5036,7 +5110,7 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 							  "pg_get_indexdef(i.indexrelid) AS indexdef, "
 							  "t.relnatts AS indnkeys, "
 							  "i.indkey, false AS indisclustered, "
-							  "t.relpages, "
+							  "false AS indisreplident, t.relpages, "
 							  "CASE WHEN i.indisprimary THEN 'p'::char "
 							  "ELSE '0'::char END AS contype, "
 							  "t.relname AS conname, "
@@ -5063,7 +5137,7 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 							  "pg_get_indexdef(i.indexrelid) AS indexdef, "
 							  "t.relnatts AS indnkeys, "
 							  "i.indkey, false AS indisclustered, "
-							  "t.relpages, "
+							  "false AS indisreplident, t.relpages, "
 							  "CASE WHEN i.indisprimary THEN 'p'::char "
 							  "ELSE '0'::char END AS contype, "
 							  "t.relname AS conname, "
@@ -5092,6 +5166,7 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 		i_indnkeys = PQfnumber(res, "indnkeys");
 		i_indkey = PQfnumber(res, "indkey");
 		i_indisclustered = PQfnumber(res, "indisclustered");
+		i_indisreplident = PQfnumber(res, "indisreplident");
 		i_relpages = PQfnumber(res, "relpages");
 		i_contype = PQfnumber(res, "contype");
 		i_conname = PQfnumber(res, "conname");
@@ -5135,6 +5210,7 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 			parseOidArray(PQgetvalue(res, j, i_indkey),
 						  indxinfo[j].indkeys, INDEX_MAX_KEYS);
 			indxinfo[j].indisclustered = (PQgetvalue(res, j, i_indisclustered)[0] == 't');
+			indxinfo[j].indisreplident = (PQgetvalue(res, j, i_indisreplident)[0] == 't');
 			indxinfo[j].relpages = atoi(PQgetvalue(res, j, i_relpages));
 			contype = *(PQgetvalue(res, j, i_contype));
 
@@ -13408,6 +13484,28 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		}
 	}
 
+	/*
+	 * dump properties we only have ALTER TABLE syntax for
+	 */
+	if ((tbinfo->relkind == RELKIND_RELATION || tbinfo->relkind == RELKIND_MATVIEW) &&
+	    tbinfo->relreplident != REPLICA_IDENTITY_DEFAULT)
+	{
+		if (tbinfo->relreplident == REPLICA_IDENTITY_INDEX)
+		{
+			/* nothing to do, will be set when the index is dumped */
+		}
+		else if (tbinfo->relreplident == REPLICA_IDENTITY_NOTHING)
+		{
+			appendPQExpBuffer(q, "\nALTER TABLE ONLY %s REPLICA IDENTITY NOTHING;\n",
+			                  fmtId(tbinfo->dobj.name));
+		}
+		else if (tbinfo->relreplident == REPLICA_IDENTITY_FULL)
+		{
+			appendPQExpBuffer(q, "\nALTER TABLE ONLY %s REPLICA IDENTITY FULL;\n",
+			                  fmtId(tbinfo->dobj.name));
+		}
+	}
+
 	if (binary_upgrade)
 		binary_upgrade_extension_member(q, &tbinfo->dobj, labelq->data);
 
@@ -13577,6 +13675,15 @@ dumpIndex(Archive *fout, IndxInfo *indxinfo)
 							  fmtId(tbinfo->dobj.name));
 			appendPQExpBuffer(q, " ON %s;\n",
 							  fmtId(indxinfo->dobj.name));
+		}
+
+		/* If the index is clustered, we need to record that. */
+		if (indxinfo->indisreplident)
+		{
+			appendPQExpBuffer(q, "\nALTER TABLE ONLY %s REPLICA IDENTITY USING",
+			                  fmtId(tbinfo->dobj.name));
+			appendPQExpBuffer(q, " INDEX %s;\n",
+			                  fmtId(indxinfo->dobj.name));
 		}
 
 		/*

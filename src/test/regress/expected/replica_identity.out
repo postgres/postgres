@@ -1,0 +1,183 @@
+CREATE TABLE test_replica_identity (
+       id serial primary key,
+       keya text not null,
+       keyb text not null,
+       nonkey text,
+       CONSTRAINT test_replica_identity_unique_defer UNIQUE (keya, keyb) DEFERRABLE,
+       CONSTRAINT test_replica_identity_unique_nondefer UNIQUE (keya, keyb)
+);
+CREATE TABLE test_replica_identity_othertable (id serial primary key);
+CREATE INDEX test_replica_identity_keyab ON test_replica_identity (keya, keyb);
+CREATE UNIQUE INDEX test_replica_identity_keyab_key ON test_replica_identity (keya, keyb);
+CREATE UNIQUE INDEX test_replica_identity_nonkey ON test_replica_identity (keya, nonkey);
+CREATE INDEX test_replica_identity_hash ON test_replica_identity USING hash (nonkey);
+CREATE UNIQUE INDEX test_replica_identity_expr ON test_replica_identity (keya, keyb, (3));
+CREATE UNIQUE INDEX test_replica_identity_partial ON test_replica_identity (keya, keyb) WHERE keyb != '3';
+-- default is 'd'/DEFAULT for user created tables
+SELECT relreplident FROM pg_class WHERE oid = 'test_replica_identity'::regclass;
+ relreplident 
+--------------
+ d
+(1 row)
+
+-- but 'none' for system tables
+SELECT relreplident FROM pg_class WHERE oid = 'pg_class'::regclass;
+ relreplident 
+--------------
+ n
+(1 row)
+
+SELECT relreplident FROM pg_class WHERE oid = 'pg_constraint'::regclass;
+ relreplident 
+--------------
+ n
+(1 row)
+
+----
+-- Make sure we detect inelegible indexes
+----
+-- fail, not unique
+ALTER TABLE test_replica_identity REPLICA IDENTITY USING INDEX test_replica_identity_keyab;
+ERROR:  cannot use non-unique index "test_replica_identity_keyab" as replica identity
+-- fail, not a candidate key, nullable column
+ALTER TABLE test_replica_identity REPLICA IDENTITY USING INDEX test_replica_identity_nonkey;
+ERROR:  index "test_replica_identity_nonkey" cannot be used as replica identity because column "nonkey" is nullable
+-- fail, hash indexes cannot do uniqueness
+ALTER TABLE test_replica_identity REPLICA IDENTITY USING INDEX test_replica_identity_hash;
+ERROR:  cannot use non-unique index "test_replica_identity_hash" as replica identity
+-- fail, expression index
+ALTER TABLE test_replica_identity REPLICA IDENTITY USING INDEX test_replica_identity_expr;
+ERROR:  cannot use expression index "test_replica_identity_expr" as replica identity
+-- fail, partial index
+ALTER TABLE test_replica_identity REPLICA IDENTITY USING INDEX test_replica_identity_partial;
+ERROR:  cannot use partial index "test_replica_identity_partial" as replica identity
+-- fail, not our index
+ALTER TABLE test_replica_identity REPLICA IDENTITY USING INDEX test_replica_identity_othertable_pkey;
+ERROR:  "test_replica_identity_othertable_pkey" is not an index for table "test_replica_identity"
+-- fail, deferrable
+ALTER TABLE test_replica_identity REPLICA IDENTITY USING INDEX test_replica_identity_unique_defer;
+ERROR:  cannot use non-immediate index "test_replica_identity_unique_defer" as replica identity
+SELECT relreplident FROM pg_class WHERE oid = 'test_replica_identity'::regclass;
+ relreplident 
+--------------
+ d
+(1 row)
+
+----
+-- Make sure index cases succeeed
+----
+-- succeed, primary key
+ALTER TABLE test_replica_identity REPLICA IDENTITY USING INDEX test_replica_identity_pkey;
+SELECT relreplident FROM pg_class WHERE oid = 'test_replica_identity'::regclass;
+ relreplident 
+--------------
+ i
+(1 row)
+
+\d test_replica_identity
+                         Table "public.test_replica_identity"
+ Column |  Type   |                             Modifiers                              
+--------+---------+--------------------------------------------------------------------
+ id     | integer | not null default nextval('test_replica_identity_id_seq'::regclass)
+ keya   | text    | not null
+ keyb   | text    | not null
+ nonkey | text    | 
+Indexes:
+    "test_replica_identity_pkey" PRIMARY KEY, btree (id) REPLICA IDENTITY
+    "test_replica_identity_expr" UNIQUE, btree (keya, keyb, (3))
+    "test_replica_identity_keyab_key" UNIQUE, btree (keya, keyb)
+    "test_replica_identity_nonkey" UNIQUE, btree (keya, nonkey)
+    "test_replica_identity_partial" UNIQUE, btree (keya, keyb) WHERE keyb <> '3'::text
+    "test_replica_identity_unique_defer" UNIQUE CONSTRAINT, btree (keya, keyb) DEFERRABLE
+    "test_replica_identity_unique_nondefer" UNIQUE CONSTRAINT, btree (keya, keyb)
+    "test_replica_identity_hash" hash (nonkey)
+    "test_replica_identity_keyab" btree (keya, keyb)
+
+-- succeed, nondeferrable unique constraint over nonullable cols
+ALTER TABLE test_replica_identity REPLICA IDENTITY USING INDEX test_replica_identity_unique_nondefer;
+-- succeed unique index over nonnullable cols
+ALTER TABLE test_replica_identity REPLICA IDENTITY USING INDEX test_replica_identity_keyab_key;
+ALTER TABLE test_replica_identity REPLICA IDENTITY USING INDEX test_replica_identity_keyab_key;
+SELECT relreplident FROM pg_class WHERE oid = 'test_replica_identity'::regclass;
+ relreplident 
+--------------
+ i
+(1 row)
+
+\d test_replica_identity
+                         Table "public.test_replica_identity"
+ Column |  Type   |                             Modifiers                              
+--------+---------+--------------------------------------------------------------------
+ id     | integer | not null default nextval('test_replica_identity_id_seq'::regclass)
+ keya   | text    | not null
+ keyb   | text    | not null
+ nonkey | text    | 
+Indexes:
+    "test_replica_identity_pkey" PRIMARY KEY, btree (id)
+    "test_replica_identity_expr" UNIQUE, btree (keya, keyb, (3))
+    "test_replica_identity_keyab_key" UNIQUE, btree (keya, keyb) REPLICA IDENTITY
+    "test_replica_identity_nonkey" UNIQUE, btree (keya, nonkey)
+    "test_replica_identity_partial" UNIQUE, btree (keya, keyb) WHERE keyb <> '3'::text
+    "test_replica_identity_unique_defer" UNIQUE CONSTRAINT, btree (keya, keyb) DEFERRABLE
+    "test_replica_identity_unique_nondefer" UNIQUE CONSTRAINT, btree (keya, keyb)
+    "test_replica_identity_hash" hash (nonkey)
+    "test_replica_identity_keyab" btree (keya, keyb)
+
+SELECT count(*) FROM pg_index WHERE indrelid = 'test_replica_identity'::regclass AND indisreplident;
+ count 
+-------
+     1
+(1 row)
+
+----
+-- Make sure non index cases work
+----
+ALTER TABLE test_replica_identity REPLICA IDENTITY DEFAULT;
+SELECT relreplident FROM pg_class WHERE oid = 'test_replica_identity'::regclass;
+ relreplident 
+--------------
+ d
+(1 row)
+
+SELECT count(*) FROM pg_index WHERE indrelid = 'test_replica_identity'::regclass AND indisreplident;
+ count 
+-------
+     0
+(1 row)
+
+ALTER TABLE test_replica_identity REPLICA IDENTITY FULL;
+SELECT relreplident FROM pg_class WHERE oid = 'test_replica_identity'::regclass;
+ relreplident 
+--------------
+ f
+(1 row)
+
+\d test_replica_identity
+                         Table "public.test_replica_identity"
+ Column |  Type   |                             Modifiers                              
+--------+---------+--------------------------------------------------------------------
+ id     | integer | not null default nextval('test_replica_identity_id_seq'::regclass)
+ keya   | text    | not null
+ keyb   | text    | not null
+ nonkey | text    | 
+Indexes:
+    "test_replica_identity_pkey" PRIMARY KEY, btree (id)
+    "test_replica_identity_expr" UNIQUE, btree (keya, keyb, (3))
+    "test_replica_identity_keyab_key" UNIQUE, btree (keya, keyb)
+    "test_replica_identity_nonkey" UNIQUE, btree (keya, nonkey)
+    "test_replica_identity_partial" UNIQUE, btree (keya, keyb) WHERE keyb <> '3'::text
+    "test_replica_identity_unique_defer" UNIQUE CONSTRAINT, btree (keya, keyb) DEFERRABLE
+    "test_replica_identity_unique_nondefer" UNIQUE CONSTRAINT, btree (keya, keyb)
+    "test_replica_identity_hash" hash (nonkey)
+    "test_replica_identity_keyab" btree (keya, keyb)
+Replica Identity: FULL
+
+ALTER TABLE test_replica_identity REPLICA IDENTITY NOTHING;
+SELECT relreplident FROM pg_class WHERE oid = 'test_replica_identity'::regclass;
+ relreplident 
+--------------
+ n
+(1 row)
+
+DROP TABLE test_replica_identity;
+DROP TABLE test_replica_identity_othertable;

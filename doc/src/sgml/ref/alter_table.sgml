@@ -69,6 +69,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
     NOT OF
     OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
     SET TABLESPACE <replaceable class="PARAMETER">new_tablespace</replaceable>
+    REPLICA IDENTITY {DEFAULT | USING INDEX <replaceable class="PARAMETER">index_name</replaceable> | FULL | NOTHING}
 
 <phrase>and <replaceable class="PARAMETER">table_constraint_using_index</replaceable> is:</phrase>
 
@@ -575,6 +576,24 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
       separately with additional <literal>SET TABLESPACE</literal> commands.
       See also
       <xref linkend="SQL-CREATETABLESPACE">.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>REPLICA IDENTITY</literal></term>
+    <listitem>
+     <para>
+      This form changes the information which is written to the write-ahead log
+      to identify rows which are updated or deleted.  This option has no effect
+      except when logical replication is in use.  <literal>DEFAULT</> records the 
+      old values of the columns of the primary key, if any.  <literal>USING INDEX</>
+      records the old values of the columns covered by the named index, which
+      must be unique, not partial, not deferrable, and include only columns marked
+      <literal>NOT NULL</>.  <literal>FULL</> records the old values of all columns
+      in the row.  <literal>NOTHING</> records no information about the old row.
+      In all cases, no old values are logged unless at least one of the columns
+      that would be logged differs between the old and new versions of the row.
      </para>
     </listitem>
    </varlistentry>

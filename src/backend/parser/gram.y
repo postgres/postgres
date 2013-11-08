@@ -255,6 +255,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <ival>	add_drop opt_asc_desc opt_nulls_order
 
 %type <node>	alter_table_cmd alter_type_cmd opt_collate_clause
+	   replica_identity
 %type <list>	alter_table_cmds alter_type_cmds
 
 %type <dbehavior>	opt_drop_behavior
@@ -2178,6 +2179,14 @@ alter_table_cmd:
 					n->def = (Node *)$2;
 					$$ = (Node *)n;
 				}
+			/* ALTER TABLE <name> REPLICA IDENTITY  */
+			| REPLICA IDENTITY_P replica_identity
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_ReplicaIdentity;
+					n->def = $3;
+					$$ = (Node *)n;
+				}
 			| alter_generic_options
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -2214,6 +2223,37 @@ alter_using:
 			USING a_expr				{ $$ = $2; }
 			| /* EMPTY */				{ $$ = NULL; }
 		;
+
+replica_identity:
+			NOTHING
+				{
+					ReplicaIdentityStmt *n = makeNode(ReplicaIdentityStmt);
+					n->identity_type = REPLICA_IDENTITY_NOTHING;
+					n->name = NULL;
+					$$ = (Node *) n;
+				}
+			| FULL
+				{
+					ReplicaIdentityStmt *n = makeNode(ReplicaIdentityStmt);
+					n->identity_type = REPLICA_IDENTITY_FULL;
+					n->name = NULL;
+					$$ = (Node *) n;
+				}
+			| DEFAULT
+				{
+					ReplicaIdentityStmt *n = makeNode(ReplicaIdentityStmt);
+					n->identity_type = REPLICA_IDENTITY_DEFAULT;
+					n->name = NULL;
+					$$ = (Node *) n;
+				}
+			| USING INDEX name
+				{
+					ReplicaIdentityStmt *n = makeNode(ReplicaIdentityStmt);
+					n->identity_type = REPLICA_IDENTITY_INDEX;
+					n->name = $3;
+					$$ = (Node *) n;
+				}
+;
 
 reloptions:
 			'(' reloption_list ')'					{ $$ = $2; }

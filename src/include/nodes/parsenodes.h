@@ -1284,8 +1284,16 @@ typedef enum AlterTableType
 	AT_DropInherit,				/* NO INHERIT parent */
 	AT_AddOf,					/* OF <type_name> */
 	AT_DropOf,					/* NOT OF */
+	AT_ReplicaIdentity,			/* REPLICA IDENTITY */
 	AT_GenericOptions			/* OPTIONS (...) */
 } AlterTableType;
+
+typedef struct ReplicaIdentityStmt
+{
+	NodeTag		type;
+	char		identity_type;
+	char	   *name;
+} ReplicaIdentityStmt;
 
 typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */
 {

@@ -1156,6 +1156,7 @@ describeOneTableDetails(const char *schemaname,
 		char	   *reloptions;
 		char	   *reloftype;
 		char		relpersistence;
+		char		relreplident;
 	}			tableinfo;
 	bool		show_modifiers = false;
 	bool		retval;
@@ -1171,7 +1172,24 @@ describeOneTableDetails(const char *schemaname,
 	initPQExpBuffer(&tmpbuf);
 
 	/* Get general table info */
-	if (pset.sversion >= 90100)
+	if (pset.sversion >= 90400)
+	{
+		printfPQExpBuffer(&buf,
+			  "SELECT c.relchecks, c.relkind, c.relhasindex, c.relhasrules, "
+						  "c.relhastriggers, c.relhasoids, "
+						  "%s, c.reltablespace, "
+						  "CASE WHEN c.reloftype = 0 THEN '' ELSE c.reloftype::pg_catalog.regtype::pg_catalog.text END, "
+						  "c.relpersistence, c.relreplident\n"
+						  "FROM pg_catalog.pg_class c\n "
+		   "LEFT JOIN pg_catalog.pg_class tc ON (c.reltoastrelid = tc.oid)\n"
+						  "WHERE c.oid = '%s';",
+						  (verbose ?
+						   "pg_catalog.array_to_string(c.reloptions || "
+						   "array(select 'toast.' || x from pg_catalog.unnest(tc.reloptions) x), ', ')\n"
+						   : "''"),
+						  oid);
+	}
+	else if (pset.sversion >= 90100)
 	{
 		printfPQExpBuffer(&buf,
 			  "SELECT c.relchecks, c.relkind, c.relhasindex, c.relhasrules, "
@@ -1276,6 +1294,8 @@ describeOneTableDetails(const char *schemaname,
 		pg_strdup(PQgetvalue(res, 0, 8)) : NULL;
 	tableinfo.relpersistence = (pset.sversion >= 90100) ?
 		*(PQgetvalue(res, 0, 9)) : 0;
+	tableinfo.relreplident = (pset.sversion >= 90400) ?
+		*(PQgetvalue(res, 0, 10)) : 'd';
 	PQclear(res);
 	res = NULL;
 
@@ -1589,6 +1609,12 @@ describeOneTableDetails(const char *schemaname,
 		else
 			appendPQExpBuffer(&buf,
 						"  false AS condeferrable, false AS condeferred,\n");
+
+		if (pset.sversion >= 90400)
+			appendPQExpBuffer(&buf, "i.indisidentity,\n");
+		else
+			appendPQExpBuffer(&buf, "false AS indisidentity,\n");
+
 		appendPQExpBuffer(&buf, "  a.amname, c2.relname, "
 					  "pg_catalog.pg_get_expr(i.indpred, i.indrelid, true)\n"
 						  "FROM pg_catalog.pg_index i, pg_catalog.pg_class c, pg_catalog.pg_class c2, pg_catalog.pg_am a\n"
@@ -1612,9 +1638,10 @@ describeOneTableDetails(const char *schemaname,
 			char	   *indisvalid = PQgetvalue(result, 0, 3);
 			char	   *deferrable = PQgetvalue(result, 0, 4);
 			char	   *deferred = PQgetvalue(result, 0, 5);
-			char	   *indamname = PQgetvalue(result, 0, 6);
-			char	   *indtable = PQgetvalue(result, 0, 7);
-			char	   *indpred = PQgetvalue(result, 0, 8);
+			char	   *indisidentity = PQgetvalue(result, 0, 6);
+			char	   *indamname = PQgetvalue(result, 0, 7);
+			char	   *indtable = PQgetvalue(result, 0, 8);
+			char	   *indpred = PQgetvalue(result, 0, 9);
 
 			if (strcmp(indisprimary, "t") == 0)
 				printfPQExpBuffer(&tmpbuf, _("primary key, "));
@@ -1642,6 +1669,9 @@ describeOneTableDetails(const char *schemaname,
 
 			if (strcmp(deferred, "t") == 0)
 				appendPQExpBuffer(&tmpbuf, _(", initially deferred"));
+
+			if (strcmp(indisidentity, "t") == 0)
+				appendPQExpBuffer(&tmpbuf, _(", replica identity"));
 
 			printTableAddFooter(&cont, tmpbuf.data);
 			add_tablespace_footer(&cont, tableinfo.relkind,
@@ -1713,6 +1743,10 @@ describeOneTableDetails(const char *schemaname,
 				appendPQExpBuffer(&buf,
 								  "null AS constraintdef, null AS contype, "
 							 "false AS condeferrable, false AS condeferred");
+			if (pset.sversion >= 90400)
+				appendPQExpBuffer(&buf, ", i.indisreplident");
+			else
+				appendPQExpBuffer(&buf, ", false AS indisreplident");
 			if (pset.sversion >= 80000)
 				appendPQExpBuffer(&buf, ", c2.reltablespace");
 			appendPQExpBuffer(&buf,
@@ -1783,12 +1817,15 @@ describeOneTableDetails(const char *schemaname,
 					if (strcmp(PQgetvalue(result, i, 4), "t") != 0)
 						appendPQExpBuffer(&buf, " INVALID");
 
+					if (strcmp(PQgetvalue(result, i, 10), "t") == 0)
+						appendPQExpBuffer(&buf, " REPLICA IDENTITY");
+
 					printTableAddFooter(&cont, buf.data);
 
 					/* Print tablespace of the index on the same line */
 					if (pset.sversion >= 80000)
 						add_tablespace_footer(&cont, 'i',
-										   atooid(PQgetvalue(result, i, 10)),
+										   atooid(PQgetvalue(result, i, 11)),
 											  false);
 				}
 			}
@@ -2270,6 +2307,17 @@ describeOneTableDetails(const char *schemaname,
 		if (tableinfo.reloftype)
 		{
 			printfPQExpBuffer(&buf, _("Typed table of type: %s"), tableinfo.reloftype);
+			printTableAddFooter(&cont, buf.data);
+		}
+
+		if ((tableinfo.relkind == 'r' || tableinfo.relkind == 'm') &&
+		    tableinfo.relreplident != 'd' && tableinfo.relreplident != 'i')
+		{
+			const char *s = _("Replica Identity");
+
+			printfPQExpBuffer(&buf, "%s: %s",
+			                  s,
+			                  tableinfo.relreplident == 'n' ? "NOTHING" : "FULL");
 			printTableAddFooter(&cont, buf.data);
 		}
 

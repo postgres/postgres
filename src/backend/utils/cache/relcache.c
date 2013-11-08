@@ -1454,6 +1454,7 @@ formrdesc(const char *relationName, Oid relationReltype,
 	/* ... and they're always populated, too */
 	relation->rd_rel->relispopulated = true;
 
+	relation->rd_rel->relreplident = REPLICA_IDENTITY_NOTHING;
 	relation->rd_rel->relpages = 0;
 	relation->rd_rel->reltuples = 0;
 	relation->rd_rel->relallvisible = 0;
@@ -2664,6 +2665,13 @@ RelationBuildLocalRelation(const char *relname,
 	else
 		rel->rd_rel->relispopulated = true;
 
+	/* system relations and non-table objects don't have one */
+	if (!IsSystemNamespace(relnamespace) &&
+	    (relkind == RELKIND_RELATION || relkind == RELKIND_MATVIEW))
+		rel->rd_rel->relreplident = REPLICA_IDENTITY_DEFAULT;
+	else
+		rel->rd_rel->relreplident = REPLICA_IDENTITY_NOTHING;
+
 	/*
 	 * Insert relation physical and logical identifiers (OIDs) into the right
 	 * places.	For a mapped relation, we set relfilenode to zero and rely on
@@ -3462,7 +3470,10 @@ RelationGetIndexList(Relation relation)
 	ScanKeyData skey;
 	HeapTuple	htup;
 	List	   *result;
-	Oid			oidIndex;
+	char		replident = relation->rd_rel->relreplident;
+	Oid			oidIndex = InvalidOid;
+	Oid			pkeyIndex = InvalidOid;
+	Oid			candidateIndex = InvalidOid;
 	MemoryContext oldcxt;
 
 	/* Quick exit if we already computed the list. */
@@ -3519,17 +3530,45 @@ RelationGetIndexList(Relation relation)
 		Assert(!isnull);
 		indclass = (oidvector *) DatumGetPointer(indclassDatum);
 
-		/* Check to see if it is a unique, non-partial btree index on OID */
-		if (IndexIsValid(index) &&
-			index->indnatts == 1 &&
-			index->indisunique && index->indimmediate &&
+		/*
+		 * Invalid, non-unique, non-immediate or predicate indexes aren't
+		 * interesting for neither oid indexes nor replication identity
+		 * indexes, so don't check them.
+		 */
+		if (!IndexIsValid(index) || !index->indisunique ||
+			!index->indimmediate ||
+			!heap_attisnull(htup, Anum_pg_index_indpred))
+			continue;
+
+		/* Check to see if is a usable btree index on OID */
+		if (index->indnatts == 1 &&
 			index->indkey.values[0] == ObjectIdAttributeNumber &&
-			indclass->values[0] == OID_BTREE_OPS_OID &&
-			heap_attisnull(htup, Anum_pg_index_indpred))
+			indclass->values[0] == OID_BTREE_OPS_OID)
 			oidIndex = index->indexrelid;
+
+		/* always prefer primary keys */
+		if (index->indisprimary)
+			pkeyIndex = index->indexrelid;
+
+		/* explicitly chosen index */
+		if (index->indisreplident)
+			candidateIndex = index->indexrelid;
 	}
 
 	systable_endscan(indscan);
+
+	/* primary key */
+	if (replident == REPLICA_IDENTITY_DEFAULT &&
+		OidIsValid(pkeyIndex))
+		relation->rd_replidindex = pkeyIndex;
+	/* explicitly chosen index */
+	else if (replident == REPLICA_IDENTITY_INDEX &&
+			 OidIsValid(candidateIndex))
+		relation->rd_replidindex = candidateIndex;
+	/* nothing */
+	else
+		relation->rd_replidindex = InvalidOid;
+
 	heap_close(indrel, AccessShareLock);
 
 	/* Now save a copy of the completed list in the relcache entry. */
