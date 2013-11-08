@@ -105,16 +105,11 @@ moveRightIfItNeeded(GinBtreeData *btree, GinBtreeStack *stack)
 		/*
 		 * We scanned the whole page, so we should take right page
 		 */
-		stack->blkno = GinPageGetOpaque(page)->rightlink;
-
 		if (GinPageRightMost(page))
 			return false;		/* no more pages */
 
-		LockBuffer(stack->buffer, GIN_UNLOCK);
-		stack->buffer = ReleaseAndReadBuffer(stack->buffer,
-											 btree->index,
-											 stack->blkno);
-		LockBuffer(stack->buffer, GIN_SHARE);
+		stack->buffer = ginStepRight(stack->buffer, btree->index, GIN_SHARE);
+		stack->blkno = BufferGetBlockNumber(stack->buffer);
 		stack->off = FirstOffsetNumber;
 	}
 
@@ -132,7 +127,6 @@ scanPostingTree(Relation index, GinScanEntry scanEntry,
 	GinPostingTreeScan *gdi;
 	Buffer		buffer;
 	Page		page;
-	BlockNumber blkno;
 
 	/* Descend to the leftmost leaf page */
 	gdi = ginPrepareScanPostingTree(index, rootPostingTree, TRUE);
@@ -162,10 +156,7 @@ scanPostingTree(Relation index, GinScanEntry scanEntry,
 		if (GinPageRightMost(page))
 			break;				/* no more pages */
 
-		blkno = GinPageGetOpaque(page)->rightlink;
-		LockBuffer(buffer, GIN_UNLOCK);
-		buffer = ReleaseAndReadBuffer(buffer, index, blkno);
-		LockBuffer(buffer, GIN_SHARE);
+		buffer = ginStepRight(buffer, index, GIN_SHARE);
 	}
 
 	UnlockReleaseBuffer(buffer);
@@ -543,7 +534,6 @@ static void
 entryGetNextItem(GinState *ginstate, GinScanEntry entry)
 {
 	Page		page;
-	BlockNumber blkno;
 
 	for (;;)
 	{
@@ -561,23 +551,18 @@ entryGetNextItem(GinState *ginstate, GinScanEntry entry)
 			 * It's needed to go by right link. During that we should refind
 			 * first ItemPointer greater that stored
 			 */
-
-			blkno = GinPageGetOpaque(page)->rightlink;
-
-			LockBuffer(entry->buffer, GIN_UNLOCK);
-			if (blkno == InvalidBlockNumber)
+			if (GinPageRightMost(page))
 			{
-				ReleaseBuffer(entry->buffer);
+				UnlockReleaseBuffer(entry->buffer);
 				ItemPointerSetInvalid(&entry->curItem);
 				entry->buffer = InvalidBuffer;
 				entry->isFinished = TRUE;
 				return;
 			}
 
-			entry->buffer = ReleaseAndReadBuffer(entry->buffer,
-												 ginstate->index,
-												 blkno);
-			LockBuffer(entry->buffer, GIN_SHARE);
+			entry->buffer = ginStepRight(entry->buffer,
+										 ginstate->index,
+										 GIN_SHARE);
 			page = BufferGetPage(entry->buffer);
 
 			entry->offset = InvalidOffsetNumber;
