@@ -47,8 +47,13 @@ pg_dump <replaceable class="parameter">dbname</replaceable> &gt; <replaceable cl
    that you can perform this backup procedure from any remote host that has
    access to the database. But remember that <application>pg_dump</>
    does not operate with special permissions. In particular, it must
-   have read access to all tables that you want to back up, so in
-   practice you almost always have to run it as a database superuser.
+   have read access to all tables that you want to back up, so in order
+   to back up the entire database you almost always have to run it as a
+   database superuser.  (If you do not sufficient privileges to back up the
+   entire database, you can still back up portions of the database to which
+   you do have access using options such as
+   <option>-n <replaceable>schema</replaceable></option>
+   or <option>-t <replaceable>table</replaceable></option>.)
   </para>
 
   <para>
