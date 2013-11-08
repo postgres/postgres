@@ -636,3 +636,67 @@ where a.thousand = b.thousand
 ----------
 (0 rows)
 
+--
+-- Check that nested sub-selects are not pulled up if they contain volatiles
+--
+explain (verbose, costs off)
+  select x, x from
+    (select (select now()) as x from (values(1),(2)) v(y)) ss;
+        QUERY PLAN         
+---------------------------
+ Values Scan on "*VALUES*"
+   Output: $0, $1
+   InitPlan 1 (returns $0)
+     ->  Result
+           Output: now()
+   InitPlan 2 (returns $1)
+     ->  Result
+           Output: now()
+(8 rows)
+
+explain (verbose, costs off)
+  select x, x from
+    (select (select random()) as x from (values(1),(2)) v(y)) ss;
+            QUERY PLAN            
+----------------------------------
+ Subquery Scan on ss
+   Output: ss.x, ss.x
+   ->  Values Scan on "*VALUES*"
+         Output: $0
+         InitPlan 1 (returns $0)
+           ->  Result
+                 Output: random()
+(7 rows)
+
+explain (verbose, costs off)
+  select x, x from
+    (select (select now() where y=y) as x from (values(1),(2)) v(y)) ss;
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ Values Scan on "*VALUES*"
+   Output: (SubPlan 1), (SubPlan 2)
+   SubPlan 1
+     ->  Result
+           Output: now()
+           One-Time Filter: ("*VALUES*".column1 = "*VALUES*".column1)
+   SubPlan 2
+     ->  Result
+           Output: now()
+           One-Time Filter: ("*VALUES*".column1 = "*VALUES*".column1)
+(10 rows)
+
+explain (verbose, costs off)
+  select x, x from
+    (select (select random() where y=y) as x from (values(1),(2)) v(y)) ss;
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
+ Subquery Scan on ss
+   Output: ss.x, ss.x
+   ->  Values Scan on "*VALUES*"
+         Output: (SubPlan 1)
+         SubPlan 1
+           ->  Result
+                 Output: random()
+                 One-Time Filter: ("*VALUES*".column1 = "*VALUES*".column1)
+(8 rows)
+
