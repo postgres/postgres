@@ -331,8 +331,8 @@ PROCLOCK_PRINT(const char *where, const PROCLOCK *proclockP)
 }
 #else							/* not LOCK_DEBUG */
 
-#define LOCK_PRINT(where, lock, type)
-#define PROCLOCK_PRINT(where, proclockP)
+#define LOCK_PRINT(where, lock, type)  ((void) 0)
+#define PROCLOCK_PRINT(where, proclockP)  ((void) 0)
 #endif   /* not LOCK_DEBUG */
 
 
