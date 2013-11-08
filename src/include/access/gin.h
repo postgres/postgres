@@ -438,6 +438,7 @@ typedef struct GinBtreeData
 
 extern GinBtreeStack *ginPrepareFindLeafPage(GinBtree btree, BlockNumber blkno);
 extern GinBtreeStack *ginFindLeafPage(GinBtree btree, GinBtreeStack *stack);
+extern Buffer ginStepRight(Buffer buffer, Relation index, int lockmode);
 extern void freeGinBtreeStack(GinBtreeStack *stack);
 extern void ginInsertValue(GinBtree btree, GinBtreeStack *stack);
 extern void findParents(GinBtree btree, GinBtreeStack *stack, BlockNumber rootBlkno);
