@@ -159,7 +159,7 @@ ecpg_start_test(const char *testname,
 }
 
 static void
-ecpg_init(void)
+ecpg_init(int argc, char *argv[])
 {
 	/* nothing to do here at the moment */
 }
