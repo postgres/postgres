@@ -13488,7 +13488,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 	 * dump properties we only have ALTER TABLE syntax for
 	 */
 	if ((tbinfo->relkind == RELKIND_RELATION || tbinfo->relkind == RELKIND_MATVIEW) &&
-	    tbinfo->relreplident != REPLICA_IDENTITY_DEFAULT)
+		tbinfo->relreplident != REPLICA_IDENTITY_DEFAULT)
 	{
 		if (tbinfo->relreplident == REPLICA_IDENTITY_INDEX)
 		{
@@ -13497,12 +13497,12 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		else if (tbinfo->relreplident == REPLICA_IDENTITY_NOTHING)
 		{
 			appendPQExpBuffer(q, "\nALTER TABLE ONLY %s REPLICA IDENTITY NOTHING;\n",
-			                  fmtId(tbinfo->dobj.name));
+							  fmtId(tbinfo->dobj.name));
 		}
 		else if (tbinfo->relreplident == REPLICA_IDENTITY_FULL)
 		{
 			appendPQExpBuffer(q, "\nALTER TABLE ONLY %s REPLICA IDENTITY FULL;\n",
-			                  fmtId(tbinfo->dobj.name));
+							  fmtId(tbinfo->dobj.name));
 		}
 	}
 
@@ -13681,9 +13681,9 @@ dumpIndex(Archive *fout, IndxInfo *indxinfo)
 		if (indxinfo->indisreplident)
 		{
 			appendPQExpBuffer(q, "\nALTER TABLE ONLY %s REPLICA IDENTITY USING",
-			                  fmtId(tbinfo->dobj.name));
+							  fmtId(tbinfo->dobj.name));
 			appendPQExpBuffer(q, " INDEX %s;\n",
-			                  fmtId(indxinfo->dobj.name));
+							  fmtId(indxinfo->dobj.name));
 		}
 
 		/*

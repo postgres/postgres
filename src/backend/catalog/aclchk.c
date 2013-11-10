@@ -3861,7 +3861,7 @@ pg_language_aclmask(Oid lang_oid, Oid roleid,
  * relative to the same snapshot that will be used to read the underlying
  * data.  The caller will actually pass NULL for an instantaneous MVCC
  * snapshot, since all we do with the snapshot argument is pass it through
- * to systable_beginscan().  
+ * to systable_beginscan().
  */
 AclMode
 pg_largeobject_aclmask_snapshot(Oid lobj_oid, Oid roleid,

@@ -5,7 +5,7 @@
 
 
 -- A version of 1.1 was shipped with these objects mistakenly in 9.3.0.
--- Therefore we only add them if we detect that they aren't already there and 
+-- Therefore we only add them if we detect that they aren't already there and
 -- dependent on the extension.
 
 DO LANGUAGE plpgsql
@@ -26,7 +26,7 @@ BEGIN
             AND  x.extname = 'hstore';
 
    IF NOT FOUND
-   THEN 
+   THEN
 
         CREATE FUNCTION hstore_to_json(hstore)
         RETURNS json

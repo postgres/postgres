@@ -109,8 +109,8 @@ set conn [eval pg_connect $dbname $options]
 
 if {$i == $argc} {
     pg_select $conn "select distinct modname from pltcl_modules	\
-    		order by modname"	\
-    		MOD {
+		order by modname"	\
+		MOD {
         listmodule $conn $MOD(modname)
     }
 } else {

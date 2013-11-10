@@ -4250,7 +4250,7 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 	pg_timezone_abbrev_initialize();
 
 	set_default_effective_cache_size();
-	    
+
 	/*
 	 * Figure out where pg_hba.conf is, and make sure the path is absolute.
 	 */

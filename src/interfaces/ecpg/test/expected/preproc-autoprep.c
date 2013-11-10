@@ -25,7 +25,7 @@
 
 static void test(void) {
   /* exec sql begin declare section */
-  	     
+	     
 	  
 	   
   
@@ -127,7 +127,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 
   for (i=0; i<4; i++)
-  	printf("item[%d] = %d\n", i, ind[i] ? -1 : item[i]);
+	printf("item[%d] = %d\n", i, ind[i] ? -1 : item[i]);
 
   /* declare C cursor for select Item1 from T */
 #line 35 "autoprep.pgc"

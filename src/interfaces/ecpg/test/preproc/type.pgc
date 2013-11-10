@@ -31,7 +31,7 @@ main (void)
   c ptr = NULL;
   struct varchar
   {
-  	int len;
+	int len;
 	char text[10];
   } vc;
   EXEC SQL END DECLARE SECTION;

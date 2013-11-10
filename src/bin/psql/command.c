@@ -1041,20 +1041,21 @@ exec_command(const char *cmd,
 
 		if (!opt0)
 		{
-		       size_t i;
-		       /* list all variables */
-		       static const char *const my_list[] = {
+			/* list all variables */
+
+			int i;
+			static const char *const my_list[] = {
 				"border", "columns", "expanded", "fieldsep",
 				"footer", "format", "linestyle", "null",
 				"numericlocale", "pager", "recordsep",
 				"tableattr", "title", "tuples_only",
-				NULL };
-		       for (i = 0; my_list[i] != NULL; i++) {
-			       printPsetInfo(my_list[i], &pset.popt);
-		       }
+				NULL
+			};
 
-		       success = true;
+			for (i = 0; my_list[i] != NULL; i++)
+				printPsetInfo(my_list[i], &pset.popt);
 
+			success = true;
 		}
 		else
 			success = do_pset(opt0, opt1, &pset.popt, pset.quiet);
@@ -2432,8 +2433,8 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 		return false;
 	}
 
-       if (!quiet)
-	       printPsetInfo(param, &pset.popt);
+	if (!quiet)
+		printPsetInfo(param, &pset.popt);
 
 	return true;
 }

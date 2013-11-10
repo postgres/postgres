@@ -8815,7 +8815,7 @@ ATExecSetRelOptions(Relation rel, List *defList, AlterTableType operation,
 		 * actually auto-updatable or not.
 		 */
 		if (check_option)
-		{   
+		{
 			const char *view_updatable_error =
 				view_query_is_auto_updatable(view_query,
 											 security_barrier, true);
@@ -10044,10 +10044,10 @@ relation_mark_replica_identity(Relation rel, char ri_type, Oid indexOid,
 	 */
 	pg_class = heap_open(RelationRelationId, RowExclusiveLock);
 	pg_class_tuple = SearchSysCacheCopy1(RELOID,
-	                                     ObjectIdGetDatum(RelationGetRelid(rel)));
+										 ObjectIdGetDatum(RelationGetRelid(rel)));
 	if (!HeapTupleIsValid(pg_class_tuple))
 		elog(ERROR, "cache lookup failed for relation \"%s\"",
-		     RelationGetRelationName(rel));
+			 RelationGetRelationName(rel));
 	pg_class_form = (Form_pg_class) GETSTRUCT(pg_class_tuple);
 	if (pg_class_form->relreplident != ri_type)
 	{
@@ -10115,7 +10115,7 @@ relation_mark_replica_identity(Relation rel, char ri_type, Oid indexOid,
 			simple_heap_update(pg_index, &pg_index_tuple->t_self, pg_index_tuple);
 			CatalogUpdateIndexes(pg_index, pg_index_tuple);
 			InvokeObjectPostAlterHookArg(IndexRelationId, thisIndexOid, 0,
-			                             InvalidOid, is_internal);
+										 InvalidOid, is_internal);
 		}
 		heap_freetuple(pg_index_tuple);
 	}
@@ -10214,15 +10214,15 @@ ATExecReplicaIdentity(Relation rel, ReplicaIdentityStmt *stmt, LOCKMODE lockmode
 		/* Of the system columns, only oid is indexable. */
 		if (attno <= 0 && attno != ObjectIdAttributeNumber)
 			elog(ERROR, "internal column %u in unique index \"%s\"",
-			     attno, RelationGetRelationName(indexRel));
+				 attno, RelationGetRelationName(indexRel));
 
 		attr = rel->rd_att->attrs[attno - 1];
 		if (!attr->attnotnull)
 			ereport(ERROR,
-			        (errcode(ERRCODE_WRONG_OBJECT_TYPE),
-			         errmsg("index \"%s\" cannot be used as replica identity because column \"%s\" is nullable",
-			                RelationGetRelationName(indexRel),
-			                NameStr(attr->attname))));
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("index \"%s\" cannot be used as replica identity because column \"%s\" is nullable",
+							RelationGetRelationName(indexRel),
+							NameStr(attr->attname))));
 	}
 
 	/* This index is suitable for use as a replica identity. Mark it. */

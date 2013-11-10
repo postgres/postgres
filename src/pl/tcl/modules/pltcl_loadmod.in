@@ -84,7 +84,7 @@ proc __PLTcl_loadmod_check_table {conn tabname expnames exptypes} {
     set found 0
 
     pg_select $conn "select C.relname, A.attname, A.attnum, T.typname 	\
-    		from pg_catalog.pg_class C, pg_catalog.pg_attribute A, pg_catalog.pg_type T		\
+		from pg_catalog.pg_class C, pg_catalog.pg_attribute A, pg_catalog.pg_type T		\
 		where C.relname = '$tabname'				\
 		  and A.attrelid = C.oid				\
 		  and A.attnum > 0					\
@@ -449,7 +449,7 @@ proc __PLTcl_loadmod_load_modules {conn} {
 	    set srctext [string range $srctext 4000 end]
 
 	    pg_result [							\
-	    	pg_exec $conn "insert into pltcl_modules values (	\
+		pg_exec $conn "insert into pltcl_modules values (	\
 			'$xname', $i, '$xpart')"			\
 	    ] -clear
 	    incr i

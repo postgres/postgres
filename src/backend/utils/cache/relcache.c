@@ -2667,7 +2667,7 @@ RelationBuildLocalRelation(const char *relname,
 
 	/* system relations and non-table objects don't have one */
 	if (!IsSystemNamespace(relnamespace) &&
-	    (relkind == RELKIND_RELATION || relkind == RELKIND_MATVIEW))
+		(relkind == RELKIND_RELATION || relkind == RELKIND_MATVIEW))
 		rel->rd_rel->relreplident = REPLICA_IDENTITY_DEFAULT;
 	else
 		rel->rd_rel->relreplident = REPLICA_IDENTITY_NOTHING;

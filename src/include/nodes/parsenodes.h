@@ -763,7 +763,7 @@ typedef struct RangeTblEntry
 	 * collations.  Note that in this case, ORDINALITY is not permitted, so
 	 * there is no extra ordinal column to be allowed for.
 	 *
-     * Otherwise, those fields are NIL, and the result column types must be
+	 * Otherwise, those fields are NIL, and the result column types must be
 	 * derived from the funcexpr while treating the ordinal column, if
 	 * present, as a special case.  (see get_rte_attribute_*)
 	 */

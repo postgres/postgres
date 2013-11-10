@@ -341,4 +341,3 @@ insert into test_json_agg values ('rec1','"a key" =>1, b => t, c => null, d=> 12
        ('rec2','"a key" =>2, b => f, c => "null", d=> -12345, e => 012345.6, f=> -1.234, g=> 0.345e-4');
 select json_agg(q) from test_json_agg q;
 select json_agg(q) from (select f1, hstore_to_json_loose(f2) as f2 from test_json_agg) q;
-

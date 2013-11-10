@@ -542,10 +542,10 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})(.*\\{space})*.
 				else
 				{
 					/*
-			         * When we fail to match $...$ to dolqstart, transfer
-			         * the $... part to the output, but put back the final
-			         * $ for rescanning.  Consider $delim$...$junk$delim$
-			         */
+					 * When we fail to match $...$ to dolqstart, transfer
+					 * the $... part to the output, but put back the final
+					 * $ for rescanning.  Consider $delim$...$junk$delim$
+					 */
 					addlit(yytext, yyleng-1);
 					yyless(yyleng-1);
 				}
@@ -1262,11 +1262,11 @@ static void
 addlitchar(unsigned char ychar)
 {
 	/* enlarge buffer if needed */
-        if ((literallen+1) >= literalalloc)
-        {
-                literalalloc *= 2;
-                literalbuf = (char *) realloc(literalbuf, literalalloc);
-        }
+	if ((literallen+1) >= literalalloc)
+	{
+		literalalloc *= 2;
+		literalbuf = (char *) realloc(literalbuf, literalalloc);
+	}
 	/* append new data, add trailing null */
 	literalbuf[literallen] = ychar;
 	literallen += 1;

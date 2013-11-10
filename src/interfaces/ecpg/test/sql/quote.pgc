@@ -48,7 +48,7 @@ int main() {
 
   while (true)
   {
-  	EXEC SQL FETCH C INTO :i, :var;
+	EXEC SQL FETCH C INTO :i, :var;
 	printf("value: %d %s\n", i, var);
   }
 

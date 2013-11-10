@@ -2142,7 +2142,6 @@ process_log_prefix_padding(const char *p, int *ppadding)
 			return NULL;
 		paddingsign = -1;
 	}
-	
 
 	/* generate an int version of the numerical string */
 	while (*p >= '0' && *p <= '9')
@@ -2169,7 +2168,7 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 	/* has counter been reset in current process? */
 	static int	log_my_pid = 0;
 	int			padding;
-	const char *p;	
+	const char *p;
 
 	/*
 	 * This is one of the few places where we'd rather not inherit a static
@@ -2284,7 +2283,7 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 				if (padding != 0)
 				{
 					char strfbuf[128];
-					snprintf(strfbuf, sizeof(strfbuf) - 1, "%lx.%x", 
+					snprintf(strfbuf, sizeof(strfbuf) - 1, "%lx.%x",
 						(long) (MyStartTime), MyProcPid);
 					appendStringInfo(buf, "%*s", padding, strfbuf);
 				}
@@ -2352,13 +2351,13 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 			case 'r':
 				if (MyProcPort && MyProcPort->remote_host)
 				{
-					if (padding != 0) 
+					if (padding != 0)
 					{
 						if (MyProcPort->remote_port && MyProcPort->remote_port[0] != '\0')
 						{
- 							/* 
+							/*
 							 * This option is slightly special as the port number
-		 					 * may be appended onto the end. Here we need to build
+							 * may be appended onto the end. Here we need to build
 							 * 1 string which contains the remote_host and optionally
 							 * the remote_port (if set) so we can properly align the
 							 * string.
@@ -2371,7 +2370,6 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 						}
 						else
 							appendStringInfo(buf, "%*s", padding, MyProcPort->remote_host);
-						
 					}
 					else
 					{
@@ -2379,7 +2377,7 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 						appendStringInfoString(buf, MyProcPort->remote_host);
 						if (MyProcPort->remote_port &&
 							MyProcPort->remote_port[0] != '\0')
-							appendStringInfo(buf, "(%s)", 
+							appendStringInfo(buf, "(%s)",
 								MyProcPort->remote_port);
 					}
 
@@ -2389,7 +2387,7 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 										   padding > 0 ? padding : -padding);
 				break;
 			case 'h':
-				if (MyProcPort && MyProcPort->remote_host) 
+				if (MyProcPort && MyProcPort->remote_host)
 				{
 					if (padding != 0)
 						appendStringInfo(buf, "%*s", padding, MyProcPort->remote_host);

@@ -185,7 +185,7 @@ static	List			*read_raise_options(void);
 %type <forvariable>	for_variable
 %type <stmt>	for_control
 
-%type <str>		any_identifier opt_block_label opt_label option_value 
+%type <str>		any_identifier opt_block_label opt_label option_value
 
 %type <list>	proc_sect proc_stmts stmt_elsifs stmt_else
 %type <loop_body>	loop_body

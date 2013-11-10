@@ -42,4 +42,3 @@ case only these files will be changed, and nothing else will be touched. If the
 first non-option argument is not a .c or .h file, it is treated as the name
 of a typedefs file for legacy reasons, but this use is deprecated - use the
 --typedefs option instead.
-

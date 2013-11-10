@@ -1786,7 +1786,7 @@ escape_json(StringInfo buf, const char *str)
  *
  * Returns the type of the outermost JSON value as TEXT.  Possible types are
  * "object", "array", "string", "number", "boolean", and "null".
- * 
+ *
  * Performs a single call to json_lex() to get the first token of the supplied
  * value.  This initial token uniquely determines the value's type.  As our
  * input must already have been validated by json_in() or json_recv(), the
@@ -1796,39 +1796,39 @@ escape_json(StringInfo buf, const char *str)
 Datum
 json_typeof(PG_FUNCTION_ARGS)
 {
-    text       *json = PG_GETARG_TEXT_P(0);
+	text	   *json = PG_GETARG_TEXT_P(0);
 
-    JsonLexContext *lex = makeJsonLexContext(json, false);
-    JsonTokenType tok;
-    char *type;
+	JsonLexContext *lex = makeJsonLexContext(json, false);
+	JsonTokenType tok;
+	char *type;
 
-    /* Lex exactly one token from the input and check its type. */
-    json_lex(lex);
-    tok = lex_peek(lex);
-    switch (tok)
-    {
-        case JSON_TOKEN_OBJECT_START:
-            type = "object";
-            break;
-        case JSON_TOKEN_ARRAY_START:
-            type = "array";
-            break;
-        case JSON_TOKEN_STRING:
-            type = "string";
-            break;
-        case JSON_TOKEN_NUMBER:
-            type = "number";
-            break;
-        case JSON_TOKEN_TRUE:
-        case JSON_TOKEN_FALSE:
-            type = "boolean";
-            break;
-        case JSON_TOKEN_NULL:
-            type = "null";
-            break;
-        default:
-            elog(ERROR, "unexpected json token: %d", tok);
-    }
+	/* Lex exactly one token from the input and check its type. */
+	json_lex(lex);
+	tok = lex_peek(lex);
+	switch (tok)
+	{
+	case JSON_TOKEN_OBJECT_START:
+		type = "object";
+		break;
+	case JSON_TOKEN_ARRAY_START:
+		type = "array";
+		break;
+	case JSON_TOKEN_STRING:
+		type = "string";
+		break;
+	case JSON_TOKEN_NUMBER:
+		type = "number";
+		break;
+	case JSON_TOKEN_TRUE:
+	case JSON_TOKEN_FALSE:
+		type = "boolean";
+		break;
+	case JSON_TOKEN_NULL:
+		type = "null";
+		break;
+	default:
+		elog(ERROR, "unexpected json token: %d", tok);
+	}
 
-    PG_RETURN_TEXT_P(cstring_to_text(type));
+	PG_RETURN_TEXT_P(cstring_to_text(type));
 }

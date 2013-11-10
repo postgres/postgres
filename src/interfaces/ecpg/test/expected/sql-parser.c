@@ -25,7 +25,7 @@
 
 int main() {
   /* exec sql begin declare section */
-  	   
+	   
   
 #line 10 "parser.pgc"
  int item [ 3 ] , ind [ 3 ] , i ;
@@ -81,7 +81,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 
   for (i=0; i<3; i++)
-  	printf("item[%d] = %d\n", i, ind[i] ? -1 : item[i]);
+	printf("item[%d] = %d\n", i, ind[i] ? -1 : item[i]);
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "alter table T alter Item1 type bigint", ECPGt_EOIT, ECPGt_EORT);
 #line 31 "parser.pgc"

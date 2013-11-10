@@ -60,4 +60,3 @@ WDT     32400 D  # West Australian Daylight-Saving Time (not in zic)
 WST     28800    # Western Standard Time (Australia)
                  #     (Antarctica/Casey)
                  #     (Australia/Perth)
-

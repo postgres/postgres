@@ -7,7 +7,7 @@ EXEC SQL INCLUDE ../regression;
 
 static void test(void) {
   EXEC SQL BEGIN DECLARE SECTION;
-  	int item[4], ind[4], i = 1;
+	int item[4], ind[4], i = 1;
 	int item1, ind1;
 	char sqlstr[64] = "SELECT item2 FROM T ORDER BY item2 NULLS LAST";
   EXEC SQL END DECLARE SECTION;
@@ -30,7 +30,7 @@ static void test(void) {
   EXEC SQL SELECT Item2 INTO :item:ind FROM T ORDER BY Item2 NULLS LAST;
 
   for (i=0; i<4; i++)
-  	printf("item[%d] = %d\n", i, ind[i] ? -1 : item[i]);
+	printf("item[%d] = %d\n", i, ind[i] ? -1 : item[i]);
 
   EXEC SQL DECLARE C CURSOR FOR SELECT Item1 FROM T;
 

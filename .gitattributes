@@ -1,0 +1,34 @@
+*		whitespace=space-before-tab,trailing-space
+*.[chly]	whitespace=space-before-tab,trailing-space,indent-with-non-tab,tabwidth=4
+*.dsl		whitespace=space-before-tab,trailing-space,tab-in-indent
+*.patch		-whitespace
+*.pl		whitespace=space-before-tab,trailing-space,tabwidth=4
+*.po		whitespace=space-before-tab,trailing-space,tab-in-indent,-blank-at-eof
+*.sgml		whitespace=space-before-tab,trailing-space,tab-in-indent,-blank-at-eol
+*.x[ms]l	whitespace=space-before-tab,trailing-space,tab-in-indent
+
+# Avoid confusing ASCII underlines with leftover merge conflict markers
+README		conflict-marker-size=32
+README.*	conflict-marker-size=32
+
+# Certain data files that contain special whitespace, and other special cases
+**/data/*.data					-whitespace
+contrib/tsearch2/sql/tsearch2.sql		whitespace=space-before-tab,blank-at-eof,-blank-at-eol
+doc/bug.template				whitespace=space-before-tab,-blank-at-eof,blank-at-eol
+src/backend/catalog/sql_features.txt		whitespace=space-before-tab,blank-at-eof,-blank-at-eol
+src/backend/tsearch/hunspell_sample.affix	whitespace=-blank-at-eof
+
+# Test output files that contain extra whitespace
+**/expected/*.out			-whitespace
+**/output/*.source			-whitespace
+src/interfaces/ecpg/test/expected/*	-whitespace
+src/interfaces/libpq/test/expected.out	whitespace=-blank-at-eof
+
+# These files are maintained or generated elsewhere.  We take them as is.
+configure				-whitespace
+ppport.h				-whitespace
+src/backend/regex/COPYRIGHT		-whitespace
+src/backend/regex/re_syntax.n		-whitespace
+src/backend/snowball/libstemmer/*.c	-whitespace
+src/backend/utils/mb/Unicode/*-std.txt	-whitespace
+src/include/snowball/libstemmer/*	-whitespace

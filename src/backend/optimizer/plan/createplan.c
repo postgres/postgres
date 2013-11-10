@@ -116,7 +116,7 @@ static TidScan *make_tidscan(List *qptlist, List *qpqual, Index scanrelid,
 			 List *tidquals);
 static FunctionScan *make_functionscan(List *qptlist, List *qpqual,
 				  Index scanrelid, Node *funcexpr, bool ordinality,
-                  List *funccolnames, List *funccoltypes, List *funccoltypmods,
+				  List *funccolnames, List *funccoltypes, List *funccoltypmods,
 				  List *funccolcollations);
 static ValuesScan *make_valuesscan(List *qptlist, List *qpqual,
 				Index scanrelid, List *values_lists);

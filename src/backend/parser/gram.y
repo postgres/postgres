@@ -3974,7 +3974,7 @@ DropFdwStmt: DROP FOREIGN DATA_P WRAPPER name opt_drop_behavior
 					$$ = (Node *) n;
 				}
 				|  DROP FOREIGN DATA_P WRAPPER IF_P EXISTS name opt_drop_behavior
-                {
+				{
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_FDW;
 					n->objects = list_make1(list_make1(makeString($7)));
@@ -4136,7 +4136,7 @@ DropForeignServerStmt: DROP SERVER name opt_drop_behavior
 					$$ = (Node *) n;
 				}
 				|  DROP SERVER IF_P EXISTS name opt_drop_behavior
-                {
+				{
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_FOREIGN_SERVER;
 					n->objects = list_make1(list_make1(makeString($5)));
@@ -4874,8 +4874,8 @@ AlterEnumStmt:
 		 ;
 
 opt_if_not_exists: IF_P NOT EXISTS              { $$ = true; }
-         | /* empty */                          { $$ = false; }
-         ;
+		| /* empty */                          { $$ = false; }
+		;
 
 
 /*****************************************************************************
@@ -11168,44 +11168,44 @@ func_application: func_name '(' ')'
 					n->agg_star = TRUE;
 					$$ = (Node *)n;
 				}
-        ;
+		;
 
 
 /*
- * func_expr and its cousin func_expr_windowless is split out from c_expr just 
- * so that we have classifications for "everything that is a function call or 
- * looks like one".  This isn't very important, but it saves us having to document 
- * which variants are legal in the backwards-compatible functional-index syntax 
+ * func_expr and its cousin func_expr_windowless is split out from c_expr just
+ * so that we have classifications for "everything that is a function call or
+ * looks like one".  This isn't very important, but it saves us having to document
+ * which variants are legal in the backwards-compatible functional-index syntax
  * for CREATE INDEX.
  * (Note that many of the special SQL functions wouldn't actually make any
  * sense as functional index entries, but we ignore that consideration here.)
  */
-func_expr: func_application filter_clause over_clause 
+func_expr: func_application filter_clause over_clause
 				{
-              		FuncCall *n = (FuncCall*)$1;
+					FuncCall *n = (FuncCall*)$1;
 					n->agg_filter = $2;
 					n->over = $3;
 					$$ = (Node*)n;
-				} 
+				}
 			| func_expr_common_subexpr
 				{ $$ = $1; }
 		;
 
-/* 
+/*
  * As func_expr but does not accept WINDOW functions directly (they
  * can still be contained in arguments for functions etc.)
- * Use this when window expressions are not allowed, so to disambiguate 
+ * Use this when window expressions are not allowed, so to disambiguate
  * the grammar. (e.g. in CREATE INDEX)
  */
-func_expr_windowless: 
+func_expr_windowless:
 			func_application						{ $$ = $1; }
-			| func_expr_common_subexpr 				{ $$ = $1; }
+			| func_expr_common_subexpr				{ $$ = $1; }
 		;
 
 /*
- * Special expression 
+ * Special expression
  */
-func_expr_common_subexpr:	
+func_expr_common_subexpr:
 			COLLATION FOR '(' a_expr ')'
 				{
 					$$ = (Node *) makeFuncCall(SystemFuncName("pg_collation_for"),
@@ -11386,8 +11386,8 @@ func_expr_common_subexpr:
 					 * at the moment they result in the same thing.
 					 */
 					$$ = (Node *) makeFuncCall(SystemFuncName(((Value *)llast($5->names))->val.str),
-											    list_make1($3),
-											    @1);
+												list_make1($3),
+												@1);
 				}
 			| TRIM '(' BOTH trim_list ')'
 				{
@@ -11596,9 +11596,9 @@ window_definition:
 		;
 
 filter_clause:
-             FILTER '(' WHERE a_expr ')'            { $$ = $4; }
-             | /*EMPTY*/                            { $$ = NULL; }
-         ;
+			FILTER '(' WHERE a_expr ')'				{ $$ = $4; }
+			| /*EMPTY*/								{ $$ = NULL; }
+		;
 
 over_clause: OVER window_specification
 				{ $$ = $2; }

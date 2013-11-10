@@ -65,4 +65,3 @@ print
 "Manually update doc/src/sgml/legal.sgml and src/interfaces/libpq/libpq.rc.in too.\n";
 print
 "Also update ./COPYRIGHT and doc/src/sgml/legal.sgml in all back branches.\n";
-

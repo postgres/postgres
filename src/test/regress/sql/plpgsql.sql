@@ -2215,7 +2215,7 @@ create function excpt_test2() returns void as $$
 begin
     begin
         begin
-    	    raise notice '% %', sqlstate, sqlerrm;
+            raise notice '% %', sqlstate, sqlerrm;
         end;
     end;
 end; $$ language plpgsql;
@@ -2225,7 +2225,7 @@ select excpt_test2();
 create function excpt_test3() returns void as $$
 begin
     begin
-    	raise exception 'user exception';
+        raise exception 'user exception';
     exception when others then
 	    raise notice 'caught exception % %', sqlstate, sqlerrm;
 	    begin
@@ -4084,4 +4084,3 @@ select outer_outer_func(20);
 drop function outer_outer_func(int);
 drop function outer_func(int);
 drop function inner_func(int);
-

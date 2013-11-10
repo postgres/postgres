@@ -2693,7 +2693,7 @@ getObjectIdentity(const ObjectAddress *object)
 			break;
 
 		case OCLASS_PROC:
-			appendStringInfoString(&buffer, 
+			appendStringInfoString(&buffer,
 							 format_procedure_qualified(object->objectId));
 			break;
 
@@ -3288,7 +3288,7 @@ getObjectIdentity(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for event trigger %u",
 						 object->objectId);
 				trigForm = (Form_pg_event_trigger) GETSTRUCT(tup);
-				appendStringInfoString(&buffer, 
+				appendStringInfoString(&buffer,
 							   quote_identifier(NameStr(trigForm->evtname)));
 				ReleaseSysCache(tup);
 				break;

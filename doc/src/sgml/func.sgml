@@ -13469,7 +13469,7 @@ SELECT * FROM unnest2(ARRAY[[1,2],[3,4]]);
 <programlisting>
 -- set returning function WITH ORDINALITY
 SELECT * FROM pg_ls_dir('.') WITH ORDINALITY AS t(ls,n);
-       ls        | n  
+       ls        | n
 -----------------+----
  pg_serial       |  1
  pg_twophase     |  2

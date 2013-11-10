@@ -368,8 +368,7 @@ usage(void)
 		   "  -j, --jobs=NUM           number of threads (default: 1)\n"
 		   "  -l, --log                write transaction times to log file\n"
 		   "  -M, --protocol=simple|extended|prepared\n"
-		   "                           protocol for submitting queries "
-		                                           "(default: simple)\n"
+		   "                           protocol for submitting queries (default: simple)\n"
 		   "  -n, --no-vacuum          do not run VACUUM before tests\n"
 		   "  -N, --skip-some-updates  skip updates of pgbench_tellers and pgbench_branches\n"
 		   "  -P, --progress=NUM       show thread progress report every NUM seconds\n"
@@ -377,8 +376,7 @@ usage(void)
 		   "  -R, --rate=NUM           target rate in transactions per second\n"
 		   "  -s, --scale=NUM          report this scale factor in output\n"
 		   "  -S, --select-only        perform SELECT-only transactions\n"
-		   "  -t, --transactions       number of transactions each client runs "
-		                                             "(default: 10)\n"
+		   "  -t, --transactions       number of transactions each client runs (default: 10)\n"
 		   "  -T, --time=NUM           duration of benchmark test in seconds\n"
 		   "  -v, --vacuum-all         vacuum all four standard tables before tests\n"
 		   "  --aggregate-interval=NUM aggregate data over NUM seconds\n"
@@ -933,7 +931,7 @@ top:
 		 * Use inverse transform sampling to randomly generate a delay, such
 		 * that the series of delays will approximate a Poisson distribution
 		 * centered on the throttle_delay time.
-                 *
+		 *
 		 * 10000 implies a 9.2 (-log(1/10000)) to 0.0 (log 1) delay multiplier,
 		 * and results in a 0.055 % target underestimation bias:
 		 *
@@ -1211,9 +1209,9 @@ top:
 	}
 
 	/*
-         * This ensures that a throttling delay is inserted before proceeding
-         * with sql commands, after the first transaction. The first transaction
-         * throttling is performed when first entering doCustom.
+	 * This ensures that a throttling delay is inserted before proceeding
+	 * with sql commands, after the first transaction. The first transaction
+	 * throttling is performed when first entering doCustom.
 	 */
 	if (trans_needs_throttle) {
 		trans_needs_throttle = false;
@@ -2180,7 +2178,7 @@ printResults(int ttype, int normal_xacts, int nclients,
 			   latency, 0.001 * sqrt(sqlat - 1000000.0 * latency * latency));
 	}
 	else
- 	{
+	{
 		/* only an average latency computed from the duration is available */
 		printf("latency average: %.3f ms\n",
 			   1000.0 * duration * nclients / normal_xacts);
@@ -2569,7 +2567,7 @@ main(int argc, char **argv)
 		}
 	}
 
-    /* compute a per thread delay */
+	/* compute a per thread delay */
 	throttle_delay *= nthreads;
 
 	if (argc > optind)

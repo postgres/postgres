@@ -1584,7 +1584,7 @@ psql_completion(char *text, int start, int end)
 	else if (pg_strcasecmp(prev4_wd, "REPLICA") == 0 &&
 			 pg_strcasecmp(prev3_wd, "IDENTITY") == 0 &&
 			 pg_strcasecmp(prev2_wd, "USING") == 0 &&
-	         pg_strcasecmp(prev_wd, "INDEX") == 0)
+			 pg_strcasecmp(prev_wd, "INDEX") == 0)
 	{
 		completion_info_charp = prev5_wd;
 		COMPLETE_WITH_QUERY(Query_for_index_of_table);

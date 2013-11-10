@@ -439,7 +439,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
         transactions go past their original scheduled end time, it is
         possible for later ones to catch up again.
        </para>
-       <para>        
+       <para>
         When throttling is active, the average and maximum transaction
         schedule lag time are reported in ms.  This is the delay between
         the original scheduled transaction time and the actual transaction

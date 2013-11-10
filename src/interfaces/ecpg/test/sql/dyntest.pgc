@@ -113,7 +113,7 @@ main ()
 	      break;
 	    case SQL3_DATE_TIME_TIMESTAMP:
 	    exec sql get descriptor MYDESC value :INDEX
-	    	:DATETIME_INTERVAL_CODE = datetime_interval_code;
+			:DATETIME_INTERVAL_CODE = datetime_interval_code;
 	      switch (DATETIME_INTERVAL_CODE)
 		{
 		case SQL3_DDT_DATE:
@@ -174,7 +174,7 @@ main ()
 		break;
 	      case SQL3_DATE_TIME_TIMESTAMP:
 	      exec sql get descriptor MYDESC value :INDEX
-	      	:DATETIME_INTERVAL_CODE = datetime_interval_code,
+			:DATETIME_INTERVAL_CODE = datetime_interval_code,
 		:STRINGVAR = data;
 		printf ("%d \"%s\"\n", DATETIME_INTERVAL_CODE, STRINGVAR);
 		break;

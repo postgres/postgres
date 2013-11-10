@@ -382,7 +382,7 @@ ALTER OPERATOR FAMILY alt_opf15 USING hash ADD FUNCTION 1 fn_opf15(int4, int2);
 DROP OPERATOR FAMILY alt_opf15 USING hash;
 ROLLBACK;
 
--- Should fail. In gist throw an error when giving different data types for function argument 
+-- Should fail. In gist throw an error when giving different data types for function argument
 -- without defining left / right type in ALTER OPERATOR FAMILY ... ADD FUNCTION
 CREATE OPERATOR FAMILY alt_opf16 USING gist;
 ALTER OPERATOR FAMILY alt_opf16 USING gist ADD FUNCTION 1 btint42cmp(int4, int2);

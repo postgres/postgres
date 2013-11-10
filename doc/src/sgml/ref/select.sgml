@@ -376,7 +376,7 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
         For example:
 <programlisting>
 SELECT * FROM unnest(ARRAY['a','b','c','d','e','f']) WITH ORDINALITY;
- unnest | ordinality 
+ unnest | ordinality
 --------+----------
  a      |        1
  b      |        2

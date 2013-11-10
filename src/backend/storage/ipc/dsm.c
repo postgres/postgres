@@ -544,7 +544,7 @@ dsm_backend_startup(void)
 		if (!dsm_control_segment_sane(dsm_control, dsm_control_mapped_size))
 		{
 			dsm_impl_op(DSM_OP_DETACH, control_handle, 0,
-					    &dsm_control_impl_private, &control_address,
+						&dsm_control_impl_private, &control_address,
 						&dsm_control_mapped_size, WARNING);
 			ereport(FATAL,
 					(errcode(ERRCODE_INTERNAL_ERROR),

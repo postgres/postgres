@@ -2311,13 +2311,13 @@ describeOneTableDetails(const char *schemaname,
 		}
 
 		if ((tableinfo.relkind == 'r' || tableinfo.relkind == 'm') &&
-		    tableinfo.relreplident != 'd' && tableinfo.relreplident != 'i')
+			tableinfo.relreplident != 'd' && tableinfo.relreplident != 'i')
 		{
 			const char *s = _("Replica Identity");
 
 			printfPQExpBuffer(&buf, "%s: %s",
-			                  s,
-			                  tableinfo.relreplident == 'n' ? "NOTHING" : "FULL");
+							  s,
+							  tableinfo.relreplident == 'n' ? "NOTHING" : "FULL");
 			printTableAddFooter(&cont, buf.data);
 		}
 

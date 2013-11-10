@@ -113,7 +113,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 30 "fetch.pgc"
 
   while (1) {
-  	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch 1 in C", ECPGt_EOIT, 
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch 1 in C", ECPGt_EOIT, 
 	ECPGt_int,&(i),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_char,(str),(long)25,(long)1,(25)*sizeof(char), 
@@ -182,7 +182,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 46 "fetch.pgc"
 
   while (1) {
-  	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch 1 in D", ECPGt_EOIT, 
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch 1 in D", ECPGt_EOIT, 
 	ECPGt_int,&(i),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_char,(str),(long)25,(long)1,(25)*sizeof(char), 

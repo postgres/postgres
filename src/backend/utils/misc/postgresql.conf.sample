@@ -370,12 +370,12 @@
 					#   panic
 
 #log_min_error_statement = error	# values in order of decreasing detail:
-				 	#   debug5
+					#   debug5
 					#   debug4
 					#   debug3
 					#   debug2
 					#   debug1
-				 	#   info
+					#   info
 					#   notice
 					#   warning
 					#   error

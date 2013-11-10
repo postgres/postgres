@@ -46,7 +46,7 @@ CREATE OR REPLACE FUNCTION plperl_concat(TEXT[]) RETURNS TEXT AS $$
 	my $array_arg = shift;
 	my $result = "";
 	my @arrays;
-	
+
 	push @arrays, @$array_arg;
 	while (@arrays > 0) {
 		my $el = shift @arrays;
@@ -68,7 +68,7 @@ CREATE TYPE foo AS (bar INTEGER, baz TEXT);
 CREATE OR REPLACE FUNCTION plperl_array_of_rows(foo[]) RETURNS TEXT AS $$
 	my $array_arg = shift;
 	my $result = "";
-	
+
 	for my $row_ref (@$array_arg) {
 		die "not a hash reference" unless (ref $row_ref eq "HASH");
 			$result .= $row_ref->{bar}." items of ".$row_ref->{baz}.";";
@@ -84,7 +84,7 @@ CREATE TYPE rowfoo AS (bar INTEGER, baz INTEGER[]);
 CREATE OR REPLACE FUNCTION plperl_sum_row_elements(rowfoo) RETURNS TEXT AS $$
 	my $row_ref = shift;
 	my $result;
-	
+
 	if (ref $row_ref ne 'HASH') {
 		$result = 0;
 	}
@@ -109,7 +109,7 @@ CREATE TYPE rowbar AS (foo rowfoo[]);
 CREATE OR REPLACE FUNCTION plperl_sum_array_of_rows(rowbar) RETURNS TEXT AS $$
 	my $rowfoo_ref = shift;
 	my $result = 0;
-	
+
 	if (ref $rowfoo_ref eq 'HASH') {
 		my $row_array_ref = $rowfoo_ref->{foo};
 		if (is_array_ref($row_array_ref)) {

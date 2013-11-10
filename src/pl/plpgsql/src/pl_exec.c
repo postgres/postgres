@@ -222,7 +222,7 @@ static Portal exec_dynquery_with_params(PLpgSQL_execstate *estate,
 						  const char *portalname, int cursorOptions);
 
 static char *format_expr_params(PLpgSQL_execstate *estate,
-					  			const PLpgSQL_expr *expr);
+								const PLpgSQL_expr *expr);
 static char *format_preparedparamsdata(PLpgSQL_execstate *estate,
 									   const PreparedParamsData *ppd);
 
@@ -3407,8 +3407,7 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 				ereport(ERROR,
 						(errcode(ERRCODE_NO_DATA_FOUND),
 						 errmsg("query returned no rows"),
-						 errdetail ?
-						 	errdetail_internal("parameters: %s", errdetail) : 0));
+						 errdetail ? errdetail_internal("parameters: %s", errdetail) : 0));
 			}
 			/* set the target to NULL(s) */
 			exec_move_row(estate, rec, row, NULL, tuptab->tupdesc);
@@ -3427,8 +3426,7 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 				ereport(ERROR,
 						(errcode(ERRCODE_TOO_MANY_ROWS),
 						 errmsg("query returned more than one row"),
-						 errdetail ?
-						 	errdetail_internal("parameters: %s", errdetail) : 0));
+						 errdetail ? errdetail_internal("parameters: %s", errdetail) : 0));
 			}
 			/* Put the first result row into the target */
 			exec_move_row(estate, rec, row, tuptab->vals[0], tuptab->tupdesc);
@@ -3601,8 +3599,7 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 				ereport(ERROR,
 						(errcode(ERRCODE_NO_DATA_FOUND),
 						 errmsg("query returned no rows"),
-						 errdetail ?
-						 	errdetail_internal("parameters: %s", errdetail) : 0));
+						 errdetail ? errdetail_internal("parameters: %s", errdetail) : 0));
 			}
 			/* set the target to NULL(s) */
 			exec_move_row(estate, rec, row, NULL, tuptab->tupdesc);
@@ -3621,8 +3618,7 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 				ereport(ERROR,
 						(errcode(ERRCODE_TOO_MANY_ROWS),
 						 errmsg("query returned more than one row"),
-						 errdetail ?
-						 	errdetail_internal("parameters: %s", errdetail) : 0));
+						 errdetail ? errdetail_internal("parameters: %s", errdetail) : 0));
 			}
 
 			/* Put the first result row into the target */

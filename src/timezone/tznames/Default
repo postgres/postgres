@@ -729,4 +729,3 @@ WAKT    43200    # Wake Time
 WFT     43200    # Wallis and Futuna Time
                  #     (Pacific/Wallis)
 YAPT    36000    # Yap Time (Micronesia) (not in zic)
-

@@ -877,7 +877,7 @@ GetBackgroundWorkerPid(BackgroundWorkerHandle *handle, pid_t *pidp)
 
 /*
  * Wait for a background worker to start up.
- * 
+ *
  * This is like GetBackgroundWorkerPid(), except that if the worker has not
  * yet started, we wait for it to do so; thus, BGWH_NOT_YET_STARTED is never
  * returned.  However, if the postmaster has died, we give up and return

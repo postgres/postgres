@@ -24,7 +24,7 @@
 
 int main() {
   /* exec sql begin declare section */
-  	    
+	    
   
 #line 9 "insupd.pgc"
  int i1 [ 3 ] , i2 [ 3 ] , i3 [ 3 ] , i4 ;
