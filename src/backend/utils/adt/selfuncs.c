@@ -4506,6 +4506,12 @@ examine_simple_variable(PlannerInfo *root, Var *var,
 		TargetEntry *ste;
 
 		/*
+		 * Punt if it's a whole-row var rather than a plain column reference.
+		 */
+		if (var->varattno == InvalidAttrNumber)
+			return;
+
+		/*
 		 * Punt if subquery uses set operations or GROUP BY, as these will
 		 * mash underlying columns' stats beyond recognition.  (Set ops are
 		 * particularly nasty; if we forged ahead, we would return stats
