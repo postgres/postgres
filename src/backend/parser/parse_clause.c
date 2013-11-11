@@ -720,13 +720,14 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		 * we always push them into the namespace, but mark them as not
 		 * lateral_ok if the jointype is wrong.
 		 *
+		 * Notice that we don't require the merged namespace list to be
+		 * conflict-free.  See the comments for scanNameSpaceForRefname().
+		 *
 		 * NB: this coding relies on the fact that list_concat is not
 		 * destructive to its second argument.
 		 */
 		lateral_ok = (j->jointype == JOIN_INNER || j->jointype == JOIN_LEFT);
 		setNamespaceLateralState(l_namespace, true, lateral_ok);
-
-		checkNameSpaceConflicts(pstate, pstate->p_namespace, l_namespace);
 
 		sv_namespace_length = list_length(pstate->p_namespace);
 		pstate->p_namespace = list_concat(pstate->p_namespace, l_namespace);

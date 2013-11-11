@@ -130,6 +130,18 @@ refnameRangeTblEntry(ParseState *pstate,
  * Search the query's table namespace for an RTE matching the
  * given unqualified refname.  Return the RTE if a unique match, or NULL
  * if no match.  Raise error if multiple matches.
+ *
+ * Note: it might seem that we shouldn't have to worry about the possibility
+ * of multiple matches; after all, the SQL standard disallows duplicate table
+ * aliases within a given SELECT level.  Historically, however, Postgres has
+ * been laxer than that.  For example, we allow
+ *		SELECT ... FROM tab1 x CROSS JOIN (tab2 x CROSS JOIN tab3 y) z
+ * on the grounds that the aliased join (z) hides the aliases within it,
+ * therefore there is no conflict between the two RTEs named "x".  However,
+ * if tab3 is a LATERAL subquery, then from within the subquery both "x"es
+ * are visible.  Rather than rejecting queries that used to work, we allow
+ * this situation, and complain only if there's actually an ambiguous
+ * reference to "x".
  */
 static RangeTblEntry *
 scanNameSpaceForRefname(ParseState *pstate, const char *refname, int location)
@@ -174,8 +186,7 @@ scanNameSpaceForRefname(ParseState *pstate, const char *refname, int location)
 /*
  * Search the query's table namespace for a relation RTE matching the
  * given relation OID.	Return the RTE if a unique match, or NULL
- * if no match.  Raise error if multiple matches (which shouldn't
- * happen if the namespace was checked correctly when it was created).
+ * if no match.  Raise error if multiple matches.
  *
  * See the comments for refnameRangeTblEntry to understand why this
  * acts the way it does.

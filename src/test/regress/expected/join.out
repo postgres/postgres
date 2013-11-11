@@ -3093,6 +3093,24 @@ SELECT * FROM
 (5 rows)
 
 rollback;
+-- bug #8444: we've historically allowed duplicate aliases within aliased JOINs
+select * from
+  int8_tbl x join (int4_tbl x cross join int4_tbl y) j on q1 = f1; -- error
+ERROR:  column reference "f1" is ambiguous
+LINE 2: ..._tbl x join (int4_tbl x cross join int4_tbl y) j on q1 = f1;
+                                                                    ^
+select * from
+  int8_tbl x join (int4_tbl x cross join int4_tbl y) j on q1 = y.f1; -- error
+ERROR:  invalid reference to FROM-clause entry for table "y"
+LINE 2: ...bl x join (int4_tbl x cross join int4_tbl y) j on q1 = y.f1;
+                                                                  ^
+HINT:  There is an entry for table "y", but it cannot be referenced from this part of the query.
+select * from
+  int8_tbl x join (int4_tbl x cross join int4_tbl y(ff)) j on q1 = f1; -- ok
+ q1 | q2 | f1 | ff 
+----+----+----+----
+(0 rows)
+
 --
 -- Test LATERAL
 --
@@ -3947,6 +3965,12 @@ ERROR:  invalid reference to FROM-clause entry for table "a"
 LINE 1: ...m int4_tbl a full join lateral generate_series(0, a.f1) g on...
                                                              ^
 DETAIL:  The combining JOIN type must be INNER or LEFT for a LATERAL reference.
+-- check we complain about ambiguous table references
+select * from
+  int8_tbl x cross join (int4_tbl x cross join lateral (select x.f1) ss);
+ERROR:  table reference "x" is ambiguous
+LINE 2: ...cross join (int4_tbl x cross join lateral (select x.f1) ss);
+                                                             ^
 -- LATERAL can be used to put an aggregate into the FROM clause of its query
 select 1 from tenk1 a, lateral (select max(a.unique1) from int4_tbl b) ss;
 ERROR:  aggregate functions are not allowed in FROM clause of their own query level
