@@ -361,7 +361,7 @@ SELECT sum(n) FROM t;
 View definition:
  WITH RECURSIVE t(n) AS (
                  VALUES (1)
-        UNION ALL 
+        UNION ALL
                  SELECT t_1.n + 1
                    FROM t t_1
                   WHERE t_1.n < 100

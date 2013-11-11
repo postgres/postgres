@@ -1381,9 +1381,9 @@ select * from dfview;
  c3     | bigint |           | plain   | 
  c4     | bigint |           | plain   | 
 View definition:
- SELECT int8_tbl.q1, 
-    int8_tbl.q2, 
-    dfunc(int8_tbl.q1, int8_tbl.q2, flag := int8_tbl.q1 > int8_tbl.q2) AS c3, 
+ SELECT int8_tbl.q1,
+    int8_tbl.q2,
+    dfunc(int8_tbl.q1, int8_tbl.q2, flag := int8_tbl.q1 > int8_tbl.q2) AS c3,
     dfunc(int8_tbl.q1, flag := int8_tbl.q1 < int8_tbl.q2, b := int8_tbl.q2) AS c4
    FROM int8_tbl;
 
