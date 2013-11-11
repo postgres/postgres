@@ -365,6 +365,7 @@ static const char *get_simple_binary_op_name(OpExpr *expr);
 static bool isSimpleNode(Node *node, Node *parentNode, int prettyFlags);
 static void appendContextKeyword(deparse_context *context, const char *str,
 					 int indentBefore, int indentAfter, int indentPlus);
+static void removeStringInfoSpaces(StringInfo str);
 static void get_rule_expr(Node *node, deparse_context *context,
 			  bool showimplicit);
 static void get_oper_expr(OpExpr *expr, deparse_context *context);
@@ -4479,42 +4480,42 @@ get_target_list(List *targetList, deparse_context *context,
 		/* Consider line-wrapping if enabled */
 		if (PRETTY_INDENT(context) && context->wrapColumn >= 0)
 		{
-			int			leading_nl_pos = -1;
-			char	   *trailing_nl;
-			int			pos;
+			int			leading_nl_pos;
 
-			/* Does the new field start with whitespace plus a new line? */
-			for (pos = 0; pos < targetbuf.len; pos++)
-			{
-				if (targetbuf.data[pos] == '\n')
-				{
-					leading_nl_pos = pos;
-					break;
-				}
-				if (targetbuf.data[pos] != ' ')
-					break;
-			}
-
-			/* Locate the start of the current line in the output buffer */
-			trailing_nl = strrchr(buf->data, '\n');
-			if (trailing_nl == NULL)
-				trailing_nl = buf->data;
+			/* Does the new field start with a new line? */
+			if (targetbuf.len > 0 && targetbuf.data[0] == '\n')
+				leading_nl_pos = 0;
 			else
-				trailing_nl++;
+				leading_nl_pos = -1;
 
-			/*
-			 * If the field we're adding is the first in the list, or it
-			 * already has a leading newline, don't add anything. Otherwise,
-			 * add a newline, plus some indentation, if either the new field
-			 * would cause an overflow or the last field used more than one
-			 * line.
-			 */
-			if (colno > 1 &&
-				leading_nl_pos == -1 &&
-				((strlen(trailing_nl) + strlen(targetbuf.data) > context->wrapColumn) ||
-				 last_was_multiline))
-				appendContextKeyword(context, "", -PRETTYINDENT_STD,
-									 PRETTYINDENT_STD, PRETTYINDENT_VAR);
+			/* If so, we shouldn't add anything */
+			if (leading_nl_pos >= 0)
+			{
+				/* instead, remove any trailing spaces currently in buf */
+				removeStringInfoSpaces(buf);
+			}
+			else
+			{
+				char	   *trailing_nl;
+
+				/* Locate the start of the current line in the output buffer */
+				trailing_nl = strrchr(buf->data, '\n');
+				if (trailing_nl == NULL)
+					trailing_nl = buf->data;
+				else
+					trailing_nl++;
+
+				/*
+				 * Add a newline, plus some indentation, if the new field is
+				 * not the first and either the new field would cause an
+				 * overflow or the last field used more than one line.
+				 */
+				if (colno > 1 &&
+					((strlen(trailing_nl) + targetbuf.len > context->wrapColumn) ||
+					 last_was_multiline))
+					appendContextKeyword(context, "", -PRETTYINDENT_STD,
+										 PRETTYINDENT_STD, PRETTYINDENT_VAR);
+			}
 
 			/* Remember this field's multiline status for next iteration */
 			last_was_multiline =
@@ -6236,22 +6237,41 @@ static void
 appendContextKeyword(deparse_context *context, const char *str,
 					 int indentBefore, int indentAfter, int indentPlus)
 {
+	StringInfo	buf = context->buf;
+
 	if (PRETTY_INDENT(context))
 	{
 		context->indentLevel += indentBefore;
 
-		appendStringInfoChar(context->buf, '\n');
-		appendStringInfoSpaces(context->buf,
+		/* remove any trailing spaces currently in the buffer ... */
+		removeStringInfoSpaces(buf);
+		/* ... then add a newline and some spaces */
+		appendStringInfoChar(buf, '\n');
+		appendStringInfoSpaces(buf,
 							   Max(context->indentLevel, 0) + indentPlus);
-		appendStringInfoString(context->buf, str);
+
+		appendStringInfoString(buf, str);
 
 		context->indentLevel += indentAfter;
 		if (context->indentLevel < 0)
 			context->indentLevel = 0;
 	}
 	else
-		appendStringInfoString(context->buf, str);
+		appendStringInfoString(buf, str);
 }
+
+/*
+ * removeStringInfoSpaces - delete trailing spaces from a buffer.
+ *
+ * Possibly this should move to stringinfo.c at some point.
+ */
+static void
+removeStringInfoSpaces(StringInfo str)
+{
+	while (str->len > 0 && str->data[str->len - 1] == ' ')
+		str->data[--(str->len)] = '\0';
+}
+
 
 /*
  * get_rule_expr_paren	- deparse expr using get_rule_expr,
@@ -7942,22 +7962,33 @@ get_from_clause(Query *query, const char *prefix, deparse_context *context)
 			/* Consider line-wrapping if enabled */
 			if (PRETTY_INDENT(context) && context->wrapColumn >= 0)
 			{
-				char	   *trailing_nl;
-
-				/* Locate the start of the current line in the buffer */
-				trailing_nl = strrchr(buf->data, '\n');
-				if (trailing_nl == NULL)
-					trailing_nl = buf->data;
+				/* Does the new item start with a new line? */
+				if (itembuf.len > 0 && itembuf.data[0] == '\n')
+				{
+					/* If so, we shouldn't add anything */
+					/* instead, remove any trailing spaces currently in buf */
+					removeStringInfoSpaces(buf);
+				}
 				else
-					trailing_nl++;
+				{
+					char	   *trailing_nl;
 
-				/*
-				 * Add a newline, plus some indentation, if the new item would
-				 * cause an overflow.
-				 */
-				if (strlen(trailing_nl) + strlen(itembuf.data) > context->wrapColumn)
-					appendContextKeyword(context, "", -PRETTYINDENT_STD,
-										 PRETTYINDENT_STD, PRETTYINDENT_VAR);
+					/* Locate the start of the current line in the buffer */
+					trailing_nl = strrchr(buf->data, '\n');
+					if (trailing_nl == NULL)
+						trailing_nl = buf->data;
+					else
+						trailing_nl++;
+
+					/*
+					 * Add a newline, plus some indentation, if the new item
+					 * would cause an overflow.
+					 */
+					if (strlen(trailing_nl) + itembuf.len > context->wrapColumn)
+						appendContextKeyword(context, "", -PRETTYINDENT_STD,
+											 PRETTYINDENT_STD,
+											 PRETTYINDENT_VAR);
+				}
 			}
 
 			/* Add the new item */

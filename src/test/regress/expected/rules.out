@@ -1279,46 +1279,46 @@ drop table cchild;
 -- temporarily disable fancy output, so view changes create less diff noise
 \a\t
 SELECT viewname, definition FROM pg_views WHERE schemaname <> 'information_schema' ORDER BY viewname;
-iexit| SELECT ih.name, 
-    ih.thepath, 
+iexit| SELECT ih.name,
+    ih.thepath,
     interpt_pp(ih.thepath, r.thepath) AS exit
-   FROM ihighway ih, 
+   FROM ihighway ih,
     ramp r
   WHERE (ih.thepath ## r.thepath);
-pg_available_extension_versions| SELECT e.name, 
-    e.version, 
-    (x.extname IS NOT NULL) AS installed, 
-    e.superuser, 
-    e.relocatable, 
-    e.schema, 
-    e.requires, 
+pg_available_extension_versions| SELECT e.name,
+    e.version,
+    (x.extname IS NOT NULL) AS installed,
+    e.superuser,
+    e.relocatable,
+    e.schema,
+    e.requires,
     e.comment
    FROM (pg_available_extension_versions() e(name, version, superuser, relocatable, schema, requires, comment)
    LEFT JOIN pg_extension x ON (((e.name = x.extname) AND (e.version = x.extversion))));
-pg_available_extensions| SELECT e.name, 
-    e.default_version, 
-    x.extversion AS installed_version, 
+pg_available_extensions| SELECT e.name,
+    e.default_version,
+    x.extversion AS installed_version,
     e.comment
    FROM (pg_available_extensions() e(name, default_version, comment)
    LEFT JOIN pg_extension x ON ((e.name = x.extname)));
-pg_cursors| SELECT c.name, 
-    c.statement, 
-    c.is_holdable, 
-    c.is_binary, 
-    c.is_scrollable, 
+pg_cursors| SELECT c.name,
+    c.statement,
+    c.is_holdable,
+    c.is_binary,
+    c.is_scrollable,
     c.creation_time
    FROM pg_cursor() c(name, statement, is_holdable, is_binary, is_scrollable, creation_time);
-pg_group| SELECT pg_authid.rolname AS groname, 
-    pg_authid.oid AS grosysid, 
+pg_group| SELECT pg_authid.rolname AS groname,
+    pg_authid.oid AS grosysid,
     ARRAY( SELECT pg_auth_members.member
            FROM pg_auth_members
           WHERE (pg_auth_members.roleid = pg_authid.oid)) AS grolist
    FROM pg_authid
   WHERE (NOT pg_authid.rolcanlogin);
-pg_indexes| SELECT n.nspname AS schemaname, 
-    c.relname AS tablename, 
-    i.relname AS indexname, 
-    t.spcname AS tablespace, 
+pg_indexes| SELECT n.nspname AS schemaname,
+    c.relname AS tablename,
+    i.relname AS indexname,
+    t.spcname AS tablespace,
     pg_get_indexdef(i.oid) AS indexdef
    FROM ((((pg_index x
    JOIN pg_class c ON ((c.oid = x.indrelid)))
@@ -1326,73 +1326,73 @@ pg_indexes| SELECT n.nspname AS schemaname,
    LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
    LEFT JOIN pg_tablespace t ON ((t.oid = i.reltablespace)))
   WHERE ((c.relkind = ANY (ARRAY['r'::"char", 'm'::"char"])) AND (i.relkind = 'i'::"char"));
-pg_locks| SELECT l.locktype, 
-    l.database, 
-    l.relation, 
-    l.page, 
-    l.tuple, 
-    l.virtualxid, 
-    l.transactionid, 
-    l.classid, 
-    l.objid, 
-    l.objsubid, 
-    l.virtualtransaction, 
-    l.pid, 
-    l.mode, 
-    l.granted, 
+pg_locks| SELECT l.locktype,
+    l.database,
+    l.relation,
+    l.page,
+    l.tuple,
+    l.virtualxid,
+    l.transactionid,
+    l.classid,
+    l.objid,
+    l.objsubid,
+    l.virtualtransaction,
+    l.pid,
+    l.mode,
+    l.granted,
     l.fastpath
    FROM pg_lock_status() l(locktype, database, relation, page, tuple, virtualxid, transactionid, classid, objid, objsubid, virtualtransaction, pid, mode, granted, fastpath);
-pg_matviews| SELECT n.nspname AS schemaname, 
-    c.relname AS matviewname, 
-    pg_get_userbyid(c.relowner) AS matviewowner, 
-    t.spcname AS tablespace, 
-    c.relhasindex AS hasindexes, 
-    c.relispopulated AS ispopulated, 
+pg_matviews| SELECT n.nspname AS schemaname,
+    c.relname AS matviewname,
+    pg_get_userbyid(c.relowner) AS matviewowner,
+    t.spcname AS tablespace,
+    c.relhasindex AS hasindexes,
+    c.relispopulated AS ispopulated,
     pg_get_viewdef(c.oid) AS definition
    FROM ((pg_class c
    LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
    LEFT JOIN pg_tablespace t ON ((t.oid = c.reltablespace)))
   WHERE (c.relkind = 'm'::"char");
-pg_prepared_statements| SELECT p.name, 
-    p.statement, 
-    p.prepare_time, 
-    p.parameter_types, 
+pg_prepared_statements| SELECT p.name,
+    p.statement,
+    p.prepare_time,
+    p.parameter_types,
     p.from_sql
    FROM pg_prepared_statement() p(name, statement, prepare_time, parameter_types, from_sql);
-pg_prepared_xacts| SELECT p.transaction, 
-    p.gid, 
-    p.prepared, 
-    u.rolname AS owner, 
+pg_prepared_xacts| SELECT p.transaction,
+    p.gid,
+    p.prepared,
+    u.rolname AS owner,
     d.datname AS database
    FROM ((pg_prepared_xact() p(transaction, gid, prepared, ownerid, dbid)
    LEFT JOIN pg_authid u ON ((p.ownerid = u.oid)))
    LEFT JOIN pg_database d ON ((p.dbid = d.oid)));
-pg_roles| SELECT pg_authid.rolname, 
-    pg_authid.rolsuper, 
-    pg_authid.rolinherit, 
-    pg_authid.rolcreaterole, 
-    pg_authid.rolcreatedb, 
-    pg_authid.rolcatupdate, 
-    pg_authid.rolcanlogin, 
-    pg_authid.rolreplication, 
-    pg_authid.rolconnlimit, 
-    '********'::text AS rolpassword, 
-    pg_authid.rolvaliduntil, 
-    s.setconfig AS rolconfig, 
+pg_roles| SELECT pg_authid.rolname,
+    pg_authid.rolsuper,
+    pg_authid.rolinherit,
+    pg_authid.rolcreaterole,
+    pg_authid.rolcreatedb,
+    pg_authid.rolcatupdate,
+    pg_authid.rolcanlogin,
+    pg_authid.rolreplication,
+    pg_authid.rolconnlimit,
+    '********'::text AS rolpassword,
+    pg_authid.rolvaliduntil,
+    s.setconfig AS rolconfig,
     pg_authid.oid
    FROM (pg_authid
    LEFT JOIN pg_db_role_setting s ON (((pg_authid.oid = s.setrole) AND (s.setdatabase = (0)::oid))));
-pg_rules| SELECT n.nspname AS schemaname, 
-    c.relname AS tablename, 
-    r.rulename, 
+pg_rules| SELECT n.nspname AS schemaname,
+    c.relname AS tablename,
+    r.rulename,
     pg_get_ruledef(r.oid) AS definition
    FROM ((pg_rewrite r
    JOIN pg_class c ON ((c.oid = r.ev_class)))
    LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
   WHERE (r.rulename <> '_RETURN'::name);
-pg_seclabels|        (        (        (        (        (        (        (        (        (         SELECT l.objoid, 
-                                                                                    l.classoid, 
-                                                                                    l.objsubid, 
+pg_seclabels|        (        (        (        (        (        (        (        (        (         SELECT l.objoid,
+                                                                                    l.classoid,
+                                                                                    l.objsubid,
                                                                                         CASE
                                                                                             WHEN (rel.relkind = 'r'::"char") THEN 'table'::text
                                                                                             WHEN (rel.relkind = 'v'::"char") THEN 'view'::text
@@ -1400,462 +1400,462 @@ pg_seclabels|        (        (        (        (        (        (        (    
                                                                                             WHEN (rel.relkind = 'S'::"char") THEN 'sequence'::text
                                                                                             WHEN (rel.relkind = 'f'::"char") THEN 'foreign table'::text
                                                                                             ELSE NULL::text
-                                                                                        END AS objtype, 
-                                                                                    rel.relnamespace AS objnamespace, 
+                                                                                        END AS objtype,
+                                                                                    rel.relnamespace AS objnamespace,
                                                                                         CASE
                                                                                             WHEN pg_table_is_visible(rel.oid) THEN quote_ident((rel.relname)::text)
                                                                                             ELSE ((quote_ident((nsp.nspname)::text) || '.'::text) || quote_ident((rel.relname)::text))
-                                                                                        END AS objname, 
-                                                                                    l.provider, 
+                                                                                        END AS objname,
+                                                                                    l.provider,
                                                                                     l.label
                                                                                    FROM ((pg_seclabel l
                                                                               JOIN pg_class rel ON (((l.classoid = rel.tableoid) AND (l.objoid = rel.oid))))
                                                                          JOIN pg_namespace nsp ON ((rel.relnamespace = nsp.oid)))
                                                                         WHERE (l.objsubid = 0)
-                                                                        UNION ALL 
-                                                                                 SELECT l.objoid, 
-                                                                                    l.classoid, 
-                                                                                    l.objsubid, 
-                                                                                    'column'::text AS objtype, 
-                                                                                    rel.relnamespace AS objnamespace, 
+                                                                        UNION ALL
+                                                                                 SELECT l.objoid,
+                                                                                    l.classoid,
+                                                                                    l.objsubid,
+                                                                                    'column'::text AS objtype,
+                                                                                    rel.relnamespace AS objnamespace,
                                                                                     ((
                                                                                         CASE
                                                                                             WHEN pg_table_is_visible(rel.oid) THEN quote_ident((rel.relname)::text)
                                                                                             ELSE ((quote_ident((nsp.nspname)::text) || '.'::text) || quote_ident((rel.relname)::text))
-                                                                                        END || '.'::text) || (att.attname)::text) AS objname, 
-                                                                                    l.provider, 
+                                                                                        END || '.'::text) || (att.attname)::text) AS objname,
+                                                                                    l.provider,
                                                                                     l.label
                                                                                    FROM (((pg_seclabel l
                                                                               JOIN pg_class rel ON (((l.classoid = rel.tableoid) AND (l.objoid = rel.oid))))
                                                                          JOIN pg_attribute att ON (((rel.oid = att.attrelid) AND (l.objsubid = att.attnum))))
                                                                     JOIN pg_namespace nsp ON ((rel.relnamespace = nsp.oid)))
                                                                    WHERE (l.objsubid <> 0))
-                                                                UNION ALL 
-                                                                         SELECT l.objoid, 
-                                                                            l.classoid, 
-                                                                            l.objsubid, 
+                                                                UNION ALL
+                                                                         SELECT l.objoid,
+                                                                            l.classoid,
+                                                                            l.objsubid,
                                                                                 CASE
                                                                                     WHEN (pro.proisagg = true) THEN 'aggregate'::text
                                                                                     WHEN (pro.proisagg = false) THEN 'function'::text
                                                                                     ELSE NULL::text
-                                                                                END AS objtype, 
-                                                                            pro.pronamespace AS objnamespace, 
+                                                                                END AS objtype,
+                                                                            pro.pronamespace AS objnamespace,
                                                                             (((
                                                                                 CASE
                                                                                     WHEN pg_function_is_visible(pro.oid) THEN quote_ident((pro.proname)::text)
                                                                                     ELSE ((quote_ident((nsp.nspname)::text) || '.'::text) || quote_ident((pro.proname)::text))
-                                                                                END || '('::text) || pg_get_function_arguments(pro.oid)) || ')'::text) AS objname, 
-                                                                            l.provider, 
+                                                                                END || '('::text) || pg_get_function_arguments(pro.oid)) || ')'::text) AS objname,
+                                                                            l.provider,
                                                                             l.label
                                                                            FROM ((pg_seclabel l
                                                                       JOIN pg_proc pro ON (((l.classoid = pro.tableoid) AND (l.objoid = pro.oid))))
                                                                  JOIN pg_namespace nsp ON ((pro.pronamespace = nsp.oid)))
                                                                 WHERE (l.objsubid = 0))
-                                                        UNION ALL 
-                                                                 SELECT l.objoid, 
-                                                                    l.classoid, 
-                                                                    l.objsubid, 
+                                                        UNION ALL
+                                                                 SELECT l.objoid,
+                                                                    l.classoid,
+                                                                    l.objsubid,
                                                                         CASE
                                                                             WHEN (typ.typtype = 'd'::"char") THEN 'domain'::text
                                                                             ELSE 'type'::text
-                                                                        END AS objtype, 
-                                                                    typ.typnamespace AS objnamespace, 
+                                                                        END AS objtype,
+                                                                    typ.typnamespace AS objnamespace,
                                                                         CASE
                                                                             WHEN pg_type_is_visible(typ.oid) THEN quote_ident((typ.typname)::text)
                                                                             ELSE ((quote_ident((nsp.nspname)::text) || '.'::text) || quote_ident((typ.typname)::text))
-                                                                        END AS objname, 
-                                                                    l.provider, 
+                                                                        END AS objname,
+                                                                    l.provider,
                                                                     l.label
                                                                    FROM ((pg_seclabel l
                                                               JOIN pg_type typ ON (((l.classoid = typ.tableoid) AND (l.objoid = typ.oid))))
                                                          JOIN pg_namespace nsp ON ((typ.typnamespace = nsp.oid)))
                                                         WHERE (l.objsubid = 0))
-                                                UNION ALL 
-                                                         SELECT l.objoid, 
-                                                            l.classoid, 
-                                                            l.objsubid, 
-                                                            'large object'::text AS objtype, 
-                                                            NULL::oid AS objnamespace, 
-                                                            (l.objoid)::text AS objname, 
-                                                            l.provider, 
+                                                UNION ALL
+                                                         SELECT l.objoid,
+                                                            l.classoid,
+                                                            l.objsubid,
+                                                            'large object'::text AS objtype,
+                                                            NULL::oid AS objnamespace,
+                                                            (l.objoid)::text AS objname,
+                                                            l.provider,
                                                             l.label
                                                            FROM (pg_seclabel l
                                                       JOIN pg_largeobject_metadata lom ON ((l.objoid = lom.oid)))
                                                      WHERE ((l.classoid = ('pg_largeobject'::regclass)::oid) AND (l.objsubid = 0)))
-                                        UNION ALL 
-                                                 SELECT l.objoid, 
-                                                    l.classoid, 
-                                                    l.objsubid, 
-                                                    'language'::text AS objtype, 
-                                                    NULL::oid AS objnamespace, 
-                                                    quote_ident((lan.lanname)::text) AS objname, 
-                                                    l.provider, 
+                                        UNION ALL
+                                                 SELECT l.objoid,
+                                                    l.classoid,
+                                                    l.objsubid,
+                                                    'language'::text AS objtype,
+                                                    NULL::oid AS objnamespace,
+                                                    quote_ident((lan.lanname)::text) AS objname,
+                                                    l.provider,
                                                     l.label
                                                    FROM (pg_seclabel l
                                               JOIN pg_language lan ON (((l.classoid = lan.tableoid) AND (l.objoid = lan.oid))))
                                              WHERE (l.objsubid = 0))
-                                UNION ALL 
-                                         SELECT l.objoid, 
-                                            l.classoid, 
-                                            l.objsubid, 
-                                            'schema'::text AS objtype, 
-                                            nsp.oid AS objnamespace, 
-                                            quote_ident((nsp.nspname)::text) AS objname, 
-                                            l.provider, 
+                                UNION ALL
+                                         SELECT l.objoid,
+                                            l.classoid,
+                                            l.objsubid,
+                                            'schema'::text AS objtype,
+                                            nsp.oid AS objnamespace,
+                                            quote_ident((nsp.nspname)::text) AS objname,
+                                            l.provider,
                                             l.label
                                            FROM (pg_seclabel l
                                       JOIN pg_namespace nsp ON (((l.classoid = nsp.tableoid) AND (l.objoid = nsp.oid))))
                                      WHERE (l.objsubid = 0))
-                        UNION ALL 
-                                 SELECT l.objoid, 
-                                    l.classoid, 
-                                    l.objsubid, 
-                                    'event trigger'::text AS objtype, 
-                                    NULL::oid AS objnamespace, 
-                                    quote_ident((evt.evtname)::text) AS objname, 
-                                    l.provider, 
+                        UNION ALL
+                                 SELECT l.objoid,
+                                    l.classoid,
+                                    l.objsubid,
+                                    'event trigger'::text AS objtype,
+                                    NULL::oid AS objnamespace,
+                                    quote_ident((evt.evtname)::text) AS objname,
+                                    l.provider,
                                     l.label
                                    FROM (pg_seclabel l
                               JOIN pg_event_trigger evt ON (((l.classoid = evt.tableoid) AND (l.objoid = evt.oid))))
                              WHERE (l.objsubid = 0))
-                UNION ALL 
-                         SELECT l.objoid, 
-                            l.classoid, 
-                            0 AS objsubid, 
-                            'database'::text AS objtype, 
-                            NULL::oid AS objnamespace, 
-                            quote_ident((dat.datname)::text) AS objname, 
-                            l.provider, 
+                UNION ALL
+                         SELECT l.objoid,
+                            l.classoid,
+                            0 AS objsubid,
+                            'database'::text AS objtype,
+                            NULL::oid AS objnamespace,
+                            quote_ident((dat.datname)::text) AS objname,
+                            l.provider,
                             l.label
                            FROM (pg_shseclabel l
                       JOIN pg_database dat ON (((l.classoid = dat.tableoid) AND (l.objoid = dat.oid)))))
-        UNION ALL 
-                 SELECT l.objoid, 
-                    l.classoid, 
-                    0 AS objsubid, 
-                    'tablespace'::text AS objtype, 
-                    NULL::oid AS objnamespace, 
-                    quote_ident((spc.spcname)::text) AS objname, 
-                    l.provider, 
+        UNION ALL
+                 SELECT l.objoid,
+                    l.classoid,
+                    0 AS objsubid,
+                    'tablespace'::text AS objtype,
+                    NULL::oid AS objnamespace,
+                    quote_ident((spc.spcname)::text) AS objname,
+                    l.provider,
                     l.label
                    FROM (pg_shseclabel l
               JOIN pg_tablespace spc ON (((l.classoid = spc.tableoid) AND (l.objoid = spc.oid)))))
-UNION ALL 
-         SELECT l.objoid, 
-            l.classoid, 
-            0 AS objsubid, 
-            'role'::text AS objtype, 
-            NULL::oid AS objnamespace, 
-            quote_ident((rol.rolname)::text) AS objname, 
-            l.provider, 
+UNION ALL
+         SELECT l.objoid,
+            l.classoid,
+            0 AS objsubid,
+            'role'::text AS objtype,
+            NULL::oid AS objnamespace,
+            quote_ident((rol.rolname)::text) AS objname,
+            l.provider,
             l.label
            FROM (pg_shseclabel l
       JOIN pg_authid rol ON (((l.classoid = rol.tableoid) AND (l.objoid = rol.oid))));
-pg_settings| SELECT a.name, 
-    a.setting, 
-    a.unit, 
-    a.category, 
-    a.short_desc, 
-    a.extra_desc, 
-    a.context, 
-    a.vartype, 
-    a.source, 
-    a.min_val, 
-    a.max_val, 
-    a.enumvals, 
-    a.boot_val, 
-    a.reset_val, 
-    a.sourcefile, 
+pg_settings| SELECT a.name,
+    a.setting,
+    a.unit,
+    a.category,
+    a.short_desc,
+    a.extra_desc,
+    a.context,
+    a.vartype,
+    a.source,
+    a.min_val,
+    a.max_val,
+    a.enumvals,
+    a.boot_val,
+    a.reset_val,
+    a.sourcefile,
     a.sourceline
    FROM pg_show_all_settings() a(name, setting, unit, category, short_desc, extra_desc, context, vartype, source, min_val, max_val, enumvals, boot_val, reset_val, sourcefile, sourceline);
-pg_shadow| SELECT pg_authid.rolname AS usename, 
-    pg_authid.oid AS usesysid, 
-    pg_authid.rolcreatedb AS usecreatedb, 
-    pg_authid.rolsuper AS usesuper, 
-    pg_authid.rolcatupdate AS usecatupd, 
-    pg_authid.rolreplication AS userepl, 
-    pg_authid.rolpassword AS passwd, 
-    (pg_authid.rolvaliduntil)::abstime AS valuntil, 
+pg_shadow| SELECT pg_authid.rolname AS usename,
+    pg_authid.oid AS usesysid,
+    pg_authid.rolcreatedb AS usecreatedb,
+    pg_authid.rolsuper AS usesuper,
+    pg_authid.rolcatupdate AS usecatupd,
+    pg_authid.rolreplication AS userepl,
+    pg_authid.rolpassword AS passwd,
+    (pg_authid.rolvaliduntil)::abstime AS valuntil,
     s.setconfig AS useconfig
    FROM (pg_authid
    LEFT JOIN pg_db_role_setting s ON (((pg_authid.oid = s.setrole) AND (s.setdatabase = (0)::oid))))
   WHERE pg_authid.rolcanlogin;
-pg_stat_activity| SELECT s.datid, 
-    d.datname, 
-    s.pid, 
-    s.usesysid, 
-    u.rolname AS usename, 
-    s.application_name, 
-    s.client_addr, 
-    s.client_hostname, 
-    s.client_port, 
-    s.backend_start, 
-    s.xact_start, 
-    s.query_start, 
-    s.state_change, 
-    s.waiting, 
-    s.state, 
+pg_stat_activity| SELECT s.datid,
+    d.datname,
+    s.pid,
+    s.usesysid,
+    u.rolname AS usename,
+    s.application_name,
+    s.client_addr,
+    s.client_hostname,
+    s.client_port,
+    s.backend_start,
+    s.xact_start,
+    s.query_start,
+    s.state_change,
+    s.waiting,
+    s.state,
     s.query
-   FROM pg_database d, 
-    pg_stat_get_activity(NULL::integer) s(datid, pid, usesysid, application_name, state, query, waiting, xact_start, query_start, backend_start, state_change, client_addr, client_hostname, client_port), 
+   FROM pg_database d,
+    pg_stat_get_activity(NULL::integer) s(datid, pid, usesysid, application_name, state, query, waiting, xact_start, query_start, backend_start, state_change, client_addr, client_hostname, client_port),
     pg_authid u
   WHERE ((s.datid = d.oid) AND (s.usesysid = u.oid));
-pg_stat_all_indexes| SELECT c.oid AS relid, 
-    i.oid AS indexrelid, 
-    n.nspname AS schemaname, 
-    c.relname, 
-    i.relname AS indexrelname, 
-    pg_stat_get_numscans(i.oid) AS idx_scan, 
-    pg_stat_get_tuples_returned(i.oid) AS idx_tup_read, 
+pg_stat_all_indexes| SELECT c.oid AS relid,
+    i.oid AS indexrelid,
+    n.nspname AS schemaname,
+    c.relname,
+    i.relname AS indexrelname,
+    pg_stat_get_numscans(i.oid) AS idx_scan,
+    pg_stat_get_tuples_returned(i.oid) AS idx_tup_read,
     pg_stat_get_tuples_fetched(i.oid) AS idx_tup_fetch
    FROM (((pg_class c
    JOIN pg_index x ON ((c.oid = x.indrelid)))
    JOIN pg_class i ON ((i.oid = x.indexrelid)))
    LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
   WHERE (c.relkind = ANY (ARRAY['r'::"char", 't'::"char", 'm'::"char"]));
-pg_stat_all_tables| SELECT c.oid AS relid, 
-    n.nspname AS schemaname, 
-    c.relname, 
-    pg_stat_get_numscans(c.oid) AS seq_scan, 
-    pg_stat_get_tuples_returned(c.oid) AS seq_tup_read, 
-    (sum(pg_stat_get_numscans(i.indexrelid)))::bigint AS idx_scan, 
-    ((sum(pg_stat_get_tuples_fetched(i.indexrelid)))::bigint + pg_stat_get_tuples_fetched(c.oid)) AS idx_tup_fetch, 
-    pg_stat_get_tuples_inserted(c.oid) AS n_tup_ins, 
-    pg_stat_get_tuples_updated(c.oid) AS n_tup_upd, 
-    pg_stat_get_tuples_deleted(c.oid) AS n_tup_del, 
-    pg_stat_get_tuples_hot_updated(c.oid) AS n_tup_hot_upd, 
-    pg_stat_get_live_tuples(c.oid) AS n_live_tup, 
-    pg_stat_get_dead_tuples(c.oid) AS n_dead_tup, 
-    pg_stat_get_mod_since_analyze(c.oid) AS n_mod_since_analyze, 
-    pg_stat_get_last_vacuum_time(c.oid) AS last_vacuum, 
-    pg_stat_get_last_autovacuum_time(c.oid) AS last_autovacuum, 
-    pg_stat_get_last_analyze_time(c.oid) AS last_analyze, 
-    pg_stat_get_last_autoanalyze_time(c.oid) AS last_autoanalyze, 
-    pg_stat_get_vacuum_count(c.oid) AS vacuum_count, 
-    pg_stat_get_autovacuum_count(c.oid) AS autovacuum_count, 
-    pg_stat_get_analyze_count(c.oid) AS analyze_count, 
+pg_stat_all_tables| SELECT c.oid AS relid,
+    n.nspname AS schemaname,
+    c.relname,
+    pg_stat_get_numscans(c.oid) AS seq_scan,
+    pg_stat_get_tuples_returned(c.oid) AS seq_tup_read,
+    (sum(pg_stat_get_numscans(i.indexrelid)))::bigint AS idx_scan,
+    ((sum(pg_stat_get_tuples_fetched(i.indexrelid)))::bigint + pg_stat_get_tuples_fetched(c.oid)) AS idx_tup_fetch,
+    pg_stat_get_tuples_inserted(c.oid) AS n_tup_ins,
+    pg_stat_get_tuples_updated(c.oid) AS n_tup_upd,
+    pg_stat_get_tuples_deleted(c.oid) AS n_tup_del,
+    pg_stat_get_tuples_hot_updated(c.oid) AS n_tup_hot_upd,
+    pg_stat_get_live_tuples(c.oid) AS n_live_tup,
+    pg_stat_get_dead_tuples(c.oid) AS n_dead_tup,
+    pg_stat_get_mod_since_analyze(c.oid) AS n_mod_since_analyze,
+    pg_stat_get_last_vacuum_time(c.oid) AS last_vacuum,
+    pg_stat_get_last_autovacuum_time(c.oid) AS last_autovacuum,
+    pg_stat_get_last_analyze_time(c.oid) AS last_analyze,
+    pg_stat_get_last_autoanalyze_time(c.oid) AS last_autoanalyze,
+    pg_stat_get_vacuum_count(c.oid) AS vacuum_count,
+    pg_stat_get_autovacuum_count(c.oid) AS autovacuum_count,
+    pg_stat_get_analyze_count(c.oid) AS analyze_count,
     pg_stat_get_autoanalyze_count(c.oid) AS autoanalyze_count
    FROM ((pg_class c
    LEFT JOIN pg_index i ON ((c.oid = i.indrelid)))
    LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
   WHERE (c.relkind = ANY (ARRAY['r'::"char", 't'::"char", 'm'::"char"]))
   GROUP BY c.oid, n.nspname, c.relname;
-pg_stat_bgwriter| SELECT pg_stat_get_bgwriter_timed_checkpoints() AS checkpoints_timed, 
-    pg_stat_get_bgwriter_requested_checkpoints() AS checkpoints_req, 
-    pg_stat_get_checkpoint_write_time() AS checkpoint_write_time, 
-    pg_stat_get_checkpoint_sync_time() AS checkpoint_sync_time, 
-    pg_stat_get_bgwriter_buf_written_checkpoints() AS buffers_checkpoint, 
-    pg_stat_get_bgwriter_buf_written_clean() AS buffers_clean, 
-    pg_stat_get_bgwriter_maxwritten_clean() AS maxwritten_clean, 
-    pg_stat_get_buf_written_backend() AS buffers_backend, 
-    pg_stat_get_buf_fsync_backend() AS buffers_backend_fsync, 
-    pg_stat_get_buf_alloc() AS buffers_alloc, 
+pg_stat_bgwriter| SELECT pg_stat_get_bgwriter_timed_checkpoints() AS checkpoints_timed,
+    pg_stat_get_bgwriter_requested_checkpoints() AS checkpoints_req,
+    pg_stat_get_checkpoint_write_time() AS checkpoint_write_time,
+    pg_stat_get_checkpoint_sync_time() AS checkpoint_sync_time,
+    pg_stat_get_bgwriter_buf_written_checkpoints() AS buffers_checkpoint,
+    pg_stat_get_bgwriter_buf_written_clean() AS buffers_clean,
+    pg_stat_get_bgwriter_maxwritten_clean() AS maxwritten_clean,
+    pg_stat_get_buf_written_backend() AS buffers_backend,
+    pg_stat_get_buf_fsync_backend() AS buffers_backend_fsync,
+    pg_stat_get_buf_alloc() AS buffers_alloc,
     pg_stat_get_bgwriter_stat_reset_time() AS stats_reset;
-pg_stat_database| SELECT d.oid AS datid, 
-    d.datname, 
-    pg_stat_get_db_numbackends(d.oid) AS numbackends, 
-    pg_stat_get_db_xact_commit(d.oid) AS xact_commit, 
-    pg_stat_get_db_xact_rollback(d.oid) AS xact_rollback, 
-    (pg_stat_get_db_blocks_fetched(d.oid) - pg_stat_get_db_blocks_hit(d.oid)) AS blks_read, 
-    pg_stat_get_db_blocks_hit(d.oid) AS blks_hit, 
-    pg_stat_get_db_tuples_returned(d.oid) AS tup_returned, 
-    pg_stat_get_db_tuples_fetched(d.oid) AS tup_fetched, 
-    pg_stat_get_db_tuples_inserted(d.oid) AS tup_inserted, 
-    pg_stat_get_db_tuples_updated(d.oid) AS tup_updated, 
-    pg_stat_get_db_tuples_deleted(d.oid) AS tup_deleted, 
-    pg_stat_get_db_conflict_all(d.oid) AS conflicts, 
-    pg_stat_get_db_temp_files(d.oid) AS temp_files, 
-    pg_stat_get_db_temp_bytes(d.oid) AS temp_bytes, 
-    pg_stat_get_db_deadlocks(d.oid) AS deadlocks, 
-    pg_stat_get_db_blk_read_time(d.oid) AS blk_read_time, 
-    pg_stat_get_db_blk_write_time(d.oid) AS blk_write_time, 
+pg_stat_database| SELECT d.oid AS datid,
+    d.datname,
+    pg_stat_get_db_numbackends(d.oid) AS numbackends,
+    pg_stat_get_db_xact_commit(d.oid) AS xact_commit,
+    pg_stat_get_db_xact_rollback(d.oid) AS xact_rollback,
+    (pg_stat_get_db_blocks_fetched(d.oid) - pg_stat_get_db_blocks_hit(d.oid)) AS blks_read,
+    pg_stat_get_db_blocks_hit(d.oid) AS blks_hit,
+    pg_stat_get_db_tuples_returned(d.oid) AS tup_returned,
+    pg_stat_get_db_tuples_fetched(d.oid) AS tup_fetched,
+    pg_stat_get_db_tuples_inserted(d.oid) AS tup_inserted,
+    pg_stat_get_db_tuples_updated(d.oid) AS tup_updated,
+    pg_stat_get_db_tuples_deleted(d.oid) AS tup_deleted,
+    pg_stat_get_db_conflict_all(d.oid) AS conflicts,
+    pg_stat_get_db_temp_files(d.oid) AS temp_files,
+    pg_stat_get_db_temp_bytes(d.oid) AS temp_bytes,
+    pg_stat_get_db_deadlocks(d.oid) AS deadlocks,
+    pg_stat_get_db_blk_read_time(d.oid) AS blk_read_time,
+    pg_stat_get_db_blk_write_time(d.oid) AS blk_write_time,
     pg_stat_get_db_stat_reset_time(d.oid) AS stats_reset
    FROM pg_database d;
-pg_stat_database_conflicts| SELECT d.oid AS datid, 
-    d.datname, 
-    pg_stat_get_db_conflict_tablespace(d.oid) AS confl_tablespace, 
-    pg_stat_get_db_conflict_lock(d.oid) AS confl_lock, 
-    pg_stat_get_db_conflict_snapshot(d.oid) AS confl_snapshot, 
-    pg_stat_get_db_conflict_bufferpin(d.oid) AS confl_bufferpin, 
+pg_stat_database_conflicts| SELECT d.oid AS datid,
+    d.datname,
+    pg_stat_get_db_conflict_tablespace(d.oid) AS confl_tablespace,
+    pg_stat_get_db_conflict_lock(d.oid) AS confl_lock,
+    pg_stat_get_db_conflict_snapshot(d.oid) AS confl_snapshot,
+    pg_stat_get_db_conflict_bufferpin(d.oid) AS confl_bufferpin,
     pg_stat_get_db_conflict_startup_deadlock(d.oid) AS confl_deadlock
    FROM pg_database d;
-pg_stat_replication| SELECT s.pid, 
-    s.usesysid, 
-    u.rolname AS usename, 
-    s.application_name, 
-    s.client_addr, 
-    s.client_hostname, 
-    s.client_port, 
-    s.backend_start, 
-    w.state, 
-    w.sent_location, 
-    w.write_location, 
-    w.flush_location, 
-    w.replay_location, 
-    w.sync_priority, 
+pg_stat_replication| SELECT s.pid,
+    s.usesysid,
+    u.rolname AS usename,
+    s.application_name,
+    s.client_addr,
+    s.client_hostname,
+    s.client_port,
+    s.backend_start,
+    w.state,
+    w.sent_location,
+    w.write_location,
+    w.flush_location,
+    w.replay_location,
+    w.sync_priority,
     w.sync_state
-   FROM pg_stat_get_activity(NULL::integer) s(datid, pid, usesysid, application_name, state, query, waiting, xact_start, query_start, backend_start, state_change, client_addr, client_hostname, client_port), 
-    pg_authid u, 
+   FROM pg_stat_get_activity(NULL::integer) s(datid, pid, usesysid, application_name, state, query, waiting, xact_start, query_start, backend_start, state_change, client_addr, client_hostname, client_port),
+    pg_authid u,
     pg_stat_get_wal_senders() w(pid, state, sent_location, write_location, flush_location, replay_location, sync_priority, sync_state)
   WHERE ((s.usesysid = u.oid) AND (s.pid = w.pid));
-pg_stat_sys_indexes| SELECT pg_stat_all_indexes.relid, 
-    pg_stat_all_indexes.indexrelid, 
-    pg_stat_all_indexes.schemaname, 
-    pg_stat_all_indexes.relname, 
-    pg_stat_all_indexes.indexrelname, 
-    pg_stat_all_indexes.idx_scan, 
-    pg_stat_all_indexes.idx_tup_read, 
+pg_stat_sys_indexes| SELECT pg_stat_all_indexes.relid,
+    pg_stat_all_indexes.indexrelid,
+    pg_stat_all_indexes.schemaname,
+    pg_stat_all_indexes.relname,
+    pg_stat_all_indexes.indexrelname,
+    pg_stat_all_indexes.idx_scan,
+    pg_stat_all_indexes.idx_tup_read,
     pg_stat_all_indexes.idx_tup_fetch
    FROM pg_stat_all_indexes
   WHERE ((pg_stat_all_indexes.schemaname = ANY (ARRAY['pg_catalog'::name, 'information_schema'::name])) OR (pg_stat_all_indexes.schemaname ~ '^pg_toast'::text));
-pg_stat_sys_tables| SELECT pg_stat_all_tables.relid, 
-    pg_stat_all_tables.schemaname, 
-    pg_stat_all_tables.relname, 
-    pg_stat_all_tables.seq_scan, 
-    pg_stat_all_tables.seq_tup_read, 
-    pg_stat_all_tables.idx_scan, 
-    pg_stat_all_tables.idx_tup_fetch, 
-    pg_stat_all_tables.n_tup_ins, 
-    pg_stat_all_tables.n_tup_upd, 
-    pg_stat_all_tables.n_tup_del, 
-    pg_stat_all_tables.n_tup_hot_upd, 
-    pg_stat_all_tables.n_live_tup, 
-    pg_stat_all_tables.n_dead_tup, 
-    pg_stat_all_tables.n_mod_since_analyze, 
-    pg_stat_all_tables.last_vacuum, 
-    pg_stat_all_tables.last_autovacuum, 
-    pg_stat_all_tables.last_analyze, 
-    pg_stat_all_tables.last_autoanalyze, 
-    pg_stat_all_tables.vacuum_count, 
-    pg_stat_all_tables.autovacuum_count, 
-    pg_stat_all_tables.analyze_count, 
+pg_stat_sys_tables| SELECT pg_stat_all_tables.relid,
+    pg_stat_all_tables.schemaname,
+    pg_stat_all_tables.relname,
+    pg_stat_all_tables.seq_scan,
+    pg_stat_all_tables.seq_tup_read,
+    pg_stat_all_tables.idx_scan,
+    pg_stat_all_tables.idx_tup_fetch,
+    pg_stat_all_tables.n_tup_ins,
+    pg_stat_all_tables.n_tup_upd,
+    pg_stat_all_tables.n_tup_del,
+    pg_stat_all_tables.n_tup_hot_upd,
+    pg_stat_all_tables.n_live_tup,
+    pg_stat_all_tables.n_dead_tup,
+    pg_stat_all_tables.n_mod_since_analyze,
+    pg_stat_all_tables.last_vacuum,
+    pg_stat_all_tables.last_autovacuum,
+    pg_stat_all_tables.last_analyze,
+    pg_stat_all_tables.last_autoanalyze,
+    pg_stat_all_tables.vacuum_count,
+    pg_stat_all_tables.autovacuum_count,
+    pg_stat_all_tables.analyze_count,
     pg_stat_all_tables.autoanalyze_count
    FROM pg_stat_all_tables
   WHERE ((pg_stat_all_tables.schemaname = ANY (ARRAY['pg_catalog'::name, 'information_schema'::name])) OR (pg_stat_all_tables.schemaname ~ '^pg_toast'::text));
-pg_stat_user_functions| SELECT p.oid AS funcid, 
-    n.nspname AS schemaname, 
-    p.proname AS funcname, 
-    pg_stat_get_function_calls(p.oid) AS calls, 
-    pg_stat_get_function_total_time(p.oid) AS total_time, 
+pg_stat_user_functions| SELECT p.oid AS funcid,
+    n.nspname AS schemaname,
+    p.proname AS funcname,
+    pg_stat_get_function_calls(p.oid) AS calls,
+    pg_stat_get_function_total_time(p.oid) AS total_time,
     pg_stat_get_function_self_time(p.oid) AS self_time
    FROM (pg_proc p
    LEFT JOIN pg_namespace n ON ((n.oid = p.pronamespace)))
   WHERE ((p.prolang <> (12)::oid) AND (pg_stat_get_function_calls(p.oid) IS NOT NULL));
-pg_stat_user_indexes| SELECT pg_stat_all_indexes.relid, 
-    pg_stat_all_indexes.indexrelid, 
-    pg_stat_all_indexes.schemaname, 
-    pg_stat_all_indexes.relname, 
-    pg_stat_all_indexes.indexrelname, 
-    pg_stat_all_indexes.idx_scan, 
-    pg_stat_all_indexes.idx_tup_read, 
+pg_stat_user_indexes| SELECT pg_stat_all_indexes.relid,
+    pg_stat_all_indexes.indexrelid,
+    pg_stat_all_indexes.schemaname,
+    pg_stat_all_indexes.relname,
+    pg_stat_all_indexes.indexrelname,
+    pg_stat_all_indexes.idx_scan,
+    pg_stat_all_indexes.idx_tup_read,
     pg_stat_all_indexes.idx_tup_fetch
    FROM pg_stat_all_indexes
   WHERE ((pg_stat_all_indexes.schemaname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name])) AND (pg_stat_all_indexes.schemaname !~ '^pg_toast'::text));
-pg_stat_user_tables| SELECT pg_stat_all_tables.relid, 
-    pg_stat_all_tables.schemaname, 
-    pg_stat_all_tables.relname, 
-    pg_stat_all_tables.seq_scan, 
-    pg_stat_all_tables.seq_tup_read, 
-    pg_stat_all_tables.idx_scan, 
-    pg_stat_all_tables.idx_tup_fetch, 
-    pg_stat_all_tables.n_tup_ins, 
-    pg_stat_all_tables.n_tup_upd, 
-    pg_stat_all_tables.n_tup_del, 
-    pg_stat_all_tables.n_tup_hot_upd, 
-    pg_stat_all_tables.n_live_tup, 
-    pg_stat_all_tables.n_dead_tup, 
-    pg_stat_all_tables.n_mod_since_analyze, 
-    pg_stat_all_tables.last_vacuum, 
-    pg_stat_all_tables.last_autovacuum, 
-    pg_stat_all_tables.last_analyze, 
-    pg_stat_all_tables.last_autoanalyze, 
-    pg_stat_all_tables.vacuum_count, 
-    pg_stat_all_tables.autovacuum_count, 
-    pg_stat_all_tables.analyze_count, 
+pg_stat_user_tables| SELECT pg_stat_all_tables.relid,
+    pg_stat_all_tables.schemaname,
+    pg_stat_all_tables.relname,
+    pg_stat_all_tables.seq_scan,
+    pg_stat_all_tables.seq_tup_read,
+    pg_stat_all_tables.idx_scan,
+    pg_stat_all_tables.idx_tup_fetch,
+    pg_stat_all_tables.n_tup_ins,
+    pg_stat_all_tables.n_tup_upd,
+    pg_stat_all_tables.n_tup_del,
+    pg_stat_all_tables.n_tup_hot_upd,
+    pg_stat_all_tables.n_live_tup,
+    pg_stat_all_tables.n_dead_tup,
+    pg_stat_all_tables.n_mod_since_analyze,
+    pg_stat_all_tables.last_vacuum,
+    pg_stat_all_tables.last_autovacuum,
+    pg_stat_all_tables.last_analyze,
+    pg_stat_all_tables.last_autoanalyze,
+    pg_stat_all_tables.vacuum_count,
+    pg_stat_all_tables.autovacuum_count,
+    pg_stat_all_tables.analyze_count,
     pg_stat_all_tables.autoanalyze_count
    FROM pg_stat_all_tables
   WHERE ((pg_stat_all_tables.schemaname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name])) AND (pg_stat_all_tables.schemaname !~ '^pg_toast'::text));
-pg_stat_xact_all_tables| SELECT c.oid AS relid, 
-    n.nspname AS schemaname, 
-    c.relname, 
-    pg_stat_get_xact_numscans(c.oid) AS seq_scan, 
-    pg_stat_get_xact_tuples_returned(c.oid) AS seq_tup_read, 
-    (sum(pg_stat_get_xact_numscans(i.indexrelid)))::bigint AS idx_scan, 
-    ((sum(pg_stat_get_xact_tuples_fetched(i.indexrelid)))::bigint + pg_stat_get_xact_tuples_fetched(c.oid)) AS idx_tup_fetch, 
-    pg_stat_get_xact_tuples_inserted(c.oid) AS n_tup_ins, 
-    pg_stat_get_xact_tuples_updated(c.oid) AS n_tup_upd, 
-    pg_stat_get_xact_tuples_deleted(c.oid) AS n_tup_del, 
+pg_stat_xact_all_tables| SELECT c.oid AS relid,
+    n.nspname AS schemaname,
+    c.relname,
+    pg_stat_get_xact_numscans(c.oid) AS seq_scan,
+    pg_stat_get_xact_tuples_returned(c.oid) AS seq_tup_read,
+    (sum(pg_stat_get_xact_numscans(i.indexrelid)))::bigint AS idx_scan,
+    ((sum(pg_stat_get_xact_tuples_fetched(i.indexrelid)))::bigint + pg_stat_get_xact_tuples_fetched(c.oid)) AS idx_tup_fetch,
+    pg_stat_get_xact_tuples_inserted(c.oid) AS n_tup_ins,
+    pg_stat_get_xact_tuples_updated(c.oid) AS n_tup_upd,
+    pg_stat_get_xact_tuples_deleted(c.oid) AS n_tup_del,
     pg_stat_get_xact_tuples_hot_updated(c.oid) AS n_tup_hot_upd
    FROM ((pg_class c
    LEFT JOIN pg_index i ON ((c.oid = i.indrelid)))
    LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
   WHERE (c.relkind = ANY (ARRAY['r'::"char", 't'::"char", 'm'::"char"]))
   GROUP BY c.oid, n.nspname, c.relname;
-pg_stat_xact_sys_tables| SELECT pg_stat_xact_all_tables.relid, 
-    pg_stat_xact_all_tables.schemaname, 
-    pg_stat_xact_all_tables.relname, 
-    pg_stat_xact_all_tables.seq_scan, 
-    pg_stat_xact_all_tables.seq_tup_read, 
-    pg_stat_xact_all_tables.idx_scan, 
-    pg_stat_xact_all_tables.idx_tup_fetch, 
-    pg_stat_xact_all_tables.n_tup_ins, 
-    pg_stat_xact_all_tables.n_tup_upd, 
-    pg_stat_xact_all_tables.n_tup_del, 
+pg_stat_xact_sys_tables| SELECT pg_stat_xact_all_tables.relid,
+    pg_stat_xact_all_tables.schemaname,
+    pg_stat_xact_all_tables.relname,
+    pg_stat_xact_all_tables.seq_scan,
+    pg_stat_xact_all_tables.seq_tup_read,
+    pg_stat_xact_all_tables.idx_scan,
+    pg_stat_xact_all_tables.idx_tup_fetch,
+    pg_stat_xact_all_tables.n_tup_ins,
+    pg_stat_xact_all_tables.n_tup_upd,
+    pg_stat_xact_all_tables.n_tup_del,
     pg_stat_xact_all_tables.n_tup_hot_upd
    FROM pg_stat_xact_all_tables
   WHERE ((pg_stat_xact_all_tables.schemaname = ANY (ARRAY['pg_catalog'::name, 'information_schema'::name])) OR (pg_stat_xact_all_tables.schemaname ~ '^pg_toast'::text));
-pg_stat_xact_user_functions| SELECT p.oid AS funcid, 
-    n.nspname AS schemaname, 
-    p.proname AS funcname, 
-    pg_stat_get_xact_function_calls(p.oid) AS calls, 
-    pg_stat_get_xact_function_total_time(p.oid) AS total_time, 
+pg_stat_xact_user_functions| SELECT p.oid AS funcid,
+    n.nspname AS schemaname,
+    p.proname AS funcname,
+    pg_stat_get_xact_function_calls(p.oid) AS calls,
+    pg_stat_get_xact_function_total_time(p.oid) AS total_time,
     pg_stat_get_xact_function_self_time(p.oid) AS self_time
    FROM (pg_proc p
    LEFT JOIN pg_namespace n ON ((n.oid = p.pronamespace)))
   WHERE ((p.prolang <> (12)::oid) AND (pg_stat_get_xact_function_calls(p.oid) IS NOT NULL));
-pg_stat_xact_user_tables| SELECT pg_stat_xact_all_tables.relid, 
-    pg_stat_xact_all_tables.schemaname, 
-    pg_stat_xact_all_tables.relname, 
-    pg_stat_xact_all_tables.seq_scan, 
-    pg_stat_xact_all_tables.seq_tup_read, 
-    pg_stat_xact_all_tables.idx_scan, 
-    pg_stat_xact_all_tables.idx_tup_fetch, 
-    pg_stat_xact_all_tables.n_tup_ins, 
-    pg_stat_xact_all_tables.n_tup_upd, 
-    pg_stat_xact_all_tables.n_tup_del, 
+pg_stat_xact_user_tables| SELECT pg_stat_xact_all_tables.relid,
+    pg_stat_xact_all_tables.schemaname,
+    pg_stat_xact_all_tables.relname,
+    pg_stat_xact_all_tables.seq_scan,
+    pg_stat_xact_all_tables.seq_tup_read,
+    pg_stat_xact_all_tables.idx_scan,
+    pg_stat_xact_all_tables.idx_tup_fetch,
+    pg_stat_xact_all_tables.n_tup_ins,
+    pg_stat_xact_all_tables.n_tup_upd,
+    pg_stat_xact_all_tables.n_tup_del,
     pg_stat_xact_all_tables.n_tup_hot_upd
    FROM pg_stat_xact_all_tables
   WHERE ((pg_stat_xact_all_tables.schemaname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name])) AND (pg_stat_xact_all_tables.schemaname !~ '^pg_toast'::text));
-pg_statio_all_indexes| SELECT c.oid AS relid, 
-    i.oid AS indexrelid, 
-    n.nspname AS schemaname, 
-    c.relname, 
-    i.relname AS indexrelname, 
-    (pg_stat_get_blocks_fetched(i.oid) - pg_stat_get_blocks_hit(i.oid)) AS idx_blks_read, 
+pg_statio_all_indexes| SELECT c.oid AS relid,
+    i.oid AS indexrelid,
+    n.nspname AS schemaname,
+    c.relname,
+    i.relname AS indexrelname,
+    (pg_stat_get_blocks_fetched(i.oid) - pg_stat_get_blocks_hit(i.oid)) AS idx_blks_read,
     pg_stat_get_blocks_hit(i.oid) AS idx_blks_hit
    FROM (((pg_class c
    JOIN pg_index x ON ((c.oid = x.indrelid)))
    JOIN pg_class i ON ((i.oid = x.indexrelid)))
    LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
   WHERE (c.relkind = ANY (ARRAY['r'::"char", 't'::"char", 'm'::"char"]));
-pg_statio_all_sequences| SELECT c.oid AS relid, 
-    n.nspname AS schemaname, 
-    c.relname, 
-    (pg_stat_get_blocks_fetched(c.oid) - pg_stat_get_blocks_hit(c.oid)) AS blks_read, 
+pg_statio_all_sequences| SELECT c.oid AS relid,
+    n.nspname AS schemaname,
+    c.relname,
+    (pg_stat_get_blocks_fetched(c.oid) - pg_stat_get_blocks_hit(c.oid)) AS blks_read,
     pg_stat_get_blocks_hit(c.oid) AS blks_hit
    FROM (pg_class c
    LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
   WHERE (c.relkind = 'S'::"char");
-pg_statio_all_tables| SELECT c.oid AS relid, 
-    n.nspname AS schemaname, 
-    c.relname, 
-    (pg_stat_get_blocks_fetched(c.oid) - pg_stat_get_blocks_hit(c.oid)) AS heap_blks_read, 
-    pg_stat_get_blocks_hit(c.oid) AS heap_blks_hit, 
-    (sum((pg_stat_get_blocks_fetched(i.indexrelid) - pg_stat_get_blocks_hit(i.indexrelid))))::bigint AS idx_blks_read, 
-    (sum(pg_stat_get_blocks_hit(i.indexrelid)))::bigint AS idx_blks_hit, 
-    (pg_stat_get_blocks_fetched(t.oid) - pg_stat_get_blocks_hit(t.oid)) AS toast_blks_read, 
-    pg_stat_get_blocks_hit(t.oid) AS toast_blks_hit, 
-    (sum((pg_stat_get_blocks_fetched(x.indexrelid) - pg_stat_get_blocks_hit(x.indexrelid))))::bigint AS tidx_blks_read, 
+pg_statio_all_tables| SELECT c.oid AS relid,
+    n.nspname AS schemaname,
+    c.relname,
+    (pg_stat_get_blocks_fetched(c.oid) - pg_stat_get_blocks_hit(c.oid)) AS heap_blks_read,
+    pg_stat_get_blocks_hit(c.oid) AS heap_blks_hit,
+    (sum((pg_stat_get_blocks_fetched(i.indexrelid) - pg_stat_get_blocks_hit(i.indexrelid))))::bigint AS idx_blks_read,
+    (sum(pg_stat_get_blocks_hit(i.indexrelid)))::bigint AS idx_blks_hit,
+    (pg_stat_get_blocks_fetched(t.oid) - pg_stat_get_blocks_hit(t.oid)) AS toast_blks_read,
+    pg_stat_get_blocks_hit(t.oid) AS toast_blks_hit,
+    (sum((pg_stat_get_blocks_fetched(x.indexrelid) - pg_stat_get_blocks_hit(x.indexrelid))))::bigint AS tidx_blks_read,
     (sum(pg_stat_get_blocks_hit(x.indexrelid)))::bigint AS tidx_blks_hit
    FROM ((((pg_class c
    LEFT JOIN pg_index i ON ((c.oid = i.indrelid)))
@@ -1864,71 +1864,71 @@ pg_statio_all_tables| SELECT c.oid AS relid,
    LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
   WHERE (c.relkind = ANY (ARRAY['r'::"char", 't'::"char", 'm'::"char"]))
   GROUP BY c.oid, n.nspname, c.relname, t.oid, x.indrelid;
-pg_statio_sys_indexes| SELECT pg_statio_all_indexes.relid, 
-    pg_statio_all_indexes.indexrelid, 
-    pg_statio_all_indexes.schemaname, 
-    pg_statio_all_indexes.relname, 
-    pg_statio_all_indexes.indexrelname, 
-    pg_statio_all_indexes.idx_blks_read, 
+pg_statio_sys_indexes| SELECT pg_statio_all_indexes.relid,
+    pg_statio_all_indexes.indexrelid,
+    pg_statio_all_indexes.schemaname,
+    pg_statio_all_indexes.relname,
+    pg_statio_all_indexes.indexrelname,
+    pg_statio_all_indexes.idx_blks_read,
     pg_statio_all_indexes.idx_blks_hit
    FROM pg_statio_all_indexes
   WHERE ((pg_statio_all_indexes.schemaname = ANY (ARRAY['pg_catalog'::name, 'information_schema'::name])) OR (pg_statio_all_indexes.schemaname ~ '^pg_toast'::text));
-pg_statio_sys_sequences| SELECT pg_statio_all_sequences.relid, 
-    pg_statio_all_sequences.schemaname, 
-    pg_statio_all_sequences.relname, 
-    pg_statio_all_sequences.blks_read, 
+pg_statio_sys_sequences| SELECT pg_statio_all_sequences.relid,
+    pg_statio_all_sequences.schemaname,
+    pg_statio_all_sequences.relname,
+    pg_statio_all_sequences.blks_read,
     pg_statio_all_sequences.blks_hit
    FROM pg_statio_all_sequences
   WHERE ((pg_statio_all_sequences.schemaname = ANY (ARRAY['pg_catalog'::name, 'information_schema'::name])) OR (pg_statio_all_sequences.schemaname ~ '^pg_toast'::text));
-pg_statio_sys_tables| SELECT pg_statio_all_tables.relid, 
-    pg_statio_all_tables.schemaname, 
-    pg_statio_all_tables.relname, 
-    pg_statio_all_tables.heap_blks_read, 
-    pg_statio_all_tables.heap_blks_hit, 
-    pg_statio_all_tables.idx_blks_read, 
-    pg_statio_all_tables.idx_blks_hit, 
-    pg_statio_all_tables.toast_blks_read, 
-    pg_statio_all_tables.toast_blks_hit, 
-    pg_statio_all_tables.tidx_blks_read, 
+pg_statio_sys_tables| SELECT pg_statio_all_tables.relid,
+    pg_statio_all_tables.schemaname,
+    pg_statio_all_tables.relname,
+    pg_statio_all_tables.heap_blks_read,
+    pg_statio_all_tables.heap_blks_hit,
+    pg_statio_all_tables.idx_blks_read,
+    pg_statio_all_tables.idx_blks_hit,
+    pg_statio_all_tables.toast_blks_read,
+    pg_statio_all_tables.toast_blks_hit,
+    pg_statio_all_tables.tidx_blks_read,
     pg_statio_all_tables.tidx_blks_hit
    FROM pg_statio_all_tables
   WHERE ((pg_statio_all_tables.schemaname = ANY (ARRAY['pg_catalog'::name, 'information_schema'::name])) OR (pg_statio_all_tables.schemaname ~ '^pg_toast'::text));
-pg_statio_user_indexes| SELECT pg_statio_all_indexes.relid, 
-    pg_statio_all_indexes.indexrelid, 
-    pg_statio_all_indexes.schemaname, 
-    pg_statio_all_indexes.relname, 
-    pg_statio_all_indexes.indexrelname, 
-    pg_statio_all_indexes.idx_blks_read, 
+pg_statio_user_indexes| SELECT pg_statio_all_indexes.relid,
+    pg_statio_all_indexes.indexrelid,
+    pg_statio_all_indexes.schemaname,
+    pg_statio_all_indexes.relname,
+    pg_statio_all_indexes.indexrelname,
+    pg_statio_all_indexes.idx_blks_read,
     pg_statio_all_indexes.idx_blks_hit
    FROM pg_statio_all_indexes
   WHERE ((pg_statio_all_indexes.schemaname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name])) AND (pg_statio_all_indexes.schemaname !~ '^pg_toast'::text));
-pg_statio_user_sequences| SELECT pg_statio_all_sequences.relid, 
-    pg_statio_all_sequences.schemaname, 
-    pg_statio_all_sequences.relname, 
-    pg_statio_all_sequences.blks_read, 
+pg_statio_user_sequences| SELECT pg_statio_all_sequences.relid,
+    pg_statio_all_sequences.schemaname,
+    pg_statio_all_sequences.relname,
+    pg_statio_all_sequences.blks_read,
     pg_statio_all_sequences.blks_hit
    FROM pg_statio_all_sequences
   WHERE ((pg_statio_all_sequences.schemaname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name])) AND (pg_statio_all_sequences.schemaname !~ '^pg_toast'::text));
-pg_statio_user_tables| SELECT pg_statio_all_tables.relid, 
-    pg_statio_all_tables.schemaname, 
-    pg_statio_all_tables.relname, 
-    pg_statio_all_tables.heap_blks_read, 
-    pg_statio_all_tables.heap_blks_hit, 
-    pg_statio_all_tables.idx_blks_read, 
-    pg_statio_all_tables.idx_blks_hit, 
-    pg_statio_all_tables.toast_blks_read, 
-    pg_statio_all_tables.toast_blks_hit, 
-    pg_statio_all_tables.tidx_blks_read, 
+pg_statio_user_tables| SELECT pg_statio_all_tables.relid,
+    pg_statio_all_tables.schemaname,
+    pg_statio_all_tables.relname,
+    pg_statio_all_tables.heap_blks_read,
+    pg_statio_all_tables.heap_blks_hit,
+    pg_statio_all_tables.idx_blks_read,
+    pg_statio_all_tables.idx_blks_hit,
+    pg_statio_all_tables.toast_blks_read,
+    pg_statio_all_tables.toast_blks_hit,
+    pg_statio_all_tables.tidx_blks_read,
     pg_statio_all_tables.tidx_blks_hit
    FROM pg_statio_all_tables
   WHERE ((pg_statio_all_tables.schemaname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name])) AND (pg_statio_all_tables.schemaname !~ '^pg_toast'::text));
-pg_stats| SELECT n.nspname AS schemaname, 
-    c.relname AS tablename, 
-    a.attname, 
-    s.stainherit AS inherited, 
-    s.stanullfrac AS null_frac, 
-    s.stawidth AS avg_width, 
-    s.stadistinct AS n_distinct, 
+pg_stats| SELECT n.nspname AS schemaname,
+    c.relname AS tablename,
+    a.attname,
+    s.stainherit AS inherited,
+    s.stanullfrac AS null_frac,
+    s.stawidth AS avg_width,
+    s.stadistinct AS n_distinct,
         CASE
             WHEN (s.stakind1 = 1) THEN s.stavalues1
             WHEN (s.stakind2 = 1) THEN s.stavalues2
@@ -1936,7 +1936,7 @@ pg_stats| SELECT n.nspname AS schemaname,
             WHEN (s.stakind4 = 1) THEN s.stavalues4
             WHEN (s.stakind5 = 1) THEN s.stavalues5
             ELSE NULL::anyarray
-        END AS most_common_vals, 
+        END AS most_common_vals,
         CASE
             WHEN (s.stakind1 = 1) THEN s.stanumbers1
             WHEN (s.stakind2 = 1) THEN s.stanumbers2
@@ -1944,7 +1944,7 @@ pg_stats| SELECT n.nspname AS schemaname,
             WHEN (s.stakind4 = 1) THEN s.stanumbers4
             WHEN (s.stakind5 = 1) THEN s.stanumbers5
             ELSE NULL::real[]
-        END AS most_common_freqs, 
+        END AS most_common_freqs,
         CASE
             WHEN (s.stakind1 = 2) THEN s.stavalues1
             WHEN (s.stakind2 = 2) THEN s.stavalues2
@@ -1952,7 +1952,7 @@ pg_stats| SELECT n.nspname AS schemaname,
             WHEN (s.stakind4 = 2) THEN s.stavalues4
             WHEN (s.stakind5 = 2) THEN s.stavalues5
             ELSE NULL::anyarray
-        END AS histogram_bounds, 
+        END AS histogram_bounds,
         CASE
             WHEN (s.stakind1 = 3) THEN s.stanumbers1[1]
             WHEN (s.stakind2 = 3) THEN s.stanumbers2[1]
@@ -1960,7 +1960,7 @@ pg_stats| SELECT n.nspname AS schemaname,
             WHEN (s.stakind4 = 3) THEN s.stanumbers4[1]
             WHEN (s.stakind5 = 3) THEN s.stanumbers5[1]
             ELSE NULL::real
-        END AS correlation, 
+        END AS correlation,
         CASE
             WHEN (s.stakind1 = 4) THEN s.stavalues1
             WHEN (s.stakind2 = 4) THEN s.stavalues2
@@ -1968,7 +1968,7 @@ pg_stats| SELECT n.nspname AS schemaname,
             WHEN (s.stakind4 = 4) THEN s.stavalues4
             WHEN (s.stakind5 = 4) THEN s.stavalues5
             ELSE NULL::anyarray
-        END AS most_common_elems, 
+        END AS most_common_elems,
         CASE
             WHEN (s.stakind1 = 4) THEN s.stanumbers1
             WHEN (s.stakind2 = 4) THEN s.stanumbers2
@@ -1976,7 +1976,7 @@ pg_stats| SELECT n.nspname AS schemaname,
             WHEN (s.stakind4 = 4) THEN s.stanumbers4
             WHEN (s.stakind5 = 4) THEN s.stanumbers5
             ELSE NULL::real[]
-        END AS most_common_elem_freqs, 
+        END AS most_common_elem_freqs,
         CASE
             WHEN (s.stakind1 = 5) THEN s.stanumbers1
             WHEN (s.stakind2 = 5) THEN s.stanumbers2
@@ -1990,44 +1990,44 @@ pg_stats| SELECT n.nspname AS schemaname,
    JOIN pg_attribute a ON (((c.oid = a.attrelid) AND (a.attnum = s.staattnum))))
    LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
   WHERE ((NOT a.attisdropped) AND has_column_privilege(c.oid, a.attnum, 'select'::text));
-pg_tables| SELECT n.nspname AS schemaname, 
-    c.relname AS tablename, 
-    pg_get_userbyid(c.relowner) AS tableowner, 
-    t.spcname AS tablespace, 
-    c.relhasindex AS hasindexes, 
-    c.relhasrules AS hasrules, 
+pg_tables| SELECT n.nspname AS schemaname,
+    c.relname AS tablename,
+    pg_get_userbyid(c.relowner) AS tableowner,
+    t.spcname AS tablespace,
+    c.relhasindex AS hasindexes,
+    c.relhasrules AS hasrules,
     c.relhastriggers AS hastriggers
    FROM ((pg_class c
    LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
    LEFT JOIN pg_tablespace t ON ((t.oid = c.reltablespace)))
   WHERE (c.relkind = 'r'::"char");
-pg_timezone_abbrevs| SELECT pg_timezone_abbrevs.abbrev, 
-    pg_timezone_abbrevs.utc_offset, 
+pg_timezone_abbrevs| SELECT pg_timezone_abbrevs.abbrev,
+    pg_timezone_abbrevs.utc_offset,
     pg_timezone_abbrevs.is_dst
    FROM pg_timezone_abbrevs() pg_timezone_abbrevs(abbrev, utc_offset, is_dst);
-pg_timezone_names| SELECT pg_timezone_names.name, 
-    pg_timezone_names.abbrev, 
-    pg_timezone_names.utc_offset, 
+pg_timezone_names| SELECT pg_timezone_names.name,
+    pg_timezone_names.abbrev,
+    pg_timezone_names.utc_offset,
     pg_timezone_names.is_dst
    FROM pg_timezone_names() pg_timezone_names(name, abbrev, utc_offset, is_dst);
-pg_user| SELECT pg_shadow.usename, 
-    pg_shadow.usesysid, 
-    pg_shadow.usecreatedb, 
-    pg_shadow.usesuper, 
-    pg_shadow.usecatupd, 
-    pg_shadow.userepl, 
-    '********'::text AS passwd, 
-    pg_shadow.valuntil, 
+pg_user| SELECT pg_shadow.usename,
+    pg_shadow.usesysid,
+    pg_shadow.usecreatedb,
+    pg_shadow.usesuper,
+    pg_shadow.usecatupd,
+    pg_shadow.userepl,
+    '********'::text AS passwd,
+    pg_shadow.valuntil,
     pg_shadow.useconfig
    FROM pg_shadow;
-pg_user_mappings| SELECT u.oid AS umid, 
-    s.oid AS srvid, 
-    s.srvname, 
-    u.umuser, 
+pg_user_mappings| SELECT u.oid AS umid,
+    s.oid AS srvid,
+    s.srvname,
+    u.umuser,
         CASE
             WHEN (u.umuser = (0)::oid) THEN 'public'::name
             ELSE a.rolname
-        END AS usename, 
+        END AS usename,
         CASE
             WHEN (pg_has_role(s.srvowner, 'USAGE'::text) OR has_server_privilege(s.oid, 'USAGE'::text)) THEN u.umoptions
             ELSE NULL::text[]
@@ -2035,106 +2035,106 @@ pg_user_mappings| SELECT u.oid AS umid,
    FROM ((pg_user_mapping u
    LEFT JOIN pg_authid a ON ((a.oid = u.umuser)))
    JOIN pg_foreign_server s ON ((u.umserver = s.oid)));
-pg_views| SELECT n.nspname AS schemaname, 
-    c.relname AS viewname, 
-    pg_get_userbyid(c.relowner) AS viewowner, 
+pg_views| SELECT n.nspname AS schemaname,
+    c.relname AS viewname,
+    pg_get_userbyid(c.relowner) AS viewowner,
     pg_get_viewdef(c.oid) AS definition
    FROM (pg_class c
    LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
   WHERE (c.relkind = 'v'::"char");
-rtest_v1| SELECT rtest_t1.a, 
+rtest_v1| SELECT rtest_t1.a,
     rtest_t1.b
    FROM rtest_t1;
-rtest_vcomp| SELECT x.part, 
+rtest_vcomp| SELECT x.part,
     (x.size * y.factor) AS size_in_cm
-   FROM rtest_comp x, 
+   FROM rtest_comp x,
     rtest_unitfact y
   WHERE (x.unit = y.unit);
-rtest_vview1| SELECT x.a, 
+rtest_vview1| SELECT x.a,
     x.b
    FROM rtest_view1 x
   WHERE (0 < ( SELECT count(*) AS count
            FROM rtest_view2 y
           WHERE (y.a = x.a)));
-rtest_vview2| SELECT rtest_view1.a, 
+rtest_vview2| SELECT rtest_view1.a,
     rtest_view1.b
    FROM rtest_view1
   WHERE rtest_view1.v;
-rtest_vview3| SELECT x.a, 
+rtest_vview3| SELECT x.a,
     x.b
    FROM rtest_vview2 x
   WHERE (0 < ( SELECT count(*) AS count
            FROM rtest_view2 y
           WHERE (y.a = x.a)));
-rtest_vview4| SELECT x.a, 
-    x.b, 
+rtest_vview4| SELECT x.a,
+    x.b,
     count(y.a) AS refcount
-   FROM rtest_view1 x, 
+   FROM rtest_view1 x,
     rtest_view2 y
   WHERE (x.a = y.a)
   GROUP BY x.a, x.b;
-rtest_vview5| SELECT rtest_view1.a, 
-    rtest_view1.b, 
+rtest_vview5| SELECT rtest_view1.a,
+    rtest_view1.b,
     rtest_viewfunc1(rtest_view1.a) AS refcount
    FROM rtest_view1;
-shoe| SELECT sh.shoename, 
-    sh.sh_avail, 
-    sh.slcolor, 
-    sh.slminlen, 
-    (sh.slminlen * un.un_fact) AS slminlen_cm, 
-    sh.slmaxlen, 
-    (sh.slmaxlen * un.un_fact) AS slmaxlen_cm, 
+shoe| SELECT sh.shoename,
+    sh.sh_avail,
+    sh.slcolor,
+    sh.slminlen,
+    (sh.slminlen * un.un_fact) AS slminlen_cm,
+    sh.slmaxlen,
+    (sh.slmaxlen * un.un_fact) AS slmaxlen_cm,
     sh.slunit
-   FROM shoe_data sh, 
+   FROM shoe_data sh,
     unit un
   WHERE (sh.slunit = un.un_name);
-shoe_ready| SELECT rsh.shoename, 
-    rsh.sh_avail, 
-    rsl.sl_name, 
-    rsl.sl_avail, 
+shoe_ready| SELECT rsh.shoename,
+    rsh.sh_avail,
+    rsl.sl_name,
+    rsl.sl_avail,
     int4smaller(rsh.sh_avail, rsl.sl_avail) AS total_avail
-   FROM shoe rsh, 
+   FROM shoe rsh,
     shoelace rsl
   WHERE (((rsl.sl_color = rsh.slcolor) AND (rsl.sl_len_cm >= rsh.slminlen_cm)) AND (rsl.sl_len_cm <= rsh.slmaxlen_cm));
-shoelace| SELECT s.sl_name, 
-    s.sl_avail, 
-    s.sl_color, 
-    s.sl_len, 
-    s.sl_unit, 
+shoelace| SELECT s.sl_name,
+    s.sl_avail,
+    s.sl_color,
+    s.sl_len,
+    s.sl_unit,
     (s.sl_len * u.un_fact) AS sl_len_cm
-   FROM shoelace_data s, 
+   FROM shoelace_data s,
     unit u
   WHERE (s.sl_unit = u.un_name);
-shoelace_candelete| SELECT shoelace_obsolete.sl_name, 
-    shoelace_obsolete.sl_avail, 
-    shoelace_obsolete.sl_color, 
-    shoelace_obsolete.sl_len, 
-    shoelace_obsolete.sl_unit, 
+shoelace_candelete| SELECT shoelace_obsolete.sl_name,
+    shoelace_obsolete.sl_avail,
+    shoelace_obsolete.sl_color,
+    shoelace_obsolete.sl_len,
+    shoelace_obsolete.sl_unit,
     shoelace_obsolete.sl_len_cm
    FROM shoelace_obsolete
   WHERE (shoelace_obsolete.sl_avail = 0);
-shoelace_obsolete| SELECT shoelace.sl_name, 
-    shoelace.sl_avail, 
-    shoelace.sl_color, 
-    shoelace.sl_len, 
-    shoelace.sl_unit, 
+shoelace_obsolete| SELECT shoelace.sl_name,
+    shoelace.sl_avail,
+    shoelace.sl_color,
+    shoelace.sl_len,
+    shoelace.sl_unit,
     shoelace.sl_len_cm
    FROM shoelace
   WHERE (NOT (EXISTS ( SELECT shoe.shoename
            FROM shoe
           WHERE (shoe.slcolor = shoelace.sl_color))));
-street| SELECT r.name, 
-    r.thepath, 
+street| SELECT r.name,
+    r.thepath,
     c.cname
-   FROM ONLY road r, 
+   FROM ONLY road r,
     real_city c
   WHERE (c.outline ## r.thepath);
-toyemp| SELECT emp.name, 
-    emp.age, 
-    emp.location, 
+toyemp| SELECT emp.name,
+    emp.age,
+    emp.location,
     (12 * emp.salary) AS annualsal
    FROM emp;
-tv| SELECT t.type, 
+tv| SELECT t.type,
     sum(t.amt) AS totamt
    FROM t
   GROUP BY t.type;
@@ -2150,14 +2150,14 @@ pg_settings|pg_settings_u|CREATE RULE pg_settings_u AS
     ON UPDATE TO pg_settings
    WHERE (new.name = old.name) DO  SELECT set_config(old.name, new.setting, false) AS set_config;
 rtest_emp|rtest_emp_del|CREATE RULE rtest_emp_del AS
-    ON DELETE TO rtest_emp DO  INSERT INTO rtest_emplog (ename, who, action, newsal, oldsal) 
+    ON DELETE TO rtest_emp DO  INSERT INTO rtest_emplog (ename, who, action, newsal, oldsal)
   VALUES (old.ename, "current_user"(), 'fired'::bpchar, '$0.00'::money, old.salary);
 rtest_emp|rtest_emp_ins|CREATE RULE rtest_emp_ins AS
-    ON INSERT TO rtest_emp DO  INSERT INTO rtest_emplog (ename, who, action, newsal, oldsal) 
+    ON INSERT TO rtest_emp DO  INSERT INTO rtest_emplog (ename, who, action, newsal, oldsal)
   VALUES (new.ename, "current_user"(), 'hired'::bpchar, new.salary, '$0.00'::money);
 rtest_emp|rtest_emp_upd|CREATE RULE rtest_emp_upd AS
     ON UPDATE TO rtest_emp
-   WHERE (new.salary <> old.salary) DO  INSERT INTO rtest_emplog (ename, who, action, newsal, oldsal) 
+   WHERE (new.salary <> old.salary) DO  INSERT INTO rtest_emplog (ename, who, action, newsal, oldsal)
   VALUES (new.ename, "current_user"(), 'honored'::bpchar, new.salary, old.salary);
 rtest_nothn1|rtest_nothn_r1|CREATE RULE rtest_nothn_r1 AS
     ON INSERT TO rtest_nothn1
@@ -2167,22 +2167,22 @@ rtest_nothn1|rtest_nothn_r2|CREATE RULE rtest_nothn_r2 AS
    WHERE ((new.a >= 30) AND (new.a < 40)) DO INSTEAD NOTHING;
 rtest_nothn2|rtest_nothn_r3|CREATE RULE rtest_nothn_r3 AS
     ON INSERT TO rtest_nothn2
-   WHERE (new.a >= 100) DO INSTEAD  INSERT INTO rtest_nothn3 (a, b) 
+   WHERE (new.a >= 100) DO INSTEAD  INSERT INTO rtest_nothn3 (a, b)
   VALUES (new.a, new.b);
 rtest_nothn2|rtest_nothn_r4|CREATE RULE rtest_nothn_r4 AS
     ON INSERT TO rtest_nothn2 DO INSTEAD NOTHING;
 rtest_order1|rtest_order_r1|CREATE RULE rtest_order_r1 AS
-    ON INSERT TO rtest_order1 DO INSTEAD  INSERT INTO rtest_order2 (a, b, c) 
+    ON INSERT TO rtest_order1 DO INSTEAD  INSERT INTO rtest_order2 (a, b, c)
   VALUES (new.a, nextval('rtest_seq'::regclass), 'rule 1 - this should run 1st'::text);
 rtest_order1|rtest_order_r2|CREATE RULE rtest_order_r2 AS
-    ON INSERT TO rtest_order1 DO  INSERT INTO rtest_order2 (a, b, c) 
+    ON INSERT TO rtest_order1 DO  INSERT INTO rtest_order2 (a, b, c)
   VALUES (new.a, nextval('rtest_seq'::regclass), 'rule 2 - this should run 2nd'::text);
 rtest_order1|rtest_order_r3|CREATE RULE rtest_order_r3 AS
-    ON INSERT TO rtest_order1 DO INSTEAD  INSERT INTO rtest_order2 (a, b, c) 
+    ON INSERT TO rtest_order1 DO INSTEAD  INSERT INTO rtest_order2 (a, b, c)
   VALUES (new.a, nextval('rtest_seq'::regclass), 'rule 3 - this should run 3rd'::text);
 rtest_order1|rtest_order_r4|CREATE RULE rtest_order_r4 AS
     ON INSERT TO rtest_order1
-   WHERE (new.a < 100) DO INSTEAD  INSERT INTO rtest_order2 (a, b, c) 
+   WHERE (new.a < 100) DO INSTEAD  INSERT INTO rtest_order2 (a, b, c)
   VALUES (new.a, nextval('rtest_seq'::regclass), 'rule 4 - this should run 4th'::text);
 rtest_person|rtest_pers_del|CREATE RULE rtest_pers_del AS
     ON DELETE TO rtest_person DO  DELETE FROM rtest_admin
@@ -2204,25 +2204,25 @@ rtest_system|rtest_sys_upd|CREATE RULE rtest_sys_upd AS
 );
 rtest_t4|rtest_t4_ins1|CREATE RULE rtest_t4_ins1 AS
     ON INSERT TO rtest_t4
-   WHERE ((new.a >= 10) AND (new.a < 20)) DO INSTEAD  INSERT INTO rtest_t5 (a, b) 
+   WHERE ((new.a >= 10) AND (new.a < 20)) DO INSTEAD  INSERT INTO rtest_t5 (a, b)
   VALUES (new.a, new.b);
 rtest_t4|rtest_t4_ins2|CREATE RULE rtest_t4_ins2 AS
     ON INSERT TO rtest_t4
-   WHERE ((new.a >= 20) AND (new.a < 30)) DO  INSERT INTO rtest_t6 (a, b) 
+   WHERE ((new.a >= 20) AND (new.a < 30)) DO  INSERT INTO rtest_t6 (a, b)
   VALUES (new.a, new.b);
 rtest_t5|rtest_t5_ins|CREATE RULE rtest_t5_ins AS
     ON INSERT TO rtest_t5
-   WHERE (new.a > 15) DO  INSERT INTO rtest_t7 (a, b) 
+   WHERE (new.a > 15) DO  INSERT INTO rtest_t7 (a, b)
   VALUES (new.a, new.b);
 rtest_t6|rtest_t6_ins|CREATE RULE rtest_t6_ins AS
     ON INSERT TO rtest_t6
-   WHERE (new.a > 25) DO INSTEAD  INSERT INTO rtest_t8 (a, b) 
+   WHERE (new.a > 25) DO INSTEAD  INSERT INTO rtest_t8 (a, b)
   VALUES (new.a, new.b);
 rtest_v1|rtest_v1_del|CREATE RULE rtest_v1_del AS
     ON DELETE TO rtest_v1 DO INSTEAD  DELETE FROM rtest_t1
   WHERE (rtest_t1.a = old.a);
 rtest_v1|rtest_v1_ins|CREATE RULE rtest_v1_ins AS
-    ON INSERT TO rtest_v1 DO INSTEAD  INSERT INTO rtest_t1 (a, b) 
+    ON INSERT TO rtest_v1 DO INSTEAD  INSERT INTO rtest_t1 (a, b)
   VALUES (new.a, new.b);
 rtest_v1|rtest_v1_upd|CREATE RULE rtest_v1_upd AS
     ON UPDATE TO rtest_v1 DO INSTEAD  UPDATE rtest_t1 SET a = new.a, b = new.b
@@ -2231,14 +2231,14 @@ shoelace|shoelace_del|CREATE RULE shoelace_del AS
     ON DELETE TO shoelace DO INSTEAD  DELETE FROM shoelace_data
   WHERE (shoelace_data.sl_name = old.sl_name);
 shoelace|shoelace_ins|CREATE RULE shoelace_ins AS
-    ON INSERT TO shoelace DO INSTEAD  INSERT INTO shoelace_data (sl_name, sl_avail, sl_color, sl_len, sl_unit) 
+    ON INSERT TO shoelace DO INSTEAD  INSERT INTO shoelace_data (sl_name, sl_avail, sl_color, sl_len, sl_unit)
   VALUES (new.sl_name, new.sl_avail, new.sl_color, new.sl_len, new.sl_unit);
 shoelace|shoelace_upd|CREATE RULE shoelace_upd AS
     ON UPDATE TO shoelace DO INSTEAD  UPDATE shoelace_data SET sl_name = new.sl_name, sl_avail = new.sl_avail, sl_color = new.sl_color, sl_len = new.sl_len, sl_unit = new.sl_unit
   WHERE (shoelace_data.sl_name = old.sl_name);
 shoelace_data|log_shoelace|CREATE RULE log_shoelace AS
     ON UPDATE TO shoelace_data
-   WHERE (new.sl_avail <> old.sl_avail) DO  INSERT INTO shoelace_log (sl_name, sl_avail, log_who, log_when) 
+   WHERE (new.sl_avail <> old.sl_avail) DO  INSERT INTO shoelace_log (sl_name, sl_avail, log_who, log_when)
   VALUES (new.sl_name, new.sl_avail, 'Al Bundy'::name, 'Thu Jan 01 00:00:00 1970'::timestamp without time zone);
 shoelace_ok|shoelace_ok_ins|CREATE RULE shoelace_ok_ins AS
     ON INSERT TO shoelace_ok DO INSTEAD  UPDATE shoelace SET sl_avail = (shoelace.sl_avail + new.ok_quant)
@@ -2460,50 +2460,50 @@ select * from only t1_2;
 
 -- test various flavors of pg_get_viewdef()
 select pg_get_viewdef('shoe'::regclass) as unpretty;
-                    unpretty                     
--------------------------------------------------
-  SELECT sh.shoename,                           +
-     sh.sh_avail,                               +
-     sh.slcolor,                                +
-     sh.slminlen,                               +
-     (sh.slminlen * un.un_fact) AS slminlen_cm, +
-     sh.slmaxlen,                               +
-     (sh.slmaxlen * un.un_fact) AS slmaxlen_cm, +
-     sh.slunit                                  +
-    FROM shoe_data sh,                          +
-     unit un                                    +
+                    unpretty                    
+------------------------------------------------
+  SELECT sh.shoename,                          +
+     sh.sh_avail,                              +
+     sh.slcolor,                               +
+     sh.slminlen,                              +
+     (sh.slminlen * un.un_fact) AS slminlen_cm,+
+     sh.slmaxlen,                              +
+     (sh.slmaxlen * un.un_fact) AS slmaxlen_cm,+
+     sh.slunit                                 +
+    FROM shoe_data sh,                         +
+     unit un                                   +
    WHERE (sh.slunit = un.un_name);
 (1 row)
 
 select pg_get_viewdef('shoe'::regclass,true) as pretty;
-                    pretty                     
------------------------------------------------
-  SELECT sh.shoename,                         +
-     sh.sh_avail,                             +
-     sh.slcolor,                              +
-     sh.slminlen,                             +
-     sh.slminlen * un.un_fact AS slminlen_cm, +
-     sh.slmaxlen,                             +
-     sh.slmaxlen * un.un_fact AS slmaxlen_cm, +
-     sh.slunit                                +
-    FROM shoe_data sh,                        +
-     unit un                                  +
+                    pretty                    
+----------------------------------------------
+  SELECT sh.shoename,                        +
+     sh.sh_avail,                            +
+     sh.slcolor,                             +
+     sh.slminlen,                            +
+     sh.slminlen * un.un_fact AS slminlen_cm,+
+     sh.slmaxlen,                            +
+     sh.slmaxlen * un.un_fact AS slmaxlen_cm,+
+     sh.slunit                               +
+    FROM shoe_data sh,                       +
+     unit un                                 +
    WHERE sh.slunit = un.un_name;
 (1 row)
 
 select pg_get_viewdef('shoe'::regclass,0) as prettier;
-                   prettier                    
------------------------------------------------
-  SELECT sh.shoename,                         +
-     sh.sh_avail,                             +
-     sh.slcolor,                              +
-     sh.slminlen,                             +
-     sh.slminlen * un.un_fact AS slminlen_cm, +
-     sh.slmaxlen,                             +
-     sh.slmaxlen * un.un_fact AS slmaxlen_cm, +
-     sh.slunit                                +
-    FROM shoe_data sh,                        +
-     unit un                                  +
+                   prettier                   
+----------------------------------------------
+  SELECT sh.shoename,                        +
+     sh.sh_avail,                            +
+     sh.slcolor,                             +
+     sh.slminlen,                            +
+     sh.slminlen * un.un_fact AS slminlen_cm,+
+     sh.slmaxlen,                            +
+     sh.slmaxlen * un.un_fact AS slmaxlen_cm,+
+     sh.slunit                               +
+    FROM shoe_data sh,                       +
+     unit un                                 +
    WHERE sh.slunit = un.un_name;
 (1 row)
 
@@ -2585,7 +2585,7 @@ Rules:
     r2 AS
     ON UPDATE TO rules_src DO  VALUES (old.f1,old.f2,'old'::text), (new.f1,new.f2,'new'::text)
     r3 AS
-    ON DELETE TO rules_src DO 
+    ON DELETE TO rules_src DO
  NOTIFY rules_src_deletion
 Has OIDs: no
 
@@ -2616,7 +2616,7 @@ View definition:
    FROM rule_t1;
 Rules:
  newinsertrule AS
-    ON INSERT TO rule_v1 DO INSTEAD  INSERT INTO rule_t1 (a) 
+    ON INSERT TO rule_v1 DO INSTEAD  INSERT INTO rule_t1 (a)
   VALUES (new.a)
 
 --

@@ -312,8 +312,8 @@ CREATE VIEW aliased_view_4 AS
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT tt1.f1, 
-    tt1.f2, 
+ SELECT tt1.f1,
+    tt1.f2,
     tt1.f3
    FROM tt1
   WHERE (EXISTS ( SELECT 1
@@ -328,8 +328,8 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT a1.f1, 
-    a1.f2, 
+ SELECT a1.f1,
+    a1.f2,
     a1.f3
    FROM tt1 a1
   WHERE (EXISTS ( SELECT 1
@@ -344,8 +344,8 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT tt1.f1, 
-    tt1.f2, 
+ SELECT tt1.f1,
+    tt1.f2,
     tt1.f3
    FROM tt1
   WHERE (EXISTS ( SELECT 1
@@ -360,8 +360,8 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT tt1.y1, 
-    tt1.f2, 
+ SELECT tt1.y1,
+    tt1.f2,
     tt1.f3
    FROM temp_view_test.tt1
   WHERE (EXISTS ( SELECT 1
@@ -377,8 +377,8 @@ ALTER TABLE tx1 RENAME TO a1;
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT tt1.f1, 
-    tt1.f2, 
+ SELECT tt1.f1,
+    tt1.f2,
     tt1.f3
    FROM tt1
   WHERE (EXISTS ( SELECT 1
@@ -393,8 +393,8 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT a1.f1, 
-    a1.f2, 
+ SELECT a1.f1,
+    a1.f2,
     a1.f3
    FROM tt1 a1
   WHERE (EXISTS ( SELECT 1
@@ -409,8 +409,8 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT tt1.f1, 
-    tt1.f2, 
+ SELECT tt1.f1,
+    tt1.f2,
     tt1.f3
    FROM tt1
   WHERE (EXISTS ( SELECT 1
@@ -425,8 +425,8 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT tt1.y1, 
-    tt1.f2, 
+ SELECT tt1.y1,
+    tt1.f2,
     tt1.f3
    FROM temp_view_test.tt1
   WHERE (EXISTS ( SELECT 1
@@ -442,8 +442,8 @@ ALTER TABLE tt1 RENAME TO a2;
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT a2.f1, 
-    a2.f2, 
+ SELECT a2.f1,
+    a2.f2,
     a2.f3
    FROM a2
   WHERE (EXISTS ( SELECT 1
@@ -458,8 +458,8 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT a1.f1, 
-    a1.f2, 
+ SELECT a1.f1,
+    a1.f2,
     a1.f3
    FROM a2 a1
   WHERE (EXISTS ( SELECT 1
@@ -474,8 +474,8 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT a2.f1, 
-    a2.f2, 
+ SELECT a2.f1,
+    a2.f2,
     a2.f3
    FROM a2
   WHERE (EXISTS ( SELECT 1
@@ -490,8 +490,8 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT tt1.y1, 
-    tt1.f2, 
+ SELECT tt1.y1,
+    tt1.f2,
     tt1.f3
    FROM temp_view_test.tt1
   WHERE (EXISTS ( SELECT 1
@@ -507,8 +507,8 @@ ALTER TABLE a1 RENAME TO tt1;
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT a2.f1, 
-    a2.f2, 
+ SELECT a2.f1,
+    a2.f2,
     a2.f3
    FROM a2
   WHERE (EXISTS ( SELECT 1
@@ -523,8 +523,8 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT a1.f1, 
-    a1.f2, 
+ SELECT a1.f1,
+    a1.f2,
     a1.f3
    FROM a2 a1
   WHERE (EXISTS ( SELECT 1
@@ -539,8 +539,8 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT a2.f1, 
-    a2.f2, 
+ SELECT a2.f1,
+    a2.f2,
     a2.f3
    FROM a2
   WHERE (EXISTS ( SELECT 1
@@ -555,8 +555,8 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT tt1.y1, 
-    tt1.f2, 
+ SELECT tt1.y1,
+    tt1.f2,
     tt1.f3
    FROM temp_view_test.tt1
   WHERE (EXISTS ( SELECT 1
@@ -573,8 +573,8 @@ ALTER TABLE tx1 SET SCHEMA temp_view_test;
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT tx1.f1, 
-    tx1.f2, 
+ SELECT tx1.f1,
+    tx1.f2,
     tx1.f3
    FROM temp_view_test.tx1
   WHERE (EXISTS ( SELECT 1
@@ -589,8 +589,8 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT a1.f1, 
-    a1.f2, 
+ SELECT a1.f1,
+    a1.f2,
     a1.f3
    FROM temp_view_test.tx1 a1
   WHERE (EXISTS ( SELECT 1
@@ -605,8 +605,8 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT tx1.f1, 
-    tx1.f2, 
+ SELECT tx1.f1,
+    tx1.f2,
     tx1.f3
    FROM temp_view_test.tx1
   WHERE (EXISTS ( SELECT 1
@@ -621,8 +621,8 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT tt1.y1, 
-    tt1.f2, 
+ SELECT tt1.y1,
+    tt1.f2,
     tt1.f3
    FROM temp_view_test.tt1
   WHERE (EXISTS ( SELECT 1
@@ -640,8 +640,8 @@ ALTER TABLE tmp1 RENAME TO tx1;
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT tx1.f1, 
-    tx1.f2, 
+ SELECT tx1.f1,
+    tx1.f2,
     tx1.f3
    FROM temp_view_test.tx1
   WHERE (EXISTS ( SELECT 1
@@ -656,8 +656,8 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT a1.f1, 
-    a1.f2, 
+ SELECT a1.f1,
+    a1.f2,
     a1.f3
    FROM temp_view_test.tx1 a1
   WHERE (EXISTS ( SELECT 1
@@ -672,8 +672,8 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT tx1.f1, 
-    tx1.f2, 
+ SELECT tx1.f1,
+    tx1.f2,
     tx1.f3
    FROM temp_view_test.tx1
   WHERE (EXISTS ( SELECT 1
@@ -688,8 +688,8 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT tx1.y1, 
-    tx1.f2, 
+ SELECT tx1.y1,
+    tx1.f2,
     tx1.f3
    FROM tx1
   WHERE (EXISTS ( SELECT 1

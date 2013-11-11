@@ -1389,7 +1389,7 @@ CREATE VIEW rw_view1 AS SELECT * FROM base_tbl WHERE a < b
  a      | integer |           | plain   | 
  b      | integer |           | plain   | 
 View definition:
- SELECT base_tbl.a, 
+ SELECT base_tbl.a,
     base_tbl.b
    FROM base_tbl
   WHERE base_tbl.a < base_tbl.b;
