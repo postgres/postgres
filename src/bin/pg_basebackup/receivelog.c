@@ -989,7 +989,7 @@ HandleCopyStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 			hdr_len += 8;		/* dataStart */
 			hdr_len += 8;		/* walEnd */
 			hdr_len += 8;		/* sendTime */
-			if (r < hdr_len + 1)
+			if (r < hdr_len)
 			{
 				fprintf(stderr, _("%s: streaming header too small: %d\n"),
 						progname, r);
