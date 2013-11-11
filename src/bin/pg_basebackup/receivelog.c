@@ -495,7 +495,7 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 					progname, copybuf[0]);
 			goto error;
 		}
-		if (r < STREAMING_HEADER_SIZE + 1)
+		if (r < STREAMING_HEADER_SIZE)
 		{
 			fprintf(stderr, _("%s: streaming header too small: %d\n"),
 					progname, r);
