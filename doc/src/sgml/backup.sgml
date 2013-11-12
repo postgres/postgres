@@ -49,8 +49,8 @@ pg_dump <replaceable class="parameter">dbname</replaceable> &gt; <replaceable cl
    does not operate with special permissions. In particular, it must
    have read access to all tables that you want to back up, so in order
    to back up the entire database you almost always have to run it as a
-   database superuser.  (If you do not sufficient privileges to back up the
-   entire database, you can still back up portions of the database to which
+   database superuser.  (If you do not have sufficient privileges to back up
+   the entire database, you can still back up portions of the database to which
    you do have access using options such as
    <option>-n <replaceable>schema</replaceable></option>
    or <option>-t <replaceable>table</replaceable></option>.)
