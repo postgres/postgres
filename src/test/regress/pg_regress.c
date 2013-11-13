@@ -1655,6 +1655,8 @@ run_schedule(const char *schedule, test_function tfunc)
 		}
 	}
 
+	free_stringlist(&ignorelist);
+
 	fclose(scf);
 }
 
