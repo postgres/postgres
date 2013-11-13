@@ -579,12 +579,13 @@ CREATE FUNCTION foo(int, int default 42) ...
 
    <para>
     The full <acronym>SQL</acronym> type syntax is allowed for
-    input arguments and return value. However, some details of the
-    type specification (e.g., the precision field for
-    type <type>numeric</type>) are the responsibility of the
-    underlying function implementation and are silently swallowed
-    (i.e., not recognized or
-    enforced) by the <command>CREATE FUNCTION</command> command.
+    declaring a function's arguments and return value.  However,
+    parenthesized type modifiers (e.g., the precision field for
+    type <type>numeric</type>) are discarded by <command>CREATE FUNCTION</>.
+    Thus for example
+    <literal>CREATE FUNCTION foo (varchar(10)) ...</>
+    is exactly the same as
+    <literal>CREATE FUNCTION foo (varchar) ...</>.
    </para>
 
    <para>
