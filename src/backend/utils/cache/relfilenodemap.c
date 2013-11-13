@@ -213,8 +213,6 @@ RelidByRelfilenode(Oid reltablespace, Oid relfilenode)
 
 	while (HeapTupleIsValid(ntp = systable_getnext(scandesc)))
 	{
-		bool isnull PG_USED_FOR_ASSERTS_ONLY;
-
 		if (found)
 			elog(ERROR,
 				 "unexpected duplicate for tablespace %u, relfilenode %u",
@@ -224,6 +222,7 @@ RelidByRelfilenode(Oid reltablespace, Oid relfilenode)
 #ifdef USE_ASSERT_CHECKING
 		if (assert_enabled)
 		{
+			bool isnull;
 			Oid check;
 			check = fastgetattr(ntp, Anum_pg_class_reltablespace,
 								RelationGetDescr(relation),
