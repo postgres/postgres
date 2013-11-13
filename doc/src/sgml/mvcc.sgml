@@ -41,12 +41,12 @@
     for developers to manage concurrent access to data.  Internally,
     data consistency is maintained by using a multiversion
     model (Multiversion Concurrency Control, <acronym>MVCC</acronym>).
-    This means that while querying a database each transaction sees
+    This means that each SQL statement sees
     a snapshot of data (a <firstterm>database version</firstterm>)
     as it was some
     time ago, regardless of the current state of the underlying data.
-    This protects the transaction from viewing inconsistent data that
-    could be caused by (other) concurrent transaction updates on the same
+    This prevents statements from viewing inconsistent data produced
+    by concurrent transactions performing updates on the same
     data rows, providing <firstterm>transaction isolation</firstterm>
     for each database session.  <acronym>MVCC</acronym>, by eschewing
     the locking methodologies of traditional database systems,
