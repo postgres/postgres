@@ -300,8 +300,8 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	signaled = WIFSIGNALED(rc) || WEXITSTATUS(rc) > 125;
 
 	ereport(signaled ? FATAL : DEBUG2,
-		(errmsg("could not restore file \"%s\" from archive: return code %d",
-				xlogfname, rc)));
+		(errmsg("could not restore file \"%s\" from archive: %s",
+				xlogfname, wait_result_to_str(rc))));
 
 not_available:
 
@@ -410,9 +410,10 @@ ExecuteRecoveryCommand(char *command, char *commandName, bool failOnSignal)
 		ereport((signaled && failOnSignal) ? FATAL : WARNING,
 		/*------
 		   translator: First %s represents a recovery.conf parameter name like
-		  "recovery_end_command", and the 2nd is the value of that parameter. */
-				(errmsg("%s \"%s\": return code %d", commandName,
-						command, rc)));
+		  "recovery_end_command", the 2nd is the value of that parameter, the
+		  third an already translated error message. */
+				(errmsg("%s \"%s\": %s", commandName,
+						command, wait_result_to_str(rc))));
 	}
 }
 
