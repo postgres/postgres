@@ -274,7 +274,7 @@ output_set_descr(char *desc_name, char *index)
 			case ECPGd_di_precision:
 			case ECPGd_precision:
 			case ECPGd_scale:
-				mmerror(PARSE_ERROR, ET_FATAL, "descriptor item \"%s\" is not implemented",
+				mmfatal(PARSE_ERROR, "descriptor item \"%s\" is not implemented",
 						descriptor_item_name(results->value));
 				break;
 
@@ -284,7 +284,7 @@ output_set_descr(char *desc_name, char *index)
 			case ECPGd_octet:
 			case ECPGd_ret_length:
 			case ECPGd_ret_octet:
-				mmerror(PARSE_ERROR, ET_FATAL, "descriptor item \"%s\" cannot be set",
+				mmfatal(PARSE_ERROR, "descriptor item \"%s\" cannot be set",
 						descriptor_item_name(results->value));
 				break;
 

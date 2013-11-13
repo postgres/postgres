@@ -15,7 +15,7 @@ mm_alloc(size_t size)
 	void	   *ptr = malloc(size);
 
 	if (ptr == NULL)
-		mmerror(OUT_OF_MEMORY, ET_FATAL, "out of memory");
+		mmfatal(OUT_OF_MEMORY, "out of memory");
 
 	return ptr;
 }
@@ -27,7 +27,7 @@ mm_strdup(const char *string)
 	char	   *new = strdup(string);
 
 	if (new == NULL)
-		mmerror(OUT_OF_MEMORY, ET_FATAL, "out of memory");
+		mmfatal(OUT_OF_MEMORY, "out of memory");
 
 	return new;
 }
@@ -282,7 +282,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type, const int bra
 	{
 		case ECPGt_array:
 			if (indicator_set && ind_type->type != ECPGt_array)
-				mmerror(INDICATOR_NOT_ARRAY, ET_FATAL, "indicator for array/pointer has to be array/pointer");
+				mmfatal(INDICATOR_NOT_ARRAY, "indicator for array/pointer has to be array/pointer");
 			switch (type->u.element->type)
 			{
 				case ECPGt_array:
@@ -319,7 +319,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type, const int bra
 			break;
 		case ECPGt_struct:
 			if (indicator_set && ind_type->type != ECPGt_struct)
-				mmerror(INDICATOR_NOT_STRUCT, ET_FATAL, "indicator for struct has to be a struct");
+				mmfatal(INDICATOR_NOT_STRUCT, "indicator for struct has to be a struct");
 
 			ECPGdump_a_struct(o, name, ind_name, mm_strdup("1"), type, ind_type, prefix, ind_prefix);
 			break;
@@ -328,7 +328,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type, const int bra
 			break;
 		case ECPGt_char_variable:
 			if (indicator_set && (ind_type->type == ECPGt_struct || ind_type->type == ECPGt_array))
-				mmerror(INDICATOR_NOT_SIMPLE, ET_FATAL, "indicator for simple data type has to be simple");
+				mmfatal(INDICATOR_NOT_SIMPLE, "indicator for simple data type has to be simple");
 
 			ECPGdump_a_simple(o, name, type->type, mm_strdup("1"), (arr_str_siz && strcmp(arr_str_siz, "0") != 0) ? arr_str_siz : mm_strdup("1"), struct_sizeof, prefix, 0);
 			if (ind_type != NULL)
@@ -336,7 +336,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type, const int bra
 			break;
 		case ECPGt_descriptor:
 			if (indicator_set && (ind_type->type == ECPGt_struct || ind_type->type == ECPGt_array))
-				mmerror(INDICATOR_NOT_SIMPLE, ET_FATAL, "indicator for simple data type has to be simple");
+				mmfatal(INDICATOR_NOT_SIMPLE, "indicator for simple data type has to be simple");
 
 			ECPGdump_a_simple(o, name, type->type, NULL, mm_strdup("-1"), NULL, prefix, 0);
 			if (ind_type != NULL)
@@ -344,7 +344,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type, const int bra
 			break;
 		default:
 			if (indicator_set && (ind_type->type == ECPGt_struct || ind_type->type == ECPGt_array))
-				mmerror(INDICATOR_NOT_SIMPLE, ET_FATAL, "indicator for simple data type has to be simple");
+				mmfatal(INDICATOR_NOT_SIMPLE, "indicator for simple data type has to be simple");
 
 			ECPGdump_a_simple(o, name, type->type, type->size, (arr_str_siz && strcmp(arr_str_siz, "0") != 0) ? arr_str_siz : mm_strdup("-1"), struct_sizeof, prefix, type->counter);
 			if (ind_type != NULL)

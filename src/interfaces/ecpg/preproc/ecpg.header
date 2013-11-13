@@ -64,11 +64,9 @@ struct ECPGtype ecpg_query = {ECPGt_char_variable, NULL, NULL, NULL, {NULL}, 0};
 /*
  * Handle parsing errors and warnings
  */
-void
-mmerror(int error_code, enum errortype type, const char *error, ...)
+static void __attribute__((format(PG_PRINTF_ATTRIBUTE, 3, 0)))
+vmmerror(int error_code, enum errortype type, const char *error, va_list ap)
 {
-	va_list ap;
-
 	/* internationalize the error message string */
 	error = _(error);
 
@@ -80,14 +78,11 @@ mmerror(int error_code, enum errortype type, const char *error, ...)
 			fprintf(stderr, _("WARNING: "));
 			break;
 		case ET_ERROR:
-		case ET_FATAL:
 			fprintf(stderr, _("ERROR: "));
 			break;
 	}
 
-	va_start(ap, error);
 	vfprintf(stderr, error, ap);
-	va_end(ap);
 
 	fprintf(stderr, "\n");
 
@@ -98,16 +93,36 @@ mmerror(int error_code, enum errortype type, const char *error, ...)
 		case ET_ERROR:
 			ret_value = error_code;
 			break;
-		case ET_FATAL:
-			if (yyin)
-				fclose(yyin);
-			if (yyout)
-				fclose(yyout);
-
-			if (strcmp(output_filename, "-") != 0 && unlink(output_filename) != 0)
-				fprintf(stderr, _("could not remove output file \"%s\"\n"), output_filename);
-			exit(error_code);
 	}
+}
+
+void
+mmerror(int error_code, enum errortype type, const char *error, ...)
+{
+	va_list		ap;
+
+	va_start(ap, error);
+	vmmerror(error_code, type, error, ap);
+	va_end(ap);
+}
+
+void
+mmfatal(int error_code, const char *error, ...)
+{
+	va_list		ap;
+
+	va_start(ap, error);
+	vmmerror(error_code, ET_ERROR, error, ap);
+	va_end(ap);
+
+	if (yyin)
+		fclose(yyin);
+	if (yyout)
+		fclose(yyout);
+
+	if (strcmp(output_filename, "-") != 0 && unlink(output_filename) != 0)
+		fprintf(stderr, _("could not remove output file \"%s\"\n"), output_filename);
+	exit(error_code);
 }
 
 /*

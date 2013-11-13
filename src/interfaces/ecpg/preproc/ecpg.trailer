@@ -1687,7 +1687,7 @@ cvariable:	CVARIABLE
 				{
 					case '[':
 							if (brace)
-								mmerror(PARSE_ERROR, ET_FATAL, "multidimensional arrays for simple data types are not supported");
+								mmfatal(PARSE_ERROR, "multidimensional arrays for simple data types are not supported");
 							brace_open++;
 							break;
 					case ']':
