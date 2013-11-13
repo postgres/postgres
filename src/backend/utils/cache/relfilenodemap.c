@@ -57,23 +57,20 @@ RelfilenodeMapInvalidateCallback(Datum arg, Oid relid)
 	HASH_SEQ_STATUS status;
 	RelfilenodeMapEntry *entry;
 
-	/* nothing to do if not active or deleted */
-	if (RelfilenodeMapHash == NULL)
-		return;
-
-	/* if relid is InvalidOid, we must invalidate the entire cache */
-	if (relid == InvalidOid)
-	{
-		hash_destroy(RelfilenodeMapHash);
-		RelfilenodeMapHash = NULL;
-		return;
-	}
+	/* callback only gets registered after creating the hash */
+	Assert(RelfilenodeMapHash != NULL);
 
 	hash_seq_init(&status, RelfilenodeMapHash);
 	while ((entry = (RelfilenodeMapEntry *) hash_seq_search(&status)) != NULL)
 	{
-		/* Same OID may occur in more than one tablespace. */
-		if (entry->relid == relid)
+		/*
+		 * If relid is InvalidOid, signalling a complete reset, we must remove
+		 * all entries, otherwise just remove the specific relation's entry.
+		 * Always remove negative cache entries.
+		 */
+		if (relid == InvalidOid ||		/* complete reset */
+			entry->relid == InvalidOid ||		/* negative cache entry */
+			entry->relid == relid)		/* individual flushed relation */
 		{
 			if (hash_search(RelfilenodeMapHash,
 							(void *) &entry->key,
@@ -92,31 +89,11 @@ static void
 InitializeRelfilenodeMap(void)
 {
 	HASHCTL		ctl;
-	static bool	initial_init_done = false;
-	int i;
+	int			i;
 
 	/* Make sure we've initialized CacheMemoryContext. */
 	if (CacheMemoryContext == NULL)
 		CreateCacheMemoryContext();
-
-	/* Initialize the hash table. */
-	MemSet(&ctl, 0, sizeof(ctl));
-	ctl.keysize = sizeof(RelfilenodeMapKey);
-	ctl.entrysize = sizeof(RelfilenodeMapEntry);
-	ctl.hash = tag_hash;
-	ctl.hcxt = CacheMemoryContext;
-
-	RelfilenodeMapHash =
-		hash_create("RelfilenodeMap cache", 1024, &ctl,
-					HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
-
-	/*
-	 * For complete resets we simply delete the entire hash, but there's no
-	 * need to do the other stuff multiple times. Especially the initialization
-	 * of the relcche invalidation should only be done once.
-	 */
-	if (initial_init_done)
-		return;
 
 	/* build skey */
 	MemSet(&relfilenode_skey, 0, sizeof(relfilenode_skey));
@@ -134,10 +111,25 @@ InitializeRelfilenodeMap(void)
 	relfilenode_skey[0].sk_attno = Anum_pg_class_reltablespace;
 	relfilenode_skey[1].sk_attno = Anum_pg_class_relfilenode;
 
+	/* Initialize the hash table. */
+	MemSet(&ctl, 0, sizeof(ctl));
+	ctl.keysize = sizeof(RelfilenodeMapKey);
+	ctl.entrysize = sizeof(RelfilenodeMapEntry);
+	ctl.hash = tag_hash;
+	ctl.hcxt = CacheMemoryContext;
+
+	/*
+	 * Only create the RelfilenodeMapHash now, so we don't end up partially
+	 * initialized when fmgr_info_cxt() above ERRORs out with an out of memory
+	 * error.
+	 */
+	RelfilenodeMapHash =
+		hash_create("RelfilenodeMap cache", 1024, &ctl,
+					HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
+
 	/* Watch for invalidation events. */
 	CacheRegisterRelcacheCallback(RelfilenodeMapInvalidateCallback,
 								  (Datum) 0);
-	initial_init_done = true;
 }
 
 /*
@@ -156,6 +148,7 @@ RelidByRelfilenode(Oid reltablespace, Oid relfilenode)
 	Relation relation;
 	HeapTuple ntp;
 	ScanKeyData skey[2];
+	Oid			relid;
 
 	if (RelfilenodeMapHash == NULL)
 		InitializeRelfilenodeMap();
@@ -169,81 +162,99 @@ RelidByRelfilenode(Oid reltablespace, Oid relfilenode)
 	key.relfilenode = relfilenode;
 
 	/*
-	 * Check cache and enter entry if nothing could be found. Even if no target
+	 * Check cache and return entry if one is found. Even if no target
 	 * relation can be found later on we store the negative match and return a
-	 * InvalidOid from cache. That's not really necessary for performance since
-	 * querying invalid values isn't supposed to be a frequent thing, but the
-	 * implementation is simpler this way.
+	 * InvalidOid from cache. That's not really necessary for performance
+	 * since querying invalid values isn't supposed to be a frequent thing,
+	 * but it's basically free.
 	 */
-	entry = hash_search(RelfilenodeMapHash, (void *) &key, HASH_ENTER, &found);
+	entry = hash_search(RelfilenodeMapHash, (void *) &key, HASH_FIND, &found);
 
 	if (found)
 		return entry->relid;
 
-	/* initialize empty/negative cache entry before doing the actual lookup */
-	entry->relid = InvalidOid;
-
 	/* ok, no previous cache entry, do it the hard way */
 
-	/* check shared tables */
+	/* initialize empty/negative cache entry before doing the actual lookups */
+	relid = InvalidOid;
+
 	if (reltablespace == GLOBALTABLESPACE_OID)
 	{
-		entry->relid = RelationMapFilenodeToOid(relfilenode, true);
-		return entry->relid;
+		/*
+		 * Ok, shared table, check relmapper.
+		 */
+		relid = RelationMapFilenodeToOid(relfilenode, true);
 	}
-
-	/* check plain relations by looking in pg_class */
-	relation = heap_open(RelationRelationId, AccessShareLock);
-
-	/* copy scankey to local copy, it will be modified during the scan */
-	memcpy(skey, relfilenode_skey, sizeof(skey));
-
-	/* set scan arguments */
-	skey[0].sk_argument = ObjectIdGetDatum(reltablespace);
-	skey[1].sk_argument = ObjectIdGetDatum(relfilenode);
-
-	scandesc = systable_beginscan(relation,
-								  ClassTblspcRelfilenodeIndexId,
-								  true,
-								  NULL,
-								  2,
-								  skey);
-
-	found = false;
-
-	while (HeapTupleIsValid(ntp = systable_getnext(scandesc)))
+	else
 	{
-		if (found)
-			elog(ERROR,
-				 "unexpected duplicate for tablespace %u, relfilenode %u",
-				 reltablespace, relfilenode);
-		found = true;
+		/*
+		 * Not a shared table, could either be a plain relation or a
+		 * non-shared, nailed one, like e.g. pg_class.
+		 */
+
+		/* check for plain relations by looking in pg_class */
+		relation = heap_open(RelationRelationId, AccessShareLock);
+
+		/* copy scankey to local copy, it will be modified during the scan */
+		memcpy(skey, relfilenode_skey, sizeof(skey));
+
+		/* set scan arguments */
+		skey[0].sk_argument = ObjectIdGetDatum(reltablespace);
+		skey[1].sk_argument = ObjectIdGetDatum(relfilenode);
+
+		scandesc = systable_beginscan(relation,
+									  ClassTblspcRelfilenodeIndexId,
+									  true,
+									  NULL,
+									  2,
+									  skey);
+
+		found = false;
+
+		while (HeapTupleIsValid(ntp = systable_getnext(scandesc)))
+		{
+			if (found)
+				elog(ERROR,
+					 "unexpected duplicate for tablespace %u, relfilenode %u",
+					 reltablespace, relfilenode);
+			found = true;
 
 #ifdef USE_ASSERT_CHECKING
-		if (assert_enabled)
-		{
-			bool isnull;
-			Oid check;
-			check = fastgetattr(ntp, Anum_pg_class_reltablespace,
-								RelationGetDescr(relation),
-								&isnull);
-			Assert(!isnull && check == reltablespace);
+			if (assert_enabled)
+			{
+				bool isnull;
+				Oid check;
+				check = fastgetattr(ntp, Anum_pg_class_reltablespace,
+									RelationGetDescr(relation),
+									&isnull);
+				Assert(!isnull && check == reltablespace);
 
-			check = fastgetattr(ntp, Anum_pg_class_relfilenode,
-								RelationGetDescr(relation),
-								&isnull);
-			Assert(!isnull && check == relfilenode);
-		}
+				check = fastgetattr(ntp, Anum_pg_class_relfilenode,
+									RelationGetDescr(relation),
+									&isnull);
+				Assert(!isnull && check == relfilenode);
+			}
 #endif
-		entry->relid = HeapTupleGetOid(ntp);
+			relid = HeapTupleGetOid(ntp);
+		}
+
+		systable_endscan(scandesc);
+		heap_close(relation, AccessShareLock);
+
+		/* check for tables that are mapped but not shared */
+		if (!found)
+			relid = RelationMapFilenodeToOid(relfilenode, false);
 	}
 
-	systable_endscan(scandesc);
-	heap_close(relation, AccessShareLock);
+	/*
+	 * Only enter entry into cache now, our opening of pg_class could have
+	 * caused cache invalidations to be executed which would have deleted a
+	 * new entry if we had entered it above.
+	 */
+	entry = hash_search(RelfilenodeMapHash, (void *) &key, HASH_ENTER, &found);
+	if (found)
+		elog(ERROR, "corrupted hashtable");
+	entry->relid = relid;
 
-	/* check for tables that are mapped but not shared */
-	if (!found)
-		entry->relid = RelationMapFilenodeToOid(relfilenode, false);
-
-	return entry->relid;
+	return relid;
 }
