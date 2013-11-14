@@ -767,6 +767,7 @@ CREATE UNIQUE INDEX cwi_uniq_idx ON cwi_test(a , b);
 ALTER TABLE cwi_test ADD primary key USING INDEX cwi_uniq_idx;
 
 \d cwi_test
+\d cwi_uniq_idx
 
 CREATE UNIQUE INDEX cwi_uniq2_idx ON cwi_test(b , a);
 ALTER TABLE cwi_test DROP CONSTRAINT cwi_uniq_idx,
@@ -774,6 +775,7 @@ ALTER TABLE cwi_test DROP CONSTRAINT cwi_uniq_idx,
 		USING INDEX cwi_uniq2_idx;
 
 \d cwi_test
+\d cwi_replaced_pkey
 
 DROP INDEX cwi_replaced_pkey;	-- Should fail; a constraint depends on it
 

@@ -2383,6 +2383,14 @@ ALTER TABLE cwi_test ADD primary key USING INDEX cwi_uniq_idx;
 Indexes:
     "cwi_uniq_idx" PRIMARY KEY, btree (a, b)
 
+\d cwi_uniq_idx
+         Index "public.cwi_uniq_idx"
+ Column |         Type          | Definition 
+--------+-----------------------+------------
+ a      | integer               | a
+ b      | character varying(10) | b
+primary key, btree, for table "public.cwi_test"
+
 CREATE UNIQUE INDEX cwi_uniq2_idx ON cwi_test(b , a);
 ALTER TABLE cwi_test DROP CONSTRAINT cwi_uniq_idx,
 	ADD CONSTRAINT cwi_replaced_pkey PRIMARY KEY
@@ -2397,6 +2405,14 @@ NOTICE:  ALTER TABLE / ADD CONSTRAINT USING INDEX will rename index "cwi_uniq2_i
  c      | character(1)          | 
 Indexes:
     "cwi_replaced_pkey" PRIMARY KEY, btree (b, a)
+
+\d cwi_replaced_pkey
+      Index "public.cwi_replaced_pkey"
+ Column |         Type          | Definition 
+--------+-----------------------+------------
+ b      | character varying(10) | b
+ a      | integer               | a
+primary key, btree, for table "public.cwi_test"
 
 DROP INDEX cwi_replaced_pkey;	-- Should fail; a constraint depends on it
 ERROR:  cannot drop index cwi_replaced_pkey because constraint cwi_replaced_pkey on table cwi_test requires it
