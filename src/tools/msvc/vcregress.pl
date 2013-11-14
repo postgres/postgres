@@ -149,7 +149,7 @@ sub ecpgcheck
 sub isolationcheck
 {
 	chdir "../isolation";
-	copy("../../../$Config/isolationtester/isolationtester.exe", 
+	copy("../../../$Config/isolationtester/isolationtester.exe",
 		 "../../../$Config/pg_isolation_regress");
 	my @args = (
 		"../../../$Config/pg_isolation_regress/pg_isolation_regress",
