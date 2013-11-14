@@ -1611,9 +1611,9 @@ describeOneTableDetails(const char *schemaname,
 						"  false AS condeferrable, false AS condeferred,\n");
 
 		if (pset.sversion >= 90400)
-			appendPQExpBuffer(&buf, "i.indisidentity,\n");
+			appendPQExpBuffer(&buf, "i.indisreplident,\n");
 		else
-			appendPQExpBuffer(&buf, "false AS indisidentity,\n");
+			appendPQExpBuffer(&buf, "false AS indisreplident,\n");
 
 		appendPQExpBuffer(&buf, "  a.amname, c2.relname, "
 					  "pg_catalog.pg_get_expr(i.indpred, i.indrelid, true)\n"
@@ -1638,7 +1638,7 @@ describeOneTableDetails(const char *schemaname,
 			char	   *indisvalid = PQgetvalue(result, 0, 3);
 			char	   *deferrable = PQgetvalue(result, 0, 4);
 			char	   *deferred = PQgetvalue(result, 0, 5);
-			char	   *indisidentity = PQgetvalue(result, 0, 6);
+			char	   *indisreplident = PQgetvalue(result, 0, 6);
 			char	   *indamname = PQgetvalue(result, 0, 7);
 			char	   *indtable = PQgetvalue(result, 0, 8);
 			char	   *indpred = PQgetvalue(result, 0, 9);
@@ -1670,7 +1670,7 @@ describeOneTableDetails(const char *schemaname,
 			if (strcmp(deferred, "t") == 0)
 				appendPQExpBuffer(&tmpbuf, _(", initially deferred"));
 
-			if (strcmp(indisidentity, "t") == 0)
+			if (strcmp(indisreplident, "t") == 0)
 				appendPQExpBuffer(&tmpbuf, _(", replica identity"));
 
 			printTableAddFooter(&cont, tmpbuf.data);
