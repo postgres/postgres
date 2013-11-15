@@ -150,7 +150,8 @@ typedef struct PlannerInfo
 	/*
 	 * all_baserels is a Relids set of all base relids (but not "other"
 	 * relids) in the query; that is, the Relids identifier of the final join
-	 * we need to form.
+	 * we need to form.  This is computed in make_one_rel, just before we
+	 * start making Paths.
 	 */
 	Relids		all_baserels;
 
@@ -243,6 +244,9 @@ typedef struct PlannerInfo
 
 	/* optional private data for join_search_hook, e.g., GEQO */
 	void	   *join_search_private;
+
+	/* This will be in a saner place in 9.4: */
+	Relids		nullable_baserels;
 } PlannerInfo;
 
 

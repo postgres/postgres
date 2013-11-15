@@ -154,6 +154,9 @@ pathkey_is_redundant(PathKey *new_pathkey, List *pathkeys)
  *	  Given an expression and sort-order information, create a PathKey.
  *	  The result is always a "canonical" PathKey, but it might be redundant.
  *
+ * expr is the expression, and nullable_relids is the set of base relids
+ * that are potentially nullable below it.
+ *
  * If the PathKey is being generated from a SortGroupClause, sortref should be
  * the SortGroupClause's SortGroupRef; otherwise zero.
  *
@@ -169,6 +172,7 @@ pathkey_is_redundant(PathKey *new_pathkey, List *pathkeys)
 static PathKey *
 make_pathkey_from_sortinfo(PlannerInfo *root,
 						   Expr *expr,
+						   Relids nullable_relids,
 						   Oid opfamily,
 						   Oid opcintype,
 						   Oid collation,
@@ -204,8 +208,8 @@ make_pathkey_from_sortinfo(PlannerInfo *root,
 			 equality_op);
 
 	/* Now find or (optionally) create a matching EquivalenceClass */
-	eclass = get_eclass_for_sort_expr(root, expr, opfamilies,
-									  opcintype, collation,
+	eclass = get_eclass_for_sort_expr(root, expr, nullable_relids,
+									  opfamilies, opcintype, collation,
 									  sortref, rel, create_it);
 
 	/* Fail if no EC and !create_it */
@@ -227,6 +231,7 @@ make_pathkey_from_sortinfo(PlannerInfo *root,
 static PathKey *
 make_pathkey_from_sortop(PlannerInfo *root,
 						 Expr *expr,
+						 Relids nullable_relids,
 						 Oid ordering_op,
 						 bool nulls_first,
 						 Index sortref,
@@ -248,6 +253,7 @@ make_pathkey_from_sortop(PlannerInfo *root,
 
 	return make_pathkey_from_sortinfo(root,
 									  expr,
+									  nullable_relids,
 									  opfamily,
 									  opcintype,
 									  collation,
@@ -461,9 +467,13 @@ build_index_pathkeys(PlannerInfo *root,
 			nulls_first = index->nulls_first[i];
 		}
 
-		/* OK, try to make a canonical pathkey for this sort key */
+		/*
+		 * OK, try to make a canonical pathkey for this sort key.  Note we're
+		 * underneath any outer joins, so nullable_relids should be NULL.
+		 */
 		cpathkey = make_pathkey_from_sortinfo(root,
 											  indexkey,
+											  NULL,
 											  index->sortopfamily[i],
 											  index->opcintype[i],
 											  index->indexcollations[i],
@@ -551,11 +561,14 @@ convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
 				 * expression is *not* volatile in the outer query: it's just
 				 * a Var referencing whatever the subquery emitted. (IOW, the
 				 * outer query isn't going to re-execute the volatile
-				 * expression itself.)	So this is okay.
+				 * expression itself.)	So this is okay.  Likewise, it's
+				 * correct to pass nullable_relids = NULL, because we're
+				 * underneath any outer joins appearing in the outer query.
 				 */
 				outer_ec =
 					get_eclass_for_sort_expr(root,
 											 outer_expr,
+											 NULL,
 											 sub_eclass->ec_opfamilies,
 											 sub_member->em_datatype,
 											 sub_eclass->ec_collation,
@@ -643,6 +656,7 @@ convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
 					/* See if we have a matching EC for that */
 					outer_ec = get_eclass_for_sort_expr(root,
 														outer_expr,
+														NULL,
 												   sub_eclass->ec_opfamilies,
 														sub_expr_type,
 														sub_expr_coll,
@@ -748,6 +762,13 @@ build_join_pathkeys(PlannerInfo *root,
  * The resulting PathKeys are always in canonical form.  (Actually, there
  * is no longer any code anywhere that creates non-canonical PathKeys.)
  *
+ * We assume that root->nullable_baserels is the set of base relids that could
+ * have gone to NULL below the SortGroupClause expressions.  This is okay if
+ * the expressions came from the query's top level (ORDER BY, DISTINCT, etc)
+ * and if this function is only invoked after deconstruct_jointree.  In the
+ * future we might have to make callers pass in the appropriate
+ * nullable-relids set, but for now it seems unnecessary.
+ *
  * 'sortclauses' is a list of SortGroupClause nodes
  * 'tlist' is the targetlist to find the referenced tlist entries in
  */
@@ -769,6 +790,7 @@ make_pathkeys_for_sortclauses(PlannerInfo *root,
 		Assert(OidIsValid(sortcl->sortop));
 		pathkey = make_pathkey_from_sortop(root,
 										   sortkey,
+										   root->nullable_baserels,
 										   sortcl->sortop,
 										   sortcl->nulls_first,
 										   sortcl->tleSortGroupRef,
@@ -824,6 +846,7 @@ initialize_mergeclause_eclasses(PlannerInfo *root, RestrictInfo *restrictinfo)
 	restrictinfo->left_ec =
 		get_eclass_for_sort_expr(root,
 								 (Expr *) get_leftop(clause),
+								 restrictinfo->nullable_relids,
 								 restrictinfo->mergeopfamilies,
 								 lefttype,
 								 ((OpExpr *) clause)->inputcollid,
@@ -833,6 +856,7 @@ initialize_mergeclause_eclasses(PlannerInfo *root, RestrictInfo *restrictinfo)
 	restrictinfo->right_ec =
 		get_eclass_for_sort_expr(root,
 								 (Expr *) get_rightop(clause),
+								 restrictinfo->nullable_relids,
 								 restrictinfo->mergeopfamilies,
 								 righttype,
 								 ((OpExpr *) clause)->inputcollid,

@@ -510,6 +510,13 @@ add_eq_member(EquivalenceClass *ec, Expr *expr, Relids relids,
  *	  equivalence class it is a member of; if none, optionally build a new
  *	  single-member EquivalenceClass for it.
  *
+ * expr is the expression, and nullable_relids is the set of base relids
+ * that are potentially nullable below it.	We actually only care about
+ * the set of such relids that are used in the expression; but for caller
+ * convenience, we perform that intersection step here.  The caller need
+ * only be sure that nullable_relids doesn't omit any nullable rels that
+ * might appear in the expr.
+ *
  * sortref is the SortGroupRef of the originating SortGroupClause, if any,
  * or zero if not.	(It should never be zero if the expression is volatile!)
  *
@@ -538,6 +545,7 @@ add_eq_member(EquivalenceClass *ec, Expr *expr, Relids relids,
 EquivalenceClass *
 get_eclass_for_sort_expr(PlannerInfo *root,
 						 Expr *expr,
+						 Relids nullable_relids,
 						 List *opfamilies,
 						 Oid opcintype,
 						 Oid collation,
@@ -545,6 +553,7 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 						 Relids rel,
 						 bool create_it)
 {
+	Relids		expr_relids;
 	EquivalenceClass *newec;
 	EquivalenceMember *newem;
 	ListCell   *lc1;
@@ -554,6 +563,12 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 	 * Ensure the expression exposes the correct type and collation.
 	 */
 	expr = canonicalize_ec_expression(expr, opcintype, collation);
+
+	/*
+	 * Get the precise set of nullable relids appearing in the expression.
+	 */
+	expr_relids = pull_varnos((Node *) expr);
+	nullable_relids = bms_intersect(nullable_relids, expr_relids);
 
 	/*
 	 * Scan through the existing EquivalenceClasses for a match
@@ -629,8 +644,8 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 	if (newec->ec_has_volatile && sortref == 0) /* should not happen */
 		elog(ERROR, "volatile EquivalenceClass has no sortref");
 
-	newem = add_eq_member(newec, copyObject(expr), pull_varnos((Node *) expr),
-						  NULL, false, opcintype);
+	newem = add_eq_member(newec, copyObject(expr), expr_relids,
+						  nullable_relids, false, opcintype);
 
 	/*
 	 * add_eq_member doesn't check for volatile functions, set-returning
