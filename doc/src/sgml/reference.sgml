@@ -40,8 +40,8 @@
    &alterDatabase;
    &alterDefaultPrivileges;
    &alterDomain;
-   &alterExtension;
    &alterEventTrigger;
+   &alterExtension;
    &alterForeignDataWrapper;
    &alterForeignTable;
    &alterFunction;
@@ -84,8 +84,8 @@
    &createConversion;
    &createDatabase;
    &createDomain;
-   &createExtension;
    &createEventTrigger;
+   &createExtension;
    &createForeignDataWrapper;
    &createForeignTable;
    &createFunction;
@@ -124,8 +124,8 @@
    &dropConversion;
    &dropDatabase;
    &dropDomain;
-   &dropExtension;
    &dropEventTrigger;
+   &dropExtension;
    &dropForeignDataWrapper;
    &dropForeignTable;
    &dropFunction;
