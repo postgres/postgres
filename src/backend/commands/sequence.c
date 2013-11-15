@@ -76,7 +76,7 @@ typedef struct SeqTableData
 
 typedef SeqTableData *SeqTable;
 
-static HTAB *seqhashtab = NULL;		/* hash table for SeqTable items */
+static HTAB *seqhashtab = NULL; /* hash table for SeqTable items */
 
 /*
  * last_used_seq is updated by nextval() to point to the last used
@@ -1022,16 +1022,17 @@ init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel)
 	Relation	seqrel;
 	bool		found;
 
+	/* Find or create a hash table entry for this sequence */
 	if (seqhashtab == NULL)
 		create_seq_hashtable();
 
 	elm = (SeqTable) hash_search(seqhashtab, &relid, HASH_ENTER, &found);
 
 	/*
-	 * Initalize the new hash table entry if it did not exist already.
+	 * Initialize the new hash table entry if it did not exist already.
 	 *
 	 * NOTE: seqtable entries are stored for the life of a backend (unless
-	 * explictly discarded with DISCARD). If the sequence itself is deleted
+	 * explicitly discarded with DISCARD). If the sequence itself is deleted
 	 * then the entry becomes wasted memory, but it's small enough that this
 	 * should not matter.
 	 */
