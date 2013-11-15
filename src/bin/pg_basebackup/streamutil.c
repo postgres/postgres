@@ -40,8 +40,8 @@ GetConnection(void)
 	int			i;
 	const char **keywords;
 	const char **values;
-	char	   *password = NULL;
 	const char *tmpparam;
+	bool		need_password;
 	PQconninfoOption *conn_opts = NULL;
 	PQconninfoOption *conn_opt;
 	char	   *err_msg = NULL;
@@ -114,27 +114,30 @@ GetConnection(void)
 		i++;
 	}
 
+	/* If -W was given, force prompt for password, but only the first time */
+	need_password = (dbgetpassword == 1 && dbpassword == NULL);
+
 	while (true)
 	{
-		if (password)
-			free(password);
+		/* Get a new password if appropriate */
+		if (need_password)
+		{
+			if (dbpassword)
+				free(dbpassword);
+			dbpassword = simple_prompt(_("Password: "), 100, false);
+			need_password = false;
+		}
 
+		/* Use (or reuse, on a subsequent connection) password if we have it */
 		if (dbpassword)
 		{
-			/*
-			 * We've saved a password when a previous connection succeeded,
-			 * meaning this is the call for a second session to the same
-			 * database, so just forcibly reuse that password.
-			 */
 			keywords[i] = "password";
 			values[i] = dbpassword;
-			dbgetpassword = -1; /* Don't try again if this fails */
 		}
-		else if (dbgetpassword == 1)
+		else
 		{
-			password = simple_prompt(_("Password: "), 100, false);
-			keywords[i] = "password";
-			values[i] = password;
+			keywords[i] = NULL;
+			values[i] = NULL;
 		}
 
 		tmpconn = PQconnectdbParams(keywords, values, true);
@@ -150,63 +153,62 @@ GetConnection(void)
 			exit(1);
 		}
 
+		/* If we need a password and -w wasn't given, loop back and get one */
 		if (PQstatus(tmpconn) == CONNECTION_BAD &&
 			PQconnectionNeedsPassword(tmpconn) &&
 			dbgetpassword != -1)
 		{
-			dbgetpassword = 1;	/* ask for password next time */
 			PQfinish(tmpconn);
-			continue;
+			need_password = true;
 		}
+		else
+			break;
+	}
 
-		if (PQstatus(tmpconn) != CONNECTION_OK)
-		{
-			fprintf(stderr, _("%s: could not connect to server: %s\n"),
-					progname, PQerrorMessage(tmpconn));
-			PQfinish(tmpconn);
-			free(values);
-			free(keywords);
-			if (conn_opts)
-				PQconninfoFree(conn_opts);
-			return NULL;
-		}
-
-		/* Connection ok! */
+	if (PQstatus(tmpconn) != CONNECTION_OK)
+	{
+		fprintf(stderr, _("%s: could not connect to server: %s\n"),
+				progname, PQerrorMessage(tmpconn));
+		PQfinish(tmpconn);
 		free(values);
 		free(keywords);
 		if (conn_opts)
 			PQconninfoFree(conn_opts);
+		return NULL;
+	}
 
-		/*
-		 * Ensure we have the same value of integer timestamps as the server
-		 * we are connecting to.
-		 */
-		tmpparam = PQparameterStatus(tmpconn, "integer_datetimes");
-		if (!tmpparam)
-		{
-			fprintf(stderr,
-					_("%s: could not determine server setting for integer_datetimes\n"),
-					progname);
-			PQfinish(tmpconn);
-			exit(1);
-		}
+	/* Connection ok! */
+	free(values);
+	free(keywords);
+	if (conn_opts)
+		PQconninfoFree(conn_opts);
+
+	/*
+	 * Ensure we have the same value of integer timestamps as the server we
+	 * are connecting to.
+	 */
+	tmpparam = PQparameterStatus(tmpconn, "integer_datetimes");
+	if (!tmpparam)
+	{
+		fprintf(stderr,
+		 _("%s: could not determine server setting for integer_datetimes\n"),
+				progname);
+		PQfinish(tmpconn);
+		exit(1);
+	}
 
 #ifdef HAVE_INT64_TIMESTAMP
-		if (strcmp(tmpparam, "on") != 0)
+	if (strcmp(tmpparam, "on") != 0)
 #else
-		if (strcmp(tmpparam, "off") != 0)
+	if (strcmp(tmpparam, "off") != 0)
 #endif
-		{
-			fprintf(stderr,
+	{
+		fprintf(stderr,
 			 _("%s: integer_datetimes compile flag does not match server\n"),
-					progname);
-			PQfinish(tmpconn);
-			exit(1);
-		}
-
-		/* Store the password for next run */
-		if (password)
-			dbpassword = password;
-		return tmpconn;
+				progname);
+		PQfinish(tmpconn);
+		exit(1);
 	}
+
+	return tmpconn;
 }
