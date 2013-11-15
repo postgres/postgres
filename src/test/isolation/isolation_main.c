@@ -98,6 +98,8 @@ isolation_start_test(const char *testname,
 static void
 isolation_init(int argc, char **argv)
 {
+	size_t		argv0_len;
+
 	/*
 	 * We unfortunately cannot do the find_other_exec() lookup to find the
 	 * "isolationtester" binary here.  regression_main() calls the
@@ -107,7 +109,13 @@ isolation_init(int argc, char **argv)
 	 * does to fail since it's linked to libpq.  So we instead copy argv[0]
 	 * and do the lookup the first time through isolation_start_test().
 	 */
-	strncpy(saved_argv0, argv[0], MAXPGPATH);
+	argv0_len = strlcpy(saved_argv0, argv[0], MAXPGPATH);
+	if (argv0_len >= MAXPGPATH)
+	{
+		fprintf(stderr, _("path for isolationtester executable is longer than %i bytes\n"),
+				(int) (MAXPGPATH - 1));
+		exit(2);
+	}
 
 	/* set default regression database name */
 	add_stringlist_item(&dblist, "isolationtest");
