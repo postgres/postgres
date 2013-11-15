@@ -136,7 +136,7 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 			retval = (Datum) 0;
 		}
 		else
-			retval = plpgsql_exec_function(func, fcinfo);
+			retval = plpgsql_exec_function(func, fcinfo, NULL);
 	}
 	PG_CATCH();
 	{
@@ -175,6 +175,7 @@ plpgsql_inline_handler(PG_FUNCTION_ARGS)
 	PLpgSQL_function *func;
 	FunctionCallInfoData fake_fcinfo;
 	FmgrInfo	flinfo;
+	EState	   *simple_eval_estate;
 	Datum		retval;
 	int			rc;
 
@@ -203,7 +204,51 @@ plpgsql_inline_handler(PG_FUNCTION_ARGS)
 	flinfo.fn_oid = InvalidOid;
 	flinfo.fn_mcxt = CurrentMemoryContext;
 
-	retval = plpgsql_exec_function(func, &fake_fcinfo);
+	/* Create a private EState for simple-expression execution */
+	simple_eval_estate = CreateExecutorState();
+
+	/* And run the function */
+	PG_TRY();
+	{
+		retval = plpgsql_exec_function(func, &fake_fcinfo, simple_eval_estate);
+	}
+	PG_CATCH();
+	{
+		/*
+		 * We need to clean up what would otherwise be long-lived resources
+		 * accumulated by the failed DO block, principally cached plans for
+		 * statements (which can be flushed with plpgsql_free_function_memory)
+		 * and execution trees for simple expressions, which are in the
+		 * private EState.
+		 *
+		 * Before releasing the private EState, we must clean up any
+		 * simple_econtext_stack entries pointing into it, which we can do by
+		 * invoking the subxact callback.  (It will be called again later if
+		 * some outer control level does a subtransaction abort, but no harm
+		 * is done.)  We cheat a bit knowing that plpgsql_subxact_cb does not
+		 * pay attention to its parentSubid argument.
+		 */
+		plpgsql_subxact_cb(SUBXACT_EVENT_ABORT_SUB,
+						   GetCurrentSubTransactionId(),
+						   0, NULL);
+
+		/* Clean up the private EState */
+		FreeExecutorState(simple_eval_estate);
+
+		/* Function should now have no remaining use-counts ... */
+		func->use_count--;
+		Assert(func->use_count == 0);
+
+		/* ... so we can free subsidiary storage */
+		plpgsql_free_function_memory(func);
+
+		/* And propagate the error */
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	/* Clean up the private EState */
+	FreeExecutorState(simple_eval_estate);
 
 	/* Function should now have no remaining use-counts ... */
 	func->use_count--;

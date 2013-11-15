@@ -3751,6 +3751,26 @@ BEGIN
     END LOOP;
 END$$;
 
+-- Check handling of errors thrown from/into anonymous code blocks.
+do $outer$
+begin
+  for i in 1..10 loop
+   begin
+    execute $ex$
+      do $$
+      declare x int = 0;
+      begin
+        x := 1 / x;
+      end;
+      $$;
+    $ex$;
+  exception when division_by_zero then
+    raise notice 'caught division by zero';
+  end;
+  end loop;
+end;
+$outer$;
+
 -- Check variable scoping -- a var is not available in its own or prior
 -- default expressions.
 
