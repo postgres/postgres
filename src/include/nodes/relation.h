@@ -150,9 +150,18 @@ typedef struct PlannerInfo
 	/*
 	 * all_baserels is a Relids set of all base relids (but not "other"
 	 * relids) in the query; that is, the Relids identifier of the final join
-	 * we need to form.
+	 * we need to form.  This is computed in make_one_rel, just before we
+	 * start making Paths.
 	 */
 	Relids		all_baserels;
+
+	/*
+	 * nullable_baserels is a Relids set of base relids that are nullable by
+	 * some outer join in the jointree; these are rels that are potentially
+	 * nullable below the WHERE clause, SELECT targetlist, etc.  This is
+	 * computed in deconstruct_jointree.
+	 */
+	Relids		nullable_baserels;
 
 	/*
 	 * join_rel_list is a list of all join-relation RelOptInfos we have

@@ -1698,6 +1698,7 @@ _outPlannerInfo(StringInfo str, const PlannerInfo *node)
 	WRITE_UINT_FIELD(query_level);
 	WRITE_NODE_FIELD(plan_params);
 	WRITE_BITMAPSET_FIELD(all_baserels);
+	WRITE_BITMAPSET_FIELD(nullable_baserels);
 	WRITE_NODE_FIELD(join_rel_list);
 	WRITE_INT_FIELD(join_cur_level);
 	WRITE_NODE_FIELD(init_plans);

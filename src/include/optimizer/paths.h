@@ -109,6 +109,7 @@ extern Expr *canonicalize_ec_expression(Expr *expr,
 extern void reconsider_outer_join_clauses(PlannerInfo *root);
 extern EquivalenceClass *get_eclass_for_sort_expr(PlannerInfo *root,
 						 Expr *expr,
+						 Relids nullable_relids,
 						 List *opfamilies,
 						 Oid opcintype,
 						 Oid collation,

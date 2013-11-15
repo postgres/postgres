@@ -791,6 +791,19 @@ select f1, unique2, case when unique2 is null then f1 else 0 end
   where (case when unique2 is null then f1 else 0 end) = 0;
 
 --
+-- another case with equivalence clauses above outer joins (bug #8591)
+--
+
+explain (costs off)
+select a.unique1, b.unique1, c.unique1, coalesce(b.twothousand, a.twothousand)
+  from tenk1 a left join tenk1 b on b.thousand = a.unique1                        left join tenk1 c on c.unique2 = coalesce(b.twothousand, a.twothousand)
+  where a.unique2 = 5530 and coalesce(b.twothousand, a.twothousand) = 44;
+
+select a.unique1, b.unique1, c.unique1, coalesce(b.twothousand, a.twothousand)
+  from tenk1 a left join tenk1 b on b.thousand = a.unique1                        left join tenk1 c on c.unique2 = coalesce(b.twothousand, a.twothousand)
+  where a.unique2 = 5530 and coalesce(b.twothousand, a.twothousand) = 44;
+
+--
 -- test ability to push constants through outer join clauses
 --
 
