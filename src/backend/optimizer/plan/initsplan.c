@@ -250,6 +250,9 @@ deconstruct_jointree(PlannerInfo *root)
 	Assert(root->parse->jointree != NULL &&
 		   IsA(root->parse->jointree, FromExpr));
 
+	/* this is filled as we scan the jointree */
+	root->nullable_baserels = NULL;
+
 	return deconstruct_recurse(root, (Node *) root->parse->jointree, false,
 							   &qualscope, &inner_join_rels);
 }
@@ -361,6 +364,7 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 					left_inners,
 					right_inners,
 					nonnullable_rels,
+					nullable_rels,
 					ojscope;
 		List	   *leftjoinlist,
 				   *rightjoinlist;
@@ -392,6 +396,8 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 				*inner_join_rels = *qualscope;
 				/* Inner join adds no restrictions for quals */
 				nonnullable_rels = NULL;
+				/* and it doesn't force anything to null, either */
+				nullable_rels = NULL;
 				break;
 			case JOIN_LEFT:
 			case JOIN_ANTI:
@@ -404,6 +410,7 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 				*qualscope = bms_union(leftids, rightids);
 				*inner_join_rels = bms_union(left_inners, right_inners);
 				nonnullable_rels = leftids;
+				nullable_rels = rightids;
 				break;
 			case JOIN_SEMI:
 				leftjoinlist = deconstruct_recurse(root, j->larg,
@@ -416,6 +423,13 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 				*inner_join_rels = bms_union(left_inners, right_inners);
 				/* Semi join adds no restrictions for quals */
 				nonnullable_rels = NULL;
+
+				/*
+				 * Theoretically, a semijoin would null the RHS; but since the
+				 * RHS can't be accessed above the join, this is immaterial
+				 * and we needn't account for it.
+				 */
+				nullable_rels = NULL;
 				break;
 			case JOIN_FULL:
 				leftjoinlist = deconstruct_recurse(root, j->larg,
@@ -428,15 +442,21 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 				*inner_join_rels = bms_union(left_inners, right_inners);
 				/* each side is both outer and inner */
 				nonnullable_rels = *qualscope;
+				nullable_rels = *qualscope;
 				break;
 			default:
 				/* JOIN_RIGHT was eliminated during reduce_outer_joins() */
 				elog(ERROR, "unrecognized join type: %d",
 					 (int) j->jointype);
 				nonnullable_rels = NULL;		/* keep compiler quiet */
+				nullable_rels = NULL;
 				leftjoinlist = rightjoinlist = NIL;
 				break;
 		}
+
+		/* Report all rels that will be nulled anywhere in the jointree */
+		root->nullable_baserels = bms_add_members(root->nullable_baserels,
+												  nullable_rels);
 
 		/*
 		 * For an OJ, form the SpecialJoinInfo now, because we need the OJ's
