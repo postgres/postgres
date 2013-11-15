@@ -1550,6 +1550,7 @@ dumpTableData_insert(Archive *fout, void *dcontext)
 	TableInfo  *tbinfo = tdinfo->tdtable;
 	const char *classname = tbinfo->dobj.name;
 	PQExpBuffer q = createPQExpBuffer();
+	PQExpBuffer insertStmt = NULL;
 	PGresult   *res;
 	int			tuple;
 	int			nfields;
@@ -1591,34 +1592,57 @@ dumpTableData_insert(Archive *fout, void *dcontext)
 		nfields = PQnfields(res);
 		for (tuple = 0; tuple < PQntuples(res); tuple++)
 		{
-			archprintf(fout, "INSERT INTO %s ", fmtId(classname));
-			if (nfields == 0)
+			/*
+			 * First time through, we build as much of the INSERT statement as
+			 * possible in "insertStmt", which we can then just print for each
+			 * line. If the table happens to have zero columns then this will
+			 * be a complete statement, otherwise it will end in "VALUES(" and
+			 * be ready to have the row's column values appended.
+			 */
+			if (insertStmt == NULL)
 			{
+				insertStmt = createPQExpBuffer();
+				appendPQExpBuffer(insertStmt, "INSERT INTO %s ",
+								  fmtId(classname));
+
 				/* corner case for zero-column table */
-				archprintf(fout, "DEFAULT VALUES;\n");
-				continue;
-			}
-			if (column_inserts)
-			{
-				resetPQExpBuffer(q);
-				appendPQExpBuffer(q, "(");
-				for (field = 0; field < nfields; field++)
+				if (nfields == 0)
 				{
-					if (field > 0)
-						appendPQExpBuffer(q, ", ");
-					appendPQExpBufferStr(q, fmtId(PQfname(res, field)));
+					appendPQExpBufferStr(insertStmt, "DEFAULT VALUES;\n");
 				}
-				appendPQExpBuffer(q, ") ");
-				archputs(q->data, fout);
+				else
+				{
+					/* append the list of column names if required */
+					if (column_inserts)
+					{
+						appendPQExpBufferStr(insertStmt, "(");
+						for (field = 0; field < nfields; field++)
+						{
+							if (field > 0)
+								appendPQExpBufferStr(insertStmt, ", ");
+							appendPQExpBufferStr(insertStmt,
+												 fmtId(PQfname(res, field)));
+						}
+						appendPQExpBufferStr(insertStmt, ") ");
+					}
+
+					appendPQExpBufferStr(insertStmt, "VALUES (");
+				}
 			}
-			archprintf(fout, "VALUES (");
+
+			archputs(insertStmt->data, fout);
+
+			/* if it is zero-column table then we're done */
+			if (nfields == 0)
+				continue;
+
 			for (field = 0; field < nfields; field++)
 			{
 				if (field > 0)
-					archprintf(fout, ", ");
+					archputs(", ", fout);
 				if (PQgetisnull(res, tuple, field))
 				{
-					archprintf(fout, "NULL");
+					archputs("NULL", fout);
 					continue;
 				}
 
@@ -1647,7 +1671,7 @@ dumpTableData_insert(Archive *fout, void *dcontext)
 							const char *s = PQgetvalue(res, tuple, field);
 
 							if (strspn(s, "0123456789 +-eE.") == strlen(s))
-								archprintf(fout, "%s", s);
+								archputs(s, fout);
 							else
 								archprintf(fout, "'%s'", s);
 						}
@@ -1661,9 +1685,9 @@ dumpTableData_insert(Archive *fout, void *dcontext)
 
 					case BOOLOID:
 						if (strcmp(PQgetvalue(res, tuple, field), "t") == 0)
-							archprintf(fout, "true");
+							archputs("true", fout);
 						else
-							archprintf(fout, "false");
+							archputs("false", fout);
 						break;
 
 					default:
@@ -1676,7 +1700,7 @@ dumpTableData_insert(Archive *fout, void *dcontext)
 						break;
 				}
 			}
-			archprintf(fout, ");\n");
+			archputs(");\n", fout);
 		}
 
 		if (PQntuples(res) <= 0)
@@ -1687,11 +1711,14 @@ dumpTableData_insert(Archive *fout, void *dcontext)
 		PQclear(res);
 	}
 
-	archprintf(fout, "\n\n");
+	archputs("\n\n", fout);
 
 	ExecuteSqlStatement(fout, "CLOSE _pg_dump_cursor");
 
 	destroyPQExpBuffer(q);
+	if (insertStmt != NULL)
+		destroyPQExpBuffer(insertStmt);
+
 	return 1;
 }
 
