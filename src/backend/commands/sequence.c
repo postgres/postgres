@@ -60,15 +60,10 @@ typedef struct sequence_magic
  * session.  This is needed to hold onto nextval/currval state.  (We can't
  * rely on the relcache, since it's only, well, a cache, and may decide to
  * discard entries.)
- *
- * XXX We use linear search to find pre-existing SeqTable entries.	This is
- * good when only a small number of sequences are touched in a session, but
- * would suck with many different sequences.  Perhaps use a hashtable someday.
  */
 typedef struct SeqTableData
 {
-	struct SeqTableData *next;	/* link to next SeqTable object */
-	Oid			relid;			/* pg_class OID of this sequence */
+	Oid			relid;			/* pg_class OID of this sequence (hash key) */
 	Oid			filenode;		/* last seen relfilenode of this sequence */
 	LocalTransactionId lxid;	/* xact in which we last did a seq op */
 	bool		last_valid;		/* do we have a valid "last" value? */
@@ -81,7 +76,7 @@ typedef struct SeqTableData
 
 typedef SeqTableData *SeqTable;
 
-static SeqTable seqtab = NULL;	/* Head of list of SeqTable items */
+static HTAB *seqhashtab = NULL;		/* hash table for SeqTable items */
 
 /*
  * last_used_seq is updated by nextval() to point to the last used
@@ -92,6 +87,7 @@ static SeqTableData *last_used_seq = NULL;
 static void fill_seq_with_data(Relation rel, HeapTuple tuple);
 static int64 nextval_internal(Oid relid);
 static Relation open_share_lock(SeqTable seq);
+static void create_seq_hashtable(void);
 static void init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel);
 static Form_pg_sequence read_seq_tuple(SeqTable elm, Relation rel,
 			   Buffer *buf, HeapTuple seqtuple);
@@ -999,6 +995,23 @@ open_share_lock(SeqTable seq)
 }
 
 /*
+ * Creates the hash table for storing sequence data
+ */
+static void
+create_seq_hashtable(void)
+{
+	HASHCTL		ctl;
+
+	memset(&ctl, 0, sizeof(ctl));
+	ctl.keysize = sizeof(Oid);
+	ctl.entrysize = sizeof(SeqTableData);
+	ctl.hash = oid_hash;
+
+	seqhashtab = hash_create("Sequence values", 16, &ctl,
+		HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
+}
+
+/*
  * Given a relation OID, open and lock the sequence.  p_elm and p_rel are
  * output parameters.
  */
@@ -1007,39 +1020,28 @@ init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel)
 {
 	SeqTable	elm;
 	Relation	seqrel;
+	bool		found;
 
-	/* Look to see if we already have a seqtable entry for relation */
-	for (elm = seqtab; elm != NULL; elm = elm->next)
-	{
-		if (elm->relid == relid)
-			break;
-	}
+	if (seqhashtab == NULL)
+		create_seq_hashtable();
+
+	elm = (SeqTable) hash_search(seqhashtab, &relid, HASH_ENTER, &found);
 
 	/*
-	 * Allocate new seqtable entry if we didn't find one.
+	 * Initalize the new hash table entry if it did not exist already.
 	 *
-	 * NOTE: seqtable entries remain in the list for the life of a backend. If
-	 * the sequence itself is deleted then the entry becomes wasted memory,
-	 * but it's small enough that this should not matter.
+	 * NOTE: seqtable entries are stored for the life of a backend (unless
+	 * explictly discarded with DISCARD). If the sequence itself is deleted
+	 * then the entry becomes wasted memory, but it's small enough that this
+	 * should not matter.
 	 */
-	if (elm == NULL)
+	if (!found)
 	{
-		/*
-		 * Time to make a new seqtable entry.  These entries live as long as
-		 * the backend does, so we use plain malloc for them.
-		 */
-		elm = (SeqTable) malloc(sizeof(SeqTableData));
-		if (elm == NULL)
-			ereport(ERROR,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory")));
-		elm->relid = relid;
+		/* relid already filled in */
 		elm->filenode = InvalidOid;
 		elm->lxid = InvalidLocalTransactionId;
 		elm->last_valid = false;
 		elm->last = elm->cached = elm->increment = 0;
-		elm->next = seqtab;
-		seqtab = elm;
 	}
 
 	/*
@@ -1609,13 +1611,10 @@ seq_redo(XLogRecPtr lsn, XLogRecord *record)
 void
 ResetSequenceCaches(void)
 {
-	SeqTableData *next;
-
-	while (seqtab != NULL)
+	if (seqhashtab)
 	{
-		next = seqtab->next;
-		free(seqtab);
-		seqtab = next;
+		hash_destroy(seqhashtab);
+		seqhashtab = NULL;
 	}
 
 	last_used_seq = NULL;
