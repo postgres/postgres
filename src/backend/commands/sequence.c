@@ -1008,7 +1008,7 @@ create_seq_hashtable(void)
 	ctl.hash = oid_hash;
 
 	seqhashtab = hash_create("Sequence values", 16, &ctl,
-		HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
+							 HASH_ELEM | HASH_FUNCTION);
 }
 
 /*
