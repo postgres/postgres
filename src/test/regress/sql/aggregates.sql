@@ -39,6 +39,18 @@ SELECT var_samp(b::numeric) FROM aggtest;
 SELECT var_pop(1.0), var_samp(2.0);
 SELECT stddev_pop(3.0::numeric), stddev_samp(4.0::numeric);
 
+-- verify correct results for null and NaN inputs
+select sum(null::int4) from generate_series(1,3);
+select sum(null::int8) from generate_series(1,3);
+select sum(null::numeric) from generate_series(1,3);
+select sum(null::float8) from generate_series(1,3);
+select avg(null::int4) from generate_series(1,3);
+select avg(null::int8) from generate_series(1,3);
+select avg(null::numeric) from generate_series(1,3);
+select avg(null::float8) from generate_series(1,3);
+select sum('NaN'::numeric) from generate_series(1,3);
+select avg('NaN'::numeric) from generate_series(1,3);
+
 -- SQL2003 binary aggregates
 SELECT regr_count(b, a) FROM aggtest;
 SELECT regr_sxx(b, a) FROM aggtest;

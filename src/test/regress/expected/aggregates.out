@@ -137,6 +137,67 @@ SELECT stddev_pop(3.0::numeric), stddev_samp(4.0::numeric);
           0 |            
 (1 row)
 
+-- verify correct results for null and NaN inputs
+select sum(null::int4) from generate_series(1,3);
+ sum 
+-----
+    
+(1 row)
+
+select sum(null::int8) from generate_series(1,3);
+ sum 
+-----
+    
+(1 row)
+
+select sum(null::numeric) from generate_series(1,3);
+ sum 
+-----
+    
+(1 row)
+
+select sum(null::float8) from generate_series(1,3);
+ sum 
+-----
+    
+(1 row)
+
+select avg(null::int4) from generate_series(1,3);
+ avg 
+-----
+    
+(1 row)
+
+select avg(null::int8) from generate_series(1,3);
+ avg 
+-----
+    
+(1 row)
+
+select avg(null::numeric) from generate_series(1,3);
+ avg 
+-----
+    
+(1 row)
+
+select avg(null::float8) from generate_series(1,3);
+ avg 
+-----
+    
+(1 row)
+
+select sum('NaN'::numeric) from generate_series(1,3);
+ sum 
+-----
+ NaN
+(1 row)
+
+select avg('NaN'::numeric) from generate_series(1,3);
+ avg 
+-----
+ NaN
+(1 row)
+
 -- SQL2003 binary aggregates
 SELECT regr_count(b, a) FROM aggtest;
  regr_count 

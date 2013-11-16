@@ -2464,106 +2464,145 @@ numeric_float4(PG_FUNCTION_ARGS)
  *
  * Aggregate functions
  *
- * The transition datatype for all these aggregates is a 3-element array
- * of Numeric, holding the values N, sum(X), sum(X*X) in that order.
+ * The transition datatype for all these aggregates is declared as INTERNAL.
+ * Actually, it's a pointer to a NumericAggState allocated in the aggregate
+ * context.  The digit buffers for the NumericVars will be there too.
  *
- * We represent N as a numeric mainly to avoid having to build a special
- * datatype; it's unlikely it'd overflow an int4, but ...
+ * Note that the transition functions don't bother to create a NumericAggState
+ * until they see the first non-null input value; therefore, the final
+ * functions will never see N == 0.  (The case is represented as a NULL
+ * state pointer, instead.)
  *
  * ----------------------------------------------------------------------
  */
 
-static ArrayType *
-do_numeric_accum(ArrayType *transarray, Numeric newval)
+typedef struct NumericAggState
 {
-	Datum	   *transdatums;
-	int			ndatums;
-	Datum		N,
-				sumX,
-				sumX2;
-	ArrayType  *result;
+	bool		calcSumX2;		/* if true, calculate sumX2 */
+	bool		isNaN;			/* true if any processed number was NaN */
+	MemoryContext agg_context;	/* context we're calculating in */
+	int64		N;				/* count of processed numbers */
+	NumericVar	sumX;			/* sum of processed numbers */
+	NumericVar	sumX2;			/* sum of squares of processed numbers */
+} NumericAggState;
 
-	/* We assume the input is array of numeric */
-	deconstruct_array(transarray,
-					  NUMERICOID, -1, false, 'i',
-					  &transdatums, NULL, &ndatums);
-	if (ndatums != 3)
-		elog(ERROR, "expected 3-element numeric array");
-	N = transdatums[0];
-	sumX = transdatums[1];
-	sumX2 = transdatums[2];
+/*
+ * Prepare state data for a numeric aggregate function that needs to compute
+ * sum, count and optionally sum of squares of the input.
+ */
+static NumericAggState *
+makeNumericAggState(FunctionCallInfo fcinfo, bool calcSumX2)
+{
+	NumericAggState *state;
+	MemoryContext agg_context;
+	MemoryContext old_context;
 
-	N = DirectFunctionCall1(numeric_inc, N);
-	sumX = DirectFunctionCall2(numeric_add, sumX,
-							   NumericGetDatum(newval));
-	sumX2 = DirectFunctionCall2(numeric_add, sumX2,
-								DirectFunctionCall2(numeric_mul,
-													NumericGetDatum(newval),
-													NumericGetDatum(newval)));
+	if (!AggCheckCallContext(fcinfo, &agg_context))
+		elog(ERROR, "aggregate function called in non-aggregate context");
 
-	transdatums[0] = N;
-	transdatums[1] = sumX;
-	transdatums[2] = sumX2;
+	old_context = MemoryContextSwitchTo(agg_context);
 
-	result = construct_array(transdatums, 3,
-							 NUMERICOID, -1, false, 'i');
+	state = (NumericAggState *) palloc0(sizeof(NumericAggState));
+	state->calcSumX2 = calcSumX2;
+	state->agg_context = agg_context;
 
-	return result;
+	MemoryContextSwitchTo(old_context);
+
+	return state;
 }
 
 /*
- * Improve avg performance by not caclulating sum(X*X).
+ * Accumulate a new input value for numeric aggregate functions.
  */
-static ArrayType *
-do_numeric_avg_accum(ArrayType *transarray, Numeric newval)
+static void
+do_numeric_accum(NumericAggState *state, Numeric newval)
 {
-	Datum	   *transdatums;
-	int			ndatums;
-	Datum		N,
-				sumX;
-	ArrayType  *result;
+	NumericVar	X;
+	NumericVar	X2;
+	MemoryContext old_context;
 
-	/* We assume the input is array of numeric */
-	deconstruct_array(transarray,
-					  NUMERICOID, -1, false, 'i',
-					  &transdatums, NULL, &ndatums);
-	if (ndatums != 2)
-		elog(ERROR, "expected 2-element numeric array");
-	N = transdatums[0];
-	sumX = transdatums[1];
+	/* result is NaN if any processed number is NaN */
+	if (state->isNaN || NUMERIC_IS_NAN(newval))
+	{
+		state->isNaN = true;
+		return;
+	}
 
-	N = DirectFunctionCall1(numeric_inc, N);
-	sumX = DirectFunctionCall2(numeric_add, sumX,
-							   NumericGetDatum(newval));
+	/* load processed number in short-lived context */
+	init_var_from_num(newval, &X);
 
-	transdatums[0] = N;
-	transdatums[1] = sumX;
+	/* if we need X^2, calculate that in short-lived context */
+	if (state->calcSumX2)
+	{
+		init_var(&X2);
+		mul_var(&X, &X, &X2, X.dscale * 2);
+	}
 
-	result = construct_array(transdatums, 2,
-							 NUMERICOID, -1, false, 'i');
+	/* The rest of this needs to work in the aggregate context */
+	old_context = MemoryContextSwitchTo(state->agg_context);
 
-	return result;
+	if (state->N++ > 0)
+	{
+		/* Accumulate sums */
+		add_var(&X, &(state->sumX), &(state->sumX));
+
+		if (state->calcSumX2)
+			add_var(&X2, &(state->sumX2), &(state->sumX2));
+	}
+	else
+	{
+		/* First input, so initialize sums */
+		set_var_from_var(&X, &(state->sumX));
+
+		if (state->calcSumX2)
+			set_var_from_var(&X2, &(state->sumX2));
+	}
+
+	MemoryContextSwitchTo(old_context);
 }
 
+/*
+ * Generic transition function for numeric aggregates that require sumX2.
+ */
 Datum
 numeric_accum(PG_FUNCTION_ARGS)
 {
-	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
-	Numeric		newval = PG_GETARG_NUMERIC(1);
+	NumericAggState *state;
 
-	PG_RETURN_ARRAYTYPE_P(do_numeric_accum(transarray, newval));
+	state = PG_ARGISNULL(0) ? NULL : (NumericAggState *) PG_GETARG_POINTER(0);
+
+	if (!PG_ARGISNULL(1))
+	{
+		/* Create the state data when we see the first non-null input. */
+		if (state == NULL)
+			state = makeNumericAggState(fcinfo, true);
+
+		do_numeric_accum(state, PG_GETARG_NUMERIC(1));
+	}
+
+	PG_RETURN_POINTER(state);
 }
 
 /*
- * Optimized case for average of numeric.
+ * Generic transition function for numeric aggregates that don't require sumX2.
  */
 Datum
 numeric_avg_accum(PG_FUNCTION_ARGS)
 {
-	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
-	Numeric		newval = PG_GETARG_NUMERIC(1);
+	NumericAggState *state;
 
-	PG_RETURN_ARRAYTYPE_P(do_numeric_avg_accum(transarray, newval));
+	state = PG_ARGISNULL(0) ? NULL : (NumericAggState *) PG_GETARG_POINTER(0);
+
+	if (!PG_ARGISNULL(1))
+	{
+		/* Create the state data when we see the first non-null input. */
+		if (state == NULL)
+			state = makeNumericAggState(fcinfo, false);
+
+		do_numeric_accum(state, PG_GETARG_NUMERIC(1));
+	}
+
+	PG_RETURN_POINTER(state);
 }
 
 /*
@@ -2578,87 +2617,142 @@ numeric_avg_accum(PG_FUNCTION_ARGS)
 Datum
 int2_accum(PG_FUNCTION_ARGS)
 {
-	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
-	Datum		newval2 = PG_GETARG_DATUM(1);
-	Numeric		newval;
+	NumericAggState *state;
 
-	newval = DatumGetNumeric(DirectFunctionCall1(int2_numeric, newval2));
+	state = PG_ARGISNULL(0) ? NULL : (NumericAggState *) PG_GETARG_POINTER(0);
 
-	PG_RETURN_ARRAYTYPE_P(do_numeric_accum(transarray, newval));
+	if (!PG_ARGISNULL(1))
+	{
+		Numeric		newval;
+
+		newval = DatumGetNumeric(DirectFunctionCall1(int2_numeric,
+													 PG_GETARG_DATUM(1)));
+
+		/* Create the state data when we see the first non-null input. */
+		if (state == NULL)
+			state = makeNumericAggState(fcinfo, true);
+
+		do_numeric_accum(state, newval);
+	}
+
+	PG_RETURN_POINTER(state);
 }
 
 Datum
 int4_accum(PG_FUNCTION_ARGS)
 {
-	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
-	Datum		newval4 = PG_GETARG_DATUM(1);
-	Numeric		newval;
+	NumericAggState *state;
 
-	newval = DatumGetNumeric(DirectFunctionCall1(int4_numeric, newval4));
+	state = PG_ARGISNULL(0) ? NULL : (NumericAggState *) PG_GETARG_POINTER(0);
 
-	PG_RETURN_ARRAYTYPE_P(do_numeric_accum(transarray, newval));
+	if (!PG_ARGISNULL(1))
+	{
+		Numeric		newval;
+
+		newval = DatumGetNumeric(DirectFunctionCall1(int4_numeric,
+													 PG_GETARG_DATUM(1)));
+
+		/* Create the state data when we see the first non-null input. */
+		if (state == NULL)
+			state = makeNumericAggState(fcinfo, true);
+
+		do_numeric_accum(state, newval);
+	}
+
+	PG_RETURN_POINTER(state);
 }
 
 Datum
 int8_accum(PG_FUNCTION_ARGS)
 {
-	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
-	Datum		newval8 = PG_GETARG_DATUM(1);
-	Numeric		newval;
+	NumericAggState *state;
 
-	newval = DatumGetNumeric(DirectFunctionCall1(int8_numeric, newval8));
+	state = PG_ARGISNULL(0) ? NULL : (NumericAggState *) PG_GETARG_POINTER(0);
 
-	PG_RETURN_ARRAYTYPE_P(do_numeric_accum(transarray, newval));
+	if (!PG_ARGISNULL(1))
+	{
+		Numeric		newval;
+
+		newval = DatumGetNumeric(DirectFunctionCall1(int8_numeric,
+													 PG_GETARG_DATUM(1)));
+
+		/* Create the state data when we see the first non-null input. */
+		if (state == NULL)
+			state = makeNumericAggState(fcinfo, true);
+
+		do_numeric_accum(state, newval);
+	}
+
+	PG_RETURN_POINTER(state);
 }
 
 /*
- * Optimized case for average of int8.
+ * Transition function for int8 input when we don't need sumX2.
  */
 Datum
 int8_avg_accum(PG_FUNCTION_ARGS)
 {
-	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
-	Datum		newval8 = PG_GETARG_DATUM(1);
-	Numeric		newval;
+	NumericAggState *state;
 
-	newval = DatumGetNumeric(DirectFunctionCall1(int8_numeric, newval8));
+	state = PG_ARGISNULL(0) ? NULL : (NumericAggState *) PG_GETARG_POINTER(0);
 
-	PG_RETURN_ARRAYTYPE_P(do_numeric_avg_accum(transarray, newval));
+	if (!PG_ARGISNULL(1))
+	{
+		Numeric		newval;
+
+		newval = DatumGetNumeric(DirectFunctionCall1(int8_numeric,
+													 PG_GETARG_DATUM(1)));
+
+		/* Create the state data when we see the first non-null input. */
+		if (state == NULL)
+			state = makeNumericAggState(fcinfo, false);
+
+		do_numeric_accum(state, newval);
+	}
+
+	PG_RETURN_POINTER(state);
 }
 
 
 Datum
 numeric_avg(PG_FUNCTION_ARGS)
 {
-	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
-	Datum	   *transdatums;
-	int			ndatums;
-	Numeric		N,
-				sumX;
+	NumericAggState *state;
+	Datum		N_datum;
+	Datum		sumX_datum;
 
-	/* We assume the input is array of numeric */
-	deconstruct_array(transarray,
-					  NUMERICOID, -1, false, 'i',
-					  &transdatums, NULL, &ndatums);
-	if (ndatums != 2)
-		elog(ERROR, "expected 2-element numeric array");
-	N = DatumGetNumeric(transdatums[0]);
-	sumX = DatumGetNumeric(transdatums[1]);
-
-	/* SQL defines AVG of no values to be NULL */
-	/* N is zero iff no digits (cf. numeric_uminus) */
-	if (NUMERIC_NDIGITS(N) == 0)
+	state = PG_ARGISNULL(0) ? NULL : (NumericAggState *) PG_GETARG_POINTER(0);
+	if (state == NULL)			/* there were no non-null inputs */
 		PG_RETURN_NULL();
 
-	PG_RETURN_DATUM(DirectFunctionCall2(numeric_div,
-										NumericGetDatum(sumX),
-										NumericGetDatum(N)));
+	if (state->isNaN)			/* there was at least one NaN input */
+		PG_RETURN_NUMERIC(make_result(&const_nan));
+
+	N_datum = DirectFunctionCall1(int8_numeric, Int64GetDatum(state->N));
+	sumX_datum = NumericGetDatum(make_result(&state->sumX));
+
+	PG_RETURN_DATUM(DirectFunctionCall2(numeric_div, sumX_datum, N_datum));
+}
+
+Datum
+numeric_sum(PG_FUNCTION_ARGS)
+{
+	NumericAggState *state;
+
+	state = PG_ARGISNULL(0) ? NULL : (NumericAggState *) PG_GETARG_POINTER(0);
+	if (state == NULL)			/* there were no non-null inputs */
+		PG_RETURN_NULL();
+
+	if (state->isNaN)			/* there was at least one NaN input */
+		PG_RETURN_NUMERIC(make_result(&const_nan));
+
+	PG_RETURN_NUMERIC(make_result(&(state->sumX)));
 }
 
 /*
  * Workhorse routine for the standard deviance and variance
- * aggregates. 'transarray' is the aggregate's transition
- * array. 'variance' specifies whether we should calculate the
+ * aggregates. 'state' is aggregate's transition state.
+ * 'variance' specifies whether we should calculate the
  * variance or the standard deviation. 'sample' indicates whether the
  * caller is interested in the sample or the population
  * variance/stddev.
@@ -2667,16 +2761,11 @@ numeric_avg(PG_FUNCTION_ARGS)
  * *is_null is set to true and NULL is returned.
  */
 static Numeric
-numeric_stddev_internal(ArrayType *transarray,
+numeric_stddev_internal(NumericAggState *state,
 						bool variance, bool sample,
 						bool *is_null)
 {
-	Datum	   *transdatums;
-	int			ndatums;
-	Numeric		N,
-				sumX,
-				sumX2,
-				res;
+	Numeric		res;
 	NumericVar	vN,
 				vsumX,
 				vsumX2,
@@ -2684,22 +2773,25 @@ numeric_stddev_internal(ArrayType *transarray,
 	NumericVar *comp;
 	int			rscale;
 
+	/* Deal with empty input and NaN-input cases */
+	if (state == NULL)
+	{
+		*is_null = true;
+		return NULL;
+	}
+
 	*is_null = false;
 
-	/* We assume the input is array of numeric */
-	deconstruct_array(transarray,
-					  NUMERICOID, -1, false, 'i',
-					  &transdatums, NULL, &ndatums);
-	if (ndatums != 3)
-		elog(ERROR, "expected 3-element numeric array");
-	N = DatumGetNumeric(transdatums[0]);
-	sumX = DatumGetNumeric(transdatums[1]);
-	sumX2 = DatumGetNumeric(transdatums[2]);
-
-	if (NUMERIC_IS_NAN(N) || NUMERIC_IS_NAN(sumX) || NUMERIC_IS_NAN(sumX2))
+	if (state->isNaN)
 		return make_result(&const_nan);
 
-	init_var_from_num(N, &vN);
+	init_var(&vN);
+	init_var(&vsumX);
+	init_var(&vsumX2);
+
+	int8_to_numericvar(state->N, &vN);
+	set_var_from_var(&(state->sumX), &vsumX);
+	set_var_from_var(&(state->sumX2), &vsumX2);
 
 	/*
 	 * Sample stddev and variance are undefined when N <= 1; population stddev
@@ -2718,9 +2810,6 @@ numeric_stddev_internal(ArrayType *transarray,
 
 	init_var(&vNminus1);
 	sub_var(&vN, &const_one, &vNminus1);
-
-	init_var_from_num(sumX, &vsumX);
-	init_var_from_num(sumX2, &vsumX2);
 
 	/* compute rscale for mul_var calls */
 	rscale = vsumX.dscale * 2;
@@ -2758,11 +2847,13 @@ numeric_stddev_internal(ArrayType *transarray,
 Datum
 numeric_var_samp(PG_FUNCTION_ARGS)
 {
+	NumericAggState *state;
 	Numeric		res;
 	bool		is_null;
 
-	res = numeric_stddev_internal(PG_GETARG_ARRAYTYPE_P(0),
-								  true, true, &is_null);
+	state = PG_ARGISNULL(0) ? NULL : (NumericAggState *) PG_GETARG_POINTER(0);
+
+	res = numeric_stddev_internal(state, true, true, &is_null);
 
 	if (is_null)
 		PG_RETURN_NULL();
@@ -2773,11 +2864,13 @@ numeric_var_samp(PG_FUNCTION_ARGS)
 Datum
 numeric_stddev_samp(PG_FUNCTION_ARGS)
 {
+	NumericAggState *state;
 	Numeric		res;
 	bool		is_null;
 
-	res = numeric_stddev_internal(PG_GETARG_ARRAYTYPE_P(0),
-								  false, true, &is_null);
+	state = PG_ARGISNULL(0) ? NULL : (NumericAggState *) PG_GETARG_POINTER(0);
+
+	res = numeric_stddev_internal(state, false, true, &is_null);
 
 	if (is_null)
 		PG_RETURN_NULL();
@@ -2788,11 +2881,13 @@ numeric_stddev_samp(PG_FUNCTION_ARGS)
 Datum
 numeric_var_pop(PG_FUNCTION_ARGS)
 {
+	NumericAggState *state;
 	Numeric		res;
 	bool		is_null;
 
-	res = numeric_stddev_internal(PG_GETARG_ARRAYTYPE_P(0),
-								  true, false, &is_null);
+	state = PG_ARGISNULL(0) ? NULL : (NumericAggState *) PG_GETARG_POINTER(0);
+
+	res = numeric_stddev_internal(state, true, false, &is_null);
 
 	if (is_null)
 		PG_RETURN_NULL();
@@ -2803,11 +2898,13 @@ numeric_var_pop(PG_FUNCTION_ARGS)
 Datum
 numeric_stddev_pop(PG_FUNCTION_ARGS)
 {
+	NumericAggState *state;
 	Numeric		res;
 	bool		is_null;
 
-	res = numeric_stddev_internal(PG_GETARG_ARRAYTYPE_P(0),
-								  false, false, &is_null);
+	state = PG_ARGISNULL(0) ? NULL : (NumericAggState *) PG_GETARG_POINTER(0);
+
+	res = numeric_stddev_internal(state, false, false, &is_null);
 
 	if (is_null)
 		PG_RETURN_NULL();
@@ -2930,6 +3027,9 @@ int4_sum(PG_FUNCTION_ARGS)
 	}
 }
 
+/*
+ * Note: this function is obsolete, it's no longer used for SUM(int8).
+ */
 Datum
 int8_sum(PG_FUNCTION_ARGS)
 {
