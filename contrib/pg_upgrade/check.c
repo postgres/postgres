@@ -351,7 +351,7 @@ set_locale_and_encoding(ClusterInfo *cluster)
 
 		res = executeQueryOrDie(conn,
 								"SELECT datcollate, datctype "
-								"FROM 	pg_catalog.pg_database "
+								"FROM	pg_catalog.pg_database "
 								"WHERE	datname = 'template0' ");
 		assert(PQntuples(res) == 1);
 
@@ -381,7 +381,7 @@ set_locale_and_encoding(ClusterInfo *cluster)
 
 	res = executeQueryOrDie(conn,
 							"SELECT pg_catalog.pg_encoding_to_char(encoding) "
-							"FROM 	pg_catalog.pg_database "
+							"FROM	pg_catalog.pg_database "
 							"WHERE	datname = 'template0' ");
 	assert(PQntuples(res) == 1);
 

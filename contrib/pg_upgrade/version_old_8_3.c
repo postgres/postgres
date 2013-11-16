@@ -61,7 +61,7 @@ old_8_3_check_for_name_data_type_usage(ClusterInfo *cluster)
 								"		a.atttypid = 'pg_catalog.name'::pg_catalog.regtype AND "
 								"		c.relnamespace = n.oid AND "
 		/* exclude possible orphaned temp tables */
-								"  		n.nspname !~ '^pg_temp_' AND "
+								"		n.nspname !~ '^pg_temp_' AND "
 						 "		n.nspname !~ '^pg_toast_temp_' AND "
 								"		n.nspname NOT IN ('pg_catalog', 'information_schema')");
 
@@ -151,7 +151,7 @@ old_8_3_check_for_tsquery_usage(ClusterInfo *cluster)
 								"		a.atttypid = 'pg_catalog.tsquery'::pg_catalog.regtype AND "
 								"		c.relnamespace = n.oid AND "
 		/* exclude possible orphaned temp tables */
-								"  		n.nspname !~ '^pg_temp_' AND "
+								"		n.nspname !~ '^pg_temp_' AND "
 						 "		n.nspname !~ '^pg_toast_temp_' AND "
 								"		n.nspname NOT IN ('pg_catalog', 'information_schema')");
 
@@ -328,7 +328,7 @@ old_8_3_rebuild_tsvector_tables(ClusterInfo *cluster, bool check_mode)
 								"		a.atttypid = 'pg_catalog.tsvector'::pg_catalog.regtype AND "
 								"		c.relnamespace = n.oid AND "
 		/* exclude possible orphaned temp tables */
-								"  		n.nspname !~ '^pg_temp_' AND "
+								"		n.nspname !~ '^pg_temp_' AND "
 						 "		n.nspname !~ '^pg_toast_temp_' AND "
 								"		n.nspname NOT IN ('pg_catalog', 'information_schema')");
 
@@ -700,7 +700,7 @@ old_8_3_create_sequence_script(ClusterInfo *cluster)
 								"WHERE	c.relkind = 'S' AND "
 								"		c.relnamespace = n.oid AND "
 		/* exclude possible orphaned temp tables */
-								"  		n.nspname !~ '^pg_temp_' AND "
+								"		n.nspname !~ '^pg_temp_' AND "
 						 "		n.nspname !~ '^pg_toast_temp_' AND "
 								"		n.nspname NOT IN ('pg_catalog', 'information_schema')");
 
