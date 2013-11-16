@@ -165,6 +165,30 @@ defGetBoolean(DefElem *def)
 }
 
 /*
+ * Extract an int32 value from a DefElem.
+ */
+int32
+defGetInt32(DefElem *def)
+{
+	if (def->arg == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("%s requires an integer value",
+						def->defname)));
+	switch (nodeTag(def->arg))
+	{
+		case T_Integer:
+			return (int32) intVal(def->arg);
+		default:
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("%s requires an integer value",
+							def->defname)));
+	}
+	return 0;					/* keep compiler quiet */
+}
+
+/*
  * Extract an int64 value from a DefElem.
  */
 int64

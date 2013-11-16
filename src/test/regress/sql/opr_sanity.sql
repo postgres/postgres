@@ -567,7 +567,7 @@ SELECT * FROM funcdescs
 
 SELECT ctid, aggfnoid::oid
 FROM pg_aggregate as p1
-WHERE aggfnoid = 0 OR aggtransfn = 0 OR aggtranstype = 0;
+WHERE aggfnoid = 0 OR aggtransfn = 0 OR aggtranstype = 0 OR aggtransspace < 0;
 
 -- Make sure the matching pg_proc entry is sensible, too.
 

@@ -702,7 +702,7 @@ SELECT * FROM funcdescs
 -- Look for illegal values in pg_aggregate fields.
 SELECT ctid, aggfnoid::oid
 FROM pg_aggregate as p1
-WHERE aggfnoid = 0 OR aggtransfn = 0 OR aggtranstype = 0;
+WHERE aggfnoid = 0 OR aggtransfn = 0 OR aggtranstype = 0 OR aggtransspace < 0;
  ctid | aggfnoid 
 ------+----------
 (0 rows)

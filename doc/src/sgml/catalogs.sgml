@@ -373,6 +373,13 @@
       <entry>Data type of the aggregate function's internal transition (state) data</entry>
      </row>
      <row>
+      <entry><structfield>aggtransspace</structfield></entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>Approximate average size (in bytes) of the transition state
+       data, or zero to use a default estimate</entry>
+     </row>
+     <row>
       <entry><structfield>agginitval</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>

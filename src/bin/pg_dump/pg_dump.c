@@ -11521,12 +11521,14 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	int			i_aggfinalfn;
 	int			i_aggsortop;
 	int			i_aggtranstype;
+	int			i_aggtransspace;
 	int			i_agginitval;
 	int			i_convertok;
 	const char *aggtransfn;
 	const char *aggfinalfn;
 	const char *aggsortop;
 	const char *aggtranstype;
+	const char *aggtransspace;
 	const char *agginitval;
 	bool		convertok;
 
@@ -11544,12 +11546,26 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	selectSourceSchema(fout, agginfo->aggfn.dobj.namespace->dobj.name);
 
 	/* Get aggregate-specific details */
-	if (fout->remoteVersion >= 80400)
+	if (fout->remoteVersion >= 90400)
 	{
 		appendPQExpBuffer(query, "SELECT aggtransfn, "
 						  "aggfinalfn, aggtranstype::pg_catalog.regtype, "
 						  "aggsortop::pg_catalog.regoperator, "
-						  "agginitval, "
+						  "aggtransspace, agginitval, "
+						  "'t'::boolean AS convertok, "
+						  "pg_catalog.pg_get_function_arguments(p.oid) AS funcargs, "
+						  "pg_catalog.pg_get_function_identity_arguments(p.oid) AS funciargs "
+					  "FROM pg_catalog.pg_aggregate a, pg_catalog.pg_proc p "
+						  "WHERE a.aggfnoid = p.oid "
+						  "AND p.oid = '%u'::pg_catalog.oid",
+						  agginfo->aggfn.dobj.catId.oid);
+	}
+	else if (fout->remoteVersion >= 80400)
+	{
+		appendPQExpBuffer(query, "SELECT aggtransfn, "
+						  "aggfinalfn, aggtranstype::pg_catalog.regtype, "
+						  "aggsortop::pg_catalog.regoperator, "
+						  "0 AS aggtransspace, agginitval, "
 						  "'t'::boolean AS convertok, "
 						  "pg_catalog.pg_get_function_arguments(p.oid) AS funcargs, "
 						  "pg_catalog.pg_get_function_identity_arguments(p.oid) AS funciargs "
@@ -11563,7 +11579,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 		appendPQExpBuffer(query, "SELECT aggtransfn, "
 						  "aggfinalfn, aggtranstype::pg_catalog.regtype, "
 						  "aggsortop::pg_catalog.regoperator, "
-						  "agginitval, "
+						  "0 AS aggtransspace, agginitval, "
 						  "'t'::boolean AS convertok "
 						  "FROM pg_catalog.pg_aggregate a, pg_catalog.pg_proc p "
 						  "WHERE a.aggfnoid = p.oid "
@@ -11575,7 +11591,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 		appendPQExpBuffer(query, "SELECT aggtransfn, "
 						  "aggfinalfn, aggtranstype::pg_catalog.regtype, "
 						  "0 AS aggsortop, "
-						  "agginitval, "
+						  "0 AS aggtransspace, agginitval, "
 						  "'t'::boolean AS convertok "
 					  "FROM pg_catalog.pg_aggregate a, pg_catalog.pg_proc p "
 						  "WHERE a.aggfnoid = p.oid "
@@ -11587,7 +11603,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 		appendPQExpBuffer(query, "SELECT aggtransfn, aggfinalfn, "
 						  "format_type(aggtranstype, NULL) AS aggtranstype, "
 						  "0 AS aggsortop, "
-						  "agginitval, "
+						  "0 AS aggtransspace, agginitval, "
 						  "'t'::boolean AS convertok "
 						  "FROM pg_aggregate "
 						  "WHERE oid = '%u'::oid",
@@ -11599,7 +11615,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 						  "aggfinalfn, "
 						  "(SELECT typname FROM pg_type WHERE oid = aggtranstype1) AS aggtranstype, "
 						  "0 AS aggsortop, "
-						  "agginitval1 AS agginitval, "
+						  "0 AS aggtransspace, agginitval1 AS agginitval, "
 						  "(aggtransfn2 = 0 and aggtranstype2 = 0 and agginitval2 is null) AS convertok "
 						  "FROM pg_aggregate "
 						  "WHERE oid = '%u'::oid",
@@ -11612,6 +11628,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	i_aggfinalfn = PQfnumber(res, "aggfinalfn");
 	i_aggsortop = PQfnumber(res, "aggsortop");
 	i_aggtranstype = PQfnumber(res, "aggtranstype");
+	i_aggtransspace = PQfnumber(res, "aggtransspace");
 	i_agginitval = PQfnumber(res, "agginitval");
 	i_convertok = PQfnumber(res, "convertok");
 
@@ -11619,6 +11636,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	aggfinalfn = PQgetvalue(res, 0, i_aggfinalfn);
 	aggsortop = PQgetvalue(res, 0, i_aggsortop);
 	aggtranstype = PQgetvalue(res, 0, i_aggtranstype);
+	aggtransspace = PQgetvalue(res, 0, i_aggtransspace);
 	agginitval = PQgetvalue(res, 0, i_agginitval);
 	convertok = (PQgetvalue(res, 0, i_convertok)[0] == 't');
 
@@ -11670,6 +11688,12 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 						  fmtId(aggtransfn));
 		appendPQExpBuffer(details, "    STYPE = %s",
 						  fmtId(aggtranstype));
+	}
+
+	if (strcmp(aggtransspace, "0") != 0)
+	{
+		appendPQExpBuffer(details, ",\n    SSPACE = %s",
+						  aggtransspace);
 	}
 
 	if (!PQgetisnull(res, 0, i_agginitval))

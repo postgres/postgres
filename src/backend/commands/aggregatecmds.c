@@ -60,6 +60,7 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 	List	   *sortoperatorName = NIL;
 	TypeName   *baseType = NULL;
 	TypeName   *transType = NULL;
+	int32		transSpace = 0;
 	char	   *initval = NULL;
 	int			numArgs;
 	oidvector  *parameterTypes;
@@ -102,6 +103,8 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 			transType = defGetTypeName(defel);
 		else if (pg_strcasecmp(defel->defname, "stype1") == 0)
 			transType = defGetTypeName(defel);
+		else if (pg_strcasecmp(defel->defname, "sspace") == 0)
+			transSpace = defGetInt32(defel);
 		else if (pg_strcasecmp(defel->defname, "initcond") == 0)
 			initval = defGetString(defel);
 		else if (pg_strcasecmp(defel->defname, "initcond1") == 0)
@@ -248,5 +251,6 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 						   finalfuncName,		/* final function name */
 						   sortoperatorName,	/* sort operator name */
 						   transTypeId, /* transition data type */
+						   transSpace,	/* transition space */
 						   initval);	/* initial condition */
 }

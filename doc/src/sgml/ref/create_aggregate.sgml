@@ -24,6 +24,7 @@ PostgreSQL documentation
 CREATE AGGREGATE <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">arg_name</replaceable> ] <replaceable class="parameter">arg_data_type</replaceable> [ , ... ] ) (
     SFUNC = <replaceable class="PARAMETER">sfunc</replaceable>,
     STYPE = <replaceable class="PARAMETER">state_data_type</replaceable>
+    [ , SSPACE = <replaceable class="PARAMETER">state_data_size</replaceable> ]
     [ , FINALFUNC = <replaceable class="PARAMETER">ffunc</replaceable> ]
     [ , INITCOND = <replaceable class="PARAMETER">initial_condition</replaceable> ]
     [ , SORTOP = <replaceable class="PARAMETER">sort_operator</replaceable> ]
@@ -35,6 +36,7 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
     BASETYPE = <replaceable class="PARAMETER">base_type</replaceable>,
     SFUNC = <replaceable class="PARAMETER">sfunc</replaceable>,
     STYPE = <replaceable class="PARAMETER">state_data_type</replaceable>
+    [ , SSPACE = <replaceable class="PARAMETER">state_data_size</replaceable> ]
     [ , FINALFUNC = <replaceable class="PARAMETER">ffunc</replaceable> ]
     [ , INITCOND = <replaceable class="PARAMETER">initial_condition</replaceable> ]
     [ , SORTOP = <replaceable class="PARAMETER">sort_operator</replaceable> ]
@@ -260,6 +262,22 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
     <listitem>
      <para>
       The data type for the aggregate's state value.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">state_data_size</replaceable></term>
+    <listitem>
+     <para>
+      The approximate average size (in bytes) of the aggregate's state value.
+      If this parameter is omitted or is zero, a default estimate is used
+      based on the <replaceable>state_data_type</>.
+      The planner uses this value to estimate the memory required for a
+      grouped aggregate query.  The planner will consider using hash
+      aggregation for such a query only if the hash table is estimated to fit
+      in <xref linkend="guc-work-mem">; therefore, large values of this
+      parameter discourage use of hash aggregation.
      </para>
     </listitem>
    </varlistentry>
