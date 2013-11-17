@@ -236,6 +236,43 @@ date_send(PG_FUNCTION_ARGS)
 }
 
 /*
+ *		make_date			- date constructor
+ */
+Datum
+make_date(PG_FUNCTION_ARGS)
+{
+	struct pg_tm tm;
+	DateADT		date;
+	int			dterr;
+
+	tm.tm_year = PG_GETARG_INT32(0);
+	tm.tm_mon = PG_GETARG_INT32(1);
+	tm.tm_mday = PG_GETARG_INT32(2);
+
+	/*
+	 * Note: we'll reject zero or negative year values.  Perhaps negatives
+	 * should be allowed to represent BC years?
+	 */
+	dterr = ValidateDate(DTK_DATE_M, false, false, false, &tm);
+
+	if (dterr != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_FIELD_OVERFLOW),
+				 errmsg("date field value out of range: %d-%02d-%02d",
+						tm.tm_year, tm.tm_mon, tm.tm_mday)));
+
+	if (!IS_VALID_JULIAN(tm.tm_year, tm.tm_mon, tm.tm_mday))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("date out of range: %d-%02d-%02d",
+						tm.tm_year, tm.tm_mon, tm.tm_mday)));
+
+	date = date2j(tm.tm_year, tm.tm_mon, tm.tm_mday) - POSTGRES_EPOCH_JDATE;
+
+	PG_RETURN_DATEADT(date);
+}
+
+/*
  * Convert reserved date values to string.
  */
 static void
@@ -1206,6 +1243,39 @@ timetypmodout(PG_FUNCTION_ARGS)
 	int32		typmod = PG_GETARG_INT32(0);
 
 	PG_RETURN_CSTRING(anytime_typmodout(false, typmod));
+}
+
+/*
+ *		make_time			- time constructor
+ */
+Datum
+make_time(PG_FUNCTION_ARGS)
+{
+	int			tm_hour = PG_GETARG_INT32(0);
+	int			tm_min = PG_GETARG_INT32(1);
+	double		sec = PG_GETARG_FLOAT8(2);
+	TimeADT		time;
+
+	/* This should match the checks in DecodeTimeOnly */
+	if (tm_hour < 0 || tm_min < 0 || tm_min > MINS_PER_HOUR - 1 ||
+		sec < 0 || sec > SECS_PER_MINUTE ||
+		tm_hour > HOURS_PER_DAY ||
+	/* test for > 24:00:00 */
+		(tm_hour == HOURS_PER_DAY && (tm_min > 0 || sec > 0)))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_FIELD_OVERFLOW),
+				 errmsg("time field value out of range: %d:%02d:%02g",
+						tm_hour, tm_min, sec)));
+
+	/* This should match tm2time */
+#ifdef HAVE_INT64_TIMESTAMP
+	time = (((tm_hour * MINS_PER_HOUR + tm_min) * SECS_PER_MINUTE)
+			* USECS_PER_SEC) + rint(sec * USECS_PER_SEC);
+#else
+	time = ((tm_hour * MINS_PER_HOUR + tm_min) * SECS_PER_MINUTE) + sec;
+#endif
+
+	PG_RETURN_TIMEADT(time);
 }
 
 

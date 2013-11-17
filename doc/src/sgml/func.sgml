@@ -6693,6 +6693,48 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        <row>
         <entry>
          <indexterm>
+          <primary>make_date</primary>
+         </indexterm>
+         <literal>
+            <function>
+             make_date(<parameter>year</parameter> <type>int</type>,
+             <parameter>month</parameter> <type>int</type>,
+             <parameter>day</parameter> <type>int</type>)
+            </function>
+         </literal>
+        </entry>
+        <entry><type>date</type></entry>
+        <entry>
+         Create date from year, month and day fields
+        </entry>
+        <entry><literal>make_date(2013, 7, 15)</literal></entry>
+        <entry><literal>2013-07-15</literal></entry>
+       </row>
+
+       <row>
+        <entry>
+         <indexterm>
+          <primary>make_time</primary>
+         </indexterm>
+         <literal>
+          <function>
+           make_time(<parameter>hour</parameter> <type>int</type>,
+           <parameter>min</parameter> <type>int</type>,
+           <parameter>sec</parameter> <type>double precision</type>)
+          </function>
+         </literal>
+        </entry>
+        <entry><type>time</type></entry>
+        <entry>
+         Create time from hour, minute and seconds fields
+        </entry>
+        <entry><literal>make_time(8, 15, 23.5)</literal></entry>
+        <entry><literal>08:15:23.5</literal></entry>
+       </row>
+
+       <row>
+        <entry>
+         <indexterm>
           <primary>now</primary>
          </indexterm>
          <literal><function>now()</function></literal>

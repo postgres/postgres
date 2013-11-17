@@ -1184,3 +1184,29 @@ select isfinite('infinity'::date), isfinite('-infinity'::date), isfinite('today'
  f        | f        | t
 (1 row)
 
+-- test constructors
+select make_date(2013, 7, 15);
+ make_date  
+------------
+ 07-15-2013
+(1 row)
+
+select make_time(8, 20, 0.0);
+ make_time 
+-----------
+ 08:20:00
+(1 row)
+
+-- should fail
+select make_date(2013, 2, 30);
+ERROR:  date field value out of range: 2013-02-30
+select make_date(2013, 13, 1);
+ERROR:  date field value out of range: 2013-13-01
+select make_date(2013, 11, -1);
+ERROR:  date field value out of range: 2013-11--1
+select make_date(-44, 3, 15);  -- perhaps we should allow this sometime?
+ERROR:  date field value out of range: -44-03-15
+select make_time(10, 55, 100.1);
+ERROR:  time field value out of range: 10:55:100.1
+select make_time(24, 0, 2.1);
+ERROR:  time field value out of range: 24:00:2.1

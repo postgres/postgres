@@ -294,6 +294,9 @@ extern void EncodeTimeOnly(struct pg_tm * tm, fsec_t fsec, bool print_tz, int tz
 extern void EncodeDateTime(struct pg_tm * tm, fsec_t fsec, bool print_tz, int tz, const char *tzn, int style, char *str);
 extern void EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str);
 
+extern int ValidateDate(int fmask, bool isjulian, bool is2digits, bool bc,
+			 struct pg_tm * tm);
+
 extern int	DecodeSpecial(int field, char *lowtoken, int *val);
 extern int	DecodeUnits(int field, char *lowtoken, int *val);
 

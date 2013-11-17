@@ -44,8 +44,6 @@ static int	DecodeTimezone(char *str, int *tzp);
 static const datetkn *datebsearch(const char *key, const datetkn *base, int nel);
 static int DecodeDate(char *str, int fmask, int *tmask, bool *is2digits,
 		   struct pg_tm * tm);
-static int ValidateDate(int fmask, bool isjulian, bool is2digits, bool bc,
-			 struct pg_tm * tm);
 static void TrimTrailingZeros(char *str);
 static void AppendSeconds(char *cp, int sec, fsec_t fsec,
 			  int precision, bool fillzeros);
@@ -2270,7 +2268,7 @@ DecodeDate(char *str, int fmask, int *tmask, bool *is2digits,
  * Check valid year/month/day values, handle BC and DOY cases
  * Return 0 if okay, a DTERR code if not.
  */
-static int
+int
 ValidateDate(int fmask, bool isjulian, bool is2digits, bool bc,
 			 struct pg_tm * tm)
 {
