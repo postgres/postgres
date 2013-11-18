@@ -1499,7 +1499,7 @@ array_to_json(PG_FUNCTION_ARGS)
 
 	array_to_json_internal(array, result, false);
 
-	PG_RETURN_TEXT_P(cstring_to_text(result->data));
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(result->data, result->len));
 }
 
 /*
@@ -1516,7 +1516,7 @@ array_to_json_pretty(PG_FUNCTION_ARGS)
 
 	array_to_json_internal(array, result, use_line_feeds);
 
-	PG_RETURN_TEXT_P(cstring_to_text(result->data));
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(result->data, result->len));
 }
 
 /*
@@ -1532,7 +1532,7 @@ row_to_json(PG_FUNCTION_ARGS)
 
 	composite_to_json(array, result, false);
 
-	PG_RETURN_TEXT_P(cstring_to_text(result->data));
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(result->data, result->len));
 }
 
 /*
@@ -1549,7 +1549,7 @@ row_to_json_pretty(PG_FUNCTION_ARGS)
 
 	composite_to_json(array, result, use_line_feeds);
 
-	PG_RETURN_TEXT_P(cstring_to_text(result->data));
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(result->data, result->len));
 }
 
 /*
@@ -1607,7 +1607,7 @@ to_json(PG_FUNCTION_ARGS)
 
 	datum_to_json(val, false, result, tcategory, typoutput);
 
-	PG_RETURN_TEXT_P(cstring_to_text(result->data));
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(result->data, result->len));
 }
 
 /*
@@ -1733,7 +1733,7 @@ json_agg_finalfn(PG_FUNCTION_ARGS)
 
 	appendStringInfoChar(state, ']');
 
-	PG_RETURN_TEXT_P(cstring_to_text(state->data));
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(state->data, state->len));
 }
 
 /*
