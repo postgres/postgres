@@ -6,12 +6,12 @@
 CREATE FUNCTION unaccent(regdictionary, text)
 	RETURNS text
 	AS 'MODULE_PATHNAME', 'unaccent_dict'
-	LANGUAGE C IMMUTABLE STRICT;
+	LANGUAGE C STABLE STRICT;
 
 CREATE FUNCTION unaccent(text)
 	RETURNS text
 	AS 'MODULE_PATHNAME', 'unaccent_dict'
-	LANGUAGE C IMMUTABLE STRICT;
+	LANGUAGE C STABLE STRICT;
 
 CREATE FUNCTION unaccent_init(internal)
 	RETURNS internal
