@@ -602,6 +602,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			if (!lazy_check_needs_freeze(buf))
 			{
 				UnlockReleaseBuffer(buf);
+				vacrelstats->scanned_pages++;
 				continue;
 			}
 			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
