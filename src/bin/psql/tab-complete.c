@@ -3613,8 +3613,8 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 					   "pg_catalog.pg_class c") == 0 &&
 				strncmp(text, "pg_", 3) !=0)
 			{
-				appendPQExpBuffer(&query_buffer,
-								  " AND c.relnamespace <> (SELECT oid FROM"
+				appendPQExpBufferStr(&query_buffer,
+									 " AND c.relnamespace <> (SELECT oid FROM"
 				   " pg_catalog.pg_namespace WHERE nspname = 'pg_catalog')");
 			}
 

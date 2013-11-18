@@ -199,7 +199,7 @@ main(int argc, char *argv[])
 		{
 			case 'a':
 				data_only = true;
-				appendPQExpBuffer(pgdumpopts, " -a");
+				appendPQExpBufferStr(pgdumpopts, " -a");
 				break;
 
 			case 'c':
@@ -212,7 +212,7 @@ main(int argc, char *argv[])
 
 			case 'f':
 				filename = pg_strdup(optarg);
-				appendPQExpBuffer(pgdumpopts, " -f ");
+				appendPQExpBufferStr(pgdumpopts, " -f ");
 				doShellQuoting(pgdumpopts, filename);
 				break;
 
@@ -233,11 +233,11 @@ main(int argc, char *argv[])
 				break;
 
 			case 'o':
-				appendPQExpBuffer(pgdumpopts, " -o");
+				appendPQExpBufferStr(pgdumpopts, " -o");
 				break;
 
 			case 'O':
-				appendPQExpBuffer(pgdumpopts, " -O");
+				appendPQExpBufferStr(pgdumpopts, " -O");
 				break;
 
 			case 'p':
@@ -249,11 +249,11 @@ main(int argc, char *argv[])
 				break;
 
 			case 's':
-				appendPQExpBuffer(pgdumpopts, " -s");
+				appendPQExpBufferStr(pgdumpopts, " -s");
 				break;
 
 			case 'S':
-				appendPQExpBuffer(pgdumpopts, " -S ");
+				appendPQExpBufferStr(pgdumpopts, " -S ");
 				doShellQuoting(pgdumpopts, optarg);
 				break;
 
@@ -267,35 +267,35 @@ main(int argc, char *argv[])
 
 			case 'v':
 				verbose = true;
-				appendPQExpBuffer(pgdumpopts, " -v");
+				appendPQExpBufferStr(pgdumpopts, " -v");
 				break;
 
 			case 'w':
 				prompt_password = TRI_NO;
-				appendPQExpBuffer(pgdumpopts, " -w");
+				appendPQExpBufferStr(pgdumpopts, " -w");
 				break;
 
 			case 'W':
 				prompt_password = TRI_YES;
-				appendPQExpBuffer(pgdumpopts, " -W");
+				appendPQExpBufferStr(pgdumpopts, " -W");
 				break;
 
 			case 'x':
 				skip_acls = true;
-				appendPQExpBuffer(pgdumpopts, " -x");
+				appendPQExpBufferStr(pgdumpopts, " -x");
 				break;
 
 			case 0:
 				break;
 
 			case 2:
-				appendPQExpBuffer(pgdumpopts, " --lock-wait-timeout ");
+				appendPQExpBufferStr(pgdumpopts, " --lock-wait-timeout ");
 				doShellQuoting(pgdumpopts, optarg);
 				break;
 
 			case 3:
 				use_role = pg_strdup(optarg);
-				appendPQExpBuffer(pgdumpopts, " --role ");
+				appendPQExpBufferStr(pgdumpopts, " --role ");
 				doShellQuoting(pgdumpopts, use_role);
 				break;
 
@@ -345,25 +345,25 @@ main(int argc, char *argv[])
 
 	/* Add long options to the pg_dump argument list */
 	if (binary_upgrade)
-		appendPQExpBuffer(pgdumpopts, " --binary-upgrade");
+		appendPQExpBufferStr(pgdumpopts, " --binary-upgrade");
 	if (column_inserts)
-		appendPQExpBuffer(pgdumpopts, " --column-inserts");
+		appendPQExpBufferStr(pgdumpopts, " --column-inserts");
 	if (disable_dollar_quoting)
-		appendPQExpBuffer(pgdumpopts, " --disable-dollar-quoting");
+		appendPQExpBufferStr(pgdumpopts, " --disable-dollar-quoting");
 	if (disable_triggers)
-		appendPQExpBuffer(pgdumpopts, " --disable-triggers");
+		appendPQExpBufferStr(pgdumpopts, " --disable-triggers");
 	if (inserts)
-		appendPQExpBuffer(pgdumpopts, " --inserts");
+		appendPQExpBufferStr(pgdumpopts, " --inserts");
 	if (no_tablespaces)
-		appendPQExpBuffer(pgdumpopts, " --no-tablespaces");
+		appendPQExpBufferStr(pgdumpopts, " --no-tablespaces");
 	if (quote_all_identifiers)
-		appendPQExpBuffer(pgdumpopts, " --quote-all-identifiers");
+		appendPQExpBufferStr(pgdumpopts, " --quote-all-identifiers");
 	if (use_setsessauth)
-		appendPQExpBuffer(pgdumpopts, " --use-set-session-authorization");
+		appendPQExpBufferStr(pgdumpopts, " --use-set-session-authorization");
 	if (no_security_labels)
-		appendPQExpBuffer(pgdumpopts, " --no-security-labels");
+		appendPQExpBufferStr(pgdumpopts, " --no-security-labels");
 	if (no_unlogged_table_data)
-		appendPQExpBuffer(pgdumpopts, " --no-unlogged-table-data");
+		appendPQExpBufferStr(pgdumpopts, " --no-unlogged-table-data");
 
 	/*
 	 * If there was a database specified on the command line, use that,
@@ -746,7 +746,7 @@ dumpRoles(PGconn *conn)
 
 		if (binary_upgrade)
 		{
-			appendPQExpBuffer(buf, "\n-- For binary upgrade, must preserve pg_authid.oid\n");
+			appendPQExpBufferStr(buf, "\n-- For binary upgrade, must preserve pg_authid.oid\n");
 			appendPQExpBuffer(buf,
 							  "SELECT binary_upgrade.set_next_pg_authid_oid('%u'::pg_catalog.oid);\n\n",
 							  auth_oid);
@@ -766,34 +766,34 @@ dumpRoles(PGconn *conn)
 		appendPQExpBuffer(buf, "ALTER ROLE %s WITH", fmtId(rolename));
 
 		if (strcmp(PQgetvalue(res, i, i_rolsuper), "t") == 0)
-			appendPQExpBuffer(buf, " SUPERUSER");
+			appendPQExpBufferStr(buf, " SUPERUSER");
 		else
-			appendPQExpBuffer(buf, " NOSUPERUSER");
+			appendPQExpBufferStr(buf, " NOSUPERUSER");
 
 		if (strcmp(PQgetvalue(res, i, i_rolinherit), "t") == 0)
-			appendPQExpBuffer(buf, " INHERIT");
+			appendPQExpBufferStr(buf, " INHERIT");
 		else
-			appendPQExpBuffer(buf, " NOINHERIT");
+			appendPQExpBufferStr(buf, " NOINHERIT");
 
 		if (strcmp(PQgetvalue(res, i, i_rolcreaterole), "t") == 0)
-			appendPQExpBuffer(buf, " CREATEROLE");
+			appendPQExpBufferStr(buf, " CREATEROLE");
 		else
-			appendPQExpBuffer(buf, " NOCREATEROLE");
+			appendPQExpBufferStr(buf, " NOCREATEROLE");
 
 		if (strcmp(PQgetvalue(res, i, i_rolcreatedb), "t") == 0)
-			appendPQExpBuffer(buf, " CREATEDB");
+			appendPQExpBufferStr(buf, " CREATEDB");
 		else
-			appendPQExpBuffer(buf, " NOCREATEDB");
+			appendPQExpBufferStr(buf, " NOCREATEDB");
 
 		if (strcmp(PQgetvalue(res, i, i_rolcanlogin), "t") == 0)
-			appendPQExpBuffer(buf, " LOGIN");
+			appendPQExpBufferStr(buf, " LOGIN");
 		else
-			appendPQExpBuffer(buf, " NOLOGIN");
+			appendPQExpBufferStr(buf, " NOLOGIN");
 
 		if (strcmp(PQgetvalue(res, i, i_rolreplication), "t") == 0)
-			appendPQExpBuffer(buf, " REPLICATION");
+			appendPQExpBufferStr(buf, " REPLICATION");
 		else
-			appendPQExpBuffer(buf, " NOREPLICATION");
+			appendPQExpBufferStr(buf, " NOREPLICATION");
 
 		if (strcmp(PQgetvalue(res, i, i_rolconnlimit), "-1") != 0)
 			appendPQExpBuffer(buf, " CONNECTION LIMIT %s",
@@ -801,7 +801,7 @@ dumpRoles(PGconn *conn)
 
 		if (!PQgetisnull(res, i, i_rolpassword))
 		{
-			appendPQExpBuffer(buf, " PASSWORD ");
+			appendPQExpBufferStr(buf, " PASSWORD ");
 			appendStringLiteralConn(buf, PQgetvalue(res, i, i_rolpassword), conn);
 		}
 
@@ -809,13 +809,13 @@ dumpRoles(PGconn *conn)
 			appendPQExpBuffer(buf, " VALID UNTIL '%s'",
 							  PQgetvalue(res, i, i_rolvaliduntil));
 
-		appendPQExpBuffer(buf, ";\n");
+		appendPQExpBufferStr(buf, ";\n");
 
 		if (!PQgetisnull(res, i, i_rolcomment))
 		{
 			appendPQExpBuffer(buf, "COMMENT ON ROLE %s IS ", fmtId(rolename));
 			appendStringLiteralConn(buf, PQgetvalue(res, i, i_rolcomment), conn);
-			appendPQExpBuffer(buf, ";\n");
+			appendPQExpBufferStr(buf, ";\n");
 		}
 
 		if (!no_security_labels && server_version >= 90200)
@@ -1068,9 +1068,9 @@ dumpTablespaces(PGconn *conn)
 		appendPQExpBuffer(buf, "CREATE TABLESPACE %s", fspcname);
 		appendPQExpBuffer(buf, " OWNER %s", fmtId(spcowner));
 
-		appendPQExpBuffer(buf, " LOCATION ");
+		appendPQExpBufferStr(buf, " LOCATION ");
 		appendStringLiteralConn(buf, spclocation, conn);
-		appendPQExpBuffer(buf, ";\n");
+		appendPQExpBufferStr(buf, ";\n");
 
 		if (spcoptions && spcoptions[0] != '\0')
 			appendPQExpBuffer(buf, "ALTER TABLESPACE %s SET (%s);\n",
@@ -1090,7 +1090,7 @@ dumpTablespaces(PGconn *conn)
 		{
 			appendPQExpBuffer(buf, "COMMENT ON TABLESPACE %s IS ", fspcname);
 			appendStringLiteralConn(buf, spccomment, conn);
-			appendPQExpBuffer(buf, ";\n");
+			appendPQExpBufferStr(buf, ";\n");
 		}
 
 		if (!no_security_labels && server_version >= 90200)
@@ -1320,26 +1320,26 @@ dumpCreateDB(PGconn *conn)
 		{
 			appendPQExpBuffer(buf, "CREATE DATABASE %s", fdbname);
 
-			appendPQExpBuffer(buf, " WITH TEMPLATE = template0");
+			appendPQExpBufferStr(buf, " WITH TEMPLATE = template0");
 
 			if (strlen(dbowner) != 0)
 				appendPQExpBuffer(buf, " OWNER = %s", fmtId(dbowner));
 
 			if (default_encoding && strcmp(dbencoding, default_encoding) != 0)
 			{
-				appendPQExpBuffer(buf, " ENCODING = ");
+				appendPQExpBufferStr(buf, " ENCODING = ");
 				appendStringLiteralConn(buf, dbencoding, conn);
 			}
 
 			if (default_collate && strcmp(dbcollate, default_collate) != 0)
 			{
-				appendPQExpBuffer(buf, " LC_COLLATE = ");
+				appendPQExpBufferStr(buf, " LC_COLLATE = ");
 				appendStringLiteralConn(buf, dbcollate, conn);
 			}
 
 			if (default_ctype && strcmp(dbctype, default_ctype) != 0)
 			{
-				appendPQExpBuffer(buf, " LC_CTYPE = ");
+				appendPQExpBufferStr(buf, " LC_CTYPE = ");
 				appendStringLiteralConn(buf, dbctype, conn);
 			}
 
@@ -1359,24 +1359,24 @@ dumpCreateDB(PGconn *conn)
 				appendPQExpBuffer(buf, " CONNECTION LIMIT = %s",
 								  dbconnlimit);
 
-			appendPQExpBuffer(buf, ";\n");
+			appendPQExpBufferStr(buf, ";\n");
 
 			if (strcmp(dbistemplate, "t") == 0)
 			{
-				appendPQExpBuffer(buf, "UPDATE pg_catalog.pg_database SET datistemplate = 't' WHERE datname = ");
+				appendPQExpBufferStr(buf, "UPDATE pg_catalog.pg_database SET datistemplate = 't' WHERE datname = ");
 				appendStringLiteralConn(buf, dbname, conn);
-				appendPQExpBuffer(buf, ";\n");
+				appendPQExpBufferStr(buf, ";\n");
 			}
 
 			if (binary_upgrade)
 			{
-				appendPQExpBuffer(buf, "-- For binary upgrade, set datfrozenxid.\n");
+				appendPQExpBufferStr(buf, "-- For binary upgrade, set datfrozenxid.\n");
 				appendPQExpBuffer(buf, "UPDATE pg_catalog.pg_database "
 								  "SET datfrozenxid = '%u' "
 								  "WHERE datname = ",
 								  dbfrozenxid);
 				appendStringLiteralConn(buf, dbname, conn);
-				appendPQExpBuffer(buf, ";\n");
+				appendPQExpBufferStr(buf, ";\n");
 			}
 		}
 
@@ -1472,7 +1472,7 @@ dumpUserConfig(PGconn *conn, const char *username)
 			printfPQExpBuffer(buf, "SELECT useconfig[%d] FROM pg_shadow WHERE usename = ", count);
 		appendStringLiteralConn(buf, username, conn);
 		if (server_version >= 90000)
-			appendPQExpBuffer(buf, ")");
+			appendPQExpBufferChar(buf, ')');
 
 		res = executeQuery(conn, buf->data);
 		if (PQntuples(res) == 1 &&
@@ -1561,10 +1561,10 @@ makeAlterConfigCommand(PGconn *conn, const char *arrayitem,
 	 */
 	if (pg_strcasecmp(mine, "DateStyle") == 0
 		|| pg_strcasecmp(mine, "search_path") == 0)
-		appendPQExpBuffer(buf, "%s", pos + 1);
+		appendPQExpBufferStr(buf, pos + 1);
 	else
 		appendStringLiteralConn(buf, pos + 1, conn);
-	appendPQExpBuffer(buf, ";\n");
+	appendPQExpBufferStr(buf, ";\n");
 
 	fprintf(OPF, "%s", buf->data);
 	destroyPQExpBuffer(buf);
@@ -1644,9 +1644,9 @@ runPgDump(const char *dbname)
 	 * format.
 	 */
 	if (filename)
-		appendPQExpBuffer(cmd, " -Fa ");
+		appendPQExpBufferStr(cmd, " -Fa ");
 	else
-		appendPQExpBuffer(cmd, " -Fp ");
+		appendPQExpBufferStr(cmd, " -Fp ");
 
 	/*
 	 * Append the database name to the already-constructed stem of connection
@@ -1657,7 +1657,7 @@ runPgDump(const char *dbname)
 
 	doShellQuoting(cmd, connstrbuf->data);
 
-	appendPQExpBuffer(cmd, "%s", SYSTEMQUOTE);
+	appendPQExpBufferStr(cmd, SYSTEMQUOTE);
 
 	if (verbose)
 		fprintf(stderr, _("%s: running \"%s\"\n"), progname, cmd->data);
@@ -2082,7 +2082,7 @@ doShellQuoting(PQExpBuffer buf, const char *str)
 	for (p = str; *p; p++)
 	{
 		if (*p == '\'')
-			appendPQExpBuffer(buf, "'\"'\"'");
+			appendPQExpBufferStr(buf, "'\"'\"'");
 		else
 			appendPQExpBufferChar(buf, *p);
 	}
@@ -2093,7 +2093,7 @@ doShellQuoting(PQExpBuffer buf, const char *str)
 	for (p = str; *p; p++)
 	{
 		if (*p == '"')
-			appendPQExpBuffer(buf, "\\\"");
+			appendPQExpBufferStr(buf, "\\\"");
 		else
 			appendPQExpBufferChar(buf, *p);
 	}

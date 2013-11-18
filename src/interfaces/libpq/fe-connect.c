@@ -1601,9 +1601,9 @@ PQconnectPoll(PGconn *conn)
 			break;
 
 		default:
-			appendPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext(
-											"invalid connection state, "
+			appendPQExpBufferStr(&conn->errorMessage,
+								 libpq_gettext(
+											   "invalid connection state, "
 								 "probably indicative of memory corruption\n"
 											));
 			goto error_return;
@@ -1695,8 +1695,8 @@ keep_going:						/* We will come back to here until there is
 
 						if (usekeepalives < 0)
 						{
-							appendPQExpBuffer(&conn->errorMessage,
-											  libpq_gettext("keepalives parameter must be an integer\n"));
+							appendPQExpBufferStr(&conn->errorMessage,
+												 libpq_gettext("keepalives parameter must be an integer\n"));
 							err = 1;
 						}
 						else if (usekeepalives == 0)
@@ -1920,8 +1920,8 @@ keep_going:						/* We will come back to here until there is
 						 * stub
 						 */
 						if (errno == ENOSYS)
-							appendPQExpBuffer(&conn->errorMessage,
-											  libpq_gettext("requirepeer parameter is not supported on this platform\n"));
+							appendPQExpBufferStr(&conn->errorMessage,
+												 libpq_gettext("requirepeer parameter is not supported on this platform\n"));
 						else
 							appendPQExpBuffer(&conn->errorMessage,
 											  libpq_gettext("could not get peer credentials: %s\n"),
@@ -2084,8 +2084,8 @@ keep_going:						/* We will come back to here until there is
 														 * "verify-full" */
 						{
 							/* Require SSL, but server does not want it */
-							appendPQExpBuffer(&conn->errorMessage,
-											  libpq_gettext("server does not support SSL, but SSL was required\n"));
+							appendPQExpBufferStr(&conn->errorMessage,
+												 libpq_gettext("server does not support SSL, but SSL was required\n"));
 							goto error_return;
 						}
 						/* Otherwise, proceed with normal startup */
@@ -2470,8 +2470,8 @@ keep_going:						/* We will come back to here until there is
 				if (res)
 				{
 					if (res->resultStatus != PGRES_FATAL_ERROR)
-						appendPQExpBuffer(&conn->errorMessage,
-										  libpq_gettext("unexpected message from server during startup\n"));
+						appendPQExpBufferStr(&conn->errorMessage,
+											 libpq_gettext("unexpected message from server during startup\n"));
 					else if (conn->send_appname &&
 							 (conn->appname || conn->fbappname))
 					{

@@ -168,11 +168,11 @@ fmtQualifiedId(int remoteVersion, const char *schema, const char *id)
 	{
 		appendPQExpBuffer(lcl_pqexp, "%s.", fmtId(schema));
 	}
-	appendPQExpBuffer(lcl_pqexp, "%s", fmtId(id));
+	appendPQExpBufferStr(lcl_pqexp, fmtId(id));
 
 	id_return = getLocalPQExpBuffer();
 
-	appendPQExpBuffer(id_return, "%s", lcl_pqexp->data);
+	appendPQExpBufferStr(id_return, lcl_pqexp->data);
 	destroyPQExpBuffer(lcl_pqexp);
 
 	return id_return->data;
@@ -625,7 +625,7 @@ buildACLCommands(const char *name, const char *subname,
 					appendPQExpBuffer(secondsql, "%sGRANT %s ON %s %s TO ",
 									  prefix, privs->data, type, name);
 					if (grantee->len == 0)
-						appendPQExpBuffer(secondsql, "PUBLIC;\n");
+						appendPQExpBufferStr(secondsql, "PUBLIC;\n");
 					else if (strncmp(grantee->data, "group ",
 									 strlen("group ")) == 0)
 						appendPQExpBuffer(secondsql, "GROUP %s;\n",
@@ -638,19 +638,19 @@ buildACLCommands(const char *name, const char *subname,
 					appendPQExpBuffer(secondsql, "%sGRANT %s ON %s %s TO ",
 									  prefix, privswgo->data, type, name);
 					if (grantee->len == 0)
-						appendPQExpBuffer(secondsql, "PUBLIC");
+						appendPQExpBufferStr(secondsql, "PUBLIC");
 					else if (strncmp(grantee->data, "group ",
 									 strlen("group ")) == 0)
 						appendPQExpBuffer(secondsql, "GROUP %s",
 									fmtId(grantee->data + strlen("group ")));
 					else
-						appendPQExpBuffer(secondsql, "%s", fmtId(grantee->data));
-					appendPQExpBuffer(secondsql, " WITH GRANT OPTION;\n");
+						appendPQExpBufferStr(secondsql, fmtId(grantee->data));
+					appendPQExpBufferStr(secondsql, " WITH GRANT OPTION;\n");
 				}
 
 				if (grantor->len > 0
 					&& (!owner || strcmp(owner, grantor->data) != 0))
-					appendPQExpBuffer(secondsql, "RESET SESSION AUTHORIZATION;\n");
+					appendPQExpBufferStr(secondsql, "RESET SESSION AUTHORIZATION;\n");
 			}
 		}
 	}
@@ -947,7 +947,7 @@ AddAcl(PQExpBuffer aclbuf, const char *keyword, const char *subname)
 {
 	if (aclbuf->len > 0)
 		appendPQExpBufferChar(aclbuf, ',');
-	appendPQExpBuffer(aclbuf, "%s", keyword);
+	appendPQExpBufferStr(aclbuf, keyword);
 	if (subname)
 		appendPQExpBuffer(aclbuf, "(%s)", subname);
 }
@@ -1205,7 +1205,7 @@ emitShSecLabels(PGconn *conn, PGresult *res, PQExpBuffer buffer,
 						  " %s IS ",
 						  fmtId(objname));
 		appendStringLiteralConn(buffer, label, conn);
-		appendPQExpBuffer(buffer, ";\n");
+		appendPQExpBufferStr(buffer, ";\n");
 	}
 }
 

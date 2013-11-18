@@ -362,9 +362,9 @@ do_copy(const char *args)
 	printfPQExpBuffer(&query, "COPY ");
 	appendPQExpBufferStr(&query, options->before_tofrom);
 	if (options->from)
-		appendPQExpBuffer(&query, " FROM STDIN ");
+		appendPQExpBufferStr(&query, " FROM STDIN ");
 	else
-		appendPQExpBuffer(&query, " TO STDOUT ");
+		appendPQExpBufferStr(&query, " TO STDOUT ");
 	if (options->after_tofrom)
 		appendPQExpBufferStr(&query, options->after_tofrom);
 

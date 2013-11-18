@@ -2786,7 +2786,7 @@ lookup_function_oid(PGconn *conn, const char *desc, Oid *foid)
 	PGresult   *res;
 
 	query = createPQExpBuffer();
-	printfPQExpBuffer(query, "SELECT ");
+	appendPQExpBufferStr(query, "SELECT ");
 	appendStringLiteralConn(query, desc, conn);
 	appendPQExpBuffer(query, "::pg_catalog.%s::pg_catalog.oid",
 					  strchr(desc, '(') ? "regprocedure" : "regproc");

@@ -1033,7 +1033,7 @@ setup_connection(Archive *AH, const char *dumpencoding, char *use_role)
 		{
 			PQExpBuffer query = createPQExpBuffer();
 
-			appendPQExpBuffer(query, "SET TRANSACTION SNAPSHOT ");
+			appendPQExpBufferStr(query, "SET TRANSACTION SNAPSHOT ");
 			appendStringLiteralConn(query, AH->sync_snapshot_id, conn);
 			ExecuteSqlStatement(AH, query->data);
 			destroyPQExpBuffer(query);
@@ -1127,7 +1127,7 @@ expand_schema_name_patterns(Archive *fout,
 	for (cell = patterns->head; cell; cell = cell->next)
 	{
 		if (cell != patterns->head)
-			appendPQExpBuffer(query, "UNION ALL\n");
+			appendPQExpBufferStr(query, "UNION ALL\n");
 		appendPQExpBuffer(query,
 						  "SELECT oid FROM pg_catalog.pg_namespace n\n");
 		processSQLNamePattern(GetConnection(fout), query, cell->val, false,
@@ -1171,7 +1171,7 @@ expand_table_name_patterns(Archive *fout,
 	for (cell = patterns->head; cell; cell = cell->next)
 	{
 		if (cell != patterns->head)
-			appendPQExpBuffer(query, "UNION ALL\n");
+			appendPQExpBufferStr(query, "UNION ALL\n");
 		appendPQExpBuffer(query,
 						  "SELECT c.oid"
 						  "\nFROM pg_catalog.pg_class c"
@@ -1920,7 +1920,7 @@ buildMatViewRefreshDependencies(Archive *fout)
 
 	query = createPQExpBuffer();
 
-	appendPQExpBuffer(query, "with recursive w as "
+	appendPQExpBufferStr(query, "with recursive w as "
 					  "( "
 					"select d1.objid, d2.refobjid, c2.relkind as refrelkind "
 					  "from pg_depend d1 "
@@ -2260,33 +2260,33 @@ dumpDatabase(Archive *fout)
 					  fmtId(datname));
 	if (strlen(encoding) > 0)
 	{
-		appendPQExpBuffer(creaQry, " ENCODING = ");
+		appendPQExpBufferStr(creaQry, " ENCODING = ");
 		appendStringLiteralAH(creaQry, encoding, fout);
 	}
 	if (strlen(collate) > 0)
 	{
-		appendPQExpBuffer(creaQry, " LC_COLLATE = ");
+		appendPQExpBufferStr(creaQry, " LC_COLLATE = ");
 		appendStringLiteralAH(creaQry, collate, fout);
 	}
 	if (strlen(ctype) > 0)
 	{
-		appendPQExpBuffer(creaQry, " LC_CTYPE = ");
+		appendPQExpBufferStr(creaQry, " LC_CTYPE = ");
 		appendStringLiteralAH(creaQry, ctype, fout);
 	}
 	if (strlen(tablespace) > 0 && strcmp(tablespace, "pg_default") != 0)
 		appendPQExpBuffer(creaQry, " TABLESPACE = %s",
 						  fmtId(tablespace));
-	appendPQExpBuffer(creaQry, ";\n");
+	appendPQExpBufferStr(creaQry, ";\n");
 
 	if (binary_upgrade)
 	{
-		appendPQExpBuffer(creaQry, "\n-- For binary upgrade, set datfrozenxid.\n");
+		appendPQExpBufferStr(creaQry, "\n-- For binary upgrade, set datfrozenxid.\n");
 		appendPQExpBuffer(creaQry, "UPDATE pg_catalog.pg_database\n"
 						  "SET datfrozenxid = '%u'\n"
 						  "WHERE	datname = ",
 						  frozenxid);
 		appendStringLiteralAH(creaQry, datname, fout);
-		appendPQExpBuffer(creaQry, ";\n");
+		appendPQExpBufferStr(creaQry, ";\n");
 
 	}
 
@@ -2336,7 +2336,7 @@ dumpDatabase(Archive *fout)
 
 		i_relfrozenxid = PQfnumber(lo_res, "relfrozenxid");
 
-		appendPQExpBuffer(loOutQry, "\n-- For binary upgrade, set pg_largeobject.relfrozenxid\n");
+		appendPQExpBufferStr(loOutQry, "\n-- For binary upgrade, set pg_largeobject.relfrozenxid\n");
 		appendPQExpBuffer(loOutQry, "UPDATE pg_catalog.pg_class\n"
 						  "SET relfrozenxid = '%u'\n"
 						  "WHERE oid = %u;\n",
@@ -2368,7 +2368,7 @@ dumpDatabase(Archive *fout)
 
 			i_relfrozenxid = PQfnumber(lo_res, "relfrozenxid");
 
-			appendPQExpBuffer(loOutQry, "\n-- For binary upgrade, set pg_largeobject_metadata.relfrozenxid\n");
+			appendPQExpBufferStr(loOutQry, "\n-- For binary upgrade, set pg_largeobject_metadata.relfrozenxid\n");
 			appendPQExpBuffer(loOutQry, "UPDATE pg_catalog.pg_class\n"
 							  "SET relfrozenxid = '%u'\n"
 							  "WHERE oid = %u;\n",
@@ -2407,7 +2407,7 @@ dumpDatabase(Archive *fout)
 			 */
 			appendPQExpBuffer(dbQry, "COMMENT ON DATABASE %s IS ", fmtId(datname));
 			appendStringLiteralAH(dbQry, comment, fout);
-			appendPQExpBuffer(dbQry, ";\n");
+			appendPQExpBufferStr(dbQry, ";\n");
 
 			ArchiveEntry(fout, dbCatId, createDumpId(), datname, NULL, NULL,
 						 dba, false, "COMMENT", SECTION_NONE,
@@ -2460,9 +2460,9 @@ dumpEncoding(Archive *AH)
 	if (g_verbose)
 		write_msg(NULL, "saving encoding = %s\n", encname);
 
-	appendPQExpBuffer(qry, "SET client_encoding = ");
+	appendPQExpBufferStr(qry, "SET client_encoding = ");
 	appendStringLiteralAH(qry, encname, AH);
-	appendPQExpBuffer(qry, ";\n");
+	appendPQExpBufferStr(qry, ";\n");
 
 	ArchiveEntry(AH, nilCatalogId, createDumpId(),
 				 "ENCODING", NULL, NULL, "",
@@ -2530,13 +2530,13 @@ getBlobs(Archive *fout)
 						  " FROM pg_largeobject_metadata",
 						  username_subquery);
 	else if (fout->remoteVersion >= 70100)
-		appendPQExpBuffer(blobQry,
-						  "SELECT DISTINCT loid, NULL::oid, NULL::oid"
-						  " FROM pg_largeobject");
+		appendPQExpBufferStr(blobQry,
+							 "SELECT DISTINCT loid, NULL::oid, NULL::oid"
+							 " FROM pg_largeobject");
 	else
-		appendPQExpBuffer(blobQry,
-						  "SELECT oid, NULL::oid, NULL::oid"
-						  " FROM pg_class WHERE relkind = 'l'");
+		appendPQExpBufferStr(blobQry,
+							 "SELECT oid, NULL::oid, NULL::oid"
+							 " FROM pg_class WHERE relkind = 'l'");
 
 	res = ExecuteSqlQuery(fout, blobQry->data, PGRES_TUPLES_OK);
 
@@ -2723,7 +2723,7 @@ binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
 	PGresult   *upgrade_res;
 	Oid			pg_type_array_oid;
 
-	appendPQExpBuffer(upgrade_buffer, "\n-- For binary upgrade, must preserve pg_type oid\n");
+	appendPQExpBufferStr(upgrade_buffer, "\n-- For binary upgrade, must preserve pg_type oid\n");
 	appendPQExpBuffer(upgrade_buffer,
 	 "SELECT binary_upgrade.set_next_pg_type_oid('%u'::pg_catalog.oid);\n\n",
 					  pg_type_oid);
@@ -2741,7 +2741,7 @@ binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
 
 	if (OidIsValid(pg_type_array_oid))
 	{
-		appendPQExpBuffer(upgrade_buffer,
+		appendPQExpBufferStr(upgrade_buffer,
 			   "\n-- For binary upgrade, must preserve pg_type array oid\n");
 		appendPQExpBuffer(upgrade_buffer,
 						  "SELECT binary_upgrade.set_next_array_pg_type_oid('%u'::pg_catalog.oid);\n\n",
@@ -2784,7 +2784,7 @@ binary_upgrade_set_type_oids_by_rel_oid(Archive *fout,
 		Oid			pg_type_toast_oid = atooid(PQgetvalue(upgrade_res, 0,
 											PQfnumber(upgrade_res, "trel")));
 
-		appendPQExpBuffer(upgrade_buffer, "\n-- For binary upgrade, must preserve pg_type toast oid\n");
+		appendPQExpBufferStr(upgrade_buffer, "\n-- For binary upgrade, must preserve pg_type toast oid\n");
 		appendPQExpBuffer(upgrade_buffer,
 						  "SELECT binary_upgrade.set_next_toast_pg_type_oid('%u'::pg_catalog.oid);\n\n",
 						  pg_type_toast_oid);
@@ -2820,8 +2820,8 @@ binary_upgrade_set_pg_class_oids(Archive *fout,
 	pg_class_reltoastrelid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "reltoastrelid")));
 	pg_index_indexrelid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "indexrelid")));
 
-	appendPQExpBuffer(upgrade_buffer,
-				   "\n-- For binary upgrade, must preserve pg_class oids\n");
+	appendPQExpBufferStr(upgrade_buffer,
+						 "\n-- For binary upgrade, must preserve pg_class oids\n");
 
 	if (!is_index)
 	{
@@ -2855,7 +2855,7 @@ binary_upgrade_set_pg_class_oids(Archive *fout,
 						  "SELECT binary_upgrade.set_next_index_pg_class_oid('%u'::pg_catalog.oid);\n",
 						  pg_class_oid);
 
-	appendPQExpBuffer(upgrade_buffer, "\n");
+	appendPQExpBufferChar(upgrade_buffer, '\n');
 
 	PQclear(upgrade_res);
 	destroyPQExpBuffer(upgrade_query);
@@ -2892,7 +2892,7 @@ binary_upgrade_extension_member(PQExpBuffer upgrade_buffer,
 	if (extobj == NULL)
 		exit_horribly(NULL, "could not find parent extension for %s\n", objlabel);
 
-	appendPQExpBuffer(upgrade_buffer,
+	appendPQExpBufferStr(upgrade_buffer,
 	  "\n-- For binary upgrade, handle extension membership the hard way\n");
 	appendPQExpBuffer(upgrade_buffer, "ALTER EXTENSION %s ADD %s;\n",
 					  fmtId(extobj->name),
@@ -3079,10 +3079,10 @@ getExtensions(Archive *fout, int *numExtensions)
 	/* Make sure we are in proper schema */
 	selectSourceSchema(fout, "pg_catalog");
 
-	appendPQExpBuffer(query, "SELECT x.tableoid, x.oid, "
-					  "x.extname, n.nspname, x.extrelocatable, x.extversion, x.extconfig, x.extcondition "
-					  "FROM pg_extension x "
-					  "JOIN pg_namespace n ON n.oid = x.extnamespace");
+	appendPQExpBufferStr(query, "SELECT x.tableoid, x.oid, "
+						 "x.extname, n.nspname, x.extrelocatable, x.extversion, x.extconfig, x.extcondition "
+						 "FROM pg_extension x "
+						 "JOIN pg_namespace n ON n.oid = x.extnamespace");
 
 	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
@@ -3707,19 +3707,19 @@ getOpclasses(Archive *fout, int *numOpclasses)
 	}
 	else if (fout->remoteVersion >= 70100)
 	{
-		appendPQExpBuffer(query, "SELECT tableoid, oid, opcname, "
-						  "0::oid AS opcnamespace, "
-						  "''::name AS rolname "
-						  "FROM pg_opclass");
+		appendPQExpBufferStr(query, "SELECT tableoid, oid, opcname, "
+							 "0::oid AS opcnamespace, "
+							 "''::name AS rolname "
+							 "FROM pg_opclass");
 	}
 	else
 	{
-		appendPQExpBuffer(query, "SELECT "
-						  "(SELECT oid FROM pg_class WHERE relname = 'pg_opclass') AS tableoid, "
-						  "oid, opcname, "
-						  "0::oid AS opcnamespace, "
-						  "''::name AS rolname "
-						  "FROM pg_opclass");
+		appendPQExpBufferStr(query, "SELECT "
+							 "(SELECT oid FROM pg_class WHERE relname = 'pg_opclass') AS tableoid, "
+							 "oid, opcname, "
+							 "0::oid AS opcnamespace, "
+							 "''::name AS rolname "
+							 "FROM pg_opclass");
 	}
 
 	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
@@ -3902,13 +3902,13 @@ getAggregates(Archive *fout, int *numAggs)
 						  "WHERE nspname = 'pg_catalog')",
 						  username_subquery);
 		if (binary_upgrade && fout->remoteVersion >= 90100)
-			appendPQExpBuffer(query,
-							  " OR EXISTS(SELECT 1 FROM pg_depend WHERE "
-							  "classid = 'pg_proc'::regclass AND "
-							  "objid = p.oid AND "
-							  "refclassid = 'pg_extension'::regclass AND "
-							  "deptype = 'e')");
-		appendPQExpBuffer(query, ")");
+			appendPQExpBufferStr(query,
+								 " OR EXISTS(SELECT 1 FROM pg_depend WHERE "
+								 "classid = 'pg_proc'::regclass AND "
+								 "objid = p.oid AND "
+								 "refclassid = 'pg_extension'::regclass AND "
+								 "deptype = 'e')");
+		appendPQExpBufferChar(query, ')');
 	}
 	else if (fout->remoteVersion >= 80200)
 	{
@@ -4094,18 +4094,18 @@ getFuncs(Archive *fout, int *numFuncs)
 						  "WHERE nspname = 'pg_catalog')",
 						  username_subquery);
 		if (fout->remoteVersion >= 90200)
-			appendPQExpBuffer(query,
-							  "\n  AND NOT EXISTS (SELECT 1 FROM pg_depend "
-							  "WHERE classid = 'pg_proc'::regclass AND "
-							  "objid = p.oid AND deptype = 'i')");
+			appendPQExpBufferStr(query,
+								 "\n  AND NOT EXISTS (SELECT 1 FROM pg_depend "
+								 "WHERE classid = 'pg_proc'::regclass AND "
+								 "objid = p.oid AND deptype = 'i')");
 		if (binary_upgrade && fout->remoteVersion >= 90100)
-			appendPQExpBuffer(query,
-							  "\n  OR EXISTS(SELECT 1 FROM pg_depend WHERE "
-							  "classid = 'pg_proc'::regclass AND "
-							  "objid = p.oid AND "
-							  "refclassid = 'pg_extension'::regclass AND "
-							  "deptype = 'e')");
-		appendPQExpBuffer(query, ")");
+			appendPQExpBufferStr(query,
+								 "\n  OR EXISTS(SELECT 1 FROM pg_depend WHERE "
+								 "classid = 'pg_proc'::regclass AND "
+								 "objid = p.oid AND "
+								 "refclassid = 'pg_extension'::regclass AND "
+								 "deptype = 'e')");
+		appendPQExpBufferChar(query, ')');
 	}
 	else if (fout->remoteVersion >= 70300)
 	{
@@ -4721,7 +4721,7 @@ getTables(Archive *fout, int *numTables)
 		 * applied to other things too.
 		 */
 		resetPQExpBuffer(query);
-		appendPQExpBuffer(query, "SET statement_timeout = ");
+		appendPQExpBufferStr(query, "SET statement_timeout = ");
 		appendStringLiteralConn(query, lockWaitTimeout, GetConnection(fout));
 		ExecuteSqlStatement(fout, query->data);
 	}
@@ -4883,7 +4883,7 @@ getInherits(Archive *fout, int *numInherits)
 
 	/* find all the inheritance information */
 
-	appendPQExpBuffer(query, "SELECT inhrelid, inhparent FROM pg_inherits");
+	appendPQExpBufferStr(query, "SELECT inhrelid, inhparent FROM pg_inherits");
 
 	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
@@ -5517,31 +5517,31 @@ getRules(Archive *fout, int *numRules)
 
 	if (fout->remoteVersion >= 80300)
 	{
-		appendPQExpBuffer(query, "SELECT "
-						  "tableoid, oid, rulename, "
-						  "ev_class AS ruletable, ev_type, is_instead, "
-						  "ev_enabled "
-						  "FROM pg_rewrite "
-						  "ORDER BY oid");
+		appendPQExpBufferStr(query, "SELECT "
+							 "tableoid, oid, rulename, "
+							 "ev_class AS ruletable, ev_type, is_instead, "
+							 "ev_enabled "
+							 "FROM pg_rewrite "
+							 "ORDER BY oid");
 	}
 	else if (fout->remoteVersion >= 70100)
 	{
-		appendPQExpBuffer(query, "SELECT "
-						  "tableoid, oid, rulename, "
-						  "ev_class AS ruletable, ev_type, is_instead, "
-						  "'O'::char AS ev_enabled "
-						  "FROM pg_rewrite "
-						  "ORDER BY oid");
+		appendPQExpBufferStr(query, "SELECT "
+							 "tableoid, oid, rulename, "
+							 "ev_class AS ruletable, ev_type, is_instead, "
+							 "'O'::char AS ev_enabled "
+							 "FROM pg_rewrite "
+							 "ORDER BY oid");
 	}
 	else
 	{
-		appendPQExpBuffer(query, "SELECT "
-						  "(SELECT oid FROM pg_class WHERE relname = 'pg_rewrite') AS tableoid, "
-						  "oid, rulename, "
-						  "ev_class AS ruletable, ev_type, is_instead, "
-						  "'O'::char AS ev_enabled "
-						  "FROM pg_rewrite "
-						  "ORDER BY oid");
+		appendPQExpBufferStr(query, "SELECT "
+							 "(SELECT oid FROM pg_class WHERE relname = 'pg_rewrite') AS tableoid, "
+							 "oid, rulename, "
+							 "ev_class AS ruletable, ev_type, is_instead, "
+							 "'O'::char AS ev_enabled "
+							 "FROM pg_rewrite "
+							 "ORDER BY oid");
 	}
 
 	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
@@ -6010,17 +6010,17 @@ getProcLangs(Archive *fout, int *numProcLangs)
 	else if (fout->remoteVersion >= 70100)
 	{
 		/* No clear notion of an owner at all before 7.4 ... */
-		appendPQExpBuffer(query, "SELECT tableoid, oid, * FROM pg_language "
-						  "WHERE lanispl "
-						  "ORDER BY oid");
+		appendPQExpBufferStr(query, "SELECT tableoid, oid, * FROM pg_language "
+							 "WHERE lanispl "
+							 "ORDER BY oid");
 	}
 	else
 	{
-		appendPQExpBuffer(query, "SELECT "
-						  "(SELECT oid FROM pg_class WHERE relname = 'pg_language') AS tableoid, "
-						  "oid, * FROM pg_language "
-						  "WHERE lanispl "
-						  "ORDER BY oid");
+		appendPQExpBufferStr(query, "SELECT "
+							 "(SELECT oid FROM pg_class WHERE relname = 'pg_language') AS tableoid, "
+							 "oid, * FROM pg_language "
+							 "WHERE lanispl "
+							 "ORDER BY oid");
 	}
 
 	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
@@ -6118,29 +6118,29 @@ getCasts(Archive *fout, int *numCasts)
 
 	if (fout->remoteVersion >= 80400)
 	{
-		appendPQExpBuffer(query, "SELECT tableoid, oid, "
-						  "castsource, casttarget, castfunc, castcontext, "
-						  "castmethod "
-						  "FROM pg_cast ORDER BY 3,4");
+		appendPQExpBufferStr(query, "SELECT tableoid, oid, "
+							 "castsource, casttarget, castfunc, castcontext, "
+							 "castmethod "
+							 "FROM pg_cast ORDER BY 3,4");
 	}
 	else if (fout->remoteVersion >= 70300)
 	{
-		appendPQExpBuffer(query, "SELECT tableoid, oid, "
-						  "castsource, casttarget, castfunc, castcontext, "
+		appendPQExpBufferStr(query, "SELECT tableoid, oid, "
+							 "castsource, casttarget, castfunc, castcontext, "
 				"CASE WHEN castfunc = 0 THEN 'b' ELSE 'f' END AS castmethod "
-						  "FROM pg_cast ORDER BY 3,4");
+							 "FROM pg_cast ORDER BY 3,4");
 	}
 	else
 	{
-		appendPQExpBuffer(query, "SELECT 0 AS tableoid, p.oid, "
-						  "t1.oid AS castsource, t2.oid AS casttarget, "
-						  "p.oid AS castfunc, 'e' AS castcontext, "
-						  "'f' AS castmethod "
-						  "FROM pg_type t1, pg_type t2, pg_proc p "
-						  "WHERE p.pronargs = 1 AND "
-						  "p.proargtypes[0] = t1.oid AND "
-						  "p.prorettype = t2.oid AND p.proname = t2.typname "
-						  "ORDER BY 3,4");
+		appendPQExpBufferStr(query, "SELECT 0 AS tableoid, p.oid, "
+							 "t1.oid AS castsource, t2.oid AS casttarget, "
+							 "p.oid AS castfunc, 'e' AS castcontext, "
+							 "'f' AS castmethod "
+							 "FROM pg_type t1, pg_type t2, pg_proc p "
+							 "WHERE p.pronargs = 1 AND "
+							 "p.proargtypes[0] = t1.oid AND "
+							 "p.prorettype = t2.oid AND p.proname = t2.typname "
+							 "ORDER BY 3,4");
 	}
 
 	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
@@ -6840,10 +6840,10 @@ getTSParsers(Archive *fout, int *numTSParsers)
 	/* Make sure we are in proper schema */
 	selectSourceSchema(fout, "pg_catalog");
 
-	appendPQExpBuffer(query, "SELECT tableoid, oid, prsname, prsnamespace, "
-					  "prsstart::oid, prstoken::oid, "
-					  "prsend::oid, prsheadline::oid, prslextype::oid "
-					  "FROM pg_ts_parser");
+	appendPQExpBufferStr(query, "SELECT tableoid, oid, prsname, prsnamespace, "
+						 "prsstart::oid, prstoken::oid, "
+						 "prsend::oid, prsheadline::oid, prslextype::oid "
+						 "FROM pg_ts_parser");
 
 	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
@@ -7009,9 +7009,9 @@ getTSTemplates(Archive *fout, int *numTSTemplates)
 	/* Make sure we are in proper schema */
 	selectSourceSchema(fout, "pg_catalog");
 
-	appendPQExpBuffer(query, "SELECT tableoid, oid, tmplname, "
-					  "tmplnamespace, tmplinit::oid, tmpllexize::oid "
-					  "FROM pg_ts_template");
+	appendPQExpBufferStr(query, "SELECT tableoid, oid, tmplname, "
+						 "tmplnamespace, tmplinit::oid, tmpllexize::oid "
+						 "FROM pg_ts_template");
 
 	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
@@ -7471,7 +7471,7 @@ dumpComment(Archive *fout, const char *target,
 
 		appendPQExpBuffer(query, "COMMENT ON %s IS ", target);
 		appendStringLiteralAH(query, comments->descr, fout);
-		appendPQExpBuffer(query, ";\n");
+		appendPQExpBufferStr(query, ";\n");
 
 		/*
 		 * We mark comments as SECTION_NONE because they really belong in the
@@ -7535,7 +7535,7 @@ dumpTableComment(Archive *fout, TableInfo *tbinfo,
 			resetPQExpBuffer(query);
 			appendPQExpBuffer(query, "COMMENT ON %s IS ", target->data);
 			appendStringLiteralAH(query, descr, fout);
-			appendPQExpBuffer(query, ";\n");
+			appendPQExpBufferStr(query, ";\n");
 
 			ArchiveEntry(fout, nilCatalogId, createDumpId(),
 						 target->data,
@@ -7551,13 +7551,12 @@ dumpTableComment(Archive *fout, TableInfo *tbinfo,
 			resetPQExpBuffer(target);
 			appendPQExpBuffer(target, "COLUMN %s.",
 							  fmtId(tbinfo->dobj.name));
-			appendPQExpBuffer(target, "%s",
-							  fmtId(tbinfo->attnames[objsubid - 1]));
+			appendPQExpBufferStr(target, fmtId(tbinfo->attnames[objsubid - 1]));
 
 			resetPQExpBuffer(query);
 			appendPQExpBuffer(query, "COMMENT ON %s IS ", target->data);
 			appendStringLiteralAH(query, descr, fout);
-			appendPQExpBuffer(query, ";\n");
+			appendPQExpBufferStr(query, ";\n");
 
 			ArchiveEntry(fout, nilCatalogId, createDumpId(),
 						 target->data,
@@ -7698,22 +7697,22 @@ collectComments(Archive *fout, CommentItem **items)
 
 	if (fout->remoteVersion >= 70300)
 	{
-		appendPQExpBuffer(query, "SELECT description, classoid, objoid, objsubid "
-						  "FROM pg_catalog.pg_description "
-						  "ORDER BY classoid, objoid, objsubid");
+		appendPQExpBufferStr(query, "SELECT description, classoid, objoid, objsubid "
+							 "FROM pg_catalog.pg_description "
+							 "ORDER BY classoid, objoid, objsubid");
 	}
 	else if (fout->remoteVersion >= 70200)
 	{
-		appendPQExpBuffer(query, "SELECT description, classoid, objoid, objsubid "
-						  "FROM pg_description "
-						  "ORDER BY classoid, objoid, objsubid");
+		appendPQExpBufferStr(query, "SELECT description, classoid, objoid, objsubid "
+							 "FROM pg_description "
+							 "ORDER BY classoid, objoid, objsubid");
 	}
 	else
 	{
 		/* Note: this will fail to find attribute comments in pre-7.2... */
-		appendPQExpBuffer(query, "SELECT description, 0 AS classoid, objoid, 0 AS objsubid "
-						  "FROM pg_description "
-						  "ORDER BY objoid");
+		appendPQExpBufferStr(query, "SELECT description, 0 AS classoid, objoid, 0 AS objsubid "
+							 "FROM pg_description "
+							 "ORDER BY objoid");
 	}
 
 	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
@@ -7976,7 +7975,7 @@ dumpExtension(Archive *fout, ExtensionInfo *extinfo)
 		int			i;
 		int			n;
 
-		appendPQExpBuffer(q, "-- For binary upgrade, create an empty extension and insert objects into it\n");
+		appendPQExpBufferStr(q, "-- For binary upgrade, create an empty extension and insert objects into it\n");
 
 		/*
 		 * We unconditionally create the extension, so we must drop it if it
@@ -7987,15 +7986,15 @@ dumpExtension(Archive *fout, ExtensionInfo *extinfo)
 		 */
 		appendPQExpBuffer(q, "DROP EXTENSION IF EXISTS %s;\n", qextname);
 
-		appendPQExpBuffer(q,
+		appendPQExpBufferStr(q,
 						  "SELECT binary_upgrade.create_empty_extension(");
 		appendStringLiteralAH(q, extinfo->dobj.name, fout);
-		appendPQExpBuffer(q, ", ");
+		appendPQExpBufferStr(q, ", ");
 		appendStringLiteralAH(q, extinfo->namespace, fout);
-		appendPQExpBuffer(q, ", ");
+		appendPQExpBufferStr(q, ", ");
 		appendPQExpBuffer(q, "%s, ", extinfo->relocatable ? "true" : "false");
 		appendStringLiteralAH(q, extinfo->extversion, fout);
-		appendPQExpBuffer(q, ", ");
+		appendPQExpBufferStr(q, ", ");
 
 		/*
 		 * Note that we're pushing extconfig (an OID array) back into
@@ -8005,14 +8004,14 @@ dumpExtension(Archive *fout, ExtensionInfo *extinfo)
 		if (strlen(extinfo->extconfig) > 2)
 			appendStringLiteralAH(q, extinfo->extconfig, fout);
 		else
-			appendPQExpBuffer(q, "NULL");
-		appendPQExpBuffer(q, ", ");
+			appendPQExpBufferStr(q, "NULL");
+		appendPQExpBufferStr(q, ", ");
 		if (strlen(extinfo->extcondition) > 2)
 			appendStringLiteralAH(q, extinfo->extcondition, fout);
 		else
-			appendPQExpBuffer(q, "NULL");
-		appendPQExpBuffer(q, ", ");
-		appendPQExpBuffer(q, "ARRAY[");
+			appendPQExpBufferStr(q, "NULL");
+		appendPQExpBufferStr(q, ", ");
+		appendPQExpBufferStr(q, "ARRAY[");
 		n = 0;
 		for (i = 0; i < extinfo->dobj.nDeps; i++)
 		{
@@ -8022,12 +8021,12 @@ dumpExtension(Archive *fout, ExtensionInfo *extinfo)
 			if (extobj && extobj->objType == DO_EXTENSION)
 			{
 				if (n++ > 0)
-					appendPQExpBuffer(q, ",");
+					appendPQExpBufferChar(q, ',');
 				appendStringLiteralAH(q, extobj->name, fout);
 			}
 		}
-		appendPQExpBuffer(q, "]::pg_catalog.text[]");
-		appendPQExpBuffer(q, ");\n");
+		appendPQExpBufferStr(q, "]::pg_catalog.text[]");
+		appendPQExpBufferStr(q, ");\n");
 	}
 
 	appendPQExpBuffer(labelq, "EXTENSION %s", qextname);
@@ -8147,13 +8146,13 @@ dumpEnumType(Archive *fout, TypeInfo *tyinfo)
 		{
 			label = PQgetvalue(res, i, PQfnumber(res, "enumlabel"));
 			if (i > 0)
-				appendPQExpBuffer(q, ",");
-			appendPQExpBuffer(q, "\n    ");
+				appendPQExpBufferChar(q, ',');
+			appendPQExpBufferStr(q, "\n    ");
 			appendStringLiteralAH(q, label, fout);
 		}
 	}
 
-	appendPQExpBuffer(q, "\n);\n");
+	appendPQExpBufferStr(q, "\n);\n");
 
 	if (binary_upgrade)
 	{
@@ -8164,7 +8163,7 @@ dumpEnumType(Archive *fout, TypeInfo *tyinfo)
 			label = PQgetvalue(res, i, PQfnumber(res, "enumlabel"));
 
 			if (i == 0)
-				appendPQExpBuffer(q, "\n-- For binary upgrade, must preserve pg_enum oids\n");
+				appendPQExpBufferStr(q, "\n-- For binary upgrade, must preserve pg_enum oids\n");
 			appendPQExpBuffer(q,
 							  "SELECT binary_upgrade.set_next_pg_enum_oid('%u'::pg_catalog.oid);\n",
 							  enum_oid);
@@ -8173,7 +8172,7 @@ dumpEnumType(Archive *fout, TypeInfo *tyinfo)
 			appendPQExpBuffer(q, "%s ADD VALUE ",
 							  qtypname);
 			appendStringLiteralAH(q, label, fout);
-			appendPQExpBuffer(q, ";\n\n");
+			appendPQExpBufferStr(q, ";\n\n");
 		}
 	}
 
@@ -8282,7 +8281,7 @@ dumpRangeType(Archive *fout, TypeInfo *tyinfo)
 		/* always schema-qualify, don't try to be smart */
 		appendPQExpBuffer(q, ",\n    subtype_opclass = %s.",
 						  fmtId(nspname));
-		appendPQExpBuffer(q, "%s", fmtId(opcname));
+		appendPQExpBufferStr(q, fmtId(opcname));
 	}
 
 	collationOid = atooid(PQgetvalue(res, 0, PQfnumber(res, "collation")));
@@ -8295,8 +8294,7 @@ dumpRangeType(Archive *fout, TypeInfo *tyinfo)
 			/* always schema-qualify, don't try to be smart */
 			appendPQExpBuffer(q, ",\n    collation = %s.",
 							  fmtId(coll->dobj.namespace->dobj.name));
-			appendPQExpBuffer(q, "%s",
-							  fmtId(coll->dobj.name));
+			appendPQExpBufferStr(q, fmtId(coll->dobj.name));
 		}
 	}
 
@@ -8308,7 +8306,7 @@ dumpRangeType(Archive *fout, TypeInfo *tyinfo)
 	if (strcmp(procname, "-") != 0)
 		appendPQExpBuffer(q, ",\n    subtype_diff = %s", procname);
 
-	appendPQExpBuffer(q, "\n);\n");
+	appendPQExpBufferStr(q, "\n);\n");
 
 	appendPQExpBuffer(labelq, "TYPE %s", qtypname);
 
@@ -8640,11 +8638,11 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 	}
 
 	if (strcmp(typcollatable, "t") == 0)
-		appendPQExpBuffer(q, ",\n    COLLATABLE = true");
+		appendPQExpBufferStr(q, ",\n    COLLATABLE = true");
 
 	if (typdefault != NULL)
 	{
-		appendPQExpBuffer(q, ",\n    DEFAULT = ");
+		appendPQExpBufferStr(q, ",\n    DEFAULT = ");
 		if (typdefault_is_literal)
 			appendStringLiteralAH(q, typdefault, fout);
 		else
@@ -8664,41 +8662,41 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 
 	if (strcmp(typcategory, "U") != 0)
 	{
-		appendPQExpBuffer(q, ",\n    CATEGORY = ");
+		appendPQExpBufferStr(q, ",\n    CATEGORY = ");
 		appendStringLiteralAH(q, typcategory, fout);
 	}
 
 	if (strcmp(typispreferred, "t") == 0)
-		appendPQExpBuffer(q, ",\n    PREFERRED = true");
+		appendPQExpBufferStr(q, ",\n    PREFERRED = true");
 
 	if (typdelim && strcmp(typdelim, ",") != 0)
 	{
-		appendPQExpBuffer(q, ",\n    DELIMITER = ");
+		appendPQExpBufferStr(q, ",\n    DELIMITER = ");
 		appendStringLiteralAH(q, typdelim, fout);
 	}
 
 	if (strcmp(typalign, "c") == 0)
-		appendPQExpBuffer(q, ",\n    ALIGNMENT = char");
+		appendPQExpBufferStr(q, ",\n    ALIGNMENT = char");
 	else if (strcmp(typalign, "s") == 0)
-		appendPQExpBuffer(q, ",\n    ALIGNMENT = int2");
+		appendPQExpBufferStr(q, ",\n    ALIGNMENT = int2");
 	else if (strcmp(typalign, "i") == 0)
-		appendPQExpBuffer(q, ",\n    ALIGNMENT = int4");
+		appendPQExpBufferStr(q, ",\n    ALIGNMENT = int4");
 	else if (strcmp(typalign, "d") == 0)
-		appendPQExpBuffer(q, ",\n    ALIGNMENT = double");
+		appendPQExpBufferStr(q, ",\n    ALIGNMENT = double");
 
 	if (strcmp(typstorage, "p") == 0)
-		appendPQExpBuffer(q, ",\n    STORAGE = plain");
+		appendPQExpBufferStr(q, ",\n    STORAGE = plain");
 	else if (strcmp(typstorage, "e") == 0)
-		appendPQExpBuffer(q, ",\n    STORAGE = external");
+		appendPQExpBufferStr(q, ",\n    STORAGE = external");
 	else if (strcmp(typstorage, "x") == 0)
-		appendPQExpBuffer(q, ",\n    STORAGE = extended");
+		appendPQExpBufferStr(q, ",\n    STORAGE = extended");
 	else if (strcmp(typstorage, "m") == 0)
-		appendPQExpBuffer(q, ",\n    STORAGE = main");
+		appendPQExpBufferStr(q, ",\n    STORAGE = main");
 
 	if (strcmp(typbyval, "t") == 0)
-		appendPQExpBuffer(q, ",\n    PASSEDBYVALUE");
+		appendPQExpBufferStr(q, ",\n    PASSEDBYVALUE");
 
-	appendPQExpBuffer(q, "\n);\n");
+	appendPQExpBufferStr(q, "\n);\n");
 
 	appendPQExpBuffer(labelq, "TYPE %s", qtypname);
 
@@ -8822,17 +8820,16 @@ dumpDomain(Archive *fout, TypeInfo *tyinfo)
 			/* always schema-qualify, don't try to be smart */
 			appendPQExpBuffer(q, " COLLATE %s.",
 							  fmtId(coll->dobj.namespace->dobj.name));
-			appendPQExpBuffer(q, "%s",
-							  fmtId(coll->dobj.name));
+			appendPQExpBufferStr(q, fmtId(coll->dobj.name));
 		}
 	}
 
 	if (typnotnull[0] == 't')
-		appendPQExpBuffer(q, " NOT NULL");
+		appendPQExpBufferStr(q, " NOT NULL");
 
 	if (typdefault != NULL)
 	{
-		appendPQExpBuffer(q, " DEFAULT ");
+		appendPQExpBufferStr(q, " DEFAULT ");
 		if (typdefault_is_literal)
 			appendStringLiteralAH(q, typdefault, fout);
 		else
@@ -8853,7 +8850,7 @@ dumpDomain(Archive *fout, TypeInfo *tyinfo)
 							  fmtId(domcheck->dobj.name), domcheck->condef);
 	}
 
-	appendPQExpBuffer(q, ";\n");
+	appendPQExpBufferStr(q, ";\n");
 
 	/*
 	 * DROP must be fully qualified in case same name appears in pg_catalog
@@ -9016,8 +9013,8 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 
 		/* Format properly if not first attr */
 		if (actual_atts++ > 0)
-			appendPQExpBuffer(q, ",");
-		appendPQExpBuffer(q, "\n\t");
+			appendPQExpBufferChar(q, ',');
+		appendPQExpBufferStr(q, "\n\t");
 
 		if (!attisdropped)
 		{
@@ -9034,8 +9031,7 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 					/* always schema-qualify, don't try to be smart */
 					appendPQExpBuffer(q, " COLLATE %s.",
 									  fmtId(coll->dobj.namespace->dobj.name));
-					appendPQExpBuffer(q, "%s",
-									  fmtId(coll->dobj.name));
+					appendPQExpBufferStr(q, fmtId(coll->dobj.name));
 				}
 			}
 		}
@@ -9050,16 +9046,16 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 			appendPQExpBuffer(q, "%s INTEGER /* dummy */", fmtId(attname));
 
 			/* stash separately for insertion after the CREATE TYPE */
-			appendPQExpBuffer(dropped,
+			appendPQExpBufferStr(dropped,
 					  "\n-- For binary upgrade, recreate dropped column.\n");
 			appendPQExpBuffer(dropped, "UPDATE pg_catalog.pg_attribute\n"
 							  "SET attlen = %s, "
 							  "attalign = '%s', attbyval = false\n"
 							  "WHERE attname = ", attlen, attalign);
 			appendStringLiteralAH(dropped, attname, fout);
-			appendPQExpBuffer(dropped, "\n  AND attrelid = ");
+			appendPQExpBufferStr(dropped, "\n  AND attrelid = ");
 			appendStringLiteralAH(dropped, qtypname, fout);
-			appendPQExpBuffer(dropped, "::pg_catalog.regclass;\n");
+			appendPQExpBufferStr(dropped, "::pg_catalog.regclass;\n");
 
 			appendPQExpBuffer(dropped, "ALTER TYPE %s ",
 							  qtypname);
@@ -9067,7 +9063,7 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 							  fmtId(attname));
 		}
 	}
-	appendPQExpBuffer(q, "\n);\n");
+	appendPQExpBufferStr(q, "\n);\n");
 	appendPQExpBufferStr(q, dropped->data);
 
 	/*
@@ -9200,13 +9196,12 @@ dumpCompositeTypeColComments(Archive *fout, TypeInfo *tyinfo)
 			resetPQExpBuffer(target);
 			appendPQExpBuffer(target, "COLUMN %s.",
 							  fmtId(tyinfo->dobj.name));
-			appendPQExpBuffer(target, "%s",
-							  fmtId(attname));
+			appendPQExpBufferStr(target, fmtId(attname));
 
 			resetPQExpBuffer(query);
 			appendPQExpBuffer(query, "COMMENT ON %s IS ", target->data);
 			appendStringLiteralAH(query, descr, fout);
-			appendPQExpBuffer(query, ";\n");
+			appendPQExpBufferStr(query, ";\n");
 
 			ArchiveEntry(fout, nilCatalogId, createDumpId(),
 						 target->data,
@@ -9396,23 +9391,21 @@ dumpProcLang(Archive *fout, ProcLangInfo *plang)
 						  fmtId(funcInfo->dobj.name));
 		if (OidIsValid(plang->laninline))
 		{
-			appendPQExpBuffer(defqry, " INLINE ");
+			appendPQExpBufferStr(defqry, " INLINE ");
 			/* Cope with possibility that inline is in different schema */
 			if (inlineInfo->dobj.namespace != funcInfo->dobj.namespace)
 				appendPQExpBuffer(defqry, "%s.",
 							   fmtId(inlineInfo->dobj.namespace->dobj.name));
-			appendPQExpBuffer(defqry, "%s",
-							  fmtId(inlineInfo->dobj.name));
+			appendPQExpBufferStr(defqry, fmtId(inlineInfo->dobj.name));
 		}
 		if (OidIsValid(plang->lanvalidator))
 		{
-			appendPQExpBuffer(defqry, " VALIDATOR ");
+			appendPQExpBufferStr(defqry, " VALIDATOR ");
 			/* Cope with possibility that validator is in different schema */
 			if (validatorInfo->dobj.namespace != funcInfo->dobj.namespace)
 				appendPQExpBuffer(defqry, "%s.",
 							fmtId(validatorInfo->dobj.namespace->dobj.name));
-			appendPQExpBuffer(defqry, "%s",
-							  fmtId(validatorInfo->dobj.name));
+			appendPQExpBufferStr(defqry, fmtId(validatorInfo->dobj.name));
 		}
 	}
 	else
@@ -9429,7 +9422,7 @@ dumpProcLang(Archive *fout, ProcLangInfo *plang)
 		appendPQExpBuffer(defqry, "CREATE OR REPLACE PROCEDURAL LANGUAGE %s",
 						  qlanname);
 	}
-	appendPQExpBuffer(defqry, ";\n");
+	appendPQExpBufferStr(defqry, ";\n");
 
 	appendPQExpBuffer(labelq, "LANGUAGE %s", qlanname);
 
@@ -9478,9 +9471,9 @@ format_function_arguments(FuncInfo *finfo, char *funcargs, bool is_agg)
 	PQExpBufferData fn;
 
 	initPQExpBuffer(&fn);
-	appendPQExpBuffer(&fn, "%s", fmtId(finfo->dobj.name));
+	appendPQExpBufferStr(&fn, fmtId(finfo->dobj.name));
 	if (is_agg && finfo->nargs == 0)
-		appendPQExpBuffer(&fn, "(*)");
+		appendPQExpBufferStr(&fn, "(*)");
 	else
 		appendPQExpBuffer(&fn, "(%s)", funcargs);
 	return fn.data;
@@ -9553,7 +9546,7 @@ format_function_arguments_old(Archive *fout,
 						  typname);
 		free(typname);
 	}
-	appendPQExpBuffer(&fn, ")");
+	appendPQExpBufferChar(&fn, ')');
 	return fn.data;
 }
 
@@ -9582,15 +9575,15 @@ format_function_signature(Archive *fout, FuncInfo *finfo, bool honor_quotes)
 	{
 		char	   *typname;
 
+		if (j > 0)
+			appendPQExpBufferStr(&fn, ", ");
+
 		typname = getFormattedTypeName(fout, finfo->argtypes[j],
 									   zeroAsOpaque);
-
-		appendPQExpBuffer(&fn, "%s%s",
-						  (j > 0) ? ", " : "",
-						  typname);
+		appendPQExpBufferStr(&fn, typname);
 		free(typname);
 	}
-	appendPQExpBuffer(&fn, ")");
+	appendPQExpBufferChar(&fn, ')');
 	return fn.data;
 }
 
@@ -9822,11 +9815,11 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	 */
 	if (probin[0] != '\0' && strcmp(probin, "-") != 0)
 	{
-		appendPQExpBuffer(asPart, "AS ");
+		appendPQExpBufferStr(asPart, "AS ");
 		appendStringLiteralAH(asPart, probin, fout);
 		if (strcmp(prosrc, "-") != 0)
 		{
-			appendPQExpBuffer(asPart, ", ");
+			appendPQExpBufferStr(asPart, ", ");
 
 			/*
 			 * where we have bin, use dollar quoting if allowed and src
@@ -9843,7 +9836,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	{
 		if (strcmp(prosrc, "-") != 0)
 		{
-			appendPQExpBuffer(asPart, "AS ");
+			appendPQExpBufferStr(asPart, "AS ");
 			/* with no bin, dollar quote src unconditionally if allowed */
 			if (disable_dollar_quoting)
 				appendStringLiteralAH(asPart, prosrc, fout);
@@ -9950,27 +9943,27 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	appendPQExpBuffer(q, "\n    LANGUAGE %s", fmtId(lanname));
 
 	if (proiswindow[0] == 't')
-		appendPQExpBuffer(q, " WINDOW");
+		appendPQExpBufferStr(q, " WINDOW");
 
 	if (provolatile[0] != PROVOLATILE_VOLATILE)
 	{
 		if (provolatile[0] == PROVOLATILE_IMMUTABLE)
-			appendPQExpBuffer(q, " IMMUTABLE");
+			appendPQExpBufferStr(q, " IMMUTABLE");
 		else if (provolatile[0] == PROVOLATILE_STABLE)
-			appendPQExpBuffer(q, " STABLE");
+			appendPQExpBufferStr(q, " STABLE");
 		else if (provolatile[0] != PROVOLATILE_VOLATILE)
 			exit_horribly(NULL, "unrecognized provolatile value for function \"%s\"\n",
 						  finfo->dobj.name);
 	}
 
 	if (proisstrict[0] == 't')
-		appendPQExpBuffer(q, " STRICT");
+		appendPQExpBufferStr(q, " STRICT");
 
 	if (prosecdef[0] == 't')
-		appendPQExpBuffer(q, " SECURITY DEFINER");
+		appendPQExpBufferStr(q, " SECURITY DEFINER");
 
 	if (proleakproof[0] == 't')
-		appendPQExpBuffer(q, " LEAKPROOF");
+		appendPQExpBufferStr(q, " LEAKPROOF");
 
 	/*
 	 * COST and ROWS are emitted only if present and not default, so as not to
@@ -10014,7 +10007,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 		 */
 		if (pg_strcasecmp(configitem, "DateStyle") == 0
 			|| pg_strcasecmp(configitem, "search_path") == 0)
-			appendPQExpBuffer(q, "%s", pos);
+			appendPQExpBufferStr(q, pos);
 		else
 			appendStringLiteralAH(q, pos, fout);
 	}
@@ -10159,10 +10152,10 @@ dumpCast(Archive *fout, CastInfo *cast)
 	switch (cast->castmethod)
 	{
 		case COERCION_METHOD_BINARY:
-			appendPQExpBuffer(defqry, "WITHOUT FUNCTION");
+			appendPQExpBufferStr(defqry, "WITHOUT FUNCTION");
 			break;
 		case COERCION_METHOD_INOUT:
-			appendPQExpBuffer(defqry, "WITH INOUT");
+			appendPQExpBufferStr(defqry, "WITH INOUT");
 			break;
 		case COERCION_METHOD_FUNCTION:
 			if (funcInfo)
@@ -10186,10 +10179,10 @@ dumpCast(Archive *fout, CastInfo *cast)
 	}
 
 	if (cast->castcontext == 'a')
-		appendPQExpBuffer(defqry, " AS ASSIGNMENT");
+		appendPQExpBufferStr(defqry, " AS ASSIGNMENT");
 	else if (cast->castcontext == 'i')
-		appendPQExpBuffer(defqry, " AS IMPLICIT");
-	appendPQExpBuffer(defqry, ";\n");
+		appendPQExpBufferStr(defqry, " AS IMPLICIT");
+	appendPQExpBufferStr(defqry, ";\n");
 
 	appendPQExpBuffer(labelq, "CAST (%s AS %s)",
 					getFormattedTypeName(fout, cast->castsource, zeroAsNone),
@@ -10375,10 +10368,10 @@ dumpOpr(Archive *fout, OprInfo *oprinfo)
 		else
 			name = fmtId(oprleft);
 		appendPQExpBuffer(details, ",\n    LEFTARG = %s", name);
-		appendPQExpBuffer(oprid, "%s", name);
+		appendPQExpBufferStr(oprid, name);
 	}
 	else
-		appendPQExpBuffer(oprid, "NONE");
+		appendPQExpBufferStr(oprid, "NONE");
 
 	if (strcmp(oprkind, "l") == 0 ||
 		strcmp(oprkind, "b") == 0)
@@ -10391,7 +10384,7 @@ dumpOpr(Archive *fout, OprInfo *oprinfo)
 		appendPQExpBuffer(oprid, ", %s)", name);
 	}
 	else
-		appendPQExpBuffer(oprid, ", NONE)");
+		appendPQExpBufferStr(oprid, ", NONE)");
 
 	name = convertOperatorReference(fout, oprcom);
 	if (name)
@@ -10402,10 +10395,10 @@ dumpOpr(Archive *fout, OprInfo *oprinfo)
 		appendPQExpBuffer(details, ",\n    NEGATOR = %s", name);
 
 	if (strcmp(oprcanmerge, "t") == 0)
-		appendPQExpBuffer(details, ",\n    MERGES");
+		appendPQExpBufferStr(details, ",\n    MERGES");
 
 	if (strcmp(oprcanhash, "t") == 0)
-		appendPQExpBuffer(details, ",\n    HASHES");
+		appendPQExpBufferStr(details, ",\n    HASHES");
 
 	name = convertRegProcReference(fout, oprrest);
 	if (name)
@@ -10714,7 +10707,7 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 	appendPQExpBuffer(q, "CREATE OPERATOR CLASS %s\n    ",
 					  fmtId(opcinfo->dobj.name));
 	if (strcmp(opcdefault, "t") == 0)
-		appendPQExpBuffer(q, "DEFAULT ");
+		appendPQExpBufferStr(q, "DEFAULT ");
 	appendPQExpBuffer(q, "FOR TYPE %s USING %s",
 					  opcintype,
 					  fmtId(amname));
@@ -10722,12 +10715,12 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 		(strcmp(opcfamilyname, opcinfo->dobj.name) != 0 ||
 		 strcmp(opcfamilynsp, opcinfo->dobj.namespace->dobj.name) != 0))
 	{
-		appendPQExpBuffer(q, " FAMILY ");
+		appendPQExpBufferStr(q, " FAMILY ");
 		if (strcmp(opcfamilynsp, opcinfo->dobj.namespace->dobj.name) != 0)
 			appendPQExpBuffer(q, "%s.", fmtId(opcfamilynsp));
 		appendPQExpBuffer(q, "%s", fmtId(opcfamilyname));
 	}
-	appendPQExpBuffer(q, " AS\n    ");
+	appendPQExpBufferStr(q, " AS\n    ");
 
 	needComma = false;
 
@@ -10834,21 +10827,21 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 		sortfamilynsp = PQgetvalue(res, i, i_sortfamilynsp);
 
 		if (needComma)
-			appendPQExpBuffer(q, " ,\n    ");
+			appendPQExpBufferStr(q, " ,\n    ");
 
 		appendPQExpBuffer(q, "OPERATOR %s %s",
 						  amopstrategy, amopopr);
 
 		if (strlen(sortfamily) > 0)
 		{
-			appendPQExpBuffer(q, " FOR ORDER BY ");
+			appendPQExpBufferStr(q, " FOR ORDER BY ");
 			if (strcmp(sortfamilynsp, opcinfo->dobj.namespace->dobj.name) != 0)
 				appendPQExpBuffer(q, "%s.", fmtId(sortfamilynsp));
-			appendPQExpBuffer(q, "%s", fmtId(sortfamily));
+			appendPQExpBufferStr(q, fmtId(sortfamily));
 		}
 
 		if (strcmp(amopreqcheck, "t") == 0)
-			appendPQExpBuffer(q, " RECHECK");
+			appendPQExpBufferStr(q, " RECHECK");
 
 		needComma = true;
 	}
@@ -10912,7 +10905,7 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 		amprocrighttype = PQgetvalue(res, i, i_amprocrighttype);
 
 		if (needComma)
-			appendPQExpBuffer(q, " ,\n    ");
+			appendPQExpBufferStr(q, " ,\n    ");
 
 		appendPQExpBuffer(q, "FUNCTION %s", amprocnum);
 
@@ -10926,7 +10919,7 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 
 	PQclear(res);
 
-	appendPQExpBuffer(q, ";\n");
+	appendPQExpBufferStr(q, ";\n");
 
 	appendPQExpBuffer(labelq, "OPERATOR CLASS %s",
 					  fmtId(opcinfo->dobj.name));
@@ -11192,21 +11185,21 @@ dumpOpfamily(Archive *fout, OpfamilyInfo *opfinfo)
 			sortfamilynsp = PQgetvalue(res_ops, i, i_sortfamilynsp);
 
 			if (needComma)
-				appendPQExpBuffer(q, " ,\n    ");
+				appendPQExpBufferStr(q, " ,\n    ");
 
 			appendPQExpBuffer(q, "OPERATOR %s %s",
 							  amopstrategy, amopopr);
 
 			if (strlen(sortfamily) > 0)
 			{
-				appendPQExpBuffer(q, " FOR ORDER BY ");
+				appendPQExpBufferStr(q, " FOR ORDER BY ");
 				if (strcmp(sortfamilynsp, opfinfo->dobj.namespace->dobj.name) != 0)
 					appendPQExpBuffer(q, "%s.", fmtId(sortfamilynsp));
-				appendPQExpBuffer(q, "%s", fmtId(sortfamily));
+				appendPQExpBufferStr(q, fmtId(sortfamily));
 			}
 
 			if (strcmp(amopreqcheck, "t") == 0)
-				appendPQExpBuffer(q, " RECHECK");
+				appendPQExpBufferStr(q, " RECHECK");
 
 			needComma = true;
 		}
@@ -11229,7 +11222,7 @@ dumpOpfamily(Archive *fout, OpfamilyInfo *opfinfo)
 			amprocrighttype = PQgetvalue(res_procs, i, i_amprocrighttype);
 
 			if (needComma)
-				appendPQExpBuffer(q, " ,\n    ");
+				appendPQExpBufferStr(q, " ,\n    ");
 
 			appendPQExpBuffer(q, "FUNCTION %s (%s, %s) %s",
 							  amprocnum, amproclefttype, amprocrighttype,
@@ -11238,7 +11231,7 @@ dumpOpfamily(Archive *fout, OpfamilyInfo *opfinfo)
 			needComma = true;
 		}
 
-		appendPQExpBuffer(q, ";\n");
+		appendPQExpBufferStr(q, ";\n");
 	}
 
 	appendPQExpBuffer(labelq, "OPERATOR FAMILY %s",
@@ -11329,9 +11322,9 @@ dumpCollation(Archive *fout, CollInfo *collinfo)
 	appendPQExpBuffer(q, "CREATE COLLATION %s (lc_collate = ",
 					  fmtId(collinfo->dobj.name));
 	appendStringLiteralAH(q, collcollate, fout);
-	appendPQExpBuffer(q, ", lc_ctype = ");
+	appendPQExpBufferStr(q, ", lc_ctype = ");
 	appendStringLiteralAH(q, collctype, fout);
-	appendPQExpBuffer(q, ");\n");
+	appendPQExpBufferStr(q, ");\n");
 
 	appendPQExpBuffer(labelq, "COLLATION %s", fmtId(collinfo->dobj.name));
 
@@ -11427,7 +11420,7 @@ dumpConversion(Archive *fout, ConvInfo *convinfo)
 					  (condefault) ? "DEFAULT " : "",
 					  fmtId(convinfo->dobj.name));
 	appendStringLiteralAH(q, conforencoding, fout);
-	appendPQExpBuffer(q, " TO ");
+	appendPQExpBufferStr(q, " TO ");
 	appendStringLiteralAH(q, contoencoding, fout);
 	/* regproc is automatically quoted in 7.3 and above */
 	appendPQExpBuffer(q, " FROM %s;\n", conproc);
@@ -11474,16 +11467,15 @@ format_aggregate_signature(AggInfo *agginfo, Archive *fout, bool honor_quotes)
 
 	initPQExpBuffer(&buf);
 	if (honor_quotes)
-		appendPQExpBuffer(&buf, "%s",
-						  fmtId(agginfo->aggfn.dobj.name));
+		appendPQExpBufferStr(&buf, fmtId(agginfo->aggfn.dobj.name));
 	else
-		appendPQExpBuffer(&buf, "%s", agginfo->aggfn.dobj.name);
+		appendPQExpBufferStr(&buf, agginfo->aggfn.dobj.name);
 
 	if (agginfo->aggfn.nargs == 0)
 		appendPQExpBuffer(&buf, "(*)");
 	else
 	{
-		appendPQExpBuffer(&buf, "(");
+		appendPQExpBufferChar(&buf, '(');
 		for (j = 0; j < agginfo->aggfn.nargs; j++)
 		{
 			char	   *typname;
@@ -11496,7 +11488,7 @@ format_aggregate_signature(AggInfo *agginfo, Archive *fout, bool honor_quotes)
 							  typname);
 			free(typname);
 		}
-		appendPQExpBuffer(&buf, ")");
+		appendPQExpBufferChar(&buf, ')');
 	}
 	return buf.data;
 }
@@ -11698,7 +11690,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 
 	if (!PQgetisnull(res, 0, i_agginitval))
 	{
-		appendPQExpBuffer(details, ",\n    INITCOND = ");
+		appendPQExpBufferStr(details, ",\n    INITCOND = ");
 		appendStringLiteralAH(details, agginitval, fout);
 	}
 
@@ -11888,10 +11880,10 @@ dumpTSDictionary(Archive *fout, TSDictInfo *dictinfo)
 	appendPQExpBuffer(q, "CREATE TEXT SEARCH DICTIONARY %s (\n",
 					  fmtId(dictinfo->dobj.name));
 
-	appendPQExpBuffer(q, "    TEMPLATE = ");
+	appendPQExpBufferStr(q, "    TEMPLATE = ");
 	if (strcmp(nspname, dictinfo->dobj.namespace->dobj.name) != 0)
 		appendPQExpBuffer(q, "%s.", fmtId(nspname));
-	appendPQExpBuffer(q, "%s", fmtId(tmplname));
+	appendPQExpBufferStr(q, fmtId(tmplname));
 
 	PQclear(res);
 
@@ -11899,7 +11891,7 @@ dumpTSDictionary(Archive *fout, TSDictInfo *dictinfo)
 	if (dictinfo->dictinitoption)
 		appendPQExpBuffer(q, ",\n    %s", dictinfo->dictinitoption);
 
-	appendPQExpBuffer(q, " );\n");
+	appendPQExpBufferStr(q, " );\n");
 
 	/*
 	 * DROP must be fully qualified in case same name appears in pg_catalog
@@ -12045,7 +12037,7 @@ dumpTSConfig(Archive *fout, TSConfigInfo *cfginfo)
 	appendPQExpBuffer(q, "CREATE TEXT SEARCH CONFIGURATION %s (\n",
 					  fmtId(cfginfo->dobj.name));
 
-	appendPQExpBuffer(q, "    PARSER = ");
+	appendPQExpBufferStr(q, "    PARSER = ");
 	if (strcmp(nspname, cfginfo->dobj.namespace->dobj.name) != 0)
 		appendPQExpBuffer(q, "%s.", fmtId(nspname));
 	appendPQExpBuffer(q, "%s );\n", fmtId(prsname));
@@ -12079,7 +12071,7 @@ dumpTSConfig(Archive *fout, TSConfigInfo *cfginfo)
 		{
 			/* starting a new token type, so start a new command */
 			if (i > 0)
-				appendPQExpBuffer(q, ";\n");
+				appendPQExpBufferStr(q, ";\n");
 			appendPQExpBuffer(q, "\nALTER TEXT SEARCH CONFIGURATION %s\n",
 							  fmtId(cfginfo->dobj.name));
 			/* tokenname needs quoting, dictname does NOT */
@@ -12091,7 +12083,7 @@ dumpTSConfig(Archive *fout, TSConfigInfo *cfginfo)
 	}
 
 	if (ntups > 0)
-		appendPQExpBuffer(q, ";\n");
+		appendPQExpBufferStr(q, ";\n");
 
 	PQclear(res);
 
@@ -12172,7 +12164,7 @@ dumpForeignDataWrapper(Archive *fout, FdwInfo *fdwinfo)
 	if (strlen(fdwinfo->fdwoptions) > 0)
 		appendPQExpBuffer(q, " OPTIONS (\n    %s\n)", fdwinfo->fdwoptions);
 
-	appendPQExpBuffer(q, ";\n");
+	appendPQExpBufferStr(q, ";\n");
 
 	appendPQExpBuffer(delq, "DROP FOREIGN DATA WRAPPER %s;\n",
 					  qfdwname);
@@ -12250,22 +12242,22 @@ dumpForeignServer(Archive *fout, ForeignServerInfo *srvinfo)
 	appendPQExpBuffer(q, "CREATE SERVER %s", qsrvname);
 	if (srvinfo->srvtype && strlen(srvinfo->srvtype) > 0)
 	{
-		appendPQExpBuffer(q, " TYPE ");
+		appendPQExpBufferStr(q, " TYPE ");
 		appendStringLiteralAH(q, srvinfo->srvtype, fout);
 	}
 	if (srvinfo->srvversion && strlen(srvinfo->srvversion) > 0)
 	{
-		appendPQExpBuffer(q, " VERSION ");
+		appendPQExpBufferStr(q, " VERSION ");
 		appendStringLiteralAH(q, srvinfo->srvversion, fout);
 	}
 
-	appendPQExpBuffer(q, " FOREIGN DATA WRAPPER ");
-	appendPQExpBuffer(q, "%s", fmtId(fdwname));
+	appendPQExpBufferStr(q, " FOREIGN DATA WRAPPER ");
+	appendPQExpBufferStr(q, fmtId(fdwname));
 
 	if (srvinfo->srvoptions && strlen(srvinfo->srvoptions) > 0)
 		appendPQExpBuffer(q, " OPTIONS (\n    %s\n)", srvinfo->srvoptions);
 
-	appendPQExpBuffer(q, ";\n");
+	appendPQExpBufferStr(q, ";\n");
 
 	appendPQExpBuffer(delq, "DROP SERVER %s;\n",
 					  qsrvname);
@@ -12382,7 +12374,7 @@ dumpUserMappings(Archive *fout,
 		if (umoptions && strlen(umoptions) > 0)
 			appendPQExpBuffer(q, " OPTIONS (\n    %s\n)", umoptions);
 
-		appendPQExpBuffer(q, ";\n");
+		appendPQExpBufferStr(q, ";\n");
 
 		resetPQExpBuffer(delq);
 		appendPQExpBuffer(delq, "DROP USER MAPPING FOR %s", fmtId(usename));
@@ -12591,7 +12583,7 @@ dumpSecLabel(Archive *fout, const char *target,
 						  "SECURITY LABEL FOR %s ON %s IS ",
 						  fmtId(labels[i].provider), target);
 		appendStringLiteralAH(query, labels[i].label, fout);
-		appendPQExpBuffer(query, ";\n");
+		appendPQExpBufferStr(query, ";\n");
 	}
 
 	if (query->len > 0)
@@ -12665,7 +12657,7 @@ dumpTableSecLabel(Archive *fout, TableInfo *tbinfo, const char *reltypename)
 		appendPQExpBuffer(query, "SECURITY LABEL FOR %s ON %s IS ",
 						  fmtId(provider), target->data);
 		appendStringLiteralAH(query, label, fout);
-		appendPQExpBuffer(query, ";\n");
+		appendPQExpBufferStr(query, ";\n");
 	}
 	if (query->len > 0)
 	{
@@ -12795,10 +12787,10 @@ collectSecLabels(Archive *fout, SecLabelItem **items)
 
 	query = createPQExpBuffer();
 
-	appendPQExpBuffer(query,
-					  "SELECT label, provider, classoid, objoid, objsubid "
-					  "FROM pg_catalog.pg_seclabel "
-					  "ORDER BY classoid, objoid, objsubid");
+	appendPQExpBufferStr(query,
+						 "SELECT label, provider, classoid, objoid, objsubid "
+						 "FROM pg_catalog.pg_seclabel "
+						 "ORDER BY classoid, objoid, objsubid");
 
 	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
@@ -12921,8 +12913,8 @@ createViewAsClause(Archive *fout, TableInfo *tbinfo)
 	}
 	else
 	{
-		appendPQExpBuffer(query, "SELECT definition AS viewdef "
-						  "FROM pg_views WHERE viewname = ");
+		appendPQExpBufferStr(query, "SELECT definition AS viewdef "
+							 "FROM pg_views WHERE viewname = ");
 		appendStringLiteralAH(query, tbinfo->dobj.name, fout);
 	}
 
@@ -13010,7 +13002,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 
 		if (tbinfo->checkoption != NULL)
 			appendPQExpBuffer(q, "\n  WITH %s CHECK OPTION", tbinfo->checkoption);
-		appendPQExpBuffer(q, ";\n");
+		appendPQExpBufferStr(q, ";\n");
 
 		appendPQExpBuffer(labelq, "VIEW %s",
 						  fmtId(tbinfo->dobj.name));
@@ -13129,15 +13121,14 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 
 					/* Format properly if not first attr */
 					if (actual_atts == 0)
-						appendPQExpBuffer(q, " (");
+						appendPQExpBufferStr(q, " (");
 					else
-						appendPQExpBuffer(q, ",");
-					appendPQExpBuffer(q, "\n    ");
+						appendPQExpBufferStr(q, ",");
+					appendPQExpBufferStr(q, "\n    ");
 					actual_atts++;
 
 					/* Attribute name */
-					appendPQExpBuffer(q, "%s",
-									  fmtId(tbinfo->attnames[j]));
+					appendPQExpBufferStr(q, fmtId(tbinfo->attnames[j]));
 
 					if (tbinfo->attisdropped[j])
 					{
@@ -13147,7 +13138,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 						 * valid type name; insert INTEGER as a stopgap. We'll
 						 * clean things up later.
 						 */
-						appendPQExpBuffer(q, " INTEGER /* dummy */");
+						appendPQExpBufferStr(q, " INTEGER /* dummy */");
 						/* Skip all the rest, too */
 						continue;
 					}
@@ -13155,7 +13146,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 					/* Attribute type */
 					if (tbinfo->reloftype && !binary_upgrade)
 					{
-						appendPQExpBuffer(q, " WITH OPTIONS");
+						appendPQExpBufferStr(q, " WITH OPTIONS");
 					}
 					else if (fout->remoteVersion >= 70100)
 					{
@@ -13181,8 +13172,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 							/* always schema-qualify, don't try to be smart */
 							appendPQExpBuffer(q, " COLLATE %s.",
 									 fmtId(coll->dobj.namespace->dobj.name));
-							appendPQExpBuffer(q, "%s",
-											  fmtId(coll->dobj.name));
+							appendPQExpBufferStr(q, fmtId(coll->dobj.name));
 						}
 					}
 
@@ -13191,7 +13181,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 										  tbinfo->attrdefs[j]->adef_expr);
 
 					if (has_notnull)
-						appendPQExpBuffer(q, " NOT NULL");
+						appendPQExpBufferStr(q, " NOT NULL");
 				}
 			}
 
@@ -13206,44 +13196,43 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 					continue;
 
 				if (actual_atts == 0)
-					appendPQExpBuffer(q, " (\n    ");
+					appendPQExpBufferStr(q, " (\n    ");
 				else
-					appendPQExpBuffer(q, ",\n    ");
+					appendPQExpBufferStr(q, ",\n    ");
 
 				appendPQExpBuffer(q, "CONSTRAINT %s ",
 								  fmtId(constr->dobj.name));
-				appendPQExpBuffer(q, "%s", constr->condef);
+				appendPQExpBufferStr(q, constr->condef);
 
 				actual_atts++;
 			}
 
 			if (actual_atts)
-				appendPQExpBuffer(q, "\n)");
+				appendPQExpBufferStr(q, "\n)");
 			else if (!(tbinfo->reloftype && !binary_upgrade))
 			{
 				/*
 				 * We must have a parenthesized attribute list, even though
 				 * empty, when not using the OF TYPE syntax.
 				 */
-				appendPQExpBuffer(q, " (\n)");
+				appendPQExpBufferStr(q, " (\n)");
 			}
 
 			if (numParents > 0 && !binary_upgrade)
 			{
-				appendPQExpBuffer(q, "\nINHERITS (");
+				appendPQExpBufferStr(q, "\nINHERITS (");
 				for (k = 0; k < numParents; k++)
 				{
 					TableInfo  *parentRel = parents[k];
 
 					if (k > 0)
-						appendPQExpBuffer(q, ", ");
+						appendPQExpBufferStr(q, ", ");
 					if (parentRel->dobj.namespace != tbinfo->dobj.namespace)
 						appendPQExpBuffer(q, "%s.",
 								fmtId(parentRel->dobj.namespace->dobj.name));
-					appendPQExpBuffer(q, "%s",
-									  fmtId(parentRel->dobj.name));
+					appendPQExpBufferStr(q, fmtId(parentRel->dobj.name));
 				}
-				appendPQExpBuffer(q, ")");
+				appendPQExpBufferChar(q, ')');
 			}
 
 			if (tbinfo->relkind == RELKIND_FOREIGN_TABLE)
@@ -13255,18 +13244,18 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		{
 			bool		addcomma = false;
 
-			appendPQExpBuffer(q, "\nWITH (");
+			appendPQExpBufferStr(q, "\nWITH (");
 			if (tbinfo->reloptions && strlen(tbinfo->reloptions) > 0)
 			{
 				addcomma = true;
-				appendPQExpBuffer(q, "%s", tbinfo->reloptions);
+				appendPQExpBufferStr(q, tbinfo->reloptions);
 			}
 			if (tbinfo->toast_reloptions && strlen(tbinfo->toast_reloptions) > 0)
 			{
 				appendPQExpBuffer(q, "%s%s", addcomma ? ", " : "",
 								  tbinfo->toast_reloptions);
 			}
-			appendPQExpBuffer(q, ")");
+			appendPQExpBufferChar(q, ')');
 		}
 
 		/* Dump generic options if any */
@@ -13287,7 +13276,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			destroyPQExpBuffer(result);
 		}
 		else
-			appendPQExpBuffer(q, ";\n");
+			appendPQExpBufferStr(q, ";\n");
 
 		/*
 		 * To create binary-compatible heap files, we have to ensure the same
@@ -13309,7 +13298,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			{
 				if (tbinfo->attisdropped[j])
 				{
-					appendPQExpBuffer(q, "\n-- For binary upgrade, recreate dropped column.\n");
+					appendPQExpBufferStr(q, "\n-- For binary upgrade, recreate dropped column.\n");
 					appendPQExpBuffer(q, "UPDATE pg_catalog.pg_attribute\n"
 									  "SET attlen = %d, "
 									  "attalign = '%c', attbyval = false\n"
@@ -13317,9 +13306,9 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 									  tbinfo->attlen[j],
 									  tbinfo->attalign[j]);
 					appendStringLiteralAH(q, tbinfo->attnames[j], fout);
-					appendPQExpBuffer(q, "\n  AND attrelid = ");
+					appendPQExpBufferStr(q, "\n  AND attrelid = ");
 					appendStringLiteralAH(q, fmtId(tbinfo->dobj.name), fout);
-					appendPQExpBuffer(q, "::pg_catalog.regclass;\n");
+					appendPQExpBufferStr(q, "::pg_catalog.regclass;\n");
 
 					if (tbinfo->relkind == RELKIND_RELATION)
 						appendPQExpBuffer(q, "ALTER TABLE ONLY %s ",
@@ -13334,14 +13323,14 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 				else if (!tbinfo->attislocal[j])
 				{
 					Assert(tbinfo->relkind != RELKIND_FOREIGN_TABLE);
-					appendPQExpBuffer(q, "\n-- For binary upgrade, recreate inherited column.\n");
-					appendPQExpBuffer(q, "UPDATE pg_catalog.pg_attribute\n"
+					appendPQExpBufferStr(q, "\n-- For binary upgrade, recreate inherited column.\n");
+					appendPQExpBufferStr(q, "UPDATE pg_catalog.pg_attribute\n"
 									  "SET attislocal = false\n"
 									  "WHERE attname = ");
 					appendStringLiteralAH(q, tbinfo->attnames[j], fout);
-					appendPQExpBuffer(q, "\n  AND attrelid = ");
+					appendPQExpBufferStr(q, "\n  AND attrelid = ");
 					appendStringLiteralAH(q, fmtId(tbinfo->dobj.name), fout);
-					appendPQExpBuffer(q, "::pg_catalog.regclass;\n");
+					appendPQExpBufferStr(q, "::pg_catalog.regclass;\n");
 				}
 			}
 
@@ -13352,24 +13341,24 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 				if (constr->separate || constr->conislocal)
 					continue;
 
-				appendPQExpBuffer(q, "\n-- For binary upgrade, set up inherited constraint.\n");
+				appendPQExpBufferStr(q, "\n-- For binary upgrade, set up inherited constraint.\n");
 				appendPQExpBuffer(q, "ALTER TABLE ONLY %s ",
 								  fmtId(tbinfo->dobj.name));
 				appendPQExpBuffer(q, " ADD CONSTRAINT %s ",
 								  fmtId(constr->dobj.name));
 				appendPQExpBuffer(q, "%s;\n", constr->condef);
-				appendPQExpBuffer(q, "UPDATE pg_catalog.pg_constraint\n"
+				appendPQExpBufferStr(q, "UPDATE pg_catalog.pg_constraint\n"
 								  "SET conislocal = false\n"
 								  "WHERE contype = 'c' AND conname = ");
 				appendStringLiteralAH(q, constr->dobj.name, fout);
-				appendPQExpBuffer(q, "\n  AND conrelid = ");
+				appendPQExpBufferStr(q, "\n  AND conrelid = ");
 				appendStringLiteralAH(q, fmtId(tbinfo->dobj.name), fout);
-				appendPQExpBuffer(q, "::pg_catalog.regclass;\n");
+				appendPQExpBufferStr(q, "::pg_catalog.regclass;\n");
 			}
 
 			if (numParents > 0)
 			{
-				appendPQExpBuffer(q, "\n-- For binary upgrade, set up inheritance this way.\n");
+				appendPQExpBufferStr(q, "\n-- For binary upgrade, set up inheritance this way.\n");
 				for (k = 0; k < numParents; k++)
 				{
 					TableInfo  *parentRel = parents[k];
@@ -13386,24 +13375,24 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 
 			if (tbinfo->reloftype)
 			{
-				appendPQExpBuffer(q, "\n-- For binary upgrade, set up typed tables this way.\n");
+				appendPQExpBufferStr(q, "\n-- For binary upgrade, set up typed tables this way.\n");
 				appendPQExpBuffer(q, "ALTER TABLE ONLY %s OF %s;\n",
 								  fmtId(tbinfo->dobj.name),
 								  tbinfo->reloftype);
 			}
 
-			appendPQExpBuffer(q, "\n-- For binary upgrade, set heap's relfrozenxid\n");
+			appendPQExpBufferStr(q, "\n-- For binary upgrade, set heap's relfrozenxid\n");
 			appendPQExpBuffer(q, "UPDATE pg_catalog.pg_class\n"
 							  "SET relfrozenxid = '%u'\n"
 							  "WHERE oid = ",
 							  tbinfo->frozenxid);
 			appendStringLiteralAH(q, fmtId(tbinfo->dobj.name), fout);
-			appendPQExpBuffer(q, "::pg_catalog.regclass;\n");
+			appendPQExpBufferStr(q, "::pg_catalog.regclass;\n");
 
 			if (tbinfo->toast_oid)
 			{
 				/* We preserve the toast oids, so we can use it during restore */
-				appendPQExpBuffer(q, "\n-- For binary upgrade, set toast's relfrozenxid\n");
+				appendPQExpBufferStr(q, "\n-- For binary upgrade, set toast's relfrozenxid\n");
 				appendPQExpBuffer(q, "UPDATE pg_catalog.pg_class\n"
 								  "SET relfrozenxid = '%u'\n"
 								  "WHERE oid = '%u';\n",
@@ -13420,12 +13409,12 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		if (binary_upgrade && tbinfo->relkind == RELKIND_MATVIEW &&
 			tbinfo->relispopulated)
 		{
-			appendPQExpBuffer(q, "\n-- For binary upgrade, mark materialized view as populated\n");
-			appendPQExpBuffer(q, "UPDATE pg_catalog.pg_class\n"
+			appendPQExpBufferStr(q, "\n-- For binary upgrade, mark materialized view as populated\n");
+			appendPQExpBufferStr(q, "UPDATE pg_catalog.pg_class\n"
 							  "SET relispopulated = 't'\n"
 							  "WHERE oid = ");
 			appendStringLiteralAH(q, fmtId(tbinfo->dobj.name), fout);
-			appendPQExpBuffer(q, "::pg_catalog.regclass;\n");
+			appendPQExpBufferStr(q, "::pg_catalog.regclass;\n");
 		}
 
 		/*
@@ -13834,19 +13823,19 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 								  fmtId(attname));
 			}
 
-			appendPQExpBuffer(q, ")");
+			appendPQExpBufferChar(q, ')');
 
 			if (indxinfo->options && strlen(indxinfo->options) > 0)
 				appendPQExpBuffer(q, " WITH (%s)", indxinfo->options);
 
 			if (coninfo->condeferrable)
 			{
-				appendPQExpBuffer(q, " DEFERRABLE");
+				appendPQExpBufferStr(q, " DEFERRABLE");
 				if (coninfo->condeferred)
-					appendPQExpBuffer(q, " INITIALLY DEFERRED");
+					appendPQExpBufferStr(q, " INITIALLY DEFERRED");
 			}
 
-			appendPQExpBuffer(q, ";\n");
+			appendPQExpBufferStr(q, ";\n");
 		}
 
 		/* If the index is clustered, we need to record that. */
@@ -14039,7 +14028,7 @@ findLastBuiltinOid_V71(Archive *fout, const char *dbname)
 	PQExpBuffer query = createPQExpBuffer();
 
 	resetPQExpBuffer(query);
-	appendPQExpBuffer(query, "SELECT datlastsysoid from pg_database where datname = ");
+	appendPQExpBufferStr(query, "SELECT datlastsysoid from pg_database where datname = ");
 	appendStringLiteralAH(query, dbname, fout);
 
 	res = ExecuteSqlQueryForSingleRow(fout, query->data);
@@ -14191,18 +14180,18 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 	if (minv)
 		appendPQExpBuffer(query, "    MINVALUE %s\n", minv);
 	else
-		appendPQExpBuffer(query, "    NO MINVALUE\n");
+		appendPQExpBufferStr(query, "    NO MINVALUE\n");
 
 	if (maxv)
 		appendPQExpBuffer(query, "    MAXVALUE %s\n", maxv);
 	else
-		appendPQExpBuffer(query, "    NO MAXVALUE\n");
+		appendPQExpBufferStr(query, "    NO MAXVALUE\n");
 
 	appendPQExpBuffer(query,
 					  "    CACHE %s%s",
 					  cache, (cycled ? "\n    CYCLE" : ""));
 
-	appendPQExpBuffer(query, ";\n");
+	appendPQExpBufferStr(query, ";\n");
 
 	appendPQExpBuffer(labelq, "SEQUENCE %s", fmtId(tbinfo->dobj.name));
 
@@ -14310,7 +14299,7 @@ dumpSequenceData(Archive *fout, TableDataInfo *tdinfo)
 	called = (strcmp(PQgetvalue(res, 0, 1), "t") == 0);
 
 	resetPQExpBuffer(query);
-	appendPQExpBuffer(query, "SELECT pg_catalog.setval(");
+	appendPQExpBufferStr(query, "SELECT pg_catalog.setval(");
 	appendStringLiteralAH(query, fmtId(tbinfo->dobj.name), fout);
 	appendPQExpBuffer(query, ", %s, %s);\n",
 					  last, (called ? "true" : "false"));
@@ -14367,23 +14356,23 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 	{
 		if (tginfo->tgisconstraint)
 		{
-			appendPQExpBuffer(query, "CREATE CONSTRAINT TRIGGER ");
+			appendPQExpBufferStr(query, "CREATE CONSTRAINT TRIGGER ");
 			appendPQExpBufferStr(query, fmtId(tginfo->tgconstrname));
 		}
 		else
 		{
-			appendPQExpBuffer(query, "CREATE TRIGGER ");
+			appendPQExpBufferStr(query, "CREATE TRIGGER ");
 			appendPQExpBufferStr(query, fmtId(tginfo->dobj.name));
 		}
-		appendPQExpBuffer(query, "\n    ");
+		appendPQExpBufferStr(query, "\n    ");
 
 		/* Trigger type */
 		if (TRIGGER_FOR_BEFORE(tginfo->tgtype))
-			appendPQExpBuffer(query, "BEFORE");
+			appendPQExpBufferStr(query, "BEFORE");
 		else if (TRIGGER_FOR_AFTER(tginfo->tgtype))
-			appendPQExpBuffer(query, "AFTER");
+			appendPQExpBufferStr(query, "AFTER");
 		else if (TRIGGER_FOR_INSTEAD(tginfo->tgtype))
-			appendPQExpBuffer(query, "INSTEAD OF");
+			appendPQExpBufferStr(query, "INSTEAD OF");
 		else
 		{
 			write_msg(NULL, "unexpected tgtype value: %d\n", tginfo->tgtype);
@@ -14393,31 +14382,31 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 		findx = 0;
 		if (TRIGGER_FOR_INSERT(tginfo->tgtype))
 		{
-			appendPQExpBuffer(query, " INSERT");
+			appendPQExpBufferStr(query, " INSERT");
 			findx++;
 		}
 		if (TRIGGER_FOR_DELETE(tginfo->tgtype))
 		{
 			if (findx > 0)
-				appendPQExpBuffer(query, " OR DELETE");
+				appendPQExpBufferStr(query, " OR DELETE");
 			else
-				appendPQExpBuffer(query, " DELETE");
+				appendPQExpBufferStr(query, " DELETE");
 			findx++;
 		}
 		if (TRIGGER_FOR_UPDATE(tginfo->tgtype))
 		{
 			if (findx > 0)
-				appendPQExpBuffer(query, " OR UPDATE");
+				appendPQExpBufferStr(query, " OR UPDATE");
 			else
-				appendPQExpBuffer(query, " UPDATE");
+				appendPQExpBufferStr(query, " UPDATE");
 			findx++;
 		}
 		if (TRIGGER_FOR_TRUNCATE(tginfo->tgtype))
 		{
 			if (findx > 0)
-				appendPQExpBuffer(query, " OR TRUNCATE");
+				appendPQExpBufferStr(query, " OR TRUNCATE");
 			else
-				appendPQExpBuffer(query, " TRUNCATE");
+				appendPQExpBufferStr(query, " TRUNCATE");
 			findx++;
 		}
 		appendPQExpBuffer(query, " ON %s\n",
@@ -14436,18 +14425,18 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 									  fmtId(tginfo->tgconstrrelname));
 			}
 			if (!tginfo->tgdeferrable)
-				appendPQExpBuffer(query, "NOT ");
-			appendPQExpBuffer(query, "DEFERRABLE INITIALLY ");
+				appendPQExpBufferStr(query, "NOT ");
+			appendPQExpBufferStr(query, "DEFERRABLE INITIALLY ");
 			if (tginfo->tginitdeferred)
-				appendPQExpBuffer(query, "DEFERRED\n");
+				appendPQExpBufferStr(query, "DEFERRED\n");
 			else
-				appendPQExpBuffer(query, "IMMEDIATE\n");
+				appendPQExpBufferStr(query, "IMMEDIATE\n");
 		}
 
 		if (TRIGGER_FOR_ROW(tginfo->tgtype))
-			appendPQExpBuffer(query, "    FOR EACH ROW\n    ");
+			appendPQExpBufferStr(query, "    FOR EACH ROW\n    ");
 		else
-			appendPQExpBuffer(query, "    FOR EACH STATEMENT\n    ");
+			appendPQExpBufferStr(query, "    FOR EACH STATEMENT\n    ");
 
 		/* In 7.3, result of regproc is already quoted */
 		if (fout->remoteVersion >= 70300)
@@ -14476,12 +14465,12 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 			}
 
 			if (findx > 0)
-				appendPQExpBuffer(query, ", ");
+				appendPQExpBufferStr(query, ", ");
 			appendStringLiteralAH(query, p, fout);
 			p += tlen + 1;
 		}
 		free(tgargs);
-		appendPQExpBuffer(query, ");\n");
+		appendPQExpBufferStr(query, ");\n");
 	}
 
 	if (tginfo->tgenabled != 't' && tginfo->tgenabled != 'O')
@@ -14492,16 +14481,16 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 		{
 			case 'D':
 			case 'f':
-				appendPQExpBuffer(query, "DISABLE");
+				appendPQExpBufferStr(query, "DISABLE");
 				break;
 			case 'A':
-				appendPQExpBuffer(query, "ENABLE ALWAYS");
+				appendPQExpBufferStr(query, "ENABLE ALWAYS");
 				break;
 			case 'R':
-				appendPQExpBuffer(query, "ENABLE REPLICA");
+				appendPQExpBufferStr(query, "ENABLE REPLICA");
 				break;
 			default:
-				appendPQExpBuffer(query, "ENABLE");
+				appendPQExpBufferStr(query, "ENABLE");
 				break;
 		}
 		appendPQExpBuffer(query, " TRIGGER %s;\n",
@@ -14541,9 +14530,9 @@ dumpEventTrigger(Archive *fout, EventTriggerInfo *evtinfo)
 	query = createPQExpBuffer();
 	labelq = createPQExpBuffer();
 
-	appendPQExpBuffer(query, "CREATE EVENT TRIGGER ");
+	appendPQExpBufferStr(query, "CREATE EVENT TRIGGER ");
 	appendPQExpBufferStr(query, fmtId(evtinfo->dobj.name));
-	appendPQExpBuffer(query, " ON ");
+	appendPQExpBufferStr(query, " ON ");
 	appendPQExpBufferStr(query, fmtId(evtinfo->evtevent));
 	appendPQExpBufferStr(query, " ");
 
@@ -14554,9 +14543,9 @@ dumpEventTrigger(Archive *fout, EventTriggerInfo *evtinfo)
 		appendPQExpBufferStr(query, ") ");
 	}
 
-	appendPQExpBuffer(query, "\n   EXECUTE PROCEDURE ");
+	appendPQExpBufferStr(query, "\n   EXECUTE PROCEDURE ");
 	appendPQExpBufferStr(query, evtinfo->evtfname);
-	appendPQExpBuffer(query, "();\n");
+	appendPQExpBufferStr(query, "();\n");
 
 	if (evtinfo->evtenabled != 'O')
 	{
@@ -14565,19 +14554,19 @@ dumpEventTrigger(Archive *fout, EventTriggerInfo *evtinfo)
 		switch (evtinfo->evtenabled)
 		{
 			case 'D':
-				appendPQExpBuffer(query, "DISABLE");
+				appendPQExpBufferStr(query, "DISABLE");
 				break;
 			case 'A':
-				appendPQExpBuffer(query, "ENABLE ALWAYS");
+				appendPQExpBufferStr(query, "ENABLE ALWAYS");
 				break;
 			case 'R':
-				appendPQExpBuffer(query, "ENABLE REPLICA");
+				appendPQExpBufferStr(query, "ENABLE REPLICA");
 				break;
 			default:
-				appendPQExpBuffer(query, "ENABLE");
+				appendPQExpBufferStr(query, "ENABLE");
 				break;
 		}
-		appendPQExpBuffer(query, ";\n");
+		appendPQExpBufferStr(query, ";\n");
 	}
 	appendPQExpBuffer(labelq, "EVENT TRIGGER %s ",
 					  fmtId(evtinfo->dobj.name));
@@ -14756,12 +14745,12 @@ getExtensionMembership(Archive *fout, ExtensionInfo extinfo[],
 	query = createPQExpBuffer();
 
 	/* refclassid constraint is redundant but may speed the search */
-	appendPQExpBuffer(query, "SELECT "
-					  "classid, objid, refclassid, refobjid "
-					  "FROM pg_depend "
-					  "WHERE refclassid = 'pg_extension'::regclass "
-					  "AND deptype = 'e' "
-					  "ORDER BY 3,4");
+	appendPQExpBufferStr(query, "SELECT "
+						 "classid, objid, refclassid, refobjid "
+						 "FROM pg_depend "
+						 "WHERE refclassid = 'pg_extension'::regclass "
+						 "AND deptype = 'e' "
+						 "ORDER BY 3,4");
 
 	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
@@ -14960,11 +14949,11 @@ getDependencies(Archive *fout)
 	 * PIN dependencies aren't interesting, and EXTENSION dependencies were
 	 * already processed by getExtensionMembership.
 	 */
-	appendPQExpBuffer(query, "SELECT "
-					  "classid, objid, refclassid, refobjid, deptype "
-					  "FROM pg_depend "
-					  "WHERE deptype != 'p' AND deptype != 'e' "
-					  "ORDER BY 1,2");
+	appendPQExpBufferStr(query, "SELECT "
+						 "classid, objid, refclassid, refobjid, deptype "
+						 "FROM pg_depend "
+						 "WHERE deptype != 'p' AND deptype != 'e' "
+						 "ORDER BY 1,2");
 
 	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
@@ -15304,7 +15293,7 @@ selectSourceSchema(Archive *fout, const char *schemaName)
 	appendPQExpBuffer(query, "SET search_path = %s",
 					  fmtId(schemaName));
 	if (strcmp(schemaName, "pg_catalog") != 0)
-		appendPQExpBuffer(query, ", pg_catalog");
+		appendPQExpBufferStr(query, ", pg_catalog");
 
 	ExecuteSqlStatement(fout, query->data);
 
@@ -15397,21 +15386,21 @@ myFormatType(const char *typname, int32 typmod)
 	{
 		int			len = (typmod - VARHDRSZ);
 
-		appendPQExpBuffer(buf, "character");
+		appendPQExpBufferStr(buf, "character");
 		if (len > 1)
 			appendPQExpBuffer(buf, "(%d)",
 							  typmod - VARHDRSZ);
 	}
 	else if (strcmp(typname, "varchar") == 0)
 	{
-		appendPQExpBuffer(buf, "character varying");
+		appendPQExpBufferStr(buf, "character varying");
 		if (typmod != -1)
 			appendPQExpBuffer(buf, "(%d)",
 							  typmod - VARHDRSZ);
 	}
 	else if (strcmp(typname, "numeric") == 0)
 	{
-		appendPQExpBuffer(buf, "numeric");
+		appendPQExpBufferStr(buf, "numeric");
 		if (typmod != -1)
 		{
 			int32		tmp_typmod;
@@ -15431,13 +15420,13 @@ myFormatType(const char *typname, int32 typmod)
 	 * through with quotes. - thomas 1998-12-13
 	 */
 	else if (strcmp(typname, "char") == 0)
-		appendPQExpBuffer(buf, "\"char\"");
+		appendPQExpBufferStr(buf, "\"char\"");
 	else
-		appendPQExpBuffer(buf, "%s", fmtId(typname));
+		appendPQExpBufferStr(buf, fmtId(typname));
 
 	/* Append array qualifier for array types */
 	if (isarray)
-		appendPQExpBuffer(buf, "[]");
+		appendPQExpBufferStr(buf, "[]");
 
 	result = pg_strdup(buf->data);
 	destroyPQExpBuffer(buf);
@@ -15460,22 +15449,22 @@ fmtCopyColumnList(const TableInfo *ti, PQExpBuffer buffer)
 	bool		needComma;
 	int			i;
 
-	appendPQExpBuffer(buffer, "(");
+	appendPQExpBufferChar(buffer, '(');
 	needComma = false;
 	for (i = 0; i < numatts; i++)
 	{
 		if (attisdropped[i])
 			continue;
 		if (needComma)
-			appendPQExpBuffer(buffer, ", ");
-		appendPQExpBuffer(buffer, "%s", fmtId(attnames[i]));
+			appendPQExpBufferStr(buffer, ", ");
+		appendPQExpBufferStr(buffer, fmtId(attnames[i]));
 		needComma = true;
 	}
 
 	if (!needComma)
 		return "";				/* no undropped columns */
 
-	appendPQExpBuffer(buffer, ")");
+	appendPQExpBufferChar(buffer, ')');
 	return buffer->data;
 }
 

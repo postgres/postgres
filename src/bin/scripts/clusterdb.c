@@ -196,12 +196,12 @@ cluster_one_database(const char *dbname, bool verbose, const char *table,
 
 	initPQExpBuffer(&sql);
 
-	appendPQExpBuffer(&sql, "CLUSTER");
+	appendPQExpBufferStr(&sql, "CLUSTER");
 	if (verbose)
-		appendPQExpBuffer(&sql, " VERBOSE");
+		appendPQExpBufferStr(&sql, " VERBOSE");
 	if (table)
 		appendPQExpBuffer(&sql, " %s", table);
-	appendPQExpBuffer(&sql, ";\n");
+	appendPQExpBufferStr(&sql, ";\n");
 
 	conn = connectDatabase(dbname, host, port, username, prompt_password,
 						   progname, false);

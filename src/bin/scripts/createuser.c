@@ -254,10 +254,10 @@ main(int argc, char *argv[])
 	if (newpassword)
 	{
 		if (encrypted == TRI_YES)
-			appendPQExpBuffer(&sql, " ENCRYPTED");
+			appendPQExpBufferStr(&sql, " ENCRYPTED");
 		if (encrypted == TRI_NO)
-			appendPQExpBuffer(&sql, " UNENCRYPTED");
-		appendPQExpBuffer(&sql, " PASSWORD ");
+			appendPQExpBufferStr(&sql, " UNENCRYPTED");
+		appendPQExpBufferStr(&sql, " PASSWORD ");
 
 		if (encrypted != TRI_NO)
 		{
@@ -277,32 +277,32 @@ main(int argc, char *argv[])
 			appendStringLiteralConn(&sql, newpassword, conn);
 	}
 	if (superuser == TRI_YES)
-		appendPQExpBuffer(&sql, " SUPERUSER");
+		appendPQExpBufferStr(&sql, " SUPERUSER");
 	if (superuser == TRI_NO)
-		appendPQExpBuffer(&sql, " NOSUPERUSER");
+		appendPQExpBufferStr(&sql, " NOSUPERUSER");
 	if (createdb == TRI_YES)
-		appendPQExpBuffer(&sql, " CREATEDB");
+		appendPQExpBufferStr(&sql, " CREATEDB");
 	if (createdb == TRI_NO)
-		appendPQExpBuffer(&sql, " NOCREATEDB");
+		appendPQExpBufferStr(&sql, " NOCREATEDB");
 	if (createrole == TRI_YES)
-		appendPQExpBuffer(&sql, " CREATEROLE");
+		appendPQExpBufferStr(&sql, " CREATEROLE");
 	if (createrole == TRI_NO)
-		appendPQExpBuffer(&sql, " NOCREATEROLE");
+		appendPQExpBufferStr(&sql, " NOCREATEROLE");
 	if (inherit == TRI_YES)
-		appendPQExpBuffer(&sql, " INHERIT");
+		appendPQExpBufferStr(&sql, " INHERIT");
 	if (inherit == TRI_NO)
-		appendPQExpBuffer(&sql, " NOINHERIT");
+		appendPQExpBufferStr(&sql, " NOINHERIT");
 	if (login == TRI_YES)
-		appendPQExpBuffer(&sql, " LOGIN");
+		appendPQExpBufferStr(&sql, " LOGIN");
 	if (login == TRI_NO)
-		appendPQExpBuffer(&sql, " NOLOGIN");
+		appendPQExpBufferStr(&sql, " NOLOGIN");
 	if (replication == TRI_YES)
-		appendPQExpBuffer(&sql, " REPLICATION");
+		appendPQExpBufferStr(&sql, " REPLICATION");
 	if (replication == TRI_NO)
-		appendPQExpBuffer(&sql, " NOREPLICATION");
+		appendPQExpBufferStr(&sql, " NOREPLICATION");
 	if (conn_limit != NULL)
 		appendPQExpBuffer(&sql, " CONNECTION LIMIT %s", conn_limit);
-	appendPQExpBuffer(&sql, ";\n");
+	appendPQExpBufferStr(&sql, ";\n");
 
 	if (echo)
 		printf("%s", sql.data);

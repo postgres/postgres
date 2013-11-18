@@ -248,13 +248,13 @@ vacuum_one_database(const char *dbname, bool full, bool verbose, bool and_analyz
 
 	if (analyze_only)
 	{
-		appendPQExpBuffer(&sql, "ANALYZE");
+		appendPQExpBufferStr(&sql, "ANALYZE");
 		if (verbose)
-			appendPQExpBuffer(&sql, " VERBOSE");
+			appendPQExpBufferStr(&sql, " VERBOSE");
 	}
 	else
 	{
-		appendPQExpBuffer(&sql, "VACUUM");
+		appendPQExpBufferStr(&sql, "VACUUM");
 		if (PQserverVersion(conn) >= 90000)
 		{
 			const char *paren = " (";
@@ -282,23 +282,23 @@ vacuum_one_database(const char *dbname, bool full, bool verbose, bool and_analyz
 				sep = comma;
 			}
 			if (sep != paren)
-				appendPQExpBuffer(&sql, ")");
+				appendPQExpBufferStr(&sql, ")");
 		}
 		else
 		{
 			if (full)
-				appendPQExpBuffer(&sql, " FULL");
+				appendPQExpBufferStr(&sql, " FULL");
 			if (freeze)
-				appendPQExpBuffer(&sql, " FREEZE");
+				appendPQExpBufferStr(&sql, " FREEZE");
 			if (verbose)
-				appendPQExpBuffer(&sql, " VERBOSE");
+				appendPQExpBufferStr(&sql, " VERBOSE");
 			if (and_analyze)
-				appendPQExpBuffer(&sql, " ANALYZE");
+				appendPQExpBufferStr(&sql, " ANALYZE");
 		}
 	}
 	if (table)
 		appendPQExpBuffer(&sql, " %s", table);
-	appendPQExpBuffer(&sql, ";\n");
+	appendPQExpBufferStr(&sql, ";\n");
 
 	if (!executeMaintenanceCommand(conn, sql.data, echo))
 	{

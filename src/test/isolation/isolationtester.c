@@ -204,7 +204,7 @@ main(int argc, char **argv)
 						 "AND holder.granted "
 						 "AND holder.pid <> $1 AND holder.pid IN (");
 	/* The spec syntax requires at least one session; assume that here. */
-	appendPQExpBuffer(&wait_query, "%s", backend_pids[1]);
+	appendPQExpBufferStr(&wait_query, backend_pids[1]);
 	for (i = 2; i < nconns; i++)
 		appendPQExpBuffer(&wait_query, ", %s", backend_pids[i]);
 	appendPQExpBufferStr(&wait_query,

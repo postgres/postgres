@@ -246,14 +246,14 @@ reindex_one_database(const char *name, const char *dbname, const char *type,
 
 	initPQExpBuffer(&sql);
 
-	appendPQExpBuffer(&sql, "REINDEX");
+	appendPQExpBufferStr(&sql, "REINDEX");
 	if (strcmp(type, "TABLE") == 0)
 		appendPQExpBuffer(&sql, " TABLE %s", name);
 	else if (strcmp(type, "INDEX") == 0)
 		appendPQExpBuffer(&sql, " INDEX %s", name);
 	else if (strcmp(type, "DATABASE") == 0)
 		appendPQExpBuffer(&sql, " DATABASE %s", fmtId(name));
-	appendPQExpBuffer(&sql, ";\n");
+	appendPQExpBufferStr(&sql, ";\n");
 
 	conn = connectDatabase(dbname, host, port, username, prompt_password,
 						   progname, false);
