@@ -672,10 +672,10 @@ data. Empty in ordinary tables.</entry>
    to this page</entry>
   </row>
   <row>
-   <entry>pd_tli</entry>
+   <entry>pd_checksum</entry>
    <entry>uint16</entry>
    <entry>2 bytes</entry>
-   <entry>TimeLineID of last change (only its lowest 16 bits)</entry>
+   <entry>Page checksum</entry>
   </row>
   <row>
    <entry>pd_flags</entry>
