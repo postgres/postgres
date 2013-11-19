@@ -325,6 +325,8 @@ old_8_3_rebuild_tsvector_tables(ClusterInfo *cluster, bool check_mode)
 								"WHERE	c.relkind = 'r' AND "
 								"		c.oid = a.attrelid AND "
 								"		NOT a.attisdropped AND "
+		/* child attribute changes are processed by the parent */
+								"		a.attinhcount = 0 AND "
 								"		a.atttypid = 'pg_catalog.tsvector'::pg_catalog.regtype AND "
 								"		c.relnamespace = n.oid AND "
 		/* exclude possible orphaned temp tables */
@@ -346,6 +348,8 @@ old_8_3_rebuild_tsvector_tables(ClusterInfo *cluster, bool check_mode)
 								"WHERE	c.relkind = 'r' AND "			\
 								"		c.oid = a.attrelid AND "		\
 								"		NOT a.attisdropped AND "		\
+		/* child attribute changes are processed by the parent */		\
+								"		a.attinhcount = 0 AND "			\
 								"		a.atttypid = 'pg_catalog.tsvector'::pg_catalog.regtype AND " \
 								"		c.relnamespace = n.oid AND "	\
 								"       n.nspname !~ '^pg_' AND "		\
