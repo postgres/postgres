@@ -3335,9 +3335,10 @@ psql_completion(char *text, int start, int end)
 	else if (strcmp(prev_wd, "\\pset") == 0)
 	{
 		static const char *const my_list[] =
-		{"format", "border", "expanded",
-			"null", "fieldsep", "tuples_only", "title", "tableattr",
-		"linestyle", "pager", "recordsep", NULL};
+		{"border", "columns", "expanded", "fieldsep", "fieldsep_zero",
+		 "footer", "format", "linestyle", "null", "numericlocale",
+		 "pager", "recordsep", "recordsep_zero", "tableattr", "title",
+		 "tuples_only", NULL};
 
 		COMPLETE_WITH_LIST_CS(my_list);
 	}
