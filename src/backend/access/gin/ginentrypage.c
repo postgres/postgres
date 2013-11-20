@@ -258,7 +258,7 @@ entryLocateEntry(GinBtree btree, GinBtreeStack *stack)
 	{
 		stack->off = FirstOffsetNumber;
 		stack->predictNumber *= PageGetMaxOffsetNumber(page);
-		return btree->getLeftMostPage(btree, page);
+		return btree->getLeftMostChild(btree, page);
 	}
 
 	low = FirstOffsetNumber;
@@ -729,16 +729,15 @@ ginPrepareEntryScan(GinBtree btree, OffsetNumber attnum,
 	btree->ginstate = ginstate;
 
 	btree->findChildPage = entryLocateEntry;
+	btree->getLeftMostChild = entryGetLeftMostPage;
 	btree->isMoveRight = entryIsMoveRight;
 	btree->findItem = entryLocateLeafEntry;
 	btree->findChildPtr = entryFindChildPtr;
-	btree->getLeftMostPage = entryGetLeftMostPage;
 	btree->placeToPage = entryPlaceToPage;
 	btree->splitPage = entrySplitPage;
 	btree->fillRoot = ginEntryFillRoot;
 
 	btree->isData = FALSE;
-	btree->searchMode = FALSE;
 	btree->fullScan = FALSE;
 	btree->isBuild = FALSE;
 

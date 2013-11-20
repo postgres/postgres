@@ -54,7 +54,7 @@ dataLocateItem(GinBtree btree, GinBtreeStack *stack)
 	{
 		stack->off = FirstOffsetNumber;
 		stack->predictNumber *= GinPageGetOpaque(page)->maxoff;
-		return btree->getLeftMostPage(btree, page);
+		return btree->getLeftMostChild(btree, page);
 	}
 
 	low = FirstOffsetNumber;
@@ -680,17 +680,10 @@ createPostingTree(Relation index, ItemPointerData *items, uint32 nitems,
 	 */
 	if (nitems > nrootitems)
 	{
-		GinPostingTreeScan *gdi;
-
-		gdi = ginPrepareScanPostingTree(index, blkno, FALSE);
-		gdi->btree.isBuild = (buildStats != NULL);
-
-		ginInsertItemPointers(gdi,
+		ginInsertItemPointers(index, blkno,
 							  items + nrootitems,
 							  nitems - nrootitems,
 							  buildStats);
-
-		pfree(gdi);
 	}
 
 	return blkno;
@@ -704,76 +697,69 @@ ginPrepareDataScan(GinBtree btree, Relation index)
 	btree->index = index;
 
 	btree->findChildPage = dataLocateItem;
+	btree->getLeftMostChild = dataGetLeftMostPage;
 	btree->isMoveRight = dataIsMoveRight;
 	btree->findItem = dataLocateLeafItem;
 	btree->findChildPtr = dataFindChildPtr;
-	btree->getLeftMostPage = dataGetLeftMostPage;
 	btree->placeToPage = dataPlaceToPage;
 	btree->splitPage = dataSplitPage;
 	btree->fillRoot = ginDataFillRoot;
 
 	btree->isData = TRUE;
-	btree->searchMode = FALSE;
 	btree->isDelete = FALSE;
 	btree->fullScan = FALSE;
 	btree->isBuild = FALSE;
-}
-
-GinPostingTreeScan *
-ginPrepareScanPostingTree(Relation index, BlockNumber rootBlkno, bool searchMode)
-{
-	GinPostingTreeScan *gdi = (GinPostingTreeScan *) palloc0(sizeof(GinPostingTreeScan));
-
-	ginPrepareDataScan(&gdi->btree, index);
-
-	gdi->btree.searchMode = searchMode;
-	gdi->btree.fullScan = searchMode;
-
-	gdi->stack = ginPrepareFindLeafPage(&gdi->btree, rootBlkno);
-
-	return gdi;
 }
 
 /*
  * Inserts array of item pointers, may execute several tree scan (very rare)
  */
 void
-ginInsertItemPointers(GinPostingTreeScan *gdi,
+ginInsertItemPointers(Relation index, BlockNumber rootBlkno,
 					  ItemPointerData *items, uint32 nitem,
 					  GinStatsData *buildStats)
 {
-	BlockNumber rootBlkno = gdi->stack->blkno;
+	GinBtreeData btree;
+	GinBtreeStack *stack;
 
-	gdi->btree.items = items;
-	gdi->btree.nitem = nitem;
-	gdi->btree.curitem = 0;
+	ginPrepareDataScan(&btree, index);
+	btree.isBuild = (buildStats != NULL);
+	btree.items = items;
+	btree.nitem = nitem;
+	btree.curitem = 0;
 
-	while (gdi->btree.curitem < gdi->btree.nitem)
+	while (btree.curitem < btree.nitem)
 	{
-		if (!gdi->stack)
-			gdi->stack = ginPrepareFindLeafPage(&gdi->btree, rootBlkno);
+		stack = ginFindLeafPage(&btree, rootBlkno, false);
 
-		gdi->stack = ginFindLeafPage(&gdi->btree, gdi->stack);
-
-		if (gdi->btree.findItem(&(gdi->btree), gdi->stack))
+		if (btree.findItem(&btree, stack))
 		{
 			/*
-			 * gdi->btree.items[gdi->btree.curitem] already exists in index
+			 * btree.items[btree.curitem] already exists in index
 			 */
-			gdi->btree.curitem++;
-			LockBuffer(gdi->stack->buffer, GIN_UNLOCK);
-			freeGinBtreeStack(gdi->stack);
+			btree.curitem++;
+			LockBuffer(stack->buffer, GIN_UNLOCK);
+			freeGinBtreeStack(stack);
 		}
 		else
-			ginInsertValue(&(gdi->btree), gdi->stack, buildStats);
-
-		gdi->stack = NULL;
+			ginInsertValue(&btree, stack, buildStats);
 	}
 }
 
-Buffer
-ginScanBeginPostingTree(GinPostingTreeScan *gdi)
+/*
+ * Starts a new scan on a posting tree.
+ */
+GinBtreeStack *
+ginScanBeginPostingTree(Relation index, BlockNumber rootBlkno)
 {
-	gdi->stack = ginFindLeafPage(&gdi->btree, gdi->stack);
-	return gdi->stack->buffer;
+	GinBtreeData btree;
+	GinBtreeStack *stack;
+
+	ginPrepareDataScan(&btree, index);
+
+	btree.fullScan = TRUE;
+
+	stack = ginFindLeafPage(&btree, rootBlkno, TRUE);
+
+	return stack;
 }

@@ -479,18 +479,17 @@ typedef struct GinBtreeData
 {
 	/* search methods */
 	BlockNumber (*findChildPage) (GinBtree, GinBtreeStack *);
+	BlockNumber (*getLeftMostChild) (GinBtree, Page);
 	bool		(*isMoveRight) (GinBtree, Page);
 	bool		(*findItem) (GinBtree, GinBtreeStack *);
 
 	/* insert methods */
 	OffsetNumber (*findChildPtr) (GinBtree, Page, BlockNumber, OffsetNumber);
-	BlockNumber (*getLeftMostPage) (GinBtree, Page);
 	bool		(*placeToPage) (GinBtree, Buffer, OffsetNumber, XLogRecData **);
 	Page		(*splitPage) (GinBtree, Buffer, Buffer, OffsetNumber, XLogRecData **);
 	void		(*fillRoot) (GinBtree, Buffer, Buffer, Buffer);
 
 	bool		isData;
-	bool		searchMode;
 
 	Relation	index;
 	GinState   *ginstate;		/* not valid in a data scan */
@@ -514,8 +513,7 @@ typedef struct GinBtreeData
 	PostingItem pitem;
 } GinBtreeData;
 
-extern GinBtreeStack *ginPrepareFindLeafPage(GinBtree btree, BlockNumber blkno);
-extern GinBtreeStack *ginFindLeafPage(GinBtree btree, GinBtreeStack *stack);
+extern GinBtreeStack *ginFindLeafPage(GinBtree btree, BlockNumber rootBlkno, bool searchMode);
 extern Buffer ginStepRight(Buffer buffer, Relation index, int lockmode);
 extern void freeGinBtreeStack(GinBtreeStack *stack);
 extern void ginInsertValue(GinBtree btree, GinBtreeStack *stack,
@@ -540,19 +538,10 @@ extern BlockNumber createPostingTree(Relation index,
 extern void GinDataPageAddItemPointer(Page page, ItemPointer data, OffsetNumber offset);
 extern void GinDataPageAddPostingItem(Page page, PostingItem *data, OffsetNumber offset);
 extern void GinPageDeletePostingItem(Page page, OffsetNumber offset);
-
-typedef struct
-{
-	GinBtreeData btree;
-	GinBtreeStack *stack;
-} GinPostingTreeScan;
-
-extern GinPostingTreeScan *ginPrepareScanPostingTree(Relation index,
-						  BlockNumber rootBlkno, bool searchMode);
-extern void ginInsertItemPointers(GinPostingTreeScan *gdi,
+extern void ginInsertItemPointers(Relation index, BlockNumber rootBlkno,
 					  ItemPointerData *items, uint32 nitem,
 					  GinStatsData *buildStats);
-extern Buffer ginScanBeginPostingTree(GinPostingTreeScan *gdi);
+extern GinBtreeStack *ginScanBeginPostingTree(Relation index, BlockNumber rootBlkno);
 extern void ginDataFillRoot(GinBtree btree, Buffer root, Buffer lbuf, Buffer rbuf);
 extern void ginPrepareDataScan(GinBtree btree, Relation index);
 

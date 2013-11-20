@@ -52,52 +52,38 @@ ginTraverseLock(Buffer buffer, bool searchMode)
 	return access;
 }
 
-GinBtreeStack *
-ginPrepareFindLeafPage(GinBtree btree, BlockNumber blkno)
-{
-	GinBtreeStack *stack = (GinBtreeStack *) palloc(sizeof(GinBtreeStack));
-
-	stack->blkno = blkno;
-	stack->buffer = ReadBuffer(btree->index, stack->blkno);
-	stack->parent = NULL;
-	stack->predictNumber = 1;
-
-	ginTraverseLock(stack->buffer, btree->searchMode);
-
-	return stack;
-}
-
 /*
- * Locates leaf page contained tuple
+ * Descends the tree to the leaf page that contains or would contain the
+ * key we're searching for. The key should already be filled in 'btree',
+ * in tree-type specific manner. If btree->fullScan is true, descends to the
+ * leftmost leaf page.
+ *
+ * If 'searchmode' is false, on return stack->buffer is exclusively locked,
+ * and the stack represents the full path to the root. Otherwise stack->buffer
+ * is share-locked, and stack->parent is NULL.
  */
 GinBtreeStack *
-ginFindLeafPage(GinBtree btree, GinBtreeStack *stack)
+ginFindLeafPage(GinBtree btree, BlockNumber rootBlkno, bool searchMode)
 {
-	bool		isfirst = TRUE;
-	BlockNumber rootBlkno;
+	GinBtreeStack *stack;
 
-	if (!stack)
-		stack = ginPrepareFindLeafPage(btree, GIN_ROOT_BLKNO);
-	rootBlkno = stack->blkno;
+	stack = (GinBtreeStack *) palloc(sizeof(GinBtreeStack));
+	stack->blkno = rootBlkno;
+	stack->buffer = ReadBuffer(btree->index, rootBlkno);
+	stack->parent = NULL;
+	stack->predictNumber = 1;
 
 	for (;;)
 	{
 		Page		page;
 		BlockNumber child;
-		int			access = GIN_SHARE;
+		int			access;
 
 		stack->off = InvalidOffsetNumber;
 
 		page = BufferGetPage(stack->buffer);
 
-		if (isfirst)
-		{
-			if (GinPageIsLeaf(page) && !btree->searchMode)
-				access = GIN_EXCLUSIVE;
-			isfirst = FALSE;
-		}
-		else
-			access = ginTraverseLock(stack->buffer, btree->searchMode);
+		access = ginTraverseLock(stack->buffer, searchMode);
 
 		/*
 		 * ok, page is correctly locked, we should check to move right ..,
@@ -127,7 +113,7 @@ ginFindLeafPage(GinBtree btree, GinBtreeStack *stack)
 		Assert(child != InvalidBlockNumber);
 		Assert(stack->blkno != child);
 
-		if (btree->searchMode)
+		if (searchMode)
 		{
 			/* in search mode we may forget path to leaf */
 			stack->blkno = child;
@@ -251,7 +237,7 @@ ginFindParents(GinBtree btree, GinBtreeStack *stack,
 		return;
 	}
 
-	leftmostBlkno = blkno = btree->getLeftMostPage(btree, page);
+	leftmostBlkno = blkno = btree->getLeftMostChild(btree, page);
 	LockBuffer(root->buffer, GIN_UNLOCK);
 	Assert(blkno != InvalidBlockNumber);
 
@@ -263,7 +249,7 @@ ginFindParents(GinBtree btree, GinBtreeStack *stack,
 		if (GinPageIsLeaf(page))
 			elog(ERROR, "Lost path");
 
-		leftmostBlkno = btree->getLeftMostPage(btree, page);
+		leftmostBlkno = btree->getLeftMostChild(btree, page);
 
 		while ((offset = btree->findChildPtr(btree, page, stack->blkno, InvalidOffsetNumber)) == InvalidOffsetNumber)
 		{
