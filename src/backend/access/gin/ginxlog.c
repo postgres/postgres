@@ -799,24 +799,11 @@ ginContinueSplit(ginIncompleteSplit *split)
 		ginPrepareEntryScan(&btree,
 							InvalidOffsetNumber, (Datum) 0, GIN_CAT_NULL_KEY,
 							&ginstate);
-		btree.entry = ginPageGetLinkItup(buffer);
 	}
 	else
 	{
-		Page		page = BufferGetPage(buffer);
-
 		ginPrepareDataScan(&btree, reln);
-
-		PostingItemSetBlockNumber(&(btree.pitem), split->leftBlkno);
-		if (GinPageIsLeaf(page))
-			btree.pitem.key = *GinDataPageGetItemPointer(page,
-														 GinPageGetOpaque(page)->maxoff);
-		else
-			btree.pitem.key = GinDataPageGetPostingItem(page,
-														GinPageGetOpaque(page)->maxoff)->key;
 	}
-
-	btree.rightblkno = split->rightBlkno;
 
 	stack.blkno = split->leftBlkno;
 	stack.buffer = buffer;
@@ -824,6 +811,8 @@ ginContinueSplit(ginIncompleteSplit *split)
 	stack.parent = NULL;
 
 	ginFindParents(&btree, &stack, split->rootBlkno);
+
+	btree.prepareDownlink(&btree, buffer);
 	ginInsertValue(&btree, stack.parent, NULL);
 
 	FreeFakeRelcacheEntry(reln);

@@ -580,12 +580,20 @@ dataSplitPage(GinBtree btree, Buffer lbuf, Buffer rbuf, OffsetNumber off, XLogRe
 	rdata[1].len = MAXALIGN(maxoff * sizeofitem);
 	rdata[1].next = NULL;
 
-	/* Prepare a downlink tuple for insertion to the parent */
+	return lpage;
+}
+
+/*
+ * Prepare the state in 'btree' for inserting a downlink for given buffer.
+ */
+static void
+dataPrepareDownlink(GinBtree btree, Buffer lbuf)
+{
+	Page		lpage = BufferGetPage(lbuf);
+
 	PostingItemSetBlockNumber(&(btree->pitem), BufferGetBlockNumber(lbuf));
 	btree->pitem.key = *GinDataPageGetRightBound(lpage);
-	btree->rightblkno = BufferGetBlockNumber(rbuf);
-
-	return lpage;
+	btree->rightblkno = GinPageGetOpaque(lpage)->rightlink;
 }
 
 /*
@@ -704,6 +712,7 @@ ginPrepareDataScan(GinBtree btree, Relation index)
 	btree->placeToPage = dataPlaceToPage;
 	btree->splitPage = dataSplitPage;
 	btree->fillRoot = ginDataFillRoot;
+	btree->prepareDownlink = dataPrepareDownlink;
 
 	btree->isData = TRUE;
 	btree->isDelete = FALSE;

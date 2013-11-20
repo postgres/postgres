@@ -487,6 +487,7 @@ typedef struct GinBtreeData
 	OffsetNumber (*findChildPtr) (GinBtree, Page, BlockNumber, OffsetNumber);
 	bool		(*placeToPage) (GinBtree, Buffer, OffsetNumber, XLogRecData **);
 	Page		(*splitPage) (GinBtree, Buffer, Buffer, OffsetNumber, XLogRecData **);
+	void		(*prepareDownlink) (GinBtree, Buffer);
 	void		(*fillRoot) (GinBtree, Buffer, Buffer, Buffer);
 
 	bool		isData;
@@ -529,7 +530,6 @@ extern void ginPrepareEntryScan(GinBtree btree, OffsetNumber attnum,
 					Datum key, GinNullCategory category,
 					GinState *ginstate);
 extern void ginEntryFillRoot(GinBtree btree, Buffer root, Buffer lbuf, Buffer rbuf);
-extern IndexTuple ginPageGetLinkItup(Buffer buf);
 
 /* gindatapage.c */
 extern BlockNumber createPostingTree(Relation index,

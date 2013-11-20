@@ -452,6 +452,7 @@ ginInsertValue(GinBtree btree, GinBtreeStack *stack, GinStatsData *buildStats)
 			}
 		}
 
+		btree->prepareDownlink(btree, stack->buffer);
 		btree->isDelete = FALSE;
 
 		/* search parent to lock */
