@@ -31,6 +31,7 @@ main(int argc, char **argv)
 	const char *connect_timeout = DEFAULT_CONNECT_TIMEOUT;
 
 	const char *pghost_str = NULL;
+	const char *pghostaddr_str = NULL;
 	const char *pgport_str = NULL;
 
 #define PARAMS_ARRAY_SIZE	7
@@ -130,7 +131,10 @@ main(int argc, char **argv)
 	/*
 	 * Get the host and port so we can display them in our output
 	 */
-	if (pgdbname)
+	if (pgdbname &&
+		(strncmp(pgdbname, "postgresql://", 13) == 0 ||
+		 strncmp(pgdbname, "postgres://", 11) == 0 ||
+		 strchr(pgdbname, '=') != NULL))
 	{
 		opts = PQconninfoParse(pgdbname, &errmsg);
 		if (opts == NULL)
@@ -149,8 +153,7 @@ main(int argc, char **argv)
 
 	for (opt = opts, def = defs; def->keyword; def++)
 	{
-		if (strcmp(def->keyword, "hostaddr") == 0 ||
-			strcmp(def->keyword, "host") == 0)
+		if (strcmp(def->keyword, "host") == 0)
 		{
 			if (opt && opt->val)
 				pghost_str = opt->val;
@@ -160,6 +163,13 @@ main(int argc, char **argv)
 				pghost_str = def->val;
 			else
 				pghost_str = DEFAULT_PGSOCKET_DIR;
+		}
+		else if (strcmp(def->keyword, "hostaddr") == 0)
+		{
+			if (opt && opt->val)
+				pghostaddr_str = opt->val;
+			else if (def->val)
+				pghostaddr_str = def->val;
 		}
 		else if (strcmp(def->keyword, "port") == 0)
 		{
@@ -179,7 +189,9 @@ main(int argc, char **argv)
 
 	if (!quiet)
 	{
-		printf("%s:%s - ", pghost_str, pgport_str);
+		printf("%s:%s - ",
+			   pghostaddr_str != NULL ? pghostaddr_str : pghost_str,
+			   pgport_str);
 
 		switch (rv)
 		{
