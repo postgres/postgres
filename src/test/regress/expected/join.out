@@ -2930,6 +2930,58 @@ select a.unique1, b.unique1, c.unique1, coalesce(b.twothousand, a.twothousand)
 (0 rows)
 
 --
+-- check handling of join aliases when flattening multiple levels of subquery
+--
+explain (verbose, costs off)
+select foo1.join_key as foo1_id, foo3.join_key AS foo3_id, bug_field from
+  (values (0),(1)) foo1(join_key)
+left join
+  (select join_key, bug_field from
+    (select ss1.join_key, ss1.bug_field from
+      (select f1 as join_key, 666 as bug_field from int4_tbl i1) ss1
+    ) foo2
+   left join
+    (select unique2 as join_key from tenk1 i2) ss2
+   using (join_key)
+  ) foo3
+using (join_key);
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
+ Nested Loop Left Join
+   Output: "*VALUES*".column1, i1.f1, (666)
+   Join Filter: ("*VALUES*".column1 = i1.f1)
+   ->  Values Scan on "*VALUES*"
+         Output: "*VALUES*".column1
+   ->  Materialize
+         Output: i1.f1, (666)
+         ->  Nested Loop Left Join
+               Output: i1.f1, 666
+               ->  Seq Scan on public.int4_tbl i1
+                     Output: i1.f1
+               ->  Index Only Scan using tenk1_unique2 on public.tenk1 i2
+                     Output: i2.unique2
+                     Index Cond: (i2.unique2 = i1.f1)
+(14 rows)
+
+select foo1.join_key as foo1_id, foo3.join_key AS foo3_id, bug_field from
+  (values (0),(1)) foo1(join_key)
+left join
+  (select join_key, bug_field from
+    (select ss1.join_key, ss1.bug_field from
+      (select f1 as join_key, 666 as bug_field from int4_tbl i1) ss1
+    ) foo2
+   left join
+    (select unique2 as join_key from tenk1 i2) ss2
+   using (join_key)
+  ) foo3
+using (join_key);
+ foo1_id | foo3_id | bug_field 
+---------+---------+-----------
+       0 |       0 |       666
+       1 |         |          
+(2 rows)
+
+--
 -- test ability to push constants through outer join clauses
 --
 explain (costs off)
