@@ -117,7 +117,7 @@ GetConnection(void)
 	/* If -W was given, force prompt for password, but only the first time */
 	need_password = (dbgetpassword == 1 && dbpassword == NULL);
 
-	while (true)
+	do
 	{
 		/* Get a new password if appropriate */
 		if (need_password)
@@ -161,9 +161,8 @@ GetConnection(void)
 			PQfinish(tmpconn);
 			need_password = true;
 		}
-		else
-			break;
 	}
+	while (need_password);
 
 	if (PQstatus(tmpconn) != CONNECTION_OK)
 	{
