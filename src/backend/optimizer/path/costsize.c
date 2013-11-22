@@ -1076,9 +1076,9 @@ cost_functionscan(Path *path, PlannerInfo *root,
 		path->rows = baserel->rows;
 
 	/*
-	 * Estimate costs of executing the function expression.
+	 * Estimate costs of executing the function expression(s).
 	 *
-	 * Currently, nodeFunctionscan.c always executes the function to
+	 * Currently, nodeFunctionscan.c always executes the functions to
 	 * completion before returning any rows, and caches the results in a
 	 * tuplestore.	So the function eval cost is all startup cost, and per-row
 	 * costs are minimal.
@@ -1088,7 +1088,7 @@ cost_functionscan(Path *path, PlannerInfo *root,
 	 * estimates for functions tend to be, there's not a lot of point in that
 	 * refinement right now.
 	 */
-	cost_qual_eval_node(&exprcost, rte->funcexpr, root);
+	cost_qual_eval_node(&exprcost, (Node *) rte->functions, root);
 
 	startup_cost += exprcost.startup + exprcost.per_tuple;
 
@@ -3845,14 +3845,26 @@ void
 set_function_size_estimates(PlannerInfo *root, RelOptInfo *rel)
 {
 	RangeTblEntry *rte;
+	ListCell   *lc;
 
 	/* Should only be applied to base relations that are functions */
 	Assert(rel->relid > 0);
 	rte = planner_rt_fetch(rel->relid, root);
 	Assert(rte->rtekind == RTE_FUNCTION);
 
-	/* Estimate number of rows the function itself will return */
-	rel->tuples = expression_returns_set_rows(rte->funcexpr);
+	/*
+	 * Estimate number of rows the functions will return. The rowcount of the
+	 * node is that of the largest function result.
+	 */
+	rel->tuples = 0;
+	foreach(lc, rte->functions)
+	{
+		RangeTblFunction *rtfunc = (RangeTblFunction *) lfirst(lc);
+		double		ntup = expression_returns_set_rows(rtfunc->funcexpr);
+
+		if (ntup > rel->tuples)
+			rel->tuples = ntup;
+	}
 
 	/* Now estimate number of output rows, etc */
 	set_baserel_size_estimates(root, rel);

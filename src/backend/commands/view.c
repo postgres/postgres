@@ -100,6 +100,7 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 			def->cooked_default = NULL;
 			def->collClause = NULL;
 			def->collOid = exprCollation((Node *) tle->expr);
+			def->location = -1;
 
 			/*
 			 * It's possible that the column is of a collatable type but the

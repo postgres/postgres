@@ -472,7 +472,7 @@ GetColumnDefCollation(ParseState *pstate, ColumnDef *coldef, Oid typeOid)
 {
 	Oid			result;
 	Oid			typcollation = get_typcollation(typeOid);
-	int			location = -1;
+	int			location = coldef->location;
 
 	if (coldef->collClause)
 	{

@@ -754,6 +754,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 		def->collClause = NULL;
 		def->collOid = attribute->attcollation;
 		def->constraints = NIL;
+		def->location = -1;
 
 		/*
 		 * Add to column list
@@ -969,6 +970,7 @@ transformOfType(CreateStmtContext *cxt, TypeName *ofTypename)
 		n->collClause = NULL;
 		n->collOid = attr->attcollation;
 		n->constraints = NIL;
+		n->location = -1;
 		cxt->columns = lappend(cxt->columns, n);
 	}
 	DecrTupleDescRefCount(tupdesc);

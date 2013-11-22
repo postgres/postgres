@@ -502,6 +502,57 @@ build_index_pathkeys(PlannerInfo *root,
 }
 
 /*
+ * build_expression_pathkey
+ *	  Build a pathkeys list that describes an ordering by a single expression
+ *	  using the given sort operator.
+ *
+ * expr, nullable_relids, and rel are as for make_pathkey_from_sortinfo.
+ * We induce the other arguments assuming default sort order for the operator.
+ *
+ * Similarly to make_pathkey_from_sortinfo, the result is NIL if create_it
+ * is false and the expression isn't already in some EquivalenceClass.
+ */
+List *
+build_expression_pathkey(PlannerInfo *root,
+						 Expr *expr,
+						 Relids nullable_relids,
+						 Oid opno,
+						 Relids rel,
+						 bool create_it)
+{
+	List	   *pathkeys;
+	Oid			opfamily,
+				opcintype;
+	int16		strategy;
+	PathKey    *cpathkey;
+
+	/* Find the operator in pg_amop --- failure shouldn't happen */
+	if (!get_ordering_op_properties(opno,
+									&opfamily, &opcintype, &strategy))
+		elog(ERROR, "operator %u is not a valid ordering operator",
+			 opno);
+
+	cpathkey = make_pathkey_from_sortinfo(root,
+										  expr,
+										  nullable_relids,
+										  opfamily,
+										  opcintype,
+										  exprCollation((Node *) expr),
+									   (strategy == BTGreaterStrategyNumber),
+									   (strategy == BTGreaterStrategyNumber),
+										  0,
+										  rel,
+										  create_it);
+
+	if (cpathkey)
+		pathkeys = list_make1(cpathkey);
+	else
+		pathkeys = NIL;
+
+	return pathkeys;
+}
+
+/*
  * convert_subquery_pathkeys
  *	  Build a pathkeys list that describes the ordering of a subquery's
  *	  result, in the terms of the outer query.	This is essentially a

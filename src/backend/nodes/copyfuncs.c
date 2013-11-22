@@ -504,11 +504,7 @@ _copyFunctionScan(const FunctionScan *from)
 	/*
 	 * copy remainder of node
 	 */
-	COPY_NODE_FIELD(funcexpr);
-	COPY_NODE_FIELD(funccolnames);
-	COPY_NODE_FIELD(funccoltypes);
-	COPY_NODE_FIELD(funccoltypmods);
-	COPY_NODE_FIELD(funccolcollations);
+	COPY_NODE_FIELD(functions);
 	COPY_SCALAR_FIELD(funcordinality);
 
 	return newnode;
@@ -1981,10 +1977,7 @@ _copyRangeTblEntry(const RangeTblEntry *from)
 	COPY_SCALAR_FIELD(security_barrier);
 	COPY_SCALAR_FIELD(jointype);
 	COPY_NODE_FIELD(joinaliasvars);
-	COPY_NODE_FIELD(funcexpr);
-	COPY_NODE_FIELD(funccoltypes);
-	COPY_NODE_FIELD(funccoltypmods);
-	COPY_NODE_FIELD(funccolcollations);
+	COPY_NODE_FIELD(functions);
 	COPY_SCALAR_FIELD(funcordinality);
 	COPY_NODE_FIELD(values_lists);
 	COPY_NODE_FIELD(values_collations);
@@ -2003,6 +1996,22 @@ _copyRangeTblEntry(const RangeTblEntry *from)
 	COPY_SCALAR_FIELD(checkAsUser);
 	COPY_BITMAPSET_FIELD(selectedCols);
 	COPY_BITMAPSET_FIELD(modifiedCols);
+
+	return newnode;
+}
+
+static RangeTblFunction *
+_copyRangeTblFunction(const RangeTblFunction *from)
+{
+	RangeTblFunction *newnode = makeNode(RangeTblFunction);
+
+	COPY_NODE_FIELD(funcexpr);
+	COPY_SCALAR_FIELD(funccolcount);
+	COPY_NODE_FIELD(funccolnames);
+	COPY_NODE_FIELD(funccoltypes);
+	COPY_NODE_FIELD(funccoltypmods);
+	COPY_NODE_FIELD(funccolcollations);
+	COPY_BITMAPSET_FIELD(funcparams);
 
 	return newnode;
 }
@@ -2299,9 +2308,10 @@ _copyRangeFunction(const RangeFunction *from)
 {
 	RangeFunction *newnode = makeNode(RangeFunction);
 
-	COPY_SCALAR_FIELD(ordinality);
 	COPY_SCALAR_FIELD(lateral);
-	COPY_NODE_FIELD(funccallnode);
+	COPY_SCALAR_FIELD(ordinality);
+	COPY_SCALAR_FIELD(is_table);
+	COPY_NODE_FIELD(functions);
 	COPY_NODE_FIELD(alias);
 	COPY_NODE_FIELD(coldeflist);
 
@@ -2366,6 +2376,7 @@ _copyColumnDef(const ColumnDef *from)
 	COPY_SCALAR_FIELD(collOid);
 	COPY_NODE_FIELD(constraints);
 	COPY_NODE_FIELD(fdwoptions);
+	COPY_LOCATION_FIELD(location);
 
 	return newnode;
 }
@@ -4549,6 +4560,9 @@ copyObject(const void *from)
 			break;
 		case T_RangeTblEntry:
 			retval = _copyRangeTblEntry(from);
+			break;
+		case T_RangeTblFunction:
+			retval = _copyRangeTblFunction(from);
 			break;
 		case T_WithCheckOption:
 			retval = _copyWithCheckOption(from);

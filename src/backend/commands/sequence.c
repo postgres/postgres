@@ -143,6 +143,7 @@ DefineSequence(CreateSeqStmt *seq)
 		coldef->collClause = NULL;
 		coldef->collOid = InvalidOid;
 		coldef->constraints = NIL;
+		coldef->location = -1;
 
 		null[i - 1] = false;
 

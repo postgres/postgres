@@ -1623,7 +1623,7 @@ create_subqueryscan_path(PlannerInfo *root, RelOptInfo *rel,
  */
 Path *
 create_functionscan_path(PlannerInfo *root, RelOptInfo *rel,
-						 Relids required_outer)
+						 List *pathkeys, Relids required_outer)
 {
 	Path	   *pathnode = makeNode(Path);
 
@@ -1631,7 +1631,7 @@ create_functionscan_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->parent = rel;
 	pathnode->param_info = get_baserel_parampathinfo(root, rel,
 													 required_outer);
-	pathnode->pathkeys = NIL;	/* for now, assume unordered result */
+	pathnode->pathkeys = pathkeys;
 
 	cost_functionscan(pathnode, root, rel, pathnode->param_info);
 

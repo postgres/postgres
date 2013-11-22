@@ -1259,9 +1259,21 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			break;
 		case T_FunctionScan:
 			if (es->verbose)
-				show_expression(((FunctionScan *) plan)->funcexpr,
+			{
+				List	   *fexprs = NIL;
+				ListCell   *lc;
+
+				foreach(lc, ((FunctionScan *) plan)->functions)
+				{
+					RangeTblFunction *rtfunc = (RangeTblFunction *) lfirst(lc);
+
+					fexprs = lappend(fexprs, rtfunc->funcexpr);
+				}
+				/* We rely on show_expression to insert commas as needed */
+				show_expression((Node *) fexprs,
 								"Function Call", planstate, ancestors,
 								es->verbose, es);
+			}
 			show_scan_qual(plan->qual, "Filter", planstate, ancestors, es);
 			if (plan->qual)
 				show_instrumentation_count("Rows Removed by Filter", 1,
@@ -1984,26 +1996,31 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 			break;
 		case T_FunctionScan:
 			{
-				Node	   *funcexpr;
+				FunctionScan *fscan = (FunctionScan *) plan;
 
 				/* Assert it's on a RangeFunction */
 				Assert(rte->rtekind == RTE_FUNCTION);
 
 				/*
-				 * If the expression is still a function call, we can get the
-				 * real name of the function.  Otherwise, punt (this can
-				 * happen if the optimizer simplified away the function call,
-				 * for example).
+				 * If the expression is still a function call of a single
+				 * function, we can get the real name of the function.
+				 * Otherwise, punt.  (Even if it was a single function call
+				 * originally, the optimizer could have simplified it away.)
 				 */
-				funcexpr = ((FunctionScan *) plan)->funcexpr;
-				if (funcexpr && IsA(funcexpr, FuncExpr))
+				if (list_length(fscan->functions) == 1)
 				{
-					Oid			funcid = ((FuncExpr *) funcexpr)->funcid;
+					RangeTblFunction *rtfunc = (RangeTblFunction *) linitial(fscan->functions);
 
-					objectname = get_func_name(funcid);
-					if (es->verbose)
-						namespace =
-							get_namespace_name(get_func_namespace(funcid));
+					if (IsA(rtfunc->funcexpr, FuncExpr))
+					{
+						FuncExpr   *funcexpr = (FuncExpr *) rtfunc->funcexpr;
+						Oid			funcid = funcexpr->funcid;
+
+						objectname = get_func_name(funcid);
+						if (es->verbose)
+							namespace =
+								get_namespace_name(get_func_namespace(funcid));
+					}
 				}
 				objecttag = "Function Name";
 			}

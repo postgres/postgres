@@ -158,40 +158,6 @@ CreateTupleDescCopy(TupleDesc tupdesc)
 }
 
 /*
- * CreateTupleDescCopyExtend
- *		This function creates a new TupleDesc by copying from an existing
- *		TupleDesc, but adding space for more columns. The new tupdesc is
- *      not regarded as the same record type as the old one (and therefore
- *      does not inherit its typeid/typmod, which instead are left as an
- *      anonymous record type).
- *
- *      The additional column slots are not initialized in any way;
- *      callers must do their own TupleDescInitEntry on each.
- *
- * !!! Constraints and defaults are not copied !!!
- */
-TupleDesc
-CreateTupleDescCopyExtend(TupleDesc tupdesc, int moreatts)
-{
-	TupleDesc	desc;
-	int			i;
-	int         src_natts = tupdesc->natts;
-
-	Assert(moreatts >= 0);
-
-	desc = CreateTemplateTupleDesc(src_natts + moreatts, tupdesc->tdhasoid);
-
-	for (i = 0; i < src_natts; i++)
-	{
-		memcpy(desc->attrs[i], tupdesc->attrs[i], ATTRIBUTE_FIXED_PART_SIZE);
-		desc->attrs[i]->attnotnull = false;
-		desc->attrs[i]->atthasdef = false;
-	}
-
-	return desc;
-}
-
-/*
  * CreateTupleDescCopyConstr
  *		This function creates a new TupleDesc by copying from an existing
  *		TupleDesc (including its constraints and defaults).
@@ -248,6 +214,47 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 	desc->tdtypmod = tupdesc->tdtypmod;
 
 	return desc;
+}
+
+/*
+ * TupleDescCopyEntry
+ *		This function copies a single attribute structure from one tuple
+ *		descriptor to another.
+ *
+ * !!! Constraints and defaults are not copied !!!
+ */
+void
+TupleDescCopyEntry(TupleDesc dst, AttrNumber dstAttno,
+				   TupleDesc src, AttrNumber srcAttno)
+{
+	/*
+	 * sanity checks
+	 */
+	AssertArg(PointerIsValid(src));
+	AssertArg(PointerIsValid(dst));
+	AssertArg(srcAttno >= 1);
+	AssertArg(srcAttno <= src->natts);
+	AssertArg(dstAttno >= 1);
+	AssertArg(dstAttno <= dst->natts);
+
+	memcpy(dst->attrs[dstAttno - 1], src->attrs[srcAttno - 1],
+		   ATTRIBUTE_FIXED_PART_SIZE);
+
+	/*
+	 * Aside from updating the attno, we'd better reset attcacheoff.
+	 *
+	 * XXX Actually, to be entirely safe we'd need to reset the attcacheoff of
+	 * all following columns in dst as well.  Current usage scenarios don't
+	 * require that though, because all following columns will get initialized
+	 * by other uses of this function or TupleDescInitEntry.  So we cheat a
+	 * bit to avoid a useless O(N^2) penalty.
+	 */
+	dst->attrs[dstAttno - 1]->attnum = dstAttno;
+	dst->attrs[dstAttno - 1]->attcacheoff = -1;
+
+	/* since we're not copying constraints or defaults, clear these */
+	dst->attrs[dstAttno - 1]->attnotnull = false;
+	dst->attrs[dstAttno - 1]->atthasdef = false;
 }
 
 /*

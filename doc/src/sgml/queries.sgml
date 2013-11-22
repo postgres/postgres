@@ -643,21 +643,55 @@ FROM (VALUES ('anne', 'smith'), ('bob', 'jones'), ('joe', 'blow'))
      the <literal>FROM</> clause of a query. Columns returned by table
      functions can be included in <literal>SELECT</>,
      <literal>JOIN</>, or <literal>WHERE</> clauses in the same manner
-     as a table, view, or subquery column.
+     as columns of a table, view, or subquery.
     </para>
 
     <para>
-     If a table function returns a base data type, the single result
-     column name matches the function name. If the function returns a
-     composite type, the result columns get the same names as the
-     individual attributes of the type.
+     Table functions may also be combined using the <literal>TABLE</literal>
+     syntax, with the results returned in parallel columns; the number of
+     result rows in this case is that of the largest function result, with
+     smaller results padded with NULLs to match.
+    </para>
+
+<synopsis>
+<replaceable>function_call</replaceable> <optional>WITH ORDINALITY</optional> <optional><optional>AS</optional> <replaceable>table_alias</replaceable> <optional>(<replaceable>column_alias</replaceable> <optional>, ... </optional>)</optional></optional>
+TABLE( <replaceable>function_call</replaceable> <optional>, ... </optional> ) <optional>WITH ORDINALITY</optional> <optional><optional>AS</optional> <replaceable>table_alias</replaceable> <optional>(<replaceable>column_alias</replaceable> <optional>, ... </optional>)</optional></optional>
+</synopsis>
+
+    <para>
+     If the <literal>WITH ORDINALITY</literal> clause is specified, an
+     additional column of type <type>bigint</type> will be added to the
+     function result columns.  This column numbers the rows of the function
+     result set, starting from 1. (This is a generalization of the
+     SQL-standard syntax for <literal>UNNEST ... WITH ORDINALITY</literal>.)
+     By default, the ordinal column is called <literal>ordinality</>, but
+     a different column name can be assigned to it using
+     an <literal>AS</literal> clause.
     </para>
 
     <para>
-     A table function can be aliased in the <literal>FROM</> clause,
-     but it also can be left unaliased. If a function is used in the
-     <literal>FROM</> clause with no alias, the function name is used
-     as the resulting table name.
+     The special table function <literal>UNNEST</literal> may be called with
+     any number of array parameters, and it returns a corresponding number of
+     columns, as if <literal>UNNEST</literal>
+     (<xref linkend="functions-array">) had been called on each parameter
+     separately and combined using the <literal>TABLE</literal> construct.
+    </para>
+
+<synopsis>
+UNNEST( <replaceable>array_expression</replaceable> <optional>, ... </optional> ) <optional>WITH ORDINALITY</optional> <optional><optional>AS</optional> <replaceable>table_alias</replaceable> <optional>(<replaceable>column_alias</replaceable> <optional>, ... </optional>)</optional></optional>
+</synopsis>
+
+    <para>
+     If no <replaceable>table_alias</replaceable> is specified, the function
+     name is used as the table name; in the case of a <literal>TABLE()</>
+     construct, the first function's name is used.
+    </para>
+
+    <para>
+     If column aliases are not supplied, then for a function returning a base
+     data type, the column name is also the same as the function name.  For a
+     function returning a composite type, the result columns get the names
+     of the individual attributes of the type.
     </para>
 
     <para>
@@ -691,7 +725,30 @@ SELECT * FROM vw_getfoo;
      the pseudotype <type>record</>.  When such a function is used in
      a query, the expected row structure must be specified in the
      query itself, so that the system can know how to parse and plan
-     the query.  Consider this example:
+     the query.  This syntax looks like:
+    </para>
+
+<synopsis>
+<replaceable>function_call</replaceable> <optional>AS</optional> <replaceable>alias</replaceable> (<replaceable>column_definition</replaceable> <optional>, ... </optional>)
+<replaceable>function_call</replaceable> AS <optional><replaceable>alias</replaceable></optional> (<replaceable>column_definition</replaceable> <optional>, ... </optional>)
+TABLE( ... <replaceable>function_call</replaceable> AS (<replaceable>column_definition</replaceable> <optional>, ... </optional>) <optional>, ... </optional> )
+</synopsis>
+
+    <para>
+     When not using the <literal>TABLE()</> syntax,
+     the <replaceable>column_definition</replaceable> list replaces the column
+     alias list that could otherwise be attached to the <literal>FROM</>
+     item; the names in the column definitions serve as column aliases.
+     When using the <literal>TABLE()</> syntax,
+     a <replaceable>column_definition</replaceable> list can be attached to
+     each member function separately; or if there is only one member function
+     and no <literal>WITH ORDINALITY</> clause,
+     a <replaceable>column_definition</replaceable> list can be written in
+     place of a column alias list following <literal>TABLE()</>.
+    </para>
+
+    <para>
+     Consider this example:
 <programlisting>
 SELECT *
     FROM dblink('dbname=mydb', 'SELECT proname, prosrc FROM pg_proc')

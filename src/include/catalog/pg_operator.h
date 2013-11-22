@@ -175,6 +175,7 @@ DATA(insert OID = 411 ( "<>"	   PGNSP PGUID b f f	20	20	16 411 410 int8ne neqsel
 DESCR("not equal");
 DATA(insert OID = 412 ( "<"		   PGNSP PGUID b f f	20	20	16 413 415 int8lt scalarltsel scalarltjoinsel ));
 DESCR("less than");
+#define Int8LessOperator	412
 DATA(insert OID = 413 ( ">"		   PGNSP PGUID b f f	20	20	16 412 414 int8gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
 DATA(insert OID = 414 ( "<="	   PGNSP PGUID b f f	20	20	16 415 413 int8le scalarltsel scalarltjoinsel ));

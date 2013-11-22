@@ -52,9 +52,12 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replac
     [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ [ AS ] <replaceable class="parameter">alias</replaceable> [ ( <replaceable class="parameter">column_alias</replaceable> [, ...] ) ] ]
     [ LATERAL ] ( <replaceable class="parameter">select</replaceable> ) [ AS ] <replaceable class="parameter">alias</replaceable> [ ( <replaceable class="parameter">column_alias</replaceable> [, ...] ) ]
     <replaceable class="parameter">with_query_name</replaceable> [ [ AS ] <replaceable class="parameter">alias</replaceable> [ ( <replaceable class="parameter">column_alias</replaceable> [, ...] ) ] ]
-    [ LATERAL ] <replaceable class="parameter">function_name</replaceable> ( [ <replaceable class="parameter">argument</replaceable> [, ...] ] ) [ WITH ORDINALITY ] [ [ AS ] <replaceable class="parameter">alias</replaceable> [ ( <replaceable class="parameter">column_alias</replaceable> [, ...] ) ] ]
+    [ LATERAL ] <replaceable class="parameter">function_name</replaceable> ( [ <replaceable class="parameter">argument</replaceable> [, ...] ] )
+                [ WITH ORDINALITY ] [ [ AS ] <replaceable class="parameter">alias</replaceable> [ ( <replaceable class="parameter">column_alias</replaceable> [, ...] ) ] ]
     [ LATERAL ] <replaceable class="parameter">function_name</replaceable> ( [ <replaceable class="parameter">argument</replaceable> [, ...] ] ) [ AS ] <replaceable class="parameter">alias</replaceable> ( <replaceable class="parameter">column_definition</replaceable> [, ...] )
     [ LATERAL ] <replaceable class="parameter">function_name</replaceable> ( [ <replaceable class="parameter">argument</replaceable> [, ...] ] ) AS ( <replaceable class="parameter">column_definition</replaceable> [, ...] )
+    [ LATERAL ] TABLE( <replaceable class="parameter">function_name</replaceable> ( [ <replaceable class="parameter">argument</replaceable> [, ...] ] ) [ AS ( <replaceable class="parameter">column_definition</replaceable> [, ...] ) ] [, ...] )
+                [ WITH ORDINALITY ] [ [ AS ] <replaceable class="parameter">alias</replaceable> [ ( <replaceable class="parameter">column_alias</replaceable> [, ...] ) ] ]
     <replaceable class="parameter">from_item</replaceable> [ NATURAL ] <replaceable class="parameter">join_type</replaceable> <replaceable class="parameter">from_item</replaceable> [ ON <replaceable class="parameter">join_condition</replaceable> | USING ( <replaceable class="parameter">join_column</replaceable> [, ...] ) ]
 
 <phrase>and <replaceable class="parameter">with_query</replaceable> is:</phrase>
@@ -368,30 +371,32 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
         Function calls can appear in the <literal>FROM</literal>
         clause.  (This is especially useful for functions that return
         result sets, but any function can be used.)  This acts as
-        though its output were created as a temporary table for the
+        though the function's output were created as a temporary table for the
         duration of this single <command>SELECT</command> command.
-        When the optional <command>WITH ORDINALITY</command> is
-        appended to the function call, a new column is appended after
-        all the function call's columns with numbering for each row.
-        For example:
-<programlisting>
-SELECT * FROM unnest(ARRAY['a','b','c','d','e','f']) WITH ORDINALITY;
- unnest | ordinality
---------+----------
- a      |        1
- b      |        2
- c      |        3
- d      |        4
- e      |        5
- f      |        6
-(6 rows)
-</programlisting>
-        An alias can also be used. If an alias is written, a column
+        When the optional <command>WITH ORDINALITY</command> clause is
+        added to the function call, a new column is appended after
+        all the function's output columns with numbering for each row.
+       </para>
+
+       <para>
+        An alias can be provided in the same way as for a table.
+        If an alias is written, a column
         alias list can also be written to provide substitute names for
         one or more attributes of the function's composite return
         type, including the column added by <literal>ORDINALITY</literal>
         if present.
-      </para>
+       </para>
+
+       <para>
+        Multiple function calls can be combined into a
+        single <literal>FROM</>-clause item by surrounding them
+        with <literal>TABLE( ... )</>.  The output of such an item is the
+        concatenation of the first row from each function, then the second
+        row from each function, etc.  If some of the functions produce fewer
+        rows than others, NULLs are substituted for the missing data, so
+        that the total number of rows returned is always the same as for the
+        function that produced the most rows.
+       </para>
 
       <para>
         If the function has been defined as returning the
@@ -402,7 +407,21 @@ SELECT * FROM unnest(ARRAY['a','b','c','d','e','f']) WITH ORDINALITY;
         class="parameter">data_type</replaceable> <optional>, ...
         </>)</literal>.  The column definition list must match the
         actual number and types of columns returned by the function.
-        <literal>ORDINALITY</literal> does not work in this case.
+       </para>
+
+       <para>
+        When using the <literal>TABLE( ... )</> syntax, if one of the
+        functions requires a column definition list, it's preferred to put
+        the column definition list after the function call inside
+        <literal>TABLE( ... )</>.  A column definition list can be placed
+        after the <literal>TABLE( ... )</> construct only if there's just a
+        single function and no <literal>WITH ORDINALITY</> clause.
+       </para>
+
+       <para>
+        To use <literal>ORDINALITY</literal> together with a column definition
+        list, you must use the <literal>TABLE( ... )</> syntax and put the
+        column definition list inside <literal>TABLE( ... )</>.
        </para>
       </listitem>
      </varlistentry>
@@ -1599,6 +1618,23 @@ SELECT * FROM distributors_2(111) AS (f1 int, f2 text);
   </para>
 
   <para>
+   Here is an example of a function with an ordinality column added:
+
+<programlisting>
+SELECT * FROM unnest(ARRAY['a','b','c','d','e','f']) WITH ORDINALITY;
+ unnest | ordinality
+--------+----------
+ a      |        1
+ b      |        2
+ c      |        3
+ d      |        4
+ e      |        5
+ f      |        6
+(6 rows)
+</programlisting>
+  </para>
+
+  <para>
    This example shows how to use a simple <literal>WITH</> clause:
 
 <programlisting>
@@ -1772,6 +1808,11 @@ SELECT distributors.* WHERE distributors.name = 'Westward';
     <literal>UNNEST()</> item in <literal>FROM</>.
     <productname>PostgreSQL</productname> treats <literal>UNNEST()</> the
     same as other set-returning functions.
+   </para>
+
+   <para>
+    Placing multiple function calls inside <literal>TABLE( ... )</> syntax is
+    also an extension of the SQL standard.
    </para>
   </refsect2>
 

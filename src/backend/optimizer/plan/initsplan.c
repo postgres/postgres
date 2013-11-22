@@ -307,7 +307,7 @@ extract_lateral_references(PlannerInfo *root, RelOptInfo *brel, Index rtindex)
 	if (rte->rtekind == RTE_SUBQUERY)
 		vars = pull_vars_of_level((Node *) rte->subquery, 1);
 	else if (rte->rtekind == RTE_FUNCTION)
-		vars = pull_vars_of_level(rte->funcexpr, 0);
+		vars = pull_vars_of_level((Node *) rte->functions, 0);
 	else if (rte->rtekind == RTE_VALUES)
 		vars = pull_vars_of_level((Node *) rte->values_lists, 0);
 	else

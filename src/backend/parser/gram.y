@@ -406,6 +406,8 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 				a_expr b_expr c_expr AexprConst indirection_el
 				columnref in_expr having_clause func_table array_expr
 				ExclusionWhereClause
+%type <list>	func_table_item func_table_list opt_col_def_list
+%type <boolean> opt_ordinality
 %type <list>	ExclusionConstraintList ExclusionConstraintElem
 %type <list>	func_arg_list
 %type <node>	func_arg_expr
@@ -612,6 +614,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
  * creates these tokens when required.
  */
 %token			NULLS_FIRST NULLS_LAST WITH_ORDINALITY WITH_TIME
+
 
 /* Precedence: lowest to highest */
 %nonassoc	SET				/* see relation_expr_opt_alias */
@@ -1926,10 +1929,11 @@ alter_table_cmd:
 					n->subtype = AT_AlterColumnType;
 					n->name = $3;
 					n->def = (Node *) def;
-					/* We only use these three fields of the ColumnDef node */
+					/* We only use these fields of the ColumnDef node */
 					def->typeName = $6;
 					def->collClause = (CollateClause *) $7;
 					def->raw_default = $8;
+					def->location = @3;
 					$$ = (Node *)n;
 				}
 			/* ALTER FOREIGN TABLE <name> ALTER [COLUMN] <colname> OPTIONS */
@@ -2354,10 +2358,11 @@ alter_type_cmd:
 					n->name = $3;
 					n->def = (Node *) def;
 					n->behavior = $8;
-					/* We only use these three fields of the ColumnDef node */
+					/* We only use these fields of the ColumnDef node */
 					def->typeName = $6;
 					def->collClause = (CollateClause *) $7;
 					def->raw_default = NULL;
+					def->location = @3;
 					$$ = (Node *)n;
 				}
 		;
@@ -2782,6 +2787,7 @@ columnDef:	ColId Typename create_generic_options ColQualList
 					n->fdwoptions = $3;
 					SplitColQualList($4, &n->constraints, &n->collClause,
 									 yyscanner);
+					n->location = @1;
 					$$ = (Node *)n;
 				}
 		;
@@ -2801,6 +2807,7 @@ columnOptions:	ColId WITH OPTIONS ColQualList
 					n->collOid = InvalidOid;
 					SplitColQualList($4, &n->constraints, &n->collClause,
 									 yyscanner);
+					n->location = @1;
 					$$ = (Node *)n;
 				}
 		;
@@ -9648,42 +9655,17 @@ table_ref:	relation_expr opt_alias_clause
 				}
 			| func_table func_alias_clause
 				{
-					RangeFunction *n = makeNode(RangeFunction);
-					n->lateral = false;
-					n->ordinality = false;
-					n->funccallnode = $1;
+					RangeFunction *n = (RangeFunction *) $1;
 					n->alias = linitial($2);
 					n->coldeflist = lsecond($2);
 					$$ = (Node *) n;
 				}
-			| func_table WITH_ORDINALITY func_alias_clause
-				{
-					RangeFunction *n = makeNode(RangeFunction);
-					n->lateral = false;
-					n->ordinality = true;
-					n->funccallnode = $1;
-					n->alias = linitial($3);
-					n->coldeflist = lsecond($3);
-					$$ = (Node *) n;
-				}
 			| LATERAL_P func_table func_alias_clause
 				{
-					RangeFunction *n = makeNode(RangeFunction);
+					RangeFunction *n = (RangeFunction *) $2;
 					n->lateral = true;
-					n->ordinality = false;
-					n->funccallnode = $2;
 					n->alias = linitial($3);
 					n->coldeflist = lsecond($3);
-					$$ = (Node *) n;
-				}
-			| LATERAL_P func_table WITH_ORDINALITY func_alias_clause
-				{
-					RangeFunction *n = makeNode(RangeFunction);
-					n->lateral = true;
-					n->ordinality = true;
-					n->funccallnode = $2;
-					n->alias = linitial($4);
-					n->coldeflist = lsecond($4);
 					$$ = (Node *) n;
 				}
 			| select_with_parens opt_alias_clause
@@ -9996,7 +9978,54 @@ relation_expr_opt_alias: relation_expr					%prec UMINUS
 				}
 		;
 
-func_table: func_expr_windowless					{ $$ = $1; }
+/*
+ * func_table represents a function invocation in a FROM list. It can be
+ * a plain function call, like "foo(...)", or a TABLE expression with
+ * one or more function calls, "TABLE (foo(...), bar(...))",
+ * optionally with WITH ORDINALITY attached.
+ * In the TABLE syntax, a column definition list can be given for each
+ * function, for example:
+ *     TABLE (foo() AS (foo_res_a text, foo_res_b text),
+ *            bar() AS (bar_res_a text, bar_res_b text))
+ * It's also possible to attach a column definition list to the RangeFunction
+ * as a whole, but that's handled by the table_ref production.
+ */
+func_table: func_expr_windowless opt_ordinality
+				{
+					RangeFunction *n = makeNode(RangeFunction);
+					n->lateral = false;
+					n->ordinality = $2;
+					n->is_table = false;
+					n->functions = list_make1(list_make2($1, NIL));
+					/* alias and coldeflist are set by table_ref production */
+					$$ = (Node *) n;
+				}
+			| TABLE '(' func_table_list ')' opt_ordinality
+				{
+					RangeFunction *n = makeNode(RangeFunction);
+					n->lateral = false;
+					n->ordinality = $5;
+					n->is_table = true;
+					n->functions = $3;
+					/* alias and coldeflist are set by table_ref production */
+					$$ = (Node *) n;
+				}
+		;
+
+func_table_item: func_expr_windowless opt_col_def_list
+				{ $$ = list_make2($1, $2); }
+		;
+
+func_table_list: func_table_item					{ $$ = list_make1($1); }
+			| func_table_list ',' func_table_item	{ $$ = lappend($1, $3); }
+		;
+
+opt_col_def_list: AS '(' TableFuncElementList ')'	{ $$ = $3; }
+			| /*EMPTY*/								{ $$ = NIL; }
+		;
+
+opt_ordinality: WITH_ORDINALITY						{ $$ = true; }
+			| /*EMPTY*/								{ $$ = false; }
 		;
 
 
@@ -10051,6 +10080,7 @@ TableFuncElement:	ColId Typename opt_collate_clause
 					n->collClause = (CollateClause *) $3;
 					n->collOid = InvalidOid;
 					n->constraints = NIL;
+					n->location = @1;
 					$$ = (Node *)n;
 				}
 		;
@@ -11172,11 +11202,11 @@ func_application: func_name '(' ')'
 
 
 /*
- * func_expr and its cousin func_expr_windowless is split out from c_expr just
+ * func_expr and its cousin func_expr_windowless are split out from c_expr just
  * so that we have classifications for "everything that is a function call or
- * looks like one".  This isn't very important, but it saves us having to document
- * which variants are legal in the backwards-compatible functional-index syntax
- * for CREATE INDEX.
+ * looks like one".  This isn't very important, but it saves us having to
+ * document which variants are legal in places like "FROM function()" or the
+ * backwards-compatible functional-index syntax for CREATE INDEX.
  * (Note that many of the special SQL functions wouldn't actually make any
  * sense as functional index entries, but we ignore that consideration here.)
  */

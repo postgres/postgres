@@ -387,8 +387,8 @@ static void get_from_clause_item(Node *jtnode, Query *query,
 					 deparse_context *context);
 static void get_column_alias_list(deparse_columns *colinfo,
 					  deparse_context *context);
-static void get_from_clause_coldeflist(deparse_columns *colinfo,
-						   List *types, List *typmods, List *collations,
+static void get_from_clause_coldeflist(RangeTblFunction *rtfunc,
+						   deparse_columns *colinfo,
 						   deparse_context *context);
 static void get_opclass_name(Oid opclass, Oid actual_datatype,
 				 StringInfo buf);
@@ -8012,6 +8012,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 		RangeTblEntry *rte = rt_fetch(varno, query->rtable);
 		char	   *refname = get_rtable_name(varno, context);
 		deparse_columns *colinfo = deparse_columns_fetch(varno, dpns);
+		RangeTblFunction *rtfunc1 = NULL;
 		bool		printalias;
 
 		if (rte->lateral)
@@ -8037,7 +8038,96 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 				break;
 			case RTE_FUNCTION:
 				/* Function RTE */
-				get_rule_expr(rte->funcexpr, context, true);
+				rtfunc1 = (RangeTblFunction *) linitial(rte->functions);
+
+				/*
+				 * Omit TABLE() syntax if there's just one function, unless it
+				 * has both a coldeflist and WITH ORDINALITY. If it has both,
+				 * we must use TABLE() syntax to avoid ambiguity about whether
+				 * the coldeflist includes the ordinality column.
+				 */
+				if (list_length(rte->functions) == 1 &&
+					(rtfunc1->funccolnames == NIL || !rte->funcordinality))
+				{
+					get_rule_expr(rtfunc1->funcexpr, context, true);
+					/* we'll print the coldeflist below, if it has one */
+				}
+				else
+				{
+					bool		all_unnest;
+					ListCell   *lc;
+
+					/*
+					 * If all the function calls in the list are to unnest,
+					 * and none need a coldeflist, then collapse the list back
+					 * down to UNNEST(args).  (If we had more than one
+					 * built-in unnest function, this would get more
+					 * difficult.)
+					 *
+					 * XXX This is pretty ugly, since it makes not-terribly-
+					 * future-proof assumptions about what the parser would do
+					 * with the output; but the alternative is to emit our
+					 * nonstandard extended TABLE() notation for what might
+					 * have been a perfectly spec-compliant multi-argument
+					 * UNNEST().
+					 */
+					all_unnest = true;
+					foreach(lc, rte->functions)
+					{
+						RangeTblFunction *rtfunc = (RangeTblFunction *) lfirst(lc);
+
+						if (!IsA(rtfunc->funcexpr, FuncExpr) ||
+							((FuncExpr *) rtfunc->funcexpr)->funcid != F_ARRAY_UNNEST ||
+							rtfunc->funccolnames != NIL)
+						{
+							all_unnest = false;
+							break;
+						}
+					}
+
+					if (all_unnest)
+					{
+						List	   *allargs = NIL;
+
+						foreach(lc, rte->functions)
+						{
+							RangeTblFunction *rtfunc = (RangeTblFunction *) lfirst(lc);
+							List	   *args = ((FuncExpr *) rtfunc->funcexpr)->args;
+
+							allargs = list_concat(allargs, list_copy(args));
+						}
+
+						appendStringInfoString(buf, "UNNEST(");
+						get_rule_expr((Node *) allargs, context, true);
+						appendStringInfoChar(buf, ')');
+					}
+					else
+					{
+						int			funcno = 0;
+
+						appendStringInfoString(buf, "TABLE(");
+						foreach(lc, rte->functions)
+						{
+							RangeTblFunction *rtfunc = (RangeTblFunction *) lfirst(lc);
+
+							if (funcno > 0)
+								appendStringInfoString(buf, ", ");
+							get_rule_expr(rtfunc->funcexpr, context, true);
+							if (rtfunc->funccolnames != NIL)
+							{
+								/* Reconstruct the column definition list */
+								appendStringInfoString(buf, " AS ");
+								get_from_clause_coldeflist(rtfunc,
+														   NULL,
+														   context);
+							}
+							funcno++;
+						}
+						appendStringInfoChar(buf, ')');
+					}
+					/* prevent printing duplicate coldeflist below */
+					rtfunc1 = NULL;
+				}
 				if (rte->funcordinality)
 					appendStringInfoString(buf, " WITH ORDINALITY");
 				break;
@@ -8081,7 +8171,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 			 * For a function RTE, always print alias.	This covers possible
 			 * renaming of the function and/or instability of the
 			 * FigureColname rules for things that aren't simple functions.
-			 * Also note we'd need to force it anyway for the RECORD case.
+			 * Note we'd need to force it anyway for the columndef list case.
 			 */
 			printalias = true;
 		}
@@ -8099,14 +8189,10 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 			appendStringInfo(buf, " %s", quote_identifier(refname));
 
 		/* Print the column definitions or aliases, if needed */
-		if (rte->rtekind == RTE_FUNCTION && rte->funccoltypes != NIL)
+		if (rtfunc1 && rtfunc1->funccolnames != NIL)
 		{
-			/* Function returning RECORD, reconstruct the columndefs */
-			get_from_clause_coldeflist(colinfo,
-									   rte->funccoltypes,
-									   rte->funccoltypmods,
-									   rte->funccolcollations,
-									   context);
+			/* Reconstruct the columndef list, which is also the aliases */
+			get_from_clause_coldeflist(rtfunc1, colinfo, context);
 		}
 		else
 		{
@@ -8250,29 +8336,45 @@ get_column_alias_list(deparse_columns *colinfo, deparse_context *context)
 /*
  * get_from_clause_coldeflist - reproduce FROM clause coldeflist
  *
+ * When printing a top-level coldeflist (which is syntactically also the
+ * relation's column alias list), use column names from colinfo.  But when
+ * printing a coldeflist embedded inside TABLE(), we prefer to use the
+ * original coldeflist's names, which are available in rtfunc->funccolnames.
+ * Pass NULL for colinfo to select the latter behavior.
+ *
  * The coldeflist is appended immediately (no space) to buf.  Caller is
  * responsible for ensuring that an alias or AS is present before it.
  */
 static void
-get_from_clause_coldeflist(deparse_columns *colinfo,
-						   List *types, List *typmods, List *collations,
+get_from_clause_coldeflist(RangeTblFunction *rtfunc,
+						   deparse_columns *colinfo,
 						   deparse_context *context)
 {
 	StringInfo	buf = context->buf;
 	ListCell   *l1;
 	ListCell   *l2;
 	ListCell   *l3;
+	ListCell   *l4;
 	int			i;
 
 	appendStringInfoChar(buf, '(');
 
+	/* there's no forfour(), so must chase one list the hard way */
 	i = 0;
-	forthree(l1, types, l2, typmods, l3, collations)
+	l4 = list_head(rtfunc->funccolnames);
+	forthree(l1, rtfunc->funccoltypes,
+			 l2, rtfunc->funccoltypmods,
+			 l3, rtfunc->funccolcollations)
 	{
-		char	   *attname = colinfo->colnames[i];
 		Oid			atttypid = lfirst_oid(l1);
 		int32		atttypmod = lfirst_int(l2);
 		Oid			attcollation = lfirst_oid(l3);
+		char	   *attname;
+
+		if (colinfo)
+			attname = colinfo->colnames[i];
+		else
+			attname = strVal(lfirst(l4));
 
 		Assert(attname);		/* shouldn't be any dropped columns here */
 
@@ -8285,6 +8387,8 @@ get_from_clause_coldeflist(deparse_columns *colinfo,
 			attcollation != get_typcollation(atttypid))
 			appendStringInfo(buf, " COLLATE %s",
 							 generate_collation_name(attcollation));
+
+		l4 = lnext(l4);
 		i++;
 	}
 

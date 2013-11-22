@@ -319,6 +319,7 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 		col->collOid = attribute->attcollation;
 		col->constraints = NIL;
 		col->fdwoptions = NIL;
+		col->location = -1;
 
 		coltype->names = NIL;
 		coltype->typeOid = attribute->atttypid;

@@ -1220,10 +1220,7 @@ _readRangeTblEntry(void)
 			READ_NODE_FIELD(joinaliasvars);
 			break;
 		case RTE_FUNCTION:
-			READ_NODE_FIELD(funcexpr);
-			READ_NODE_FIELD(funccoltypes);
-			READ_NODE_FIELD(funccoltypmods);
-			READ_NODE_FIELD(funccolcollations);
+			READ_NODE_FIELD(functions);
 			READ_BOOL_FIELD(funcordinality);
 			break;
 		case RTE_VALUES:
@@ -1251,6 +1248,25 @@ _readRangeTblEntry(void)
 	READ_OID_FIELD(checkAsUser);
 	READ_BITMAPSET_FIELD(selectedCols);
 	READ_BITMAPSET_FIELD(modifiedCols);
+
+	READ_DONE();
+}
+
+/*
+ * _readRangeTblFunction
+ */
+static RangeTblFunction *
+_readRangeTblFunction(void)
+{
+	READ_LOCALS(RangeTblFunction);
+
+	READ_NODE_FIELD(funcexpr);
+	READ_INT_FIELD(funccolcount);
+	READ_NODE_FIELD(funccolnames);
+	READ_NODE_FIELD(funccoltypes);
+	READ_NODE_FIELD(funccoltypmods);
+	READ_NODE_FIELD(funccolcollations);
+	READ_BITMAPSET_FIELD(funcparams);
 
 	READ_DONE();
 }
@@ -1378,6 +1394,8 @@ parseNodeString(void)
 		return_value = _readFromExpr();
 	else if (MATCH("RTE", 3))
 		return_value = _readRangeTblEntry();
+	else if (MATCH("RANGETBLFUNCTION", 16))
+		return_value = _readRangeTblFunction();
 	else if (MATCH("NOTIFY", 6))
 		return_value = _readNotifyStmt();
 	else if (MATCH("DECLARECURSOR", 13))

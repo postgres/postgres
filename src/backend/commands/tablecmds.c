@@ -1605,6 +1605,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 				def->collClause = NULL;
 				def->collOid = attribute->attcollation;
 				def->constraints = NIL;
+				def->location = -1;
 				inhSchema = lappend(inhSchema, def);
 				newattno[parent_attno - 1] = ++child_attno;
 			}
@@ -4823,6 +4824,7 @@ ATPrepAddOids(List **wqueue, Relation rel, bool recurse, AlterTableCmd *cmd, LOC
 		cdef->is_local = true;
 		cdef->is_not_null = true;
 		cdef->storage = 0;
+		cdef->location = -1;
 		cmd->def = (Node *) cdef;
 	}
 	ATPrepAddColumn(wqueue, rel, recurse, false, cmd, lockmode);

@@ -1757,8 +1757,7 @@ find_expr_references_walker(Node *node,
 
 		/*
 		 * Add whole-relation refs for each plain relation mentioned in the
-		 * subquery's rtable, as well as refs for any datatypes and collations
-		 * used in a RECORD function's output.
+		 * subquery's rtable.
 		 *
 		 * Note: query_tree_walker takes care of recursing into RTE_FUNCTION
 		 * RTEs, subqueries, etc, so no need to do that here.  But keep it
@@ -1766,34 +1765,19 @@ find_expr_references_walker(Node *node,
 		 *
 		 * Note: we don't need to worry about collations mentioned in
 		 * RTE_VALUES or RTE_CTE RTEs, because those must just duplicate
-		 * collations referenced in other parts of the Query.
+		 * collations referenced in other parts of the Query.  We do have to
+		 * worry about collations mentioned in RTE_FUNCTION, but we take care
+		 * of those when we recurse to the RangeTblFunction node(s).
 		 */
 		foreach(lc, query->rtable)
 		{
 			RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
-			ListCell   *ct;
 
 			switch (rte->rtekind)
 			{
 				case RTE_RELATION:
 					add_object_address(OCLASS_CLASS, rte->relid, 0,
 									   context->addrs);
-					break;
-				case RTE_FUNCTION:
-					foreach(ct, rte->funccoltypes)
-					{
-						add_object_address(OCLASS_TYPE, lfirst_oid(ct), 0,
-										   context->addrs);
-					}
-					foreach(ct, rte->funccolcollations)
-					{
-						Oid			collid = lfirst_oid(ct);
-
-						if (OidIsValid(collid) &&
-							collid != DEFAULT_COLLATION_OID)
-							add_object_address(OCLASS_COLLATION, collid, 0,
-											   context->addrs);
-					}
 					break;
 				default:
 					break;
@@ -1862,6 +1846,30 @@ find_expr_references_walker(Node *node,
 		/* we need to look at the groupClauses for operator references */
 		find_expr_references_walker((Node *) setop->groupClauses, context);
 		/* fall through to examine child nodes */
+	}
+	else if (IsA(node, RangeTblFunction))
+	{
+		RangeTblFunction *rtfunc = (RangeTblFunction *) node;
+		ListCell   *ct;
+
+		/*
+		 * Add refs for any datatypes and collations used in a column
+		 * definition list for a RECORD function.  (For other cases, it should
+		 * be enough to depend on the function itself.)
+		 */
+		foreach(ct, rtfunc->funccoltypes)
+		{
+			add_object_address(OCLASS_TYPE, lfirst_oid(ct), 0,
+							   context->addrs);
+		}
+		foreach(ct, rtfunc->funccolcollations)
+		{
+			Oid			collid = lfirst_oid(ct);
+
+			if (OidIsValid(collid) && collid != DEFAULT_COLLATION_OID)
+				add_object_address(OCLASS_COLLATION, collid, 0,
+								   context->addrs);
+		}
 	}
 
 	return expression_tree_walker(node, find_expr_references_walker,

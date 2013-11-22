@@ -122,14 +122,10 @@ makeVarFromTargetEntry(Index varno,
  * a rowtype; either a named composite type, or RECORD.  This function
  * encapsulates the logic for determining the correct rowtype OID to use.
  *
- * If allowScalar is true, then for the case where the RTE is a function
+ * If allowScalar is true, then for the case where the RTE is a single function
  * returning a non-composite result type, we produce a normal Var referencing
  * the function's result directly, instead of the single-column composite
  * value that the whole-row notation might otherwise suggest.
- *
- * We also handle the specific case of function RTEs with ordinality,
- * where the additional column has to be added. This forces the result
- * to be composite and RECORD type.
  */
 Var *
 makeWholeRowVar(RangeTblEntry *rte,
@@ -139,6 +135,7 @@ makeWholeRowVar(RangeTblEntry *rte,
 {
 	Var		   *result;
 	Oid			toid;
+	Node	   *fexpr;
 
 	switch (rte->rtekind)
 	{
@@ -157,31 +154,27 @@ makeWholeRowVar(RangeTblEntry *rte,
 			break;
 
 		case RTE_FUNCTION:
-			/*
-			 * RTE is a function with or without ordinality. We map the
-			 * cases as follows:
-			 *
-			 * If ordinality is set, we return a composite var even if
-			 * the function is a scalar. This var is always of RECORD type.
-			 *
-			 * If ordinality is not set but the function returns a row,
-			 * we keep the function's return type.
-			 *
-			 * If the function is a scalar, we do what allowScalar requests.
-			 */
-			toid = exprType(rte->funcexpr);
 
-			if (rte->funcordinality)
+			/*
+			 * If there's more than one function, or ordinality is requested,
+			 * force a RECORD result, since there's certainly more than one
+			 * column involved and it can't be a known named type.
+			 */
+			if (rte->funcordinality || list_length(rte->functions) != 1)
 			{
-				/* ORDINALITY always produces an anonymous RECORD result */
+				/* always produces an anonymous RECORD result */
 				result = makeVar(varno,
 								 InvalidAttrNumber,
 								 RECORDOID,
 								 -1,
 								 InvalidOid,
 								 varlevelsup);
+				break;
 			}
-			else if (type_is_rowtype(toid))
+
+			fexpr = ((RangeTblFunction *) linitial(rte->functions))->funcexpr;
+			toid = exprType(fexpr);
+			if (type_is_rowtype(toid))
 			{
 				/* func returns composite; same as relation case */
 				result = makeVar(varno,
@@ -198,7 +191,7 @@ makeWholeRowVar(RangeTblEntry *rte,
 								 1,
 								 toid,
 								 -1,
-								 exprCollation(rte->funcexpr),
+								 exprCollation(fexpr),
 								 varlevelsup);
 			}
 			else
@@ -214,6 +207,7 @@ makeWholeRowVar(RangeTblEntry *rte,
 			break;
 
 		default:
+
 			/*
 			 * RTE is a join, subselect, or VALUES.  We represent this as a
 			 * whole-row Var of RECORD type. (Note that in most cases the Var
@@ -541,23 +535,21 @@ makeDefElemExtended(char *nameSpace, char *name, Node *arg,
  * makeFuncCall -
  *
  * Initialize a FuncCall struct with the information every caller must
- * supply.  Any non-default parameters have to be handled by the
- * caller.
- *
+ * supply.	Any non-default parameters have to be inserted by the caller.
  */
-
 FuncCall *
 makeFuncCall(List *name, List *args, int location)
 {
-	FuncCall *n = makeNode(FuncCall);
+	FuncCall   *n = makeNode(FuncCall);
+
 	n->funcname = name;
 	n->args = args;
-	n->location = location;
 	n->agg_order = NIL;
 	n->agg_filter = NULL;
 	n->agg_star = FALSE;
 	n->agg_distinct = FALSE;
 	n->func_variadic = FALSE;
 	n->over = NULL;
+	n->location = location;
 	return n;
 }
