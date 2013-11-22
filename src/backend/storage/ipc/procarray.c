@@ -473,7 +473,7 @@ ProcArrayClearTransaction(PGPROC *proc)
  * ProcArrayInitRecovery -- initialize recovery xid mgmt environment
  *
  * Remember up to where the startup process initialized the CLOG and subtrans
- * so we can ensure its initialized gaplessly up to the point where necessary
+ * so we can ensure it's initialized gaplessly up to the point where necessary
  * while in recovery.
  */
 void
@@ -483,9 +483,10 @@ ProcArrayInitRecovery(TransactionId initializedUptoXID)
 	Assert(TransactionIdIsNormal(initializedUptoXID));
 
 	/*
-	 * we set latestObservedXid to the xid SUBTRANS has been initialized upto
-	 * so we can extend it from that point onwards when we reach a consistent
-	 * state in ProcArrayApplyRecoveryInfo().
+	 * we set latestObservedXid to the xid SUBTRANS has been initialized upto,
+	 * so we can extend it from that point onwards in
+	 * RecordKnownAssignedTransactionIds, and when we get consistent in
+	 * ProcArrayApplyRecoveryInfo().
 	 */
 	latestObservedXid = initializedUptoXID;
 	TransactionIdRetreat(latestObservedXid);
@@ -661,17 +662,23 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 	pfree(xids);
 
 	/*
-	 * latestObservedXid is set to the the point where SUBTRANS was started up
-	 * to, initialize subtrans from thereon, up to nextXid - 1.
+	 * latestObservedXid is at least set to the the point where SUBTRANS was
+	 * started up to (c.f. ProcArrayInitRecovery()) or to the biggest xid
+	 * RecordKnownAssignedTransactionIds() was called for.  Initialize
+	 * subtrans from thereon, up to nextXid - 1.
+	 *
+	 * We need to duplicate parts of RecordKnownAssignedTransactionId() here,
+	 * because we've just added xids to the known assigned xids machinery that
+	 * haven't gone through RecordKnownAssignedTransactionId().
 	 */
 	Assert(TransactionIdIsNormal(latestObservedXid));
+	TransactionIdAdvance(latestObservedXid);
 	while (TransactionIdPrecedes(latestObservedXid, running->nextXid))
 	{
-		ExtendCLOG(latestObservedXid);
 		ExtendSUBTRANS(latestObservedXid);
-
 		TransactionIdAdvance(latestObservedXid);
 	}
+	TransactionIdRetreat(latestObservedXid);  /* = running->nextXid - 1 */
 
 	/* ----------
 	 * Now we've got the running xids we need to set the global values that
@@ -756,10 +763,6 @@ ProcArrayApplyXidAssignment(TransactionId topxid,
 
 	Assert(standbyState >= STANDBY_INITIALIZED);
 
-	/* can't do anything useful unless we have more state setup */
-	if (standbyState == STANDBY_INITIALIZED)
-		return;
-
 	max_xid = TransactionIdLatest(topxid, nsubxids, subxids);
 
 	/*
@@ -785,6 +788,10 @@ ProcArrayApplyXidAssignment(TransactionId topxid,
 	 */
 	for (i = 0; i < nsubxids; i++)
 		SubTransSetParent(subxids[i], topxid, false);
+
+	/* KnownAssignedXids isn't maintained yet, so we're done for now */
+	if (standbyState == STANDBY_INITIALIZED)
+		return;
 
 	/*
 	 * Uses same locking as transaction commit
@@ -2661,17 +2668,10 @@ RecordKnownAssignedTransactionIds(TransactionId xid)
 {
 	Assert(standbyState >= STANDBY_INITIALIZED);
 	Assert(TransactionIdIsValid(xid));
+	Assert(TransactionIdIsValid(latestObservedXid));
 
 	elog(trace_recovery(DEBUG4), "record known xact %u latestObservedXid %u",
 		 xid, latestObservedXid);
-
-	/*
-	 * If the KnownAssignedXids machinery isn't up yet, do nothing.
-	 */
-	if (standbyState <= STANDBY_INITIALIZED)
-		return;
-
-	Assert(TransactionIdIsValid(latestObservedXid));
 
 	/*
 	 * When a newly observed xid arrives, it is frequently the case that it is
@@ -2683,22 +2683,34 @@ RecordKnownAssignedTransactionIds(TransactionId xid)
 		TransactionId next_expected_xid;
 
 		/*
-		 * Extend clog and subtrans like we do in GetNewTransactionId() during
-		 * normal operation using individual extend steps. Typical case
-		 * requires almost no activity.
+		 * Extend subtrans like we do in GetNewTransactionId() during normal
+		 * operation using individual extend steps. Note that we do not need
+		 * to extend clog since its extensions are WAL logged.
+		 *
+		 * This part has to be done regardless of standbyState since we
+		 * immediately start assigning subtransactions to their toplevel
+		 * transactions.
 		 */
 		next_expected_xid = latestObservedXid;
-		TransactionIdAdvance(next_expected_xid);
-		while (TransactionIdPrecedesOrEquals(next_expected_xid, xid))
+		while (TransactionIdPrecedes(next_expected_xid, xid))
 		{
-			ExtendCLOG(next_expected_xid);
-			ExtendSUBTRANS(next_expected_xid);
-
 			TransactionIdAdvance(next_expected_xid);
+			ExtendSUBTRANS(next_expected_xid);
+		}
+		Assert(next_expected_xid == xid);
+
+		/*
+		 * If the KnownAssignedXids machinery isn't up yet, there's nothing
+		 * more to do since we don't track assigned xids yet.
+		 */
+		if (standbyState <= STANDBY_INITIALIZED)
+		{
+			latestObservedXid = xid;
+			return;
 		}
 
 		/*
-		 * Add the new xids onto the KnownAssignedXids array.
+		 * Add (latestObservedXid, xid] onto the KnownAssignedXids array.
 		 */
 		next_expected_xid = latestObservedXid;
 		TransactionIdAdvance(next_expected_xid);
