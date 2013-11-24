@@ -226,6 +226,18 @@ transformArrayType(Oid *arrayType, int32 *arrayTypmod)
 	 */
 	*arrayType = getBaseTypeAndTypmod(*arrayType, arrayTypmod);
 
+	/*
+	 * We treat int2vector and oidvector as though they were domains over
+	 * int2[] and oid[].  This is needed because array slicing could create an
+	 * array that doesn't satisfy the dimensionality constraints of the
+	 * xxxvector type; so we want the result of a slice operation to be
+	 * considered to be of the more general type.
+	 */
+	if (*arrayType == INT2VECTOROID)
+		*arrayType = INT2ARRAYOID;
+	else if (*arrayType == OIDVECTOROID)
+		*arrayType = OIDARRAYOID;
+
 	/* Get the type tuple for the array */
 	type_tuple_array = SearchSysCache1(TYPEOID, ObjectIdGetDatum(*arrayType));
 	if (!HeapTupleIsValid(type_tuple_array))
@@ -263,6 +275,7 @@ transformArrayType(Oid *arrayType, int32 *arrayTypmod)
  * For both cases, if the source array is of a domain-over-array type,
  * the result is of the base array type or its element type; essentially,
  * we must fold a domain to its base type before applying subscripting.
+ * (Note that int2vector and oidvector are treated as domains here.)
  *
  * pstate		Parse state
  * arrayBase	Already-transformed expression for the array as a whole
