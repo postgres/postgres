@@ -1865,6 +1865,11 @@ Iresult:        Iconst			{ $$ = $1; }
                 | Iresult '%' Iresult   { $$ = cat_str(3, $1, mm_strdup("%"), $3); }
                 | ecpg_sconst		{ $$ = $1; }
                 | ColId                 { $$ = $1; }
+		| ColId '(' ColId ')'   { if (pg_strcasecmp($1, "sizeof") != 0)
+						mmerror(PARSE_ERROR, ET_ERROR, "operator not allowed in variable definition");
+					 else
+						$$ = cat_str(4,$1, mm_strdup("("), $3, mm_strdup(")"));
+					}
                 ;
 
 execute_rest: /* EMPTY */	{ $$ = EMPTY; }
