@@ -102,7 +102,8 @@ static struct _if_value
  * and to eliminate parsing troubles for numeric strings.
  * Exclusive states:
  *	<xb> bit string literal
- *	<xc> extended C-style comments - thomas 1997-07-12
+ *	<xcc> extended C-style comments in C
+ *	<xcsql> extended C-style comments in SQL
  *	<xd> delimited identifiers (double-quoted identifiers) - thomas 1997-10-27
  *	<xh> hexadecimal numeric string - thomas 1997-11-16
  *	<xq> standard quoted strings - thomas 1997-07-30
@@ -115,7 +116,8 @@ static struct _if_value
  */
 
 %x xb
-%x xc
+%x xcc
+%x xcsql
 %x xd
 %x xdc
 %x xh
@@ -369,23 +371,32 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})(.*\\{space})*.
 
 <SQL>{whitespace}	{ /* ignore */ }
 
-<C,SQL>{xcstart}		{
+<C>{xcstart}		{
 					token_start = yytext;
 					state_before = YYSTATE;
 					xcdepth = 0;
-					BEGIN(xc);
+					BEGIN(xcc);
 					/* Put back any characters past slash-star; see above */
 					yyless(2);
 					fputs("/*", yyout);
 				}
-<xc>{xcstart}	{
+<SQL>{xcstart}		{
+					token_start = yytext;
+					state_before = YYSTATE;
+					xcdepth = 0;
+					BEGIN(xcsql);
+					/* Put back any characters past slash-star; see above */
+					yyless(2);
+					fputs("/*", yyout);
+				}
+<xcc>{xcstart}	{ ECHO; }
+<xcsql>{xcstart}	{
 					xcdepth++;
 					/* Put back any characters past slash-star; see above */
 					yyless(2);
 					fputs("/*", yyout);
 				}
-
-<xc>{xcstop}	{
+<xcsql>{xcstop}	{
 					ECHO;
 					if (xcdepth <= 0)
 					{
@@ -395,12 +406,16 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})(.*\\{space})*.
 					else
 						xcdepth--;
 				}
+<xcc>{xcstop}	{
+					ECHO;
+					BEGIN(state_before);
+					token_start = NULL;
+				}
+<xcc,xcsql>{xcinside}	{ ECHO; }
+<xcc,xcsql>{op_chars}	{ ECHO; }
+<xcc,xcsql>\*+		{ ECHO; }
 
-<xc>{xcinside}	{ ECHO; }
-<xc>{op_chars}	{ ECHO; }
-<xc>\*+			{ ECHO; }
-
-<xc><<EOF>>		{ mmfatal(PARSE_ERROR, "unterminated /* comment"); }
+<xcc,xcsql><<EOF>>		{ mmfatal(PARSE_ERROR, "unterminated /* comment"); }
 
 <SQL>{xbstart}	{
 					token_start = yytext;
