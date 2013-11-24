@@ -27,6 +27,7 @@
 #include "access/xact.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "commands/event_trigger.h"
 #include "commands/trigger.h"
 #include "executor/spi.h"
 #include "fmgr.h"
@@ -200,11 +201,13 @@ static Datum pltcl_handler(PG_FUNCTION_ARGS, bool pltrusted);
 static Datum pltcl_func_handler(PG_FUNCTION_ARGS, bool pltrusted);
 
 static HeapTuple pltcl_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted);
+static void pltcl_event_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted);
 
 static void throw_tcl_error(Tcl_Interp *interp, const char *proname);
 
 static pltcl_proc_desc *compile_pltcl_function(Oid fn_oid, Oid tgreloid,
-					   bool pltrusted);
+											   bool is_event_trigger,
+											   bool pltrusted);
 
 static int pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 		   int argc, CONST84 char *argv[]);
@@ -644,6 +647,12 @@ pltcl_handler(PG_FUNCTION_ARGS, bool pltrusted)
 			pltcl_current_fcinfo = NULL;
 			retval = PointerGetDatum(pltcl_trigger_handler(fcinfo, pltrusted));
 		}
+		else if (CALLED_AS_EVENT_TRIGGER(fcinfo))
+		{
+			pltcl_current_fcinfo = NULL;
+			pltcl_event_trigger_handler(fcinfo, pltrusted);
+			retval = (Datum) 0;
+		}
 		else
 		{
 			pltcl_current_fcinfo = fcinfo;
@@ -685,7 +694,7 @@ pltcl_func_handler(PG_FUNCTION_ARGS, bool pltrusted)
 
 	/* Find or compile the function */
 	prodesc = compile_pltcl_function(fcinfo->flinfo->fn_oid, InvalidOid,
-									 pltrusted);
+									 false, pltrusted);
 
 	pltcl_current_prodesc = prodesc;
 
@@ -844,6 +853,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted)
 	/* Find or compile the function */
 	prodesc = compile_pltcl_function(fcinfo->flinfo->fn_oid,
 									 RelationGetRelid(trigdata->tg_relation),
+									 false, /* not an event trigger */
 									 pltrusted);
 
 	pltcl_current_prodesc = prodesc;
@@ -1130,6 +1140,47 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted)
 	return rettup;
 }
 
+/**********************************************************************
+ * pltcl_event_trigger_handler()	- Handler for event trigger calls
+ **********************************************************************/
+static void
+pltcl_event_trigger_handler(PG_FUNCTION_ARGS, bool pltrusted)
+{
+	pltcl_proc_desc *prodesc;
+	Tcl_Interp *volatile interp;
+	EventTriggerData *tdata = (EventTriggerData *) fcinfo->context;
+	Tcl_DString tcl_cmd;
+	int			tcl_rc;
+
+	/* Connect to SPI manager */
+	if (SPI_connect() != SPI_OK_CONNECT)
+		elog(ERROR, "could not connect to SPI manager");
+
+	/* Find or compile the function */
+	prodesc = compile_pltcl_function(fcinfo->flinfo->fn_oid,
+									 InvalidOid, true, pltrusted);
+
+	pltcl_current_prodesc = prodesc;
+
+	interp = prodesc->interp_desc->interp;
+
+	/* Create the tcl command and call the internal proc */
+	Tcl_DStringInit(&tcl_cmd);
+	Tcl_DStringAppendElement(&tcl_cmd, prodesc->internal_proname);
+	Tcl_DStringAppendElement(&tcl_cmd, tdata->event);
+	Tcl_DStringAppendElement(&tcl_cmd, tdata->tag);
+
+	tcl_rc = Tcl_GlobalEval(interp, Tcl_DStringValue(&tcl_cmd));
+	Tcl_DStringFree(&tcl_cmd);
+
+	/* Check for errors reported by Tcl. */
+	if (tcl_rc != TCL_OK)
+		throw_tcl_error(interp, prodesc->user_proname);
+
+	if (SPI_finish() != SPI_OK_FINISH)
+		elog(ERROR, "SPI_finish() failed");
+}
+
 
 /**********************************************************************
  * throw_tcl_error	- ereport an error returned from the Tcl interpreter
@@ -1168,7 +1219,8 @@ throw_tcl_error(Tcl_Interp *interp, const char *proname)
  * (InvalidOid) when compiling a plain function.
  **********************************************************************/
 static pltcl_proc_desc *
-compile_pltcl_function(Oid fn_oid, Oid tgreloid, bool pltrusted)
+compile_pltcl_function(Oid fn_oid, Oid tgreloid,
+					   bool is_event_trigger, bool pltrusted)
 {
 	HeapTuple	procTup;
 	Form_pg_proc procStruct;
@@ -1245,10 +1297,13 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid, bool pltrusted)
 		 * "_trigger" when appropriate to ensure the normal and trigger
 		 * cases are kept separate.
 		 ************************************************************/
-		if (!is_trigger)
+		if (!is_trigger && !is_event_trigger)
 			snprintf(internal_proname, sizeof(internal_proname),
 					 "__PLTcl_proc_%u", fn_oid);
-		else
+		else if (is_event_trigger)
+			snprintf(internal_proname, sizeof(internal_proname),
+					 "__PLTcl_proc_%u_evttrigger", fn_oid);
+		else if (is_trigger)
 			snprintf(internal_proname, sizeof(internal_proname),
 					 "__PLTcl_proc_%u_trigger", fn_oid);
 
@@ -1286,7 +1341,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid, bool pltrusted)
 		 * Get the required information for input conversion of the
 		 * return value.
 		 ************************************************************/
-		if (!is_trigger)
+		if (!is_trigger && !is_event_trigger)
 		{
 			typeTup =
 				SearchSysCache1(TYPEOID,
@@ -1306,7 +1361,8 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid, bool pltrusted)
 			{
 				if (procStruct->prorettype == VOIDOID)
 					 /* okay */ ;
-				else if (procStruct->prorettype == TRIGGEROID)
+				else if (procStruct->prorettype == TRIGGEROID ||
+						 procStruct->prorettype == EVTTRIGGEROID)
 				{
 					free(prodesc->user_proname);
 					free(prodesc->internal_proname);
@@ -1347,7 +1403,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid, bool pltrusted)
 		 * Get the required information for output conversion
 		 * of all procedure arguments
 		 ************************************************************/
-		if (!is_trigger)
+		if (!is_trigger && !is_event_trigger)
 		{
 			prodesc->nargs = procStruct->pronargs;
 			proc_internal_args[0] = '\0';
@@ -1397,11 +1453,16 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid, bool pltrusted)
 				ReleaseSysCache(typeTup);
 			}
 		}
-		else
+		else if (is_trigger)
 		{
 			/* trigger procedure has fixed args */
 			strcpy(proc_internal_args,
 				   "TG_name TG_relid TG_table_name TG_table_schema TG_relatts TG_when TG_level TG_op __PLTcl_Tup_NEW __PLTcl_Tup_OLD args");
+		}
+		else if (is_event_trigger)
+		{
+			/* event trigger procedure has fixed args */
+			strcpy(proc_internal_args, "TG_event TG_tag");
 		}
 
 		/************************************************************
@@ -1422,20 +1483,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid, bool pltrusted)
 		Tcl_DStringAppend(&proc_internal_body, "upvar #0 ", -1);
 		Tcl_DStringAppend(&proc_internal_body, internal_proname, -1);
 		Tcl_DStringAppend(&proc_internal_body, " GD\n", -1);
-		if (!is_trigger)
-		{
-			for (i = 0; i < prodesc->nargs; i++)
-			{
-				if (prodesc->arg_is_rowtype[i])
-				{
-					snprintf(buf, sizeof(buf),
-							 "array set %d $__PLTcl_Tup_%d\n",
-							 i + 1, i + 1);
-					Tcl_DStringAppend(&proc_internal_body, buf, -1);
-				}
-			}
-		}
-		else
+		if (is_trigger)
 		{
 			Tcl_DStringAppend(&proc_internal_body,
 							  "array set NEW $__PLTcl_Tup_NEW\n", -1);
@@ -1450,6 +1498,23 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid, bool pltrusted)
 							  "  set $i $v\n"
 							  "}\n"
 							  "unset i v\n\n", -1);
+		}
+		else if (is_event_trigger)
+		{
+			/* no argument support for event triggers */
+		}
+		else
+		{
+			for (i = 0; i < prodesc->nargs; i++)
+			{
+				if (prodesc->arg_is_rowtype[i])
+				{
+					snprintf(buf, sizeof(buf),
+							 "array set %d $__PLTcl_Tup_%d\n",
+							 i + 1, i + 1);
+					Tcl_DStringAppend(&proc_internal_body, buf, -1);
+				}
+			}
 		}
 
 		/************************************************************

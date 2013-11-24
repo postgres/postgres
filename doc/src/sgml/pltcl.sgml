@@ -711,6 +711,65 @@ CREATE TRIGGER trig_mytab_modcount BEFORE INSERT OR UPDATE ON mytab
     </para>
    </sect1>
 
+   <sect1 id="pltcl-event-trigger">
+    <title>Event Trigger Procedures in PL/Tcl</title>
+
+    <indexterm>
+     <primary>event trigger</primary>
+     <secondary>in PL/Tcl</secondary>
+    </indexterm>
+
+    <para>
+     Event trigger procedures can be written in PL/Tcl.
+     <productname>PostgreSQL</productname> requires that a procedure that is
+     to be called as an event trigger must be declared as a function with no
+     arguments and a return type of <literal>event_trigger</>.
+    </para>
+    <para>
+     The information from the trigger manager is passed to the procedure body
+     in the following variables:
+
+     <variablelist>
+
+      <varlistentry>
+       <term><varname>$TG_event</varname></term>
+       <listitem>
+        <para>
+         The name of the event the trigger is fired for.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><varname>$TG_tag</varname></term>
+       <listitem>
+        <para>
+         The command tag for which the trigger is fired.
+        </para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
+    </para>
+
+    <para>
+     The return value of the trigger procedure is ignored.
+    </para>
+
+    <para>
+     Here's a little example event trigger procedure that simply raises
+     a <literal>NOTICE</literal> message each time a supported command is
+     executed:
+
+<programlisting>
+CREATE OR REPLACE FUNCTION tclsnitch() RETURNS event_trigger AS $$
+  elog NOTICE "tclsnitch: $TG_event $TG_tag"
+$$ LANGUAGE pltcl;
+
+CREATE EVENT TRIGGER tcl_a_snitch ON ddl_command_start EXECUTE PROCEDURE tclsnitch();
+</programlisting>
+    </para>
+   </sect1>
+
    <sect1 id="pltcl-unknown">
        <title>Modules and the <function>unknown</> Command</title>
        <para>

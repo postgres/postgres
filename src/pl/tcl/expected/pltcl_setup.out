@@ -519,3 +519,26 @@ select tcl_date_week(2001,10,24);
  42
 (1 row)
 
+-- test pltcl event triggers
+create or replace function tclsnitch() returns event_trigger language pltcl as $$
+  elog NOTICE "tclsnitch: $TG_event $TG_tag"
+$$;
+create event trigger tcl_a_snitch on ddl_command_start execute procedure tclsnitch();
+create event trigger tcl_b_snitch on ddl_command_end execute procedure tclsnitch();
+create or replace function foobar() returns int language sql as $$select 1;$$;
+NOTICE:  tclsnitch: ddl_command_start CREATE FUNCTION
+NOTICE:  tclsnitch: ddl_command_end CREATE FUNCTION
+alter function foobar() cost 77;
+NOTICE:  tclsnitch: ddl_command_start ALTER FUNCTION
+NOTICE:  tclsnitch: ddl_command_end ALTER FUNCTION
+drop function foobar();
+NOTICE:  tclsnitch: ddl_command_start DROP FUNCTION
+NOTICE:  tclsnitch: ddl_command_end DROP FUNCTION
+create table foo();
+NOTICE:  tclsnitch: ddl_command_start CREATE TABLE
+NOTICE:  tclsnitch: ddl_command_end CREATE TABLE
+drop table foo;
+NOTICE:  tclsnitch: ddl_command_start DROP TABLE
+NOTICE:  tclsnitch: ddl_command_end DROP TABLE
+drop event trigger tcl_a_snitch;
+drop event trigger tcl_b_snitch;
