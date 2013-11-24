@@ -446,6 +446,7 @@ DATA(insert OID = 1001 (  _bytea	 PGNSP PGUID -1 f b A f t \054 0	17 0 array_in 
 DATA(insert OID = 1002 (  _char		 PGNSP PGUID -1 f b A f t \054 0	18 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 DATA(insert OID = 1003 (  _name		 PGNSP PGUID -1 f b A f t \054 0	19 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 DATA(insert OID = 1005 (  _int2		 PGNSP PGUID -1 f b A f t \054 0	21 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+#define INT2ARRAYOID		1005
 DATA(insert OID = 1006 (  _int2vector PGNSP PGUID -1 f b A f t \054 0	22 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 DATA(insert OID = 1007 (  _int4		 PGNSP PGUID -1 f b A f t \054 0	23 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 #define INT4ARRAYOID		1007
@@ -453,6 +454,7 @@ DATA(insert OID = 1008 (  _regproc	 PGNSP PGUID -1 f b A f t \054 0	24 0 array_i
 DATA(insert OID = 1009 (  _text		 PGNSP PGUID -1 f b A f t \054 0	25 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 100 _null_ _null_ _null_ ));
 #define TEXTARRAYOID		1009
 DATA(insert OID = 1028 (  _oid		 PGNSP PGUID -1 f b A f t \054 0	26 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+#define OIDARRAYOID			1028
 DATA(insert OID = 1010 (  _tid		 PGNSP PGUID -1 f b A f t \054 0	27 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 DATA(insert OID = 1011 (  _xid		 PGNSP PGUID -1 f b A f t \054 0	28 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 DATA(insert OID = 1012 (  _cid		 PGNSP PGUID -1 f b A f t \054 0	29 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));

@@ -839,18 +839,20 @@ transformAssignmentSubscripts(ParseState *pstate,
 	/* If target was a domain over array, need to coerce up to the domain */
 	if (arrayType != targetTypeId)
 	{
+		Oid			resulttype = exprType(result);
+
 		result = coerce_to_target_type(pstate,
-									   result, exprType(result),
+									   result, resulttype,
 									   targetTypeId, targetTypMod,
 									   COERCION_ASSIGNMENT,
 									   COERCE_IMPLICIT_CAST,
 									   -1);
-		/* probably shouldn't fail, but check */
+		/* can fail if we had int2vector/oidvector, but not for true domains */
 		if (result == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_CANNOT_COERCE),
 					 errmsg("cannot cast type %s to %s",
-							format_type_be(exprType(result)),
+							format_type_be(resulttype),
 							format_type_be(targetTypeId)),
 					 parser_errposition(pstate, location)));
 	}
