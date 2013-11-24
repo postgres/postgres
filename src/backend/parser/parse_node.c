@@ -268,6 +268,18 @@ transformArraySubscripts(ParseState *pstate,
 		elementType = transformArrayType(arrayType);
 
 	/*
+	 * We treat int2vector and oidvector as though they were domains over
+	 * int2[] and oid[].  This is needed because array slicing could create an
+	 * array that doesn't satisfy the dimensionality constraints of the
+	 * xxxvector type; so we want the result of a slice operation to be
+	 * considered to be of the more general type.
+	 */
+	if (arrayType == INT2VECTOROID)
+		arrayType = INT2ARRAYOID;
+	else if (arrayType == OIDVECTOROID)
+		arrayType = OIDARRAYOID;
+
+	/*
 	 * A list containing only single subscripts refers to a single array
 	 * element.  If any of the items are double subscripts (lower:upper), then
 	 * the subscript expression means an array slice operation. In this case,
