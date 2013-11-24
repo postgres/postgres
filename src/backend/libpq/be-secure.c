@@ -295,6 +295,7 @@ rloop:
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
 						 errmsg("unrecognized SSL error code: %d",
 								err)));
+				errno = ECONNRESET;
 				n = -1;
 				break;
 		}
@@ -416,28 +417,32 @@ wloop:
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
 						 errmsg("unrecognized SSL error code: %d",
 								err)));
+				errno = ECONNRESET;
 				n = -1;
 				break;
 		}
 
-		/* is renegotiation complete? */
-		if (in_ssl_renegotiation &&
-			SSL_num_renegotiations(port->ssl) >= 1)
+		if (n >= 0)
 		{
-			in_ssl_renegotiation = false;
-			port->count = 0;
-		}
+			/* is renegotiation complete? */
+			if (in_ssl_renegotiation &&
+				SSL_num_renegotiations(port->ssl) >= 1)
+			{
+				in_ssl_renegotiation = false;
+				port->count = 0;
+			}
 
-		/*
-		 * if renegotiation is still ongoing, and we've gone beyond the limit,
-		 * kill the connection now -- continuing to use it can be considered a
-		 * security problem.
-		 */
-		if (in_ssl_renegotiation &&
-			port->count > ssl_renegotiation_limit * 1024L)
-			ereport(FATAL,
-					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-					 errmsg("SSL failed to renegotiate connection before limit expired")));
+			/*
+			 * if renegotiation is still ongoing, and we've gone beyond the
+			 * limit, kill the connection now -- continuing to use it can be
+			 * considered a security problem.
+			 */
+			if (in_ssl_renegotiation &&
+				port->count > ssl_renegotiation_limit * 1024L)
+				ereport(FATAL,
+						(errcode(ERRCODE_PROTOCOL_VIOLATION),
+						 errmsg("SSL failed to renegotiate connection before limit expired")));
+		}
 	}
 	else
 #endif
