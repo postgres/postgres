@@ -64,8 +64,10 @@ EXEC SQL ...;
    These statements syntactically take the place of a C statement.
    Depending on the particular statement, they can appear at the
    global level or within a function.  Embedded
-   <acronym>SQL</acronym> statements follow the case-sensitivity rules
-   of normal <acronym>SQL</acronym> code, and not those of C.
+   <acronym>SQL</acronym> statements follow the case-sensitivity rules of
+   normal <acronym>SQL</acronym> code, and not those of C. Also they allow nested
+   C-style comments that are part of the SQL standard. The C part of the
+   program, however, follows the C standard of not accepting nested comments.
   </para>
 
   <para>

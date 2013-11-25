@@ -394,17 +394,20 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})(.*\\{space})*.
 					xcdepth++;
 					/* Put back any characters past slash-star; see above */
 					yyless(2);
-					fputs("/*", yyout);
+					fputs("/_*", yyout);
 				}
 <xcsql>{xcstop}	{
-					ECHO;
 					if (xcdepth <= 0)
 					{
+						ECHO;
 						BEGIN(state_before);
 						token_start = NULL;
 					}
 					else
+					{
 						xcdepth--;
+						fputs("*_/", yyout);
+					}
 				}
 <xcc>{xcstop}	{
 					ECHO;
@@ -861,6 +864,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})(.*\\{space})*.
 							}
 						}
 					}
+<C>{xcstop}			{ mmerror(PARSE_ERROR, ET_ERROR, "nested /* ... */ comments"); }
 <C>":"				{ return(':'); }
 <C>";"				{ return(';'); }
 <C>","				{ return(','); }
