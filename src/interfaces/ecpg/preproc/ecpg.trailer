@@ -837,7 +837,12 @@ opt_signed: SQL_SIGNED
 variable_list: variable
 			{ $$ = $1; }
 		| variable_list ',' variable
-			{ $$ = cat_str(3, $1, mm_strdup(","), $3); }
+		{
+			if (actual_type[struct_level].type_enum == ECPGt_varchar)
+				$$ = cat_str(3, $1, mm_strdup(";"), $3);
+			else
+				$$ = cat_str(3, $1, mm_strdup(","), $3);
+		}
 		;
 
 variable: opt_pointer ECPGColLabel opt_array_bounds opt_bit_field opt_initializer
