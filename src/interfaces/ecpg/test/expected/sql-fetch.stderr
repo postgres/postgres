@@ -102,46 +102,49 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 39: RESULT: text4 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 44: query: declare D cursor for select * from My_Table where Item1 = $1; with 1 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 42: query: close C; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 44: using PQexecParams
+[NO_PID]: ecpg_execute on line 42: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 44: parameter 1 = 1
+[NO_PID]: ecpg_execute on line 42: OK: CLOSE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 44: OK: DECLARE CURSOR
+[NO_PID]: ecpg_execute on line 46: query: declare D cursor for select * from My_Table where Item1 = $1; with 1 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 48: query: fetch 1 in D; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 46: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 48: using PQexec
+[NO_PID]: free_params on line 46: parameter 1 = 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 48: correctly got 1 tuples with 2 fields
+[NO_PID]: ecpg_execute on line 46: OK: DECLARE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 48: RESULT: 1 offset: -1; array: no
+[NO_PID]: ecpg_execute on line 50: query: fetch 1 in D; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_get_data on line 48: RESULT: text1 offset: -1; array: no
+[NO_PID]: ecpg_execute on line 50: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 48: query: fetch 1 in D; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 50: correctly got 1 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 48: using PQexec
+[NO_PID]: ecpg_get_data on line 50: RESULT: 1 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 48: correctly got 0 tuples with 2 fields
+[NO_PID]: ecpg_get_data on line 50: RESULT: text1 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlcode 100 on line 48: no data found on line 48
+[NO_PID]: ecpg_execute on line 50: query: fetch 1 in D; with 0 parameter(s) on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 50: using PQexec
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 50: correctly got 0 tuples with 2 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: raising sqlcode 100 on line 50: no data found on line 50
 [NO_PID]: sqlca: code: 100, state: 02000
-[NO_PID]: ecpg_execute on line 51: query: close D; with 0 parameter(s) on connection regress1
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 51: using PQexec
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 51: OK: CLOSE CURSOR
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 53: query: drop table My_Table; with 0 parameter(s) on connection regress1
+[NO_PID]: ecpg_execute on line 53: query: close D; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 53: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_check_PQresult on line 53: bad response - ERROR:  cannot DROP TABLE "my_table" because it is being used by active queries in this session
+[NO_PID]: ecpg_execute on line 53: OK: CLOSE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlstate 55006 (sqlcode -400): cannot DROP TABLE "my_table" because it is being used by active queries in this session on line 53
-[NO_PID]: sqlca: code: -400, state: 55006
-SQL error: cannot DROP TABLE "my_table" because it is being used by active queries in this session on line 53
+[NO_PID]: ecpg_execute on line 55: query: drop table My_Table; with 0 parameter(s) on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 55: using PQexec
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 55: OK: DROP TABLE
+[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection regress1 closed
 [NO_PID]: sqlca: code: 0, state: 00000

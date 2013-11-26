@@ -39,6 +39,8 @@ int main() {
   EXEC SQL FETCH :count IN C INTO :i, :str;
   printf("%d: %s\n", i, str);
 
+  EXEC SQL CLOSE C;
+
   EXEC SQL DECLARE D CURSOR FOR SELECT * FROM My_Table WHERE Item1 = $1;
 
   EXEC SQL OPEN D using 1;
