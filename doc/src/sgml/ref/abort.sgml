@@ -63,8 +63,7 @@ ABORT [ WORK | TRANSACTION ]
   </para>
 
   <para>
-   Issuing <command>ABORT</> when not inside a transaction does
-   no harm, but it will provoke a warning message.
+   Issuing <command>ABORT</> outside of a transaction block has no effect.
   </para>
  </refsect1>
 

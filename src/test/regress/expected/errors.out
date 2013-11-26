@@ -114,7 +114,7 @@ ERROR:  column name "oid" conflicts with a system column name
 -- TRANSACTION STUFF
 -- not in a xact
 abort;
-NOTICE:  there is no transaction in progress
+WARNING:  there is no transaction in progress
 -- not in a xact
 end;
 WARNING:  there is no transaction in progress
