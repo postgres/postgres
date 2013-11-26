@@ -347,28 +347,31 @@ if (sqlca.sqlcode < 0) exit (1);}
 
 	close_cur1();
 
+	free(myvar);
+	free(mynullvar);
+
 	strcpy(msg, "drop");
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table a1", ECPGt_EOIT, ECPGt_EORT);
-#line 115 "outofscope.pgc"
+#line 118 "outofscope.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
-#line 115 "outofscope.pgc"
+#line 118 "outofscope.pgc"
 
 
 	strcpy(msg, "commit");
 	{ ECPGtrans(__LINE__, NULL, "commit");
-#line 118 "outofscope.pgc"
+#line 121 "outofscope.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
-#line 118 "outofscope.pgc"
+#line 121 "outofscope.pgc"
 
 
 	strcpy(msg, "disconnect");
 	{ ECPGdisconnect(__LINE__, "CURRENT");
-#line 121 "outofscope.pgc"
+#line 124 "outofscope.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
-#line 121 "outofscope.pgc"
+#line 124 "outofscope.pgc"
 
 
 	return (0);

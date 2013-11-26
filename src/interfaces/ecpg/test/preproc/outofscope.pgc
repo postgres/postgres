@@ -111,6 +111,9 @@ main (void)
 
 	close_cur1();
 
+	free(myvar);
+	free(mynullvar);
+
 	strcpy(msg, "drop");
 	exec sql drop table a1;
 
