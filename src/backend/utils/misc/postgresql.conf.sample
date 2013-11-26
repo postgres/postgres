@@ -534,6 +534,7 @@
 
 #dynamic_library_path = '$libdir'
 #local_preload_libraries = ''
+#session_preload_libraries = ''
 
 
 #------------------------------------------------------------------------------
