@@ -294,6 +294,26 @@ $$ LANGUAGE plpythonu;
 SELECT * FROM test_type_conversion_array_error();
 
 
+--
+-- Domains over arrays
+--
+
+CREATE DOMAIN ordered_pair_domain AS integer[] CHECK (array_length(VALUE,1)=2 AND VALUE[1] < VALUE[2]);
+
+CREATE FUNCTION test_type_conversion_array_domain(x ordered_pair_domain) RETURNS ordered_pair_domain AS $$
+plpy.info(x, type(x))
+return x
+$$ LANGUAGE plpythonu;
+
+SELECT * FROM test_type_conversion_array_domain(ARRAY[0, 100]::ordered_pair_domain);
+SELECT * FROM test_type_conversion_array_domain(NULL::ordered_pair_domain);
+
+CREATE FUNCTION test_type_conversion_array_domain_check_violation() RETURNS ordered_pair_domain AS $$
+return [2,1]
+$$ LANGUAGE plpythonu;
+SELECT * FROM test_type_conversion_array_domain_check_violation();
+
+
 ---
 --- Composite types
 ---
