@@ -227,6 +227,7 @@ GinDataPageAddItemPointer(Page page, ItemPointer data, OffsetNumber offset)
 	OffsetNumber maxoff = GinPageGetOpaque(page)->maxoff;
 	char	   *ptr;
 
+	Assert(ItemPointerIsValid(data));
 	Assert(GinPageIsLeaf(page));
 
 	if (offset == InvalidOffsetNumber)
@@ -255,6 +256,7 @@ GinDataPageAddPostingItem(Page page, PostingItem *data, OffsetNumber offset)
 	OffsetNumber maxoff = GinPageGetOpaque(page)->maxoff;
 	char	   *ptr;
 
+	Assert(PostingItemGetBlockNumber(data) != InvalidBlockNumber);
 	Assert(!GinPageIsLeaf(page));
 
 	if (offset == InvalidOffsetNumber)
@@ -338,11 +340,8 @@ dataPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off,
 				XLogRecData **prdata)
 {
 	Page		page = BufferGetPage(buf);
-	int			cnt = 0;
-
 	/* these must be static so they can be returned to caller */
-	static XLogRecData rdata[3];
-	static ginxlogInsert data;
+	static XLogRecData rdata[2];
 
 	/* quick exit if it doesn't fit */
 	if (!dataIsEnoughSpace(btree, buf, off, insertdata))
@@ -359,45 +358,10 @@ dataPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off,
 		PostingItemSetBlockNumber(pitem, updateblkno);
 	}
 
-	data.updateBlkno = updateblkno;
-	data.node = btree->index->rd_node;
-	data.blkno = BufferGetBlockNumber(buf);
-	data.offset = off;
-	data.nitem = 1;
-	data.isDelete = FALSE;
-	data.isData = TRUE;
-	data.isLeaf = GinPageIsLeaf(page) ? TRUE : FALSE;
-
-	/*
-	 * Prevent full page write if child's split occurs. That is needed to
-	 * remove incomplete splits while replaying WAL
-	 *
-	 * data.updateBlkno contains new block number (of newly created right
-	 * page) for recently splited page.
-	 */
-	if (data.updateBlkno == InvalidBlockNumber)
-	{
-		rdata[0].buffer = buf;
-		rdata[0].buffer_std = FALSE;
-		rdata[0].data = NULL;
-		rdata[0].len = 0;
-		rdata[0].next = &rdata[1];
-		cnt++;
-	}
-
-	rdata[cnt].buffer = InvalidBuffer;
-	rdata[cnt].data = (char *) &data;
-	rdata[cnt].len = sizeof(ginxlogInsert);
-	rdata[cnt].next = &rdata[cnt + 1];
-	cnt++;
-
-	rdata[cnt].buffer = InvalidBuffer;
-	/* data and len filled in below */
-	rdata[cnt].next = NULL;
-
 	if (GinPageIsLeaf(page))
 	{
 		GinBtreeDataLeafInsertData *items = insertdata;
+		static ginxlogInsertDataLeaf data;
 		uint32		savedPos = items->curitem;
 
 		if (GinPageRightMost(page) && off > GinPageGetOpaque(page)->maxoff)
@@ -415,10 +379,18 @@ dataPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off,
 		{
 			GinDataPageAddItemPointer(page, items->items + items->curitem, off);
 			items->curitem++;
+			data.nitem = 1;
 		}
 
-		rdata[cnt].data = (char *) &items->items[savedPos];
-		rdata[cnt].len = sizeof(ItemPointerData) * data.nitem;
+		rdata[0].buffer = InvalidBuffer;
+		rdata[0].data = (char *) &data;
+		rdata[0].len = offsetof(ginxlogInsertDataLeaf, items);
+		rdata[0].next = &rdata[1];
+
+		rdata[1].buffer = InvalidBuffer;
+		rdata[1].data = (char *) &items->items[savedPos];
+		rdata[1].len = sizeof(ItemPointerData) * data.nitem;
+		rdata[1].next = NULL;
 	}
 	else
 	{
@@ -426,8 +398,10 @@ dataPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off,
 
 		GinDataPageAddPostingItem(page, pitem, off);
 
-		rdata[cnt].data = (char *) pitem;
-		rdata[cnt].len = sizeof(PostingItem);
+		rdata[0].buffer = InvalidBuffer;
+		rdata[0].data = (char *) pitem;
+		rdata[0].len = sizeof(PostingItem);
+		rdata[0].next = NULL;
 	}
 
 	return true;
@@ -456,8 +430,8 @@ dataSplitPage(GinBtree btree, Buffer lbuf, Buffer rbuf, OffsetNumber off,
 	Size		freeSpace;
 
 	/* these must be static so they can be returned to caller */
-	static ginxlogSplit data;
-	static XLogRecData rdata[4];
+	static ginxlogSplitData data;
+	static XLogRecData rdata[2];
 	static char vector[2 * BLCKSZ];
 
 	GinInitPage(rpage, GinPageGetOpaque(lpage)->flags, pageSize);
@@ -488,6 +462,7 @@ dataSplitPage(GinBtree btree, Buffer lbuf, Buffer rbuf, OffsetNumber off,
 
 	if (isleaf && GinPageRightMost(lpage) && off > GinPageGetOpaque(lpage)->maxoff)
 	{
+		/* append new items to the end */
 		GinBtreeDataLeafInsertData *items = insertdata;
 
 		while (items->curitem < items->nitem &&
@@ -566,25 +541,18 @@ dataSplitPage(GinBtree btree, Buffer lbuf, Buffer rbuf, OffsetNumber off,
 	bound = GinDataPageGetRightBound(rpage);
 	*bound = oldbound;
 
-	data.node = btree->index->rd_node;
-	data.rootBlkno = InvalidBlockNumber;
-	data.lblkno = BufferGetBlockNumber(lbuf);
-	data.rblkno = BufferGetBlockNumber(rbuf);
 	data.separator = separator;
 	data.nitem = maxoff;
-	data.isData = TRUE;
-	data.isLeaf = GinPageIsLeaf(lpage) ? TRUE : FALSE;
-	data.isRootSplit = FALSE;
 	data.rightbound = oldbound;
 
 	rdata[0].buffer = InvalidBuffer;
 	rdata[0].data = (char *) &data;
-	rdata[0].len = sizeof(ginxlogSplit);
+	rdata[0].len = sizeof(ginxlogSplitData);
 	rdata[0].next = &rdata[1];
 
 	rdata[1].buffer = InvalidBuffer;
 	rdata[1].data = vector;
-	rdata[1].len = MAXALIGN(maxoff * sizeofitem);
+	rdata[1].len = maxoff * sizeofitem;
 	rdata[1].next = NULL;
 
 	return lpage;
@@ -610,21 +578,18 @@ dataPrepareDownlink(GinBtree btree, Buffer lbuf)
  * Also called from ginxlog, should not use btree
  */
 void
-ginDataFillRoot(GinBtree btree, Buffer root, Buffer lbuf, Buffer rbuf)
+ginDataFillRoot(GinBtree btree, Page root, BlockNumber lblkno, Page lpage, BlockNumber rblkno, Page rpage)
 {
-	Page		page = BufferGetPage(root),
-				lpage = BufferGetPage(lbuf),
-				rpage = BufferGetPage(rbuf);
 	PostingItem li,
 				ri;
 
 	li.key = *GinDataPageGetRightBound(lpage);
-	PostingItemSetBlockNumber(&li, BufferGetBlockNumber(lbuf));
-	GinDataPageAddPostingItem(page, &li, InvalidOffsetNumber);
+	PostingItemSetBlockNumber(&li, lblkno);
+	GinDataPageAddPostingItem(root, &li, InvalidOffsetNumber);
 
 	ri.key = *GinDataPageGetRightBound(rpage);
-	PostingItemSetBlockNumber(&ri, BufferGetBlockNumber(rbuf));
-	GinDataPageAddPostingItem(page, &ri, InvalidOffsetNumber);
+	PostingItemSetBlockNumber(&ri, rblkno);
+	GinDataPageAddPostingItem(root, &ri, InvalidOffsetNumber);
 }
 
 /*

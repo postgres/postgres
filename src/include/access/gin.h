@@ -58,6 +58,5 @@ extern void gin_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void gin_desc(StringInfo buf, uint8 xl_info, char *rec);
 extern void gin_xlog_startup(void);
 extern void gin_xlog_cleanup(void);
-extern bool gin_safe_restartpoint(void);
 
 #endif   /* GIN_H */

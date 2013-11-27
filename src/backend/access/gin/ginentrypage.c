@@ -504,7 +504,7 @@ entryPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off,
 
 	/* these must be static so they can be returned to caller */
 	static XLogRecData rdata[3];
-	static ginxlogInsert data;
+	static ginxlogInsertEntry data;
 
 	/* quick exit if it doesn't fit */
 	if (!entryIsEnoughSpace(btree, buf, off, insertData))
@@ -512,7 +512,6 @@ entryPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off,
 
 	*prdata = rdata;
 	entryPreparePage(btree, page, off, insertData, updateblkno);
-	data.updateBlkno = updateblkno;
 
 	placed = PageAddItem(page,
 						 (Item) insertData->entry,
@@ -522,34 +521,11 @@ entryPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off,
 		elog(ERROR, "failed to add item to index page in \"%s\"",
 			 RelationGetRelationName(btree->index));
 
-	data.node = btree->index->rd_node;
-	data.blkno = BufferGetBlockNumber(buf);
-	data.offset = off;
-	data.nitem = 1;
 	data.isDelete = insertData->isDelete;
-	data.isData = false;
-	data.isLeaf = GinPageIsLeaf(page) ? TRUE : FALSE;
-
-	/*
-	 * Prevent full page write if child's split occurs. That is needed to
-	 * remove incomplete splits while replaying WAL
-	 *
-	 * data.updateBlkno contains new block number (of newly created right
-	 * page) for recently splited page.
-	 */
-	if (data.updateBlkno == InvalidBlockNumber)
-	{
-		rdata[0].buffer = buf;
-		rdata[0].buffer_std = TRUE;
-		rdata[0].data = NULL;
-		rdata[0].len = 0;
-		rdata[0].next = &rdata[1];
-		cnt++;
-	}
 
 	rdata[cnt].buffer = InvalidBuffer;
 	rdata[cnt].data = (char *) &data;
-	rdata[cnt].len = sizeof(ginxlogInsert);
+	rdata[cnt].len = offsetof(ginxlogInsertEntry, tuple);
 	rdata[cnt].next = &rdata[cnt + 1];
 	cnt++;
 
@@ -577,6 +553,7 @@ entrySplitPage(GinBtree btree, Buffer lbuf, Buffer rbuf, OffsetNumber off,
 				maxoff,
 				separator = InvalidOffsetNumber;
 	Size		totalsize = 0;
+	Size		tupstoresize;
 	Size		lsize = 0,
 				size;
 	char	   *ptr;
@@ -588,18 +565,18 @@ entrySplitPage(GinBtree btree, Buffer lbuf, Buffer rbuf, OffsetNumber off,
 
 	/* these must be static so they can be returned to caller */
 	static XLogRecData rdata[2];
-	static ginxlogSplit data;
+	static ginxlogSplitEntry data;
 	static char tupstore[2 * BLCKSZ];
 
 	*prdata = rdata;
-	data.leftChildBlkno = (GinPageIsLeaf(lpage)) ?
-		InvalidOffsetNumber : GinGetDownlink(insertData->entry);
-	data.updateBlkno = updateblkno;
 	entryPreparePage(btree, lpage, off, insertData, updateblkno);
 
+	/*
+	 * First, append all the existing tuples and the new tuple we're inserting
+	 * one after another in a temporary workspace.
+	 */
 	maxoff = PageGetMaxOffsetNumber(lpage);
 	ptr = tupstore;
-
 	for (i = FirstOffsetNumber; i <= maxoff; i++)
 	{
 		if (i == off)
@@ -624,7 +601,12 @@ entrySplitPage(GinBtree btree, Buffer lbuf, Buffer rbuf, OffsetNumber off,
 		ptr += size;
 		totalsize += size + sizeof(ItemIdData);
 	}
+	tupstoresize = ptr - tupstore;
 
+	/*
+	 * Initialize the left and right pages, and copy all the tuples back to
+	 * them.
+	 */
 	GinInitPage(rpage, GinPageGetOpaque(lpage)->flags, pageSize);
 	GinInitPage(lpage, GinPageGetOpaque(rpage)->flags, pageSize);
 
@@ -654,24 +636,17 @@ entrySplitPage(GinBtree btree, Buffer lbuf, Buffer rbuf, OffsetNumber off,
 		ptr += MAXALIGN(IndexTupleSize(itup));
 	}
 
-	data.node = btree->index->rd_node;
-	data.rootBlkno = InvalidBlockNumber;
-	data.lblkno = BufferGetBlockNumber(lbuf);
-	data.rblkno = BufferGetBlockNumber(rbuf);
 	data.separator = separator;
 	data.nitem = maxoff;
-	data.isData = FALSE;
-	data.isLeaf = GinPageIsLeaf(lpage) ? TRUE : FALSE;
-	data.isRootSplit = FALSE;
 
 	rdata[0].buffer = InvalidBuffer;
 	rdata[0].data = (char *) &data;
-	rdata[0].len = sizeof(ginxlogSplit);
+	rdata[0].len = sizeof(ginxlogSplitEntry);
 	rdata[0].next = &rdata[1];
 
 	rdata[1].buffer = InvalidBuffer;
 	rdata[1].data = tupstore;
-	rdata[1].len = MAXALIGN(totalsize);
+	rdata[1].len = tupstoresize;
 	rdata[1].next = NULL;
 
 	return lpage;
@@ -702,24 +677,19 @@ entryPrepareDownlink(GinBtree btree, Buffer lbuf)
  * Also called from ginxlog, should not use btree
  */
 void
-ginEntryFillRoot(GinBtree btree, Buffer root, Buffer lbuf, Buffer rbuf)
+ginEntryFillRoot(GinBtree btree, Page root,
+				 BlockNumber lblkno, Page lpage,
+				 BlockNumber rblkno, Page rpage)
 {
-	Page		page = BufferGetPage(root);
-	Page		lpage = BufferGetPage(lbuf);
-	Page		rpage = BufferGetPage(rbuf);
 	IndexTuple	itup;
 
-	itup = GinFormInteriorTuple(getRightMostTuple(lpage),
-								lpage,
-								BufferGetBlockNumber(lbuf));
-	if (PageAddItem(page, (Item) itup, IndexTupleSize(itup), InvalidOffsetNumber, false, false) == InvalidOffsetNumber)
+	itup = GinFormInteriorTuple(getRightMostTuple(lpage), lpage, lblkno);
+	if (PageAddItem(root, (Item) itup, IndexTupleSize(itup), InvalidOffsetNumber, false, false) == InvalidOffsetNumber)
 		elog(ERROR, "failed to add item to index root page");
 	pfree(itup);
 
-	itup = GinFormInteriorTuple(getRightMostTuple(rpage),
-								rpage,
-								BufferGetBlockNumber(rbuf));
-	if (PageAddItem(page, (Item) itup, IndexTupleSize(itup), InvalidOffsetNumber, false, false) == InvalidOffsetNumber)
+	itup = GinFormInteriorTuple(getRightMostTuple(rpage), rpage, rblkno);
+	if (PageAddItem(root, (Item) itup, IndexTupleSize(itup), InvalidOffsetNumber, false, false) == InvalidOffsetNumber)
 		elog(ERROR, "failed to add item to index root page");
 	pfree(itup);
 }

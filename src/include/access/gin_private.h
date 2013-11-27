@@ -48,6 +48,7 @@ typedef GinPageOpaqueData *GinPageOpaque;
 #define GIN_META		  (1 << 3)
 #define GIN_LIST		  (1 << 4)
 #define GIN_LIST_FULLROW  (1 << 5)		/* makes sense only on GIN_LIST page */
+#define GIN_INCOMPLETE_SPLIT (1 << 6)	/* page was split, but parent not updated */
 
 /* Page numbers of fixed-location pages */
 #define GIN_METAPAGE_BLKNO	(0)
@@ -119,6 +120,7 @@ typedef struct GinMetaPageData
 #define GinPageIsDeleted(page) ( GinPageGetOpaque(page)->flags & GIN_DELETED)
 #define GinPageSetDeleted(page)    ( GinPageGetOpaque(page)->flags |= GIN_DELETED)
 #define GinPageSetNonDeleted(page) ( GinPageGetOpaque(page)->flags &= ~GIN_DELETED)
+#define GinPageIsIncompleteSplit(page) ( GinPageGetOpaque(page)->flags & GIN_INCOMPLETE_SPLIT)
 
 #define GinPageRightMost(page) ( GinPageGetOpaque(page)->rightlink == InvalidBlockNumber)
 
@@ -336,18 +338,38 @@ typedef struct ginxlogInsert
 {
 	RelFileNode node;
 	BlockNumber blkno;
-	BlockNumber updateBlkno;
+	uint16		flags;		/* GIN_SPLIT_ISLEAF and/or GIN_SPLIT_ISDATA */
 	OffsetNumber offset;
-	bool		isDelete;
-	bool		isData;
-	bool		isLeaf;
-	OffsetNumber nitem;
 
 	/*
-	 * follows: tuples or ItemPointerData or PostingItem or list of
-	 * ItemPointerData
+	 * FOLLOWS:
+	 *
+	 * 1. if not leaf page, block numbers of the left and right child pages
+	 * whose split this insertion finishes. As BlockIdData[2] (beware of adding
+	 * fields before this that would make them not 16-bit aligned)
+	 *
+	 * 2. one of the following structs, depending on tree type.
+	 *
+	 * NB: the below structs are only 16-bit aligned when appended to a
+	 * ginxlogInsert struct! Beware of adding fields to them that require
+	 * stricter alignment.
 	 */
 } ginxlogInsert;
+
+typedef struct
+{
+	bool		isDelete;
+	IndexTupleData tuple;	/* variable length */
+} ginxlogInsertEntry;
+
+typedef struct
+{
+	OffsetNumber nitem;
+	ItemPointerData items[1]; /* variable length */
+} ginxlogInsertDataLeaf;
+
+/* In an insert to an internal data page, the payload is a PostingItem */
+
 
 #define XLOG_GIN_SPLIT	0x30
 
@@ -355,22 +377,38 @@ typedef struct ginxlogSplit
 {
 	RelFileNode node;
 	BlockNumber lblkno;
-	BlockNumber rootBlkno;
 	BlockNumber rblkno;
-	BlockNumber rrlink;
+	BlockNumber rrlink;				/* right link, or root's blocknumber if root split */
+	BlockNumber	leftChildBlkno;		/* valid on a non-leaf split */
+	BlockNumber	rightChildBlkno;
+	uint16		flags;
+
+	/* follows: one of the following structs */
+} ginxlogSplit;
+
+/*
+ * Flags used in ginxlogInsert and ginxlogSplit records
+ */
+#define GIN_INSERT_ISDATA	0x01	/* for both insert and split records */
+#define GIN_INSERT_ISLEAF	0x02	/* .. */
+#define GIN_SPLIT_ROOT		0x04	/* only for split records */
+
+typedef struct
+{
 	OffsetNumber separator;
 	OffsetNumber nitem;
 
-	bool		isData;
-	bool		isLeaf;
-	bool		isRootSplit;
+	/* FOLLOWS: IndexTuples */
+} ginxlogSplitEntry;
 
-	BlockNumber leftChildBlkno;
-	BlockNumber updateBlkno;
+typedef struct
+{
+	OffsetNumber separator;
+	OffsetNumber nitem;
+	ItemPointerData rightbound;
 
-	ItemPointerData rightbound; /* used only in posting tree */
-	/* follows: list of tuple or ItemPointerData or PostingItem */
-} ginxlogSplit;
+	/* FOLLOWS: array of ItemPointers (for leaf) or PostingItems (non-leaf) */
+} ginxlogSplitData;
 
 #define XLOG_GIN_VACUUM_PAGE	0x40
 
@@ -488,7 +526,7 @@ typedef struct GinBtreeData
 	bool		(*placeToPage) (GinBtree, Buffer, OffsetNumber, void *, BlockNumber, XLogRecData **);
 	Page		(*splitPage) (GinBtree, Buffer, Buffer, OffsetNumber, void *, BlockNumber, XLogRecData **);
 	void	   *(*prepareDownlink) (GinBtree, Buffer);
-	void		(*fillRoot) (GinBtree, Buffer, Buffer, Buffer);
+	void		(*fillRoot) (GinBtree, Page, BlockNumber, Page, BlockNumber, Page);
 
 	bool		isData;
 
@@ -535,9 +573,6 @@ extern Buffer ginStepRight(Buffer buffer, Relation index, int lockmode);
 extern void freeGinBtreeStack(GinBtreeStack *stack);
 extern void ginInsertValue(GinBtree btree, GinBtreeStack *stack,
 			   void *insertdata, GinStatsData *buildStats);
-extern void ginFindParents(GinBtree btree, GinBtreeStack *stack);
-extern void ginFinishSplit(GinBtree btree, GinBtreeStack *stack,
-			   GinStatsData *buildStats);
 
 /* ginentrypage.c */
 extern IndexTuple GinFormTuple(GinState *ginstate,
@@ -547,7 +582,7 @@ extern void GinShortenTuple(IndexTuple itup, uint32 nipd);
 extern void ginPrepareEntryScan(GinBtree btree, OffsetNumber attnum,
 					Datum key, GinNullCategory category,
 					GinState *ginstate);
-extern void ginEntryFillRoot(GinBtree btree, Buffer root, Buffer lbuf, Buffer rbuf);
+extern void ginEntryFillRoot(GinBtree btree, Page root, BlockNumber lblkno, Page lpage, BlockNumber rblkno, Page rpage);
 
 /* gindatapage.c */
 extern BlockNumber createPostingTree(Relation index,
@@ -560,7 +595,7 @@ extern void ginInsertItemPointers(Relation index, BlockNumber rootBlkno,
 					  ItemPointerData *items, uint32 nitem,
 					  GinStatsData *buildStats);
 extern GinBtreeStack *ginScanBeginPostingTree(Relation index, BlockNumber rootBlkno);
-extern void ginDataFillRoot(GinBtree btree, Buffer root, Buffer lbuf, Buffer rbuf);
+extern void ginDataFillRoot(GinBtree btree, Page root, BlockNumber lblkno, Page lpage, BlockNumber rblkno, Page rpage);
 extern void ginPrepareDataScan(GinBtree btree, Relation index, BlockNumber rootBlkno);
 
 /* ginscan.c */

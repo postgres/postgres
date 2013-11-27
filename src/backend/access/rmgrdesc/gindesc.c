@@ -41,20 +41,45 @@ gin_desc(StringInfo buf, uint8 xl_info, char *rec)
 			desc_node(buf, ((ginxlogCreatePostingTree *) rec)->node, ((ginxlogCreatePostingTree *) rec)->blkno);
 			break;
 		case XLOG_GIN_INSERT:
-			appendStringInfoString(buf, "Insert item, ");
-			desc_node(buf, ((ginxlogInsert *) rec)->node, ((ginxlogInsert *) rec)->blkno);
-			appendStringInfo(buf, " offset: %u nitem: %u isdata: %c isleaf %c isdelete %c updateBlkno:%u",
-							 ((ginxlogInsert *) rec)->offset,
-							 ((ginxlogInsert *) rec)->nitem,
-							 (((ginxlogInsert *) rec)->isData) ? 'T' : 'F',
-							 (((ginxlogInsert *) rec)->isLeaf) ? 'T' : 'F',
-							 (((ginxlogInsert *) rec)->isDelete) ? 'T' : 'F',
-							 ((ginxlogInsert *) rec)->updateBlkno);
+			{
+				ginxlogInsert *xlrec = (ginxlogInsert *) rec;
+				char	*payload = rec + sizeof(ginxlogInsert);
+
+				appendStringInfoString(buf, "Insert item, ");
+				desc_node(buf, xlrec->node, xlrec->blkno);
+				appendStringInfo(buf, " offset: %u isdata: %c isleaf: %c",
+								 xlrec->offset,
+								 (xlrec->flags & GIN_INSERT_ISDATA) ? 'T' : 'F',
+								 (xlrec->flags & GIN_INSERT_ISLEAF) ? 'T' : 'F');
+				if (!(xlrec->flags & GIN_INSERT_ISLEAF))
+				{
+					BlockNumber leftChildBlkno;
+					BlockNumber rightChildBlkno;
+
+					memcpy(&leftChildBlkno, payload, sizeof(BlockNumber));
+					payload += sizeof(BlockNumber);
+					memcpy(&rightChildBlkno, payload, sizeof(BlockNumber));
+					payload += sizeof(BlockNumber);
+					appendStringInfo(buf, " children: %u/%u",
+									 leftChildBlkno, rightChildBlkno);
+				}
+				if (!(xlrec->flags & GIN_INSERT_ISDATA))
+					appendStringInfo(buf, " isdelete: %c",
+									 (((ginxlogInsertEntry *) payload)->isDelete) ? 'T' : 'F');
+				else if (xlrec->flags & GIN_INSERT_ISLEAF)
+					appendStringInfo(buf, " nitem: %u",
+									 (((ginxlogInsertDataLeaf *) payload)->nitem) ? 'T' : 'F');
+				else
+					appendStringInfo(buf, " pitem: %u-%u/%u",
+									 PostingItemGetBlockNumber((PostingItem *) payload),
+									 ItemPointerGetBlockNumber(&((PostingItem *) payload)->key),
+									 ItemPointerGetOffsetNumber(&((PostingItem *) payload)->key));
+			}
 			break;
 		case XLOG_GIN_SPLIT:
 			appendStringInfoString(buf, "Page split, ");
 			desc_node(buf, ((ginxlogSplit *) rec)->node, ((ginxlogSplit *) rec)->lblkno);
-			appendStringInfo(buf, " isrootsplit: %c", (((ginxlogSplit *) rec)->isRootSplit) ? 'T' : 'F');
+			appendStringInfo(buf, " isrootsplit: %c", (((ginxlogSplit *) rec)->flags & GIN_SPLIT_ROOT) ? 'T' : 'F');
 			break;
 		case XLOG_GIN_VACUUM_PAGE:
 			appendStringInfoString(buf, "Vacuum page, ");
