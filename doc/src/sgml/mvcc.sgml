@@ -298,7 +298,8 @@
     though they are not yet committed.  Also note that two successive
     <command>SELECT</command> commands can see different data, even
     though they are within a single transaction, if other transactions
-    commit changes during execution of the first <command>SELECT</command>.
+    commit changes after the first <command>SELECT</command> starts and
+    before the second <command>SELECT</command> starts.
    </para>
 
    <para>
