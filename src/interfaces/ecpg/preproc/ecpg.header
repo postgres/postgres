@@ -477,7 +477,7 @@ add_additional_variables(char *name, bool insert)
 {
 	struct cursor *ptr;
 	struct arguments *p;
-	int (* strcmp_fn)(const char *, const char *) = (name[0] == ':' ? strcmp : pg_strcasecmp);
+	int (* strcmp_fn)(const char *, const char *) = ((name[0] == ':' || name[0] == '"') ? strcmp : pg_strcasecmp);
 
 	for (ptr = cur; ptr != NULL; ptr=ptr->next)
 	{
