@@ -945,20 +945,6 @@ struct varchar_var { int len; char arr[180]; } var;
     </para>
 
     <para>
-     Two or more <type>VARCHAR</type> host variables cannot be defined
-     in single line statement.  The following code will confuse
-     the <command>ecpg</command> preprocessor:
-<programlisting>
-VARCHAR v1[128], v2[128];   /* WRONG */
-</programlisting>
-     Two variables should be defined in separate statements like this:
-<programlisting>
-VARCHAR v1[128];
-VARCHAR v2[128];
-</programlisting>
-    </para>
-
-    <para>
      <type>VARCHAR</type> can be written in upper or lower case, but
      not in mixed case.
     </para>
