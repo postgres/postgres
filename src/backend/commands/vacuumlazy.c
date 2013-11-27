@@ -172,7 +172,8 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	int			usecs;
 	double		read_rate,
 				write_rate;
-	bool		scan_all;
+	bool		scan_all;		/* should we scan all pages? */
+	bool		scanned_all;	/* did we actually scan all pages? */
 	TransactionId freezeTableLimit;
 	BlockNumber new_rel_pages;
 	double		new_rel_tuples;
@@ -218,6 +219,21 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	vac_close_indexes(nindexes, Irel, NoLock);
 
 	/*
+	 * Compute whether we actually scanned the whole relation. If we did, we
+	 * can adjust relfrozenxid.
+	 *
+	 * NB: We need to check this before truncating the relation, because that
+	 * will change ->rel_pages.
+	 */
+	if (vacrelstats->scanned_pages < vacrelstats->rel_pages)
+	{
+		Assert(!scan_all);
+		scanned_all = false;
+	}
+	else
+		scanned_all = true;
+
+	/*
 	 * Optionally truncate the relation.
 	 *
 	 * Don't even think about it unless we have a shot at releasing a goodly
@@ -261,9 +277,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	if (new_rel_allvisible > new_rel_pages)
 		new_rel_allvisible = new_rel_pages;
 
-	new_frozen_xid = FreezeLimit;
-	if (vacrelstats->scanned_pages < vacrelstats->rel_pages)
-		new_frozen_xid = InvalidTransactionId;
+	new_frozen_xid = scanned_all ? FreezeLimit : InvalidTransactionId;
 
 	vac_update_relstats(onerel,
 						new_rel_pages,
