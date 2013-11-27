@@ -374,7 +374,7 @@ restartScanEntry:
 	ginPrepareEntryScan(&btreeEntry, entry->attnum,
 						entry->queryKey, entry->queryCategory,
 						ginstate);
-	stackEntry = ginFindLeafPage(&btreeEntry, GIN_ROOT_BLKNO, true);
+	stackEntry = ginFindLeafPage(&btreeEntry, true);
 	page = BufferGetPage(stackEntry->buffer);
 	needUnlock = TRUE;
 

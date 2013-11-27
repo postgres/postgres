@@ -485,41 +485,59 @@ typedef struct GinBtreeData
 
 	/* insert methods */
 	OffsetNumber (*findChildPtr) (GinBtree, Page, BlockNumber, OffsetNumber);
-	bool		(*placeToPage) (GinBtree, Buffer, OffsetNumber, XLogRecData **);
-	Page		(*splitPage) (GinBtree, Buffer, Buffer, OffsetNumber, XLogRecData **);
-	void		(*prepareDownlink) (GinBtree, Buffer);
+	bool		(*placeToPage) (GinBtree, Buffer, OffsetNumber, void *, BlockNumber, XLogRecData **);
+	Page		(*splitPage) (GinBtree, Buffer, Buffer, OffsetNumber, void *, BlockNumber, XLogRecData **);
+	void	   *(*prepareDownlink) (GinBtree, Buffer);
 	void		(*fillRoot) (GinBtree, Buffer, Buffer, Buffer);
 
 	bool		isData;
 
 	Relation	index;
+	BlockNumber rootBlkno;
 	GinState   *ginstate;		/* not valid in a data scan */
 	bool		fullScan;
 	bool		isBuild;
 
-	BlockNumber rightblkno;
-
-	/* Entry options */
+	/* Search key for Entry tree */
 	OffsetNumber entryAttnum;
 	Datum		entryKey;
 	GinNullCategory entryCategory;
-	IndexTuple	entry;
-	bool		isDelete;
 
-	/* Data (posting tree) options */
+	/* Search key for data tree (posting tree) */
+	ItemPointerData itemptr;
+} GinBtreeData;
+
+/* This represents a tuple to be inserted to entry tree. */
+typedef struct
+{
+	IndexTuple	entry;			/* tuple to insert */
+	bool		isDelete;		/* delete old tuple at same offset? */
+} GinBtreeEntryInsertData;
+
+/*
+ * This represents an itempointer, or many itempointers, to be inserted to
+ * a data (posting tree) leaf page
+ */
+typedef struct
+{
 	ItemPointerData *items;
 	uint32		nitem;
 	uint32		curitem;
+} GinBtreeDataLeafInsertData;
 
-	PostingItem pitem;
-} GinBtreeData;
+/*
+ * For internal data (posting tree) pages, the insertion payload is a
+ * PostingItem
+ */
 
-extern GinBtreeStack *ginFindLeafPage(GinBtree btree, BlockNumber rootBlkno, bool searchMode);
+extern GinBtreeStack *ginFindLeafPage(GinBtree btree, bool searchMode);
 extern Buffer ginStepRight(Buffer buffer, Relation index, int lockmode);
 extern void freeGinBtreeStack(GinBtreeStack *stack);
 extern void ginInsertValue(GinBtree btree, GinBtreeStack *stack,
+			   void *insertdata, GinStatsData *buildStats);
+extern void ginFindParents(GinBtree btree, GinBtreeStack *stack);
+extern void ginFinishSplit(GinBtree btree, GinBtreeStack *stack,
 			   GinStatsData *buildStats);
-extern void ginFindParents(GinBtree btree, GinBtreeStack *stack, BlockNumber rootBlkno);
 
 /* ginentrypage.c */
 extern IndexTuple GinFormTuple(GinState *ginstate,
@@ -543,7 +561,7 @@ extern void ginInsertItemPointers(Relation index, BlockNumber rootBlkno,
 					  GinStatsData *buildStats);
 extern GinBtreeStack *ginScanBeginPostingTree(Relation index, BlockNumber rootBlkno);
 extern void ginDataFillRoot(GinBtree btree, Buffer root, Buffer lbuf, Buffer rbuf);
-extern void ginPrepareDataScan(GinBtree btree, Relation index);
+extern void ginPrepareDataScan(GinBtree btree, Relation index, BlockNumber rootBlkno);
 
 /* ginscan.c */
 

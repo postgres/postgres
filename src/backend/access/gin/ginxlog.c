@@ -774,7 +774,7 @@ ginContinueSplit(ginIncompleteSplit *split)
 	GinState	ginstate;
 	Relation	reln;
 	Buffer		buffer;
-	GinBtreeStack stack;
+	GinBtreeStack *stack;
 
 	/*
 	 * elog(NOTICE,"ginContinueSplit root:%u l:%u r:%u",  split->rootBlkno,
@@ -802,22 +802,22 @@ ginContinueSplit(ginIncompleteSplit *split)
 	}
 	else
 	{
-		ginPrepareDataScan(&btree, reln);
+		ginPrepareDataScan(&btree, reln, split->rootBlkno);
 	}
 
-	stack.blkno = split->leftBlkno;
-	stack.buffer = buffer;
-	stack.off = InvalidOffsetNumber;
-	stack.parent = NULL;
+	stack = palloc(sizeof(GinBtreeStack));
+	stack->blkno = split->leftBlkno;
+	stack->buffer = buffer;
+	stack->off = InvalidOffsetNumber;
+	stack->parent = NULL;
 
-	ginFindParents(&btree, &stack, split->rootBlkno);
+	ginFindParents(&btree, stack);
+	LockBuffer(stack->parent->buffer, GIN_UNLOCK);
+	ginFinishSplit(&btree, stack, NULL);
 
-	btree.prepareDownlink(&btree, buffer);
-	ginInsertValue(&btree, stack.parent, NULL);
+	/* buffer is released by ginFinishSplit */
 
 	FreeFakeRelcacheEntry(reln);
-
-	UnlockReleaseBuffer(buffer);
 }
 
 void

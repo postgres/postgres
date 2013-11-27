@@ -163,9 +163,12 @@ ginEntryInsert(GinState *ginstate,
 			   GinStatsData *buildStats)
 {
 	GinBtreeData btree;
+	GinBtreeEntryInsertData insertdata;
 	GinBtreeStack *stack;
 	IndexTuple	itup;
 	Page		page;
+
+	insertdata.isDelete = FALSE;
 
 	/* During index build, count the to-be-inserted entry */
 	if (buildStats)
@@ -173,7 +176,7 @@ ginEntryInsert(GinState *ginstate,
 
 	ginPrepareEntryScan(&btree, attnum, key, category, ginstate);
 
-	stack = ginFindLeafPage(&btree, GIN_ROOT_BLKNO, false);
+	stack = ginFindLeafPage(&btree, false);
 	page = BufferGetPage(stack->buffer);
 
 	if (btree.findItem(&btree, stack))
@@ -201,7 +204,7 @@ ginEntryInsert(GinState *ginstate,
 		itup = addItemPointersToLeafTuple(ginstate, itup,
 										  items, nitem, buildStats);
 
-		btree.isDelete = TRUE;
+		insertdata.isDelete = TRUE;
 	}
 	else
 	{
@@ -211,8 +214,8 @@ ginEntryInsert(GinState *ginstate,
 	}
 
 	/* Insert the new or modified leaf tuple */
-	btree.entry = itup;
-	ginInsertValue(&btree, stack, buildStats);
+	insertdata.entry = itup;
+	ginInsertValue(&btree, stack, &insertdata, buildStats);
 	pfree(itup);
 }
 
