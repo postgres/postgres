@@ -291,7 +291,7 @@ ECPGCursorStmt:  DECLARE cursor_name cursor_options CURSOR opt_hold FOR prepared
 		{
 			struct cursor *ptr, *this;
 			char *cursor_marker = $2[0] == ':' ? mm_strdup("$0") : mm_strdup($2);
-			int (* strcmp_fn)(const char *, const char *) = ($2[0] == ':' ? strcmp : pg_strcasecmp);
+			int (* strcmp_fn)(const char *, const char *) = (($2[0] == ':' || $2[0] == '"') ? strcmp : pg_strcasecmp);
 			struct variable *thisquery = (struct variable *)mm_alloc(sizeof(struct variable));
 			const char *con = connection ? connection : "NULL";
 			char *comment;

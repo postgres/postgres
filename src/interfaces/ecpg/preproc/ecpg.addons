@@ -290,7 +290,7 @@ ECPG: DeclareCursorStmtDECLAREcursor_namecursor_optionsCURSORopt_holdFORSelectSt
 		struct cursor *ptr, *this;
 		char *cursor_marker = $2[0] == ':' ? mm_strdup("$0") : mm_strdup($2);
 		char *comment, *c1, *c2;
-		int (* strcmp_fn)(const char *, const char *) = ($2[0] == ':' ? strcmp : pg_strcasecmp);
+		int (* strcmp_fn)(const char *, const char *) = (($2[0] == ':' || $2[0] == '"') ? strcmp : pg_strcasecmp);
 
 		for (ptr = cur; ptr != NULL; ptr = ptr->next)
 		{
