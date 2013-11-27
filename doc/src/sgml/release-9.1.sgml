@@ -268,7 +268,7 @@
 
     <listitem>
      <para>
-      Have <application>pg_upgrade</> use <command>>pg_dump
+      Have <application>pg_upgrade</> use <command>pg_dump
       --quote-all-identifiers</> to avoid problems with keyword changes
       between releases (Tom Lane)
      </para>
