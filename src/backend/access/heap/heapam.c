@@ -4824,7 +4824,16 @@ heap_lock_updated_tuple_rec(Relation rel, ItemPointer tid, TransactionId xid,
 		ItemPointerCopy(&tupid, &(mytup.t_self));
 
 		if (!heap_fetch(rel, SnapshotAny, &mytup, &buf, false, NULL))
-			elog(ERROR, "unable to fetch updated version of tuple");
+		{
+			/*
+			 * if we fail to find the updated version of the tuple, it's
+			 * because it was vacuumed/pruned away after its creator
+			 * transaction aborted.  So behave as if we got to the end of the
+			 * chain, and there's no further tuple to lock: return success to
+			 * caller.
+			 */
+			return HeapTupleMayBeUpdated;
+		}
 
 l4:
 		CHECK_FOR_INTERRUPTS();
