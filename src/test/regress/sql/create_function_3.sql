@@ -138,6 +138,30 @@ SELECT proname, proisstrict FROM pg_proc
                      'functext_F_3'::regproc,
                      'functext_F_4'::regproc) ORDER BY proname;
 
+
+-- information_schema tests
+
+CREATE FUNCTION functest_IS_1(a int, b int default 1, c text default 'foo')
+    RETURNS int
+    LANGUAGE SQL
+    AS 'SELECT $1 + $2';
+
+CREATE FUNCTION functest_IS_2(out a int, b int default 1)
+    RETURNS int
+    LANGUAGE SQL
+    AS 'SELECT $1';
+
+CREATE FUNCTION functest_IS_3(a int default 1, out b int)
+    RETURNS int
+    LANGUAGE SQL
+    AS 'SELECT $1';
+
+SELECT routine_name, ordinal_position, parameter_name, parameter_default
+    FROM information_schema.parameters JOIN information_schema.routines USING (specific_schema, specific_name)
+    WHERE routine_schema = 'temp_func_test' AND routine_name ~ '^functest_is_'
+    ORDER BY 1, 2;
+
+
 -- Cleanups
 DROP SCHEMA temp_func_test CASCADE;
 DROP USER regtest_unpriv_user;

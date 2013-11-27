@@ -425,9 +425,37 @@ SELECT proname, proisstrict FROM pg_proc
  functext_f_4 | t
 (4 rows)
 
+-- information_schema tests
+CREATE FUNCTION functest_IS_1(a int, b int default 1, c text default 'foo')
+    RETURNS int
+    LANGUAGE SQL
+    AS 'SELECT $1 + $2';
+CREATE FUNCTION functest_IS_2(out a int, b int default 1)
+    RETURNS int
+    LANGUAGE SQL
+    AS 'SELECT $1';
+CREATE FUNCTION functest_IS_3(a int default 1, out b int)
+    RETURNS int
+    LANGUAGE SQL
+    AS 'SELECT $1';
+SELECT routine_name, ordinal_position, parameter_name, parameter_default
+    FROM information_schema.parameters JOIN information_schema.routines USING (specific_schema, specific_name)
+    WHERE routine_schema = 'temp_func_test' AND routine_name ~ '^functest_is_'
+    ORDER BY 1, 2;
+ routine_name  | ordinal_position | parameter_name | parameter_default 
+---------------+------------------+----------------+-------------------
+ functest_is_1 |                1 | a              | 
+ functest_is_1 |                2 | b              | 1
+ functest_is_1 |                3 | c              | 'foo'::text
+ functest_is_2 |                1 | a              | 
+ functest_is_2 |                2 | b              | 1
+ functest_is_3 |                1 | a              | 1
+ functest_is_3 |                2 | b              | 
+(7 rows)
+
 -- Cleanups
 DROP SCHEMA temp_func_test CASCADE;
-NOTICE:  drop cascades to 16 other objects
+NOTICE:  drop cascades to 19 other objects
 DETAIL:  drop cascades to function functest_a_1(text,date)
 drop cascades to function functest_a_2(text[])
 drop cascades to function functest_a_3()
@@ -444,5 +472,8 @@ drop cascades to function functext_f_1(integer)
 drop cascades to function functext_f_2(integer)
 drop cascades to function functext_f_3(integer)
 drop cascades to function functext_f_4(integer)
+drop cascades to function functest_is_1(integer,integer,text)
+drop cascades to function functest_is_2(integer)
+drop cascades to function functest_is_3(integer)
 DROP USER regtest_unpriv_user;
 RESET search_path;

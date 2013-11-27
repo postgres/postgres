@@ -3323,6 +3323,15 @@ ORDER BY c.ordinal_position;
        in future versions.)
       </entry>
      </row>
+
+     <row>
+      <entry><literal>parameter_default</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       The default expression of the parameter, or null if none or if the
+       function is not owned by a currently enabled role.
+      </entry>
+     </row>
     </tbody>
    </tgroup>
   </table>
