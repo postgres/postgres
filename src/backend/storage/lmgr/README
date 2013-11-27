@@ -228,14 +228,9 @@ a specialized hash function (see proclock_hash).
 * Formerly, each PGPROC had a single list of PROCLOCKs belonging to it.
 This has now been split into per-partition lists, so that access to a
 particular PROCLOCK list can be protected by the associated partition's
-LWLock.  (This is not strictly necessary at the moment, because at this
-writing a PGPROC's PROCLOCK list is only accessed by the owning backend
-anyway.  But it seems forward-looking to maintain a convention for how
-other backends could access it.  In any case LockReleaseAll needs to be
-able to quickly determine which partition each LOCK belongs to, and
-for the currently contemplated number of partitions, this way takes less
-shared memory than explicitly storing a partition number in LOCK structs
-would require.)
+LWLock.  (This rule allows one backend to manipulate another backend's
+PROCLOCK lists, which was not originally necessary but is now required in
+connection with fast-path locking; see below.)
 
 * The other lock-related fields of a PGPROC are only interesting when
 the PGPROC is waiting for a lock, so we consider that they are protected
@@ -292,20 +287,20 @@ To alleviate this bottleneck, beginning in PostgreSQL 9.2, each backend is
 permitted to record a limited number of locks on unshared relations in an
 array within its PGPROC structure, rather than using the primary lock table.
 This mechanism can only be used when the locker can verify that no conflicting
-locks can possibly exist.
+locks exist at the time of taking the lock.
 
 A key point of this algorithm is that it must be possible to verify the
 absence of possibly conflicting locks without fighting over a shared LWLock or
 spinlock.  Otherwise, this effort would simply move the contention bottleneck
 from one place to another.  We accomplish this using an array of 1024 integer
-counters, which are in effect a 1024-way partitioning of the lock space.  Each
-counter records the number of "strong" locks (that is, ShareLock,
+counters, which are in effect a 1024-way partitioning of the lock space.
+Each counter records the number of "strong" locks (that is, ShareLock,
 ShareRowExclusiveLock, ExclusiveLock, and AccessExclusiveLock) on unshared
 relations that fall into that partition.  When this counter is non-zero, the
-fast path mechanism may not be used for relation locks in that partition.  A
-strong locker bumps the counter and then scans each per-backend array for
-matching fast-path locks; any which are found must be transferred to the
-primary lock table before attempting to acquire the lock, to ensure proper
+fast path mechanism may not be used to take new relation locks within that
+partition.  A strong locker bumps the counter and then scans each per-backend
+array for matching fast-path locks; any which are found must be transferred to
+the primary lock table before attempting to acquire the lock, to ensure proper
 lock conflict and deadlock detection.
 
 On an SMP system, we must guarantee proper memory synchronization.  Here we
@@ -314,19 +309,19 @@ A performs a store, A and B both acquire an LWLock in either order, and B
 then performs a load on the same memory location, it is guaranteed to see
 A's store.  In this case, each backend's fast-path lock queue is protected
 by an LWLock.  A backend wishing to acquire a fast-path lock grabs this
-LWLock before examining FastPathStrongRelationLocks to check for the presence of
-a conflicting strong lock.  And the backend attempting to acquire a strong
+LWLock before examining FastPathStrongRelationLocks to check for the presence
+of a conflicting strong lock.  And the backend attempting to acquire a strong
 lock, because it must transfer any matching weak locks taken via the fast-path
-mechanism to the shared lock table, will acquire every LWLock protecting
-a backend fast-path queue in turn.  So, if we examine FastPathStrongRelationLocks
-and see a zero, then either the value is truly zero, or if it is a stale value,
-the strong locker has yet to acquire the per-backend LWLock we now hold (or,
-indeed, even the first per-backend LWLock) and will notice any weak lock we
-take when it does.
+mechanism to the shared lock table, will acquire every LWLock protecting a
+backend fast-path queue in turn.  So, if we examine
+FastPathStrongRelationLocks and see a zero, then either the value is truly
+zero, or if it is a stale value, the strong locker has yet to acquire the
+per-backend LWLock we now hold (or, indeed, even the first per-backend LWLock)
+and will notice any weak lock we take when it does.
 
 Fast-path VXID locks do not use the FastPathStrongRelationLocks table.  The
-first lock taken on a VXID is always the ExclusiveLock taken by its owner.  Any
-subsequent lockers are share lockers waiting for the VXID to terminate.
+first lock taken on a VXID is always the ExclusiveLock taken by its owner.
+Any subsequent lockers are share lockers waiting for the VXID to terminate.
 Indeed, the only reason VXID locks use the lock manager at all (rather than
 waiting for the VXID to terminate via some other method) is for deadlock
 detection.  Thus, the initial VXID lock can *always* be taken via the fast
@@ -334,6 +329,10 @@ path without checking for conflicts.  Any subsequent locker must check
 whether the lock has been transferred to the main lock table, and if not,
 do so.  The backend owning the VXID must be careful to clean up any entry
 made in the main lock table at end of transaction.
+
+Deadlock detection does not need to examine the fast-path data structures,
+because any lock that could possibly be involved in a deadlock must have
+been transferred to the main tables beforehand.
 
 
 The Deadlock Detection Algorithm
@@ -376,7 +375,7 @@ inserted in the wait queue just ahead of the first such waiter.  (If we
 did not make this check, the deadlock detection code would adjust the
 queue order to resolve the conflict, but it's relatively cheap to make
 the check in ProcSleep and avoid a deadlock timeout delay in this case.)
- Note special case when inserting before the end of the queue: if the
+Note special case when inserting before the end of the queue: if the
 process's request does not conflict with any existing lock nor any
 waiting request before its insertion point, then go ahead and grant the
 lock without waiting.
@@ -414,7 +413,7 @@ need to kill all the transactions involved.
 indicates a deadlock, but one that does not involve our starting
 process. We ignore this condition on the grounds that resolving such a
 deadlock is the responsibility of the processes involved --- killing our
-start- point process would not resolve the deadlock.  So, cases 1 and 3
+start-point process would not resolve the deadlock.  So, cases 1 and 3
 both report "no deadlock".
 
 Postgres' situation is a little more complex than the standard discussion
@@ -620,7 +619,7 @@ level is AccessExclusiveLock.
 Regular backends are only allowed to take locks on relations or objects
 at RowExclusiveLock or lower. This ensures that they do not conflict with
 each other or with the Startup process, unless AccessExclusiveLocks are
-requested by one of the backends.
+requested by the Startup process.
 
 Deadlocks involving AccessExclusiveLocks are not possible, so we need
 not be concerned that a user initiated deadlock can prevent recovery from
@@ -632,3 +631,9 @@ of transaction just as they are in normal processing. These locks are
 held by the Startup process, acting as a proxy for the backends that
 originally acquired these locks. Again, these locks cannot conflict with
 one another, so the Startup process cannot deadlock itself either.
+
+Although deadlock is not possible, a regular backend's weak lock can
+prevent the Startup process from making progress in applying WAL, which is
+usually not something that should be tolerated for very long.  Mechanisms
+exist to forcibly cancel a regular backend's query if it blocks the
+Startup process for too long.
