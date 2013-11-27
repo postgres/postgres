@@ -4797,6 +4797,7 @@ heap_lock_updated_tuple_rec(Relation rel, ItemPointer tid, TransactionId xid,
 				old_infomask;
 	TransactionId xmax,
 				new_xmax;
+	TransactionId priorXmax = InvalidTransactionId;
 
 	ItemPointerCopy(tid, &tupid);
 
@@ -4821,6 +4822,18 @@ heap_lock_updated_tuple_rec(Relation rel, ItemPointer tid, TransactionId xid,
 l4:
 		CHECK_FOR_INTERRUPTS();
 		LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
+
+		/*
+		 * Check the tuple XMIN against prior XMAX, if any.  If we reached
+		 * the end of the chain, we're done, so return success.
+		 */
+		if (TransactionIdIsValid(priorXmax) &&
+			!TransactionIdEquals(HeapTupleHeaderGetXmin(mytup.t_data),
+								 priorXmax))
+		{
+			UnlockReleaseBuffer(buf);
+			return HeapTupleMayBeUpdated;
+		}
 
 		old_infomask = mytup.t_data->t_infomask;
 		xmax = HeapTupleHeaderGetRawXmax(mytup.t_data);
@@ -4922,6 +4935,7 @@ l4:
 		}
 
 		/* tail recursion */
+		priorXmax = HeapTupleHeaderGetUpdateXid(mytup.t_data);
 		ItemPointerCopy(&(mytup.t_data->t_ctid), &tupid);
 		UnlockReleaseBuffer(buf);
 	}
