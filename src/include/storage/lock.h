@@ -379,6 +379,20 @@ typedef struct PROCLOCK
  * shared memory.  We also track the number of lock acquisitions per
  * ResourceOwner, so that we can release just those locks belonging to a
  * particular ResourceOwner.
+ *
+ * When holding a lock taken "normally", the lock and proclock fields always
+ * point to the associated objects in shared memory.  However, if we acquired
+ * the lock via the fast-path mechanism, the lock and proclock fields are set
+ * to NULL, since there probably aren't any such objects in shared memory.
+ * (If the lock later gets promoted to normal representation, we may eventually
+ * update our locallock's lock/proclock fields after finding the shared
+ * objects.)
+ *
+ * Caution: a locallock object can be left over from a failed lock acquisition
+ * attempt.  In this case its lock/proclock fields are untrustworthy, since
+ * the shared lock object is neither held nor awaited, and hence is available
+ * to be reclaimed.  If nLocks > 0 then these pointers must either be valid or
+ * NULL, but when nLocks == 0 they should be considered garbage.
  */
 typedef struct LOCALLOCKTAG
 {
@@ -404,13 +418,13 @@ typedef struct LOCALLOCK
 	LOCALLOCKTAG tag;			/* unique identifier of locallock entry */
 
 	/* data */
-	LOCK	   *lock;			/* associated LOCK object in shared mem */
-	PROCLOCK   *proclock;		/* associated PROCLOCK object in shmem */
+	LOCK	   *lock;			/* associated LOCK object, if any */
+	PROCLOCK   *proclock;		/* associated PROCLOCK object, if any */
 	uint32		hashcode;		/* copy of LOCKTAG's hash value */
 	int64		nLocks;			/* total number of times lock is held */
 	int			numLockOwners;	/* # of relevant ResourceOwners */
 	int			maxLockOwners;	/* allocated size of array */
-	bool		holdsStrongLockCount;	/* bumped FastPathStrongRelatonLocks? */
+	bool		holdsStrongLockCount;	/* bumped FastPathStrongRelationLocks */
 	LOCALLOCKOWNER *lockOwners; /* dynamically resizable array */
 } LOCALLOCK;
 
