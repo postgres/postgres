@@ -74,6 +74,7 @@
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "pg_trace.h"
+#include "postmaster/autovacuum.h"
 #include "storage/lmgr.h"
 #include "storage/pmsignal.h"
 #include "storage/procarray.h"
@@ -1958,6 +1959,10 @@ SetMultiXactIdLimit(MultiXactId oldest_datminmxid, Oid oldest_datoid)
 	/*
 	 * We'll refuse to continue assigning MultiXactIds once we get within 100
 	 * multi of data loss.
+	 *
+	 * Note: This differs from the magic number used in
+	 * SetTransactionIdLimit() since vacuum itself will never generate new
+	 * multis.
 	 */
 	multiStopLimit = multiWrapLimit - 100;
 	if (multiStopLimit < FirstMultiXactId)
@@ -1979,9 +1984,12 @@ SetMultiXactIdLimit(MultiXactId oldest_datminmxid, Oid oldest_datoid)
 
 	/*
 	 * We'll start trying to force autovacuums when oldest_datminmxid gets to
-	 * be more than 200 million transactions old.
+	 * be more than autovacuum_freeze_max_age mxids old.
+	 *
+	 * It's a bit ugly to just reuse limits for xids that way, but it doesn't
+	 * seem worth adding separate GUCs for that purpose.
 	 */
-	multiVacLimit = oldest_datminmxid + 200000000;
+	multiVacLimit = oldest_datminmxid + autovacuum_freeze_max_age;
 	if (multiVacLimit < FirstMultiXactId)
 		multiVacLimit += FirstMultiXactId;
 
