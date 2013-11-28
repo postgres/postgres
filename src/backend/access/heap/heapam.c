@@ -4952,7 +4952,7 @@ l4:
 				int		i;
 				MultiXactMember *members;
 
-				nmembers = GetMultiXactIdMembers(rawxmax, &members, false, false);
+				nmembers = GetMultiXactIdMembers(rawxmax, &members, false);
 				for (i = 0; i < nmembers; i++)
 				{
 					HTSU_Result	res;
