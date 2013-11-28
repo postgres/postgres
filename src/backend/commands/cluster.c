@@ -176,7 +176,10 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 		/* close relation, keep lock till commit */
 		heap_close(rel, NoLock);
 
-		/* Do the job */
+		/*
+		 * Do the job.  We use a -1 freeze_min_age to avoid having CLUSTER
+		 * freeze tuples earlier than a plain VACUUM would.
+		 */
 		cluster_rel(tableOid, indexOid, false, stmt->verbose, -1, -1);
 	}
 	else
@@ -226,6 +229,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 			StartTransactionCommand();
 			/* functions in indexes may want a snapshot set */
 			PushActiveSnapshot(GetTransactionSnapshot());
+			/* Do the job.  As above, use a -1 freeze_min_age. */
 			cluster_rel(rvtc->tableOid, rvtc->indexOid, true, stmt->verbose,
 						-1, -1);
 			PopActiveSnapshot();
@@ -853,13 +857,12 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 		*pSwapToastByContent = false;
 
 	/*
-	 * compute xids used to freeze and weed out dead tuples.  We use -1
-	 * freeze_min_age to avoid having CLUSTER freeze tuples earlier than a
-	 * plain VACUUM would.
+	 * compute xids used to freeze and weed out dead tuples.
 	 */
 	vacuum_set_xid_limits(freeze_min_age, freeze_table_age,
 						  OldHeap->rd_rel->relisshared,
-						  &OldestXmin, &FreezeXid, NULL, &MultiXactCutoff);
+						  &OldestXmin, &FreezeXid, NULL, &MultiXactCutoff,
+						  NULL);
 
 	/*
 	 * FreezeXid will become the table's new relfrozenxid, and that mustn't go
