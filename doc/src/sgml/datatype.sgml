@@ -83,15 +83,15 @@
       </row>
 
       <row>
-       <entry><type>character varying [ (<replaceable>n</replaceable>) ]</type></entry>
-       <entry><type>varchar [ (<replaceable>n</replaceable>) ]</type></entry>
-       <entry>variable-length character string</entry>
-      </row>
-
-      <row>
        <entry><type>character [ (<replaceable>n</replaceable>) ]</type></entry>
        <entry><type>char [ (<replaceable>n</replaceable>) ]</type></entry>
        <entry>fixed-length character string</entry>
+      </row>
+
+      <row>
+       <entry><type>character varying [ (<replaceable>n</replaceable>) ]</type></entry>
+       <entry><type>varchar [ (<replaceable>n</replaceable>) ]</type></entry>
+       <entry>variable-length character string</entry>
       </row>
 
       <row>
@@ -134,6 +134,12 @@
        <entry><type>interval [ <replaceable>fields</replaceable> ] [ (<replaceable>p</replaceable>) ]</type></entry>
        <entry></entry>
        <entry>time span</entry>
+      </row>
+
+      <row>
+       <entry><type>json</type></entry>
+       <entry></entry>
+       <entry>JSON data</entry>
       </row>
 
       <row>
@@ -268,12 +274,6 @@
        <entry><type>xml</type></entry>
        <entry></entry>
        <entry>XML data</entry>
-      </row>
-
-      <row>
-       <entry><type>json</type></entry>
-       <entry></entry>
-       <entry>JSON data</entry>
       </row>
      </tbody>
     </tgroup>
