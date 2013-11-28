@@ -78,18 +78,18 @@
      </row>
 
      <row>
-      <entry><structfield>relblocknumber</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry></entry>
-      <entry>Page number within the relation</entry>
-     </row>
-
-     <row>
       <entry><structfield>relforknumber</structfield></entry>
       <entry><type>smallint</type></entry>
       <entry></entry>
       <entry>Fork number within the relation;  see
       <filename>include/storage/relfilenode.h</></entry>
+     </row>
+
+     <row>
+      <entry><structfield>relblocknumber</structfield></entry>
+      <entry><type>bigint</type></entry>
+      <entry></entry>
+      <entry>Page number within the relation</entry>
      </row>
 
      <row>
