@@ -5264,6 +5264,8 @@ heap_inplace_update(Relation relation, HeapTuple tuple)
  * so we need no external state checks to decide what to do.  (This is good
  * because this function is applied during WAL recovery, when we don't have
  * access to any such state, and can't depend on the hint bits to be set.)
+ * There is an exception we make which is to assume GetMultiXactIdMembers can
+ * be called during recovery.
  *
  * Similarly, cutoff_multi must be less than or equal to the smallest
  * MultiXactId used by any transaction currently open.
@@ -5279,14 +5281,19 @@ heap_inplace_update(Relation relation, HeapTuple tuple)
  * exclusive lock ensures no other backend is in process of checking the
  * tuple status.  Also, getting exclusive lock makes it safe to adjust the
  * infomask bits.
+ *
+ * NB: Cannot rely on hint bits here, they might not be set after a crash or
+ * on a standby.
  */
 bool
 heap_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid,
 				  MultiXactId cutoff_multi)
 {
 	bool		changed = false;
+	bool		freeze_xmax = false;
 	TransactionId xid;
 
+	/* Process xmin */
 	xid = HeapTupleHeaderGetXmin(tuple);
 	if (TransactionIdIsNormal(xid) &&
 		TransactionIdPrecedes(xid, cutoff_xid))
@@ -5303,16 +5310,112 @@ heap_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid,
 	}
 
 	/*
-	 * Note that this code handles IS_MULTI Xmax values, too, but only to mark
-	 * the tuple as not updated if the multixact is below the cutoff Multixact
-	 * given; it doesn't remove dead members of a very old multixact.
+	 * Process xmax.  To thoroughly examine the current Xmax value we need to
+	 * resolve a MultiXactId to its member Xids, in case some of them are
+	 * below the given cutoff for Xids.  In that case, those values might need
+	 * freezing, too.  Also, if a multi needs freezing, we cannot simply take
+	 * it out --- if there's a live updater Xid, it needs to be kept.
+	 *
+	 * Make sure to keep heap_tuple_needs_freeze in sync with this.
 	 */
 	xid = HeapTupleHeaderGetRawXmax(tuple);
-	if ((tuple->t_infomask & HEAP_XMAX_IS_MULTI) ?
-		(MultiXactIdIsValid(xid) &&
-		 MultiXactIdPrecedes(xid, cutoff_multi)) :
-		(TransactionIdIsNormal(xid) &&
-		 TransactionIdPrecedes(xid, cutoff_xid)))
+
+	if (tuple->t_infomask & HEAP_XMAX_IS_MULTI)
+	{
+		if (!MultiXactIdIsValid(xid))
+		{
+			/* no xmax set, ignore */
+			;
+		}
+		else if (MultiXactIdPrecedes(xid, cutoff_multi))
+		{
+			/*
+			 * This old multi cannot possibly be running.  If it was a locker
+			 * only, it can be removed without much further thought; but if it
+			 * contained an update, we need to preserve it.
+			 */
+			if (HEAP_XMAX_IS_LOCKED_ONLY(tuple->t_infomask))
+				freeze_xmax = true;
+			else
+			{
+				TransactionId update_xid;
+
+				update_xid = HeapTupleGetUpdateXid(tuple);
+
+				/*
+				 * The multixact has an update hidden within.  Get rid of it.
+				 *
+				 * If the update_xid is below the cutoff_xid, it necessarily
+				 * must be an aborted transaction.  In a primary server, such
+				 * an Xmax would have gotten marked invalid by
+				 * HeapTupleSatisfiesVacuum, but in a replica that is not
+				 * called before we are, so deal with it in the same way.
+				 *
+				 * If not below the cutoff_xid, then the tuple would have been
+				 * pruned by vacuum, if the update committed long enough ago,
+				 * and we wouldn't be freezing it; so it's either recently
+				 * committed, or in-progress.  Deal with this by setting the
+				 * Xmax to the update Xid directly and remove the IS_MULTI
+				 * bit.  (We know there cannot be running lockers in this
+				 * multi, because it's below the cutoff_multi value.)
+				 */
+
+				if (TransactionIdPrecedes(update_xid, cutoff_xid))
+				{
+					Assert(InRecovery || TransactionIdDidAbort(update_xid));
+					freeze_xmax = true;
+				}
+				else
+				{
+					Assert(InRecovery || !TransactionIdIsInProgress(update_xid));
+					tuple->t_infomask &= ~HEAP_XMAX_BITS;
+					HeapTupleHeaderSetXmax(tuple, update_xid);
+					changed = true;
+				}
+			}
+		}
+		else if (HEAP_XMAX_IS_LOCKED_ONLY(tuple->t_infomask))
+		{
+			/* newer than the cutoff, so don't touch it */
+			;
+		}
+		else
+		{
+			TransactionId	update_xid;
+
+			/*
+			 * This is a multixact which is not marked LOCK_ONLY, but which
+			 * is newer than the cutoff_multi.  If the update_xid is below the
+			 * cutoff_xid point, then we can just freeze the Xmax in the
+			 * tuple, removing it altogether.  This seems simple, but there
+			 * are several underlying assumptions:
+			 *
+			 * 1. A tuple marked by an multixact containing a very old
+			 * committed update Xid would have been pruned away by vacuum; we
+			 * wouldn't be freezing this tuple at all.
+			 *
+			 * 2. There cannot possibly be any live locking members remaining
+			 * in the multixact.  This is because if they were alive, the
+			 * update's Xid would had been considered, via the lockers'
+			 * snapshot's Xmin, as part the cutoff_xid.
+			 *
+			 * 3. We don't create new MultiXacts via MultiXactIdExpand() that
+			 * include a very old aborted update Xid: in that function we only
+			 * include update Xids corresponding to transactions that are
+			 * committed or in-progress.
+			 */
+			update_xid = HeapTupleGetUpdateXid(tuple);
+			if (TransactionIdPrecedes(update_xid, cutoff_xid))
+				freeze_xmax = true;
+		}
+	}
+	else if (TransactionIdIsNormal(xid) &&
+			 TransactionIdPrecedes(xid, cutoff_xid))
+	{
+		freeze_xmax = true;
+	}
+
+	if (freeze_xmax)
 	{
 		HeapTupleHeaderSetXmax(tuple, InvalidTransactionId);
 
@@ -5632,6 +5735,9 @@ ConditionalMultiXactIdWait(MultiXactId multi, MultiXactStatus status,
  *
  * It doesn't matter whether the tuple is alive or dead, we are checking
  * to see if a tuple needs to be removed or frozen to avoid wraparound.
+ *
+ * NB: Cannot rely on hint bits here, they might not be set after a crash or
+ * on a standby.
  */
 bool
 heap_tuple_needs_freeze(HeapTupleHeader tuple, TransactionId cutoff_xid,
@@ -5644,23 +5750,41 @@ heap_tuple_needs_freeze(HeapTupleHeader tuple, TransactionId cutoff_xid,
 		TransactionIdPrecedes(xid, cutoff_xid))
 		return true;
 
-	if (!(tuple->t_infomask & HEAP_XMAX_INVALID))
+	/*
+	 * The considerations for multixacts are complicated; look at
+	 * heap_freeze_tuple for justifications.  This routine had better be in
+	 * sync with that one!
+	 */
+	if (tuple->t_infomask & HEAP_XMAX_IS_MULTI)
 	{
-		if (!(tuple->t_infomask & HEAP_XMAX_IS_MULTI))
+		MultiXactId multi;
+
+		multi = HeapTupleHeaderGetRawXmax(tuple);
+		if (!MultiXactIdIsValid(multi))
 		{
-			xid = HeapTupleHeaderGetRawXmax(tuple);
-			if (TransactionIdIsNormal(xid) &&
-				TransactionIdPrecedes(xid, cutoff_xid))
-				return true;
+			/* no xmax set, ignore */
+			;
+		}
+		else if (MultiXactIdPrecedes(multi, cutoff_multi))
+			return true;
+		else if (HEAP_XMAX_IS_LOCKED_ONLY(tuple->t_infomask))
+		{
+			/* only-locker multis don't need internal examination */
+			;
 		}
 		else
 		{
-			MultiXactId multi;
-
-			multi = HeapTupleHeaderGetRawXmax(tuple);
-			if (MultiXactIdPrecedes(multi, cutoff_multi))
+			if (TransactionIdPrecedes(HeapTupleGetUpdateXid(tuple),
+									  cutoff_xid))
 				return true;
 		}
+	}
+	else
+	{
+		xid = HeapTupleHeaderGetRawXmax(tuple);
+		if (TransactionIdIsNormal(xid) &&
+			TransactionIdPrecedes(xid, cutoff_xid))
+			return true;
 	}
 
 	if (tuple->t_infomask & HEAP_MOVED)
