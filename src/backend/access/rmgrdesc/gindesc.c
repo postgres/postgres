@@ -56,9 +56,9 @@ gin_desc(StringInfo buf, uint8 xl_info, char *rec)
 					BlockNumber leftChildBlkno;
 					BlockNumber rightChildBlkno;
 
-					memcpy(&leftChildBlkno, payload, sizeof(BlockNumber));
-					payload += sizeof(BlockNumber);
-					memcpy(&rightChildBlkno, payload, sizeof(BlockNumber));
+					leftChildBlkno = BlockIdGetBlockNumber((BlockId) payload);
+					payload += sizeof(BlockIdData);
+					rightChildBlkno = BlockIdGetBlockNumber((BlockId) payload);
 					payload += sizeof(BlockNumber);
 					appendStringInfo(buf, " children: %u/%u",
 									 leftChildBlkno, rightChildBlkno);
