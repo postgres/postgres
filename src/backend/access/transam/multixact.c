@@ -434,11 +434,14 @@ MultiXactIdExpand(MultiXactId multi, TransactionId xid, MultiXactStatus status)
 	 * Determine which of the members of the MultiXactId are still of
 	 * interest. This is any running transaction, and also any transaction
 	 * that grabbed something stronger than just a lock and was committed. (An
-	 * update that aborted is of no interest here.)
+	 * update that aborted is of no interest here; and having more than one
+	 * update Xid in a multixact would cause errors elsewhere.)
 	 *
-	 * (Removing dead members is just an optimization, but a useful one. Note
-	 * we have the same race condition here as above: j could be 0 at the end
-	 * of the loop.)
+	 * Removing dead members is not just an optimization: freezing of tuples
+	 * whose Xmax are multis depends on this behavior.
+	 *
+	 * Note we have the same race condition here as above: j could be 0 at the
+	 * end of the loop.
 	 */
 	newMembers = (MultiXactMember *)
 		palloc(sizeof(MultiXactMember) * (nmembers + 1));
@@ -1052,7 +1055,8 @@ GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
 
 	debug_elog3(DEBUG2, "GetMembers: asked for %u", multi);
 
-	Assert(MultiXactIdIsValid(multi));
+	if (!MultiXactIdIsValid(multi))
+		return -1;
 
 	/* See if the MultiXactId is in the local cache */
 	length = mXactCacheGetById(multi, members);
