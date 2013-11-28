@@ -68,7 +68,7 @@ gin_desc(StringInfo buf, uint8 xl_info, char *rec)
 									 (((ginxlogInsertEntry *) payload)->isDelete) ? 'T' : 'F');
 				else if (xlrec->flags & GIN_INSERT_ISLEAF)
 					appendStringInfo(buf, " nitem: %u",
-									 (((ginxlogInsertDataLeaf *) payload)->nitem) ? 'T' : 'F');
+									 (((ginxlogInsertDataLeaf *) payload)->nitem));
 				else
 					appendStringInfo(buf, " pitem: %u-%u/%u",
 									 PostingItemGetBlockNumber((PostingItem *) payload),
