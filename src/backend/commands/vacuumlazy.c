@@ -180,7 +180,8 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 				write_rate;
 	bool		scan_all;		/* should we scan all pages? */
 	bool		scanned_all;	/* did we actually scan all pages? */
-	TransactionId freezeTableLimit;
+	TransactionId xidFullScanLimit;
+	MultiXactId mxactFullScanLimit;
 	BlockNumber new_rel_pages;
 	double		new_rel_tuples;
 	BlockNumber new_rel_allvisible;
@@ -203,10 +204,19 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 
 	vacuum_set_xid_limits(vacstmt->freeze_min_age, vacstmt->freeze_table_age,
 						  onerel->rd_rel->relisshared,
-						  &OldestXmin, &FreezeLimit, &freezeTableLimit,
-						  &MultiXactCutoff);
+						  &OldestXmin, &FreezeLimit, &xidFullScanLimit,
+						  &MultiXactCutoff, &mxactFullScanLimit);
+
+	/*
+	 * We request a full scan if either the table's frozen Xid is now older
+	 * than or equal to the requested Xid full-table scan limit; or if the
+	 * table's minimum MultiXactId is older than or equal to the requested mxid
+	 * full-table scan limit.
+	 */
 	scan_all = TransactionIdPrecedesOrEquals(onerel->rd_rel->relfrozenxid,
-											 freezeTableLimit);
+											 xidFullScanLimit);
+	scan_all |= MultiXactIdPrecedesOrEquals(onerel->rd_rel->relminmxid,
+											mxactFullScanLimit);
 
 	vacrelstats = (LVRelStats *) palloc0(sizeof(LVRelStats));
 

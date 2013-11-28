@@ -376,6 +376,24 @@ get_rel_oids(Oid relid, const RangeVar *vacrel)
 
 /*
  * vacuum_set_xid_limits() -- compute oldest-Xmin and freeze cutoff points
+ *
+ * The output parameters are:
+ * - oldestXmin is the cutoff value used to distinguish whether tuples are
+ *   DEAD or RECENTLY_DEAD (see HeapTupleSatisfiesVacuum).
+ * - freezeLimit is the Xid below which all Xids are replaced by
+ *   FrozenTransactionId during vacuum.
+ * - xidFullScanLimit (computed from the the table_freeze_age parameter)
+ *   represents a minimum Xid value; a table whose relfrozenxid is older than
+ *   this will have a full-table vacuum applied to it, to freeze tuples across
+ *   the whole table.  Vacuuming a table younger than this value can use a
+ *   partial scan.
+ * - multiXactCutoff is the value below which all MultiXactIds are removed from
+ *   Xmax.
+ * - mxactFullScanLimit is a value against which a table's relminmxid value is
+ *   compared to produce a full-table vacuum, as with xidFullScanLimit.
+ *
+ * xidFullScanLimit and mxactFullScanLimit can be passed as NULL if caller is
+ * not interested.
  */
 void
 vacuum_set_xid_limits(int freeze_min_age,
@@ -383,12 +401,14 @@ vacuum_set_xid_limits(int freeze_min_age,
 					  bool sharedRel,
 					  TransactionId *oldestXmin,
 					  TransactionId *freezeLimit,
-					  TransactionId *freezeTableLimit,
-					  MultiXactId *multiXactCutoff)
+					  TransactionId *xidFullScanLimit,
+					  MultiXactId *multiXactCutoff,
+					  MultiXactId *mxactFullScanLimit)
 {
 	int			freezemin;
 	TransactionId limit;
 	TransactionId safeLimit;
+	MultiXactId	mxactLimit;
 
 	/*
 	 * We can always ignore processes running lazy vacuum.	This is because we
@@ -441,9 +461,21 @@ vacuum_set_xid_limits(int freeze_min_age,
 
 	*freezeLimit = limit;
 
-	if (freezeTableLimit != NULL)
+	/*
+	 * simplistic MultiXactId removal limit: use the same policy as for
+	 * freezing Xids (except we use the oldest known mxact instead of the
+	 * current next value).
+	 */
+	mxactLimit = GetOldestMultiXactId() - freezemin;
+	if (mxactLimit < FirstMultiXactId)
+		mxactLimit = FirstMultiXactId;
+	*multiXactCutoff = mxactLimit;
+
+	if (xidFullScanLimit != NULL)
 	{
 		int			freezetable;
+
+		Assert(mxactFullScanLimit != NULL);
 
 		/*
 		 * Determine the table freeze age to use: as specified by the caller,
@@ -459,29 +491,25 @@ vacuum_set_xid_limits(int freeze_min_age,
 		Assert(freezetable >= 0);
 
 		/*
-		 * Compute the cutoff XID, being careful not to generate a "permanent"
-		 * XID.
+		 * Compute XID limit causing a full-table vacuum, being careful not to
+		 * generate a "permanent" XID.
 		 */
 		limit = ReadNewTransactionId() - freezetable;
 		if (!TransactionIdIsNormal(limit))
 			limit = FirstNormalTransactionId;
 
-		*freezeTableLimit = limit;
-	}
-
-	if (multiXactCutoff != NULL)
-	{
-		MultiXactId mxLimit;
+		*xidFullScanLimit = limit;
 
 		/*
-		 * simplistic multixactid freezing: use the same freezing policy as
-		 * for Xids
+		 * Compute MultiXactId limit to cause a full-table vacuum, being
+		 * careful not to generate an invalid multi. We just copy the logic
+		 * (and limits) from plain XIDs here.
 		 */
-		mxLimit = GetOldestMultiXactId() - freezemin;
-		if (mxLimit < FirstMultiXactId)
-			mxLimit = FirstMultiXactId;
+		mxactLimit = ReadNextMultiXactId() - freezetable;
+		if (mxactLimit < FirstMultiXactId)
+			mxactLimit = FirstMultiXactId;
 
-		*multiXactCutoff = mxLimit;
+		*mxactFullScanLimit = mxactLimit;
 	}
 }
 
