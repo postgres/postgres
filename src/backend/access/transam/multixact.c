@@ -826,6 +826,10 @@ GetNewMultiXactId(int nxids, MultiXactOffset *offset)
 	/* MultiXactIdSetOldestMember() must have been called already */
 	Assert(MultiXactIdIsValid(OldestMemberMXactId[MyBackendId]));
 
+	/* safety check, we should never get this far in a HS slave */
+	if (RecoveryInProgress())
+		elog(ERROR, "cannot assign MultiXactIds during recovery");
+
 	LWLockAcquire(MultiXactGenLock, LW_EXCLUSIVE);
 
 	/* Handle wraparound of the nextMXact counter */
@@ -912,6 +916,10 @@ GetMultiXactIdMembers(MultiXactId multi, TransactionId **xids)
 	debug_elog3(DEBUG2, "GetMembers: asked for %u", multi);
 
 	Assert(MultiXactIdIsValid(multi));
+
+	/* safety check, we should never get this far in a HS slave */
+	if (RecoveryInProgress())
+		elog(ERROR, "cannot GetMultiXactIdMembers() during recovery");
 
 	/* See if the MultiXactId is in the local cache */
 	length = mXactCacheGetById(multi, xids);
@@ -1512,14 +1520,37 @@ ZeroMultiXactMemberPage(int pageno, bool writeXlog)
  * This must be called ONCE during postmaster or standalone-backend startup.
  *
  * StartupXLOG has already established nextMXact/nextOffset by calling
- * MultiXactSetNextMXact and/or MultiXactAdvanceNextMXact.	Note that we
- * may already have replayed WAL data into the SLRU files.
- *
- * We don't need any locks here, really; the SLRU locks are taken
- * only because slru.c expects to be called with locks held.
+ * MultiXactSetNextMXact and/or MultiXactAdvanceNextMXact, but we haven't yet
+ * replayed WAL.
  */
 void
 StartupMultiXact(void)
+{
+	MultiXactId multi = MultiXactState->nextMXact;
+	MultiXactOffset offset = MultiXactState->nextOffset;
+	int			pageno;
+
+	/*
+	 * Initialize our idea of the latest page number.
+	 */
+	pageno = MultiXactIdToOffsetPage(multi);
+	MultiXactOffsetCtl->shared->latest_page_number = pageno;
+
+	/*
+	 * Initialize our idea of the latest page number.
+	 */
+	pageno = MXOffsetToMemberPage(offset);
+	MultiXactMemberCtl->shared->latest_page_number = pageno;
+}
+
+/*
+ * This must be called ONCE at the end of startup/recovery.
+ *
+ * We don't need any locks here, really; the SLRU locks are taken only because
+ * slru.c expects to be called with locks held.
+ */
+void
+TrimMultiXact(void)
 {
 	MultiXactId multi = MultiXactState->nextMXact;
 	MultiXactOffset offset = MultiXactState->nextOffset;
@@ -1530,7 +1561,7 @@ StartupMultiXact(void)
 	LWLockAcquire(MultiXactOffsetControlLock, LW_EXCLUSIVE);
 
 	/*
-	 * Initialize our idea of the latest page number.
+	 * (Re-)Initialize our idea of the latest page number.
 	 */
 	pageno = MultiXactIdToOffsetPage(multi);
 	MultiXactOffsetCtl->shared->latest_page_number = pageno;
@@ -1560,7 +1591,7 @@ StartupMultiXact(void)
 	LWLockAcquire(MultiXactMemberControlLock, LW_EXCLUSIVE);
 
 	/*
-	 * Initialize our idea of the latest page number.
+	 * (Re-)Initialize our idea of the latest page number.
 	 */
 	pageno = MXOffsetToMemberPage(offset);
 	MultiXactMemberCtl->shared->latest_page_number = pageno;
@@ -1639,14 +1670,9 @@ CheckPointMultiXact(void)
 
 	/*
 	 * Truncate the SLRU files.  This could be done at any time, but
-	 * checkpoint seems a reasonable place for it.	There is one exception: if
-	 * we are called during xlog recovery, then shared->latest_page_number
-	 * isn't valid (because StartupMultiXact hasn't been called yet) and so
-	 * SimpleLruTruncate would get confused.  It seems best not to risk
-	 * removing any data during recovery anyway, so don't truncate.
+	 * checkpoint seems a reasonable place for it.
 	 */
-	if (!RecoveryInProgress())
-		TruncateMultiXact();
+	TruncateMultiXact();
 
 	TRACE_POSTGRESQL_MULTIXACT_CHECKPOINT_DONE(true);
 }
