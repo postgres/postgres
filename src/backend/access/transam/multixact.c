@@ -1768,14 +1768,37 @@ MaybeExtendOffsetSlru(void)
  *
  * StartupXLOG has already established nextMXact/nextOffset by calling
  * MultiXactSetNextMXact and/or MultiXactAdvanceNextMXact, and the oldestMulti
- * info from pg_control and/or MultiXactAdvanceOldest.	Note that we may
- * already have replayed WAL data into the SLRU files.
- *
- * We don't need any locks here, really; the SLRU locks are taken
- * only because slru.c expects to be called with locks held.
+ * info from pg_control and/or MultiXactAdvanceOldest, but we haven't yet
+ * replayed WAL.
  */
 void
 StartupMultiXact(void)
+{
+	MultiXactId multi = MultiXactState->nextMXact;
+	MultiXactOffset offset = MultiXactState->nextOffset;
+	int			pageno;
+
+	/*
+	 * Initialize offset's idea of the latest page number.
+	 */
+	pageno = MultiXactIdToOffsetPage(multi);
+	MultiXactOffsetCtl->shared->latest_page_number = pageno;
+
+	/*
+	 * Initialize member's idea of the latest page number.
+	 */
+	pageno = MXOffsetToMemberPage(offset);
+	MultiXactMemberCtl->shared->latest_page_number = pageno;
+}
+
+/*
+ * This must be called ONCE at the end of startup/recovery.
+ *
+ * We don't need any locks here, really; the SLRU locks are taken only because
+ * slru.c expects to be called with locks held.
+ */
+void
+TrimMultiXact(void)
 {
 	MultiXactId multi = MultiXactState->nextMXact;
 	MultiXactOffset offset = MultiXactState->nextOffset;
@@ -1785,7 +1808,9 @@ StartupMultiXact(void)
 
 	/*
 	 * During a binary upgrade, make sure that the offsets SLRU is large
-	 * enough to contain the next value that would be created.
+	 * enough to contain the next value that would be created. It's fine to do
+	 * this here and not in StartupMultiXact() since binary upgrades should
+	 * never need crash recovery.
 	 */
 	if (IsBinaryUpgrade)
 		MaybeExtendOffsetSlru();
@@ -1794,7 +1819,7 @@ StartupMultiXact(void)
 	LWLockAcquire(MultiXactOffsetControlLock, LW_EXCLUSIVE);
 
 	/*
-	 * Initialize our idea of the latest page number.
+	 * (Re-)Initialize our idea of the latest page number.
 	 */
 	pageno = MultiXactIdToOffsetPage(multi);
 	MultiXactOffsetCtl->shared->latest_page_number = pageno;
@@ -1824,7 +1849,7 @@ StartupMultiXact(void)
 	LWLockAcquire(MultiXactMemberControlLock, LW_EXCLUSIVE);
 
 	/*
-	 * Initialize our idea of the latest page number.
+	 * (Re-)Initialize our idea of the latest page number.
 	 */
 	pageno = MXOffsetToMemberPage(offset);
 	MultiXactMemberCtl->shared->latest_page_number = pageno;
@@ -2258,9 +2283,15 @@ SlruScanDirCbFindEarliest(SlruCtl ctl, char *filename, int segpage, void *data)
  * Remove all MultiXactOffset and MultiXactMember segments before the oldest
  * ones still of interest.
  *
- * This is called by vacuum after it has successfully advanced a database's
- * datminmxid value; the cutoff value we're passed is the minimum of all
- * databases' datminmxid values.
+ * On a primary, this is called by vacuum after it has successfully advanced a
+ * database's datminmxid value; the cutoff value we're passed is the minimum of
+ * all databases' datminmxid values.
+ *
+ * During crash recovery, it's called from CreateRestartPoint() instead.  We
+ * rely on the fact that xlog_redo() will already have called
+ * MultiXactAdvanceOldest().  Our latest_page_number will already have been
+ * initialized by StartupMultiXact() and kept up to date as new pages are
+ * zeroed.
  */
 void
 TruncateMultiXact(MultiXactId oldestMXact)
