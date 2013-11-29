@@ -3181,7 +3181,11 @@ l2:
 			if (!HEAP_XMAX_IS_LOCKED_ONLY(oldtup.t_data->t_infomask))
 				update_xact = HeapTupleGetUpdateXid(oldtup.t_data);
 
-			/* there was no UPDATE in the MultiXact; or it aborted. */
+			/*
+			 * There was no UPDATE in the MultiXact; or it aborted. No
+			 * TransactionIdIsInProgress() call needed here, since we called
+			 * MultiXactIdWait() above.
+			 */
 			if (!TransactionIdIsValid(update_xact) ||
 				TransactionIdDidAbort(update_xact))
 				can_continue = true;
@@ -5441,6 +5445,9 @@ GetMultiXactIdHintBits(MultiXactId multi, uint16 *new_infomask,
  * Given a multixact Xmax and corresponding infomask, which does not have the
  * HEAP_XMAX_LOCK_ONLY bit set, obtain and return the Xid of the updating
  * transaction.
+ *
+ * Caller is expected to check the status of the updating transaction, if
+ * necessary.
  */
 static TransactionId
 MultiXactIdGetUpdateXid(TransactionId xmax, uint16 t_infomask)
@@ -5465,19 +5472,11 @@ MultiXactIdGetUpdateXid(TransactionId xmax, uint16 t_infomask)
 		for (i = 0; i < nmembers; i++)
 		{
 			/* Ignore lockers */
-			if (members[i].status == MultiXactStatusForKeyShare ||
-				members[i].status == MultiXactStatusForShare ||
-				members[i].status == MultiXactStatusForNoKeyUpdate ||
-				members[i].status == MultiXactStatusForUpdate)
+			if (!ISUPDATE_from_mxstatus(members[i].status))
 				continue;
 
-			/* ignore aborted transactions */
-			if (TransactionIdDidAbort(members[i].xid))
-				continue;
-			/* there should be at most one non-aborted updater */
+			/* there can be at most one updater */
 			Assert(update_xact == InvalidTransactionId);
-			Assert(members[i].status == MultiXactStatusNoKeyUpdate ||
-				   members[i].status == MultiXactStatusUpdate);
 			update_xact = members[i].xid;
 #ifndef USE_ASSERT_CHECKING
 

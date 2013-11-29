@@ -479,22 +479,12 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 				break;
 
 			case HEAPTUPLE_DELETE_IN_PROGRESS:
-				{
-					TransactionId	xmax;
-
-					/*
-					 * This tuple may soon become DEAD.  Update the hint field
-					 * so that the page is reconsidered for pruning in future.
-					 * If there was a MultiXactId updater, and it aborted after
-					 * HTSV checked, then we will get an invalid Xid here.
-					 * There is no need for future pruning of the page in that
-					 * case, so skip it.
-					 */
-					xmax = HeapTupleHeaderGetUpdateXid(htup);
-					if (TransactionIdIsValid(xmax))
-						heap_prune_record_prunable(prstate, xmax);
-				}
-
+				/*
+				 * This tuple may soon become DEAD.  Update the hint field
+				 * so that the page is reconsidered for pruning in future.
+				 */
+				heap_prune_record_prunable(prstate,
+										   HeapTupleHeaderGetUpdateXid(htup));
 				break;
 
 			case HEAPTUPLE_LIVE:
