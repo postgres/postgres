@@ -2537,6 +2537,7 @@ FastPathTransferRelationLocks(LockMethod lockMethodTable, const LOCKTAG *locktag
 				if (!proclock)
 				{
 					LWLockRelease(partitionLock);
+					LWLockRelease(proc->backendLock);
 					return false;
 				}
 				GrantLock(proclock->tag.myLock, proclock, lockmode);
@@ -2592,6 +2593,7 @@ FastPathGetRelationLockEntry(LOCALLOCK *locallock)
 		if (!proclock)
 		{
 			LWLockRelease(partitionLock);
+			LWLockRelease(MyProc->backendLock);
 			ereport(ERROR,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("out of shared memory"),
@@ -4055,6 +4057,7 @@ VirtualXactLock(VirtualTransactionId vxid, bool wait)
 		if (!proclock)
 		{
 			LWLockRelease(partitionLock);
+			LWLockRelease(proc->backendLock);
 			ereport(ERROR,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("out of shared memory"),
