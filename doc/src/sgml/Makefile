@@ -258,6 +258,10 @@ postgres.xml: $(srcdir)/postgres.sgml $(ALMOSTALLSGML)
 	rm postgres.xmltmp
 # ' hello Emacs
 
+ifeq ($(STYLE),website)
+XSLTPROC_HTML_FLAGS += --param website.stylesheet 1
+endif
+
 xslthtml: xslthtml-stamp
 
 xslthtml-stamp: stylesheet.xsl postgres.xml
