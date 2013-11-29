@@ -877,8 +877,11 @@ include 'filename'
       <listitem>
        <para>
         Specifies a list of <acronym>SSL</> ciphers that are allowed to be
-        used on secure connections. See the <application>openssl</>
-        manual page for a list of supported ciphers.
+        used on secure connections.  See
+        the <citerefentry><refentrytitle>ciphers</></citerefentry> manual page
+        in the <application>OpenSSL</> package for the syntax of this setting
+        and a list of supported values.  The default value is usually
+        reasonable, unless you have specific security requirements.
        </para>
       </listitem>
      </varlistentry>
