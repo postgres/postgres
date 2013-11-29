@@ -16,6 +16,7 @@
 
 #include <sys/time.h>
 
+#include "miscadmin.h"
 #include "storage/proc.h"
 #include "utils/timeout.h"
 #include "utils/timestamp.h"
@@ -260,6 +261,23 @@ handle_sig_alarm(SIGNAL_ARGS)
 	int			save_errno = errno;
 
 	/*
+	 * We may be executing while ImmediateInterruptOK is true (e.g., when
+	 * mainline is waiting for a lock).  If SIGINT or similar arrives while
+	 * this code is running, we'd lose control and perhaps leave our data
+	 * structures in an inconsistent state.  Hold off interrupts to prevent
+	 * that.
+	 *
+	 * Note: it's possible for a SIGINT to interrupt handle_sig_alarm even
+	 * before we reach HOLD_INTERRUPTS(); the net effect would be as if the
+	 * SIGALRM event had been silently lost.  Therefore error recovery must
+	 * include some action that will allow any lost interrupt to be
+	 * rescheduled.  Disabling some or all timeouts is sufficient, or if
+	 * that's not appropriate, reschedule_timeouts() can be called.  Also, the
+	 * signal blocking hazard described below applies here too.
+	 */
+	HOLD_INTERRUPTS();
+
+	/*
 	 * SIGALRM is always cause for waking anything waiting on the process
 	 * latch.  Cope with MyProc not being there, as the startup process also
 	 * uses this signal handler.
@@ -310,6 +328,20 @@ handle_sig_alarm(SIGNAL_ARGS)
 			schedule_alarm(now);
 		}
 	}
+
+	/*
+	 * Re-allow query cancel, and then service any cancel request that arrived
+	 * meanwhile (this might in particular include a cancel request fired by
+	 * one of the timeout handlers).
+	 *
+	 * Note: a longjmp from here is safe so far as our own data structures are
+	 * concerned; but on platforms that block a signal before calling the
+	 * handler and then un-block it on return, longjmping out of the signal
+	 * handler leaves SIGALRM still blocked.  Error cleanup is responsible for
+	 * unblocking any blocked signals.
+	 */
+	RESUME_INTERRUPTS();
+	CHECK_FOR_INTERRUPTS();
 
 	errno = save_errno;
 }
@@ -385,6 +417,30 @@ RegisterTimeout(TimeoutId id, timeout_handler_proc handler)
 	all_timeouts[id].timeout_handler = handler;
 
 	return id;
+}
+
+/*
+ * Reschedule any pending SIGALRM interrupt.
+ *
+ * This can be used during error recovery in case query cancel resulted in loss
+ * of a SIGALRM event (due to longjmp'ing out of handle_sig_alarm before it
+ * could do anything).	But note it's not necessary if any of the public
+ * enable_ or disable_timeout functions are called in the same area, since
+ * those all do schedule_alarm() internally if needed.
+ */
+void
+reschedule_timeouts(void)
+{
+	/* For flexibility, allow this to be called before we're initialized. */
+	if (!all_timeouts_initialized)
+		return;
+
+	/* Disable timeout interrupts for safety. */
+	disable_alarm();
+
+	/* Reschedule the interrupt, if any timeouts remain active. */
+	if (num_active_timeouts > 0)
+		schedule_alarm(GetCurrentTimestamp());
 }
 
 /*
