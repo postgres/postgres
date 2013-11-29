@@ -2465,7 +2465,7 @@ heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 	 * because the heaptuples data structure is all in local memory, not in
 	 * the shared buffer.
 	 */
-	if (IsSystemRelation(relation))
+	if (IsCatalogRelation(relation))
 	{
 		for (i = 0; i < ntuples; i++)
 			CacheInvalidateHeapTuple(relation, heaptuples[i], NULL);

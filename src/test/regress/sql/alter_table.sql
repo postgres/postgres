@@ -1567,3 +1567,31 @@ FROM (
     FROM pg_class
     WHERE relkind IN ('r', 'i', 'S', 't', 'm')
     ) mapped;
+
+-- Checks on creating and manipulation of user defined relations in
+-- pg_catalog.
+--
+-- XXX: It would be useful to add checks around trying to manipulate
+-- catalog tables, but that might have ugly consequences when run
+-- against an existing server with allow_system_table_mods = on.
+
+SHOW allow_system_table_mods;
+-- disallowed because of search_path issues with pg_dump
+CREATE TABLE pg_catalog.new_system_table();
+-- instead create in public first, move to catalog
+CREATE TABLE new_system_table(id serial primary key, othercol text);
+ALTER TABLE new_system_table SET SCHEMA pg_catalog;
+
+-- XXX: it's currently impossible to move relations out of pg_catalog
+ALTER TABLE new_system_table SET SCHEMA public;
+-- move back, will currently error out, already there
+ALTER TABLE new_system_table SET SCHEMA pg_catalog;
+ALTER TABLE new_system_table RENAME TO old_system_table;
+CREATE INDEX old_system_table__othercol ON old_system_table (othercol);
+INSERT INTO old_system_table(othercol) VALUES ('somedata'), ('otherdata');
+UPDATE old_system_table SET id = -id;
+DELETE FROM old_system_table WHERE othercol = 'somedata';
+TRUNCATE old_system_table;
+ALTER TABLE old_system_table DROP CONSTRAINT new_system_table_pkey;
+ALTER TABLE old_system_table DROP COLUMN othercol;
+DROP TABLE old_system_table;

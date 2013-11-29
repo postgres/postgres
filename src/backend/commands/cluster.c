@@ -1354,7 +1354,7 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 			 * ones the dependency changes would change.  It's too late to be
 			 * making any data changes to the target catalog.
 			 */
-			if (IsSystemClass(relform1))
+			if (IsSystemClass(r1, relform1))
 				elog(ERROR, "cannot swap toast files by links for system catalogs");
 
 			/* Delete old dependencies */

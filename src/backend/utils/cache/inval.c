@@ -1040,15 +1040,15 @@ CacheInvalidateHeapTuple(Relation relation,
 
 	/*
 	 * We only need to worry about invalidation for tuples that are in system
-	 * relations; user-relation tuples are never in catcaches and can't affect
+	 * catalogs; user-relation tuples are never in catcaches and can't affect
 	 * the relcache either.
 	 */
-	if (!IsSystemRelation(relation))
+	if (!IsCatalogRelation(relation))
 		return;
 
 	/*
-	 * TOAST tuples can likewise be ignored here. Note that TOAST tables are
-	 * considered system relations so they are not filtered by the above test.
+	 * IsCatalogRelation() will return true for TOAST tables of system
+	 * catalogs, but we don't care about those, either.
 	 */
 	if (IsToastRelation(relation))
 		return;

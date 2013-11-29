@@ -1824,6 +1824,7 @@ ReindexDatabase(const char *databaseName, bool do_system, bool do_user)
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		Form_pg_class classtuple = (Form_pg_class) GETSTRUCT(tuple);
+		Oid			relid = HeapTupleGetOid(tuple);
 
 		if (classtuple->relkind != RELKIND_RELATION &&
 			classtuple->relkind != RELKIND_MATVIEW)
@@ -1835,7 +1836,7 @@ ReindexDatabase(const char *databaseName, bool do_system, bool do_user)
 			continue;
 
 		/* Check user/system classification, and optionally skip */
-		if (IsSystemClass(classtuple))
+		if (IsSystemClass(relid, classtuple))
 		{
 			if (!do_system)
 				continue;
@@ -1850,7 +1851,7 @@ ReindexDatabase(const char *databaseName, bool do_system, bool do_user)
 			continue;			/* got it already */
 
 		old = MemoryContextSwitchTo(private_context);
-		relids = lappend_oid(relids, HeapTupleGetOid(tuple));
+		relids = lappend_oid(relids, relid);
 		MemoryContextSwitchTo(old);
 	}
 	heap_endscan(scan);

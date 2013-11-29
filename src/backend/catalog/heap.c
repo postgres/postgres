@@ -256,10 +256,17 @@ heap_create(const char *relname,
 	Assert(OidIsValid(relid));
 
 	/*
-	 * sanity checks
+	 * Don't allow creating relations in pg_catalog directly, even though it
+	 * is allowed to move user defined relations there. Semantics with search
+	 * paths including pg_catalog are too confusing for now.
+	 *
+	 * But allow creating indexes on relations in pg_catalog even if
+	 * allow_system_table_mods = off, upper layers already guarantee it's on a
+	 * user defined relation, not a system one.
 	 */
 	if (!allow_system_table_mods &&
-		(IsSystemNamespace(relnamespace) || IsToastNamespace(relnamespace)) &&
+		((IsSystemNamespace(relnamespace) && relkind != RELKIND_INDEX) ||
+		 IsToastNamespace(relnamespace)) &&
 		IsNormalProcessingMode())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
