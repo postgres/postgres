@@ -36,18 +36,6 @@
   <xsl:call-template name="inline.monoseq"/>
 </xsl:template>
 
-<!--
-  Format multiple terms in varlistentry vertically, instead
-  of comma-separated.
- -->
-
-<xsl:template match="varlistentry/term[position()!=last()]">
-  <span class="term">
-    <xsl:call-template name="anchor"/>
-    <xsl:apply-templates/>
-  </span><br/>
-</xsl:template>
-
 
 <!-- table of contents configuration -->
 
