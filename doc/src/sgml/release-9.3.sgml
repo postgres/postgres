@@ -22,6 +22,11 @@
     A dump/restore is not required for those running 9.3.X.
    </para>
 
+   <para>
+    However, if you use the <literal>hstore</> extension, see the
+    first changelog entry.
+   </para>
+
   </sect2>
 
   <sect2>
@@ -31,21 +36,33 @@
 
     <listitem>
      <para>
-      Update hstore extension with JSON functionality (Andrew Dunstan)
+      Ensure new-in-9.3 JSON functionality is added to the <literal>hstore</>
+      extension during an update (Andrew Dunstan)
      </para>
 
      <para>
-      Users who installed hstore prior to 9.3.1 must execute:
+      Users who upgraded a pre-9.3 database containing <literal>hstore</>
+      should execute
 <programlisting>
 ALTER EXTENSION hstore UPDATE;
 </programlisting>
-      to add two new JSON functions and a cast.
+      after installing 9.3.1, to add two new JSON functions and a cast.
+      (If <literal>hstore</> is already up to date, this command does
+      nothing.)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Fix memory leak when creating range indexes (Heikki Linnakangas)
+      Fix memory leak when creating B-tree indexes on range columns
+      (Heikki Linnakangas)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix memory leak caused by <function>lo_open()</function> failure
+      (Heikki Linnakangas)
      </para>
     </listitem>
 
@@ -57,7 +74,7 @@ ALTER EXTENSION hstore UPDATE;
 
     <listitem>
      <para>
-      Fix libpq SSL deadlock bug (Stephen Frost)
+      Fix deadlock bug in libpq when using SSL (Stephen Frost)
      </para>
     </listitem>
 

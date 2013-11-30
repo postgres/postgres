@@ -23,8 +23,8 @@
    </para>
 
    <para>
-    Also, if you are upgrading from a version earlier than 9.0.6,
-    see the release notes for 9.0.6.
+    However, if you are upgrading from a version earlier than 9.0.13,
+    see the release notes for 9.0.13.
    </para>
 
   </sect2>
@@ -36,12 +36,13 @@
 
     <listitem>
      <para>
-      Prevent downcasing of non-ASCII non-double-quoted identifiers in
-      multi-byte encodings (Andrew Dunstan)
+      Prevent corruption of multi-byte characters when attempting to
+      case-fold identifiers (Andrew Dunstan)
      </para>
 
      <para>
-      The previous behavior was wrong and confusing.
+      <productname>PostgreSQL</> case-folds non-ASCII characters only
+      when using a single-byte server encoding.
      </para>
     </listitem>
 
@@ -68,13 +69,13 @@
 
     <listitem>
      <para>
-      Fix libpq SSL deadlock bug (Stephen Frost)
+      Fix deadlock bug in libpq when using SSL (Stephen Frost)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Fix possible SSL network stack corruption in threaded libpq applications
+      Fix possible SSL state corruption in threaded libpq applications
       (Nick Phillips, Stephen Frost)
      </para>
     </listitem>
@@ -99,21 +100,24 @@
      </para>
 
      <para>
-      Previously such push downs could generate errors.
+      Subqueries of a <literal>UNION</> or <literal>INTERSECT</> that
+      contain set-returning functions or volatile functions in their
+      <literal>SELECT</> lists could be improperly optimized, leading to
+      run-time errors or incorrect query results.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Fix rare <literal>GROUP BY</> query error caused by improperly
-      processed data type modifiers (Tom Lane)
+      Fix rare case of <quote>failed to locate grouping columns</>
+      planner failure (Tom Lane)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Allow view dump code to better handle dropped columns on base tables
-      (Tom Lane)
+      Improve view dumping code's handling of dropped columns in referenced
+      tables (Tom Lane)
      </para>
     </listitem>
 
@@ -193,8 +197,9 @@
      <para>
       Specifically, lessen keyword restrictions for role names, language
       names, <command>EXPLAIN</> and <command>COPY</> options, and
-      <command>SET</> values.  This allows <literal>COPY ...  (FORMAT
-      BINARY)</> previously <literal>BINARY</> required single-quotes.
+      <command>SET</> values.  This allows <literal>COPY ... (FORMAT
+      BINARY)</> to work as expected; previously <literal>BINARY</> needed
+      to be quoted.
      </para>
     </listitem>
 
@@ -214,8 +219,9 @@
 
     <listitem>
      <para>
-      Improve analyze statistics generation after a cancelled file truncate
-      request (Kevin Grittner)
+      Ensure that <command>VACUUM ANALYZE</> still runs the ANALYZE phase
+      if its attempt to truncate the file is cancelled due to lock conflicts
+      (Kevin Grittner)
      </para>
     </listitem>
 
@@ -228,12 +234,16 @@
 
     <listitem>
      <para>
-      Allow various spellings of infinity on all platforms (Tom Lane)
+      Ensure that floating-point data input accepts standard spellings
+      of <quote>infinity</> on all platforms (Tom Lane)
      </para>
 
      <para>
-      Supported infinity values are "inf", "+inf", "-inf", "infinity",
-      "+infinity", and "-infinity".
+      The C99 standard says that allowable spellings are <literal>inf</>,
+      <literal>+inf</>, <literal>-inf</>, <literal>infinity</>,
+      <literal>+infinity</>, and <literal>-infinity</>.  Make sure we
+      recognize these even if the platform's <function>strtod</> function
+      doesn't.
      </para>
     </listitem>
 
@@ -247,9 +257,8 @@
     <listitem>
      <para>
       Update time zone data files to <application>tzdata</> release 2013d
-      for DST law changes in DST law changes in Israel, Morocco, Palestine,
-      Paraguay.  Also, historical zone data corrections for Macquarie Island
-      (Tom Lane)
+      for DST law changes in Israel, Morocco, Palestine, and Paraguay.
+      Also, historical zone data corrections for Macquarie Island.
      </para>
     </listitem>
 
