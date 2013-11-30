@@ -1114,12 +1114,9 @@ fi
 
 m4_defun([AC_PROG_CC_STDC], []) dnl We don't want that.
 AC_C_BIGENDIAN
-AC_C_CONST
 PGAC_C_INLINE
-AC_C_STRINGIZE
 AC_C_FLEXIBLE_ARRAY_MEMBER
 PGAC_C_SIGNED
-AC_C_VOLATILE
 PGAC_C_FUNCNAME_SUPPORT
 PGAC_C_STATIC_ASSERT
 PGAC_C_TYPES_COMPATIBLE
@@ -1748,9 +1745,6 @@ Thread-safety requires POSIX signals, which are not supported by this
 operating system;  use --disable-thread-safety to disable thread safety.])
 fi
 fi
-
-# SunOS doesn't handle negative byte comparisons properly with +/- return
-AC_FUNC_MEMCMP
 
 
 # Select semaphore implementation type.

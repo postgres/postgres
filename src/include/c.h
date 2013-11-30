@@ -130,28 +130,12 @@
  * CppConcat
  *		Concatenate two arguments together, using the C preprocessor.
  *
- * Note: the standard Autoconf macro AC_C_STRINGIZE actually only checks
- * whether #identifier works, but if we have that we likely have ## too.
+ * Note: There used to be support here for pre-ANSI C compilers that didn't
+ * support # and ##.  Nowadays, these macros are just for clarity and/or
+ * backward compatibility with existing PostgreSQL code.
  */
-#if defined(HAVE_STRINGIZE)
-
 #define CppAsString(identifier) #identifier
 #define CppConcat(x, y)			x##y
-#else							/* !HAVE_STRINGIZE */
-
-#define CppAsString(identifier) "identifier"
-
-/*
- * CppIdentity -- On Reiser based cpp's this is used to concatenate
- *		two tokens.  That is
- *				CppIdentity(A)B ==> AB
- *		We renamed it to _private_CppIdentity because it should not
- *		be referenced outside this file.  On other cpp's it
- *		produces  A  B.
- */
-#define _priv_CppIdentity(x)x
-#define CppConcat(x, y)			_priv_CppIdentity(x)y
-#endif   /* !HAVE_STRINGIZE */
 
 /*
  * dummyret is used to set return values in macros that use ?: to make
