@@ -25,6 +25,7 @@
 static void usage(void);
 static void check_required_directory(char **dirpath, char **configpath,
 				   char *envVarName, char *cmdLineOption, char *description);
+#define FIX_DEFAULT_READ_ONLY "-c default_transaction_read_only=false"
 
 
 UserOpts	user_opts;
@@ -207,6 +208,17 @@ parseCommandLine(int argc, char *argv[])
 				ctime(&run_time));
 		fclose(fp);
 	}
+
+	/* Turn off read-only mode;  add prefix to PGOPTIONS? */
+	if (getenv("PGOPTIONS"))
+	{
+		char *pgoptions = psprintf("%s %s", FIX_DEFAULT_READ_ONLY,
+									getenv("PGOPTIONS"));
+		pg_putenv("PGOPTIONS", pgoptions);
+		pfree(pgoptions);
+	}
+	else
+		pg_putenv("PGOPTIONS", FIX_DEFAULT_READ_ONLY);
 
 	/* Get values from env if not already set */
 	check_required_directory(&old_cluster.bindir, NULL, "PGBINOLD", "-b",
