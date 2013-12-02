@@ -44,7 +44,7 @@ my @BRANCHES = qw(master
   REL6_5_PATCHES REL6_4);
 
 # Might want to make this parameter user-settable.
-my $timestamp_slop = 600;
+my $timestamp_slop = 24*60*60;
 
 my $details_after = 0;
 my $post_date     = 0;
