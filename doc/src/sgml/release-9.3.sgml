@@ -53,8 +53,7 @@ Branch: REL8_4_STABLE [8a7f4466a] 2013-11-27 13:40:05 +0200
     <listitem>
      <para>
       Fix <command>VACUUM</>'s tests to see whether it can
-      update <structfield>relfrozenxid</> (Andres Freund, Sergey Burladyn,
-      Jeff Janes)
+      update <structfield>relfrozenxid</> (Andres Freund)
      </para>
 
      <para>
@@ -129,12 +128,12 @@ Branch: REL9_0_STABLE [b4f697f8e] 2013-11-22 14:49:07 +0200
     <listitem>
      <para>
       Fix initialization of <filename>pg_clog</> and <filename>pg_subtrans</>
-      during hot standby startup (Andres Freund)
+      during hot standby startup (Andres Freund, Heikki Linnakangas)
      </para>
 
      <para>
       This bug can cause data loss on standby servers at the moment they
-      start to accept read-only queries, by marking committed transactions
+      start to accept hot-standby queries, by marking committed transactions
       as uncommitted. The likelihood of such corruption is small unless, at
       the time of standby startup, the primary server has executed many
       updating transactions since its last checkpoint.  Symptoms include
@@ -153,20 +152,6 @@ Branch: REL9_0_STABLE [b4f697f8e] 2013-11-22 14:49:07 +0200
     </listitem>
 
 <!--
-Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
-Branch: master [83eb54001] 2013-10-23 14:24:37 +0300
-Branch: REL9_3_STABLE [f90d7426e] 2013-10-23 14:25:43 +0300
-Branch: REL9_2_STABLE [4da24f12e] 2013-10-23 14:25:50 +0300
--->
-
-    <listitem>
-     <para>
-      Fix bugs in setting the visibility-map bit for an empty page (Andres
-      Freund)
-     </para>
-    </listitem>
-
-<!--
 Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 Branch: master [1ce150b7b] 2013-11-29 21:47:21 -0300
 Branch: REL9_3_STABLE [663d2e485] 2013-11-29 21:48:18 -0300
@@ -174,8 +159,15 @@ Branch: REL9_3_STABLE [663d2e485] 2013-11-29 21:48:18 -0300
 
     <listitem>
      <para>
-      Fix multiple bugs in update chain traversal (Andres
-      Freund, &Aacute;lvaro Herrera)
+      Fix multiple bugs in update chain traversal (Andres Freund,
+      &Aacute;lvaro Herrera)
+     </para>
+
+     <para>
+      These bugs could result in incorrect behavior, such as locking or even
+      updating the wrong row, in the presence of concurrent updates.
+      Spurious <quote>unable to fetch updated version of tuple</> errors
+      were also possible.
      </para>
     </listitem>
 
@@ -225,13 +217,50 @@ Branch: REL9_0_STABLE [6d0b8cd2f] 2013-11-29 22:02:15 -0300
 
     <listitem>
      <para>
-      Truncate <filename>pg_multixact</> contents during crash recovery
+      Truncate <filename>pg_multixact</> contents during WAL replay
       (Andres Freund)
      </para>
 
      <para>
-      This avoids ever-increasing disk space consumption in hot standby
-      mode.
+      This avoids ever-increasing disk space consumption in standby servers.
+     </para>
+    </listitem>
+
+<!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+Branch: master [4c697d8f4] 2013-11-18 09:51:09 +0200
+Branch: REL9_3_STABLE [ea2bb1b47] 2013-11-18 10:16:31 +0200
+Branch: REL9_2_STABLE [3379263b6] 2013-11-18 10:12:22 +0200
+-->
+
+    <listitem>
+     <para>
+      Ensure an anti-wraparound <command>VACUUM</> counts a page as scanned
+      when it's only verified that no tuples need freezing (Sergey
+      Burladyan, Jeff Janes)
+     </para>
+
+     <para>
+      This bug could result in failing to
+      advance <structfield>relfrozenxid</>, so that the table would still be
+      thought to need another anti-wraparound vacuum.  In the worst case the
+      database might even shut down to prevent wraparound.
+     </para>
+    </listitem>
+
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [f54106f77] 2013-11-29 21:47:13 -0300
+Branch: REL9_3_STABLE [f5f92bdc4] 2013-11-29 21:48:11 -0300
+-->
+
+    <listitem>
+     <para>
+      Fix full-table-vacuum request mechanism for MultiXactIds (Andres Freund)
+     </para>
+
+     <para>
+      This bug could result in large amounts of useless autovacuum activity.
      </para>
     </listitem>
 
