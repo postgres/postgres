@@ -1,16 +1,16 @@
-# LANGUAGE message translation file for plpython
+# Czech message translation file for plpython
 # Copyright (C) 2012 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 #
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2012.
+# Tomáš Vondra <tv@fuzzy.cz>, 2012, 2013.
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.2\n"
+"Project-Id-Version: plpython-cs (PostgreSQL 9.3)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2012-09-18 16:39+0000\n"
 "PO-Revision-Date: 2012-09-19 01:51+0200\n"
-"Last-Translator: \n"
-"Language-Team: Czech <kde-i18n-doc@kde.org>\n"
+"Last-Translator: Tomas Vondra <tv@fuzzy.cz>\n"
+"Language-Team: Czech <info@cspug.cx>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
