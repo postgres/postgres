@@ -1,6 +1,263 @@
 <!-- doc/src/sgml/release-9.1.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-1-11">
+  <title>Release 9.1.11</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2013-12-05</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 9.1.10.
+   For information about new features in the 9.1 major release, see
+   <xref linkend="release-9-1">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.1.11</title>
+
+   <para>
+    A dump/restore is not required for those running 9.1.X.
+   </para>
+
+   <para>
+    However, this release corrects a number of potential data corruption
+    issues.  See the first two changelog entries below to find out whether
+    your installation has been affected and what steps you can take if so.
+   </para>
+
+   <para>
+    Also, if you are upgrading from a version earlier than 9.1.9,
+    see the release notes for 9.1.9.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix <command>VACUUM</>'s tests to see whether it can
+      update <structfield>relfrozenxid</> (Andres Freund)
+     </para>
+
+     <para>
+      In some cases <command>VACUUM</> (either manual or autovacuum) could
+      incorrectly advance a table's <structfield>relfrozenxid</> value,
+      allowing tuples to escape freezing, causing those rows to become
+      invisible once 2^31 transactions have elapsed.  The probability of
+      data loss is fairly low since multiple incorrect advancements would
+      need to happen before actual loss occurs, but it's not zero.  Users
+      upgrading from releases 9.0.4 or 8.4.8 or earlier are not affected, but
+      all later versions contain the bug.
+     </para>
+
+     <para>
+      The issue can be ameliorated by, after upgrading, vacuuming all tables
+      in all databases while having <link
+      linkend="guc-vacuum-freeze-table-age"><varname>vacuum_freeze_table_age</></link>
+      set to zero.  This will fix any latent corruption but will not be able
+      to fix all pre-existing data errors.  However, an installation can be
+      presumed safe after performing this vacuuming if it has executed fewer
+      than 2^31 update transactions in its lifetime (check this with
+      <literal>SELECT txid_current() < 2^31</>).
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix initialization of <filename>pg_clog</> and <filename>pg_subtrans</>
+      during hot standby startup (Andres Freund, Heikki Linnakangas)
+     </para>
+
+     <para>
+      This bug can cause data loss on standby servers at the moment they
+      start to accept hot-standby queries, by marking committed transactions
+      as uncommitted. The likelihood of such corruption is small unless, at
+      the time of standby startup, the primary server has executed many
+      updating transactions since its last checkpoint.  Symptoms include
+      missing rows, rows that should have been deleted being still visible,
+      and obsolete versions of updated rows being still visible alongside
+      their newer versions.
+     </para>
+
+     <para>
+      This bug was introduced in versions 9.3.0, 9.2.5, 9.1.10, and 9.0.14.
+      Standby servers that have only been running earlier releases are not
+      at risk.  It's recommended that standby servers that have ever run any
+      of the buggy releases be re-cloned from the primary (e.g., with a new
+      base backup) after upgrading.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Truncate <filename>pg_multixact</> contents during WAL replay
+      (Andres Freund)
+     </para>
+
+     <para>
+      This avoids ever-increasing disk space consumption in standby servers.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix race condition in GIN index posting tree page deletion (Heikki
+      Linnakangas)
+     </para>
+
+     <para>
+      This could lead to transient wrong answers or query failures.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid flattening a subquery whose <literal>SELECT</> list contains a
+      volatile function wrapped inside a sub-<literal>SELECT</> (Tom Lane)
+     </para>
+
+     <para>
+      This avoids unexpected results due to extra evaluations of the
+      volatile function.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix planner's processing of non-simple-variable subquery outputs
+      nested within outer joins (Tom Lane)
+     </para>
+
+     <para>
+      This error could lead to incorrect plans for queries involving
+      multiple levels of subqueries within <literal>JOIN</> syntax.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect generation of optimized MIN()/MAX() plans for
+      inheritance trees (Tom Lane)
+     </para>
+
+     <para>
+      The planner could fail in cases where the MIN()/MAX() argument was an
+      expression rather than a simple variable.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix premature deletion of temporary files (Andres Freund)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible read past end of memory in rule printing (Peter Eisentraut)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix array slicing of <type>int2vector</> and <type>oidvector</> values
+      (Tom Lane)
+     </para>
+
+     <para>
+      Expressions of this kind are now implicitly promoted to
+      regular <type>int2</> or <type>oid</> arrays.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect behaviors when using a SQL-standard, simple GMT offset
+      timezone (Tom Lane)
+     </para>
+
+     <para>
+      In some cases, the system would use the simple GMT offset value when
+      it should have used the regular timezone setting that had prevailed
+      before the simple offset was selected.  This change also causes
+      the <function>timeofday</> function to honor the simple GMT offset
+      zone.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent possible misbehavior when logging translations of Windows
+      error codes (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Properly quote generated command lines in <application>pg_ctl</>
+      (Naoya Anzai and Tom Lane)
+     </para>
+
+     <para>
+      This fix applies only to Windows.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_dumpall</> to work when a source database
+      sets <link
+      linkend="guc-default-transaction-read-only"><varname>default_transaction_read_only</></link>
+      via <command>ALTER DATABASE SET</> (Kevin Grittner)
+     </para>
+
+     <para>
+      Previously, the generated script would fail during restore.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <application>ecpg</> search for quoted cursor names
+      case-sensitively (Zolt&aacute;n B&ouml;sz&ouml;rm&eacute;nyi)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>ecpg</>'s processing of lists of variables
+      declared <type>varchar</> (Zolt&aacute;n B&ouml;sz&ouml;rm&eacute;nyi)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <filename>contrib/lo</> defend against incorrect trigger definitions
+      (Marc Cousin)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2013h
+      for DST law changes in Argentina, Brazil, Jordan, Libya,
+      Liechtenstein, Morocco, and Palestine.  Also, new timezone
+      abbreviations WIB, WIT, WITA for Indonesia.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-1-10">
   <title>Release 9.1.10</title>
 
@@ -23,8 +280,8 @@
    </para>
 
    <para>
-    Also, if you are upgrading from a version earlier than 9.1.6,
-    see the release notes for 9.1.6.
+    However, if you are upgrading from a version earlier than 9.1.9,
+    see the release notes for 9.1.9.
    </para>
 
   </sect2>
@@ -36,12 +293,13 @@
 
     <listitem>
      <para>
-      Prevent downcasing of non-ASCII non-double-quoted identifiers in
-      multi-byte encodings (Andrew Dunstan)
+      Prevent corruption of multi-byte characters when attempting to
+      case-fold identifiers (Andrew Dunstan)
      </para>
 
      <para>
-      The previous behavior was wrong and confusing.
+      <productname>PostgreSQL</> case-folds non-ASCII characters only
+      when using a single-byte server encoding.
      </para>
     </listitem>
 
@@ -74,13 +332,13 @@
 
     <listitem>
      <para>
-      Fix libpq SSL deadlock bug (Stephen Frost)
+      Fix deadlock bug in libpq when using SSL (Stephen Frost)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Fix possible SSL network stack corruption in threaded libpq applications
+      Fix possible SSL state corruption in threaded libpq applications
       (Nick Phillips, Stephen Frost)
      </para>
     </listitem>
@@ -105,14 +363,17 @@
      </para>
 
      <para>
-      Previously such push downs could generate errors.
+      Subqueries of a <literal>UNION</> or <literal>INTERSECT</> that
+      contain set-returning functions or volatile functions in their
+      <literal>SELECT</> lists could be improperly optimized, leading to
+      run-time errors or incorrect query results.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Fix rare <literal>GROUP BY</> query error caused by improperly
-      processed data type modifiers (Tom Lane)
+      Fix rare case of <quote>failed to locate grouping columns</>
+      planner failure (Tom Lane)
      </para>
     </listitem>
 
@@ -142,8 +403,8 @@
 
     <listitem>
      <para>
-      Allow view dump code to better handle dropped columns on base tables
-      (Tom Lane)
+      Improve view dumping code's handling of dropped columns in referenced
+      tables (Tom Lane)
      </para>
     </listitem>
 
@@ -254,8 +515,9 @@
      <para>
       Specifically, lessen keyword restrictions for role names, language
       names, <command>EXPLAIN</> and <command>COPY</> options, and
-      <command>SET</> values.  This allows <literal>COPY ...  (FORMAT
-      BINARY)</> previously <literal>BINARY</> required single-quotes.
+      <command>SET</> values.  This allows <literal>COPY ... (FORMAT
+      BINARY)</> to work as expected; previously <literal>BINARY</> needed
+      to be quoted.
      </para>
     </listitem>
 
@@ -268,7 +530,7 @@
 
     <listitem>
      <para>
-      Have <application>pg_upgrade</> use <command>pg_dump
+      Make <application>pg_upgrade</> use <literal>pg_dump
       --quote-all-identifiers</> to avoid problems with keyword changes
       between releases (Tom Lane)
      </para>
@@ -283,8 +545,9 @@
 
     <listitem>
      <para>
-      Improve analyze statistics generation after a cancelled file truncate
-      request (Kevin Grittner)
+      Ensure that <command>VACUUM ANALYZE</> still runs the ANALYZE phase
+      if its attempt to truncate the file is cancelled due to lock conflicts
+      (Kevin Grittner)
      </para>
     </listitem>
 
@@ -297,12 +560,16 @@
 
     <listitem>
      <para>
-      Allow various spellings of infinity on all platforms (Tom Lane)
+      Ensure that floating-point data input accepts standard spellings
+      of <quote>infinity</> on all platforms (Tom Lane)
      </para>
 
      <para>
-      Supported infinity values are "inf", "+inf", "-inf", "infinity",
-      "+infinity", and "-infinity".
+      The C99 standard says that allowable spellings are <literal>inf</>,
+      <literal>+inf</>, <literal>-inf</>, <literal>infinity</>,
+      <literal>+infinity</>, and <literal>-infinity</>.  Make sure we
+      recognize these even if the platform's <function>strtod</> function
+      doesn't.
      </para>
     </listitem>
 
@@ -316,9 +583,8 @@
     <listitem>
      <para>
       Update time zone data files to <application>tzdata</> release 2013d
-      for DST law changes in DST law changes in Israel, Morocco, Palestine,
-      Paraguay.  Also, historical zone data corrections for Macquarie Island
-      (Tom Lane)
+      for DST law changes in Israel, Morocco, Palestine, and Paraguay.
+      Also, historical zone data corrections for Macquarie Island.
      </para>
     </listitem>
 
