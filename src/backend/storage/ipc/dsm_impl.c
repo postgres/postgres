@@ -214,7 +214,7 @@ dsm_impl_can_resize(void)
 		case DSM_IMPL_WINDOWS:
 			return false;
 		case DSM_IMPL_MMAP:
-			return false;
+			return true;
 		default:
 			return false;		/* should not happen */
 	}
