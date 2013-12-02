@@ -397,12 +397,13 @@ void
 errfinish(int dummy,...)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
-	int			elevel = edata->elevel;
+	int			elevel;
 	MemoryContext oldcontext;
 	ErrorContextCallback *econtext;
 
 	recursion_depth++;
 	CHECK_STACK_DEPTH();
+	elevel = edata->elevel;
 
 	/*
 	 * Do processing in ErrorContext, which we hope has enough reserved space
