@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2013-08-11 16:01+0000\n"
-"PO-Revision-Date: 2013-08-15 13:45+0100\n"
+"POT-Creation-Date: 2013-11-27 12:43+0000\n"
+"PO-Revision-Date: 2013-11-27 22:03+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -262,8 +262,8 @@ msgstr "%s : n'a pas pu lire les données du COPY : %s"
 
 #: pg_basebackup.c:515
 #, c-format
-msgid "%s: received invalid directory (too long): %s"
-msgstr "%s : a reçu un répertoire invalide (trop long) : %s"
+msgid "%s: received invalid directory (too long): %s\n"
+msgstr "%s : a reçu un répertoire invalide (trop long) : %s\n"
 
 #: pg_basebackup.c:576
 #, c-format

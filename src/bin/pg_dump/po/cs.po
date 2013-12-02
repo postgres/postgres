@@ -1,18 +1,17 @@
-# translation of pg_dump-cs.po to
-# translation of pg_dump-cs.po to Czech
 # Czech translation of pg_dump messages
 #
 # pgtranslation Id: pg_dump.po,v 1.4 2011/09/08 18:23:05 petere Exp $
 #
 # Karel Zak <zakkr@zf.jcu.cz>, 2001-2003, 2004, 2011, 2012, 2013.
+# Tomáš Vondra <tv@fuzzy.cz>, 2011, 2012, 2013.
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_dump-cs\n"
+"Project-Id-Version: pg_dump-cs (PostgreSQL 9.1)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2013-03-17 12:09+0000\n"
-"PO-Revision-Date: 2013-03-17 21:09+0100\n"
-"Last-Translator: \n"
-"Language-Team: Czech <kde-i18n-doc@kde.org>\n"
+"PO-Revision-Date: 2013-04-28 19:08+0200\n"
+"Last-Translator: Tomas Vondra <tv@fuzzy.cz>\n"
+"Language-Team: Czech <info@cspug.cx>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -338,7 +337,7 @@ msgid ""
 "of\n"
 "                              ALTER OWNER commands to set ownership\n"
 msgstr ""
-"  -use-set-session-authorization\n"
+"  --use-set-session-authorization\n"
 "                           používat příkaz SET SESSION AUTHORIZATION "
 "namísto\n"
 "                           příkazu ALTER OWNER pro nastavení vlastníka\n"
@@ -1431,7 +1430,7 @@ msgstr "nelze uzavřít archivní soubor: %s\n"
 
 #: pg_backup_custom.c:737
 msgid "can only reopen input archives\n"
-msgstr "nelze otevřít vstupní soubor: %s\n"
+msgstr "vstupní archivy lze pouze znovu otevřít\n"
 
 #: pg_backup_custom.c:744
 msgid "parallel restore from stdin is not supported\n"
@@ -1937,7 +1936,7 @@ msgstr ""
 #: pg_restore.c:433
 #, c-format
 msgid "  --no-security-labels     do not restore security labels\n"
-msgstr "  --no-tablespaces         neobnovuj bezpečnostní štítky\n"
+msgstr "  --no-security-labels     neobnovuj bezpečnostní štítky\n"
 
 #: pg_restore.c:434
 #, c-format
