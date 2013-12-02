@@ -2,16 +2,16 @@
 # Copyright (C) 2012 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 #
-# Tomas Vondra <tv@fuzzy.cz>, 2012.
+# Tomáš Vondra <tv@fuzzy.cz>, 2012, 2013.
 
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.2\n"
+"Project-Id-Version: ecpglib-cs (PostgreSQL 9.3)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2012-09-18 16:40+0000\n"
-"PO-Revision-Date: 2013-10-13 22:05-0400\n"
-"Last-Translator: Tomas Vondra\n"
-"Language-Team: Czech <kde-i18n-doc@kde.org>\n"
+"PO-Revision-Date: 2012-MO-DA HO:MI+ZONE\n"
+"Last-Translator: Tomas Vondra <tv@fuzzy.cz>\n"
+"Language-Team: Czech <info@cspug.cx>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
