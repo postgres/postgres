@@ -99,7 +99,8 @@ SET CONSTRAINTS { ALL | <replaceable class="parameter">name</replaceable> [, ...
 
   <para>
    This command only alters the behavior of constraints within the
-   current transaction.  This has no effect outside of a transaction block.
+   current transaction.  Issuing this outside of a transaction block
+   emits a warning and otherwise has no effect.
   </para>
  </refsect1>
 

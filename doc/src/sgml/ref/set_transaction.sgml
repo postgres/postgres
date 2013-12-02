@@ -185,7 +185,7 @@ SET SESSION CHARACTERISTICS AS TRANSACTION <replaceable class="parameter">transa
   <para>
    If <command>SET TRANSACTION</command> is executed without a prior
    <command>START TRANSACTION</command> or <command>BEGIN</command>,
-   it will have no effect.
+   it emits a warning and otherwise has no effect.
   </para>
 
   <para>

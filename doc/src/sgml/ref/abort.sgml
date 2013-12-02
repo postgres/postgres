@@ -63,7 +63,8 @@ ABORT [ WORK | TRANSACTION ]
   </para>
 
   <para>
-   Issuing <command>ABORT</> outside of a transaction block has no effect.
+   Issuing <command>ABORT</> outside of a transaction block
+   emits a warning and otherwise has no effect.
   </para>
  </refsect1>
 

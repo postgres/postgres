@@ -110,8 +110,9 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
      <para>
       Specifies that the command takes effect for only the current
       transaction.  After <command>COMMIT</> or <command>ROLLBACK</>,
-      the session-level setting takes effect again.  This has no effect
-      outside of a transaction block.
+      the session-level setting takes effect again.  Issuing this
+      outside of a transaction block emits a warning and otherwise has
+      no effect.
      </para>
     </listitem>
    </varlistentry>
