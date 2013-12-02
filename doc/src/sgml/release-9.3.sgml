@@ -40,16 +40,6 @@
 
    <itemizedlist>
 
-<!--
-Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
-Branch: master [82b43f7df] 2013-11-27 13:43:27 +0200
-Branch: REL9_3_STABLE [08302a397] 2013-11-27 13:22:26 +0200
-Branch: REL9_2_STABLE [0b132b904] 2013-11-27 13:28:47 +0200
-Branch: REL9_1_STABLE [bf0d21e61] 2013-11-27 13:44:10 +0200
-Branch: REL9_0_STABLE [ba6379959] 2013-11-27 13:43:18 +0200
-Branch: REL8_4_STABLE [8a7f4466a] 2013-11-27 13:40:05 +0200
--->
-
     <listitem>
      <para>
       Fix <command>VACUUM</>'s tests to see whether it can
@@ -81,12 +71,6 @@ Branch: REL8_4_STABLE [8a7f4466a] 2013-11-27 13:40:05 +0200
      </para>
     </listitem>
 
-<!--
-Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
-Branch: master [2393c7d10] 2013-11-29 21:47:25 -0300
-Branch: REL9_3_STABLE [8e53ae025] 2013-11-29 21:48:21 -0300
--->
-
     <listitem>
      <para>
       Fix multiple bugs in MultiXactId freezing (Andres Freund,
@@ -116,15 +100,6 @@ Branch: REL9_3_STABLE [8e53ae025] 2013-11-29 21:48:21 -0300
      </para>
     </listitem>
 
-<!--
-Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
-Branch: master [98f58a30c] 2013-11-22 14:45:41 +0200
-Branch: REL9_3_STABLE [3e10cc492] 2013-11-22 14:48:05 +0200
-Branch: REL9_2_STABLE [f22624cea] 2013-11-22 14:48:43 +0200
-Branch: REL9_1_STABLE [fc8e54f39] 2013-11-22 14:48:55 +0200
-Branch: REL9_0_STABLE [b4f697f8e] 2013-11-22 14:49:07 +0200
--->
-
     <listitem>
      <para>
       Fix initialization of <filename>pg_clog</> and <filename>pg_subtrans</>
@@ -151,12 +126,6 @@ Branch: REL9_0_STABLE [b4f697f8e] 2013-11-22 14:49:07 +0200
      </para>
     </listitem>
 
-<!--
-Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
-Branch: master [1ce150b7b] 2013-11-29 21:47:21 -0300
-Branch: REL9_3_STABLE [663d2e485] 2013-11-29 21:48:18 -0300
--->
-
     <listitem>
      <para>
       Fix multiple bugs in update chain traversal (Andres Freund,
@@ -171,13 +140,6 @@ Branch: REL9_3_STABLE [663d2e485] 2013-11-29 21:48:18 -0300
      </para>
     </listitem>
 
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [7db285afc] 2013-11-27 18:10:00 -0500
-Branch: REL9_3_STABLE [d32e8387b] 2013-11-27 18:10:03 -0500
-Branch: REL9_2_STABLE [024edb454] 2013-11-27 18:10:06 -0500
--->
-
     <listitem>
      <para>
       Fix dangling-pointer problem in fast-path locking (Tom Lane)
@@ -188,12 +150,6 @@ Branch: REL9_2_STABLE [024edb454] 2013-11-27 18:10:06 -0500
       memory, causing <quote>lock already held</> and other odd errors.
      </para>
     </listitem>
-
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [16e1b7a1b] 2013-11-29 16:41:00 -0500
-Branch: REL9_3_STABLE [c357be2cd] 2013-11-29 16:41:03 -0500
--->
 
     <listitem>
      <para>
@@ -206,15 +162,6 @@ Branch: REL9_3_STABLE [c357be2cd] 2013-11-29 16:41:03 -0500
      </para>
     </listitem>
 
-<!--
-Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
-Branch: master [1df0122da] 2013-11-29 21:47:15 -0300
-Branch: REL9_3_STABLE [215ac4ad6] 2013-11-29 21:48:15 -0300
-Branch: REL9_2_STABLE [8f8c66614] 2013-11-29 21:59:15 -0300
-Branch: REL9_1_STABLE [9f1e051ad] 2013-11-29 22:01:01 -0300
-Branch: REL9_0_STABLE [6d0b8cd2f] 2013-11-29 22:02:15 -0300
--->
-
     <listitem>
      <para>
       Truncate <filename>pg_multixact</> contents during WAL replay
@@ -225,13 +172,6 @@ Branch: REL9_0_STABLE [6d0b8cd2f] 2013-11-29 22:02:15 -0300
       This avoids ever-increasing disk space consumption in standby servers.
      </para>
     </listitem>
-
-<!--
-Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
-Branch: master [4c697d8f4] 2013-11-18 09:51:09 +0200
-Branch: REL9_3_STABLE [ea2bb1b47] 2013-11-18 10:16:31 +0200
-Branch: REL9_2_STABLE [3379263b6] 2013-11-18 10:12:22 +0200
--->
 
     <listitem>
      <para>
@@ -248,12 +188,6 @@ Branch: REL9_2_STABLE [3379263b6] 2013-11-18 10:12:22 +0200
      </para>
     </listitem>
 
-<!--
-Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
-Branch: master [f54106f77] 2013-11-29 21:47:13 -0300
-Branch: REL9_3_STABLE [f5f92bdc4] 2013-11-29 21:48:11 -0300
--->
-
     <listitem>
      <para>
       Fix full-table-vacuum request mechanism for MultiXactIds (Andres Freund)
@@ -263,16 +197,6 @@ Branch: REL9_3_STABLE [f5f92bdc4] 2013-11-29 21:48:11 -0300
       This bug could result in large amounts of useless autovacuum activity.
      </para>
     </listitem>
-
-<!--
-Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
-Branch: master [ac4ab97ec] 2013-11-08 22:21:42 +0200
-Branch: REL9_3_STABLE [fc545a254] 2013-11-08 22:23:03 +0200
-Branch: REL9_2_STABLE [9a45a6559] 2013-11-08 22:23:11 +0200
-Branch: REL9_1_STABLE [3527a5f59] 2013-11-08 22:23:14 +0200
-Branch: REL9_0_STABLE [4b099e1bf] 2013-11-08 22:23:16 +0200
-Branch: REL8_4_STABLE [b6f82acef] 2013-11-08 22:23:19 +0200
--->
 
     <listitem>
      <para>
@@ -285,13 +209,6 @@ Branch: REL8_4_STABLE [b6f82acef] 2013-11-08 22:23:19 +0200
      </para>
     </listitem>
 
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [24ace4053] 2013-11-02 16:45:42 -0400
-Branch: REL9_3_STABLE [86dab9c8a] 2013-11-02 16:45:52 -0400
-Branch: REL9_2_STABLE [a1c3d54fb] 2013-11-02 16:45:57 -0400
--->
-
     <listitem>
      <para>
       Fix <quote>unexpected spgdoinsert() failure</> error during SP-GiST
@@ -299,23 +216,11 @@ Branch: REL9_2_STABLE [a1c3d54fb] 2013-11-02 16:45:57 -0400
      </para>
     </listitem>
 
-<!--
-Author: Kevin Grittner <kgrittn@postgresql.org>
-Branch: master [732758db4] 2013-11-04 14:31:07 -0600
-Branch: REL9_3_STABLE [5b6ee03a3] 2013-11-04 14:45:18 -0600
--->
-
     <listitem>
      <para>
       Fix assorted bugs in materialized views (Kevin Grittner, Andres Freund)
      </para>
     </listitem>
-
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [648bd05b1] 2013-11-11 10:42:57 -0500
-Branch: REL9_3_STABLE [04e6ee402] 2013-11-11 10:43:00 -0500
--->
 
     <listitem>
      <para>
@@ -335,16 +240,6 @@ SELECT ... FROM tab1 x CROSS JOIN (tab2 x CROSS JOIN tab3 y) z
      </para>
     </listitem>
 
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [b97ee66cc] 2013-11-08 11:36:57 -0500
-Branch: REL9_3_STABLE [9548bee2b] 2013-11-08 11:37:00 -0500
-Branch: REL9_2_STABLE [f7171c7e2] 2013-11-08 11:37:04 -0500
-Branch: REL9_1_STABLE [af38d140c] 2013-11-08 11:37:08 -0500
-Branch: REL9_0_STABLE [987f05e16] 2013-11-08 11:37:12 -0500
-Branch: REL8_4_STABLE [90b07dd7b] 2013-11-08 11:37:17 -0500
--->
-
     <listitem>
      <para>
       Avoid flattening a subquery whose <literal>SELECT</> list contains a
@@ -356,16 +251,6 @@ Branch: REL8_4_STABLE [90b07dd7b] 2013-11-08 11:37:17 -0500
       volatile function.
      </para>
     </listitem>
-
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [f19e92ed0] 2013-11-22 14:37:21 -0500
-Branch: REL9_3_STABLE [6bc68af1d] 2013-11-22 14:37:25 -0500
-Branch: REL9_2_STABLE [c0aa210f6] 2013-11-22 14:37:29 -0500
-Branch: REL9_1_STABLE [92a752151] 2013-11-22 14:37:31 -0500
-Branch: REL9_0_STABLE [612f953c7] 2013-11-22 14:37:35 -0500
-Branch: REL8_4_STABLE [122ba5dad] 2013-11-22 14:37:38 -0500
--->
 
     <listitem>
      <para>
@@ -379,13 +264,6 @@ Branch: REL8_4_STABLE [122ba5dad] 2013-11-22 14:37:38 -0500
      </para>
     </listitem>
 
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [f3b3b8d5b] 2013-11-15 16:46:18 -0500
-Branch: REL9_3_STABLE [1c0dfaa68] 2013-11-15 16:46:21 -0500
-Branch: REL9_2_STABLE [51b6ae6bb] 2013-11-15 16:46:25 -0500
--->
-
     <listitem>
      <para>
       Fix incorrect planning in cases where the same non-strict expression
@@ -394,26 +272,11 @@ Branch: REL9_2_STABLE [51b6ae6bb] 2013-11-15 16:46:25 -0500
      </para>
     </listitem>
 
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [ebefbb5fd] 2013-11-11 16:36:27 -0500
-Branch: REL9_3_STABLE [e243bd79d] 2013-11-11 16:36:41 -0500
-Branch: REL9_2_STABLE [449d5acd7] 2013-11-11 16:36:44 -0500
--->
-
     <listitem>
      <para>
       Fix planner crash with whole-row reference to a subquery (Tom Lane)
      </para>
     </listitem>
-
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [5e900bc00] 2013-11-07 13:14:14 -0500
-Branch: REL9_3_STABLE [5d0731da5] 2013-11-07 13:13:15 -0500
-Branch: REL9_2_STABLE [aa8a2c3a6] 2013-11-07 13:13:19 -0500
-Branch: REL9_1_STABLE [6e2c76248] 2013-11-07 13:13:47 -0500
--->
 
     <listitem>
      <para>
@@ -427,28 +290,11 @@ Branch: REL9_1_STABLE [6e2c76248] 2013-11-07 13:13:47 -0500
      </para>
     </listitem>
 
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [bffd1ce92] 2013-11-01 16:09:48 -0400
-Branch: REL9_3_STABLE [14d4548f1] 2013-11-01 16:09:52 -0400
-Branch: REL9_2_STABLE [2f2507e38] 2013-11-01 16:09:57 -0400
-Branch: REL9_1_STABLE [8c0116a4c] 2013-11-01 16:10:00 -0400
-Branch: REL9_0_STABLE [0c8462fd5] 2013-11-01 16:10:03 -0400
-Branch: REL8_4_STABLE [d74eaf374] 2013-11-01 16:10:08 -0400
--->
-
     <listitem>
      <para>
       Fix premature deletion of temporary files (Andres Freund)
      </para>
     </listitem>
-
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [b006f4ddb] 2013-11-03 11:33:05 -0500
-Branch: REL9_3_STABLE [da2c6a919] 2013-11-03 11:33:09 -0500
-Branch: REL9_2_STABLE [85de12624] 2013-11-03 11:33:13 -0500
--->
 
     <listitem>
      <para>
@@ -463,12 +309,6 @@ Branch: REL9_2_STABLE [85de12624] 2013-11-03 11:33:13 -0500
      </para>
     </listitem>
 
-<!--
-Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
-Branch: master [138184adc] 2013-10-24 15:27:40 +0300
-Branch: REL9_3_STABLE [bb604d03a] 2013-10-24 15:28:15 +0300
--->
-
     <listitem>
      <para>
       Fix memory leaks when reloading configuration files (Heikki
@@ -476,26 +316,12 @@ Branch: REL9_3_STABLE [bb604d03a] 2013-10-24 15:28:15 +0300
      </para>
     </listitem>
 
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [c28b289bf] 2013-11-07 14:41:36 -0500
-Branch: REL9_3_STABLE [df5d5f1dc] 2013-11-07 14:41:39 -0500
-Branch: REL9_2_STABLE [8bd5a6af6] 2013-11-07 14:41:43 -0500
--->
-
     <listitem>
      <para>
       Prevent incorrect display of dropped columns in NOT NULL and CHECK
       constraint violation messages (Michael Paquier and Tom Lane)
      </para>
     </listitem>
-
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [bb45c6404] 2013-11-06 13:33:09 -0500
-Branch: REL9_3_STABLE [66e6daa3e] 2013-11-06 13:33:18 -0500
-Branch: REL9_2_STABLE [74aea2af9] 2013-11-06 13:26:38 -0500
--->
 
     <listitem>
      <para>
@@ -507,12 +333,6 @@ Branch: REL9_2_STABLE [74aea2af9] 2013-11-06 13:26:38 -0500
       Previously, these cases were likely to crash.
      </para>
     </listitem>
-
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [0b7e660d6] 2013-11-11 13:36:38 -0500
-Branch: REL9_3_STABLE [fbbd150a2] 2013-11-11 13:36:42 -0500
--->
 
     <listitem>
      <para>
@@ -527,31 +347,11 @@ Branch: REL9_3_STABLE [fbbd150a2] 2013-11-11 13:36:42 -0500
      </para>
     </listitem>
 
-<!--
-Author: Peter Eisentraut <peter_e@gmx.net>
-Branch: master [4053189d5] 2013-11-23 07:25:37 -0500
-Branch: REL9_3_STABLE [0f8ff3e46] 2013-11-23 07:30:16 -0500
-Branch: REL9_2_STABLE [654e006bb] 2013-11-23 07:30:45 -0500
-Branch: REL9_1_STABLE [e1f7173ea] 2013-11-23 07:31:07 -0500
-Branch: REL9_0_STABLE [44032290d] 2013-11-23 07:31:32 -0500
-Branch: REL8_4_STABLE [240766a6e] 2013-11-23 07:31:53 -0500
--->
-
     <listitem>
      <para>
       Fix possible read past end of memory in rule printing (Peter Eisentraut)
      </para>
     </listitem>
-
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [45e02e323] 2013-11-23 20:03:56 -0500
-Branch: REL9_3_STABLE [c4d3cd3dc] 2013-11-23 20:04:00 -0500
-Branch: REL9_2_STABLE [96ac8b518] 2013-11-23 20:04:03 -0500
-Branch: REL9_1_STABLE [7b6352875] 2013-11-23 20:04:06 -0500
-Branch: REL9_0_STABLE [747dd9724] 2013-11-23 20:04:10 -0500
-Branch: REL8_4_STABLE [d0378c8a8] 2013-11-23 20:04:13 -0500
--->
 
     <listitem>
      <para>
@@ -565,12 +365,6 @@ Branch: REL8_4_STABLE [d0378c8a8] 2013-11-23 20:04:13 -0500
      </para>
     </listitem>
 
-<!--
-Author: Andrew Dunstan <andrew@dunslane.net>
-Branch: master [bbe4deac1] 2013-10-17 11:12:48 -0400
-Branch: REL9_3_STABLE [bfb327ac1] 2013-10-17 11:09:55 -0400
--->
-
     <listitem>
      <para>
       Return a valid JSON value when converting an empty <type>hstore</> value
@@ -578,16 +372,6 @@ Branch: REL9_3_STABLE [bfb327ac1] 2013-10-17 11:09:55 -0400
       (Oskari Saarenmaa)
      </para>
     </listitem>
-
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [631dc390f] 2013-11-01 12:13:18 -0400
-Branch: REL9_3_STABLE [2650c5cf4] 2013-11-01 12:13:23 -0400
-Branch: REL9_2_STABLE [2e2134954] 2013-11-01 12:13:26 -0400
-Branch: REL9_1_STABLE [172ba4578] 2013-11-01 12:13:29 -0400
-Branch: REL9_0_STABLE [d81cd0430] 2013-11-01 12:13:33 -0400
-Branch: REL8_4_STABLE [01499ea33] 2013-11-01 12:13:38 -0400
--->
 
     <listitem>
      <para>
@@ -604,32 +388,12 @@ Branch: REL8_4_STABLE [01499ea33] 2013-11-01 12:13:38 -0400
      </para>
     </listitem>
 
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [f145454d5] 2013-11-23 18:24:26 -0500
-Branch: REL9_3_STABLE [69eb86169] 2013-11-23 18:24:42 -0500
-Branch: REL9_2_STABLE [e86f2a052] 2013-11-23 18:24:46 -0500
-Branch: REL9_1_STABLE [b2502ecef] 2013-11-23 18:24:50 -0500
-Branch: REL9_0_STABLE [ec6a6a268] 2013-11-23 18:24:54 -0500
-Branch: REL8_4_STABLE [3482f2986] 2013-11-23 18:25:00 -0500
--->
-
     <listitem>
      <para>
       Prevent possible misbehavior when logging translations of Windows
       error codes (Tom Lane)
      </para>
     </listitem>
-
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [79193c75f] 2013-11-29 18:34:07 -0500
-Branch: REL9_3_STABLE [a9380b5c3] 2013-11-29 18:34:11 -0500
-Branch: REL9_2_STABLE [19af7d4f0] 2013-11-29 18:34:14 -0500
-Branch: REL9_1_STABLE [8c72b20e3] 2013-11-29 18:34:18 -0500
-Branch: REL9_0_STABLE [4ab4e5c6b] 2013-11-29 18:34:22 -0500
-Branch: REL8_4_STABLE [6cb109a81] 2013-11-29 18:34:25 -0500
--->
 
     <listitem>
      <para>
@@ -641,16 +405,6 @@ Branch: REL8_4_STABLE [6cb109a81] 2013-11-29 18:34:25 -0500
       This fix applies only to Windows.
      </para>
     </listitem>
-
-<!--
-Author: Kevin Grittner <kgrittn@postgresql.org>
-Branch: master [4bd371f6f] 2013-11-30 11:24:56 -0600
-Branch: REL9_3_STABLE [53b0f2134] 2013-11-30 11:33:04 -0600
-Branch: REL9_2_STABLE [27b33245a] 2013-11-30 11:33:54 -0600
-Branch: REL9_1_STABLE [4bdccd842] 2013-11-30 12:06:48 -0600
-Branch: REL9_0_STABLE [52898e005] 2013-11-30 12:07:05 -0600
-Branch: REL8_4_STABLE [ac7113bb3] 2013-11-30 12:07:18 -0600
--->
 
     <listitem>
      <para>
@@ -665,12 +419,6 @@ Branch: REL8_4_STABLE [ac7113bb3] 2013-11-30 12:07:18 -0600
      </para>
     </listitem>
 
-<!--
-Author: Fujii Masao <fujii@postgresql.org>
-Branch: master [38f432898] 2013-11-21 21:52:03 +0900
-Branch: REL9_3_STABLE [844534dd4] 2013-11-21 21:54:19 +0900
--->
-
     <listitem>
      <para>
       Fix <application>pg_isready</> to handle its <option>-d</> option
@@ -678,11 +426,17 @@ Branch: REL9_3_STABLE [844534dd4] 2013-11-21 21:54:19 +0900
      </para>
     </listitem>
 
-<!--
-Author: Peter Eisentraut <peter_e@gmx.net>
-Branch: master [bd5a9a50e] 2013-11-18 22:01:59 -0500
-Branch: REL9_3_STABLE [8ca75671b] 2013-11-18 22:02:36 -0500
--->
+    <listitem>
+     <para>
+      Fix parsing of WAL file names in <application>pg_receivexlog</>
+      (Heikki Linnakangas)
+     </para>
+
+     <para>
+      This error made <application>pg_receivexlog</> unable to restart
+      streaming after stopping, once at least 4 GB of WAL had been written.
+     </para>
+    </listitem>
 
     <listitem>
      <para>
@@ -691,30 +445,12 @@ Branch: REL9_3_STABLE [8ca75671b] 2013-11-18 22:02:36 -0500
      </para>
     </listitem>
 
-<!--
-Author: Michael Meskes <meskes@postgresql.org>
-Branch: master [51867a0f9] 2013-11-27 11:02:13 +0100
-Branch: REL9_3_STABLE [dcb05900b] 2013-11-27 11:14:52 +0100
-Branch: REL9_2_STABLE [0cedfa766] 2013-11-27 11:15:13 +0100
-Branch: REL9_1_STABLE [9a1c6dd43] 2013-11-27 11:15:34 +0100
--->
-
     <listitem>
      <para>
       Make <application>ecpg</> search for quoted cursor names
       case-sensitively (Zolt&aacute;n B&ouml;sz&ouml;rm&eacute;nyi)
      </para>
     </listitem>
-
-<!--
-Author: Michael Meskes <meskes@postgresql.org>
-Branch: master [b46fa3210] 2013-11-26 17:42:32 +0100
-Branch: REL9_3_STABLE [b3866bc2b] 2013-11-26 17:32:40 +0100
-Branch: REL9_2_STABLE [b05c415c8] 2013-11-26 17:32:26 +0100
-Branch: REL9_1_STABLE [5bffd42a3] 2013-11-26 17:32:06 +0100
-Branch: REL9_0_STABLE [7bee2e3e5] 2013-11-26 17:31:39 +0100
-Branch: REL8_4_STABLE [3b41a7c74] 2013-11-26 17:30:24 +0100
--->
 
     <listitem>
      <para>
@@ -723,32 +459,12 @@ Branch: REL8_4_STABLE [3b41a7c74] 2013-11-26 17:30:24 +0100
      </para>
     </listitem>
 
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [64d15e424] 2013-11-23 22:46:43 -0500
-Branch: REL9_3_STABLE [af1288e68] 2013-11-23 22:46:03 -0500
-Branch: REL9_2_STABLE [b6da09fcb] 2013-11-23 22:46:08 -0500
-Branch: REL9_1_STABLE [8bf45ea8b] 2013-11-23 22:46:11 -0500
-Branch: REL9_0_STABLE [cd5316f67] 2013-11-23 22:46:15 -0500
-Branch: REL8_4_STABLE [2c3b7d224] 2013-11-23 22:46:21 -0500
--->
-
     <listitem>
      <para>
       Make <filename>contrib/lo</> defend against incorrect trigger definitions
       (Marc Cousin)
      </para>
     </listitem>
-
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [335470251] 2013-12-01 14:11:44 -0500
-Branch: REL9_3_STABLE [4e213be86] 2013-12-01 14:12:01 -0500
-Branch: REL9_2_STABLE [c89acb41f] 2013-12-01 14:12:05 -0500
-Branch: REL9_1_STABLE [99e7d2ad1] 2013-12-01 14:12:08 -0500
-Branch: REL9_0_STABLE [47430452a] 2013-12-01 14:12:12 -0500
-Branch: REL8_4_STABLE [0526889a6] 2013-12-01 14:12:17 -0500
--->
 
     <listitem>
      <para>
