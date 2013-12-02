@@ -6531,6 +6531,12 @@ StartupXLOG(void)
 	XLogCtl->ckptXid = checkPoint.nextXid;
 
 	/*
+	 * Startup MultiXact.  We need to do this early because we need its state
+	 * initialized because we attempt truncation during restartpoints.
+	 */
+	StartupMultiXact();
+
+	/*
 	 * We must replay WAL entries using the same TimeLineID they were created
 	 * under, so temporarily adopt the TLI indicated by the checkpoint (see
 	 * also xlog_redo()).
@@ -6696,8 +6702,9 @@ StartupXLOG(void)
 			ProcArrayInitRecovery(ShmemVariableCache->nextXid);
 
 			/*
-			 * Startup commit log and subtrans only. Other SLRUs are not
-			 * maintained during recovery and need not be started yet.
+			 * Startup commit log and subtrans only. MultiXact has already
+			 * been started up and other SLRUs are not maintained during
+			 * recovery and need not be started yet.
 			 */
 			StartupCLOG();
 			StartupSUBTRANS(oldestActiveXID);
@@ -7238,7 +7245,7 @@ StartupXLOG(void)
 	/*
 	 * Perform end of recovery actions for any SLRUs that need it.
 	 */
-	StartupMultiXact();
+	TrimMultiXact();
 	TrimCLOG();
 
 	/* Reload shared-memory state for prepared transactions */
