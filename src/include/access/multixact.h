@@ -59,6 +59,7 @@ extern Size MultiXactShmemSize(void);
 extern void MultiXactShmemInit(void);
 extern void BootStrapMultiXact(void);
 extern void StartupMultiXact(void);
+extern void TrimMultiXact(void);
 extern void ShutdownMultiXact(void);
 extern void MultiXactGetCheckptMulti(bool is_shutdown,
 						 MultiXactId *nextMulti,
