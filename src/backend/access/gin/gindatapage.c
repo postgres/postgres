@@ -382,12 +382,14 @@ dataPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off,
 			data.nitem = 1;
 		}
 
-		rdata[0].buffer = InvalidBuffer;
+		rdata[0].buffer = buf;
+		rdata[0].buffer_std = false;
 		rdata[0].data = (char *) &data;
 		rdata[0].len = offsetof(ginxlogInsertDataLeaf, items);
 		rdata[0].next = &rdata[1];
 
-		rdata[1].buffer = InvalidBuffer;
+		rdata[1].buffer = buf;
+		rdata[1].buffer_std = false;
 		rdata[1].data = (char *) &items->items[savedPos];
 		rdata[1].len = sizeof(ItemPointerData) * data.nitem;
 		rdata[1].next = NULL;
@@ -398,7 +400,8 @@ dataPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off,
 
 		GinDataPageAddPostingItem(page, pitem, off);
 
-		rdata[0].buffer = InvalidBuffer;
+		rdata[0].buffer = buf;
+		rdata[0].buffer_std = false;
 		rdata[0].data = (char *) pitem;
 		rdata[0].len = sizeof(PostingItem);
 		rdata[0].next = NULL;
