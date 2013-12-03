@@ -703,3 +703,13 @@ explain (verbose, costs off)
                  One-Time Filter: ("*VALUES*".column1 = "*VALUES*".column1)
 (8 rows)
 
+--
+-- Check we behave sanely in corner case of empty SELECT list (bug #8648)
+--
+create temp table nocolumns();
+select exists(select * from nocolumns);
+ ?column? 
+----------
+ f
+(1 row)
+
