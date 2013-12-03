@@ -382,7 +382,6 @@ dataPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off, XLogRecData **prda
 {
 	Page		page = BufferGetPage(buf);
 	int			sizeofitem = GinSizeOfDataPageItem(page);
-	int			cnt = 0;
 
 	/* these must be static so they can be returned to caller */
 	static XLogRecData rdata[3];
@@ -402,32 +401,25 @@ dataPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off, XLogRecData **prda
 	data.isLeaf = GinPageIsLeaf(page) ? TRUE : FALSE;
 
 	/*
-	 * Prevent full page write if child's split occurs. That is needed to
-	 * remove incomplete splits while replaying WAL
-	 *
-	 * data.updateBlkno contains new block number (of newly created right
-	 * page) for recently splited page.
+	 * For incomplete-split tracking, we need updateBlkno information and the
+	 * inserted item even when we make a full page image of the page, so put
+	 * the buffer reference in a separate XLogRecData entry.
 	 */
-	if (data.updateBlkno == InvalidBlockNumber)
-	{
-		rdata[0].buffer = buf;
-		rdata[0].buffer_std = FALSE;
-		rdata[0].data = NULL;
-		rdata[0].len = 0;
-		rdata[0].next = &rdata[1];
-		cnt++;
-	}
+	rdata[0].buffer = buf;
+	rdata[0].buffer_std = FALSE;
+	rdata[0].data = NULL;
+	rdata[0].len = 0;
+	rdata[0].next = &rdata[1];
 
-	rdata[cnt].buffer = InvalidBuffer;
-	rdata[cnt].data = (char *) &data;
-	rdata[cnt].len = sizeof(ginxlogInsert);
-	rdata[cnt].next = &rdata[cnt + 1];
-	cnt++;
+	rdata[1].buffer = InvalidBuffer;
+	rdata[1].data = (char *) &data;
+	rdata[1].len = sizeof(ginxlogInsert);
+	rdata[1].next = &rdata[2];
 
-	rdata[cnt].buffer = InvalidBuffer;
-	rdata[cnt].data = (GinPageIsLeaf(page)) ? ((char *) (btree->items + btree->curitem)) : ((char *) &(btree->pitem));
-	rdata[cnt].len = sizeofitem;
-	rdata[cnt].next = NULL;
+	rdata[2].buffer = InvalidBuffer;
+	rdata[2].data = (GinPageIsLeaf(page)) ? ((char *) (btree->items + btree->curitem)) : ((char *) &(btree->pitem));
+	rdata[2].len = sizeofitem;
+	rdata[2].next = NULL;
 
 	if (GinPageIsLeaf(page))
 	{
@@ -443,7 +435,7 @@ dataPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off, XLogRecData **prda
 				btree->curitem++;
 			}
 			data.nitem = btree->curitem - savedPos;
-			rdata[cnt].len = sizeofitem * data.nitem;
+			rdata[2].len = sizeofitem * data.nitem;
 		}
 		else
 		{
