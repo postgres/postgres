@@ -1084,9 +1084,17 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
 
    <para>
     It is important that the command return nonzero exit status on failure.
-    The command <emphasis>will</> be called requesting files that are not present
-    in the archive; it must return nonzero when so asked.  This is not an
-    error condition.  Not all of the requested files will be WAL segment
+    The command <emphasis>will</> be called requesting files that are not
+    present in the archive; it must return nonzero when so asked.  This is not
+    an error condition.  An exception is that if the command was terminated by
+    a signal (other than <systemitem>SIGTERM</systemitem>, which is used as
+    part of a database server shutdown) or an error by the shell (such as
+    command not found), then recovery will abort and the server will not start
+    up.
+   </para>
+
+   <para>
+    Not all of the requested files will be WAL segment
     files; you should also expect requests for files with a suffix of
     <literal>.backup</> or <literal>.history</>. Also be aware that
     the base name of the <literal>%p</> path will be different from

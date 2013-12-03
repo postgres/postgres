@@ -70,6 +70,10 @@
 restore_command = 'cp /mnt/server/archivedir/%f "%p"'
 restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
 </programlisting>
+        An exception is that if the command was terminated by a signal (other
+        than <systemitem>SIGTERM</systemitem>, which is used as part of a
+        database server shutdown) or an error by the shell (such as command
+        not found), then recovery will abort and the server will not start up.
        </para>
       </listitem>
      </varlistentry>
@@ -106,8 +110,10 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         command.
        </para>
        <para>
-        If the command returns a non-zero exit status then a WARNING log
-        message will be written.
+        If the command returns a nonzero exit status then a warning log
+        message will be written.  An exception is that if the command was
+        terminated by a signal or an error by the shell (such as command not
+        found), a fatal error will be raised.
        </para>
       </listitem>
      </varlistentry>
@@ -127,10 +133,11 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         last valid restart point, like in <xref linkend="archive-cleanup-command">.
        </para>
        <para>
-        If the command returns a non-zero exit status then a WARNING log
+        If the command returns a nonzero exit status then a warning log
         message will be written and the database will proceed to start up
         anyway.  An exception is that if the command was terminated by a
-        signal, the database will not proceed with startup.
+        signal or an error by the shell (such as command not found), the
+        database will not proceed with startup.
        </para>
       </listitem>
      </varlistentry>
