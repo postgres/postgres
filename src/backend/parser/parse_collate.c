@@ -564,16 +564,22 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 				 * SubLink.  Act as though the Query returns its first output
 				 * column, which indeed is what it does for EXPR_SUBLINK and
 				 * ARRAY_SUBLINK cases.  In the cases where the SubLink
-				 * returns boolean, this info will be ignored.
+				 * returns boolean, this info will be ignored.	Special case:
+				 * in EXISTS, the Query might return no columns, in which case
+				 * we need do nothing.
 				 *
 				 * We needn't recurse, since the Query is already processed.
 				 */
 				Query	   *qtree = (Query *) node;
 				TargetEntry *tent;
 
+				if (qtree->targetList == NIL)
+					return false;
 				tent = (TargetEntry *) linitial(qtree->targetList);
 				Assert(IsA(tent, TargetEntry));
-				Assert(!tent->resjunk);
+				if (tent->resjunk)
+					return false;
+
 				collation = exprCollation((Node *) tent->expr);
 				/* collation doesn't change if it's converted to array */
 				strength = COLLATE_IMPLICIT;
