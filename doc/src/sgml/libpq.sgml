@@ -483,7 +483,8 @@ typedef struct
        with an entry having a null <structfield>keyword</> pointer.  The
        null pointer is returned if memory could not be allocated. Note that
        the current default values (<structfield>val</structfield> fields)
-       will depend on environment variables and other context.  Callers
+       will depend on environment variables and other context.  A
+       missing or invalid service file will be silently ignored.  Callers
        must treat the connection options data as read-only.
       </para>
 
