@@ -486,7 +486,6 @@ entryPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off, XLogRecData **prd
 {
 	Page		page = BufferGetPage(buf);
 	OffsetNumber placed;
-	int			cnt = 0;
 
 	/* these must be static so they can be returned to caller */
 	static XLogRecData rdata[3];
@@ -509,32 +508,25 @@ entryPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off, XLogRecData **prd
 	data.isLeaf = GinPageIsLeaf(page) ? TRUE : FALSE;
 
 	/*
-	 * Prevent full page write if child's split occurs. That is needed to
-	 * remove incomplete splits while replaying WAL
-	 *
-	 * data.updateBlkno contains new block number (of newly created right
-	 * page) for recently splited page.
+	 * For incomplete-split tracking, we need updateBlkno information and the
+	 * inserted item even when we make a full page image of the page, so put
+	 * the buffer reference in a separate XLogRecData entry.
 	 */
-	if (data.updateBlkno == InvalidBlockNumber)
-	{
-		rdata[0].buffer = buf;
-		rdata[0].buffer_std = TRUE;
-		rdata[0].data = NULL;
-		rdata[0].len = 0;
-		rdata[0].next = &rdata[1];
-		cnt++;
-	}
+	rdata[0].buffer = buf;
+	rdata[0].buffer_std = TRUE;
+	rdata[0].data = NULL;
+	rdata[0].len = 0;
+	rdata[0].next = &rdata[1];
 
-	rdata[cnt].buffer = InvalidBuffer;
-	rdata[cnt].data = (char *) &data;
-	rdata[cnt].len = sizeof(ginxlogInsert);
-	rdata[cnt].next = &rdata[cnt + 1];
-	cnt++;
+	rdata[1].buffer = InvalidBuffer;
+	rdata[1].data = (char *) &data;
+	rdata[1].len = sizeof(ginxlogInsert);
+	rdata[1].next = &rdata[2];
 
-	rdata[cnt].buffer = InvalidBuffer;
-	rdata[cnt].data = (char *) btree->entry;
-	rdata[cnt].len = IndexTupleSize(btree->entry);
-	rdata[cnt].next = NULL;
+	rdata[2].buffer = InvalidBuffer;
+	rdata[2].data = (char *) btree->entry;
+	rdata[2].len = IndexTupleSize(btree->entry);
+	rdata[2].next = NULL;
 
 	btree->entry = NULL;
 }
