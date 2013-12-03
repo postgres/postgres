@@ -978,8 +978,6 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn)
 /*
  * pg_fe_getauthname -- returns a pointer to dynamic space containing whatever
  *					 name the user has authenticated to the system
- *
- * if there is an error, return NULL with an error message in errorMessage
  */
 char *
 pg_fe_getauthname(void)
