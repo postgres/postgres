@@ -699,14 +699,10 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 				 * which will cause a PANIC.  To prevent that, check whether
 				 * the page has been previously WAL-logged, and if not, do that
 				 * now.
-				 *
-				 * XXX: It would be nice to use a logging method supporting
-				 * standard buffers here since log_newpage_buffer() will write
-				 * the full block instead of omitting the hole.
 				 */
 				if (RelationNeedsWAL(onerel) &&
 					PageGetLSN(page) == InvalidXLogRecPtr)
-					log_newpage_buffer(buf);
+					log_newpage_buffer(buf, true);
 
 				PageSetAllVisible(page);
 				visibilitymap_set(onerel, blkno, buf, InvalidXLogRecPtr,

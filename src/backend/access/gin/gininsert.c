@@ -435,10 +435,10 @@ ginbuildempty(PG_FUNCTION_ARGS)
 	START_CRIT_SECTION();
 	GinInitMetabuffer(MetaBuffer);
 	MarkBufferDirty(MetaBuffer);
-	log_newpage_buffer(MetaBuffer);
+	log_newpage_buffer(MetaBuffer, false);
 	GinInitBuffer(RootBuffer, GIN_LEAF);
 	MarkBufferDirty(RootBuffer);
-	log_newpage_buffer(RootBuffer);
+	log_newpage_buffer(RootBuffer, false);
 	END_CRIT_SECTION();
 
 	/* Unlock and release the buffers. */

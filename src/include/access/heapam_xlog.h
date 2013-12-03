@@ -198,10 +198,12 @@ typedef struct xl_heap_newpage
 	RelFileNode node;
 	ForkNumber	forknum;
 	BlockNumber blkno;			/* location of new page */
-	/* entire page contents follow at end of record */
+	uint16		hole_offset;	/* number of bytes before "hole" */
+	uint16		hole_length;	/* number of bytes in "hole" */
+	/* entire page contents (minus the hole) follow at end of record */
 } xl_heap_newpage;
 
-#define SizeOfHeapNewpage	(offsetof(xl_heap_newpage, blkno) + sizeof(BlockNumber))
+#define SizeOfHeapNewpage	(offsetof(xl_heap_newpage, hole_length) + sizeof(uint16))
 
 /* flags for infobits_set */
 #define XLHL_XMAX_IS_MULTI		0x01
@@ -282,7 +284,7 @@ extern XLogRecPtr log_heap_freeze(Relation reln, Buffer buffer,
 extern XLogRecPtr log_heap_visible(RelFileNode rnode, Buffer heap_buffer,
 				 Buffer vm_buffer, TransactionId cutoff_xid);
 extern XLogRecPtr log_newpage(RelFileNode *rnode, ForkNumber forkNum,
-			BlockNumber blk, Page page);
-extern XLogRecPtr log_newpage_buffer(Buffer buffer);
+			BlockNumber blk, Page page, bool page_std);
+extern XLogRecPtr log_newpage_buffer(Buffer buffer, bool page_std);
 
 #endif   /* HEAPAM_XLOG_H */

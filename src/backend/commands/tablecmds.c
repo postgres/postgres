@@ -9130,9 +9130,13 @@ copy_relation_data(SMgrRelation src, SMgrRelation dst,
 										   src->smgr_rnode.backend,
 										   forkNum))));
 
-		/* XLOG stuff */
+		/*
+		 * WAL-log the copied page. Unfortunately we don't know what kind of
+		 * a page this is, so we have to log the full page including any
+		 * unused space.
+		 */
 		if (use_wal)
-			log_newpage(&dst->smgr_rnode.node, forkNum, blkno, page);
+			log_newpage(&dst->smgr_rnode.node, forkNum, blkno, page, false);
 
 		PageSetChecksumInplace(page, blkno);
 

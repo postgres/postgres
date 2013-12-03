@@ -6207,16 +6207,22 @@ log_heap_update(Relation reln, Buffer oldbuf,
  * memory and writing them directly to smgr.  If you're using buffers, call
  * log_newpage_buffer instead.
  *
- * Note: the NEWPAGE log record is used for both heaps and indexes, so do
- * not do anything that assumes we are touching a heap.
+ * If the page follows the standard page layout, with a PageHeader and unused
+ * space between pd_lower and pd_upper, set 'page_std' to TRUE. That allows
+ * the unused space to be left out from the WAL record, making it smaller.
  */
 XLogRecPtr
 log_newpage(RelFileNode *rnode, ForkNumber forkNum, BlockNumber blkno,
-			Page page)
+			Page page, bool page_std)
 {
 	xl_heap_newpage xlrec;
 	XLogRecPtr	recptr;
-	XLogRecData rdata[2];
+	XLogRecData rdata[3];
+
+	/*
+	 * Note: the NEWPAGE log record is used for both heaps and indexes, so do
+	 * not do anything that assumes we are touching a heap.
+	 */
 
 	/* NO ELOG(ERROR) from here till newpage op is logged */
 	START_CRIT_SECTION();
@@ -6225,15 +6231,58 @@ log_newpage(RelFileNode *rnode, ForkNumber forkNum, BlockNumber blkno,
 	xlrec.forknum = forkNum;
 	xlrec.blkno = blkno;
 
+	if (page_std)
+	{
+		/* Assume we can omit data between pd_lower and pd_upper */
+		uint16		lower = ((PageHeader) page)->pd_lower;
+		uint16		upper = ((PageHeader) page)->pd_upper;
+
+		if (lower >= SizeOfPageHeaderData &&
+			upper > lower &&
+			upper <= BLCKSZ)
+		{
+			xlrec.hole_offset = lower;
+			xlrec.hole_length = upper - lower;
+		}
+		else
+		{
+			/* No "hole" to compress out */
+			xlrec.hole_offset = 0;
+			xlrec.hole_length = 0;
+		}
+	}
+	else
+	{
+		/* Not a standard page header, don't try to eliminate "hole" */
+		xlrec.hole_offset = 0;
+		xlrec.hole_length = 0;
+	}
+
 	rdata[0].data = (char *) &xlrec;
 	rdata[0].len = SizeOfHeapNewpage;
 	rdata[0].buffer = InvalidBuffer;
 	rdata[0].next = &(rdata[1]);
 
-	rdata[1].data = (char *) page;
-	rdata[1].len = BLCKSZ;
-	rdata[1].buffer = InvalidBuffer;
-	rdata[1].next = NULL;
+	if (xlrec.hole_length == 0)
+	{
+		rdata[1].data = (char *) page;
+		rdata[1].len = BLCKSZ;
+		rdata[1].buffer = InvalidBuffer;
+		rdata[1].next = NULL;
+	}
+	else
+	{
+		/* must skip the hole */
+		rdata[1].data = (char *) page;
+		rdata[1].len = xlrec.hole_offset;
+		rdata[1].buffer = InvalidBuffer;
+		rdata[1].next = &rdata[2];
+
+		rdata[2].data = (char *) page + (xlrec.hole_offset + xlrec.hole_length);
+		rdata[2].len = BLCKSZ - (xlrec.hole_offset + xlrec.hole_length);
+		rdata[2].buffer = InvalidBuffer;
+		rdata[2].next = NULL;
+	}
 
 	recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_NEWPAGE, rdata);
 
@@ -6257,44 +6306,24 @@ log_newpage(RelFileNode *rnode, ForkNumber forkNum, BlockNumber blkno,
  * Caller should initialize the buffer and mark it dirty before calling this
  * function.  This function will set the page LSN and TLI.
  *
- * Note: the NEWPAGE log record is used for both heaps and indexes, so do
- * not do anything that assumes we are touching a heap.
+ * If the page follows the standard page layout, with a PageHeader and unused
+ * space between pd_lower and pd_upper, set 'page_std' to TRUE. That allows
+ * the unused space to be left out from the WAL record, making it smaller.
  */
 XLogRecPtr
-log_newpage_buffer(Buffer buffer)
+log_newpage_buffer(Buffer buffer, bool page_std)
 {
-	xl_heap_newpage xlrec;
-	XLogRecPtr	recptr;
-	XLogRecData rdata[2];
 	Page		page = BufferGetPage(buffer);
+	RelFileNode rnode;
+	ForkNumber	forkNum;
+	BlockNumber blkno;
 
-	/* We should be in a critical section. */
+	/* Shared buffers should be modified in a critical section. */
 	Assert(CritSectionCount > 0);
 
-	BufferGetTag(buffer, &xlrec.node, &xlrec.forknum, &xlrec.blkno);
+	BufferGetTag(buffer, &rnode, &forkNum, &blkno);
 
-	rdata[0].data = (char *) &xlrec;
-	rdata[0].len = SizeOfHeapNewpage;
-	rdata[0].buffer = InvalidBuffer;
-	rdata[0].next = &(rdata[1]);
-
-	rdata[1].data = page;
-	rdata[1].len = BLCKSZ;
-	rdata[1].buffer = InvalidBuffer;
-	rdata[1].next = NULL;
-
-	recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_NEWPAGE, rdata);
-
-	/*
-	 * The page may be uninitialized. If so, we can't set the LSN and TLI
-	 * because that would corrupt the page.
-	 */
-	if (!PageIsNew(page))
-	{
-		PageSetLSN(page, recptr);
-	}
-
-	return recptr;
+	return log_newpage(&rnode, forkNum, blkno, page, page_std);
 }
 
 /*
@@ -6582,11 +6611,14 @@ static void
 heap_xlog_newpage(XLogRecPtr lsn, XLogRecord *record)
 {
 	xl_heap_newpage *xlrec = (xl_heap_newpage *) XLogRecGetData(record);
+	char	   *blk = ((char *) xlrec) + sizeof(xl_heap_newpage);
 	Buffer		buffer;
 	Page		page;
 
 	/* Backup blocks are not used in newpage records */
 	Assert(!(record->xl_info & XLR_BKP_BLOCK_MASK));
+
+	Assert(record->xl_len == SizeOfHeapNewpage + BLCKSZ - xlrec->hole_length);
 
 	/*
 	 * Note: the NEWPAGE log record is used for both heaps and indexes, so do
@@ -6598,8 +6630,19 @@ heap_xlog_newpage(XLogRecPtr lsn, XLogRecord *record)
 	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 	page = (Page) BufferGetPage(buffer);
 
-	Assert(record->xl_len == SizeOfHeapNewpage + BLCKSZ);
-	memcpy(page, (char *) xlrec + SizeOfHeapNewpage, BLCKSZ);
+	if (xlrec->hole_length == 0)
+	{
+		memcpy((char *) page, blk, BLCKSZ);
+	}
+	else
+	{
+		memcpy((char *) page, blk, xlrec->hole_offset);
+		/* must zero-fill the hole */
+		MemSet((char *) page + xlrec->hole_offset, 0, xlrec->hole_length);
+		memcpy((char *) page + (xlrec->hole_offset + xlrec->hole_length),
+			   blk + xlrec->hole_offset,
+			   BLCKSZ - (xlrec->hole_offset + xlrec->hole_length));
+	}
 
 	/*
 	 * The page may be uninitialized. If so, we can't set the LSN because that

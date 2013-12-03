@@ -169,7 +169,7 @@ spgbuildempty(PG_FUNCTION_ARGS)
 			  (char *) page, true);
 	if (XLogIsNeeded())
 		log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
-					SPGIST_METAPAGE_BLKNO, page);
+					SPGIST_METAPAGE_BLKNO, page, false);
 
 	/* Likewise for the root page. */
 	SpGistInitPage(page, SPGIST_LEAF);
@@ -179,7 +179,7 @@ spgbuildempty(PG_FUNCTION_ARGS)
 			  (char *) page, true);
 	if (XLogIsNeeded())
 		log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
-					SPGIST_ROOT_BLKNO, page);
+					SPGIST_ROOT_BLKNO, page, true);
 
 	/* Likewise for the null-tuples root page. */
 	SpGistInitPage(page, SPGIST_LEAF | SPGIST_NULLS);
@@ -189,7 +189,7 @@ spgbuildempty(PG_FUNCTION_ARGS)
 			  (char *) page, true);
 	if (XLogIsNeeded())
 		log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
-					SPGIST_NULL_BLKNO, page);
+					SPGIST_NULL_BLKNO, page, true);
 
 	/*
 	 * An immediate sync is required even if we xlog'd the pages, because the

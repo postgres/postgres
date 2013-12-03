@@ -277,7 +277,8 @@ end_heap_rewrite(RewriteState state)
 			log_newpage(&state->rs_new_rel->rd_node,
 						MAIN_FORKNUM,
 						state->rs_blockno,
-						state->rs_buffer);
+						state->rs_buffer,
+						true);
 		RelationOpenSmgr(state->rs_new_rel);
 
 		PageSetChecksumInplace(state->rs_buffer, state->rs_blockno);
@@ -622,7 +623,8 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
 				log_newpage(&state->rs_new_rel->rd_node,
 							MAIN_FORKNUM,
 							state->rs_blockno,
-							page);
+							page,
+							true);
 
 			/*
 			 * Now write the page. We say isTemp = true even if it's not a

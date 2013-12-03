@@ -274,7 +274,7 @@ _bt_blwritepage(BTWriteState *wstate, Page page, BlockNumber blkno)
 	if (wstate->btws_use_wal)
 	{
 		/* We use the heap NEWPAGE record type for this */
-		log_newpage(&wstate->index->rd_node, MAIN_FORKNUM, blkno, page);
+		log_newpage(&wstate->index->rd_node, MAIN_FORKNUM, blkno, page, true);
 	}
 
 	/*

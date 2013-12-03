@@ -222,7 +222,7 @@ btbuildempty(PG_FUNCTION_ARGS)
 			  (char *) metapage, true);
 	if (XLogIsNeeded())
 		log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
-					BTREE_METAPAGE, metapage);
+					BTREE_METAPAGE, metapage, false);
 
 	/*
 	 * An immediate sync is require even if we xlog'd the page, because the

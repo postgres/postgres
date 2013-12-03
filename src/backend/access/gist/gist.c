@@ -83,7 +83,7 @@ gistbuildempty(PG_FUNCTION_ARGS)
 	START_CRIT_SECTION();
 	GISTInitBuffer(buffer, F_LEAF);
 	MarkBufferDirty(buffer);
-	log_newpage_buffer(buffer);
+	log_newpage_buffer(buffer, true);
 	END_CRIT_SECTION();
 
 	/* Unlock and release the buffer */
