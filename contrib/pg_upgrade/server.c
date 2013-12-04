@@ -327,7 +327,7 @@ check_pghost_envvar(void)
 
 	if (!start)
 		pg_fatal("out of memory\n");
-		
+
 	for (option = start; option->keyword != NULL; option++)
 	{
 		if (option->envvar && (strcmp(option->envvar, "PGHOST") == 0 ||
