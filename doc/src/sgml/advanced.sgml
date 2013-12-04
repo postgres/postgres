@@ -389,7 +389,9 @@ SELECT depname, empno, salary, avg(salary) OVER (PARTITION BY depname) FROM emps
     order in which the rows are output.)  Here is an example:
 
 <programlisting>
-SELECT depname, empno, salary, rank() OVER (PARTITION BY depname ORDER BY salary DESC) FROM empsalary;
+SELECT depname, empno, salary,
+       rank() OVER (PARTITION BY depname ORDER BY salary DESC)
+FROM empsalary;
 </programlisting>
 
 <screen>
