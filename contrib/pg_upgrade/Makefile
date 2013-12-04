@@ -25,7 +25,7 @@ include $(top_srcdir)/contrib/contrib-global.mk
 endif
 
 check: test.sh all
-	MAKE=$(MAKE) bindir=$(bindir) libdir=$(libdir) $(SHELL) $< --install
+	MAKE=$(MAKE) bindir=$(bindir) libdir=$(libdir) EXTRA_REGRESS_OPTS="$(EXTRA_REGRESS_OPTS)" $(SHELL) $< --install
 
 # disabled because it upsets the build farm
 #installcheck: test.sh

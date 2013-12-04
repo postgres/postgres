@@ -458,8 +458,8 @@ endif
 
 pg_regress_locale_flags = $(if $(ENCODING),--encoding=$(ENCODING)) $(NOLOCALE)
 
-pg_regress_check = $(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --temp-install=./tmp_check --top-builddir=$(top_builddir) $(pg_regress_locale_flags)
-pg_regress_installcheck = $(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --psqldir='$(PSQLDIR)' $(pg_regress_locale_flags)
+pg_regress_check = $(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --temp-install=./tmp_check --top-builddir=$(top_builddir) $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
+pg_regress_installcheck = $(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --psqldir='$(PSQLDIR)' $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
 
 pg_regress_clean_files = results/ regression.diffs regression.out tmp_check/ log/
 
