@@ -789,13 +789,26 @@ HeapTupleSatisfiesUpdate(HeapTupleHeader tuple, CommandId curcid,
 		if (TransactionIdDidCommit(xmax))
 			return HeapTupleUpdated;
 
-		/* no member, even just a locker, alive anymore */
+		/*
+		 * By here, the update in the Xmax is either aborted or crashed, but
+		 * what about the other members?
+		 */
+
 		if (!MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple)))
+		{
+			/*
+			 * There's no member, even just a locker, alive anymore, so we can
+			 * mark the Xmax as invalid.
+			 */
 			SetHintBits(tuple, buffer, HEAP_XMAX_INVALID,
 						InvalidTransactionId);
-
-		/* it must have aborted or crashed */
-		return HeapTupleMayBeUpdated;
+			return HeapTupleMayBeUpdated;
+		}
+		else
+		{
+			/* There are lockers running */
+			return HeapTupleBeingUpdated;
+		}
 	}
 
 	if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetRawXmax(tuple)))
