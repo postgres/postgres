@@ -464,7 +464,10 @@ wloop:
  * non-reentrant libc facilities. We also need to call send() and recv()
  * directly so it gets passed through the socket/signals layer on Win32.
  *
- * They are closely modelled on the original socket implementations in OpenSSL.
+ * These functions are closely modelled on the standard socket BIO in OpenSSL;
+ * see sock_read() and sock_write() in OpenSSL's crypto/bio/bss_sock.c.
+ * XXX OpenSSL 1.0.1e considers many more errcodes than just EINTR as reasons
+ * to retry; do we need to adopt their logic for that?
  */
 
 static bool my_bio_initialized = false;
@@ -502,6 +505,7 @@ my_sock_write(BIO *h, const char *buf, int size)
 	int			res = 0;
 
 	res = send(h->num, buf, size, 0);
+	BIO_clear_retry_flags(h);
 	if (res <= 0)
 	{
 		if (errno == EINTR)
