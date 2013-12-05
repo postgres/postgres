@@ -1,0 +1,130 @@
+Parsed test spec with 3 sessions
+
+starting permutation: s1_show s1_commit s2_commit
+step s1_show: SELECT current_setting('default_transaction_isolation') <> 'read committed';
+?column?       
+
+f              
+step s1_commit: COMMIT;
+step s2_commit: COMMIT;
+
+starting permutation: s1_lock s2_update s2_abort s3_forkeyshr s1_commit
+step s1_lock: SELECT * FROM dont_forget FOR KEY SHARE;
+value          
+
+1              
+step s2_update: UPDATE dont_forget SET value = 2;
+step s2_abort: ROLLBACK;
+step s3_forkeyshr: SELECT * FROM dont_forget FOR KEY SHARE;
+value          
+
+1              
+step s1_commit: COMMIT;
+
+starting permutation: s1_lock s2_update s2_commit s3_forkeyshr s1_commit
+step s1_lock: SELECT * FROM dont_forget FOR KEY SHARE;
+value          
+
+1              
+step s2_update: UPDATE dont_forget SET value = 2;
+step s2_commit: COMMIT;
+step s3_forkeyshr: SELECT * FROM dont_forget FOR KEY SHARE;
+value          
+
+2              
+step s1_commit: COMMIT;
+
+starting permutation: s1_lock s2_update s1_commit s3_forkeyshr s2_commit
+step s1_lock: SELECT * FROM dont_forget FOR KEY SHARE;
+value          
+
+1              
+step s2_update: UPDATE dont_forget SET value = 2;
+step s1_commit: COMMIT;
+step s3_forkeyshr: SELECT * FROM dont_forget FOR KEY SHARE;
+value          
+
+1              
+step s2_commit: COMMIT;
+
+starting permutation: s1_lock s2_update s2_abort s3_fornokeyupd s1_commit
+step s1_lock: SELECT * FROM dont_forget FOR KEY SHARE;
+value          
+
+1              
+step s2_update: UPDATE dont_forget SET value = 2;
+step s2_abort: ROLLBACK;
+step s3_fornokeyupd: SELECT * FROM dont_forget FOR NO KEY UPDATE;
+value          
+
+1              
+step s1_commit: COMMIT;
+
+starting permutation: s1_lock s2_update s2_commit s3_fornokeyupd s1_commit
+step s1_lock: SELECT * FROM dont_forget FOR KEY SHARE;
+value          
+
+1              
+step s2_update: UPDATE dont_forget SET value = 2;
+step s2_commit: COMMIT;
+step s3_fornokeyupd: SELECT * FROM dont_forget FOR NO KEY UPDATE;
+value          
+
+2              
+step s1_commit: COMMIT;
+
+starting permutation: s1_lock s2_update s1_commit s3_fornokeyupd s2_commit
+step s1_lock: SELECT * FROM dont_forget FOR KEY SHARE;
+value          
+
+1              
+step s2_update: UPDATE dont_forget SET value = 2;
+step s1_commit: COMMIT;
+step s3_fornokeyupd: SELECT * FROM dont_forget FOR NO KEY UPDATE; <waiting ...>
+step s2_commit: COMMIT;
+step s3_fornokeyupd: <... completed>
+value          
+
+2              
+
+starting permutation: s1_lock s2_update s2_abort s3_forupd s1_commit
+step s1_lock: SELECT * FROM dont_forget FOR KEY SHARE;
+value          
+
+1              
+step s2_update: UPDATE dont_forget SET value = 2;
+step s2_abort: ROLLBACK;
+step s3_forupd: SELECT * FROM dont_forget FOR UPDATE; <waiting ...>
+step s1_commit: COMMIT;
+step s3_forupd: <... completed>
+value          
+
+1              
+
+starting permutation: s1_lock s2_update s2_commit s3_forupd s1_commit
+step s1_lock: SELECT * FROM dont_forget FOR KEY SHARE;
+value          
+
+1              
+step s2_update: UPDATE dont_forget SET value = 2;
+step s2_commit: COMMIT;
+step s3_forupd: SELECT * FROM dont_forget FOR UPDATE; <waiting ...>
+step s1_commit: COMMIT;
+step s3_forupd: <... completed>
+value          
+
+2              
+
+starting permutation: s1_lock s2_update s1_commit s3_forupd s2_commit
+step s1_lock: SELECT * FROM dont_forget FOR KEY SHARE;
+value          
+
+1              
+step s2_update: UPDATE dont_forget SET value = 2;
+step s1_commit: COMMIT;
+step s3_forupd: SELECT * FROM dont_forget FOR UPDATE; <waiting ...>
+step s2_commit: COMMIT;
+step s3_forupd: <... completed>
+value          
+
+2              

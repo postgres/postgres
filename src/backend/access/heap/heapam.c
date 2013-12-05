@@ -4842,10 +4842,23 @@ test_lockmode_for_conflict(MultiXactStatus status, TransactionId xid,
 	else if (TransactionIdDidCommit(xid))
 	{
 		/*
-		 * If the updating transaction committed, what we do depends on whether
-		 * the lock modes conflict: if they do, then we must report error to
-		 * caller.  But if they don't, we can fall through to lock it.
+		 * The other transaction committed.  If it was only a locker, then the
+		 * lock is completely gone now and we can return success; but if it
+		 * was an update, then what we do depends on whether the two lock
+		 * modes conflict.	If they conflict, then we must report error to
+		 * caller. But if they don't, we can fall through to allow the current
+		 * transaction to lock the tuple.
+		 *
+		 * Note: the reason we worry about ISUPDATE here is because as soon as
+		 * a transaction ends, all its locks are gone and meaningless, and
+		 * thus we can ignore them; whereas its updates persist.  In the
+		 * TransactionIdIsInProgress case, above, we don't need to check
+		 * because we know the lock is still "alive" and thus a conflict needs
+		 * always be checked.
 		 */
+		if (!ISUPDATE_from_mxstatus(status))
+			return HeapTupleMayBeUpdated;
+
 		if (DoLockModesConflict(LOCKMODE_from_mxstatus(status),
 								LOCKMODE_from_mxstatus(wantedstatus)))
 			/* bummer */
