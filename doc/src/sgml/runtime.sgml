@@ -1815,12 +1815,12 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
 
    <listitem>
     <para>
-     On Linux, encryption can be layered on top of a file system
-     using a <quote>loopback device</quote>. This allows an entire
-     file system partition to be encrypted on disk, and decrypted by the
-     operating system. On FreeBSD, the equivalent facility is called
-     GEOM Based Disk Encryption (<acronym>gbde</acronym>), and many
-     other operating systems support this functionality, including Windows.
+     Storage encryption can be performed at the file system level or the
+     block level.  Linux file system encryption options include eCryptfs
+     and EncFS, while FreeBSD uses PEFS.  Block level or full disk
+     encryption options include dm-crypt + LUKS on Linux and GEOM
+     modules geli and gbde on FreeBSD.  Many other operating systems
+     support this functionality, including Windows.
     </para>
 
     <para>
