@@ -1986,10 +1986,10 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    <quote>intermediate</> certificate authority, rather than one that is
    directly trusted by clients.  To use such a certificate, append the
    certificate of the signing authority to the <filename>server.crt</> file,
-   then its parent authority's certificate, and so on up to a <quote>root</>
-   authority that is trusted by the clients.  The root certificate should
-   be included in every case where <filename>server.crt</> contains more than
-   one certificate.
+   then its parent authority's certificate, and so on up to a certificate
+   authority, <quote>root</> or <quote>intermediate</>, that is trusted by
+   clients, i.e. signed by a certificate in the clients'
+   <filename>root.crt</filename> files.
   </para>
 
   <sect2 id="ssl-client-certificates">
@@ -2008,7 +2008,10 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    SSL connection startup.  (See <xref linkend="libpq-ssl"> for a
    description of how to set up certificates on the client.)  The server will
    verify that the client's certificate is signed by one of the trusted
-   certificate authorities.  Certificate Revocation List (CRL) entries
+   certificate authorities.  If intermediate <acronym>CA</>s appear in
+   <filename>root.crt</filename>, the file must also contain certificate
+   chains to their root <acronym>CA</>s.  Certificate Revocation List
+   (CRL) entries
    are also checked if the parameter <xref linkend="guc-ssl-crl-file"> is set.
    <!-- If this URL changes replace it with a URL to www.archive.org. -->
    (See <ulink
@@ -2026,8 +2029,9 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
   </para>
 
   <para>
-   Note that <filename>root.crt</filename> lists the top-level CAs that are
-   considered trusted for signing client certificates.  In principle it need
+   Note that the server's <filename>root.crt</filename> lists the top-level
+   CAs that are considered trusted for signing client certificates.
+   In principle it need
    not list the CA that signed the server's certificate, though in most cases
    that CA would also be trusted for client certificates.
   </para>

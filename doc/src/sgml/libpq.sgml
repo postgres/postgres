@@ -7122,7 +7122,9 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
    To allow server certificate verification, the certificate(s) of one or more
    trusted <acronym>CA</>s must be
    placed in the file <filename>~/.postgresql/root.crt</> in the user's home
-   directory. (On Microsoft Windows the file is named
+   directory. If intermediate <acronym>CA</>s appear in
+   <filename>root.crt</filename>, the file must also contain certificate
+   chains to their root <acronym>CA</>s. (On Microsoft Windows the file is named
    <filename>%APPDATA%\postgresql\root.crt</filename>.)
   </para>
 
@@ -7180,15 +7182,15 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
    <quote>intermediate</> certificate authority, rather than one that is
    directly trusted by the server.  To use such a certificate, append the
    certificate of the signing authority to the <filename>postgresql.crt</>
-   file, then its parent authority's certificate, and so on up to a
-   <quote>root</> authority that is trusted by the server.  The root
-   certificate should be included in every case where
-   <filename>postgresql.crt</> contains more than one certificate.
+   file, then its parent authority's certificate, and so on up to a certificate
+   authority, <quote>root</> or <quote>intermediate</>, that is trusted by
+   the server, i.e. signed by a certificate in the server's
+   <filename>root.crt</filename> file.
   </para>
 
   <para>
-   Note that <filename>root.crt</filename> lists the top-level CAs that are
-   considered trusted for signing server certificates.  In principle it need
+   Note that the client's <filename>~/.postgresql/root.crt</> lists the top-level CAs 
+   that are considered trusted for signing server certificates.  In principle it need
    not list the CA that signed the client's certificate, though in most cases
    that CA would also be trusted for server certificates.
   </para>
