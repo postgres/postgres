@@ -112,6 +112,9 @@ static bool ssl_loaded_verify_locations = false;
 /* GUC variable controlling SSL cipher list */
 char	   *SSLCipherSuites = NULL;
 
+/* GUC variable: if false, prefer client ciphers */
+bool	   SSLPreferServerCiphers;
+
 /* ------------------------------------------------------------ */
 /*						 Hardcoded values						*/
 /* ------------------------------------------------------------ */
@@ -853,6 +856,10 @@ initialize_SSL(void)
 	/* set up the allowed cipher list */
 	if (SSL_CTX_set_cipher_list(SSL_context, SSLCipherSuites) != 1)
 		elog(FATAL, "could not set the cipher list (no valid ciphers available)");
+
+	/* Let server choose order */
+	if (SSLPreferServerCiphers)
+		SSL_CTX_set_options(SSL_context, SSL_OP_CIPHER_SERVER_PREFERENCE);
 
 	/*
 	 * Load CA store, so we can verify client certificates if needed.

@@ -886,6 +886,27 @@ include 'filename'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-ssl-prefer-server-ciphers" xreflabel="ssl_prefer_server_ciphers">
+      <term><varname>ssl_prefer_server_ciphers</varname> (<type>bool</type>)</term>
+      <indexterm>
+       <primary><varname>ssl_prefer_server_ciphers</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Specifies whether to use the server's SSL cipher preferences, rather
+        than the client's.  The default is true.
+       </para>
+
+       <para>
+        Older PostgreSQL versions do not have this setting and always use the
+        client's preferences.  This setting is mainly for backward
+        compatibility with those versions.  Using the server's preferences is
+        usually better because it is more likely that the server is appropriately
+        configured.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-password-encryption" xreflabel="password_encryption">
       <term><varname>password_encryption</varname> (<type>boolean</type>)</term>
       <indexterm>

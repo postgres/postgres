@@ -127,6 +127,7 @@ extern char *temp_tablespaces;
 extern bool ignore_checksum_failure;
 extern bool synchronize_seqscans;
 extern char *SSLCipherSuites;
+extern bool SSLPreferServerCiphers;
 
 #ifdef TRACE_SORT
 extern bool trace_sort;
@@ -799,6 +800,15 @@ static struct config_bool ConfigureNamesBool[] =
 		&EnableSSL,
 		false,
 		check_ssl, NULL, NULL
+	},
+	{
+		{"ssl_prefer_server_ciphers", PGC_POSTMASTER, CONN_AUTH_SECURITY,
+			gettext_noop("Give priority to server ciphersuite order."),
+			NULL
+		},
+		&SSLPreferServerCiphers,
+		true,
+		NULL, NULL, NULL
 	},
 	{
 		{"fsync", PGC_SIGHUP, WAL_SETTINGS,
