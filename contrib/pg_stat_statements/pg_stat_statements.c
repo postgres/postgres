@@ -67,7 +67,9 @@ PG_MODULE_MAGIC;
 #define PGSS_DUMP_FILE	"global/pg_stat_statements.stat"
 
 /* This constant defines the magic number in the stats file header */
-static const uint32 PGSS_FILE_HEADER = 0x20120328;
+static const uint32 PGSS_FILE_HEADER = 0x20131115;
+/* PostgreSQL major version number, changes in which invalidate all entries */
+static const uint32 PGSS_PG_MAJOR_VERSION = PG_VERSION_NUM / 100;
 
 /* XXX: Should USAGE_EXEC reflect execution time and/or buffer usage? */
 #define USAGE_EXEC(duration)	(1.0)
@@ -78,6 +80,16 @@ static const uint32 PGSS_FILE_HEADER = 0x20120328;
 #define USAGE_DEALLOC_PERCENT	5		/* free this % of entries at once */
 
 #define JUMBLE_SIZE				1024	/* query serialization buffer size */
+
+/*
+ * Extension version number, for supporting older extension versions' objects
+ */
+typedef enum pgssVersion
+{
+	PGSS_V1_0 = 0,
+	PGSS_V1_1,
+	PGSS_V1_2
+} pgssVersion;
 
 /*
  * Hashtable key that defines the identity of a hashtable entry.  We separate
@@ -390,6 +402,7 @@ pgss_shmem_startup(void)
 	FILE	   *file;
 	uint32		header;
 	int32		num;
+	int32		pgver;
 	int32		i;
 	int			query_size;
 	int			buffer_size;
@@ -465,6 +478,8 @@ pgss_shmem_startup(void)
 
 	if (fread(&header, sizeof(uint32), 1, file) != 1 ||
 		header != PGSS_FILE_HEADER ||
+		fread(&pgver, sizeof(uint32), 1, file) != 1 ||
+		pgver != PGSS_PG_MAJOR_VERSION ||
 		fread(&num, sizeof(int32), 1, file) != 1)
 		goto error;
 
@@ -564,6 +579,8 @@ pgss_shmem_shutdown(int code, Datum arg)
 		goto error;
 
 	if (fwrite(&PGSS_FILE_HEADER, sizeof(uint32), 1, file) != 1)
+		goto error;
+	if (fwrite(&PGSS_PG_MAJOR_VERSION, sizeof(uint32), 1, file) != 1)
 		goto error;
 	num_entries = hash_get_num_entries(pgss_hash);
 	if (fwrite(&num_entries, sizeof(int32), 1, file) != 1)
@@ -1069,7 +1086,8 @@ pg_stat_statements_reset(PG_FUNCTION_ARGS)
 }
 
 #define PG_STAT_STATEMENTS_COLS_V1_0	14
-#define PG_STAT_STATEMENTS_COLS			18
+#define PG_STAT_STATEMENTS_COLS_V1_1	18
+#define PG_STAT_STATEMENTS_COLS			19
 
 /*
  * Retrieve statement statistics.
@@ -1086,7 +1104,7 @@ pg_stat_statements(PG_FUNCTION_ARGS)
 	bool		is_superuser = superuser();
 	HASH_SEQ_STATUS hash_seq;
 	pgssEntry  *entry;
-	bool		sql_supports_v1_1_counters = true;
+	pgssVersion detected_version;
 
 	if (!pgss || !pgss_hash)
 		ereport(ERROR,
@@ -1107,8 +1125,21 @@ pg_stat_statements(PG_FUNCTION_ARGS)
 	/* Build a tuple descriptor for our result type */
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
-	if (tupdesc->natts == PG_STAT_STATEMENTS_COLS_V1_0)
-		sql_supports_v1_1_counters = false;
+
+	switch (tupdesc->natts)
+	{
+		case PG_STAT_STATEMENTS_COLS_V1_0:
+			detected_version = PGSS_V1_0;
+			break;
+		case PG_STAT_STATEMENTS_COLS_V1_1:
+			detected_version = PGSS_V1_1;
+			break;
+		case PG_STAT_STATEMENTS_COLS:
+			detected_version = PGSS_V1_2;
+			break;
+		default:
+			elog(ERROR, "pgss version unrecognized from tuple descriptor");
+	}
 
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
 	oldcontext = MemoryContextSwitchTo(per_query_ctx);
@@ -1140,6 +1171,9 @@ pg_stat_statements(PG_FUNCTION_ARGS)
 		{
 			char	   *qstr;
 
+			if (detected_version >= PGSS_V1_2)
+				values[i++] = Int64GetDatumFast((int64) entry->key.queryid);
+
 			qstr = (char *)
 				pg_do_encoding_conversion((unsigned char *) entry->query,
 										  entry->query_len,
@@ -1150,7 +1184,12 @@ pg_stat_statements(PG_FUNCTION_ARGS)
 				pfree(qstr);
 		}
 		else
+		{
+			if (detected_version >= PGSS_V1_2)
+				nulls[i++] = true;
+
 			values[i++] = CStringGetTextDatum("<insufficient privilege>");
+		}
 
 		/* copy counters to a local variable to keep locking time short */
 		{
@@ -1170,24 +1209,27 @@ pg_stat_statements(PG_FUNCTION_ARGS)
 		values[i++] = Int64GetDatumFast(tmp.rows);
 		values[i++] = Int64GetDatumFast(tmp.shared_blks_hit);
 		values[i++] = Int64GetDatumFast(tmp.shared_blks_read);
-		if (sql_supports_v1_1_counters)
+		if (detected_version >= PGSS_V1_1)
 			values[i++] = Int64GetDatumFast(tmp.shared_blks_dirtied);
 		values[i++] = Int64GetDatumFast(tmp.shared_blks_written);
 		values[i++] = Int64GetDatumFast(tmp.local_blks_hit);
 		values[i++] = Int64GetDatumFast(tmp.local_blks_read);
-		if (sql_supports_v1_1_counters)
+		if (detected_version >= PGSS_V1_1)
 			values[i++] = Int64GetDatumFast(tmp.local_blks_dirtied);
 		values[i++] = Int64GetDatumFast(tmp.local_blks_written);
 		values[i++] = Int64GetDatumFast(tmp.temp_blks_read);
 		values[i++] = Int64GetDatumFast(tmp.temp_blks_written);
-		if (sql_supports_v1_1_counters)
+		if (detected_version >= PGSS_V1_1)
 		{
 			values[i++] = Float8GetDatumFast(tmp.blk_read_time);
 			values[i++] = Float8GetDatumFast(tmp.blk_write_time);
 		}
 
-		Assert(i == (sql_supports_v1_1_counters ?
-					 PG_STAT_STATEMENTS_COLS : PG_STAT_STATEMENTS_COLS_V1_0));
+		Assert(i == (detected_version == PGSS_V1_0?
+						 PG_STAT_STATEMENTS_COLS_V1_0:
+					 detected_version == PGSS_V1_1?
+						 PG_STAT_STATEMENTS_COLS_V1_1:
+					 PG_STAT_STATEMENTS_COLS));
 
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}

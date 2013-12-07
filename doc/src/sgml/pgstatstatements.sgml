@@ -23,11 +23,12 @@
   <title>The <structname>pg_stat_statements</structname> View</title>
 
   <para>
-   The statistics gathered by the module are made available via a system view
-   named <structname>pg_stat_statements</>.  This view contains one row for
-   each distinct query, database ID, and user ID (up to the maximum
-   number of distinct statements that the module can track).  The columns
-   of the view are shown in <xref linkend="pgstatstatements-columns">.
+   The statistics gathered by the module are made available via a
+   system view named <structname>pg_stat_statements</>.  This view
+   contains one row for each distinct database ID, user ID and query
+   ID (up to the maximum number of distinct statements that the module
+   can track).  The columns of the view are shown in
+   <xref linkend="pgstatstatements-columns">.
   </para>
 
   <table id="pgstatstatements-columns">
@@ -57,7 +58,14 @@
       <entry>OID of database in which the statement was executed</entry>
      </row>
 
-    <row>
+     <row>
+      <entry><structfield>queryid</structfield></entry>
+      <entry><type>bigint</type></entry>
+      <entry></entry>
+      <entry>Internal hash identifier, computed from the entry's post-parse-analysis tree</entry>
+     </row>
+
+     <row>
       <entry><structfield>query</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
@@ -189,9 +197,10 @@
   </para>
 
   <para>
-   For security reasons, non-superusers are not allowed to see the text of
-   queries executed by other users.  They can see the statistics, however,
-   if the view has been installed in their database.
+   For security reasons, non-superusers are not allowed to see the SQL
+   text or queryid of queries executed by other users.  They can see
+   the statistics, however, if the view has been installed in their
+   database.
   </para>
 
   <para>
@@ -209,8 +218,9 @@
    When a constant's value has been ignored for purposes of matching the
    query to other queries, the constant is replaced by <literal>?</literal>
    in the <structname>pg_stat_statements</> display.  The rest of the query
-   text is that of the first query that had the particular hash value
-   associated with the <structname>pg_stat_statements</> entry.
+   text is that of the first query that had the particular
+   <structfield>queryid</> hash value associated with the
+   <structname>pg_stat_statements</> entry.
   </para>
 
   <para>
@@ -223,10 +233,45 @@
   </para>
 
   <para>
-   Since the hash value is computed on the post-parse-analysis representation
-   of the queries, the opposite is also possible: queries with identical texts
-   might appear as separate entries, if they have different meanings as a
-   result of factors such as different <varname>search_path</> settings.
+   Since the <structfield>queryid</> hash value is computed on the
+   post-parse-analysis representation of the queries, the opposite is
+   also possible: queries with identical texts might appear as
+   separate entries, if they have different meanings as a result of
+   factors such as different <varname>search_path</> settings.
+  </para>
+
+  <para>
+   Consumers of <literal>pg_stat_statements</> may wish to use
+   <structfield>queryid</> (perhaps in composite with
+   <structfield>dbid</> and <structfield>userid</>) as a more stable
+   and reliable identifier for each entry than its query text.
+   However, it is important to understand that there are only limited
+   guarantees around the stability of the <structfield>queryid</> hash
+   value.  Since the identifier is derived from the
+   post-parse-analysis tree, its value is a function of, among other
+   things, the internal identifiers that comprise this representation.
+   This has some counterintuitive implications.  For example, a query
+   against a table that is fingerprinted by
+   <literal>pg_stat_statements</> will appear distinct to a
+   subsequently executed query that a reasonable observer might judge
+   to be a non-distinct, if in the interim the table was dropped and
+   re-created.  The hashing process is sensitive to difference in
+   machine architecture and other facets of the platform.
+   Furthermore, it is not safe to assume that <structfield>queryid</>
+   will be stable across major versions of <productname>PostgreSQL</>.
+  </para>
+
+  <para>
+   As a rule of thumb, an assumption of the stability or comparability
+   of <structfield>querid</> values should be predicated on the the
+   underlying catalog metadata and hash function implementation
+   details exactly matching.  Any two servers participating in any
+   variety of replication based on physical WAL-replay can be expected
+   to have identical <structfield>querid</> values for the same query.
+   Logical replication schemes do not have replicas comparable in all
+   relevant regards, and so <structfield>querid</> will not be a
+   useful identifier for accumulating costs for the entire replica
+   set.  If in doubt, direct testing is recommended.
   </para>
  </sect2>
 
