@@ -263,13 +263,13 @@
 
   <para>
    As a rule of thumb, an assumption of the stability or comparability
-   of <structfield>querid</> values should be predicated on the the
+   of <structfield>queryid</> values should be predicated on the the
    underlying catalog metadata and hash function implementation
    details exactly matching.  Any two servers participating in any
    variety of replication based on physical WAL-replay can be expected
-   to have identical <structfield>querid</> values for the same query.
+   to have identical <structfield>queryid</> values for the same query.
    Logical replication schemes do not have replicas comparable in all
-   relevant regards, and so <structfield>querid</> will not be a
+   relevant regards, and so <structfield>queryid</> will not be a
    useful identifier for accumulating costs for the entire replica
    set.  If in doubt, direct testing is recommended.
   </para>
