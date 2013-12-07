@@ -907,6 +907,24 @@ include 'filename'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-ssl-ecdh-curve" xreflabel="ssl_ecdh_curve">
+      <term><varname>ssl_ecdh_curve</varname> (<type>string</type>)</term>
+      <indexterm>
+       <primary><varname>ssl_ecdh_curve</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Specifies the name of the curve to use in ECDH key exchanges.  The
+        default is <literal>prime256p1</>.
+       </para>
+
+       <para>
+        The list of available curves can be shown with the command
+        <literal>openssl ecparam -list_curves</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-password-encryption" xreflabel="password_encryption">
       <term><varname>password_encryption</varname> (<type>boolean</type>)</term>
       <indexterm>

@@ -127,6 +127,7 @@ extern char *temp_tablespaces;
 extern bool ignore_checksum_failure;
 extern bool synchronize_seqscans;
 extern char *SSLCipherSuites;
+extern char *SSLECDHCurve;
 extern bool SSLPreferServerCiphers;
 
 #ifdef TRACE_SORT
@@ -3144,6 +3145,21 @@ static struct config_string ConfigureNamesString[] =
 		&SSLCipherSuites,
 #ifdef USE_SSL
 		"DEFAULT:!LOW:!EXP:!MD5:@STRENGTH",
+#else
+		"none",
+#endif
+		NULL, NULL, NULL
+	},
+
+	{
+		{"ssl_ecdh_curve", PGC_POSTMASTER, CONN_AUTH_SECURITY,
+			gettext_noop("Sets the curve to use for ECDH."),
+			NULL,
+			GUC_SUPERUSER_ONLY
+		},
+		&SSLECDHCurve,
+#ifdef USE_SSL
+		"prime256v1",
 #else
 		"none",
 #endif

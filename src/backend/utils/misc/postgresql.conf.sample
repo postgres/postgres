@@ -82,6 +82,7 @@
 #ssl_ciphers = 'DEFAULT:!LOW:!EXP:!MD5:@STRENGTH'	# allowed SSL ciphers
 					# (change requires restart)
 #ssl_prefer_server_ciphers = on		# (change requires restart)
+#ssl_ecdh_curve = 'prime256v1'		# (change requires restart)
 #ssl_renegotiation_limit = 512MB	# amount of data between renegotiations
 #ssl_cert_file = 'server.crt'		# (change requires restart)
 #ssl_key_file = 'server.key'		# (change requires restart)

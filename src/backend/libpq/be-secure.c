@@ -69,6 +69,9 @@
 #if SSLEAY_VERSION_NUMBER >= 0x0907000L
 #include <openssl/conf.h>
 #endif
+#if (OPENSSL_VERSION_NUMBER >= 0x0090800fL) && !defined(OPENSSL_NO_ECDH)
+#include <openssl/ec.h>
+#endif
 #endif   /* USE_SSL */
 
 #include "libpq/libpq.h"
@@ -111,6 +114,9 @@ static bool ssl_loaded_verify_locations = false;
 
 /* GUC variable controlling SSL cipher list */
 char	   *SSLCipherSuites = NULL;
+
+/* GUC variable for default ECHD curve. */
+char	   *SSLECDHCurve;
 
 /* GUC variable: if false, prefer client ciphers */
 bool	   SSLPreferServerCiphers;
@@ -774,6 +780,31 @@ info_cb(const SSL *ssl, int type, int args)
 	}
 }
 
+#if (OPENSSL_VERSION_NUMBER >= 0x0090800fL) && !defined(OPENSSL_NO_ECDH)
+static void
+initialize_ecdh(void)
+{
+	EC_KEY	   *ecdh;
+	int			nid;
+
+	nid = OBJ_sn2nid(SSLECDHCurve);
+	if (!nid)
+		ereport(FATAL,
+				(errmsg("ECDH: unrecognized curve name: %s", SSLECDHCurve)));
+
+	ecdh = EC_KEY_new_by_curve_name(nid);
+	if (!ecdh)
+		ereport(FATAL,
+				(errmsg("ECDH: could not create key")));
+
+	SSL_CTX_set_options(SSL_context, SSL_OP_SINGLE_ECDH_USE);
+	SSL_CTX_set_tmp_ecdh(SSL_context, ecdh);
+	EC_KEY_free(ecdh);
+}
+#else
+#define initialize_ecdh()
+#endif
+
 /*
  *	Initialize global SSL context.
  */
@@ -852,6 +883,9 @@ initialize_SSL(void)
 	/* set up ephemeral DH keys, and disallow SSL v2 while at it */
 	SSL_CTX_set_tmp_dh_callback(SSL_context, tmp_dh_cb);
 	SSL_CTX_set_options(SSL_context, SSL_OP_SINGLE_DH_USE | SSL_OP_NO_SSLv2);
+
+	/* set up ephemeral ECDH keys */
+	initialize_ecdh();
 
 	/* set up the allowed cipher list */
 	if (SSL_CTX_set_cipher_list(SSL_context, SSLCipherSuites) != 1)
