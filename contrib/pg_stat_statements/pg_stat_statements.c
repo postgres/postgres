@@ -1160,6 +1160,7 @@ pg_stat_statements(PG_FUNCTION_ARGS)
 		bool		nulls[PG_STAT_STATEMENTS_COLS];
 		int			i = 0;
 		Counters	tmp;
+		int64		queryid = entry->key.queryid;
 
 		memset(values, 0, sizeof(values));
 		memset(nulls, 0, sizeof(nulls));
@@ -1172,7 +1173,7 @@ pg_stat_statements(PG_FUNCTION_ARGS)
 			char	   *qstr;
 
 			if (detected_version >= PGSS_V1_2)
-				values[i++] = Int64GetDatumFast((int64) entry->key.queryid);
+				values[i++] = Int64GetDatumFast(queryid);
 
 			qstr = (char *)
 				pg_do_encoding_conversion((unsigned char *) entry->query,
