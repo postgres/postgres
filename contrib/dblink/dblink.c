@@ -192,7 +192,8 @@ typedef struct remoteConnHashEnt
 							 errdetail_internal("%s", msg))); \
 				} \
 				dblink_security_check(conn, rconn); \
-				PQsetClientEncoding(conn, GetDatabaseEncodingName()); \
+				if (PQclientEncoding(conn) != GetDatabaseEncoding()) \
+					PQsetClientEncoding(conn, GetDatabaseEncodingName()); \
 				freeconn = true; \
 			} \
 	} while (0)
@@ -271,8 +272,9 @@ dblink_connect(PG_FUNCTION_ARGS)
 	/* check password actually used if not superuser */
 	dblink_security_check(conn, rconn);
 
-	/* attempt to set client encoding to match server encoding */
-	PQsetClientEncoding(conn, GetDatabaseEncodingName());
+	/* attempt to set client encoding to match server encoding, if needed */
+	if (PQclientEncoding(conn) != GetDatabaseEncoding())
+		PQsetClientEncoding(conn, GetDatabaseEncodingName());
 
 	if (connname)
 	{
