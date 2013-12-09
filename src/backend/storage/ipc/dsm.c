@@ -301,14 +301,14 @@ dsm_cleanup_for_mmap(void)
 	struct dirent *dent;
 
 	/* Open the directory; can't use AllocateDir in postmaster. */
-	if ((dir = opendir(PG_DYNSHMEM_DIR)) == NULL)
+	if ((dir = AllocateDir(PG_DYNSHMEM_DIR)) == NULL)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not open directory \"%s\": %m",
 					PG_DYNSHMEM_DIR)));
 
 	/* Scan for something with a name of the correct format. */
-	while ((dent = readdir(dir)) != NULL)
+	while ((dent = ReadDir(dir, PG_DYNSHMEM_DIR)) != NULL)
 	{
 		if (strncmp(dent->d_name, PG_DYNSHMEM_MMAP_FILE_PREFIX,
 				strlen(PG_DYNSHMEM_MMAP_FILE_PREFIX)) == 0)
@@ -335,7 +335,7 @@ dsm_cleanup_for_mmap(void)
 	}
 
 	/* Cleanup complete. */
-	closedir(dir);
+	FreeDir(dir);
 }
 
 /*
@@ -357,7 +357,7 @@ dsm_read_state_file(dsm_handle *h)
 	dsm_handle	handle;
 
 	/* Read the state file to get the ID of the old control segment. */
-	statefd = open(PG_DYNSHMEM_STATE_FILE, O_RDONLY | PG_BINARY, 0);
+	statefd = BasicOpenFile(PG_DYNSHMEM_STATE_FILE, O_RDONLY | PG_BINARY, 0);
 	if (statefd < 0)
 	{
 		if (errno == ENOENT)
@@ -369,10 +369,13 @@ dsm_read_state_file(dsm_handle *h)
 	}
 	nbytes = read(statefd, statebuf, PG_DYNSHMEM_STATE_BUFSIZ - 1);
 	if (nbytes < 0)
+	{
+		close(statefd);
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not read file \"%s\": %m",
 					PG_DYNSHMEM_STATE_FILE)));
+	}
 	/* make sure buffer is NUL terminated */
 	statebuf[nbytes] = '\0';
 	close(statefd);
