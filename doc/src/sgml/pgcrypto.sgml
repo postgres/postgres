@@ -312,56 +312,65 @@ gen_salt(type text [, iter_count integer ]) returns text
        <entry>Hashes/sec</entry>
        <entry>For <literal>[a-z]</></entry>
        <entry>For <literal>[A-Za-z0-9]</></entry>
+       <entry>Duration relative to <literal>md5 hash</></entry>
       </row>
      </thead>
      <tbody>
       <row>
        <entry><literal>crypt-bf/8</></entry>
-       <entry>28</entry>
-       <entry>246 years</entry>
-       <entry>251322 years</entry>
+       <entry>1792</entry>
+       <entry>4 years</entry>
+       <entry>3927 years</entry>
+       <entry>100k</entry>
       </row>
       <row>
        <entry><literal>crypt-bf/7</></entry>
-       <entry>57</entry>
-       <entry>121 years</entry>
-       <entry>123457 years</entry>
+       <entry>3648</entry>
+       <entry>2 years</entry>
+       <entry>1929 years</entry>
+       <entry>50k</entry>
       </row>
       <row>
        <entry><literal>crypt-bf/6</></entry>
-       <entry>112</entry>
-       <entry>62 years</entry>
-       <entry>62831 years</entry>
+       <entry>7168</entry>
+       <entry>1 year</entry>
+       <entry>982 years</entry>
+       <entry>25k</entry>
       </row>
       <row>
        <entry><literal>crypt-bf/5</></entry>
-       <entry>211</entry>
-       <entry>33 years</entry>
-       <entry>33351 years</entry>
+       <entry>13504</entry>
+       <entry>188 days</entry>
+       <entry>521 years</entry>
+       <entry>12.5k</entry>
       </row>
       <row>
        <entry><literal>crypt-md5</></entry>
-       <entry>2681</entry>
-       <entry>2.6 years</entry>
-       <entry>2625 years</entry>
+       <entry>171584</entry>
+       <entry>15 days</entry>
+       <entry>41 years</entry>
+       <entry>1k</entry>
       </row>
       <row>
        <entry><literal>crypt-des</></entry>
-       <entry>362837</entry>
-       <entry>7 days</entry>
-       <entry>19 years</entry>
+       <entry>23221568</entry>
+       <entry>157.5 minutes</entry>
+       <entry>108 days</entry>
+       <entry>7</entry>
       </row>
       <row>
        <entry><literal>sha1</></entry>
-       <entry>590223</entry>
-       <entry>4 days</entry>
-       <entry>12 years</entry>
+       <entry>37774272</entry>
+       <entry>90 minutes</entry>
+       <entry>68 days</entry>
+       <entry>4</entry>
       </row>
       <row>
        <entry><literal>md5 hash</></entry>
-       <entry>2345086</entry>
-       <entry>1 day</entry>
-       <entry>3 years</entry>
+       <entry>150085504</entry>
+       <entry>22.5 minutes</entry>
+       <entry>17 days</entry>
+       <entry>1</entry>
       </row>
      </tbody>
     </tgroup>
@@ -374,7 +383,7 @@ gen_salt(type text [, iter_count integer ]) returns text
    <itemizedlist>
     <listitem>
      <para>
-     The machine used is a 1.5GHz Pentium 4.
+     The machine used is an Intel Core i5.
      </para>
     </listitem>
     <listitem>
