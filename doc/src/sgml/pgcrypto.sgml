@@ -383,7 +383,7 @@ gen_salt(type text [, iter_count integer ]) returns text
    <itemizedlist>
     <listitem>
      <para>
-     The machine used is an Intel Core i5.
+     The machine used is an Intel Mobile Core i3.
      </para>
     </listitem>
     <listitem>
