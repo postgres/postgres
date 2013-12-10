@@ -713,3 +713,32 @@ select exists(select * from nocolumns);
  f
 (1 row)
 
+--
+-- Check sane behavior with nested IN SubLinks
+--
+explain (verbose, costs off)
+select * from int4_tbl where
+  (case when f1 in (select unique1 from tenk1 a) then f1 else null end) in
+  (select ten from tenk1 b);
+                                                                                      QUERY PLAN                                                                                       
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Nested Loop Semi Join
+   Output: int4_tbl.f1
+   Join Filter: (CASE WHEN (hashed SubPlan 1) THEN int4_tbl.f1 ELSE NULL::integer END = b.ten)
+   ->  Seq Scan on public.int4_tbl
+         Output: int4_tbl.f1
+   ->  Seq Scan on public.tenk1 b
+         Output: b.unique1, b.unique2, b.two, b.four, b.ten, b.twenty, b.hundred, b.thousand, b.twothousand, b.fivethous, b.tenthous, b.odd, b.even, b.stringu1, b.stringu2, b.string4
+   SubPlan 1
+     ->  Seq Scan on public.tenk1 a
+           Output: a.unique1
+(10 rows)
+
+select * from int4_tbl where
+  (case when f1 in (select unique1 from tenk1 a) then f1 else null end) in
+  (select ten from tenk1 b);
+ f1 
+----
+  0
+(1 row)
+
