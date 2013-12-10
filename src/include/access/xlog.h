@@ -197,7 +197,8 @@ typedef enum WalLevel
 {
 	WAL_LEVEL_MINIMAL = 0,
 	WAL_LEVEL_ARCHIVE,
-	WAL_LEVEL_HOT_STANDBY
+	WAL_LEVEL_HOT_STANDBY,
+	WAL_LEVEL_LOGICAL
 } WalLevel;
 extern int	wal_level;
 
@@ -210,8 +211,11 @@ extern int	wal_level;
  */
 #define XLogIsNeeded() (wal_level >= WAL_LEVEL_ARCHIVE)
 
-/* Do we need to WAL-log information required only for Hot Standby? */
+/* Do we need to WAL-log information required only for Hot Standby and logical replication? */
 #define XLogStandbyInfoActive() (wal_level >= WAL_LEVEL_HOT_STANDBY)
+
+/* Do we need to WAL-log information required only for logical replication? */
+#define XLogLogicalInfoActive() (wal_level >= WAL_LEVEL_LOGICAL)
 
 #ifdef WAL_DEBUG
 extern bool XLOG_DEBUG;

@@ -184,6 +184,15 @@ heap2_desc(StringInfo buf, uint8 xl_info, char *rec)
 						 xlrec->infobits_set);
 		out_target(buf, &(xlrec->target));
 	}
+	else if (info == XLOG_HEAP2_NEW_CID)
+	{
+		xl_heap_new_cid *xlrec = (xl_heap_new_cid *) rec;
+
+		appendStringInfo(buf, "new_cid: ");
+		out_target(buf, &(xlrec->target));
+		appendStringInfo(buf, "; cmin: %u, cmax: %u, combo: %u",
+						 xlrec->cmin, xlrec->cmax, xlrec->combocid);
+	}
 	else
 		appendStringInfoString(buf, "UNKNOWN");
 }

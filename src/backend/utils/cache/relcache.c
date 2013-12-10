@@ -3818,8 +3818,9 @@ RelationGetIndexPredicate(Relation relation)
  * simple index keys, but attributes used in expressions and partial-index
  * predicates.)
  *
- * If "keyAttrs" is true, only attributes that can be referenced by foreign
- * keys are considered.
+ * Depending on attrKind, a bitmap covering the attnums for all index columns,
+ * for all key columns or for all the columns the configured replica identity
+ * are returned.
  *
  * Attribute numbers are offset by FirstLowInvalidHeapAttributeNumber so that
  * we can include system attributes (e.g., OID) in the bitmap representation.
@@ -3832,17 +3833,28 @@ RelationGetIndexPredicate(Relation relation)
  * be bms_free'd when not needed anymore.
  */
 Bitmapset *
-RelationGetIndexAttrBitmap(Relation relation, bool keyAttrs)
+RelationGetIndexAttrBitmap(Relation relation, IndexAttrBitmapKind attrKind)
 {
-	Bitmapset  *indexattrs;
-	Bitmapset  *uindexattrs;
+	Bitmapset  *indexattrs; /* indexed columns */
+	Bitmapset  *uindexattrs; /* columns in unique indexes */
+	Bitmapset  *idindexattrs; /* columns in the the replica identity */
 	List	   *indexoidlist;
 	ListCell   *l;
 	MemoryContext oldcxt;
 
 	/* Quick exit if we already computed the result. */
 	if (relation->rd_indexattr != NULL)
-		return bms_copy(keyAttrs ? relation->rd_keyattr : relation->rd_indexattr);
+		switch(attrKind)
+		{
+			case INDEX_ATTR_BITMAP_IDENTITY_KEY:
+				return bms_copy(relation->rd_idattr);
+			case INDEX_ATTR_BITMAP_KEY:
+				return bms_copy(relation->rd_keyattr);
+			case INDEX_ATTR_BITMAP_ALL:
+				return bms_copy(relation->rd_indexattr);
+			default:
+				elog(ERROR, "unknown attrKind %u", attrKind);
+		}
 
 	/* Fast path if definitely no indexes */
 	if (!RelationGetForm(relation)->relhasindex)
@@ -3869,13 +3881,16 @@ RelationGetIndexAttrBitmap(Relation relation, bool keyAttrs)
 	 */
 	indexattrs = NULL;
 	uindexattrs = NULL;
+	idindexattrs = NULL;
 	foreach(l, indexoidlist)
 	{
 		Oid			indexOid = lfirst_oid(l);
 		Relation	indexDesc;
 		IndexInfo  *indexInfo;
 		int			i;
-		bool		isKey;
+		bool		isKey; /* candidate key */
+		bool		isIDKey; /* replica identity index */
+
 
 		indexDesc = index_open(indexOid, AccessShareLock);
 
@@ -3887,6 +3902,9 @@ RelationGetIndexAttrBitmap(Relation relation, bool keyAttrs)
 			indexInfo->ii_Expressions == NIL &&
 			indexInfo->ii_Predicate == NIL;
 
+		/* Is this index the configured (or default) replica identity? */
+		isIDKey = indexOid == relation->rd_replidindex;
+
 		/* Collect simple attribute references */
 		for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
 		{
@@ -3896,6 +3914,11 @@ RelationGetIndexAttrBitmap(Relation relation, bool keyAttrs)
 			{
 				indexattrs = bms_add_member(indexattrs,
 							   attrnum - FirstLowInvalidHeapAttributeNumber);
+
+				if (isIDKey)
+					idindexattrs = bms_add_member(idindexattrs,
+												 attrnum - FirstLowInvalidHeapAttributeNumber);
+
 				if (isKey)
 					uindexattrs = bms_add_member(uindexattrs,
 							   attrnum - FirstLowInvalidHeapAttributeNumber);
@@ -3917,10 +3940,21 @@ RelationGetIndexAttrBitmap(Relation relation, bool keyAttrs)
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 	relation->rd_indexattr = bms_copy(indexattrs);
 	relation->rd_keyattr = bms_copy(uindexattrs);
+	relation->rd_idattr = bms_copy(idindexattrs);
 	MemoryContextSwitchTo(oldcxt);
 
 	/* We return our original working copy for caller to play with */
-	return keyAttrs ? uindexattrs : indexattrs;
+	switch(attrKind)
+	{
+		case INDEX_ATTR_BITMAP_IDENTITY_KEY:
+			return idindexattrs;
+		case INDEX_ATTR_BITMAP_KEY:
+			return uindexattrs;
+		case INDEX_ATTR_BITMAP_ALL:
+			return indexattrs;
+		default:
+			elog(ERROR, "unknown attrKind %u", attrKind);
+	}
 }
 
 /*

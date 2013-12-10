@@ -3321,7 +3321,7 @@ reindex_relation(Oid relid, int flags)
 
 	/* Ensure rd_indexattr is valid; see comments for RelationSetIndexList */
 	if (is_pg_class)
-		(void) RelationGetIndexAttrBitmap(rel, false);
+		(void) RelationGetIndexAttrBitmap(rel, INDEX_ATTR_BITMAP_ALL);
 
 	PG_TRY();
 	{

@@ -791,6 +791,7 @@ IdentifySystemCmd
 IncrementVarSublevelsUp_context
 Index
 IndexArrayKeyInfo
+IndexAttrBitmapKind
 IndexBuildCallback
 IndexBuildResult
 IndexBulkDeleteCallback
@@ -2419,11 +2420,13 @@ xl_heap_cleanup_info
 xl_heap_delete
 xl_heap_freeze
 xl_heap_header
+xl_heap_header_len
 xl_heap_inplace
 xl_heap_insert
 xl_heap_lock
 xl_heap_lock_updated
 xl_heap_multi_insert
+xl_heap_new_cid
 xl_heap_newpage
 xl_heap_update
 xl_heap_visible

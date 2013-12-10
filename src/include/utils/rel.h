@@ -104,6 +104,7 @@ typedef struct RelationData
 	List	   *rd_indexlist;	/* list of OIDs of indexes on relation */
 	Bitmapset  *rd_indexattr;	/* identifies columns used in indexes */
 	Bitmapset  *rd_keyattr;		/* cols that can be ref'd by foreign keys */
+	Bitmapset  *rd_idattr;		/* included in replica identity index */
 	Oid			rd_oidindex;	/* OID of unique index on OID, if any */
 	LockInfoData rd_lockInfo;	/* lock mgr's info for locking relation */
 	RuleLock   *rd_rules;		/* rewrite rules */
@@ -453,6 +454,29 @@ typedef struct StdRdOptions
  */
 #define RelationIsPopulated(relation) ((relation)->rd_rel->relispopulated)
 
+/*
+ * RelationIsAccessibleInLogicalDecoding
+ *		True if we need to log enough information to have access via
+ *		decoding snapshot.
+ */
+#define RelationIsAccessibleInLogicalDecoding(relation) \
+	(XLogLogicalInfoActive() && \
+	 RelationNeedsWAL(relation) && \
+	 IsCatalogRelation(relation))
+
+/*
+ * RelationIsLogicallyLogged
+ *		True if we need to log enough information to extract the data from the
+ *		WAL stream.
+ *
+ * We don't log information for unlogged tables (since they don't WAL log
+ * anyway) and for system tables (their content is hard to make sense of, and
+ * it would complicate decoding slightly for little gain).
+ */
+#define RelationIsLogicallyLogged(relation) \
+	(XLogLogicalInfoActive() && \
+	 RelationNeedsWAL(relation) && \
+	 !IsCatalogRelation(relation))
 
 /* routines in utils/cache/relcache.c */
 extern void RelationIncrementReferenceCount(Relation rel);
