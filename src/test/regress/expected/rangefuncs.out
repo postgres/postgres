@@ -97,14 +97,14 @@ select definition from pg_views where viewname='vw_ord';
 
 drop view vw_ord;
 -- multiple functions
-select * from table(foot(1),foot(2)) with ordinality as z(a,b,c,d,ord);
+select * from rows from(foot(1),foot(2)) with ordinality as z(a,b,c,d,ord);
  a |  b  | c | d  | ord 
 ---+-----+---+----+-----
  1 |  11 | 2 | 22 |   1
  1 | 111 |   |    |   2
 (2 rows)
 
-create temporary view vw_ord as select * from (values (1)) v(n) join table(foot(1),foot(2)) with ordinality as z(a,b,c,d,ord) on (n=ord);
+create temporary view vw_ord as select * from (values (1)) v(n) join rows from(foot(1),foot(2)) with ordinality as z(a,b,c,d,ord) on (n=ord);
 select * from vw_ord;
  n | a | b  | c | d  | ord 
 ---+---+----+---+----+-----
@@ -112,16 +112,16 @@ select * from vw_ord;
 (1 row)
 
 select definition from pg_views where viewname='vw_ord';
-                                       definition                                        
------------------------------------------------------------------------------------------
-  SELECT v.n,                                                                           +
-     z.a,                                                                               +
-     z.b,                                                                               +
-     z.c,                                                                               +
-     z.d,                                                                               +
-     z.ord                                                                              +
-    FROM (( VALUES (1)) v(n)                                                            +
-    JOIN TABLE(foot(1), foot(2)) WITH ORDINALITY z(a, b, c, d, ord) ON ((v.n = z.ord)));
+                                         definition                                          
+---------------------------------------------------------------------------------------------
+  SELECT v.n,                                                                               +
+     z.a,                                                                                   +
+     z.b,                                                                                   +
+     z.c,                                                                                   +
+     z.d,                                                                                   +
+     z.ord                                                                                  +
+    FROM (( VALUES (1)) v(n)                                                                +
+    JOIN ROWS FROM(foot(1), foot(2)) WITH ORDINALITY z(a, b, c, d, ord) ON ((v.n = z.ord)));
 (1 row)
 
 drop view vw_ord;
@@ -140,14 +140,14 @@ select * from unnest(array[10,20],array['foo','bar'],array[1.0]) with ordinality
  20 | bar |     |   2
 (2 rows)
 
-select * from table(unnest(array[10,20],array['foo','bar'],array[1.0])) with ordinality as z(a,b,c,ord);
+select * from rows from(unnest(array[10,20],array['foo','bar'],array[1.0])) with ordinality as z(a,b,c,ord);
  a  |  b  |  c  | ord 
 ----+-----+-----+-----
  10 | foo | 1.0 |   1
  20 | bar |     |   2
 (2 rows)
 
-select * from table(unnest(array[10,20],array['foo','bar']), generate_series(101,102)) with ordinality as z(a,b,c,ord);
+select * from rows from(unnest(array[10,20],array['foo','bar']), generate_series(101,102)) with ordinality as z(a,b,c,ord);
  a  |  b  |  c  | ord 
 ----+-----+-----+-----
  10 | foo | 101 |   1
@@ -172,7 +172,7 @@ select definition from pg_views where viewname='vw_ord';
 (1 row)
 
 drop view vw_ord;
-create temporary view vw_ord as select * from table(unnest(array[10,20],array['foo','bar'],array[1.0])) as z(a,b,c);
+create temporary view vw_ord as select * from rows from(unnest(array[10,20],array['foo','bar'],array[1.0])) as z(a,b,c);
 select * from vw_ord;
  a  |  b  |  c  
 ----+-----+-----
@@ -190,7 +190,7 @@ select definition from pg_views where viewname='vw_ord';
 (1 row)
 
 drop view vw_ord;
-create temporary view vw_ord as select * from table(unnest(array[10,20],array['foo','bar']), generate_series(1,2)) as z(a,b,c);
+create temporary view vw_ord as select * from rows from(unnest(array[10,20],array['foo','bar']), generate_series(1,2)) as z(a,b,c);
 select * from vw_ord;
  a  |  b  | c 
 ----+-----+---
@@ -199,18 +199,18 @@ select * from vw_ord;
 (2 rows)
 
 select definition from pg_views where viewname='vw_ord';
-                                                    definition                                                    
-------------------------------------------------------------------------------------------------------------------
-  SELECT z.a,                                                                                                    +
-     z.b,                                                                                                        +
-     z.c                                                                                                         +
-    FROM TABLE(unnest(ARRAY[10, 20]), unnest(ARRAY['foo'::text, 'bar'::text]), generate_series(1, 2)) z(a, b, c);
+                                                      definition                                                      
+----------------------------------------------------------------------------------------------------------------------
+  SELECT z.a,                                                                                                        +
+     z.b,                                                                                                            +
+     z.c                                                                                                             +
+    FROM ROWS FROM(unnest(ARRAY[10, 20]), unnest(ARRAY['foo'::text, 'bar'::text]), generate_series(1, 2)) z(a, b, c);
 (1 row)
 
 drop view vw_ord;
 -- ordinality and multiple functions vs. rewind and reverse scan
 begin;
-declare foo scroll cursor for select * from table(generate_series(1,5),generate_series(1,2)) with ordinality as g(i,j,o);
+declare foo scroll cursor for select * from rows from(generate_series(1,5),generate_series(1,2)) with ordinality as g(i,j,o);
 fetch all from foo;
  i | j | o 
 ---+---+---
@@ -525,7 +525,7 @@ SELECT * FROM getfoo6(1) AS t1(fooid int, foosubid int, fooname text);
      1 |        1 | Joe
 (1 row)
 
-SELECT * FROM TABLE( getfoo6(1) AS (fooid int, foosubid int, fooname text) ) WITH ORDINALITY;
+SELECT * FROM ROWS FROM( getfoo6(1) AS (fooid int, foosubid int, fooname text) ) WITH ORDINALITY;
  fooid | foosubid | fooname | ordinality 
 -------+----------+---------+------------
      1 |        1 | Joe     |          1
@@ -541,7 +541,7 @@ SELECT * FROM vw_getfoo;
 
 DROP VIEW vw_getfoo;
 CREATE VIEW vw_getfoo AS
-  SELECT * FROM TABLE( getfoo6(1) AS (fooid int, foosubid int, fooname text) )
+  SELECT * FROM ROWS FROM( getfoo6(1) AS (fooid int, foosubid int, fooname text) )
                 WITH ORDINALITY;
 SELECT * FROM vw_getfoo;
  fooid | foosubid | fooname | ordinality 
@@ -559,7 +559,7 @@ SELECT * FROM getfoo7(1) AS t1(fooid int, foosubid int, fooname text);
      1 |        2 | Ed
 (2 rows)
 
-SELECT * FROM TABLE( getfoo7(1) AS (fooid int, foosubid int, fooname text) ) WITH ORDINALITY;
+SELECT * FROM ROWS FROM( getfoo7(1) AS (fooid int, foosubid int, fooname text) ) WITH ORDINALITY;
  fooid | foosubid | fooname | ordinality 
 -------+----------+---------+------------
      1 |        1 | Joe     |          1
@@ -577,7 +577,7 @@ SELECT * FROM vw_getfoo;
 
 DROP VIEW vw_getfoo;
 CREATE VIEW vw_getfoo AS
-  SELECT * FROM TABLE( getfoo7(1) AS (fooid int, foosubid int, fooname text) )
+  SELECT * FROM ROWS FROM( getfoo7(1) AS (fooid int, foosubid int, fooname text) )
                 WITH ORDINALITY;
 SELECT * FROM vw_getfoo;
  fooid | foosubid | fooname | ordinality 
@@ -648,7 +648,7 @@ SELECT * FROM vw_getfoo;
 
 DROP VIEW vw_getfoo;
 -- mix 'n match kinds, to exercise expandRTE and related logic
-select * from table(getfoo1(1),getfoo2(1),getfoo3(1),getfoo4(1),getfoo5(1),
+select * from rows from(getfoo1(1),getfoo2(1),getfoo3(1),getfoo4(1),getfoo5(1),
                     getfoo6(1) AS (fooid int, foosubid int, fooname text),
                     getfoo7(1) AS (fooid int, foosubid int, fooname text),
                     getfoo8(1),getfoo9(1))
@@ -659,7 +659,7 @@ select * from table(getfoo1(1),getfoo2(1),getfoo3(1),getfoo4(1),getfoo5(1),
    | 1 | Ed  |   |   |     | 1 | 2 | Ed  |   |   |     | 1 | 2 | Ed  |   |   |   |     | 2
 (2 rows)
 
-select * from table(getfoo9(1),getfoo8(1),
+select * from rows from(getfoo9(1),getfoo8(1),
                     getfoo7(1) AS (fooid int, foosubid int, fooname text),
                     getfoo6(1) AS (fooid int, foosubid int, fooname text),
                     getfoo5(1),getfoo4(1),getfoo3(1),getfoo2(1),getfoo1(1))
@@ -671,7 +671,7 @@ select * from table(getfoo9(1),getfoo8(1),
 (2 rows)
 
 create temporary view vw_foo as
-  select * from table(getfoo9(1),
+  select * from rows from(getfoo9(1),
                       getfoo7(1) AS (fooid int, foosubid int, fooname text),
                       getfoo1(1))
                 with ordinality as t1(a,b,c,d,e,f,g,n);
@@ -683,17 +683,17 @@ select * from vw_foo;
 (2 rows)
 
 select pg_get_viewdef('vw_foo');
-                                                                  pg_get_viewdef                                                                  
---------------------------------------------------------------------------------------------------------------------------------------------------
-  SELECT t1.a,                                                                                                                                   +
-     t1.b,                                                                                                                                       +
-     t1.c,                                                                                                                                       +
-     t1.d,                                                                                                                                       +
-     t1.e,                                                                                                                                       +
-     t1.f,                                                                                                                                       +
-     t1.g,                                                                                                                                       +
-     t1.n                                                                                                                                        +
-    FROM TABLE(getfoo9(1), getfoo7(1) AS (fooid integer, foosubid integer, fooname text), getfoo1(1)) WITH ORDINALITY t1(a, b, c, d, e, f, g, n);
+                                                                    pg_get_viewdef                                                                    
+------------------------------------------------------------------------------------------------------------------------------------------------------
+  SELECT t1.a,                                                                                                                                       +
+     t1.b,                                                                                                                                           +
+     t1.c,                                                                                                                                           +
+     t1.d,                                                                                                                                           +
+     t1.e,                                                                                                                                           +
+     t1.f,                                                                                                                                           +
+     t1.g,                                                                                                                                           +
+     t1.n                                                                                                                                            +
+    FROM ROWS FROM(getfoo9(1), getfoo7(1) AS (fooid integer, foosubid integer, fooname text), getfoo1(1)) WITH ORDINALITY t1(a, b, c, d, e, f, g, n);
 (1 row)
 
 drop view vw_foo;
@@ -805,7 +805,7 @@ SELECT setval('foo_rescan_seq1',1,false),setval('foo_rescan_seq2',1,false);
       1 |      1
 (1 row)
 
-SELECT * FROM (VALUES (1),(2),(3)) v(r) LEFT JOIN TABLE( foo_sql(11,13), foo_mat(11,13) ) WITH ORDINALITY AS f(i1,s1,i2,s2,o) ON (r+i1+i2)<100;
+SELECT * FROM (VALUES (1),(2),(3)) v(r) LEFT JOIN ROWS FROM( foo_sql(11,13), foo_mat(11,13) ) WITH ORDINALITY AS f(i1,s1,i2,s2,o) ON (r+i1+i2)<100;
  r | i1 | s1 | i2 | s2 | o 
 ---+----+----+----+----+---
  1 | 11 |  1 | 11 |  1 | 1
@@ -1103,7 +1103,7 @@ SELECT setval('foo_rescan_seq1',1,false),setval('foo_rescan_seq2',1,false);
       1 |      1
 (1 row)
 
-SELECT * FROM (VALUES (1),(2),(3)) v(r), TABLE( foo_sql(11,11), foo_mat(10+r,13) );
+SELECT * FROM (VALUES (1),(2),(3)) v(r), ROWS FROM( foo_sql(11,11), foo_mat(10+r,13) );
  r | i  | s | i  | s 
 ---+----+---+----+---
  1 | 11 | 1 | 11 | 1
@@ -1120,7 +1120,7 @@ SELECT setval('foo_rescan_seq1',1,false),setval('foo_rescan_seq2',1,false);
       1 |      1
 (1 row)
 
-SELECT * FROM (VALUES (1),(2),(3)) v(r), TABLE( foo_sql(10+r,13), foo_mat(11,11) );
+SELECT * FROM (VALUES (1),(2),(3)) v(r), ROWS FROM( foo_sql(10+r,13), foo_mat(11,11) );
  r | i  | s | i  | s 
 ---+----+---+----+---
  1 | 11 | 1 | 11 | 1
@@ -1137,7 +1137,7 @@ SELECT setval('foo_rescan_seq1',1,false),setval('foo_rescan_seq2',1,false);
       1 |      1
 (1 row)
 
-SELECT * FROM (VALUES (1),(2),(3)) v(r), TABLE( foo_sql(10+r,13), foo_mat(10+r,13) );
+SELECT * FROM (VALUES (1),(2),(3)) v(r), ROWS FROM( foo_sql(10+r,13), foo_mat(10+r,13) );
  r | i  | s | i  | s 
 ---+----+---+----+---
  1 | 11 | 1 | 11 | 1
@@ -1154,7 +1154,7 @@ SELECT setval('foo_rescan_seq1',1,false),setval('foo_rescan_seq2',1,false);
       1 |      1
 (1 row)
 
-SELECT * FROM generate_series(1,2) r1, generate_series(r1,3) r2, TABLE( foo_sql(10+r1,13), foo_mat(10+r2,13) );
+SELECT * FROM generate_series(1,2) r1, generate_series(r1,3) r2, ROWS FROM( foo_sql(10+r1,13), foo_mat(10+r2,13) );
  r1 | r2 | i  | s  | i  | s 
 ----+----+----+----+----+---
   1 |  1 | 11 |  1 | 11 | 1
@@ -1905,14 +1905,14 @@ SELECT * FROM get_users() WITH ORDINALITY;   -- make sure ordinality copes
 (2 rows)
 
 -- multiple functions vs. dropped columns
-SELECT * FROM TABLE(generate_series(10,11), get_users()) WITH ORDINALITY;
+SELECT * FROM ROWS FROM(generate_series(10,11), get_users()) WITH ORDINALITY;
  generate_series | userid | seq | email  | moredrop | enabled | ordinality 
 -----------------+--------+-----+--------+----------+---------+------------
               10 | id     |   1 | email  |       11 | t       |          1
               11 | id2    |   2 | email2 |       12 | t       |          2
 (2 rows)
 
-SELECT * FROM TABLE(get_users(), generate_series(10,11)) WITH ORDINALITY;
+SELECT * FROM ROWS FROM(get_users(), generate_series(10,11)) WITH ORDINALITY;
  userid | seq | email  | moredrop | enabled | generate_series | ordinality 
 --------+-----+--------+----------+---------+-----------------+------------
  id     |   1 | email  |       11 | t       |              10 |          1
@@ -1921,7 +1921,7 @@ SELECT * FROM TABLE(get_users(), generate_series(10,11)) WITH ORDINALITY;
 
 -- check that we can cope with post-parsing changes in rowtypes
 create temp view usersview as
-SELECT * FROM TABLE(get_users(), generate_series(10,11)) WITH ORDINALITY;
+SELECT * FROM ROWS FROM(get_users(), generate_series(10,11)) WITH ORDINALITY;
 select * from usersview;
  userid | seq | email  | moredrop | enabled | generate_series | ordinality 
 --------+-----+--------+----------+---------+-----------------+------------

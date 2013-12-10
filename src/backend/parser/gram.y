@@ -406,7 +406,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 				a_expr b_expr c_expr AexprConst indirection_el
 				columnref in_expr having_clause func_table array_expr
 				ExclusionWhereClause
-%type <list>	func_table_item func_table_list opt_col_def_list
+%type <list>	rowsfrom_item rowsfrom_list opt_col_def_list
 %type <boolean> opt_ordinality
 %type <list>	ExclusionConstraintList ExclusionConstraintElem
 %type <list>	func_arg_list
@@ -9980,13 +9980,13 @@ relation_expr_opt_alias: relation_expr					%prec UMINUS
 
 /*
  * func_table represents a function invocation in a FROM list. It can be
- * a plain function call, like "foo(...)", or a TABLE expression with
- * one or more function calls, "TABLE (foo(...), bar(...))",
+ * a plain function call, like "foo(...)", or a ROWS FROM expression with
+ * one or more function calls, "ROWS FROM (foo(...), bar(...))",
  * optionally with WITH ORDINALITY attached.
- * In the TABLE syntax, a column definition list can be given for each
+ * In the ROWS FROM syntax, a column definition list can be given for each
  * function, for example:
- *     TABLE (foo() AS (foo_res_a text, foo_res_b text),
- *            bar() AS (bar_res_a text, bar_res_b text))
+ *     ROWS FROM (foo() AS (foo_res_a text, foo_res_b text),
+ *                bar() AS (bar_res_a text, bar_res_b text))
  * It's also possible to attach a column definition list to the RangeFunction
  * as a whole, but that's handled by the table_ref production.
  */
@@ -9995,29 +9995,30 @@ func_table: func_expr_windowless opt_ordinality
 					RangeFunction *n = makeNode(RangeFunction);
 					n->lateral = false;
 					n->ordinality = $2;
-					n->is_table = false;
+					n->is_rowsfrom = false;
 					n->functions = list_make1(list_make2($1, NIL));
 					/* alias and coldeflist are set by table_ref production */
 					$$ = (Node *) n;
 				}
-			| TABLE '(' func_table_list ')' opt_ordinality
+			| ROWS FROM '(' rowsfrom_list ')' opt_ordinality
 				{
 					RangeFunction *n = makeNode(RangeFunction);
 					n->lateral = false;
-					n->ordinality = $5;
-					n->is_table = true;
-					n->functions = $3;
+					n->ordinality = $6;
+					n->is_rowsfrom = true;
+					n->functions = $4;
 					/* alias and coldeflist are set by table_ref production */
 					$$ = (Node *) n;
 				}
 		;
 
-func_table_item: func_expr_windowless opt_col_def_list
+rowsfrom_item: func_expr_windowless opt_col_def_list
 				{ $$ = list_make2($1, $2); }
 		;
 
-func_table_list: func_table_item					{ $$ = list_make1($1); }
-			| func_table_list ',' func_table_item	{ $$ = lappend($1, $3); }
+rowsfrom_list:
+			rowsfrom_item						{ $$ = list_make1($1); }
+			| rowsfrom_list ',' rowsfrom_item	{ $$ = lappend($1, $3); }
 		;
 
 opt_col_def_list: AS '(' TableFuncElementList ')'	{ $$ = $3; }

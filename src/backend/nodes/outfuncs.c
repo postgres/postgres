@@ -2629,7 +2629,7 @@ _outRangeFunction(StringInfo str, const RangeFunction *node)
 
 	WRITE_BOOL_FIELD(lateral);
 	WRITE_BOOL_FIELD(ordinality);
-	WRITE_BOOL_FIELD(is_table);
+	WRITE_BOOL_FIELD(is_rowsfrom);
 	WRITE_NODE_FIELD(functions);
 	WRITE_NODE_FIELD(alias);
 	WRITE_NODE_FIELD(coldeflist);

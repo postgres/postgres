@@ -647,7 +647,7 @@ FROM (VALUES ('anne', 'smith'), ('bob', 'jones'), ('joe', 'blow'))
     </para>
 
     <para>
-     Table functions may also be combined using the <literal>TABLE</literal>
+     Table functions may also be combined using the <literal>ROWS FROM</>
      syntax, with the results returned in parallel columns; the number of
      result rows in this case is that of the largest function result, with
      smaller results padded with NULLs to match.
@@ -655,7 +655,7 @@ FROM (VALUES ('anne', 'smith'), ('bob', 'jones'), ('joe', 'blow'))
 
 <synopsis>
 <replaceable>function_call</replaceable> <optional>WITH ORDINALITY</optional> <optional><optional>AS</optional> <replaceable>table_alias</replaceable> <optional>(<replaceable>column_alias</replaceable> <optional>, ... </optional>)</optional></optional>
-TABLE( <replaceable>function_call</replaceable> <optional>, ... </optional> ) <optional>WITH ORDINALITY</optional> <optional><optional>AS</optional> <replaceable>table_alias</replaceable> <optional>(<replaceable>column_alias</replaceable> <optional>, ... </optional>)</optional></optional>
+ROWS FROM( <replaceable>function_call</replaceable> <optional>, ... </optional> ) <optional>WITH ORDINALITY</optional> <optional><optional>AS</optional> <replaceable>table_alias</replaceable> <optional>(<replaceable>column_alias</replaceable> <optional>, ... </optional>)</optional></optional>
 </synopsis>
 
     <para>
@@ -674,7 +674,7 @@ TABLE( <replaceable>function_call</replaceable> <optional>, ... </optional> ) <o
      any number of array parameters, and it returns a corresponding number of
      columns, as if <literal>UNNEST</literal>
      (<xref linkend="functions-array">) had been called on each parameter
-     separately and combined using the <literal>TABLE</literal> construct.
+     separately and combined using the <literal>ROWS FROM</literal> construct.
     </para>
 
 <synopsis>
@@ -683,7 +683,7 @@ UNNEST( <replaceable>array_expression</replaceable> <optional>, ... </optional> 
 
     <para>
      If no <replaceable>table_alias</replaceable> is specified, the function
-     name is used as the table name; in the case of a <literal>TABLE()</>
+     name is used as the table name; in the case of a <literal>ROWS FROM()</>
      construct, the first function's name is used.
     </para>
 
@@ -731,20 +731,20 @@ SELECT * FROM vw_getfoo;
 <synopsis>
 <replaceable>function_call</replaceable> <optional>AS</optional> <replaceable>alias</replaceable> (<replaceable>column_definition</replaceable> <optional>, ... </optional>)
 <replaceable>function_call</replaceable> AS <optional><replaceable>alias</replaceable></optional> (<replaceable>column_definition</replaceable> <optional>, ... </optional>)
-TABLE( ... <replaceable>function_call</replaceable> AS (<replaceable>column_definition</replaceable> <optional>, ... </optional>) <optional>, ... </optional> )
+ROWS FROM( ... <replaceable>function_call</replaceable> AS (<replaceable>column_definition</replaceable> <optional>, ... </optional>) <optional>, ... </optional> )
 </synopsis>
 
     <para>
-     When not using the <literal>TABLE()</> syntax,
+     When not using the <literal>ROWS FROM()</> syntax,
      the <replaceable>column_definition</replaceable> list replaces the column
      alias list that could otherwise be attached to the <literal>FROM</>
      item; the names in the column definitions serve as column aliases.
-     When using the <literal>TABLE()</> syntax,
+     When using the <literal>ROWS FROM()</> syntax,
      a <replaceable>column_definition</replaceable> list can be attached to
      each member function separately; or if there is only one member function
      and no <literal>WITH ORDINALITY</> clause,
      a <replaceable>column_definition</replaceable> list can be written in
-     place of a column alias list following <literal>TABLE()</>.
+     place of a column alias list following <literal>ROWS FROM()</>.
     </para>
 
     <para>

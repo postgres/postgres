@@ -56,7 +56,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replac
                 [ WITH ORDINALITY ] [ [ AS ] <replaceable class="parameter">alias</replaceable> [ ( <replaceable class="parameter">column_alias</replaceable> [, ...] ) ] ]
     [ LATERAL ] <replaceable class="parameter">function_name</replaceable> ( [ <replaceable class="parameter">argument</replaceable> [, ...] ] ) [ AS ] <replaceable class="parameter">alias</replaceable> ( <replaceable class="parameter">column_definition</replaceable> [, ...] )
     [ LATERAL ] <replaceable class="parameter">function_name</replaceable> ( [ <replaceable class="parameter">argument</replaceable> [, ...] ] ) AS ( <replaceable class="parameter">column_definition</replaceable> [, ...] )
-    [ LATERAL ] TABLE( <replaceable class="parameter">function_name</replaceable> ( [ <replaceable class="parameter">argument</replaceable> [, ...] ] ) [ AS ( <replaceable class="parameter">column_definition</replaceable> [, ...] ) ] [, ...] )
+    [ LATERAL ] ROWS FROM( <replaceable class="parameter">function_name</replaceable> ( [ <replaceable class="parameter">argument</replaceable> [, ...] ] ) [ AS ( <replaceable class="parameter">column_definition</replaceable> [, ...] ) ] [, ...] )
                 [ WITH ORDINALITY ] [ [ AS ] <replaceable class="parameter">alias</replaceable> [ ( <replaceable class="parameter">column_alias</replaceable> [, ...] ) ] ]
     <replaceable class="parameter">from_item</replaceable> [ NATURAL ] <replaceable class="parameter">join_type</replaceable> <replaceable class="parameter">from_item</replaceable> [ ON <replaceable class="parameter">join_condition</replaceable> | USING ( <replaceable class="parameter">join_column</replaceable> [, ...] ) ]
 
@@ -390,7 +390,7 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
        <para>
         Multiple function calls can be combined into a
         single <literal>FROM</>-clause item by surrounding them
-        with <literal>TABLE( ... )</>.  The output of such an item is the
+        with <literal>ROWS FROM( ... )</>.  The output of such an item is the
         concatenation of the first row from each function, then the second
         row from each function, etc.  If some of the functions produce fewer
         rows than others, NULLs are substituted for the missing data, so
@@ -410,18 +410,18 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
        </para>
 
        <para>
-        When using the <literal>TABLE( ... )</> syntax, if one of the
+        When using the <literal>ROWS FROM( ... )</> syntax, if one of the
         functions requires a column definition list, it's preferred to put
         the column definition list after the function call inside
-        <literal>TABLE( ... )</>.  A column definition list can be placed
-        after the <literal>TABLE( ... )</> construct only if there's just a
-        single function and no <literal>WITH ORDINALITY</> clause.
+        <literal>ROWS FROM( ... )</>.  A column definition list can be placed
+        after the <literal>ROWS FROM( ... )</> construct only if there's just
+        a single function and no <literal>WITH ORDINALITY</> clause.
        </para>
 
        <para>
         To use <literal>ORDINALITY</literal> together with a column definition
-        list, you must use the <literal>TABLE( ... )</> syntax and put the
-        column definition list inside <literal>TABLE( ... )</>.
+        list, you must use the <literal>ROWS FROM( ... )</> syntax and put the
+        column definition list inside <literal>ROWS FROM( ... )</>.
        </para>
       </listitem>
      </varlistentry>
@@ -1811,8 +1811,7 @@ SELECT distributors.* WHERE distributors.name = 'Westward';
    </para>
 
    <para>
-    Placing multiple function calls inside <literal>TABLE( ... )</> syntax is
-    also an extension of the SQL standard.
+    <literal>ROWS FROM( ... )</> is an extension of the SQL standard.
    </para>
   </refsect2>
 

@@ -2142,7 +2142,7 @@ _equalRangeFunction(const RangeFunction *a, const RangeFunction *b)
 {
 	COMPARE_SCALAR_FIELD(lateral);
 	COMPARE_SCALAR_FIELD(ordinality);
-	COMPARE_SCALAR_FIELD(is_table);
+	COMPARE_SCALAR_FIELD(is_rowsfrom);
 	COMPARE_NODE_FIELD(functions);
 	COMPARE_NODE_FIELD(alias);
 	COMPARE_NODE_FIELD(coldeflist);

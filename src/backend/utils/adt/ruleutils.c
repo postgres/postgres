@@ -8125,10 +8125,10 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 				rtfunc1 = (RangeTblFunction *) linitial(rte->functions);
 
 				/*
-				 * Omit TABLE() syntax if there's just one function, unless it
+				 * Omit ROWS FROM() syntax for just one function, unless it
 				 * has both a coldeflist and WITH ORDINALITY. If it has both,
-				 * we must use TABLE() syntax to avoid ambiguity about whether
-				 * the coldeflist includes the ordinality column.
+				 * we must use ROWS FROM() syntax to avoid ambiguity about
+				 * whether the coldeflist includes the ordinality column.
 				 */
 				if (list_length(rte->functions) == 1 &&
 					(rtfunc1->funccolnames == NIL || !rte->funcordinality))
@@ -8151,8 +8151,8 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 					 * XXX This is pretty ugly, since it makes not-terribly-
 					 * future-proof assumptions about what the parser would do
 					 * with the output; but the alternative is to emit our
-					 * nonstandard extended TABLE() notation for what might
-					 * have been a perfectly spec-compliant multi-argument
+					 * nonstandard ROWS FROM() notation for what might have
+					 * been a perfectly spec-compliant multi-argument
 					 * UNNEST().
 					 */
 					all_unnest = true;
@@ -8189,7 +8189,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 					{
 						int			funcno = 0;
 
-						appendStringInfoString(buf, "TABLE(");
+						appendStringInfoString(buf, "ROWS FROM(");
 						foreach(lc, rte->functions)
 						{
 							RangeTblFunction *rtfunc = (RangeTblFunction *) lfirst(lc);
@@ -8422,7 +8422,7 @@ get_column_alias_list(deparse_columns *colinfo, deparse_context *context)
  *
  * When printing a top-level coldeflist (which is syntactically also the
  * relation's column alias list), use column names from colinfo.  But when
- * printing a coldeflist embedded inside TABLE(), we prefer to use the
+ * printing a coldeflist embedded inside ROWS FROM(), we prefer to use the
  * original coldeflist's names, which are available in rtfunc->funccolnames.
  * Pass NULL for colinfo to select the latter behavior.
  *

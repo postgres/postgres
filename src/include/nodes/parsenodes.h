@@ -466,11 +466,11 @@ typedef struct RangeSubselect
  * RangeFunction - function call appearing in a FROM clause
  *
  * functions is a List because we use this to represent the construct
- * TABLE(func1(...), func2(...), ...).	Each element of this list is a
+ * ROWS FROM(func1(...), func2(...), ...).	Each element of this list is a
  * two-element sublist, the first element being the untransformed function
  * call tree, and the second element being a possibly-empty list of ColumnDef
  * nodes representing any columndef list attached to that function within the
- * TABLE() syntax.
+ * ROWS FROM() syntax.
  *
  * alias and coldeflist represent any alias and/or columndef list attached
  * at the top level.  (We disallow coldeflist appearing both here and
@@ -481,7 +481,7 @@ typedef struct RangeFunction
 	NodeTag		type;
 	bool		lateral;		/* does it have LATERAL prefix? */
 	bool		ordinality;		/* does it have WITH ORDINALITY suffix? */
-	bool		is_table;		/* is result of TABLE() syntax? */
+	bool		is_rowsfrom;	/* is result of ROWS FROM() syntax? */
 	List	   *functions;		/* per-function information, see above */
 	Alias	   *alias;			/* table alias & optional column aliases */
 	List	   *coldeflist;		/* list of ColumnDef nodes to describe result

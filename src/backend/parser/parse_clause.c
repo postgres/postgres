@@ -655,25 +655,25 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 	 * expansion) and no WITH ORDINALITY.  The reason for the latter
 	 * restriction is that it's not real clear whether the ordinality column
 	 * should be in the coldeflist, and users are too likely to make mistakes
-	 * in one direction or the other.  Putting the coldeflist inside TABLE()
-	 * is much clearer in this case.
+	 * in one direction or the other.  Putting the coldeflist inside ROWS
+	 * FROM() is much clearer in this case.
 	 */
 	if (r->coldeflist)
 	{
 		if (list_length(funcexprs) != 1)
 		{
-			if (r->is_table)
+			if (r->is_rowsfrom)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("TABLE() with multiple functions cannot have a column definition list"),
-						 errhint("Put a separate column definition list for each function inside TABLE()."),
+						 errmsg("ROWS FROM() with multiple functions cannot have a column definition list"),
+						 errhint("Put a separate column definition list for each function inside ROWS FROM()."),
 						 parser_errposition(pstate,
 									 exprLocation((Node *) r->coldeflist))));
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("UNNEST() with multiple arguments cannot have a column definition list"),
-						 errhint("Use separate UNNEST() calls inside TABLE(), and attach a column definition list to each one."),
+						 errhint("Use separate UNNEST() calls inside ROWS FROM(), and attach a column definition list to each one."),
 						 parser_errposition(pstate,
 									 exprLocation((Node *) r->coldeflist))));
 		}
@@ -681,7 +681,7 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("WITH ORDINALITY cannot be used with a column definition list"),
-				   errhint("Put the column definition list inside TABLE()."),
+				   errhint("Put the column definition list inside ROWS FROM()."),
 					 parser_errposition(pstate,
 									 exprLocation((Node *) r->coldeflist))));
 
