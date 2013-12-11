@@ -813,6 +813,33 @@ DROP SCHEMA testns CASCADE;
 RESET client_min_messages;
 
 
+-- Change owner of the schema & and rename of new schema owner
+\c -
+
+CREATE ROLE schemauser1 superuser login;
+CREATE ROLE schemauser2 superuser login;
+
+SET SESSION ROLE schemauser1;
+CREATE SCHEMA testns;
+
+SELECT nspname, rolname FROM pg_namespace, pg_roles WHERE pg_namespace.nspname = 'testns' AND pg_namespace.nspowner = pg_roles.oid;
+
+ALTER SCHEMA testns OWNER TO schemauser2;
+ALTER ROLE schemauser2 RENAME TO schemauser_renamed;
+SELECT nspname, rolname FROM pg_namespace, pg_roles WHERE pg_namespace.nspname = 'testns' AND pg_namespace.nspowner = pg_roles.oid;
+
+set session role schemauser_renamed;
+SET client_min_messages TO 'warning';
+DROP SCHEMA testns CASCADE;
+RESET client_min_messages;
+
+-- clean up
+\c -
+
+DROP ROLE schemauser1;
+DROP ROLE schemauser_renamed;
+
+
 -- test that dependent privileges are revoked (or not) properly
 \c -
 
