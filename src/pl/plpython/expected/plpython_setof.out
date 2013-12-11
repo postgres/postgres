@@ -124,8 +124,7 @@ SELECT test_setof_spi_in_iterator();
  World
 (4 rows)
 
--- setof function with an SPI result set (used to crash because of
--- memory management issues across multiple calls)
+-- returns set of named-composite-type tuples
 CREATE OR REPLACE FUNCTION get_user_records()
 RETURNS SETOF users
 AS $$
@@ -138,5 +137,38 @@ SELECT get_user_records();
  (john,doe,johnd,2)
  (rick,smith,slash,4)
  (willem,doe,w_doe,3)
+(4 rows)
+
+SELECT * FROM get_user_records();
+ fname  | lname | username | userid 
+--------+-------+----------+--------
+ jane   | doe   | j_doe    |      1
+ john   | doe   | johnd    |      2
+ rick   | smith | slash    |      4
+ willem | doe   | w_doe    |      3
+(4 rows)
+
+-- same, but returning set of RECORD
+CREATE OR REPLACE FUNCTION get_user_records2()
+RETURNS TABLE(fname text, lname text, username text, userid int)
+AS $$
+    return plpy.execute("SELECT * FROM users ORDER BY username")
+$$ LANGUAGE plpythonu;
+SELECT get_user_records2();
+  get_user_records2   
+----------------------
+ (jane,doe,j_doe,1)
+ (john,doe,johnd,2)
+ (rick,smith,slash,4)
+ (willem,doe,w_doe,3)
+(4 rows)
+
+SELECT * FROM get_user_records2();
+ fname  | lname | username | userid 
+--------+-------+----------+--------
+ jane   | doe   | j_doe    |      1
+ john   | doe   | johnd    |      2
+ rick   | smith | slash    |      4
+ willem | doe   | w_doe    |      3
 (4 rows)
 

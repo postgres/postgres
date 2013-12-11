@@ -64,9 +64,7 @@ SELECT test_setof_as_iterator(2, null);
 SELECT test_setof_spi_in_iterator();
 
 
--- setof function with an SPI result set (used to crash because of
--- memory management issues across multiple calls)
-
+-- returns set of named-composite-type tuples
 CREATE OR REPLACE FUNCTION get_user_records()
 RETURNS SETOF users
 AS $$
@@ -74,3 +72,14 @@ AS $$
 $$ LANGUAGE plpythonu;
 
 SELECT get_user_records();
+SELECT * FROM get_user_records();
+
+-- same, but returning set of RECORD
+CREATE OR REPLACE FUNCTION get_user_records2()
+RETURNS TABLE(fname text, lname text, username text, userid int)
+AS $$
+    return plpy.execute("SELECT * FROM users ORDER BY username")
+$$ LANGUAGE plpythonu;
+
+SELECT get_user_records2();
+SELECT * FROM get_user_records2();
