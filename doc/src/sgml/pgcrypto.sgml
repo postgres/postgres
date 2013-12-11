@@ -305,7 +305,7 @@ gen_salt(type text [, iter_count integer ]) returns text
 
    <table id="pgcrypto-hash-speed-table">
     <title>Hash Algorithm Speeds</title>
-    <tgroup cols="4">
+    <tgroup cols="5">
      <thead>
       <row>
        <entry>Algorithm</entry>
