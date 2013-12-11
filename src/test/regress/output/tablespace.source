@@ -72,6 +72,14 @@ ERROR:  tablespace "nosuchspace" does not exist
 -- Fail, not empty
 DROP TABLESPACE testspace;
 ERROR:  tablespace "testspace" is not empty
+CREATE ROLE tablespace_testuser1 login;
+CREATE ROLE tablespace_testuser2 login;
+ALTER TABLESPACE testspace OWNER TO tablespace_testuser1;
+SET SESSION ROLE tablespace_testuser2;
+CREATE TABLE tablespace_table (i int) TABLESPACE testspace; -- fail
+ERROR:  permission denied for tablespace testspace
+\c -
+ALTER TABLESPACE testspace RENAME TO testspace_renamed;
 DROP SCHEMA testschema CASCADE;
 NOTICE:  drop cascades to 4 other objects
 DETAIL:  drop cascades to table testschema.foo
@@ -79,4 +87,6 @@ drop cascades to table testschema.asselect
 drop cascades to table testschema.asexecute
 drop cascades to table testschema.atable
 -- Should succeed
-DROP TABLESPACE testspace;
+DROP TABLESPACE testspace_renamed;
+DROP ROLE tablespace_testuser1;
+DROP ROLE tablespace_testuser2;

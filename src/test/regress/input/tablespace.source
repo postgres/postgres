@@ -54,7 +54,22 @@ CREATE TABLE bar (i int) TABLESPACE nosuchspace;
 -- Fail, not empty
 DROP TABLESPACE testspace;
 
+CREATE ROLE tablespace_testuser1 login;
+CREATE ROLE tablespace_testuser2 login;
+
+ALTER TABLESPACE testspace OWNER TO tablespace_testuser1;
+
+SET SESSION ROLE tablespace_testuser2;
+CREATE TABLE tablespace_table (i int) TABLESPACE testspace; -- fail
+
+\c -
+
+ALTER TABLESPACE testspace RENAME TO testspace_renamed;
+
 DROP SCHEMA testschema CASCADE;
 
 -- Should succeed
-DROP TABLESPACE testspace;
+DROP TABLESPACE testspace_renamed;
+
+DROP ROLE tablespace_testuser1;
+DROP ROLE tablespace_testuser2;
