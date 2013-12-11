@@ -6638,7 +6638,6 @@ ExtractReplicaIdentity(Relation relation, HeapTuple tp, bool key_changed, bool *
 	TupleDesc	idx_desc;
 	char		replident = relation->rd_rel->relreplident;
 	HeapTuple	key_tuple = NULL;
-	bool		copy_oid = false;
 	bool		nulls[MaxHeapAttributeNumber];
 	Datum		values[MaxHeapAttributeNumber];
 	int			natt;
@@ -6697,20 +6696,30 @@ ExtractReplicaIdentity(Relation relation, HeapTuple tp, bool key_changed, bool *
 	{
 		int attno = idx_rel->rd_index->indkey.values[natt];
 
-		if (attno == ObjectIdAttributeNumber)
-			copy_oid = true;
-		else if (attno < 0)
+		if (attno < 0)
+		{
+			/*
+			 * The OID column can appear in an index definition, but that's
+			 * OK, becuse we always copy the OID if present (see below).
+			 * Other system columns may not.
+			 */
+			if (attno == ObjectIdAttributeNumber)
+				continue;
 			elog(ERROR, "system column in index");
-		else
-			nulls[attno - 1] = false;
+		}
+		nulls[attno - 1] = false;
 	}
 
 	key_tuple = heap_form_tuple(desc, values, nulls);
 	*copy = true;
 	RelationClose(idx_rel);
 
-	/* XXX: we could also do this unconditionally, the space is used anyway */
-	if (copy_oid)
+	/*
+	 * Always copy oids if the table has them, even if not included in the
+	 * index. The space in the logged tuple is used anyway, so there's little
+	 * point in not including the information.
+	 */
+	if (relation->rd_rel->relhasoids)
 		HeapTupleSetOid(key_tuple, HeapTupleGetOid(tp));
 
 	/*
