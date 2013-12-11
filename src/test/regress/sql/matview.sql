@@ -121,7 +121,7 @@ CREATE INDEX hogeviewidx ON hogeview (i);
 DELETE FROM hoge;
 REFRESH MATERIALIZED VIEW hogeview;
 SELECT * FROM hogeview WHERE i < 10;
-VACUUM ANALYZE;
+VACUUM ANALYZE hogeview;
 SELECT * FROM hogeview WHERE i < 10;
 DROP TABLE hoge CASCADE;
 

@@ -377,7 +377,7 @@ SELECT * FROM hogeview WHERE i < 10;
 ---
 (0 rows)
 
-VACUUM ANALYZE;
+VACUUM ANALYZE hogeview;
 SELECT * FROM hogeview WHERE i < 10;
  i 
 ---
