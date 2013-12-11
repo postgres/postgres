@@ -21,6 +21,7 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "commands/event_trigger.h"
 #include "commands/trigger.h"
 #include "executor/spi.h"
 #include "funcapi.h"
@@ -254,10 +255,13 @@ static void set_interp_require(bool trusted);
 
 static Datum plperl_func_handler(PG_FUNCTION_ARGS);
 static Datum plperl_trigger_handler(PG_FUNCTION_ARGS);
+static void plperl_event_trigger_handler(PG_FUNCTION_ARGS);
 
 static void free_plperl_function(plperl_proc_desc *prodesc);
 
-static plperl_proc_desc *compile_plperl_function(Oid fn_oid, bool is_trigger);
+static plperl_proc_desc *compile_plperl_function(Oid fn_oid,
+												 bool is_trigger,
+												 bool is_event_trigger);
 
 static SV  *plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc);
 static SV  *plperl_hash_from_datum(Datum attr);
@@ -1610,6 +1614,23 @@ plperl_trigger_build_args(FunctionCallInfo fcinfo)
 }
 
 
+/* Set up the arguments for an event trigger call. */
+static SV  *
+plperl_event_trigger_build_args(FunctionCallInfo fcinfo)
+{
+	EventTriggerData *tdata;
+	HV		   *hv;
+
+	hv = newHV();
+
+	tdata = (EventTriggerData *) fcinfo->context;
+
+	hv_store_string(hv, "event", cstr2sv(tdata->event));
+	hv_store_string(hv, "tag", cstr2sv(tdata->tag));
+
+	return newRV_noinc((SV *) hv);
+}
+
 /* Set up the new tuple returned from a trigger. */
 
 static HeapTuple
@@ -1717,6 +1738,11 @@ plperl_call_handler(PG_FUNCTION_ARGS)
 		current_call_data = &this_call_data;
 		if (CALLED_AS_TRIGGER(fcinfo))
 			retval = PointerGetDatum(plperl_trigger_handler(fcinfo));
+		else if (CALLED_AS_EVENT_TRIGGER(fcinfo))
+		{
+			plperl_event_trigger_handler(fcinfo);
+			retval = (Datum) 0;
+		}
 		else
 			retval = plperl_func_handler(fcinfo);
 	}
@@ -1853,7 +1879,8 @@ plperl_validator(PG_FUNCTION_ARGS)
 	Oid		   *argtypes;
 	char	  **argnames;
 	char	   *argmodes;
-	bool		istrigger = false;
+	bool		is_trigger = false;
+	bool		is_event_trigger = false;
 	int			i;
 
 	/* Get the new function's pg_proc entry */
@@ -1865,13 +1892,15 @@ plperl_validator(PG_FUNCTION_ARGS)
 	functyptype = get_typtype(proc->prorettype);
 
 	/* Disallow pseudotype result */
-	/* except for TRIGGER, RECORD, or VOID */
+	/* except for TRIGGER, EVTTRIGGER, RECORD, or VOID */
 	if (functyptype == TYPTYPE_PSEUDO)
 	{
 		/* we assume OPAQUE with no arguments means a trigger */
 		if (proc->prorettype == TRIGGEROID ||
 			(proc->prorettype == OPAQUEOID && proc->pronargs == 0))
-			istrigger = true;
+			is_trigger = true;
+		else if (proc->prorettype == EVTTRIGGEROID)
+			is_event_trigger = true;
 		else if (proc->prorettype != RECORDOID &&
 				 proc->prorettype != VOIDOID)
 			ereport(ERROR,
@@ -1898,7 +1927,7 @@ plperl_validator(PG_FUNCTION_ARGS)
 	/* Postpone body checks if !check_function_bodies */
 	if (check_function_bodies)
 	{
-		(void) compile_plperl_function(funcoid, istrigger);
+		(void) compile_plperl_function(funcoid, is_trigger, is_event_trigger);
 	}
 
 	/* the result of a validator is ignored */
@@ -2169,6 +2198,63 @@ plperl_call_perl_trigger_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo,
 }
 
 
+static void
+plperl_call_perl_event_trigger_func(plperl_proc_desc *desc,
+									FunctionCallInfo fcinfo,
+									SV *td)
+{
+	dSP;
+	SV		   *retval,
+			   *TDsv;
+	int			count;
+
+	ENTER;
+	SAVETMPS;
+
+	TDsv = get_sv("main::_TD", 0);
+	if (!TDsv)
+		elog(ERROR, "couldn't fetch $_TD");
+
+	save_item(TDsv);			/* local $_TD */
+	sv_setsv(TDsv, td);
+
+	PUSHMARK(sp);
+	PUTBACK;
+
+	/* Do NOT use G_KEEPERR here */
+	count = perl_call_sv(desc->reference, G_SCALAR | G_EVAL);
+
+	SPAGAIN;
+
+	if (count != 1)
+	{
+		PUTBACK;
+		FREETMPS;
+		LEAVE;
+		elog(ERROR, "didn't get a return item from trigger function");
+	}
+
+	if (SvTRUE(ERRSV))
+	{
+		(void) POPs;
+		PUTBACK;
+		FREETMPS;
+		LEAVE;
+		/* XXX need to find a way to assign an errcode here */
+		ereport(ERROR,
+				(errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV)))));
+	}
+
+	retval = newSVsv(POPs);
+	(void) retval;				/* silence compiler warning */
+
+	PUTBACK;
+	FREETMPS;
+	LEAVE;
+
+	return;
+}
+
 static Datum
 plperl_func_handler(PG_FUNCTION_ARGS)
 {
@@ -2181,7 +2267,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "could not connect to SPI manager");
 
-	prodesc = compile_plperl_function(fcinfo->flinfo->fn_oid, false);
+	prodesc = compile_plperl_function(fcinfo->flinfo->fn_oid, false, false);
 	current_call_data->prodesc = prodesc;
 	increment_prodesc_refcount(prodesc);
 
@@ -2295,7 +2381,7 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 		elog(ERROR, "could not connect to SPI manager");
 
 	/* Find or compile the function */
-	prodesc = compile_plperl_function(fcinfo->flinfo->fn_oid, true);
+	prodesc = compile_plperl_function(fcinfo->flinfo->fn_oid, true, false);
 	current_call_data->prodesc = prodesc;
 	increment_prodesc_refcount(prodesc);
 
@@ -2386,6 +2472,45 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 }
 
 
+static void
+plperl_event_trigger_handler(PG_FUNCTION_ARGS)
+{
+	plperl_proc_desc *prodesc;
+	SV		   *svTD;
+	ErrorContextCallback pl_error_context;
+
+	/* Connect to SPI manager */
+	if (SPI_connect() != SPI_OK_CONNECT)
+		elog(ERROR, "could not connect to SPI manager");
+
+	/* Find or compile the function */
+	prodesc = compile_plperl_function(fcinfo->flinfo->fn_oid, false, true);
+	current_call_data->prodesc = prodesc;
+	increment_prodesc_refcount(prodesc);
+
+	/* Set a callback for error reporting */
+	pl_error_context.callback = plperl_exec_callback;
+	pl_error_context.previous = error_context_stack;
+	pl_error_context.arg = prodesc->proname;
+	error_context_stack = &pl_error_context;
+
+	activate_interpreter(prodesc->interp);
+
+	svTD = plperl_event_trigger_build_args(fcinfo);
+	plperl_call_perl_event_trigger_func(prodesc, fcinfo, svTD);
+
+	if (SPI_finish() != SPI_OK_FINISH)
+		elog(ERROR, "SPI_finish() failed");
+
+	/* Restore the previous error callback */
+	error_context_stack = pl_error_context.previous;
+
+	SvREFCNT_dec(svTD);
+
+	return;
+}
+
+
 static bool
 validate_plperl_function(plperl_proc_ptr *proc_ptr, HeapTuple procTup)
 {
@@ -2437,7 +2562,7 @@ free_plperl_function(plperl_proc_desc *prodesc)
 
 
 static plperl_proc_desc *
-compile_plperl_function(Oid fn_oid, bool is_trigger)
+compile_plperl_function(Oid fn_oid, bool is_trigger, bool is_event_trigger)
 {
 	HeapTuple	procTup;
 	Form_pg_proc procStruct;
@@ -2543,7 +2668,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 		 * Get the required information for input conversion of the
 		 * return value.
 		 ************************************************************/
-		if (!is_trigger)
+		if (!is_trigger && !is_event_trigger)
 		{
 			typeTup =
 				SearchSysCache1(TYPEOID,
@@ -2562,7 +2687,8 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 				if (procStruct->prorettype == VOIDOID ||
 					procStruct->prorettype == RECORDOID)
 					 /* okay */ ;
-				else if (procStruct->prorettype == TRIGGEROID)
+				else if (procStruct->prorettype == TRIGGEROID ||
+						 procStruct->prorettype == EVTTRIGGEROID)
 				{
 					free_plperl_function(prodesc);
 					ereport(ERROR,
@@ -2598,7 +2724,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 		 * Get the required information for output conversion
 		 * of all procedure arguments
 		 ************************************************************/
-		if (!is_trigger)
+		if (!is_trigger && !is_event_trigger)
 		{
 			prodesc->nargs = procStruct->pronargs;
 			for (i = 0; i < prodesc->nargs; i++)

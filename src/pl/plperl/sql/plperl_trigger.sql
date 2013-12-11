@@ -169,3 +169,23 @@ CREATE FUNCTION direct_trigger() RETURNS trigger AS $$
 $$ LANGUAGE plperl;
 
 SELECT direct_trigger();
+
+-- test plperl command triggers
+create or replace function perlsnitch() returns event_trigger language plperl as $$
+  elog(NOTICE, "perlsnitch: " . $_TD->{event} . " " . $_TD->{tag} . " ");
+$$;
+
+create event trigger perl_a_snitch on ddl_command_start
+   execute procedure perlsnitch();
+create event trigger perl_b_snitch on ddl_command_end
+   execute procedure perlsnitch();
+
+create or replace function foobar() returns int language sql as $$select 1;$$;
+alter function foobar() cost 77;
+drop function foobar();
+
+create table foo();
+drop table foo;
+
+drop event trigger perl_a_snitch;
+drop event trigger perl_b_snitch;

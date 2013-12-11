@@ -309,3 +309,38 @@ $$ LANGUAGE plperl;
 SELECT direct_trigger();
 ERROR:  trigger functions can only be called as triggers
 CONTEXT:  compilation of PL/Perl function "direct_trigger"
+-- test plperl command triggers
+create or replace function perlsnitch() returns event_trigger language plperl as $$
+  elog(NOTICE, "perlsnitch: " . $_TD->{event} . " " . $_TD->{tag} . " ");
+$$;
+create event trigger perl_a_snitch on ddl_command_start
+   execute procedure perlsnitch();
+create event trigger perl_b_snitch on ddl_command_end
+   execute procedure perlsnitch();
+create or replace function foobar() returns int language sql as $$select 1;$$;
+NOTICE:  perlsnitch: ddl_command_start CREATE FUNCTION 
+CONTEXT:  PL/Perl function "perlsnitch"
+NOTICE:  perlsnitch: ddl_command_end CREATE FUNCTION 
+CONTEXT:  PL/Perl function "perlsnitch"
+alter function foobar() cost 77;
+NOTICE:  perlsnitch: ddl_command_start ALTER FUNCTION 
+CONTEXT:  PL/Perl function "perlsnitch"
+NOTICE:  perlsnitch: ddl_command_end ALTER FUNCTION 
+CONTEXT:  PL/Perl function "perlsnitch"
+drop function foobar();
+NOTICE:  perlsnitch: ddl_command_start DROP FUNCTION 
+CONTEXT:  PL/Perl function "perlsnitch"
+NOTICE:  perlsnitch: ddl_command_end DROP FUNCTION 
+CONTEXT:  PL/Perl function "perlsnitch"
+create table foo();
+NOTICE:  perlsnitch: ddl_command_start CREATE TABLE 
+CONTEXT:  PL/Perl function "perlsnitch"
+NOTICE:  perlsnitch: ddl_command_end CREATE TABLE 
+CONTEXT:  PL/Perl function "perlsnitch"
+drop table foo;
+NOTICE:  perlsnitch: ddl_command_start DROP TABLE 
+CONTEXT:  PL/Perl function "perlsnitch"
+NOTICE:  perlsnitch: ddl_command_end DROP TABLE 
+CONTEXT:  PL/Perl function "perlsnitch"
+drop event trigger perl_a_snitch;
+drop event trigger perl_b_snitch;

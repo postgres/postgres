@@ -1211,6 +1211,56 @@ CREATE TRIGGER test_valid_id_trig
   </para>
  </sect1>
 
+ <sect1 id="plperl-event-triggers">
+  <title>PL/Perl Event Triggers</title>
+
+  <para>
+   PL/Perl can be used to write event trigger functions.  In an event trigger
+   function, the hash reference <varname>$_TD</varname> contains information
+   about the current trigger event.  <varname>$_TD</> is a global variable,
+   which gets a separate local value for each invocation of the trigger.  The
+   fields of the <varname>$_TD</varname> hash reference are:
+
+   <variablelist>
+    <varlistentry>
+     <term><literal>$_TD-&gt;{event}</literal></term>
+     <listitem>
+      <para>
+       The name of the event the trigger is fired for.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>$_TD-&gt;{tag}</literal></term>
+     <listitem>
+      <para>
+       The command tag for which the trigger is fired.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+
+  <para>
+   The return value of the trigger procedure is ignored.
+  </para>
+
+  <para>
+   Here is an example of an event trigger function, illustrating some of the
+   above:
+<programlisting>
+CREATE OR REPLACE FUNCTION perlsnitch() RETURNS event_trigger AS $$
+  elog(NOTICE, "perlsnitch: " . $_TD->{event} . " " . $_TD->{tag} . " ");
+$$ LANGUAGE plperl;
+
+CREATE EVENT TRIGGER perl_a_snitch
+    ON ddl_command_start
+    EXECUTE PROCEDURE perlsnitch();
+</programlisting>
+  </para>
+ </sect1>
+
  <sect1 id="plperl-under-the-hood">
   <title>PL/Perl Under the Hood</title>
 
