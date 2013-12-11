@@ -896,7 +896,7 @@ SELECT count(*) FROM dupindexcols
 -- Check ordering of =ANY indexqual results (bug in 9.2.0)
 --
 
-vacuum analyze tenk1;		-- ensure we get consistent plans here
+vacuum tenk1;		-- ensure we get consistent plans here
 
 explain (costs off)
 SELECT unique1 FROM tenk1

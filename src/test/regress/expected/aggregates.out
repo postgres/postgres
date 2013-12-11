@@ -445,7 +445,6 @@ FROM bool_test;
 -- Test cases that should be optimized into indexscans instead of
 -- the generic aggregate implementation.
 --
-analyze tenk1;		-- ensure we get consistent plans here
 -- Basic cases
 explain (costs off)
   select min(unique1) from tenk1;
