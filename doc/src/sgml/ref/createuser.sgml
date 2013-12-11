@@ -131,6 +131,19 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-g <replaceable class="parameter">role</replaceable></></term>
+      <term><option>--role=<replaceable class="parameter">role</replaceable></></term>
+      <listitem>
+       <para>
+         Indicates role to which this role will be added immediately as a new
+         member. Multiple roles to which this role will be added as a member
+         can be specified by writing multiple
+         <option>-g</> switches.
+         </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-i</></term>
       <term><option>--inherit</></term>
       <listitem>
