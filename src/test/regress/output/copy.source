@@ -34,6 +34,29 @@ COPY bt_txt_heap FROM '@abs_srcdir@/data/desc.data';
 COPY bt_f8_heap FROM '@abs_srcdir@/data/hash.data';
 COPY array_op_test FROM '@abs_srcdir@/data/array.data';
 COPY array_index_op_test FROM '@abs_srcdir@/data/array.data';
+-- analyze all the data we just loaded, to ensure plan consistency
+-- in later tests
+ANALYZE aggtest;
+ANALYZE onek;
+ANALYZE tenk1;
+ANALYZE slow_emp4000;
+ANALYZE person;
+ANALYZE emp;
+ANALYZE student;
+ANALYZE stud_emp;
+ANALYZE road;
+ANALYZE real_city;
+ANALYZE hash_i4_heap;
+ANALYZE hash_name_heap;
+ANALYZE hash_txt_heap;
+ANALYZE hash_f8_heap;
+ANALYZE test_tsvector;
+ANALYZE bt_i4_heap;
+ANALYZE bt_name_heap;
+ANALYZE bt_txt_heap;
+ANALYZE bt_f8_heap;
+ANALYZE array_op_test;
+ANALYZE array_index_op_test;
 --- test copying in CSV mode with various styles
 --- of embedded line ending characters
 create temp table copytest (
