@@ -3532,6 +3532,12 @@ ATRewriteTables(List **wqueue, LOCKMODE lockmode)
 						 errmsg("cannot rewrite system relation \"%s\"",
 								RelationGetRelationName(OldHeap))));
 
+			if (RelationIsUsedAsCatalogTable(OldHeap))
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot rewrite table \"%s\" used as a catalog table",
+								RelationGetRelationName(OldHeap))));
+
 			/*
 			 * Don't allow rewrite on temp tables of other backends ... their
 			 * local buffer manager is not going to cope.

@@ -63,6 +63,14 @@ static relopt_bool boolRelOpts[] =
 	},
 	{
 		{
+			"user_catalog_table",
+			"Declare a table as an additional catalog table, e.g. for the purpose of logical replication",
+			RELOPT_KIND_HEAP
+		},
+		false
+	},
+	{
+		{
 			"fastupdate",
 			"Enables \"fast update\" feature for this GIN index",
 			RELOPT_KIND_GIN
@@ -1166,6 +1174,8 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 		offsetof(StdRdOptions, security_barrier)},
 		{"check_option", RELOPT_TYPE_STRING,
 		offsetof(StdRdOptions, check_option_offset)},
+		{"user_catalog_table", RELOPT_TYPE_BOOL,
+		 offsetof(StdRdOptions, user_catalog_table)}
 	};
 
 	options = parseRelOptions(reloptions, validate, kind, &numoptions);

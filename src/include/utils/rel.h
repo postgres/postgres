@@ -217,6 +217,7 @@ typedef struct StdRdOptions
 	AutoVacOpts autovacuum;		/* autovacuum-related options */
 	bool		security_barrier;		/* for views */
 	int			check_option_offset;	/* for views */
+	bool		user_catalog_table;		/* use as an additional catalog relation */
 } StdRdOptions;
 
 #define HEAP_MIN_FILLFACTOR			10
@@ -284,6 +285,15 @@ typedef struct StdRdOptions
 	 strcmp((char *) (relation)->rd_options +								\
 			((StdRdOptions *) (relation)->rd_options)->check_option_offset,	\
 			"cascaded") == 0 : false)
+
+/*
+ * RelationIsUsedAsCatalogTable
+ *		Returns whether the relation should be treated as a catalog table
+ *      from the pov of logical decoding.
+ */
+#define RelationIsUsedAsCatalogTable(relation)	\
+	((relation)->rd_options ?				\
+	 ((StdRdOptions *) (relation)->rd_options)->user_catalog_table : false)
 
 /*
  * RelationIsValid
@@ -462,7 +472,7 @@ typedef struct StdRdOptions
 #define RelationIsAccessibleInLogicalDecoding(relation) \
 	(XLogLogicalInfoActive() && \
 	 RelationNeedsWAL(relation) && \
-	 IsCatalogRelation(relation))
+	 (IsCatalogRelation(relation) || RelationIsUsedAsCatalogTable(relation)))
 
 /*
  * RelationIsLogicallyLogged
@@ -471,7 +481,9 @@ typedef struct StdRdOptions
  *
  * We don't log information for unlogged tables (since they don't WAL log
  * anyway) and for system tables (their content is hard to make sense of, and
- * it would complicate decoding slightly for little gain).
+ * it would complicate decoding slightly for little gain). Note that we *do*
+ * log information for user defined catalog tables since they presumably are
+ * interesting to the user...
  */
 #define RelationIsLogicallyLogged(relation) \
 	(XLogLogicalInfoActive() && \
