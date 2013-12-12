@@ -177,9 +177,10 @@ PostgreSQL documentation
   <para>
    The <option>-n</> (no operation) option instructs
    <command>pg_resetxlog</command> to print the values reconstructed from
-   <filename>pg_control</> and then exit without modifying anything.
-   This is mainly a debugging tool, but can be useful as a sanity check
-   before allowing <command>pg_resetxlog</command> to proceed for real.
+   <filename>pg_control</> and values about to be changed, and then exit
+   without modifying anything. This is mainly a debugging tool, but can be
+   useful as a sanity check before allowing <command>pg_resetxlog</command>
+   to proceed for real.
   </para>
 
   <para>
