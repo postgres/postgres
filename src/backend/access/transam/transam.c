@@ -304,7 +304,7 @@ TransactionIdPrecedes(TransactionId id1, TransactionId id2)
 {
 	/*
 	 * If either ID is a permanent XID then we can just do unsigned
-	 * comparison.	If both are normal, do a modulo-2^31 comparison.
+	 * comparison.	If both are normal, do a modulo-2^32 comparison.
 	 */
 	int32		diff;
 
