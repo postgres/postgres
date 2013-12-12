@@ -22,8 +22,9 @@ EXPLAIN (costs off)
      QUERY PLAN      
 ---------------------
  HashAggregate
+   Group Key: type
    ->  Seq Scan on t
-(2 rows)
+(3 rows)
 
 CREATE MATERIALIZED VIEW tm AS SELECT type, sum(amt) AS totamt FROM t GROUP BY type WITH NO DATA;
 SELECT relispopulated FROM pg_class WHERE oid = 'tm'::regclass;
@@ -59,8 +60,9 @@ EXPLAIN (costs off)
  Sort
    Sort Key: t.type
    ->  HashAggregate
+         Group Key: t.type
          ->  Seq Scan on t
-(4 rows)
+(5 rows)
 
 CREATE MATERIALIZED VIEW tvm AS SELECT * FROM tv ORDER BY type;
 SELECT * FROM tvm;
@@ -82,8 +84,9 @@ EXPLAIN (costs off)
 ---------------------------
  Aggregate
    ->  HashAggregate
+         Group Key: t.type
          ->  Seq Scan on t
-(3 rows)
+(4 rows)
 
 CREATE MATERIALIZED VIEW tvvm AS SELECT * FROM tvv;
 CREATE VIEW tvvmv AS SELECT * FROM tvvm;

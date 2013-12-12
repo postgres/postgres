@@ -395,13 +395,14 @@ PREPARE query(int, int) AS SELECT sum(bar) FROM test
 
 EXPLAIN ANALYZE EXECUTE query(100, 200);
 
-                                                       QUERY PLAN
--------------------------------------------------------------------------------------------------------------------------
- HashAggregate  (cost=39.53..39.53 rows=1 width=8) (actual time=0.661..0.672 rows=7 loops=1)
-   -&gt;  Index Scan using test_pkey on test  (cost=0.00..32.97 rows=1311 width=8) (actual time=0.050..0.395 rows=99 loops=1)
+                                                       QUERY PLAN                                                       
+------------------------------------------------------------------------------------------------------------------------
+ HashAggregate  (cost=9.54..9.54 rows=1 width=8) (actual time=0.156..0.161 rows=11 loops=1)
+   Group Key: foo
+   -&gt;  Index Scan using test_pkey on test  (cost=0.29..9.29 rows=50 width=8) (actual time=0.039..0.091 rows=99 loops=1)
          Index Cond: ((id &gt; $1) AND (id &lt; $2))
- Total runtime: 0.851 ms
-(4 rows)
+ Total runtime: 0.225 ms
+(5 rows)
 </programlisting>
   </para>
 

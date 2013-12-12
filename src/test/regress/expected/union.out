@@ -494,12 +494,13 @@ explain (costs off)
                     QUERY PLAN                     
 ---------------------------------------------------
  HashAggregate
+   Group Key: ((t1.a || t1.b))
    ->  Append
          ->  Index Scan using t1_ab_idx on t1
                Index Cond: ((a || b) = 'ab'::text)
          ->  Index Only Scan using t2_pkey on t2
                Index Cond: (ab = 'ab'::text)
-(6 rows)
+(7 rows)
 
 reset enable_seqscan;
 reset enable_indexscan;
@@ -552,17 +553,18 @@ SELECT * FROM
    SELECT 2 AS t, 4 AS x) ss
 WHERE x < 4
 ORDER BY x;
-           QUERY PLAN           
---------------------------------
+                       QUERY PLAN                       
+--------------------------------------------------------
  Sort
    Sort Key: ss.x
    ->  Subquery Scan on ss
          Filter: (ss.x < 4)
          ->  HashAggregate
+               Group Key: (1), (generate_series(1, 10))
                ->  Append
                      ->  Result
                      ->  Result
-(8 rows)
+(9 rows)
 
 SELECT * FROM
   (SELECT 1 AS t, generate_series(1,10) AS x

@@ -659,12 +659,13 @@ explain (costs off)
                              QUERY PLAN                              
 ---------------------------------------------------------------------
  HashAggregate
+   Group Key: $0
    InitPlan 1 (returns $0)
      ->  Limit
            ->  Index Only Scan Backward using tenk1_unique2 on tenk1
                  Index Cond: (unique2 IS NOT NULL)
    ->  Result
-(6 rows)
+(7 rows)
 
 select distinct max(unique2) from tenk1;
  max  
@@ -806,6 +807,7 @@ explain (costs off)
                                           QUERY PLAN                                          
 ----------------------------------------------------------------------------------------------
  HashAggregate
+   Group Key: $0, $1
    InitPlan 1 (returns $0)
      ->  Limit
            ->  Merge Append
@@ -831,7 +833,7 @@ explain (costs off)
                  ->  Index Only Scan Backward using minmaxtest3i on minmaxtest3 minmaxtest3_1
                        Index Cond: (f1 IS NOT NULL)
    ->  Result
-(26 rows)
+(27 rows)
 
 select distinct min(f1), max(f1) from minmaxtest;
  min | max 

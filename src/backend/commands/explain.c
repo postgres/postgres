@@ -76,9 +76,13 @@ static void show_sort_keys(SortState *sortstate, List *ancestors,
 			   ExplainState *es);
 static void show_merge_append_keys(MergeAppendState *mstate, List *ancestors,
 					   ExplainState *es);
-static void show_sort_keys_common(PlanState *planstate,
-					  int nkeys, AttrNumber *keycols,
-					  List *ancestors, ExplainState *es);
+static void show_agg_keys(AggState *astate, List *ancestors,
+			  ExplainState *es);
+static void show_group_keys(GroupState *gstate, List *ancestors,
+				ExplainState *es);
+static void show_sort_group_keys(PlanState *planstate, const char *qlabel,
+					 int nkeys, AttrNumber *keycols,
+					 List *ancestors, ExplainState *es);
 static void show_sort_info(SortState *sortstate, ExplainState *es);
 static void show_hash_info(HashState *hashstate, ExplainState *es);
 static void show_instrumentation_count(const char *qlabel, int which,
@@ -1341,7 +1345,14 @@ ExplainNode(PlanState *planstate, List *ancestors,
 										   planstate, es);
 			break;
 		case T_Agg:
+			show_agg_keys((AggState *) planstate, ancestors, es);
+			show_upper_qual(plan->qual, "Filter", planstate, ancestors, es);
+			if (plan->qual)
+				show_instrumentation_count("Rows Removed by Filter", 1,
+										   planstate, es);
+			break;
 		case T_Group:
+			show_group_keys((GroupState *) planstate, ancestors, es);
 			show_upper_qual(plan->qual, "Filter", planstate, ancestors, es);
 			if (plan->qual)
 				show_instrumentation_count("Rows Removed by Filter", 1,
@@ -1693,9 +1704,9 @@ show_sort_keys(SortState *sortstate, List *ancestors, ExplainState *es)
 {
 	Sort	   *plan = (Sort *) sortstate->ss.ps.plan;
 
-	show_sort_keys_common((PlanState *) sortstate,
-						  plan->numCols, plan->sortColIdx,
-						  ancestors, es);
+	show_sort_group_keys((PlanState *) sortstate, "Sort Key",
+						 plan->numCols, plan->sortColIdx,
+						 ancestors, es);
 }
 
 /*
@@ -1707,14 +1718,56 @@ show_merge_append_keys(MergeAppendState *mstate, List *ancestors,
 {
 	MergeAppend *plan = (MergeAppend *) mstate->ps.plan;
 
-	show_sort_keys_common((PlanState *) mstate,
-						  plan->numCols, plan->sortColIdx,
-						  ancestors, es);
+	show_sort_group_keys((PlanState *) mstate, "Sort Key",
+						 plan->numCols, plan->sortColIdx,
+						 ancestors, es);
 }
 
+/*
+ * Show the grouping keys for an Agg node.
+ */
 static void
-show_sort_keys_common(PlanState *planstate, int nkeys, AttrNumber *keycols,
-					  List *ancestors, ExplainState *es)
+show_agg_keys(AggState *astate, List *ancestors,
+			  ExplainState *es)
+{
+	Agg		   *plan = (Agg *) astate->ss.ps.plan;
+
+	if (plan->numCols > 0)
+	{
+		/* The key columns refer to the tlist of the child plan */
+		ancestors = lcons(astate, ancestors);
+		show_sort_group_keys(outerPlanState(astate), "Group Key",
+							 plan->numCols, plan->grpColIdx,
+							 ancestors, es);
+		ancestors = list_delete_first(ancestors);
+	}
+}
+
+/*
+ * Show the grouping keys for a Group node.
+ */
+static void
+show_group_keys(GroupState *gstate, List *ancestors,
+				ExplainState *es)
+{
+	Group	   *plan = (Group *) gstate->ss.ps.plan;
+
+	/* The key columns refer to the tlist of the child plan */
+	ancestors = lcons(gstate, ancestors);
+	show_sort_group_keys(outerPlanState(gstate), "Group Key",
+						 plan->numCols, plan->grpColIdx,
+						 ancestors, es);
+	ancestors = list_delete_first(ancestors);
+}
+
+/*
+ * Common code to show sort/group keys, which are represented in plan nodes
+ * as arrays of targetlist indexes
+ */
+static void
+show_sort_group_keys(PlanState *planstate, const char *qlabel,
+					 int nkeys, AttrNumber *keycols,
+					 List *ancestors, ExplainState *es)
 {
 	Plan	   *plan = planstate->plan;
 	List	   *context;
@@ -1748,7 +1801,7 @@ show_sort_keys_common(PlanState *planstate, int nkeys, AttrNumber *keycols,
 		result = lappend(result, exprstr);
 	}
 
-	ExplainPropertyList("Sort Key", result, es);
+	ExplainPropertyList(qlabel, result, es);
 }
 
 /*
