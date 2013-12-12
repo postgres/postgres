@@ -10,13 +10,13 @@
  * relations with finite memory space usage.  To do that, we set upper bounds
  * on the number of tuples and pages we will keep track of at once.
  *
- * We are willing to use at most maintenance_work_mem memory space to keep
- * track of dead tuples.  We initially allocate an array of TIDs of that size,
- * with an upper limit that depends on table size (this limit ensures we don't
- * allocate a huge area uselessly for vacuuming small tables).	If the array
- * threatens to overflow, we suspend the heap scan phase and perform a pass of
- * index cleanup and page compaction, then resume the heap scan with an empty
- * TID array.
+ * We are willing to use at most maintenance_work_mem (or perhaps
+ * autovacuum_work_mem) memory space to keep track of dead tuples.  We
+ * initially allocate an array of TIDs of that size, with an upper limit that
+ * depends on table size (this limit ensures we don't allocate a huge area
+ * uselessly for vacuuming small tables).  If the array threatens to overflow,
+ * we suspend the heap scan phase and perform a pass of index cleanup and page
+ * compaction, then resume the heap scan with an empty TID array.
  *
  * If we're processing a table with no indexes, we can just vacuum each page
  * as we go; there's no need to save up multiple tuples to minimize the number
@@ -1599,10 +1599,13 @@ static void
 lazy_space_alloc(LVRelStats *vacrelstats, BlockNumber relblocks)
 {
 	long		maxtuples;
+	int			vac_work_mem =  IsAutoVacuumWorkerProcess() &&
+									autovacuum_work_mem != -1 ?
+								autovacuum_work_mem : maintenance_work_mem;
 
 	if (vacrelstats->hasindex)
 	{
-		maxtuples = (maintenance_work_mem * 1024L) / sizeof(ItemPointerData);
+		maxtuples = (vac_work_mem * 1024L) / sizeof(ItemPointerData);
 		maxtuples = Min(maxtuples, INT_MAX);
 		maxtuples = Min(maxtuples, MaxAllocSize / sizeof(ItemPointerData));
 

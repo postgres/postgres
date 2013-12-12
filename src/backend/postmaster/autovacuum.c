@@ -110,6 +110,7 @@
  */
 bool		autovacuum_start_daemon = false;
 int			autovacuum_max_workers;
+int			autovacuum_work_mem = -1;
 int			autovacuum_naptime;
 int			autovacuum_vac_thresh;
 double		autovacuum_vac_scale;

@@ -1198,8 +1198,26 @@ include 'filename'
        </para>
        <para>
         Note that when autovacuum runs, up to
-        <xref linkend="guc-autovacuum-max-workers"> times this memory may be
-        allocated, so be careful not to set the default value too high.
+        <xref linkend="guc-autovacuum-max-workers"> times this memory
+        may be allocated, so be careful not to set the default value
+        too high.  It may be useful to control for this by separately
+        setting <xref linkend="guc-autovacuum-work-mem">.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-autovacuum-work-mem" xreflabel="autovacuum_work_mem">
+      <term><varname>autovacuum_work_mem</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>autovacuum_work_mem</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Specifies the maximum amount of memory to be used by each
+        autovacuum worker process.  It defaults to -1, indicating that
+        the value of <xref linkend="guc-maintenance-work-mem"> should
+        be used instead.  The setting has no effect on the behavior of
+        <command>VACUUM</command> when run in other contexts.
        </para>
       </listitem>
      </varlistentry>

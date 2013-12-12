@@ -124,6 +124,7 @@
 # actively intend to use prepared transactions.
 #work_mem = 1MB				# min 64kB
 #maintenance_work_mem = 16MB		# min 1MB
+#autovacuum_work_mem = -1		# min 1MB, or -1 to use maintenance_work_mem
 #max_stack_depth = 2MB			# min 100kB
 #dynamic_shared_memory_type = posix # the default is the first option
 					# supported by the operating system:

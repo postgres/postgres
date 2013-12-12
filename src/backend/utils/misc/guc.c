@@ -194,6 +194,7 @@ static const char *show_tcp_keepalives_count(void);
 static bool check_maxconnections(int *newval, void **extra, GucSource source);
 static bool check_max_worker_processes(int *newval, void **extra, GucSource source);
 static bool check_autovacuum_max_workers(int *newval, void **extra, GucSource source);
+static bool check_autovacuum_work_mem(int *newval, void **extra, GucSource source);
 static bool check_effective_io_concurrency(int *newval, void **extra, GucSource source);
 static void assign_effective_io_concurrency(int newval, void *extra);
 static void assign_pgstat_temp_directory(const char *newval, void *extra);
@@ -2355,6 +2356,17 @@ static struct config_int ConfigureNamesInt[] =
 		&autovacuum_max_workers,
 		3, 1, MAX_BACKENDS,
 		check_autovacuum_max_workers, NULL, NULL
+	},
+
+	{
+		{"autovacuum_work_mem", PGC_SIGHUP, RESOURCES_MEM,
+			gettext_noop("Sets the maximum memory to be used by each autovacuum worker process."),
+			NULL,
+			GUC_UNIT_KB
+		},
+		&autovacuum_work_mem,
+		-1, -1, MAX_KILOBYTES,
+		check_autovacuum_work_mem, NULL, NULL
 	},
 
 	{
@@ -8774,6 +8786,29 @@ check_autovacuum_max_workers(int *newval, void **extra, GucSource source)
 {
 	if (MaxConnections + *newval + 1 + max_worker_processes > MAX_BACKENDS)
 		return false;
+	return true;
+}
+
+static bool
+check_autovacuum_work_mem(int *newval, void **extra, GucSource source)
+{
+	/*
+	 * -1 indicates fallback.
+	 *
+	 * If we haven't yet changed the boot_val default of -1, just let it be.
+	 * Autovacuum will look to maintenance_work_mem instead.
+	 */
+	if (*newval == -1)
+		return true;
+
+	/*
+	 * We clamp manually-set values to at least 1MB.  Since
+	 * maintenance_work_mem is always set to at least this value, do the same
+	 * here.
+	 */
+	if (*newval < 1024)
+		*newval = 1024;
+
 	return true;
 }
 
