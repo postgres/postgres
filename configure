@@ -804,6 +804,7 @@ SHELL'
 ac_subst_files=''
 ac_user_opts='
 enable_option_checking
+with_extra_version
 with_template
 with_includes
 with_libraries
@@ -1507,6 +1508,8 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+  --with-extra-version=STRING
+                          append STRING to version
   --with-template=NAME    override operating system template
   --with-includes=DIRS    look for additional header files in DIRS
   --with-libraries=DIRS   look for additional libraries in DIRS
@@ -2047,16 +2050,44 @@ ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
 configure_args=$ac_configure_args
 
 
-
-cat >>confdefs.h <<_ACEOF
-#define PG_VERSION "$PACKAGE_VERSION"
-_ACEOF
-
 PG_MAJORVERSION=`expr "$PACKAGE_VERSION" : '\([0-9][0-9]*\.[0-9][0-9]*\)'`
 
 
 cat >>confdefs.h <<_ACEOF
 #define PG_MAJORVERSION "$PG_MAJORVERSION"
+_ACEOF
+
+
+
+
+
+# Check whether --with-extra-version was given.
+if test "${with_extra_version+set}" = set; then
+  withval=$with_extra_version;
+  case $withval in
+    yes)
+      { { $as_echo "$as_me:$LINENO: error: argument required for --with-extra-version option" >&5
+$as_echo "$as_me: error: argument required for --with-extra-version option" >&2;}
+   { (exit 1); exit 1; }; }
+      ;;
+    no)
+      { { $as_echo "$as_me:$LINENO: error: argument required for --with-extra-version option" >&5
+$as_echo "$as_me: error: argument required for --with-extra-version option" >&2;}
+   { (exit 1); exit 1; }; }
+      ;;
+    *)
+      PG_VERSION="$PACKAGE_VERSION$withval"
+      ;;
+  esac
+
+else
+  PG_VERSION="$PACKAGE_VERSION"
+fi
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define PG_VERSION "$PG_VERSION"
 _ACEOF
 
 
@@ -30284,7 +30315,7 @@ fi
 
 
 cat >>confdefs.h <<_ACEOF
-#define PG_VERSION_STR "PostgreSQL $PACKAGE_VERSION on $host, compiled by $cc_string, `expr $ac_cv_sizeof_void_p \* 8`-bit"
+#define PG_VERSION_STR "PostgreSQL $PG_VERSION on $host, compiled by $cc_string, `expr $ac_cv_sizeof_void_p \* 8`-bit"
 _ACEOF
 
 

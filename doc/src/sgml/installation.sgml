@@ -629,6 +629,19 @@ su - postgres
     <para>
      <variablelist>
       <varlistentry>
+       <term><option>--with-extra-version=<replaceable>STRING</></option></term>
+       <listitem>
+        <para>
+         Append <replaceable>STRING</> to the PostgreSQL version number.  You
+         can use this, for example, to mark binaries built from unreleased Git
+         snapshots or containing custom patches with an extra version string
+         such as a <command>git describe</command> identifier or a
+         distribution package release number.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
        <term><option>--with-includes=<replaceable>DIRECTORIES</></option></term>
        <listitem>
         <para>
