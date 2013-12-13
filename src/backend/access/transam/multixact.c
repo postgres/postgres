@@ -72,6 +72,7 @@
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
 #include "funcapi.h"
+#include "lib/ilist.h"
 #include "miscadmin.h"
 #include "pg_trace.h"
 #include "postmaster/autovacuum.h"
@@ -261,13 +262,15 @@ static MultiXactId *OldestVisibleMXactId;
  */
 typedef struct mXactCacheEnt
 {
-	struct mXactCacheEnt *next;
 	MultiXactId multi;
 	int			nmembers;
+	dlist_node	node;
 	MultiXactMember members[FLEXIBLE_ARRAY_MEMBER];
 } mXactCacheEnt;
 
-static mXactCacheEnt *MXactCache = NULL;
+#define MAX_CACHE_ENTRIES	256
+static dlist_head	MXactCache = DLIST_STATIC_INIT(MXactCache);
+static int			MXactCacheMembers = 0;
 static MemoryContext MXactContext = NULL;
 
 #ifdef MULTIXACT_DEBUG
@@ -1301,7 +1304,7 @@ mxactMemberComparator(const void *arg1, const void *arg2)
 static MultiXactId
 mXactCacheGetBySet(int nmembers, MultiXactMember *members)
 {
-	mXactCacheEnt *entry;
+	dlist_iter	iter;
 
 	debug_elog3(DEBUG2, "CacheGet: looking for %s",
 				mxid_to_string(InvalidMultiXactId, nmembers, members));
@@ -1309,8 +1312,10 @@ mXactCacheGetBySet(int nmembers, MultiXactMember *members)
 	/* sort the array so comparison is easy */
 	qsort(members, nmembers, sizeof(MultiXactMember), mxactMemberComparator);
 
-	for (entry = MXactCache; entry != NULL; entry = entry->next)
+	dlist_foreach(iter, &MXactCache)
 	{
+		mXactCacheEnt *entry = dlist_container(mXactCacheEnt, node, iter.cur);
+
 		if (entry->nmembers != nmembers)
 			continue;
 
@@ -1321,6 +1326,7 @@ mXactCacheGetBySet(int nmembers, MultiXactMember *members)
 		if (memcmp(members, entry->members, nmembers * sizeof(MultiXactMember)) == 0)
 		{
 			debug_elog3(DEBUG2, "CacheGet: found %u", entry->multi);
+			dlist_move_head(&MXactCache, iter.cur);
 			return entry->multi;
 		}
 	}
@@ -1340,12 +1346,14 @@ mXactCacheGetBySet(int nmembers, MultiXactMember *members)
 static int
 mXactCacheGetById(MultiXactId multi, MultiXactMember **members)
 {
-	mXactCacheEnt *entry;
+	dlist_iter	iter;
 
 	debug_elog3(DEBUG2, "CacheGet: looking for %u", multi);
 
-	for (entry = MXactCache; entry != NULL; entry = entry->next)
+	dlist_foreach(iter, &MXactCache)
 	{
+		mXactCacheEnt *entry = dlist_container(mXactCacheEnt, node, iter.cur);
+
 		if (entry->multi == multi)
 		{
 			MultiXactMember *ptr;
@@ -1361,6 +1369,14 @@ mXactCacheGetById(MultiXactId multi, MultiXactMember **members)
 						mxid_to_string(multi,
 									   entry->nmembers,
 									   entry->members));
+
+			/*
+			 * Note we modify the list while not using a modifyable iterator.
+			 * This is acceptable only because we exit the iteration
+			 * immediately afterwards.
+			 */
+			dlist_move_head(&MXactCache, iter.cur);
+
 			return entry->nmembers;
 		}
 	}
@@ -1404,8 +1420,22 @@ mXactCachePut(MultiXactId multi, int nmembers, MultiXactMember *members)
 	/* mXactCacheGetBySet assumes the entries are sorted, so sort them */
 	qsort(entry->members, nmembers, sizeof(MultiXactMember), mxactMemberComparator);
 
-	entry->next = MXactCache;
-	MXactCache = entry;
+	dlist_push_head(&MXactCache, &entry->node);
+	if (MXactCacheMembers++ >= MAX_CACHE_ENTRIES)
+	{
+		dlist_node *node;
+		mXactCacheEnt *entry;
+
+		node = dlist_tail_node(&MXactCache);
+		dlist_delete(node);
+		MXactCacheMembers--;
+
+		entry = dlist_container(mXactCacheEnt, node, node);
+		debug_elog3(DEBUG2, "CachePut: pruning cached multi %u",
+					entry->multi);
+
+		pfree(entry);
+	}
 }
 
 static char *
@@ -1480,7 +1510,8 @@ AtEOXact_MultiXact(void)
 	 * a child of TopTransactionContext, we needn't delete it explicitly.
 	 */
 	MXactContext = NULL;
-	MXactCache = NULL;
+	dlist_init(&MXactCache);
+	MXactCacheMembers = 0;
 }
 
 /*
@@ -1546,7 +1577,8 @@ PostPrepare_MultiXact(TransactionId xid)
 	 * Discard the local MultiXactId cache like in AtEOX_MultiXact
 	 */
 	MXactContext = NULL;
-	MXactCache = NULL;
+	dlist_init(&MXactCache);
+	MXactCacheMembers = 0;
 }
 
 /*
