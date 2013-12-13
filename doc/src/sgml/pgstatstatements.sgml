@@ -263,7 +263,7 @@
 
   <para>
    As a rule of thumb, an assumption of the stability or comparability
-   of <structfield>queryid</> values should be predicated on the the
+   of <structfield>queryid</> values should be predicated on the
    underlying catalog metadata and hash function implementation
    details exactly matching.  Any two servers participating in any
    variety of replication based on physical WAL-replay can be expected
