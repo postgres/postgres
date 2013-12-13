@@ -259,22 +259,27 @@ static void
 handle_sig_alarm(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
+	bool		save_ImmediateInterruptOK = ImmediateInterruptOK;
 
 	/*
 	 * We may be executing while ImmediateInterruptOK is true (e.g., when
 	 * mainline is waiting for a lock).  If SIGINT or similar arrives while
 	 * this code is running, we'd lose control and perhaps leave our data
-	 * structures in an inconsistent state.  Hold off interrupts to prevent
-	 * that.
+	 * structures in an inconsistent state.  Disable immediate interrupts, and
+	 * just to be real sure, bump the holdoff counter as well.	(The reason
+	 * for this belt-and-suspenders-too approach is to make sure that nothing
+	 * bad happens if a timeout handler calls code that manipulates
+	 * ImmediateInterruptOK.)
 	 *
-	 * Note: it's possible for a SIGINT to interrupt handle_sig_alarm even
-	 * before we reach HOLD_INTERRUPTS(); the net effect would be as if the
-	 * SIGALRM event had been silently lost.  Therefore error recovery must
-	 * include some action that will allow any lost interrupt to be
-	 * rescheduled.  Disabling some or all timeouts is sufficient, or if
-	 * that's not appropriate, reschedule_timeouts() can be called.  Also, the
-	 * signal blocking hazard described below applies here too.
+	 * Note: it's possible for a SIGINT to interrupt handle_sig_alarm before
+	 * we manage to do this; the net effect would be as if the SIGALRM event
+	 * had been silently lost.	Therefore error recovery must include some
+	 * action that will allow any lost interrupt to be rescheduled.  Disabling
+	 * some or all timeouts is sufficient, or if that's not appropriate,
+	 * reschedule_timeouts() can be called.  Also, the signal blocking hazard
+	 * described below applies here too.
 	 */
+	ImmediateInterruptOK = false;
 	HOLD_INTERRUPTS();
 
 	/*
@@ -330,9 +335,12 @@ handle_sig_alarm(SIGNAL_ARGS)
 	}
 
 	/*
-	 * Re-allow query cancel, and then service any cancel request that arrived
-	 * meanwhile (this might in particular include a cancel request fired by
-	 * one of the timeout handlers).
+	 * Re-allow query cancel, and then try to service any cancel request that
+	 * arrived meanwhile (this might in particular include a cancel request
+	 * fired by one of the timeout handlers).  Since we are in a signal
+	 * handler, we mustn't call ProcessInterrupts unless ImmediateInterruptOK
+	 * is set; if it isn't, the cancel will happen at the next mainline
+	 * CHECK_FOR_INTERRUPTS.
 	 *
 	 * Note: a longjmp from here is safe so far as our own data structures are
 	 * concerned; but on platforms that block a signal before calling the
@@ -341,7 +349,9 @@ handle_sig_alarm(SIGNAL_ARGS)
 	 * unblocking any blocked signals.
 	 */
 	RESUME_INTERRUPTS();
-	CHECK_FOR_INTERRUPTS();
+	ImmediateInterruptOK = save_ImmediateInterruptOK;
+	if (save_ImmediateInterruptOK)
+		CHECK_FOR_INTERRUPTS();
 
 	errno = save_errno;
 }
