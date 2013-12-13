@@ -2626,16 +2626,15 @@ MarkBufferDirtyHint(Buffer buffer, bool buffer_std)
 		bool		delayChkpt = false;
 
 		/*
-		 * If checksums are enabled, and the buffer is permanent, then a full
-		 * page image may be required even for some hint bit updates to
-		 * protect against torn pages. This full page image is only necessary
+		 * If we need to protect hint bit updates from torn writes, WAL-log a
+		 * full page image of the page. This full page image is only necessary
 		 * if the hint bit update is the first change to the page since the
 		 * last checkpoint.
 		 *
 		 * We don't check full_page_writes here because that logic is included
 		 * when we call XLogInsert() since the value changes dynamically.
 		 */
-		if (DataChecksumsEnabled() && (bufHdr->flags & BM_PERMANENT))
+		if (XLogHintBitIsNeeded() && (bufHdr->flags & BM_PERMANENT))
 		{
 			/*
 			 * If we're in recovery we cannot dirty a page because of a hint.

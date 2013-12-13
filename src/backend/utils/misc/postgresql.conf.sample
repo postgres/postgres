@@ -184,6 +184,7 @@
 					#   fsync_writethrough
 					#   open_sync
 #full_page_writes = on			# recover from partial page writes
+#wal_log_hintbits = off			# also do full pages writes of non-critical updates
 #wal_buffers = -1			# min 32kB, -1 sets based on shared_buffers
 					# (change requires restart)
 #wal_writer_delay = 200ms		# 1-10000 milliseconds

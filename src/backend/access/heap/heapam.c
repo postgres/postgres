@@ -6271,7 +6271,7 @@ log_heap_visible(RelFileNode rnode, Buffer heap_buffer, Buffer vm_buffer,
 	rdata[1].buffer_std = false;
 	rdata[1].next = NULL;
 
-	if (DataChecksumsEnabled())
+	if (XLogHintBitIsNeeded())
 	{
 		rdata[1].next = &(rdata[2]);
 

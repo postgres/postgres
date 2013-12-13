@@ -1944,6 +1944,32 @@ include 'filename'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-wal-log-hintbits" xreflabel="wal_log_hintbits">
+      <term><varname>wal_log_hintbits</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary><varname>wal_log_hintbits</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        When this parameter is <literal>on</>, the <productname>PostgreSQL</>
+        server writes the entire content of each disk page to WAL during the
+        first modification of that page after a checkpoint, even for
+        non-critical modifications of so-called hint bits.
+       </para>
+
+       <para>
+        If data checksums are enabled, hint bit updates are always WAL-logged
+        and this setting is ignored. You can use this setting to test how much
+        extra WAL-logging would occur if your database had data checksums
+        enabled.
+       </para>
+
+       <para>
+        This parameter can only be set at server start. The default value is <literal>off</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-wal-buffers" xreflabel="wal_buffers">
       <term><varname>wal_buffers</varname> (<type>integer</type>)</term>
       <indexterm>

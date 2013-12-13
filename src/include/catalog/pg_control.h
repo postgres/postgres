@@ -171,6 +171,7 @@ typedef struct ControlFileData
 	 * or hot standby.
 	 */
 	int			wal_level;
+	bool		wal_log_hintbits;
 	int			MaxConnections;
 	int			max_worker_processes;
 	int			max_prepared_xacts;

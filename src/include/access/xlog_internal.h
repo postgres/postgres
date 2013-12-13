@@ -209,6 +209,7 @@ typedef struct xl_parameter_change
 	int			max_prepared_xacts;
 	int			max_locks_per_xact;
 	int			wal_level;
+	bool		wal_log_hintbits;
 } xl_parameter_change;
 
 /* logs restore point */

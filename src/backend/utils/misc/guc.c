@@ -866,6 +866,17 @@ static struct config_bool ConfigureNamesBool[] =
 		true,
 		NULL, NULL, NULL
 	},
+
+	{
+		{"wal_log_hintbits", PGC_POSTMASTER, WAL_SETTINGS,
+			gettext_noop("Writes full pages to WAL when first modified after a checkpoint, even for a non-critical modifications"),
+			NULL
+		},
+		&walLogHintbits,
+		false,
+		NULL, NULL, NULL
+	},
+
 	{
 		{"log_checkpoints", PGC_SIGHUP, LOGGING_WHAT,
 			gettext_noop("Logs each checkpoint."),
