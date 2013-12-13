@@ -3837,7 +3837,7 @@ RelationGetIndexAttrBitmap(Relation relation, IndexAttrBitmapKind attrKind)
 {
 	Bitmapset  *indexattrs; /* indexed columns */
 	Bitmapset  *uindexattrs; /* columns in unique indexes */
-	Bitmapset  *idindexattrs; /* columns in the the replica identity */
+	Bitmapset  *idindexattrs; /* columns in the replica identity */
 	List	   *indexoidlist;
 	ListCell   *l;
 	MemoryContext oldcxt;

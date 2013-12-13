@@ -589,7 +589,7 @@ pg_backup_start_time(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Parse the file to find the the START TIME line.
+	 * Parse the file to find the START TIME line.
 	 */
 	backup_start_time[0] = '\0';
 	while (fgets(fline, sizeof(fline), lfp) != NULL)

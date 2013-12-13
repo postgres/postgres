@@ -6594,7 +6594,7 @@ format_expr_params(PLpgSQL_execstate *estate,
 
 /*
  * Return a formatted string with information about PreparedParamsData, or NULL
- * if the there are no parameters.
+ * if there are no parameters.
  */
 static char *
 format_preparedparamsdata(PLpgSQL_execstate *estate,

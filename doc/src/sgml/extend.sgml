@@ -1187,7 +1187,7 @@ include $(PGXS)
 
    <para>
     Alternatively, you can set up a directory for a VPATH build in a similar
-    way to how it is done for the core code. One way to to this is using the
+    way to how it is done for the core code. One way to do this is using the
     core script <filename>config/prep_buildtree</>. Once this has been done
     you can build by setting the <literal>make</literal> variable
     <varname>USE_VPATH</varname> like this:

@@ -424,9 +424,9 @@ typedef struct XLogCtlInsert
 	/*
 	 * CurrBytePos is the end of reserved WAL. The next record will be inserted
 	 * at that position. PrevBytePos is the start position of the previously
-	 * inserted (or rather, reserved) record - it is copied to the the prev-
-	 * link of the next record. These are stored as "usable byte positions"
-	 * rather than XLogRecPtrs (see XLogBytePosToRecPtr()).
+	 * inserted (or rather, reserved) record - it is copied to the prev-link
+	 * of the next record. These are stored as "usable byte positions" rather
+	 * than XLogRecPtrs (see XLogBytePosToRecPtr()).
 	 */
 	uint64		CurrBytePos;
 	uint64		PrevBytePos;
@@ -10831,7 +10831,7 @@ next_record_is_invalid:
  * 'tliRecPtr' is the position of the WAL record we're interested in. It is
  * used to decide which timeline to stream the requested WAL from.
  *
- * If the the record is not immediately available, the function returns false
+ * If the record is not immediately available, the function returns false
  * if we're not in standby mode. In standby mode, waits for it to become
  * available.
  *
