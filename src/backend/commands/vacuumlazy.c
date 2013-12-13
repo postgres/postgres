@@ -1182,11 +1182,20 @@ lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 
 	/*
 	 * Mark buffer dirty before we write WAL.
-	 *
-	 * If checksums are enabled, visibilitymap_set() may log the heap page, so
-	 * we must mark heap buffer dirty before calling visibilitymap_set().
 	 */
 	MarkBufferDirty(buffer);
+
+	/* XLOG stuff */
+	if (RelationNeedsWAL(onerel))
+	{
+		XLogRecPtr	recptr;
+
+		recptr = log_heap_clean(onerel, buffer,
+								NULL, 0, NULL, 0,
+								unused, uncnt,
+								vacrelstats->latestRemovedXid);
+		PageSetLSN(page, recptr);
+	}
 
 	/*
 	 * Now that we have removed the dead tuples from the page, once again
@@ -1199,18 +1208,6 @@ lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 		PageSetAllVisible(page);
 		visibilitymap_set(onerel, blkno, buffer, InvalidXLogRecPtr, *vmbuffer,
 						  visibility_cutoff_xid);
-	}
-
-	/* XLOG stuff */
-	if (RelationNeedsWAL(onerel))
-	{
-		XLogRecPtr	recptr;
-
-		recptr = log_heap_clean(onerel, buffer,
-								NULL, 0, NULL, 0,
-								unused, uncnt,
-								vacrelstats->latestRemovedXid);
-		PageSetLSN(page, recptr);
 	}
 
 	END_CRIT_SECTION();
