@@ -1371,7 +1371,7 @@ mXactCacheGetById(MultiXactId multi, MultiXactMember **members)
 									   entry->members));
 
 			/*
-			 * Note we modify the list while not using a modifyable iterator.
+			 * Note we modify the list while not using a modifiable iterator.
 			 * This is acceptable only because we exit the iteration
 			 * immediately afterwards.
 			 */
