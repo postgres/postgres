@@ -1652,11 +1652,15 @@ HandleNotifyInterrupt(void)
 
 		/*
 		 * We may be called while ImmediateInterruptOK is true; turn it off
-		 * while messing with the NOTIFY state.  (We would have to save and
-		 * restore it anyway, because PGSemaphore operations inside
-		 * ProcessIncomingNotify() might reset it.)
+		 * while messing with the NOTIFY state.  This prevents problems if
+		 * SIGINT or similar arrives while we're working.  Just to be real
+		 * sure, bump the interrupt holdoff counter as well.  That way, even
+		 * if something inside ProcessIncomingNotify() transiently sets
+		 * ImmediateInterruptOK (eg while waiting on a lock), we won't get
+		 * interrupted until we're done with the notify interrupt.
 		 */
 		ImmediateInterruptOK = false;
+		HOLD_INTERRUPTS();
 
 		/*
 		 * I'm not sure whether some flavors of Unix might allow another
@@ -1686,8 +1690,10 @@ HandleNotifyInterrupt(void)
 		}
 
 		/*
-		 * Restore ImmediateInterruptOK, and check for interrupts if needed.
+		 * Restore the holdoff level and ImmediateInterruptOK, and check for
+		 * interrupts if needed.
 		 */
+		RESUME_INTERRUPTS();
 		ImmediateInterruptOK = save_ImmediateInterruptOK;
 		if (save_ImmediateInterruptOK)
 			CHECK_FOR_INTERRUPTS();
