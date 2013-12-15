@@ -2011,6 +2011,20 @@ transformDistinctClause(ParseState *pstate,
 									  true);
 	}
 
+	/*
+	 * Complain if we found nothing to make DISTINCT.  Returning an empty list
+	 * would cause the parsed Query to look like it didn't have DISTINCT, with
+	 * results that would probably surprise the user.  Note: this case is
+	 * presently impossible for aggregates because of grammar restrictions,
+	 * but we check anyway.
+	 */
+	if (result == NIL)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 is_agg ?
+				 errmsg("an aggregate with DISTINCT must have at least one argument") :
+				 errmsg("SELECT DISTINCT must have at least one column")));
+
 	return result;
 }
 
@@ -2114,6 +2128,11 @@ transformDistinctOnClause(ParseState *pstate, List *distinctlist,
 									  exprLocation(dexpr),
 									  true);
 	}
+
+	/*
+	 * An empty result list is impossible here because of grammar restrictions.
+	 */
+	Assert(result != NIL);
 
 	return result;
 }

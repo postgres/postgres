@@ -2018,6 +2018,19 @@ transformReturningList(ParseState *pstate, List *returningList)
 	/* transform RETURNING identically to a SELECT targetlist */
 	rlist = transformTargetList(pstate, returningList, EXPR_KIND_RETURNING);
 
+	/*
+	 * Complain if the nonempty tlist expanded to nothing (which is possible
+	 * if it contains only a star-expansion of a zero-column table).  If we
+	 * allow this, the parsed Query will look like it didn't have RETURNING,
+	 * with results that would probably surprise the user.
+	 */
+	if (rlist == NIL)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("RETURNING must have at least one column"),
+				 parser_errposition(pstate,
+									exprLocation(linitial(returningList)))));
+
 	/* mark column origins */
 	markTargetListOrigins(pstate, rlist);
 

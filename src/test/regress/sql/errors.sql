@@ -16,28 +16,25 @@ select 1;
 --
 -- SELECT
 
--- missing relation name
+-- this used to be a syntax error, but now we allow an empty target list
 select;
 
 -- no such relation
 select * from nonesuch;
 
--- missing target list
-select from pg_database;
 -- bad name in target list
 select nonesuch from pg_database;
+
+-- empty distinct list isn't OK
+select distinct from pg_database;
+
 -- bad attribute name on lhs of operator
 select * from pg_database where nonesuch = pg_database.datname;
 
 -- bad attribute name on rhs of operator
 select * from pg_database where pg_database.datname = nonesuch;
 
-
--- bad select distinct on syntax, distinct attribute missing
-select distinct on (foobar) from pg_database;
-
-
--- bad select distinct on syntax, distinct attribute not in target list
+-- bad attribute name in select distinct on
 select distinct on (foobar) * from pg_database;
 
 

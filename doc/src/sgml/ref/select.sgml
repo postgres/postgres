@@ -34,7 +34,7 @@ PostgreSQL documentation
 <synopsis>
 [ WITH [ RECURSIVE ] <replaceable class="parameter">with_query</replaceable> [, ...] ]
 SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replaceable> [, ...] ) ] ]
-    * | <replaceable class="parameter">expression</replaceable> [ [ AS ] <replaceable class="parameter">output_name</replaceable> ] [, ...]
+    [ * | <replaceable class="parameter">expression</replaceable> [ [ AS ] <replaceable class="parameter">output_name</replaceable> ] [, ...] ]
     [ FROM <replaceable class="parameter">from_item</replaceable> [, ...] ]
     [ WHERE <replaceable class="parameter">condition</replaceable> ]
     [ GROUP BY <replaceable class="parameter">expression</replaceable> [, ...] ]
@@ -1740,10 +1740,24 @@ SELECT 2+2;
     following query is invalid:
 <programlisting>
 SELECT distributors.* WHERE distributors.name = 'Westward';
-</programlisting><productname>PostgreSQL</productname> releases prior to
+</programlisting>
+    <productname>PostgreSQL</productname> releases prior to
     8.1 would accept queries of this form, and add an implicit entry
     to the query's <literal>FROM</literal> clause for each table
     referenced by the query. This is no longer allowed.
+   </para>
+  </refsect2>
+
+  <refsect2>
+   <title>Empty <literal>SELECT</literal> Lists</title>
+
+   <para>
+    The list of output expressions after <literal>SELECT</literal> can be
+    empty, producing a zero-column result table.
+    This is not valid syntax according to the SQL standard.
+    <productname>PostgreSQL</productname> allows it to be consistent with
+    allowing zero-column tables.
+    However, an empty list is not allowed when <literal>DISTINCT</> is used.
    </para>
   </refsect2>
 
@@ -1808,10 +1822,6 @@ SELECT distributors.* WHERE distributors.name = 'Westward';
     <literal>UNNEST()</> item in <literal>FROM</>.
     <productname>PostgreSQL</productname> treats <literal>UNNEST()</> the
     same as other set-returning functions.
-   </para>
-
-   <para>
-    <literal>ROWS FROM( ... )</> is an extension of the SQL standard.
    </para>
   </refsect2>
 
@@ -1910,8 +1920,12 @@ SELECT distributors.* WHERE distributors.name = 'Westward';
    <title>Nonstandard Clauses</title>
 
    <para>
-    The clause <literal>DISTINCT ON</literal> is not defined in the
+    <literal>DISTINCT ON ( ... )</literal> is an extension of the
     SQL standard.
+   </para>
+
+   <para>
+    <literal>ROWS FROM( ... )</> is an extension of the SQL standard.
    </para>
   </refsect2>
  </refsect1>

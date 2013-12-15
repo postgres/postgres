@@ -15,26 +15,24 @@ select 1;
 --
 --
 -- SELECT
--- missing relation name
+-- this used to be a syntax error, but now we allow an empty target list
 select;
-ERROR:  syntax error at or near ";"
-LINE 1: select;
-              ^
+--
+(1 row)
+
 -- no such relation
 select * from nonesuch;
 ERROR:  relation "nonesuch" does not exist
 LINE 1: select * from nonesuch;
                       ^
--- missing target list
-select from pg_database;
-ERROR:  syntax error at or near "from"
-LINE 1: select from pg_database;
-               ^
 -- bad name in target list
 select nonesuch from pg_database;
 ERROR:  column "nonesuch" does not exist
 LINE 1: select nonesuch from pg_database;
                ^
+-- empty distinct list isn't OK
+select distinct from pg_database;
+ERROR:  SELECT DISTINCT must have at least one column
 -- bad attribute name on lhs of operator
 select * from pg_database where nonesuch = pg_database.datname;
 ERROR:  column "nonesuch" does not exist
@@ -45,12 +43,7 @@ select * from pg_database where pg_database.datname = nonesuch;
 ERROR:  column "nonesuch" does not exist
 LINE 1: ...ect * from pg_database where pg_database.datname = nonesuch;
                                                               ^
--- bad select distinct on syntax, distinct attribute missing
-select distinct on (foobar) from pg_database;
-ERROR:  syntax error at or near "from"
-LINE 1: select distinct on (foobar) from pg_database;
-                                    ^
--- bad select distinct on syntax, distinct attribute not in target list
+-- bad attribute name in select distinct on
 select distinct on (foobar) * from pg_database;
 ERROR:  column "foobar" does not exist
 LINE 1: select distinct on (foobar) * from pg_database;

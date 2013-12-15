@@ -334,7 +334,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 				name_list from_clause from_list opt_array_bounds
 				qualified_name_list any_name any_name_list
 				any_operator expr_list attrs
-				target_list insert_column_list set_target_list
+				target_list opt_target_list insert_column_list set_target_list
 				set_clause_list set_clause multiple_set_clause
 				ctext_expr_list ctext_row def_list indirection opt_indirection
 				reloption_list group_clause TriggerFuncArgs select_limit
@@ -9259,7 +9259,7 @@ select_clause:
  * However, this is not checked by the grammar; parse analysis must check it.
  */
 simple_select:
-			SELECT opt_distinct target_list
+			SELECT opt_distinct opt_target_list
 			into_clause from_clause where_clause
 			group_clause having_clause window_clause
 				{
@@ -12214,6 +12214,10 @@ ctext_row: '(' ctext_expr_list ')'					{ $$ = $2; }
  *	target list for SELECT
  *
  *****************************************************************************/
+
+opt_target_list: target_list						{ $$ = $1; }
+			| /* EMPTY */							{ $$ = NIL; }
+		;
 
 target_list:
 			target_el								{ $$ = list_make1($1); }
