@@ -162,6 +162,7 @@ static const struct encoding_match encoding_match_list[] = {
 	{PG_SJIS, "SJIS"},
 	{PG_SJIS, "PCK"},
 	{PG_SJIS, "CP932"},
+	{PG_SJIS, "SHIFT_JIS"},
 
 	{PG_BIG5, "BIG5"},
 	{PG_BIG5, "BIG5HKSCS"},
