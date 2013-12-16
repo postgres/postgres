@@ -424,6 +424,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	Buffer		vmbuffer = InvalidBuffer;
 	BlockNumber next_not_all_visible_block;
 	bool		skipping_all_visible_blocks;
+	xl_heap_freeze_tuple *frozen;
 
 	pg_rusage_init(&ru0);
 
@@ -446,6 +447,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	vacrelstats->latestRemovedXid = InvalidTransactionId;
 
 	lazy_space_alloc(vacrelstats, nblocks);
+	frozen = palloc(sizeof(xl_heap_freeze_tuple) * MaxHeapTuplesPerPage);
 
 	/*
 	 * We want to skip pages that don't require vacuuming according to the
@@ -500,7 +502,6 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		bool		tupgone,
 					hastup;
 		int			prev_dead_count;
-		OffsetNumber frozen[MaxOffsetNumber];
 		int			nfrozen;
 		Size		freespace;
 		bool		all_visible_according_to_vm;
@@ -893,9 +894,9 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 				 * Each non-removable tuple must be checked to see if it needs
 				 * freezing.  Note we already have exclusive buffer lock.
 				 */
-				if (heap_freeze_tuple(tuple.t_data, FreezeLimit,
-									  MultiXactCutoff))
-					frozen[nfrozen++] = offnum;
+				if (heap_prepare_freeze_tuple(tuple.t_data, FreezeLimit,
+										  MultiXactCutoff, &frozen[nfrozen]))
+					frozen[nfrozen++].offset = offnum;
 			}
 		}						/* scan along page */
 
@@ -906,15 +907,33 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		 */
 		if (nfrozen > 0)
 		{
+			START_CRIT_SECTION();
+
 			MarkBufferDirty(buf);
+
+			/* execute collected freezes */
+			for (i = 0; i < nfrozen; i++)
+			{
+				ItemId		itemid;
+				HeapTupleHeader htup;
+
+				itemid = PageGetItemId(page, frozen[i].offset);
+				htup = (HeapTupleHeader) PageGetItem(page, itemid);
+
+				heap_execute_freeze_tuple(htup, &frozen[i]);
+			}
+
+			/* Now WAL-log freezing if neccessary */
 			if (RelationNeedsWAL(onerel))
 			{
 				XLogRecPtr	recptr;
 
 				recptr = log_heap_freeze(onerel, buf, FreezeLimit,
-										 MultiXactCutoff, frozen, nfrozen);
+										 frozen, nfrozen);
 				PageSetLSN(page, recptr);
 			}
+
+			END_CRIT_SECTION();
 		}
 
 		/*
@@ -1014,6 +1033,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		if (vacrelstats->num_dead_tuples == prev_dead_count)
 			RecordPageWithFreeSpace(onerel, blkno, freespace);
 	}
+
+	pfree(frozen);
 
 	/* save stats for use later */
 	vacrelstats->scanned_tuples = num_tuples;

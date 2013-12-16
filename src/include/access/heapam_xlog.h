@@ -50,7 +50,7 @@
  */
 #define XLOG_HEAP2_FREEZE		0x00
 #define XLOG_HEAP2_CLEAN		0x10
-/* 0x20 is free, was XLOG_HEAP2_CLEAN_MOVE */
+#define XLOG_HEAP2_FREEZE_PAGE	0x20
 #define XLOG_HEAP2_CLEANUP_INFO 0x30
 #define XLOG_HEAP2_VISIBLE		0x40
 #define XLOG_HEAP2_MULTI_INSERT 0x50
@@ -239,7 +239,7 @@ typedef struct xl_heap_inplace
 
 #define SizeOfHeapInplace	(offsetof(xl_heap_inplace, target) + SizeOfHeapTid)
 
-/* This is what we need to know about tuple freezing during vacuum */
+/* This is what we need to know about tuple freezing during vacuum (legacy) */
 typedef struct xl_heap_freeze
 {
 	RelFileNode node;
@@ -250,6 +250,37 @@ typedef struct xl_heap_freeze
 } xl_heap_freeze;
 
 #define SizeOfHeapFreeze (offsetof(xl_heap_freeze, cutoff_multi) + sizeof(MultiXactId))
+
+/*
+ * This struct represents a 'freeze plan', which is what we need to know about
+ * a single tuple being frozen during vacuum.
+ */
+#define		XLH_FREEZE_XMIN		0x01
+#define		XLH_FREEZE_XVAC		0x02
+#define		XLH_INVALID_XVAC	0x04
+
+typedef struct xl_heap_freeze_tuple
+{
+	TransactionId xmax;
+	OffsetNumber offset;
+	uint16		t_infomask2;
+	uint16		t_infomask;
+	uint8		frzflags;
+} xl_heap_freeze_tuple;
+
+/*
+ * This is what we need to know about a block being frozen during vacuum
+ */
+typedef struct xl_heap_freeze_page
+{
+	RelFileNode node;
+	BlockNumber block;
+	TransactionId cutoff_xid;
+	uint16		ntuples;
+	xl_heap_freeze_tuple tuples[FLEXIBLE_ARRAY_MEMBER];
+} xl_heap_freeze_page;
+
+#define SizeOfHeapFreezePage offsetof(xl_heap_freeze_page, tuples)
 
 /* This is what we need to know about setting a visibility map bit */
 typedef struct xl_heap_visible
@@ -277,8 +308,14 @@ extern XLogRecPtr log_heap_clean(Relation reln, Buffer buffer,
 			   OffsetNumber *nowunused, int nunused,
 			   TransactionId latestRemovedXid);
 extern XLogRecPtr log_heap_freeze(Relation reln, Buffer buffer,
-				TransactionId cutoff_xid, MultiXactId cutoff_multi,
-				OffsetNumber *offsets, int offcnt);
+				TransactionId cutoff_xid, xl_heap_freeze_tuple *tuples,
+				int ntuples);
+extern bool heap_prepare_freeze_tuple(HeapTupleHeader tuple,
+						  TransactionId cutoff_xid,
+						  TransactionId cutoff_multi,
+						  xl_heap_freeze_tuple *frz);
+extern void heap_execute_freeze_tuple(HeapTupleHeader tuple,
+						  xl_heap_freeze_tuple *xlrec_tp);
 extern XLogRecPtr log_heap_visible(RelFileNode rnode, Buffer heap_buffer,
 				 Buffer vm_buffer, TransactionId cutoff_xid);
 extern XLogRecPtr log_newpage(RelFileNode *rnode, ForkNumber forkNum,

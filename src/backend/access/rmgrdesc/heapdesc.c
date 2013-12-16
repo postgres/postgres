@@ -149,6 +149,15 @@ heap2_desc(StringInfo buf, uint8 xl_info, char *rec)
 						 xlrec->node.relNode, xlrec->block,
 						 xlrec->latestRemovedXid);
 	}
+	else if (info == XLOG_HEAP2_FREEZE_PAGE)
+	{
+		xl_heap_freeze_page *xlrec = (xl_heap_freeze_page *) rec;
+
+		appendStringInfo(buf, "freeze_page: rel %u/%u/%u; blk %u; cutoff xid %u ntuples %u",
+						 xlrec->node.spcNode, xlrec->node.dbNode,
+						 xlrec->node.relNode, xlrec->block,
+						 xlrec->cutoff_xid, xlrec->ntuples);
+	}
 	else if (info == XLOG_HEAP2_CLEANUP_INFO)
 	{
 		xl_heap_cleanup_info *xlrec = (xl_heap_cleanup_info *) rec;
