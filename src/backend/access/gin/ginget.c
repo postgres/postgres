@@ -20,6 +20,8 @@
 #include "utils/datum.h"
 #include "utils/memutils.h"
 
+/* GUC parameter */
+int			GinFuzzySearchLimit = 0;
 
 typedef struct pendingPosition
 {

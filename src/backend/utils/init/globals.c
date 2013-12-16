@@ -122,5 +122,3 @@ int			VacuumPageDirty = 0;
 
 int			VacuumCostBalance = 0;		/* working state for vacuum */
 bool		VacuumCostActive = false;
-
-int			GinFuzzySearchLimit = 0;

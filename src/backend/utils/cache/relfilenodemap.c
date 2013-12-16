@@ -33,7 +33,7 @@
 static HTAB *RelfilenodeMapHash = NULL;
 
 /* built first time through in InitializeRelfilenodeMap */
-ScanKeyData relfilenode_skey[2];
+static ScanKeyData relfilenode_skey[2];
 
 typedef struct
 {

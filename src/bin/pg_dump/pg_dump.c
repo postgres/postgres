@@ -90,11 +90,11 @@ bool		g_verbose;			/* User wants verbose narration of our
 								 * activities. */
 
 /* various user-settable parameters */
-bool		schemaOnly;
-bool		dataOnly;
-int			dumpSections;		/* bitmask of chosen sections */
-bool		aclsSkip;
-const char *lockWaitTimeout;
+static bool	schemaOnly;
+static bool	dataOnly;
+static int	dumpSections;		/* bitmask of chosen sections */
+static bool	aclsSkip;
+static const char *lockWaitTimeout;
 
 /* subquery used to convert user ID (eg, datdba) to user name */
 static const char *username_subquery;

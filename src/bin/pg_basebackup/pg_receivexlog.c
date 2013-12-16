@@ -32,11 +32,11 @@
 #define RECONNECT_SLEEP_TIME 5
 
 /* Global options */
-char	   *basedir = NULL;
-int			verbose = 0;
-int			noloop = 0;
-int			standby_message_timeout = 10 * 1000;		/* 10 sec = default */
-volatile bool time_to_abort = false;
+static char *basedir = NULL;
+static int	verbose = 0;
+static int	noloop = 0;
+static int	standby_message_timeout = 10 * 1000;		/* 10 sec = default */
+static volatile bool time_to_abort = false;
 
 
 static void usage(void);

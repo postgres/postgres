@@ -34,18 +34,18 @@
 
 
 /* Global options */
-char	   *basedir = NULL;
+static char *basedir = NULL;
 static char *xlog_dir = "";
-char		format = 'p';		/* p(lain)/t(ar) */
-char	   *label = "pg_basebackup base backup";
-bool		showprogress = false;
-int			verbose = 0;
-int			compresslevel = 0;
-bool		includewal = false;
-bool		streamwal = false;
-bool		fastcheckpoint = false;
-bool		writerecoveryconf = false;
-int			standby_message_timeout = 10 * 1000;		/* 10 sec = default */
+static char	format = 'p';		/* p(lain)/t(ar) */
+static char *label = "pg_basebackup base backup";
+static bool	showprogress = false;
+static int verbose = 0;
+static int	compresslevel = 0;
+static bool	includewal = false;
+static bool	streamwal = false;
+static bool	fastcheckpoint = false;
+static bool	writerecoveryconf = false;
+static int	standby_message_timeout = 10 * 1000;		/* 10 sec = default */
 
 /* Progress counters */
 static uint64 totalsize;
