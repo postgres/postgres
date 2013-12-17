@@ -2199,8 +2199,8 @@ CopyFrom(CopyState cstate)
 		{
 			/*
 			 * Reset the per-tuple exprcontext. We can only do this if the
-			 * tuple buffer is empty (calling the context the per-tuple memory
-			 * context is a bit of a misnomer now
+			 * tuple buffer is empty. (Calling the context the per-tuple memory
+			 * context is a bit of a misnomer now.)
 			 */
 			ResetPerTupleExprContext(estate);
 		}
