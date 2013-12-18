@@ -493,8 +493,36 @@ HeapTupleSatisfiesUpdate(HeapTuple htup, CommandId curcid,
 			if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid */
 				return HeapTupleMayBeUpdated;
 
-			if (HEAP_XMAX_IS_LOCKED_ONLY(tuple->t_infomask))	/* not deleter */
-				return HeapTupleMayBeUpdated;
+			if (HEAP_XMAX_IS_LOCKED_ONLY(tuple->t_infomask))
+			{
+				TransactionId	xmax;
+
+				xmax = HeapTupleHeaderGetRawXmax(tuple);
+
+				/*
+				 * Careful here: even though this tuple was created by our own
+				 * transaction, it might be locked by other transactions, if
+				 * the original version was key-share locked when we updated
+				 * it.
+				 */
+
+				if (tuple->t_infomask & HEAP_XMAX_IS_MULTI)
+				{
+					if (MultiXactHasRunningRemoteMembers(xmax))
+						return HeapTupleBeingUpdated;
+					else
+						return HeapTupleMayBeUpdated;
+				}
+
+				/* if locker is gone, all's well */
+				if (!TransactionIdIsInProgress(xmax))
+					return HeapTupleMayBeUpdated;
+
+				if (!TransactionIdIsCurrentTransactionId(xmax))
+					return HeapTupleBeingUpdated;
+				else
+					return HeapTupleMayBeUpdated;
+			}
 
 			if (tuple->t_infomask & HEAP_XMAX_IS_MULTI)
 			{
@@ -507,7 +535,11 @@ HeapTupleSatisfiesUpdate(HeapTuple htup, CommandId curcid,
 
 				/* updating subtransaction must have aborted */
 				if (!TransactionIdIsCurrentTransactionId(xmax))
+				{
+					if (MultiXactHasRunningRemoteMembers(HeapTupleHeaderGetRawXmax(tuple)))
+						return HeapTupleBeingUpdated;
 					return HeapTupleMayBeUpdated;
+				}
 				else
 				{
 					if (HeapTupleHeaderGetCmax(tuple) >= curcid)
