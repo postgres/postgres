@@ -443,7 +443,7 @@ void		check_pghost_envvar(void);
 /* util.c */
 
 char	   *quote_identifier(const char *s);
-int			get_user_info(char **user_name);
+int			get_user_info(char **user_name_p);
 void		check_ok(void);
 void
 report_status(eLogType type, const char *fmt,...)

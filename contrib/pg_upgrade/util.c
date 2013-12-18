@@ -205,9 +205,10 @@ quote_identifier(const char *s)
  * get_user_info()
  */
 int
-get_user_info(char **user_name)
+get_user_info(char **user_name_p)
 {
 	int			user_id;
+	const char *user_name;
 	char	   *errstr;
 
 #ifndef WIN32
@@ -216,12 +217,12 @@ get_user_info(char **user_name)
 	user_id = 1;
 #endif
 
-	*user_name = get_user_name(&errstr);
-	if (!*user_name)
+	user_name = get_user_name(&errstr);
+	if (!user_name)
 		pg_fatal("%s\n", errstr);
 
 	/* make a copy */
-	*user_name = pg_strdup(*user_name);
+	*user_name_p = pg_strdup(user_name);
 
 	return user_id;
 }
