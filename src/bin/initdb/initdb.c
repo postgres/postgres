@@ -770,15 +770,14 @@ exit_nicely(void)
 /*
  * find the current user
  *
- * on unix make sure it isn't really root
+ * on unix make sure it isn't root
  */
 static char *
 get_id(void)
 {
+	const char	   *username;
+
 #ifndef WIN32
-
-	struct passwd *pw;
-
 	if (geteuid() == 0)			/* 0 is root's uid */
 	{
 		fprintf(stderr,
@@ -789,35 +788,11 @@ get_id(void)
 				progname);
 		exit(1);
 	}
-
-	pw = getpwuid(geteuid());
-	if (!pw)
-	{
-		fprintf(stderr,
-			  _("%s: could not obtain information about current user: %s\n"),
-				progname, strerror(errno));
-		exit(1);
-	}
-#else							/* the windows code */
-
-	struct passwd_win32
-	{
-		int			pw_uid;
-		char		pw_name[128];
-	}			pass_win32;
-	struct passwd_win32 *pw = &pass_win32;
-	DWORD		pwname_size = sizeof(pass_win32.pw_name) - 1;
-
-	pw->pw_uid = 1;
-	if (!GetUserName(pw->pw_name, &pwname_size))
-	{
-		fprintf(stderr, _("%s: could not get current user name: %s\n"),
-				progname, strerror(errno));
-		exit(1);
-	}
 #endif
 
-	return pg_strdup(pw->pw_name);
+	username = get_user_name_or_exit(progname);
+
+	return pg_strdup(username);
 }
 
 static char *

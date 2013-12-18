@@ -203,32 +203,25 @@ quote_identifier(const char *s)
 
 /*
  * get_user_info()
- * (copied from initdb.c) find the current user
  */
 int
 get_user_info(char **user_name)
 {
 	int			user_id;
+	char	   *errstr;
 
 #ifndef WIN32
-	struct passwd *pw = getpwuid(geteuid());
-
 	user_id = geteuid();
-#else							/* the windows code */
-	struct passwd_win32
-	{
-		int			pw_uid;
-		char		pw_name[128];
-	}			pass_win32;
-	struct passwd_win32 *pw = &pass_win32;
-	DWORD		pwname_size = sizeof(pass_win32.pw_name) - 1;
-
-	GetUserName(pw->pw_name, &pwname_size);
-
+#else
 	user_id = 1;
 #endif
 
-	*user_name = pg_strdup(pw->pw_name);
+	*user_name = get_user_name(&errstr);
+	if (!*user_name)
+		pg_fatal("%s\n", errstr);
+
+	/* make a copy */
+	*user_name = pg_strdup(*user_name);
 
 	return user_id;
 }

@@ -20,7 +20,6 @@
  */
 #include "postgres.h"
 
-#include <pwd.h>
 #include <unistd.h>
 
 #if defined(__alpha) && defined(__osf__)		/* no __alpha__ ? */
@@ -49,7 +48,6 @@ const char *progname;
 static void startup_hacks(const char *progname);
 static void help(const char *progname);
 static void check_root(const char *progname);
-static char *get_current_username(const char *progname);
 
 
 /*
@@ -191,7 +189,7 @@ main(int argc, char *argv[])
 	else if (argc > 1 && strcmp(argv[1], "--single") == 0)
 		PostgresMain(argc, argv,
 					 NULL,		/* no dbname */
-					 get_current_username(progname));	/* does not return */
+					 strdup(get_user_name_or_exit(progname)));	/* does not return */
 	else
 		PostmasterMain(argc, argv);		/* does not return */
 	abort();					/* should not get here */
@@ -371,37 +369,4 @@ check_root(const char *progname)
 		exit(1);
 	}
 #endif   /* WIN32 */
-}
-
-
-
-static char *
-get_current_username(const char *progname)
-{
-#ifndef WIN32
-	struct passwd *pw;
-
-	pw = getpwuid(geteuid());
-	if (pw == NULL)
-	{
-		write_stderr("%s: invalid effective UID: %d\n",
-					 progname, (int) geteuid());
-		exit(1);
-	}
-	/* Allocate new memory because later getpwuid() calls can overwrite it. */
-	return strdup(pw->pw_name);
-#else
-	unsigned long namesize = 256 /* UNLEN */ + 1;
-	char	   *name;
-
-	name = malloc(namesize);
-	if (!GetUserName(name, &namesize))
-	{
-		write_stderr("%s: could not determine user name (GetUserName failed)\n",
-					 progname);
-		exit(1);
-	}
-
-	return name;
-#endif
 }

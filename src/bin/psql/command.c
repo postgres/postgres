@@ -265,10 +265,13 @@ exec_command(const char *cmd,
 #ifndef WIN32
 			struct passwd *pw;
 
+			errno = 0;	/* clear errno before call */
 			pw = getpwuid(geteuid());
 			if (!pw)
 			{
-				psql_error("could not get home directory: %s\n", strerror(errno));
+				psql_error("could not get home directory for user id %d: %s\n",
+						   (int) geteuid(), errno ?
+						   strerror(errno) : "user does not exist");
 				exit(EXIT_FAILURE);
 			}
 			dir = pw->pw_dir;

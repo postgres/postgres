@@ -22,8 +22,6 @@ enum trivalue
 
 typedef void (*help_handler) (const char *progname);
 
-extern const char *get_user_name(const char *progname);
-
 extern void handle_help_version_opts(int argc, char *argv[],
 						 const char *fixed_progname,
 						 help_handler hlp);

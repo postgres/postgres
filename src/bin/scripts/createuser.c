@@ -193,7 +193,7 @@ main(int argc, char *argv[])
 			if (getenv("PGUSER"))
 				newuser = getenv("PGUSER");
 			else
-				newuser = get_user_name(progname);
+				newuser = get_user_name_or_exit(progname);
 		}
 	}
 
