@@ -216,7 +216,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 		AlterEventTrigStmt
 		AlterDatabaseStmt AlterDatabaseSetStmt AlterDomainStmt AlterEnumStmt
 		AlterFdwStmt AlterForeignServerStmt AlterGroupStmt
-		AlterObjectSchemaStmt AlterOwnerStmt AlterSeqStmt AlterTableStmt
+		AlterObjectSchemaStmt AlterOwnerStmt AlterSeqStmt AlterSystemStmt AlterTableStmt
 		AlterExtensionStmt AlterExtensionContentsStmt AlterForeignTableStmt
 		AlterCompositeTypeStmt AlterUserStmt AlterUserMappingStmt AlterUserSetStmt
 		AlterRoleStmt AlterRoleSetStmt
@@ -397,7 +397,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
 %type <istmt>	insert_rest
 
-%type <vsetstmt> set_rest set_rest_more SetResetClause FunctionSetResetClause
+%type <vsetstmt> generic_set set_rest set_rest_more SetResetClause FunctionSetResetClause
 
 %type <node>	TableElement TypedTableElement ConstraintElem TableFuncElement
 %type <node>	columnDef columnOptions
@@ -724,6 +724,7 @@ stmt :
 			| AlterObjectSchemaStmt
 			| AlterOwnerStmt
 			| AlterSeqStmt
+			| AlterSystemStmt
 			| AlterTableStmt
 			| AlterCompositeTypeStmt
 			| AlterRoleSetStmt
@@ -1333,7 +1334,7 @@ set_rest:
 			| set_rest_more
 			;
 
-set_rest_more:	/* Generic SET syntaxes: */
+generic_set:
 			var_name TO var_list
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
@@ -1364,6 +1365,9 @@ set_rest_more:	/* Generic SET syntaxes: */
 					n->name = $1;
 					$$ = n;
 				}
+
+set_rest_more:	/* Generic SET syntaxes: */
+			generic_set 						{$$ = $1;}
 			| var_name FROM CURRENT_P
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
@@ -8305,6 +8309,23 @@ DropdbStmt: DROP DATABASE database_name
 					DropdbStmt *n = makeNode(DropdbStmt);
 					n->dbname = $5;
 					n->missing_ok = TRUE;
+					$$ = (Node *)n;
+				}
+		;
+
+
+/*****************************************************************************
+ *
+ *		ALTER SYSTEM SET
+ *
+ * This is used to change configuration parameters persistently.
+ *****************************************************************************/
+
+AlterSystemStmt:
+			ALTER SYSTEM_P SET generic_set
+				{
+					AlterSystemStmt *n = makeNode(AlterSystemStmt);
+					n->setstmt = $4;
 					$$ = (Node *)n;
 				}
 		;

@@ -158,6 +158,19 @@ SET ENABLE_SEQSCAN TO OFF;
      require superuser permission to change via <command>SET</command> or
      <command>ALTER</>.
     </para>
+
+    <para>
+     Another way to change configuration parameters persistently is by
+     use of <xref linkend="SQL-ALTERSYSTEM">
+     command, for example:
+<screen>
+ALTER SYSTEM SET checkpoint_timeout TO 600;
+</screen>
+     This command will allow users to change values persistently
+     through SQL command. The values will be effective after reload of server configuration
+     (<acronym>SIGHUP</>) or server startup. The effect of this command is similar to when
+     user manually changes values in <filename>postgresql.conf</filename>.
+    </para>
    </sect2>
 
    <sect2 id="config-setting-examining">

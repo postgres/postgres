@@ -1547,6 +1547,15 @@ _equalReplicaIdentityStmt(const ReplicaIdentityStmt *a, const ReplicaIdentityStm
 }
 
 static bool
+_equalAlterSystemStmt(const AlterSystemStmt * a, const AlterSystemStmt * b)
+{
+	COMPARE_NODE_FIELD(setstmt);
+
+	return true;
+}
+
+
+static bool
 _equalCreateSeqStmt(const CreateSeqStmt *a, const CreateSeqStmt *b)
 {
 	COMPARE_NODE_FIELD(sequence);
@@ -2837,6 +2846,9 @@ equal(const void *a, const void *b)
 			break;
 		case T_ReplicaIdentityStmt:
 			retval = _equalReplicaIdentityStmt(a, b);
+			break;
+		case T_AlterSystemStmt:
+			retval = _equalAlterSystemStmt(a, b);
 			break;
 		case T_CreateSeqStmt:
 			retval = _equalCreateSeqStmt(a, b);

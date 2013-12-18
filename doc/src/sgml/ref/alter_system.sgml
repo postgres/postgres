@@ -1,0 +1,114 @@
+<!--
+doc/src/sgml/ref/alter_system.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-ALTERSYSTEM">
+ <refmeta>
+  <refentrytitle>ALTER SYSTEM</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>ALTER SYSTEM</refname>
+  <refpurpose>change a server configuration parameter</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="sql-altersystem">
+  <primary>ALTER SYSTEM</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+ALTER SYSTEM SET <replaceable class="PARAMETER">configuration_parameter</replaceable> { TO | = } { <replaceable class="PARAMETER">value</replaceable> | '<replaceable class="PARAMETER">value</replaceable>' | DEFAULT }
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>ALTER SYSTEM</command> writes the configuration parameter
+   values to the <filename>postgresql.auto.conf</filename> file. With
+   <literal>DEFAULT</literal>, it removes a configuration entry from
+   <filename>postgresql.auto.conf</filename> file. The values will be
+   effective after reload of server configuration (SIGHUP) or in next 
+   server start based on the type of configuration parameter modified.
+  </para>
+
+  <para>
+   This command is not allowed inside transaction block or function.
+  </para>
+  
+  <para>
+   See <xref linkend="config-setting"> for other ways to set the parameters and 
+   how they become effective.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">configuration_parameter</replaceable></term>
+    <listitem>
+     <para>
+      Name of a settable run-time parameter.  Available parameters are
+      documented in <xref linkend="runtime-config">.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">value</replaceable></term>
+    <listitem>
+     <para>
+      New value of parameter.  Values can be specified as string
+      constants, identifiers, numbers, or comma-separated lists of
+      these, as appropriate for the particular parameter.
+      <literal>DEFAULT</literal> can be written to specify to remove the
+      parameter and its value from <filename>postgresql.auto.conf</filename>
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   Set the <literal>wal_level</>:
+<programlisting>
+ALTER SYSTEM SET wal_level = hot_standby;
+</programlisting>
+  </para>
+
+  <para>
+   Set the <literal>authentication_timeout</>:
+<programlisting>
+ALTER SYSTEM SET authentication_timeout = 10;
+</programlisting></para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   The <command>ALTER SYSTEM</command> statement is a
+   <productname>PostgreSQL</productname> extension.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="SQL-SET"></member>
+   <member><xref linkend="SQL-SHOW"></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>

@@ -120,6 +120,9 @@ ProcessConfigFile(GucContext context)
 				   *head,
 				   *tail;
 	int			i;
+	char		ConfigAutoFileName[MAXPGPATH];
+	char		*ErrorConfFile;
+	char		*CallingFileName;
 
 	/*
 	 * Config files are processed on startup (by the postmaster only)
@@ -134,6 +137,8 @@ ProcessConfigFile(GucContext context)
 	 */
 	elevel = IsUnderPostmaster ? DEBUG2 : LOG;
 
+	ErrorConfFile = ConfigFileName;
+
 	/* Parse the file into a list of option names and values */
 	head = tail = NULL;
 
@@ -141,6 +146,26 @@ ProcessConfigFile(GucContext context)
 	{
 		/* Syntax error(s) detected in the file, so bail out */
 		error = true;
+		goto cleanup_list;
+	}
+
+	/*
+	 * Parse postgresql.auto.conf file after postgresql.conf to replace
+	 * parameters set by ALTER SYSTEM command. This file is present in
+	 * data directory, however when called during initdb data directory is not
+	 * set till this point, so use ConfigFile path which will be same.
+	 */
+	snprintf(ConfigAutoFileName,sizeof(ConfigAutoFileName),"%s", PG_AUTOCONF_FILENAME);
+	if (data_directory)
+		CallingFileName = NULL;
+	else
+		CallingFileName = ConfigFileName;
+
+	if (!ParseConfigFile(ConfigAutoFileName, CallingFileName, false, 0, elevel, &head, &tail))
+	{
+		/* Syntax error(s) detected in the file, so bail out */
+		error = true;
+		ErrorConfFile = ConfigAutoFileName;
 		goto cleanup_list;
 	}
 
@@ -192,6 +217,7 @@ ProcessConfigFile(GucContext context)
 							item->name,
 							item->filename, item->sourceline)));
 			error = true;
+			ErrorConfFile = item->filename;
 		}
 	}
 
@@ -318,7 +344,10 @@ ProcessConfigFile(GucContext context)
 			}
 		}
 		else if (scres == 0)
+		{
 			error = true;
+			ErrorConfFile = item->filename;
+		}
 		/* else no error but variable's active value was not changed */
 
 		/*
@@ -348,17 +377,17 @@ ProcessConfigFile(GucContext context)
 			ereport(ERROR,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("configuration file \"%s\" contains errors",
-							ConfigFileName)));
+							ErrorConfFile)));
 		else if (apply)
 			ereport(elevel,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("configuration file \"%s\" contains errors; unaffected changes were applied",
-							ConfigFileName)));
+							ErrorConfFile)));
 		else
 			ereport(elevel,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("configuration file \"%s\" contains errors; no changes were applied",
-							ConfigFileName)));
+							ErrorConfFile)));
 	}
 }
 

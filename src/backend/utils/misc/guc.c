@@ -207,6 +207,10 @@ static char *config_enum_get_options(struct config_enum * record,
 						const char *prefix, const char *suffix,
 						const char *separator);
 
+static bool validate_conf_option(struct config_generic * record,
+					 const char *name, const char *value, GucSource source,
+					 int elevel, bool freemem, void *newval, void **newextra);
+
 
 /*
  * Options for enum values defined in this module.
@@ -3484,6 +3488,9 @@ static void ShowAllGUCConfig(DestReceiver *dest);
 static char *_ShowOption(struct config_generic * record, bool use_units);
 static bool validate_option_array_item(const char *name, const char *value,
 						   bool skipIfNoPermissions);
+static void write_auto_conf_file(int fd, const char *filename, ConfigVariable **head_p);
+static void replace_auto_config_value(ConfigVariable **head_p, ConfigVariable **tail_p,
+						  char *config_file, char *name, char *value);
 
 
 /*
@@ -5248,6 +5255,220 @@ config_enum_get_options(struct config_enum * record, const char *prefix,
 	return retstr.data;
 }
 
+/*
+ * Validates configuration parameter and value, by calling check hook functions
+ * depending on record's vartype. It validates if the parameter
+ * value given is in range of expected predefined value for that parameter.
+ *
+ * freemem - true indicates memory for newval and newextra will be
+ *			 freed in this function, false indicates it will be freed
+ *			 by caller.
+ * Return value:
+ *	1: the value is valid
+ *	0: the name or value is invalid
+ */
+bool
+validate_conf_option(struct config_generic * record, const char *name,
+					 const char *value, GucSource source, int elevel,
+					 bool freemem, void *newval, void **newextra)
+{
+	/*
+	 * Validate the value for the passed record, to ensure it is in expected
+	 * range.
+	 */
+	switch (record->vartype)
+	{
+
+		case PGC_BOOL:
+			{
+				struct config_bool *conf = (struct config_bool *) record;
+				bool		tmpnewval;
+
+				if (newval == NULL)
+					newval = &tmpnewval;
+
+				if (value != NULL)
+				{
+					if (!parse_bool(value, newval))
+					{
+						ereport(elevel,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("parameter \"%s\" requires a Boolean value",
+								 name)));
+						return 0;
+					}
+
+					if (!call_bool_check_hook(conf, newval, newextra,
+											  source, elevel))
+						return 0;
+
+					if (*newextra && freemem)
+						free(*newextra);
+				}
+			}
+			break;
+		case PGC_INT:
+			{
+				struct config_int *conf = (struct config_int *) record;
+				int			tmpnewval;
+
+				if (newval == NULL)
+					newval = &tmpnewval;
+
+				if (value != NULL)
+				{
+					const char *hintmsg;
+
+					if (!parse_int(value, newval, conf->gen.flags, &hintmsg))
+					{
+						ereport(elevel,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("invalid value for parameter \"%s\": \"%s\"",
+								 name, value),
+								 hintmsg ? errhint("%s", _(hintmsg)) : 0));
+						return 0;
+					}
+
+					if (*((int *) newval) < conf->min || *((int *) newval) > conf->max)
+					{
+						ereport(elevel,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("%d is outside the valid range for parameter \"%s\" (%d .. %d)",
+										*((int *) newval), name, conf->min, conf->max)));
+						return 0;
+					}
+
+					if (!call_int_check_hook(conf, newval, newextra,
+											 source, elevel))
+						return 0;
+
+					if (*newextra && freemem)
+						free(*newextra);
+				}
+			}
+			break;
+		case PGC_REAL:
+			{
+				struct config_real *conf = (struct config_real *) record;
+				double		tmpnewval;
+
+				if (newval == NULL)
+					newval = &tmpnewval;
+
+				if (value != NULL)
+				{
+					if (!parse_real(value, newval))
+					{
+						ereport(elevel,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("parameter \"%s\" requires a numeric value",
+								 name)));
+						return 0;
+					}
+
+					if (*((double *) newval) < conf->min || *((double *) newval) > conf->max)
+					{
+						ereport(elevel,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("%g is outside the valid range for parameter \"%s\" (%g .. %g)",
+										*((double *) newval), name, conf->min, conf->max)));
+						return 0;
+					}
+
+					if (!call_real_check_hook(conf, newval, newextra,
+											  source, elevel))
+						return 0;
+
+					if (*newextra && freemem)
+						free(*newextra);
+				}
+			}
+			break;
+		case PGC_STRING:
+			{
+				struct config_string *conf = (struct config_string *) record;
+				char	   *tempPtr;
+				char	  **tmpnewval = newval;
+
+				if (newval == NULL)
+					tmpnewval = &tempPtr;
+
+				if (value != NULL)
+				{
+					/*
+					 * The value passed by the caller could be transient, so
+					 * we always strdup it.
+					 */
+					*tmpnewval = guc_strdup(elevel, value);
+					if (*tmpnewval == NULL)
+						return 0;
+
+					/*
+					 * The only built-in "parsing" check we have is to apply
+					 * truncation if GUC_IS_NAME.
+					 */
+					if (conf->gen.flags & GUC_IS_NAME)
+						truncate_identifier(*tmpnewval, strlen(*tmpnewval), true);
+
+					if (!call_string_check_hook(conf, tmpnewval, newextra,
+												source, elevel))
+					{
+						free(*tmpnewval);
+						return 0;
+					}
+
+					/* Free the malloc'd data if any */
+					if (freemem)
+					{
+						if (*tmpnewval != NULL)
+							free(*tmpnewval);
+						if (*newextra != NULL)
+							free(*newextra);
+					}
+				}
+			}
+			break;
+		case PGC_ENUM:
+			{
+				struct config_enum *conf = (struct config_enum *) record;
+				int			tmpnewval;
+
+				if (newval == NULL)
+					newval = &tmpnewval;
+
+				if (value != NULL)
+				{
+					if (!config_enum_lookup_by_name(conf, value, newval))
+					{
+						char	   *hintmsg;
+
+						hintmsg = config_enum_get_options(conf,
+														"Available values: ",
+														  ".", ", ");
+
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("invalid value for parameter \"%s\": \"%s\"",
+										name, value),
+										hintmsg ? errhint("%s", _(hintmsg)) : 0));
+
+						if (hintmsg != NULL)
+							pfree(hintmsg);
+						return 0;
+					}
+					if (!call_enum_check_hook(conf, newval, newextra,
+											  source, LOG))
+						return 0;
+
+					if (*newextra && freemem)
+						free(*newextra);
+				}
+			}
+			break;
+	}
+	return 1;
+}
+
 
 /*
  * Sets option `name' to given value.
@@ -5496,16 +5717,9 @@ set_config_option(const char *name, const char *value,
 
 				if (value)
 				{
-					if (!parse_bool(value, &newval))
-					{
-						ereport(elevel,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						  errmsg("parameter \"%s\" requires a Boolean value",
-								 name)));
-						return 0;
-					}
-					if (!call_bool_check_hook(conf, &newval, &newextra,
-											  source, elevel))
+					if (!validate_conf_option(record, name, value, source,
+											  elevel, false, &newval,
+											  &newextra))
 						return 0;
 				}
 				else if (source == PGC_S_DEFAULT)
@@ -5589,27 +5803,9 @@ set_config_option(const char *name, const char *value,
 
 				if (value)
 				{
-					const char *hintmsg;
-
-					if (!parse_int(value, &newval, conf->gen.flags, &hintmsg))
-					{
-						ereport(elevel,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("invalid value for parameter \"%s\": \"%s\"",
-								name, value),
-								 hintmsg ? errhint("%s", _(hintmsg)) : 0));
-						return 0;
-					}
-					if (newval < conf->min || newval > conf->max)
-					{
-						ereport(elevel,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("%d is outside the valid range for parameter \"%s\" (%d .. %d)",
-										newval, name, conf->min, conf->max)));
-						return 0;
-					}
-					if (!call_int_check_hook(conf, &newval, &newextra,
-											 source, elevel))
+					if (!validate_conf_option(record, name, value, source,
+											  elevel, false, &newval,
+											  &newextra))
 						return 0;
 				}
 				else if (source == PGC_S_DEFAULT)
@@ -5693,24 +5889,9 @@ set_config_option(const char *name, const char *value,
 
 				if (value)
 				{
-					if (!parse_real(value, &newval))
-					{
-						ereport(elevel,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						  errmsg("parameter \"%s\" requires a numeric value",
-								 name)));
-						return 0;
-					}
-					if (newval < conf->min || newval > conf->max)
-					{
-						ereport(elevel,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("%g is outside the valid range for parameter \"%s\" (%g .. %g)",
-										newval, name, conf->min, conf->max)));
-						return 0;
-					}
-					if (!call_real_check_hook(conf, &newval, &newextra,
-											  source, elevel))
+					if (!validate_conf_option(record, name, value, source,
+											  elevel, false, &newval,
+											  &newextra))
 						return 0;
 				}
 				else if (source == PGC_S_DEFAULT)
@@ -5794,27 +5975,10 @@ set_config_option(const char *name, const char *value,
 
 				if (value)
 				{
-					/*
-					 * The value passed by the caller could be transient, so
-					 * we always strdup it.
-					 */
-					newval = guc_strdup(elevel, value);
-					if (newval == NULL)
+					if (!validate_conf_option(record, name, value, source,
+											  elevel, false, &newval,
+											  &newextra))
 						return 0;
-
-					/*
-					 * The only built-in "parsing" check we have is to apply
-					 * truncation if GUC_IS_NAME.
-					 */
-					if (conf->gen.flags & GUC_IS_NAME)
-						truncate_identifier(newval, strlen(newval), true);
-
-					if (!call_string_check_hook(conf, &newval, &newextra,
-												source, elevel))
-					{
-						free(newval);
-						return 0;
-					}
 				}
 				else if (source == PGC_S_DEFAULT)
 				{
@@ -5920,26 +6084,9 @@ set_config_option(const char *name, const char *value,
 
 				if (value)
 				{
-					if (!config_enum_lookup_by_name(conf, value, &newval))
-					{
-						char	   *hintmsg;
-
-						hintmsg = config_enum_get_options(conf,
-														"Available values: ",
-														  ".", ", ");
-
-						ereport(elevel,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("invalid value for parameter \"%s\": \"%s\"",
-								name, value),
-								 hintmsg ? errhint("%s", _(hintmsg)) : 0));
-
-						if (hintmsg)
-							pfree(hintmsg);
-						return 0;
-					}
-					if (!call_enum_check_hook(conf, &newval, &newextra,
-											  source, elevel))
+					if (!validate_conf_option(record, name, value, source,
+											  elevel, false, &newval,
+											  &newextra))
 						return 0;
 				}
 				else if (source == PGC_S_DEFAULT)
@@ -6309,6 +6456,295 @@ flatten_set_variable_args(const char *name, List *args)
 	return buf.data;
 }
 
+/*
+ * Writes updated configuration parameter values into
+ * postgresql.auto.conf.temp file. It traverses the list of parameters
+ * and quote the string values before writing them to temporaray file.
+ */
+static void
+write_auto_conf_file(int fd, const char *filename, ConfigVariable **head_p)
+{
+	ConfigVariable *item;
+	StringInfoData buf;
+
+	initStringInfo(&buf);
+	appendStringInfoString(&buf, "# Do not edit this file manually! \n");
+	appendStringInfoString(&buf, "# It will be overwritten by ALTER SYSTEM command. \n");
+
+	/*
+	 * write the file header message before contents, so that if there is no
+	 * item it can contain message
+	 */
+	if (write(fd, buf.data, buf.len) < 0)
+		ereport(ERROR,
+				(errmsg("failed to write to \"%s\" file", filename)));
+	resetStringInfo(&buf);
+
+	/*
+	 * traverse the list of parameters, quote the string parameter and write
+	 * it to file. Once all parameters are written fsync the file.
+	 */
+
+	for (item = *head_p; item != NULL; item = item->next)
+	{
+		char	   *escaped;
+
+		appendStringInfoString(&buf, item->name);
+		appendStringInfoString(&buf, " = ");
+
+		appendStringInfoString(&buf, "\'");
+		escaped = escape_single_quotes_ascii(item->value);
+		appendStringInfoString(&buf, escaped);
+		free(escaped);
+		appendStringInfoString(&buf, "\'");
+
+		appendStringInfoString(&buf, "\n");
+
+		if (write(fd, buf.data, buf.len) < 0)
+			ereport(ERROR,
+					(errmsg("failed to write to \"%s\" file", filename)));
+		resetStringInfo(&buf);
+	}
+
+	if (pg_fsync(fd) != 0)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not fsync file \"%s\": %m", filename)));
+
+	pfree(buf.data);
+}
+
+
+/*
+ * This function takes list of all configuration parameters in
+ * postgresql.auto.conf and parameter to be updated as input arguments and
+ * replace the updated configuration parameter value in a list. If the
+ * parameter to be updated is new then it is appended to the list of
+ * parameters.
+ */
+static void
+replace_auto_config_value(ConfigVariable **head_p, ConfigVariable **tail_p,
+						  char *config_file,
+						  char *name, char *value)
+{
+	ConfigVariable *item,
+			   *prev = NULL;
+
+	if (*head_p != NULL)
+	{
+		for (item = *head_p; item != NULL; item = item->next)
+		{
+			if (strcmp(item->name, name) == 0)
+			{
+				pfree(item->value);
+				if (value != NULL)
+					/* update the parameter value */
+					item->value = pstrdup(value);
+				else
+				{
+					/* delete the configuration parameter from list */
+					if (*head_p == item)
+						*head_p = item->next;
+					else
+						prev->next = item->next;
+
+					if (*tail_p == item)
+						*tail_p = prev;
+
+					pfree(item->name);
+					pfree(item->filename);
+					pfree(item);
+				}
+				return;
+			}
+			prev = item;
+		}
+	}
+
+	if (value == NULL)
+		return;
+
+	item = palloc(sizeof *item);
+	item->name = pstrdup(name);
+	item->value = pstrdup(value);
+	item->filename = pstrdup(config_file);
+	item->next = NULL;
+
+	if (*head_p == NULL)
+	{
+		item->sourceline = 1;
+		*head_p = item;
+	}
+	else
+	{
+		item->sourceline = (*tail_p)->sourceline + 1;
+		(*tail_p)->next = item;
+	}
+
+	*tail_p = item;
+
+	return;
+}
+
+
+/*
+ * Persist the configuration parameter value.
+ *
+ * This function takes all previous configuration parameters
+ * set by ALTER SYSTEM command and the currently set ones
+ * and write them all to the automatic configuration file.
+ *
+ * The configuration parameters are written to a temporary
+ * file then renamed to the final name. The template for the
+ * temporary file is postgresql.auto.conf.temp.
+ *
+ * An LWLock is used to serialize writing to the same file.
+ *
+ * In case of an error, we leave the original automatic
+ * configuration file (postgresql.auto.conf) intact.
+ */
+void
+AlterSystemSetConfigFile(AlterSystemStmt * altersysstmt)
+{
+	char	   *name;
+	char	   *value;
+	int			Tmpfd = -1;
+	FILE	   *infile;
+	struct config_generic *record;
+	ConfigVariable *head = NULL;
+	ConfigVariable *tail = NULL;
+	char		AutoConfFileName[MAXPGPATH];
+	char		AutoConfTmpFileName[MAXPGPATH];
+	struct stat st;
+	void	   *newextra = NULL;
+
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to execute ALTER SYSTEM command"))));
+
+	/*
+	 * Validate the name and arguments [value1, value2 ... ].
+	 */
+	name = altersysstmt->setstmt->name;
+
+	switch (altersysstmt->setstmt->kind)
+	{
+		case VAR_SET_VALUE:
+			value = ExtractSetVariableArgs(altersysstmt->setstmt);
+			break;
+
+		case VAR_SET_DEFAULT:
+			value = NULL;
+			break;
+		default:
+			elog(ERROR, "unrecognized alter system stmt type: %d",
+				 altersysstmt->setstmt->kind);
+			break;
+	}
+
+	record = find_option(name, false, LOG);
+	if (record == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("unrecognized configuration parameter \"%s\"", name)));
+
+	if ((record->context == PGC_INTERNAL) ||
+		(record->flags & GUC_DISALLOW_IN_FILE))
+		ereport(ERROR,
+				(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
+				 errmsg("parameter \"%s\" cannot be changed",
+						name)));
+
+	if (!validate_conf_option(record, name, value, PGC_S_FILE,
+							  ERROR, true, NULL,
+							  &newextra))
+		ereport(ERROR,
+				(errmsg("invalid value for parameter \"%s\": \"%s\"", name, value)));
+
+
+	/*
+	 * Use data directory as reference path for postgresql.auto.conf and it's
+	 * corresponding temp file
+	 */
+	join_path_components(AutoConfFileName, data_directory, PG_AUTOCONF_FILENAME);
+	canonicalize_path(AutoConfFileName);
+	snprintf(AutoConfTmpFileName, sizeof(AutoConfTmpFileName), "%s.%s",
+			 AutoConfFileName,
+			 "temp");
+
+	/*
+	 * one backend is allowed to operate on postgresql.auto.conf file, to
+	 * ensure that we need to update the contents of the file with
+	 * AutoFileLock. To ensure crash safety, first the contents are written to
+	 * temporary file and then rename it to postgresql.auto.conf. In case
+	 * there exists a temp file from previous crash, that can be reused.
+	 */
+
+	LWLockAcquire(AutoFileLock, LW_EXCLUSIVE);
+
+	Tmpfd = open(AutoConfTmpFileName, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+	if (Tmpfd < 0)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("failed to open auto conf temp file \"%s\": %m ",
+						AutoConfTmpFileName)));
+
+	PG_TRY();
+	{
+		if (stat(AutoConfFileName, &st) == 0)
+		{
+			/* open postgresql.auto.conf file */
+			infile = AllocateFile(AutoConfFileName, "r");
+			if (infile == NULL)
+				ereport(ERROR,
+						(errmsg("failed to open auto conf file \"%s\": %m ",
+								AutoConfFileName)));
+
+			/* Parse the postgresql.auto.conf file */
+			ParseConfigFp(infile, AutoConfFileName, 0, LOG, &head, &tail);
+
+			FreeFile(infile);
+		}
+
+		/*
+		 * replace with new value if the configuration parameter already
+		 * exists OR add it as a new cofiguration parameter in the file.
+		 */
+		replace_auto_config_value(&head, &tail, AutoConfFileName, name, value);
+
+		/* Write and sync the New contents to postgresql.auto.conf.temp file */
+		write_auto_conf_file(Tmpfd, AutoConfTmpFileName, &head);
+
+		close(Tmpfd);
+		Tmpfd = -1;
+
+		/*
+		 * As the rename is atomic operation, if any problem occurs after this
+		 * at max it can loose the parameters set by last ALTER SYSTEM
+		 * command.
+		 */
+		if (rename(AutoConfTmpFileName, AutoConfFileName) < 0)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not rename file \"%s\" to \"%s\" : %m",
+							AutoConfTmpFileName, AutoConfFileName)));
+	}
+	PG_CATCH();
+	{
+		if (Tmpfd >= 0)
+			close(Tmpfd);
+
+		unlink(AutoConfTmpFileName);
+		FreeConfigVariables(head);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	FreeConfigVariables(head);
+	LWLockRelease(AutoFileLock);
+	return;
+}
 
 /*
  * SET command

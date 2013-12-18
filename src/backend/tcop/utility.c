@@ -687,6 +687,11 @@ standard_ProcessUtility(Node *parsetree,
 			ExplainQuery((ExplainStmt *) parsetree, queryString, params, dest);
 			break;
 
+		case T_AlterSystemStmt:
+			PreventTransactionChain(isTopLevel, "ALTER SYSTEM");
+			AlterSystemSetConfigFile((AlterSystemStmt *) parsetree);
+			break;
+
 		case T_VariableSetStmt:
 			ExecSetVariableStmt((VariableSetStmt *) parsetree, isTopLevel);
 			break;
@@ -2157,6 +2162,10 @@ CreateCommandTag(Node *parsetree)
 			tag = "REFRESH MATERIALIZED VIEW";
 			break;
 
+		case T_AlterSystemStmt:
+			tag = "ALTER SYSTEM";
+			break;
+
 		case T_VariableSetStmt:
 			switch (((VariableSetStmt *) parsetree)->kind)
 			{
@@ -2724,6 +2733,10 @@ GetCommandLogLevel(Node *parsetree)
 
 		case T_RefreshMatViewStmt:
 			lev = LOGSTMT_DDL;
+			break;
+
+		case T_AlterSystemStmt:
+			lev = LOGSTMT_ALL;
 			break;
 
 		case T_VariableSetStmt:

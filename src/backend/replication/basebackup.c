@@ -811,6 +811,13 @@ sendDir(char *path, int basepathlen, bool sizeonly)
 					strlen(PG_TEMP_FILE_PREFIX)) == 0)
 			continue;
 
+		/* skip auto conf temporary file */
+		if (strncmp(de->d_name,
+					PG_AUTOCONF_FILENAME ".temp",
+					sizeof(PG_AUTOCONF_FILENAME) + 4) == 0)
+			continue;
+
+
 		/*
 		 * If there's a backup_label file, it belongs to a backup started by
 		 * the user with pg_start_backup(). It is *not* correct for this

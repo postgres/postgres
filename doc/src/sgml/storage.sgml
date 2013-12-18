@@ -126,6 +126,12 @@ Item
 </row>
 
 <row>
+ <entry><filename>postgresql.auto.conf</></entry>
+ <entry>A file used for storing configuration parameters that are set by
+<command>ALTER SYSTEM</command></entry>
+</row>
+
+<row>
  <entry><filename>postmaster.opts</></entry>
  <entry>A file recording the command-line options the server was
 last started with</entry>

@@ -292,3 +292,10 @@
 /* #define HEAPDEBUGALL */
 /* #define ACLDEBUG */
 /* #define RTDEBUG */
+
+/*
+ * Automatic configuration file name for ALTER SYSTEM.
+ * This file will be used to store values of configuration parameters
+ * set by ALTER SYSTEM command
+ */
+#define PG_AUTOCONF_FILENAME		"postgresql.auto.conf"

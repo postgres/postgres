@@ -3292,6 +3292,16 @@ _copyReplicaIdentityStmt(const ReplicaIdentityStmt *from)
 	return newnode;
 }
 
+static AlterSystemStmt *
+_copyAlterSystemStmt(const AlterSystemStmt * from)
+{
+	AlterSystemStmt *newnode = makeNode(AlterSystemStmt);
+
+	COPY_NODE_FIELD(setstmt);
+
+	return newnode;
+}
+
 static CreateSeqStmt *
 _copyCreateSeqStmt(const CreateSeqStmt *from)
 {
@@ -4367,6 +4377,9 @@ copyObject(const void *from)
 			break;
 		case T_ReplicaIdentityStmt:
 			retval = _copyReplicaIdentityStmt(from);
+			break;
+		case T_AlterSystemStmt:
+			retval = _copyAlterSystemStmt(from);
 			break;
 		case T_CreateSeqStmt:
 			retval = _copyCreateSeqStmt(from);
