@@ -1275,6 +1275,39 @@ retry:
 }
 
 /*
+ * MultiXactHasRunningRemoteMembers
+ * 		Does the given multixact have still-live members from
+ * 		transactions other than our own?
+ */
+bool
+MultiXactHasRunningRemoteMembers(MultiXactId multi)
+{
+	MultiXactMember *members;
+	int			nmembers;
+	int			i;
+
+	nmembers = GetMultiXactIdMembers(multi, &members, true);
+	if (nmembers <= 0)
+		return false;
+
+	for (i = 0; i < nmembers; i++)
+	{
+		/* not interested in our own members */
+		if (TransactionIdIsCurrentTransactionId(members[i].xid))
+			continue;
+
+		if (TransactionIdIsInProgress(members[i].xid))
+		{
+			pfree(members);
+			return true;
+		}
+	}
+
+	pfree(members);
+	return false;
+}
+
+/*
  * mxactMemberComparator
  *		qsort comparison function for MultiXactMember
  *

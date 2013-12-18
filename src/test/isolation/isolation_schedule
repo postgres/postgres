@@ -21,5 +21,6 @@ test: delete-abort-savept-2
 test: aborted-keyrevoke
 test: multixact-no-deadlock
 test: multixact-no-forget
+test: propagate-lock-delete
 test: drop-index-concurrently-1
 test: timeouts
