@@ -46,14 +46,14 @@ typedef void (*shmem_startup_hook_type) (void);
  */
 #define PG_ENSURE_ERROR_CLEANUP(cleanup_function, arg)	\
 	do { \
-		on_shmem_exit(cleanup_function, arg); \
+		before_shmem_exit(cleanup_function, arg); \
 		PG_TRY()
 
 #define PG_END_ENSURE_ERROR_CLEANUP(cleanup_function, arg)	\
-		cancel_shmem_exit(cleanup_function, arg); \
+		cancel_before_shmem_exit(cleanup_function, arg); \
 		PG_CATCH(); \
 		{ \
-			cancel_shmem_exit(cleanup_function, arg); \
+			cancel_before_shmem_exit(cleanup_function, arg); \
 			cleanup_function (0, arg); \
 			PG_RE_THROW(); \
 		} \
@@ -68,7 +68,8 @@ extern void proc_exit(int code) __attribute__((noreturn));
 extern void shmem_exit(int code);
 extern void on_proc_exit(pg_on_exit_callback function, Datum arg);
 extern void on_shmem_exit(pg_on_exit_callback function, Datum arg);
-extern void cancel_shmem_exit(pg_on_exit_callback function, Datum arg);
+extern void before_shmem_exit(pg_on_exit_callback function, Datum arg);
+extern void cancel_before_shmem_exit(pg_on_exit_callback function, Datum arg);
 extern void on_exit_reset(void);
 
 /* ipci.c */

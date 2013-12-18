@@ -587,15 +587,14 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	RelationCacheInitializePhase2();
 
 	/*
-	 * Set up process-exit callback to do pre-shutdown cleanup.  This has to
-	 * be after we've initialized all the low-level modules like the buffer
-	 * manager, because during shutdown this has to run before the low-level
-	 * modules start to close down.  On the other hand, we want it in place
-	 * before we begin our first transaction --- if we fail during the
-	 * initialization transaction, as is entirely possible, we need the
-	 * AbortTransaction call to clean up.
+	 * Set up process-exit callback to do pre-shutdown cleanup.  This is the
+	 * first before_shmem_exit callback we register; thus, this will be the
+	 * last thing we do before low-level modules like the buffer manager begin
+	 * to close down.  We need to have this in place before we begin our first
+	 * transaction --- if we fail during the initialization transaction, as is
+	 * entirely possible, we need the AbortTransaction call to clean up.
 	 */
-	on_shmem_exit(ShutdownPostgres, 0);
+	before_shmem_exit(ShutdownPostgres, 0);
 
 	/* The autovacuum launcher is done here */
 	if (IsAutoVacuumLauncherProcess())

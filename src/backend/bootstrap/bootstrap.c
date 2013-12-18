@@ -402,8 +402,8 @@ AuxiliaryProcessMain(int argc, char *argv[])
 		/* finish setting up bufmgr.c */
 		InitBufferPoolBackend();
 
-		/* register a shutdown callback for LWLock cleanup */
-		on_shmem_exit(ShutdownAuxiliaryProcess, 0);
+		/* register a before-shutdown callback for LWLock cleanup */
+		before_shmem_exit(ShutdownAuxiliaryProcess, 0);
 	}
 
 	/*

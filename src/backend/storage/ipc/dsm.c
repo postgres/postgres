@@ -58,6 +58,14 @@
 
 #define INVALID_CONTROL_SLOT		((uint32) -1)
 
+/* Backend-local tracking for on-detach callbacks. */
+typedef struct dsm_segment_detach_callback
+{
+	on_dsm_detach_callback	function;
+	Datum					arg;
+	slist_node				node;
+} dsm_segment_detach_callback;
+
 /* Backend-local state for a dynamic shared memory segment. */
 struct dsm_segment
 {
@@ -68,6 +76,7 @@ struct dsm_segment
 	void       *impl_private;		/* Implementation-specific private data. */
 	void	   *mapped_address;		/* Mapping address, or NULL if unmapped. */
 	Size		mapped_size;		/* Size of our mapping. */
+	slist_head	on_detach;			/* On-detach callbacks. */
 };
 
 /* Shared-memory state for a dynamic shared memory segment. */
@@ -91,7 +100,6 @@ static void dsm_cleanup_for_mmap(void);
 static bool dsm_read_state_file(dsm_handle *h);
 static void dsm_write_state_file(dsm_handle h);
 static void dsm_postmaster_shutdown(int code, Datum arg);
-static void dsm_backend_shutdown(int code, Datum arg);
 static dsm_segment *dsm_create_descriptor(void);
 static bool dsm_control_segment_sane(dsm_control_header *control,
 						 Size mapped_size);
@@ -556,9 +564,6 @@ dsm_backend_startup(void)
 	}
 #endif
 
-	/* Arrange to detach segments on exit. */
-	on_shmem_exit(dsm_backend_shutdown, 0);
-
 	dsm_init_done = true;
 }
 
@@ -718,8 +723,8 @@ dsm_attach(dsm_handle h)
 /*
  * At backend shutdown time, detach any segments that are still attached.
  */
-static void
-dsm_backend_shutdown(int code, Datum arg)
+void
+dsm_backend_shutdown(void)
 {
 	while (!dlist_is_empty(&dsm_segment_list))
 	{
@@ -774,6 +779,27 @@ dsm_remap(dsm_segment *seg)
 void
 dsm_detach(dsm_segment *seg)
 {
+	/*
+	 * Invoke registered callbacks.  Just in case one of those callbacks
+	 * throws a further error that brings us back here, pop the callback
+	 * before invoking it, to avoid infinite error recursion.
+	 */
+	while (!slist_is_empty(&seg->on_detach))
+	{
+		slist_node *node;
+		dsm_segment_detach_callback *cb;
+		on_dsm_detach_callback	function;
+		Datum		arg;
+
+		node = slist_pop_head_node(&seg->on_detach);
+		cb = slist_container(dsm_segment_detach_callback, node, node);
+		function = cb->function;
+		arg = cb->arg;
+		pfree(cb);
+
+		function(seg, arg);
+	}
+
 	/*
 	 * Try to remove the mapping, if one exists.  Normally, there will be,
 	 * but maybe not, if we failed partway through a create or attach
@@ -916,6 +942,44 @@ dsm_segment_handle(dsm_segment *seg)
 }
 
 /*
+ * Register an on-detach callback for a dynamic shared memory segment.
+ */
+void
+on_dsm_detach(dsm_segment *seg, on_dsm_detach_callback function, Datum arg)
+{
+	dsm_segment_detach_callback *cb;
+
+	cb = MemoryContextAlloc(TopMemoryContext,
+							sizeof(dsm_segment_detach_callback));
+	cb->function = function;
+	cb->arg = arg;
+	slist_push_head(&seg->on_detach, &cb->node);
+}
+
+/*
+ * Unregister an on-detach callback for a dynamic shared memory segment.
+ */
+void
+cancel_on_dsm_detach(dsm_segment *seg, on_dsm_detach_callback function,
+					 Datum arg)
+{
+	slist_mutable_iter	iter;
+
+	slist_foreach_modify(iter, &seg->on_detach)
+	{
+		dsm_segment_detach_callback *cb;
+
+		cb = slist_container(dsm_segment_detach_callback, node, iter.cur);
+		if (cb->function == function && cb->arg == arg)
+		{
+			slist_delete_current(&iter);
+			pfree(cb);
+			break;
+		}
+	}
+}
+
+/*
  * Create a segment descriptor.
  */
 static dsm_segment *
@@ -936,6 +1000,8 @@ dsm_create_descriptor(void)
 
 	seg->resowner = CurrentResourceOwner;
 	ResourceOwnerRememberDSM(CurrentResourceOwner, seg);
+
+	slist_init(&seg->on_detach);
 
 	return seg;
 }

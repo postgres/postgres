@@ -921,7 +921,7 @@ Exec_ListenPreCommit(void)
 	 */
 	if (!unlistenExitRegistered)
 	{
-		on_shmem_exit(Async_UnlistenOnExit, 0);
+		before_shmem_exit(Async_UnlistenOnExit, 0);
 		unlistenExitRegistered = true;
 	}
 
