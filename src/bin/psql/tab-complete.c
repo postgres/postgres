@@ -541,6 +541,12 @@ static const SchemaQuery Query_for_list_of_matviews = {
 "SELECT pg_catalog.quote_ident(nspname) FROM pg_catalog.pg_namespace "\
 " WHERE substring(pg_catalog.quote_ident(nspname),1,%d)='%s'"
 
+#define Query_for_list_of_alter_system_set_vars \
+"SELECT name FROM "\
+" (SELECT pg_catalog.lower(name) AS name FROM pg_catalog.pg_settings "\
+"  WHERE context != 'internal') ss "\
+" WHERE substring(name,1,%d)='%s'"
+
 #define Query_for_list_of_set_vars \
 "SELECT name FROM "\
 " (SELECT pg_catalog.lower(name) AS name FROM pg_catalog.pg_settings "\
@@ -930,7 +936,7 @@ psql_completion(char *text, int start, int end)
 		{"AGGREGATE", "COLLATION", "CONVERSION", "DATABASE", "DEFAULT PRIVILEGES", "DOMAIN",
 			"EXTENSION", "FOREIGN DATA WRAPPER", "FOREIGN TABLE", "FUNCTION",
 			"GROUP", "INDEX", "LANGUAGE", "LARGE OBJECT", "MATERIALIZED VIEW", "OPERATOR",
-			"ROLE", "RULE", "SCHEMA", "SERVER", "SEQUENCE", "TABLE",
+			 "ROLE", "RULE", "SCHEMA", "SERVER", "SEQUENCE", "SYSTEM SET", "TABLE",
 			"TABLESPACE", "TEXT SEARCH", "TRIGGER", "TYPE",
 		"USER", "USER MAPPING FOR", "VIEW", NULL};
 
@@ -1263,6 +1269,11 @@ psql_completion(char *text, int start, int end)
 
 		COMPLETE_WITH_LIST(list_ALTER_SERVER);
 	}
+	/* ALTER SYSTEM SET <name> */
+	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
+			 pg_strcasecmp(prev2_wd, "SYSTEM") == 0 &&
+			 pg_strcasecmp(prev_wd, "SET") == 0)
+		COMPLETE_WITH_QUERY(Query_for_list_of_alter_system_set_vars);
 	/* ALTER VIEW <name> */
 	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
 			 pg_strcasecmp(prev2_wd, "VIEW") == 0)
