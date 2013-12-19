@@ -4534,6 +4534,8 @@ compute_new_xmax_infomask(TransactionId xmax, uint16 old_infomask,
 	uint16		new_infomask,
 				new_infomask2;
 
+	Assert(TransactionIdIsCurrentTransactionId(add_to_xmax));
+
 l5:
 	new_infomask = 0;
 	new_infomask2 = 0;
@@ -4541,6 +4543,11 @@ l5:
 	{
 		/*
 		 * No previous locker; we just insert our own TransactionId.
+		 *
+		 * Note that it's critical that this case be the first one checked,
+		 * because there are several blocks below that come back to this one
+		 * to implement certain optimizations; old_infomask might contain
+		 * other dirty bits in those cases, but we don't really care.
 		 */
 		if (is_update)
 		{
@@ -4666,21 +4673,22 @@ l5:
 		 * create a new MultiXactId that includes both the old locker or
 		 * updater and our own TransactionId.
 		 */
-		MultiXactStatus status;
 		MultiXactStatus new_status;
+		MultiXactStatus old_status;
+		LockTupleMode	old_mode;
 
 		if (HEAP_XMAX_IS_LOCKED_ONLY(old_infomask))
 		{
 			if (HEAP_XMAX_IS_KEYSHR_LOCKED(old_infomask))
-				status = MultiXactStatusForKeyShare;
+				old_status = MultiXactStatusForKeyShare;
 			else if (HEAP_XMAX_IS_SHR_LOCKED(old_infomask))
-				status = MultiXactStatusForShare;
+				old_status = MultiXactStatusForShare;
 			else if (HEAP_XMAX_IS_EXCL_LOCKED(old_infomask))
 			{
 				if (old_infomask2 & HEAP_KEYS_UPDATED)
-					status = MultiXactStatusForUpdate;
+					old_status = MultiXactStatusForUpdate;
 				else
-					status = MultiXactStatusForNoKeyUpdate;
+					old_status = MultiXactStatusForNoKeyUpdate;
 			}
 			else
 			{
@@ -4700,43 +4708,43 @@ l5:
 		{
 			/* it's an update, but which kind? */
 			if (old_infomask2 & HEAP_KEYS_UPDATED)
-				status = MultiXactStatusUpdate;
+				old_status = MultiXactStatusUpdate;
 			else
-				status = MultiXactStatusNoKeyUpdate;
+				old_status = MultiXactStatusNoKeyUpdate;
 		}
 
-		new_status = get_mxact_status_for_lock(mode, is_update);
+		old_mode = TUPLOCK_from_mxstatus(old_status);
 
 		/*
-		 * If the existing lock mode is identical to or weaker than the new
-		 * one, we can act as though there is no existing lock, so set
-		 * XMAX_INVALID and restart.
+		 * If the lock to be acquired is for the same TransactionId as the
+		 * existing lock, there's an optimization possible: consider only the
+		 * strongest of both locks as the only one present, and restart.
 		 */
 		if (xmax == add_to_xmax)
 		{
-			LockTupleMode old_mode = TUPLOCK_from_mxstatus(status);
-			bool		old_isupd = ISUPDATE_from_mxstatus(status);
-
 			/*
-			 * We can do this if the new LockTupleMode is higher or equal than
-			 * the old one; and if there was previously an update, we need an
-			 * update, but if there wasn't, then we can accept there not being
-			 * one.
+			 * Note that it's not possible for the original tuple to be updated:
+			 * we wouldn't be here because the tuple would have been invisible and
+			 * we wouldn't try to update it.  As a subtlety, this code can also
+			 * run when traversing an update chain to lock future versions of a
+			 * tuple.  But we wouldn't be here either, because the add_to_xmax
+			 * would be different from the original updater.
 			 */
-			if ((mode >= old_mode) && (is_update || !old_isupd))
-			{
-				/*
-				 * Note that the infomask might contain some other dirty bits.
-				 * However, since the new infomask is reset to zero, we only
-				 * set what's minimally necessary, and that the case that
-				 * checks HEAP_XMAX_INVALID is the very first above, there is
-				 * no need for extra cleanup of the infomask here.
-				 */
-				old_infomask |= HEAP_XMAX_INVALID;
-				goto l5;
-			}
+			Assert(HEAP_XMAX_IS_LOCKED_ONLY(old_infomask));
+
+			/* acquire the strongest of both */
+			if (mode < old_mode)
+				mode = old_mode;
+			/* mustn't touch is_update */
+
+			old_infomask |= HEAP_XMAX_INVALID;
+			goto l5;
 		}
-		new_xmax = MultiXactIdCreate(xmax, status, add_to_xmax, new_status);
+
+		/* otherwise, just fall back to creating a new multixact */
+		new_status = get_mxact_status_for_lock(mode, is_update);
+		new_xmax = MultiXactIdCreate(xmax, old_status,
+									 add_to_xmax, new_status);
 		GetMultiXactIdHintBits(new_xmax, &new_infomask, &new_infomask2);
 	}
 	else if (!HEAP_XMAX_IS_LOCKED_ONLY(old_infomask) &&
