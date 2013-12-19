@@ -16,6 +16,7 @@
 
 #include "access/tuptoaster.h"
 #include "access/xact.h"
+#include "catalog/binary_upgrade.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
@@ -31,8 +32,6 @@
 #include "utils/syscache.h"
 
 /* Potentially set by contrib/pg_upgrade_support functions */
-extern Oid	binary_upgrade_next_toast_pg_class_oid;
-
 Oid			binary_upgrade_next_toast_pg_type_oid = InvalidOid;
 
 static bool create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,

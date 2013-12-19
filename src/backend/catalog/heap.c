@@ -34,6 +34,7 @@
 #include "access/sysattr.h"
 #include "access/transam.h"
 #include "access/xact.h"
+#include "catalog/binary_upgrade.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"

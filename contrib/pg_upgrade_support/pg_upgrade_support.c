@@ -11,6 +11,7 @@
 
 #include "postgres.h"
 
+#include "catalog/binary_upgrade.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
 #include "commands/extension.h"
@@ -23,17 +24,6 @@
 #ifdef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
 #endif
-
-extern PGDLLIMPORT Oid binary_upgrade_next_pg_type_oid;
-extern PGDLLIMPORT Oid binary_upgrade_next_array_pg_type_oid;
-extern PGDLLIMPORT Oid binary_upgrade_next_toast_pg_type_oid;
-
-extern PGDLLIMPORT Oid binary_upgrade_next_heap_pg_class_oid;
-extern PGDLLIMPORT Oid binary_upgrade_next_index_pg_class_oid;
-extern PGDLLIMPORT Oid binary_upgrade_next_toast_pg_class_oid;
-
-extern PGDLLIMPORT Oid binary_upgrade_next_pg_enum_oid;
-extern PGDLLIMPORT Oid binary_upgrade_next_pg_authid_oid;
 
 Datum		set_next_pg_type_oid(PG_FUNCTION_ARGS);
 Datum		set_next_array_pg_type_oid(PG_FUNCTION_ARGS);
