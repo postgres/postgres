@@ -70,8 +70,6 @@ exit_nicely(void)
 
 	for (i = 0; i < nconns; i++)
 		PQfinish(conns[i]);
-	fflush(stderr);
-	fflush(stdout);
 	exit(1);
 }
 
@@ -100,6 +98,9 @@ main(int argc, char **argv)
 				return EXIT_FAILURE;
 		}
 	}
+
+	/* make stdout unbuffered to match stderr */
+	setbuf(stdout, NULL);
 
 	/*
 	 * If the user supplies a non-option parameter on the command line, use it
@@ -288,8 +289,6 @@ main(int argc, char **argv)
 	/* Clean up and exit */
 	for (i = 0; i < nconns; i++)
 		PQfinish(conns[i]);
-	fflush(stderr);
-	fflush(stdout);
 	return 0;
 }
 
@@ -574,9 +573,7 @@ run_permutation(TestSpec * testspec, int nsteps, Step ** steps)
 			 * but it can only be unblocked by running steps from other
 			 * sessions.
 			 */
-			fflush(stdout);
 			fprintf(stderr, "invalid permutation detected\n");
-			fflush(stderr);
 
 			/* Cancel the waiting statement from this session. */
 			cancel = PQgetCancel(conn);
@@ -664,7 +661,6 @@ teardown:
 						testspec->sessions[i]->name,
 						PQerrorMessage(conns[i + 1]));
 				/* don't exit on teardown failure */
-				fflush(stderr);
 			}
 			PQclear(res);
 		}
@@ -683,7 +679,6 @@ teardown:
 			fprintf(stderr, "teardown failed: %s",
 					PQerrorMessage(conns[0]));
 			/* don't exit on teardown failure */
-			fflush(stderr);
 		}
 		PQclear(res);
 	}
