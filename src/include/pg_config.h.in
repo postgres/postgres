@@ -260,19 +260,19 @@
 /* Define to 1 if you have isinf(). */
 #undef HAVE_ISINF
 
-/* Define to 1 if `e_data' is member of `krb5_error'. */
+/* Define to 1 if `e_data' is a member of `krb5_error'. */
 #undef HAVE_KRB5_ERROR_E_DATA
 
-/* Define to 1 if `text.data' is member of `krb5_error'. */
+/* Define to 1 if `text.data' is a member of `krb5_error'. */
 #undef HAVE_KRB5_ERROR_TEXT_DATA
 
 /* Define to 1 if you have krb5_free_unparsed_name. */
 #undef HAVE_KRB5_FREE_UNPARSED_NAME
 
-/* Define to 1 if `client' is member of `krb5_ticket'. */
+/* Define to 1 if `client' is a member of `krb5_ticket'. */
 #undef HAVE_KRB5_TICKET_CLIENT
 
-/* Define to 1 if `enc_part2' is member of `krb5_ticket'. */
+/* Define to 1 if `enc_part2' is a member of `krb5_ticket'. */
 #undef HAVE_KRB5_TICKET_ENC_PART2
 
 /* Define to 1 if you have the <langinfo.h> header file. */
@@ -490,25 +490,25 @@
 /* Define to 1 if the system has the type `struct option'. */
 #undef HAVE_STRUCT_OPTION
 
-/* Define to 1 if `sa_len' is member of `struct sockaddr'. */
+/* Define to 1 if `sa_len' is a member of `struct sockaddr'. */
 #undef HAVE_STRUCT_SOCKADDR_SA_LEN
 
 /* Define to 1 if the system has the type `struct sockaddr_storage'. */
 #undef HAVE_STRUCT_SOCKADDR_STORAGE
 
-/* Define to 1 if `ss_family' is member of `struct sockaddr_storage'. */
+/* Define to 1 if `ss_family' is a member of `struct sockaddr_storage'. */
 #undef HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY
 
-/* Define to 1 if `ss_len' is member of `struct sockaddr_storage'. */
+/* Define to 1 if `ss_len' is a member of `struct sockaddr_storage'. */
 #undef HAVE_STRUCT_SOCKADDR_STORAGE_SS_LEN
 
-/* Define to 1 if `__ss_family' is member of `struct sockaddr_storage'. */
+/* Define to 1 if `__ss_family' is a member of `struct sockaddr_storage'. */
 #undef HAVE_STRUCT_SOCKADDR_STORAGE___SS_FAMILY
 
-/* Define to 1 if `__ss_len' is member of `struct sockaddr_storage'. */
+/* Define to 1 if `__ss_len' is a member of `struct sockaddr_storage'. */
 #undef HAVE_STRUCT_SOCKADDR_STORAGE___SS_LEN
 
-/* Define to 1 if `tm_zone' is member of `struct tm'. */
+/* Define to 1 if `tm_zone' is a member of `struct tm'. */
 #undef HAVE_STRUCT_TM_TM_ZONE
 
 /* Define to 1 if you have the `symlink' function. */
@@ -605,6 +605,9 @@
 /* Define to 1 if you have the `unsetenv' function. */
 #undef HAVE_UNSETENV
 
+/* Define to 1 if the system has the type `unsigned long long int'. */
+#undef HAVE_UNSIGNED_LONG_LONG_INT
+
 /* Define to 1 if you have the `utime' function. */
 #undef HAVE_UTIME
 
@@ -676,6 +679,9 @@
 
 /* Define to the one symbol short name of this package. */
 #undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
@@ -826,6 +832,11 @@
    and larger than XLOG_BLCKSZ (preferably, a great deal larger than
    XLOG_BLCKSZ). Changing XLOG_SEG_SIZE requires an initdb. */
 #undef XLOG_SEG_SIZE
+
+/* Enable large inode numbers on Mac OS X 10.5.  */
+#ifndef _DARWIN_USE_64_BIT_INODE
+# define _DARWIN_USE_64_BIT_INODE 1
+#endif
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 #undef _FILE_OFFSET_BITS
