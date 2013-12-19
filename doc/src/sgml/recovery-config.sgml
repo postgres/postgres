@@ -152,7 +152,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         By default, a standby server keeps restoring WAL records from the
         primary as soon as possible. It may be useful to have a time-delayed
         copy of the data, offering various options to correct data loss errors.
-        This paramater allows you to delay recovery by a fixed period of time,
+        This parameter allows you to delay recovery by a fixed period of time,
         specified in milliseconds if no unit is specified.  For example, if
         you set this parameter to <literal>5min</literal>, the standby will
         replay each transaction commit only when the system time on the standby
