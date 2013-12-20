@@ -99,8 +99,12 @@ main(int argc, char **argv)
 		}
 	}
 
-	/* make stdout unbuffered to match stderr */
+	/*
+	 * Make stdout unbuffered to match stderr; and ensure stderr is unbuffered
+	 * too, which it should already be everywhere except sometimes in Windows.
+	 */
 	setbuf(stdout, NULL);
+	setbuf(stderr, NULL);
 
 	/*
 	 * If the user supplies a non-option parameter on the command line, use it
