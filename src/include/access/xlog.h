@@ -189,7 +189,7 @@ extern bool XLogArchiveMode;
 extern char *XLogArchiveCommand;
 extern bool EnableHotStandby;
 extern bool fullPageWrites;
-extern bool walLogHintbits;
+extern bool walLogHints;
 extern bool log_checkpoints;
 extern int	num_xloginsert_slots;
 
@@ -219,9 +219,9 @@ extern int	wal_level;
  * we have to protect them against torn page writes.  When you only set
  * individual bits on a page, it's still consistent no matter what combination
  * of the bits make it to disk, but the checksum wouldn't match.  Also WAL-log
- * them if forced by wal_log_hintbits=on.
+ * them if forced by wal_log_hints=on.
  */
-#define XLogHintBitIsNeeded() (DataChecksumsEnabled() || walLogHintbits)
+#define XLogHintBitIsNeeded() (DataChecksumsEnabled() || walLogHints)
 
 /* Do we need to WAL-log information required only for Hot Standby and logical replication? */
 #define XLogStandbyInfoActive() (wal_level >= WAL_LEVEL_HOT_STANDBY)

@@ -1957,10 +1957,10 @@ include 'filename'
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-wal-log-hintbits" xreflabel="wal_log_hintbits">
-      <term><varname>wal_log_hintbits</varname> (<type>boolean</type>)</term>
+     <varlistentry id="guc-wal-log-hints" xreflabel="wal_log_hints">
+      <term><varname>wal_log_hints</varname> (<type>boolean</type>)</term>
       <indexterm>
-       <primary><varname>wal_log_hintbits</> configuration parameter</primary>
+       <primary><varname>wal_log_hints</> configuration parameter</primary>
       </indexterm>
       <listitem>
        <para>

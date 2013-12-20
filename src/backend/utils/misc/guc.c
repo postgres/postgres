@@ -872,11 +872,11 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-		{"wal_log_hintbits", PGC_POSTMASTER, WAL_SETTINGS,
+		{"wal_log_hints", PGC_POSTMASTER, WAL_SETTINGS,
 			gettext_noop("Writes full pages to WAL when first modified after a checkpoint, even for a non-critical modifications"),
 			NULL
 		},
-		&walLogHintbits,
+		&walLogHints,
 		false,
 		NULL, NULL, NULL
 	},

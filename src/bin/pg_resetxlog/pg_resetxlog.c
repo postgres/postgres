@@ -525,7 +525,7 @@ GuessControlValues(void)
 	/* minRecoveryPoint, backupStartPoint and backupEndPoint can be left zero */
 
 	ControlFile.wal_level = WAL_LEVEL_MINIMAL;
-	ControlFile.wal_log_hintbits = false;
+	ControlFile.wal_log_hints = false;
 	ControlFile.MaxConnections = 100;
 	ControlFile.max_worker_processes = 8;
 	ControlFile.max_prepared_xacts = 0;
@@ -722,7 +722,7 @@ RewriteControlFile(void)
 	 * anyway at startup.
 	 */
 	ControlFile.wal_level = WAL_LEVEL_MINIMAL;
-	ControlFile.wal_log_hintbits = false;
+	ControlFile.wal_log_hints = false;
 	ControlFile.MaxConnections = 100;
 	ControlFile.max_worker_processes = 8;
 	ControlFile.max_prepared_xacts = 0;

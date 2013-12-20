@@ -260,8 +260,8 @@ main(int argc, char *argv[])
 		   ControlFile.backupEndRequired ? _("yes") : _("no"));
 	printf(_("Current wal_level setting:            %s\n"),
 		   wal_level_str(ControlFile.wal_level));
-	printf(_("Current wal_log_hintbits setting:     %s\n"),
-		   ControlFile.wal_log_hintbits ? _("on") : _("off"));
+	printf(_("Current wal_log_hints setting:        %s\n"),
+		   ControlFile.wal_log_hints ? _("on") : _("off"));
 	printf(_("Current max_connections setting:      %d\n"),
 		   ControlFile.MaxConnections);
 	printf(_("Current max_worker_processes setting: %d\n"),

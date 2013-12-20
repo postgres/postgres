@@ -287,7 +287,7 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
 										  cutoff_xid);
 
 				/*
-				 * If data checksums are enabled (or wal_log_hintbits=on), we
+				 * If data checksums are enabled (or wal_log_hints=on), we
 				 * need to protect the heap page from being torn.
 				 */
 				if (XLogHintBitIsNeeded())
