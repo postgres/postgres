@@ -1,0 +1,68 @@
+<!-- doc/src/sgml/pgprewarm.sgml -->
+
+<sect1 id="pgprewarm" xreflabel="pg_prewarm">
+ <title>pg_prewarm</title>
+
+ <indexterm zone="pgprewarm">
+  <primary>pg_prewarm</primary>
+ </indexterm>
+
+ <para>
+  The <filename>pg_prewarm</filename> module provides a convenient way
+  to load relation data into either the operating system buffer cache
+  or the <productname>PostgreSQL</productname> buffer cache.
+ </para>
+
+ <sect2>
+  <title>Functions</title>
+
+<synopsis>
+pg_prewarm(regclass, mode text default 'buffer', fork text default 'main',
+           first_block int8 default null,
+           last_block int8 default null) RETURNS int8
+</synopsis>
+
+  <para>
+   The first argument is the relation to be prewarmed.  The second argument
+   is the prewarming method to be used, as further discussed below; the third
+   is the relation fork to be prewarmed, usually <literal>main</literal>.  
+   The fourth argument is the first block number to prewarm
+   (<literal>NULL</literal> is accepted as a synonym for zero).  The fifth
+   argument is the last block number to prewarm (<literal>NULL</literal>
+   means prewarm through the last block in the relation).  The return value
+   is the number of blocks prewarmed.
+  </para>
+
+  <para>
+   There are three available prewarming methods.  <literal>prefetch</literal>
+   issues asynchronous prefetch requests to the operating system, if this is
+   supported, or throws an error otherwise.  <literal>read</literal> reads
+   the requested range of blocks; unlike <literal>prefetch</literal>, this is
+   synchronous and supported on all platforms and builds, but may be slower.
+   <literal>buffer</literal> reads the requested range of blocks into the
+   database buffer cache.
+  </para>
+
+  <para>
+   Note that with any of these methods, attempting to prewarm more blocks than
+   can be cached &mdash; by the OS when using <literal>prefetch</literal> or
+   <literal>read</literal>, or by <productname>PostgreSQL</productname> when
+   using <literal>buffer</literal> &mdash; will likely result in lower-numbered
+   blocks being evicted as higher numbered blocks are read in.  Prewarmed data
+   also enjoys no special protection from cache evictions, so it is possible
+   for other system activity may evict the newly prewarmed blocks shortly after
+   they are read; conversely, prewarming may also evict other data from cache.
+   For these reasons, prewarming is typically most useful at startup, when
+   caches are largely empty.
+  </para>
+ </sect2>
+
+ <sect2>
+  <title>Author</title>
+
+  <para>
+   Robert Haas <email>rhaas@postgresql.org</email>
+  </para>
+ </sect2>
+
+</sect1>

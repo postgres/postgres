@@ -1334,6 +1334,7 @@ PostParseColumnRefHook
 PostgresPollingStatusType
 PostingItem
 PreParseColumnRefHook
+PrewarmType
 PredClass
 PredIterInfo
 PredIterInfoData
