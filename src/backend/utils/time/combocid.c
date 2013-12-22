@@ -148,11 +148,11 @@ HeapTupleHeaderAdjustCmax(HeapTupleHeader tup,
 	/*
 	 * If we're marking a tuple deleted that was inserted by (any
 	 * subtransaction of) our transaction, we need to use a combo command id.
-	 * Test for HEAP_XMIN_COMMITTED first, because it's cheaper than a
+	 * Test for HeapTupleHeaderXminCommitted() first, because it's cheaper than a
 	 * TransactionIdIsCurrentTransactionId call.
 	 */
-	if (!(tup->t_infomask & HEAP_XMIN_COMMITTED) &&
-		TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmin(tup)))
+	if (!HeapTupleHeaderXminCommitted(tup) &&
+		TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetRawXmin(tup)))
 	{
 		CommandId	cmin = HeapTupleHeaderGetCmin(tup);
 

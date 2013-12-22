@@ -823,14 +823,14 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 					 * NB: Like with per-tuple hint bits, we can't set the
 					 * PD_ALL_VISIBLE flag if the inserter committed
 					 * asynchronously. See SetHintBits for more info. Check
-					 * that the HEAP_XMIN_COMMITTED hint bit is set because of
-					 * that.
+					 * that the tuple is hinted xmin-committed because
+					 * of that.
 					 */
 					if (all_visible)
 					{
 						TransactionId xmin;
 
-						if (!(tuple.t_data->t_infomask & HEAP_XMIN_COMMITTED))
+						if (!HeapTupleHeaderXminCommitted(tuple.t_data))
 						{
 							all_visible = false;
 							break;
@@ -1774,7 +1774,7 @@ heap_page_is_all_visible(Relation rel, Buffer buf, TransactionId *visibility_cut
 					TransactionId xmin;
 
 					/* Check comments in lazy_scan_heap. */
-					if (!(tuple.t_data->t_infomask & HEAP_XMIN_COMMITTED))
+					if (!HeapTupleHeaderXminCommitted(tuple.t_data))
 					{
 						all_visible = false;
 						break;

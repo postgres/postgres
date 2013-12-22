@@ -2257,13 +2257,10 @@ heap_prepare_insert(Relation relation, HeapTuple tup, TransactionId xid,
 	tup->t_data->t_infomask &= ~(HEAP_XACT_MASK);
 	tup->t_data->t_infomask2 &= ~(HEAP2_XACT_MASK);
 	tup->t_data->t_infomask |= HEAP_XMAX_INVALID;
+	HeapTupleHeaderSetXmin(tup->t_data, xid);
 	if (options & HEAP_INSERT_FROZEN)
-	{
-		tup->t_data->t_infomask |= HEAP_XMIN_COMMITTED;
-		HeapTupleHeaderSetXmin(tup->t_data, FrozenTransactionId);
-	}
-	else
-		HeapTupleHeaderSetXmin(tup->t_data, xid);
+		HeapTupleHeaderSetXminFrozen(tup->t_data);
+
 	HeapTupleHeaderSetCmin(tup->t_data, cid);
 	HeapTupleHeaderSetXmax(tup->t_data, 0);		/* for cleanliness */
 	tup->t_tableOid = RelationGetRelid(relation);
@@ -5732,13 +5729,7 @@ heap_prepare_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid,
 	if (TransactionIdIsNormal(xid) &&
 		TransactionIdPrecedes(xid, cutoff_xid))
 	{
-		frz->frzflags |= XLH_FREEZE_XMIN;
-
-		/*
-		 * Might as well fix the hint bits too; usually XMIN_COMMITTED will
-		 * already be set here, but there's a small chance not.
-		 */
-		frz->t_infomask |= HEAP_XMIN_COMMITTED;
+		frz->t_infomask |= HEAP_XMIN_FROZEN;
 		changed = true;
 	}
 
@@ -5882,9 +5873,6 @@ heap_prepare_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid,
 void
 heap_execute_freeze_tuple(HeapTupleHeader tuple, xl_heap_freeze_tuple *frz)
 {
-	if (frz->frzflags & XLH_FREEZE_XMIN)
-		HeapTupleHeaderSetXmin(tuple, FrozenTransactionId);
-
 	HeapTupleHeaderSetXmax(tuple, frz->xmax);
 
 	if (frz->frzflags & XLH_FREEZE_XVAC)
@@ -6361,10 +6349,8 @@ HeapTupleHeaderAdvanceLatestRemovedXid(HeapTupleHeader tuple,
 	 * This needs to work on both master and standby, where it is used to
 	 * assess btree delete records.
 	 */
-	if ((tuple->t_infomask & HEAP_XMIN_COMMITTED) ||
-		(!(tuple->t_infomask & HEAP_XMIN_COMMITTED) &&
-		 !(tuple->t_infomask & HEAP_XMIN_INVALID) &&
-		 TransactionIdDidCommit(xmin)))
+	if (HeapTupleHeaderXminCommitted(tuple) ||
+		(!HeapTupleHeaderXminInvalid(tuple) && TransactionIdDidCommit(xmin)))
 	{
 		if (xmax != xmin &&
 			TransactionIdFollows(xmax, *latestRemovedXid))
@@ -6882,7 +6868,7 @@ log_heap_new_cid(Relation relation, HeapTuple tup)
 	if (hdr->t_infomask & HEAP_COMBOCID)
 	{
 		Assert(!(hdr->t_infomask & HEAP_XMAX_INVALID));
-		Assert(!(hdr->t_infomask & HEAP_XMIN_INVALID));
+		Assert(!HeapTupleHeaderXminInvalid(hdr));
 		xlrec.cmin = HeapTupleHeaderGetCmin(hdr);
 		xlrec.cmax = HeapTupleHeaderGetCmax(hdr);
 		xlrec.combocid = HeapTupleHeaderGetRawCommandId(hdr);

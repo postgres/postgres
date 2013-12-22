@@ -157,7 +157,7 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 	proc = PLy_malloc(sizeof(PLyProcedure));
 	proc->proname = PLy_strdup(NameStr(procStruct->proname));
 	proc->pyname = PLy_strdup(procName);
-	proc->fn_xmin = HeapTupleHeaderGetXmin(procTup->t_data);
+	proc->fn_xmin = HeapTupleHeaderGetRawXmin(procTup->t_data);
 	proc->fn_tid = procTup->t_self;
 	/* Remember if function is STABLE/IMMUTABLE */
 	proc->fn_readonly =
@@ -446,7 +446,7 @@ PLy_procedure_argument_valid(PLyTypeInfo *arg)
 		elog(ERROR, "cache lookup failed for relation %u", arg->typ_relid);
 
 	/* If it has changed, the cached data is not valid */
-	valid = (arg->typrel_xmin == HeapTupleHeaderGetXmin(relTup->t_data) &&
+	valid = (arg->typrel_xmin == HeapTupleHeaderGetRawXmin(relTup->t_data) &&
 			 ItemPointerEquals(&arg->typrel_tid, &relTup->t_self));
 
 	ReleaseSysCache(relTup);
@@ -466,7 +466,7 @@ PLy_procedure_valid(PLyProcedure *proc, HeapTuple procTup)
 	Assert(proc != NULL);
 
 	/* If the pg_proc tuple has changed, it's not valid */
-	if (!(proc->fn_xmin == HeapTupleHeaderGetXmin(procTup->t_data) &&
+	if (!(proc->fn_xmin == HeapTupleHeaderGetRawXmin(procTup->t_data) &&
 		  ItemPointerEquals(&proc->fn_tid, &procTup->t_self)))
 		return false;
 

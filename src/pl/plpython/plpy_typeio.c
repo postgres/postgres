@@ -157,7 +157,7 @@ PLy_input_tuple_funcs(PLyTypeInfo *arg, TupleDesc desc)
 			elog(ERROR, "cache lookup failed for relation %u", arg->typ_relid);
 
 		/* Remember XMIN and TID for later validation if cache is still OK */
-		arg->typrel_xmin = HeapTupleHeaderGetXmin(relTup->t_data);
+		arg->typrel_xmin = HeapTupleHeaderGetRawXmin(relTup->t_data);
 		arg->typrel_tid = relTup->t_self;
 
 		ReleaseSysCache(relTup);
@@ -221,7 +221,7 @@ PLy_output_tuple_funcs(PLyTypeInfo *arg, TupleDesc desc)
 			elog(ERROR, "cache lookup failed for relation %u", arg->typ_relid);
 
 		/* Remember XMIN and TID for later validation if cache is still OK */
-		arg->typrel_xmin = HeapTupleHeaderGetXmin(relTup->t_data);
+		arg->typrel_xmin = HeapTupleHeaderGetRawXmin(relTup->t_data);
 		arg->typrel_tid = relTup->t_self;
 
 		ReleaseSysCache(relTup);

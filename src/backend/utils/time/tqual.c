@@ -166,9 +166,9 @@ HeapTupleSatisfiesSelf(HeapTuple htup, Snapshot snapshot, Buffer buffer)
 	Assert(ItemPointerIsValid(&htup->t_self));
 	Assert(htup->t_tableOid != InvalidOid);
 
-	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
+	if (!HeapTupleHeaderXminCommitted(tuple))
 	{
-		if (tuple->t_infomask & HEAP_XMIN_INVALID)
+		if (HeapTupleHeaderXminInvalid(tuple))
 			return false;
 
 		/* Used by pre-9.0 binary upgrades */
@@ -210,7 +210,7 @@ HeapTupleSatisfiesSelf(HeapTuple htup, Snapshot snapshot, Buffer buffer)
 				}
 			}
 		}
-		else if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmin(tuple)))
+		else if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetRawXmin(tuple)))
 		{
 			if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid */
 				return true;
@@ -244,11 +244,11 @@ HeapTupleSatisfiesSelf(HeapTuple htup, Snapshot snapshot, Buffer buffer)
 
 			return false;
 		}
-		else if (TransactionIdIsInProgress(HeapTupleHeaderGetXmin(tuple)))
+		else if (TransactionIdIsInProgress(HeapTupleHeaderGetRawXmin(tuple)))
 			return false;
-		else if (TransactionIdDidCommit(HeapTupleHeaderGetXmin(tuple)))
+		else if (TransactionIdDidCommit(HeapTupleHeaderGetRawXmin(tuple)))
 			SetHintBits(tuple, buffer, HEAP_XMIN_COMMITTED,
-						HeapTupleHeaderGetXmin(tuple));
+						HeapTupleHeaderGetRawXmin(tuple));
 		else
 		{
 			/* it must have aborted or crashed */
@@ -356,9 +356,9 @@ HeapTupleSatisfiesToast(HeapTuple htup, Snapshot snapshot,
 	Assert(ItemPointerIsValid(&htup->t_self));
 	Assert(htup->t_tableOid != InvalidOid);
 
-	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
+	if (!HeapTupleHeaderXminCommitted(tuple))
 	{
-		if (tuple->t_infomask & HEAP_XMIN_INVALID)
+		if (HeapTupleHeaderXminInvalid(tuple))
 			return false;
 
 		/* Used by pre-9.0 binary upgrades */
@@ -441,9 +441,9 @@ HeapTupleSatisfiesUpdate(HeapTuple htup, CommandId curcid,
 	Assert(ItemPointerIsValid(&htup->t_self));
 	Assert(htup->t_tableOid != InvalidOid);
 
-	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
+	if (!HeapTupleHeaderXminCommitted(tuple))
 	{
-		if (tuple->t_infomask & HEAP_XMIN_INVALID)
+		if (HeapTupleHeaderXminInvalid(tuple))
 			return HeapTupleInvisible;
 
 		/* Used by pre-9.0 binary upgrades */
@@ -485,7 +485,7 @@ HeapTupleSatisfiesUpdate(HeapTuple htup, CommandId curcid,
 				}
 			}
 		}
-		else if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmin(tuple)))
+		else if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetRawXmin(tuple)))
 		{
 			if (HeapTupleHeaderGetCmin(tuple) >= curcid)
 				return HeapTupleInvisible;		/* inserted after scan started */
@@ -564,11 +564,11 @@ HeapTupleSatisfiesUpdate(HeapTuple htup, CommandId curcid,
 			else
 				return HeapTupleInvisible;		/* updated before scan started */
 		}
-		else if (TransactionIdIsInProgress(HeapTupleHeaderGetXmin(tuple)))
+		else if (TransactionIdIsInProgress(HeapTupleHeaderGetRawXmin(tuple)))
 			return HeapTupleInvisible;
-		else if (TransactionIdDidCommit(HeapTupleHeaderGetXmin(tuple)))
+		else if (TransactionIdDidCommit(HeapTupleHeaderGetRawXmin(tuple)))
 			SetHintBits(tuple, buffer, HEAP_XMIN_COMMITTED,
-						HeapTupleHeaderGetXmin(tuple));
+						HeapTupleHeaderGetRawXmin(tuple));
 		else
 		{
 			/* it must have aborted or crashed */
@@ -715,9 +715,9 @@ HeapTupleSatisfiesDirty(HeapTuple htup, Snapshot snapshot,
 
 	snapshot->xmin = snapshot->xmax = InvalidTransactionId;
 
-	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
+	if (!HeapTupleHeaderXminCommitted(tuple))
 	{
-		if (tuple->t_infomask & HEAP_XMIN_INVALID)
+		if (HeapTupleHeaderXminInvalid(tuple))
 			return false;
 
 		/* Used by pre-9.0 binary upgrades */
@@ -759,7 +759,7 @@ HeapTupleSatisfiesDirty(HeapTuple htup, Snapshot snapshot,
 				}
 			}
 		}
-		else if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmin(tuple)))
+		else if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetRawXmin(tuple)))
 		{
 			if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid */
 				return true;
@@ -793,15 +793,15 @@ HeapTupleSatisfiesDirty(HeapTuple htup, Snapshot snapshot,
 
 			return false;
 		}
-		else if (TransactionIdIsInProgress(HeapTupleHeaderGetXmin(tuple)))
+		else if (TransactionIdIsInProgress(HeapTupleHeaderGetRawXmin(tuple)))
 		{
-			snapshot->xmin = HeapTupleHeaderGetXmin(tuple);
+			snapshot->xmin = HeapTupleHeaderGetRawXmin(tuple);
 			/* XXX shouldn't we fall through to look at xmax? */
 			return true;		/* in insertion by other */
 		}
-		else if (TransactionIdDidCommit(HeapTupleHeaderGetXmin(tuple)))
+		else if (TransactionIdDidCommit(HeapTupleHeaderGetRawXmin(tuple)))
 			SetHintBits(tuple, buffer, HEAP_XMIN_COMMITTED,
-						HeapTupleHeaderGetXmin(tuple));
+						HeapTupleHeaderGetRawXmin(tuple));
 		else
 		{
 			/* it must have aborted or crashed */
@@ -909,9 +909,9 @@ HeapTupleSatisfiesMVCC(HeapTuple htup, Snapshot snapshot,
 	Assert(ItemPointerIsValid(&htup->t_self));
 	Assert(htup->t_tableOid != InvalidOid);
 
-	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
+	if (!HeapTupleHeaderXminCommitted(tuple))
 	{
-		if (tuple->t_infomask & HEAP_XMIN_INVALID)
+		if (HeapTupleHeaderXminInvalid(tuple))
 			return false;
 
 		/* Used by pre-9.0 binary upgrades */
@@ -953,7 +953,7 @@ HeapTupleSatisfiesMVCC(HeapTuple htup, Snapshot snapshot,
 				}
 			}
 		}
-		else if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmin(tuple)))
+		else if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetRawXmin(tuple)))
 		{
 			if (HeapTupleHeaderGetCmin(tuple) >= snapshot->curcid)
 				return false;	/* inserted after scan started */
@@ -995,11 +995,11 @@ HeapTupleSatisfiesMVCC(HeapTuple htup, Snapshot snapshot,
 			else
 				return false;	/* deleted before scan started */
 		}
-		else if (TransactionIdIsInProgress(HeapTupleHeaderGetXmin(tuple)))
+		else if (TransactionIdIsInProgress(HeapTupleHeaderGetRawXmin(tuple)))
 			return false;
-		else if (TransactionIdDidCommit(HeapTupleHeaderGetXmin(tuple)))
+		else if (TransactionIdDidCommit(HeapTupleHeaderGetRawXmin(tuple)))
 			SetHintBits(tuple, buffer, HEAP_XMIN_COMMITTED,
-						HeapTupleHeaderGetXmin(tuple));
+						HeapTupleHeaderGetRawXmin(tuple));
 		else
 		{
 			/* it must have aborted or crashed */
@@ -1013,7 +1013,8 @@ HeapTupleSatisfiesMVCC(HeapTuple htup, Snapshot snapshot,
 	 * By here, the inserting transaction has committed - have to check
 	 * when...
 	 */
-	if (XidInMVCCSnapshot(HeapTupleHeaderGetXmin(tuple), snapshot))
+	if (!HeapTupleHeaderXminFrozen(tuple)
+		&& XidInMVCCSnapshot(HeapTupleHeaderGetRawXmin(tuple), snapshot))
 		return false;			/* treat as still in progress */
 
 	if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid or aborted */
@@ -1116,9 +1117,9 @@ HeapTupleSatisfiesVacuum(HeapTuple htup, TransactionId OldestXmin,
 	 * If the inserting transaction aborted, then the tuple was never visible
 	 * to any other transaction, so we can delete it immediately.
 	 */
-	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
+	if (!HeapTupleHeaderXminCommitted(tuple))
 	{
-		if (tuple->t_infomask & HEAP_XMIN_INVALID)
+		if (HeapTupleHeaderXminInvalid(tuple))
 			return HEAPTUPLE_DEAD;
 		/* Used by pre-9.0 binary upgrades */
 		else if (tuple->t_infomask & HEAP_MOVED_OFF)
@@ -1157,7 +1158,7 @@ HeapTupleSatisfiesVacuum(HeapTuple htup, TransactionId OldestXmin,
 				return HEAPTUPLE_DEAD;
 			}
 		}
-		else if (TransactionIdIsInProgress(HeapTupleHeaderGetXmin(tuple)))
+		else if (TransactionIdIsInProgress(HeapTupleHeaderGetRawXmin(tuple)))
 		{
 			if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid */
 				return HEAPTUPLE_INSERT_IN_PROGRESS;
@@ -1168,9 +1169,9 @@ HeapTupleSatisfiesVacuum(HeapTuple htup, TransactionId OldestXmin,
 			/* inserted and then deleted by same xact */
 			return HEAPTUPLE_DELETE_IN_PROGRESS;
 		}
-		else if (TransactionIdDidCommit(HeapTupleHeaderGetXmin(tuple)))
+		else if (TransactionIdDidCommit(HeapTupleHeaderGetRawXmin(tuple)))
 			SetHintBits(tuple, buffer, HEAP_XMIN_COMMITTED,
-						HeapTupleHeaderGetXmin(tuple));
+						HeapTupleHeaderGetRawXmin(tuple));
 		else
 		{
 			/*
@@ -1347,8 +1348,8 @@ HeapTupleIsSurelyDead(HeapTuple htup, TransactionId OldestXmin)
 	 * invalid, then we assume it's still alive (since the presumption is that
 	 * all relevant hint bits were just set moments ago).
 	 */
-	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
-		return (tuple->t_infomask & HEAP_XMIN_INVALID) != 0 ? true : false;
+	if (!HeapTupleHeaderXminCommitted(tuple))
+		return HeapTupleHeaderXminInvalid(tuple) ? true : false;
 
 	/*
 	 * If the inserting transaction committed, but any deleting transaction

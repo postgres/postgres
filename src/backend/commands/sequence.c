@@ -361,10 +361,10 @@ fill_seq_with_data(Relation rel, HeapTuple tuple)
 		item = PageGetItem((Page) page, itemId);
 
 		HeapTupleHeaderSetXmin((HeapTupleHeader) item, FrozenTransactionId);
-		((HeapTupleHeader) item)->t_infomask |= HEAP_XMIN_COMMITTED;
+		HeapTupleHeaderSetXminFrozen((HeapTupleHeader) item);
 
 		HeapTupleHeaderSetXmin(tuple->t_data, FrozenTransactionId);
-		tuple->t_data->t_infomask |= HEAP_XMIN_COMMITTED;
+		HeapTupleHeaderSetXminFrozen(tuple->t_data);
 	}
 
 	MarkBufferDirty(buf);

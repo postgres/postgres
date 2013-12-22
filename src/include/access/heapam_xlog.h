@@ -274,7 +274,7 @@ typedef struct xl_heap_inplace
  * This struct represents a 'freeze plan', which is what we need to know about
  * a single tuple being frozen during vacuum.
  */
-#define		XLH_FREEZE_XMIN		0x01
+/* 0x01 was XLH_FREEZE_XMIN */
 #define		XLH_FREEZE_XVAC		0x02
 #define		XLH_INVALID_XVAC	0x04
 

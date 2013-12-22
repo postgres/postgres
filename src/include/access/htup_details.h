@@ -17,6 +17,7 @@
 #include "access/htup.h"
 #include "access/tupdesc.h"
 #include "access/tupmacs.h"
+#include "access/transam.h"
 #include "storage/bufpage.h"
 
 /*
@@ -175,6 +176,7 @@ struct HeapTupleHeaderData
 						 HEAP_XMAX_KEYSHR_LOCK)
 #define HEAP_XMIN_COMMITTED		0x0100	/* t_xmin committed */
 #define HEAP_XMIN_INVALID		0x0200	/* t_xmin invalid/aborted */
+#define HEAP_XMIN_FROZEN		(HEAP_XMIN_COMMITTED|HEAP_XMIN_INVALID)
 #define HEAP_XMAX_COMMITTED		0x0400	/* t_xmax committed */
 #define HEAP_XMAX_INVALID		0x0800	/* t_xmax invalid/aborted */
 #define HEAP_XMAX_IS_MULTI		0x1000	/* t_xmax is a MultiXactId */
@@ -244,14 +246,62 @@ struct HeapTupleHeaderData
  * macros evaluate their other argument only once.
  */
 
-#define HeapTupleHeaderGetXmin(tup) \
+/*
+ * HeapTupleHeaderGetRawXmin returns the "raw" xmin field, which is the xid
+ * originally used to insert the tuple.  However, the tuple might actually
+ * be frozen (via HeapTupleHeaderSetXminFrozen) in which case the tuple's xmin
+ * is visible to every snapshot.  Prior to PostgreSQL 9.4, we actually changed
+ * the xmin to FrozenTransactionId, and that value may still be encountered
+ * on disk.
+ */
+#define HeapTupleHeaderGetRawXmin(tup) \
 ( \
 	(tup)->t_choice.t_heap.t_xmin \
+)
+
+#define HeapTupleHeaderGetXmin(tup) \
+( \
+	HeapTupleHeaderXminFrozen(tup) ? \
+		FrozenTransactionId : HeapTupleHeaderGetRawXmin(tup) \
 )
 
 #define HeapTupleHeaderSetXmin(tup, xid) \
 ( \
 	(tup)->t_choice.t_heap.t_xmin = (xid) \
+)
+
+#define HeapTupleHeaderXminCommitted(tup) \
+( \
+	(tup)->t_infomask & HEAP_XMIN_COMMITTED \
+)
+
+#define HeapTupleHeaderXminInvalid(tup) \
+( \
+	((tup)->t_infomask & (HEAP_XMIN_COMMITTED|HEAP_XMIN_INVALID)) == \
+		HEAP_XMIN_INVALID \
+)
+
+#define HeapTupleHeaderXminFrozen(tup) \
+( \
+	((tup)->t_infomask & (HEAP_XMIN_FROZEN)) == HEAP_XMIN_FROZEN \
+)
+
+#define HeapTupleHeaderSetXminCommitted(tup) \
+( \
+	AssertMacro(!HeapTupleHeaderXminInvalid(tup)), \
+	((tup)->t_infomask |= HEAP_XMIN_COMMITTED) \
+)
+
+#define HeapTupleHeaderSetXminInvalid(tup) \
+( \
+	AssertMacro(!HeapTupleHeaderXminCommitted(tup)), \
+	((tup)->t_infomask |= HEAP_XMIN_INVALID) \
+)
+
+#define HeapTupleHeaderSetXminFrozen(tup) \
+( \
+	AssertMacro(!HeapTupleHeaderXminInvalid(tup)), \
+	((tup)->t_infomask |= HEAP_XMIN_FROZEN) \
 )
 
 /*
@@ -374,7 +424,8 @@ do { \
 #define HeapTupleHeaderIsHotUpdated(tup) \
 ( \
 	((tup)->t_infomask2 & HEAP_HOT_UPDATED) != 0 && \
-	((tup)->t_infomask & (HEAP_XMIN_INVALID | HEAP_XMAX_INVALID)) == 0 \
+	((tup)->t_infomask & HEAP_XMAX_INVALID) == 0 && \
+	!HeapTupleHeaderXminInvalid(tup) \
 )
 
 #define HeapTupleHeaderSetHotUpdated(tup) \
