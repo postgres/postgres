@@ -26,6 +26,7 @@ SELECT ($1 = $2) OR
  EXISTS(select 1 from pg_catalog.pg_cast where
         castsource = $1 and casttarget = $2 and
         castmethod = 'b' and castcontext = 'i') OR
+ ($2 = 'pg_catalog.any'::pg_catalog.regtype) OR
  ($2 = 'pg_catalog.anyarray'::pg_catalog.regtype AND
   EXISTS(select 1 from pg_catalog.pg_type where
          oid = $1 and typelem != 0 and typlen = -1))
@@ -38,6 +39,7 @@ SELECT ($1 = $2) OR
  EXISTS(select 1 from pg_catalog.pg_cast where
         castsource = $1 and casttarget = $2 and
         castmethod = 'b') OR
+ ($2 = 'pg_catalog.any'::pg_catalog.regtype) OR
  ($2 = 'pg_catalog.anyarray'::pg_catalog.regtype AND
   EXISTS(select 1 from pg_catalog.pg_type where
          oid = $1 and typelem != 0 and typlen = -1))
@@ -567,14 +569,18 @@ SELECT * FROM funcdescs
 
 SELECT ctid, aggfnoid::oid
 FROM pg_aggregate as p1
-WHERE aggfnoid = 0 OR aggtransfn = 0 OR aggtranstype = 0 OR aggtransspace < 0;
+WHERE aggfnoid = 0 OR aggtransfn = 0 OR
+    aggkind NOT IN ('n', 'o', 'h') OR
+    aggnumdirectargs < 0 OR
+    (aggkind = 'n' AND aggnumdirectargs > 0) OR
+    aggtranstype = 0 OR aggtransspace < 0;
 
 -- Make sure the matching pg_proc entry is sensible, too.
 
 SELECT a.aggfnoid::oid, p.proname
 FROM pg_aggregate as a, pg_proc as p
 WHERE a.aggfnoid = p.oid AND
-    (NOT p.proisagg OR p.proretset);
+    (NOT p.proisagg OR p.proretset OR p.pronargs < a.aggnumdirectargs);
 
 -- Make sure there are no proisagg pg_proc entries without matches.
 
@@ -598,7 +604,9 @@ FROM pg_aggregate AS a, pg_proc AS p, pg_proc AS ptr
 WHERE a.aggfnoid = p.oid AND
     a.aggtransfn = ptr.oid AND
     (ptr.proretset
-     OR NOT (ptr.pronargs = p.pronargs + 1)
+     OR NOT (ptr.pronargs =
+             CASE WHEN a.aggkind = 'n' THEN p.pronargs + 1
+             ELSE greatest(p.pronargs - a.aggnumdirectargs, 1) + 1 END)
      OR NOT physically_coercible(ptr.prorettype, a.aggtranstype)
      OR NOT physically_coercible(a.aggtranstype, ptr.proargtypes[0])
      OR (p.pronargs > 0 AND
@@ -607,7 +615,7 @@ WHERE a.aggfnoid = p.oid AND
          NOT physically_coercible(p.proargtypes[1], ptr.proargtypes[2]))
      OR (p.pronargs > 2 AND
          NOT physically_coercible(p.proargtypes[2], ptr.proargtypes[3]))
-     -- we could carry the check further, but that's enough for now
+     -- we could carry the check further, but 3 args is enough for now
     );
 
 -- Cross-check finalfn (if present) against its entry in pg_proc.
@@ -616,10 +624,19 @@ SELECT a.aggfnoid::oid, p.proname, pfn.oid, pfn.proname
 FROM pg_aggregate AS a, pg_proc AS p, pg_proc AS pfn
 WHERE a.aggfnoid = p.oid AND
     a.aggfinalfn = pfn.oid AND
-    (pfn.proretset
-     OR NOT binary_coercible(pfn.prorettype, p.prorettype)
-     OR pfn.pronargs != 1
-     OR NOT binary_coercible(a.aggtranstype, pfn.proargtypes[0]));
+    (pfn.proretset OR
+     NOT binary_coercible(pfn.prorettype, p.prorettype) OR
+     NOT binary_coercible(a.aggtranstype, pfn.proargtypes[0]) OR
+     CASE WHEN a.aggkind = 'n' THEN pfn.pronargs != 1
+     ELSE pfn.pronargs != p.pronargs + 1
+       OR (p.pronargs > 0 AND
+         NOT binary_coercible(p.proargtypes[0], pfn.proargtypes[1]))
+       OR (p.pronargs > 1 AND
+         NOT binary_coercible(p.proargtypes[1], pfn.proargtypes[2]))
+       OR (p.pronargs > 2 AND
+         NOT binary_coercible(p.proargtypes[2], pfn.proargtypes[3]))
+       -- we could carry the check further, but 3 args is enough for now
+     END);
 
 -- If transfn is strict then either initval should be non-NULL, or
 -- input type should match transtype so that the first non-null input
@@ -685,17 +702,19 @@ WHERE p1.oid < p2.oid AND p1.proname = p2.proname AND
     array_dims(p1.proargtypes) != array_dims(p2.proargtypes)
 ORDER BY 1;
 
--- For the same reason, we avoid creating built-in variadic aggregates.
-
-SELECT oid, proname
-FROM pg_proc AS p
-WHERE proisagg AND provariadic != 0;
-
 -- For the same reason, built-in aggregates with default arguments are no good.
 
 SELECT oid, proname
 FROM pg_proc AS p
 WHERE proisagg AND proargdefaults IS NOT NULL;
+
+-- For the same reason, we avoid creating built-in variadic aggregates, except
+-- that variadic ordered-set aggregates are OK (since they have special syntax
+-- that is not subject to the misplaced ORDER BY issue).
+
+SELECT p.oid, proname
+FROM pg_proc AS p JOIN pg_aggregate AS a ON a.aggfnoid = p.oid
+WHERE proisagg AND provariadic != 0 AND a.aggkind = 'n';
 
 -- **************** pg_opfamily ****************
 

@@ -21,7 +21,8 @@ OBJS = acl.o arrayfuncs.o array_selfuncs.o array_typanalyze.o \
 	enum.o float.o format_type.o \
 	geo_ops.o geo_selfuncs.o int.o int8.o json.o jsonfuncs.o like.o \
 	lockfuncs.o misc.o nabstime.o name.o numeric.o numutils.o \
-	oid.o oracle_compat.o pseudotypes.o rangetypes.o rangetypes_gist.o \
+	oid.o oracle_compat.o orderedsetaggs.o \
+	pseudotypes.o rangetypes.o rangetypes_gist.o \
 	rowtypes.o regexp.o regproc.o ruleutils.o selfuncs.o \
 	tid.o timestamp.o varbit.o varchar.o varlena.o version.o xid.o \
 	network.o mac.o inet_cidr_ntop.o inet_net_pton.o \

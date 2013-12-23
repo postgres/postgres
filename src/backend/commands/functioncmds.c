@@ -168,6 +168,8 @@ compute_return_type(TypeName *returnType, Oid languageOid,
  *
  * Results are stored into output parameters.  parameterTypes must always
  * be created, but the other arrays are set to NULL if not needed.
+ * variadicArgType is set to the variadic array type if there's a VARIADIC
+ * parameter (there can be only one); or to InvalidOid if not.
  * requiredResultType is set to InvalidOid if there are no OUT parameters,
  * else it is set to the OID of the implied result type.
  */
@@ -181,6 +183,7 @@ interpret_function_parameter_list(List *parameters,
 								  ArrayType **parameterModes,
 								  ArrayType **parameterNames,
 								  List **parameterDefaults,
+								  Oid *variadicArgType,
 								  Oid *requiredResultType)
 {
 	int			parameterCount = list_length(parameters);
@@ -197,6 +200,7 @@ interpret_function_parameter_list(List *parameters,
 	int			i;
 	ParseState *pstate;
 
+	*variadicArgType = InvalidOid;		/* default result */
 	*requiredResultType = InvalidOid;	/* default result */
 
 	inTypes = (Oid *) palloc(parameterCount * sizeof(Oid));
@@ -293,6 +297,7 @@ interpret_function_parameter_list(List *parameters,
 
 		if (fp->mode == FUNC_PARAM_VARIADIC)
 		{
+			*variadicArgType = toid;
 			varCount++;
 			/* validate variadic parameter type */
 			switch (toid)
@@ -823,6 +828,7 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 	ArrayType  *parameterModes;
 	ArrayType  *parameterNames;
 	List	   *parameterDefaults;
+	Oid			variadicArgType;
 	Oid			requiredResultType;
 	bool		isWindowFunc,
 				isStrict,
@@ -920,6 +926,7 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 									  &parameterModes,
 									  &parameterNames,
 									  &parameterDefaults,
+									  &variadicArgType,
 									  &requiredResultType);
 
 	if (stmt->returnType)

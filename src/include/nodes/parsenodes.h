@@ -281,7 +281,8 @@ typedef struct CollateClause
 /*
  * FuncCall - a function or aggregate invocation
  *
- * agg_order (if not NIL) indicates we saw 'foo(... ORDER BY ...)'.
+ * agg_order (if not NIL) indicates we saw 'foo(... ORDER BY ...)', or if
+ * agg_within_group is true, it was 'foo(...) WITHIN GROUP (ORDER BY ...)'.
  * agg_star indicates we saw a 'foo(*)' construct, while agg_distinct
  * indicates we saw 'foo(DISTINCT ...)'.  In any of these cases, the
  * construct *must* be an aggregate call.  Otherwise, it might be either an
@@ -298,6 +299,7 @@ typedef struct FuncCall
 	List	   *args;			/* the arguments (list of exprs) */
 	List	   *agg_order;		/* ORDER BY (list of SortBy) */
 	Node	   *agg_filter;		/* FILTER clause, if any */
+	bool		agg_within_group;		/* ORDER BY appeared in WITHIN GROUP */
 	bool		agg_star;		/* argument was really '*' */
 	bool		agg_distinct;	/* arguments were labeled DISTINCT */
 	bool		func_variadic;	/* last argument was labeled VARIADIC */

@@ -47,15 +47,16 @@ typedef struct QualCost
 
 /*
  * Costing aggregate function execution requires these statistics about
- * the aggregates to be executed by a given Agg node.  Note that transCost
- * includes the execution costs of the aggregates' input expressions.
+ * the aggregates to be executed by a given Agg node.  Note that the costs
+ * include the execution costs of the aggregates' argument expressions as
+ * well as the aggregate functions themselves.
  */
 typedef struct AggClauseCosts
 {
 	int			numAggs;		/* total number of aggregate functions */
-	int			numOrderedAggs; /* number that use DISTINCT or ORDER BY */
+	int			numOrderedAggs; /* number w/ DISTINCT/ORDER BY/WITHIN GROUP */
 	QualCost	transCost;		/* total per-input-row execution costs */
-	Cost		finalCost;		/* total costs of agg final functions */
+	Cost		finalCost;		/* total per-aggregated-row costs */
 	Size		transitionSpace;	/* space for pass-by-ref transition data */
 } AggClauseCosts;
 

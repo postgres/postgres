@@ -492,12 +492,14 @@ _readAggref(void)
 	READ_OID_FIELD(aggtype);
 	READ_OID_FIELD(aggcollid);
 	READ_OID_FIELD(inputcollid);
+	READ_NODE_FIELD(aggdirectargs);
 	READ_NODE_FIELD(args);
 	READ_NODE_FIELD(aggorder);
 	READ_NODE_FIELD(aggdistinct);
 	READ_NODE_FIELD(aggfilter);
 	READ_BOOL_FIELD(aggstar);
 	READ_BOOL_FIELD(aggvariadic);
+	READ_CHAR_FIELD(aggkind);
 	READ_UINT_FIELD(agglevelsup);
 	READ_LOCATION_FIELD(location);
 

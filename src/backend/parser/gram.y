@@ -142,6 +142,9 @@ static void check_qualified_name(List *names, core_yyscan_t yyscanner);
 static List *check_func_name(List *names, core_yyscan_t yyscanner);
 static List *check_indirection(List *indirection, core_yyscan_t yyscanner);
 static List *extractArgTypes(List *parameters);
+static List *extractAggrArgTypes(List *aggrargs);
+static List *makeOrderedSetArgs(List *directargs, List *orderedargs,
+								core_yyscan_t yyscanner);
 static void insertSelectOptions(SelectStmt *stmt,
 								List *sortClause, List *lockingClause,
 								Node *limitOffset, Node *limitCount,
@@ -491,12 +494,13 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <with>	with_clause opt_with_clause
 %type <list>	cte_list
 
+%type <list>	within_group_clause
+%type <node>	filter_clause
 %type <list>	window_clause window_definition_list opt_partition_clause
 %type <windef>	window_definition over_clause window_specification
 				opt_frame_clause frame_extent frame_bound
 %type <str>		opt_existing_window_name
 %type <boolean> opt_if_not_exists
-%type <node>    filter_clause
 
 /*
  * Non-keyword token types.  These are hard-wired into the "flex" lexer.
@@ -599,7 +603,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	VACUUM VALID VALIDATE VALIDATOR VALUE_P VALUES VARCHAR VARIADIC VARYING
 	VERBOSE VERSION_P VIEW VOLATILE
 
-	WHEN WHERE WHITESPACE_P WINDOW WITH WITHOUT WORK WRAPPER WRITE
+	WHEN WHERE WHITESPACE_P WINDOW WITH WITHIN WITHOUT WORK WRAPPER WRITE
 
 	XML_P XMLATTRIBUTES XMLCONCAT XMLELEMENT XMLEXISTS XMLFOREST XMLPARSE
 	XMLPI XMLROOT XMLSERIALIZE
@@ -3715,7 +3719,7 @@ AlterExtensionContentsStmt:
 					n->action = $4;
 					n->objtype = OBJECT_AGGREGATE;
 					n->objname = $6;
-					n->objargs = extractArgTypes($7);
+					n->objargs = extractAggrArgTypes($7);
 					$$ = (Node *)n;
 				}
 			| ALTER EXTENSION name add_drop CAST '(' Typename AS Typename ')'
@@ -5294,7 +5298,7 @@ CommentStmt:
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_AGGREGATE;
 					n->objname = $4;
-					n->objargs = extractArgTypes($5);
+					n->objargs = extractAggrArgTypes($5);
 					n->comment = $7;
 					$$ = (Node *) n;
 				}
@@ -5460,7 +5464,7 @@ SecLabelStmt:
 					n->provider = $3;
 					n->objtype = OBJECT_AGGREGATE;
 					n->objname = $6;
-					n->objargs = extractArgTypes($7);
+					n->objargs = extractAggrArgTypes($7);
 					n->label = $9;
 					$$ = (Node *) n;
 				}
@@ -6460,9 +6464,52 @@ aggr_arg:	func_arg
 				}
 		;
 
-/* Zero-argument aggregates are named with * for consistency with COUNT(*) */
-aggr_args:	'(' aggr_args_list ')'					{ $$ = $2; }
-			| '(' '*' ')'							{ $$ = NIL; }
+/*
+ * The SQL standard offers no guidance on how to declare aggregate argument
+ * lists, since it doesn't have CREATE AGGREGATE etc.  We accept these cases:
+ *
+ * (*)									- normal agg with no args
+ * (aggr_arg,...)						- normal agg with args
+ * (ORDER BY aggr_arg,...)				- ordered-set agg with no direct args
+ * (aggr_arg,... ORDER BY aggr_arg,...)	- ordered-set agg with direct args
+ *
+ * The zero-argument case is spelled with '*' for consistency with COUNT(*).
+ *
+ * An additional restriction is that if the direct-args list ends in a
+ * VARIADIC item, the ordered-args list must contain exactly one item that
+ * is also VARIADIC with the same type.  This allows us to collapse the two
+ * VARIADIC items into one, which is necessary to represent the aggregate in
+ * pg_proc.  We check this at the grammar stage so that we can return a list
+ * in which the second VARIADIC item is already discarded, avoiding extra work
+ * in cases such as DROP AGGREGATE.
+ *
+ * The return value of this production is a two-element list, in which the
+ * first item is a sublist of FunctionParameter nodes (with any duplicate
+ * VARIADIC item already dropped, as per above) and the second is an integer
+ * Value node, containing -1 if there was no ORDER BY and otherwise the number
+ * of argument declarations before the ORDER BY.  (If this number is equal
+ * to the first sublist's length, then we dropped a duplicate VARIADIC item.)
+ * This representation is passed as-is to CREATE AGGREGATE; for operations
+ * on existing aggregates, we can just apply extractArgTypes to the first
+ * sublist.
+ */
+aggr_args:	'(' '*' ')'
+				{
+					$$ = list_make2(NIL, makeInteger(-1));
+				}
+			| '(' aggr_args_list ')'
+				{
+					$$ = list_make2($2, makeInteger(-1));
+				}
+			| '(' ORDER BY aggr_args_list ')'
+				{
+					$$ = list_make2($4, makeInteger(0));
+				}
+			| '(' aggr_args_list ORDER BY aggr_args_list ')'
+				{
+					/* this is the only case requiring consistency checking */
+					$$ = makeOrderedSetArgs($2, $5, yyscanner);
+				}
 		;
 
 aggr_args_list:
@@ -6668,7 +6715,7 @@ RemoveAggrStmt:
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_AGGREGATE;
 					n->objects = list_make1($3);
-					n->arguments = list_make1(extractArgTypes($4));
+					n->arguments = list_make1(extractAggrArgTypes($4));
 					n->behavior = $5;
 					n->missing_ok = false;
 					n->concurrent = false;
@@ -6679,7 +6726,7 @@ RemoveAggrStmt:
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_AGGREGATE;
 					n->objects = list_make1($5);
-					n->arguments = list_make1(extractArgTypes($6));
+					n->arguments = list_make1(extractAggrArgTypes($6));
 					n->behavior = $7;
 					n->missing_ok = true;
 					n->concurrent = false;
@@ -6895,7 +6942,7 @@ RenameStmt: ALTER AGGREGATE func_name aggr_args RENAME TO name
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_AGGREGATE;
 					n->object = $3;
-					n->objarg = extractArgTypes($4);
+					n->objarg = extractAggrArgTypes($4);
 					n->newname = $7;
 					n->missing_ok = false;
 					$$ = (Node *)n;
@@ -7369,7 +7416,7 @@ AlterObjectSchemaStmt:
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_AGGREGATE;
 					n->object = $3;
-					n->objarg = extractArgTypes($4);
+					n->objarg = extractAggrArgTypes($4);
 					n->newschema = $7;
 					n->missing_ok = false;
 					$$ = (Node *)n;
@@ -7598,7 +7645,7 @@ AlterOwnerStmt: ALTER AGGREGATE func_name aggr_args OWNER TO RoleId
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_AGGREGATE;
 					n->object = $3;
-					n->objarg = extractArgTypes($4);
+					n->objarg = extractAggrArgTypes($4);
 					n->newowner = $7;
 					$$ = (Node *)n;
 				}
@@ -11165,26 +11212,24 @@ func_application: func_name '(' ')'
 				{
 					$$ = (Node *) makeFuncCall($1, NIL, @1);
 				}
-			| func_name '(' func_arg_list ')'
-				{
-					$$ = (Node *) makeFuncCall($1, $3, @1);
-				}
-			| func_name '(' VARIADIC func_arg_expr ')'
-				{
-					FuncCall *n = makeFuncCall($1, list_make1($4), @1);
-					n->func_variadic = TRUE;
-					$$ = (Node *)n;
-				}
-			| func_name '(' func_arg_list ',' VARIADIC func_arg_expr ')'
-				{
-					FuncCall *n = makeFuncCall($1, lappend($3, $6), @1);
-					n->func_variadic = TRUE;
-					$$ = (Node *)n;
-				}
-			| func_name '(' func_arg_list sort_clause ')'
+			| func_name '(' func_arg_list opt_sort_clause ')'
 				{
 					FuncCall *n = makeFuncCall($1, $3, @1);
 					n->agg_order = $4;
+					$$ = (Node *)n;
+				}
+			| func_name '(' VARIADIC func_arg_expr opt_sort_clause ')'
+				{
+					FuncCall *n = makeFuncCall($1, list_make1($4), @1);
+					n->func_variadic = TRUE;
+					n->agg_order = $5;
+					$$ = (Node *)n;
+				}
+			| func_name '(' func_arg_list ',' VARIADIC func_arg_expr opt_sort_clause ')'
+				{
+					FuncCall *n = makeFuncCall($1, lappend($3, $6), @1);
+					n->func_variadic = TRUE;
+					n->agg_order = $7;
 					$$ = (Node *)n;
 				}
 			| func_name '(' ALL func_arg_list opt_sort_clause ')'
@@ -11232,12 +11277,40 @@ func_application: func_name '(' ')'
  * (Note that many of the special SQL functions wouldn't actually make any
  * sense as functional index entries, but we ignore that consideration here.)
  */
-func_expr: func_application filter_clause over_clause
+func_expr: func_application within_group_clause filter_clause over_clause
 				{
-					FuncCall *n = (FuncCall*)$1;
-					n->agg_filter = $2;
-					n->over = $3;
-					$$ = (Node*)n;
+					FuncCall *n = (FuncCall *) $1;
+					/*
+					 * The order clause for WITHIN GROUP and the one for
+					 * plain-aggregate ORDER BY share a field, so we have to
+					 * check here that at most one is present.  We also check
+					 * for DISTINCT and VARIADIC here to give a better error
+					 * location.  Other consistency checks are deferred to
+					 * parse analysis.
+					 */
+					if ($2 != NIL)
+					{
+						if (n->agg_order != NIL)
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("cannot use multiple ORDER BY clauses with WITHIN GROUP"),
+									 parser_errposition(@2)));
+						if (n->agg_distinct)
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("cannot use DISTINCT with WITHIN GROUP"),
+									 parser_errposition(@2)));
+						if (n->func_variadic)
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("cannot use VARIADIC with WITHIN GROUP"),
+									 parser_errposition(@2)));
+						n->agg_order = $2;
+						n->agg_within_group = TRUE;
+					}
+					n->agg_filter = $3;
+					n->over = $4;
+					$$ = (Node *) n;
 				}
 			| func_expr_common_subexpr
 				{ $$ = $1; }
@@ -11625,6 +11698,20 @@ xmlexists_argument:
 
 
 /*
+ * Aggregate decoration clauses
+ */
+within_group_clause:
+			WITHIN GROUP_P '(' sort_clause ')'		{ $$ = $4; }
+			| /*EMPTY*/								{ $$ = NIL; }
+		;
+
+filter_clause:
+			FILTER '(' WHERE a_expr ')'				{ $$ = $4; }
+			| /*EMPTY*/								{ $$ = NULL; }
+		;
+
+
+/*
  * Window Definitions
  */
 window_clause:
@@ -11645,11 +11732,6 @@ window_definition:
 					n->name = $1;
 					$$ = n;
 				}
-		;
-
-filter_clause:
-			FILTER '(' WHERE a_expr ')'				{ $$ = $4; }
-			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
 over_clause: OVER window_specification
@@ -12416,16 +12498,17 @@ AexprConst: Iconst
 					t->location = @1;
 					$$ = makeStringConstCast($2, @2, t);
 				}
-			| func_name '(' func_arg_list ')' Sconst
+			| func_name '(' func_arg_list opt_sort_clause ')' Sconst
 				{
 					/* generic syntax with a type modifier */
 					TypeName *t = makeTypeNameFromNameList($1);
 					ListCell *lc;
 
 					/*
-					 * We must use func_arg_list in the production to avoid
-					 * reduce/reduce conflicts, but we don't actually wish
-					 * to allow NamedArgExpr in this context.
+					 * We must use func_arg_list and opt_sort_clause in the
+					 * production to avoid reduce/reduce conflicts, but we
+					 * don't actually wish to allow NamedArgExpr in this
+					 * context, nor ORDER BY.
 					 */
 					foreach(lc, $3)
 					{
@@ -12437,9 +12520,15 @@ AexprConst: Iconst
 									 errmsg("type modifier cannot have parameter name"),
 									 parser_errposition(arg->location)));
 					}
+					if ($4 != NIL)
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("type modifier cannot have ORDER BY"),
+									 parser_errposition(@4)));
+
 					t->typmods = $3;
 					t->location = @1;
-					$$ = makeStringConstCast($5, @5, t);
+					$$ = makeStringConstCast($6, @6, t);
 				}
 			| ConstTypename Sconst
 				{
@@ -12800,6 +12889,7 @@ unreserved_keyword:
 			| VIEW
 			| VOLATILE
 			| WHITESPACE_P
+			| WITHIN
 			| WITHOUT
 			| WORK
 			| WRAPPER
@@ -13273,6 +13363,52 @@ extractArgTypes(List *parameters)
 			result = lappend(result, p->argType);
 	}
 	return result;
+}
+
+/* extractAggrArgTypes()
+ * As above, but work from the output of the aggr_args production.
+ */
+static List *
+extractAggrArgTypes(List *aggrargs)
+{
+	Assert(list_length(aggrargs) == 2);
+	return extractArgTypes((List *) linitial(aggrargs));
+}
+
+/* makeOrderedSetArgs()
+ * Build the result of the aggr_args production (which see the comments for).
+ * This handles only the case where both given lists are nonempty, so that
+ * we have to deal with multiple VARIADIC arguments.
+ */
+static List *
+makeOrderedSetArgs(List *directargs, List *orderedargs,
+				   core_yyscan_t yyscanner)
+{
+	FunctionParameter *lastd = (FunctionParameter *) llast(directargs);
+
+	/* No restriction unless last direct arg is VARIADIC */
+	if (lastd->mode == FUNC_PARAM_VARIADIC)
+	{
+		FunctionParameter *firsto = (FunctionParameter *) linitial(orderedargs);
+
+		/*
+		 * We ignore the names, though the aggr_arg production allows them;
+		 * it doesn't allow default values, so those need not be checked.
+		 */
+		if (list_length(orderedargs) != 1 ||
+			firsto->mode != FUNC_PARAM_VARIADIC ||
+			!equal(lastd->argType, firsto->argType))
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("an ordered-set aggregate with a VARIADIC direct argument must have one VARIADIC aggregated argument of the same data type"),
+					 parser_errposition(exprLocation((Node *) firsto))));
+
+		/* OK, drop the duplicate VARIADIC argument from the internal form */
+		orderedargs = NIL;
+	}
+
+	return list_make2(list_concat(directargs, orderedargs),
+					  makeInteger(list_length(directargs)));
 }
 
 /* insertSelectOptions()

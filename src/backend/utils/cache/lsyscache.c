@@ -1493,6 +1493,25 @@ get_func_signature(Oid funcid, Oid **argtypes, int *nargs)
 }
 
 /*
+ * get_func_variadictype
+ *		Given procedure id, return the function's provariadic field.
+ */
+Oid
+get_func_variadictype(Oid funcid)
+{
+	HeapTuple	tp;
+	Oid			result;
+
+	tp = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for function %u", funcid);
+
+	result = ((Form_pg_proc) GETSTRUCT(tp))->provariadic;
+	ReleaseSysCache(tp);
+	return result;
+}
+
+/*
  * get_func_retset
  *		Given procedure id, return the function's proretset flag.
  */

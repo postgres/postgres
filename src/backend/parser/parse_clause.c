@@ -75,9 +75,6 @@ static TargetEntry *findTargetlistEntrySQL99(ParseState *pstate, Node *node,
 						 List **tlist, ParseExprKind exprKind);
 static int get_matching_location(int sortgroupref,
 					  List *sortgrouprefs, List *exprs);
-static List *addTargetToSortList(ParseState *pstate, TargetEntry *tle,
-					List *sortlist, List *targetlist, SortBy *sortby,
-					bool resolveUnknown);
 static List *addTargetToGroupList(ParseState *pstate, TargetEntry *tle,
 					 List *grouplist, List *targetlist, int location,
 					 bool resolveUnknown);
@@ -2177,7 +2174,7 @@ get_matching_location(int sortgroupref, List *sortgrouprefs, List *exprs)
  *
  * Returns the updated SortGroupClause list.
  */
-static List *
+List *
 addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 					List *sortlist, List *targetlist, SortBy *sortby,
 					bool resolveUnknown)

@@ -25,7 +25,7 @@ SECURITY LABEL [ FOR <replaceable class="PARAMETER">provider</replaceable> ] ON
 {
   TABLE <replaceable class="PARAMETER">object_name</replaceable> |
   COLUMN <replaceable class="PARAMETER">table_name</replaceable>.<replaceable class="PARAMETER">column_name</replaceable> |
-  AGGREGATE <replaceable class="PARAMETER">agg_name</replaceable> ( [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">agg_type</replaceable> [, ...] ) |
+  AGGREGATE <replaceable class="PARAMETER">aggregate_name</replaceable> ( <replaceable>aggregate_signature</replaceable> ) |
   DATABASE <replaceable class="PARAMETER">object_name</replaceable> |
   DOMAIN <replaceable class="PARAMETER">object_name</replaceable> |
   EVENT TRIGGER <replaceable class="PARAMETER">object_name</replaceable> |
@@ -41,6 +41,12 @@ SECURITY LABEL [ FOR <replaceable class="PARAMETER">provider</replaceable> ] ON
   TYPE <replaceable class="PARAMETER">object_name</replaceable> |
   VIEW <replaceable class="PARAMETER">object_name</replaceable>
 } IS '<replaceable class="PARAMETER">label</replaceable>'
+
+<phrase>where <replaceable>aggregate_signature</replaceable> is:</phrase>
+
+* |
+[ <replaceable>argmode</replaceable> ] [ <replaceable>argname</replaceable> ] <replaceable>argtype</replaceable> [ , ... ] |
+[ [ <replaceable>argmode</replaceable> ] [ <replaceable>argname</replaceable> ] <replaceable>argtype</replaceable> [ , ... ] ] ORDER BY [ <replaceable>argmode</replaceable> ] [ <replaceable>argname</replaceable> ] <replaceable>argtype</replaceable> [ , ... ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -83,7 +89,7 @@ SECURITY LABEL [ FOR <replaceable class="PARAMETER">provider</replaceable> ] ON
    <varlistentry>
     <term><replaceable class="parameter">object_name</replaceable></term>
     <term><replaceable class="parameter">table_name.column_name</replaceable></term>
-    <term><replaceable class="parameter">agg_name</replaceable></term>
+    <term><replaceable class="parameter">aggregate_name</replaceable></term>
     <term><replaceable class="parameter">function_name</replaceable></term>
     <listitem>
      <para>
@@ -107,22 +113,12 @@ SECURITY LABEL [ FOR <replaceable class="PARAMETER">provider</replaceable> ] ON
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">agg_type</replaceable></term>
-    <listitem>
-     <para>
-      An input data type on which the aggregate function operates.
-      To reference a zero-argument aggregate function, write <literal>*</>
-      in place of the list of argument specifications.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
     <term><replaceable class="parameter">argmode</replaceable></term>
 
     <listitem>
      <para>
-      The mode of a function argument: <literal>IN</>, <literal>OUT</>,
+      The mode of a function or aggregate
+      argument: <literal>IN</>, <literal>OUT</>,
       <literal>INOUT</>, or <literal>VARIADIC</>.
       If omitted, the default is <literal>IN</>.
       Note that <command>SECURITY LABEL</command> does not actually
@@ -139,7 +135,7 @@ SECURITY LABEL [ FOR <replaceable class="PARAMETER">provider</replaceable> ] ON
 
     <listitem>
      <para>
-      The name of a function argument.
+      The name of a function or aggregate argument.
       Note that <command>SECURITY LABEL</command> does not actually
       pay any attention to argument names, since only the argument data
       types are needed to determine the function's identity.
@@ -152,8 +148,7 @@ SECURITY LABEL [ FOR <replaceable class="PARAMETER">provider</replaceable> ] ON
 
     <listitem>
      <para>
-      The data type(s) of the function's arguments (optionally
-      schema-qualified), if any.
+      The data type of a function or aggregate argument.
      </para>
     </listitem>
    </varlistentry>

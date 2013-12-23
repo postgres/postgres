@@ -1311,6 +1311,262 @@ select aggfns(distinct a,b,c order by a,c using ~<~,b) filter (where a > 1)
  {"(2,2,bar)","(3,1,baz)"}
 (1 row)
 
+-- ordered-set aggregates
+select p, percentile_cont(p) within group (order by x::float8)
+from generate_series(1,5) x,
+     (values (0::float8),(0.1),(0.25),(0.4),(0.5),(0.6),(0.75),(0.9),(1)) v(p)
+group by p order by p;
+  p   | percentile_cont 
+------+-----------------
+    0 |               1
+  0.1 |             1.4
+ 0.25 |               2
+  0.4 |             2.6
+  0.5 |               3
+  0.6 |             3.4
+ 0.75 |               4
+  0.9 |             4.6
+    1 |               5
+(9 rows)
+
+select p, percentile_cont(p order by p) within group (order by x)  -- error
+from generate_series(1,5) x,
+     (values (0::float8),(0.1),(0.25),(0.4),(0.5),(0.6),(0.75),(0.9),(1)) v(p)
+group by p order by p;
+ERROR:  cannot use multiple ORDER BY clauses with WITHIN GROUP
+LINE 1: select p, percentile_cont(p order by p) within group (order ...
+                                                ^
+select p, sum() within group (order by x::float8)  -- error
+from generate_series(1,5) x,
+     (values (0::float8),(0.1),(0.25),(0.4),(0.5),(0.6),(0.75),(0.9),(1)) v(p)
+group by p order by p;
+ERROR:  sum is not an ordered-set aggregate, so it cannot have WITHIN GROUP
+LINE 1: select p, sum() within group (order by x::float8)  
+                  ^
+select p, percentile_cont(p,p)  -- error
+from generate_series(1,5) x,
+     (values (0::float8),(0.1),(0.25),(0.4),(0.5),(0.6),(0.75),(0.9),(1)) v(p)
+group by p order by p;
+ERROR:  WITHIN GROUP is required for ordered-set aggregate percentile_cont
+LINE 1: select p, percentile_cont(p,p)  
+                  ^
+select percentile_cont(0.5) within group (order by b) from aggtest;
+ percentile_cont  
+------------------
+ 53.4485001564026
+(1 row)
+
+select percentile_cont(0.5) within group (order by b), sum(b) from aggtest;
+ percentile_cont  |   sum   
+------------------+---------
+ 53.4485001564026 | 431.773
+(1 row)
+
+select percentile_cont(0.5) within group (order by thousand) from tenk1;
+ percentile_cont 
+-----------------
+           499.5
+(1 row)
+
+select percentile_disc(0.5) within group (order by thousand) from tenk1;
+ percentile_disc 
+-----------------
+             499
+(1 row)
+
+select rank(3) within group (order by x)
+from (values (1),(1),(2),(2),(3),(3),(4)) v(x);
+ rank 
+------
+    5
+(1 row)
+
+select cume_dist(3) within group (order by x)
+from (values (1),(1),(2),(2),(3),(3),(4)) v(x);
+ cume_dist 
+-----------
+     0.875
+(1 row)
+
+select percent_rank(3) within group (order by x)
+from (values (1),(1),(2),(2),(3),(3),(4),(5)) v(x);
+ percent_rank 
+--------------
+          0.5
+(1 row)
+
+select dense_rank(3) within group (order by x)
+from (values (1),(1),(2),(2),(3),(3),(4)) v(x);
+ dense_rank 
+------------
+          3
+(1 row)
+
+select percentile_disc(array[0,0.1,0.25,0.5,0.75,0.9,1]) within group (order by thousand)
+from tenk1;
+      percentile_disc       
+----------------------------
+ {0,99,249,499,749,899,999}
+(1 row)
+
+select percentile_cont(array[0,0.25,0.5,0.75,1]) within group (order by thousand)
+from tenk1;
+       percentile_cont       
+-----------------------------
+ {0,249.75,499.5,749.25,999}
+(1 row)
+
+select percentile_disc(array[[null,1,0.5],[0.75,0.25,null]]) within group (order by thousand)
+from tenk1;
+         percentile_disc         
+---------------------------------
+ {{NULL,999,499},{749,249,NULL}}
+(1 row)
+
+select percentile_cont(array[0,1,0.25,0.75,0.5,1]) within group (order by x)
+from generate_series(1,6) x;
+    percentile_cont    
+-----------------------
+ {1,6,2.25,4.75,3.5,6}
+(1 row)
+
+select ten, mode() within group (order by string4) from tenk1 group by ten;
+ ten |  mode  
+-----+--------
+   0 | HHHHxx
+   1 | OOOOxx
+   2 | VVVVxx
+   3 | OOOOxx
+   4 | HHHHxx
+   5 | HHHHxx
+   6 | OOOOxx
+   7 | AAAAxx
+   8 | VVVVxx
+   9 | VVVVxx
+(10 rows)
+
+select percentile_disc(array[0.25,0.5,0.75]) within group (order by x)
+from unnest('{fred,jim,fred,jack,jill,fred,jill,jim,jim,sheila,jim,sheila}'::text[]) u(x);
+ percentile_disc 
+-----------------
+ {fred,jill,jim}
+(1 row)
+
+-- check collation propagates up in suitable cases:
+select pg_collation_for(percentile_disc(1) within group (order by x collate "POSIX"))
+  from (values ('fred'),('jim')) v(x);
+ pg_collation_for 
+------------------
+ "POSIX"
+(1 row)
+
+-- ordered-set aggs created with CREATE AGGREGATE
+select test_rank(3) within group (order by x)
+from (values (1),(1),(2),(2),(3),(3),(4)) v(x);
+ test_rank 
+-----------
+         5
+(1 row)
+
+select test_percentile_disc(0.5) within group (order by thousand) from tenk1;
+ test_percentile_disc 
+----------------------
+                  499
+(1 row)
+
+-- ordered-set aggs can't use ungrouped vars in direct args:
+select rank(x) within group (order by x) from generate_series(1,5) x;
+ERROR:  column "x.x" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: select rank(x) within group (order by x) from generate_serie...
+                    ^
+DETAIL:  Direct arguments of an ordered-set aggregate must use only grouped columns.
+-- outer-level agg can't use a grouped arg of a lower level, either:
+select array(select percentile_disc(a) within group (order by x)
+               from (values (0.3),(0.7)) v(a) group by a)
+  from generate_series(1,5) g(x);
+ERROR:  outer-level aggregate cannot contain a lower-level variable in its direct arguments
+LINE 1: select array(select percentile_disc(a) within group (order b...
+                                            ^
+-- agg in the direct args is a grouping violation, too:
+select rank(sum(x)) within group (order by x) from generate_series(1,5) x;
+ERROR:  aggregate function calls cannot be nested
+LINE 1: select rank(sum(x)) within group (order by x) from generate_...
+                    ^
+-- hypothetical-set type unification and argument-count failures:
+select rank(3) within group (order by x) from (values ('fred'),('jim')) v(x);
+ERROR:  WITHIN GROUP types text and integer cannot be matched
+LINE 1: select rank(3) within group (order by x) from (values ('fred...
+                    ^
+select rank(3) within group (order by stringu1,stringu2) from tenk1;
+ERROR:  function rank(integer, name, name) does not exist
+LINE 1: select rank(3) within group (order by stringu1,stringu2) fro...
+               ^
+HINT:  To use the hypothetical-set aggregate rank, the number of hypothetical direct arguments (here 1) must match the number of ordering columns (here 2).
+select rank('fred') within group (order by x) from generate_series(1,5) x;
+ERROR:  invalid input syntax for integer: "fred"
+LINE 1: select rank('fred') within group (order by x) from generate_...
+                    ^
+select rank('adam'::text collate "C") within group (order by x collate "POSIX")
+  from (values ('fred'),('jim')) v(x);
+ERROR:  collation mismatch between explicit collations "C" and "POSIX"
+LINE 1: ...adam'::text collate "C") within group (order by x collate "P...
+                                                             ^
+-- hypothetical-set type unification successes:
+select rank('adam'::varchar) within group (order by x) from (values ('fred'),('jim')) v(x);
+ rank 
+------
+    1
+(1 row)
+
+select rank('3') within group (order by x) from generate_series(1,5) x;
+ rank 
+------
+    3
+(1 row)
+
+-- divide by zero check
+select percent_rank(0) within group (order by x) from generate_series(1,0) x;
+ percent_rank 
+--------------
+            0
+(1 row)
+
+-- deparse and multiple features:
+create view aggordview1 as
+select ten,
+       percentile_disc(0.5) within group (order by thousand) as p50,
+       percentile_disc(0.5) within group (order by thousand) filter (where hundred=1) as px,
+       rank(5,'AZZZZ',50) within group (order by hundred, string4 desc, hundred)
+  from tenk1
+ group by ten order by ten;
+select pg_get_viewdef('aggordview1');
+                                                        pg_get_viewdef                                                         
+-------------------------------------------------------------------------------------------------------------------------------
+  SELECT tenk1.ten,                                                                                                           +
+     percentile_disc((0.5)::double precision) WITHIN GROUP (ORDER BY tenk1.thousand) AS p50,                                  +
+     percentile_disc((0.5)::double precision) WITHIN GROUP (ORDER BY tenk1.thousand) FILTER (WHERE (tenk1.hundred = 1)) AS px,+
+     rank(5, 'AZZZZ'::name, 50) WITHIN GROUP (ORDER BY tenk1.hundred, tenk1.string4 DESC, tenk1.hundred) AS rank              +
+    FROM tenk1                                                                                                                +
+   GROUP BY tenk1.ten                                                                                                         +
+   ORDER BY tenk1.ten;
+(1 row)
+
+select * from aggordview1 order by ten;
+ ten | p50 | px  | rank 
+-----+-----+-----+------
+   0 | 490 |     |  101
+   1 | 491 | 401 |  101
+   2 | 492 |     |  101
+   3 | 493 |     |  101
+   4 | 494 |     |  101
+   5 | 495 |     |   67
+   6 | 496 |     |    1
+   7 | 497 |     |    1
+   8 | 498 |     |    1
+   9 | 499 |     |    1
+(10 rows)
+
+drop view aggordview1;
 -- variadic aggregates
 select least_agg(q1,q2) from int8_tbl;
      least_agg     

@@ -37,7 +37,6 @@
 #include "catalog/objectaccess.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_proc.h"
-#include "catalog/pg_type.h"
 #include "executor/executor.h"
 #include "executor/nodeWindowAgg.h"
 #include "miscadmin.h"
@@ -1796,27 +1795,16 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 	}
 
 	/* resolve actual type of transition state, if polymorphic */
-	aggtranstype = aggform->aggtranstype;
-	if (IsPolymorphicType(aggtranstype))
-	{
-		/* have to fetch the agg's declared input types... */
-		Oid		   *declaredArgTypes;
-		int			agg_nargs;
-
-		get_func_signature(wfunc->winfnoid,
-						   &declaredArgTypes, &agg_nargs);
-		Assert(agg_nargs == numArguments);
-		aggtranstype = enforce_generic_type_consistency(inputTypes,
-														declaredArgTypes,
-														agg_nargs,
-														aggtranstype,
-														false);
-		pfree(declaredArgTypes);
-	}
+	aggtranstype = resolve_aggregate_transtype(wfunc->winfnoid,
+											   aggform->aggtranstype,
+											   inputTypes,
+											   numArguments);
 
 	/* build expression trees using actual argument & result types */
 	build_aggregate_fnexprs(inputTypes,
 							numArguments,
+							0,	/* no ordered-set window functions yet */
+							false,
 							false,		/* no variadic window functions yet */
 							aggtranstype,
 							wfunc->wintype,

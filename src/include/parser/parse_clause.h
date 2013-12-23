@@ -42,6 +42,9 @@ extern List *transformDistinctClause(ParseState *pstate,
 extern List *transformDistinctOnClause(ParseState *pstate, List *distinctlist,
 						  List **targetlist, List *sortClause);
 
+extern List *addTargetToSortList(ParseState *pstate, TargetEntry *tle,
+					List *sortlist, List *targetlist, SortBy *sortby,
+					bool resolveUnknown);
 extern Index assignSortGroupRef(TargetEntry *tle, List *tlist);
 extern bool targetIsInSortList(TargetEntry *tle, Oid sortop, List *sortList);
 

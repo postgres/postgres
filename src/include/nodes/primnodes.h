@@ -225,8 +225,9 @@ typedef struct Param
 /*
  * Aggref
  *
- * The aggregate's args list is a targetlist, ie, a list of TargetEntry nodes
- * (before Postgres 9.0 it was just bare expressions).	The non-resjunk TLEs
+ * The aggregate's args list is a targetlist, ie, a list of TargetEntry nodes.
+ *
+ * For a normal (non-ordered-set) aggregate, the non-resjunk TargetEntries
  * represent the aggregate's regular arguments (if any) and resjunk TLEs can
  * be added at the end to represent ORDER BY expressions that are not also
  * arguments.  As in a top-level Query, the TLEs can be marked with
@@ -236,6 +237,12 @@ typedef struct Param
  * they are passed to the transition function.	The grammar only allows a
  * simple "DISTINCT" specifier for the arguments, but we use the full
  * query-level representation to allow more code sharing.
+ *
+ * For an ordered-set aggregate, the args list represents the WITHIN GROUP
+ * (aggregated) arguments, all of which will be listed in the aggorder list.
+ * DISTINCT is not supported in this case, so aggdistinct will be NIL.
+ * The direct arguments appear in aggdirectargs (as a list of plain
+ * expressions, not TargetEntry nodes).
  */
 typedef struct Aggref
 {
@@ -244,12 +251,14 @@ typedef struct Aggref
 	Oid			aggtype;		/* type Oid of result of the aggregate */
 	Oid			aggcollid;		/* OID of collation of result */
 	Oid			inputcollid;	/* OID of collation that function should use */
-	List	   *args;			/* arguments and sort expressions */
+	List	   *aggdirectargs;	/* direct arguments, if an ordered-set agg */
+	List	   *args;			/* aggregated arguments and sort expressions */
 	List	   *aggorder;		/* ORDER BY (list of SortGroupClause) */
 	List	   *aggdistinct;	/* DISTINCT (list of SortGroupClause) */
-	Expr	   *aggfilter;		/* FILTER expression */
+	Expr	   *aggfilter;		/* FILTER expression, if any */
 	bool		aggstar;		/* TRUE if argument list was really '*' */
 	bool		aggvariadic;	/* TRUE if VARIADIC was used in call */
+	char		aggkind;		/* aggregate kind (see pg_aggregate.h) */
 	Index		agglevelsup;	/* > 0 if agg belongs to outer query */
 	int			location;		/* token location, or -1 if unknown */
 } Aggref;
@@ -265,7 +274,7 @@ typedef struct WindowFunc
 	Oid			wincollid;		/* OID of collation of result */
 	Oid			inputcollid;	/* OID of collation that function should use */
 	List	   *args;			/* arguments to the window function */
-	Expr	   *aggfilter;		/* FILTER expression */
+	Expr	   *aggfilter;		/* FILTER expression, if any */
 	Index		winref;			/* index of associated WindowClause */
 	bool		winstar;		/* TRUE if argument list was really '*' */
 	bool		winagg;			/* is function a simple aggregate? */

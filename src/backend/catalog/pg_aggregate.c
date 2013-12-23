@@ -36,6 +36,7 @@
 
 
 static Oid lookup_agg_function(List *fnName, int nargs, Oid *input_types,
+					Oid variadicArgType,
 					Oid *rettype);
 
 
@@ -45,12 +46,15 @@ static Oid lookup_agg_function(List *fnName, int nargs, Oid *input_types,
 Oid
 AggregateCreate(const char *aggName,
 				Oid aggNamespace,
+				char aggKind,
 				int numArgs,
+				int numDirectArgs,
 				oidvector *parameterTypes,
 				Datum allParameterTypes,
 				Datum parameterModes,
 				Datum parameterNames,
 				List *parameterDefaults,
+				Oid variadicArgType,
 				List *aggtransfnName,
 				List *aggfinalfnName,
 				List *aggsortopName,
@@ -71,7 +75,7 @@ AggregateCreate(const char *aggName,
 	bool		hasInternalArg;
 	Oid			rettype;
 	Oid			finaltype;
-	Oid		   *fnArgs;
+	Oid			fnArgs[FUNC_MAX_ARGS];
 	int			nargs_transfn;
 	Oid			procOid;
 	TupleDesc	tupDesc;
@@ -86,6 +90,22 @@ AggregateCreate(const char *aggName,
 
 	if (!aggtransfnName)
 		elog(ERROR, "aggregate must have a transition function");
+
+	if (numDirectArgs < 0 || numDirectArgs > numArgs)
+		elog(ERROR, "incorrect number of direct args for aggregate");
+
+	/*
+	 * Aggregates can have at most FUNC_MAX_ARGS-1 args, else the transfn
+	 * and/or finalfn will be unrepresentable in pg_proc.  We must check now
+	 * to protect fixed-size arrays here and possibly in called functions.
+	 */
+	if (numArgs < 0 || numArgs > FUNC_MAX_ARGS - 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
+				 errmsg_plural("aggregates cannot have more than %d argument",
+							 "aggregates cannot have more than %d arguments",
+							   FUNC_MAX_ARGS - 1,
+							   FUNC_MAX_ARGS - 1)));
 
 	/* check for polymorphic and INTERNAL arguments */
 	hasPolyArg = false;
@@ -108,12 +128,75 @@ AggregateCreate(const char *aggName,
 				 errmsg("cannot determine transition data type"),
 				 errdetail("An aggregate using a polymorphic transition type must have at least one polymorphic argument.")));
 
-	/* find the transfn */
-	nargs_transfn = numArgs + 1;
-	fnArgs = (Oid *) palloc(nargs_transfn * sizeof(Oid));
-	fnArgs[0] = aggTransType;
-	memcpy(fnArgs + 1, aggArgTypes, numArgs * sizeof(Oid));
-	transfn = lookup_agg_function(aggtransfnName, nargs_transfn, fnArgs,
+	/*
+	 * An ordered-set aggregate that is VARIADIC must be VARIADIC ANY.	In
+	 * principle we could support regular variadic types, but it would make
+	 * things much more complicated because we'd have to assemble the correct
+	 * subsets of arguments into array values.	Since no standard aggregates
+	 * have use for such a case, we aren't bothering for now.
+	 */
+	if (AGGKIND_IS_ORDERED_SET(aggKind) && OidIsValid(variadicArgType) &&
+		variadicArgType != ANYOID)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("a variadic ordered-set aggregate must use VARIADIC type ANY")));
+
+	/*
+	 * If it's a hypothetical-set aggregate, there must be at least as many
+	 * direct arguments as aggregated ones, and the last N direct arguments
+	 * must match the aggregated ones in type.	(We have to check this again
+	 * when the aggregate is called, in case ANY is involved, but it makes
+	 * sense to reject the aggregate definition now if the declared arg types
+	 * don't match up.)  It's unconditionally OK if numDirectArgs == numArgs,
+	 * indicating that the grammar merged identical VARIADIC entries from both
+	 * lists.  Otherwise, if the agg is VARIADIC, then we had VARIADIC only on
+	 * the aggregated side, which is not OK.  Otherwise, insist on the last N
+	 * parameter types on each side matching exactly.
+	 */
+	if (aggKind == AGGKIND_HYPOTHETICAL &&
+		numDirectArgs < numArgs)
+	{
+		int			numAggregatedArgs = numArgs - numDirectArgs;
+
+		if (OidIsValid(variadicArgType) ||
+			numDirectArgs < numAggregatedArgs ||
+			memcmp(aggArgTypes + (numDirectArgs - numAggregatedArgs),
+				   aggArgTypes + numDirectArgs,
+				   numAggregatedArgs * sizeof(Oid)) != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("a hypothetical-set aggregate must have direct arguments matching its aggregated arguments")));
+	}
+
+	/*
+	 * Find the transfn.  For ordinary aggs, it takes the transtype plus all
+	 * aggregate arguments.  For ordered-set aggs, it takes the transtype plus
+	 * all aggregated args, but not direct args.  However, we have to treat
+	 * specially the case where a trailing VARIADIC item is considered to
+	 * cover both direct and aggregated args.
+	 */
+	if (AGGKIND_IS_ORDERED_SET(aggKind))
+	{
+		if (numDirectArgs < numArgs)
+			nargs_transfn = numArgs - numDirectArgs + 1;
+		else
+		{
+			/* special case with VARIADIC last arg */
+			Assert(variadicArgType != InvalidOid);
+			nargs_transfn = 2;
+		}
+		fnArgs[0] = aggTransType;
+		memcpy(fnArgs + 1, aggArgTypes + (numArgs - (nargs_transfn - 1)),
+			   (nargs_transfn - 1) * sizeof(Oid));
+	}
+	else
+	{
+		nargs_transfn = numArgs + 1;
+		fnArgs[0] = aggTransType;
+		memcpy(fnArgs + 1, aggArgTypes, numArgs * sizeof(Oid));
+	}
+	transfn = lookup_agg_function(aggtransfnName, nargs_transfn,
+								  fnArgs, variadicArgType,
 								  &rettype);
 
 	/*
@@ -156,9 +239,44 @@ AggregateCreate(const char *aggName,
 	/* handle finalfn, if supplied */
 	if (aggfinalfnName)
 	{
+		int			nargs_finalfn;
+
+		/*
+		 * For ordinary aggs, the finalfn just takes the transtype.  For
+		 * ordered-set aggs, it takes the transtype plus all args.	(The
+		 * aggregated args are useless at runtime, and are actually passed as
+		 * NULLs, but we may need them in the function signature to allow
+		 * resolution of a polymorphic agg's result type.)
+		 */
 		fnArgs[0] = aggTransType;
-		finalfn = lookup_agg_function(aggfinalfnName, 1, fnArgs,
+		if (AGGKIND_IS_ORDERED_SET(aggKind))
+		{
+			nargs_finalfn = numArgs + 1;
+			memcpy(fnArgs + 1, aggArgTypes, numArgs * sizeof(Oid));
+		}
+		else
+		{
+			nargs_finalfn = 1;
+			/* variadic-ness of the aggregate doesn't affect finalfn */
+			variadicArgType = InvalidOid;
+		}
+		finalfn = lookup_agg_function(aggfinalfnName, nargs_finalfn,
+									  fnArgs, variadicArgType,
 									  &finaltype);
+
+		/*
+		 * The finalfn of an ordered-set agg will certainly be passed at least
+		 * one null argument, so complain if it's strict.  Nothing bad would
+		 * happen at runtime (you'd just get a null result), but it's surely
+		 * not what the user wants, so let's complain now.
+		 *
+		 * Note: it's likely that a strict transfn would also be a mistake,
+		 * but the case isn't quite so airtight, so we let that pass.
+		 */
+		if (AGGKIND_IS_ORDERED_SET(aggKind) && func_strict(finalfn))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("final function of an ordered-set aggregate must not be declared STRICT")));
 	}
 	else
 	{
@@ -270,6 +388,8 @@ AggregateCreate(const char *aggName,
 		values[i] = (Datum) NULL;
 	}
 	values[Anum_pg_aggregate_aggfnoid - 1] = ObjectIdGetDatum(procOid);
+	values[Anum_pg_aggregate_aggkind - 1] = CharGetDatum(aggKind);
+	values[Anum_pg_aggregate_aggnumdirectargs - 1] = Int16GetDatum(numDirectArgs);
 	values[Anum_pg_aggregate_aggtransfn - 1] = ObjectIdGetDatum(transfn);
 	values[Anum_pg_aggregate_aggfinalfn - 1] = ObjectIdGetDatum(finalfn);
 	values[Anum_pg_aggregate_aggsortop - 1] = ObjectIdGetDatum(sortop);
@@ -333,6 +453,7 @@ static Oid
 lookup_agg_function(List *fnName,
 					int nargs,
 					Oid *input_types,
+					Oid variadicArgType,
 					Oid *rettype)
 {
 	Oid			fnOid;
@@ -372,6 +493,21 @@ lookup_agg_function(List *fnName,
 											  NIL, input_types))));
 
 	/*
+	 * If the agg is declared to take VARIADIC ANY, the underlying functions
+	 * had better be declared that way too, else they may receive too many
+	 * parameters; but func_get_detail would have been happy with plain ANY.
+	 * (Probably nothing very bad would happen, but it wouldn't work as the
+	 * user expects.)  Other combinations should work without any special
+	 * pushups, given that we told func_get_detail not to expand VARIADIC.
+	 */
+	if (variadicArgType == ANYOID && vatype != ANYOID)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("function %s must accept VARIADIC ANY to be used in this aggregate",
+						func_signature_string(fnName, nargs,
+											  NIL, input_types))));
+
+	/*
 	 * If there are any polymorphic types involved, enforce consistency, and
 	 * possibly refine the result type.  It's OK if the result is still
 	 * polymorphic at this point, though.
@@ -388,8 +524,7 @@ lookup_agg_function(List *fnName,
 	 */
 	for (i = 0; i < nargs; i++)
 	{
-		if (!IsPolymorphicType(true_oid_array[i]) &&
-			!IsBinaryCoercible(input_types[i], true_oid_array[i]))
+		if (!IsBinaryCoercible(input_types[i], true_oid_array[i]))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("function %s requires run-time type coercion",

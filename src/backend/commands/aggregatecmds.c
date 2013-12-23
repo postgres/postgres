@@ -45,7 +45,10 @@
  *
  * "oldstyle" signals the old (pre-8.2) style where the aggregate input type
  * is specified by a BASETYPE element in the parameters.  Otherwise,
- * "args" is a list of FunctionParameter structs defining the agg's arguments.
+ * "args" is a pair, whose first element is a list of FunctionParameter structs
+ * defining the agg's arguments (both direct and aggregated), and whose second
+ * element is an Integer node with the number of direct args, or -1 if this
+ * isn't an ordered-set aggregate.
  * "parameters" is a list of DefElem representing the agg's definition clauses.
  */
 Oid
@@ -55,6 +58,7 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 	char	   *aggName;
 	Oid			aggNamespace;
 	AclResult	aclresult;
+	char		aggKind = AGGKIND_NORMAL;
 	List	   *transfuncName = NIL;
 	List	   *finalfuncName = NIL;
 	List	   *sortoperatorName = NIL;
@@ -63,11 +67,13 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 	int32		transSpace = 0;
 	char	   *initval = NULL;
 	int			numArgs;
+	int			numDirectArgs = 0;
 	oidvector  *parameterTypes;
 	ArrayType  *allParameterTypes;
 	ArrayType  *parameterModes;
 	ArrayType  *parameterNames;
 	List	   *parameterDefaults;
+	Oid			variadicArgType;
 	Oid			transTypeId;
 	char		transTypeType;
 	ListCell   *pl;
@@ -81,6 +87,19 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
 					   get_namespace_name(aggNamespace));
 
+	/* Deconstruct the output of the aggr_args grammar production */
+	if (!oldstyle)
+	{
+		Assert(list_length(args) == 2);
+		numDirectArgs = intVal(lsecond(args));
+		if (numDirectArgs >= 0)
+			aggKind = AGGKIND_ORDERED_SET;
+		else
+			numDirectArgs = 0;
+		args = (List *) linitial(args);
+	}
+
+	/* Examine aggregate's definition clauses */
 	foreach(pl, parameters)
 	{
 		DefElem    *defel = (DefElem *) lfirst(pl);
@@ -99,6 +118,17 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 			sortoperatorName = defGetQualifiedName(defel);
 		else if (pg_strcasecmp(defel->defname, "basetype") == 0)
 			baseType = defGetTypeName(defel);
+		else if (pg_strcasecmp(defel->defname, "hypothetical") == 0)
+		{
+			if (defGetBoolean(defel))
+			{
+				if (aggKind == AGGKIND_NORMAL)
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+							 errmsg("only ordered-set aggregates can be hypothetical")));
+				aggKind = AGGKIND_HYPOTHETICAL;
+			}
+		}
 		else if (pg_strcasecmp(defel->defname, "stype") == 0)
 			transType = defGetTypeName(defel);
 		else if (pg_strcasecmp(defel->defname, "stype1") == 0)
@@ -162,6 +192,7 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 		parameterModes = NULL;
 		parameterNames = NULL;
 		parameterDefaults = NIL;
+		variadicArgType = InvalidOid;
 	}
 	else
 	{
@@ -186,6 +217,7 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 										  &parameterModes,
 										  &parameterNames,
 										  &parameterDefaults,
+										  &variadicArgType,
 										  &requiredResultType);
 		/* Parameter defaults are not currently allowed by the grammar */
 		Assert(parameterDefaults == NIL);
@@ -241,12 +273,15 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 	 */
 	return AggregateCreate(aggName,		/* aggregate name */
 						   aggNamespace,		/* namespace */
+						   aggKind,
 						   numArgs,
+						   numDirectArgs,
 						   parameterTypes,
 						   PointerGetDatum(allParameterTypes),
 						   PointerGetDatum(parameterModes),
 						   PointerGetDatum(parameterNames),
 						   parameterDefaults,
+						   variadicArgType,
 						   transfuncName,		/* step function name */
 						   finalfuncName,		/* final function name */
 						   sortoperatorName,	/* sort operator name */

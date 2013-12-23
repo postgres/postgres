@@ -43,9 +43,7 @@ typedef enum
 
 
 extern Node *ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
-				  List *agg_order, Expr *agg_filter,
-				  bool agg_star, bool agg_distinct, bool func_variadic,
-				  WindowDef *over, bool is_column, int location);
+				  FuncCall *fn, int location);
 
 extern FuncDetailCode func_get_detail(List *funcname,
 				List *fargs, List *fargnames,

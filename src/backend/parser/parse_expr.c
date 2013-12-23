@@ -463,8 +463,8 @@ transformIndirection(ParseState *pstate, Node *basenode, List *indirection)
 			newresult = ParseFuncOrColumn(pstate,
 										  list_make1(n),
 										  list_make1(result),
-										  NIL, NULL, false, false, false,
-										  NULL, true, location);
+										  NULL,
+										  location);
 			if (newresult == NULL)
 				unknown_attribute(pstate, result, strVal(n), location);
 			result = newresult;
@@ -631,8 +631,8 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					node = ParseFuncOrColumn(pstate,
 											 list_make1(makeString(colname)),
 											 list_make1(node),
-											 NIL, NULL, false, false, false,
-											 NULL, true, cref->location);
+											 NULL,
+											 cref->location);
 				}
 				break;
 			}
@@ -676,8 +676,8 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					node = ParseFuncOrColumn(pstate,
 											 list_make1(makeString(colname)),
 											 list_make1(node),
-											 NIL, NULL, false, false, false,
-											 NULL, true, cref->location);
+											 NULL,
+											 cref->location);
 				}
 				break;
 			}
@@ -734,8 +734,8 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					node = ParseFuncOrColumn(pstate,
 											 list_make1(makeString(colname)),
 											 list_make1(node),
-											 NIL, NULL, false, false, false,
-											 NULL, true, cref->location);
+											 NULL,
+											 cref->location);
 				}
 				break;
 			}
@@ -1242,7 +1242,6 @@ transformFuncCall(ParseState *pstate, FuncCall *fn)
 {
 	List	   *targs;
 	ListCell   *args;
-	Expr	   *tagg_filter;
 
 	/* Transform the list of arguments ... */
 	targs = NIL;
@@ -1253,26 +1252,30 @@ transformFuncCall(ParseState *pstate, FuncCall *fn)
 	}
 
 	/*
-	 * Transform the aggregate filter using transformWhereClause(), to which
-	 * FILTER is virtually identical...
+	 * When WITHIN GROUP is used, we treat its ORDER BY expressions as
+	 * additional arguments to the function, for purposes of function lookup
+	 * and argument type coercion.	So, transform each such expression and add
+	 * them to the targs list.	We don't explicitly mark where each argument
+	 * came from, but ParseFuncOrColumn can tell what's what by reference to
+	 * list_length(fn->agg_order).
 	 */
-	tagg_filter = NULL;
-	if (fn->agg_filter != NULL)
-		tagg_filter = (Expr *)
-			transformWhereClause(pstate, (Node *) fn->agg_filter,
-								 EXPR_KIND_FILTER, "FILTER");
+	if (fn->agg_within_group)
+	{
+		Assert(fn->agg_order != NIL);
+		foreach(args, fn->agg_order)
+		{
+			SortBy	   *arg = (SortBy *) lfirst(args);
+
+			targs = lappend(targs, transformExpr(pstate, arg->node,
+												 EXPR_KIND_ORDER_BY));
+		}
+	}
 
 	/* ... and hand off to ParseFuncOrColumn */
 	return ParseFuncOrColumn(pstate,
 							 fn->funcname,
 							 targs,
-							 fn->agg_order,
-							 tagg_filter,
-							 fn->agg_star,
-							 fn->agg_distinct,
-							 fn->func_variadic,
-							 fn->over,
-							 false,
+							 fn,
 							 fn->location);
 }
 

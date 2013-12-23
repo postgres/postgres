@@ -1586,6 +1586,7 @@ JumbleExpr(pgssJumbleState *jstate, Node *node)
 				Aggref	   *expr = (Aggref *) node;
 
 				APP_JUMB(expr->aggfnoid);
+				JumbleExpr(jstate, (Node *) expr->aggdirectargs);
 				JumbleExpr(jstate, (Node *) expr->args);
 				JumbleExpr(jstate, (Node *) expr->aggorder);
 				JumbleExpr(jstate, (Node *) expr->aggdistinct);

@@ -22,6 +22,7 @@
 #include "access/sysattr.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
+#include "catalog/pg_aggregate.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
@@ -40,6 +41,7 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/tlist.h"
 #include "parser/keywords.h"
+#include "parser/parse_agg.h"
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
 #include "parser/parser.h"
@@ -2166,6 +2168,7 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 	Oid		   *argtypes;
 	char	  **argnames;
 	char	   *argmodes;
+	int			insertorderbyat = -1;
 	int			argsprinted;
 	int			inputargno;
 	int			nlackdefaults;
@@ -2197,6 +2200,23 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 			/* nlackdefaults counts only *input* arguments lacking defaults */
 			nlackdefaults = proc->pronargs - list_length(argdefaults);
 		}
+	}
+
+	/* Check for special treatment of ordered-set aggregates */
+	if (proc->proisagg)
+	{
+		HeapTuple	aggtup;
+		Form_pg_aggregate agg;
+
+		aggtup = SearchSysCache1(AGGFNOID,
+								 ObjectIdGetDatum(HeapTupleGetOid(proctup)));
+		if (!HeapTupleIsValid(aggtup))
+			elog(ERROR, "cache lookup failed for aggregate %u",
+				 HeapTupleGetOid(proctup));
+		agg = (Form_pg_aggregate) GETSTRUCT(aggtup);
+		if (AGGKIND_IS_ORDERED_SET(agg->aggkind))
+			insertorderbyat = agg->aggnumdirectargs;
+		ReleaseSysCache(aggtup);
 	}
 
 	argsprinted = 0;
@@ -2243,8 +2263,15 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 		if (print_table_args != (argmode == PROARGMODE_TABLE))
 			continue;
 
-		if (argsprinted)
+		if (argsprinted == insertorderbyat)
+		{
+			if (argsprinted)
+				appendStringInfoChar(buf, ' ');
+			appendStringInfoString(buf, "ORDER BY ");
+		}
+		else if (argsprinted)
 			appendStringInfoString(buf, ", ");
+
 		appendStringInfoString(buf, modename);
 		if (argname && argname[0])
 			appendStringInfo(buf, "%s ", quote_identifier(argname));
@@ -2261,6 +2288,14 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 							 deparse_expression(expr, NIL, false, false));
 		}
 		argsprinted++;
+
+		/* nasty hack: print the last arg twice for variadic ordered-set agg */
+		if (argsprinted == insertorderbyat && i == numargs - 1)
+		{
+			i--;
+			/* aggs shouldn't have defaults anyway, but just to be sure ... */
+			print_defaults = false;
+		}
 	}
 
 	return argsprinted;
@@ -7493,31 +7528,13 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
 	Oid			argtypes[FUNC_MAX_ARGS];
-	List	   *arglist;
 	int			nargs;
 	bool		use_variadic;
-	ListCell   *l;
 
-	/* Extract the regular arguments, ignoring resjunk stuff for the moment */
-	arglist = NIL;
-	nargs = 0;
-	foreach(l, aggref->args)
-	{
-		TargetEntry *tle = (TargetEntry *) lfirst(l);
-		Node	   *arg = (Node *) tle->expr;
+	/* Extract the argument types as seen by the parser */
+	nargs = get_aggregate_argtypes(aggref, argtypes);
 
-		Assert(!IsA(arg, NamedArgExpr));
-		if (tle->resjunk)
-			continue;
-		if (nargs >= FUNC_MAX_ARGS)		/* paranoia */
-			ereport(ERROR,
-					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-					 errmsg("too many arguments")));
-		argtypes[nargs] = exprType(arg);
-		arglist = lappend(arglist, arg);
-		nargs++;
-	}
-
+	/* Print the aggregate name, schema-qualified if needed */
 	appendStringInfo(buf, "%s(%s",
 					 generate_function_name(aggref->aggfnoid, nargs,
 											NIL, argtypes,
@@ -7525,26 +7542,51 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
 											&use_variadic),
 					 (aggref->aggdistinct != NIL) ? "DISTINCT " : "");
 
-	/* aggstar can be set only in zero-argument aggregates */
-	if (aggref->aggstar)
-		appendStringInfoChar(buf, '*');
+	if (AGGKIND_IS_ORDERED_SET(aggref->aggkind))
+	{
+		/*
+		 * Ordered-set aggregates do not use "*" syntax.  Also, we needn't
+		 * worry about inserting VARIADIC.	So we can just dump the direct
+		 * args as-is.
+		 */
+		Assert(!aggref->aggvariadic);
+		get_rule_expr((Node *) aggref->aggdirectargs, context, true);
+		Assert(aggref->aggorder != NIL);
+		appendStringInfoString(buf, ") WITHIN GROUP (ORDER BY ");
+		get_rule_orderby(aggref->aggorder, aggref->args, false, context);
+	}
 	else
 	{
-		nargs = 0;
-		foreach(l, arglist)
+		/* aggstar can be set only in zero-argument aggregates */
+		if (aggref->aggstar)
+			appendStringInfoChar(buf, '*');
+		else
 		{
-			if (nargs++ > 0)
-				appendStringInfoString(buf, ", ");
-			if (use_variadic && lnext(l) == NULL)
-				appendStringInfoString(buf, "VARIADIC ");
-			get_rule_expr((Node *) lfirst(l), context, true);
-		}
-	}
+			ListCell   *l;
+			int			i;
 
-	if (aggref->aggorder != NIL)
-	{
-		appendStringInfoString(buf, " ORDER BY ");
-		get_rule_orderby(aggref->aggorder, aggref->args, false, context);
+			i = 0;
+			foreach(l, aggref->args)
+			{
+				TargetEntry *tle = (TargetEntry *) lfirst(l);
+				Node	   *arg = (Node *) tle->expr;
+
+				Assert(!IsA(arg, NamedArgExpr));
+				if (tle->resjunk)
+					continue;
+				if (i++ > 0)
+					appendStringInfoString(buf, ", ");
+				if (use_variadic && i == nargs)
+					appendStringInfoString(buf, "VARIADIC ");
+				get_rule_expr(arg, context, true);
+			}
+		}
+
+		if (aggref->aggorder != NIL)
+		{
+			appendStringInfoString(buf, " ORDER BY ");
+			get_rule_orderby(aggref->aggorder, aggref->args, false, context);
+		}
 	}
 
 	if (aggref->aggfilter != NULL)

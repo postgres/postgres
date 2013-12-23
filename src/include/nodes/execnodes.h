@@ -141,7 +141,7 @@ typedef struct ExprContext
 	/* Link to containing EState (NULL if a standalone ExprContext) */
 	struct EState *ecxt_estate;
 
-	/* Functions to call back when ExprContext is shut down */
+	/* Functions to call back when ExprContext is shut down or rescanned */
 	ExprContext_CB *ecxt_callbacks;
 } ExprContext;
 
@@ -587,8 +587,9 @@ typedef struct WholeRowVarExprState
 typedef struct AggrefExprState
 {
 	ExprState	xprstate;
-	List	   *args;			/* states of argument expressions */
-	ExprState  *aggfilter;		/* FILTER expression */
+	List	   *aggdirectargs;	/* states of direct-argument expressions */
+	List	   *args;			/* states of aggregated-argument expressions */
+	ExprState  *aggfilter;		/* state of FILTER expression, if any */
 	int			aggno;			/* ID number for agg within its plan node */
 } AggrefExprState;
 
@@ -1704,6 +1705,7 @@ typedef struct AggState
 	AggStatePerAgg peragg;		/* per-Aggref information */
 	MemoryContext aggcontext;	/* memory context for long-lived data */
 	ExprContext *tmpcontext;	/* econtext for input expressions */
+	AggStatePerAgg curperagg;	/* identifies currently active aggregate */
 	bool		agg_done;		/* indicates completion of Agg scan */
 	/* these fields are used in AGG_PLAIN and AGG_SORTED modes: */
 	AggStatePerGroup pergroup;	/* per-Aggref-per-group working state */

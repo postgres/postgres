@@ -9,20 +9,27 @@
   </indexterm>
 
   <para>
-   Aggregate functions  in <productname>PostgreSQL</productname>
-   are expressed in terms of <firstterm>state values</firstterm>
+   Aggregate functions in <productname>PostgreSQL</productname>
+   are defined in terms of <firstterm>state values</firstterm>
    and <firstterm>state transition functions</firstterm>.
    That is, an aggregate operates using a state value that is updated
    as each successive input row is processed.
    To define a new aggregate
    function, one selects a data type for the state value,
    an initial value for the state, and a state transition
-   function.  The state transition function is just an
-   ordinary function that could also be used outside the
-   context of the aggregate.  A <firstterm>final function</firstterm>
+   function.  The state transition function takes the previous state
+   value and the aggregate's input value(s) for the current row, and
+   returns a new state value.
+   A <firstterm>final function</firstterm>
    can also be specified, in case the desired result of the aggregate
    is different from the data that needs to be kept in the running
-   state value.
+   state value.  The final function takes the last state value
+   and returns whatever is wanted as the aggregate result.
+   In principle, the transition and final functions are just ordinary
+   functions that could also be used outside the context of the
+   aggregate.  (In practice, it's often helpful for performance reasons
+   to create specialized transition functions that can only work when
+   called as part of an aggregate.)
   </para>
 
   <para>
@@ -42,20 +49,24 @@
    we only need the addition function for that data type.
    The aggregate definition would be:
 
-<screen>
+<programlisting>
 CREATE AGGREGATE sum (complex)
 (
     sfunc = complex_add,
     stype = complex,
     initcond = '(0,0)'
 );
+</programlisting>
 
+   which we might use like this:
+
+<programlisting>
 SELECT sum(a) FROM test_complex;
 
    sum
 -----------
  (34,53.9)
-</screen>
+</programlisting>
 
    (Notice that we are relying on function overloading: there is more than
     one aggregate named <function>sum</>, but
@@ -64,19 +75,19 @@ SELECT sum(a) FROM test_complex;
   </para>
 
   <para>
-   The above definition of <function>sum</function> will return zero (the initial
-   state condition) if there are no nonnull input values.
+   The above definition of <function>sum</function> will return zero
+   (the initial state value) if there are no nonnull input values.
    Perhaps we want to return null in that case instead &mdash; the SQL standard
    expects <function>sum</function> to behave that way.  We can do this simply by
    omitting the <literal>initcond</literal> phrase, so that the initial state
-   condition is null.  Ordinarily this would mean that the <literal>sfunc</literal>
-   would need to check for a null state-condition input.  But for
+   value is null.  Ordinarily this would mean that the <literal>sfunc</literal>
+   would need to check for a null state-value input.  But for
    <function>sum</function> and some other simple aggregates like
    <function>max</> and <function>min</>,
    it is sufficient to insert the first nonnull input value into
    the state variable and then start applying the transition function
    at the second nonnull input value.  <productname>PostgreSQL</productname>
-   will do that automatically if the initial condition is null and
+   will do that automatically if the initial state value is null and
    the transition function is marked <quote>strict</> (i.e., not to be called
    for null inputs).
   </para>
@@ -109,12 +120,16 @@ CREATE AGGREGATE avg (float8)
     initcond = '{0,0,0}'
 );
 </programlisting>
+  </para>
 
-   (<function>float8_accum</> requires a three-element array, not just
+  <note>
+   <para>
+   <function>float8_accum</> requires a three-element array, not just
    two elements, because it accumulates the sum of squares as well as
    the sum and count of the inputs.  This is so that it can be used for
-   some other aggregates besides <function>avg</>.)
-  </para>
+   some other aggregates besides <function>avg</>.
+   </para>
+  </note>
 
   <para>
    Aggregate functions can use polymorphic
@@ -136,7 +151,7 @@ CREATE AGGREGATE array_accum (anyelement)
 );
 </programlisting>
 
-   Here, the actual state type for any aggregate call is the array type
+   Here, the actual state type for any given aggregate call is the array type
    having the actual input type as elements.  The behavior of the aggregate
    is to concatenate all the inputs into an array of that type.
    (Note: the built-in aggregate <function>array_agg</> provides similar
@@ -206,6 +221,97 @@ SELECT myaggregate(a, b, c ORDER BY a) FROM ...
   </note>
 
   <para>
+   Aggregate function calls in SQL allow <literal>DISTINCT</>
+   and <literal>ORDER BY</> options that control which rows are fed
+   to the aggregate's transition function and in what order.  These
+   options are implemented behind the scenes and are not the concern
+   of the aggregate's support functions.
+  </para>
+
+  <para>
+   The aggregates we have been describing so far are <quote>normal</>
+   aggregates.  <productname>PostgreSQL</> also
+   supports <firstterm>ordered-set aggregates</>, which differ from
+   normal aggregates in two key ways.  First, in addition to ordinary
+   aggregated arguments that are evaluated once per input row, an
+   ordered-set aggregate can have <quote>direct</> arguments that are
+   evaluated only once per aggregation operation.  Second, the syntax
+   for the ordinary aggregated arguments specifies a sort ordering
+   for them explicitly.  An ordered-set aggregate is usually
+   used to implement a computation that depends on a specific row
+   ordering, for instance rank or percentile, so that the sort ordering
+   is a required aspect of any call.  For example, the built-in
+   definition of <function>percentile_disc</> is equivalent to:
+
+<programlisting>
+CREATE AGGREGATE percentile_disc (float8 ORDER BY anyelement)
+(
+    sfunc = ordered_set_transition,
+    stype = internal,
+    finalfunc = percentile_disc_final
+);
+</programlisting>
+
+   which could be used to obtain a median household income like this:
+
+<programlisting>
+SELECT percentile_disc(0.5) WITHIN GROUP (ORDER BY income) FROM households;
+ percentile_disc
+-----------------
+           50489
+</programlisting>
+
+   Here, <literal>0.5</> is a direct argument; it would make no sense
+   for the percentile fraction to be a value varying across rows.
+  </para>
+
+  <para>
+   Unlike the case for normal aggregates, the sorting of input rows for
+   an ordered-set aggregate is <emphasis>not</> done behind the scenes,
+   but is the responsibility of the aggregate's support functions.
+   The typical implementation approach is to keep a reference to
+   a <quote>tuplesort</> object in the aggregate's state value, feed the
+   incoming rows into that object, and then complete the sorting and
+   read out the data in the final function.  This design allows the
+   final function to perform special operations such as injecting
+   additional <quote>hypothetical</> rows into the data to be sorted.
+   While normal aggregates can often be implemented with support
+   functions written in <application>PL/pgSQL</application> or another
+   PL language, ordered-set aggregates generally have to be written in
+   C, since their state values aren't definable as any SQL datatype.
+   (In the above example, notice that the state value is declared as
+   type <type>internal</> &mdash; this is typical.)
+  </para>
+
+  <para>
+   The state transition function for an ordered-set aggregate receives
+   the current state value plus the aggregated input values for
+   each row, and returns the updated state value.  This is the
+   same definition as for normal aggregates, but note that the direct
+   arguments (if any) are not provided.  The final function receives
+   the last state value, the values of the direct arguments if any,
+   and null values corresponding to the aggregated input(s).  While the
+   null values seem useless at first sight, they are important because
+   they make it possible to include the data types of the aggregated
+   input(s) in the final function's signature, which may be necessary
+   to resolve the output type of a polymorphic aggregate.  For example,
+   the built-in <function>mode()</> ordered-set aggregate takes a
+   single aggregated column of any sortable data type and returns a
+   value of that same type.  This is possible because the final function
+   is declared as <literal>mode_final(internal, anyelement) returns
+   anyelement</>, with the <type>anyelement</> parameter corresponding
+   to the dummy null argument that represents the aggregated column.
+   The actual data is conveyed in the <type>internal</>-type state
+   value, but type resolution needs a parse-time indication of what the
+   result data type will be, and the dummy argument provides that.
+   In the example of <function>percentile_disc</>, the support functions
+   are respectively declared as
+   <literal>ordered_set_transition(internal, "any") returns internal</>
+   and <literal>percentile_disc_final(internal, float8, anyelement)
+   returns anyelement</>.
+  </para>
+
+  <para>
    A function written in C can detect that it is being called as an
    aggregate transition or final function by calling
    <function>AggCheckCallContext</>, for example:
@@ -214,14 +320,25 @@ if (AggCheckCallContext(fcinfo, NULL))
 </programlisting>
    One reason for checking this is that when it is true for a transition
    function, the first input
-   must be a temporary transition value and can therefore safely be modified
+   must be a temporary state value and can therefore safely be modified
    in-place rather than allocating a new copy.
    See <literal>int8inc()</> for an example.
    (This is the <emphasis>only</>
    case where it is safe for a function to modify a pass-by-reference input.
-   In particular, aggregate final functions should not modify their inputs in
-   any case, because in some cases they will be re-executed on the same
-   final transition value.)
+   In particular, final functions for normal aggregates must not
+   modify their inputs in any case, because in some cases they will be
+   re-executed on the same final state value.)
+  </para>
+
+  <para>
+   Another support routine available to aggregate functions written in C
+   is <function>AggGetAggref</>, which returns the <literal>Aggref</>
+   parse node that defines the aggregate call.  This is mainly useful
+   for ordered-set aggregates, which can inspect the substructure of
+   the <literal>Aggref</> node to find out what sort ordering they are
+   supposed to implement.  Examples can be found
+   in <filename>orderedsetaggs.c</> in the <productname>PostgreSQL</>
+   source code.
   </para>
 
   <para>

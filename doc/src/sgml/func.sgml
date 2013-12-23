@@ -11560,10 +11560,13 @@ NULL baz</literallayout>(3 rows)</entry>
 
   <para>
    <firstterm>Aggregate functions</firstterm> compute a single result
-   from a set of input values.  The built-in aggregate functions
+   from a set of input values.  The built-in normal aggregate functions
    are listed in
    <xref linkend="functions-aggregate-table"> and
    <xref linkend="functions-aggregate-statistics-table">.
+   The built-in ordered-set aggregate functions
+   are listed in <xref linkend="functions-orderedset-table"> and
+   <xref linkend="functions-hypothetical-table">.
    The special syntax considerations for aggregate
    functions are explained in <xref linkend="syntax-aggregates">.
    Consult <xref linkend="tutorial-agg"> for additional introductory
@@ -12307,6 +12310,290 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
    </tgroup>
   </table>
 
+  <para>
+   <xref linkend="functions-orderedset-table"> shows some
+   aggregate functions that use the <firstterm>ordered-set aggregate</>
+   syntax.  These functions are sometimes referred to as <quote>inverse
+   distribution</> functions.
+  </para>
+
+  <indexterm>
+   <primary>ordered-set aggregate</primary>
+   <secondary>built-in</secondary>
+  </indexterm>
+  <indexterm>
+   <primary>inverse distribution</primary>
+  </indexterm>
+
+  <table id="functions-orderedset-table">
+   <title>Ordered-Set Aggregate Functions</title>
+
+   <tgroup cols="5">
+    <thead>
+     <row>
+      <entry>Function</entry>
+      <entry>Direct Argument Type(s)</entry>
+      <entry>Aggregated Argument Type(s)</entry>
+      <entry>Return Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>mode</primary>
+        <secondary>statistical</secondary>
+       </indexterm>
+       <function>mode() WITHIN GROUP (ORDER BY <replaceable class="parameter">sort_expression</replaceable>)</function>
+      </entry>
+      <entry>
+      </entry>
+      <entry>
+       any sortable type
+      </entry>
+      <entry>
+       same as sort expression
+      </entry>
+      <entry>
+       returns the most frequent input value (arbitrarily choosing the first
+       one if there are multiple equally-frequent results)
+      </entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>percentile</primary>
+        <secondary>continuous</secondary>
+       </indexterm>
+       <indexterm>
+        <primary>median</primary>
+       </indexterm>
+       <function>percentile_cont(<replaceable class="parameter">fraction</replaceable>) WITHIN GROUP (ORDER BY <replaceable class="parameter">sort_expression</replaceable>)</function>
+      </entry>
+      <entry>
+       <type>double precision</type>
+      </entry>
+      <entry>
+       <type>double precision</type> or <type>interval</type>
+      </entry>
+      <entry>
+       same as sort expression
+      </entry>
+      <entry>
+       continuous percentile: returns a value corresponding to the specified
+       fraction in the ordering, interpolating between adjacent input items if
+       needed
+      </entry>
+     </row>
+
+     <row>
+      <entry>
+       <function>percentile_cont(<replaceable class="parameter">fractions</replaceable>) WITHIN GROUP (ORDER BY <replaceable class="parameter">sort_expression</replaceable>)</function>
+      </entry>
+      <entry>
+       <type>double precision[]</type>
+      </entry>
+      <entry>
+       <type>double precision</type> or <type>interval</type>
+      </entry>
+      <entry>
+       array of sort expression's type
+      </entry>
+      <entry>
+       multiple continuous percentile: returns an array of results matching
+       the shape of the <literal>fractions</literal> parameter, with each
+       non-null element replaced by the value corresponding to that percentile
+      </entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>percentile</primary>
+        <secondary>discrete</secondary>
+       </indexterm>
+       <function>percentile_disc(<replaceable class="parameter">fraction</replaceable>) WITHIN GROUP (ORDER BY <replaceable class="parameter">sort_expression</replaceable>)</function>
+      </entry>
+      <entry>
+       <type>double precision</type>
+      </entry>
+      <entry>
+       any sortable type
+      </entry>
+      <entry>
+       same as sort expression
+      </entry>
+      <entry>
+       discrete percentile: returns the first input value whose position in
+       the ordering equals or exceeds the specified fraction
+      </entry>
+     </row>
+
+     <row>
+      <entry>
+       <function>percentile_disc(<replaceable class="parameter">fractions</replaceable>) WITHIN GROUP (ORDER BY <replaceable class="parameter">sort_expression</replaceable>)</function>
+      </entry>
+      <entry>
+       <type>double precision[]</type>
+      </entry>
+      <entry>
+       any sortable type
+      </entry>
+      <entry>
+       array of sort expression's type
+      </entry>
+      <entry>
+       multiple discrete percentile: returns an array of results matching the
+       shape of the <literal>fractions</literal> parameter, with each non-null
+       element replaced by the input value corresponding to that percentile
+      </entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   All the aggregates listed in <xref linkend="functions-orderedset-table">
+   ignore null values in their sorted input.  For those that take
+   a <replaceable>fraction</replaceable> parameter, the fraction value must be
+   between 0 and 1; an error is thrown if not.  However, a null fraction value
+   simply produces a null result.
+  </para>
+
+  <para>
+   Each of the aggregates listed in
+   <xref linkend="functions-hypothetical-table"> is associated with a
+   window function of the same name defined in
+   <xref linkend="functions-window">.  In each case, the aggregate result
+   is the value that the associated window function would have
+   returned for the <quote>hypothetical</> row constructed from
+   <replaceable>args</replaceable>, if such a row had been added to the sorted
+   group of rows computed from the <replaceable>sorted_args</replaceable>.
+  </para>
+
+  <table id="functions-hypothetical-table">
+   <title>Hypothetical-Set Aggregate Functions</title>
+
+   <tgroup cols="5">
+    <thead>
+     <row>
+      <entry>Function</entry>
+      <entry>Direct Argument Type(s)</entry>
+      <entry>Aggregated Argument Type(s)</entry>
+      <entry>Return Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>rank</primary>
+        <secondary>hypothetical</secondary>
+       </indexterm>
+       <function>rank(<replaceable class="parameter">args</replaceable>) WITHIN GROUP (ORDER BY <replaceable class="parameter">sorted_args</replaceable>)</function>
+      </entry>
+      <entry>
+       <literal>VARIADIC</> <type>"any"</type>
+      </entry>
+      <entry>
+       <literal>VARIADIC</> <type>"any"</type>
+      </entry>
+      <entry>
+       <type>bigint</type>
+      </entry>
+      <entry>
+       rank of the hypothetical row, with gaps for duplicate rows
+      </entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>dense_rank</primary>
+        <secondary>hypothetical</secondary>
+       </indexterm>
+       <function>dense_rank(<replaceable class="parameter">args</replaceable>) WITHIN GROUP (ORDER BY <replaceable class="parameter">sorted_args</replaceable>)</function>
+      </entry>
+      <entry>
+       <literal>VARIADIC</> <type>"any"</type>
+      </entry>
+      <entry>
+       <literal>VARIADIC</> <type>"any"</type>
+      </entry>
+      <entry>
+       <type>bigint</type>
+      </entry>
+      <entry>
+       rank of the hypothetical row, without gaps
+      </entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>percent_rank</primary>
+        <secondary>hypothetical</secondary>
+       </indexterm>
+       <function>percent_rank(<replaceable class="parameter">args</replaceable>) WITHIN GROUP (ORDER BY <replaceable class="parameter">sorted_args</replaceable>)</function>
+      </entry>
+      <entry>
+       <literal>VARIADIC</> <type>"any"</type>
+      </entry>
+      <entry>
+       <literal>VARIADIC</> <type>"any"</type>
+      </entry>
+      <entry>
+       <type>double precision</type>
+      </entry>
+      <entry>
+       relative rank of the hypothetical row, ranging from 0 to 1
+      </entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>cume_dist</primary>
+        <secondary>hypothetical</secondary>
+       </indexterm>
+       <function>cume_dist(<replaceable class="parameter">args</replaceable>) WITHIN GROUP (ORDER BY <replaceable class="parameter">sorted_args</replaceable>)</function>
+      </entry>
+      <entry>
+       <literal>VARIADIC</> <type>"any"</type>
+      </entry>
+      <entry>
+       <literal>VARIADIC</> <type>"any"</type>
+      </entry>
+      <entry>
+       <type>double precision</type>
+      </entry>
+      <entry>
+       relative rank of the hypothetical row, ranging from
+       1/<replaceable>N</> to 1
+      </entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   For each of these hypothetical-set aggregates, the list of direct arguments
+   given in <replaceable>args</replaceable> must match the number and types of
+   the aggregated arguments given in <replaceable>sorted_args</replaceable>.
+   Unlike most built-in aggregates, these aggregates are not strict, that is
+   they do not drop input rows containing nulls.  Null values sort according
+   to the rule specified in the <literal>ORDER BY</> clause.
+  </para>
+
  </sect1>
 
  <sect1 id="functions-window">
@@ -12332,9 +12619,10 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
   </para>
 
   <para>
-   In addition to these functions, any built-in or user-defined aggregate
-   function can be used as a window function (see
-   <xref linkend="functions-aggregate"> for a list of the built-in aggregates).
+   In addition to these functions, any built-in or user-defined normal
+   aggregate function (but not ordered-set or hypothetical-set aggregates)
+   can be used as a window function; see
+   <xref linkend="functions-aggregate"> for a list of the built-in aggregates.
    Aggregate functions act as window functions only when an <literal>OVER</>
    clause follows the call; otherwise they act as regular aggregates.
   </para>

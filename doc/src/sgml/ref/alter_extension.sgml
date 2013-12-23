@@ -30,7 +30,7 @@ ALTER EXTENSION <replaceable class="PARAMETER">name</replaceable> DROP <replacea
 
 <phrase>where <replaceable class="PARAMETER">member_object</replaceable> is:</phrase>
 
-  AGGREGATE <replaceable class="PARAMETER">agg_name</replaceable> ( [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">agg_type</replaceable> [, ...] ) |
+  AGGREGATE <replaceable class="PARAMETER">aggregate_name</replaceable> ( <replaceable>aggregate_signature</replaceable> ) |
   CAST (<replaceable>source_type</replaceable> AS <replaceable>target_type</replaceable>) |
   COLLATION <replaceable class="PARAMETER">object_name</replaceable> |
   CONVERSION <replaceable class="PARAMETER">object_name</replaceable> |
@@ -54,6 +54,12 @@ ALTER EXTENSION <replaceable class="PARAMETER">name</replaceable> DROP <replacea
   TEXT SEARCH TEMPLATE <replaceable class="PARAMETER">object_name</replaceable> |
   TYPE <replaceable class="PARAMETER">object_name</replaceable> |
   VIEW <replaceable class="PARAMETER">object_name</replaceable>
+
+<phrase>and <replaceable>aggregate_signature</replaceable> is:</phrase>
+
+* |
+[ <replaceable>argmode</replaceable> ] [ <replaceable>argname</replaceable> ] <replaceable>argtype</replaceable> [ , ... ] |
+[ [ <replaceable>argmode</replaceable> ] [ <replaceable>argname</replaceable> ] <replaceable>argtype</replaceable> [ , ... ] ] ORDER BY [ <replaceable>argmode</replaceable> ] [ <replaceable>argname</replaceable> ] <replaceable>argtype</replaceable> [ , ... ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -159,7 +165,7 @@ ALTER EXTENSION <replaceable class="PARAMETER">name</replaceable> DROP <replacea
 
     <varlistentry>
      <term><replaceable class="parameter">object_name</replaceable></term>
-     <term><replaceable class="parameter">agg_name</replaceable></term>
+     <term><replaceable class="parameter">aggregate_name</replaceable></term>
      <term><replaceable class="parameter">function_name</replaceable></term>
      <term><replaceable class="parameter">operator_name</replaceable></term>
      <listitem>
@@ -169,17 +175,6 @@ ALTER EXTENSION <replaceable class="PARAMETER">name</replaceable> DROP <replacea
        aggregates, domains, foreign tables, functions, operators,
        operator classes, operator families, sequences, text search objects,
        types, and views can be schema-qualified.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><replaceable class="parameter">agg_type</replaceable></term>
-     <listitem>
-      <para>
-       An input data type on which the aggregate function operates.
-       To reference a zero-argument aggregate function, write <literal>*</>
-       in place of the list of argument specifications.
       </para>
      </listitem>
     </varlistentry>
@@ -207,7 +202,8 @@ ALTER EXTENSION <replaceable class="PARAMETER">name</replaceable> DROP <replacea
 
      <listitem>
       <para>
-       The mode of a function argument: <literal>IN</>, <literal>OUT</>,
+       The mode of a function or aggregate
+       argument: <literal>IN</>, <literal>OUT</>,
        <literal>INOUT</>, or <literal>VARIADIC</>.
        If omitted, the default is <literal>IN</>.
        Note that <command>ALTER EXTENSION</command> does not actually pay
@@ -224,7 +220,7 @@ ALTER EXTENSION <replaceable class="PARAMETER">name</replaceable> DROP <replacea
 
      <listitem>
       <para>
-       The name of a function argument.
+       The name of a function or aggregate argument.
        Note that <command>ALTER EXTENSION</command> does not actually pay
        any attention to argument names, since only the argument data
        types are needed to determine the function's identity.
@@ -237,8 +233,7 @@ ALTER EXTENSION <replaceable class="PARAMETER">name</replaceable> DROP <replacea
 
      <listitem>
       <para>
-       The data type(s) of the function's arguments (optionally
-       schema-qualified), if any.
+       The data type of a function or aggregate argument.
       </para>
      </listitem>
     </varlistentry>

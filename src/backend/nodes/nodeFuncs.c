@@ -1453,6 +1453,10 @@ exprLocation(const Node *expr)
 		case T_Constraint:
 			loc = ((const Constraint *) expr)->location;
 			break;
+		case T_FunctionParameter:
+			/* just use typename's location */
+			loc = exprLocation((Node *) ((const FunctionParameter *) expr)->argType);
+			break;
 		case T_XmlSerialize:
 			/* XMLSERIALIZE keyword should always be the first thing */
 			loc = ((const XmlSerialize *) expr)->location;
@@ -1625,6 +1629,9 @@ expression_tree_walker(Node *node,
 				Aggref	   *expr = (Aggref *) node;
 
 				/* recurse directly on List */
+				if (expression_tree_walker((Node *) expr->aggdirectargs,
+										   walker, context))
+					return true;
 				if (expression_tree_walker((Node *) expr->args,
 										   walker, context))
 					return true;
@@ -2157,6 +2164,7 @@ expression_tree_mutator(Node *node,
 				Aggref	   *newnode;
 
 				FLATCOPY(newnode, aggref, Aggref);
+				MUTATE(newnode->aggdirectargs, aggref->aggdirectargs, List *);
 				MUTATE(newnode->args, aggref->args, List *);
 				MUTATE(newnode->aggorder, aggref->aggorder, List *);
 				MUTATE(newnode->aggdistinct, aggref->aggdistinct, List *);

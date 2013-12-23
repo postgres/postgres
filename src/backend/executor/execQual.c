@@ -4408,6 +4408,8 @@ ExecInitExpr(Expr *node, PlanState *parent)
 					aggstate->aggs = lcons(astate, aggstate->aggs);
 					naggs = ++aggstate->numaggs;
 
+					astate->aggdirectargs = (List *) ExecInitExpr((Expr *) aggref->aggdirectargs,
+																  parent);
 					astate->args = (List *) ExecInitExpr((Expr *) aggref->args,
 														 parent);
 					astate->aggfilter = ExecInitExpr(aggref->aggfilter,

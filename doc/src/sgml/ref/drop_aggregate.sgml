@@ -21,9 +21,13 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP AGGREGATE [ IF EXISTS ]
-  <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">arg_name</replaceable> ] <replaceable class="parameter">arg_data_type</replaceable> [ , ... ] )
-  [ CASCADE | RESTRICT ]
+DROP AGGREGATE [ IF EXISTS ] <replaceable>name</replaceable> ( <replaceable>aggregate_signature</replaceable> ) [ CASCADE | RESTRICT ]
+
+<phrase>where <replaceable>aggregate_signature</replaceable> is:</phrase>
+
+* |
+[ <replaceable>argmode</replaceable> ] [ <replaceable>argname</replaceable> ] <replaceable>argtype</replaceable> [ , ... ] |
+[ [ <replaceable>argmode</replaceable> ] [ <replaceable>argname</replaceable> ] <replaceable>argtype</replaceable> [ , ... ] ] ORDER BY [ <replaceable>argmode</replaceable> ] [ <replaceable>argname</replaceable> ] <replaceable>argtype</replaceable> [ , ... ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -73,7 +77,7 @@ DROP AGGREGATE [ IF EXISTS ]
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">arg_name</replaceable></term>
+    <term><replaceable class="parameter">argname</replaceable></term>
 
     <listitem>
      <para>
@@ -86,12 +90,15 @@ DROP AGGREGATE [ IF EXISTS ]
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">arg_data_type</replaceable></term>
+    <term><replaceable class="parameter">argtype</replaceable></term>
     <listitem>
      <para>
       An input data type on which the aggregate function operates.
       To reference a zero-argument aggregate function, write <literal>*</>
       in place of the list of argument specifications.
+      To reference an ordered-set aggregate function, write
+      <literal>ORDER BY</> between the direct and aggregated argument
+      specifications.
      </para>
     </listitem>
    </varlistentry>
@@ -118,6 +125,15 @@ DROP AGGREGATE [ IF EXISTS ]
  </refsect1>
 
  <refsect1>
+  <title>Notes</title>
+
+   <para>
+    Alternative syntaxes for referencing ordered-set aggregates
+    are described under <xref linkend="sql-alteraggregate">.
+   </para>
+ </refsect1>
+
+ <refsect1>
   <title>Examples</title>
 
   <para>
@@ -125,7 +141,17 @@ DROP AGGREGATE [ IF EXISTS ]
    <type>integer</type>:
 <programlisting>
 DROP AGGREGATE myavg(integer);
-</programlisting></para>
+</programlisting>
+  </para>
+
+  <para>
+   To remove the hypothetical-set aggregate function <literal>myrank</>,
+   which takes an arbitrary list of ordering columns and a matching list
+   of direct arguments:
+<programlisting>
+DROP AGGREGATE myrank(VARIADIC "any" ORDER BY VARIADIC "any");
+</programlisting>
+  </para>
  </refsect1>
 
  <refsect1>

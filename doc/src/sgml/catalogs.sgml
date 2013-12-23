@@ -349,6 +349,27 @@
       <entry><structname>pg_proc</structname> OID of the aggregate function</entry>
      </row>
      <row>
+      <entry><structfield>aggkind</structfield></entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>Aggregate kind:
+       <literal>n</literal> for <quote>normal</> aggregates,
+       <literal>o</literal> for <quote>ordered-set</> aggregates, or
+       <literal>h</literal> for <quote>hypothetical-set</> aggregates
+      </entry>
+     </row>
+     <row>
+      <entry><structfield>aggnumdirectargs</structfield></entry>
+      <entry><type>int2</type></entry>
+      <entry></entry>
+      <entry>Number of direct (non-aggregated) arguments of an ordered-set or
+       hypothetical-set aggregate, counting a variadic array as one argument.
+       If equal to <structfield>pronargs</>, the aggregate must be variadic
+       and the variadic array describes the aggregated arguments as well as
+       the final direct arguments.
+       Always zero for normal aggregates.</entry>
+     </row>
+     <row>
       <entry><structfield>aggtransfn</structfield></entry>
       <entry><type>regproc</type></entry>
       <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>

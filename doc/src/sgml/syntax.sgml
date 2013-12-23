@@ -1555,7 +1555,15 @@ sqrt(2)
    </indexterm>
 
    <indexterm zone="syntax-aggregates">
-    <primary>filter</primary>
+    <primary>ordered-set aggregate</primary>
+   </indexterm>
+
+   <indexterm zone="syntax-aggregates">
+    <primary>WITHIN GROUP</primary>
+   </indexterm>
+
+   <indexterm zone="syntax-aggregates">
+    <primary>FILTER</primary>
    </indexterm>
 
    <para>
@@ -1570,6 +1578,7 @@ sqrt(2)
 <replaceable>aggregate_name</replaceable> (ALL <replaceable>expression</replaceable> [ , ... ] [ <replaceable>order_by_clause</replaceable> ] ) [ FILTER ( WHERE <replaceable>filter_clause</replaceable> ) ]
 <replaceable>aggregate_name</replaceable> (DISTINCT <replaceable>expression</replaceable> [ , ... ] [ <replaceable>order_by_clause</replaceable> ] ) [ FILTER ( WHERE <replaceable>filter_clause</replaceable> ) ]
 <replaceable>aggregate_name</replaceable> ( * ) [ FILTER ( WHERE <replaceable>filter_clause</replaceable> ) ]
+<replaceable>aggregate_name</replaceable> ( [ <replaceable>expression</replaceable> [ , ... ] ] ) WITHIN GROUP ( <replaceable>order_by_clause</replaceable> ) [ FILTER ( WHERE <replaceable>filter_clause</replaceable> ) ]
 </synopsis>
 
     where <replaceable>aggregate_name</replaceable> is a previously
@@ -1589,9 +1598,11 @@ sqrt(2)
     The third form invokes the aggregate once for each distinct value
     of the expression (or distinct set of values, for multiple expressions)
     found in the input rows.
-    The last form invokes the aggregate once for each input row; since no
+    The fourth form invokes the aggregate once for each input row; since no
     particular input value is specified, it is generally only useful
     for the <function>count(*)</function> aggregate function.
+    The last form is used with <firstterm>ordered-set</> aggregate
+    functions, which are described below.
    </para>
 
    <para>
@@ -1608,23 +1619,6 @@ sqrt(2)
     <function>count</> ignores nulls; and
     <literal>count(distinct f1)</literal> yields the number of
     distinct non-null values of <literal>f1</literal>.
-   </para>
-
-   <para>
-    If <literal>FILTER</literal> is specified, then only the input
-    rows for which the <replaceable>filter_clause</replaceable>
-    evaluates to true are fed to the aggregate function; other rows
-    are discarded.  For example:
-<programlisting>
-SELECT
-    count(*) AS unfiltered,
-    count(*) FILTER (WHERE i < 5) AS filtered
-FROM generate_series(1,10) AS s(i);
- unfiltered | filtered
-------------+----------
-         10 |        4
-(1 row)
-</programlisting>
    </para>
 
    <para>
@@ -1677,6 +1671,71 @@ SELECT string_agg(a ORDER BY a, ',') FROM table;  -- incorrect
    </note>
 
    <para>
+    Placing <literal>ORDER BY</> within the aggregate's regular argument
+    list, as described so far, is used when ordering the input rows for
+    a <quote>normal</> aggregate for which ordering is optional.  There is a
+    subclass of aggregate functions called <firstterm>ordered-set
+    aggregates</> for which an <replaceable>order_by_clause</replaceable>
+    is <emphasis>required</>, usually because the aggregate's computation is
+    only sensible in terms of a specific ordering of its input rows.
+    Typical examples of ordered-set aggregates include rank and percentile
+    calculations.  For an ordered-set aggregate,
+    the <replaceable>order_by_clause</replaceable> is written
+    inside <literal>WITHIN GROUP (...)</>, as shown in the final syntax
+    alternative above.  The expressions in
+    the <replaceable>order_by_clause</replaceable> are evaluated once per
+    input row just like normal aggregate arguments, sorted as per
+    the <replaceable>order_by_clause</replaceable>'s requirements, and fed
+    to the aggregate function as input arguments.  (This is unlike the case
+    for a non-<literal>WITHIN GROUP</> <replaceable>order_by_clause</>,
+    which is not treated as argument(s) to the aggregate function.)  The
+    argument expressions preceding <literal>WITHIN GROUP</>, if any, are
+    called <firstterm>direct arguments</> to distinguish them from
+    the <firstterm>aggregated arguments</> listed in
+    the <replaceable>order_by_clause</replaceable>.  Unlike normal aggregate
+    arguments, direct arguments are evaluated only once per aggregate call,
+    not once per input row.  This means that they can contain variables only
+    if those variables are grouped by <literal>GROUP BY</>; this restriction
+    is the same as if the direct arguments were not inside an aggregate
+    expression at all.  Direct arguments are typically used for things like
+    percentile fractions, which only make sense as a single value per
+    aggregation calculation.  The direct argument list can be empty; in this
+    case, write just <literal>()</> not <literal>(*)</>.
+    (<productname>PostgreSQL</> will actually accept either spelling, but
+    only the first way conforms to the SQL standard.)
+    An example of an ordered-set aggregate call is:
+
+<programlisting>
+SELECT percentile_disc(0.5) WITHIN GROUP (ORDER BY income) FROM households;
+ percentile_disc
+-----------------
+           50489
+</programlisting>
+
+   which obtains the 50th percentile, or median, value of
+   the <structfield>income</> column from table <structname>households</>.
+   Here, <literal>0.5</> is a direct argument; it would make no sense
+   for the percentile fraction to be a value varying across rows.
+   </para>
+
+   <para>
+    If <literal>FILTER</literal> is specified, then only the input
+    rows for which the <replaceable>filter_clause</replaceable>
+    evaluates to true are fed to the aggregate function; other rows
+    are discarded.  For example:
+<programlisting>
+SELECT
+    count(*) AS unfiltered,
+    count(*) FILTER (WHERE i < 5) AS filtered
+FROM generate_series(1,10) AS s(i);
+ unfiltered | filtered
+------------+----------
+         10 |        4
+(1 row)
+</programlisting>
+   </para>
+
+   <para>
     The predefined aggregate functions are described in <xref
     linkend="functions-aggregate">.  Other aggregate functions can be added
     by the user.
@@ -1695,7 +1754,8 @@ SELECT string_agg(a ORDER BY a, ',') FROM table;  -- incorrect
     <xref linkend="sql-syntax-scalar-subqueries"> and
     <xref linkend="functions-subquery">), the aggregate is normally
     evaluated over the rows of the subquery.  But an exception occurs
-    if the aggregate's arguments contain only outer-level variables:
+    if the aggregate's arguments (and <replaceable>filter_clause</replaceable>
+    if any) contain only outer-level variables:
     the aggregate then belongs to the nearest such outer level, and is
     evaluated over the rows of that query.  The aggregate expression
     as a whole is then an outer reference for the subquery it appears in,
@@ -1856,15 +1916,16 @@ UNBOUNDED FOLLOWING
     If <literal>FILTER</literal> is specified, then only the input
     rows for which the <replaceable>filter_clause</replaceable>
     evaluates to true are fed to the window function; other rows
-    are discarded.  Only aggregate window functions accept
+    are discarded.  Only window functions that are aggregates accept
     a <literal>FILTER</literal> clause.
    </para>
 
    <para>
     The built-in window functions are described in <xref
     linkend="functions-window-table">.  Other window functions can be added by
-    the user.  Also, any built-in or user-defined aggregate function can be
-    used as a window function.
+    the user.  Also, any built-in or user-defined normal aggregate function
+    can be used as a window function.  Ordered-set aggregates presently
+    cannot be used as window functions, however.
    </para>
 
    <para>
@@ -1885,7 +1946,7 @@ UNBOUNDED FOLLOWING
    <para>
     More information about window functions can be found in
     <xref linkend="tutorial-window">,
-    <xref linkend="functions-window">,
+    <xref linkend="functions-window">, and
     <xref linkend="queries-window">.
    </para>
   </sect2>

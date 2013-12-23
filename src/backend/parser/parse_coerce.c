@@ -2009,6 +2009,10 @@ IsBinaryCoercible(Oid srctype, Oid targettype)
 	if (srctype == targettype)
 		return true;
 
+	/* Anything is coercible to ANY or ANYELEMENT */
+	if (targettype == ANYOID || targettype == ANYELEMENTOID)
+		return true;
+
 	/* If srctype is a domain, reduce to its base type */
 	if (OidIsValid(srctype))
 		srctype = getBaseType(srctype);

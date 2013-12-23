@@ -80,3 +80,24 @@ returns anyelement language sql as
 create aggregate least_agg(variadic items anyarray) (
   stype = anyelement, sfunc = least_accum
 );
+
+-- test ordered-set aggs using built-in support functions
+create aggregate my_percentile_disc(float8 ORDER BY anyelement) (
+  stype = internal,
+  sfunc = ordered_set_transition,
+  finalfunc = percentile_disc_final
+);
+
+create aggregate my_rank(VARIADIC "any" ORDER BY VARIADIC "any") (
+  stype = internal,
+  sfunc = ordered_set_transition_multi,
+  finalfunc = rank_final,
+  hypothetical
+);
+
+alter aggregate my_percentile_disc(float8 ORDER BY anyelement)
+  rename to test_percentile_disc;
+alter aggregate my_rank(VARIADIC "any" ORDER BY VARIADIC "any")
+  rename to test_rank;
+
+\da test_*

@@ -40,7 +40,9 @@
  */
 #include "postgres.h"
 
+#include "catalog/pg_aggregate.h"
 #include "catalog/pg_collation.h"
+#include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parse_collate.h"
 #include "utils/lsyscache.h"
@@ -73,6 +75,18 @@ typedef struct
 static bool assign_query_collations_walker(Node *node, ParseState *pstate);
 static bool assign_collations_walker(Node *node,
 						 assign_collations_context *context);
+static void merge_collation_state(Oid collation,
+					  CollateStrength strength,
+					  int location,
+					  Oid collation2,
+					  int location2,
+					  assign_collations_context *context);
+static void assign_aggregate_collations(Aggref *aggref,
+							assign_collations_context *loccontext);
+static void assign_ordered_set_collations(Aggref *aggref,
+							  assign_collations_context *loccontext);
+static void assign_hypothetical_collations(Aggref *aggref,
+							   assign_collations_context *loccontext);
 
 
 /*
@@ -258,6 +272,9 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 	loccontext.collation = InvalidOid;
 	loccontext.strength = COLLATE_NONE;
 	loccontext.location = -1;
+	/* Set these fields just to suppress uninitialized-value warnings: */
+	loccontext.collation2 = InvalidOid;
+	loccontext.location2 = -1;
 
 	/*
 	 * Recurse if appropriate, then determine the collation for this node.
@@ -570,40 +587,31 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 					case T_Aggref:
 						{
 							/*
-							 * Aggref is a special case because expressions
-							 * used only for ordering shouldn't be taken to
-							 * conflict with each other or with regular args.
-							 * So we apply assign_expr_collations() to them
-							 * rather than passing down our loccontext.
-							 *
-							 * Note that we recurse to each TargetEntry, not
-							 * directly to its contained expression, so that
-							 * the case above for T_TargetEntry will apply
-							 * appropriate checks to agg ORDER BY items.
-							 *
-							 * Likewise, we assign collations for the (bool)
-							 * expression in aggfilter, independently of any
-							 * other args.
-							 *
-							 * We need not recurse into the aggorder or
-							 * aggdistinct lists, because those contain only
-							 * SortGroupClause nodes which we need not
-							 * process.
+							 * Aggref is messy enough that we give it its own
+							 * function, in fact three of them.  The FILTER
+							 * clause is independent of the rest of the
+							 * aggregate, however, so it can be processed
+							 * separately.
 							 */
 							Aggref	   *aggref = (Aggref *) node;
-							ListCell   *lc;
 
-							foreach(lc, aggref->args)
+							switch (aggref->aggkind)
 							{
-								TargetEntry *tle = (TargetEntry *) lfirst(lc);
-
-								Assert(IsA(tle, TargetEntry));
-								if (tle->resjunk)
-									assign_expr_collations(context->pstate,
-														   (Node *) tle);
-								else
-									(void) assign_collations_walker((Node *) tle,
+								case AGGKIND_NORMAL:
+									assign_aggregate_collations(aggref,
 																&loccontext);
+									break;
+								case AGGKIND_ORDERED_SET:
+									assign_ordered_set_collations(aggref,
+																&loccontext);
+									break;
+								case AGGKIND_HYPOTHETICAL:
+									assign_hypothetical_collations(aggref,
+																&loccontext);
+									break;
+								default:
+									elog(ERROR, "unrecognized aggkind: %d",
+										 (int) aggref->aggkind);
 							}
 
 							assign_expr_collations(context->pstate,
@@ -730,9 +738,33 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 	}
 
 	/*
-	 * Now, merge my information into my parent's state.  If the collation
-	 * strength for this node is different from what's already in *context,
-	 * then this node either dominates or is dominated by earlier siblings.
+	 * Now, merge my information into my parent's state.
+	 */
+	merge_collation_state(collation,
+						  strength,
+						  location,
+						  loccontext.collation2,
+						  loccontext.location2,
+						  context);
+
+	return false;
+}
+
+/*
+ * Merge collation state of a subexpression into the context for its parent.
+ */
+static void
+merge_collation_state(Oid collation,
+					  CollateStrength strength,
+					  int location,
+					  Oid collation2,
+					  int location2,
+					  assign_collations_context *context)
+{
+	/*
+	 * If the collation strength for this node is different from what's
+	 * already in *context, then this node either dominates or is dominated by
+	 * earlier siblings.
 	 */
 	if (strength > context->strength)
 	{
@@ -743,8 +775,8 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 		/* Bubble up error info if applicable */
 		if (strength == COLLATE_CONFLICT)
 		{
-			context->collation2 = loccontext.collation2;
-			context->location2 = loccontext.location2;
+			context->collation2 = collation2;
+			context->location2 = location2;
 		}
 	}
 	else if (strength == context->strength)
@@ -805,6 +837,201 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 				break;
 		}
 	}
+}
 
-	return false;
+/*
+ * Aggref is a special case because expressions used only for ordering
+ * shouldn't be taken to conflict with each other or with regular args,
+ * indeed shouldn't affect the aggregate's result collation at all.
+ * We handle this by applying assign_expr_collations() to them rather than
+ * passing down our loccontext.
+ *
+ * Note that we recurse to each TargetEntry, not directly to its contained
+ * expression, so that the case above for T_TargetEntry will complain if we
+ * can't resolve a collation for an ORDER BY item (whether or not it is also
+ * a normal aggregate arg).
+ *
+ * We need not recurse into the aggorder or aggdistinct lists, because those
+ * contain only SortGroupClause nodes which we need not process.
+ */
+static void
+assign_aggregate_collations(Aggref *aggref,
+							assign_collations_context *loccontext)
+{
+	ListCell   *lc;
+
+	/* Plain aggregates have no direct args */
+	Assert(aggref->aggdirectargs == NIL);
+
+	/* Process aggregated args, holding resjunk ones at arm's length */
+	foreach(lc, aggref->args)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(lc);
+
+		Assert(IsA(tle, TargetEntry));
+		if (tle->resjunk)
+			assign_expr_collations(loccontext->pstate, (Node *) tle);
+		else
+			(void) assign_collations_walker((Node *) tle, loccontext);
+	}
+}
+
+/*
+ * For ordered-set aggregates, it's somewhat unclear how best to proceed.
+ * The spec-defined inverse distribution functions have only one sort column
+ * and don't return collatable types, but this is clearly too restrictive in
+ * the general case.  Our solution is to consider that the aggregate's direct
+ * arguments contribute normally to determination of the aggregate's own
+ * collation, while aggregated arguments contribute only when the aggregate
+ * is designed to have exactly one aggregated argument (i.e., it has a single
+ * aggregated argument and is non-variadic).  If it can have more than one
+ * aggregated argument, we process the aggregated arguments as independent
+ * sort columns.  This avoids throwing error for something like
+ *		agg(...) within group (order by x collate "foo", y collate "bar")
+ * while also guaranteeing that variadic aggregates don't change in behavior
+ * depending on how many sort columns a particular call happens to have.
+ *
+ * Otherwise this is much like the plain-aggregate case.
+ */
+static void
+assign_ordered_set_collations(Aggref *aggref,
+							  assign_collations_context *loccontext)
+{
+	bool		merge_sort_collations;
+	ListCell   *lc;
+
+	/* Merge sort collations to parent only if there can be only one */
+	merge_sort_collations = (list_length(aggref->args) == 1 &&
+					  get_func_variadictype(aggref->aggfnoid) == InvalidOid);
+
+	/* Direct args, if any, are normal children of the Aggref node */
+	(void) assign_collations_walker((Node *) aggref->aggdirectargs,
+									loccontext);
+
+	/* Process aggregated args appropriately */
+	foreach(lc, aggref->args)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(lc);
+
+		Assert(IsA(tle, TargetEntry));
+		if (merge_sort_collations)
+			(void) assign_collations_walker((Node *) tle, loccontext);
+		else
+			assign_expr_collations(loccontext->pstate, (Node *) tle);
+	}
+}
+
+/*
+ * Hypothetical-set aggregates are even more special: per spec, we need to
+ * unify the collations of each pair of hypothetical and aggregated args.
+ * And we need to force the choice of collation down into the sort column
+ * to ensure that the sort happens with the chosen collation.  Other than
+ * that, the behavior is like regular ordered-set aggregates.  Note that
+ * hypothetical direct arguments contribute to the aggregate collation
+ * only when their partner aggregated arguments do.
+ */
+static void
+assign_hypothetical_collations(Aggref *aggref,
+							   assign_collations_context *loccontext)
+{
+	ListCell   *h_cell = list_head(aggref->aggdirectargs);
+	ListCell   *s_cell = list_head(aggref->args);
+	bool		merge_sort_collations;
+	int			extra_args;
+
+	/* Merge sort collations to parent only if there can be only one */
+	merge_sort_collations = (list_length(aggref->args) == 1 &&
+					  get_func_variadictype(aggref->aggfnoid) == InvalidOid);
+
+	/* Process any non-hypothetical direct args */
+	extra_args = list_length(aggref->aggdirectargs) - list_length(aggref->args);
+	Assert(extra_args >= 0);
+	while (extra_args-- > 0)
+	{
+		(void) assign_collations_walker((Node *) lfirst(h_cell), loccontext);
+		h_cell = lnext(h_cell);
+	}
+
+	/* Scan hypothetical args and aggregated args in parallel */
+	while (h_cell && s_cell)
+	{
+		Node	   *h_arg = (Node *) lfirst(h_cell);
+		TargetEntry *s_tle = (TargetEntry *) lfirst(s_cell);
+		assign_collations_context paircontext;
+
+		/*
+		 * Assign collations internally in this pair of expressions, then
+		 * choose a common collation for them.	This should match
+		 * select_common_collation(), but we can't use that function as-is
+		 * because we need access to the whole collation state so we can
+		 * bubble it up to the aggregate function's level.
+		 */
+		paircontext.pstate = loccontext->pstate;
+		paircontext.collation = InvalidOid;
+		paircontext.strength = COLLATE_NONE;
+		paircontext.location = -1;
+		/* Set these fields just to suppress uninitialized-value warnings: */
+		paircontext.collation2 = InvalidOid;
+		paircontext.location2 = -1;
+
+		(void) assign_collations_walker(h_arg, &paircontext);
+		(void) assign_collations_walker((Node *) s_tle->expr, &paircontext);
+
+		/* deal with collation conflict */
+		if (paircontext.strength == COLLATE_CONFLICT)
+			ereport(ERROR,
+					(errcode(ERRCODE_COLLATION_MISMATCH),
+					 errmsg("collation mismatch between implicit collations \"%s\" and \"%s\"",
+							get_collation_name(paircontext.collation),
+							get_collation_name(paircontext.collation2)),
+					 errhint("You can choose the collation by applying the COLLATE clause to one or both expressions."),
+					 parser_errposition(paircontext.pstate,
+										paircontext.location2)));
+
+		/*
+		 * At this point paircontext.collation can be InvalidOid only if the
+		 * type is not collatable; no need to do anything in that case.  If we
+		 * do have to change the sort column's collation, do it by inserting a
+		 * RelabelType node into the sort column TLE.
+		 *
+		 * XXX This is pretty grotty for a couple of reasons:
+		 * assign_collations_walker isn't supposed to be changing the
+		 * expression structure like this, and a parse-time change of
+		 * collation ought to be signaled by a CollateExpr not a RelabelType
+		 * (the use of RelabelType for collation marking is supposed to be a
+		 * planner/executor thing only).  But we have no better alternative.
+		 * In particular, injecting a CollateExpr could result in the
+		 * expression being interpreted differently after dump/reload, since
+		 * we might be effectively promoting an implicit collation to
+		 * explicit.  This kluge is relying on ruleutils.c not printing a
+		 * COLLATE clause for a RelabelType, and probably on some other
+		 * fragile behaviors.
+		 */
+		if (OidIsValid(paircontext.collation) &&
+			paircontext.collation != exprCollation((Node *) s_tle->expr))
+		{
+			s_tle->expr = (Expr *)
+				makeRelabelType(s_tle->expr,
+								exprType((Node *) s_tle->expr),
+								exprTypmod((Node *) s_tle->expr),
+								paircontext.collation,
+								COERCE_IMPLICIT_CAST);
+		}
+
+		/*
+		 * If appropriate, merge this column's collation state up to the
+		 * aggregate function.
+		 */
+		if (merge_sort_collations)
+			merge_collation_state(paircontext.collation,
+								  paircontext.strength,
+								  paircontext.location,
+								  paircontext.collation2,
+								  paircontext.location2,
+								  loccontext);
+
+		h_cell = lnext(h_cell);
+		s_cell = lnext(s_cell);
+	}
+	Assert(h_cell == NULL && s_cell == NULL);
 }

@@ -21,13 +21,23 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE AGGREGATE <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">arg_name</replaceable> ] <replaceable class="parameter">arg_data_type</replaceable> [ , ... ] ) (
+CREATE AGGREGATE <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">arg_data_type</replaceable> [ , ... ] ) (
     SFUNC = <replaceable class="PARAMETER">sfunc</replaceable>,
     STYPE = <replaceable class="PARAMETER">state_data_type</replaceable>
     [ , SSPACE = <replaceable class="PARAMETER">state_data_size</replaceable> ]
     [ , FINALFUNC = <replaceable class="PARAMETER">ffunc</replaceable> ]
     [ , INITCOND = <replaceable class="PARAMETER">initial_condition</replaceable> ]
     [ , SORTOP = <replaceable class="PARAMETER">sort_operator</replaceable> ]
+)
+
+CREATE AGGREGATE <replaceable class="parameter">name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">arg_data_type</replaceable> [ , ... ] ]
+                        ORDER BY [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">arg_data_type</replaceable> [ , ... ] ) (
+    SFUNC = <replaceable class="PARAMETER">sfunc</replaceable>,
+    STYPE = <replaceable class="PARAMETER">state_data_type</replaceable>
+    [ , SSPACE = <replaceable class="PARAMETER">state_data_size</replaceable> ]
+    [ , FINALFUNC = <replaceable class="PARAMETER">ffunc</replaceable> ]
+    [ , INITCOND = <replaceable class="PARAMETER">initial_condition</replaceable> ]
+    [ , HYPOTHETICAL ]
 )
 
 <phrase>or the old syntax</phrase>
@@ -69,6 +79,8 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
    name and input data type(s) of an aggregate must also be distinct from
    the name and input data type(s) of every ordinary function in the same
    schema.
+   This behavior is identical to overloading of ordinary function names
+   (see <xref linkend="sql-createfunction">).
   </para>
 
   <para>
@@ -128,7 +140,7 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
   <para>
    If the state transition function is not strict, then it will be called
    unconditionally at each input row, and must deal with null inputs
-   and null transition values for itself.  This allows the aggregate
+   and null state values for itself.  This allows the aggregate
    author to have full control over the aggregate's handling of null values.
   </para>
 
@@ -140,6 +152,22 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
    the option of returning a null value.  For example, the final function for
    <function>avg</function> returns null when it sees there were zero
    input rows.
+  </para>
+
+  <para>
+   The syntax with <literal>ORDER BY</literal> in the parameter list creates
+   a special type of aggregate called an <firstterm>ordered-set
+   aggregate</firstterm>; or if <literal>HYPOTHETICAL</> is specified, then
+   a <firstterm>hypothetical-set aggregate</firstterm> is created.  These
+   aggregates operate over groups of sorted values in order-dependent ways,
+   so that specification of an input sort order is an essential part of a
+   call.  Also, they can have <firstterm>direct</> arguments, which are
+   arguments that are evaluated only once per aggregation rather than once
+   per input row.  Hypothetical-set aggregates are a subclass of ordered-set
+   aggregates in which some of the direct arguments are required to match,
+   in number and datatypes, the aggregated argument columns.  This allows
+   the values of those direct arguments to be added to the collection of
+   aggregate-input rows as an additional <quote>hypothetical</> row.
   </para>
 
   <para>
@@ -202,7 +230,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">arg_name</replaceable></term>
+    <term><replaceable class="parameter">argname</replaceable></term>
 
     <listitem>
      <para>
@@ -234,6 +262,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
       only one input parameter.  To define a zero-argument aggregate function
       with this syntax, specify the <literal>basetype</> as
       <literal>"ANY"</> (not <literal>*</>).
+      Ordered-set aggregates cannot be defined with the old syntax.
      </para>
     </listitem>
    </varlistentry>
@@ -243,7 +272,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
     <listitem>
      <para>
       The name of the state transition function to be called for each
-      input row.  For an <replaceable class="PARAMETER">N</>-argument
+      input row.  For a normal <replaceable class="PARAMETER">N</>-argument
       aggregate function, the <replaceable class="PARAMETER">sfunc</>
       must take <replaceable class="PARAMETER">N</>+1 arguments,
       the first being of type <replaceable
@@ -253,6 +282,13 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
       class="PARAMETER">state_data_type</replaceable>.  This function
       takes the current state value and the current input data value(s),
       and returns the next state value.
+     </para>
+
+     <para>
+      For ordered-set (including hypothetical-set) aggregates, the state
+      transition function receives only the current state value and the
+      aggregated arguments, not the direct arguments.  Otherwise it is the
+      same.
      </para>
     </listitem>
    </varlistentry>
@@ -287,7 +323,8 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
     <listitem>
      <para>
       The name of the final function called to compute the aggregate's
-      result after all input rows have been traversed.  The function
+      result after all input rows have been traversed.
+      For a normal aggregate, this function
       must take a single argument of type <replaceable
       class="PARAMETER">state_data_type</replaceable>.  The return
       data type of the aggregate is defined as the return type of this
@@ -295,6 +332,17 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
       is not specified, then the ending state value is used as the
       aggregate's result, and the return type is <replaceable
       class="PARAMETER">state_data_type</replaceable>.
+     </para>
+
+     <para>
+      For ordered-set (including hypothetical-set) aggregates, the
+      final function receives not only the final state value,
+      but also the values of all the direct arguments, followed by
+      null values corresponding to each aggregated argument.
+      (The reason for including the aggregated arguments in the function
+      signature is that this may be necessary to allow correct resolution
+      of the aggregate result type, when a polymorphic aggregate is
+      being defined.)
      </para>
     </listitem>
    </varlistentry>
@@ -319,7 +367,22 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
       <function>MAX</>-like aggregate.
       This is just an operator name (possibly schema-qualified).
       The operator is assumed to have the same input data types as
-      the aggregate (which must be a single-argument aggregate).
+      the aggregate (which must be a single-argument normal aggregate).
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>HYPOTHETICAL</literal></term>
+    <listitem>
+     <para>
+      For ordered-set aggregates only, this flag specifies that the aggregate
+      arguments are to be processed according to the requirements for
+      hypothetical-set aggregates: that is, the last few direct arguments must
+      match the data types of the aggregated (<literal>WITHIN GROUP</>)
+      arguments.  The <literal>HYPOTHETICAL</literal> flag has no effect on
+      run-time behavior, only on parse-time resolution of the data types and
+      collations of the aggregate's arguments.
      </para>
     </listitem>
    </varlistentry>
@@ -329,6 +392,29 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    The parameters of <command>CREATE AGGREGATE</command> can be
    written in any order, not just the order illustrated above.
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+   <para>
+    The syntax for ordered-set aggregates allows <literal>VARIADIC</>
+    to be specified for both the last direct parameter and the last
+    aggregated (<literal>WITHIN GROUP</>) parameter.  However, the
+    current implementation restricts use of <literal>VARIADIC</>
+    in two ways.  First, ordered-set aggregates can only use
+    <literal>VARIADIC "any"</>, not other variadic array types.
+    Second, if the last direct parameter is <literal>VARIADIC "any"</>,
+    then there can be only one aggregated parameter and it must also
+    be <literal>VARIADIC "any"</>.  (In the representation used in the
+    system catalogs, these two parameters are merged into a single
+    <literal>VARIADIC "any"</> item, since <structname>pg_proc</> cannot
+    represent functions with more than one <literal>VARIADIC</> parameter.)
+    If the aggregate is a hypothetical-set aggregate, the direct arguments
+    that match the <literal>VARIADIC "any"</> parameter are the hypothetical
+    ones; any preceding parameters represent additional direct arguments
+    that are not constrained to match the aggregated arguments.
+   </para>
  </refsect1>
 
  <refsect1>

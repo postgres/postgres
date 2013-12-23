@@ -63,6 +63,7 @@ extern void interpret_function_parameter_list(List *parameters,
 								  ArrayType **parameterModes,
 								  ArrayType **parameterNames,
 								  List **parameterDefaults,
+								  Oid *variadicArgType,
 								  Oid *requiredResultType);
 
 /* commands/operatorcmds.c */
