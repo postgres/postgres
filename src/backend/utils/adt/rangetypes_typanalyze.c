@@ -27,6 +27,7 @@
 #include "catalog/pg_operator.h"
 #include "commands/vacuum.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "utils/rangetypes.h"
 
 static int	float8_qsort_cmp(const void *a1, const void *a2);
@@ -44,8 +45,8 @@ range_typanalyze(PG_FUNCTION_ARGS)
 	TypeCacheEntry *typcache;
 	Form_pg_attribute attr = stats->attr;
 
-	/* Get information about range type */
-	typcache = range_get_typcache(fcinfo, stats->attrtypid);
+	/* Get information about range type; note column might be a domain */
+	typcache = range_get_typcache(fcinfo, getBaseType(stats->attrtypid));
 
 	if (attr->attstattarget < 0)
 		attr->attstattarget = default_statistics_target;
