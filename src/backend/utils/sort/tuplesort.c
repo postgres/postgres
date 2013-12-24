@@ -1725,6 +1725,8 @@ tuplesort_getdatum(Tuplesortstate *state, bool forward,
 bool
 tuplesort_skiptuples(Tuplesortstate *state, int64 ntuples, bool forward)
 {
+	MemoryContext oldcontext;
+
 	/*
 	 * We don't actually support backwards skip yet, because no callers need
 	 * it.	The API is designed to allow for that later, though.
@@ -1760,6 +1762,7 @@ tuplesort_skiptuples(Tuplesortstate *state, int64 ntuples, bool forward)
 			 * We could probably optimize these cases better, but for now it's
 			 * not worth the trouble.
 			 */
+			oldcontext = MemoryContextSwitchTo(state->sortcontext);
 			while (ntuples-- > 0)
 			{
 				SortTuple	stup;
@@ -1767,11 +1770,15 @@ tuplesort_skiptuples(Tuplesortstate *state, int64 ntuples, bool forward)
 
 				if (!tuplesort_gettuple_common(state, forward,
 											   &stup, &should_free))
+				{
+					MemoryContextSwitchTo(oldcontext);
 					return false;
-				if (should_free)
+				}
+				if (should_free && stup.tuple)
 					pfree(stup.tuple);
 				CHECK_FOR_INTERRUPTS();
 			}
+			MemoryContextSwitchTo(oldcontext);
 			return true;
 
 		default:
