@@ -5264,8 +5264,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       <listitem>
        <para>
         Specifies the cutoff age (in transactions) that <command>VACUUM</>
-        should use to decide whether to replace transaction IDs with
-        <literal>FrozenXID</> while scanning a table.
+        should use to decide whether to freeze row versions
+        while scanning a table.
         The default is 50 million transactions.  Although
         users can set this value anywhere from zero to one billion,
         <command>VACUUM</> will silently limit the effective value to half

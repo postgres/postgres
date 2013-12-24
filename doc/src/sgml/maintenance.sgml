@@ -397,8 +397,12 @@
 
    <para>
     The reason that periodic vacuuming solves the problem is that
-    <productname>PostgreSQL</productname> reserves a special XID
-    as <literal>FrozenXID</>.  This XID does not follow the normal XID
+    <command>VACUUM</> will mark rows as <emphasis>frozen</>, indicating that
+    they were inserted by a transaction which committed sufficiently far in
+    the past that the effects of the inserting transaction is certain to be
+    visible, from an MVCC perspective, to all current and future transactions.
+    <productname>PostgreSQL</> reserves a special XID,
+    <literal>FrozenTransactionId</>, which does not follow the normal XID
     comparison rules and is always considered older
     than every normal XID. Normal XIDs are
     compared using modulo-2<superscript>32</> arithmetic. This means
@@ -410,20 +414,19 @@
     the next two billion transactions, no matter which normal XID we are
     talking about. If the row version still exists after more than two billion
     transactions, it will suddenly appear to be in the future. To
-    prevent this, old row versions must be reassigned the XID
-    <literal>FrozenXID</> sometime before they reach the
-    two-billion-transactions-old mark. Once they are assigned this
-    special XID, they will appear to be <quote>in the past</> to all
-    normal transactions regardless of wraparound issues, and so such
-    row versions will be valid until deleted, no matter how long that is.
-    This reassignment of old XIDs is handled by <command>VACUUM</>.
+    prevent this, frozen row versions are treated as if the inserting XID were
+    <literal>FrozenTransactionId</>, so that they will appear to be
+    <quote>in the past</> to all normal transactions regardless of wraparound
+    issues, and so such row versions will be valid until deleted, no matter
+    how long that is.
    </para>
 
    <para>
     <xref linkend="guc-vacuum-freeze-min-age">
-    controls how old an XID value has to be before it's replaced with
-    <literal>FrozenXID</>.  Larger values of this setting
-    preserve transactional information longer, while smaller values increase
+    controls how old an XID value has to be before its row version will be
+    frozen.  Increasing this setting may avoid unnecessary work if the
+    rows that would otherwise be frozen will soon be modified again,
+    but decreasing this setting increases
     the number of transactions that can elapse before the table must be
     vacuumed again.
    </para>
@@ -431,8 +434,8 @@
    <para>
     <command>VACUUM</> normally skips pages that don't have any dead row
     versions, but those pages might still have row versions with old XID
-    values.  To ensure all old XIDs have been replaced by
-    <literal>FrozenXID</>, a scan of the whole table is needed.
+    values.  To ensure all old row versions have been frozen, a
+    scan of the whole table is needed.
     <xref linkend="guc-vacuum-freeze-table-age"> controls when
     <command>VACUUM</> does that: a whole table sweep is forced if
     the table hasn't been fully scanned for <varname>vacuum_freeze_table_age</>
@@ -447,8 +450,8 @@
     the time <command>VACUUM</> last scanned the whole table.  If it were to go
     unvacuumed for longer than
     that, data loss could result.  To ensure that this does not happen,
-    autovacuum is invoked on any table that might contain XIDs older than the
-    age specified by the configuration parameter <xref
+    autovacuum is invoked on any table that might contain unfrozen rows with
+    XIDs older than the age specified by the configuration parameter <xref
     linkend="guc-autovacuum-freeze-max-age">.  (This will happen even if
     autovacuum is disabled.)
    </para>
@@ -504,30 +507,25 @@
 
    <para>
     One disadvantage of decreasing <varname>vacuum_freeze_min_age</> is that
-    it might cause <command>VACUUM</> to do useless work: changing a table row's
-    XID to <literal>FrozenXID</> is a waste of time if the row is modified
+    it might cause <command>VACUUM</> to do useless work: freezing a row
+    version is a waste of time if the row is modified
     soon thereafter (causing it to acquire a new XID).  So the setting should
     be large enough that rows are not frozen until they are unlikely to change
-    any more.  Another disadvantage of decreasing this setting is
-    that details about exactly which transaction inserted or modified a
-    row will be lost sooner.  This information sometimes comes in handy,
-    particularly when trying to analyze what went wrong after a database
-    failure.  For these two reasons, decreasing this setting is not
-    recommended except for completely static tables.
+    any more.
    </para>
 
    <para>
-    To track the age of the oldest XIDs in a database,
+    To track the age of the oldest unfrozen XIDs in a database,
     <command>VACUUM</> stores XID
     statistics in the system tables <structname>pg_class</> and
     <structname>pg_database</>.  In particular,
     the <structfield>relfrozenxid</> column of a table's
     <structname>pg_class</> row contains the freeze cutoff XID that was used
-    by the last whole-table <command>VACUUM</> for that table.  All normal
-    XIDs older than this cutoff XID are guaranteed to have been replaced by
-    <literal>FrozenXID</> within the table.  Similarly,
+    by the last whole-table <command>VACUUM</> for that table.  All rows
+    inserted by transactions with XIDs XIDs older than this cutoff XID are
+    guaranteed to have been frozen.  Similarly,
     the <structfield>datfrozenxid</> column of a database's
-    <structname>pg_database</> row is a lower bound on the normal XIDs
+    <structname>pg_database</> row is a lower bound on the unfrozen XIDs
     appearing in that database &mdash; it is just the minimum of the
     per-table <structfield>relfrozenxid</> values within the database.
     A convenient way to
