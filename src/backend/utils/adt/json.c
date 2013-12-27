@@ -73,7 +73,7 @@ typedef enum					/* required operations on state stack */
 static void json_validate_cstring(char *input);
 static void json_lex(JsonLexContext *lex);
 static void json_lex_string(JsonLexContext *lex);
-static void json_lex_number(JsonLexContext *lex, char *s);
+static void json_lex_number(JsonLexContext *lex, char *s, bool *num_err);
 static void report_parse_error(JsonParseStack *stack, JsonLexContext *lex);
 static void report_invalid_token(JsonLexContext *lex);
 static int report_json_context(JsonLexContext *lex);
@@ -89,8 +89,6 @@ static void array_to_json_internal(Datum array, StringInfo result,
 
 /* fake type category for JSON so we can distinguish it in datum_to_json */
 #define TYPCATEGORY_JSON 'j'
-/* letters appearing in numeric output that aren't valid in a JSON number */
-#define NON_NUMERIC_LETTER "NnAaIiFfTtYy"
 /* chars to consider as part of an alphanumeric token */
 #define JSON_ALPHANUMERIC_CHAR(c)  \
 	(((c) >= 'a' && (c) <= 'z') || \
@@ -361,13 +359,13 @@ json_lex(JsonLexContext *lex)
 	else if (*s == '-')
 	{
 		/* Negative number. */
-		json_lex_number(lex, s + 1);
+		json_lex_number(lex, s + 1, NULL);
 		lex->token_type = JSON_VALUE_NUMBER;
 	}
 	else if (*s >= '0' && *s <= '9')
 	{
 		/* Positive number. */
-		json_lex_number(lex, s);
+		json_lex_number(lex, s, NULL);
 		lex->token_type = JSON_VALUE_NUMBER;
 	}
 	else
@@ -530,7 +528,7 @@ json_lex_string(JsonLexContext *lex)
  *-------------------------------------------------------------------------
  */
 static void
-json_lex_number(JsonLexContext *lex, char *s)
+json_lex_number(JsonLexContext *lex, char *s, bool *num_err)
 {
 	bool		error = false;
 	char	   *p;
@@ -584,15 +582,24 @@ json_lex_number(JsonLexContext *lex, char *s)
 	}
 
 	/*
-	 * Check for trailing garbage.  As in json_lex(), any alphanumeric stuff
+	 * Check for trailing garbage.	As in json_lex(), any alphanumeric stuff
 	 * here should be considered part of the token for error-reporting
 	 * purposes.
 	 */
 	for (p = s; JSON_ALPHANUMERIC_CHAR(*p); p++)
 		error = true;
-	lex->token_terminator = p;
-	if (error)
-		report_invalid_token(lex);
+
+	if (num_err != NULL)
+	{
+		/* let the caller handle the error */
+		*num_err = error;
+	}
+	else
+	{
+		lex->token_terminator = p;
+		if (error)
+			report_invalid_token(lex);
+	}
 }
 
 /*
@@ -819,6 +826,8 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 			  TYPCATEGORY tcategory, Oid typoutputfunc)
 {
 	char	   *outputstr;
+	bool		numeric_error;
+	JsonLexContext dummy_lex;
 
 	if (is_null)
 	{
@@ -845,11 +854,10 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 
 			/*
 			 * Don't call escape_json here if it's a valid JSON number.
-			 * Numeric output should usually be a valid JSON number and JSON
-			 * numbers shouldn't be quoted. Quote cases like "Nan" and
-			 * "Infinity", however.
 			 */
-			if (strpbrk(outputstr, NON_NUMERIC_LETTER) == NULL)
+			dummy_lex.input = *outputstr == '-' ? outputstr + 1 : outputstr;
+			json_lex_number(&dummy_lex, dummy_lex.input, &numeric_error);
+			if (!numeric_error)
 				appendStringInfoString(result, outputstr);
 			else
 				escape_json(result, outputstr);
