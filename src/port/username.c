@@ -71,7 +71,7 @@ const char *
 get_user_name_or_exit(const char *progname)
 {
 	const char *user_name;
-	char 	   *errstr;
+	char	   *errstr;
 
 	user_name = get_user_name(&errstr);
 

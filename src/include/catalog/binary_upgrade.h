@@ -26,4 +26,3 @@ extern PGDLLIMPORT Oid binary_upgrade_next_pg_enum_oid;
 extern PGDLLIMPORT Oid binary_upgrade_next_pg_authid_oid;
 
 #endif   /* BINARY_UPGRADE_H */
-
