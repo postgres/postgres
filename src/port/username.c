@@ -50,7 +50,7 @@ get_user_name(char **errstr)
 	return pw->pw_name;
 #else
 	/* UNLEN = 256, 'static' variable remains after function exit */
-	static char username[256 + 1]; 
+	static char username[256 + 1];
 	DWORD		len = sizeof(username) - 1;
 
 	if (!GetUserName(username, &len))
