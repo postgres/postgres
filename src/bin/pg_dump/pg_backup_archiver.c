@@ -266,8 +266,12 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		if (AH->version < K_VERS_1_3)
 			die_horribly(AH, modulename, "direct database connections are not supported in pre-1.3 archives\n");
 
-		/* XXX Should get this from the archive */
-		AHX->minRemoteVersion = 070100;
+		/*
+		 * We don't want to guess at whether the dump will successfully
+		 * restore; allow the attempt regardless of the version of the restore
+		 * target.
+		 */
+		AHX->minRemoteVersion = 0;
 		AHX->maxRemoteVersion = 999999;
 
 		ConnectDatabase(AHX, ropt->dbname,
