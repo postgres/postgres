@@ -68,6 +68,7 @@ static const struct FileFdwOption valid_options[] = {
 	{"escape", ForeignTableRelationId},
 	{"null", ForeignTableRelationId},
 	{"encoding", ForeignTableRelationId},
+	{"decompressor", ForeignTableRelationId},
 	{"force_not_null", AttributeRelationId},
 
 	/*
@@ -186,6 +187,7 @@ file_fdw_validator(PG_FUNCTION_ARGS)
 	List	   *options_list = untransformRelOptions(PG_GETARG_DATUM(0));
 	Oid			catalog = PG_GETARG_OID(1);
 	char	   *filename = NULL;
+	char	   *decompressor = NULL;
 	DefElem    *force_not_null = NULL;
 	List	   *other_options = NIL;
 	ListCell   *cell;
@@ -243,9 +245,9 @@ file_fdw_validator(PG_FUNCTION_ARGS)
 		}
 
 		/*
-		 * Separate out filename and force_not_null, since ProcessCopyOptions
-		 * won't accept them.  (force_not_null only comes in a boolean
-		 * per-column flavor here.)
+		 * Separate out filename, decompressor, and force_not_null, since
+		 * ProcessCopyOptions won't accept them.  (force_not_null only comes in
+		 * a boolean per-column flavor here.)
 		 */
 		if (strcmp(def->defname, "filename") == 0)
 		{
@@ -254,6 +256,14 @@ file_fdw_validator(PG_FUNCTION_ARGS)
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
 			filename = defGetString(def);
+		}
+		else if (strcmp(def->defname, "decompressor") == 0)
+		{
+			if (decompressor)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+			decompressor = defGetString(def);
 		}
 		else if (strcmp(def->defname, "force_not_null") == 0)
 		{
@@ -274,13 +284,28 @@ file_fdw_validator(PG_FUNCTION_ARGS)
 	 */
 	ProcessCopyOptions(NULL, true, other_options);
 
-	/*
-	 * Filename option is required for file_fdw foreign tables.
-	 */
-	if (catalog == ForeignTableRelationId && filename == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_FDW_DYNAMIC_PARAMETER_VALUE_NEEDED),
-				 errmsg("filename is required for file_fdw foreign tables")));
+	if (catalog == ForeignTableRelationId)
+	{
+		/*
+		 * Filename option is required for file_fdw foreign tables.
+		 */
+		if (filename == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_FDW_DYNAMIC_PARAMETER_VALUE_NEEDED),
+					 errmsg("filename is required for file_fdw foreign tables")));
+
+
+		/*
+		 * Decompressors must be executable.
+		 */
+		if (decompressor && !access(decompressor, R_OK | X_OK))
+		{
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("decompressor must be readable/executable \"%s\": %m",
+							decompressor)));
+		}
+	}
 
 	PG_RETURN_VOID();
 }
@@ -338,7 +363,7 @@ fileGetOptions(Oid foreigntableid,
 	options = list_concat(options, get_file_fdw_attribute_options(foreigntableid));
 
 	/*
-	 * Separate out the filename.
+	 * Separate out the filename and decompressor.
 	 */
 	*filename = NULL;
 	prev = NULL;
@@ -349,6 +374,11 @@ fileGetOptions(Oid foreigntableid,
 		if (strcmp(def->defname, "filename") == 0)
 		{
 			*filename = defGetString(def);
+			options = list_delete_cell(options, lc, prev);
+			break;
+		}
+		else if (strcmp(def->defname, "decompressor") == 0)
+		{
 			options = list_delete_cell(options, lc, prev);
 			break;
 		}
