@@ -138,7 +138,7 @@ static bool fileAnalyzeForeignTable(Relation relation,
  */
 static bool is_valid_option(const char *option, Oid context);
 static void fileGetOptions(Oid foreigntableid,
-			   char **filename, List **other_options);
+			   char **filename, char **decompressor, List **other_options);
 static List *get_file_fdw_attribute_options(Oid relid);
 static bool check_selective_binary_conversion(RelOptInfo *baserel,
 								  Oid foreigntableid,
@@ -330,12 +330,12 @@ is_valid_option(const char *option, Oid context)
 /*
  * Fetch the options for a file_fdw foreign table.
  *
- * We have to separate out "filename" from the other options because
- * it must not appear in the options list passed to the core COPY code.
+ * We have to separate out "filename" and "decompressor" from the other options
+ * because they must not appear in the options passed to the core COPY code.
  */
 static void
 fileGetOptions(Oid foreigntableid,
-			   char **filename, List **other_options)
+			   char **filename, char **decompressor, List **other_options)
 {
 	ForeignTable *table;
 	ForeignServer *server;
@@ -379,6 +379,7 @@ fileGetOptions(Oid foreigntableid,
 		}
 		else if (strcmp(def->defname, "decompressor") == 0)
 		{
+			*decompressor = defGetString(def);
 			options = list_delete_cell(options, lc, prev);
 			break;
 		}
@@ -463,14 +464,15 @@ fileGetForeignRelSize(PlannerInfo *root,
 					  Oid foreigntableid)
 {
 	FileFdwPlanState *fdw_private;
+	char			 *decompressor;
 
 	/*
 	 * Fetch options.  We only need filename at this point, but we might as
 	 * well get everything and not need to re-fetch it later in planning.
 	 */
 	fdw_private = (FileFdwPlanState *) palloc(sizeof(FileFdwPlanState));
-	fileGetOptions(foreigntableid,
-				   &fdw_private->filename, &fdw_private->options);
+	fileGetOptions(foreigntableid, &fdw_private->filename, &decompressor,
+			&fdw_private->options);
 	baserel->fdw_private = (void *) fdw_private;
 
 	/* Estimate relation size */
@@ -567,11 +569,12 @@ static void
 fileExplainForeignScan(ForeignScanState *node, ExplainState *es)
 {
 	char	   *filename;
+	char	   *decompressor;
 	List	   *options;
 
 	/* Fetch options --- we only need filename at this point */
 	fileGetOptions(RelationGetRelid(node->ss.ss_currentRelation),
-				   &filename, &options);
+				   &filename, &decompressor, &options);
 
 	ExplainPropertyText("Foreign File", filename, es);
 
@@ -595,6 +598,7 @@ fileBeginForeignScan(ForeignScanState *node, int eflags)
 {
 	ForeignScan *plan = (ForeignScan *) node->ss.ps.plan;
 	char	   *filename;
+	char	   *decompressor;
 	List	   *options;
 	CopyState	cstate;
 	FileFdwExecutionState *festate;
@@ -607,7 +611,7 @@ fileBeginForeignScan(ForeignScanState *node, int eflags)
 
 	/* Fetch options of foreign table */
 	fileGetOptions(RelationGetRelid(node->ss.ss_currentRelation),
-				   &filename, &options);
+				   &filename, &decompressor, &options);
 
 	/* Add any options from the plan (currently only convert_selectively) */
 	options = list_concat(options, plan->fdw_private);
@@ -720,11 +724,12 @@ fileAnalyzeForeignTable(Relation relation,
 						BlockNumber *totalpages)
 {
 	char	   *filename;
+	char       *decompressor;
 	List	   *options;
 	struct stat stat_buf;
 
 	/* Fetch options of foreign table */
-	fileGetOptions(RelationGetRelid(relation), &filename, &options);
+	fileGetOptions(RelationGetRelid(relation), &filename, &decompressor, &options);
 
 	/*
 	 * Get size of the file.  (XXX if we fail here, would it be better to just
@@ -1006,6 +1011,7 @@ file_acquire_sample_rows(Relation onerel, int elevel,
 	bool	   *nulls;
 	bool		found;
 	char	   *filename;
+	char	   *decompressor;
 	List	   *options;
 	CopyState	cstate;
 	ErrorContextCallback errcallback;
@@ -1020,7 +1026,7 @@ file_acquire_sample_rows(Relation onerel, int elevel,
 	nulls = (bool *) palloc(tupDesc->natts * sizeof(bool));
 
 	/* Fetch options of foreign table */
-	fileGetOptions(RelationGetRelid(onerel), &filename, &options);
+	fileGetOptions(RelationGetRelid(onerel), &filename, &decompressor, &options);
 
 	/*
 	 * Create CopyState from FDW options.
