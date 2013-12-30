@@ -96,6 +96,7 @@ typedef struct FileFdwPlanState
 typedef struct FileFdwExecutionState
 {
 	char	   *filename;		/* file to read */
+	char	   *program;		/* program/args to use if using compression */
 	List	   *options;		/* merged COPY options, excluding filename */
 	CopyState	cstate;			/* state of reading file */
 } FileFdwExecutionState;
@@ -464,14 +465,14 @@ fileGetForeignRelSize(PlannerInfo *root,
 					  Oid foreigntableid)
 {
 	FileFdwPlanState *fdw_private;
-	char			 *decompressor;
+	char			 *program;
 
 	/*
 	 * Fetch options.  We only need filename at this point, but we might as
 	 * well get everything and not need to re-fetch it later in planning.
 	 */
 	fdw_private = (FileFdwPlanState *) palloc(sizeof(FileFdwPlanState));
-	fileGetOptions(foreigntableid, &fdw_private->filename, &decompressor,
+	fileGetOptions(foreigntableid, &fdw_private->filename, &program,
 			&fdw_private->options);
 	baserel->fdw_private = (void *) fdw_private;
 
@@ -569,14 +570,17 @@ static void
 fileExplainForeignScan(ForeignScanState *node, ExplainState *es)
 {
 	char	   *filename;
-	char	   *decompressor;
+	char	   *program;
 	List	   *options;
 
 	/* Fetch options --- we only need filename at this point */
 	fileGetOptions(RelationGetRelid(node->ss.ss_currentRelation),
-				   &filename, &decompressor, &options);
+				   &filename, &program, &options);
 
 	ExplainPropertyText("Foreign File", filename, es);
+
+	if (program != NULL)
+		ExplainPropertyText("Foreign Program", program, es);
 
 	/* Suppress file size if we're not showing cost details */
 	if (es->costs)
@@ -598,7 +602,7 @@ fileBeginForeignScan(ForeignScanState *node, int eflags)
 {
 	ForeignScan *plan = (ForeignScan *) node->ss.ps.plan;
 	char	   *filename;
-	char	   *decompressor;
+	char	   *program;
 	List	   *options;
 	CopyState	cstate;
 	FileFdwExecutionState *festate;
@@ -611,7 +615,7 @@ fileBeginForeignScan(ForeignScanState *node, int eflags)
 
 	/* Fetch options of foreign table */
 	fileGetOptions(RelationGetRelid(node->ss.ss_currentRelation),
-				   &filename, &decompressor, &options);
+				   &filename, &program, &options);
 
 	/* Add any options from the plan (currently only convert_selectively) */
 	options = list_concat(options, plan->fdw_private);
@@ -621,8 +625,8 @@ fileBeginForeignScan(ForeignScanState *node, int eflags)
 	 * as to match the expected ScanTupleSlot signature.
 	 */
 	cstate = BeginCopyFrom(node->ss.ss_currentRelation,
-						   filename,
-						   false,
+						   (program != NULL) ? program : filename,
+						   (program != NULL),
 						   NIL,
 						   options);
 
@@ -632,6 +636,7 @@ fileBeginForeignScan(ForeignScanState *node, int eflags)
 	 */
 	festate = (FileFdwExecutionState *) palloc(sizeof(FileFdwExecutionState));
 	festate->filename = filename;
+	festate->program = program;
 	festate->options = options;
 	festate->cstate = cstate;
 
@@ -690,12 +695,16 @@ static void
 fileReScanForeignScan(ForeignScanState *node)
 {
 	FileFdwExecutionState *festate = (FileFdwExecutionState *) node->fdw_state;
+	char *filename_or_program;
 
 	EndCopyFrom(festate->cstate);
 
+	filename_or_program =
+			(festate->program != NULL) ? festate->program : festate->filename;
+
 	festate->cstate = BeginCopyFrom(node->ss.ss_currentRelation,
-									festate->filename,
-									false,
+									filename_or_program,
+									(festate->program != NULL),
 									NIL,
 									festate->options);
 }
@@ -724,12 +733,12 @@ fileAnalyzeForeignTable(Relation relation,
 						BlockNumber *totalpages)
 {
 	char	   *filename;
-	char       *decompressor;
+	char       *program;
 	List	   *options;
 	struct stat stat_buf;
 
 	/* Fetch options of foreign table */
-	fileGetOptions(RelationGetRelid(relation), &filename, &decompressor, &options);
+	fileGetOptions(RelationGetRelid(relation), &filename, &program, &options);
 
 	/*
 	 * Get size of the file.  (XXX if we fail here, would it be better to just
@@ -1011,7 +1020,7 @@ file_acquire_sample_rows(Relation onerel, int elevel,
 	bool	   *nulls;
 	bool		found;
 	char	   *filename;
-	char	   *decompressor;
+	char	   *program;
 	List	   *options;
 	CopyState	cstate;
 	ErrorContextCallback errcallback;
@@ -1026,12 +1035,13 @@ file_acquire_sample_rows(Relation onerel, int elevel,
 	nulls = (bool *) palloc(tupDesc->natts * sizeof(bool));
 
 	/* Fetch options of foreign table */
-	fileGetOptions(RelationGetRelid(onerel), &filename, &decompressor, &options);
+	fileGetOptions(RelationGetRelid(onerel), &filename, &program, &options);
 
 	/*
 	 * Create CopyState from FDW options.
 	 */
-	cstate = BeginCopyFrom(onerel, filename, false, NIL, options);
+	cstate = BeginCopyFrom(onerel, (program != NULL) ? program : filename,
+			(program != NULL), NIL, options);
 
 	/*
 	 * Use per-tuple memory context to prevent leak of memory used to read
