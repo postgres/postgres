@@ -344,7 +344,10 @@ insert_event_trigger_tuple(char *trigname, char *eventname, Oid evtOwner,
 	referenced.objectSubId = 0;
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
-	/* Post creation hook for new operator family */
+	/* Depend on extension, if any. */
+	recordDependencyOnCurrentExtension(&myself, false);
+
+	/* Post creation hook for new event trigger */
 	InvokeObjectPostCreateHook(EventTriggerRelationId, trigoid, 0);
 
 	/* Close pg_event_trigger. */
