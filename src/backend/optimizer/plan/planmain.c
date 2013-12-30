@@ -20,6 +20,7 @@
  */
 #include "postgres.h"
 
+#include "optimizer/orclauses.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/placeholder.h"
@@ -193,6 +194,12 @@ query_planner(PlannerInfo *root, List *tlist,
 	 * lateral_vars lists for lateral references within PlaceHolderVars.
 	 */
 	create_lateral_join_info(root);
+
+	/*
+	 * Look for join OR clauses that we can extract single-relation
+	 * restriction OR clauses from.
+	 */
+	extract_restriction_or_clauses(root);
 
 	/*
 	 * We should now have size estimates for every actual table involved in
