@@ -99,13 +99,13 @@
      </row>
 
      <row>
-      <entry><link linkend="catalog-pg-constraint"><structname>pg_constraint</structname></link></entry>
-      <entry>check constraints, unique constraints, primary key constraints, foreign key constraints</entry>
+      <entry><link linkend="catalog-pg-collation"><structname>pg_collation</structname></link></entry>
+      <entry>collations (locale information)</entry>
      </row>
 
      <row>
-      <entry><link linkend="catalog-pg-collation"><structname>pg_collation</structname></link></entry>
-      <entry>collations (locale information)</entry>
+      <entry><link linkend="catalog-pg-constraint"><structname>pg_constraint</structname></link></entry>
+      <entry>check constraints, unique constraints, primary key constraints, foreign key constraints</entry>
      </row>
 
      <row>
@@ -1933,20 +1933,22 @@
   </para>
  </sect1>
 
- <sect1 id="catalog-pg-event-trigger">
-  <title><structname>pg_event_trigger</structname></title>
+ <sect1 id="catalog-pg-collation">
+  <title><structname>pg_collation</structname></title>
 
-  <indexterm zone="catalog-pg-event-trigger">
-   <primary>pg_event_trigger</primary>
+  <indexterm zone="catalog-pg-collation">
+   <primary>pg_collation</primary>
   </indexterm>
 
   <para>
-   The catalog <structname>pg_event_trigger</structname> stores event triggers.
-   See <xref linkend="event-triggers"> for more information.
+   The catalog <structname>pg_collation</structname> describes the
+   available collations, which are essentially mappings from an SQL
+   name to operating system locale categories.
+   See <xref linkend="collation"> for more information.
   </para>
 
   <table>
-   <title><structname>pg_event_trigger</> Columns</title>
+   <title><structname>pg_collation</> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -1960,59 +1962,83 @@
 
     <tbody>
      <row>
-      <entry><structfield>evtname</structfield></entry>
-      <entry><type>name</type></entry>
+      <entry><structfield>oid</structfield></entry>
+      <entry><type>oid</type></entry>
       <entry></entry>
-      <entry>Trigger name (must be unique)</entry>
+      <entry>Row identifier (hidden attribute; must be explicitly selected)</entry>
      </row>
 
      <row>
-      <entry><structfield>evtevent</structfield></entry>
+      <entry><structfield>collname</structfield></entry>
       <entry><type>name</type></entry>
       <entry></entry>
-      <entry>Identifies the event for which this trigger fires</entry>
+      <entry>Collation name (unique per namespace and encoding)</entry>
      </row>
 
      <row>
-      <entry><structfield>evtowner</structfield></entry>
+      <entry><structfield>collnamespace</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.oid</literal></entry>
+      <entry>
+       The OID of the namespace that contains this collation
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>collowner</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
-      <entry>Owner of the event trigger</entry>
+      <entry>Owner of the collation</entry>
      </row>
 
      <row>
-      <entry><structfield>evtfoid</structfield></entry>
-      <entry><type>oid</type></entry>
-      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
-      <entry>The function to be called</entry>
-     </row>
-
-     <row>
-      <entry><structfield>evtenabled</structfield></entry>
-      <entry><type>char</type></entry>
+      <entry><structfield>collencoding</structfield></entry>
+      <entry><type>int4</type></entry>
       <entry></entry>
-      <entry>
-       Controls in which <xref linkend="guc-session-replication-role"> modes
-       the event trigger fires.
-       <literal>O</> = trigger fires in <quote>origin</> and <quote>local</> modes,
-       <literal>D</> = trigger is disabled,
-       <literal>R</> = trigger fires in <quote>replica</> mode,
-       <literal>A</> = trigger fires always.
-      </entry>
+      <entry>Encoding in which the collation is applicable, or -1 if it
+       works for any encoding</entry>
      </row>
 
      <row>
-      <entry><structfield>evttags</structfield></entry>
-      <entry><type>text[]</type></entry>
+      <entry><structfield>collcollate</structfield></entry>
+      <entry><type>name</type></entry>
       <entry></entry>
-      <entry>
-        Command tags for which this trigger will fire.  If NULL, the firing
-        of this trigger is not restricted on the basis of the command tag.
-      </entry>
+      <entry><symbol>LC_COLLATE</> for this collation object</entry>
+     </row>
+
+     <row>
+      <entry><structfield>collctype</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry><symbol>LC_CTYPE</> for this collation object</entry>
      </row>
     </tbody>
    </tgroup>
   </table>
+
+  <para>
+   Note that the unique key on this catalog is (<structfield>collname</>,
+   <structfield>collencoding</>, <structfield>collnamespace</>) not just
+   (<structfield>collname</>, <structfield>collnamespace</>).
+   <productname>PostgreSQL</productname> generally ignores all
+   collations that do not have <structfield>collencoding</> equal to
+   either the current database's encoding or -1, and creation of new entries
+   with the same name as an entry with <structfield>collencoding</> = -1
+   is forbidden.  Therefore it is sufficient to use a qualified SQL name
+   (<replaceable>schema</>.<replaceable>name</>) to identify a collation,
+   even though this is not unique according to the catalog definition.
+   The reason for defining the catalog this way is that
+   <application>initdb</> fills it in at cluster initialization time with
+   entries for all locales available on the system, so it must be able to
+   hold entries for all encodings that might ever be used in the cluster.
+  </para>
+
+  <para>
+   In the <literal>template0</> database, it could be useful to create
+   collations whose encoding does not match the database encoding,
+   since they could match the encodings of databases later cloned from
+   <literal>template0</>.  This would currently have to be done manually.
+  </para>
  </sect1>
 
  <sect1 id="catalog-pg-constraint">
@@ -2296,116 +2322,8 @@
     relation.
    </para>
   </note>
-
  </sect1>
 
- <sect1 id="catalog-pg-collation">
-  <title><structname>pg_collation</structname></title>
-
-  <indexterm zone="catalog-pg-collation">
-   <primary>pg_collation</primary>
-  </indexterm>
-
-  <para>
-   The catalog <structname>pg_collation</structname> describes the
-   available collations, which are essentially mappings from an SQL
-   name to operating system locale categories.
-   See <xref linkend="collation"> for more information.
-  </para>
-
-  <table>
-   <title><structname>pg_collation</> Columns</title>
-
-   <tgroup cols="4">
-    <thead>
-     <row>
-      <entry>Name</entry>
-      <entry>Type</entry>
-      <entry>References</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
-
-    <tbody>
-     <row>
-      <entry><structfield>oid</structfield></entry>
-      <entry><type>oid</type></entry>
-      <entry></entry>
-      <entry>Row identifier (hidden attribute; must be explicitly selected)</entry>
-     </row>
-
-     <row>
-      <entry><structfield>collname</structfield></entry>
-      <entry><type>name</type></entry>
-      <entry></entry>
-      <entry>Collation name (unique per namespace and encoding)</entry>
-     </row>
-
-     <row>
-      <entry><structfield>collnamespace</structfield></entry>
-      <entry><type>oid</type></entry>
-      <entry><literal><link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.oid</literal></entry>
-      <entry>
-       The OID of the namespace that contains this collation
-      </entry>
-     </row>
-
-     <row>
-      <entry><structfield>collowner</structfield></entry>
-      <entry><type>oid</type></entry>
-      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
-      <entry>Owner of the collation</entry>
-     </row>
-
-     <row>
-      <entry><structfield>collencoding</structfield></entry>
-      <entry><type>int4</type></entry>
-      <entry></entry>
-      <entry>Encoding in which the collation is applicable, or -1 if it
-       works for any encoding</entry>
-     </row>
-
-     <row>
-      <entry><structfield>collcollate</structfield></entry>
-      <entry><type>name</type></entry>
-      <entry></entry>
-      <entry><symbol>LC_COLLATE</> for this collation object</entry>
-     </row>
-
-     <row>
-      <entry><structfield>collctype</structfield></entry>
-      <entry><type>name</type></entry>
-      <entry></entry>
-      <entry><symbol>LC_CTYPE</> for this collation object</entry>
-     </row>
-    </tbody>
-   </tgroup>
-  </table>
-
-  <para>
-   Note that the unique key on this catalog is (<structfield>collname</>,
-   <structfield>collencoding</>, <structfield>collnamespace</>) not just
-   (<structfield>collname</>, <structfield>collnamespace</>).
-   <productname>PostgreSQL</productname> generally ignores all
-   collations that do not have <structfield>collencoding</> equal to
-   either the current database's encoding or -1, and creation of new entries
-   with the same name as an entry with <structfield>collencoding</> = -1
-   is forbidden.  Therefore it is sufficient to use a qualified SQL name
-   (<replaceable>schema</>.<replaceable>name</>) to identify a collation,
-   even though this is not unique according to the catalog definition.
-   The reason for defining the catalog this way is that
-   <application>initdb</> fills it in at cluster initialization time with
-   entries for all locales available on the system, so it must be able to
-   hold entries for all encodings that might ever be used in the cluster.
-  </para>
-
-  <para>
-   In the <literal>template0</> database, it could be useful to create
-   collations whose encoding does not match the database encoding,
-   since they could match the encodings of databases later cloned from
-   <literal>template0</>.  This would currently have to be done manually.
-  </para>
- </sect1>
 
  <sect1 id="catalog-pg-conversion">
   <title><structname>pg_conversion</structname></title>
@@ -3175,6 +3093,89 @@
    The only requirement on these values is that they be correctly
    ordered and unique within each enum type.
   </para>
+ </sect1>
+
+
+ <sect1 id="catalog-pg-event-trigger">
+  <title><structname>pg_event_trigger</structname></title>
+
+  <indexterm zone="catalog-pg-event-trigger">
+   <primary>pg_event_trigger</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_event_trigger</structname> stores event triggers.
+   See <xref linkend="event-triggers"> for more information.
+  </para>
+
+  <table>
+   <title><structname>pg_event_trigger</> Columns</title>
+
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>evtname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Trigger name (must be unique)</entry>
+     </row>
+
+     <row>
+      <entry><structfield>evtevent</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Identifies the event for which this trigger fires</entry>
+     </row>
+
+     <row>
+      <entry><structfield>evtowner</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
+      <entry>Owner of the event trigger</entry>
+     </row>
+
+     <row>
+      <entry><structfield>evtfoid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
+      <entry>The function to be called</entry>
+     </row>
+
+     <row>
+      <entry><structfield>evtenabled</structfield></entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>
+       Controls in which <xref linkend="guc-session-replication-role"> modes
+       the event trigger fires.
+       <literal>O</> = trigger fires in <quote>origin</> and <quote>local</> modes,
+       <literal>D</> = trigger is disabled,
+       <literal>R</> = trigger fires in <quote>replica</> mode,
+       <literal>A</> = trigger fires always.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>evttags</structfield></entry>
+      <entry><type>text[]</type></entry>
+      <entry></entry>
+      <entry>
+        Command tags for which this trigger will fire.  If NULL, the firing
+        of this trigger is not restricted on the basis of the command tag.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
  </sect1>
 
 
