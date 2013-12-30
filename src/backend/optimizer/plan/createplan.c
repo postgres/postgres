@@ -1413,9 +1413,6 @@ create_bitmap_scan_plan(PlannerInfo *root,
  * OR subtrees.  This could be done in a less hacky way if we returned the
  * indexquals in RestrictInfo form, but that would be slower and still pretty
  * messy, since we'd have to build new RestrictInfos in many cases.)
- *
- * Note: if you find yourself changing this, you probably need to change
- * make_restrictinfo_from_bitmapqual too.
  */
 static Plan *
 create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,

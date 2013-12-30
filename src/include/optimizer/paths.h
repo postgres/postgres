@@ -43,9 +43,6 @@ extern void debug_print_rel(PlannerInfo *root, RelOptInfo *rel);
  *	  routines to generate index paths
  */
 extern void create_index_paths(PlannerInfo *root, RelOptInfo *rel);
-extern List *generate_bitmap_or_paths(PlannerInfo *root, RelOptInfo *rel,
-						 List *clauses, List *other_clauses,
-						 bool restriction_only);
 extern bool relation_has_unique_index_for(PlannerInfo *root, RelOptInfo *rel,
 							  List *restrictlist,
 							  List *exprlist, List *oprlist);
