@@ -299,7 +299,7 @@ file_fdw_validator(PG_FUNCTION_ARGS)
 		/*
 		 * Decompressors must be executable.
 		 */
-		if (decompressor && !access(decompressor, R_OK | X_OK))
+		if (decompressor && (access(decompressor, R_OK | X_OK) != 0))
 		{
 			ereport(ERROR,
 					(errcode_for_file_access(),
@@ -350,6 +350,9 @@ fileGetOptions(Oid foreigntableid,
 	char	   *decompressor = NULL;
 	char	   *write_ptr, *token, *input, *read_ptr;
 
+	bool gzip_found, filename_found;
+	gzip_found = filename_found = FALSE;
+
 	/*
 	 * Extract options from FDW objects.  We ignore user mappings because
 	 * file_fdw doesn't have any options that can be specified there.
@@ -381,14 +384,17 @@ fileGetOptions(Oid foreigntableid,
 		{
 			*filename = defGetString(def);
 			options = list_delete_cell(options, lc, prev);
-			break;
+			filename_found = TRUE;
 		}
 		else if (strcmp(def->defname, "decompressor") == 0)
 		{
 			decompressor = defGetString(def);
 			options = list_delete_cell(options, lc, prev);
-			break;
+			gzip_found = TRUE;
 		}
+
+		if (filename_found && gzip_found) break;
+
 		prev = lc;
 	}
 
@@ -412,14 +418,14 @@ fileGetOptions(Oid foreigntableid,
 		 * room for the quotes, a space, and a null terminator.
 		 */
 		*program = palloc0(
-				(strlen(decompressor) + (4 * strlen(filename)) + 4)
+				(strlen(decompressor) + (4 * strlen(*filename)) + 4)
 						* sizeof(char));
 
-		write_ptr = stpcpy(program, decompressor);
+		write_ptr = stpcpy(*program, decompressor);
 		write_ptr = stpcpy(write_ptr, " '");
 
 		/* We're mutating filename so copy it */
-		input = read_ptr = pstrdup(filename);
+		input = read_ptr = pstrdup(*filename);
 
 		write_ptr = stpcpy(write_ptr, strsep(&read_ptr, "'"));
 
