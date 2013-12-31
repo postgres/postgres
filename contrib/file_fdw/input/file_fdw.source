@@ -72,6 +72,11 @@ CREATE FOREIGN TABLE agg_csv (
 	b	float4
 ) SERVER file_server
 OPTIONS (format 'csv', filename '@abs_srcdir@/data/agg.csv', header 'true', delimiter ';', quote '@', escape '"', null '');
+CREATE FOREIGN TABLE agg_csv_gz (
+	a	int2,
+	b	float4
+) SERVER file_server
+OPTIONS (format 'csv', filename '@abs_srcdir@/data/agg.csv.gz', header 'true', delimiter ';', quote '@', escape '"', null '', decompressor '@abs_srcdir@/scripts/gunzip.pl');
 CREATE FOREIGN TABLE agg_bad (
 	a	int2,
 	b	float4
@@ -97,7 +102,9 @@ CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (force_not_null '*'); -- 
 -- basic query tests
 SELECT * FROM agg_text WHERE b > 10.0 ORDER BY a;
 SELECT * FROM agg_csv ORDER BY a;
+SELECT * FROM agg_csv_gz ORDER BY a;
 SELECT * FROM agg_csv c JOIN agg_text t ON (t.a = c.a) ORDER BY c.a;
+SELECT * FROM agg_csv_gz c JOIN agg_text t ON (t.a = c.a) ORDER BY c.a;
 
 -- error context report tests
 SELECT * FROM agg_bad;               -- ERROR
@@ -107,6 +114,14 @@ SELECT * FROM agg_bad;               -- ERROR
 EXPLAIN (VERBOSE, COSTS FALSE) SELECT * FROM agg_csv;
 \t off
 PREPARE st(int) AS SELECT * FROM agg_csv WHERE a = $1;
+EXECUTE st(100);
+EXECUTE st(100);
+DEALLOCATE st;
+
+\t on
+EXPLAIN (VERBOSE, COSTS FALSE) SELECT * FROM agg_csv_gz;
+\t off
+PREPARE st(int) AS SELECT * FROM agg_csv_gz WHERE a = $1;
 EXECUTE st(100);
 EXECUTE st(100);
 DEALLOCATE st;

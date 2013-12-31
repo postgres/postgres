@@ -33,6 +33,18 @@
   </varlistentry>
 
   <varlistentry>
+   <term><literal>decompressor</literal></term>
+
+   <listitem>
+    <para>
+     Specifies an external program to be used to decompress the file. Such
+     programs should accept the filename as an argument and decompress data to
+     stdout. The program must be readable and executable by the server process.
+    </para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry>
    <term><literal>format</literal></term>
 
    <listitem>

@@ -88,6 +88,11 @@ CREATE FOREIGN TABLE agg_csv (
 	b	float4
 ) SERVER file_server
 OPTIONS (format 'csv', filename '@abs_srcdir@/data/agg.csv', header 'true', delimiter ';', quote '@', escape '"', null '');
+CREATE FOREIGN TABLE agg_csv_gz (
+	a	int2,
+	b	float4
+) SERVER file_server
+OPTIONS (format 'csv', filename '@abs_srcdir@/data/agg.csv.gz', header 'true', delimiter ';', quote '@', escape '"', null '', decompressor '@abs_srcdir@/scripts/gunzip.pl');
 CREATE FOREIGN TABLE agg_bad (
 	a	int2,
 	b	float4
@@ -140,7 +145,23 @@ SELECT * FROM agg_csv ORDER BY a;
  100 |  99.097
 (3 rows)
 
+SELECT * FROM agg_csv_gz ORDER BY a;
+  a  |    b    
+-----+---------
+   0 | 0.09561
+  42 |  324.78
+ 100 |  99.097
+(3 rows)
+
 SELECT * FROM agg_csv c JOIN agg_text t ON (t.a = c.a) ORDER BY c.a;
+  a  |    b    |  a  |    b    
+-----+---------+-----+---------
+   0 | 0.09561 |   0 | 0.09561
+  42 |  324.78 |  42 |  324.78
+ 100 |  99.097 | 100 |  99.097
+(3 rows)
+
+SELECT * FROM agg_csv_gz c JOIN agg_text t ON (t.a = c.a) ORDER BY c.a;
   a  |    b    |  a  |    b    
 -----+---------+-----+---------
    0 | 0.09561 |   0 | 0.09561
@@ -161,6 +182,29 @@ EXPLAIN (VERBOSE, COSTS FALSE) SELECT * FROM agg_csv;
 
 \t off
 PREPARE st(int) AS SELECT * FROM agg_csv WHERE a = $1;
+EXECUTE st(100);
+  a  |   b    
+-----+--------
+ 100 | 99.097
+(1 row)
+
+EXECUTE st(100);
+  a  |   b    
+-----+--------
+ 100 | 99.097
+(1 row)
+
+DEALLOCATE st;
+\t on
+EXPLAIN (VERBOSE, COSTS FALSE) SELECT * FROM agg_csv_gz;
+ Foreign Scan on public.agg_csv_gz
+   Output: a, b
+   Foreign File: @abs_srcdir@/data/agg.csv.gz
+   Foreign Program: @abs_srcdir@/scripts/gunzip.pl '@abs_srcdir@/data/agg.csv.gz'
+   Foreign Program Compression Est.: 2.7709
+
+\t off
+PREPARE st(int) AS SELECT * FROM agg_csv_gz WHERE a = $1;
 EXECUTE st(100);
   a  |   b    
 -----+--------
@@ -243,13 +287,14 @@ SET ROLE file_fdw_superuser;
 -- cleanup
 RESET ROLE;
 DROP EXTENSION file_fdw CASCADE;
-NOTICE:  drop cascades to 8 other objects
+NOTICE:  drop cascades to 9 other objects
 DETAIL:  drop cascades to server file_server
 drop cascades to user mapping for file_fdw_user
 drop cascades to user mapping for file_fdw_superuser
 drop cascades to user mapping for no_priv_user
 drop cascades to foreign table agg_text
 drop cascades to foreign table agg_csv
+drop cascades to foreign table agg_csv_gz
 drop cascades to foreign table agg_bad
 drop cascades to foreign table text_csv
 DROP ROLE file_fdw_superuser, file_fdw_user, no_priv_user;
