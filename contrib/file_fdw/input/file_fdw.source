@@ -77,6 +77,11 @@ CREATE FOREIGN TABLE agg_csv_gz (
 	b	float4
 ) SERVER file_server
 OPTIONS (format 'csv', filename '@abs_srcdir@/data/agg.csv.gz', header 'true', delimiter ';', quote '@', escape '"', null '', decompressor '@abs_srcdir@/scripts/gunzip.pl');
+CREATE FOREIGN TABLE it_is_ok (
+	a	int2,
+	b	float4
+) SERVER file_server
+OPTIONS (format 'csv', filename '@abs_srcdir@/data/it''s_ok.csv.gz', header 'true', delimiter ';', quote '@', escape '"', null '', decompressor '@abs_srcdir@/scripts/gunzip.pl');
 CREATE FOREIGN TABLE agg_bad (
 	a	int2,
 	b	float4
@@ -125,6 +130,10 @@ PREPARE st(int) AS SELECT * FROM agg_csv_gz WHERE a = $1;
 EXECUTE st(100);
 EXECUTE st(100);
 DEALLOCATE st;
+
+\t on
+EXPLAIN (VERBOSE, COSTS FALSE) SELECT * FROM it_is_ok;
+\t off
 
 -- tableoid
 SELECT tableoid::regclass, b FROM agg_csv;
