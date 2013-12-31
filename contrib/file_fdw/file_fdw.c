@@ -347,11 +347,8 @@ fileGetOptions(Oid foreigntableid,
 	ListCell   *lc,
 			   *prev;
 
-	char	   *decompressor = NULL;
+	char	   *decompressor;
 	char	   *write_ptr, *token, *input, *read_ptr;
-
-	bool gzip_found, filename_found;
-	gzip_found = filename_found = FALSE;
 
 	/*
 	 * Extract options from FDW objects.  We ignore user mappings because
@@ -372,7 +369,7 @@ fileGetOptions(Oid foreigntableid,
 	options = list_concat(options, get_file_fdw_attribute_options(foreigntableid));
 
 	/*
-	 * Separate out the filename and decompressor.
+	 * Separate out the filename.
 	 */
 	*filename = NULL;
 	prev = NULL;
@@ -384,16 +381,28 @@ fileGetOptions(Oid foreigntableid,
 		{
 			*filename = defGetString(def);
 			options = list_delete_cell(options, lc, prev);
-			filename_found = TRUE;
+			break;
 		}
-		else if (strcmp(def->defname, "decompressor") == 0)
+
+		prev = lc;
+	}
+
+	/*
+	 * Separate out the decompressor, which will be used to calculate program.
+	 */
+	decompressor = NULL;
+	*program = NULL;
+	prev = NULL;
+	foreach(lc, options)
+	{
+		DefElem    *def = (DefElem *) lfirst(lc);
+
+		if (strcmp(def->defname, "decompressor") == 0)
 		{
 			decompressor = defGetString(def);
 			options = list_delete_cell(options, lc, prev);
-			gzip_found = TRUE;
+			break;
 		}
-
-		if (filename_found && gzip_found) break;
 
 		prev = lc;
 	}
