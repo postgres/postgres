@@ -46,6 +46,9 @@ struct FileFdwOption
 	Oid			optcontext;		/* Oid of catalog in which option may appear */
 };
 
+/* Totally made-up compression ratio */
+static const double program_compression_ratio = 2.7708899835032f;
+
 /*
  * Valid options for file_fdw.
  * These options are based on the options for COPY FROM command.
@@ -85,6 +88,7 @@ static const struct FileFdwOption valid_options[] = {
 typedef struct FileFdwPlanState
 {
 	char	   *filename;		/* file to read */
+	bool		is_program;		/* whether a program is used to read the file */
 	List	   *options;		/* merged COPY options, excluding filename */
 	BlockNumber pages;			/* estimate of file's physical size */
 	double		ntuples;		/* estimate of number of rows in file */
@@ -96,7 +100,7 @@ typedef struct FileFdwPlanState
 typedef struct FileFdwExecutionState
 {
 	char	   *filename;		/* file to read */
-	char	   *program;		/* program/args to use if using compression */
+	char	   *program;		/* optional program to use to read file */
 	List	   *options;		/* merged COPY options, excluding filename */
 	CopyState	cstate;			/* state of reading file */
 } FileFdwExecutionState;
@@ -529,6 +533,7 @@ fileGetForeignRelSize(PlannerInfo *root,
 	fdw_private = (FileFdwPlanState *) palloc(sizeof(FileFdwPlanState));
 	fileGetOptions(foreigntableid, &fdw_private->filename, &program,
 			&fdw_private->options);
+	fdw_private->is_program = (program != NULL);
 	baserel->fdw_private = (void *) fdw_private;
 
 	/* Estimate relation size */
@@ -635,7 +640,11 @@ fileExplainForeignScan(ForeignScanState *node, ExplainState *es)
 	ExplainPropertyText("Foreign File", filename, es);
 
 	if (program != NULL)
+	{
 		ExplainPropertyText("Foreign Program", program, es);
+		ExplainPropertyFloat("Foreign Program Compression Est.",
+				program_compression_ratio, 4, es);
+	}
 
 	/* Suppress file size if we're not showing cost details */
 	if (es->costs)
@@ -999,6 +1008,8 @@ estimate_size(PlannerInfo *root, RelOptInfo *baserel,
 			MAXALIGN(sizeof(HeapTupleHeaderData));
 		ntuples = clamp_row_est((double) stat_buf.st_size /
 								(double) tuple_width);
+		if (fdw_private->is_program)
+			ntuples *= program_compression_ratio;
 	}
 	fdw_private->ntuples = ntuples;
 
