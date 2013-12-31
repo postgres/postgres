@@ -139,7 +139,7 @@ static bool fileAnalyzeForeignTable(Relation relation,
  */
 static bool is_valid_option(const char *option, Oid context);
 static void fileGetOptions(Oid foreigntableid,
-			   char **filename, char **decompressor, List **other_options);
+			   char **filename, char **program, List **other_options);
 static List *get_file_fdw_attribute_options(Oid relid);
 static bool check_selective_binary_conversion(RelOptInfo *baserel,
 								  Oid foreigntableid,
@@ -332,11 +332,13 @@ is_valid_option(const char *option, Oid context)
  * Fetch the options for a file_fdw foreign table.
  *
  * We have to separate out "filename" and "decompressor" from the other options
- * because they must not appear in the options passed to the core COPY code.
+ * because they must not appear in the options passed to the core COPY code. If
+ * a decompressor is present, a string consisting of it concatenated to the
+ * escaped file name is stored at `program`.
  */
 static void
 fileGetOptions(Oid foreigntableid,
-			   char **filename, char **decompressor, List **other_options)
+			   char **filename, char **program, List **other_options)
 {
 	ForeignTable *table;
 	ForeignServer *server;
@@ -344,6 +346,9 @@ fileGetOptions(Oid foreigntableid,
 	List	   *options;
 	ListCell   *lc,
 			   *prev;
+
+	char	   *decompressor = NULL;
+	char	   *write_ptr, *token, *input, *read_ptr;
 
 	/*
 	 * Extract options from FDW objects.  We ignore user mappings because
@@ -380,7 +385,7 @@ fileGetOptions(Oid foreigntableid,
 		}
 		else if (strcmp(def->defname, "decompressor") == 0)
 		{
-			*decompressor = defGetString(def);
+			decompressor = defGetString(def);
 			options = list_delete_cell(options, lc, prev);
 			break;
 		}
@@ -393,6 +398,41 @@ fileGetOptions(Oid foreigntableid,
 	 */
 	if (*filename == NULL)
 		elog(ERROR, "filename is required for file_fdw foreign tables");
+
+	/*
+	 * Set up the decompressor if present.
+	 */
+	if (decompressor != NULL)
+	{
+		/*
+		 * We will escape the filename by wrapping it in single quotes. To deal
+		 * with single quotes in the name itself, we will replace all single
+		 * quotes with the string "'\''", which is four characters long. Strings
+		 * of only single quotes will need four times as much space, plus the
+		 * room for the quotes, a space, and a null terminator.
+		 */
+		*program = palloc0(
+				(strlen(decompressor) + (4 * strlen(filename)) + 4)
+						* sizeof(char));
+
+		write_ptr = stpcpy(program, decompressor);
+		write_ptr = stpcpy(write_ptr, " '");
+
+		/* We're mutating filename so copy it */
+		input = read_ptr = pstrdup(filename);
+
+		write_ptr = stpcpy(write_ptr, strsep(&read_ptr, "'"));
+
+		while ((token = strsep(&read_ptr, "'")) != NULL)
+		{
+			write_ptr = stpcpy(write_ptr, "'\\''");
+			write_ptr = stpcpy(write_ptr, token);
+		}
+
+		stpcpy(write_ptr, "'");
+
+		pfree(input);
+	}
 
 	*other_options = options;
 }
