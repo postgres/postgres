@@ -326,7 +326,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 
 	if (dbname != NULL)
 	{
-		/* get the detail information out of dbname */
+		/* get the detail information from dbname */
 		if (strncmp(dbname, "tcp:", 4) == 0 || strncmp(dbname, "unix:", 5) == 0)
 		{
 			int			offset = 0;
@@ -345,7 +345,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 				/*------
 				 * new style:
 				 *	<tcp|unix>:postgresql://server[:port|:/unixsocket/path:]
-				 *	[/db name][?options]
+				 *	[/db-name][?options]
 				 *------
 				 */
 				offset += strlen("postgresql://");
@@ -420,8 +420,10 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 					}
 				}
 				else
-					host = ecpg_strdup(dbname + offset, lineno);
-
+				{
+					if (*(dbname + offset) != '\0')
+						host = ecpg_strdup(dbname + offset, lineno);
+				}
 			}
 		}
 		else
