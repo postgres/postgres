@@ -577,8 +577,13 @@ MultiXactIdSetOldestMember(void)
 		 * another someone else could compute an OldestVisibleMXactId that
 		 * would be after the value we are going to store when we get control
 		 * back.  Which would be wrong.
+		 *
+		 * Note that a shared lock is sufficient, because it's enough to stop
+		 * someone from advancing nextMXact; and nobody else could be trying to
+		 * write to our OldestMember entry, only reading (and we assume storing
+		 * it is atomic.)
 		 */
-		LWLockAcquire(MultiXactGenLock, LW_EXCLUSIVE);
+		LWLockAcquire(MultiXactGenLock, LW_SHARED);
 
 		/*
 		 * We have to beware of the possibility that nextMXact is in the
@@ -1559,7 +1564,7 @@ AtEOXact_MultiXact(void)
 
 /*
  * AtPrepare_MultiXact
- *		Save multixact state at 2PC tranasction prepare
+ *		Save multixact state at 2PC transaction prepare
  *
  * In this phase, we only store our OldestMemberMXactId value in the two-phase
  * state file.
@@ -2335,6 +2340,65 @@ GetOldestMultiXactId(void)
 	return oldestMXact;
 }
 
+/*
+ * SlruScanDirectory callback.
+ * 		This callback deletes segments that are outside the range determined by
+ * 		the given page numbers.
+ *
+ * Both range endpoints are exclusive (that is, segments containing any of
+ * those pages are kept.)
+ */
+typedef struct MembersLiveRange
+{
+	int		rangeStart;
+	int		rangeEnd;
+} MembersLiveRange;
+
+static bool
+SlruScanDirCbRemoveMembers(SlruCtl ctl, char *filename, int segpage,
+						   void *data)
+{
+	MembersLiveRange *range = (MembersLiveRange *) data;
+	MultiXactOffset	nextOffset;
+
+	if ((segpage == range->rangeStart) ||
+		(segpage == range->rangeEnd))
+		return false;		/* easy case out */
+
+	/*
+	 * To ensure that no segment is spuriously removed, we must keep track
+	 * of new segments added since the start of the directory scan; to do this,
+	 * we update our end-of-range point as we run.
+	 *
+	 * As an optimization, we can skip looking at shared memory if we know for
+	 * certain that the current segment must be kept.  This is so because
+	 * nextOffset never decreases, and we never increase rangeStart during any
+	 * one run.
+	 */
+	if (!((range->rangeStart > range->rangeEnd &&
+		   segpage > range->rangeEnd && segpage < range->rangeStart) ||
+		  (range->rangeStart < range->rangeEnd &&
+		   (segpage < range->rangeStart || segpage > range->rangeEnd))))
+		return false;
+
+	/*
+	 * Update our idea of the end of the live range.
+	 */
+	LWLockAcquire(MultiXactGenLock, LW_SHARED);
+	nextOffset = MultiXactState->nextOffset;
+	LWLockRelease(MultiXactGenLock);
+	range->rangeEnd = MXOffsetToMemberPage(nextOffset);
+
+	/* Recheck the deletion condition.  If it still holds, perform deletion */
+	if ((range->rangeStart > range->rangeEnd &&
+		 segpage > range->rangeEnd && segpage < range->rangeStart) ||
+		(range->rangeStart < range->rangeEnd &&
+		 (segpage < range->rangeStart || segpage > range->rangeEnd)))
+		SlruDeleteSegment(ctl, filename);
+
+	return false;				/* keep going */
+}
+
 typedef struct mxtruncinfo
 {
 	int			earliestExistingPage;
@@ -2376,8 +2440,10 @@ void
 TruncateMultiXact(MultiXactId oldestMXact)
 {
 	MultiXactOffset oldestOffset;
+	MultiXactOffset	nextOffset;
 	mxtruncinfo trunc;
 	MultiXactId earliest;
+	MembersLiveRange	range;
 
 	/*
 	 * Note we can't just plow ahead with the truncation; it's possible that
@@ -2424,9 +2490,23 @@ TruncateMultiXact(MultiXactId oldestMXact)
 	SimpleLruTruncate(MultiXactOffsetCtl,
 					  MultiXactIdToOffsetPage(oldestMXact));
 
-	/* truncate MultiXactMembers and we're done */
-	SimpleLruTruncate(MultiXactMemberCtl,
-					  MXOffsetToMemberPage(oldestOffset));
+	/*
+	 * To truncate MultiXactMembers, we need to figure out the active page
+	 * range and delete all files outside that range.  The start point is the
+	 * start of the segment containing the oldest offset; an end point of the
+	 * segment containing the next offset to use is enough.  The end point is
+	 * updated as MultiXactMember gets extended concurrently, elsewhere.
+	 */
+	range.rangeStart = MXOffsetToMemberPage(oldestOffset);
+	range.rangeStart -= range.rangeStart % SLRU_PAGES_PER_SEGMENT;
+
+	LWLockAcquire(MultiXactGenLock, LW_SHARED);
+	nextOffset = MultiXactState->nextOffset;
+	LWLockRelease(MultiXactGenLock);
+
+	range.rangeEnd = MXOffsetToMemberPage(nextOffset);
+
+	SlruScanDirectory(MultiXactMemberCtl, SlruScanDirCbRemoveMembers, &range);
 }
 
 /*

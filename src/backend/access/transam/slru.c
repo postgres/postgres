@@ -1210,6 +1210,17 @@ restart:;
 	(void) SlruScanDirectory(ctl, SlruScanDirCbDeleteCutoff, &cutoffPage);
 }
 
+void
+SlruDeleteSegment(SlruCtl ctl, char *filename)
+{
+	char		path[MAXPGPATH];
+
+	snprintf(path, MAXPGPATH, "%s/%s", ctl->Dir, filename);
+	ereport(DEBUG2,
+			(errmsg("removing file \"%s\"", path)));
+	unlink(path);
+}
+
 /*
  * SlruScanDirectory callback
  *		This callback reports true if there's any segment prior to the one
@@ -1235,16 +1246,10 @@ SlruScanDirCbReportPresence(SlruCtl ctl, char *filename, int segpage, void *data
 static bool
 SlruScanDirCbDeleteCutoff(SlruCtl ctl, char *filename, int segpage, void *data)
 {
-	char		path[MAXPGPATH];
 	int			cutoffPage = *(int *) data;
 
 	if (ctl->PagePrecedes(segpage, cutoffPage))
-	{
-		snprintf(path, MAXPGPATH, "%s/%s", ctl->Dir, filename);
-		ereport(DEBUG2,
-				(errmsg("removing file \"%s\"", path)));
-		unlink(path);
-	}
+		SlruDeleteSegment(ctl, filename);
 
 	return false;				/* keep going */
 }
@@ -1256,12 +1261,7 @@ SlruScanDirCbDeleteCutoff(SlruCtl ctl, char *filename, int segpage, void *data)
 bool
 SlruScanDirCbDeleteAll(SlruCtl ctl, char *filename, int segpage, void *data)
 {
-	char		path[MAXPGPATH];
-
-	snprintf(path, MAXPGPATH, "%s/%s", ctl->Dir, filename);
-	ereport(DEBUG2,
-			(errmsg("removing file \"%s\"", path)));
-	unlink(path);
+	SlruDeleteSegment(ctl, filename);
 
 	return false;				/* keep going */
 }
@@ -1271,6 +1271,11 @@ SlruScanDirCbDeleteAll(SlruCtl ctl, char *filename, int segpage, void *data)
  *
  * If the callback returns true, the scan is stopped.  The last return value
  * from the callback is returned.
+ *
+ * The callback receives the following arguments: 1. the SlruCtl struct for the
+ * slru being truncated; 2. the filename being considered; 3. the page number
+ * for the first page of that file; 4. a pointer to the opaque data given to us
+ * by the caller.
  *
  * Note that the ordering in which the directory is scanned is not guaranteed.
  *

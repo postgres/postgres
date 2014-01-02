@@ -150,6 +150,7 @@ extern bool SimpleLruDoesPhysicalPageExist(SlruCtl ctl, int pageno);
 typedef bool (*SlruScanCallback) (SlruCtl ctl, char *filename, int segpage,
 											  void *data);
 extern bool SlruScanDirectory(SlruCtl ctl, SlruScanCallback callback, void *data);
+extern void SlruDeleteSegment(SlruCtl ctl, char *filename);
 
 /* SlruScanDirectory public callbacks */
 extern bool SlruScanDirCbReportPresence(SlruCtl ctl, char *filename,
