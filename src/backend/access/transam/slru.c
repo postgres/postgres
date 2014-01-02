@@ -1293,8 +1293,12 @@ SlruScanDirectory(SlruCtl ctl, SlruScanCallback callback, void *data)
 	cldir = AllocateDir(ctl->Dir);
 	while ((clde = ReadDir(cldir, ctl->Dir)) != NULL)
 	{
-		if (strlen(clde->d_name) == 4 &&
-			strspn(clde->d_name, "0123456789ABCDEF") == 4)
+		size_t	len;
+
+		len = strlen(clde->d_name);
+
+		if ((len == 4 || len == 5) &&
+			strspn(clde->d_name, "0123456789ABCDEF") == len)
 		{
 			segno = (int) strtol(clde->d_name, NULL, 16);
 			segpage = segno * SLRU_PAGES_PER_SEGMENT;
