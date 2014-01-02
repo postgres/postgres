@@ -2259,7 +2259,6 @@ ExtendMultiXactMember(MultiXactOffset offset, int nmembers)
 	{
 		int			flagsoff;
 		int			flagsbit;
-		int			difference;
 
 		/*
 		 * Only zero when at first entry of a page.
@@ -2280,10 +2279,25 @@ ExtendMultiXactMember(MultiXactOffset offset, int nmembers)
 			LWLockRelease(MultiXactMemberControlLock);
 		}
 
-		/* Advance to next page (OK if nmembers goes negative) */
-		difference = MULTIXACT_MEMBERS_PER_PAGE - offset % MULTIXACT_MEMBERS_PER_PAGE;
-		offset += difference;
-		nmembers -= difference;
+		/*
+		 * Advance to next page, taking care to properly handle the wraparound
+		 * case.  OK if nmembers goes negative.
+		 */
+		if ((unsigned int) (offset + nmembers) < offset)
+		{
+			uint32		difference = offset + MULTIXACT_MEMBERS_PER_PAGE;
+
+			nmembers -= (unsigned int) (MULTIXACT_MEMBERS_PER_PAGE - difference);
+			offset = 0;
+		}
+		else
+		{
+			int			difference;
+
+			difference = MULTIXACT_MEMBERS_PER_PAGE - offset % MULTIXACT_MEMBERS_PER_PAGE;
+			nmembers -= difference;
+			offset += difference;
+		}
 	}
 }
 
