@@ -79,7 +79,7 @@ bool		XLogArchiveMode = false;
 char	   *XLogArchiveCommand = NULL;
 bool		EnableHotStandby = false;
 bool		fullPageWrites = true;
-bool		walLogHints = false;
+bool		wal_log_hints = false;
 bool		log_checkpoints = false;
 int			sync_method = DEFAULT_SYNC_METHOD;
 int			wal_level = WAL_LEVEL_MINIMAL;
@@ -5271,7 +5271,7 @@ BootStrapXLOG(void)
 	ControlFile->max_prepared_xacts = max_prepared_xacts;
 	ControlFile->max_locks_per_xact = max_locks_per_xact;
 	ControlFile->wal_level = wal_level;
-	ControlFile->wal_log_hints = walLogHints;
+	ControlFile->wal_log_hints = wal_log_hints;
 	ControlFile->data_checksum_version = bootstrap_data_checksum_version;
 
 	/* some additional ControlFile fields are set in WriteControlFile() */
@@ -9060,7 +9060,7 @@ static void
 XLogReportParameters(void)
 {
 	if (wal_level != ControlFile->wal_level ||
-		walLogHints != ControlFile->wal_log_hints ||
+		wal_log_hints != ControlFile->wal_log_hints ||
 		MaxConnections != ControlFile->MaxConnections ||
 		max_worker_processes != ControlFile->max_worker_processes ||
 		max_prepared_xacts != ControlFile->max_prepared_xacts ||
@@ -9083,7 +9083,7 @@ XLogReportParameters(void)
 			xlrec.max_prepared_xacts = max_prepared_xacts;
 			xlrec.max_locks_per_xact = max_locks_per_xact;
 			xlrec.wal_level = wal_level;
-			xlrec.wal_log_hints = walLogHints;
+			xlrec.wal_log_hints = wal_log_hints;
 
 			rdata.buffer = InvalidBuffer;
 			rdata.data = (char *) &xlrec;
@@ -9098,7 +9098,7 @@ XLogReportParameters(void)
 		ControlFile->max_prepared_xacts = max_prepared_xacts;
 		ControlFile->max_locks_per_xact = max_locks_per_xact;
 		ControlFile->wal_level = wal_level;
-		ControlFile->wal_log_hints = walLogHints;
+		ControlFile->wal_log_hints = wal_log_hints;
 		UpdateControlFile();
 	}
 }
@@ -9485,7 +9485,7 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 		ControlFile->max_prepared_xacts = xlrec.max_prepared_xacts;
 		ControlFile->max_locks_per_xact = xlrec.max_locks_per_xact;
 		ControlFile->wal_level = xlrec.wal_level;
-		ControlFile->wal_log_hints = walLogHints;
+		ControlFile->wal_log_hints = wal_log_hints;
 
 		/*
 		 * Update minRecoveryPoint to ensure that if recovery is aborted, we

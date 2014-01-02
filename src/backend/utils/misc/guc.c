@@ -876,7 +876,7 @@ static struct config_bool ConfigureNamesBool[] =
 			gettext_noop("Writes full pages to WAL when first modified after a checkpoint, even for a non-critical modifications"),
 			NULL
 		},
-		&walLogHints,
+		&wal_log_hints,
 		false,
 		NULL, NULL, NULL
 	},

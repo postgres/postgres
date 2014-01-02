@@ -189,7 +189,7 @@ extern bool XLogArchiveMode;
 extern char *XLogArchiveCommand;
 extern bool EnableHotStandby;
 extern bool fullPageWrites;
-extern bool walLogHints;
+extern bool wal_log_hints;
 extern bool log_checkpoints;
 extern int	num_xloginsert_slots;
 
@@ -221,7 +221,7 @@ extern int	wal_level;
  * of the bits make it to disk, but the checksum wouldn't match.  Also WAL-log
  * them if forced by wal_log_hints=on.
  */
-#define XLogHintBitIsNeeded() (DataChecksumsEnabled() || walLogHints)
+#define XLogHintBitIsNeeded() (DataChecksumsEnabled() || wal_log_hints)
 
 /* Do we need to WAL-log information required only for Hot Standby and logical replication? */
 #define XLogStandbyInfoActive() (wal_level >= WAL_LEVEL_HOT_STANDBY)
