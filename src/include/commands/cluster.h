@@ -20,7 +20,7 @@
 
 extern void cluster(ClusterStmt *stmt, bool isTopLevel);
 extern void cluster_rel(Oid tableOid, Oid indexOid, bool recheck,
-			bool verbose, int freeze_min_age, int freeze_table_age);
+			bool verbose);
 extern void check_index_is_clusterable(Relation OldHeap, Oid indexOid,
 						   bool recheck, LOCKMODE lockmode);
 extern void mark_index_clustered(Relation rel, Oid indexOid, bool is_internal);

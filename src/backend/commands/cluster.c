@@ -64,12 +64,10 @@ typedef struct
 } RelToCluster;
 
 
-static void rebuild_relation(Relation OldHeap, Oid indexOid,
-				 int freeze_min_age, int freeze_table_age, bool verbose);
+static void rebuild_relation(Relation OldHeap, Oid indexOid, bool verbose);
 static void copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
-			   int freeze_min_age, int freeze_table_age, bool verbose,
-			   bool *pSwapToastByContent, TransactionId *pFreezeXid,
-			   MultiXactId *pCutoffMulti);
+			   bool verbose, bool *pSwapToastByContent,
+			   TransactionId *pFreezeXid, MultiXactId *pCutoffMulti);
 static List *get_tables_to_cluster(MemoryContext cluster_context);
 static void reform_and_rewrite_tuple(HeapTuple tuple,
 						 TupleDesc oldTupDesc, TupleDesc newTupDesc,
@@ -176,11 +174,8 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 		/* close relation, keep lock till commit */
 		heap_close(rel, NoLock);
 
-		/*
-		 * Do the job.  We use a -1 freeze_min_age to avoid having CLUSTER
-		 * freeze tuples earlier than a plain VACUUM would.
-		 */
-		cluster_rel(tableOid, indexOid, false, stmt->verbose, -1, -1);
+		/* Do the job. */
+		cluster_rel(tableOid, indexOid, false, stmt->verbose);
 	}
 	else
 	{
@@ -229,9 +224,8 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 			StartTransactionCommand();
 			/* functions in indexes may want a snapshot set */
 			PushActiveSnapshot(GetTransactionSnapshot());
-			/* Do the job.  As above, use a -1 freeze_min_age. */
-			cluster_rel(rvtc->tableOid, rvtc->indexOid, true, stmt->verbose,
-						-1, -1);
+			/* Do the job. */
+			cluster_rel(rvtc->tableOid, rvtc->indexOid, true, stmt->verbose);
 			PopActiveSnapshot();
 			CommitTransactionCommand();
 		}
@@ -262,8 +256,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
  * and error messages should refer to the operation as VACUUM not CLUSTER.
  */
 void
-cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose,
-			int freeze_min_age, int freeze_table_age)
+cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose)
 {
 	Relation	OldHeap;
 
@@ -407,8 +400,7 @@ cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose,
 	TransferPredicateLocksToHeapRelation(OldHeap);
 
 	/* rebuild_relation does all the dirty work */
-	rebuild_relation(OldHeap, indexOid, freeze_min_age, freeze_table_age,
-					 verbose);
+	rebuild_relation(OldHeap, indexOid, verbose);
 
 	/* NB: rebuild_relation does heap_close() on OldHeap */
 }
@@ -561,8 +553,7 @@ mark_index_clustered(Relation rel, Oid indexOid, bool is_internal)
  * NB: this routine closes OldHeap at the right time; caller should not.
  */
 static void
-rebuild_relation(Relation OldHeap, Oid indexOid,
-				 int freeze_min_age, int freeze_table_age, bool verbose)
+rebuild_relation(Relation OldHeap, Oid indexOid, bool verbose)
 {
 	Oid			tableOid = RelationGetRelid(OldHeap);
 	Oid			tableSpace = OldHeap->rd_rel->reltablespace;
@@ -587,8 +578,7 @@ rebuild_relation(Relation OldHeap, Oid indexOid,
 							   AccessExclusiveLock);
 
 	/* Copy the heap data into the new table in the desired order */
-	copy_heap_data(OIDNewHeap, tableOid, indexOid,
-				   freeze_min_age, freeze_table_age, verbose,
+	copy_heap_data(OIDNewHeap, tableOid, indexOid, verbose,
 				   &swap_toast_by_content, &frozenXid, &cutoffMulti);
 
 	/*
@@ -743,8 +733,7 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, bool forcetemp,
  * *pCutoffMulti receives the MultiXactId used as a cutoff point.
  */
 static void
-copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
-			   int freeze_min_age, int freeze_table_age, bool verbose,
+copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 			   bool *pSwapToastByContent, TransactionId *pFreezeXid,
 			   MultiXactId *pCutoffMulti)
 {
@@ -857,10 +846,11 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 		*pSwapToastByContent = false;
 
 	/*
-	 * compute xids used to freeze and weed out dead tuples.
+	 * Compute xids used to freeze and weed out dead tuples and multixacts.
+	 * Since we're going to rewrite the whole table anyway, there's no reason
+	 * not to be aggressive about this.
 	 */
-	vacuum_set_xid_limits(freeze_min_age, freeze_table_age,
-						  OldHeap->rd_rel->relisshared,
+	vacuum_set_xid_limits(0, 0, OldHeap->rd_rel->relisshared,
 						  &OldestXmin, &FreezeXid, NULL, &MultiXactCutoff,
 						  NULL);
 

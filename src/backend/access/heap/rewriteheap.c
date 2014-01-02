@@ -345,7 +345,7 @@ rewrite_heap_tuple(RewriteState state,
 
 	/*
 	 * While we have our hands on the tuple, we may as well freeze any
-	 * very-old xmin or xmax, so that future VACUUM effort can be saved.
+	 * eligible xmin or xmax, so that future VACUUM effort can be saved.
 	 */
 	heap_freeze_tuple(new_tuple->t_data, state->rs_freeze_xid,
 					  state->rs_cutoff_multi);
