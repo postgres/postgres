@@ -1446,9 +1446,11 @@ index_drop(Oid indexId, bool concurrent)
 
 		/*
 		 * Now we must wait until no running transaction could be using the
-		 * index for a query. Note we do not need to worry about xacts that
-		 * open the table for reading after this point; they will see the
-		 * index as invalid when they open the relation.
+		 * index for a query.  Use AccessExclusiveLock here to check for
+		 * running transactions that hold locks of any kind on the table.
+		 * Note we do not need to worry about xacts that open the table for
+		 * reading after this point; they will see the index as invalid when
+		 * they open the relation.
 		 *
 		 * Note: the reason we use actual lock acquisition here, rather than
 		 * just checking the ProcArray and sleeping, is that deadlock is
