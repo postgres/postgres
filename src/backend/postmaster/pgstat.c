@@ -330,6 +330,16 @@ pgstat_init(void)
 #define TESTBYTEVAL ((char) 199)
 
 	/*
+	 * This static assertion verifies that we didn't mess up the calculations
+	 * involved in selecting maximum payload sizes for our UDP messages.
+	 * Because the only consequence of overrunning PGSTAT_MAX_MSG_SIZE would
+	 * be silent performance loss from fragmentation, it seems worth having a
+	 * compile-time cross-check that we didn't.
+	 */
+	StaticAssertStmt(sizeof(PgStat_Msg) <= PGSTAT_MAX_MSG_SIZE,
+				   'maximum stats message size exceeds PGSTAT_MAX_MSG_SIZE');
+
+	/*
 	 * Create the UDP socket for sending and receiving statistic messages
 	 */
 	hints.ai_flags = AI_PASSIVE;

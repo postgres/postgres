@@ -177,11 +177,13 @@ typedef struct PgStat_MsgHdr
 
 /* ----------
  * Space available in a message.  This will keep the UDP packets below 1K,
- * which should fit unfragmented into the MTU of the lo interface on most
- * platforms. Does anybody care for platforms where it doesn't?
+ * which should fit unfragmented into the MTU of the loopback interface.
+ * (Larger values of PGSTAT_MAX_MSG_SIZE would work for that on most
+ * platforms, but we're being conservative here.)
  * ----------
  */
-#define PGSTAT_MSG_PAYLOAD	(1000 - sizeof(PgStat_MsgHdr))
+#define PGSTAT_MAX_MSG_SIZE 1000
+#define PGSTAT_MSG_PAYLOAD	(PGSTAT_MAX_MSG_SIZE - sizeof(PgStat_MsgHdr))
 
 
 /* ----------
@@ -225,7 +227,7 @@ typedef struct PgStat_TableEntry
  * ----------
  */
 #define PGSTAT_NUM_TABENTRIES  \
-	((PGSTAT_MSG_PAYLOAD - sizeof(Oid) - 3 * sizeof(int))  \
+	((PGSTAT_MSG_PAYLOAD - sizeof(Oid) - 3 * sizeof(int) - 2 * sizeof(PgStat_Counter))	\
 	 / sizeof(PgStat_TableEntry))
 
 typedef struct PgStat_MsgTabstat
