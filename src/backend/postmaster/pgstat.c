@@ -337,7 +337,7 @@ pgstat_init(void)
 	 * compile-time cross-check that we didn't.
 	 */
 	StaticAssertStmt(sizeof(PgStat_Msg) <= PGSTAT_MAX_MSG_SIZE,
-				   'maximum stats message size exceeds PGSTAT_MAX_MSG_SIZE');
+				   "maximum stats message size exceeds PGSTAT_MAX_MSG_SIZE");
 
 	/*
 	 * Create the UDP socket for sending and receiving statistic messages
