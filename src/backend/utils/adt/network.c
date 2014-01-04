@@ -544,8 +544,8 @@ network_sub(PG_FUNCTION_ARGS)
 
 	if (ip_family(a1) == ip_family(a2))
 	{
-		PG_RETURN_BOOL(ip_bits(a1) > ip_bits(a2)
-					 && bitncmp(ip_addr(a1), ip_addr(a2), ip_bits(a2)) == 0);
+		PG_RETURN_BOOL(ip_bits(a1) > ip_bits(a2) &&
+					   bitncmp(ip_addr(a1), ip_addr(a2), ip_bits(a2)) == 0);
 	}
 
 	PG_RETURN_BOOL(false);
@@ -559,8 +559,8 @@ network_subeq(PG_FUNCTION_ARGS)
 
 	if (ip_family(a1) == ip_family(a2))
 	{
-		PG_RETURN_BOOL(ip_bits(a1) >= ip_bits(a2)
-					 && bitncmp(ip_addr(a1), ip_addr(a2), ip_bits(a2)) == 0);
+		PG_RETURN_BOOL(ip_bits(a1) >= ip_bits(a2) &&
+					   bitncmp(ip_addr(a1), ip_addr(a2), ip_bits(a2)) == 0);
 	}
 
 	PG_RETURN_BOOL(false);
@@ -574,8 +574,8 @@ network_sup(PG_FUNCTION_ARGS)
 
 	if (ip_family(a1) == ip_family(a2))
 	{
-		PG_RETURN_BOOL(ip_bits(a1) < ip_bits(a2)
-					 && bitncmp(ip_addr(a1), ip_addr(a2), ip_bits(a1)) == 0);
+		PG_RETURN_BOOL(ip_bits(a1) < ip_bits(a2) &&
+					   bitncmp(ip_addr(a1), ip_addr(a2), ip_bits(a1)) == 0);
 	}
 
 	PG_RETURN_BOOL(false);
@@ -589,8 +589,8 @@ network_supeq(PG_FUNCTION_ARGS)
 
 	if (ip_family(a1) == ip_family(a2))
 	{
-		PG_RETURN_BOOL(ip_bits(a1) <= ip_bits(a2)
-					 && bitncmp(ip_addr(a1), ip_addr(a2), ip_bits(a1)) == 0);
+		PG_RETURN_BOOL(ip_bits(a1) <= ip_bits(a2) &&
+					   bitncmp(ip_addr(a1), ip_addr(a2), ip_bits(a1)) == 0);
 	}
 
 	PG_RETURN_BOOL(false);
@@ -955,7 +955,7 @@ convert_network_to_scalar(Datum value, Oid typid)
  * bitncmp(l, r, n)
  *		compare bit masks l and r, for n bits.
  * return:
- *		-1, 1, or 0 in the libc tradition.
+ *		<0, >0, or 0 in the libc tradition.
  * note:
  *		network byte order assumed.  this means 192.5.5.240/28 has
  *		0x11110000 in its fourth octet.
