@@ -2895,7 +2895,8 @@ listConversions(const char *pattern, bool verbose, bool showSystem)
 	PQExpBufferData buf;
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
-	static const bool translate_columns[] = {false, false, false, false, true};
+	static const bool translate_columns[] =
+		{false, false, false, false, true, false};
 
 	initPQExpBuffer(&buf);
 
@@ -2969,7 +2970,7 @@ listCasts(const char *pattern, bool verbose)
 	PQExpBufferData buf;
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
-	static const bool translate_columns[] = {false, false, false, true};
+	static const bool translate_columns[] = {false, false, false, true, false};
 
 	initPQExpBuffer(&buf);
 
