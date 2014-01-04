@@ -723,7 +723,7 @@ postgresGetForeignPlan(PlannerInfo *root,
 	/*
 	 * Separate the scan_clauses into those that can be executed remotely and
 	 * those that can't.  baserestrictinfo clauses that were previously
-	 * determined to be safe or unsafe by classifyClauses are shown in
+	 * determined to be safe or unsafe by classifyConditions are shown in
 	 * fpinfo->remote_conds and fpinfo->local_conds.  Anything else in the
 	 * scan_clauses list should be a join clause that was found safe by
 	 * postgresGetForeignPaths.
