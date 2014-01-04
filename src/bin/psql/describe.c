@@ -217,7 +217,7 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 	PQExpBufferData buf;
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
-	static const bool translate_columns[] = {false, false, false, false, true, true, false, false, false, false};
+	static const bool translate_columns[] = {false, false, false, false, true, true, true, false, false, false, false};
 
 	if (strlen(functypes) != strspn(functypes, "antwS+"))
 	{
@@ -2945,7 +2945,8 @@ listConversions(const char *pattern, bool verbose, bool showSystem)
 	PQExpBufferData buf;
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
-	static const bool translate_columns[] = {false, false, false, false, true};
+	static const bool translate_columns[] =
+		{false, false, false, false, true, false};
 
 	initPQExpBuffer(&buf);
 
@@ -3025,19 +3026,23 @@ listEventTriggers(const char *pattern, bool verbose)
 	initPQExpBuffer(&buf);
 
 	printfPQExpBuffer(&buf,
-					  "select evtname as \"%s\", "
-					  "evtevent as  \"%s\", "
-					  "pg_catalog.pg_get_userbyid(e.evtowner) AS \"%s\", "
-					  "case evtenabled when 'O' then 'enabled' "
-					  "  when 'R' then 'replica' "
-					  "  when 'A' then 'always' "
-					  "  when 'D' then 'disabled' end as  \"%s\", "
-					  "e.evtfoid::regproc as \"%s\", "
-					  "array_to_string(array(select x "
-					"      from unnest(evttags) as t(x)), ', ') as  \"%s\" ",
+					  "SELECT evtname as \"%s\", "
+					  "evtevent as \"%s\", "
+					  "pg_catalog.pg_get_userbyid(e.evtowner) as \"%s\",\n"
+					  " case evtenabled when 'O' then '%s'"
+					  "  when 'R' then '%s'"
+					  "  when 'A' then '%s'"
+					  "  when 'D' then '%s' end as \"%s\",\n"
+					  " e.evtfoid::pg_catalog.regproc as \"%s\", "
+					  "pg_catalog.array_to_string(array(select x"
+					  " from pg_catalog.unnest(evttags) as t(x)), ', ') as \"%s\"",
 					  gettext_noop("Name"),
 					  gettext_noop("Event"),
 					  gettext_noop("Owner"),
+					  gettext_noop("enabled"),
+					  gettext_noop("replica"),
+					  gettext_noop("always"),
+					  gettext_noop("disabled"),
 					  gettext_noop("Enabled"),
 					  gettext_noop("Procedure"),
 					  gettext_noop("Tags"));
@@ -3046,7 +3051,7 @@ listEventTriggers(const char *pattern, bool verbose)
 		",\npg_catalog.obj_description(e.oid, 'pg_event_trigger') as \"%s\"",
 						  gettext_noop("Description"));
 	appendPQExpBuffer(&buf,
-					  "\nFROM pg_event_trigger e ");
+					  "\nFROM pg_catalog.pg_event_trigger e ");
 
 	processSQLNamePattern(pset.db, &buf, pattern, false, false,
 						  NULL, "evtname", NULL, NULL);
@@ -3080,7 +3085,7 @@ listCasts(const char *pattern, bool verbose)
 	PQExpBufferData buf;
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
-	static const bool translate_columns[] = {false, false, false, true};
+	static const bool translate_columns[] = {false, false, false, true, false};
 
 	initPQExpBuffer(&buf);
 
