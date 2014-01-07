@@ -342,6 +342,7 @@ static Query *
 transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 {
 	Query	   *qry = makeNode(Query);
+	ParseNamespaceItem *nsitem;
 	Node	   *qual;
 
 	qry->commandType = CMD_DELETE;
@@ -360,7 +361,14 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 										 true,
 										 ACL_DELETE);
 
+	/* grab the namespace item made by setTargetTable */
+	nsitem = (ParseNamespaceItem *) llast(pstate->p_namespace);
+
+	/* there's no DISTINCT in DELETE */
 	qry->distinctClause = NIL;
+
+	/* subqueries in USING can see the result relation only via LATERAL */
+	nsitem->p_lateral_only = true;
 
 	/*
 	 * The USING clause is non-standard SQL syntax, and is equivalent in
@@ -369,6 +377,9 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 	 * keyword in the DELETE syntax.
 	 */
 	transformFromClause(pstate, stmt->usingClause);
+
+	/* remaining clauses can see the result relation normally */
+	nsitem->p_lateral_only = false;
 
 	qual = transformWhereClause(pstate, stmt->whereClause,
 								EXPR_KIND_WHERE, "WHERE");
@@ -1889,6 +1900,7 @@ static Query *
 transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 {
 	Query	   *qry = makeNode(Query);
+	ParseNamespaceItem *nsitem;
 	RangeTblEntry *target_rte;
 	Node	   *qual;
 	ListCell   *origTargetList;
@@ -1910,11 +1922,20 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 										 true,
 										 ACL_UPDATE);
 
+	/* grab the namespace item made by setTargetTable */
+	nsitem = (ParseNamespaceItem *) llast(pstate->p_namespace);
+
+	/* subqueries in FROM can see the result relation only via LATERAL */
+	nsitem->p_lateral_only = true;
+
 	/*
 	 * the FROM clause is non-standard SQL syntax. We used to be able to do
 	 * this with REPLACE in POSTQUEL so we keep the feature.
 	 */
 	transformFromClause(pstate, stmt->fromClause);
+
+	/* remaining clauses can see the result relation normally */
+	nsitem->p_lateral_only = false;
 
 	qry->targetList = transformTargetList(pstate, stmt->targetList,
 										  EXPR_KIND_UPDATE_SOURCE);
