@@ -3,7 +3,7 @@
  * test_parser.c
  *	  Simple example of a text search parser
  *
- * Copyright (c) 2007-2013, PostgreSQL Global Development Group
+ * Copyright (c) 2007-2014, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  contrib/test_parser/test_parser.c

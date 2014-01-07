@@ -3,7 +3,7 @@
  * walreceiver.h
  *	  Exports from replication/walreceiverfuncs.c.
  *
- * Portions Copyright (c) 2010-2013, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2010-2014, PostgreSQL Global Development Group
  *
  * src/include/replication/walreceiver.h
  *

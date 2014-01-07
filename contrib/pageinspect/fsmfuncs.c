@@ -9,7 +9,7 @@
  * there's hardly any use case for using these without superuser-rights
  * anyway.
  *
- * Copyright (c) 2007-2013, PostgreSQL Global Development Group
+ * Copyright (c) 2007-2014, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  contrib/pageinspect/fsmfuncs.c

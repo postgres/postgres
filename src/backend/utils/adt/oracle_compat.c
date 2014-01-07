@@ -2,7 +2,7 @@
  * oracle_compat.c
  *	Oracle compatible functions.
  *
- * Copyright (c) 1996-2013, PostgreSQL Global Development Group
+ * Copyright (c) 1996-2014, PostgreSQL Global Development Group
  *
  *	Author: Edmund Mergl <E.Mergl@bawue.de>
  *	Multibyte enhancement: Tatsuo Ishii <ishii@postgresql.org>

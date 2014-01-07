@@ -4,7 +4,7 @@
  *		Functions for handling locale-related info
  *
  *
- * Copyright (c) 1996-2013, PostgreSQL Global Development Group
+ * Copyright (c) 1996-2014, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION

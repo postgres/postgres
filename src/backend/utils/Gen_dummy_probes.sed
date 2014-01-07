@@ -1,7 +1,7 @@
 #-------------------------------------------------------------------------
 # sed script to create dummy probes.h file when dtrace is not available
 #
-# Copyright (c) 2008-2013, PostgreSQL Global Development Group
+# Copyright (c) 2008-2014, PostgreSQL Global Development Group
 #
 # src/backend/utils/Gen_dummy_probes.sed
 #-------------------------------------------------------------------------

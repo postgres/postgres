@@ -4,7 +4,7 @@
  *	  Tuple macros used by both index tuples and heap tuples.
  *
  *
- * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/tupmacs.h

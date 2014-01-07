@@ -3,7 +3,7 @@
  * wparser_def.c
  *		Default text search parser
  *
- * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION

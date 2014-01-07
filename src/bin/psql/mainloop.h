@@ -1,7 +1,7 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2013, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2014, PostgreSQL Global Development Group
  *
  * src/bin/psql/mainloop.h
  */

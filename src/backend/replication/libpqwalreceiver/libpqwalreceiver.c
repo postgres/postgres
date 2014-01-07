@@ -6,7 +6,7 @@
  * loaded as a dynamic module to avoid linking the main server binary with
  * libpq.
  *
- * Portions Copyright (c) 2010-2013, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2010-2014, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION

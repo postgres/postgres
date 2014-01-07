@@ -43,7 +43,7 @@
  * Beware of multiple evaluations of the macro arguments.
  *
  *
- * Copyright (c) 2001-2013, PostgreSQL Global Development Group
+ * Copyright (c) 2001-2014, PostgreSQL Global Development Group
  *
  * src/include/portability/instr_time.h
  *

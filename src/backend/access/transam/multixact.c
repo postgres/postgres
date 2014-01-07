@@ -54,7 +54,7 @@
  * values are to be created, care is taken that the counter does not
  * fall within the wraparound horizon considering the global minimum value.
  *
- * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/access/transam/multixact.c

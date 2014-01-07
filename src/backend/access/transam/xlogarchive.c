@@ -4,7 +4,7 @@
  *		Functions for archiving WAL files and restoring from the archive.
  *
  *
- * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/access/transam/xlogarchive.c

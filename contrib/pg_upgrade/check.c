@@ -3,7 +3,7 @@
  *
  *	server checks and output routines
  *
- *	Copyright (c) 2010-2013, PostgreSQL Global Development Group
+ *	Copyright (c) 2010-2014, PostgreSQL Global Development Group
  *	contrib/pg_upgrade/check.c
  */
 

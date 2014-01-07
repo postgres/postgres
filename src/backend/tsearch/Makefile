@@ -2,7 +2,7 @@
 #
 # Makefile for backend/tsearch
 #
-# Copyright (c) 2006-2013, PostgreSQL Global Development Group
+# Copyright (c) 2006-2014, PostgreSQL Global Development Group
 #
 # src/backend/tsearch/Makefile
 #

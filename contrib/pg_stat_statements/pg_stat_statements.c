@@ -34,7 +34,7 @@
  * disappear!) and also take the entry's mutex spinlock.
  *
  *
- * Copyright (c) 2008-2013, PostgreSQL Global Development Group
+ * Copyright (c) 2008-2014, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  contrib/pg_stat_statements/pg_stat_statements.c

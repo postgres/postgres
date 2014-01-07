@@ -3,7 +3,7 @@
  * syncrep.h
  *	  Exports from replication/syncrep.c.
  *
- * Portions Copyright (c) 2010-2013, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2010-2014, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		src/include/replication/syncrep.h

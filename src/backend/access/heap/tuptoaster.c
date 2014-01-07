@@ -4,7 +4,7 @@
  *	  Support routines for external and compressed storage of
  *	  variable size attributes.
  *
- * Copyright (c) 2000-2013, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2014, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION

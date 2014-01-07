@@ -8,7 +8,7 @@
  * but also length coercion functions.
  *
  *
- * Copyright (c) 2002-2013, PostgreSQL Global Development Group
+ * Copyright (c) 2002-2014, PostgreSQL Global Development Group
  *
  * src/include/catalog/pg_cast.h
  *
