@@ -9727,6 +9727,9 @@ XLogFileNameP(TimeLineID tli, XLogSegNo segno)
  *
  * Every successfully started non-exclusive backup must be stopped by calling
  * do_pg_stop_backup() or do_pg_abort_backup().
+ *
+ * It is the responsibility of the caller of this function to verify the
+ * permissions of the calling user!
  */
 XLogRecPtr
 do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
@@ -9746,11 +9749,6 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 	StringInfoData labelfbuf;
 
 	backup_started_in_recovery = RecoveryInProgress();
-
-	if (!superuser() && !has_rolreplication(GetUserId()))
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-		   errmsg("must be superuser or replication role to run a backup")));
 
 	/*
 	 * Currently only non-exclusive backup can be taken during recovery.
@@ -10053,6 +10051,9 @@ pg_start_backup_callback(int code, Datum arg)
  *
  * Returns the last WAL position that must be present to restore from this
  * backup, and the corresponding timeline ID in *stoptli_p.
+ *
+ * It is the responsibility of the caller of this function to verify the
+ * permissions of the calling user!
  */
 XLogRecPtr
 do_pg_stop_backup(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
@@ -10084,11 +10085,6 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 				lo;
 
 	backup_started_in_recovery = RecoveryInProgress();
-
-	if (!superuser() && !has_rolreplication(GetUserId()))
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-		 (errmsg("must be superuser or replication role to run a backup"))));
 
 	/*
 	 * Currently only non-exclusive backup can be taken during recovery.
