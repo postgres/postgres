@@ -1563,10 +1563,7 @@ dblink_get_pkey(PG_FUNCTION_ARGS)
 		Datum		result;
 
 		values = (char **) palloc(2 * sizeof(char *));
-		values[0] = (char *) palloc(12);		/* sign, 10 digits, '\0' */
-
-		sprintf(values[0], "%d", call_cntr + 1);
-
+		values[0] = psprintf("%d", call_cntr + 1);
 		values[1] = results[call_cntr];
 
 		/* build the tuple */

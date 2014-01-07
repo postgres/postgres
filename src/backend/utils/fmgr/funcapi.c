@@ -1205,8 +1205,7 @@ build_function_result_tupdesc_d(Datum proallargtypes,
 		if (pname == NULL || pname[0] == '\0')
 		{
 			/* Parameter is not named, so gin up a column name */
-			pname = (char *) palloc(32);
-			snprintf(pname, 32, "column%d", numoutargs + 1);
+			pname = psprintf("column%d", numoutargs + 1);
 		}
 		outargnames[numoutargs] = pname;
 		numoutargs++;

@@ -73,8 +73,7 @@ complex_out(PG_FUNCTION_ARGS)
 	Complex    *complex = (Complex *) PG_GETARG_POINTER(0);
 	char	   *result;
 
-	result = (char *) palloc(100);
-	snprintf(result, 100, "(%g,%g)", complex->x, complex->y);
+	result = psprintf("(%g,%g)", complex->x, complex->y);
 	PG_RETURN_CSTRING(result);
 }
 

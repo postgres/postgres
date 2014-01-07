@@ -269,15 +269,11 @@ widget_in(char *str)
 char *
 widget_out(WIDGET * widget)
 {
-	char	   *result;
-
 	if (widget == NULL)
 		return NULL;
 
-	result = (char *) palloc(60);
-	sprintf(result, "(%g,%g,%g)",
+	return psprintf("(%g,%g,%g)",
 			widget->center.x, widget->center.y, widget->radius);
-	return result;
 }
 
 PG_FUNCTION_INFO_V1(pt_in_widget);

@@ -1649,9 +1649,7 @@ _mdfd_segpath(SMgrRelation reln, ForkNumber forknum, BlockNumber segno)
 
 	if (segno > 0)
 	{
-		/* be sure we have enough space for the '.segno' */
-		fullpath = (char *) palloc(strlen(path) + 12);
-		sprintf(fullpath, "%s.%u", path, segno);
+		fullpath = psprintf("%s.%u", path, segno);
 		pfree(path);
 	}
 	else

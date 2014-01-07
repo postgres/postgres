@@ -271,39 +271,29 @@ pgstatindex_impl(Relation rel, FunctionCallInfo fcinfo)
 			elog(ERROR, "return type must be a row type");
 
 		j = 0;
-		values[j] = palloc(32);
-		snprintf(values[j++], 32, "%d", indexStat.version);
-		values[j] = palloc(32);
-		snprintf(values[j++], 32, "%d", indexStat.level);
-		values[j] = palloc(32);
-		snprintf(values[j++], 32, INT64_FORMAT,
+		values[j++] = psprintf("%d", indexStat.version);
+		values[j++] = psprintf("%d", indexStat.level);
+		values[j++] = psprintf(INT64_FORMAT,
 				 (indexStat.root_pages +
 				  indexStat.leaf_pages +
 				  indexStat.internal_pages +
 				  indexStat.deleted_pages +
 				  indexStat.empty_pages) * BLCKSZ);
-		values[j] = palloc(32);
-		snprintf(values[j++], 32, "%u", indexStat.root_blkno);
-		values[j] = palloc(32);
-		snprintf(values[j++], 32, INT64_FORMAT, indexStat.internal_pages);
-		values[j] = palloc(32);
-		snprintf(values[j++], 32, INT64_FORMAT, indexStat.leaf_pages);
-		values[j] = palloc(32);
-		snprintf(values[j++], 32, INT64_FORMAT, indexStat.empty_pages);
-		values[j] = palloc(32);
-		snprintf(values[j++], 32, INT64_FORMAT, indexStat.deleted_pages);
-		values[j] = palloc(32);
+		values[j++] = psprintf("%u", indexStat.root_blkno);
+		values[j++] = psprintf(INT64_FORMAT, indexStat.internal_pages);
+		values[j++] = psprintf(INT64_FORMAT, indexStat.leaf_pages);
+		values[j++] = psprintf(INT64_FORMAT, indexStat.empty_pages);
+		values[j++] = psprintf(INT64_FORMAT, indexStat.deleted_pages);
 		if (indexStat.max_avail > 0)
-			snprintf(values[j++], 32, "%.2f",
+			values[j++] = psprintf("%.2f",
 					 100.0 - (double) indexStat.free_space / (double) indexStat.max_avail * 100.0);
 		else
-			snprintf(values[j++], 32, "NaN");
-		values[j] = palloc(32);
+			values[j++] = pstrdup("NaN");
 		if (indexStat.leaf_pages > 0)
-			snprintf(values[j++], 32, "%.2f",
+			values[j++] = psprintf("%.2f",
 					 (double) indexStat.fragments / (double) indexStat.leaf_pages * 100.0);
 		else
-			snprintf(values[j++], 32, "NaN");
+			values[j++] = pstrdup("NaN");
 
 		tuple = BuildTupleFromCStrings(TupleDescGetAttInMetadata(tupleDesc),
 									   values);

@@ -56,12 +56,7 @@ defGetString(DefElem *def)
 	switch (nodeTag(def->arg))
 	{
 		case T_Integer:
-			{
-				char	   *str = palloc(32);
-
-				snprintf(str, 32, "%ld", (long) intVal(def->arg));
-				return str;
-			}
+			return psprintf("%ld", (long) intVal(def->arg));
 		case T_Float:
 
 			/*

@@ -2757,8 +2757,7 @@ pg_get_multixact_members(PG_FUNCTION_ARGS)
 		HeapTuple	tuple;
 		char	   *values[2];
 
-		values[0] = palloc(32);
-		sprintf(values[0], "%u", multi->members[multi->iter].xid);
+		values[0] = psprintf("%u", multi->members[multi->iter].xid);
 		values[1] = mxstatus_to_string(multi->members[multi->iter].status);
 
 		tuple = BuildTupleFromCStrings(funccxt->attinmeta, values);

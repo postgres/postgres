@@ -1114,11 +1114,7 @@ hstore_out(PG_FUNCTION_ARGS)
 	HEntry	   *entries = ARRPTR(in);
 
 	if (count == 0)
-	{
-		out = palloc(1);
-		*out = '\0';
-		PG_RETURN_CSTRING(out);
-	}
+		PG_RETURN_CSTRING(pstrdup(""));
 
 	buflen = 0;
 

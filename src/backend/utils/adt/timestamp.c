@@ -116,15 +116,12 @@ anytimestamp_typmodin(bool istz, ArrayType *ta)
 static char *
 anytimestamp_typmodout(bool istz, int32 typmod)
 {
-	char	   *res = (char *) palloc(64);
 	const char *tz = istz ? " with time zone" : " without time zone";
 
 	if (typmod >= 0)
-		snprintf(res, 64, "(%d)%s", (int) typmod, tz);
+		return psprintf("(%d)%s", (int) typmod, tz);
 	else
-		snprintf(res, 64, "%s", tz);
-
-	return res;
+		return psprintf("%s", tz);
 }
 
 
