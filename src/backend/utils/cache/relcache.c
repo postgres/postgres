@@ -3954,6 +3954,7 @@ RelationGetIndexAttrBitmap(Relation relation, IndexAttrBitmapKind attrKind)
 			return indexattrs;
 		default:
 			elog(ERROR, "unknown attrKind %u", attrKind);
+			return NULL;
 	}
 }
 
