@@ -1611,6 +1611,10 @@ isLockedRefname(ParseState *pstate, const char *refname)
  * and/or namespace list.  (We assume caller has checked for any
  * namespace conflicts.)  The RTE is always marked as unconditionally
  * visible, that is, not LATERAL-only.
+ *
+ * Note: some callers know that they can find the new ParseNamespaceItem
+ * at the end of the pstate->p_namespace list.  This is a bit ugly but not
+ * worth complicating this function's signature for.
  */
 void
 addRTEtoQuery(ParseState *pstate, RangeTblEntry *rte,

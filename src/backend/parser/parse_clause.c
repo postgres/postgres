@@ -207,6 +207,10 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
 
 	/*
 	 * If UPDATE/DELETE, add table to joinlist and namespace.
+	 *
+	 * Note: some callers know that they can find the new ParseNamespaceItem
+	 * at the end of the pstate->p_namespace list.  This is a bit ugly but not
+	 * worth complicating this function's signature for.
 	 */
 	if (alsoSource)
 		addRTEtoQuery(pstate, rte, true, true, true);

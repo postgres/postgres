@@ -4055,3 +4055,51 @@ select 1 from tenk1 a, lateral (select max(a.unique1) from int4_tbl b) ss;
 ERROR:  aggregate functions are not allowed in FROM clause of their own query level
 LINE 1: select 1 from tenk1 a, lateral (select max(a.unique1) from i...
                                                ^
+-- check behavior of LATERAL in UPDATE/DELETE
+create temp table xx1 as select f1 as x1, -f1 as x2 from int4_tbl;
+select * from xx1;
+     x1      |     x2      
+-------------+-------------
+           0 |           0
+      123456 |     -123456
+     -123456 |      123456
+  2147483647 | -2147483647
+ -2147483647 |  2147483647
+(5 rows)
+
+-- error, can't do this without LATERAL:
+update xx1 set x2 = f1 from (select * from int4_tbl where f1 = x1) ss;
+ERROR:  column "x1" does not exist
+LINE 1: ... set x2 = f1 from (select * from int4_tbl where f1 = x1) ss;
+                                                                ^
+HINT:  There is a column named "x1" in table "xx1", but it cannot be referenced from this part of the query.
+update xx1 set x2 = f1 from (select * from int4_tbl where f1 = xx1.x1) ss;
+ERROR:  invalid reference to FROM-clause entry for table "xx1"
+LINE 1: ...t x2 = f1 from (select * from int4_tbl where f1 = xx1.x1) ss...
+                                                             ^
+HINT:  There is an entry for table "xx1", but it cannot be referenced from this part of the query.
+-- OK:
+update xx1 set x2 = f1 from lateral (select * from int4_tbl where f1 = x1) ss;
+select * from xx1;
+     x1      |     x2      
+-------------+-------------
+           0 |           0
+      123456 |      123456
+     -123456 |     -123456
+  2147483647 |  2147483647
+ -2147483647 | -2147483647
+(5 rows)
+
+-- error:
+delete from xx1 using (select * from int4_tbl where f1 = x1) ss;
+ERROR:  column "x1" does not exist
+LINE 1: ...te from xx1 using (select * from int4_tbl where f1 = x1) ss;
+                                                                ^
+HINT:  There is a column named "x1" in table "xx1", but it cannot be referenced from this part of the query.
+-- OK:
+delete from xx1 using lateral (select * from int4_tbl where f1 = x1) ss;
+select * from xx1;
+ x1 | x2 
+----+----
+(0 rows)
+
