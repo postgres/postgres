@@ -5402,13 +5402,6 @@ readRecoveryCommandFile(void)
 		}
 		else if (strcmp(item->name, "recovery_target_time") == 0)
 		{
-			/*
-			 * if recovery_target_xid or recovery_target_name specified, then
-			 * this overrides recovery_target_time
-			 */
-			if (recoveryTarget == RECOVERY_TARGET_XID ||
-				recoveryTarget == RECOVERY_TARGET_NAME)
-				continue;
 			recoveryTarget = RECOVERY_TARGET_TIME;
 
 			/*
@@ -5425,12 +5418,6 @@ readRecoveryCommandFile(void)
 		}
 		else if (strcmp(item->name, "recovery_target_name") == 0)
 		{
-			/*
-			 * if recovery_target_xid specified, then this overrides
-			 * recovery_target_name
-			 */
-			if (recoveryTarget == RECOVERY_TARGET_XID)
-				continue;
 			recoveryTarget = RECOVERY_TARGET_NAME;
 
 			recoveryTargetName = pstrdup(item->value);
