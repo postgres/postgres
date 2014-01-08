@@ -6623,11 +6623,6 @@ StartupXLOG(void)
 				 */
 				if (recoveryStopsHere(record, &recoveryApply))
 				{
-					if (recoveryPauseAtTarget)
-					{
-						SetRecoveryPause(true);
-						recoveryPausesHere();
-					}
 					reachedStopPoint = true;	/* see below */
 					recoveryContinue = false;
 
@@ -6696,6 +6691,12 @@ StartupXLOG(void)
 			/*
 			 * end of main redo apply loop
 			 */
+
+			if (recoveryPauseAtTarget && reachedStopPoint)
+			{
+				SetRecoveryPause(true);
+				recoveryPausesHere();
+			}
 
 			ereport(LOG,
 					(errmsg("redo done at %X/%X",
