@@ -57,6 +57,14 @@
 #define NUM_USER_DEFINED_LWLOCKS	4
 
 /*
+ * When we don't have native spinlocks, we use semaphores to simulate them.
+ * Decreasing this value reduces consumption of OS resources; increasing it
+ * may improve performance, but supplying a real spinlock implementation is
+ * probably far better.
+ */
+#define	NUM_SPINLOCK_SEMAPHORES		1024
+
+/*
  * Define this if you want to allow the lo_import and lo_export SQL
  * functions to be executed by ordinary users.	By default these
  * functions are only available to the Postgres superuser.	CAUTION:

@@ -116,9 +116,24 @@ InitShmemAllocation(void)
 	Assert(shmhdr != NULL);
 
 	/*
-	 * Initialize the spinlock used by ShmemAlloc.	We have to do the space
-	 * allocation the hard way, since obviously ShmemAlloc can't be called
-	 * yet.
+	 * If spinlocks are disabled, initialize emulation layer.  We have to do
+	 * the space allocation the hard way, since obviously ShmemAlloc can't be
+	 * called yet.
+	 */
+#ifndef HAVE_SPINLOCKS
+	{
+		PGSemaphore spinsemas;
+
+		spinsemas = (PGSemaphore) (((char *) shmhdr) + shmhdr->freeoffset);
+		shmhdr->freeoffset += MAXALIGN(SpinlockSemaSize());
+		SpinlockSemaInit(spinsemas);
+		Assert(shmhdr->freeoffset <= shmhdr->totalsize);
+	}
+#endif
+
+	/*
+	 * Initialize the spinlock used by ShmemAlloc; we have to do this the hard
+	 * way, too, for the same reasons as above.
 	 */
 	ShmemLock = (slock_t *) (((char *) shmhdr) + shmhdr->freeoffset);
 	shmhdr->freeoffset += MAXALIGN(sizeof(slock_t));

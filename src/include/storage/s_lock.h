@@ -915,7 +915,7 @@ spin_delay(void)
  * to fall foul of kernel limits on number of semaphores, so don't use this
  * unless you must!  The subroutines appear in spin.c.
  */
-typedef PGSemaphoreData slock_t;
+typedef int slock_t;
 
 extern bool s_lock_free_sema(volatile slock_t *lock);
 extern void s_unlock_sema(volatile slock_t *lock);

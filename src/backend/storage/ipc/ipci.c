@@ -105,6 +105,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		 * need to be so careful during the actual allocation phase.
 		 */
 		size = 100000;
+		size = add_size(size, SpinlockSemaSize());
 		size = add_size(size, hash_estimate_size(SHMEM_INDEX_SIZE,
 												 sizeof(ShmemIndexEnt)));
 		size = add_size(size, BufferShmemSize());
