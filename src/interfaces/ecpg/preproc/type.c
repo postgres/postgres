@@ -368,7 +368,7 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 		fprintf(o, "\n\tECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ");
 	else if (type == ECPGt_descriptor)
 		/* remember that name here already contains quotes (if needed) */
-		fprintf(o, "\n\tECPGt_descriptor, %s, 0L, 0L, 0L, ", name);
+		fprintf(o, "\n\tECPGt_descriptor, %s, 1L, 1L, 1L, ", name);
 	else if (type == ECPGt_sqlda)
 		fprintf(o, "\n\tECPGt_sqlda, &%s, 0L, 0L, 0L, ", name);
 	else

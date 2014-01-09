@@ -174,12 +174,12 @@ if (sqlca.sqlcode < 0) exit (1);}
 
 	strcpy(msg, "describe");
 	{ ECPGdescribe(__LINE__, 1, 0, NULL, "st_id1",
-	ECPGt_descriptor, "desc1", 0L, 0L, 0L, 
+	ECPGt_descriptor, "desc1", 1L, 1L, 1L, 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);}
 #line 60 "describe.pgc"
 
 	{ ECPGdescribe(__LINE__, 1, 0, NULL, "st_id1",
-	ECPGt_descriptor, "desc2", 0L, 0L, 0L, 
+	ECPGt_descriptor, "desc2", 1L, 1L, 1L, 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);}
 #line 61 "describe.pgc"
 
@@ -336,12 +336,12 @@ if (sqlca.sqlcode < 0) exit (1);}
 
 	strcpy(msg, "describe");
 	{ ECPGdescribe(__LINE__, 1, 0, NULL, "st_id2",
-	ECPGt_descriptor, "desc1", 0L, 0L, 0L, 
+	ECPGt_descriptor, "desc1", 1L, 1L, 1L, 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);}
 #line 146 "describe.pgc"
 
 	{ ECPGdescribe(__LINE__, 1, 0, NULL, "st_id2",
-	ECPGt_descriptor, "desc2", 0L, 0L, 0L, 
+	ECPGt_descriptor, "desc2", 1L, 1L, 1L, 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);}
 #line 147 "describe.pgc"
 
