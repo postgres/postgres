@@ -210,7 +210,7 @@ if (sqlca.sqlcode < 0) sqlprint ( );
 #line 41 "dynalloc.pgc"
 
    { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select a , b , c , d , e , f , g , h , i from test order by a", ECPGt_EOIT, 
-	ECPGt_descriptor, "mydesc", 0L, 0L, 0L, 
+	ECPGt_descriptor, "mydesc", 1L, 1L, 1L, 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 42 "dynalloc.pgc"
 
