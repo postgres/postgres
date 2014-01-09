@@ -1634,9 +1634,7 @@ tupledesc_match(TupleDesc dst_tupdesc, TupleDesc src_tupdesc)
  * init_fcache is presumed already run on the FuncExprState.
  *
  * This function handles the most general case, wherein the function or
- * one of its arguments might (or might not) return a set.	If we find
- * no sets involved, we will change the FuncExprState's function pointer
- * to use a simpler method on subsequent calls.
+ * one of its arguments can return a set.
  */
 static Datum
 ExecMakeFunctionResult(FuncExprState *fcache,
@@ -1906,13 +1904,12 @@ restart:
 		/*
 		 * Non-set case: much easier.
 		 *
-		 * We change the ExprState function pointer to use the simpler
-		 * ExecMakeFunctionResultNoSets on subsequent calls.  This amounts to
-		 * assuming that no argument can return a set if it didn't do so the
-		 * first time.
+		 * In common cases, this code path is unreachable because we'd have
+		 * selected ExecMakeFunctionResultNoSets instead.  However, it's
+		 * possible to get here if an argument sometimes produces set results
+		 * and sometimes scalar results.  For example, a CASE expression might
+		 * call a set-returning function in only some of its arms.
 		 */
-		fcache->xprstate.evalfunc = (ExprStateEvalFunc) ExecMakeFunctionResultNoSets;
-
 		if (isDone)
 			*isDone = ExprSingleResult;
 
@@ -2371,10 +2368,22 @@ ExecEvalFunc(FuncExprState *fcache,
 	init_fcache(func->funcid, func->inputcollid, fcache,
 				econtext->ecxt_per_query_memory, true);
 
-	/* Go directly to ExecMakeFunctionResult on subsequent uses */
-	fcache->xprstate.evalfunc = (ExprStateEvalFunc) ExecMakeFunctionResult;
-
-	return ExecMakeFunctionResult(fcache, econtext, isNull, isDone);
+	/*
+	 * We need to invoke ExecMakeFunctionResult if either the function itself
+	 * or any of its input expressions can return a set.  Otherwise, invoke
+	 * ExecMakeFunctionResultNoSets.  In either case, change the evalfunc
+	 * pointer to go directly there on subsequent uses.
+	 */
+	if (fcache->func.fn_retset || expression_returns_set((Node *) func->args))
+	{
+		fcache->xprstate.evalfunc = (ExprStateEvalFunc) ExecMakeFunctionResult;
+		return ExecMakeFunctionResult(fcache, econtext, isNull, isDone);
+	}
+	else
+	{
+		fcache->xprstate.evalfunc = (ExprStateEvalFunc) ExecMakeFunctionResultNoSets;
+		return ExecMakeFunctionResultNoSets(fcache, econtext, isNull, isDone);
+	}
 }
 
 /* ----------------------------------------------------------------
@@ -2394,10 +2403,22 @@ ExecEvalOper(FuncExprState *fcache,
 	init_fcache(op->opfuncid, op->inputcollid, fcache,
 				econtext->ecxt_per_query_memory, true);
 
-	/* Go directly to ExecMakeFunctionResult on subsequent uses */
-	fcache->xprstate.evalfunc = (ExprStateEvalFunc) ExecMakeFunctionResult;
-
-	return ExecMakeFunctionResult(fcache, econtext, isNull, isDone);
+	/*
+	 * We need to invoke ExecMakeFunctionResult if either the function itself
+	 * or any of its input expressions can return a set.  Otherwise, invoke
+	 * ExecMakeFunctionResultNoSets.  In either case, change the evalfunc
+	 * pointer to go directly there on subsequent uses.
+	 */
+	if (fcache->func.fn_retset || expression_returns_set((Node *) op->args))
+	{
+		fcache->xprstate.evalfunc = (ExprStateEvalFunc) ExecMakeFunctionResult;
+		return ExecMakeFunctionResult(fcache, econtext, isNull, isDone);
+	}
+	else
+	{
+		fcache->xprstate.evalfunc = (ExprStateEvalFunc) ExecMakeFunctionResultNoSets;
+		return ExecMakeFunctionResultNoSets(fcache, econtext, isNull, isDone);
+	}
 }
 
 /* ----------------------------------------------------------------
