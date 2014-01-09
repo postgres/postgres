@@ -33,7 +33,6 @@
 #include <openssl/bn.h>
 
 #include "px.h"
-#include "mbuf.h"
 #include "pgp.h"
 
 static BIGNUM *

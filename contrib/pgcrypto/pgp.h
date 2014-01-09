@@ -29,6 +29,9 @@
  * contrib/pgcrypto/pgp.h
  */
 
+#include "mbuf.h"
+#include "px.h"
+
 enum PGP_S2K_TYPE
 {
 	PGP_S2K_SIMPLE = 0,

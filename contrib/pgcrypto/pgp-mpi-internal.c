@@ -33,7 +33,6 @@
 #include "imath.h"
 
 #include "px.h"
-#include "mbuf.h"
 #include "pgp.h"
 
 static mpz_t *

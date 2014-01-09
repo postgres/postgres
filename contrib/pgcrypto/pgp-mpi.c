@@ -31,7 +31,6 @@
 #include "postgres.h"
 
 #include "px.h"
-#include "mbuf.h"
 #include "pgp.h"
 
 int
