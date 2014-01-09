@@ -134,7 +134,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_execute, "foo1", 
-	ECPGt_descriptor, "indesc", 0L, 0L, 0L, 
+	ECPGt_descriptor, "indesc", 1L, 1L, 1L, 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 35 "desc.pgc"
 
@@ -161,7 +161,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_execute, "foo1", 
-	ECPGt_descriptor, "indesc", 0L, 0L, 0L, 
+	ECPGt_descriptor, "indesc", 1L, 1L, 1L, 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 40 "desc.pgc"
 
@@ -188,7 +188,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_execute, "Foo-1", 
-	ECPGt_descriptor, "indesc", 0L, 0L, 0L, 
+	ECPGt_descriptor, "indesc", 1L, 1L, 1L, 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 45 "desc.pgc"
 
@@ -222,9 +222,9 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_execute, "foo2", 
-	ECPGt_descriptor, "indesc", 0L, 0L, 0L, 
+	ECPGt_descriptor, "indesc", 1L, 1L, 1L, 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, 
-	ECPGt_descriptor, "outdesc", 0L, 0L, 0L, 
+	ECPGt_descriptor, "outdesc", 1L, 1L, 1L, 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 52 "desc.pgc"
 
@@ -248,7 +248,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare c1 cursor for $1", 
 	ECPGt_char_variable,(ECPGprepared_statement(NULL, "foo2", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
-	ECPGt_descriptor, "indesc", 0L, 0L, 0L, 
+	ECPGt_descriptor, "indesc", 1L, 1L, 1L, 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 58 "desc.pgc"
 
@@ -298,7 +298,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare c2 cursor for $1", 
 	ECPGt_char_variable,(ECPGprepared_statement(NULL, "foo3", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
-	ECPGt_descriptor, "indesc", 0L, 0L, 0L, 
+	ECPGt_descriptor, "indesc", 1L, 1L, 1L, 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 70 "desc.pgc"
 
