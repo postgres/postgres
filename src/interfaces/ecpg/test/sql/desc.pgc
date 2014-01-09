@@ -14,12 +14,13 @@ main(void)
 	int val1output = 2, val2i = 0;
 	int val2null = -1;
 	int ind1, ind2;
+	char desc1[8] = "outdesc";
 	EXEC SQL END DECLARE SECTION;
 
 	ECPGdebug(1, stderr);
 
 	EXEC SQL ALLOCATE DESCRIPTOR indesc;
-	EXEC SQL ALLOCATE DESCRIPTOR outdesc;
+	EXEC SQL ALLOCATE DESCRIPTOR :desc1;
 
 	EXEC SQL SET DESCRIPTOR indesc VALUE 1 DATA = :val1;
 	EXEC SQL SET DESCRIPTOR indesc VALUE 2 INDICATOR = :val2i, DATA = :val2;
