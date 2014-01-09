@@ -159,27 +159,17 @@ ordered_set_startup(FunctionCallInfo fcinfo, bool use_tuples)
 		if (use_tuples)
 		{
 			bool		ishypothetical = (aggref->aggkind == AGGKIND_HYPOTHETICAL);
-			AttrNumber *sortColIdx;
-			Oid		   *sortOperators;
-			Oid		   *eqOperators;
-			Oid		   *sortCollations;
-			bool	   *sortNullsFirsts;
 			ListCell   *lc;
 			int			i;
 
 			if (ishypothetical)
 				numSortCols++;	/* make space for flag column */
 			qstate->numSortCols = numSortCols;
-			qstate->sortColIdx = sortColIdx =
-				(AttrNumber *) palloc(numSortCols * sizeof(AttrNumber));
-			qstate->sortOperators = sortOperators =
-				(Oid *) palloc(numSortCols * sizeof(Oid));
-			qstate->eqOperators = eqOperators =
-				(Oid *) palloc(numSortCols * sizeof(Oid));
-			qstate->sortCollations = sortCollations =
-				(Oid *) palloc(numSortCols * sizeof(Oid));
-			qstate->sortNullsFirsts = sortNullsFirsts =
-				(bool *) palloc(numSortCols * sizeof(bool));
+			qstate->sortColIdx = (AttrNumber *) palloc(numSortCols * sizeof(AttrNumber));
+			qstate->sortOperators = (Oid *) palloc(numSortCols * sizeof(Oid));
+			qstate->eqOperators = (Oid *) palloc(numSortCols * sizeof(Oid));
+			qstate->sortCollations = (Oid *) palloc(numSortCols * sizeof(Oid));
+			qstate->sortNullsFirsts = (bool *) palloc(numSortCols * sizeof(bool));
 
 			i = 0;
 			foreach(lc, sortlist)
@@ -191,22 +181,22 @@ ordered_set_startup(FunctionCallInfo fcinfo, bool use_tuples)
 				/* the parser should have made sure of this */
 				Assert(OidIsValid(sortcl->sortop));
 
-				sortColIdx[i] = tle->resno;
-				sortOperators[i] = sortcl->sortop;
-				eqOperators[i] = sortcl->eqop;
-				sortCollations[i] = exprCollation((Node *) tle->expr);
-				sortNullsFirsts[i] = sortcl->nulls_first;
+				qstate->sortColIdx[i] = tle->resno;
+				qstate->sortOperators[i] = sortcl->sortop;
+				qstate->eqOperators[i] = sortcl->eqop;
+				qstate->sortCollations[i] = exprCollation((Node *) tle->expr);
+				qstate->sortNullsFirsts[i] = sortcl->nulls_first;
 				i++;
 			}
 
 			if (ishypothetical)
 			{
 				/* Add an integer flag column as the last sort column */
-				sortColIdx[i] = list_length(aggref->args) + 1;
-				sortOperators[i] = Int4LessOperator;
-				eqOperators[i] = Int4EqualOperator;
-				sortCollations[i] = InvalidOid;
-				sortNullsFirsts[i] = false;
+				qstate->sortColIdx[i] = list_length(aggref->args) + 1;
+				qstate->sortOperators[i] = Int4LessOperator;
+				qstate->eqOperators[i] = Int4EqualOperator;
+				qstate->sortCollations[i] = InvalidOid;
+				qstate->sortNullsFirsts[i] = false;
 				i++;
 			}
 
