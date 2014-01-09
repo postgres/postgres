@@ -57,6 +57,9 @@
 #define SPIN_H
 
 #include "storage/s_lock.h"
+#ifndef HAVE_SPINLOCKS
+#include "storage/pg_sema.h"
+#endif
 
 
 #define SpinLockInit(lock)	S_INIT_LOCK(lock)

@@ -94,10 +94,7 @@
 #ifndef S_LOCK_H
 #define S_LOCK_H
 
-#include "storage/pg_sema.h"
-
 #ifdef HAVE_SPINLOCKS	/* skip spinlocks if requested */
-
 
 #if defined(__GNUC__) || defined(__INTEL_COMPILER)
 /*************************************************************************
