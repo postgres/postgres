@@ -9,6 +9,7 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#include "common/username.h"
 #include "libpq-fe.h"
 #include "getopt_long.h"		/* pgrminclude ignore */
 #include "pqexpbuffer.h"		/* pgrminclude ignore */

@@ -21,6 +21,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
+#include "common/username.h"
 #include "libpq/auth.h"
 #include "libpq/crypt.h"
 #include "libpq/ip.h"

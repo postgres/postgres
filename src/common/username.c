@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  src/port/username.c
+ *	  src/common/username.c
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 
+#include "common/username.h"
 
 /*
  * Returns the current user name in a static buffer, or NULL on error and

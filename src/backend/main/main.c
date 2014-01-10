@@ -35,6 +35,7 @@
 #endif
 
 #include "bootstrap/bootstrap.h"
+#include "common/username.h"
 #include "postmaster/postmaster.h"
 #include "tcop/tcopprot.h"
 #include "utils/help_config.h"

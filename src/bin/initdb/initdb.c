@@ -60,6 +60,7 @@
 #include "sys/mman.h"
 #endif
 
+#include "common/username.h"
 #include "mb/pg_wchar.h"
 #include "getaddrinfo.h"
 #include "getopt_long.h"
