@@ -5288,6 +5288,7 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
 	bool		has_lockers;
 	TransactionId update_xid;
 	bool		update_committed;
+	bool		allow_old;
 
 	*flags = 0;
 
@@ -5349,7 +5350,9 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
 	 * anything.
 	 */
 
-	nmembers = GetMultiXactIdMembers(multi, &members, false);
+	allow_old = !(t_infomask & HEAP_LOCK_MASK) &&
+		HEAP_XMAX_IS_LOCKED_ONLY(t_infomask);
+	nmembers = GetMultiXactIdMembers(multi, &members, allow_old);
 	if (nmembers <= 0)
 	{
 		/* Nothing worth keeping */
@@ -6060,10 +6063,13 @@ heap_tuple_needs_freeze(HeapTupleHeader tuple, TransactionId cutoff_xid,
 			MultiXactMember *members;
 			int			nmembers;
 			int			i;
+			bool		allow_old;
 
 			/* need to check whether any member of the mxact is too old */
 
-			nmembers = GetMultiXactIdMembers(multi, &members, false);
+			allow_old = !(tuple->t_infomask & HEAP_LOCK_MASK) &&
+				HEAP_XMAX_IS_LOCKED_ONLY(tuple->t_infomask);
+			nmembers = GetMultiXactIdMembers(multi, &members, allow_old);
 
 			for (i = 0; i < nmembers; i++)
 			{
