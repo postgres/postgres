@@ -497,11 +497,6 @@ PostmasterMain(int argc, char *argv[])
 	umask((mode_t) 0077);
 
 	/*
-	 * Fire up essential subsystems: memory management
-	 */
-	MemoryContextInit();
-
-	/*
 	 * By default, palloc() requests in the postmaster will be allocated in
 	 * the PostmasterContext, which is space that can be recycled by backends.
 	 * Allocated data that needs to be available to backends should be
@@ -3943,7 +3938,6 @@ SubPostmasterMain(int argc, char *argv[])
 	whereToSendOutput = DestNone;
 
 	/* Setup essential subsystems (to ensure elog() behaves sanely) */
-	MemoryContextInit();
 	InitializeGUCOptions();
 
 	/* Read in the variables file */
