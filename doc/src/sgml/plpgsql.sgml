@@ -3932,20 +3932,20 @@ CREATE OR REPLACE FUNCTION update_emp_view() RETURNS TRIGGER AS $$
             DELETE FROM emp WHERE empname = OLD.empname;
             IF NOT FOUND THEN RETURN NULL; END IF;
 
-            OLD.last_updated = now();
+            OLD.last_updated := now();
             INSERT INTO emp_audit VALUES('D', user, OLD.*);
             RETURN OLD;
         ELSIF (TG_OP = 'UPDATE') THEN
             UPDATE emp SET salary = NEW.salary WHERE empname = OLD.empname;
             IF NOT FOUND THEN RETURN NULL; END IF;
 
-            NEW.last_updated = now();
+            NEW.last_updated := now();
             INSERT INTO emp_audit VALUES('U', user, NEW.*);
             RETURN NEW;
         ELSIF (TG_OP = 'INSERT') THEN
             INSERT INTO emp VALUES(NEW.empname, NEW.salary);
 
-            NEW.last_updated = now();
+            NEW.last_updated := now();
             INSERT INTO emp_audit VALUES('I', user, NEW.*);
             RETURN NEW;
         END IF;
@@ -4030,10 +4030,10 @@ AS $maint_sales_summary_bytime$
         -- Work out the increment/decrement amount(s).
         IF (TG_OP = 'DELETE') THEN
 
-            delta_time_key = OLD.time_key;
-            delta_amount_sold = -1 * OLD.amount_sold;
-            delta_units_sold = -1 * OLD.units_sold;
-            delta_amount_cost = -1 * OLD.amount_cost;
+            delta_time_key := OLD.time_key;
+            delta_amount_sold := -1 * OLD.amount_sold;
+            delta_units_sold := -1 * OLD.units_sold;
+            delta_amount_cost := -1 * OLD.amount_cost;
 
         ELSIF (TG_OP = 'UPDATE') THEN
 
@@ -4045,17 +4045,17 @@ AS $maint_sales_summary_bytime$
                                                       OLD.time_key, NEW.time_key;
             END IF;
 
-            delta_time_key = OLD.time_key;
-            delta_amount_sold = NEW.amount_sold - OLD.amount_sold;
-            delta_units_sold = NEW.units_sold - OLD.units_sold;
-            delta_amount_cost = NEW.amount_cost - OLD.amount_cost;
+            delta_time_key := OLD.time_key;
+            delta_amount_sold := NEW.amount_sold - OLD.amount_sold;
+            delta_units_sold := NEW.units_sold - OLD.units_sold;
+            delta_amount_cost := NEW.amount_cost - OLD.amount_cost;
 
         ELSIF (TG_OP = 'INSERT') THEN
 
-            delta_time_key = NEW.time_key;
-            delta_amount_sold = NEW.amount_sold;
-            delta_units_sold = NEW.units_sold;
-            delta_amount_cost = NEW.amount_cost;
+            delta_time_key := NEW.time_key;
+            delta_amount_sold := NEW.amount_sold;
+            delta_units_sold := NEW.units_sold;
+            delta_amount_cost := NEW.amount_cost;
 
         END IF;
 
