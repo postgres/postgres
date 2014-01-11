@@ -544,9 +544,11 @@ FROM pg_operator as p1 LEFT JOIN pg_description as d
 WHERE d.classoid IS NULL AND p1.oid <= 9999;
 
 -- Check that operators' underlying functions have suitable comments,
--- namely 'implementation of XXX operator'.  In some cases involving legacy
--- names for operators, there are multiple operators referencing the same
--- pg_proc entry, so ignore operators whose comments say they are deprecated.
+-- namely 'implementation of XXX operator'.  (Note: it's not necessary to
+-- put such comments into pg_proc.h; initdb will generate them as needed.)
+-- In some cases involving legacy names for operators, there are multiple
+-- operators referencing the same pg_proc entry, so ignore operators whose
+-- comments say they are deprecated.
 -- We also have a few functions that are both operator support and meant to
 -- be called directly; those should have comments matching their operator.
 WITH funcdescs AS (
@@ -561,6 +563,23 @@ SELECT * FROM funcdescs
   WHERE prodesc IS DISTINCT FROM expecteddesc
     AND oprdesc NOT LIKE 'deprecated%'
     AND prodesc IS DISTINCT FROM oprdesc;
+
+-- Show all the operator-implementation functions that have their own
+-- comments.  This should happen only in cases where the function and
+-- operator syntaxes are both documented at the user level.
+-- This should be a pretty short list; it's mostly legacy cases.
+WITH funcdescs AS (
+  SELECT p.oid as p_oid, proname, o.oid as o_oid,
+    obj_description(p.oid, 'pg_proc') as prodesc,
+    'implementation of ' || oprname || ' operator' as expecteddesc,
+    obj_description(o.oid, 'pg_operator') as oprdesc
+  FROM pg_proc p JOIN pg_operator o ON oprcode = p.oid
+  WHERE o.oid <= 9999
+)
+SELECT p_oid, proname, prodesc FROM funcdescs
+  WHERE prodesc IS DISTINCT FROM expecteddesc
+    AND oprdesc NOT LIKE 'deprecated%'
+ORDER BY 1;
 
 
 -- **************** pg_aggregate ****************
