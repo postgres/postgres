@@ -38,6 +38,7 @@
 #include "postmaster/postmaster.h"
 #include "tcop/tcopprot.h"
 #include "utils/help_config.h"
+#include "utils/memutils.h"
 #include "utils/pg_locale.h"
 #include "utils/ps_status.h"
 #ifdef WIN32
@@ -77,6 +78,15 @@ main(int argc, char *argv[])
 	 * result pointer.
 	 */
 	argv = save_ps_display_args(argc, argv);
+
+	/*
+	 * Fire up essential subsystems: error and memory management
+	 *
+	 * Code after this point is allowed to use elog/ereport, though
+	 * localization of messages may not work right away, and messages won't go
+	 * anywhere but stderr until GUC settings get loaded.
+	 */
+	MemoryContextInit();
 
 	/*
 	 * Set up locale information from environment.	Note that LC_CTYPE and

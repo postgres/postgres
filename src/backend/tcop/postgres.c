@@ -2999,14 +2999,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 	MyStartTime = time(NULL);
 
-	/*
-	 * Fire up essential subsystems: error and memory management
-	 *
-	 * If we are running under the postmaster, this is done already.
-	 */
-	if (!IsUnderPostmaster)
-		MemoryContextInit();
-
 	set_ps_display("startup", false);
 
 	SetProcessingMode(InitProcessing);
