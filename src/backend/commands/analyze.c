@@ -2669,7 +2669,21 @@ compute_scalar_stats(VacAttrStatsP stats,
 			slot_idx++;
 		}
 	}
-	else if (nonnull_cnt == 0 && null_cnt > 0)
+	else if (nonnull_cnt > 0)
+	{
+		/* We found some non-null values, but they were all too wide */
+		Assert(nonnull_cnt == toowide_cnt);
+		stats->stats_valid = true;
+		/* Do the simple null-frac and width stats */
+		stats->stanullfrac = (double) null_cnt / (double) samplerows;
+		if (is_varwidth)
+			stats->stawidth = total_width / (double) nonnull_cnt;
+		else
+			stats->stawidth = stats->attrtype->typlen;
+		/* Assume all too-wide values are distinct, so it's a unique column */
+		stats->stadistinct = -1.0;
+	}
+	else if (null_cnt > 0)
 	{
 		/* We found only nulls; assume the column is entirely null */
 		stats->stats_valid = true;
