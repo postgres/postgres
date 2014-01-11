@@ -202,14 +202,6 @@ AuxiliaryProcessMain(int argc, char *argv[])
 
 	MyStartTime = time(NULL);
 
-	/*
-	 * Fire up essential subsystems: error and memory management
-	 *
-	 * If we are running under the postmaster, this is done already.
-	 */
-	if (!IsUnderPostmaster)
-		MemoryContextInit();
-
 	/* Compute paths, if we didn't inherit them from postmaster */
 	if (my_exec_path[0] == '\0')
 	{

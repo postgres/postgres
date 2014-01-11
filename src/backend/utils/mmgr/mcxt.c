@@ -72,7 +72,8 @@ static void MemoryContextStatsInternal(MemoryContext context, int level);
  * In normal multi-backend operation, this is called once during
  * postmaster startup, and not at all by individual backend startup
  * (since the backends inherit an already-initialized context subsystem
- * by virtue of being forked off the postmaster).
+ * by virtue of being forked off the postmaster).  But in an EXEC_BACKEND
+ * build, each process must do this for itself.
  *
  * In a standalone backend this must be called during backend startup.
  */
@@ -106,6 +107,9 @@ MemoryContextInit(void)
 	 * where retained memory in a context is *essential* --- we want to be
 	 * sure ErrorContext still has some memory even if we've run out
 	 * elsewhere!
+	 *
+	 * This should be the last step in this function, as elog.c assumes memory
+	 * management works once ErrorContext is non-null.
 	 */
 	ErrorContext = AllocSetContextCreate(TopMemoryContext,
 										 "ErrorContext",
