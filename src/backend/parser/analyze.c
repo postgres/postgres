@@ -367,8 +367,9 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 	/* there's no DISTINCT in DELETE */
 	qry->distinctClause = NIL;
 
-	/* subqueries in USING can see the result relation only via LATERAL */
+	/* subqueries in USING cannot access the result relation */
 	nsitem->p_lateral_only = true;
+	nsitem->p_lateral_ok = false;
 
 	/*
 	 * The USING clause is non-standard SQL syntax, and is equivalent in
@@ -378,8 +379,9 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 	 */
 	transformFromClause(pstate, stmt->usingClause);
 
-	/* remaining clauses can see the result relation normally */
+	/* remaining clauses can reference the result relation normally */
 	nsitem->p_lateral_only = false;
+	nsitem->p_lateral_ok = true;
 
 	qual = transformWhereClause(pstate, stmt->whereClause,
 								EXPR_KIND_WHERE, "WHERE");
@@ -1925,8 +1927,9 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 	/* grab the namespace item made by setTargetTable */
 	nsitem = (ParseNamespaceItem *) llast(pstate->p_namespace);
 
-	/* subqueries in FROM can see the result relation only via LATERAL */
+	/* subqueries in FROM cannot access the result relation */
 	nsitem->p_lateral_only = true;
+	nsitem->p_lateral_ok = false;
 
 	/*
 	 * the FROM clause is non-standard SQL syntax. We used to be able to do
@@ -1934,8 +1937,9 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 	 */
 	transformFromClause(pstate, stmt->fromClause);
 
-	/* remaining clauses can see the result relation normally */
+	/* remaining clauses can reference the result relation normally */
 	nsitem->p_lateral_only = false;
+	nsitem->p_lateral_ok = true;
 
 	qry->targetList = transformTargetList(pstate, stmt->targetList,
 										  EXPR_KIND_UPDATE_SOURCE);

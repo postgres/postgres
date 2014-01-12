@@ -38,6 +38,8 @@ static RangeTblEntry *scanNameSpaceForRefname(ParseState *pstate,
 						const char *refname, int location);
 static RangeTblEntry *scanNameSpaceForRelid(ParseState *pstate, Oid relid,
 					  int location);
+static void check_lateral_ref_ok(ParseState *pstate, ParseNamespaceItem *nsitem,
+					 int location);
 static void markRTEForSelectPriv(ParseState *pstate, RangeTblEntry *rte,
 					 int rtindex, AttrNumber col);
 static void expandRelation(Oid relid, Alias *eref,
@@ -170,14 +172,7 @@ scanNameSpaceForRefname(ParseState *pstate, const char *refname, int location)
 						 errmsg("table reference \"%s\" is ambiguous",
 								refname),
 						 parser_errposition(pstate, location)));
-			/* SQL:2008 demands this be an error, not an invisible item */
-			if (nsitem->p_lateral_only && !nsitem->p_lateral_ok)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-						 errmsg("invalid reference to FROM-clause entry for table \"%s\"",
-								refname),
-						 errdetail("The combining JOIN type must be INNER or LEFT for a LATERAL reference."),
-						 parser_errposition(pstate, location)));
+			check_lateral_ref_ok(pstate, nsitem, location);
 			result = rte;
 		}
 	}
@@ -221,14 +216,7 @@ scanNameSpaceForRelid(ParseState *pstate, Oid relid, int location)
 						 errmsg("table reference %u is ambiguous",
 								relid),
 						 parser_errposition(pstate, location)));
-			/* SQL:2008 demands this be an error, not an invisible item */
-			if (nsitem->p_lateral_only && !nsitem->p_lateral_ok)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-						 errmsg("invalid reference to FROM-clause entry for table \"%s\"",
-								rte->eref->aliasname),
-						 errdetail("The combining JOIN type must be INNER or LEFT for a LATERAL reference."),
-						 parser_errposition(pstate, location)));
+			check_lateral_ref_ok(pstate, nsitem, location);
 			result = rte;
 		}
 	}
@@ -407,6 +395,37 @@ checkNameSpaceConflicts(ParseState *pstate, List *namespace1,
 					 errmsg("table name \"%s\" specified more than once",
 							aliasname1)));
 		}
+	}
+}
+
+/*
+ * Complain if a namespace item is currently disallowed as a LATERAL reference.
+ * This enforces both SQL:2008's rather odd idea of what to do with a LATERAL
+ * reference to the wrong side of an outer join, and our own prohibition on
+ * referencing the target table of an UPDATE or DELETE as a lateral reference
+ * in a FROM/USING clause.
+ *
+ * Convenience subroutine to avoid multiple copies of a rather ugly ereport.
+ */
+static void
+check_lateral_ref_ok(ParseState *pstate, ParseNamespaceItem *nsitem,
+					 int location)
+{
+	if (nsitem->p_lateral_only && !nsitem->p_lateral_ok)
+	{
+		/* SQL:2008 demands this be an error, not an invisible item */
+		RangeTblEntry *rte = nsitem->p_rte;
+		char	   *refname = rte->eref->aliasname;
+
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+			errmsg("invalid reference to FROM-clause entry for table \"%s\"",
+				   refname),
+				 (rte == pstate->p_target_rangetblentry) ?
+				 errhint("There is an entry for table \"%s\", but it cannot be referenced from this part of the query.",
+						 refname) :
+				 errdetail("The combining JOIN type must be INNER or LEFT for a LATERAL reference."),
+				 parser_errposition(pstate, location)));
 	}
 }
 
@@ -622,15 +641,8 @@ colNameToVar(ParseState *pstate, char *colname, bool localonly,
 							(errcode(ERRCODE_AMBIGUOUS_COLUMN),
 							 errmsg("column reference \"%s\" is ambiguous",
 									colname),
-							 parser_errposition(orig_pstate, location)));
-				/* SQL:2008 demands this be an error, not an invisible item */
-				if (nsitem->p_lateral_only && !nsitem->p_lateral_ok)
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-							 errmsg("invalid reference to FROM-clause entry for table \"%s\"",
-									rte->eref->aliasname),
-							 errdetail("The combining JOIN type must be INNER or LEFT for a LATERAL reference."),
-							 parser_errposition(orig_pstate, location)));
+							 parser_errposition(pstate, location)));
+				check_lateral_ref_ok(pstate, nsitem, location);
 				result = newresult;
 			}
 		}

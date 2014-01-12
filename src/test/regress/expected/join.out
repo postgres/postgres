@@ -4057,17 +4057,7 @@ LINE 1: select 1 from tenk1 a, lateral (select max(a.unique1) from i...
                                                ^
 -- check behavior of LATERAL in UPDATE/DELETE
 create temp table xx1 as select f1 as x1, -f1 as x2 from int4_tbl;
-select * from xx1;
-     x1      |     x2      
--------------+-------------
-           0 |           0
-      123456 |     -123456
-     -123456 |      123456
-  2147483647 | -2147483647
- -2147483647 |  2147483647
-(5 rows)
-
--- error, can't do this without LATERAL:
+-- error, can't do this:
 update xx1 set x2 = f1 from (select * from int4_tbl where f1 = x1) ss;
 ERROR:  column "x1" does not exist
 LINE 1: ... set x2 = f1 from (select * from int4_tbl where f1 = x1) ss;
@@ -4078,28 +4068,28 @@ ERROR:  invalid reference to FROM-clause entry for table "xx1"
 LINE 1: ...t x2 = f1 from (select * from int4_tbl where f1 = xx1.x1) ss...
                                                              ^
 HINT:  There is an entry for table "xx1", but it cannot be referenced from this part of the query.
--- OK:
+-- can't do it even with LATERAL:
 update xx1 set x2 = f1 from lateral (select * from int4_tbl where f1 = x1) ss;
-select * from xx1;
-     x1      |     x2      
--------------+-------------
-           0 |           0
-      123456 |      123456
-     -123456 |     -123456
-  2147483647 |  2147483647
- -2147483647 | -2147483647
-(5 rows)
-
--- error:
+ERROR:  invalid reference to FROM-clause entry for table "xx1"
+LINE 1: ...= f1 from lateral (select * from int4_tbl where f1 = x1) ss;
+                                                                ^
+HINT:  There is an entry for table "xx1", but it cannot be referenced from this part of the query.
+-- we might in future allow something like this, but for now it's an error:
+update xx1 set x2 = f1 from xx1, lateral (select * from int4_tbl where f1 = x1) ss;
+ERROR:  table name "xx1" specified more than once
+-- also errors:
 delete from xx1 using (select * from int4_tbl where f1 = x1) ss;
 ERROR:  column "x1" does not exist
 LINE 1: ...te from xx1 using (select * from int4_tbl where f1 = x1) ss;
                                                                 ^
 HINT:  There is a column named "x1" in table "xx1", but it cannot be referenced from this part of the query.
--- OK:
+delete from xx1 using (select * from int4_tbl where f1 = xx1.x1) ss;
+ERROR:  invalid reference to FROM-clause entry for table "xx1"
+LINE 1: ...from xx1 using (select * from int4_tbl where f1 = xx1.x1) ss...
+                                                             ^
+HINT:  There is an entry for table "xx1", but it cannot be referenced from this part of the query.
 delete from xx1 using lateral (select * from int4_tbl where f1 = x1) ss;
-select * from xx1;
- x1 | x2 
-----+----
-(0 rows)
-
+ERROR:  invalid reference to FROM-clause entry for table "xx1"
+LINE 1: ...xx1 using lateral (select * from int4_tbl where f1 = x1) ss;
+                                                                ^
+HINT:  There is an entry for table "xx1", but it cannot be referenced from this part of the query.
