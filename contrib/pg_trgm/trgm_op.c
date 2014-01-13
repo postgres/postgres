@@ -9,6 +9,7 @@
 
 #include "catalog/pg_type.h"
 #include "tsearch/ts_locale.h"
+#include "utils/memutils.h"
 #include "utils/array.h"
 
 
@@ -192,6 +193,18 @@ generate_trgm(char *str, int slen)
 	char	   *bword,
 			   *eword;
 
+	/*
+	 * Guard against possible overflow in the palloc requests below.  (We
+	 * don't worry about the additive constants, since palloc can detect
+	 * requests that are a little above MaxAllocSize --- we just need to
+	 * prevent integer overflow in the multiplications.)
+	 */
+	if ((Size) (slen / 2) >= (MaxAllocSize / (sizeof(trgm) * 3)) ||
+		(Size) slen >= (MaxAllocSize / pg_database_encoding_max_length()))
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("out of memory")));
+
 	trg = (TRGM *) palloc(TRGMHDRSIZE + sizeof(trgm) * (slen / 2 + 1) *3);
 	trg->flag = ARRKEY;
 	SET_VARSIZE(trg, TRGMHDRSIZE);
@@ -201,7 +214,8 @@ generate_trgm(char *str, int slen)
 
 	tptr = GETARR(trg);
 
-	buf = palloc(sizeof(char) * (slen + 4));
+	/* Allocate a buffer for case-folded, blank-padded words */
+	buf = (char *) palloc(slen * pg_database_encoding_max_length() + 4);
 
 	if (LPADDING > 0)
 	{
@@ -225,6 +239,7 @@ generate_trgm(char *str, int slen)
 #ifdef IGNORECASE
 		pfree(bword);
 #endif
+
 		buf[LPADDING + bytelen] = ' ';
 		buf[LPADDING + bytelen + 1] = ' ';
 
@@ -240,7 +255,10 @@ generate_trgm(char *str, int slen)
 	if ((len = tptr - GETARR(trg)) == 0)
 		return trg;
 
-	if (len > 0)
+	/*
+	 * Make trigrams unique.
+	 */
+	if (len > 1)
 	{
 		qsort((void *) GETARR(trg), len, sizeof(trgm), comp_trgm);
 		len = unique_array(GETARR(trg), len);
@@ -423,6 +441,18 @@ generate_wildcard_trgm(const char *str, int slen)
 				bytelen;
 	const char *eword;
 
+	/*
+	 * Guard against possible overflow in the palloc requests below.  (We
+	 * don't worry about the additive constants, since palloc can detect
+	 * requests that are a little above MaxAllocSize --- we just need to
+	 * prevent integer overflow in the multiplications.)
+	 */
+	if ((Size) (slen / 2) >= (MaxAllocSize / (sizeof(trgm) * 3)) ||
+		(Size) slen >= (MaxAllocSize / pg_database_encoding_max_length()))
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("out of memory")));
+
 	trg = (TRGM *) palloc(TRGMHDRSIZE + sizeof(trgm) * (slen / 2 + 1) *3);
 	trg->flag = ARRKEY;
 	SET_VARSIZE(trg, TRGMHDRSIZE);
@@ -432,6 +462,7 @@ generate_wildcard_trgm(const char *str, int slen)
 
 	tptr = GETARR(trg);
 
+	/* Allocate a buffer for blank-padded, but not yet case-folded, words */
 	buf = palloc(sizeof(char) * (slen + 4));
 
 	/*
@@ -452,6 +483,7 @@ generate_wildcard_trgm(const char *str, int slen)
 		 * count trigrams
 		 */
 		tptr = make_trigrams(tptr, buf2, bytelen, charlen);
+
 #ifdef IGNORECASE
 		pfree(buf2);
 #endif
@@ -465,7 +497,7 @@ generate_wildcard_trgm(const char *str, int slen)
 	/*
 	 * Make trigrams unique.
 	 */
-	if (len > 0)
+	if (len > 1)
 	{
 		qsort((void *) GETARR(trg), len, sizeof(trgm), comp_trgm);
 		len = unique_array(GETARR(trg), len);
