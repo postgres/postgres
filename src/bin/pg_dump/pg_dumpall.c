@@ -699,7 +699,7 @@ dumpRoles(PGconn *conn)
 						  "valuntil as rolvaliduntil, "
 						  "false as rolreplication, "
 						  "null as rolcomment, "
-						  "rolname = current_user AS is_current_user "
+						  "usename = current_user AS is_current_user "
 						  "FROM pg_shadow "
 						  "UNION ALL "
 						  "SELECT 0, groname as rolname, "
