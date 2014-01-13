@@ -827,7 +827,7 @@ string2ean(const char *str, bool errorOK, ean13 *result,
 		case ISMN:
 			strncpy(buf, "9790", 4);	/* this isn't for sure yet, for now
 										 * ISMN it's only 9790 */
-			valid = (valid && ((rcheck = checkdig(buf + 3, 10)) == check || magic));
+			valid = (valid && ((rcheck = checkdig(buf, 13)) == check || magic));
 			break;
 		case ISBN:
 			strncpy(buf, "978", 3);
