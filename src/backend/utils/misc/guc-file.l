@@ -120,7 +120,6 @@ ProcessConfigFile(GucContext context)
 				   *head,
 				   *tail;
 	int			i;
-	char		ConfigAutoFileName[MAXPGPATH];
 	char		*ErrorConfFile;
 	char		*CallingFileName;
 
@@ -155,17 +154,16 @@ ProcessConfigFile(GucContext context)
 	 * data directory, however when called during initdb data directory is not
 	 * set till this point, so use ConfigFile path which will be same.
 	 */
-	snprintf(ConfigAutoFileName,sizeof(ConfigAutoFileName),"%s", PG_AUTOCONF_FILENAME);
 	if (data_directory)
 		CallingFileName = NULL;
 	else
 		CallingFileName = ConfigFileName;
 
-	if (!ParseConfigFile(ConfigAutoFileName, CallingFileName, false, 0, elevel, &head, &tail))
+	if (!ParseConfigFile(PG_AUTOCONF_FILENAME, CallingFileName, false, 0, elevel, &head, &tail))
 	{
 		/* Syntax error(s) detected in the file, so bail out */
 		error = true;
-		ErrorConfFile = ConfigAutoFileName;
+		ErrorConfFile = PG_AUTOCONF_FILENAME;
 		goto cleanup_list;
 	}
 
@@ -368,8 +366,6 @@ ProcessConfigFile(GucContext context)
 	PgReloadTime = GetCurrentTimestamp();
 
  cleanup_list:
-	FreeConfigVariables(head);
-
 	if (error)
 	{
 		/* During postmaster startup, any error is fatal */
@@ -389,6 +385,13 @@ ProcessConfigFile(GucContext context)
 					 errmsg("configuration file \"%s\" contains errors; no changes were applied",
 							ErrorConfFile)));
 	}
+
+	/*
+	 * Calling FreeConfigVariables() any earlier than this can cause problems,
+	 * because ErrorConfFile could be pointing to a string that will be freed
+	 * here.
+	 */
+	FreeConfigVariables(head);
 }
 
 /*
