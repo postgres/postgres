@@ -6797,6 +6797,9 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
     </table>
 
    <para>
+    <indexterm>
+      <primary>OVERLAPS</primary>
+    </indexterm>
     In addition to these functions, the SQL <literal>OVERLAPS</> operator is
     supported:
 <synopsis>
