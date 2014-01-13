@@ -228,7 +228,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_execute, "foo2", 
 	ECPGt_descriptor, "indesc", 1L, 1L, 1L, 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, 
-	ECPGt_descriptor, "outdesc", 1L, 1L, 1L, 
+	ECPGt_descriptor, (desc1), 1L, 1L, 1L, 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 53 "desc.pgc"
 
@@ -236,7 +236,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 53 "desc.pgc"
 
 
-	{ ECPGget_desc(__LINE__, "outdesc", 1,ECPGd_data,
+	{ ECPGget_desc(__LINE__, (desc1), 1,ECPGd_data,
 	ECPGt_char,(val2output),(long)sizeof("AAA"),(long)1,(sizeof("AAA"))*sizeof(char), ECPGd_EODT);
 
 #line 55 "desc.pgc"
@@ -366,7 +366,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlcode < 0) sqlprint();
 #line 85 "desc.pgc"
 
-	ECPGdeallocate_desc(__LINE__, "outdesc");
+	ECPGdeallocate_desc(__LINE__, (desc1));
 #line 86 "desc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();
