@@ -38,7 +38,9 @@ typedef enum
 	RBM_NORMAL,					/* Normal read */
 	RBM_ZERO,					/* Don't read from disk, caller will
 								 * initialize */
-	RBM_ZERO_ON_ERROR			/* Read, but return an all-zeros page on error */
+	RBM_ZERO_ON_ERROR,			/* Read, but return an all-zeros page on error */
+	RBM_NORMAL_NO_LOG			/* Don't log page as invalid during WAL
+								 * replay; otherwise same as RBM_NORMAL */
 } ReadBufferMode;
 
 /* in globals.c ... this duplicates miscadmin.h */

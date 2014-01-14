@@ -289,6 +289,7 @@ extern void issue_xlog_fsync(int fd, uint32 log, uint32 seg);
 
 extern bool RecoveryInProgress(void);
 extern bool HotStandbyActive(void);
+extern bool HotStandbyActiveInReplay(void);
 extern bool XLogInsertAllowed(void);
 extern void GetXLogReceiptTime(TimestampTz *rtime, bool *fromStream);
 extern XLogRecPtr GetXLogReplayRecPtr(TimeLineID *targetTLI);

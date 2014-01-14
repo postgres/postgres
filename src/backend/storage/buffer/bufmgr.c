@@ -203,7 +203,8 @@ ReadBuffer(Relation reln, BlockNumber blockNum)
  * Assume when this function is called, that reln has been opened already.
  *
  * In RBM_NORMAL mode, the page is read from disk, and the page header is
- * validated. An error is thrown if the page header is not valid.
+ * validated.  An error is thrown if the page header is not valid.	(But
+ * note that an all-zero page is considered "valid"; see PageIsVerified().)
  *
  * RBM_ZERO_ON_ERROR is like the normal mode, but if the page header is not
  * valid, the page is zeroed instead of throwing an error. This is intended
@@ -216,6 +217,8 @@ ReadBuffer(Relation reln, BlockNumber blockNum)
  * Caution: do not use this mode to read a page that is beyond the relation's
  * current physical EOF; that is likely to cause problems in md.c when
  * the page is modified and written out. P_NEW is OK, though.
+ *
+ * RBM_NORMAL_NO_LOG mode is treated the same as RBM_NORMAL here.
  *
  * If strategy is not NULL, a nondefault buffer access strategy is used.
  * See buffer/README for details.
