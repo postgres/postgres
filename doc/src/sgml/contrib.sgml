@@ -141,6 +141,7 @@ CREATE EXTENSION <replaceable>module_name</> FROM unpackaged;
  &tablefunc;
  &tcn;
  &test-parser;
+ &test-shm-mq;
  &tsearch2;
  &unaccent;
  &uuid-ossp;
