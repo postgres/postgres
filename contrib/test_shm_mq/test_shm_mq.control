@@ -1,0 +1,4 @@
+comment = 'Test code for shared memory message queues'
+default_version = '1.0'
+module_pathname = '$libdir/test_shm_mq'
+relocatable = true

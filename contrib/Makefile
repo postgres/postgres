@@ -51,6 +51,7 @@ SUBDIRS = \
 		tablefunc	\
 		tcn		\
 		test_parser	\
+		test_shm_mq	\
 		tsearch2	\
 		unaccent	\
 		vacuumlo	\
