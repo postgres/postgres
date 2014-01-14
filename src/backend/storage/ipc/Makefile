@@ -16,6 +16,6 @@ endif
 endif
 
 OBJS = dsm_impl.o dsm.o ipc.o ipci.o pmsignal.o procarray.o procsignal.o \
-	shmem.o shmqueue.o shm_toc.o sinval.o sinvaladt.o standby.o
+	shmem.o shmqueue.o shm_mq.o shm_toc.o sinval.o sinvaladt.o standby.o
 
 include $(top_srcdir)/src/backend/common.mk
