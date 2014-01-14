@@ -19,7 +19,7 @@
 
 
 /*
- * Page opaque data in a inverted index page.
+ * Page opaque data in an inverted index page.
  *
  * Note: GIN does not include a page ID word as do the other index types.
  * This is OK because the opaque data is only 8 bytes and so can be reliably
