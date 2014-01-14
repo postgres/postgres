@@ -159,6 +159,9 @@ static XLogRecPtr LastRec;
  */
 static bool LocalRecoveryInProgress = true;
 
+/* True if we're allowing hot standby backends, but only in startup process */
+static bool backendsAllowed = false;
+
 /*
  * Local state for XLogInsertAllowed():
  *		1: unconditionally allowed to insert XLOG
@@ -6654,8 +6657,6 @@ StartupXLOG(void)
 static void
 CheckRecoveryConsistency(void)
 {
-	static bool backendsAllowed = false;
-
 	/*
 	 * During crash recovery, we don't reach a consistent state until we've
 	 * replayed all the WAL.
@@ -6732,6 +6733,16 @@ RecoveryInProgress(void)
 
 		return LocalRecoveryInProgress;
 	}
+}
+
+/*
+ * Like HotStandbyActive(), but to be used only in WAL replay code,
+ * where we don't need to ask any other process what the state is.
+ */
+bool
+HotStandbyActiveInReplay(void)
+{
+	return backendsAllowed;
 }
 
 /*
