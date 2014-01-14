@@ -482,28 +482,47 @@ btree_xlog_vacuum(XLogRecPtr lsn, XLogRecord *record)
 	BTPageOpaque opaque;
 
 	/*
-	 * If queries might be active then we need to ensure every block is
+	 * If queries might be active then we need to ensure every leaf page is
 	 * unpinned between the lastBlockVacuumed and the current block, if there
-	 * are any. This ensures that every block in the index is touched during
-	 * VACUUM as required to ensure scans work correctly.
+	 * are any.  This prevents replay of the VACUUM from reaching the stage of
+	 * removing heap tuples while there could still be indexscans "in flight"
+	 * to those particular tuples (see nbtree/README).
+	 *
+	 * It might be worth checking if there are actually any backends running;
+	 * if not, we could just skip this.
+	 *
+	 * Since VACUUM can visit leaf pages out-of-order, it might issue records
+	 * with lastBlockVacuumed >= block; that's not an error, it just means
+	 * nothing to do now.
+	 *
+	 * Note: since we touch all pages in the range, we will lock non-leaf
+	 * pages, and also any empty (all-zero) pages that may be in the index. It
+	 * doesn't seem worth the complexity to avoid that.  But it's important
+	 * that HotStandbyActiveInReplay() will not return true if the database
+	 * isn't yet consistent; so we need not fear reading still-corrupt blocks
+	 * here during crash recovery.
 	 */
-	if (standbyState == STANDBY_SNAPSHOT_READY &&
-		(xlrec->lastBlockVacuumed + 1) != xlrec->block)
+	if (HotStandbyActiveInReplay())
 	{
-		BlockNumber blkno = xlrec->lastBlockVacuumed + 1;
+		BlockNumber blkno;
 
-		for (; blkno < xlrec->block; blkno++)
+		for (blkno = xlrec->lastBlockVacuumed + 1; blkno < xlrec->block; blkno++)
 		{
 			/*
+			 * We use RBM_NORMAL_NO_LOG mode because it's not an error
+			 * condition to see all-zero pages.  The original btvacuumpage
+			 * scan would have skipped over all-zero pages, noting them in FSM
+			 * but not bothering to initialize them just yet; so we mustn't
+			 * throw an error here.  (We could skip acquiring the cleanup lock
+			 * if PageIsNew, but it's probably not worth the cycles to test.)
+			 *
 			 * XXX we don't actually need to read the block, we just need to
 			 * confirm it is unpinned. If we had a special call into the
 			 * buffer manager we could optimise this so that if the block is
 			 * not in shared_buffers we confirm it as unpinned.
-			 *
-			 * Another simple optimization would be to check if there's any
-			 * backends running; if not, we could just skip this.
 			 */
-			buffer = XLogReadBufferExtended(xlrec->node, MAIN_FORKNUM, blkno, RBM_NORMAL);
+			buffer = XLogReadBufferExtended(xlrec->node, MAIN_FORKNUM, blkno,
+											RBM_NORMAL_NO_LOG);
 			if (BufferIsValid(buffer))
 			{
 				LockBufferForCleanup(buffer);
