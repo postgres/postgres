@@ -15,7 +15,6 @@ our $config = {
 	tcl     => undef,    # --with-tls=<path>
 	perl    => undef,    # --with-perl
 	python  => undef,    # --with-python=<path>
-	krb5    => undef,    # --with-krb5=<path>
 	openssl => undef,    # --with-ssl=<path>
 	uuid    => undef,    # --with-ossp-uuid
 	xml     => undef,    # --with-libxml=<path>

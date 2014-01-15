@@ -817,7 +817,6 @@ with_tclconfig
 with_perl
 with_python
 with_gssapi
-with_krb5
 with_krb_srvnam
 with_pam
 with_ldap
@@ -1502,8 +1501,7 @@ Optional Packages:
   --with-perl             build Perl modules (PL/Perl)
   --with-python           build Python modules (PL/Python)
   --with-gssapi           build with GSSAPI support
-  --with-krb5             build with Kerberos 5 support
-  --with-krb-srvnam=NAME  default service principal name in Kerberos
+  --with-krb-srvnam=NAME  default service principal name in Kerberos (GSSAPI)
                           [postgres]
   --with-pam              build with PAM support
   --with-ldap             build with LDAP support
@@ -5336,43 +5334,6 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $with_gssapi" >&5
 $as_echo "$with_gssapi" >&6; }
 
-#
-# Kerberos 5
-#
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build with Kerberos 5 support" >&5
-$as_echo_n "checking whether to build with Kerberos 5 support... " >&6; }
-
-
-
-# Check whether --with-krb5 was given.
-if test "${with_krb5+set}" = set; then :
-  withval=$with_krb5;
-  case $withval in
-    yes)
-
-
-$as_echo "#define KRB5 1" >>confdefs.h
-
-  krb_srvtab="FILE:\$(sysconfdir)/krb5.keytab"
-
-      ;;
-    no)
-      :
-      ;;
-    *)
-      as_fn_error $? "no argument expected for --with-krb5 option" "$LINENO" 5
-      ;;
-  esac
-
-else
-  with_krb5=no
-
-fi
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $with_krb5" >&5
-$as_echo "$with_krb5" >&6; }
-
 
 
 
@@ -8395,186 +8356,6 @@ fi
   fi
 fi
 
-if test "$with_krb5" = yes ; then
-  if test "$PORTNAME" != "win32"; then
-     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing com_err" >&5
-$as_echo_n "checking for library containing com_err... " >&6; }
-if ${ac_cv_search_com_err+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS=$LIBS
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char com_err ();
-int
-main ()
-{
-return com_err ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' krb5 'krb5 -lcrypto -ldes -lasn1 -lroken' com_err 'com_err -lssl -lcrypto'; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_search_com_err=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-  if ${ac_cv_search_com_err+:} false; then :
-  break
-fi
-done
-if ${ac_cv_search_com_err+:} false; then :
-
-else
-  ac_cv_search_com_err=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_com_err" >&5
-$as_echo "$ac_cv_search_com_err" >&6; }
-ac_res=$ac_cv_search_com_err
-if test "$ac_res" != no; then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-
-else
-  as_fn_error $? "could not find function 'com_err' required for Kerberos 5" "$LINENO" 5
-fi
-
-     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing krb5_sendauth" >&5
-$as_echo_n "checking for library containing krb5_sendauth... " >&6; }
-if ${ac_cv_search_krb5_sendauth+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS=$LIBS
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char krb5_sendauth ();
-int
-main ()
-{
-return krb5_sendauth ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' krb5 'krb5 -lcrypto -ldes -lasn1 -lroken'; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_search_krb5_sendauth=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-  if ${ac_cv_search_krb5_sendauth+:} false; then :
-  break
-fi
-done
-if ${ac_cv_search_krb5_sendauth+:} false; then :
-
-else
-  ac_cv_search_krb5_sendauth=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_krb5_sendauth" >&5
-$as_echo "$ac_cv_search_krb5_sendauth" >&6; }
-ac_res=$ac_cv_search_krb5_sendauth
-if test "$ac_res" != no; then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-
-else
-  as_fn_error $? "could not find function 'krb5_sendauth' required for Kerberos 5" "$LINENO" 5
-fi
-
-  else
-     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing com_err" >&5
-$as_echo_n "checking for library containing com_err... " >&6; }
-if ${ac_cv_search_com_err+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS=$LIBS
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char com_err ();
-int
-main ()
-{
-return com_err ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' 'comerr32 -lkrb5_32'; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_search_com_err=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-  if ${ac_cv_search_com_err+:} false; then :
-  break
-fi
-done
-if ${ac_cv_search_com_err+:} false; then :
-
-else
-  ac_cv_search_com_err=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_com_err" >&5
-$as_echo "$ac_cv_search_com_err" >&6; }
-ac_res=$ac_cv_search_com_err
-if test "$ac_res" != no; then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-
-else
-  as_fn_error $? "could not find function 'com_err' required for Kerberos 5" "$LINENO" 5
-fi
-
-  fi
-fi
-
 if test "$with_openssl" = yes ; then
     if test "$PORTNAME" != "win32"; then
      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for CRYPTO_new_ex_data in -lcrypto" >&5
@@ -9493,17 +9274,6 @@ done
 fi
 
 done
-
-fi
-
-if test "$with_krb5" = yes ; then
-  ac_fn_c_check_header_mongrel "$LINENO" "krb5.h" "ac_cv_header_krb5_h" "$ac_includes_default"
-if test "x$ac_cv_header_krb5_h" = xyes; then :
-
-else
-  as_fn_error $? "header file <krb5.h> is required for Kerberos 5" "$LINENO" 5
-fi
-
 
 fi
 
@@ -10770,88 +10540,6 @@ else
 Use --without-zlib to disable zlib support." "$LINENO" 5
 fi
 
-fi
-
-if test "$with_krb5" = yes; then
-# Check for differences between MIT and Heimdal (KTH) releases
-  ac_fn_c_check_member "$LINENO" "krb5_ticket" "enc_part2" "ac_cv_member_krb5_ticket_enc_part2" "#include <krb5.h>
-"
-if test "x$ac_cv_member_krb5_ticket_enc_part2" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_KRB5_TICKET_ENC_PART2 1
-_ACEOF
-
-
-else
-  ac_fn_c_check_member "$LINENO" "krb5_ticket" "client" "ac_cv_member_krb5_ticket_client" "#include <krb5.h>
-"
-if test "x$ac_cv_member_krb5_ticket_client" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_KRB5_TICKET_CLIENT 1
-_ACEOF
-
-
-else
-  as_fn_error $? "could not determine how to get client name from Kerberos 5 ticket" "$LINENO" 5
-fi
-
-fi
-
-  ac_fn_c_check_member "$LINENO" "krb5_error" "text.data" "ac_cv_member_krb5_error_text_data" "#include <krb5.h>
-"
-if test "x$ac_cv_member_krb5_error_text_data" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_KRB5_ERROR_TEXT_DATA 1
-_ACEOF
-
-
-else
-  ac_fn_c_check_member "$LINENO" "krb5_error" "e_data" "ac_cv_member_krb5_error_e_data" "#include <krb5.h>
-"
-if test "x$ac_cv_member_krb5_error_e_data" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_KRB5_ERROR_E_DATA 1
-_ACEOF
-
-
-else
-  as_fn_error $? "could not determine how to extract Kerberos 5 error messages" "$LINENO" 5
-fi
-
-fi
-
-
-# Win32 requires headers to be loaded for __stdcall, so can't use
-# AC_CHECK_FUNCS here.
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for krb5_free_unparsed_name" >&5
-$as_echo_n "checking for krb5_free_unparsed_name... " >&6; }
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <krb5.h>
-int
-main ()
-{
-krb5_free_unparsed_name(NULL,NULL);
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-
-$as_echo "#define HAVE_KRB5_FREE_UNPARSED_NAME 1" >>confdefs.h
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
 fi
 
 # On PPC, check if assembler supports LWARX instruction's mutex hint bit

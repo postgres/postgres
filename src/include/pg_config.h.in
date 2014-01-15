@@ -260,21 +260,6 @@
 /* Define to 1 if you have isinf(). */
 #undef HAVE_ISINF
 
-/* Define to 1 if `e_data' is a member of `krb5_error'. */
-#undef HAVE_KRB5_ERROR_E_DATA
-
-/* Define to 1 if `text.data' is a member of `krb5_error'. */
-#undef HAVE_KRB5_ERROR_TEXT_DATA
-
-/* Define to 1 if you have krb5_free_unparsed_name. */
-#undef HAVE_KRB5_FREE_UNPARSED_NAME
-
-/* Define to 1 if `client' is a member of `krb5_ticket'. */
-#undef HAVE_KRB5_TICKET_CLIENT
-
-/* Define to 1 if `enc_part2' is a member of `krb5_ticket'. */
-#undef HAVE_KRB5_TICKET_ENC_PART2
-
 /* Define to 1 if you have the <langinfo.h> header file. */
 #undef HAVE_LANGINFO_H
 
@@ -655,9 +640,6 @@
 
 /* Define to the appropriate snprintf format for 64-bit ints. */
 #undef INT64_FORMAT
-
-/* Define to build with Kerberos 5 support. (--with-krb5) */
-#undef KRB5
 
 /* Define to 1 if `locale_t' requires <xlocale.h>. */
 #undef LOCALE_T_IN_XLOCALE

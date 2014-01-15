@@ -608,17 +608,6 @@ PGAC_ARG_BOOL(with, gssapi, no, [build with GSSAPI support],
 ])
 AC_MSG_RESULT([$with_gssapi])
 
-#
-# Kerberos 5
-#
-AC_MSG_CHECKING([whether to build with Kerberos 5 support])
-PGAC_ARG_BOOL(with, krb5, no, [build with Kerberos 5 support],
-[
-  AC_DEFINE(KRB5, 1, [Define to build with Kerberos 5 support. (--with-krb5)])
-  krb_srvtab="FILE:\$(sysconfdir)/krb5.keytab"
-])
-AC_MSG_RESULT([$with_krb5])
-
 
 AC_SUBST(krb_srvtab)
 
@@ -627,11 +616,11 @@ AC_SUBST(krb_srvtab)
 # Kerberos configuration parameters
 #
 PGAC_ARG_REQ(with, krb-srvnam,
-             [NAME], [default service principal name in Kerberos [postgres]],
+             [NAME], [default service principal name in Kerberos (GSSAPI) [postgres]],
              [],
              [with_krb_srvnam="postgres"])
 AC_DEFINE_UNQUOTED([PG_KRB_SRVNAM], ["$with_krb_srvnam"],
-                   [Define to the name of the default PostgreSQL service principal in Kerberos. (--with-krb-srvnam=NAME)])
+                   [Define to the name of the default PostgreSQL service principal in Kerberos (GSSAPI). (--with-krb-srvnam=NAME)])
 
 
 #
@@ -929,18 +918,6 @@ if test "$with_gssapi" = yes ; then
   fi
 fi
 
-if test "$with_krb5" = yes ; then
-  if test "$PORTNAME" != "win32"; then
-     AC_SEARCH_LIBS(com_err, [krb5 'krb5 -lcrypto -ldes -lasn1 -lroken' com_err 'com_err -lssl -lcrypto'], [],
-                    [AC_MSG_ERROR([could not find function 'com_err' required for Kerberos 5])])
-     AC_SEARCH_LIBS(krb5_sendauth, [krb5 'krb5 -lcrypto -ldes -lasn1 -lroken'], [],
-                    [AC_MSG_ERROR([could not find function 'krb5_sendauth' required for Kerberos 5])])
-  else
-     AC_SEARCH_LIBS(com_err, 'comerr32 -lkrb5_32', [],
-                    [AC_MSG_ERROR([could not find function 'com_err' required for Kerberos 5])])
-  fi
-fi
-
 if test "$with_openssl" = yes ; then
   dnl Order matters!
   if test "$PORTNAME" != "win32"; then
@@ -1061,10 +1038,6 @@ if test "$with_gssapi" = yes ; then
 	[AC_CHECK_HEADERS(gssapi.h, [], [AC_MSG_ERROR([gssapi.h header file is required for GSSAPI])])])
 fi
 
-if test "$with_krb5" = yes ; then
-  AC_CHECK_HEADER(krb5.h, [], [AC_MSG_ERROR([header file <krb5.h> is required for Kerberos 5])])
-fi
-
 if test "$with_openssl" = yes ; then
   AC_CHECK_HEADER(openssl/ssl.h, [], [AC_MSG_ERROR([header file <openssl/ssl.h> is required for OpenSSL])])
   AC_CHECK_HEADER(openssl/err.h, [], [AC_MSG_ERROR([header file <openssl/err.h> is required for OpenSSL])])
@@ -1158,29 +1131,6 @@ if test "$with_zlib" = yes; then
   AC_CHECK_TYPE(z_streamp, [], [AC_MSG_ERROR([zlib version is too old
 Use --without-zlib to disable zlib support.])],
                 [#include <zlib.h>])
-fi
-
-if test "$with_krb5" = yes; then
-# Check for differences between MIT and Heimdal (KTH) releases
-  AC_CHECK_MEMBERS(krb5_ticket.enc_part2, [],
-                   [AC_CHECK_MEMBERS(krb5_ticket.client, [],
-                                     [AC_MSG_ERROR([could not determine how to get client name from Kerberos 5 ticket])],
-                                     [#include <krb5.h>])],
-                   [#include <krb5.h>])
-  AC_CHECK_MEMBERS(krb5_error.text.data, [],
-                   [AC_CHECK_MEMBERS(krb5_error.e_data, [],
-                                     [AC_MSG_ERROR([could not determine how to extract Kerberos 5 error messages])],
-                                     [#include <krb5.h>])],
-                   [#include <krb5.h>])
-
-# Win32 requires headers to be loaded for __stdcall, so can't use
-# AC_CHECK_FUNCS here.
-  AC_MSG_CHECKING(for krb5_free_unparsed_name)
-  AC_TRY_LINK([#include <krb5.h>],
-              [krb5_free_unparsed_name(NULL,NULL);],
-              [AC_DEFINE(HAVE_KRB5_FREE_UNPARSED_NAME, 1, [Define to 1 if you have krb5_free_unparsed_name.])
-AC_MSG_RESULT(yes)],
-              [AC_MSG_RESULT(no)])
 fi
 
 # On PPC, check if assembler supports LWARX instruction's mutex hint bit

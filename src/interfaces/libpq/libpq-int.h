@@ -331,7 +331,7 @@ struct pg_conn
 	char	   *sslcrl;			/* certificate revocation list filename */
 	char	   *requirepeer;	/* required peer credentials for local sockets */
 
-#if defined(KRB5) || defined(ENABLE_GSS) || defined(ENABLE_SSPI)
+#if defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 	char	   *krbsrvname;		/* Kerberos service name */
 #endif
 

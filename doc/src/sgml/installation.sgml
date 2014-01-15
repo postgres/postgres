@@ -772,27 +772,11 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term><option>--with-krb5</option></term>
-       <listitem>
-        <para>
-         Build with support for Kerberos 5 authentication. On many
-         systems, the Kerberos system is not installed in a location
-         that is searched by default (e.g., <filename>/usr/include</>,
-         <filename>/usr/lib</>), so you must use the options
-         <option>--with-includes</> and <option>--with-libraries</> in
-         addition to this option.  <filename>configure</> will check
-         for the required header files and libraries to make sure that
-         your Kerberos installation is sufficient before proceeding.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
        <term><option>--with-krb-srvnam=<replaceable>NAME</></option></term>
        <listitem>
         <para>
-         The default name of the Kerberos service principal (also used
-         by GSSAPI).
+         The default name of the Kerberos service principal used
+         by GSSAPI.
          <literal>postgres</literal> is the default. There's usually no
          reason to change this unless you have a Windows environment,
          in which case it must be set to upper case

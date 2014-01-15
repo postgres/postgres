@@ -269,7 +269,7 @@ $ENV{PATH}=$ENV{PATH} . ';c:\some\where\bison\bin';
     <varlistentry>
      <term><productname>MIT Kerberos</productname></term>
      <listitem><para>
-      Required for Kerberos authentication support. MIT Kerberos can be
+      Required for GSSAPI authentication support. MIT Kerberos can be
       downloaded from
       <ulink url="http://web.mit.edu/Kerberos/dist/index.html"></>.
      </para></listitem>

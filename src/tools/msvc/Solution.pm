@@ -221,10 +221,6 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
 		}
 		if ($self->{options}->{krb5})
 		{
-			print O "#define KRB5 1\n";
-			print O "#define HAVE_KRB5_ERROR_TEXT_DATA 1\n";
-			print O "#define HAVE_KRB5_TICKET_ENC_PART2 1\n";
-			print O "#define HAVE_KRB5_FREE_UNPARSED_NAME 1\n";
 			print O "#define ENABLE_GSS 1\n";
 		}
 		if (my $port = $self->{options}->{"--with-pgport"})
@@ -625,7 +621,7 @@ sub GetFakeConfigure
 	$cfg .= ' --with-ossp-uuid' if ($self->{options}->{uuid});
 	$cfg .= ' --with-libxml'    if ($self->{options}->{xml});
 	$cfg .= ' --with-libxslt'   if ($self->{options}->{xslt});
-	$cfg .= ' --with-krb5'      if ($self->{options}->{krb5});
+	$cfg .= ' --with-gssapi'    if ($self->{options}->{krb5});
 	$cfg .= ' --with-tcl'       if ($self->{options}->{tcl});
 	$cfg .= ' --with-perl'      if ($self->{options}->{perl});
 	$cfg .= ' --with-python'    if ($self->{options}->{python});

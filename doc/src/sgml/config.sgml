@@ -964,7 +964,7 @@ include 'filename'
       <listitem>
        <para>
         Sets the location of the Kerberos server key file. See
-        <xref linkend="kerberos-auth"> or <xref linkend="gssapi-auth">
+        <xref linkend="gssapi-auth">
         for details. This parameter can only be set in the
         <filename>postgresql.conf</> file or on the server command line.
        </para>
@@ -978,7 +978,7 @@ include 'filename'
       </indexterm>
       <listitem>
        <para>
-        Sets the Kerberos service name. See <xref linkend="kerberos-auth">
+        Sets the Kerberos service name. See <xref linkend="gssapi-auth">
         for details. This parameter can only be set in the
         <filename>postgresql.conf</> file or on the server command line.
        </para>
@@ -992,7 +992,7 @@ include 'filename'
       </indexterm>
       <listitem>
        <para>
-        Sets whether Kerberos and GSSAPI user names should be treated
+        Sets whether GSSAPI user names should be treated
         case-insensitively.
         The default is <literal>off</> (case sensitive). This parameter can only be
         set in the <filename>postgresql.conf</> file or on the server command line.

@@ -1177,12 +1177,6 @@ parse_hba_line(List *line, int line_num, char *raw_line)
 		parsedline->auth_method = uaPeer;
 	else if (strcmp(token->string, "password") == 0)
 		parsedline->auth_method = uaPassword;
-	else if (strcmp(token->string, "krb5") == 0)
-#ifdef KRB5
-		parsedline->auth_method = uaKrb5;
-#else
-		unsupauth = "krb5";
-#endif
 	else if (strcmp(token->string, "gss") == 0)
 #ifdef ENABLE_GSS
 		parsedline->auth_method = uaGSS;
@@ -1261,17 +1255,6 @@ parse_hba_line(List *line, int line_num, char *raw_line)
 		parsedline->auth_method = uaPeer;
 
 	/* Invalid authentication combinations */
-	if (parsedline->conntype == ctLocal &&
-		parsedline->auth_method == uaKrb5)
-	{
-		ereport(LOG,
-				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-			 errmsg("krb5 authentication is not supported on local sockets"),
-				 errcontext("line %d of configuration file \"%s\"",
-							line_num, HbaFileName)));
-		return NULL;
-	}
-
 	if (parsedline->conntype == ctLocal &&
 		parsedline->auth_method == uaGSS)
 	{
@@ -1417,11 +1400,10 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline, int line_num)
 	{
 		if (hbaline->auth_method != uaIdent &&
 			hbaline->auth_method != uaPeer &&
-			hbaline->auth_method != uaKrb5 &&
 			hbaline->auth_method != uaGSS &&
 			hbaline->auth_method != uaSSPI &&
 			hbaline->auth_method != uaCert)
-			INVALID_AUTH_OPTION("map", gettext_noop("ident, peer, krb5, gssapi, sspi, and cert"));
+			INVALID_AUTH_OPTION("map", gettext_noop("ident, peer, gssapi, sspi, and cert"));
 		hbaline->usermap = pstrdup(val);
 	}
 	else if (strcmp(name, "clientcert") == 0)
@@ -1578,25 +1560,18 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline, int line_num)
 		REQUIRE_AUTH_OPTION(uaLDAP, "ldapsuffix", "ldap");
 		hbaline->ldapsuffix = pstrdup(val);
 	}
-	else if (strcmp(name, "krb_server_hostname") == 0)
-	{
-		REQUIRE_AUTH_OPTION(uaKrb5, "krb_server_hostname", "krb5");
-		hbaline->krb_server_hostname = pstrdup(val);
-	}
 	else if (strcmp(name, "krb_realm") == 0)
 	{
-		if (hbaline->auth_method != uaKrb5 &&
-			hbaline->auth_method != uaGSS &&
+		if (hbaline->auth_method != uaGSS &&
 			hbaline->auth_method != uaSSPI)
-			INVALID_AUTH_OPTION("krb_realm", gettext_noop("krb5, gssapi, and sspi"));
+			INVALID_AUTH_OPTION("krb_realm", gettext_noop("gssapi and sspi"));
 		hbaline->krb_realm = pstrdup(val);
 	}
 	else if (strcmp(name, "include_realm") == 0)
 	{
-		if (hbaline->auth_method != uaKrb5 &&
-			hbaline->auth_method != uaGSS &&
+		if (hbaline->auth_method != uaGSS &&
 			hbaline->auth_method != uaSSPI)
-			INVALID_AUTH_OPTION("include_realm", gettext_noop("krb5, gssapi, and sspi"));
+			INVALID_AUTH_OPTION("include_realm", gettext_noop("gssapi and sspi"));
 		if (strcmp(val, "1") == 0)
 			hbaline->include_realm = true;
 		else

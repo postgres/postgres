@@ -76,9 +76,6 @@ static const char *auth_methods_host[] = {"trust", "reject", "md5", "password", 
 #ifdef ENABLE_SSPI
 	"sspi",
 #endif
-#ifdef KRB5
-	"krb5",
-#endif
 #ifdef USE_PAM
 	"pam", "pam ",
 #endif

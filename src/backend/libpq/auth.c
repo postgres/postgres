@@ -134,29 +134,6 @@ bool		pg_krb_caseins_users;
 
 
 /*----------------------------------------------------------------
- * MIT Kerberos authentication system - protocol version 5
- *----------------------------------------------------------------
- */
-#ifdef KRB5
-static int	pg_krb5_recvauth(Port *port);
-
-#include <krb5.h>
-/* Some old versions of Kerberos do not include <com_err.h> in <krb5.h> */
-#if !defined(__COM_ERR_H) && !defined(__COM_ERR_H__)
-#include <com_err.h>
-#endif
-/*
- * Various krb5 state which is not connection specific, and a flag to
- * indicate whether we have initialised it yet.
- */
-static int	pg_krb5_initialised;
-static krb5_context pg_krb5_context;
-static krb5_keytab pg_krb5_keytab;
-static krb5_principal pg_krb5_server;
-#endif   /* KRB5 */
-
-
-/*----------------------------------------------------------------
  * GSSAPI Authentication
  *----------------------------------------------------------------
  */
@@ -256,9 +233,6 @@ auth_failed(Port *port, int status)
 		case uaReject:
 		case uaImplicitReject:
 			errstr = gettext_noop("authentication failed for user \"%s\": host rejected");
-			break;
-		case uaKrb5:
-			errstr = gettext_noop("Kerberos 5 authentication failed for user \"%s\"");
 			break;
 		case uaTrust:
 			errstr = gettext_noop("\"trust\" authentication failed for user \"%s\"");
@@ -497,15 +471,6 @@ ClientAuthentication(Port *port)
 				break;
 			}
 
-		case uaKrb5:
-#ifdef KRB5
-			sendAuthRequest(port, AUTH_REQ_KRB5);
-			status = pg_krb5_recvauth(port);
-#else
-			Assert(false);
-#endif
-			break;
-
 		case uaGSS:
 #ifdef ENABLE_GSS
 			sendAuthRequest(port, AUTH_REQ_GSS);
@@ -734,188 +699,6 @@ recv_and_check_password_packet(Port *port)
 	return result;
 }
 
-
-/*----------------------------------------------------------------
- * MIT Kerberos authentication system - protocol version 5
- *----------------------------------------------------------------
- */
-#ifdef KRB5
-
-static int
-pg_krb5_init(Port *port)
-{
-	krb5_error_code retval;
-	char	   *khostname;
-
-	if (pg_krb5_initialised)
-		return STATUS_OK;
-
-	retval = krb5_init_context(&pg_krb5_context);
-	if (retval)
-	{
-		ereport(LOG,
-				(errmsg("Kerberos initialization returned error %d",
-						retval)));
-		com_err("postgres", retval, "while initializing krb5");
-		return STATUS_ERROR;
-	}
-
-	retval = krb5_kt_resolve(pg_krb5_context, pg_krb_server_keyfile, &pg_krb5_keytab);
-	if (retval)
-	{
-		ereport(LOG,
-				(errmsg("Kerberos keytab resolving returned error %d",
-						retval)));
-		com_err("postgres", retval, "while resolving keytab file \"%s\"",
-				pg_krb_server_keyfile);
-		krb5_free_context(pg_krb5_context);
-		return STATUS_ERROR;
-	}
-
-	/*
-	 * If no hostname was specified, pg_krb_server_hostname is already NULL.
-	 * If it's set to blank, force it to NULL.
-	 */
-	khostname = port->hba->krb_server_hostname;
-	if (khostname && khostname[0] == '\0')
-		khostname = NULL;
-
-	retval = krb5_sname_to_principal(pg_krb5_context,
-									 khostname,
-									 pg_krb_srvnam,
-									 KRB5_NT_SRV_HST,
-									 &pg_krb5_server);
-	if (retval)
-	{
-		ereport(LOG,
-				(errmsg("Kerberos sname_to_principal(\"%s\", \"%s\") returned error %d",
-		 khostname ? khostname : "server hostname", pg_krb_srvnam, retval)));
-		com_err("postgres", retval,
-		"while getting server principal for server \"%s\" for service \"%s\"",
-				khostname ? khostname : "server hostname", pg_krb_srvnam);
-		krb5_kt_close(pg_krb5_context, pg_krb5_keytab);
-		krb5_free_context(pg_krb5_context);
-		return STATUS_ERROR;
-	}
-
-	pg_krb5_initialised = 1;
-	return STATUS_OK;
-}
-
-
-/*
- * pg_krb5_recvauth -- server routine to receive authentication information
- *					   from the client
- *
- * We still need to compare the username obtained from the client's setup
- * packet to the authenticated name.
- *
- * We have our own keytab file because postgres is unlikely to run as root,
- * and so cannot read the default keytab.
- */
-static int
-pg_krb5_recvauth(Port *port)
-{
-	krb5_error_code retval;
-	int			ret;
-	krb5_auth_context auth_context = NULL;
-	krb5_ticket *ticket;
-	char	   *kusername;
-	char	   *cp;
-
-	ret = pg_krb5_init(port);
-	if (ret != STATUS_OK)
-		return ret;
-
-	retval = krb5_recvauth(pg_krb5_context, &auth_context,
-						   (krb5_pointer) & port->sock, pg_krb_srvnam,
-						   pg_krb5_server, 0, pg_krb5_keytab, &ticket);
-	if (retval)
-	{
-		ereport(LOG,
-				(errmsg("Kerberos recvauth returned error %d",
-						retval)));
-		com_err("postgres", retval, "from krb5_recvauth");
-		return STATUS_ERROR;
-	}
-
-	/*
-	 * The "client" structure comes out of the ticket and is therefore
-	 * authenticated.  Use it to check the username obtained from the
-	 * postmaster startup packet.
-	 */
-#if defined(HAVE_KRB5_TICKET_ENC_PART2)
-	retval = krb5_unparse_name(pg_krb5_context,
-							   ticket->enc_part2->client, &kusername);
-#elif defined(HAVE_KRB5_TICKET_CLIENT)
-	retval = krb5_unparse_name(pg_krb5_context,
-							   ticket->client, &kusername);
-#else
-#error "bogus configuration"
-#endif
-	if (retval)
-	{
-		ereport(LOG,
-				(errmsg("Kerberos unparse_name returned error %d",
-						retval)));
-		com_err("postgres", retval, "while unparsing client name");
-		krb5_free_ticket(pg_krb5_context, ticket);
-		krb5_auth_con_free(pg_krb5_context, auth_context);
-		return STATUS_ERROR;
-	}
-
-	cp = strchr(kusername, '@');
-	if (cp)
-	{
-		/*
-		 * If we are not going to include the realm in the username that is
-		 * passed to the ident map, destructively modify it here to remove the
-		 * realm. Then advance past the separator to check the realm.
-		 */
-		if (!port->hba->include_realm)
-			*cp = '\0';
-		cp++;
-
-		if (port->hba->krb_realm != NULL && strlen(port->hba->krb_realm))
-		{
-			/* Match realm against configured */
-			if (pg_krb_caseins_users)
-				ret = pg_strcasecmp(port->hba->krb_realm, cp);
-			else
-				ret = strcmp(port->hba->krb_realm, cp);
-
-			if (ret)
-			{
-				elog(DEBUG2,
-					 "krb5 realm (%s) and configured realm (%s) don't match",
-					 cp, port->hba->krb_realm);
-
-				krb5_free_ticket(pg_krb5_context, ticket);
-				krb5_auth_con_free(pg_krb5_context, auth_context);
-				return STATUS_ERROR;
-			}
-		}
-	}
-	else if (port->hba->krb_realm && strlen(port->hba->krb_realm))
-	{
-		elog(DEBUG2,
-			 "krb5 did not return realm but realm matching was requested");
-
-		krb5_free_ticket(pg_krb5_context, ticket);
-		krb5_auth_con_free(pg_krb5_context, auth_context);
-		return STATUS_ERROR;
-	}
-
-	ret = check_usermap(port->hba->usermap, port->user_name, kusername,
-						pg_krb_caseins_users);
-
-	krb5_free_ticket(pg_krb5_context, ticket);
-	krb5_auth_con_free(pg_krb5_context, auth_context);
-	free(kusername);
-
-	return ret;
-}
-#endif   /* KRB5 */
 
 
 /*----------------------------------------------------------------

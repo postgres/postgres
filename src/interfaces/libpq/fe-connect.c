@@ -278,7 +278,7 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 		"Require-Peer", "", 10,
 	offsetof(struct pg_conn, requirepeer)},
 
-#if defined(KRB5) || defined(ENABLE_GSS) || defined(ENABLE_SSPI)
+#if defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 	/* Kerberos and GSSAPI authentication support specifying the service name */
 	{"krbsrvname", "PGKRBSRVNAME", PG_KRB_SRVNAM, NULL,
 		"Kerberos-service-name", "", 20,
@@ -2823,7 +2823,7 @@ freePGconn(PGconn *conn)
 		free(conn->sslcompression);
 	if (conn->requirepeer)
 		free(conn->requirepeer);
-#if defined(KRB5) || defined(ENABLE_GSS) || defined(ENABLE_SSPI)
+#if defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 	if (conn->krbsrvname)
 		free(conn->krbsrvname);
 #endif

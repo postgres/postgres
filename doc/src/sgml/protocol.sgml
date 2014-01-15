@@ -271,7 +271,8 @@
         authentication dialog (not described here, part of the
         Kerberos specification) with the server.  If this is
         successful, the server responds with an AuthenticationOk,
-        otherwise it responds with an ErrorResponse.
+        otherwise it responds with an ErrorResponse. This is no
+        longer supported. This is not supported any more.
        </para>
       </listitem>
      </varlistentry>

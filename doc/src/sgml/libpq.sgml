@@ -896,7 +896,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         Using <literal>hostaddr</> instead of <literal>host</> allows the
         application to avoid a host name look-up, which might be important
         in applications with time constraints. However, a host name is
-        required for Kerberos, GSSAPI, or SSPI authentication
+        required for GSSAPI or SSPI authentication
         methods, as well as for <literal>verify-full</> SSL
         certificate verification.  The following rules are used:
         <itemizedlist>
@@ -1331,11 +1331,10 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       <term><literal>krbsrvname</literal></term>
       <listitem>
        <para>
-        Kerberos service name to use when authenticating with Kerberos 5
-        or GSSAPI.
+        Kerberos service name to use when authenticating with GSSAPI.
         This must match the service name specified in the server
         configuration for Kerberos authentication to succeed. (See also
-        <xref linkend="kerberos-auth"> and <xref linkend="gssapi-auth">.)
+        <xref linkend="gssapi-auth">.)
        </para>
       </listitem>
      </varlistentry>
@@ -6652,7 +6651,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <application>libpq</application> applications will attempt
       authentication  with  servers for this realm and use separate ticket
       files to avoid conflicts with local ticket files.   This
-      environment  variable is only used if Kerberos authentication is
+      environment  variable is only used if GSSAPI authentication is
       selected by the server.
      </para>
     </listitem>
