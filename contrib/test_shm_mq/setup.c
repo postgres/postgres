@@ -29,7 +29,7 @@ typedef struct
 	BackgroundWorkerHandle *handle[FLEXIBLE_ARRAY_MEMBER];
 } worker_state;
 
-static void setup_dynamic_shared_memory(uint64 queue_size, int nworkers,
+static void setup_dynamic_shared_memory(int64 queue_size, int nworkers,
 							dsm_segment **segp,
 							test_shm_mq_header **hdrp,
 							shm_mq **outp, shm_mq **inp);
@@ -45,7 +45,7 @@ static bool check_worker_status(worker_state *wstate);
  * for a test run.
  */
 void
-test_shm_mq_setup(uint64 queue_size, int32 nworkers, dsm_segment **segp,
+test_shm_mq_setup(int64 queue_size, int32 nworkers, dsm_segment **segp,
 				  shm_mq_handle **output, shm_mq_handle **input)
 {
 	dsm_segment *seg;
@@ -86,7 +86,7 @@ test_shm_mq_setup(uint64 queue_size, int32 nworkers, dsm_segment **segp,
  * the number of workers, plus one.
  */
 static void
-setup_dynamic_shared_memory(uint64 queue_size, int nworkers,
+setup_dynamic_shared_memory(int64 queue_size, int nworkers,
 							dsm_segment **segp, test_shm_mq_header **hdrp,
 							shm_mq **outp, shm_mq **inp)
 {

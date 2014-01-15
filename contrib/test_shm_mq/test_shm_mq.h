@@ -35,7 +35,7 @@ typedef struct
 } test_shm_mq_header;
 
 /* Set up dynamic shared memory and background workers for test run. */
-extern void test_shm_mq_setup(uint64 queue_size, int32 nworkers,
+extern void test_shm_mq_setup(int64 queue_size, int32 nworkers,
 							  dsm_segment **seg, shm_mq_handle **output,
 							  shm_mq_handle **input);
 
