@@ -2156,7 +2156,7 @@ toast_open_indexes(Relation toastrel,
 	/* Fetch the first valid index in list */
 	for (i = 0; i < *num_indexes; i++)
 	{
-		Relation toastidx = *toastidxs[i];
+		Relation toastidx = (*toastidxs)[i];
 		if (toastidx->rd_index->indisvalid)
 		{
 			res = i;
