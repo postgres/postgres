@@ -113,6 +113,6 @@ typedef RunningTransactionsData *RunningTransactions;
 extern void LogAccessExclusiveLock(Oid dbOid, Oid relOid);
 extern void LogAccessExclusiveLockPrepare(void);
 
-extern void LogStandbySnapshot(void);
+extern XLogRecPtr LogStandbySnapshot(void);
 
 #endif   /* STANDBY_H */

@@ -54,9 +54,11 @@
 #include "storage/shmem.h"
 #include "storage/smgr.h"
 #include "storage/spin.h"
+#include "storage/standby.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/resowner.h"
+#include "utils/timestamp.h"
 
 
 /*
@@ -69,6 +71,20 @@ int			BgWriterDelay = 200;
  * (Perhaps this needs to be configurable?)
  */
 #define HIBERNATE_FACTOR			50
+
+/*
+ * Interval in which standby snapshots are logged into the WAL stream, in
+ * milliseconds.
+ */
+#define LOG_SNAPSHOT_INTERVAL_MS 15000
+
+/*
+ * LSN and timestamp at which we last issued a LogStandbySnapshot(), to avoid
+ * doing so too often or repeatedly if there has been no other write activity
+ * in the system.
+ */
+static TimestampTz last_snapshot_ts;
+static XLogRecPtr last_snapshot_lsn = InvalidXLogRecPtr;
 
 /*
  * Flags set by interrupt handlers for later service in the main loop.
@@ -140,6 +156,12 @@ BackgroundWriterMain(void)
 	 * buffer pins).
 	 */
 	CurrentResourceOwner = ResourceOwnerCreate(NULL, "Background Writer");
+
+	/*
+	 * We just started, assume there has been either a shutdown or
+	 * end-of-recovery snapshot.
+	 */
+	last_snapshot_ts = GetCurrentTimestamp();
 
 	/*
 	 * Create a memory context that we will do all our work in.  We do this so
@@ -273,6 +295,46 @@ BackgroundWriterMain(void)
 			 * won't hang onto smgr references to deleted files indefinitely.
 			 */
 			smgrcloseall();
+		}
+
+		/*
+		 * Log a new xl_running_xacts every now and then so replication can get
+		 * into a consistent state faster (think of suboverflowed snapshots)
+		 * and clean up resources (locks, KnownXids*) more frequently. The
+		 * costs of this are relatively low, so doing it 4 times
+		 * (LOG_SNAPSHOT_INTERVAL_MS) a minute seems fine.
+		 *
+		 * We assume the interval for writing xl_running_xacts is
+		 * significantly bigger than BgWriterDelay, so we don't complicate the
+		 * overall timeout handling but just assume we're going to get called
+		 * often enough even if hibernation mode is active. It's not that
+		 * important that log_snap_interval_ms is met strictly. To make sure
+		 * we're not waking the disk up unneccesarily on an idle system we
+		 * check whether there has been any WAL inserted since the last time
+		 * we've logged a running xacts.
+		 *
+		 * We do this logging in the bgwriter as its the only process thats
+		 * run regularly and returns to its mainloop all the
+		 * time. E.g. Checkpointer, when active, is barely ever in its
+		 * mainloop and thus makes it hard to log regularly.
+		 */
+		if (XLogStandbyInfoActive() && !RecoveryInProgress())
+		{
+			TimestampTz timeout = 0;
+			TimestampTz now = GetCurrentTimestamp();
+			timeout = TimestampTzPlusMilliseconds(last_snapshot_ts,
+												  LOG_SNAPSHOT_INTERVAL_MS);
+
+			/*
+			 * only log if enough time has passed and some xlog record has been
+			 * inserted.
+			 */
+			if (now >= timeout &&
+				last_snapshot_lsn != GetXLogInsertRecPtr())
+			{
+				last_snapshot_lsn = LogStandbySnapshot();
+				last_snapshot_ts = now;
+			}
 		}
 
 		/*
