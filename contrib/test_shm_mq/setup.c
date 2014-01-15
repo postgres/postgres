@@ -102,7 +102,7 @@ setup_dynamic_shared_memory(int64 queue_size, int nworkers,
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("queue size must be at least %lu bytes",
-					shm_mq_minimum_size)));
+					(unsigned long) shm_mq_minimum_size)));
 
 	/*
 	 * Estimate how much shared memory we need.
