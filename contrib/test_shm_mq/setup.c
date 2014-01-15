@@ -101,7 +101,7 @@ setup_dynamic_shared_memory(uint64 queue_size, int nworkers,
 	if (queue_size < 0 || ((uint64) queue_size) < shm_mq_minimum_size)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("queue size must be at least " UINT64_FORMAT " bytes",
+				 errmsg("queue size must be at least %lu bytes",
 					shm_mq_minimum_size)));
 
 	/*
