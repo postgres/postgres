@@ -50,8 +50,8 @@ test_shm_mq_setup(uint64 queue_size, int32 nworkers, dsm_segment **segp,
 {
 	dsm_segment *seg;
 	test_shm_mq_header *hdr;
-	shm_mq	   *outq;
-	shm_mq	   *inq;
+	shm_mq	   *outq = NULL;		/* placate compiler */
+	shm_mq	   *inq = NULL;			/* placate compiler */
 	worker_state	   *wstate;
 
 	/* Set up a dynamic shared memory segment. */
