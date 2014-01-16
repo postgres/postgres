@@ -1199,12 +1199,13 @@ testdb=&gt;
         <literal>n</>, <literal>t</>, or <literal>w</> to the command.
         If <replaceable
         class="parameter">pattern</replaceable> is specified, only
-        functions whose names match the pattern are shown.  If the
-        form <literal>\df+</literal> is used, additional information
-        about each function, including security, volatility, language, source
-        code and description, is shown.  By default, only user-created
+        functions whose names match the pattern are shown.
+        By default, only user-created
         objects are shown; supply a pattern or the <literal>S</literal>
         modifier to include system objects.
+        If the form <literal>\df+</literal> is used, additional information
+        about each function is shown, including security classification,
+        volatility, owner, language, source code and description.
         </para>
 
         <tip>
@@ -1337,15 +1338,18 @@ testdb=&gt;
 
 
       <varlistentry>
-        <term><literal>\do[S] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <term><literal>\do[S+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
-        Lists operators with their operand and return types.
+        Lists operators with their operand and result types.
         If <replaceable class="parameter">pattern</replaceable> is
         specified, only operators whose names match the pattern are listed.
-        By default, only user-created objects are shown;  supply a
+        By default, only user-created objects are shown; supply a
         pattern or the <literal>S</literal> modifier to include system
         objects.
+        If <literal>+</literal> is appended to the command name,
+        additional information about each operator is shown, currently just
+        the name of the underlying function.
         </para>
         </listitem>
       </varlistentry>

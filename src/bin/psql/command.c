@@ -410,7 +410,7 @@ exec_command(const char *cmd,
 				success = listSchemas(pattern, show_verbose, show_system);
 				break;
 			case 'o':
-				success = describeOperators(pattern, show_system);
+				success = describeOperators(pattern, show_verbose, show_system);
 				break;
 			case 'O':
 				success = listCollations(pattern, show_verbose, show_system);
