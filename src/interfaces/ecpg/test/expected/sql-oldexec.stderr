@@ -6,7 +6,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 25: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 25: OK: CREATE TABLE
+[NO_PID]: ecpg_process_output on line 25: OK: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGtrans on line 26: action "commit"; connection "main"
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -14,19 +14,19 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 29: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 29: OK: INSERT 0 1
+[NO_PID]: ecpg_process_output on line 29: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 32: query: insert into test (name, amount, letter) values ('db: ''r1''', 2, 't'); with 0 parameter(s) on connection main
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 32: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 32: OK: INSERT 0 1
+[NO_PID]: ecpg_process_output on line 32: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 35: query: insert into test (name, amount, letter) select name, amount+10, letter from test; with 0 parameter(s) on connection main
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 35: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 35: OK: INSERT 0 2
+[NO_PID]: ecpg_process_output on line 35: OK: INSERT 0 2
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: prepare_common on line 40: name i; query: "insert into test (name, amount, letter) select name, amount+$1, letter from test"
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -36,7 +36,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_free_params on line 41: parameter 1 = 100
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 41: OK: INSERT 0 4
+[NO_PID]: ecpg_process_output on line 41: OK: INSERT 0 4
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGtrans on line 45: action "commit"; connection "main"
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -46,13 +46,13 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 52: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 52: OK: DECLARE CURSOR
+[NO_PID]: ecpg_process_output on line 52: OK: DECLARE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 53: query: fetch 8 in CUR; with 0 parameter(s) on connection main
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 53: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 53: correctly got 8 tuples with 3 fields
+[NO_PID]: ecpg_process_output on line 53: correctly got 8 tuples with 3 fields
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 53: RESULT: db: 'r1' offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -106,7 +106,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 66: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 66: OK: CLOSE CURSOR
+[NO_PID]: ecpg_process_output on line 66: OK: CLOSE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: deallocate_one on line 70: name f
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -118,13 +118,13 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_free_params on line 73: parameter 1 = 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 73: OK: DECLARE CURSOR
+[NO_PID]: ecpg_process_output on line 73: OK: DECLARE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 74: query: fetch in CUR3; with 0 parameter(s) on connection main
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 74: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 74: correctly got 1 tuples with 3 fields
+[NO_PID]: ecpg_process_output on line 74: correctly got 1 tuples with 3 fields
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 74: RESULT: db: 'r1' offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -136,13 +136,13 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 87: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 87: OK: CLOSE CURSOR
+[NO_PID]: ecpg_process_output on line 87: OK: CLOSE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 88: query: drop table test; with 0 parameter(s) on connection main
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 88: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 88: OK: DROP TABLE
+[NO_PID]: ecpg_process_output on line 88: OK: DROP TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGtrans on line 89: action "commit"; connection "main"
 [NO_PID]: sqlca: code: 0, state: 00000

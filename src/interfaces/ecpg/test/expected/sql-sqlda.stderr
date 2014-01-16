@@ -6,19 +6,19 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 73: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 73: OK: SET
+[NO_PID]: ecpg_process_output on line 73: OK: SET
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 76: query: create table t1 ( id integer , t text , d1 numeric , d2 float8 , c char ( 10 ) ); with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 76: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 76: OK: CREATE TABLE
+[NO_PID]: ecpg_process_output on line 76: OK: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 84: query: insert into t1 values ( 1 , 'a' , 1.0 , 1 , 'a' ) , ( 2 , null , null , null , null ) , ( 4 , 'd' , 4.0 , 4 , 'd' ); with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 84: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 84: OK: INSERT 0 3
+[NO_PID]: ecpg_process_output on line 84: OK: INSERT 0 3
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGtrans on line 90: action "commit"; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -28,17 +28,17 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 103: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 103: OK: DECLARE CURSOR
+[NO_PID]: ecpg_process_output on line 103: OK: DECLARE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 111: query: fetch 1 from mycur1; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 111: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 111: correctly got 1 tuples with 5 fields
+[NO_PID]: ecpg_process_output on line 111: correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_build_native_sqlda on line 111 sqld = 5
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 111: new sqlda was built
+[NO_PID]: ecpg_process_output on line 111: new sqlda was built
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda on line 111 row 0 col 0 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -58,17 +58,17 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 111: RESULT: a          offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 111: putting result (1 tuple 5 fields) into sqlda descriptor
+[NO_PID]: ecpg_process_output on line 111: putting result (1 tuple 5 fields) into sqlda descriptor
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 111: query: fetch 1 from mycur1; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 111: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 111: correctly got 1 tuples with 5 fields
+[NO_PID]: ecpg_process_output on line 111: correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_build_native_sqlda on line 111 sqld = 5
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 111: new sqlda was built
+[NO_PID]: ecpg_process_output on line 111: new sqlda was built
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda on line 111 row 0 col 0 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -82,17 +82,17 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda on line 111 row 0 col 4 IS NULL
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 111: putting result (1 tuple 5 fields) into sqlda descriptor
+[NO_PID]: ecpg_process_output on line 111: putting result (1 tuple 5 fields) into sqlda descriptor
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 111: query: fetch 1 from mycur1; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 111: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 111: correctly got 1 tuples with 5 fields
+[NO_PID]: ecpg_process_output on line 111: correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_build_native_sqlda on line 111 sqld = 5
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 111: new sqlda was built
+[NO_PID]: ecpg_process_output on line 111: new sqlda was built
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda on line 111 row 0 col 0 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -112,13 +112,13 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 111: RESULT: d          offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 111: putting result (1 tuple 5 fields) into sqlda descriptor
+[NO_PID]: ecpg_process_output on line 111: putting result (1 tuple 5 fields) into sqlda descriptor
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 111: query: fetch 1 from mycur1; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 111: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 111: correctly got 0 tuples with 5 fields
+[NO_PID]: ecpg_process_output on line 111: correctly got 0 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: raising sqlcode 100 on line 111: no data found on line 111
 [NO_PID]: sqlca: code: 100, state: 02000
@@ -126,7 +126,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 120: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 120: OK: CLOSE CURSOR
+[NO_PID]: ecpg_process_output on line 120: OK: CLOSE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: deallocate_one on line 123: name st_id1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -136,17 +136,17 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 138: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 138: OK: DECLARE CURSOR
+[NO_PID]: ecpg_process_output on line 138: OK: DECLARE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 141: query: fetch all from mycur2; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 141: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 141: correctly got 3 tuples with 5 fields
+[NO_PID]: ecpg_process_output on line 141: correctly got 3 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_build_native_sqlda on line 141 sqld = 5
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 141: new sqlda was built
+[NO_PID]: ecpg_process_output on line 141: new sqlda was built
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda on line 141 row 2 col 0 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -166,11 +166,11 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 141: RESULT: d          offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 141: putting result (1 tuple 5 fields) into sqlda descriptor
+[NO_PID]: ecpg_process_output on line 141: putting result (1 tuple 5 fields) into sqlda descriptor
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_build_native_sqlda on line 141 sqld = 5
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 141: new sqlda was built
+[NO_PID]: ecpg_process_output on line 141: new sqlda was built
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda on line 141 row 1 col 0 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -184,11 +184,11 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda on line 141 row 1 col 4 IS NULL
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 141: putting result (1 tuple 5 fields) into sqlda descriptor
+[NO_PID]: ecpg_process_output on line 141: putting result (1 tuple 5 fields) into sqlda descriptor
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_build_native_sqlda on line 141 sqld = 5
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 141: new sqlda was built
+[NO_PID]: ecpg_process_output on line 141: new sqlda was built
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda on line 141 row 0 col 0 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -208,13 +208,13 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 141: RESULT: a          offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 141: putting result (1 tuple 5 fields) into sqlda descriptor
+[NO_PID]: ecpg_process_output on line 141: putting result (1 tuple 5 fields) into sqlda descriptor
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 157: query: close mycur2; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 157: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 157: OK: CLOSE CURSOR
+[NO_PID]: ecpg_process_output on line 157: OK: CLOSE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: deallocate_one on line 160: name st_id2
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -226,11 +226,11 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_free_params on line 185: parameter 1 = 4
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 185: correctly got 1 tuples with 5 fields
+[NO_PID]: ecpg_process_output on line 185: correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_build_native_sqlda on line 185 sqld = 5
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 185: new sqlda was built
+[NO_PID]: ecpg_process_output on line 185: new sqlda was built
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda on line 185 row 0 col 0 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -250,7 +250,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 185: RESULT: d          offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 185: putting result (1 tuple 5 fields) into sqlda descriptor
+[NO_PID]: ecpg_process_output on line 185: putting result (1 tuple 5 fields) into sqlda descriptor
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: deallocate_one on line 190: name st_id3
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -264,11 +264,11 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_free_params on line 222: parameter 1 = 4
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 222: correctly got 1 tuples with 5 fields
+[NO_PID]: ecpg_process_output on line 222: correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_build_native_sqlda on line 222 sqld = 5
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 222: new sqlda was built
+[NO_PID]: ecpg_process_output on line 222: new sqlda was built
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_set_native_sqlda on line 222 row 0 col 0 IS NOT NULL
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -288,7 +288,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 222: RESULT: d          offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 222: putting result (1 tuple 5 fields) into sqlda descriptor
+[NO_PID]: ecpg_process_output on line 222: putting result (1 tuple 5 fields) into sqlda descriptor
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGtrans on line 227: action "commit"; connection "con2"
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -300,7 +300,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 241: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 241: OK: DROP TABLE
+[NO_PID]: ecpg_process_output on line 241: OK: DROP TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGtrans on line 244: action "commit"; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000

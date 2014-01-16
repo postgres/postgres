@@ -6,7 +6,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 24: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 24: OK: ALTER ROLE
+[NO_PID]: ecpg_process_output on line 24: OK: ALTER ROLE
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection main closed
 [NO_PID]: sqlca: code: 0, state: 00000

@@ -6,7 +6,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 24: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 24: OK: CREATE TABLE
+[NO_PID]: ecpg_process_output on line 24: OK: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 28: query: insert into test ( i , j , c ) values ( 7 , $1  , 'test   ' ); with 1 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -14,7 +14,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_free_params on line 28: parameter 1 = 0
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 28: OK: INSERT 0 1
+[NO_PID]: ecpg_process_output on line 28: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGtrans on line 29: action "commit"; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -35,7 +35,7 @@ DETAIL:  Key (i)=(7) already exists.
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_free_params on line 36: parameter 1 = 14
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 36: OK: INSERT 0 1
+[NO_PID]: ecpg_process_output on line 36: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGtrans on line 37: action "commit"; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -53,7 +53,7 @@ DETAIL:  Key (i)=(7) already exists.
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 44: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 44: correctly got 1 tuples with 1 fields
+[NO_PID]: ecpg_process_output on line 44: correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 95: query: declare c cursor for select * from test where i <= $1 ; with 1 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -61,13 +61,13 @@ DETAIL:  Key (i)=(7) already exists.
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_free_params on line 95: parameter 1 = 14
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 95: OK: DECLARE CURSOR
+[NO_PID]: ecpg_process_output on line 95: OK: DECLARE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 57: query: fetch forward c; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 57: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 57: correctly got 1 tuples with 3 fields
+[NO_PID]: ecpg_process_output on line 57: correctly got 1 tuples with 3 fields
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 57: RESULT: 7 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -79,7 +79,7 @@ DETAIL:  Key (i)=(7) already exists.
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 57: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 57: correctly got 1 tuples with 3 fields
+[NO_PID]: ecpg_process_output on line 57: correctly got 1 tuples with 3 fields
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_get_data on line 57: RESULT: 14 offset: -1; array: no
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -91,7 +91,7 @@ DETAIL:  Key (i)=(7) already exists.
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 57: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 57: correctly got 0 tuples with 3 fields
+[NO_PID]: ecpg_process_output on line 57: correctly got 0 tuples with 3 fields
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: raising sqlcode 100 on line 57: no data found on line 57
 [NO_PID]: sqlca: code: 100, state: 02000
@@ -101,7 +101,7 @@ DETAIL:  Key (i)=(7) already exists.
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_free_params on line 75: parameter 1 = 21.0
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 75: OK: DELETE 0
+[NO_PID]: ecpg_process_output on line 75: OK: DELETE 0
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: raising sqlcode 100 on line 75: no data found on line 75
 [NO_PID]: sqlca: code: 100, state: 02000
@@ -109,13 +109,13 @@ DETAIL:  Key (i)=(7) already exists.
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 78: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 78: correctly got 1 tuples with 1 fields
+[NO_PID]: ecpg_process_output on line 78: correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 81: query: select 1 from test where i = 147; with 0 parameter(s) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 81: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 81: correctly got 0 tuples with 1 fields
+[NO_PID]: ecpg_process_output on line 81: correctly got 0 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: raising sqlcode 100 on line 81: no data found on line 81
 [NO_PID]: sqlca: code: 100, state: 02000
@@ -125,7 +125,7 @@ DETAIL:  Key (i)=(7) already exists.
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 85: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_execute on line 85: OK: DROP TABLE
+[NO_PID]: ecpg_process_output on line 85: OK: DROP TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGtrans on line 86: action "commit"; connection "regress1"
 [NO_PID]: sqlca: code: 0, state: 00000
