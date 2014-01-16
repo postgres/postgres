@@ -279,7 +279,7 @@ wait_for_workers_to_become_ready(worker_state *wstate,
 				break;
 			}
 
-  			/* Wait to be signalled. */
+			/* Wait to be signalled. */
 			WaitLatch(&MyProc->procLatch, WL_LATCH_SET, 0);
 
 			/* An interrupt may have occurred while we were waiting. */
