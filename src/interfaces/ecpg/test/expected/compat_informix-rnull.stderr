@@ -14,19 +14,19 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 36: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 36: parameter 1 = abc
+[NO_PID]: ecpg_free_params on line 36: parameter 1 = abc
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 36: parameter 2 = 17
+[NO_PID]: ecpg_free_params on line 36: parameter 2 = 17
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 36: parameter 3 = -74874
+[NO_PID]: ecpg_free_params on line 36: parameter 3 = -74874
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 36: parameter 4 = t
+[NO_PID]: ecpg_free_params on line 36: parameter 4 = t
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 36: parameter 5 = 3.71000003814697
+[NO_PID]: ecpg_free_params on line 36: parameter 5 = 3.71000003814697
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 36: parameter 6 = 487444
+[NO_PID]: ecpg_free_params on line 36: parameter 6 = 487444
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 36: parameter 7 = 404.404
+[NO_PID]: ecpg_free_params on line 36: parameter 7 = 404.404
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 36: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -36,25 +36,25 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 52: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 52: parameter 1 = null
+[NO_PID]: ecpg_free_params on line 52: parameter 1 = null
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 52: parameter 2 = null
+[NO_PID]: ecpg_free_params on line 52: parameter 2 = null
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 52: parameter 3 = null
+[NO_PID]: ecpg_free_params on line 52: parameter 3 = null
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 52: parameter 4 = t
+[NO_PID]: ecpg_free_params on line 52: parameter 4 = t
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 52: parameter 5 = null
+[NO_PID]: ecpg_free_params on line 52: parameter 5 = null
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 52: parameter 6 = null
+[NO_PID]: ecpg_free_params on line 52: parameter 6 = null
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 52: parameter 7 = null
+[NO_PID]: ecpg_free_params on line 52: parameter 7 = null
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 52: parameter 8 = null
+[NO_PID]: ecpg_free_params on line 52: parameter 8 = null
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 52: parameter 9 = null
+[NO_PID]: ecpg_free_params on line 52: parameter 9 = null
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 52: parameter 10 = null
+[NO_PID]: ecpg_free_params on line 52: parameter 10 = null
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 52: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000

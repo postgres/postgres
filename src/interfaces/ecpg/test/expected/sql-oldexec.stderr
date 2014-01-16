@@ -34,7 +34,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 41: using PQexecPrepared for "insert into test (name, amount, letter) select name, amount+$1, letter from test"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 41: parameter 1 = 100
+[NO_PID]: ecpg_free_params on line 41: parameter 1 = 100
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 41: OK: INSERT 0 4
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -116,7 +116,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 73: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 73: parameter 1 = 1
+[NO_PID]: ecpg_free_params on line 73: parameter 1 = 1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 73: OK: DECLARE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000

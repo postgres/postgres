@@ -22,9 +22,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 37: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 37: parameter 1 = {9,8,7,6,5,4,3,2,1,0}
+[NO_PID]: ecpg_free_params on line 37: parameter 1 = {9,8,7,6,5,4,3,2,1,0}
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 37: parameter 2 = klmnopqrst
+[NO_PID]: ecpg_free_params on line 37: parameter 2 = klmnopqrst
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 37: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -32,11 +32,11 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 39: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 39: parameter 1 = 1
+[NO_PID]: ecpg_free_params on line 39: parameter 1 = 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 39: parameter 2 = {9,8,7,6,5,4,3,2,1,0}
+[NO_PID]: ecpg_free_params on line 39: parameter 2 = {9,8,7,6,5,4,3,2,1,0}
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 39: parameter 3 = 0123456789
+[NO_PID]: ecpg_free_params on line 39: parameter 3 = 0123456789
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 39: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -58,7 +58,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 53: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 53: parameter 1 = 140787
+[NO_PID]: ecpg_free_params on line 53: parameter 1 = 140787
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 53: correctly got 1 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -72,7 +72,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 63: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 63: parameter 1 = 140787
+[NO_PID]: ecpg_free_params on line 63: parameter 1 = 140787
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 63: correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000

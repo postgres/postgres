@@ -36,9 +36,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 45: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 45: parameter 1 = 1
+[NO_PID]: ecpg_free_params on line 45: parameter 1 = 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 45: parameter 2 = NaN
+[NO_PID]: ecpg_free_params on line 45: parameter 2 = NaN
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 45: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -46,9 +46,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 46: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 46: parameter 1 = 1
+[NO_PID]: ecpg_free_params on line 46: parameter 1 = 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 46: parameter 2 = NaN
+[NO_PID]: ecpg_free_params on line 46: parameter 2 = NaN
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 46: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -68,9 +68,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 45: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 45: parameter 1 = 2
+[NO_PID]: ecpg_free_params on line 45: parameter 1 = 2
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 45: parameter 2 = Infinity
+[NO_PID]: ecpg_free_params on line 45: parameter 2 = Infinity
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 45: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -78,9 +78,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 46: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 46: parameter 1 = 2
+[NO_PID]: ecpg_free_params on line 46: parameter 1 = 2
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 46: parameter 2 = Infinity
+[NO_PID]: ecpg_free_params on line 46: parameter 2 = Infinity
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 46: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -100,9 +100,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 45: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 45: parameter 1 = 3
+[NO_PID]: ecpg_free_params on line 45: parameter 1 = 3
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 45: parameter 2 = -Infinity
+[NO_PID]: ecpg_free_params on line 45: parameter 2 = -Infinity
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 45: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -110,9 +110,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 46: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 46: parameter 1 = 3
+[NO_PID]: ecpg_free_params on line 46: parameter 1 = 3
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 46: parameter 2 = -Infinity
+[NO_PID]: ecpg_free_params on line 46: parameter 2 = -Infinity
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 46: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -286,7 +286,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 72: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 72: parameter 1 = NaN
+[NO_PID]: ecpg_free_params on line 72: parameter 1 = NaN
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 72: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -294,7 +294,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 73: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 73: parameter 1 = NaN
+[NO_PID]: ecpg_free_params on line 73: parameter 1 = NaN
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 73: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000

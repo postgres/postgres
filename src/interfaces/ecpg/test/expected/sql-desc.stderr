@@ -20,9 +20,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 36: using PQexecPrepared for "INSERT INTO test1 VALUES ($1, $2)"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 36: parameter 1 = 1
+[NO_PID]: ecpg_free_params on line 36: parameter 1 = 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 36: parameter 2 = one
+[NO_PID]: ecpg_free_params on line 36: parameter 2 = one
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 36: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -30,9 +30,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 41: using PQexecPrepared for "INSERT INTO test1 VALUES ($1, $2)"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 41: parameter 1 = 2
+[NO_PID]: ecpg_free_params on line 41: parameter 1 = 2
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 41: parameter 2 = null
+[NO_PID]: ecpg_free_params on line 41: parameter 2 = null
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 41: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -40,9 +40,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 46: using PQexecPrepared for "INSERT INTO test1 VALUES ($1, $2)"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 46: parameter 1 = 3
+[NO_PID]: ecpg_free_params on line 46: parameter 1 = 3
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 46: parameter 2 = this is a long test
+[NO_PID]: ecpg_free_params on line 46: parameter 2 = this is a long test
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 46: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -52,9 +52,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 53: using PQexecPrepared for "SELECT * from test1 where a = $1 and b = $2"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 53: parameter 1 = 1
+[NO_PID]: ecpg_free_params on line 53: parameter 1 = 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 53: parameter 2 = one
+[NO_PID]: ecpg_free_params on line 53: parameter 2 = one
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 53: correctly got 1 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -68,9 +68,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 59: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 59: parameter 1 = 1
+[NO_PID]: ecpg_free_params on line 59: parameter 1 = 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 59: parameter 2 = one
+[NO_PID]: ecpg_free_params on line 59: parameter 2 = one
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 59: OK: DECLARE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -94,7 +94,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 71: using PQexecParams
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 71: parameter 1 = 2
+[NO_PID]: ecpg_free_params on line 71: parameter 1 = 2
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 71: OK: DECLARE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000

@@ -26,7 +26,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 24: using PQexecPrepared for "insert into T values ( 1 , $1  )"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 24: parameter 1 = 1
+[NO_PID]: ecpg_free_params on line 24: parameter 1 = 1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 24: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -36,7 +36,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 26: using PQexecPrepared for "insert into T values ( 1 , $1  )"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 26: parameter 1 = 2
+[NO_PID]: ecpg_free_params on line 26: parameter 1 = 2
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 26: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -186,7 +186,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 24: using PQexecPrepared for "insert into T values ( 1 , $1  )"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 24: parameter 1 = 1
+[NO_PID]: ecpg_free_params on line 24: parameter 1 = 1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 24: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -196,7 +196,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 26: using PQexecPrepared for "insert into T values ( 1 , $1  )"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: free_params on line 26: parameter 1 = 2
+[NO_PID]: ecpg_free_params on line 26: parameter 1 = 2
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_execute on line 26: OK: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
