@@ -328,7 +328,7 @@ arow RECORD;
     <para>
      The general syntax of a variable declaration is:
 <synopsis>
-<replaceable>name</replaceable> <optional> CONSTANT </optional> <replaceable>type</replaceable> <optional> COLLATE <replaceable>collation_name</replaceable> </optional> <optional> NOT NULL </optional> <optional> { DEFAULT | := } <replaceable>expression</replaceable> </optional>;
+<replaceable>name</replaceable> <optional> CONSTANT </optional> <replaceable>type</replaceable> <optional> COLLATE <replaceable>collation_name</replaceable> </optional> <optional> NOT NULL </optional> <optional> { DEFAULT | := | = } <replaceable>expression</replaceable> </optional>;
 </synopsis>
       The <literal>DEFAULT</> clause, if given, specifies the initial value assigned
       to the variable when the block is entered.  If the <literal>DEFAULT</> clause
@@ -343,6 +343,8 @@ arow RECORD;
       is specified, an assignment of a null value results in a run-time
       error. All variables declared as <literal>NOT NULL</>
       must have a nonnull default value specified.
+      Equals (<literal>=</>) can be used instead of PL/SQL-compliant
+      <literal>:=</>.
      </para>
 
      <para>
@@ -866,7 +868,7 @@ PREPARE <replaceable>statement_name</>(integer, integer) AS SELECT $1 &lt; $2;
      An assignment of a value to a <application>PL/pgSQL</application>
      variable is written as:
 <synopsis>
-<replaceable>variable</replaceable> := <replaceable>expression</replaceable>;
+<replaceable>variable</replaceable> { := | = } <replaceable>expression</replaceable>;
 </synopsis>
      As explained previously, the expression in such a statement is evaluated
      by means of an SQL <command>SELECT</> command sent to the main
@@ -874,7 +876,8 @@ PREPARE <replaceable>statement_name</>(integer, integer) AS SELECT $1 &lt; $2;
      a row value, if the variable is a row or record variable).  The target
      variable can be a simple variable (optionally qualified with a block
      name), a field of a row or record variable, or an element of an array
-     that is a simple variable or field.
+     that is a simple variable or field.  Equals (<literal>=</>) can be
+     used instead of PL/SQL-compliant <literal>:=</>.
     </para>
 
     <para>
@@ -1411,7 +1414,7 @@ EXECUTE format('UPDATE tbl SET %I = $1 WHERE key = $2', colname)
      command, which has the form:
 
 <synopsis>
-GET <optional> CURRENT </optional> DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>item</replaceable> <optional> , ... </optional>;
+GET <optional> CURRENT </optional> DIAGNOSTICS <replaceable>variable</replaceable> { = | := } <replaceable>item</replaceable> <optional> , ... </optional>;
 </synopsis>
 
      This command allows retrieval of system status indicators.  Each
@@ -1425,6 +1428,8 @@ GET <optional> CURRENT </optional> DIAGNOSTICS <replaceable>variable</replaceabl
      <acronym>SQL</acronym> command.  Note that <varname>RESULT_OID</>
      is only useful after an <command>INSERT</command> command into a
      table containing OIDs.
+     Equals (<literal>:=</>) can be used instead of SQL-standard
+     <literal>=</> for <command>GET DIAGNOSTICS</>.
     </para>
 
     <para>
@@ -2672,7 +2677,7 @@ SELECT merge_db(1, 'dennis');
      <command>GET STACKED DIAGNOSTICS</command> command, which has the form:
 
 <synopsis>
-GET STACKED DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>item</replaceable> <optional> , ... </optional>;
+GET STACKED DIAGNOSTICS <replaceable>variable</replaceable> { = | := } <replaceable>item</replaceable> <optional> , ... </optional>;
 </synopsis>
 
      Each <replaceable>item</replaceable> is a key word identifying a status
@@ -2776,7 +2781,7 @@ END;
    <para>
 
 <synopsis>
-GET <optional> CURRENT </optional> DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>PG_CONTEXT</replaceable> <optional> , ... </optional>;
+GET <optional> CURRENT </optional> DIAGNOSTICS <replaceable>variable</replaceable> { = | := } <replaceable>PG_CONTEXT</replaceable> <optional> , ... </optional>;
 </synopsis>
 
 

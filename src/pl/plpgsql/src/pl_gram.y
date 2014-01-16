@@ -796,7 +796,12 @@ decl_defkey		: assign_operator
 				| K_DEFAULT
 				;
 
-assign_operator	: '='	/* not documented because it might be removed someday */
+/*
+ * Ada-based PL/SQL uses := for assignment and variable defaults, while
+ * the SQL standard uses equals for these cases and for GET
+ * DIAGNOSTICS, so we support both.  FOR and OPEN only support :=.
+ */
+assign_operator	: '='
 				| COLON_EQUALS
 				;
 
