@@ -343,7 +343,7 @@ arow RECORD;
       is specified, an assignment of a null value results in a run-time
       error. All variables declared as <literal>NOT NULL</>
       must have a nonnull default value specified.
-      Equals (<literal>=</>) can be used instead of PL/SQL-compliant
+      Equal (<literal>=</>) can be used instead of PL/SQL-compliant
       <literal>:=</>.
      </para>
 
@@ -876,7 +876,7 @@ PREPARE <replaceable>statement_name</>(integer, integer) AS SELECT $1 &lt; $2;
      a row value, if the variable is a row or record variable).  The target
      variable can be a simple variable (optionally qualified with a block
      name), a field of a row or record variable, or an element of an array
-     that is a simple variable or field.  Equals (<literal>=</>) can be
+     that is a simple variable or field.  Equal (<literal>=</>) can be
      used instead of PL/SQL-compliant <literal>:=</>.
     </para>
 
