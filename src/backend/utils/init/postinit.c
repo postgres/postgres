@@ -230,13 +230,31 @@ PerformAuthentication(Port *port)
 	if (Log_connections)
 	{
 		if (am_walsender)
-			ereport(LOG,
-					(errmsg("replication connection authorized: user=%s",
-							port->user_name)));
+		{
+#ifdef USE_SSL
+			if (port->ssl)
+				ereport(LOG,
+						(errmsg("replication connection authorized: user=%s SSL(protocol: %s, cipher: %s) enabled",
+								port->user_name, SSL_get_version(port->ssl), SSL_get_cipher(port->ssl))));
+			else
+#endif
+				ereport(LOG,
+						(errmsg("replication connection authorized: user=%s",
+								port->user_name)));
+		}
 		else
-			ereport(LOG,
-					(errmsg("connection authorized: user=%s database=%s",
-							port->user_name, port->database_name)));
+		{
+#ifdef USE_SSL
+			if (port->ssl)
+				ereport(LOG,
+						(errmsg("connection authorized: user=%s database=%s SSL(protocol: %s, cipher: %s) enabled",
+								port->user_name, port->database_name, SSL_get_version(port->ssl), SSL_get_cipher(port->ssl))));
+			else
+#endif
+				ereport(LOG,
+						(errmsg("connection authorized: user=%s database=%s",
+								port->user_name, port->database_name)));
+		}
 	}
 
 	set_ps_display("startup", false);
