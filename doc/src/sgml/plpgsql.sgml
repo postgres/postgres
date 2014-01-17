@@ -1428,7 +1428,7 @@ GET <optional> CURRENT </optional> DIAGNOSTICS <replaceable>variable</replaceabl
      <acronym>SQL</acronym> command.  Note that <varname>RESULT_OID</>
      is only useful after an <command>INSERT</command> command into a
      table containing OIDs.
-     Equals (<literal>:=</>) can be used instead of SQL-standard
+     Colon-equal (<literal>:=</>) can be used instead of SQL-standard
      <literal>=</> for <command>GET DIAGNOSTICS</>.
     </para>
 
