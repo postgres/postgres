@@ -2974,7 +2974,7 @@ threadRun(void *arg)
 	/* for reporting progress: */
 	int64       thread_start = INSTR_TIME_GET_MICROSEC(thread->start_time);
 	int64		last_report = thread_start;
-	int64		next_report = last_report + progress * 1000000;
+	int64		next_report = last_report + (int64) progress * 1000000;
 	int64		last_count = 0, last_lats = 0, last_sqlats = 0, last_lags = 0;
 
 	AggVals		aggs;
@@ -3210,7 +3210,7 @@ threadRun(void *arg)
 				last_sqlats = sqlats;
 				last_lags = lags;
 				last_report = now;
-				next_report += progress * 1000000;
+				next_report += (int64) progress * 1000000;
 			}
 		}
 #else
@@ -3261,7 +3261,7 @@ threadRun(void *arg)
 				last_sqlats = sqlats;
 				last_lags = lags;
 				last_report = now;
-				next_report += progress * 1000000;
+				next_report += (int64) progress * 1000000;
 			}
 		}
 #endif /* PTHREAD_FORK_EMULATION */
