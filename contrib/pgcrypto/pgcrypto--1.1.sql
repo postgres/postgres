@@ -1,4 +1,4 @@
-/* contrib/pgcrypto/pgcrypto--1.0.sql */
+/* contrib/pgcrypto/pgcrypto--1.1.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION pgcrypto" to load this file. \quit
@@ -62,6 +62,11 @@ CREATE FUNCTION gen_random_bytes(int4)
 RETURNS bytea
 AS 'MODULE_PATHNAME', 'pg_random_bytes'
 LANGUAGE C VOLATILE STRICT;
+
+CREATE FUNCTION gen_random_uuid()
+RETURNS uuid
+AS 'MODULE_PATHNAME', 'pg_random_uuid'
+LANGUAGE C VOLATILE;
 
 --
 -- pgp_sym_encrypt(data, key)

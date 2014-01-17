@@ -18,6 +18,15 @@
   <ulink url="http://www.ossp.org/pkg/lib/uuid/"></ulink>.
  </para>
 
+ <note>
+  <para>
+   The OSSP UUID library is not well maintained, and is becoming increasingly
+   difficult to port to newer platforms.  If you only need randomly-generated
+   (version 4) UUIDs, consider using the <function>gen_random_uuid()</>
+   function from the <xref linkend="pgcrypto"> module instead.
+  </para>
+ </note>
+
  <sect2>
   <title><literal>uuid-ossp</literal> Functions</title>
 

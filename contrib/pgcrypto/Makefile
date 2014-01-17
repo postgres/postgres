@@ -26,7 +26,7 @@ MODULE_big	= pgcrypto
 OBJS		= $(SRCS:.c=.o)
 
 EXTENSION = pgcrypto
-DATA = pgcrypto--1.0.sql pgcrypto--unpackaged--1.0.sql
+DATA = pgcrypto--1.1.sql pgcrypto--1.0--1.1.sql pgcrypto--unpackaged--1.0.sql
 
 REGRESS = init md5 sha1 hmac-md5 hmac-sha1 blowfish rijndael \
 	$(CF_TESTS) \

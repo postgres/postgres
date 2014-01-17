@@ -1084,6 +1084,17 @@ gen_random_bytes(count integer) returns bytea
    At most 1024 bytes can be extracted at a time.  This is to avoid
    draining the randomness generator pool.
   </para>
+
+  <indexterm>
+   <primary>gen_random_uuid</primary>
+  </indexterm>
+
+<synopsis>
+gen_random_uuid() returns uuid
+</synopsis>
+  <para>
+   Returns a version 4 (random) UUID.
+  </para>
  </sect2>
 
  <sect2>
