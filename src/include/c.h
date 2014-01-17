@@ -58,7 +58,7 @@
  * but _WIN32 is the compiler pre-defined macro. So make sure we define
  * WIN32 whenever _WIN32 is set, to facilitate standalone building.
  */
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(WIN32)
 #define WIN32
 #endif
 
