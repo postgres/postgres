@@ -1635,6 +1635,17 @@ _equalAlterTableSpaceOptionsStmt(const AlterTableSpaceOptionsStmt *a,
 }
 
 static bool
+_equalAlterTableSpaceMoveStmt(const AlterTableSpaceMoveStmt *a,
+							  const AlterTableSpaceMoveStmt *b)
+{
+	COMPARE_STRING_FIELD(orig_tablespacename);
+	COMPARE_STRING_FIELD(new_tablespacename);
+	COMPARE_SCALAR_FIELD(nowait);
+
+	return true;
+}
+
+static bool
 _equalCreateExtensionStmt(const CreateExtensionStmt *a, const CreateExtensionStmt *b)
 {
 	COMPARE_STRING_FIELD(extname);
@@ -2876,6 +2887,9 @@ equal(const void *a, const void *b)
 			break;
 		case T_AlterTableSpaceOptionsStmt:
 			retval = _equalAlterTableSpaceOptionsStmt(a, b);
+			break;
+		case T_AlterTableSpaceMoveStmt:
+			retval = _equalAlterTableSpaceMoveStmt(a, b);
 			break;
 		case T_CreateExtensionStmt:
 			retval = _equalCreateExtensionStmt(a, b);

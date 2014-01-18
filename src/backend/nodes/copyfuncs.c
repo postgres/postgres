@@ -3397,6 +3397,18 @@ _copyAlterTableSpaceOptionsStmt(const AlterTableSpaceOptionsStmt *from)
 	return newnode;
 }
 
+static AlterTableSpaceMoveStmt *
+_copyAlterTableSpaceMoveStmt(const AlterTableSpaceMoveStmt *from)
+{
+	AlterTableSpaceMoveStmt *newnode = makeNode(AlterTableSpaceMoveStmt);
+
+	COPY_STRING_FIELD(orig_tablespacename);
+	COPY_STRING_FIELD(new_tablespacename);
+	COPY_SCALAR_FIELD(nowait);
+
+	return newnode;
+}
+
 static CreateExtensionStmt *
 _copyCreateExtensionStmt(const CreateExtensionStmt *from)
 {
@@ -4407,6 +4419,9 @@ copyObject(const void *from)
 			break;
 		case T_AlterTableSpaceOptionsStmt:
 			retval = _copyAlterTableSpaceOptionsStmt(from);
+			break;
+		case T_AlterTableSpaceMoveStmt:
+			retval = _copyAlterTableSpaceMoveStmt(from);
 			break;
 		case T_CreateExtensionStmt:
 			retval = _copyCreateExtensionStmt(from);

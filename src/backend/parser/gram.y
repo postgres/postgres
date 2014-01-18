@@ -601,7 +601,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	UNTIL UPDATE USER USING
 
 	VACUUM VALID VALIDATE VALIDATOR VALUE_P VALUES VARCHAR VARIADIC VARYING
-	VERBOSE VERSION_P VIEW VOLATILE
+	VERBOSE VERSION_P VIEW VIEWS VOLATILE
 
 	WHEN WHERE WHITESPACE_P WINDOW WITH WITHIN WITHOUT WORK WRAPPER WRITE
 
@@ -7319,6 +7319,49 @@ RenameStmt: ALTER AGGREGATE func_name aggr_args RENAME TO name
 					n->missing_ok = false;
 					$$ = (Node *)n;
 				}
+			| ALTER TABLESPACE name MOVE ALL TO name opt_nowait
+				{
+					AlterTableSpaceMoveStmt *n =
+						makeNode(AlterTableSpaceMoveStmt);
+					n->orig_tablespacename = $3;
+					n->new_tablespacename = $7;
+					n->nowait = $8;
+					n->move_all = true;
+					$$ = (Node *)n;
+				}
+			| ALTER TABLESPACE name MOVE TABLES TO name opt_nowait
+				{
+					AlterTableSpaceMoveStmt *n =
+						makeNode(AlterTableSpaceMoveStmt);
+					n->orig_tablespacename = $3;
+					n->new_tablespacename = $7;
+					n->nowait = $8;
+					n->objtype = OBJECT_TABLE;
+					n->move_all = false;
+					$$ = (Node *)n;
+				}
+			| ALTER TABLESPACE name MOVE INDEXES TO name opt_nowait
+				{
+					AlterTableSpaceMoveStmt *n =
+						makeNode(AlterTableSpaceMoveStmt);
+					n->orig_tablespacename = $3;
+					n->new_tablespacename = $7;
+					n->nowait = $8;
+					n->objtype = OBJECT_INDEX;
+					n->move_all = false;
+					$$ = (Node *)n;
+				}
+			| ALTER TABLESPACE name MOVE MATERIALIZED VIEWS TO name opt_nowait
+				{
+					AlterTableSpaceMoveStmt *n =
+						makeNode(AlterTableSpaceMoveStmt);
+					n->orig_tablespacename = $3;
+					n->new_tablespacename = $8;
+					n->nowait = $9;
+					n->objtype = OBJECT_MATVIEW;
+					n->move_all = false;
+					$$ = (Node *)n;
+				}
 			| ALTER TABLESPACE name SET reloptions
 				{
 					AlterTableSpaceOptionsStmt *n =
@@ -12887,6 +12930,7 @@ unreserved_keyword:
 			| VARYING
 			| VERSION_P
 			| VIEW
+			| VIEWS
 			| VOLATILE
 			| WHITESPACE_P
 			| WITHIN

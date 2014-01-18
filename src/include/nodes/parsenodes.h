@@ -1686,6 +1686,16 @@ typedef struct AlterTableSpaceOptionsStmt
 	bool		isReset;
 } AlterTableSpaceOptionsStmt;
 
+typedef struct AlterTableSpaceMoveStmt
+{
+	NodeTag		type;
+	char	   *orig_tablespacename;
+	char	   *new_tablespacename;
+	ObjectType	objtype;
+	bool		nowait;
+	bool		move_all;
+} AlterTableSpaceMoveStmt;
+
 /* ----------------------
  *		Create/Alter Extension Statements
  * ----------------------

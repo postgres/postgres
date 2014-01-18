@@ -243,6 +243,7 @@ check_xact_readonly(Node *parsetree)
 		case T_AlterUserMappingStmt:
 		case T_DropUserMappingStmt:
 		case T_AlterTableSpaceOptionsStmt:
+		case T_AlterTableSpaceMoveStmt:
 		case T_CreateForeignTableStmt:
 		case T_SecLabelStmt:
 			PreventCommandIfReadOnly(CreateCommandTag(parsetree));
@@ -546,6 +547,11 @@ standard_ProcessUtility(Node *parsetree,
 		case T_AlterTableSpaceOptionsStmt:
 			/* no event triggers for global objects */
 			AlterTableSpaceOptions((AlterTableSpaceOptionsStmt *) parsetree);
+			break;
+
+		case T_AlterTableSpaceMoveStmt:
+			/* no event triggers for global objects */
+			AlterTableSpaceMove((AlterTableSpaceMoveStmt *) parsetree);
 			break;
 
 		case T_TruncateStmt:
@@ -1822,6 +1828,10 @@ CreateCommandTag(Node *parsetree)
 			tag = "ALTER TABLESPACE";
 			break;
 
+		case T_AlterTableSpaceMoveStmt:
+			tag = "ALTER TABLESPACE";
+			break;
+
 		case T_CreateExtensionStmt:
 			tag = "CREATE EXTENSION";
 			break;
@@ -2511,6 +2521,10 @@ GetCommandLogLevel(Node *parsetree)
 		case T_CreateTableSpaceStmt:
 		case T_DropTableSpaceStmt:
 		case T_AlterTableSpaceOptionsStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_AlterTableSpaceMoveStmt:
 			lev = LOGSTMT_DDL;
 			break;
 

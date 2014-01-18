@@ -59,20 +59,25 @@
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
+#include "catalog/namespace.h"
 #include "catalog/objectaccess.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_tablespace.h"
 #include "commands/comment.h"
 #include "commands/seclabel.h"
+#include "commands/tablecmds.h"
 #include "commands/tablespace.h"
 #include "common/relpath.h"
 #include "miscadmin.h"
 #include "postmaster/bgwriter.h"
 #include "storage/fd.h"
+#include "storage/lmgr.h"
 #include "storage/standby.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
+#include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/tqual.h"
@@ -953,6 +958,172 @@ AlterTableSpaceOptions(AlterTableSpaceOptionsStmt *stmt)
 	heap_close(rel, NoLock);
 
 	return tablespaceoid;
+}
+
+/*
+ * Alter table space move
+ *
+ * Allows a user to move all of their objects in a given tablespace in the
+ * current database to another tablespace. Only objects which the user is
+ * considered to be an owner of are moved and the user must have CREATE rights
+ * on the new tablespace. These checks should mean that ALTER TABLE will never
+ * fail due to permissions, but note that permissions will also be checked at
+ * that level. Objects can be ALL, TABLES, INDEXES, or MATERIALIZED VIEWS.
+ *
+ * All to-be-moved objects are locked first. If NOWAIT is specified and the
+ * lock can't be acquired then we ereport(ERROR).
+ */
+Oid
+AlterTableSpaceMove(AlterTableSpaceMoveStmt *stmt)
+{
+	List	   *relations = NIL;
+	ListCell   *l;
+	ScanKeyData key[1];
+	Relation	rel;
+	HeapScanDesc scan;
+	HeapTuple	tuple;
+	Oid			orig_tablespaceoid;
+	Oid			new_tablespaceoid;
+
+	/* Ensure we were not asked to move something we can't */
+	if (!stmt->move_all && stmt->objtype != OBJECT_TABLE &&
+		stmt->objtype != OBJECT_INDEX && stmt->objtype != OBJECT_MATVIEW)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("only tables, indexes, and materialized views exist in tablespaces")));
+
+	/* Get the orig and new tablespace OIDs */
+	orig_tablespaceoid = get_tablespace_oid(stmt->orig_tablespacename, false);
+	new_tablespaceoid = get_tablespace_oid(stmt->new_tablespacename, false);
+
+	/* Can't move shared relations in to or out of pg_global */
+	/* This is also checked by ATExecSetTableSpace, but nice to stop earlier */
+	if (orig_tablespaceoid == GLOBALTABLESPACE_OID ||
+		new_tablespaceoid == GLOBALTABLESPACE_OID)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("cannot move relations in to or out of pg_global tablespace")));
+
+	/*
+	 * Must have CREATE rights on the new tablespace, unless it is the
+	 * database default tablespace (which all users implicitly have CREATE
+	 * rights on).
+	 */
+	if (OidIsValid(new_tablespaceoid) && new_tablespaceoid != MyDatabaseTableSpace)
+	{
+		AclResult	aclresult;
+
+		aclresult = pg_tablespace_aclcheck(new_tablespaceoid, GetUserId(),
+										   ACL_CREATE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, ACL_KIND_TABLESPACE,
+						   get_tablespace_name(new_tablespaceoid));
+	}
+
+	/*
+	 * Now that the checks are done, check if we should set either to
+	 * InvalidOid because it is our database's default tablespace.
+	 */
+	if (orig_tablespaceoid == MyDatabaseTableSpace)
+		orig_tablespaceoid = InvalidOid;
+
+	if (new_tablespaceoid == MyDatabaseTableSpace)
+		new_tablespaceoid = InvalidOid;
+
+	/* no-op */
+	if (orig_tablespaceoid == new_tablespaceoid)
+		return new_tablespaceoid;
+
+	/*
+	 * Walk the list of objects in the tablespace and move them. This will
+	 * only find objects in our database, of course.
+	 */
+	ScanKeyInit(&key[0],
+				Anum_pg_class_reltablespace,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(orig_tablespaceoid));
+
+	rel = heap_open(RelationRelationId, AccessShareLock);
+	scan = heap_beginscan_catalog(rel, 1, key);
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	{
+		Oid			relOid = HeapTupleGetOid(tuple);
+		Form_pg_class relForm;
+
+		relForm = (Form_pg_class) GETSTRUCT(tuple);
+
+		/*
+		 * Do not move objects in pg_catalog as part of this, if an admin
+		 * really wishes to do so, they can issue the individual ALTER
+		 * commands directly.
+		 *
+		 * Also, explicitly avoid any shared tables, temp tables, or TOAST
+		 * (TOAST will be moved with the main table).
+		 */
+		if (IsSystemNamespace(relForm->relnamespace) || relForm->relisshared ||
+			isAnyTempNamespace(relForm->relnamespace) ||
+			relForm->relnamespace == PG_TOAST_NAMESPACE)
+			continue;
+
+		/*
+		 * Only move objects that we are considered an owner of and only
+		 * objects which can actually have a tablespace.
+		 */
+		if (!pg_class_ownercheck(relOid, GetUserId()) ||
+			(relForm->relkind != RELKIND_RELATION &&
+			 relForm->relkind != RELKIND_INDEX &&
+			 relForm->relkind != RELKIND_MATVIEW))
+			continue;
+
+		/* Check if we were asked to only move a certain type of object */
+		if (!stmt->move_all &&
+			((stmt->objtype == OBJECT_TABLE &&
+			  relForm->relkind != RELKIND_RELATION) ||
+			 (stmt->objtype == OBJECT_INDEX &&
+			  relForm->relkind != RELKIND_INDEX) ||
+			 (stmt->objtype == OBJECT_MATVIEW &&
+			  relForm->relkind != RELKIND_MATVIEW)))
+			continue;
+
+		if (stmt->nowait &&
+			!ConditionalLockRelationOid(relOid, AccessExclusiveLock))
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_IN_USE),
+			   errmsg("aborting due to \"%s\".\"%s\" --- lock not available",
+					  get_namespace_name(relForm->relnamespace),
+					  NameStr(relForm->relname))));
+		else
+			LockRelationOid(relOid, AccessExclusiveLock);
+
+		/* Add to our list of objects to move */
+		relations = lappend_oid(relations, relOid);
+	}
+
+	heap_endscan(scan);
+	heap_close(rel, AccessShareLock);
+
+	if (relations == NIL)
+		ereport(NOTICE,
+				(errcode(ERRCODE_NO_DATA_FOUND),
+				 errmsg("no matching relations in tablespace \"%s\" found",
+					orig_tablespaceoid == InvalidOid ? "(database default)" :
+						get_tablespace_name(orig_tablespaceoid))));
+
+	/* Everything is locked, loop through and move all of the relations. */
+	foreach(l, relations)
+	{
+		List	   *cmds = NIL;
+		AlterTableCmd *cmd = makeNode(AlterTableCmd);
+
+		cmd->subtype = AT_SetTableSpace;
+		cmd->name = stmt->new_tablespacename;
+
+		cmds = lappend(cmds, cmd);
+
+		AlterTableInternal(lfirst_oid(l), cmds, false);
+	}
+
+	return new_tablespaceoid;
 }
 
 /*

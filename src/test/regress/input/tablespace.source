@@ -66,10 +66,15 @@ CREATE TABLE tablespace_table (i int) TABLESPACE testspace; -- fail
 
 ALTER TABLESPACE testspace RENAME TO testspace_renamed;
 
-DROP SCHEMA testschema CASCADE;
+ALTER TABLESPACE testspace_renamed MOVE ALL TO pg_default;
+
+-- Should show notice that nothing was done
+ALTER TABLESPACE testspace_renamed MOVE ALL TO pg_default;
 
 -- Should succeed
 DROP TABLESPACE testspace_renamed;
+
+DROP SCHEMA testschema CASCADE;
 
 DROP ROLE tablespace_testuser1;
 DROP ROLE tablespace_testuser2;

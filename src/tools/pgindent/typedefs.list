@@ -76,6 +76,7 @@ AlterTSConfigurationStmt
 AlterTSDictionaryStmt
 AlterTableCmd
 AlterTableSpaceOptionsStmt
+AlterTableSpaceMoveStmt
 AlterTableStmt
 AlterTableType
 AlterUserMappingStmt

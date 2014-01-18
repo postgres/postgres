@@ -43,6 +43,7 @@ extern Oid	CreateTableSpace(CreateTableSpaceStmt *stmt);
 extern void DropTableSpace(DropTableSpaceStmt *stmt);
 extern Oid	RenameTableSpace(const char *oldname, const char *newname);
 extern Oid	AlterTableSpaceOptions(AlterTableSpaceOptionsStmt *stmt);
+extern Oid	AlterTableSpaceMove(AlterTableSpaceMoveStmt *stmt);
 
 extern void TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo);
 
