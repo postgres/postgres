@@ -65,6 +65,6 @@ extern shm_mq_result shm_mq_receive(shm_mq_handle *mqh,
 extern shm_mq_result shm_mq_wait_for_attach(shm_mq_handle *mqh);
 
 /* Smallest possible queue. */
-extern const Size shm_mq_minimum_size;
+extern PGDLLIMPORT const Size shm_mq_minimum_size;
 
 #endif   /* SHM_MQ_H */
