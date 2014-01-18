@@ -59,10 +59,10 @@ const int	day_tab[2][13] =
 	{31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0}
 };
 
-char	   *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+const char *const months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", NULL};
 
-char	   *days[] = {"Sunday", "Monday", "Tuesday", "Wednesday",
+const char *const days[] = {"Sunday", "Monday", "Tuesday", "Wednesday",
 "Thursday", "Friday", "Saturday", NULL};
 
 
@@ -186,7 +186,7 @@ static const datetkn datetktbl[] = {
 
 static int	szdatetktbl = sizeof datetktbl / sizeof datetktbl[0];
 
-static datetkn deltatktbl[] = {
+static const datetkn deltatktbl[] = {
 	/* text, token, lexval */
 	{"@", IGNORE_DTF, 0},		/* postgres relative prefix */
 	{DAGO, AGO, 0},				/* "ago" indicates negative time offset */

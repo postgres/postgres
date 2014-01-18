@@ -25,7 +25,8 @@
 #define TABLESPACE_VERSION_DIRECTORY	"PG_" PG_MAJORVERSION "_" \
 									CppAsString2(CATALOG_VERSION_NO)
 
-extern const char *forkNames[];
+extern const char *const forkNames[];
+
 extern int	forkname_chars(const char *str, ForkNumber *fork);
 extern char *relpathbackend(RelFileNode rnode, BackendId backend,
 			   ForkNumber forknum);

@@ -20,7 +20,7 @@
 #include "miscadmin.h"
 
 
-static float weights[] = {0.1f, 0.2f, 0.4f, 1.0f};
+static const float weights[] = {0.1f, 0.2f, 0.4f, 1.0f};
 
 #define wpos(wep)	( w[ WEP_GETWEIGHT(wep) ] )
 
@@ -33,8 +33,8 @@ static float weights[] = {0.1f, 0.2f, 0.4f, 1.0f};
 #define RANK_NORM_RDIVRPLUS1	0x20
 #define DEF_NORM_METHOD			RANK_NO_NORM
 
-static float calc_rank_or(float *w, TSVector t, TSQuery q);
-static float calc_rank_and(float *w, TSVector t, TSQuery q);
+static float calc_rank_or(const float *w, TSVector t, TSQuery q);
+static float calc_rank_and(const float *w, TSVector t, TSQuery q);
 
 /*
  * Returns a weight of a word collocation
@@ -202,7 +202,7 @@ static WordEntryPosVector POSNULL = {
 };
 
 static float
-calc_rank_and(float *w, TSVector t, TSQuery q)
+calc_rank_and(const float *w, TSVector t, TSQuery q)
 {
 	WordEntryPosVector **pos;
 	int			i,
@@ -278,7 +278,7 @@ calc_rank_and(float *w, TSVector t, TSQuery q)
 }
 
 static float
-calc_rank_or(float *w, TSVector t, TSQuery q)
+calc_rank_or(const float *w, TSVector t, TSQuery q)
 {
 	WordEntry  *entry,
 			   *firstentry;
@@ -347,7 +347,7 @@ calc_rank_or(float *w, TSVector t, TSQuery q)
 }
 
 static float
-calc_rank(float *w, TSVector t, TSQuery q, int32 method)
+calc_rank(const float *w, TSVector t, TSQuery q, int32 method)
 {
 	QueryItem  *item = GETQUERY(q);
 	float		res = 0.0;
@@ -387,7 +387,7 @@ calc_rank(float *w, TSVector t, TSQuery q, int32 method)
 	return res;
 }
 
-static float *
+static const float *
 getWeights(ArrayType *win)
 {
 	static float ws[lengthof(weights)];
@@ -723,7 +723,7 @@ get_docrep(TSVector txt, QueryRepresentation *qr, int *doclen)
 }
 
 static float4
-calc_rank_cd(float4 *arrdata, TSVector txt, TSQuery query, int method)
+calc_rank_cd(const float4 *arrdata, TSVector txt, TSQuery query, int method)
 {
 	DocRepresentation *doc;
 	int			len,

@@ -122,13 +122,6 @@
 
 
 /* ----------
- * External (defined in PgSQL datetime.c (timestamp utils))
- * ----------
- */
-extern char *months[],			/* month abbreviation	*/
-		   *days[];				/* full days		*/
-
-/* ----------
  * Format parser structs
  * ----------
  */
@@ -188,12 +181,12 @@ struct FormatNode
  * Full months
  * ----------
  */
-static char *months_full[] = {
+static const char *const months_full[] = {
 	"January", "February", "March", "April", "May", "June", "July",
 	"August", "September", "October", "November", "December", NULL
 };
 
-static char *days_short[] = {
+static const char *const days_short[] = {
 	"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", NULL
 };
 
@@ -226,8 +219,8 @@ static char *days_short[] = {
  * matches for BC have an odd index.  So the boolean value for BC is given by
  * taking the array index of the match, modulo 2.
  */
-static char *adbc_strings[] = {ad_STR, bc_STR, AD_STR, BC_STR, NULL};
-static char *adbc_strings_long[] = {a_d_STR, b_c_STR, A_D_STR, B_C_STR, NULL};
+static const char *const adbc_strings[] = {ad_STR, bc_STR, AD_STR, BC_STR, NULL};
+static const char *const adbc_strings_long[] = {a_d_STR, b_c_STR, A_D_STR, B_C_STR, NULL};
 
 /* ----------
  * AM / PM
@@ -253,8 +246,8 @@ static char *adbc_strings_long[] = {a_d_STR, b_c_STR, A_D_STR, B_C_STR, NULL};
  * matches for PM have an odd index.  So the boolean value for PM is given by
  * taking the array index of the match, modulo 2.
  */
-static char *ampm_strings[] = {am_STR, pm_STR, AM_STR, PM_STR, NULL};
-static char *ampm_strings_long[] = {a_m_STR, p_m_STR, A_M_STR, P_M_STR, NULL};
+static const char *const ampm_strings[] = {am_STR, pm_STR, AM_STR, PM_STR, NULL};
+static const char *const ampm_strings_long[] = {a_m_STR, p_m_STR, A_M_STR, P_M_STR, NULL};
 
 /* ----------
  * Months in roman-numeral
@@ -262,26 +255,26 @@ static char *ampm_strings_long[] = {a_m_STR, p_m_STR, A_M_STR, P_M_STR, NULL};
  *	'VIII' must have higher precedence than 'V')
  * ----------
  */
-static char *rm_months_upper[] =
+static const char *const rm_months_upper[] =
 {"XII", "XI", "X", "IX", "VIII", "VII", "VI", "V", "IV", "III", "II", "I", NULL};
 
-static char *rm_months_lower[] =
+static const char *const rm_months_lower[] =
 {"xii", "xi", "x", "ix", "viii", "vii", "vi", "v", "iv", "iii", "ii", "i", NULL};
 
 /* ----------
  * Roman numbers
  * ----------
  */
-static char *rm1[] = {"I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", NULL};
-static char *rm10[] = {"X", "XX", "XXX", "XL", "L", "LX", "LXX", "LXXX", "XC", NULL};
-static char *rm100[] = {"C", "CC", "CCC", "CD", "D", "DC", "DCC", "DCCC", "CM", NULL};
+static const char *const rm1[] = {"I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", NULL};
+static const char *const rm10[] = {"X", "XX", "XXX", "XL", "L", "LX", "LXX", "LXXX", "XC", NULL};
+static const char *const rm100[] = {"C", "CC", "CCC", "CD", "D", "DC", "DCC", "DCCC", "CM", NULL};
 
 /* ----------
  * Ordinal postfixes
  * ----------
  */
-static char *numTH[] = {"ST", "ND", "RD", "TH", NULL};
-static char *numth[] = {"st", "nd", "rd", "th", NULL};
+static const char *const numTH[] = {"ST", "ND", "RD", "TH", NULL};
+static const char *const numth[] = {"st", "nd", "rd", "th", NULL};
 
 /* ----------
  * Flags & Options:
@@ -525,7 +518,7 @@ do { \
  * Suffixes definition for DATE-TIME TO/FROM CHAR
  * ----------
  */
-static KeySuffix DCH_suff[] = {
+static const KeySuffix DCH_suff[] = {
 	{"FM", 2, DCH_S_FM, SUFFTYPE_PREFIX},
 	{"fm", 2, DCH_S_FM, SUFFTYPE_PREFIX},
 	{"TM", 2, DCH_S_TM, SUFFTYPE_PREFIX},
@@ -950,10 +943,10 @@ typedef struct NUMProc
  */
 static const KeyWord *index_seq_search(char *str, const KeyWord *kw,
 				 const int *index);
-static KeySuffix *suff_search(char *str, KeySuffix *suf, int type);
+static const KeySuffix *suff_search(char *str, const KeySuffix *suf, int type);
 static void NUMDesc_prepare(NUMDesc *num, FormatNode *n);
 static void parse_format(FormatNode *node, char *str, const KeyWord *kw,
-			 KeySuffix *suf, const int *index, int ver, NUMDesc *Num);
+			 const KeySuffix *suf, const int *index, int ver, NUMDesc *Num);
 
 static void DCH_to_char(FormatNode *node, bool is_interval,
 			TmToChar *in, char *out, Oid collid);
@@ -964,7 +957,7 @@ static void dump_index(const KeyWord *k, const int *index);
 static void dump_node(FormatNode *node, int max);
 #endif
 
-static char *get_th(char *num, int type);
+static const char *get_th(char *num, int type);
 static char *str_numth(char *dest, char *num, int type);
 static int	adjust_partial_year_to_2020(int year);
 static int	strspace_len(char *str);
@@ -973,8 +966,8 @@ static void from_char_set_mode(TmFromChar *tmfc, const FromCharDateMode mode);
 static void from_char_set_int(int *dest, const int value, const FormatNode *node);
 static int	from_char_parse_int_len(int *dest, char **src, const int len, FormatNode *node);
 static int	from_char_parse_int(int *dest, char **src, FormatNode *node);
-static int	seq_search(char *name, char **array, int type, int max, int *len);
-static int	from_char_seq_search(int *dest, char **src, char **array, int type, int max, FormatNode *node);
+static int	seq_search(char *name, const char *const * array, int type, int max, int *len);
+static int	from_char_seq_search(int *dest, char **src, const char *const * array, int type, int max, FormatNode *node);
 static void do_to_timestamp(text *date_txt, text *fmt,
 				struct pg_tm * tm, fsec_t *fsec);
 static char *fill_str(char *str, int c, int max);
@@ -1024,10 +1017,10 @@ index_seq_search(char *str, const KeyWord *kw, const int *index)
 	return NULL;
 }
 
-static KeySuffix *
-suff_search(char *str, KeySuffix *suf, int type)
+static const KeySuffix *
+suff_search(char *str, const KeySuffix *suf, int type)
 {
-	KeySuffix  *s;
+	const KeySuffix *s;
 
 	for (s = suf; s->name != NULL; s++)
 	{
@@ -1237,9 +1230,9 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
  */
 static void
 parse_format(FormatNode *node, char *str, const KeyWord *kw,
-			 KeySuffix *suf, const int *index, int ver, NUMDesc *Num)
+			 const KeySuffix *suf, const int *index, int ver, NUMDesc *Num)
 {
-	KeySuffix  *s;
+	const KeySuffix *s;
 	FormatNode *n;
 	int			node_set = 0,
 				suffix,
@@ -1401,7 +1394,7 @@ dump_node(FormatNode *node, int max)
  * type --> 0 upper, 1 lower
  * ----------
  */
-static char *
+static const char *
 get_th(char *num, int type)
 {
 	int			len = strlen(num),
@@ -2268,11 +2261,11 @@ from_char_parse_int(int *dest, char **src, FormatNode *node)
  * ----------
  */
 static int
-seq_search(char *name, char **array, int type, int max, int *len)
+seq_search(char *name, const char *const * array, int type, int max, int *len)
 {
-	char	   *p,
-			   *n,
-			  **a;
+	const char *p;
+	const char *const * a;
+	char	   *n;
 	int			last,
 				i;
 
@@ -2346,7 +2339,7 @@ seq_search(char *name, char **array, int type, int max, int *len)
  * If the string doesn't match, throw an error.
  */
 static int
-from_char_seq_search(int *dest, char **src, char **array, int type, int max,
+from_char_seq_search(int *dest, char **src, const char *const * array, int type, int max,
 					 FormatNode *node)
 {
 	int			len;

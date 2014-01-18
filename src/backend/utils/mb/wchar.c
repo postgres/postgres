@@ -1720,7 +1720,7 @@ pg_eucjp_increment(unsigned char *charptr, int length)
  * XXX must be sorted by the same order as enum pg_enc (in mb/pg_wchar.h)
  *-------------------------------------------------------------------
  */
-pg_wchar_tbl pg_wchar_table[] = {
+const pg_wchar_tbl pg_wchar_table[] = {
 	{pg_ascii2wchar_with_len, pg_wchar2single_with_len, pg_ascii_mblen, pg_ascii_dsplen, pg_ascii_verifier, 1}, /* PG_SQL_ASCII */
 	{pg_eucjp2wchar_with_len, pg_wchar2euc_with_len, pg_eucjp_mblen, pg_eucjp_dsplen, pg_eucjp_verifier, 3},	/* PG_EUC_JP */
 	{pg_euccn2wchar_with_len, pg_wchar2euc_with_len, pg_euccn_mblen, pg_euccn_dsplen, pg_euccn_verifier, 2},	/* PG_EUC_CN */

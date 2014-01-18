@@ -101,7 +101,7 @@ typedef struct
 										 * class? */
 } ObjectPropertyType;
 
-static ObjectPropertyType ObjectProperty[] =
+static const ObjectPropertyType ObjectProperty[] =
 {
 	{
 		CastRelationId,
@@ -431,7 +431,7 @@ static ObjectAddress get_object_address_type(ObjectType objtype,
 						List *objname, bool missing_ok);
 static ObjectAddress get_object_address_opcf(ObjectType objtype, List *objname,
 						List *objargs, bool missing_ok);
-static ObjectPropertyType *get_object_property_data(Oid class_id);
+static const ObjectPropertyType *get_object_property_data(Oid class_id);
 
 static void getRelationDescription(StringInfo buffer, Oid relid);
 static void getOpFamilyDescription(StringInfo buffer, Oid opfid);
@@ -1297,7 +1297,7 @@ get_object_namespace(const ObjectAddress *address)
 	HeapTuple	tuple;
 	bool		isnull;
 	Oid			oid;
-	ObjectPropertyType *property;
+	const ObjectPropertyType *property;
 
 	/* If not owned by a namespace, just return InvalidOid. */
 	property = get_object_property_data(address->classId);
@@ -1329,7 +1329,7 @@ get_object_namespace(const ObjectAddress *address)
 Oid
 get_object_oid_index(Oid class_id)
 {
-	ObjectPropertyType *prop = get_object_property_data(class_id);
+	const ObjectPropertyType *prop = get_object_property_data(class_id);
 
 	return prop->oid_index_oid;
 }
@@ -1337,7 +1337,7 @@ get_object_oid_index(Oid class_id)
 int
 get_object_catcache_oid(Oid class_id)
 {
-	ObjectPropertyType *prop = get_object_property_data(class_id);
+	const ObjectPropertyType *prop = get_object_property_data(class_id);
 
 	return prop->oid_catcache_id;
 }
@@ -1345,7 +1345,7 @@ get_object_catcache_oid(Oid class_id)
 int
 get_object_catcache_name(Oid class_id)
 {
-	ObjectPropertyType *prop = get_object_property_data(class_id);
+	const ObjectPropertyType *prop = get_object_property_data(class_id);
 
 	return prop->name_catcache_id;
 }
@@ -1353,7 +1353,7 @@ get_object_catcache_name(Oid class_id)
 AttrNumber
 get_object_attnum_name(Oid class_id)
 {
-	ObjectPropertyType *prop = get_object_property_data(class_id);
+	const ObjectPropertyType *prop = get_object_property_data(class_id);
 
 	return prop->attnum_name;
 }
@@ -1361,7 +1361,7 @@ get_object_attnum_name(Oid class_id)
 AttrNumber
 get_object_attnum_namespace(Oid class_id)
 {
-	ObjectPropertyType *prop = get_object_property_data(class_id);
+	const ObjectPropertyType *prop = get_object_property_data(class_id);
 
 	return prop->attnum_namespace;
 }
@@ -1369,7 +1369,7 @@ get_object_attnum_namespace(Oid class_id)
 AttrNumber
 get_object_attnum_owner(Oid class_id)
 {
-	ObjectPropertyType *prop = get_object_property_data(class_id);
+	const ObjectPropertyType *prop = get_object_property_data(class_id);
 
 	return prop->attnum_owner;
 }
@@ -1377,7 +1377,7 @@ get_object_attnum_owner(Oid class_id)
 AttrNumber
 get_object_attnum_acl(Oid class_id)
 {
-	ObjectPropertyType *prop = get_object_property_data(class_id);
+	const ObjectPropertyType *prop = get_object_property_data(class_id);
 
 	return prop->attnum_acl;
 }
@@ -1385,7 +1385,7 @@ get_object_attnum_acl(Oid class_id)
 AclObjectKind
 get_object_aclkind(Oid class_id)
 {
-	ObjectPropertyType *prop = get_object_property_data(class_id);
+	const ObjectPropertyType *prop = get_object_property_data(class_id);
 
 	return prop->acl_kind;
 }
@@ -1393,7 +1393,7 @@ get_object_aclkind(Oid class_id)
 bool
 get_object_namensp_unique(Oid class_id)
 {
-	ObjectPropertyType *prop = get_object_property_data(class_id);
+	const ObjectPropertyType *prop = get_object_property_data(class_id);
 
 	return prop->is_nsp_name_unique;
 }
@@ -1419,10 +1419,10 @@ is_objectclass_supported(Oid class_id)
 /*
  * Find ObjectProperty structure by class_id.
  */
-static ObjectPropertyType *
+static const ObjectPropertyType *
 get_object_property_data(Oid class_id)
 {
-	static ObjectPropertyType *prop_last = NULL;
+	static const ObjectPropertyType *prop_last = NULL;
 	int			index;
 
 	/*

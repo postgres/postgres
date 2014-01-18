@@ -303,33 +303,23 @@ typedef enum pg_enc
 #define PG_VALID_FE_ENCODING(_enc)	PG_VALID_ENCODING(_enc)
 
 /*
- * Encoding names with all aliases
- */
-typedef struct pg_encname
-{
-	char	   *name;
-	pg_enc		encoding;
-} pg_encname;
-
-extern pg_encname pg_encname_tbl[];
-extern unsigned int pg_encname_tbl_sz;
-
-/*
- * Careful:
+ * Table for mapping an encoding number to official encoding name and
+ * possibly other subsidiary data.	Be careful to check encoding number
+ * before accessing a table entry!
  *
  * if (PG_VALID_ENCODING(encoding))
  *		pg_enc2name_tbl[ encoding ];
  */
 typedef struct pg_enc2name
 {
-	char	   *name;
+	const char *name;
 	pg_enc		encoding;
 #ifdef WIN32
 	unsigned	codepage;		/* codepage for WIN32 */
 #endif
 } pg_enc2name;
 
-extern pg_enc2name pg_enc2name_tbl[];
+extern const pg_enc2name pg_enc2name_tbl[];
 
 /*
  * Encoding names for gettext
@@ -340,7 +330,7 @@ typedef struct pg_enc2gettext
 	const char *name;
 } pg_enc2gettext;
 
-extern pg_enc2gettext pg_enc2gettext_tbl[];
+extern const pg_enc2gettext pg_enc2gettext_tbl[];
 
 /*
  * pg_wchar stuff
@@ -373,7 +363,7 @@ typedef struct
 	int			maxmblen;		/* max bytes for a char in this encoding */
 } pg_wchar_tbl;
 
-extern pg_wchar_tbl pg_wchar_table[];
+extern const pg_wchar_tbl pg_wchar_table[];
 
 /*
  * UTF-8 to local code conversion map
@@ -441,8 +431,6 @@ extern int	pg_valid_server_encoding_id(int encoding);
  * Remaining functions are not considered part of libpq's API, though many
  * of them do exist inside libpq.
  */
-extern pg_encname *pg_char_to_encname_struct(const char *name);
-
 extern int	pg_mb2wchar(const char *from, pg_wchar *to);
 extern int	pg_mb2wchar_with_len(const char *from, pg_wchar *to, int len);
 extern int pg_encoding_mb2wchar_with_len(int encoding,

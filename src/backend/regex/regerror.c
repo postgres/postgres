@@ -34,10 +34,10 @@
 #include "regex/regguts.h"
 
 /* unknown-error explanation */
-static char unk[] = "*** unknown regex error code 0x%x ***";
+static const char unk[] = "*** unknown regex error code 0x%x ***";
 
 /* struct to map among codes, code names, and explanations */
-static struct rerr
+static const struct rerr
 {
 	int			code;
 	const char *name;
@@ -62,7 +62,7 @@ pg_regerror(int errcode,		/* error code, or REG_ATOI or REG_ITOA */
 			char *errbuf,		/* result buffer (unless errbuf_size==0) */
 			size_t errbuf_size) /* available space in errbuf, can be 0 */
 {
-	struct rerr *r;
+	const struct rerr *r;
 	const char *msg;
 	char		convbuf[sizeof(unk) + 50];		/* 50 = plenty for int */
 	size_t		len;

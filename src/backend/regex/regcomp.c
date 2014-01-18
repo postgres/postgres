@@ -274,7 +274,7 @@ struct vars
 
 
 /* static function list */
-static struct fns functions = {
+static const struct fns functions = {
 	rfree,						/* regfree insides */
 };
 

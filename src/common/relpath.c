@@ -29,7 +29,7 @@
  * documentation for pg_relation_size(). Also keep FORKNAMECHARS above
  * up-to-date.
  */
-const char *forkNames[] = {
+const char *const forkNames[] = {
 	"main",						/* MAIN_FORKNUM */
 	"fsm",						/* FSM_FORKNUM */
 	"vm",						/* VISIBILITYMAP_FORKNUM */
