@@ -106,6 +106,7 @@ typedef struct LVRelStats
 	double		scanned_tuples; /* counts only tuples on scanned pages */
 	double		old_rel_tuples; /* previous value of pg_class.reltuples */
 	double		new_rel_tuples; /* new estimated total # of tuples */
+	double		new_dead_tuples;	/* new estimated total # of dead tuples */
 	BlockNumber pages_removed;
 	double		tuples_deleted;
 	BlockNumber nonempty_pages; /* actually, last nonempty page + 1 */
@@ -185,6 +186,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	BlockNumber new_rel_pages;
 	double		new_rel_tuples;
 	BlockNumber new_rel_allvisible;
+	double		new_live_tuples;
 	TransactionId new_frozen_xid;
 	MultiXactId new_min_multi;
 
@@ -307,9 +309,14 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 						new_min_multi);
 
 	/* report results to the stats collector, too */
+	new_live_tuples = new_rel_tuples - vacrelstats->new_dead_tuples;
+	if (new_live_tuples < 0)
+		new_live_tuples = 0;	/* just in case */
+
 	pgstat_report_vacuum(RelationGetRelid(onerel),
 						 onerel->rd_rel->relisshared,
-						 new_rel_tuples);
+						 new_live_tuples,
+						 vacrelstats->new_dead_tuples);
 
 	/* and log the action if appropriate */
 	if (IsAutoVacuumWorkerProcess() && Log_autovacuum_min_duration >= 0)
@@ -334,7 +341,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 			ereport(LOG,
 					(errmsg("automatic vacuum of table \"%s.%s.%s\": index scans: %d\n"
 							"pages: %d removed, %d remain\n"
-							"tuples: %.0f removed, %.0f remain\n"
+							"tuples: %.0f removed, %.0f remain, %.0f are dead but not yet removable\n"
 							"buffer usage: %d hits, %d misses, %d dirtied\n"
 					  "avg read rate: %.3f MB/s, avg write rate: %.3f MB/s\n"
 							"system usage: %s",
@@ -346,6 +353,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 							vacrelstats->rel_pages,
 							vacrelstats->tuples_deleted,
 							vacrelstats->new_rel_tuples,
+							vacrelstats->new_dead_tuples,
 							VacuumPageHit,
 							VacuumPageMiss,
 							VacuumPageDirty,
@@ -1036,6 +1044,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	/* save stats for use later */
 	vacrelstats->scanned_tuples = num_tuples;
 	vacrelstats->tuples_deleted = tups_vacuumed;
+	vacrelstats->new_dead_tuples = nkeep;
 
 	/* now we can compute the new value for pg_class.reltuples */
 	vacrelstats->new_rel_tuples = vac_estimate_reltuples(onerel, false,

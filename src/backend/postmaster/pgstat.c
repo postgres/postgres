@@ -1327,7 +1327,8 @@ pgstat_report_autovac(Oid dboid)
  * ---------
  */
 void
-pgstat_report_vacuum(Oid tableoid, bool shared, PgStat_Counter tuples)
+pgstat_report_vacuum(Oid tableoid, bool shared,
+					 PgStat_Counter livetuples, PgStat_Counter deadtuples)
 {
 	PgStat_MsgVacuum msg;
 
@@ -1339,7 +1340,8 @@ pgstat_report_vacuum(Oid tableoid, bool shared, PgStat_Counter tuples)
 	msg.m_tableoid = tableoid;
 	msg.m_autovacuum = IsAutoVacuumWorkerProcess();
 	msg.m_vacuumtime = GetCurrentTimestamp();
-	msg.m_tuples = tuples;
+	msg.m_live_tuples = livetuples;
+	msg.m_dead_tuples = deadtuples;
 	pgstat_send(&msg, sizeof(msg));
 }
 
@@ -4809,9 +4811,8 @@ pgstat_recv_vacuum(PgStat_MsgVacuum *msg, int len)
 
 	tabentry = pgstat_get_tab_entry(dbentry, msg->m_tableoid, true);
 
-	tabentry->n_live_tuples = msg->m_tuples;
-	/* Resetting dead_tuples to 0 is an approximation ... */
-	tabentry->n_dead_tuples = 0;
+	tabentry->n_live_tuples = msg->m_live_tuples;
+	tabentry->n_dead_tuples = msg->m_dead_tuples;
 
 	if (msg->m_autovacuum)
 	{
