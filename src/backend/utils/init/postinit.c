@@ -234,7 +234,7 @@ PerformAuthentication(Port *port)
 #ifdef USE_SSL
 			if (port->ssl)
 				ereport(LOG,
-						(errmsg("replication connection authorized: user=%s SSL(protocol: %s, cipher: %s) enabled",
+						(errmsg("replication connection authorized: user=%s SSL enabled (protocol=%s, cipher=%s)",
 								port->user_name, SSL_get_version(port->ssl), SSL_get_cipher(port->ssl))));
 			else
 #endif
@@ -247,7 +247,7 @@ PerformAuthentication(Port *port)
 #ifdef USE_SSL
 			if (port->ssl)
 				ereport(LOG,
-						(errmsg("connection authorized: user=%s database=%s SSL(protocol: %s, cipher: %s) enabled",
+						(errmsg("connection authorized: user=%s database=%s SSL enabled (protocol=%s, cipher=%s)",
 								port->user_name, port->database_name, SSL_get_version(port->ssl), SSL_get_cipher(port->ssl))));
 			else
 #endif
