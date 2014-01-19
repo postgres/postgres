@@ -239,6 +239,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	Oid			tablespaceoid;
 	char	   *location;
 	Oid			ownerId;
+	Datum		newOptions;
 
 	/* Must be super user */
 	if (!superuser())
@@ -322,7 +323,16 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	values[Anum_pg_tablespace_spcowner - 1] =
 		ObjectIdGetDatum(ownerId);
 	nulls[Anum_pg_tablespace_spcacl - 1] = true;
-	nulls[Anum_pg_tablespace_spcoptions - 1] = true;
+
+	/* Generate new proposed spcoptions (text array) */
+	newOptions = transformRelOptions((Datum) 0,
+									 stmt->options,
+									 NULL, NULL, false, false);
+	(void) tablespace_reloptions(newOptions, true);
+	if (newOptions != (Datum) 0)
+		values[Anum_pg_tablespace_spcoptions - 1] = newOptions;
+	else
+		nulls[Anum_pg_tablespace_spcoptions - 1] = true;
 
 	tuple = heap_form_tuple(rel->rd_att, values, nulls);
 

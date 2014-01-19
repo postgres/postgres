@@ -21,7 +21,10 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE TABLESPACE <replaceable class="parameter">tablespace_name</replaceable> [ OWNER <replaceable class="parameter">user_name</replaceable> ] LOCATION '<replaceable class="parameter">directory</replaceable>'
+CREATE TABLESPACE <replaceable class="parameter">tablespace_name</replaceable>
+    [ OWNER <replaceable class="parameter">user_name</replaceable> ]
+    LOCATION '<replaceable class="parameter">directory</replaceable>'
+    [ WITH ( <replaceable class="PARAMETER">tablespace_option</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] ) ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -84,6 +87,24 @@ CREATE TABLESPACE <replaceable class="parameter">tablespace_name</replaceable> [
         should be empty and must be owned by the
         <productname>PostgreSQL</> system user.  The directory must be
         specified by an absolute path name.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="parameter">tablespace_option</replaceable></term>
+      <listitem>
+       <para>
+        A tablespace parameter to be set or reset.  Currently, the only
+        available parameters are <varname>seq_page_cost</> and
+        <varname>random_page_cost</>.  Setting either value for a particular
+        tablespace will override the planner's usual estimate of the cost of
+        reading pages from tables in that tablespace, as established by
+        the configuration parameters of the same name (see
+        <xref linkend="guc-seq-page-cost">,
+        <xref linkend="guc-random-page-cost">).  This may be useful if one
+        tablespace is located on a disk which is faster or slower than the
+        remainder of the I/O subsystem.
        </para>
       </listitem>
      </varlistentry>

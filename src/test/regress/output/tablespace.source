@@ -1,3 +1,16 @@
+-- create a tablespace using WITH clause
+CREATE TABLESPACE testspacewith LOCATION '@testtablespace@' WITH (some_nonexistent_parameter = true); -- fail
+ERROR:  unrecognized parameter "some_nonexistent_parameter"
+CREATE TABLESPACE testspacewith LOCATION '@testtablespace@' WITH (random_page_cost = 3.0); -- ok
+-- check to see the parameter was used
+SELECT spcoptions FROM pg_tablespace WHERE spcname = 'testspacewith';
+       spcoptions       
+------------------------
+ {random_page_cost=3.0}
+(1 row)
+
+-- drop the tablespace so we can re-use the location
+DROP TABLESPACE testspacewith;
 -- create a tablespace we can use
 CREATE TABLESPACE testspace LOCATION '@testtablespace@';
 -- try setting and resetting some properties for the new tablespace

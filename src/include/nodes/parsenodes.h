@@ -1669,6 +1669,7 @@ typedef struct CreateTableSpaceStmt
 	char	   *tablespacename;
 	char	   *owner;
 	char	   *location;
+	List	   *options;
 } CreateTableSpaceStmt;
 
 typedef struct DropTableSpaceStmt

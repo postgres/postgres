@@ -3588,12 +3588,13 @@ opt_procedural:
  *
  *****************************************************************************/
 
-CreateTableSpaceStmt: CREATE TABLESPACE name OptTableSpaceOwner LOCATION Sconst
+CreateTableSpaceStmt: CREATE TABLESPACE name OptTableSpaceOwner LOCATION Sconst opt_reloptions
 				{
 					CreateTableSpaceStmt *n = makeNode(CreateTableSpaceStmt);
 					n->tablespacename = $3;
 					n->owner = $4;
 					n->location = $6;
+					n->options = $7;
 					$$ = (Node *) n;
 				}
 		;
