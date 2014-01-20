@@ -45,6 +45,7 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/datum.h"
+#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
@@ -94,6 +95,7 @@ static bool expression_returns_set_rows_walker(Node *node, double *count);
 static bool contain_subplans_walker(Node *node, void *context);
 static bool contain_mutable_functions_walker(Node *node, void *context);
 static bool contain_volatile_functions_walker(Node *node, void *context);
+static bool contain_volatile_functions_not_nextval_walker(Node *node, void *context);
 static bool contain_nonstrict_functions_walker(Node *node, void *context);
 static bool contain_leaky_functions_walker(Node *node, void *context);
 static Relids find_nonnullable_rels_walker(Node *node, bool top_level);
@@ -971,6 +973,19 @@ contain_volatile_functions(Node *clause)
 	return contain_volatile_functions_walker(clause, NULL);
 }
 
+bool
+contain_volatile_functions_not_nextval(Node *clause)
+{
+	return contain_volatile_functions_not_nextval_walker(clause, NULL);
+}
+
+/*
+ * General purpose code for checking expression volatility.
+ *
+ * Special purpose code for use in COPY is almost identical to this,
+ * so any changes here may also be needed in other contain_volatile...
+ * functions.
+ */
 static bool
 contain_volatile_functions_walker(Node *node, void *context)
 {
@@ -1072,6 +1087,107 @@ contain_volatile_functions_walker(Node *node, void *context)
 								  context);
 }
 
+/*
+ * Special purpose version of contain_volatile_functions for use in COPY
+ */
+static bool
+contain_volatile_functions_not_nextval_walker(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, FuncExpr))
+	{
+		FuncExpr   *expr = (FuncExpr *) node;
+
+		/*
+		 * For this case only, we want to ignore the volatility of the
+		 * nextval() function, since some callers want this.
+		 */
+		if (expr->funcid != F_NEXTVAL_OID &&
+			func_volatile(expr->funcid) == PROVOLATILE_VOLATILE)
+			return true;
+		/* else fall through to check args */
+	}
+	else if (IsA(node, OpExpr))
+	{
+		OpExpr	   *expr = (OpExpr *) node;
+
+		set_opfuncid(expr);
+		if (func_volatile(expr->opfuncid) == PROVOLATILE_VOLATILE)
+			return true;
+		/* else fall through to check args */
+	}
+	else if (IsA(node, DistinctExpr))
+	{
+		DistinctExpr *expr = (DistinctExpr *) node;
+
+		set_opfuncid((OpExpr *) expr);	/* rely on struct equivalence */
+		if (func_volatile(expr->opfuncid) == PROVOLATILE_VOLATILE)
+			return true;
+		/* else fall through to check args */
+	}
+	else if (IsA(node, NullIfExpr))
+	{
+		NullIfExpr *expr = (NullIfExpr *) node;
+
+		set_opfuncid((OpExpr *) expr);	/* rely on struct equivalence */
+		if (func_volatile(expr->opfuncid) == PROVOLATILE_VOLATILE)
+			return true;
+		/* else fall through to check args */
+	}
+	else if (IsA(node, ScalarArrayOpExpr))
+	{
+		ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
+
+		set_sa_opfuncid(expr);
+		if (func_volatile(expr->opfuncid) == PROVOLATILE_VOLATILE)
+			return true;
+		/* else fall through to check args */
+	}
+	else if (IsA(node, CoerceViaIO))
+	{
+		CoerceViaIO *expr = (CoerceViaIO *) node;
+		Oid			iofunc;
+		Oid			typioparam;
+		bool		typisvarlena;
+
+		/* check the result type's input function */
+		getTypeInputInfo(expr->resulttype,
+						 &iofunc, &typioparam);
+		if (func_volatile(iofunc) == PROVOLATILE_VOLATILE)
+			return true;
+		/* check the input type's output function */
+		getTypeOutputInfo(exprType((Node *) expr->arg),
+						  &iofunc, &typisvarlena);
+		if (func_volatile(iofunc) == PROVOLATILE_VOLATILE)
+			return true;
+		/* else fall through to check args */
+	}
+	else if (IsA(node, ArrayCoerceExpr))
+	{
+		ArrayCoerceExpr *expr = (ArrayCoerceExpr *) node;
+
+		if (OidIsValid(expr->elemfuncid) &&
+			func_volatile(expr->elemfuncid) == PROVOLATILE_VOLATILE)
+			return true;
+		/* else fall through to check args */
+	}
+	else if (IsA(node, RowCompareExpr))
+	{
+		/* RowCompare probably can't have volatile ops, but check anyway */
+		RowCompareExpr *rcexpr = (RowCompareExpr *) node;
+		ListCell   *opid;
+
+		foreach(opid, rcexpr->opnos)
+		{
+			if (op_volatile(lfirst_oid(opid)) == PROVOLATILE_VOLATILE)
+				return true;
+		}
+		/* else fall through to check args */
+	}
+	return expression_tree_walker(node, contain_volatile_functions_not_nextval_walker,
+								  context);
+}
 
 /*****************************************************************************
  *		Check clauses for nonstrict functions
