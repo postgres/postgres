@@ -727,7 +727,7 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, bool forcetemp,
 /*
  * Do the physical copying of heap data.
  *
- * There are two output parameters:
+ * There are three output parameters:
  * *pSwapToastByContent is set true if toast tables must be swapped by content.
  * *pFreezeXid receives the TransactionId used as freeze cutoff point.
  * *pCutoffMulti receives the MultiXactId used as a cutoff point.
