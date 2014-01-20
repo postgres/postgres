@@ -486,29 +486,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 
 	/* Print info about runtime of triggers */
 	if (es->analyze)
-	{
-		ResultRelInfo *rInfo;
-		bool		show_relname;
-		int			numrels = queryDesc->estate->es_num_result_relations;
-		List	   *targrels = queryDesc->estate->es_trig_target_relations;
-		int			nr;
-		ListCell   *l;
-
-		ExplainOpenGroup("Triggers", "Triggers", false, es);
-
-		show_relname = (numrels > 1 || targrels != NIL);
-		rInfo = queryDesc->estate->es_result_relations;
-		for (nr = 0; nr < numrels; rInfo++, nr++)
-			report_triggers(rInfo, show_relname, es);
-
-		foreach(l, targrels)
-		{
-			rInfo = (ResultRelInfo *) lfirst(l);
-			report_triggers(rInfo, show_relname, es);
-		}
-
-		ExplainCloseGroup("Triggers", "Triggers", false, es);
-	}
+		ExplainPrintTriggers(es, queryDesc);
 
 	/*
 	 * Close down the query and free resources.  Include time for this in the
@@ -562,6 +540,42 @@ ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc)
 	ExplainPreScanNode(queryDesc->planstate, &rels_used);
 	es->rtable_names = select_rtable_names_for_explain(es->rtable, rels_used);
 	ExplainNode(queryDesc->planstate, NIL, NULL, NULL, es);
+}
+
+/*
+ * ExplainPrintTriggers -
+
+ *	  convert a QueryDesc's trigger statistics to text and append it to
+ *	  es->str
+ *
+ * The caller should have set up the options fields of *es, as well as
+ * initializing the output buffer es->str.	Other fields in *es are
+ * initialized here.
+ */
+void
+ExplainPrintTriggers(ExplainState *es, QueryDesc *queryDesc)
+{
+	ResultRelInfo *rInfo;
+	bool		show_relname;
+	int			numrels = queryDesc->estate->es_num_result_relations;
+	List	   *targrels = queryDesc->estate->es_trig_target_relations;
+	int			nr;
+	ListCell   *l;
+
+	ExplainOpenGroup("Triggers", "Triggers", false, es);
+
+	show_relname = (numrels > 1 || targrels != NIL);
+	rInfo = queryDesc->estate->es_result_relations;
+	for (nr = 0; nr < numrels; rInfo++, nr++)
+		report_triggers(rInfo, show_relname, es);
+
+	foreach(l, targrels)
+	{
+		rInfo = (ResultRelInfo *) lfirst(l);
+		report_triggers(rInfo, show_relname, es);
+	}
+
+	ExplainCloseGroup("Triggers", "Triggers", false, es);
 }
 
 /*

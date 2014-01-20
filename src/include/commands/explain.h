@@ -71,6 +71,7 @@ extern void ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into,
 			   const char *queryString, ParamListInfo params);
 
 extern void ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc);
+extern void ExplainPrintTriggers(ExplainState *es, QueryDesc *queryDesc);
 
 extern void ExplainQueryText(ExplainState *es, QueryDesc *queryDesc);
 
