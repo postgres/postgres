@@ -2839,14 +2839,20 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 	{
 		if (n->type != NODE_TYPE_ACTION)
 		{
+			/*
+			 * Separator, so consume one character from input string.  Notice
+			 * we don't insist that the consumed character match the format's
+			 * character.
+			 */
 			s++;
-			/* Ignore spaces when not in FX (fixed width) mode */
-			if (isspace((unsigned char) n->character) && !fx_mode)
-			{
-				while (*s != '\0' && isspace((unsigned char) *s))
-					s++;
-			}
 			continue;
+		}
+
+		/* Ignore spaces before fields when not in FX (fixed width) mode */
+		if (!fx_mode && n->key->id != DCH_FX)
+		{
+			while (*s != '\0' && isspace((unsigned char) *s))
+				s++;
 		}
 
 		from_char_set_mode(out, n->key->date_mode);

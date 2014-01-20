@@ -2907,6 +2907,81 @@ SELECT to_timestamp('  20050302', 'YYYYMMDD');
 (1 row)
 
 --
+-- Check handling of multiple spaces in format and/or input
+--
+SELECT to_timestamp('2011-12-18 23:38:15', 'YYYY-MM-DD  HH24:MI:SS');
+         to_timestamp         
+------------------------------
+ Sun Dec 18 03:38:15 2011 PST
+(1 row)
+
+SELECT to_timestamp('2011-12-18  23:38:15', 'YYYY-MM-DD  HH24:MI:SS');
+         to_timestamp         
+------------------------------
+ Sun Dec 18 23:38:15 2011 PST
+(1 row)
+
+SELECT to_timestamp('2011-12-18   23:38:15', 'YYYY-MM-DD  HH24:MI:SS');
+         to_timestamp         
+------------------------------
+ Sun Dec 18 23:38:15 2011 PST
+(1 row)
+
+SELECT to_timestamp('2011-12-18  23:38:15', 'YYYY-MM-DD HH24:MI:SS');
+         to_timestamp         
+------------------------------
+ Sun Dec 18 23:38:15 2011 PST
+(1 row)
+
+SELECT to_timestamp('2011-12-18  23:38:15', 'YYYY-MM-DD  HH24:MI:SS');
+         to_timestamp         
+------------------------------
+ Sun Dec 18 23:38:15 2011 PST
+(1 row)
+
+SELECT to_timestamp('2011-12-18  23:38:15', 'YYYY-MM-DD   HH24:MI:SS');
+         to_timestamp         
+------------------------------
+ Sun Dec 18 03:38:15 2011 PST
+(1 row)
+
+SELECT to_date('2011 12  18', 'YYYY MM DD');
+  to_date   
+------------
+ 12-18-2011
+(1 row)
+
+SELECT to_date('2011 12  18', 'YYYY MM  DD');
+  to_date   
+------------
+ 12-18-2011
+(1 row)
+
+SELECT to_date('2011 12  18', 'YYYY MM   DD');
+  to_date   
+------------
+ 12-08-2011
+(1 row)
+
+SELECT to_date('2011 12 18', 'YYYY  MM DD');
+  to_date   
+------------
+ 02-18-2011
+(1 row)
+
+SELECT to_date('2011  12 18', 'YYYY  MM DD');
+  to_date   
+------------
+ 12-18-2011
+(1 row)
+
+SELECT to_date('2011   12 18', 'YYYY  MM DD');
+  to_date   
+------------
+ 12-18-2011
+(1 row)
+
+--
 -- Check errors for some incorrect usages of to_timestamp()
 --
 -- Mixture of date conventions (ISO week and Gregorian):

@@ -441,6 +441,26 @@ SELECT to_timestamp(' 2005 03 02', 'YYYYMMDD');
 SELECT to_timestamp('  20050302', 'YYYYMMDD');
 
 --
+-- Check handling of multiple spaces in format and/or input
+--
+
+SELECT to_timestamp('2011-12-18 23:38:15', 'YYYY-MM-DD  HH24:MI:SS');
+SELECT to_timestamp('2011-12-18  23:38:15', 'YYYY-MM-DD  HH24:MI:SS');
+SELECT to_timestamp('2011-12-18   23:38:15', 'YYYY-MM-DD  HH24:MI:SS');
+
+SELECT to_timestamp('2011-12-18  23:38:15', 'YYYY-MM-DD HH24:MI:SS');
+SELECT to_timestamp('2011-12-18  23:38:15', 'YYYY-MM-DD  HH24:MI:SS');
+SELECT to_timestamp('2011-12-18  23:38:15', 'YYYY-MM-DD   HH24:MI:SS');
+
+SELECT to_date('2011 12  18', 'YYYY MM DD');
+SELECT to_date('2011 12  18', 'YYYY MM  DD');
+SELECT to_date('2011 12  18', 'YYYY MM   DD');
+
+SELECT to_date('2011 12 18', 'YYYY  MM DD');
+SELECT to_date('2011  12 18', 'YYYY  MM DD');
+SELECT to_date('2011   12 18', 'YYYY  MM DD');
+
+--
 -- Check errors for some incorrect usages of to_timestamp()
 --
 
