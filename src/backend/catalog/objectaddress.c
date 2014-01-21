@@ -1024,6 +1024,7 @@ get_object_address_attribute(ObjectType objtype, List *objname,
 		address.classId = RelationRelationId;
 		address.objectId = InvalidOid;
 		address.objectSubId = InvalidAttrNumber;
+		relation_close(relation, lockmode);
 		return address;
 	}
 
