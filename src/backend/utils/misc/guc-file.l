@@ -444,7 +444,6 @@ ParseConfigFile(const char *config_file, const char *calling_file, bool strict,
 		ereport(LOG,
 				(errmsg("skipping missing configuration file \"%s\"",
 						abs_path)));
-		OK = true;
 		goto cleanup;
 	}
 
