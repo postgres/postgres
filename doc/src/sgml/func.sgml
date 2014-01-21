@@ -11009,6 +11009,9 @@ SELECT NULLIF(value, '(none)') ...
     <primary>array_upper</primary>
   </indexterm>
   <indexterm>
+    <primary>cardinality</primary>
+  </indexterm>
+  <indexterm>
     <primary>string_to_array</primary>
   </indexterm>
   <indexterm>
@@ -11162,6 +11165,17 @@ SELECT NULLIF(value, '(none)') ...
         <entry><type>int</type></entry>
         <entry>returns upper bound of the requested array dimension</entry>
         <entry><literal>array_upper(ARRAY[1,8,3,7], 1)</literal></entry>
+        <entry><literal>4</literal></entry>
+       </row>
+       <row>
+        <entry>
+         <literal>
+          <function>cardinality</function>(<type>anyarray</type>)
+         </literal>
+        </entry>
+        <entry><type>int</type></entry>
+        <entry>returns the total number of elements in the array, or 0 if the array is empty</entry>
+        <entry><literal>cardinality(ARRAY[[1,2],[3,4]])</literal></entry>
         <entry><literal>4</literal></entry>
        </row>
        <row>

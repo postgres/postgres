@@ -338,6 +338,19 @@ SELECT array_length(schedule, 1) FROM sal_emp WHERE name = 'Carol';
             2
 (1 row)
 </programlisting>
+
+ <function>cardinality</function> returns the total number of elements in an
+ array across all dimensions.  It is effectively the number of rows a call to
+ <function>unnest</function> would yield:
+
+<programlisting>
+SELECT cardinality(schedule) FROM sal_emp WHERE name = 'Carol';
+
+ cardinality 
+-------------
+           4
+(1 row)
+</programlisting>
  </para>
  </sect2>
 

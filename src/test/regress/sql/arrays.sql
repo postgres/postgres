@@ -419,6 +419,14 @@ select array_length(array[[1,2,3], [4,5,6]], 1);
 select array_length(array[[1,2,3], [4,5,6]], 2);
 select array_length(array[[1,2,3], [4,5,6]], 3);
 
+select cardinality(NULL::int[]);
+select cardinality('{}'::int[]);
+select cardinality(array[1,2,3]);
+select cardinality('[2:4]={5,6,7}'::int[]);
+select cardinality('{{1,2}}'::int[]);
+select cardinality('{{1,2},{3,4},{5,6}}'::int[]);
+select cardinality('{{{1}},{{2,3},{3,4}}}'::int[]);
+
 select array_agg(unique1) from (select unique1 from tenk1 where unique1 < 15 order by unique1) ss;
 select array_agg(ten) from (select ten from tenk1 where unique1 < 15 order by unique1) ss;
 select array_agg(nullif(ten, 4)) from (select ten from tenk1 where unique1 < 15 order by unique1) ss;

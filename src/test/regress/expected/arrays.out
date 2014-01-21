@@ -1455,6 +1455,48 @@ select array_length(array[[1,2,3], [4,5,6]], 3);
              
 (1 row)
 
+select cardinality(NULL::int[]);
+ cardinality 
+-------------
+            
+(1 row)
+
+select cardinality('{}'::int[]);
+ cardinality 
+-------------
+           0
+(1 row)
+
+select cardinality(array[1,2,3]);
+ cardinality 
+-------------
+           3
+(1 row)
+
+select cardinality('[2:4]={5,6,7}'::int[]);
+ cardinality 
+-------------
+           3
+(1 row)
+
+select cardinality('{{1,2}}'::int[]);
+ cardinality 
+-------------
+           2
+(1 row)
+
+select cardinality('{{1,2},{3,4},{5,6}}'::int[]);
+ cardinality 
+-------------
+           6
+(1 row)
+
+select cardinality('{{{1}},{{2,3},{3,4}}}'::int[]);
+ cardinality 
+-------------
+           8
+(1 row)
+
 select array_agg(unique1) from (select unique1 from tenk1 where unique1 < 15 order by unique1) ss;
               array_agg               
 --------------------------------------
