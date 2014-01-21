@@ -469,18 +469,22 @@ ParseConfigFile(const char *config_file, const char *calling_file, bool strict,
 					(errcode_for_file_access(),
 					 errmsg("could not open configuration file \"%s\": %m",
 							abs_path)));
-			return false;
+			OK = false;
+			goto cleanup;
 		}
 
 		ereport(LOG,
 				(errmsg("skipping missing configuration file \"%s\"",
 						abs_path)));
-		return OK;
+		OK = true;
+		goto cleanup;
 	}
 
 	OK = ParseConfigFp(fp, abs_path, depth, elevel, head_p, tail_p);
 
-	FreeFile(fp);
+cleanup:
+	if (fp)
+		FreeFile(fp);
 	pfree(abs_path);
 
 	return OK;
@@ -748,7 +752,8 @@ ParseConfigDirectory(const char *includedir,
 				(errcode_for_file_access(),
 				 errmsg("could not open configuration directory \"%s\": %m",
 						directory)));
-		return false;
+		status = false;
+		goto cleanup;
 	}
 
 	/*
@@ -803,7 +808,8 @@ ParseConfigDirectory(const char *includedir,
 					(errcode_for_file_access(),
 					 errmsg("could not stat file \"%s\": %m",
 							filename)));
-			return false;
+			status = false;
+			goto cleanup;
 		}
 	}
 
@@ -824,7 +830,9 @@ ParseConfigDirectory(const char *includedir,
 	status = true;
 
 cleanup:
-	FreeDir(d);
+	if (d)
+		FreeDir(d);
+	pfree(directory);
 	return status;
 }
 
