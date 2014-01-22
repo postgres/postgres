@@ -71,24 +71,20 @@ callConsistentFn(GinState *ginstate, GinScanKey key)
  * Tries to refind previously taken ItemPointer on a posting page.
  */
 static bool
-findItemInPostingPage(Page page, ItemPointer item, OffsetNumber *off)
+needToStepRight(Page page, ItemPointer item)
 {
-	OffsetNumber maxoff = GinPageGetOpaque(page)->maxoff;
-	int			res;
-
 	if (GinPageGetOpaque(page)->flags & GIN_DELETED)
 		/* page was deleted by concurrent vacuum */
-		return false;
+		return true;
 
-	/*
-	 * scan page to find equal or first greater value
-	 */
-	for (*off = FirstOffsetNumber; *off <= maxoff; (*off)++)
+	if (ginCompareItemPointers(item, GinDataPageGetRightBound(page)) > 0
+			&& !GinPageRightMost(page))
 	{
-		res = ginCompareItemPointers(item, GinDataPageGetItemPointer(page, *off));
-
-		if (res <= 0)
-			return true;
+		/*
+		 * the item we're looking is > the right bound of the page, so it
+		 * can't be on this page.
+		 */
+		return true;
 	}
 
 	return false;
@@ -143,14 +139,10 @@ scanPostingTree(Relation index, GinScanEntry scanEntry,
 	for (;;)
 	{
 		page = BufferGetPage(buffer);
-
-		if ((GinPageGetOpaque(page)->flags & GIN_DELETED) == 0 &&
-			GinPageGetOpaque(page)->maxoff >= FirstOffsetNumber)
+		if ((GinPageGetOpaque(page)->flags & GIN_DELETED) == 0)
 		{
-			tbm_add_tuples(scanEntry->matchBitmap,
-						   GinDataPageGetItemPointer(page, FirstOffsetNumber),
-						   GinPageGetOpaque(page)->maxoff, false);
-			scanEntry->predictNumberResult += GinPageGetOpaque(page)->maxoff;
+			int n = GinDataLeafPageGetItemsToTbm(page, scanEntry->matchBitmap);
+			scanEntry->predictNumberResult += n;
 		}
 
 		if (GinPageRightMost(page))
@@ -335,8 +327,11 @@ collectMatchBitmap(GinBtreeData *btree, GinBtreeStack *stack,
 		}
 		else
 		{
-			tbm_add_tuples(scanEntry->matchBitmap,
-						   GinGetPosting(itup), GinGetNPosting(itup), false);
+			ItemPointer ipd;
+			int			nipd;
+
+			ipd = ginReadTuple(btree->ginstate, scanEntry->attnum, itup, &nipd);
+			tbm_add_tuples(scanEntry->matchBitmap, ipd, nipd, false);
 			scanEntry->predictNumberResult += GinGetNPosting(itup);
 		}
 
@@ -450,16 +445,14 @@ restartScanEntry:
 			IncrBufferRefCount(entry->buffer);
 
 			page = BufferGetPage(entry->buffer);
-			entry->predictNumberResult = stack->predictNumber * GinPageGetOpaque(page)->maxoff;
 
 			/*
-			 * Keep page content in memory to prevent durable page locking
+			 * Copy page content to memory to avoid keeping it locked for
+			 * a long time.
 			 */
-			entry->list = (ItemPointerData *) palloc(BLCKSZ);
-			entry->nlist = GinPageGetOpaque(page)->maxoff;
-			memcpy(entry->list,
-				   GinDataPageGetItemPointer(page, FirstOffsetNumber),
-				   GinPageGetOpaque(page)->maxoff * sizeof(ItemPointerData));
+			entry->list = GinDataLeafPageGetItems(page, &entry->nlist);
+
+			entry->predictNumberResult = stack->predictNumber * entry->nlist;
 
 			LockBuffer(entry->buffer, GIN_UNLOCK);
 			freeGinBtreeStack(stack);
@@ -467,9 +460,10 @@ restartScanEntry:
 		}
 		else if (GinGetNPosting(itup) > 0)
 		{
-			entry->nlist = GinGetNPosting(itup);
-			entry->list = (ItemPointerData *) palloc(sizeof(ItemPointerData) * entry->nlist);
-			memcpy(entry->list, GinGetPosting(itup), sizeof(ItemPointerData) * entry->nlist);
+			entry->list = ginReadTuple(ginstate, entry->attnum, itup,
+				&entry->nlist);
+			entry->predictNumberResult = entry->nlist;
+
 			entry->isFinished = FALSE;
 		}
 	}
@@ -532,6 +526,7 @@ static void
 entryGetNextItem(GinState *ginstate, GinScanEntry entry)
 {
 	Page		page;
+	int			i;
 
 	for (;;)
 	{
@@ -564,35 +559,47 @@ entryGetNextItem(GinState *ginstate, GinScanEntry entry)
 			page = BufferGetPage(entry->buffer);
 
 			entry->offset = InvalidOffsetNumber;
-			if (!ItemPointerIsValid(&entry->curItem) ||
-				findItemInPostingPage(page, &entry->curItem, &entry->offset))
+			if (entry->list)
 			{
-				/*
-				 * Found position equal to or greater than stored
-				 */
-				entry->nlist = GinPageGetOpaque(page)->maxoff;
-				memcpy(entry->list,
-					   GinDataPageGetItemPointer(page, FirstOffsetNumber),
-					   GinPageGetOpaque(page)->maxoff * sizeof(ItemPointerData));
+				pfree(entry->list);
+				entry->list = NULL;
+			}
 
-				LockBuffer(entry->buffer, GIN_UNLOCK);
+			/*
+			 * If the page was concurrently split, we have to re-find the
+			 * item we were stopped on. If the page was split more than once,
+			 * the item might not be on this page, but somewhere to the right.
+			 * Keep following the right-links until we re-find the correct
+			 * page.
+			 */
+			if (ItemPointerIsValid(&entry->curItem) &&
+				needToStepRight(page, &entry->curItem))
+			{
+				continue;
+			}
 
-				if (!ItemPointerIsValid(&entry->curItem) ||
-					ginCompareItemPointers(&entry->curItem,
-									   entry->list + entry->offset - 1) == 0)
+			entry->list = GinDataLeafPageGetItems(page, &entry->nlist);
+
+			/* re-find the item we were stopped on. */
+			if (ItemPointerIsValid(&entry->curItem))
+			{
+				for (i = 0; i < entry->nlist; i++)
 				{
-					/*
-					 * First pages are deleted or empty, or we found exact
-					 * position, so break inner loop and continue outer one.
-					 */
-					break;
+					if (ginCompareItemPointers(&entry->curItem,
+											   &entry->list[i]) < 0)
+					{
+						LockBuffer(entry->buffer, GIN_UNLOCK);
+						entry->offset = i + 1;
+						entry->curItem = entry->list[entry->offset - 1];
+						return;
+					}
 				}
-
-				/*
-				 * Find greater than entry->curItem position, store it.
-				 */
+			}
+			else
+			{
+				LockBuffer(entry->buffer, GIN_UNLOCK);
+				entry->offset = 1; /* scan all items on the page. */
 				entry->curItem = entry->list[entry->offset - 1];
-
 				return;
 			}
 		}

@@ -123,6 +123,6 @@ create index test_ginidx on test using gin (b);
 select * from pgstatginindex('test_ginidx');
  version | pending_pages | pending_tuples 
 ---------+---------------+----------------
-       1 |             0 |              0
+       2 |             0 |              0
 (1 row)
 

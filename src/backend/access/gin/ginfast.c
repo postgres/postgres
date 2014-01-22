@@ -487,7 +487,7 @@ ginHeapTupleFastCollect(GinState *ginstate,
 		IndexTuple	itup;
 
 		itup = GinFormTuple(ginstate, attnum, entries[i], categories[i],
-							NULL, 0, true);
+							NULL, 0, 0, true);
 		itup->t_tid = *ht_ctid;
 		collector->tuples[collector->ntuples++] = itup;
 		collector->sumsize += IndexTupleSize(itup);
