@@ -22,7 +22,7 @@
 #include "storage/lmgr.h"
 #include "utils/memutils.h"
 
-typedef struct GinVacuumState
+struct GinVacuumState
 {
 	Relation	index;
 	IndexBulkDeleteResult *result;
@@ -31,7 +31,7 @@ typedef struct GinVacuumState
 	GinState	ginstate;
 	BufferAccessStrategy strategy;
 	MemoryContext tmpCxt;
-} GinVacuumState;
+};
 
 /*
  * Vacuums an uncompressed posting list. The size of the must can be specified
