@@ -751,11 +751,12 @@ json_lex_string(JsonLexContext *lex)
 								 report_json_context(lex)));
 
 					/*
-					 * For UTF8, replace the escape sequence by the actual utf8
-					 * character in lex->strval. Do this also for other encodings
-					 * if the escape designates an ASCII character, otherwise
-					 * raise an error. We don't ever unescape a \u0000, since that
-					 * would result in an impermissible nul byte.
+					 * For UTF8, replace the escape sequence by the actual
+					 * utf8 character in lex->strval. Do this also for other
+					 * encodings if the escape designates an ASCII character,
+					 * otherwise raise an error. We don't ever unescape a
+					 * \u0000, since that would result in an impermissible nul
+					 * byte.
 					 */
 
 					if (ch == 0)
@@ -771,8 +772,9 @@ json_lex_string(JsonLexContext *lex)
 					else if (ch <= 0x007f)
 					{
 						/*
-						 * This is the only way to designate things like a form feed
-						 * character in JSON, so it's useful in all encodings.
+						 * This is the only way to designate things like a
+						 * form feed character in JSON, so it's useful in all
+						 * encodings.
 						 */
 						appendStringInfoChar(lex->strval, (char) ch);
 					}
@@ -866,7 +868,7 @@ json_lex_string(JsonLexContext *lex)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type json"),
-		errdetail("Unicode low surrogate must follow a high surrogate."),
+			errdetail("Unicode low surrogate must follow a high surrogate."),
 				 report_json_context(lex)));
 
 	/* Hooray, we found the end of the string! */
@@ -1221,7 +1223,7 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 {
 	char	   *outputstr;
 	text	   *jsontext;
-	bool       numeric_error;
+	bool		numeric_error;
 	JsonLexContext dummy_lex;
 
 	if (is_null)
@@ -1246,13 +1248,14 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 			break;
 		case TYPCATEGORY_NUMERIC:
 			outputstr = OidOutputFunctionCall(typoutputfunc, val);
+
 			/*
 			 * Don't call escape_json here if it's a valid JSON number.
 			 */
 			dummy_lex.input = *outputstr == '-' ? outputstr + 1 : outputstr;
 			dummy_lex.input_length = strlen(dummy_lex.input);
 			json_lex_number(&dummy_lex, dummy_lex.input, &numeric_error);
-			if (! numeric_error)
+			if (!numeric_error)
 				appendStringInfoString(result, outputstr);
 			else
 				escape_json(result, outputstr);
@@ -1808,34 +1811,34 @@ json_typeof(PG_FUNCTION_ARGS)
 
 	JsonLexContext *lex = makeJsonLexContext(json, false);
 	JsonTokenType tok;
-	char *type;
+	char	   *type;
 
 	/* Lex exactly one token from the input and check its type. */
 	json_lex(lex);
 	tok = lex_peek(lex);
 	switch (tok)
 	{
-	case JSON_TOKEN_OBJECT_START:
-		type = "object";
-		break;
-	case JSON_TOKEN_ARRAY_START:
-		type = "array";
-		break;
-	case JSON_TOKEN_STRING:
-		type = "string";
-		break;
-	case JSON_TOKEN_NUMBER:
-		type = "number";
-		break;
-	case JSON_TOKEN_TRUE:
-	case JSON_TOKEN_FALSE:
-		type = "boolean";
-		break;
-	case JSON_TOKEN_NULL:
-		type = "null";
-		break;
-	default:
-		elog(ERROR, "unexpected json token: %d", tok);
+		case JSON_TOKEN_OBJECT_START:
+			type = "object";
+			break;
+		case JSON_TOKEN_ARRAY_START:
+			type = "array";
+			break;
+		case JSON_TOKEN_STRING:
+			type = "string";
+			break;
+		case JSON_TOKEN_NUMBER:
+			type = "number";
+			break;
+		case JSON_TOKEN_TRUE:
+		case JSON_TOKEN_FALSE:
+			type = "boolean";
+			break;
+		case JSON_TOKEN_NULL:
+			type = "null";
+			break;
+		default:
+			elog(ERROR, "unexpected json token: %d", tok);
 	}
 
 	PG_RETURN_TEXT_P(cstring_to_text(type));

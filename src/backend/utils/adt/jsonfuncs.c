@@ -106,7 +106,7 @@ typedef struct OkeysState
 	int			result_size;
 	int			result_count;
 	int			sent_count;
-}	OkeysState;
+} OkeysState;
 
 /* state for json_get* functions */
 typedef struct GetState
@@ -127,14 +127,14 @@ typedef struct GetState
 	bool	   *pathok;
 	int		   *array_level_index;
 	int		   *path_level_index;
-}	GetState;
+} GetState;
 
 /* state for json_array_length */
 typedef struct AlenState
 {
 	JsonLexContext *lex;
 	int			count;
-}	AlenState;
+} AlenState;
 
 /* state for json_each */
 typedef struct EachState
@@ -147,7 +147,7 @@ typedef struct EachState
 	bool		normalize_results;
 	bool		next_scalar;
 	char	   *normalized_scalar;
-}	EachState;
+} EachState;
 
 /* state for json_array_elements */
 typedef struct ElementsState
@@ -157,7 +157,7 @@ typedef struct ElementsState
 	TupleDesc	ret_tdesc;
 	MemoryContext tmp_cxt;
 	char	   *result_start;
-}	ElementsState;
+} ElementsState;
 
 /* state for get_json_object_as_hash */
 typedef struct JhashState
@@ -168,7 +168,7 @@ typedef struct JhashState
 	char	   *save_json_start;
 	bool		use_json_as_text;
 	char	   *function_name;
-}	JHashState;
+} JHashState;
 
 /* used to build the hashtable */
 typedef struct JsonHashEntry
@@ -177,7 +177,7 @@ typedef struct JsonHashEntry
 	char	   *val;
 	char	   *json;
 	bool		isnull;
-}	JsonHashEntry;
+} JsonHashEntry;
 
 /* these two are stolen from hstore / record_out, used in populate_record* */
 typedef struct ColumnIOData
@@ -209,7 +209,7 @@ typedef struct PopulateRecordsetState
 	HeapTupleHeader rec;
 	RecordIOData *my_extra;
 	MemoryContext fn_mcxt;		/* used to stash IO funcs */
-}	PopulateRecordsetState;
+} PopulateRecordsetState;
 
 /*
  * SQL function json_object-keys
@@ -1239,7 +1239,7 @@ json_populate_record(PG_FUNCTION_ARGS)
 	if (!type_is_rowtype(argtype))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("first argument of json_populate_record must be a row type")));
+		errmsg("first argument of json_populate_record must be a row type")));
 
 	if (PG_ARGISNULL(0))
 	{
@@ -1836,7 +1836,7 @@ populate_recordset_array_element_start(void *state, bool isnull)
 		_state->lex->token_type != JSON_TOKEN_OBJECT_START)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			 errmsg("must call json_populate_recordset on an array of objects")));
+		errmsg("must call json_populate_recordset on an array of objects")));
 }
 
 static void
