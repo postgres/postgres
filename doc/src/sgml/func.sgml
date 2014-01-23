@@ -6570,6 +6570,20 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        <row>
         <entry>
          <indexterm>
+          <primary>date_trunc</primary>
+         </indexterm>
+         <literal><function>date_trunc(<type>text</type>, <type>interval</type>)</function></literal>
+        </entry>
+        <entry><type>interval</type></entry>
+        <entry>Truncate to specified precision; see also <xref linkend="functions-datetime-trunc">
+        </entry>
+        <entry><literal>date_trunc('hour', interval '2 days 3 hours 40 minutes')</literal></entry>
+        <entry><literal>2 days 03:00:00</literal></entry>
+       </row>
+
+       <row>
+        <entry>
+         <indexterm>
           <primary>extract</primary>
          </indexterm>
          <literal><function>extract</function>(<parameter>field</parameter> from
