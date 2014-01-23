@@ -1464,6 +1464,24 @@ char *PQhost(const PGconn *conn);
      </listitem>
     </varlistentry>
 
+    <varlistentry id="libpq-pqhostaddr">
+     <term>
+      <function>PQhostaddr</function>
+      <indexterm>
+       <primary>PQhostaddr</primary>
+      </indexterm>
+     </term>
+
+     <listitem>
+      <para>
+       Returns the server numeric IP address of the connection.
+<synopsis>
+char *PQhostaddr(const PGconn *conn);
+</synopsis>
+      </para>
+     </listitem>
+    </varlistentry>
+
     <varlistentry id="libpq-pqport">
      <term>
       <function>PQport</function>

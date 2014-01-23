@@ -5201,6 +5201,14 @@ PQhost(const PGconn *conn)
 }
 
 char *
+PQhostaddr(const PGconn *conn)
+{
+	if (!conn)
+		return NULL;
+	return conn->pghostaddr;
+}
+
+char *
 PQport(const PGconn *conn)
 {
 	if (!conn)
