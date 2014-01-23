@@ -598,7 +598,10 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 			return false;
 	}
 	else
+	{
 		elog(ERROR, "unknown return code from GIN placeToPage method: %d", rc);
+		return false;		/* keep compiler quiet */
+	}
 }
 
 /*
