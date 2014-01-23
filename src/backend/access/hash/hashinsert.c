@@ -65,9 +65,8 @@ _hash_doinsert(Relation rel, IndexTuple itup)
 	if (itemsz > HashMaxItemSize((Page) metap))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("index row size %lu exceeds hash maximum %lu",
-						(unsigned long) itemsz,
-						(unsigned long) HashMaxItemSize((Page) metap)),
+				 errmsg("index row size %zu exceeds hash maximum %zu",
+						itemsz, HashMaxItemSize((Page) metap)),
 			errhint("Values larger than a buffer page cannot be indexed.")));
 
 	/*

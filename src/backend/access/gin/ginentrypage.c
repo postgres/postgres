@@ -105,9 +105,8 @@ GinFormTuple(GinState *ginstate,
 		if (errorTooBig)
 			ereport(ERROR,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-			errmsg("index row size %lu exceeds maximum %lu for index \"%s\"",
-				   (unsigned long) newsize,
-				   (unsigned long) GinMaxItemSize,
+			errmsg("index row size %zu exceeds maximum %zu for index \"%s\"",
+				   (Size) newsize, (Size) GinMaxItemSize,
 				   RelationGetRelationName(ginstate->index))));
 		pfree(itup);
 		return NULL;

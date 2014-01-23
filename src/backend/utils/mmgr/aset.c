@@ -676,8 +676,7 @@ AllocSetAlloc(MemoryContext context, Size size)
 			ereport(ERROR,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("out of memory"),
-					 errdetail("Failed on request of size %lu.",
-							   (unsigned long) size)));
+					 errdetail("Failed on request of size %zu.", size)));
 		}
 		block->aset = set;
 		block->freeptr = block->endptr = ((char *) block) + blksize;
@@ -871,8 +870,7 @@ AllocSetAlloc(MemoryContext context, Size size)
 			ereport(ERROR,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("out of memory"),
-					 errdetail("Failed on request of size %lu.",
-							   (unsigned long) size)));
+					 errdetail("Failed on request of size %zu.", size)));
 		}
 
 		block->aset = set;
@@ -1114,8 +1112,7 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 			ereport(ERROR,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("out of memory"),
-					 errdetail("Failed on request of size %lu.",
-							   (unsigned long) size)));
+					 errdetail("Failed on request of size %zu.", size)));
 		}
 		block->freeptr = block->endptr = ((char *) block) + blksize;
 
@@ -1245,10 +1242,10 @@ static void
 AllocSetStats(MemoryContext context, int level)
 {
 	AllocSet	set = (AllocSet) context;
-	long		nblocks = 0;
-	long		nchunks = 0;
-	long		totalspace = 0;
-	long		freespace = 0;
+	Size		nblocks = 0;
+	Size		nchunks = 0;
+	Size		totalspace = 0;
+	Size		freespace = 0;
 	AllocBlock	block;
 	AllocChunk	chunk;
 	int			fidx;
@@ -1274,7 +1271,7 @@ AllocSetStats(MemoryContext context, int level)
 		fprintf(stderr, "  ");
 
 	fprintf(stderr,
-			"%s: %lu total in %ld blocks; %lu free (%ld chunks); %lu used\n",
+			"%s: %zu total in %zd blocks; %zu free (%zd chunks); %zu used\n",
 			set->header.name, totalspace, nblocks, freespace, nchunks,
 			totalspace - freespace);
 }
@@ -1338,8 +1335,8 @@ AllocSetCheck(MemoryContext context)
 				elog(WARNING, "problem in alloc set %s: req size > alloc size for chunk %p in block %p",
 					 name, chunk, block);
 			if (chsize < (1 << ALLOC_MINBITS))
-				elog(WARNING, "problem in alloc set %s: bad size %lu for chunk %p in block %p",
-					 name, (unsigned long) chsize, chunk, block);
+				elog(WARNING, "problem in alloc set %s: bad size %zu for chunk %p in block %p",
+					 name, chsize, chunk, block);
 
 			/* single-chunk block? */
 			if (chsize > set->allocChunkLimit &&

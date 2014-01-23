@@ -2738,9 +2738,9 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible)
 					ereport(PANIC,
 							(errcode_for_file_access(),
 							 errmsg("could not write to log file %s "
-									"at offset %u, length %lu: %m",
+									"at offset %u, length %zu: %m",
 									XLogFileNameP(ThisTimeLineID, openLogSegNo),
-									openLogOff, (unsigned long) nbytes)));
+									openLogOff, nbytes)));
 				}
 				nleft -= written;
 				from += written;

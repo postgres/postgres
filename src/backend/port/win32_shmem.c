@@ -166,8 +166,8 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 		if (!hmap)
 			ereport(FATAL,
 					(errmsg("could not create shared memory segment: error code %lu", GetLastError()),
-					 errdetail("Failed system call was CreateFileMapping(size=%lu, name=%s).",
-							   (unsigned long) size, szShareMem)));
+					 errdetail("Failed system call was CreateFileMapping(size=%zu, name=%s).",
+							   size, szShareMem)));
 
 		/*
 		 * If the segment already existed, CreateFileMapping() will return a

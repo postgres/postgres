@@ -165,9 +165,8 @@ index_form_tuple(TupleDesc tupleDescriptor,
 	if ((size & INDEX_SIZE_MASK) != size)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("index row requires %lu bytes, maximum size is %lu",
-						(unsigned long) size,
-						(unsigned long) INDEX_SIZE_MASK)));
+				 errmsg("index row requires %zu bytes, maximum size is %zu",
+						size, (Size) INDEX_SIZE_MASK)));
 
 	infomask |= size;
 

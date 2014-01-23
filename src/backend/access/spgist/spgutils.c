@@ -602,9 +602,8 @@ spgFormNodeTuple(SpGistState *state, Datum label, bool isnull)
 	if ((size & INDEX_SIZE_MASK) != size)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("index row requires %lu bytes, maximum size is %lu",
-						(unsigned long) size,
-						(unsigned long) INDEX_SIZE_MASK)));
+				 errmsg("index row requires %zu bytes, maximum size is %zu",
+						(Size) size, (Size) INDEX_SIZE_MASK)));
 
 	tup = (SpGistNodeTuple) palloc0(size);
 
@@ -661,9 +660,9 @@ spgFormInnerTuple(SpGistState *state, bool hasPrefix, Datum prefix,
 	if (size > SPGIST_PAGE_CAPACITY - sizeof(ItemIdData))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("SP-GiST inner tuple size %lu exceeds maximum %lu",
-						(unsigned long) size,
-				(unsigned long) (SPGIST_PAGE_CAPACITY - sizeof(ItemIdData))),
+				 errmsg("SP-GiST inner tuple size %zu exceeds maximum %zu",
+						(Size) size,
+						SPGIST_PAGE_CAPACITY - sizeof(ItemIdData)),
 			errhint("Values larger than a buffer page cannot be indexed.")));
 
 	/*

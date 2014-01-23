@@ -359,8 +359,8 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 				ereport(ERROR,
 						(errcode(ERRCODE_OUT_OF_MEMORY),
 						 errmsg("not enough shared memory for data structure"
-								" \"%s\" (%lu bytes requested)",
-								name, (unsigned long) size)));
+								" \"%s\" (%zu bytes requested)",
+								name, size)));
 			shmemseghdr->index = structPtr;
 			*foundPtr = FALSE;
 		}
@@ -393,10 +393,8 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 			LWLockRelease(ShmemIndexLock);
 			ereport(ERROR,
 				  (errmsg("ShmemIndex entry size is wrong for data structure"
-						  " \"%s\": expected %lu, actual %lu",
-						  name,
-						  (unsigned long) size,
-						  (unsigned long) result->size)));
+						  " \"%s\": expected %zu, actual %zu",
+						  name, size, result->size)));
 		}
 		structPtr = result->location;
 	}
@@ -412,8 +410,8 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 			ereport(ERROR,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("not enough shared memory for data structure"
-							" \"%s\" (%lu bytes requested)",
-							name, (unsigned long) size)));
+							" \"%s\" (%zu bytes requested)",
+							name, size)));
 		}
 		result->size = size;
 		result->location = structPtr;

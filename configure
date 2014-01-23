@@ -12698,13 +12698,13 @@ fi
 # Force use of our snprintf if system's doesn't do arg control
 # See comment above at snprintf test for details.
 if test "$enable_nls" = yes -a "$pgac_need_repl_snprintf" = no; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether printf supports argument control" >&5
-$as_echo_n "checking whether printf supports argument control... " >&6; }
-if ${pgac_cv_printf_arg_control+:} false; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether snprintf supports argument control" >&5
+$as_echo_n "checking whether snprintf supports argument control... " >&6; }
+if ${pgac_cv_snprintf_arg_control+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   if test "$cross_compiling" = yes; then :
-  pgac_cv_printf_arg_control=cross
+  pgac_cv_snprintf_arg_control=cross
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -12723,9 +12723,9 @@ int main()
 }
 _ACEOF
 if ac_fn_c_try_run "$LINENO"; then :
-  pgac_cv_printf_arg_control=yes
+  pgac_cv_snprintf_arg_control=yes
 else
-  pgac_cv_printf_arg_control=no
+  pgac_cv_snprintf_arg_control=no
 fi
 rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
   conftest.$ac_objext conftest.beam conftest.$ac_ext
@@ -12733,10 +12733,10 @@ fi
 
 
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_printf_arg_control" >&5
-$as_echo "$pgac_cv_printf_arg_control" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_snprintf_arg_control" >&5
+$as_echo "$pgac_cv_snprintf_arg_control" >&6; }
 
-  if test $pgac_cv_printf_arg_control != yes ; then
+  if test $pgac_cv_snprintf_arg_control != yes ; then
     pgac_need_repl_snprintf=yes
   fi
 fi
@@ -13035,6 +13035,58 @@ cat >>confdefs.h <<_ACEOF
 #define UINT64_FORMAT $UINT64_FORMAT
 _ACEOF
 
+
+# Also force use of our snprintf if the system's doesn't support the %z flag.
+if test "$pgac_need_repl_snprintf" = no; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether snprintf supports the %z modifier" >&5
+$as_echo_n "checking whether snprintf supports the %z modifier... " >&6; }
+if ${pgac_cv_snprintf_size_t_support+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test "$cross_compiling" = yes; then :
+  pgac_cv_snprintf_size_t_support=cross
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <stdio.h>
+#include <string.h>
+
+int main()
+{
+  char bufz[100];
+  char buf64[100];
+
+  /*
+   * Print the largest unsigned number fitting in a size_t using both %zu
+   * and the previously-determined format for 64-bit integers.  Note that
+   * we don't run this code unless we know snprintf handles 64-bit ints.
+   */
+  bufz[0] = '\0';  /* in case snprintf fails to emit anything */
+  snprintf(bufz, sizeof(bufz), "%zu", ~((size_t) 0));
+  snprintf(buf64, sizeof(buf64), UINT64_FORMAT, (PG_INT64_TYPE) ~((size_t) 0));
+  if (strcmp(bufz, buf64) != 0)
+    return 1;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  pgac_cv_snprintf_size_t_support=yes
+else
+  pgac_cv_snprintf_size_t_support=no
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_snprintf_size_t_support" >&5
+$as_echo "$pgac_cv_snprintf_size_t_support" >&6; }
+
+  if test "$pgac_cv_snprintf_size_t_support" != yes; then
+    pgac_need_repl_snprintf=yes
+  fi
+fi
 
 # Now we have checked all the reasons to replace snprintf
 if test $pgac_need_repl_snprintf = yes; then

@@ -1885,9 +1885,9 @@ spgdoinsert(Relation index, SpGistState *state,
 	if (leafSize > SPGIST_PAGE_CAPACITY && !state->config.longValuesOK)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-			errmsg("index row size %lu exceeds maximum %lu for index \"%s\"",
-				   (unsigned long) (leafSize - sizeof(ItemIdData)),
-				 (unsigned long) (SPGIST_PAGE_CAPACITY - sizeof(ItemIdData)),
+			errmsg("index row size %zu exceeds maximum %zu for index \"%s\"",
+				   leafSize - sizeof(ItemIdData),
+				   SPGIST_PAGE_CAPACITY - sizeof(ItemIdData),
 				   RelationGetRelationName(index)),
 			errhint("Values larger than a buffer page cannot be indexed.")));
 

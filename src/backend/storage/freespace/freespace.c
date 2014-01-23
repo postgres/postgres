@@ -379,8 +379,7 @@ fsm_space_needed_to_cat(Size needed)
 
 	/* Can't ask for more space than the highest category represents */
 	if (needed > MaxFSMRequestSize)
-		elog(ERROR, "invalid FSM request size %lu",
-			 (unsigned long) needed);
+		elog(ERROR, "invalid FSM request size %zu", needed);
 
 	if (needed == 0)
 		return 1;

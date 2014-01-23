@@ -1533,8 +1533,8 @@ for the exact reason.]])],
 # Force use of our snprintf if system's doesn't do arg control
 # See comment above at snprintf test for details.
 if test "$enable_nls" = yes -a "$pgac_need_repl_snprintf" = no; then
-  PGAC_FUNC_PRINTF_ARG_CONTROL
-  if test $pgac_cv_printf_arg_control != yes ; then
+  PGAC_FUNC_SNPRINTF_ARG_CONTROL
+  if test $pgac_cv_snprintf_arg_control != yes ; then
     pgac_need_repl_snprintf=yes
   fi
 fi
@@ -1616,6 +1616,14 @@ AC_DEFINE_UNQUOTED(INT64_FORMAT, $INT64_FORMAT,
 
 AC_DEFINE_UNQUOTED(UINT64_FORMAT, $UINT64_FORMAT,
                    [Define to the appropriate snprintf format for unsigned 64-bit ints.])
+
+# Also force use of our snprintf if the system's doesn't support the %z flag.
+if test "$pgac_need_repl_snprintf" = no; then
+  PGAC_FUNC_SNPRINTF_SIZE_T_SUPPORT
+  if test "$pgac_cv_snprintf_size_t_support" != yes; then
+    pgac_need_repl_snprintf=yes
+  fi
+fi
 
 # Now we have checked all the reasons to replace snprintf
 if test $pgac_need_repl_snprintf = yes; then

@@ -142,8 +142,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		/* might as well round it off to a multiple of a typical page size */
 		size = add_size(size, 8192 - (size % 8192));
 
-		elog(DEBUG3, "invoking IpcMemoryCreate(size=%lu)",
-			 (unsigned long) size);
+		elog(DEBUG3, "invoking IpcMemoryCreate(size=%zu)", size);
 
 		/*
 		 * Create the shmem segment
