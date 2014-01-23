@@ -39,11 +39,11 @@ my $vcver = Mkvcbuild::mkvcbuild($config);
 
 my $bconf     = $ENV{CONFIG} || "Release";
 my $buildwhat = $ARGV[1]     || "";
-if ($ARGV[0] eq 'DEBUG')
+if (uc($ARGV[0]) eq 'DEBUG')
 {
 	$bconf = "Debug";
 }
-elsif ($ARGV[0] ne "RELEASE")
+elsif (uc($ARGV[0]) ne "RELEASE")
 {
 	$buildwhat = $ARGV[0] || "";
 }
