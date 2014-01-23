@@ -450,7 +450,7 @@ static void getRelationIdentity(StringInfo buffer, Oid relid);
  * sub-object is looked up, the parent object will be locked instead.
  *
  * If the object is a relation or a child object of a relation (e.g. an
- * attribute or contraint), the relation is also opened and *relp receives
+ * attribute or constraint), the relation is also opened and *relp receives
  * the open relcache entry pointer; otherwise, *relp is set to NULL.  This
  * is a bit grotty but it makes life simpler, since the caller will
  * typically need the relcache entry too.  Caller must close the relcache
@@ -458,9 +458,20 @@ static void getRelationIdentity(StringInfo buffer, Oid relid);
  * if the target object is the relation itself or an attribute, but for other
  * child objects, only AccessShareLock is acquired on the relation.
  *
+ * If the object is not found, an error is thrown, unless missing_ok is
+ * true.  In this case, no lock is acquired, relp is set to NULL, and the
+ * returned address has objectId set to InvalidOid.
+ *
  * We don't currently provide a function to release the locks acquired here;
  * typically, the lock must be held until commit to guard against a concurrent
  * drop operation.
+ *
+ * Note: If the object is not found, we don't give any indication of the
+ * reason.	(It might have been a missing schema if the name was qualified, or
+ * an inexistant type name in case of a cast, function or operator; etc).
+ * Currently there is only one caller that might be interested in such info, so
+ * we don't spend much effort here.  If more callers start to care, it might be
+ * better to add some support for that in this function.
  */
 ObjectAddress
 get_object_address(ObjectType objtype, List *objname, List *objargs,
@@ -580,9 +591,11 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 				{
 					TypeName   *sourcetype = (TypeName *) linitial(objname);
 					TypeName   *targettype = (TypeName *) linitial(objargs);
-					Oid			sourcetypeid = typenameTypeId(NULL, sourcetype);
-					Oid			targettypeid = typenameTypeId(NULL, targettype);
+					Oid			sourcetypeid;
+					Oid			targettypeid;
 
+					sourcetypeid = LookupTypeNameOid(NULL, sourcetype, missing_ok);
+					targettypeid = LookupTypeNameOid(NULL, targettype, missing_ok);
 					address.classId = CastRelationId;
 					address.objectId =
 						get_cast_oid(sourcetypeid, targettypeid, missing_ok);
@@ -942,26 +955,31 @@ get_object_address_relobject(ObjectType objtype, List *objname,
 
 		/* Extract relation name and open relation. */
 		relname = list_truncate(list_copy(objname), nnames - 1);
-		relation = heap_openrv(makeRangeVarFromNameList(relname),
-							   AccessShareLock);
-		reloid = RelationGetRelid(relation);
+		relation = heap_openrv_extended(makeRangeVarFromNameList(relname),
+										AccessShareLock,
+										missing_ok);
+
+		reloid = relation ? RelationGetRelid(relation) : InvalidOid;
 
 		switch (objtype)
 		{
 			case OBJECT_RULE:
 				address.classId = RewriteRelationId;
-				address.objectId = get_rewrite_oid(reloid, depname, missing_ok);
+				address.objectId = relation ?
+					get_rewrite_oid(reloid, depname, missing_ok) : InvalidOid;
 				address.objectSubId = 0;
 				break;
 			case OBJECT_TRIGGER:
 				address.classId = TriggerRelationId;
-				address.objectId = get_trigger_oid(reloid, depname, missing_ok);
+				address.objectId = relation ?
+					get_trigger_oid(reloid, depname, missing_ok) : InvalidOid;
 				address.objectSubId = 0;
 				break;
 			case OBJECT_CONSTRAINT:
 				address.classId = ConstraintRelationId;
-				address.objectId =
-					get_relation_constraint_oid(reloid, depname, missing_ok);
+				address.objectId = relation ?
+					get_relation_constraint_oid(reloid, depname, missing_ok) :
+					InvalidOid;
 				address.objectSubId = 0;
 				break;
 			default:
@@ -975,7 +993,9 @@ get_object_address_relobject(ObjectType objtype, List *objname,
 		/* Avoid relcache leak when object not found. */
 		if (!OidIsValid(address.objectId))
 		{
-			heap_close(relation, AccessShareLock);
+			if (relation != NULL)
+				heap_close(relation, AccessShareLock);
+
 			relation = NULL;	/* department of accident prevention */
 			return address;
 		}
@@ -1008,6 +1028,7 @@ get_object_address_attribute(ObjectType objtype, List *objname,
 				 errmsg("column name must be qualified")));
 	attname = strVal(lfirst(list_tail(objname)));
 	relname = list_truncate(list_copy(objname), list_length(objname) - 1);
+	/* XXX no missing_ok support here */
 	relation = relation_openrv(makeRangeVarFromNameList(relname), lockmode);
 	reloid = RelationGetRelid(relation);
 
@@ -1053,7 +1074,7 @@ get_object_address_type(ObjectType objtype,
 	address.objectId = InvalidOid;
 	address.objectSubId = 0;
 
-	tup = LookupTypeName(NULL, typename, NULL);
+	tup = LookupTypeName(NULL, typename, NULL, missing_ok);
 	if (!HeapTupleIsValid(tup))
 	{
 		if (!missing_ok)
@@ -1090,6 +1111,7 @@ get_object_address_opcf(ObjectType objtype,
 	ObjectAddress address;
 
 	Assert(list_length(objargs) == 1);
+	/* XXX no missing_ok support here */
 	amoid = get_am_oid(strVal(linitial(objargs)), false);
 
 	switch (objtype)

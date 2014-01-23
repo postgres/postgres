@@ -280,7 +280,7 @@ SELECT * FROM dropped_objects WHERE schema IS NULL OR schema <> 'pg_toast';
 (23 rows)
 
 DROP OWNED BY regression_bob;
-NOTICE:  table "audit_tbls_schema_one_table_two" does not exist, skipping
+NOTICE:  schema "audit_tbls" does not exist, skipping
 CONTEXT:  SQL statement "DROP TABLE IF EXISTS audit_tbls.audit_tbls_schema_one_table_two"
 PL/pgSQL function test_evtrig_dropped_objects() line 8 at EXECUTE statement
 SELECT * FROM dropped_objects WHERE type = 'schema';

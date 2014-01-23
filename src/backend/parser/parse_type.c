@@ -56,7 +56,7 @@ static int32 typenameTypeMod(ParseState *pstate, const TypeName *typeName,
  */
 Type
 LookupTypeName(ParseState *pstate, const TypeName *typeName,
-			   int32 *typmod_p)
+			   int32 *typmod_p, bool missing_ok)
 {
 	Oid			typoid;
 	HeapTuple	tup;
@@ -116,24 +116,32 @@ LookupTypeName(ParseState *pstate, const TypeName *typeName,
 		 * concurrent DDL.	But taking a lock would carry a performance
 		 * penalty and would also require a permissions check.
 		 */
-		relid = RangeVarGetRelid(rel, NoLock, false);
+		relid = RangeVarGetRelid(rel, NoLock, missing_ok);
 		attnum = get_attnum(relid, field);
 		if (attnum == InvalidAttrNumber)
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_COLUMN),
-					 errmsg("column \"%s\" of relation \"%s\" does not exist",
-							field, rel->relname),
-					 parser_errposition(pstate, typeName->location)));
-		typoid = get_atttype(relid, attnum);
+		{
+			if (missing_ok)
+				typoid = InvalidOid;
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+					errmsg("column \"%s\" of relation \"%s\" does not exist",
+						   field, rel->relname),
+						 parser_errposition(pstate, typeName->location)));
+		}
+		else
+		{
+			typoid = get_atttype(relid, attnum);
 
-		/* this construct should never have an array indicator */
-		Assert(typeName->arrayBounds == NIL);
+			/* this construct should never have an array indicator */
+			Assert(typeName->arrayBounds == NIL);
 
-		/* emit nuisance notice (intentionally not errposition'd) */
-		ereport(NOTICE,
-				(errmsg("type reference %s converted to %s",
-						TypeNameToString(typeName),
-						format_type_be(typoid))));
+			/* emit nuisance notice (intentionally not errposition'd) */
+			ereport(NOTICE,
+					(errmsg("type reference %s converted to %s",
+							TypeNameToString(typeName),
+							format_type_be(typoid))));
+		}
 	}
 	else
 	{
@@ -149,10 +157,13 @@ LookupTypeName(ParseState *pstate, const TypeName *typeName,
 			/* Look in specific schema only */
 			Oid			namespaceId;
 
-			namespaceId = LookupExplicitNamespace(schemaname, false);
-			typoid = GetSysCacheOid2(TYPENAMENSP,
-									 PointerGetDatum(typname),
-									 ObjectIdGetDatum(namespaceId));
+			namespaceId = LookupExplicitNamespace(schemaname, missing_ok);
+			if (OidIsValid(namespaceId))
+				typoid = GetSysCacheOid2(TYPENAMENSP,
+										 PointerGetDatum(typname),
+										 ObjectIdGetDatum(namespaceId));
+			else
+				typoid = InvalidOid;
 		}
 		else
 		{
@@ -185,6 +196,43 @@ LookupTypeName(ParseState *pstate, const TypeName *typeName,
 }
 
 /*
+ * LookupTypeNameOid
+ *		Given a TypeName object, lookup the pg_type syscache entry of the type.
+ *		Returns InvalidOid if no such type can be found.  If the type is found,
+ *		return its Oid.
+ *
+ * NB: direct callers of this function need to be aware that the type OID
+ * returned may correspond to a shell type.  Most code should go through
+ * typenameTypeId instead.
+ *
+ * pstate is only used for error location info, and may be NULL.
+ */
+Oid
+LookupTypeNameOid(ParseState *pstate, const TypeName *typeName, bool missing_ok)
+{
+	Oid			typoid;
+	Type		tup;
+
+	tup = LookupTypeName(pstate, typeName, NULL, missing_ok);
+	if (tup == NULL)
+	{
+		if (!missing_ok)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("type \"%s\" does not exist",
+							TypeNameToString(typeName)),
+					 parser_errposition(pstate, typeName->location)));
+
+		return InvalidOid;
+	}
+
+	typoid = HeapTupleGetOid(tup);
+	ReleaseSysCache(tup);
+
+	return typoid;
+}
+
+/*
  * typenameType - given a TypeName, return a Type structure and typmod
  *
  * This is equivalent to LookupTypeName, except that this will report
@@ -196,7 +244,7 @@ typenameType(ParseState *pstate, const TypeName *typeName, int32 *typmod_p)
 {
 	Type		tup;
 
-	tup = LookupTypeName(pstate, typeName, typmod_p);
+	tup = LookupTypeName(pstate, typeName, typmod_p, false);
 	if (tup == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),

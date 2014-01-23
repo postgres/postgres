@@ -3246,7 +3246,7 @@ AlterTypeOwner(List *names, Oid newOwnerId, ObjectType objecttype)
 	typename = makeTypeNameFromNameList(names);
 
 	/* Use LookupTypeName here so that shell types can be processed */
-	tup = LookupTypeName(NULL, typename, NULL);
+	tup = LookupTypeName(NULL, typename, NULL, false);
 	if (tup == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),

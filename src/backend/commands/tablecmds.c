@@ -690,9 +690,27 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
  * non-existent relation
  */
 static void
-DropErrorMsgNonExistent(const char *relname, char rightkind, bool missing_ok)
+DropErrorMsgNonExistent(RangeVar *rel, char rightkind, bool missing_ok)
 {
 	const struct dropmsgstrings *rentry;
+
+	if (rel->schemaname != NULL &&
+		!OidIsValid(LookupNamespaceNoError(rel->schemaname)))
+	{
+		if (!missing_ok)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_SCHEMA),
+					 errmsg("schema \"%s\" does not exist", rel->schemaname)));
+		}
+		else
+		{
+			ereport(NOTICE,
+					(errmsg("schema \"%s\" does not exist, skipping",
+							rel->schemaname)));
+		}
+		return;
+	}
 
 	for (rentry = dropmsgstringarray; rentry->kind != '\0'; rentry++)
 	{
@@ -702,11 +720,11 @@ DropErrorMsgNonExistent(const char *relname, char rightkind, bool missing_ok)
 			{
 				ereport(ERROR,
 						(errcode(rentry->nonexistent_code),
-						 errmsg(rentry->nonexistent_msg, relname)));
+						 errmsg(rentry->nonexistent_msg, rel->relname)));
 			}
 			else
 			{
-				ereport(NOTICE, (errmsg(rentry->skipping_msg, relname)));
+				ereport(NOTICE, (errmsg(rentry->skipping_msg, rel->relname)));
 				break;
 			}
 		}
@@ -845,7 +863,7 @@ RemoveRelations(DropStmt *drop)
 		/* Not there? */
 		if (!OidIsValid(relOid))
 		{
-			DropErrorMsgNonExistent(rel->relname, relkind, drop->missing_ok);
+			DropErrorMsgNonExistent(rel, relkind, drop->missing_ok);
 			continue;
 		}
 

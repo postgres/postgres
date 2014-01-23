@@ -12,7 +12,6 @@
  *
  *-------------------------------------------------------------------------
  */
-
 #include "postgres.h"
 
 #include "access/heapam.h"
@@ -29,8 +28,16 @@
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 
+
 static void does_not_exist_skipping(ObjectType objtype,
 						List *objname, List *objargs);
+static bool owningrel_does_not_exist_skipping(List *objname,
+								  const char **msg, char **name);
+static bool schema_does_not_exist_skipping(List *objname,
+							   const char **msg, char **name);
+static bool type_in_list_does_not_exist_skipping(List *typenames,
+									 const char **msg, char **name);
+
 
 /*
  * Drop one or more objects.
@@ -73,9 +80,14 @@ RemoveObjects(DropStmt *stmt)
 									 AccessExclusiveLock,
 									 stmt->missing_ok);
 
-		/* Issue NOTICE if supplied object was not found. */
+		/*
+		 * Issue NOTICE if supplied object was not found.  Note this is only
+		 * relevant in the missing_ok case, because otherwise
+		 * get_object_address would have thrown an error.
+		 */
 		if (!OidIsValid(address.objectId))
 		{
+			Assert(stmt->missing_ok);
 			does_not_exist_skipping(stmt->removeType, objname, objargs);
 			continue;
 		}
@@ -125,9 +137,121 @@ RemoveObjects(DropStmt *stmt)
 }
 
 /*
+ * owningrel_does_not_exist_skipping
+ *		Subroutine for RemoveObjects
+ *
+ * After determining that a specification for a rule or trigger returns that
+ * the specified object does not exist, test whether its owning relation, and
+ * its schema, exist or not; if they do, return false --- the trigger or rule
+ * itself is missing instead.  If the owning relation or its schema do not
+ * exist, fill the error message format string and name, and return true.
+ */
+static bool
+owningrel_does_not_exist_skipping(List *objname, const char **msg, char **name)
+{
+	List	   *parent_objname;
+	RangeVar   *parent_rel;
+
+	parent_objname = list_truncate(list_copy(objname),
+								   list_length(objname) - 1);
+
+	if (schema_does_not_exist_skipping(parent_objname, msg, name))
+		return true;
+
+	parent_rel = makeRangeVarFromNameList(parent_objname);
+
+	if (!OidIsValid(RangeVarGetRelid(parent_rel, NoLock, true)))
+	{
+		*msg = gettext_noop("relation \"%s\" does not exist, skipping");
+		*name = NameListToString(parent_objname);
+
+		return true;
+	}
+
+	return false;
+}
+
+/*
+ * schema_does_not_exist_skipping
+ *		Subroutine for RemoveObjects
+ *
+ * After determining that a specification for a schema-qualifiable object
+ * refers to an object that does not exist, test whether the specified schema
+ * exists or not.  If no schema was specified, or if the schema does exist,
+ * return false -- the object itself is missing instead.  If the specified
+ * schema does not exist, fill the error message format string and the
+ * specified schema name, and return true.
+ */
+static bool
+schema_does_not_exist_skipping(List *objname, const char **msg, char **name)
+{
+	RangeVar   *rel;
+
+	rel = makeRangeVarFromNameList(objname);
+
+	if (rel->schemaname != NULL &&
+		!OidIsValid(LookupNamespaceNoError(rel->schemaname)))
+	{
+		*msg = gettext_noop("schema \"%s\" does not exist, skipping");
+		*name = rel->schemaname;
+
+		return true;
+	}
+
+	return false;
+}
+
+/*
+ * type_in_list_does_not_exist_skipping
+ *		Subroutine for RemoveObjects
+ *
+ * After determining that a specification for a function, cast, aggregate or
+ * operator returns that the specified object does not exist, test whether the
+ * involved datatypes, and their schemas, exist or not; if they do, return
+ * false --- the original object itself is missing instead.  If the datatypes
+ * or schemas do not exist, fill the error message format string and the
+ * missing name, and return true.
+ *
+ * First parameter is a list of TypeNames.
+ */
+static bool
+type_in_list_does_not_exist_skipping(List *typenames, const char **msg,
+									 char **name)
+{
+	ListCell   *l;
+
+	foreach(l, typenames)
+	{
+		TypeName   *typeName = (TypeName *) lfirst(l);
+
+		if (typeName != NULL)
+		{
+			Assert(IsA(typeName, TypeName));
+
+			if (!OidIsValid(LookupTypeNameOid(NULL, typeName, true)))
+			{
+				/* type doesn't exist, try to find why */
+				if (schema_does_not_exist_skipping(typeName->names, msg, name))
+					return true;
+
+				*msg = gettext_noop("type \"%s\" does not exist, skipping");
+				*name = TypeNameToString(typeName);
+
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+/*
+ * does_not_exist_skipping
+ *		Subroutine for RemoveObjects
+ *
  * Generate a NOTICE stating that the named object was not found, and is
  * being skipped.  This is only relevant when "IF EXISTS" is used; otherwise,
- * get_object_address() will throw an ERROR.
+ * get_object_address() in RemoveObjects would have thrown an ERROR.
  */
 static void
 does_not_exist_skipping(ObjectType objtype, List *objname, List *objargs)
@@ -140,81 +264,125 @@ does_not_exist_skipping(ObjectType objtype, List *objname, List *objargs)
 	{
 		case OBJECT_TYPE:
 		case OBJECT_DOMAIN:
-			msg = gettext_noop("type \"%s\" does not exist, skipping");
-			name = TypeNameToString(makeTypeNameFromNameList(objname));
+			if (!schema_does_not_exist_skipping(objname, &msg, &name))
+			{
+				msg = gettext_noop("type \"%s\" does not exist, skipping");
+				name = TypeNameToString(makeTypeNameFromNameList(objname));
+			}
 			break;
 		case OBJECT_COLLATION:
-			msg = gettext_noop("collation \"%s\" does not exist, skipping");
-			name = NameListToString(objname);
+			if (!schema_does_not_exist_skipping(objname, &msg, &name))
+			{
+				msg = gettext_noop("collation \"%s\" does not exist, skipping");
+				name = NameListToString(objname);
+			}
 			break;
 		case OBJECT_CONVERSION:
-			msg = gettext_noop("conversion \"%s\" does not exist, skipping");
-			name = NameListToString(objname);
+			if (!schema_does_not_exist_skipping(objname, &msg, &name))
+			{
+				msg = gettext_noop("conversion \"%s\" does not exist, skipping");
+				name = NameListToString(objname);
+			}
 			break;
 		case OBJECT_SCHEMA:
 			msg = gettext_noop("schema \"%s\" does not exist, skipping");
 			name = NameListToString(objname);
 			break;
 		case OBJECT_TSPARSER:
-			msg = gettext_noop("text search parser \"%s\" does not exist, skipping");
-			name = NameListToString(objname);
+			if (!schema_does_not_exist_skipping(objname, &msg, &name))
+			{
+				msg = gettext_noop("text search parser \"%s\" does not exist, skipping");
+				name = NameListToString(objname);
+			}
 			break;
 		case OBJECT_TSDICTIONARY:
-			msg = gettext_noop("text search dictionary \"%s\" does not exist, skipping");
-			name = NameListToString(objname);
+			if (!schema_does_not_exist_skipping(objname, &msg, &name))
+			{
+				msg = gettext_noop("text search dictionary \"%s\" does not exist, skipping");
+				name = NameListToString(objname);
+			}
 			break;
 		case OBJECT_TSTEMPLATE:
-			msg = gettext_noop("text search template \"%s\" does not exist, skipping");
-			name = NameListToString(objname);
+			if (!schema_does_not_exist_skipping(objname, &msg, &name))
+			{
+				msg = gettext_noop("text search template \"%s\" does not exist, skipping");
+				name = NameListToString(objname);
+			}
 			break;
 		case OBJECT_TSCONFIGURATION:
-			msg = gettext_noop("text search configuration \"%s\" does not exist, skipping");
-			name = NameListToString(objname);
+			if (!schema_does_not_exist_skipping(objname, &msg, &name))
+			{
+				msg = gettext_noop("text search configuration \"%s\" does not exist, skipping");
+				name = NameListToString(objname);
+			}
 			break;
 		case OBJECT_EXTENSION:
 			msg = gettext_noop("extension \"%s\" does not exist, skipping");
 			name = NameListToString(objname);
 			break;
 		case OBJECT_FUNCTION:
-			msg = gettext_noop("function %s(%s) does not exist, skipping");
-			name = NameListToString(objname);
-			args = TypeNameListToString(objargs);
+			if (!schema_does_not_exist_skipping(objname, &msg, &name) &&
+				!type_in_list_does_not_exist_skipping(objargs, &msg, &name))
+			{
+				msg = gettext_noop("function %s(%s) does not exist, skipping");
+				name = NameListToString(objname);
+				args = TypeNameListToString(objargs);
+			}
 			break;
 		case OBJECT_AGGREGATE:
-			msg = gettext_noop("aggregate %s(%s) does not exist, skipping");
-			name = NameListToString(objname);
-			args = TypeNameListToString(objargs);
+			if (!schema_does_not_exist_skipping(objname, &msg, &name) &&
+				!type_in_list_does_not_exist_skipping(objargs, &msg, &name))
+			{
+				msg = gettext_noop("aggregate %s(%s) does not exist, skipping");
+				name = NameListToString(objname);
+				args = TypeNameListToString(objargs);
+			}
 			break;
 		case OBJECT_OPERATOR:
-			msg = gettext_noop("operator %s does not exist, skipping");
-			name = NameListToString(objname);
+			if (!schema_does_not_exist_skipping(objname, &msg, &name) &&
+				!type_in_list_does_not_exist_skipping(objargs, &msg, &name))
+			{
+				msg = gettext_noop("operator %s does not exist, skipping");
+				name = NameListToString(objname);
+			}
 			break;
 		case OBJECT_LANGUAGE:
 			msg = gettext_noop("language \"%s\" does not exist, skipping");
 			name = NameListToString(objname);
 			break;
 		case OBJECT_CAST:
-			msg = gettext_noop("cast from type %s to type %s does not exist, skipping");
-			name = format_type_be(typenameTypeId(NULL,
-											(TypeName *) linitial(objname)));
-			args = format_type_be(typenameTypeId(NULL,
-											(TypeName *) linitial(objargs)));
+			{
+				if (!type_in_list_does_not_exist_skipping(objname, &msg, &name) &&
+				 !type_in_list_does_not_exist_skipping(objargs, &msg, &name))
+				{
+					/* XXX quote or no quote? */
+					msg = gettext_noop("cast from type %s to type %s does not exist, skipping");
+					name = TypeNameToString((TypeName *) linitial(objname));
+					args = TypeNameToString((TypeName *) linitial(objargs));
+				}
+			}
 			break;
 		case OBJECT_TRIGGER:
-			msg = gettext_noop("trigger \"%s\" for table \"%s\" does not exist, skipping");
-			name = strVal(llast(objname));
-			args = NameListToString(list_truncate(list_copy(objname),
+			if (!owningrel_does_not_exist_skipping(objname, &msg, &name))
+			{
+				msg = gettext_noop("trigger \"%s\" for relation \"%s\" does not exist, skipping");
+				name = strVal(llast(objname));
+				args = NameListToString(list_truncate(list_copy(objname),
 												  list_length(objname) - 1));
+			}
 			break;
 		case OBJECT_EVENT_TRIGGER:
 			msg = gettext_noop("event trigger \"%s\" does not exist, skipping");
 			name = NameListToString(objname);
 			break;
 		case OBJECT_RULE:
-			msg = gettext_noop("rule \"%s\" for relation \"%s\" does not exist, skipping");
-			name = strVal(llast(objname));
-			args = NameListToString(list_truncate(list_copy(objname),
+			if (!owningrel_does_not_exist_skipping(objname, &msg, &name))
+			{
+				msg = gettext_noop("rule \"%s\" for relation \"%s\" does not exist, skipping");
+				name = strVal(llast(objname));
+				args = NameListToString(list_truncate(list_copy(objname),
 												  list_length(objname) - 1));
+			}
 			break;
 		case OBJECT_FDW:
 			msg = gettext_noop("foreign-data wrapper \"%s\" does not exist, skipping");
@@ -225,14 +393,20 @@ does_not_exist_skipping(ObjectType objtype, List *objname, List *objargs)
 			name = NameListToString(objname);
 			break;
 		case OBJECT_OPCLASS:
-			msg = gettext_noop("operator class \"%s\" does not exist for access method \"%s\", skipping");
-			name = NameListToString(objname);
-			args = strVal(linitial(objargs));
+			if (!schema_does_not_exist_skipping(objname, &msg, &name))
+			{
+				msg = gettext_noop("operator class \"%s\" does not exist for access method \"%s\", skipping");
+				name = NameListToString(objname);
+				args = strVal(linitial(objargs));
+			}
 			break;
 		case OBJECT_OPFAMILY:
-			msg = gettext_noop("operator family \"%s\" does not exist for access method \"%s\", skipping");
-			name = NameListToString(objname);
-			args = strVal(linitial(objargs));
+			if (!schema_does_not_exist_skipping(objname, &msg, &name))
+			{
+				msg = gettext_noop("operator family \"%s\" does not exist for access method \"%s\", skipping");
+				name = NameListToString(objname);
+				args = strVal(linitial(objargs));
+			}
 			break;
 		default:
 			elog(ERROR, "unexpected object type (%d)", (int) objtype);

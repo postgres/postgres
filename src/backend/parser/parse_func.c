@@ -1259,7 +1259,8 @@ func_get_detail(List *funcname,
 
 	/* Get list of possible candidates from namespace search */
 	raw_candidates = FuncnameGetCandidates(funcname, nargs, fargnames,
-										   expand_variadic, expand_defaults);
+										   expand_variadic, expand_defaults,
+										   false);
 
 	/*
 	 * Quickly check if there is an exact match to the input datatypes (there
@@ -1714,7 +1715,7 @@ FuncNameAsType(List *funcname)
 	Oid			result;
 	Type		typtup;
 
-	typtup = LookupTypeName(NULL, makeTypeNameFromNameList(funcname), NULL);
+	typtup = LookupTypeName(NULL, makeTypeNameFromNameList(funcname), NULL, false);
 	if (typtup == NULL)
 		return InvalidOid;
 
@@ -1873,7 +1874,7 @@ LookupFuncName(List *funcname, int nargs, const Oid *argtypes, bool noError)
 {
 	FuncCandidateList clist;
 
-	clist = FuncnameGetCandidates(funcname, nargs, NIL, false, false);
+	clist = FuncnameGetCandidates(funcname, nargs, NIL, false, false, noError);
 
 	while (clist)
 	{
@@ -1890,27 +1891,6 @@ LookupFuncName(List *funcname, int nargs, const Oid *argtypes, bool noError)
 											  NIL, argtypes))));
 
 	return InvalidOid;
-}
-
-/*
- * LookupTypeNameOid
- *		Convenience routine to look up a type, silently accepting shell types
- */
-static Oid
-LookupTypeNameOid(const TypeName *typename)
-{
-	Oid			result;
-	Type		typtup;
-
-	typtup = LookupTypeName(NULL, typename, NULL);
-	if (typtup == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("type \"%s\" does not exist",
-						TypeNameToString(typename))));
-	result = typeTypeId(typtup);
-	ReleaseSysCache(typtup);
-	return result;
 }
 
 /*
@@ -1940,7 +1920,7 @@ LookupFuncNameTypeNames(List *funcname, List *argtypes, bool noError)
 	{
 		TypeName   *t = (TypeName *) lfirst(args_item);
 
-		argoids[i] = LookupTypeNameOid(t);
+		argoids[i] = LookupTypeNameOid(NULL, t, noError);
 		args_item = lnext(args_item);
 	}
 
@@ -1980,7 +1960,7 @@ LookupAggNameTypeNames(List *aggname, List *argtypes, bool noError)
 	{
 		TypeName   *t = (TypeName *) lfirst(lc);
 
-		argoids[i] = LookupTypeNameOid(t);
+		argoids[i] = LookupTypeNameOid(NULL, t, noError);
 		i++;
 	}
 

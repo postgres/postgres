@@ -906,10 +906,15 @@ TypeIsVisible(Oid typid)
  * with oid = 0 that represents a set of such conflicting candidates.
  * The caller might end up discarding such an entry anyway, but if it selects
  * such an entry it should react as though the call were ambiguous.
+ *
+ * If missing_ok is true, an empty list (NULL) is returned if the name was
+ * schema- qualified with a schema that does not exist.  Likewise if no
+ * candidate is found for other reasons.
  */
 FuncCandidateList
 FuncnameGetCandidates(List *names, int nargs, List *argnames,
-					  bool expand_variadic, bool expand_defaults)
+					  bool expand_variadic, bool expand_defaults,
+					  bool missing_ok)
 {
 	FuncCandidateList resultList = NULL;
 	bool		any_special = false;
@@ -928,7 +933,9 @@ FuncnameGetCandidates(List *names, int nargs, List *argnames,
 	if (schemaname)
 	{
 		/* use exact schema given */
-		namespaceId = LookupExplicitNamespace(schemaname, false);
+		namespaceId = LookupExplicitNamespace(schemaname, missing_ok);
+		if (!OidIsValid(namespaceId))
+			return NULL;
 	}
 	else
 	{
@@ -1414,7 +1421,7 @@ FunctionIsVisible(Oid funcid)
 		visible = false;
 
 		clist = FuncnameGetCandidates(list_make1(makeString(proname)),
-									  nargs, NIL, false, false);
+									  nargs, NIL, false, false, false);
 
 		for (; clist; clist = clist->next)
 		{
@@ -1443,7 +1450,8 @@ FunctionIsVisible(Oid funcid)
  * a postfix op.
  *
  * If the operator name is not schema-qualified, it is sought in the current
- * namespace search path.
+ * namespace search path.  If the name is schema-qualified and the given
+ * schema does not exist, InvalidOid is returned.
  */
 Oid
 OpernameGetOprid(List *names, Oid oprleft, Oid oprright)
@@ -1460,21 +1468,26 @@ OpernameGetOprid(List *names, Oid oprleft, Oid oprright)
 	{
 		/* search only in exact schema given */
 		Oid			namespaceId;
-		HeapTuple	opertup;
 
-		namespaceId = LookupExplicitNamespace(schemaname, false);
-		opertup = SearchSysCache4(OPERNAMENSP,
-								  CStringGetDatum(opername),
-								  ObjectIdGetDatum(oprleft),
-								  ObjectIdGetDatum(oprright),
-								  ObjectIdGetDatum(namespaceId));
-		if (HeapTupleIsValid(opertup))
+		namespaceId = LookupExplicitNamespace(schemaname, true);
+		if (OidIsValid(namespaceId))
 		{
-			Oid			result = HeapTupleGetOid(opertup);
+			HeapTuple	opertup;
 
-			ReleaseSysCache(opertup);
-			return result;
+			opertup = SearchSysCache4(OPERNAMENSP,
+									  CStringGetDatum(opername),
+									  ObjectIdGetDatum(oprleft),
+									  ObjectIdGetDatum(oprright),
+									  ObjectIdGetDatum(namespaceId));
+			if (HeapTupleIsValid(opertup))
+			{
+				Oid			result = HeapTupleGetOid(opertup);
+
+				ReleaseSysCache(opertup);
+				return result;
+			}
 		}
+
 		return InvalidOid;
 	}
 
@@ -1729,7 +1742,7 @@ OperatorIsVisible(Oid oprid)
 		 * If it is in the path, it might still not be visible; it could be
 		 * hidden by another operator of the same name and arguments earlier
 		 * in the path.  So we must do a slow check to see if this is the same
-		 * operator that would be found by OpernameGetOprId.
+		 * operator that would be found by OpernameGetOprid.
 		 */
 		char	   *oprname = NameStr(oprform->oprname);
 

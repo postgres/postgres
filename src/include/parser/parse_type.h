@@ -20,7 +20,9 @@
 typedef HeapTuple Type;
 
 extern Type LookupTypeName(ParseState *pstate, const TypeName *typeName,
-			   int32 *typmod_p);
+			   int32 *typmod_p, bool missing_ok);
+extern Oid LookupTypeNameOid(ParseState *pstate, const TypeName *typeName,
+				  bool missing_ok);
 extern Type typenameType(ParseState *pstate, const TypeName *typeName,
 			 int32 *typmod_p);
 extern Oid	typenameTypeId(ParseState *pstate, const TypeName *typeName);

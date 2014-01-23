@@ -148,12 +148,12 @@ LookupOperNameTypeNames(ParseState *pstate, List *opername,
 	if (oprleft == NULL)
 		leftoid = InvalidOid;
 	else
-		leftoid = typenameTypeId(pstate, oprleft);
+		leftoid = LookupTypeNameOid(pstate, oprleft, noError);
 
 	if (oprright == NULL)
 		rightoid = InvalidOid;
 	else
-		rightoid = typenameTypeId(pstate, oprright);
+		rightoid = LookupTypeNameOid(pstate, oprright, noError);
 
 	return LookupOperName(pstate, opername, leftoid, rightoid,
 						  noError, location);

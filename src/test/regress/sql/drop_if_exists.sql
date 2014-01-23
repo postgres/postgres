@@ -182,6 +182,9 @@ DROP TRIGGER IF EXISTS test_trigger_exists ON test_exists;
 DROP TRIGGER test_trigger_exists ON no_such_table;
 DROP TRIGGER IF EXISTS test_trigger_exists ON no_such_table;
 
+DROP TRIGGER test_trigger_exists ON no_such_schema.no_such_table;
+DROP TRIGGER IF EXISTS test_trigger_exists ON no_such_schema.no_such_table;
+
 CREATE TRIGGER test_trigger_exists
     BEFORE UPDATE ON test_exists
     FOR EACH ROW EXECUTE PROCEDURE suppress_redundant_updates_trigger();
@@ -193,6 +196,9 @@ DROP RULE IF EXISTS test_rule_exists ON test_exists;
 
 DROP RULE test_rule_exists ON no_such_table;
 DROP RULE IF EXISTS test_rule_exists ON no_such_table;
+
+DROP RULE test_rule_exists ON no_such_schema.no_such_table;
+DROP RULE IF EXISTS test_rule_exists ON no_such_schema.no_such_table;
 
 CREATE RULE test_rule_exists AS ON INSERT TO test_exists
     DO INSTEAD
@@ -226,3 +232,38 @@ DROP OPERATOR FAMILY IF EXISTS test_operator_family USING no_such_am;
 DROP TABLE IF EXISTS test_exists;
 
 DROP TABLE test_exists;
+
+-- be tolerant with missing schemas, types, etc
+
+DROP AGGREGATE IF EXISTS no_such_schema.foo(int);
+DROP AGGREGATE IF EXISTS foo(no_such_type);
+DROP AGGREGATE IF EXISTS foo(no_such_schema.no_such_type);
+DROP CAST IF EXISTS (INTEGER AS no_such_type2);
+DROP CAST IF EXISTS (no_such_type1 AS INTEGER);
+DROP CAST IF EXISTS (INTEGER AS no_such_schema.bar);
+DROP CAST IF EXISTS (no_such_schema.foo AS INTEGER);
+DROP COLLATION IF EXISTS no_such_schema.foo;
+DROP CONVERSION IF EXISTS no_such_schema.foo;
+DROP DOMAIN IF EXISTS no_such_schema.foo;
+DROP FOREIGN TABLE IF EXISTS no_such_schema.foo;
+DROP FUNCTION IF EXISTS no_such_schema.foo();
+DROP FUNCTION IF EXISTS foo(no_such_type);
+DROP FUNCTION IF EXISTS foo(no_such_schema.no_such_type);
+DROP INDEX IF EXISTS no_such_schema.foo;
+DROP MATERIALIZED VIEW IF EXISTS no_such_schema.foo;
+DROP OPERATOR IF EXISTS no_such_schema.+ (int, int);
+DROP OPERATOR IF EXISTS + (no_such_type, no_such_type);
+DROP OPERATOR IF EXISTS + (no_such_schema.no_such_type, no_such_schema.no_such_type);
+DROP OPERATOR IF EXISTS # (NONE, no_such_schema.no_such_type);
+DROP OPERATOR CLASS IF EXISTS no_such_schema.widget_ops USING btree;
+DROP OPERATOR FAMILY IF EXISTS no_such_schema.float_ops USING btree;
+DROP RULE IF EXISTS foo ON no_such_schema.bar;
+DROP SEQUENCE IF EXISTS no_such_schema.foo;
+DROP TABLE IF EXISTS no_such_schema.foo;
+DROP TEXT SEARCH CONFIGURATION IF EXISTS no_such_schema.foo;
+DROP TEXT SEARCH DICTIONARY IF EXISTS no_such_schema.foo;
+DROP TEXT SEARCH PARSER IF EXISTS no_such_schema.foo;
+DROP TEXT SEARCH TEMPLATE IF EXISTS no_such_schema.foo;
+DROP TRIGGER IF EXISTS foo ON no_such_schema.bar;
+DROP TYPE IF EXISTS no_such_schema.foo;
+DROP VIEW IF EXISTS no_such_schema.foo;

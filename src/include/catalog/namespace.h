@@ -71,7 +71,8 @@ extern bool TypeIsVisible(Oid typid);
 extern FuncCandidateList FuncnameGetCandidates(List *names,
 					  int nargs, List *argnames,
 					  bool expand_variadic,
-					  bool expand_defaults);
+					  bool expand_defaults,
+					  bool missing_ok);
 extern bool FunctionIsVisible(Oid funcid);
 
 extern Oid	OpernameGetOprid(List *names, Oid oprleft, Oid oprright);
