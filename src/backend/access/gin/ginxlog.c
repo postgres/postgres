@@ -153,6 +153,7 @@ ginRedoRecompress(Page page, ginxlogRecompressDataLeaf *data)
 	memcpy(segment, data->newdata, data->length - data->unmodifiedsize);
 	GinDataLeafPageSetPostingListSize(page, data->length);
 	GinPageSetCompressed(page);
+	GinPageGetOpaque(page)->maxoff = InvalidOffsetNumber;
 }
 
 static void

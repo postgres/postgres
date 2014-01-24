@@ -817,7 +817,10 @@ dataPlaceToPageLeafRecompress(Buffer buf, disassembledLeaf *leaf,
 	}
 	Assert(newsize <= GinDataLeafMaxContentSize);
 	GinDataLeafPageSetPostingListSize(page, newsize);
-	GinPageSetCompressed(page);	 /* in case it was in pre-9.4 format before */
+
+	/* Reset these in case the page was in pre-9.4 format before */
+	GinPageSetCompressed(page);
+	GinPageGetOpaque(page)->maxoff = InvalidOffsetNumber;
 
 	/* Put WAL data */
 	recompress_xlog.length = (uint16) newsize;
