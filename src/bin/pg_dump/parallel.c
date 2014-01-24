@@ -1288,7 +1288,7 @@ readMessageFromPipe(int fd)
 
 		/* worker has closed the connection or another error happened */
 		if (ret <= 0)
-			return NULL;
+			break;
 
 		Assert(ret == 1);
 
@@ -1303,6 +1303,14 @@ readMessageFromPipe(int fd)
 			msg = (char *) realloc(msg, bufsize);
 		}
 	}
+
+	/*
+	 * Worker has closed the connection, make sure to clean up before return
+	 * since we are not returning msg (but did allocate it).
+	 */
+	free(msg);
+
+	return NULL;
 }
 
 #ifdef WIN32
