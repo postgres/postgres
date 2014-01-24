@@ -6568,12 +6568,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
 
        <row>
-        <entry>
-         <indexterm>
-          <primary>date_trunc</primary>
-         </indexterm>
-         <literal><function>date_trunc(<type>text</type>, <type>interval</type>)</function></literal>
-        </entry>
+        <entry><literal><function>date_trunc(<type>text</type>, <type>interval</type>)</function></literal></entry>
         <entry><type>interval</type></entry>
         <entry>Truncate to specified precision; see also <xref linkend="functions-datetime-trunc">
         </entry>
