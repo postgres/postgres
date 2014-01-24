@@ -753,6 +753,13 @@ ginVacuumPostingTreeLeaf(Relation indexrel, Buffer buffer, GinVacuumState *gvs)
  * *prdata is filled with WAL information about this operation. The caller
  * is responsible for inserting to the WAL, along with any other information
  * about the operation that triggered this recompression.
+ *
+ * NOTE: The segment pointers can point directly to the same buffer, with
+ * the limitation that any earlier segment must not overlap with an original,
+ * later segment. In other words, some segments may point the original buffer
+ * as long as you don't make any segments larger. Currently, leafRepackItems
+ * satisies this rule because it rewrites all segments after the first
+ * modified one, and vacuum can only make segments shorter.
  */
 static void
 dataPlaceToPageLeafRecompress(Buffer buf, disassembledLeaf *leaf,
@@ -798,7 +805,13 @@ dataPlaceToPageLeafRecompress(Buffer buf, disassembledLeaf *leaf,
 		if (!modified)
 			unmodifiedsize += segsize;
 		else
-			memcpy(ptr, seginfo->seg, segsize);
+		{
+			/*
+			 * Use memmove rather than memcpy, in case the segment points
+			 * to the same buffer
+			 */
+			memmove(ptr, seginfo->seg, segsize);
+		}
 		ptr += segsize;
 		newsize += segsize;
 	}
