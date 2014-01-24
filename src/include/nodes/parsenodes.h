@@ -1691,10 +1691,11 @@ typedef struct AlterTableSpaceMoveStmt
 {
 	NodeTag		type;
 	char	   *orig_tablespacename;
+	ObjectType	objtype;		/* set to -1 if move_all is true */
+	bool		move_all;		/* move all, or just objtype objects? */
+	List	   *roles;			/* List of roles to move objects of */
 	char	   *new_tablespacename;
-	ObjectType	objtype;
 	bool		nowait;
-	bool		move_all;
 } AlterTableSpaceMoveStmt;
 
 /* ----------------------

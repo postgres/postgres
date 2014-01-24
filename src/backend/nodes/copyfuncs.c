@@ -3404,6 +3404,9 @@ _copyAlterTableSpaceMoveStmt(const AlterTableSpaceMoveStmt *from)
 	AlterTableSpaceMoveStmt *newnode = makeNode(AlterTableSpaceMoveStmt);
 
 	COPY_STRING_FIELD(orig_tablespacename);
+	COPY_SCALAR_FIELD(objtype);
+	COPY_SCALAR_FIELD(move_all);
+	COPY_NODE_FIELD(roles);
 	COPY_STRING_FIELD(new_tablespacename);
 	COPY_SCALAR_FIELD(nowait);
 

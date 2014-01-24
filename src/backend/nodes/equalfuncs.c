@@ -1640,6 +1640,9 @@ _equalAlterTableSpaceMoveStmt(const AlterTableSpaceMoveStmt *a,
 							  const AlterTableSpaceMoveStmt *b)
 {
 	COMPARE_STRING_FIELD(orig_tablespacename);
+	COMPARE_SCALAR_FIELD(objtype);
+	COMPARE_SCALAR_FIELD(move_all);
+	COMPARE_NODE_FIELD(roles);
 	COMPARE_STRING_FIELD(new_tablespacename);
 	COMPARE_SCALAR_FIELD(nowait);
 

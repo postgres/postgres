@@ -48,7 +48,6 @@ extern bool Password_encryption;
 /* Hook to check passwords in CreateRole() and AlterRole() */
 check_password_hook_type check_password_hook = NULL;
 
-static List *roleNamesToIds(List *memberNames);
 static void AddRoleMems(const char *rolename, Oid roleid,
 			List *memberNames, List *memberIds,
 			Oid grantorId, bool admin_opt);
@@ -1302,7 +1301,7 @@ ReassignOwnedObjects(ReassignOwnedStmt *stmt)
  * Given a list of role names (as String nodes), generate a list of role OIDs
  * in the same order.
  */
-static List *
+List *
 roleNamesToIds(List *memberNames)
 {
 	List	   *result = NIL;

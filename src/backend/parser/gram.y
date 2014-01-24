@@ -7325,9 +7325,11 @@ RenameStmt: ALTER AGGREGATE func_name aggr_args RENAME TO name
 					AlterTableSpaceMoveStmt *n =
 						makeNode(AlterTableSpaceMoveStmt);
 					n->orig_tablespacename = $3;
+					n->objtype = -1;
+					n->move_all = true;
+					n->roles = NIL;
 					n->new_tablespacename = $7;
 					n->nowait = $8;
-					n->move_all = true;
 					$$ = (Node *)n;
 				}
 			| ALTER TABLESPACE name MOVE TABLES TO name opt_nowait
@@ -7335,10 +7337,11 @@ RenameStmt: ALTER AGGREGATE func_name aggr_args RENAME TO name
 					AlterTableSpaceMoveStmt *n =
 						makeNode(AlterTableSpaceMoveStmt);
 					n->orig_tablespacename = $3;
-					n->new_tablespacename = $7;
-					n->nowait = $8;
 					n->objtype = OBJECT_TABLE;
 					n->move_all = false;
+					n->roles = NIL;
+					n->new_tablespacename = $7;
+					n->nowait = $8;
 					$$ = (Node *)n;
 				}
 			| ALTER TABLESPACE name MOVE INDEXES TO name opt_nowait
@@ -7346,10 +7349,11 @@ RenameStmt: ALTER AGGREGATE func_name aggr_args RENAME TO name
 					AlterTableSpaceMoveStmt *n =
 						makeNode(AlterTableSpaceMoveStmt);
 					n->orig_tablespacename = $3;
-					n->new_tablespacename = $7;
-					n->nowait = $8;
 					n->objtype = OBJECT_INDEX;
 					n->move_all = false;
+					n->roles = NIL;
+					n->new_tablespacename = $7;
+					n->nowait = $8;
 					$$ = (Node *)n;
 				}
 			| ALTER TABLESPACE name MOVE MATERIALIZED VIEWS TO name opt_nowait
@@ -7357,10 +7361,59 @@ RenameStmt: ALTER AGGREGATE func_name aggr_args RENAME TO name
 					AlterTableSpaceMoveStmt *n =
 						makeNode(AlterTableSpaceMoveStmt);
 					n->orig_tablespacename = $3;
-					n->new_tablespacename = $8;
-					n->nowait = $9;
 					n->objtype = OBJECT_MATVIEW;
 					n->move_all = false;
+					n->roles = NIL;
+					n->new_tablespacename = $8;
+					n->nowait = $9;
+					$$ = (Node *)n;
+				}
+			| ALTER TABLESPACE name MOVE ALL OWNED BY role_list TO name opt_nowait
+				{
+					AlterTableSpaceMoveStmt *n =
+						makeNode(AlterTableSpaceMoveStmt);
+					n->orig_tablespacename = $3;
+					n->objtype = -1;
+					n->move_all = true;
+					n->roles = $8;
+					n->new_tablespacename = $10;
+					n->nowait = $11;
+					$$ = (Node *)n;
+				}
+			| ALTER TABLESPACE name MOVE TABLES OWNED BY role_list TO name opt_nowait
+				{
+					AlterTableSpaceMoveStmt *n =
+						makeNode(AlterTableSpaceMoveStmt);
+					n->orig_tablespacename = $3;
+					n->objtype = OBJECT_TABLE;
+					n->move_all = false;
+					n->roles = $8;
+					n->new_tablespacename = $10;
+					n->nowait = $11;
+					$$ = (Node *)n;
+				}
+			| ALTER TABLESPACE name MOVE INDEXES OWNED BY role_list TO name opt_nowait
+				{
+					AlterTableSpaceMoveStmt *n =
+						makeNode(AlterTableSpaceMoveStmt);
+					n->orig_tablespacename = $3;
+					n->objtype = OBJECT_INDEX;
+					n->move_all = false;
+					n->roles = $8;
+					n->new_tablespacename = $10;
+					n->nowait = $11;
+					$$ = (Node *)n;
+				}
+			| ALTER TABLESPACE name MOVE MATERIALIZED VIEWS OWNED BY role_list TO name opt_nowait
+				{
+					AlterTableSpaceMoveStmt *n =
+						makeNode(AlterTableSpaceMoveStmt);
+					n->orig_tablespacename = $3;
+					n->objtype = OBJECT_MATVIEW;
+					n->move_all = false;
+					n->roles = $9;
+					n->new_tablespacename = $11;
+					n->nowait = $12;
 					$$ = (Node *)n;
 				}
 			| ALTER TABLESPACE name SET reloptions

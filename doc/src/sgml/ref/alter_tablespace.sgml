@@ -25,7 +25,7 @@ ALTER TABLESPACE <replaceable>name</replaceable> RENAME TO <replaceable>new_name
 ALTER TABLESPACE <replaceable>name</replaceable> OWNER TO <replaceable>new_owner</replaceable>
 ALTER TABLESPACE <replaceable>name</replaceable> SET ( <replaceable class="PARAMETER">tablespace_option</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )
 ALTER TABLESPACE <replaceable>name</replaceable> RESET ( <replaceable class="PARAMETER">tablespace_option</replaceable> [, ... ] )
-ALTER TABLESPACE <replaceable>name</replaceable> MOVE { ALL | TABLES | INDEXES | MATERIALIZED VIEWS } TO <replaceable>new_tablespace</replaceable> [ NOWAIT ]
+ALTER TABLESPACE <replaceable>name</replaceable> MOVE { ALL | TABLES | INDEXES | MATERIALIZED VIEWS } [ OWNED BY <replaceable class="PARAMETER">role_name</replaceable> [, ...] ] TO <replaceable>new_tablespace</replaceable> [ NOWAIT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -34,8 +34,8 @@ ALTER TABLESPACE <replaceable>name</replaceable> MOVE { ALL | TABLES | INDEXES |
 
   <para>
    <command>ALTER TABLESPACE</command> can be used to change the definition of
-   a tablespace or to migrate all of the objects in the current database which
-   are owned by the user out of a given tablespace.
+   a tablespace or to migrate objects in the current database between
+   tablespaces.
   </para>
 
   <para>
@@ -44,13 +44,19 @@ ALTER TABLESPACE <replaceable>name</replaceable> MOVE { ALL | TABLES | INDEXES |
    owning role.
    (Note that superusers have these privileges automatically.)
 
-   Users may use ALTER TABLESPACE ... MOVE to move either ALL of their objects,
-   or just TABLES, INDEXES, or MATERIALIZED VIEWS, but they must have CREATE
-   rights on the new tablespace and only objects, directly or indirectly, owned
-   by the user will be moved.  Note that the superuser is considered an owner
-   of all objects and therefore an ALTER TABLESPACE ... MOVE ALL issued by the
-   superuser will move all objects in the current database which are in the
-   tablespace.
+   Users may use ALTER TABLESPACE ... MOVE to move objects between tablespaces.
+   ALL will move all tables, indexes and materialized views while specifying
+   TABLES will move only tables (but not their indexes), INDEXES will only move
+   indexes (including those underneath materialized views, but not tables) and
+   MATERIALIZED VIEWS will only move the table relation of the materialized
+   view (but no indexes associated with it).  Users may also specify a list of
+   roles whose objects are to be moved using OWNED BY.
+
+   Users must have CREATE rights on the new tablespace and be considered an
+   owner (either directly or indirectly) on all objects to be moved.  Note that
+   the superuser is considered an owner of all objects and therefore an
+   ALTER TABLESPACE ... MOVE ALL issued by the superuser will move all objects
+   in the current database which are in the tablespace.
 
    All objects to be moved will be locked immediately by the command.  The
    NOWAIT option, if specified, will cause the command to fail if it is unable
@@ -111,6 +117,15 @@ ALTER TABLESPACE <replaceable>name</replaceable> MOVE { ALL | TABLES | INDEXES |
       <xref linkend="guc-random-page-cost">).  This may be useful if one
       tablespace is located on a disk which is faster or slower than the
       remainder of the I/O subsystem.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">role_name</replaceable></term>
+    <listitem>
+     <para>
+      Role(s) whose objects are to be moved.
      </para>
     </listitem>
    </varlistentry>
