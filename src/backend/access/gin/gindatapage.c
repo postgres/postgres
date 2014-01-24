@@ -815,7 +815,7 @@ dataPlaceToPageLeafRecompress(Buffer buf, disassembledLeaf *leaf,
 		ptr += segsize;
 		newsize += segsize;
 	}
-	Assert(newsize < GinDataLeafMaxContentSize);
+	Assert(newsize <= GinDataLeafMaxContentSize);
 	GinDataLeafPageSetPostingListSize(page, newsize);
 	GinPageSetCompressed(page);	 /* in case it was in pre-9.4 format before */
 
