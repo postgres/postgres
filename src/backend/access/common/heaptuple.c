@@ -1342,7 +1342,7 @@ slot_attisnull(TupleTableSlot *slot, int attnum)
 		return slot->tts_isnull[attnum - 1];
 
 	/*
-	 * return NULL if attnum is out of range according to the tupdesc
+	 * assume NULL if attnum is out of range according to the tupdesc
 	 */
 	if (attnum > tupleDesc->natts)
 		return true;
