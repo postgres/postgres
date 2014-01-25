@@ -81,6 +81,12 @@
 #recovery_target_inclusive = true
 #
 #
+# Alternatively, you can request stopping as soon as a consistent state
+# is reached, by uncommenting this option.
+#
+#recovery_target = 'immediate'
+#
+#
 # If you want to recover into a timeline other than the "main line" shown in
 # pg_control, specify the timeline number here, or write 'latest' to get
 # the latest branch for which there's a history file.

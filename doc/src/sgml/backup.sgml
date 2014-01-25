@@ -1124,7 +1124,7 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
    <para>
     If you want to recover to some previous point in time (say, right before
     the junior DBA dropped your main transaction table), just specify the
-    required stopping point in <filename>recovery.conf</>.  You can specify
+    required <link linkend="recovery-target-settings">stopping point</link> in <filename>recovery.conf</>.  You can specify
     the stop point, known as the <quote>recovery target</>, either by
     date/time, named restore point or by completion of a specific transaction
     ID.  As of this writing only the date/time and named restore point options

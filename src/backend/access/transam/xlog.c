@@ -5434,6 +5434,19 @@ readRecoveryCommandFile(void)
 					(errmsg_internal("recovery_target_name = '%s'",
 									 recoveryTargetName)));
 		}
+		else if (strcmp(item->name, "recovery_target") == 0)
+		{
+			if (strcmp(item->value, "immediate") == 0)
+				recoveryTarget = RECOVERY_TARGET_IMMEDIATE;
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("invalid recovery_target parameter"),
+						 errhint("The only allowed value is 'immediate'")));
+			ereport(DEBUG2,
+					(errmsg_internal("recovery_target = '%s'",
+									 item->value)));
+		}
 		else if (strcmp(item->name, "recovery_target_inclusive") == 0)
 		{
 			/*
@@ -5676,7 +5689,20 @@ recoveryStopsBefore(XLogRecord *record)
 	bool		isCommit;
 	TimestampTz recordXtime = 0;
 
-	/* We only consider stopping before COMMIT or ABORT records. */
+	/* Check if we should stop as soon as reaching consistency */
+	if (recoveryTarget == RECOVERY_TARGET_IMMEDIATE && reachedConsistency)
+	{
+		ereport(LOG,
+				(errmsg("recovery stopping after reaching consistency")));
+
+		recoveryStopAfter = false;
+		recoveryStopXid = InvalidTransactionId;
+		recoveryStopTime = 0;
+		recoveryStopName[0] = '\0';
+		return true;
+	}
+
+	/* Otherwise we only consider stopping before COMMIT or ABORT records. */
 	if (record->xl_rmid != RM_XACT_ID)
 		return false;
 	record_info = record->xl_info & ~XLR_INFO_MASK;
@@ -5823,6 +5849,19 @@ recoveryStopsAfter(XLogRecord *record)
 			}
 			return true;
 		}
+	}
+
+	/* Check if we should stop as soon as reaching consistency */
+	if (recoveryTarget == RECOVERY_TARGET_IMMEDIATE && reachedConsistency)
+	{
+		ereport(LOG,
+				(errmsg("recovery stopping after reaching consistency")));
+
+		recoveryStopAfter = true;
+		recoveryStopXid = InvalidTransactionId;
+		recoveryStopTime = 0;
+		recoveryStopName[0] = '\0';
+		return true;
 	}
 
 	return false;
@@ -6246,6 +6285,9 @@ StartupXLOG(void)
 			ereport(LOG,
 					(errmsg("starting point-in-time recovery to \"%s\"",
 							recoveryTargetName)));
+		else if (recoveryTarget == RECOVERY_TARGET_IMMEDIATE)
+			ereport(LOG,
+					(errmsg("starting point-in-time recovery to earliest consistent point")));
 		else
 			ereport(LOG,
 					(errmsg("starting archive recovery")));
@@ -7125,6 +7167,8 @@ StartupXLOG(void)
 			snprintf(reason, sizeof(reason),
 					 "at restore point \"%s\"",
 					 recoveryStopName);
+		else if (recoveryTarget == RECOVERY_TARGET_IMMEDIATE)
+			snprintf(reason, sizeof(reason), "reached consistency");
 		else
 			snprintf(reason, sizeof(reason), "no recovery target specified");
 

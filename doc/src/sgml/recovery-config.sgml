@@ -199,7 +199,32 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
   <sect1 id="recovery-target-settings">
 
     <title>Recovery Target Settings</title>
+     <para>
+      By default, recovery will recover to the end of the WAL log. The
+      following parameters can be used to specify an earlier stopping point.
+      At most one of <varname>recovery_target</>,
+      <varname>recovery_target_name</>, <varname>recovery_target_time</>, or
+      <varname>recovery_target_xid</> can be specified. 
+     </para>
      <variablelist>
+
+     <varlistentry id="recovery-target" xreflabel="recovery_target_name">
+      <term><varname>recovery_target</varname><literal> = 'immediate'</literal></term>
+      <indexterm>
+        <primary><varname>recovery_target</> recovery parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        This parameter specifies that recovery should end as soon as a
+        consistency is reached, ie. as early as possible. When restoring from an
+        online backup, this means the point where taking the backup ended.
+       </para>
+       <para>
+        Technically, this is a string parameter, but <literal>'immediate'</>
+        is currently the only allowed value.
+       </para>
+      </listitem>
+     </varlistentry>
 
      <varlistentry id="recovery-target-name" xreflabel="recovery_target_name">
       <term><varname>recovery_target_name</varname>
@@ -212,10 +237,6 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
        <para>
         This parameter specifies the named restore point, created with
         <function>pg_create_restore_point()</> to which recovery will proceed.
-        At most one of <varname>recovery_target_name</>,
-        <xref linkend="recovery-target-time"> or
-        <xref linkend="recovery-target-xid"> can be specified.  The default is to
-        recover to the end of the WAL log.
        </para>
       </listitem>
      </varlistentry>
@@ -231,10 +252,6 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
        <para>
         This parameter specifies the time stamp up to which recovery
         will proceed.
-        At most one of <varname>recovery_target_time</>,
-        <xref linkend="recovery-target-name"> or
-        <xref linkend="recovery-target-xid"> can be specified.
-        The default is to recover to the end of the WAL log.
         The precise stopping point is also influenced by
         <xref linkend="recovery-target-inclusive">.
        </para>
@@ -254,15 +271,18 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         start, transactions can complete in a different numeric order.
         The transactions that will be recovered are those that committed
         before (and optionally including) the specified one.
-        At most one of <varname>recovery_target_xid</>,
-        <xref linkend="recovery-target-name"> or
-        <xref linkend="recovery-target-time"> can be specified.
-        The default is to recover to the end of the WAL log.
         The precise stopping point is also influenced by
         <xref linkend="recovery-target-inclusive">.
        </para>
       </listitem>
      </varlistentry>
+     </variablelist>
+     <para>
+       The following options further specify the recovery target, and affect
+       what happens when the target is reached:
+     </para>
+
+     <variablelist>
 
      <varlistentry id="recovery-target-inclusive"
                    xreflabel="recovery_target_inclusive">
