@@ -248,7 +248,7 @@ include 'filename'
         names that start with the <literal>.</literal> character are also excluded,
         to prevent mistakes as they are hidden on some platforms.  Multiple files
         within an include directory are processed in file name order. The file names
-        are ordered by C locale rules, ie. numbers before letters, and uppercase
+        are ordered by C locale rules, i.e. numbers before letters, and uppercase
         letters before lowercase ones.
      </para>
 
