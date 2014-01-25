@@ -966,7 +966,11 @@ init_ssl_system(PGconn *conn)
 			SSL_load_error_strings();
 		}
 
-		SSL_context = SSL_CTX_new(TLSv1_method());
+		/*
+		 * Only SSLv23_method() negotiates higher protocol versions;
+		 * alternatives like TLSv1_2_method() permit one specific version.
+		 */
+		SSL_context = SSL_CTX_new(SSLv23_method());
 		if (!SSL_context)
 		{
 			char	   *err = SSLerrmessage();
@@ -980,6 +984,9 @@ init_ssl_system(PGconn *conn)
 #endif
 			return -1;
 		}
+
+		/* Disable old protocol versions */
+		SSL_CTX_set_options(SSL_context, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
 
 		/*
 		 * Disable OpenSSL's moving-write-buffer sanity check, because it
