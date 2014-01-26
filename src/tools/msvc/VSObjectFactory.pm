@@ -45,6 +45,10 @@ sub CreateSolution
 	{
 		return new VS2012Solution(@_);
 	}
+	elsif ($visualStudioVersion eq '12.00')
+	{
+		return new VS2013Solution(@_);
+	}
 	else
 	{
 		croak "The requested Visual Studio version is not supported.";
@@ -75,6 +79,10 @@ sub CreateProject
 	elsif ($visualStudioVersion eq '11.00')
 	{
 		return new VC2012Project(@_);
+	}
+	elsif ($visualStudioVersion eq '12.00')
+	{
+		return new VC2013Project(@_);
 	}
 	else
 	{
@@ -115,11 +123,11 @@ sub DetermineVisualStudioVersion
 sub _GetVisualStudioVersion
 {
 	my ($major, $minor) = @_;
-	if ($major > 11)
+	if ($major > 12)
 	{
 		carp
 "The determined version of Visual Studio is newer than the latest supported version. Returning the latest supported version instead.";
-		return '11.00';
+		return '12.00';
 	}
 	elsif ($major < 6)
 	{

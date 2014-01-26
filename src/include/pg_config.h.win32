@@ -295,7 +295,10 @@
 /* #undef HAVE_READLINK */
 
 /* Define to 1 if you have the `rint' function. */
-/*#define HAVE_RINT 1*/
+#if (_MSC_VER >= 1800)
+#define HAVE_RINT 1
+#endif
+
 
 /* Define to 1 if you have the global variable
    'rl_completion_append_character'. */
