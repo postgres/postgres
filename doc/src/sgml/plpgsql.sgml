@@ -2804,7 +2804,7 @@ DECLARE
   stack text;
 BEGIN
   GET DIAGNOSTICS stack = PG_CONTEXT;
-  RAISE NOTICE e'--- Call Stack ---\n%', stack;
+  RAISE NOTICE E'--- Call Stack ---\n%', stack;
   RETURN 1;
 END;
 $$ LANGUAGE plpgsql;
