@@ -176,6 +176,11 @@ describeTablespaces(const char *pattern, bool verbose)
 		 ",\n  pg_catalog.shobj_description(oid, 'pg_tablespace') AS \"%s\"",
 						  gettext_noop("Description"));
 
+	if (verbose && pset.sversion >= 90000)
+		appendPQExpBuffer(&buf,
+						  ",\n  spcoptions AS \"%s\"",
+						  gettext_noop("Options"));
+
 	appendPQExpBufferStr(&buf,
 						 "\nFROM pg_catalog.pg_tablespace\n");
 
