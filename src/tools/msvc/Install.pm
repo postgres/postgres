@@ -17,6 +17,16 @@ our (@ISA, @EXPORT_OK);
 @ISA       = qw(Exporter);
 @EXPORT_OK = qw(Install);
 
+my $insttype;
+my @client_contribs = ('oid2name', 'pgbench', 'vacuumlo');
+my @client_program_files = (
+	'clusterdb',     'createdb',       'createlang', 'createuser',
+	'dropdb',        'droplang',       'dropuser',   'ecpg',
+	'libecpg',       'libecpg_compat', 'libpgtypes', 'libpq',
+	'pg_basebackup', 'pg_config',      'pg_dump',    'pg_dumpall',
+	'pg_isready',    'pg_receivexlog', 'pg_restore', 'psql',
+	'reindexdb',     'vacuumdb',       @client_contribs);
+
 sub lcopy
 {
 	my $src    = shift;
@@ -37,6 +47,8 @@ sub Install
 	$| = 1;
 
 	my $target = shift;
+	$insttype = shift;
+	$insttype = "all" unless ($insttype);
 
 	# if called from vcregress, the config will be passed to us
 	# so no need to re-include these
@@ -65,24 +77,31 @@ sub Install
 	my $majorver = DetermineMajorVersion();
 	print "Installing version $majorver for $conf in $target\n";
 
-	EnsureDirectories(
-		$target,              'bin',
-		'lib',                'share',
-		'share/timezonesets', 'share/extension',
-		'share/contrib',      'doc',
-		'doc/extension',      'doc/contrib',
-		'symbols',            'share/tsearch_data');
+	my @client_dirs = ('bin', 'lib', 'share', 'symbols');
+	my @all_dirs = (
+		@client_dirs, 'doc', 'doc/contrib', 'doc/extension', 'share/contrib',
+		'share/extension', 'share/timezonesets', 'share/tsearch_data');
+	if ($insttype eq "client")
+	{
+		EnsureDirectories($target, @client_dirs);
+	}
+	else
+	{
+		EnsureDirectories($target, @all_dirs);
+	}
 
 	CopySolutionOutput($conf, $target);
 	lcopy($target . '/lib/libpq.dll', $target . '/bin/libpq.dll');
 	my $sample_files = [];
+	my @top_dir      = ("src");
+	@top_dir = ("src\\bin", "src\\interfaces") if ($insttype eq "client");
 	File::Find::find(
 		{   wanted => sub {
 				/^.*\.sample\z/s
 				  && push(@$sample_files, $File::Find::name);
 			  }
 		},
-		"src");
+		@top_dir);
 	CopySetOfFiles('config files', $sample_files, $target . '/share/');
 	CopyFiles(
 		'Import libraries',
@@ -95,53 +114,57 @@ sub Install
 		"libpgport\\libpgport.lib",
 		"libpgtypes\\libpgtypes.lib",
 		"libecpg_compat\\libecpg_compat.lib");
-	CopySetOfFiles(
-		'timezone names',
-		[ glob('src\timezone\tznames\*.txt') ],
-		$target . '/share/timezonesets/');
-	CopyFiles(
-		'timezone sets',
-		$target . '/share/timezonesets/',
-		'src/timezone/tznames/', 'Default', 'Australia', 'India');
-	CopySetOfFiles(
-		'BKI files',
-		[ glob("src\\backend\\catalog\\postgres.*") ],
-		$target . '/share/');
-	CopySetOfFiles(
-		'SQL files',
-		[ glob("src\\backend\\catalog\\*.sql") ],
-		$target . '/share/');
-	CopyFiles(
-		'Information schema data', $target . '/share/',
-		'src/backend/catalog/',    'sql_features.txt');
-	GenerateConversionScript($target);
-	GenerateTimezoneFiles($target, $conf);
-	GenerateTsearchFiles($target);
-	CopySetOfFiles(
-		'Stopword files',
-		[ glob("src\\backend\\snowball\\stopwords\\*.stop") ],
-		$target . '/share/tsearch_data/');
-	CopySetOfFiles(
-		'Dictionaries sample files',
-		[ glob("src\\backend\\tsearch\\*_sample.*") ],
-		$target . '/share/tsearch_data/');
 	CopyContribFiles($config, $target);
 	CopyIncludeFiles($target);
 
-	my $pl_extension_files = [];
-	my @pldirs             = ('src/pl/plpgsql/src');
-	push @pldirs, "src/pl/plperl"   if $config->{perl};
-	push @pldirs, "src/pl/plpython" if $config->{python};
-	push @pldirs, "src/pl/tcl"      if $config->{tcl};
-	File::Find::find(
-		{   wanted => sub {
-				/^(.*--.*\.sql|.*\.control)\z/s
-				  && push(@$pl_extension_files, $File::Find::name);
-			  }
-		},
-		@pldirs);
-	CopySetOfFiles('PL Extension files',
-		$pl_extension_files, $target . '/share/extension/');
+	if ($insttype ne "client")
+	{
+		CopySetOfFiles(
+			'timezone names',
+			[ glob('src\timezone\tznames\*.txt') ],
+			$target . '/share/timezonesets/');
+		CopyFiles(
+			'timezone sets',
+			$target . '/share/timezonesets/',
+			'src/timezone/tznames/', 'Default', 'Australia', 'India');
+		CopySetOfFiles(
+			'BKI files',
+			[ glob("src\\backend\\catalog\\postgres.*") ],
+			$target . '/share/');
+		CopySetOfFiles(
+			'SQL files',
+			[ glob("src\\backend\\catalog\\*.sql") ],
+			$target . '/share/');
+		CopyFiles(
+			'Information schema data', $target . '/share/',
+			'src/backend/catalog/',    'sql_features.txt');
+		GenerateConversionScript($target);
+		GenerateTimezoneFiles($target, $conf);
+		GenerateTsearchFiles($target);
+		CopySetOfFiles(
+			'Stopword files',
+			[ glob("src\\backend\\snowball\\stopwords\\*.stop") ],
+			$target . '/share/tsearch_data/');
+		CopySetOfFiles(
+			'Dictionaries sample files',
+			[ glob("src\\backend\\tsearch\\*_sample.*") ],
+			$target . '/share/tsearch_data/');
+
+		my $pl_extension_files = [];
+		my @pldirs             = ('src/pl/plpgsql/src');
+		push @pldirs, "src/pl/plperl"   if $config->{perl};
+		push @pldirs, "src/pl/plpython" if $config->{python};
+		push @pldirs, "src/pl/tcl"      if $config->{tcl};
+		File::Find::find(
+			{   wanted => sub {
+					/^(.*--.*\.sql|.*\.control)\z/s
+					  && push(@$pl_extension_files, $File::Find::name);
+				  }
+			},
+			@pldirs);
+		CopySetOfFiles('PL Extension files',
+			$pl_extension_files, $target . '/share/extension/');
+	}
 
 	GenerateNLSFiles($target, $config->{nls}, $majorver) if ($config->{nls});
 
@@ -217,6 +240,10 @@ sub CopySolutionOutput
 		my $ext;
 
 		$sln =~ s/$rem//;
+
+		next
+		  if ($insttype eq "client" && !grep { $_ eq $pf }
+			@client_program_files);
 
 		my $proj = read_file("$pf.$vcproj")
 		  || croak "Could not open $pf.$vcproj\n";
@@ -378,6 +405,9 @@ sub CopyContribFiles
 	{
 		next if ($d =~ /^\./);
 		next unless (-f "contrib/$d/Makefile");
+		next
+		  if ($insttype eq "client" && !grep { $_ eq $d } @client_contribs);
+
 		next if ($d eq "uuid-ossp" && !defined($config->{uuid}));
 		next if ($d eq "sslinfo"   && !defined($config->{openssl}));
 		next if ($d eq "xml2"      && !defined($config->{xml}));

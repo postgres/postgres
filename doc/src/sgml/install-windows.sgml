@@ -410,6 +410,14 @@ $ENV{CONFIG}="Debug";
 <userinput>install c:\destination\directory</userinput>
 </screen>
   </para>
+
+  <para>
+   If you want to install only the client applications and
+   interface libraries, then you can use these commands:
+<screen>
+<userinput>install c:\destination\directory client</userinput>
+</screen>
+  </para>
  </sect2>
 
  <sect2>

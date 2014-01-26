@@ -9,10 +9,12 @@ use warnings;
 use Install qw(Install);
 
 my $target = shift || Usage();
-Install($target);
+my $insttype = shift;
+Install($target, $insttype);
 
 sub Usage
 {
-	print "Usage: install.pl <targetdir>\n";
+	print "Usage: install.pl <targetdir> [installtype]\n";
+	print "installtype: client\n";
 	exit(1);
 }

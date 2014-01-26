@@ -150,7 +150,7 @@ sub isolationcheck
 {
 	chdir "../isolation";
 	copy("../../../$Config/isolationtester/isolationtester.exe",
-		 "../../../$Config/pg_isolation_regress");
+		"../../../$Config/pg_isolation_regress");
 	my @args = (
 		"../../../$Config/pg_isolation_regress/pg_isolation_regress",
 		"--psqldir=../../../$Config/psql",
@@ -252,7 +252,7 @@ sub upgradecheck
 	(mkdir $tmp_root || die $!) unless -d $tmp_root;
 	my $tmp_install = "$tmp_root/install";
 	print "Setting up temp install\n\n";
-	Install($tmp_install, $config);
+	Install($tmp_install, "all", $config);
 
 	# Install does a chdir, so change back after that
 	chdir $cwd;

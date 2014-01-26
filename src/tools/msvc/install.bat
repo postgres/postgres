@@ -20,7 +20,7 @@ CALL bldenv.bat
 del bldenv.bat
 :nobuildenv
 
-perl install.pl "%1"
+perl install.pl "%1" %2
 
 REM exit fix for pre-2003 shell especially if used on buildfarm
 if "%XP_EXIT_FIX%" == "yes" exit %ERRORLEVEL%
