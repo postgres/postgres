@@ -171,15 +171,15 @@ describeTablespaces(const char *pattern, bool verbose)
 		printACLColumn(&buf, "spcacl");
 	}
 
-	if (verbose && pset.sversion >= 80200)
-		appendPQExpBuffer(&buf,
-		 ",\n  pg_catalog.shobj_description(oid, 'pg_tablespace') AS \"%s\"",
-						  gettext_noop("Description"));
-
 	if (verbose && pset.sversion >= 90000)
 		appendPQExpBuffer(&buf,
 						  ",\n  spcoptions AS \"%s\"",
 						  gettext_noop("Options"));
+
+	if (verbose && pset.sversion >= 80200)
+		appendPQExpBuffer(&buf,
+		 ",\n  pg_catalog.shobj_description(oid, 'pg_tablespace') AS \"%s\"",
+						  gettext_noop("Description"));
 
 	appendPQExpBufferStr(&buf,
 						 "\nFROM pg_catalog.pg_tablespace\n");
