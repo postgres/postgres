@@ -210,8 +210,14 @@ SysLoggerMain(int argc, char *argv[])
 		close(fileno(stderr));
 		if (fd != -1)
 		{
-			dup2(fd, fileno(stdout));
-			dup2(fd, fileno(stderr));
+			if (dup2(fd, fileno(stdout)) < 0)
+					ereport(FATAL,
+							(errcode_for_file_access(),
+							 errmsg("could not redirect stdout: %m")));
+			if (dup2(fd, fileno(stderr)) < 0)
+					ereport(FATAL,
+							(errcode_for_file_access(),
+							 errmsg("could not redirect stderr: %m")));
 			close(fd);
 		}
 	}
