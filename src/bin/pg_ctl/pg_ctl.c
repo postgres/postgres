@@ -135,6 +135,12 @@ static void print_msg(const char *msg);
 static void adjust_data_dir(void);
 
 #if defined(WIN32) || defined(__CYGWIN__)
+#if (_MSC_VER >= 1800)
+#include <versionhelpers.h>
+#else
+static bool IsWindowsXPOrGreater(void);
+static bool IsWindows7OrGreater(void);
+#endif
 static bool pgwin32_IsInstalled(SC_HANDLE);
 static char *pgwin32_CommandLine(bool);
 static void pgwin32_doRegister(void);
@@ -1227,6 +1233,29 @@ do_kill(pgpid_t pid)
 
 #if defined(WIN32) || defined(__CYGWIN__)
 
+#if (_MSC_VER < 1800)
+static bool
+IsWindowsXPOrGreater(void)
+{
+	OSVERSIONINFO osv;
+	osv.dwOSVersionInfoSize = sizeof(osv);
+
+	 /* Windows XP = Version 5.1 */
+	return (!GetVersionEx(&osv) || /* could not get version */
+			osv.dwMajorVersion > 5 || (osv.dwMajorVersion == 5 && osv.dwMinorVersion >= 1));
+}
+
+static bool IsWindows7OrGreater(void)
+{
+	OSVERSIONINFO osv;
+	osv.dwOSVersionInfoSize = sizeof(osv);
+
+	 /* Windows 7 = Version 6.0 */
+	return (!GetVersionEx(&osv) || /* could not get version */
+			osv.dwMajorVersion > 6 || (osv.dwMajorVersion == 6 && osv.dwMinorVersion >= 0));
+}
+#endif
+
 static bool
 pgwin32_IsInstalled(SC_HANDLE hSCM)
 {
@@ -1656,12 +1685,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 		 * IsProcessInJob() is not available on < WinXP, so there is no need
 		 * to log the error every time in that case
 		 */
-		OSVERSIONINFO osv;
-
-		osv.dwOSVersionInfoSize = sizeof(osv);
-		if (!GetVersionEx(&osv) ||		/* could not get version */
-			(osv.dwMajorVersion == 5 && osv.dwMinorVersion > 0) ||		/* 5.1=xp, 5.2=2003, etc */
-			osv.dwMajorVersion > 5)		/* anything newer should have the API */
+		if (IsWindowsXPOrGreater())
 
 			/*
 			 * Log error if we can't get version, or if we're on WinXP/2003 or
@@ -1693,7 +1717,6 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 					JOBOBJECT_BASIC_LIMIT_INFORMATION basicLimit;
 					JOBOBJECT_BASIC_UI_RESTRICTIONS uiRestrictions;
 					JOBOBJECT_SECURITY_LIMIT_INFORMATION securityLimit;
-					OSVERSIONINFO osv;
 
 					ZeroMemory(&basicLimit, sizeof(basicLimit));
 					ZeroMemory(&uiRestrictions, sizeof(uiRestrictions));
@@ -1709,10 +1732,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 
 					if (as_service)
 					{
-						osv.dwOSVersionInfoSize = sizeof(osv);
-						if (!GetVersionEx(&osv) ||
-							osv.dwMajorVersion < 6 ||
-						(osv.dwMajorVersion == 6 && osv.dwMinorVersion == 0))
+						if (!IsWindows7OrGreater())
 						{
 							/*
 							 * On Windows 7 (and presumably later),

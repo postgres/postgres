@@ -111,6 +111,14 @@ get_float8_infinity(void)
 #endif
 }
 
+/*
+* The funny placements of the two #pragmas is necessary because of a
+* long lived bug in the Microsoft compilers.
+* See http://support.microsoft.com/kb/120968/en-us for details
+*/
+#if (_MSC_VER >= 1800)
+#pragma warning(disable:4756)
+#endif
 float
 get_float4_infinity(void)
 {
@@ -118,6 +126,9 @@ get_float4_infinity(void)
 	/* C99 standard way */
 	return (float) INFINITY;
 #else
+#if (_MSC_VER >= 1800)
+#pragma warning(default:4756)
+#endif
 
 	/*
 	 * On some platforms, HUGE_VAL is an infinity, elsewhere it's just the

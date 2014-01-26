@@ -427,8 +427,10 @@ typedef unsigned short mode_t;
 #define W_OK 2
 #define R_OK 4
 
+#if (_MSC_VER < 1800)
 #define isinf(x) ((_fpclass(x) == _FPCLASS_PINF) || (_fpclass(x) == _FPCLASS_NINF))
 #define isnan(x) _isnan(x)
+#endif
 
 /* Pulled from Makefile.port in mingw */
 #define DLSUFFIX ".dll"

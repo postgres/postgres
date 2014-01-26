@@ -19,6 +19,8 @@ sub _new
 		options  => $options,
 		numver   => '',
 		strver   => '',
+		VisualStudioVersion => undef,
+		MinimumVisualStudioVersion => undef,
 		vcver    => undef,
 		platform => undef, };
 	bless($self, $classname);
@@ -57,6 +59,11 @@ sub _new
 	$self->DeterminePlatform();
 
 	return $self;
+}
+
+sub GetAdditionalHeaders
+{
+	return '';
 }
 
 sub DeterminePlatform
@@ -545,6 +552,8 @@ Microsoft Visual Studio Solution File, Format Version $self->{solutionFileVersio
 # $self->{visualStudioName}
 EOF
 
+	print SLN $self->GetAdditionalHeaders();
+
 	foreach my $fld (keys %{ $self->{projects} })
 	{
 		foreach my $proj (@{ $self->{projects}->{$fld} })
@@ -725,6 +734,41 @@ sub new
 	$self->{visualStudioName}    = 'Visual Studio 2012';
 
 	return $self;
+}
+
+package VS2013Solution;
+
+#
+# Package that encapsulates a Visual Studio 2013 solution file
+#
+
+use Carp;
+use strict;
+use warnings;
+use base qw(Solution);
+
+sub new
+{
+	my $classname = shift;
+	my $self      = $classname->SUPER::_new(@_);
+	bless($self, $classname);
+
+	$self->{solutionFileVersion}        = '12.00';
+	$self->{vcver}                      = '12.00';
+	$self->{visualStudioName}           = 'Visual Studio 2013';
+	$self->{VisualStudioVersion}        = '12.0.21005.1',
+	$self->{MinimumVisualStudioVersion} = '10.0.40219.1',
+
+	return $self;
+}
+
+sub GetAdditionalHeaders
+{
+	my ($self, $f) = @_;
+
+	return qq|VisualStudioVersion = $self->{VisualStudioVersion}
+MinimumVisualStudioVersion = $self->{MinimumVisualStudioVersion}
+|;
 }
 
 1;

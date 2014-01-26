@@ -18,6 +18,7 @@ sub _new
 	bless($self, $classname);
 
 	$self->{filenameExtension} = '.vcxproj';
+	$self->{ToolsVersion} = '4.0';
 
 	return $self;
 }
@@ -28,7 +29,7 @@ sub WriteHeader
 
 	print $f <<EOF;
 <?xml version="1.0" encoding="Windows-1252"?>
-<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="$self->{ToolsVersion}" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
 EOF
 	$self->WriteConfigurationHeader($f, 'Debug');
@@ -414,6 +415,7 @@ sub new
 	bless($self, $classname);
 
 	$self->{vcver} = '11.00';
+	$self->{PlatformToolset} = 'v110';
 
 	return $self;
 }
@@ -434,9 +436,32 @@ sub WriteConfigurationPropertyGroup
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
     <WholeProgramOptimization>$p->{wholeopt}</WholeProgramOptimization>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>$self->{PlatformToolset}</PlatformToolset>
   </PropertyGroup>
 EOF
+}
+
+package VC2013Project;
+
+#
+# Package that encapsulates a Visual C++ 2013 project file
+#
+
+use strict;
+use warnings;
+use base qw(VC2012Project);
+
+sub new
+{
+	my $classname = shift;
+	my $self      = $classname->SUPER::_new(@_);
+	bless($self, $classname);
+
+	$self->{vcver} = '12.00';
+	$self->{PlatformToolset} = 'v120';
+	$self->{ToolsVersion} = '12.0';
+
+	return $self;
 }
 
 1;

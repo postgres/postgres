@@ -19,12 +19,12 @@
  <para>
   There are several different ways of building PostgreSQL on
   <productname>Windows</productname>. The simplest way to build with
-  Microsoft tools is to install <productname>Visual Studio Express 2012
+  Microsoft tools is to install <productname>Visual Studio Express 2013
   for Windows Desktop</productname> and use the included
   compiler. It is also possible to build with the full
-  <productname>Microsoft Visual C++ 2005, 2008 or 2010</productname>. In some cases
-  that requires the installation of the <productname>Windows SDK</productname>
-  in addition to the compiler.
+  <productname>Microsoft Visual C++ 2005 to 2013</productname>.
+  In some cases that requires the installation of the
+  <productname>Windows SDK</productname> in addition to the compiler.
  </para>
 
  <para>
@@ -77,15 +77,15 @@
   <productname>Visual Studio Express</productname> or some versions of the
   <productname>Microsoft Windows SDK</productname>. If you do not already have a
   <productname>Visual Studio</productname> environment set up, the easiest
-  ways are to use the compilers in the <productname>Windows SDK 7.1</productname>
-  or those from <productname>Visual Studio Express 2012 for Windows
-  Desktop</productname>, which are both free downloads from Microsoft.
+  ways are to use the compilers from <productname>Visual Studio Express 2013
+  for Windows Desktop</productname> or those in the <productname>Windows SDK
+  7.1</productname>, which are both free downloads from Microsoft.
  </para>
 
  <para>
   PostgreSQL is known to support compilation using the compilers shipped with
   <productname>Visual Studio 2005</productname> to
-  <productname>Visual Studio 2012</productname> (including Express editions),
+  <productname>Visual Studio 2013</productname> (including Express editions),
   as well as standalone Windows SDK releases 6.0 to 7.1.
   64-bit PostgreSQL builds are only supported with
   <productname>Microsoft Windows SDK</productname> version 6.0a to 7.1 or
