@@ -3602,7 +3602,7 @@ getConversions(Archive *fout, int *numConversions)
 	PGresult   *res;
 	int			ntups;
 	int			i;
-	PQExpBuffer query = createPQExpBuffer();
+	PQExpBuffer query;
 	ConvInfo   *convinfo;
 	int			i_tableoid;
 	int			i_oid;
@@ -3616,6 +3616,8 @@ getConversions(Archive *fout, int *numConversions)
 		*numConversions = 0;
 		return NULL;
 	}
+
+	query = createPQExpBuffer();
 
 	/*
 	 * find all conversions, including builtin conversions; we filter out
