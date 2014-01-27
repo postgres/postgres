@@ -26,12 +26,26 @@
  * tree(s) generated from the query.  The executor can then use this value
  * to blame query costs on the proper queryId.
  *
+ * To facilitate presenting entries to users, we create "representative" query
+ * strings in which constants are replaced with '?' characters, to make it
+ * clearer what a normalized entry can represent.  To save on shared memory,
+ * and to avoid having to truncate oversized query strings, we store these
+ * strings in a temporary external query-texts file.  Offsets into this
+ * file are kept in shared memory.
+ *
  * Note about locking issues: to create or delete an entry in the shared
  * hashtable, one must hold pgss->lock exclusively.  Modifying any field
  * in an entry except the counters requires the same.  To look up an entry,
  * one must hold the lock shared.  To read or update the counters within
  * an entry, one must hold the lock shared or exclusive (so the entry doesn't
  * disappear!) and also take the entry's mutex spinlock.
+ * The shared state variable pgss->extent (the next free spot in the external
+ * query-text file) should be accessed only while holding either the
+ * pgss->mutex spinlock, or exclusive lock on pgss->lock.  We use the mutex to
+ * allow reserving file space while holding only shared lock on pgss->lock.
+ * Rewriting the entire external query-text file, eg for garbage collection,
+ * requires holding pgss->lock exclusively; this allows individual entries
+ * in the file to be read or written while holding only shared lock.
  *
  *
  * Copyright (c) 2008-2014, PostgreSQL Global Development Group
@@ -43,6 +57,7 @@
  */
 #include "postgres.h"
 
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include "access/hash.h"
@@ -53,21 +68,32 @@
 #include "parser/analyze.h"
 #include "parser/parsetree.h"
 #include "parser/scanner.h"
-#include "pgstat.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/spin.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"
+#include "utils/memutils.h"
 
 
 PG_MODULE_MAGIC;
 
-/* Location of stats file */
+/* Location of permanent stats file (valid when database is shut down) */
 #define PGSS_DUMP_FILE	"global/pg_stat_statements.stat"
 
-/* This constant defines the magic number in the stats file header */
-static const uint32 PGSS_FILE_HEADER = 0x20131115;
+/*
+ * Location of external query text file.  We don't keep it in the core
+ * system's stats_temp_directory.  The core system can safely use that GUC
+ * setting, because the statistics collector temp file paths are set only once
+ * as part of changing the GUC, but pg_stat_statements has no way of avoiding
+ * race conditions.  Besides, we only expect modest, infrequent I/O for query
+ * strings, so placing the file on a faster filesystem is not compelling.
+ */
+#define PGSS_TEXT_FILE	"pg_stat_tmp/pgss_query_texts.stat"
+
+/* Magic number identifying the stats file format */
+static const uint32 PGSS_FILE_HEADER = 0x20140125;
+
 /* PostgreSQL major version number, changes in which invalidate all entries */
 static const uint32 PGSS_PG_MAJOR_VERSION = PG_VERSION_NUM / 100;
 
@@ -75,6 +101,7 @@ static const uint32 PGSS_PG_MAJOR_VERSION = PG_VERSION_NUM / 100;
 #define USAGE_EXEC(duration)	(1.0)
 #define USAGE_INIT				(1.0)	/* including initial planning */
 #define ASSUMED_MEDIAN_INIT		(10.0)	/* initial assumed median usage */
+#define ASSUMED_LENGTH_INIT		1024	/* initial assumed mean query length */
 #define USAGE_DECREASE_FACTOR	(0.99)	/* decreased every entry_dealloc */
 #define STICKY_DECREASE_FACTOR	(0.50)	/* factor for sticky entries */
 #define USAGE_DEALLOC_PERCENT	5		/* free this % of entries at once */
@@ -94,16 +121,11 @@ typedef enum pgssVersion
 /*
  * Hashtable key that defines the identity of a hashtable entry.  We separate
  * queries by user and by database even if they are otherwise identical.
- *
- * Presently, the query encoding is fully determined by the source database
- * and so we don't really need it to be in the key.  But that might not always
- * be true. Anyway it's notationally convenient to pass it as part of the key.
  */
 typedef struct pgssHashKey
 {
 	Oid			userid;			/* user OID */
 	Oid			dbid;			/* database OID */
-	int			encoding;		/* query encoding */
 	uint32		queryid;		/* query identifier */
 } pgssHashKey;
 
@@ -133,16 +155,18 @@ typedef struct Counters
 /*
  * Statistics per statement
  *
- * NB: see the file read/write code before changing field order here.
+ * Note: in event of a failure in garbage collection of the query text file,
+ * we reset query_offset to zero and query_len to -1.  This will be seen as
+ * an invalid state by qtext_fetch().
  */
 typedef struct pgssEntry
 {
 	pgssHashKey key;			/* hash key of entry - MUST BE FIRST */
 	Counters	counters;		/* the statistics for this query */
+	Size		query_offset;	/* query text offset in external file */
 	int			query_len;		/* # of valid bytes in query string */
+	int			encoding;		/* query text encoding */
 	slock_t		mutex;			/* protects the counters only */
-	char		query[1];		/* VARIABLE LENGTH ARRAY - MUST BE LAST */
-	/* Note: the allocated length of query[] is actually pgss->query_size */
 } pgssEntry;
 
 /*
@@ -151,8 +175,12 @@ typedef struct pgssEntry
 typedef struct pgssSharedState
 {
 	LWLock	   *lock;			/* protects hashtable search/modification */
-	int			query_size;		/* max query length in bytes */
 	double		cur_median_usage;		/* current median usage in hashtable */
+	Size		mean_query_len; /* current mean entry text length */
+	slock_t		mutex;			/* protects following fields only: */
+	Size		extent;			/* current extent of query file */
+	int			n_writers;		/* number of active writers to query file */
+	int			gc_count;		/* query file garbage collection cycle count */
 } pgssSharedState;
 
 /*
@@ -231,15 +259,25 @@ static bool pgss_save;			/* whether to save stats across shutdown */
 	(pgss_track == PGSS_TRACK_ALL || \
 	(pgss_track == PGSS_TRACK_TOP && nested_level == 0))
 
+#define record_gc_qtexts() \
+	do { \
+		volatile pgssSharedState *s = (volatile pgssSharedState *) pgss; \
+		SpinLockAcquire(&s->mutex); \
+		s->gc_count++; \
+		SpinLockRelease(&s->mutex); \
+	} while(0)
+
 /*---- Function declarations ----*/
 
 void		_PG_init(void);
 void		_PG_fini(void);
 
 Datum		pg_stat_statements_reset(PG_FUNCTION_ARGS);
+Datum		pg_stat_statements_1_2(PG_FUNCTION_ARGS);
 Datum		pg_stat_statements(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(pg_stat_statements_reset);
+PG_FUNCTION_INFO_V1(pg_stat_statements_1_2);
 PG_FUNCTION_INFO_V1(pg_stat_statements);
 
 static void pgss_shmem_startup(void);
@@ -261,10 +299,20 @@ static void pgss_store(const char *query, uint32 queryId,
 		   double total_time, uint64 rows,
 		   const BufferUsage *bufusage,
 		   pgssJumbleState *jstate);
+static void pg_stat_statements_internal(FunctionCallInfo fcinfo,
+							pgssVersion api_version,
+							bool showtext);
 static Size pgss_memsize(void);
-static pgssEntry *entry_alloc(pgssHashKey *key, const char *query,
-			int query_len, bool sticky);
+static pgssEntry *entry_alloc(pgssHashKey *key, Size query_offset, int query_len,
+			int encoding, bool sticky);
 static void entry_dealloc(void);
+static bool qtext_store(const char *query, int query_len,
+			Size *query_offset, int *gc_count);
+static char *qtext_load_file(Size *buffer_size);
+static char *qtext_fetch(Size query_offset, int query_len,
+			char *buffer, Size buffer_size);
+static bool need_gc_qtexts(void);
+static void gc_qtexts(void);
 static void entry_reset(void);
 static void AppendJumble(pgssJumbleState *jstate,
 			 const unsigned char *item, Size size);
@@ -302,7 +350,7 @@ _PG_init(void)
 	  "Sets the maximum number of statements tracked by pg_stat_statements.",
 							NULL,
 							&pgss_max,
-							1000,
+							5000,
 							100,
 							INT_MAX,
 							PGC_POSTMASTER,
@@ -393,18 +441,20 @@ _PG_fini(void)
 /*
  * shmem_startup hook: allocate or attach to shared memory,
  * then load any pre-existing statistics from file.
+ * Also create and load the query-texts file, which is expected to exist
+ * (even if empty) while the module is enabled.
  */
 static void
 pgss_shmem_startup(void)
 {
 	bool		found;
 	HASHCTL		info;
-	FILE	   *file;
+	FILE	   *file = NULL;
+	FILE	   *qfile = NULL;
 	uint32		header;
 	int32		num;
 	int32		pgver;
 	int32		i;
-	int			query_size;
 	int			buffer_size;
 	char	   *buffer = NULL;
 
@@ -428,16 +478,17 @@ pgss_shmem_startup(void)
 	{
 		/* First time through ... */
 		pgss->lock = LWLockAssign();
-		pgss->query_size = pgstat_track_activity_query_size;
 		pgss->cur_median_usage = ASSUMED_MEDIAN_INIT;
+		pgss->mean_query_len = ASSUMED_LENGTH_INIT;
+		SpinLockInit(&pgss->mutex);
+		pgss->extent = 0;
+		pgss->n_writers = 0;
+		pgss->gc_count = 0;
 	}
-
-	/* Be sure everyone agrees on the hash table entry size */
-	query_size = pgss->query_size;
 
 	memset(&info, 0, sizeof(info));
 	info.keysize = sizeof(pgssHashKey);
-	info.entrysize = offsetof(pgssEntry, query) +query_size;
+	info.entrysize = sizeof(pgssEntry);
 	info.hash = pgss_hash_fn;
 	info.match = pgss_match_fn;
 	pgss_hash = ShmemInitHash("pg_stat_statements hash",
@@ -455,70 +506,100 @@ pgss_shmem_startup(void)
 		on_shmem_exit(pgss_shmem_shutdown, (Datum) 0);
 
 	/*
-	 * Attempt to load old statistics from the dump file, if this is the first
-	 * time through and we weren't told not to.
+	 * Done if some other process already completed our initialization.
 	 */
-	if (found || !pgss_save)
+	if (found)
 		return;
 
 	/*
 	 * Note: we don't bother with locks here, because there should be no other
 	 * processes running when this code is reached.
 	 */
+
+	/* Unlink query text file possibly left over from crash */
+	unlink(PGSS_TEXT_FILE);
+
+	/* Allocate new query text temp file */
+	qfile = AllocateFile(PGSS_TEXT_FILE, PG_BINARY_W);
+	if (qfile == NULL)
+		goto write_error;
+
+	/*
+	 * If we were told not to load old statistics, we're done.  (Note we do
+	 * not try to unlink any old dump file in this case.  This seems a bit
+	 * questionable but it's the historical behavior.)
+	 */
+	if (!pgss_save)
+	{
+		FreeFile(qfile);
+		return;
+	}
+
+	/*
+	 * Attempt to load old statistics from the dump file.
+	 */
 	file = AllocateFile(PGSS_DUMP_FILE, PG_BINARY_R);
 	if (file == NULL)
 	{
-		if (errno == ENOENT)
-			return;				/* ignore not-found error */
-		goto error;
+		if (errno != ENOENT)
+			goto read_error;
+		/* No existing persisted stats file, so we're done */
+		FreeFile(qfile);
+		return;
 	}
 
-	buffer_size = query_size;
+	buffer_size = 2048;
 	buffer = (char *) palloc(buffer_size);
 
 	if (fread(&header, sizeof(uint32), 1, file) != 1 ||
-		header != PGSS_FILE_HEADER ||
 		fread(&pgver, sizeof(uint32), 1, file) != 1 ||
-		pgver != PGSS_PG_MAJOR_VERSION ||
 		fread(&num, sizeof(int32), 1, file) != 1)
-		goto error;
+		goto read_error;
+
+	if (header != PGSS_FILE_HEADER ||
+		pgver != PGSS_PG_MAJOR_VERSION)
+		goto data_error;
 
 	for (i = 0; i < num; i++)
 	{
 		pgssEntry	temp;
 		pgssEntry  *entry;
+		Size		query_offset;
 
-		if (fread(&temp, offsetof(pgssEntry, mutex), 1, file) != 1)
-			goto error;
+		if (fread(&temp, sizeof(pgssEntry), 1, file) != 1)
+			goto read_error;
 
 		/* Encoding is the only field we can easily sanity-check */
-		if (!PG_VALID_BE_ENCODING(temp.key.encoding))
-			goto error;
+		if (!PG_VALID_BE_ENCODING(temp.encoding))
+			goto data_error;
 
-		/* Previous incarnation might have had a larger query_size */
+		/* Resize buffer as needed */
 		if (temp.query_len >= buffer_size)
 		{
-			buffer = (char *) repalloc(buffer, temp.query_len + 1);
-			buffer_size = temp.query_len + 1;
+			buffer_size = Max(buffer_size * 2, temp.query_len + 1);
+			buffer = repalloc(buffer, buffer_size);
 		}
 
-		if (fread(buffer, 1, temp.query_len, file) != temp.query_len)
-			goto error;
+		if (fread(buffer, 1, temp.query_len + 1, file) != temp.query_len + 1)
+			goto read_error;
+
+		/* Should have a trailing null, but let's make sure */
 		buffer[temp.query_len] = '\0';
 
 		/* Skip loading "sticky" entries */
 		if (temp.counters.calls == 0)
 			continue;
 
-		/* Clip to available length if needed */
-		if (temp.query_len >= query_size)
-			temp.query_len = pg_encoding_mbcliplen(temp.key.encoding,
-												   buffer,
-												   temp.query_len,
-												   query_size - 1);
+		/* Store the query text */
+		query_offset = pgss->extent;
+		if (fwrite(buffer, 1, temp.query_len + 1, qfile) != temp.query_len + 1)
+			goto write_error;
+		pgss->extent += temp.query_len + 1;
 
 		/* make the hashtable entry (discards old entries if too many) */
-		entry = entry_alloc(&temp.key, buffer, temp.query_len, false);
+		entry = entry_alloc(&temp.key, query_offset, temp.query_len,
+							temp.encoding,
+							false);
 
 		/* copy in the actual stats */
 		entry->counters = temp.counters;
@@ -526,26 +607,56 @@ pgss_shmem_startup(void)
 
 	pfree(buffer);
 	FreeFile(file);
+	FreeFile(qfile);
 
 	/*
-	 * Remove the file so it's not included in backups/replication slaves,
-	 * etc. A new file will be written on next shutdown.
+	 * Remove the persisted stats file so it's not included in
+	 * backups/replication slaves, etc.  A new file will be written on next
+	 * shutdown.
+	 *
+	 * Note: it's okay if the PGSS_TEXT_FILE is included in a basebackup,
+	 * because we remove that file on startup; it acts inversely to
+	 * PGSS_DUMP_FILE, in that it is only supposed to be around when the
+	 * server is running, whereas PGSS_DUMP_FILE is only supposed to be around
+	 * when the server is not running.	Leaving the file creates no danger of
+	 * a newly restored database having a spurious record of execution costs,
+	 * which is what we're really concerned about here.
 	 */
 	unlink(PGSS_DUMP_FILE);
 
 	return;
 
-error:
+read_error:
 	ereport(LOG,
 			(errcode_for_file_access(),
 			 errmsg("could not read pg_stat_statement file \"%s\": %m",
 					PGSS_DUMP_FILE)));
+	goto fail;
+data_error:
+	ereport(LOG,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("ignoring invalid data in pg_stat_statement file \"%s\"",
+					PGSS_DUMP_FILE)));
+	goto fail;
+write_error:
+	ereport(LOG,
+			(errcode_for_file_access(),
+			 errmsg("could not write pg_stat_statement file \"%s\": %m",
+					PGSS_TEXT_FILE)));
+fail:
 	if (buffer)
 		pfree(buffer);
 	if (file)
 		FreeFile(file);
+	if (qfile)
+		FreeFile(qfile);
 	/* If possible, throw away the bogus file; ignore any error */
 	unlink(PGSS_DUMP_FILE);
+
+	/*
+	 * Don't unlink PGSS_TEXT_FILE here; it should always be around while the
+	 * server is running with pg_stat_statements enabled
+	 */
 }
 
 /*
@@ -558,6 +669,8 @@ static void
 pgss_shmem_shutdown(int code, Datum arg)
 {
 	FILE	   *file;
+	char	   *qbuffer = NULL;
+	Size		qbuffer_size = 0;
 	HASH_SEQ_STATUS hash_seq;
 	int32		num_entries;
 	pgssEntry  *entry;
@@ -586,15 +699,35 @@ pgss_shmem_shutdown(int code, Datum arg)
 	if (fwrite(&num_entries, sizeof(int32), 1, file) != 1)
 		goto error;
 
+	qbuffer = qtext_load_file(&qbuffer_size);
+	if (qbuffer == NULL)
+		goto error;
+
+	/*
+	 * When serializing to disk, we store query texts immediately after their
+	 * entry data.	Any orphaned query texts are thereby excluded.
+	 */
 	hash_seq_init(&hash_seq, pgss_hash);
 	while ((entry = hash_seq_search(&hash_seq)) != NULL)
 	{
 		int			len = entry->query_len;
+		char	   *qstr = qtext_fetch(entry->query_offset, len,
+									   qbuffer, qbuffer_size);
 
-		if (fwrite(entry, offsetof(pgssEntry, mutex), 1, file) != 1 ||
-			fwrite(entry->query, 1, len, file) != len)
+		if (qstr == NULL)
+			continue;			/* Ignore any entries with bogus texts */
+
+		if (fwrite(entry, sizeof(pgssEntry), 1, file) != 1 ||
+			fwrite(qstr, 1, len + 1, file) != len + 1)
+		{
+			/* note: we assume hash_seq_term won't change errno */
+			hash_seq_term(&hash_seq);
 			goto error;
+		}
 	}
+
+	free(qbuffer);
+	qbuffer = NULL;
 
 	if (FreeFile(file))
 	{
@@ -603,13 +736,16 @@ pgss_shmem_shutdown(int code, Datum arg)
 	}
 
 	/*
-	 * Rename file into place, so we atomically replace the old one.
+	 * Rename file into place, so we atomically replace any old one.
 	 */
 	if (rename(PGSS_DUMP_FILE ".tmp", PGSS_DUMP_FILE) != 0)
 		ereport(LOG,
 				(errcode_for_file_access(),
 				 errmsg("could not rename pg_stat_statement file \"%s\": %m",
 						PGSS_DUMP_FILE ".tmp")));
+
+	/* Unlink query-texts file; it's not needed while shutdown */
+	unlink(PGSS_TEXT_FILE);
 
 	return;
 
@@ -618,9 +754,12 @@ error:
 			(errcode_for_file_access(),
 			 errmsg("could not write pg_stat_statement file \"%s\": %m",
 					PGSS_DUMP_FILE ".tmp")));
+	if (qbuffer)
+		free(qbuffer);
 	if (file)
 		FreeFile(file);
 	unlink(PGSS_DUMP_FILE ".tmp");
+	unlink(PGSS_TEXT_FILE);
 }
 
 /*
@@ -916,7 +1055,6 @@ pgss_hash_fn(const void *key, Size keysize)
 {
 	const pgssHashKey *k = (const pgssHashKey *) key;
 
-	/* we don't bother to include encoding in the hash */
 	return hash_uint32((uint32) k->userid) ^
 		hash_uint32((uint32) k->dbid) ^
 		hash_uint32((uint32) k->queryid);
@@ -933,7 +1071,6 @@ pgss_match_fn(const void *key1, const void *key2, Size keysize)
 
 	if (k1->userid == k2->userid &&
 		k1->dbid == k2->dbid &&
-		k1->encoding == k2->encoding &&
 		k1->queryid == k2->queryid)
 		return 0;
 	else
@@ -967,6 +1104,8 @@ pgss_store(const char *query, uint32 queryId,
 	pgssHashKey key;
 	pgssEntry  *entry;
 	char	   *norm_query = NULL;
+	int			encoding = GetDatabaseEncoding();
+	int			query_len;
 
 	Assert(query != NULL);
 
@@ -974,10 +1113,11 @@ pgss_store(const char *query, uint32 queryId,
 	if (!pgss || !pgss_hash)
 		return;
 
+	query_len = strlen(query);
+
 	/* Set up key for hashtable search */
 	key.userid = GetUserId();
 	key.dbid = MyDatabaseId;
-	key.encoding = GetDatabaseEncoding();
 	key.queryid = queryId;
 
 	/* Lookup the hash table entry with shared lock. */
@@ -988,45 +1128,64 @@ pgss_store(const char *query, uint32 queryId,
 	/* Create new entry, if not present */
 	if (!entry)
 	{
-		int			query_len;
+		Size		query_offset;
+		int			gc_count;
+		bool		stored;
+		bool		do_gc;
 
 		/*
-		 * We'll need exclusive lock to make a new entry.  There is no point
-		 * in holding shared lock while we normalize the string, though.
+		 * Create a new, normalized query string if caller asked.  We don't
+		 * need to hold the lock while doing this work.  (Note: in any case,
+		 * it's possible that someone else creates a duplicate hashtable entry
+		 * in the interval where we don't hold the lock below.  That case is
+		 * handled by entry_alloc.)
 		 */
-		LWLockRelease(pgss->lock);
-
-		query_len = strlen(query);
-
 		if (jstate)
 		{
-			/* Normalize the string if enabled */
+			LWLockRelease(pgss->lock);
 			norm_query = generate_normalized_query(jstate, query,
 												   &query_len,
-												   key.encoding);
-
-			/* Acquire exclusive lock as required by entry_alloc() */
-			LWLockAcquire(pgss->lock, LW_EXCLUSIVE);
-
-			entry = entry_alloc(&key, norm_query, query_len, true);
+												   encoding);
+			LWLockAcquire(pgss->lock, LW_SHARED);
 		}
-		else
-		{
-			/*
-			 * We're just going to store the query string as-is; but we have
-			 * to truncate it if over-length.
-			 */
-			if (query_len >= pgss->query_size)
-				query_len = pg_encoding_mbcliplen(key.encoding,
-												  query,
-												  query_len,
-												  pgss->query_size - 1);
 
-			/* Acquire exclusive lock as required by entry_alloc() */
-			LWLockAcquire(pgss->lock, LW_EXCLUSIVE);
+		/* Append new query text to file with only shared lock held */
+		stored = qtext_store(norm_query ? norm_query : query, query_len,
+							 &query_offset, &gc_count);
 
-			entry = entry_alloc(&key, query, query_len, false);
-		}
+		/*
+		 * Determine whether we need to garbage collect external query texts
+		 * while the shared lock is still held.  This micro-optimization
+		 * avoids taking the time to decide this while holding exclusive lock.
+		 */
+		do_gc = need_gc_qtexts();
+
+		/* Need exclusive lock to make a new hashtable entry - promote */
+		LWLockRelease(pgss->lock);
+		LWLockAcquire(pgss->lock, LW_EXCLUSIVE);
+
+		/*
+		 * A garbage collection may have occurred while we weren't holding the
+		 * lock.  In the unlikely event that this happens, the query text we
+		 * stored above will have been garbage collected, so write it again.
+		 * This should be infrequent enough that doing it while holding
+		 * exclusive lock isn't a performance problem.
+		 */
+		if (!stored || pgss->gc_count != gc_count)
+			stored = qtext_store(norm_query ? norm_query : query, query_len,
+								 &query_offset, NULL);
+
+		/* If we failed to write to the text file, give up */
+		if (!stored)
+			goto done;
+
+		/* OK to create a new hashtable entry */
+		entry = entry_alloc(&key, query_offset, query_len, encoding,
+							jstate != NULL);
+
+		/* If needed, perform garbage collection while exclusive lock held */
+		if (do_gc)
+			gc_qtexts();
 	}
 
 	/* Increment the counts, except when jstate is not NULL */
@@ -1064,9 +1223,10 @@ pgss_store(const char *query, uint32 queryId,
 		SpinLockRelease(&e->mutex);
 	}
 
+done:
 	LWLockRelease(pgss->lock);
 
-	/* We postpone this pfree until we're out of the lock */
+	/* We postpone this clean-up until we're out of the lock */
 	if (norm_query)
 		pfree(norm_query);
 }
@@ -1085,15 +1245,50 @@ pg_stat_statements_reset(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 }
 
+/* Number of output arguments (columns) for various API versions */
 #define PG_STAT_STATEMENTS_COLS_V1_0	14
 #define PG_STAT_STATEMENTS_COLS_V1_1	18
-#define PG_STAT_STATEMENTS_COLS			19
+#define PG_STAT_STATEMENTS_COLS_V1_2	19
+#define PG_STAT_STATEMENTS_COLS			19		/* maximum of above */
 
 /*
  * Retrieve statement statistics.
+ *
+ * The SQL API of this function has changed multiple times, and will likely
+ * do so again in future.  To support the case where a newer version of this
+ * loadable module is being used with an old SQL declaration of the function,
+ * we continue to support the older API versions.  For 1.2 and later, the
+ * expected API version is identified by embedding it in the C name of the
+ * function.  Unfortunately we weren't bright enough to do that for 1.1.
+ */
+Datum
+pg_stat_statements_1_2(PG_FUNCTION_ARGS)
+{
+	bool		showtext = PG_GETARG_BOOL(0);
+
+	pg_stat_statements_internal(fcinfo, PGSS_V1_2, showtext);
+
+	return (Datum) 0;
+}
+
+/*
+ * Legacy entry point for pg_stat_statements() API versions 1.0 and 1.1.
+ * This can be removed someday, perhaps.
  */
 Datum
 pg_stat_statements(PG_FUNCTION_ARGS)
+{
+	/* If it's really API 1.1, we'll figure that out below */
+	pg_stat_statements_internal(fcinfo, PGSS_V1_0, true);
+
+	return (Datum) 0;
+}
+
+/* Common code for all versions of pg_stat_statements() */
+static void
+pg_stat_statements_internal(FunctionCallInfo fcinfo,
+							pgssVersion api_version,
+							bool showtext)
 {
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	TupleDesc	tupdesc;
@@ -1102,10 +1297,14 @@ pg_stat_statements(PG_FUNCTION_ARGS)
 	MemoryContext oldcontext;
 	Oid			userid = GetUserId();
 	bool		is_superuser = superuser();
+	char	   *qbuffer = NULL;
+	Size		qbuffer_size = 0;
+	Size		extent = 0;
+	int			gc_count = 0;
 	HASH_SEQ_STATUS hash_seq;
 	pgssEntry  *entry;
-	pgssVersion detected_version;
 
+	/* hash table must exist already */
 	if (!pgss || !pgss_hash)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
@@ -1122,27 +1321,38 @@ pg_stat_statements(PG_FUNCTION_ARGS)
 				 errmsg("materialize mode required, but it is not " \
 						"allowed in this context")));
 
+	/* Switch into long-lived context to construct returned data structures */
+	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+
 	/* Build a tuple descriptor for our result type */
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 
+	/*
+	 * Check we have the expected number of output arguments.  Aside from
+	 * being a good safety check, we need a kluge here to detect API version
+	 * 1.1, which was wedged into the code in an ill-considered way.
+	 */
 	switch (tupdesc->natts)
 	{
 		case PG_STAT_STATEMENTS_COLS_V1_0:
-			detected_version = PGSS_V1_0;
+			if (api_version != PGSS_V1_0)
+				elog(ERROR, "incorrect number of output arguments");
 			break;
 		case PG_STAT_STATEMENTS_COLS_V1_1:
-			detected_version = PGSS_V1_1;
+			/* pg_stat_statements() should have told us 1.0 */
+			if (api_version != PGSS_V1_0)
+				elog(ERROR, "incorrect number of output arguments");
+			api_version = PGSS_V1_1;
 			break;
-		case PG_STAT_STATEMENTS_COLS:
-			detected_version = PGSS_V1_2;
+		case PG_STAT_STATEMENTS_COLS_V1_2:
+			if (api_version != PGSS_V1_2)
+				elog(ERROR, "incorrect number of output arguments");
 			break;
 		default:
-			elog(ERROR, "pgss version unrecognized from tuple descriptor");
+			elog(ERROR, "incorrect number of output arguments");
 	}
-
-	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-	oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
 	tupstore = tuplestore_begin_heap(true, false, work_mem);
 	rsinfo->returnMode = SFRM_Materialize;
@@ -1151,7 +1361,70 @@ pg_stat_statements(PG_FUNCTION_ARGS)
 
 	MemoryContextSwitchTo(oldcontext);
 
+	/*
+	 * We'd like to load the query text file (if needed) while not holding any
+	 * lock on pgss->lock.	In the worst case we'll have to do this again
+	 * after we have the lock, but it's unlikely enough to make this a win
+	 * despite occasional duplicated work.	We need to reload if anybody
+	 * writes to the file (either a retail qtext_store(), or a garbage
+	 * collection) between this point and where we've gotten shared lock.  If
+	 * a qtext_store is actually in progress when we look, we might as well
+	 * skip the speculative load entirely.
+	 */
+	if (showtext)
+	{
+		int			n_writers;
+
+		/* Take the mutex so we can examine variables */
+		{
+			volatile pgssSharedState *s = (volatile pgssSharedState *) pgss;
+
+			SpinLockAcquire(&s->mutex);
+			extent = s->extent;
+			n_writers = s->n_writers;
+			gc_count = s->gc_count;
+			SpinLockRelease(&s->mutex);
+		}
+
+		/* No point in loading file now if there are active writers */
+		if (n_writers == 0)
+			qbuffer = qtext_load_file(&qbuffer_size);
+	}
+
+	/*
+	 * Get shared lock, load or reload the query text file if we must, and
+	 * iterate over the hashtable entries.
+	 *
+	 * With a large hash table, we might be holding the lock rather longer
+	 * than one could wish.  However, this only blocks creation of new hash
+	 * table entries, and the larger the hash table the less likely that is to
+	 * be needed.  So we can hope this is okay.  Perhaps someday we'll decide
+	 * we need to partition the hash table to limit the time spent holding any
+	 * one lock.
+	 */
 	LWLockAcquire(pgss->lock, LW_SHARED);
+
+	if (showtext)
+	{
+		/*
+		 * Here it is safe to examine extent and gc_count without taking the
+		 * mutex.  Note that although other processes might change
+		 * pgss->extent just after we look at it, the strings they then write
+		 * into the file cannot yet be referenced in the hashtable, so we
+		 * don't care whether we see them or not.
+		 *
+		 * If qtext_load_file fails, we just press on; we'll return NULL for
+		 * every query text.
+		 */
+		if (qbuffer == NULL ||
+			pgss->extent != extent ||
+			pgss->gc_count != gc_count)
+		{
+			if (qbuffer)
+				free(qbuffer);
+			qbuffer = qtext_load_file(&qbuffer_size);
+		}
+	}
 
 	hash_seq_init(&hash_seq, pgss_hash);
 	while ((entry = hash_seq_search(&hash_seq)) != NULL)
@@ -1170,26 +1443,57 @@ pg_stat_statements(PG_FUNCTION_ARGS)
 
 		if (is_superuser || entry->key.userid == userid)
 		{
-			char	   *qstr;
-
-			if (detected_version >= PGSS_V1_2)
+			if (api_version >= PGSS_V1_2)
 				values[i++] = Int64GetDatumFast(queryid);
 
-			qstr = (char *)
-				pg_do_encoding_conversion((unsigned char *) entry->query,
-										  entry->query_len,
-										  entry->key.encoding,
-										  GetDatabaseEncoding());
-			values[i++] = CStringGetTextDatum(qstr);
-			if (qstr != entry->query)
-				pfree(qstr);
+			if (showtext)
+			{
+				char	   *qstr = qtext_fetch(entry->query_offset,
+											   entry->query_len,
+											   qbuffer,
+											   qbuffer_size);
+
+				if (qstr)
+				{
+					char	   *enc;
+
+					enc = (char *)
+						pg_do_encoding_conversion((unsigned char *) qstr,
+												  entry->query_len,
+												  entry->encoding,
+												  GetDatabaseEncoding());
+
+					values[i++] = CStringGetTextDatum(enc);
+
+					if (enc != qstr)
+						pfree(enc);
+				}
+				else
+				{
+					/* Just return a null if we fail to find the text */
+					nulls[i++] = true;
+				}
+			}
+			else
+			{
+				/* Query text not requested */
+				nulls[i++] = true;
+			}
 		}
 		else
 		{
-			if (detected_version >= PGSS_V1_2)
+			/* Don't show queryid */
+			if (api_version >= PGSS_V1_2)
 				nulls[i++] = true;
 
-			values[i++] = CStringGetTextDatum("<insufficient privilege>");
+			/*
+			 * Don't show query text, but hint as to the reason for not doing
+			 * so if it was requested
+			 */
+			if (showtext)
+				values[i++] = CStringGetTextDatum("<insufficient privilege>");
+			else
+				nulls[i++] = true;
 		}
 
 		/* copy counters to a local variable to keep locking time short */
@@ -1210,37 +1514,37 @@ pg_stat_statements(PG_FUNCTION_ARGS)
 		values[i++] = Int64GetDatumFast(tmp.rows);
 		values[i++] = Int64GetDatumFast(tmp.shared_blks_hit);
 		values[i++] = Int64GetDatumFast(tmp.shared_blks_read);
-		if (detected_version >= PGSS_V1_1)
+		if (api_version >= PGSS_V1_1)
 			values[i++] = Int64GetDatumFast(tmp.shared_blks_dirtied);
 		values[i++] = Int64GetDatumFast(tmp.shared_blks_written);
 		values[i++] = Int64GetDatumFast(tmp.local_blks_hit);
 		values[i++] = Int64GetDatumFast(tmp.local_blks_read);
-		if (detected_version >= PGSS_V1_1)
+		if (api_version >= PGSS_V1_1)
 			values[i++] = Int64GetDatumFast(tmp.local_blks_dirtied);
 		values[i++] = Int64GetDatumFast(tmp.local_blks_written);
 		values[i++] = Int64GetDatumFast(tmp.temp_blks_read);
 		values[i++] = Int64GetDatumFast(tmp.temp_blks_written);
-		if (detected_version >= PGSS_V1_1)
+		if (api_version >= PGSS_V1_1)
 		{
 			values[i++] = Float8GetDatumFast(tmp.blk_read_time);
 			values[i++] = Float8GetDatumFast(tmp.blk_write_time);
 		}
 
-		Assert(i == (detected_version == PGSS_V1_0?
-						 PG_STAT_STATEMENTS_COLS_V1_0:
-					 detected_version == PGSS_V1_1?
-						 PG_STAT_STATEMENTS_COLS_V1_1:
-					 PG_STAT_STATEMENTS_COLS));
+		Assert(i == (api_version == PGSS_V1_0 ? PG_STAT_STATEMENTS_COLS_V1_0 :
+					 api_version == PGSS_V1_1 ? PG_STAT_STATEMENTS_COLS_V1_1 :
+					 api_version == PGSS_V1_2 ? PG_STAT_STATEMENTS_COLS_V1_2 :
+					 -1 /* fail if you forget to update this assert */ ));
 
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}
 
+	/* clean up and return the tuplestore */
 	LWLockRelease(pgss->lock);
 
-	/* clean up and return the tuplestore */
-	tuplestore_donestoring(tupstore);
+	if (qbuffer)
+		free(qbuffer);
 
-	return (Datum) 0;
+	tuplestore_donestoring(tupstore);
 }
 
 /*
@@ -1250,11 +1554,9 @@ static Size
 pgss_memsize(void)
 {
 	Size		size;
-	Size		entrysize;
 
 	size = MAXALIGN(sizeof(pgssSharedState));
-	entrysize = offsetof(pgssEntry, query) +pgstat_track_activity_query_size;
-	size = add_size(size, hash_estimate_size(pgss_max, entrysize));
+	size = add_size(size, hash_estimate_size(pgss_max, sizeof(pgssEntry)));
 
 	return size;
 }
@@ -1277,7 +1579,8 @@ pgss_memsize(void)
  * have made the entry while we waited to get exclusive lock.
  */
 static pgssEntry *
-entry_alloc(pgssHashKey *key, const char *query, int query_len, bool sticky)
+entry_alloc(pgssHashKey *key, Size query_offset, int query_len, int encoding,
+			bool sticky)
 {
 	pgssEntry  *entry;
 	bool		found;
@@ -1299,11 +1602,11 @@ entry_alloc(pgssHashKey *key, const char *query, int query_len, bool sticky)
 		entry->counters.usage = sticky ? pgss->cur_median_usage : USAGE_INIT;
 		/* re-initialize the mutex each time ... we assume no one using it */
 		SpinLockInit(&entry->mutex);
-		/* ... and don't forget the query text */
-		Assert(query_len >= 0 && query_len < pgss->query_size);
+		/* ... and don't forget the query text metadata */
+		Assert(query_len >= 0);
+		entry->query_offset = query_offset;
 		entry->query_len = query_len;
-		memcpy(entry->query, query, query_len);
-		entry->query[query_len] = '\0';
+		entry->encoding = encoding;
 	}
 
 	return entry;
@@ -1338,6 +1641,7 @@ entry_dealloc(void)
 	pgssEntry  *entry;
 	int			nvictims;
 	int			i;
+	Size		totlen = 0;
 
 	/*
 	 * Sort entries by usage and deallocate USAGE_DEALLOC_PERCENT of them.
@@ -1357,13 +1661,19 @@ entry_dealloc(void)
 			entry->counters.usage *= STICKY_DECREASE_FACTOR;
 		else
 			entry->counters.usage *= USAGE_DECREASE_FACTOR;
+		/* Accumulate total size, too. */
+		totlen += entry->query_len + 1;
 	}
 
 	qsort(entries, i, sizeof(pgssEntry *), entry_cmp);
 
-	/* Also, record the (approximate) median usage */
 	if (i > 0)
+	{
+		/* Record the (approximate) median usage */
 		pgss->cur_median_usage = entries[i / 2]->counters.usage;
+		/* Record the mean query length */
+		pgss->mean_query_len = totlen / i;
+	}
 
 	nvictims = Max(10, i * USAGE_DEALLOC_PERCENT / 100);
 	nvictims = Min(nvictims, i);
@@ -1377,6 +1687,396 @@ entry_dealloc(void)
 }
 
 /*
+ * Given a null-terminated string, allocate a new entry in the external query
+ * text file and store the string there.
+ *
+ * Although we could compute the string length via strlen(), callers already
+ * have it handy, so we require them to pass it too.
+ *
+ * If successful, returns true, and stores the new entry's offset in the file
+ * into *query_offset.	Also, if gc_count isn't NULL, *gc_count is set to the
+ * number of garbage collections that have occurred so far.
+ *
+ * On failure, returns false.
+ *
+ * At least a shared lock on pgss->lock must be held by the caller, so as
+ * to prevent a concurrent garbage collection.	Share-lock-holding callers
+ * should pass a gc_count pointer to obtain the number of garbage collections,
+ * so that they can recheck the count after obtaining exclusive lock to
+ * detect whether a garbage collection occurred (and removed this entry).
+ */
+static bool
+qtext_store(const char *query, int query_len,
+			Size *query_offset, int *gc_count)
+{
+	Size		off;
+	int			fd;
+
+	/*
+	 * We use a spinlock to protect extent/n_writers/gc_count, so that
+	 * multiple processes may execute this function concurrently.
+	 */
+	{
+		volatile pgssSharedState *s = (volatile pgssSharedState *) pgss;
+
+		SpinLockAcquire(&s->mutex);
+		off = s->extent;
+		s->extent += query_len + 1;
+		s->n_writers++;
+		if (gc_count)
+			*gc_count = s->gc_count;
+		SpinLockRelease(&s->mutex);
+	}
+
+	*query_offset = off;
+
+	/* Now write the data into the successfully-reserved part of the file */
+	fd = OpenTransientFile(PGSS_TEXT_FILE, O_RDWR | O_CREAT | PG_BINARY,
+						   S_IRUSR | S_IWUSR);
+	if (fd < 0)
+		goto error;
+
+	if (lseek(fd, off, SEEK_SET) != off)
+		goto error;
+
+	if (write(fd, query, query_len + 1) != query_len + 1)
+		goto error;
+
+	CloseTransientFile(fd);
+
+	/* Mark our write complete */
+	{
+		volatile pgssSharedState *s = (volatile pgssSharedState *) pgss;
+
+		SpinLockAcquire(&s->mutex);
+		s->n_writers--;
+		SpinLockRelease(&s->mutex);
+	}
+
+	return true;
+
+error:
+	ereport(LOG,
+			(errcode_for_file_access(),
+			 errmsg("could not write pg_stat_statement file \"%s\": %m",
+					PGSS_TEXT_FILE)));
+
+	if (fd >= 0)
+		CloseTransientFile(fd);
+
+	/* Mark our write complete */
+	{
+		volatile pgssSharedState *s = (volatile pgssSharedState *) pgss;
+
+		SpinLockAcquire(&s->mutex);
+		s->n_writers--;
+		SpinLockRelease(&s->mutex);
+	}
+
+	return false;
+}
+
+/*
+ * Read the external query text file into a malloc'd buffer.
+ *
+ * Returns NULL (without throwing an error) if unable to read, eg
+ * file not there or insufficient memory.
+ *
+ * On success, the buffer size is also returned into *buffer_size.
+ *
+ * This can be called without any lock on pgss->lock, but in that case
+ * the caller is responsible for verifying that the result is sane.
+ */
+static char *
+qtext_load_file(Size *buffer_size)
+{
+	char	   *buf;
+	int			fd;
+	struct stat stat;
+
+	fd = OpenTransientFile(PGSS_TEXT_FILE, O_RDONLY | PG_BINARY, 0);
+	if (fd < 0)
+	{
+		if (errno != ENOENT)
+			ereport(LOG,
+					(errcode_for_file_access(),
+				   errmsg("could not read pg_stat_statement file \"%s\": %m",
+						  PGSS_TEXT_FILE)));
+		return NULL;
+	}
+
+	/* Get file length */
+	if (fstat(fd, &stat))
+	{
+		ereport(LOG,
+				(errcode_for_file_access(),
+				 errmsg("could not stat pg_stat_statement file \"%s\": %m",
+						PGSS_TEXT_FILE)));
+		CloseTransientFile(fd);
+		return NULL;
+	}
+
+	/* Allocate buffer; beware that off_t might be wider than size_t */
+	if (stat.st_size <= MaxAllocSize)
+		buf = (char *) malloc(stat.st_size);
+	else
+		buf = NULL;
+	if (buf == NULL)
+	{
+		ereport(LOG,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
+		CloseTransientFile(fd);
+		return NULL;
+	}
+
+	/*
+	 * OK, slurp in the file.  If we get a short read and errno doesn't get
+	 * set, the reason is probably that garbage collection truncated the file
+	 * since we did the fstat(), so we don't log a complaint --- but we don't
+	 * return the data, either, since it's most likely corrupt due to
+	 * concurrent writes from garbage collection.
+	 */
+	errno = 0;
+	if (read(fd, buf, stat.st_size) != stat.st_size)
+	{
+		if (errno)
+			ereport(LOG,
+					(errcode_for_file_access(),
+				   errmsg("could not read pg_stat_statement file \"%s\": %m",
+						  PGSS_TEXT_FILE)));
+		free(buf);
+		CloseTransientFile(fd);
+		return NULL;
+	}
+
+	CloseTransientFile(fd);
+
+	*buffer_size = stat.st_size;
+	return buf;
+}
+
+/*
+ * Locate a query text in the file image previously read by qtext_load_file().
+ *
+ * We validate the given offset/length, and return NULL if bogus.  Otherwise,
+ * the result points to a null-terminated string within the buffer.
+ */
+static char *
+qtext_fetch(Size query_offset, int query_len,
+			char *buffer, Size buffer_size)
+{
+	/* File read failed? */
+	if (buffer == NULL)
+		return NULL;
+	/* Bogus offset/length? */
+	if (query_len < 0 ||
+		query_offset + query_len >= buffer_size)
+		return NULL;
+	/* As a further sanity check, make sure there's a trailing null */
+	if (buffer[query_offset + query_len] != '\0')
+		return NULL;
+	/* Looks OK */
+	return buffer + query_offset;
+}
+
+/*
+ * Do we need to garbage-collect the external query text file?
+ *
+ * Caller should hold at least a shared lock on pgss->lock.
+ */
+static bool
+need_gc_qtexts(void)
+{
+	Size		extent;
+
+	/* Read shared extent pointer */
+	{
+		volatile pgssSharedState *s = (volatile pgssSharedState *) pgss;
+
+		SpinLockAcquire(&s->mutex);
+		extent = s->extent;
+		SpinLockRelease(&s->mutex);
+	}
+
+	/* Don't proceed if file does not exceed 512 bytes per possible entry */
+	if (extent < 512 * pgss_max)
+		return false;
+
+	/*
+	 * Don't proceed if file is less than about 50% bloat.  Nothing can or
+	 * should be done in the event of unusually large query texts accounting
+	 * for file's large size.  We go to the trouble of maintaining the mean
+	 * query length in order to prevent garbage collection from thrashing
+	 * uselessly.
+	 */
+	if (extent < pgss->mean_query_len * pgss_max * 2)
+		return false;
+
+	return true;
+}
+
+/*
+ * Garbage-collect orphaned query texts in external file.
+ *
+ * This won't be called often in the typical case, since it's likely that
+ * there won't be too much churn, and besides, a similar compaction process
+ * occurs when serializing to disk at shutdown or as part of resetting.
+ * Despite this, it seems prudent to plan for the edge case where the file
+ * becomes unreasonably large, with no other method of compaction likely to
+ * occur in the foreseeable future.
+ *
+ * The caller must hold an exclusive lock on pgss->lock.
+ */
+static void
+gc_qtexts(void)
+{
+	char	   *qbuffer;
+	Size		qbuffer_size;
+	FILE	   *qfile;
+	HASH_SEQ_STATUS hash_seq;
+	pgssEntry  *entry;
+	Size		extent;
+	int			nentries;
+
+	/*
+	 * When called from pgss_store, some other session might have proceeded
+	 * with garbage collection in the no-lock-held interim of lock strength
+	 * escalation.	Check once more that this is actually necessary.
+	 */
+	if (!need_gc_qtexts())
+		return;
+
+	/*
+	 * Load the old texts file.  If we fail (out of memory, for instance) just
+	 * skip the garbage collection.
+	 */
+	qbuffer = qtext_load_file(&qbuffer_size);
+	if (qbuffer == NULL)
+		return;
+
+	/*
+	 * We overwrite the query texts file in place, so as to reduce the risk of
+	 * an out-of-disk-space failure.  Since the file is guaranteed not to get
+	 * larger, this should always work on traditional filesystems; though we
+	 * could still lose on copy-on-write filesystems.
+	 */
+	qfile = AllocateFile(PGSS_TEXT_FILE, PG_BINARY_W);
+	if (qfile == NULL)
+	{
+		ereport(LOG,
+				(errcode_for_file_access(),
+				 errmsg("could not write pg_stat_statement file \"%s\": %m",
+						PGSS_TEXT_FILE)));
+		goto gc_fail;
+	}
+
+	extent = 0;
+	nentries = 0;
+
+	hash_seq_init(&hash_seq, pgss_hash);
+	while ((entry = hash_seq_search(&hash_seq)) != NULL)
+	{
+		int			query_len = entry->query_len;
+		char	   *qry = qtext_fetch(entry->query_offset,
+									  query_len,
+									  qbuffer,
+									  qbuffer_size);
+
+		if (qry == NULL)
+		{
+			/* Trouble ... drop the text */
+			entry->query_offset = 0;
+			entry->query_len = -1;
+			continue;
+		}
+
+		if (fwrite(qry, 1, query_len + 1, qfile) != query_len + 1)
+		{
+			ereport(LOG,
+					(errcode_for_file_access(),
+				  errmsg("could not write pg_stat_statement file \"%s\": %m",
+						 PGSS_TEXT_FILE)));
+			hash_seq_term(&hash_seq);
+			goto gc_fail;
+		}
+
+		entry->query_offset = extent;
+		extent += query_len + 1;
+		nentries++;
+	}
+
+	/*
+	 * Truncate away any now-unused space.	If this fails for some odd reason,
+	 * we log it, but there's no need to fail.
+	 */
+	if (ftruncate(fileno(qfile), extent) != 0)
+		ereport(LOG,
+				(errcode_for_file_access(),
+			   errmsg("could not truncate pg_stat_statement file \"%s\": %m",
+					  PGSS_TEXT_FILE)));
+
+	if (FreeFile(qfile))
+	{
+		ereport(LOG,
+				(errcode_for_file_access(),
+				 errmsg("could not write pg_stat_statement file \"%s\": %m",
+						PGSS_TEXT_FILE)));
+		qfile = NULL;
+		goto gc_fail;
+	}
+
+	elog(DEBUG1, "pgss gc of queries file shrunk size from %zu to %zu",
+		 pgss->extent, extent);
+
+	/* Reset the shared extent pointer */
+	pgss->extent = extent;
+
+	/*
+	 * Also update the mean query length, to be sure that need_gc_qtexts()
+	 * won't still think we have a problem.
+	 */
+	if (nentries > 0)
+		pgss->mean_query_len = extent / nentries;
+	else
+		pgss->mean_query_len = ASSUMED_LENGTH_INIT;
+
+	free(qbuffer);
+
+	/*
+	 * OK, count a garbage collection cycle.  (Note: even though we have
+	 * exclusive lock on pgss->lock, we must take pgss->mutex for this, since
+	 * other processes may examine gc_count while holding only the mutex.
+	 * Also, we have to advance the count *after* we've rewritten the file,
+	 * else other processes might not realize they read a stale file.)
+	 */
+	record_gc_qtexts();
+
+	return;
+
+gc_fail:
+	/* clean up resources */
+	if (qfile)
+		FreeFile(qfile);
+	if (qbuffer)
+		free(qbuffer);
+
+	/*
+	 * Since the contents of the external file are now uncertain, mark all
+	 * hashtable entries as having invalid texts.
+	 */
+	hash_seq_init(&hash_seq, pgss_hash);
+	while ((entry = hash_seq_search(&hash_seq)) != NULL)
+	{
+		entry->query_offset = 0;
+		entry->query_len = -1;
+	}
+
+	/* Seems like a good idea to bump the GC count even though we failed */
+	record_gc_qtexts();
+}
+
+/*
  * Release all entries.
  */
 static void
@@ -1384,6 +2084,7 @@ entry_reset(void)
 {
 	HASH_SEQ_STATUS hash_seq;
 	pgssEntry  *entry;
+	FILE	   *qfile;
 
 	LWLockAcquire(pgss->lock, LW_EXCLUSIVE);
 
@@ -1392,6 +2093,34 @@ entry_reset(void)
 	{
 		hash_search(pgss_hash, &entry->key, HASH_REMOVE, NULL);
 	}
+
+	/*
+	 * Write new empty query file, perhaps even creating a new one to recover
+	 * if the file was missing.
+	 */
+	qfile = AllocateFile(PGSS_TEXT_FILE, PG_BINARY_W);
+	if (qfile == NULL)
+	{
+		ereport(LOG,
+				(errcode_for_file_access(),
+				 errmsg("could not create pg_stat_statement file \"%s\": %m",
+						PGSS_TEXT_FILE)));
+		goto done;
+	}
+
+	/* If ftruncate fails, log it, but it's not a fatal problem */
+	if (ftruncate(fileno(qfile), 0) != 0)
+		ereport(LOG,
+				(errcode_for_file_access(),
+			   errmsg("could not truncate pg_stat_statement file \"%s\": %m",
+					  PGSS_TEXT_FILE)));
+
+	FreeFile(qfile);
+
+done:
+	pgss->extent = 0;
+	/* This counts as a query text garbage collection for our purposes */
+	record_gc_qtexts();
 
 	LWLockRelease(pgss->lock);
 }
@@ -1962,7 +2691,7 @@ RecordConstLocation(pgssJumbleState *jstate, int location)
  * *query_len_p contains the input string length, and is updated with
  * the result string length (which cannot be longer) on exit.
  *
- * Returns a palloc'd string, which is not necessarily null-terminated.
+ * Returns a palloc'd string.
  */
 static char *
 generate_normalized_query(pgssJumbleState *jstate, const char *query,
@@ -1970,7 +2699,6 @@ generate_normalized_query(pgssJumbleState *jstate, const char *query,
 {
 	char	   *norm_query;
 	int			query_len = *query_len_p;
-	int			max_output_len;
 	int			i,
 				len_to_wrt,		/* Length (in bytes) to write */
 				quer_loc = 0,	/* Source query byte location */
@@ -1984,9 +2712,8 @@ generate_normalized_query(pgssJumbleState *jstate, const char *query,
 	 */
 	fill_in_constant_lengths(jstate, query);
 
-	/* Allocate result buffer, ensuring we limit result to allowed size */
-	max_output_len = Min(query_len, pgss->query_size - 1);
-	norm_query = palloc(max_output_len);
+	/* Allocate result buffer */
+	norm_query = palloc(query_len + 1);
 
 	for (i = 0; i < jstate->clocations_count; i++)
 	{
@@ -2002,49 +2729,32 @@ generate_normalized_query(pgssJumbleState *jstate, const char *query,
 		/* Copy next chunk, or as much as will fit */
 		len_to_wrt = off - last_off;
 		len_to_wrt -= last_tok_len;
-		len_to_wrt = Min(len_to_wrt, max_output_len - n_quer_loc);
 
 		Assert(len_to_wrt >= 0);
 		memcpy(norm_query + n_quer_loc, query + quer_loc, len_to_wrt);
 		n_quer_loc += len_to_wrt;
 
-		if (n_quer_loc < max_output_len)
-			norm_query[n_quer_loc++] = '?';
+		norm_query[n_quer_loc++] = '?';
 
 		quer_loc = off + tok_len;
 		last_off = off;
 		last_tok_len = tok_len;
-
-		/* If we run out of space, might as well stop iterating */
-		if (n_quer_loc >= max_output_len)
-			break;
 	}
 
 	/*
 	 * We've copied up until the last ignorable constant.  Copy over the
-	 * remaining bytes of the original query string, or at least as much as
-	 * will fit.
+	 * remaining bytes of the original query string.
 	 */
 	len_to_wrt = query_len - quer_loc;
-	len_to_wrt = Min(len_to_wrt, max_output_len - n_quer_loc);
 
 	Assert(len_to_wrt >= 0);
 	memcpy(norm_query + n_quer_loc, query + quer_loc, len_to_wrt);
 	n_quer_loc += len_to_wrt;
 
-	/*
-	 * If we ran out of space, we need to do an encoding-aware truncation,
-	 * just to make sure we don't have an incomplete character at the end.
-	 */
-	if (n_quer_loc >= max_output_len)
-		query_len = pg_encoding_mbcliplen(encoding,
-										  norm_query,
-										  n_quer_loc,
-										  pgss->query_size - 1);
-	else
-		query_len = n_quer_loc;
+	Assert(n_quer_loc <= query_len);
+	norm_query[n_quer_loc] = '\0';
 
-	*query_len_p = query_len;
+	*query_len_p = n_quer_loc;
 	return norm_query;
 }
 

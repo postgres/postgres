@@ -62,14 +62,14 @@
       <entry><structfield>queryid</structfield></entry>
       <entry><type>bigint</type></entry>
       <entry></entry>
-      <entry>Internal hash identifier, computed from the entry's post-parse-analysis tree</entry>
+      <entry>Internal hash code, computed from the statement's parse tree</entry>
      </row>
 
      <row>
       <entry><structfield>query</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
-      <entry>Text of a representative statement (up to <xref linkend="guc-track-activity-query-size"> bytes)</entry>
+      <entry>Text of a representative statement</entry>
      </row>
 
      <row>
@@ -188,9 +188,10 @@
   </table>
 
   <para>
-   This view, and the function <function>pg_stat_statements_reset</>,
-   are available only in databases they have been specifically installed into
-   by installing the <literal>pg_stat_statements</> extension.
+   This view, and the functions <function>pg_stat_statements_reset</>
+   and <function>pg_stat_statements</>, are available only in
+   databases they have been specifically installed into by installing
+   the <literal>pg_stat_statements</> extension.
    However, statistics are tracked across all databases of the server
    whenever the <filename>pg_stat_statements</filename> module is loaded
    into the server, regardless of presence of the view.
@@ -242,36 +243,34 @@
 
   <para>
    Consumers of <literal>pg_stat_statements</> may wish to use
-   <structfield>queryid</> (perhaps in composite with
+   <structfield>queryid</> (perhaps in combination with
    <structfield>dbid</> and <structfield>userid</>) as a more stable
    and reliable identifier for each entry than its query text.
    However, it is important to understand that there are only limited
    guarantees around the stability of the <structfield>queryid</> hash
    value.  Since the identifier is derived from the
    post-parse-analysis tree, its value is a function of, among other
-   things, the internal identifiers that comprise this representation.
-   This has some counterintuitive implications.  For example, a query
-   against a table that is fingerprinted by
-   <literal>pg_stat_statements</> will appear distinct to a
-   subsequently executed query that a reasonable observer might judge
-   to be a non-distinct, if in the interim the table was dropped and
-   re-created.  The hashing process is sensitive to difference in
+   things, the internal object identifiers appearing in this representation.
+   This has some counterintuitive implications.  For example,
+   <literal>pg_stat_statements</> will consider two apparently-identical
+   queries to be distinct, if they reference a table that was dropped
+   and recreated between the executions of the two queries.
+   The hashing process is also sensitive to differences in
    machine architecture and other facets of the platform.
    Furthermore, it is not safe to assume that <structfield>queryid</>
    will be stable across major versions of <productname>PostgreSQL</>.
   </para>
 
   <para>
-   As a rule of thumb, an assumption of the stability or comparability
-   of <structfield>queryid</> values should be predicated on the
-   underlying catalog metadata and hash function implementation
-   details exactly matching.  Any two servers participating in any
-   variety of replication based on physical WAL-replay can be expected
+   As a rule of thumb, <structfield>queryid</> values can be assumed to be
+   stable and comparable only so long as the underlying server version and
+   catalog metadata details stay exactly the same.  Two servers
+   participating in replication based on physical WAL replay can be expected
    to have identical <structfield>queryid</> values for the same query.
-   Logical replication schemes do not have replicas comparable in all
-   relevant regards, and so <structfield>queryid</> will not be a
-   useful identifier for accumulating costs for the entire replica
-   set.  If in doubt, direct testing is recommended.
+   However, logical replication schemes do not promise to keep replicas
+   identical in all relevant details, so <structfield>queryid</> will
+   not be a useful identifier for accumulating costs across a set of logical
+   replicas.  If in doubt, direct testing is recommended.
   </para>
  </sect2>
 
@@ -297,6 +296,36 @@
     </listitem>
    </varlistentry>
 
+   <varlistentry>
+   <indexterm>
+    <primary>pg_stat_statements</primary>
+    <secondary>function</secondary>
+   </indexterm>
+
+    <term>
+     <function>pg_stat_statements(showtext boolean) returns setof record</function>
+    </term>
+
+    <listitem>
+     <para>
+      The <structname>pg_stat_statements</structname> view is defined in
+      terms of a function also named <function>pg_stat_statements</>.
+      It is possible for clients to call
+      the <function>pg_stat_statements</function> function directly, and by
+      specifying <literal>showtext := false</literal> have query text be
+      omitted (that is, the <literal>OUT</literal> argument that corresponds
+      to the view's <structfield>query</> column will return nulls).  This
+      feature is intended to support external tools that might wish to avoid
+      the overhead of repeatedly retrieving query texts of indeterminate
+      length.  Such tools can instead cache the first query text observed
+      for each entry themselves, since that is
+      all <filename>pg_stat_statements</> itself does, and then retrieve
+      query texts only as needed.  Since the server stores query texts in a
+      file, this approach may reduce physical I/O for repeated examination
+      of the <structname>pg_stat_statements</structname> data.
+     </para>
+    </listitem>
+   </varlistentry>
   </variablelist>
  </sect2>
 
@@ -316,7 +345,7 @@
       in the <structname>pg_stat_statements</> view).  If more distinct
       statements than that are observed, information about the least-executed
       statements is discarded.
-      The default value is 1000.
+      The default value is 5000.
       This parameter can only be set at server start.
      </para>
     </listitem>
@@ -378,9 +407,8 @@
   </variablelist>
 
   <para>
-   The module requires additional shared memory amounting to about
-   <varname>pg_stat_statements.max</varname> <literal>*</>
-   <xref linkend="guc-track-activity-query-size"> bytes.  Note that this
+   The module requires additional shared memory proportional to
+   <varname>pg_stat_statements.max</varname>.  Note that this
    memory is consumed whenever the module is loaded, even if
    <varname>pg_stat_statements.track</> is set to <literal>none</>.
   </para>

@@ -9,7 +9,7 @@ RETURNS void
 AS 'MODULE_PATHNAME'
 LANGUAGE C;
 
-CREATE FUNCTION pg_stat_statements(
+CREATE FUNCTION pg_stat_statements(IN showtext boolean,
     OUT userid oid,
     OUT dbid oid,
     OUT queryid bigint,
@@ -31,12 +31,12 @@ CREATE FUNCTION pg_stat_statements(
     OUT blk_write_time float8
 )
 RETURNS SETOF record
-AS 'MODULE_PATHNAME'
-LANGUAGE C;
+AS 'MODULE_PATHNAME', 'pg_stat_statements_1_2'
+LANGUAGE C STRICT VOLATILE;
 
 -- Register a view on the function for ease of use.
 CREATE VIEW pg_stat_statements AS
-  SELECT * FROM pg_stat_statements();
+  SELECT * FROM pg_stat_statements(true);
 
 GRANT SELECT ON pg_stat_statements TO PUBLIC;
 
