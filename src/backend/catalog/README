@@ -92,7 +92,7 @@ them.  Thus, the variable-length fields must all be at the end, and
 only the variable-length fields of a catalog tuple are permitted to be
 NULL.  For example, if you set pg_type.typrelid to be NULL, a
 piece of code will likely perform "typetup->typrelid" (or, worse,
-"typetyp->typelem", which follows typrelid).  This will result in
+"typetup->typelem", which follows typrelid).  This will result in
 random errors or even segmentation violations.  Hence, do NOT insert
 catalog tuples that contain NULL attributes except in their
 variable-length portions!  (The bootstrapping code is fairly good about
