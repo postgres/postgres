@@ -6670,7 +6670,7 @@ AlterSystemSetConfigFile(AlterSystemStmt * altersysstmt)
 	canonicalize_path(AutoConfFileName);
 	snprintf(AutoConfTmpFileName, sizeof(AutoConfTmpFileName), "%s.%s",
 			 AutoConfFileName,
-			 "temp");
+			 "tmp");
 
 	/*
 	 * One backend is allowed to operate on file PG_AUTOCONF_FILENAME, to
