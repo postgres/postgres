@@ -149,7 +149,7 @@ ProcessConfigFile(GucContext context)
 	}
 
 	/*
-	 * Parse postgresql.auto.conf file after postgresql.conf to replace
+	 * Parse file PG_AUTOCONF_FILENAME after postgresql.conf to replace
 	 * parameters set by ALTER SYSTEM command. This file is present in
 	 * data directory, however when called during initdb data directory is not
 	 * set till this point, so use ConfigFile path which will be same.
