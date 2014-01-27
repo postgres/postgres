@@ -182,8 +182,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	 * Now initialize LWLocks, which do shared memory allocation and are
 	 * needed for InitShmemIndex.
 	 */
-	if (!IsUnderPostmaster)
-		CreateLWLocks();
+	CreateLWLocks();
 
 	/*
 	 * Set up shmem.c index hashtable

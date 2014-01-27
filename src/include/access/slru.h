@@ -55,7 +55,7 @@ typedef enum
  */
 typedef struct SlruSharedData
 {
-	LWLockId	ControlLock;
+	LWLock     *ControlLock;
 
 	/* Number of buffers managed by this SLRU structure */
 	int			num_slots;
@@ -69,7 +69,7 @@ typedef struct SlruSharedData
 	bool	   *page_dirty;
 	int		   *page_number;
 	int		   *page_lru_count;
-	LWLockId   *buffer_locks;
+	LWLock    **buffer_locks;
 
 	/*
 	 * Optional array of WAL flush LSNs associated with entries in the SLRU
@@ -136,7 +136,7 @@ typedef SlruCtlData *SlruCtl;
 
 extern Size SimpleLruShmemSize(int nslots, int nlsns);
 extern void SimpleLruInit(SlruCtl ctl, const char *name, int nslots, int nlsns,
-			  LWLockId ctllock, const char *subdir);
+			  LWLock *ctllock, const char *subdir);
 extern int	SimpleLruZeroPage(SlruCtl ctl, int pageno);
 extern int SimpleLruReadPage(SlruCtl ctl, int pageno, bool write_ok,
 				  TransactionId xid);

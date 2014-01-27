@@ -565,7 +565,7 @@ LockHasWaiters(const LOCKTAG *locktag, LOCKMODE lockmode, bool sessionLock)
 	LOCALLOCK  *locallock;
 	LOCK	   *lock;
 	PROCLOCK   *proclock;
-	LWLockId	partitionLock;
+	LWLock	   *partitionLock;
 	bool		hasWaiters = false;
 
 	if (lockmethodid <= 0 || lockmethodid >= lengthof(LockMethods))
@@ -702,7 +702,7 @@ LockAcquireExtended(const LOCKTAG *locktag,
 	bool		found;
 	ResourceOwner owner;
 	uint32		hashcode;
-	LWLockId	partitionLock;
+	LWLock	   *partitionLock;
 	int			status;
 	bool		log_lock = false;
 
@@ -1744,7 +1744,7 @@ LockRelease(const LOCKTAG *locktag, LOCKMODE lockmode, bool sessionLock)
 	LOCALLOCK  *locallock;
 	LOCK	   *lock;
 	PROCLOCK   *proclock;
-	LWLockId	partitionLock;
+	LWLock	   *partitionLock;
 	bool		wakeupNeeded;
 
 	if (lockmethodid <= 0 || lockmethodid >= lengthof(LockMethods))
@@ -2096,9 +2096,11 @@ LockReleaseAll(LOCKMETHODID lockmethodid, bool allLocks)
 	 */
 	for (partition = 0; partition < NUM_LOCK_PARTITIONS; partition++)
 	{
-		LWLockId	partitionLock = FirstLockMgrLock + partition;
+		LWLock	   *partitionLock;
 		SHM_QUEUE  *procLocks = &(MyProc->myProcLocks[partition]);
 		PROCLOCK   *nextplock;
+
+		partitionLock = LockHashPartitionLockByIndex(partition);
 
 		/*
 		 * If the proclock list for this partition is empty, we can skip
@@ -2475,7 +2477,7 @@ static bool
 FastPathTransferRelationLocks(LockMethod lockMethodTable, const LOCKTAG *locktag,
 							  uint32 hashcode)
 {
-	LWLockId	partitionLock = LockHashPartitionLock(hashcode);
+	LWLock	   *partitionLock = LockHashPartitionLock(hashcode);
 	Oid			relid = locktag->locktag_field2;
 	uint32		i;
 
@@ -2565,7 +2567,7 @@ FastPathGetRelationLockEntry(LOCALLOCK *locallock)
 	LockMethod	lockMethodTable = LockMethods[DEFAULT_LOCKMETHOD];
 	LOCKTAG    *locktag = &locallock->tag.lock;
 	PROCLOCK   *proclock = NULL;
-	LWLockId	partitionLock = LockHashPartitionLock(locallock->hashcode);
+	LWLock	   *partitionLock = LockHashPartitionLock(locallock->hashcode);
 	Oid			relid = locktag->locktag_field2;
 	uint32		f;
 
@@ -2671,7 +2673,7 @@ GetLockConflicts(const LOCKTAG *locktag, LOCKMODE lockmode)
 	SHM_QUEUE  *procLocks;
 	PROCLOCK   *proclock;
 	uint32		hashcode;
-	LWLockId	partitionLock;
+	LWLock	   *partitionLock;
 	int			count = 0;
 	int			fast_count = 0;
 
@@ -2883,7 +2885,7 @@ LockRefindAndRelease(LockMethod lockMethodTable, PGPROC *proc,
 	PROCLOCKTAG proclocktag;
 	uint32		hashcode;
 	uint32		proclock_hashcode;
-	LWLockId	partitionLock;
+	LWLock	   *partitionLock;
 	bool		wakeupNeeded;
 
 	hashcode = LockTagHashCode(locktag);
@@ -3159,9 +3161,11 @@ PostPrepare_Locks(TransactionId xid)
 	 */
 	for (partition = 0; partition < NUM_LOCK_PARTITIONS; partition++)
 	{
-		LWLockId	partitionLock = FirstLockMgrLock + partition;
+		LWLock	   *partitionLock;
 		SHM_QUEUE  *procLocks = &(MyProc->myProcLocks[partition]);
 		PROCLOCK   *nextplock;
+
+		partitionLock = LockHashPartitionLockByIndex(partition);
 
 		/*
 		 * If the proclock list for this partition is empty, we can skip
@@ -3400,7 +3404,7 @@ GetLockStatusData(void)
 	 * Must grab LWLocks in partition-number order to avoid LWLock deadlock.
 	 */
 	for (i = 0; i < NUM_LOCK_PARTITIONS; i++)
-		LWLockAcquire(FirstLockMgrLock + i, LW_SHARED);
+		LWLockAcquire(LockHashPartitionLockByIndex(i), LW_SHARED);
 
 	/* Now we can safely count the number of proclocks */
 	data->nelements = el + hash_get_num_entries(LockMethodProcLockHash);
@@ -3442,7 +3446,7 @@ GetLockStatusData(void)
 	 * behavior inside LWLockRelease.
 	 */
 	for (i = NUM_LOCK_PARTITIONS; --i >= 0;)
-		LWLockRelease(FirstLockMgrLock + i);
+		LWLockRelease(LockHashPartitionLockByIndex(i));
 
 	Assert(el == data->nelements);
 
@@ -3477,7 +3481,7 @@ GetRunningTransactionLocks(int *nlocks)
 	 * Must grab LWLocks in partition-number order to avoid LWLock deadlock.
 	 */
 	for (i = 0; i < NUM_LOCK_PARTITIONS; i++)
-		LWLockAcquire(FirstLockMgrLock + i, LW_SHARED);
+		LWLockAcquire(LockHashPartitionLockByIndex(i), LW_SHARED);
 
 	/* Now we can safely count the number of proclocks */
 	els = hash_get_num_entries(LockMethodProcLockHash);
@@ -3537,7 +3541,7 @@ GetRunningTransactionLocks(int *nlocks)
 	 * behavior inside LWLockRelease.
 	 */
 	for (i = NUM_LOCK_PARTITIONS; --i >= 0;)
-		LWLockRelease(FirstLockMgrLock + i);
+		LWLockRelease(LockHashPartitionLockByIndex(i));
 
 	*nlocks = index;
 	return accessExclusiveLocks;
@@ -3673,7 +3677,7 @@ lock_twophase_recover(TransactionId xid, uint16 info,
 	uint32		hashcode;
 	uint32		proclock_hashcode;
 	int			partition;
-	LWLockId	partitionLock;
+	LWLock	   *partitionLock;
 	LockMethod	lockMethodTable;
 
 	Assert(len == sizeof(TwoPhaseLockRecord));
@@ -4044,7 +4048,7 @@ VirtualXactLock(VirtualTransactionId vxid, bool wait)
 	{
 		PROCLOCK   *proclock;
 		uint32		hashcode;
-		LWLockId	partitionLock;
+		LWLock	   *partitionLock;
 
 		hashcode = LockTagHashCode(&tag);
 

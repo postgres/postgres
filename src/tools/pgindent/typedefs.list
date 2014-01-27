@@ -896,7 +896,6 @@ LPWSTR
 LSEG
 LVRelStats
 LWLock
-LWLockId
 LWLockMode
 LWLockPadded
 LabelProvider

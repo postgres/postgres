@@ -104,7 +104,10 @@ typedef struct buftag
 #define BufTableHashPartition(hashcode) \
 	((hashcode) % NUM_BUFFER_PARTITIONS)
 #define BufMappingPartitionLock(hashcode) \
-	((LWLockId) (FirstBufMappingLock + BufTableHashPartition(hashcode)))
+	(&MainLWLockArray[BUFFER_MAPPING_LWLOCK_OFFSET + \
+		BufTableHashPartition(hashcode)].lock)
+#define BufMappingPartitionLockByIndex(i) \
+	(&MainLWLockArray[BUFFER_MAPPING_LWLOCK_OFFSET + (i)].lock)
 
 /*
  *	BufferDesc -- shared descriptor/state data for a single shared buffer.
@@ -144,8 +147,8 @@ typedef struct sbufdesc
 	int			buf_id;			/* buffer's index number (from 0) */
 	int			freeNext;		/* link in freelist chain */
 
-	LWLockId	io_in_progress_lock;	/* to wait for I/O to complete */
-	LWLockId	content_lock;	/* to lock access to buffer contents */
+	LWLock     *io_in_progress_lock;	/* to wait for I/O to complete */
+	LWLock	   *content_lock;	/* to lock access to buffer contents */
 } BufferDesc;
 
 #define BufferDescriptorGetBuffer(bdesc) ((bdesc)->buf_id + 1)

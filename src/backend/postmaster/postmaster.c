@@ -448,8 +448,6 @@ typedef struct
 typedef int InheritableSocket;
 #endif
 
-typedef struct LWLock LWLock;	/* ugly kluge */
-
 /*
  * Structure contains all variables passed to exec:ed backends
  */
@@ -473,7 +471,7 @@ typedef struct
 #ifndef HAVE_SPINLOCKS
 	PGSemaphore	SpinlockSemaArray;
 #endif
-	LWLock	   *LWLockArray;
+	LWLock	   *MainLWLockArray;
 	slock_t    *ProcStructLock;
 	PROC_HDR   *ProcGlobal;
 	PGPROC	   *AuxiliaryProcs;
@@ -5576,7 +5574,6 @@ PostmasterMarkPIDForWorkerNotify(int pid)
  * functions.  They are marked NON_EXEC_STATIC in their home modules.
  */
 extern slock_t *ShmemLock;
-extern LWLock *LWLockArray;
 extern slock_t *ProcStructLock;
 extern PGPROC *AuxiliaryProcs;
 extern PMSignalData *PMSignalState;
@@ -5625,7 +5622,7 @@ save_backend_variables(BackendParameters *param, Port *port,
 #ifndef HAVE_SPINLOCKS
 	param->SpinlockSemaArray = SpinlockSemaArray;
 #endif
-	param->LWLockArray = LWLockArray;
+	param->MainLWLockArray = MainLWLockArray;
 	param->ProcStructLock = ProcStructLock;
 	param->ProcGlobal = ProcGlobal;
 	param->AuxiliaryProcs = AuxiliaryProcs;
@@ -5856,7 +5853,7 @@ restore_backend_variables(BackendParameters *param, Port *port)
 #ifndef HAVE_SPINLOCKS
 	SpinlockSemaArray = param->SpinlockSemaArray;
 #endif
-	LWLockArray = param->LWLockArray;
+	MainLWLockArray = param->MainLWLockArray;
 	ProcStructLock = param->ProcStructLock;
 	ProcGlobal = param->ProcGlobal;
 	AuxiliaryProcs = param->AuxiliaryProcs;

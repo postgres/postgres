@@ -151,7 +151,7 @@ SimpleLruShmemSize(int nslots, int nlsns)
 	sz += MAXALIGN(nslots * sizeof(bool));		/* page_dirty[] */
 	sz += MAXALIGN(nslots * sizeof(int));		/* page_number[] */
 	sz += MAXALIGN(nslots * sizeof(int));		/* page_lru_count[] */
-	sz += MAXALIGN(nslots * sizeof(LWLockId));	/* buffer_locks[] */
+	sz += MAXALIGN(nslots * sizeof(LWLock *));	/* buffer_locks[] */
 
 	if (nlsns > 0)
 		sz += MAXALIGN(nslots * nlsns * sizeof(XLogRecPtr));	/* group_lsn[] */
@@ -161,7 +161,7 @@ SimpleLruShmemSize(int nslots, int nlsns)
 
 void
 SimpleLruInit(SlruCtl ctl, const char *name, int nslots, int nlsns,
-			  LWLockId ctllock, const char *subdir)
+			  LWLock *ctllock, const char *subdir)
 {
 	SlruShared	shared;
 	bool		found;
@@ -202,8 +202,8 @@ SimpleLruInit(SlruCtl ctl, const char *name, int nslots, int nlsns,
 		offset += MAXALIGN(nslots * sizeof(int));
 		shared->page_lru_count = (int *) (ptr + offset);
 		offset += MAXALIGN(nslots * sizeof(int));
-		shared->buffer_locks = (LWLockId *) (ptr + offset);
-		offset += MAXALIGN(nslots * sizeof(LWLockId));
+		shared->buffer_locks = (LWLock **) (ptr + offset);
+		offset += MAXALIGN(nslots * sizeof(LWLock *));
 
 		if (nlsns > 0)
 		{

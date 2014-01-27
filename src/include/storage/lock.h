@@ -483,8 +483,10 @@ typedef enum
 #define LockHashPartition(hashcode) \
 	((hashcode) % NUM_LOCK_PARTITIONS)
 #define LockHashPartitionLock(hashcode) \
-	((LWLockId) (FirstLockMgrLock + LockHashPartition(hashcode)))
-
+	(&MainLWLockArray[LOCK_MANAGER_LWLOCK_OFFSET + \
+		LockHashPartition(hashcode)].lock)
+#define LockHashPartitionLockByIndex(i) \
+	(&MainLWLockArray[LOCK_MANAGER_LWLOCK_OFFSET + (i)].lock)
 
 /*
  * function prototypes

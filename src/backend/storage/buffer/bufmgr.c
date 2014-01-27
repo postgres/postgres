@@ -146,7 +146,7 @@ PrefetchBuffer(Relation reln, ForkNumber forkNum, BlockNumber blockNum)
 	{
 		BufferTag	newTag;		/* identity of requested block */
 		uint32		newHash;	/* hash value for newTag */
-		LWLockId	newPartitionLock;	/* buffer partition lock for it */
+		LWLock	   *newPartitionLock;	/* buffer partition lock for it */
 		int			buf_id;
 
 		/* create a tag so we can lookup the buffer */
@@ -539,10 +539,10 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 {
 	BufferTag	newTag;			/* identity of requested block */
 	uint32		newHash;		/* hash value for newTag */
-	LWLockId	newPartitionLock;		/* buffer partition lock for it */
+	LWLock	   *newPartitionLock;		/* buffer partition lock for it */
 	BufferTag	oldTag;			/* previous identity of selected buffer */
 	uint32		oldHash;		/* hash value for oldTag */
-	LWLockId	oldPartitionLock;		/* buffer partition lock for it */
+	LWLock	   *oldPartitionLock;		/* buffer partition lock for it */
 	BufFlags	oldFlags;
 	int			buf_id;
 	volatile BufferDesc *buf;
@@ -891,7 +891,7 @@ InvalidateBuffer(volatile BufferDesc *buf)
 {
 	BufferTag	oldTag;
 	uint32		oldHash;		/* hash value for oldTag */
-	LWLockId	oldPartitionLock;		/* buffer partition lock for it */
+	LWLock	   *oldPartitionLock;		/* buffer partition lock for it */
 	BufFlags	oldFlags;
 
 	/* Save the original buffer tag before dropping the spinlock */

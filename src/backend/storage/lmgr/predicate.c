@@ -241,7 +241,10 @@
 #define PredicateLockHashPartition(hashcode) \
 	((hashcode) % NUM_PREDICATELOCK_PARTITIONS)
 #define PredicateLockHashPartitionLock(hashcode) \
-	((LWLockId) (FirstPredicateLockMgrLock + PredicateLockHashPartition(hashcode)))
+	(&MainLWLockArray[PREDICATELOCK_MANAGER_LWLOCK_OFFSET + \
+		PredicateLockHashPartition(hashcode)].lock)
+#define PredicateLockHashPartitionLockByIndex(i) \
+	(&MainLWLockArray[PREDICATELOCK_MANAGER_LWLOCK_OFFSET + (i)].lock)
 
 #define NPREDICATELOCKTARGETENTS() \
 	mul_size(max_predicate_locks_per_xact, add_size(MaxBackends, max_prepared_xacts))
@@ -383,7 +386,7 @@ static SHM_QUEUE *FinishedSerializableTransactions;
  */
 static const PREDICATELOCKTARGETTAG ScratchTargetTag = {0, 0, 0, 0};
 static uint32 ScratchTargetTagHash;
-static int	ScratchPartitionLock;
+static LWLock *ScratchPartitionLock;
 
 /*
  * The local hash table used to determine when to combine multiple fine-
@@ -1398,7 +1401,7 @@ GetPredicateLockStatusData(void)
 	 * in ascending order, then SerializableXactHashLock.
 	 */
 	for (i = 0; i < NUM_PREDICATELOCK_PARTITIONS; i++)
-		LWLockAcquire(FirstPredicateLockMgrLock + i, LW_SHARED);
+		LWLockAcquire(PredicateLockHashPartitionLockByIndex(i), LW_SHARED);
 	LWLockAcquire(SerializableXactHashLock, LW_SHARED);
 
 	/* Get number of locks and allocate appropriately-sized arrays. */
@@ -1427,7 +1430,7 @@ GetPredicateLockStatusData(void)
 	/* Release locks in reverse order */
 	LWLockRelease(SerializableXactHashLock);
 	for (i = NUM_PREDICATELOCK_PARTITIONS - 1; i >= 0; i--)
-		LWLockRelease(FirstPredicateLockMgrLock + i);
+		LWLockRelease(PredicateLockHashPartitionLockByIndex(i));
 
 	return data;
 }
@@ -1856,7 +1859,7 @@ PageIsPredicateLocked(Relation relation, BlockNumber blkno)
 {
 	PREDICATELOCKTARGETTAG targettag;
 	uint32		targettaghash;
-	LWLockId	partitionLock;
+	LWLock	   *partitionLock;
 	PREDICATELOCKTARGET *target;
 
 	SET_PREDICATELOCKTARGETTAG_PAGE(targettag,
@@ -2089,7 +2092,7 @@ DeleteChildTargetLocks(const PREDICATELOCKTARGETTAG *newtargettag)
 		if (TargetTagIsCoveredBy(oldtargettag, *newtargettag))
 		{
 			uint32		oldtargettaghash;
-			LWLockId	partitionLock;
+			LWLock	    *partitionLock;
 			PREDICATELOCK *rmpredlock PG_USED_FOR_ASSERTS_ONLY;
 
 			oldtargettaghash = PredicateLockTargetTagHashCode(&oldtargettag);
@@ -2301,7 +2304,7 @@ CreatePredicateLock(const PREDICATELOCKTARGETTAG *targettag,
 	PREDICATELOCKTARGET *target;
 	PREDICATELOCKTAG locktag;
 	PREDICATELOCK *lock;
-	LWLockId	partitionLock;
+	LWLock	   *partitionLock;
 	bool		found;
 
 	partitionLock = PredicateLockHashPartitionLock(targettaghash);
@@ -2599,10 +2602,10 @@ TransferPredicateLocksToNewTarget(PREDICATELOCKTARGETTAG oldtargettag,
 								  bool removeOld)
 {
 	uint32		oldtargettaghash;
-	LWLockId	oldpartitionLock;
+	LWLock	   *oldpartitionLock;
 	PREDICATELOCKTARGET *oldtarget;
 	uint32		newtargettaghash;
-	LWLockId	newpartitionLock;
+	LWLock	   *newpartitionLock;
 	bool		found;
 	bool		outOfShmem = false;
 
@@ -2858,7 +2861,7 @@ DropAllPredicateLocksFromTable(Relation relation, bool transfer)
 	/* Acquire locks on all lock partitions */
 	LWLockAcquire(SerializablePredicateLockListLock, LW_EXCLUSIVE);
 	for (i = 0; i < NUM_PREDICATELOCK_PARTITIONS; i++)
-		LWLockAcquire(FirstPredicateLockMgrLock + i, LW_EXCLUSIVE);
+		LWLockAcquire(PredicateLockHashPartitionLockByIndex(i), LW_EXCLUSIVE);
 	LWLockAcquire(SerializableXactHashLock, LW_EXCLUSIVE);
 
 	/*
@@ -2996,7 +2999,7 @@ DropAllPredicateLocksFromTable(Relation relation, bool transfer)
 	/* Release locks in reverse order */
 	LWLockRelease(SerializableXactHashLock);
 	for (i = NUM_PREDICATELOCK_PARTITIONS - 1; i >= 0; i--)
-		LWLockRelease(FirstPredicateLockMgrLock + i);
+		LWLockRelease(PredicateLockHashPartitionLockByIndex(i));
 	LWLockRelease(SerializablePredicateLockListLock);
 }
 
@@ -3611,7 +3614,7 @@ ClearOldPredicateLocks(void)
 			PREDICATELOCKTARGET *target;
 			PREDICATELOCKTARGETTAG targettag;
 			uint32		targettaghash;
-			LWLockId	partitionLock;
+			LWLock	   *partitionLock;
 
 			tag = predlock->tag;
 			target = tag.myTarget;
@@ -3690,7 +3693,7 @@ ReleaseOneSerializableXact(SERIALIZABLEXACT *sxact, bool partial,
 		PREDICATELOCKTARGET *target;
 		PREDICATELOCKTARGETTAG targettag;
 		uint32		targettaghash;
-		LWLockId	partitionLock;
+		LWLock	   *partitionLock;
 
 		nextpredlock = (PREDICATELOCK *)
 			SHMQueueNext(&(sxact->predicateLocks),
@@ -4068,7 +4071,7 @@ static void
 CheckTargetForConflictsIn(PREDICATELOCKTARGETTAG *targettag)
 {
 	uint32		targettaghash;
-	LWLockId	partitionLock;
+	LWLock	   *partitionLock;
 	PREDICATELOCKTARGET *target;
 	PREDICATELOCK *predlock;
 	PREDICATELOCK *mypredlock = NULL;
@@ -4360,7 +4363,7 @@ CheckTableForSerializableConflictIn(Relation relation)
 
 	LWLockAcquire(SerializablePredicateLockListLock, LW_EXCLUSIVE);
 	for (i = 0; i < NUM_PREDICATELOCK_PARTITIONS; i++)
-		LWLockAcquire(FirstPredicateLockMgrLock + i, LW_SHARED);
+		LWLockAcquire(PredicateLockHashPartitionLockByIndex(i), LW_SHARED);
 	LWLockAcquire(SerializableXactHashLock, LW_SHARED);
 
 	/* Scan through target list */
@@ -4407,7 +4410,7 @@ CheckTableForSerializableConflictIn(Relation relation)
 	/* Release locks in reverse order */
 	LWLockRelease(SerializableXactHashLock);
 	for (i = NUM_PREDICATELOCK_PARTITIONS - 1; i >= 0; i--)
-		LWLockRelease(FirstPredicateLockMgrLock + i);
+		LWLockRelease(PredicateLockHashPartitionLockByIndex(i));
 	LWLockRelease(SerializablePredicateLockListLock);
 }
 

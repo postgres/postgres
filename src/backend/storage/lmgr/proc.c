@@ -189,7 +189,8 @@ InitProcGlobal(void)
 	 */
 	procs = (PGPROC *) ShmemAlloc(TotalProcs * sizeof(PGPROC));
 	ProcGlobal->allProcs = procs;
-	ProcGlobal->allProcCount = TotalProcs;
+	/* XXX allProcCount isn't really all of them; it excludes prepared xacts */
+	ProcGlobal->allProcCount = MaxBackends + NUM_AUXILIARY_PROCS;
 	if (!procs)
 		ereport(FATAL,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -663,7 +664,7 @@ IsWaitingForLock(void)
 void
 LockErrorCleanup(void)
 {
-	LWLockId	partitionLock;
+	LWLock	   *partitionLock;
 	DisableTimeoutParams timeouts[2];
 
 	AbortStrongLockAcquire();
@@ -942,7 +943,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 	LOCK	   *lock = locallock->lock;
 	PROCLOCK   *proclock = locallock->proclock;
 	uint32		hashcode = locallock->hashcode;
-	LWLockId	partitionLock = LockHashPartitionLock(hashcode);
+	LWLock	   *partitionLock = LockHashPartitionLock(hashcode);
 	PROC_QUEUE *waitQueue = &(lock->waitProcs);
 	LOCKMASK	myHeldLocks = MyProc->heldLocks;
 	bool		early_deadlock = false;
@@ -1440,7 +1441,7 @@ CheckDeadLock(void)
 	 * interrupts.
 	 */
 	for (i = 0; i < NUM_LOCK_PARTITIONS; i++)
-		LWLockAcquire(FirstLockMgrLock + i, LW_EXCLUSIVE);
+		LWLockAcquire(LockHashPartitionLockByIndex(i), LW_EXCLUSIVE);
 
 	/*
 	 * Check to see if we've been awoken by anyone in the interim.
@@ -1522,7 +1523,7 @@ CheckDeadLock(void)
 	 */
 check_done:
 	for (i = NUM_LOCK_PARTITIONS; --i >= 0;)
-		LWLockRelease(FirstLockMgrLock + i);
+		LWLockRelease(LockHashPartitionLockByIndex(i));
 }
 
 
