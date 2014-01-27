@@ -2974,17 +2974,9 @@ include 'filename'
       <listitem>
        <para>
         Sets the planner's assumption about the effective size of the
-        disk cache that is available to a single query.  The default
-        setting of -1 selects a size equal to four times the size of <xref
-        linkend="guc-shared-buffers">, but not less than the size of one
-        shared buffer page, typically <literal>8kB</literal>.  This value
-        can be set manually if the automatic choice is too large or too
-        small.
-       </para>
-
-       <para>
-        This value is factored into estimates of the cost of using an index;
-        a higher value makes it more likely index scans will be used, a
+        disk cache that is available to a single query.  This is
+        factored into estimates of the cost of using an index; a
+        higher value makes it more likely index scans will be used, a
         lower value makes it more likely sequential scans will be
         used. When setting this parameter you should consider both
         <productname>PostgreSQL</productname>'s shared buffers and the
@@ -2996,10 +2988,16 @@ include 'filename'
         memory allocated by <productname>PostgreSQL</productname>, nor
         does it reserve kernel disk cache; it is used only for estimation
         purposes.  The system also does not assume data remains in
-        the disk cache between queries.  The auto-tuning
-        selected by the default setting of -1 should give reasonable
-        results if this database cluster can utilize most of the memory
-        on this server.
+        the disk cache between queries.
+       </para>
+
+       <para>
+        If <varname>effective_cache_size</> is set to -1, which is the
+        default, the value is replaced by an automatically selected value,
+        currently four times the size of <xref linkend="guc-shared-buffers">.
+        For recommended settings of <varname>shared_buffers</>, this should
+        give reasonable results if this database cluster can use most of the
+        memory on the server.
        </para>
       </listitem>
      </varlistentry>

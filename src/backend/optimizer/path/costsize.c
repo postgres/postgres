@@ -71,6 +71,7 @@
 #ifdef _MSC_VER
 #include <float.h>				/* for _isnan */
 #endif
+#include <limits.h>
 #include <math.h>
 
 #include "access/htup_details.h"
@@ -96,13 +97,14 @@
 
 #define LOG2(x)  (log(x) / 0.693147180559945)
 
+
 double		seq_page_cost = DEFAULT_SEQ_PAGE_COST;
 double		random_page_cost = DEFAULT_RANDOM_PAGE_COST;
 double		cpu_tuple_cost = DEFAULT_CPU_TUPLE_COST;
 double		cpu_index_tuple_cost = DEFAULT_CPU_INDEX_TUPLE_COST;
 double		cpu_operator_cost = DEFAULT_CPU_OPERATOR_COST;
 
-int			effective_cache_size = -1;
+int			effective_cache_size = -1;	/* will get replaced */
 
 Cost		disable_cost = 1.0e10;
 
@@ -454,52 +456,6 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count)
 
 	path->path.startup_cost = startup_cost;
 	path->path.total_cost = startup_cost + run_cost;
-}
-
-void
-set_default_effective_cache_size(void)
-{
-	/*
-	 * If the value of effective_cache_size is -1, use the preferred
-	 * auto-tune value.
-	 */
-	if (effective_cache_size == -1)
-	{
-		char		buf[32];
-
-		snprintf(buf, sizeof(buf), "%d", NBuffers * DEFAULT_EFFECTIVE_CACHE_SIZE_MULTI);
-		SetConfigOption("effective_cache_size", buf, PGC_POSTMASTER, PGC_S_OVERRIDE);
-	}
-	Assert(effective_cache_size > 0);
-}
-
-/*
- * GUC check_hook for effective_cache_size
- */
-bool
-check_effective_cache_size(int *newval, void **extra, GucSource source)
-{
-	/*
-	 * -1 indicates a request for auto-tune.
-	 */
-	if (*newval == -1)
-	{
-		/*
-		 * If we haven't yet changed the boot_val default of -1, just let it
-		 * be.	We'll fix it later.
-		 */
-		if (effective_cache_size == -1)
-			return true;
-
-		/* Otherwise, substitute the auto-tune value */
-		*newval = NBuffers * DEFAULT_EFFECTIVE_CACHE_SIZE_MULTI;
-	}
-
-	/* set minimum? */
-	if (*newval < 1)
-		*newval = 1;
-
-	return true;
 }
 
 /*
@@ -4136,4 +4092,60 @@ static double
 page_size(double tuples, int width)
 {
 	return ceil(relation_byte_size(tuples, width) / BLCKSZ);
+}
+
+/*
+ * GUC check_hook for effective_cache_size
+ */
+bool
+check_effective_cache_size(int *newval, void **extra, GucSource source)
+{
+	/*
+	 * -1 is the documented way of requesting auto-tune, but we also treat
+	 * zero as meaning that, since we don't consider zero a valid setting.
+	 */
+	if (*newval <= 0)
+	{
+		/*
+		 * If we haven't yet changed the initial default of -1, just let it
+		 * be.	We'll fix it later on during GUC initialization, when
+		 * set_default_effective_cache_size is called.	(If we try to do it
+		 * immediately, we may not be looking at the final value of NBuffers.)
+		 */
+		if (effective_cache_size == -1)
+			return true;
+
+		/*
+		 * Otherwise, substitute the auto-tune value, being wary of overflow.
+		 */
+		if (NBuffers < INT_MAX / 4)
+			*newval = NBuffers * 4;
+		else
+			*newval = INT_MAX;
+	}
+
+	Assert(*newval > 0);
+
+	return true;
+}
+
+/*
+ * initialize effective_cache_size at the end of GUC startup
+ */
+void
+set_default_effective_cache_size(void)
+{
+	/*
+	 * If the value of effective_cache_size is still -1 (or zero), replace it
+	 * with the auto-tune value.
+	 */
+	if (effective_cache_size <= 0)
+	{
+		/* disable the short-circuit in check_effective_cache_size */
+		effective_cache_size = 0;
+		/* and let check_effective_cache_size() compute the setting */
+		SetConfigOption("effective_cache_size", "-1",
+						PGC_POSTMASTER, PGC_S_OVERRIDE);
+	}
+	Assert(effective_cache_size > 0);
 }

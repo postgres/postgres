@@ -4305,6 +4305,7 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 	 */
 	pg_timezone_abbrev_initialize();
 
+	/* Also install the correct value for effective_cache_size */
 	set_default_effective_cache_size();
 
 	/*

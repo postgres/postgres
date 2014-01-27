@@ -279,7 +279,7 @@
 #cpu_tuple_cost = 0.01			# same scale as above
 #cpu_index_tuple_cost = 0.005		# same scale as above
 #cpu_operator_cost = 0.0025		# same scale as above
-#effective_cache_size = -1
+#effective_cache_size = -1		# -1 selects auto-tuned default
 
 # - Genetic Query Optimizer -
 
