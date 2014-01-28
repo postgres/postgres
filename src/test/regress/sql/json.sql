@@ -325,3 +325,90 @@ select value, json_typeof(value)
                (json '{}'),
                (NULL::json))
       as data(value);
+
+-- json_build_array, json_build_object, json_object_agg
+
+SELECT json_build_array('a',1,'b',1.2,'c',true,'d',null,'e',json '{"x": 3, "y": [1,2,3]}');
+
+SELECT json_build_object('a',1,'b',1.2,'c',true,'d',null,'e',json '{"x": 3, "y": [1,2,3]}');
+
+SELECT json_build_object(
+       'a', json_build_object('b',false,'c',99),
+       'd', json_build_object('e',array[9,8,7]::int[],
+           'f', (select row_to_json(r) from ( select relkind, oid::regclass as name from pg_class where relname = 'pg_class') r)));
+
+
+-- empty objects/arrays
+SELECT json_build_array();
+
+SELECT json_build_object();
+
+-- make sure keys are quoted
+SELECT json_build_object(1,2);
+
+-- keys must be scalar and not null
+SELECT json_build_object(null,2);
+
+SELECT json_build_object(r,2) FROM (SELECT 1 AS a, 2 AS b) r;
+
+SELECT json_build_object(json '{"a":1,"b":2}', 3);
+
+SELECT json_build_object('{1,2,3}'::int[], 3);
+
+CREATE TEMP TABLE foo (serial_num int, name text, type text);
+INSERT INTO foo VALUES (847001,'t15','GE1043');
+INSERT INTO foo VALUES (847002,'t16','GE1043');
+INSERT INTO foo VALUES (847003,'sub-alpha','GESS90');
+
+SELECT json_build_object('turbines',json_object_agg(serial_num,json_build_object('name',name,'type',type)))
+FROM foo;
+
+-- json_object
+
+-- one dimension
+SELECT json_object('{a,1,b,2,3,NULL,"d e f","a b c"}');
+
+-- same but with two dimensions
+SELECT json_object('{{a,1},{b,2},{3,NULL},{"d e f","a b c"}}');
+
+-- odd number error
+SELECT json_object('{a,b,c}');
+
+-- one column error
+SELECT json_object('{{a},{b}}');
+
+-- too many columns error
+SELECT json_object('{{a,b,c},{b,c,d}}');
+
+-- too many dimensions error
+SELECT json_object('{{{a,b},{c,d}},{{b,c},{d,e}}}');
+
+--two argument form of json_object
+
+select json_object('{a,b,c,"d e f"}','{1,2,3,"a b c"}');
+
+-- too many dimensions
+SELECT json_object('{{a,1},{b,2},{3,NULL},{"d e f","a b c"}}', '{{a,1},{b,2},{3,NULL},{"d e f","a b c"}}');
+
+-- mismatched dimensions
+
+select json_object('{a,b,c,"d e f",g}','{1,2,3,"a b c"}');
+
+select json_object('{a,b,c,"d e f"}','{1,2,3,"a b c",g}');
+
+-- null key error
+
+select json_object('{a,b,NULL,"d e f"}','{1,2,3,"a b c"}');
+
+-- empty key error
+
+select json_object('{a,b,"","d e f"}','{1,2,3,"a b c"}');
+
+
+-- json_to_record and json_to_recordset
+
+select * from json_to_record('{"a":1,"b":"foo","c":"bar"}',true)
+    as x(a int, b text, d text);
+
+select * from json_to_recordset('[{"a":1,"b":"foo","d":false},{"a":2,"b":"bar","c":true}]',false)
+    as x(a int, b text, c boolean);

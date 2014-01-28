@@ -991,3 +991,129 @@ select value, json_typeof(value)
                       | 
 (11 rows)
 
+-- json_build_array, json_build_object, json_object_agg
+SELECT json_build_array('a',1,'b',1.2,'c',true,'d',null,'e',json '{"x": 3, "y": [1,2,3]}');
+                           json_build_array                            
+-----------------------------------------------------------------------
+ ["a", 1, "b", 1.2, "c", true, "d", null, "e", {"x": 3, "y": [1,2,3]}]
+(1 row)
+
+SELECT json_build_object('a',1,'b',1.2,'c',true,'d',null,'e',json '{"x": 3, "y": [1,2,3]}');
+                             json_build_object                              
+----------------------------------------------------------------------------
+ {"a" : 1, "b" : 1.2, "c" : true, "d" : null, "e" : {"x": 3, "y": [1,2,3]}}
+(1 row)
+
+SELECT json_build_object(
+       'a', json_build_object('b',false,'c',99),
+       'd', json_build_object('e',array[9,8,7]::int[],
+           'f', (select row_to_json(r) from ( select relkind, oid::regclass as name from pg_class where relname = 'pg_class') r)));
+                                        json_build_object                                        
+-------------------------------------------------------------------------------------------------
+ {"a" : {"b" : false, "c" : 99}, "d" : {"e" : [9,8,7], "f" : {"relkind":"r","name":"pg_class"}}}
+(1 row)
+
+-- empty objects/arrays
+SELECT json_build_array();
+ json_build_array 
+------------------
+ []
+(1 row)
+
+SELECT json_build_object();
+ json_build_object 
+-------------------
+ {}
+(1 row)
+
+-- make sure keys are quoted
+SELECT json_build_object(1,2);
+ json_build_object 
+-------------------
+ {"1" : 2}
+(1 row)
+
+-- keys must be scalar and not null
+SELECT json_build_object(null,2);
+ERROR:  arg 1: key cannot be null
+SELECT json_build_object(r,2) FROM (SELECT 1 AS a, 2 AS b) r;
+ERROR:  key value must be scalar, not array, composite or json
+SELECT json_build_object(json '{"a":1,"b":2}', 3);
+ERROR:  key value must be scalar, not array, composite or json
+SELECT json_build_object('{1,2,3}'::int[], 3);
+ERROR:  key value must be scalar, not array, composite or json
+CREATE TEMP TABLE foo (serial_num int, name text, type text);
+INSERT INTO foo VALUES (847001,'t15','GE1043');
+INSERT INTO foo VALUES (847002,'t16','GE1043');
+INSERT INTO foo VALUES (847003,'sub-alpha','GESS90');
+SELECT json_build_object('turbines',json_object_agg(serial_num,json_build_object('name',name,'type',type)))
+FROM foo;
+                                                                            json_build_object                                                                            
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"turbines" : { "847001" : {"name" : "t15", "type" : "GE1043"}, "847002" : {"name" : "t16", "type" : "GE1043"}, "847003" : {"name" : "sub-alpha", "type" : "GESS90"} }}
+(1 row)
+
+-- json_object
+-- one dimension
+SELECT json_object('{a,1,b,2,3,NULL,"d e f","a b c"}');
+                      json_object                      
+-------------------------------------------------------
+ {"a" : "1", "b" : "2", "3" : null, "d e f" : "a b c"}
+(1 row)
+
+-- same but with two dimensions
+SELECT json_object('{{a,1},{b,2},{3,NULL},{"d e f","a b c"}}');
+                      json_object                      
+-------------------------------------------------------
+ {"a" : "1", "b" : "2", "3" : null, "d e f" : "a b c"}
+(1 row)
+
+-- odd number error
+SELECT json_object('{a,b,c}');
+ERROR:  array must have even number of elements
+-- one column error
+SELECT json_object('{{a},{b}}');
+ERROR:  array must have two columns
+-- too many columns error
+SELECT json_object('{{a,b,c},{b,c,d}}');
+ERROR:  array must have two columns
+-- too many dimensions error
+SELECT json_object('{{{a,b},{c,d}},{{b,c},{d,e}}}');
+ERROR:  wrong number of array subscripts
+--two argument form of json_object
+select json_object('{a,b,c,"d e f"}','{1,2,3,"a b c"}');
+                     json_object                      
+------------------------------------------------------
+ {"a" : "1", "b" : "2", "c" : "3", "d e f" : "a b c"}
+(1 row)
+
+-- too many dimensions
+SELECT json_object('{{a,1},{b,2},{3,NULL},{"d e f","a b c"}}', '{{a,1},{b,2},{3,NULL},{"d e f","a b c"}}');
+ERROR:  wrong number of array subscripts
+-- mismatched dimensions
+select json_object('{a,b,c,"d e f",g}','{1,2,3,"a b c"}');
+ERROR:  mismatched array dimensions
+select json_object('{a,b,c,"d e f"}','{1,2,3,"a b c",g}');
+ERROR:  mismatched array dimensions
+-- null key error
+select json_object('{a,b,NULL,"d e f"}','{1,2,3,"a b c"}');
+ERROR:  null value not allowed for object key
+-- empty key error
+select json_object('{a,b,"","d e f"}','{1,2,3,"a b c"}');
+ERROR:  empty value not allowed for object key
+-- json_to_record and json_to_recordset
+select * from json_to_record('{"a":1,"b":"foo","c":"bar"}',true)
+    as x(a int, b text, d text);
+ a |  b  | d 
+---+-----+---
+ 1 | foo | 
+(1 row)
+
+select * from json_to_recordset('[{"a":1,"b":"foo","d":false},{"a":2,"b":"bar","c":true}]',false)
+    as x(a int, b text, c boolean);
+ a |  b  | c 
+---+-----+---
+ 1 | foo | 
+ 2 | bar | t
+(2 rows)
+
