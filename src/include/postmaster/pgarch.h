@@ -14,6 +14,19 @@
 #define _PGARCH_H
 
 /* ----------
+ * Archiver control info.
+ *
+ * We expect that archivable files within pg_xlog will have names between
+ * MIN_XFN_CHARS and MAX_XFN_CHARS in length, consisting only of characters
+ * appearing in VALID_XFN_CHARS.  The status files in archive_status have
+ * corresponding names with ".ready" or ".done" appended.
+ * ----------
+ */
+#define MIN_XFN_CHARS	16
+#define MAX_XFN_CHARS	40
+#define VALID_XFN_CHARS "0123456789ABCDEF.history.backup"
+
+/* ----------
  * Functions called from postmaster
  * ----------
  */

@@ -1640,6 +1640,14 @@ pg_stat_all_tables| SELECT c.oid AS relid,
    LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
   WHERE (c.relkind = ANY (ARRAY['r'::"char", 't'::"char", 'm'::"char"]))
   GROUP BY c.oid, n.nspname, c.relname;
+pg_stat_archiver| SELECT s.archived_count,
+    s.last_archived_wal,
+    s.last_archived_time,
+    s.failed_count,
+    s.last_failed_wal,
+    s.last_failed_time,
+    s.stats_reset
+   FROM pg_stat_get_archiver() s(archived_count, last_archived_wal, last_archived_time, failed_count, last_failed_wal, last_failed_time, stats_reset);
 pg_stat_bgwriter| SELECT pg_stat_get_bgwriter_timed_checkpoints() AS checkpoints_timed,
     pg_stat_get_bgwriter_requested_checkpoints() AS checkpoints_req,
     pg_stat_get_checkpoint_write_time() AS checkpoint_write_time,

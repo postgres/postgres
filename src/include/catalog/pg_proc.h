@@ -2702,6 +2702,8 @@ DATA(insert OID = 2844 (  pg_stat_get_db_blk_read_time	PGNSP PGUID 12 1 0 0 0 f 
 DESCR("statistics: block read time, in msec");
 DATA(insert OID = 2845 (  pg_stat_get_db_blk_write_time PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 701 "26" _null_ _null_ _null_ _null_ pg_stat_get_db_blk_write_time _null_ _null_ _null_ ));
 DESCR("statistics: block write time, in msec");
+DATA(insert OID = 3195 (  pg_stat_get_archiver		PGNSP PGUID 12 1 0 0 0 f f f f f f s 0 0 2249 "" "{20,25,1184,20,25,1184,1184}" "{o,o,o,o,o,o,o}" "{archived_count,last_archived_wal,last_archived_time,failed_count,last_failed_wal,last_failed_time,stats_reset}" _null_ pg_stat_get_archiver _null_ _null_ _null_ ));
+DESCR("statistics: information about WAL archiver");
 DATA(insert OID = 2769 ( pg_stat_get_bgwriter_timed_checkpoints PGNSP PGUID 12 1 0 0 0 f f f f t f s 0 0 20 "" _null_ _null_ _null_ _null_ pg_stat_get_bgwriter_timed_checkpoints _null_ _null_ _null_ ));
 DESCR("statistics: number of timed checkpoints started by the bgwriter");
 DATA(insert OID = 2770 ( pg_stat_get_bgwriter_requested_checkpoints PGNSP PGUID 12 1 0 0 0 f f f f t f s 0 0 20 "" _null_ _null_ _null_ _null_ pg_stat_get_bgwriter_requested_checkpoints _null_ _null_ _null_ ));

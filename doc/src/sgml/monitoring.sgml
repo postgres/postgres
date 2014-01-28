@@ -270,6 +270,14 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
+      <entry><structname>pg_stat_archiver</><indexterm><primary>pg_stat_archiver</primary></indexterm></entry>
+      <entry>One row only, showing statistics about the
+       WAL archiver process's activity. See
+       <xref linkend="pg-stat-archiver-view"> for details.
+      </entry>
+     </row>
+
+     <row>
       <entry><structname>pg_stat_bgwriter</><indexterm><primary>pg_stat_bgwriter</primary></indexterm></entry>
       <entry>One row only, showing statistics about the
        background writer process's activity. See
@@ -647,6 +655,63 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
     somewhere in the system.
    </para>
   </note>
+
+  <table id="pg-stat-archiver-view" xreflabel="pg_stat_archiver">
+   <title><structname>pg_stat_archiver</structname> View</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Column</entry>
+      <entry>Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>archived_count</></entry>
+      <entry><type>bigint</type></entry>
+      <entry>Number of WAL files that have been successfully archived</entry>
+     </row>
+     <row>
+      <entry><structfield>last_archived_wal</></entry>
+      <entry><type>text</type></entry>
+      <entry>Name of the last WAL file successfully archived</entry>
+     </row>
+     <row>
+      <entry><structfield>last_archived_time</></entry>
+      <entry><type>timestamp with time zone</type></entry>
+      <entry>Time of the last successful archive operation</entry>
+     </row>
+     <row>
+      <entry><structfield>failed_count</></entry>
+      <entry><type>bigint</type></entry>
+      <entry>Number of failed attempts for archiving WAL files</entry>
+     </row>
+     <row>
+      <entry><structfield>last_failed_wal</></entry>
+      <entry><type>text</type></entry>
+      <entry>Name of the WAL file of the last failed archival operation</entry>
+     </row>
+     <row>
+      <entry><structfield>last_failed_time</></entry>
+      <entry><type>timestamp with time zone</type></entry>
+      <entry>Time of the last failed archival operation</entry>
+     </row>
+     <row>
+      <entry><structfield>stats_reset</></entry>
+      <entry><type>timestamp with time zone</type></entry>
+      <entry>Time at which these statistics were last reset</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The <structname>pg_stat_archiver</structname> view will always have a
+   single row, containing data about the archiver process of the cluster.
+  </para>
 
   <table id="pg-stat-bgwriter-view" xreflabel="pg_stat_bgwriter">
    <title><structname>pg_stat_bgwriter</structname> View</title>
@@ -1613,6 +1678,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
        argument (requires superuser privileges).
        Calling <literal>pg_stat_reset_shared('bgwriter')</> will zero all the
        counters shown in the <structname>pg_stat_bgwriter</> view.
+       Calling <literal>pg_stat_reset_shared('archiver')</> will zero all the
+       counters shown in the <structname>pg_stat_archiver</> view.
       </entry>
      </row>
 

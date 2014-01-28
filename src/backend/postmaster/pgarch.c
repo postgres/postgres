@@ -36,6 +36,7 @@
 #include "access/xlog_internal.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "postmaster/fork_process.h"
 #include "postmaster/pgarch.h"
 #include "postmaster/postmaster.h"
@@ -57,19 +58,6 @@
 										 * seconds. */
 #define PGARCH_RESTART_INTERVAL 10		/* How often to attempt to restart a
 										 * failed archiver; in seconds. */
-
-/* ----------
- * Archiver control info.
- *
- * We expect that archivable files within pg_xlog will have names between
- * MIN_XFN_CHARS and MAX_XFN_CHARS in length, consisting only of characters
- * appearing in VALID_XFN_CHARS.  The status files in archive_status have
- * corresponding names with ".ready" or ".done" appended.
- * ----------
- */
-#define MIN_XFN_CHARS	16
-#define MAX_XFN_CHARS	40
-#define VALID_XFN_CHARS "0123456789ABCDEF.history.backup"
 
 #define NUM_ARCHIVE_RETRIES 3
 
@@ -496,10 +484,17 @@ pgarch_ArchiverCopyLoop(void)
 			{
 				/* successful */
 				pgarch_archiveDone(xlog);
+
+				/* Tell the collector about the WAL file that we successfully archived */
+				pgstat_send_archiver(xlog, false);
+
 				break;			/* out of inner retry loop */
 			}
 			else
 			{
+				/* Tell the collector about the WAL file that we failed to archive */
+				pgstat_send_archiver(xlog, true);
+
 				if (++failures >= NUM_ARCHIVE_RETRIES)
 				{
 					ereport(WARNING,

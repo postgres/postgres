@@ -672,6 +672,17 @@ CREATE VIEW pg_stat_xact_user_functions AS
     WHERE P.prolang != 12  -- fast check to eliminate built-in functions
           AND pg_stat_get_xact_function_calls(P.oid) IS NOT NULL;
 
+CREATE VIEW pg_stat_archiver AS
+    SELECT
+        s.archived_count,
+        s.last_archived_wal,
+        s.last_archived_time,
+        s.failed_count,
+        s.last_failed_wal,
+        s.last_failed_time,
+        s.stats_reset
+    FROM pg_stat_get_archiver() s;
+
 CREATE VIEW pg_stat_bgwriter AS
     SELECT
         pg_stat_get_bgwriter_timed_checkpoints() AS checkpoints_timed,
