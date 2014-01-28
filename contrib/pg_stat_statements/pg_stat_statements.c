@@ -2726,7 +2726,7 @@ generate_normalized_query(pgssJumbleState *jstate, const char *query,
 		if (tok_len < 0)
 			continue;			/* ignore any duplicates */
 
-		/* Copy next chunk, or as much as will fit */
+		/* Copy next chunk (what precedes the next constant) */
 		len_to_wrt = off - last_off;
 		len_to_wrt -= last_tok_len;
 
@@ -2734,6 +2734,7 @@ generate_normalized_query(pgssJumbleState *jstate, const char *query,
 		memcpy(norm_query + n_quer_loc, query + quer_loc, len_to_wrt);
 		n_quer_loc += len_to_wrt;
 
+		/* And insert a '?' in place of the constant token */
 		norm_query[n_quer_loc++] = '?';
 
 		quer_loc = off + tok_len;
