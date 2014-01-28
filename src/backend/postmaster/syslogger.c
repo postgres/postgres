@@ -205,19 +205,18 @@ SysLoggerMain(int argc, char *argv[])
 		 * darn sure the pipe gets closed even if the open failed.	We can
 		 * survive running with stderr pointing nowhere, but we can't afford
 		 * to have extra pipe input descriptors hanging around.
+		 *
+		 * As we're just trying to reset these to go to DEVNULL, there's not
+		 * much point in checking for failure from the close/dup2 calls here,
+		 * if they fail then presumably the file descriptors are closed and
+		 * any writes will go into the bitbucket anyway.
 		 */
 		close(fileno(stdout));
 		close(fileno(stderr));
 		if (fd != -1)
 		{
-			if (dup2(fd, fileno(stdout)) < 0)
-					ereport(FATAL,
-							(errcode_for_file_access(),
-							 errmsg("could not redirect stdout: %m")));
-			if (dup2(fd, fileno(stderr)) < 0)
-					ereport(FATAL,
-							(errcode_for_file_access(),
-							 errmsg("could not redirect stderr: %m")));
+			(void) dup2(fd, fileno(stdout));
+			(void) dup2(fd, fileno(stderr));
 			close(fd);
 		}
 	}
