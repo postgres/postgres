@@ -38,9 +38,9 @@
  *----------------------------------------------------------------
  */
 static void sendAuthRequest(Port *port, AuthRequest areq);
-static void auth_failed(Port *port, int status);
+static void auth_failed(Port *port, int status, char *logdetail);
 static char *recv_password_packet(Port *port);
-static int	recv_and_check_password_packet(Port *port);
+static int	recv_and_check_password_packet(Port *port, char **logdetail);
 
 
 /*----------------------------------------------------------------
@@ -207,10 +207,11 @@ ClientAuthentication_hook_type ClientAuthentication_hook = NULL;
  * in use, and these are items that must be presumed known to an attacker
  * anyway.
  * Note that many sorts of failure report additional information in the
- * postmaster log, which we hope is only readable by good guys.
+ * postmaster log, which we hope is only readable by good guys.  In
+ * particular, if logdetail isn't NULL, we send that string to the log.
  */
 static void
-auth_failed(Port *port, int status)
+auth_failed(Port *port, int status, char *logdetail)
 {
 	const char *errstr;
 	int			errcode_return = ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION;
@@ -273,14 +274,21 @@ auth_failed(Port *port, int status)
 	}
 
 	if (port->hba)
-		ereport(FATAL,
-				(errcode(errcode_return),
-				 errmsg(errstr, port->user_name),
-				 errdetail_log("Connection matched pg_hba.conf line %d: \"%s\"", port->hba->linenumber, port->hba->rawline)));
-	else
-		ereport(FATAL,
-				(errcode(errcode_return),
-				 errmsg(errstr, port->user_name)));
+	{
+		char	   *cdetail;
+
+		cdetail = psprintf(_("Connection matched pg_hba.conf line %d: \"%s\""),
+						   port->hba->linenumber, port->hba->rawline);
+		if (logdetail)
+			logdetail = psprintf("%s\n%s", logdetail, cdetail);
+		else
+			logdetail = cdetail;
+	}
+
+	ereport(FATAL,
+			(errcode(errcode_return),
+			 errmsg(errstr, port->user_name),
+			 logdetail ? errdetail_log("%s", logdetail) : 0));
 
 	/* doesn't return */
 }
@@ -294,6 +302,7 @@ void
 ClientAuthentication(Port *port)
 {
 	int			status = STATUS_ERROR;
+	char	   *logdetail = NULL;
 
 	/*
 	 * Get the authentication method to use for this frontend/database
@@ -507,12 +516,12 @@ ClientAuthentication(Port *port)
 						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
 						 errmsg("MD5 authentication is not supported when \"db_user_namespace\" is enabled")));
 			sendAuthRequest(port, AUTH_REQ_MD5);
-			status = recv_and_check_password_packet(port);
+			status = recv_and_check_password_packet(port, &logdetail);
 			break;
 
 		case uaPassword:
 			sendAuthRequest(port, AUTH_REQ_PASSWORD);
-			status = recv_and_check_password_packet(port);
+			status = recv_and_check_password_packet(port, &logdetail);
 			break;
 
 		case uaPAM:
@@ -552,7 +561,7 @@ ClientAuthentication(Port *port)
 	if (status == STATUS_OK)
 		sendAuthRequest(port, AUTH_REQ_OK);
 	else
-		auth_failed(port, status);
+		auth_failed(port, status, logdetail);
 
 	/* Done with authentication, so we should turn off immediate interrupts */
 	ImmediateInterruptOK = false;
@@ -680,9 +689,10 @@ recv_password_packet(Port *port)
 /*
  * Called when we have sent an authorization request for a password.
  * Get the response and check it.
+ * On error, optionally store a detail string at *logdetail.
  */
 static int
-recv_and_check_password_packet(Port *port)
+recv_and_check_password_packet(Port *port, char **logdetail)
 {
 	char	   *passwd;
 	int			result;
@@ -692,7 +702,7 @@ recv_and_check_password_packet(Port *port)
 	if (passwd == NULL)
 		return STATUS_EOF;		/* client wouldn't send password */
 
-	result = md5_crypt_verify(port, port->user_name, passwd);
+	result = md5_crypt_verify(port, port->user_name, passwd, logdetail);
 
 	pfree(passwd);
 

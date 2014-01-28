@@ -29,8 +29,14 @@
 #include "utils/timestamp.h"
 
 
+/*
+ * Check given password for given user, and return STATUS_OK or STATUS_ERROR.
+ * In the error case, optionally store a palloc'd string at *logdetail
+ * that will be sent to the postmaster log (but not the client).
+ */
 int
-md5_crypt_verify(const Port *port, const char *role, char *client_pass)
+md5_crypt_verify(const Port *port, const char *role, char *client_pass,
+				 char **logdetail)
 {
 	int			retval = STATUS_ERROR;
 	char	   *shadow_pass,
@@ -58,6 +64,8 @@ md5_crypt_verify(const Port *port, const char *role, char *client_pass)
 	if (isnull)
 	{
 		ReleaseSysCache(roleTup);
+		*logdetail = psprintf(_("User \"%s\" has no password assigned."),
+							  role);
 		return STATUS_ERROR;	/* user has no password */
 	}
 	shadow_pass = TextDatumGetCString(datum);
@@ -148,7 +156,11 @@ md5_crypt_verify(const Port *port, const char *role, char *client_pass)
 		if (isnull)
 			retval = STATUS_OK;
 		else if (vuntil < GetCurrentTimestamp())
+		{
+			*logdetail = psprintf(_("User \"%s\" has an expired password."),
+								  role);
 			retval = STATUS_ERROR;
+		}
 		else
 			retval = STATUS_OK;
 	}
