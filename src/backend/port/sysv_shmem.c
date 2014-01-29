@@ -329,7 +329,7 @@ PGSharedMemoryIsInUse(unsigned long id1, unsigned long id2)
 static void *
 CreateAnonymousSegment(Size *size)
 {
-	Size		allocsize;
+	Size		allocsize = *size;
 	void	   *ptr = MAP_FAILED;
 
 #ifndef MAP_HUGETLB
@@ -358,11 +358,10 @@ CreateAnonymousSegment(Size *size)
 		 */
 		int			hugepagesize = 2 * 1024 * 1024;
 
-		allocsize = *size;
 		if (allocsize % hugepagesize != 0)
 			allocsize += hugepagesize - (allocsize % hugepagesize);
 
-		ptr = mmap(NULL, *size, PROT_READ | PROT_WRITE,
+		ptr = mmap(NULL, allocsize, PROT_READ | PROT_WRITE,
 				   PG_MMAP_FLAGS | MAP_HUGETLB, -1, 0);
 		if (huge_tlb_pages == HUGE_TLB_TRY && ptr == MAP_FAILED)
 			elog(DEBUG1, "mmap with MAP_HUGETLB failed, huge pages disabled: %m");
@@ -372,8 +371,12 @@ CreateAnonymousSegment(Size *size)
 	if (huge_tlb_pages == HUGE_TLB_OFF ||
 		(huge_tlb_pages == HUGE_TLB_TRY && ptr == MAP_FAILED))
 	{
+		/*
+		 * use the original size, not the rounded up value, when falling
+		 * back to non-huge pages.
+		 */
 		allocsize = *size;
-		ptr = mmap(NULL, *size, PROT_READ | PROT_WRITE, PG_MMAP_FLAGS, -1, 0);
+		ptr = mmap(NULL, allocsize, PROT_READ | PROT_WRITE, PG_MMAP_FLAGS, -1, 0);
 	}
 
 	if (ptr == MAP_FAILED)
