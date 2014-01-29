@@ -27,6 +27,7 @@
 extern char *optarg;
 extern int	optind;
 
+
 int
 main(int argc, char **argv)
 {
@@ -88,6 +89,7 @@ main(int argc, char **argv)
 	argv += optind;
 	argc -= optind;
 
+	/* process arguments */
 	do
 	{
 		if (argc < 1)
@@ -104,6 +106,7 @@ main(int argc, char **argv)
 
 		escaped = FALSE;
 
+		/* process lines */
 		while (fgets(in_line, sizeof(in_line), in_file) != NULL)
 		{
 			col_in_tab = 0;
@@ -114,9 +117,11 @@ main(int argc, char **argv)
 				quote_char = ' ';
 			escaped = FALSE;
 
+			/* process line */
 			while (*src != NUL)
 			{
 				col_in_tab++;
+				/* Is this a potential space/tab replacement? */
 				if (quote_char == ' ' && (*src == ' ' || *src == '\t'))
 				{
 					if (*src == '\t')
@@ -127,22 +132,26 @@ main(int argc, char **argv)
 					else
 						prv_spaces++;
 
+					/* Are we at a tab stop? */
 					if (col_in_tab == tab_size)
 					{
 						/*
-						 * Is the next character going to be a tab? Needed to
-						 * do tab replacement in current spot if next char is
-						 * going to be a tab, ignoring min_spaces
+						 * Is the next character going to be a tab?  We do
+						 * tab replacement in the current spot if the next
+						 * char is going to be a tab and ignore min_spaces.
 						 */
 						nxt_spaces = 0;
 						while (1)
 						{
+							/* Have we reached non-whitespace? */
 							if (*(src + nxt_spaces + 1) == NUL ||
 								(*(src + nxt_spaces + 1) != ' ' &&
 								 *(src + nxt_spaces + 1) != '\t'))
 								break;
+							/* count spaces */
 							if (*(src + nxt_spaces + 1) == ' ')
 								++nxt_spaces;
+							/* Have we found a forward tab? */
 							if (*(src + nxt_spaces + 1) == '\t' ||
 								nxt_spaces == tab_size)
 							{
@@ -150,6 +159,7 @@ main(int argc, char **argv)
 								break;
 							}
 						}
+						/* Do tab replacment for spaces? */
 						if ((prv_spaces >= min_spaces ||
 							 nxt_spaces == tab_size) &&
 							del_tabs == FALSE)
@@ -158,40 +168,51 @@ main(int argc, char **argv)
 							prv_spaces = 0;
 						}
 						else
+						/* output accumulated spaces */
 						{
 							for (; prv_spaces > 0; prv_spaces--)
 								*(dst++) = ' ';
 						}
 					}
 				}
+				/* Not a potential space/tab replacement */
 				else
 				{
+					/* output accumulated spaces */
 					for (; prv_spaces > 0; prv_spaces--)
 						*(dst++) = ' ';
-					if (*src == '\t')	/* only when in quote */
+					/* This can only happen in a quote. */
+					if (*src == '\t')
 						col_in_tab = 0;
+					/* visual backspace? */
 					if (*src == '\b')
 						col_in_tab -= 2;
+					/* Do we process quotes? */
 					if (escaped == FALSE && protect_quotes == TRUE)
 					{
 						if (*src == '\\')
 							escaped = TRUE;
+						/* Is this a quote character? */
 						if (*src == '"' || *src == '\'')
 						{
+							/* toggle quote mode */
 							if (quote_char == ' ')
 								quote_char = *src;
 							else if (*src == quote_char)
 								quote_char = ' ';
 						}
 					}
+					/* newlines/CRs do not terminate escapes */
 					else if (*src != '\r' && *src != '\n')
 						escaped = FALSE;
 
+					/* reached newline/CR;  clip line? */
 					if ((*src == '\r' || *src == '\n') &&
-						quote_char == ' ' &&
 						clip_lines == TRUE &&
+						quote_char == ' ' &&
 						escaped == FALSE)
 					{
+						/* trim spaces starting from the end */
 						while (dst > out_line &&
 							   (*(dst - 1) == ' ' || *(dst - 1) == '\t'))
 							dst--;
@@ -210,9 +231,11 @@ main(int argc, char **argv)
 					dst--;
 				prv_spaces = 0;
 			}
+			/* output accumulated spaces */
 			for (; prv_spaces > 0; prv_spaces--)
 				*(dst++) = ' ';
 			*dst = NUL;
+
 			if (fputs(out_line, stdout) == EOF)
 			{
 				fprintf(stderr, "Cannot write to output file %s: %s\n", argv[0], strerror(errno));
