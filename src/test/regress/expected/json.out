@@ -801,7 +801,7 @@ select '{"f2":["f3",1],"f4":{"f5":99,"f6":"stringy"}}'::json#>>'{f2,1}';
 (1 row)
 
 -- array_elements
-select json_array_elements('[1,true,[1,[2,3]],null,{"f1":1,"f2":[7,8,9]},false]');
+select json_array_elements('[1,true,[1,[2,3]],null,{"f1":1,"f2":[7,8,9]},false,"stringy"]');
   json_array_elements  
 -----------------------
  1
@@ -810,9 +810,10 @@ select json_array_elements('[1,true,[1,[2,3]],null,{"f1":1,"f2":[7,8,9]},false]'
  null
  {"f1":1,"f2":[7,8,9]}
  false
-(6 rows)
+ "stringy"
+(7 rows)
 
-select * from json_array_elements('[1,true,[1,[2,3]],null,{"f1":1,"f2":[7,8,9]},false]') q;
+select * from json_array_elements('[1,true,[1,[2,3]],null,{"f1":1,"f2":[7,8,9]},false,"stringy"]') q;
          value         
 -----------------------
  1
@@ -821,7 +822,32 @@ select * from json_array_elements('[1,true,[1,[2,3]],null,{"f1":1,"f2":[7,8,9]},
  null
  {"f1":1,"f2":[7,8,9]}
  false
-(6 rows)
+ "stringy"
+(7 rows)
+
+select json_array_elements_text('[1,true,[1,[2,3]],null,{"f1":1,"f2":[7,8,9]},false,"stringy"]');
+ json_array_elements_text 
+--------------------------
+ 1
+ true
+ [1,[2,3]]
+ 
+ {"f1":1,"f2":[7,8,9]}
+ false
+ stringy
+(7 rows)
+
+select * from json_array_elements_text('[1,true,[1,[2,3]],null,{"f1":1,"f2":[7,8,9]},false,"stringy"]') q;
+         value         
+-----------------------
+ 1
+ true
+ [1,[2,3]]
+ 
+ {"f1":1,"f2":[7,8,9]}
+ false
+ stringy
+(7 rows)
 
 -- populate_record
 create type jpop as (a text, b int, c timestamp);

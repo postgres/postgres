@@ -66,6 +66,9 @@ static void each_object_field_end(void *state, char *fname, bool isnull);
 static void each_array_start(void *state);
 static void each_scalar(void *state, char *token, JsonTokenType tokentype);
 
+/* common worker for json_each* functions */
+static inline Datum elements_worker(PG_FUNCTION_ARGS, bool as_text);
+
 /* semantic action functions for json_array_elements */
 static void elements_object_start(void *state);
 static void elements_array_element_start(void *state, bool isnull);
@@ -165,6 +168,9 @@ typedef struct ElementsState
 	TupleDesc	ret_tdesc;
 	MemoryContext tmp_cxt;
 	char	   *result_start;
+	bool		normalize_results;
+	bool		next_scalar;
+	char	   *normalized_scalar;
 } ElementsState;
 
 /* state for get_json_object_as_hash */
@@ -1069,7 +1075,7 @@ each_scalar(void *state, char *token, JsonTokenType tokentype)
 }
 
 /*
- * SQL function json_array_elements
+ * SQL functions json_array_elements and json_array_elements_text
  *
  * get the elements from a json array
  *
@@ -1078,10 +1084,22 @@ each_scalar(void *state, char *token, JsonTokenType tokentype)
 Datum
 json_array_elements(PG_FUNCTION_ARGS)
 {
+	return elements_worker(fcinfo, false);
+}
+
+Datum
+json_array_elements_text(PG_FUNCTION_ARGS)
+{
+	return elements_worker(fcinfo, true);
+}
+
+static inline Datum
+elements_worker(PG_FUNCTION_ARGS, bool as_text)
+{
 	text	   *json = PG_GETARG_TEXT_P(0);
 
-	/* elements doesn't need any escaped strings, so use false here */
-	JsonLexContext *lex = makeJsonLexContext(json, false);
+	/* elements only needs escaped strings when as_text */
+	JsonLexContext *lex = makeJsonLexContext(json, as_text);
 	JsonSemAction *sem;
 	ReturnSetInfo *rsi;
 	MemoryContext old_cxt;
@@ -1124,6 +1142,9 @@ json_array_elements(PG_FUNCTION_ARGS)
 	sem->array_element_start = elements_array_element_start;
 	sem->array_element_end = elements_array_element_end;
 
+	state->normalize_results = as_text;
+	state->next_scalar = false;
+
 	state->lex = lex;
 	state->tmp_cxt = AllocSetContextCreate(CurrentMemoryContext,
 										 "json_array_elements temporary cxt",
@@ -1146,7 +1167,17 @@ elements_array_element_start(void *state, bool isnull)
 
 	/* save a pointer to where the value starts */
 	if (_state->lex->lex_level == 1)
-		_state->result_start = _state->lex->token_start;
+	{
+		/*
+		 * next_scalar will be reset in the array_element_end handler, and
+		 * since we know the value is a scalar there is no danger of it being
+		 * on while recursing down the tree.
+		 */
+		if (_state->normalize_results && _state->lex->token_type == JSON_TOKEN_STRING)
+			_state->next_scalar = true;
+		else
+			_state->result_start = _state->lex->token_start;
+	}
 }
 
 static void
@@ -1158,7 +1189,7 @@ elements_array_element_end(void *state, bool isnull)
 	text	   *val;
 	HeapTuple	tuple;
 	Datum		values[1];
-	static bool nulls[1] = {false};
+	bool nulls[1] = {false};
 
 	/* skip over nested objects */
 	if (_state->lex->lex_level != 1)
@@ -1167,10 +1198,23 @@ elements_array_element_end(void *state, bool isnull)
 	/* use the tmp context so we can clean up after each tuple is done */
 	old_cxt = MemoryContextSwitchTo(_state->tmp_cxt);
 
-	len = _state->lex->prev_token_terminator - _state->result_start;
-	val = cstring_to_text_with_len(_state->result_start, len);
+	if (isnull && _state->normalize_results)
+	{
+		nulls[0] = true;
+		values[0] = (Datum) NULL;
+	}
+	else if (_state->next_scalar)
+	{
+		values[0] = CStringGetTextDatum(_state->normalized_scalar);
+		_state->next_scalar = false;
+	}
+	else
+	{
+		len = _state->lex->prev_token_terminator - _state->result_start;
+		val = cstring_to_text_with_len(_state->result_start, len);
+		values[0] = PointerGetDatum(val);
+	}
 
-	values[0] = PointerGetDatum(val);
 
 	tuple = heap_form_tuple(_state->ret_tdesc, values, nulls);
 
@@ -1204,10 +1248,9 @@ elements_scalar(void *state, char *token, JsonTokenType tokentype)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("cannot call json_array_elements on a scalar")));
 
-	/*
-	 * json_array_elements always returns json, so there's no need to think
-	 * about de-escaped values here.
-	 */
+	/* supply de-escaped value if required */
+	if (_state->next_scalar)
+		_state->normalized_scalar = token;
 }
 
 /*

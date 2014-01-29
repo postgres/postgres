@@ -10286,6 +10286,27 @@ table2-mapping
       <row>
        <entry>
          <indexterm>
+          <primary>json_array_elements_text</primary>
+         </indexterm>
+         <literal>json_array_elements_text(json)</literal>
+       </entry>
+       <entry><type>SETOF json</type></entry>
+       <entry>
+         Expands a JSON array to a set of text values.
+       </entry>
+       <entry><literal>json_array_elements_text('["foo", "bar"]')</literal></entry>
+       <entry>
+<programlisting>
+   value
+-----------
+ foo
+ bar
+</programlisting>
+       </entry>
+      </row>
+      <row>
+       <entry>
+         <indexterm>
           <primary>json_typeof</primary>
          </indexterm>
          <literal>json_typeof(json)</literal>

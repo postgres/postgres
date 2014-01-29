@@ -58,6 +58,7 @@ extern Datum json_array_length(PG_FUNCTION_ARGS);
 extern Datum json_each(PG_FUNCTION_ARGS);
 extern Datum json_each_text(PG_FUNCTION_ARGS);
 extern Datum json_array_elements(PG_FUNCTION_ARGS);
+extern Datum json_array_elements_text(PG_FUNCTION_ARGS);
 extern Datum json_populate_record(PG_FUNCTION_ARGS);
 extern Datum json_populate_recordset(PG_FUNCTION_ARGS);
 extern Datum json_to_record(PG_FUNCTION_ARGS);
