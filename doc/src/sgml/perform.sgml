@@ -89,6 +89,7 @@ EXPLAIN SELECT * FROM tenk1;
                          QUERY PLAN
 -------------------------------------------------------------
  Seq Scan on tenk1  (cost=0.00..458.00 rows=10000 width=244)
+ Planning time: 0.113 ms
 </screen>
    </para>
 
@@ -162,6 +163,12 @@ EXPLAIN SELECT * FROM tenk1;
    </para>
 
    <para>
+    The <literal>Planning time</literal> shown is the time it took to generate
+    the query plan from the parsed query and optimize it. It does not include
+    rewriting and parsing.
+   </para>
+
+   <para>
     Returning to our example:
 
 <screen>
@@ -170,6 +177,7 @@ EXPLAIN SELECT * FROM tenk1;
                          QUERY PLAN
 -------------------------------------------------------------
  Seq Scan on tenk1  (cost=0.00..458.00 rows=10000 width=244)
+ Planning time: 0.113 ms
 </screen>
    </para>
 
@@ -198,6 +206,7 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 7000;
 ------------------------------------------------------------
  Seq Scan on tenk1  (cost=0.00..483.00 rows=7001 width=244)
    Filter: (unique1 &lt; 7000)
+ Planning time: 0.104 ms
 </screen>
 
     Notice that the <command>EXPLAIN</> output shows the <literal>WHERE</>
@@ -234,6 +243,7 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 100;
    Recheck Cond: (unique1 &lt; 100)
    -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..5.04 rows=101 width=0)
          Index Cond: (unique1 &lt; 100)
+ Planning time: 0.093 ms
 </screen>
 
     Here the planner has decided to use a two-step plan: the child plan
@@ -262,6 +272,7 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 100 AND stringu1 = 'xxx';
    Filter: (stringu1 = 'xxx'::name)
    -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..5.04 rows=101 width=0)
          Index Cond: (unique1 &lt; 100)
+ Planning time: 0.089 ms
 </screen>
 
     The added condition <literal>stringu1 = 'xxx'</literal> reduces the
@@ -283,6 +294,7 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 = 42;
 -----------------------------------------------------------------------------
  Index Scan using tenk1_unique1 on tenk1  (cost=0.29..8.30 rows=1 width=244)
    Index Cond: (unique1 = 42)
+ Planning time: 0.076 ms
 </screen>
 
     In this type of plan the table rows are fetched in index order, which
@@ -311,6 +323,7 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 100 AND unique2 &gt; 9000;
                Index Cond: (unique1 &lt; 100)
          -&gt;  Bitmap Index Scan on tenk1_unique2  (cost=0.00..19.78 rows=999 width=0)
                Index Cond: (unique2 &gt; 9000)
+ Planning time: 0.094 ms
 </screen>
 
     But this requires visiting both indexes, so it's not necessarily a win
@@ -331,6 +344,7 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 100 AND unique2 &gt; 9000 LIMIT 2
    -&gt;  Index Scan using tenk1_unique2 on tenk1  (cost=0.29..71.27 rows=10 width=244)
          Index Cond: (unique2 &gt; 9000)
          Filter: (unique1 &lt; 100)
+ Planning time: 0.087 ms
 </screen>
    </para>
 
@@ -364,6 +378,7 @@ WHERE t1.unique1 &lt; 10 AND t1.unique2 = t2.unique2;
                Index Cond: (unique1 &lt; 10)
    -&gt;  Index Scan using tenk2_unique2 on tenk2 t2  (cost=0.29..7.91 rows=1 width=244)
          Index Cond: (unique2 = t1.unique2)
+ Planning time: 0.117 ms
 </screen>
    </para>
 
@@ -415,6 +430,7 @@ WHERE t1.unique1 &lt; 10 AND t2.unique2 &lt; 10 AND t1.hundred &lt; t2.hundred;
    -&gt;  Materialize  (cost=0.29..8.51 rows=10 width=244)
          -&gt;  Index Scan using tenk2_unique2 on tenk2 t2  (cost=0.29..8.46 rows=10 width=244)
                Index Cond: (unique2 &lt; 10)
+ Planning time: 0.119 ms
 </screen>
 
     The condition <literal>t1.hundred &lt; t2.hundred</literal> can't be
@@ -462,6 +478,7 @@ WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
                Recheck Cond: (unique1 &lt; 100)
                -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..5.04 rows=101 width=0)
                      Index Cond: (unique1 &lt; 100)
+ Planning time: 0.182 ms
 </screen>
    </para>
 
@@ -492,6 +509,7 @@ WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
    -&gt;  Sort  (cost=197.83..200.33 rows=1000 width=244)
          Sort Key: t2.unique2
          -&gt;  Seq Scan on onek t2  (cost=0.00..148.00 rows=1000 width=244)
+ Planning time: 0.195 ms
 </screen>
    </para>
 
@@ -528,6 +546,7 @@ WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
    -&gt;  Index Scan using tenk1_unique2 on tenk1 t1  (cost=0.29..656.28 rows=101 width=244)
          Filter: (unique1 &lt; 100)
    -&gt;  Index Scan using onek_unique2 on onek t2  (cost=0.28..224.79 rows=1000 width=244)
+ Planning time: 0.176 ms
 </screen>
 
     which shows that the planner thinks that sorting <literal>onek</> by
@@ -564,6 +583,7 @@ WHERE t1.unique1 &lt; 10 AND t1.unique2 = t2.unique2;
                Index Cond: (unique1 &lt; 10)
    -&gt;  Index Scan using tenk2_unique2 on tenk2 t2  (cost=0.29..7.91 rows=1 width=244) (actual time=0.021..0.022 rows=1 loops=10)
          Index Cond: (unique2 = t1.unique2)
+ Planning time: 0.181 ms
  Total runtime: 0.501 ms
 </screen>
 
@@ -612,6 +632,7 @@ WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2 ORDER BY t1.fivethous;
                      Recheck Cond: (unique1 &lt; 100)
                      -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..5.04 rows=101 width=0) (actual time=0.049..0.049 rows=100 loops=1)
                            Index Cond: (unique1 &lt; 100)
+ Planning time: 0.194 ms
  Total runtime: 8.008 ms
 </screen>
 
@@ -635,6 +656,7 @@ EXPLAIN ANALYZE SELECT * FROM tenk1 WHERE ten &lt; 7;
  Seq Scan on tenk1  (cost=0.00..483.00 rows=7000 width=244) (actual time=0.016..5.107 rows=7000 loops=1)
    Filter: (ten &lt; 7)
    Rows Removed by Filter: 3000
+ Planning time: 0.083 ms
  Total runtime: 5.905 ms
 </screen>
 
@@ -657,6 +679,7 @@ EXPLAIN ANALYZE SELECT * FROM polygon_tbl WHERE f1 @&gt; polygon '(0.5,2.0)';
  Seq Scan on polygon_tbl  (cost=0.00..1.05 rows=1 width=32) (actual time=0.044..0.044 rows=0 loops=1)
    Filter: (f1 @&gt; '((0.5,2))'::polygon)
    Rows Removed by Filter: 4
+ Planning time: 0.040 ms
  Total runtime: 0.083 ms
 </screen>
 
@@ -675,6 +698,7 @@ EXPLAIN ANALYZE SELECT * FROM polygon_tbl WHERE f1 @&gt; polygon '(0.5,2.0)';
  Index Scan using gpolygonind on polygon_tbl  (cost=0.13..8.15 rows=1 width=32) (actual time=0.062..0.062 rows=0 loops=1)
    Index Cond: (f1 @&gt; '((0.5,2))'::polygon)
    Rows Removed by Index Recheck: 1
+ Planning time: 0.034 ms
  Total runtime: 0.144 ms
 </screen>
 
@@ -705,6 +729,7 @@ EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM tenk1 WHERE unique1 &lt; 100 AND unique
          -&gt;  Bitmap Index Scan on tenk1_unique2  (cost=0.00..19.78 rows=999 width=0) (actual time=0.227..0.227 rows=999 loops=1)
                Index Cond: (unique2 &gt; 9000)
                Buffers: shared hit=5
+ Planning time: 0.088 ms
  Total runtime: 0.423 ms
 </screen>
 
@@ -732,6 +757,7 @@ EXPLAIN ANALYZE UPDATE tenk1 SET hundred = hundred + 1 WHERE unique1 &lt; 100;
          Recheck Cond: (unique1 &lt; 100)
          -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..5.04 rows=101 width=0) (actual time=0.043..0.043 rows=100 loops=1)
                Index Cond: (unique1 &lt; 100)
+ Planning time: 0.079 ms
  Total runtime: 14.727 ms
 
 ROLLBACK;
@@ -817,6 +843,7 @@ EXPLAIN ANALYZE SELECT * FROM tenk1 WHERE unique1 &lt; 100 AND unique2 &gt; 9000
          Index Cond: (unique2 &gt; 9000)
          Filter: (unique1 &lt; 100)
          Rows Removed by Filter: 287
+ Planning time: 0.096 ms
  Total runtime: 0.336 ms
 </screen>
 
