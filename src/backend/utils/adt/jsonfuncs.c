@@ -1283,8 +1283,8 @@ populate_record_worker(PG_FUNCTION_ARGS, bool have_record_arg)
 	bool		use_json_as_text;
 	HTAB	   *json_hash;
 	HeapTupleHeader rec = NULL;
-	Oid			tupType;
-	int32		tupTypmod;
+	Oid			tupType = InvalidOid;
+	int32		tupTypmod = -1;
 	TupleDesc	tupdesc;
 	HeapTupleData tuple;
 	HeapTuple	rettuple;
