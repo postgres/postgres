@@ -1137,7 +1137,7 @@ include 'filename'
        <para>
         With <varname>huge_tlb_pages</varname> set to <literal>try</literal>,
         the server will try to use huge pages, but fall back to using
-        normal allocation if that fails. With <literal>on</literal, failure
+        normal allocation if that fails. With <literal>on</literal>, failure
         to use huge pages will prevent the server from starting up. With
         <literal>off</literal>, huge pages will not be used.
        </para>
