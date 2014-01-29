@@ -96,19 +96,49 @@ static void dataPlaceToPageLeafSplit(Buffer buf,
 						 XLogRecData **prdata, Page lpage, Page rpage);
 
 /*
- * Read all TIDs from leaf data page to single uncompressed array.
+ * Read TIDs from leaf data page to single uncompressed array. The TIDs are
+ * returned in ascending order.
+ *
+ * advancePast is a hint, indicating that the caller is only interested in
+ * TIDs > advancePast. To return all items, use ItemPointerSetMin.
+ *
+ * Note: This function can still return items smaller than advancePast that
+ * are in the same posting list as the items of interest, so the caller must
+ * still check all the returned items. But passing it allows this function to
+ * skip whole posting lists.
  */
 ItemPointer
-GinDataLeafPageGetItems(Page page, int *nitems)
+GinDataLeafPageGetItems(Page page, int *nitems, ItemPointerData advancePast)
 {
 	ItemPointer result;
 
 	if (GinPageIsCompressed(page))
 	{
-		GinPostingList *ptr = GinDataLeafPageGetPostingList(page);
+		GinPostingList *seg = GinDataLeafPageGetPostingList(page);
 		Size		len = GinDataLeafPageGetPostingListSize(page);
+		Pointer		endptr = ((Pointer) seg) + len;
+		GinPostingList *next;
 
-		result = ginPostingListDecodeAllSegments(ptr, len, nitems);
+		/* Skip to the segment containing advancePast+1 */
+		if (ItemPointerIsValid(&advancePast))
+		{
+			next = GinNextPostingListSegment(seg);
+			while ((Pointer) next < endptr &&
+				   ginCompareItemPointers(&next->first, &advancePast) <= 0)
+			{
+				seg = next;
+				next = GinNextPostingListSegment(seg);
+			}
+			len = endptr - (Pointer) seg;
+		}
+
+		if (len > 0)
+			result = ginPostingListDecodeAllSegments(seg, len, nitems);
+		else
+		{
+			result = NULL;
+			*nitems = 0;
+		}
 	}
 	else
 	{

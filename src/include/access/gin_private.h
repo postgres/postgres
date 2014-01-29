@@ -692,7 +692,7 @@ extern ItemPointer ginReadTuple(GinState *ginstate, OffsetNumber attnum,
 			 IndexTuple itup, int *nitems);
 
 /* gindatapage.c */
-extern ItemPointer GinDataLeafPageGetItems(Page page, int *nitems);
+extern ItemPointer GinDataLeafPageGetItems(Page page, int *nitems, ItemPointerData advancePast);
 extern int GinDataLeafPageGetItemsToTbm(Page page, TIDBitmap *tbm);
 extern BlockNumber createPostingTree(Relation index,
 				  ItemPointerData *items, uint32 nitems,

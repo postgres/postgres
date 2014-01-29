@@ -400,6 +400,7 @@ restartScanEntry:
 			BlockNumber rootPostingTree = GinGetPostingTree(itup);
 			GinBtreeStack *stack;
 			Page		page;
+			ItemPointerData minItem;
 
 			/*
 			 * We should unlock entry page before touching posting tree to
@@ -426,7 +427,8 @@ restartScanEntry:
 			/*
 			 * Load the first page into memory.
 			 */
-			entry->list = GinDataLeafPageGetItems(page, &entry->nlist);
+			ItemPointerSetMin(&minItem);
+			entry->list = GinDataLeafPageGetItems(page, &entry->nlist, minItem);
 
 			entry->predictNumberResult = stack->predictNumber * entry->nlist;
 
@@ -558,7 +560,7 @@ entryLoadMoreItems(GinState *ginstate, GinScanEntry entry, ItemPointerData advan
 			continue;
 		}
 
-		entry->list = GinDataLeafPageGetItems(page, &entry->nlist);
+		entry->list = GinDataLeafPageGetItems(page, &entry->nlist, advancePast);
 
 		for (i = 0; i < entry->nlist; i++)
 		{
