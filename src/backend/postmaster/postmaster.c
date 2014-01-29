@@ -471,7 +471,7 @@ typedef struct
 #ifndef HAVE_SPINLOCKS
 	PGSemaphore	SpinlockSemaArray;
 #endif
-	LWLock	   *MainLWLockArray;
+	LWLockPadded *MainLWLockArray;
 	slock_t    *ProcStructLock;
 	PROC_HDR   *ProcGlobal;
 	PGPROC	   *AuxiliaryProcs;
