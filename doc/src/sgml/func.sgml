@@ -10486,7 +10486,9 @@ table2-mapping
   <para>
     See also <xref linkend="functions-aggregate"> about the aggregate
     function <function>json_agg</function> which aggregates record
-    values as JSON efficiently.
+    values as JSON efficiently, and the aggregate function
+    <function>json_object_agg</function>, which aggregates pairs of values
+    into a JSON object.
   </para>
  </sect1>
 
@@ -12077,6 +12079,7 @@ SELECT count(*) FROM sometable;
   <para>
    The aggregate functions <function>array_agg</function>,
    <function>json_agg</function>,
+   <function>json_object_agg</function>,
    <function>string_agg</function>,
    and <function>xmlagg</function>, as well as similar user-defined
    aggregate functions, produce meaningfully different result values
