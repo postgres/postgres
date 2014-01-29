@@ -31,7 +31,7 @@ extern int	optind;
 static void
 output_accumulated_spaces(int *prv_spaces, char **dst)
 {
-	for (; *prv_spaces > 0; *prv_spaces--)
+	for (; *prv_spaces > 0; (*prv_spaces)--)
 		*((*dst)++) = ' ';
 }
 
