@@ -64,6 +64,7 @@
 #include "storage/dsm_impl.h"
 #include "storage/standby.h"
 #include "storage/fd.h"
+#include "storage/pg_shmem.h"
 #include "storage/proc.h"
 #include "storage/predicate.h"
 #include "tcop/tcopprot.h"
@@ -388,6 +389,23 @@ static const struct config_enum_entry synchronous_commit_options[] = {
 };
 
 /*
+ * Although only "on", "off", "try" are documented, we accept all the likely
+ * variants of "on" and "off".
+ */
+static const struct config_enum_entry huge_tlb_options[] = {
+	{"off", HUGE_TLB_OFF, false},
+	{"on", HUGE_TLB_ON, false},
+	{"try", HUGE_TLB_TRY, false},
+	{"true", HUGE_TLB_ON, true},
+	{"false", HUGE_TLB_OFF, true},
+	{"yes", HUGE_TLB_ON, true},
+	{"no", HUGE_TLB_OFF, true},
+	{"1", HUGE_TLB_ON, true},
+	{"0", HUGE_TLB_OFF, true},
+	{NULL, 0, false}
+};
+
+/*
  * Options for enum values stored in other modules
  */
 extern const struct config_enum_entry wal_level_options[];
@@ -446,6 +464,12 @@ char	   *application_name;
 int			tcp_keepalives_idle;
 int			tcp_keepalives_interval;
 int			tcp_keepalives_count;
+
+/*
+ * This really belongs in pg_shmem.c, but is defined here so that it doesn't
+ * need to be duplicated in all the different implementations of pg_shmem.c.
+ */
+int			huge_tlb_pages;
 
 /*
  * These variables are all dummies that don't do anything, except in some
@@ -3430,6 +3454,15 @@ static struct config_enum ConfigureNamesEnum[] =
 		NULL, NULL, NULL
 	},
 
+	{
+		{"huge_tlb_pages", PGC_POSTMASTER, RESOURCES_MEM,
+			gettext_noop("Use of huge TLB pages on Linux"),
+			NULL
+		},
+		&huge_tlb_pages,
+		HUGE_TLB_TRY, huge_tlb_options,
+		NULL, NULL, NULL
+	},
 
 	/* End-of-list marker */
 	{

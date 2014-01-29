@@ -1107,6 +1107,43 @@ include 'filename'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-huge-tlb-pages" xreflabel="huge_tlb_pages">
+      <term><varname>huge_tlb_pages</varname> (<type>enum</type>)</term>
+      <indexterm>
+       <primary><varname>huge_tlb_pages</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Enables/disables the use of huge TLB pages. Valid values are
+        <literal>try</literal> (the default), <literal>on</literal>,
+        and <literal>off</literal>.
+       </para>
+
+       <para>
+        At present, this feature is supported only on Linux. The setting
+        is ignored on other systems.
+       </para>
+
+       <para>
+        The use of huge TLB pages results in smaller page tables and
+        less CPU time spent on memory management, increasing performance. For
+        more details, see
+        <ulink url="https://wiki.debian.org/Hugepages">the Debian wiki</ulink>.
+        Remember that you will need at least shared_buffers / huge page size +
+        1 huge TLB pages. So for example for a system with 6GB shared buffers
+        and a hugepage size of 2kb of you will need at least 3156 huge pages.
+       </para>
+
+       <para>
+        With <varname>huge_tlb_pages</varname> set to <literal>try</literal>,
+        the server will try to use huge pages, but fall back to using
+        normal allocation if that fails. With <literal>on</literal, failure
+        to use huge pages will prevent the server from starting up. With
+        <literal>off</literal>, huge pages will not be used.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-temp-buffers" xreflabel="temp_buffers">
       <term><varname>temp_buffers</varname> (<type>integer</type>)</term>
       <indexterm>

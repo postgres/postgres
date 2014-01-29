@@ -38,6 +38,16 @@ typedef struct PGShmemHeader	/* standard header for all Postgres shmem */
 #endif
 } PGShmemHeader;
 
+/* GUC variable */
+extern int huge_tlb_pages;
+
+/* Possible values for huge_tlb_pages */
+typedef enum
+{
+	HUGE_TLB_OFF,
+	HUGE_TLB_ON,
+	HUGE_TLB_TRY
+} HugeTlbType;
 
 #ifdef EXEC_BACKEND
 #ifndef WIN32

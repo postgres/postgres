@@ -115,6 +115,8 @@
 
 #shared_buffers = 32MB			# min 128kB
 					# (change requires restart)
+#huge_tlb_pages = try			# on, off, or try
+					# (change requires restart)
 #temp_buffers = 8MB			# min 800kB
 #max_prepared_transactions = 0		# zero disables the feature
 					# (change requires restart)

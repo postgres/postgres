@@ -128,6 +128,11 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 	DWORD		size_high;
 	DWORD		size_low;
 
+	if (huge_tlb_pages == HUGE_TLB_ON)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("huge TLB pages not supported on this platform")));
+
 	/* Room for a header? */
 	Assert(size > MAXALIGN(sizeof(PGShmemHeader)));
 
