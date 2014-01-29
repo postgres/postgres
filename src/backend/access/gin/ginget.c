@@ -68,29 +68,6 @@ callConsistentFn(GinState *ginstate, GinScanKey key)
 }
 
 /*
- * Tries to refind previously taken ItemPointer on a posting page.
- */
-static bool
-needToStepRight(Page page, ItemPointer item)
-{
-	if (GinPageGetOpaque(page)->flags & GIN_DELETED)
-		/* page was deleted by concurrent vacuum */
-		return true;
-
-	if (ginCompareItemPointers(item, GinDataPageGetRightBound(page)) > 0
-			&& !GinPageRightMost(page))
-	{
-		/*
-		 * the item we're looking is > the right bound of the page, so it
-		 * can't be on this page.
-		 */
-		return true;
-	}
-
-	return false;
-}
-
-/*
  * Goes to the next page if current offset is outside of bounds
  */
 static bool
@@ -447,8 +424,7 @@ restartScanEntry:
 			page = BufferGetPage(entry->buffer);
 
 			/*
-			 * Copy page content to memory to avoid keeping it locked for
-			 * a long time.
+			 * Load the first page into memory.
 			 */
 			entry->list = GinDataLeafPageGetItems(page, &entry->nlist);
 
@@ -518,88 +494,78 @@ startScan(IndexScanDesc scan)
 }
 
 /*
- * Gets next ItemPointer from PostingTree. Note, that we copy
- * page into GinScanEntry->list array and unlock page, but keep it pinned
- * to prevent interference with vacuum
+ * Load the next batch of item pointers from a posting tree.
+ *
+ * Note that we copy the page into GinScanEntry->list array and unlock it, but
+ * keep it pinned to prevent interference with vacuum.
  */
 static void
-entryGetNextItem(GinState *ginstate, GinScanEntry entry)
+entryLoadMoreItems(GinState *ginstate, GinScanEntry entry, ItemPointerData advancePast)
 {
 	Page		page;
 	int			i;
 
+	LockBuffer(entry->buffer, GIN_SHARE);
+	page = BufferGetPage(entry->buffer);
 	for (;;)
 	{
-		if (entry->offset < entry->nlist)
+		entry->offset = InvalidOffsetNumber;
+		if (entry->list)
 		{
-			entry->curItem = entry->list[entry->offset++];
+			pfree(entry->list);
+			entry->list = NULL;
+			entry->nlist = 0;
+		}
+
+		/*
+		 * We've processed all the entries on this page. If it was the last
+		 * page in the tree, we're done.
+		 */
+		if (GinPageRightMost(page))
+		{
+			UnlockReleaseBuffer(entry->buffer);
+			entry->buffer = InvalidBuffer;
+			entry->isFinished = TRUE;
 			return;
 		}
 
-		LockBuffer(entry->buffer, GIN_SHARE);
+		if (GinPageGetOpaque(page)->flags & GIN_DELETED)
+			continue;		/* page was deleted by concurrent vacuum */
+
+		/*
+		 * Step to next page, following the right link. then find the first
+		 * ItemPointer greater than advancePast.
+		 */
+		entry->buffer = ginStepRight(entry->buffer,
+									 ginstate->index,
+									 GIN_SHARE);
 		page = BufferGetPage(entry->buffer);
-		for (;;)
+
+		/*
+		 * The first item > advancePast might not be on this page, but
+		 * somewhere to the right, if the page was split, or a non-match from
+		 * another key in the query allowed us to skip some items from this
+		 * entry. Keep following the right-links until we re-find the correct
+		 * page.
+		 */
+		if (!GinPageRightMost(page) &&
+			ginCompareItemPointers(&advancePast, GinDataPageGetRightBound(page)) >= 0)
 		{
 			/*
-			 * It's needed to go by right link. During that we should refind
-			 * first ItemPointer greater that stored
+			 * the item we're looking is > the right bound of the page, so it
+			 * can't be on this page.
 			 */
-			if (GinPageRightMost(page))
-			{
-				UnlockReleaseBuffer(entry->buffer);
-				ItemPointerSetInvalid(&entry->curItem);
-				entry->buffer = InvalidBuffer;
-				entry->isFinished = TRUE;
-				return;
-			}
+			continue;
+		}
 
-			entry->buffer = ginStepRight(entry->buffer,
-										 ginstate->index,
-										 GIN_SHARE);
-			page = BufferGetPage(entry->buffer);
+		entry->list = GinDataLeafPageGetItems(page, &entry->nlist);
 
-			entry->offset = InvalidOffsetNumber;
-			if (entry->list)
-			{
-				pfree(entry->list);
-				entry->list = NULL;
-			}
-
-			/*
-			 * If the page was concurrently split, we have to re-find the
-			 * item we were stopped on. If the page was split more than once,
-			 * the item might not be on this page, but somewhere to the right.
-			 * Keep following the right-links until we re-find the correct
-			 * page.
-			 */
-			if (ItemPointerIsValid(&entry->curItem) &&
-				needToStepRight(page, &entry->curItem))
-			{
-				continue;
-			}
-
-			entry->list = GinDataLeafPageGetItems(page, &entry->nlist);
-
-			/* re-find the item we were stopped on. */
-			if (ItemPointerIsValid(&entry->curItem))
-			{
-				for (i = 0; i < entry->nlist; i++)
-				{
-					if (ginCompareItemPointers(&entry->curItem,
-											   &entry->list[i]) < 0)
-					{
-						LockBuffer(entry->buffer, GIN_UNLOCK);
-						entry->offset = i + 1;
-						entry->curItem = entry->list[entry->offset - 1];
-						return;
-					}
-				}
-			}
-			else
+		for (i = 0; i < entry->nlist; i++)
+		{
+			if (ginCompareItemPointers(&advancePast, &entry->list[i]) < 0)
 			{
 				LockBuffer(entry->buffer, GIN_UNLOCK);
-				entry->offset = 1; /* scan all items on the page. */
-				entry->curItem = entry->list[entry->offset - 1];
+				entry->offset = i;
 				return;
 			}
 		}
@@ -610,10 +576,10 @@ entryGetNextItem(GinState *ginstate, GinScanEntry entry)
 #define dropItem(e) ( gin_rand() > ((double)GinFuzzySearchLimit)/((double)((e)->predictNumberResult)) )
 
 /*
- * Sets entry->curItem to next heap item pointer for one entry of one scan key,
- * or sets entry->isFinished to TRUE if there are no more.
+ * Sets entry->curItem to next heap item pointer > advancePast, for one entry
+ * of one scan key, or sets entry->isFinished to TRUE if there are no more.
  *
- * Item pointers must be returned in ascending order.
+ * Item pointers are returned in ascending order.
  *
  * Note: this can return a "lossy page" item pointer, indicating that the
  * entry potentially matches all items on that heap page.  However, it is
@@ -623,12 +589,20 @@ entryGetNextItem(GinState *ginstate, GinScanEntry entry)
  * current implementation this is guaranteed by the behavior of tidbitmaps.
  */
 static void
-entryGetItem(GinState *ginstate, GinScanEntry entry)
+entryGetItem(GinState *ginstate, GinScanEntry entry,
+			 ItemPointerData advancePast)
 {
 	Assert(!entry->isFinished);
 
+	Assert(!ItemPointerIsValid(&entry->curItem) ||
+		   ginCompareItemPointers(&entry->curItem, &advancePast) <= 0);
+
 	if (entry->matchBitmap)
 	{
+		/* A bitmap result */
+		BlockNumber advancePastBlk = GinItemPointerGetBlockNumber(&advancePast);
+		OffsetNumber advancePastOff = GinItemPointerGetOffsetNumber(&advancePast);
+
 		do
 		{
 			if (entry->matchResult == NULL ||
@@ -643,6 +617,18 @@ entryGetItem(GinState *ginstate, GinScanEntry entry)
 					entry->matchIterator = NULL;
 					entry->isFinished = TRUE;
 					break;
+				}
+
+				/*
+				 * If all the matches on this page are <= advancePast, skip
+				 * to next page.
+				 */
+				if (entry->matchResult->blockno < advancePastBlk ||
+					(entry->matchResult->blockno == advancePastBlk &&
+					 entry->matchResult->offsets[entry->offset] <= advancePastOff))
+				{
+					entry->offset = entry->matchResult->ntuples;
+					continue;
 				}
 
 				/*
@@ -670,6 +656,17 @@ entryGetItem(GinState *ginstate, GinScanEntry entry)
 				break;
 			}
 
+			if (entry->matchResult->blockno == advancePastBlk)
+			{
+				/*
+				 * Skip to the right offset on this page. We already checked
+				 * in above loop that there is at least one item > advancePast
+				 * on the page.
+				 */
+				while (entry->matchResult->offsets[entry->offset] <= advancePastOff)
+					entry->offset++;
+			}
+
 			ItemPointerSet(&entry->curItem,
 						   entry->matchResult->blockno,
 						   entry->matchResult->offsets[entry->offset]);
@@ -678,29 +675,48 @@ entryGetItem(GinState *ginstate, GinScanEntry entry)
 	}
 	else if (!BufferIsValid(entry->buffer))
 	{
-		entry->offset++;
-		if (entry->offset <= entry->nlist)
-			entry->curItem = entry->list[entry->offset - 1];
-		else
+		/* A posting list from an entry tuple  */
+		do
 		{
-			ItemPointerSetInvalid(&entry->curItem);
-			entry->isFinished = TRUE;
-		}
+			if (entry->offset >= entry->nlist)
+			{
+				ItemPointerSetInvalid(&entry->curItem);
+				entry->isFinished = TRUE;
+				break;
+			}
+
+			entry->curItem = entry->list[entry->offset++];
+		} while (ginCompareItemPointers(&entry->curItem, &advancePast) <= 0);
+		/* XXX: shouldn't we apply the fuzzy search limit here? */
 	}
 	else
 	{
+		/* A posting tree */
 		do
 		{
-			entryGetNextItem(ginstate, entry);
-		} while (entry->isFinished == FALSE &&
-				 entry->reduceResult == TRUE &&
-				 dropItem(entry));
+			/* If we've processed the current batch, load more items */
+			while (entry->offset >= entry->nlist)
+			{
+				entryLoadMoreItems(ginstate, entry, advancePast);
+
+				if (entry->isFinished)
+				{
+					ItemPointerSetInvalid(&entry->curItem);
+					return;
+				}
+			}
+
+			entry->curItem = entry->list[entry->offset++];
+
+		} while (ginCompareItemPointers(&entry->curItem, &advancePast) <= 0 ||
+				 (entry->reduceResult == TRUE && dropItem(entry)));
 	}
 }
 
 /*
- * Identify the "current" item among the input entry streams for this scan key,
- * and test whether it passes the scan key qual condition.
+ * Identify the "current" item among the input entry streams for this scan key
+ * that is greater than advancePast, and test whether it passes the scan key
+ * qual condition.
  *
  * The current item is the smallest curItem among the inputs.  key->curItem
  * is set to that value.  key->curItemMatches is set to indicate whether that
@@ -719,7 +735,8 @@ entryGetItem(GinState *ginstate, GinScanEntry entry)
  * logic in scanGetItem.)
  */
 static void
-keyGetItem(GinState *ginstate, MemoryContext tempCtx, GinScanKey key)
+keyGetItem(GinState *ginstate, MemoryContext tempCtx, GinScanKey key,
+		   ItemPointerData advancePast)
 {
 	ItemPointerData minItem;
 	ItemPointerData curPageLossy;
@@ -729,11 +746,20 @@ keyGetItem(GinState *ginstate, MemoryContext tempCtx, GinScanKey key)
 	GinScanEntry entry;
 	bool		res;
 	MemoryContext oldCtx;
+	bool		allFinished;
 
 	Assert(!key->isFinished);
 
 	/*
-	 * Find the minimum of the active entry curItems.
+	 * We might have already tested this item; if so, no need to repeat work.
+	 * (Note: the ">" case can happen, if minItem is exact but we previously
+	 * had to set curItem to a lossy-page pointer.)
+	 */
+	if (ginCompareItemPointers(&key->curItem, &advancePast) > 0)
+		return;
+
+	/*
+	 * Find the minimum item > advancePast among the active entry streams.
 	 *
 	 * Note: a lossy-page entry is encoded by a ItemPointer with max value for
 	 * offset (0xffff), so that it will sort after any exact entries for the
@@ -741,16 +767,33 @@ keyGetItem(GinState *ginstate, MemoryContext tempCtx, GinScanKey key)
 	 * pointers, which is good.
 	 */
 	ItemPointerSetMax(&minItem);
-
+	allFinished = true;
 	for (i = 0; i < key->nentries; i++)
 	{
 		entry = key->scanEntry[i];
-		if (entry->isFinished == FALSE &&
-			ginCompareItemPointers(&entry->curItem, &minItem) < 0)
-			minItem = entry->curItem;
+
+		/*
+		 * Advance this stream if necessary.
+		 *
+		 * In particular, since entry->curItem was initialized with
+		 * ItemPointerSetMin, this ensures we fetch the first item for each
+		 * entry on the first call.
+		 */
+		while (entry->isFinished == FALSE &&
+			   ginCompareItemPointers(&entry->curItem, &advancePast) <= 0)
+		{
+			entryGetItem(ginstate, entry, advancePast);
+		}
+
+		if (!entry->isFinished)
+		{
+			allFinished = FALSE;
+			if (ginCompareItemPointers(&entry->curItem, &minItem) < 0)
+				minItem = entry->curItem;
+		}
 	}
 
-	if (ItemPointerIsMax(&minItem))
+	if (allFinished)
 	{
 		/* all entries are finished */
 		key->isFinished = TRUE;
@@ -758,15 +801,7 @@ keyGetItem(GinState *ginstate, MemoryContext tempCtx, GinScanKey key)
 	}
 
 	/*
-	 * We might have already tested this item; if so, no need to repeat work.
-	 * (Note: the ">" case can happen, if minItem is exact but we previously
-	 * had to set curItem to a lossy-page pointer.)
-	 */
-	if (ginCompareItemPointers(&key->curItem, &minItem) >= 0)
-		return;
-
-	/*
-	 * OK, advance key->curItem and perform consistentFn test.
+	 * OK, set key->curItem and perform consistentFn test.
 	 */
 	key->curItem = minItem;
 
@@ -895,117 +930,122 @@ keyGetItem(GinState *ginstate, MemoryContext tempCtx, GinScanKey key)
  * keyGetItem() the combination logic is known only to the consistentFn.
  */
 static bool
-scanGetItem(IndexScanDesc scan, ItemPointer advancePast,
+scanGetItem(IndexScanDesc scan, ItemPointerData advancePast,
 			ItemPointerData *item, bool *recheck)
 {
 	GinScanOpaque so = (GinScanOpaque) scan->opaque;
-	GinState   *ginstate = &so->ginstate;
-	ItemPointerData myAdvancePast = *advancePast;
 	uint32		i;
-	bool		allFinished;
 	bool		match;
 
-	for (;;)
+	/*----------
+	 * Advance the scan keys in lock-step, until we find an item that matches
+	 * all the keys. If any key reports isFinished, meaning its subset of the
+	 * entries is exhausted, we can stop.  Otherwise, set *item to the next
+	 * matching item.
+	 *
+	 * This logic works only if a keyGetItem stream can never contain both
+	 * exact and lossy pointers for the same page.	Else we could have a
+	 * case like
+	 *
+	 *		stream 1		stream 2
+	 *		...				...
+	 *		42/6			42/7
+	 *		50/1			42/0xffff
+	 *		...				...
+	 *
+	 * We would conclude that 42/6 is not a match and advance stream 1,
+	 * thus never detecting the match to the lossy pointer in stream 2.
+	 * (keyGetItem has a similar problem versus entryGetItem.)
+	 *----------
+	 */
+	do
 	{
-		/*
-		 * Advance any entries that are <= myAdvancePast.  In particular,
-		 * since entry->curItem was initialized with ItemPointerSetMin, this
-		 * ensures we fetch the first item for each entry on the first call.
-		 */
-		allFinished = TRUE;
-
-		for (i = 0; i < so->totalentries; i++)
-		{
-			GinScanEntry entry = so->entries[i];
-
-			while (entry->isFinished == FALSE &&
-				   ginCompareItemPointers(&entry->curItem,
-										  &myAdvancePast) <= 0)
-				entryGetItem(ginstate, entry);
-
-			if (entry->isFinished == FALSE)
-				allFinished = FALSE;
-		}
-
-		if (allFinished)
-		{
-			/* all entries exhausted, so we're done */
-			return false;
-		}
-
-		/*
-		 * Perform the consistentFn test for each scan key.  If any key
-		 * reports isFinished, meaning its subset of the entries is exhausted,
-		 * we can stop.  Otherwise, set *item to the minimum of the key
-		 * curItems.
-		 */
-		ItemPointerSetMax(item);
-
-		for (i = 0; i < so->nkeys; i++)
+		ItemPointerSetMin(item);
+		match = true;
+		for (i = 0; i < so->nkeys && match; i++)
 		{
 			GinScanKey	key = so->keys + i;
 
-			keyGetItem(&so->ginstate, so->tempCtx, key);
+			/* Fetch the next item for this key that is > advancePast. */
+			keyGetItem(&so->ginstate, so->tempCtx, key, advancePast);
 
 			if (key->isFinished)
-				return false;	/* finished one of keys */
+				return false;
 
-			if (ginCompareItemPointers(&key->curItem, item) < 0)
-				*item = key->curItem;
-		}
-
-		Assert(!ItemPointerIsMax(item));
-
-		/*----------
-		 * Now *item contains first ItemPointer after previous result.
-		 *
-		 * The item is a valid hit only if all the keys succeeded for either
-		 * that exact TID, or a lossy reference to the same page.
-		 *
-		 * This logic works only if a keyGetItem stream can never contain both
-		 * exact and lossy pointers for the same page.	Else we could have a
-		 * case like
-		 *
-		 *		stream 1		stream 2
-		 *		...				...
-		 *		42/6			42/7
-		 *		50/1			42/0xffff
-		 *		...				...
-		 *
-		 * We would conclude that 42/6 is not a match and advance stream 1,
-		 * thus never detecting the match to the lossy pointer in stream 2.
-		 * (keyGetItem has a similar problem versus entryGetItem.)
-		 *----------
-		 */
-		match = true;
-		for (i = 0; i < so->nkeys; i++)
-		{
-			GinScanKey	key = so->keys + i;
-
-			if (key->curItemMatches)
+			/*
+			 * If it's not a match, we can immediately conclude that nothing
+			 * <= this item matches, without checking the rest of the keys.
+			 */
+			if (!key->curItemMatches)
 			{
-				if (ginCompareItemPointers(item, &key->curItem) == 0)
-					continue;
-				if (ItemPointerIsLossyPage(&key->curItem) &&
-					GinItemPointerGetBlockNumber(&key->curItem) ==
-					GinItemPointerGetBlockNumber(item))
-					continue;
+				advancePast = key->curItem;
+				match = false;
+				break;
 			}
-			match = false;
-			break;
+
+			/*
+			 * It's a match. We can conclude that nothing < matches, so
+			 * the other key streams can skip to this item.
+			 *
+			 * Beware of lossy pointers, though; from a lossy pointer, we
+			 * can only conclude that nothing smaller than this *block*
+			 * matches.
+			 */
+			if (ItemPointerIsLossyPage(&key->curItem))
+			{
+				if (GinItemPointerGetBlockNumber(&advancePast) <
+					GinItemPointerGetBlockNumber(&key->curItem))
+				{
+					advancePast.ip_blkid = key->curItem.ip_blkid;
+					advancePast.ip_posid = 0;
+				}
+			}
+			else
+			{
+				Assert(key->curItem.ip_posid > 0);
+				advancePast = key->curItem;
+				advancePast.ip_posid--;
+			}
+
+			/*
+			 * If this is the first key, remember this location as a
+			 * potential match.
+			 *
+			 * Otherwise, check if this is the same item that we checked the
+			 * previous keys for (or a lossy pointer for the same page). If
+			 * not, loop back to check the previous keys for this item (we
+			 * will check this key again too, but keyGetItem returns quickly
+			 * for that)
+			 */
+			if (i == 0)
+			{
+				*item = key->curItem;
+			}
+			else
+			{
+				if (ItemPointerIsLossyPage(&key->curItem) ||
+					ItemPointerIsLossyPage(item))
+				{
+					Assert (GinItemPointerGetBlockNumber(&key->curItem) >= GinItemPointerGetBlockNumber(item));
+					match = (GinItemPointerGetBlockNumber(&key->curItem) ==
+							 GinItemPointerGetBlockNumber(item));
+				}
+				else
+				{
+					Assert(ginCompareItemPointers(&key->curItem, item) >= 0);
+					match = (ginCompareItemPointers(&key->curItem, item) == 0);
+				}
+			}
 		}
+	} while (!match);
 
-		if (match)
-			break;
-
-		/*
-		 * No hit.	Update myAdvancePast to this TID, so that on the next pass
-		 * we'll move to the next possible entry.
-		 */
-		myAdvancePast = *item;
-	}
+	Assert(!ItemPointerIsMin(item));
 
 	/*
+	 * Now *item contains the first ItemPointer after previous result that
+	 * satisfied all the keys for that exact TID, or a lossy reference
+	 * to the same page.
+	 *
 	 * We must return recheck = true if any of the keys are marked recheck.
 	 */
 	*recheck = false;
@@ -1536,7 +1576,7 @@ gingetbitmap(PG_FUNCTION_ARGS)
 	{
 		CHECK_FOR_INTERRUPTS();
 
-		if (!scanGetItem(scan, &iptr, &iptr, &recheck))
+		if (!scanGetItem(scan, iptr, &iptr, &recheck))
 			break;
 
 		if (ItemPointerIsLossyPage(&iptr))
