@@ -99,12 +99,13 @@ static void
 scanPostingTree(Relation index, GinScanEntry scanEntry,
 				BlockNumber rootPostingTree)
 {
+	GinBtreeData btree;
 	GinBtreeStack *stack;
 	Buffer		buffer;
 	Page		page;
 
 	/* Descend to the leftmost leaf page */
-	stack = ginScanBeginPostingTree(index, rootPostingTree);
+	stack = ginScanBeginPostingTree(&btree, index, rootPostingTree);
 	buffer = stack->buffer;
 	IncrBufferRefCount(buffer); /* prevent unpin in freeGinBtreeStack */
 
@@ -412,7 +413,8 @@ restartScanEntry:
 			LockBuffer(stackEntry->buffer, GIN_UNLOCK);
 			needUnlock = FALSE;
 
-			stack = ginScanBeginPostingTree(ginstate->index, rootPostingTree);
+			stack = ginScanBeginPostingTree(&entry->btree, ginstate->index,
+											rootPostingTree);
 			entry->buffer = stack->buffer;
 
 			/*
@@ -506,8 +508,60 @@ entryLoadMoreItems(GinState *ginstate, GinScanEntry entry, ItemPointerData advan
 {
 	Page		page;
 	int			i;
+	bool		stepright;
 
-	LockBuffer(entry->buffer, GIN_SHARE);
+	if (!BufferIsValid(entry->buffer))
+	{
+		entry->isFinished = true;
+		return;
+	}
+
+	/*
+	 * We have two strategies for finding the correct page: step right from
+	 * the current page, or descend the tree again from the root. If
+	 * advancePast equals the current item, the next matching item should be
+	 * on the next page, so we step right. Otherwise, descend from root.
+	 */
+	if (ginCompareItemPointers(&entry->curItem, &advancePast) == 0)
+	{
+		stepright = true;
+		LockBuffer(entry->buffer, GIN_SHARE);
+	}
+	else
+	{
+		GinBtreeStack *stack;
+
+		ReleaseBuffer(entry->buffer);
+
+		/*
+		 * Set the search key, and find the correct leaf page.
+		 */
+		if (ItemPointerIsLossyPage(&advancePast))
+		{
+			ItemPointerSet(&entry->btree.itemptr,
+						   GinItemPointerGetBlockNumber(&advancePast) + 1,
+						   FirstOffsetNumber);
+		}
+		else
+		{
+			entry->btree.itemptr = advancePast;
+			entry->btree.itemptr.ip_posid++;
+		}
+		entry->btree.fullScan = false;
+		stack = ginFindLeafPage(&entry->btree, true);
+
+		/* we don't need the stack, just the buffer. */
+		entry->buffer = stack->buffer;
+		IncrBufferRefCount(entry->buffer);
+		freeGinBtreeStack(stack);
+		stepright = false;
+	}
+
+	elog(DEBUG2, "entryLoadMoreItems, %u/%u, skip: %d",
+		 GinItemPointerGetBlockNumber(&advancePast),
+		 GinItemPointerGetOffsetNumber(&advancePast),
+		 !stepright);
+
 	page = BufferGetPage(entry->buffer);
 	for (;;)
 	{
@@ -519,29 +573,33 @@ entryLoadMoreItems(GinState *ginstate, GinScanEntry entry, ItemPointerData advan
 			entry->nlist = 0;
 		}
 
-		/*
-		 * We've processed all the entries on this page. If it was the last
-		 * page in the tree, we're done.
-		 */
-		if (GinPageRightMost(page))
+		if (stepright)
 		{
-			UnlockReleaseBuffer(entry->buffer);
-			entry->buffer = InvalidBuffer;
-			entry->isFinished = TRUE;
-			return;
+			/*
+			 * We've processed all the entries on this page. If it was the last
+			 * page in the tree, we're done.
+			 */
+			if (GinPageRightMost(page))
+			{
+				UnlockReleaseBuffer(entry->buffer);
+				entry->buffer = InvalidBuffer;
+				entry->isFinished = TRUE;
+				return;
+			}
+
+			/*
+			 * Step to next page, following the right link. then find the first
+			 * ItemPointer greater than advancePast.
+			 */
+			entry->buffer = ginStepRight(entry->buffer,
+										 ginstate->index,
+										 GIN_SHARE);
+			page = BufferGetPage(entry->buffer);
 		}
+		stepright = true;
 
 		if (GinPageGetOpaque(page)->flags & GIN_DELETED)
 			continue;		/* page was deleted by concurrent vacuum */
-
-		/*
-		 * Step to next page, following the right link. then find the first
-		 * ItemPointer greater than advancePast.
-		 */
-		entry->buffer = ginStepRight(entry->buffer,
-									 ginstate->index,
-									 GIN_SHARE);
-		page = BufferGetPage(entry->buffer);
 
 		/*
 		 * The first item > advancePast might not be on this page, but
@@ -566,8 +624,16 @@ entryLoadMoreItems(GinState *ginstate, GinScanEntry entry, ItemPointerData advan
 		{
 			if (ginCompareItemPointers(&advancePast, &entry->list[i]) < 0)
 			{
-				LockBuffer(entry->buffer, GIN_UNLOCK);
 				entry->offset = i;
+
+				if (GinPageRightMost(page))
+				{
+					/* after processing the copied items, we're done. */
+					UnlockReleaseBuffer(entry->buffer);
+					entry->buffer = InvalidBuffer;
+				}
+				else
+					LockBuffer(entry->buffer, GIN_UNLOCK);
 				return;
 			}
 		}
@@ -677,7 +743,10 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
 	}
 	else if (!BufferIsValid(entry->buffer))
 	{
-		/* A posting list from an entry tuple  */
+		/*
+		 * A posting list from an entry tuple, or the last page of a posting
+		 * tree.
+		 */
 		do
 		{
 			if (entry->offset >= entry->nlist)

@@ -1639,16 +1639,15 @@ ginInsertItemPointers(Relation index, BlockNumber rootBlkno,
  * Starts a new scan on a posting tree.
  */
 GinBtreeStack *
-ginScanBeginPostingTree(Relation index, BlockNumber rootBlkno)
+ginScanBeginPostingTree(GinBtree btree, Relation index, BlockNumber rootBlkno)
 {
-	GinBtreeData btree;
 	GinBtreeStack *stack;
 
-	ginPrepareDataScan(&btree, index, rootBlkno);
+	ginPrepareDataScan(btree, index, rootBlkno);
 
-	btree.fullScan = TRUE;
+	btree->fullScan = TRUE;
 
-	stack = ginFindLeafPage(&btree, TRUE);
+	stack = ginFindLeafPage(btree, TRUE);
 
 	return stack;
 }

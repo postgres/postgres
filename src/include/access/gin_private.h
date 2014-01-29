@@ -702,7 +702,7 @@ extern void GinPageDeletePostingItem(Page page, OffsetNumber offset);
 extern void ginInsertItemPointers(Relation index, BlockNumber rootBlkno,
 					  ItemPointerData *items, uint32 nitem,
 					  GinStatsData *buildStats);
-extern GinBtreeStack *ginScanBeginPostingTree(Relation index, BlockNumber rootBlkno);
+extern GinBtreeStack *ginScanBeginPostingTree(GinBtree btree, Relation index, BlockNumber rootBlkno);
 extern void ginDataFillRoot(GinBtree btree, Page root, BlockNumber lblkno, Page lpage, BlockNumber rblkno, Page rpage);
 extern void ginPrepareDataScan(GinBtree btree, Relation index, BlockNumber rootBlkno);
 
@@ -802,6 +802,7 @@ typedef struct GinScanEntryData
 	bool		isFinished;
 	bool		reduceResult;
 	uint32		predictNumberResult;
+	GinBtreeData btree;
 }	GinScanEntryData;
 
 typedef struct GinScanOpaqueData
