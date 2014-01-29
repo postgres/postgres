@@ -28,6 +28,24 @@ extern char *optarg;
 extern int	optind;
 
 
+static void
+output_accumulated_spaces(int *prv_spaces, char **dst)
+{
+	for (; *prv_spaces > 0; *prv_spaces--)
+		*((*dst)++) = ' ';
+}
+
+
+static void
+trim_trailing_whitespace(int *prv_spaces, char **dst, char *out_line)
+{
+	while (*dst > out_line &&
+		   (*((*dst) - 1) == ' ' || *((*dst) - 1) == '\t'))
+		(*dst)--;
+	*prv_spaces = 0;
+}
+
+
 int
 main(int argc, char **argv)
 {
@@ -168,19 +186,14 @@ main(int argc, char **argv)
 							prv_spaces = 0;
 						}
 						else
-						/* output accumulated spaces */
-						{
-							for (; prv_spaces > 0; prv_spaces--)
-								*(dst++) = ' ';
-						}
+							output_accumulated_spaces(&prv_spaces, &dst);
 					}
 				}
 				/* Not a potential space/tab replacement */
 				else
 				{
 					/* output accumulated spaces */
-					for (; prv_spaces > 0; prv_spaces--)
-						*(dst++) = ' ';
+					output_accumulated_spaces(&prv_spaces, &dst);
 					/* This can only happen in a quote. */
 					if (*src == '\t')
 						col_in_tab = 0;
@@ -211,13 +224,7 @@ main(int argc, char **argv)
 						clip_lines == TRUE &&
 						quote_char == ' ' &&
 						escaped == FALSE)
-					{
-						/* trim spaces starting from the end */
-						while (dst > out_line &&
-							   (*(dst - 1) == ' ' || *(dst - 1) == '\t'))
-							dst--;
-						prv_spaces = 0;
-					}
+						trim_trailing_whitespace(&prv_spaces, &dst, out_line);
 					*(dst++) = *src;
 				}
 				col_in_tab %= tab_size;
@@ -225,15 +232,8 @@ main(int argc, char **argv)
 			}
 			/* for cases where the last line of file has no newline */
 			if (clip_lines == TRUE && escaped == FALSE)
-			{
-				while (dst > out_line &&
-					   (*(dst - 1) == ' ' || *(dst - 1) == '\t'))
-					dst--;
-				prv_spaces = 0;
-			}
-			/* output accumulated spaces */
-			for (; prv_spaces > 0; prv_spaces--)
-				*(dst++) = ' ';
+				trim_trailing_whitespace(&prv_spaces, &dst, out_line);
+			output_accumulated_spaces(&prv_spaces, &dst);
 			*dst = NUL;
 
 			if (fputs(out_line, stdout) == EOF)
