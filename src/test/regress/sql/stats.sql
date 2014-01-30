@@ -16,7 +16,7 @@ SET enable_indexonlyscan TO off;
 
 -- wait to let any prior tests finish dumping out stats;
 -- else our messages might get lost due to contention
-SELECT pg_sleep(2.0);
+SELECT pg_sleep_for('2 seconds');
 
 -- save counters
 CREATE TEMP TABLE prevstats AS

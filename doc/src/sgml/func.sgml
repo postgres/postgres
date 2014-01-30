@@ -7664,20 +7664,28 @@ SELECT TIMESTAMP 'now';  -- incorrect for use with DEFAULT
    </indexterm>
 
    <para>
-    The following function is available to delay execution of the server
+    The following functions are available to delay execution of the server
     process:
 <synopsis>
 pg_sleep(<replaceable>seconds</replaceable>)
+pg_sleep_for(<type>interval</>)
+pg_sleep_until(<type>timestamp with time zone</>)
 </synopsis>
 
     <function>pg_sleep</function> makes the current session's process
     sleep until <replaceable>seconds</replaceable> seconds have
     elapsed.  <replaceable>seconds</replaceable> is a value of type
     <type>double precision</>, so fractional-second delays can be specified.
+    <function>pg_sleep_for</function> is a convenience function for larger
+    sleep times specified as an <type>interval</>.
+    <function>pg_sleep_until</function> is a convenience function for when
+    a specific wake-up time is desired.
     For example:
 
 <programlisting>
 SELECT pg_sleep(1.5);
+SELECT pg_sleep_for('5 minutes');
+SELECT pg_sleep_until('tomorrow 03:00');
 </programlisting>
    </para>
 
@@ -7686,15 +7694,17 @@ SELECT pg_sleep(1.5);
       The effective resolution of the sleep interval is platform-specific;
       0.01 seconds is a common value.  The sleep delay will be at least as long
       as specified. It might be longer depending on factors such as server load.
+      In particular, <function>pg_sleep_until</function> is not guaranteed to
+      wake up exactly at the specified time, but it will not wake up any earlier.
      </para>
    </note>
 
    <warning>
      <para>
       Make sure that your session does not hold more locks than necessary
-      when calling <function>pg_sleep</function>.  Otherwise other sessions
-      might have to wait for your sleeping process, slowing down the entire
-      system.
+      when calling <function>pg_sleep</function> or its variants.  Otherwise
+      other sessions might have to wait for your sleeping process, slowing down
+      the entire system.
      </para>
    </warning>
   </sect2>
