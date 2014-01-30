@@ -990,6 +990,7 @@ get_canonical_locale_name(int category, const char *locale)
 	char	   *save;
 	char	   *res;
 
+	/* get the current setting, so we can restore it. */
 	save = setlocale(category, NULL);
 	if (!save)
 		pg_fatal("failed to get the current locale\n");
@@ -1001,7 +1002,7 @@ get_canonical_locale_name(int category, const char *locale)
 	res = setlocale(category, locale);
 
 	if (!res)
-		pg_fatal("failed to get system local name for \"%s\"\n", res);
+		pg_fatal("failed to get system locale name for \"%s\"\n", locale);
 
 	res = pg_strdup(res);
 
