@@ -979,7 +979,7 @@ get_canonical_locale_name(int category, const char *locale)
 	res = setlocale(category, locale);
 
 	if (!res)
-        pg_log(PG_FATAL, "failed to get system local name for \"%s\"\n", res);
+        pg_log(PG_FATAL, "failed to get system locale name for \"%s\"\n", locale);
 
 	res = pg_strdup(res);
 
