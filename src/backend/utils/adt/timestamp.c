@@ -41,6 +41,15 @@
 #error -ffast-math is known to break this code
 #endif
 
+#define SAMESIGN(a,b)   (((a) < 0) == ((b) < 0))
+
+#ifndef INT64_MAX
+#define INT64_MAX	INT64CONST(0x7FFFFFFFFFFFFFFF)
+#endif
+
+#ifndef INT64_MIN
+#define INT64_MIN	(-INT64CONST(0x7FFFFFFFFFFFFFFF) - 1)
+#endif
 
 /* Set at postmaster start */
 TimestampTz PgStartTime;
@@ -1694,7 +1703,11 @@ interval2tm(Interval span, struct pg_tm * tm, fsec_t *fsec)
 #ifdef HAVE_INT64_TIMESTAMP
 	tfrac = time / USECS_PER_HOUR;
 	time -= tfrac * USECS_PER_HOUR;
-	tm->tm_hour = tfrac;		/* could overflow ... */
+	tm->tm_hour = tfrac;
+	if (!SAMESIGN(tm->tm_hour, tfrac))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("interval out of range")));
 	tfrac = time / USECS_PER_MINUTE;
 	time -= tfrac * USECS_PER_MINUTE;
 	tm->tm_min = tfrac;
@@ -1725,7 +1738,11 @@ recalc:
 int
 tm2interval(struct pg_tm * tm, fsec_t fsec, Interval *span)
 {
-	span->month = tm->tm_year * MONTHS_PER_YEAR + tm->tm_mon;
+	double total_months = (double)tm->tm_year * MONTHS_PER_YEAR + tm->tm_mon;
+
+	if (total_months > INT_MAX || total_months < INT_MIN)
+		return -1;
+	span->month = total_months;
 	span->day = tm->tm_mday;
 #ifdef HAVE_INT64_TIMESTAMP
 	span->time = (((((tm->tm_hour * INT64CONST(60)) +
@@ -2826,8 +2843,21 @@ interval_um(PG_FUNCTION_ARGS)
 	result = (Interval *) palloc(sizeof(Interval));
 
 	result->time = -interval->time;
+	/* overflow check copied from int4um */
+	if (interval->time != 0 && SAMESIGN(result->time, interval->time))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("interval out of range")));
 	result->day = -interval->day;
+	if (interval->day != 0 && SAMESIGN(result->day, interval->day))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("interval out of range")));
 	result->month = -interval->month;
+	if (interval->month != 0 && SAMESIGN(result->month, interval->month))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("interval out of range")));
 
 	PG_RETURN_INTERVAL_P(result);
 }
@@ -2872,8 +2902,26 @@ interval_pl(PG_FUNCTION_ARGS)
 	result = (Interval *) palloc(sizeof(Interval));
 
 	result->month = span1->month + span2->month;
+	/* overflow check copied from int4pl */
+	if (SAMESIGN(span1->month, span2->month) &&
+		!SAMESIGN(result->month, span1->month))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("interval out of range")));
+
 	result->day = span1->day + span2->day;
+	if (SAMESIGN(span1->day, span2->day) &&
+		!SAMESIGN(result->day, span1->day))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("interval out of range")));
+
 	result->time = span1->time + span2->time;
+	if (SAMESIGN(span1->time, span2->time) &&
+		!SAMESIGN(result->time, span1->time))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("interval out of range")));
 
 	PG_RETURN_INTERVAL_P(result);
 }
@@ -2888,8 +2936,27 @@ interval_mi(PG_FUNCTION_ARGS)
 	result = (Interval *) palloc(sizeof(Interval));
 
 	result->month = span1->month - span2->month;
+	/* overflow check copied from int4mi */
+	if (!SAMESIGN(span1->month, span2->month) &&
+		!SAMESIGN(result->month, span1->month))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("interval out of range")));
+
 	result->day = span1->day - span2->day;
+	if (!SAMESIGN(span1->day, span2->day) &&
+		!SAMESIGN(result->day, span1->day))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("interval out of range")));
+
 	result->time = span1->time - span2->time;
+	if (!SAMESIGN(span1->time, span2->time) &&
+		!SAMESIGN(result->time, span1->time))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("interval out of range")));
+
 
 	PG_RETURN_INTERVAL_P(result);
 }
@@ -2906,15 +2973,27 @@ interval_mul(PG_FUNCTION_ARGS)
 	Interval   *span = PG_GETARG_INTERVAL_P(0);
 	float8		factor = PG_GETARG_FLOAT8(1);
 	double		month_remainder_days,
-				sec_remainder;
+				sec_remainder,
+				result_double;
 	int32		orig_month = span->month,
 				orig_day = span->day;
 	Interval   *result;
 
 	result = (Interval *) palloc(sizeof(Interval));
 
-	result->month = (int32) (span->month * factor);
-	result->day = (int32) (span->day * factor);
+	result_double = span->month * factor;
+	if (result_double > INT_MAX || result_double < INT_MIN)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("interval out of range")));
+	result->month = (int32) result_double;
+
+	result_double = span->day * factor;
+	if (result_double > INT_MAX || result_double < INT_MIN)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("interval out of range")));
+	result->day = (int32) result_double;
 
 	/*
 	 * The above correctly handles the whole-number part of the month and day
@@ -2954,7 +3033,12 @@ interval_mul(PG_FUNCTION_ARGS)
 	/* cascade units down */
 	result->day += (int32) month_remainder_days;
 #ifdef HAVE_INT64_TIMESTAMP
-	result->time = rint(span->time * factor + sec_remainder * USECS_PER_SEC);
+	result_double = rint(span->time * factor + sec_remainder * USECS_PER_SEC);
+	if (result_double > INT64_MAX || result_double < INT64_MIN)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("interval out of range")));
+	result->time = (int64) result_double;
 #else
 	result->time = span->time * factor + sec_remainder;
 #endif

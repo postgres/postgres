@@ -1587,7 +1587,7 @@ SELECT E'\\xDEADBEEF';
        </row>
        <row>
         <entry><type>interval [ <replaceable>fields</replaceable> ] [ (<replaceable>p</replaceable>) ]</type></entry>
-        <entry>12 bytes</entry>
+        <entry>16 bytes</entry>
         <entry>time interval</entry>
         <entry>-178000000 years</entry>
         <entry>178000000 years</entry>

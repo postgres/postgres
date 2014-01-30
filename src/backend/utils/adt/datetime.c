@@ -2976,6 +2976,9 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 					type = DTK_MONTH;
 					if (*field[i] == '-')
 						val2 = -val2;
+					if (((double)val * MONTHS_PER_YEAR + val2) > INT_MAX ||
+						((double)val * MONTHS_PER_YEAR + val2) < INT_MIN)
+						return DTERR_FIELD_OVERFLOW;
 					val = val * MONTHS_PER_YEAR + val2;
 					fval = 0;
 				}
