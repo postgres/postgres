@@ -405,7 +405,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ <replaceable class="parameter">name</
    </para>
 
    <para>
-    If a problem arises while scanning the table, such as a
+    If a problem arises while scanning the table, such as a deadlock or a
     uniqueness violation in a unique index, the <command>CREATE INDEX</>
     command will fail but leave behind an <quote>invalid</> index. This index
     will be ignored for querying purposes because it might be incomplete;
