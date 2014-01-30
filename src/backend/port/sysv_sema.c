@@ -94,15 +94,17 @@ InternalIpcSemaphoreCreate(IpcSemaphoreKey semKey, int numSems)
 
 	if (semId < 0)
 	{
+		int			saved_errno = errno;
+
 		/*
 		 * Fail quietly if error indicates a collision with existing set. One
 		 * would expect EEXIST, given that we said IPC_EXCL, but perhaps we
 		 * could get a permission violation instead?  Also, EIDRM might occur
 		 * if an old set is slated for destruction but not gone yet.
 		 */
-		if (errno == EEXIST || errno == EACCES
+		if (saved_errno == EEXIST || saved_errno == EACCES
 #ifdef EIDRM
-			|| errno == EIDRM
+			|| saved_errno == EIDRM
 #endif
 			)
 			return -1;
@@ -115,7 +117,7 @@ InternalIpcSemaphoreCreate(IpcSemaphoreKey semKey, int numSems)
 				 errdetail("Failed system call was semget(%lu, %d, 0%o).",
 						   (unsigned long) semKey, numSems,
 						   IPC_CREAT | IPC_EXCL | IPCProtection),
-				 (errno == ENOSPC) ?
+				 (saved_errno == ENOSPC) ?
 				 errhint("This error does *not* mean that you have run out of disk space.  "
 		  "It occurs when either the system limit for the maximum number of "
 			 "semaphore sets (SEMMNI), or the system wide maximum number of "
@@ -139,13 +141,17 @@ IpcSemaphoreInitialize(IpcSemaphoreId semId, int semNum, int value)
 
 	semun.val = value;
 	if (semctl(semId, semNum, SETVAL, semun) < 0)
+	{
+		int			saved_errno = errno;
+
 		ereport(FATAL,
 				(errmsg_internal("semctl(%d, %d, SETVAL, %d) failed: %m",
 								 semId, semNum, value),
-				 (errno == ERANGE) ?
+				 (saved_errno == ERANGE) ?
 				 errhint("You possibly need to raise your kernel's SEMVMX value to be at least "
 				  "%d.  Look into the PostgreSQL documentation for details.",
 						 value) : 0));
+	}
 }
 
 /*

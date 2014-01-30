@@ -769,10 +769,14 @@ remove_symlink:
 	else
 	{
 		if (unlink(linkloc) < 0)
-			ereport(redo ? LOG : (errno == ENOENT ? WARNING : ERROR),
+		{
+			int			saved_errno = errno;
+
+			ereport(redo ? LOG : (saved_errno == ENOENT ? WARNING : ERROR),
 					(errcode_for_file_access(),
 					 errmsg("could not remove symbolic link \"%s\": %m",
 							linkloc)));
+		}
 	}
 
 	pfree(linkloc_with_version_dir);

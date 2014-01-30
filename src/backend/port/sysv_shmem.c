@@ -79,15 +79,17 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 
 	if (shmid < 0)
 	{
+		int			shmget_errno = errno;
+
 		/*
 		 * Fail quietly if error indicates a collision with existing segment.
 		 * One would expect EEXIST, given that we said IPC_EXCL, but perhaps
 		 * we could get a permission violation instead?  Also, EIDRM might
 		 * occur if an old seg is slated for destruction but not gone yet.
 		 */
-		if (errno == EEXIST || errno == EACCES
+		if (shmget_errno == EEXIST || shmget_errno == EACCES
 #ifdef EIDRM
-			|| errno == EIDRM
+			|| shmget_errno == EIDRM
 #endif
 			)
 			return NULL;
@@ -101,10 +103,8 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 		 * against SHMMIN in the preexisting-segment case, so we will not get
 		 * EINVAL a second time if there is such a segment.
 		 */
-		if (errno == EINVAL)
+		if (shmget_errno == EINVAL)
 		{
-			int			save_errno = errno;
-
 			shmid = shmget(memKey, 0, IPC_CREAT | IPC_EXCL | IPCProtection);
 
 			if (shmid < 0)
@@ -130,8 +130,6 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 					elog(LOG, "shmctl(%d, %d, 0) failed: %m",
 						 (int) shmid, IPC_RMID);
 			}
-
-			errno = save_errno;
 		}
 
 		/*
@@ -143,12 +141,13 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 		 * it should be.  SHMMNI violation is ENOSPC, per spec.  Just plain
 		 * not-enough-RAM is ENOMEM.
 		 */
+		errno = shmget_errno;
 		ereport(FATAL,
 				(errmsg("could not create shared memory segment: %m"),
 		  errdetail("Failed system call was shmget(key=%lu, size=%lu, 0%o).",
 					(unsigned long) memKey, (unsigned long) size,
 					IPC_CREAT | IPC_EXCL | IPCProtection),
-				 (errno == EINVAL) ?
+				 (shmget_errno == EINVAL) ?
 				 errhint("This error usually means that PostgreSQL's request for a shared memory "
 		  "segment exceeded your kernel's SHMMAX parameter.  You can either "
 						 "reduce the request size or reconfigure the kernel with larger SHMMAX.  "
@@ -161,7 +160,7 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 		"The PostgreSQL documentation contains more information about shared "
 						 "memory configuration.",
 						 (unsigned long) size) : 0,
-				 (errno == ENOMEM) ?
+				 (shmget_errno == ENOMEM) ?
 				 errhint("This error usually means that PostgreSQL's request for a shared "
 				   "memory segment exceeded available memory or swap space, "
 			   "or exceeded your kernel's SHMALL parameter.  You can either "
@@ -172,7 +171,7 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 		"The PostgreSQL documentation contains more information about shared "
 						 "memory configuration.",
 						 (unsigned long) size) : 0,
-				 (errno == ENOSPC) ?
+				 (shmget_errno == ENOSPC) ?
 				 errhint("This error does *not* mean that you have run out of disk space.  "
 						 "It occurs either if all available shared memory IDs have been taken, "
 						 "in which case you need to raise the SHMMNI parameter in your kernel, "
