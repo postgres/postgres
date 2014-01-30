@@ -8,7 +8,7 @@ Intra-document Linking
 
 <xref>
 	use to get chapter/section # from the title of the target
-	link, or xreflabel if defined at the target; has no close tag
+	link, or xreflabel or refentry if defined at the target; has no close tag
 	http://www.oasis-open.org/docbook/documentation/reference/html/xref.html
 
 <link>
