@@ -797,6 +797,7 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 					ojscope;
 		List	   *leftjoinlist,
 				   *rightjoinlist;
+		List	   *my_quals;
 		SpecialJoinInfo *sjinfo;
 		ListCell   *l;
 
@@ -896,6 +897,32 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 												  nullable_rels);
 
 		/*
+		 * Try to process any quals postponed by children.	If they need
+		 * further postponement, add them to my output postponed_qual_list.
+		 * Quals that can be processed now must be included in my_quals, so
+		 * that they'll be handled properly in make_outerjoininfo.
+		 */
+		my_quals = NIL;
+		foreach(l, child_postponed_quals)
+		{
+			PostponedQual *pq = (PostponedQual *) lfirst(l);
+
+			if (bms_is_subset(pq->relids, *qualscope))
+				my_quals = lappend(my_quals, pq->qual);
+			else
+			{
+				/*
+				 * We should not be postponing any quals past an outer join.
+				 * If this Assert fires, pull_up_subqueries() messed up.
+				 */
+				Assert(j->jointype == JOIN_INNER);
+				*postponed_qual_list = lappend(*postponed_qual_list, pq);
+			}
+		}
+		/* list_concat is nondestructive of its second argument */
+		my_quals = list_concat(my_quals, (List *) j->quals);
+
+		/*
 		 * For an OJ, form the SpecialJoinInfo now, because we need the OJ's
 		 * semantic scope (ojscope) to pass to distribute_qual_to_rels.  But
 		 * we mustn't add it to join_info_list just yet, because we don't want
@@ -910,7 +937,7 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 										leftids, rightids,
 										*inner_join_rels,
 										j->jointype,
-										(List *) j->quals);
+										my_quals);
 			if (j->jointype == JOIN_SEMI)
 				ojscope = NULL;
 			else
@@ -923,33 +950,8 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 			ojscope = NULL;
 		}
 
-		/*
-		 * Try to process any quals postponed by children.	If they need
-		 * further postponement, add them to my output postponed_qual_list.
-		 */
-		foreach(l, child_postponed_quals)
-		{
-			PostponedQual *pq = (PostponedQual *) lfirst(l);
-
-			if (bms_is_subset(pq->relids, *qualscope))
-				distribute_qual_to_rels(root, pq->qual,
-										false, below_outer_join, j->jointype,
-										*qualscope,
-										ojscope, nonnullable_rels, NULL,
-										NULL);
-			else
-			{
-				/*
-				 * We should not be postponing any quals past an outer join.
-				 * If this Assert fires, pull_up_subqueries() messed up.
-				 */
-				Assert(j->jointype == JOIN_INNER);
-				*postponed_qual_list = lappend(*postponed_qual_list, pq);
-			}
-		}
-
 		/* Process the JOIN's qual clauses */
-		foreach(l, (List *) j->quals)
+		foreach(l, my_quals)
 		{
 			Node	   *qual = (Node *) lfirst(l);
 
