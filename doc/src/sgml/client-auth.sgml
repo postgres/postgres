@@ -83,7 +83,7 @@
    Fields can contain white space if the field value is double-quoted.
    Quoting one of the keywords in a database, user, or address field (e.g.,
    <literal>all</> or <literal>replication</>) makes the word lose its special
-   character, and just match a database, user, or host with that name.
+   meaning, and just match a database, user, or host with that name.
   </para>
 
   <para>
@@ -408,7 +408,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
         <term><literal>md5</></term>
         <listitem>
          <para>
-          Require the client to supply an MD5-encrypted password for
+          Require the client to supply a double-MD5-hashed password for
           authentication.
           See <xref linkend="auth-password"> for details.
          </para>
