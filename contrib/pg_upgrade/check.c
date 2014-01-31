@@ -9,6 +9,7 @@
 
 #include "postgres_fe.h"
 
+#include "mb/pg_wchar.h"
 #include "pg_upgrade.h"
 
 
@@ -16,6 +17,8 @@ static void set_locale_and_encoding(ClusterInfo *cluster);
 static void check_new_cluster_is_empty(void);
 static void check_locale_and_encoding(ControlData *oldctrl,
 						  ControlData *newctrl);
+static bool equivalent_locale(const char *loca, const char *locb);
+static bool equivalent_encoding(const char *chara, const char *charb);
 static void check_is_super_user(ClusterInfo *cluster);
 static void check_for_prepared_transactions(ClusterInfo *cluster);
 static void check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster);
@@ -397,27 +400,80 @@ set_locale_and_encoding(ClusterInfo *cluster)
 /*
  * check_locale_and_encoding()
  *
- *	locale is not in pg_controldata in 8.4 and later so
- *	we probably had to get via a database query.
+ * Check that old and new locale and encoding match.  Even though the backend
+ * tries to canonicalize stored locale names, the platform often doesn't
+ * cooperate, so it's entirely possible that one DB thinks its locale is
+ * "en_US.UTF-8" while the other says "en_US.utf8".  Try to be forgiving.
  */
 static void
 check_locale_and_encoding(ControlData *oldctrl,
 						  ControlData *newctrl)
 {
-	/*
-	 * These are often defined with inconsistent case, so use pg_strcasecmp().
-	 * They also often use inconsistent hyphenation, which we cannot fix, e.g.
-	 * UTF-8 vs. UTF8, so at least we display the mismatching values.
-	 */
-	if (pg_strcasecmp(oldctrl->lc_collate, newctrl->lc_collate) != 0)
+	if (!equivalent_locale(oldctrl->lc_collate, newctrl->lc_collate))
 		pg_fatal("lc_collate cluster values do not match:  old \"%s\", new \"%s\"\n",
-			   oldctrl->lc_collate, newctrl->lc_collate);
-	if (pg_strcasecmp(oldctrl->lc_ctype, newctrl->lc_ctype) != 0)
+				 oldctrl->lc_collate, newctrl->lc_collate);
+	if (!equivalent_locale(oldctrl->lc_ctype, newctrl->lc_ctype))
 		pg_fatal("lc_ctype cluster values do not match:  old \"%s\", new \"%s\"\n",
-			   oldctrl->lc_ctype, newctrl->lc_ctype);
-	if (pg_strcasecmp(oldctrl->encoding, newctrl->encoding) != 0)
+				 oldctrl->lc_ctype, newctrl->lc_ctype);
+	if (!equivalent_encoding(oldctrl->encoding, newctrl->encoding))
 		pg_fatal("encoding cluster values do not match:  old \"%s\", new \"%s\"\n",
-			   oldctrl->encoding, newctrl->encoding);
+				 oldctrl->encoding, newctrl->encoding);
+}
+
+/*
+ * equivalent_locale()
+ *
+ * Best effort locale-name comparison.  Return false if we are not 100% sure
+ * the locales are equivalent.
+ */
+static bool
+equivalent_locale(const char *loca, const char *locb)
+{
+	const char *chara = strrchr(loca, '.');
+	const char *charb = strrchr(locb, '.');
+	int			lencmp;
+
+	/* If they don't both contain an encoding part, just do strcasecmp(). */
+	if (!chara || !charb)
+		return (pg_strcasecmp(loca, locb) == 0);
+
+	/* Compare the encoding parts. */
+	if (!equivalent_encoding(chara + 1, charb + 1))
+		return false;
+
+	/*
+	 * OK, compare the locale identifiers (e.g. en_US part of en_US.utf8).
+	 *
+	 * It's tempting to ignore non-alphanumeric chars here, but for now it's
+	 * not clear that that's necessary; just do case-insensitive comparison.
+	 */
+	lencmp = chara - loca;
+	if (lencmp != charb - locb)
+		return false;
+
+	return (pg_strncasecmp(loca, locb, lencmp) == 0);
+}
+
+/*
+ * equivalent_encoding()
+ *
+ * Best effort encoding-name comparison.  Return true only if the encodings
+ * are valid server-side encodings and known equivalent.
+ *
+ * Because the lookup in pg_valid_server_encoding() does case folding and
+ * ignores non-alphanumeric characters, this will recognize many popular
+ * variant spellings as equivalent, eg "utf8" and "UTF-8" will match.
+ */
+static bool
+equivalent_encoding(const char *chara, const char *charb)
+{
+	int			enca = pg_valid_server_encoding(chara);
+	int			encb = pg_valid_server_encoding(charb);
+
+	if (enca < 0 || encb < 0)
+		return false;
+
+	return (enca == encb);
 }
 
 
