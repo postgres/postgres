@@ -654,6 +654,12 @@ GROUP BY <replaceable class="parameter">expression</replaceable> [, ...]
     the grouped columns (or a subset thereof) are the primary key of
     the table containing the ungrouped column.
    </para>
+
+   <para>
+    Currently, <literal>FOR NO KEY UPDATE</>, <literal>FOR UPDATE</>,
+    <literal>FOR SHARE</> and <literal>FOR KEY SHARE</> cannot be
+    specified with <literal>GROUP BY</literal>.
+   </para>
   </refsect2>
 
   <refsect2 id="SQL-HAVING">
@@ -689,6 +695,12 @@ HAVING <replaceable class="parameter">condition</replaceable>
     <literal>HAVING</literal> clause can only reference table columns from
     within aggregate functions.  Such a query will emit a single row if the
     <literal>HAVING</literal> condition is true, zero rows if it is not true.
+   </para>
+
+   <para>
+    Currently, <literal>FOR NO KEY UPDATE</>, <literal>FOR UPDATE</>,
+    <literal>FOR SHARE</> and <literal>FOR KEY SHARE</> cannot be
+    specified with <literal>HAVING</literal>.
    </para>
   </refsect2>
 
@@ -825,6 +837,12 @@ UNBOUNDED FOLLOWING
    </para>
 
    <para>
+    Currently, <literal>FOR NO KEY UPDATE</>, <literal>FOR UPDATE</>,
+    <literal>FOR SHARE</> and <literal>FOR KEY SHARE</> cannot be
+    specified with <literal>WINDOW</literal>.
+   </para>
+
+   <para>
     Window functions are described in detail in
     <xref linkend="tutorial-window">,
     <xref linkend="syntax-window-functions">, and
@@ -919,6 +937,12 @@ SELECT DISTINCT ON (location) location, time, report
     <literal>ORDER BY</> expression(s).  The <literal>ORDER BY</> clause
     will normally contain additional expression(s) that determine the
     desired precedence of rows within each <literal>DISTINCT ON</> group.
+   </para>
+
+   <para>
+    Currently, <literal>FOR NO KEY UPDATE</>, <literal>FOR UPDATE</>,
+    <literal>FOR SHARE</> and <literal>FOR KEY SHARE</> cannot be
+    specified with <literal>DISTINCT</literal>.
    </para>
   </refsect2>
 
