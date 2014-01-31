@@ -51,13 +51,18 @@ main(int argc, char **argv)
 {
 	int			tab_size = 8,
 				min_spaces = 2,
+				only_comment_periods = FALSE,
 				protect_quotes = FALSE,
+				protect_leading_whitespace = FALSE,
 				del_tabs = FALSE,
 				clip_lines = FALSE,
+				in_comment = FALSE,
+				was_period = FALSE,
 				prv_spaces,
 				col_in_tab,
 				escaped,
-				nxt_spaces;
+				nxt_spaces,
+				in_leading_whitespace;
 	char		in_line[BUFSIZ],
 				out_line[BUFSIZ],
 			   *src,
@@ -74,7 +79,7 @@ main(int argc, char **argv)
 	if (strcmp(cp, "detab") == 0)
 		del_tabs = 1;
 
-	while ((ch = getopt(argc, argv, "cdhqs:t:")) != -1)
+	while ((ch = getopt(argc, argv, "cdhlmqs:t:")) != -1)
 		switch (ch)
 		{
 			case 'c':
@@ -82,6 +87,13 @@ main(int argc, char **argv)
 				break;
 			case 'd':
 				del_tabs = TRUE;
+				break;
+			case 'l':
+				protect_leading_whitespace = TRUE;
+				break;
+			case 'm':
+				/* only process text followed by periods in C comments */
+				only_comment_periods = TRUE;
 				break;
 			case 'q':
 				protect_quotes = TRUE;
@@ -97,6 +109,8 @@ main(int argc, char **argv)
 				fprintf(stderr, "USAGE: %s [ -cdqst ] [file ...]\n\
 	-c (clip trailing whitespace)\n\
 	-d (delete tabs)\n\
+	-l (protect leading whitespace)\n\
+	-m (only C comment periods)\n\
 	-q (protect quotes)\n\
 	-s minimum_spaces\n\
 	-t tab_width\n",
@@ -134,13 +148,24 @@ main(int argc, char **argv)
 			if (escaped == FALSE)
 				quote_char = ' ';
 			escaped = FALSE;
+			in_leading_whitespace = TRUE;
 
 			/* process line */
 			while (*src != NUL)
 			{
 				col_in_tab++;
+
+				/* look backward so we handle slash-star-slash properly */
+				if (!in_comment && src > in_line &&
+					*(src - 1) == '/' && *src == '*')
+					in_comment = TRUE;
+				else if (in_comment && *src == '*' && *(src + 1) == '/')
+					in_comment = FALSE;
+
 				/* Is this a potential space/tab replacement? */
-				if (quote_char == ' ' && (*src == ' ' || *src == '\t'))
+				if ((!only_comment_periods || (in_comment && was_period)) &&
+					(!protect_leading_whitespace || !in_leading_whitespace) &&
+					quote_char == ' ' && (*src == ' ' || *src == '\t'))
 				{
 					if (*src == '\t')
 					{
@@ -192,6 +217,11 @@ main(int argc, char **argv)
 				/* Not a potential space/tab replacement */
 				else
 				{
+					/* allow leading stars in comments */
+					if (in_leading_whitespace && *src != ' ' && *src != '\t' &&
+						(!in_comment || *src != '*'))
+						in_leading_whitespace = FALSE;
+					was_period = (*src == '.');
 					/* output accumulated spaces */
 					output_accumulated_spaces(&prv_spaces, &dst);
 					/* This can only happen in a quote. */
