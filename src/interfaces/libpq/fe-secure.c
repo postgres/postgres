@@ -967,8 +967,10 @@ init_ssl_system(PGconn *conn)
 		}
 
 		/*
-		 * Only SSLv23_method() negotiates higher protocol versions;
-		 * alternatives like TLSv1_2_method() permit one specific version.
+		 * We use SSLv23_method() because it can negotiate use of the highest
+		 * mutually supported protocol version, while alternatives like
+		 * TLSv1_2_method() permit only one specific version.  Note that we
+		 * don't actually allow SSL v2 or v3, only TLS protocols (see below).
 		 */
 		SSL_context = SSL_CTX_new(SSLv23_method());
 		if (!SSL_context)
