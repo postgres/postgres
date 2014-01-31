@@ -22,10 +22,11 @@ my $indent_opts =
 # indent-dependant settings
 my $extra_opts = "";
 
-my ($typedefs_file, $code_base, $excludes, $indent, $build);
+my ($typedefs_file, $typedef_str, $code_base, $excludes, $indent, $build);
 
 my %options = (
 	"typedefs=s"  => \$typedefs_file,
+	"list-of-typedefs=s"  => \$typedef_str,
 	"code-base=s" => \$code_base,
 	"excludes=s"  => \$excludes,
 	"indent=s"    => \$indent,
@@ -125,6 +126,13 @@ sub load_typedefs
 	  || die "cannot open typedefs file \"$typedefs_file\": $!\n";
 	my @typedefs = <$typedefs_fh>;
 	close($typedefs_fh);
+	if (defined($typedef_str))
+	{
+		foreach my $typedef (split(m/[, \t\n]+/, $typedef_str))
+		{
+			push(@typedefs, $typedef . "\n");
+		}
+	}
 
 	# remove certain entries
 	@typedefs =
