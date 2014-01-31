@@ -376,6 +376,68 @@
  </sect2>
 
  <sect2>
+  <title>Examples</title>
+
+  <para>
+   Here is an example of creating a foreign table with
+   <literal>postgres_fdw</>. First install the extension:
+  </para>
+
+<programlisting>
+CREATE EXTENSION postgres_fdw;
+</programlisting>
+
+  <para>
+   Then create a foreign server using <xref linkend="sql-createserver">.
+   In this example we wish to connect to a <productname>PostgreSQL</> server
+   on host <literal>192.83.123.89</literal> listening on
+   port <literal>5432</literal>.  The database to which the connection is made
+   is named <literal>foreign_db</literal> on the remote server:
+
+<programlisting>
+CREATE SERVER foreign_server
+        FOREIGN DATA WRAPPER postgres_fdw
+        OPTIONS (host '192.83.123.89', port '5432', dbname 'foreign_db');
+</programlisting>
+  </para>
+
+  <para>
+   A user mapping, defined with <xref linkend="sql-createusermapping">, is
+   needed as well to identify the role that will be used on the remote
+   server:
+
+<programlisting>
+CREATE USER MAPPING FOR local_user
+        SERVER foreign_server
+        OPTIONS (user 'foreign_user', password 'password');
+</programlisting>
+  </para>
+
+  <para>
+   Now it is possible to create a foreign table with
+   <xref linkend="sql-createforeigntable">.  In this example we
+   wish to access the table named <structname>some_schema.some_table</>
+   on the remote server.  The local name for it will
+   be <structname>foreign_table</>:
+
+<programlisting>
+CREATE FOREIGN TABLE foreign_table (
+        id serial NOT NULL,
+        data text
+)
+        SERVER foreign_server
+        OPTIONS (schema_name 'some_schema', table_name 'some_table');
+</programlisting>
+
+   It's essential that the data types and other properties of the columns
+   declared in <command>CREATE FOREIGN TABLE</> match the actual remote table.
+   Column names must match as well, unless you attach <literal>column_name</>
+   options to the individual columns to show how they are named in the remote
+   table.
+  </para>
+ </sect2>
+
+ <sect2>
   <title>Author</title>
   <para>
    Shigeru Hanada <email>shigeru.hanada@gmail.com</email>
