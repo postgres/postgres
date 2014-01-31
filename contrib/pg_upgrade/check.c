@@ -437,8 +437,14 @@ equivalent_locale(const char *loca, const char *locb)
 	if (!chara || !charb)
 		return (pg_strcasecmp(loca, locb) == 0);
 
-	/* Compare the encoding parts. */
-	if (!equivalent_encoding(chara + 1, charb + 1))
+	/*
+	 * Compare the encoding parts.	Windows tends to use code page numbers for
+	 * the encoding part, which equivalent_encoding() won't like, so accept if
+	 * the strings are case-insensitive equal; otherwise use
+	 * equivalent_encoding() to compare.
+	 */
+	if (pg_strcasecmp(chara + 1, charb + 1) != 0 &&
+		!equivalent_encoding(chara + 1, charb + 1))
 		return false;
 
 	/*
