@@ -126,6 +126,8 @@ sub load_typedefs
 	  || die "cannot open typedefs file \"$typedefs_file\": $!\n";
 	my @typedefs = <$typedefs_fh>;
 	close($typedefs_fh);
+
+	# add command-line-supplied typedefs?
 	if (defined($typedef_str))
 	{
 		foreach my $typedef (split(m/[, \t\n]+/, $typedef_str))
