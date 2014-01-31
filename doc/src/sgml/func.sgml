@@ -10282,7 +10282,7 @@ table2-mapping
        <entry>
          Expands a JSON array to a set of JSON values.
        </entry>
-       <entry><literal>json_array_elements('[1,true, [2,false]]')</literal></entry>
+       <entry><literal>SELECT * FROM json_array_elements('[1,true, [2,false]]')</literal></entry>
        <entry>
 <programlisting>
    value
@@ -10300,11 +10300,11 @@ table2-mapping
          </indexterm>
          <literal>json_array_elements_text(json)</literal>
        </entry>
-       <entry><type>SETOF json</type></entry>
+       <entry><type>SETOF text</type></entry>
        <entry>
          Expands a JSON array to a set of text values.
        </entry>
-       <entry><literal>json_array_elements_text('["foo", "bar"]')</literal></entry>
+       <entry><literal>SELECT * FROM json_array_elements_text('["foo", "bar"]')</literal></entry>
        <entry>
 <programlisting>
    value
