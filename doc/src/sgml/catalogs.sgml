@@ -5881,7 +5881,8 @@
       <entry><structfield>tgconstrindid</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
-      <entry>The index supporting a unique, primary key, or referential integrity constraint</entry>
+      <entry>The index supporting a unique, primary key, referential integrity,
+       or exclusion constraint</entry>
      </row>
 
      <row>
