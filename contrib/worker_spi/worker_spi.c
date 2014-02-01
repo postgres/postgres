@@ -42,6 +42,7 @@
 #include "tcop/utility.h"
 
 PG_MODULE_MAGIC;
+
 PG_FUNCTION_INFO_V1(worker_spi_launch);
 
 void		_PG_init(void);
@@ -82,15 +83,19 @@ worker_spi_sigterm(SIGNAL_ARGS)
 
 /*
  * Signal handler for SIGHUP
- *		Set a flag to let the main loop to reread the config file, and set
+ *		Set a flag to tell the main loop to reread the config file, and set
  *		our latch to wake it up.
  */
 static void
 worker_spi_sighup(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
+
 	got_sighup = true;
 	if (MyProc)
 		SetLatch(&MyProc->procLatch);
+
+	errno = save_errno;
 }
 
 /*
