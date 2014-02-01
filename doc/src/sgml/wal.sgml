@@ -193,9 +193,10 @@
     </listitem>
     <listitem>
      <para>
-      Data pages are not currently checksummed, though full page images recorded
-      in WAL records will be protected. Data pages have a 16-bit field available
-      for future use with a data page checksum feature.
+      Data pages are not currently checksummed by default, though full page images
+      recorded in WAL records will be protected;  see<link
+      linkend="app-initdb-data-checksums"><application>initdb</></link>
+      for details about enabling data page checksums.
      </para>
     </listitem>
     <listitem>
