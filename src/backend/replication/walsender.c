@@ -950,17 +950,23 @@ InitWalSnd(void)
 static void
 WalSndKill(int code, Datum arg)
 {
-	Assert(MyWalSnd != NULL);
+	WalSnd	   *walsnd = MyWalSnd;
+
+	Assert(walsnd != NULL);
+
+	/*
+	 * Clear MyWalSnd first; then disown the latch.  This is so that signal
+	 * handlers won't try to touch the latch after it's no longer ours.
+	 */
+	MyWalSnd = NULL;
+
+	DisownLatch(&walsnd->latch);
 
 	/*
 	 * Mark WalSnd struct no longer in use. Assume that no lock is required
 	 * for this.
 	 */
-	MyWalSnd->pid = 0;
-	DisownLatch(&MyWalSnd->latch);
-
-	/* WalSnd struct isn't mine anymore */
-	MyWalSnd = NULL;
+	walsnd->pid = 0;
 }
 
 /*
