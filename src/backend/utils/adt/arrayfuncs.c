@@ -425,8 +425,8 @@ ArrayCount(const char *str, int *dim, char typdelim)
 
 	for (i = 0; i < MAXDIM; ++i)
 	{
-		temp[i] = dim[i] = 0;
-		nelems_last[i] = nelems[i] = 1;
+		temp[i] = dim[i] = nelems_last[i] = 0;
+		nelems[i] = 1;
 	}
 
 	ptr = str;
@@ -540,8 +540,8 @@ ArrayCount(const char *str, int *dim, char typdelim)
 							errmsg("malformed array literal: \"%s\"", str)));
 						nest_level--;
 
-						if ((nelems_last[nest_level] != 1) &&
-							(nelems[nest_level] != nelems_last[nest_level]))
+						if (nelems_last[nest_level] != 0 &&
+							nelems[nest_level] != nelems_last[nest_level])
 							ereport(ERROR,
 							   (errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 								errmsg("multidimensional arrays must have "
