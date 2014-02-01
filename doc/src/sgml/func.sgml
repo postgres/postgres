@@ -3984,7 +3984,8 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
      string containing zero or more single-letter flags that change the
      function's behavior.  Flag <literal>i</> specifies case-insensitive
      matching, while flag <literal>g</> specifies replacement of each matching
-     substring rather than only the first one.  Other supported flags are
+     substring rather than only the first one.  Supported flags (though
+     not <literal>g</>) are
      described in <xref linkend="posix-embedded-options-table">.
     </para>
 
@@ -4021,8 +4022,9 @@ regexp_replace('foobarbaz', 'b(..)', E'X\\1Y', 'g')
      string containing zero or more single-letter flags that change the
      function's behavior.  Flag <literal>g</> causes the function to find
      each match in the string, not only the first one, and return a row for
-     each such match.  Other supported
-     flags are described in <xref linkend="posix-embedded-options-table">.
+     each such match.  Supported flags (though
+     not <literal>g</>)
+     are described in <xref linkend="posix-embedded-options-table">.
     </para>
 
    <para>
