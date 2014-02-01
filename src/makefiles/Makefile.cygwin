@@ -1,6 +1,5 @@
-# src/makefiles/Makefile.cygwin
 DLLTOOL= dlltool
-DLLWRAP= dllwrap
+# src/makefiles/Makefile.cygwin
 ifdef PGXS
 BE_DLLLIBS= -L$(libdir) -lpostgres
 else
@@ -40,6 +39,4 @@ endif
 
 # Rule for building a shared library from a single .o file
 %.dll: %.o
-	$(DLLTOOL) --export-all --output-def $*.def $<
-	$(DLLWRAP) -o $@ --def $*.def $< $(LDFLAGS) $(LDFLAGS_SL) $(BE_DLLLIBS)
-	rm -f $*.def
+	 $(CC) $(CFLAGS)  -shared -o $@ $<  $(LDFLAGS) $(LDFLAGS_SL) $(BE_DLLLIBS)

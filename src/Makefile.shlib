@@ -309,6 +309,7 @@ ifeq ($(PORTNAME), unixware)
 endif
 
 ifeq ($(PORTNAME), cygwin)
+  LINK.shared		= $(CC) -shared
   ifdef SO_MAJOR_VERSION
     shlib		= cyg$(NAME)$(DLSUFFIX)
   endif
@@ -399,6 +400,16 @@ else # PORTNAME == cygwin || PORTNAME == win32
 
 # If SHLIB_EXPORTS is set, the rules below will build a .def file from
 # that.  Else we build a temporary one here.
+ifeq ($(PORTNAME), cygwin)
+$(shlib): $(OBJS) | $(SHLIB_PREREQS)
+	$(CC) $(CFLAGS)  -shared -o $@  $(OBJS) $(LDFLAGS) $(LDFLAGS_SL) $(SHLIB_LINK) $(LIBS) $(LDAP_LIBS_BE)
+
+$(stlib): $(OBJS) | $(SHLIB_PREREQS)
+	$(LINK.static) $@ $^
+	$(RANLIB) $@
+
+
+else
 ifeq (,$(SHLIB_EXPORTS))
 DLL_DEFFILE = lib$(NAME)dll.def
 exports_file = $(DLL_DEFFILE)
@@ -415,6 +426,7 @@ $(shlib): $(OBJS) $(DLL_DEFFILE) | $(SHLIB_PREREQS)
 $(stlib): $(shlib) $(DLL_DEFFILE) | $(SHLIB_PREREQS)
 	$(DLLTOOL) --dllname $(shlib) $(DLLTOOL_LIBFLAGS) --def $(DLL_DEFFILE) --output-lib $@
 
+endif # PORTNAME == cygwin 
 endif # PORTNAME == cygwin || PORTNAME == win32
 
 endif # enable_shared
