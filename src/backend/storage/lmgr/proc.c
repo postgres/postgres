@@ -591,6 +591,7 @@ ProcKill(int code, Datum arg)
 {
 	/* use volatile pointer to prevent code rearrangement */
 	volatile PROC_HDR *procglobal = ProcGlobal;
+	PGPROC	   *proc;
 
 	Assert(MyProc != NULL);
 
@@ -601,22 +602,27 @@ ProcKill(int code, Datum arg)
 	 */
 	LWLockReleaseAll();
 
+	/*
+	 * Clear MyProc first before after putting it back on the global list,
+	 * so that signal handlers won't try to access it after it's no longer
+	 * ours.
+	 */
+	proc = MyProc;
+	MyProc = NULL;
+
 	SpinLockAcquire(ProcStructLock);
 
 	/* Return PGPROC structure (and semaphore) to freelist */
 	if (IsAutoVacuumWorkerProcess())
 	{
-		MyProc->links.next = (SHM_QUEUE *) procglobal->autovacFreeProcs;
-		procglobal->autovacFreeProcs = MyProc;
+		proc->links.next = (SHM_QUEUE *) procglobal->autovacFreeProcs;
+		procglobal->autovacFreeProcs = proc;
 	}
 	else
 	{
-		MyProc->links.next = (SHM_QUEUE *) procglobal->freeProcs;
-		procglobal->freeProcs = MyProc;
+		proc->links.next = (SHM_QUEUE *) procglobal->freeProcs;
+		procglobal->freeProcs = proc;
 	}
-
-	/* PGPROC struct isn't mine anymore */
-	MyProc = NULL;
 
 	/* Update shared estimate of spins_per_delay */
 	procglobal->spins_per_delay = update_spins_per_delay(procglobal->spins_per_delay);
@@ -645,6 +651,7 @@ AuxiliaryProcKill(int code, Datum arg)
 {
 	int			proctype = DatumGetInt32(arg);
 	PGPROC	   *auxproc;
+	PGPROC	   *proc;
 
 	Assert(proctype >= 0 && proctype < NUM_AUXILIARY_PROCS);
 
@@ -655,13 +662,18 @@ AuxiliaryProcKill(int code, Datum arg)
 	/* Release any LW locks I am holding (see notes above) */
 	LWLockReleaseAll();
 
+	/*
+	 * Clear MyProc first before after putting it back on the global list,
+	 * so that signal handlers won't try to access it after it's no longer
+	 * ours.
+	 */
+	proc = MyProc;
+	MyProc = NULL;
+
 	SpinLockAcquire(ProcStructLock);
 
 	/* Mark auxiliary proc no longer in use */
-	MyProc->pid = 0;
-
-	/* PGPROC struct isn't mine anymore */
-	MyProc = NULL;
+	proc->pid = 0;
 
 	/* Update shared estimate of spins_per_delay */
 	ProcGlobal->spins_per_delay = update_spins_per_delay(ProcGlobal->spins_per_delay);
