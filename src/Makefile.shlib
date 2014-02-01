@@ -398,7 +398,7 @@ $(shlib): $(OBJS) $(DLL_DEFFILE) | $(SHLIB_PREREQS)
 $(stlib): $(shlib) $(DLL_DEFFILE) | $(SHLIB_PREREQS)
 	$(DLLTOOL) --dllname $(shlib) $(DLLTOOL_LIBFLAGS) --def $(DLL_DEFFILE) --output-lib $@
 
-endif # PORTNAME == cygwin 
+endif # PORTNAME == cgywin
 endif # PORTNAME == cygwin || PORTNAME == win32
 
 
