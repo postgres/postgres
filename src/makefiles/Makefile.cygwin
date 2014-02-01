@@ -1,6 +1,5 @@
 # $PostgreSQL: pgsql/src/makefiles/Makefile.cygwin,v 1.15 2010/07/05 23:15:56 tgl Exp $
 DLLTOOL= dlltool
-DLLWRAP= dllwrap
 ifdef PGXS
 BE_DLLLIBS= -L$(libdir) -lpostgres
 else
@@ -40,6 +39,4 @@ endif
 
 # Rule for building a shared library from a single .o file
 %.dll: %.o
-	$(DLLTOOL) --export-all --output-def $*.def $<
-	$(DLLWRAP) -o $@ --def $*.def $< $(LDFLAGS) $(LDFLAGS_SL) $(BE_DLLLIBS)
-	rm -f $*.def
+	 $(CC) $(CFLAGS)  -shared -o $@ $<  $(LDFLAGS) $(LDFLAGS_SL) $(BE_DLLLIBS)
