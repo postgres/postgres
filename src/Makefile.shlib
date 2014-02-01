@@ -425,7 +425,7 @@ $(shlib): $(OBJS) $(DLL_DEFFILE)
 $(stlib): $(shlib) $(DLL_DEFFILE)
 	$(DLLTOOL) --dllname $(shlib) $(DLLTOOL_LIBFLAGS) --def $(DLL_DEFFILE) --output-lib $@
 
-endif # PORTNAME == cygwin 
+endif # PORTNAME == cgywin
 endif # PORTNAME == cygwin || PORTNAME == win32
 
 endif # enable_shared
