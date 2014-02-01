@@ -356,7 +356,7 @@ TParserClose(TParser *prs)
  *    or give wrong result. 
  *  - multibyte encoding and C-locale often are used for 
  *    Asian languages.
- *  - if locale is C the we use pgwstr instead of wstr
+ *  - if locale is C then we use pgwstr instead of wstr.
  */
 
 #ifdef USE_WIDE_UPPER_LOWER
@@ -368,9 +368,13 @@ p_is##type(TParser *prs) {													\
 	if ( prs->usewide )														\
 	{																		\
 		if ( prs->pgwstr )													\
-			return is##type( 0xff & *( prs->pgwstr + prs->state->poschar) );\
-																			\
-		return isw##type( *(wint_t*)( prs->wstr + prs->state->poschar ) );	\
+		{																	\
+			unsigned int c = *(prs->pgwstr + prs->state->poschar);			\
+			if ( c > 0x7f )													\
+				return 0;													\
+			return is##type( c );											\
+		}																	\
+		return isw##type( *( prs->wstr + prs->state->poschar ) );			\
 	}																		\
 																			\
 	return is##type( *(unsigned char*)( prs->str + prs->state->posbyte ) ); \
@@ -399,10 +403,10 @@ p_isalnum(TParser *prs)
 			if (c > 0x7f)
 				return 1;
 
-			return isalnum(0xff & c);
+			return isalnum(c);
 		}
 
-		return iswalnum((wint_t) *(prs->wstr + prs->state->poschar));
+		return iswalnum(*(prs->wstr + prs->state->poschar));
 	}
 
 	return isalnum(*(unsigned char *) (prs->str + prs->state->posbyte));
@@ -431,10 +435,10 @@ p_isalpha(TParser *prs)
 			if (c > 0x7f)
 				return 1;
 
-			return isalpha(0xff & c);
+			return isalpha(c);
 		}
 
-		return iswalpha((wint_t) *(prs->wstr + prs->state->poschar));
+		return iswalpha(*(prs->wstr + prs->state->poschar));
 	}
 
 	return isalpha(*(unsigned char *) (prs->str + prs->state->posbyte));
