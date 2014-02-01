@@ -27,6 +27,7 @@
 #include "commands/async.h"
 #include "miscadmin.h"
 #include "pg_trace.h"
+#include "replication/slot.h"
 #include "storage/ipc.h"
 #include "storage/predicate.h"
 #include "storage/proc.h"
@@ -237,6 +238,9 @@ NumLWLocks(void)
 
 	/* predicate.c needs one per old serializable xid buffer */
 	numLocks += NUM_OLDSERXID_BUFFERS;
+
+	/* slot.c needs one for each slot */
+	numLocks += max_replication_slots;
 
 	/*
 	 * Add any requested by loadable modules; for backwards-compatibility

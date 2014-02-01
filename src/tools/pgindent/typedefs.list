@@ -343,6 +343,7 @@ CreateOpClassItem
 CreateOpClassStmt
 CreateOpFamilyStmt
 CreatePLangStmt
+CreateReplicationSlotCmd
 CreateRangeStmt
 CreateRoleStmt
 CreateSchemaStmt
@@ -416,6 +417,7 @@ DomainConstraintType
 DomainIOData
 DropBehavior
 DropOwnedStmt
+DropReplicationSlotCmd
 DropRoleStmt
 DropStmt
 DropTableSpaceStmt

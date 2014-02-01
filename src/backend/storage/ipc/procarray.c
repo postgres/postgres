@@ -82,6 +82,9 @@ typedef struct ProcArrayStruct
 	 */
 	TransactionId lastOverflowedXid;
 
+	/* oldest xmin of any replication slot */
+	TransactionId replication_slot_xmin;
+
 	/*
 	 * We declare pgprocnos[] as 1 entry because C wants a fixed-size array,
 	 * but actually it is maxProcs entries long.
@@ -228,6 +231,7 @@ CreateSharedProcArray(void)
 		 */
 		procArray->numProcs = 0;
 		procArray->maxProcs = PROCARRAY_MAXPROCS;
+		procArray->replication_slot_xmin = InvalidTransactionId;
 		procArray->maxKnownAssignedXids = TOTAL_MAX_CACHED_SUBXIDS;
 		procArray->numKnownAssignedXids = 0;
 		procArray->tailKnownAssignedXids = 0;
@@ -1153,6 +1157,7 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
 	ProcArrayStruct *arrayP = procArray;
 	TransactionId result;
 	int			index;
+	volatile TransactionId replication_slot_xmin = InvalidTransactionId;
 
 	/* Cannot look for individual databases during recovery */
 	Assert(allDbs || !RecoveryInProgress());
@@ -1204,6 +1209,9 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
 		}
 	}
 
+	/* fetch into volatile var while ProcArrayLock is held */
+	replication_slot_xmin = procArray->replication_slot_xmin;
+
 	if (RecoveryInProgress())
 	{
 		/*
@@ -1243,6 +1251,13 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
 		if (!TransactionIdIsNormal(result))
 			result = FirstNormalTransactionId;
 	}
+
+	/*
+	 * Check whether there are replication slots requiring an older xmin.
+	 */
+	if (TransactionIdIsValid(replication_slot_xmin) &&
+		NormalTransactionIdPrecedes(replication_slot_xmin, result))
+		result = replication_slot_xmin;
 
 	return result;
 }
@@ -1313,6 +1328,7 @@ GetSnapshotData(Snapshot snapshot)
 	int			count = 0;
 	int			subcount = 0;
 	bool		suboverflowed = false;
+	volatile TransactionId replication_slot_xmin = InvalidTransactionId;
 
 	Assert(snapshot != NULL);
 
@@ -1490,8 +1506,13 @@ GetSnapshotData(Snapshot snapshot)
 			suboverflowed = true;
 	}
 
+
+	/* fetch into volatile var while ProcArrayLock is held */
+	replication_slot_xmin = procArray->replication_slot_xmin;
+
 	if (!TransactionIdIsValid(MyPgXact->xmin))
 		MyPgXact->xmin = TransactionXmin = xmin;
+
 	LWLockRelease(ProcArrayLock);
 
 	/*
@@ -1506,6 +1527,12 @@ GetSnapshotData(Snapshot snapshot)
 	RecentGlobalXmin = globalxmin - vacuum_defer_cleanup_age;
 	if (!TransactionIdIsNormal(RecentGlobalXmin))
 		RecentGlobalXmin = FirstNormalTransactionId;
+
+	/* Check whether there's a replication slot requiring an older xmin. */
+	if (TransactionIdIsValid(replication_slot_xmin) &&
+		NormalTransactionIdPrecedes(replication_slot_xmin, RecentGlobalXmin))
+		RecentGlobalXmin = replication_slot_xmin;
+
 	RecentXmin = xmin;
 
 	snapshot->xmin = xmin;
@@ -2489,6 +2516,21 @@ CountOtherDBBackends(Oid databaseId, int *nbackends, int *nprepared)
 	}
 
 	return true;				/* timed out, still conflicts */
+}
+
+/*
+ * ProcArraySetReplicationSlotXmin
+ *
+ * Install limits to future computations of the xmin horizon to prevent vacuum
+ * and HOT pruning from removing affected rows still needed by clients with
+ * replicaton slots.
+ */
+void
+ProcArraySetReplicationSlotXmin(TransactionId xmin)
+{
+	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
+	procArray->replication_slot_xmin = xmin;
+	LWLockRelease(ProcArrayLock);
 }
 
 

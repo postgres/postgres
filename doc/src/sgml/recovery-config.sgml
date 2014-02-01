@@ -418,6 +418,22 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
          </para>
         </listitem>
        </varlistentry>
+       <varlistentry id="primary-slotname" xreflabel="primary_slotname">
+        <term><varname>primary_slotname</varname> (<type>string</type>)</term>
+        <indexterm>
+          <primary><varname>primary_slotname</> recovery parameter</primary>
+        </indexterm>
+        <listitem>
+         <para>
+          Optionally specifies an existing replication slot to be used when
+          connecting to the primary via streaming replication to control
+          resource removal on the upstream node
+          (see <xref linkend="streaming-replication-slots">).
+          This setting has no effect if <varname>primary_conninfo</> is not
+          set.
+         </para>
+        </listitem>
+       </varlistentry>
        <varlistentry id="trigger-file" xreflabel="trigger_file">
         <term><varname>trigger_file</varname> (<type>string</type>)</term>
         <indexterm>

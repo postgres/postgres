@@ -65,7 +65,7 @@ Node *replication_parse_result;
 }
 
 /* Non-keyword tokens */
-%token <str> SCONST
+%token <str> SCONST IDENT
 %token <uintval> UCONST
 %token <recptr> RECPTR
 
@@ -73,6 +73,8 @@ Node *replication_parse_result;
 %token K_BASE_BACKUP
 %token K_IDENTIFY_SYSTEM
 %token K_START_REPLICATION
+%token K_CREATE_REPLICATION_SLOT
+%token K_DROP_REPLICATION_SLOT
 %token K_TIMELINE_HISTORY
 %token K_LABEL
 %token K_PROGRESS
@@ -80,12 +82,15 @@ Node *replication_parse_result;
 %token K_NOWAIT
 %token K_WAL
 %token K_TIMELINE
+%token K_PHYSICAL
+%token K_SLOT
 
 %type <node>	command
-%type <node>	base_backup start_replication identify_system timeline_history
+%type <node>	base_backup start_replication create_replication_slot drop_replication_slot identify_system timeline_history
 %type <list>	base_backup_opt_list
 %type <defelt>	base_backup_opt
 %type <uintval>	opt_timeline
+%type <str>		opt_slot
 %%
 
 firstcmd: command opt_semicolon
@@ -102,6 +107,8 @@ command:
 			identify_system
 			| base_backup
 			| start_replication
+			| create_replication_slot
+			| drop_replication_slot
 			| timeline_history
 			;
 
@@ -158,18 +165,42 @@ base_backup_opt:
 				}
 			;
 
+/* CREATE_REPLICATION_SLOT SLOT slot PHYSICAL */
+create_replication_slot:
+			K_CREATE_REPLICATION_SLOT IDENT K_PHYSICAL
+				{
+					CreateReplicationSlotCmd *cmd;
+					cmd = makeNode(CreateReplicationSlotCmd);
+					cmd->kind = REPLICATION_KIND_PHYSICAL;
+					cmd->slotname = $2;
+					$$ = (Node *) cmd;
+				}
+			;
+
+/* DROP_REPLICATION_SLOT SLOT slot */
+drop_replication_slot:
+			K_DROP_REPLICATION_SLOT IDENT
+				{
+					DropReplicationSlotCmd *cmd;
+					cmd = makeNode(DropReplicationSlotCmd);
+					cmd->slotname = $2;
+					$$ = (Node *) cmd;
+				}
+			;
+
 /*
- * START_REPLICATION %X/%X [TIMELINE %d]
+ * START_REPLICATION [SLOT slot] [PHYSICAL] %X/%X [TIMELINE %d]
  */
 start_replication:
-			K_START_REPLICATION RECPTR opt_timeline
+			K_START_REPLICATION opt_slot opt_physical RECPTR opt_timeline
 				{
 					StartReplicationCmd *cmd;
 
 					cmd = makeNode(StartReplicationCmd);
-					cmd->startpoint = $2;
-					cmd->timeline = $3;
-
+					cmd->kind = REPLICATION_KIND_PHYSICAL;
+					cmd->slotname = $2;
+					cmd->startpoint = $4;
+					cmd->timeline = $5;
 					$$ = (Node *) cmd;
 				}
 			;
@@ -205,6 +236,15 @@ timeline_history:
 					$$ = (Node *) cmd;
 				}
 			;
+
+opt_physical :	K_PHYSICAL | /* EMPTY */;
+
+
+opt_slot :	K_SLOT IDENT
+				{
+					$$ = $2;
+				}
+				| /* nothing */			{ $$ = NULL; }
 %%
 
 #include "repl_scanner.c"

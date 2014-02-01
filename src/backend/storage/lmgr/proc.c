@@ -40,6 +40,7 @@
 #include "access/xact.h"
 #include "miscadmin.h"
 #include "postmaster/autovacuum.h"
+#include "replication/slot.h"
 #include "replication/syncrep.h"
 #include "storage/ipc.h"
 #include "storage/lmgr.h"
@@ -779,6 +780,10 @@ ProcKill(int code, Datum arg)
 
 	/* Make sure we're out of the sync rep lists */
 	SyncRepCleanupAtProcExit();
+
+	/* Make sure active replication slots are released */
+	if (MyReplicationSlot != NULL)
+		ReplicationSlotRelease();
 
 #ifdef USE_ASSERT_CHECKING
 	if (assert_enabled)

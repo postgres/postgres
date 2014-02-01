@@ -77,4 +77,6 @@ extern void XidCacheRemoveRunningXids(TransactionId xid,
 						  int nxids, const TransactionId *xids,
 						  TransactionId latestXid);
 
+extern void ProcArraySetReplicationSlotXmin(TransactionId xmin);
+
 #endif   /* PROCARRAY_H */

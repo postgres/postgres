@@ -643,7 +643,9 @@ protocol to make nodes agree on a serializable transactional order.
     entries in <filename>pg_hba.conf</> with the database field set to
     <literal>replication</>.  Also ensure <varname>max_wal_senders</> is set
     to a sufficiently large value in the configuration file of the primary
-    server.
+    server. If replication slots will be used,
+    ensure that <varname>max_replication_slots</varname> is set sufficiently
+    high as well.
    </para>
 
    <para>
@@ -750,13 +752,14 @@ archive_cleanup_command = 'pg_archivecleanup /path/to/archive %r'
 
    <para>
     If you use streaming replication without file-based continuous
-    archiving, you have to set <varname>wal_keep_segments</> in the master
-    to a value high enough to ensure that old WAL segments are not recycled
-    too early, while the standby might still need them to catch up. If the
-    standby falls behind too much, it needs to be reinitialized from a new
-    base backup. If you set up a WAL archive that's accessible from the
-    standby, <varname>wal_keep_segments</> is not required as the standby can always
-    use the archive to catch up.
+    archiving, the server might recycle old WAL segments before the standby
+    has received them.  If this occurs, the standby will need to be
+    reinitialized from a new base backup.  You can avoid this by setting
+    <varname>wal_keep_segments</> to a value large enough to ensure that
+    WAL segments are not recycled too early, or by configuration a replication
+    slot for the standby.  If you set up a WAL archive that's accessible from
+    the standby, these solutions are not required, since the standby can
+    always use the archive to catch up provided it retains enough segments.
    </para>
 
    <para>
@@ -867,6 +870,81 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
      differences between <literal>sent_location</> and
      <function>pg_last_xlog_receive_location</> on the standby might indicate
      network delay, or that the standby is under heavy load.
+    </para>
+   </sect3>
+  </sect2>
+
+  <sect2 id="streaming-replication-slots">
+   <title>Replication Slots</title>
+   <indexterm zone="high-availability">
+    <primary>Replication Slots</primary>
+   </indexterm>
+   <para>
+    Replication slots provide an automated way to ensure that the master does
+    not remove WAL segments until they have been received by all standbys,
+    and that the master does not remove rows which could cause a
+    <link linkend="hot-standby-conflict">recovery conflict</> even when the
+    standby is disconnected.
+   </para>
+   <para>
+    In lieu of using replication slots, it is possible to prevent the removal
+    of old WAL segments using <xref linkend="guc-wal-keep-segments">, or by
+    storing the segments in an archive using <xref linkend="restore-command">.
+    However, these methods often result in retaining more WAL segments than
+    required, whereas replication slots retain only the number of segments
+    known to be needed.  An advantage of these methods is that they bound
+    the space requirement for <literal>pg_xlog</>; there is currently no way
+    to do this using replication slots.
+   </para>
+   <para>
+    Similarly, <varname>hot_standby_feedback</varname>
+    and <varname>vacuum_defer_cleanup_age</varname> provide protection against
+    relevant rows being removed by vacuum, but the former provides no
+    protection during any time period when the standby is not connected,
+    and the latter often needs to be set to a high value to provide adequate
+    protection.  Replication slots overcome these disadvantages.
+   </para>
+   <sect3 id="streaming-replication-slots-manipulation">
+    <title>Querying and manipulating replication slots</title>
+    <para>
+     Each replication slot has a name, which can contain lower-case letters,
+     numbers, and the underscore character.
+    </para>
+    <para>
+     Existing replication slots and their state can be seen in the
+     <link linkend="catalog-pg-replication-slots"><structname>pg_replication_slots</structname></link>
+     view.
+    </para>
+    <para>
+     Slots can be created and dropped either via the streaming replication
+     protocol (see <xref linkend="protocol-replication">) or via SQL
+     functions (see <xref linkend="functions-replication">).
+    </para>
+   </sect3>
+   <sect3 id="streaming-replication-slots-config">
+    <title>Configuration Example</title>
+    <para>
+     You can create a replication slot like this:
+<programlisting>
+postgres=# SELECT * FROM pg_create_physical_replication_slot('node_a_slot');
+  slotname   | xlog_position
+-------------+---------------
+ node_a_slot |
+
+postgres=# SELECT * FROM pg_replication_slots;
+  slot_name  | slot_type | datoid | database | active | xmin | restart_lsn
+-------------+-----------+--------+----------+--------+------+-------------
+ node_a_slot | physical  |      0 |          | f      |      |
+(1 row)
+</programlisting>
+     To configure the standby to use this slot, <varname>primary_slotname</>
+     should be configured in the standby's <filename>recovery.conf</>.
+     Here is a simple example:
+<programlisting>
+standby_mode = 'on'
+primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
+primary_slotname = 'node_a_slot'
+</programlisting>
     </para>
    </sect3>
   </sect2>

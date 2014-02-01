@@ -57,6 +57,7 @@
 #include "postmaster/postmaster.h"
 #include "postmaster/syslogger.h"
 #include "postmaster/walwriter.h"
+#include "replication/slot.h"
 #include "replication/syncrep.h"
 #include "replication/walreceiver.h"
 #include "replication/walsender.h"
@@ -2120,6 +2121,17 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&max_wal_senders,
 		0, 0, MAX_BACKENDS,
+		NULL, NULL, NULL
+	},
+
+	{
+		/* see max_connections */
+		{"max_replication_slots", PGC_POSTMASTER, REPLICATION_SENDING,
+			gettext_noop("Sets the maximum number of simultaneously defined replication slots."),
+			NULL
+		},
+		&max_replication_slots,
+		0, 0, MAX_BACKENDS /* XXX?*/,
 		NULL, NULL, NULL
 	},
 

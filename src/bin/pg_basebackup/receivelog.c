@@ -31,6 +31,8 @@
 /* fd and filename for currently open WAL file */
 static int	walfile = -1;
 static char current_walfile_name[MAXPGPATH] = "";
+static bool reportFlushPosition = false;
+static XLogRecPtr lastFlushPosition = InvalidXLogRecPtr;
 
 static PGresult *HandleCopyStream(PGconn *conn, XLogRecPtr startpos,
 				 uint32 timeline, char *basedir,
@@ -133,7 +135,7 @@ open_walfile(XLogRecPtr startpoint, uint32 timeline, char *basedir,
  * and returns false, otherwise returns true.
  */
 static bool
-close_walfile(char *basedir, char *partial_suffix)
+close_walfile(char *basedir, char *partial_suffix, XLogRecPtr pos)
 {
 	off_t		currpos;
 
@@ -187,6 +189,7 @@ close_walfile(char *basedir, char *partial_suffix)
 				_("%s: not renaming \"%s%s\", segment is not complete\n"),
 				progname, current_walfile_name, partial_suffix);
 
+	lastFlushPosition = pos;
 	return true;
 }
 
@@ -421,7 +424,10 @@ sendFeedback(PGconn *conn, XLogRecPtr blockpos, int64 now, bool replyRequested)
 	len += 1;
 	sendint64(blockpos, &replybuf[len]);		/* write */
 	len += 8;
-	sendint64(InvalidXLogRecPtr, &replybuf[len]);		/* flush */
+	if (reportFlushPosition)
+		sendint64(lastFlushPosition, &replybuf[len]);		/* flush */
+	else
+		sendint64(InvalidXLogRecPtr, &replybuf[len]);		/* flush */
 	len += 8;
 	sendint64(InvalidXLogRecPtr, &replybuf[len]);		/* apply */
 	len += 8;
@@ -511,6 +517,7 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 				  int standby_message_timeout, char *partial_suffix)
 {
 	char		query[128];
+	char		slotcmd[128];
 	PGresult   *res;
 	XLogRecPtr	stoppos;
 
@@ -520,6 +527,29 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 	 */
 	if (!CheckServerVersionForStreaming(conn))
 		return false;
+
+	if (replication_slot != NULL)
+	{
+		/*
+		 * Report the flush position, so the primary can know what WAL we'll
+		 * possibly re-request, and remove older WAL safely.
+		 *
+		 * We only report it when a slot has explicitly been used, because
+		 * reporting the flush position makes one elegible as a synchronous
+		 * replica. People shouldn't include generic names in
+		 * synchronous_standby_names, but we've protected them against it so
+		 * far, so let's continue to do so in the situations when possible.
+		 * If they've got a slot, though, we need to report the flush position,
+		 * so that the master can remove WAL.
+		 */
+		reportFlushPosition = true;
+		sprintf(slotcmd, "SLOT \"%s\" ", replication_slot);
+	}
+	else
+	{
+		reportFlushPosition = false;
+		slotcmd[0] = 0;
+	}
 
 	if (sysidentifier != NULL)
 	{
@@ -559,6 +589,12 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 		}
 		PQclear(res);
 	}
+
+	/*
+	 * initialize flush position to starting point, it's the caller's
+	 * responsibility that that's sane.
+	 */
+	lastFlushPosition = startpos;
 
 	while (1)
 	{
@@ -606,7 +642,8 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 			return true;
 
 		/* Initiate the replication stream at specified location */
-		snprintf(query, sizeof(query), "START_REPLICATION %X/%X TIMELINE %u",
+		snprintf(query, sizeof(query), "START_REPLICATION %s%X/%X TIMELINE %u",
+				 slotcmd,
 				 (uint32) (startpos >> 32), (uint32) startpos,
 				 timeline);
 		res = PQexec(conn, query);
@@ -810,7 +847,7 @@ HandleCopyStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 		 */
 		if (still_sending && stream_stop(blockpos, timeline, false))
 		{
-			if (!close_walfile(basedir, partial_suffix))
+			if (!close_walfile(basedir, partial_suffix, blockpos))
 			{
 				/* Potential error message is written by close_walfile */
 				goto error;
@@ -909,7 +946,7 @@ HandleCopyStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 			 */
 			if (still_sending)
 			{
-				if (!close_walfile(basedir, partial_suffix))
+				if (!close_walfile(basedir, partial_suffix, blockpos))
 				{
 					/* Error message written in close_walfile() */
 					goto error;
@@ -1074,7 +1111,7 @@ HandleCopyStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 				/* Did we reach the end of a WAL segment? */
 				if (blockpos % XLOG_SEG_SIZE == 0)
 				{
-					if (!close_walfile(basedir, partial_suffix))
+					if (!close_walfile(basedir, partial_suffix, blockpos))
 						/* Error message written in close_walfile() */
 						goto error;
 

@@ -187,6 +187,7 @@ void
 WalReceiverMain(void)
 {
 	char		conninfo[MAXCONNINFO];
+	char		slotname[NAMEDATALEN];
 	XLogRecPtr	startpoint;
 	TimeLineID	startpointTLI;
 	TimeLineID	primaryTLI;
@@ -241,6 +242,7 @@ WalReceiverMain(void)
 
 	/* Fetch information required to start streaming */
 	strlcpy(conninfo, (char *) walrcv->conninfo, MAXCONNINFO);
+	strlcpy(slotname, (char *) walrcv->slotname, NAMEDATALEN);
 	startpoint = walrcv->receiveStart;
 	startpointTLI = walrcv->receiveStartTLI;
 
@@ -355,7 +357,8 @@ WalReceiverMain(void)
 		 * on the new timeline.
 		 */
 		ThisTimeLineID = startpointTLI;
-		if (walrcv_startstreaming(startpointTLI, startpoint))
+		if (walrcv_startstreaming(startpointTLI, startpoint,
+								  slotname[0] != '\0' ? slotname : NULL))
 		{
 			bool		endofwal = false;
 

@@ -47,8 +47,9 @@ to fetch more WAL (if streaming replication is configured).
 
 Walreceiver is a postmaster subprocess, so the startup process can't fork it
 directly. Instead, it sends a signal to postmaster, asking postmaster to launch
-it. Before that, however, startup process fills in WalRcvData->conninfo,
-and initializes the starting point in WalRcvData->receiveStart.
+it. Before that, however, startup process fills in WalRcvData->conninfo
+and WalRcvData->slotname, and initializes the starting point in
+WalRcvData->receiveStart.
 
 As walreceiver receives WAL from the master server, and writes and flushes
 it to disk (in pg_xlog), it updates WalRcvData->receivedUpto and signals

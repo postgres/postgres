@@ -226,6 +226,9 @@
 #wal_keep_segments = 0		# in logfile segments, 16MB each; 0 disables
 #wal_sender_timeout = 60s	# in milliseconds; 0 disables
 
+#max_replication_slots = 0	# max number of replication slots.
+				# (change requires restart)
+
 # - Master Server -
 
 # These settings are ignored on a standby server.

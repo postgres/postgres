@@ -1401,15 +1401,39 @@ The commands accepted in walsender mode are:
   </varlistentry>
 
   <varlistentry>
-    <term>START_REPLICATION <replaceable class="parameter">XXX/XXX</> TIMELINE <replaceable class="parameter">tli</></term>
+    <term><literal>CREATE_REPLICATION_SLOT</literal> <replaceable class="parameter">slotname</> <literal>PHYSICAL</literal></term>
+    <indexterm><primary>CREATE_REPLICATION_SLOT</primary></indexterm>
+    <listitem>
+     <para>
+      Create a physical replication
+      slot. See <xref linkend="streaming-replication-slots"> for more about
+      replication slots.
+     </para>
+     <variablelist>
+      <varlistentry>
+       <term><replaceable class="parameter">slotname</></term>
+       <listitem>
+         <para>
+          The name of the slot to create. Must be a valid replication slot
+          name (see <xref linkend="streaming-replication-slots-manipulation">).
+         </para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
+    </listitem>
+  </varlistentry>
+
+  <varlistentry>
+    <term><literal>START_REPLICATION</literal> [<literal>SLOT</literal> <replaceable class="parameter">slotname</>] [<literal>PHYSICAL</literal>] <replaceable class="parameter">XXX/XXX</> <literal>TIMELINE</literal> <replaceable class="parameter">tli</></term>
     <listitem>
      <para>
       Instructs server to start streaming WAL, starting at
-      WAL position <replaceable class="parameter">XXX/XXX</> on timeline
-      <replaceable class="parameter">tli</>.
-      The server can reply with an error, e.g. if the requested section of WAL
-      has already been recycled. On success, server responds with a
-      CopyBothResponse message, and then starts to stream WAL to the frontend.
+      WAL position <replaceable class="parameter">XXX/XXX</>. If specified,
+      streaming starts on timeline <replaceable class="parameter">tli</>;
+      otherwise, the server's current timeline is selected. The server can
+      reply with an error, e.g. if the requested section of WAL has already
+      been recycled. On success, server responds with a CopyBothResponse
+      message, and then starts to stream WAL to the frontend.
      </para>
 
      <para>
@@ -1441,6 +1465,14 @@ The commands accepted in walsender mode are:
       an ErrorResponse message if it encounters a failure after beginning
       to stream.)  The payload of each CopyData message from server to the
       client contains a message of one of the following formats:
+     </para>
+
+     <para>
+      If a slot's name is provided
+      via <replaceable class="parameter">slotname</>, it will be updated
+      as replication progresses so that the server knows which WAL segments -
+      and if <varname>hot_standby_feedback</> is on which transactions -
+      are still needed by the standby.
      </para>
 
      <para>
@@ -1716,6 +1748,26 @@ The commands accepted in walsender mode are:
       </varlistentry>
       </variablelist>
      </para>
+    </listitem>
+  </varlistentry>
+
+  <varlistentry>
+    <term><literal>DROP_REPLICATION_SLOT</literal> <replaceable class="parameter">slotname</></term>
+    <listitem>
+     <para>
+      Drops a replication slot, freeing any reserved server-side resources. If
+      the slot is currently in use by an active connection, this command fails.
+     </para>
+     <variablelist>
+      <varlistentry>
+       <term><replaceable class="parameter">slotname</></term>
+       <listitem>
+         <para>
+          The name of the slot to drop.
+         </para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
     </listitem>
   </varlistentry>
 

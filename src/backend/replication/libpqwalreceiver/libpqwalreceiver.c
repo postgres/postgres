@@ -49,7 +49,8 @@ static char *recvBuf = NULL;
 static void libpqrcv_connect(char *conninfo);
 static void libpqrcv_identify_system(TimeLineID *primary_tli);
 static void libpqrcv_readtimelinehistoryfile(TimeLineID tli, char **filename, char **content, int *len);
-static bool libpqrcv_startstreaming(TimeLineID tli, XLogRecPtr startpoint);
+static bool libpqrcv_startstreaming(TimeLineID tli, XLogRecPtr startpoint,
+									char *slotname);
 static void libpqrcv_endstreaming(TimeLineID *next_tli);
 static int	libpqrcv_receive(int timeout, char **buffer);
 static void libpqrcv_send(const char *buffer, int nbytes);
@@ -171,15 +172,20 @@ libpqrcv_identify_system(TimeLineID *primary_tli)
  * throws an ERROR.
  */
 static bool
-libpqrcv_startstreaming(TimeLineID tli, XLogRecPtr startpoint)
+libpqrcv_startstreaming(TimeLineID tli, XLogRecPtr startpoint, char *slotname)
 {
 	char		cmd[64];
 	PGresult   *res;
 
 	/* Start streaming from the point requested by startup process */
-	snprintf(cmd, sizeof(cmd), "START_REPLICATION %X/%X TIMELINE %u",
-			 (uint32) (startpoint >> 32), (uint32) startpoint,
-			 tli);
+	if (slotname != NULL)
+		snprintf(cmd, sizeof(cmd),
+				 "START_REPLICATION SLOT \"%s\" %X/%X TIMELINE %u", slotname,
+				 (uint32) (startpoint >> 32), (uint32) startpoint, tli);
+	else
+		snprintf(cmd, sizeof(cmd),
+				 "START_REPLICATION %X/%X TIMELINE %u",
+				 (uint32) (startpoint >> 32), (uint32) startpoint, tli);
 	res = libpqrcv_PQexec(cmd);
 
 	if (PQresultStatus(res) == PGRES_COMMAND_OK)

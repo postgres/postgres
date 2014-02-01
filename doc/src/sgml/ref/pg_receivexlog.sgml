@@ -225,6 +225,24 @@ PostgreSQL documentation
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+      <term><option>--slot</option></term>
+      <listitem>
+        <para>
+         Require <application>pg_receivexlog</application> to use an existing
+         replication slot (see <xref linkend="streaming-replication-slots">).
+         When this option is used, <application>pg_receivexlog</> will report
+         a flush position to the server, indicating when each segment has been
+         synchronized to disk so that the server can remove that segment if it
+         is not otherwise needed.  When using this paramter, it is important
+         to make sure that <application>pg_receivexlog</> cannot become the
+         synchronous standby through an incautious setting of
+         <xref linkend="guc-synchronous-standby-names">; it does not flush
+         data frequently enough for this to work correctly.
+        </para>
+      </listitem>
+     </varlistentry>
     </variablelist>
    </para>
 

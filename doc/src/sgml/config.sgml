@@ -2348,6 +2348,25 @@ include 'filename'
        </listitem>
       </varlistentry>
 
+      <varlistentry id="guc-max-replication-slots" xreflabel="max_replication_slots">
+       <term><varname>max_replication_slots</varname> (<type>integer</type>)</term>
+       <indexterm>
+        <primary><varname>max_replication_slots</> configuration parameter</primary>
+       </indexterm>
+       <listitem>
+        <para>
+         Specifies the maximum number of replication slots
+         (see <xref linkend="streaming-replication-slots"> that the server
+         can support. The default is zero.  This parameter can only be set at
+         server start.
+         <varname>wal_level</varname> must be set
+         to <literal>archive</literal> or higher to allow replication slots to
+         be used. Setting it to a lower value than the number of currently
+         existing replication slots will prevent the server from starting.
+        </para>
+       </listitem>
+      </varlistentry>
+
       <varlistentry id="guc-wal-keep-segments" xreflabel="wal_keep_segments">
        <term><varname>wal_keep_segments</varname> (<type>integer</type>)</term>
        <indexterm>

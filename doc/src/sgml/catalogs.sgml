@@ -234,6 +234,11 @@
      </row>
 
      <row>
+      <entry><link linkend="catalog-pg-replication-slots"><structname>pg_replication_slots</structname></link></entry>
+      <entry>replication slot information</entry>
+     </row>
+
+     <row>
       <entry><link linkend="catalog-pg-seclabel"><structname>pg_seclabel</structname></link></entry>
       <entry>security labels on database objects</entry>
      </row>
@@ -5155,6 +5160,100 @@
    </para>
   </note>
 
+ </sect1>
+
+ <sect1 id="catalog-pg-replication-slots">
+  <title><structname>pg_replication_slots</structname></title>
+
+  <indexterm zone="catalog-pg-replication-slots">
+   <primary>pg_replication_slots</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_replication_slots</structname> view provides a listing
+   of all replication slots that currently exist on the database cluster,
+   along with their current state.
+  </para>
+
+  <para>
+   For more on replication slots,
+   see <xref linkend="streaming-replication-slots">.
+  </para>
+
+  <table>
+
+   <title><structname>pg_replication_slots</structname> Columns</title>
+
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>slot_name</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>A unique, cluster-wide identifier for the replication slot</entry>
+     </row>
+
+     <row>
+      <entry><structfield>slot_type</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>The slot type - <literal>physical</> or <literal>logical</></entry>
+     </row>
+
+     <row>
+      <entry><structfield>datoid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-database"><structname>pg_database</structname></link>.oid</literal></entry>
+      <entry>The oid of the database this slot is associated with, or
+      null. Only logical slots have an associated database.</entry>
+     </row>
+
+     <row>
+      <entry><structfield>database</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry><literal><link linkend="catalog-pg-database"><structname>pg_database</structname></link>.datname</literal></entry>
+      <entry>The name of the database this slot is associated with, or
+      null. Only logical slots have an associated database.</entry>
+     </row>
+
+     <row>
+      <entry><structfield>active</structfield></entry>
+      <entry><type>boolean</type></entry>
+      <entry></entry>
+      <entry>True if this slot is currently actively being used</entry>
+     </row>
+
+     <row>
+      <entry><structfield>xmin</structfield></entry>
+      <entry><type>xid</type></entry>
+      <entry></entry>
+      <entry>The oldest transaction that this slot needs the database to
+      retain.  <literal>VACUUM</literal> cannot remove tuples deleted
+      by any later transaction.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>restart_lsn</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>The address (<literal>LSN</literal>) of oldest WAL which still
+      might be required by the consumer of this slot and thus won't be
+      automatically removed during checkpoints.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
  </sect1>
 
 

@@ -847,6 +847,10 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces)
 		if (strcmp(de->d_name, BACKUP_LABEL_FILE) == 0)
 			continue;
 
+		/* Skip pg_replslot, not useful to copy */
+		if (strcmp(de->d_name, "pg_replslot") == 0)
+			continue;
+
 		/*
 		 * Check if the postmaster has signaled us to exit, and abort with an
 		 * error in that case. The error handler further up will call

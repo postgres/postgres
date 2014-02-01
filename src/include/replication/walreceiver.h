@@ -103,6 +103,12 @@ typedef struct
 	 */
 	char		conninfo[MAXCONNINFO];
 
+	/*
+	 * replication slot name; is also used for walreceiver to connect with
+	 * the primary
+	 */
+	char		slotname[NAMEDATALEN];
+
 	slock_t		mutex;			/* locks shared variables shown above */
 
 	/*
@@ -125,7 +131,7 @@ extern PGDLLIMPORT walrcv_identify_system_type walrcv_identify_system;
 typedef void (*walrcv_readtimelinehistoryfile_type) (TimeLineID tli, char **filename, char **content, int *size);
 extern PGDLLIMPORT walrcv_readtimelinehistoryfile_type walrcv_readtimelinehistoryfile;
 
-typedef bool (*walrcv_startstreaming_type) (TimeLineID tli, XLogRecPtr startpoint);
+typedef bool (*walrcv_startstreaming_type) (TimeLineID tli, XLogRecPtr startpoint, char *slotname);
 extern PGDLLIMPORT walrcv_startstreaming_type walrcv_startstreaming;
 
 typedef void (*walrcv_endstreaming_type) (TimeLineID *next_tli);
@@ -149,7 +155,8 @@ extern void WalRcvShmemInit(void);
 extern void ShutdownWalRcv(void);
 extern bool WalRcvStreaming(void);
 extern bool WalRcvRunning(void);
-extern void RequestXLogStreaming(TimeLineID tli, XLogRecPtr recptr, const char *conninfo);
+extern void RequestXLogStreaming(TimeLineID tli, XLogRecPtr recptr,
+					 const char *conninfo, const char *slotname);
 extern XLogRecPtr GetWalRcvWriteRecPtr(XLogRecPtr *latestChunkStart, TimeLineID *receiveTLI);
 extern int	GetReplicationApplyDelay(void);
 extern int	GetReplicationTransferLatency(void);

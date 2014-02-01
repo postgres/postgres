@@ -16290,6 +16290,76 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
    </para>
   </sect2>
 
+  <sect2 id="functions-replication">
+   <title>Replication Functions</title>
+
+   <para>
+    PostgreSQL exposes a number of functions for controlling and interacting
+    with replication features. See <xref linkend="streaming-replication">
+    and <xref linkend="streaming-replication-slots">.
+   </para>
+
+   <para>
+    Many of these functions have equivalent commands in the replication
+    protocol; see <xref linkend="protocol-replication">.
+   </para>
+
+   <para>
+    The sections <xref linkend="functions-snapshot-synchronization">, <xref
+    linkend="functions-recovery-control"> and <xref
+    linkend="functions-admin-backup"> are also relevant for replication.
+   </para>
+
+   <table id="functions-replication-table">
+    <title>Replication <acronym>SQL</acronym> Functions</title>
+    <tgroup cols="3">
+     <thead>
+      <row>
+       <entry>Function</entry>
+       <entry>Return Type</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>
+        <indexterm>
+         <primary>pg_create_physical_replication_slot</primary>
+        </indexterm>
+        <literal><function>pg_create_physical_replication_slot(<parameter>slotname</parameter> <type>text</type>, <parameter>plugin</parameter> <type>text</type>)</function></literal>
+       </entry>
+       <entry>
+        (<parameter>slotname</parameter> <type>text</type>, <parameter>xlog_position</parameter> <type>text</type>)
+       </entry>
+       <entry>
+        Creates a new physical replication slot named
+        <parameter>slotname</parameter>. Streaming changes from a physical slot
+        is only possible with the walsender protocol - see <xref
+        linkend="protocol-replication">. Corresponds to the walsender protocol
+        command <literal>CREATE_REPLICATION_SLOT ... PHYSICAL</literal>.
+       </entry>
+      </row>
+      <row>
+       <entry>
+        <indexterm>
+         <primary>pg_drop_replication_slot</primary>
+        </indexterm>
+        <literal><function>pg_drop_replication_slot(<parameter>slotname</parameter> <type>text</type>)</function></literal>
+       </entry>
+       <entry>
+        (<parameter>slotname</parameter> <type>text</type>)
+       </entry>
+       <entry>
+        Drops the physical or logical replication slot
+        named <parameter>slotname</parameter>. Same as walsender protocol
+        command <literal>DROP_REPLICATION_SLOT</>.
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+  </sect2>
+
   <sect2 id="functions-admin-dbobject">
    <title>Database Object Management Functions</title>
 
