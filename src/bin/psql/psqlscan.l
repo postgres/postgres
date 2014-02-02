@@ -1296,6 +1296,8 @@ psql_scan(PsqlScanState state,
 			{
 				/* This switch must cover all non-slash-command states. */
 				case INITIAL:
+				case xuiend:	/* we treat these like INITIAL */
+				case xusend:
 					if (state->paren_depth > 0)
 					{
 						result = PSCAN_INCOMPLETE;
