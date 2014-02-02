@@ -25,14 +25,6 @@
 /* Result of the parsing is returned here */
 Node *replication_parse_result;
 
-/* Location tracking support --- simpler than bison's default */
-#define YYLLOC_DEFAULT(Current, Rhs, N) \
-	do { \
-		if (N) \
-			(Current) = (Rhs)[1]; \
-		else \
-			(Current) = (Rhs)[0]; \
-	} while (0)
 
 /*
  * Bison doesn't allocate anything that needs to live across parser calls,
@@ -44,9 +36,6 @@ Node *replication_parse_result;
  */
 #define YYMALLOC palloc
 #define YYFREE   pfree
-
-#define parser_yyerror(msg)  replication_yyerror(msg, yyscanner)
-#define parser_errposition(pos)  replication_scanner_errposition(pos)
 
 %}
 
@@ -91,6 +80,7 @@ Node *replication_parse_result;
 %type <defelt>	base_backup_opt
 %type <uintval>	opt_timeline
 %type <str>		opt_slot
+
 %%
 
 firstcmd: command opt_semicolon
@@ -134,34 +124,38 @@ base_backup:
 				}
 			;
 
-base_backup_opt_list: base_backup_opt_list base_backup_opt { $$ = lappend($1, $2); }
-			| /* EMPTY */			{ $$ = NIL; }
+base_backup_opt_list:
+			base_backup_opt_list base_backup_opt
+				{ $$ = lappend($1, $2); }
+			| /* EMPTY */
+				{ $$ = NIL; }
+			;
 
 base_backup_opt:
 			K_LABEL SCONST
 				{
 				  $$ = makeDefElem("label",
-						   (Node *)makeString($2));
+								   (Node *)makeString($2));
 				}
 			| K_PROGRESS
 				{
 				  $$ = makeDefElem("progress",
-						   (Node *)makeInteger(TRUE));
+								   (Node *)makeInteger(TRUE));
 				}
 			| K_FAST
 				{
 				  $$ = makeDefElem("fast",
-						   (Node *)makeInteger(TRUE));
+								   (Node *)makeInteger(TRUE));
 				}
 			| K_WAL
 				{
 				  $$ = makeDefElem("wal",
-						   (Node *)makeInteger(TRUE));
+								   (Node *)makeInteger(TRUE));
 				}
 			| K_NOWAIT
 				{
 				  $$ = makeDefElem("nowait",
-						   (Node *)makeInteger(TRUE));
+								   (Node *)makeInteger(TRUE));
 				}
 			;
 
@@ -214,7 +208,8 @@ opt_timeline:
 								 (errmsg("invalid timeline %u", $2))));
 					$$ = $2;
 				}
-				| /* nothing */			{ $$ = 0; }
+			| /* EMPTY */
+				{ $$ = 0; }
 			;
 
 /*
@@ -237,14 +232,18 @@ timeline_history:
 				}
 			;
 
-opt_physical :	K_PHYSICAL | /* EMPTY */;
+opt_physical:
+			K_PHYSICAL
+			| /* EMPTY */
+			;
 
+opt_slot:
+			K_SLOT IDENT
+				{ $$ = $2; }
+			| /* EMPTY */
+				{ $$ = NULL; }
+			;
 
-opt_slot :	K_SLOT IDENT
-				{
-					$$ = $2;
-				}
-				| /* nothing */			{ $$ = NULL; }
 %%
 
 #include "repl_scanner.c"
