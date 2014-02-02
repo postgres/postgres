@@ -7659,6 +7659,12 @@ SELECT TIMESTAMP 'now';  -- incorrect for use with DEFAULT
     <primary>pg_sleep</primary>
    </indexterm>
    <indexterm>
+    <primary>pg_sleep_for</primary>
+   </indexterm>
+   <indexterm>
+    <primary>pg_sleep_until</primary>
+   </indexterm>
+   <indexterm>
     <primary>sleep</primary>
    </indexterm>
    <indexterm>
