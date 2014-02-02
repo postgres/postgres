@@ -535,7 +535,7 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 		 * possibly re-request, and remove older WAL safely.
 		 *
 		 * We only report it when a slot has explicitly been used, because
-		 * reporting the flush position makes one elegible as a synchronous
+		 * reporting the flush position makes one eligible as a synchronous
 		 * replica. People shouldn't include generic names in
 		 * synchronous_standby_names, but we've protected them against it so
 		 * far, so let's continue to do so in the situations when possible.

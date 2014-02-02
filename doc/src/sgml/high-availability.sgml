@@ -756,7 +756,7 @@ archive_cleanup_command = 'pg_archivecleanup /path/to/archive %r'
     has received them.  If this occurs, the standby will need to be
     reinitialized from a new base backup.  You can avoid this by setting
     <varname>wal_keep_segments</> to a value large enough to ensure that
-    WAL segments are not recycled too early, or by configuration a replication
+    WAL segments are not recycled too early, or by configuring a replication
     slot for the standby.  If you set up a WAL archive that's accessible from
     the standby, these solutions are not required, since the standby can
     always use the archive to catch up provided it retains enough segments.

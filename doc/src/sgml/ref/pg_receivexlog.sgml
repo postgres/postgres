@@ -235,7 +235,7 @@ PostgreSQL documentation
          When this option is used, <application>pg_receivexlog</> will report
          a flush position to the server, indicating when each segment has been
          synchronized to disk so that the server can remove that segment if it
-         is not otherwise needed.  When using this paramter, it is important
+         is not otherwise needed.  When using this parameter, it is important
          to make sure that <application>pg_receivexlog</> cannot become the
          synchronous standby through an incautious setting of
          <xref linkend="guc-synchronous-standby-names">; it does not flush

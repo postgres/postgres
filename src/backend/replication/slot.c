@@ -15,7 +15,7 @@
  * Replication slots are used to keep state about replication streams
  * originating from this cluster.  Their primary purpose is to prevent the
  * premature removal of WAL or of old tuple versions in a manner that would
- * interfere with replication; they also useful for monitoring purposes.
+ * interfere with replication; they are also useful for monitoring purposes.
  * Slots need to be permanent (to allow restarts), crash-safe, and allocatable
  * on standbys (to support cascading setups).  The requirement that slots be
  * usable on standbys precludes storing them in the system catalogs.
@@ -142,7 +142,7 @@ ReplicationSlotsShmemInit(void)
  * Check whether the passed slot name is valid and report errors at elevel.
  *
  * Slot names may consist out of [a-z0-9_]{1,NAMEDATALEN-1} which should allow
- * the name to be uses as a directory name on every supported OS.
+ * the name to be used as a directory name on every supported OS.
  *
  * Returns whether the directory name is valid or not if elevel < ERROR.
  */
@@ -290,7 +290,7 @@ ReplicationSlotCreate(const char *name, bool db_specific)
 }
 
 /*
- * Find an previously created slot and mark it as used by this backend.
+ * Find a previously created slot and mark it as used by this backend.
  */
 void
 ReplicationSlotAcquire(const char *name)
@@ -743,7 +743,7 @@ CreateSlotOnDisk(ReplicationSlot *slot)
 
 	/*
 	 * No need to take out the io_in_progress_lock, nobody else can see this
-	 * slot yet, so nobody else wil write. We're reusing SaveSlotToPath which
+	 * slot yet, so nobody else will write. We're reusing SaveSlotToPath which
 	 * takes out the lock, if we'd take the lock here, we'd deadlock.
 	 */
 
@@ -780,7 +780,7 @@ CreateSlotOnDisk(ReplicationSlot *slot)
 						tmppath, path)));
 
 	/*
-	 * If we'd now fail - really unlikely - we wouldn't know wether this slot
+	 * If we'd now fail - really unlikely - we wouldn't know whether this slot
 	 * would persist after an OS crash or not - so, force a restart. The
 	 * restart would try to fysnc this again till it works.
 	 */

@@ -957,7 +957,7 @@ PhysicalConfirmReceivedLocation(XLogRecPtr lsn)
 	}
 
 	/*
-	 * One could argue that the slot should saved to disk now, but that'd be
+	 * One could argue that the slot should be saved to disk now, but that'd be
 	 * energy wasted - the worst lost information can do here is give us wrong
 	 * information in a statistics view - we'll just potentially be more
 	 * conservative in removing files.
@@ -1032,7 +1032,7 @@ PhysicalReplicationSlotNewXmin(TransactionId feedbackXmin)
 	SpinLockAcquire(&slot->mutex);
 	MyPgXact->xmin = InvalidTransactionId;
 	/*
-	 * For physical replication we don't need the the interlock provided
+	 * For physical replication we don't need the interlock provided
 	 * by xmin and effective_xmin since the consequences of a missed increase
 	 * are limited to query cancellations, so set both at once.
 	 */
