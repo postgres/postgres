@@ -121,7 +121,7 @@ install: all installdirs install-lib
 	$(INSTALL_DATA) $(srcdir)/libpq-int.h '$(DESTDIR)$(includedir_internal)'
 	$(INSTALL_DATA) $(srcdir)/pqexpbuffer.h '$(DESTDIR)$(includedir_internal)'
 	$(INSTALL_DATA) $(srcdir)/pg_service.conf.sample '$(DESTDIR)$(datadir)/pg_service.conf.sample'
-ifneq (,$findstring($(PORTNAME), win32 cygwin))
+ifneq (,$(findstring $(PORTNAME), win32 cygwin))
 	$(INSTALL_DATA) $(shlib) '$(DESTDIR)$(bindir)/$(shlib)'
 endif
 
@@ -130,7 +130,7 @@ installcheck:
 
 installdirs: installdirs-lib
 	$(MKDIR_P) '$(DESTDIR)$(includedir)' '$(DESTDIR)$(includedir_internal)' '$(DESTDIR)$(datadir)'
-ifneq (,$findstring($(PORTNAME), win32 cygwin))
+ifneq (,$(findstring $(PORTNAME), win32 cygwin))
 	$(MKDIR_P) '$(DESTDIR)$(bindir)'
 endif
 
@@ -140,7 +140,7 @@ uninstall: uninstall-lib
 	rm -f '$(DESTDIR)$(includedir_internal)/libpq-int.h'
 	rm -f '$(DESTDIR)$(includedir_internal)/pqexpbuffer.h'
 	rm -f '$(DESTDIR)$(datadir)/pg_service.conf.sample'
-ifneq (,$findstring($(PORTNAME), win32 cygwin))
+ifneq (,$(findstring $(PORTNAME), win32 cygwin))
 	rm -f '$(DESTDIR)$(bindir)/$(shlib)'
 endif
 
