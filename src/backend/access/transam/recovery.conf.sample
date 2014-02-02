@@ -120,6 +120,12 @@
 #
 #primary_conninfo = ''		# e.g. 'host=localhost port=5432'
 #
+# If set, the PostgreSQL server will use the specified replication slot when
+# connecting to the primary via streaming replication to control resource
+# removal on the upstream node. This setting has no effect if primary_conninfo
+# is not set.
+#
+#primary_slotname = ''
 #
 # By default, a standby server keeps restoring XLOG records from the
 # primary indefinitely. If you want to stop the standby mode, finish recovery
