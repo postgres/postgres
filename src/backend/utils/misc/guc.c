@@ -3174,7 +3174,7 @@ static struct config_string ConfigureNamesString[] =
 			GUC_SUPERUSER_ONLY
 		},
 		&pgstat_temp_directory,
-		"pg_stat_tmp",
+		PG_STAT_TMP_DIR,
 		check_canonical_path, assign_pgstat_temp_directory, NULL
 	},
 

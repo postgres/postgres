@@ -68,6 +68,7 @@
 #include "parser/analyze.h"
 #include "parser/parsetree.h"
 #include "parser/scanner.h"
+#include "pgstat.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/spin.h"
@@ -89,7 +90,7 @@ PG_MODULE_MAGIC;
  * race conditions.  Besides, we only expect modest, infrequent I/O for query
  * strings, so placing the file on a faster filesystem is not compelling.
  */
-#define PGSS_TEXT_FILE	"pg_stat_tmp/pgss_query_texts.stat"
+#define PGSS_TEXT_FILE	PG_STAT_TMP_DIR "/pgss_query_texts.stat"
 
 /* Magic number identifying the stats file format */
 static const uint32 PGSS_FILE_HEADER = 0x20140125;

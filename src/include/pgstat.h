@@ -20,6 +20,9 @@
 #include "utils/relcache.h"
 
 
+/* Default directory to store temporary statistics data in */
+#define PG_STAT_TMP_DIR		"pg_stat_tmp"
+
 /* Values for track_functions GUC variable --- order is significant! */
 typedef enum TrackFunctionsLevel
 {
