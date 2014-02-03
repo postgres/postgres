@@ -3034,9 +3034,9 @@ DATA(insert OID = 2625 ( pg_ls_dir			PGNSP PGUID 12 1 1000 0 0 f f f f t t v 1 0
 DESCR("list all files in a directory");
 DATA(insert OID = 2626 ( pg_sleep			PGNSP PGUID 12 1 0 0 0 f f f f t f v 1 0 2278 "701" _null_ _null_ _null_ _null_ pg_sleep _null_ _null_ _null_ ));
 DESCR("sleep for the specified time in seconds");
-DATA(insert OID = 3935 ( pg_sleep_for			PGNSP PGUID 14 1 0 0 0 f f f f t f v 1 0 2278 "1186" _null_ _null_ _null_ _null_ "select pg_catalog.pg_sleep(extract(epoch from pg_catalog.now() operator(pg_catalog.+) $1) operator(pg_catalog.-) extract(epoch from pg_catalog.now()))" _null_ _null_ _null_ ));
+DATA(insert OID = 3935 ( pg_sleep_for			PGNSP PGUID 14 1 0 0 0 f f f f t f v 1 0 2278 "1186" _null_ _null_ _null_ _null_ "select pg_catalog.pg_sleep(extract(epoch from pg_catalog.clock_timestamp() operator(pg_catalog.+) $1) operator(pg_catalog.-) extract(epoch from pg_catalog.clock_timestamp()))" _null_ _null_ _null_ ));
 DESCR("sleep for the specified interval");
-DATA(insert OID = 3936 ( pg_sleep_until			PGNSP PGUID 14 1 0 0 0 f f f f t f v 1 0 2278 "1184" _null_ _null_ _null_ _null_ "select pg_catalog.pg_sleep(extract(epoch from $1) operator(pg_catalog.-) extract(epoch from pg_catalog.now()))" _null_ _null_ _null_ ));
+DATA(insert OID = 3936 ( pg_sleep_until			PGNSP PGUID 14 1 0 0 0 f f f f t f v 1 0 2278 "1184" _null_ _null_ _null_ _null_ "select pg_catalog.pg_sleep(extract(epoch from $1) operator(pg_catalog.-) extract(epoch from pg_catalog.clock_timestamp()))" _null_ _null_ _null_ ));
 DESCR("sleep until the specified time");
 
 DATA(insert OID = 2971 (  text				PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 25 "16" _null_ _null_ _null_ _null_ booltext _null_ _null_ _null_ ));
