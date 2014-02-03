@@ -186,6 +186,34 @@ select * from price;
 rollback;
 
 --
+-- Test case derived from bug #9085: check * qualification of composite
+-- parameters for SQL functions
+--
+
+create temp table compos (f1 int, f2 text);
+
+create function fcompos1(v compos) returns void as $$
+insert into compos values (v);  -- fail
+$$ language sql;
+
+create function fcompos1(v compos) returns void as $$
+insert into compos values (v.*);
+$$ language sql;
+
+create function fcompos2(v compos) returns void as $$
+select fcompos1(v);
+$$ language sql;
+
+create function fcompos3(v compos) returns void as $$
+select fcompos1(fcompos3.v.*);
+$$ language sql;
+
+select fcompos1(row(1,'one'));
+select fcompos2(row(2,'two'));
+select fcompos3(row(3,'three'));
+select * from compos;
+
+--
 -- We allow I/O conversion casts from composite types to strings to be
 -- invoked via cast syntax, but not functional syntax.  This is because
 -- the latter is too prone to be invoked unintentionally.
