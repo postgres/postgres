@@ -125,7 +125,9 @@ gmake installcheck-parallel
 </screen>
    The tests will expect to contact the server at the local host and the
    default port number, unless directed otherwise by <envar>PGHOST</envar> and
-   <envar>PGPORT</envar> environment variables.
+   <envar>PGPORT</envar> environment variables.  The tests will be run in a
+   database named <literal>regression</>; any existing database by this name
+   will be dropped.
   </para>
 
   <para>
@@ -147,7 +149,9 @@ gmake installcheck
 </screen>
    The <filename>contrib</> modules must have been built and installed first.
    You can also do this in a subdirectory of <filename>contrib</> to run
-   the tests for just one module.
+   the tests for just one module.  Tests of <literal>contrib</> modules will
+   be run in a database named <literal>contrib_regression</>; any existing
+   database by this name will be dropped.
   </para>
   </sect2>
 
@@ -469,6 +473,18 @@ diff results/random.out expected/random.out
 </programlisting>
      should produce only one or a few lines of differences.  You need
      not worry unless the random test fails repeatedly.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Configuration Parameters</title>
+
+    <para>
+     When running the tests against an existing installation, some non-default
+     parameter settings could cause the tests to fail.  For example, the
+     settings described in <xref linkend="runtime-config-query-enable">
+     could cause plan changes that would affect the results of tests which
+     use <command>EXPLAIN</>.
     </para>
    </sect2>
   </sect1>
