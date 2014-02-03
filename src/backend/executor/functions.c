@@ -310,12 +310,20 @@ sql_fn_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var)
 	 *			(the first possibility takes precedence)
 	 * A.B.C	A = function name, B = record-typed parameter name,
 	 *			C = field name
+	 * A.*		Whole-row reference to composite parameter A.
+	 * A.B.*	Same, with A = function name, B = parameter name
+	 *
+	 * Here, it's sufficient to ignore the "*" in the last two cases --- the
+	 * main parser will take care of expanding the whole-row reference.
 	 *----------
 	 */
 	nnames = list_length(cref->fields);
 
 	if (nnames > 3)
 		return NULL;
+
+	if (IsA(llast(cref->fields), A_Star))
+		nnames--;
 
 	field1 = (Node *) linitial(cref->fields);
 	Assert(IsA(field1, String));
