@@ -481,10 +481,10 @@ diff results/random.out expected/random.out
 
     <para>
      When running the tests against an existing installation, some non-default
-     parameter settings could cause the tests to fail.  For example, the
-     settings described in <xref linkend="runtime-config-query-enable">
-     could cause plan changes that would affect the results of tests which
-     use <command>EXPLAIN</>.
+     parameter settings could cause the tests to fail.  For example, changing
+     parameters such as <varname>enable_seqscan</varname> or
+     <varname>enable_indexscan</varname> could cause plan changes that would
+     affect the results of tests which use <command>EXPLAIN</>.
     </para>
    </sect2>
   </sect1>
