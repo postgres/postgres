@@ -30,8 +30,8 @@ extern PGconn *GetConnection(ForeignServer *server, UserMapping *user,
 extern void ReleaseConnection(PGconn *conn);
 extern unsigned int GetCursorNumber(PGconn *conn);
 extern unsigned int GetPrepStmtNumber(PGconn *conn);
-extern void pgfdw_report_error(int elevel, PGresult *res, bool clear,
-				   const char *sql);
+extern void pgfdw_report_error(int elevel, PGresult *res, PGconn *conn,
+				   bool clear, const char *sql);
 
 /* in option.c */
 extern int ExtractConnectionOptions(List *defelems,
