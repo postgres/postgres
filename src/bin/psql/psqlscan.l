@@ -166,7 +166,8 @@ static void escape_variable(bool as_ident);
  *  <xe> extended quoted strings (support backslash escape sequences)
  *  <xdolq> $foo$ quoted strings
  *  <xui> quoted identifier with Unicode escapes
- *  <xuiend> end of a quoted identifier with Unicode escapes, UESCAPE can follow *  <xus> quoted string with Unicode escapes
+ *  <xuiend> end of a quoted identifier with Unicode escapes, UESCAPE can follow
+ *  <xus> quoted string with Unicode escapes
  *  <xusend> end of a quoted string with Unicode escapes, UESCAPE can follow
  *
  * Note: we intentionally don't mimic the backend's <xeu> state; we have
