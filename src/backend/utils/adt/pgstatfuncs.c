@@ -1751,7 +1751,7 @@ pg_stat_get_archiver(PG_FUNCTION_ARGS)
 
 	/* Fill values and NULLs */
 	values[0] = Int64GetDatum(archiver_stats->archived_count);
-	if (archiver_stats->last_archived_wal == 0)
+	if (*(archiver_stats->last_archived_wal) == '\0')
 		nulls[1] = true;
 	else
 		values[1] = CStringGetTextDatum(archiver_stats->last_archived_wal);
@@ -1762,7 +1762,7 @@ pg_stat_get_archiver(PG_FUNCTION_ARGS)
 		values[2] = TimestampTzGetDatum(archiver_stats->last_archived_timestamp);
 
 	values[3] = Int64GetDatum(archiver_stats->failed_count);
-	if (archiver_stats->last_failed_wal == 0)
+	if (*(archiver_stats->last_failed_wal) == '\0')
 		nulls[4] = true;
 	else
 		values[4] = CStringGetTextDatum(archiver_stats->last_failed_wal);
