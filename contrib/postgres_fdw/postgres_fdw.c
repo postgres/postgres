@@ -1040,7 +1040,7 @@ postgresReScanForeignScan(ForeignScanState *node)
 	 */
 	res = PQexec(fsstate->conn, sql);
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
-		pgfdw_report_error(ERROR, res, true, sql);
+		pgfdw_report_error(ERROR, res, fsstate->conn, true, sql);
 	PQclear(res);
 
 	/* Now force a fresh FETCH. */
@@ -1374,7 +1374,7 @@ postgresExecForeignInsert(EState *estate,
 						 0);
 	if (PQresultStatus(res) !=
 		(fmstate->has_returning ? PGRES_TUPLES_OK : PGRES_COMMAND_OK))
-		pgfdw_report_error(ERROR, res, true, fmstate->query);
+		pgfdw_report_error(ERROR, res, fmstate->conn, true, fmstate->query);
 
 	/* Check number of rows affected, and fetch RETURNING tuple if any */
 	if (fmstate->has_returning)
@@ -1444,7 +1444,7 @@ postgresExecForeignUpdate(EState *estate,
 						 0);
 	if (PQresultStatus(res) !=
 		(fmstate->has_returning ? PGRES_TUPLES_OK : PGRES_COMMAND_OK))
-		pgfdw_report_error(ERROR, res, true, fmstate->query);
+		pgfdw_report_error(ERROR, res, fmstate->conn, true, fmstate->query);
 
 	/* Check number of rows affected, and fetch RETURNING tuple if any */
 	if (fmstate->has_returning)
@@ -1514,7 +1514,7 @@ postgresExecForeignDelete(EState *estate,
 						 0);
 	if (PQresultStatus(res) !=
 		(fmstate->has_returning ? PGRES_TUPLES_OK : PGRES_COMMAND_OK))
-		pgfdw_report_error(ERROR, res, true, fmstate->query);
+		pgfdw_report_error(ERROR, res, fmstate->conn, true, fmstate->query);
 
 	/* Check number of rows affected, and fetch RETURNING tuple if any */
 	if (fmstate->has_returning)
@@ -1563,7 +1563,7 @@ postgresEndForeignModify(EState *estate,
 		 */
 		res = PQexec(fmstate->conn, sql);
 		if (PQresultStatus(res) != PGRES_COMMAND_OK)
-			pgfdw_report_error(ERROR, res, true, sql);
+			pgfdw_report_error(ERROR, res, fmstate->conn, true, sql);
 		PQclear(res);
 		fmstate->p_name = NULL;
 	}
@@ -1800,7 +1800,7 @@ get_remote_estimate(const char *sql, PGconn *conn,
 		 */
 		res = PQexec(conn, sql);
 		if (PQresultStatus(res) != PGRES_TUPLES_OK)
-			pgfdw_report_error(ERROR, res, false, sql);
+			pgfdw_report_error(ERROR, res, conn, false, sql);
 
 		/*
 		 * Extract cost numbers for topmost plan node.	Note we search for a
@@ -1934,7 +1934,7 @@ create_cursor(ForeignScanState *node)
 	res = PQexecParams(conn, buf.data, numParams, NULL, values,
 					   NULL, NULL, 0);
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
-		pgfdw_report_error(ERROR, res, true, fsstate->query);
+		pgfdw_report_error(ERROR, res, conn, true, fsstate->query);
 	PQclear(res);
 
 	/* Mark the cursor as created, and show no tuples have been retrieved */
@@ -1985,7 +1985,7 @@ fetch_more_data(ForeignScanState *node)
 		res = PQexec(conn, sql);
 		/* On error, report the original query, not the FETCH. */
 		if (PQresultStatus(res) != PGRES_TUPLES_OK)
-			pgfdw_report_error(ERROR, res, false, fsstate->query);
+			pgfdw_report_error(ERROR, res, conn, false, fsstate->query);
 
 		/* Convert the data into HeapTuples */
 		numrows = PQntuples(res);
@@ -2091,7 +2091,7 @@ close_cursor(PGconn *conn, unsigned int cursor_number)
 	 */
 	res = PQexec(conn, sql);
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
-		pgfdw_report_error(ERROR, res, true, sql);
+		pgfdw_report_error(ERROR, res, conn, true, sql);
 	PQclear(res);
 }
 
@@ -2128,7 +2128,7 @@ prepare_foreign_modify(PgFdwModifyState *fmstate)
 					NULL);
 
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
-		pgfdw_report_error(ERROR, res, true, fmstate->query);
+		pgfdw_report_error(ERROR, res, fmstate->conn, true, fmstate->query);
 	PQclear(res);
 
 	/* This action shows that the prepare has been done. */
@@ -2278,7 +2278,7 @@ postgresAnalyzeForeignTable(Relation relation,
 	{
 		res = PQexec(conn, sql.data);
 		if (PQresultStatus(res) != PGRES_TUPLES_OK)
-			pgfdw_report_error(ERROR, res, false, sql.data);
+			pgfdw_report_error(ERROR, res, conn, false, sql.data);
 
 		if (PQntuples(res) != 1 || PQnfields(res) != 1)
 			elog(ERROR, "unexpected result from deparseAnalyzeSizeSql query");
@@ -2372,7 +2372,7 @@ postgresAcquireSampleRowsFunc(Relation relation, int elevel,
 	{
 		res = PQexec(conn, sql.data);
 		if (PQresultStatus(res) != PGRES_COMMAND_OK)
-			pgfdw_report_error(ERROR, res, false, sql.data);
+			pgfdw_report_error(ERROR, res, conn, false, sql.data);
 		PQclear(res);
 		res = NULL;
 
@@ -2403,7 +2403,7 @@ postgresAcquireSampleRowsFunc(Relation relation, int elevel,
 			res = PQexec(conn, fetch_sql);
 			/* On error, report the original query, not the FETCH. */
 			if (PQresultStatus(res) != PGRES_TUPLES_OK)
-				pgfdw_report_error(ERROR, res, false, sql.data);
+				pgfdw_report_error(ERROR, res, conn, false, sql.data);
 
 			/* Process whatever we got. */
 			numrows = PQntuples(res);

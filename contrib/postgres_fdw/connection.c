@@ -355,7 +355,7 @@ do_sql_command(PGconn *conn, const char *sql)
 
 	res = PQexec(conn, sql);
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
-		pgfdw_report_error(ERROR, res, true, sql);
+		pgfdw_report_error(ERROR, res, conn, true, sql);
 	PQclear(res);
 }
 
@@ -454,6 +454,7 @@ GetPrepStmtNumber(PGconn *conn)
  *
  * elevel: error level to use (typically ERROR, but might be less)
  * res: PGresult containing the error
+ * conn: connection we did the query on
  * clear: if true, PQclear the result (otherwise caller will handle it)
  * sql: NULL, or text of remote command we tried to execute
  *
@@ -462,7 +463,8 @@ GetPrepStmtNumber(PGconn *conn)
  * marked with have_error = true.
  */
 void
-pgfdw_report_error(int elevel, PGresult *res, bool clear, const char *sql)
+pgfdw_report_error(int elevel, PGresult *res, PGconn *conn,
+				   bool clear, const char *sql)
 {
 	/* If requested, PGresult must be released before leaving this function. */
 	PG_TRY();
@@ -482,6 +484,14 @@ pgfdw_report_error(int elevel, PGresult *res, bool clear, const char *sql)
 									 diag_sqlstate[4]);
 		else
 			sqlstate = ERRCODE_CONNECTION_FAILURE;
+
+		/*
+		 * If we don't get a message from the PGresult, try the PGconn.  This
+		 * is needed because for connection-level failures, PQexec may just
+		 * return NULL, not a PGresult at all.
+		 */
+		if (message_primary == NULL)
+			message_primary = PQerrorMessage(conn);
 
 		ereport(elevel,
 				(errcode(sqlstate),
@@ -525,74 +535,37 @@ pgfdw_xact_callback(XactEvent event, void *arg)
 	{
 		PGresult   *res;
 
-		/* We only care about connections with open remote transactions */
-		if (entry->conn == NULL || entry->xact_depth == 0)
+		/* Ignore cache entry if no open connection right now */
+		if (entry->conn == NULL)
 			continue;
 
-		elog(DEBUG3, "closing remote transaction on connection %p",
-			 entry->conn);
-
-		switch (event)
+		/* If it has an open remote transaction, try to close it */
+		if (entry->xact_depth > 0)
 		{
-			case XACT_EVENT_PRE_COMMIT:
-				/* Commit all remote transactions during pre-commit */
-				do_sql_command(entry->conn, "COMMIT TRANSACTION");
+			elog(DEBUG3, "closing remote transaction on connection %p",
+				 entry->conn);
 
-				/*
-				 * If there were any errors in subtransactions, and we made
-				 * prepared statements, do a DEALLOCATE ALL to make sure we
-				 * get rid of all prepared statements.	This is annoying and
-				 * not terribly bulletproof, but it's probably not worth
-				 * trying harder.
-				 *
-				 * DEALLOCATE ALL only exists in 8.3 and later, so this
-				 * constrains how old a server postgres_fdw can communicate
-				 * with.  We intentionally ignore errors in the DEALLOCATE, so
-				 * that we can hobble along to some extent with older servers
-				 * (leaking prepared statements as we go; but we don't really
-				 * support update operations pre-8.3 anyway).
-				 */
-				if (entry->have_prep_stmt && entry->have_error)
-				{
-					res = PQexec(entry->conn, "DEALLOCATE ALL");
-					PQclear(res);
-				}
-				entry->have_prep_stmt = false;
-				entry->have_error = false;
-				break;
-			case XACT_EVENT_PRE_PREPARE:
+			switch (event)
+			{
+				case XACT_EVENT_PRE_COMMIT:
+					/* Commit all remote transactions during pre-commit */
+					do_sql_command(entry->conn, "COMMIT TRANSACTION");
 
-				/*
-				 * We disallow remote transactions that modified anything,
-				 * since it's not really reasonable to hold them open until
-				 * the prepared transaction is committed.  For the moment,
-				 * throw error unconditionally; later we might allow read-only
-				 * cases.  Note that the error will cause us to come right
-				 * back here with event == XACT_EVENT_ABORT, so we'll clean up
-				 * the connection state at that point.
-				 */
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot prepare a transaction that modified remote tables")));
-				break;
-			case XACT_EVENT_COMMIT:
-			case XACT_EVENT_PREPARE:
-				/* Should not get here -- pre-commit should have handled it */
-				elog(ERROR, "missed cleaning up connection during pre-commit");
-				break;
-			case XACT_EVENT_ABORT:
-				/* Assume we might have lost track of prepared statements */
-				entry->have_error = true;
-				/* If we're aborting, abort all remote transactions too */
-				res = PQexec(entry->conn, "ABORT TRANSACTION");
-				/* Note: can't throw ERROR, it would be infinite loop */
-				if (PQresultStatus(res) != PGRES_COMMAND_OK)
-					pgfdw_report_error(WARNING, res, true,
-									   "ABORT TRANSACTION");
-				else
-				{
-					PQclear(res);
-					/* As above, make sure we've cleared any prepared stmts */
+					/*
+					 * If there were any errors in subtransactions, and we
+					 * made prepared statements, do a DEALLOCATE ALL to make
+					 * sure we get rid of all prepared statements. This is
+					 * annoying and not terribly bulletproof, but it's
+					 * probably not worth trying harder.
+					 *
+					 * DEALLOCATE ALL only exists in 8.3 and later, so this
+					 * constrains how old a server postgres_fdw can
+					 * communicate with.  We intentionally ignore errors in
+					 * the DEALLOCATE, so that we can hobble along to some
+					 * extent with older servers (leaking prepared statements
+					 * as we go; but we don't really support update operations
+					 * pre-8.3 anyway).
+					 */
 					if (entry->have_prep_stmt && entry->have_error)
 					{
 						res = PQexec(entry->conn, "DEALLOCATE ALL");
@@ -600,8 +573,50 @@ pgfdw_xact_callback(XactEvent event, void *arg)
 					}
 					entry->have_prep_stmt = false;
 					entry->have_error = false;
-				}
-				break;
+					break;
+				case XACT_EVENT_PRE_PREPARE:
+
+					/*
+					 * We disallow remote transactions that modified anything,
+					 * since it's not very reasonable to hold them open until
+					 * the prepared transaction is committed.  For the moment,
+					 * throw error unconditionally; later we might allow
+					 * read-only cases.  Note that the error will cause us to
+					 * come right back here with event == XACT_EVENT_ABORT, so
+					 * we'll clean up the connection state at that point.
+					 */
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("cannot prepare a transaction that modified remote tables")));
+					break;
+				case XACT_EVENT_COMMIT:
+				case XACT_EVENT_PREPARE:
+					/* Pre-commit should have closed the open transaction */
+					elog(ERROR, "missed cleaning up connection during pre-commit");
+					break;
+				case XACT_EVENT_ABORT:
+					/* Assume we might have lost track of prepared statements */
+					entry->have_error = true;
+					/* If we're aborting, abort all remote transactions too */
+					res = PQexec(entry->conn, "ABORT TRANSACTION");
+					/* Note: can't throw ERROR, it would be infinite loop */
+					if (PQresultStatus(res) != PGRES_COMMAND_OK)
+						pgfdw_report_error(WARNING, res, entry->conn, true,
+										   "ABORT TRANSACTION");
+					else
+					{
+						PQclear(res);
+						/* As above, make sure to clear any prepared stmts */
+						if (entry->have_prep_stmt && entry->have_error)
+						{
+							res = PQexec(entry->conn, "DEALLOCATE ALL");
+							PQclear(res);
+						}
+						entry->have_prep_stmt = false;
+						entry->have_error = false;
+					}
+					break;
+			}
 		}
 
 		/* Reset state to show we're out of a transaction */
@@ -689,7 +704,7 @@ pgfdw_subxact_callback(SubXactEvent event, SubTransactionId mySubid,
 					 curlevel, curlevel);
 			res = PQexec(entry->conn, sql);
 			if (PQresultStatus(res) != PGRES_COMMAND_OK)
-				pgfdw_report_error(WARNING, res, true, sql);
+				pgfdw_report_error(WARNING, res, entry->conn, true, sql);
 			else
 				PQclear(res);
 		}
