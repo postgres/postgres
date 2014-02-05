@@ -21,7 +21,6 @@
 #include "miscadmin.h"
 #include "storage/lmgr.h"
 #include "storage/predicate.h"
-#include "utils/inval.h"
 #include "utils/tqual.h"
 
 
@@ -868,13 +867,9 @@ _bt_insertonpg(Relation rel,
 
 		END_CRIT_SECTION();
 
-		/* release buffers; send out relcache inval if metapage changed */
+		/* release buffers */
 		if (BufferIsValid(metabuf))
-		{
-			if (!InRecovery)
-				CacheInvalidateRelcache(rel);
 			_bt_relbuf(rel, metabuf);
-		}
 
 		_bt_relbuf(rel, buf);
 	}
@@ -1962,10 +1957,6 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	}
 
 	END_CRIT_SECTION();
-
-	/* send out relcache inval for metapage change */
-	if (!InRecovery)
-		CacheInvalidateRelcache(rel);
 
 	/* done with metapage */
 	_bt_relbuf(rel, metabuf);

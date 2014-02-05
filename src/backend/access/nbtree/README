@@ -438,14 +438,17 @@ location of the root page --- both the true root and the current effective
 root ("fast" root).  To avoid fetching the metapage for every single index
 search, we cache a copy of the meta-data information in the index's
 relcache entry (rd_amcache).  This is a bit ticklish since using the cache
-implies following a root page pointer that could be stale.  We require
-every metapage update to send out a SI "relcache inval" message on the
-index relation.  That ensures that each backend will flush its cached copy
-not later than the start of its next transaction.  Therefore, stale
-pointers cannot be used for longer than the current transaction, which
-reduces the problem to the same one already dealt with for concurrent
-VACUUM --- we can just imagine that each open transaction is potentially
-"already in flight" to the old root.
+implies following a root page pointer that could be stale.  However, a
+backend following a cached pointer can sufficiently verify whether it
+reached the intended page; either by checking the is-root flag when it
+is going to the true root, or by checking that the page has no siblings
+when going to the fast root.  At worst, this could result in descending
+some extra tree levels if we have a cached pointer to a fast root that is
+now above the real fast root.  Such cases shouldn't arise often enough to
+be worth optimizing; and in any case we can expect a relcache flush will
+discard the cached metapage before long, since a VACUUM that's moved the
+fast root pointer can be expected to issue a statistics update for the
+index.
 
 The algorithm assumes we can fit at least three items per page
 (a "high key" and two real data items).  Therefore it's unsafe

@@ -149,14 +149,6 @@ btbuild(PG_FUNCTION_ARGS)
 #endif   /* BTREE_BUILD_STATS */
 
 	/*
-	 * If we are reindexing a pre-existing index, it is critical to send out a
-	 * relcache invalidation SI message to ensure all backends re-read the
-	 * index metapage.	We expect that the caller will ensure that happens
-	 * (typically as a side effect of updating index stats, but it must happen
-	 * even if the stats don't change!)
-	 */
-
-	/*
 	 * Return statistics
 	 */
 	result = (IndexBuildResult *) palloc(sizeof(IndexBuildResult));

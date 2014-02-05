@@ -28,7 +28,6 @@
 #include "storage/indexfsm.h"
 #include "storage/lmgr.h"
 #include "storage/predicate.h"
-#include "utils/inval.h"
 #include "utils/snapmgr.h"
 
 
@@ -245,12 +244,6 @@ _bt_getroot(Relation rel, int access)
 		}
 
 		END_CRIT_SECTION();
-
-		/*
-		 * Send out relcache inval for metapage change (probably unnecessary
-		 * here, but let's be safe).
-		 */
-		CacheInvalidateRelcache(rel);
 
 		/*
 		 * swap root write lock for read lock.	There is no danger of anyone
@@ -1545,12 +1538,10 @@ _bt_pagedel(Relation rel, Buffer buf, BTStack stack)
 
 	END_CRIT_SECTION();
 
-	/* release metapage; send out relcache inval if metapage changed */
+	/* release metapage */
 	if (BufferIsValid(metabuf))
-	{
-		CacheInvalidateRelcache(rel);
 		_bt_relbuf(rel, metabuf);
-	}
+
 	/* can always release leftsib immediately */
 	if (BufferIsValid(lbuf))
 		_bt_relbuf(rel, lbuf);
