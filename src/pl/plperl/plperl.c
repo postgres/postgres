@@ -1786,7 +1786,7 @@ plperl_inline_handler(PG_FUNCTION_ARGS)
 	/* Set up a callback for error reporting */
 	pl_error_context.callback = plperl_inline_callback;
 	pl_error_context.previous = error_context_stack;
-	pl_error_context.arg = (Datum) 0;
+	pl_error_context.arg = NULL;
 	error_context_stack = &pl_error_context;
 
 	/*
