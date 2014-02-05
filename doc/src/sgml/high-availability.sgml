@@ -889,7 +889,8 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
    <para>
     In lieu of using replication slots, it is possible to prevent the removal
     of old WAL segments using <xref linkend="guc-wal-keep-segments">, or by
-    storing the segments in an archive using <xref linkend="restore-command">.
+    storing the segments in an archive using
+    <xref linkend="guc-archive-command">.
     However, these methods often result in retaining more WAL segments than
     required, whereas replication slots retain only the number of segments
     known to be needed.  An advantage of these methods is that they bound
@@ -897,8 +898,8 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
     to do this using replication slots.
    </para>
    <para>
-    Similarly, <varname>hot_standby_feedback</varname>
-    and <varname>vacuum_defer_cleanup_age</varname> provide protection against
+    Similarly, <xref linkend="guc-hot-standby-feedback">
+    and <xref linkend="guc-vacuum-defer-cleanup-age"> provide protection against
     relevant rows being removed by vacuum, but the former provides no
     protection during any time period when the standby is not connected,
     and the latter often needs to be set to a high value to provide adequate
