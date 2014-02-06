@@ -972,7 +972,7 @@ each_worker(PG_FUNCTION_ARGS, bool as_text)
 
 	pg_parse_json(lex, sem);
 
-	MemoryContextDelete(state->tmp_cxt); 
+	MemoryContextDelete(state->tmp_cxt);
 
 	rsi->setResult = state->tuple_store;
 	rsi->setDesc = state->ret_tdesc;
@@ -1156,7 +1156,7 @@ elements_worker(PG_FUNCTION_ARGS, bool as_text)
 
 	pg_parse_json(lex, sem);
 
-	MemoryContextDelete(state->tmp_cxt); 
+	MemoryContextDelete(state->tmp_cxt);
 
 	rsi->setResult = state->tuple_store;
 	rsi->setDesc = state->ret_tdesc;
