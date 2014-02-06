@@ -1578,6 +1578,9 @@ RelationIdGetRelation(Oid relationId)
 {
 	Relation	rd;
 
+	/* Make sure we're in an xact, even if this ends up being a cache hit */
+	Assert(IsTransactionState());
+
 	/*
 	 * first try to find reldesc in the cache
 	 */
