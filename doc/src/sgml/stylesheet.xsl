@@ -15,7 +15,6 @@
 <xsl:param name="generate.id.attributes" select="1"></xsl:param>
 <xsl:param name="generate.legalnotice.link" select="1"></xsl:param>
 <xsl:param name="link.mailto.url">pgsql-docs@postgresql.org</xsl:param>
-<xsl:param name="chunker.output.indent" select="'yes'"/>
 <xsl:param name="chunk.first.sections" select="1"/>
 <xsl:param name="chunk.quietly" select="1"></xsl:param>
 <xsl:param name="toc.max.depth">2</xsl:param>
