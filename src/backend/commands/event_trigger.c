@@ -491,7 +491,7 @@ AlterEventTriggerOwner(const char *name, Oid newOwnerId)
 }
 
 /*
- * Change extension owner, by OID
+ * Change event trigger owner, by OID
  */
 void
 AlterEventTriggerOwner_oid(Oid trigOid, Oid newOwnerId)

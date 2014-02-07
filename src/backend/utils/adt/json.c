@@ -400,7 +400,7 @@ parse_object(JsonLexContext *lex, JsonSemAction *sem)
 {
 	/*
 	 * an object is a possibly empty sequence of object fields, separated by
-	 * commas and surrounde by curly braces.
+	 * commas and surrounded by curly braces.
 	 */
 	json_struct_action ostart = sem->object_start;
 	json_struct_action oend = sem->object_end;
