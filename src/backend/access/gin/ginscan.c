@@ -164,6 +164,8 @@ ginFillScanKey(GinScanOpaque so, OffsetNumber attnum,
 	key->recheckCurItem = false;
 	key->isFinished = false;
 
+	ginInitConsistentFunction(ginstate, key);
+
 	for (i = 0; i < nQueryValues; i++)
 	{
 		Datum		queryKey;

@@ -746,8 +746,25 @@ typedef struct GinScanKeyData
 	/* array of GinScanEntry pointers, one per extracted search condition */
 	GinScanEntry *scanEntry;
 
+	/*
+	 * At least one of the entries in requiredEntries must be present for
+	 * a tuple to match the overall qual.
+	 *
+	 * additionalEntries contains entries that are needed by the consistent
+	 * function to decide if an item matches, but are not sufficient to
+	 * satisfy the qual without entries from requiredEntries.
+	 */
+	GinScanEntry *requiredEntries;
+	int			nrequired;
+	GinScanEntry *additionalEntries;
+	int			nadditional;
+
 	/* array of check flags, reported to consistentFn */
 	bool	   *entryRes;
+	bool		(*boolConsistentFn) (GinScanKey key);
+	bool		(*triConsistentFn) (GinScanKey key);
+	FmgrInfo   *consistentFmgrInfo;
+	Oid			collation;
 
 	/* other data needed for calling consistentFn */
 	Datum		query;
@@ -831,6 +848,20 @@ extern void ginNewScanKey(IndexScanDesc scan);
 
 /* ginget.c */
 extern Datum gingetbitmap(PG_FUNCTION_ARGS);
+
+/* ginlogic.c */
+
+enum
+{
+	GIN_FALSE = 0,			/* item is present / matches */
+	GIN_TRUE = 1,			/* item is not present / does not match */
+	GIN_MAYBE = 2			/* don't know if item is present / don't know if
+							 * matches */
+} GinLogicValueEnum;
+
+typedef char GinLogicValue;
+
+extern void ginInitConsistentFunction(GinState *ginstate, GinScanKey key);
 
 /* ginvacuum.c */
 extern Datum ginbulkdelete(PG_FUNCTION_ARGS);
