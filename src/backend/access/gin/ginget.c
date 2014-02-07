@@ -445,6 +445,7 @@ startScanKey(GinState *ginstate, GinScanOpaque so, GinScanKey key)
 {
 	MemoryContext oldCtx = CurrentMemoryContext;
 	int			i;
+	int			j;
 	int		   *entryIndexes;
 
 	ItemPointerSetMin(&key->curItem);
@@ -472,10 +473,6 @@ startScanKey(GinState *ginstate, GinScanOpaque so, GinScanKey key)
 	 * entries can form a match, without any items from the required set. The
 	 * rest go to the additional set.
 	 */
-	key->requiredEntries = palloc(key->nentries * sizeof(GinScanEntry));
-	key->additionalEntries = palloc(key->nentries * sizeof(GinScanEntry));
-	key->nrequired = key->nadditional = 0;
-
 	if (key->nentries > 1)
 	{
 		MemoryContextSwitchTo(so->tempCtx);
@@ -483,31 +480,44 @@ startScanKey(GinState *ginstate, GinScanOpaque so, GinScanKey key)
 		entryIndexes = (int *) palloc(sizeof(int) * key->nentries);
 		for (i = 0; i < key->nentries; i++)
 			entryIndexes[i] = i;
-
 		qsort_arg(entryIndexes, key->nentries, sizeof(int),
 				  entryIndexByFrequencyCmp, key);
 
-		for (i = 0; i < key->nentries; i++)
-			key->entryRes[i] = GIN_MAYBE;
-
-		for (i = 0; i < key->nentries; i++)
+		for (i = 0; i < key->nentries - 1; i++)
 		{
-			key->requiredEntries[key->nrequired++] = key->scanEntry[entryIndexes[i]];
-			key->entryRes[entryIndexes[i]] = GIN_FALSE;
+			/* Pass all entries <= i as FALSE, and the rest as MAYBE */
+			for (j = 0; j <= i; j++)
+				key->entryRes[entryIndexes[j]] = GIN_FALSE;
+			for (j = i + 1; j < key->nentries; j++)
+				key->entryRes[entryIndexes[j]] = GIN_MAYBE;
 
 			if (key->triConsistentFn(key) == GIN_FALSE)
 				break;
 		}
-		for (i = i + 1; i < key->nentries; i++)
-			key->additionalEntries[key->nadditional++] = key->scanEntry[entryIndexes[i]];
+		/* i is now the last required entry. */
+
+		MemoryContextSwitchTo(oldCtx);
+
+		key->nrequired = i + 1;
+		key->nadditional = key->nentries - key->nrequired;
+		key->requiredEntries = palloc(key->nrequired * sizeof(GinScanEntry));
+		key->additionalEntries = palloc(key->nadditional * sizeof(GinScanEntry));
+
+		j = 0;
+		for (i = 0; i < key->nrequired; i++)
+			key->requiredEntries[i] = key->scanEntry[entryIndexes[j++]];
+		for (i = 0; i < key->nadditional; i++)
+			key->additionalEntries[i] = key->scanEntry[entryIndexes[j++]];
 
 		/* clean up after consistentFn calls (also frees entryIndexes) */
-		MemoryContextSwitchTo(oldCtx);
 		MemoryContextReset(so->tempCtx);
 	}
 	else
 	{
-		key->requiredEntries[key->nrequired++] = key->scanEntry[0];
+		key->nrequired = 1;
+		key->nadditional = 0;
+		key->requiredEntries = palloc(1 * sizeof(GinScanEntry));
+		key->requiredEntries[0] = key->scanEntry[0];
 	}
 }
 

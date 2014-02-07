@@ -90,6 +90,8 @@ normalBoolConsistentFn(GinScanKey key)
  * combination, that's the overall result. Otherwise, return MAYBE. Testing
  * every combination is O(n^2), so this is only feasible for a small number of
  * MAYBE inputs.
+ *
+ * NB: This function modifies the key->entryRes array!
  */
 static GinLogicValue
 shimTriConsistentFn(GinScanKey key)
@@ -98,7 +100,7 @@ shimTriConsistentFn(GinScanKey key)
 	int			maybeEntries[MAX_MAYBE_ENTRIES];
 	int			i;
 	bool		boolResult;
-	bool		recheck = 0;
+	bool		recheck = false;
 	GinLogicValue curResult;
 
 	/*
@@ -124,7 +126,7 @@ shimTriConsistentFn(GinScanKey key)
 	if (nmaybe == 0)
 		return normalBoolConsistentFn(key);
 
-	/* Try the consistent function with the maybe-inputs set both ways */
+	/* First call consistent function with all the maybe-inputs set FALSE */
 	for (i = 0; i < nmaybe; i++)
 		key->entryRes[maybeEntries[i]] = GIN_FALSE;
 	curResult = normalBoolConsistentFn(key);
