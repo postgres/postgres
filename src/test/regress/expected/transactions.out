@@ -552,6 +552,20 @@ ROLLBACK;
 DROP TABLE foo;
 DROP TABLE baz;
 DROP TABLE barbaz;
+-- test case for problems with revalidating an open relation during abort
+create function inverse(int) returns float8 as
+$$
+begin
+  analyze revalidate_bug;
+  return 1::float8/$1;
+exception
+  when division_by_zero then return 0;
+end$$ language plpgsql volatile;
+create table revalidate_bug (c float8 unique);
+insert into revalidate_bug values (1);
+insert into revalidate_bug values (inverse(0));
+drop table revalidate_bug;
+drop function inverse(int);
 -- verify that cursors created during an aborted subtransaction are
 -- closed, but that we do not rollback the effect of any FETCHs
 -- performed in the aborted subtransaction

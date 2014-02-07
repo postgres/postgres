@@ -1601,6 +1601,7 @@ RelationIdGetRelation(Oid relationId)
 				RelationReloadIndexInfo(rd);
 			else
 				RelationClearRelation(rd, true);
+			Assert(rd->rd_isvalid);
 		}
 		return rd;
 	}
@@ -1712,8 +1713,9 @@ RelationReloadIndexInfo(Relation relation)
 	/* Should be called only for invalidated indexes */
 	Assert(relation->rd_rel->relkind == RELKIND_INDEX &&
 		   !relation->rd_isvalid);
-	/* Should be closed at smgr level */
-	Assert(relation->rd_smgr == NULL);
+
+	/* Ensure it's closed at smgr level */
+	RelationCloseSmgr(relation);
 
 	/* Must free any AM cached data upon relcache flush */
 	if (relation->rd_amcache)
@@ -1892,12 +1894,11 @@ RelationClearRelation(Relation relation, bool rebuild)
 	 * be unable to recover.  However, we must redo RelationInitPhysicalAddr
 	 * in case it is a mapped relation whose mapping changed.
 	 *
-	 * If it's a nailed index, then we need to re-read the pg_class row to see
-	 * if its relfilenode changed.	We can't necessarily do that here, because
-	 * we might be in a failed transaction.  We assume it's okay to do it if
-	 * there are open references to the relcache entry (cf notes for
-	 * AtEOXact_RelationCache).  Otherwise just mark the entry as possibly
-	 * invalid, and it'll be fixed when next opened.
+	 * If it's a nailed-but-not-mapped index, then we need to re-read the
+	 * pg_class row to see if its relfilenode changed. We do that immediately
+	 * if we're inside a valid transaction and the relation is open (not
+	 * counting the nailed refcount).  Otherwise just mark the entry as
+	 * possibly invalid, and it'll be fixed when next opened.
 	 */
 	if (relation->rd_isnailed)
 	{
@@ -1906,7 +1907,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 		if (relation->rd_rel->relkind == RELKIND_INDEX)
 		{
 			relation->rd_isvalid = false;		/* needs to be revalidated */
-			if (relation->rd_refcnt > 1)
+			if (relation->rd_refcnt > 1 && IsTransactionState())
 				RelationReloadIndexInfo(relation);
 		}
 		return;
@@ -1924,7 +1925,8 @@ RelationClearRelation(Relation relation, bool rebuild)
 		relation->rd_indexcxt != NULL)
 	{
 		relation->rd_isvalid = false;	/* needs to be revalidated */
-		RelationReloadIndexInfo(relation);
+		if (IsTransactionState())
+			RelationReloadIndexInfo(relation);
 		return;
 	}
 
@@ -1944,6 +1946,29 @@ RelationClearRelation(Relation relation, bool rebuild)
 
 		/* And release storage */
 		RelationDestroyRelation(relation);
+	}
+	else if (!IsTransactionState())
+	{
+		/*
+		 * If we're not inside a valid transaction, we can't do any catalog
+		 * access so it's not possible to rebuild yet.  Just exit, leaving
+		 * rd_isvalid = false so that the rebuild will occur when the entry is
+		 * next opened.
+		 *
+		 * Note: it's possible that we come here during subtransaction abort,
+		 * and the reason for wanting to rebuild is that the rel is open in
+		 * the outer transaction.  In that case it might seem unsafe to not
+		 * rebuild immediately, since whatever code has the rel already open
+		 * will keep on using the relcache entry as-is.  However, in such a
+		 * case the outer transaction should be holding a lock that's
+		 * sufficient to prevent any significant change in the rel's schema,
+		 * so the existing entry contents should be good enough for its
+		 * purposes; at worst we might be behind on statistics updates or the
+		 * like.  (See also CheckTableNotInUse() and its callers.)	These same
+		 * remarks also apply to the cases above where we exit without having
+		 * done RelationReloadIndexInfo() yet.
+		 */
+		return;
 	}
 	else
 	{
@@ -2057,6 +2082,7 @@ RelationClearRelation(Relation relation, bool rebuild)
  * RelationFlushRelation
  *
  *	 Rebuild the relation if it is open (refcount > 0), else blow it away.
+ *	 This is used when we receive a cache invalidation event for the rel.
  */
 static void
 RelationFlushRelation(Relation relation)
