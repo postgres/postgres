@@ -41,8 +41,8 @@
  * MaxFSMRequestSize, exclusive.
  *
  * MaxFSMRequestSize depends on the architecture and BLCKSZ, but assuming
- * default 8k BLCKSZ, and that MaxFSMRequestSize is 24 bytes, the categories
- * look like this
+ * default 8k BLCKSZ, and that MaxFSMRequestSize is 8164 bytes, the
+ * categories look like this:
  *
  *
  * Range	 Category
