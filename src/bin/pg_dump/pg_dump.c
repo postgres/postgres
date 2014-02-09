@@ -7145,7 +7145,7 @@ getForeignDataWrappers(Archive *fout, int *numForeignDataWrappers)
 	PGresult   *res;
 	int			ntups;
 	int			i;
-	PQExpBuffer query = createPQExpBuffer();
+	PQExpBuffer query;
 	FdwInfo    *fdwinfo;
 	int			i_tableoid;
 	int			i_oid;
@@ -7162,6 +7162,8 @@ getForeignDataWrappers(Archive *fout, int *numForeignDataWrappers)
 		*numForeignDataWrappers = 0;
 		return NULL;
 	}
+
+	query = createPQExpBuffer();
 
 	/* Make sure we are in proper schema */
 	selectSourceSchema(fout, "pg_catalog");
@@ -7251,7 +7253,7 @@ getForeignServers(Archive *fout, int *numForeignServers)
 	PGresult   *res;
 	int			ntups;
 	int			i;
-	PQExpBuffer query = createPQExpBuffer();
+	PQExpBuffer query;
 	ForeignServerInfo *srvinfo;
 	int			i_tableoid;
 	int			i_oid;
@@ -7269,6 +7271,8 @@ getForeignServers(Archive *fout, int *numForeignServers)
 		*numForeignServers = 0;
 		return NULL;
 	}
+
+	query = createPQExpBuffer();
 
 	/* Make sure we are in proper schema */
 	selectSourceSchema(fout, "pg_catalog");

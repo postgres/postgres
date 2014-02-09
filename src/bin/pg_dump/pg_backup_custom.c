@@ -708,6 +708,9 @@ _CloseArchive(ArchiveHandle *AH)
 	{
 		WriteHead(AH);
 		tpos = ftello(AH->FH);
+		if (tpos < 0 || errno)
+			exit_horribly(modulename, "could not determine seek position in archive file: %s\n",
+						  strerror(errno));
 		WriteToc(AH);
 		ctx->dataStart = _getFilePos(AH, ctx);
 		WriteDataChunks(AH, NULL);
@@ -756,7 +759,7 @@ _ReopenArchive(ArchiveHandle *AH)
 
 	errno = 0;
 	tpos = ftello(AH->FH);
-	if (errno)
+	if (tpos < 0 || errno)
 		exit_horribly(modulename, "could not determine seek position in archive file: %s\n",
 					  strerror(errno));
 

@@ -1898,13 +1898,22 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 
 	if (strncmp(sig, "PGDMP", 5) == 0)
 	{
+		int byteread;
+
 		/*
 		 * Finish reading (most of) a custom-format header.
 		 *
 		 * NB: this code must agree with ReadHead().
 		 */
-		AH->vmaj = fgetc(fh);
-		AH->vmin = fgetc(fh);
+		if ((byteread = fgetc(fh)) == EOF)
+			exit_horribly(modulename, "could not read input file: %s\n", strerror(errno));
+
+		AH->vmaj = byteread;
+
+		if ((byteread = fgetc(fh)) == EOF)
+			exit_horribly(modulename, "could not read input file: %s\n", strerror(errno));
+
+		AH->vmin = byteread;
 
 		/* Save these too... */
 		AH->lookahead[AH->lookaheadLen++] = AH->vmaj;
@@ -1913,7 +1922,10 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 		/* Check header version; varies from V1.0 */
 		if (AH->vmaj > 1 || ((AH->vmaj == 1) && (AH->vmin > 0)))		/* Version > 1.0 */
 		{
-			AH->vrev = fgetc(fh);
+			if ((byteread = fgetc(fh)) == EOF)
+				exit_horribly(modulename, "could not read input file: %s\n", strerror(errno));
+
+			AH->vrev = byteread;
 			AH->lookahead[AH->lookaheadLen++] = AH->vrev;
 		}
 		else
@@ -1922,18 +1934,21 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 		/* Make a convenient integer <maj><min><rev>00 */
 		AH->version = ((AH->vmaj * 256 + AH->vmin) * 256 + AH->vrev) * 256 + 0;
 
-		AH->intSize = fgetc(fh);
+		if ((AH->intSize = fgetc(fh)) == EOF)
+			exit_horribly(modulename, "could not read input file: %s\n", strerror(errno));
 		AH->lookahead[AH->lookaheadLen++] = AH->intSize;
 
 		if (AH->version >= K_VERS_1_7)
 		{
-			AH->offSize = fgetc(fh);
+			if ((AH->offSize = fgetc(fh)) == EOF)
+				exit_horribly(modulename, "could not read input file: %s\n", strerror(errno));
 			AH->lookahead[AH->lookaheadLen++] = AH->offSize;
 		}
 		else
 			AH->offSize = AH->intSize;
 
-		AH->format = fgetc(fh);
+		if ((AH->format = fgetc(fh)) == EOF)
+			exit_horribly(modulename, "could not read input file: %s\n", strerror(errno));
 		AH->lookahead[AH->lookaheadLen++] = AH->format;
 	}
 	else
