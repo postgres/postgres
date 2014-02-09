@@ -11,10 +11,4 @@ extern char *replication_slot;
 /* Connection kept global so we can disconnect easily */
 extern PGconn *conn;
 
-#define disconnect_and_exit(code)				\
-	{											\
-	if (conn != NULL) PQfinish(conn);			\
-	exit(code);									\
-	}
-
 extern PGconn *GetConnection(void);
