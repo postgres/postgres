@@ -563,6 +563,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 			else
 #endif
 				tarfile = stdout;
+			strcpy(filename, "-");
 		}
 		else
 		{
