@@ -18,6 +18,7 @@
  */
 #include "postgres.h"
 
+#include "libpq/libpq-be.h"
 #include "libpq/pqcomm.h"
 #include "miscadmin.h"
 #include "storage/backendid.h"

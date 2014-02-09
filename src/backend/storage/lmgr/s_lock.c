@@ -19,6 +19,7 @@
 #include <unistd.h>
 
 #include "storage/s_lock.h"
+#include "storage/barrier.h"
 
 slock_t		dummy_spinlock;
 

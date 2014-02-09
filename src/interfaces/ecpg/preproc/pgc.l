@@ -56,7 +56,7 @@ static bool isdefine(void);
 static bool isinformixdefine(void);
 
 char *token_start;
-int state_before;
+static int state_before;
 
 struct _yy_buffer
 {

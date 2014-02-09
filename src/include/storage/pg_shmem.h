@@ -49,7 +49,6 @@ typedef enum
 	HUGE_TLB_TRY
 } HugeTlbType;
 
-#ifdef EXEC_BACKEND
 #ifndef WIN32
 extern unsigned long UsedShmemSegID;
 #else
@@ -57,6 +56,7 @@ extern HANDLE UsedShmemSegID;
 #endif
 extern void *UsedShmemSegAddr;
 
+#ifdef EXEC_BACKEND
 extern void PGSharedMemoryReAttach(void);
 #endif
 

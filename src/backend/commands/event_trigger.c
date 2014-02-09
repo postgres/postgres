@@ -51,7 +51,7 @@ typedef struct EventTriggerQueryState
 	struct EventTriggerQueryState *previous;
 } EventTriggerQueryState;
 
-EventTriggerQueryState *currentEventTriggerState = NULL;
+static EventTriggerQueryState *currentEventTriggerState = NULL;
 
 typedef struct
 {

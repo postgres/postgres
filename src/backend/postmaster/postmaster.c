@@ -237,8 +237,6 @@ bool		enable_bonjour = false;
 char	   *bonjour_name;
 bool		restart_after_crash = true;
 
-char	   *output_config_variable = NULL;
-
 /* PIDs of special child processes; 0 when not running */
 static pid_t StartupPID = 0,
 			BgWriterPID = 0,
@@ -545,6 +543,7 @@ PostmasterMain(int argc, char *argv[])
 	char	   *userDoption = NULL;
 	bool		listen_addr_saved = false;
 	int			i;
+	char	   *output_config_variable = NULL;
 
 	MyProcPid = PostmasterPid = getpid();
 
