@@ -1068,6 +1068,9 @@ _tarAddFile(ArchiveHandle *AH, TAR_MEMBER *th)
 	 */
 	fseeko(tmp, 0, SEEK_END);
 	th->fileLen = ftello(tmp);
+	if (th->fileLen < 0)
+		exit_horribly(modulename, "could not determine seek position in file: %s\n",
+					  strerror(errno));
 	fseeko(tmp, 0, SEEK_SET);
 
 	/*
@@ -1212,20 +1215,6 @@ _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th)
 
 	while (!gotBlock)
 	{
-#if 0
-		if (ftello(ctx->tarFH) != ctx->tarFHpos)
-		{
-			char		buf1[100],
-						buf2[100];
-
-			snprintf(buf1, sizeof(buf1), INT64_FORMAT, (int64) ftello(ctx->tarFH));
-			snprintf(buf2, sizeof(buf2), INT64_FORMAT, (int64) ftello(ctx->tarFHpos));
-			exit_horribly(modulename,
-			  "mismatch in actual vs. predicted file position (%s vs. %s)\n",
-						  buf1, buf2);
-		}
-#endif
-
 		/* Save the pos for reporting purposes */
 		hPos = ctx->tarFHpos;
 

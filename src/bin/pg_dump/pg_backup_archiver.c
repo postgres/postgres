@@ -3347,9 +3347,8 @@ checkSeek(FILE *fp)
 #endif
 
 	/* Check that ftello works on this file */
-	errno = 0;
 	tpos = ftello(fp);
-	if (errno)
+	if (tpos < 0)
 		return false;
 
 	/*
