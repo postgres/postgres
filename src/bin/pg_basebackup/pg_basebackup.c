@@ -73,6 +73,7 @@ static PQExpBuffer recoveryconfcontents = NULL;
 
 /* Function headers */
 static void usage(void);
+static void disconnect_and_exit(int code);
 static void verify_dir_is_empty_or_create(char *dirname);
 static void progress_report(int tablespacenum, const char *filename);
 
@@ -84,6 +85,26 @@ static void BaseBackup(void);
 
 static bool reached_end_position(XLogRecPtr segendpos, uint32 timeline,
 					 bool segment_finished);
+
+
+static void disconnect_and_exit(int code)
+{
+	if (conn != NULL)
+		PQfinish(conn);
+
+#ifndef WIN32
+	/*
+	 * On windows, our background thread dies along with the process.
+	 * But on Unix, if we have started a subprocess, we want to kill
+	 * it off so it doesn't remain running trying to stream data.
+	 */
+	if (bgchild> 0)
+		kill(bgchild, SIGTERM);
+#endif
+
+	exit(code);
+}
+
 
 #ifdef HAVE_LIBZ
 static const char *
