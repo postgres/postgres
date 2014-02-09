@@ -708,7 +708,7 @@ _CloseArchive(ArchiveHandle *AH)
 	{
 		WriteHead(AH);
 		tpos = ftello(AH->FH);
-		if (tpos < 0 || errno)
+		if (tpos < 0)
 			exit_horribly(modulename, "could not determine seek position in archive file: %s\n",
 						  strerror(errno));
 		WriteToc(AH);
@@ -757,9 +757,8 @@ _ReopenArchive(ArchiveHandle *AH)
 	if (!ctx->hasSeek)
 		exit_horribly(modulename, "parallel restore from non-seekable file is not supported\n");
 
-	errno = 0;
 	tpos = ftello(AH->FH);
-	if (tpos < 0 || errno)
+	if (tpos < 0)
 		exit_horribly(modulename, "could not determine seek position in archive file: %s\n",
 					  strerror(errno));
 
