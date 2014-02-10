@@ -396,6 +396,7 @@ plainto_tsquery_byid(PG_FUNCTION_ARGS)
 	if (query->size == 0)
 		PG_RETURN_TSQUERY(query);
 
+	/* clean out any stopword placeholders from the tree */
 	res = clean_fakeval(GETQUERY(query), &len);
 	if (!res)
 	{
@@ -405,6 +406,10 @@ plainto_tsquery_byid(PG_FUNCTION_ARGS)
 	}
 	memcpy((void *) GETQUERY(query), (void *) res, len * sizeof(QueryItem));
 
+	/*
+	 * Removing the stopword placeholders might've resulted in fewer
+	 * QueryItems. If so, move the operands up accordingly.
+	 */
 	if (len != query->size)
 	{
 		char	   *oldoperand = GETOPERAND(query);
@@ -413,7 +418,7 @@ plainto_tsquery_byid(PG_FUNCTION_ARGS)
 		Assert(len < query->size);
 
 		query->size = len;
-		memcpy((void *) GETOPERAND(query), oldoperand, lenoperand);
+		memmove((void *) GETOPERAND(query), oldoperand, lenoperand);
 		SET_VARSIZE(query, COMPUTESIZE(len, lenoperand));
 	}
 
