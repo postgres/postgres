@@ -1842,15 +1842,14 @@ WakeupWaiters(XLogRecPtr EndPos)
 	slot->xlogInsertingAt = EndPos;
 
 	/*
-	 * See if there are any waiters that need to be woken up.
+	 * See if there are any LW_WAIT_UNTIL_FREE waiters that need to be woken
+	 * up. They are always in the front of the queue.
 	 */
 	head = slot->head;
 
-	if (head != NULL)
+	if (head != NULL && head->lwWaitMode == LW_WAIT_UNTIL_FREE)
 	{
 		proc = head;
-
-		/* LW_WAIT_UNTIL_FREE waiters are always in the front of the queue */
 		next = proc->lwWaitLink;
 		while (next && next->lwWaitMode == LW_WAIT_UNTIL_FREE)
 		{
@@ -1862,6 +1861,8 @@ WakeupWaiters(XLogRecPtr EndPos)
 		slot->head = next;
 		proc->lwWaitLink = NULL;
 	}
+	else
+		head = NULL;
 
 	/* We are done updating shared state of the lock itself. */
 	SpinLockRelease(&slot->mutex);
