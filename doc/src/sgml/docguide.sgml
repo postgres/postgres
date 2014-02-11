@@ -942,26 +942,19 @@ save_size.pdfjadetex = 15000
    <title>Plain Text Files</title>
 
    <para>
-    Several files are distributed as plain text, for reading during
-    the installation process. The <filename>INSTALL</filename> file
+    The installation instructions are also distributed as plain text,
+    in case they are needed in a situation where better reading tools
+    are not available.  The <filename>INSTALL</filename> file
     corresponds to <xref linkend="installation">, with some minor
     changes to account for the different context.  To recreate the
     file, change to the directory <filename>doc/src/sgml</filename>
-    and enter <userinput>gmake INSTALL</userinput>.  This will create
-    a file <filename>INSTALL.html</filename> that can be saved as text
-    with <productname>Netscape Navigator</productname> and put into
-    the place of the existing file.
-    <productname>Netscape</productname> seems to offer the best
-    quality for <acronym>HTML</acronym> to text conversions (over
-    <application>lynx</application> and
-    <application>w3m</application>).
+    and enter <userinput>gmake INSTALL</userinput>.
    </para>
 
    <para>
-    The file <filename>HISTORY</filename> can be created similarly,
-    using the command <userinput>gmake HISTORY</userinput>.  For the
-    file <filename>src/test/regress/README</filename> the command is
-    <userinput>gmake regress_README</userinput>.
+    In the past, the release notes and regression testing instructions
+    were also distributed as plain text, but this practice has been
+    discontinued.
    </para>
   </sect2>
 

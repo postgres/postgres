@@ -10,7 +10,6 @@ For All Releases (major, minor, beta, RC)
 	o update doc/src/sgml/release.sgml
 	o run spellchecker on result
 	o add SGML markup
-	o check if 'gmake HISTORY.html' works for <link>s
 
 * Update timezone data to match latest zic database and new
   Windows releases, if any (see src/timezone/README)
