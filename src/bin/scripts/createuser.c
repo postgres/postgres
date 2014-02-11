@@ -320,10 +320,10 @@ main(int argc, char *argv[])
 				appendPQExpBuffer(&sql, "%s", fmtId(cell->val));
 		}
 	}
-	appendPQExpBufferStr(&sql, ";\n");
+	appendPQExpBufferStr(&sql, ";");
 
 	if (echo)
-		printf("%s", sql.data);
+		printf("%s\n", sql.data);
 	result = PQexec(conn, sql.data);
 
 	if (PQresultStatus(result) != PGRES_COMMAND_OK)

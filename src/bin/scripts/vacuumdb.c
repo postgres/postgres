@@ -298,7 +298,7 @@ vacuum_one_database(const char *dbname, bool full, bool verbose, bool and_analyz
 	}
 	if (table)
 		appendPQExpBuffer(&sql, " %s", table);
-	appendPQExpBufferStr(&sql, ";\n");
+	appendPQExpBufferStr(&sql, ";");
 
 	if (!executeMaintenanceCommand(conn, sql.data, echo))
 	{

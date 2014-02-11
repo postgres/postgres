@@ -211,10 +211,10 @@ main(int argc, char *argv[])
 	 * Attempt to drop the language.  We do not use CASCADE, so that the drop
 	 * will fail if there are any functions in the language.
 	 */
-	printfPQExpBuffer(&sql, "DROP EXTENSION \"%s\";\n", langname);
+	printfPQExpBuffer(&sql, "DROP EXTENSION \"%s\";", langname);
 
 	if (echo)
-		printf("%s", sql.data);
+		printf("%s\n", sql.data);
 	result = PQexec(conn, sql.data);
 	if (PQresultStatus(result) != PGRES_COMMAND_OK)
 	{

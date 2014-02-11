@@ -195,7 +195,7 @@ main(int argc, char *argv[])
 	if (lc_ctype)
 		appendPQExpBuffer(&sql, " LC_CTYPE '%s'", lc_ctype);
 
-	appendPQExpBufferStr(&sql, ";\n");
+	appendPQExpBufferStr(&sql, ";");
 
 	/* No point in trying to use postgres db when creating postgres db. */
 	if (maintenance_db == NULL && strcmp(dbname, "postgres") == 0)
@@ -205,7 +205,7 @@ main(int argc, char *argv[])
 									  prompt_password, progname);
 
 	if (echo)
-		printf("%s", sql.data);
+		printf("%s\n", sql.data);
 	result = PQexec(conn, sql.data);
 
 	if (PQresultStatus(result) != PGRES_COMMAND_OK)
@@ -222,10 +222,10 @@ main(int argc, char *argv[])
 	{
 		printfPQExpBuffer(&sql, "COMMENT ON DATABASE %s IS ", fmtId(dbname));
 		appendStringLiteralConn(&sql, comment, conn);
-		appendPQExpBufferStr(&sql, ";\n");
+		appendPQExpBufferStr(&sql, ";");
 
 		if (echo)
-			printf("%s", sql.data);
+			printf("%s\n", sql.data);
 		result = PQexec(conn, sql.data);
 
 		if (PQresultStatus(result) != PGRES_COMMAND_OK)
