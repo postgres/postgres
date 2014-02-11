@@ -34,12 +34,6 @@
 # SO_MINOR_VERSION      Minor version number to use for shared library
 # (If you want a patchlevel, include it in SO_MINOR_VERSION, e.g., "6.2".)
 #
-# Optional flags when building DLL's (only applicable to win32 and cygwin
-# platforms).
-# DLLTOOL_DEFFLAGS      Additional flags when creating the dll .def file
-# DLLTOOL_LIBFLAGS      Additional flags when creating the lib<module>.a file
-# DLLWRAP_FLAGS         Additional flags to dllwrap
-#
 # The module Makefile must also include
 # $(top_builddir)/src/Makefile.global before including this file.
 # (Makefile.global sets PORTNAME and other needed symbols.)
@@ -358,11 +352,10 @@ endif # PORTNAME == aix
 
 else # PORTNAME == cygwin || PORTNAME == win32
 
-# Cygwin or Win32 case
-
-# If SHLIB_EXPORTS is set, the rules below will build a .def file from
-# that.  Else we build a temporary one here.
 ifeq ($(PORTNAME), cygwin)
+
+# Cygwin case
+
 $(shlib): $(OBJS) | $(SHLIB_PREREQS)
 	$(CC) $(CFLAGS)  -shared -o $@  $(OBJS) $(LDFLAGS) $(LDFLAGS_SL) $(SHLIB_LINK) $(LIBS) $(LDAP_LIBS_BE)
 
@@ -370,23 +363,29 @@ $(stlib): $(OBJS) | $(SHLIB_PREREQS)
 	$(LINK.static) $@ $^
 	$(RANLIB) $@
 
-
 else
+
+# Win32 case
+
+# There is no correct way to write a rule that generates two files.
+# Rules with two targets don't have that meaning, they are merely
+# shorthand for two otherwise separate rules.  To be safe for parallel
+# make, we must chain the dependencies like this.  The semicolon is
+# important, otherwise make will choose some built-in rule.
+
+$(stlib): $(shlib) ;
+
+# If SHLIB_EXPORTS is set, the rules below will build a .def file from that.
+# Else we just use --export-all-symbols.
 ifeq (,$(SHLIB_EXPORTS))
-DLL_DEFFILE = lib$(NAME)dll.def
-exports_file = $(DLL_DEFFILE)
-
-$(exports_file): $(OBJS)
-	$(DLLTOOL) --export-all $(DLLTOOL_DEFFLAGS) --output-def $@ $^
+$(shlib): $(OBJS) | $(SHLIB_PREREQS)
+	$(CC) $(CFLAGS)  -shared -o $@  $(OBJS) $(LDFLAGS) $(LDFLAGS_SL) $(SHLIB_LINK) $(LIBS) -Wl,--export-all-symbols -Wl,--out-implib=$(stlib)
 else
 DLL_DEFFILE = lib$(NAME)dll.def
-endif
 
 $(shlib): $(OBJS) $(DLL_DEFFILE) | $(SHLIB_PREREQS)
-	$(DLLWRAP) -o $@ --dllname $(shlib) $(DLLWRAP_FLAGS) --def $(DLL_DEFFILE) $(OBJS) $(LDFLAGS) $(LDFLAGS_SL) $(SHLIB_LINK)
-
-$(stlib): $(shlib) $(DLL_DEFFILE) | $(SHLIB_PREREQS)
-	$(DLLTOOL) --dllname $(shlib) $(DLLTOOL_LIBFLAGS) --def $(DLL_DEFFILE) --output-lib $@
+	$(CC) $(CFLAGS)  -shared -o $@  $(OBJS) $(LDFLAGS) $(LDFLAGS_SL) $(SHLIB_LINK) $(LIBS) $(DLL_DEFFILE) -Wl,--out-implib=$(stlib)
+endif
 
 endif # PORTNAME == cgywin
 endif # PORTNAME == cygwin || PORTNAME == win32

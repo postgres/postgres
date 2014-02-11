@@ -72,6 +72,4 @@ win32ver.o: win32ver.rc
 
 # Rule for building a shared library from a single .o file
 %.dll: %.o
-	$(DLLTOOL) --export-all --output-def $*.def $<
-	$(DLLWRAP) -o $@ --def $*.def $< $(LDFLAGS) $(LDFLAGS_SL) $(BE_DLLLIBS)
-	rm -f $*.def
+	$(CC) $(CFLAGS) -shared -o $@ $< -Wl,--export-all-symbols $(LDFLAGS) $(LDFLAGS_SL) $(BE_DLLLIBS)

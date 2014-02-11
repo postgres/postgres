@@ -78,18 +78,10 @@ endif # cygwin
 ifeq ($(PORTNAME), win32)
 LIBS += -lsecur32
 
-postgres: $(OBJS) postgres.def libpostgres.a $(WIN32RES)
-	$(DLLTOOL) --dllname $@$(X) --output-exp $@.exp --def postgres.def
-	$(CC) $(CFLAGS) $(LDFLAGS) $(LDFLAGS_EX) -o $@$(X) -Wl,--base-file,$@.base $@.exp $(call expand_subsys,$(OBJS)) $(WIN32RES) $(LIBS)
-	$(DLLTOOL) --dllname $@$(X) --base-file $@.base --output-exp $@.exp --def postgres.def
-	$(CC) $(CFLAGS) $(LDFLAGS) $(LDFLAGS_EX) -Wl,--stack=$(WIN32_STACK_RLIMIT) -o $@$(X) $@.exp $(call expand_subsys,$(OBJS)) $(WIN32RES) $(LIBS)
-	rm -f $@.exp $@.base
+postgres: $(OBJS) $(WIN32RES)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(LDFLAGS_EX) -Wl,--stack=$(WIN32_STACK_RLIMIT) -Wl,--export-all-symbols -Wl,--out-implib=libpostgres.a $(call expand_subsys,$(OBJS)) $(WIN32RES) $(LIBS) -o $@$(X)
 
-postgres.def: $(OBJS)
-	$(DLLTOOL) --export-all --output-def $@ $(call expand_subsys,$^)
-
-libpostgres.a: postgres.def
-	$(DLLTOOL) --dllname postgres.exe --def postgres.def --output-lib $@
+libpostgres.a: postgres ;
 
 endif # win32
 
@@ -296,7 +288,7 @@ ifeq ($(PORTNAME), cygwin)
 	rm -f postgres.dll libpostgres.a
 endif
 ifeq ($(PORTNAME), win32)
-	rm -f postgres.dll postgres.def libpostgres.a $(WIN32RES)
+	rm -f postgres.dll libpostgres.a $(WIN32RES)
 endif
 
 distclean: clean
