@@ -415,7 +415,12 @@ else
 libpq_pgport = -L$(top_builddir)/src/common -lpgcommon -L$(top_builddir)/src/port -lpgport $(libpq)
 endif
 
-# If PGXS is not defined, build libpq and libpgport dependancies as required.
+# Cygwin seems to need ldap libraries to be mentioned here, too
+ifeq ($(PORTNAME),cygwin)
+libpq_pgport += $(LDAP_LIBS_FE)
+endif
+
+# If PGXS is not defined, build libpq and libpgport dependencies as required.
 # If the build is with PGXS, then these are supposed to be already built and
 # installed, and we just ensure that the expected files exist.
 ifndef PGXS
