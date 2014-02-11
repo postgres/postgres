@@ -2,21 +2,7 @@
 
 <!--
 This file helps in generating the INSTALL text file that lives in the
-top level directory of the distribution. The exact process is like
-this:
-
-1. Paste together with installation.sgml
-
-2. Process with jade to HTML (use -V nochunks)
-
-3. Remove "Chapter 1" heading
-
-4. Save as text file in Netscape
-
-5. Put in place of old INSTALL file
-
-Running 'make INSTALL' in the doc/src/sgml directory will do 1 through
-3 for you.
+top level directory of the distribution.
 -->
 
 <!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [

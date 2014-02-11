@@ -117,10 +117,8 @@ distdir:
 	  fi || exit; \
 	done
 	$(MAKE) -C $(distdir) distprep
-	$(MAKE) -C $(distdir)/doc/src/sgml/ HISTORY INSTALL regress_README
-	cp $(distdir)/doc/src/sgml/HISTORY $(distdir)/
+	$(MAKE) -C $(distdir)/doc/src/sgml/ INSTALL
 	cp $(distdir)/doc/src/sgml/INSTALL $(distdir)/
-	cp $(distdir)/doc/src/sgml/regress_README $(distdir)/src/test/regress/README
 	$(MAKE) -C $(distdir) distclean
 	rm -f $(distdir)/README.git
 

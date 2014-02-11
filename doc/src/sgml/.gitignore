@@ -6,9 +6,7 @@
 /man7/
 /man-stamp
 # Other popular build targets
-/HISTORY
 /INSTALL
-/regress_README
 /postgres-US.pdf
 /postgres-A4.pdf
 /postgres.html
@@ -21,9 +19,7 @@
 /HTML.index
 # Assorted byproducts from building the above
 /postgres.xml
-/HISTORY.html
 /INSTALL.html
-/regress_README.html
 /postgres-US.aux
 /postgres-US.log
 /postgres-US.out
