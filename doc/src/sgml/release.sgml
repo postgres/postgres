@@ -36,9 +36,7 @@ non-ASCII characters            find using grep -P '[\x80-\xFF]'
 
 wrap long lines
 
-For new features, add links to the documentation sections.  Use </link>
-not just </> so that generate_history.pl can remove it, so HISTORY.html
-can be created without links to the main documentation.  Don't use <xref>.
+For new features, add links to the documentation sections.
 
 -->
 
@@ -73,7 +71,6 @@ can be created without links to the main documentation.  Don't use <xref>.
 
 <!--
   To add a new major-release series, add an entry here and in filelist.sgml.
-  Follow the naming convention, or you'll confuse generate_history.pl.
 
   The reason for splitting the release notes this way is so that appropriate
   subsets can easily be copied into back branches.
