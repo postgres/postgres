@@ -1,12 +1,12 @@
 (This file does not appear in release tarballs.)
 
-In a release or snapshot tarball of PostgreSQL, documentation files named
-INSTALL and HISTORY will appear in this directory.  However, these files are
-not stored in git and so will not be present if you are using a git checkout.
-If you are using git, you can view the most recent install instructions at:
+In a release or snapshot tarball of PostgreSQL, a documentation file named
+INSTALL will appear in this directory.  However, this file is not stored in
+git and so will not be present if you are using a git checkout.
+
+If you are using a git checkout, you can view the most recent installation
+instructions at:
 	http://www.postgresql.org/docs/devel/static/installation.html
-and the current release notes at:
-	http://www.postgresql.org/docs/devel/static/release.html
 
 Users compiling from git will also need compatible versions of Bison, Flex,
 and Perl, as discussed in the install documentation.  These programs are not

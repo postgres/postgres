@@ -2,9 +2,7 @@
 *.html
 *.[1-9]
 # Other popular build targets
-/HISTORY
 /INSTALL
-/regress_README
 /postgres-US.pdf
 /postgres-A4.pdf
 # GENERATED_SGML
@@ -16,6 +14,7 @@
 /HTML.index.start
 # Assorted byproducts from building the above
 /postgres.xml
+/INSTALL.html
 /postgres-US.aux
 /postgres-US.log
 /postgres-US.out

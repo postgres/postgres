@@ -205,24 +205,11 @@ postgres.pdf:
 JADE.text = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -i output-text -t sgml
 LYNX = lynx
 
-INSTALL HISTORY regress_README: % : %.html
+INSTALL: % : %.html
 	$(PERL) -p -e 's/<H(1|2)$$/<H\1 align=center/g' $< | $(LYNX) -force_html -dump -nolist -stdin >$@
 
 INSTALL.html: standalone-install.sgml installation.sgml version.sgml
 	$(JADE.text) -V nochunks standalone-install.sgml installation.sgml >$@
-
-HISTORY.html: generate_history.pl $(wildcard $(srcdir)/release*.sgml)
-	$(PERL) $< "$(srcdir)" release.sgml >tempfile_HISTORY.sgml
-	$(JADE.text) -V nochunks tempfile_HISTORY.sgml >$@
-	rm tempfile_HISTORY.sgml
-
-regress_README.html: regress.sgml
-	( echo '<!doctype chapter PUBLIC "-//OASIS//DTD DocBook V4.2//EN" ['; \
-	  echo '<!entity % standalone-ignore "IGNORE">'; \
-	  echo '<!entity % standalone-include "INCLUDE"> ]>'; \
-	  cat $< ) >tempfile_regress_README.sgml
-	$(JADE.text) -V nochunks tempfile_regress_README.sgml >$@
-	rm tempfile_regress_README.sgml
 
 
 ##
@@ -310,7 +297,7 @@ clean distclean maintainer-clean:
 # index
 	rm -f HTML.index HTML.index.start $(GENERATED_SGML)
 # text
-	rm -f INSTALL HISTORY regress_README
+	rm -f INSTALL
 # XSLT
 	rm -f postgres.xml htmlhelp.hhp toc.hhc index.hhk *.fo
 # Texinfo
