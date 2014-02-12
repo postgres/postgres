@@ -2205,8 +2205,10 @@ January 8 04:05:06 1999 PST
      historical accident.)  <xref
      linkend="datatype-datetime-output-table"> shows examples of each
      output style.  The output of the <type>date</type> and
-     <type>time</type> types is of course only the date or time part
-     in accordance with the given examples.
+     <type>time</type> types is generally only the date or time part
+     in accordance with the given examples.  However, the
+     <productname>POSTGRES</> style outputs date-only values in
+     <acronym>ISO</acronym> format.
     </para>
 
      <table id="datatype-datetime-output-table">
