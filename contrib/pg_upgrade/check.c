@@ -707,20 +707,18 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 			fprintf(script, "\n");
 			/* remove PG_VERSION? */
 			if (GET_MAJOR_VERSION(old_cluster.major_version) <= 804)
-				fprintf(script, RM_CMD " %s%s%cPG_VERSION\n",
+				fprintf(script, RM_CMD " %s%cPG_VERSION\n",
 						fix_path_separator(os_info.old_tablespaces[tblnum]),
-						fix_path_separator(old_cluster.tablespace_suffix),
 						PATH_SEPARATOR);
 
 			for (dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
-			{
-				fprintf(script, RMDIR_CMD " %s%s%c%d\n",
+				fprintf(script, RMDIR_CMD " %s%c%d\n",
 						fix_path_separator(os_info.old_tablespaces[tblnum]),
-						fix_path_separator(old_cluster.tablespace_suffix),
 						PATH_SEPARATOR, old_cluster.dbarr.dbs[dbnum].db_oid);
-			}
 		}
 		else
+		{
+			char	*suffix_path = pg_strdup(old_cluster.tablespace_suffix);
 
 			/*
 			 * Simply delete the tablespace directory, which might be ".old"
@@ -728,7 +726,9 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 			 */
 			fprintf(script, RMDIR_CMD " %s%s\n",
 					fix_path_separator(os_info.old_tablespaces[tblnum]),
-					fix_path_separator(old_cluster.tablespace_suffix));
+					fix_path_separator(suffix_path));
+			pfree(suffix_path);
+		}
 	}
 
 	fclose(script);
