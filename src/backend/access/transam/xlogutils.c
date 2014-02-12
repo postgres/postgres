@@ -314,15 +314,21 @@ XLogReadBufferExtended(RelFileNode rnode, ForkNumber forknum,
 		/* we do this in recovery only - no rel-extension lock needed */
 		Assert(InRecovery);
 		buffer = InvalidBuffer;
-		while (blkno >= lastblock)
+		do
 		{
 			if (buffer != InvalidBuffer)
 				ReleaseBuffer(buffer);
 			buffer = ReadBufferWithoutRelcache(rnode, false, forknum,
 											   P_NEW, mode, NULL);
-			lastblock++;
 		}
-		Assert(BufferGetBlockNumber(buffer) == blkno);
+		while (BufferGetBlockNumber(buffer) < blkno);
+		/* Handle the corner case that P_NEW returns non-consecutive pages */
+		if (BufferGetBlockNumber(buffer) != blkno)
+		{
+			ReleaseBuffer(buffer);
+			buffer = ReadBufferWithoutRelcache(rnode, false, forknum, blkno,
+											   mode, NULL);
+		}
 	}
 
 	if (mode == RBM_NORMAL)
