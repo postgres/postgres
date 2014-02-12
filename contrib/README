@@ -12,7 +12,7 @@ documentation.
 
 When building from the source distribution, these modules are not
 built automatically, unless you build the "world" target.  You can
-also build and install them all by running "gmake all" and "gmake
+also build and install them all by running "make all" and "make
 install" in this directory; or to build and install just one selected
 module, do the same in that module's subdirectory.
 

@@ -32,9 +32,9 @@ in a standalone-ignore clause.
   <para>
 <synopsis>
 ./configure
-gmake
+make
 su
-gmake install
+make install
 adduser postgres
 mkdir /usr/local/pgsql/data
 chown postgres /usr/local/pgsql/data
@@ -77,14 +77,11 @@ su - postgres
 
       <acronym>GNU</> <application>make</> version 3.80 or newer is required; other
       <application>make</> programs or older <acronym>GNU</> <application>make</> versions will <emphasis>not</> work.
-      <acronym>GNU</> <application>make</> is often installed under
-      the name <filename>gmake</filename>; this document will always
-      refer to it by that name. (On some systems
-      <acronym>GNU</acronym> <application>make</> is the default tool with the name
-      <filename>make</>.) To test for <acronym>GNU</acronym>
+      (<acronym>GNU</> <application>make</> is sometimes installed under
+      the name <filename>gmake</filename>.)  To test for <acronym>GNU</acronym>
       <application>make</application> enter:
 <screen>
-<userinput>gmake --version</userinput>
+<userinput>make --version</userinput>
 </screen>
      </para>
     </listitem>
@@ -422,7 +419,7 @@ su - postgres
 <userinput>mkdir build_dir</userinput>
 <userinput>cd build_dir</userinput>
 <userinput>/path/to/source/tree/configure [options go here]</userinput>
-<userinput>gmake</userinput>
+<userinput>make</userinput>
 </screen>
    </para>
 
@@ -1441,7 +1438,7 @@ su - postgres
       source code lines.  If you get confused while trying to debug
       optimized code, recompile the specific files of interest with
       <option>-O0</>.  An easy way to do this is by passing an option
-      to <application>make</>: <command>gmake PROFILE=-O0 file.o</>.
+      to <application>make</>: <command>make PROFILE=-O0 file.o</>.
      </para>
     </note>
    </step>
@@ -1452,7 +1449,7 @@ su - postgres
    <para>
     To start the build, type:
 <screen>
-<userinput>gmake</userinput>
+<userinput>make</userinput>
 </screen>
     (Remember to use <acronym>GNU</> <application>make</>.) The build
     will take a few minutes depending on your
@@ -1467,7 +1464,7 @@ All of PostgreSQL is successfully made. Ready to install.
    documentation (HTML and man pages), and the additional modules
    (<filename>contrib</filename>), type instead:
 <screen>
-<userinput>gmake world</userinput>
+<userinput>make world</userinput>
 </screen>
    The last line displayed should be:
 <screen>
@@ -1490,7 +1487,7 @@ PostgreSQL, contrib and HTML documentation successfully made. Ready to install.
     runs on your machine in the way the developers expected it
     to. Type:
 <screen>
-<userinput>gmake check</userinput>
+<userinput>make check</userinput>
 </screen>
     (This won't work as root; do it as an unprivileged user.)
     <![%standalone-include[The file
@@ -1518,7 +1515,7 @@ PostgreSQL, contrib and HTML documentation successfully made. Ready to install.
    <para>
     To install <productname>PostgreSQL</> enter:
 <screen>
-<userinput>gmake install</userinput>
+<userinput>make install</userinput>
 </screen>
     This will install files into the directories that were specified
     in <xref linkend="configure">. Make sure that you have appropriate
@@ -1531,21 +1528,21 @@ PostgreSQL, contrib and HTML documentation successfully made. Ready to install.
    <para>
     To install the documentation (HTML and man pages), enter:
 <screen>
-<userinput>gmake install-docs</userinput>
+<userinput>make install-docs</userinput>
 </screen>
    </para>
 
    <para>
     If you built the world above, type instead:
 <screen>
-<userinput>gmake install-world</userinput>
+<userinput>make install-world</userinput>
 </screen>
     This also installs the documentation.
    </para>
 
    <para>
-    You can use <literal>gmake install-strip</literal> instead of
-    <literal>gmake install</literal> to strip the executable files and
+    You can use <literal>make install-strip</literal> instead of
+    <literal>make install</literal> to strip the executable files and
     libraries as they are installed.  This will save some space.  If
     you built with debugging support, stripping will effectively
     remove the debugging support, so it should only be done if
@@ -1560,7 +1557,7 @@ PostgreSQL, contrib and HTML documentation successfully made. Ready to install.
     The standard installation provides all the header files needed for client
     application development as well as for server-side program
     development, such as custom functions or data types written in C.
-    (Prior to <productname>PostgreSQL</> 8.0, a separate <literal>gmake
+    (Prior to <productname>PostgreSQL</> 8.0, a separate <literal>make
     install-all-headers</> command was needed for the latter, but this
     step has been folded into the standard install.)
    </para>
@@ -1571,10 +1568,10 @@ PostgreSQL, contrib and HTML documentation successfully made. Ready to install.
      If you want to install only the client applications and
      interface libraries, then you can use these commands:
 <screen>
-<userinput>gmake -C src/bin install</>
-<userinput>gmake -C src/include install</>
-<userinput>gmake -C src/interfaces install</>
-<userinput>gmake -C doc install</>
+<userinput>make -C src/bin install</>
+<userinput>make -C src/include install</>
+<userinput>make -C src/interfaces install</>
+<userinput>make -C doc install</>
 </screen>
     <filename>src/bin</> has a few binaries for server-only use,
     but they are small.
@@ -1586,7 +1583,7 @@ PostgreSQL, contrib and HTML documentation successfully made. Ready to install.
   <formalpara>
    <title>Uninstallation:</title>
    <para>
-    To undo the installation use the command <command>gmake
+    To undo the installation use the command <command>make
     uninstall</>. However, this will not remove any created directories.
    </para>
   </formalpara>
@@ -1596,11 +1593,11 @@ PostgreSQL, contrib and HTML documentation successfully made. Ready to install.
 
    <para>
     After the installation you can free disk space by removing the built
-    files from the source tree with the command <command>gmake
+    files from the source tree with the command <command>make
     clean</>. This will preserve the files made by the <command>configure</command>
-    program, so that you can rebuild everything with <command>gmake</>
+    program, so that you can rebuild everything with <command>make</>
     later on. To reset the source tree to the state in which it was
-    distributed, use <command>gmake distclean</>. If you are going to
+    distributed, use <command>make distclean</>. If you are going to
     build for several platforms within the same source tree you must do
     this and re-configure for each platform.  (Alternatively, use
     a separate build tree for each platform, so that the source tree
@@ -1612,7 +1609,7 @@ PostgreSQL, contrib and HTML documentation successfully made. Ready to install.
    If you perform a build and then discover that your <command>configure</>
    options were wrong, or if you change anything that <command>configure</>
    investigates (for example, software upgrades), then it's a good
-   idea to do <command>gmake distclean</> before reconfiguring and
+   idea to do <command>make distclean</> before reconfiguring and
    rebuilding.  Without this, your changes in configuration choices
    might not propagate everywhere they need to.
   </para>
@@ -1904,7 +1901,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
     <listitem>
      <para>
       Run the regression tests against the installed server (using
-      <command>gmake installcheck</command>). If you didn't run the
+      <command>make installcheck</command>). If you didn't run the
       tests before installation, you should definitely do it now. This
       is also explained in the documentation.
      </para>
@@ -2360,12 +2357,6 @@ createlang: language installation failed: ERROR:  could not load library "/opt/d
 
      <listitem>
       <para>
-       The GNU make command is called <command>make</command>, not <command>gmake</command>.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
        The <command>adduser</command> command is not supported; use
        the appropriate user management application on Windows NT,
        2000, or XP.  Otherwise, skip this step.
@@ -2647,9 +2638,7 @@ PHSS_30849  s700_800 u2comp/be/plugin library Patch
     <para>
      You need to use the GNU Make program, which is on the Skunkware
      CD.  By default, it installs
-     as <filename>/usr/local/bin/make</filename>.  To avoid confusion
-     with the SCO <filename>make</filename> program, you may want to rename GNU <filename>make</filename> to
-     <filename>gmake</filename>.
+     as <filename>/usr/local/bin/make</filename>.
     </para>
 
     <para>
@@ -2902,7 +2891,7 @@ AbortTransaction                    utils/probes.o
 CommitTransaction                   utils/probes.o
 ld: fatal: Symbol referencing errors. No output written to postgres
 collect2: ld returned 1 exit status
-gmake: *** [postgres] Error 1
+make: *** [postgres] Error 1
 </screen>
      your DTrace installation is too old to handle probes in static
      functions.  You need Solaris 10u4 or newer.

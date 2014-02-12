@@ -2,7 +2,7 @@ src/pl/plperl/README
 
 PL/Perl allows you to write PostgreSQL functions and procedures in
 Perl.  To include PL/Perl in the build use './configure --with-perl'.
-To build from this directory use 'gmake all; gmake install'.  libperl
+To build from this directory use 'make all; make install'.  libperl
 must have been built as a shared library, which is usually not the
 case in standard installations.
 

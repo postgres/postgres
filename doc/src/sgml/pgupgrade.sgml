@@ -246,7 +246,7 @@ mv /usr/local/pgsql /usr/local/pgsql.old
      location, use the <literal>prefix</literal> variable:
 
 <programlisting>
-gmake prefix=/usr/local/pgsql.new install
+make prefix=/usr/local/pgsql.new install
 </programlisting></para>
    </step>
 

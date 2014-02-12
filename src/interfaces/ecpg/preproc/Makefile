@@ -30,7 +30,7 @@ OBJS=	preproc.o type.o ecpg.o output.o parser.o \
 	keywords.o c_keywords.o ecpg_keywords.o kwlookup.o ../ecpglib/typename.o descriptor.o variable.o \
 	$(WIN32RES)
 
-# Suppress parallel build to avoid a bug in gmake 3.82
+# Suppress parallel build to avoid a bug in GNU make 3.82
 # (see comments in ../Makefile)
 ifeq ($(MAKE_VERSION),3.82)
 .NOTPARALLEL:

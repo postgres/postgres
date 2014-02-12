@@ -9,9 +9,9 @@ locale data.  Then there are test-sort.pl and test-sort.py that test
 collating.
 
 To run a test for some locale run
-    gmake check-$locale
+    make check-$locale
 for example
-    gmake check-koi8-r
+    make check-koi8-r
 
 Currently, there are only tests for a few locales available.  The script
 'runall' calls test-ctype to test libc and locale data, test-sort.pl

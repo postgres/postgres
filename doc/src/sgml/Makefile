@@ -234,9 +234,9 @@ INSTALL.html: standalone-install.sgml installation.sgml version.sgml
 ## XSLT processing
 ##
 
-# For obscure reasons, gmake 3.81 complains about circular dependencies
+# For obscure reasons, GNU make 3.81 complains about circular dependencies
 # if we try to do "make all" in a VPATH build without the explicit
-# $(srcdir) on the postgres.sgml dependency in this rule.  gmake bug?
+# $(srcdir) on the postgres.sgml dependency in this rule.  GNU make bug?
 postgres.xml: $(srcdir)/postgres.sgml $(ALMOSTALLSGML)
 	$(OSX) -D. -x lower -i include-xslt-index $< >postgres.xmltmp
 	$(PERL) -p -e 's/\[(aacute|acirc|aelig|agrave|amp|aring|atilde|auml|bull|copy|eacute|egrave|gt|iacute|lt|mdash|nbsp|ntilde|oacute|ocirc|oslash|ouml|pi|quot|scaron|uuml) *\]/\&\1;/gi;' \

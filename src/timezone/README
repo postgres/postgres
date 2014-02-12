@@ -27,7 +27,7 @@ effort is needed to update the time zone abbreviation lists under tznames/.
 These need to be changed whenever new abbreviations are invented or the
 UTC offset associated with an existing abbreviation changes.  To detect
 if this has happened, after installing new files under data/ do
-	gmake abbrevs.txt
+	make abbrevs.txt
 which will produce a file showing all abbreviations that are in current
 use according to the data/ files.  Compare this to known_abbrevs.txt,
 which is the list that existed last time the tznames/ files were updated.

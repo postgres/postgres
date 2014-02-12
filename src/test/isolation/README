@@ -14,7 +14,7 @@ behaviors have been added as well.
 To run the tests, you need to have a server running at the default port
 expected by libpq.  (You can set PGPORT and so forth in your environment
 to control this.)  Then run
-    gmake installcheck
+    make installcheck
 To run just specific test(s), you can do something like
     ./pg_isolation_regress fk-contention fk-deadlock
 (look into the specs/ subdirectory to see the available tests).
@@ -22,7 +22,7 @@ To run just specific test(s), you can do something like
 The prepared-transactions test requires the server's
 max_prepared_transactions parameter to be set to at least 3; therefore it
 is not run by default.  To include it in the test run, use
-    gmake installcheck-prepared-txns
+    make installcheck-prepared-txns
 
 To define tests with overlapping transactions, we use test specification
 files with a custom syntax, which is described in the next section.  To add

@@ -39,7 +39,7 @@
    To run the parallel regression tests after building but before installation,
    type:
 <screen>
-gmake check
+make check
 </screen>
    in the top-level directory.  (Or you can change to
    <filename>src/test/regress</filename> and run the command there.)
@@ -69,7 +69,7 @@ gmake check
 <prompt>root# </prompt><userinput>chmod -R a+w src/test/regress</userinput>
 <prompt>root# </prompt><userinput>su - joeuser</userinput>
 <prompt>joeuser$ </prompt><userinput>cd <replaceable>top-level build directory</></userinput>
-<prompt>joeuser$ </prompt><userinput>gmake check</userinput>
+<prompt>joeuser$ </prompt><userinput>make check</userinput>
 </screen>
     (The only possible <quote>security risk</quote> here is that other
     users might be able to alter the regression test results behind
@@ -82,7 +82,7 @@ gmake check
    <para>
     If you have configured <productname>PostgreSQL</productname> to install
     into a location where an older <productname>PostgreSQL</productname>
-    installation already exists, and you perform <literal>gmake check</>
+    installation already exists, and you perform <literal>make check</>
     before installing the new version, you might find that the tests fail
     because the new programs try to use the already-installed shared
     libraries.  (Typical symptoms are complaints about undefined symbols.)
@@ -103,7 +103,7 @@ gmake check
     a position to raise the limit, you can cut down the degree of parallelism
     by setting the <literal>MAX_CONNECTIONS</> parameter.  For example:
 <screen>
-gmake MAX_CONNECTIONS=10 check
+make MAX_CONNECTIONS=10 check
 </screen>
     runs no more than ten tests concurrently.
    </para>
@@ -117,11 +117,11 @@ gmake MAX_CONNECTIONS=10 check
    initialize a data area and start the
    server, <![%standalone-ignore;[as explained in <xref linkend="runtime">, ]]> then type:
 <screen>
-gmake installcheck
+make installcheck
 </screen>
 or for a parallel test:
 <screen>
-gmake installcheck-parallel
+make installcheck-parallel
 </screen>
    The tests will expect to contact the server at the local host and the
    default port number, unless directed otherwise by <envar>PGHOST</envar> and
@@ -138,14 +138,14 @@ gmake installcheck-parallel
    built and installed, change to the <filename>src/pl</> directory of the
    build tree and type:
 <screen>
-gmake installcheck
+make installcheck
 </screen>
    You can also do this in any of the subdirectories of <filename>src/pl</>
    to run tests for just one procedural language.  To run the tests for all
    <filename>contrib</> modules that have them, change to the
    <filename>contrib</> directory of the build tree and type:
 <screen>
-gmake installcheck
+make installcheck
 </screen>
    The <filename>contrib</> modules must have been built and installed first.
    You can also do this in a subdirectory of <filename>contrib</> to run
@@ -184,7 +184,7 @@ psql -h primary -f src/test/regress/sql/hs_primary_setup.sql regression
    directory:
 <screen>
 cd src/test/regress
-gmake standbycheck
+make standbycheck
 </screen>
   </para>
 
@@ -209,8 +209,8 @@ gmake standbycheck
     can be useful to test different locales by setting the appropriate
     environment variables, for example:
 <screen>
-gmake check LANG=C
-gmake check LC_COLLATE=en_US.utf8 LC_CTYPE=fr_CA.utf8
+make check LANG=C
+make check LC_COLLATE=en_US.utf8 LC_CTYPE=fr_CA.utf8
 </screen>
     For implementation reasons, setting <envar>LC_ALL</envar> does not
     work for this purpose; all the other locale-related environment
@@ -227,7 +227,7 @@ gmake check LC_COLLATE=en_US.utf8 LC_CTYPE=fr_CA.utf8
     You can also choose the database encoding explicitly by setting
     the variable <envar>ENCODING</envar>, for example:
 <screen>
-gmake check LANG=C ENCODING=EUC_JP
+make check LANG=C ENCODING=EUC_JP
 </screen>
     Setting the database encoding this way typically only makes sense
     if the locale is C; otherwise the encoding is chosen automatically
@@ -251,11 +251,11 @@ gmake check LANG=C ENCODING=EUC_JP
     files by setting the variable <envar>EXTRA_TESTS</envar>.  For
     example, to run the <literal>numeric_big</literal> test:
 <screen>
-gmake check EXTRA_TESTS=numeric_big
+make check EXTRA_TESTS=numeric_big
 </screen>
     To run the collation tests:
 <screen>
-gmake check EXTRA_TESTS=collate.linux.utf8 LANG=en_US.utf8
+make check EXTRA_TESTS=collate.linux.utf8 LANG=en_US.utf8
 </screen>
     The <literal>collate.linux.utf8</> test works only on Linux/glibc
     platforms, and only when run in a database that uses UTF-8 encoding.
@@ -337,7 +337,7 @@ gmake check EXTRA_TESTS=collate.linux.utf8 LANG=en_US.utf8
      locale-related environment variables on
      the <command>make</command> command line, for example:
 <programlisting>
-gmake check LANG=de_DE.utf8
+make check LANG=de_DE.utf8
 </programlisting>
      (The regression test driver unsets <envar>LC_ALL</envar>, so it
      does not work to choose the locale using that variable.)  To use
@@ -345,7 +345,7 @@ gmake check LANG=de_DE.utf8
      (or set them to <literal>C</literal>) or use the following
      special invocation:
 <programlisting>
-gmake check NO_LOCALE=1
+make check NO_LOCALE=1
 </programlisting>
      When running the tests against an existing installation, the
      locale setup is determined by the existing installation.  To
@@ -601,19 +601,19 @@ float8:out:i.86-.*-openbsd=float8-small-is-zero.out
     A typical workflow would look like this:
 <screen>
 ./configure --enable-coverage ... OTHER OPTIONS ...
-gmake
-gmake check # or other test suite
-gmake coverage-html
+make
+make check # or other test suite
+make coverage-html
 </screen>
     Then point your HTML browser
     to <filename>coverage/index.html</filename>.
-    The <command>gmake</command> commands also work in subdirectories.
+    The <command>make</command> commands also work in subdirectories.
    </para>
 
    <para>
     To reset the execution counts between test runs, run:
 <screen>
-gmake coverage-clean
+make coverage-clean
 </screen>
    </para>
   </sect1>

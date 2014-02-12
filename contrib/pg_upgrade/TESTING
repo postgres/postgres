@@ -10,7 +10,7 @@ specific to each major version of Postgres.
 Here are the steps needed to create a regression database dump file:
 
 1)  Create and populate the regression database in the old cluster
-    This database can be created by running 'gmake installcheck' from
+    This database can be created by running 'make installcheck' from
     src/test/regression.
 
 2)  Use pg_dump to dump out the regression database.  Use the new
@@ -66,18 +66,18 @@ steps:
 The shell script test.sh in this directory performs more or less this
 procedure.  You can invoke it by running
 
-    gmake check
+    make check
 
 or by running
 
-    gmake installcheck
+    make installcheck
 
-if "gmake install" (or "gmake install-world") were done beforehand.
+if "make install" (or "make install-world") were done beforehand.
 When invoked without arguments, it will run an upgrade from the
 version in this source tree to a new instance of the same version.  To
 test an upgrade from a different version, invoke it like this:
 
-    gmake installcheck oldbindir=...otherversion/bin oldsrc=...somewhere/postgresql
+    make installcheck oldbindir=...otherversion/bin oldsrc=...somewhere/postgresql
 
 In this case, you will have to manually eyeball the resulting dump
 diff for version-specific differences, as explained above.

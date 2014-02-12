@@ -40,8 +40,8 @@ endif
 
 # We could do this test in the action section:
 #	$(if $(ZIC),$(ZIC),./zic)
-# but gmake versions <= 3.78.1 or perhaps later have a bug
-# that causes a segfault;  gmake 3.81 or later fixes this.
+# but GNU make versions <= 3.78.1 or perhaps later have a bug
+# that causes a segfault;  GNU make 3.81 or later fixes this.
 ifeq (,$(ZIC))
 ZIC= ./zic
 endif

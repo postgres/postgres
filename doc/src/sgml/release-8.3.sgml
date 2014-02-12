@@ -8297,7 +8297,7 @@ current_date &lt; 2017-11-17
 
      <listitem>
       <para>
-       Support <command>gmake draft</command> when building the
+       Support <command>make draft</command> when building the
        <acronym>SGML</> documentation (Bruce)
       </para>
 

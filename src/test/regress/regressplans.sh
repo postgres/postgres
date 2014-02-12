@@ -26,8 +26,8 @@
 # efficient available query plans!  Have patience.
 
 
-# Select make to use --- default gmake, can be overridden by env var
-MAKE="${MAKE:-gmake}"
+# Select make to use --- default 'make', can be overridden by env var
+MAKE="${MAKE:-make}"
 
 # If PGOPTIONS is already defined, we'll add the -f switches to it.
 PGOPTIONS="${PGOPTIONS:-}"

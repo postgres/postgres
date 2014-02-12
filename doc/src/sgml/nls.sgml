@@ -165,7 +165,7 @@ msgstr "another translated"
     If you need to start a new translation effort, then first run the
     command:
 <programlisting>
-gmake init-po
+make init-po
 </programlisting>
     This will create a file
     <filename><replaceable>progname</replaceable>.pot</filename>.
@@ -188,7 +188,7 @@ AVAIL_LANGUAGES := de fr
     changed or added by the programmers.  In this case you do not need
     to start from scratch.  Instead, run the command:
 <programlisting>
-gmake update-po
+make update-po
 </programlisting>
     which will create a new blank message catalog file (the pot file
     you started with) and will merge it with the existing PO files.

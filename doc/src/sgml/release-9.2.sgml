@@ -5434,7 +5434,7 @@
        </para>
 
        <para>
-        Use <command>gmake STYLE=website draft</>.
+        Use <command>make STYLE=website draft</>.
        </para>
       </listitem>
 

@@ -12,7 +12,7 @@ This can format all PostgreSQL *.c and *.h files, but excludes *.y, and
 
 4) Remove all derived files (pgindent has trouble with one of the flex macros):
 
-	gmake maintainer-clean
+	make maintainer-clean
 
    Or:
 
@@ -47,10 +47,10 @@ This can format all PostgreSQL *.c and *.h files, but excludes *.y, and
 	# stop is only necessary if it's going to install in a location with an
 	# already running server
 	pg_ctl stop
-	gmake -C src install
-	gmake -C contrib install
+	make -C src install
+	make -C contrib install
 	pg_ctl start
-	gmake installcheck-world
+	make installcheck-world
 
 10) Remove Perl backup files after testing
 

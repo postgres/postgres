@@ -581,7 +581,7 @@ checking for osx... osx
    <para>
     To build the <acronym>HTML</acronym> version of the documentation:
 <screen>
-<prompt>doc/src/sgml$ </prompt><userinput>gmake html</userinput>
+<prompt>doc/src/sgml$ </prompt><userinput>make html</userinput>
 </screen>
     This is also the default target.  The output appears in the
     subdirectory <filename>html</filename>.
@@ -592,14 +592,14 @@ checking for osx... osx
     stages.  If you do not care about the index, and just want to
     proof-read the output, use <literal>draft</>:
 <screen>
-<prompt>doc/src/sgml$ </prompt><userinput>gmake draft</userinput>
+<prompt>doc/src/sgml$ </prompt><userinput>make draft</userinput>
 </screen>
    </para>
 
    <para>
     To build the documentation as a single HTML page, use:
 <screen>
-<prompt>doc/src/sgml$ </prompt><userinput>gmake postgres.html</userinput>
+<prompt>doc/src/sgml$ </prompt><userinput>make postgres.html</userinput>
 </screen>
    </para>
  </sect2>
@@ -616,7 +616,7 @@ checking for osx... osx
    pages, use the commands:
 <programlisting>
 cd doc/src/sgml
-gmake man
+make man
 </programlisting>
   </para>
  </sect2>
@@ -634,11 +634,11 @@ gmake man
       <para>
        To generate PostScript via <acronym>DVI</acronym> in A4 format:
 <screen>
-<prompt>doc/src/sgml$ </prompt><userinput>gmake postgres-A4.ps</userinput>
+<prompt>doc/src/sgml$ </prompt><userinput>make postgres-A4.ps</userinput>
 </screen>
        In U.S. letter format:
 <screen>
-<prompt>doc/src/sgml$ </prompt><userinput>gmake postgres-US.ps</userinput>
+<prompt>doc/src/sgml$ </prompt><userinput>make postgres-US.ps</userinput>
 </screen>
       </para>
      </listitem>
@@ -647,11 +647,11 @@ gmake man
       <para>
        To make a <acronym>PDF</acronym>:
 <screen>
-<prompt>doc/src/sgml$ </prompt><userinput>gmake postgres-A4.pdf</userinput>
+<prompt>doc/src/sgml$ </prompt><userinput>make postgres-A4.pdf</userinput>
 </screen>
        or:
 <screen>
-<prompt>doc/src/sgml$ </prompt><userinput>gmake postgres-US.pdf</userinput>
+<prompt>doc/src/sgml$ </prompt><userinput>make postgres-US.pdf</userinput>
 </screen>
        (Of course you can also make a <acronym>PDF</acronym> version
        from the PostScript, but if you generate <acronym>PDF</acronym>
@@ -741,7 +741,7 @@ save_size.pdfjadetex = 15000
      <para>
       Generate the <acronym>RTF</acronym> version by typing:
 <screen>
-<prompt>doc/src/sgml$ </prompt><userinput>gmake postgres.rtf</userinput>
+<prompt>doc/src/sgml$ </prompt><userinput>make postgres.rtf</userinput>
 </screen>
      </para>
     </step>
@@ -948,7 +948,7 @@ save_size.pdfjadetex = 15000
     corresponds to <xref linkend="installation">, with some minor
     changes to account for the different context.  To recreate the
     file, change to the directory <filename>doc/src/sgml</filename>
-    and enter <userinput>gmake INSTALL</userinput>.
+    and enter <userinput>make INSTALL</userinput>.
    </para>
 
    <para>
@@ -966,7 +966,7 @@ save_size.pdfjadetex = 15000
     method to just check the correct syntax of the documentation
     files, which only takes a few seconds:
 <screen>
-<prompt>doc/src/sgml$ </prompt><userinput>gmake check</userinput>
+<prompt>doc/src/sgml$ </prompt><userinput>make check</userinput>
 </screen>
    </para>
   </sect2>

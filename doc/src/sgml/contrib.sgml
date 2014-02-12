@@ -26,8 +26,8 @@
   (see <xref linkend="build">).
   You can build and install all of them by running:
 <screen>
-<userinput>gmake</userinput>
-<userinput>gmake install</userinput>
+<userinput>make</userinput>
+<userinput>make install</userinput>
 </screen>
   in the <literal>contrib</literal> directory of a configured source tree;
   or to build and install
@@ -35,11 +35,11 @@
   Many of the modules have regression tests, which can be executed by
   running:
 <screen>
-<userinput>gmake check</userinput>
+<userinput>make check</userinput>
 </screen>
   before installation or
 <screen>
-<userinput>gmake installcheck</userinput>
+<userinput>make installcheck</userinput>
 </screen>
   once you have a <productname>PostgreSQL</> server running.
  </para>
