@@ -1,6 +1,5 @@
 Release notes for all versions of PostgreSQL can be found on-line at
-http://www.postgresql.org/docs/devel/static/release.html
+http://www.postgresql.org/docs/current/static/release.html
 
-In a distribution file set, release notes for the current version can be
-found prebuilt under doc/src/sgml/html/.  Visit the index.html file with
-an HTML browser, then consult the "Release Notes" appendix.
+Distribution file sets include release notes for their version and preceding
+versions.  Visit the file doc/src/sgml/html/release.html in an HTML browser.
