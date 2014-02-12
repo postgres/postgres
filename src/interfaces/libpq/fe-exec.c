@@ -63,6 +63,7 @@ static int PQsendQueryGuts(PGconn *conn,
 				const int *paramFormats,
 				int resultFormat);
 static void parseInput(PGconn *conn);
+static PGresult *getCopyResult(PGconn *conn, ExecStatusType copytype);
 static bool PQexecStart(PGconn *conn);
 static PGresult *PQexecFinish(PGconn *conn);
 static int PQsendDescribe(PGconn *conn, char desc_type,
@@ -1734,22 +1735,13 @@ PQgetResult(PGconn *conn)
 			conn->asyncStatus = PGASYNC_BUSY;
 			break;
 		case PGASYNC_COPY_IN:
-			if (conn->result && conn->result->resultStatus == PGRES_COPY_IN)
-				res = pqPrepareAsyncResult(conn);
-			else
-				res = PQmakeEmptyPGresult(conn, PGRES_COPY_IN);
+			res = getCopyResult(conn, PGRES_COPY_IN);
 			break;
 		case PGASYNC_COPY_OUT:
-			if (conn->result && conn->result->resultStatus == PGRES_COPY_OUT)
-				res = pqPrepareAsyncResult(conn);
-			else
-				res = PQmakeEmptyPGresult(conn, PGRES_COPY_OUT);
+			res = getCopyResult(conn, PGRES_COPY_OUT);
 			break;
 		case PGASYNC_COPY_BOTH:
-			if (conn->result && conn->result->resultStatus == PGRES_COPY_BOTH)
-				res = pqPrepareAsyncResult(conn);
-			else
-				res = PQmakeEmptyPGresult(conn, PGRES_COPY_BOTH);
+			res = getCopyResult(conn, PGRES_COPY_BOTH);
 			break;
 		default:
 			printfPQExpBuffer(&conn->errorMessage,
@@ -1784,6 +1776,36 @@ PQgetResult(PGconn *conn)
 	}
 
 	return res;
+}
+
+/*
+ * getCopyResult
+ *	  Helper for PQgetResult: generate result for COPY-in-progress cases
+ */
+static PGresult *
+getCopyResult(PGconn *conn, ExecStatusType copytype)
+{
+	/*
+	 * If the server connection has been lost, don't pretend everything is
+	 * hunky-dory; instead return a PGRES_FATAL_ERROR result, and reset the
+	 * asyncStatus to idle (corresponding to what we'd do if we'd detected I/O
+	 * error in the earlier steps in PQgetResult).	The text returned in the
+	 * result is whatever is in conn->errorMessage; we hope that was filled
+	 * with something relevant when the lost connection was detected.
+	 */
+	if (conn->status != CONNECTION_OK)
+	{
+		pqSaveErrorResult(conn);
+		conn->asyncStatus = PGASYNC_IDLE;
+		return pqPrepareAsyncResult(conn);
+	}
+
+	/* If we have an async result for the COPY, return that */
+	if (conn->result && conn->result->resultStatus == copytype)
+		return pqPrepareAsyncResult(conn);
+
+	/* Otherwise, invent a suitable PGresult */
+	return PQmakeEmptyPGresult(conn, copytype);
 }
 
 
