@@ -369,6 +369,12 @@ test_sync(int writes_per_op)
 		{
 			for (writes = 0; writes < writes_per_op; writes++)
 				if (write(tmpfile, buf, XLOG_BLCKSZ) != XLOG_BLCKSZ)
+				/*
+				 * This can generate write failures if the filesystem
+				 * has a large block size, e.g. 4k, and there is no
+				 * support for O_DIRECT writes smaller than the
+				 * file system block size, e.g. XFS.
+				 */
 					die("write failed");
 			if (lseek(tmpfile, 0, SEEK_SET) == -1)
 				die("seek failed");
