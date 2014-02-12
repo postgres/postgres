@@ -1,3 +1,6 @@
+# src/template/win32
+
 # --allow-multiple-definition is required to link pg_dump because it finds
-# pg_toupper() in both libpq and pgport
-LDFLAGS="-Wl,--allow-multiple-definition"
+# pg_toupper() etc. in both libpq and pgport
+# --disable-auto-import is to ensure we get MSVC-like linking behavior
+LDFLAGS="-Wl,--allow-multiple-definition -Wl,--disable-auto-import"
