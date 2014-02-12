@@ -3,6 +3,6 @@
 SRCH_LIB="/usr/local/lib"
 
 # --allow-multiple-definition is required to link pg_dump because it finds
-# pg_toupper() in both libpq and pgport
-# --enable-auto-import gets rid of a diagnostics linker message
-LDFLAGS="-Wl,--allow-multiple-definition -Wl,--enable-auto-import"
+# pg_toupper() etc. in both libpq and pgport
+# --disable-auto-import is to ensure we get MSVC-like linking behavior
+LDFLAGS="-Wl,--allow-multiple-definition -Wl,--disable-auto-import"
