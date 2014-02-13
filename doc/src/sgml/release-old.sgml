@@ -1,11 +1,11 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release-old.sgml,v 1.1 2009/05/02 20:17:19 tgl Exp $ -->
+<!-- doc/src/sgml/release-old.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
  <sect1 id="release-7-3-21">
   <title>Release 7.3.21</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2008-01-07</simpara>
   </note>
 
@@ -25,8 +25,8 @@
 
    <para>
     A dump/restore is not required for those running 7.3.X.  However,
-    if you are upgrading from a version earlier than 7.3.13, see the release
-    notes for 7.3.13.
+    if you are upgrading from a version earlier than 7.3.13,
+    see <xref linkend="release-7-3-13">.
    </para>
 
   </sect2>
@@ -117,7 +117,7 @@
   <title>Release 7.3.20</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2007-09-17</simpara>
   </note>
 
@@ -130,8 +130,8 @@
 
    <para>
     A dump/restore is not required for those running 7.3.X.  However,
-    if you are upgrading from a version earlier than 7.3.13, see the release
-    notes for 7.3.13.
+    if you are upgrading from a version earlier than 7.3.13,
+    see <xref linkend="release-7-3-13">.
    </para>
 
   </sect2>
@@ -178,7 +178,7 @@
   <title>Release 7.3.19</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2007-04-23</simpara>
   </note>
 
@@ -192,8 +192,8 @@
 
    <para>
     A dump/restore is not required for those running 7.3.X.  However,
-    if you are upgrading from a version earlier than 7.3.13, see the release
-    notes for 7.3.13.
+    if you are upgrading from a version earlier than 7.3.13,
+    see <xref linkend="release-7-3-13">.
    </para>
 
   </sect2>
@@ -234,7 +234,7 @@
   <title>Release 7.3.18</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2007-02-05</simpara>
   </note>
 
@@ -248,8 +248,8 @@
 
    <para>
     A dump/restore is not required for those running 7.3.X.  However,
-    if you are upgrading from a version earlier than 7.3.13, see the release
-    notes for 7.3.13.
+    if you are upgrading from a version earlier than 7.3.13,
+    see <xref linkend="release-7-3-13">.
    </para>
 
   </sect2>
@@ -296,7 +296,7 @@
   <title>Release 7.3.17</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2007-01-08</simpara>
   </note>
 
@@ -309,8 +309,8 @@
 
    <para>
     A dump/restore is not required for those running 7.3.X.  However,
-    if you are upgrading from a version earlier than 7.3.13, see the release
-    notes for 7.3.13.
+    if you are upgrading from a version earlier than 7.3.13,
+    see <xref linkend="release-7-3-13">.
    </para>
 
   </sect2>
@@ -352,7 +352,7 @@
   <title>Release 7.3.16</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2006-10-16</simpara>
   </note>
 
@@ -365,8 +365,8 @@
 
    <para>
     A dump/restore is not required for those running 7.3.X.  However,
-    if you are upgrading from a version earlier than 7.3.13, see the release
-    notes for 7.3.13.
+    if you are upgrading from a version earlier than 7.3.13,
+    see <xref linkend="release-7-3-13">.
    </para>
 
   </sect2>
@@ -394,7 +394,7 @@
   <title>Release 7.3.15</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2006-05-23</simpara>
   </note>
 
@@ -408,8 +408,8 @@
 
    <para>
     A dump/restore is not required for those running 7.3.X.  However,
-    if you are upgrading from a version earlier than 7.3.13, see the release
-    notes for 7.3.13.
+    if you are upgrading from a version earlier than 7.3.13,
+    see <xref linkend="release-7-3-13">.
    </para>
 
    <para>
@@ -486,7 +486,7 @@ Fuhr)</para></listitem>
   <title>Release 7.3.14</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2006-02-14</simpara>
   </note>
 
@@ -499,8 +499,8 @@ Fuhr)</para></listitem>
 
    <para>
     A dump/restore is not required for those running 7.3.X.  However,
-    if you are upgrading from a version earlier than 7.3.13, see the release
-    notes for 7.3.13.
+    if you are upgrading from a version earlier than 7.3.13,
+    see <xref linkend="release-7-3-13">.
    </para>
   </sect2>
 
@@ -543,7 +543,7 @@ and <function>isinf</> during configure (Tom)</para></listitem>
   <title>Release 7.3.13</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2006-01-09</simpara>
   </note>
 
@@ -556,8 +556,8 @@ and <function>isinf</> during configure (Tom)</para></listitem>
 
    <para>
     A dump/restore is not required for those running 7.3.X.  However,
-    if you are upgrading from a version earlier than 7.3.10, see the release
-    notes for 7.3.10.
+    if you are upgrading from a version earlier than 7.3.10,
+    see <xref linkend="release-7-3-10">.
     Also, you might need to <command>REINDEX</> indexes on textual
     columns after updating, if you are affected by the locale or
     <application>plperl</> issues described below.
@@ -605,7 +605,7 @@ what's actually returned by the query (Joe)</para></listitem>
   <title>Release 7.3.12</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2005-12-12</simpara>
   </note>
 
@@ -618,8 +618,8 @@ what's actually returned by the query (Joe)</para></listitem>
 
    <para>
     A dump/restore is not required for those running 7.3.X.  However,
-    if you are upgrading from a version earlier than 7.3.10, see the release
-    notes for 7.3.10.
+    if you are upgrading from a version earlier than 7.3.10,
+    see <xref linkend="release-7-3-10">.
    </para>
   </sect2>
 
@@ -652,7 +652,7 @@ table has been dropped</para></listitem>
   <title>Release 7.3.11</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2005-10-04</simpara>
   </note>
 
@@ -665,8 +665,8 @@ table has been dropped</para></listitem>
 
    <para>
     A dump/restore is not required for those running 7.3.X.  However,
-    if you are upgrading from a version earlier than 7.3.10, see the release
-    notes for 7.3.10.
+    if you are upgrading from a version earlier than 7.3.10,
+    see <xref linkend="release-7-3-10">.
    </para>
   </sect2>
 
@@ -692,7 +692,7 @@ pages</para></listitem>
 enabled</para></listitem>
 <listitem><para>Various memory leakage fixes</para></listitem>
 <listitem><para>Various portability improvements</para></listitem>
-<listitem><para>Fix PL/PgSQL to handle <literal>var := var</> correctly when
+<listitem><para>Fix PL/pgSQL to handle <literal>var := var</> correctly when
 the variable is of pass-by-reference type</para></listitem>
 </itemizedlist>
 
@@ -703,7 +703,7 @@ the variable is of pass-by-reference type</para></listitem>
   <title>Release 7.3.10</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2005-05-09</simpara>
   </note>
 
@@ -829,7 +829,7 @@ month-related formats</para></listitem>
   <title>Release 7.3.9</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2005-01-31</simpara>
   </note>
 
@@ -885,7 +885,7 @@ datestyles</para></listitem>
   <title>Release 7.3.8</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2004-10-22</simpara>
   </note>
 
@@ -935,7 +935,7 @@ concern since there is no reason for non-developers to use this script anyway.
   <title>Release 7.3.7</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2004-08-16</simpara>
   </note>
 
@@ -975,7 +975,7 @@ since <productname>PostgreSQL</productname> 7.1.
   <title>Release 7.3.6</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2004-03-02</simpara>
   </note>
 
@@ -1040,7 +1040,7 @@ operations on bytea columns (Joe)</para></listitem>
   <title>Release 7.3.5</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2003-12-03</simpara>
   </note>
 
@@ -1091,7 +1091,7 @@ operations on bytea columns (Joe)</para></listitem>
   <title>Release 7.3.4</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2003-07-24</simpara>
   </note>
 
@@ -1131,7 +1131,7 @@ operations on bytea columns (Joe)</para></listitem>
  <title>Release 7.3.3</title>
 
  <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2003-05-22</simpara>
  </note>
 
@@ -1241,7 +1241,7 @@ operations on bytea columns (Joe)</para></listitem>
  <title>Release 7.3.2</title>
 
  <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2003-02-04</simpara>
  </note>
 
@@ -1302,7 +1302,7 @@ operations on bytea columns (Joe)</para></listitem>
  <title>Release 7.3.1</title>
 
  <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2002-12-18</simpara>
  </note>
 
@@ -1352,7 +1352,7 @@ operations on bytea columns (Joe)</para></listitem>
  <title>Release 7.3</title>
 
  <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2002-11-27</simpara>
  </note>
 
@@ -1988,7 +1988,7 @@ operations on bytea columns (Joe)</para></listitem>
   <title>Release 7.2.8</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2005-05-09</simpara>
   </note>
 
@@ -2039,7 +2039,7 @@ month-related formats</para></listitem>
   <title>Release 7.2.7</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2005-01-31</simpara>
   </note>
 
@@ -2087,7 +2087,7 @@ datestyles</para></listitem>
   <title>Release 7.2.6</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2004-10-22</simpara>
   </note>
 
@@ -2138,7 +2138,7 @@ concern since there is no reason for non-developers to use this script anyway.
   <title>Release 7.2.5</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2004-08-16</simpara>
   </note>
 
@@ -2181,7 +2181,7 @@ since <productname>PostgreSQL</productname> 7.1.
  <title>Release 7.2.4</title>
 
  <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2003-01-30</simpara>
  </note>
 
@@ -2220,7 +2220,7 @@ since <productname>PostgreSQL</productname> 7.1.
  <title>Release 7.2.3</title>
 
  <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2002-10-01</simpara>
  </note>
 
@@ -2257,7 +2257,7 @@ since <productname>PostgreSQL</productname> 7.1.
  <title>Release 7.2.2</title>
 
  <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2002-08-23</simpara>
  </note>
 
@@ -2300,7 +2300,7 @@ since <productname>PostgreSQL</productname> 7.1.
  <title>Release 7.2.1</title>
 
  <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2002-03-21</simpara>
  </note>
 
@@ -2346,7 +2346,7 @@ since <productname>PostgreSQL</productname> 7.1.
  <title>Release 7.2</title>
 
  <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2002-02-04</simpara>
  </note>
 
@@ -2902,7 +2902,7 @@ since <productname>PostgreSQL</productname> 7.1.
   <title>Release 7.1.3</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2001-08-15</simpara>
   </note>
 
@@ -2919,7 +2919,7 @@ since <productname>PostgreSQL</productname> 7.1.
    <title>Changes</title>
 
    <para>
-    <programlisting>
+<programlisting>
 Remove unused WAL segments of large transactions (Tom)
 Multiaction rule fix (Tom)
 PL/pgSQL memory allocation fix (Jan)
@@ -2930,7 +2930,7 @@ Fix subselects with DISTINCT ON or LIMIT (Tom)
 BeOS fix
 Disable COPY TO/FROM a view (Tom)
 Cygwin build (Jason Tishler)
-    </programlisting>
+</programlisting>
    </para>
   </sect2>
  </sect1>
@@ -2940,7 +2940,7 @@ Cygwin build (Jason Tishler)
   <title>Release 7.1.2</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2001-05-11</simpara>
   </note>
 
@@ -2962,13 +2962,13 @@ Cygwin build (Jason Tishler)
    <title>Changes</title>
 
    <para>
-    <programlisting>
+<programlisting>
 Fix PL/pgSQL SELECTs when returning no rows
 Fix for psql backslash core dump
 Referential integrity privilege fix
 Optimizer fixes
 pg_dump cleanups
-    </programlisting>
+</programlisting>
    </para>
   </sect2>
  </sect1>
@@ -2978,7 +2978,7 @@ pg_dump cleanups
   <title>Release 7.1.1</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2001-05-05</simpara>
   </note>
 
@@ -3000,7 +3000,7 @@ pg_dump cleanups
    <title>Changes</title>
 
    <para>
-    <programlisting>
+<programlisting>
 Fix for numeric MODULO operator (Tom)
 pg_dump fixes (Philip)
 pg_dump can dump 7.0 databases (Philip)
@@ -3015,7 +3015,7 @@ Fix for pg_ctl and option strings with spaces (Peter E)
 ODBC fixes (Hiroshi)
 EXTRACT can now take string argument (Thomas)
 Python fixes (Darcy)
-    </programlisting>
+</programlisting>
    </para>
   </sect2>
  </sect1>
@@ -3025,7 +3025,7 @@ Python fixes (Darcy)
   <title>Release 7.1</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2001-04-13</simpara>
   </note>
 
@@ -3127,7 +3127,7 @@ Subqueries in FROM are now supported.
    <title>Changes</title>
 
    <para>
-    <programlisting>
+<programlisting>
 Bug Fixes
 ---------
 Many multibyte/Unicode/locale fixes (Tatsuo and others)
@@ -3299,7 +3299,7 @@ New BeOS port (David Reid, Cyril Velter)
 Add proofreader's changes to docs (Addison-Wesley, Bruce)
 New Alpha spinlock code (Adriaan Joubert, Compaq)
 UnixWare port overhaul (Peter E)
-New Darwin/MacOS X port (Peter Bierman, Bruce Hartzler)
+New Darwin/Mac OS X port (Peter Bierman, Bruce Hartzler)
 New FreeBSD Alpha port (Alfred)
 Overhaul shared memory segments (Tom)
 Add IBM S/390 support (Neale Ferguson)
@@ -3313,7 +3313,7 @@ New contrib/pg_logger
 New --template option to createdb
 New contrib/pg_control utility (Oliver)
 New FreeBSD tools ipc_check, start-scripts/freebsd
-    </programlisting>
+</programlisting>
    </para>
   </sect2>
  </sect1>
@@ -3323,7 +3323,7 @@ New FreeBSD tools ipc_check, start-scripts/freebsd
   <title>Release 7.0.3</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2000-11-11</simpara>
   </note>
 
@@ -3345,7 +3345,7 @@ New FreeBSD tools ipc_check, start-scripts/freebsd
    <title>Changes</title>
 
    <para>
-    <programlisting>
+<programlisting>
 Jdbc fixes (Peter)
 Large object fix (Tom)
 Fix lean in COPY WITH OIDS leak (Tom)
@@ -3385,7 +3385,7 @@ Buffer fix (Tom)
 Fix for inserting/copying longer multibyte strings into char() data
    types (Tatsuo)
 Fix for crash of backend, on abort (Tom)
-    </programlisting>
+</programlisting>
    </para>
   </sect2>
  </sect1>
@@ -3395,7 +3395,7 @@ Fix for crash of backend, on abort (Tom)
   <title>Release 7.0.2</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2000-06-05</simpara>
   </note>
 
@@ -3417,9 +3417,9 @@ Fix for crash of backend, on abort (Tom)
    <title>Changes</title>
 
    <para>
-    <programlisting>
+<programlisting>
 Added documentation to tarball.
-    </programlisting>
+</programlisting>
    </para>
   </sect2>
  </sect1>
@@ -3429,7 +3429,7 @@ Added documentation to tarball.
   <title>Release 7.0.1</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2000-06-01</simpara>
   </note>
 
@@ -3450,7 +3450,7 @@ Added documentation to tarball.
    <title>Changes</title>
 
    <para>
-    <programlisting>
+<programlisting>
 Fix many CLUSTER failures (Tom)
 Allow ALTER TABLE RENAME works on indexes (Tom)
 Fix plpgsql to handle datetime-&gt;timestamp and timespan-&gt;interval (Bruce)
@@ -3475,7 +3475,7 @@ Fix too long syslog message (Tatsuo)
 Fix problem with quoted indexes that are too long (Tom)
 JDBC ResultSet.getTimestamp() fix (Gregory Krasnow &amp; Floyd Marinescu)
 ecpg changes (Michael)
-    </programlisting>
+</programlisting>
    </para>
   </sect2>
  </sect1>
@@ -3484,7 +3484,7 @@ ecpg changes (Michael)
   <title>Release 7.0</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2000-05-08</simpara>
   </note>
 
@@ -3626,7 +3626,7 @@ ecpg changes (Michael)
    <title>Changes</title>
 
    <para>
-    <programlisting>
+<programlisting>
 Bug Fixes
 ---------
 Prevent function calls exceeding maximum number of arguments (Tom)
@@ -3944,7 +3944,7 @@ NT fixes
 NetBSD fixes (Johnny C. Lam <email>lamj@stat.cmu.edu</email>)
 Fixes for Alpha compiles
 New multibyte encodings
-    </programlisting>
+</programlisting>
    </para>
   </sect2>
  </sect1>
@@ -3953,7 +3953,7 @@ New multibyte encodings
   <title>Release 6.5.3</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>1999-10-13</simpara>
   </note>
 
@@ -3975,11 +3975,11 @@ New multibyte encodings
    <title>Changes</title>
 
    <para>
-    <programlisting>
+<programlisting>
 Updated version of pgaccess 0.98
 NT-specific patch
 Fix dumping rules on inherited tables
-    </programlisting>
+</programlisting>
    </para>
   </sect2>
  </sect1>
@@ -3989,7 +3989,7 @@ Fix dumping rules on inherited tables
   <title>Release 6.5.2</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>1999-09-15</simpara>
   </note>
 
@@ -4012,7 +4012,7 @@ Fix dumping rules on inherited tables
    <title>Changes</title>
 
    <para>
-    <programlisting>
+<programlisting>
 subselect+CASE fixes(Tom)
 Add SHLIB_LINK setting for solaris_i386 and solaris_sparc ports(Daren Sefcik)
 Fixes for CASE in WHERE join clauses(Tom)
@@ -4037,7 +4037,7 @@ Repair logic error in LIKE: should not return LIKE_ABORT
   when reach end of pattern before end of text(Tom)
 Repair incorrect cleanup of heap memory allocation during transaction abort(Tom)
 Updated version of pgaccess 0.98
-    </programlisting>
+</programlisting>
    </para>
   </sect2>
  </sect1>
@@ -4046,7 +4046,7 @@ Updated version of pgaccess 0.98
   <title>Release 6.5.1</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>1999-07-15</simpara>
   </note>
 
@@ -4068,7 +4068,7 @@ Updated version of pgaccess 0.98
    <title>Changes</title>
 
    <para>
-    <programlisting>
+<programlisting>
 Add NT README file
 Portability fixes for linux_ppc, IRIX, linux_alpha, OpenBSD, alpha
 Remove QUERY_LIMIT, use SELECT...LIMIT
@@ -4092,7 +4092,7 @@ Shared library dependencies fixed (Tom)
 Fixed glitches affecting GROUP BY in subselects(Tom)
 Fix some compiler warnings (Tomoaki Nishiyama)
 Add Win1250 (Czech) support (Pavel Behal)
-    </programlisting>
+</programlisting>
    </para>
   </sect2>
  </sect1>
@@ -4101,7 +4101,7 @@ Add Win1250 (Czech) support (Pavel Behal)
   <title>Release 6.5</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>1999-06-09</simpara>
   </note>
 
@@ -4329,7 +4329,7 @@ Add Win1250 (Czech) support (Pavel Behal)
    <title>Changes</title>
 
    <para>
-    <programlisting>
+<programlisting>
 Bug Fixes
 ---------
 Fix text&lt;-&gt;float8 and text&lt;-&gt;float4 conversion functions(Thomas)
@@ -4491,7 +4491,7 @@ Add ARM32 support(Andrew McMurry)
 Better support for HP-UX 11 and UnixWare
 Improve file handling to be more uniform, prevent file descriptor leak(Tom)
 New install commands for plpgsql(Jan)
-    </programlisting>
+</programlisting>
    </para>
   </sect2>
  </sect1>
@@ -4501,7 +4501,7 @@ New install commands for plpgsql(Jan)
 <title>Release 6.4.2</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>1998-12-20</simpara>
   </note>
 
@@ -4536,7 +4536,7 @@ Fix for datetime constant problem on some platforms(Thomas)
 <title>Release 6.4.1</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>1998-12-18</simpara>
   </note>
 
@@ -4600,7 +4600,7 @@ Upgrade to PyGreSQL 2.2(D'Arcy)
 <title>Release 6.4</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>1998-10-30</simpara>
   </note>
 
@@ -4695,7 +4695,7 @@ previous release of <productname>PostgreSQL</productname>.
 <title>Changes</title>
 
    <para>
-    <programlisting>
+<programlisting>
 Bug Fixes
 ---------
 Fix for a tiny memory leak in PQsetdb/PQfinish(Bryan)
@@ -4897,7 +4897,7 @@ new Makefile.shlib for shared library configuration(Tom)
 <title>Release 6.3.2</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>1998-04-07</simpara>
   </note>
 
@@ -4939,7 +4939,7 @@ refer to the installation and migration instructions for version 6.3.
    <title>Changes</title>
 
    <para>
-    <programlisting>
+<programlisting>
 Configure detection improvements for tcl/tk(Brook Milligan, Alvin)
 Manual page improvements(Bruce)
 BETWEEN and LIKE fix(Thomas)
@@ -4958,7 +4958,7 @@ libreadline cleanup(Erwan MAS)
 Remove DISTDIR(Bruce)
 Makefile dependency cleanup(Jeroen van Vianen)
 ASSERT fixes(Bruce)
-    </programlisting>
+</programlisting>
    </para>
   </sect2>
  </sect1>
@@ -4967,7 +4967,7 @@ ASSERT fixes(Bruce)
   <title>Release 6.3.1</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>1998-03-23</simpara>
   </note>
 
@@ -5016,7 +5016,7 @@ refer to the installation and migration instructions for version 6.3.
    <title>Changes</title>
 
    <para>
-    <programlisting>
+<programlisting>
 ecpg cleanup/fixes, now version 1.1(Michael Meskes)
 pg_user cleanup(Bruce)
 large object fix for pg_dump and tclsh (alvin)
@@ -5044,7 +5044,7 @@ Fix Alpha port(Dwayne Bailey)
 Fix for text arrays containing quotes(Doug Gibson)
 Solaris compile fix(Albert Chin-A-Young)
 Better identify tcl and tk libs and includes(Bruce)
-    </programlisting>
+</programlisting>
    </para>
   </sect2>
  </sect1>
@@ -5053,7 +5053,7 @@ Better identify tcl and tk libs and includes(Bruce)
   <title>Release 6.3</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>1998-03-01</simpara>
   </note>
 
@@ -5191,7 +5191,7 @@ Better identify tcl and tk libs and includes(Bruce)
    <title>Changes</title>
 
    <para>
-    <programlisting>
+<programlisting>
 Bug Fixes
 ---------
 Fix binary cursors broken by MOVE implementation(Vadim)
@@ -5365,7 +5365,7 @@ Remove un-needed malloc() calls and replace with palloc()(Bruce)
 <title>Release 6.2.1</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>1997-10-17</simpara>
   </note>
 
@@ -5413,8 +5413,8 @@ Another way to avoid dump/reload is to use the following SQL command
 from <command>psql</command> to update the existing system table:
 
 <programlisting>
- update pg_aggregate set aggfinalfn = 'cash_div_flt8'
-  where aggname = 'avg' and aggbasetype = 790;
+update pg_aggregate set aggfinalfn = 'cash_div_flt8'
+ where aggname = 'avg' and aggbasetype = 790;
 </programlisting>
 </para>
 <para>
@@ -5426,7 +5426,7 @@ This will need to be done to every existing database, including template1.
    <title>Changes</title>
 
    <para>
-    <programlisting>
+<programlisting>
 Allow TIME and TYPE column names(Thomas)
 Allow larger range of true/false as boolean values(Thomas)
 Support output of "now" and "current"(Thomas)
@@ -5438,7 +5438,7 @@ Fix avg(cash) computation(Thomas)
 Fix for specifying a column twice in ORDER/GROUP BY(Vadim)
 Documented new libpq function to return affected rows, PQcmdTuples(Bruce)
 Trigger function for inserting user names for INSERT/UPDATE(Brook Milligan)
-    </programlisting>
+</programlisting>
    </para>
   </sect2>
  </sect1>
@@ -5447,7 +5447,7 @@ Trigger function for inserting user names for INSERT/UPDATE(Brook Milligan)
 <title>Release 6.2</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>1997-10-02</simpara>
   </note>
 
@@ -5482,7 +5482,7 @@ because the COPY output format was improved from the 1.02 release.
    <title>Changes</title>
 
    <para>
-    <programlisting>
+<programlisting>
 Bug Fixes
 ---------
 Fix problems with pg_dump for inheritance, sequences, archive tables(Bruce)
@@ -5600,7 +5600,7 @@ SPI and Trigger programming guides (Vadim &amp; D'Arcy)
 <title>Release 6.1.1</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>1997-07-22</simpara>
   </note>
 
@@ -5618,7 +5618,7 @@ Refer to the release notes for 6.1 for more details.
    <title>Changes</title>
 
    <para>
-    <programlisting>
+<programlisting>
 fix for SET with options (Thomas)
 allow pg_dump/pg_dumpall to preserve ownership of all tables/objects(Bruce)
 new psql \connect option allows changing usernames without changing databases
@@ -5636,7 +5636,7 @@ major fix for endian handling of communication to server(Thomas, Tatsuo)
 Fix for Solaris assembler and include files(Yoshihiko Ichikawa)
 allow underscores in usernames(Bruce)
 pg_dumpall now returns proper status, portability fix(Bruce)
-    </programlisting>
+</programlisting>
    </para>
   </sect2>
  </sect1>
@@ -5645,7 +5645,7 @@ pg_dumpall now returns proper status, portability fix(Bruce)
 <title>Release 6.1</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>1997-06-08</simpara>
   </note>
 
@@ -5713,7 +5713,7 @@ because the COPY output format was improved from the 1.02 release.
    <title>Changes</title>
 
    <para>
-    <programlisting>
+<programlisting>
 Bug Fixes
 ---------
 packet length checking in library routines
@@ -5817,7 +5817,7 @@ DG/UX, Ultrix, IRIX, AIX portability fixes
 <title>Release 6.0</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>1997-01-29</simpara>
   </note>
 
@@ -5848,7 +5848,7 @@ because the COPY output format was improved from the 1.02 release.
    <title>Changes</title>
 
    <para>
-    <programlisting>
+<programlisting>
 Bug Fixes
 ---------
 ALTER TABLE bug - running postgres process needs to re-read table definition
@@ -5961,7 +5961,7 @@ Unused/uninitialized variables corrected
 <title>Release 1.09</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>1996-11-04</simpara>
   </note>
 
@@ -5976,7 +5976,7 @@ releases.
 <title>Release 1.02</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>1996-08-01</simpara>
   </note>
 
@@ -6017,7 +6017,7 @@ Add the new built-in functions and operators of 1.02.1 to 1.01 or 1.02
   1.01 or 1.02 database is named <literal>testdb</literal> and you have cut the commands
   from the end of this file and saved them in <filename>addfunc.sql</filename>:
 <programlisting>
-       % psql testdb -f addfunc.sql
+% psql testdb -f addfunc.sql
 </programlisting>
 
 Those upgrading 1.02 databases will get a warning when executing the
@@ -6040,7 +6040,7 @@ end-of-data marker.  Also, empty strings are now loaded in as '' rather
 than NULL. See the copy manual page for full details.
 
 <programlisting>
-       sed 's/^\.$/\\./g' &lt;in_file &gt;out_file
+sed 's/^\.$/\\./g' &lt;in_file &gt;out_file
 </programlisting>
 </para>
 <para>
@@ -6125,7 +6125,7 @@ Contributors (apologies to any missed)
 <title>Release 1.01</title>
 
    <note>
-   <title>Release date</title>
+   <title>Release Date</title>
    <simpara>1996-02-23</simpara>
    </note>
 
@@ -6169,7 +6169,7 @@ If you do, you must create a file name <literal>pg_hba</literal> in your top-lev
 If you do not want host-based authentication, you can comment out
    the line:
 <programlisting>
-        HBA = 1
+HBA = 1
 </programlisting>
    in <filename>src/Makefile.global</filename>
 </para>
@@ -6218,7 +6218,7 @@ Add the new built-in functions and operators of 1.01 to 1.0
    If your 1.0 database is name <literal>testdb</literal>:
 
 <programlisting>
-        % psql testdb -f 1.0_to_1.01.sql
+% psql testdb -f 1.0_to_1.01.sql
 </programlisting>
 
 and then execute the following commands (cut and paste from here):
@@ -6317,7 +6317,7 @@ Bug fixes:
 <title>Release 1.0</title>
 
    <note>
-   <title>Release date</title>
+   <title>Release Date</title>
    <simpara>1995-09-05</simpara>
    </note>
 
@@ -6374,7 +6374,7 @@ Bug fixes:
 <title><productname>Postgres95</productname> Release 0.03</title>
 
    <note>
-   <title>Release date</title>
+   <title>Release Date</title>
    <simpara>1995-07-21</simpara>
    </note>
 
@@ -6496,7 +6496,7 @@ New documentation:
 <title><productname>Postgres95</productname> Release 0.02</title>
 
    <note>
-   <title>Release date</title>
+   <title>Release Date</title>
    <simpara>1995-05-25</simpara>
    </note>
 
@@ -6547,7 +6547,7 @@ The following bugs have been fixed in postgres95-beta-0.02:
 <title><productname>Postgres95</productname> Release 0.01</title>
 
    <note>
-   <title>Release date</title>
+   <title>Release Date</title>
    <simpara>1995-05-01</simpara>
    </note>
 
@@ -6563,11 +6563,11 @@ Initial release.
    <para>
     These timing results are from running the regression test with the commands
 
-    <programlisting>
+<programlisting>
 % cd src/test/regress
 % make all
 % time make runtest
-    </programlisting>
+</programlisting>
    </para>
    <para>
     Timing under Linux 2.0.27 seems to have a roughly 5% variation from run
@@ -6587,20 +6587,20 @@ Initial release.
     <para>
      Timing with <function>fsync()</function> disabled:
 
-     <programlisting>
-  Time   System
-  02:00  Dual Pentium Pro 180, 224MB, UW-SCSI, Linux 2.0.36, gcc 2.7.2.3 -O2 -m486
-  04:38  Sparc Ultra 1 143MHz, 64MB, Solaris 2.6
-     </programlisting>
+<literallayout class="monospaced">
+Time   System
+02:00  Dual Pentium Pro 180, 224MB, UW-SCSI, Linux 2.0.36, gcc 2.7.2.3 -O2 -m486
+04:38  Sparc Ultra 1 143MHz, 64MB, Solaris 2.6
+</literallayout>
     </para>
 
     <para>
      Timing with <function>fsync()</function> enabled:
 
-     <programlisting>
-  Time   System
-  04:21  Dual Pentium Pro 180, 224MB, UW-SCSI, Linux 2.0.36, gcc 2.7.2.3 -O2 -m486
-     </programlisting>
+<literallayout class="monospaced">
+Time   System
+04:21  Dual Pentium Pro 180, 224MB, UW-SCSI, Linux 2.0.36, gcc 2.7.2.3 -O2 -m486
+</literallayout>
 
      For the <systemitem class="osname">Linux</systemitem> system above, using <acronym>UW-SCSI</acronym> disks rather than (older) <acronym>IDE</acronym>
      disks leads to a 50% improvement in speed on the regression test.
@@ -6616,10 +6616,10 @@ since some additional regression tests have been included.
 In general, however, 6.4 should be slightly faster than the previous release (thanks, Bruce!).
 </para>
 <para>
-<programlisting>
-  Time   System
-  02:26  Dual Pentium Pro 180, 96MB, UW-SCSI, Linux 2.0.30, gcc 2.7.2.1 -O2 -m486
-</programlisting>
+<literallayout class="monospaced">
+Time   System
+02:26  Dual Pentium Pro 180, 96MB, UW-SCSI, Linux 2.0.30, gcc 2.7.2.1 -O2 -m486
+</literallayout>
 </para>
 </sect2>
 

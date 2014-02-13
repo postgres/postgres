@@ -5,7 +5,7 @@
   <title>Release 8.1.23</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2010-12-16</simpara>
   </note>
 
@@ -27,7 +27,7 @@
    <para>
     A dump/restore is not required for those running 8.1.X.
     However, if you are upgrading from a version earlier than 8.1.18,
-    see the release notes for 8.1.18.
+    see <xref linkend="release-8-1-18">.
    </para>
 
   </sect2>
@@ -224,7 +224,7 @@
   <title>Release 8.1.22</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2010-10-04</simpara>
   </note>
 
@@ -246,7 +246,7 @@
    <para>
     A dump/restore is not required for those running 8.1.X.
     However, if you are upgrading from a version earlier than 8.1.18,
-    see the release notes for 8.1.18.
+    see <xref linkend="release-8-1-18">.
    </para>
 
   </sect2>
@@ -442,7 +442,7 @@
   <title>Release 8.1.21</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2010-05-17</simpara>
   </note>
 
@@ -458,7 +458,7 @@
    <para>
     A dump/restore is not required for those running 8.1.X.
     However, if you are upgrading from a version earlier than 8.1.18,
-    see the release notes for 8.1.18.
+    see <xref linkend="release-8-1-18">.
    </para>
 
   </sect2>
@@ -596,7 +596,7 @@
   <title>Release 8.1.20</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2010-03-15</simpara>
   </note>
 
@@ -612,7 +612,7 @@
    <para>
     A dump/restore is not required for those running 8.1.X.
     However, if you are upgrading from a version earlier than 8.1.18,
-    see the release notes for 8.1.18.
+    see <xref linkend="release-8-1-18">.
    </para>
 
   </sect2>
@@ -786,7 +786,7 @@
   <title>Release 8.1.19</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2009-12-14</simpara>
   </note>
 
@@ -802,7 +802,7 @@
    <para>
     A dump/restore is not required for those running 8.1.X.
     However, if you are upgrading from a version earlier than 8.1.18,
-    see the release notes for 8.1.18.
+    see <xref linkend="release-8-1-18">.
    </para>
 
   </sect2>
@@ -849,7 +849,7 @@
      </para>
 
      <para>
-      This fix prevents a PANIC if a <literal>VACUUM FULL</> is cancelled
+      This fix prevents a PANIC if a <literal>VACUUM FULL</> is canceled
       after it's already committed its tuple movements, as well as transient
       errors if a plain <literal>VACUUM</> is interrupted after having
       truncated the table.
@@ -967,7 +967,7 @@
   <title>Release 8.1.18</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2009-09-09</simpara>
   </note>
 
@@ -985,7 +985,7 @@
     However, if you have any hash indexes on <type>interval</> columns,
     you must <command>REINDEX</> them after updating to 8.1.18.
     Also, if you are upgrading from a version earlier than 8.1.15,
-    see the release notes for 8.1.15.
+    see <xref linkend="release-8-1-15">.
    </para>
 
   </sect2>
@@ -1131,7 +1131,7 @@
   <title>Release 8.1.17</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2009-03-16</simpara>
   </note>
 
@@ -1147,7 +1147,7 @@
    <para>
     A dump/restore is not required for those running 8.1.X.
     However, if you are upgrading from a version earlier than 8.1.15,
-    see the release notes for 8.1.15.
+    see <xref linkend="release-8-1-15">.
    </para>
 
   </sect2>
@@ -1254,7 +1254,7 @@
   <title>Release 8.1.16</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2009-02-02</simpara>
   </note>
 
@@ -1270,7 +1270,7 @@
    <para>
     A dump/restore is not required for those running 8.1.X.
     However, if you are upgrading from a version earlier than 8.1.15,
-    see the release notes for 8.1.15.
+    see <xref linkend="release-8-1-15">.
    </para>
 
   </sect2>
@@ -1374,7 +1374,7 @@
   <title>Release 8.1.15</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2008-11-03</simpara>
   </note>
 
@@ -1390,7 +1390,7 @@
    <para>
     A dump/restore is not required for those running 8.1.X.
     However, if you are upgrading from a version earlier than 8.1.2,
-    see the release notes for 8.1.2.  Also, if you were running a previous
+    see <xref linkend="release-8-1-2">.  Also, if you were running a previous
     8.1.X release, it is recommended to <command>REINDEX</> all GiST
     indexes after the upgrade.
    </para>
@@ -1526,7 +1526,7 @@
   <title>Release 8.1.14</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2008-09-22</simpara>
   </note>
 
@@ -1542,7 +1542,7 @@
    <para>
     A dump/restore is not required for those running 8.1.X.
     However, if you are upgrading from a version earlier than 8.1.2,
-    see the release notes for 8.1.2.
+    see <xref linkend="release-8-1-2">.
    </para>
 
   </sect2>
@@ -1702,7 +1702,7 @@
   <title>Release 8.1.13</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2008-06-12</simpara>
   </note>
 
@@ -1718,7 +1718,7 @@
    <para>
     A dump/restore is not required for those running 8.1.X.
     However, if you are upgrading from a version earlier than 8.1.2,
-    see the release notes for 8.1.2.
+    see <xref linkend="release-8-1-2">.
    </para>
 
   </sect2>
@@ -1769,7 +1769,7 @@
   <title>Release 8.1.12</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>never released</simpara>
   </note>
 
@@ -1785,7 +1785,7 @@
    <para>
     A dump/restore is not required for those running 8.1.X.
     However, if you are upgrading from a version earlier than 8.1.2,
-    see the release notes for 8.1.2.
+    see <xref linkend="release-8-1-2">.
    </para>
 
   </sect2>
@@ -1991,7 +1991,7 @@
      </para>
 
      <para>
-      An explictly casted constant would be shown incorrectly.  This could
+      An explicitly casted constant would be shown incorrectly.  This could
       for example lead to corruption of a view definition during
       dump and reload.
      </para>
@@ -2019,7 +2019,7 @@
   <title>Release 8.1.11</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2008-01-07</simpara>
   </note>
 
@@ -2045,7 +2045,7 @@
    <para>
     A dump/restore is not required for those running 8.1.X.
     However, if you are upgrading from a version earlier than 8.1.2,
-    see the release notes for 8.1.2.
+    see <xref linkend="release-8-1-2">.
    </para>
 
   </sect2>
@@ -2271,7 +2271,7 @@
   <title>Release 8.1.10</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2007-09-17</simpara>
   </note>
 
@@ -2287,7 +2287,7 @@
    <para>
     A dump/restore is not required for those running 8.1.X.
     However, if you are upgrading from a version earlier than 8.1.2,
-    see the release notes for 8.1.2.
+    see <xref linkend="release-8-1-2">.
    </para>
 
   </sect2>
@@ -2392,7 +2392,7 @@
   <title>Release 8.1.9</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2007-04-23</simpara>
   </note>
 
@@ -2409,7 +2409,7 @@
    <para>
     A dump/restore is not required for those running 8.1.X.
     However, if you are upgrading from a version earlier than 8.1.2,
-    see the release notes for 8.1.2.
+    see <xref linkend="release-8-1-2">.
    </para>
 
   </sect2>
@@ -2483,7 +2483,7 @@
   <title>Release 8.1.8</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2007-02-07</simpara>
   </note>
 
@@ -2499,7 +2499,7 @@
    <para>
     A dump/restore is not required for those running 8.1.X.
     However, if you are upgrading from a version earlier than 8.1.2,
-    see the release notes for 8.1.2.
+    see <xref linkend="release-8-1-2">.
    </para>
 
   </sect2>
@@ -2525,7 +2525,7 @@
   <title>Release 8.1.7</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2007-02-05</simpara>
   </note>
 
@@ -2542,7 +2542,7 @@
    <para>
     A dump/restore is not required for those running 8.1.X.
     However, if you are upgrading from a version earlier than 8.1.2,
-    see the release notes for 8.1.2.
+    see <xref linkend="release-8-1-2">.
    </para>
 
   </sect2>
@@ -2627,7 +2627,7 @@
   <title>Release 8.1.6</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2007-01-08</simpara>
   </note>
 
@@ -2643,7 +2643,7 @@
    <para>
     A dump/restore is not required for those running 8.1.X.
     However, if you are upgrading from a version earlier than 8.1.2,
-    see the release notes for 8.1.2.
+    see <xref linkend="release-8-1-2">.
    </para>
 
   </sect2>
@@ -2777,7 +2777,7 @@
   <title>Release 8.1.5</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2006-10-16</simpara>
   </note>
 
@@ -2793,7 +2793,7 @@
    <para>
     A dump/restore is not required for those running 8.1.X.
     However, if you are upgrading from a version earlier than 8.1.2,
-    see the release notes for 8.1.2.
+    see <xref linkend="release-8-1-2">.
    </para>
 
   </sect2>
@@ -2854,7 +2854,7 @@ compilers (Hiroshi Saito)</para></listitem>
   <title>Release 8.1.4</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2006-05-23</simpara>
   </note>
 
@@ -2871,7 +2871,7 @@ compilers (Hiroshi Saito)</para></listitem>
    <para>
     A dump/restore is not required for those running 8.1.X.
     However, if you are upgrading from a version earlier than 8.1.2,
-    see the release notes for 8.1.2.
+    see <xref linkend="release-8-1-2">.
    </para>
 
    <para>
@@ -3008,7 +3008,7 @@ documented (Tom)</para></listitem>
   <title>Release 8.1.3</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2006-02-14</simpara>
   </note>
 
@@ -3025,7 +3025,7 @@ documented (Tom)</para></listitem>
    <para>
     A dump/restore is not required for those running 8.1.X.
     However, if you are upgrading from a version earlier than 8.1.2,
-    see the release notes for 8.1.2.
+    see <xref linkend="release-8-1-2">.
    </para>
   </sect2>
 
@@ -3130,7 +3130,7 @@ creation (Tom)</para></listitem>
   <title>Release 8.1.2</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2006-01-09</simpara>
   </note>
 
@@ -3233,7 +3233,7 @@ what's actually returned by the query (Joe)</para></listitem>
   <title>Release 8.1.1</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2005-12-12</simpara>
   </note>
 
@@ -3325,7 +3325,7 @@ DISTINCT query</para></listitem>
   <title>Release 8.1</title>
 
   <note>
-   <title>Release date</title>
+   <title>Release Date</title>
    <simpara>2005-11-08</simpara>
   </note>
 
@@ -4203,7 +4203,7 @@ psql -t -f fixseq.sql db1 | psql -e db1
       <para>
        While the <varname>statement_timeout</> configuration
        parameter allows a query taking more than a certain amount of
-       time to be cancelled, the <command>NOWAIT</> option allows a
+       time to be canceled, the <command>NOWAIT</> option allows a
        query to be canceled as soon as a <command>SELECT ... FOR
        UPDATE/SHARE</> command cannot immediately acquire a row lock.
       </para>
