@@ -252,10 +252,10 @@ CREATE [ OR REPLACE ] FUNCTION
      <listitem>
       <para>
        The name of the language that the function is implemented in.
-       Can be <literal>SQL</literal>, <literal>C</literal>,
+       It can be <literal>sql</literal>, <literal>c</literal>,
        <literal>internal</literal>, or the name of a user-defined
-       procedural language.  For backward compatibility,
-       the name can be enclosed by single quotes.
+       procedural language, e.g. <literal>plpgsql</literal>.  Enclosing the
+       name in single quotes is deprecated and requires matching case.
       </para>
      </listitem>
     </varlistentry>
