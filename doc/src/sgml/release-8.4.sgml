@@ -30,7 +30,7 @@
 
    <para>
     Also, if you are upgrading from a version earlier than 8.4.17,
-    see the release notes for 8.4.17.
+    see <xref linkend="release-8-4-17">.
    </para>
 
   </sect2>
@@ -225,7 +225,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 8.4.17,
-    see the release notes for 8.4.17.
+    see <xref linkend="release-8-4-17">.
    </para>
 
   </sect2>
@@ -432,7 +432,7 @@
 
    <para>
     Also, if you are upgrading from a version earlier than 8.4.10,
-    see the release notes for 8.4.10.
+    see <xref linkend="release-8-4-10">.
    </para>
 
   </sect2>
@@ -654,7 +654,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 8.4.10,
-    see the release notes for 8.4.10.
+    see <xref linkend="release-8-4-10">.
    </para>
 
   </sect2>
@@ -864,7 +864,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 8.4.10,
-    see the release notes for 8.4.10.
+    see <xref linkend="release-8-4-10">.
    </para>
 
   </sect2>
@@ -1166,7 +1166,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 8.4.10,
-    see the release notes for 8.4.10.
+    see <xref linkend="release-8-4-10">.
    </para>
 
   </sect2>
@@ -1282,7 +1282,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 8.4.10,
-    see the release notes for 8.4.10.
+    see <xref linkend="release-8-4-10">.
    </para>
 
   </sect2>
@@ -1516,7 +1516,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 8.4.10,
-    see the release notes for 8.4.10.
+    see <xref linkend="release-8-4-10">.
    </para>
 
   </sect2>
@@ -1801,7 +1801,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 8.4.10,
-    see the release notes for 8.4.10.
+    see <xref linkend="release-8-4-10">.
    </para>
 
   </sect2>
@@ -2170,7 +2170,7 @@
 
    <para>
     Also, if you are upgrading from a version earlier than 8.4.8,
-    see the release notes for 8.4.8.
+    see <xref linkend="release-8-4-8">.
    </para>
 
   </sect2>
@@ -2478,7 +2478,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 8.4.8,
-    see the release notes for 8.4.8.
+    see <xref linkend="release-8-4-8">.
    </para>
 
   </sect2>
@@ -3014,7 +3014,7 @@
 
    <para>
     Also, if you are upgrading from a version earlier than 8.4.2,
-    see the release notes for 8.4.2.
+    see <xref linkend="release-8-4-2">.
    </para>
 
   </sect2>
@@ -3248,7 +3248,7 @@
    <para>
     A dump/restore is not required for those running 8.4.X.
     However, if you are upgrading from a version earlier than 8.4.2,
-    see the release notes for 8.4.2.
+    see <xref linkend="release-8-4-2">.
    </para>
 
   </sect2>
@@ -3380,7 +3380,7 @@
    <para>
     A dump/restore is not required for those running 8.4.X.
     However, if you are upgrading from a version earlier than 8.4.2,
-    see the release notes for 8.4.2.
+    see <xref linkend="release-8-4-2">.
    </para>
 
   </sect2>
@@ -3691,7 +3691,7 @@
    <para>
     A dump/restore is not required for those running 8.4.X.
     However, if you are upgrading from a version earlier than 8.4.2,
-    see the release notes for 8.4.2.
+    see <xref linkend="release-8-4-2">.
    </para>
 
   </sect2>
@@ -4213,7 +4213,7 @@
    <para>
     A dump/restore is not required for those running 8.4.X.
     However, if you are upgrading from a version earlier than 8.4.2,
-    see the release notes for 8.4.2.
+    see <xref linkend="release-8-4-2">.
    </para>
 
   </sect2>
@@ -4504,7 +4504,7 @@
    <para>
     A dump/restore is not required for those running 8.4.X.
     However, if you are upgrading from a version earlier than 8.4.2,
-    see the release notes for 8.4.2.
+    see <xref linkend="release-8-4-2">.
    </para>
 
   </sect2>

@@ -27,7 +27,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.
     However, if you are upgrading from a version earlier than 8.0.22,
-    see the release notes for 8.0.22.
+    see <xref linkend="release-8-0-22">.
    </para>
 
   </sect2>
@@ -231,7 +231,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.
     However, if you are upgrading from a version earlier than 8.0.22,
-    see the release notes for 8.0.22.
+    see <xref linkend="release-8-0-22">.
    </para>
 
   </sect2>
@@ -391,7 +391,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.
     However, if you are upgrading from a version earlier than 8.0.22,
-    see the release notes for 8.0.22.
+    see <xref linkend="release-8-0-22">.
    </para>
 
   </sect2>
@@ -562,7 +562,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.
     However, if you are upgrading from a version earlier than 8.0.22,
-    see the release notes for 8.0.22.
+    see <xref linkend="release-8-0-22">.
    </para>
 
   </sect2>
@@ -719,7 +719,7 @@
     However, if you have any hash indexes on <type>interval</> columns,
     you must <command>REINDEX</> them after updating to 8.0.22.
     Also, if you are upgrading from a version earlier than 8.0.6,
-    see the release notes for 8.0.6.
+    see <xref linkend="release-8-0-6">.
    </para>
 
   </sect2>
@@ -881,7 +881,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.
     However, if you are upgrading from a version earlier than 8.0.6,
-    see the release notes for 8.0.6.
+    see <xref linkend="release-8-0-6">.
    </para>
 
   </sect2>
@@ -961,7 +961,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.
     However, if you are upgrading from a version earlier than 8.0.6,
-    see the release notes for 8.0.6.
+    see <xref linkend="release-8-0-6">.
    </para>
 
   </sect2>
@@ -1047,7 +1047,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.
     However, if you are upgrading from a version earlier than 8.0.6,
-    see the release notes for 8.0.6.
+    see <xref linkend="release-8-0-6">.
    </para>
 
   </sect2>
@@ -1158,7 +1158,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.
     However, if you are upgrading from a version earlier than 8.0.6,
-    see the release notes for 8.0.6.
+    see <xref linkend="release-8-0-6">.
    </para>
 
   </sect2>
@@ -1292,7 +1292,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.
     However, if you are upgrading from a version earlier than 8.0.6,
-    see the release notes for 8.0.6.
+    see <xref linkend="release-8-0-6">.
    </para>
 
   </sect2>
@@ -1346,7 +1346,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.
     However, if you are upgrading from a version earlier than 8.0.6,
-    see the release notes for 8.0.6.
+    see <xref linkend="release-8-0-6">.
    </para>
 
   </sect2>
@@ -1592,8 +1592,8 @@
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
-    if you are upgrading from a version earlier than 8.0.6, see the release
-    notes for 8.0.6.
+    if you are upgrading from a version earlier than 8.0.6,
+    see <xref linkend="release-8-0-6">.
    </para>
 
   </sect2>
@@ -1798,8 +1798,8 @@
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
-    if you are upgrading from a version earlier than 8.0.6, see the release
-    notes for 8.0.6.
+    if you are upgrading from a version earlier than 8.0.6,
+    see <xref linkend="release-8-0-6">.
    </para>
 
   </sect2>
@@ -1907,8 +1907,8 @@
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
-    if you are upgrading from a version earlier than 8.0.6, see the release
-    notes for 8.0.6.
+    if you are upgrading from a version earlier than 8.0.6,
+    see <xref linkend="release-8-0-6">.
    </para>
 
   </sect2>
@@ -1983,8 +1983,8 @@
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
-    if you are upgrading from a version earlier than 8.0.6, see the release
-    notes for 8.0.6.
+    if you are upgrading from a version earlier than 8.0.6,
+    see <xref linkend="release-8-0-6">.
    </para>
 
   </sect2>
@@ -2026,8 +2026,8 @@
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
-    if you are upgrading from a version earlier than 8.0.6, see the release
-    notes for 8.0.6.
+    if you are upgrading from a version earlier than 8.0.6,
+    see <xref linkend="release-8-0-6">.
    </para>
 
   </sect2>
@@ -2096,8 +2096,8 @@
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
-    if you are upgrading from a version earlier than 8.0.6, see the release
-    notes for 8.0.6.
+    if you are upgrading from a version earlier than 8.0.6,
+    see <xref linkend="release-8-0-6">.
    </para>
 
   </sect2>
@@ -2215,8 +2215,8 @@
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
-    if you are upgrading from a version earlier than 8.0.6, see the release
-    notes for 8.0.6.
+    if you are upgrading from a version earlier than 8.0.6,
+    see <xref linkend="release-8-0-6">.
    </para>
 
   </sect2>
@@ -2272,8 +2272,8 @@ Wieland)</para></listitem>
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
-    if you are upgrading from a version earlier than 8.0.6, see the release
-    notes for 8.0.6.
+    if you are upgrading from a version earlier than 8.0.6,
+    see <xref linkend="release-8-0-6">.
    </para>
 
    <para>
@@ -2385,8 +2385,8 @@ Fuhr)</para></listitem>
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
-    if you are upgrading from a version earlier than 8.0.6, see the release
-    notes for 8.0.6.
+    if you are upgrading from a version earlier than 8.0.6,
+    see <xref linkend="release-8-0-6">.
    </para>
   </sect2>
 
@@ -2484,8 +2484,8 @@ and <function>isinf</> during configure (Tom)</para></listitem>
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
-    if you are upgrading from a version earlier than 8.0.3, see the release
-    notes for 8.0.3.
+    if you are upgrading from a version earlier than 8.0.3,
+    see <xref linkend="release-8-0-3">.
     Also, you might need to <command>REINDEX</> indexes on textual
     columns after updating, if you are affected by the locale or
     <application>plperl</> issues described below.
@@ -2569,8 +2569,8 @@ what's actually returned by the query (Joe)</para></listitem>
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
-    if you are upgrading from a version earlier than 8.0.3, see the release
-    notes for 8.0.3.
+    if you are upgrading from a version earlier than 8.0.3,
+    see <xref linkend="release-8-0-3">.
    </para>
   </sect2>
 
@@ -2651,8 +2651,8 @@ to subquery results</para></listitem>
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
-    if you are upgrading from a version earlier than 8.0.3, see the release
-    notes for 8.0.3.
+    if you are upgrading from a version earlier than 8.0.3,
+    see <xref linkend="release-8-0-3">.
    </para>
   </sect2>
 

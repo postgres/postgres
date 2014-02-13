@@ -30,7 +30,7 @@
 
    <para>
     Also, if you are upgrading from a version earlier than 9.1.9,
-    see the release notes for 9.1.9.
+    see <xref linkend="release-9-1-9">.
    </para>
 
   </sect2>
@@ -281,7 +281,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 9.1.9,
-    see the release notes for 9.1.9.
+    see <xref linkend="release-9-1-9">.
    </para>
 
   </sect2>
@@ -623,7 +623,7 @@
 
    <para>
     Also, if you are upgrading from a version earlier than 9.1.6,
-    see the release notes for 9.1.6.
+    see <xref linkend="release-9-1-6">.
    </para>
 
   </sect2>
@@ -950,7 +950,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 9.1.6,
-    see the release notes for 9.1.6.
+    see <xref linkend="release-9-1-6">.
    </para>
 
   </sect2>
@@ -1272,7 +1272,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 9.1.6,
-    see the release notes for 9.1.6.
+    see <xref linkend="release-9-1-6">.
    </para>
 
   </sect2>
@@ -1741,7 +1741,7 @@
 
    <para>
     Also, if you are upgrading from a version earlier than 9.1.4,
-    see the release notes for 9.1.4.
+    see <xref linkend="release-9-1-4">.
    </para>
 
   </sect2>
@@ -1990,7 +1990,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 9.1.4,
-    see the release notes for 9.1.4.
+    see <xref linkend="release-9-1-4">.
    </para>
 
   </sect2>
@@ -2389,7 +2389,7 @@
 
    <para>
     Also, if you are upgrading from a version earlier than 9.1.2,
-    see the release notes for 9.1.2.
+    see <xref linkend="release-9-1-2">.
    </para>
 
   </sect2>
@@ -2867,7 +2867,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 9.1.2,
-    see the release notes for 9.1.2.
+    see <xref linkend="release-9-1-2">.
    </para>
 
   </sect2>
