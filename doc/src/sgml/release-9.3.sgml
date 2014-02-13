@@ -30,7 +30,7 @@
 
    <para>
     Also, if you are upgrading from a version earlier than 9.3.1,
-    see the release notes for 9.3.1.
+    see <xref linkend="release-9-3-1">.
    </para>
 
   </sect2>

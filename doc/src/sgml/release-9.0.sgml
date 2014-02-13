@@ -30,7 +30,7 @@
 
    <para>
     Also, if you are upgrading from a version earlier than 9.0.13,
-    see the release notes for 9.0.13.
+    see <xref linkend="release-9-0-13">.
    </para>
 
   </sect2>
@@ -262,7 +262,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 9.0.13,
-    see the release notes for 9.0.13.
+    see <xref linkend="release-9-0-13">.
    </para>
 
   </sect2>
@@ -535,7 +535,7 @@
 
    <para>
     Also, if you are upgrading from a version earlier than 9.0.6,
-    see the release notes for 9.0.6.
+    see <xref linkend="release-9-0-6">.
    </para>
 
   </sect2>
@@ -825,7 +825,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 9.0.6,
-    see the release notes for 9.0.6.
+    see <xref linkend="release-9-0-6">.
    </para>
 
   </sect2>
@@ -1087,7 +1087,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 9.0.6,
-    see the release notes for 9.0.6.
+    see <xref linkend="release-9-0-6">.
    </para>
 
   </sect2>
@@ -1465,7 +1465,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 9.0.6,
-    see the release notes for 9.0.6.
+    see <xref linkend="release-9-0-6">.
    </para>
 
   </sect2>
@@ -1607,7 +1607,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 9.0.6,
-    see the release notes for 9.0.6.
+    see <xref linkend="release-9-0-6">.
    </para>
 
   </sect2>
@@ -1913,7 +1913,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 9.0.6,
-    see the release notes for 9.0.6.
+    see <xref linkend="release-9-0-6">.
    </para>
 
   </sect2>
@@ -2233,7 +2233,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 9.0.6,
-    see the release notes for 9.0.6.
+    see <xref linkend="release-9-0-6">.
    </para>
 
   </sect2>
@@ -2756,7 +2756,7 @@
 
    <para>
     Also, if you are upgrading from a version earlier than 9.0.4,
-    see the release notes for 9.0.4.
+    see <xref linkend="release-9-0-4">.
    </para>
 
   </sect2>
@@ -3133,7 +3133,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 9.0.4,
-    see the release notes for 9.0.4.
+    see <xref linkend="release-9-0-4">.
    </para>
 
   </sect2>
