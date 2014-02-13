@@ -350,7 +350,9 @@ do_copy(const char *args)
 				   PQresultStatus(result));
 		/* if still in COPY IN state, try to get out of it */
 		if (PQresultStatus(result) == PGRES_COPY_IN)
-			PQputCopyEnd(pset.db, _("trying to exit copy mode"));
+			PQputCopyEnd(pset.db,
+						 (PQprotocolVersion(pset.db) < 3) ? NULL :
+						 _("trying to exit copy mode"));
 		PQclear(result);
 	}
 
@@ -397,15 +399,15 @@ handleCopyOut(PGconn *conn, FILE *copystream)
 		ret = PQgetCopyData(conn, &buf, 0);
 
 		if (ret < 0)
-			break;				/* done or error */
+			break;				/* done or server/connection error */
 
 		if (buf)
 		{
-			if (fwrite(buf, 1, ret, copystream) != ret)
+			if (OK && fwrite(buf, 1, ret, copystream) != ret)
 			{
-				if (OK)			/* complain only once, keep reading data */
-					psql_error("could not write COPY data: %s\n",
-							   strerror(errno));
+				psql_error("could not write COPY data: %s\n",
+						   strerror(errno));
+				/* complain only once, keep reading data from server */
 				OK = false;
 			}
 			PQfreemem(buf);
@@ -469,7 +471,9 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary)
 		/* got here with longjmp */
 
 		/* Terminate data transfer */
-		PQputCopyEnd(conn, _("canceled by user"));
+		PQputCopyEnd(conn,
+					 (PQprotocolVersion(conn) < 3) ? NULL :
+					 _("canceled by user"));
 
 		/* Check command status and return to normal libpq state */
 		res = PQgetResult(conn);
@@ -597,7 +601,8 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary)
 
 	/* Terminate data transfer */
 	if (PQputCopyEnd(conn,
-					 OK ? NULL : _("aborted because of read failure")) <= 0)
+					 (OK || PQprotocolVersion(conn) < 3) ? NULL :
+					 _("aborted because of read failure")) <= 0)
 		OK = false;
 
 	/* Check command status and return to normal libpq state */
