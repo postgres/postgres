@@ -569,7 +569,10 @@ psql --username postgres --file script.sql postgres
    the old server and run <command>rsync</> again to update the copy with any
    changes to make it consistent.  You might want to exclude some
    files, e.g. <filename>postmaster.pid</>, as documented in <xref
-   linkend="backup-lowlevel-base-backup">.
+   linkend="backup-lowlevel-base-backup">.  If your file system supports
+   file system snapshots or copy-on-write file copying, you can use that
+   to make a backup of the old cluster, though the snapshot and copies
+   must be created simultaneously or while the database server is down.
   </para>
 
  <refsect2>
