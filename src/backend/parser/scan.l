@@ -620,28 +620,32 @@ other			.
 					return IDENT;
 				}
 <xui>{xuistop1}	{
-					char		   *ident;
+					char	   *ident;
+					int			identlen;
 
 					BEGIN(INITIAL);
 					if (literallen == 0)
 						yyerror("zero-length delimited identifier");
 					ident = litbuf_udeescape('\\');
-					if (literallen >= NAMEDATALEN)
-						truncate_identifier(ident, literallen, true);
+					identlen = strlen(ident);
+					if (identlen >= NAMEDATALEN)
+						truncate_identifier(ident, identlen, true);
 					yylval.str = ident;
 					/* throw back all but the quote */
 					yyless(1);
 					return IDENT;
 				}
 <xui>{xuistop2}	{
-					char		   *ident;
+					char	   *ident;
+					int			identlen;
 
 					BEGIN(INITIAL);
 					if (literallen == 0)
 						yyerror("zero-length delimited identifier");
 					ident = litbuf_udeescape(yytext[yyleng - 2]);
-					if (literallen >= NAMEDATALEN)
-						truncate_identifier(ident, literallen, true);
+					identlen = strlen(ident);
+					if (identlen >= NAMEDATALEN)
+						truncate_identifier(ident, identlen, true);
 					yylval.str = ident;
 					return IDENT;
 				}
