@@ -27,7 +27,7 @@
    <para>
     A dump/restore is not required for those running 7.4.X.
     However, if you are upgrading from a version earlier than 7.4.26,
-    see the release notes for 7.4.26.
+    see <xref linkend="release-7-4-26">.
    </para>
 
   </sect2>
@@ -161,7 +161,7 @@
    <para>
     A dump/restore is not required for those running 7.4.X.
     However, if you are upgrading from a version earlier than 7.4.26,
-    see the release notes for 7.4.26.
+    see <xref linkend="release-7-4-26">.
    </para>
 
   </sect2>
@@ -305,7 +305,7 @@
    <para>
     A dump/restore is not required for those running 7.4.X.
     However, if you are upgrading from a version earlier than 7.4.26,
-    see the release notes for 7.4.26.
+    see <xref linkend="release-7-4-26">.
    </para>
 
   </sect2>
@@ -418,7 +418,7 @@
    <para>
     A dump/restore is not required for those running 7.4.X.
     However, if you are upgrading from a version earlier than 7.4.26,
-    see the release notes for 7.4.26.
+    see <xref linkend="release-7-4-26">.
    </para>
 
   </sect2>
@@ -540,7 +540,7 @@
     However, if you have any hash indexes on <type>interval</> columns,
     you must <command>REINDEX</> them after updating to 7.4.26.
     Also, if you are upgrading from a version earlier than 7.4.11,
-    see the release notes for 7.4.11.
+    see <xref linkend="release-7-4-11">.
    </para>
 
   </sect2>
@@ -668,7 +668,7 @@
    <para>
     A dump/restore is not required for those running 7.4.X.
     However, if you are upgrading from a version earlier than 7.4.11,
-    see the release notes for 7.4.11.
+    see <xref linkend="release-7-4-11">.
    </para>
 
   </sect2>
@@ -748,7 +748,7 @@
    <para>
     A dump/restore is not required for those running 7.4.X.
     However, if you are upgrading from a version earlier than 7.4.11,
-    see the release notes for 7.4.11.
+    see <xref linkend="release-7-4-11">.
    </para>
 
   </sect2>
@@ -834,7 +834,7 @@
    <para>
     A dump/restore is not required for those running 7.4.X.
     However, if you are upgrading from a version earlier than 7.4.11,
-    see the release notes for 7.4.11.
+    see <xref linkend="release-7-4-11">.
    </para>
 
   </sect2>
@@ -918,7 +918,7 @@
    <para>
     A dump/restore is not required for those running 7.4.X.
     However, if you are upgrading from a version earlier than 7.4.11,
-    see the release notes for 7.4.11.
+    see <xref linkend="release-7-4-11">.
    </para>
 
   </sect2>
@@ -994,7 +994,7 @@
    <para>
     A dump/restore is not required for those running 7.4.X.
     However, if you are upgrading from a version earlier than 7.4.11,
-    see the release notes for 7.4.11.
+    see <xref linkend="release-7-4-11">.
    </para>
 
   </sect2>
@@ -1048,7 +1048,7 @@
    <para>
     A dump/restore is not required for those running 7.4.X.
     However, if you are upgrading from a version earlier than 7.4.11,
-    see the release notes for 7.4.11.
+    see <xref linkend="release-7-4-11">.
    </para>
 
   </sect2>
@@ -1149,7 +1149,7 @@
      </para>
 
      <para>
-      An explictly casted constant would be shown incorrectly.  This could
+      An explicitly casted constant would be shown incorrectly.  This could
       for example lead to corruption of a view definition during
       dump and reload.
      </para>
@@ -1193,8 +1193,8 @@
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
-    if you are upgrading from a version earlier than 7.4.11, see the release
-    notes for 7.4.11.
+    if you are upgrading from a version earlier than 7.4.11,
+    see <xref linkend="release-7-4-11">.
    </para>
 
   </sect2>
@@ -1346,8 +1346,8 @@
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
-    if you are upgrading from a version earlier than 7.4.11, see the release
-    notes for 7.4.11.
+    if you are upgrading from a version earlier than 7.4.11,
+    see <xref linkend="release-7-4-11">.
    </para>
 
   </sect2>
@@ -1423,8 +1423,8 @@
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
-    if you are upgrading from a version earlier than 7.4.11, see the release
-    notes for 7.4.11.
+    if you are upgrading from a version earlier than 7.4.11,
+    see <xref linkend="release-7-4-11">.
    </para>
 
   </sect2>
@@ -1494,8 +1494,8 @@
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
-    if you are upgrading from a version earlier than 7.4.11, see the release
-    notes for 7.4.11.
+    if you are upgrading from a version earlier than 7.4.11,
+    see <xref linkend="release-7-4-11">.
    </para>
 
   </sect2>
@@ -1564,8 +1564,8 @@
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
-    if you are upgrading from a version earlier than 7.4.11, see the release
-    notes for 7.4.11.
+    if you are upgrading from a version earlier than 7.4.11,
+    see <xref linkend="release-7-4-11">.
    </para>
 
   </sect2>
@@ -1653,8 +1653,8 @@
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
-    if you are upgrading from a version earlier than 7.4.11, see the release
-    notes for 7.4.11.
+    if you are upgrading from a version earlier than 7.4.11,
+    see <xref linkend="release-7-4-11">.
    </para>
 
   </sect2>
@@ -1701,8 +1701,8 @@ ANYARRAY</para></listitem>
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
-    if you are upgrading from a version earlier than 7.4.11, see the release
-    notes for 7.4.11.
+    if you are upgrading from a version earlier than 7.4.11,
+    see <xref linkend="release-7-4-11">.
    </para>
 
    <para>
@@ -1807,8 +1807,8 @@ Fuhr)</para></listitem>
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
-    if you are upgrading from a version earlier than 7.4.11, see the release
-    notes for 7.4.11.
+    if you are upgrading from a version earlier than 7.4.11,
+    see <xref linkend="release-7-4-11">.
    </para>
   </sect2>
 
@@ -1870,8 +1870,8 @@ and <function>isinf</> during configure (Tom)</para></listitem>
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
-    if you are upgrading from a version earlier than 7.4.8, see the release
-    notes for 7.4.8.
+    if you are upgrading from a version earlier than 7.4.8,
+    see <xref linkend="release-7-4-8">.
     Also, you might need to <command>REINDEX</> indexes on textual
     columns after updating, if you are affected by the locale or
     <application>plperl</> issues described below.
@@ -1937,8 +1937,8 @@ what's actually returned by the query (Joe)</para></listitem>
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
-    if you are upgrading from a version earlier than 7.4.8, see the release
-    notes for 7.4.8.
+    if you are upgrading from a version earlier than 7.4.8,
+    see <xref linkend="release-7-4-8">.
    </para>
   </sect2>
 
@@ -1990,8 +1990,8 @@ table has been dropped</para></listitem>
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
-    if you are upgrading from a version earlier than 7.4.8, see the release
-    notes for 7.4.8.
+    if you are upgrading from a version earlier than 7.4.8,
+    see <xref linkend="release-7-4-8">.
    </para>
   </sect2>
 
