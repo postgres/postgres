@@ -445,15 +445,15 @@ handleCopyOut(PGconn *conn, FILE *copystream)
 		ret = PQgetCopyData(conn, &buf, 0);
 
 		if (ret < 0)
-			break;				/* done or error */
+			break;				/* done or server/connection error */
 
 		if (buf)
 		{
-			if (fwrite(buf, 1, ret, copystream) != ret)
+			if (OK && fwrite(buf, 1, ret, copystream) != ret)
 			{
-				if (OK)			/* complain only once, keep reading data */
-					psql_error("could not write COPY data: %s\n",
-							   strerror(errno));
+				psql_error("could not write COPY data: %s\n",
+						   strerror(errno));
+				/* complain only once, keep reading data from server */
 				OK = false;
 			}
 			PQfreemem(buf);
@@ -474,29 +474,18 @@ handleCopyOut(PGconn *conn, FILE *copystream)
 	}
 
 	/*
-	 * Check command status and return to normal libpq state.  After a
-	 * client-side error, the server will remain ready to deliver data.  The
-	 * cleanest thing is to fully drain and discard that data.	If the
-	 * client-side error happened early in a large file, this takes a long
-	 * time.  Instead, take advantage of the fact that PQexec() will silently
-	 * end any ongoing PGRES_COPY_OUT state.  This does cause us to lose the
-	 * results of any commands following the COPY in a single command string.
-	 * It also only works for protocol version 3.  XXX should we clean up
-	 * using the slow way when the connection is using protocol version 2?
+	 * Check command status and return to normal libpq state.
 	 *
-	 * We must not ever return with the status still PGRES_COPY_OUT.  Our
-	 * caller is unable to distinguish that situation from reaching the next
-	 * COPY in a command string that happened to contain two consecutive COPY
-	 * TO STDOUT commands.	We trust that no condition can make PQexec() fail
-	 * indefinitely while retaining status PGRES_COPY_OUT.
+	 * If for some reason libpq is still reporting PGRES_COPY_OUT state, we
+	 * would like to forcibly exit that state, since our caller would be
+	 * unable to distinguish that situation from reaching the next COPY in a
+	 * command string that happened to contain two consecutive COPY TO STDOUT
+	 * commands.  However, libpq provides no API for doing that, and in
+	 * principle it's a libpq bug anyway if PQgetCopyData() returns -1 or -2
+	 * but hasn't exited COPY_OUT state internally.  So we ignore the
+	 * possibility here.
 	 */
-	while (res = PQgetResult(conn), PQresultStatus(res) == PGRES_COPY_OUT)
-	{
-		OK = false;
-		PQclear(res);
-
-		PQexec(conn, "-- clear PGRES_COPY_OUT state");
-	}
+	res = PQgetResult(conn);
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
 		psql_error("%s", PQerrorMessage(conn));
@@ -539,7 +528,9 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary)
 		/* got here with longjmp */
 
 		/* Terminate data transfer */
-		PQputCopyEnd(conn, _("canceled by user"));
+		PQputCopyEnd(conn,
+					 (PQprotocolVersion(conn) < 3) ? NULL :
+					 _("canceled by user"));
 
 		OK = false;
 		goto copyin_cleanup;
@@ -665,29 +656,37 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary)
 	if (ferror(copystream))
 		OK = false;
 
-	/* Terminate data transfer */
+	/*
+	 * Terminate data transfer.  We can't send an error message if we're using
+	 * protocol version 2.
+	 */
 	if (PQputCopyEnd(conn,
-					 OK ? NULL : _("aborted because of read failure")) <= 0)
+					 (OK || PQprotocolVersion(conn) < 3) ? NULL :
+					 _("aborted because of read failure")) <= 0)
 		OK = false;
 
 copyin_cleanup:
 
 	/*
-	 * Check command status and return to normal libpq state
+	 * Check command status and return to normal libpq state.
 	 *
-	 * We must not ever return with the status still PGRES_COPY_IN.  Our
-	 * caller is unable to distinguish that situation from reaching the next
-	 * COPY in a command string that happened to contain two consecutive COPY
-	 * FROM STDIN commands.  XXX if something makes PQputCopyEnd() fail
-	 * indefinitely while retaining status PGRES_COPY_IN, we get an infinite
-	 * loop.  This is more realistic than handleCopyOut()'s counterpart risk.
+	 * We do not want to return with the status still PGRES_COPY_IN: our
+	 * caller would be unable to distinguish that situation from reaching the
+	 * next COPY in a command string that happened to contain two consecutive
+	 * COPY FROM STDIN commands.  We keep trying PQputCopyEnd() in the hope
+	 * it'll work eventually.  (What's actually likely to happen is that in
+	 * attempting to flush the data, libpq will eventually realize that the
+	 * connection is lost.	But that's fine; it will get us out of COPY_IN
+	 * state, which is what we need.)
 	 */
 	while (res = PQgetResult(conn), PQresultStatus(res) == PGRES_COPY_IN)
 	{
 		OK = false;
 		PQclear(res);
-
-		PQputCopyEnd(pset.db, _("trying to exit copy mode"));
+		/* We can't send an error message if we're using protocol version 2 */
+		PQputCopyEnd(conn,
+					 (PQprotocolVersion(conn) < 3) ? NULL :
+					 _("trying to exit copy mode"));
 	}
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
