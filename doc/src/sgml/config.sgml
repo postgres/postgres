@@ -4892,6 +4892,33 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-autovacuum-multixact-freeze-max-age" xreflabel="autovacuum_multixact_freeze_max_age">
+      <term><varname>autovacuum_multixact_freeze_max_age</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>autovacuum_multixact_freeze_max_age</varname> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Specifies the maximum age (in multixacts) that a table's
+        <structname>pg_class</>.<structfield>relminmxid</> field can
+        attain before a <command>VACUUM</> operation is forced to
+        prevent multixact ID wraparound within the table.
+        Note that the system will launch autovacuum processes to
+        prevent wraparound even when autovacuum is otherwise disabled.
+       </para>
+
+       <para>
+        Vacuuming multixacts also allows removal of old files from the
+        <filename>pg_multixact/members</> and <filename>pg_multixact/offsets</>
+        subdirectories, which is why the default is a relatively low
+        400 million multixacts.
+        This parameter can only be set at server start, but the setting
+        can be reduced for individual tables by changing storage parameters.
+        For more information see <xref linkend="vacuum-for-multixact-wraparound">.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-autovacuum-vacuum-cost-delay" xreflabel="autovacuum_vacuum_cost_delay">
       <term><varname>autovacuum_vacuum_cost_delay</varname> (<type>integer</type>)</term>
       <indexterm>
@@ -5300,7 +5327,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         <structname>pg_class</>.<structfield>relfrozenxid</> field has reached
         the age specified by this setting.  The default is 150 million
         transactions.  Although users can set this value anywhere from zero to
-        one billion, <command>VACUUM</> will silently limit the effective value
+        two billions, <command>VACUUM</> will silently limit the effective value
         to 95% of <xref linkend="guc-autovacuum-freeze-max-age">, so that a
         periodical manual <command>VACUUM</> has a chance to run before an
         anti-wraparound autovacuum is launched for the table. For more
@@ -5327,6 +5354,47 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         that there is not an unreasonably short time between forced
         autovacuums.  For more information see <xref
         linkend="vacuum-for-wraparound">.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-vacuum-multixact-freeze-table-age" xreflabel="vacuum_multixact_freeze_table_age">
+      <term><varname>vacuum_multixact_freeze_table_age</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>vacuum_multixact_freeze_table_age</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        <command>VACUUM</> performs a whole-table scan if the table's
+        <structname>pg_class</>.<structfield>relminmxid</> field has reached
+        the age specified by this setting.  The default is 150 million multixacts.
+        Although users can set this value anywhere from zero to two billions,
+        <command>VACUUM</> will silently limit the effective value to 95% of
+        <xref linkend="guc-autovacuum-multixact-freeze-max-age">, so that a
+        periodical manual <command>VACUUM</> has a chance to run before an
+        anti-wraparound is launched for the table.
+        For more information see <xref linkend="vacuum-for-multixact-wraparound">.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-vacuum-multixact-freeze-min-age" xreflabel="vacuum_multixact_freeze_min_age">
+      <term><varname>vacuum_multixact_freeze_min_age</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>vacuum_multixact_freeze_min_age</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Specifies the cutoff age (in multixacts) that <command>VACUUM</>
+        should use to decide whether to replace multixact IDs with a newer
+        transaction ID or multixact ID while scanning a table.  The default
+        is 5 million multixacts.
+        Although users can set this value anywhere from zero to one billion,
+        <command>VACUUM</> will silently limit the effective value to half
+        the value of <xref linkend="guc-autovacuum-multixact-freeze-max-age">,
+        so that there is not an unreasonably short time between forced
+        autovacuums.
+        For more information see <xref linkend="vacuum-for-multixact-wraparound">.
        </para>
       </listitem>
      </varlistentry>

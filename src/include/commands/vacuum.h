@@ -136,6 +136,8 @@ extern PGDLLIMPORT int default_statistics_target;		/* PGDLLIMPORT for
 														 * PostGIS */
 extern int	vacuum_freeze_min_age;
 extern int	vacuum_freeze_table_age;
+extern int	vacuum_multixact_freeze_min_age;
+extern int	vacuum_multixact_freeze_table_age;
 
 
 /* in commands/vacuum.c */
@@ -156,6 +158,8 @@ extern void vac_update_relstats(Relation relation,
 					TransactionId frozenxid,
 					MultiXactId minmulti);
 extern void vacuum_set_xid_limits(int freeze_min_age, int freeze_table_age,
+					  int multixact_freeze_min_age,
+					  int multixact_freeze_table_age,
 					  bool sharedRel,
 					  TransactionId *oldestXmin,
 					  TransactionId *freezeLimit,

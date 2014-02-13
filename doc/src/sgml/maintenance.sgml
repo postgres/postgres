@@ -108,7 +108,8 @@
 
      <listitem>
       <simpara>To protect against loss of very old data due to
-      <firstterm>transaction ID wraparound</>.</simpara>
+      <firstterm>transaction ID wraparound</> or
+      <firstterm>multixact ID wraparound</>.</simpara>
      </listitem>
     </orderedlist>
 
@@ -379,6 +380,11 @@
     <secondary>wraparound</secondary>
    </indexterm>
 
+    <indexterm>
+     <primary>wraparound</primary>
+     <secondary>of transaction IDs</secondary>
+    </indexterm>
+
    <para>
     <productname>PostgreSQL</productname>'s MVCC transaction semantics
     depend on being able to compare transaction ID (<acronym>XID</>)
@@ -597,6 +603,54 @@ HINT:  Stop the postmaster and vacuum that database in single-user mode.
     page for details about using single-user mode.
    </para>
 
+   <sect3 id="vacuum-for-multixact-wraparound">
+    <title>Multixacts and Wraparound</title>
+
+    <indexterm>
+     <primary>MultiXactId</primary>
+    </indexterm>
+
+    <indexterm>
+     <primary>wraparound</primary>
+     <secondary>of multixact IDs</secondary>
+    </indexterm>
+
+    <para>
+     <firstterm>Multixacts</> are used to implement row locking by
+     multiple transactions: since there is limited space in the tuple
+     header to store lock information, that information is stored as a
+     multixact separately in the <filename>pg_multixact</> subdirectory,
+     and only its ID is in the <structfield>xmax</> field
+     in the tuple header.
+     Similar to transaction IDs, multixact IDs are implemented as a
+     32-bit counter and corresponding storage, all of which requires
+     careful aging management, storage cleanup, and wraparound handling.
+    </para>
+
+    <para>
+     During a <command>VACUUM</> table scan, either partial or of the whole
+     table, any multixact ID older than
+     <xref linkend="guc-vacuum-multixact-freeze-min-age">
+     is replaced by a different value, which can be the zero value, a single
+     transaction ID, or a newer multixact ID.  For each table,
+     <structname>pg_class</>.<structfield>relminmxid</> stores the oldest
+     possible value still stored in any tuple of that table.  Every time this
+     value is older than
+     <xref linkend="guc-vacuum-multixact-freeze-table-age">, a whole-table
+     scan is forced.  Whole-table <command>VACUUM</> scans, regardless of
+     what causes them, enable advancing the value for that table.
+     Eventually, as all tables in all databases are scanned and their
+     oldest multixact values are advanced, on-disk storage for older
+     multixacts can be removed.
+    </para>
+
+    <para>
+     As a safety device, a whole-table vacuum scan will occur for any table
+     whose multixact-age is greater than
+     <xref linkend="guc-autovacuum-multixact-freeze-max-age">.
+     This will occur even if autovacuum is nominally disabled.
+    </para>
+   </sect3>
   </sect2>
 
   <sect2 id="autovacuum">

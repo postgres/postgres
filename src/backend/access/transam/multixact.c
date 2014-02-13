@@ -2055,11 +2055,13 @@ SetMultiXactIdLimit(MultiXactId oldest_datminmxid, Oid oldest_datoid)
 	Assert(MultiXactIdIsValid(oldest_datminmxid));
 
 	/*
-	 * The place where we actually get into deep trouble is halfway around
-	 * from the oldest potentially-existing XID/multi.	(This calculation is
-	 * probably off by one or two counts for Xids, because the special XIDs
-	 * reduce the size of the loop a little bit.  But we throw in plenty of
-	 * slop below, so it doesn't matter.)
+	 * Since multixacts wrap differently from transaction IDs, this logic is
+	 * not entirely correct: in some scenarios we could go for longer than 2
+	 * billion multixacts without seeing any data loss, and in some others we
+	 * could get in trouble before that if the new pg_multixact/members data
+	 * stomps on the previous cycle's data.  For lack of a better mechanism we
+	 * use the same logic as for transaction IDs, that is, start taking action
+	 * halfway around the oldest potentially-existing multixact.
 	 */
 	multiWrapLimit = oldest_datminmxid + (MaxMultiXactId >> 1);
 	if (multiWrapLimit < FirstMultiXactId)
@@ -2093,12 +2095,13 @@ SetMultiXactIdLimit(MultiXactId oldest_datminmxid, Oid oldest_datoid)
 
 	/*
 	 * We'll start trying to force autovacuums when oldest_datminmxid gets to
-	 * be more than autovacuum_freeze_max_age mxids old.
+	 * be more than autovacuum_multixact_freeze_max_age mxids old.
 	 *
-	 * It's a bit ugly to just reuse limits for xids that way, but it doesn't
-	 * seem worth adding separate GUCs for that purpose.
+	 * Note: autovacuum_multixact_freeze_max_age is a PGC_POSTMASTER parameter
+	 * so that we don't have to worry about dealing with on-the-fly changes in
+	 * its value.  See SetTransactionIdLimit.
 	 */
-	multiVacLimit = oldest_datminmxid + autovacuum_freeze_max_age;
+	multiVacLimit = oldest_datminmxid + autovacuum_multixact_freeze_max_age;
 	if (multiVacLimit < FirstMultiXactId)
 		multiVacLimit += FirstMultiXactId;
 
