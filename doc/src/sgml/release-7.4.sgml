@@ -5,7 +5,7 @@
   <title>Release 7.4.30</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2010-10-04</simpara>
   </note>
 
@@ -27,7 +27,7 @@
    <para>
     A dump/restore is not required for those running 7.4.X.
     However, if you are upgrading from a version earlier than 7.4.26,
-    see the release notes for 7.4.26.
+    see <xref linkend="release-7-4-26">.
    </para>
 
   </sect2>
@@ -139,7 +139,7 @@
   <title>Release 7.4.29</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2010-05-17</simpara>
   </note>
 
@@ -161,7 +161,7 @@
    <para>
     A dump/restore is not required for those running 7.4.X.
     However, if you are upgrading from a version earlier than 7.4.26,
-    see the release notes for 7.4.26.
+    see <xref linkend="release-7-4-26">.
    </para>
 
   </sect2>
@@ -283,7 +283,7 @@
   <title>Release 7.4.28</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2010-03-15</simpara>
   </note>
 
@@ -305,7 +305,7 @@
    <para>
     A dump/restore is not required for those running 7.4.X.
     However, if you are upgrading from a version earlier than 7.4.26,
-    see the release notes for 7.4.26.
+    see <xref linkend="release-7-4-26">.
    </para>
 
   </sect2>
@@ -402,7 +402,7 @@
   <title>Release 7.4.27</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2009-12-14</simpara>
   </note>
 
@@ -418,7 +418,7 @@
    <para>
     A dump/restore is not required for those running 7.4.X.
     However, if you are upgrading from a version earlier than 7.4.26,
-    see the release notes for 7.4.26.
+    see <xref linkend="release-7-4-26">.
    </para>
 
   </sect2>
@@ -465,7 +465,7 @@
      </para>
 
      <para>
-      This fix prevents a PANIC if a <literal>VACUUM FULL</> is cancelled
+      This fix prevents a PANIC if a <literal>VACUUM FULL</> is canceled
       after it's already committed its tuple movements, as well as transient
       errors if a plain <literal>VACUUM</> is interrupted after having
       truncated the table.
@@ -522,7 +522,7 @@
   <title>Release 7.4.26</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2009-09-09</simpara>
   </note>
 
@@ -540,7 +540,7 @@
     However, if you have any hash indexes on <type>interval</> columns,
     you must <command>REINDEX</> them after updating to 7.4.26.
     Also, if you are upgrading from a version earlier than 7.4.11,
-    see the release notes for 7.4.11.
+    see <xref linkend="release-7-4-11">.
    </para>
 
   </sect2>
@@ -652,7 +652,7 @@
   <title>Release 7.4.25</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2009-03-16</simpara>
   </note>
 
@@ -668,7 +668,7 @@
    <para>
     A dump/restore is not required for those running 7.4.X.
     However, if you are upgrading from a version earlier than 7.4.11,
-    see the release notes for 7.4.11.
+    see <xref linkend="release-7-4-11">.
    </para>
 
   </sect2>
@@ -732,7 +732,7 @@
   <title>Release 7.4.24</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2009-02-02</simpara>
   </note>
 
@@ -748,7 +748,7 @@
    <para>
     A dump/restore is not required for those running 7.4.X.
     However, if you are upgrading from a version earlier than 7.4.11,
-    see the release notes for 7.4.11.
+    see <xref linkend="release-7-4-11">.
    </para>
 
   </sect2>
@@ -818,7 +818,7 @@
   <title>Release 7.4.23</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2008-11-03</simpara>
   </note>
 
@@ -834,7 +834,7 @@
    <para>
     A dump/restore is not required for those running 7.4.X.
     However, if you are upgrading from a version earlier than 7.4.11,
-    see the release notes for 7.4.11.
+    see <xref linkend="release-7-4-11">.
    </para>
 
   </sect2>
@@ -902,7 +902,7 @@
   <title>Release 7.4.22</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2008-09-22</simpara>
   </note>
 
@@ -918,7 +918,7 @@
    <para>
     A dump/restore is not required for those running 7.4.X.
     However, if you are upgrading from a version earlier than 7.4.11,
-    see the release notes for 7.4.11.
+    see <xref linkend="release-7-4-11">.
    </para>
 
   </sect2>
@@ -978,7 +978,7 @@
   <title>Release 7.4.21</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2008-06-12</simpara>
   </note>
 
@@ -994,7 +994,7 @@
    <para>
     A dump/restore is not required for those running 7.4.X.
     However, if you are upgrading from a version earlier than 7.4.11,
-    see the release notes for 7.4.11.
+    see <xref linkend="release-7-4-11">.
    </para>
 
   </sect2>
@@ -1032,7 +1032,7 @@
   <title>Release 7.4.20</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>never released</simpara>
   </note>
 
@@ -1048,7 +1048,7 @@
    <para>
     A dump/restore is not required for those running 7.4.X.
     However, if you are upgrading from a version earlier than 7.4.11,
-    see the release notes for 7.4.11.
+    see <xref linkend="release-7-4-11">.
    </para>
 
   </sect2>
@@ -1149,7 +1149,7 @@
      </para>
 
      <para>
-      An explictly casted constant would be shown incorrectly.  This could
+      An explicitly casted constant would be shown incorrectly.  This could
       for example lead to corruption of a view definition during
       dump and reload.
      </para>
@@ -1177,7 +1177,7 @@
   <title>Release 7.4.19</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2008-01-07</simpara>
   </note>
 
@@ -1193,8 +1193,8 @@
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
-    if you are upgrading from a version earlier than 7.4.11, see the release
-    notes for 7.4.11.
+    if you are upgrading from a version earlier than 7.4.11,
+    see <xref linkend="release-7-4-11">.
    </para>
 
   </sect2>
@@ -1331,7 +1331,7 @@
   <title>Release 7.4.18</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2007-09-17</simpara>
   </note>
 
@@ -1346,8 +1346,8 @@
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
-    if you are upgrading from a version earlier than 7.4.11, see the release
-    notes for 7.4.11.
+    if you are upgrading from a version earlier than 7.4.11,
+    see <xref linkend="release-7-4-11">.
    </para>
 
   </sect2>
@@ -1407,7 +1407,7 @@
   <title>Release 7.4.17</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2007-04-23</simpara>
   </note>
 
@@ -1423,8 +1423,8 @@
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
-    if you are upgrading from a version earlier than 7.4.11, see the release
-    notes for 7.4.11.
+    if you are upgrading from a version earlier than 7.4.11,
+    see <xref linkend="release-7-4-11">.
    </para>
 
   </sect2>
@@ -1478,7 +1478,7 @@
   <title>Release 7.4.16</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2007-02-05</simpara>
   </note>
 
@@ -1494,8 +1494,8 @@
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
-    if you are upgrading from a version earlier than 7.4.11, see the release
-    notes for 7.4.11.
+    if you are upgrading from a version earlier than 7.4.11,
+    see <xref linkend="release-7-4-11">.
    </para>
 
   </sect2>
@@ -1549,7 +1549,7 @@
   <title>Release 7.4.15</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2007-01-08</simpara>
   </note>
 
@@ -1564,8 +1564,8 @@
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
-    if you are upgrading from a version earlier than 7.4.11, see the release
-    notes for 7.4.11.
+    if you are upgrading from a version earlier than 7.4.11,
+    see <xref linkend="release-7-4-11">.
    </para>
 
   </sect2>
@@ -1638,7 +1638,7 @@
   <title>Release 7.4.14</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2006-10-16</simpara>
   </note>
 
@@ -1653,8 +1653,8 @@
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
-    if you are upgrading from a version earlier than 7.4.11, see the release
-    notes for 7.4.11.
+    if you are upgrading from a version earlier than 7.4.11,
+    see <xref linkend="release-7-4-11">.
    </para>
 
   </sect2>
@@ -1685,7 +1685,7 @@ ANYARRAY</para></listitem>
   <title>Release 7.4.13</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2006-05-23</simpara>
   </note>
 
@@ -1701,8 +1701,8 @@ ANYARRAY</para></listitem>
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
-    if you are upgrading from a version earlier than 7.4.11, see the release
-    notes for 7.4.11.
+    if you are upgrading from a version earlier than 7.4.11,
+    see <xref linkend="release-7-4-11">.
    </para>
 
    <para>
@@ -1792,7 +1792,7 @@ Fuhr)</para></listitem>
   <title>Release 7.4.12</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2006-02-14</simpara>
   </note>
 
@@ -1807,8 +1807,8 @@ Fuhr)</para></listitem>
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
-    if you are upgrading from a version earlier than 7.4.11, see the release
-    notes for 7.4.11.
+    if you are upgrading from a version earlier than 7.4.11,
+    see <xref linkend="release-7-4-11">.
    </para>
   </sect2>
 
@@ -1855,7 +1855,7 @@ and <function>isinf</> during configure (Tom)</para></listitem>
   <title>Release 7.4.11</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2006-01-09</simpara>
   </note>
 
@@ -1870,8 +1870,8 @@ and <function>isinf</> during configure (Tom)</para></listitem>
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
-    if you are upgrading from a version earlier than 7.4.8, see the release
-    notes for 7.4.8.
+    if you are upgrading from a version earlier than 7.4.8,
+    see <xref linkend="release-7-4-8">.
     Also, you might need to <command>REINDEX</> indexes on textual
     columns after updating, if you are affected by the locale or
     <application>plperl</> issues described below.
@@ -1922,7 +1922,7 @@ what's actually returned by the query (Joe)</para></listitem>
   <title>Release 7.4.10</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2005-12-12</simpara>
   </note>
 
@@ -1937,8 +1937,8 @@ what's actually returned by the query (Joe)</para></listitem>
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
-    if you are upgrading from a version earlier than 7.4.8, see the release
-    notes for 7.4.8.
+    if you are upgrading from a version earlier than 7.4.8,
+    see <xref linkend="release-7-4-8">.
    </para>
   </sect2>
 
@@ -1975,7 +1975,7 @@ table has been dropped</para></listitem>
   <title>Release 7.4.9</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2005-10-04</simpara>
   </note>
 
@@ -1990,8 +1990,8 @@ table has been dropped</para></listitem>
 
    <para>
     A dump/restore is not required for those running 7.4.X.  However,
-    if you are upgrading from a version earlier than 7.4.8, see the release
-    notes for 7.4.8.
+    if you are upgrading from a version earlier than 7.4.8,
+    see <xref linkend="release-7-4-8">.
    </para>
   </sect2>
 
@@ -2044,7 +2044,7 @@ code</para></listitem>
   <title>Release 7.4.8</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2005-05-09</simpara>
   </note>
 
@@ -2228,7 +2228,7 @@ holder of the lock released it within a very narrow window.
   <title>Release 7.4.7</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2005-01-31</simpara>
   </note>
 
@@ -2288,7 +2288,7 @@ GMT</para></listitem>
   <title>Release 7.4.6</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2004-10-22</simpara>
   </note>
 
@@ -2360,7 +2360,7 @@ ECPG prepare statement</para></listitem>
   <title>Release 7.4.5</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2004-08-18</simpara>
   </note>
 
@@ -2398,7 +2398,7 @@ still worth a re-release.  The bug does not exist in pre-7.4 releases.
   <title>Release 7.4.4</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2004-08-16</simpara>
   </note>
 
@@ -2450,7 +2450,7 @@ aggregate plan</para></listitem>
   <title>Release 7.4.3</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2004-06-14</simpara>
   </note>
 
@@ -2508,7 +2508,7 @@ names from outer query levels.
   <title>Release 7.4.2</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2004-03-08</simpara>
   </note>
 
@@ -2651,7 +2651,7 @@ inconveniences associated with the <literal>i/I</> problem.</para></listitem>
   <title>Release 7.4.1</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2003-12-22</simpara>
   </note>
 
@@ -2765,7 +2765,7 @@ DROP SCHEMA information_schema CASCADE;
  <title>Release 7.4</title>
 
  <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2003-11-17</simpara>
  </note>
 
@@ -4143,7 +4143,7 @@ DROP SCHEMA information_schema CASCADE;
    </listitem>
 
    <listitem>
-    <para>Fix <literal>date_trunc('quarter', ...)</literal> (Böjthe Zoltán)</para>
+    <para>Fix <literal>date_trunc('quarter', ...)</literal> (B&ouml;jthe Zolt&aacute;n)</para>
     <para>
      Prior releases returned an incorrect value for this function call.
     </para>
@@ -4613,8 +4613,8 @@ DROP SCHEMA information_schema CASCADE;
    <listitem><para>Improve pgstattuple (Rod)</para></listitem>
    <listitem><para>Fix bug in <function>metaphone()</function> in fuzzystrmatch</para></listitem>
    <listitem><para>Improve adddepend (Rod)</para></listitem>
-   <listitem><para>Update spi/timetravel (Böjthe Zoltán)</para></listitem>
-   <listitem><para>Fix dbase <option>-s</> option and improve non-ASCII handling (Thomas Behr, Márcio Smiderle)</para></listitem>
+   <listitem><para>Update spi/timetravel (B&ouml;jthe Zolt&aacute;n)</para></listitem>
+   <listitem><para>Fix dbase <option>-s</> option and improve non-ASCII handling (Thomas Behr, M&aacute;rcio Smiderle)</para></listitem>
    <listitem><para>Remove array module because features now included by default (Joe)</para></listitem>
   </itemizedlist>
  </sect3>

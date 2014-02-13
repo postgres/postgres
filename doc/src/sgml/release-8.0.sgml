@@ -5,7 +5,7 @@
   <title>Release 8.0.26</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2010-10-04</simpara>
   </note>
 
@@ -27,7 +27,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.
     However, if you are upgrading from a version earlier than 8.0.22,
-    see the release notes for 8.0.22.
+    see <xref linkend="release-8-0-22">.
    </para>
 
   </sect2>
@@ -209,7 +209,7 @@
   <title>Release 8.0.25</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2010-05-17</simpara>
   </note>
 
@@ -231,7 +231,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.
     However, if you are upgrading from a version earlier than 8.0.22,
-    see the release notes for 8.0.22.
+    see <xref linkend="release-8-0-22">.
    </para>
 
   </sect2>
@@ -369,7 +369,7 @@
   <title>Release 8.0.24</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2010-03-15</simpara>
   </note>
 
@@ -391,7 +391,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.
     However, if you are upgrading from a version earlier than 8.0.22,
-    see the release notes for 8.0.22.
+    see <xref linkend="release-8-0-22">.
    </para>
 
   </sect2>
@@ -546,7 +546,7 @@
   <title>Release 8.0.23</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2009-12-14</simpara>
   </note>
 
@@ -562,7 +562,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.
     However, if you are upgrading from a version earlier than 8.0.22,
-    see the release notes for 8.0.22.
+    see <xref linkend="release-8-0-22">.
    </para>
 
   </sect2>
@@ -609,7 +609,7 @@
      </para>
 
      <para>
-      This fix prevents a PANIC if a <literal>VACUUM FULL</> is cancelled
+      This fix prevents a PANIC if a <literal>VACUUM FULL</> is canceled
       after it's already committed its tuple movements, as well as transient
       errors if a plain <literal>VACUUM</> is interrupted after having
       truncated the table.
@@ -701,7 +701,7 @@
   <title>Release 8.0.22</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2009-09-09</simpara>
   </note>
 
@@ -719,7 +719,7 @@
     However, if you have any hash indexes on <type>interval</> columns,
     you must <command>REINDEX</> them after updating to 8.0.22.
     Also, if you are upgrading from a version earlier than 8.0.6,
-    see the release notes for 8.0.6.
+    see <xref linkend="release-8-0-6">.
    </para>
 
   </sect2>
@@ -865,7 +865,7 @@
   <title>Release 8.0.21</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2009-03-16</simpara>
   </note>
 
@@ -881,7 +881,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.
     However, if you are upgrading from a version earlier than 8.0.6,
-    see the release notes for 8.0.6.
+    see <xref linkend="release-8-0-6">.
    </para>
 
   </sect2>
@@ -945,7 +945,7 @@
   <title>Release 8.0.20</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2009-02-02</simpara>
   </note>
 
@@ -961,7 +961,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.
     However, if you are upgrading from a version earlier than 8.0.6,
-    see the release notes for 8.0.6.
+    see <xref linkend="release-8-0-6">.
    </para>
 
   </sect2>
@@ -1031,7 +1031,7 @@
   <title>Release 8.0.19</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2008-11-03</simpara>
   </note>
 
@@ -1047,7 +1047,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.
     However, if you are upgrading from a version earlier than 8.0.6,
-    see the release notes for 8.0.6.
+    see <xref linkend="release-8-0-6">.
    </para>
 
   </sect2>
@@ -1142,7 +1142,7 @@
   <title>Release 8.0.18</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2008-09-22</simpara>
   </note>
 
@@ -1158,7 +1158,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.
     However, if you are upgrading from a version earlier than 8.0.6,
-    see the release notes for 8.0.6.
+    see <xref linkend="release-8-0-6">.
    </para>
 
   </sect2>
@@ -1276,7 +1276,7 @@
   <title>Release 8.0.17</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2008-06-12</simpara>
   </note>
 
@@ -1292,7 +1292,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.
     However, if you are upgrading from a version earlier than 8.0.6,
-    see the release notes for 8.0.6.
+    see <xref linkend="release-8-0-6">.
    </para>
 
   </sect2>
@@ -1330,7 +1330,7 @@
   <title>Release 8.0.16</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>never released</simpara>
   </note>
 
@@ -1346,7 +1346,7 @@
    <para>
     A dump/restore is not required for those running 8.0.X.
     However, if you are upgrading from a version earlier than 8.0.6,
-    see the release notes for 8.0.6.
+    see <xref linkend="release-8-0-6">.
    </para>
 
   </sect2>
@@ -1539,7 +1539,7 @@
      </para>
 
      <para>
-      An explictly casted constant would be shown incorrectly.  This could
+      An explicitly casted constant would be shown incorrectly.  This could
       for example lead to corruption of a view definition during
       dump and reload.
      </para>
@@ -1567,7 +1567,7 @@
   <title>Release 8.0.15</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2008-01-07</simpara>
   </note>
 
@@ -1592,8 +1592,8 @@
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
-    if you are upgrading from a version earlier than 8.0.6, see the release
-    notes for 8.0.6.
+    if you are upgrading from a version earlier than 8.0.6,
+    see <xref linkend="release-8-0-6">.
    </para>
 
   </sect2>
@@ -1783,7 +1783,7 @@
   <title>Release 8.0.14</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2007-09-17</simpara>
   </note>
 
@@ -1798,8 +1798,8 @@
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
-    if you are upgrading from a version earlier than 8.0.6, see the release
-    notes for 8.0.6.
+    if you are upgrading from a version earlier than 8.0.6,
+    see <xref linkend="release-8-0-6">.
    </para>
 
   </sect2>
@@ -1891,7 +1891,7 @@
   <title>Release 8.0.13</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2007-04-23</simpara>
   </note>
 
@@ -1907,8 +1907,8 @@
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
-    if you are upgrading from a version earlier than 8.0.6, see the release
-    notes for 8.0.6.
+    if you are upgrading from a version earlier than 8.0.6,
+    see <xref linkend="release-8-0-6">.
    </para>
 
   </sect2>
@@ -1968,7 +1968,7 @@
   <title>Release 8.0.12</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2007-02-07</simpara>
   </note>
 
@@ -1983,8 +1983,8 @@
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
-    if you are upgrading from a version earlier than 8.0.6, see the release
-    notes for 8.0.6.
+    if you are upgrading from a version earlier than 8.0.6,
+    see <xref linkend="release-8-0-6">.
    </para>
 
   </sect2>
@@ -2010,7 +2010,7 @@
   <title>Release 8.0.11</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2007-02-05</simpara>
   </note>
 
@@ -2026,8 +2026,8 @@
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
-    if you are upgrading from a version earlier than 8.0.6, see the release
-    notes for 8.0.6.
+    if you are upgrading from a version earlier than 8.0.6,
+    see <xref linkend="release-8-0-6">.
    </para>
 
   </sect2>
@@ -2081,7 +2081,7 @@
   <title>Release 8.0.10</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2007-01-08</simpara>
   </note>
 
@@ -2096,8 +2096,8 @@
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
-    if you are upgrading from a version earlier than 8.0.6, see the release
-    notes for 8.0.6.
+    if you are upgrading from a version earlier than 8.0.6,
+    see <xref linkend="release-8-0-6">.
    </para>
 
   </sect2>
@@ -2200,7 +2200,7 @@
   <title>Release 8.0.9</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2006-10-16</simpara>
   </note>
 
@@ -2215,8 +2215,8 @@
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
-    if you are upgrading from a version earlier than 8.0.6, see the release
-    notes for 8.0.6.
+    if you are upgrading from a version earlier than 8.0.6,
+    see <xref linkend="release-8-0-6">.
    </para>
 
   </sect2>
@@ -2256,7 +2256,7 @@ Wieland)</para></listitem>
   <title>Release 8.0.8</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2006-05-23</simpara>
   </note>
 
@@ -2272,8 +2272,8 @@ Wieland)</para></listitem>
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
-    if you are upgrading from a version earlier than 8.0.6, see the release
-    notes for 8.0.6.
+    if you are upgrading from a version earlier than 8.0.6,
+    see <xref linkend="release-8-0-6">.
    </para>
 
    <para>
@@ -2370,7 +2370,7 @@ Fuhr)</para></listitem>
   <title>Release 8.0.7</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2006-02-14</simpara>
   </note>
 
@@ -2385,8 +2385,8 @@ Fuhr)</para></listitem>
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
-    if you are upgrading from a version earlier than 8.0.6, see the release
-    notes for 8.0.6.
+    if you are upgrading from a version earlier than 8.0.6,
+    see <xref linkend="release-8-0-6">.
    </para>
   </sect2>
 
@@ -2469,7 +2469,7 @@ and <function>isinf</> during configure (Tom)</para></listitem>
   <title>Release 8.0.6</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2006-01-09</simpara>
   </note>
 
@@ -2484,8 +2484,8 @@ and <function>isinf</> during configure (Tom)</para></listitem>
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
-    if you are upgrading from a version earlier than 8.0.3, see the release
-    notes for 8.0.3.
+    if you are upgrading from a version earlier than 8.0.3,
+    see <xref linkend="release-8-0-3">.
     Also, you might need to <command>REINDEX</> indexes on textual
     columns after updating, if you are affected by the locale or
     <application>plperl</> issues described below.
@@ -2554,7 +2554,7 @@ what's actually returned by the query (Joe)</para></listitem>
   <title>Release 8.0.5</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2005-12-12</simpara>
   </note>
 
@@ -2569,8 +2569,8 @@ what's actually returned by the query (Joe)</para></listitem>
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
-    if you are upgrading from a version earlier than 8.0.3, see the release
-    notes for 8.0.3.
+    if you are upgrading from a version earlier than 8.0.3,
+    see <xref linkend="release-8-0-3">.
    </para>
   </sect2>
 
@@ -2636,7 +2636,7 @@ to subquery results</para></listitem>
   <title>Release 8.0.4</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2005-10-04</simpara>
   </note>
 
@@ -2651,8 +2651,8 @@ to subquery results</para></listitem>
 
    <para>
     A dump/restore is not required for those running 8.0.X.  However,
-    if you are upgrading from a version earlier than 8.0.3, see the release
-    notes for 8.0.3.
+    if you are upgrading from a version earlier than 8.0.3,
+    see <xref linkend="release-8-0-3">.
    </para>
   </sect2>
 
@@ -2733,7 +2733,7 @@ code</para></listitem>
   <title>Release 8.0.3</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2005-05-09</simpara>
   </note>
 
@@ -2853,7 +2853,7 @@ data types</para></listitem>
   <title>Release 8.0.2</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2005-04-07</simpara>
   </note>
 
@@ -3010,7 +3010,7 @@ addresses in <type>INET</> data types (Tom)</para></listitem>
   <title>Release 8.0.1</title>
 
   <note>
-  <title>Release date</title>
+  <title>Release Date</title>
   <simpara>2005-01-31</simpara>
   </note>
 
@@ -3079,7 +3079,7 @@ typedefs (Michael)</para></listitem>
   <title>Release 8.0</title>
 
   <note>
-   <title>Release date</title>
+   <title>Release Date</title>
    <simpara>2005-01-19</simpara>
   </note>
 
