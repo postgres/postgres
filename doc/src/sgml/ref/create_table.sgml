@@ -981,7 +981,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
      <para>
      Custom <xref linkend="guc-vacuum-freeze-min-age"> parameter. Note that
      autovacuum will ignore attempts to set a per-table
-     <literal>autovacuum_freeze_min_age</> larger than the half system-wide
+     <literal>autovacuum_freeze_min_age</> larger than half the system-wide
      <xref linkend="guc-autovacuum-freeze-max-age"> setting.
      </para>
     </listitem>
@@ -1006,6 +1006,43 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
     <listitem>
      <para>
       Custom <xref linkend="guc-vacuum-freeze-table-age"> parameter.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>autovacuum_multixact_freeze_min_age</literal>, <literal>toast.autovacuum_multixact_freeze_min_age</literal> (<type>integer</type>)</term>
+    <listitem>
+     <para>
+      Custom <xref linkend="guc-vacuum-multixact-freeze-min-age"> parameter.
+      Note that autovacuum will ignore attempts to set a per-table
+      <literal>autovacuum_multixact_freeze_min_age</> larger than half the
+      system-wide <xref linkend="guc-autovacuum-multixact-freeze-max-age">
+      setting.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>autovacuum_multixact_freeze_max_age</literal>, <literal>toast.autovacuum_multixact_freeze_max_age</literal> (<type>integer</type>)</term>
+    <listitem>
+     <para>
+      Custom <xref linkend="guc-autovacuum-multixact-freeze-max-age"> parameter. Note
+      that autovacuum will ignore attempts to set a per-table
+      <literal>autovacuum_multixact_freeze_max_age</> larger than the
+      system-wide setting (it can only be set smaller).  Note that while you
+      can set <literal>autovacuum_multixact_freeze_max_age</> very small,
+      or even zero, this is usually unwise since it will force frequent
+      vacuuming.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>autovacuum_multixact_freeze_table_age</literal>, <literal>toast.autovacuum_multixact_freeze_table_age</literal> (<type>integer</type>)</term>
+    <listitem>
+     <para>
+      Custom <xref linkend="guc-vacuum-multixact-freeze-table-age"> parameter.
      </para>
     </listitem>
    </varlistentry>

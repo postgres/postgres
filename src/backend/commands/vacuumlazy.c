@@ -203,6 +203,8 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	vac_strategy = bstrategy;
 
 	vacuum_set_xid_limits(vacstmt->freeze_min_age, vacstmt->freeze_table_age,
+						  vacstmt->multixact_freeze_min_age,
+						  vacstmt->multixact_freeze_table_age,
 						  onerel->rd_rel->relisshared,
 						  &OldestXmin, &FreezeLimit, &xidFullScanLimit,
 						  &MultiXactCutoff, &mxactFullScanLimit);
@@ -210,8 +212,8 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	/*
 	 * We request a full scan if either the table's frozen Xid is now older
 	 * than or equal to the requested Xid full-table scan limit; or if the
-	 * table's minimum MultiXactId is older than or equal to the requested mxid
-	 * full-table scan limit.
+	 * table's minimum MultiXactId is older than or equal to the requested
+	 * mxid full-table scan limit.
 	 */
 	scan_all = TransactionIdPrecedesOrEquals(onerel->rd_rel->relfrozenxid,
 											 xidFullScanLimit);

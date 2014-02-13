@@ -55,6 +55,8 @@
  */
 int			vacuum_freeze_min_age;
 int			vacuum_freeze_table_age;
+int			vacuum_multixact_freeze_min_age;
+int			vacuum_multixact_freeze_table_age;
 
 
 /* A few variables that don't seem worth passing around as parameters */
@@ -398,6 +400,8 @@ get_rel_oids(Oid relid, const RangeVar *vacrel)
 void
 vacuum_set_xid_limits(int freeze_min_age,
 					  int freeze_table_age,
+					  int multixact_freeze_min_age,
+					  int multixact_freeze_table_age,
 					  bool sharedRel,
 					  TransactionId *oldestXmin,
 					  TransactionId *freezeLimit,
@@ -406,9 +410,11 @@ vacuum_set_xid_limits(int freeze_min_age,
 					  MultiXactId *mxactFullScanLimit)
 {
 	int			freezemin;
+	int			mxid_freezemin;
 	TransactionId limit;
 	TransactionId safeLimit;
-	MultiXactId	mxactLimit;
+	MultiXactId mxactLimit;
+	MultiXactId safeMxactLimit;
 
 	/*
 	 * We can always ignore processes running lazy vacuum.	This is because we
@@ -462,13 +468,36 @@ vacuum_set_xid_limits(int freeze_min_age,
 	*freezeLimit = limit;
 
 	/*
-	 * simplistic MultiXactId removal limit: use the same policy as for
-	 * freezing Xids (except we use the oldest known mxact instead of the
-	 * current next value).
+	 * Determine the minimum multixact freeze age to use: as specified by
+	 * caller, or vacuum_multixact_freeze_min_age, but in any case not more
+	 * than half autovacuum_multixact_freeze_max_age, so that autovacuums to
+	 * prevent MultiXact wraparound won't occur too frequently.
 	 */
-	mxactLimit = GetOldestMultiXactId() - freezemin;
+	mxid_freezemin = multixact_freeze_min_age;
+	if (mxid_freezemin < 0)
+		mxid_freezemin = vacuum_multixact_freeze_min_age;
+	mxid_freezemin = Min(mxid_freezemin,
+						 autovacuum_multixact_freeze_max_age / 2);
+	Assert(mxid_freezemin >= 0);
+
+	/* compute the cutoff multi, being careful to generate a valid value */
+	mxactLimit = GetOldestMultiXactId() - mxid_freezemin;
 	if (mxactLimit < FirstMultiXactId)
 		mxactLimit = FirstMultiXactId;
+
+	safeMxactLimit =
+		ReadNextMultiXactId() - autovacuum_multixact_freeze_max_age;
+	if (safeMxactLimit < FirstMultiXactId)
+		safeMxactLimit = FirstMultiXactId;
+
+	if (MultiXactIdPrecedes(mxactLimit, safeMxactLimit))
+	{
+		ereport(WARNING,
+				(errmsg("oldest multixact is far in the past"),
+				 errhint("Close open transactions with multixacts soon to avoid wraparound problems.")));
+		mxactLimit = safeMxactLimit;
+	}
+
 	*multiXactCutoff = mxactLimit;
 
 	if (xidFullScanLimit != NULL)
@@ -501,15 +530,33 @@ vacuum_set_xid_limits(int freeze_min_age,
 		*xidFullScanLimit = limit;
 
 		/*
-		 * Compute MultiXactId limit to cause a full-table vacuum, being
-		 * careful not to generate an invalid multi. We just copy the logic
-		 * (and limits) from plain XIDs here.
+		 * Similar to the above, determine the table freeze age to use for
+		 * multixacts: as specified by the caller, or
+		 * vacuum_multixact_freeze_table_age, but in any case not more than
+		 * autovacuum_multixact_freeze_table_age * 0.95, so that if you have
+		 * e.g. nightly VACUUM schedule, the nightly VACUUM gets a chance to
+		 * freeze multixacts before anti-wraparound autovacuum is launched.
+		 */
+		freezetable = multixact_freeze_table_age;
+		if (freezetable < 0)
+			freezetable = vacuum_multixact_freeze_table_age;
+		freezetable = Min(freezetable,
+						  autovacuum_multixact_freeze_max_age * 0.95);
+		Assert(freezetable >= 0);
+
+		/*
+		 * Compute MultiXact limit causing a full-table vacuum, being careful
+		 * to generate a valid MultiXact value.
 		 */
 		mxactLimit = ReadNextMultiXactId() - freezetable;
 		if (mxactLimit < FirstMultiXactId)
 			mxactLimit = FirstMultiXactId;
 
 		*mxactFullScanLimit = mxactLimit;
+	}
+	else
+	{
+		Assert(mxactFullScanLimit == NULL);
 	}
 }
 
@@ -1150,7 +1197,9 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound)
 		/* VACUUM FULL is now a variant of CLUSTER; see cluster.c */
 		cluster_rel(relid, InvalidOid, false,
 					(vacstmt->options & VACOPT_VERBOSE) != 0,
-					vacstmt->freeze_min_age, vacstmt->freeze_table_age);
+					vacstmt->freeze_min_age, vacstmt->freeze_table_age,
+					vacstmt->multixact_freeze_min_age,
+					vacstmt->multixact_freeze_table_age);
 	}
 	else
 		lazy_vacuum_rel(onerel, vacstmt, vac_strategy);

@@ -362,12 +362,12 @@
 					#   panic
 
 #log_min_error_statement = error	# values in order of decreasing detail:
-				 	#   debug5
+					#   debug5
 					#   debug4
 					#   debug3
 					#   debug2
 					#   debug1
-				 	#   info
+					#   info
 					#   notice
 					#   warning
 					#   error
@@ -431,7 +431,7 @@
 #track_counts = on
 #track_io_timing = off
 #track_functions = none			# none, pl, all
-#track_activity_query_size = 1024 	# (change requires restart)
+#track_activity_query_size = 1024	# (change requires restart)
 #update_process_title = on
 #stats_temp_directory = 'pg_stat_tmp'
 
@@ -465,6 +465,9 @@
 #autovacuum_analyze_scale_factor = 0.1	# fraction of table size before analyze
 #autovacuum_freeze_max_age = 200000000	# maximum XID age before forced vacuum
 					# (change requires restart)
+#autovacuum_multixact_freeze_max_age = 400000000	# maximum Multixact age
+					# before forced vacuum
+					# (change requires restart)
 #autovacuum_vacuum_cost_delay = 20ms	# default vacuum cost delay for
 					# autovacuum, in milliseconds;
 					# -1 means use vacuum_cost_delay
@@ -492,6 +495,8 @@
 #lock_timeout = 0			# in milliseconds, 0 is disabled
 #vacuum_freeze_min_age = 50000000
 #vacuum_freeze_table_age = 150000000
+#vacuum_multixact_freeze_min_age = 5000000
+#vacuum_multixact_freeze_table_age = 150000000
 #bytea_output = 'hex'			# hex, escape
 #xmlbinary = 'base64'
 #xmloption = 'content'

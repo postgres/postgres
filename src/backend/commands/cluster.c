@@ -64,9 +64,13 @@ typedef struct
 
 
 static void rebuild_relation(Relation OldHeap, Oid indexOid,
-				 int freeze_min_age, int freeze_table_age, bool verbose);
+				 int freeze_min_age, int freeze_table_age,
+				 int multixact_freeze_min_age, int multixact_freeze_table_age,
+				 bool verbose);
 static void copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
-			   int freeze_min_age, int freeze_table_age, bool verbose,
+			   int freeze_min_age, int freeze_table_age,
+			   int multixact_freeze_min_age, int multixact_freeze_table_age,
+			   bool verbose,
 			   bool *pSwapToastByContent, TransactionId *pFreezeXid,
 			   MultiXactId *pCutoffMulti);
 static List *get_tables_to_cluster(MemoryContext cluster_context);
@@ -179,7 +183,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 		 * Do the job.  We use a -1 freeze_min_age to avoid having CLUSTER
 		 * freeze tuples earlier than a plain VACUUM would.
 		 */
-		cluster_rel(tableOid, indexOid, false, stmt->verbose, -1, -1);
+		cluster_rel(tableOid, indexOid, false, stmt->verbose, -1, -1, -1, -1);
 	}
 	else
 	{
@@ -230,7 +234,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 			PushActiveSnapshot(GetTransactionSnapshot());
 			/* Do the job.  As above, use a -1 freeze_min_age. */
 			cluster_rel(rvtc->tableOid, rvtc->indexOid, true, stmt->verbose,
-						-1, -1);
+						-1, -1, -1, -1);
 			PopActiveSnapshot();
 			CommitTransactionCommand();
 		}
@@ -262,7 +266,8 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
  */
 void
 cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose,
-			int freeze_min_age, int freeze_table_age)
+			int freeze_min_age, int freeze_table_age,
+			int multixact_freeze_min_age, int multixact_freeze_table_age)
 {
 	Relation	OldHeap;
 
@@ -407,6 +412,7 @@ cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose,
 
 	/* rebuild_relation does all the dirty work */
 	rebuild_relation(OldHeap, indexOid, freeze_min_age, freeze_table_age,
+					 multixact_freeze_min_age, multixact_freeze_table_age,
 					 verbose);
 
 	/* NB: rebuild_relation does heap_close() on OldHeap */
@@ -566,7 +572,9 @@ mark_index_clustered(Relation rel, Oid indexOid, bool is_internal)
  */
 static void
 rebuild_relation(Relation OldHeap, Oid indexOid,
-				 int freeze_min_age, int freeze_table_age, bool verbose)
+				 int freeze_min_age, int freeze_table_age,
+				 int multixact_freeze_min_age, int multixact_freeze_table_age,
+				 bool verbose)
 {
 	Oid			tableOid = RelationGetRelid(OldHeap);
 	Oid			tableSpace = OldHeap->rd_rel->reltablespace;
@@ -591,7 +599,9 @@ rebuild_relation(Relation OldHeap, Oid indexOid,
 
 	/* Copy the heap data into the new table in the desired order */
 	copy_heap_data(OIDNewHeap, tableOid, indexOid,
-				   freeze_min_age, freeze_table_age, verbose,
+				   freeze_min_age, freeze_table_age,
+				   multixact_freeze_min_age, multixact_freeze_table_age,
+				   verbose,
 				   &swap_toast_by_content, &frozenXid, &cutoffMulti);
 
 	/*
@@ -733,7 +743,9 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace)
  */
 static void
 copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
-			   int freeze_min_age, int freeze_table_age, bool verbose,
+			   int freeze_min_age, int freeze_table_age,
+			   int multixact_freeze_min_age, int multixact_freeze_table_age,
+			   bool verbose,
 			   bool *pSwapToastByContent, TransactionId *pFreezeXid,
 			   MultiXactId *pCutoffMulti)
 {
@@ -849,6 +861,7 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex,
 	 * compute xids used to freeze and weed out dead tuples.
 	 */
 	vacuum_set_xid_limits(freeze_min_age, freeze_table_age,
+						  multixact_freeze_min_age, multixact_freeze_table_age,
 						  OldHeap->rd_rel->relisshared,
 						  &OldestXmin, &FreezeXid, NULL, &MultiXactCutoff,
 						  NULL);

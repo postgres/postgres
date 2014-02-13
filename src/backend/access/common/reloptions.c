@@ -164,6 +164,14 @@ static relopt_int intRelOpts[] =
 	},
 	{
 		{
+			"autovacuum_multixact_freeze_min_age",
+			"Minimum multixact age at which VACUUM should freeze a row multixact's, for autovacuum",
+			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST
+		},
+		-1, 0, 1000000000
+	},
+	{
+		{
 			"autovacuum_freeze_max_age",
 			"Age at which to autovacuum a table to prevent transaction ID wraparound",
 			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST
@@ -172,8 +180,23 @@ static relopt_int intRelOpts[] =
 	},
 	{
 		{
+			"autovacuum_multixact_freeze_max_age",
+			"Multixact age at which to autovacuum a table to prevent multixact wraparound",
+			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST
+		},
+		-1, 100000000, 2000000000
+	},
+	{
+		{
 			"autovacuum_freeze_table_age",
 			"Age at which VACUUM should perform a full table sweep to replace old Xid values with FrozenXID",
+			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST
+		}, -1, 0, 2000000000
+	},
+	{
+		{
+			"autovacuum_multixact_freeze_table_age",
+			"Age of multixact at which VACUUM should perform a full table sweep to replace old multixact values with newer ones",
 			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST
 		}, -1, 0, 2000000000
 	},
@@ -1146,6 +1169,12 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 		offsetof(StdRdOptions, autovacuum) +offsetof(AutoVacOpts, freeze_max_age)},
 		{"autovacuum_freeze_table_age", RELOPT_TYPE_INT,
 		offsetof(StdRdOptions, autovacuum) +offsetof(AutoVacOpts, freeze_table_age)},
+		{"autovacuum_multixact_freeze_min_age", RELOPT_TYPE_INT,
+		offsetof(StdRdOptions, autovacuum2) +offsetof(AutoVacOpts2, multixact_freeze_min_age)},
+		{"autovacuum_multixact_freeze_max_age", RELOPT_TYPE_INT,
+		offsetof(StdRdOptions, autovacuum2) +offsetof(AutoVacOpts2, multixact_freeze_max_age)},
+		{"autovacuum_multixact_freeze_table_age", RELOPT_TYPE_INT,
+		offsetof(StdRdOptions, autovacuum2) +offsetof(AutoVacOpts2, multixact_freeze_table_age)},
 		{"autovacuum_vacuum_scale_factor", RELOPT_TYPE_REAL,
 		offsetof(StdRdOptions, autovacuum) +offsetof(AutoVacOpts, vacuum_scale_factor)},
 		{"autovacuum_analyze_scale_factor", RELOPT_TYPE_REAL,
