@@ -366,7 +366,7 @@ gen_salt(type text [, iter_count integer ]) returns text
        <entry>4</entry>
       </row>
       <row>
-       <entry><literal>md5 hash</></entry>
+       <entry><literal>md5</> (hash)</entry>
        <entry>150085504</entry>
        <entry>22.5 minutes</entry>
        <entry>17 days</entry>
