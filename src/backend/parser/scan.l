@@ -737,7 +737,8 @@ other			.
 <xuiend>{xustop1} |
 <xuiend><<EOF>>	{
 					/* no UESCAPE after the quote, throw back everything */
-					char		   *ident;
+					char	   *ident;
+					int			identlen;
 
 					yyless(0);
 
@@ -745,14 +746,16 @@ other			.
 					if (yyextra->literallen == 0)
 						yyerror("zero-length delimited identifier");
 					ident = litbuf_udeescape('\\', yyscanner);
-					if (yyextra->literallen >= NAMEDATALEN)
-						truncate_identifier(ident, yyextra->literallen, true);
+					identlen = strlen(ident);
+					if (identlen >= NAMEDATALEN)
+						truncate_identifier(ident, identlen, true);
 					yylval->str = ident;
 					return IDENT;
 				}
 <xuiend>{xustop2}	{
 					/* found UESCAPE after the end quote */
-					char		   *ident;
+					char	   *ident;
+					int			identlen;
 
 					BEGIN(INITIAL);
 					if (yyextra->literallen == 0)
@@ -764,8 +767,9 @@ other			.
 						yyerror("invalid Unicode escape character");
 					}
 					ident = litbuf_udeescape(yytext[yyleng - 2], yyscanner);
-					if (yyextra->literallen >= NAMEDATALEN)
-						truncate_identifier(ident, yyextra->literallen, true);
+					identlen = strlen(ident);
+					if (identlen >= NAMEDATALEN)
+						truncate_identifier(ident, identlen, true);
 					yylval->str = ident;
 					return IDENT;
 				}
