@@ -30,7 +30,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 8.3.17,
-    see the release notes for 8.3.17.
+    see <xref linkend="release-8-3-17">.
    </para>
 
   </sect2>
@@ -199,7 +199,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 8.3.17,
-    see the release notes for 8.3.17.
+    see <xref linkend="release-8-3-17">.
    </para>
 
   </sect2>
@@ -495,7 +495,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 8.3.17,
-    see the release notes for 8.3.17.
+    see <xref linkend="release-8-3-17">.
    </para>
 
   </sect2>
@@ -605,7 +605,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 8.3.17,
-    see the release notes for 8.3.17.
+    see <xref linkend="release-8-3-17">.
    </para>
 
   </sect2>
@@ -822,7 +822,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 8.3.17,
-    see the release notes for 8.3.17.
+    see <xref linkend="release-8-3-17">.
    </para>
 
   </sect2>
@@ -1051,7 +1051,7 @@
 
    <para>
     However, if you are upgrading from a version earlier than 8.3.17,
-    see the release notes for 8.3.17.
+    see <xref linkend="release-8-3-17">.
    </para>
 
   </sect2>
@@ -1346,7 +1346,7 @@
 
    <para>
     Also, if you are upgrading from a version earlier than 8.3.8,
-    see the release notes for 8.3.8.
+    see <xref linkend="release-8-3-8">.
    </para>
 
   </sect2>
@@ -1603,7 +1603,7 @@
    <para>
     A dump/restore is not required for those running 8.3.X.
     However, if you are upgrading from a version earlier than 8.3.8,
-    see the release notes for 8.3.8.
+    see <xref linkend="release-8-3-8">.
    </para>
 
   </sect2>
@@ -1974,7 +1974,7 @@
    <para>
     A dump/restore is not required for those running 8.3.X.
     However, if you are upgrading from a version earlier than 8.3.8,
-    see the release notes for 8.3.8.
+    see <xref linkend="release-8-3-8">.
    </para>
 
   </sect2>
@@ -2137,7 +2137,7 @@
    <para>
     A dump/restore is not required for those running 8.3.X.
     However, if you are upgrading from a version earlier than 8.3.8,
-    see the release notes for 8.3.8.
+    see <xref linkend="release-8-3-8">.
    </para>
 
   </sect2>
@@ -2269,7 +2269,7 @@
    <para>
     A dump/restore is not required for those running 8.3.X.
     However, if you are upgrading from a version earlier than 8.3.8,
-    see the release notes for 8.3.8.
+    see <xref linkend="release-8-3-8">.
    </para>
 
   </sect2>
@@ -2547,7 +2547,7 @@
    <para>
     A dump/restore is not required for those running 8.3.X.
     However, if you are upgrading from a version earlier than 8.3.8,
-    see the release notes for 8.3.8.
+    see <xref linkend="release-8-3-8">.
    </para>
 
   </sect2>
@@ -2910,7 +2910,7 @@
    <para>
     A dump/restore is not required for those running 8.3.X.
     However, if you are upgrading from a version earlier than 8.3.8,
-    see the release notes for 8.3.8.
+    see <xref linkend="release-8-3-8">.
    </para>
 
   </sect2>
@@ -3139,7 +3139,7 @@
    <para>
     A dump/restore is not required for those running 8.3.X.
     However, if you are upgrading from a version earlier than 8.3.8,
-    see the release notes for 8.3.8.
+    see <xref linkend="release-8-3-8">.
    </para>
 
   </sect2>
@@ -3466,7 +3466,7 @@
    <para>
     A dump/restore is not required for those running 8.3.X.
     However, if you are upgrading from a version earlier than 8.3.8,
-    see the release notes for 8.3.8.
+    see <xref linkend="release-8-3-8">.
    </para>
 
   </sect2>
@@ -3801,7 +3801,7 @@
     However, if you have any hash indexes on <type>interval</> columns,
     you must <command>REINDEX</> them after updating to 8.3.8.
     Also, if you are upgrading from a version earlier than 8.3.5,
-    see the release notes for 8.3.5.
+    see <xref linkend="release-8-3-5">.
    </para>
 
   </sect2>
@@ -4089,7 +4089,7 @@
    <para>
     A dump/restore is not required for those running 8.3.X.
     However, if you are upgrading from a version earlier than 8.3.5,
-    see the release notes for 8.3.5.
+    see <xref linkend="release-8-3-5">.
    </para>
 
   </sect2>
@@ -4312,7 +4312,7 @@
    <para>
     A dump/restore is not required for those running 8.3.X.
     However, if you are upgrading from a version earlier than 8.3.5,
-    see the release notes for 8.3.5.
+    see <xref linkend="release-8-3-5">.
    </para>
 
   </sect2>
@@ -4606,7 +4606,7 @@
    <para>
     A dump/restore is not required for those running 8.3.X.
     However, if you are upgrading from a version earlier than 8.3.1,
-    see the release notes for 8.3.1.  Also, if you were running a previous
+    see <xref linkend="release-8-3-1">.  Also, if you were running a previous
     8.3.X release, it is recommended to <command>REINDEX</> all GiST
     indexes after the upgrade.
    </para>
@@ -4861,7 +4861,7 @@
    <para>
     A dump/restore is not required for those running 8.3.X.
     However, if you are upgrading from a version earlier than 8.3.1,
-    see the release notes for 8.3.1.
+    see <xref linkend="release-8-3-1">.
    </para>
 
   </sect2>
@@ -5215,7 +5215,7 @@
    <para>
     A dump/restore is not required for those running 8.3.X.
     However, if you are upgrading from a version earlier than 8.3.1,
-    see the release notes for 8.3.1.
+    see <xref linkend="release-8-3-1">.
    </para>
 
   </sect2>
@@ -5282,7 +5282,7 @@
    <para>
     A dump/restore is not required for those running 8.3.X.
     However, if you are upgrading from a version earlier than 8.3.1,
-    see the release notes for 8.3.1.
+    see <xref linkend="release-8-3-1">.
    </para>
 
   </sect2>
