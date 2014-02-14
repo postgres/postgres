@@ -9576,17 +9576,15 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 	/*-------
 	 * Standby mode is implemented by a state machine:
 	 *
-	 * 1. Read from archive (XLOG_FROM_ARCHIVE)
-	 * 2. Read from pg_xlog (XLOG_FROM_PG_XLOG)
-	 * 3. Check trigger file
-	 * 4. Read from primary server via walreceiver (XLOG_FROM_STREAM)
-	 * 5. Rescan timelines
-	 * 6. Sleep 5 seconds, and loop back to 1.
+	 * 1. Read from either archive or pg_xlog (XLOG_FROM_ARCHIVE), or just
+	 *    pg_xlog (XLOG_FROM_XLOG)
+	 * 2. Check trigger file
+	 * 3. Read from primary server via walreceiver (XLOG_FROM_STREAM)
+	 * 4. Rescan timelines
+	 * 5. Sleep 5 seconds, and loop back to 1.
 	 *
 	 * Failure to read from the current source advances the state machine to
-	 * the next state. In addition, successfully reading a file from pg_xlog
-	 * moves the state machine from state 2 back to state 1 (we always prefer
-	 * files in the archive over files in pg_xlog).
+	 * the next state.
 	 *
 	 * 'currentSource' indicates the current state. There are no currentSource
 	 * values for "check trigger", "rescan timelines", and "sleep" states,
@@ -9614,9 +9612,6 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 			switch (currentSource)
 			{
 				case XLOG_FROM_ARCHIVE:
-					currentSource = XLOG_FROM_PG_XLOG;
-					break;
-
 				case XLOG_FROM_PG_XLOG:
 
 					/*
@@ -9781,7 +9776,9 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 				 * Try to restore the file from archive, or read an existing
 				 * file from pg_xlog.
 				 */
-				readFile = XLogFileReadAnyTLI(readSegNo, DEBUG2, currentSource);
+				readFile = XLogFileReadAnyTLI(readSegNo, DEBUG2,
+						currentSource == XLOG_FROM_ARCHIVE ? XLOG_FROM_ANY :
+										 currentSource);
 				if (readFile >= 0)
 					return true;	/* success! */
 
