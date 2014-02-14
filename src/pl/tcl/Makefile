@@ -29,10 +29,29 @@ endif
 endif
 
 
-SHLIB_LINK = $(TCL_LIB_SPEC)
 ifneq ($(PORTNAME), win32)
-SHLIB_LINK += $(TCL_LIBS) -lc
-endif
+
+SHLIB_LINK = $(TCL_LIB_SPEC) $(TCL_LIBS) -lc
+
+else # win32
+
+# Tcl on win32 ships with import libraries only for Microsoft Visual C++,
+# which are not compatible with mingw gcc. Therefore we need to build a
+# new import library to link with.
+
+tclwithver = $(subst -l,,$(filter -l%, $(TCL_LIB_SPEC)))
+TCLDLL = $(subst -L,,$(filter -L%, $(TCL_LIB_SPEC)))/$(tclwithver).dll
+
+OBJS += lib$(tclwithver).a
+
+lib$(tclwithver).a: $(tclwithver).def
+	dlltool --dllname $(tclwithver).dll --def $(tclwithver).def --output-lib lib$(tclwithver).a
+
+$(tclwithver).def: $(TCLDLL)
+	pexports $^ > $@
+
+endif # win32
+
 
 NAME = pltcl
 
@@ -96,4 +115,7 @@ endif # TCL_SHARED_BUILD = 0
 clean distclean maintainer-clean: clean-lib
 	rm -f $(OBJS)
 	rm -rf $(pg_regress_clean_files)
+ifeq ($(PORTNAME), win32)
+	rm -f $(tclwithver).def
+endif
 	$(MAKE) -C modules $@
