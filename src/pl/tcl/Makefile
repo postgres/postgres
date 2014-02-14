@@ -29,15 +29,28 @@ endif
 endif
 
 
+# On Windows, we don't link directly with the Tcl library; see below
 ifneq ($(PORTNAME), win32)
-
 SHLIB_LINK = $(TCL_LIB_SPEC) $(TCL_LIBS) -lc
+endif
 
-else # win32
+
+NAME = pltcl
+
+OBJS = pltcl.o
+
+DATA = pltcl.control pltcl--1.0.sql pltcl--unpackaged--1.0.sql \
+       pltclu.control pltclu--1.0.sql pltclu--unpackaged--1.0.sql
+
+REGRESS_OPTS = --dbname=$(PL_TESTDB) --load-extension=pltcl
+REGRESS = pltcl_setup pltcl_queries
+# where to find psql for running the tests
+PSQLDIR = $(bindir)
 
 # Tcl on win32 ships with import libraries only for Microsoft Visual C++,
 # which are not compatible with mingw gcc. Therefore we need to build a
 # new import library to link with.
+ifeq ($(PORTNAME), win32)
 
 tclwithver = $(subst -l,,$(filter -l%, $(TCL_LIB_SPEC)))
 TCLDLL = $(subst -L,,$(filter -L%, $(TCL_LIB_SPEC)))/$(tclwithver).dll
@@ -52,18 +65,6 @@ $(tclwithver).def: $(TCLDLL)
 
 endif # win32
 
-
-NAME = pltcl
-
-OBJS = pltcl.o
-
-DATA = pltcl.control pltcl--1.0.sql pltcl--unpackaged--1.0.sql \
-       pltclu.control pltclu--1.0.sql pltclu--unpackaged--1.0.sql
-
-REGRESS_OPTS = --dbname=$(PL_TESTDB) --load-extension=pltcl
-REGRESS = pltcl_setup pltcl_queries
-# where to find psql for running the tests
-PSQLDIR = $(bindir)
 
 include $(top_srcdir)/src/Makefile.shlib
 
