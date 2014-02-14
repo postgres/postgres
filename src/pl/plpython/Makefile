@@ -61,14 +61,19 @@ endif
 # which are not compatible with mingw gcc. Therefore we need to build a
 # new import library to link with.
 ifeq ($(PORTNAME), win32)
+
 pytverstr=$(subst .,,${python_version})
+PYTHONDLL=$(subst \,/,$(WINDIR))/system32/python${pytverstr}.dll
+
 OBJS += libpython${pytverstr}.a
+
 libpython${pytverstr}.a: python${pytverstr}.def
-	dlltool --dllname python${pytverstr}.dll --def python${pytverstr}.def --output-lib  libpython${pytverstr}.a
-WD=$(subst \,/,$(WINDIR))
-python${pytverstr}.def:
-	pexports $(WD)/system32/python${pytverstr}.dll > python${pytverstr}.def
-endif
+	dlltool --dllname python${pytverstr}.dll --def python${pytverstr}.def --output-lib libpython${pytverstr}.a
+
+python${pytverstr}.def: $(PYTHONDLL)
+	pexports $^ > $@
+
+endif # win32
 
 
 SHLIB_LINK = $(python_libspec) $(python_additional_libs) $(filter -lintl,$(LIBS))
