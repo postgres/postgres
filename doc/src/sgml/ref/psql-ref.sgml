@@ -83,14 +83,15 @@ PostgreSQL documentation
       (<filename>psqlrc</filename> and <filename>~/.psqlrc</filename>) are
       ignored with this option.
       </para>
-      <para><replaceable class="parameter">command</replaceable> must be either
+      <para>
+      <replaceable class="parameter">command</replaceable> must be either
       a command string that is completely parsable by the server (i.e.,
       it contains no <application>psql</application>-specific features),
       or a single backslash command. Thus you cannot mix
       <acronym>SQL</acronym> and <application>psql</application>
       meta-commands with this option. To achieve that, you could
-      pipe the string into <application>psql</application>, like
-      this: <literal>echo '\x \\ SELECT * FROM foo;' | psql</literal>.
+      pipe the string into <application>psql</application>, for example:
+      <literal>echo '\x \\ SELECT * FROM foo;' | psql</literal>.
       (<literal>\\</> is the separator meta-command.)
       </para>
       <para>
@@ -101,6 +102,19 @@ PostgreSQL documentation
        different from the behavior when the same string is fed to
        <application>psql</application>'s standard input.  Also, only
        the result of the last SQL command is returned.
+      </para>
+      <para>
+       Because of these legacy behaviors, putting more than one command in
+       the <option>-c</option> string often has unexpected results.  It's
+       better to feed multiple commands to <application>psql</application>'s
+       standard input, either using <application>echo</application> as
+       illustrated above, or via a shell here-document, for example:
+<programlisting>
+psql &lt;&lt;EOF
+\x
+SELECT * FROM foo;
+EOF
+</programlisting>
       </para>
       </listitem>
     </varlistentry>
