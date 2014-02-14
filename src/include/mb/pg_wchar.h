@@ -273,7 +273,7 @@ typedef enum pg_enc
 	/* PG_ENCODING_BE_LAST points to the above entry */
 
 	/* followings are for client encoding only */
-	PG_SJIS,					/* Shift JIS (Winindows-932) */
+	PG_SJIS,					/* Shift JIS (Windows-932) */
 	PG_BIG5,					/* Big5 (Windows-950) */
 	PG_GBK,						/* GBK (Windows-936) */
 	PG_UHC,						/* UHC (Windows-949) */
