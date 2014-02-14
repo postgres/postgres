@@ -28,7 +28,7 @@
    <quote>sequential</quote> mode for running the tests.  The
    sequential method runs each test script alone, while the
    parallel method starts up multiple server processes to run groups
-   of tests in parallel.  Parallel testing gives confidence that
+   of tests in parallel.  Parallel testing adds confidence that
    interprocess communication and locking are working correctly.
   </para>
 
@@ -43,9 +43,7 @@ gmake check
 </screen>
    in the top-level directory.  (Or you can change to
    <filename>src/test/regress</filename> and run the command there.)
-   This will first build several auxiliary files, such as
-   sample user-defined trigger functions, and then run the test driver
-   script.  At the end you should see something like:
+   At the end you should see something like:
 <screen>
 <computeroutput>
 =======================
@@ -113,9 +111,9 @@ gmake MAX_CONNECTIONS=10 check
    <title>Running the Tests Against an Existing Installation</title>
 
   <para>
-   To run the tests after installation<![%standalone-ignore;[ (see <xref linkend="installation">)]]>,
+   To run the tests after installation (see <xref linkend="installation">),
    initialize a data area and start the
-   server, <![%standalone-ignore;[as explained in <xref linkend="runtime">, ]]> then type:
+   server as explained in <xref linkend="runtime">, then type:
 <screen>
 gmake installcheck
 </screen>
@@ -128,74 +126,86 @@ gmake installcheck-parallel
    <envar>PGPORT</envar> environment variables.  The tests will be run in a
    database named <literal>regression</>; any existing database by this name
    will be dropped.
-  </para>
-
-  <para>
-   The source distribution also contains regression tests for the optional
-   procedural languages and for some of the <filename>contrib</> modules.
-   At present, these tests can be used only against an already-installed
-   server.  To run the tests for all procedural languages that have been
-   built and installed, change to the <filename>src/pl</> directory of the
-   build tree and type:
-<screen>
-gmake installcheck
-</screen>
-   You can also do this in any of the subdirectories of <filename>src/pl</>
-   to run tests for just one procedural language.  To run the tests for all
-   <filename>contrib</> modules that have them, change to the
-   <filename>contrib</> directory of the build tree and type:
-<screen>
-gmake installcheck
-</screen>
-   The <filename>contrib</> modules must have been built and installed first.
-   You can also do this in a subdirectory of <filename>contrib</> to run
-   the tests for just one module.  Tests of <literal>contrib</> modules will
-   be run in a database named <literal>contrib_regression</>; any existing
-   database by this name will be dropped.
+   The tests will also transiently create some cluster-wide objects, such as
+   user identities named <literal>regressuser<replaceable>N</></literal>.
   </para>
   </sect2>
 
   <sect2>
-   <title>Testing Hot Standby</title>
+   <title>Additional Test Suites</title>
 
   <para>
-   The source distribution also contains regression tests of the static
-   behavior of Hot Standby. These tests require a running primary server
-   and a running standby server that is accepting new WAL changes from the
-   primary using either file-based log shipping or streaming replication.
-   Those servers are not automatically created for you, nor is the setup
-   documented here. Please check the various sections of the documentation already
-   devoted to the required commands and related issues.
+   The <literal>gmake check</> and <literal>gmake installcheck</> commands
+   run only the <quote>core</> regression tests, which test built-in
+   functionality of the <productname>PostgreSQL</> server.  The source
+   distribution also contains additional test suites, most of them having
+   to do with add-on functionality such as optional procedural languages.
   </para>
 
   <para>
-   First create a database called "regression" on the primary.
+   To run all test suites applicable to the modules that have been selected
+   to be built, including the core tests, type one of these commands at the
+   top of the build tree:
 <screen>
-psql -h primary -c "CREATE DATABASE regression"
+gmake check-world
+gmake installcheck-world
 </screen>
-   Next, run a preparatory script on the primary in the regression database:
-   <filename>src/test/regress/sql/hs_primary_setup.sql</filename>, and
-   allow for the changes to propagate to the standby, for example
-<screen>
-psql -h primary -f src/test/regress/sql/hs_primary_setup.sql regression
-</screen>
-   Now confirm that the default connection for the tester is the standby
-   server under test and then run the <literal>standbycheck</> target from the regression
-   directory:
-<screen>
-cd src/test/regress
-gmake standbycheck
-</screen>
+   These commands run the tests using temporary servers or an
+   already-installed server, respectively, just as previously explained
+   for <literal>gmake check</> and <literal>gmake installcheck</>.  Other
+   considerations are the same as previously explained for each method.
+   Note that <literal>gmake check-world</> builds a separate temporary
+   installation tree for each tested module, so it requires a great deal
+   more time and disk space than <literal>gmake installcheck-world</>.
   </para>
 
   <para>
-   Some extreme behaviors can also be generated on the primary using the
-   script: <filename>src/test/regress/sql/hs_primary_extremes.sql</filename>
-   to allow the behavior of the standby to be tested.
+   Alternatively, you can run individual test suites by typing
+   <literal>gmake check</> or <literal>gmake installcheck</> in the appropriate
+   subdirectory of the build tree.  Keep in mind that <literal>gmake
+   installcheck</> assumes you've installed the relevant module(s), not
+   only the core server.
   </para>
 
   <para>
-   Additional automated testing may be available in later releases.
+   The additional tests that can be invoked this way include:
+  </para>
+
+  <itemizedlist>
+   <listitem>
+    <para>
+     Regression tests for optional procedural languages (other than
+     <application>PL/pgSQL</>, which is tested by the core tests).
+     These are located under <filename>src/pl</>.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Regression tests for <filename>contrib</> modules,
+     located under <filename>contrib</>.
+     Not all <filename>contrib</> modules have tests.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Regression tests for the ECPG interface library,
+     located in <filename>src/interfaces/ecpg/test</>.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Tests stressing behavior of concurrent sessions,
+     located in <filename>src/test/isolation</>.
+    </para>
+   </listitem>
+  </itemizedlist>
+
+  <para>
+   When using <literal>installcheck</> mode, these tests will destroy any
+   existing databases named <literal>pl_regression</>,
+   <literal>contrib_regression</>, <literal>isolationtest</>,
+   <literal>regress1</>, or <literal>connectdb</>, as well as
+   <literal>regression</>.
   </para>
   </sect2>
 
@@ -203,7 +213,7 @@ gmake standbycheck
    <title>Locale and Encoding</title>
 
    <para>
-    By default, the tests against a temporary installation use the
+    By default, tests using a temporary installation use the
     locale defined in the current environment and the corresponding
     database encoding as determined by <command>initdb</command>.  It
     can be useful to test different locales by setting the appropriate
@@ -236,8 +246,9 @@ gmake check LANG=C ENCODING=EUC_JP
    </para>
 
    <para>
-    The encoding can be set for tests against a temporary or an
-    existing installation.
+    The database encoding can be set for tests against either a temporary or
+    an existing installation, though in the latter case it must be
+    compatible with the installation's locale.
    </para>
   </sect2>
 
@@ -245,7 +256,7 @@ gmake check LANG=C ENCODING=EUC_JP
    <title>Extra Tests</title>
 
    <para>
-    The regression test suite contains a few test files that are not
+    The core regression test suite contains a few test files that are not
     run by default, because they might be platform-dependent or take a
     very long time to run.  You can run these or other extra test
     files by setting the variable <envar>EXTRA_TESTS</envar>.  For
@@ -260,6 +271,52 @@ gmake check EXTRA_TESTS=collate.linux.utf8 LANG=en_US.utf8
     The <literal>collate.linux.utf8</> test works only on Linux/glibc
     platforms, and only when run in a database that uses UTF-8 encoding.
    </para>
+  </sect2>
+
+  <sect2>
+   <title>Testing Hot Standby</title>
+
+  <para>
+   The source distribution also contains regression tests for the static
+   behavior of Hot Standby. These tests require a running primary server
+   and a running standby server that is accepting new WAL changes from the
+   primary (using either file-based log shipping or streaming replication).
+   Those servers are not automatically created for you, nor is replication
+   setup documented here. Please check the various sections of the
+   documentation devoted to the required commands and related issues.
+  </para>
+
+  <para>
+   To run the Hot Standby tests, first create a database
+   called <literal>regression</> on the primary:
+<screen>
+psql -h primary -c "CREATE DATABASE regression"
+</screen>
+   Next, run the preparatory script
+   <filename>src/test/regress/sql/hs_primary_setup.sql</filename>
+   on the primary in the regression database, for example:
+<screen>
+psql -h primary -f src/test/regress/sql/hs_primary_setup.sql regression
+</screen>
+   Allow these changes to propagate to the standby.
+  </para>
+
+  <para>
+   Now arrange for the default database connection to be to the standby
+   server under test (for example, by setting the <envar>PGHOST</envar> and
+   <envar>PGPORT</envar> environment variables).
+   Finally, run <literal>gmake standbycheck</> in the regression directory:
+<screen>
+cd src/test/regress
+gmake standbycheck
+</screen>
+  </para>
+
+  <para>
+   Some extreme behaviors can also be generated on the primary using the
+   script <filename>src/test/regress/sql/hs_primary_extremes.sql</filename>
+   to allow the behavior of the standby to be tested.
+  </para>
   </sect2>
   </sect1>
 
@@ -289,7 +346,14 @@ gmake check EXTRA_TESTS=collate.linux.utf8 LANG=en_US.utf8
     file against the reference outputs stored in the
     <filename>src/test/regress/expected</filename> directory.  Any
     differences are saved for your inspection in
-    <filename>src/test/regress/regression.diffs</filename>.  If you don't
+    <filename>src/test/regress/regression.diffs</filename>.
+    (When running a test suite other than the core tests, these files
+    of course appear in the relevant subdirectory,
+    not <filename>src/test/regress</>.)
+   </para>
+
+   <para>
+    If you don't
     like the <command>diff</command> options that are used by default, set the
     environment variable <envar>PG_REGRESS_DIFF_OPTS</envar>, for
     instance <literal>PG_REGRESS_DIFF_OPTS='-u'</literal>.  (Or you
@@ -335,7 +399,7 @@ gmake check EXTRA_TESTS=collate.linux.utf8 LANG=en_US.utf8
      To run the tests in a different locale when using the
      temporary-installation method, pass the appropriate
      locale-related environment variables on
-     the <command>make</command> command line, for example:
+     the <command>gmake</command> command line, for example:
 <programlisting>
 gmake check LANG=de_DE.utf8
 </programlisting>
@@ -355,7 +419,7 @@ gmake check NO_LOCALE=1
     </para>
 
     <para>
-     In general, it is nevertheless advisable to try to run the
+     In general, it is advisable to try to run the
      regression tests in the locale setup that is wanted for
      production use, as this will exercise the locale- and
      encoding-related code portions that will actually be used in
@@ -389,7 +453,7 @@ gmake check NO_LOCALE=1
      results involving mathematical functions of <type>double
      precision</type> columns have been observed.  The <literal>float8</> and
      <literal>geometry</> tests are particularly prone to small differences
-     across platforms, or even with different compiler optimization setting.
+     across platforms, or even with different compiler optimization settings.
      Human eyeball comparison is needed to determine the real
      significance of these differences which are usually 10 places to
      the right of the decimal point.
@@ -451,13 +515,18 @@ exclusion of those that don't.
      If the <literal>errors</literal> test results in a server crash
      at the <literal>select infinite_recurse()</> command, it means that
      the platform's limit on process stack size is smaller than the
-     <![%standalone-ignore;[<xref linkend="guc-max-stack-depth">]]>
-     <![%standalone-include;[<literal>max_stack_depth</literal>]]>
-     parameter indicates.  This
+     <xref linkend="guc-max-stack-depth"> parameter indicates.  This
      can be fixed by running the server under a higher stack
      size limit (4MB is recommended with the default value of
      <varname>max_stack_depth</>).  If you are unable to do that, an
      alternative is to reduce the value of <varname>max_stack_depth</>.
+    </para>
+
+    <para>
+     On platforms supporting <function>getrlimit()</>, the server should
+     automatically choose a safe value of <varname>max_stack_depth</>;
+     so unless you've manually overridden this setting, a failure of this
+     kind is a reportable bug.
     </para>
    </sect2>
 
@@ -466,7 +535,7 @@ exclusion of those that don't.
 
     <para>
      The <literal>random</literal> test script is intended to produce
-     random results.   In rare cases, this causes the random regression
+     random results.   In very rare cases, this causes that regression
      test to fail.  Typing:
 <programlisting>
 diff results/random.out expected/random.out
@@ -484,7 +553,7 @@ diff results/random.out expected/random.out
      parameter settings could cause the tests to fail.  For example, changing
      parameters such as <varname>enable_seqscan</varname> or
      <varname>enable_indexscan</varname> could cause plan changes that would
-     affect the results of tests which use <command>EXPLAIN</>.
+     affect the results of tests that use <command>EXPLAIN</>.
     </para>
    </sect2>
   </sect1>
