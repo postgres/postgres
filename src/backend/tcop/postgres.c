@@ -32,9 +32,6 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #endif
-#ifdef HAVE_GETOPT_H
-#include <getopt.h>
-#endif
 
 #ifndef HAVE_GETRUSAGE
 #include "rusagestub.h"
@@ -55,6 +52,7 @@
 #include "pg_trace.h"
 #include "parser/analyze.h"
 #include "parser/parser.h"
+#include "pg_getopt.h"
 #include "postmaster/autovacuum.h"
 #include "postmaster/postmaster.h"
 #include "replication/walsender.h"
@@ -75,14 +73,6 @@
 #include "utils/timeout.h"
 #include "utils/timestamp.h"
 #include "mb/pg_wchar.h"
-
-
-extern char *optarg;
-extern int	optind;
-
-#ifdef HAVE_INT_OPTRESET
-extern int	optreset;			/* might not be declared by system headers */
-#endif
 
 
 /* ----------------

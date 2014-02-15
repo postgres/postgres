@@ -9,14 +9,8 @@
  */
 #include "postgres_fe.h"
 
-#include <unistd.h>
-#ifdef HAVE_GETOPT_H
-#include <getopt.h>
-#endif
-
-extern char *optarg;
-
 #include "libpq-fe.h"
+#include "pg_getopt.h"
 
 /* an extensible array to keep track of elements to show */
 typedef struct

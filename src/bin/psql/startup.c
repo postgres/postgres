@@ -386,8 +386,6 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 	};
 
 	int			optindex;
-	extern char *optarg;
-	extern int	optind;
 	int			c;
 
 	memset(options, 0, sizeof *options);

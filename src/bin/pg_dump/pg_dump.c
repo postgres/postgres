@@ -63,10 +63,6 @@
 #include "dumputils.h"
 #include "parallel.h"
 
-extern char *optarg;
-extern int	optind,
-			opterr;
-
 
 typedef struct
 {

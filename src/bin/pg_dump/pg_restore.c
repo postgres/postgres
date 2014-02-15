@@ -43,19 +43,13 @@
 #include "pg_backup_utils.h"
 #include "dumputils.h"
 #include "parallel.h"
+#include "getopt_long.h"
 
 #include <ctype.h>
 
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
 #endif
-
-#include <unistd.h>
-
-#include "getopt_long.h"
-
-extern char *optarg;
-extern int	optind;
 
 #ifdef ENABLE_NLS
 #include <locale.h>

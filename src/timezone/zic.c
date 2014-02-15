@@ -8,15 +8,11 @@
 
 #include "postgres_fe.h"
 
-#ifdef HAVE_GETOPT_H
-#include <getopt.h>
-#endif
 #include <limits.h>
 #include <locale.h>
 #include <time.h>
 
-extern int	optind;
-extern char *optarg;
+#include "pg_getopt.h"
 
 #include "private.h"
 #include "pgtz.h"

@@ -83,10 +83,6 @@
 #include <sys/select.h>
 #endif
 
-#ifdef HAVE_GETOPT_H
-#include <getopt.h>
-#endif
-
 #ifdef USE_BONJOUR
 #include <dns_sd.h>
 #endif
@@ -101,6 +97,7 @@
 #include "libpq/libpq.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
+#include "pg_getopt.h"
 #include "pgstat.h"
 #include "postmaster/autovacuum.h"
 #include "postmaster/bgworker_internals.h"
@@ -351,14 +348,6 @@ static volatile bool HaveCrashedWorker = false;
  */
 static unsigned int random_seed = 0;
 static struct timeval random_start_time;
-
-extern char *optarg;
-extern int	optind,
-			opterr;
-
-#ifdef HAVE_INT_OPTRESET
-extern int	optreset;			/* might not be declared by system headers */
-#endif
 
 #ifdef USE_BONJOUR
 static DNSServiceRef bonjour_sdref = NULL;

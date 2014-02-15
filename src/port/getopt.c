@@ -32,6 +32,8 @@
 
 #include "c.h"
 
+#include "pg_getopt.h"
+
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)getopt.c	8.3 (Berkeley) 4/27/95";
 #endif   /* LIBC_SCCS and not lint */
@@ -49,19 +51,12 @@ int			opterr = 1,			/* if error message should be printed */
 			optind = 1,			/* index into parent argv vector */
 			optopt;				/* character checked for validity */
 char	   *optarg;				/* argument associated with option */
-#else
 
-extern int	opterr;
-extern int	optind;
-extern int	optopt;
-extern char *optarg;
 #endif
 
 #define BADCH	(int)'?'
 #define BADARG	(int)':'
 #define EMSG	""
-
-int			getopt(int nargc, char *const * nargv, const char *ostr);
 
 /*
  * getopt

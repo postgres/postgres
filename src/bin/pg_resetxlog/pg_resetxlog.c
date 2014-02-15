@@ -44,9 +44,6 @@
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
-#ifdef HAVE_GETOPT_H
-#include <getopt.h>
-#endif
 
 #include "access/transam.h"
 #include "access/tuptoaster.h"
@@ -55,9 +52,7 @@
 #include "catalog/catversion.h"
 #include "catalog/pg_control.h"
 #include "common/fe_memutils.h"
-
-extern int	optind;
-extern char *optarg;
+#include "pg_getopt.h"
 
 
 static ControlFileData ControlFile;		/* pg_control values */

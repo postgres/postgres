@@ -17,20 +17,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <signal.h>
-
-#ifndef WIN32
 #include <sys/time.h>
-#include <unistd.h>
 
-#ifdef HAVE_GETOPT_H
-#include <getopt.h>
-#endif
-#else							/* WIN32 */
-extern int	getopt(int argc, char *const argv[], const char *optstring);
-#endif   /* ! WIN32 */
-
-extern char *optarg;
-extern int	optind;
+#include "pg_getopt.h"
 
 const char *progname;
 

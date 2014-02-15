@@ -40,12 +40,7 @@
 #include <ctype.h>
 #include <math.h>
 #include <signal.h>
-
-#ifndef WIN32
 #include <sys/time.h>
-#include <unistd.h>
-#endif   /* ! WIN32 */
-
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif
@@ -88,9 +83,6 @@ typedef int pthread_attr_t;
 static int	pthread_create(pthread_t *thread, pthread_attr_t *attr, void *(*start_routine) (void *), void *arg);
 static int	pthread_join(pthread_t th, void **thread_return);
 #endif
-
-extern char *optarg;
-extern int	optind;
 
 
 /********************************************************************

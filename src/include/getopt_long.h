@@ -9,15 +9,7 @@
 #ifndef GETOPT_LONG_H
 #define GETOPT_LONG_H
 
-#ifdef HAVE_GETOPT_H
-#include <getopt.h>
-#endif
-
-/* These are picked up from the system's getopt() facility. */
-extern int	opterr;
-extern int	optind;
-extern int	optopt;
-extern char *optarg;
+#include "pg_getopt.h"
 
 #ifndef HAVE_STRUCT_OPTION
 

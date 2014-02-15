@@ -17,9 +17,6 @@
 #include <time.h>
 #include <unistd.h>
 #include <signal.h>
-#ifdef HAVE_GETOPT_H
-#include <getopt.h>
-#endif
 
 #include "access/htup_details.h"
 #include "bootstrap/bootstrap.h"
@@ -29,6 +26,7 @@
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
+#include "pg_getopt.h"
 #include "postmaster/bgwriter.h"
 #include "postmaster/startup.h"
 #include "postmaster/walwriter.h"
@@ -45,9 +43,6 @@
 #include "utils/rel.h"
 #include "utils/relmapper.h"
 #include "utils/tqual.h"
-
-extern int	optind;
-extern char *optarg;
 
 uint32		bootstrap_data_checksum_version = 0;		/* No checksum */
 

@@ -382,10 +382,6 @@ extern int	fls(int mask);
 #define ftello(a)		ftell(a)
 #endif
 
-#ifndef HAVE_GETOPT
-extern int	getopt(int nargc, char *const * nargv, const char *ostr);
-#endif
-
 #if !defined(HAVE_GETPEEREID) && !defined(WIN32)
 extern int	getpeereid(int sock, uid_t *uid, gid_t *gid);
 #endif

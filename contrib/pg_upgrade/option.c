@@ -10,10 +10,10 @@
 #include "postgres_fe.h"
 
 #include "miscadmin.h"
+#include "getopt_long.h"
 
 #include "pg_upgrade.h"
 
-#include <getopt_long.h>
 #include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
