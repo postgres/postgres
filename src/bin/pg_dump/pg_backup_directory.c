@@ -452,6 +452,7 @@ _LoadBlobs(ArchiveHandle *AH, RestoreOptions *ropt)
 		char		fname[MAXPGPATH];
 		char		path[MAXPGPATH];
 
+		/* Can't overflow because line and fname are the same length. */
 		if (sscanf(line, "%u %s\n", &oid, fname) != 2)
 			exit_horribly(modulename, "invalid line in large object TOC file \"%s\": \"%s\"\n",
 						  fname, line);

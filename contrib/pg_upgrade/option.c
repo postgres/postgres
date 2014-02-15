@@ -453,9 +453,10 @@ get_sock_dir(ClusterInfo *cluster, bool live_check)
 					sscanf(line, "%hu", &old_cluster.port);
 				if (lineno == LOCK_FILE_LINE_SOCKET_DIR)
 				{
-					cluster->sockdir = pg_malloc(MAXPGPATH);
+					cluster->sockdir = pg_strdup(line);
 					/* strip off newline */
-					sscanf(line, "%s\n", cluster->sockdir);
+					if (strchr(cluster->sockdir, '\n') != NULL)
+						*strchr(cluster->sockdir, '\n') = '\0';
 				}
 			}
 			fclose(fp);
