@@ -20,7 +20,7 @@ ZICOBJS= zic.o ialloc.o scheck.o localtime.o
 
 # timezone data files
 TZDATA = africa antarctica asia australasia europe northamerica southamerica \
-	pacificnew etcetera factory backward systemv solar87 solar88 solar89
+	pacificnew etcetera factory backward systemv
 TZDATAFILES = $(TZDATA:%=$(srcdir)/data/%)
 
 # which zone should determine the DST rules (not the specific UTC offset!)
