@@ -1462,10 +1462,12 @@ DetermineSleepTime(struct timeval * timeout)
 
 	if (next_wakeup != 0)
 	{
+		long		secs;
 		int			microsecs;
 
 		TimestampDifference(GetCurrentTimestamp(), next_wakeup,
-							&timeout->tv_sec, &microsecs);
+							&secs, &microsecs);
+		timeout->tv_sec = secs;
 		timeout->tv_usec = microsecs;
 
 		/* Ensure we don't exceed one minute */
