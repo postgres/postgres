@@ -764,6 +764,7 @@ exec_command(const char *cmd,
 			/* we must set a non-NULL prefix to trigger storing */
 			pset.gset_prefix = pg_strdup("");
 		}
+		/* gset_prefix is freed later */
 		status = PSQL_CMD_SEND;
 	}
 
