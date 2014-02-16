@@ -4,5 +4,6 @@ SRCH_LIB="/usr/local/lib"
 
 # --allow-multiple-definition is required to link pg_dump because it finds
 # pg_toupper() etc. in both libpq and pgport
-# --disable-auto-import is to ensure we get MSVC-like linking behavior
-LDFLAGS="-Wl,--allow-multiple-definition -Wl,--disable-auto-import"
+# we'd prefer to use --disable-auto-import to match MSVC linking behavior,
+# but support for it in Cygwin is too haphazard
+LDFLAGS="-Wl,--allow-multiple-definition -Wl,--enable-auto-import"
