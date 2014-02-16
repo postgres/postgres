@@ -53,7 +53,7 @@ PSQLDIR = $(bindir)
 ifeq ($(PORTNAME), win32)
 
 tclwithver = $(subst -l,,$(filter -l%, $(TCL_LIB_SPEC)))
-TCLDLL = $(subst -L,,$(filter -L%, $(TCL_LIB_SPEC)))/$(tclwithver).dll
+TCLDLL = $(dir $(TCLSH))/$(tclwithver).dll
 
 OBJS += lib$(tclwithver).a
 
