@@ -108,25 +108,6 @@ Branch: REL9_3_STABLE [fb47de2be] 2014-02-13 19:30:30 -0300
 
 <!--
 Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
-Branch: master [423e1211a] 2014-01-10 18:03:18 -0300
-Branch: REL9_3_STABLE [a25c2b7c4] 2014-01-10 18:03:18 -0300
--->
-
-    <listitem>
-     <para>
-      Fix multixact freezing of tuples that predate
-      a <literal>pg_upgrade</> to 9.3
-      (&Aacute;lvaro Herrera)
-     </para>
-
-     <para>
-      This oversight would result in complaints such as <quote>ERROR:
-      MultiXactId 11415437 does no longer exist -- apparent wraparound</>.
-     </para>
-    </listitem>
-
-<!--
-Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 Branch: master [11ac4c73c] 2013-12-18 13:45:51 -0300
 Branch: REL9_3_STABLE [db1014bc4] 2013-12-18 13:31:27 -0300
 -->
@@ -412,16 +393,23 @@ Branch: REL9_3_STABLE [e34acac62] 2014-01-16 23:14:57 +0200
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [214c7a4f0] 2014-02-01 16:21:23 -0500
-Branch: REL9_3_STABLE [6f1a40773] 2014-02-01 16:21:30 -0500
-Branch: REL9_2_STABLE [81b116d98] 2014-02-01 16:21:33 -0500
-Branch: REL9_1_STABLE [03f06ff38] 2014-02-01 16:21:38 -0500
+Branch: master [e8312b4f0] 2013-12-13 11:50:15 -0500
+Branch: REL9_3_STABLE [478af9b79] 2013-12-13 11:50:25 -0500
 -->
 
     <listitem>
      <para>
-      Fix race conditions in walsender shutdown logic and walreceiver
-      SIGHUP signal handler (Tom Lane)
+      Prevent timeout interrupts from taking control away from mainline
+      code unless <varname>ImmediateInterruptOK</> is set
+      (Andres Freund, Tom Lane)
+     </para>
+
+     <para>
+      This is a serious issue for any application making use of statement
+      timeouts, as it could cause all manner of strange failures after a
+      timeout occurred.  We have seen reports of <quote>stuck</> spinlocks,
+      ERRORs being unexpectedly promoted to PANICs, unkillable backends,
+      and other misbehaviors.
      </para>
     </listitem>
 
@@ -441,8 +429,23 @@ Branch: REL8_4_STABLE [458b20f2d] 2014-01-31 21:41:09 -0500
      </para>
 
      <para>
-      Ensure that signal handlers don't attempt to use
-      the process's <varname>MyProc</> pointer after it's no longer valid.
+      Ensure that signal handlers don't attempt to use the
+      process's <varname>MyProc</> pointer after it's no longer valid.
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [214c7a4f0] 2014-02-01 16:21:23 -0500
+Branch: REL9_3_STABLE [6f1a40773] 2014-02-01 16:21:30 -0500
+Branch: REL9_2_STABLE [81b116d98] 2014-02-01 16:21:33 -0500
+Branch: REL9_1_STABLE [03f06ff38] 2014-02-01 16:21:38 -0500
+-->
+
+    <listitem>
+     <para>
+      Fix race conditions in walsender shutdown logic and walreceiver
+      SIGHUP signal handler (Tom Lane)
      </para>
     </listitem>
 
@@ -487,25 +490,6 @@ Branch: REL8_4_STABLE [d0070ac81] 2014-01-11 16:35:44 -0500
      <para>
       The principal case we've seen in the field is a crash if the server
       is started in a directory it doesn't have permission to read.
-     </para>
-    </listitem>
-
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [e8312b4f0] 2013-12-13 11:50:15 -0500
-Branch: REL9_3_STABLE [478af9b79] 2013-12-13 11:50:25 -0500
--->
-
-    <listitem>
-     <para>
-      Prevent timeout interrupts from taking control away from mainline
-      code unless <varname>ImmediateInterruptOK</> is set
-      (Andres Freund, Tom Lane)
-     </para>
-
-     <para>
-      This was initially reported as a <quote>stuck spinlock</> failure,
-      but many other misbehaviors are possible after a statement timeout.
      </para>
     </listitem>
 
