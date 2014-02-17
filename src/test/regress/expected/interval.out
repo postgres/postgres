@@ -306,6 +306,13 @@ select '4 millenniums 5 centuries 4 decades 1 year 4 months 4 days 17 minutes 31
  @ 4541 years 4 mons 4 days 17 mins 31 secs
 (1 row)
 
+-- test long interval output
+select '100000000y 10mon -1000000000d -1000000000h -10min -10.000001s ago'::interval;
+                                         interval                                          
+-------------------------------------------------------------------------------------------
+ @ 100000000 years 10 mons -1000000000 days -1000000000 hours -10 mins -10.000001 secs ago
+(1 row)
+
 -- test justify_hours() and justify_days()
 SELECT justify_hours(interval '6 months 3 days 52 hours 3 minutes 2 seconds') as "6 mons 5 days 4 hours 3 mins 2 seconds";
  6 mons 5 days 4 hours 3 mins 2 seconds 

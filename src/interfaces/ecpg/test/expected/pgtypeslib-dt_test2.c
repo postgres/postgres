@@ -45,6 +45,15 @@ char *dates[] = { "19990108foobar",
 				  "1999.008",
 				  "J2451187",
 				  "January 8, 99 BC",
+				  /*
+				   * Maximize space usage in ParseDateTime() with 25
+				   * (MAXDATEFIELDS) fields and 128 (MAXDATELEN) total length.
+				   */
+				  "........................Xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+				  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+				  /* 26 fields */
+				  ".........................aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+				  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 				  NULL };
 
 /* do not conflict with libc "times" symbol */
@@ -52,6 +61,7 @@ static char *times[] = { "0:04",
 				  "1:59 PDT",
 				  "13:24:40 -8:00",
 				  "13:24:40.495+3",
+				  "13:24:40.123456789+3",
 				  NULL };
 
 char *intervals[] = { "1 minute",
@@ -73,22 +83,22 @@ main(void)
 		 
 		 
 	
-#line 52 "dt_test2.pgc"
+#line 62 "dt_test2.pgc"
  date date1 ;
  
-#line 53 "dt_test2.pgc"
+#line 63 "dt_test2.pgc"
  timestamp ts1 , ts2 ;
  
-#line 54 "dt_test2.pgc"
+#line 64 "dt_test2.pgc"
  char * text ;
  
-#line 55 "dt_test2.pgc"
+#line 65 "dt_test2.pgc"
  interval * i1 ;
  
-#line 56 "dt_test2.pgc"
+#line 66 "dt_test2.pgc"
  date * dc ;
 /* exec sql end declare section */
-#line 57 "dt_test2.pgc"
+#line 67 "dt_test2.pgc"
 
 
 	int i, j;
