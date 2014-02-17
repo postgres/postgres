@@ -195,11 +195,13 @@ CREATE LANGUAGE plsample
    <para>
     Validator functions should typically honor the <xref
     linkend="guc-check-function-bodies"> parameter: if it is turned off then
-    any expensive or context-sensitive checking should be skipped.
-    In particular, this parameter is turned off by <application>pg_dump</>
-    so that it can load procedural language functions without worrying
-    about possible dependencies of the function bodies on other database
-    objects.  (Because of this requirement, the call handler should avoid
+    any expensive or context-sensitive checking should be skipped.  If the
+    language provides for code execution at compilation time, the validator
+    must suppress checks that would induce such execution.  In particular,
+    this parameter is turned off by <application>pg_dump</> so that it can
+    load procedural language functions without worrying about side effects or
+    dependencies of the function bodies on other database objects.
+    (Because of this requirement, the call handler should avoid
     assuming that the validator has fully checked the function.  The point
     of having a validator is not to let the call handler omit checks, but
     to notify the user immediately if there are obvious errors in a

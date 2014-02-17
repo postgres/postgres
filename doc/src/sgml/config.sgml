@@ -4407,9 +4407,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        <para>
         This parameter is normally on. When set to <literal>off</>, it
         disables validation of the function body string during <xref
-        linkend="sql-createfunction">. Disabling validation is
-        occasionally useful to avoid problems such as forward references
-        when restoring function definitions from a dump.
+        linkend="sql-createfunction">.  Disabling validation avoids side
+        effects of the validation process and avoids false positives due
+        to problems such as forward references.  Set this parameter
+        to <literal>off</> before loading functions on behalf of other
+        users; <application>pg_dump</> does so automatically.
        </para>
       </listitem>
      </varlistentry>
