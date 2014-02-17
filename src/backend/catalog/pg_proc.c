@@ -623,6 +623,9 @@ fmgr_internal_validator(PG_FUNCTION_ARGS)
 	Datum		tmp;
 	char	   *prosrc;
 
+	if (!CheckFunctionValidatorAccess(fcinfo->flinfo->fn_oid, funcoid))
+		PG_RETURN_VOID();
+
 	/*
 	 * We do not honor check_function_bodies since it's unlikely the function
 	 * name will be found later if it isn't there now.
@@ -671,6 +674,9 @@ fmgr_c_validator(PG_FUNCTION_ARGS)
 	Datum		tmp;
 	char	   *prosrc;
 	char	   *probin;
+
+	if (!CheckFunctionValidatorAccess(fcinfo->flinfo->fn_oid, funcoid))
+		PG_RETURN_VOID();
 
 	/*
 	 * It'd be most consistent to skip the check if !check_function_bodies,
@@ -723,6 +729,9 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 	ErrorContextCallback sqlerrcontext;
 	bool		haspolyarg;
 	int			i;
+
+	if (!CheckFunctionValidatorAccess(fcinfo->flinfo->fn_oid, funcoid))
+		PG_RETURN_VOID();
 
 	tuple = SearchSysCache(PROCOID,
 						   ObjectIdGetDatum(funcoid),

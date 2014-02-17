@@ -1094,6 +1094,9 @@ plperl_validator(PG_FUNCTION_ARGS)
 	bool		istrigger = false;
 	int			i;
 
+	if (!CheckFunctionValidatorAccess(fcinfo->flinfo->fn_oid, funcoid))
+		PG_RETURN_VOID();
+
 	/* Get the new function's pg_proc entry */
 	tuple = SearchSysCache(PROCOID,
 						   ObjectIdGetDatum(funcoid),
