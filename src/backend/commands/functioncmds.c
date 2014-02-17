@@ -960,7 +960,6 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 					prorows);
 }
 
-
 /*
  * RemoveFunction
  *		Deletes a function.
