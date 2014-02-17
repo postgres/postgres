@@ -519,6 +519,9 @@ plpython_validator(PG_FUNCTION_ARGS)
 	Form_pg_proc procStruct;
 	bool		is_trigger;
 
+	if (!CheckFunctionValidatorAccess(fcinfo->flinfo->fn_oid, funcoid))
+		PG_RETURN_VOID();
+
 	if (!check_function_bodies)
 	{
 		PG_RETURN_VOID();
@@ -5012,6 +5015,7 @@ PG_FUNCTION_INFO_V1(plpython2_validator);
 Datum
 plpython2_validator(PG_FUNCTION_ARGS)
 {
+	/* call plpython validator with our fcinfo so it gets our oid */
 	return plpython_validator(fcinfo);
 }
 
