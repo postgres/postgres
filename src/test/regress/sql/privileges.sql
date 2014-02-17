@@ -37,7 +37,7 @@ ALTER GROUP regressgroup1 ADD USER regressuser4;
 
 ALTER GROUP regressgroup2 ADD USER regressuser2;	-- duplicate
 ALTER GROUP regressgroup2 DROP USER regressuser2;
-ALTER GROUP regressgroup2 ADD USER regressuser4;
+GRANT regressgroup2 TO regressuser4 WITH ADMIN OPTION;
 
 -- test owner privileges
 
@@ -470,6 +470,33 @@ SELECT has_table_privilege('regressuser2', 'atest4', 'SELECT'); -- true
 SELECT has_table_privilege('regressuser3', 'atest4', 'SELECT'); -- false
 
 SELECT has_table_privilege('regressuser1', 'atest4', 'SELECT WITH GRANT OPTION'); -- true
+
+
+-- Admin options
+
+SET SESSION AUTHORIZATION regressuser4;
+CREATE FUNCTION dogrant_ok() RETURNS void LANGUAGE sql SECURITY DEFINER AS
+	'GRANT regressgroup2 TO regressuser5';
+GRANT regressgroup2 TO regressuser5; -- ok: had ADMIN OPTION
+SET ROLE regressgroup2;
+GRANT regressgroup2 TO regressuser5; -- fails: SET ROLE suspended privilege
+
+SET SESSION AUTHORIZATION regressuser1;
+GRANT regressgroup2 TO regressuser5; -- fails: no ADMIN OPTION
+SELECT dogrant_ok();			-- ok: SECURITY DEFINER conveys ADMIN
+SET ROLE regressgroup2;
+GRANT regressgroup2 TO regressuser5; -- fails: SET ROLE did not help
+
+SET SESSION AUTHORIZATION regressgroup2;
+GRANT regressgroup2 TO regressuser5; -- ok: a role can self-admin
+CREATE FUNCTION dogrant_fails() RETURNS void LANGUAGE sql SECURITY DEFINER AS
+	'GRANT regressgroup2 TO regressuser5';
+SELECT dogrant_fails();			-- fails: no self-admin in SECURITY DEFINER
+DROP FUNCTION dogrant_fails();
+
+SET SESSION AUTHORIZATION regressuser4;
+DROP FUNCTION dogrant_ok();
+REVOKE regressgroup2 FROM regressuser5;
 
 
 -- has_sequence_privilege tests
