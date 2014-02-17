@@ -5,6 +5,7 @@
 #define ___INT_H__
 
 #include "utils/array.h"
+#include "utils/memutils.h"
 
 /* number ranges for compression */
 #define MAXNUMRANGE 100
@@ -137,6 +138,7 @@ typedef struct QUERYTYPE
 
 #define HDRSIZEQT	offsetof(QUERYTYPE, items)
 #define COMPUTESIZE(size)	( HDRSIZEQT + (size) * sizeof(ITEM) )
+#define QUERYTYPEMAXITEMS	((MaxAllocSize - HDRSIZEQT) / sizeof(ITEM))
 #define GETQUERY(x)  ( (x)->items )
 
 /* "type" codes for ITEM */

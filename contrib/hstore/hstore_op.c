@@ -7,6 +7,7 @@
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "utils/builtins.h"
+#include "utils/memutils.h"
 
 #include "hstore.h"
 
@@ -88,6 +89,19 @@ hstoreArrayToPairs(ArrayType *a, int *npairs)
 		*npairs = 0;
 		return NULL;
 	}
+
+	/*
+	 * A text array uses at least eight bytes per element, so any overflow in
+	 * "key_count * sizeof(Pairs)" is small enough for palloc() to catch.
+	 * However, credible improvements to the array format could invalidate
+	 * that assumption.  Therefore, use an explicit check rather than relying
+	 * on palloc() to complain.
+	 */
+	if (key_count > MaxAllocSize / sizeof(Pairs))
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+			  errmsg("number of pairs (%d) exceeds the maximum allowed (%d)",
+					 key_count, (int) (MaxAllocSize / sizeof(Pairs)))));
 
 	key_pairs = palloc(sizeof(Pairs) * key_count);
 
@@ -647,6 +661,7 @@ hstore_slice_to_hstore(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(out);
 	}
 
+	/* hstoreArrayToPairs() checked overflow */
 	out_pairs = palloc(sizeof(Pairs) * nkeys);
 	bufsiz = 0;
 

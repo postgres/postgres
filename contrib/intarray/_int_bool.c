@@ -451,6 +451,9 @@ boolop(PG_FUNCTION_ARGS)
 static void
 findoprnd(ITEM *ptr, int4 *pos)
 {
+	/* since this function recurses, it could be driven to stack overflow. */
+	check_stack_depth();
+
 #ifdef BS_DEBUG
 	elog(DEBUG3, (ptr[*pos].type == OPR) ?
 		 "%d  %c" : "%d  %d", *pos, ptr[*pos].val);
@@ -511,7 +514,13 @@ bqarr_in(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("empty query")));
 
+	if (state.num > QUERYTYPEMAXITEMS)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+		errmsg("number of query items (%d) exceeds the maximum allowed (%d)",
+			   state.num, (int) QUERYTYPEMAXITEMS)));
 	commonlen = COMPUTESIZE(state.num);
+
 	query = (QUERYTYPE *) palloc(commonlen);
 	SET_VARSIZE(query, commonlen);
 	query->size = state.num;
