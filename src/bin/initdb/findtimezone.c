@@ -68,7 +68,7 @@ pg_open_tzfile(const char *name, char *canonname)
 	if (canonname)
 		strlcpy(canonname, name, TZ_STRLEN_MAX + 1);
 
-	strcpy(fullname, pg_TZDIR());
+	strlcpy(fullname, pg_TZDIR(), sizeof(fullname));
 	if (strlen(fullname) + 1 + strlen(name) >= MAXPGPATH)
 		return -1;				/* not gonna fit */
 	strcat(fullname, "/");
@@ -375,7 +375,7 @@ identify_system_timezone(void)
 	}
 
 	/* Search for the best-matching timezone file */
-	strcpy(tmptzdir, pg_TZDIR());
+	strlcpy(tmptzdir, pg_TZDIR(), sizeof(tmptzdir));
 	bestscore = -1;
 	resultbuf[0] = '\0';
 	scan_available_timezones(tmptzdir, tmptzdir + strlen(tmptzdir) + 1,

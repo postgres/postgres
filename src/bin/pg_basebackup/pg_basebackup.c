@@ -735,9 +735,9 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 	FILE	   *file = NULL;
 
 	if (PQgetisnull(res, rownum, 0))
-		strcpy(current_path, basedir);
+		strlcpy(current_path, basedir, sizeof(current_path));
 	else
-		strcpy(current_path, PQgetvalue(res, rownum, 1));
+		strlcpy(current_path, PQgetvalue(res, rownum, 1), sizeof(current_path));
 
 	/*
 	 * Get the COPY data
@@ -1053,7 +1053,7 @@ BaseBackup(void)
 				progname);
 		disconnect_and_exit(1);
 	}
-	strcpy(xlogstart, PQgetvalue(res, 0, 0));
+	strlcpy(xlogstart, PQgetvalue(res, 0, 0), sizeof(xlogstart));
 	if (verbose && includewal)
 		fprintf(stderr, "transaction log start point: %s\n", xlogstart);
 	PQclear(res);
@@ -1153,7 +1153,7 @@ BaseBackup(void)
 				progname);
 		disconnect_and_exit(1);
 	}
-	strcpy(xlogend, PQgetvalue(res, 0, 0));
+	strlcpy(xlogend, PQgetvalue(res, 0, 0), sizeof(xlogend));
 	if (verbose && includewal)
 		fprintf(stderr, "transaction log end point: %s\n", xlogend);
 	PQclear(res);
