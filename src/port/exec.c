@@ -88,7 +88,7 @@ validate_exec(const char *path)
 	if (strlen(path) >= strlen(".exe") &&
 		pg_strcasecmp(path + strlen(path) - strlen(".exe"), ".exe") != 0)
 	{
-		strcpy(path_exe, path);
+		strlcpy(path_exe, path, sizeof(path_exe) - 4);
 		strcat(path_exe, ".exe");
 		path = path_exe;
 	}
@@ -345,7 +345,7 @@ resolve_symlinks(char *path)
 	}
 
 	/* must copy final component out of 'path' temporarily */
-	strcpy(link_buf, fname);
+	strlcpy(link_buf, fname, sizeof(link_buf));
 
 	if (!getcwd(path, MAXPGPATH))
 	{

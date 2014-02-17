@@ -181,7 +181,7 @@ NIAddSpell(IspellDict *Conf, const char *word, const char *flag)
 	}
 	Conf->Spell[Conf->nspell] = (SPELL *) tmpalloc(SPELLHDRSZ + strlen(word) + 1);
 	strcpy(Conf->Spell[Conf->nspell]->word, word);
-	strncpy(Conf->Spell[Conf->nspell]->p.flag, flag, MAXFLAGLEN);
+	strlcpy(Conf->Spell[Conf->nspell]->p.flag, flag, MAXFLAGLEN);
 	Conf->nspell++;
 }
 
