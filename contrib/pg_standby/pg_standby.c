@@ -337,7 +337,7 @@ SetWALFileNameForCleanup(void)
 		if (strcmp(restartWALFileName, nextWALFileName) > 0)
 			return false;
 
-		strcpy(exclusiveCleanupFileName, restartWALFileName);
+		strlcpy(exclusiveCleanupFileName, restartWALFileName, sizeof(exclusiveCleanupFileName));
 		return true;
 	}
 
