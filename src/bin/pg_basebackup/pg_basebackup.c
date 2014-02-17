@@ -508,7 +508,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 	FILE	   *file = NULL;
 
 	if (PQgetisnull(res, rownum, 0))
-		strcpy(current_path, basedir);
+		strlcpy(current_path, basedir, sizeof(current_path));
 	else
 	{
 		if (PQgetlength(res, rownum, 1) >= MAXPGPATH)
@@ -517,7 +517,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 					progname, PQgetvalue(res, rownum, 1));
 			disconnect_and_exit(1);
 		}
-		strcpy(current_path, PQgetvalue(res, rownum, 1));
+		strlcpy(current_path, PQgetvalue(res, rownum, 1), sizeof(current_path));
 	}
 
 	/*

@@ -94,7 +94,7 @@ pg_open_tzfile(const char *name, char *canonname)
 	 * Loop to split the given name into directory levels; for each level,
 	 * search using scan_directory_ci().
 	 */
-	strcpy(fullname, pg_TZDIR());
+	strlcpy(fullname, pg_TZDIR(), sizeof(fullname));
 	orignamelen = fullnamelen = strlen(fullname);
 	fname = name;
 	for (;;)
@@ -428,7 +428,7 @@ identify_system_timezone(void)
 	}
 
 	/* Search for the best-matching timezone file */
-	strcpy(tmptzdir, pg_TZDIR());
+	strlcpy(tmptzdir, pg_TZDIR(), sizeof(tmptzdir));
 	bestscore = -1;
 	resultbuf[0] = '\0';
 	scan_available_timezones(tmptzdir, tmptzdir + strlen(tmptzdir) + 1,
