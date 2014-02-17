@@ -178,7 +178,10 @@ CREATE LANGUAGE plsample
     or updated a function written in the procedural language.
     The passed-in OID is the OID of the function's <classname>pg_proc</>
     row.  The validator must fetch this row in the usual way, and do
-    whatever checking is appropriate.  Typical checks include verifying
+    whatever checking is appropriate.
+    First, call <function>CheckFunctionValidatorAccess()</> to diagnose
+    explicit calls to the validator that the user could not achieve through
+    <command>CREATE FUNCTION</>.  Typical checks then include verifying
     that the function's argument and result types are supported by the
     language, and that the function's body is syntactically correct
     in the language.  If the validator finds the function to be okay,

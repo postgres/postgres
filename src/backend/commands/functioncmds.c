@@ -997,7 +997,6 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 					prorows);
 }
 
-
 /*
  * Guts of function deletion.
  *
