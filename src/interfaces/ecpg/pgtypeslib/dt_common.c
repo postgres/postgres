@@ -1161,15 +1161,22 @@ DecodeNumberField(int len, char *str, int fmask,
 	if ((cp = strchr(str, '.')) != NULL)
 	{
 #ifdef HAVE_INT64_TIMESTAMP
-		char		fstr[MAXDATELEN + 1];
+		char		fstr[7];
+		int			i;
+
+		cp++;
 
 		/*
 		 * OK, we have at most six digits to care about. Let's construct a
-		 * string and then do the conversion to an integer.
+		 * string with those digits, zero-padded on the right, and then do
+		 * the conversion to an integer.
+		 *
+		 * XXX This truncates the seventh digit, unlike rounding it as do
+		 * the backend and the !HAVE_INT64_TIMESTAMP case.
 		 */
-		strcpy(fstr, (cp + 1));
-		strcpy(fstr + strlen(fstr), "000000");
-		*(fstr + 6) = '\0';
+		for (i = 0; i < 6; i++)
+			fstr[i] = *cp != '\0' ? *cp++ : '0';
+		fstr[i] = '\0';
 		*fsec = strtol(fstr, NULL, 10);
 #else
 		*fsec = strtod(cp, NULL);
@@ -1521,15 +1528,22 @@ DecodeTime(char *str, int *tmask, struct tm * tm, fsec_t *fsec)
 		else if (*cp == '.')
 		{
 #ifdef HAVE_INT64_TIMESTAMP
-			char		fstr[MAXDATELEN + 1];
+			char		fstr[7];
+			int			i;
+
+			cp++;
 
 			/*
-			 * OK, we have at most six digits to work with. Let's construct a
-			 * string and then do the conversion to an integer.
+			 * OK, we have at most six digits to care about. Let's construct a
+			 * string with those digits, zero-padded on the right, and then do
+			 * the conversion to an integer.
+			 *
+			 * XXX This truncates the seventh digit, unlike rounding it as do
+			 * the backend and the !HAVE_INT64_TIMESTAMP case.
 			 */
-			strncpy(fstr, (cp + 1), 7);
-			strcpy(fstr + strlen(fstr), "000000");
-			*(fstr + 6) = '\0';
+			for (i = 0; i < 6; i++)
+				fstr[i] = *cp != '\0' ? *cp++ : '0';
+			fstr[i] = '\0';
 			*fsec = strtol(fstr, &cp, 10);
 #else
 			str = cp;
@@ -1655,6 +1669,9 @@ DecodePosixTimezone(char *str, int *tzp)
  *	DTK_NUMBER can hold date fields (yy.ddd)
  *	DTK_STRING can hold months (January) and time zones (PST)
  *	DTK_DATE can hold Posix time zones (GMT-8)
+ *
+ * The "lowstr" work buffer must have at least strlen(timestr) + MAXDATEFIELDS
+ * bytes of space.  On output, field[] entries will point into it.
  */
 int
 ParseDateTime(char *timestr, char *lowstr,
@@ -1667,7 +1684,10 @@ ParseDateTime(char *timestr, char *lowstr,
 	/* outer loop through fields */
 	while (*(*endstr) != '\0')
 	{
+		/* Record start of current field */
 		field[nf] = lp;
+		if (nf >= MAXDATEFIELDS)
+			return -1;
 
 		/* leading digit? then date or time */
 		if (isdigit((unsigned char) *(*endstr)))
@@ -1808,8 +1828,6 @@ ParseDateTime(char *timestr, char *lowstr,
 		/* force in a delimiter after each field */
 		*lp++ = '\0';
 		nf++;
-		if (nf > MAXDATEFIELDS)
-			return -1;
 	}
 
 	*numfields = nf;
