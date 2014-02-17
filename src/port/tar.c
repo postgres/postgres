@@ -81,10 +81,10 @@ tarCreateHeader(char *h, const char *filename, const char *linktarget,
 	sprintf(&h[100], "%07o ", (int) mode);
 
 	/* User ID 8 */
-	sprintf(&h[108], "%07o ", uid);
+	sprintf(&h[108], "%07o ", (int) uid);
 
 	/* Group 8 */
-	sprintf(&h[116], "%07o ", gid);
+	sprintf(&h[116], "%07o ", (int) gid);
 
 	/* File size 12 - 11 digits, 1 space; use print_val for 64 bit support */
 	if (linktarget != NULL || S_ISDIR(mode))
