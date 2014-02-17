@@ -26,7 +26,9 @@
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "libpq/pqformat.h"
+#include "postmaster/postmaster.h"
 #include "utils/builtins.h"
+#include "utils/memutils.h"
 #include "utils/snapmgr.h"
 
 
@@ -66,6 +68,8 @@ typedef struct
 
 #define TXID_SNAPSHOT_SIZE(nxip) \
 	(offsetof(TxidSnapshot, xip) + sizeof(txid) * (nxip))
+#define TXID_SNAPSHOT_MAX_NXIP \
+	((MaxAllocSize - offsetof(TxidSnapshot, xip)) / sizeof(txid))
 
 /*
  * Epoch values from xact.c
@@ -368,6 +372,13 @@ txid_current_snapshot(PG_FUNCTION_ARGS)
 
 	load_xid_epoch(&state);
 
+	/*
+	 * Compile-time limits on the procarray (MAX_BACKENDS processes plus
+	 * MAX_BACKENDS prepared transactions) guarantee nxip won't be too large.
+	 */
+	StaticAssertStmt(MAX_BACKENDS * 2 <= TXID_SNAPSHOT_MAX_NXIP,
+					 "possible overflow in txid_current_snapshot()");
+
 	/* allocate */
 	nxip = cur->xcnt;
 	size = TXID_SNAPSHOT_SIZE(nxip);
@@ -445,20 +456,12 @@ txid_snapshot_recv(PG_FUNCTION_ARGS)
 	txid		last = 0;
 	int			nxip;
 	int			i;
-	int			avail;
-	int			expect;
 	txid		xmin,
 				xmax;
 
-	/*
-	 * load nxip and check for nonsense.
-	 *
-	 * (nxip > avail) check is against int overflows in 'expect'.
-	 */
+	/* load and validate nxip */
 	nxip = pq_getmsgint(buf, 4);
-	avail = buf->len - buf->cursor;
-	expect = 8 + 8 + nxip * 8;
-	if (nxip < 0 || nxip > avail || expect > avail)
+	if (nxip < 0 || nxip > TXID_SNAPSHOT_MAX_NXIP)
 		goto bad_format;
 
 	xmin = pq_getmsgint64(buf);

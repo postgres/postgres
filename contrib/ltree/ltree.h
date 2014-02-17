@@ -5,6 +5,7 @@
 
 #include "fmgr.h"
 #include "tsearch/ts_locale.h"
+#include "utils/memutils.h"
 
 typedef struct
 {
@@ -111,6 +112,8 @@ typedef struct
 
 #define HDRSIZEQT		MAXALIGN(VARHDRSZ + sizeof(int32))
 #define COMPUTESIZE(size,lenofoperand)	( HDRSIZEQT + (size) * sizeof(ITEM) + (lenofoperand) )
+#define LTXTQUERY_TOO_BIG(size,lenofoperand) \
+	((size) > (MaxAllocSize - HDRSIZEQT - (lenofoperand)) / sizeof(ITEM))
 #define GETQUERY(x)  (ITEM*)( (char*)(x)+HDRSIZEQT )
 #define GETOPERAND(x)	( (char*)GETQUERY(x) + ((ltxtquery*)x)->size * sizeof(ITEM) )
 
