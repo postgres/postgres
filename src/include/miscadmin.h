@@ -74,8 +74,8 @@
 /* in globals.c */
 /* these are marked volatile because they are set by signal handlers: */
 extern PGDLLIMPORT volatile bool InterruptPending;
-extern volatile bool QueryCancelPending;
-extern volatile bool ProcDiePending;
+extern PGDLLIMPORT volatile bool QueryCancelPending;
+extern PGDLLIMPORT volatile bool ProcDiePending;
 
 extern volatile bool ClientConnectionLost;
 
