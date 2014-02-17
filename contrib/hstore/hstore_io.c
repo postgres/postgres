@@ -11,6 +11,7 @@
 #include "funcapi.h"
 #include "libpq/pqformat.h"
 #include "utils/lsyscache.h"
+#include "utils/memutils.h"
 #include "utils/typcache.h"
 
 #include "hstore.h"
@@ -438,6 +439,11 @@ hstore_recv(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(out);
 	}
 
+	if (pcount < 0 || pcount > MaxAllocSize / sizeof(Pairs))
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+			  errmsg("number of pairs (%d) exceeds the maximum allowed (%d)",
+					 pcount, (int) (MaxAllocSize / sizeof(Pairs)))));
 	pairs = palloc(pcount * sizeof(Pairs));
 
 	for (i = 0; i < pcount; ++i)
@@ -552,6 +558,13 @@ hstore_from_arrays(PG_FUNCTION_ARGS)
 	deconstruct_array(key_array,
 					  TEXTOID, -1, false, 'i',
 					  &key_datums, &key_nulls, &key_count);
+
+	/* see discussion in hstoreArrayToPairs() */
+	if (key_count > MaxAllocSize / sizeof(Pairs))
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+			  errmsg("number of pairs (%d) exceeds the maximum allowed (%d)",
+					 key_count, (int) (MaxAllocSize / sizeof(Pairs)))));
 
 	/* value_array might be NULL */
 
@@ -674,6 +687,13 @@ hstore_from_array(PG_FUNCTION_ARGS)
 					  &in_datums, &in_nulls, &in_count);
 
 	count = in_count / 2;
+
+	/* see discussion in hstoreArrayToPairs() */
+	if (count > MaxAllocSize / sizeof(Pairs))
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+			  errmsg("number of pairs (%d) exceeds the maximum allowed (%d)",
+					 count, (int) (MaxAllocSize / sizeof(Pairs)))));
 
 	pairs = palloc(count * sizeof(Pairs));
 
@@ -806,6 +826,7 @@ hstore_from_record(PG_FUNCTION_ARGS)
 		my_extra->ncolumns = ncolumns;
 	}
 
+	Assert(ncolumns <= MaxTupleAttributeNumber);		/* thus, no overflow */
 	pairs = palloc(ncolumns * sizeof(Pairs));
 
 	if (rec)
