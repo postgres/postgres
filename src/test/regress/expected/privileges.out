@@ -32,7 +32,7 @@ ALTER GROUP regressgroup1 ADD USER regressuser4;
 ALTER GROUP regressgroup2 ADD USER regressuser2;	-- duplicate
 NOTICE:  role "regressuser2" is already a member of role "regressgroup2"
 ALTER GROUP regressgroup2 DROP USER regressuser2;
-ALTER GROUP regressgroup2 ADD USER regressuser4;
+GRANT regressgroup2 TO regressuser4 WITH ADMIN OPTION;
 -- test owner privileges
 SET SESSION AUTHORIZATION regressuser1;
 SELECT session_user, current_user;
@@ -948,6 +948,40 @@ SELECT has_table_privilege('regressuser1', 'atest4', 'SELECT WITH GRANT OPTION')
  t
 (1 row)
 
+-- Admin options
+SET SESSION AUTHORIZATION regressuser4;
+CREATE FUNCTION dogrant_ok() RETURNS void LANGUAGE sql SECURITY DEFINER AS
+	'GRANT regressgroup2 TO regressuser5';
+GRANT regressgroup2 TO regressuser5; -- ok: had ADMIN OPTION
+SET ROLE regressgroup2;
+GRANT regressgroup2 TO regressuser5; -- fails: SET ROLE suspended privilege
+ERROR:  must have admin option on role "regressgroup2"
+SET SESSION AUTHORIZATION regressuser1;
+GRANT regressgroup2 TO regressuser5; -- fails: no ADMIN OPTION
+ERROR:  must have admin option on role "regressgroup2"
+SELECT dogrant_ok();			-- ok: SECURITY DEFINER conveys ADMIN
+NOTICE:  role "regressuser5" is already a member of role "regressgroup2"
+CONTEXT:  SQL function "dogrant_ok" statement 1
+ dogrant_ok 
+------------
+ 
+(1 row)
+
+SET ROLE regressgroup2;
+GRANT regressgroup2 TO regressuser5; -- fails: SET ROLE did not help
+ERROR:  must have admin option on role "regressgroup2"
+SET SESSION AUTHORIZATION regressgroup2;
+GRANT regressgroup2 TO regressuser5; -- ok: a role can self-admin
+NOTICE:  role "regressuser5" is already a member of role "regressgroup2"
+CREATE FUNCTION dogrant_fails() RETURNS void LANGUAGE sql SECURITY DEFINER AS
+	'GRANT regressgroup2 TO regressuser5';
+SELECT dogrant_fails();			-- fails: no self-admin in SECURITY DEFINER
+ERROR:  must have admin option on role "regressgroup2"
+CONTEXT:  SQL function "dogrant_fails" statement 1
+DROP FUNCTION dogrant_fails();
+SET SESSION AUTHORIZATION regressuser4;
+DROP FUNCTION dogrant_ok();
+REVOKE regressgroup2 FROM regressuser5;
 -- has_sequence_privilege tests
 \c -
 CREATE SEQUENCE x_seq;
