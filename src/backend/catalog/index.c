@@ -115,7 +115,6 @@ static void validate_index_heapscan(Relation heapRelation,
 						IndexInfo *indexInfo,
 						Snapshot snapshot,
 						v_i_state *state);
-static Oid	IndexGetRelation(Oid indexId);
 static bool ReindexIsCurrentlyProcessingIndex(Oid indexOid);
 static void SetReindexProcessing(Oid heapOid, Oid indexOid);
 static void ResetReindexProcessing(void);
@@ -1202,18 +1201,13 @@ index_constraint_create(Relation heapRelation,
 	 */
 	if (deferrable)
 	{
-		RangeVar   *heapRel;
 		CreateTrigStmt *trigger;
-
-		heapRel = makeRangeVar(get_namespace_name(namespaceId),
-							   pstrdup(RelationGetRelationName(heapRelation)),
-							   -1);
 
 		trigger = makeNode(CreateTrigStmt);
 		trigger->trigname = (constraintType == CONSTRAINT_PRIMARY) ?
 			"PK_ConstraintTrigger" :
 			"Unique_ConstraintTrigger";
-		trigger->relation = heapRel;
+		trigger->relation = NULL;
 		trigger->funcname = SystemFuncName("unique_key_recheck");
 		trigger->args = NIL;
 		trigger->row = true;
@@ -1226,7 +1220,8 @@ index_constraint_create(Relation heapRelation,
 		trigger->initdeferred = initdeferred;
 		trigger->constrrel = NULL;
 
-		(void) CreateTrigger(trigger, NULL, conOid, indexRelationId, true);
+		(void) CreateTrigger(trigger, NULL, RelationGetRelid(heapRelation),
+							 InvalidOid, conOid, indexRelationId, true);
 	}
 
 	/*
@@ -2833,7 +2828,7 @@ index_set_state_flags(Oid indexId, IndexStateFlagsAction action)
  * IndexGetRelation: given an index's relation OID, get the OID of the
  * relation it is an index on.	Uses the system cache.
  */
-static Oid
+Oid
 IndexGetRelation(Oid indexId)
 {
 	HeapTuple	tuple;

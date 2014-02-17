@@ -27,6 +27,7 @@
 #include "bootstrap/bootstrap.h"
 #include "catalog/catalog.h"
 #include "catalog/heap.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_authid.h"
@@ -279,9 +280,14 @@ Boot_InsertStmt:
 Boot_DeclareIndexStmt:
 		  XDECLARE INDEX boot_ident oidspec ON boot_ident USING boot_ident LPAREN boot_index_params RPAREN
 				{
+					Oid		relationId;
+
 					do_start();
 
-					DefineIndex(makeRangeVar(NULL, $6, -1),
+					relationId = RangeVarGetRelid(makeRangeVar(NULL, $6, -1),
+												  false);
+
+					DefineIndex(relationId,
 								$3,
 								$4,
 								$8,
@@ -297,9 +303,14 @@ Boot_DeclareIndexStmt:
 Boot_DeclareUniqueIndexStmt:
 		  XDECLARE UNIQUE INDEX boot_ident oidspec ON boot_ident USING boot_ident LPAREN boot_index_params RPAREN
 				{
+					Oid		relationId;
+
 					do_start();
 
-					DefineIndex(makeRangeVar(NULL, $7, -1),
+					relationId = RangeVarGetRelid(makeRangeVar(NULL, $7, -1),
+												  false);
+
+					DefineIndex(relationId,
 								$4,
 								$5,
 								$9,

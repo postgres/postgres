@@ -2630,6 +2630,7 @@ _outConstraint(StringInfo str, Constraint *node)
 			WRITE_CHAR_FIELD(fk_del_action);
 			WRITE_BOOL_FIELD(skip_validation);
 			WRITE_BOOL_FIELD(initially_valid);
+			WRITE_OID_FIELD(old_pktable_oid);
 			break;
 
 		case CONSTR_ATTR_DEFERRABLE:

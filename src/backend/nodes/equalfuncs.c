@@ -2271,6 +2271,7 @@ _equalConstraint(Constraint *a, Constraint *b)
 	COMPARE_SCALAR_FIELD(fk_del_action);
 	COMPARE_SCALAR_FIELD(skip_validation);
 	COMPARE_SCALAR_FIELD(initially_valid);
+	COMPARE_SCALAR_FIELD(old_pktable_oid);
 
 	return true;
 }

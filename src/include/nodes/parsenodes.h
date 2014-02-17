@@ -1553,6 +1553,8 @@ typedef struct Constraint
 	char		fk_del_action;	/* ON DELETE action */
 	bool		skip_validation;	/* skip validation of existing rows? */
 	bool		initially_valid;	/* mark the new constraint as valid? */
+
+	Oid			old_pktable_oid; /* pg_constraint.confrelid of my former self */
 } Constraint;
 
 /* ----------------------

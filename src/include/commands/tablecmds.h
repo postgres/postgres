@@ -25,7 +25,7 @@ extern Oid	DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId);
 
 extern void RemoveRelations(DropStmt *drop);
 
-extern void AlterTable(AlterTableStmt *stmt);
+extern void AlterTable(Oid relid, AlterTableStmt *stmt);
 
 extern LOCKMODE AlterTableGetLockLevel(List *cmds);
 

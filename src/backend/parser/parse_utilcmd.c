@@ -1860,14 +1860,18 @@ transformFKConstraints(CreateStmtContext *cxt,
  * a predicate expression.	There are several code paths that create indexes
  * without bothering to call this, because they know they don't have any
  * such expressions to deal with.
+ *
+ * To avoid race conditions, it's important that this function rely only on
+ * the passed-in relid (and not on stmt->relation) to determine the target
+ * relation.
  */
 IndexStmt *
-transformIndexStmt(IndexStmt *stmt, const char *queryString)
+transformIndexStmt(Oid relid, IndexStmt *stmt, const char *queryString)
 {
-	Relation	rel;
 	ParseState *pstate;
 	RangeTblEntry *rte;
 	ListCell   *l;
+	Relation	rel;
 
 	/*
 	 * We must not scribble on the passed-in IndexStmt, so copy it.  (This is
@@ -1875,26 +1879,17 @@ transformIndexStmt(IndexStmt *stmt, const char *queryString)
 	 */
 	stmt = (IndexStmt *) copyObject(stmt);
 
-	/*
-	 * Open the parent table with appropriate locking.	We must do this
-	 * because addRangeTableEntry() would acquire only AccessShareLock,
-	 * leaving DefineIndex() needing to do a lock upgrade with consequent risk
-	 * of deadlock.  Make sure this stays in sync with the type of lock
-	 * DefineIndex() wants. If we are being called by ALTER TABLE, we will
-	 * already hold a higher lock.
-	 */
-	rel = heap_openrv(stmt->relation,
-				  (stmt->concurrent ? ShareUpdateExclusiveLock : ShareLock));
-
 	/* Set up pstate */
 	pstate = make_parsestate(NULL);
 	pstate->p_sourcetext = queryString;
 
 	/*
 	 * Put the parent table into the rtable so that the expressions can refer
-	 * to its fields without qualification.
+	 * to its fields without qualification.  Caller is responsible for locking
+	 * relation, but we still need to open it.
 	 */
-	rte = addRangeTableEntry(pstate, stmt->relation, NULL, false, true);
+	rel = relation_open(relid, NoLock);
+	rte = addRangeTableEntryForRelation(pstate, rel, NULL, false, true);
 
 	/* no to join list, yes to namespaces */
 	addRTEtoQuery(pstate, rte, false, true, true);
@@ -1948,7 +1943,7 @@ transformIndexStmt(IndexStmt *stmt, const char *queryString)
 
 	free_parsestate(pstate);
 
-	/* Close relation, but keep the lock */
+	/* Close relation */
 	heap_close(rel, NoLock);
 
 	return stmt;
@@ -2270,9 +2265,14 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
  * Returns a List of utility commands to be done in sequence.  One of these
  * will be the transformed AlterTableStmt, but there may be additional actions
  * to be done before and after the actual AlterTable() call.
+ *
+ * To avoid race conditions, it's important that this function rely only on
+ * the passed-in relid (and not on stmt->relation) to determine the target
+ * relation.
  */
 List *
-transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
+transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
+						const char *queryString)
 {
 	Relation	rel;
 	ParseState *pstate;
@@ -2284,7 +2284,6 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 	List	   *newcmds = NIL;
 	bool		skipValidation = true;
 	AlterTableCmd *newcmd;
-	LOCKMODE	lockmode;
 
 	/*
 	 * We must not scribble on the passed-in AlterTableStmt, so copy it. (This
@@ -2292,21 +2291,8 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 	 */
 	stmt = (AlterTableStmt *) copyObject(stmt);
 
-	/*
-	 * Determine the appropriate lock level for this list of subcommands.
-	 */
-	lockmode = AlterTableGetLockLevel(stmt->cmds);
-
-	/*
-	 * Acquire appropriate lock on the target relation, which will be held
-	 * until end of transaction.  This ensures any decisions we make here
-	 * based on the state of the relation will still be good at execution. We
-	 * must get lock now because execution will later require it; taking a
-	 * lower grade lock now and trying to upgrade later risks deadlock.  Any
-	 * new commands we add after this must not upgrade the lock level
-	 * requested here.
-	 */
-	rel = relation_openrv(stmt->relation, lockmode);
+	/* Caller is responsible for locking the relation */
+	rel = relation_open(relid, NoLock);
 
 	/* Set up pstate and CreateStmtContext */
 	pstate = make_parsestate(NULL);
@@ -2419,7 +2405,7 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 		IndexStmt  *idxstmt = (IndexStmt *) lfirst(l);
 
 		Assert(IsA(idxstmt, IndexStmt));
-		idxstmt = transformIndexStmt(idxstmt, queryString);
+		idxstmt = transformIndexStmt(relid, idxstmt, queryString);
 		newcmd = makeNode(AlterTableCmd);
 		newcmd->subtype = OidIsValid(idxstmt->indexOid) ? AT_AddIndexConstraint : AT_AddIndex;
 		newcmd->def = (Node *) idxstmt;
@@ -2443,7 +2429,7 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 		newcmds = lappend(newcmds, newcmd);
 	}
 
-	/* Close rel but keep lock */
+	/* Close rel */
 	relation_close(rel, NoLock);
 
 	/*
