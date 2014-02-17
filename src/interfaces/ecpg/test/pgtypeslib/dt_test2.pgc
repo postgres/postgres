@@ -27,6 +27,15 @@ char *dates[] = { "19990108foobar",
 				  "1999.008",
 				  "J2451187",
 				  "January 8, 99 BC",
+				  /*
+				   * Maximize space usage in ParseDateTime() with 25
+				   * (MAXDATEFIELDS) fields and 128 (MAXDATELEN) total length.
+				   */
+				  "........................Xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+				  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+				  /* 26 fields */
+				  ".........................aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+				  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 				  NULL };
 
 /* do not conflict with libc "times" symbol */
@@ -34,6 +43,7 @@ static char *times[] = { "0:04",
 				  "1:59 PDT",
 				  "13:24:40 -8:00",
 				  "13:24:40.495+3",
+				  "13:24:40.123456789+3",
 				  NULL };
 
 char *intervals[] = { "1 minute",
