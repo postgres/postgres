@@ -1,7 +1,7 @@
 # Brazilian Portuguese message translation file for pg_basebackup
 # Copyright (C) 2011 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2012-2013.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2012-2014.
 #
 msgid ""
 msgstr ""
@@ -632,12 +632,12 @@ msgstr "%s: não pôde preencher arquivo de log de transação \"%s\": %s\n"
 #: receivelog.c:121
 #, c-format
 msgid "%s: could not seek to beginning of transaction log file \"%s\": %s\n"
-msgstr "%s: não pôde buscar início do arquivo de log de transação \"%s\": %s\n"
+msgstr "%s: não pôde posicionar no início do arquivo de log de transação \"%s\": %s\n"
 
 #: receivelog.c:147
 #, c-format
 msgid "%s: could not determine seek position in file \"%s\": %s\n"
-msgstr "%s: não pôde determinar posição de busca no arquivo \"%s\": %s\n"
+msgstr "%s: não pôde determinar posição no arquivo \"%s\": %s\n"
 
 #: receivelog.c:154 receivelog.c:344
 #, c-format
