@@ -42,6 +42,145 @@
 
     <listitem>
      <para>
+      Shore up <literal>GRANT ... WITH ADMIN OPTION</> restrictions
+      (Noah Misch)
+     </para>
+
+     <para>
+      Granting a role without <literal>ADMIN OPTION</> is supposed to
+      prevent the grantee from adding or removing members from the granted
+      role, but this restriction was easily bypassed by doing <literal>SET
+      ROLE</> first.  The security impact is mostly that a role member can
+      revoke the access of others, contrary to the wishes of his grantor.
+      Unapproved role member additions are a lesser concern, since an
+      uncooperative role member could provide most of his rights to others
+      anyway by creating views or <literal>SECURITY DEFINER</> functions.
+      (CVE-2014-0060)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent privilege escalation via manual calls to PL validator
+      functions (Andres Freund)
+     </para>
+
+     <para>
+      The primary role of PL validator functions is to be called implicitly
+      during <command>CREATE FUNCTION</>, but they are also normal SQL
+      functions that a user can call explicitly.  Calling a validator on
+      a function actually written in some other language was not checked
+      for and could be exploited for privilege-escalation purposes.
+      The fix involves adding a call to a privilege-checking function in
+      each validator function.  Non-core procedural languages will also
+      need to make this change to their own validator functions, if any.
+      (CVE-2014-0061)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid multiple name lookups during table and index DDL
+      (Robert Haas, Andres Freund)
+     </para>
+
+     <para>
+      If the name lookups come to different conclusions due to concurrent
+      activity, we might perform some parts of the DDL on a different table
+      than other parts.  At least in the case of <command>CREATE INDEX</>,
+      this can be used to cause the permissions checks to be performed
+      against a different table than the index creation, allowing for a
+      privilege escalation attack.
+      (CVE-2014-0062)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent buffer overrun with long datetime strings (Noah Misch)
+     </para>
+
+     <para>
+      The <literal>MAXDATELEN</> constant was too small for the longest
+      possible value of type <type>interval</>, allowing a buffer overrun
+      in <function>interval_out()</>.  Although the datetime input
+      functions were more careful about avoiding buffer overrun, the limit
+      was short enough to cause them to reject some valid inputs, such as
+      input containing a very long timezone name.  The <application>ecpg</>
+      library contained these vulnerabilities along with some of its own.
+      (CVE-2014-0063)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent buffer overrun due to integer overflow in size calculations
+      (Noah Misch, Heikki Linnakangas)
+     </para>
+
+     <para>
+      Several functions, mostly type input functions, calculated an
+      allocation size without checking for overflow.  If overflow did
+      occur, a too-small buffer would be allocated and then written past.
+      (CVE-2014-0064)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent overruns of fixed-size buffers
+      (Peter Eisentraut, Jozef Mlich)
+     </para>
+
+     <para>
+      Use <function>strlcpy()</> and related functions to provide a clear
+      guarantee that fixed-size buffers are not overrun.  Unlike the
+      preceding items, it is unclear whether these cases really represent
+      live issues, since in most cases there appear to be previous
+      constraints on the size of the input string.  Nonetheless it seems
+      prudent to silence all Coverity warnings of this type.
+      (CVE-2014-0065)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid crashing if <function>crypt()</> returns NULL (Honza Horak,
+      Bruce Momjian)
+     </para>
+
+     <para>
+      There are relatively few scenarios in which <function>crypt()</>
+      could return NULL, but <filename>contrib/chkpass</> would crash
+      if it did.  One practical case in which this could be an issue is
+      if <application>libc</> is configured to refuse to execute unapproved
+      hashing algorithms (e.g., <quote>FIPS mode</>).
+      (CVE-2014-0066)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Document risks of <literal>make check</> in the regression testing
+      instructions (Noah Misch, Tom Lane)
+     </para>
+
+     <para>
+      Since the temporary server started by <literal>make check</>
+      uses <quote>trust</> authentication, another user on the same machine
+      could connect to it as database superuser, and then potentially
+      exploit the privileges of the operating-system user who started the
+      tests.  A future release will probably incorporate changes in the
+      testing procedure to prevent this risk, but some public discussion is
+      needed first.  So for the moment, just warn people against using
+      <literal>make check</> when there are untrusted users on the
+      same machine.
+      (CVE-2014-0067)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       Fix possible mis-replay of WAL records when some segments of a
       relation aren't full size (Greg Stark, Tom Lane)
      </para>
