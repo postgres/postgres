@@ -1,6 +1,326 @@
 <!-- doc/src/sgml/release-8.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-8-4-20">
+  <title>Release 8.4.20</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2014-02-20</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.4.19.
+   For information about new features in the 8.4 major release, see
+   <xref linkend="release-8-4">.
+  </para>
+
+  <para>
+   The <productname>PostgreSQL</> community will stop releasing updates
+   for the 8.4.X release series in July 2014.
+   Users are encouraged to update to a newer release branch soon.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.4.20</title>
+
+   <para>
+    A dump/restore is not required for those running 8.4.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 8.4.19,
+    see <xref linkend="release-8-4-19">.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix possible mis-replay of WAL records when some segments of a
+      relation aren't full size (Greg Stark, Tom Lane)
+     </para>
+
+     <para>
+      The WAL update could be applied to the wrong page, potentially many
+      pages past where it should have been.  Aside from corrupting data,
+      this error has been observed to result in significant <quote>bloat</>
+      of standby servers compared to their masters, due to updates being
+      applied far beyond where the end-of-file should have been.  This
+      failure mode does not appear to be a significant risk during crash
+      recovery, only when initially synchronizing a standby created from a
+      base backup taken from a quickly-changing master.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure that insertions into non-leaf GIN index pages write a full-page
+      WAL record when appropriate (Heikki Linnakangas)
+     </para>
+
+     <para>
+      The previous coding risked index corruption in the event of a
+      partial-page write during a system crash.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix race conditions during server process exit (Robert Haas)
+     </para>
+
+     <para>
+      Ensure that signal handlers don't attempt to use the
+      process's <varname>MyProc</> pointer after it's no longer valid.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix unsafe references to <varname>errno</> within error reporting
+      logic (Christian Kruse)
+     </para>
+
+     <para>
+      This would typically lead to odd behaviors such as missing or
+      inappropriate <literal>HINT</> fields.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible crashes from using <function>ereport()</> too early
+      during server startup (Tom Lane)
+     </para>
+
+     <para>
+      The principal case we've seen in the field is a crash if the server
+      is started in a directory it doesn't have permission to read.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Clear retry flags properly in OpenSSL socket write
+      function (Alexander Kukushkin)
+     </para>
+
+     <para>
+      This omission could result in a server lockup after unexpected loss
+      of an SSL-encrypted connection.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix length checking for Unicode identifiers (<literal>U&amp;"..."</>
+      syntax) containing escapes (Tom Lane)
+     </para>
+
+     <para>
+      A spurious truncation warning would be printed for such identifiers
+      if the escaped form of the identifier was too long, but the
+      identifier actually didn't need truncation after de-escaping.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible crash due to invalid plan for nested sub-selects, such
+      as <literal>WHERE (... x IN (SELECT ...) ...) IN (SELECT ...)</>
+      (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure that <command>ANALYZE</> creates statistics for a table column
+      even when all the values in it are <quote>too wide</> (Tom Lane)
+     </para>
+
+     <para>
+      <command>ANALYZE</> intentionally omits very wide values from its
+      histogram and most-common-values calculations, but it neglected to do
+      something sane in the case that all the sampled entries are too wide.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In <literal>ALTER TABLE ... SET TABLESPACE</>, allow the database's
+      default tablespace to be used without a permissions check
+      (Stephen Frost)
+     </para>
+
+     <para>
+      <literal>CREATE TABLE</> has always allowed such usage,
+      but <literal>ALTER TABLE</> didn't get the memo.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <quote>cannot accept a set</> error when some arms of
+      a <literal>CASE</> return a set and others don't (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix checks for all-zero client addresses in pgstat functions (Kevin
+      Grittner)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible misclassification of multibyte characters by the text
+      search parser (Tom Lane)
+     </para>
+
+     <para>
+      Non-ASCII characters could be misclassified when using C locale with
+      a multibyte encoding.  On Cygwin, non-C locales could fail as well.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible misbehavior in <function>plainto_tsquery()</>
+      (Heikki Linnakangas)
+     </para>
+
+     <para>
+      Use <function>memmove()</> not <function>memcpy()</> for copying
+      overlapping memory regions.  There have been no field reports of
+      this actually causing trouble, but it's certainly risky.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Accept <literal>SHIFT_JIS</> as an encoding name for locale checking
+      purposes (Tatsuo Ishii)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix misbehavior of <function>PQhost()</> on Windows (Fujii Masao)
+     </para>
+
+     <para>
+      It should return <literal>localhost</> if no host has been specified.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve error handling in <application>libpq</> and <application>psql</>
+      for failures during <literal>COPY TO STDOUT/FROM STDIN</> (Tom Lane)
+     </para>
+
+     <para>
+      In particular this fixes an infinite loop that could occur in 9.2 and
+      up if the server connection was lost during <literal>COPY FROM
+      STDIN</>.  Variants of that scenario might be possible in older
+      versions, or with other client applications.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix misaligned descriptors in <application>ecpg</> (MauMau)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In <application>ecpg</>, handle lack of a hostname in the connection
+      parameters properly (Michael Meskes)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix performance regression in <filename>contrib/dblink</> connection
+      startup (Joe Conway)
+     </para>
+
+     <para>
+      Avoid an unnecessary round trip when client and server encodings match.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In <filename>contrib/isn</>, fix incorrect calculation of the check
+      digit for ISMN values (Fabien Coelho)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure client-code-only installation procedure works as documented
+      (Peter Eisentraut)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In Mingw and Cygwin builds, install the <application>libpq</> DLL
+      in the <filename>bin</> directory (Andrew Dunstan)
+     </para>
+
+     <para>
+      This duplicates what the MSVC build has long done.  It should fix
+      problems with programs like <application>psql</> failing to start
+      because they can't find the DLL.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Don't generate plain-text <filename>HISTORY</>
+      and <filename>src/test/regress/README</> files anymore (Tom Lane)
+     </para>
+
+     <para>
+      These text files duplicated the main HTML and PDF documentation
+      formats.  The trouble involved in maintaining them greatly outweighs
+      the likely audience for plain-text format.  Distribution tarballs
+      will still contain files by these names, but they'll just be stubs
+      directing the reader to consult the main documentation.
+      The plain-text <filename>INSTALL</> file will still be maintained, as
+      there is arguably a use-case for that.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2013i
+      for DST law changes in Jordan and historical changes in Cuba.
+     </para>
+
+     <para>
+      In addition, the zones <literal>Asia/Riyadh87</>,
+      <literal>Asia/Riyadh88</>, and <literal>Asia/Riyadh89</> have been
+      removed, as they are no longer maintained by IANA, and never
+      represented actual civil timekeeping practice.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-8-4-19">
   <title>Release 8.4.19</title>
 
