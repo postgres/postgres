@@ -1,7 +1,6 @@
 # translation of libpq-cs.po to Czech
 # Czech translation of libpq messages
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/po/cs.po,v 1.7 2009/06/26 19:33:51 petere Exp $
 # Karel Žák, 2001-2003, 2004.
 # Zdeněk Kotala, 2009.
 #
@@ -13,6 +12,7 @@ msgstr ""
 "PO-Revision-Date: 2009-05-24 14:26+0200\n"
 "Last-Translator: Zdeněk Kotala\n"
 "Language-Team:  \n"
+"Language: cs\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"

@@ -13,6 +13,7 @@ msgstr ""
 "PO-Revision-Date: 2009-04-17 10:13+0200\n"
 "Last-Translator: Stéphane Schildknecht <stephane.schildknecht@dalibo.com>\n"
 "Language-Team: PostgreSQLfr <pgsql-fr-generale@postgresql.org>\n"
+"Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-15\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -468,7 +469,7 @@ msgstr "  %s [OPTION]... [NOMROLE]\n"
 #, c-format
 msgid "  -c, --connection-limit=N  connection limit for role (default: no limit)\n"
 msgstr ""
-"  -c, --conn-limit=N             nombre maximal de connexions pour le rôle\n"
+"  -c, --connection-limit=N       nombre maximal de connexions pour le rôle\n"
 "                                 (par défaut sans limite)\n"
 
 #: createuser.c:304
