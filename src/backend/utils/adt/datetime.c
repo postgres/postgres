@@ -89,10 +89,10 @@ const char *const days[] = {"Sunday", "Monday", "Tuesday", "Wednesday",
  * Note that this table must be strictly alphabetically ordered to allow an
  * O(ln(N)) search algorithm to be used.
  *
- * The text field is NOT guaranteed to be NULL-terminated.
+ * The token field is NOT guaranteed to be NULL-terminated.
  *
- * To keep this table reasonably small, we divide the lexval for TZ and DTZ
- * entries by 15 (so they are on 15 minute boundaries) and truncate the text
+ * To keep this table reasonably small, we divide the value for TZ and DTZ
+ * entries by 15 (so they are on 15 minute boundaries) and truncate the token
  * field at TOKMAXLEN characters.
  * Formerly, we divided by 10 rather than 15 but there are a few time zones
  * which are 30 or 45 minutes away from an even hour, most are on an hour
@@ -107,7 +107,7 @@ static datetkn *timezonetktbl = NULL;
 static int	sztimezonetktbl = 0;
 
 static const datetkn datetktbl[] = {
-/*	text, token, lexval */
+	/* token, type, value */
 	{EARLY, RESERV, DTK_EARLY}, /* "-infinity" reserved for "early time" */
 	{DA_D, ADBC, AD},			/* "ad" for years > 0 */
 	{"allballs", RESERV, DTK_ZULU},		/* 00:00:00 */
@@ -187,7 +187,7 @@ static const datetkn datetktbl[] = {
 static int	szdatetktbl = sizeof datetktbl / sizeof datetktbl[0];
 
 static const datetkn deltatktbl[] = {
-	/* text, token, lexval */
+	/* token, type, value */
 	{"@", IGNORE_DTF, 0},		/* postgres relative prefix */
 	{DAGO, AGO, 0},				/* "ago" indicates negative time offset */
 	{"c", UNITS, DTK_CENTURY},	/* "century" relative */
@@ -4215,6 +4215,7 @@ ConvertTimeZoneAbbrevs(TimeZoneAbbrevTable *tbl,
 	tbl->numabbrevs = n;
 	for (i = 0; i < n; i++)
 	{
+		/* do NOT use strlcpy here; token field need not be null-terminated */
 		strncpy(newtbl[i].token, abbrevs[i].abbrev, TOKMAXLEN);
 		newtbl[i].type = abbrevs[i].is_dst ? DTZ : TZ;
 		TOVAL(&newtbl[i], abbrevs[i].offset / MINS_PER_HOUR);
