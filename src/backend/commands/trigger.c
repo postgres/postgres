@@ -90,6 +90,13 @@ static void AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
  * queryString is the source text of the CREATE TRIGGER command.
  * This must be supplied if a whenClause is specified, else it can be NULL.
  *
+ * relOid, if nonzero, is the relation on which the trigger should be
+ * created.  If zero, the name provided in the statement will be looked up.
+ *
+ * refRelOid, if nonzero, is the relation to which the constraint trigger
+ * refers.  If zero, the constraint relation name provided in the statement
+ * will be looked up as needed.
+ *
  * constraintOid, if nonzero, says that this trigger is being created
  * internally to implement that constraint.  A suitable pg_depend entry will
  * be made to link the trigger to that constraint.	constraintOid is zero when
@@ -112,7 +119,7 @@ static void AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
  */
 Oid
 CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
-			  Oid constraintOid, Oid indexOid,
+			  Oid relOid, Oid refRelOid, Oid constraintOid, Oid indexOid,
 			  bool isInternal)
 {
 	int16		tgtype;
@@ -141,7 +148,10 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 	ObjectAddress myself,
 				referenced;
 
-	rel = heap_openrv(stmt->relation, AccessExclusiveLock);
+	if (OidIsValid(relOid))
+		rel = heap_open(relOid, AccessExclusiveLock);
+	else
+		rel = heap_openrv(stmt->relation, AccessExclusiveLock);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
 		ereport(ERROR,
@@ -155,8 +165,13 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 				 errmsg("permission denied: \"%s\" is a system catalog",
 						RelationGetRelationName(rel))));
 
-	if (stmt->isconstraint && stmt->constrrel != NULL)
-		constrrelid = RangeVarGetRelid(stmt->constrrel, false);
+	if (stmt->isconstraint)
+	{
+		if (OidIsValid(refRelOid))
+			constrrelid = refRelOid;
+		else if (stmt->constrrel != NULL)
+			constrrelid = RangeVarGetRelid(stmt->constrrel, false);
+	}
 
 	/* permission checks */
 	if (!isInternal)
@@ -443,7 +458,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_OBJECT),
 				  errmsg("trigger \"%s\" for relation \"%s\" already exists",
-						 trigname, stmt->relation->relname)));
+						 trigname, RelationGetRelationName(rel))));
 		}
 		systable_endscan(tgscan);
 	}

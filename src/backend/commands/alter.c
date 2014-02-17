@@ -93,9 +93,8 @@ ExecRenameStmt(RenameStmt *stmt)
 			{
 				Oid			relid;
 
-				CheckRelationOwnership(stmt->relation, true);
-
 				relid = RangeVarGetRelid(stmt->relation, false);
+				CheckRelationOwnership(relid, true);
 
 				switch (stmt->renameType)
 				{
@@ -188,7 +187,6 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt)
 		case OBJECT_SEQUENCE:
 		case OBJECT_TABLE:
 		case OBJECT_VIEW:
-			CheckRelationOwnership(stmt->relation, true);
 			AlterTableNamespace(stmt->relation, stmt->newschema,
 								stmt->objectType);
 			break;

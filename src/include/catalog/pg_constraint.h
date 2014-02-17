@@ -238,5 +238,6 @@ extern char *ChooseConstraintName(const char *name1, const char *name2,
 extern void AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
 						  Oid newNspId, bool isType);
 extern Oid	GetConstraintByName(Oid relid, const char *conname);
+extern void get_constraint_relation_oids(Oid constraint_oid, Oid *conrelid, Oid *confrelid);
 
 #endif   /* PG_CONSTRAINT_H */

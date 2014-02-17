@@ -88,5 +88,6 @@ extern bool reindex_relation(Oid relid, bool toast_too, int flags);
 
 extern bool ReindexIsProcessingHeap(Oid heapOid);
 extern bool ReindexIsProcessingIndex(Oid indexOid);
+extern Oid	IndexGetRelation(Oid indexId);
 
 #endif   /* INDEX_H */
