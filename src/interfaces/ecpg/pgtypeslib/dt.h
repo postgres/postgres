@@ -192,12 +192,17 @@ typedef double fsec_t;
 #define DTK_DATE_M		(DTK_M(YEAR) | DTK_M(MONTH) | DTK_M(DAY))
 #define DTK_TIME_M		(DTK_M(HOUR) | DTK_M(MINUTE) | DTK_M(SECOND))
 
-#define MAXDATELEN		63		/* maximum possible length of an input date
-								 * string (not counting tr. null) */
-#define MAXDATEFIELDS	25		/* maximum possible number of fields in a date
-								 * string */
-#define TOKMAXLEN		10		/* only this many chars are stored in
-								 * datetktbl */
+/*
+ * Working buffer size for input and output of interval, timestamp, etc.
+ * Inputs that need more working space will be rejected early.  Longer outputs
+ * will overrun buffers, so this must suffice for all possible output.  As of
+ * this writing, PGTYPESinterval_to_asc() needs the most space at ~90 bytes.
+ */
+#define MAXDATELEN		128
+/* maximum possible number of fields in a date string */
+#define MAXDATEFIELDS	25
+/* only this many chars are stored in datetktbl */
+#define TOKMAXLEN		10
 
 /* keep this struct small; it gets used a lot */
 typedef struct

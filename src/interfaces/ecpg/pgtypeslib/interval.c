@@ -1094,7 +1094,7 @@ PGTYPESinterval_from_asc(char *str, char **endptr)
 	tm->tm_sec = 0;
 	fsec = 0;
 
-	if (strlen(str) >= sizeof(lowstr))
+	if (strlen(str) > MAXDATELEN)
 	{
 		errno = PGTYPES_INTVL_BAD_INTERVAL;
 		return NULL;

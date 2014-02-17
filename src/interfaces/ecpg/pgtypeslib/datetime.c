@@ -60,14 +60,14 @@ PGTYPESdate_from_asc(char *str, char **endptr)
 	int			nf;
 	char	   *field[MAXDATEFIELDS];
 	int			ftype[MAXDATEFIELDS];
-	char		lowstr[MAXDATELEN + 1];
+	char		lowstr[MAXDATELEN + MAXDATEFIELDS];
 	char	   *realptr;
 	char	  **ptr = (endptr != NULL) ? endptr : &realptr;
 
 	bool		EuroDates = FALSE;
 
 	errno = 0;
-	if (strlen(str) >= sizeof(lowstr))
+	if (strlen(str) > MAXDATELEN)
 	{
 		errno = PGTYPES_DATE_BAD_DATE;
 		return INT_MIN;
