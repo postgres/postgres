@@ -24,6 +24,7 @@
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "pgstat.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgrtab.h"
 #include "utils/guc.h"
@@ -2470,4 +2471,87 @@ get_fn_expr_variadic(FmgrInfo *flinfo)
 		return ((FuncExpr *) expr)->funcvariadic;
 	else
 		return false;
+}
+
+/*-------------------------------------------------------------------------
+ *		Support routines for procedural language implementations
+ *-------------------------------------------------------------------------
+ */
+
+/*
+ * Verify that a validator is actually associated with the language of a
+ * particular function and that the user has access to both the language and
+ * the function.  All validators should call this before doing anything
+ * substantial.  Doing so ensures a user cannot achieve anything with explicit
+ * calls to validators that he could not achieve with CREATE FUNCTION or by
+ * simply calling an existing function.
+ *
+ * When this function returns false, callers should skip all validation work
+ * and call PG_RETURN_VOID().  This never happens at present; it is reserved
+ * for future expansion.
+ *
+ * In particular, checking that the validator corresponds to the function's
+ * language allows untrusted language validators to assume they process only
+ * superuser-chosen source code.  (Untrusted language call handlers, by
+ * definition, do assume that.)  A user lacking the USAGE language privilege
+ * would be unable to reach the validator through CREATE FUNCTION, so we check
+ * that to block explicit calls as well.  Checking the EXECUTE privilege on
+ * the function is often superfluous, because most users can clone the
+ * function to get an executable copy.  It is meaningful against users with no
+ * database TEMP right and no permanent schema CREATE right, thereby unable to
+ * create any function.  Also, if the function tracks persistent state by
+ * function OID or name, validating the original function might permit more
+ * mischief than creating and validating a clone thereof.
+ */
+bool
+CheckFunctionValidatorAccess(Oid validatorOid, Oid functionOid)
+{
+	HeapTuple	procTup;
+	HeapTuple	langTup;
+	Form_pg_proc procStruct;
+	Form_pg_language langStruct;
+	AclResult	aclresult;
+
+	/* Get the function's pg_proc entry */
+	procTup = SearchSysCache1(PROCOID, ObjectIdGetDatum(functionOid));
+	if (!HeapTupleIsValid(procTup))
+		elog(ERROR, "cache lookup failed for function %u", functionOid);
+	procStruct = (Form_pg_proc) GETSTRUCT(procTup);
+
+	/*
+	 * Fetch pg_language entry to know if this is the correct validation
+	 * function for that pg_proc entry.
+	 */
+	langTup = SearchSysCache1(LANGOID, ObjectIdGetDatum(procStruct->prolang));
+	if (!HeapTupleIsValid(langTup))
+		elog(ERROR, "cache lookup failed for language %u", procStruct->prolang);
+	langStruct = (Form_pg_language) GETSTRUCT(langTup);
+
+	if (langStruct->lanvalidator != validatorOid)
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("language validation function %u called for language %u instead of %u",
+						validatorOid, procStruct->prolang,
+						langStruct->lanvalidator)));
+
+	/* first validate that we have permissions to use the language */
+	aclresult = pg_language_aclcheck(procStruct->prolang, GetUserId(),
+									 ACL_USAGE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, ACL_KIND_LANGUAGE,
+					   NameStr(langStruct->lanname));
+
+	/*
+	 * Check whether we are allowed to execute the function itself. If we can
+	 * execute it, there should be no possible side-effect of
+	 * compiling/validation that execution can't have.
+	 */
+	aclresult = pg_proc_aclcheck(functionOid, GetUserId(), ACL_EXECUTE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, ACL_KIND_PROC, NameStr(procStruct->proname));
+
+	ReleaseSysCache(procTup);
+	ReleaseSysCache(langTup);
+
+	return true;
 }
