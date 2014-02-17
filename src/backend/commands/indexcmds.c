@@ -112,7 +112,6 @@ static void RangeVarCallbackForReindexIndex(const RangeVar *relation,
  */
 bool
 CheckIndexCompatible(Oid oldId,
-					 RangeVar *heapRelation,
 					 char *accessMethodName,
 					 List *attributeList,
 					 List *exclusionOpNames)
@@ -140,7 +139,7 @@ CheckIndexCompatible(Oid oldId,
 	Datum		d;
 
 	/* Caller should already have the relation locked in some way. */
-	relationId = RangeVarGetRelid(heapRelation, NoLock, false);
+	relationId = IndexGetRelation(oldId, false);
 
 	/*
 	 * We can pretend isconstraint = false unconditionally.  It only serves to
@@ -280,6 +279,8 @@ CheckIndexCompatible(Oid oldId,
  * DefineIndex
  *		Creates a new index.
  *
+ * 'relationId': the OID of the heap relation on which the index is to be
+ *		created
  * 'stmt': IndexStmt describing the properties of the new index.
  * 'indexRelationId': normally InvalidOid, but during bootstrap can be
  *		nonzero to specify a preselected OID for the index.
@@ -293,7 +294,8 @@ CheckIndexCompatible(Oid oldId,
  * Returns the OID of the created index.
  */
 Oid
-DefineIndex(IndexStmt *stmt,
+DefineIndex(Oid relationId,
+			IndexStmt *stmt,
 			Oid indexRelationId,
 			bool is_alter_table,
 			bool check_rights,
@@ -306,7 +308,6 @@ DefineIndex(IndexStmt *stmt,
 	Oid		   *collationObjectId;
 	Oid		   *classObjectId;
 	Oid			accessMethodId;
-	Oid			relationId;
 	Oid			namespaceId;
 	Oid			tablespaceId;
 	List	   *indexColNames;
@@ -326,6 +327,7 @@ DefineIndex(IndexStmt *stmt,
 	int			n_old_snapshots;
 	LockRelId	heaprelid;
 	LOCKTAG		heaplocktag;
+	LOCKMODE	lockmode;
 	Snapshot	snapshot;
 	int			i;
 
@@ -344,14 +346,18 @@ DefineIndex(IndexStmt *stmt,
 						INDEX_MAX_KEYS)));
 
 	/*
-	 * Open heap relation, acquire a suitable lock on it, remember its OID
-	 *
 	 * Only SELECT ... FOR UPDATE/SHARE are allowed while doing a standard
 	 * index build; but for concurrent builds we allow INSERT/UPDATE/DELETE
 	 * (but not VACUUM).
+	 *
+	 * NB: Caller is responsible for making sure that relationId refers
+	 * to the relation on which the index should be built; except in bootstrap
+	 * mode, this will typically require the caller to have already locked
+	 * the relation.  To avoid lock upgrade hazards, that lock should be at
+	 * least as strong as the one we take here.
 	 */
-	rel = heap_openrv(stmt->relation,
-				  (stmt->concurrent ? ShareUpdateExclusiveLock : ShareLock));
+	lockmode = stmt->concurrent ? ShareUpdateExclusiveLock : ShareLock;
+	rel = heap_open(relationId, lockmode);
 
 	relationId = RelationGetRelid(rel);
 	namespaceId = RelationGetNamespace(rel);
