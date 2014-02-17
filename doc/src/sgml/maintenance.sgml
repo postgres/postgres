@@ -616,13 +616,16 @@ HINT:  Stop the postmaster and vacuum that database in single-user mode.
     </indexterm>
 
     <para>
-     <firstterm>Multixacts</> are used to implement row locking by
-     multiple transactions: since there is limited space in the tuple
-     header to store lock information, that information is stored as a
-     multixact separately in the <filename>pg_multixact</> subdirectory,
-     and only its ID is in the <structfield>xmax</> field
-     in the tuple header.
-     Similar to transaction IDs, multixact IDs are implemented as a
+     <firstterm>Multixact IDs</> are used to support row locking by
+     multiple transactions.  Since there is only limited space in a tuple
+     header to store lock information, that information is encoded as
+     a <quote>multiple transaction ID</>, or multixact ID for short,
+     whenever there is more than one transaction concurrently locking a
+     row.  Information about which transaction IDs are included in any
+     particular multixact ID is stored separately in
+     the <filename>pg_multixact</> subdirectory, and only the multixact ID
+     appears in the <structfield>xmax</> field in the tuple header.
+     Like transaction IDs, multixact IDs are implemented as a
      32-bit counter and corresponding storage, all of which requires
      careful aging management, storage cleanup, and wraparound handling.
     </para>
@@ -634,8 +637,8 @@ HINT:  Stop the postmaster and vacuum that database in single-user mode.
      is replaced by a different value, which can be the zero value, a single
      transaction ID, or a newer multixact ID.  For each table,
      <structname>pg_class</>.<structfield>relminmxid</> stores the oldest
-     possible value still stored in any tuple of that table.  Every time this
-     value is older than
+     possible multixact ID still appearing in any tuple of that table.
+     If this value is older than
      <xref linkend="guc-vacuum-multixact-freeze-table-age">, a whole-table
      scan is forced.  Whole-table <command>VACUUM</> scans, regardless of
      what causes them, enable advancing the value for that table.
