@@ -6,10 +6,10 @@ msgstr ""
 "Project-Id-Version: postgres (PostgreSQL 9.0)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2013-01-29 13:52+0000\n"
-"PO-Revision-Date: 2010-10-01 13:03+0800\n"
+"PO-Revision-Date: 2013-06-24 14:11-0400\n"
 "Last-Translator: Weibin <ssmei_2000@yahoo.com>\n"
 "Language-Team: Chinese (Simplified)\n"
-"Language: \n"
+"Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -10632,7 +10632,7 @@ msgstr "无法为扩展\"%2$s\"添加模式\"%1$s\"，因为该模式已经包�
 #: commands/extension.c:3009
 #, c-format
 msgid "%s is not a member of extension \"%s\""
-msgstr "%s不是扩展\"%s\"的成员\v"
+msgstr ""
 
 #: commands/collationcmds.c:81
 #, c-format
