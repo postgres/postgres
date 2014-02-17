@@ -396,11 +396,13 @@ GRANT <replaceable class="PARAMETER">role_name</replaceable> [, ...] TO <replace
   <para>
    If <literal>WITH ADMIN OPTION</literal> is specified, the member can
    in turn grant membership in the role to others, and revoke membership
-   in the role as well.  Without the admin option, ordinary users cannot do
-   that.  However,
-   database superusers can grant or revoke membership in any role to anyone.
-   Roles having <literal>CREATEROLE</> privilege can grant or revoke
-   membership in any role that is not a superuser.
+   in the role as well.  Without the admin option, ordinary users cannot
+   do that.  A role is not considered to hold <literal>WITH ADMIN
+   OPTION</literal> on itself, but it may grant or revoke membership in
+   itself from a database session where the session user matches the
+   role.  Database superusers can grant or revoke membership in any role
+   to anyone.  Roles having <literal>CREATEROLE</> privilege can grant
+   or revoke membership in any role that is not a superuser.
   </para>
 
   <para>
