@@ -334,6 +334,11 @@ QTN2QT(QTNode *in)
 	QTN2QTState state;
 
 	cntsize(in, &sumlen, &nnode);
+
+	if (TSQUERY_TOO_BIG(nnode, sumlen))
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("tsquery is too large")));
 	len = COMPUTESIZE(nnode, sumlen);
 
 	out = (TSQuery) palloc0(len);

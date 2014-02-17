@@ -143,12 +143,22 @@ bit_in(PG_FUNCTION_ARGS)
 		sp = input_string;
 	}
 
+	/*
+	 * Determine bitlength from input string.  MaxAllocSize ensures a regular
+	 * input is small enough, but we must check hex input.
+	 */
 	slen = strlen(sp);
-	/* Determine bitlength from input string */
 	if (bit_not_hex)
 		bitlen = slen;
 	else
+	{
+		if (slen > VARBITMAXLEN / 4)
+			ereport(ERROR,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("bit string length exceeds the maximum allowed (%d)",
+						VARBITMAXLEN)));
 		bitlen = slen * 4;
+	}
 
 	/*
 	 * Sometimes atttypmod is not supplied. If it is supplied we need to make
@@ -441,12 +451,22 @@ varbit_in(PG_FUNCTION_ARGS)
 		sp = input_string;
 	}
 
+	/*
+	 * Determine bitlength from input string.  MaxAllocSize ensures a regular
+	 * input is small enough, but we must check hex input.
+	 */
 	slen = strlen(sp);
-	/* Determine bitlength from input string */
 	if (bit_not_hex)
 		bitlen = slen;
 	else
+	{
+		if (slen > VARBITMAXLEN / 4)
+			ereport(ERROR,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("bit string length exceeds the maximum allowed (%d)",
+						VARBITMAXLEN)));
 		bitlen = slen * 4;
+	}
 
 	/*
 	 * Sometimes atttypmod is not supplied. If it is supplied we need to make
@@ -525,6 +545,9 @@ varbit_in(PG_FUNCTION_ARGS)
 
 /* varbit_out -
  *	  Prints the string as bits to preserve length accurately
+ *
+ * XXX varbit_recv() and hex input to varbit_in() can load a value that this
+ * cannot emit.  Consider using hex output for such values.
  */
 Datum
 varbit_out(PG_FUNCTION_ARGS)
@@ -898,6 +921,11 @@ bit_catenate(VarBit *arg1, VarBit *arg2)
 	bitlen1 = VARBITLEN(arg1);
 	bitlen2 = VARBITLEN(arg2);
 
+	if (bitlen1 > VARBITMAXLEN - bitlen2)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("bit string length exceeds the maximum allowed (%d)",
+						VARBITMAXLEN)));
 	bytelen = VARBITTOTALLEN(bitlen1 + bitlen2);
 
 	result = (VarBit *) palloc(bytelen);

@@ -49,9 +49,12 @@ typedef struct
 } HStore;
 
 /*
- * it's not possible to get more than 2^28 items into an hstore,
- * so we reserve the top few bits of the size field. See hstore_compat.c
- * for one reason why.	Some bits are left for future use here.
+ * It's not possible to get more than 2^28 items into an hstore, so we reserve
+ * the top few bits of the size field.  See hstore_compat.c for one reason
+ * why.  Some bits are left for future use here.  MaxAllocSize makes the
+ * practical count limit slightly more than 2^28 / 3, or INT_MAX / 24, the
+ * limit for an hstore full of 4-byte keys and null values.  Therefore, we
+ * don't explicitly check the format-imposed limit.
  */
 #define HS_FLAG_NEWVERSION 0x80000000
 
@@ -59,6 +62,12 @@ typedef struct
 #define HS_SETCOUNT(hsp_,c_) ((hsp_)->size_ = (c_) | HS_FLAG_NEWVERSION)
 
 
+/*
+ * "x" comes from an existing HS_COUNT() (as discussed, <= INT_MAX/24) or a
+ * Pairs array length (due to MaxAllocSize, <= INT_MAX/40).  "lenstr" is no
+ * more than INT_MAX, that extreme case arising in hstore_from_arrays().
+ * Therefore, this calculation is limited to about INT_MAX / 5 + INT_MAX.
+ */
 #define HSHRDSIZE	(sizeof(HStore))
 #define CALCDATASIZE(x, lenstr) ( (x) * 2 * sizeof(HEntry) + HSHRDSIZE + (lenstr) )
 

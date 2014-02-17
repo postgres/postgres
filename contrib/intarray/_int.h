@@ -5,6 +5,7 @@
 #define ___INT_H__
 
 #include "utils/array.h"
+#include "utils/memutils.h"
 
 /* number ranges for compression */
 #define MAXNUMRANGE 100
@@ -142,6 +143,7 @@ typedef struct
 
 #define HDRSIZEQT	(VARHDRSZ + sizeof(int4))
 #define COMPUTESIZE(size)	( HDRSIZEQT + size * sizeof(ITEM) )
+#define QUERYTYPEMAXITEMS	((MaxAllocSize - HDRSIZEQT) / sizeof(ITEM))
 #define GETQUERY(x)  (ITEM*)( (char*)(x)+HDRSIZEQT )
 
 #define END		0
