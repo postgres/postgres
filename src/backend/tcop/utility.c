@@ -51,11 +51,13 @@
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteRemove.h"
 #include "storage/fd.h"
+#include "storage/lmgr.h"
 #include "tcop/pquery.h"
 #include "tcop/utility.h"
 #include "utils/acl.h"
 #include "utils/guc.h"
 #include "utils/syscache.h"
+#include "utils/lsyscache.h"
 
 
 /*
@@ -65,12 +67,10 @@
  * except when allowSystemTableMods is true.
  */
 void
-CheckRelationOwnership(RangeVar *rel, bool noCatalogs)
+CheckRelationOwnership(Oid relOid, bool noCatalogs)
 {
-	Oid			relOid;
 	HeapTuple	tuple;
 
-	relOid = RangeVarGetRelid(rel, false);
 	tuple = SearchSysCache(RELOID,
 						   ObjectIdGetDatum(relOid),
 						   0, 0, 0);
@@ -79,7 +79,7 @@ CheckRelationOwnership(RangeVar *rel, bool noCatalogs)
 
 	if (!pg_class_ownercheck(relOid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
-					   rel->relname);
+					   get_rel_name(relOid));
 
 	if (noCatalogs)
 	{
@@ -88,7 +88,7 @@ CheckRelationOwnership(RangeVar *rel, bool noCatalogs)
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("permission denied: \"%s\" is a system catalog",
-							rel->relname)));
+							get_rel_name(relOid))));
 	}
 
 	ReleaseSysCache(tuple);
@@ -638,9 +638,21 @@ ProcessUtility(Node *parsetree,
 			{
 				List	   *stmts;
 				ListCell   *l;
+				AlterTableStmt *atstmt = (AlterTableStmt *) parsetree;
+				Oid			relid;
+
+				/*
+				 * Look up the relation OID just once, right here at the
+				 * beginning, so that we don't end up repeating the name
+				 * lookup later and latching onto a different relation
+				 * partway through.
+				 */
+				relid = RangeVarGetRelid(atstmt->relation, false);
+				LockRelationOid(relid, AccessExclusiveLock);
 
 				/* Run parse analysis ... */
-				stmts = transformAlterTableStmt((AlterTableStmt *) parsetree,
+				stmts = transformAlterTableStmt(relid,
+												atstmt,
 												queryString);
 
 				/* ... and do it */
@@ -651,7 +663,7 @@ ProcessUtility(Node *parsetree,
 					if (IsA(stmt, AlterTableStmt))
 					{
 						/* Do the table alteration proper */
-						AlterTable((AlterTableStmt *) stmt);
+						AlterTable(relid, (AlterTableStmt *) stmt);
 					}
 					else
 					{
@@ -795,18 +807,33 @@ ProcessUtility(Node *parsetree,
 		case T_IndexStmt:		/* CREATE INDEX */
 			{
 				IndexStmt  *stmt = (IndexStmt *) parsetree;
+				Oid			relid;
+				LOCKMODE	lockmode;
 
 				if (stmt->concurrent)
 					PreventTransactionChain(isTopLevel,
 											"CREATE INDEX CONCURRENTLY");
 
-				CheckRelationOwnership(stmt->relation, true);
+				/*
+				 * Look up the relation OID just once, right here at the
+				 * beginning, so that we don't end up repeating the name
+				 * lookup later and latching onto a different relation
+				 * partway through.  To avoid lock upgrade hazards, it's
+				 * important that we take the strongest lock that will
+				 * eventually be needed here, so the lockmode calculation
+				 * needs to match what DefineIndex() does.
+				 */
+				lockmode = stmt->concurrent ? ShareUpdateExclusiveLock
+					: ShareLock;
+				relid = RangeVarGetRelid(stmt->relation, false);
+				LockRelationOid(relid, lockmode);
+				CheckRelationOwnership(relid, true);
 
 				/* Run parse analysis ... */
-				stmt = transformIndexStmt(stmt, queryString);
+				stmt = transformIndexStmt(relid, stmt, queryString);
 
 				/* ... and do it */
-				DefineIndex(stmt->relation,		/* relation */
+				DefineIndex(relid,		/* relation */
 							stmt->idxname,		/* index name */
 							InvalidOid, /* no predefined OID */
 							stmt->accessMethod, /* am name */
@@ -954,7 +981,8 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_CreateTrigStmt:
-			CreateTrigger((CreateTrigStmt *) parsetree, InvalidOid, true);
+			CreateTrigger((CreateTrigStmt *) parsetree, InvalidOid, InvalidOid,
+						  InvalidOid, true);
 			break;
 
 		case T_DropPropertyStmt:

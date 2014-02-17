@@ -82,4 +82,6 @@ extern void index_set_state_flags(Oid indexId, IndexStateFlagsAction action);
 extern void reindex_index(Oid indexId);
 extern bool reindex_relation(Oid relid, bool toast_too);
 
+extern Oid	IndexGetRelation(Oid indexId);
+
 #endif   /* INDEX_H */

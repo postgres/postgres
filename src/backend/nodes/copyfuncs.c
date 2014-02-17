@@ -1756,6 +1756,7 @@ _copyFkConstraint(FkConstraint *from)
 	COPY_SCALAR_FIELD(deferrable);
 	COPY_SCALAR_FIELD(initdeferred);
 	COPY_SCALAR_FIELD(skip_validation);
+	COPY_SCALAR_FIELD(old_pktable_oid);
 
 	return newnode;
 }

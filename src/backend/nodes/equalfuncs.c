@@ -2199,6 +2199,7 @@ _equalFkConstraint(FkConstraint *a, FkConstraint *b)
 	COMPARE_SCALAR_FIELD(deferrable);
 	COMPARE_SCALAR_FIELD(initdeferred);
 	COMPARE_SCALAR_FIELD(skip_validation);
+	COMPARE_SCALAR_FIELD(old_pktable_oid);
 
 	return true;
 }

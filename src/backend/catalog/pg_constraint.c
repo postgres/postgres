@@ -699,3 +699,22 @@ AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
 
 	heap_close(conRel, RowExclusiveLock);
 }
+
+/*
+ * get_constraint_relation_oids
+ *		Find the IDs of the relations to which a constraint refers.
+ */
+void
+get_constraint_relation_oids(Oid constraint_oid, Oid *conrelid, Oid *confrelid)
+{
+	HeapTuple	tup;
+	Form_pg_constraint	con;
+
+	tup = SearchSysCache(CONSTROID, ObjectIdGetDatum(constraint_oid), 0, 0, 0);
+	if (!HeapTupleIsValid(tup)) /* should not happen */
+		elog(ERROR, "cache lookup failed for constraint %u", constraint_oid);
+	con = (Form_pg_constraint) GETSTRUCT(tup);
+	*conrelid = con->conrelid;
+	*confrelid = con->confrelid;
+	ReleaseSysCache(tup);
+}

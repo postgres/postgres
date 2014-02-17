@@ -72,7 +72,8 @@ static bool relationHasPrimaryKey(Relation rel);
  * DefineIndex
  *		Creates a new index.
  *
- * 'heapRelation': the relation the index will apply to.
+ * 'relationId': the OID of the heap relation on which the index is to be
+ *		created
  * 'indexRelationName': the name for the new index, or NULL to indicate
  *		that a nonconflicting default name should be picked.
  * 'indexRelationId': normally InvalidOid, but during bootstrap can be
@@ -97,7 +98,7 @@ static bool relationHasPrimaryKey(Relation rel);
  * 'concurrent': avoid blocking writers to the table while building.
  */
 void
-DefineIndex(RangeVar *heapRelation,
+DefineIndex(Oid relationId,
 			char *indexRelationName,
 			Oid indexRelationId,
 			char *accessMethodName,
@@ -116,7 +117,6 @@ DefineIndex(RangeVar *heapRelation,
 {
 	Oid		   *classObjectId;
 	Oid			accessMethodId;
-	Oid			relationId;
 	Oid			namespaceId;
 	Oid			tablespaceId;
 	Relation	rel;
@@ -135,6 +135,7 @@ DefineIndex(RangeVar *heapRelation,
 	int			n_old_snapshots;
 	LockRelId	heaprelid;
 	LOCKTAG		heaplocktag;
+	LOCKMODE	lockmode;
 	Snapshot	snapshot;
 	int			i;
 
@@ -153,14 +154,18 @@ DefineIndex(RangeVar *heapRelation,
 						INDEX_MAX_KEYS)));
 
 	/*
-	 * Open heap relation, acquire a suitable lock on it, remember its OID
-	 *
 	 * Only SELECT ... FOR UPDATE/SHARE are allowed while doing a standard
 	 * index build; but for concurrent builds we allow INSERT/UPDATE/DELETE
 	 * (but not VACUUM).
+	 *
+	 * NB: Caller is responsible for making sure that relationId refers
+	 * to the relation on which the index should be built; except in bootstrap
+	 * mode, this will typically require the caller to have already locked
+	 * the relation.  To avoid lock upgrade hazards, that lock should be at
+	 * least as strong as the one we take here.
 	 */
-	rel = heap_openrv(heapRelation,
-					  (concurrent ? ShareUpdateExclusiveLock : ShareLock));
+	lockmode = concurrent ? ShareUpdateExclusiveLock : ShareLock;
+	rel = heap_open(relationId, lockmode);
 
 	relationId = RelationGetRelid(rel);
 	namespaceId = RelationGetNamespace(rel);
@@ -171,7 +176,7 @@ DefineIndex(RangeVar *heapRelation,
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is not a table",
-						heapRelation->relname)));
+						RelationGetRelationName(rel))));
 
 	/*
 	 * Don't try to CREATE INDEX on temp tables of other backends.
@@ -537,7 +542,7 @@ DefineIndex(RangeVar *heapRelation,
 	 */
 
 	/* Open and lock the parent heap relation */
-	rel = heap_openrv(heapRelation, ShareUpdateExclusiveLock);
+	rel = heap_open(relationId, ShareUpdateExclusiveLock);
 
 	/* And the target index relation */
 	indexRelation = index_open(indexRelationId, RowExclusiveLock);

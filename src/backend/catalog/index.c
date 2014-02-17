@@ -96,7 +96,6 @@ static void validate_index_heapscan(Relation heapRelation,
 						IndexInfo *indexInfo,
 						Snapshot snapshot,
 						v_i_state *state);
-static Oid	IndexGetRelation(Oid indexId);
 
 
 /*
@@ -2319,7 +2318,7 @@ index_set_state_flags(Oid indexId, IndexStateFlagsAction action)
  * IndexGetRelation: given an index's relation OID, get the OID of the
  * relation it is an index on.	Uses the system cache.
  */
-static Oid
+Oid
 IndexGetRelation(Oid indexId)
 {
 	HeapTuple	tuple;

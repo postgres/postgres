@@ -1430,6 +1430,7 @@ typedef struct FkConstraint
 	bool		deferrable;		/* DEFERRABLE */
 	bool		initdeferred;	/* INITIALLY DEFERRED */
 	bool		skip_validation;	/* skip validation of existing rows? */
+	Oid			old_pktable_oid; /* pg_constraint.confrelid of my former self */
 } FkConstraint;
 
 

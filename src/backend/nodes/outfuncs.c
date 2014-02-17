@@ -2345,6 +2345,7 @@ _outFkConstraint(StringInfo str, FkConstraint *node)
 	WRITE_BOOL_FIELD(deferrable);
 	WRITE_BOOL_FIELD(initdeferred);
 	WRITE_BOOL_FIELD(skip_validation);
+	WRITE_OID_FIELD(old_pktable_oid);
 }
 
 

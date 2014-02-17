@@ -18,7 +18,7 @@
 
 
 /* commands/indexcmds.c */
-extern void DefineIndex(RangeVar *heapRelation,
+extern void DefineIndex(Oid relationId,
 			char *indexRelationName,
 			Oid indexRelationId,
 			char *accessMethodName,
