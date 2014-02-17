@@ -83,7 +83,7 @@ pg_open_tzfile(const char *name, char *canonname)
 	 * Loop to split the given name into directory levels; for each level,
 	 * search using scan_directory_ci().
 	 */
-	strcpy(fullname, pg_TZDIR());
+	strlcpy(fullname, pg_TZDIR(), sizeof(fullname));
 	orignamelen = fullnamelen = strlen(fullname);
 	fname = name;
 	for (;;)
