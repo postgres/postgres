@@ -42,6 +42,4 @@ extern LogStmtLevel GetCommandLogLevel(Node *parsetree);
 
 extern bool CommandIsReadOnly(Node *parsetree);
 
-extern void CheckRelationOwnership(RangeVar *rel, bool noCatalogs);
-
 #endif   /* UTILITY_H */
