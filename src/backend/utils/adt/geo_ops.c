@@ -1398,6 +1398,7 @@ path_in(PG_FUNCTION_ARGS)
 	char	   *s;
 	int			npts;
 	int			size;
+	int			base_size;
 	int			depth = 0;
 
 	if ((npts = pair_count(str, ',')) <= 0)
@@ -1416,7 +1417,15 @@ path_in(PG_FUNCTION_ARGS)
 		depth++;
 	}
 
-	size = offsetof(PATH, p[0]) +sizeof(path->p[0]) * npts;
+	base_size = sizeof(path->p[0]) * npts;
+	size = offsetof(PATH, p[0]) + base_size;
+
+	/* Check for integer overflow */
+	if (base_size / npts != sizeof(path->p[0]) || size <= base_size)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("too many points requested")));
+
 	path = (PATH *) palloc(size);
 
 	SET_VARSIZE(path, size);
@@ -3460,6 +3469,7 @@ poly_in(PG_FUNCTION_ARGS)
 	POLYGON    *poly;
 	int			npts;
 	int			size;
+	int			base_size;
 	int			isopen;
 	char	   *s;
 
@@ -3468,7 +3478,15 @@ poly_in(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 			  errmsg("invalid input syntax for type polygon: \"%s\"", str)));
 
-	size = offsetof(POLYGON, p[0]) +sizeof(poly->p[0]) * npts;
+	base_size = sizeof(poly->p[0]) * npts;
+	size = offsetof(POLYGON, p[0]) + base_size;
+
+	/* Check for integer overflow */
+	if (base_size / npts != sizeof(poly->p[0]) || size <= base_size)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("too many points requested")));
+
 	poly = (POLYGON *) palloc0(size);	/* zero any holes */
 
 	SET_VARSIZE(poly, size);
@@ -4374,6 +4392,10 @@ path_poly(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("open path cannot be converted to polygon")));
 
+	/*
+	 * Never overflows: the old size fit in MaxAllocSize, and the new size is
+	 * just a small constant larger.
+	 */
 	size = offsetof(POLYGON, p[0]) +sizeof(poly->p[0]) * path->npts;
 	poly = (POLYGON *) palloc(size);
 
@@ -4479,6 +4501,10 @@ poly_path(PG_FUNCTION_ARGS)
 	int			size;
 	int			i;
 
+	/*
+	 * Never overflows: the old size fit in MaxAllocSize, and the new size is
+	 * smaller by a small constant.
+	 */
 	size = offsetof(PATH, p[0]) +sizeof(path->p[0]) * poly->npts;
 	path = (PATH *) palloc(size);
 
