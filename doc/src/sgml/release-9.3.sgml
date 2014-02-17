@@ -64,9 +64,11 @@ Branch: REL9_3_STABLE [8e9a16ab8] 2013-12-16 11:29:51 -0300
      </para>
 
      <para>
-      The method for tuple freezing was unable to handle some cases
-      involving freezing of <quote>multixact</> IDs, with the practical
-      effect that shared row-level locks might be forgotten once old enough.
+      The logic for tuple freezing was unable to handle some cases involving
+      freezing of
+      <link linkend="vacuum-for-multixact-wraparound"><firstterm>multixact</>
+      IDs</link>, with the practical effect that shared row-level locks
+      might be forgotten once old enough.
      </para>
 
      <para>
