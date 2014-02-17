@@ -1652,6 +1652,7 @@ typedef struct Constraint
 	char		fk_upd_action;	/* ON UPDATE action */
 	char		fk_del_action;	/* ON DELETE action */
 	List	   *old_conpfeqop;	/* pg_constraint.conpfeqop of my former self */
+	Oid			old_pktable_oid; /* pg_constraint.confrelid of my former self */
 
 	/* Fields used for constraints that allow a NOT VALID specification */
 	bool		skip_validation;	/* skip validation of existing rows? */

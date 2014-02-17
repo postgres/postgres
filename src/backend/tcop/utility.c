@@ -79,49 +79,6 @@ static void ExecDropStmt(DropStmt *stmt, bool isTopLevel);
 
 
 /*
- * Verify user has ownership of specified relation, else ereport.
- *
- * If noCatalogs is true then we also deny access to system catalogs,
- * except when allowSystemTableMods is true.
- */
-void
-CheckRelationOwnership(RangeVar *rel, bool noCatalogs)
-{
-	Oid			relOid;
-	HeapTuple	tuple;
-
-	/*
-	 * XXX: This is unsafe in the presence of concurrent DDL, since it is
-	 * called before acquiring any lock on the target relation.  However,
-	 * locking the target relation (especially using something like
-	 * AccessExclusiveLock) before verifying that the user has permissions is
-	 * not appealing either.
-	 */
-	relOid = RangeVarGetRelid(rel, NoLock, false);
-
-	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relOid));
-	if (!HeapTupleIsValid(tuple))		/* should not happen */
-		elog(ERROR, "cache lookup failed for relation %u", relOid);
-
-	if (!pg_class_ownercheck(relOid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
-					   rel->relname);
-
-	if (noCatalogs)
-	{
-		if (!allowSystemTableMods &&
-			IsSystemClass(relOid, (Form_pg_class) GETSTRUCT(tuple)))
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("permission denied: \"%s\" is a system catalog",
-							rel->relname)));
-	}
-
-	ReleaseSysCache(tuple);
-}
-
-
-/*
  * CommandIsReadOnly: is an executable query read-only?
  *
  * This is a much stricter test than we apply for XactReadOnly mode;
@@ -1019,7 +976,8 @@ ProcessUtilitySlow(Node *parsetree,
 					if (OidIsValid(relid))
 					{
 						/* Run parse analysis ... */
-						stmts = transformAlterTableStmt(atstmt, queryString);
+						stmts = transformAlterTableStmt(relid, atstmt,
+														queryString);
 
 						/* ... and do it */
 						foreach(l, stmts)
@@ -1160,18 +1118,36 @@ ProcessUtilitySlow(Node *parsetree,
 			case T_IndexStmt:	/* CREATE INDEX */
 				{
 					IndexStmt  *stmt = (IndexStmt *) parsetree;
+					Oid			relid;
+					LOCKMODE	lockmode;
 
 					if (stmt->concurrent)
 						PreventTransactionChain(isTopLevel,
 												"CREATE INDEX CONCURRENTLY");
 
-					CheckRelationOwnership(stmt->relation, true);
+					/*
+					 * Look up the relation OID just once, right here at the
+					 * beginning, so that we don't end up repeating the name
+					 * lookup later and latching onto a different relation
+					 * partway through.  To avoid lock upgrade hazards, it's
+					 * important that we take the strongest lock that will
+					 * eventually be needed here, so the lockmode calculation
+					 * needs to match what DefineIndex() does.
+					 */
+					lockmode = stmt->concurrent ? ShareUpdateExclusiveLock
+						: ShareLock;
+					relid =
+						RangeVarGetRelidExtended(stmt->relation, lockmode,
+												 false, false,
+												 RangeVarCallbackOwnsRelation,
+												 NULL);
 
 					/* Run parse analysis ... */
-					stmt = transformIndexStmt(stmt, queryString);
+					stmt = transformIndexStmt(relid, stmt, queryString);
 
 					/* ... and do it */
-					DefineIndex(stmt,
+					DefineIndex(relid,	/* OID of heap relation */
+								stmt,
 								InvalidOid,		/* no predefined OID */
 								false,	/* is_alter_table */
 								true,	/* check_rights */
@@ -1276,7 +1252,8 @@ ProcessUtilitySlow(Node *parsetree,
 
 			case T_CreateTrigStmt:
 				(void) CreateTrigger((CreateTrigStmt *) parsetree, queryString,
-									 InvalidOid, InvalidOid, false);
+									 InvalidOid, InvalidOid, InvalidOid,
+									 InvalidOid, false);
 				break;
 
 			case T_CreatePLangStmt:

@@ -752,6 +752,25 @@ AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
 }
 
 /*
+ * get_constraint_relation_oids
+ *		Find the IDs of the relations to which a constraint refers.
+ */
+void
+get_constraint_relation_oids(Oid constraint_oid, Oid *conrelid, Oid *confrelid)
+{
+	HeapTuple	tup;
+	Form_pg_constraint	con;
+
+	tup = SearchSysCache1(CONSTROID, ObjectIdGetDatum(constraint_oid));
+	if (!HeapTupleIsValid(tup)) /* should not happen */
+		elog(ERROR, "cache lookup failed for constraint %u", constraint_oid);
+	con = (Form_pg_constraint) GETSTRUCT(tup);
+	*conrelid = con->conrelid;
+	*confrelid = con->confrelid;
+	ReleaseSysCache(tup);
+}
+
+/*
  * get_relation_constraint_oid
  *		Find a constraint on the specified relation with the specified name.
  *		Returns constraint's OID.
