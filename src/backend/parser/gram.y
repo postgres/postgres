@@ -119,7 +119,6 @@ static Node *makeBitStringConst(char *str, int location);
 static Node *makeNullAConst(int location);
 static Node *makeAConst(Value *v, int location);
 static Node *makeBoolAConst(bool state, int location);
-static FuncCall *makeOverlaps(List *largs, List *rargs, int location);
 static void check_qualified_name(List *names);
 static List *check_func_name(List *names);
 static List *check_indirection(List *indirection);
@@ -8393,7 +8392,25 @@ a_expr:		c_expr									{ $$ = $1; }
 				}
 			| row OVERLAPS row
 				{
-					$$ = (Node *)makeOverlaps($1, $3, @2);
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = SystemFuncName("overlaps");
+					if (list_length($1) != 2)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("wrong number of parameters on left side of OVERLAPS expression"),
+								 scanner_errposition(@1)));
+					if (list_length($3) != 2)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("wrong number of parameters on right side of OVERLAPS expression"),
+								 scanner_errposition(@3)));
+					n->args = list_concat($1, $3);
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
+					n->func_variadic = FALSE;
+					n->over = NULL;
+					n->location = @2;
+					$$ = (Node *)n;
 				}
 			| a_expr IS TRUE_P
 				{
@@ -10760,38 +10777,6 @@ makeBoolAConst(bool state, int location)
 	n->location = location;
 
 	return makeTypeCast((Node *)n, SystemTypeName("bool"), -1);
-}
-
-/* makeOverlaps()
- * Create and populate a FuncCall node to support the OVERLAPS operator.
- */
-static FuncCall *
-makeOverlaps(List *largs, List *rargs, int location)
-{
-	FuncCall *n = makeNode(FuncCall);
-
-	n->funcname = SystemFuncName("overlaps");
-	if (list_length(largs) == 1)
-		largs = lappend(largs, largs);
-	else if (list_length(largs) != 2)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("wrong number of parameters on left side of OVERLAPS expression"),
-				 scanner_errposition(location)));
-	if (list_length(rargs) == 1)
-		rargs = lappend(rargs, rargs);
-	else if (list_length(rargs) != 2)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("wrong number of parameters on right side of OVERLAPS expression"),
-				 scanner_errposition(location)));
-	n->args = list_concat(largs, rargs);
-	n->agg_star = FALSE;
-	n->agg_distinct = FALSE;
-	n->func_variadic = FALSE;
-	n->over = NULL;
-	n->location = location;
-	return n;
 }
 
 /* check_qualified_name --- check the result of qualified_name production
