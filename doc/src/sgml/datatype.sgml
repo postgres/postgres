@@ -181,6 +181,12 @@
       </row>
 
       <row>
+       <entry><type>pg_lsn</type></entry>
+       <entry></entry>
+       <entry><productname>PostgreSQL</productname> Log Sequence Number</entry>
+      </row>
+
+      <row>
        <entry><type>point</type></entry>
        <entry></entry>
        <entry>geometric point on a plane</entry>
@@ -4501,6 +4507,32 @@ SELECT * FROM pg_attribute
    <para>
     (The system columns are further explained in <xref
     linkend="ddl-system-columns">.)
+   </para>
+  </sect1>
+
+  <sect1 id="datatype-pg-lsn">
+   <title><acronym>pg_lsn Type</acronym></title>
+
+   <indexterm zone="datatype-pg-lsn">
+    <primary>pg_lsn</primary>
+   </indexterm>
+
+   <para>
+    The <type>pg_lsn</type> data type can be used to store LSN (Log Sequence
+    Number) data which is a pointer to a location in the XLOG. This type is a
+    representation of XLogRecPtr and an internal system type of
+    <productname>PostgreSQL</productname>.
+   </para>
+
+   <para>
+    Internally, an LSN is a 64-bit integer, representing a byte position in
+    the write-ahead log stream.  It is printed as two hexadecimal numbers of
+    up to 8 digits each, separated by a slash; for example,
+    <literal>16/B374D848</>.  The <type>pg_lsn</type> type supports the
+    standard comparison operators, like <literal>=</literal> and 
+    <literal>&gt;</literal>.  Two LSNs can be subtracted using the
+    <literal>-</literal> operator; the result is the number of bytes separating
+    those write-ahead log positions.
    </para>
   </sect1>
 

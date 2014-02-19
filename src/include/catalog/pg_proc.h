@@ -4212,6 +4212,23 @@ DESCR("I/O");
 DATA(insert OID = 2963 (  uuid_hash		   PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 23 "2950" _null_ _null_ _null_ _null_ uuid_hash _null_ _null_ _null_ ));
 DESCR("hash");
 
+/* pg_lsn */
+DATA(insert OID = 3229 (  pg_lsn_in		PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 3220 "2275" _null_ _null_ _null_ _null_ pg_lsn_in _null_ _null_ _null_ ));
+DESCR("I/O");
+DATA(insert OID = 3230 (  pg_lsn_out		PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 2275 "3220" _null_ _null_ _null_ _null_ pg_lsn_out _null_ _null_ _null_ ));
+DESCR("I/O");
+DATA(insert OID = 3231 (  pg_lsn_lt		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "3220 3220" _null_ _null_ _null_ _null_ pg_lsn_lt _null_ _null_ _null_ ));
+DATA(insert OID = 3232 (  pg_lsn_le		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "3220 3220" _null_ _null_ _null_ _null_ pg_lsn_le _null_ _null_ _null_ ));
+DATA(insert OID = 3233 (  pg_lsn_eq		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "3220 3220" _null_ _null_ _null_ _null_ pg_lsn_eq _null_ _null_ _null_ ));
+DATA(insert OID = 3234 (  pg_lsn_ge		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "3220 3220" _null_ _null_ _null_ _null_ pg_lsn_ge _null_ _null_ _null_ ));
+DATA(insert OID = 3235 (  pg_lsn_gt		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "3220 3220" _null_ _null_ _null_ _null_ pg_lsn_gt _null_ _null_ _null_ ));
+DATA(insert OID = 3236 (  pg_lsn_ne		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "3220 3220" _null_ _null_ _null_ _null_ pg_lsn_ne _null_ _null_ _null_ ));
+DATA(insert OID = 3237 (  pg_lsn_mi		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 1700 "3220 3220" _null_ _null_ _null_ _null_ pg_lsn_mi _null_ _null_ _null_ ));
+DATA(insert OID = 3238 (  pg_lsn_recv	PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 3220 "2281" _null_ _null_ _null_ _null_ pg_lsn_recv _null_ _null_ _null_ ));
+DESCR("I/O");
+DATA(insert OID = 3239 (  pg_lsn_send	PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 17 "3220" _null_ _null_ _null_ _null_ pg_lsn_send _null_ _null_ _null_ ));
+DESCR("I/O");
+
 /* enum related procs */
 DATA(insert OID = 3504 (  anyenum_in	PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 3500 "2275" _null_ _null_ _null_ _null_ anyenum_in _null_ _null_ _null_ ));
 DESCR("I/O");

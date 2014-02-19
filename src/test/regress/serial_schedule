@@ -19,6 +19,7 @@ test: uuid
 test: enum
 test: money
 test: rangetypes
+test: pg_lsn
 test: strings
 test: numerology
 test: point

@@ -577,6 +577,11 @@ DESCR("UUID datatype");
 #define UUIDOID 2950
 DATA(insert OID = 2951 ( _uuid			PGNSP PGUID -1 f b A f t \054 0 2950 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 
+/* pg_lsn */
+DATA(insert OID = 3220 ( pg_lsn			PGNSP PGUID 8 t b U t t \054 0 0 3221 pg_lsn_in pg_lsn_out pg_lsn_recv pg_lsn_send - - - d p f 0 -1 0 0 _null_ _null_ _null_ ));
+DESCR("PostgreSQL LSN datatype");
+DATA(insert OID = 3221 ( _pg_lsn			PGNSP PGUID -1 f b A f t \054 0 3220 0 array_in array_out array_recv array_send - - array_typanalyze d x f 0 -1 0 0 _null_ _null_ _null_ ));
+
 /* text search */
 DATA(insert OID = 3614 ( tsvector		PGNSP PGUID -1 f b U f t \054 0 0 3643 tsvectorin tsvectorout tsvectorrecv tsvectorsend - - ts_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 DESCR("text representation for text search");

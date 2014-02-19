@@ -1,0 +1,62 @@
+--
+-- PG_LSN
+--
+CREATE TABLE PG_LSN_TBL (f1 pg_lsn);
+-- Largest and smallest input
+INSERT INTO PG_LSN_TBL VALUES ('0/0');
+INSERT INTO PG_LSN_TBL VALUES ('FFFFFFFF/FFFFFFFF');
+-- Incorrect input
+INSERT INTO PG_LSN_TBL VALUES ('G/0');
+ERROR:  invalid input syntax for transaction log location: "G/0"
+LINE 1: INSERT INTO PG_LSN_TBL VALUES ('G/0');
+                                       ^
+INSERT INTO PG_LSN_TBL VALUES ('-1/0');
+ERROR:  invalid input syntax for transaction log location: "-1/0"
+LINE 1: INSERT INTO PG_LSN_TBL VALUES ('-1/0');
+                                       ^
+INSERT INTO PG_LSN_TBL VALUES (' 0/12345678');
+ERROR:  invalid input syntax for transaction log location: " 0/12345678"
+LINE 1: INSERT INTO PG_LSN_TBL VALUES (' 0/12345678');
+                                       ^
+INSERT INTO PG_LSN_TBL VALUES ('ABCD/');
+ERROR:  invalid input syntax for transaction log location: "ABCD/"
+LINE 1: INSERT INTO PG_LSN_TBL VALUES ('ABCD/');
+                                       ^
+INSERT INTO PG_LSN_TBL VALUES ('/ABCD');
+ERROR:  invalid input syntax for transaction log location: "/ABCD"
+LINE 1: INSERT INTO PG_LSN_TBL VALUES ('/ABCD');
+                                       ^
+DROP TABLE PG_LSN_TBL;
+-- Operators
+SELECT '0/16AE7F8' = '0/16AE7F8'::pg_lsn;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT '0/16AE7F8'::pg_lsn != '0/16AE7F7';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT '0/16AE7F7' < '0/16AE7F8'::pg_lsn;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT '0/16AE7F8' > pg_lsn '0/16AE7F7';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT '0/16AE7F7'::pg_lsn - '0/16AE7F8'::pg_lsn; -- No negative results
+ERROR:  transaction log location out of range
+SELECT '0/16AE7F8'::pg_lsn - '0/16AE7F7'::pg_lsn; -- correct
+ ?column? 
+----------
+        1
+(1 row)
+
