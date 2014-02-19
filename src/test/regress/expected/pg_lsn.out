@@ -7,23 +7,23 @@ INSERT INTO PG_LSN_TBL VALUES ('0/0');
 INSERT INTO PG_LSN_TBL VALUES ('FFFFFFFF/FFFFFFFF');
 -- Incorrect input
 INSERT INTO PG_LSN_TBL VALUES ('G/0');
-ERROR:  invalid input syntax for transaction log location: "G/0"
+ERROR:  invalid input syntax for type pg_lsn: "G/0"
 LINE 1: INSERT INTO PG_LSN_TBL VALUES ('G/0');
                                        ^
 INSERT INTO PG_LSN_TBL VALUES ('-1/0');
-ERROR:  invalid input syntax for transaction log location: "-1/0"
+ERROR:  invalid input syntax for type pg_lsn: "-1/0"
 LINE 1: INSERT INTO PG_LSN_TBL VALUES ('-1/0');
                                        ^
 INSERT INTO PG_LSN_TBL VALUES (' 0/12345678');
-ERROR:  invalid input syntax for transaction log location: " 0/12345678"
+ERROR:  invalid input syntax for type pg_lsn: " 0/12345678"
 LINE 1: INSERT INTO PG_LSN_TBL VALUES (' 0/12345678');
                                        ^
 INSERT INTO PG_LSN_TBL VALUES ('ABCD/');
-ERROR:  invalid input syntax for transaction log location: "ABCD/"
+ERROR:  invalid input syntax for type pg_lsn: "ABCD/"
 LINE 1: INSERT INTO PG_LSN_TBL VALUES ('ABCD/');
                                        ^
 INSERT INTO PG_LSN_TBL VALUES ('/ABCD');
-ERROR:  invalid input syntax for transaction log location: "/ABCD"
+ERROR:  invalid input syntax for type pg_lsn: "/ABCD"
 LINE 1: INSERT INTO PG_LSN_TBL VALUES ('/ABCD');
                                        ^
 DROP TABLE PG_LSN_TBL;

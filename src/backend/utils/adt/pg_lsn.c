@@ -38,17 +38,17 @@ pg_lsn_in(PG_FUNCTION_ARGS)
 	if (len1 < 1 || len1 > MAXPG_LSNCOMPONENT || str[len1] != '/')
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for transaction log location: \"%s\"", str)));
+				 errmsg("invalid input syntax for type pg_lsn: \"%s\"", str)));
 	len2 = strspn(str + len1 + 1, "0123456789abcdefABCDEF");
 	if (len2 < 1 || len2 > MAXPG_LSNCOMPONENT || str[len1 + 1 + len2] != '\0')
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for transaction log location: \"%s\"", str)));
+				 errmsg("invalid input syntax for type pg_lsn: \"%s\"", str)));
 
 	/* Decode result. */
 	id = (uint32) strtoul(str, NULL, 16);
 	off = (uint32) strtoul(str + len1 + 1, NULL, 16);
-	result = (XLogRecPtr) ((uint64) id << 32) | off;
+	result = ((uint64) id << 32) | off;
 
 	PG_RETURN_LSN(result);
 }
@@ -56,7 +56,7 @@ pg_lsn_in(PG_FUNCTION_ARGS)
 Datum
 pg_lsn_out(PG_FUNCTION_ARGS)
 {
-	XLogRecPtr	lsn = (XLogRecPtr) PG_GETARG_LSN(0);
+	XLogRecPtr	lsn = PG_GETARG_LSN(0);
 	char		buf[MAXPG_LSNLEN + 1];
 	char	   *result;
 	uint32		id, off;
@@ -83,7 +83,7 @@ pg_lsn_recv(PG_FUNCTION_ARGS)
 Datum
 pg_lsn_send(PG_FUNCTION_ARGS)
 {
-	XLogRecPtr lsn = (XLogRecPtr) PG_GETARG_LSN(0);
+	XLogRecPtr lsn = PG_GETARG_LSN(0);
 	StringInfoData buf;
 
 	pq_begintypsend(&buf);
@@ -99,8 +99,8 @@ pg_lsn_send(PG_FUNCTION_ARGS)
 Datum
 pg_lsn_eq(PG_FUNCTION_ARGS)
 {
-	XLogRecPtr lsn1 = (XLogRecPtr) PG_GETARG_LSN(0);
-	XLogRecPtr lsn2 = (XLogRecPtr) PG_GETARG_LSN(1);
+	XLogRecPtr lsn1 = PG_GETARG_LSN(0);
+	XLogRecPtr lsn2 = PG_GETARG_LSN(1);
 
 	PG_RETURN_BOOL(lsn1 == lsn2);
 }
@@ -108,8 +108,8 @@ pg_lsn_eq(PG_FUNCTION_ARGS)
 Datum
 pg_lsn_ne(PG_FUNCTION_ARGS)
 {
-	XLogRecPtr lsn1 = (XLogRecPtr) PG_GETARG_LSN(0);
-	XLogRecPtr lsn2 = (XLogRecPtr) PG_GETARG_LSN(1);
+	XLogRecPtr lsn1 = PG_GETARG_LSN(0);
+	XLogRecPtr lsn2 = PG_GETARG_LSN(1);
 
 	PG_RETURN_BOOL(lsn1 != lsn2);
 }
@@ -117,8 +117,8 @@ pg_lsn_ne(PG_FUNCTION_ARGS)
 Datum
 pg_lsn_lt(PG_FUNCTION_ARGS)
 {
-	XLogRecPtr lsn1 = (XLogRecPtr) PG_GETARG_LSN(0);
-	XLogRecPtr lsn2 = (XLogRecPtr) PG_GETARG_LSN(1);
+	XLogRecPtr lsn1 = PG_GETARG_LSN(0);
+	XLogRecPtr lsn2 = PG_GETARG_LSN(1);
 
 	PG_RETURN_BOOL(lsn1 < lsn2);
 }
@@ -126,8 +126,8 @@ pg_lsn_lt(PG_FUNCTION_ARGS)
 Datum
 pg_lsn_gt(PG_FUNCTION_ARGS)
 {
-	XLogRecPtr lsn1 = (XLogRecPtr) PG_GETARG_LSN(0);
-	XLogRecPtr lsn2 = (XLogRecPtr) PG_GETARG_LSN(1);
+	XLogRecPtr lsn1 = PG_GETARG_LSN(0);
+	XLogRecPtr lsn2 = PG_GETARG_LSN(1);
 
 	PG_RETURN_BOOL(lsn1 > lsn2);
 }
@@ -135,8 +135,8 @@ pg_lsn_gt(PG_FUNCTION_ARGS)
 Datum
 pg_lsn_le(PG_FUNCTION_ARGS)
 {
-	XLogRecPtr lsn1 = (XLogRecPtr) PG_GETARG_LSN(0);
-	XLogRecPtr lsn2 = (XLogRecPtr) PG_GETARG_LSN(1);
+	XLogRecPtr lsn1 = PG_GETARG_LSN(0);
+	XLogRecPtr lsn2 = PG_GETARG_LSN(1);
 
 	PG_RETURN_BOOL(lsn1 <= lsn2);
 }
@@ -144,8 +144,8 @@ pg_lsn_le(PG_FUNCTION_ARGS)
 Datum
 pg_lsn_ge(PG_FUNCTION_ARGS)
 {
-	XLogRecPtr lsn1 = (XLogRecPtr) PG_GETARG_LSN(0);
-	XLogRecPtr lsn2 = (XLogRecPtr) PG_GETARG_LSN(1);
+	XLogRecPtr lsn1 = PG_GETARG_LSN(0);
+	XLogRecPtr lsn2 = PG_GETARG_LSN(1);
 
 	PG_RETURN_BOOL(lsn1 >= lsn2);
 }
@@ -158,8 +158,8 @@ pg_lsn_ge(PG_FUNCTION_ARGS)
 Datum
 pg_lsn_mi(PG_FUNCTION_ARGS)
 {
-	XLogRecPtr lsn1 = (XLogRecPtr) PG_GETARG_LSN(0);
-	XLogRecPtr lsn2 = (XLogRecPtr) PG_GETARG_LSN(1);
+	XLogRecPtr lsn1 = PG_GETARG_LSN(0);
+	XLogRecPtr lsn2 = PG_GETARG_LSN(1);
 	char		buf[256];
 	Datum		result;
 
