@@ -90,6 +90,11 @@ Item
 </row>
 
 <row>
+ <entry><filename>pg_replslot</></entry>
+ <entry>Subdirectory containing replication slot data</entry>
+</row>
+
+<row>
  <entry><filename>pg_serial</></entry>
  <entry>Subdirectory containing information about committed serializable transactions</entry>
 </row>
