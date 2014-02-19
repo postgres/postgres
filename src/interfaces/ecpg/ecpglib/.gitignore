@@ -1,8 +1,10 @@
 /ecpglib.def
 /blibecpgdll.def
 /exports.list
-
 /path.c
 /pgstrcasecmp.c
+/snprintf.c
 /strlcpy.c
 /thread.c
+/win32setlocale.c
+/isinf.c

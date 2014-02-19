@@ -76,6 +76,6 @@ uninstall: uninstall-lib
 
 clean distclean: clean-lib
 	rm -f $(OBJS)
-	rm -f path.c pgstrcasecmp.c snprintf.c strlcpy.c thread.c win32setlocale.c
+	rm -f path.c pgstrcasecmp.c snprintf.c strlcpy.c thread.c win32setlocale.c isinf.c
 
 maintainer-clean: distclean maintainer-clean-lib
