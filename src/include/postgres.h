@@ -484,18 +484,18 @@ typedef Datum *DatumPtr;
 #define ObjectIdGetDatum(X) ((Datum) SET_4_BYTES(X))
 
 /*
- * DatumGetPgLsn
+ * DatumGetLSN
  *		Returns PostgreSQL log sequence number of a datum.
  */
 
-#define DatumGetPgLsn(X) ((XLogRecPtr) GET_8_BYTES(X))
+#define DatumGetLSN(X) ((XLogRecPtr) GET_8_BYTES(X))
 
 /*
- * PG_LSNGetDatum
+ * LSNGetDatum
  *		Returns datum representation for a PostgreSQL log sequence number.
  */
 
-#define PgLsnGetDatum(X) ((Datum) SET_8_BYTES(X))
+#define LSNGetDatum(X) ((Datum) SET_8_BYTES(X))
 
 /*
  * DatumGetTransactionId

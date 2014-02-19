@@ -53,7 +53,11 @@ SELECT '0/16AE7F8' > pg_lsn '0/16AE7F7';
 (1 row)
 
 SELECT '0/16AE7F7'::pg_lsn - '0/16AE7F8'::pg_lsn; -- No negative results
-ERROR:  transaction log location out of range
+ ?column? 
+----------
+       -1
+(1 row)
+
 SELECT '0/16AE7F8'::pg_lsn - '0/16AE7F7'::pg_lsn; -- correct
  ?column? 
 ----------

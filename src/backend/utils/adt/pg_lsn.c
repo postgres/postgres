@@ -50,13 +50,13 @@ pg_lsn_in(PG_FUNCTION_ARGS)
 	off = (uint32) strtoul(str + len1 + 1, NULL, 16);
 	result = (XLogRecPtr) ((uint64) id << 32) | off;
 
-	PG_RETURN_PG_LSN(result);
+	PG_RETURN_LSN(result);
 }
 
 Datum
 pg_lsn_out(PG_FUNCTION_ARGS)
 {
-	XLogRecPtr	lsn = (XLogRecPtr) PG_GETARG_PG_LSN(0);
+	XLogRecPtr	lsn = (XLogRecPtr) PG_GETARG_LSN(0);
 	char		buf[MAXPG_LSNLEN + 1];
 	char	   *result;
 	uint32		id, off;
@@ -77,13 +77,13 @@ pg_lsn_recv(PG_FUNCTION_ARGS)
 	XLogRecPtr	result;
 
 	result = pq_getmsgint64(buf);
-	PG_RETURN_PG_LSN(result);
+	PG_RETURN_LSN(result);
 }
 
 Datum
 pg_lsn_send(PG_FUNCTION_ARGS)
 {
-	XLogRecPtr lsn = (XLogRecPtr) PG_GETARG_PG_LSN(0);
+	XLogRecPtr lsn = (XLogRecPtr) PG_GETARG_LSN(0);
 	StringInfoData buf;
 
 	pq_begintypsend(&buf);
@@ -99,8 +99,8 @@ pg_lsn_send(PG_FUNCTION_ARGS)
 Datum
 pg_lsn_eq(PG_FUNCTION_ARGS)
 {
-	XLogRecPtr lsn1 = (XLogRecPtr) PG_GETARG_PG_LSN(0);
-	XLogRecPtr lsn2 = (XLogRecPtr) PG_GETARG_PG_LSN(1);
+	XLogRecPtr lsn1 = (XLogRecPtr) PG_GETARG_LSN(0);
+	XLogRecPtr lsn2 = (XLogRecPtr) PG_GETARG_LSN(1);
 
 	PG_RETURN_BOOL(lsn1 == lsn2);
 }
@@ -108,8 +108,8 @@ pg_lsn_eq(PG_FUNCTION_ARGS)
 Datum
 pg_lsn_ne(PG_FUNCTION_ARGS)
 {
-	XLogRecPtr lsn1 = (XLogRecPtr) PG_GETARG_PG_LSN(0);
-	XLogRecPtr lsn2 = (XLogRecPtr) PG_GETARG_PG_LSN(1);
+	XLogRecPtr lsn1 = (XLogRecPtr) PG_GETARG_LSN(0);
+	XLogRecPtr lsn2 = (XLogRecPtr) PG_GETARG_LSN(1);
 
 	PG_RETURN_BOOL(lsn1 != lsn2);
 }
@@ -117,8 +117,8 @@ pg_lsn_ne(PG_FUNCTION_ARGS)
 Datum
 pg_lsn_lt(PG_FUNCTION_ARGS)
 {
-	XLogRecPtr lsn1 = (XLogRecPtr) PG_GETARG_PG_LSN(0);
-	XLogRecPtr lsn2 = (XLogRecPtr) PG_GETARG_PG_LSN(1);
+	XLogRecPtr lsn1 = (XLogRecPtr) PG_GETARG_LSN(0);
+	XLogRecPtr lsn2 = (XLogRecPtr) PG_GETARG_LSN(1);
 
 	PG_RETURN_BOOL(lsn1 < lsn2);
 }
@@ -126,8 +126,8 @@ pg_lsn_lt(PG_FUNCTION_ARGS)
 Datum
 pg_lsn_gt(PG_FUNCTION_ARGS)
 {
-	XLogRecPtr lsn1 = (XLogRecPtr) PG_GETARG_PG_LSN(0);
-	XLogRecPtr lsn2 = (XLogRecPtr) PG_GETARG_PG_LSN(1);
+	XLogRecPtr lsn1 = (XLogRecPtr) PG_GETARG_LSN(0);
+	XLogRecPtr lsn2 = (XLogRecPtr) PG_GETARG_LSN(1);
 
 	PG_RETURN_BOOL(lsn1 > lsn2);
 }
@@ -135,8 +135,8 @@ pg_lsn_gt(PG_FUNCTION_ARGS)
 Datum
 pg_lsn_le(PG_FUNCTION_ARGS)
 {
-	XLogRecPtr lsn1 = (XLogRecPtr) PG_GETARG_PG_LSN(0);
-	XLogRecPtr lsn2 = (XLogRecPtr) PG_GETARG_PG_LSN(1);
+	XLogRecPtr lsn1 = (XLogRecPtr) PG_GETARG_LSN(0);
+	XLogRecPtr lsn2 = (XLogRecPtr) PG_GETARG_LSN(1);
 
 	PG_RETURN_BOOL(lsn1 <= lsn2);
 }
@@ -144,8 +144,8 @@ pg_lsn_le(PG_FUNCTION_ARGS)
 Datum
 pg_lsn_ge(PG_FUNCTION_ARGS)
 {
-	XLogRecPtr lsn1 = (XLogRecPtr) PG_GETARG_PG_LSN(0);
-	XLogRecPtr lsn2 = (XLogRecPtr) PG_GETARG_PG_LSN(1);
+	XLogRecPtr lsn1 = (XLogRecPtr) PG_GETARG_LSN(0);
+	XLogRecPtr lsn2 = (XLogRecPtr) PG_GETARG_LSN(1);
 
 	PG_RETURN_BOOL(lsn1 >= lsn2);
 }
@@ -158,19 +158,18 @@ pg_lsn_ge(PG_FUNCTION_ARGS)
 Datum
 pg_lsn_mi(PG_FUNCTION_ARGS)
 {
-	XLogRecPtr lsn1 = (XLogRecPtr) PG_GETARG_PG_LSN(0);
-	XLogRecPtr lsn2 = (XLogRecPtr) PG_GETARG_PG_LSN(1);
+	XLogRecPtr lsn1 = (XLogRecPtr) PG_GETARG_LSN(0);
+	XLogRecPtr lsn2 = (XLogRecPtr) PG_GETARG_LSN(1);
 	char		buf[256];
 	Datum		result;
 
-	/* Negative results are not allowed. */
+	/* Output could be as large as plus or minus 2^63 - 1. */
 	if (lsn1 < lsn2)
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("transaction log location out of range")));
+		snprintf(buf, sizeof buf, "-" UINT64_FORMAT, lsn2 - lsn1);
+	else
+		snprintf(buf, sizeof buf, UINT64_FORMAT, lsn1 - lsn2);
 
 	/* Convert to numeric. */
-	snprintf(buf, sizeof buf, UINT64_FORMAT, lsn1 - lsn2);
 	result = DirectFunctionCall3(numeric_in,
 								 CStringGetDatum(buf),
 								 ObjectIdGetDatum(0),
