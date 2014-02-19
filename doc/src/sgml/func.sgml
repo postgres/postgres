@@ -15884,35 +15884,35 @@ SELECT set_config('log_statement_stats', 'off', false);
        <entry>
         <literal><function>pg_create_restore_point(<parameter>name</> <type>text</>)</function></literal>
         </entry>
-       <entry><type>text</type></entry>
+       <entry><type>pg_lsn</type></entry>
        <entry>Create a named point for performing restore (restricted to superusers)</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_current_xlog_insert_location()</function></literal>
         </entry>
-       <entry><type>text</type></entry>
+       <entry><type>pg_lsn</type></entry>
        <entry>Get current transaction log insert location</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_current_xlog_location()</function></literal>
         </entry>
-       <entry><type>text</type></entry>
+       <entry><type>pg_lsn</type></entry>
        <entry>Get current transaction log write location</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_start_backup(<parameter>label</> <type>text</> <optional>, <parameter>fast</> <type>boolean</> </optional>)</function></literal>
         </entry>
-       <entry><type>text</type></entry>
+       <entry><type>pg_lsn</type></entry>
        <entry>Prepare for performing on-line backup (restricted to superusers or replication roles)</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_stop_backup()</function></literal>
         </entry>
-       <entry><type>text</type></entry>
+       <entry><type>pg_lsn</type></entry>
        <entry>Finish performing on-line backup (restricted to superusers or replication roles)</entry>
       </row>
       <row>
@@ -15933,26 +15933,26 @@ SELECT set_config('log_statement_stats', 'off', false);
        <entry>
         <literal><function>pg_switch_xlog()</function></literal>
         </entry>
-       <entry><type>text</type></entry>
+       <entry><type>pg_lsn</type></entry>
        <entry>Force switch to a new transaction log file (restricted to superusers)</entry>
       </row>
       <row>
        <entry>
-        <literal><function>pg_xlogfile_name(<parameter>location</> <type>text</>)</function></literal>
+        <literal><function>pg_xlogfile_name(<parameter>location</> <type>pg_lsn</>)</function></literal>
         </entry>
        <entry><type>text</type></entry>
        <entry>Convert transaction log location string to file name</entry>
       </row>
       <row>
        <entry>
-        <literal><function>pg_xlogfile_name_offset(<parameter>location</> <type>text</>)</function></literal>
+        <literal><function>pg_xlogfile_name_offset(<parameter>location</> <type>pg_lsn</>)</function></literal>
         </entry>
        <entry><type>text</>, <type>integer</></entry>
        <entry>Convert transaction log location string to file name and decimal byte offset within file</entry>
       </row>
       <row>
        <entry>
-        <literal><function>pg_xlog_location_diff(<parameter>location</> <type>text</>, <parameter>location</> <type>text</>)</function></literal>
+        <literal><function>pg_xlog_location_diff(<parameter>location</> <type>pg_lsn</>, <parameter>location</> <type>pg_lsn</>)</function></literal>
        </entry>
        <entry><type>numeric</></entry>
        <entry>Calculate the difference between two transaction log locations</entry>
@@ -16107,7 +16107,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
        <entry>
         <literal><function>pg_last_xlog_receive_location()</function></literal>
         </entry>
-       <entry><type>text</type></entry>
+       <entry><type>pg_lsn</type></entry>
        <entry>Get last transaction log location received and synced to disk by
         streaming replication. While streaming replication is in progress
         this will increase monotonically. If recovery has completed this will
@@ -16121,7 +16121,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
        <entry>
         <literal><function>pg_last_xlog_replay_location()</function></literal>
         </entry>
-       <entry><type>text</type></entry>
+       <entry><type>pg_lsn</type></entry>
        <entry>Get last transaction log location replayed during recovery.
         If recovery is still in progress this will increase monotonically.
         If recovery has completed then this value will remain static at
@@ -16335,7 +16335,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <literal><function>pg_create_physical_replication_slot(<parameter>slotname</parameter> <type>text</type>, <parameter>plugin</parameter> <type>text</type>)</function></literal>
        </entry>
        <entry>
-        (<parameter>slotname</parameter> <type>text</type>, <parameter>xlog_position</parameter> <type>text</type>)
+        (<parameter>slotname</parameter> <type>text</type>, <parameter>xlog_position</parameter> <type>pg_lsn</type>)
        </entry>
        <entry>
         Creates a new physical replication slot named

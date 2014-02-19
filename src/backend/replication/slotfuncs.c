@@ -17,6 +17,7 @@
 #include "miscadmin.h"
 #include "access/htup_details.h"
 #include "utils/builtins.h"
+#include "utils/pg_lsn.h"
 #include "replication/slot.h"
 
 Datum		pg_create_physical_replication_slot(PG_FUNCTION_ARGS);
@@ -141,8 +142,6 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 		bool		active;
 		Oid			database;
 		const char *slot_name;
-
-		char		restart_lsn_s[MAXFNAMELEN];
 		int			i;
 
 		SpinLockAcquire(&slot->mutex);
@@ -164,9 +163,6 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 
 		memset(nulls, 0, sizeof(nulls));
 
-		snprintf(restart_lsn_s, sizeof(restart_lsn_s), "%X/%X",
-				 (uint32) (restart_lsn >> 32), (uint32) restart_lsn);
-
 		i = 0;
 		values[i++] = CStringGetTextDatum(slot_name);
 		if (database == InvalidOid)
@@ -180,7 +176,7 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 		else
 			nulls[i++] = true;
 		if (restart_lsn != InvalidTransactionId)
-			values[i++] = CStringGetTextDatum(restart_lsn_s);
+			values[i++] = LSNGetDatum(restart_lsn);
 		else
 			nulls[i++] = true;
 

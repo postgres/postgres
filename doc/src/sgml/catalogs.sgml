@@ -5244,7 +5244,7 @@
 
      <row>
       <entry><structfield>restart_lsn</structfield></entry>
-      <entry><type>text</type></entry>
+      <entry><type>pg_lsn</type></entry>
       <entry></entry>
       <entry>The address (<literal>LSN</literal>) of oldest WAL which still
       might be required by the consumer of this slot and thus won't be
