@@ -1,0 +1,5 @@
+; dlltool --output-def pgevent.def pgevent.o pgmsgevent.o
+EXPORTS
+	DllUnregisterServer@0 ;
+	DllRegisterServer@0 ;
+	DllInstall ;
