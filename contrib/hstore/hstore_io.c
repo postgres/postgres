@@ -1245,77 +1245,49 @@ Datum
 hstore_to_json_loose(PG_FUNCTION_ARGS)
 {
 	HStore	   *in = PG_GETARG_HS(0);
-	int			buflen,
-				i;
+	int			i;
 	int			count = HS_COUNT(in);
-	char	   *out,
-			   *ptr;
 	char	   *base = STRPTR(in);
 	HEntry	   *entries = ARRPTR(in);
 	bool		is_number;
-	StringInfo	src,
+	StringInfoData tmp,
 				dst;
 
 	if (count == 0)
 		PG_RETURN_TEXT_P(cstring_to_text_with_len("{}",2));
 
-	buflen = 3;
+	initStringInfo(&tmp);
+	initStringInfo(&dst);
 
-	/*
-	 * Formula adjusted slightly from the logic in hstore_out. We have to take
-	 * account of out treatment of booleans to be a bit more pessimistic about
-	 * the length of values.
-	 */
+	appendStringInfoChar(&dst, '{');
 
 	for (i = 0; i < count; i++)
 	{
-		/* include "" and colon-space and comma-space */
-		buflen += 6 + 2 * HS_KEYLEN(entries, i);
-		/* include "" only if nonnull */
-		buflen += 3 + (HS_VALISNULL(entries, i)
-					   ? 1
-					   : 2 * HS_VALLEN(entries, i));
-	}
-
-	out = ptr = palloc(buflen);
-
-	src = makeStringInfo();
-	dst = makeStringInfo();
-
-	*ptr++ = '{';
-
-	for (i = 0; i < count; i++)
-	{
-		resetStringInfo(src);
-		resetStringInfo(dst);
-		appendBinaryStringInfo(src, HS_KEY(entries, base, i), HS_KEYLEN(entries, i));
-		escape_json(dst, src->data);
-		strncpy(ptr, dst->data, dst->len);
-		ptr += dst->len;
-		*ptr++ = ':';
-		*ptr++ = ' ';
-		resetStringInfo(dst);
+		resetStringInfo(&tmp);
+		appendBinaryStringInfo(&tmp, HS_KEY(entries, base, i), HS_KEYLEN(entries, i));
+		escape_json(&dst, tmp.data);
+		appendStringInfoString(&dst, ": ");
 		if (HS_VALISNULL(entries, i))
-			appendStringInfoString(dst, "null");
+			appendStringInfoString(&dst, "null");
 		/* guess that values of 't' or 'f' are booleans */
 		else if (HS_VALLEN(entries, i) == 1 && *(HS_VAL(entries, base, i)) == 't')
-			appendStringInfoString(dst, "true");
+			appendStringInfoString(&dst, "true");
 		else if (HS_VALLEN(entries, i) == 1 && *(HS_VAL(entries, base, i)) == 'f')
-			appendStringInfoString(dst, "false");
+			appendStringInfoString(&dst, "false");
 		else
 		{
 			is_number = false;
-			resetStringInfo(src);
-			appendBinaryStringInfo(src, HS_VAL(entries, base, i), HS_VALLEN(entries, i));
+			resetStringInfo(&tmp);
+			appendBinaryStringInfo(&tmp, HS_VAL(entries, base, i), HS_VALLEN(entries, i));
 
 			/*
 			 * don't treat something with a leading zero followed by another
 			 * digit as numeric - could be a zip code or similar
 			 */
-			if (src->len > 0 &&
-				!(src->data[0] == '0' &&
-				  isdigit((unsigned char) src->data[1])) &&
-				strspn(src->data, "+-0123456789Ee.") == src->len)
+			if (tmp.len > 0 &&
+				!(tmp.data[0] == '0' &&
+				  isdigit((unsigned char) tmp.data[1])) &&
+				strspn(tmp.data, "+-0123456789Ee.") == tmp.len)
 			{
 				/*
 				 * might be a number. See if we can input it as a numeric
@@ -1324,7 +1296,7 @@ hstore_to_json_loose(PG_FUNCTION_ARGS)
 				char	   *endptr = "junk";
 				long		lval;
 
-				lval = strtol(src->data, &endptr, 10);
+				lval = strtol(tmp.data, &endptr, 10);
 				(void) lval;
 				if (*endptr == '\0')
 				{
@@ -1339,30 +1311,24 @@ hstore_to_json_loose(PG_FUNCTION_ARGS)
 					/* not an int - try a double */
 					double		dval;
 
-					dval = strtod(src->data, &endptr);
+					dval = strtod(tmp.data, &endptr);
 					(void) dval;
 					if (*endptr == '\0')
 						is_number = true;
 				}
 			}
 			if (is_number)
-				appendBinaryStringInfo(dst, src->data, src->len);
+				appendBinaryStringInfo(&dst, tmp.data, tmp.len);
 			else
-				escape_json(dst, src->data);
+				escape_json(&dst, tmp.data);
 		}
-		strncpy(ptr, dst->data, dst->len);
-		ptr += dst->len;
 
 		if (i + 1 != count)
-		{
-			*ptr++ = ',';
-			*ptr++ = ' ';
-		}
+			appendStringInfoString(&dst, ", ");
 	}
-	*ptr++ = '}';
-	*ptr = '\0';
+	appendStringInfoChar(&dst, '}');
 
-	PG_RETURN_TEXT_P(cstring_to_text(out));
+	PG_RETURN_TEXT_P(cstring_to_text(dst.data));
 }
 
 PG_FUNCTION_INFO_V1(hstore_to_json);
@@ -1371,74 +1337,40 @@ Datum
 hstore_to_json(PG_FUNCTION_ARGS)
 {
 	HStore	   *in = PG_GETARG_HS(0);
-	int			buflen,
-				i;
+	int			i;
 	int			count = HS_COUNT(in);
-	char	   *out,
-			   *ptr;
 	char	   *base = STRPTR(in);
 	HEntry	   *entries = ARRPTR(in);
-	StringInfo	src,
+	StringInfoData tmp,
 				dst;
 
 	if (count == 0)
 		PG_RETURN_TEXT_P(cstring_to_text_with_len("{}",2));
 
-	buflen = 3;
+	initStringInfo(&tmp);
+	initStringInfo(&dst);
 
-	/*
-	 * Formula adjusted slightly from the logic in hstore_out. We have to take
-	 * account of out treatment of booleans to be a bit more pessimistic about
-	 * the length of values.
-	 */
+	appendStringInfoChar(&dst, '{');
 
 	for (i = 0; i < count; i++)
 	{
-		/* include "" and colon-space and comma-space */
-		buflen += 6 + 2 * HS_KEYLEN(entries, i);
-		/* include "" only if nonnull */
-		buflen += 3 + (HS_VALISNULL(entries, i)
-					   ? 1
-					   : 2 * HS_VALLEN(entries, i));
-	}
-
-	out = ptr = palloc(buflen);
-
-	src = makeStringInfo();
-	dst = makeStringInfo();
-
-	*ptr++ = '{';
-
-	for (i = 0; i < count; i++)
-	{
-		resetStringInfo(src);
-		resetStringInfo(dst);
-		appendBinaryStringInfo(src, HS_KEY(entries, base, i), HS_KEYLEN(entries, i));
-		escape_json(dst, src->data);
-		strncpy(ptr, dst->data, dst->len);
-		ptr += dst->len;
-		*ptr++ = ':';
-		*ptr++ = ' ';
-		resetStringInfo(dst);
+		resetStringInfo(&tmp);
+		appendBinaryStringInfo(&tmp, HS_KEY(entries, base, i), HS_KEYLEN(entries, i));
+		escape_json(&dst, tmp.data);
+		appendStringInfoString(&dst, ": ");
 		if (HS_VALISNULL(entries, i))
-			appendStringInfoString(dst, "null");
+			appendStringInfoString(&dst, "null");
 		else
 		{
-			resetStringInfo(src);
-			appendBinaryStringInfo(src, HS_VAL(entries, base, i), HS_VALLEN(entries, i));
-			escape_json(dst, src->data);
+			resetStringInfo(&tmp);
+			appendBinaryStringInfo(&tmp, HS_VAL(entries, base, i), HS_VALLEN(entries, i));
+			escape_json(&dst, tmp.data);
 		}
-		strncpy(ptr, dst->data, dst->len);
-		ptr += dst->len;
 
 		if (i + 1 != count)
-		{
-			*ptr++ = ',';
-			*ptr++ = ' ';
-		}
+			appendStringInfoString(&dst, ", ");
 	}
-	*ptr++ = '}';
-	*ptr = '\0';
+	appendStringInfoChar(&dst, '}');
 
-	PG_RETURN_TEXT_P(cstring_to_text(out));
+	PG_RETURN_TEXT_P(cstring_to_text(dst.data));
 }
