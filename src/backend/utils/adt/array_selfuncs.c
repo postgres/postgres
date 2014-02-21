@@ -68,11 +68,13 @@ static int	float_compare_desc(const void *key1, const void *key2);
  * scalararraysel_containment
  *		Estimate selectivity of ScalarArrayOpExpr via array containment.
  *
- * scalararraysel() has already verified that the operator of a
- * ScalarArrayOpExpr is the array element type's default equality or
- * inequality operator.  If we have const =/<> ANY/ALL (array_var)
- * then we can estimate the selectivity as though this were an array
- * containment operator, array_var op ARRAY[const].
+ * If we have const =/<> ANY/ALL (array_var) then we can estimate the
+ * selectivity as though this were an array containment operator,
+ * array_var op ARRAY[const].
+ *
+ * scalararraysel() has already verified that the ScalarArrayOpExpr's operator
+ * is the array element type's default equality or inequality operator, and
+ * has aggressively simplified both inputs to constants.
  *
  * Returns selectivity (0..1), or -1 if we fail to estimate selectivity.
  */
@@ -99,9 +101,8 @@ scalararraysel_containment(PlannerInfo *root,
 	}
 
 	/*
-	 * Aggressively reduce leftop to a constant, if possible.
+	 * leftop must be a constant, else punt.
 	 */
-	leftop = estimate_expression_value(root, leftop);
 	if (!IsA(leftop, Const))
 	{
 		ReleaseVariableStats(vardata);
