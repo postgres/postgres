@@ -1734,6 +1734,10 @@ scalararraysel(PlannerInfo *root,
 	leftop = (Node *) linitial(clause->args);
 	rightop = (Node *) lsecond(clause->args);
 
+	/* aggressively reduce both sides to constants */
+	leftop = estimate_expression_value(root, leftop);
+	rightop = estimate_expression_value(root, rightop);
+
 	/* get nominal (after relabeling) element type of rightop */
 	nominal_element_type = get_base_element_type(exprType(rightop));
 	if (!OidIsValid(nominal_element_type))
@@ -6855,7 +6859,8 @@ gincost_pattern(IndexOptInfo *index, int indexcol,
  * appropriately.  If the query is unsatisfiable, return false.
  */
 static bool
-gincost_opexpr(IndexOptInfo *index, OpExpr *clause, GinQualCounts *counts)
+gincost_opexpr(PlannerInfo *root, IndexOptInfo *index, OpExpr *clause,
+			   GinQualCounts *counts)
 {
 	Node	   *leftop = get_leftop((Expr *) clause);
 	Node	   *rightop = get_rightop((Expr *) clause);
@@ -6878,6 +6883,9 @@ gincost_opexpr(IndexOptInfo *index, OpExpr *clause, GinQualCounts *counts)
 		elog(ERROR, "could not match index to operand");
 		operand = NULL;			/* keep compiler quiet */
 	}
+
+	/* aggressively reduce to a constant, and look through relabeling */
+	operand = estimate_expression_value(root, operand);
 
 	if (IsA(operand, RelabelType))
 		operand = (Node *) ((RelabelType *) operand)->arg;
@@ -6917,7 +6925,8 @@ gincost_opexpr(IndexOptInfo *index, OpExpr *clause, GinQualCounts *counts)
  * by N, causing gincostestimate to scale up its estimates accordingly.
  */
 static bool
-gincost_scalararrayopexpr(IndexOptInfo *index, ScalarArrayOpExpr *clause,
+gincost_scalararrayopexpr(PlannerInfo *root,
+						  IndexOptInfo *index, ScalarArrayOpExpr *clause,
 						  double numIndexEntries,
 						  GinQualCounts *counts)
 {
@@ -6941,6 +6950,9 @@ gincost_scalararrayopexpr(IndexOptInfo *index, ScalarArrayOpExpr *clause,
 	/* index column must be on the left */
 	if ((indexcol = find_index_column(leftop, index)) < 0)
 		elog(ERROR, "could not match index to operand");
+
+	/* aggressively reduce to a constant, and look through relabeling */
+	rightop = estimate_expression_value(root, rightop);
 
 	if (IsA(rightop, RelabelType))
 		rightop = (Node *) ((RelabelType *) rightop)->arg;
@@ -7159,7 +7171,8 @@ gincostestimate(PG_FUNCTION_ARGS)
 		clause = rinfo->clause;
 		if (IsA(clause, OpExpr))
 		{
-			matchPossible = gincost_opexpr(index,
+			matchPossible = gincost_opexpr(root,
+										   index,
 										   (OpExpr *) clause,
 										   &counts);
 			if (!matchPossible)
@@ -7167,7 +7180,8 @@ gincostestimate(PG_FUNCTION_ARGS)
 		}
 		else if (IsA(clause, ScalarArrayOpExpr))
 		{
-			matchPossible = gincost_scalararrayopexpr(index,
+			matchPossible = gincost_scalararrayopexpr(root,
+													  index,
 												(ScalarArrayOpExpr *) clause,
 													  numEntries,
 													  &counts);
