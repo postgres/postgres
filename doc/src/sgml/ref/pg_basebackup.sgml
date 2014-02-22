@@ -203,6 +203,33 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-T <replaceable class="parameter">olddir</replaceable>=<replaceable class="parameter">newdir</replaceable></option></term>
+      <term><option>--tablespace-mapping=<replaceable class="parameter">olddir</replaceable>=<replaceable class="parameter">newdir</replaceable></option></term>
+      <listitem>
+       <para>
+        Relocate the tablespace in directory <replaceable>olddir</replaceable>
+        to <replaceable>newdir</replaceable> during the backup.  To be
+        effective, <replaceable>olddir</replaceable> must exactly match the
+        path specification of the tablespace as it is currently defined.  (But
+        it is not an error if there is no tablespace
+        in <replaceable>olddir</replaceable> contained in the backup.)
+        Both <replaceable>olddir</replaceable>
+        and <replaceable>newdir</replaceable> must be absolute paths.  If a
+        path happens to contain a <literal>=</literal> sign, escape it with a
+        backslash.  This option can be specified multiple times for multiple
+        tablespaces.  See examples below.
+       </para>
+
+       <para>
+        If a tablespace is relocated in this way, the symbolic links inside
+        the main data directory are updated to point to the new location.  So
+        the new data directory is ready to be used for a new server instance
+        with all tablespaces in the updated locations.
+        </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--xlogdir=<replaceable class="parameter">xlogdir</replaceable></option></term>
       <listitem>
        <para>
@@ -528,9 +555,13 @@ PostgreSQL documentation
   </para>
 
   <para>
-   The way <productname>PostgreSQL</productname> manages tablespaces, the path
-   for all additional tablespaces must be identical whenever a backup is
-   restored. The main data directory, however, is relocatable to any location.
+   Tablespaces will in plain format by default be backed up to the same path
+   they have on the server, unless the
+   option <replaceable>--tablespace-mapping</replaceable> is used.  Without
+   this option, running a plain format base backup on the same host as the
+   server will not work if tablespaces are in use, because the backup would
+   have to be written to the same directory locations as the original
+   tablespaces.
   </para>
 
   <para>
@@ -569,6 +600,15 @@ PostgreSQL documentation
 </screen>
    (This command will fail if there are multiple tablespaces in the
    database.)
+  </para>
+
+  <para>
+   To create a backup of a local database where the tablespace in
+   <filename>/opt/ts</filename> is relocated
+   to <filename>./backup/ts</filename>:
+<screen>
+<prompt>$</prompt> <userinput>pg_basebackup -D backup/data -T /opt/ts=$(pwd)/backup/ts</userinput>
+</screen>
   </para>
  </refsect1>
 
