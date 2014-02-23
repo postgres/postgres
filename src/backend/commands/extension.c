@@ -635,7 +635,6 @@ read_extension_script_file(const ExtensionControlFile *control,
 						   const char *filename)
 {
 	int			src_encoding;
-	int			dest_encoding = GetDatabaseEncoding();
 	bytea	   *content;
 	char	   *src_str;
 	char	   *dest_str;
@@ -645,7 +644,7 @@ read_extension_script_file(const ExtensionControlFile *control,
 
 	/* use database encoding if not given */
 	if (control->encoding < 0)
-		src_encoding = dest_encoding;
+		src_encoding = GetDatabaseEncoding();
 	else
 		src_encoding = control->encoding;
 
@@ -655,10 +654,7 @@ read_extension_script_file(const ExtensionControlFile *control,
 	pg_verify_mbstr_len(src_encoding, src_str, len, false);
 
 	/* convert the encoding to the database encoding */
-	dest_str = (char *) pg_do_encoding_conversion((unsigned char *) src_str,
-												  len,
-												  src_encoding,
-												  dest_encoding);
+	dest_str = pg_any_to_server(src_str, len, src_encoding);
 
 	/* if no conversion happened, we have to arrange for null termination */
 	if (dest_str == src_str)

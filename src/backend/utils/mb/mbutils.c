@@ -1077,7 +1077,9 @@ pgwin32_message_to_UTF16(const char *str, int len, int *utf16len)
 		char	   *utf8;
 
 		utf8 = (char *) pg_do_encoding_conversion((unsigned char *) str,
-										 len, GetMessageEncoding(), PG_UTF8);
+												  len,
+												  GetMessageEncoding(),
+												  PG_UTF8);
 		if (utf8 != str)
 			len = strlen(utf8);
 

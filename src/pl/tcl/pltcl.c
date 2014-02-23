@@ -63,13 +63,17 @@
 static unsigned char *
 utf_u2e(unsigned char *src)
 {
-	return pg_do_encoding_conversion(src, strlen(src), PG_UTF8, GetDatabaseEncoding());
+	return (unsigned char *) pg_any_to_server((char *) src,
+											  strlen(src),
+											  PG_UTF8);
 }
 
 static unsigned char *
 utf_e2u(unsigned char *src)
 {
-	return pg_do_encoding_conversion(src, strlen(src), GetDatabaseEncoding(), PG_UTF8);
+	return (unsigned char *) pg_server_to_any((char *) src,
+											  strlen(src),
+											  PG_UTF8);
 }
 
 #define PLTCL_UTF

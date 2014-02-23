@@ -1458,11 +1458,9 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 				{
 					char	   *enc;
 
-					enc = (char *)
-						pg_do_encoding_conversion((unsigned char *) qstr,
-												  entry->query_len,
-												  entry->encoding,
-												  GetDatabaseEncoding());
+					enc = pg_any_to_server(qstr,
+										   entry->query_len,
+										   entry->encoding);
 
 					values[i++] = CStringGetTextDatum(enc);
 

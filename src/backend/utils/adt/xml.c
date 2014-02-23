@@ -345,10 +345,7 @@ xml_recv(PG_FUNCTION_ARGS)
 	xmlFreeDoc(doc);
 
 	/* Now that we know what we're dealing with, convert to server encoding */
-	newstr = (char *) pg_do_encoding_conversion((unsigned char *) str,
-												nbytes,
-												encoding,
-												GetDatabaseEncoding());
+	newstr = pg_any_to_server(str, nbytes, encoding);
 
 	if (newstr != str)
 	{
@@ -1793,10 +1790,8 @@ sqlchar_to_unicode(char *s)
 	char	   *utf8string;
 	pg_wchar	ret[2];			/* need space for trailing zero */
 
-	utf8string = (char *) pg_do_encoding_conversion((unsigned char *) s,
-													pg_mblen(s),
-													GetDatabaseEncoding(),
-													PG_UTF8);
+	/* note we're not assuming s is null-terminated */
+	utf8string = pg_server_to_any(s, pg_mblen(s), PG_UTF8);
 
 	pg_encoding_mb2wchar_with_len(PG_UTF8, utf8string, ret,
 								  pg_encoding_mblen(PG_UTF8, utf8string));
@@ -1892,19 +1887,15 @@ map_sql_identifier_to_xml_name(char *ident, bool fully_escaped,
 static char *
 unicode_to_sqlchar(pg_wchar c)
 {
-	unsigned char utf8string[5];	/* need room for trailing zero */
+	char		utf8string[8];			/* need room for trailing zero */
 	char	   *result;
 
 	memset(utf8string, 0, sizeof(utf8string));
-	unicode_to_utf8(c, utf8string);
+	unicode_to_utf8(c, (unsigned char *) utf8string);
 
-	result = (char *) pg_do_encoding_conversion(utf8string,
-												pg_encoding_mblen(PG_UTF8,
-														(char *) utf8string),
-												PG_UTF8,
-												GetDatabaseEncoding());
-	/* if pg_do_encoding_conversion didn't strdup, we must */
-	if (result == (char *) utf8string)
+	result = pg_any_to_server(utf8string, strlen(utf8string), PG_UTF8);
+	/* if pg_any_to_server didn't strdup, we must */
+	if (result == utf8string)
 		result = pstrdup(result);
 	return result;
 }

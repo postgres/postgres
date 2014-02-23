@@ -418,9 +418,7 @@ db_encoding_strdup(int encoding, const char *str)
 	char	   *mstr;
 
 	/* convert the string to the database encoding */
-	pstr = (char *) pg_do_encoding_conversion(
-										  (unsigned char *) str, strlen(str),
-											encoding, GetDatabaseEncoding());
+	pstr = pg_any_to_server(str, strlen(str), encoding);
 	mstr = strdup(pstr);
 	if (pstr != str)
 		pfree(pstr);
@@ -581,35 +579,32 @@ strftime_win32(char *dst, size_t dstlen, const wchar_t *format, const struct tm 
 {
 	size_t		len;
 	wchar_t		wbuf[MAX_L10N_DATA];
-	int			encoding;
-
-	encoding = GetDatabaseEncoding();
 
 	len = wcsftime(wbuf, MAX_L10N_DATA, format, tm);
 	if (len == 0)
-
+	{
 		/*
 		 * strftime call failed - return 0 with the contents of dst
 		 * unspecified
 		 */
 		return 0;
+	}
 
 	len = WideCharToMultiByte(CP_UTF8, 0, wbuf, len, dst, dstlen, NULL, NULL);
 	if (len == 0)
-		elog(ERROR,
-		"could not convert string to UTF-8: error code %lu", GetLastError());
+		elog(ERROR, "could not convert string to UTF-8: error code %lu",
+			 GetLastError());
 
 	dst[len] = '\0';
-	if (encoding != PG_UTF8)
+	if (GetDatabaseEncoding() != PG_UTF8)
 	{
-		char	   *convstr =
-		(char *) pg_do_encoding_conversion((unsigned char *) dst,
-										   len, PG_UTF8, encoding);
+		char	   *convstr = pg_any_to_server(dst, len, PG_UTF8);
 
-		if (dst != convstr)
+		if (convstr != dst)
 		{
 			strlcpy(dst, convstr, dstlen);
 			len = strlen(dst);
+			pfree(convstr);
 		}
 	}
 

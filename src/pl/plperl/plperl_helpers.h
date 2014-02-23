@@ -9,24 +9,11 @@
 static inline char *
 utf_u2e(char *utf8_str, size_t len)
 {
-	int			enc = GetDatabaseEncoding();
 	char	   *ret;
 
-	/*
-	 * When we are in a PG_UTF8 or SQL_ASCII database
-	 * pg_do_encoding_conversion() will not do any conversion (which is good)
-	 * or verification (not so much), so we need to run the verification step
-	 * separately.
-	 */
-	if (enc == PG_UTF8 || enc == PG_SQL_ASCII)
-	{
-		pg_verify_mbstr_len(enc, utf8_str, len, false);
-		ret = utf8_str;
-	}
-	else
-		ret = (char *) pg_do_encoding_conversion((unsigned char *) utf8_str,
-												 len, PG_UTF8, enc);
+	ret = pg_any_to_server(utf8_str, len, PG_UTF8);
 
+	/* ensure we have a copy even if no conversion happened */
 	if (ret == utf8_str)
 		ret = pstrdup(ret);
 
@@ -41,12 +28,14 @@ utf_u2e(char *utf8_str, size_t len)
 static inline char *
 utf_e2u(const char *str)
 {
-	char	   *ret =
-	(char *) pg_do_encoding_conversion((unsigned char *) str, strlen(str),
-									   GetDatabaseEncoding(), PG_UTF8);
+	char	   *ret;
 
+	ret = pg_server_to_any(str, strlen(str), PG_UTF8);
+
+	/* ensure we have a copy even if no conversion happened */
 	if (ret == str)
 		ret = pstrdup(ret);
+
 	return ret;
 }
 

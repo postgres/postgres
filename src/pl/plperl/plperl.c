@@ -3811,9 +3811,7 @@ hv_store_string(HV *hv, const char *key, SV *val)
 	char	   *hkey;
 	SV		  **ret;
 
-	hkey = (char *)
-		pg_do_encoding_conversion((unsigned char *) key, strlen(key),
-								  GetDatabaseEncoding(), PG_UTF8);
+	hkey = pg_server_to_any(key, strlen(key), PG_UTF8);
 
 	/*
 	 * This seems nowhere documented, but under Perl 5.8.0 and up, hv_store()
@@ -3841,9 +3839,7 @@ hv_fetch_string(HV *hv, const char *key)
 	char	   *hkey;
 	SV		  **ret;
 
-	hkey = (char *)
-		pg_do_encoding_conversion((unsigned char *) key, strlen(key),
-								  GetDatabaseEncoding(), PG_UTF8);
+	hkey = pg_server_to_any(key, strlen(key), PG_UTF8);
 
 	/* See notes in hv_store_string */
 	hlen = -(int) strlen(hkey);

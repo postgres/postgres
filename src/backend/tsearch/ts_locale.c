@@ -209,10 +209,7 @@ t_readline(FILE *fp)
 	(void) pg_verify_mbstr(PG_UTF8, buf, len, false);
 
 	/* And convert */
-	recoded = (char *) pg_do_encoding_conversion((unsigned char *) buf,
-												 len,
-												 PG_UTF8,
-												 GetDatabaseEncoding());
+	recoded = pg_any_to_server(buf, len, PG_UTF8);
 	if (recoded == buf)
 	{
 		/*

@@ -255,10 +255,7 @@ dsnowball_lexize(PG_FUNCTION_ARGS)
 		{
 			char	   *recoded;
 
-			recoded = (char *) pg_do_encoding_conversion((unsigned char *) txt,
-														 strlen(txt),
-													   GetDatabaseEncoding(),
-														 PG_UTF8);
+			recoded = pg_server_to_any(txt, strlen(txt), PG_UTF8);
 			if (recoded != txt)
 			{
 				pfree(txt);
@@ -284,10 +281,7 @@ dsnowball_lexize(PG_FUNCTION_ARGS)
 		{
 			char	   *recoded;
 
-			recoded = (char *) pg_do_encoding_conversion((unsigned char *) txt,
-														 strlen(txt),
-														 PG_UTF8,
-													  GetDatabaseEncoding());
+			recoded = pg_any_to_server(txt, strlen(txt), PG_UTF8);
 			if (recoded != txt)
 			{
 				pfree(txt);
