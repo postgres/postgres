@@ -1,10 +1,36 @@
-/*
- * This file contains public functions for conversion between
- * client encoding and server (database) encoding.
+/*-------------------------------------------------------------------------
  *
- * Tatsuo Ishii
+ * mbutils.c
+ *	  This file contains functions for encoding conversion.
  *
- * src/backend/utils/mb/mbutils.c
+ * The string-conversion functions in this file share some API quirks.
+ * Note the following:
+ *
+ * The functions return a palloc'd, null-terminated string if conversion
+ * is required.  However, if no conversion is performed, the given source
+ * string pointer is returned as-is.
+ *
+ * Although the presence of a length argument means that callers can pass
+ * non-null-terminated strings, care is required because the same string
+ * will be passed back if no conversion occurs.  Such callers *must* check
+ * whether result == src and handle that case differently.
+ *
+ * If the source and destination encodings are the same, the source string
+ * is returned without any verification; it's assumed to be valid data.
+ * If that might not be the case, the caller is responsible for validating
+ * the string using a separate call to pg_verify_mbstr().  Whenever the
+ * source and destination encodings are different, the functions ensure that
+ * the result is validly encoded according to the destination encoding.
+ *
+ *
+ * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ *
+ * IDENTIFICATION
+ *	  src/backend/utils/mb/mbutils.c
+ *
+ *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
@@ -290,7 +316,6 @@ InitializeClientEncoding(void)
 int
 pg_get_client_encoding(void)
 {
-	Assert(ClientEncoding);
 	return ClientEncoding->encoding;
 }
 
@@ -300,29 +325,13 @@ pg_get_client_encoding(void)
 const char *
 pg_get_client_encoding_name(void)
 {
-	Assert(ClientEncoding);
 	return ClientEncoding->name;
 }
 
 /*
- * Apply encoding conversion on src and return it. The encoding
- * conversion function is chosen from the pg_conversion system catalog
- * marked as "default". If it is not found in the schema search path,
- * it's taken from pg_catalog schema. If it even is not in the schema,
- * warn and return src.
+ * Convert src string to another encoding (general case).
  *
- * If conversion occurs, a palloc'd null-terminated string is returned.
- * In the case of no conversion, src is returned.
- *
- * CAUTION: although the presence of a length argument means that callers
- * can pass non-null-terminated strings, care is required because the same
- * string will be passed back if no conversion occurs.	Such callers *must*
- * check whether result == src and handle that case differently.
- *
- * Note: we try to avoid raising error, since that could get us into
- * infinite recursion when this function is invoked during error message
- * sending.  It should be OK to raise error for overlength strings though,
- * since the recursion will come with a shorter message.
+ * See the notes about string conversion functions at the top of this file.
  */
 unsigned char *
 pg_do_encoding_conversion(unsigned char *src, int len,
@@ -331,39 +340,32 @@ pg_do_encoding_conversion(unsigned char *src, int len,
 	unsigned char *result;
 	Oid			proc;
 
-	if (!IsTransactionState())
-		return src;
+	if (len <= 0)
+		return src;				/* empty string is always valid */
 
 	if (src_encoding == dest_encoding)
-		return src;
+		return src;				/* no conversion required, assume valid */
 
-	if (src_encoding == PG_SQL_ASCII || dest_encoding == PG_SQL_ASCII)
-		return src;
+	if (dest_encoding == PG_SQL_ASCII)
+		return src;				/* any string is valid in SQL_ASCII */
 
-	if (len <= 0)
+	if (src_encoding == PG_SQL_ASCII)
+	{
+		/* No conversion is possible, but we must validate the result */
+		(void) pg_verify_mbstr(dest_encoding, (const char *) src, len, false);
 		return src;
+	}
+
+	if (!IsTransactionState())	/* shouldn't happen */
+		elog(ERROR, "cannot perform encoding conversion outside a transaction");
 
 	proc = FindDefaultConversionProc(src_encoding, dest_encoding);
 	if (!OidIsValid(proc))
-	{
-		ereport(LOG,
+		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("default conversion function for encoding \"%s\" to \"%s\" does not exist",
 						pg_encoding_to_char(src_encoding),
 						pg_encoding_to_char(dest_encoding))));
-		return src;
-	}
-
-	/*
-	 * XXX we should avoid throwing errors in OidFunctionCall. Otherwise we
-	 * are going into infinite loop!  So we have to make sure that the
-	 * function exists before calling OidFunctionCall.
-	 */
-	if (!SearchSysCacheExists1(PROCOID, ObjectIdGetDatum(proc)))
-	{
-		elog(LOG, "cache lookup failed for function %u", proc);
-		return src;
-	}
 
 	/*
 	 * Allocate space for conversion result, being wary of integer overflow
@@ -387,7 +389,7 @@ pg_do_encoding_conversion(unsigned char *src, int len,
 }
 
 /*
- * Convert string using encoding_name. The source
+ * Convert string to encoding encoding_name. The source
  * encoding is the DB encoding.
  *
  * BYTEA convert_to(TEXT string, NAME encoding_name) */
@@ -412,7 +414,7 @@ pg_convert_to(PG_FUNCTION_ARGS)
 }
 
 /*
- * Convert string using encoding_name. The destination
+ * Convert string from encoding encoding_name. The destination
  * encoding is the DB encoding.
  *
  * TEXT convert_from(BYTEA string, NAME encoding_name) */
@@ -439,7 +441,7 @@ pg_convert_from(PG_FUNCTION_ARGS)
 }
 
 /*
- * Convert string using encoding_names.
+ * Convert string between two arbitrary encodings.
  *
  * BYTEA convert(BYTEA string, NAME src_encoding_name, NAME dest_encoding_name)
  */
@@ -472,8 +474,13 @@ pg_convert(PG_FUNCTION_ARGS)
 	src_str = VARDATA_ANY(string);
 	pg_verify_mbstr_len(src_encoding, src_str, len, false);
 
-	dest_str = (char *) pg_do_encoding_conversion(
-				(unsigned char *) src_str, len, src_encoding, dest_encoding);
+	/* perform conversion */
+	dest_str = (char *) pg_do_encoding_conversion((unsigned char *) src_str,
+												  len,
+												  src_encoding,
+												  dest_encoding);
+
+	/* update len if conversion actually happened */
 	if (dest_str != src_str)
 		len = strlen(dest_str);
 
@@ -503,10 +510,11 @@ pg_convert(PG_FUNCTION_ARGS)
 Datum
 length_in_encoding(PG_FUNCTION_ARGS)
 {
-	bytea	   *string = PG_GETARG_BYTEA_P(0);
+	bytea	   *string = PG_GETARG_BYTEA_PP(0);
 	char	   *src_encoding_name = NameStr(*PG_GETARG_NAME(1));
 	int			src_encoding = pg_char_to_encoding(src_encoding_name);
-	int			len = VARSIZE(string) - VARHDRSZ;
+	const char *src_str;
+	int			len;
 	int			retval;
 
 	if (src_encoding < 0)
@@ -515,11 +523,19 @@ length_in_encoding(PG_FUNCTION_ARGS)
 				 errmsg("invalid encoding name \"%s\"",
 						src_encoding_name)));
 
-	retval = pg_verify_mbstr_len(src_encoding, VARDATA(string), len, false);
-	PG_RETURN_INT32(retval);
+	len = VARSIZE_ANY_EXHDR(string);
+	src_str = VARDATA_ANY(string);
 
+	retval = pg_verify_mbstr_len(src_encoding, src_str, len, false);
+
+	PG_RETURN_INT32(retval);
 }
 
+/*
+ * Get maximum multibyte character length in the specified encoding.
+ *
+ * Note encoding is specified numerically, not by name as above.
+ */
 Datum
 pg_encoding_max_length_sql(PG_FUNCTION_ARGS)
 {
@@ -532,27 +548,31 @@ pg_encoding_max_length_sql(PG_FUNCTION_ARGS)
 }
 
 /*
- * convert client encoding to server encoding.
+ * Convert client encoding to server encoding.
+ *
+ * See the notes about string conversion functions at the top of this file.
  */
 char *
 pg_client_to_server(const char *s, int len)
 {
-	Assert(ClientEncoding);
-
 	return pg_any_to_server(s, len, ClientEncoding->encoding);
 }
 
 /*
- * convert any encoding to server encoding.
+ * Convert any encoding to server encoding.
+ *
+ * See the notes about string conversion functions at the top of this file.
+ *
+ * Unlike the other string conversion functions, this will apply validation
+ * even if encoding == DatabaseEncoding->encoding.	This is because this is
+ * used to process data coming in from outside the database, and we never
+ * want to just assume validity.
  */
 char *
 pg_any_to_server(const char *s, int len, int encoding)
 {
-	Assert(DatabaseEncoding);
-	Assert(ClientEncoding);
-
 	if (len <= 0)
-		return (char *) s;
+		return (char *) s;		/* empty string is always valid */
 
 	if (encoding == DatabaseEncoding->encoding ||
 		encoding == PG_SQL_ASCII)
@@ -594,46 +614,59 @@ pg_any_to_server(const char *s, int len, int encoding)
 		return (char *) s;
 	}
 
-	if (ClientEncoding->encoding == encoding)
+	/* Fast path if we can use cached conversion function */
+	if (encoding == ClientEncoding->encoding)
 		return perform_default_encoding_conversion(s, len, true);
-	else
-		return (char *) pg_do_encoding_conversion(
-			 (unsigned char *) s, len, encoding, DatabaseEncoding->encoding);
+
+	/* General case ... will not work outside transactions */
+	return (char *) pg_do_encoding_conversion((unsigned char *) s,
+											  len,
+											  encoding,
+											  DatabaseEncoding->encoding);
 }
 
 /*
- * convert server encoding to client encoding.
+ * Convert server encoding to client encoding.
+ *
+ * See the notes about string conversion functions at the top of this file.
  */
 char *
 pg_server_to_client(const char *s, int len)
 {
-	Assert(ClientEncoding);
-
 	return pg_server_to_any(s, len, ClientEncoding->encoding);
 }
 
 /*
- * convert server encoding to any encoding.
+ * Convert server encoding to any encoding.
+ *
+ * See the notes about string conversion functions at the top of this file.
  */
 char *
 pg_server_to_any(const char *s, int len, int encoding)
 {
-	Assert(DatabaseEncoding);
-	Assert(ClientEncoding);
-
 	if (len <= 0)
-		return (char *) s;
+		return (char *) s;		/* empty string is always valid */
 
 	if (encoding == DatabaseEncoding->encoding ||
-		encoding == PG_SQL_ASCII ||
-		DatabaseEncoding->encoding == PG_SQL_ASCII)
+		encoding == PG_SQL_ASCII)
 		return (char *) s;		/* assume data is valid */
 
-	if (ClientEncoding->encoding == encoding)
+	if (DatabaseEncoding->encoding == PG_SQL_ASCII)
+	{
+		/* No conversion is possible, but we must validate the result */
+		(void) pg_verify_mbstr(encoding, s, len, false);
+		return (char *) s;
+	}
+
+	/* Fast path if we can use cached conversion function */
+	if (encoding == ClientEncoding->encoding)
 		return perform_default_encoding_conversion(s, len, false);
-	else
-		return (char *) pg_do_encoding_conversion(
-			 (unsigned char *) s, len, DatabaseEncoding->encoding, encoding);
+
+	/* General case ... will not work outside transactions */
+	return (char *) pg_do_encoding_conversion((unsigned char *) s,
+											  len,
+											  DatabaseEncoding->encoding,
+											  encoding);
 }
 
 /*
@@ -643,7 +676,8 @@ pg_server_to_any(const char *s, int len, int encoding)
  *	SetClientEncoding(), no conversion is performed.
  */
 static char *
-perform_default_encoding_conversion(const char *src, int len, bool is_client_to_server)
+perform_default_encoding_conversion(const char *src, int len,
+									bool is_client_to_server)
 {
 	char	   *result;
 	int			src_encoding,
@@ -931,11 +965,11 @@ raw_pg_bind_textdomain_codeset(const char *domainname, int encoding)
  * On most platforms, gettext defaults to the codeset implied by LC_CTYPE.
  * When that matches the database encoding, we don't need to do anything.  In
  * CREATE DATABASE, we enforce or trust that the locale's codeset matches the
- * database encoding, except for the C locale.  (On Windows, we also permit a
+ * database encoding, except for the C locale.	(On Windows, we also permit a
  * discrepancy under the UTF8 encoding.)  For the C locale, explicitly bind
  * gettext to the right codeset.
  *
- * On Windows, gettext defaults to the Windows ANSI code page.  This is a
+ * On Windows, gettext defaults to the Windows ANSI code page.	This is a
  * convenient departure for software that passes the strings to Windows ANSI
  * APIs, but we don't do that.  Compel gettext to use database encoding or,
  * failing that, the LC_CTYPE encoding as it would on other platforms.
@@ -980,28 +1014,24 @@ pg_bind_textdomain_codeset(const char *domainname)
 int
 GetDatabaseEncoding(void)
 {
-	Assert(DatabaseEncoding);
 	return DatabaseEncoding->encoding;
 }
 
 const char *
 GetDatabaseEncodingName(void)
 {
-	Assert(DatabaseEncoding);
 	return DatabaseEncoding->name;
 }
 
 Datum
 getdatabaseencoding(PG_FUNCTION_ARGS)
 {
-	Assert(DatabaseEncoding);
 	return DirectFunctionCall1(namein, CStringGetDatum(DatabaseEncoding->name));
 }
 
 Datum
 pg_client_encoding(PG_FUNCTION_ARGS)
 {
-	Assert(ClientEncoding);
 	return DirectFunctionCall1(namein, CStringGetDatum(ClientEncoding->name));
 }
 
@@ -1014,7 +1044,6 @@ pg_client_encoding(PG_FUNCTION_ARGS)
 int
 GetMessageEncoding(void)
 {
-	Assert(MessageEncoding);
 	return MessageEncoding->encoding;
 }
 
