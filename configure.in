@@ -1155,10 +1155,10 @@ esac
 # defines can affect what is generated for that.
 if test "$PORTNAME" != "win32"; then
    AC_SYS_LARGEFILE
-   # Autoconf 2.69's AC_SYS_LARGEFILE believes it's a good idea to #define
-   # _DARWIN_USE_64_BIT_INODE, but it isn't: on OS X 10.5 that activates a
-   # bug that causes readdir() to sometimes return EINVAL.  On later OS X
-   # versions where the feature actually works, it's on by default anyway.
+   dnl Autoconf 2.69's AC_SYS_LARGEFILE believes it's a good idea to #define
+   dnl _DARWIN_USE_64_BIT_INODE, but it isn't: on OS X 10.5 that activates a
+   dnl bug that causes readdir() to sometimes return EINVAL.  On later OS X
+   dnl versions where the feature actually works, it's on by default anyway.
    AH_VERBATIM([_DARWIN_USE_64_BIT_INODE],[])
 fi
 
