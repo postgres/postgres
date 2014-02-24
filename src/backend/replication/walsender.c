@@ -67,6 +67,7 @@
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
+#include "utils/pg_lsn.h"
 #include "utils/ps_status.h"
 #include "utils/resowner.h"
 #include "utils/timeout.h"
@@ -2137,7 +2138,6 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 	{
 		/* use volatile pointer to prevent code rearrangement */
 		volatile WalSnd *walsnd = &WalSndCtl->walsnds[i];
-		char		location[MAXFNAMELEN];
 		XLogRecPtr	sentPtr;
 		XLogRecPtr	write;
 		XLogRecPtr	flush;
@@ -2171,28 +2171,19 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 		else
 		{
 			values[1] = CStringGetTextDatum(WalSndGetStateString(state));
-
-			snprintf(location, sizeof(location), "%X/%X",
-					 (uint32) (sentPtr >> 32), (uint32) sentPtr);
-			values[2] = CStringGetTextDatum(location);
+			values[2] = LSNGetDatum(sentPtr);
 
 			if (write == 0)
 				nulls[3] = true;
-			snprintf(location, sizeof(location), "%X/%X",
-					 (uint32) (write >> 32), (uint32) write);
-			values[3] = CStringGetTextDatum(location);
+			values[3] = LSNGetDatum(write);
 
 			if (flush == 0)
 				nulls[4] = true;
-			snprintf(location, sizeof(location), "%X/%X",
-					 (uint32) (flush >> 32), (uint32) flush);
-			values[4] = CStringGetTextDatum(location);
+			values[4] = LSNGetDatum(flush);
 
 			if (apply == 0)
 				nulls[5] = true;
-			snprintf(location, sizeof(location), "%X/%X",
-					 (uint32) (apply >> 32), (uint32) apply);
-			values[5] = CStringGetTextDatum(location);
+			values[5] = LSNGetDatum(apply);
 
 			values[6] = Int32GetDatum(sync_priority[i]);
 

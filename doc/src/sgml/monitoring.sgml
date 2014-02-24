@@ -1490,24 +1490,24 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
     </row>
     <row>
      <entry><structfield>sent_location</></entry>
-     <entry><type>text</></entry>
+     <entry><type>pg_lsn</></entry>
      <entry>Last transaction log position sent on this connection</entry>
     </row>
     <row>
      <entry><structfield>write_location</></entry>
-     <entry><type>text</></entry>
+     <entry><type>pg_lsn</></entry>
      <entry>Last transaction log position written to disk by this standby
       server</entry>
     </row>
     <row>
      <entry><structfield>flush_location</></entry>
-     <entry><type>text</></entry>
+     <entry><type>pg_lsn</></entry>
      <entry>Last transaction log position flushed to disk by this standby
       server</entry>
     </row>
     <row>
      <entry><structfield>replay_location</></entry>
-     <entry><type>text</></entry>
+     <entry><type>pg_lsn</></entry>
      <entry>Last transaction log position replayed into the database on this
       standby server</entry>
     </row>
