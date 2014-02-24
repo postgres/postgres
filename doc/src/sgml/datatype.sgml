@@ -1082,8 +1082,8 @@ SELECT '52093.89'::money::numeric::float8;
     semantically insignificant and disregarded when comparing two values
     of type <type>character</type>.  In collations where whitespace
     is significant, this behavior can produce unexpected results,
-    e.g. <command>SELECT 'a '::CHAR(2) collate "C" < 'a\n'::CHAR(2)
-    returns true.
+    e.g. <command>SELECT 'a '::CHAR(2) collate "C" &lt;
+    'a\n'::CHAR(2)</command> returns true.
     Trailing spaces are removed when converting a <type>character</type> value
     to one of the other string types.  Note that trailing spaces
     <emphasis>are</> semantically significant in
