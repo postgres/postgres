@@ -2090,15 +2090,19 @@ describeOneTableDetails(const char *schemaname,
 		printfPQExpBuffer(&buf,
 						  "SELECT t.tgname, "
 						  "pg_catalog.pg_get_triggerdef(t.oid%s), "
-						  "t.tgenabled\n"
+						  "t.tgenabled, %s\n"
 						  "FROM pg_catalog.pg_trigger t\n"
 						  "WHERE t.tgrelid = '%s' AND ",
 						  (pset.sversion >= 90000 ? ", true" : ""),
-						  oid);
+						  (pset.sversion >= 90000 ? "t.tgisinternal" :
+						   pset.sversion >= 80300 ?
+						   "t.tgconstraint <> 0 AS tgisinternal" :
+						   "false AS tgisinternal"), oid);
 		if (pset.sversion >= 90000)
-			appendPQExpBufferStr(&buf, "NOT t.tgisinternal");
+			/* display/warn about disabled internal triggers */
+			appendPQExpBuffer(&buf, "(NOT t.tgisinternal OR (t.tgisinternal AND t.tgenabled = 'D'))");
 		else if (pset.sversion >= 80300)
-			appendPQExpBufferStr(&buf, "t.tgconstraint = 0");
+			appendPQExpBufferStr(&buf, "(t.tgconstraint = 0 OR (t.tgconstraint <> 0 AND t.tgenabled = 'D'))");
 		else
 			appendPQExpBufferStr(&buf,
 								 "(NOT tgisconstraint "
@@ -2124,7 +2128,7 @@ describeOneTableDetails(const char *schemaname,
 			 * disabled triggers and the two special ALWAYS and REPLICA
 			 * configurations.
 			 */
-			for (category = 0; category < 4; category++)
+			for (category = 0; category <= 4; category++)
 			{
 				have_heading = false;
 				for (i = 0; i < tuples; i++)
@@ -2133,11 +2137,13 @@ describeOneTableDetails(const char *schemaname,
 					const char *tgdef;
 					const char *usingpos;
 					const char *tgenabled;
+					const char *tgisinternal;
 
 					/*
 					 * Check if this trigger falls into the current category
 					 */
 					tgenabled = PQgetvalue(result, i, 2);
+					tgisinternal = PQgetvalue(result, i, 3);
 					list_trigger = false;
 					switch (category)
 					{
@@ -2146,14 +2152,20 @@ describeOneTableDetails(const char *schemaname,
 								list_trigger = true;
 							break;
 						case 1:
-							if (*tgenabled == 'D' || *tgenabled == 'f')
+							if ((*tgenabled == 'D' || *tgenabled == 'f') &&
+								*tgisinternal == 'f')
 								list_trigger = true;
 							break;
 						case 2:
-							if (*tgenabled == 'A')
+							if ((*tgenabled == 'D' || *tgenabled == 'f') &&
+								*tgisinternal == 't')
 								list_trigger = true;
 							break;
 						case 3:
+							if (*tgenabled == 'A')
+								list_trigger = true;
+							break;
+						case 4:
 							if (*tgenabled == 'R')
 								list_trigger = true;
 							break;
@@ -2170,12 +2182,18 @@ describeOneTableDetails(const char *schemaname,
 								printfPQExpBuffer(&buf, _("Triggers:"));
 								break;
 							case 1:
-								printfPQExpBuffer(&buf, _("Disabled triggers:"));
+								if (pset.sversion >= 80300)
+									printfPQExpBuffer(&buf, _("Disabled user triggers:"));
+								else
+									printfPQExpBuffer(&buf, _("Disabled triggers:"));
 								break;
 							case 2:
-								printfPQExpBuffer(&buf, _("Triggers firing always:"));
+									printfPQExpBuffer(&buf, _("Disabled internal triggers:"));
 								break;
 							case 3:
+								printfPQExpBuffer(&buf, _("Triggers firing always:"));
+								break;
+							case 4:
 								printfPQExpBuffer(&buf, _("Triggers firing on replica only:"));
 								break;
 
