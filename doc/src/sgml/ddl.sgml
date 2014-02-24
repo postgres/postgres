@@ -1106,9 +1106,8 @@ CREATE TABLE circles (
     within a single transaction.  In practice this limit is not a
     problem &mdash; note that the limit is on the number of
     <acronym>SQL</acronym> commands, not the number of rows processed.
-    Also, as of <productname>PostgreSQL</productname> 8.3, only commands
-    that actually modify the database contents will consume a command
-    identifier.
+    Also, only commands that actually modify the database contents will
+    consume a command identifier.
    </para>
  </sect1>
 
@@ -1873,11 +1872,8 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
    </para>
 
    <para>
-    In <productname>PostgreSQL</productname> versions before 7.3,
-    table names beginning with <literal>pg_</> were reserved.  This is
-    no longer true: you can create such a table name if you wish, in
-    any non-system schema.  However, it's best to continue to avoid
-    such names, to ensure that you won't suffer a conflict if some
+    Since system table names begin with <literal>pg_</>, it is best to
+    avoid such names to ensure that you won't suffer a conflict if some
     future version defines a system table named the same as your
     table.  (With the default search path, an unqualified reference to
     your table name would then be resolved as the system table instead.)

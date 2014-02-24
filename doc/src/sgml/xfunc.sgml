@@ -1465,11 +1465,9 @@ CREATE FUNCTION test(int, int) RETURNS int
 
    <note>
     <para>
-     Before <productname>PostgreSQL</productname> release 8.0, the requirement
-     that <literal>STABLE</> and <literal>IMMUTABLE</> functions cannot modify
-     the database was not enforced by the system.  Releases 8.0 and later enforce it
-     by requiring SQL functions and procedural language functions of these
-     categories to contain no SQL commands other than <command>SELECT</>.
+     <productname>PostgreSQL</productname> requires that <literal>STABLE</>
+     and <literal>IMMUTABLE</> functions contain no SQL commands other
+     than <command>SELECT</> to prevent data modification.
      (This is not a completely bulletproof test, since such functions could
      still call <literal>VOLATILE</> functions that modify the database.
      If you do that, you will find that the <literal>STABLE</> or

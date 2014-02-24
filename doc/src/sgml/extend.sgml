@@ -1161,16 +1161,6 @@ include $(PGXS)
     or on the <literal>make</literal> command line.
    </para>
 
-   <caution>
-    <para>
-     Changing <varname>PG_CONFIG</varname> only works when building
-     against <productname>PostgreSQL</productname> 8.3 or later.
-     With older releases it does not work to set it to anything except
-     <literal>pg_config</>; you must alter your <varname>PATH</>
-     to select the installation to build against.
-    </para>
-   </caution>
-
    <para>
     You can also run <literal>make</literal> in a directory outside the source
     tree of your extension, if you want to keep the build directory separate.

@@ -2191,10 +2191,6 @@ CREATE VIEW phone_number WITH (security_barrier) AS
       </para>
      </listitem>
     </itemizedlist>
-
-    (This system was established in <productname>PostgreSQL</> 7.3.
-    In versions before that, the command status might show different
-    results when rules exist.)
 </para>
 
 <para>

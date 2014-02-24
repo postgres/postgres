@@ -27,12 +27,11 @@
   </tip>
 
  <para>
-  As of <productname>PostgreSQL</productname> 7.4, PL/Python is only
-  available as an <quote>untrusted</> language, meaning it does not
-  offer any way of restricting what users can do in it.  It has
-  therefore been renamed to <literal>plpythonu</>.  The trusted
-  variant <literal>plpython</> might become available again in future,
-  if a new secure execution mechanism is developed in Python.  The
+  PL/Python is only available as an <quote>untrusted</> language, meaning
+  it does not offer any way of restricting what users can do in it and
+  is therefore named <literal>plpythonu</>.  A trusted
+  variant <literal>plpython</> might become available in the future
+  if a secure execution mechanism is developed in Python.  The
   writer of a function in untrusted PL/Python must take care that the
   function cannot be used to do anything unwanted, since it will be
   able to do anything that could be done by a user logged in as the

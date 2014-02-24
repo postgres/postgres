@@ -236,19 +236,11 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE <replaceable
   </para>
 
   <para>
-   Prior to <productname>PostgreSQL</productname> 8.0, <command>CREATE
-   TABLE AS</command> always included OIDs in the table it
-   created.  As of <productname>PostgreSQL</productname> 8.0,
-   the <command>CREATE TABLE AS</command> command allows the user to
+   The <command>CREATE TABLE AS</command> command allows the user to
    explicitly specify whether OIDs should be included. If the
    presence of OIDs is not explicitly specified,
    the <xref linkend="guc-default-with-oids"> configuration variable is
-   used.  As of <productname>PostgreSQL</productname> 8.1,
-   this variable is false by default, so the default behavior is not
-   identical to pre-8.0 releases.  Applications that
-   require OIDs in the table created by <command>CREATE TABLE
-   AS</command> should explicitly specify <literal>WITH (OIDS)</literal>
-   to ensure desired behavior.
+   used.
   </para>
  </refsect1>
 

@@ -33,8 +33,7 @@ files, as shown in <xref linkend="pgdata-contents-table">.  In addition to
 these required items, the cluster configuration files
 <filename>postgresql.conf</filename>, <filename>pg_hba.conf</filename>, and
 <filename>pg_ident.conf</filename> are traditionally stored in
-<varname>PGDATA</> (although in <productname>PostgreSQL</productname> 8.0 and
-later, it is possible to place them elsewhere).
+<varname>PGDATA</>, although it is possible to place them elsewhere.
 </para>
 
 <table tocentry="1" id="pgdata-contents-table">

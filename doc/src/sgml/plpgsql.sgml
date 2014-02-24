@@ -388,9 +388,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 </programlisting>
-      The other way, which was the only way available before
-      <productname>PostgreSQL</productname> 8.0, is to explicitly
-      declare an alias, using the declaration syntax
+      The other way is to explicitly declare an alias, using the
+      declaration syntax
 
 <synopsis>
 <replaceable>name</replaceable> ALIAS FOR $<replaceable>n</replaceable>;

@@ -750,11 +750,7 @@ NUMERIC
 
     <note>
      <para>
-      Prior to <productname>PostgreSQL</productname> 7.4, the precision in
-      <type>float(<replaceable>p</replaceable>)</type> was taken to mean
-      so many <emphasis>decimal</> digits.  This has been corrected to match the SQL
-      standard, which specifies that the precision is measured in binary
-      digits.  The assumption that <type>real</type> and
+      The assumption that <type>real</type> and
       <type>double precision</type> have exactly 24 and 53 bits in the
       mantissa respectively is correct for IEEE-standard floating point
       implementations.  On non-IEEE platforms it might be off a little, but
@@ -848,16 +844,6 @@ ALTER SEQUENCE <replaceable class="parameter">tablename</replaceable>_<replaceab
         See <literal>nextval()</literal> in <xref linkend="functions-sequence">
         for details.
       </para>
-    </note>
-
-    <note>
-     <para>
-      Prior to <productname>PostgreSQL</productname> 7.3, <type>serial</type>
-      implied <literal>UNIQUE</literal>.  This is no longer automatic.  If
-      you wish a serial column to have a unique constraint or be a
-      primary key, it must now be specified, just like
-      any other data type.
-     </para>
     </note>
 
     <para>
@@ -1611,8 +1597,7 @@ SELECT E'\\xDEADBEEF';
      The SQL standard requires that writing just <type>timestamp</type>
      be equivalent to <type>timestamp without time
      zone</type>, and <productname>PostgreSQL</productname> honors that
-     behavior.  (Releases prior to 7.3 treated it as <type>timestamp
-     with time zone</type>.)  <type>timestamptz</type> is accepted as an
+     behavior.  <type>timestamptz</type> is accepted as an
      abbreviation for <type>timestamp with time zone</type>; this is a
      <productname>PostgreSQL</productname> extension.
     </para>

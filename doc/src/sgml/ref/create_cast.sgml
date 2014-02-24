@@ -332,17 +332,6 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
   </para>
 
   <para>
-   Prior to <productname>PostgreSQL</> 7.3, every function that had
-   the same name as a data type, returned that data type, and took one
-   argument of a different type was automatically a cast function.
-   This convention has been abandoned in face of the introduction of
-   schemas and to be able to represent binary-coercible casts in the
-   system catalogs.  The built-in cast functions still follow this naming
-   scheme, but they have to be shown as casts in the system catalog
-   <structname>pg_cast</> as well.
-  </para>
-
-  <para>
    While not required, it is recommended that you continue to follow this old
    convention of naming cast implementation functions after the target data
    type.  Many users are used to being able to cast data types using a

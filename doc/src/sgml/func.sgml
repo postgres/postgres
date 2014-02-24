@@ -3549,11 +3549,9 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
 
     <note>
      <para>
-      Prior to <productname>PostgreSQL</productname> 8.0, casting an
-      integer to <type>bit(n)</> would copy the leftmost <literal>n</>
-      bits of the integer, whereas now it copies the rightmost <literal>n</>
-      bits.  Also, casting an integer to a bit string width wider than
-      the integer itself will sign-extend on the left.
+      Casting an integer to <type>bit(n)</> copies the rightmost
+      <literal>n</> bits.  Casting an integer to a bit string width wider
+      than the integer itself will sign-extend on the left.
      </para>
     </note>
 
@@ -6959,12 +6957,6 @@ SELECT EXTRACT(CENTURY FROM TIMESTAMP '2001-02-16 20:38:40');
         If you disagree with this, please write your complaint to:
         Pope, Cathedral Saint-Peter of Roma, Vatican.
        </para>
-
-       <para>
-        <productname>PostgreSQL</productname> releases before 8.0 did not
-        follow the conventional numbering of centuries, but just returned
-        the year field divided by 100.
-       </para>
       </listitem>
      </varlistentry>
 
@@ -7159,12 +7151,6 @@ SELECT EXTRACT(MILLENNIUM FROM TIMESTAMP '2001-02-16 20:38:40');
        <para>
         Years in the 1900s are in the second millennium.
         The third millennium started January 1, 2001.
-       </para>
-
-       <para>
-        <productname>PostgreSQL</productname> releases before 8.0 did not
-        follow the conventional numbering of millennia, but just returned
-        the year field divided by 1000.
        </para>
       </listitem>
      </varlistentry>
@@ -10747,8 +10733,7 @@ nextval('foo'::text)      <lineannotation><literal>foo</literal> is looked up at
         next <function>nextval</function> will return exactly the specified
         value, and sequence advancement commences with the following
         <function>nextval</function>.  Furthermore, the value reported by
-        <function>currval</> is not changed in this case (this is a change
-        from pre-8.3 behavior).  For example,
+        <function>currval</> is not changed in this case.  For example,
 
 <screen>
 SELECT setval('foo', 42);           <lineannotation>Next <function>nextval</> will return 43</lineannotation>

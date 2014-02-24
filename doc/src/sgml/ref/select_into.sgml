@@ -106,12 +106,9 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replac
   </para>
 
   <para>
-   Prior to <productname>PostgreSQL</> 8.1, the table created by
-   <command>SELECT INTO</command> included OIDs by default. In
-   <productname>PostgreSQL</productname> 8.1, this is not the case
-   &mdash; to include OIDs in the new table, the <xref
-   linkend="guc-default-with-oids"> configuration variable must be
-   enabled. Alternatively, <command>CREATE TABLE AS</command> can be
+   To add OIDs to the table created by <command>SELECT INTO</command>,
+   enable the <xref linkend="guc-default-with-oids"> configuration
+   variable.  Alternatively, <command>CREATE TABLE AS</command> can be
    used with the <literal>WITH OIDS</literal> clause.
   </para>
  </refsect1>

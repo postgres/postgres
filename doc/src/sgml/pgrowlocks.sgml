@@ -113,8 +113,7 @@ SELECT * FROM accounts AS a, pgrowlocks('accounts') AS p
   WHERE p.locked_row = a.ctid;
 </programlisting>
 
-   Be aware however that (as of <productname>PostgreSQL</> 8.3) such a
-   query will be very inefficient.
+   Be aware however that such a query will be very inefficient.
   </para>
  </sect2>
 

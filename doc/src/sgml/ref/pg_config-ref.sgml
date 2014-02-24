@@ -297,15 +297,6 @@
   <title>Notes</title>
 
   <para>
-   The option <option>--includedir-server</option> was added in
-   <productname>PostgreSQL</> 7.2.  In prior releases, the server include files were
-   installed in the same location as the client headers, which could
-   be queried with the option <option>--includedir</option>.  To make your
-   package handle both cases, try the newer option first and test the
-   exit status to see whether it succeeded.
-  </para>
-
-  <para>
    The options <option>--docdir</option>, <option>--pkgincludedir</option>,
    <option>--localedir</option>, <option>--mandir</option>,
    <option>--sharedir</option>, <option>--sysconfdir</option>,
@@ -315,12 +306,6 @@
    and <option>--libs</option> were added in <productname>PostgreSQL</> 8.1.
    The option <option>--htmldir</option> was added in <productname>PostgreSQL</> 8.4.
    The option <option>--ldflags_ex</option> was added in <productname>PostgreSQL</> 9.0.
-  </para>
-
-  <para>
-   In releases prior to <productname>PostgreSQL</> 7.1, before
-   <command>pg_config</command> came to be, a method for finding the
-   equivalent configuration information did not exist.
   </para>
  </refsect1>
 
