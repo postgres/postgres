@@ -9604,7 +9604,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	PQExpBuffer asPart;
 	PGresult   *res;
 	char	   *funcsig;		/* identity signature */
-	char	   *funcfullsig;	/* full signature */
+	char	   *funcfullsig = NULL;	/* full signature */
 	char	   *funcsig_tag;
 	char	   *proretset;
 	char	   *prosrc;
@@ -9912,13 +9912,10 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 		funcsig = format_function_arguments(finfo, funciargs, false);
 	}
 	else
-	{
 		/* pre-8.4, do it ourselves */
 		funcsig = format_function_arguments_old(fout,
 												finfo, nallargs, allargtypes,
 												argmodes, argnames);
-		funcfullsig = funcsig;
-	}
 
 	funcsig_tag = format_function_signature(fout, finfo, false);
 
@@ -9929,7 +9926,8 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 					  fmtId(finfo->dobj.namespace->dobj.name),
 					  funcsig);
 
-	appendPQExpBuffer(q, "CREATE FUNCTION %s ", funcfullsig);
+	appendPQExpBuffer(q, "CREATE FUNCTION %s ", funcfullsig ? funcfullsig :
+					  funcsig);
 	if (funcresult)
 		appendPQExpBuffer(q, "RETURNS %s", funcresult);
 	else
@@ -10052,6 +10050,8 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	destroyPQExpBuffer(labelq);
 	destroyPQExpBuffer(asPart);
 	free(funcsig);
+	if (funcfullsig)
+		free(funcfullsig);
 	free(funcsig_tag);
 	if (allargtypes)
 		free(allargtypes);
@@ -11508,7 +11508,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	PQExpBuffer labelq;
 	PQExpBuffer details;
 	char	   *aggsig;			/* identity signature */
-	char	   *aggfullsig;		/* full signature */
+	char	   *aggfullsig = NULL;		/* full signature */
 	char	   *aggsig_tag;
 	PGresult   *res;
 	int			i_aggtransfn;
@@ -11656,11 +11656,8 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 		aggsig = format_function_arguments(&agginfo->aggfn, funciargs, true);
 	}
 	else
-	{
 		/* pre-8.4, do it ourselves */
 		aggsig = format_aggregate_signature(agginfo, fout, true);
-		aggfullsig = aggsig;
-	}
 
 	aggsig_tag = format_aggregate_signature(agginfo, fout, false);
 
@@ -11730,7 +11727,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 					  aggsig);
 
 	appendPQExpBuffer(q, "CREATE AGGREGATE %s (\n%s\n);\n",
-					  aggfullsig, details->data);
+					  aggfullsig ? aggfullsig : aggsig, details->data);
 
 	appendPQExpBuffer(labelq, "AGGREGATE %s", aggsig);
 
@@ -11773,6 +11770,8 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 			agginfo->aggfn.rolname, agginfo->aggfn.proacl);
 
 	free(aggsig);
+	if (aggfullsig)
+		free(aggfullsig);
 	free(aggsig_tag);
 
 	PQclear(res);
