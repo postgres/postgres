@@ -1213,7 +1213,7 @@ include 'filename'
        <para>
         Specifies the amount of memory to be used by internal sort operations
         and hash tables before writing to temporary disk files. The value
-        defaults to one megabyte (<literal>1MB</>).
+        defaults to four megabytes (<literal>4MB</>).
         Note that for a complex query, several sort or hash operations might be
         running in parallel; each operation will be allowed to use as much memory
         as this value specifies before it starts to write data into temporary
@@ -1239,7 +1239,7 @@ include 'filename'
         Specifies the maximum amount of memory to be used by maintenance
         operations, such as <command>VACUUM</command>, <command>CREATE
         INDEX</>, and <command>ALTER TABLE ADD FOREIGN KEY</>.  It defaults
-        to 16 megabytes (<literal>16MB</>).  Since only one of these
+        to 64 megabytes (<literal>64MB</>).  Since only one of these
         operations can be executed at a time by a database session, and
         an installation normally doesn't have many of them running
         concurrently, it's safe to set this value significantly larger

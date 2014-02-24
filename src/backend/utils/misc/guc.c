@@ -1773,7 +1773,7 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_KB
 		},
 		&work_mem,
-		1024, 64, MAX_KILOBYTES,
+		4096, 64, MAX_KILOBYTES,
 		NULL, NULL, NULL
 	},
 
@@ -1784,7 +1784,7 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_KB
 		},
 		&maintenance_work_mem,
-		16384, 1024, MAX_KILOBYTES,
+		65536, 1024, MAX_KILOBYTES,
 		NULL, NULL, NULL
 	},
 
