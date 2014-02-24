@@ -21,5 +21,5 @@ SELECT '0/16AE7F8' = '0/16AE7F8'::pg_lsn;
 SELECT '0/16AE7F8'::pg_lsn != '0/16AE7F7';
 SELECT '0/16AE7F7' < '0/16AE7F8'::pg_lsn;
 SELECT '0/16AE7F8' > pg_lsn '0/16AE7F7';
-SELECT '0/16AE7F7'::pg_lsn - '0/16AE7F8'::pg_lsn; -- No negative results
-SELECT '0/16AE7F8'::pg_lsn - '0/16AE7F7'::pg_lsn; -- correct
+SELECT '0/16AE7F7'::pg_lsn - '0/16AE7F8'::pg_lsn;
+SELECT '0/16AE7F8'::pg_lsn - '0/16AE7F7'::pg_lsn;
