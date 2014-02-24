@@ -5191,7 +5191,7 @@ poly_circle(PG_FUNCTION_ARGS)
 	CIRCLE	   *circle;
 	int			i;
 
-	if (poly->npts < 2)
+	if (poly->npts < 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("cannot convert empty polygon to circle")));
@@ -5213,11 +5213,6 @@ poly_circle(PG_FUNCTION_ARGS)
 	for (i = 0; i < poly->npts; i++)
 		circle->radius += point_dt(&poly->p[i], &circle->center);
 	circle->radius /= poly->npts;
-
-	if (FPzero(circle->radius))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cannot convert empty polygon to circle")));
 
 	PG_RETURN_CIRCLE_P(circle);
 }
