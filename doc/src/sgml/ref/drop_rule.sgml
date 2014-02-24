@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPRULE">
+ <indexterm zone="sql-droprule">
+  <primary>DROP RULE</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>DROP RULE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>DROP RULE</refname>
   <refpurpose>remove a rewrite rule</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-droprule">
-  <primary>DROP RULE</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

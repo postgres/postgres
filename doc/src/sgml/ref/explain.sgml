@@ -4,17 +4,6 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-EXPLAIN">
- <refmeta>
-  <refentrytitle>EXPLAIN</refentrytitle>
-  <manvolnum>7</manvolnum>
-  <refmiscinfo>SQL - Language Statements</refmiscinfo>
- </refmeta>
-
- <refnamediv>
-  <refname>EXPLAIN</refname>
-  <refpurpose>show the execution plan of a statement</refpurpose>
- </refnamediv>
-
  <indexterm zone="sql-explain">
   <primary>EXPLAIN</primary>
  </indexterm>
@@ -28,6 +17,17 @@ PostgreSQL documentation
   <primary>cursor</primary>
   <secondary>showing the query plan</secondary>
  </indexterm>
+
+ <refmeta>
+  <refentrytitle>EXPLAIN</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>EXPLAIN</refname>
+  <refpurpose>show the execution plan of a statement</refpurpose>
+ </refnamediv>
 
  <refsynopsisdiv>
 <synopsis>

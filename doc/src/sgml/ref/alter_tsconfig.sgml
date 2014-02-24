@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERTSCONFIG">
+ <indexterm zone="sql-altertsconfig">
+  <primary>ALTER TEXT SEARCH CONFIGURATION</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>ALTER TEXT SEARCH CONFIGURATION</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>ALTER TEXT SEARCH CONFIGURATION</refname>
   <refpurpose>change the definition of a text search configuration</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-altertsconfig">
-  <primary>ALTER TEXT SEARCH CONFIGURATION</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

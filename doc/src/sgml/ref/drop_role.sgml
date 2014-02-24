@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPROLE">
+ <indexterm zone="sql-droprole">
+  <primary>DROP ROLE</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>DROP ROLE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>DROP ROLE</refname>
   <refpurpose>remove a database role</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-droprole">
-  <primary>DROP ROLE</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATEAGGREGATE">
+ <indexterm zone="sql-createaggregate">
+  <primary>CREATE AGGREGATE</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>CREATE AGGREGATE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>CREATE AGGREGATE</refname>
   <refpurpose>define a new aggregate function</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-createaggregate">
-  <primary>CREATE AGGREGATE</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

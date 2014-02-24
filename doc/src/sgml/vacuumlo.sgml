@@ -1,6 +1,10 @@
 <!-- doc/src/sgml/vacuumlo.sgml -->
 
 <refentry id="vacuumlo">
+ <indexterm zone="vacuumlo">
+  <primary>vacuumlo</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle><application>vacuumlo</application></refentrytitle>
   <manvolnum>1</manvolnum>
@@ -11,10 +15,6 @@
   <refname>vacuumlo</refname>
   <refpurpose>remove orphaned large objects from a <productname>PostgreSQL</productname> database</refpurpose>
  </refnamediv>
-
- <indexterm zone="vacuumlo">
-  <primary>vacuumlo</primary>
- </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

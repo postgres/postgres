@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATEUSERMAPPING">
+ <indexterm zone="sql-createusermapping">
+  <primary>CREATE USER MAPPING</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>CREATE USER MAPPING</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>CREATE USER MAPPING</refname>
   <refpurpose>define a new mapping of a user to a foreign server</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-createusermapping">
-  <primary>CREATE USER MAPPING</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

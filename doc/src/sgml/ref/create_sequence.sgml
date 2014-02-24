@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATESEQUENCE">
+ <indexterm zone="sql-createsequence">
+  <primary>CREATE SEQUENCE</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>CREATE SEQUENCE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>CREATE SEQUENCE</refname>
   <refpurpose>define a new sequence generator</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-createsequence">
-  <primary>CREATE SEQUENCE</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

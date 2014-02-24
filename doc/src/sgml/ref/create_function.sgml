@@ -3,6 +3,10 @@ doc/src/sgml/ref/create_function.sgml
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
+ <indexterm zone="sql-createfunction">
+  <primary>CREATE FUNCTION</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>CREATE FUNCTION</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -13,10 +17,6 @@ doc/src/sgml/ref/create_function.sgml
   <refname>CREATE FUNCTION</refname>
   <refpurpose>define a new function</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-createfunction">
-  <primary>CREATE FUNCTION</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

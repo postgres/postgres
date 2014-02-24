@@ -4,6 +4,15 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-RELEASE-SAVEPOINT">
+ <indexterm zone="sql-release-savepoint">
+  <primary>RELEASE SAVEPOINT</primary>
+ </indexterm>
+
+ <indexterm zone="sql-release-savepoint">
+  <primary>savepoints</primary>
+  <secondary>releasing</secondary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>RELEASE SAVEPOINT</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,15 +23,6 @@ PostgreSQL documentation
   <refname>RELEASE SAVEPOINT</refname>
   <refpurpose>destroy a previously defined savepoint</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-release-savepoint">
-  <primary>RELEASE SAVEPOINT</primary>
- </indexterm>
-
- <indexterm zone="sql-release-savepoint">
-  <primary>savepoints</primary>
-  <secondary>releasing</secondary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

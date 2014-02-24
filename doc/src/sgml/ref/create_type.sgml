@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATETYPE">
+ <indexterm zone="sql-createtype">
+  <primary>CREATE TYPE</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>CREATE TYPE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>CREATE TYPE</refname>
   <refpurpose>define a new data type</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-createtype">
-  <primary>CREATE TYPE</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

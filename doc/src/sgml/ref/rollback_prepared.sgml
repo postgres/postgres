@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-ROLLBACK-PREPARED">
+ <indexterm zone="sql-rollback-prepared">
+  <primary>ROLLBACK PREPARED</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>ROLLBACK PREPARED</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>ROLLBACK PREPARED</refname>
   <refpurpose>cancel a transaction that was earlier prepared for two-phase commit</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-rollback-prepared">
-  <primary>ROLLBACK PREPARED</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

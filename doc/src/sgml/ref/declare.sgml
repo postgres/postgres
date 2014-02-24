@@ -4,6 +4,15 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-DECLARE">
+ <indexterm zone="sql-declare">
+  <primary>DECLARE</primary>
+ </indexterm>
+
+ <indexterm zone="sql-declare">
+  <primary>cursor</primary>
+  <secondary>DECLARE</secondary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>DECLARE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,15 +23,6 @@ PostgreSQL documentation
   <refname>DECLARE</refname>
   <refpurpose>define a cursor</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-declare">
-  <primary>DECLARE</primary>
- </indexterm>
-
- <indexterm zone="sql-declare">
-  <primary>cursor</primary>
-  <secondary>DECLARE</secondary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

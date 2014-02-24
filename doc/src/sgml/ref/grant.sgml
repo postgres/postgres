@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-GRANT">
+ <indexterm zone="sql-grant">
+  <primary>GRANT</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>GRANT</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>GRANT</refname>
   <refpurpose>define access privileges</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-grant">
-  <primary>GRANT</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

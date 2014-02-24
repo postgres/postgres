@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATEFOREIGNDATAWRAPPER">
+ <indexterm zone="sql-createforeigndatawrapper">
+  <primary>CREATE FOREIGN DATA WRAPPER</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>CREATE FOREIGN DATA WRAPPER</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>CREATE FOREIGN DATA WRAPPER</refname>
   <refpurpose>define a new foreign-data wrapper</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-createforeigndatawrapper">
-  <primary>CREATE FOREIGN DATA WRAPPER</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

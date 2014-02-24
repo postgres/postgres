@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERTYPE">
+ <indexterm zone="sql-altertype">
+  <primary>ALTER TYPE</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>ALTER TYPE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -16,10 +20,6 @@ PostgreSQL documentation
    change the definition of a type
   </refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-altertype">
-  <primary>ALTER TYPE</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

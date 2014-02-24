@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPVIEW">
+ <indexterm zone="sql-dropview">
+  <primary>DROP VIEW</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>DROP VIEW</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>DROP VIEW</refname>
   <refpurpose>remove a view</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-dropview">
-  <primary>DROP VIEW</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

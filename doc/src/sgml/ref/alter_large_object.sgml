@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERLARGEOBJECT">
+ <indexterm zone="sql-alterlargeobject">
+  <primary>ALTER LARGE OBJECT</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>ALTER LARGE OBJECT</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>ALTER LARGE OBJECT</refname>
   <refpurpose>change the definition of a large object</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-alterlargeobject">
-  <primary>ALTER LARGE OBJECT</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERINDEX">
+ <indexterm zone="sql-alterindex">
+  <primary>ALTER INDEX</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>ALTER INDEX</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>ALTER INDEX</refname>
   <refpurpose>change the definition of an index</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-alterindex">
-  <primary>ALTER INDEX</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

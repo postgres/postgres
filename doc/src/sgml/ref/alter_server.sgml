@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERSERVER">
+ <indexterm zone="sql-alterserver">
+  <primary>ALTER SERVER</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>ALTER SERVER</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>ALTER SERVER</refname>
   <refpurpose>change the definition of a foreign server</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-alterserver">
-  <primary>ALTER SERVER</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

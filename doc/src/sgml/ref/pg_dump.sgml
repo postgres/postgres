@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="APP-PGDUMP">
+ <indexterm zone="app-pgdump">
+  <primary>pg_dump</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>pg_dump</refentrytitle>
   <manvolnum>1</manvolnum>
@@ -17,10 +21,6 @@ PostgreSQL documentation
    extract a <productname>PostgreSQL</productname> database into a script file or other archive file
   </refpurpose>
  </refnamediv>
-
- <indexterm zone="app-pgdump">
-  <primary>pg_dump</primary>
- </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERTABLE">
+ <indexterm zone="sql-altertable">
+  <primary>ALTER TABLE</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>ALTER TABLE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>ALTER TABLE</refname>
   <refpurpose>change the definition of a table</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-altertable">
-  <primary>ALTER TABLE</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPAGGREGATE">
+ <indexterm zone="sql-dropaggregate">
+  <primary>DROP AGGREGATE</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>DROP AGGREGATE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>DROP AGGREGATE</refname>
   <refpurpose>remove an aggregate function</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-dropaggregate">
-  <primary>DROP AGGREGATE</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

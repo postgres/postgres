@@ -4,19 +4,6 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-SELECT">
- <refmeta>
-  <refentrytitle>SELECT</refentrytitle>
-  <manvolnum>7</manvolnum>
-  <refmiscinfo>SQL - Language Statements</refmiscinfo>
- </refmeta>
-
- <refnamediv>
-  <refname>SELECT</refname>
-  <refname>TABLE</refname>
-  <refname>WITH</refname>
-  <refpurpose>retrieve rows from a table or view</refpurpose>
- </refnamediv>
-
  <indexterm zone="sql-select">
   <primary>SELECT</primary>
  </indexterm>
@@ -29,6 +16,19 @@ PostgreSQL documentation
   <primary>WITH</primary>
   <secondary>in SELECT</secondary>
  </indexterm>
+
+ <refmeta>
+  <refentrytitle>SELECT</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>SELECT</refname>
+  <refname>TABLE</refname>
+  <refname>WITH</refname>
+  <refpurpose>retrieve rows from a table or view</refpurpose>
+ </refnamediv>
 
  <refsynopsisdiv>
 <synopsis>

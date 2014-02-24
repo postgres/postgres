@@ -1,6 +1,10 @@
 <!-- doc/src/sgml/pgbench.sgml -->
 
 <refentry id="pgbench">
+ <indexterm zone="pgbench">
+  <primary>pgbench</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle><application>pgbench</application></refentrytitle>
   <manvolnum>1</manvolnum>
@@ -11,10 +15,6 @@
   <refname>pgbench</refname>
   <refpurpose>run a benchmark test on <productname>PostgreSQL</productname></refpurpose>
  </refnamediv>
-
- <indexterm zone="pgbench">
-  <primary>pgbench</primary>
- </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

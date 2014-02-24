@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPUSERMAPPING">
+ <indexterm zone="sql-dropusermapping">
+  <primary>DROP USER MAPPING</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>DROP USER MAPPING</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>DROP USER MAPPING</refname>
   <refpurpose>remove a user mapping for a foreign server</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-dropusermapping">
-  <primary>DROP USER MAPPING</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

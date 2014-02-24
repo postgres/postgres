@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-DELETE">
+ <indexterm zone="sql-delete">
+  <primary>DELETE</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>DELETE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>DELETE</refname>
   <refpurpose>delete rows of a table</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-delete">
-  <primary>DELETE</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

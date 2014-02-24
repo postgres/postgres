@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERTSPARSER">
+ <indexterm zone="sql-altertsparser">
+  <primary>ALTER TEXT SEARCH PARSER</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>ALTER TEXT SEARCH PARSER</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>ALTER TEXT SEARCH PARSER</refname>
   <refpurpose>change the definition of a text search parser</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-altertsparser">
-  <primary>ALTER TEXT SEARCH PARSER</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

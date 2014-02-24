@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-INSERT">
+ <indexterm zone="sql-insert">
+  <primary>INSERT</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>INSERT</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>INSERT</refname>
   <refpurpose>create new rows in a table</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-insert">
-  <primary>INSERT</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

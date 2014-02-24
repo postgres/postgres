@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPDOMAIN">
+ <indexterm zone="sql-dropdomain">
+  <primary>DROP DOMAIN</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>DROP DOMAIN</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>DROP DOMAIN</refname>
   <refpurpose>remove a domain</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-dropdomain">
-  <primary>DROP DOMAIN</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

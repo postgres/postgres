@@ -1,6 +1,10 @@
 <!-- doc/src/sggml/ref/drop_foreign_table.sgml -->
 
 <refentry id="SQL-DROPFOREIGNTABLE">
+ <indexterm zone="sql-dropforeigntable">
+  <primary>DROP FOREIGN TABLE</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>DROP FOREIGN TABLE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -11,10 +15,6 @@
   <refname>DROP FOREIGN TABLE</refname>
   <refpurpose>remove a foreign table</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-dropforeigntable">
-  <primary>DROP FOREIGN TABLE</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

@@ -63,6 +63,8 @@
  <title>Interface Functions</title>
 
  <refentry id="spi-spi-connect">
+  <indexterm><primary>SPI_connect</primary></indexterm>
+
   <refmeta>
    <refentrytitle>SPI_connect</refentrytitle>
    <manvolnum>3</manvolnum>
@@ -72,8 +74,6 @@
    <refname>SPI_connect</refname>
    <refpurpose>connect a procedure to the SPI manager</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_connect</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -135,6 +135,8 @@ int SPI_connect(void)
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-finish">
+ <indexterm><primary>SPI_finish</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_finish</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -144,8 +146,6 @@ int SPI_connect(void)
   <refname>SPI_finish</refname>
   <refpurpose>disconnect a procedure from the SPI manager</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_finish</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -201,6 +201,8 @@ int SPI_finish(void)
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-push">
+ <indexterm><primary>SPI_push</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_push</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -210,8 +212,6 @@ int SPI_finish(void)
   <refname>SPI_push</refname>
   <refpurpose>push SPI stack to allow recursive SPI usage</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_push</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -249,6 +249,8 @@ void SPI_push(void)
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-pop">
+ <indexterm><primary>SPI_pop</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_pop</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -258,8 +260,6 @@ void SPI_push(void)
   <refname>SPI_pop</refname>
   <refpurpose>pop SPI stack to return from recursive SPI usage</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_pop</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -281,6 +281,8 @@ void SPI_pop(void)
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-execute">
+ <indexterm><primary>SPI_execute</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_execute</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -290,8 +292,6 @@ void SPI_pop(void)
   <refname>SPI_execute</refname>
   <refpurpose>execute a command</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_execute</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -637,6 +637,8 @@ typedef struct
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-exec">
+ <indexterm><primary>SPI_exec</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_exec</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -646,8 +648,6 @@ typedef struct
   <refname>SPI_exec</refname>
   <refpurpose>execute a read/write command</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_exec</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -703,6 +703,8 @@ int SPI_exec(const char * <parameter>command</parameter>, long <parameter>count<
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-execute-with-args">
+ <indexterm><primary>SPI_execute_with_args</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_execute_with_args</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -712,8 +714,6 @@ int SPI_exec(const char * <parameter>command</parameter>, long <parameter>count<
   <refname>SPI_execute_with_args</refname>
   <refpurpose>execute a command with out-of-line parameters</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_execute_with_args</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -856,6 +856,8 @@ int SPI_execute_with_args(const char *<parameter>command</parameter>,
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-prepare">
+ <indexterm><primary>SPI_prepare</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_prepare</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -865,8 +867,6 @@ int SPI_execute_with_args(const char *<parameter>command</parameter>,
   <refname>SPI_prepare</refname>
   <refpurpose>prepare a statement, without executing it yet</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_prepare</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -1018,6 +1018,8 @@ SPIPlanPtr SPI_prepare(const char * <parameter>command</parameter>, int <paramet
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-prepare-cursor">
+ <indexterm><primary>SPI_prepare_cursor</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_prepare_cursor</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -1027,8 +1029,6 @@ SPIPlanPtr SPI_prepare(const char * <parameter>command</parameter>, int <paramet
   <refname>SPI_prepare_cursor</refname>
   <refpurpose>prepare a statement, without executing it yet</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_prepare_cursor</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -1120,6 +1120,8 @@ SPIPlanPtr SPI_prepare_cursor(const char * <parameter>command</parameter>, int <
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-prepare-params">
+ <indexterm><primary>SPI_prepare_params</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_prepare_params</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -1129,8 +1131,6 @@ SPIPlanPtr SPI_prepare_cursor(const char * <parameter>command</parameter>, int <
   <refname>SPI_prepare_params</refname>
   <refpurpose>prepare a statement, without executing it yet</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_prepare_params</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -1208,6 +1208,8 @@ SPIPlanPtr SPI_prepare_params(const char * <parameter>command</parameter>,
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-getargcount">
+ <indexterm><primary>SPI_getargcount</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_getargcount</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -1218,8 +1220,6 @@ SPIPlanPtr SPI_prepare_params(const char * <parameter>command</parameter>,
   <refpurpose>return the number of arguments needed by a statement
   prepared by <function>SPI_prepare</function></refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_getargcount</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -1265,6 +1265,8 @@ int SPI_getargcount(SPIPlanPtr <parameter>plan</parameter>)
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-getargtypeid">
+ <indexterm><primary>SPI_getargtypeid</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_getargtypeid</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -1275,8 +1277,6 @@ int SPI_getargcount(SPIPlanPtr <parameter>plan</parameter>)
   <refpurpose>return the data type OID for an argument of
   a statement prepared by <function>SPI_prepare</function></refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_getargtypeid</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -1335,6 +1335,8 @@ Oid SPI_getargtypeid(SPIPlanPtr <parameter>plan</parameter>, int <parameter>argI
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-is-cursor-plan">
+ <indexterm><primary>SPI_is_cursor_plan</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_is_cursor_plan</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -1346,8 +1348,6 @@ Oid SPI_getargtypeid(SPIPlanPtr <parameter>plan</parameter>, int <parameter>argI
   prepared by <function>SPI_prepare</function> can be used with
   <function>SPI_cursor_open</function></refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_is_cursor_plan</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -1404,6 +1404,8 @@ bool SPI_is_cursor_plan(SPIPlanPtr <parameter>plan</parameter>)
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-execute-plan">
+ <indexterm><primary>SPI_execute_plan</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_execute_plan</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -1413,8 +1415,6 @@ bool SPI_is_cursor_plan(SPIPlanPtr <parameter>plan</parameter>)
   <refname>SPI_execute_plan</refname>
   <refpurpose>execute a statement prepared by <function>SPI_prepare</function></refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_execute_plan</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -1540,6 +1540,8 @@ int SPI_execute_plan(SPIPlanPtr <parameter>plan</parameter>, Datum * <parameter>
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-execute-plan-with-paramlist">
+ <indexterm><primary>SPI_execute_plan_with_paramlist</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_execute_plan_with_paramlist</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -1549,8 +1551,6 @@ int SPI_execute_plan(SPIPlanPtr <parameter>plan</parameter>, Datum * <parameter>
   <refname>SPI_execute_plan_with_paramlist</refname>
   <refpurpose>execute a statement prepared by <function>SPI_prepare</function></refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_execute_plan_with_paramlist</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -1635,6 +1635,8 @@ int SPI_execute_plan_with_paramlist(SPIPlanPtr <parameter>plan</parameter>,
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-execp">
+ <indexterm><primary>SPI_execp</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_execp</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -1644,8 +1646,6 @@ int SPI_execute_plan_with_paramlist(SPIPlanPtr <parameter>plan</parameter>,
   <refname>SPI_execp</refname>
   <refpurpose>execute a statement in read/write mode</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_execp</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -1739,6 +1739,8 @@ int SPI_execp(SPIPlanPtr <parameter>plan</parameter>, Datum * <parameter>values<
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-cursor-open">
+ <indexterm><primary>SPI_cursor_open</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_cursor_open</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -1748,8 +1750,6 @@ int SPI_execp(SPIPlanPtr <parameter>plan</parameter>, Datum * <parameter>values<
   <refname>SPI_cursor_open</refname>
   <refpurpose>set up a cursor using a statement created with <function>SPI_prepare</function></refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_cursor_open</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -1863,6 +1863,8 @@ Portal SPI_cursor_open(const char * <parameter>name</parameter>, SPIPlanPtr <par
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-cursor-open-with-args">
+ <indexterm><primary>SPI_cursor_open_with_args</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_cursor_open_with_args</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -1872,8 +1874,6 @@ Portal SPI_cursor_open(const char * <parameter>name</parameter>, SPIPlanPtr <par
   <refname>SPI_cursor_open_with_args</refname>
   <refpurpose>set up a cursor using a query and parameters</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_cursor_open_with_args</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -2016,6 +2016,8 @@ Portal SPI_cursor_open_with_args(const char *<parameter>name</parameter>,
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-cursor-open-with-paramlist">
+ <indexterm><primary>SPI_cursor_open_with_paramlist</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_cursor_open_with_paramlist</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -2025,8 +2027,6 @@ Portal SPI_cursor_open_with_args(const char *<parameter>name</parameter>,
   <refname>SPI_cursor_open_with_paramlist</refname>
   <refpurpose>set up a cursor using parameters</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_cursor_open_with_paramlist</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -2112,6 +2112,8 @@ Portal SPI_cursor_open_with_paramlist(const char *<parameter>name</parameter>,
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-cursor-find">
+ <indexterm><primary>SPI_cursor_find</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_cursor_find</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -2121,8 +2123,6 @@ Portal SPI_cursor_open_with_paramlist(const char *<parameter>name</parameter>,
   <refname>SPI_cursor_find</refname>
   <refpurpose>find an existing cursor by name</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_cursor_find</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -2168,6 +2168,8 @@ Portal SPI_cursor_find(const char * <parameter>name</parameter>)
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-cursor-fetch">
+ <indexterm><primary>SPI_cursor_fetch</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_cursor_fetch</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -2177,8 +2179,6 @@ Portal SPI_cursor_find(const char * <parameter>name</parameter>)
   <refname>SPI_cursor_fetch</refname>
   <refpurpose>fetch some rows from a cursor</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_cursor_fetch</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -2253,6 +2253,8 @@ void SPI_cursor_fetch(Portal <parameter>portal</parameter>, bool <parameter>forw
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-cursor-move">
+ <indexterm><primary>SPI_cursor_move</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_cursor_move</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -2262,8 +2264,6 @@ void SPI_cursor_fetch(Portal <parameter>portal</parameter>, bool <parameter>forw
   <refname>SPI_cursor_move</refname>
   <refpurpose>move a cursor</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_cursor_move</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -2328,6 +2328,8 @@ void SPI_cursor_move(Portal <parameter>portal</parameter>, bool <parameter>forwa
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-scroll-cursor-fetch">
+ <indexterm><primary>SPI_scroll_cursor_fetch</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_scroll_cursor_fetch</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -2337,8 +2339,6 @@ void SPI_cursor_move(Portal <parameter>portal</parameter>, bool <parameter>forwa
   <refname>SPI_scroll_cursor_fetch</refname>
   <refpurpose>fetch some rows from a cursor</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_scroll_cursor_fetch</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -2427,6 +2427,8 @@ void SPI_scroll_cursor_fetch(Portal <parameter>portal</parameter>, FetchDirectio
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-scroll-cursor-move">
+ <indexterm><primary>SPI_scroll_cursor_move</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_scroll_cursor_move</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -2436,8 +2438,6 @@ void SPI_scroll_cursor_fetch(Portal <parameter>portal</parameter>, FetchDirectio
   <refname>SPI_scroll_cursor_move</refname>
   <refpurpose>move a cursor</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_scroll_cursor_move</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -2528,6 +2528,8 @@ void SPI_scroll_cursor_move(Portal <parameter>portal</parameter>, FetchDirection
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-cursor-close">
+ <indexterm><primary>SPI_cursor_close</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_cursor_close</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -2537,8 +2539,6 @@ void SPI_scroll_cursor_move(Portal <parameter>portal</parameter>, FetchDirection
   <refname>SPI_cursor_close</refname>
   <refpurpose>close a cursor</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_cursor_close</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -2580,6 +2580,8 @@ void SPI_cursor_close(Portal <parameter>portal</parameter>)
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-keepplan">
+ <indexterm><primary>SPI_keepplan</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_keepplan</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -2589,8 +2591,6 @@ void SPI_cursor_close(Portal <parameter>portal</parameter>)
   <refname>SPI_keepplan</refname>
   <refpurpose>save a prepared statement</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_keepplan</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -2649,6 +2649,8 @@ int SPI_keepplan(SPIPlanPtr <parameter>plan</parameter>)
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-saveplan">
+ <indexterm><primary>SPI_saveplan</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_saveplan</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -2658,8 +2660,6 @@ int SPI_keepplan(SPIPlanPtr <parameter>plan</parameter>)
   <refname>SPI_saveplan</refname>
   <refpurpose>save a prepared statement</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_saveplan</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -2760,6 +2760,8 @@ SPIPlanPtr SPI_saveplan(SPIPlanPtr <parameter>plan</parameter>)
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-fname">
+ <indexterm><primary>SPI_fname</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_fname</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -2769,8 +2771,6 @@ SPIPlanPtr SPI_saveplan(SPIPlanPtr <parameter>plan</parameter>)
   <refname>SPI_fname</refname>
   <refpurpose>determine the column name for the specified column number</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_fname</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -2827,6 +2827,8 @@ char * SPI_fname(TupleDesc <parameter>rowdesc</parameter>, int <parameter>colnum
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-fnumber">
+ <indexterm><primary>SPI_fnumber</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_fnumber</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -2836,8 +2838,6 @@ char * SPI_fname(TupleDesc <parameter>rowdesc</parameter>, int <parameter>colnum
   <refname>SPI_fnumber</refname>
   <refpurpose>determine the column number for the specified column name</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_fnumber</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -2901,6 +2901,8 @@ int SPI_fnumber(TupleDesc <parameter>rowdesc</parameter>, const char * <paramete
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-getvalue">
+ <indexterm><primary>SPI_getvalue</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_getvalue</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -2910,8 +2912,6 @@ int SPI_fnumber(TupleDesc <parameter>rowdesc</parameter>, const char * <paramete
   <refname>SPI_getvalue</refname>
   <refpurpose>return the string value of the specified column</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_getvalue</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -2985,6 +2985,8 @@ char * SPI_getvalue(HeapTuple <parameter>row</parameter>, TupleDesc <parameter>r
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-getbinval">
+ <indexterm><primary>SPI_getbinval</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_getbinval</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -2994,8 +2996,6 @@ char * SPI_getvalue(HeapTuple <parameter>row</parameter>, TupleDesc <parameter>r
   <refname>SPI_getbinval</refname>
   <refpurpose>return the binary value of the specified column</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_getbinval</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -3080,6 +3080,8 @@ Datum SPI_getbinval(HeapTuple <parameter>row</parameter>, TupleDesc <parameter>r
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-gettype">
+ <indexterm><primary>SPI_gettype</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_gettype</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -3089,8 +3091,6 @@ Datum SPI_getbinval(HeapTuple <parameter>row</parameter>, TupleDesc <parameter>r
   <refname>SPI_gettype</refname>
   <refpurpose>return the data type name of the specified column</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_gettype</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -3146,6 +3146,8 @@ char * SPI_gettype(TupleDesc <parameter>rowdesc</parameter>, int <parameter>coln
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-gettypeid">
+ <indexterm><primary>SPI_gettypeid</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_gettypeid</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -3155,8 +3157,6 @@ char * SPI_gettype(TupleDesc <parameter>rowdesc</parameter>, int <parameter>coln
   <refname>SPI_gettypeid</refname>
   <refpurpose>return the data type <acronym>OID</acronym> of the specified column</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_gettypeid</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -3212,6 +3212,8 @@ Oid SPI_gettypeid(TupleDesc <parameter>rowdesc</parameter>, int <parameter>colnu
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-getrelname">
+ <indexterm><primary>SPI_getrelname</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_getrelname</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -3221,8 +3223,6 @@ Oid SPI_gettypeid(TupleDesc <parameter>rowdesc</parameter>, int <parameter>colnu
   <refname>SPI_getrelname</refname>
   <refpurpose>return the name of the specified relation</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_getrelname</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -3265,6 +3265,8 @@ char * SPI_getrelname(Relation <parameter>rel</parameter>)
 </refentry>
 
 <refentry id="spi-spi-getnspname">
+ <indexterm><primary>SPI_getnspname</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_getnspname</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -3274,8 +3276,6 @@ char * SPI_getrelname(Relation <parameter>rel</parameter>)
   <refname>SPI_getnspname</refname>
   <refpurpose>return the namespace of the specified relation</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_getnspname</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -3400,6 +3400,8 @@ char * SPI_getnspname(Relation <parameter>rel</parameter>)
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-palloc">
+ <indexterm><primary>SPI_palloc</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_palloc</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -3409,8 +3411,6 @@ char * SPI_getnspname(Relation <parameter>rel</parameter>)
   <refname>SPI_palloc</refname>
   <refpurpose>allocate memory in the upper executor context</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_palloc</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -3454,6 +3454,8 @@ void * SPI_palloc(Size <parameter>size</parameter>)
 <!-- *********************************************** -->
 
 <refentry id="spi-realloc">
+ <indexterm><primary>SPI_repalloc</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_repalloc</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -3463,8 +3465,6 @@ void * SPI_palloc(Size <parameter>size</parameter>)
   <refname>SPI_repalloc</refname>
   <refpurpose>reallocate memory in the upper executor context</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_repalloc</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -3524,6 +3524,8 @@ void * SPI_repalloc(void * <parameter>pointer</parameter>, Size <parameter>size<
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-pfree">
+ <indexterm><primary>SPI_pfree</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_pfree</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -3533,8 +3535,6 @@ void * SPI_repalloc(void * <parameter>pointer</parameter>, Size <parameter>size<
   <refname>SPI_pfree</refname>
   <refpurpose>free memory in the upper executor context</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_pfree</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -3577,6 +3577,8 @@ void SPI_pfree(void * <parameter>pointer</parameter>)
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-copytuple">
+ <indexterm><primary>SPI_copytuple</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_copytuple</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -3586,8 +3588,6 @@ void SPI_pfree(void * <parameter>pointer</parameter>)
   <refname>SPI_copytuple</refname>
   <refpurpose>make a copy of a row in the upper executor context</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_copytuple</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -3634,6 +3634,8 @@ HeapTuple SPI_copytuple(HeapTuple <parameter>row</parameter>)
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-returntuple">
+ <indexterm><primary>SPI_returntuple</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_returntuple</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -3643,8 +3645,6 @@ HeapTuple SPI_copytuple(HeapTuple <parameter>row</parameter>)
   <refname>SPI_returntuple</refname>
   <refpurpose>prepare to return a tuple as a Datum</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_returntuple</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -3709,6 +3709,8 @@ HeapTupleHeader SPI_returntuple(HeapTuple <parameter>row</parameter>, TupleDesc 
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-modifytuple">
+ <indexterm><primary>SPI_modifytuple</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_modifytuple</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -3718,8 +3720,6 @@ HeapTupleHeader SPI_returntuple(HeapTuple <parameter>row</parameter>, TupleDesc 
   <refname>SPI_modifytuple</refname>
   <refpurpose>create a row by replacing selected fields of a given row</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_modifytuple</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -3857,6 +3857,8 @@ HeapTuple SPI_modifytuple(Relation <parameter>rel</parameter>, HeapTuple <parame
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-freetuple">
+ <indexterm><primary>SPI_freetuple</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_freetuple</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -3866,8 +3868,6 @@ HeapTuple SPI_modifytuple(Relation <parameter>rel</parameter>, HeapTuple <parame
   <refname>SPI_freetuple</refname>
   <refpurpose>free a row allocated in the upper executor context</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_freetuple</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -3909,6 +3909,8 @@ void SPI_freetuple(HeapTuple <parameter>row</parameter>)
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-freetupletable">
+ <indexterm><primary>SPI_freetuptable</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_freetuptable</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -3919,8 +3921,6 @@ void SPI_freetuple(HeapTuple <parameter>row</parameter>)
   <refpurpose>free a row set created by <function>SPI_execute</> or a similar
   function</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_freetuptable</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -3976,6 +3976,8 @@ void SPI_freetuptable(SPITupleTable * <parameter>tuptable</parameter>)
 <!-- *********************************************** -->
 
 <refentry id="spi-spi-freeplan">
+ <indexterm><primary>SPI_freeplan</primary></indexterm>
+
  <refmeta>
   <refentrytitle>SPI_freeplan</refentrytitle>
   <manvolnum>3</manvolnum>
@@ -3985,8 +3987,6 @@ void SPI_freetuptable(SPITupleTable * <parameter>tuptable</parameter>)
   <refname>SPI_freeplan</refname>
   <refpurpose>free a previously saved prepared statement</refpurpose>
  </refnamediv>
-
- <indexterm><primary>SPI_freeplan</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>

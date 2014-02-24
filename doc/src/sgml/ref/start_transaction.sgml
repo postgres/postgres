@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-START-TRANSACTION">
+ <indexterm zone="sql-start-transaction">
+  <primary>START TRANSACTION</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>START TRANSACTION</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>START TRANSACTION</refname>
   <refpurpose>start a transaction block</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-start-transaction">
-  <primary>START TRANSACTION</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

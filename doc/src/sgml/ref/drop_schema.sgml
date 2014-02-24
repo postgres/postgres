@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPSCHEMA">
+ <indexterm zone="sql-dropschema">
+  <primary>DROP SCHEMA</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>DROP SCHEMA</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>DROP SCHEMA</refname>
   <refpurpose>remove a schema</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-dropschema">
-  <primary>DROP SCHEMA</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

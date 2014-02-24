@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERSYSTEM">
+ <indexterm zone="sql-altersystem">
+  <primary>ALTER SYSTEM</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>ALTER SYSTEM</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>ALTER SYSTEM</refname>
   <refpurpose>change a server configuration parameter</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-altersystem">
-  <primary>ALTER SYSTEM</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

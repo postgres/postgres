@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERTABLESPACE">
+ <indexterm zone="sql-altertablespace">
+  <primary>ALTER TABLESPACE</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>ALTER TABLESPACE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>ALTER TABLESPACE</refname>
   <refpurpose>change the definition of a tablespace or affect objects of a tablespace</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-altertablespace">
-  <primary>ALTER TABLESPACE</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

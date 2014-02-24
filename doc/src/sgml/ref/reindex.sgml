@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-REINDEX">
+ <indexterm zone="sql-reindex">
+  <primary>REINDEX</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>REINDEX</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>REINDEX</refname>
   <refpurpose>rebuild indexes</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-reindex">
-  <primary>REINDEX</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPUSER">
+ <indexterm zone="sql-dropuser">
+  <primary>DROP USER</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>DROP USER</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>DROP USER</refname>
   <refpurpose>remove a database role</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-dropuser">
-  <primary>DROP USER</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

@@ -4,6 +4,15 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-DEALLOCATE">
+ <indexterm zone="sql-deallocate">
+  <primary>DEALLOCATE</primary>
+ </indexterm>
+
+ <indexterm zone="sql-deallocate">
+  <primary>prepared statements</primary>
+  <secondary>removing</secondary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>DEALLOCATE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,15 +23,6 @@ PostgreSQL documentation
   <refname>DEALLOCATE</refname>
   <refpurpose>deallocate a prepared statement</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-deallocate">
-  <primary>DEALLOCATE</primary>
- </indexterm>
-
- <indexterm zone="sql-deallocate">
-  <primary>prepared statements</primary>
-  <secondary>removing</secondary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

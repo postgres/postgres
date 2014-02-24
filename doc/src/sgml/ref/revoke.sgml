@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-REVOKE">
+ <indexterm zone="sql-revoke">
+  <primary>REVOKE</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>REVOKE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>REVOKE</refname>
   <refpurpose>remove access privileges</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-revoke">
-  <primary>REVOKE</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

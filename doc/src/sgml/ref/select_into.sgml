@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-SELECTINTO">
+ <indexterm zone="sql-selectinto">
+  <primary>SELECT INTO</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>SELECT INTO</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>SELECT INTO</refname>
   <refpurpose>define a new table from the results of a query</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-selectinto">
-  <primary>SELECT INTO</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

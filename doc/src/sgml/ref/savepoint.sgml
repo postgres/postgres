@@ -4,6 +4,15 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-SAVEPOINT">
+ <indexterm zone="sql-savepoint">
+  <primary>SAVEPOINT</primary>
+ </indexterm>
+
+ <indexterm zone="sql-savepoint">
+  <primary>savepoints</primary>
+  <secondary>defining</secondary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>SAVEPOINT</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,15 +23,6 @@ PostgreSQL documentation
   <refname>SAVEPOINT</refname>
   <refpurpose>define a new savepoint within the current transaction</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-savepoint">
-  <primary>SAVEPOINT</primary>
- </indexterm>
-
- <indexterm zone="sql-savepoint">
-  <primary>savepoints</primary>
-  <secondary>defining</secondary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

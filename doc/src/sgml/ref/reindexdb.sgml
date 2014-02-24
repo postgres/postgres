@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="APP-REINDEXDB">
+ <indexterm zone="app-reindexdb">
+  <primary>reindexdb</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle><application>reindexdb</application></refentrytitle>
   <manvolnum>1</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname id="reindexdb">reindexdb</refname>
   <refpurpose>reindex a <productname>PostgreSQL</productname> database</refpurpose>
  </refnamediv>
-
- <indexterm zone="app-reindexdb">
-  <primary>reindexdb</primary>
- </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

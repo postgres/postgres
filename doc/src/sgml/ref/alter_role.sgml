@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERROLE">
+ <indexterm zone="sql-alterrole">
+  <primary>ALTER ROLE</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>ALTER ROLE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>ALTER ROLE</refname>
   <refpurpose>change a database role</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-alterrole">
-  <primary>ALTER ROLE</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

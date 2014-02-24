@@ -1,6 +1,10 @@
 <!-- doc/src/sgml/oid2name.sgml -->
 
 <refentry id="oid2name">
+ <indexterm zone="oid2name">
+  <primary>oid2name</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>oid2name</refentrytitle>
   <manvolnum>1</manvolnum>
@@ -11,10 +15,6 @@
   <refname>oid2name</refname>
   <refpurpose>resolve OIDs and file nodes in a <productname>PostgreSQL</productname> data directory</refpurpose>
  </refnamediv>
-
- <indexterm zone="oid2name">
-  <primary>oid2name</primary>
- </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

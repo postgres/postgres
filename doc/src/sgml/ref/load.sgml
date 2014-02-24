@@ -3,6 +3,10 @@ doc/src/sgml/ref/load.sgml
 -->
 
 <refentry id="SQL-LOAD">
+ <indexterm zone="sql-load">
+  <primary>LOAD</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>LOAD</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -13,10 +17,6 @@ doc/src/sgml/ref/load.sgml
   <refname>LOAD</refname>
   <refpurpose>load a shared library file</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-load">
-  <primary>LOAD</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

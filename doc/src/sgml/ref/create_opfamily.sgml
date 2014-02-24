@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATEOPFAMILY">
+ <indexterm zone="sql-createopfamily">
+  <primary>CREATE OPERATOR FAMILY</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>CREATE OPERATOR FAMILY</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>CREATE OPERATOR FAMILY</refname>
   <refpurpose>define a new operator family</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-createopfamily">
-  <primary>CREATE OPERATOR FAMILY</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

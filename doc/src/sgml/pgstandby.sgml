@@ -1,6 +1,10 @@
 <!-- doc/src/sgml/pgstandby.sgml -->
 
 <refentry id="pgstandby">
+ <indexterm zone="pgstandby">
+  <primary>pg_standby</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle><application>pg_standby</application></refentrytitle>
   <manvolnum>1</manvolnum>
@@ -11,10 +15,6 @@
   <refname>pg_standby</refname>
   <refpurpose>supports the creation of a <productname>PostgreSQL</productname> warm standby server</refpurpose>
  </refnamediv>
-
- <indexterm zone="pgstandby">
-  <primary>pg_standby</primary>
- </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

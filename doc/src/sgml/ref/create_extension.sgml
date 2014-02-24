@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATEEXTENSION">
+ <indexterm zone="sql-createextension">
+  <primary>CREATE EXTENSION</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>CREATE EXTENSION</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>CREATE EXTENSION</refname>
   <refpurpose>install an extension</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-createextension">
-  <primary>CREATE EXTENSION</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

@@ -1,6 +1,10 @@
 <!-- doc/src/sgml/pgtestfsync.sgml -->
 
 <refentry id="pgtestfsync">
+ <indexterm zone="pgtestfsync">
+  <primary>pg_test_fsync</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle><application>pg_test_fsync</application></refentrytitle>
   <manvolnum>1</manvolnum>
@@ -11,10 +15,6 @@
   <refname>pg_test_fsync</refname>
   <refpurpose>determine fastest wal_sync_method for <productname>PostgreSQL</productname></refpurpose>
  </refnamediv>
-
- <indexterm zone="pgtestfsync">
-  <primary>pg_test_fsync</primary>
- </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

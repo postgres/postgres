@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPOPFAMILY">
+ <indexterm zone="sql-dropopfamily">
+  <primary>DROP OPERATOR FAMILY</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>DROP OPERATOR FAMILY</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>DROP OPERATOR FAMILY</refname>
   <refpurpose>remove an operator family</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-dropopfamily">
-  <primary>DROP OPERATOR FAMILY</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

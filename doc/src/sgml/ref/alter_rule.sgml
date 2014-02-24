@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERRULE">
+ <indexterm zone="sql-alterrule">
+  <primary>ALTER RULE</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>ALTER RULE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>ALTER RULE</refname>
   <refpurpose>change the definition of a rule</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-alterrule">
-  <primary>ALTER RULE</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

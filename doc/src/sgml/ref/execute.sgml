@@ -4,6 +4,15 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-EXECUTE">
+ <indexterm zone="sql-execute">
+  <primary>EXECUTE</primary>
+ </indexterm>
+
+ <indexterm zone="sql-execute">
+  <primary>prepared statements</primary>
+  <secondary>executing</secondary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>EXECUTE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,15 +23,6 @@ PostgreSQL documentation
   <refname>EXECUTE</refname>
   <refpurpose>execute a prepared statement</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-execute">
-  <primary>EXECUTE</primary>
- </indexterm>
-
- <indexterm zone="sql-execute">
-  <primary>prepared statements</primary>
-  <secondary>executing</secondary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

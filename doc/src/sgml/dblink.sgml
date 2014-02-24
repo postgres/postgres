@@ -19,6 +19,10 @@
  </para>
 
  <refentry id="CONTRIB-DBLINK-CONNECT">
+  <indexterm>
+   <primary>dblink_connect</primary>
+  </indexterm>
+
   <refmeta>
    <refentrytitle>dblink_connect</refentrytitle>
    <manvolnum>3</manvolnum>
@@ -28,10 +32,6 @@
    <refname>dblink_connect</refname>
    <refpurpose>opens a persistent connection to a remote database</refpurpose>
   </refnamediv>
-
-  <indexterm>
-   <primary>dblink_connect</primary>
-  </indexterm>
 
   <refsynopsisdiv>
 <synopsis>
@@ -183,6 +183,10 @@ DROP SERVER fdtest;
  </refentry>
 
  <refentry id="CONTRIB-DBLINK-CONNECT-U">
+  <indexterm>
+   <primary>dblink_connect_u</primary>
+  </indexterm>
+
   <refmeta>
    <refentrytitle>dblink_connect_u</refentrytitle>
    <manvolnum>3</manvolnum>
@@ -192,10 +196,6 @@ DROP SERVER fdtest;
    <refname>dblink_connect_u</refname>
    <refpurpose>opens a persistent connection to a remote database, insecurely</refpurpose>
   </refnamediv>
-
-  <indexterm>
-   <primary>dblink_connect_u</primary>
-  </indexterm>
 
   <refsynopsisdiv>
 <synopsis>
@@ -240,6 +240,10 @@ dblink_connect_u(text connname, text connstr) returns text
  </refentry>
 
  <refentry id="CONTRIB-DBLINK-DISCONNECT">
+  <indexterm>
+   <primary>dblink_disconnect</primary>
+  </indexterm>
+
   <refmeta>
    <refentrytitle>dblink_disconnect</refentrytitle>
    <manvolnum>3</manvolnum>
@@ -249,10 +253,6 @@ dblink_connect_u(text connname, text connstr) returns text
    <refname>dblink_disconnect</refname>
    <refpurpose>closes a persistent connection to a remote database</refpurpose>
   </refnamediv>
-
-  <indexterm>
-   <primary>dblink_disconnect</primary>
-  </indexterm>
 
   <refsynopsisdiv>
 <synopsis>
@@ -315,6 +315,10 @@ SELECT dblink_disconnect('myconn');
  </refentry>
 
  <refentry id="CONTRIB-DBLINK-FUNCTION">
+  <indexterm>
+   <primary>dblink</primary>
+  </indexterm>
+
   <refmeta>
    <refentrytitle>dblink</refentrytitle>
    <manvolnum>3</manvolnum>
@@ -324,10 +328,6 @@ SELECT dblink_disconnect('myconn');
    <refname>dblink</refname>
    <refpurpose>executes a query in a remote database</refpurpose>
   </refnamediv>
-
-  <indexterm>
-   <primary>dblink</primary>
-  </indexterm>
 
   <refsynopsisdiv>
 <synopsis>
@@ -533,6 +533,10 @@ SELECT * FROM dblink('myconn', 'select proname, prosrc from pg_proc')
  </refentry>
 
  <refentry id="CONTRIB-DBLINK-EXEC">
+  <indexterm>
+   <primary>dblink_exec</primary>
+  </indexterm>
+
   <refmeta>
    <refentrytitle>dblink_exec</refentrytitle>
    <manvolnum>3</manvolnum>
@@ -542,10 +546,6 @@ SELECT * FROM dblink('myconn', 'select proname, prosrc from pg_proc')
    <refname>dblink_exec</refname>
    <refpurpose>executes a command in a remote database</refpurpose>
   </refnamediv>
-
-  <indexterm>
-   <primary>dblink_exec</primary>
-  </indexterm>
 
   <refsynopsisdiv>
 <synopsis>
@@ -670,6 +670,10 @@ DETAIL:  ERROR:  null value in column "relnamespace" violates not-null constrain
  </refentry>
 
  <refentry id="CONTRIB-DBLINK-OPEN">
+  <indexterm>
+   <primary>dblink_open</primary>
+  </indexterm>
+
   <refmeta>
    <refentrytitle>dblink_open</refentrytitle>
    <manvolnum>3</manvolnum>
@@ -679,10 +683,6 @@ DETAIL:  ERROR:  null value in column "relnamespace" violates not-null constrain
    <refname>dblink_open</refname>
    <refpurpose>opens a cursor in a remote database</refpurpose>
   </refnamediv>
-
-  <indexterm>
-   <primary>dblink_open</primary>
-  </indexterm>
 
   <refsynopsisdiv>
 <synopsis>
@@ -794,6 +794,10 @@ SELECT dblink_open('foo', 'select proname, prosrc from pg_proc');
  </refentry>
 
  <refentry id="CONTRIB-DBLINK-FETCH">
+  <indexterm>
+   <primary>dblink_fetch</primary>
+  </indexterm>
+
   <refmeta>
    <refentrytitle>dblink_fetch</refentrytitle>
    <manvolnum>3</manvolnum>
@@ -803,10 +807,6 @@ SELECT dblink_open('foo', 'select proname, prosrc from pg_proc');
    <refname>dblink_fetch</refname>
    <refpurpose>returns rows from an open cursor in a remote database</refpurpose>
   </refnamediv>
-
-  <indexterm>
-   <primary>dblink_fetch</primary>
-  </indexterm>
 
   <refsynopsisdiv>
 <synopsis>
@@ -947,6 +947,10 @@ SELECT * FROM dblink_fetch('foo', 5) AS (funcname name, source text);
  </refentry>
 
  <refentry id="CONTRIB-DBLINK-CLOSE">
+  <indexterm>
+   <primary>dblink_close</primary>
+  </indexterm>
+
   <refmeta>
    <refentrytitle>dblink_close</refentrytitle>
    <manvolnum>3</manvolnum>
@@ -956,10 +960,6 @@ SELECT * FROM dblink_fetch('foo', 5) AS (funcname name, source text);
    <refname>dblink_close</refname>
    <refpurpose>closes a cursor in a remote database</refpurpose>
   </refnamediv>
-
-  <indexterm>
-   <primary>dblink_close</primary>
-  </indexterm>
 
   <refsynopsisdiv>
 <synopsis>
@@ -1058,6 +1058,10 @@ SELECT dblink_close('foo');
  </refentry>
 
  <refentry id="CONTRIB-DBLINK-GET-CONNECTIONS">
+  <indexterm>
+   <primary>dblink_get_connections</primary>
+  </indexterm>
+
   <refmeta>
    <refentrytitle>dblink_get_connections</refentrytitle>
    <manvolnum>3</manvolnum>
@@ -1067,10 +1071,6 @@ SELECT dblink_close('foo');
    <refname>dblink_get_connections</refname>
    <refpurpose>returns the names of all open named dblink connections</refpurpose>
   </refnamediv>
-
-  <indexterm>
-   <primary>dblink_get_connections</primary>
-  </indexterm>
 
   <refsynopsisdiv>
 <synopsis>
@@ -1103,6 +1103,10 @@ SELECT dblink_get_connections();
  </refentry>
 
  <refentry id="CONTRIB-DBLINK-ERROR-MESSAGE">
+  <indexterm>
+   <primary>dblink_error_message</primary>
+  </indexterm>
+
   <refmeta>
    <refentrytitle>dblink_error_message</refentrytitle>
    <manvolnum>3</manvolnum>
@@ -1112,10 +1116,6 @@ SELECT dblink_get_connections();
    <refname>dblink_error_message</refname>
    <refpurpose>gets last error message on the named connection</refpurpose>
   </refnamediv>
-
-  <indexterm>
-   <primary>dblink_error_message</primary>
-  </indexterm>
 
   <refsynopsisdiv>
 <synopsis>
@@ -1166,6 +1166,10 @@ SELECT dblink_error_message('dtest1');
  </refentry>
 
  <refentry id="CONTRIB-DBLINK-SEND-QUERY">
+  <indexterm>
+   <primary>dblink_send_query</primary>
+  </indexterm>
+
   <refmeta>
    <refentrytitle>dblink_send_query</refentrytitle>
    <manvolnum>3</manvolnum>
@@ -1175,10 +1179,6 @@ SELECT dblink_error_message('dtest1');
    <refname>dblink_send_query</refname>
    <refpurpose>sends an async query to a remote database</refpurpose>
   </refnamediv>
-
-  <indexterm>
-   <primary>dblink_send_query</primary>
-  </indexterm>
 
   <refsynopsisdiv>
 <synopsis>
@@ -1248,6 +1248,10 @@ SELECT dblink_send_query('dtest1', 'SELECT * FROM foo WHERE f1 &lt; 3');
  </refentry>
 
  <refentry id="CONTRIB-DBLINK-IS-BUSY">
+  <indexterm>
+   <primary>dblink_is_busy</primary>
+  </indexterm>
+
   <refmeta>
    <refentrytitle>dblink_is_busy</refentrytitle>
    <manvolnum>3</manvolnum>
@@ -1257,10 +1261,6 @@ SELECT dblink_send_query('dtest1', 'SELECT * FROM foo WHERE f1 &lt; 3');
    <refname>dblink_is_busy</refname>
    <refpurpose>checks if connection is busy with an async query</refpurpose>
   </refnamediv>
-
-  <indexterm>
-   <primary>dblink_is_busy</primary>
-  </indexterm>
 
   <refsynopsisdiv>
 <synopsis>
@@ -1311,6 +1311,10 @@ SELECT dblink_is_busy('dtest1');
  </refentry>
 
  <refentry id="CONTRIB-DBLINK-GET-NOTIFY">
+  <indexterm>
+   <primary>dblink_get_notify</primary>
+  </indexterm>
+
   <refmeta>
    <refentrytitle>dblink_get_notify</refentrytitle>
    <manvolnum>3</manvolnum>
@@ -1320,10 +1324,6 @@ SELECT dblink_is_busy('dtest1');
    <refname>dblink_get_notify</refname>
    <refpurpose>retrieve async notifications on a connection</refpurpose>
   </refnamediv>
-
-  <indexterm>
-   <primary>dblink_get_notify</primary>
-  </indexterm>
 
   <refsynopsisdiv>
 <synopsis>
@@ -1393,6 +1393,10 @@ SELECT * FROM dblink_get_notify();
  </refentry>
 
  <refentry id="CONTRIB-DBLINK-GET-RESULT">
+  <indexterm>
+   <primary>dblink_get_result</primary>
+  </indexterm>
+
   <refmeta>
    <refentrytitle>dblink_get_result</refentrytitle>
    <manvolnum>3</manvolnum>
@@ -1402,10 +1406,6 @@ SELECT * FROM dblink_get_notify();
    <refname>dblink_get_result</refname>
    <refpurpose>gets an async query result</refpurpose>
   </refnamediv>
-
-  <indexterm>
-   <primary>dblink_get_result</primary>
-  </indexterm>
 
   <refsynopsisdiv>
 <synopsis>
@@ -1557,6 +1557,10 @@ contrib_regression=# SELECT * FROM dblink_get_result('dtest1') AS t1(f1 int, f2 
  </refentry>
 
  <refentry id="CONTRIB-DBLINK-CANCEL-QUERY">
+  <indexterm>
+   <primary>dblink_cancel_query</primary>
+  </indexterm>
+
   <refmeta>
    <refentrytitle>dblink_cancel_query</refentrytitle>
    <manvolnum>3</manvolnum>
@@ -1566,10 +1570,6 @@ contrib_regression=# SELECT * FROM dblink_get_result('dtest1') AS t1(f1 int, f2 
    <refname>dblink_cancel_query</refname>
    <refpurpose>cancels any active query on the named connection</refpurpose>
   </refnamediv>
-
-  <indexterm>
-   <primary>dblink_cancel_query</primary>
-  </indexterm>
 
   <refsynopsisdiv>
 <synopsis>
@@ -1625,6 +1625,10 @@ SELECT dblink_cancel_query('dtest1');
  </refentry>
 
  <refentry id="CONTRIB-DBLINK-GET-PKEY">
+  <indexterm>
+   <primary>dblink_get_pkey</primary>
+  </indexterm>
+
   <refmeta>
    <refentrytitle>dblink_get_pkey</refentrytitle>
    <manvolnum>3</manvolnum>
@@ -1636,10 +1640,6 @@ SELECT dblink_cancel_query('dtest1');
     primary key fields
    </refpurpose>
   </refnamediv>
-
-  <indexterm>
-   <primary>dblink_get_pkey</primary>
-  </indexterm>
 
   <refsynopsisdiv>
 <synopsis>
@@ -1717,6 +1717,10 @@ SELECT * FROM dblink_get_pkey('foobar');
  </refentry>
 
  <refentry id="CONTRIB-DBLINK-BUILD-SQL-INSERT">
+  <indexterm>
+   <primary>dblink_build_sql_insert</primary>
+  </indexterm>
+
   <refmeta>
    <refentrytitle>dblink_build_sql_insert</refentrytitle>
    <manvolnum>3</manvolnum>
@@ -1729,10 +1733,6 @@ SELECT * FROM dblink_get_pkey('foobar');
     primary key field values with alternative supplied values
    </refpurpose>
   </refnamediv>
-
-  <indexterm>
-   <primary>dblink_build_sql_insert</primary>
-  </indexterm>
 
   <refsynopsisdiv>
 <synopsis>
@@ -1852,6 +1852,10 @@ SELECT dblink_build_sql_insert('foo', '1 2', 2, '{"1", "a"}', '{"1", "b''a"}');
  </refentry>
 
  <refentry id="CONTRIB-DBLINK-BUILD-SQL-DELETE">
+  <indexterm>
+   <primary>dblink_build_sql_delete</primary>
+  </indexterm>
+
   <refmeta>
    <refentrytitle>dblink_build_sql_delete</refentrytitle>
    <manvolnum>3</manvolnum>
@@ -1863,10 +1867,6 @@ SELECT dblink_build_sql_insert('foo', '1 2', 2, '{"1", "a"}', '{"1", "b''a"}');
     key field values
    </refpurpose>
   </refnamediv>
-
-  <indexterm>
-   <primary>dblink_build_sql_delete</primary>
-  </indexterm>
 
   <refsynopsisdiv>
 <synopsis>
@@ -1970,6 +1970,10 @@ SELECT dblink_build_sql_delete('"MyFoo"', '1 2', 2, '{"1", "b"}');
  </refentry>
 
  <refentry id="CONTRIB-DBLINK-BUILD-SQL-UPDATE">
+  <indexterm>
+   <primary>dblink_build_sql_update</primary>
+  </indexterm>
+
   <refmeta>
    <refentrytitle>dblink_build_sql_update</refentrytitle>
    <manvolnum>3</manvolnum>
@@ -1981,10 +1985,6 @@ SELECT dblink_build_sql_delete('"MyFoo"', '1 2', 2, '{"1", "b"}');
     the primary key field values with alternative supplied values
    </refpurpose>
   </refnamediv>
-
-  <indexterm>
-   <primary>dblink_build_sql_update</primary>
-  </indexterm>
 
   <refsynopsisdiv>
 <synopsis>

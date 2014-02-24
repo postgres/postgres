@@ -1,6 +1,10 @@
 <!-- doc/src/sgml/pgtesttiming.sgml -->
 
 <refentry id="pgtesttiming">
+ <indexterm zone="pgtesttiming">
+  <primary>pg_test_timing</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle><application>pg_test_timing</application></refentrytitle>
   <manvolnum>1</manvolnum>
@@ -11,10 +15,6 @@
   <refname>pg_test_timing</refname>
   <refpurpose>measure timing overhead</refpurpose>
  </refnamediv>
-
- <indexterm zone="pgtesttiming">
-  <primary>pg_test_timing</primary>
- </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

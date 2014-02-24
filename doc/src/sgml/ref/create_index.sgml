@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATEINDEX">
+ <indexterm zone="sql-createindex">
+  <primary>CREATE INDEX</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>CREATE INDEX</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>CREATE INDEX</refname>
   <refpurpose>define a new index</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-createindex">
-  <primary>CREATE INDEX</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-RESET">
+ <indexterm zone="sql-reset">
+  <primary>RESET</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>RESET</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>RESET</refname>
   <refpurpose>restore the value of a run-time parameter to the default value</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-reset">
-  <primary>RESET</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

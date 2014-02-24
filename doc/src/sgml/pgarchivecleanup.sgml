@@ -1,6 +1,10 @@
 <!-- doc/src/sgml/pgarchivecleanup.sgml -->
 
 <refentry id="pgarchivecleanup">
+ <indexterm zone="pgarchivecleanup">
+  <primary>pg_archivecleanup</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle><application>pg_archivecleanup</application></refentrytitle>
   <manvolnum>1</manvolnum>
@@ -11,10 +15,6 @@
   <refname>pg_archivecleanup</refname>
   <refpurpose>clean up <productname>PostgreSQL</productname> WAL archive files</refpurpose>
  </refnamediv>
-
- <indexterm zone="pgarchivecleanup">
-  <primary>pg_archivecleanup</primary>
- </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

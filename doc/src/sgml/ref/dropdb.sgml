@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="APP-DROPDB">
+ <indexterm zone="app-dropdb">
+  <primary>dropdb</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle><application>dropdb</application></refentrytitle>
   <manvolnum>1</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>dropdb</refname>
   <refpurpose>remove a <productname>PostgreSQL</productname> database</refpurpose>
  </refnamediv>
-
- <indexterm zone="app-dropdb">
-  <primary>dropdb</primary>
- </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

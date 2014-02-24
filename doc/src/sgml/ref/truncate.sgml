@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-TRUNCATE">
+ <indexterm zone="sql-truncate">
+  <primary>TRUNCATE</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>TRUNCATE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>TRUNCATE</refname>
   <refpurpose>empty a table or set of tables</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-truncate">
-  <primary>TRUNCATE</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

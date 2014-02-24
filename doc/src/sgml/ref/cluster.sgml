@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-CLUSTER">
+ <indexterm zone="sql-cluster">
+  <primary>CLUSTER</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>CLUSTER</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>CLUSTER</refname>
   <refpurpose>cluster a table according to an index</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-cluster">
-  <primary>CLUSTER</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

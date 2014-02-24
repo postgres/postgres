@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPLANGUAGE">
+ <indexterm zone="sql-droplanguage">
+  <primary>DROP LANGUAGE</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>DROP LANGUAGE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>DROP LANGUAGE</refname>
   <refpurpose>remove a procedural language</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-droplanguage">
-  <primary>DROP LANGUAGE</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

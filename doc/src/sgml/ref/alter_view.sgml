@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERVIEW">
+ <indexterm zone="sql-alterview">
+  <primary>ALTER VIEW</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>ALTER VIEW</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>ALTER VIEW</refname>
   <refpurpose>change the definition of a view</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-alterview">
-  <primary>ALTER VIEW</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

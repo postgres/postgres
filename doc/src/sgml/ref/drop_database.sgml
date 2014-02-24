@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPDATABASE">
+ <indexterm zone="sql-dropdatabase">
+  <primary>DROP DATABASE</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>DROP DATABASE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>DROP DATABASE</refname>
   <refpurpose>remove a database</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-dropdatabase">
-  <primary>DROP DATABASE</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

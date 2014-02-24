@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-REASSIGN-OWNED">
+ <indexterm zone="sql-reassign-owned">
+  <primary>REASSIGN OWNED</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>REASSIGN OWNED</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>REASSIGN OWNED</refname>
   <refpurpose>change the ownership of database objects owned by a database role</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-reassign-owned">
-  <primary>REASSIGN OWNED</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

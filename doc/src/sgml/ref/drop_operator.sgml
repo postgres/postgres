@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPOPERATOR">
+ <indexterm zone="sql-dropoperator">
+  <primary>DROP OPERATOR</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>DROP OPERATOR</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>DROP OPERATOR</refname>
   <refpurpose>remove an operator</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-dropoperator">
-  <primary>DROP OPERATOR</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

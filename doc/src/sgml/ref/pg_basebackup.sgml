@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="app-pgbasebackup">
+ <indexterm zone="app-pgbasebackup">
+  <primary>pg_basebackup</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>pg_basebackup</refentrytitle>
   <manvolnum>1</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>pg_basebackup</refname>
   <refpurpose>take a base backup of a <productname>PostgreSQL</productname> cluster</refpurpose>
  </refnamediv>
-
- <indexterm zone="app-pgbasebackup">
-  <primary>pg_basebackup</primary>
- </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

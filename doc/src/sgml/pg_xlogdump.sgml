@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="pgxlogdump">
+ <indexterm zone="pgxlogdump">
+  <primary>pg_xlogdump</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle><application>pg_xlogdump</application></refentrytitle>
   <manvolnum>1</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>pg_xlogdump</refname>
   <refpurpose>Display a human-readable rendering of the write-ahead log of a <productname>PostgreSQL</productname> database cluster</refpurpose>
  </refnamediv>
-
- <indexterm zone="pgxlogdump">
-  <primary>pg_xlogdump</primary>
- </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

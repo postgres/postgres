@@ -1,6 +1,10 @@
 <!-- doc/src/sgml/ref/drop_cast.sgml -->
 
 <refentry id="SQL-DROPCAST">
+ <indexterm zone="sql-dropcast">
+  <primary>DROP CAST</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>DROP CAST</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -11,10 +15,6 @@
   <refname>DROP CAST</refname>
   <refpurpose>remove a cast</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-dropcast">
-  <primary>DROP CAST</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

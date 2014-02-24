@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="APP-CLUSTERDB">
+ <indexterm zone="app-clusterdb">
+  <primary>clusterdb</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle><application>clusterdb</application></refentrytitle>
   <manvolnum>1</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname id="clusterdb">clusterdb</refname>
   <refpurpose>cluster a <productname>PostgreSQL</productname> database</refpurpose>
  </refnamediv>
-
- <indexterm zone="app-clusterdb">
-  <primary>clusterdb</primary>
- </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

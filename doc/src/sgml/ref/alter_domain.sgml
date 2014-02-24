@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERDOMAIN">
+ <indexterm zone="sql-alterdomain">
+  <primary>ALTER DOMAIN</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>ALTER DOMAIN</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -16,10 +20,6 @@ PostgreSQL documentation
    change the definition of a domain
   </refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-alterdomain">
-  <primary>ALTER DOMAIN</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

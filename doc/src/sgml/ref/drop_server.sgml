@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPSERVER">
+ <indexterm zone="sql-dropserver">
+  <primary>DROP SERVER</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>DROP SERVER</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>DROP SERVER</refname>
   <refpurpose>remove a foreign server descriptor</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-dropserver">
-  <primary>DROP SERVER</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

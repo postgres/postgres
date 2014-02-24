@@ -1,6 +1,10 @@
 <!-- doc/src/sgml/ref/pg_config-ref.sgml -->
 
 <refentry id="app-pgconfig">
+ <indexterm zone="app-pgconfig">
+  <primary>pg_config</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>pg_config</refentrytitle>
   <manvolnum>1</manvolnum>
@@ -11,10 +15,6 @@
   <refname>pg_config</refname>
   <refpurpose>retrieve information about the installed version of <productname>PostgreSQL</></refpurpose>
  </refnamediv>
-
- <indexterm zone="app-pgconfig">
-  <primary>pg_config</primary>
- </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

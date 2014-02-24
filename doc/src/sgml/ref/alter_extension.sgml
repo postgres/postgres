@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTEREXTENSION">
+ <indexterm zone="sql-alterextension">
+  <primary>ALTER EXTENSION</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>ALTER EXTENSION</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -16,10 +20,6 @@ PostgreSQL documentation
    change the definition of an extension
   </refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-alterextension">
-  <primary>ALTER EXTENSION</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

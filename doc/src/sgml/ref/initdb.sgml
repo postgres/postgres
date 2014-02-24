@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="APP-INITDB">
+ <indexterm zone="app-initdb">
+  <primary>initdb</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>initdb</refentrytitle>
   <manvolnum>1</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>initdb</refname>
   <refpurpose>create a new <productname>PostgreSQL</productname> database cluster</refpurpose>
  </refnamediv>
-
- <indexterm zone="app-initdb">
-  <primary>initdb</primary>
- </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-VALUES">
+ <indexterm zone="sql-values">
+  <primary>VALUES</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>VALUES</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>VALUES</refname>
   <refpurpose>compute a set of rows</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-values">
-  <primary>VALUES</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

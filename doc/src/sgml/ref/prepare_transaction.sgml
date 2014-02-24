@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-PREPARE-TRANSACTION">
+ <indexterm zone="sql-prepare-transaction">
+  <primary>PREPARE TRANSACTION</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>PREPARE TRANSACTION</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>PREPARE TRANSACTION</refname>
   <refpurpose>prepare the current transaction for two-phase commit</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-prepare-transaction">
-  <primary>PREPARE TRANSACTION</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

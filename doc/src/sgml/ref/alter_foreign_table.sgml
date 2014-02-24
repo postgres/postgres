@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERFOREIGNTABLE">
+ <indexterm zone="sql-alterforeigntable">
+  <primary>ALTER FOREIGN TABLE</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>ALTER FOREIGN TABLE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>ALTER FOREIGN TABLE</refname>
   <refpurpose>change the definition of a foreign table</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-alterforeigntable">
-  <primary>ALTER FOREIGN TABLE</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

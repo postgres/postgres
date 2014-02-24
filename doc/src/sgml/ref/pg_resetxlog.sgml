@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="APP-PGRESETXLOG">
+ <indexterm zone="app-pgresetxlog">
+  <primary>pg_resetxlog</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle><application>pg_resetxlog</application></refentrytitle>
   <manvolnum>1</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>pg_resetxlog</refname>
   <refpurpose>reset the write-ahead log and other control information of a <productname>PostgreSQL</productname> database cluster</refpurpose>
  </refnamediv>
-
- <indexterm zone="app-pgresetxlog">
-  <primary>pg_resetxlog</primary>
- </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

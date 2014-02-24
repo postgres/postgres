@@ -1,5 +1,9 @@
 <!-- doc/src/sgml/ref/set_session_auth.sgml -->
 <refentry id="SQL-SET-SESSION-AUTHORIZATION">
+ <indexterm zone="sql-set-session-authorization">
+  <primary>SET SESSION AUTHORIZATION</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>SET SESSION AUTHORIZATION</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -10,10 +14,6 @@
   <refname>SET SESSION AUTHORIZATION</refname>
   <refpurpose>set the session user identifier and the current user identifier of the current session</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-set-session-authorization">
-  <primary>SET SESSION AUTHORIZATION</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

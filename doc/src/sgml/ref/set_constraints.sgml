@@ -1,5 +1,9 @@
 <!-- doc/src/sgml/ref/set_constraints.sgml -->
 <refentry id="SQL-SET-CONSTRAINTS">
+ <indexterm zone="sql-set-constraints">
+  <primary>SET CONSTRAINTS</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>SET CONSTRAINTS</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -10,10 +14,6 @@
   <refname>SET CONSTRAINTS</refname>
   <refpurpose>set constraint check timing for the current transaction</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-set-constraints">
-  <primary>SET CONSTRAINTS</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

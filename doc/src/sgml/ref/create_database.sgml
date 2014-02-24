@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATEDATABASE">
+ <indexterm zone="sql-createdatabase">
+  <primary>CREATE DATABASE</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>CREATE DATABASE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>CREATE DATABASE</refname>
   <refpurpose>create a new database</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-createdatabase">
-  <primary>CREATE DATABASE</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

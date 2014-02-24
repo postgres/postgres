@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="APP-DROPUSER">
+ <indexterm zone="app-dropuser">
+  <primary>dropuser</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle><application>dropuser</application></refentrytitle>
   <manvolnum>1</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>dropuser</refname>
   <refpurpose>remove a <productname>PostgreSQL</productname> user account</refpurpose>
  </refnamediv>
-
- <indexterm zone="app-dropuser">
-  <primary>dropuser</primary>
- </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

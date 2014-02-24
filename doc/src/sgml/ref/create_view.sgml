@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATEVIEW">
+ <indexterm zone="sql-createview">
+  <primary>CREATE VIEW</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>CREATE VIEW</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>CREATE VIEW</refname>
   <refpurpose>define a new view</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-createview">
-  <primary>CREATE VIEW</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-LOCK">
+ <indexterm zone="sql-lock">
+  <primary>LOCK</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>LOCK</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>LOCK</refname>
   <refpurpose>lock a table</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-lock">
-  <primary>LOCK</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

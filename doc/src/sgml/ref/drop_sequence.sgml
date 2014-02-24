@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPSEQUENCE">
+ <indexterm zone="sql-dropsequence">
+  <primary>DROP SEQUENCE</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>DROP SEQUENCE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>DROP SEQUENCE</refname>
   <refpurpose>remove a sequence</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-dropsequence">
-  <primary>DROP SEQUENCE</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPMATERIALIZEDVIEW">
+ <indexterm zone="sql-dropmaterializedview">
+  <primary>DROP MATERIALIZED VIEW</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>DROP MATERIALIZED VIEW</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>DROP MATERIALIZED VIEW</refname>
   <refpurpose>remove a materialized view</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-dropmaterializedview">
-  <primary>DROP MATERIALIZED VIEW</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

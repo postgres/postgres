@@ -1,6 +1,10 @@
 <!-- doc/src/sgml/ref/create_conversion.sgml -->
 
 <refentry id="SQL-CREATECONVERSION">
+ <indexterm zone="sql-createconversion">
+  <primary>CREATE CONVERSION</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>CREATE CONVERSION</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -11,10 +15,6 @@
   <refname>CREATE CONVERSION</refname>
   <refpurpose>define a new encoding conversion</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-createconversion">
-  <primary>CREATE CONVERSION</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

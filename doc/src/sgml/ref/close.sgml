@@ -4,6 +4,15 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-CLOSE">
+ <indexterm zone="sql-close">
+  <primary>CLOSE</primary>
+ </indexterm>
+
+ <indexterm zone="sql-close">
+  <primary>cursor</primary>
+  <secondary>CLOSE</secondary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>CLOSE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,15 +23,6 @@ PostgreSQL documentation
   <refname>CLOSE</refname>
   <refpurpose>close a cursor</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-close">
-  <primary>CLOSE</primary>
- </indexterm>
-
- <indexterm zone="sql-close">
-  <primary>cursor</primary>
-  <secondary>CLOSE</secondary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

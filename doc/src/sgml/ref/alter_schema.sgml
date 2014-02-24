@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERSCHEMA">
+ <indexterm zone="sql-alterschema">
+  <primary>ALTER SCHEMA</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>ALTER SCHEMA</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>ALTER SCHEMA</refname>
   <refpurpose>change the definition of a schema</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-alterschema">
-  <primary>ALTER SCHEMA</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

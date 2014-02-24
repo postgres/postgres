@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-ROLLBACK">
+ <indexterm zone="sql-rollback">
+  <primary>ROLLBACK</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>ROLLBACK</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>ROLLBACK</refname>
   <refpurpose>abort the current transaction</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-rollback">
-  <primary>ROLLBACK</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

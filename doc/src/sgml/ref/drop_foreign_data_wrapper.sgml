@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPFOREIGNDATAWRAPPER">
+ <indexterm zone="sql-dropforeigndatawrapper">
+  <primary>DROP FOREIGN DATA WRAPPER</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>DROP FOREIGN DATA WRAPPER</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>DROP FOREIGN DATA WRAPPER</refname>
   <refpurpose>remove a foreign-data wrapper</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-dropforeigndatawrapper">
-  <primary>DROP FOREIGN DATA WRAPPER</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

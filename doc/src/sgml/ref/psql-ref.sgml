@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="APP-PSQL">
+ <indexterm zone="app-psql">
+  <primary>psql</primary>
+ </indexterm>
+
   <refmeta>
     <refentrytitle><application>psql</application></refentrytitle>
     <manvolnum>1</manvolnum>
@@ -16,10 +20,6 @@ PostgreSQL documentation
       <productname>PostgreSQL</productname> interactive terminal
     </refpurpose>
   </refnamediv>
-
- <indexterm zone="app-psql">
-  <primary>psql</primary>
- </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

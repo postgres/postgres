@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATEROLE">
+ <indexterm zone="sql-createrole">
+  <primary>CREATE ROLE</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>CREATE ROLE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>CREATE ROLE</refname>
   <refpurpose>define a new database role</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-createrole">
-  <primary>CREATE ROLE</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

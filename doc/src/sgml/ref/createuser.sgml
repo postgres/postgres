@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="APP-CREATEUSER">
+ <indexterm zone="app-createuser">
+  <primary>createuser</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle><application>createuser</application></refentrytitle>
   <manvolnum>1</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>createuser</refname>
   <refpurpose>define a new <productname>PostgreSQL</productname> user account</refpurpose>
  </refnamediv>
-
- <indexterm zone="app-createuser">
-  <primary>createuser</primary>
- </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

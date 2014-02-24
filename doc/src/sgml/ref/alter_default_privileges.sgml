@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERDEFAULTPRIVILEGES">
+ <indexterm zone="sql-alterdefaultprivileges">
+  <primary>ALTER DEFAULT PRIVILEGES</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>ALTER DEFAULT PRIVILEGES</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>ALTER DEFAULT PRIVILEGES</refname>
   <refpurpose>define default access privileges</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-alterdefaultprivileges">
-  <primary>ALTER DEFAULT PRIVILEGES</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

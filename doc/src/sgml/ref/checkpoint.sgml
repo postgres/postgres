@@ -1,6 +1,10 @@
 <!-- doc/src/sgml/ref/checkpoint.sgml -->
 
 <refentry id="sql-checkpoint">
+ <indexterm zone="sql-checkpoint">
+  <primary>CHECKPOINT</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>CHECKPOINT</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -11,10 +15,6 @@
   <refname>CHECKPOINT</refname>
   <refpurpose>force a transaction log checkpoint</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-checkpoint">
-  <primary>CHECKPOINT</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

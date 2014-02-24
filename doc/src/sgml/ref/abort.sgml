@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-ABORT">
+ <indexterm zone="sql-abort">
+  <primary>ABORT</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>ABORT</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>ABORT</refname>
   <refpurpose>abort the current transaction</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-abort">
-  <primary>ABORT</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

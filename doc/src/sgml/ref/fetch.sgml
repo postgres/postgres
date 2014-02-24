@@ -4,6 +4,15 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-FETCH">
+
+ <indexterm zone="sql-fetch">
+  <primary>FETCH</primary>
+ </indexterm>
+
+ <indexterm zone="sql-fetch">
+  <primary>cursor</primary>
+  <secondary>FETCH</secondary>
+ </indexterm>
  <refmeta>
   <refentrytitle>FETCH</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,15 +23,6 @@ PostgreSQL documentation
   <refname>FETCH</refname>
   <refpurpose>retrieve rows from a query using a cursor</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-fetch">
-  <primary>FETCH</primary>
- </indexterm>
-
- <indexterm zone="sql-fetch">
-  <primary>cursor</primary>
-  <secondary>FETCH</secondary>
- </indexterm>
 
  <refsynopsisdiv>
 <!-- Note the "direction" bit is also in ref/move.sgml -->

@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERTSDICTIONARY">
+ <indexterm zone="sql-altertsdictionary">
+  <primary>ALTER TEXT SEARCH DICTIONARY</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>ALTER TEXT SEARCH DICTIONARY</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>ALTER TEXT SEARCH DICTIONARY</refname>
   <refpurpose>change the definition of a text search dictionary</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-altertsdictionary">
-  <primary>ALTER TEXT SEARCH DICTIONARY</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

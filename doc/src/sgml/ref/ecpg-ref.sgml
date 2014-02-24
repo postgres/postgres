@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="APP-ECPG">
+ <indexterm zone="app-ecpg">
+  <primary>ecpg</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle><application>ecpg</application></refentrytitle>
   <manvolnum>1</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname><application>ecpg</application></refname>
   <refpurpose>embedded SQL C preprocessor</refpurpose>
  </refnamediv>
-
- <indexterm zone="app-ecpg">
-  <primary>ecpg</primary>
- </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

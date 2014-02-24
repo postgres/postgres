@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATETRIGGER">
+ <indexterm zone="sql-createtrigger">
+  <primary>CREATE TRIGGER</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>CREATE TRIGGER</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>CREATE TRIGGER</refname>
   <refpurpose>define a new trigger</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-createtrigger">
-  <primary>CREATE TRIGGER</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

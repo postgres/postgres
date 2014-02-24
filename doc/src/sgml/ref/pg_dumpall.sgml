@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="APP-PG-DUMPALL">
+ <indexterm zone="app-pg-dumpall">
+  <primary>pg_dumpall</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle><application>pg_dumpall</application></refentrytitle>
   <manvolnum>1</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>pg_dumpall</refname>
   <refpurpose>extract a <productname>PostgreSQL</productname> database cluster into a script file</refpurpose>
  </refnamediv>
-
- <indexterm zone="app-pg-dumpall">
-  <primary>pg_dumpall</primary>
- </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

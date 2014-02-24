@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATESERVER">
+ <indexterm zone="sql-createserver">
+  <primary>CREATE SERVER</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>CREATE SERVER</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>CREATE SERVER</refname>
   <refpurpose>define a new foreign server</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-createserver">
-  <primary>CREATE SERVER</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

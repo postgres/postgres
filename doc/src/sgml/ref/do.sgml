@@ -4,6 +4,14 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-DO">
+ <indexterm zone="sql-do">
+  <primary>DO</primary>
+ </indexterm>
+
+ <indexterm zone="sql-do">
+  <primary>anonymous code blocks</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>DO</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,14 +22,6 @@ PostgreSQL documentation
   <refname>DO</refname>
   <refpurpose>execute an anonymous code block</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-do">
-  <primary>DO</primary>
- </indexterm>
-
- <indexterm zone="sql-do">
-  <primary>anonymous code blocks</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

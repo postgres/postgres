@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERUSERMAPPING">
+ <indexterm zone="sql-alterusermapping">
+  <primary>ALTER USER MAPPING</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>ALTER USER MAPPING</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>ALTER USER MAPPING</refname>
   <refpurpose>change the definition of a user mapping</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-alterusermapping">
-  <primary>ALTER USER MAPPING</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

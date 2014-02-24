@@ -1,6 +1,10 @@
 <!-- doc/src/sgml/ref/pg_restore.sgml -->
 
 <refentry id="APP-PGRESTORE">
+ <indexterm zone="app-pgrestore">
+  <primary>pg_restore</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>pg_restore</refentrytitle>
   <manvolnum>1</manvolnum>
@@ -15,10 +19,6 @@
    archive file created by <application>pg_dump</application>
   </refpurpose>
  </refnamediv>
-
- <indexterm zone="app-pgrestore">
-  <primary>pg_restore</primary>
- </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

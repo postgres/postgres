@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-SHOW">
+ <indexterm zone="sql-show">
+  <primary>SHOW</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>SHOW</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>SHOW</refname>
   <refpurpose>show the value of a run-time parameter</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-show">
-  <primary>SHOW</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

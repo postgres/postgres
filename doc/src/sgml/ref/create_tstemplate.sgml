@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATETSTEMPLATE">
+ <indexterm zone="sql-createtstemplate">
+  <primary>CREATE TEXT SEARCH TEMPLATE</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>CREATE TEXT SEARCH TEMPLATE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>CREATE TEXT SEARCH TEMPLATE</refname>
   <refpurpose>define a new text search template</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-createtstemplate">
-  <primary>CREATE TEXT SEARCH TEMPLATE</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

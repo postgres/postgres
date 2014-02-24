@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="app-pgreceivexlog">
+ <indexterm zone="app-pgreceivexlog">
+  <primary>pg_receivexlog</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>pg_receivexlog</refentrytitle>
   <manvolnum>1</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>pg_receivexlog</refname>
   <refpurpose>streams transaction logs from a <productname>PostgreSQL</productname> cluster</refpurpose>
  </refnamediv>
-
- <indexterm zone="app-pgreceivexlog">
-  <primary>pg_receivexlog</primary>
- </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

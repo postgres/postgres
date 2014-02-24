@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPTABLE">
+ <indexterm zone="sql-droptable">
+  <primary>DROP TABLE</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>DROP TABLE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>DROP TABLE</refname>
   <refpurpose>remove a table</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-droptable">
-  <primary>DROP TABLE</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

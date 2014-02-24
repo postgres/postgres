@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-LISTEN">
+ <indexterm zone="sql-listen">
+  <primary>LISTEN</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>LISTEN</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>LISTEN</refname>
   <refpurpose>listen for a notification</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-listen">
-  <primary>LISTEN</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="APP-CREATEDB">
+ <indexterm zone="app-createdb">
+  <primary>createdb</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle><application>createdb</application></refentrytitle>
   <manvolnum>1</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>createdb</refname>
   <refpurpose>create a new <productname>PostgreSQL</productname> database</refpurpose>
  </refnamediv>
-
- <indexterm zone="app-createdb">
-  <primary>createdb</primary>
- </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

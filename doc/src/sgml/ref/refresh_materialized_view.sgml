@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-REFRESHMATERIALIZEDVIEW">
+ <indexterm zone="sql-refreshmaterializedview">
+  <primary>REFRESH MATERIALIZED VIEW</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>REFRESH MATERIALIZED VIEW</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>REFRESH MATERIALIZED VIEW</refname>
   <refpurpose>replace the contents of a materialized view</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-refreshmaterializedview">
-  <primary>REFRESH MATERIALIZED VIEW</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-COMMIT-PREPARED">
+ <indexterm zone="sql-commit-prepared">
+  <primary>COMMIT PREPARED</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>COMMIT PREPARED</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>COMMIT PREPARED</refname>
   <refpurpose>commit a transaction that was earlier prepared for two-phase commit</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-commit-prepared">
-  <primary>COMMIT PREPARED</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

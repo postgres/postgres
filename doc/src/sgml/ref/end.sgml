@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-END">
+ <indexterm zone="sql-end">
+  <primary>END</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>END</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>END</refname>
   <refpurpose>commit the current transaction</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-end">
-  <primary>END</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

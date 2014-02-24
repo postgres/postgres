@@ -1,6 +1,10 @@
 <!-- doc/src/sgml/ref/drop_conversion.sgml -->
 
 <refentry id="SQL-DROPCONVERSION">
+ <indexterm zone="sql-dropconversion">
+  <primary>DROP CONVERSION</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>DROP CONVERSION</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -11,10 +15,6 @@
   <refname>DROP CONVERSION</refname>
   <refpurpose>remove a conversion</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-dropconversion">
-  <primary>DROP CONVERSION</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

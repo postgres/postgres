@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATETSPARSER">
+ <indexterm zone="sql-createtsparser">
+  <primary>CREATE TEXT SEARCH PARSER</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>CREATE TEXT SEARCH PARSER</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>CREATE TEXT SEARCH PARSER</refname>
   <refpurpose>define a new text search parser</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-createtsparser">
-  <primary>CREATE TEXT SEARCH PARSER</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

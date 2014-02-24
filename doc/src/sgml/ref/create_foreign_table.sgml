@@ -1,6 +1,10 @@
 <!-- doc/src/sgml/ref/create_foreign_table.sgml -->
 
 <refentry id="SQL-CREATEFOREIGNTABLE">
+ <indexterm zone="sql-createforeigntable">
+  <primary>CREATE FOREIGN TABLE</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>CREATE FOREIGN TABLE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -11,10 +15,6 @@
   <refname>CREATE FOREIGN TABLE</refname>
   <refpurpose>define a new foreign table</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-createforeigntable">
-  <primary>CREATE FOREIGN TABLE</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPTSPARSER">
+ <indexterm zone="sql-droptsparser">
+  <primary>DROP TEXT SEARCH PARSER</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>DROP TEXT SEARCH PARSER</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>DROP TEXT SEARCH PARSER</refname>
   <refpurpose>remove a text search parser</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-droptsparser">
-  <primary>DROP TEXT SEARCH PARSER</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

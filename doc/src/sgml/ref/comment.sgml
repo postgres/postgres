@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-COMMENT">
+ <indexterm zone="sql-comment">
+  <primary>COMMENT</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>COMMENT</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>COMMENT</refname>
   <refpurpose>define or change the comment of an object</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-comment">
-  <primary>COMMENT</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

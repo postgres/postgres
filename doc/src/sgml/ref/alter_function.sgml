@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERFUNCTION">
+ <indexterm zone="sql-alterfunction">
+  <primary>ALTER FUNCTION</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>ALTER FUNCTION</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>ALTER FUNCTION</refname>
   <refpurpose>change the definition of a function</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-alterfunction">
-  <primary>ALTER FUNCTION</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

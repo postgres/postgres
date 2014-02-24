@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPEVENTTRIGGER">
+ <indexterm zone="sql-dropeventtrigger">
+  <primary>DROP EVENT TRIGGER</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>DROP EVENT TRIGGER</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>DROP EVENT TRIGGER</refname>
   <refpurpose>remove an event trigger</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-dropeventtrigger">
-  <primary>DROP EVENT TRIGGER</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

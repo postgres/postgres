@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="APP-VACUUMDB">
+ <indexterm zone="app-vacuumdb">
+  <primary>vacuumdb</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle><application>vacuumdb</application></refentrytitle>
   <manvolnum>1</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname id="vacuumdb">vacuumdb</refname>
   <refpurpose>garbage-collect and analyze a <productname>PostgreSQL</productname> database</refpurpose>
  </refnamediv>
-
- <indexterm zone="app-vacuumdb">
-  <primary>vacuumdb</primary>
- </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERDATABASE">
+ <indexterm zone="sql-alterdatabase">
+  <primary>ALTER DATABASE</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>ALTER DATABASE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>ALTER DATABASE</refname>
   <refpurpose>change a database</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-alterdatabase">
-  <primary>ALTER DATABASE</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

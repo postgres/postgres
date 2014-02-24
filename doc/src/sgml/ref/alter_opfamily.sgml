@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTEROPFAMILY">
+ <indexterm zone="sql-alteropfamily">
+  <primary>ALTER OPERATOR FAMILY</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>ALTER OPERATOR FAMILY</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>ALTER OPERATOR FAMILY</refname>
   <refpurpose>change the definition of an operator family</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-alteropfamily">
-  <primary>ALTER OPERATOR FAMILY</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

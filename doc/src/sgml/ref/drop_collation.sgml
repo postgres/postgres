@@ -1,6 +1,10 @@
 <!-- doc/src/sgml/ref/drop_collation.sgml -->
 
 <refentry id="SQL-DROPCOLLATION">
+ <indexterm zone="sql-dropcollation">
+  <primary>DROP COLLATION</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>DROP COLLATION</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -11,10 +15,6 @@
   <refname>DROP COLLATION</refname>
   <refpurpose>remove a collation</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-dropcollation">
-  <primary>DROP COLLATION</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

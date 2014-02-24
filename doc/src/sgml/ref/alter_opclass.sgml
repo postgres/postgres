@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTEROPCLASS">
+ <indexterm zone="sql-alteropclass">
+  <primary>ALTER OPERATOR CLASS</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>ALTER OPERATOR CLASS</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>ALTER OPERATOR CLASS</refname>
   <refpurpose>change the definition of an operator class</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-alteropclass">
-  <primary>ALTER OPERATOR CLASS</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

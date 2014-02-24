@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERSEQUENCE">
+ <indexterm zone="sql-altersequence">
+  <primary>ALTER SEQUENCE</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>ALTER SEQUENCE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -16,10 +20,6 @@ PostgreSQL documentation
    change the definition of a sequence generator
   </refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-altersequence">
-  <primary>ALTER SEQUENCE</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

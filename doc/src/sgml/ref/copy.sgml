@@ -5,6 +5,10 @@ PostgreSQL documentation
 
 
 <refentry id="SQL-COPY">
+ <indexterm zone="sql-copy">
+  <primary>COPY</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>COPY</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -15,10 +19,6 @@ PostgreSQL documentation
   <refname>COPY</refname>
   <refpurpose>copy data between a file and a table</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-copy">
-  <primary>COPY</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

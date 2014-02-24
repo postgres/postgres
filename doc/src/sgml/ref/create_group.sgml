@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATEGROUP">
+ <indexterm zone="sql-creategroup">
+  <primary>CREATE GROUP</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>CREATE GROUP</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>CREATE GROUP</refname>
   <refpurpose>define a new database role</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-creategroup">
-  <primary>CREATE GROUP</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

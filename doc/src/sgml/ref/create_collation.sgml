@@ -1,6 +1,10 @@
 <!-- doc/src/sgml/ref/create_collation.sgml -->
 
 <refentry id="SQL-CREATECOLLATION">
+ <indexterm zone="sql-createcollation">
+  <primary>CREATE COLLATION</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>CREATE COLLATION</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -11,10 +15,6 @@
   <refname>CREATE COLLATION</refname>
   <refpurpose>define a new collation</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-createcollation">
-  <primary>CREATE COLLATION</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

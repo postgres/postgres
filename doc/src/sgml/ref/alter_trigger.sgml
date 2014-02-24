@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERTRIGGER">
+ <indexterm zone="sql-altertrigger">
+  <primary>ALTER TRIGGER</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>ALTER TRIGGER</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>ALTER TRIGGER</refname>
   <refpurpose>change the definition of a trigger</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-altertrigger">
-  <primary>ALTER TRIGGER</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

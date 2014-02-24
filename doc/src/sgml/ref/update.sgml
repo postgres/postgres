@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-UPDATE">
+ <indexterm zone="sql-update">
+  <primary>UPDATE</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>UPDATE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>UPDATE</refname>
   <refpurpose>update rows of a table</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-update">
-  <primary>UPDATE</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

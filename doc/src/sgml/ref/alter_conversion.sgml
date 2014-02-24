@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERCONVERSION">
+ <indexterm zone="sql-alterconversion">
+  <primary>ALTER CONVERSION</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>ALTER CONVERSION</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>ALTER CONVERSION</refname>
   <refpurpose>change the definition of a conversion</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-alterconversion">
-  <primary>ALTER CONVERSION</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="app-pg-ctl">
+ <indexterm zone="app-pg-ctl">
+  <primary>pg_ctl</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle><application>pg_ctl</application></refentrytitle>
   <manvolnum>1</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>pg_ctl</refname>
   <refpurpose>initialize, start, stop, or control a <productname>PostgreSQL</productname> server</refpurpose>
  </refnamediv>
-
- <indexterm zone="app-pg-ctl">
-  <primary>pg_ctl</primary>
- </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

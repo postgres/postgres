@@ -4,6 +4,15 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-PREPARE">
+ <indexterm zone="sql-prepare">
+  <primary>PREPARE</primary>
+ </indexterm>
+
+ <indexterm zone="sql-prepare">
+  <primary>prepared statements</primary>
+  <secondary>creating</secondary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>PREPARE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,15 +23,6 @@ PostgreSQL documentation
   <refname>PREPARE</refname>
   <refpurpose>prepare a statement for execution</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-prepare">
-  <primary>PREPARE</primary>
- </indexterm>
-
- <indexterm zone="sql-prepare">
-  <primary>prepared statements</primary>
-  <secondary>creating</secondary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

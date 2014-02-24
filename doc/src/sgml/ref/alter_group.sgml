@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERGROUP">
+ <indexterm zone="sql-altergroup">
+  <primary>ALTER GROUP</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>ALTER GROUP</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>ALTER GROUP</refname>
   <refpurpose>change role name or membership</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-altergroup">
-  <primary>ALTER GROUP</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

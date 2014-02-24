@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="app-postmaster">
+ <indexterm zone="app-postmaster">
+  <primary>postmaster</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle><application>postmaster</application></refentrytitle>
   <manvolnum>1</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname id="postmaster-ref">postmaster</refname>
   <refpurpose><productname>PostgreSQL</productname> database server</refpurpose>
  </refnamediv>
-
- <indexterm zone="app-postmaster">
-  <primary>postmaster</primary>
- </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

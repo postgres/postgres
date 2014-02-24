@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATESCHEMA">
+ <indexterm zone="sql-createschema">
+  <primary>CREATE SCHEMA</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>CREATE SCHEMA</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>CREATE SCHEMA</refname>
   <refpurpose>define a new schema</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-createschema">
-  <primary>CREATE SCHEMA</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

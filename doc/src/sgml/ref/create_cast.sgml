@@ -1,6 +1,10 @@
 <!-- doc/src/sgml/ref/create_cast.sgml -->
 
 <refentry id="SQL-CREATECAST">
+ <indexterm zone="sql-createcast">
+  <primary>CREATE CAST</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>CREATE CAST</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -11,10 +15,6 @@
   <refname>CREATE CAST</refname>
   <refpurpose>define a new cast</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-createcast">
-  <primary>CREATE CAST</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

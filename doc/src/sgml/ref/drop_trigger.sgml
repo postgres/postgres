@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPTRIGGER">
+ <indexterm zone="sql-droptrigger">
+  <primary>DROP TRIGGER</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>DROP TRIGGER</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>DROP TRIGGER</refname>
   <refpurpose>remove a trigger</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-droptrigger">
-  <primary>DROP TRIGGER</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

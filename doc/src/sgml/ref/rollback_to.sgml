@@ -4,6 +4,15 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-ROLLBACK-TO">
+ <indexterm zone="sql-rollback-to">
+  <primary>ROLLBACK TO SAVEPOINT</primary>
+ </indexterm>
+
+ <indexterm zone="sql-rollback-to">
+  <primary>savepoints</primary>
+  <secondary>rolling back</secondary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>ROLLBACK TO SAVEPOINT</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,15 +23,6 @@ PostgreSQL documentation
   <refname>ROLLBACK TO SAVEPOINT</refname>
   <refpurpose>roll back to a savepoint</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-rollback-to">
-  <primary>ROLLBACK TO SAVEPOINT</primary>
- </indexterm>
-
- <indexterm zone="sql-rollback-to">
-  <primary>savepoints</primary>
-  <secondary>rolling back</secondary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

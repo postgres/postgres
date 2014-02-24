@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPINDEX">
+ <indexterm zone="sql-dropindex">
+  <primary>DROP INDEX</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>DROP INDEX</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>DROP INDEX</refname>
   <refpurpose>remove an index</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-dropindex">
-  <primary>DROP INDEX</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-SECURITY-LABEL">
+ <indexterm zone="sql-security-label">
+  <primary>SECURITY LABEL</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>SECURITY LABEL</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>SECURITY LABEL</refname>
   <refpurpose>define or change a security label applied to an object</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-security-label">
-  <primary>SECURITY LABEL</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

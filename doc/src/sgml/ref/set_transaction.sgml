@@ -1,16 +1,5 @@
 <!-- doc/src/sgml/ref/set_transaction.sgml -->
 <refentry id="SQL-SET-TRANSACTION">
- <refmeta>
-  <refentrytitle>SET TRANSACTION</refentrytitle>
-  <manvolnum>7</manvolnum>
-  <refmiscinfo>SQL - Language Statements</refmiscinfo>
- </refmeta>
-
- <refnamediv>
-  <refname>SET TRANSACTION</refname>
-  <refpurpose>set the characteristics of the current transaction</refpurpose>
- </refnamediv>
-
  <indexterm zone="sql-set-transaction">
   <primary>SET TRANSACTION</primary>
  </indexterm>
@@ -29,6 +18,17 @@
   <primary>deferrable transaction</primary>
   <secondary>setting</secondary>
  </indexterm>
+
+ <refmeta>
+  <refentrytitle>SET TRANSACTION</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>SET TRANSACTION</refname>
+  <refpurpose>set the characteristics of the current transaction</refpurpose>
+ </refnamediv>
 
  <refsynopsisdiv>
 <synopsis>

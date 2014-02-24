@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-NOTIFY">
+ <indexterm zone="sql-notify">
+  <primary>NOTIFY</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>NOTIFY</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>NOTIFY</refname>
   <refpurpose>generate a notification</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-notify">
-  <primary>NOTIFY</primary>
- </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="APP-CREATELANG">
+ <indexterm zone="app-createlang">
+  <primary>createlang</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle><application>createlang</application></refentrytitle>
   <manvolnum>1</manvolnum>
@@ -14,10 +18,6 @@ PostgreSQL documentation
   <refname>createlang</refname>
   <refpurpose>install a <productname>PostgreSQL</productname> procedural language</refpurpose>
  </refnamediv>
-
- <indexterm zone="app-createlang">
-  <primary>createlang</primary>
- </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

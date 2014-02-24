@@ -4,6 +4,15 @@ PostgreSQL documentation
 -->
 
 <refentry id="SQL-MOVE">
+ <indexterm zone="sql-move">
+  <primary>MOVE</primary>
+ </indexterm>
+
+ <indexterm zone="sql-move">
+  <primary>cursor</primary>
+  <secondary>MOVE</secondary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle>MOVE</refentrytitle>
   <manvolnum>7</manvolnum>
@@ -14,15 +23,6 @@ PostgreSQL documentation
   <refname>MOVE</refname>
   <refpurpose>position a cursor</refpurpose>
  </refnamediv>
-
- <indexterm zone="sql-move">
-  <primary>MOVE</primary>
- </indexterm>
-
- <indexterm zone="sql-move">
-  <primary>cursor</primary>
-  <secondary>MOVE</secondary>
- </indexterm>
 
  <refsynopsisdiv>
 <!-- Note the "direction" bit is also in ref/fetch.sgml -->
