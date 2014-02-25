@@ -4961,6 +4961,7 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 			HeapTuple	tup;
 			Datum		values[INDEX_MAX_KEYS];
 			bool		isnull[INDEX_MAX_KEYS];
+			SnapshotData SnapshotDirty;
 
 			estate = CreateExecutorState();
 			econtext = GetPerTupleExprContext(estate);
@@ -4983,6 +4984,7 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 			slot = MakeSingleTupleTableSlot(RelationGetDescr(heapRel));
 			econtext->ecxt_scantuple = slot;
 			get_typlenbyval(vardata->atttype, &typLen, &typByVal);
+			InitDirtySnapshot(SnapshotDirty);
 
 			/* set up an IS NOT NULL scan key so that we ignore nulls */
 			ScanKeyEntryInitialize(&scankeys[0],
@@ -4999,8 +5001,23 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 			/* If min is requested ... */
 			if (min)
 			{
-				index_scan = index_beginscan(heapRel, indexRel, SnapshotNow,
-											 1, 0);
+				/*
+				 * In principle, we should scan the index with our current
+				 * active snapshot, which is the best approximation we've got
+				 * to what the query will see when executed.  But that won't
+				 * be exact if a new snap is taken before running the query,
+				 * and it can be very expensive if a lot of uncommitted rows
+				 * exist at the end of the index (because we'll laboriously
+				 * fetch each one and reject it).  What seems like a good
+				 * compromise is to use SnapshotDirty.	That will accept
+				 * uncommitted rows, and thus avoid fetching multiple heap
+				 * tuples in this scenario.  On the other hand, it will reject
+				 * known-dead rows, and thus not give a bogus answer when the
+				 * extreme value has been deleted; that case motivates not
+				 * using SnapshotAny here.
+				 */
+				index_scan = index_beginscan(heapRel, indexRel,
+											 &SnapshotDirty, 1, 0);
 				index_rescan(index_scan, scankeys, 1, NULL, 0);
 
 				/* Fetch first tuple in sortop's direction */
@@ -5031,8 +5048,8 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 			/* If max is requested, and we didn't find the index is empty */
 			if (max && have_data)
 			{
-				index_scan = index_beginscan(heapRel, indexRel, SnapshotNow,
-											 1, 0);
+				index_scan = index_beginscan(heapRel, indexRel,
+											 &SnapshotDirty, 1, 0);
 				index_rescan(index_scan, scankeys, 1, NULL, 0);
 
 				/* Fetch first tuple in reverse direction */
