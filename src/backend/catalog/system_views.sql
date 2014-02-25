@@ -586,6 +586,8 @@ CREATE VIEW pg_stat_activity AS
             S.state_change,
             S.waiting,
             S.state,
+            S.backend_xid,
+            s.backend_xmin,
             S.query
     FROM pg_database D, pg_stat_get_activity(NULL) AS S, pg_authid U
     WHERE S.datid = D.oid AND
@@ -601,6 +603,7 @@ CREATE VIEW pg_stat_replication AS
             S.client_hostname,
             S.client_port,
             S.backend_start,
+            S.backend_xmin,
             W.state,
             W.sent_location,
             W.write_location,

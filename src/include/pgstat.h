@@ -735,6 +735,34 @@ typedef struct PgBackendStatus
 	char	   *st_activity;
 } PgBackendStatus;
 
+/* ----------
+ * LocalPgBackendStatus
+ *
+ * When we build the backend status array, we use LocalPgBackendStatus to be
+ * able to add new values to the struct when needed without adding new fields
+ * to the shared memory. It contains the backend status as a first member.
+ * ----------
+ */
+typedef struct LocalPgBackendStatus
+{
+	/*
+	 * Local version of the backend status entry.
+	 */
+	PgBackendStatus backendStatus;
+
+	/*
+	 * The xid of the current transaction if available, InvalidTransactionId
+	 * if not.
+	 */
+	TransactionId backend_xid;
+
+	/*
+	 * The xmin of the current session if available, InvalidTransactionId
+	 * if not.
+	 */
+	TransactionId backend_xmin;
+} LocalPgBackendStatus;
+
 /*
  * Working state needed to accumulate per-function-call timing statistics.
  */
@@ -907,6 +935,7 @@ extern void pgstat_send_bgwriter(void);
 extern PgStat_StatDBEntry *pgstat_fetch_stat_dbentry(Oid dbid);
 extern PgStat_StatTabEntry *pgstat_fetch_stat_tabentry(Oid relid);
 extern PgBackendStatus *pgstat_fetch_stat_beentry(int beid);
+extern LocalPgBackendStatus *pgstat_fetch_stat_local_beentry(int beid);
 extern PgStat_StatFuncEntry *pgstat_fetch_stat_funcentry(Oid funcid);
 extern int	pgstat_fetch_stat_numbackends(void);
 extern PgStat_ArchiverStats *pgstat_fetch_stat_archiver(void);

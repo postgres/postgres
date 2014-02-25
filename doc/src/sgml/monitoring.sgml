@@ -629,6 +629,16 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </entry>
     </row>
     <row>
+     <entry><structfield>backend_xid</structfield></entry>
+     <entry><type>xid</type></entry>
+     <entry>Toplevel transaction identifier of this backend, if any.</entry>
+    </row>
+    <row>
+     <entry><structfield>backend_xmin</structfield></entry>
+     <entry><type>xid</type></entry>
+     <entry>The current backend's <literal>xmin</> horizon.</entry>
+    </row>
+    <row>
      <entry><structfield>query</></entry>
      <entry><type>text</></entry>
      <entry>Text of this backend's most recent query. If
@@ -1482,6 +1492,12 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      <entry>Time when this process was started, i.e., when the
       client connected to this WAL sender
      </entry>
+    </row>
+    <row>
+     <entry><structfield>backend_xid</structfield></entry>
+     <entry><type>xid</type></entry>
+     <entry>This standby's <literal>xmin</> horizon reported
+     by <xref linkend="guc-hot-standby-feedback">.</entry>
     </row>
     <row>
      <entry><structfield>state</></entry>

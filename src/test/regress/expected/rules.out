@@ -1604,9 +1604,11 @@ pg_stat_activity| SELECT s.datid,
     s.state_change,
     s.waiting,
     s.state,
+    s.backend_xid,
+    s.backend_xmin,
     s.query
    FROM pg_database d,
-    pg_stat_get_activity(NULL::integer) s(datid, pid, usesysid, application_name, state, query, waiting, xact_start, query_start, backend_start, state_change, client_addr, client_hostname, client_port),
+    pg_stat_get_activity(NULL::integer) s(datid, pid, usesysid, application_name, state, query, waiting, xact_start, query_start, backend_start, state_change, client_addr, client_hostname, client_port, backend_xid, backend_xmin),
     pg_authid u
   WHERE ((s.datid = d.oid) AND (s.usesysid = u.oid));
 pg_stat_all_indexes| SELECT c.oid AS relid,
@@ -1704,6 +1706,7 @@ pg_stat_replication| SELECT s.pid,
     s.client_hostname,
     s.client_port,
     s.backend_start,
+    s.backend_xmin,
     w.state,
     w.sent_location,
     w.write_location,
@@ -1711,7 +1714,7 @@ pg_stat_replication| SELECT s.pid,
     w.replay_location,
     w.sync_priority,
     w.sync_state
-   FROM pg_stat_get_activity(NULL::integer) s(datid, pid, usesysid, application_name, state, query, waiting, xact_start, query_start, backend_start, state_change, client_addr, client_hostname, client_port),
+   FROM pg_stat_get_activity(NULL::integer) s(datid, pid, usesysid, application_name, state, query, waiting, xact_start, query_start, backend_start, state_change, client_addr, client_hostname, client_port, backend_xid, backend_xmin),
     pg_authid u,
     pg_stat_get_wal_senders() w(pid, state, sent_location, write_location, flush_location, replay_location, sync_priority, sync_state)
   WHERE ((s.usesysid = u.oid) AND (s.pid = w.pid));

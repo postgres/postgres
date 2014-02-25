@@ -48,12 +48,14 @@
 #include "postmaster/autovacuum.h"
 #include "postmaster/fork_process.h"
 #include "postmaster/postmaster.h"
+#include "storage/proc.h"
 #include "storage/backendid.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/latch.h"
 #include "storage/pg_shmem.h"
 #include "storage/procsignal.h"
+#include "storage/sinvaladt.h"
 #include "utils/ascii.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
@@ -213,7 +215,7 @@ typedef struct TwoPhasePgStatRecord
  */
 static MemoryContext pgStatLocalContext = NULL;
 static HTAB *pgStatDBHash = NULL;
-static PgBackendStatus *localBackendStatusTable = NULL;
+static LocalPgBackendStatus *localBackendStatusTable = NULL;
 static int	localNumBackends = 0;
 
 /*
@@ -2306,6 +2308,28 @@ pgstat_fetch_stat_beentry(int beid)
 	if (beid < 1 || beid > localNumBackends)
 		return NULL;
 
+	return &localBackendStatusTable[beid - 1].backendStatus;
+}
+
+
+/* ----------
+ * pgstat_fetch_stat_local_beentry() -
+ *
+ *  Like pgstat_fetch_stat_beentry() but with locally computed addtions (like
+ *  xid and xmin values of the backend)
+ *
+ *	NB: caller is responsible for a check if the user is permitted to see
+ *	this info (especially the querystring).
+ * ----------
+ */
+LocalPgBackendStatus *
+pgstat_fetch_stat_local_beentry(int beid)
+{
+	pgstat_read_current_status();
+
+	if (beid < 1 || beid > localNumBackends)
+		return NULL;
+
 	return &localBackendStatusTable[beid - 1];
 }
 
@@ -2783,8 +2807,8 @@ static void
 pgstat_read_current_status(void)
 {
 	volatile PgBackendStatus *beentry;
-	PgBackendStatus *localtable;
-	PgBackendStatus *localentry;
+	LocalPgBackendStatus *localtable;
+	LocalPgBackendStatus *localentry;
 	char	   *localappname,
 			   *localactivity;
 	int			i;
@@ -2795,9 +2819,9 @@ pgstat_read_current_status(void)
 
 	pgstat_setup_memcxt();
 
-	localtable = (PgBackendStatus *)
+	localtable = (LocalPgBackendStatus *)
 		MemoryContextAlloc(pgStatLocalContext,
-						   sizeof(PgBackendStatus) * MaxBackends);
+						   sizeof(LocalPgBackendStatus) * MaxBackends);
 	localappname = (char *)
 		MemoryContextAlloc(pgStatLocalContext,
 						   NAMEDATALEN * MaxBackends);
@@ -2821,19 +2845,19 @@ pgstat_read_current_status(void)
 		{
 			int			save_changecount = beentry->st_changecount;
 
-			localentry->st_procpid = beentry->st_procpid;
-			if (localentry->st_procpid > 0)
+			localentry->backendStatus.st_procpid = beentry->st_procpid;
+			if (localentry->backendStatus.st_procpid > 0)
 			{
-				memcpy(localentry, (char *) beentry, sizeof(PgBackendStatus));
+				memcpy(&localentry->backendStatus, (char *) beentry, sizeof(PgBackendStatus));
 
 				/*
 				 * strcpy is safe even if the string is modified concurrently,
 				 * because there's always a \0 at the end of the buffer.
 				 */
 				strcpy(localappname, (char *) beentry->st_appname);
-				localentry->st_appname = localappname;
+				localentry->backendStatus.st_appname = localappname;
 				strcpy(localactivity, (char *) beentry->st_activity);
-				localentry->st_activity = localactivity;
+				localentry->backendStatus.st_activity = localactivity;
 			}
 
 			if (save_changecount == beentry->st_changecount &&
@@ -2846,8 +2870,12 @@ pgstat_read_current_status(void)
 
 		beentry++;
 		/* Only valid entries get included into the local array */
-		if (localentry->st_procpid > 0)
+		if (localentry->backendStatus.st_procpid > 0)
 		{
+			BackendIdGetTransactionIds(i,
+									   &localentry->backend_xid,
+									   &localentry->backend_xmin);
+
 			localentry++;
 			localappname += NAMEDATALEN;
 			localactivity += pgstat_track_activity_query_size;

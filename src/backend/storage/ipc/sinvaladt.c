@@ -25,6 +25,7 @@
 #include "storage/shmem.h"
 #include "storage/sinvaladt.h"
 #include "storage/spin.h"
+#include "access/transam.h"
 
 
 /*
@@ -398,6 +399,37 @@ BackendIdGetProc(int backendID)
 	LWLockRelease(SInvalWriteLock);
 
 	return result;
+}
+
+/*
+ * BackendIdGetTransactionIds
+ *		Get the xid and xmin of the backend. The result may be out of date
+ *		arbitrarily quickly, so the caller must be careful about how this
+ *		information is used.
+ */
+void
+BackendIdGetTransactionIds(int backendID, TransactionId *xid, TransactionId *xmin)
+{
+	ProcState  *stateP;
+	SISeg	   *segP = shmInvalBuffer;
+	PGXACT	   *xact;
+
+	*xid = InvalidTransactionId;
+	*xmin = InvalidTransactionId;
+
+	/* Need to lock out additions/removals of backends */
+	LWLockAcquire(SInvalWriteLock, LW_SHARED);
+
+	if (backendID > 0 && backendID <= segP->lastBackend)
+	{
+		stateP = &segP->procState[backendID - 1];
+		xact = &ProcGlobal->allPgXact[stateP->proc->pgprocno];
+
+		*xid = xact->xid;
+		*xmin = xact->xmin;
+	}
+
+	LWLockRelease(SInvalWriteLock);
 }
 
 /*
