@@ -862,10 +862,6 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces)
 		if (strcmp(de->d_name, BACKUP_LABEL_FILE) == 0)
 			continue;
 
-		/* Skip pg_replslot, not useful to copy */
-		if (strcmp(de->d_name, "pg_replslot") == 0)
-			continue;
-
 		/*
 		 * Check if the postmaster has signaled us to exit, and abort with an
 		 * error in that case. The error handler further up will call
@@ -917,6 +913,18 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces)
 			if (!sizeonly)
 				_tarWriteHeader(pathbuf + basepathlen + 1, NULL, &statbuf);
 			size += 512;
+			continue;
+		}
+
+		/*
+		 * Skip pg_replslot, not useful to copy. But include it as an empty
+		 * directory anyway, so we get permissions right.
+		 */
+		if (strcmp(de->d_name, "pg_replslot") == 0)
+		{
+			if (!sizeonly)
+				_tarWriteHeader(pathbuf + basepathlen + 1, NULL, &statbuf);
+			size += 512;		/* Size of the header just added */
 			continue;
 		}
 
