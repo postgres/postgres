@@ -79,7 +79,7 @@
 
 #authentication_timeout = 1min		# 1s-600s
 #ssl = off				# (change requires restart)
-#ssl_ciphers = 'DEFAULT:!LOW:!EXP:!MD5:@STRENGTH'	# allowed SSL ciphers
+#ssl_ciphers = 'HIGH:MEDIUM:+3DES:!aNULL' # allowed SSL ciphers
 					# (change requires restart)
 #ssl_prefer_server_ciphers = on		# (change requires restart)
 #ssl_ecdh_curve = 'prime256v1'		# (change requires restart)

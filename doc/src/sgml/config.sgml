@@ -889,12 +889,71 @@ include 'filename'
       </indexterm>
       <listitem>
        <para>
-        Specifies a list of <acronym>SSL</> ciphers that are allowed to be
+        Specifies a list of <acronym>SSL</> cipher suites that are allowed to be
         used on secure connections.  See
         the <citerefentry><refentrytitle>ciphers</></citerefentry> manual page
         in the <application>OpenSSL</> package for the syntax of this setting
-        and a list of supported values.  The default value is usually
-        reasonable, unless you have specific security requirements.
+        and a list of supported values.  The default value is
+        <literal>HIGH:MEDIUM:+3DES:!aNULL</>.  It is usually reasonable,
+        unless you have specific security requirements.
+       </para>
+
+       <para>
+        Explanation of the default value:
+        <variablelist>
+         <varlistentry>
+          <term><literal>HIGH</literal></term>
+          <listitem>
+           <para>
+            Cipher suites that use ciphers from <literal>HIGH</> group (e.g.,
+            AES, Camellia, 3DES)
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>MEDIUM</literal></term>
+          <listitem>
+           <para>
+            Cipher suites that use ciphers from <literal>MEDIUM</> group
+            (e.g., RC4, SEED)
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>+3DES</literal></term>
+          <listitem>
+           <para>
+            The OpenSSL default order for <literal>HIGH</> is problematic
+            because it orders 3DES higher than AES128.  This is wrong because
+            3DES offers less security than AES128, and it is also much
+            slower.  <literal>+3DES</> reorders it after all other
+            <literal>HIGH</> and <literal>MEDIUM</> ciphers.
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>!aNULL</literal></term>
+          <listitem>
+           <para>
+            Disables anonymous cipher suites that do no authentication.  Such
+            cipher suites are vulnerable to man-in-the-middle attacks and
+            therefore should not be used.
+           </para>
+          </listitem>
+         </varlistentry>
+        </variablelist>
+       </para>
+
+       <para>
+        Available cipher suite details will vary across OpenSSL versions.  Use
+        the command
+        <literal>openssl ciphers -v 'HIGH:MEDIUM:+3DES:!aNULL'</literal> to
+        see actual details for the currently installed <application>OpenSSL</>
+        version.  Note that this list is filtered at run time based on the
+        server key type.
        </para>
       </listitem>
      </varlistentry>
