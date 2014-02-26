@@ -83,8 +83,8 @@ static void _bt_vacuum_one_page(Relation rel, Buffer buffer, Relation heapRel);
 /*
  *	_bt_doinsert() -- Handle insertion of a single index tuple in the tree.
  *
- *		This routine is called by the public interface routines, btbuild
- *		and btinsert.  By here, itup is filled in, including the TID.
+ *		This routine is called by the public interface routine, btinsert.
+ *		By here, itup is filled in, including the TID.
  *
  *		If checkUnique is UNIQUE_CHECK_NO or UNIQUE_CHECK_PARTIAL, this
  *		will allow duplicates.	Otherwise (UNIQUE_CHECK_YES or
