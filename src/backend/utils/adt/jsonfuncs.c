@@ -941,7 +941,11 @@ each_worker(PG_FUNCTION_ARGS, bool as_text)
 
 	rsi->returnMode = SFRM_Materialize;
 
-	(void) get_call_result_type(fcinfo, NULL, &tupdesc);
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("function returning record called in context "
+						"that cannot accept type record")));
 
 	/* make these in a sufficiently long-lived memory context */
 	old_cxt = MemoryContextSwitchTo(rsi->econtext->ecxt_per_query_memory);
@@ -1349,7 +1353,13 @@ populate_record_worker(PG_FUNCTION_ARGS, bool have_record_arg)
 
 		json = PG_GETARG_TEXT_P(0);
 
-		get_call_result_type(fcinfo, NULL, &tupdesc);
+		if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("function returning record called in context "
+							"that cannot accept type record"),
+					 errhint("Try calling the function in the FROM clause "
+							 "using a column definition list.")));
 	}
 
 	json_hash = get_json_object_as_hash(json, "json_populate_record",
@@ -1713,7 +1723,11 @@ populate_recordset_worker(PG_FUNCTION_ARGS, bool have_record_arg)
 	 * get the tupdesc from the result set info - it must be a record type
 	 * because we already checked that arg1 is a record type.
 	 */
-	(void) get_call_result_type(fcinfo, NULL, &tupdesc);
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("function returning record called in context "
+						"that cannot accept type record")));
 
 	state = palloc0(sizeof(PopulateRecordsetState));
 	sem = palloc0(sizeof(JsonSemAction));
