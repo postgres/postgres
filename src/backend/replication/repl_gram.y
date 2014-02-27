@@ -69,6 +69,7 @@ Node *replication_parse_result;
 %token K_PROGRESS
 %token K_FAST
 %token K_NOWAIT
+%token K_MAX_RATE
 %token K_WAL
 %token K_TIMELINE
 %token K_PHYSICAL
@@ -113,7 +114,7 @@ identify_system:
 			;
 
 /*
- * BASE_BACKUP [LABEL '<label>'] [PROGRESS] [FAST] [WAL] [NOWAIT]
+ * BASE_BACKUP [LABEL '<label>'] [PROGRESS] [FAST] [WAL] [NOWAIT] [MAX_RATE %d]
  */
 base_backup:
 			K_BASE_BACKUP base_backup_opt_list
@@ -156,6 +157,11 @@ base_backup_opt:
 				{
 				  $$ = makeDefElem("nowait",
 								   (Node *)makeInteger(TRUE));
+				}
+			| K_MAX_RATE UCONST
+				{
+				  $$ = makeDefElem("max_rate",
+								   (Node *)makeInteger($2));
 				}
 			;
 
