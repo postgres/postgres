@@ -572,7 +572,7 @@ SELECT btrim('xyxtrimyyx'::citext,    'xy'::text  ) = 'trim' AS t;
 -- chr() takes an int and returns text.
 -- convert() and convert_from take bytea and return text.
 
-SELECT convert_to( name, 'ISO-8859-1' ) = convert_to( name::text, 'ISO-8859-1' ) AS t FROM srt;
+SELECT convert_from( name::bytea, 'SQL_ASCII' ) = convert_from( name::text::bytea, 'SQL_ASCII' ) AS t FROM srt;
 SELECT decode('MTIzAAE='::citext, 'base64') = decode('MTIzAAE='::text, 'base64') AS t;
 -- encode() takes bytea and returns text.
 SELECT initcap('hi THOMAS'::citext) = initcap('hi THOMAS'::text) AS t;
