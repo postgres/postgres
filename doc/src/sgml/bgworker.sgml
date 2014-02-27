@@ -47,7 +47,7 @@
  <para>
   The structure <structname>BackgroundWorker</structname> is defined thus:
 <programlisting>
-typedef void (*bgworker_main_type)(void *main_arg);
+typedef void (*bgworker_main_type)(Datum main_arg);
 typedef struct BackgroundWorker
 {
     char        bgw_name[BGW_MAXLEN];
@@ -107,7 +107,7 @@ typedef struct BackgroundWorker
   <para>
    <structfield>bgw_main</structfield> is a pointer to the function to run when
    the process is started.  This function must take a single argument of type
-   <type>void *</> and return <type>void</>.
+   <type>Datum</> and return <type>void</>.
    <structfield>bgw_main_arg</structfield> will be passed to it as its only
    argument.  Note that the global variable <literal>MyBgworkerEntry</literal>
    points to a copy of the <structname>BackgroundWorker</structname> structure
