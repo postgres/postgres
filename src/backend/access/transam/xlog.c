@@ -9906,9 +9906,9 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 		 * process.
 		 */
 		HandleStartupProcInterrupts();
-	} while (StandbyMode);
+	}
 
-	return false;
+	return false; 	/* not reached */
 }
 
 /*
