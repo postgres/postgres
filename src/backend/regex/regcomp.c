@@ -34,6 +34,8 @@
 
 #include "regex/regguts.h"
 
+#include "miscadmin.h"			/* needed by rcancelrequested() */
+
 /*
  * forward declarations, up here so forward datatypes etc. are defined early
  */
@@ -67,6 +69,7 @@ static long nfanode(struct vars *, struct subre *, FILE *);
 static int	newlacon(struct vars *, struct state *, struct state *, int);
 static void freelacons(struct subre *, int);
 static void rfree(regex_t *);
+static int	rcancelrequested(void);
 
 #ifdef REG_DEBUG
 static void dump(regex_t *, FILE *);
@@ -274,6 +277,7 @@ struct vars
 /* static function list */
 static struct fns functions = {
 	rfree,						/* regfree insides */
+	rcancelrequested			/* check for cancel request */
 };
 
 
@@ -1857,6 +1861,22 @@ rfree(regex_t *re)
 			freecnfa(&g->search);
 		FREE(g);
 	}
+}
+
+/*
+ * rcancelrequested - check for external request to cancel regex operation
+ *
+ * Return nonzero to fail the operation with error code REG_CANCEL,
+ * zero to keep going
+ *
+ * The current implementation is Postgres-specific.  If we ever get around
+ * to splitting the regex code out as a standalone library, there will need
+ * to be some API to let applications define a callback function for this.
+ */
+static int
+rcancelrequested(void)
+{
+	return InterruptPending && (QueryCancelPending || ProcDiePending);
 }
 
 #ifdef REG_DEBUG

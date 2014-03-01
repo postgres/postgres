@@ -403,8 +403,11 @@ struct subre
 struct fns
 {
 	void		FUNCPTR(free, (regex_t *));
+	int			FUNCPTR(cancel_requested, (void));
 };
 
+#define CANCEL_REQUESTED(re)  \
+	((*((struct fns *) (re)->re_fns)->cancel_requested) ())
 
 
 /*
