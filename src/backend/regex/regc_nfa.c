@@ -174,11 +174,23 @@ newstate(struct nfa * nfa)
 {
 	struct state *s;
 
+	/*
+	 * This is a handy place to check for operation cancel during regex
+	 * compilation, since no code path will go very long without making a new
+	 * state.
+	 */
+	if (CANCEL_REQUESTED(nfa->v->re))
+	{
+		NERR(REG_CANCEL);
+		return NULL;
+	}
+
 	if (TooManyStates(nfa))
 	{
 		NERR(REG_ETOOBIG);
 		return NULL;
 	}
+
 	if (nfa->free != NULL)
 	{
 		s = nfa->free;
