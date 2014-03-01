@@ -3035,6 +3035,7 @@ replace_text_regexp(text *src_text, void *regexp,
 		{
 			char		errMsg[100];
 
+			CHECK_FOR_INTERRUPTS();
 			pg_regerror(regexec_result, re, errMsg, sizeof(errMsg));
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
