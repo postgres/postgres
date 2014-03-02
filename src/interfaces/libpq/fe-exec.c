@@ -2724,7 +2724,8 @@ PQfnumber(const PGresult *res, const char *field_name)
 {
 	char	   *field_case;
 	bool		in_quotes;
-	char	   *iptr;
+	bool		all_lower = true;
+	const char *iptr;
 	char	   *optr;
 	int			i;
 
@@ -2739,6 +2740,28 @@ PQfnumber(const PGresult *res, const char *field_name)
 		field_name[0] == '\0' ||
 		res->attDescs == NULL)
 		return -1;
+
+	/*
+	 * Check if we can avoid the strdup() and related work because the
+	 * passed-in string wouldn't be changed before we do the check anyway.
+	 */
+	for (iptr = field_name; *iptr; iptr++)
+	{
+		char		c = *iptr;
+
+		if (c == '"' || c != pg_tolower((unsigned char) c))
+		{
+			all_lower = false;
+			break;
+		}
+	}
+
+	if (all_lower)
+		for (i = 0; i < res->numAttributes; i++)
+			if (strcmp(field_name, res->attDescs[i].name) == 0)
+				return i;
+	
+	/* Fall through to the normal check if that didn't work out. */
 
 	/*
 	 * Note: this code will not reject partially quoted strings, eg
@@ -2883,7 +2906,7 @@ PQoidStatus(const PGresult *res)
 
 	size_t		len;
 
-	if (!res || !res->cmdStatus || strncmp(res->cmdStatus, "INSERT ", 7) != 0)
+	if (!res || strncmp(res->cmdStatus, "INSERT ", 7) != 0)
 		return "";
 
 	len = strspn(res->cmdStatus + 7, "0123456789");
@@ -2907,7 +2930,6 @@ PQoidValue(const PGresult *res)
 	unsigned long result;
 
 	if (!res ||
-		!res->cmdStatus ||
 		strncmp(res->cmdStatus, "INSERT ", 7) != 0 ||
 		res->cmdStatus[7] < '0' ||
 		res->cmdStatus[7] > '9')

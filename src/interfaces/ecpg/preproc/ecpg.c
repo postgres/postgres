@@ -138,7 +138,11 @@ main(int argc, char *const argv[])
 
 	progname = get_progname(argv[0]);
 
-	find_my_exec(argv[0], my_exec_path);
+	if (find_my_exec(argv[0], my_exec_path) < 0)
+	{
+		fprintf(stderr, _("%s: could not locate my own executable path\n"), argv[0]);
+		return (ILLEGAL_OPTION);
+	}
 
 	output_filename = NULL;
 	while ((c = getopt_long(argc, argv, "vcio:I:tD:dC:r:h?", ecpg_options, NULL)) != -1)

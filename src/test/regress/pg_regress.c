@@ -450,7 +450,12 @@ convert_sourcefiles_in(char *source_subdir, char *dest_dir, char *dest_subdir, c
 	 * Windows.  See pgsql-hackers discussion of 2008-01-18.
 	 */
 	if (directory_exists(testtablespace))
-		rmtree(testtablespace, true);
+		if (!rmtree(testtablespace, true))
+		{
+			fprintf(stderr, _("\n%s: could not remove test tablespace \"%s\": %s\n"),
+					progname, testtablespace, strerror(errno));
+			exit(2);
+		}
 	make_directory(testtablespace);
 #endif
 
@@ -1152,6 +1157,9 @@ get_alternative_expectfile(const char *expectfile, int i)
 	char	   *tmp = (char *) malloc(ssize);
 	char	   *s = (char *) malloc(ssize);
 
+	if (!tmp || !s)
+		return NULL;
+
 	strcpy(tmp, expectfile);
 	last_dot = strrchr(tmp, '.');
 	if (!last_dot)
@@ -1258,8 +1266,18 @@ results_differ(const char *testname, const char *resultsfile, const char *defaul
 		char	   *alt_expectfile;
 
 		alt_expectfile = get_alternative_expectfile(expectfile, i);
+		if (!alt_expectfile)
+		{
+			fprintf(stderr, _("Unable to check secondary comparison files: %s\n"),
+					strerror(errno));
+			exit(2);
+		}
+
 		if (!file_exists(alt_expectfile))
+		{
+			free(alt_expectfile);
 			continue;
+		}
 
 		snprintf(cmd, sizeof(cmd),
 				 SYSTEMQUOTE "diff %s \"%s\" \"%s\" > \"%s\"" SYSTEMQUOTE,
@@ -1268,6 +1286,7 @@ results_differ(const char *testname, const char *resultsfile, const char *defaul
 		if (run_diff(cmd, diff) == 0)
 		{
 			unlink(diff);
+			free(alt_expectfile);
 			return false;
 		}
 
@@ -2105,7 +2124,11 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		if (directory_exists(temp_install))
 		{
 			header(_("removing existing temp installation"));
-			rmtree(temp_install, true);
+			if (!rmtree(temp_install, true))
+			{
+				fprintf(stderr, _("\n%s: could not remove temp installation \"%s\": %s\n"), progname, temp_install, strerror(errno));
+				exit(2);
+			}
 		}
 
 		header(_("creating temporary installation"));

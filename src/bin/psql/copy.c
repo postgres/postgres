@@ -345,13 +345,20 @@ do_copy(const char *args)
 
 	if (!options->program)
 	{
+		int result;
+
 		/* make sure the specified file is not a directory */
-		fstat(fileno(copystream), &st);
-		if (S_ISDIR(st.st_mode))
-		{
-			fclose(copystream);
+		if ((result = fstat(fileno(copystream), &st)) < 0)
+			psql_error("could not stat file: %s\n",
+					   strerror(errno));
+
+		if (result == 0 && S_ISDIR(st.st_mode))
 			psql_error("%s: cannot copy from/to a directory\n",
 					   options->file);
+
+		if (result < 0 || S_ISDIR(st.st_mode))
+		{
+			fclose(copystream);
 			free_copy_options(options);
 			return false;
 		}

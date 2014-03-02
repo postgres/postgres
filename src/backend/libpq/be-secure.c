@@ -371,7 +371,7 @@ secure_write(Port *port, void *ptr, size_t len)
 				 * A handshake can fail, so be prepared to retry it, but only
 				 * a few times.
 				 */
-				for (retries = 0; retries++;)
+				for (retries = 0;; retries++)
 				{
 					if (SSL_do_handshake(port->ssl) > 0)
 						break;	/* done */

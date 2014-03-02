@@ -308,7 +308,11 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type, const int bra
 					if (ind_type != NULL)
 					{
 						if (ind_type->type == ECPGt_NO_INDICATOR)
-							ECPGdump_a_simple(o, ind_name, ind_type->type, ind_type->size, mm_strdup("-1"), NULL, ind_prefix, 0);
+						{
+							char   *str_neg_one = mm_strdup("-1");
+							ECPGdump_a_simple(o, ind_name, ind_type->type, ind_type->size, str_neg_one, NULL, ind_prefix, 0);
+							free(str_neg_one);
+						}
 						else
 						{
 							ECPGdump_a_simple(o, ind_name, ind_type->u.element->type,
@@ -318,37 +322,71 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type, const int bra
 			}
 			break;
 		case ECPGt_struct:
-			if (indicator_set && ind_type->type != ECPGt_struct)
-				mmfatal(INDICATOR_NOT_STRUCT, "indicator for struct has to be a struct");
+			{
+				char   *str_one = mm_strdup("1");
 
-			ECPGdump_a_struct(o, name, ind_name, mm_strdup("1"), type, ind_type, prefix, ind_prefix);
+				if (indicator_set && ind_type->type != ECPGt_struct)
+					mmfatal(INDICATOR_NOT_STRUCT, "indicator for struct has to be a struct");
+
+				ECPGdump_a_struct(o, name, ind_name, str_one, type, ind_type, prefix, ind_prefix);
+				free(str_one);
+			}
 			break;
 		case ECPGt_union:		/* cannot dump a complete union */
 			base_yyerror("type of union has to be specified");
 			break;
 		case ECPGt_char_variable:
-			if (indicator_set && (ind_type->type == ECPGt_struct || ind_type->type == ECPGt_array))
-				mmfatal(INDICATOR_NOT_SIMPLE, "indicator for simple data type has to be simple");
+			{
+				/* Allocate for each, as there are code-paths where the values get stomped on. */
+				char   *str_varchar_one = mm_strdup("1");
+				char   *str_arr_one = mm_strdup("1");
+				char   *str_neg_one = mm_strdup("-1");
 
-			ECPGdump_a_simple(o, name, type->type, mm_strdup("1"), (arr_str_siz && strcmp(arr_str_siz, "0") != 0) ? arr_str_siz : mm_strdup("1"), struct_sizeof, prefix, 0);
-			if (ind_type != NULL)
-				ECPGdump_a_simple(o, ind_name, ind_type->type, ind_type->size, (arr_str_siz && strcmp(arr_str_siz, "0") != 0) ? arr_str_siz : mm_strdup("-1"), ind_struct_sizeof, ind_prefix, 0);
+				if (indicator_set && (ind_type->type == ECPGt_struct || ind_type->type == ECPGt_array))
+					mmfatal(INDICATOR_NOT_SIMPLE, "indicator for simple data type has to be simple");
+
+				ECPGdump_a_simple(o, name, type->type, str_varchar_one, (arr_str_siz && strcmp(arr_str_siz, "0") != 0) ? arr_str_siz : str_arr_one, struct_sizeof, prefix, 0);
+				if (ind_type != NULL)
+					ECPGdump_a_simple(o, ind_name, ind_type->type, ind_type->size, (arr_str_siz && strcmp(arr_str_siz, "0") != 0) ? arr_str_siz : str_neg_one, ind_struct_sizeof, ind_prefix, 0);
+
+				free(str_varchar_one);
+				free(str_arr_one);
+				free(str_neg_one);
+			}
 			break;
 		case ECPGt_descriptor:
-			if (indicator_set && (ind_type->type == ECPGt_struct || ind_type->type == ECPGt_array))
-				mmfatal(INDICATOR_NOT_SIMPLE, "indicator for simple data type has to be simple");
+			{
+				/* Allocate for each, as there are code-paths where the values get stomped on. */
+				char   *str_neg_one = mm_strdup("-1");
+				char   *ind_type_neg_one = mm_strdup("-1");
 
-			ECPGdump_a_simple(o, name, type->type, NULL, mm_strdup("-1"), NULL, prefix, 0);
-			if (ind_type != NULL)
-				ECPGdump_a_simple(o, ind_name, ind_type->type, ind_type->size, mm_strdup("-1"), NULL, ind_prefix, 0);
+				if (indicator_set && (ind_type->type == ECPGt_struct || ind_type->type == ECPGt_array))
+					mmfatal(INDICATOR_NOT_SIMPLE, "indicator for simple data type has to be simple");
+
+				ECPGdump_a_simple(o, name, type->type, NULL, str_neg_one, NULL, prefix, 0);
+				if (ind_type != NULL)
+					ECPGdump_a_simple(o, ind_name, ind_type->type, ind_type->size, ind_type_neg_one, NULL, ind_prefix, 0);
+
+				free(str_neg_one);
+				free(ind_type_neg_one);
+			}
 			break;
 		default:
-			if (indicator_set && (ind_type->type == ECPGt_struct || ind_type->type == ECPGt_array))
-				mmfatal(INDICATOR_NOT_SIMPLE, "indicator for simple data type has to be simple");
+			{
+				/* Allocate for each, as there are code-paths where the values get stomped on. */
+				char   *str_neg_one = mm_strdup("-1");
+				char   *ind_type_neg_one = mm_strdup("-1");
 
-			ECPGdump_a_simple(o, name, type->type, type->size, (arr_str_siz && strcmp(arr_str_siz, "0") != 0) ? arr_str_siz : mm_strdup("-1"), struct_sizeof, prefix, type->counter);
-			if (ind_type != NULL)
-				ECPGdump_a_simple(o, ind_name, ind_type->type, ind_type->size, (arr_str_siz && strcmp(arr_str_siz, "0") != 0) ? arr_str_siz : mm_strdup("-1"), ind_struct_sizeof, ind_prefix, 0);
+				if (indicator_set && (ind_type->type == ECPGt_struct || ind_type->type == ECPGt_array))
+					mmfatal(INDICATOR_NOT_SIMPLE, "indicator for simple data type has to be simple");
+
+				ECPGdump_a_simple(o, name, type->type, type->size, (arr_str_siz && strcmp(arr_str_siz, "0") != 0) ? arr_str_siz : str_neg_one, struct_sizeof, prefix, type->counter);
+				if (ind_type != NULL)
+					ECPGdump_a_simple(o, ind_name, ind_type->type, ind_type->size, (arr_str_siz && strcmp(arr_str_siz, "0") != 0) ? arr_str_siz : ind_type_neg_one, ind_struct_sizeof, ind_prefix, 0);
+
+				free(str_neg_one);
+				free(ind_type_neg_one);
+			}
 			break;
 	}
 }

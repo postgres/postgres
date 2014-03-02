@@ -1158,8 +1158,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 			 * Only do it if the worker is not working to protect against Xid
 			 * wraparound.
 			 */
-			if ((autovac != NULL) &&
-				(autovac_pgxact->vacuumFlags & PROC_IS_AUTOVACUUM) &&
+			if ((autovac_pgxact->vacuumFlags & PROC_IS_AUTOVACUUM) &&
 				!(autovac_pgxact->vacuumFlags & PROC_VACUUM_FOR_WRAPAROUND))
 			{
 				int			pid = autovac->pid;

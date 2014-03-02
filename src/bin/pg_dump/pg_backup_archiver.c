@@ -1947,8 +1947,10 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 		else
 			AH->offSize = AH->intSize;
 
-		if ((AH->format = fgetc(fh)) == EOF)
+		if ((byteread = fgetc(fh)) == EOF)
 			exit_horribly(modulename, "could not read input file: %s\n", strerror(errno));
+
+		AH->format = byteread;
 		AH->lookahead[AH->lookaheadLen++] = AH->format;
 	}
 	else

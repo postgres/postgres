@@ -2027,14 +2027,20 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf,
 			if (fwrite(query_buf->data, 1, ql, stream) != ql)
 			{
 				psql_error("%s: %s\n", fname, strerror(errno));
-				fclose(stream);
-				remove(fname);
+
+				if (fclose(stream) != 0)
+					psql_error("%s: %s\n", fname, strerror(errno));
+
+				if (remove(fname) != 0)
+					psql_error("%s: %s\n", fname, strerror(errno));
+
 				error = true;
 			}
 			else if (fclose(stream) != 0)
 			{
 				psql_error("%s: %s\n", fname, strerror(errno));
-				remove(fname);
+				if (remove(fname) != 0)
+					psql_error("%s: %s\n", fname, strerror(errno));
 				error = true;
 			}
 		}

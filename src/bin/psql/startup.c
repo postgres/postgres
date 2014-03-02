@@ -603,7 +603,12 @@ process_psqlrc(char *argv0)
 	char		etc_path[MAXPGPATH];
 	char	   *envrc = getenv("PSQLRC");
 
-	find_my_exec(argv0, my_exec_path);
+	if (find_my_exec(argv0, my_exec_path) < 0)
+	{
+		fprintf(stderr, _("%s: could not find own program executable\n"), argv0);
+		exit(EXIT_FAILURE);
+	}
+
 	get_etc_path(my_exec_path, etc_path);
 
 	snprintf(rc_file, MAXPGPATH, "%s/%s", etc_path, SYSPSQLRC);

@@ -855,14 +855,22 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 
 						for (element = 0; element < var->arrsize; element++)
 						{
+							int result;
+
 							nval = PGTYPESnumeric_new();
 							if (!nval)
 								return false;
 
 							if (var->type == ECPGt_numeric)
-								PGTYPESnumeric_copy((numeric *) ((var + var->offset * element)->value), nval);
+								result = PGTYPESnumeric_copy((numeric *) ((var + var->offset * element)->value), nval);
 							else
-								PGTYPESnumeric_from_decimal((decimal *) ((var + var->offset * element)->value), nval);
+								result = PGTYPESnumeric_from_decimal((decimal *) ((var + var->offset * element)->value), nval);
+
+							if (result != 0)
+							{
+								PGTYPESnumeric_free(nval);
+								return false;
+							}
 
 							str = PGTYPESnumeric_to_asc(nval, nval->dscale);
 							slen = strlen(str);
@@ -882,14 +890,22 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 					}
 					else
 					{
+						int result;
+
 						nval = PGTYPESnumeric_new();
 						if (!nval)
 							return false;
 
 						if (var->type == ECPGt_numeric)
-							PGTYPESnumeric_copy((numeric *) (var->value), nval);
+							result = PGTYPESnumeric_copy((numeric *) (var->value), nval);
 						else
-							PGTYPESnumeric_from_decimal((decimal *) (var->value), nval);
+							result = PGTYPESnumeric_from_decimal((decimal *) (var->value), nval);
+
+						if (result != 0)
+						{
+							PGTYPESnumeric_free(nval);
+							return false;
+						}
 
 						str = PGTYPESnumeric_to_asc(nval, nval->dscale);
 						slen = strlen(str);
@@ -1026,7 +1042,10 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 						{
 							str = quote_postgres(PGTYPEStimestamp_to_asc(*(timestamp *) ((var + var->offset * element)->value)), quote, lineno);
 							if (!str)
+							{
+								ecpg_free(mallocedval);
 								return false;
+							}
 
 							slen = strlen(str);
 
