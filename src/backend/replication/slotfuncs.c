@@ -56,7 +56,7 @@ pg_create_physical_replication_slot(PG_FUNCTION_ARGS)
 	/* acquire replication slot, this will check for conflicting names*/
 	ReplicationSlotCreate(NameStr(*name), false);
 
-	values[0] = CStringGetTextDatum(NameStr(MyReplicationSlot->data.name));
+	values[0] = NameGetDatum(&MyReplicationSlot->data.name);
 
 	nulls[0] = false;
 	nulls[1] = true;
@@ -141,7 +141,8 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 		XLogRecPtr	restart_lsn;
 		bool		active;
 		Oid			database;
-		const char *slot_name;
+		NameData	slot_name;
+
 		int			i;
 
 		SpinLockAcquire(&slot->mutex);
@@ -155,7 +156,7 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 			xmin = slot->data.xmin;
 			database = slot->data.database;
 			restart_lsn = slot->data.restart_lsn;
-			slot_name = pstrdup(NameStr(slot->data.name));
+			namecpy(&slot_name, &slot->data.name);
 
 			active = slot->active;
 		}
@@ -164,12 +165,15 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 		memset(nulls, 0, sizeof(nulls));
 
 		i = 0;
-		values[i++] = CStringGetTextDatum(slot_name);
+		values[i++] = NameGetDatum(&slot_name);
 		if (database == InvalidOid)
 			values[i++] = CStringGetTextDatum("physical");
 		else
 			values[i++] = CStringGetTextDatum("logical");
-		values[i++] = database;
+		if (database == InvalidOid)
+			nulls[i++] = true;
+		else
+			values[i++] = database;
 		values[i++] = BoolGetDatum(active);
 		if (xmin != InvalidTransactionId)
 			values[i++] = TransactionIdGetDatum(xmin);

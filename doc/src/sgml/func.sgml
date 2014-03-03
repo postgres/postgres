@@ -16317,10 +16317,10 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <indexterm>
          <primary>pg_create_physical_replication_slot</primary>
         </indexterm>
-        <literal><function>pg_create_physical_replication_slot(<parameter>slotname</parameter> <type>text</type>, <parameter>plugin</parameter> <type>text</type>)</function></literal>
+        <literal><function>pg_create_physical_replication_slot(<parameter>slotname</parameter> <type>name</type>)</function></literal>
        </entry>
        <entry>
-        (<parameter>slotname</parameter> <type>text</type>, <parameter>xlog_position</parameter> <type>pg_lsn</type>)
+        (<parameter>slotname</parameter> <type>name</type>, <parameter>xlog_position</parameter> <type>pg_lsn</type>)
        </entry>
        <entry>
         Creates a new physical replication slot named
@@ -16335,10 +16335,10 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <indexterm>
          <primary>pg_drop_replication_slot</primary>
         </indexterm>
-        <literal><function>pg_drop_replication_slot(<parameter>slotname</parameter> <type>text</type>)</function></literal>
+        <literal><function>pg_drop_replication_slot(<parameter>slotname</parameter> <type>name</type>)</function></literal>
        </entry>
        <entry>
-        (<parameter>slotname</parameter> <type>text</type>)
+        <type>void</type>
        </entry>
        <entry>
         Drops the physical or logical replication slot

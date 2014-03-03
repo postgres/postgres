@@ -935,7 +935,7 @@ postgres=# SELECT * FROM pg_create_physical_replication_slot('node_a_slot');
 postgres=# SELECT * FROM pg_replication_slots;
   slot_name  | slot_type | datoid | database | active | xmin | restart_lsn
 -------------+-----------+--------+----------+--------+------+-------------
- node_a_slot | physical  |      0 |          | f      |      |
+ node_a_slot | physical  |        |          | f      |      |
 (1 row)
 </programlisting>
      To configure the standby to use this slot, <varname>primary_slotname</>
