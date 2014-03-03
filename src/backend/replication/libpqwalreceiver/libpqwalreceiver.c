@@ -174,7 +174,7 @@ libpqrcv_identify_system(TimeLineID *primary_tli)
 static bool
 libpqrcv_startstreaming(TimeLineID tli, XLogRecPtr startpoint, char *slotname)
 {
-	char		cmd[64];
+	char		cmd[256];
 	PGresult   *res;
 
 	/* Start streaming from the point requested by startup process */
