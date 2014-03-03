@@ -393,16 +393,16 @@ static const struct config_enum_entry synchronous_commit_options[] = {
  * Although only "on", "off", "try" are documented, we accept all the likely
  * variants of "on" and "off".
  */
-static const struct config_enum_entry huge_tlb_options[] = {
-	{"off", HUGE_TLB_OFF, false},
-	{"on", HUGE_TLB_ON, false},
-	{"try", HUGE_TLB_TRY, false},
-	{"true", HUGE_TLB_ON, true},
-	{"false", HUGE_TLB_OFF, true},
-	{"yes", HUGE_TLB_ON, true},
-	{"no", HUGE_TLB_OFF, true},
-	{"1", HUGE_TLB_ON, true},
-	{"0", HUGE_TLB_OFF, true},
+static const struct config_enum_entry huge_pages_options[] = {
+	{"off", HUGE_PAGES_OFF, false},
+	{"on", HUGE_PAGES_ON, false},
+	{"try", HUGE_PAGES_TRY, false},
+	{"true", HUGE_PAGES_ON, true},
+	{"false", HUGE_PAGES_OFF, true},
+	{"yes", HUGE_PAGES_ON, true},
+	{"no", HUGE_PAGES_OFF, true},
+	{"1", HUGE_PAGES_ON, true},
+	{"0", HUGE_PAGES_OFF, true},
 	{NULL, 0, false}
 };
 
@@ -470,7 +470,7 @@ int			tcp_keepalives_count;
  * This really belongs in pg_shmem.c, but is defined here so that it doesn't
  * need to be duplicated in all the different implementations of pg_shmem.c.
  */
-int			huge_tlb_pages;
+int			huge_pages;
 
 /*
  * These variables are all dummies that don't do anything, except in some
@@ -3497,12 +3497,12 @@ static struct config_enum ConfigureNamesEnum[] =
 	},
 
 	{
-		{"huge_tlb_pages", PGC_POSTMASTER, RESOURCES_MEM,
-			gettext_noop("Use of huge TLB pages on Linux"),
+		{"huge_pages", PGC_POSTMASTER, RESOURCES_MEM,
+			gettext_noop("Use of huge pages on Linux"),
 			NULL
 		},
-		&huge_tlb_pages,
-		HUGE_TLB_TRY, huge_tlb_options,
+		&huge_pages,
+		HUGE_PAGES_TRY, huge_pages_options,
 		NULL, NULL, NULL
 	},
 

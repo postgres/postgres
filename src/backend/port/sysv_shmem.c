@@ -333,12 +333,12 @@ CreateAnonymousSegment(Size *size)
 	int			mmap_errno = 0;
 
 #ifndef MAP_HUGETLB
-	if (huge_tlb_pages == HUGE_TLB_ON)
+	if (huge_pages == HUGE_PAGES_ON)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("huge TLB pages not supported on this platform")));
 #else
-	if (huge_tlb_pages == HUGE_TLB_ON || huge_tlb_pages == HUGE_TLB_TRY)
+	if (huge_pages == HUGE_PAGES_ON || huge_pages == HUGE_PAGES_TRY)
 	{
 		/*
 		 * Round up the request size to a suitable large value.
@@ -364,13 +364,13 @@ CreateAnonymousSegment(Size *size)
 		ptr = mmap(NULL, allocsize, PROT_READ | PROT_WRITE,
 				   PG_MMAP_FLAGS | MAP_HUGETLB, -1, 0);
 		mmap_errno = errno;
-		if (huge_tlb_pages == HUGE_TLB_TRY && ptr == MAP_FAILED)
+		if (huge_pages == HUGE_PAGES_TRY && ptr == MAP_FAILED)
 			elog(DEBUG1, "mmap with MAP_HUGETLB failed, huge pages disabled: %m");
 	}
 #endif
 
-	if (huge_tlb_pages == HUGE_TLB_OFF ||
-		(huge_tlb_pages == HUGE_TLB_TRY && ptr == MAP_FAILED))
+	if (huge_pages == HUGE_PAGES_OFF ||
+		(huge_pages == HUGE_PAGES_TRY && ptr == MAP_FAILED))
 	{
 		/*
 		 * use the original size, not the rounded up value, when falling
@@ -431,10 +431,10 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 	Size		sysvsize;
 
 #if defined(EXEC_BACKEND) || !defined(MAP_HUGETLB)
-	if (huge_tlb_pages == HUGE_TLB_ON)
+	if (huge_pages == HUGE_PAGES_ON)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("huge TLB pages not supported on this platform")));
+				 errmsg("huge pages not supported on this platform")));
 #endif
 
 	/* Room for a header? */

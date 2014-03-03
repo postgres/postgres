@@ -1307,6 +1307,57 @@ echo -1000 > /proc/self/oom_score_adj
    </para>
    </note>
   </sect2>
+
+  <sect2 id="linux-huge-pages">
+   <title>Linux huge pages</title>
+
+   <para>
+    Using huge pages reduces overhead when using large contiguous chunks of
+    memory, like <productname>PostgreSQL</productname> does. To enable this
+    feature in <productname>PostgreSQL</productname> you need a kernel
+    with <varname>CONFIG_HUGETLBFS=y</varname> and
+    <varname>CONFIG_HUGETLB_PAGE=y</varname>. You also have to tune the system
+    setting <varname>vm.nr_hugepages</varname>. To estimate the number of
+    necessary huge pages start <productname>PostgreSQL</productname> without
+    huge pages enabled and check the <varname>VmPeak</varname> value from the
+    proc filesystem:
+<programlisting>
+$ <userinput>head -1 /path/to/data/directory/postmaster.pid</userinput>
+4170
+$ <userinput>grep ^VmPeak /proc/4170/status</userinput>
+VmPeak:  6490428 kB
+</programlisting>
+     <literal>6490428</literal> / <literal>2048</literal>
+     (<varname>PAGE_SIZE</varname> is <literal>2MB</literal> in this case) are
+     roughly <literal>3169.154</literal> huge pages, so you will need at
+     least <literal>3170</literal> huge pages:
+<programlisting>
+$ <userinput>sysctl -w vm.nr_hugepages=3170</userinput>
+</programlisting>
+    Sometimes the kernel is not able to allocate the desired number of huge
+    pages, so it might be necessary to repeat that command or to reboot. Don't
+    forget to add an entry to <filename>/etc/sysctl.conf</filename> to persist
+    this setting through reboots.
+   </para>
+
+   <para>
+    The default behavior for huge pages in
+    <productname>PostgreSQL</productname> is to use them when possible and
+    to fallback to normal pages when failing. To enforce the use of huge
+    pages, you can set
+    <link linkend="guc-huge-pages"><varname>huge_pages</varname></link>
+    to <literal>on</literal>. Note that in this case
+    <productname>PostgreSQL</productname> will fail to start if not enough huge
+    pages are available.
+   </para>
+
+   <para>
+    For a detailed description of the <productname>Linux</productname> huge
+    pages feature have a look
+    at <ulink url="https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt">https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt</ulink>.
+   </para>
+
+  </sect2>
  </sect1>
 
 
