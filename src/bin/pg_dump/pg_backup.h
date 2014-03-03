@@ -113,6 +113,7 @@ typedef struct _restoreOptions
 	char	   *superuser;		/* Username to use as superuser */
 	char	   *use_role;		/* Issue SET ROLE to this */
 	int			dropSchema;
+	int			if_exists;
 	const char *filename;
 	int			dataOnly;
 	int			schemaOnly;

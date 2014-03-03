@@ -70,6 +70,7 @@ main(int argc, char **argv)
 	Archive    *AH;
 	char	   *inputFileSpec;
 	static int	disable_triggers = 0;
+	static int	if_exists = 0;
 	static int	no_data_for_failed_tables = 0;
 	static int	outputNoTablespaces = 0;
 	static int	use_setsessauth = 0;
@@ -110,6 +111,7 @@ main(int argc, char **argv)
 		 * the following options don't have an equivalent short option letter
 		 */
 		{"disable-triggers", no_argument, &disable_triggers, 1},
+		{"if-exists", no_argument, &if_exists, 1},
 		{"no-data-for-failed-tables", no_argument, &no_data_for_failed_tables, 1},
 		{"no-tablespaces", no_argument, &outputNoTablespaces, 1},
 		{"role", required_argument, NULL, 2},
@@ -336,6 +338,14 @@ main(int argc, char **argv)
 	opts->use_setsessauth = use_setsessauth;
 	opts->no_security_labels = no_security_labels;
 
+	if (if_exists && !opts->dropSchema)
+	{
+		fprintf(stderr, _("%s: option --if-exists requires -c/--clean option\n"),
+				progname);
+		exit_nicely(1);
+	}
+	opts->if_exists = if_exists;
+
 	if (opts->formatName)
 	{
 		switch (opts->formatName[0])
@@ -450,6 +460,7 @@ usage(const char *progname)
 	printf(_("  -x, --no-privileges          skip restoration of access privileges (grant/revoke)\n"));
 	printf(_("  -1, --single-transaction     restore as a single transaction\n"));
 	printf(_("  --disable-triggers           disable triggers during data-only restore\n"));
+	printf(_("  --if-exists                  use IF EXISTS when dropping objects\n"));
 	printf(_("  --no-data-for-failed-tables  do not restore data of tables that could not be\n"
 			 "                               created\n"));
 	printf(_("  --no-security-labels         do not restore security labels\n"));

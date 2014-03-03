@@ -109,7 +109,8 @@
       <listitem>
        <para>
         Clean (drop) database objects before recreating them.
-        (This might generate some harmless error messages, if any objects
+        (Unless <option>--if-exists</> is used,
+        this might generate some harmless error messages, if any objects
         were not present in the destination database.)
        </para>
       </listitem>
@@ -485,6 +486,17 @@
         should also specify a superuser name with <option>-S</> or,
         preferably, run <application>pg_restore</application> as a
         <productname>PostgreSQL</> superuser.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--if-exists</option></term>
+      <listitem>
+       <para>
+        Use conditional commands (i.e. add an <literal>IF EXISTS</literal>
+        clause) when cleaning database objects.  This option is not valid
+        unless <option>--clean</> is also specified.
        </para>
       </listitem>
      </varlistentry>

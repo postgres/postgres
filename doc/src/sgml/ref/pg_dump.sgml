@@ -145,7 +145,8 @@ PostgreSQL documentation
        <para>
         Output commands to clean (drop)
         database objects prior to outputting the commands for creating them.
-        (Restore might generate some harmless error messages, if any objects
+        (Unless <option>--if-exists</> is also specified,
+        restore might generate some harmless error messages, if any objects
         were not present in the destination database.)
        </para>
 
@@ -645,6 +646,17 @@ PostgreSQL documentation
         However, since this option generates a separate command for each row,
         an error in reloading a row causes only that row to be lost rather
         than the entire table contents.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--if-exists</option></term>
+      <listitem>
+       <para>
+        Use conditional commands (i.e. add an <literal>IF EXISTS</literal>
+        clause) when cleaning database objects.  This option is not valid
+        unless <option>--clean</> is also specified.
        </para>
       </listitem>
      </varlistentry>

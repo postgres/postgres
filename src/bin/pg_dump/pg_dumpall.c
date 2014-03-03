@@ -73,6 +73,7 @@ static int	binary_upgrade = 0;
 static int	column_inserts = 0;
 static int	disable_dollar_quoting = 0;
 static int	disable_triggers = 0;
+static int	if_exists = 0;
 static int	inserts = 0;
 static int	no_tablespaces = 0;
 static int	use_setsessauth = 0;
@@ -119,6 +120,7 @@ main(int argc, char *argv[])
 		{"column-inserts", no_argument, &column_inserts, 1},
 		{"disable-dollar-quoting", no_argument, &disable_dollar_quoting, 1},
 		{"disable-triggers", no_argument, &disable_triggers, 1},
+		{"if-exists", no_argument, &if_exists, 1},
 		{"inserts", no_argument, &inserts, 1},
 		{"lock-wait-timeout", required_argument, NULL, 2},
 		{"no-tablespaces", no_argument, &no_tablespaces, 1},
@@ -330,6 +332,13 @@ main(int argc, char *argv[])
 		fprintf(stderr, _("%s: options -g/--globals-only and -t/--tablespaces-only cannot be used together\n"),
 				progname);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
+				progname);
+		exit_nicely(1);
+	}
+
+	if (if_exists && !output_clean)
+	{
+		fprintf(stderr, _("%s: option --if-exists requires -c/--clean option\n"),
 				progname);
 		exit_nicely(1);
 	}
@@ -564,6 +573,7 @@ help(void)
 	printf(_("  --column-inserts             dump data as INSERT commands with column names\n"));
 	printf(_("  --disable-dollar-quoting     disable dollar quoting, use SQL standard quoting\n"));
 	printf(_("  --disable-triggers           disable triggers during data-only restore\n"));
+	printf(_("  --if-exists                  use IF EXISTS when dropping objects\n"));
 	printf(_("  --inserts                    dump data as INSERT commands, rather than COPY\n"));
 	printf(_("  --no-security-labels         do not dump security label assignments\n"));
 	printf(_("  --no-tablespaces             do not dump tablespace assignments\n"));
@@ -624,7 +634,9 @@ dropRoles(PGconn *conn)
 
 		rolename = PQgetvalue(res, i, i_rolname);
 
-		fprintf(OPF, "DROP ROLE %s;\n", fmtId(rolename));
+		fprintf(OPF, "DROP ROLE %s%s;\n",
+				if_exists ? "IF EXISTS " : "",
+				fmtId(rolename));
 	}
 
 	PQclear(res);
@@ -994,7 +1006,9 @@ dropTablespaces(PGconn *conn)
 	{
 		char	   *spcname = PQgetvalue(res, i, 0);
 
-		fprintf(OPF, "DROP TABLESPACE %s;\n", fmtId(spcname));
+		fprintf(OPF, "DROP TABLESPACE %s%s;\n",
+				if_exists ? "IF EXISTS " : "",
+				fmtId(spcname));
 	}
 
 	PQclear(res);
@@ -1148,7 +1162,9 @@ dropDBs(PGconn *conn)
 		if (strcmp(dbname, "template1") != 0 &&
 			strcmp(dbname, "postgres") != 0)
 		{
-			fprintf(OPF, "DROP DATABASE %s;\n", fmtId(dbname));
+			fprintf(OPF, "DROP DATABASE %s%s;\n",
+					if_exists ? "IF EXISTS " : "",
+					fmtId(dbname));
 		}
 	}
 

@@ -301,6 +301,17 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--if-exists</option></term>
+      <listitem>
+       <para>
+        Use conditional commands (i.e. add an <literal>IF EXISTS</literal>
+        clause) to clean databases and other objects.  This option is not valid
+        unless <option>--clean</> is also specified.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--inserts</option></term>
       <listitem>
        <para>
