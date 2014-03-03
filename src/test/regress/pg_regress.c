@@ -1154,11 +1154,17 @@ get_alternative_expectfile(const char *expectfile, int i)
 {
 	char	   *last_dot;
 	int			ssize = strlen(expectfile) + 2 + 1;
-	char	   *tmp = (char *) malloc(ssize);
-	char	   *s = (char *) malloc(ssize);
+	char	   *tmp;
+	char	   *s;
 
-	if (!tmp || !s)
+	if (!(tmp = (char*) malloc(ssize)))
 		return NULL;
+	
+	if (!(s = (char*) malloc(ssize)))
+	{
+		free(tmp);
+		return NULL;
+	}
 
 	strcpy(tmp, expectfile);
 	last_dot = strrchr(tmp, '.');

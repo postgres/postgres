@@ -404,7 +404,7 @@ NIAddAffix(IspellDict *Conf, int flag, char flagflags, const char *mask, const c
 		Affix->issimple = 0;
 		Affix->isregis = 1;
 		RS_compile(&(Affix->reg.regis), (type == FF_SUFFIX) ? true : false,
-				   (mask && *mask) ? mask : VoidString);
+				   *mask ? mask : VoidString);
 	}
 	else
 	{

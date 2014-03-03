@@ -585,10 +585,7 @@ percentile_cont_final_common(FunctionCallInfo fcinfo,
 	 * trouble, since the cleanup callback will clear the tuplesort later.
 	 */
 
-	if (isnull)
-		PG_RETURN_NULL();
-	else
-		PG_RETURN_DATUM(val);
+	PG_RETURN_DATUM(val);
 }
 
 /*

@@ -227,7 +227,8 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 		/* Setup and activate network throttling, if client requested it */
 		if (opt->maxrate > 0)
 		{
-			throttling_sample = opt->maxrate * 1024 / THROTTLING_FREQUENCY;
+			throttling_sample =
+				(int64) opt->maxrate * (int64) 1024 / THROTTLING_FREQUENCY;
 
 			/*
 			 * The minimum amount of time for throttling_sample

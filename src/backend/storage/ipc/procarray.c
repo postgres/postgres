@@ -2302,9 +2302,9 @@ MinimumActiveBackends(int min)
 		volatile PGXACT *pgxact = &allPgXact[pgprocno];
 
 		/*
-		 * Since we're not holding a lock, need to check that the pointer is
-		 * valid. Someone holding the lock could have incremented numProcs
-		 * already, but not yet inserted a valid pointer to the array.
+		 * Since we're not holding a lock, need to be prepared to deal with
+		 * garbage, as someone could have incremented numPucs but not yet
+		 * filled the structure.
 		 *
 		 * If someone just decremented numProcs, 'proc' could also point to a
 		 * PGPROC entry that's no longer in the array. It still points to a
@@ -2312,9 +2312,6 @@ MinimumActiveBackends(int min)
 		 * free list and are recycled. Its contents are nonsense in that case,
 		 * but that's acceptable for this function.
 		 */
-		if (proc == NULL)
-			continue;
-
 		if (proc == MyProc)
 			continue;			/* do not count myself */
 		if (pgxact->xid == InvalidTransactionId)

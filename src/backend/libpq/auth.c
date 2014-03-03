@@ -214,6 +214,7 @@ static void
 auth_failed(Port *port, int status, char *logdetail)
 {
 	const char *errstr;
+	char	   *cdetail;
 	int			errcode_return = ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION;
 
 	/*
@@ -273,17 +274,12 @@ auth_failed(Port *port, int status, char *logdetail)
 			break;
 	}
 
-	if (port->hba)
-	{
-		char	   *cdetail;
-
-		cdetail = psprintf(_("Connection matched pg_hba.conf line %d: \"%s\""),
-						   port->hba->linenumber, port->hba->rawline);
-		if (logdetail)
-			logdetail = psprintf("%s\n%s", logdetail, cdetail);
-		else
-			logdetail = cdetail;
-	}
+	cdetail = psprintf(_("Connection matched pg_hba.conf line %d: \"%s\""),
+					   port->hba->linenumber, port->hba->rawline);
+	if (logdetail)
+		logdetail = psprintf("%s\n%s", logdetail, cdetail);
+	else
+		logdetail = cdetail;
 
 	ereport(FATAL,
 			(errcode(errcode_return),
