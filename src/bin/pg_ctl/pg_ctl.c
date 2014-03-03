@@ -383,7 +383,7 @@ free_readfile(char **optlines)
 
 	while (optlines[i++])
 		free(optlines[i]);
-	
+
 	free(optlines);
 
 	return;

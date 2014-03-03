@@ -1159,7 +1159,7 @@ get_alternative_expectfile(const char *expectfile, int i)
 
 	if (!(tmp = (char*) malloc(ssize)))
 		return NULL;
-	
+
 	if (!(s = (char*) malloc(ssize)))
 	{
 		free(tmp);

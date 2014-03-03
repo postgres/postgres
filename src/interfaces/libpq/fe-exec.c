@@ -2760,7 +2760,7 @@ PQfnumber(const PGresult *res, const char *field_name)
 		for (i = 0; i < res->numAttributes; i++)
 			if (strcmp(field_name, res->attDescs[i].name) == 0)
 				return i;
-	
+
 	/* Fall through to the normal check if that didn't work out. */
 
 	/*

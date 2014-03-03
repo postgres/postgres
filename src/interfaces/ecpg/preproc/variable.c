@@ -456,7 +456,7 @@ dump_variables(struct arguments * list, int mode)
 	/* Then release the list element. */
 	if (mode != 0)
 		free(list);
-	
+
 	free(str_zero);
 }
 
