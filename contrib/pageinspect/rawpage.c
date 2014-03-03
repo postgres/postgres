@@ -18,10 +18,12 @@
 #include "access/htup_details.h"
 #include "catalog/catalog.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
 #include "utils/builtins.h"
+#include "utils/pg_lsn.h"
 #include "utils/rel.h"
 
 PG_MODULE_MAGIC;
@@ -180,7 +182,6 @@ page_header(PG_FUNCTION_ARGS)
 
 	PageHeader	page;
 	XLogRecPtr	lsn;
-	char		lsnchar[64];
 
 	if (!superuser())
 		ereport(ERROR,
@@ -207,10 +208,17 @@ page_header(PG_FUNCTION_ARGS)
 	/* Extract information from the page header */
 
 	lsn = PageGetLSN(page);
-	snprintf(lsnchar, sizeof(lsnchar), "%X/%X",
-			 (uint32) (lsn >> 32), (uint32) lsn);
 
-	values[0] = CStringGetTextDatum(lsnchar);
+	/* pageinspect >= 1.2 uses pg_lsn instead of text for the LSN field. */
+	if (tupdesc->attrs[0]->atttypid == TEXTOID)
+	{
+		char	lsnchar[64];
+		snprintf(lsnchar, sizeof(lsnchar), "%X/%X",
+				 (uint32) (lsn >> 32), (uint32) lsn);
+		values[0] = CStringGetTextDatum(lsnchar);
+	}
+	else
+		values[0] = LSNGetDatum(lsn);
 	values[1] = UInt16GetDatum(page->pd_checksum);
 	values[2] = UInt16GetDatum(page->pd_flags);
 	values[3] = UInt16GetDatum(page->pd_lower);
