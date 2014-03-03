@@ -1368,13 +1368,15 @@ pg_prepared_xacts| SELECT p.transaction,
    LEFT JOIN pg_authid u ON ((p.ownerid = u.oid)))
    LEFT JOIN pg_database d ON ((p.dbid = d.oid)));
 pg_replication_slots| SELECT l.slot_name,
+    l.plugin,
     l.slot_type,
     l.datoid,
     d.datname AS database,
     l.active,
     l.xmin,
+    l.catalog_xmin,
     l.restart_lsn
-   FROM (pg_get_replication_slots() l(slot_name, slot_type, datoid, active, xmin, restart_lsn)
+   FROM (pg_get_replication_slots() l(slot_name, plugin, slot_type, datoid, active, xmin, catalog_xmin, restart_lsn)
    LEFT JOIN pg_database d ON ((l.datoid = d.oid)));
 pg_roles| SELECT pg_authid.rolname,
     pg_authid.rolsuper,

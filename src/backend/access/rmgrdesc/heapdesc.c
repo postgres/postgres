@@ -149,6 +149,10 @@ heap2_desc(StringInfo buf, uint8 xl_info, char *rec)
 						 xlrec->node.relNode, xlrec->block,
 						 xlrec->cutoff_xid, xlrec->ntuples);
 	}
+	else if (info == XLOG_HEAP2_REWRITE)
+	{
+		appendStringInfoString(buf, "heap rewrite:");
+	}
 	else if (info == XLOG_HEAP2_CLEANUP_INFO)
 	{
 		xl_heap_cleanup_info *xlrec = (xl_heap_cleanup_info *) rec;

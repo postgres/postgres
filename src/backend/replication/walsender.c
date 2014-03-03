@@ -55,6 +55,7 @@
 #include "replication/basebackup.h"
 #include "replication/slot.h"
 #include "replication/syncrep.h"
+#include "replication/slot.h"
 #include "replication/walreceiver.h"
 #include "replication/walsender.h"
 #include "replication/walsender_private.h"
@@ -434,7 +435,7 @@ StartReplication(StartReplicationCmd *cmd)
 		if (MyReplicationSlot->data.database != InvalidOid)
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 (errmsg("cannot use a replication slot created for changeset extraction for streaming replication"))));
+					 (errmsg("cannot use a logical replication slot for physical replication"))));
 	}
 
 	/*
@@ -656,7 +657,9 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 	sendTimeLineIsHistoric = false;
 	sendTimeLine = ThisTimeLineID;
 
-	ReplicationSlotCreate(cmd->slotname, cmd->kind == REPLICATION_KIND_LOGICAL);
+	ReplicationSlotCreate(cmd->slotname,
+						  cmd->kind == REPLICATION_KIND_LOGICAL,
+						  RS_PERSISTENT);
 
 	initStringInfo(&output_message);
 
@@ -766,7 +769,7 @@ exec_replication_command(const char *cmd_string)
 				if (cmd->kind == REPLICATION_KIND_PHYSICAL)
 					StartReplication(cmd);
 				else
-					elog(ERROR, "cannot handle changeset extraction yet");
+					elog(ERROR, "cannot handle logical decoding yet");
 				break;
 			}
 
@@ -1017,7 +1020,7 @@ ProcessStandbyReplyMessage(void)
 	if (MyReplicationSlot && flushPtr != InvalidXLogRecPtr)
 	{
 		if (MyReplicationSlot->data.database != InvalidOid)
-			elog(ERROR, "cannot handle changeset extraction yet");
+			elog(ERROR, "cannot handle logical decoding yet");
 		else
 			PhysicalConfirmReceivedLocation(flushPtr);
 	}
@@ -1050,7 +1053,7 @@ PhysicalReplicationSlotNewXmin(TransactionId feedbackXmin)
 	if (changed)
 	{
 		ReplicationSlotMarkDirty();
-		ReplicationSlotsComputeRequiredXmin();
+		ReplicationSlotsComputeRequiredXmin(false);
 	}
 }
 

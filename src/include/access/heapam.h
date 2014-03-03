@@ -164,8 +164,7 @@ extern void heap_restrpos(HeapScanDesc scan);
 extern void heap_sync(Relation relation);
 
 /* in heap/pruneheap.c */
-extern void heap_page_prune_opt(Relation relation, Buffer buffer,
-					TransactionId OldestXmin);
+extern void heap_page_prune_opt(Relation relation, Buffer buffer);
 extern int heap_page_prune(Relation relation, Buffer buffer,
 				TransactionId OldestXmin,
 				bool report_stats, TransactionId *latestRemovedXid);

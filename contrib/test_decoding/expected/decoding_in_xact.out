@@ -1,0 +1,89 @@
+-- predictability
+SET synchronous_commit = on;
+-- fail because we're creating a slot while in an xact with xid
+BEGIN;
+SELECT txid_current() = 0;
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
+ERROR:  cannot create logical replication slot in transaction that has performed writes
+ROLLBACK;
+-- fail because we're creating a slot while in an subxact whose topxact has a xid
+BEGIN;
+SELECT txid_current() = 0;
+ ?column? 
+----------
+ f
+(1 row)
+
+SAVEPOINT barf;
+SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
+ERROR:  cannot create logical replication slot in transaction that has performed writes
+ROLLBACK TO SAVEPOINT barf;
+ROLLBACK;
+-- succeed, outside tx.
+SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
+ ?column? 
+----------
+ init
+(1 row)
+
+SELECT 'stop' FROM pg_drop_replication_slot('regression_slot');
+ ?column? 
+----------
+ stop
+(1 row)
+
+-- succeed, in tx without xid.
+BEGIN;
+SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
+ ?column? 
+----------
+ init
+(1 row)
+
+COMMIT;
+CREATE TABLE nobarf(id serial primary key, data text);
+INSERT INTO nobarf(data) VALUES('1');
+-- decoding works in transaction with xid
+BEGIN;
+SELECT txid_current() = 0;
+ ?column? 
+----------
+ f
+(1 row)
+
+-- don't show yet, haven't committed
+INSERT INTO nobarf(data) VALUES('2');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0');
+                           data                            
+-----------------------------------------------------------
+ BEGIN
+ COMMIT
+ BEGIN
+ table public.nobarf: INSERT: id[integer]:1 data[text]:'1'
+ COMMIT
+(5 rows)
+
+COMMIT;
+INSERT INTO nobarf(data) VALUES('3');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0');
+                           data                            
+-----------------------------------------------------------
+ BEGIN
+ table public.nobarf: INSERT: id[integer]:2 data[text]:'2'
+ COMMIT
+ BEGIN
+ table public.nobarf: INSERT: id[integer]:3 data[text]:'3'
+ COMMIT
+(6 rows)
+
+SELECT 'stop' FROM pg_drop_replication_slot('regression_slot');
+ ?column? 
+----------
+ stop
+(1 row)
+

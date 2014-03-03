@@ -147,4 +147,6 @@ extern void ProcessCommittedInvalidationMessages(SharedInvalidationMessage *msgs
 									 int nmsgs, bool RelcacheInitFileInval,
 									 Oid dbid, Oid tsid);
 
+extern void LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg);
+
 #endif   /* SINVAL_H */

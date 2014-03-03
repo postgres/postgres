@@ -468,6 +468,8 @@ pg_regress_installcheck = $(top_builddir)/src/test/regress/pg_regress --inputdir
 
 pg_regress_clean_files = results/ regression.diffs regression.out tmp_check/ log/
 
+pg_isolation_regress_check = $(top_builddir)/src/test/isolation/pg_isolation_regress --inputdir=$(srcdir) --temp-install=./tmp_check --top-builddir=$(top_builddir) $(pg_regress_locale_flags)
+pg_isolation_regress_installcheck = $(top_builddir)/src/test/isolation/pg_isolation_regress --inputdir=$(srcdir) --top-builddir=$(top_builddir) $(pg_regress_locale_flags)
 
 ##########################################################################
 #

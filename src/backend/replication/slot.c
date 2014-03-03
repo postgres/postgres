@@ -43,6 +43,7 @@
 #include "miscadmin.h"
 #include "replication/slot.h"
 #include "storage/fd.h"
+#include "storage/proc.h"
 #include "storage/procarray.h"
 
 /*
@@ -81,6 +82,8 @@ ReplicationSlot *MyReplicationSlot = NULL;
 
 /* GUCs */
 int			max_replication_slots = 0;	/* the maximum number of replication slots */
+
+static void ReplicationSlotDropAcquired(void);
 
 /* internal persistency functions */
 static void RestoreSlotFromDisk(const char *name);
@@ -190,11 +193,12 @@ ReplicationSlotValidateName(const char *name, int elevel)
  * Create a new replication slot and mark it as used by this backend.
  *
  * name: Name of the slot
- * db_specific: changeset extraction is db specific, if the slot is going to
+ * db_specific: logical decoding is db specific; if the slot is going to
  *     be used for that pass true, otherwise false.
  */
 void
-ReplicationSlotCreate(const char *name, bool db_specific)
+ReplicationSlotCreate(const char *name, bool db_specific,
+					  ReplicationSlotPersistency persistency)
 {
 	ReplicationSlot *slot = NULL;
 	int			i;
@@ -246,6 +250,7 @@ ReplicationSlotCreate(const char *name, bool db_specific)
 	 */
 	Assert(!slot->in_use);
 	Assert(!slot->active);
+	slot->data.persistency = persistency;
 	slot->data.xmin = InvalidTransactionId;
 	slot->effective_xmin = InvalidTransactionId;
 	strncpy(NameStr(slot->data.name), name, NAMEDATALEN);
@@ -348,14 +353,30 @@ ReplicationSlotRelease(void)
 
 	Assert(slot != NULL && slot->active);
 
-	/* Mark slot inactive.  We're not freeing it, just disconnecting. */
+	if (slot->data.persistency == RS_EPHEMERAL)
 	{
+		/*
+		 * Delete the slot. There is no !PANIC case where this is allowed to
+		 * fail, all that may happen is an incomplete cleanup of the on-disk
+		 * data.
+		 */
+		ReplicationSlotDropAcquired();
+	}
+	else
+	{
+		/* Mark slot inactive.  We're not freeing it, just disconnecting. */
 		volatile ReplicationSlot *vslot = slot;
 		SpinLockAcquire(&slot->mutex);
 		vslot->active = false;
 		SpinLockRelease(&slot->mutex);
-		MyReplicationSlot = NULL;
 	}
+
+	MyReplicationSlot = NULL;
+
+	/* might not have been set when we've been a plain slot */
+	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
+	MyPgXact->vacuumFlags &= ~PROC_IN_LOGICAL_DECODING;
+	LWLockRelease(ProcArrayLock);
 }
 
 /*
@@ -364,51 +385,35 @@ ReplicationSlotRelease(void)
 void
 ReplicationSlotDrop(const char *name)
 {
-	ReplicationSlot *slot = NULL;
-	int			i;
-	bool		active;
+	Assert(MyReplicationSlot == NULL);
+
+	ReplicationSlotAcquire(name);
+
+	ReplicationSlotDropAcquired();
+}
+
+/*
+ * Permanently drop the currently acquired replication slot which will be
+ * released by the point this function returns.
+ */
+static void
+ReplicationSlotDropAcquired(void)
+{
 	char		path[MAXPGPATH];
 	char		tmppath[MAXPGPATH];
+	ReplicationSlot *slot = MyReplicationSlot;
 
-	ReplicationSlotValidateName(name, ERROR);
+	Assert(MyReplicationSlot != NULL);
+
+	/* slot isn't acquired anymore */
+	MyReplicationSlot = NULL;
 
 	/*
-	 * If some other backend ran this code currently with us, we might both
-	 * try to free the same slot at the same time.  Or we might try to delete
-	 * a slot with a certain name while someone else was trying to create a
-	 * slot with the same name.
+	 * If some other backend ran this code concurrently with us, we might try
+	 * to delete a slot with a certain name while someone else was trying to
+	 * create a slot with the same name.
 	 */
 	LWLockAcquire(ReplicationSlotAllocationLock, LW_EXCLUSIVE);
-
-	/* Search for the named slot and mark it active if we find it. */
-	LWLockAcquire(ReplicationSlotControlLock, LW_SHARED);
-	for (i = 0; i < max_replication_slots; i++)
-	{
-		ReplicationSlot *s = &ReplicationSlotCtl->replication_slots[i];
-
-		if (s->in_use && strcmp(name, NameStr(s->data.name)) == 0)
-		{
-			volatile ReplicationSlot *vslot = s;
-
-			SpinLockAcquire(&s->mutex);
-			active = vslot->active;
-			vslot->active = true;
-			SpinLockRelease(&s->mutex);
-			slot = s;
-			break;
-		}
-	}
-	LWLockRelease(ReplicationSlotControlLock);
-
-	/* If we did not find the slot or it was already active, error out. */
-	if (slot == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("replication slot \"%s\" does not exist", name)));
-	if (active)
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_IN_USE),
-				 errmsg("replication slot \"%s\" is already active", name)));
 
 	/* Generate pathnames. */
 	sprintf(path, "pg_replslot/%s", NameStr(slot->data.name));
@@ -417,33 +422,39 @@ ReplicationSlotDrop(const char *name)
 	/*
 	 * Rename the slot directory on disk, so that we'll no longer recognize
 	 * this as a valid slot.  Note that if this fails, we've got to mark the
-	 * slot inactive again before bailing out.
+	 * slot inactive before bailing out.  If we're dropping a ephemeral slot,
+	 * we better never fail hard as the caller won't expect the slot to
+	 * survive and this might get called during error handling.
 	 */
-	if (rename(path, tmppath) != 0)
+	if (rename(path, tmppath) == 0)
+	{
+		/*
+		 * We need to fsync() the directory we just renamed and its parent to
+		 * make sure that our changes are on disk in a crash-safe fashion.  If
+		 * fsync() fails, we can't be sure whether the changes are on disk or
+		 * not.  For now, we handle that by panicking;
+		 * StartupReplicationSlots() will try to straighten it out after
+		 * restart.
+		 */
+		START_CRIT_SECTION();
+		fsync_fname(tmppath, true);
+		fsync_fname("pg_replslot", true);
+		END_CRIT_SECTION();
+	}
+	else
 	{
 		volatile ReplicationSlot *vslot = slot;
+		bool fail_softly = slot->data.persistency == RS_EPHEMERAL;
 
 		SpinLockAcquire(&slot->mutex);
 		vslot->active = false;
 		SpinLockRelease(&slot->mutex);
 
-		ereport(ERROR,
+		ereport(fail_softly ? WARNING : ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not rename \"%s\" to \"%s\": %m",
 						path, tmppath)));
 	}
-
-	/*
-	 * We need to fsync() the directory we just renamed and its parent to make
-	 * sure that our changes are on disk in a crash-safe fashion.  If fsync()
-	 * fails, we can't be sure whether the changes are on disk or not.  For
-	 * now, we handle that by panicking; StartupReplicationSlots() will
-	 * try to straighten it out after restart.
-	 */
-	START_CRIT_SECTION();
-	fsync_fname(tmppath, true);
-	fsync_fname("pg_replslot", true);
-	END_CRIT_SECTION();
 
 	/*
 	 * The slot is definitely gone.  Lock out concurrent scans of the array
@@ -461,7 +472,7 @@ ReplicationSlotDrop(const char *name)
 	 * Slot is dead and doesn't prevent resource removal anymore, recompute
 	 * limits.
 	 */
-	ReplicationSlotsComputeRequiredXmin();
+	ReplicationSlotsComputeRequiredXmin(false);
 	ReplicationSlotsComputeRequiredLSN();
 
 	/*
@@ -519,21 +530,49 @@ ReplicationSlotMarkDirty(void)
 }
 
 /*
+ * Convert a slot that's marked as RS_DROP_ON_ERROR to a RS_PERSISTENT slot,
+ * guaranteeing it will be there after a eventual crash.
+ */
+void
+ReplicationSlotPersist(void)
+{
+	ReplicationSlot *slot = MyReplicationSlot;
+
+	Assert(slot != NULL);
+	Assert(slot->data.persistency != RS_PERSISTENT);
+
+	{
+		volatile ReplicationSlot *vslot = slot;
+
+		SpinLockAcquire(&slot->mutex);
+		vslot->data.persistency = RS_PERSISTENT;
+		SpinLockRelease(&slot->mutex);
+	}
+
+	ReplicationSlotMarkDirty();
+	ReplicationSlotSave();
+}
+
+/*
  * Compute the oldest xmin across all slots and store it in the ProcArray.
  */
 void
-ReplicationSlotsComputeRequiredXmin(void)
+ReplicationSlotsComputeRequiredXmin(bool already_locked)
 {
 	int			i;
 	TransactionId agg_xmin = InvalidTransactionId;
+	TransactionId agg_catalog_xmin = InvalidTransactionId;
 
 	Assert(ReplicationSlotCtl != NULL);
 
-	LWLockAcquire(ReplicationSlotControlLock, LW_SHARED);
+	if (!already_locked)
+		LWLockAcquire(ReplicationSlotControlLock, LW_SHARED);
+
 	for (i = 0; i < max_replication_slots; i++)
 	{
 		ReplicationSlot *s = &ReplicationSlotCtl->replication_slots[i];
 		TransactionId	effective_xmin;
+		TransactionId	effective_catalog_xmin;
 
 		if (!s->in_use)
 			continue;
@@ -543,6 +582,7 @@ ReplicationSlotsComputeRequiredXmin(void)
 
 			SpinLockAcquire(&s->mutex);
 			effective_xmin = vslot->effective_xmin;
+			effective_catalog_xmin = vslot->effective_catalog_xmin;
 			SpinLockRelease(&s->mutex);
 		}
 
@@ -551,10 +591,18 @@ ReplicationSlotsComputeRequiredXmin(void)
 			(!TransactionIdIsValid(agg_xmin) ||
 			 TransactionIdPrecedes(effective_xmin, agg_xmin)))
 			agg_xmin = effective_xmin;
-	}
-	LWLockRelease(ReplicationSlotControlLock);
 
-	ProcArraySetReplicationSlotXmin(agg_xmin);
+		/* check the catalog xmin */
+		if (TransactionIdIsValid(effective_catalog_xmin) &&
+			(!TransactionIdIsValid(agg_catalog_xmin) ||
+			 TransactionIdPrecedes(effective_catalog_xmin, agg_catalog_xmin)))
+			agg_catalog_xmin = effective_catalog_xmin;
+	}
+
+	if (!already_locked)
+		LWLockRelease(ReplicationSlotControlLock);
+
+	ProcArraySetReplicationSlotXmin(agg_xmin, agg_catalog_xmin, already_locked);
 }
 
 /*
@@ -594,6 +642,110 @@ ReplicationSlotsComputeRequiredLSN(void)
 
 	XLogSetReplicationSlotMinimumLSN(min_required);
 }
+
+/*
+ * Compute the oldest WAL LSN required by *logical* decoding slots..
+ *
+ * Returns InvalidXLogRecPtr if logical decoding is disabled or no logicals
+ * slots exist.
+ *
+ * NB: this returns a value >= ReplicationSlotsComputeRequiredLSN(), since it
+ * ignores physical replication slots.
+ *
+ * The results aren't required frequently, so we don't maintain a precomputed
+ * value like we do for ComputeRequiredLSN() and ComputeRequiredXmin().
+ */
+XLogRecPtr
+ReplicationSlotsComputeLogicalRestartLSN(void)
+{
+	XLogRecPtr	result = InvalidXLogRecPtr;
+	int			i;
+
+	if (max_replication_slots <= 0)
+		return InvalidXLogRecPtr;
+
+	LWLockAcquire(ReplicationSlotControlLock, LW_SHARED);
+
+	for (i = 0; i < max_replication_slots; i++)
+	{
+		volatile ReplicationSlot *s;
+		XLogRecPtr		restart_lsn;
+
+		s = &ReplicationSlotCtl->replication_slots[i];
+
+		/* cannot change while ReplicationSlotCtlLock is held */
+		if (!s->in_use)
+			continue;
+
+		/* we're only interested in logical slots */
+		if (s->data.database == InvalidOid)
+			continue;
+
+		/* read once, it's ok if it increases while we're checking */
+		SpinLockAcquire(&s->mutex);
+		restart_lsn = s->data.restart_lsn;
+		SpinLockRelease(&s->mutex);
+
+		if (result == InvalidXLogRecPtr ||
+			restart_lsn < result)
+			result = restart_lsn;
+	}
+
+	LWLockRelease(ReplicationSlotControlLock);
+
+	return result;
+}
+
+/*
+ * ReplicationSlotsCountDBSlots -- count the number of slots that refer to the
+ * passed database oid.
+ *
+ * Returns true if there are any slots referencing the database. *nslots will
+ * be set to the absolute number of slots in the database, *nactive to ones
+ * currently active.
+ */
+bool
+ReplicationSlotsCountDBSlots(Oid dboid, int *nslots, int *nactive)
+{
+	int			i;
+
+	*nslots = *nactive = 0;
+
+	if (max_replication_slots <= 0)
+		return false;
+
+	LWLockAcquire(ReplicationSlotControlLock, LW_SHARED);
+	for (i = 0; i < max_replication_slots; i++)
+	{
+		volatile ReplicationSlot *s;
+
+		s = &ReplicationSlotCtl->replication_slots[i];
+
+		/* cannot change while ReplicationSlotCtlLock is held */
+		if (!s->in_use)
+			continue;
+
+		/* not database specific, skip */
+		if (s->data.database == InvalidOid)
+
+		/* not our database, skip */
+		if (s->data.database != dboid)
+			continue;
+
+		/* count slots with spinlock held */
+		SpinLockAcquire(&s->mutex);
+		(*nslots)++;
+		if (s->active)
+			(*nactive)++;
+		SpinLockRelease(&s->mutex);
+	}
+	LWLockRelease(ReplicationSlotControlLock);
+
+	if (*nslots > 0)
+		return true;
+	return false;
+}
+
 
 /*
  * Check whether the server's configuration supports using replication
@@ -723,7 +875,7 @@ StartupReplicationSlots(XLogRecPtr checkPointRedo)
 		return;
 
 	/* Now that we have recovered all the data, compute replication xmin */
-	ReplicationSlotsComputeRequiredXmin();
+	ReplicationSlotsComputeRequiredXmin(false);
 	ReplicationSlotsComputeRequiredLSN();
 }
 
@@ -1050,8 +1202,19 @@ RestoreSlotFromDisk(const char *name)
 		memcpy(&slot->data, &cp.slotdata,
 			   sizeof(ReplicationSlotPersistentData));
 
+		/* Don't restore the slot if it's not parked as persistent. */
+		if (slot->data.persistency != RS_PERSISTENT)
+			return;
+
 		/* initialize in memory state */
 		slot->effective_xmin = cp.slotdata.xmin;
+		slot->effective_catalog_xmin = cp.slotdata.catalog_xmin;
+
+		slot->candidate_catalog_xmin = InvalidTransactionId;
+		slot->candidate_xmin_lsn = InvalidXLogRecPtr;
+		slot->candidate_restart_lsn = InvalidXLogRecPtr;
+		slot->candidate_restart_valid = InvalidXLogRecPtr;
+
 		slot->in_use = true;
 		slot->active = false;
 

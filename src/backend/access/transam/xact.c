@@ -1074,8 +1074,16 @@ RecordTransactionCommit(void)
 
 		/*
 		 * Do we need the long commit record? If not, use the compact format.
+		 *
+		 * For now always use the non-compact version if wal_level=logical, so
+		 * we can hide commits from other databases. TODO: In the future we
+		 * should merge compact and non-compact commits and use a flags
+		 * variable to determine if it contains subxacts, relations or
+		 * invalidation messages, that's more extensible and degrades more
+		 * gracefully. Till then, it's just 20 bytes of overhead.
 		 */
-		if (nrels > 0 || nmsgs > 0 || RelcacheInitFileInval || forceSyncCommit)
+		if (nrels > 0 || nmsgs > 0 || RelcacheInitFileInval || forceSyncCommit ||
+			XLogLogicalInfoActive())
 		{
 			XLogRecData rdata[4];
 			int			lastrdata = 0;

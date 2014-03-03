@@ -63,6 +63,11 @@
 	(AssertMacro(TransactionIdIsNormal(id1) && TransactionIdIsNormal(id2)), \
 	(int32) ((id1) - (id2)) < 0)
 
+/* compare two XIDs already known to be normal; this is a macro for speed */
+#define NormalTransactionIdFollows(id1, id2) \
+	(AssertMacro(TransactionIdIsNormal(id1) && TransactionIdIsNormal(id2)), \
+	(int32) ((id1) - (id2)) > 0)
+
 /* ----------
  *		Object ID (OID) zero is InvalidOid.
  *

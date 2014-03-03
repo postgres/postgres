@@ -800,7 +800,9 @@ standby_redo(XLogRecPtr lsn, XLogRecord *record)
 
 /*
  * Log details of the current snapshot to WAL. This allows the snapshot state
- * to be reconstructed on the standby.
+ * to be reconstructed on the standby and for logical decoding.
+ *
+ * This is used for Hot Standby as follows:
  *
  * We can move directly to STANDBY_SNAPSHOT_READY at startup if we
  * start from a shutdown checkpoint because we know nothing was running
@@ -854,6 +856,12 @@ standby_redo(XLogRecPtr lsn, XLogRecord *record)
  * Zero xids should no longer be possible, but we may be replaying WAL
  * from a time when they were possible.
  *
+ * For logical decoding only the running xacts information is needed;
+ * there's no need to look at the locking information, but it's logged anyway,
+ * as there's no independent knob to just enable logical decoding. For
+ * details of how this is used, check snapbuild.c's introductory comment.
+ *
+ *
  * Returns the RecPtr of the last inserted record.
  */
 XLogRecPtr
@@ -879,7 +887,27 @@ LogStandbySnapshot(void)
 	 * record we write, because standby will open up when it sees this.
 	 */
 	running = GetRunningTransactionData();
+
+	/*
+	 * GetRunningTransactionData() acquired ProcArrayLock, we must release
+	 * it. For Hot Standby this can be done before inserting the WAL record
+	 * because ProcArrayApplyRecoveryInfo() rechecks the commit status using
+	 * the clog. For logical decoding, though, the lock can't be released
+	 * early becuase the clog might be "in the future" from the POV of the
+	 * historic snapshot. This would allow for situations where we're waiting
+	 * for the end of a transaction listed in the xl_running_xacts record
+	 * which, according to the WAL, have commit before the xl_running_xacts
+	 * record. Fortunately this routine isn't executed frequently, and it's
+	 * only a shared lock.
+	 */
+	if (wal_level < WAL_LEVEL_LOGICAL)
+		LWLockRelease(ProcArrayLock);
+
 	recptr = LogCurrentRunningXacts(running);
+
+	/* Release lock if we kept it longer ... */
+	if (wal_level >= WAL_LEVEL_LOGICAL)
+		LWLockRelease(ProcArrayLock);
 
 	/* GetRunningTransactionData() acquired XidGenLock, we must release it */
 	LWLockRelease(XidGenLock);

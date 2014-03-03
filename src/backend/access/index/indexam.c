@@ -67,7 +67,10 @@
 
 #include "access/relscan.h"
 #include "access/transam.h"
+#include "access/xlog.h"
+
 #include "catalog/index.h"
+#include "catalog/catalog.h"
 #include "pgstat.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
@@ -520,8 +523,7 @@ index_fetch_heap(IndexScanDesc scan)
 		 * Prune page, but only if we weren't already on this page
 		 */
 		if (prev_buf != scan->xs_cbuf)
-			heap_page_prune_opt(scan->heapRelation, scan->xs_cbuf,
-								RecentGlobalXmin);
+			heap_page_prune_opt(scan->heapRelation, scan->xs_cbuf);
 	}
 
 	/* Obtain share-lock on the buffer so we can examine visibility */

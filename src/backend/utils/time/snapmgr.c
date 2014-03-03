@@ -19,6 +19,10 @@
  * have regd_count = 1 and are counted in RegisteredSnapshots, but are not
  * tracked by any resource owner.
  *
+ * The same is true for historic snapshots used during logical decoding,
+ * their lifetime is managed separately (as they life longer as one xact.c
+ * transaction).
+ *
  * These arrangements let us reset MyPgXact->xmin when there are no snapshots
  * referenced by this transaction.	(One possible improvement would be to be
  * able to advance Xmin when the snapshot with the earliest Xmin is no longer
@@ -69,12 +73,13 @@
  */
 static SnapshotData CurrentSnapshotData = {HeapTupleSatisfiesMVCC};
 static SnapshotData SecondarySnapshotData = {HeapTupleSatisfiesMVCC};
-static SnapshotData CatalogSnapshotData = {HeapTupleSatisfiesMVCC};
+SnapshotData CatalogSnapshotData = {HeapTupleSatisfiesMVCC};
 
 /* Pointers to valid snapshots */
 static Snapshot CurrentSnapshot = NULL;
 static Snapshot SecondarySnapshot = NULL;
 static Snapshot CatalogSnapshot = NULL;
+static Snapshot HistoricSnapshot = NULL;
 
 /*
  * Staleness detection for CatalogSnapshot.
@@ -86,13 +91,18 @@ static bool CatalogSnapshotStale = true;
  * for the convenience of TransactionIdIsInProgress: even in bootstrap
  * mode, we don't want it to say that BootstrapTransactionId is in progress.
  *
- * RecentGlobalXmin is initialized to InvalidTransactionId, to ensure that no
- * one tries to use a stale value.	Readers should ensure that it has been set
- * to something else before using it.
+ * RecentGlobalXmin and RecentGlobalDataXmin are initialized to
+ * InvalidTransactionId, to ensure that no one tries to use a stale
+ * value. Readers should ensure that it has been set to something else
+ * before using it.
  */
 TransactionId TransactionXmin = FirstNormalTransactionId;
 TransactionId RecentXmin = FirstNormalTransactionId;
 TransactionId RecentGlobalXmin = InvalidTransactionId;
+TransactionId RecentGlobalDataXmin = InvalidTransactionId;
+
+/* (table, ctid) => (cmin, cmax) mapping during timetravel */
+static HTAB *tuplecid_data = NULL;
 
 /*
  * Elements of the active snapshot stack.
@@ -158,6 +168,18 @@ static void SnapshotResetXmin(void);
 Snapshot
 GetTransactionSnapshot(void)
 {
+	/*
+	 * Return historic snapshot if doing logical decoding. We'll never
+	 * need a non-historic transaction snapshot in this (sub-)transaction, so
+	 * there's no need to be careful to set one up for later calls to
+	 * GetTransactionSnapshot().
+	 */
+	if (HistoricSnapshotActive())
+	{
+		Assert(!FirstSnapshotSet);
+		return HistoricSnapshot;
+	}
+
 	/* First call in transaction? */
 	if (!FirstSnapshotSet)
 	{
@@ -214,6 +236,13 @@ GetTransactionSnapshot(void)
 Snapshot
 GetLatestSnapshot(void)
 {
+	/*
+	 * So far there are no cases requiring support for GetLatestSnapshot()
+	 * during logical decoding, but it wouldn't be hard to add if
+	 * required.
+	 */
+	Assert(!HistoricSnapshotActive());
+
 	/* If first call in transaction, go ahead and set the xact snapshot */
 	if (!FirstSnapshotSet)
 		return GetTransactionSnapshot();
@@ -230,6 +259,26 @@ GetLatestSnapshot(void)
  */
 Snapshot
 GetCatalogSnapshot(Oid relid)
+{
+	/*
+	 * Return historic snapshot if we're doing logical decoding, but
+	 * return a non-historic, snapshot if we temporarily are doing up2date
+	 * lookups.
+	 */
+	if (HistoricSnapshotActive())
+		return HistoricSnapshot;
+
+	return GetNonHistoricCatalogSnapshot(relid);
+}
+
+/*
+ * GetNonHistoricCatalogSnapshot
+ *		Get a snapshot that is sufficiently up-to-date for scan of the system
+ *		catalog with the specified OID, even while historic snapshots are set
+ *		up.
+ */
+Snapshot
+GetNonHistoricCatalogSnapshot(Oid relid)
 {
 	/*
 	 * If the caller is trying to scan a relation that has no syscache,
@@ -303,6 +352,7 @@ SetTransactionSnapshot(Snapshot sourcesnap, TransactionId sourcexid)
 
 	Assert(RegisteredSnapshots == 0);
 	Assert(FirstXactSnapshot == NULL);
+	Assert(HistoricSnapshotActive());
 
 	/*
 	 * Even though we are not going to use the snapshot it computes, we must
@@ -796,7 +846,7 @@ AtEOXact_Snapshot(bool isCommit)
  *		Returns the token (the file name) that can be used to import this
  *		snapshot.
  */
-static char *
+char *
 ExportSnapshot(Snapshot snapshot)
 {
 	TransactionId topXid;
@@ -1257,4 +1307,46 @@ ThereAreNoPriorRegisteredSnapshots(void)
 		return true;
 
 	return false;
+}
+
+/*
+ * Setup a snapshot that replaces normal catalog snapshots that allows catalog
+ * access to behave just like it did at a certain point in the past.
+ *
+ * Needed for logical decoding.
+ */
+void
+SetupHistoricSnapshot(Snapshot historic_snapshot, HTAB *tuplecids)
+{
+	Assert(historic_snapshot != NULL);
+
+	/* setup the timetravel snapshot */
+	HistoricSnapshot = historic_snapshot;
+
+	/* setup (cmin, cmax) lookup hash */
+	tuplecid_data = tuplecids;
+}
+
+
+/*
+ * Make catalog snapshots behave normally again.
+ */
+void
+TeardownHistoricSnapshot(bool is_error)
+{
+	HistoricSnapshot = NULL;
+	tuplecid_data = NULL;
+}
+
+bool
+HistoricSnapshotActive(void)
+{
+	return HistoricSnapshot != NULL;
+}
+
+HTAB *
+HistoricSnapshotGetTupleCids(void)
+{
+	Assert(HistoricSnapshotActive());
+	return tuplecid_data;
 }

@@ -23,6 +23,7 @@
 
 #include "access/clog.h"
 #include "access/multixact.h"
+#include "access/rewriteheap.h"
 #include "access/subtrans.h"
 #include "access/timeline.h"
 #include "access/transam.h"
@@ -39,7 +40,9 @@
 #include "pgstat.h"
 #include "postmaster/bgwriter.h"
 #include "postmaster/startup.h"
+#include "replication/logical.h"
 #include "replication/slot.h"
+#include "replication/snapbuild.h"
 #include "replication/walreceiver.h"
 #include "replication/walsender.h"
 #include "storage/barrier.h"
@@ -4016,6 +4019,27 @@ CheckXLogRemoved(XLogSegNo segno, TimeLineID tli)
 }
 
 /*
+ * Return the last WAL segment removed, or 0 if no segment has been removed
+ * since startup.
+ *
+ * NB: the result can be out of date arbitrarily fast, the caller has to deal
+ * with that.
+ */
+XLogSegNo
+XLogGetLastRemovedSegno(void)
+{
+	/* use volatile pointer to prevent code rearrangement */
+	volatile XLogCtlData *xlogctl = XLogCtl;
+	XLogSegNo	lastRemovedSegNo;
+
+	SpinLockAcquire(&xlogctl->info_lck);
+	lastRemovedSegNo = xlogctl->lastRemovedSegNo;
+	SpinLockRelease(&xlogctl->info_lck);
+
+	return lastRemovedSegNo;
+}
+
+/*
  * Update the last removed segno pointer in shared memory, to reflect
  * that the given XLOG file has been removed.
  */
@@ -6559,6 +6583,12 @@ StartupXLOG(void)
 	StartupReplicationSlots(checkPoint.redo);
 
 	/*
+	 * Startup logical state, needs to be setup now so we have proper data
+	 * during crash recovery.
+	 */
+	StartupReorderBuffer();
+
+	/*
 	 * Startup MultiXact.  We need to do this early for two reasons: one
 	 * is that we might try to access multixacts when we do tuple freezing,
 	 * and the other is we need its state initialized because we attempt
@@ -8589,7 +8619,7 @@ CreateCheckPoint(int flags)
 	 * StartupSUBTRANS hasn't been called yet.
 	 */
 	if (!RecoveryInProgress())
-		TruncateSUBTRANS(GetOldestXmin(true, false));
+		TruncateSUBTRANS(GetOldestXmin(NULL, false));
 
 	/* Real work is done, but log and update stats before releasing lock. */
 	LogCheckpointEnd(false);
@@ -8674,6 +8704,8 @@ CheckPointGuts(XLogRecPtr checkPointRedo, int flags)
 	CheckPointPredicate();
 	CheckPointRelationMap();
 	CheckPointReplicationSlots();
+	CheckPointSnapBuild();
+	CheckPointLogicalRewriteHeap();
 	CheckPointBuffers(flags);	/* performs all required fsyncs */
 	/* We deliberately delay 2PC checkpointing as long as possible */
 	CheckPointTwoPhase(checkPointRedo);
@@ -8965,7 +8997,7 @@ CreateRestartPoint(int flags)
 	 * this because StartupSUBTRANS hasn't been called yet.
 	 */
 	if (EnableHotStandby)
-		TruncateSUBTRANS(GetOldestXmin(true, false));
+		TruncateSUBTRANS(GetOldestXmin(NULL, false));
 
 	/* Real work is done, but log and update before releasing lock. */
 	LogCheckpointEnd(true);

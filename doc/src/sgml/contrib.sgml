@@ -140,6 +140,7 @@ CREATE EXTENSION <replaceable>module_name</> FROM unpackaged;
  &sslinfo;
  &tablefunc;
  &tcn;
+ &test-decoding;
  &test-parser;
  &test-shm-mq;
  &tsearch2;

@@ -45,6 +45,7 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "postmaster/bgwriter.h"
+#include "replication/slot.h"
 #include "storage/copydir.h"
 #include "storage/fd.h"
 #include "storage/lmgr.h"
@@ -750,6 +751,7 @@ dropdb(const char *dbname, bool missing_ok)
 	HeapTuple	tup;
 	int			notherbackends;
 	int			npreparedxacts;
+	int			nslots, nslots_active;
 
 	/*
 	 * Look up the target database's OID, and get exclusive lock on it. We
@@ -805,6 +807,19 @@ dropdb(const char *dbname, bool missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_IN_USE),
 				 errmsg("cannot drop the currently open database")));
+
+	/*
+	 * Check whether there are, possibly unconnected, logical slots that refer
+	 * to the to-be-dropped database. The database lock we are holding
+	 * prevents the creation of new slots using the database.
+	 */
+	if (ReplicationSlotsCountDBSlots(db_id, &nslots, &nslots_active))
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_IN_USE),
+				 errmsg("database \"%s\" is used by a logical decoding slot",
+						dbname),
+				 errdetail("There are %d slot(s), %d of them active",
+						   nslots, nslots_active)));
 
 	/*
 	 * Check for other backends in the target database.  (Because we hold the

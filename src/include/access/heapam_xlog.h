@@ -48,7 +48,7 @@
  * the ones above associated with RM_HEAP_ID.  XLOG_HEAP_OPMASK applies to
  * these, too.
  */
-/* 0x00 is free, was XLOG_HEAP2_FREEZE */
+#define XLOG_HEAP2_REWRITE		0x00
 #define XLOG_HEAP2_CLEAN		0x10
 #define XLOG_HEAP2_FREEZE_PAGE	0x20
 #define XLOG_HEAP2_CLEANUP_INFO 0x30
@@ -332,6 +332,17 @@ typedef struct xl_heap_new_cid
 	xl_heaptid target;
 } xl_heap_new_cid;
 
+/* logical rewrite xlog record header */
+typedef struct xl_heap_rewrite_mapping
+{
+	TransactionId		mapped_xid;	/* xid that might need to see the row */
+	Oid					mapped_db;	/* DbOid or InvalidOid for shared rels */
+	Oid					mapped_rel;	/* Oid of the mapped relation */
+	off_t				offset;		/* How far have we written so far */
+	uint32				num_mappings; /* Number of in-memory mappings */
+	XLogRecPtr			start_lsn;	/* Insert LSN at begin of rewrite */
+} xl_heap_rewrite_mapping;
+
 #define SizeOfHeapNewCid (offsetof(xl_heap_new_cid, target) + SizeOfHeapTid)
 
 extern void HeapTupleHeaderAdvanceLatestRemovedXid(HeapTupleHeader tuple,
@@ -341,6 +352,7 @@ extern void heap_redo(XLogRecPtr lsn, XLogRecord *rptr);
 extern void heap_desc(StringInfo buf, uint8 xl_info, char *rec);
 extern void heap2_redo(XLogRecPtr lsn, XLogRecord *rptr);
 extern void heap2_desc(StringInfo buf, uint8 xl_info, char *rec);
+extern void heap_xlog_logical_rewrite(XLogRecPtr lsn, XLogRecord *r);
 
 extern XLogRecPtr log_heap_cleanup_info(RelFileNode rnode,
 					  TransactionId latestRemovedXid);

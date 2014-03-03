@@ -18,12 +18,13 @@
 #include "access/heapam_xlog.h"
 #include "access/transam.h"
 #include "access/htup_details.h"
+#include "catalog/catalog.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "storage/bufmgr.h"
+#include "utils/snapmgr.h"
 #include "utils/rel.h"
 #include "utils/tqual.h"
-
 
 /* Working data for heap_page_prune and subroutines */
 typedef struct
@@ -70,10 +71,34 @@ static void heap_prune_record_unused(PruneState *prstate, OffsetNumber offnum);
  * or RECENTLY_DEAD (see HeapTupleSatisfiesVacuum).
  */
 void
-heap_page_prune_opt(Relation relation, Buffer buffer, TransactionId OldestXmin)
+heap_page_prune_opt(Relation relation, Buffer buffer)
 {
 	Page		page = BufferGetPage(buffer);
 	Size		minfree;
+	TransactionId OldestXmin;
+
+	/*
+	 * We can't write WAL in recovery mode, so there's no point trying to
+	 * clean the page. The master will likely issue a cleaning WAL record soon
+	 * anyway, so this is no particular loss.
+	 */
+	if (RecoveryInProgress())
+		return;
+
+	/*
+	 * Use the appropriate xmin horizon for this relation. If it's a proper
+	 * catalog relation or a user defined, additional, catalog relation, we
+	 * need to use the horizon that includes slots, otherwise the data-only
+	 * horizon can be used. Note that the toast relation of user defined
+	 * relations are *not* considered catalog relations.
+	 */
+	if (IsCatalogRelation(relation) ||
+		RelationIsAccessibleInLogicalDecoding(relation))
+		OldestXmin = RecentGlobalXmin;
+	else
+		OldestXmin = RecentGlobalDataXmin;
+
+	Assert(TransactionIdIsValid(OldestXmin));
 
 	/*
 	 * Let's see if we really need pruning.
@@ -82,14 +107,6 @@ heap_page_prune_opt(Relation relation, Buffer buffer, TransactionId OldestXmin)
 	 * older than OldestXmin.
 	 */
 	if (!PageIsPrunable(page, OldestXmin))
-		return;
-
-	/*
-	 * We can't write WAL in recovery mode, so there's no point trying to
-	 * clean the page. The master will likely issue a cleaning WAL record soon
-	 * anyway, so this is no particular loss.
-	 */
-	if (RecoveryInProgress())
 		return;
 
 	/*

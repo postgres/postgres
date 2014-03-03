@@ -336,8 +336,7 @@ bitgetpage(HeapScanDesc scan, TBMIterateResult *tbmres)
 	/*
 	 * Prune and repair fragmentation for the whole page, if possible.
 	 */
-	Assert(TransactionIdIsValid(RecentGlobalXmin));
-	heap_page_prune_opt(scan->rs_rd, buffer, RecentGlobalXmin);
+	heap_page_prune_opt(scan->rs_rd, buffer);
 
 	/*
 	 * We must hold share lock on the buffer content while examining tuple

@@ -30,6 +30,22 @@ typedef struct SnapshotData *Snapshot;
 typedef bool (*SnapshotSatisfiesFunc) (HeapTuple htup,
 									   Snapshot snapshot, Buffer buffer);
 
+/*
+ * Struct representing all kind of possible snapshots.
+ *
+ * There are several different kinds of snapshots:
+ * * Normal MVCC snapshots
+ * * MVCC snapshots taken during recovery (in Hot-Standby mode)
+ * * Historic MVCC snapshots used during logical decoding 
+ * * snapshots passed to HeapTupleSatisfiesDirty()
+ * * snapshots used for SatisfiesAny, Toast, Self where no members are
+ *   accessed.
+ *
+ * TODO: It's probably a good idea to split this struct using a NodeTag
+ * similar to how parser and executor nodes are handled, with one type for
+ * each different kind of snapshot to avoid overloading the meaning of
+ * individual fields.
+ */
 typedef struct SnapshotData
 {
 	SnapshotSatisfiesFunc satisfies;	/* tuple test function */
@@ -46,11 +62,23 @@ typedef struct SnapshotData
 	 */
 	TransactionId xmin;			/* all XID < xmin are visible to me */
 	TransactionId xmax;			/* all XID >= xmax are invisible to me */
-	TransactionId *xip;			/* array of xact IDs in progress */
+	/*
+	 * For normal MVCC snapshot this contains the all xact IDs that are in
+	 * progress, unless the snapshot was taken during recovery in which case
+	 * it's empty. For historic MVCC snapshots, the meaning is inverted,
+	 * i.e. it contains *committed* transactions between xmin and xmax.
+	 */
+	TransactionId *xip;
 	uint32		xcnt;			/* # of xact ids in xip[] */
 	/* note: all ids in xip[] satisfy xmin <= xip[i] < xmax */
 	int32		subxcnt;		/* # of xact ids in subxip[] */
-	TransactionId *subxip;		/* array of subxact IDs in progress */
+	/*
+	 * For non-historic MVCC snapshots, this contains subxact IDs that are in
+	 * progress (and other transactions that are in progress if taken during
+	 * recovery). For historic snapshot it contains *all* xids assigned to the
+	 * replayed transaction, including the toplevel xid.
+	 */
+	TransactionId *subxip;
 	bool		suboverflowed;	/* has the subxip array overflowed? */
 	bool		takenDuringRecovery;	/* recovery-shaped snapshot? */
 	bool		copied;			/* false if it's a static snapshot */

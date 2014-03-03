@@ -512,7 +512,7 @@ RegisterSnapshotInvalidation(Oid dbId, Oid relId)
  * Only the local caches are flushed; this does not transmit the message
  * to other backends.
  */
-static void
+void
 LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg)
 {
 	if (msg->id >= 0)
@@ -596,7 +596,7 @@ LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg)
  *		since that tells us we've lost some shared-inval messages and hence
  *		don't know what needs to be invalidated.
  */
-static void
+void
 InvalidateSystemCaches(void)
 {
 	int			i;

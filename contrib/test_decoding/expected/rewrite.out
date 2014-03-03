@@ -1,0 +1,107 @@
+-- predictability
+SET synchronous_commit = on;
+DROP TABLE IF EXISTS replication_example;
+SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
+ ?column? 
+----------
+ init
+(1 row)
+
+CREATE TABLE replication_example(id SERIAL PRIMARY KEY, somedata int, text varchar(120));
+INSERT INTO replication_example(somedata) VALUES (1);
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0');
+                                                   data                                                   
+----------------------------------------------------------------------------------------------------------
+ BEGIN
+ COMMIT
+ BEGIN
+ table public.replication_example: INSERT: id[integer]:1 somedata[integer]:1 text[character varying]:null
+ COMMIT
+(5 rows)
+
+BEGIN;
+INSERT INTO replication_example(somedata) VALUES (2);
+ALTER TABLE replication_example ADD COLUMN testcolumn1 int;
+INSERT INTO replication_example(somedata, testcolumn1) VALUES (3,  1);
+COMMIT;
+BEGIN;
+INSERT INTO replication_example(somedata) VALUES (3);
+ALTER TABLE replication_example ADD COLUMN testcolumn2 int;
+INSERT INTO replication_example(somedata, testcolumn1, testcolumn2) VALUES (4,  2, 1);
+COMMIT;
+VACUUM FULL pg_am;
+VACUUM FULL pg_amop;
+VACUUM FULL pg_proc;
+VACUUM FULL pg_opclass;
+VACUUM FULL pg_type;
+VACUUM FULL pg_index;
+VACUUM FULL pg_database;
+-- repeated rewrites that fail
+BEGIN;
+CLUSTER pg_class USING pg_class_oid_index;
+CLUSTER pg_class USING pg_class_oid_index;
+ROLLBACK;
+-- repeated rewrites that succeed
+BEGIN;
+CLUSTER pg_class USING pg_class_oid_index;
+CLUSTER pg_class USING pg_class_oid_index;
+CLUSTER pg_class USING pg_class_oid_index;
+COMMIT;
+ -- repeated rewrites in different transactions
+VACUUM FULL pg_class;
+VACUUM FULL pg_class;
+INSERT INTO replication_example(somedata, testcolumn1) VALUES (5, 3);
+BEGIN;
+INSERT INTO replication_example(somedata, testcolumn1) VALUES (6, 4);
+ALTER TABLE replication_example ADD COLUMN testcolumn3 int;
+INSERT INTO replication_example(somedata, testcolumn1, testcolumn3) VALUES (7, 5, 1);
+COMMIT;
+-- make old files go away
+CHECKPOINT;
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0');
+                                                                                       data                                                                                       
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ BEGIN
+ table public.replication_example: INSERT: id[integer]:2 somedata[integer]:2 text[character varying]:null
+ table public.replication_example: INSERT: id[integer]:3 somedata[integer]:3 text[character varying]:null testcolumn1[integer]:1
+ COMMIT
+ BEGIN
+ table public.replication_example: INSERT: id[integer]:4 somedata[integer]:3 text[character varying]:null testcolumn1[integer]:null
+ table public.replication_example: INSERT: id[integer]:5 somedata[integer]:4 text[character varying]:null testcolumn1[integer]:2 testcolumn2[integer]:1
+ COMMIT
+ BEGIN
+ COMMIT
+ BEGIN
+ COMMIT
+ BEGIN
+ COMMIT
+ BEGIN
+ COMMIT
+ BEGIN
+ COMMIT
+ BEGIN
+ COMMIT
+ BEGIN
+ COMMIT
+ BEGIN
+ COMMIT
+ BEGIN
+ COMMIT
+ BEGIN
+ COMMIT
+ BEGIN
+ table public.replication_example: INSERT: id[integer]:6 somedata[integer]:5 text[character varying]:null testcolumn1[integer]:3 testcolumn2[integer]:null
+ COMMIT
+ BEGIN
+ table public.replication_example: INSERT: id[integer]:7 somedata[integer]:6 text[character varying]:null testcolumn1[integer]:4 testcolumn2[integer]:null
+ table public.replication_example: INSERT: id[integer]:8 somedata[integer]:7 text[character varying]:null testcolumn1[integer]:5 testcolumn2[integer]:null testcolumn3[integer]:1
+ COMMIT
+(35 rows)
+
+SELECT pg_drop_replication_slot('regression_slot');
+ pg_drop_replication_slot 
+--------------------------
+ 
+(1 row)
+
+DROP TABLE IF EXISTS replication_example;

@@ -1,0 +1,42 @@
+<!-- doc/src/sgml/test-decoding.sgml -->
+
+<sect1 id="test-decoding" xreflabel="test_decoding">
+ <title>test_decoding</title>
+
+ <indexterm zone="test-decoding">
+  <primary>test_decoding</primary>
+ </indexterm>
+
+ <para>
+  <filename>test_decoding</> is an example of a logical decoding
+  output plugin. It doesn't do anything especially useful, but can serve as
+  a starting point for developing your own decoder.
+ </para>
+
+ <para>
+  <filename>test_decoding</> receives WAL through the logical decoding
+  mechanism and decodes it into text representations of the operations
+  performed.
+ </para>
+
+ <para>
+  Typical output from this plugin, used over the SQL logical decoding
+  interface, might be:
+
+  <programlisting>
+postgres=# SELECT * FROM pg_logical_slot_get_changes('test_slot', 'now', 'include-xids', '0');
+ location  | xid |                       data
+-----------+-----+--------------------------------------------------
+ 0/16D30F8 | 691 | BEGIN
+ 0/16D32A0 | 691 | table public.data: INSERT: id[int4]:2 data[text]:'arg'
+ 0/16D32A0 | 691 | table public.data: INSERT: id[int4]:3 data[text]:'demo'
+ 0/16D32A0 | 691 | COMMIT
+ 0/16D32D8 | 692 | BEGIN
+ 0/16D3398 | 692 | table public.data: DELETE: id[int4]:2
+ 0/16D3398 | 692 | table public.data: DELETE: id[int4]:3
+ 0/16D3398 | 692 | COMMIT
+(8 rows)
+  </programlisting>
+ </para>
+
+</sect1>

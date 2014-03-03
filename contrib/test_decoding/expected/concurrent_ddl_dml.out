@@ -1,0 +1,733 @@
+Parsed test spec with 2 sessions
+
+starting permutation: s1_init s1_begin s1_insert_tbl1 s2_alter_tbl2_float s1_insert_tbl2 s1_commit s2_get_changes
+step s1_init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding');
+?column?       
+
+init           
+step s1_begin: BEGIN;
+step s1_insert_tbl1: INSERT INTO tbl1 (val1, val2) VALUES (1, 1);
+step s2_alter_tbl2_float: ALTER TABLE tbl2 ALTER COLUMN val2 TYPE float;
+step s1_insert_tbl2: INSERT INTO tbl2 (val1, val2) VALUES (1, 1);
+step s1_commit: COMMIT;
+step s2_get_changes: SELECT regexp_replace(data, 'temp_\d+', 'temp') AS data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0');
+data           
+
+BEGIN          
+COMMIT         
+BEGIN          
+table public.tbl1: INSERT: val1[integer]:1 val2[integer]:1
+table public.tbl2: INSERT: val1[integer]:1 val2[double precision]:1
+COMMIT         
+?column?       
+
+stop           
+
+starting permutation: s1_init s1_begin s1_insert_tbl1 s2_alter_tbl1_float s1_insert_tbl2 s1_commit s2_get_changes
+step s1_init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding');
+?column?       
+
+init           
+step s1_begin: BEGIN;
+step s1_insert_tbl1: INSERT INTO tbl1 (val1, val2) VALUES (1, 1);
+step s2_alter_tbl1_float: ALTER TABLE tbl1 ALTER COLUMN val2 TYPE float; <waiting ...>
+step s1_insert_tbl2: INSERT INTO tbl2 (val1, val2) VALUES (1, 1);
+step s1_commit: COMMIT;
+step s2_alter_tbl1_float: <... completed>
+step s2_get_changes: SELECT regexp_replace(data, 'temp_\d+', 'temp') AS data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0');
+data           
+
+BEGIN          
+table public.tbl1: INSERT: val1[integer]:1 val2[integer]:1
+table public.tbl2: INSERT: val1[integer]:1 val2[integer]:1
+COMMIT         
+BEGIN          
+table public.pg_temp: INSERT: val1[integer]:1 val2[double precision]:1
+COMMIT         
+?column?       
+
+stop           
+
+starting permutation: s1_init s1_begin s1_insert_tbl1 s2_alter_tbl2_char s1_insert_tbl2 s1_commit s2_get_changes
+step s1_init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding');
+?column?       
+
+init           
+step s1_begin: BEGIN;
+step s1_insert_tbl1: INSERT INTO tbl1 (val1, val2) VALUES (1, 1);
+step s2_alter_tbl2_char: ALTER TABLE tbl2 ALTER COLUMN val2 TYPE character varying;
+step s1_insert_tbl2: INSERT INTO tbl2 (val1, val2) VALUES (1, 1);
+step s1_commit: COMMIT;
+step s2_get_changes: SELECT regexp_replace(data, 'temp_\d+', 'temp') AS data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0');
+data           
+
+BEGIN          
+COMMIT         
+BEGIN          
+table public.tbl1: INSERT: val1[integer]:1 val2[integer]:1
+table public.tbl2: INSERT: val1[integer]:1 val2[character varying]:'1'
+COMMIT         
+?column?       
+
+stop           
+
+starting permutation: s1_init s1_begin s1_insert_tbl1 s2_alter_tbl1_char s1_insert_tbl2 s1_commit s2_get_changes
+step s1_init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding');
+?column?       
+
+init           
+step s1_begin: BEGIN;
+step s1_insert_tbl1: INSERT INTO tbl1 (val1, val2) VALUES (1, 1);
+step s2_alter_tbl1_char: ALTER TABLE tbl1 ALTER COLUMN val2 TYPE character varying; <waiting ...>
+step s1_insert_tbl2: INSERT INTO tbl2 (val1, val2) VALUES (1, 1);
+step s1_commit: COMMIT;
+step s2_alter_tbl1_char: <... completed>
+step s2_get_changes: SELECT regexp_replace(data, 'temp_\d+', 'temp') AS data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0');
+data           
+
+BEGIN          
+table public.tbl1: INSERT: val1[integer]:1 val2[integer]:1
+table public.tbl2: INSERT: val1[integer]:1 val2[integer]:1
+COMMIT         
+BEGIN          
+table public.pg_temp: INSERT: val1[integer]:1 val2[character varying]:'1'
+COMMIT         
+?column?       
+
+stop           
+
+starting permutation: s1_init s1_begin s1_insert_tbl1 s1_insert_tbl2 s2_alter_tbl1_float s1_commit s2_get_changes
+step s1_init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding');
+?column?       
+
+init           
+step s1_begin: BEGIN;
+step s1_insert_tbl1: INSERT INTO tbl1 (val1, val2) VALUES (1, 1);
+step s1_insert_tbl2: INSERT INTO tbl2 (val1, val2) VALUES (1, 1);
+step s2_alter_tbl1_float: ALTER TABLE tbl1 ALTER COLUMN val2 TYPE float; <waiting ...>
+step s1_commit: COMMIT;
+step s2_alter_tbl1_float: <... completed>
+step s2_get_changes: SELECT regexp_replace(data, 'temp_\d+', 'temp') AS data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0');
+data           
+
+BEGIN          
+table public.tbl1: INSERT: val1[integer]:1 val2[integer]:1
+table public.tbl2: INSERT: val1[integer]:1 val2[integer]:1
+COMMIT         
+BEGIN          
+table public.pg_temp: INSERT: val1[integer]:1 val2[double precision]:1
+COMMIT         
+?column?       
+
+stop           
+
+starting permutation: s1_init s1_begin s1_insert_tbl1 s1_insert_tbl2 s2_alter_tbl1_char s1_commit s2_get_changes
+step s1_init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding');
+?column?       
+
+init           
+step s1_begin: BEGIN;
+step s1_insert_tbl1: INSERT INTO tbl1 (val1, val2) VALUES (1, 1);
+step s1_insert_tbl2: INSERT INTO tbl2 (val1, val2) VALUES (1, 1);
+step s2_alter_tbl1_char: ALTER TABLE tbl1 ALTER COLUMN val2 TYPE character varying; <waiting ...>
+step s1_commit: COMMIT;
+step s2_alter_tbl1_char: <... completed>
+step s2_get_changes: SELECT regexp_replace(data, 'temp_\d+', 'temp') AS data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0');
+data           
+
+BEGIN          
+table public.tbl1: INSERT: val1[integer]:1 val2[integer]:1
+table public.tbl2: INSERT: val1[integer]:1 val2[integer]:1
+COMMIT         
+BEGIN          
+table public.pg_temp: INSERT: val1[integer]:1 val2[character varying]:'1'
+COMMIT         
+?column?       
+
+stop           
+
+starting permutation: s1_init s1_begin s1_insert_tbl1 s2_alter_tbl2_float s1_insert_tbl2 s2_alter_tbl1_float s1_commit s2_get_changes
+step s1_init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding');
+?column?       
+
+init           
+step s1_begin: BEGIN;
+step s1_insert_tbl1: INSERT INTO tbl1 (val1, val2) VALUES (1, 1);
+step s2_alter_tbl2_float: ALTER TABLE tbl2 ALTER COLUMN val2 TYPE float;
+step s1_insert_tbl2: INSERT INTO tbl2 (val1, val2) VALUES (1, 1);
+step s2_alter_tbl1_float: ALTER TABLE tbl1 ALTER COLUMN val2 TYPE float; <waiting ...>
+step s1_commit: COMMIT;
+step s2_alter_tbl1_float: <... completed>
+step s2_get_changes: SELECT regexp_replace(data, 'temp_\d+', 'temp') AS data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0');
+data           
+
+BEGIN          
+COMMIT         
+BEGIN          
+table public.tbl1: INSERT: val1[integer]:1 val2[integer]:1
+table public.tbl2: INSERT: val1[integer]:1 val2[double precision]:1
+COMMIT         
+BEGIN          
+table public.pg_temp: INSERT: val1[integer]:1 val2[double precision]:1
+COMMIT         
+?column?       
+
+stop           
+
+starting permutation: s1_init s1_begin s1_insert_tbl1 s2_alter_tbl2_char s1_insert_tbl2 s2_alter_tbl1_char s1_commit s2_get_changes
+step s1_init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding');
+?column?       
+
+init           
+step s1_begin: BEGIN;
+step s1_insert_tbl1: INSERT INTO tbl1 (val1, val2) VALUES (1, 1);
+step s2_alter_tbl2_char: ALTER TABLE tbl2 ALTER COLUMN val2 TYPE character varying;
+step s1_insert_tbl2: INSERT INTO tbl2 (val1, val2) VALUES (1, 1);
+step s2_alter_tbl1_char: ALTER TABLE tbl1 ALTER COLUMN val2 TYPE character varying; <waiting ...>
+step s1_commit: COMMIT;
+step s2_alter_tbl1_char: <... completed>
+step s2_get_changes: SELECT regexp_replace(data, 'temp_\d+', 'temp') AS data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0');
+data           
+
+BEGIN          
+COMMIT         
+BEGIN          
+table public.tbl1: INSERT: val1[integer]:1 val2[integer]:1
+table public.tbl2: INSERT: val1[integer]:1 val2[character varying]:'1'
+COMMIT         
+BEGIN          
+table public.pg_temp: INSERT: val1[integer]:1 val2[character varying]:'1'
+COMMIT         
+?column?       
+
+stop           
+
+starting permutation: s1_init s2_alter_tbl2_char s1_begin s1_insert_tbl1 s2_alter_tbl2_text s1_insert_tbl2 s1_commit s2_get_changes
+step s1_init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding');
+?column?       
+
+init           
+step s2_alter_tbl2_char: ALTER TABLE tbl2 ALTER COLUMN val2 TYPE character varying;
+step s1_begin: BEGIN;
+step s1_insert_tbl1: INSERT INTO tbl1 (val1, val2) VALUES (1, 1);
+step s2_alter_tbl2_text: ALTER TABLE tbl2 ALTER COLUMN val2 TYPE text;
+step s1_insert_tbl2: INSERT INTO tbl2 (val1, val2) VALUES (1, 1);
+step s1_commit: COMMIT;
+step s2_get_changes: SELECT regexp_replace(data, 'temp_\d+', 'temp') AS data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0');
+data           
+
+BEGIN          
+COMMIT         
+BEGIN          
+COMMIT         
+BEGIN          
+table public.tbl1: INSERT: val1[integer]:1 val2[integer]:1
+table public.tbl2: INSERT: val1[integer]:1 val2[text]:'1'
+COMMIT         
+?column?       
+
+stop           
+
+starting permutation: s1_init s2_alter_tbl2_char s1_begin s1_insert_tbl1 s2_alter_tbl2_text s1_insert_tbl2 s2_alter_tbl1_char s1_commit s2_get_changes
+step s1_init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding');
+?column?       
+
+init           
+step s2_alter_tbl2_char: ALTER TABLE tbl2 ALTER COLUMN val2 TYPE character varying;
+step s1_begin: BEGIN;
+step s1_insert_tbl1: INSERT INTO tbl1 (val1, val2) VALUES (1, 1);
+step s2_alter_tbl2_text: ALTER TABLE tbl2 ALTER COLUMN val2 TYPE text;
+step s1_insert_tbl2: INSERT INTO tbl2 (val1, val2) VALUES (1, 1);
+step s2_alter_tbl1_char: ALTER TABLE tbl1 ALTER COLUMN val2 TYPE character varying; <waiting ...>
+step s1_commit: COMMIT;
+step s2_alter_tbl1_char: <... completed>
+step s2_get_changes: SELECT regexp_replace(data, 'temp_\d+', 'temp') AS data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0');
+data           
+
+BEGIN          
+COMMIT         
+BEGIN          
+COMMIT         
+BEGIN          
+table public.tbl1: INSERT: val1[integer]:1 val2[integer]:1
+table public.tbl2: INSERT: val1[integer]:1 val2[text]:'1'
+COMMIT         
+BEGIN          
+table public.pg_temp: INSERT: val1[integer]:1 val2[character varying]:'1'
+COMMIT         
+?column?       
+
+stop           
+
+starting permutation: s1_init s1_begin s1_insert_tbl1 s2_alter_tbl2_boolean s1_insert_tbl2 s1_commit s2_get_changes
+step s1_init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding');
+?column?       
+
+init           
+step s1_begin: BEGIN;
+step s1_insert_tbl1: INSERT INTO tbl1 (val1, val2) VALUES (1, 1);
+step s2_alter_tbl2_boolean: ALTER TABLE tbl2 ALTER COLUMN val2 TYPE boolean;
+ERROR:  column "val2" cannot be cast automatically to type boolean
+step s1_insert_tbl2: INSERT INTO tbl2 (val1, val2) VALUES (1, 1);
+step s1_commit: COMMIT;
+step s2_get_changes: SELECT regexp_replace(data, 'temp_\d+', 'temp') AS data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0');
+data           
+
+BEGIN          
+table public.tbl1: INSERT: val1[integer]:1 val2[integer]:1
+table public.tbl2: INSERT: val1[integer]:1 val2[integer]:1
+COMMIT         
+?column?       
+
+stop           
+
+starting permutation: s1_init s1_begin s1_insert_tbl1 s2_alter_tbl2_boolean s1_insert_tbl2 s2_alter_tbl1_boolean s1_commit s2_get_changes
+step s1_init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding');
+?column?       
+
+init           
+step s1_begin: BEGIN;
+step s1_insert_tbl1: INSERT INTO tbl1 (val1, val2) VALUES (1, 1);
+step s2_alter_tbl2_boolean: ALTER TABLE tbl2 ALTER COLUMN val2 TYPE boolean;
+ERROR:  column "val2" cannot be cast automatically to type boolean
+step s1_insert_tbl2: INSERT INTO tbl2 (val1, val2) VALUES (1, 1);
+step s2_alter_tbl1_boolean: ALTER TABLE tbl1 ALTER COLUMN val2 TYPE boolean; <waiting ...>
+step s1_commit: COMMIT;
+step s2_alter_tbl1_boolean: <... completed>
+error in steps s1_commit s2_alter_tbl1_boolean: ERROR:  column "val2" cannot be cast automatically to type boolean
+step s2_get_changes: SELECT regexp_replace(data, 'temp_\d+', 'temp') AS data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0');
+data           
+
+BEGIN          
+table public.tbl1: INSERT: val1[integer]:1 val2[integer]:1
+table public.tbl2: INSERT: val1[integer]:1 val2[integer]:1
+COMMIT         
+?column?       
+
+stop           
+
+starting permutation: s1_init s1_begin s1_insert_tbl1 s2_alter_tbl2_add_int s1_insert_tbl2_3col s1_commit s2_get_changes
+step s1_init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding');
+?column?       
+
+init           
+step s1_begin: BEGIN;
+step s1_insert_tbl1: INSERT INTO tbl1 (val1, val2) VALUES (1, 1);
+step s2_alter_tbl2_add_int: ALTER TABLE tbl2 ADD COLUMN val3 INTEGER;
+step s1_insert_tbl2_3col: INSERT INTO tbl2 (val1, val2, val3) VALUES (1, 1, 1);
+step s1_commit: COMMIT;
+step s2_get_changes: SELECT regexp_replace(data, 'temp_\d+', 'temp') AS data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0');
+data           
+
+BEGIN          
+COMMIT         
+BEGIN          
+table public.tbl1: INSERT: val1[integer]:1 val2[integer]:1
+table public.tbl2: INSERT: val1[integer]:1 val2[integer]:1 val3[integer]:1
+COMMIT         
+?column?       
+
+stop           
+
+starting permutation: s1_init s1_begin s1_insert_tbl1 s1_insert_tbl2 s1_commit s1_begin s2_alter_tbl2_add_int s1_insert_tbl2_3col s1_commit s2_get_changes
+step s1_init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding');
+?column?       
+
+init           
+step s1_begin: BEGIN;
+step s1_insert_tbl1: INSERT INTO tbl1 (val1, val2) VALUES (1, 1);
+step s1_insert_tbl2: INSERT INTO tbl2 (val1, val2) VALUES (1, 1);
+step s1_commit: COMMIT;
+step s1_begin: BEGIN;
+step s2_alter_tbl2_add_int: ALTER TABLE tbl2 ADD COLUMN val3 INTEGER;
+step s1_insert_tbl2_3col: INSERT INTO tbl2 (val1, val2, val3) VALUES (1, 1, 1);
+step s1_commit: COMMIT;
+step s2_get_changes: SELECT regexp_replace(data, 'temp_\d+', 'temp') AS data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0');
+data           
+
+BEGIN          
+table public.tbl1: INSERT: val1[integer]:1 val2[integer]:1
+table public.tbl2: INSERT: val1[integer]:1 val2[integer]:1
+COMMIT         
+BEGIN          
+COMMIT         
+BEGIN          
+table public.tbl2: INSERT: val1[integer]:1 val2[integer]:1 val3[integer]:1
+COMMIT         
+?column?       
+
+stop           
+
+starting permutation: s1_init s1_begin s1_insert_tbl1 s2_alter_tbl2_add_float s1_insert_tbl2_3col s1_commit s2_get_changes
+step s1_init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding');
+?column?       
+
+init           
+step s1_begin: BEGIN;
+step s1_insert_tbl1: INSERT INTO tbl1 (val1, val2) VALUES (1, 1);
+step s2_alter_tbl2_add_float: ALTER TABLE tbl2 ADD COLUMN val3 FLOAT;
+step s1_insert_tbl2_3col: INSERT INTO tbl2 (val1, val2, val3) VALUES (1, 1, 1);
+step s1_commit: COMMIT;
+step s2_get_changes: SELECT regexp_replace(data, 'temp_\d+', 'temp') AS data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0');
+data           
+
+BEGIN          
+COMMIT         
+BEGIN          
+table public.tbl1: INSERT: val1[integer]:1 val2[integer]:1
+table public.tbl2: INSERT: val1[integer]:1 val2[integer]:1 val3[double precision]:1
+COMMIT         
+?column?       
+
+stop           
+
+starting permutation: s1_init s1_begin s1_insert_tbl1 s1_insert_tbl2 s1_commit s1_begin s2_alter_tbl2_add_float s1_insert_tbl2_3col s1_commit s2_get_changes
+step s1_init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding');
+?column?       
+
+init           
+step s1_begin: BEGIN;
+step s1_insert_tbl1: INSERT INTO tbl1 (val1, val2) VALUES (1, 1);
+step s1_insert_tbl2: INSERT INTO tbl2 (val1, val2) VALUES (1, 1);
+step s1_commit: COMMIT;
+step s1_begin: BEGIN;
+step s2_alter_tbl2_add_float: ALTER TABLE tbl2 ADD COLUMN val3 FLOAT;
+step s1_insert_tbl2_3col: INSERT INTO tbl2 (val1, val2, val3) VALUES (1, 1, 1);
+step s1_commit: COMMIT;
+step s2_get_changes: SELECT regexp_replace(data, 'temp_\d+', 'temp') AS data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0');
+data           
+
+BEGIN          
+table public.tbl1: INSERT: val1[integer]:1 val2[integer]:1
+table public.tbl2: INSERT: val1[integer]:1 val2[integer]:1
+COMMIT         
+BEGIN          
+COMMIT         
+BEGIN          
+table public.tbl2: INSERT: val1[integer]:1 val2[integer]:1 val3[double precision]:1
+COMMIT         
+?column?       
+
+stop           
+
+starting permutation: s1_init s1_begin s1_insert_tbl1 s2_alter_tbl2_add_char s1_insert_tbl2_3col s1_commit s2_get_changes
+step s1_init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding');
+?column?       
+
+init           
+step s1_begin: BEGIN;
+step s1_insert_tbl1: INSERT INTO tbl1 (val1, val2) VALUES (1, 1);
+step s2_alter_tbl2_add_char: ALTER TABLE tbl2 ADD COLUMN val3 character varying;
+step s1_insert_tbl2_3col: INSERT INTO tbl2 (val1, val2, val3) VALUES (1, 1, 1);
+step s1_commit: COMMIT;
+step s2_get_changes: SELECT regexp_replace(data, 'temp_\d+', 'temp') AS data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0');
+data           
+
+BEGIN          
+COMMIT         
+BEGIN          
+table public.tbl1: INSERT: val1[integer]:1 val2[integer]:1
+table public.tbl2: INSERT: val1[integer]:1 val2[integer]:1 val3[character varying]:'1'
+COMMIT         
+?column?       
+
+stop           
+
+starting permutation: s1_init s1_begin s1_insert_tbl1 s1_insert_tbl2 s1_commit s1_begin s2_alter_tbl2_add_char s1_insert_tbl2_3col s1_commit s2_get_changes
+step s1_init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding');
+?column?       
+
+init           
+step s1_begin: BEGIN;
+step s1_insert_tbl1: INSERT INTO tbl1 (val1, val2) VALUES (1, 1);
+step s1_insert_tbl2: INSERT INTO tbl2 (val1, val2) VALUES (1, 1);
+step s1_commit: COMMIT;
+step s1_begin: BEGIN;
+step s2_alter_tbl2_add_char: ALTER TABLE tbl2 ADD COLUMN val3 character varying;
+step s1_insert_tbl2_3col: INSERT INTO tbl2 (val1, val2, val3) VALUES (1, 1, 1);
+step s1_commit: COMMIT;
+step s2_get_changes: SELECT regexp_replace(data, 'temp_\d+', 'temp') AS data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0');
+data           
+
+BEGIN          
+table public.tbl1: INSERT: val1[integer]:1 val2[integer]:1
+table public.tbl2: INSERT: val1[integer]:1 val2[integer]:1
+COMMIT         
+BEGIN          
+COMMIT         
+BEGIN          
+table public.tbl2: INSERT: val1[integer]:1 val2[integer]:1 val3[character varying]:'1'
+COMMIT         
+?column?       
+
+stop           
+
+starting permutation: s1_init s2_alter_tbl2_add_int s1_begin s1_insert_tbl2_3col s2_alter_tbl2_drop_3rd_col s1_commit s2_get_changes
+step s1_init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding');
+?column?       
+
+init           
+step s2_alter_tbl2_add_int: ALTER TABLE tbl2 ADD COLUMN val3 INTEGER;
+step s1_begin: BEGIN;
+step s1_insert_tbl2_3col: INSERT INTO tbl2 (val1, val2, val3) VALUES (1, 1, 1);
+step s2_alter_tbl2_drop_3rd_col: ALTER TABLE tbl2 DROP COLUMN val3; <waiting ...>
+step s1_commit: COMMIT;
+step s2_alter_tbl2_drop_3rd_col: <... completed>
+step s2_get_changes: SELECT regexp_replace(data, 'temp_\d+', 'temp') AS data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0');
+data           
+
+BEGIN          
+COMMIT         
+BEGIN          
+table public.tbl2: INSERT: val1[integer]:1 val2[integer]:1 val3[integer]:1
+COMMIT         
+BEGIN          
+COMMIT         
+?column?       
+
+stop           
+
+starting permutation: s1_init s2_alter_tbl2_add_int s1_begin s1_insert_tbl2_3col s2_alter_tbl2_drop_3rd_col s1_insert_tbl2 s1_commit s1_insert_tbl2 s2_get_changes
+step s1_init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding');
+?column?       
+
+init           
+step s2_alter_tbl2_add_int: ALTER TABLE tbl2 ADD COLUMN val3 INTEGER;
+step s1_begin: BEGIN;
+step s1_insert_tbl2_3col: INSERT INTO tbl2 (val1, val2, val3) VALUES (1, 1, 1);
+step s2_alter_tbl2_drop_3rd_col: ALTER TABLE tbl2 DROP COLUMN val3; <waiting ...>
+step s1_insert_tbl2: INSERT INTO tbl2 (val1, val2) VALUES (1, 1);
+step s1_commit: COMMIT;
+step s2_alter_tbl2_drop_3rd_col: <... completed>
+step s1_insert_tbl2: INSERT INTO tbl2 (val1, val2) VALUES (1, 1);
+step s2_get_changes: SELECT regexp_replace(data, 'temp_\d+', 'temp') AS data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0');
+data           
+
+BEGIN          
+COMMIT         
+BEGIN          
+table public.tbl2: INSERT: val1[integer]:1 val2[integer]:1 val3[integer]:1
+table public.tbl2: INSERT: val1[integer]:1 val2[integer]:1 val3[integer]:null
+COMMIT         
+BEGIN          
+COMMIT         
+BEGIN          
+table public.tbl2: INSERT: val1[integer]:1 val2[integer]:1
+COMMIT         
+?column?       
+
+stop           
+
+starting permutation: s1_init s2_alter_tbl2_add_int s1_begin s1_insert_tbl2_3col s2_alter_tbl2_drop_3rd_col s1_commit s2_get_changes s2_alter_tbl2_add_text s1_begin s1_insert_tbl2_3col s2_alter_tbl2_3rd_char s1_insert_tbl2_3col s1_commit s2_get_changes s2_alter_tbl2_3rd_int s1_insert_tbl2_3col s2_get_changes
+step s1_init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding');
+?column?       
+
+init           
+step s2_alter_tbl2_add_int: ALTER TABLE tbl2 ADD COLUMN val3 INTEGER;
+step s1_begin: BEGIN;
+step s1_insert_tbl2_3col: INSERT INTO tbl2 (val1, val2, val3) VALUES (1, 1, 1);
+step s2_alter_tbl2_drop_3rd_col: ALTER TABLE tbl2 DROP COLUMN val3; <waiting ...>
+step s1_commit: COMMIT;
+step s2_alter_tbl2_drop_3rd_col: <... completed>
+step s2_get_changes: SELECT regexp_replace(data, 'temp_\d+', 'temp') AS data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0');
+data           
+
+BEGIN          
+COMMIT         
+BEGIN          
+table public.tbl2: INSERT: val1[integer]:1 val2[integer]:1 val3[integer]:1
+COMMIT         
+BEGIN          
+COMMIT         
+step s2_alter_tbl2_add_text: ALTER TABLE tbl2 ADD COLUMN val3 TEXT;
+step s1_begin: BEGIN;
+step s1_insert_tbl2_3col: INSERT INTO tbl2 (val1, val2, val3) VALUES (1, 1, 1);
+step s2_alter_tbl2_3rd_char: ALTER TABLE tbl2 ALTER COLUMN val3 TYPE character varying; <waiting ...>
+step s1_insert_tbl2_3col: INSERT INTO tbl2 (val1, val2, val3) VALUES (1, 1, 1);
+step s1_commit: COMMIT;
+step s2_alter_tbl2_3rd_char: <... completed>
+step s2_get_changes: SELECT regexp_replace(data, 'temp_\d+', 'temp') AS data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0');
+data           
+
+BEGIN          
+COMMIT         
+BEGIN          
+table public.tbl2: INSERT: val1[integer]:1 val2[integer]:1 val3[text]:'1'
+table public.tbl2: INSERT: val1[integer]:1 val2[integer]:1 val3[text]:'1'
+COMMIT         
+BEGIN          
+COMMIT         
+step s2_alter_tbl2_3rd_int: ALTER TABLE tbl2 ALTER COLUMN val3 TYPE int USING val3::integer;
+step s1_insert_tbl2_3col: INSERT INTO tbl2 (val1, val2, val3) VALUES (1, 1, 1);
+step s2_get_changes: SELECT regexp_replace(data, 'temp_\d+', 'temp') AS data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0');
+data           
+
+BEGIN          
+table public.pg_temp: INSERT: val1[integer]:1 val2[integer]:1 val3[integer]:null
+table public.pg_temp: INSERT: val1[integer]:1 val2[integer]:1 val3[integer]:1
+table public.pg_temp: INSERT: val1[integer]:1 val2[integer]:1 val3[integer]:1
+COMMIT         
+BEGIN          
+table public.tbl2: INSERT: val1[integer]:1 val2[integer]:1 val3[integer]:1
+COMMIT         
+?column?       
+
+stop           
+
+starting permutation: s1_init s2_alter_tbl2_add_char s1_begin s1_insert_tbl1 s1_insert_tbl2_3col s2_alter_tbl2_3rd_text s1_insert_tbl2_3col s1_commit s1_insert_tbl2_3col s2_get_changes
+step s1_init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding');
+?column?       
+
+init           
+step s2_alter_tbl2_add_char: ALTER TABLE tbl2 ADD COLUMN val3 character varying;
+step s1_begin: BEGIN;
+step s1_insert_tbl1: INSERT INTO tbl1 (val1, val2) VALUES (1, 1);
+step s1_insert_tbl2_3col: INSERT INTO tbl2 (val1, val2, val3) VALUES (1, 1, 1);
+step s2_alter_tbl2_3rd_text: ALTER TABLE tbl2 ALTER COLUMN val3 TYPE text; <waiting ...>
+step s1_insert_tbl2_3col: INSERT INTO tbl2 (val1, val2, val3) VALUES (1, 1, 1);
+step s1_commit: COMMIT;
+step s2_alter_tbl2_3rd_text: <... completed>
+step s1_insert_tbl2_3col: INSERT INTO tbl2 (val1, val2, val3) VALUES (1, 1, 1);
+step s2_get_changes: SELECT regexp_replace(data, 'temp_\d+', 'temp') AS data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0');
+data           
+
+BEGIN          
+COMMIT         
+BEGIN          
+table public.tbl1: INSERT: val1[integer]:1 val2[integer]:1
+table public.tbl2: INSERT: val1[integer]:1 val2[integer]:1 val3[character varying]:'1'
+table public.tbl2: INSERT: val1[integer]:1 val2[integer]:1 val3[character varying]:'1'
+COMMIT         
+BEGIN          
+COMMIT         
+BEGIN          
+table public.tbl2: INSERT: val1[integer]:1 val2[integer]:1 val3[text]:'1'
+COMMIT         
+?column?       
+
+stop           
+
+starting permutation: s1_init s2_alter_tbl2_add_text s1_begin s1_insert_tbl1 s1_insert_tbl2_3col s2_alter_tbl2_3rd_char s1_insert_tbl2_3col s1_commit s1_insert_tbl2_3col s2_get_changes
+step s1_init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding');
+?column?       
+
+init           
+step s2_alter_tbl2_add_text: ALTER TABLE tbl2 ADD COLUMN val3 TEXT;
+step s1_begin: BEGIN;
+step s1_insert_tbl1: INSERT INTO tbl1 (val1, val2) VALUES (1, 1);
+step s1_insert_tbl2_3col: INSERT INTO tbl2 (val1, val2, val3) VALUES (1, 1, 1);
+step s2_alter_tbl2_3rd_char: ALTER TABLE tbl2 ALTER COLUMN val3 TYPE character varying; <waiting ...>
+step s1_insert_tbl2_3col: INSERT INTO tbl2 (val1, val2, val3) VALUES (1, 1, 1);
+step s1_commit: COMMIT;
+step s2_alter_tbl2_3rd_char: <... completed>
+step s1_insert_tbl2_3col: INSERT INTO tbl2 (val1, val2, val3) VALUES (1, 1, 1);
+step s2_get_changes: SELECT regexp_replace(data, 'temp_\d+', 'temp') AS data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0');
+data           
+
+BEGIN          
+COMMIT         
+BEGIN          
+table public.tbl1: INSERT: val1[integer]:1 val2[integer]:1
+table public.tbl2: INSERT: val1[integer]:1 val2[integer]:1 val3[text]:'1'
+table public.tbl2: INSERT: val1[integer]:1 val2[integer]:1 val3[text]:'1'
+COMMIT         
+BEGIN          
+COMMIT         
+BEGIN          
+table public.tbl2: INSERT: val1[integer]:1 val2[integer]:1 val3[character varying]:'1'
+COMMIT         
+?column?       
+
+stop           
+
+starting permutation: s1_init s2_alter_tbl2_add_char s1_begin s1_insert_tbl1 s2_alter_tbl2_3rd_text s1_insert_tbl2_3col s1_commit s2_alter_tbl2_drop_3rd_col s1_insert_tbl2 s2_get_changes
+step s1_init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding');
+?column?       
+
+init           
+step s2_alter_tbl2_add_char: ALTER TABLE tbl2 ADD COLUMN val3 character varying;
+step s1_begin: BEGIN;
+step s1_insert_tbl1: INSERT INTO tbl1 (val1, val2) VALUES (1, 1);
+step s2_alter_tbl2_3rd_text: ALTER TABLE tbl2 ALTER COLUMN val3 TYPE text;
+step s1_insert_tbl2_3col: INSERT INTO tbl2 (val1, val2, val3) VALUES (1, 1, 1);
+step s1_commit: COMMIT;
+step s2_alter_tbl2_drop_3rd_col: ALTER TABLE tbl2 DROP COLUMN val3;
+step s1_insert_tbl2: INSERT INTO tbl2 (val1, val2) VALUES (1, 1);
+step s2_get_changes: SELECT regexp_replace(data, 'temp_\d+', 'temp') AS data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0');
+data           
+
+BEGIN          
+COMMIT         
+BEGIN          
+COMMIT         
+BEGIN          
+table public.tbl1: INSERT: val1[integer]:1 val2[integer]:1
+table public.tbl2: INSERT: val1[integer]:1 val2[integer]:1 val3[text]:'1'
+COMMIT         
+BEGIN          
+COMMIT         
+BEGIN          
+table public.tbl2: INSERT: val1[integer]:1 val2[integer]:1
+COMMIT         
+?column?       
+
+stop           
+
+starting permutation: s1_init s2_alter_tbl2_add_text s1_begin s1_insert_tbl1 s2_alter_tbl2_3rd_char s1_insert_tbl2_3col s1_commit s2_alter_tbl2_drop_3rd_col s1_insert_tbl2 s2_get_changes
+step s1_init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding');
+?column?       
+
+init           
+step s2_alter_tbl2_add_text: ALTER TABLE tbl2 ADD COLUMN val3 TEXT;
+step s1_begin: BEGIN;
+step s1_insert_tbl1: INSERT INTO tbl1 (val1, val2) VALUES (1, 1);
+step s2_alter_tbl2_3rd_char: ALTER TABLE tbl2 ALTER COLUMN val3 TYPE character varying;
+step s1_insert_tbl2_3col: INSERT INTO tbl2 (val1, val2, val3) VALUES (1, 1, 1);
+step s1_commit: COMMIT;
+step s2_alter_tbl2_drop_3rd_col: ALTER TABLE tbl2 DROP COLUMN val3;
+step s1_insert_tbl2: INSERT INTO tbl2 (val1, val2) VALUES (1, 1);
+step s2_get_changes: SELECT regexp_replace(data, 'temp_\d+', 'temp') AS data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0');
+data           
+
+BEGIN          
+COMMIT         
+BEGIN          
+COMMIT         
+BEGIN          
+table public.tbl1: INSERT: val1[integer]:1 val2[integer]:1
+table public.tbl2: INSERT: val1[integer]:1 val2[integer]:1 val3[character varying]:'1'
+COMMIT         
+BEGIN          
+COMMIT         
+BEGIN          
+table public.tbl2: INSERT: val1[integer]:1 val2[integer]:1
+COMMIT         
+?column?       
+
+stop           
+
+starting permutation: s1_init s2_alter_tbl2_add_char s1_begin s1_insert_tbl1 s2_alter_tbl2_drop_3rd_col s1_insert_tbl1 s1_commit s2_get_changes
+step s1_init: SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'test_decoding');
+?column?       
+
+init           
+step s2_alter_tbl2_add_char: ALTER TABLE tbl2 ADD COLUMN val3 character varying;
+step s1_begin: BEGIN;
+step s1_insert_tbl1: INSERT INTO tbl1 (val1, val2) VALUES (1, 1);
+step s2_alter_tbl2_drop_3rd_col: ALTER TABLE tbl2 DROP COLUMN val3;
+step s1_insert_tbl1: INSERT INTO tbl1 (val1, val2) VALUES (1, 1);
+step s1_commit: COMMIT;
+step s2_get_changes: SELECT regexp_replace(data, 'temp_\d+', 'temp') AS data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0');
+data           
+
+BEGIN          
+COMMIT         
+BEGIN          
+COMMIT         
+BEGIN          
+table public.tbl1: INSERT: val1[integer]:1 val2[integer]:1
+table public.tbl1: INSERT: val1[integer]:1 val2[integer]:1
+COMMIT         
+?column?       
+
+stop           

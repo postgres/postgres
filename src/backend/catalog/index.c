@@ -2156,7 +2156,7 @@ IndexBuildHeapScan(Relation heapRelation,
 	{
 		snapshot = SnapshotAny;
 		/* okay to ignore lazy VACUUMs here */
-		OldestXmin = GetOldestXmin(heapRelation->rd_rel->relisshared, true);
+		OldestXmin = GetOldestXmin(heapRelation, true);
 	}
 
 	scan = heap_beginscan_strat(heapRelation,	/* relation */

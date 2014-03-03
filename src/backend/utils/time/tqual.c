@@ -62,6 +62,9 @@
 #include "access/xact.h"
 #include "storage/bufmgr.h"
 #include "storage/procarray.h"
+#include "utils/builtins.h"
+#include "utils/combocid.h"
+#include "utils/snapmgr.h"
 #include "utils/tqual.h"
 
 
@@ -72,7 +75,6 @@ SnapshotData SnapshotToastData = {HeapTupleSatisfiesToast};
 
 /* local functions */
 static bool XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot);
-
 
 /*
  * SetHintBits()
@@ -1544,4 +1546,164 @@ HeapTupleHeaderIsOnlyLocked(HeapTupleHeader tuple)
 	 * crashed
 	 */
 	return true;
+}
+
+/*
+ * check whether the transaciont id 'xid' in in the pre-sorted array 'xip'.
+ */
+static bool
+TransactionIdInArray(TransactionId xid, TransactionId *xip, Size num)
+{
+	return bsearch(&xid, xip, num,
+				   sizeof(TransactionId), xidComparator) != NULL;
+}
+
+/*
+ * See the comments for HeapTupleSatisfiesMVCC for the semantics this function
+ * obeys.
+ *
+ * Only usable on tuples from catalog tables!
+ *
+ * We don't need to support HEAP_MOVED_(IN|OFF) for now because we only support
+ * reading catalog pages which couldn't have been created in an older version.
+ *
+ * We don't set any hint bits in here as it seems unlikely to be beneficial as
+ * those should already be set by normal access and it seems to be too
+ * dangerous to do so as the semantics of doing so during timetravel are more
+ * complicated than when dealing "only" with the present.
+ */
+bool
+HeapTupleSatisfiesHistoricMVCC(HeapTuple htup, Snapshot snapshot,
+						   Buffer buffer)
+{
+	HeapTupleHeader tuple = htup->t_data;
+	TransactionId xmin = HeapTupleHeaderGetXmin(tuple);
+	TransactionId xmax = HeapTupleHeaderGetRawXmax(tuple);
+
+	Assert(ItemPointerIsValid(&htup->t_self));
+	Assert(htup->t_tableOid != InvalidOid);
+
+	/* inserting transaction aborted */
+	if (HeapTupleHeaderXminInvalid(tuple))
+	{
+		Assert(!TransactionIdDidCommit(xmin));
+		return false;
+	}
+	/* check if its one of our txids, toplevel is also in there */
+	else if (TransactionIdInArray(xmin, snapshot->subxip, snapshot->subxcnt))
+	{
+		bool		resolved;
+		CommandId	cmin = HeapTupleHeaderGetRawCommandId(tuple);
+		CommandId	cmax = InvalidCommandId;
+
+		/*
+		 * another transaction might have (tried to) delete this tuple or
+		 * cmin/cmax was stored in a combocid. S we need to to lookup the
+		 * actual values externally.
+		 */
+		resolved = ResolveCminCmaxDuringDecoding(HistoricSnapshotGetTupleCids(), snapshot,
+												 htup, buffer,
+												 &cmin, &cmax);
+
+		if (!resolved)
+			elog(ERROR, "could not resolve cmin/cmax of catalog tuple");
+
+		Assert(cmin != InvalidCommandId);
+
+		if (cmin >= snapshot->curcid)
+			return false;	/* inserted after scan started */
+		/* fall through */
+	}
+	/* committed before our xmin horizon. Do a normal visibility check. */
+	else if (TransactionIdPrecedes(xmin, snapshot->xmin))
+	{
+		Assert(!(HeapTupleHeaderXminCommitted(tuple) &&
+				 !TransactionIdDidCommit(xmin)));
+
+		/* check for hint bit first, consult clog afterwards */
+		if (!HeapTupleHeaderXminCommitted(tuple) &&
+			!TransactionIdDidCommit(xmin))
+			return false;
+		/* fall through */
+	}
+	/* beyond our xmax horizon, i.e. invisible */
+	else if (TransactionIdFollowsOrEquals(xmin, snapshot->xmax))
+	{
+		return false;
+	}
+	/* check if it's a committed transaction in [xmin, xmax) */
+	else if(TransactionIdInArray(xmin, snapshot->xip, snapshot->xcnt))
+	{
+		/* fall through */
+	}
+	/*
+	 * none of the above, i.e. between [xmin, xmax) but hasn't
+	 * committed. I.e. invisible.
+	 */
+	else
+	{
+		return false;
+	}
+
+	/* at this point we know xmin is visible, go on to check xmax */
+
+	/* xid invalid or aborted */
+	if (tuple->t_infomask & HEAP_XMAX_INVALID)
+		return true;
+	/* locked tuples are always visible */
+	else if (HEAP_XMAX_IS_LOCKED_ONLY(tuple->t_infomask))
+		return true;
+	/*
+	 * We can see multis here if we're looking at user tables or if
+	 * somebody SELECT ... FOR SHARE/UPDATE a system table.
+	 */
+	else if (tuple->t_infomask & HEAP_XMAX_IS_MULTI)
+	{
+		xmax = HeapTupleGetUpdateXid(tuple);
+	}
+
+	/* check if its one of our txids, toplevel is also in there */
+	if (TransactionIdInArray(xmax, snapshot->subxip, snapshot->subxcnt))
+	{
+		bool resolved;
+		CommandId cmin;
+		CommandId cmax = HeapTupleHeaderGetRawCommandId(tuple);
+
+		/* Lookup actual cmin/cmax values */
+		resolved = ResolveCminCmaxDuringDecoding(HistoricSnapshotGetTupleCids(), snapshot,
+												 htup, buffer,
+												 &cmin, &cmax);
+
+		if (!resolved)
+			elog(ERROR, "could not resolve combocid to cmax");
+
+		Assert(cmax != InvalidCommandId);
+
+		if (cmax >= snapshot->curcid)
+			return true;	/* deleted after scan started */
+		else
+			return false;	/* deleted before scan started */
+	}
+	/* below xmin horizon, normal transaction state is valid */
+	else if (TransactionIdPrecedes(xmax, snapshot->xmin))
+	{
+		Assert(!(tuple->t_infomask & HEAP_XMAX_COMMITTED &&
+				 !TransactionIdDidCommit(xmax)));
+
+		/* check hint bit first */
+		if (tuple->t_infomask & HEAP_XMAX_COMMITTED)
+			return false;
+
+		/* check clog */
+		return !TransactionIdDidCommit(xmax);
+	}
+	/* above xmax horizon, we cannot possibly see the deleting transaction */
+	else if (TransactionIdFollowsOrEquals(xmax, snapshot->xmax))
+		return true;
+	/* xmax is between [xmin, xmax), check known committed array */
+	else if (TransactionIdInArray(xmax, snapshot->xip, snapshot->xcnt))
+		return false;
+	/* xmax is between [xmin, xmax), but known not to have committed yet */
+	else
+		return true;
 }

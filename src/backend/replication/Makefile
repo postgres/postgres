@@ -17,6 +17,8 @@ override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
 OBJS = walsender.o walreceiverfuncs.o walreceiver.o basebackup.o \
 	repl_gram.o slot.o slotfuncs.o syncrep.o
 
+SUBDIRS = logical
+
 include $(top_srcdir)/src/backend/common.mk
 
 # repl_scanner is compiled as part of repl_gram

@@ -55,6 +55,7 @@
 #include "pg_getopt.h"
 #include "postmaster/autovacuum.h"
 #include "postmaster/postmaster.h"
+#include "replication/slot.h"
 #include "replication/walsender.h"
 #include "rewrite/rewriteHandler.h"
 #include "storage/bufmgr.h"
@@ -3852,6 +3853,16 @@ PostgresMain(int argc, char *argv[],
 
 		if (am_walsender)
 			WalSndErrorCleanup();
+
+		/*
+		 * We can't release replication slots inside AbortTransaction() as we
+		 * need to be able to start and abort transactions while having a slot
+		 * acquired. But we never need to hold them across top level errors,
+		 * so releasing here is fine. There's another cleanup in ProcKill()
+		 * ensuring we'll correctly cleanup on FATAL errors as well.
+		 */
+		if (MyReplicationSlot != NULL)
+			ReplicationSlotRelease();
 
 		/*
 		 * Now return to normal top-level context and clear ErrorContext for
