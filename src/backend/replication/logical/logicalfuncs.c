@@ -2,7 +2,7 @@
  *
  * logicalfuncs.c
  *
- *	   Support functions for using logical decoding and managemnt of
+ *	   Support functions for using logical decoding and management of
  *	   logical replication slots via SQL.
  *
  *
@@ -400,7 +400,7 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 			ctx->options.output_type != OUTPUT_PLUGIN_TEXTUAL_OUTPUT)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("output plugin cannot produce text output")));
+					 errmsg("output plugin cannot produce binary output")));
 
 		ctx->output_writer_private = p;
 

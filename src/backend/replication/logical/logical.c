@@ -9,7 +9,7 @@
  *
  * NOTES
  *    This file coordinates interaction between the various modules that
- *    together providethe logical decoding, primarily by providing so
+ *    together provide logical decoding, primarily by providing so
  *    called LogicalDecodingContexts. The goal is to encapsulate most of the
  *    internal complexity for consumers of logical decoding, so they can
  *    create and consume a changestream with a low amount of code.

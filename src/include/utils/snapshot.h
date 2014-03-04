@@ -36,7 +36,7 @@ typedef bool (*SnapshotSatisfiesFunc) (HeapTuple htup,
  * There are several different kinds of snapshots:
  * * Normal MVCC snapshots
  * * MVCC snapshots taken during recovery (in Hot-Standby mode)
- * * Historic MVCC snapshots used during logical decoding 
+ * * Historic MVCC snapshots used during logical decoding
  * * snapshots passed to HeapTupleSatisfiesDirty()
  * * snapshots used for SatisfiesAny, Toast, Self where no members are
  *   accessed.
