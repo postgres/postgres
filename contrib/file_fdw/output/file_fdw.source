@@ -96,20 +96,24 @@ OPTIONS (format 'csv', filename '@abs_srcdir@/data/agg.bad', header 'true', deli
 -- per-column options tests
 CREATE FOREIGN TABLE text_csv (
     word1 text OPTIONS (force_not_null 'true'),
-    word2 text OPTIONS (force_not_null 'off')
+    word2 text OPTIONS (force_not_null 'off'),
+    word3 text OPTIONS (force_null 'true'),
+    word4 text OPTIONS (force_null 'off')
 ) SERVER file_server
 OPTIONS (format 'text', filename '@abs_srcdir@/data/text.csv', null 'NULL');
 SELECT * FROM text_csv; -- ERROR
 ERROR:  COPY force not null available only in CSV mode
 ALTER FOREIGN TABLE text_csv OPTIONS (SET format 'csv');
+\pset null _null_
 SELECT * FROM text_csv;
- word1 | word2 
--------+-------
- AAA   | aaa
- XYZ   | xyz
- NULL  | 
- ABC   | abc
-(4 rows)
+ word1 | word2  | word3  | word4  
+-------+--------+--------+--------
+ AAA   | aaa    | 123    | 
+ XYZ   | xyz    |        | 321
+ NULL  | _null_ | _null_ | _null_
+ NULL  | _null_ | _null_ | _null_
+ ABC   | abc    |        | 
+(5 rows)
 
 -- force_not_null is not allowed to be specified at any foreign object level:
 ALTER FOREIGN DATA WRAPPER file_fdw OPTIONS (ADD force_not_null '*'); -- ERROR
@@ -124,6 +128,27 @@ HINT:  There are no valid options in this context.
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (force_not_null '*'); -- ERROR
 ERROR:  invalid option "force_not_null"
 HINT:  Valid options in this context are: filename, format, header, delimiter, quote, escape, null, encoding
+-- force_not_null cannot be specified together with force_null
+ALTER FOREIGN TABLE text_csv ALTER COLUMN word1 OPTIONS (force_null 'true'); --ERROR
+ERROR:  conflicting or redundant options
+HINT:  option "force_null" cannot be used together with "force_not_null"
+-- force_null is not allowed to be specified at any foreign object level:
+ALTER FOREIGN DATA WRAPPER file_fdw OPTIONS (ADD force_null '*'); -- ERROR
+ERROR:  invalid option "force_null"
+HINT:  There are no valid options in this context.
+ALTER SERVER file_server OPTIONS (ADD force_null '*'); -- ERROR
+ERROR:  invalid option "force_null"
+HINT:  There are no valid options in this context.
+CREATE USER MAPPING FOR public SERVER file_server OPTIONS (force_null '*'); -- ERROR
+ERROR:  invalid option "force_null"
+HINT:  There are no valid options in this context.
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (force_null '*'); -- ERROR
+ERROR:  invalid option "force_null"
+HINT:  Valid options in this context are: filename, format, header, delimiter, quote, escape, null, encoding
+-- force_null cannot be specified together with force_not_null
+ALTER FOREIGN TABLE text_csv ALTER COLUMN word3 OPTIONS (force_not_null 'true'); --ERROR
+ERROR:  conflicting or redundant options
+HINT:  option "force_not_null" cannot be used together with "force_null"
 -- basic query tests
 SELECT * FROM agg_text WHERE b > 10.0 ORDER BY a;
   a  |   b    

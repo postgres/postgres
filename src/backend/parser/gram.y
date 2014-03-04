@@ -2548,6 +2548,10 @@ copy_opt_item:
 				{
 					$$ = makeDefElem("force_not_null", (Node *)$4);
 				}
+			| FORCE NULL_P columnList
+				{
+					$$ = makeDefElem("force_null", (Node *)$3);
+				}
 			| ENCODING Sconst
 				{
 					$$ = makeDefElem("encoding", (Node *)makeString($2));

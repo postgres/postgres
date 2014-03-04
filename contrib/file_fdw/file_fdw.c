@@ -48,9 +48,9 @@ struct FileFdwOption
 
 /*
  * Valid options for file_fdw.
- * These options are based on the options for COPY FROM command.
- * But note that force_not_null is handled as a boolean option attached to
- * each column, not as a table option.
+ * These options are based on the options for the COPY FROM command.
+ * But note that force_not_null and force_null are handled as boolean options
+ * attached to a column, not as table options.
  *
  * Note: If you are adding new option for user mapping, you need to modify
  * fileGetOptions(), which currently doesn't bother to look at user mappings.
@@ -69,7 +69,7 @@ static const struct FileFdwOption valid_options[] = {
 	{"null", ForeignTableRelationId},
 	{"encoding", ForeignTableRelationId},
 	{"force_not_null", AttributeRelationId},
-
+	{"force_null", AttributeRelationId},
 	/*
 	 * force_quote is not supported by file_fdw because it's for COPY TO.
 	 */
@@ -187,6 +187,7 @@ file_fdw_validator(PG_FUNCTION_ARGS)
 	Oid			catalog = PG_GETARG_OID(1);
 	char	   *filename = NULL;
 	DefElem    *force_not_null = NULL;
+	DefElem    *force_null = NULL;
 	List	   *other_options = NIL;
 	ListCell   *cell;
 
@@ -243,10 +244,10 @@ file_fdw_validator(PG_FUNCTION_ARGS)
 		}
 
 		/*
-		 * Separate out filename and force_not_null, since ProcessCopyOptions
-		 * won't accept them.  (force_not_null only comes in a boolean
-		 * per-column flavor here.)
+		 * Separate out filename and column-specific options, since
+		 * ProcessCopyOptions won't accept them.
 		 */
+
 		if (strcmp(def->defname, "filename") == 0)
 		{
 			if (filename)
@@ -255,14 +256,40 @@ file_fdw_validator(PG_FUNCTION_ARGS)
 						 errmsg("conflicting or redundant options")));
 			filename = defGetString(def);
 		}
+		/*
+		 * force_not_null is a boolean option; after validation we can discard
+		 * it - it will be retrieved later in get_file_fdw_attribute_options()
+		 */
 		else if (strcmp(def->defname, "force_not_null") == 0)
 		{
 			if (force_not_null)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options")));
+						 errmsg("conflicting or redundant options"),
+						 errhint("option \"force_not_null\" supplied more than once for a column")));
+			if(force_null)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options"),
+						 errhint("option \"force_not_null\" cannot be used together with \"force_null\"")));
 			force_not_null = def;
 			/* Don't care what the value is, as long as it's a legal boolean */
+			(void) defGetBoolean(def);
+		}
+		/* See comments for force_not_null above */
+		else if (strcmp(def->defname, "force_null") == 0)
+		{
+			if (force_null)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options"),
+						 errhint("option \"force_null\" supplied more than once for a column")));
+			if(force_not_null)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options"),
+						 errhint("option \"force_null\" cannot be used together with \"force_not_null\"")));
+			force_null = def;
 			(void) defGetBoolean(def);
 		}
 		else
@@ -369,8 +396,9 @@ fileGetOptions(Oid foreigntableid,
  * Retrieve per-column generic options from pg_attribute and construct a list
  * of DefElems representing them.
  *
- * At the moment we only have "force_not_null", which should be combined into
- * a single DefElem listing all such columns, since that's what COPY expects.
+ * At the moment we only have "force_not_null", and "force_null",
+ * which should each be combined into a single DefElem listing all such
+ * columns, since that's what COPY expects.
  */
 static List *
 get_file_fdw_attribute_options(Oid relid)
@@ -380,6 +408,9 @@ get_file_fdw_attribute_options(Oid relid)
 	AttrNumber	natts;
 	AttrNumber	attnum;
 	List	   *fnncolumns = NIL;
+	List	   *fncolumns = NIL;
+
+	List *options = NIL;
 
 	rel = heap_open(relid, AccessShareLock);
 	tupleDesc = RelationGetDescr(rel);
@@ -410,17 +441,29 @@ get_file_fdw_attribute_options(Oid relid)
 					fnncolumns = lappend(fnncolumns, makeString(attname));
 				}
 			}
+			else if (strcmp(def->defname, "force_null") == 0)
+			{
+				if (defGetBoolean(def))
+				{
+					char	   *attname = pstrdup(NameStr(attr->attname));
+
+					fncolumns = lappend(fncolumns, makeString(attname));
+				}
+			}
 			/* maybe in future handle other options here */
 		}
 	}
 
 	heap_close(rel, AccessShareLock);
 
-	/* Return DefElem only when some column(s) have force_not_null */
+	/* Return DefElem only when some column(s) have force_not_null / force_null options set */
 	if (fnncolumns != NIL)
-		return list_make1(makeDefElem("force_not_null", (Node *) fnncolumns));
-	else
-		return NIL;
+		options = lappend(options, makeDefElem("force_not_null", (Node *) fnncolumns));
+
+	if (fncolumns != NIL)
+		options = lappend(options,makeDefElem("force_null", (Node *) fncolumns));
+
+	return options;
 }
 
 /*

@@ -1,4 +1,5 @@
-AAA,aaa
-XYZ,xyz
-NULL,NULL
-ABC,abc
+AAA,aaa,123,""
+XYZ,xyz,"",321
+NULL,NULL,NULL,NULL
+NULL,NULL,"NULL",NULL
+ABC,abc,"",""

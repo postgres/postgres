@@ -125,6 +125,8 @@ typedef struct CopyStateData
 	bool	   *force_quote_flags;		/* per-column CSV FQ flags */
 	List	   *force_notnull;	/* list of column names */
 	bool	   *force_notnull_flags;	/* per-column CSV FNN flags */
+	List	   *force_null;	/* list of column names */
+	bool	   *force_null_flags;	/* per-column CSV FN flags */
 	bool		convert_selectively;	/* do selective binary conversion? */
 	List	   *convert_select; /* list of column names (can be NIL) */
 	bool	   *convert_select_flags;	/* per-column CSV/TEXT CS flags */
@@ -1019,6 +1021,20 @@ ProcessCopyOptions(CopyState cstate,
 						 errmsg("argument to option \"%s\" must be a list of column names",
 								defel->defname)));
 		}
+		else if (strcmp(defel->defname, "force_null") == 0)
+		{
+			if (cstate->force_null)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+			if (defel->arg && IsA(defel->arg, List))
+				cstate->force_null = (List *) defel->arg;
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("argument to option \"%s\" must be a list of column names",
+								defel->defname)));
+		}
 		else if (strcmp(defel->defname, "convert_selectively") == 0)
 		{
 			/*
@@ -1177,6 +1193,17 @@ ProcessCopyOptions(CopyState cstate,
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			  errmsg("COPY force not null only available using COPY FROM")));
+
+	/* Check force_null */
+	if (!cstate->csv_mode && cstate->force_null != NIL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("COPY force null available only in CSV mode")));
+
+	if (cstate->force_null != NIL && !is_from)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			  errmsg("COPY force null only available using COPY FROM")));
 
 	/* Don't allow the delimiter to appear in the null string. */
 	if (strchr(cstate->null_print, cstate->delim[0]) != NULL)
@@ -1382,6 +1409,28 @@ BeginCopy(bool is_from,
 				errmsg("FORCE NOT NULL column \"%s\" not referenced by COPY",
 					   NameStr(tupDesc->attrs[attnum - 1]->attname))));
 			cstate->force_notnull_flags[attnum - 1] = true;
+		}
+	}
+
+	/* Convert FORCE NULL name list to per-column flags, check validity */
+	cstate->force_null_flags = (bool *) palloc0(num_phys_attrs * sizeof(bool));
+	if (cstate->force_null)
+	{
+		List	   *attnums;
+		ListCell   *cur;
+
+		attnums = CopyGetAttnums(tupDesc, cstate->rel, cstate->force_null);
+
+		foreach(cur, attnums)
+		{
+			int			attnum = lfirst_int(cur);
+
+			if (!list_member_int(cstate->attnumlist, attnum))
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+				errmsg("FORCE NULL column \"%s\" not referenced by COPY",
+					   NameStr(tupDesc->attrs[attnum - 1]->attname))));
+			cstate->force_null_flags[attnum - 1] = true;
 		}
 	}
 
@@ -2810,11 +2859,28 @@ NextCopyFrom(CopyState cstate, ExprContext *econtext,
 				continue;
 			}
 
-			if (cstate->csv_mode && string == NULL &&
-				cstate->force_notnull_flags[m])
+			if (cstate->csv_mode)
 			{
-				/* Go ahead and read the NULL string */
-				string = cstate->null_print;
+				if(string == NULL &&
+				   cstate->force_notnull_flags[m])
+				{
+					/*
+					 * FORCE_NOT_NULL option is set and column is NULL -
+					 * convert it to the NULL string.
+					 */
+					string = cstate->null_print;
+				}
+				else if(string != NULL && cstate->force_null_flags[m]
+						&& strcmp(string,cstate->null_print) == 0 )
+				{
+					/*
+					 * FORCE_NULL option is set and column matches the NULL string.
+					 * It must have been quoted, or otherwise the string would already
+					 * have been set to NULL.
+					 * Convert it to NULL as specified.
+					 */
+					string = NULL;
+				}
 			}
 
 			cstate->cur_attname = NameStr(attr[m]->attname);

@@ -42,6 +42,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     ESCAPE '<replaceable class="parameter">escape_character</replaceable>'
     FORCE_QUOTE { ( <replaceable class="parameter">column_name</replaceable> [, ...] ) | * }
     FORCE_NOT_NULL ( <replaceable class="parameter">column_name</replaceable> [, ...] )
+    FORCE_NULL ( <replaceable class="parameter">column_name</replaceable> [, ...] )
     ENCODING '<replaceable class="parameter">encoding_name</replaceable>'
 </synopsis>
  </refsynopsisdiv>
@@ -322,6 +323,20 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
       In the default case where the null string is empty, this means that
       empty values will be read as zero-length strings rather than nulls,
       even when they are not quoted.
+      This option is allowed only in <command>COPY FROM</>, and only when
+      using <literal>CSV</> format.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>FORCE_NULL</></term>
+    <listitem>
+     <para>
+      Match the specified columns' values against the null string, even
+      if it has been quoted, and if a match is found set the value to
+      <literal>NULL</>. In the default case where the null string is empty,
+      this converts a quoted empty string into NULL.
       This option is allowed only in <command>COPY FROM</>, and only when
       using <literal>CSV</> format.
      </para>
@@ -637,7 +652,9 @@ COPY <replaceable class="parameter">count</replaceable>
     string, while an empty string data value is written with double quotes
     (<literal>""</>). Reading values follows similar rules. You can
     use <literal>FORCE_NOT_NULL</> to prevent <literal>NULL</> input
-    comparisons for specific columns.
+    comparisons for specific columns. You can also use
+    <literal>FORCE_NULL</> to convert quoted null string data values to
+    <literal>NULL</>.
    </para>
 
    <para>

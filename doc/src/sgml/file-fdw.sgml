@@ -112,11 +112,11 @@
  </variablelist>
 
  <para>
-  Note that while <command>COPY</> allows options such as OIDS and HEADER 
+  Note that while <command>COPY</> allows options such as OIDS and HEADER
   to be specified without a corresponding value, the foreign data wrapper
-  syntax requires a value to be present in all cases.  To activate 
+  syntax requires a value to be present in all cases.  To activate
   <command>COPY</> options normally supplied without a value, you can
-  instead pass the value TRUE. 
+  instead pass the value TRUE.
  </para>
 
  <para>
@@ -136,6 +136,21 @@
      file-level <literal>null</literal> option).  This has the same effect
      as listing the column in <command>COPY</>'s
      <literal>FORCE_NOT_NULL</literal> option.
+    </para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry>
+   <term><literal>force_null</literal></term>
+
+   <listitem>
+    <para>
+     This is a Boolean option.  If true, it specifies that values of the
+     column which match the null string are returned as <literal>NULL</>
+     even if the value is quoted. Without this option, only unquoted
+     values matching the null string are returned as <literal>NULL</>.
+     This has the same effect  as listing the column in
+     <command>COPY</>'s <literal>FORCE_NULL</literal> option.
     </para>
    </listitem>
   </varlistentry>
