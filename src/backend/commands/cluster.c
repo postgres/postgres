@@ -1269,7 +1269,8 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 	 * changes because we'd be updating the old data that we're about to throw
 	 * away.  Because the real work being done here for a mapped relation is
 	 * just to change the relation map settings, it's all right to not update
-	 * the pg_class rows in this case.
+	 * the pg_class rows in this case. The most important changes will instead
+	 * performed later, in finish_heap_swap() itself.
 	 */
 	if (!target_is_pg_class)
 	{
@@ -1503,6 +1504,40 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 	if (check_constraints)
 		reindex_flags |= REINDEX_REL_CHECK_CONSTRAINTS;
 	reindex_relation(OIDOldHeap, reindex_flags);
+
+	/*
+	 * If the relation being rebuild is pg_class, swap_relation_files()
+	 * couldn't update pg_class's own pg_class entry (check comments in
+	 * swap_relation_files()), thus relfrozenxid was not updated. That's
+	 * annoying because a potential reason for doing a VACUUM FULL is a
+	 * imminent or actual anti-wraparound shutdown.  So, now that we can
+	 * access the new relation using it's indices, update
+	 * relfrozenxid. pg_class doesn't have a toast relation, so we don't need
+	 * to update the corresponding toast relation. Not that there's little
+	 * point moving all relfrozenxid updates here since swap_relation_files()
+	 * needs to write to pg_class for non-mapped relations anyway.
+	 */
+	if (OIDOldHeap == RelationRelationId)
+	{
+		Relation	relRelation;
+		HeapTuple	reltup;
+		Form_pg_class relform;
+
+		relRelation = heap_open(RelationRelationId, RowExclusiveLock);
+
+		reltup = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(OIDOldHeap));
+		if (!HeapTupleIsValid(reltup))
+			elog(ERROR, "cache lookup failed for relation %u", OIDOldHeap);
+		relform = (Form_pg_class) GETSTRUCT(reltup);
+
+		relform->relfrozenxid = frozenXid;
+		relform->relminmxid = cutoffMulti;
+
+		simple_heap_update(relRelation, &reltup->t_self, reltup);
+		CatalogUpdateIndexes(relRelation, reltup);
+
+		heap_close(relRelation, RowExclusiveLock);
+	}
 
 	/* Destroy new heap with old filenode */
 	object.classId = RelationRelationId;
