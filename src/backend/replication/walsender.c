@@ -1100,7 +1100,7 @@ WalSndLoop(void)
 					ping_sent = true;
 					/* Try to flush pending output to the client */
 					if (pq_flush_if_writable() != 0)
-						break;
+						goto send_failure;
 				}
 			}
 
