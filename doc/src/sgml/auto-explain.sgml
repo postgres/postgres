@@ -124,6 +124,24 @@ LOAD 'auto_explain';
 
    <varlistentry>
     <term>
+     <varname>auto_explain.log_triggers</varname> (<type>boolean</type>)
+    </term>
+    <indexterm>
+     <primary><varname>auto_explain.log_triggers</> configuration parameter</primary>
+    </indexterm>
+    <listitem>
+     <para>
+      <varname>auto_explain.log_triggers</varname> causes trigger
+      execution statistics to be included when an execution plan is logged.
+      This parameter is off by default. Only superusers can change this
+      setting. This parameter has no effect unless
+      <varname>auto_explain.log_analyze</> parameter is set.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
      <varname>auto_explain.log_format</varname> (<type>enum</type>)
     </term>
     <indexterm>
