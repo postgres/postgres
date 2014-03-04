@@ -254,3 +254,40 @@ INSERT INTO TIMESTAMPTZ_TST VALUES(4, '1000000312 23:58:48 IST');
 SELECT * FROM TIMESTAMPTZ_TST ORDER BY a;
 --Cleanup
 DROP TABLE TIMESTAMPTZ_TST;
+
+-- test timestamptz constructors
+set TimeZone to 'America/Santiago';
+
+-- numeric timezone
+SELECT make_timestamptz(1973, 07, 15, 08, 15, 55.33);
+SELECT make_timestamptz(1973, 07, 15, 08, 15, 55.33, '+2');
+SELECT make_timestamptz(1973, 07, 15, 08, 15, 55.33, '-2');
+WITH tzs (tz) AS (VALUES
+    ('+1'), ('+1:'), ('+1:0'), ('+100'), ('+1:00'), ('+01:00'),
+    ('+10'), ('+1000'), ('+10:'), ('+10:0'), ('+10:00'), ('+10:00:'),
+    ('+10:00:1'), ('+10:00:01'),
+    ('+10:00:10'))
+     SELECT make_timestamptz(2010, 2, 27, 3, 45, 00, tz), tz FROM tzs;
+
+-- these should fail
+SELECT make_timestamptz(1973, 07, 15, 08, 15, 55.33, '2');
+SELECT make_timestamptz(2014, 12, 10, 10, 10, 10, '+16');
+SELECT make_timestamptz(2014, 12, 10, 10, 10, 10, '-16');
+
+-- should be true
+SELECT make_timestamptz(1973, 07, 15, 08, 15, 55.33, '+2') = '1973-07-15 08:15:55.33+02'::timestamptz;
+
+-- full timezone name
+SELECT make_timestamptz(2014, 12, 10, 0, 0, 0, 'Europe/Prague') = timestamptz '2014-12-10 00:00:00 Europe/Prague';
+SELECT make_timestamptz(2014, 12, 10, 0, 0, 0, 'Europe/Prague') AT TIME ZONE 'UTC';
+SELECT make_timestamptz(1846, 12, 10, 0, 0, 0, 'Asia/Manila') AT TIME ZONE 'UTC';
+SELECT make_timestamptz(1866, 12, 10, 0, 0, 0, 'America/Metlakatla') AT TIME ZONE 'UTC';
+SELECT make_timestamptz(1901, 12, 10, 0, 0, 0, 'America/Metlakatla') AT TIME ZONE 'UTC';
+SELECT make_timestamptz(2014, 12, 10, 0, 0, 0, 'Mars/Mons_Olympus');
+
+-- abbreviations
+SELECT make_timestamptz(2008, 12, 10, 10, 10, 10, 'CLST');
+SELECT make_timestamptz(2008, 12, 10, 10, 10, 10, 'CLT');
+SELECT make_timestamptz(2014, 12, 10, 10, 10, 10, 'PST8PDT');
+
+RESET TimeZone;

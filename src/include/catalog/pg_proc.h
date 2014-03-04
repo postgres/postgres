@@ -4718,11 +4718,19 @@ DESCR("int8range constructor");
 DATA(insert OID = 3946 (  int8range PGNSP PGUID 12 1 0 0 0 f f f f f f i 3 0 3926 "20 20 25" _null_ _null_ _null_ _null_ range_constructor3 _null_ _null_ _null_ ));
 DESCR("int8range constructor");
 
-/* date, time constructors */
+/* date, time, timestamp constructors */
 DATA(insert OID = 3846 ( make_date	PGNSP PGUID 12 1 0 0 0 f f f f t f i 3 0 1082 "23 23 23" _null_ _null_ "{year,month,day}" _null_ make_date _null_ _null_ _null_ ));
 DESCR("construct date");
 DATA(insert OID = 3847 ( make_time	PGNSP PGUID 12 1 0 0 0 f f f f t f i 3 0 1083 "23 23 701" _null_ _null_ "{hour,min,sec}" _null_ make_time _null_ _null_ _null_ ));
 DESCR("construct time");
+DATA(insert OID = 3461 ( make_timestamp	PGNSP PGUID 12 1 0 0 0 f f f f t f i 6 0 1114 "23 23 23 23 23 701" _null_ _null_ "{year,month,mday,hour,min,sec}" _null_ make_timestamp _null_ _null_ _null_ ));
+DESCR("construct timestamp");
+DATA(insert OID = 3462 ( make_timestamptz	PGNSP PGUID 12 1 0 0 0 f f f f t f s 6 0 1184 "23 23 23 23 23 701" _null_ _null_ "{year,month,mday,hour,min,sec}" _null_ make_timestamptz _null_ _null_ _null_ ));
+DESCR("construct timestamp with time zone");
+DATA(insert OID = 3463 ( make_timestamptz	PGNSP PGUID 12 1 0 0 0 f f f f t f s 7 0 1184 "23 23 23 23 23 701 25" _null_ _null_ "{year,month,mday,hour,min,sec,timezone}" _null_ make_timestamptz_at_timezone _null_ _null_ _null_ ));
+DESCR("construct timestamp with time zone");
+DATA(insert OID = 3464 ( make_interval	PGNSP PGUID 12 1 0 0 0 f f f f t f i 7 0 1186 "23 23 23 23 23 23 701" _null_ _null_ "{years,months,weeks,days,hours,mins,secs}" _null_ make_interval _null_ _null_ _null_ ));
+DESCR("construct interval");
 
 /* spgist support functions */
 DATA(insert OID = 4001 (  spggettuple	   PGNSP PGUID 12 1 0 0 0 f f f f t f v 2 0 16 "2281 2281" _null_ _null_ _null_ _null_	spggettuple _null_ _null_ _null_ ));

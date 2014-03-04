@@ -807,3 +807,48 @@ select interval_hash('30 days'::interval) = interval_hash('1 month'::interval) a
  t
 (1 row)
 
+-- numeric constructor
+select make_interval(years := 2);
+ make_interval 
+---------------
+ @ 2 years
+(1 row)
+
+select make_interval(years := 1, months := 6);
+  make_interval  
+-----------------
+ @ 1 year 6 mons
+(1 row)
+
+select make_interval(years := 1, months := -1, weeks := 5, days := -7, hours := 25, mins := -180);
+       make_interval        
+----------------------------
+ @ 11 mons 28 days 22 hours
+(1 row)
+
+select make_interval() = make_interval(years := 0, months := 0, weeks := 0, days := 0, mins := 0, secs := 0.0);
+ ?column? 
+----------
+ t
+(1 row)
+
+select make_interval(hours := -2, mins := -10, secs := -25.3);
+          make_interval          
+---------------------------------
+ @ 2 hours 10 mins 25.3 secs ago
+(1 row)
+
+select make_interval(years := 'inf'::float::int);
+ERROR:  integer out of range
+select make_interval(months := 'NaN'::float::int);
+ERROR:  integer out of range
+select make_interval(secs := 'inf');
+ERROR:  interval out of range
+select make_interval(secs := 'NaN');
+ERROR:  interval out of range
+select make_interval(secs := 7e12);
+           make_interval            
+------------------------------------
+ @ 1944444444 hours 26 mins 40 secs
+(1 row)
+

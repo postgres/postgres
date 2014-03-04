@@ -40,7 +40,6 @@ static int DecodeNumberField(int len, char *str,
 				  struct pg_tm * tm, fsec_t *fsec, bool *is2digits);
 static int DecodeTime(char *str, int fmask, int range,
 		   int *tmask, struct pg_tm * tm, fsec_t *fsec);
-static int	DecodeTimezone(char *str, int *tzp);
 static const datetkn *datebsearch(const char *key, const datetkn *base, int nel);
 static int DecodeDate(char *str, int fmask, int *tmask, bool *is2digits,
 		   struct pg_tm * tm);
@@ -2075,6 +2074,9 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 	else if (mer == PM && tm->tm_hour != HOURS_PER_DAY / 2)
 		tm->tm_hour += HOURS_PER_DAY / 2;
 
+	/*
+	 * This should match the checks in make_timestamp_internal
+	 */
 	if (tm->tm_hour < 0 || tm->tm_min < 0 || tm->tm_min > MINS_PER_HOUR - 1 ||
 		tm->tm_sec < 0 || tm->tm_sec > SECS_PER_MINUTE ||
 		tm->tm_hour > HOURS_PER_DAY ||
@@ -2707,7 +2709,7 @@ DecodeNumberField(int len, char *str, int fmask,
  *
  * NB: this must *not* ereport on failure; see commands/variable.c.
  */
-static int
+int
 DecodeTimezone(char *str, int *tzp)
 {
 	int			tz;

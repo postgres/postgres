@@ -121,6 +121,10 @@ extern Datum timestamp_gt_timestamptz(PG_FUNCTION_ARGS);
 extern Datum timestamp_ge_timestamptz(PG_FUNCTION_ARGS);
 extern Datum timestamp_cmp_timestamptz(PG_FUNCTION_ARGS);
 
+extern Datum make_timestamp(PG_FUNCTION_ARGS);
+extern Datum make_timestamptz(PG_FUNCTION_ARGS);
+extern Datum make_timestamptz_at_timezone(PG_FUNCTION_ARGS);
+
 extern Datum timestamptz_eq_timestamp(PG_FUNCTION_ARGS);
 extern Datum timestamptz_ne_timestamp(PG_FUNCTION_ARGS);
 extern Datum timestamptz_lt_timestamp(PG_FUNCTION_ARGS);
@@ -151,6 +155,7 @@ extern Datum interval_larger(PG_FUNCTION_ARGS);
 extern Datum interval_justify_interval(PG_FUNCTION_ARGS);
 extern Datum interval_justify_hours(PG_FUNCTION_ARGS);
 extern Datum interval_justify_days(PG_FUNCTION_ARGS);
+extern Datum make_interval(PG_FUNCTION_ARGS);
 
 extern Datum timestamp_trunc(PG_FUNCTION_ARGS);
 extern Datum interval_trunc(PG_FUNCTION_ARGS);

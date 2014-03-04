@@ -222,3 +222,6 @@ SELECT '' AS to_char_10, to_char(d1, 'IYYY IYY IY I IW IDDD ID')
 
 SELECT '' AS to_char_11, to_char(d1, 'FMIYYY FMIYY FMIY FMI FMIW FMIDDD FMID')
    FROM TIMESTAMP_TBL;
+
+-- timestamp numeric fields constructor
+SELECT make_timestamp(2014,12,28,6,30,45.887);

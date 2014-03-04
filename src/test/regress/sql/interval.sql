@@ -261,3 +261,17 @@ select interval '0:0:0.7', interval '@ 0.70 secs', interval '0.7 seconds';
 -- check that '30 days' equals '1 month' according to the hash function
 select '30 days'::interval = '1 month'::interval as t;
 select interval_hash('30 days'::interval) = interval_hash('1 month'::interval) as t;
+
+-- numeric constructor
+select make_interval(years := 2);
+select make_interval(years := 1, months := 6);
+select make_interval(years := 1, months := -1, weeks := 5, days := -7, hours := 25, mins := -180);
+
+select make_interval() = make_interval(years := 0, months := 0, weeks := 0, days := 0, mins := 0, secs := 0.0);
+select make_interval(hours := -2, mins := -10, secs := -25.3);
+
+select make_interval(years := 'inf'::float::int);
+select make_interval(months := 'NaN'::float::int);
+select make_interval(secs := 'inf');
+select make_interval(secs := 'NaN');
+select make_interval(secs := 7e12);
