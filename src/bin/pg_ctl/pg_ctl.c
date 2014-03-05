@@ -730,10 +730,10 @@ read_post_opts(void)
 				{
 					*arg1 = '\0';		/* terminate so we get only program
 										 * name */
-					post_opts = arg1 + 1;		/* point past whitespace */
+					post_opts = pg_strdup(arg1 + 1); /* point past whitespace */
 				}
 				if (exec_path == NULL)
-					exec_path = optline;
+					exec_path = pg_strdup(optline);
 			}
 
 			/* Free the results of readfile. */
