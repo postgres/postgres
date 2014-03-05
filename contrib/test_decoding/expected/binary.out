@@ -14,7 +14,7 @@ SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'for
 
 -- fails, binary plugin, textual consumer
 SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'force-binary', '1');
-ERROR:  output plugin cannot produce text output
+ERROR:  output plugin cannot produce binary output
 -- succeeds, textual plugin, binary consumer
 SELECT data FROM pg_logical_slot_get_binary_changes('regression_slot', NULL, NULL, 'force-binary', '0');
  data 
