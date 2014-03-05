@@ -563,10 +563,16 @@ main(int argc, char **argv)
 		dump_inserts = 1;
 
 	if (dataOnly && schemaOnly)
-		exit_horribly(NULL, "options -s/--schema-only and -a/--data-only cannot be used together\n");
+	{
+		write_msg(NULL, "options -s/--schema-only and -a/--data-only cannot be used together\n");
+		exit_nicely(1);
+	}
 
 	if (dataOnly && outputClean)
-		exit_horribly(NULL, "options -c/--clean and -a/--data-only cannot be used together\n");
+	{
+		write_msg(NULL, "options -c/--clean and -a/--data-only cannot be used together\n");
+		exit_nicely(1);
+	}
 
 	if (dump_inserts && oids)
 	{
