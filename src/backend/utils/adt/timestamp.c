@@ -597,8 +597,14 @@ make_timestamp_internal(int year, int month, int day,
 
 	date = date2j(tm.tm_year, tm.tm_mon, tm.tm_mday) - POSTGRES_EPOCH_JDATE;
 
-	/* This should match the checks in DecodeTimeOnly */
+	/*
+	 * This should match the checks in DecodeTimeOnly, except that since we're
+	 * dealing with a float "sec" value, we also explicitly reject NaN.  (An
+	 * infinity input should get rejected by the range comparisons, but we
+	 * can't be sure how those will treat a NaN.)
+	 */
 	if (hour < 0 || min < 0 || min > MINS_PER_HOUR - 1 ||
+		isnan(sec) ||
 		sec < 0 || sec > SECS_PER_MINUTE ||
 		hour > HOURS_PER_DAY ||
 	/* test for > 24:00:00 */
@@ -1463,23 +1469,25 @@ make_interval(PG_FUNCTION_ARGS)
 	double		secs = PG_GETARG_FLOAT8(6);
 	Interval   *result;
 
+	/*
+	 * Reject out-of-range inputs.	We really ought to check the integer
+	 * inputs as well, but it's not entirely clear what limits to apply.
+	 */
+	if (isinf(secs) || isnan(secs))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("interval out of range")));
+
 	result = (Interval *) palloc(sizeof(Interval));
 	result->month = years * MONTHS_PER_YEAR + months;
 	result->day = weeks * 7 + days;
 
-#ifdef HAVE_INT64_TIMESTAMP
-	result->time = ((((hours * INT64CONST(60)) +
-					  mins) * INT64CONST(60)) +
-					secs) * USECS_PER_SEC;
-#else
-	result->time = (((hours * (double) MINS_PER_HOUR) +
-					 mins) * (double) SECS_PER_MINUTE) +
-		secs;
-#endif
+	secs += hours * (double) SECS_PER_HOUR + mins * (double) SECS_PER_MINUTE;
 
-#ifdef NOT_USED
-	/* this is a no-op for negative typmods */
-	AdjustIntervalForTypmod(result, -1);
+#ifdef HAVE_INT64_TIMESTAMP
+	result->time = (int64) (secs * USECS_PER_SEC);
+#else
+	result->time = secs;
 #endif
 
 	PG_RETURN_INTERVAL_P(result);
