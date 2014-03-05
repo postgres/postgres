@@ -17,7 +17,7 @@ SELECT pg_drop_replication_slot('regression_slot');
 -- fail
 SELECT pg_drop_replication_slot('regression_slot');
 
--- check that we're detecting a streaming rep slot used for logical decoding 
+-- check that we're detecting a streaming rep slot used for logical decoding
 SELECT 'init' FROM pg_create_physical_replication_slot('repl');
 SELECT data FROM pg_logical_slot_get_changes('repl', NULL, NULL, 'include-xids', '0');
 SELECT pg_drop_replication_slot('repl');
