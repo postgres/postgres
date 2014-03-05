@@ -4650,7 +4650,7 @@ pgstat_recv_dropdb(PgStat_MsgDropdb *msg, int len)
 	{
 		char		statfile[MAXPGPATH];
 
-		get_dbstat_filename(true, false, dbid, statfile, MAXPGPATH);
+		get_dbstat_filename(false, false, dbid, statfile, MAXPGPATH);
 
 		elog(DEBUG2, "removing %s", statfile);
 		unlink(statfile);
