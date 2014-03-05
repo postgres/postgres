@@ -585,7 +585,8 @@ typedef struct EquivalenceClass
 	List	   *ec_members;		/* list of EquivalenceMembers */
 	List	   *ec_sources;		/* list of generating RestrictInfos */
 	List	   *ec_derives;		/* list of derived RestrictInfos */
-	Relids		ec_relids;		/* all relids appearing in ec_members */
+	Relids		ec_relids;		/* all relids appearing in ec_members, except
+								 * for child members (see below) */
 	bool		ec_has_const;	/* any pseudoconstants in ec_members? */
 	bool		ec_has_volatile;	/* the (sole) member is a volatile expr */
 	bool		ec_below_outer_join;	/* equivalence applies below an OJ */
