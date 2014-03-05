@@ -376,13 +376,14 @@ readfile(const char *path)
 void
 free_readfile(char **optlines)
 {
-	int i = 0;
+	char   *curr_line = NULL;
+	int		i = 0;
 
 	if (!optlines)
 		return;
 
-	while (optlines[i++])
-		free(optlines[i]);
+	while ((curr_line = optlines[i++]))
+		free(curr_line);
 
 	free(optlines);
 
@@ -1224,6 +1225,7 @@ do_status(void)
 			if (postmaster_is_alive((pid_t) pid))
 			{
 				char	  **optlines;
+				char	  **curr_line;
 
 				printf(_("%s: server is running (PID: %ld)\n"),
 					   progname, pid);
@@ -1231,8 +1233,8 @@ do_status(void)
 				optlines = readfile(postopts_file);
 				if (optlines != NULL)
 				{
-					for (; *optlines != NULL; optlines++)
-						fputs(*optlines, stdout);
+					for (curr_line = optlines; *curr_line != NULL; curr_line++)
+						fputs(*curr_line, stdout);
 
 					/* Free the results of readfile */
 					free_readfile(optlines);
