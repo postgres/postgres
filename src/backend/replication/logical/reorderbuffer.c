@@ -2741,7 +2741,7 @@ ReorderBufferToastReset(ReorderBuffer *rb, ReorderBufferTXN *txn)
  * * A tuple with a cmin but no cmax (and thus no combocid) got
  *	 deleted/updated in another transaction than the one which created it
  *	 which we are looking at right now. As only one of cmin, cmax or combocid
- *	 is actually stored in the heap we don't have access to the the value we
+ *	 is actually stored in the heap we don't have access to the value we
  *	 need anymore.
  *
  * To resolve those problems we have a per-transaction hash of (cmin,

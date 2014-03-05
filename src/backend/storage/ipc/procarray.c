@@ -1948,7 +1948,7 @@ GetOldestSafeDecodingTransactionId(void)
 	/*
 	 * Acquire XidGenLock, so no transactions can acquire an xid while we're
 	 * running. If no transaction with xid were running concurrently a new xid
-	 * could influence the the RecentXmin et al.
+	 * could influence the RecentXmin et al.
 	 *
 	 * We initialize the computation to nextXid since that's guaranteed to be
 	 * a safe, albeit pessimal, value.

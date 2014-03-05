@@ -179,7 +179,7 @@ StartupDecodingContext(List *output_plugin_options,
  *		perform the use-case dependent, actual, work.
  *
  * Needs to be called while in a memory context that's at least as long lived
- * as the the decoding context because further memory contexts will be created
+ * as the decoding context because further memory contexts will be created
  * inside it.
  *
  * Returns an initialized decoding context after calling the output plugin's
@@ -334,7 +334,7 @@ CreateInitDecodingContext(char *plugin,
  *		perform the use-case dependent, actual, work.
  *
  * Needs to be called while in a memory context that's at least as long lived
- * as the the decoding context because further memory contexts will be created
+ * as the decoding context because further memory contexts will be created
  * inside it.
  *
  * Returns an initialized decoding context after calling the output plugin's

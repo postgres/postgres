@@ -497,7 +497,7 @@ DecodeCommit(LogicalDecodingContext *ctx, XLogRecordBuffer *buf,
 
 	/* ----
 	 * Check whether we are interested in this specific transaction, and tell
-	 * the the reorderbuffer to forget the content of the (sub-)transactions
+	 * the reorderbuffer to forget the content of the (sub-)transactions
 	 * if not.
 	 *
 	 * There basically two reasons we might not be interested in this
