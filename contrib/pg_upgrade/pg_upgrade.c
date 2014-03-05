@@ -15,13 +15,12 @@
  *	oids are the same between old and new clusters.  This is important
  *	because toast oids are stored as toast pointers in user tables.
  *
- *	FYI, while pg_class.oid and pg_class.relfilenode are initially the same
- *	in a cluster, but they can diverge due to CLUSTER, REINDEX, or VACUUM
- *	FULL.  The new cluster will have matching pg_class.oid and
- *	pg_class.relfilenode values and be based on the old oid value.	This can
- *	cause the old and new pg_class.relfilenode values to differ.  In summary,
- *	old and new pg_class.oid and new pg_class.relfilenode will have the
- *	same value, and old pg_class.relfilenode might differ.
+ *	While pg_class.oid and pg_class.relfilenode are initially the same
+ *	in a cluster, they can diverge due to CLUSTER, REINDEX, or VACUUM
+ *	FULL.  In the new cluster, pg_class.oid and pg_class.relfilenode will
+ *	be the same and will match the old pg_class.oid value.  Because of
+ *	this, old/new pg_class.relfilenode values will not match if CLUSTER,
+ *	REINDEX, or VACUUM FULL have been performed in the old cluster.
  *
  *	We control all assignments of pg_type.oid because these oids are stored
  *	in user composite type values.
