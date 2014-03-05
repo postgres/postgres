@@ -6751,11 +6751,15 @@ StartupXLOG(void)
 
 		/*
 		 * Initialize shared variables for tracking progress of WAL replay,
-		 * as if we had just replayed the record before the REDO location.
+		 * as if we had just replayed the record before the REDO location
+		 * (or the checkpoint record itself, if it's a shutdown checkpoint).
 		 */
 		SpinLockAcquire(&xlogctl->info_lck);
-		xlogctl->replayEndRecPtr = checkPoint.redo;
-		xlogctl->lastReplayedEndRecPtr = checkPoint.redo;
+		if (XLByteLT(checkPoint.redo, RecPtr))
+			xlogctl->replayEndRecPtr = checkPoint.redo;
+		else
+			xlogctl->replayEndRecPtr = EndRecPtr;
+		xlogctl->lastReplayedEndRecPtr = xlogctl->replayEndRecPtr;
 		xlogctl->recoveryLastXTime = 0;
 		xlogctl->currentChunkStartTime = 0;
 		xlogctl->recoveryPause = false;
