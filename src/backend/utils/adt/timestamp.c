@@ -511,7 +511,7 @@ parse_sane_timezone(struct pg_tm *tm, text *zone)
 	 * as invalid, it's enough to disallow having a digit in the first
 	 * position of our input string.
 	 */
-	if (isdigit(*tzname))
+	if (isdigit((unsigned char) *tzname))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("invalid input syntax for numeric time zone: \"%s\"",
