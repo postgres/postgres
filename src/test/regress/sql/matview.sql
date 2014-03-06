@@ -141,3 +141,11 @@ REFRESH MATERIALIZED VIEW mv_v;
 SELECT * FROM v;
 SELECT * FROM mv_v;
 DROP TABLE v CASCADE;
+
+-- make sure that matview rows can be referenced as source rows (bug #9398)
+CREATE TABLE v AS SELECT generate_series(1,10) AS a;
+CREATE MATERIALIZED VIEW mv_v AS SELECT a FROM v WHERE a <= 5;
+DELETE FROM v WHERE EXISTS ( SELECT * FROM mv_v WHERE mv_v.a = v.a );
+SELECT * FROM v;
+SELECT * FROM mv_v;
+DROP TABLE v CASCADE;
