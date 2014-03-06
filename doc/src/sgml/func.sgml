@@ -5785,6 +5785,20 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
 
      <listitem>
       <para>
+       <function>to_timestamp</function> and <function>to_date</function>
+       exist to handle input formats that cannot be converted by
+       simple casting.  These functions interpret input liberally,
+       with minimal error checking.  While they produce valid output,
+       the conversion can yield unexpected results.  For example,
+       input to these functions is not restricted by normal ranges,
+       thus <literal>to_date('20096040','YYYYMMDD')</literal> returns
+       <literal>2014-01-17</literal> rather than causing an error.
+       Casting does not have this behavior.
+      </para>
+     </listitem>
+  
+     <listitem>
+      <para>
        Ordinary text is allowed in <function>to_char</function>
        templates and will be output literally.  You can put a substring
        in double quotes to force it to be interpreted as literal text
