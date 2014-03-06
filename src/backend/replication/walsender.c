@@ -1259,6 +1259,27 @@ WalSndLoop(void)
 		}
 
 		/*
+		 * If half of wal_sender_timeout has elapsed without receiving any
+		 * reply from standby, send a keep-alive message requesting an
+		 * immediate reply.
+		 */
+		if (wal_sender_timeout > 0 && !ping_sent)
+		{
+			TimestampTz timeout;
+
+			timeout = TimestampTzPlusMilliseconds(last_reply_timestamp,
+												  wal_sender_timeout / 2);
+			if (GetCurrentTimestamp() >= timeout)
+			{
+				WalSndKeepalive(true);
+				ping_sent = true;
+				/* Try to flush pending output to the client */
+				if (pq_flush_if_writable() != 0)
+					goto send_failure;
+			}
+		}
+
+		/*
 		 * We don't block if not caught up, unless there is unsent data
 		 * pending in which case we'd better block until the socket is
 		 * write-ready.  This test is only needed for the case where XLogSend
@@ -1267,7 +1288,7 @@ WalSndLoop(void)
 		 */
 		if ((caughtup && !streamingDoneSending) || pq_is_send_pending())
 		{
-			TimestampTz timeout = 0;
+			TimestampTz timeout;
 			long		sleeptime = 10000;		/* 10 s */
 			int			wakeEvents;
 
@@ -1276,32 +1297,14 @@ WalSndLoop(void)
 
 			if (pq_is_send_pending())
 				wakeEvents |= WL_SOCKET_WRITEABLE;
-			else if (wal_sender_timeout > 0 && !ping_sent)
-			{
-				/*
-				 * If half of wal_sender_timeout has lapsed without receiving
-				 * any reply from standby, send a keep-alive message to
-				 * standby requesting an immediate reply.
-				 */
-				timeout = TimestampTzPlusMilliseconds(last_reply_timestamp,
-													  wal_sender_timeout / 2);
-				if (GetCurrentTimestamp() >= timeout)
-				{
-					WalSndKeepalive(true);
-					ping_sent = true;
-					/* Try to flush pending output to the client */
-					if (pq_flush_if_writable() != 0)
-						goto send_failure;
-				}
-			}
 
-			/* Determine time until replication timeout */
+			/*
+			 * If wal_sender_timeout is active, sleep in smaller increments
+			 * to not go over the timeout too much. XXX: Why not just sleep
+			 * until the timeout has elapsed?
+			 */
 			if (wal_sender_timeout > 0)
-			{
-				timeout = TimestampTzPlusMilliseconds(last_reply_timestamp,
-													  wal_sender_timeout);
 				sleeptime = 1 + (wal_sender_timeout / 10);
-			}
 
 			/* Sleep until something happens or we time out */
 			ImmediateInterruptOK = true;
@@ -1315,6 +1318,8 @@ WalSndLoop(void)
 			 * possibility that the client replied just as we reached the
 			 * timeout ... he's supposed to reply *before* that.
 			 */
+			timeout = TimestampTzPlusMilliseconds(last_reply_timestamp,
+												  wal_sender_timeout);
 			if (wal_sender_timeout > 0 && GetCurrentTimestamp() >= timeout)
 			{
 				/*
