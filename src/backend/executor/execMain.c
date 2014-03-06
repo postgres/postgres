@@ -1102,14 +1102,15 @@ CheckValidRowMarkRel(Relation rel, RowMarkType markType)
 							RelationGetRelationName(rel))));
 			break;
 		case RELKIND_MATVIEW:
-			/* Should not get here */
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("cannot lock rows in materialized view \"%s\"",
-							RelationGetRelationName(rel))));
+			/* Allow referencing a matview, but not actual locking clauses */
+			if (markType != ROW_MARK_REFERENCE)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					   errmsg("cannot lock rows in materialized view \"%s\"",
+							  RelationGetRelationName(rel))));
 			break;
 		case RELKIND_FOREIGN_TABLE:
-			/* Should not get here */
+			/* Should not get here; planner should have used ROW_MARK_COPY */
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot lock rows in foreign table \"%s\"",
