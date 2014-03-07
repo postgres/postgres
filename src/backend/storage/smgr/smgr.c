@@ -86,6 +86,7 @@ static SMgrRelation first_unowned_reln = NULL;
 
 /* local function prototypes */
 static void smgrshutdown(int code, Datum arg);
+static void add_to_unowned_list(SMgrRelation reln);
 static void remove_from_unowned_list(SMgrRelation reln);
 
 
@@ -176,9 +177,8 @@ smgropen(RelFileNode rnode, BackendId backend)
 		for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
 			reln->md_fd[forknum] = NULL;
 
-		/* place it at head of unowned list (to make smgrsetowner cheap) */
-		reln->next_unowned_reln = first_unowned_reln;
-		first_unowned_reln = reln;
+		/* it has no owner yet */
+		add_to_unowned_list(reln);
 	}
 
 	return reln;
@@ -193,7 +193,7 @@ smgropen(RelFileNode rnode, BackendId backend)
 void
 smgrsetowner(SMgrRelation *owner, SMgrRelation reln)
 {
-	/* We don't currently support "disowning" an SMgrRelation here */
+	/* We don't support "disowning" an SMgrRelation here, use smgrclearowner */
 	Assert(owner != NULL);
 
 	/*
@@ -213,6 +213,40 @@ smgrsetowner(SMgrRelation *owner, SMgrRelation reln)
 	/* Now establish the ownership relationship. */
 	reln->smgr_owner = owner;
 	*owner = reln;
+}
+
+/*
+ * smgrclearowner() -- Remove long-lived reference to an SMgrRelation object
+ *					   if one exists
+ */
+void
+smgrclearowner(SMgrRelation *owner, SMgrRelation reln)
+{
+	/* Do nothing if the SMgrRelation object is not owned by the owner */
+	if (reln->smgr_owner != owner)
+		return;
+
+	/* unset the owner's reference */
+	*owner = NULL;
+
+	/* unset our reference to the owner */
+	reln->smgr_owner = NULL;
+
+	add_to_unowned_list(reln);
+}
+
+/*
+ * add_to_unowned_list -- link an SMgrRelation onto the unowned list
+ *
+ * Check remove_from_unowned_list()'s comments for performance
+ * considerations.
+ */
+static void
+add_to_unowned_list(SMgrRelation reln)
+{
+	/* place it at head of the list (to make smgrsetowner cheap) */
+	reln->next_unowned_reln = first_unowned_reln;
+	first_unowned_reln = reln;
 }
 
 /*

@@ -421,6 +421,9 @@ CreateFakeRelcacheEntry(RelFileNode rnode)
 void
 FreeFakeRelcacheEntry(Relation fakerel)
 {
+	/* make sure the fakerel is not referenced by the SmgrRelation anymore */
+	if (fakerel->rd_smgr != NULL)
+		smgrclearowner(&fakerel->rd_smgr, fakerel->rd_smgr);
 	pfree(fakerel);
 }
 
