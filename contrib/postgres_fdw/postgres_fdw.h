@@ -41,6 +41,7 @@ extern int ExtractConnectionOptions(List *defelems,
 /* in deparse.c */
 extern void classifyConditions(PlannerInfo *root,
 				   RelOptInfo *baserel,
+				   List *input_conds,
 				   List **remote_conds,
 				   List **local_conds);
 extern bool is_foreign_expr(PlannerInfo *root,

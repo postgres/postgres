@@ -134,14 +134,15 @@ static void deparseArrayExpr(ArrayExpr *node, deparse_expr_cxt *context);
 
 
 /*
- * Examine each restriction clause in baserel's baserestrictinfo list,
- * and classify them into two groups, which are returned as two lists:
+ * Examine each qual clause in input_conds, and classify them into two groups,
+ * which are returned as two lists:
  *	- remote_conds contains expressions that can be evaluated remotely
  *	- local_conds contains expressions that can't be evaluated remotely
  */
 void
 classifyConditions(PlannerInfo *root,
 				   RelOptInfo *baserel,
+				   List *input_conds,
 				   List **remote_conds,
 				   List **local_conds)
 {
@@ -150,7 +151,7 @@ classifyConditions(PlannerInfo *root,
 	*remote_conds = NIL;
 	*local_conds = NIL;
 
-	foreach(lc, baserel->baserestrictinfo)
+	foreach(lc, input_conds)
 	{
 		RestrictInfo *ri = (RestrictInfo *) lfirst(lc);
 
