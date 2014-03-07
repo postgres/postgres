@@ -727,6 +727,7 @@ ReplicationSlotsCountDBSlots(Oid dboid, int *nslots, int *nactive)
 
 		/* not database specific, skip */
 		if (s->data.database == InvalidOid)
+			continue;
 
 		/* not our database, skip */
 		if (s->data.database != dboid)
