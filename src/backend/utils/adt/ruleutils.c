@@ -3966,7 +3966,7 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 		query = getInsertSelectQuery(query, NULL);
 
 		/* Must acquire locks right away; see notes in get_query_def() */
-		AcquireRewriteLocks(query, false);
+		AcquireRewriteLocks(query, false, false);
 
 		context.buf = buf;
 		context.namespaces = list_make1(&dpns);
@@ -4108,8 +4108,11 @@ get_query_def(Query *query, StringInfo buf, List *parentnamespace,
 	 * relations, and fix up deleted columns in JOIN RTEs.	This ensures
 	 * consistent results.	Note we assume it's OK to scribble on the passed
 	 * querytree!
+	 *
+	 * We are only deparsing the query (we are not about to execute it), so we
+	 * only need AccessShareLock on the relations it mentions.
 	 */
-	AcquireRewriteLocks(query, false);
+	AcquireRewriteLocks(query, false, false);
 
 	context.buf = buf;
 	context.namespaces = lcons(&dpns, list_copy(parentnamespace));

@@ -18,7 +18,9 @@
 #include "nodes/parsenodes.h"
 
 extern List *QueryRewrite(Query *parsetree);
-extern void AcquireRewriteLocks(Query *parsetree, bool forUpdatePushedDown);
+extern void AcquireRewriteLocks(Query *parsetree,
+					bool forExecute,
+					bool forUpdatePushedDown);
 
 extern Node *build_column_default(Relation rel, int attrno);
 extern Query *get_view_query(Relation view);
