@@ -3444,7 +3444,7 @@ local0.*    /var/log/postgresql
      <varlistentry id="guc-syslog-ident" xreflabel="syslog_ident">
       <term><varname>syslog_ident</varname> (<type>string</type>)</term>
       <indexterm>
-       <primary><varname>syslog_identity</> configuration parameter</primary>
+       <primary><varname>syslog_ident</> configuration parameter</primary>
       </indexterm>
        <listitem>
         <para>
