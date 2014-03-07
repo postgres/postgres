@@ -1068,7 +1068,7 @@ WalSndLoop(void)
 		}
 
 		/*
-		 * If half of wal_sender_timeout has lapsed without receiving any
+		 * If half of wal_sender_timeout has elapsed without receiving any
 		 * reply from standby, send a keep-alive message requesting an
 		 * immediate reply.
 		 */
