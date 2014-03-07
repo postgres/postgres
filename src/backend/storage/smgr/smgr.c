@@ -194,6 +194,24 @@ smgrsetowner(SMgrRelation *owner, SMgrRelation reln)
 }
 
 /*
+ * smgrclearowner() -- Remove long-lived reference to an SMgrRelation object
+ *					   if one exists
+ */
+void
+smgrclearowner(SMgrRelation *owner, SMgrRelation reln)
+{
+	/* Do nothing if the SMgrRelation object is not owned by the owner */
+	if (reln->smgr_owner != owner)
+		return;
+
+	/* unset the owner's reference */
+	*owner = NULL;
+
+	/* unset our reference to the owner */
+	reln->smgr_owner = NULL;
+}
+
+/*
  *	smgrexists() -- Does the underlying file for a fork exist?
  */
 bool
