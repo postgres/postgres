@@ -1180,6 +1180,13 @@
 
     <listitem>
      <para>
+      Prevent errors in WAL replay due to references to uninitialized empty
+      pages (Andres Freund)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       Fix <command>REINDEX TABLE</> and <command>REINDEX DATABASE</>
       to properly revalidate constraints and mark invalidated indexes as
       valid (Noah Misch)
