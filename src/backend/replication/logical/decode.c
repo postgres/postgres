@@ -586,17 +586,17 @@ DecodeInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 
 	change = ReorderBufferGetChange(ctx->reorder);
 	change->action = REORDER_BUFFER_CHANGE_INSERT;
-	memcpy(&change->tp.relnode, &xlrec->target.node, sizeof(RelFileNode));
+	memcpy(&change->data.tp.relnode, &xlrec->target.node, sizeof(RelFileNode));
 
 	if (xlrec->flags & XLOG_HEAP_CONTAINS_NEW_TUPLE)
 	{
 		Assert(r->xl_len > (SizeOfHeapInsert + SizeOfHeapHeader));
 
-		change->tp.newtuple = ReorderBufferGetTupleBuf(ctx->reorder);
+		change->data.tp.newtuple = ReorderBufferGetTupleBuf(ctx->reorder);
 
 		DecodeXLogTuple((char *) xlrec + SizeOfHeapInsert,
 						r->xl_len - SizeOfHeapInsert,
-						change->tp.newtuple);
+						change->data.tp.newtuple);
 	}
 
 	ReorderBufferQueueChange(ctx->reorder, r->xl_xid, buf->origptr, change);
@@ -626,7 +626,7 @@ DecodeUpdate(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 
 	change = ReorderBufferGetChange(ctx->reorder);
 	change->action = REORDER_BUFFER_CHANGE_UPDATE;
-	memcpy(&change->tp.relnode, &xlrec->target.node, sizeof(RelFileNode));
+	memcpy(&change->data.tp.relnode, &xlrec->target.node, sizeof(RelFileNode));
 
 	data = (char *) &xlhdr->header;
 
@@ -634,11 +634,11 @@ DecodeUpdate(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	{
 		Assert(r->xl_len > (SizeOfHeapUpdate + SizeOfHeapHeaderLen));
 
-		change->tp.newtuple = ReorderBufferGetTupleBuf(ctx->reorder);
+		change->data.tp.newtuple = ReorderBufferGetTupleBuf(ctx->reorder);
 
 		DecodeXLogTuple(data,
 						xlhdr->t_len + SizeOfHeapHeader,
-						change->tp.newtuple);
+						change->data.tp.newtuple);
 		/* skip over the rest of the tuple header */
 		data += SizeOfHeapHeader;
 		/* skip over the tuple data */
@@ -648,10 +648,10 @@ DecodeUpdate(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	if (xlrec->flags & XLOG_HEAP_CONTAINS_OLD)
 	{
 		xlhdr = (xl_heap_header_len *) data;
-		change->tp.oldtuple = ReorderBufferGetTupleBuf(ctx->reorder);
+		change->data.tp.oldtuple = ReorderBufferGetTupleBuf(ctx->reorder);
 		DecodeXLogTuple((char *) &xlhdr->header,
 						xlhdr->t_len + SizeOfHeapHeader,
-						change->tp.oldtuple);
+						change->data.tp.oldtuple);
 		data = (char *) &xlhdr->header;
 		data += SizeOfHeapHeader;
 		data += xlhdr->t_len;
@@ -681,18 +681,18 @@ DecodeDelete(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	change = ReorderBufferGetChange(ctx->reorder);
 	change->action = REORDER_BUFFER_CHANGE_DELETE;
 
-	memcpy(&change->tp.relnode, &xlrec->target.node, sizeof(RelFileNode));
+	memcpy(&change->data.tp.relnode, &xlrec->target.node, sizeof(RelFileNode));
 
 	/* old primary key stored */
 	if (xlrec->flags & XLOG_HEAP_CONTAINS_OLD)
 	{
 		Assert(r->xl_len > (SizeOfHeapDelete + SizeOfHeapHeader));
 
-		change->tp.oldtuple = ReorderBufferGetTupleBuf(ctx->reorder);
+		change->data.tp.oldtuple = ReorderBufferGetTupleBuf(ctx->reorder);
 
 		DecodeXLogTuple((char *) xlrec + SizeOfHeapDelete,
 						r->xl_len - SizeOfHeapDelete,
-						change->tp.oldtuple);
+						change->data.tp.oldtuple);
 	}
 	ReorderBufferQueueChange(ctx->reorder, r->xl_xid, buf->origptr, change);
 }
@@ -735,7 +735,7 @@ DecodeMultiInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 
 		change = ReorderBufferGetChange(ctx->reorder);
 		change->action = REORDER_BUFFER_CHANGE_INSERT;
-		memcpy(&change->tp.relnode, &xlrec->node, sizeof(RelFileNode));
+		memcpy(&change->data.tp.relnode, &xlrec->node, sizeof(RelFileNode));
 
 		/*
 		 * CONTAINS_NEW_TUPLE will always be set currently as multi_insert
@@ -746,9 +746,9 @@ DecodeMultiInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 		 */
 		if (xlrec->flags & XLOG_HEAP_CONTAINS_NEW_TUPLE)
 		{
-			change->tp.newtuple = ReorderBufferGetTupleBuf(ctx->reorder);
+			change->data.tp.newtuple = ReorderBufferGetTupleBuf(ctx->reorder);
 
-			tuple = change->tp.newtuple;
+			tuple = change->data.tp.newtuple;
 
 			/* not a disk based tuple */
 			ItemPointerSetInvalid(&tuple->tuple.t_self);

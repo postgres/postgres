@@ -32,12 +32,22 @@ typedef struct ReorderBufferTupleBuf
 	char		data[MaxHeapTupleSize];
 } ReorderBufferTupleBuf;
 
-/* types of the change passed to a 'change' callback */
+/*
+ * Types of the change passed to a 'change' callback.
+ *
+ * For efficiency and simplicity reasons we want to keep Snapshots, CommandIds
+ * and ComboCids in the same list with the user visible INSERT/UPDATE/DELETE
+ * changes. Users of the decoding facilities will never see changes with
+ * *_INTERNAL_* actions.
+ */
 enum ReorderBufferChangeType
 {
 	REORDER_BUFFER_CHANGE_INSERT,
 	REORDER_BUFFER_CHANGE_UPDATE,
-	REORDER_BUFFER_CHANGE_DELETE
+	REORDER_BUFFER_CHANGE_DELETE,
+	REORDER_BUFFER_CHANGE_INTERNAL_SNAPSHOT,
+	REORDER_BUFFER_CHANGE_INTERNAL_COMMAND_ID,
+	REORDER_BUFFER_CHANGE_INTERNAL_TUPLECID
 };
 
 /*
@@ -51,13 +61,8 @@ typedef struct ReorderBufferChange
 {
 	XLogRecPtr	lsn;
 
-	/* type of change */
-	union
-	{
-		enum ReorderBufferChangeType action;
-		/* do not leak internal enum values to the outside */
-		int			action_internal;
-	};
+	/* The type of change. */
+	enum ReorderBufferChangeType action;
 
 	/*
 	 * Context data for the change, which part of the union is valid depends
@@ -65,7 +70,7 @@ typedef struct ReorderBufferChange
 	 */
 	union
 	{
-		/* old, new tuples when action == *_INSERT|UPDATE|DELETE */
+		/* Old, new tuples when action == *_INSERT|UPDATE|DELETE */
 		struct
 		{
 			/* relation that has been changed */
@@ -76,13 +81,19 @@ typedef struct ReorderBufferChange
 			ReorderBufferTupleBuf *newtuple;
 		} tp;
 
-		/* new snapshot */
+		/* New snapshot, set when action == *_INTERNAL_SNAPSHOT */
 		Snapshot	snapshot;
 
-		/* new command id for existing snapshot in a catalog changing tx */
+		/*
+		 * New command id for existing snapshot in a catalog changing tx. Set
+		 * when action == *_INTERNAL_COMMAND_ID.
+		 */
 		CommandId	command_id;
 
-		/* new cid mapping for catalog changing transaction */
+		/*
+		 * New cid mapping for catalog changing transaction, set when action
+		 * == *_INTERNAL_TUPLECID.
+		 */
 		struct
 		{
 			RelFileNode node;
@@ -91,7 +102,7 @@ typedef struct ReorderBufferChange
 			CommandId	cmax;
 			CommandId	combocid;
 		}			tuplecid;
-	};
+	} data;
 
 	/*
 	 * While in use this is how a change is linked into a transactions,
