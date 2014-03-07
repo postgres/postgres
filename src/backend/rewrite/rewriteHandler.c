@@ -36,7 +36,13 @@ typedef struct rewrite_event
 	CmdType		event;			/* type of rule being fired */
 } rewrite_event;
 
-static bool acquireLocksOnSubLinks(Node *node, void *context);
+typedef struct acquireLocksOnSubLinks_context
+{
+	bool		for_execute;	/* AcquireRewriteLocks' forExecute param */
+} acquireLocksOnSubLinks_context;
+
+static bool acquireLocksOnSubLinks(Node *node,
+					   acquireLocksOnSubLinks_context *context);
 static Query *rewriteRuleAction(Query *parsetree,
 				  Query *rule_action,
 				  Node *rule_qual,
@@ -66,9 +72,19 @@ static Query *fireRIRrules(Query *parsetree, List *activeRIRs,
  *	  These locks will ensure that the relation schemas don't change under us
  *	  while we are rewriting and planning the query.
  *
- * forUpdatePushedDown indicates that a pushed-down FOR UPDATE/SHARE applies
- * to the current subquery, requiring all rels to be opened with RowShareLock.
- * This should always be false at the start of the recursion.
+ * forExecute indicates that the query is about to be executed.
+ * If so, we'll acquire RowExclusiveLock on the query's resultRelation,
+ * RowShareLock on any relation accessed FOR UPDATE/SHARE, and
+ * AccessShareLock on all other relations mentioned.
+ *
+ * If forExecute is false, AccessShareLock is acquired on all relations.
+ * This case is suitable for ruleutils.c, for example, where we only need
+ * schema stability and we don't intend to actually modify any relations.
+ *
+ * forUpdatePushedDown indicates that a pushed-down FOR UPDATE/SHARE
+ * applies to the current subquery, requiring all rels to be opened with at
+ * least RowShareLock.  This should always be false at the top of the
+ * recursion.  This flag is ignored if forExecute is false.
  *
  * A secondary purpose of this routine is to fix up JOIN RTE references to
  * dropped columns (see details below).  Because the RTEs are modified in
@@ -96,10 +112,15 @@ static Query *fireRIRrules(Query *parsetree, List *activeRIRs,
  * construction of a nested join was O(N^2) in the nesting depth.)
  */
 void
-AcquireRewriteLocks(Query *parsetree, bool forUpdatePushedDown)
+AcquireRewriteLocks(Query *parsetree,
+					bool forExecute,
+					bool forUpdatePushedDown)
 {
 	ListCell   *l;
 	int			rt_index;
+	acquireLocksOnSubLinks_context context;
+
+	context.for_execute = forExecute;
 
 	/*
 	 * First, process RTEs of the current query level.
@@ -125,14 +146,12 @@ AcquireRewriteLocks(Query *parsetree, bool forUpdatePushedDown)
 				 * release it until end of transaction. This protects the
 				 * rewriter and planner against schema changes mid-query.
 				 *
-				 * If the relation is the query's result relation, then we
-				 * need RowExclusiveLock.  Otherwise, check to see if the
-				 * relation is accessed FOR UPDATE/SHARE or not.  We can't
-				 * just grab AccessShareLock because then the executor would
-				 * be trying to upgrade the lock, leading to possible
-				 * deadlocks.
+				 * Assuming forExecute is true, this logic must match what the
+				 * executor will do, else we risk lock-upgrade deadlocks.
 				 */
-				if (rt_index == parsetree->resultRelation)
+				if (!forExecute)
+					lockmode = AccessShareLock;
+				else if (rt_index == parsetree->resultRelation)
 					lockmode = RowExclusiveLock;
 				else if (forUpdatePushedDown ||
 						 get_parse_rowmark(parsetree, rt_index) != NULL)
@@ -213,6 +232,7 @@ AcquireRewriteLocks(Query *parsetree, bool forUpdatePushedDown)
 				 * recurse to process the represented subquery.
 				 */
 				AcquireRewriteLocks(rte->subquery,
+									forExecute,
 									(forUpdatePushedDown ||
 							get_parse_rowmark(parsetree, rt_index) != NULL));
 				break;
@@ -228,7 +248,7 @@ AcquireRewriteLocks(Query *parsetree, bool forUpdatePushedDown)
 	{
 		CommonTableExpr *cte = (CommonTableExpr *) lfirst(l);
 
-		AcquireRewriteLocks((Query *) cte->ctequery, false);
+		AcquireRewriteLocks((Query *) cte->ctequery, forExecute, false);
 	}
 
 	/*
@@ -236,7 +256,7 @@ AcquireRewriteLocks(Query *parsetree, bool forUpdatePushedDown)
 	 * the rtable and cteList.
 	 */
 	if (parsetree->hasSubLinks)
-		query_tree_walker(parsetree, acquireLocksOnSubLinks, NULL,
+		query_tree_walker(parsetree, acquireLocksOnSubLinks, &context,
 						  QTW_IGNORE_RC_SUBQUERIES);
 }
 
@@ -244,7 +264,7 @@ AcquireRewriteLocks(Query *parsetree, bool forUpdatePushedDown)
  * Walker to find sublink subqueries for AcquireRewriteLocks
  */
 static bool
-acquireLocksOnSubLinks(Node *node, void *context)
+acquireLocksOnSubLinks(Node *node, acquireLocksOnSubLinks_context *context)
 {
 	if (node == NULL)
 		return false;
@@ -253,7 +273,9 @@ acquireLocksOnSubLinks(Node *node, void *context)
 		SubLink    *sub = (SubLink *) node;
 
 		/* Do what we came for */
-		AcquireRewriteLocks((Query *) sub->subselect, false);
+		AcquireRewriteLocks((Query *) sub->subselect,
+							context->for_execute,
+							false);
 		/* Fall through to process lefthand args of SubLink */
 	}
 
@@ -295,6 +317,9 @@ rewriteRuleAction(Query *parsetree,
 	int			rt_length;
 	Query	   *sub_action;
 	Query	  **sub_action_ptr;
+	acquireLocksOnSubLinks_context context;
+
+	context.for_execute = true;
 
 	/*
 	 * Make modifiable copies of rule action and qual (what we're passed are
@@ -306,8 +331,8 @@ rewriteRuleAction(Query *parsetree,
 	/*
 	 * Acquire necessary locks and fix any deleted JOIN RTE entries.
 	 */
-	AcquireRewriteLocks(rule_action, false);
-	(void) acquireLocksOnSubLinks(rule_qual, NULL);
+	AcquireRewriteLocks(rule_action, true, false);
+	(void) acquireLocksOnSubLinks(rule_qual, &context);
 
 	current_varno = rt_index;
 	rt_length = list_length(parsetree->rtable);
@@ -1170,7 +1195,7 @@ ApplyRetrieveRule(Query *parsetree,
 	 */
 	rule_action = copyObject(linitial(rule->actions));
 
-	AcquireRewriteLocks(rule_action, forUpdatePushedDown);
+	AcquireRewriteLocks(rule_action, true, forUpdatePushedDown);
 
 	/*
 	 * Recursively expand any view references inside the view.
@@ -1479,6 +1504,9 @@ CopyAndAddInvertedQual(Query *parsetree,
 {
 	/* Don't scribble on the passed qual (it's in the relcache!) */
 	Node	   *new_qual = (Node *) copyObject(rule_qual);
+	acquireLocksOnSubLinks_context context;
+
+	context.for_execute = true;
 
 	/*
 	 * In case there are subqueries in the qual, acquire necessary locks and
@@ -1486,7 +1514,7 @@ CopyAndAddInvertedQual(Query *parsetree,
 	 * rewriteRuleAction, but not entirely ... consider restructuring so that
 	 * we only need to process the qual this way once.)
 	 */
-	(void) acquireLocksOnSubLinks(new_qual, NULL);
+	(void) acquireLocksOnSubLinks(new_qual, &context);
 
 	/* Fix references to OLD */
 	ChangeVarNodes(new_qual, PRS2_OLD_VARNO, rt_index, 0);
