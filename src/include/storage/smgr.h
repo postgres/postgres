@@ -73,6 +73,7 @@ extern void smgrinit(void);
 extern SMgrRelation smgropen(RelFileNode rnode);
 extern bool smgrexists(SMgrRelation reln, ForkNumber forknum);
 extern void smgrsetowner(SMgrRelation *owner, SMgrRelation reln);
+extern void smgrclearowner(SMgrRelation *owner, SMgrRelation reln);
 extern void smgrclose(SMgrRelation reln);
 extern void smgrcloseall(void);
 extern void smgrclosenode(RelFileNode rnode);
