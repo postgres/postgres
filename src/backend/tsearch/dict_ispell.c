@@ -126,20 +126,19 @@ dispell_lexize(PG_FUNCTION_ARGS)
 	if (res == NULL)
 		PG_RETURN_POINTER(NULL);
 
-	ptr = cptr = res;
-	while (ptr->lexeme)
+	cptr = res;
+	for (ptr = cptr; ptr->lexeme; ptr++)
 	{
 		if (searchstoplist(&(d->stoplist), ptr->lexeme))
 		{
 			pfree(ptr->lexeme);
 			ptr->lexeme = NULL;
-			ptr++;
 		}
 		else
 		{
-			memcpy(cptr, ptr, sizeof(TSLexeme));
+			if (cptr != ptr)
+				memcpy(cptr, ptr, sizeof(TSLexeme));
 			cptr++;
-			ptr++;
 		}
 	}
 	cptr->lexeme = NULL;
