@@ -684,8 +684,9 @@ include 'filename'
       </indexterm>
       <listitem>
        <para>
-        Specifies the number of seconds before sending a keepalive packet on
-        an otherwise idle connection.  A value of 0 uses the system default.
+        Specifies the number of seconds of inactivity after which TCP
+        should send a keepalive message to the client.  A value of 0 uses
+        the system default.
         This parameter is supported only on systems that support the
         <symbol>TCP_KEEPIDLE</> or <symbol>TCP_KEEPALIVE</> symbols, and on
         Windows; on other systems, it must be zero.
@@ -708,8 +709,9 @@ include 'filename'
       </indexterm>
       <listitem>
        <para>
-        Specifies the number of seconds between sending keepalives on an
-        otherwise idle connection.  A value of 0 uses the system default.
+        Specifies the number of seconds after which a TCP keepalive message
+        that is not acknowledged by the client should be retransmitted.
+        A value of 0 uses the system default.
         This parameter is supported only on systems that support the
         <symbol>TCP_KEEPINTVL</> symbol, and on Windows; on other systems, it
         must be zero.
@@ -732,8 +734,9 @@ include 'filename'
       </indexterm>
       <listitem>
        <para>
-        Specifies the number of keepalive packets to send on an otherwise idle
-        connection.  A value of 0 uses the system default.  This parameter is
+        Specifies the number of TCP keepalives that can be lost before
+        the server's connection to the client is considered dead.  A value of 0
+        uses the system default.  This parameter is
         supported only on systems that support the <symbol>TCP_KEEPCNT</>
         symbol; on other systems, it must be zero.
         In sessions connected via a Unix-domain socket, this parameter is
