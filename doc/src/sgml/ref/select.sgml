@@ -214,7 +214,7 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
     subqueries that can be referenced by name in the primary query.
     The subqueries effectively act as temporary tables or views
     for the duration of the primary query.
-    Each subquery can be a <command>SELECT</command>, <command>VALUES</command>,
+    Each subquery can be a <command>SELECT</command>, <command>TABLE</>, <command>VALUES</command>,
     <command>INSERT</command>, <command>UPDATE</command> or
     <command>DELETE</command> statement.
     When writing a data-modifying statement (<command>INSERT</command>,
@@ -1489,12 +1489,17 @@ SELECT * FROM (SELECT * FROM mytable FOR UPDATE) ss ORDER BY column1;
 <programlisting>
 TABLE <replaceable class="parameter">name</replaceable>
 </programlisting>
-    is completely equivalent to
+    is equivalent to
 <programlisting>
 SELECT * FROM <replaceable class="parameter">name</replaceable>
 </programlisting>
     It can be used as a top-level command or as a space-saving syntax
-    variant in parts of complex queries.
+    variant in parts of complex queries. Only the <literal>WITH</>,
+    <literal>UNION</>, <literal>INTERSECT</>, <literal>EXCEPT</>,
+    <literal>ORDER BY</>, <literal>LIMIT</>, <literal>OFFSET</>,
+    <literal>FETCH</> and locking clauses can be used with <command>TABLE</>;
+    the <literal>WHERE</> clause and any form of aggregation cannot
+    be used.
    </para>
   </refsect2>
  </refsect1>
