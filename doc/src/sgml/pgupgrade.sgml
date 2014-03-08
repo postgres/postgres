@@ -460,7 +460,8 @@ psql --username postgres --file script.sql postgres
      cluster's data directories by running the script mentioned when
      <command>pg_upgrade</command> completes. You can also delete the
      old installation directories
-     (e.g. <filename>bin</>, <filename>share</>).
+     (e.g. <filename>bin</>, <filename>share</>).  This will not work
+     if you have tablespaces inside the old data directory.
     </para>
    </step>
 
