@@ -1497,8 +1497,9 @@ SELECT * FROM <replaceable class="parameter">name</replaceable>
     variant in parts of complex queries. Only the <literal>WITH</>,
     <literal>UNION</>, <literal>INTERSECT</>, <literal>EXCEPT</>,
     <literal>ORDER BY</>, <literal>LIMIT</>, <literal>OFFSET</>,
-    <literal>FETCH</> and locking clauses can be used with <command>TABLE</>;
-    the <literal>WHERE</> clause and any form of aggregation cannot
+    <literal>FETCH</> and <literal>FOR</> locking clauses can be used
+    with <command>TABLE</>; the <literal>WHERE</> clause and any form of
+    aggregation cannot
     be used.
    </para>
   </refsect2>
