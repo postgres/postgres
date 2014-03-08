@@ -408,8 +408,8 @@ GetNewOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolumn)
 
 /*
  * GetNewRelFileNode
- *		Generate a new relfilenode number that is unique within the given
- *		tablespace.
+ *		Generate a new relfilenode number that is unique within the
+ *		database of the given tablespace.
  *
  * If the relfilenode will also be used as the relation's OID, pass the
  * opened pg_class catalog, and this routine will guarantee that the result
