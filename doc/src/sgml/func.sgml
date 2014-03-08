@@ -6944,7 +6944,7 @@ SELECT (DATE '2001-10-30', DATE '2001-10-30') OVERLAPS
    time zone that recognizes DST), this means <literal>interval '1 day'</literal>
    does not necessarily equal <literal>interval '24 hours'</literal>.
    For example, with the session time zone set to <literal>CST7CDT</literal>,
-   <literal>timestamp with time zone '2005-04-02 12:00-07' + interval '1 day' </literal>
+   <literal>timestamp with time zone '2005-04-02 12:00-07' + interval '1 day'</literal>
    will produce <literal>timestamp with time zone '2005-04-03 12:00-06'</literal>,
    while adding <literal>interval '24 hours'</literal> to the same initial
    <type>timestamp with time zone</type> produces
