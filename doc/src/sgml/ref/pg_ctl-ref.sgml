@@ -208,7 +208,8 @@ PostgreSQL documentation
    the specified data directory. If it is, the <acronym>PID</acronym>
    and the command line options that were used to invoke it are
    displayed.  If the server is not running, the process returns an
-   exit status of 3.
+   exit status of 3.  If an accessible data directory is not specified,
+   the process returns an exit status of 4.
   </para>
 
   <para>
