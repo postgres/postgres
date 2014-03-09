@@ -13773,7 +13773,7 @@ dumpIndex(Archive *fout, IndxInfo *indxinfo)
 							  fmtId(indxinfo->dobj.name));
 		}
 
-		/* If the index is clustered, we need to record that. */
+		/* If the index defines identity, we need to record that. */
 		if (indxinfo->indisreplident)
 		{
 			appendPQExpBuffer(q, "\nALTER TABLE ONLY %s REPLICA IDENTITY USING",
