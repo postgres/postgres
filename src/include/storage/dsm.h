@@ -43,5 +43,6 @@ extern void on_dsm_detach(dsm_segment *seg,
 			  on_dsm_detach_callback function, Datum arg);
 extern void cancel_on_dsm_detach(dsm_segment *seg,
 			  on_dsm_detach_callback function, Datum arg);
+extern void reset_on_dsm_detach(void);
 
 #endif   /* DSM_H */

@@ -400,4 +400,5 @@ on_exit_reset(void)
 	before_shmem_exit_index = 0;
 	on_shmem_exit_index = 0;
 	on_proc_exit_index = 0;
+	reset_on_dsm_detach();
 }

@@ -980,6 +980,37 @@ cancel_on_dsm_detach(dsm_segment *seg, on_dsm_detach_callback function,
 }
 
 /*
+ * Discard all registered on-detach callbacks without executing them.
+ */
+void
+reset_on_dsm_detach(void)
+{
+	dlist_iter		iter;
+
+	dlist_foreach(iter, &dsm_segment_list)
+	{
+		dsm_segment *seg = dlist_container(dsm_segment, node, iter.cur);
+
+		/* Throw away explicit on-detach actions one by one. */
+		while (!slist_is_empty(&seg->on_detach))
+		{
+			slist_node *node;
+			dsm_segment_detach_callback *cb;
+
+			node = slist_pop_head_node(&seg->on_detach);
+			cb = slist_container(dsm_segment_detach_callback, node, node);
+			pfree(cb);
+		}
+
+		/*
+		 * Decrementing the reference count is a sort of implicit on-detach
+		 * action; make sure we don't do that, either.
+		 */
+		seg->control_slot = INVALID_CONTROL_SLOT;
+	}
+}
+
+/*
  * Create a segment descriptor.
  */
 static dsm_segment *
