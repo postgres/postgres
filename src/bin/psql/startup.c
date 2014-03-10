@@ -120,6 +120,7 @@ main(int argc, char *argv[])
 	pset.encoding = PQenv2encoding();
 	pset.queryFout = stdout;
 	pset.queryFoutPipe = false;
+	pset.copyStream = NULL;
 	pset.cur_cmd_source = stdin;
 	pset.cur_cmd_interactive = false;
 

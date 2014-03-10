@@ -244,8 +244,6 @@ do_copy(const char *args)
 {
 	PQExpBufferData query;
 	FILE	   *copystream;
-	FILE	   *save_file;
-	FILE	  **override_file;
 	struct copy_options *options;
 	bool		success;
 	struct stat st;
@@ -262,8 +260,6 @@ do_copy(const char *args)
 
 	if (options->from)
 	{
-		override_file = &pset.cur_cmd_source;
-
 		if (options->file)
 			copystream = fopen(options->file, PG_BINARY_R);
 		else if (!options->psql_inout)
@@ -273,8 +269,6 @@ do_copy(const char *args)
 	}
 	else
 	{
-		override_file = &pset.queryFout;
-
 		if (options->file)
 			copystream = fopen(options->file, PG_BINARY_W);
 		else if (!options->psql_inout)
@@ -313,11 +307,10 @@ do_copy(const char *args)
 	if (options->after_tofrom)
 		appendPQExpBufferStr(&query, options->after_tofrom);
 
-	/* Run it like a user command, interposing the data source or sink. */
-	save_file = *override_file;
-	*override_file = copystream;
+	/* run it like a user command, but with copystream as data source/sink */
+	pset.copyStream = copystream;
 	success = SendQuery(query.data);
-	*override_file = save_file;
+	pset.copyStream = NULL;
 	termPQExpBuffer(&query);
 
 	if (options->file != NULL)
