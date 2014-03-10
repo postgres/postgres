@@ -1909,6 +1909,7 @@ WalRcvData
 WalRcvState
 WalSnd
 WalSndCtlData
+WalSndSendDataCallback
 WalSndState
 WholeRowVarExprState
 WindowAgg

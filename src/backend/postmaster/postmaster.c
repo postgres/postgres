@@ -1884,10 +1884,23 @@ retry1:
 				port->cmdline_options = pstrdup(valptr);
 			else if (strcmp(nameptr, "replication") == 0)
 			{
-				if (!parse_bool(valptr, &am_walsender))
+				/*
+				 * Due to backward compatibility concerns the replication
+				 * parameter is a hybrid beast which allows the value to be
+				 * either boolean or the string 'database'. The latter
+				 * connects to a specific database which is e.g. required for
+				 * logical decoding while.
+				 */
+				if (strcmp(valptr, "database") == 0)
+				{
+					am_walsender = true;
+					am_db_walsender = true;
+				}
+				else if (!parse_bool(valptr, &am_walsender))
 					ereport(FATAL,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("invalid value for boolean option \"replication\"")));
+							 errmsg("invalid value for parameter \"replication\""),
+							 errhint("Valid values are: false, 0, true, 1, database.")));
 			}
 			else
 			{
@@ -1968,8 +1981,15 @@ retry1:
 	if (strlen(port->user_name) >= NAMEDATALEN)
 		port->user_name[NAMEDATALEN - 1] = '\0';
 
-	/* Walsender is not related to a particular database */
-	if (am_walsender)
+	/*
+	 * Normal walsender backends, e.g. for streaming replication, are not
+	 * connected to a particular database. But walsenders used for logical
+	 * replication need to connect to a specific database. We allow streaming
+	 * replication commands to be issued even if connected to a database as it
+	 * can make sense to first make a basebackup and then stream changes
+	 * starting from that.
+	 */
+	if (am_walsender && !am_db_walsender)
 		port->database_name[0] = '\0';
 
 	/*

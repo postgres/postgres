@@ -1302,10 +1302,13 @@
 
 <para>
 To initiate streaming replication, the frontend sends the
-<literal>replication</> parameter in the startup message. This tells the
-backend to go into walsender mode, wherein a small set of replication commands
-can be issued instead of SQL statements. Only the simple query protocol can be
-used in walsender mode.
+<literal>replication</> parameter in the startup message. A boolean value
+of <literal>true</> tells the backend to go into walsender mode, wherein a
+small set of replication commands can be issued instead of SQL statements. Only
+the simple query protocol can be used in walsender mode.
+Passing <literal>database</> as the value instructs walsender to connect to
+the database specified in the <literal>dbname</> parameter, which will allow
+the connection to be used for logical replication from that database.
 
 The commands accepted in walsender mode are:
 
@@ -1315,7 +1318,7 @@ The commands accepted in walsender mode are:
     <listitem>
      <para>
       Requests the server to identify itself. Server replies with a result
-      set of a single row, containing three fields:
+      set of a single row, containing four fields:
      </para>
 
      <para>
@@ -1353,6 +1356,17 @@ The commands accepted in walsender mode are:
       <para>
        Current xlog write location. Useful to get a known location in the
        transaction log where streaming can start.
+      </para>
+      </listitem>
+      </varlistentry>
+
+      <varlistentry>
+      <term>
+       dbname
+      </term>
+      <listitem>
+      <para>
+       Database connected to or NULL.
       </para>
       </listitem>
       </varlistentry>

@@ -73,13 +73,17 @@ Node *replication_parse_result;
 %token K_WAL
 %token K_TIMELINE
 %token K_PHYSICAL
+%token K_LOGICAL
 %token K_SLOT
 
 %type <node>	command
-%type <node>	base_backup start_replication create_replication_slot drop_replication_slot identify_system timeline_history
+%type <node>	base_backup start_replication start_logical_replication create_replication_slot drop_replication_slot identify_system timeline_history
 %type <list>	base_backup_opt_list
 %type <defelt>	base_backup_opt
 %type <uintval>	opt_timeline
+%type <list>	plugin_options plugin_opt_list
+%type <defelt>	plugin_opt_elem
+%type <node>	plugin_opt_arg
 %type <str>		opt_slot
 
 %%
@@ -98,6 +102,7 @@ command:
 			identify_system
 			| base_backup
 			| start_replication
+			| start_logical_replication
 			| create_replication_slot
 			| drop_replication_slot
 			| timeline_history
@@ -165,8 +170,8 @@ base_backup_opt:
 				}
 			;
 
-/* CREATE_REPLICATION_SLOT SLOT slot PHYSICAL */
 create_replication_slot:
+			/* CREATE_REPLICATION_SLOT slot PHYSICAL */
 			K_CREATE_REPLICATION_SLOT IDENT K_PHYSICAL
 				{
 					CreateReplicationSlotCmd *cmd;
@@ -175,9 +180,19 @@ create_replication_slot:
 					cmd->slotname = $2;
 					$$ = (Node *) cmd;
 				}
+			/* CREATE_REPLICATION_SLOT slot LOGICAL plugin */
+			| K_CREATE_REPLICATION_SLOT IDENT K_LOGICAL IDENT
+				{
+					CreateReplicationSlotCmd *cmd;
+					cmd = makeNode(CreateReplicationSlotCmd);
+					cmd->kind = REPLICATION_KIND_LOGICAL;
+					cmd->slotname = $2;
+					cmd->plugin = $4;
+					$$ = (Node *) cmd;
+				}
 			;
 
-/* DROP_REPLICATION_SLOT SLOT slot */
+/* DROP_REPLICATION_SLOT slot */
 drop_replication_slot:
 			K_DROP_REPLICATION_SLOT IDENT
 				{
@@ -205,19 +220,19 @@ start_replication:
 				}
 			;
 
-opt_timeline:
-			K_TIMELINE UCONST
+/* START_REPLICATION SLOT slot LOGICAL %X/%X options */
+start_logical_replication:
+			K_START_REPLICATION K_SLOT IDENT K_LOGICAL RECPTR plugin_options
 				{
-					if ($2 <= 0)
-						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
-								 (errmsg("invalid timeline %u", $2))));
-					$$ = $2;
+					StartReplicationCmd *cmd;
+					cmd = makeNode(StartReplicationCmd);
+					cmd->kind = REPLICATION_KIND_LOGICAL;;
+					cmd->slotname = $3;
+					cmd->startpoint = $5;
+					cmd->options = $6;
+					$$ = (Node *) cmd;
 				}
-			| /* EMPTY */
-				{ $$ = 0; }
 			;
-
 /*
  * TIMELINE_HISTORY %d
  */
@@ -250,6 +265,46 @@ opt_slot:
 				{ $$ = NULL; }
 			;
 
+opt_timeline:
+			K_TIMELINE UCONST
+				{
+					if ($2 <= 0)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 (errmsg("invalid timeline %u", $2))));
+					$$ = $2;
+				}
+				| /* EMPTY */			{ $$ = 0; }
+			;
+
+
+plugin_options:
+			'(' plugin_opt_list ')'			{ $$ = $2; }
+			| /* EMPTY */					{ $$ = NIL; }
+		;
+
+plugin_opt_list:
+			plugin_opt_elem
+				{
+					$$ = list_make1($1);
+				}
+			| plugin_opt_list ',' plugin_opt_elem
+				{
+					$$ = lappend($1, $3);
+				}
+		;
+
+plugin_opt_elem:
+			IDENT plugin_opt_arg
+				{
+					$$ = makeDefElem($1, $2);
+				}
+		;
+
+plugin_opt_arg:
+			SCONST							{ $$ = (Node *) makeString($1); }
+			| /* EMPTY */					{ $$ = NULL; }
+		;
 %%
 
 #include "repl_scanner.c"

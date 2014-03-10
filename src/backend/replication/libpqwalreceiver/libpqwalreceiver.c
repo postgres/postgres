@@ -131,7 +131,7 @@ libpqrcv_identify_system(TimeLineID *primary_tli)
 						"the primary server: %s",
 						PQerrorMessage(streamConn))));
 	}
-	if (PQnfields(res) != 3 || PQntuples(res) != 1)
+	if (PQnfields(res) < 3 || PQntuples(res) != 1)
 	{
 		int			ntuples = PQntuples(res);
 		int			nfields = PQnfields(res);
@@ -139,8 +139,8 @@ libpqrcv_identify_system(TimeLineID *primary_tli)
 		PQclear(res);
 		ereport(ERROR,
 				(errmsg("invalid response from primary server"),
-				 errdetail("Expected 1 tuple with 3 fields, got %d tuples with %d fields.",
-						   ntuples, nfields)));
+				 errdetail("Could not identify system: Got %d rows and %d fields, expected %d rows and %d or more fields.",
+						   ntuples, nfields, 3, 1)));
 	}
 	primary_sysid = PQgetvalue(res, 0, 0);
 	*primary_tli = pg_atoi(PQgetvalue(res, 0, 1), 4, 0);

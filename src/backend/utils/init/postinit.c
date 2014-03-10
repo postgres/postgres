@@ -729,11 +729,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 				(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
 				 errmsg("remaining connection slots are reserved for non-replication superuser connections")));
 
-	/*
-	 * If walsender, we don't want to connect to any particular database. Just
-	 * finish the backend startup by processing any options from the startup
-	 * packet, and we're done.
-	 */
+	/* Check replication permissions needed for walsender processes. */
 	if (am_walsender)
 	{
 		Assert(!bootstrap);
@@ -742,7 +738,16 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 			ereport(FATAL,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must be superuser or replication role to start walsender")));
+	}
 
+	/*
+	 * If this is a plain walsender only supporting physical replication, we
+	 * don't want to connect to any particular database. Just finish the
+	 * backend startup by processing any options from the startup packet, and
+	 * we're done.
+	 */
+	if (am_walsender && !am_db_walsender)
+	{
 		/* process any options passed in the startup packet */
 		if (MyProcPort != NULL)
 			process_startup_options(MyProcPort, am_superuser);
