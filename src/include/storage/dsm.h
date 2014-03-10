@@ -30,6 +30,7 @@ extern void dsm_detach(dsm_segment *seg);
 
 /* Resource management functions. */
 extern void dsm_keep_mapping(dsm_segment *seg);
+extern void dsm_keep_segment(dsm_segment *seg);
 extern dsm_segment *dsm_find_mapping(dsm_handle h);
 
 /* Informational functions. */
