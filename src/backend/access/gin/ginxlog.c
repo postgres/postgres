@@ -502,17 +502,19 @@ ginRedoUpdateMetapage(XLogRecPtr lsn, XLogRecord *record)
 	Page		metapage;
 	Buffer		buffer;
 
+	/*
+	 * Restore the metapage. This is essentially the same as a full-page image,
+	 * so restore the metapage unconditionally without looking at the LSN, to
+	 * avoid torn page hazards.
+	 */
 	metabuffer = XLogReadBuffer(data->node, GIN_METAPAGE_BLKNO, false);
 	if (!BufferIsValid(metabuffer))
 		return;					/* assume index was deleted, nothing to do */
 	metapage = BufferGetPage(metabuffer);
 
-	if (lsn > PageGetLSN(metapage))
-	{
-		memcpy(GinPageGetMeta(metapage), &data->metadata, sizeof(GinMetaPageData));
-		PageSetLSN(metapage, lsn);
-		MarkBufferDirty(metabuffer);
-	}
+	memcpy(GinPageGetMeta(metapage), &data->metadata, sizeof(GinMetaPageData));
+	PageSetLSN(metapage, lsn);
+	MarkBufferDirty(metabuffer);
 
 	if (data->ntuples > 0)
 	{
@@ -662,12 +664,9 @@ ginRedoDeleteListPages(XLogRecPtr lsn, XLogRecord *record)
 		return;					/* assume index was deleted, nothing to do */
 	metapage = BufferGetPage(metabuffer);
 
-	if (lsn > PageGetLSN(metapage))
-	{
-		memcpy(GinPageGetMeta(metapage), &data->metadata, sizeof(GinMetaPageData));
-		PageSetLSN(metapage, lsn);
-		MarkBufferDirty(metabuffer);
-	}
+	memcpy(GinPageGetMeta(metapage), &data->metadata, sizeof(GinMetaPageData));
+	PageSetLSN(metapage, lsn);
+	MarkBufferDirty(metabuffer);
 
 	/*
 	 * In normal operation, shiftList() takes exclusive lock on all the
