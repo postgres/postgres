@@ -218,3 +218,87 @@ ginarrayconsistent(PG_FUNCTION_ARGS)
 
 	PG_RETURN_BOOL(res);
 }
+
+/*
+ * triconsistent support function
+ */
+Datum
+ginarraytriconsistent(PG_FUNCTION_ARGS)
+{
+	GinLogicValue *check = (GinLogicValue *) PG_GETARG_POINTER(0);
+	StrategyNumber strategy = PG_GETARG_UINT16(1);
+
+	/* ArrayType  *query = PG_GETARG_ARRAYTYPE_P(2); */
+	int32		nkeys = PG_GETARG_INT32(3);
+
+	/* Pointer	   *extra_data = (Pointer *) PG_GETARG_POINTER(4); */
+	/* Datum	   *queryKeys = (Datum *) PG_GETARG_POINTER(5); */
+	bool	   *nullFlags = (bool *) PG_GETARG_POINTER(6);
+	GinLogicValue	res;
+	int32		i;
+
+	switch (strategy)
+	{
+		case GinOverlapStrategy:
+			/* must have a match for at least one non-null element */
+			res = GIN_FALSE;
+			for (i = 0; i < nkeys; i++)
+			{
+				if (!nullFlags[i])
+				{
+					if (check[i] == GIN_TRUE)
+					{
+						res = GIN_TRUE;
+						break;
+					}
+					else if (check[i] == GIN_MAYBE && res == GIN_FALSE)
+					{
+						res = GIN_MAYBE;
+					}
+				}
+			}
+			break;
+		case GinContainsStrategy:
+			/* must have all elements in check[] true, and no nulls */
+			res = GIN_TRUE;
+			for (i = 0; i < nkeys; i++)
+			{
+				if (check[i] == GIN_FALSE || nullFlags[i])
+				{
+					res = GIN_FALSE;
+					break;
+				}
+				if (check[i] == GIN_MAYBE)
+				{
+					res = GIN_MAYBE;
+				}
+			}
+			break;
+		case GinContainedStrategy:
+			/* can't do anything else useful here */
+			res = GIN_MAYBE;
+			break;
+		case GinEqualStrategy:
+			/*
+			 * Must have all elements in check[] true; no discrimination
+			 * against nulls here.	This is because array_contain_compare and
+			 * array_eq handle nulls differently ...
+			 */
+			res = GIN_MAYBE;
+			for (i = 0; i < nkeys; i++)
+			{
+				if (check[i] == GIN_FALSE)
+				{
+					res = GIN_FALSE;
+					break;
+				}
+			}
+			break;
+		default:
+			elog(ERROR, "ginarrayconsistent: unknown strategy number: %d",
+				 strategy);
+			res = false;
+	}
+
+	PG_RETURN_GIN_LOGIC_VALUE(res);
+}

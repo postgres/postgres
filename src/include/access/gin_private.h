@@ -348,6 +348,7 @@ typedef struct GinState
 	FmgrInfo	extractValueFn[INDEX_MAX_KEYS];
 	FmgrInfo	extractQueryFn[INDEX_MAX_KEYS];
 	FmgrInfo	consistentFn[INDEX_MAX_KEYS];
+	FmgrInfo	triConsistentFn[INDEX_MAX_KEYS];
 	FmgrInfo	comparePartialFn[INDEX_MAX_KEYS];		/* optional method */
 	/* canPartialMatch[i] is true if comparePartialFn[i] is valid */
 	bool		canPartialMatch[INDEX_MAX_KEYS];
@@ -762,8 +763,9 @@ typedef struct GinScanKeyData
 	/* array of check flags, reported to consistentFn */
 	bool	   *entryRes;
 	bool		(*boolConsistentFn) (GinScanKey key);
-	bool		(*triConsistentFn) (GinScanKey key);
+	GinLogicValue (*triConsistentFn) (GinScanKey key);
 	FmgrInfo   *consistentFmgrInfo;
+	FmgrInfo   *triConsistentFmgrInfo;
 	Oid			collation;
 
 	/* other data needed for calling consistentFn */
@@ -850,17 +852,6 @@ extern void ginNewScanKey(IndexScanDesc scan);
 extern Datum gingetbitmap(PG_FUNCTION_ARGS);
 
 /* ginlogic.c */
-
-enum
-{
-	GIN_FALSE = 0,			/* item is present / matches */
-	GIN_TRUE = 1,			/* item is not present / does not match */
-	GIN_MAYBE = 2			/* don't know if item is present / don't know if
-							 * matches */
-} GinLogicValueEnum;
-
-typedef char GinLogicValue;
-
 extern void ginInitConsistentFunction(GinState *ginstate, GinScanKey key);
 
 /* ginvacuum.c */

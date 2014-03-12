@@ -149,6 +149,7 @@ extern Datum gin_cmp_tslexeme(PG_FUNCTION_ARGS);
 extern Datum gin_cmp_prefix(PG_FUNCTION_ARGS);
 extern Datum gin_extract_tsquery(PG_FUNCTION_ARGS);
 extern Datum gin_tsquery_consistent(PG_FUNCTION_ARGS);
+extern Datum gin_tsquery_triconsistent(PG_FUNCTION_ARGS);
 extern Datum gin_extract_tsvector_2args(PG_FUNCTION_ARGS);
 extern Datum gin_extract_tsquery_5args(PG_FUNCTION_ARGS);
 extern Datum gin_tsquery_consistent_6args(PG_FUNCTION_ARGS);

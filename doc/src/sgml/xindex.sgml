@@ -567,7 +567,10 @@
       </row>
       <row>
        <entry><function>consistent</></entry>
-       <entry>determine whether value matches query condition</entry>
+       <entry>
+        determine whether value matches query condition (boolean variant)
+        (optional if support function 6 is present)
+       </entry>
        <entry>4</entry>
       </row>
       <row>
@@ -579,6 +582,14 @@
         entry, treat the entry as a match, or stop the index scan (optional)
        </entry>
        <entry>5</entry>
+      </row>
+      <row>
+       <entry><function>triConsistent</></entry>
+       <entry>
+        determine whether value matches query condition (ternary variant)
+        (optional if support function 4 is present)
+       </entry>
+       <entry>6</entry>
       </row>
      </tbody>
     </tgroup>

@@ -23,7 +23,8 @@
 #define GIN_EXTRACTQUERY_PROC		   3
 #define GIN_CONSISTENT_PROC			   4
 #define GIN_COMPARE_PARTIAL_PROC	   5
-#define GINNProcs					   5
+#define GIN_TRICONSISTENT_PROC		   6
+#define GINNProcs					   6
 
 /*
  * searchMode settings for extractQueryFn.
@@ -45,6 +46,21 @@ typedef struct GinStatsData
 	int64		nEntries;
 	int32		ginVersion;
 } GinStatsData;
+
+/* ginlogic.c */
+enum
+{
+	GIN_FALSE = 0,			/* item is present / matches */
+	GIN_TRUE = 1,			/* item is not present / does not match */
+	GIN_MAYBE = 2			/* don't know if item is present / don't know if
+							 * matches */
+} GinLogicValueEnum;
+
+typedef char GinLogicValue;
+
+#define DatumGetGinLogicValue(X) ((GinLogicValue)(X))
+#define GinLogicValueGetDatum(X) ((Datum)(X))
+#define PG_RETURN_GIN_LOGIC_VALUE(x) return GinLogicValueGetDatum(x)
 
 /* GUC parameter */
 extern PGDLLIMPORT int GinFuzzySearchLimit;

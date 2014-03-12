@@ -67,9 +67,31 @@ initGinState(GinState *state, Relation index)
 		fmgr_info_copy(&(state->extractQueryFn[i]),
 					   index_getprocinfo(index, i + 1, GIN_EXTRACTQUERY_PROC),
 					   CurrentMemoryContext);
-		fmgr_info_copy(&(state->consistentFn[i]),
-					   index_getprocinfo(index, i + 1, GIN_CONSISTENT_PROC),
-					   CurrentMemoryContext);
+		/*
+		 * Check opclass capability to do tri-state or binary logic consistent
+		 * check.
+		 */
+		if (index_getprocid(index, i + 1, GIN_TRICONSISTENT_PROC) != InvalidOid)
+		{
+			fmgr_info_copy(&(state->triConsistentFn[i]),
+			   index_getprocinfo(index, i + 1, GIN_TRICONSISTENT_PROC),
+						   CurrentMemoryContext);
+		}
+
+		if (index_getprocid(index, i + 1, GIN_CONSISTENT_PROC) != InvalidOid)
+		{
+			fmgr_info_copy(&(state->consistentFn[i]),
+						   index_getprocinfo(index, i + 1, GIN_CONSISTENT_PROC),
+						   CurrentMemoryContext);
+		}
+
+		if (state->consistentFn[i].fn_oid == InvalidOid &&
+			state->triConsistentFn[i].fn_oid == InvalidOid)
+		{
+			elog(ERROR, "missing GIN support function (%d or %d) for attribute %d of index \"%s\"",
+				 GIN_CONSISTENT_PROC, GIN_TRICONSISTENT_PROC,
+				 i + 1, RelationGetRelationName(index));
+		}
 
 		/*
 		 * Check opclass capability to do partial match.

@@ -1297,46 +1297,49 @@ WHERE p1.amprocfamily = p3.oid AND p3.opfmethod = p2.oid AND
 
 -- Detect missing pg_amproc entries: should have as many support functions
 -- as AM expects for each datatype combination supported by the opfamily.
--- btree/GiST/GIN each allow one optional support function, though.
-SELECT p1.amname, p2.opfname, p3.amproclefttype, p3.amprocrighttype
-FROM pg_am AS p1, pg_opfamily AS p2, pg_amproc AS p3
-WHERE p2.opfmethod = p1.oid AND p3.amprocfamily = p2.oid AND
-    (SELECT count(*) FROM pg_amproc AS p4
-     WHERE p4.amprocfamily = p2.oid AND
-           p4.amproclefttype = p3.amproclefttype AND
-           p4.amprocrighttype = p3.amprocrighttype)
-    NOT BETWEEN
-      (CASE WHEN p1.amname IN ('btree', 'gist', 'gin') THEN p1.amsupport - 1
-            ELSE p1.amsupport END)
-      AND p1.amsupport;
- amname | opfname | amproclefttype | amprocrighttype 
---------+---------+----------------+-----------------
+SELECT * FROM (
+  SELECT p1.amname, p2.opfname, p3.amproclefttype, p3.amprocrighttype,
+         array_agg(p3.amprocnum ORDER BY amprocnum) AS procnums
+  FROM pg_am AS p1, pg_opfamily AS p2, pg_amproc AS p3
+  WHERE p2.opfmethod = p1.oid AND p3.amprocfamily = p2.oid
+  GROUP BY p1.amname, p2.opfname, p3.amproclefttype, p3.amprocrighttype
+) AS t
+WHERE NOT (
+  -- btree has one mandatory and one optional support function.
+  -- hash has one support function, which is mandatory.
+  -- GiST has eight support functions, one of which is optional.
+  -- GIN has six support functions. 1-3 are mandatory, 5 is optional, and
+  --   at least one of 4 and 6 must be given.
+  -- SP-GiST has five support functions, all mandatory
+  amname = 'btree' AND procnums @> '{1}' OR
+  amname = 'hash' AND procnums = '{1}' OR
+  amname = 'gist' AND procnums @> '{1, 2, 3, 4, 5, 6, 7}' OR
+  amname = 'gin' AND (procnums @> '{1, 2, 3}' AND (procnums && '{4, 6}')) OR
+  amname = 'spgist' AND procnums = '{1, 2, 3, 4, 5}'
+);
+ amname | opfname | amproclefttype | amprocrighttype | procnums 
+--------+---------+----------------+-----------------+----------
 (0 rows)
 
 -- Also, check if there are any pg_opclass entries that don't seem to have
--- pg_amproc support.  Again, opclasses with an optional support proc have
--- to be checked specially.
-SELECT amname, opcname, count(*)
-FROM pg_am am JOIN pg_opclass op ON opcmethod = am.oid
-     LEFT JOIN pg_amproc p ON amprocfamily = opcfamily AND
-         amproclefttype = amprocrighttype AND amproclefttype = opcintype
-WHERE am.amname <> 'btree' AND am.amname <> 'gist' AND am.amname <> 'gin'
-GROUP BY amname, amsupport, opcname, amprocfamily
-HAVING count(*) != amsupport OR amprocfamily IS NULL;
- amname | opcname | count 
---------+---------+-------
-(0 rows)
-
-SELECT amname, opcname, count(*)
-FROM pg_am am JOIN pg_opclass op ON opcmethod = am.oid
-     LEFT JOIN pg_amproc p ON amprocfamily = opcfamily AND
-         amproclefttype = amprocrighttype AND amproclefttype = opcintype
-WHERE am.amname = 'btree' OR am.amname = 'gist' OR am.amname = 'gin'
-GROUP BY amname, amsupport, opcname, amprocfamily
-HAVING (count(*) != amsupport AND count(*) != amsupport - 1)
-    OR amprocfamily IS NULL;
- amname | opcname | count 
---------+---------+-------
+-- pg_amproc support.
+SELECT * FROM (
+  SELECT amname, opcname, array_agg(amprocnum ORDER BY amprocnum) as procnums
+  FROM pg_am am JOIN pg_opclass op ON opcmethod = am.oid
+       LEFT JOIN pg_amproc p ON amprocfamily = opcfamily AND
+           amproclefttype = amprocrighttype AND amproclefttype = opcintype
+  GROUP BY amname, opcname, amprocfamily
+) AS t
+WHERE NOT (
+  -- same per-AM rules as above
+  amname = 'btree' AND procnums @> '{1}' OR
+  amname = 'hash' AND procnums = '{1}' OR
+  amname = 'gist' AND procnums @> '{1, 2, 3, 4, 5, 6, 7}' OR
+  amname = 'gin' AND (procnums @> '{1, 2, 3}' AND (procnums && '{4, 6}')) OR
+  amname = 'spgist' AND procnums = '{1, 2, 3, 4, 5}'
+);
+ amname | opcname | procnums 
+--------+---------+----------
 (0 rows)
 
 -- Unfortunately, we can't check the amproc link very well because the

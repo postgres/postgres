@@ -61,7 +61,7 @@ trueTriConsistentFn(GinScanKey key)
  * A helper function for calling a regular, binary logic, consistent function.
  */
 static bool
-normalBoolConsistentFn(GinScanKey key)
+directBoolConsistentFn(GinScanKey key)
 {
 	/*
 	 * Initialize recheckCurItem in case the consistentFn doesn't know it
@@ -79,6 +79,53 @@ normalBoolConsistentFn(GinScanKey key)
 									   PointerGetDatum(&key->recheckCurItem),
 										  PointerGetDatum(key->queryValues),
 									 PointerGetDatum(key->queryCategories)));
+}
+
+/*
+ * A helper function for calling a native ternary logic consistent function.
+ */
+static GinLogicValue
+directTriConsistentFn(GinScanKey key)
+{
+	return DatumGetGinLogicValue(FunctionCall7Coll(key->triConsistentFmgrInfo,
+										  key->collation,
+										  PointerGetDatum(key->entryRes),
+										  UInt16GetDatum(key->strategy),
+										  key->query,
+										  UInt32GetDatum(key->nuserentries),
+										  PointerGetDatum(key->extra_data),
+										  PointerGetDatum(key->queryValues),
+									 PointerGetDatum(key->queryCategories)));
+}
+
+/*
+ * This function implements a binary logic consistency check, using a ternary
+ * logic consistent function provided by the opclass. GIN_MAYBE return value
+ * is interpreted as true with recheck flag.
+ */
+static bool
+shimBoolConsistentFn(GinScanKey key)
+{
+	GinLogicValue result;
+	result = DatumGetGinLogicValue(FunctionCall7Coll(key->triConsistentFmgrInfo,
+										  key->collation,
+										  PointerGetDatum(key->entryRes),
+										  UInt16GetDatum(key->strategy),
+										  key->query,
+										  UInt32GetDatum(key->nuserentries),
+										  PointerGetDatum(key->extra_data),
+										  PointerGetDatum(key->queryValues),
+									 PointerGetDatum(key->queryCategories)));
+	if (result == GIN_MAYBE)
+	{
+		key->recheckCurItem = true;
+		return true;
+	}
+	else
+	{
+		key->recheckCurItem = false;
+		return result;
+	}
 }
 
 /*
@@ -124,12 +171,12 @@ shimTriConsistentFn(GinScanKey key)
 	 * function as is.
 	 */
 	if (nmaybe == 0)
-		return normalBoolConsistentFn(key);
+		return directBoolConsistentFn(key);
 
 	/* First call consistent function with all the maybe-inputs set FALSE */
 	for (i = 0; i < nmaybe; i++)
 		key->entryRes[maybeEntries[i]] = GIN_FALSE;
-	curResult = normalBoolConsistentFn(key);
+	curResult = directBoolConsistentFn(key);
 
 	for (;;)
 	{
@@ -147,7 +194,7 @@ shimTriConsistentFn(GinScanKey key)
 		if (i == nmaybe)
 			break;
 
-		boolResult = normalBoolConsistentFn(key);
+		boolResult = directBoolConsistentFn(key);
 		recheck |= key->recheckCurItem;
 
 		if (curResult != boolResult)
@@ -175,8 +222,17 @@ ginInitConsistentFunction(GinState *ginstate, GinScanKey key)
 	else
 	{
 		key->consistentFmgrInfo = &ginstate->consistentFn[key->attnum - 1];
+		key->triConsistentFmgrInfo = &ginstate->triConsistentFn[key->attnum - 1];
 		key->collation = ginstate->supportCollation[key->attnum - 1];
-		key->boolConsistentFn = normalBoolConsistentFn;
-		key->triConsistentFn = shimTriConsistentFn;
+
+		if (OidIsValid(ginstate->consistentFn[key->attnum - 1].fn_oid))
+			key->boolConsistentFn = directBoolConsistentFn;
+		else
+			key->boolConsistentFn = shimBoolConsistentFn;
+
+		if (OidIsValid(ginstate->triConsistentFn[key->attnum - 1].fn_oid))
+			key->triConsistentFn =  directTriConsistentFn;
+		else
+			key->triConsistentFn =  shimTriConsistentFn;
 	}
 }

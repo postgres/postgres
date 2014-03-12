@@ -74,15 +74,15 @@
 
  <para>
    All it takes to get a <acronym>GIN</acronym> access method working is to
-   implement four (or five) user-defined methods, which define the behavior of
+   implement a few user-defined methods, which define the behavior of
    keys in the tree and the relationships between keys, indexed items,
    and indexable queries. In short, <acronym>GIN</acronym> combines
    extensibility with generality, code reuse, and a clean interface.
  </para>
 
  <para>
-   The four methods that an operator class for
-   <acronym>GIN</acronym> must provide are:
+   There are three methods that an operator class for
+   <acronym>GIN</acronym> must provide:
 
  <variablelist>
     <varlistentry>
@@ -190,7 +190,18 @@
 
      </listitem>
     </varlistentry>
+  </variablelist>
 
+  An operator class must also provide a function to check if an indexed item
+  matches the query. It comes in two flavors, a boolean <function>consistent</>
+  function, and a ternary <function>triConsistent</> function.
+  <function>triConsistent</> covers the functionality of both, so providing
+  triConsistent alone is sufficient. However, if the boolean variant is
+  significantly cheaper to calculate, it can be advantegous to provide both.
+  If only the boolean variant is provided, some optimizations that depend on
+  refuting index items before fetching all the keys are disabled. 
+
+  <variablelist>
     <varlistentry>
      <term><function>bool consistent(bool check[], StrategyNumber n, Datum query,
         int32 nkeys, Pointer extra_data[], bool *recheck,
@@ -241,10 +252,38 @@
       </para>
      </listitem>
     </varlistentry>
+
+    <varlistentry>
+     <term><function>GinLogicValue triConsistent(GinLogicValue check[], StrategyNumber n, Datum query,
+        int32 nkeys, Pointer extra_data[],
+        Datum queryKeys[], bool nullFlags[])</></term>
+     <listitem>
+      <para>
+       <function>triConsistent</> is similar to <function>consistent</>,
+       but instead of a boolean <literal>check[]</>, there are three possible
+       values for each key: <literal>GIN_TRUE</>, <literal>GIN_FALSE</> and
+       <literal>GIN_MAYBE</>. <literal>GIN_FALSE</> and <literal>GIN_TRUE</>
+       have the same meaning as regular boolean values.
+       <literal>GIN_MAYBE</> means that the presence of that key is not known.
+       When <literal>GIN_MAYBE</> values are present, the function should only
+       return GIN_TRUE if the item matches whether or not the index item
+       contains the corresponding query keys. Likewise, the function must
+       return GIN_FALSE only if the item does not match, whether or not it 
+       contains the GIN_MAYBE keys. If the result depends on the GIN_MAYBE
+       entries, ie. the match cannot be confirmed or refuted based on the
+       known query keys, the function must return GIN_MAYBE.
+      </para>
+      <para>
+       When there are no GIN_MAYBE values in the <literal>check</> vector,
+       <literal>GIN_MAYBE</> return value is equivalent of setting
+       <literal>recheck</> flag in the boolean <function>consistent</> function.
+      </para>
+     </listitem>
+    </varlistentry>
   </variablelist>
 
-  Optionally, an operator class for
-  <acronym>GIN</acronym> can supply a fifth method:
+  Optionally, an operator class for <acronym>GIN</acronym> can supply the
+  following method:
 
   <variablelist>
     <varlistentry>
@@ -282,8 +321,9 @@
   above vary depending on the operator class.  The item values passed to
   <function>extractValue</> are always of the operator class's input type, and
   all key values must be of the class's <literal>STORAGE</> type.  The type of
-  the <literal>query</> argument passed to <function>extractQuery</> and
-  <function>consistent</> is whatever is specified as the right-hand input
+  the <literal>query</> argument passed to <function>extractQuery</>,
+  <function>consistent</> and <function>triConsistent</> is whatever is
+  specified as the right-hand input
   type of the class member operator identified by the strategy number.
   This need not be the same as the item type, so long as key values of the
   correct type can be extracted from it.
