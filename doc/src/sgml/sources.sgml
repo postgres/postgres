@@ -251,6 +251,15 @@ ereport(ERROR,
    </listitem>
    <listitem>
     <para>
+     <function>errdetail_log_plural(const char *fmt_singuar, const char
+     *fmt_plural, unsigned long n, ...)</function> is like
+     <function>errdetail_log</>, but with support for various plural forms of
+     the message.
+     For more information see <xref linkend="nls-guidelines">.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
      <function>errhint(const char *msg, ...)</function> supplies an optional
      <quote>hint</> message; this is to be used when offering suggestions
      about how to fix the problem, as opposed to factual details about

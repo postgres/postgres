@@ -937,6 +937,28 @@ errdetail_log(const char *fmt,...)
 	return 0;					/* return value does not matter */
 }
 
+/*
+ * errdetail_log_plural --- add a detail_log error message text to the current error
+ * with support for pluralization of the message text
+ */
+int
+errdetail_log_plural(const char *fmt_singular, const char *fmt_plural,
+					 unsigned long n,...)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+	MemoryContext oldcontext;
+
+	recursion_depth++;
+	CHECK_STACK_DEPTH();
+	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
+
+	EVALUATE_MESSAGE_PLURAL(edata->domain, detail_log, false);
+
+	MemoryContextSwitchTo(oldcontext);
+	recursion_depth--;
+	return 0;					/* return value does not matter */
+}
+
 
 /*
  * errdetail_plural --- add a detail error message text to the current error,
