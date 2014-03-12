@@ -2336,6 +2336,29 @@ XLogRecPtrToBytePos(XLogRecPtr ptr)
 }
 
 /*
+ * Determine whether the buffer referenced has to be backed up.
+ *
+ * Since we don't yet have the insert lock, fullPageWrites and forcePageWrites
+ * could change later, so the result should be used for optimization purposes
+ * only.
+ */
+bool
+XLogCheckBufferNeedsBackup(Buffer buffer)
+{
+	bool		doPageWrites;
+	Page		page;
+
+	page = BufferGetPage(buffer);
+
+	doPageWrites = XLogCtl->Insert.fullPageWrites || XLogCtl->Insert.forcePageWrites;
+
+	if (doPageWrites && PageGetLSN(page) <= RedoRecPtr)
+		return true;			/* buffer requires backup */
+
+	return false;				/* buffer does not need to be backed up */
+}
+
+/*
  * Determine whether the buffer referenced by an XLogRecData item has to
  * be backed up, and if so fill a BkpBlock struct for it.  In any case
  * save the buffer's LSN at *lsn.

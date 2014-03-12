@@ -67,6 +67,8 @@
 #define XLOG_HEAP_CONTAINS_OLD_TUPLE		(1<<2)
 #define XLOG_HEAP_CONTAINS_OLD_KEY			(1<<3)
 #define XLOG_HEAP_CONTAINS_NEW_TUPLE		(1<<4)
+#define XLOG_HEAP_PREFIX_FROM_OLD			(1<<5)
+#define XLOG_HEAP_SUFFIX_FROM_OLD			(1<<6)
 
 /* convenience macro for checking whether any form of old tuple was logged */
 #define XLOG_HEAP_CONTAINS_OLD 						\
@@ -179,7 +181,22 @@ typedef struct xl_heap_update
 	ItemPointerData newtid;		/* new inserted tuple id */
 	uint8		old_infobits_set;	/* infomask bits to set on old tuple */
 	uint8		flags;
-	/* NEW TUPLE xl_heap_header AND TUPLE DATA FOLLOWS AT END OF STRUCT */
+
+	/*
+	 * If XLOG_HEAP_PREFIX_FROM_OLD or XLOG_HEAP_SUFFIX_FROM_OLD flags are
+	 * set, the prefix and/or suffix come next, as one or two uint16s.
+	 *
+	 * After that, xl_heap_header_len and new tuple data follow.  The new
+	 * tuple data and length don't include the prefix and suffix, which are
+	 * copied from the old tuple on replay.  The new tuple data is omitted if
+	 * a full-page image of the page was taken (unless the
+	 * XLOG_HEAP_CONTAINS_NEW_TUPLE flag is set, in which case it's included
+	 * anyway).
+	 *
+	 * If XLOG_HEAP_CONTAINS_OLD_TUPLE or XLOG_HEAP_CONTAINS_OLD_KEY flags are
+	 * set, another xl_heap_header_len struct and tuple data for the old tuple
+	 * follows.
+	 */
 } xl_heap_update;
 
 #define SizeOfHeapUpdate	(offsetof(xl_heap_update, flags) + sizeof(uint8))
