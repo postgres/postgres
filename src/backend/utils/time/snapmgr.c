@@ -261,9 +261,11 @@ Snapshot
 GetCatalogSnapshot(Oid relid)
 {
 	/*
-	 * Return historic snapshot if we're doing logical decoding, but
-	 * return a non-historic, snapshot if we temporarily are doing up2date
-	 * lookups.
+	 * Return historic snapshot while we're doing logical decoding, so we can
+	 * see the appropriate state of the catalog.
+	 *
+	 * This is the primary reason for needing to reset the system caches after
+	 * finishing decoding.
 	 */
 	if (HistoricSnapshotActive())
 		return HistoricSnapshot;
@@ -352,7 +354,7 @@ SetTransactionSnapshot(Snapshot sourcesnap, TransactionId sourcexid)
 
 	Assert(RegisteredSnapshots == 0);
 	Assert(FirstXactSnapshot == NULL);
-	Assert(HistoricSnapshotActive());
+	Assert(!HistoricSnapshotActive());
 
 	/*
 	 * Even though we are not going to use the snapshot it computes, we must
