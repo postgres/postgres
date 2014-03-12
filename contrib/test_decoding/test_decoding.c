@@ -33,6 +33,7 @@
 
 PG_MODULE_MAGIC;
 
+/* These must be available to pg_dlsym() */
 extern void		_PG_init(void);
 extern void		_PG_output_plugin_init(OutputPluginCallbacks *cb);
 
@@ -43,7 +44,6 @@ typedef struct
 	bool		include_timestamp;
 } TestDecodingData;
 
-/* These must be available to pg_dlsym() */
 static void pg_decode_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 							  bool is_init);
 static void pg_decode_shutdown(LogicalDecodingContext *ctx);

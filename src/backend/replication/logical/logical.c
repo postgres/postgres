@@ -12,14 +12,17 @@
  *    together provide logical decoding, primarily by providing so
  *    called LogicalDecodingContexts. The goal is to encapsulate most of the
  *    internal complexity for consumers of logical decoding, so they can
- *    create and consume a changestream with a low amount of code.
+ *    create and consume a changestream with a low amount of code. Builtin
+ *    consumers are the walsender and SQL SRF interface, but it's possible to
+ *    add further ones without changing core code, e.g. to consume changes in
+ *    a bgworker.
  *
  *    The idea is that a consumer provides three callbacks, one to read WAL,
  *    one to prepare a data write, and a final one for actually writing since
  *    their implementation depends on the type of consumer.  Check
- *    logicalfunc.c for an example implementations of a fairly simple consumer
+ *    logicalfuncs.c for an example implementation of a fairly simple consumer
  *    and a implementation of a WAL reading callback that's suitable for
- *    simpler consumers.
+ *    simple consumers.
  *-------------------------------------------------------------------------
  */
 
