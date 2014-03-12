@@ -24,7 +24,7 @@
   interface, might be:
 
   <programlisting>
-postgres=# SELECT * FROM pg_logical_slot_get_changes('test_slot', 'now', 'include-xids', '0');
+postgres=# SELECT * FROM pg_logical_slot_get_changes('test_slot', NULL, NULL, 'include-xids', '0');
  location  | xid |                       data
 -----------+-----+--------------------------------------------------
  0/16D30F8 | 691 | BEGIN
