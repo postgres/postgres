@@ -7291,31 +7291,30 @@ gincostestimate(PG_FUNCTION_ARGS)
 	*indexStartupCost = (entryPagesFetched + dataPagesFetched) * spc_random_page_cost;
 
 	/*
-	 * Now we compute the number of data pages fetched while the scan
-	 * proceeds.
+	 * Now compute the number of data pages fetched during the scan.
+	 *
+	 * We assume every entry to have the same number of items, and that there
+	 * is no overlap between them. (XXX: tsvector and array opclasses collect
+	 * statistics on the frequency of individual keys; it would be nice to
+	 * use those here.)
 	 */
-
-	/* data pages scanned for each exact (non-partial) matched entry */
 	dataPagesFetched = ceil(numDataPages * counts.exactEntries / numEntries);
 
 	/*
-	 * Estimate number of data pages read, using selectivity estimation and
-	 * capacity of data page.
+	 * If there is a lot of overlap among the entries, in particular if one
+	 * of the entries is very frequent, the above calculation can grossly
+	 * under-estimate.  As a simple cross-check, calculate a lower bound
+	 * based on the overall selectivity of the quals.  At a minimum, we must
+	 * read one item pointer for each matching entry.
+	 *
+	 * The width of each item pointer varies, based on the level of
+	 * compression.  We don't have statistics on that, but an average of
+	 * around 3 bytes per item is fairly typical.
 	 */
 	dataPagesFetchedBySel = ceil(*indexSelectivity *
-								 (numTuples / (BLCKSZ / SizeOfIptrData)));
-
+								 (numTuples / (BLCKSZ / 3)));
 	if (dataPagesFetchedBySel > dataPagesFetched)
-	{
-		/*
-		 * At least one of entries is very frequent and, unfortunately, we
-		 * couldn't get statistic about entries (only tsvector has such
-		 * statistics). So, we obviously have too small estimation of pages
-		 * fetched from data tree. Re-estimate it from known capacity of data
-		 * pages
-		 */
 		dataPagesFetched = dataPagesFetchedBySel;
-	}
 
 	/* Account for cache effects, the same as above */
 	if (outer_scans > 1 || counts.arrayScans > 1)
