@@ -565,7 +565,6 @@ walkdir(char *path, void (*action) (char *fname, bool isdir))
 	}
 
 #ifdef WIN32
-
 	/*
 	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but not in
 	 * released version

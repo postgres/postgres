@@ -1048,7 +1048,6 @@ GetMessageEncoding(void)
 }
 
 #ifdef WIN32
-
 /*
  * Result is palloc'ed null-terminated utf16 string. The character length
  * is also passed to utf16len if not null. Returns NULL iff failed.
