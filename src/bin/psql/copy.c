@@ -429,16 +429,17 @@ do_copy(const char *args)
  * conn should be a database connection that you just issued COPY TO on
  * and got back a PGRES_COPY_OUT result.
  * copystream is the file stream for the data to go to.
+ * The final status for the COPY is returned into *res (but note
+ * we already reported the error, if it's not a success result).
  *
  * result is true if successful, false if not.
  */
 bool
-handleCopyOut(PGconn *conn, FILE *copystream)
+handleCopyOut(PGconn *conn, FILE *copystream, PGresult **res)
 {
 	bool		OK = true;
 	char	   *buf;
 	int			ret;
-	PGresult   *res;
 
 	for (;;)
 	{
@@ -485,13 +486,12 @@ handleCopyOut(PGconn *conn, FILE *copystream)
 	 * but hasn't exited COPY_OUT state internally.  So we ignore the
 	 * possibility here.
 	 */
-	res = PQgetResult(conn);
-	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	*res = PQgetResult(conn);
+	if (PQresultStatus(*res) != PGRES_COMMAND_OK)
 	{
 		psql_error("%s", PQerrorMessage(conn));
 		OK = false;
 	}
-	PQclear(res);
 
 	return OK;
 }
@@ -504,6 +504,8 @@ handleCopyOut(PGconn *conn, FILE *copystream)
  * and got back a PGRES_COPY_IN result.
  * copystream is the file stream to read the data from.
  * isbinary can be set from PQbinaryTuples().
+ * The final status for the COPY is returned into *res (but note
+ * we already reported the error, if it's not a success result).
  *
  * result is true if successful, false if not.
  */
@@ -512,12 +514,11 @@ handleCopyOut(PGconn *conn, FILE *copystream)
 #define COPYBUFSIZ 8192
 
 bool
-handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary)
+handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary, PGresult **res)
 {
 	bool		OK;
 	const char *prompt;
 	char		buf[COPYBUFSIZ];
-	PGresult   *res;
 
 	/*
 	 * Establish longjmp destination for exiting from wait-for-input. (This is
@@ -679,21 +680,20 @@ copyin_cleanup:
 	 * connection is lost.	But that's fine; it will get us out of COPY_IN
 	 * state, which is what we need.)
 	 */
-	while (res = PQgetResult(conn), PQresultStatus(res) == PGRES_COPY_IN)
+	while (*res = PQgetResult(conn), PQresultStatus(*res) == PGRES_COPY_IN)
 	{
 		OK = false;
-		PQclear(res);
+		PQclear(*res);
 		/* We can't send an error message if we're using protocol version 2 */
 		PQputCopyEnd(conn,
 					 (PQprotocolVersion(conn) < 3) ? NULL :
 					 _("trying to exit copy mode"));
 	}
-	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	if (PQresultStatus(*res) != PGRES_COMMAND_OK)
 	{
 		psql_error("%s", PQerrorMessage(conn));
 		OK = false;
 	}
-	PQclear(res);
 
 	return OK;
 }

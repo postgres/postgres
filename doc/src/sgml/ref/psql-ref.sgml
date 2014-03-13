@@ -863,36 +863,36 @@ testdb=&gt;
         <para>
         When <literal>program</> is specified,
         <replaceable class="parameter">command</replaceable> is
-        executed by <application>psql</application> and the data from
+        executed by <application>psql</application> and the data passed from
         or to <replaceable class="parameter">command</replaceable> is
         routed between the server and the client.
-        This means that the execution privileges are those of
+        Again, the execution privileges are those of
         the local user, not the server, and no SQL superuser
         privileges are required.
         </para>
 
-        <para><literal>\copy ... from stdin | to stdout</literal>
-        reads/writes based on the command input and output respectively.
-        All rows are read from the same source that issued the command,
-        continuing until <literal>\.</literal> is read or the stream
-        reaches <acronym>EOF</>. Output is sent to the same place as
-        command output. To read/write from
-        <application>psql</application>'s standard input or output, use
-        <literal>pstdin</> or <literal>pstdout</>. This option is useful
+        <para>
+        For <literal>\copy ... from stdin</>, data rows are read from the same
+        source that issued the command, continuing until <literal>\.</literal>
+        is read or the stream reaches <acronym>EOF</>. This option is useful
         for populating tables in-line within a SQL script file.
+        For <literal>\copy ... to stdout</>, output is sent to the same place
+        as <application>psql</> command output, and
+        the <literal>COPY <replaceable>count</></literal> command status is
+        not printed (since it might be confused with a data row).
+        To read/write <application>psql</application>'s standard input or
+        output regardless of the current command source or <literal>\o</>
+        option, write <literal>from pstdin</> or <literal>to pstdout</>.
         </para>
 
         <para>
-        The syntax of the command is similar to that of the
+        The syntax of this command is similar to that of the
         <acronym>SQL</acronym> <xref linkend="sql-copy">
-        command, and
-        <replaceable class="parameter">option</replaceable>
-        must indicate one of the options of the
-        <acronym>SQL</acronym> <xref linkend="sql-copy"> command.
-        Note that, because of this,
-        special parsing rules apply to the <command>\copy</command>
-        command. In particular, the variable substitution rules and
-        backslash escapes do not apply.
+        command.  All options other than the data source/destination are
+        as specified for <xref linkend="sql-copy">.
+        Because of this, special parsing rules apply to the <command>\copy</>
+        command. In particular, <application>psql</>'s variable substitution
+        rules and backslash escapes do not apply.
         </para>
 
         <tip>

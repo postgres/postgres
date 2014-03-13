@@ -370,6 +370,16 @@ COPY <replaceable class="parameter">count</replaceable>
    The <replaceable class="parameter">count</replaceable> is the number
    of rows copied.
   </para>
+
+  <note>
+   <para>
+    <application>psql</> will print this command tag only if the command
+    was not <literal>COPY ... TO STDOUT</>, or the
+    equivalent <application>psql</> meta-command
+    <literal>\copy ... to stdout</>.  This is to prevent confusing the
+    command tag with the data that was just printed.
+   </para>
+  </note>
  </refsect1>
 
  <refsect1>

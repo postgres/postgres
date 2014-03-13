@@ -632,7 +632,9 @@ StoreQueryTuple(const PGresult *result)
  * degenerates to an AcceptResult() call.
  *
  * Changes its argument to point to the last PGresult of the command string,
- * or NULL if that result was for a COPY FROM STDIN or COPY TO STDOUT.
+ * or NULL if that result was for a COPY TO STDOUT.  (Returning NULL prevents
+ * the command status from being printed, which we want in that case so that
+ * the status line doesn't get taken as part of the COPY data.)
  *
  * Returns true on complete success, false otherwise.  Possible failure modes
  * include purely client-side problems; check the transaction status for the
@@ -641,14 +643,14 @@ StoreQueryTuple(const PGresult *result)
 static bool
 ProcessResult(PGresult **results)
 {
-	PGresult   *next_result;
 	bool		success = true;
 	bool		first_cycle = true;
 
-	do
+	for (;;)
 	{
 		ExecStatusType result_status;
 		bool		is_copy;
+		PGresult   *next_result;
 
 		if (!AcceptResult(*results))
 		{
@@ -693,6 +695,7 @@ ProcessResult(PGresult **results)
 			 * otherwise use queryFout or cur_cmd_source as appropriate.
 			 */
 			FILE	   *copystream = pset.copyStream;
+			PGresult   *copy_result;
 
 			SetCancelConn();
 			if (result_status == PGRES_COPY_OUT)
@@ -700,7 +703,19 @@ ProcessResult(PGresult **results)
 				if (!copystream)
 					copystream = pset.queryFout;
 				success = handleCopyOut(pset.db,
-										copystream) && success;
+										copystream,
+										&copy_result) && success;
+
+				/*
+				 * Suppress status printing if the report would go to the same
+				 * place as the COPY data just went.  Note this doesn't
+				 * prevent error reporting, since handleCopyOut did that.
+				 */
+				if (copystream == pset.queryFout)
+				{
+					PQclear(copy_result);
+					copy_result = NULL;
+				}
 			}
 			else
 			{
@@ -708,30 +723,37 @@ ProcessResult(PGresult **results)
 					copystream = pset.cur_cmd_source;
 				success = handleCopyIn(pset.db,
 									   copystream,
-									   PQbinaryTuples(*results)) && success;
+									   PQbinaryTuples(*results),
+									   &copy_result) && success;
 			}
 			ResetCancelConn();
 
 			/*
-			 * Call PQgetResult() once more.  In the typical case of a
-			 * single-command string, it will return NULL.	Otherwise, we'll
-			 * have other results to process that may include other COPYs.
+			 * Replace the PGRES_COPY_OUT/IN result with COPY command's exit
+			 * status, or with NULL if we want to suppress printing anything.
 			 */
 			PQclear(*results);
-			*results = next_result = PQgetResult(pset.db);
+			*results = copy_result;
 		}
 		else if (first_cycle)
+		{
 			/* fast path: no COPY commands; PQexec visited all results */
 			break;
-		else if ((next_result = PQgetResult(pset.db)))
-		{
-			/* non-COPY command(s) after a COPY: keep the last one */
-			PQclear(*results);
-			*results = next_result;
 		}
 
+		/*
+		 * Check PQgetResult() again.  In the typical case of a single-command
+		 * string, it will return NULL.  Otherwise, we'll have other results
+		 * to process that may include other COPYs.  We keep the last result.
+		 */
+		next_result = PQgetResult(pset.db);
+		if (!next_result)
+			break;
+
+		PQclear(*results);
+		*results = next_result;
 		first_cycle = false;
-	} while (next_result);
+	}
 
 	/* may need this to recover from conn loss during COPY */
 	if (!first_cycle && !CheckConnection())
