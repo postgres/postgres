@@ -197,7 +197,7 @@
   function, and a ternary <function>triConsistent</> function.
   <function>triConsistent</> covers the functionality of both, so providing
   triConsistent alone is sufficient. However, if the boolean variant is
-  significantly cheaper to calculate, it can be advantegous to provide both.
+  significantly cheaper to calculate, it can be advantageous to provide both.
   If only the boolean variant is provided, some optimizations that depend on
   refuting index items before fetching all the keys are disabled. 
 
@@ -219,7 +219,7 @@
        returned by <function>extractQuery</> for this <literal>query</> datum.
        Each element of the
        <literal>check</> array is TRUE if the indexed item contains the
-       corresponding query key, ie, if (check[i] == TRUE) the i-th key of the
+       corresponding query key, i.e., if (check[i] == TRUE) the i-th key of the
        <function>extractQuery</> result array is present in the indexed item.
        The original <literal>query</> datum is
        passed in case the <function>consistent</> method needs to consult it,
