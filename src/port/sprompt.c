@@ -57,7 +57,6 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 		return NULL;
 
 #ifdef WIN32
-
 	/*
 	 * A Windows console has an "input code page" and an "output code page";
 	 * these usually match each other, but they rarely match the "Windows ANSI
@@ -86,7 +85,6 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 #endif
 	if (!termin || !termout
 #ifdef WIN32
-
 	/*
 	 * Direct console I/O does not work from the MSYS 1.0.10 console.  Writes
 	 * reach nowhere user-visible; reads block indefinitely.  XXX This affects

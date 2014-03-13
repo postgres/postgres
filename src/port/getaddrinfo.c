@@ -144,7 +144,6 @@ getaddrinfo(const char *node, const char *service,
 	struct addrinfo hints;
 
 #ifdef WIN32
-
 	/*
 	 * If Windows has native IPv6 support, use the native Windows routine.
 	 * Otherwise, fall through and use our own code.
@@ -267,7 +266,6 @@ freeaddrinfo(struct addrinfo * res)
 	if (res)
 	{
 #ifdef WIN32
-
 		/*
 		 * If Windows has native IPv6 support, use the native Windows routine.
 		 * Otherwise, fall through and use our own code.
@@ -359,7 +357,6 @@ getnameinfo(const struct sockaddr * sa, int salen,
 			char *service, int servicelen, int flags)
 {
 #ifdef WIN32
-
 	/*
 	 * If Windows has native IPv6 support, use the native Windows routine.
 	 * Otherwise, fall through and use our own code.

@@ -222,7 +222,6 @@ canonicalize_path(char *path)
 	int			pending_strips;
 
 #ifdef WIN32
-
 	/*
 	 * The Windows command processor will accept suitably quoted paths with
 	 * forward slashes, but barfs badly with mixed forward and back slashes.
@@ -372,7 +371,6 @@ path_is_relative_and_below_cwd(const char *path)
 	else if (path_contains_parent_reference(path))
 		return false;
 #ifdef WIN32
-
 	/*
 	 * On Win32, a drive letter _not_ followed by a slash, e.g. 'E:abc', is
 	 * relative to the cwd on that drive, or the drive's root directory if

@@ -697,7 +697,6 @@ plperl_init_interp(void)
 	int			nargs = 3;
 
 #ifdef WIN32
-
 	/*
 	 * The perl library on startup does horrible things like call
 	 * setlocale(LC_ALL,""). We have protected against that on most platforms

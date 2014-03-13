@@ -2891,7 +2891,6 @@ void
 get_restricted_token(void)
 {
 #ifdef WIN32
-
 	/*
 	 * Before we execute another program, make sure that we are running with a
 	 * restricted token. If not, re-execute ourselves with one.

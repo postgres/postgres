@@ -3950,7 +3950,6 @@ convert_string_datum(Datum value, Oid typid)
 		xfrmlen = strxfrm(NULL, val, 0);
 #endif
 #ifdef WIN32
-
 		/*
 		 * On Windows, strxfrm returns INT_MAX when an error occurs. Instead
 		 * of trying to allocate this much memory (and fail), just return the

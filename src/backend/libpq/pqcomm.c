@@ -692,7 +692,6 @@ StreamConnection(pgsocket server_fd, Port *port)
 		}
 
 #ifdef WIN32
-
 		/*
 		 * This is a Win32 socket optimization.  The ideal size is 32k.
 		 * http://support.microsoft.com/kb/823764/EN-US/

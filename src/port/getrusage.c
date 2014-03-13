@@ -32,7 +32,6 @@ int
 getrusage(int who, struct rusage * rusage)
 {
 #ifdef WIN32
-
 	FILETIME	starttime;
 	FILETIME	exittime;
 	FILETIME	kerneltime;

@@ -2848,7 +2848,6 @@ mkdirs(char *argname)
 	{
 		*cp = '\0';
 #ifdef WIN32
-
 		/*
 		 * DOS drive specifier?
 		 */

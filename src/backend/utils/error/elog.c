@@ -2057,7 +2057,6 @@ write_console(const char *line, int len)
 	int			rc;
 
 #ifdef WIN32
-
 	/*
 	 * Try to convert the message to UTF16 and write it with WriteConsoleW().
 	 * Fall back on write() if anything fails.
@@ -2887,7 +2886,6 @@ send_message_to_server_log(ErrorData *edata)
 		if (redirection_done && !am_syslogger)
 			write_pipe_chunks(buf.data, buf.len, LOG_DESTINATION_STDERR);
 #ifdef WIN32
-
 		/*
 		 * In a win32 service environment, there is no usable stderr. Capture
 		 * anything going there and write it to the eventlog instead.

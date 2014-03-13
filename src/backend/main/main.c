@@ -107,7 +107,6 @@ main(int argc, char *argv[])
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("postgres"));
 
 #ifdef WIN32
-
 	/*
 	 * Windows uses codepages rather than the environment, so we work around
 	 * that by querying the environment explicitly first for LC_COLLATE and
@@ -183,7 +182,6 @@ main(int argc, char *argv[])
 #endif
 
 #ifdef WIN32
-
 	/*
 	 * Start our win32 signal implementation
 	 *

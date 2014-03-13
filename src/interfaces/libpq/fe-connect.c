@@ -2667,7 +2667,6 @@ makeEmptyPGconn(void)
 	PGconn	   *conn;
 
 #ifdef WIN32
-
 	/*
 	 * Make sure socket support is up and running.
 	 */

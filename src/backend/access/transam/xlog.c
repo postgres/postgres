@@ -4182,7 +4182,6 @@ RemoveOldXlogFiles(XLogSegNo segno, XLogRecPtr endptr)
 									xlde->d_name)));
 
 #ifdef WIN32
-
 					/*
 					 * On Windows, if another process (e.g another backend)
 					 * holds the file open in FILE_SHARE_DELETE mode, unlink

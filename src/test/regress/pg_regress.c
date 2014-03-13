@@ -438,7 +438,6 @@ convert_sourcefiles_in(char *source_subdir, char *dest_dir, char *dest_subdir, c
 	snprintf(testtablespace, MAXPGPATH, "%s/testtablespace", outputdir);
 
 #ifdef WIN32
-
 	/*
 	 * On Windows only, clean out the test tablespace dir, or create it if it
 	 * doesn't exist.  On other platforms we expect the Makefile to take care
@@ -1195,7 +1194,6 @@ run_diff(const char *cmd, const char *filename)
 		exit(2);
 	}
 #ifdef WIN32
-
 	/*
 	 * On WIN32, if the 'diff' command cannot be found, system() returns 1,
 	 * but produces nothing to stdout, so we check for that here.

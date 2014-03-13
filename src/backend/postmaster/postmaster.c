@@ -1063,7 +1063,6 @@ PostmasterMain(int argc, char *argv[])
 	InitPostmasterDeathWatchHandle();
 
 #ifdef WIN32
-
 	/*
 	 * Initialize I/O completion port used to deliver list of dead children.
 	 */
@@ -2929,8 +2928,8 @@ CleanupBackend(int pid,
 	 * assume everything is all right and proceed to remove the backend from
 	 * the active backend list.
 	 */
-#ifdef WIN32
 
+#ifdef WIN32
 	/*
 	 * On win32, also treat ERROR_WAIT_NO_CHILDREN (128) as nonfatal case,
 	 * since that sometimes happens under load when the process fails to start
