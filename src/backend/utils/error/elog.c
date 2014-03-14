@@ -406,11 +406,24 @@ errfinish(int dummy,...)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
 	int			elevel = edata->elevel;
+	bool		save_ImmediateInterruptOK;
 	MemoryContext oldcontext;
 	ErrorContextCallback *econtext;
 
 	recursion_depth++;
 	CHECK_STACK_DEPTH();
+
+	/*
+	 * Ensure we can't get interrupted while performing error reporting.  This
+	 * is needed to prevent recursive entry to functions like syslog(), which
+	 * may not be re-entrant.
+	 *
+	 * Note: other places that save-and-clear ImmediateInterruptOK also do
+	 * HOLD_INTERRUPTS(), but that should not be necessary here since we
+	 * don't call anything that could turn on ImmediateInterruptOK.
+	 */
+	save_ImmediateInterruptOK = ImmediateInterruptOK;
+	ImmediateInterruptOK = false;
 
 	/*
 	 * Do processing in ErrorContext, which we hope has enough reserved space
@@ -437,17 +450,16 @@ errfinish(int dummy,...)
 		/*
 		 * We do some minimal cleanup before longjmp'ing so that handlers can
 		 * execute in a reasonably sane state.
-		 */
-
-		/* This is just in case the error came while waiting for input */
-		ImmediateInterruptOK = false;
-
-		/*
+		 *
 		 * Reset InterruptHoldoffCount in case we ereport'd from inside an
 		 * interrupt holdoff section.  (We assume here that no handler will
 		 * itself be inside a holdoff section.	If necessary, such a handler
 		 * could save and restore InterruptHoldoffCount for itself, but this
 		 * should make life easier for most.)
+		 *
+		 * Note that we intentionally don't restore ImmediateInterruptOK here,
+		 * even if it was set at entry.  We definitely don't want that on
+		 * while doing error cleanup.
 		 */
 		InterruptHoldoffCount = 0;
 
@@ -504,10 +516,7 @@ errfinish(int dummy,...)
 	{
 		/*
 		 * For a FATAL error, we let proc_exit clean up and exit.
-		 */
-		ImmediateInterruptOK = false;
-
-		/*
+		 *
 		 * If we just reported a startup failure, the client will disconnect
 		 * on receiving it, so don't send any more to the client.
 		 */
@@ -540,15 +549,18 @@ errfinish(int dummy,...)
 		 * XXX: what if we are *in* the postmaster?  abort() won't kill our
 		 * children...
 		 */
-		ImmediateInterruptOK = false;
 		fflush(stdout);
 		fflush(stderr);
 		abort();
 	}
 
 	/*
-	 * We reach here if elevel <= WARNING. OK to return to caller.
-	 *
+	 * We reach here if elevel <= WARNING.  OK to return to caller, so restore
+	 * caller's setting of ImmediateInterruptOK.
+	 */
+	ImmediateInterruptOK = save_ImmediateInterruptOK;
+
+	/*
 	 * But check for cancel/die interrupt first --- this is so that the user
 	 * can stop a query emitting tons of notice or warning messages, even if
 	 * it's in a loop that otherwise fails to check for interrupts.
