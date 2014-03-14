@@ -215,11 +215,10 @@ typedef struct BTMetaPageData
 #define XLOG_BTREE_SPLIT_L_ROOT 0x50	/* add tuple with split of root */
 #define XLOG_BTREE_SPLIT_R_ROOT 0x60	/* as above, new item on right */
 #define XLOG_BTREE_DELETE		0x70	/* delete leaf index tuples for a page */
-#define XLOG_BTREE_DELETE_PAGE	0x80	/* delete an entire page */
-#define XLOG_BTREE_DELETE_PAGE_META 0x90		/* same, and update metapage */
+#define XLOG_BTREE_UNLINK_PAGE	0x80	/* delete a half-dead page */
+#define XLOG_BTREE_UNLINK_PAGE_META 0x90 /* same, and update metapage */
 #define XLOG_BTREE_NEWROOT		0xA0	/* new root page */
-#define XLOG_BTREE_DELETE_PAGE_HALF 0xB0		/* page deletion that makes
-												 * parent half-dead */
+#define XLOG_BTREE_MARK_PAGE_HALFDEAD 0xB0 /* mark a leaf as half-dead */
 #define XLOG_BTREE_VACUUM		0xC0	/* delete entries on a page during
 										 * vacuum */
 #define XLOG_BTREE_REUSE_PAGE	0xD0	/* old page is about to be reused from
@@ -370,23 +369,49 @@ typedef struct xl_btree_vacuum
 #define SizeOfBtreeVacuum	(offsetof(xl_btree_vacuum, lastBlockVacuumed) + sizeof(BlockNumber))
 
 /*
- * This is what we need to know about deletion of a btree page.  The target
- * identifies the tuple removed from the parent page (note that we remove
- * this tuple's downlink and the *following* tuple's key).	Note we do not
- * store any content for the deleted page --- it is just rewritten as empty
- * during recovery, apart from resetting the btpo.xact.
+ * This is what we need to know about marking an empty branch for deletion.
+ * The target identifies the tuple removed from the parent page (note that we
+ * remove this tuple's downlink and the *following* tuple's key).  Note that
+ * the leaf page is empty, so we don't need to store its content --- it is
+ * just reinitialized during recovery using the rest of the fields.
  */
-typedef struct xl_btree_delete_page
+typedef struct xl_btree_mark_page_halfdead
 {
 	xl_btreetid target;			/* deleted tuple id in parent page */
-	BlockNumber deadblk;		/* child block being deleted */
-	BlockNumber leftblk;		/* child block's left sibling, if any */
-	BlockNumber rightblk;		/* child block's right sibling */
-	TransactionId btpo_xact;	/* value of btpo.xact for use in recovery */
-	/* xl_btree_metadata FOLLOWS IF XLOG_BTREE_DELETE_PAGE_META */
-} xl_btree_delete_page;
+	BlockNumber leafblk;		/* leaf block ultimately being deleted */
+	BlockNumber leftblk;		/* leaf block's left sibling, if any */
+	BlockNumber rightblk;		/* leaf block's right sibling */
+	BlockNumber downlink;		/* next child down in the branch */
+} xl_btree_mark_page_halfdead;
 
-#define SizeOfBtreeDeletePage	(offsetof(xl_btree_delete_page, btpo_xact) + sizeof(TransactionId))
+#define SizeOfBtreeMarkPageHalfDead	(offsetof(xl_btree_mark_page_halfdead, downlink) + sizeof(BlockNumber))
+
+/*
+ * This is what we need to know about deletion of a btree page.  Note we do
+ * not store any content for the deleted page --- it is just rewritten as empty
+ * during recovery, apart from resetting the btpo.xact.
+ */
+typedef struct xl_btree_unlink_page
+{
+	RelFileNode	node;
+	BlockNumber deadblk;		/* target block being deleted */
+	BlockNumber leftsib;		/* taregt block's left sibling, if any */
+	BlockNumber rightsib;		/* target block's right sibling */
+
+	/*
+	 * Information needed to recreate the leaf page, when target is an internal
+	 * page.
+	 */
+	BlockNumber	leafblk;
+	BlockNumber	leafleftsib;
+	BlockNumber	leafrightsib;
+	BlockNumber	downlink;		/* next child down in the branch */
+
+	TransactionId btpo_xact;	/* value of btpo.xact for use in recovery */
+	/* xl_btree_metadata FOLLOWS IF XLOG_BTREE_UNLINK_PAGE_META */
+} xl_btree_unlink_page;
+
+#define SizeOfBtreeUnlinkPage	(offsetof(xl_btree_unlink_page, btpo_xact) + sizeof(TransactionId))
 
 /*
  * New root log record.  There are zero tuples if this is to establish an
@@ -639,7 +664,7 @@ extern void _bt_delitems_delete(Relation rel, Buffer buf,
 extern void _bt_delitems_vacuum(Relation rel, Buffer buf,
 					OffsetNumber *itemnos, int nitems,
 					BlockNumber lastBlockVacuumed);
-extern int	_bt_pagedel(Relation rel, Buffer buf, BTStack stack);
+extern int	_bt_pagedel(Relation rel, Buffer buf);
 
 /*
  * prototypes for functions in nbtsearch.c

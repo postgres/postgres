@@ -1082,7 +1082,7 @@ restart:
 		MemoryContextReset(vstate->pagedelcontext);
 		oldcontext = MemoryContextSwitchTo(vstate->pagedelcontext);
 
-		ndel = _bt_pagedel(rel, buf, NULL);
+		ndel = _bt_pagedel(rel, buf);
 
 		/* count only this page, else may double-count parent */
 		if (ndel)
