@@ -85,9 +85,6 @@
 #ifndef PG_KRB_SRVTAB
 #define PG_KRB_SRVTAB ""
 #endif
-#ifndef PG_KRB_SRVNAM
-#define PG_KRB_SRVNAM ""
-#endif
 
 #define CONFIG_FILENAME "postgresql.conf"
 #define HBA_FILENAME	"pg_hba.conf"
@@ -2799,16 +2796,6 @@ static struct config_string ConfigureNamesString[] =
 		},
 		&pg_krb_server_keyfile,
 		PG_KRB_SRVTAB,
-		NULL, NULL, NULL
-	},
-
-	{
-		{"krb_srvname", PGC_SIGHUP, CONN_AUTH_SECURITY,
-			gettext_noop("Sets the name of the Kerberos service."),
-			NULL
-		},
-		&pg_krb_srvnam,
-		PG_KRB_SRVNAM,
 		NULL, NULL, NULL
 	},
 

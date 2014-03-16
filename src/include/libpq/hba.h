@@ -75,7 +75,6 @@ typedef struct HbaLine
 	char	   *ldapprefix;
 	char	   *ldapsuffix;
 	bool		clientcert;
-	char	   *krb_server_hostname;
 	char	   *krb_realm;
 	bool		include_realm;
 	char	   *radiusserver;

@@ -1033,20 +1033,6 @@ include 'filename'
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-krb-srvname" xreflabel="krb_srvname">
-      <term><varname>krb_srvname</varname> (<type>string</type>)</term>
-      <indexterm>
-       <primary><varname>krb_srvname</> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        Sets the Kerberos service name. See <xref linkend="gssapi-auth">
-        for details. This parameter can only be set in the
-        <filename>postgresql.conf</> file or on the server command line.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry id="guc-krb-caseins-users" xreflabel="krb_caseins_users">
       <term><varname>krb_caseins_users</varname> (<type>boolean</type>)</term>
       <indexterm>

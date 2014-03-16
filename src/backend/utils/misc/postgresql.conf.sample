@@ -91,9 +91,8 @@
 #password_encryption = on
 #db_user_namespace = off
 
-# Kerberos and GSSAPI
+# GSSAPI using Kerberos
 #krb_server_keyfile = ''
-#krb_srvname = 'postgres'		# (Kerberos only)
 #krb_caseins_users = off
 
 # - TCP Keepalives -
