@@ -524,6 +524,7 @@ EOF
 		StackReserveSize="4194304" DisableSpecificWarnings="$self->{disablewarnings}"
 		GenerateDebugInformation="TRUE" ProgramDatabaseFile=".\\$cfgname\\$self->{name}\\$self->{name}.pdb"
 		GenerateMapFile="FALSE" MapFileName=".\\$cfgname\\$self->{name}\\$self->{name}.map"
+		RandomizedBaseAddress="1"
 		SubSystem="1" TargetMachine="$targetmachine"
 EOF
     if ($self->{disablelinkerwarnings})
