@@ -83,10 +83,10 @@ mkdir "$logdir"
 PGDATABASE="";        unset PGDATABASE
 PGUSER="";            unset PGUSER
 PGSERVICE="";         unset PGSERVICE
-PGSSLMODE=""          unset PGSSLMODE
+PGSSLMODE="";         unset PGSSLMODE
 PGREQUIRESSL="";      unset PGREQUIRESSL
 PGCONNECT_TIMEOUT=""; unset PGCONNECT_TIMEOUT
-PGHOST=""             unset PGHOST
+PGHOST="";            unset PGHOST
 PGHOSTADDR="";        unset PGHOSTADDR
 
 # Select a non-conflicting port number, similarly to pg_regress.c
