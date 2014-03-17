@@ -304,6 +304,16 @@ static char *setlocale_perl(int category, char *locale);
 static char *
 hek2cstr(HE *he)
 {
+	char *ret;
+	SV	 *sv;
+
+	/*
+	 * HeSVKEY_force will return a temporary mortal SV*, so we need to make
+	 * sure to free it with ENTER/SAVE/FREE/LEAVE
+	 */
+	ENTER;
+	SAVETMPS;
+
 	/*-------------------------
 	 * Unfortunately,  while HeUTF8 is true for most things > 256, for values
 	 * 128..255 it's not, but perl will treat them as unicode code points if
@@ -328,11 +338,17 @@ hek2cstr(HE *he)
 	 * right thing
 	 *-------------------------
 	 */
-	SV		   *sv = HeSVKEY_force(he);
 
+	sv = HeSVKEY_force(he);
 	if (HeUTF8(he))
 		SvUTF8_on(sv);
-	return sv2cstr(sv);
+	ret = sv2cstr(sv);
+
+	/* free sv */
+	FREETMPS;
+	LEAVE;
+
+	return ret;
 }
 
 /*
