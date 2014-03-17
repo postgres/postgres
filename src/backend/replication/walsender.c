@@ -2446,10 +2446,20 @@ XLogSendLogical(void)
 static void
 WalSndDone(WalSndSendDataCallback send_data)
 {
+	XLogRecPtr	replicatedPtr;
+
 	/* ... let's just be real sure we're caught up ... */
 	send_data();
 
-	if (WalSndCaughtUp && sentPtr == MyWalSnd->flush &&
+	/*
+	 * Check a write location to see whether all the WAL have
+	 * successfully been replicated if this walsender is connecting
+	 * to a standby such as pg_receivexlog which always returns
+	 * an invalid flush location. Otherwise, check a flush location.
+	 */
+	replicatedPtr = XLogRecPtrIsInvalid(MyWalSnd->flush) ?
+		MyWalSnd->write : MyWalSnd->flush;
+	if (WalSndCaughtUp && sentPtr == replicatedPtr &&
 		!pq_is_send_pending())
 	{
 		/* Inform the standby that XLOG streaming is done */
