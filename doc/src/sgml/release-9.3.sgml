@@ -1,6 +1,471 @@
 <!-- doc/src/sgml/release-9.3.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-3-4">
+  <title>Release 9.3.4</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2014-03-20</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 9.3.3.
+   For information about new features in the 9.3 major release, see
+   <xref linkend="release-9-3">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.3.4</title>
+
+   <para>
+    A dump/restore is not required for those running 9.3.X.
+   </para>
+
+   <para>
+    However, the error fixed in the first changelog entry below could have
+    resulted in corrupt data on standby servers.  It may be prudent to
+    reinitialize standby servers from fresh base backups after installing
+    this update.
+   </para>
+
+   <para>
+    Also, if you are upgrading from a version earlier than 9.3.3,
+    see <xref linkend="release-9-3-3">.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [6bfa88acd] 2014-02-27 11:13:39 -0300
+Branch: REL9_3_STABLE [9a57858f1] 2014-02-27 11:23:24 -0300
+-->
+
+    <listitem>
+     <para>
+      Fix WAL replay of locking an already-updated tuple (Andres Freund,
+      &Aacute;lvaro Herrera)
+     </para>
+
+     <para>
+      This error caused updated rows to not be found by index scans, resulting
+      in inconsistent query results depending on whether an index scan was
+      used.  Subsequent processing could result in constraint violations,
+      since the previously updated row would not be found by later index
+      searches, thus possibly allowing conflicting rows to be inserted.
+      Since this error is in WAL replay, it would only manifest during crash
+      recovery or on standby servers.  The improperly-replayed case most
+      commonly arises when a table row that is referenced by a foreign-key
+      constraint is updated concurrently with creation of a referencing row.
+     </para>
+    </listitem>
+
+<!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+Branch: master [fecfc2b91] 2014-03-12 10:04:57 +0200
+Branch: REL9_3_STABLE [4738cc356] 2014-03-12 10:05:46 +0200
+Branch: REL9_2_STABLE [91f932cf4] 2014-03-12 10:07:22 +0200
+Branch: REL9_1_STABLE [63e59c259] 2014-03-12 10:09:22 +0200
+Branch: REL9_0_STABLE [9954e1f03] 2014-03-12 10:09:43 +0200
+Branch: REL8_4_STABLE [e2bccdfcc] 2014-03-12 10:10:04 +0200
+-->
+
+    <listitem>
+     <para>
+      Restore GIN metapages unconditionally to avoid torn-page risk
+      (Heikki Linnakangas)
+     </para>
+
+     <para>
+      Although this oversight could theoretically result in a corrupted
+      index, it is unlikely to have caused any problems in practice, since
+      the active part of a GIN metapage is smaller than a standard 512-byte
+      disk sector.
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [7bae0284e] 2014-03-13 12:02:54 -0400
+Branch: REL9_3_STABLE [0d11fed8e] 2014-03-13 12:02:56 -0400
+Branch: REL9_2_STABLE [bbe9621a9] 2014-03-13 12:03:00 -0400
+Branch: REL9_1_STABLE [7bfdf10f5] 2014-03-13 12:03:03 -0400
+Branch: REL9_0_STABLE [7aea1050e] 2014-03-13 12:03:07 -0400
+-->
+
+    <listitem>
+     <para>
+      Avoid race condition in checking transaction commit status during
+      receipt of a <command>NOTIFY</> message (Marko Tiikkaja)
+     </para>
+
+     <para>
+      This prevents a scenario wherein a sufficiently fast client might
+      respond to a notification before database updates made by the
+      notifier have become visible to the recipient.
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [bf4052faa] 2014-03-06 11:37:02 -0500
+Branch: REL9_3_STABLE [3973034e6] 2014-03-06 11:37:04 -0500
+-->
+
+    <listitem>
+     <para>
+      Allow materialized views to be referenced in <command>UPDATE</>
+      and <command>DELETE</> commands (Michael Paquier)
+     </para>
+
+     <para>
+      Previously such queries failed with a complaint about not being able
+      to lock rows in the materialized view.
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [9662143f0] 2014-03-01 15:20:56 -0500
+Branch: REL9_3_STABLE [f5f21315d] 2014-03-01 15:21:00 -0500
+Branch: REL9_2_STABLE [03e6423fc] 2014-03-01 15:21:04 -0500
+Branch: REL9_1_STABLE [a9eb4924a] 2014-03-01 15:21:07 -0500
+Branch: REL9_0_STABLE [43af0e8c6] 2014-03-01 15:21:11 -0500
+Branch: REL8_4_STABLE [b6e143458] 2014-03-01 15:21:13 -0500
+-->
+
+    <listitem>
+     <para>
+      Allow regular-expression operators to be terminated early by query
+      cancel requests (Tom Lane)
+     </para>
+
+     <para>
+      This prevents scenarios wherein a pathological regular expression
+      could lock up a server process uninterruptably for a long time.
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [a222f7fda] 2014-02-18 12:44:20 -0500
+Branch: REL9_3_STABLE [0aaa42241] 2014-02-18 12:44:24 -0500
+Branch: REL9_2_STABLE [d7cd6a9d5] 2014-02-18 12:44:27 -0500
+Branch: REL9_1_STABLE [e6f7fe983] 2014-02-18 12:44:30 -0500
+Branch: REL9_0_STABLE [19d66ab05] 2014-02-18 12:44:33 -0500
+Branch: REL8_4_STABLE [dd378dd1e] 2014-02-18 12:44:36 -0500
+-->
+
+    <listitem>
+     <para>
+      Remove incorrect code that tried to allow <literal>OVERLAPS</> with
+      single-element row arguments (Joshua Yanovski)
+     </para>
+
+     <para>
+      This code never worked correctly, and since the case is neither
+      specified by the SQL standard nor documented, it seemed better to
+      remove it than fix it.
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [7c3187494] 2014-03-06 19:31:05 -0500
+Branch: REL9_3_STABLE [f557826f8] 2014-03-06 19:31:09 -0500
+Branch: REL9_2_STABLE [5ec41e345] 2014-03-06 19:31:12 -0500
+Branch: REL9_1_STABLE [f3e3f6c5b] 2014-03-06 19:31:16 -0500
+Branch: REL9_0_STABLE [bed1259e5] 2014-03-06 19:31:19 -0500
+Branch: REL8_4_STABLE [f043bddfe] 2014-03-06 19:31:22 -0500
+-->
+
+    <listitem>
+     <para>
+      Avoid getting more than <literal>AccessShareLock</> when de-parsing a
+      rule or view (Dean Rasheed)
+     </para>
+
+     <para>
+      This oversight resulted in <application>pg_dump</> unexpectedly
+      acquiring <literal>RowExclusiveLock</> locks on tables mentioned as
+      the targets of <literal>INSERT</>/<literal>UPDATE</>/<literal>DELETE</>
+      commands in rules.  While usually harmless, that could interfere with
+      concurrent transactions that tried to acquire, for example,
+      <literal>ShareLock</> on those tables.
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [fccebe421] 2014-02-25 16:04:06 -0500
+Branch: REL9_3_STABLE [4162a55c7] 2014-02-25 16:04:09 -0500
+Branch: REL9_2_STABLE [00283cae1] 2014-02-25 16:04:12 -0500
+Branch: REL9_1_STABLE [3e2db4c80] 2014-02-25 16:04:16 -0500
+Branch: REL9_0_STABLE [1e0fb6a2c] 2014-02-25 16:04:20 -0500
+-->
+
+    <listitem>
+     <para>
+      Improve performance of index endpoint probes during planning (Tom Lane)
+     </para>
+
+     <para>
+      This change fixes a significant performance problem that occurred
+      when there were many not-yet-committed rows at the end of the index,
+      which is a common situation for indexes on sequentially-assigned
+      values such as timestamps or sequence-generated identifiers.
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [77585bce0] 2014-02-21 17:10:46 -0500
+Branch: REL9_3_STABLE [e8655a77f] 2014-02-21 17:10:49 -0500
+-->
+
+    <listitem>
+     <para>
+      Use non-default selectivity estimates for
+      <literal><replaceable>value</> IN (<replaceable>list</>)</literal> and
+      <literal><replaceable>value</> <replaceable>operator</> ANY
+      (<replaceable>array</>)</literal>
+      expressions when the righthand side is a stable expression (Tom Lane)
+     </para>
+    </listitem>
+
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [2b4f2ab33] 2014-03-05 13:03:29 -0300
+Branch: REL9_3_STABLE [13ea43ab8] 2014-03-05 13:03:29 -0300
+-->
+
+    <listitem>
+     <para>
+      Remove the correct per-database statistics file during <command>DROP
+      DATABASE</> (Tomas Vondra)
+     </para>
+
+     <para>
+      This fix prevents a permanent leak of statistics file space.
+      Users who have done many <command>DROP DATABASE</> commands since
+      upgrading to <productname>PostgreSQL</> 9.3 may wish to check their
+      statistics directory and delete statistics files that do not
+      correspond to any existing database.  Please note
+      that <filename>db_0.stat</> should not be removed.
+     </para>
+    </listitem>
+
+<!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+Branch: master [94ae6ba74] 2014-03-06 21:38:51 +0200
+Branch: REL9_3_STABLE [dcd1131c8] 2014-03-06 21:40:50 +0200
+-->
+
+    <listitem>
+     <para>
+      Fix <application>walsender</> ping logic to avoid inappropriate
+      disconnects under continuous load (Andres Freund, Heikki Linnakangas)
+     </para>
+
+     <para>
+      <application>walsender</> failed to send ping messages to the client
+      if it was constantly busy sending WAL data; but it expected to see
+      ping responses despite that, and would therefore disconnect
+      once <xref linkend="guc-wal-sender-timeout"> elapsed.
+     </para>
+    </listitem>
+
+<!--
+Author: Fujii Masao <fujii@postgresql.org>
+Branch: master [5c6d9fc4b] 2014-03-17 20:37:50 +0900
+Branch: REL9_3_STABLE [385723405] 2014-03-17 20:41:12 +0900
+Branch: REL9_2_STABLE [7899aa356] 2014-03-17 20:41:52 +0900
+Branch: REL9_1_STABLE [65e8dbb18] 2014-03-17 20:42:35 +0900
+-->
+
+    <listitem>
+     <para>
+      Fix <application>walsender</>'s failure to shut down cleanly when client
+      is <application>pg_receivexlog</> (Fujii Masao)
+     </para>
+    </listitem>
+
+<!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+Branch: master [956685f82] 2014-03-05 14:48:14 +0200
+Branch: REL9_3_STABLE [a5363a696] 2014-03-05 14:46:56 +0200
+Branch: REL9_2_STABLE [e7ec05562] 2014-03-05 14:45:55 +0200
+-->
+
+    <listitem>
+     <para>
+      Check WAL level and hot standby parameters correctly when doing crash
+      recovery that will be followed by archive recovery (Heikki Linnakangas)
+     </para>
+    </listitem>
+
+<!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+Branch: master [af246c37c] 2014-03-05 13:51:19 +0200
+Branch: REL9_3_STABLE [2cd72ba42] 2014-03-05 13:52:21 +0200
+Branch: REL9_2_STABLE [931dc26b0] 2014-03-05 13:57:32 +0200
+Branch: REL9_1_STABLE [7552d3d1a] 2014-03-05 13:58:14 +0200
+Branch: REL9_0_STABLE [4521cc850] 2014-03-05 13:58:22 +0200
+-->
+
+    <listitem>
+     <para>
+      Fix test to see if hot standby connections can be allowed immediately
+      after a crash (Heikki Linnakangas)
+     </para>
+    </listitem>
+
+<!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+Branch: REL9_3_STABLE [5a7e75849] 2014-02-20 10:46:54 +0200
+-->
+
+    <listitem>
+     <para>
+      Add read-only <xref linkend="guc-data-checksums"> parameter to
+      display whether page checksums are enabled (Heikki Linnakangas)
+     </para>
+
+     <para>
+      Without this parameter, determining the state of checksum
+      processing was difficult.
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [6c461cb92] 2014-03-13 20:59:42 -0400
+Branch: REL9_3_STABLE [41bd2cf55] 2014-03-13 20:59:45 -0400
+Branch: REL9_2_STABLE [7a289bb6d] 2014-03-13 20:59:48 -0400
+Branch: REL9_1_STABLE [f16ca9755] 2014-03-13 20:59:51 -0400
+Branch: REL9_0_STABLE [dad55e1e9] 2014-03-13 20:59:55 -0400
+Branch: REL8_4_STABLE [172c53e92] 2014-03-13 20:59:57 -0400
+-->
+
+    <listitem>
+     <para>
+      Prevent interrupts while reporting non-<literal>ERROR</> messages
+      (Tom Lane)
+     </para>
+
+     <para>
+      This guards against rare server-process freezeups due to recursive
+      entry to <function>syslog()</>, and perhaps other related problems.
+     </para>
+    </listitem>
+
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [bd1154ede] 2014-03-16 23:22:21 -0300
+Branch: REL9_3_STABLE [60829079d] 2014-03-16 23:22:22 -0300
+Branch: REL9_2_STABLE [ba5946e86] 2014-03-16 23:22:22 -0300
+Branch: REL9_1_STABLE [f84997c7e] 2014-03-16 23:22:22 -0300
+-->
+
+    <listitem>
+     <para>
+      Fix memory leak in PL/Perl when returning a composite result, including
+      multiple-OUT-parameter cases (Alex Hunsaker)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [e85a5ffba] 2014-03-10 15:47:40 -0400
+Branch: REL9_3_STABLE [f64f4c370] 2014-03-10 15:47:09 -0400
+Branch: REL9_2_STABLE [b315b767f] 2014-03-10 15:47:13 -0400
+-->
+
+    <listitem>
+     <para>
+      Fix tracking of <application>psql</> script line numbers
+      during <literal>\copy</> from out-of-line data
+      (Kumar Rajeev Rastogi, Amit Khandekar)
+     </para>
+
+     <para>
+      <literal>\copy ... from</> incremented the script file line number
+      for each data line, even if the data was not coming from the script
+      file.  This mistake resulted in wrong line numbers being reported for
+      any errors occurring later in the same script file.
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [83204e100] 2014-03-07 16:36:40 -0500
+Branch: REL9_3_STABLE [73f0483fd] 2014-03-07 16:36:50 -0500
+-->
+
+    <listitem>
+     <para>
+      Fix <application>contrib/postgres_fdw</> to handle multiple join
+      conditions properly (Tom Lane)
+     </para>
+
+     <para>
+      This oversight could result in sending <literal>WHERE</> clauses to
+      the remote server for execution even though the clauses are not known
+      to have the same semantics on the remote server (for example, clauses
+      that use non-built-in operators).  The query might succeed anyway,
+      but it could also fail with errors from the remote server, or worse
+      give silently wrong answers.
+     </para>
+    </listitem>
+
+<!--
+Author: Magnus Hagander <magnus@hagander.net>
+Branch: master [7f3e17b48] 2014-02-18 14:45:58 +0100
+Branch: REL9_3_STABLE [b88ecb002] 2014-02-18 14:49:41 +0100
+Branch: REL9_2_STABLE [062deb313] 2014-02-18 14:50:19 +0100
+Branch: REL9_1_STABLE [fae12f331] 2014-03-16 11:46:20 +0100
+Branch: REL9_0_STABLE [665515539] 2014-03-16 11:47:37 +0100
+-->
+
+    <listitem>
+     <para>
+      Prevent intermittent <quote>could not reserve shared memory region</>
+      failures on recent Windows versions (MauMau)
+     </para>
+    </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [aba7f5677] 2014-03-15 13:36:07 -0400
+Branch: REL9_3_STABLE [b5de16997] 2014-03-15 13:36:24 -0400
+Branch: REL9_2_STABLE [f2063b379] 2014-03-15 13:36:32 -0400
+Branch: REL9_1_STABLE [2df1bf21c] 2014-03-15 13:36:41 -0400
+Branch: REL9_0_STABLE [0033f5324] 2014-03-15 13:36:49 -0400
+Branch: REL8_4_STABLE [6e6c2c2e1] 2014-03-15 13:36:57 -0400
+-->
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2014a
+      for DST law changes in Fiji and Turkey, plus historical changes in
+      Israel and Ukraine.
+     </para>
+
+     <para>
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-3-3">
   <title>Release 9.3.3</title>
 
