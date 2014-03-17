@@ -30,18 +30,6 @@
    </para>
 
    <para>
-    Also, the error fixed in the second changelog entry below could have
-    caused some bloat in statistics data.  Users who have done
-    many <command>DROP DATABASE</> commands since upgrading to 9.3 may wish
-    to manually remove files in <filename>$PGDATA/pg_stat_tmp</>
-    (or <filename>$PGDATA/pg_stat</> if the server is not running) that
-    have old modification times and do not correspond to any database OID
-    present in <filename>$PGDATA/base</>.  If you do this, note that the
-    file <filename>db_0.stat</> is a valid file even though it does not
-    correspond to any <filename>$PGDATA/base</> subdirectory.
-   </para>
-
-   <para>
     Also, if you are upgrading from a version earlier than 9.3.3,
     see <xref linkend="release-9-3-3">.
    </para>
@@ -66,27 +54,15 @@ Branch: REL9_3_STABLE [9a57858f1] 2014-02-27 11:23:24 -0300
      </para>
 
      <para>
-      This error allowed multiple versions of the same row to become
-      visible to queries, resulting in apparent duplicates.  Since the
-      error is in WAL replay, it would only manifest during crash recovery
-      or on standby servers.
-     </para>
-    </listitem>
-
-<!--
-Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
-Branch: master [2b4f2ab33] 2014-03-05 13:03:29 -0300
-Branch: REL9_3_STABLE [13ea43ab8] 2014-03-05 13:03:29 -0300
--->
-
-    <listitem>
-     <para>
-      Remove the correct per-database statistics file during <command>DROP
-      DATABASE</> (Tomas Vondra)
-     </para>
-
-     <para>
-      This fix prevents a permanent leak of statistics file space.
+      This error caused updated rows to not be found by index scans, resulting
+      in inconsistent query results depending on whether an index scan was
+      used.  Subsequent processing could result in constraint violations,
+      since the previously updated row would not be found by later index
+      searches, thus possibly allowing conflicting rows to be inserted.
+      Since this error is in WAL replay, it would only manifest during crash
+      recovery or on standby servers.  The improperly-replayed case most
+      commonly arises when a table row that is referenced by a foreign-key
+      constraint is updated concurrently with creation of a referencing row.
      </para>
     </listitem>
 
@@ -264,6 +240,28 @@ Branch: REL9_3_STABLE [e8655a77f] 2014-02-21 17:10:49 -0500
     </listitem>
 
 <!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [2b4f2ab33] 2014-03-05 13:03:29 -0300
+Branch: REL9_3_STABLE [13ea43ab8] 2014-03-05 13:03:29 -0300
+-->
+
+    <listitem>
+     <para>
+      Remove the correct per-database statistics file during <command>DROP
+      DATABASE</> (Tomas Vondra)
+     </para>
+
+     <para>
+      This fix prevents a permanent leak of statistics file space.
+      Users who have done many <command>DROP DATABASE</> commands since
+      upgrading to <productname>PostgreSQL</> 9.3 may wish to check their
+      statistics directory and delete statistics files that do not
+      correspond to any existing database.  Please note
+      that <filename>db_0.stat</> should not be removed.
+     </para>
+    </listitem>
+
+<!--
 Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
 Branch: master [94ae6ba74] 2014-03-06 21:38:51 +0200
 Branch: REL9_3_STABLE [dcd1131c8] 2014-03-06 21:40:50 +0200
@@ -280,6 +278,21 @@ Branch: REL9_3_STABLE [dcd1131c8] 2014-03-06 21:40:50 +0200
       if it was constantly busy sending WAL data; but it expected to see
       ping responses despite that, and would therefore disconnect
       once <xref linkend="guc-wal-sender-timeout"> elapsed.
+     </para>
+    </listitem>
+
+<!--
+Author: Fujii Masao <fujii@postgresql.org>
+Branch: master [5c6d9fc4b] 2014-03-17 20:37:50 +0900
+Branch: REL9_3_STABLE [385723405] 2014-03-17 20:41:12 +0900
+Branch: REL9_2_STABLE [7899aa356] 2014-03-17 20:41:52 +0900
+Branch: REL9_1_STABLE [65e8dbb18] 2014-03-17 20:42:35 +0900
+-->
+
+    <listitem>
+     <para>
+      Fix <application>walsender</>'s failure to shut down cleanly when client
+      is <application>pg_receivexlog</> (Fujii Masao)
      </para>
     </listitem>
 
@@ -353,6 +366,21 @@ Branch: REL8_4_STABLE [172c53e92] 2014-03-13 20:59:57 -0400
     </listitem>
 
 <!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [bd1154ede] 2014-03-16 23:22:21 -0300
+Branch: REL9_3_STABLE [60829079d] 2014-03-16 23:22:22 -0300
+Branch: REL9_2_STABLE [ba5946e86] 2014-03-16 23:22:22 -0300
+Branch: REL9_1_STABLE [f84997c7e] 2014-03-16 23:22:22 -0300
+-->
+
+    <listitem>
+     <para>
+      Fix memory leak in PL/Perl when returning a composite result, including
+      multiple-OUT-parameter cases (Alex Hunsaker)
+     </para>
+    </listitem>
+
+<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [e85a5ffba] 2014-03-10 15:47:40 -0400
 Branch: REL9_3_STABLE [f64f4c370] 2014-03-10 15:47:09 -0400
@@ -401,6 +429,8 @@ Author: Magnus Hagander <magnus@hagander.net>
 Branch: master [7f3e17b48] 2014-02-18 14:45:58 +0100
 Branch: REL9_3_STABLE [b88ecb002] 2014-02-18 14:49:41 +0100
 Branch: REL9_2_STABLE [062deb313] 2014-02-18 14:50:19 +0100
+Branch: REL9_1_STABLE [fae12f331] 2014-03-16 11:46:20 +0100
+Branch: REL9_0_STABLE [665515539] 2014-03-16 11:47:37 +0100
 -->
 
     <listitem>

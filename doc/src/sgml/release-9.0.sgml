@@ -1,6 +1,162 @@
 <!-- doc/src/sgml/release-9.0.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-0-17">
+  <title>Release 9.0.17</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2014-03-20</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 9.0.16.
+   For information about new features in the 9.0 major release, see
+   <xref linkend="release-9-0">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.0.17</title>
+
+   <para>
+    A dump/restore is not required for those running 9.0.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 9.0.15,
+    see <xref linkend="release-9-0-15">.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Restore GIN metapages unconditionally to avoid torn-page risk
+      (Heikki Linnakangas)
+     </para>
+
+     <para>
+      Although this oversight could theoretically result in a corrupted
+      index, it is unlikely to have caused any problems in practice, since
+      the active part of a GIN metapage is smaller than a standard 512-byte
+      disk sector.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid race condition in checking transaction commit status during
+      receipt of a <command>NOTIFY</> message (Marko Tiikkaja)
+     </para>
+
+     <para>
+      This prevents a scenario wherein a sufficiently fast client might
+      respond to a notification before database updates made by the
+      notifier have become visible to the recipient.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow regular-expression operators to be terminated early by query
+      cancel requests (Tom Lane)
+     </para>
+
+     <para>
+      This prevents scenarios wherein a pathological regular expression
+      could lock up a server process uninterruptably for a long time.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Remove incorrect code that tried to allow <literal>OVERLAPS</> with
+      single-element row arguments (Joshua Yanovski)
+     </para>
+
+     <para>
+      This code never worked correctly, and since the case is neither
+      specified by the SQL standard nor documented, it seemed better to
+      remove it than fix it.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid getting more than <literal>AccessShareLock</> when de-parsing a
+      rule or view (Dean Rasheed)
+     </para>
+
+     <para>
+      This oversight resulted in <application>pg_dump</> unexpectedly
+      acquiring <literal>RowExclusiveLock</> locks on tables mentioned as
+      the targets of <literal>INSERT</>/<literal>UPDATE</>/<literal>DELETE</>
+      commands in rules.  While usually harmless, that could interfere with
+      concurrent transactions that tried to acquire, for example,
+      <literal>ShareLock</> on those tables.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve performance of index endpoint probes during planning (Tom Lane)
+     </para>
+
+     <para>
+      This change fixes a significant performance problem that occurred
+      when there were many not-yet-committed rows at the end of the index,
+      which is a common situation for indexes on sequentially-assigned
+      values such as timestamps or sequence-generated identifiers.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix test to see if hot standby connections can be allowed immediately
+      after a crash (Heikki Linnakangas)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent interrupts while reporting non-<literal>ERROR</> messages
+      (Tom Lane)
+     </para>
+
+     <para>
+      This guards against rare server-process freezeups due to recursive
+      entry to <function>syslog()</>, and perhaps other related problems.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent intermittent <quote>could not reserve shared memory region</>
+      failures on recent Windows versions (MauMau)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2014a
+      for DST law changes in Fiji and Turkey, plus historical changes in
+      Israel and Ukraine.
+     </para>
+
+     <para>
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-0-16">
   <title>Release 9.0.16</title>
 
