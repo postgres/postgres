@@ -808,9 +808,20 @@ WalSndLoop(void)
 			 */
 			if (walsender_ready_to_stop)
 			{
+				XLogRecPtr	replicatedPtr;
+
 				/* ... let's just be real sure we're caught up ... */
 				XLogSend(output_message, &caughtup);
-				if (caughtup && XLByteEQ(sentPtr, MyWalSnd->flush) &&
+
+				/*
+				 * Check a write location to see whether all the WAL have
+				 * successfully been replicated if this walsender is connecting
+				 * to a standby such as pg_receivexlog which always returns
+				 * an invalid flush location. Otherwise, check a flush location.
+				 */
+				replicatedPtr = XLogRecPtrIsInvalid(MyWalSnd->flush) ?
+					MyWalSnd->write : MyWalSnd->flush;
+				if (caughtup && XLByteEQ(sentPtr, replicatedPtr) &&
 					!pq_is_send_pending())
 				{
 					walsender_shutdown_requested = true;
