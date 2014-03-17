@@ -251,7 +251,7 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 	 * to exclude them since none of them are mandatory.
 	 */
 	{"sslmode", "PGSSLMODE", DefaultSSLMode, NULL,
-		"SSL-Mode", "", 8,		/* sizeof("disable") == 8 */
+		"SSL-Mode", "", 12,		/* sizeof("verify-full") == 12 */
 	offsetof(struct pg_conn, sslmode)},
 
 	{"sslcompression", "PGSSLCOMPRESSION", "1", NULL,
