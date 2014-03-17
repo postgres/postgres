@@ -1000,7 +1000,7 @@ dsm_impl_keep_segment(dsm_handle handle, void *impl_private)
 	switch (dynamic_shared_memory_type)
 	{
 #ifdef USE_DSM_WINDOWS
-        case DSM_IMPL_WINDOWS:
+		case DSM_IMPL_WINDOWS:
 		{
 			HANDLE		hmap;
 
