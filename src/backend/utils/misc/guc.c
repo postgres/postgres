@@ -1510,7 +1510,7 @@ static struct config_bool ConfigureNamesBool[] =
 
 	{
 		{"data_checksums", PGC_INTERNAL, PRESET_OPTIONS,
-			gettext_noop("Shows whether data checksums are turned on for this cluster"),
+			gettext_noop("Shows whether data checksums are turned on for this cluster."),
 			NULL,
 			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
