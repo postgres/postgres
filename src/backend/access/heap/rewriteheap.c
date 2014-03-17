@@ -783,9 +783,9 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
  * deal with WAL logging at all - an fsync() at the end of a rewrite would be
  * sufficient for crash safety. Any mapping that hasn't been safely flushed to
  * disk has to be by an aborted (explicitly or via a crash) transaction and is
- * ignored by virtue of the xid in it's name being subject to a
+ * ignored by virtue of the xid in its name being subject to a
  * TransactionDidCommit() check. But we want to support having standbys via
- * physical replication, both for availability and to to do logical decoding
+ * physical replication, both for availability and to do logical decoding
  * there.
  * ------------------------------------------------------------------------
  */
@@ -1046,7 +1046,7 @@ logical_rewrite_log_mapping(RewriteState state, TransactionId xid,
 
 /*
  * Perform logical remapping for a tuple that's mapped from old_tid to
- * new_tuple->t_self by rewrite_heap_tuple() iff necessary for the tuple.
+ * new_tuple->t_self by rewrite_heap_tuple() if necessary for the tuple.
  */
 static void
 logical_rewrite_heap_tuple(RewriteState state, ItemPointerData old_tid,

@@ -26,7 +26,7 @@
 /*
  * Delete 'node' from list.
  *
- * It is not allowed to delete a 'node' which is is not in the list 'head'
+ * It is not allowed to delete a 'node' which is not in the list 'head'
  *
  * Caution: this is O(n); consider using slist_delete_current() instead.
  */

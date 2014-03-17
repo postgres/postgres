@@ -1549,7 +1549,7 @@ HeapTupleHeaderIsOnlyLocked(HeapTupleHeader tuple)
 }
 
 /*
- * check whether the transaciont id 'xid' in in the pre-sorted array 'xip'.
+ * check whether the transaciont id 'xid' is in the pre-sorted array 'xip'.
  */
 static bool
 TransactionIdInArray(TransactionId xid, TransactionId *xip, Size num)
@@ -1589,7 +1589,7 @@ HeapTupleSatisfiesHistoricMVCC(HeapTuple htup, Snapshot snapshot,
 		Assert(!TransactionIdDidCommit(xmin));
 		return false;
 	}
-	/* check if its one of our txids, toplevel is also in there */
+	/* check if it's one of our txids, toplevel is also in there */
 	else if (TransactionIdInArray(xmin, snapshot->subxip, snapshot->subxcnt))
 	{
 		bool		resolved;
@@ -1598,7 +1598,7 @@ HeapTupleSatisfiesHistoricMVCC(HeapTuple htup, Snapshot snapshot,
 
 		/*
 		 * another transaction might have (tried to) delete this tuple or
-		 * cmin/cmax was stored in a combocid. S we need to to lookup the
+		 * cmin/cmax was stored in a combocid. So we need to lookup the
 		 * actual values externally.
 		 */
 		resolved = ResolveCminCmaxDuringDecoding(HistoricSnapshotGetTupleCids(), snapshot,
@@ -1662,7 +1662,7 @@ HeapTupleSatisfiesHistoricMVCC(HeapTuple htup, Snapshot snapshot,
 		xmax = HeapTupleGetUpdateXid(tuple);
 	}
 
-	/* check if its one of our txids, toplevel is also in there */
+	/* check if it's one of our txids, toplevel is also in there */
 	if (TransactionIdInArray(xmax, snapshot->subxip, snapshot->subxcnt))
 	{
 		bool resolved;

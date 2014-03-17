@@ -293,7 +293,7 @@ CreateInitDecodingContext(char *plugin,
 	 * So we have to acquire the ProcArrayLock to prevent computation of new
 	 * xmin horizons by other backends, get the safe decoding xid, and inform
 	 * the slot machinery about the new limit. Once that's done the
-	 * ProcArrayLock can be be released as the slot machinery now is
+	 * ProcArrayLock can be released as the slot machinery now is
 	 * protecting against vacuum.
 	 * ----
 	 */

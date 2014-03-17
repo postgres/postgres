@@ -429,7 +429,7 @@ bf_init(PX_Cipher *c, const uint8 *key, unsigned klen, const uint8 *iv)
 
 	/*
 	 * Test if key len is supported. BF_set_key silently cut large keys and it
-	 * could be be a problem when user transfer crypted data from one server
+	 * could be a problem when user transfer crypted data from one server
 	 * to another.
 	 */
 

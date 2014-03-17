@@ -933,7 +933,7 @@ keyGetItem(GinState *ginstate, MemoryContext tempCtx, GinScanKey key,
 	/*
 	 * Ok, we now know that there are no matches < minItem.
 	 *
-	 * If minItem is lossy, it means that there there were no exact items on
+	 * If minItem is lossy, it means that there were no exact items on
 	 * the page among requiredEntries, because lossy pointers sort after exact
 	 * items. However, there might be exact items for the same page among
 	 * additionalEntries, so we mustn't advance past them.

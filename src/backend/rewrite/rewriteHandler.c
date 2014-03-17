@@ -2343,7 +2343,7 @@ relation_is_updatable(Oid reloid,
 
 			/*
 			 * Determine which of the view's columns are updatable. If there
-			 * are none within the set of of columns we are looking at, then
+			 * are none within the set of columns we are looking at, then
 			 * the view doesn't support INSERT/UPDATE, but it may still
 			 * support DELETE.
 			 */

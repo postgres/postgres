@@ -270,7 +270,7 @@
        contains the corresponding query keys. Likewise, the function must
        return GIN_FALSE only if the item does not match, whether or not it 
        contains the GIN_MAYBE keys. If the result depends on the GIN_MAYBE
-       entries, ie. the match cannot be confirmed or refuted based on the
+       entries, i.e. the match cannot be confirmed or refuted based on the
        known query keys, the function must return GIN_MAYBE.
       </para>
       <para>

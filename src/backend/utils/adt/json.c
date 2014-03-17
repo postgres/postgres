@@ -395,7 +395,7 @@ parse_object(JsonLexContext *lex, JsonSemAction *sem)
 		(*ostart) (sem->semstate);
 
 	/*
-	 * Data inside an object at at a higher nesting level than the object
+	 * Data inside an object is at a higher nesting level than the object
 	 * itself. Note that we increment this after we call the semantic routine
 	 * for the object start and restore it before we call the routine for the
 	 * object end.
@@ -473,7 +473,7 @@ parse_array(JsonLexContext *lex, JsonSemAction *sem)
 		(*astart) (sem->semstate);
 
 	/*
-	 * Data inside an array at at a higher nesting level than the array
+	 * Data inside an array is at a higher nesting level than the array
 	 * itself. Note that we increment this after we call the semantic routine
 	 * for the array start and restore it before we call the routine for the
 	 * array end.

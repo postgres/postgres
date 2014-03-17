@@ -55,7 +55,7 @@
  *
  *
  *
- * The snapbuild machinery is starting up in in several stages, as illustrated
+ * The snapbuild machinery is starting up in several stages, as illustrated
  * by the following graph:
  *         +-------------------------+
  *    +----|SNAPBUILD_START          |-------------+
@@ -779,7 +779,7 @@ SnapBuildDistributeNewCatalogSnapshot(SnapBuild *builder, XLogRecPtr lsn)
 		/*
 		 * If we don't have a base snapshot yet, there are no changes in this
 		 * transaction which in turn implies we don't yet need a snapshot at
-		 * all. We'll add add a snapshot when the first change gets queued.
+		 * all. We'll add a snapshot when the first change gets queued.
 		 *
 		 * NB: This works correctly even for subtransactions because
 		 * ReorderBufferCommitChild() takes care to pass the parent the base

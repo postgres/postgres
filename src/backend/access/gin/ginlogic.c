@@ -10,7 +10,7 @@
  * a GIN scan can apply various optimizations, if it can determine that an
  * item matches or doesn't match, even if it doesn't know if some of the keys
  * are present or not. Hence, it's useful to have a ternary-logic consistent
- * function, where where each key can be TRUE (present), FALSE (not present),
+ * function, where each key can be TRUE (present), FALSE (not present),
  * or MAYBE (don't know if present). This file provides such a ternary-logic
  * consistent function,  implemented by calling the regular boolean consistent
  * function many times, with all the MAYBE arguments set to all combinations
