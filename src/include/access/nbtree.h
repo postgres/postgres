@@ -395,7 +395,7 @@ typedef struct xl_btree_unlink_page
 {
 	RelFileNode	node;
 	BlockNumber deadblk;		/* target block being deleted */
-	BlockNumber leftsib;		/* taregt block's left sibling, if any */
+	BlockNumber leftsib;		/* target block's left sibling, if any */
 	BlockNumber rightsib;		/* target block's right sibling */
 
 	/*
