@@ -609,39 +609,22 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid)
 	{
 		Oid			indexoid = lfirst_oid(indexoidscan);
 		Relation	indexRel;
-		HeapTuple	indexTuple;
 		Form_pg_index indexStruct;
 
 		indexRel = index_open(indexoid, RowExclusiveLock);
-		indexTuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexoid));
-		if (!HeapTupleIsValid(indexTuple))		/* should not happen */
-			elog(ERROR, "cache lookup failed for index %u", indexoid);
-		indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
+		indexStruct = indexRel->rd_index;
 
-		/* We're only interested if it is unique and valid. */
-		if (indexStruct->indisunique && IndexIsValid(indexStruct))
+		/*
+		 * We're only interested if it is unique, valid, contains no
+		 * expressions, and is not partial.
+		 */
+		if (indexStruct->indisunique &&
+			IndexIsValid(indexStruct) &&
+			RelationGetIndexExpressions(indexRel) == NIL &&
+			RelationGetIndexPredicate(indexRel) == NIL)
 		{
 			int			numatts = indexStruct->indnatts;
 			int			i;
-
-			/* Skip any index on an expression. */
-			if (RelationGetIndexExpressions(indexRel) != NIL)
-			{
-				index_close(indexRel, NoLock);
-				ReleaseSysCache(indexTuple);
-				continue;
-			}
-
-			/* Skip partial indexes. */
-			if (RelationGetIndexPredicate(indexRel) != NIL)
-			{
-				index_close(indexRel, NoLock);
-				ReleaseSysCache(indexTuple);
-				continue;
-			}
-
-			/* Hold the locks, since we're about to run DML which needs them. */
-			index_close(indexRel, NoLock);
 
 			/* Add quals for all columns from this index. */
 			for (i = 0; i < numatts; i++)
@@ -675,7 +658,9 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid)
 				foundUniqueIndex = true;
 			}
 		}
-		ReleaseSysCache(indexTuple);
+
+		/* Keep the locks, since we're about to run DML which needs them. */
+		index_close(indexRel, NoLock);
 	}
 
 	list_free(indexoidlist);
