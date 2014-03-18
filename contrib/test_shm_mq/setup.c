@@ -92,7 +92,7 @@ setup_dynamic_shared_memory(int64 queue_size, int nworkers,
 {
 	shm_toc_estimator	e;
 	int					i;
-	uint64			segsize;
+	Size			segsize;
 	dsm_segment	   *seg;
 	shm_toc		   *toc;
 	test_shm_mq_header *hdr;
@@ -101,8 +101,12 @@ setup_dynamic_shared_memory(int64 queue_size, int nworkers,
 	if (queue_size < 0 || ((uint64) queue_size) < shm_mq_minimum_size)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("queue size must be at least %lu bytes",
-					(unsigned long) shm_mq_minimum_size)));
+				 errmsg("queue size must be at least %zu bytes",
+						shm_mq_minimum_size)));
+	if (queue_size != ((Size) queue_size))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("queue size overflows size_t")));
 
 	/*
 	 * Estimate how much shared memory we need.
@@ -116,7 +120,7 @@ setup_dynamic_shared_memory(int64 queue_size, int nworkers,
 	shm_toc_initialize_estimator(&e);
 	shm_toc_estimate_chunk(&e, sizeof(test_shm_mq_header));
 	for (i = 0; i <= nworkers; ++i)
-		shm_toc_estimate_chunk(&e, queue_size);
+		shm_toc_estimate_chunk(&e, (Size) queue_size);
 	shm_toc_estimate_keys(&e, 2 + nworkers);
 	segsize = shm_toc_estimate(&e);
 
@@ -138,7 +142,8 @@ setup_dynamic_shared_memory(int64 queue_size, int nworkers,
 	{
 		shm_mq		   *mq;
 
-		mq = shm_mq_create(shm_toc_allocate(toc, queue_size), queue_size);
+		mq = shm_mq_create(shm_toc_allocate(toc, (Size) queue_size),
+						   (Size) queue_size);
 		shm_toc_insert(toc, i + 1, mq);
 
 		if (i == 0)

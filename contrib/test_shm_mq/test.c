@@ -254,12 +254,12 @@ verify_message(Size origlen, char *origdata, Size newlen, char *newdata)
 	if (origlen != newlen)
 		ereport(ERROR,
 				(errmsg("message corrupted"),
-				 errdetail("The original message was " UINT64_FORMAT " bytes but the final message is " UINT64_FORMAT " bytes.",
+				 errdetail("The original message was %zu bytes but the final message is %zu bytes.",
 					 origlen, newlen)));
 
 	for (i = 0; i < origlen; ++i)
 		if (origdata[i] != newdata[i])
 			ereport(ERROR,
 					(errmsg("message corrupted"),
-					 errdetail("The new and original messages differ at byte " UINT64_FORMAT " of " UINT64_FORMAT ".", i, origlen)));
+					 errdetail("The new and original messages differ at byte %zu of %zu.", i, origlen)));
 }
