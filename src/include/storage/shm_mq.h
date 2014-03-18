@@ -57,9 +57,9 @@ extern void shm_mq_detach(shm_mq *);
 
 /* Send or receive messages. */
 extern shm_mq_result shm_mq_send(shm_mq_handle *mqh,
-			uint64 nbytes, void *data, bool nowait);
+			Size nbytes, void *data, bool nowait);
 extern shm_mq_result shm_mq_receive(shm_mq_handle *mqh,
-			   uint64 *nbytesp, void **datap, bool nowait);
+			   Size *nbytesp, void **datap, bool nowait);
 
 /* Wait for our counterparty to attach to the queue. */
 extern shm_mq_result shm_mq_wait_for_attach(shm_mq_handle *mqh);
