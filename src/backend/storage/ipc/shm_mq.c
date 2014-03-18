@@ -763,11 +763,12 @@ shm_mq_send_bytes(shm_mq_handle *mqh, Size nbytes, void *data, bool nowait,
 
 /*
  * Wait until at least *nbytesp bytes are available to be read from the
- * shared message queue, or until the buffer wraps around.  On return,
- * *datap is set to the location at which data bytes can be read.  The
- * return value is the number of bytes available to be read starting at
- * that offset; if the message has wrapped the buffer, it may be less than
- * bytes_needed.
+ * shared message queue, or until the buffer wraps around.  If the queue is
+ * detached, returns SHM_MQ_DETACHED.  If nowait is specified and a wait
+ * would be required, returns SHM_MQ_WOULD_BLOCK.  Otherwise, *datap is set
+ * to the location at which data bytes can be read, *nbytesp is set to the
+ * number of bytes which can be read at that address, and the return value
+ * is SHM_MQ_SUCCESS.
  */
 static shm_mq_result
 shm_mq_receive_bytes(shm_mq *mq, Size bytes_needed, bool nowait,
