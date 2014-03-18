@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
- * pg_recvlogical.c - receive data from a logical decoding slot in a streaming fashion
- *					  and write it to to a local file.
+ * pg_recvlogical.c - receive data from a logical decoding slot in a streaming
+ *					  fashion and write it to a local file.
  *
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
  *
@@ -110,7 +110,7 @@ sendFeedback(PGconn *conn, int64 now, bool force, bool replyRequested)
 	int			len = 0;
 
 	/*
-	 * we normally don't want to send superflous feedbacks, but if it's
+	 * we normally don't want to send superfluous feedbacks, but if it's
 	 * because of a timeout we need to, otherwise wal_sender_timeout will
 	 * kill us.
 	 */

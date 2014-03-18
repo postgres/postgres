@@ -23,7 +23,7 @@ SELECT relreplident FROM pg_class WHERE oid = 'pg_class'::regclass;
 SELECT relreplident FROM pg_class WHERE oid = 'pg_constraint'::regclass;
 
 ----
--- Make sure we detect inelegible indexes
+-- Make sure we detect ineligible indexes
 ----
 
 -- fail, not unique

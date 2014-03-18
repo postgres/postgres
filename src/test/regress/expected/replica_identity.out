@@ -34,7 +34,7 @@ SELECT relreplident FROM pg_class WHERE oid = 'pg_constraint'::regclass;
 (1 row)
 
 ----
--- Make sure we detect inelegible indexes
+-- Make sure we detect ineligible indexes
 ----
 -- fail, not unique
 ALTER TABLE test_replica_identity REPLICA IDENTITY USING INDEX test_replica_identity_keyab;
