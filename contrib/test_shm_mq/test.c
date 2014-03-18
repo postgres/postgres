@@ -26,7 +26,7 @@ void		_PG_init(void);
 Datum		test_shm_mq(PG_FUNCTION_ARGS);
 Datum		test_shm_mq_pipelined(PG_FUNCTION_ARGS);
 
-static void verify_message(uint64 origlen, char *origdata, uint64 newlen,
+static void verify_message(Size origlen, char *origdata, Size newlen,
 			   char *newdata);
 
 /*
@@ -50,7 +50,7 @@ test_shm_mq(PG_FUNCTION_ARGS)
 	shm_mq_handle *outqh;
 	shm_mq_handle *inqh;
 	shm_mq_result	res;
-	uint64		len;
+	Size		len;
 	void	   *data;
 
 	/* A negative loopcount is nonsensical. */
@@ -142,7 +142,7 @@ test_shm_mq_pipelined(PG_FUNCTION_ARGS)
 	shm_mq_handle *outqh;
 	shm_mq_handle *inqh;
 	shm_mq_result	res;
-	uint64		len;
+	Size		len;
 	void	   *data;
 
 	/* A negative loopcount is nonsensical. */
@@ -247,9 +247,9 @@ test_shm_mq_pipelined(PG_FUNCTION_ARGS)
  * Verify that two messages are the same.
  */
 static void
-verify_message(uint64 origlen, char *origdata, uint64 newlen, char *newdata)
+verify_message(Size origlen, char *origdata, Size newlen, char *newdata)
 {
-	uint64	i;
+	Size	i;
 
 	if (origlen != newlen)
 		ereport(ERROR,

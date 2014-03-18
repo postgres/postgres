@@ -180,7 +180,7 @@ attach_to_queues(dsm_segment *seg, shm_toc *toc, int myworkernumber,
 static void
 copy_messages(shm_mq_handle *inqh, shm_mq_handle *outqh)
 {
-	uint64		len;
+	Size		len;
 	void	   *data;
 	shm_mq_result res;
 
