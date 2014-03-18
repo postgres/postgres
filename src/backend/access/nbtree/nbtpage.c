@@ -992,6 +992,7 @@ _bt_lock_branch_parent(Relation rel, BlockNumber child, BTStack stack,
 	Buffer		pbuf;
 	Page		page;
 	BTPageOpaque opaque;
+	BlockNumber leftsib;
 
 	/* Locate the parent's downlink (updating the stack entry if needed) */
 	ItemPointerSet(&(stack->bts_btentry.t_tid), child, P_HIKEY);
@@ -1020,7 +1021,8 @@ _bt_lock_branch_parent(Relation rel, BlockNumber child, BTStack stack,
 			 * We have to check the parent itself, and then recurse to test
 			 * the conditions at the parent's parent.
 			 */
-			if (P_RIGHTMOST(opaque) || P_ISROOT(opaque))
+			if (P_RIGHTMOST(opaque) || P_ISROOT(opaque) ||
+				P_INCOMPLETE_SPLIT(opaque))
 			{
 				_bt_relbuf(rel, pbuf);
 				return false;
@@ -1028,8 +1030,41 @@ _bt_lock_branch_parent(Relation rel, BlockNumber child, BTStack stack,
 
 			*target = parent;
 			*rightsib = opaque->btpo_next;
+			leftsib = opaque->btpo_prev;
 
 			_bt_relbuf(rel, pbuf);
+
+			/*
+			 * Like in _bt_pagedel, check that the left sibling is not marked
+			 * with INCOMPLETE_SPLIT flag.  That would mean that there is no
+			 * downlink to the page to be deleted, and the page deletion
+			 * algorithm isn't prepared to handle that.
+			 */
+			if (leftsib != P_NONE)
+			{
+				Buffer		lbuf;
+				Page		lpage;
+				BTPageOpaque lopaque;
+
+				lbuf = _bt_getbuf(rel, leftsib, BT_READ);
+				lpage = BufferGetPage(lbuf);
+				lopaque = (BTPageOpaque) PageGetSpecialPointer(lpage);
+				/*
+				 * If the left sibling was concurrently split, so that its
+				 * next-pointer doesn't point to the current page anymore,
+				 * the split that created the current page must be completed.
+				 * (We don't allow splitting an incompletely split page again
+				 * until the previous split has been completed)
+				 */
+				if (lopaque->btpo_next == parent &&
+					P_INCOMPLETE_SPLIT(lopaque))
+				{
+					_bt_relbuf(rel, lbuf);
+					return false;
+				}
+				_bt_relbuf(rel, lbuf);
+			}
+
 			return _bt_lock_branch_parent(rel, parent, stack->bts_parent,
 										  topparent, topoff, target, rightsib);
 		}
@@ -1081,6 +1116,10 @@ _bt_pagedel(Relation rel, Buffer buf)
 	 * "stack" is a search stack leading (approximately) to the target page.
 	 * It is initially NULL, but when iterating, we keep it to avoid
 	 * duplicated search effort.
+	 *
+	 * Also, when "stack" is not NULL, we have already checked that the
+	 * current page is not the right half of an incomplete split, i.e. the
+	 * left sibling does not have its INCOMPLETE_SPLIT flag set.
 	 */
 	BTStack		stack = NULL;
 
@@ -1117,11 +1156,25 @@ _bt_pagedel(Relation rel, Buffer buf)
 		}
 
 		/*
-		 * We can never delete rightmost pages nor root pages.	While at it,
-		 * check that page is not already deleted and is empty.
+		 * We can never delete rightmost pages nor root pages.  While at
+		 * it, check that page is not already deleted and is empty.
+		 *
+		 * To keep the algorithm simple, we also never delete an incompletely
+		 * split page (they should be rare enough that this doesn't make any
+		 * meaningful difference to disk usage):
+		 *
+		 * The INCOMPLETE_SPLIT flag on the page tells us if the page is the
+		 * left half of an incomplete split, but ensuring that it's not the
+		 * right half is more complicated.  For that, we have to check that
+		 * the left sibling doesn't have its INCOMPLETE_SPLIT flag set.  On
+		 * the first iteration, we temporarily release the lock on the
+		 * current page, and check the left sibling and also construct a
+		 * search stack to.  On subsequent iterations, we know we stepped right
+		 * from a page that passed these tests, so it's OK.
 		 */
 		if (P_RIGHTMOST(opaque) || P_ISROOT(opaque) || P_ISDELETED(opaque) ||
-			P_FIRSTDATAKEY(opaque) <= PageGetMaxOffsetNumber(page))
+			P_FIRSTDATAKEY(opaque) <= PageGetMaxOffsetNumber(page) ||
+			P_INCOMPLETE_SPLIT(opaque))
 		{
 			/* Should never fail to delete a half-dead page */
 			Assert(!P_ISHALFDEAD(opaque));
@@ -1142,6 +1195,9 @@ _bt_pagedel(Relation rel, Buffer buf)
 			 * use the standard search mechanism to search for the page's high
 			 * key; this will give us a link to either the current parent or
 			 * someplace to its left (if there are multiple equal high keys).
+			 *
+			 * Also check if this is the right-half of an incomplete split
+			 * (see comment above).
 			 */
 			if (!stack)
 			{
@@ -1149,15 +1205,42 @@ _bt_pagedel(Relation rel, Buffer buf)
 				ItemId		itemid;
 				IndexTuple	targetkey;
 				Buffer		lbuf;
+				BlockNumber	leftsib;
 
 				itemid = PageGetItemId(page, P_HIKEY);
 				targetkey = CopyIndexTuple((IndexTuple) PageGetItem(page, itemid));
+
+				leftsib = opaque->btpo_prev;
 
 				/*
 				 * To avoid deadlocks, we'd better drop the leaf page lock
 				 * before going further.
 				 */
 				LockBuffer(buf, BUFFER_LOCK_UNLOCK);
+
+				/*
+				 * Fetch the left sibling, to check that it's not marked
+				 * with INCOMPLETE_SPLIT flag.  That would mean that the
+				 * page to-be-deleted doesn't have a downlink, and the page
+				 * deletion algorithm isn't prepared to handle that.
+				 */
+				if (!P_LEFTMOST(opaque))
+				{
+					BTPageOpaque lopaque;
+					Page		lpage;
+
+					lbuf = _bt_getbuf(rel, leftsib, BT_READ);
+					lpage = BufferGetPage(lbuf);
+					lopaque = (BTPageOpaque) PageGetSpecialPointer(lpage);
+					if (lopaque->btpo_next == BufferGetBlockNumber(buf) &&
+						P_INCOMPLETE_SPLIT(lopaque))
+					{
+						ReleaseBuffer(buf);
+						_bt_relbuf(rel, lbuf);
+						return ndeleted;
+					}
+					_bt_relbuf(rel, lbuf);
+				}
 
 				/* we need an insertion scan key for the search, so build one */
 				itup_scankey = _bt_mkscankey(rel, targetkey);

@@ -51,7 +51,8 @@ static bool _bt_endpoint(IndexScanDesc scan, ScanDirection dir);
  * NOTE that the returned buffer is read-locked regardless of the access
  * parameter.  However, access = BT_WRITE will allow an empty root page
  * to be created and returned.	When access = BT_READ, an empty index
- * will result in *bufP being set to InvalidBuffer.
+ * will result in *bufP being set to InvalidBuffer.  Also, in BT_WRITE mode,
+ * any incomplete splits encountered during the search will be finished.
  */
 BTStack
 _bt_search(Relation rel, int keysz, ScanKey scankey, bool nextkey,
@@ -82,8 +83,17 @@ _bt_search(Relation rel, int keysz, ScanKey scankey, bool nextkey,
 		 * Race -- the page we just grabbed may have split since we read its
 		 * pointer in the parent (or metapage).  If it has, we may need to
 		 * move right to its new sibling.  Do that.
+		 *
+		 * In write-mode, allow _bt_moveright to finish any incomplete splits
+		 * along the way.  Strictly speaking, we'd only need to finish an
+		 * incomplete split on the leaf page we're about to insert to, not on
+		 * any of the upper levels (they is taken care of in _bt_getstackbuf,
+		 * if the leaf page is split and we insert to the parent page).  But
+		 * this is a good opportunity to finish splits of internal pages too.
 		 */
-		*bufP = _bt_moveright(rel, *bufP, keysz, scankey, nextkey, BT_READ);
+		*bufP = _bt_moveright(rel, *bufP, keysz, scankey, nextkey,
+							  (access == BT_WRITE), stack_in,
+							  BT_READ);
 
 		/* if this is a leaf page, we're done */
 		page = BufferGetPage(*bufP);
@@ -148,6 +158,11 @@ _bt_search(Relation rel, int keysz, ScanKey scankey, bool nextkey,
  * item >= scankey.  When nextkey is true, we are looking for the first
  * item strictly greater than scankey.
  *
+ * If forupdate is true, we will attempt to finish any incomplete splits
+ * that we encounter.  This is required when locking a target page for an
+ * insertion, because we don't allow inserting on a page before the split
+ * is completed.  'stack' is only used if forupdate is true.
+ *
  * On entry, we have the buffer pinned and a lock of the type specified by
  * 'access'.  If we move right, we release the buffer and lock and acquire
  * the same on the right sibling.  Return value is the buffer we stop at.
@@ -158,14 +173,13 @@ _bt_moveright(Relation rel,
 			  int keysz,
 			  ScanKey scankey,
 			  bool nextkey,
+			  bool forupdate,
+			  BTStack stack,
 			  int access)
 {
 	Page		page;
 	BTPageOpaque opaque;
 	int32		cmpval;
-
-	page = BufferGetPage(buf);
-	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
 	/*
 	 * When nextkey = false (normal case): if the scan key that brought us to
@@ -184,16 +198,46 @@ _bt_moveright(Relation rel,
 	 */
 	cmpval = nextkey ? 0 : 1;
 
-	while (!P_RIGHTMOST(opaque) &&
-		   (P_IGNORE(opaque) ||
-			_bt_compare(rel, keysz, scankey, page, P_HIKEY) >= cmpval))
+	for (;;)
 	{
-		/* step right one page */
-		BlockNumber rblkno = opaque->btpo_next;
-
-		buf = _bt_relandgetbuf(rel, buf, rblkno, access);
 		page = BufferGetPage(buf);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+
+		if (P_RIGHTMOST(opaque))
+			break;
+
+		/*
+		 * Finish any incomplete splits we encounter along the way.
+		 */
+		if (forupdate && P_INCOMPLETE_SPLIT(opaque))
+		{
+			BlockNumber blkno = BufferGetBlockNumber(buf);
+
+			/* upgrade our lock if necessary */
+			if (access == BT_READ)
+			{
+				LockBuffer(buf, BUFFER_LOCK_UNLOCK);
+				LockBuffer(buf, BT_WRITE);
+			}
+
+			if (P_INCOMPLETE_SPLIT(opaque))
+				_bt_finish_split(rel, buf, stack);
+			else
+				_bt_relbuf(rel, buf);
+
+			/* re-acquire the lock in the right mode, and re-check */
+			buf = _bt_getbuf(rel, blkno, access);
+			continue;
+		}
+
+		if (P_IGNORE(opaque) || _bt_compare(rel, keysz, scankey, page, P_HIKEY) >= cmpval)
+		{
+			/* step right one page */
+			buf = _bt_relandgetbuf(rel, buf, opaque->btpo_next, access);
+			continue;
+		}
+		else
+			break;
 	}
 
 	if (P_IGNORE(opaque))

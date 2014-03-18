@@ -73,6 +73,7 @@ typedef BTPageOpaqueData *BTPageOpaque;
 #define BTP_HALF_DEAD	(1 << 4)	/* empty, but still in tree */
 #define BTP_SPLIT_END	(1 << 5)	/* rightmost page of split group */
 #define BTP_HAS_GARBAGE (1 << 6)	/* page has LP_DEAD tuples */
+#define BTP_INCOMPLETE_SPLIT (1 << 7) /* right sibling's downlink is missing */
 
 /*
  * The max allowed value of a cycle ID is a bit less than 64K.	This is
@@ -178,6 +179,7 @@ typedef struct BTMetaPageData
 #define P_ISHALFDEAD(opaque)	((opaque)->btpo_flags & BTP_HALF_DEAD)
 #define P_IGNORE(opaque)		((opaque)->btpo_flags & (BTP_DELETED|BTP_HALF_DEAD))
 #define P_HAS_GARBAGE(opaque)	((opaque)->btpo_flags & BTP_HAS_GARBAGE)
+#define P_INCOMPLETE_SPLIT(opaque)	((opaque)->btpo_flags & BTP_INCOMPLETE_SPLIT)
 
 /*
  *	Lehman and Yao's algorithm requires a ``high key'' on every non-rightmost
@@ -253,7 +255,7 @@ typedef struct xl_btree_metadata
 typedef struct xl_btree_insert
 {
 	xl_btreetid target;			/* inserted tuple id */
-	/* BlockNumber downlink field FOLLOWS IF NOT XLOG_BTREE_INSERT_LEAF */
+	/* BlockNumber finishes_split field FOLLOWS IF NOT XLOG_BTREE_INSERT_LEAF */
 	/* xl_btree_metadata FOLLOWS IF XLOG_BTREE_INSERT_META */
 	/* INDEX TUPLE FOLLOWS AT END OF STRUCT */
 } xl_btree_insert;
@@ -286,19 +288,18 @@ typedef struct xl_btree_split
 	OffsetNumber firstright;	/* first item moved to right page */
 
 	/*
-	 * If level > 0, BlockIdData downlink follows.	(We use BlockIdData rather
-	 * than BlockNumber for alignment reasons: SizeOfBtreeSplit is only 16-bit
-	 * aligned.)
+	 * In the _L variants, next are OffsetNumber newitemoff and the new item.
+	 * (In the _R variants, the new item is one of the right page's tuples.)
+	 * The new item, but not newitemoff, is suppressed if XLogInsert chooses
+	 * to store the left page's whole page image.
 	 *
 	 * If level > 0, an IndexTuple representing the HIKEY of the left page
 	 * follows.  We don't need this on leaf pages, because it's the same as
 	 * the leftmost key in the new right page.	Also, it's suppressed if
 	 * XLogInsert chooses to store the left page's whole page image.
 	 *
-	 * In the _L variants, next are OffsetNumber newitemoff and the new item.
-	 * (In the _R variants, the new item is one of the right page's tuples.)
-	 * The new item, but not newitemoff, is suppressed if XLogInsert chooses
-	 * to store the left page's whole page image.
+	 * If level > 0, BlockNumber of the page whose incomplete-split flag
+	 * this insertion clears. (not aligned)
 	 *
 	 * Last are the right page's tuples in the form used by _bt_restore_page.
 	 */
@@ -642,8 +643,7 @@ extern Datum btoptions(PG_FUNCTION_ARGS);
 extern bool _bt_doinsert(Relation rel, IndexTuple itup,
 			 IndexUniqueCheck checkUnique, Relation heapRel);
 extern Buffer _bt_getstackbuf(Relation rel, BTStack stack, int access);
-extern void _bt_insert_parent(Relation rel, Buffer buf, Buffer rbuf,
-				  BTStack stack, bool is_root, bool is_only);
+extern void _bt_finish_split(Relation rel, Buffer bbuf, BTStack stack);
 
 /*
  * prototypes for functions in nbtpage.c
@@ -673,7 +673,8 @@ extern BTStack _bt_search(Relation rel,
 		   int keysz, ScanKey scankey, bool nextkey,
 		   Buffer *bufP, int access);
 extern Buffer _bt_moveright(Relation rel, Buffer buf, int keysz,
-			  ScanKey scankey, bool nextkey, int access);
+			  ScanKey scankey, bool nextkey, bool forupdate, BTStack stack,
+			  int access);
 extern OffsetNumber _bt_binsrch(Relation rel, Buffer buf, int keysz,
 			ScanKey scankey, bool nextkey);
 extern int32 _bt_compare(Relation rel, int keysz, ScanKey scankey,
@@ -722,8 +723,5 @@ extern void _bt_leafbuild(BTSpool *btspool, BTSpool *spool2);
  */
 extern void btree_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void btree_desc(StringInfo buf, uint8 xl_info, char *rec);
-extern void btree_xlog_startup(void);
-extern void btree_xlog_cleanup(void);
-extern bool btree_safe_restartpoint(void);
 
 #endif   /* NBTREE_H */

@@ -57,15 +57,18 @@ static void _bt_findinsertloc(Relation rel,
 				  int keysz,
 				  ScanKey scankey,
 				  IndexTuple newtup,
+				  BTStack stack,
 				  Relation heapRel);
-static void _bt_insertonpg(Relation rel, Buffer buf,
+static void _bt_insertonpg(Relation rel, Buffer buf, Buffer cbuf,
 			   BTStack stack,
 			   IndexTuple itup,
 			   OffsetNumber newitemoff,
 			   bool split_only_page);
-static Buffer _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
-		  OffsetNumber newitemoff, Size newitemsz,
+static Buffer _bt_split(Relation rel, Buffer buf, Buffer cbuf,
+		  OffsetNumber firstright, OffsetNumber newitemoff, Size newitemsz,
 		  IndexTuple newitem, bool newitemonleft);
+static void _bt_insert_parent(Relation rel, Buffer buf, Buffer rbuf,
+				  BTStack stack, bool is_root, bool is_only);
 static OffsetNumber _bt_findsplitloc(Relation rel, Page page,
 				 OffsetNumber newitemoff,
 				 Size newitemsz,
@@ -129,7 +132,8 @@ top:
 	 * move right in the tree.	See Lehman and Yao for an excruciatingly
 	 * precise description.
 	 */
-	buf = _bt_moveright(rel, buf, natts, itup_scankey, false, BT_WRITE);
+	buf = _bt_moveright(rel, buf, natts, itup_scankey, false,
+						true, stack, BT_WRITE);
 
 	/*
 	 * If we're not allowing duplicates, make sure the key isn't already in
@@ -182,8 +186,9 @@ top:
 		 */
 		CheckForSerializableConflictIn(rel, NULL, buf);
 		/* do the insertion */
-		_bt_findinsertloc(rel, &buf, &offset, natts, itup_scankey, itup, heapRel);
-		_bt_insertonpg(rel, buf, stack, itup, offset, false);
+		_bt_findinsertloc(rel, &buf, &offset, natts, itup_scankey, itup,
+						  stack, heapRel);
+		_bt_insertonpg(rel, buf, InvalidBuffer, stack, itup, offset, false);
 	}
 	else
 	{
@@ -507,6 +512,7 @@ _bt_findinsertloc(Relation rel,
 				  int keysz,
 				  ScanKey scankey,
 				  IndexTuple newtup,
+				  BTStack stack,
 				  Relation heapRel)
 {
 	Buffer		buf = *bufptr;
@@ -568,6 +574,7 @@ _bt_findinsertloc(Relation rel,
 	while (PageGetFreeSpace(page) < itemsz)
 	{
 		Buffer		rbuf;
+		BlockNumber	rblkno;
 
 		/*
 		 * before considering moving right, see if we can obtain enough space
@@ -605,18 +612,33 @@ _bt_findinsertloc(Relation rel,
 		 */
 		rbuf = InvalidBuffer;
 
+		rblkno = lpageop->btpo_next;
 		for (;;)
 		{
-			BlockNumber rblkno = lpageop->btpo_next;
-
 			rbuf = _bt_relandgetbuf(rel, rbuf, rblkno, BT_WRITE);
 			page = BufferGetPage(rbuf);
 			lpageop = (BTPageOpaque) PageGetSpecialPointer(page);
+
+			/*
+			 * If this page was incompletely split, finish the split now.
+			 * We do this while holding a lock on the left sibling, which
+			 * is not good because finishing the split could be a fairly
+			 * lengthy operation.  But this should happen very seldom.
+			 */
+			if (P_INCOMPLETE_SPLIT(lpageop))
+			{
+				_bt_finish_split(rel, rbuf, stack);
+				rbuf = InvalidBuffer;
+				continue;
+			}
+
 			if (!P_IGNORE(lpageop))
 				break;
 			if (P_RIGHTMOST(lpageop))
 				elog(ERROR, "fell off the end of index \"%s\"",
 					 RelationGetRelationName(rel));
+
+			rblkno = lpageop->btpo_next;
 		}
 		_bt_relbuf(rel, buf);
 		buf = rbuf;
@@ -658,9 +680,13 @@ _bt_findinsertloc(Relation rel,
  *			   child page on the parent.
  *			+  updates the metapage if a true root or fast root is split.
  *
- *		On entry, we must have the right buffer in which to do the
+ *		On entry, we must have the correct buffer in which to do the
  *		insertion, and the buffer must be pinned and write-locked.	On return,
  *		we will have dropped both the pin and the lock on the buffer.
+ *
+ *		When inserting to a non-leaf page, 'cbuf' is the left-sibling of the
+ *		page we're inserting the downlink for.  This function will clear the
+ *		INCOMPLETE_SPLIT flag on it, and release the buffer.
  *
  *		The locking interactions in this code are critical.  You should
  *		grok Lehman and Yao's paper before making any changes.  In addition,
@@ -675,6 +701,7 @@ _bt_findinsertloc(Relation rel,
 static void
 _bt_insertonpg(Relation rel,
 			   Buffer buf,
+			   Buffer cbuf,
 			   BTStack stack,
 			   IndexTuple itup,
 			   OffsetNumber newitemoff,
@@ -687,6 +714,14 @@ _bt_insertonpg(Relation rel,
 
 	page = BufferGetPage(buf);
 	lpageop = (BTPageOpaque) PageGetSpecialPointer(page);
+
+	/* child buffer must be given iff inserting on an internal page */
+	Assert(P_ISLEAF(lpageop) == !BufferIsValid(cbuf));
+
+	/* The caller should've finished any incomplete splits already. */
+	if (P_INCOMPLETE_SPLIT(lpageop))
+		elog(ERROR, "cannot insert to incompletely split page %u",
+			 BufferGetBlockNumber(buf));
 
 	itemsz = IndexTupleDSize(*itup);
 	itemsz = MAXALIGN(itemsz);	/* be safe, PageAddItem will do this but we
@@ -712,7 +747,7 @@ _bt_insertonpg(Relation rel,
 									  &newitemonleft);
 
 		/* split the buffer into left and right halves */
-		rbuf = _bt_split(rel, buf, firstright,
+		rbuf = _bt_split(rel, buf, cbuf, firstright,
 						 newitemoff, itemsz, itup, newitemonleft);
 		PredicateLockPageSplit(rel,
 							   BufferGetBlockNumber(buf),
@@ -786,11 +821,22 @@ _bt_insertonpg(Relation rel,
 			MarkBufferDirty(metabuf);
 		}
 
+		/* clear INCOMPLETE_SPLIT flag on child if inserting a downlink */
+		if (BufferIsValid(cbuf))
+		{
+			Page		cpage = BufferGetPage(cbuf);
+			BTPageOpaque cpageop = (BTPageOpaque) PageGetSpecialPointer(cpage);
+
+			Assert(P_INCOMPLETE_SPLIT(cpageop));
+			cpageop->btpo_flags &= ~BTP_INCOMPLETE_SPLIT;
+			MarkBufferDirty(cbuf);
+		}
+
 		/* XLOG stuff */
 		if (RelationNeedsWAL(rel))
 		{
 			xl_btree_insert xlrec;
-			BlockNumber xldownlink;
+			BlockNumber xlleftchild;
 			xl_btree_metadata xlmeta;
 			uint8		xlinfo;
 			XLogRecPtr	recptr;
@@ -810,12 +856,15 @@ _bt_insertonpg(Relation rel,
 				xlinfo = XLOG_BTREE_INSERT_LEAF;
 			else
 			{
-				xldownlink = ItemPointerGetBlockNumber(&(itup->t_tid));
-				Assert(ItemPointerGetOffsetNumber(&(itup->t_tid)) == P_HIKEY);
-
-				nextrdata->data = (char *) &xldownlink;
+				/*
+				 * Include the block number of the left child, whose
+				 * INCOMPLETE_SPLIT flag was cleared.
+				 */
+				xlleftchild = BufferGetBlockNumber(cbuf);
+				nextrdata->data = (char *) &xlleftchild;
 				nextrdata->len = sizeof(BlockNumber);
-				nextrdata->buffer = InvalidBuffer;
+				nextrdata->buffer = cbuf;
+				nextrdata->buffer_std = true;
 				nextrdata->next = nextrdata + 1;
 				nextrdata++;
 
@@ -870,7 +919,8 @@ _bt_insertonpg(Relation rel,
 		/* release buffers */
 		if (BufferIsValid(metabuf))
 			_bt_relbuf(rel, metabuf);
-
+		if (BufferIsValid(cbuf))
+			_bt_relbuf(rel, cbuf);
 		_bt_relbuf(rel, buf);
 	}
 }
@@ -883,11 +933,15 @@ _bt_insertonpg(Relation rel,
  *		new right page.  newitemoff etc. tell us about the new item that
  *		must be inserted along with the data from the old page.
  *
+ *		When splitting a non-leaf page, 'cbuf' is the left-sibling of the
+ *		page we're inserting the downlink for.  This function will clear the
+ *		INCOMPLETE_SPLIT flag on it, and release the buffer.
+ *
  *		Returns the new right sibling of buf, pinned and write-locked.
  *		The pin and lock on buf are maintained.
  */
 static Buffer
-_bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
+_bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
 		  OffsetNumber newitemoff, Size newitemsz, IndexTuple newitem,
 		  bool newitemonleft)
 {
@@ -911,6 +965,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	OffsetNumber maxoff;
 	OffsetNumber i;
 	bool		isroot;
+	bool		isleaf;
 
 	/* Acquire a new page to split into */
 	rbuf = _bt_getbuf(rel, P_NEW, BT_WRITE);
@@ -949,12 +1004,15 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	ropaque = (BTPageOpaque) PageGetSpecialPointer(rightpage);
 
 	isroot = P_ISROOT(oopaque);
+	isleaf = P_ISLEAF(oopaque);
 
 	/* if we're splitting this page, it won't be the root when we're done */
 	/* also, clear the SPLIT_END and HAS_GARBAGE flags in both pages */
 	lopaque->btpo_flags = oopaque->btpo_flags;
 	lopaque->btpo_flags &= ~(BTP_ROOT | BTP_SPLIT_END | BTP_HAS_GARBAGE);
 	ropaque->btpo_flags = lopaque->btpo_flags;
+	/* set flag in left page indicating that the right page has no downlink */
+	lopaque->btpo_flags |= BTP_INCOMPLETE_SPLIT;
 	lopaque->btpo_prev = oopaque->btpo_prev;
 	lopaque->btpo_next = rightpagenumber;
 	ropaque->btpo_prev = origpagenumber;
@@ -1178,6 +1236,19 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		MarkBufferDirty(sbuf);
 	}
 
+	/*
+	 * Clear INCOMPLETE_SPLIT flag on child if inserting the new item finishes
+	 * a split.
+	 */
+	if (!isleaf)
+	{
+		Page		cpage = BufferGetPage(cbuf);
+		BTPageOpaque cpageop = (BTPageOpaque) PageGetSpecialPointer(cpage);
+
+		cpageop->btpo_flags &= ~BTP_INCOMPLETE_SPLIT;
+		MarkBufferDirty(cbuf);
+	}
+
 	/* XLOG stuff */
 	if (RelationNeedsWAL(rel))
 	{
@@ -1186,6 +1257,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		XLogRecPtr	recptr;
 		XLogRecData rdata[7];
 		XLogRecData *lastrdata;
+		BlockNumber cblkno;
 
 		xlrec.node = rel->rd_node;
 		xlrec.leftsib = origpagenumber;
@@ -1199,34 +1271,6 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		rdata[0].buffer = InvalidBuffer;
 
 		lastrdata = &rdata[0];
-
-		if (ropaque->btpo.level > 0)
-		{
-			/* Log downlink on non-leaf pages */
-			lastrdata->next = lastrdata + 1;
-			lastrdata++;
-
-			lastrdata->data = (char *) &newitem->t_tid.ip_blkid;
-			lastrdata->len = sizeof(BlockIdData);
-			lastrdata->buffer = InvalidBuffer;
-
-			/*
-			 * We must also log the left page's high key, because the right
-			 * page's leftmost key is suppressed on non-leaf levels.  Show it
-			 * as belonging to the left page buffer, so that it is not stored
-			 * if XLogInsert decides it needs a full-page image of the left
-			 * page.
-			 */
-			lastrdata->next = lastrdata + 1;
-			lastrdata++;
-
-			itemid = PageGetItemId(origpage, P_HIKEY);
-			item = (IndexTuple) PageGetItem(origpage, itemid);
-			lastrdata->data = (char *) item;
-			lastrdata->len = MAXALIGN(IndexTupleSize(item));
-			lastrdata->buffer = buf;	/* backup block 1 */
-			lastrdata->buffer_std = true;
-		}
 
 		/*
 		 * Log the new item and its offset, if it was inserted on the left
@@ -1254,20 +1298,59 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 			lastrdata->buffer = buf;	/* backup block 1 */
 			lastrdata->buffer_std = true;
 		}
-		else if (ropaque->btpo.level == 0)
+
+		/* Log left page */
+		if (!isleaf)
 		{
-			/*
-			 * Although we don't need to WAL-log the new item, we still need
-			 * XLogInsert to consider storing a full-page image of the left
-			 * page, so make an empty entry referencing that buffer. This also
-			 * ensures that the left page is always backup block 1.
-			 */
 			lastrdata->next = lastrdata + 1;
 			lastrdata++;
 
+			/*
+			 * We must also log the left page's high key, because the right
+			 * page's leftmost key is suppressed on non-leaf levels.  Show it
+			 * as belonging to the left page buffer, so that it is not stored
+			 * if XLogInsert decides it needs a full-page image of the left
+			 * page.
+			 */
+			itemid = PageGetItemId(origpage, P_HIKEY);
+			item = (IndexTuple) PageGetItem(origpage, itemid);
+			lastrdata->data = (char *) item;
+			lastrdata->len = MAXALIGN(IndexTupleSize(item));
+			lastrdata->buffer = buf;	/* backup block 1 */
+			lastrdata->buffer_std = true;
+		}
+
+		if (isleaf && !newitemonleft)
+		{
+			lastrdata->next = lastrdata + 1;
+			lastrdata++;
+
+			/*
+			 * Although we don't need to WAL-log anything on the left page,
+			 * we still need XLogInsert to consider storing a full-page image
+			 * of the left page, so make an empty entry referencing that
+			 * buffer. This also ensures that the left page is always backup
+			 * block 1.
+			 */
 			lastrdata->data = NULL;
 			lastrdata->len = 0;
 			lastrdata->buffer = buf;	/* backup block 1 */
+			lastrdata->buffer_std = true;
+		}
+
+		/*
+		 * Log block number of left child, whose INCOMPLETE_SPLIT flag this
+		 * insertion clears.
+		 */
+		if (!isleaf)
+		{
+			lastrdata->next = lastrdata + 1;
+			lastrdata++;
+
+			cblkno = BufferGetBlockNumber(cbuf);
+			lastrdata->data = (char *) &cblkno;
+			lastrdata->len = sizeof(BlockNumber);
+			lastrdata->buffer = cbuf;	/* backup block 2 */
 			lastrdata->buffer_std = true;
 		}
 
@@ -1300,7 +1383,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 
 			lastrdata->data = NULL;
 			lastrdata->len = 0;
-			lastrdata->buffer = sbuf;	/* backup block 2 */
+			lastrdata->buffer = sbuf;	/* bkp block 2 (leaf) or 3 (non-leaf) */
 			lastrdata->buffer_std = true;
 		}
 
@@ -1326,6 +1409,10 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	/* release the old right sibling */
 	if (!P_RIGHTMOST(ropaque))
 		_bt_relbuf(rel, sbuf);
+
+	/* release the child */
+	if (!isleaf)
+		_bt_relbuf(rel, cbuf);
 
 	/* split's done */
 	return rbuf;
@@ -1597,10 +1684,8 @@ _bt_checksplitloc(FindSplitData *state,
  *			have to be efficient (concurrent ROOT split, WAL recovery)
  * is_root - we split the true root
  * is_only - we split a page alone on its level (might have been fast root)
- *
- * This is exported so it can be called by nbtxlog.c.
  */
-void
+static void
 _bt_insert_parent(Relation rel,
 				  Buffer buf,
 				  Buffer rbuf,
@@ -1619,8 +1704,7 @@ _bt_insert_parent(Relation rel,
 	 *
 	 * If we have to search for the parent level, we do so by re-descending
 	 * from the root.  This is not super-efficient, but it's rare enough not
-	 * to matter.  (This path is also taken when called from WAL recovery ---
-	 * we have no stack in that case.)
+	 * to matter.
 	 */
 	if (is_root)
 	{
@@ -1679,12 +1763,13 @@ _bt_insert_parent(Relation rel,
 		 * 05/27/97
 		 */
 		ItemPointerSet(&(stack->bts_btentry.t_tid), bknum, P_HIKEY);
-
 		pbuf = _bt_getstackbuf(rel, stack, BT_WRITE);
 
-		/* Now we can unlock the children */
+		/*
+		 * Now we can unlock the right child. The left child will be unlocked
+		 * by _bt_insertonpg().
+		 */
 		_bt_relbuf(rel, rbuf);
-		_bt_relbuf(rel, buf);
 
 		/* Check for error only after writing children */
 		if (pbuf == InvalidBuffer)
@@ -1692,13 +1777,69 @@ _bt_insert_parent(Relation rel,
 				 RelationGetRelationName(rel), bknum, rbknum);
 
 		/* Recursively update the parent */
-		_bt_insertonpg(rel, pbuf, stack->bts_parent,
+		_bt_insertonpg(rel, pbuf, buf, stack->bts_parent,
 					   new_item, stack->bts_offset + 1,
 					   is_only);
 
 		/* be tidy */
 		pfree(new_item);
 	}
+}
+
+/*
+ * _bt_finish_split() -- Finish an incomplete split
+ *
+ * A crash or other failure can leave a split incomplete.  The insertion
+ * routines won't allow to insert on a page that is incompletely split.
+ * Before inserting on such a page, call _bt_finish_split().
+ *
+ * On entry, 'lbuf' must be locked in write-mode.  On exit, it is unlocked
+ * and unpinned.
+ */
+void
+_bt_finish_split(Relation rel, Buffer lbuf, BTStack stack)
+{
+	Page		lpage = BufferGetPage(lbuf);
+	BTPageOpaque lpageop = (BTPageOpaque) PageGetSpecialPointer(lpage);
+	Buffer		rbuf;
+	Page		rpage;
+	BTPageOpaque rpageop;
+	bool		was_root;
+	bool		was_only;
+
+	Assert(P_INCOMPLETE_SPLIT(lpageop));
+
+	/* Lock right sibling, the one missing the downlink */
+	rbuf = _bt_getbuf(rel, lpageop->btpo_next, BT_WRITE);
+	rpage = BufferGetPage(rbuf);
+	rpageop = (BTPageOpaque) PageGetSpecialPointer(rpage);
+
+	/* Could this be a root split? */
+	if (!stack)
+	{
+		Buffer		metabuf;
+		Page		metapg;
+		BTMetaPageData *metad;
+
+		/* acquire lock on the metapage */
+		metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_WRITE);
+		metapg = BufferGetPage(metabuf);
+		metad = BTPageGetMeta(metapg);
+
+		was_root = (metad->btm_root == BufferGetBlockNumber(lbuf));
+
+		_bt_relbuf(rel, metabuf);
+	}
+	else
+		was_root = false;
+
+	/* Was this the only page on the level before split? */
+	was_only = (P_LEFTMOST(lpageop) && P_RIGHTMOST(rpageop));
+
+	elog(DEBUG1, "finishing incomplete split of %u/%u",
+		 BufferGetBlockNumber(lbuf), BufferGetBlockNumber(rbuf));
+
+	_bt_insert_parent(rel, lbuf, rbuf, stack, was_root, was_only);
 }
 
 /*
@@ -1732,6 +1873,12 @@ _bt_getstackbuf(Relation rel, BTStack stack, int access)
 		buf = _bt_getbuf(rel, blkno, access);
 		page = BufferGetPage(buf);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+
+		if (access == BT_WRITE && P_INCOMPLETE_SPLIT(opaque))
+		{
+			_bt_finish_split(rel, buf, stack->bts_parent);
+			continue;
+		}
 
 		if (!P_IGNORE(opaque))
 		{
@@ -1837,6 +1984,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 				rbkno;
 	BlockNumber rootblknum;
 	BTPageOpaque rootopaque;
+	BTPageOpaque lopaque;
 	ItemId		itemid;
 	IndexTuple	item;
 	Size		itemsz;
@@ -1848,6 +1996,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	lbkno = BufferGetBlockNumber(lbuf);
 	rbkno = BufferGetBlockNumber(rbuf);
 	lpage = BufferGetPage(lbuf);
+	lopaque = (BTPageOpaque) PageGetSpecialPointer(lpage);
 
 	/* get a new root page */
 	rootbuf = _bt_getbuf(rel, P_NEW, BT_WRITE);
@@ -1921,6 +2070,11 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 			 BufferGetBlockNumber(lbuf), RelationGetRelationName(rel));
 	pfree(new_item);
 
+	/* Clear the incomplete-split flag in the left child */
+	Assert(P_INCOMPLETE_SPLIT(lopaque));
+	lopaque->btpo_flags &= ~BTP_INCOMPLETE_SPLIT;
+	MarkBufferDirty(lbuf);
+
 	MarkBufferDirty(rootbuf);
 	MarkBufferDirty(metabuf);
 
@@ -1929,7 +2083,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	{
 		xl_btree_newroot xlrec;
 		XLogRecPtr	recptr;
-		XLogRecData rdata[2];
+		XLogRecData rdata[3];
 
 		xlrec.node = rel->rd_node;
 		xlrec.rootblk = rootblknum;
@@ -1948,7 +2102,13 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 		rdata[1].len = ((PageHeader) rootpage)->pd_special -
 			((PageHeader) rootpage)->pd_upper;
 		rdata[1].buffer = InvalidBuffer;
-		rdata[1].next = NULL;
+		rdata[1].next = &(rdata[2]);
+
+		/* Make a full-page image of the left child if needed */
+		rdata[2].data = NULL;
+		rdata[2].len = 0;
+		rdata[2].buffer = lbuf;
+		rdata[2].next = NULL;
 
 		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_NEWROOT, rdata);
 

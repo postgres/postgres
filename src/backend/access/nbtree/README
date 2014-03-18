@@ -404,12 +404,41 @@ an additional insertion above that, etc).
 For a root split, the followon WAL entry is a "new root" entry rather than
 an "insertion" entry, but details are otherwise much the same.
 
-Because insertion involves multiple atomic actions, the WAL replay logic
-has to detect the case where a page split isn't followed by a matching
-insertion on the parent level, and then do that insertion on its own (and
-recursively for any subsequent parent insertion, of course).  This is
-feasible because the WAL entry for the split contains enough info to know
-what must be inserted in the parent level.
+Because splitting involves multiple atomic actions, it's possible that the
+system crashes between splitting a page and inserting the downlink for the
+new half to the parent.  After recovery, the downlink for the new page will
+be missing.  The search algorithm works correctly, as the page will be found
+by following the right-link from its left sibling, although if a lot of
+downlinks in the tree are missing, performance will suffer.  A more serious
+consequence is that if the page without a downlink gets split again, the
+insertion algorithm will fail to find the location in the parent level to
+insert the downlink.
+
+Our approach is to create any missing downlinks on-the-fly, when searching
+the tree for a new insertion.  It could be done during searches, too, but
+it seems best not to put any extra updates in what would otherwise be a
+read-only operation (updating is not possible in hot standby mode anyway).
+It would seem natural to add the missing downlinks in VACUUM, but since
+inserting a downlink might require splitting a page, it might fail if you
+run out of disk space.  That would be bad during VACUUM - the reason for
+running VACUUM in the first place might be that you run out of disk space,
+and now VACUUM won't finish because you're out of disk space.  In contrast,
+an insertion can require enlarging the physical file anyway.
+
+To identify missing downlinks, when a page is split, the left page is
+flagged to indicate that the split is not yet complete (INCOMPLETE_SPLIT).
+When the downlink is inserted to the parent, the flag is cleared atomically
+with the insertion.  The child page is kept locked until the insertion in
+the parent is finished and the flag in the child cleared, but can be
+released immediately after that, before recursing up the tree if the parent
+also needs to be split.  This ensures that incompletely split pages should
+not be seen under normal circumstances; only if insertion to the parent
+has failed for some reason.
+
+We flag the left page, even though it's the right page that's missing the
+downlink, beacuse it's more convenient to know already when following the
+right-link from the left page to the right page that it will need to have
+its downlink inserted to the parent.
 
 When splitting a non-root page that is alone on its level, the required
 metapage update (of the "fast root" link) is performed and logged as part
@@ -419,8 +448,16 @@ metapage update is handled as part of the "new root" action.
 Each step in page deletion are logged as separate WAL entries: marking the
 leaf as half-dead and removing the downlink is one record, and unlinking a
 page is a second record.  If vacuum is interrupted for some reason, or the
-system crashes, the tree is consistent for searches and insertions.  The next
-VACUUM will find the half-dead leaf page and continue the deletion.
+system crashes, the tree is consistent for searches and insertions.  The
+next VACUUM will find the half-dead leaf page and continue the deletion.
+
+Before 9.4, we used to keep track of incomplete splits and page deletions
+during recovery and finish them immediately at end of recovery, instead of
+doing it lazily at the next  insertion or vacuum.  However, that made the
+recovery much more complicated, and only fixed the problem when crash
+recovery was performed.  An incomplete split can also occur if an otherwise
+recoverable error, like out-of-memory or out-of-disk-space, happens while
+inserting the downlink to the parent.
 
 Scans during Recovery
 ---------------------
