@@ -42,12 +42,12 @@
   <sect1 id="logicaldecoding-example">
    <title>Logical Decoding Example</title>
    <para>
-    The following example demonstartes the SQL interface.
+    The following example demonstrates the SQL interface.
    </para>
    <para>
     Before you can use logical decoding, you must set
     <xref linkend="guc-wal-level"> to logical and
-    <xref linkend="guc-max-replication-slots"> ot at least 1.
+    <xref linkend="guc-max-replication-slots"> to at least 1.
     Then, you should connect to the target database (in the example
     below, <literal>postgres</literal>) as a superuser.
    </para>
@@ -98,8 +98,8 @@ postgres=# SELECT * FROM pg_logical_slot_get_changes('regression_slot', NULL, NU
  location  | xid |                     data
 -----------+-----+-----------------------------------------------
  0/16E0478 | 689 | BEGIN 689
- 0/16E0478 | 689 | table public.data: INSERT: id[int4]:1 data[text]:'1'
- 0/16E0580 | 689 | table public.data: INSERT: id[int4]:2 data[text]:'2'
+ 0/16E0478 | 689 | table public.data: INSERT: id[integer]:1 data[text]:'1'
+ 0/16E0580 | 689 | table public.data: INSERT: id[integer]:2 data[text]:'2'
  0/16E0650 | 689 | COMMIT 689
 (4 rows)
 
@@ -110,7 +110,7 @@ postgres=# SELECT * FROM pg_logical_slot_peek_changes('regression_slot', NULL, N
  location  | xid |                     data
 -----------+-----+-----------------------------------------------
  0/16E09C0 | 690 | BEGIN 690
- 0/16E09C0 | 690 | table public.data: INSERT: id[int4]:3 data[text]:'3'
+ 0/16E09C0 | 690 | table public.data: INSERT: id[integer]:3 data[text]:'3'
  0/16E0B90 | 690 | COMMIT 690
 (3 rows)
 
@@ -119,7 +119,7 @@ postgres=# SELECT * FROM pg_logical_slot_peek_changes('regression_slot', NULL, N
  location  | xid |                     data
 -----------+-----+-----------------------------------------------
  0/16E09C0 | 690 | BEGIN 690
- 0/16E09C0 | 690 | table public.data: INSERT: id[int4]:3 data[text]:'3'
+ 0/16E09C0 | 690 | table public.data: INSERT: id[integer]:3 data[text]:'3'
  0/16E0B90 | 690 | COMMIT 690
 (3 rows)
 
@@ -128,7 +128,7 @@ postgres=# SELECT * FROM pg_logical_slot_peek_changes('regression_slot', NULL, N
  location  | xid |                     data
 -----------+-----+-----------------------------------------------
  0/16E09C0 | 690 | BEGIN 690
- 0/16E09C0 | 690 | table public.data: INSERT: id[int4]:3 data[text]:'3'
+ 0/16E09C0 | 690 | table public.data: INSERT: id[integer]:3 data[text]:'3'
  0/16E0B90 | 690 | COMMIT 690 (at 2014-02-27 16:41:51.863092+01)
 (3 rows)
 
@@ -155,7 +155,7 @@ CTRL-Z
 # psql -c "INSERT INTO data(data) VALUES('4');"
 # fg
 BEGIN 693
-table public.data: INSERT: id[int4]:4 data[text]:'4'
+table public.data: INSERT: id[integer]:4 data[text]:'4'
 COMMIT 693
 CTRL-C
 # pg_recvlogical -d testdb --slot test --drop
@@ -251,7 +251,7 @@ CTRL-C
      SNAPSHOT</literal></link> to read the state of the database at the moment
      the slot was created. This transaction can then be used to dump the
      database's state at that point in time which afterwards can be updated
-     using the slot's contents without loosing any changes.
+     using the slot's contents without losing any changes.
     </para>
    </sect2>
   </sect1>
@@ -344,7 +344,7 @@ typedef void (*LogicalOutputPluginInit)(struct OutputPluginCallbacks *cb);
      backend's normal infrastructure, including calling output functions. Read
      only access to relations is permitted as long as only relations are
      accessed that either have been created by <command>initdb</command> in
-     the <literal>pg_catalog</literal> schema, or have are marked as user
+     the <literal>pg_catalog</literal> schema, or have been marked as user
      provided catalog tables using
      <programlisting>
 ALTER TABLE user_catalog_table SET (user_catalog_table = true);
@@ -368,9 +368,9 @@ CREATE TABLE another_catalog_table(data text) WITH (user_catalog_table = true);
      the <literal>begin</literal> and <literal>commit</literal>
      callbacks. Transactions that were rolled back explicitly or implicitly
      never get
-     decoded. Successfull <link linkend="SQL-SAVEPOINT">SAVEPOINTs</link> are
+     decoded. Successful <link linkend="SQL-SAVEPOINT">SAVEPOINTs</link> are
      folded into the transaction containing them in the order they were
-     exectuded within that transaction.
+     executed within that transaction.
     </para>
     <note>
      <para>
@@ -385,7 +385,7 @@ CREATE TABLE another_catalog_table(data text) WITH (user_catalog_table = true);
      <title>Startup Callback</title>
      <para>
       The optional <function>startup_cb</function> callback is called whenever
-      an replication slot is created or asked to stream changes, independent
+      a replication slot is created or asked to stream changes, independent
       of the number of changes that are ready to be put out.
       <programlisting>
 typedef void (*LogicalDecodeStartupCB) (
@@ -394,7 +394,7 @@ typedef void (*LogicalDecodeStartupCB) (
     bool is_init
 );
       </programlisting>
-      The <literal>is_init</literal> paramter will be true when the
+      The <literal>is_init</literal> parameter will be true when the
       replication slot is being created and false
       otherwise. <parameter>options</parameter> points to a struct of options
       that output plugins can set:
