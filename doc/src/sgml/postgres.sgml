@@ -219,6 +219,7 @@
 
   &spi;
   &bgworker;
+  &logicaldecoding;
 
  </part>
 

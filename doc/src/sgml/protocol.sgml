@@ -1309,9 +1309,22 @@ the simple query protocol can be used in walsender mode.
 Passing <literal>database</> as the value instructs walsender to connect to
 the database specified in the <literal>dbname</> parameter, which will allow
 the connection to be used for logical replication from that database.
+</para>
+<para>
+ For the purpose of testing replication commands, you can make a replication
+ connection via <application>psql</application> or any other <literal>libpq</literal>-using
+ tool with a connection string including the <literal>replication</literal> option,
+ e.g.:
+ <programlisting>
+  psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
+ </programlisting>
+ However it is often more useful to use
+ <application>pg_receivexlog</application> (for physical replication) or
+ <application>pg_recvlogical</application> (for logical replication).
+</para>
 
+<para>
 The commands accepted in walsender mode are:
-
 <variablelist>
   <varlistentry>
     <term>IDENTIFY_SYSTEM</term>
@@ -1762,6 +1775,43 @@ The commands accepted in walsender mode are:
       </varlistentry>
       </variablelist>
      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>START_REPLICATION</literal> <literal>SLOT</literal> <replaceable class="parameter">slotname</> <literal>LOGICAL</literal> <replaceable class="parameter">XXX/XXX</></term>
+    <listitem>
+     <para>
+      Instructs server to start streaming WAL for logical replication, starting
+      at WAL position <replaceable class="parameter">XXX/XXX</>. The server can
+      reply with an error, e.g. if the requested section of WAL has already
+      been recycled. On success, server responds with a CopyBothResponse
+      message, and then starts to stream WAL to the frontend.
+     </para>
+     <para>
+      The output plugin associated with the selected slot is used
+      to process the output for streaming.
+     </para>
+     <variablelist>
+      <varlistentry>
+       <term><literal>SLOT</literal> <replaceable class="parameter">slotname</></term>
+       <listitem>
+         <para>
+          The name of the slot to stream changes from. This parameter is required,
+          and must correspond to an existing logical replication slot created
+          with <literal>CREATE_REPLICATION_SLOT</literal> in
+          <literal>LOGICAL</literal> mode.
+         </para>
+       </listitem>
+      </varlistentry>
+      <varlistentry>
+       <term><replaceable class="parameter">XXX/XXX</></term>
+       <listitem>
+        <para>
+         The WAL position to begin streaming at.
+        </para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
     </listitem>
   </varlistentry>
 

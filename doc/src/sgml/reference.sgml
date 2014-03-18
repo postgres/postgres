@@ -231,6 +231,7 @@
    &pgDumpall;
    &pgIsready;
    &pgReceivexlog;
+   &pgRecvlogical;
    &pgRestore;
    &psqlRef;
    &reindexdb;

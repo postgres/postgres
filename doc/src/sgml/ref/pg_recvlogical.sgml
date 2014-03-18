@@ -1,0 +1,331 @@
+<!--
+doc/src/sgml/ref/pg_recvlogical.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="app-pgrecvlogical">
+ <refmeta>
+  <refentrytitle><application>pg_recvlogical</application></refentrytitle>
+  <manvolnum>1</manvolnum>
+  <refmiscinfo>Application</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>pg_recvlogical</refname>
+  <refpurpose>Control logical decoding (see <xref linkend="logicaldecoding">)
+   streams over a walsender connection.</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="app-pgrecvlogical">
+  <primary>pg_recvlogical</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+  <cmdsynopsis>
+   <command>pg_recvlogical</command>
+   <arg rep="repeat" choice="opt"><option>option</option></arg>
+  </cmdsynopsis>
+ </refsynopsisdiv>
+
+ <refsect1 id="R1-APP-PGRECVLOGICAL-1">
+  <title>Description</title>
+  <para>
+   <command>pg_recvlogical</command> controls logical decoding replication
+   slots and streams data from such replication slots.
+  </para>
+  <para>
+   It creates a replication-mode connection, so it is subject to the same
+   constraints as <link
+   linkend="app-pgreceivexlog"><application>pg_receivexlog</application></link>,
+   plus those for logical replication (see <xref
+   linkend="logicaldecoding">).
+  </para>
+
+ </refsect1>
+
+ <refsect1>
+  <title>Options</title>
+
+   <para>
+    <application>pg_recvlogical</application> runs in one of three modes, which
+    control its primary action:
+
+    <variablelist>
+
+     <varlistentry>
+      <term><option>--create</option></term>
+      <listitem>
+       <para>
+        Create a new logical replication slot with the name specified in
+        <option>--slot</option>, using the output plugin
+        <option>--plugin</option>, then exit. The slot is created for the
+        database given in <option>--dbname</option>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--start</option></term>
+      <listitem>
+       <para>
+        Begin streaming changes from the logical replication slot with the name
+        specified in <option>--slot</option>, continuing until terminated with a
+        signal. If the server side change stream ends with a server
+        shutdown or disconnect, retry in a loop unless
+        <option>--no-loop</option> is specified. The stream format is
+        determined by the output plugin specified when the slot was created.
+       </para>
+       <para>
+        You must connect to the same database used to create the slot.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--drop</option></term>
+      <listitem>
+       <para>
+        Drop the replication slot with the name specified
+        in <option>--slot</option>, then exit.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+
+   </para>
+
+   <para>
+    <application>pg_recvlogical</application> supports all the usual
+    <literal>libpq</literal>-based options. These are explained in detail in
+    the documentation for
+    <link linkend="APP-PSQL"><application>psql</application></link> and for
+    <link linkend="libpq"><literal>libpq</literal></link>.
+
+    <variablelist>
+
+      <varlistentry>
+       <term><option>-U <replaceable>user</replaceable></option></term>
+       <term><option>--username <replaceable>user</replaceable></option></term>
+       <listitem>
+        <para>
+         Username to connect as. Must have a suitable <literal>pg_hba.conf</literal>
+         entry allowing <literal>replication</literal> connections. Defaults to
+         current operating system user name.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>-d <replaceable>database</replaceable></option></term>
+       <term><option>--dbname <replaceable>database</replaceable></option></term>
+       <listitem>
+        <para>
+         The database to connect to in <literal>replication</literal> mode; see
+         mode descriptions for details. May be
+         a <link linkend="LIBPQ-CONNSTRING">libpq connstring</link>
+         instead. Defaults to user name.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>-h <replaceable>hostname-or-ip</replaceable></option></term>
+       <term><option>--host <replaceable>hostname-or-ip</replaceable></option></term>
+       <listitem>
+        <para>
+         Host or socket to connect
+         to. See <link linkend="APP-PSQL"><application>psql</application></link>
+         and <link linkend="libpq"><literal>libpq</literal></link>
+         documentation.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>-p <replaceable>port</replaceable></option></term>
+       <term><option>--port <replaceable>port</replaceable></option></term>
+       <listitem>
+        <para>
+         Port number to connect to. See
+         <link linkend="R1-APP-PSQL-3"><application>psql</application></link>
+         for an explanation of default port choices when this is not
+         specified.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>-w</option></term>
+       <term><option>--no-password</option></term>
+       <listitem>
+        <para>
+         Prevent prompting for a password. Will exit with an error code if a
+         password is required but not available.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>-W</option></term>
+       <term><option>--password</option></term>
+       <listitem>
+        <para>
+         Provide a password for this connection. Please use the pgservice file
+         (see <xref linkend="libpq-pgservice">) or an environment variable
+         instead of this option.
+        </para>
+       </listitem>
+      </varlistentry>
+
+     </variablelist>
+
+   </para>
+
+   <para>
+    The following command-line options control the location and format of the
+    output and other replication behaviour:
+
+    <variablelist>
+
+     <varlistentry>
+      <term><option>-f <replaceable>filename</replaceable></option></term>
+      <term><option>--file=<replaceable>filename</replaceable></option></term>
+      <listitem>
+       <para>
+        Write received and decoded transaction data into this
+        file. Use <literal>-</> for stdout.
+       </para>
+      </listitem>
+     </varlistentry>
+
+
+     <varlistentry>
+      <term><option>-n</option></term>
+      <term><option>--no-loop</option></term>
+      <listitem>
+       <para>
+        When the connection to the server is lost, do not retry in a loop, just exit.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-o <replaceable>NAME</replaceable>[=<replaceable>VALUE</replaceable>]</option></term>
+      <term><option>--option=<replaceable>NAME</replaceable>[=<replaceable>VALUE</replaceable>]</option></term>
+      <listitem>
+       <para>
+        Pass the option <parameter>NAME</parameter> to the output plugin with,
+        if specified, the option value <parameter>NAME</parameter>. Which
+        options exist and their effects depends on the used output plugin.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-F <replaceable>interval_seconds</replaceable></option></term>
+      <term><option>--fsync-interval=<replaceable>interval_seconds</replaceable></option></term>
+      <listitem>
+       <para>
+        How often should
+        <link linkend="app-pgreceivexlog"><application>pg_receivexlog</application></link>
+        issue sync commands to ensure the <parameter>--outputfile</parameter>
+        is safely flushed to disk without being asked by the server to do
+        so. Specifying an interval of <literal>0</literal> disables issuing
+        fsyncs altogether, while still reporting progress the server.
+        In this case, data may be lost in the event of a crash.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-P <replaceable>plugin</replaceable></option></term>
+      <term><option>--plugin=<replaceable>plugin</replaceable></option></term>
+      <listitem>
+       <para>
+        When creating a slot, use the logical decoding output
+        plugin. See <xref linkend="logicaldecoding">. This option has no
+        effect if the slot already exists.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-s <replaceable>interval_seconds</replaceable></option></term>
+      <term><option>--status-interval=<replaceable>interval_seconds</replaceable></option></term>
+      <listitem>
+       <para>
+        This option has the same effect as the option of the same name in <link
+        linkend="app-pgreceivexlog"><application>pg_receivexlog</application></link>.
+        See the description there.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-S <replaceable>slot_name</replaceable></option></term>
+      <term><option>--slot=<replaceable>slot_name</replaceable></option></term>
+      <listitem>
+       <para>
+        In <option>--start</option> mode, use the existing logical replication slot named
+        <replaceable>slot_name</replaceable>. In <option>--create</option> mode, create the
+        slot with this name. In <option>--drop</option> mode, delete the slot with this name.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-I <replaceable>lsn</replaceable></option></term>
+      <term><option>--startpos=<replaceable>lsn</replaceable></option></term>
+      <listitem>
+       <para>
+        In <option>--start</option> mode, start replication from the given
+        LSN.  For details on the effect of this, see the documentation
+        in <xref linkend="logicaldecoding">
+        and <xref linkend="protocol-replication">. Ignored in other modes.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+
+   </para>
+
+   <para>
+    The following additional options are available:
+
+    <variablelist>
+
+     <varlistentry>
+       <term><option>-v</></term>
+       <term><option>--verbose</></term>
+       <listitem>
+       <para>
+        Enables verbose mode.
+       </para>
+       </listitem>
+     </varlistentry>
+
+     <varlistentry>
+       <term><option>-V</></term>
+       <term><option>--version</></term>
+       <listitem>
+       <para>
+        Print the <application>pg_recvlogical</application> version and exit.
+       </para>
+       </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-?</></term>
+      <term><option>--help</></term>
+       <listitem>
+        <para>
+         Show help about <application>pg_recvlogical</application> command line
+         arguments, and exit.
+        </para>
+       </listitem>
+      </varlistentry>
+
+    </variablelist>
+   </para>
+ </refsect1>
+</refentry>

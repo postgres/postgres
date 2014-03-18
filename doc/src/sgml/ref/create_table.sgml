@@ -137,7 +137,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
 
   <variablelist>
 
-   <varlistentry>
+   <varlistentry id="SQL-CREATETABLE-TEMPORARY">
     <term><literal>TEMPORARY</> or <literal>TEMP</></term>
     <listitem>
      <para>
@@ -171,7 +171,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="SQL-CREATETABLE-UNLOGGED">
     <term><literal>UNLOGGED</></term>
     <listitem>
      <para>
@@ -1047,6 +1047,17 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
     <listitem>
      <para>
       Custom <xref linkend="guc-vacuum-multixact-freeze-table-age"> parameter.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>user_catalog_table</literal> (<type>boolean</type>)</term>
+    <listitem>
+     <para>
+      Declare a table as an additional catalog table, e.g. for the purpose of
+      logical replication. See
+      <xref linkend="logicaldecoding-capabilities"> for details.
      </para>
     </listitem>
    </varlistentry>

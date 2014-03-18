@@ -580,7 +580,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="SQL-CREATETABLE-REPLICA-IDENTITY">
     <term><literal>REPLICA IDENTITY</literal></term>
     <listitem>
      <para>
