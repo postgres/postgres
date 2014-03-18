@@ -1,3 +1,5 @@
+#include "libpq-fe.h"
+
 #include "access/xlogdefs.h"
 
 /*

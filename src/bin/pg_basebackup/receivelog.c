@@ -11,21 +11,18 @@
  *		  src/bin/pg_basebackup/receivelog.c
  *-------------------------------------------------------------------------
  */
+
 #include "postgres_fe.h"
 
 #include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/types.h>
 #include <unistd.h>
-/* for ntohl/htonl */
-#include <netinet/in.h>
-#include <arpa/inet.h>
+
+/* local includes */
+#include "receivelog.h"
+#include "streamutil.h"
 
 #include "libpq-fe.h"
 #include "access/xlog_internal.h"
-
-#include "receivelog.h"
-#include "streamutil.h"
 
 
 /* fd and filename for currently open WAL file */
@@ -195,63 +192,6 @@ close_walfile(char *basedir, char *partial_suffix, XLogRecPtr pos)
 
 
 /*
- * Local version of GetCurrentTimestamp(), since we are not linked with
- * backend code. The protocol always uses integer timestamps, regardless of
- * server setting.
- */
-static int64
-localGetCurrentTimestamp(void)
-{
-	int64		result;
-	struct timeval tp;
-
-	gettimeofday(&tp, NULL);
-
-	result = (int64) tp.tv_sec -
-		((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
-
-	result = (result * USECS_PER_SEC) + tp.tv_usec;
-
-	return result;
-}
-
-/*
- * Local version of TimestampDifference(), since we are not linked with
- * backend code.
- */
-static void
-localTimestampDifference(int64 start_time, int64 stop_time,
-						 long *secs, int *microsecs)
-{
-	int64		diff = stop_time - start_time;
-
-	if (diff <= 0)
-	{
-		*secs = 0;
-		*microsecs = 0;
-	}
-	else
-	{
-		*secs = (long) (diff / USECS_PER_SEC);
-		*microsecs = (int) (diff % USECS_PER_SEC);
-	}
-}
-
-/*
- * Local version of TimestampDifferenceExceeds(), since we are not
- * linked with backend code.
- */
-static bool
-localTimestampDifferenceExceeds(int64 start_time,
-								int64 stop_time,
-								int msec)
-{
-	int64		diff = stop_time - start_time;
-
-	return (diff >= msec * INT64CONST(1000));
-}
-
-/*
  * Check if a timeline history file exists.
  */
 static bool
@@ -371,47 +311,6 @@ writeTimeLineHistoryFile(char *basedir, TimeLineID tli, char *filename, char *co
 }
 
 /*
- * Converts an int64 to network byte order.
- */
-static void
-sendint64(int64 i, char *buf)
-{
-	uint32		n32;
-
-	/* High order half first, since we're doing MSB-first */
-	n32 = (uint32) (i >> 32);
-	n32 = htonl(n32);
-	memcpy(&buf[0], &n32, 4);
-
-	/* Now the low order half */
-	n32 = (uint32) i;
-	n32 = htonl(n32);
-	memcpy(&buf[4], &n32, 4);
-}
-
-/*
- * Converts an int64 from network byte order to native format.
- */
-static int64
-recvint64(char *buf)
-{
-	int64		result;
-	uint32		h32;
-	uint32		l32;
-
-	memcpy(&h32, buf, 4);
-	memcpy(&l32, buf + 4, 4);
-	h32 = ntohl(h32);
-	l32 = ntohl(l32);
-
-	result = h32;
-	result <<= 32;
-	result |= l32;
-
-	return result;
-}
-
-/*
  * Send a Standby Status Update message to server.
  */
 static bool
@@ -422,16 +321,16 @@ sendFeedback(PGconn *conn, XLogRecPtr blockpos, int64 now, bool replyRequested)
 
 	replybuf[len] = 'r';
 	len += 1;
-	sendint64(blockpos, &replybuf[len]);		/* write */
+	fe_sendint64(blockpos, &replybuf[len]);		/* write */
 	len += 8;
 	if (reportFlushPosition)
-		sendint64(lastFlushPosition, &replybuf[len]);		/* flush */
+		fe_sendint64(lastFlushPosition, &replybuf[len]);		/* flush */
 	else
-		sendint64(InvalidXLogRecPtr, &replybuf[len]);		/* flush */
+		fe_sendint64(InvalidXLogRecPtr, &replybuf[len]);		/* flush */
 	len += 8;
-	sendint64(InvalidXLogRecPtr, &replybuf[len]);		/* apply */
+	fe_sendint64(InvalidXLogRecPtr, &replybuf[len]);		/* apply */
 	len += 8;
-	sendint64(now, &replybuf[len]);		/* sendTime */
+	fe_sendint64(now, &replybuf[len]);		/* sendTime */
 	len += 8;
 	replybuf[len] = replyRequested ? 1 : 0;		/* replyRequested */
 	len += 1;
@@ -864,9 +763,9 @@ HandleCopyStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 		/*
 		 * Potentially send a status message to the master
 		 */
-		now = localGetCurrentTimestamp();
+		now = feGetCurrentTimestamp();
 		if (still_sending && standby_message_timeout > 0 &&
-			localTimestampDifferenceExceeds(last_status, now,
+			feTimestampDifferenceExceeds(last_status, now,
 											standby_message_timeout))
 		{
 			/* Time to send feedback! */
@@ -895,10 +794,10 @@ HandleCopyStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 				int			usecs;
 
 				targettime = last_status + (standby_message_timeout - 1) * ((int64) 1000);
-				localTimestampDifference(now,
-										 targettime,
-										 &secs,
-										 &usecs);
+				feTimestampDifference(now,
+									  targettime,
+									  &secs,
+									  &usecs);
 				if (secs <= 0)
 					timeout.tv_sec = 1; /* Always sleep at least 1 sec */
 				else
@@ -1002,7 +901,7 @@ HandleCopyStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 			/* If the server requested an immediate reply, send one. */
 			if (replyRequested && still_sending)
 			{
-				now = localGetCurrentTimestamp();
+				now = feGetCurrentTimestamp();
 				if (!sendFeedback(conn, blockpos, now, false))
 					goto error;
 				last_status = now;
@@ -1032,7 +931,7 @@ HandleCopyStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 						progname, r);
 				goto error;
 			}
-			blockpos = recvint64(&copybuf[1]);
+			blockpos = fe_recvint64(&copybuf[1]);
 
 			/* Extract WAL location for this block */
 			xlogoff = blockpos % XLOG_SEG_SIZE;

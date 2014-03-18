@@ -12,10 +12,23 @@
  */
 
 #include "postgres_fe.h"
-#include "streamutil.h"
 
 #include <stdio.h>
 #include <string.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+/* for ntohl/htonl */
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+/* local includes */
+#include "receivelog.h"
+#include "streamutil.h"
+
+#include "common/fe_memutils.h"
+#include "datatype/timestamp.h"
 
 const char *progname;
 char	   *connection_string = NULL;
@@ -23,6 +36,7 @@ char	   *dbhost = NULL;
 char	   *dbuser = NULL;
 char	   *dbport = NULL;
 char	   *replication_slot = NULL;
+char	   *dbname = NULL;
 int			dbgetpassword = 0;	/* 0=auto, -1=never, 1=always */
 static char *dbpassword = NULL;
 PGconn	   *conn = NULL;
@@ -87,10 +101,10 @@ GetConnection(void)
 	}
 
 	keywords[i] = "dbname";
-	values[i] = "replication";
+	values[i] = dbname == NULL ? "replication" : dbname;
 	i++;
 	keywords[i] = "replication";
-	values[i] = "true";
+	values[i] = dbname == NULL ? "true" : "database";
 	i++;
 	keywords[i] = "fallback_application_name";
 	values[i] = progname;
@@ -211,4 +225,103 @@ GetConnection(void)
 	}
 
 	return tmpconn;
+}
+
+
+/*
+ * Frontend version of GetCurrentTimestamp(), since we are not linked with
+ * backend code. The protocol always uses integer timestamps, regardless of
+ * server setting.
+ */
+int64
+feGetCurrentTimestamp(void)
+{
+	int64		result;
+	struct timeval tp;
+
+	gettimeofday(&tp, NULL);
+
+	result = (int64) tp.tv_sec -
+		((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
+
+	result = (result * USECS_PER_SEC) + tp.tv_usec;
+
+	return result;
+}
+
+/*
+ * Frontend version of TimestampDifference(), since we are not linked with
+ * backend code.
+ */
+void
+feTimestampDifference(int64 start_time, int64 stop_time,
+						 long *secs, int *microsecs)
+{
+	int64		diff = stop_time - start_time;
+
+	if (diff <= 0)
+	{
+		*secs = 0;
+		*microsecs = 0;
+	}
+	else
+	{
+		*secs = (long) (diff / USECS_PER_SEC);
+		*microsecs = (int) (diff % USECS_PER_SEC);
+	}
+}
+
+/*
+ * Frontend version of TimestampDifferenceExceeds(), since we are not
+ * linked with backend code.
+ */
+bool
+feTimestampDifferenceExceeds(int64 start_time,
+								int64 stop_time,
+								int msec)
+{
+	int64		diff = stop_time - start_time;
+
+	return (diff >= msec * INT64CONST(1000));
+}
+
+/*
+ * Converts an int64 to network byte order.
+ */
+void
+fe_sendint64(int64 i, char *buf)
+{
+	uint32		n32;
+
+	/* High order half first, since we're doing MSB-first */
+	n32 = (uint32) (i >> 32);
+	n32 = htonl(n32);
+	memcpy(&buf[0], &n32, 4);
+
+	/* Now the low order half */
+	n32 = (uint32) i;
+	n32 = htonl(n32);
+	memcpy(&buf[4], &n32, 4);
+}
+
+/*
+ * Converts an int64 from network byte order to native format.
+ */
+int64
+fe_recvint64(char *buf)
+{
+	int64		result;
+	uint32		h32;
+	uint32		l32;
+
+	memcpy(&h32, buf, 4);
+	memcpy(&l32, buf + 4, 4);
+	h32 = ntohl(h32);
+	l32 = ntohl(l32);
+
+	result = h32;
+	result <<= 32;
+	result |= l32;
+
+	return result;
 }
