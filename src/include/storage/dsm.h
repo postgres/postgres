@@ -20,6 +20,7 @@ typedef struct dsm_segment dsm_segment;
 /* Startup and shutdown functions. */
 extern void dsm_postmaster_startup(void);
 extern void dsm_backend_shutdown(void);
+extern void dsm_detach_all(void);
 
 /* Functions that create, update, or remove mappings. */
 extern dsm_segment *dsm_create(Size size);

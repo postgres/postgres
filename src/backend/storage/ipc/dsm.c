@@ -722,6 +722,8 @@ dsm_attach(dsm_handle h)
 
 /*
  * At backend shutdown time, detach any segments that are still attached.
+ * (This is similar to dsm_detach_all, except that there's no reason to
+ * unmap the control segment before exiting, so we don't bother.)
  */
 void
 dsm_backend_shutdown(void)
@@ -733,6 +735,31 @@ dsm_backend_shutdown(void)
 		seg = dlist_head_element(dsm_segment, node, &dsm_segment_list);
 		dsm_detach(seg);
 	}
+}
+
+/*
+ * Detach all shared memory segments, including the control segments.  This
+ * should be called, along with PGSharedMemoryDetach, in processes that
+ * might inherit mappings but are not intended to be connected to dynamic
+ * shared memory.
+ */
+void
+dsm_detach_all(void)
+{
+	void   *control_address = dsm_control;
+
+	while (!dlist_is_empty(&dsm_segment_list))
+	{
+		dsm_segment	   *seg;
+
+		seg = dlist_head_element(dsm_segment, node, &dsm_segment_list);
+		dsm_detach(seg);
+	}
+
+	if (control_address != NULL)
+		dsm_impl_op(DSM_OP_DETACH, dsm_control_handle, 0,
+					&dsm_control_impl_private, &control_address,
+					&dsm_control_mapped_size, ERROR);
 }
 
 /*
