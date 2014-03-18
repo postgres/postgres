@@ -316,7 +316,7 @@ StreamLog(void)
 			int64		message_target = 0;
 			int64		fsync_target = 0;
 			struct timeval timeout;
-			struct timeval *timeoutptr;
+			struct timeval *timeoutptr = NULL;
 
 			FD_ZERO(&input_mask);
 			FD_SET(PQsocket(conn), &input_mask);
