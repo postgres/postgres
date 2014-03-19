@@ -57,7 +57,10 @@ BACKEND_COMMON_GETTEXT_TRIGGERS = \
     errmsg errmsg_plural:1,2 \
     errdetail errdetail_log errdetail_plural:1,2 \
     errhint \
-    errcontext
+    errcontext \
+    XactLockTableWait:4 \
+    MultiXactIdWait:6 \
+    ConditionalMultiXactIdWait:6
 BACKEND_COMMON_GETTEXT_FLAGS = \
     errmsg:1:c-format errmsg_plural:1:c-format errmsg_plural:2:c-format \
     errdetail:1:c-format errdetail_log:1:c-format errdetail_plural:1:c-format errdetail_plural:2:c-format \

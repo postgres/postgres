@@ -105,11 +105,12 @@ static void GetMultiXactIdHintBits(MultiXactId multi, uint16 *new_infomask,
 					   uint16 *new_infomask2);
 static TransactionId MultiXactIdGetUpdateXid(TransactionId xmax,
 						uint16 t_infomask);
-static void MultiXactIdWait(MultiXactId multi, MultiXactStatus status,
-				int *remaining, uint16 infomask);
-static bool ConditionalMultiXactIdWait(MultiXactId multi,
-						   MultiXactStatus status, int *remaining,
-						   uint16 infomask);
+static void MultiXactIdWait(MultiXactId multi, MultiXactStatus status, uint16 infomask,
+				Relation rel, ItemPointer ctid, XLTW_Oper oper,
+				int *remaining);
+static bool ConditionalMultiXactIdWait(MultiXactId multi, MultiXactStatus status,
+						   uint16 infomask, Relation rel, ItemPointer ctid,
+						   XLTW_Oper oper, int *remaining);
 static XLogRecPtr log_heap_new_cid(Relation relation, HeapTuple tup);
 static HeapTuple ExtractReplicaIdentity(Relation rel, HeapTuple tup, bool key_modified,
 										bool *copy);
@@ -2714,8 +2715,9 @@ l1:
 		if (infomask & HEAP_XMAX_IS_MULTI)
 		{
 			/* wait for multixact */
-			MultiXactIdWait((MultiXactId) xwait, MultiXactStatusUpdate,
-							NULL, infomask);
+			MultiXactIdWait((MultiXactId) xwait, MultiXactStatusUpdate, infomask,
+							relation, &tp.t_data->t_ctid, XLTW_Delete,
+							NULL);
 			LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 
 			/*
@@ -2741,7 +2743,7 @@ l1:
 		else
 		{
 			/* wait for regular transaction to end */
-			XactLockTableWait(xwait);
+			XactLockTableWait(xwait, relation, &tp.t_data->t_ctid, XLTW_Delete);
 			LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 
 			/*
@@ -3266,8 +3268,9 @@ l2:
 			int			remain;
 
 			/* wait for multixact */
-			MultiXactIdWait((MultiXactId) xwait, mxact_status, &remain,
-							infomask);
+			MultiXactIdWait((MultiXactId) xwait, mxact_status, infomask,
+							relation, &oldtup.t_data->t_ctid, XLTW_Update,
+							&remain);
 			LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 
 			/*
@@ -3341,7 +3344,8 @@ l2:
 			else
 			{
 				/* wait for regular transaction to end */
-				XactLockTableWait(xwait);
+				XactLockTableWait(xwait, relation, &oldtup.t_data->t_ctid,
+								  XLTW_Update);
 				LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 
 				/*
@@ -4402,14 +4406,18 @@ l3:
 				if (nowait)
 				{
 					if (!ConditionalMultiXactIdWait((MultiXactId) xwait,
-													status, NULL, infomask))
+												  status, infomask, relation,
+													&tuple->t_data->t_ctid,
+													XLTW_Lock, NULL))
 						ereport(ERROR,
 								(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
 								 errmsg("could not obtain lock on row in relation \"%s\"",
 										RelationGetRelationName(relation))));
 				}
 				else
-					MultiXactIdWait((MultiXactId) xwait, status, NULL, infomask);
+					MultiXactIdWait((MultiXactId) xwait, status, infomask,
+									relation, &tuple->t_data->t_ctid,
+									XLTW_Lock, NULL);
 
 				/* if there are updates, follow the update chain */
 				if (follow_updates &&
@@ -4464,7 +4472,8 @@ l3:
 										RelationGetRelationName(relation))));
 				}
 				else
-					XactLockTableWait(xwait);
+					XactLockTableWait(xwait, relation, &tuple->t_data->t_ctid,
+									  XLTW_Lock);
 
 				/* if there are updates, follow the update chain */
 				if (follow_updates &&
@@ -5151,7 +5160,9 @@ l4:
 					if (needwait)
 					{
 						LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-						XactLockTableWait(members[i].xid);
+						XactLockTableWait(members[i].xid, rel,
+										  &mytup.t_data->t_ctid,
+										  XLTW_LockUpdated);
 						pfree(members);
 						goto l4;
 					}
@@ -5211,7 +5222,8 @@ l4:
 				if (needwait)
 				{
 					LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-					XactLockTableWait(rawxmax);
+					XactLockTableWait(rawxmax, rel, &mytup.t_data->t_ctid,
+									  XLTW_LockUpdated);
 					goto l4;
 				}
 				if (res != HeapTupleMayBeUpdated)
@@ -6076,6 +6088,15 @@ HeapTupleGetUpdateXid(HeapTupleHeader tuple)
  * Do_MultiXactIdWait
  *		Actual implementation for the two functions below.
  *
+ * 'multi', 'status' and 'infomask' indicate what to sleep on (the status is
+ * needed to ensure we only sleep on conflicting members, and the infomask is
+ * used to optimize multixact access in case it's a lock-only multi); 'nowait'
+ * indicates whether to use conditional lock acquisition, to allow callers to
+ * fail if lock is unavailable.  'rel', 'ctid' and 'oper' are used to set up
+ * context information for error messages.	'remaining', if not NULL, receives
+ * the number of members that are still running, including any (non-aborted)
+ * subtransactions of our own transaction.
+ *
  * We do this by sleeping on each member using XactLockTableWait.  Any
  * members that belong to the current backend are *not* waited for, however;
  * this would not merely be useless but would lead to Assert failure inside
@@ -6093,7 +6114,9 @@ HeapTupleGetUpdateXid(HeapTupleHeader tuple)
  */
 static bool
 Do_MultiXactIdWait(MultiXactId multi, MultiXactStatus status,
-				   int *remaining, uint16 infomask, bool nowait)
+				   uint16 infomask, bool nowait,
+				   Relation rel, ItemPointer ctid, XLTW_Oper oper,
+				   int *remaining)
 {
 	bool		allow_old;
 	bool		result = true;
@@ -6130,6 +6153,12 @@ Do_MultiXactIdWait(MultiXactId multi, MultiXactStatus status,
 			/*
 			 * This member conflicts with our multi, so we have to sleep (or
 			 * return failure, if asked to avoid waiting.)
+			 *
+			 * Note that we don't set up an error context callback ourselves,
+			 * but instead we pass the info down to XactLockTableWait.	This
+			 * might seem a bit wasteful because the context is set up and
+			 * tore down for each member of the multixact, but in reality it
+			 * should be barely noticeable, and it avoids duplicate code.
 			 */
 			if (nowait)
 			{
@@ -6138,7 +6167,7 @@ Do_MultiXactIdWait(MultiXactId multi, MultiXactStatus status,
 					break;
 			}
 			else
-				XactLockTableWait(memxid);
+				XactLockTableWait(memxid, rel, ctid, oper);
 		}
 
 		pfree(members);
@@ -6159,13 +6188,14 @@ Do_MultiXactIdWait(MultiXactId multi, MultiXactStatus status,
  *
  * We return (in *remaining, if not NULL) the number of members that are still
  * running, including any (non-aborted) subtransactions of our own transaction.
- *
  */
 static void
-MultiXactIdWait(MultiXactId multi, MultiXactStatus status,
-				int *remaining, uint16 infomask)
+MultiXactIdWait(MultiXactId multi, MultiXactStatus status, uint16 infomask,
+				Relation rel, ItemPointer ctid, XLTW_Oper oper,
+				int *remaining)
 {
-	Do_MultiXactIdWait(multi, status, remaining, infomask, false);
+	(void) Do_MultiXactIdWait(multi, status, infomask, false,
+							  rel, ctid, oper, remaining);
 }
 
 /*
@@ -6183,9 +6213,11 @@ MultiXactIdWait(MultiXactId multi, MultiXactStatus status,
  */
 static bool
 ConditionalMultiXactIdWait(MultiXactId multi, MultiXactStatus status,
-						   int *remaining, uint16 infomask)
+						   uint16 infomask, Relation rel, ItemPointer ctid,
+						   XLTW_Oper oper, int *remaining)
 {
-	return Do_MultiXactIdWait(multi, status, remaining, infomask, true);
+	return Do_MultiXactIdWait(multi, status, infomask, true,
+							  rel, ctid, oper, remaining);
 }
 
 /*

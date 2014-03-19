@@ -2295,7 +2295,9 @@ IndexBuildHeapScan(Relation heapRelation,
 							 * Must drop the lock on the buffer before we wait
 							 */
 							LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
-							XactLockTableWait(xwait);
+							XactLockTableWait(xwait, heapRelation,
+											  &heapTuple->t_data->t_ctid,
+											  XLTW_InsertIndexUnique);
 							goto recheck;
 						}
 					}
@@ -2341,7 +2343,9 @@ IndexBuildHeapScan(Relation heapRelation,
 							 * Must drop the lock on the buffer before we wait
 							 */
 							LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
-							XactLockTableWait(xwait);
+							XactLockTableWait(xwait, heapRelation,
+											  &heapTuple->t_data->t_ctid,
+											  XLTW_InsertIndexUnique);
 							goto recheck;
 						}
 

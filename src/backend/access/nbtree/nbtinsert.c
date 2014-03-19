@@ -168,7 +168,7 @@ top:
 		{
 			/* Have to wait for the other guy ... */
 			_bt_relbuf(rel, buf);
-			XactLockTableWait(xwait);
+			XactLockTableWait(xwait, rel, &itup->t_tid, XLTW_InsertIndex);
 			/* start over... */
 			_bt_freestack(stack);
 			goto top;

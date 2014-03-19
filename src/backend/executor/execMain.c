@@ -1982,7 +1982,9 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
 			if (TransactionIdIsValid(SnapshotDirty.xmax))
 			{
 				ReleaseBuffer(buffer);
-				XactLockTableWait(SnapshotDirty.xmax);
+				XactLockTableWait(SnapshotDirty.xmax,
+								  relation, &tuple.t_data->t_ctid,
+								  XLTW_FetchUpdated);
 				continue;		/* loop back to repeat heap_fetch */
 			}
 

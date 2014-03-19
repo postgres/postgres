@@ -1307,7 +1307,8 @@ retry:
 		if (TransactionIdIsValid(xwait))
 		{
 			index_endscan(index_scan);
-			XactLockTableWait(xwait);
+			XactLockTableWait(xwait, heap, &tup->t_data->t_ctid,
+							  XLTW_RecheckExclusionConstr);
 			goto retry;
 		}
 

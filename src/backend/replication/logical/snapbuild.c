@@ -1343,7 +1343,7 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 			if (TransactionIdIsCurrentTransactionId(xid))
 				elog(ERROR, "waiting for ourselves");
 
-			XactLockTableWait(xid);
+			XactLockTableWait(xid, NULL, NULL, XLTW_None);
 		}
 
 		/* nothing could have built up so far, so don't perform cleanup */

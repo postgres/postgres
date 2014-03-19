@@ -20,6 +20,20 @@
 #include "utils/rel.h"
 
 
+/* XactLockTableWait operations */
+typedef enum XLTW_Oper
+{
+	XLTW_None,
+	XLTW_Update,
+	XLTW_Delete,
+	XLTW_Lock,
+	XLTW_LockUpdated,
+	XLTW_InsertIndex,
+	XLTW_InsertIndexUnique,
+	XLTW_FetchUpdated,
+	XLTW_RecheckExclusionConstr
+} XLTW_Oper;
+
 extern void RelationInitLockInfo(Relation relation);
 
 /* Lock a relation */
@@ -54,7 +68,8 @@ extern void UnlockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode);
 /* Lock an XID (used to wait for a transaction to finish) */
 extern void XactLockTableInsert(TransactionId xid);
 extern void XactLockTableDelete(TransactionId xid);
-extern void XactLockTableWait(TransactionId xid);
+extern void XactLockTableWait(TransactionId xid, Relation rel,
+				  ItemPointer ctid, XLTW_Oper oper);
 extern bool ConditionalXactLockTableWait(TransactionId xid);
 
 /* Lock VXIDs, specified by conflicting locktags */
