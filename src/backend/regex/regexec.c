@@ -259,7 +259,7 @@ pg_regexec(regex_t *re,
 	/* clean up */
 	if (v->pmatch != pmatch && v->pmatch != mat)
 		FREE(v->pmatch);
-	for (i = 0; i < n; i++)
+	for (i = 0; i < v->g->ntree; i++)
 	{
 		if (v->subdfas[i] != NULL)
 			freedfa(v->subdfas[i]);
