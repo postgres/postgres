@@ -83,7 +83,7 @@ usage(void)
 	printf(_("  -F  --fsync-interval=INTERVAL\n"
 			 "                         frequency of syncs to the output file (in seconds, defaults to 10)\n"));
 	printf(_("  -o, --option=NAME[=VALUE]\n"
-			 "                         Specify option NAME with optional value VAL, to be passed\n"
+			 "                         Specify option NAME with optional value VALUE, to be passed\n"
 			 "                         to the output plugin\n"));
 	printf(_("  -P, --plugin=PLUGIN    use output plugin PLUGIN (defaults to test_decoding)\n"));
 	printf(_("  -s, --status-interval=INTERVAL\n"

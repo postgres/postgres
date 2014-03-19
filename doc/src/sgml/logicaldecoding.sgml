@@ -23,7 +23,7 @@
    Every output plugin has access to each individual new row produced
    by <command>INSERT</command> and the new row version created
    by <command>UPDATE</command>.  Availability of old row versions for
-   <command>UPDATE</command> and delete <command>DELETE</command> depends on
+   <command>UPDATE</command> and <command>DELETE</command> depends on
    the configured
    <link linkend="SQL-CREATETABLE-REPLICA-IDENTITY"><literal>REPLICA
    IDENTITY</literal></link>.
@@ -46,7 +46,7 @@
    </para>
    <para>
     Before you can use logical decoding, you must set
-    <xref linkend="guc-wal-level"> to logical and
+    <xref linkend="guc-wal-level"> to <literal>logical</literal> and
     <xref linkend="guc-max-replication-slots"> to at least 1.
     Then, you should connect to the target database (in the example
     below, <literal>postgres</literal>) as a superuser.
@@ -149,16 +149,16 @@ postgres=# SELECT pg_drop_replication_slot('regression_slot');
     another connection.
    </para>
    <programlisting>
-# pg_recvlogical -d testdb --slot test --create
-# pg_recvlogical -d testdb --slot test --start -f -
+# pg_recvlogical -d postgres --slot test --create
+# pg_recvlogical -d postgres --slot test --start -f -
 CTRL-Z
-# psql -c "INSERT INTO data(data) VALUES('4');"
+# psql -d postgres -c "INSERT INTO data(data) VALUES('4');"
 # fg
 BEGIN 693
 table public.data: INSERT: id[integer]:4 data[text]:'4'
 COMMIT 693
 CTRL-C
-# pg_recvlogical -d testdb --slot test --drop
+# pg_recvlogical -d postgres --slot test --drop
    </programlisting>
   </sect1>
   <sect1 id="logicaldecoding-explanation">
@@ -198,7 +198,7 @@ CTRL-C
      in the stream).
     </para>
     <note>
-     <para>PostgreSQL also has streaming replication slots
+     <para><productname>PostgreSQL</productname> also has streaming replication slots
      (see <xref linkend="streaming-replication">), but they are used somewhat
      differently there.
      </para>
@@ -258,8 +258,8 @@ CTRL-C
   <sect1 id="logicaldecoding-walsender">
    <title>Streaming Replication Protocol Interface</title>
    <para>
-    The <literal>CREATE_REPLICATION_SLOT SLOT slotname LOGICAL
-    options</literal>, <literal>DROP_REPLICATION_SLOT SLOT slotname</literal>
+    The <literal>CREATE_REPLICATION_SLOT slotname LOGICAL
+    options</literal>, <literal>DROP_REPLICATION_SLOT slotname</literal>
     and <literal>START_REPLICATION SLOT slotname LOGICAL options</literal>
     commands can be used to create, drop and stream changes from a replication
     slot respectively. These commands are only available over a replication
