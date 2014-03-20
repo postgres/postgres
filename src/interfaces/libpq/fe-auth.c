@@ -741,16 +741,18 @@ pg_fe_getauthname(void)
 	 */
 	pglock_thread();
 
-	if (!name)
-	{
+	/*
+	 *	We document PQconndefaults() to return NULL for a memory allocation
+	 *	failure.  We don't have an API to return a user name lookup failure,
+	 *	so we just assume it always succeeds.
+	 */
 #ifdef WIN32
-		if (GetUserName(username, &namesize))
-			name = username;
+	if (GetUserName(username, &namesize))
+		name = username;
 #else
-		if (pqGetpwuid(geteuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pw) == 0)
-			name = pw->pw_name;
+	if (pqGetpwuid(geteuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pw) == 0)
+		name = pw->pw_name;
 #endif
-	}
 
 	authn = name ? strdup(name) : NULL;
 

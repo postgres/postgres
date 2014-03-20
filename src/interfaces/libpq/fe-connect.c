@@ -4482,6 +4482,13 @@ conninfo_add_defaults(PQconninfoOption *options, PQExpBuffer errorMessage)
 		if (strcmp(option->keyword, "user") == 0)
 		{
 			option->val = pg_fe_getauthname();
+			if (!option->val)
+			{
+				if (errorMessage)
+					printfPQExpBuffer(errorMessage,
+									  libpq_gettext("out of memory\n"));
+				return false;
+			}
 			continue;
 		}
 	}
