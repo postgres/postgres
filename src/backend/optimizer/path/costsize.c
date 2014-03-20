@@ -4107,16 +4107,7 @@ check_effective_cache_size(int *newval, void **extra, GucSource source)
 	if (*newval <= 0)
 	{
 		/*
-		 * If we haven't yet changed the initial default of -1, just let it
-		 * be.	We'll fix it later on during GUC initialization, when
-		 * set_default_effective_cache_size is called.	(If we try to do it
-		 * immediately, we may not be looking at the final value of NBuffers.)
-		 */
-		if (effective_cache_size == -1)
-			return true;
-
-		/*
-		 * Otherwise, substitute the auto-tune value, being wary of overflow.
+		 * Substitute the auto-tune value, being wary of overflow.
 		 */
 		if (NBuffers < INT_MAX / 4)
 			*newval = NBuffers * 4;
@@ -4130,22 +4121,22 @@ check_effective_cache_size(int *newval, void **extra, GucSource source)
 }
 
 /*
- * initialize effective_cache_size at the end of GUC startup
+ * Initialize effective_cache_size at the end of GUC startup, or when
+ * a setting in postgresql.conf is removed.
+ *
+ * Note: check_effective_cache_size() will have been called when the boot_val
+ * was installed, but we will not have known the final value of NBuffers at
+ * that time, which is why this has to be called at the end of GUC startup.
  */
 void
 set_default_effective_cache_size(void)
 {
 	/*
-	 * If the value of effective_cache_size is still -1 (or zero), replace it
-	 * with the auto-tune value.
+	 * We let check_effective_cache_size() compute the actual setting.	Note
+	 * that this call is a no-op if the user has supplied a setting (since
+	 * that will have a higher priority than PGC_S_DYNAMIC_DEFAULT).
 	 */
-	if (effective_cache_size <= 0)
-	{
-		/* disable the short-circuit in check_effective_cache_size */
-		effective_cache_size = 0;
-		/* and let check_effective_cache_size() compute the setting */
-		SetConfigOption("effective_cache_size", "-1",
-						PGC_POSTMASTER, PGC_S_OVERRIDE);
-	}
+	SetConfigOption("effective_cache_size", "-1",
+					PGC_POSTMASTER, PGC_S_DYNAMIC_DEFAULT);
 	Assert(effective_cache_size > 0);
 }

@@ -298,6 +298,7 @@ ProcessConfigFile(GucContext context)
 	{
 		InitializeGUCOptionsFromEnvironment();
 		pg_timezone_abbrev_initialize();
+		set_default_effective_cache_size();
 		/* this selects SQL_ASCII in processes not connected to a database */
 		SetConfigOption("client_encoding", GetDatabaseEncodingName(),
 						PGC_BACKEND, PGC_S_DYNAMIC_DEFAULT);
