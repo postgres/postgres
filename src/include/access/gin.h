@@ -48,13 +48,13 @@ typedef struct GinStatsData
 } GinStatsData;
 
 /* ginlogic.c */
-enum
+enum GinLogicValueEnum
 {
-	GIN_FALSE = 0,			/* item is present / matches */
-	GIN_TRUE = 1,			/* item is not present / does not match */
+	GIN_FALSE = 0,			/* item is not present / does not match */
+	GIN_TRUE = 1,			/* item is present / matches */
 	GIN_MAYBE = 2			/* don't know if item is present / don't know if
 							 * matches */
-} GinLogicValueEnum;
+};
 
 typedef char GinLogicValue;
 
