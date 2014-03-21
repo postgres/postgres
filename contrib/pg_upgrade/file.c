@@ -291,7 +291,7 @@ pg_scandir_internal(const char *dirname,
 
 	*namelist = NULL;
 
-	while ((direntry = readdir(dirdesc)) != NULL)
+	while (errno = 0, (direntry = readdir(dirdesc)) != NULL)
 	{
 		/* Invoke the selector function to see if the direntry matches */
 		if (!selector || (*selector) (direntry))
@@ -324,7 +324,17 @@ pg_scandir_internal(const char *dirname,
 		}
 	}
 
-	closedir(dirdesc);
+#ifdef WIN32
+	/* Bug in old Mingw dirent.c;  fixed in mingw-runtime-3.2, 2003-10-10 */
+	if (GetLastError() == ERROR_NO_MORE_FILES)
+		errno = 0;
+#endif
+
+	if (errno)
+		pg_log(PG_FATAL, "could not read directory \"%s\": %s\n", dirname, getErrorText(errno));
+
+	if (closedir(dirdesc))
+		pg_log(PG_FATAL, "could not close directory \"%s\": %s\n", dirname, getErrorText(errno));
 
 	return count;
 }
