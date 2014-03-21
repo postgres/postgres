@@ -169,12 +169,16 @@ typedef enum LWLockMode
 extern bool Trace_lwlocks;
 #endif
 
-extern void LWLockAcquire(LWLock *lock, LWLockMode mode);
+extern bool LWLockAcquire(LWLock *lock, LWLockMode mode);
 extern bool LWLockConditionalAcquire(LWLock *lock, LWLockMode mode);
 extern bool LWLockAcquireOrWait(LWLock *lock, LWLockMode mode);
 extern void LWLockRelease(LWLock *lock);
 extern void LWLockReleaseAll(void);
 extern bool LWLockHeldByMe(LWLock *lock);
+
+extern bool LWLockAcquireWithVar(LWLock *lock, uint64 *valptr, uint64 val);
+extern bool LWLockWaitForVar(LWLock *lock, uint64 *valptr, uint64 oldval, uint64 *newval);
+extern void LWLockUpdateVar(LWLock *lock, uint64 *valptr, uint64 value);
 
 extern Size LWLockShmemSize(void);
 extern void CreateLWLocks(void);

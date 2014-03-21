@@ -2120,12 +2120,12 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"xloginsert_slots", PGC_POSTMASTER, WAL_SETTINGS,
-			gettext_noop("Sets the number of slots for concurrent xlog insertions."),
+		{"xloginsert_locks", PGC_POSTMASTER, WAL_SETTINGS,
+			gettext_noop("Sets the number of locks used for concurrent xlog insertions."),
 			NULL,
 			GUC_NOT_IN_SAMPLE
 		},
-		&num_xloginsert_slots,
+		&num_xloginsert_locks,
 		8, 1, 1000,
 		NULL, NULL, NULL
 	},
