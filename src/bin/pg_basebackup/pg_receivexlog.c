@@ -139,7 +139,7 @@ FindStreamingStart(uint32 *tli)
 		disconnect_and_exit(1);
 	}
 
-	while ((dirent = readdir(dir)) != NULL)
+	while (errno = 0, (dirent = readdir(dir)) != NULL)
 	{
 		uint32		tli;
 		XLogSegNo	segno;
@@ -209,7 +209,25 @@ FindStreamingStart(uint32 *tli)
 		}
 	}
 
-	closedir(dir);
+#ifdef WIN32
+	/* Bug in old Mingw dirent.c;  fixed in mingw-runtime-3.2, 2003-10-10 */
+	if (GetLastError() == ERROR_NO_MORE_FILES)
+		errno = 0;
+#endif
+
+	if (errno)
+	{
+		fprintf(stderr, _("%s: could not read directory \"%s\": %s\n"),
+				progname, basedir, strerror(errno));
+		disconnect_and_exit(1);
+	}
+
+	if (closedir(dir))
+	{
+		fprintf(stderr, _("%s: could not close directory \"%s\": %s\n"),
+				progname, basedir, strerror(errno));
+		disconnect_and_exit(1);
+	}
 
 	if (high_segno > 0)
 	{

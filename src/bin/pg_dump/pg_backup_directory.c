@@ -177,7 +177,7 @@ InitArchiveFmt_Directory(ArchiveHandle *AH)
 				struct dirent *d;
 
 				is_empty = true;
-				while ((d = readdir(dir)))
+				while (errno = 0, (d = readdir(dir)))
 				{
 					if (strcmp(d->d_name, ".") != 0 && strcmp(d->d_name, "..") != 0)
 					{
@@ -185,7 +185,20 @@ InitArchiveFmt_Directory(ArchiveHandle *AH)
 						break;
 					}
 				}
-				closedir(dir);
+
+#ifdef WIN32
+				/* Bug in old Mingw dirent.c;  fixed in mingw-runtime-3.2, 2003-10-10 */
+				if (GetLastError() == ERROR_NO_MORE_FILES)
+					errno = 0;
+#endif
+
+				if (errno)
+					exit_horribly(modulename, "could not read directory \"%s\": %s\n",
+								  ctx->directory, strerror(errno));
+
+				if (closedir(dir))
+					exit_horribly(modulename, "could not close directory \"%s\": %s\n",
+								  ctx->directory, strerror(errno));
 			}
 		}
 

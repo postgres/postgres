@@ -565,10 +565,7 @@ walkdir(char *path, void (*action) (char *fname, bool isdir))
 	}
 
 #ifdef WIN32
-	/*
-	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but not in
-	 * released version
-	 */
+	/* Bug in old Mingw dirent.c;  fixed in mingw-runtime-3.2, 2003-10-10 */
 	if (GetLastError() == ERROR_NO_MORE_FILES)
 		errno = 0;
 #endif
@@ -580,7 +577,12 @@ walkdir(char *path, void (*action) (char *fname, bool isdir))
 		exit_nicely();
 	}
 
-	closedir(dir);
+	if (closedir(dir))
+	{
+		fprintf(stderr, _("%s: could not close directory \"%s\": %s\n"),
+				progname, path, strerror(errno));
+		exit_nicely();
+	}
 
 	/*
 	 * It's important to fsync the destination directory itself as individual
