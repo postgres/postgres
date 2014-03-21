@@ -258,10 +258,7 @@ load_directory(const char *dirname, char ***namelist)
 	}
 
 #ifdef WIN32
-	/*
-	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but not in
-	 * released version
-	 */
+	/* Bug in old Mingw dirent.c;  fixed in mingw-runtime-3.2, 2003-10-10 */
 	if (GetLastError() == ERROR_NO_MORE_FILES)
 		errno = 0;
 #endif
@@ -270,7 +267,9 @@ load_directory(const char *dirname, char ***namelist)
 		pg_log(PG_FATAL, "could not read directory \"%s\": %s\n",
 			   dirname, getErrorText(errno));
 
-	closedir(dirdesc);
+	if (closedir(dirdesc))
+		pg_log(PG_FATAL, "could not close directory \"%s\": %s\n",
+			   dirname, getErrorText(errno));
 
 	return count;
 }
