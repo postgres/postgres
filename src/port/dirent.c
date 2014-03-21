@@ -100,15 +100,19 @@ readdir(DIR *d)
 	strcpy(d->ret.d_name, fd.cFileName);		/* Both strings are MAX_PATH
 												 * long */
 	d->ret.d_namlen = strlen(d->ret.d_name);
+
 	return &d->ret;
 }
 
 int
 closedir(DIR *d)
 {
+	int ret = 0;
+
 	if (d->handle != INVALID_HANDLE_VALUE)
-		FindClose(d->handle);
+		ret = !FindClose(d->handle);
 	free(d->dirname);
 	free(d);
-	return 0;
+
+	return ret;
 }
