@@ -1956,12 +1956,6 @@ ReadDir(DIR *dir, const char *dirname)
 	if ((dent = readdir(dir)) != NULL)
 		return dent;
 
-#ifdef WIN32
-	/* Bug in old Mingw dirent.c;  fixed in mingw-runtime-3.2, 2003-10-10 */
-	if (GetLastError() == ERROR_NO_MORE_FILES)
-		errno = 0;
-#endif
-
 	if (errno)
 		ereport(ERROR,
 				(errcode_for_file_access(),

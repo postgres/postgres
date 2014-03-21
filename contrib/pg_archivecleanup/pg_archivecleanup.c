@@ -165,12 +165,6 @@ CleanupPriorWALFiles(void)
 			}
 		}
 
-#ifdef WIN32
-		/* Bug in old Mingw dirent.c;  fixed in mingw-runtime-3.2, 2003-10-10 */
-		if (GetLastError() == ERROR_NO_MORE_FILES)
-			errno = 0;
-#endif
-
 		if (errno)
 			fprintf(stderr, "%s: could not read archive location \"%s\": %s\n",
 					progname, archiveLocation, strerror(errno));
