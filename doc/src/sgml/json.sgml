@@ -147,7 +147,7 @@
    <type>jsonb</> data is subject to the same concurrency control
    considerations as any other datatype when stored in a table.
    Although storing large documents is practicable, in order to ensure
-   correct behavior row-level locks are, quite naturally, aquired as
+   correct behavior row-level locks are, quite naturally, acquired as
    rows are updated.  Consider keeping <type>jsonb</> documents at a
    manageable size in order to decrease lock contention among updating
    transactions.  Ideally, <type>jsonb</> documents should each
