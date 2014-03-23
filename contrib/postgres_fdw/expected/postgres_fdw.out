@@ -2496,3 +2496,322 @@ select * from rem1;
  11 | bye remote
 (4 rows)
 
+-- ===================================================================
+-- test local triggers
+-- ===================================================================
+-- Trigger functions "borrowed" from triggers regress test.
+CREATE FUNCTION trigger_func() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+	RAISE NOTICE 'trigger_func(%) called: action = %, when = %, level = %',
+		TG_ARGV[0], TG_OP, TG_WHEN, TG_LEVEL;
+	RETURN NULL;
+END;$$;
+CREATE TRIGGER trig_stmt_before BEFORE DELETE OR INSERT OR UPDATE ON rem1
+	FOR EACH STATEMENT EXECUTE PROCEDURE trigger_func();
+CREATE TRIGGER trig_stmt_after AFTER DELETE OR INSERT OR UPDATE ON rem1
+	FOR EACH STATEMENT EXECUTE PROCEDURE trigger_func();
+CREATE OR REPLACE FUNCTION trigger_data()  RETURNS trigger
+LANGUAGE plpgsql AS $$
+
+declare
+	oldnew text[];
+	relid text;
+    argstr text;
+begin
+
+	relid := TG_relid::regclass;
+	argstr := '';
+	for i in 0 .. TG_nargs - 1 loop
+		if i > 0 then
+			argstr := argstr || ', ';
+		end if;
+		argstr := argstr || TG_argv[i];
+	end loop;
+
+    RAISE NOTICE '%(%) % % % ON %',
+		tg_name, argstr, TG_when, TG_level, TG_OP, relid;
+    oldnew := '{}'::text[];
+	if TG_OP != 'INSERT' then
+		oldnew := array_append(oldnew, format('OLD: %s', OLD));
+	end if;
+
+	if TG_OP != 'DELETE' then
+		oldnew := array_append(oldnew, format('NEW: %s', NEW));
+	end if;
+
+    RAISE NOTICE '%', array_to_string(oldnew, ',');
+
+	if TG_OP = 'DELETE' then
+		return OLD;
+	else
+		return NEW;
+	end if;
+end;
+$$;
+-- Test basic functionality
+CREATE TRIGGER trig_row_before
+BEFORE INSERT OR UPDATE OR DELETE ON rem1
+FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
+CREATE TRIGGER trig_row_after
+AFTER INSERT OR UPDATE OR DELETE ON rem1
+FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
+delete from rem1;
+NOTICE:  trigger_func(<NULL>) called: action = DELETE, when = BEFORE, level = STATEMENT
+NOTICE:  trig_row_before(23, skidoo) BEFORE ROW DELETE ON rem1
+NOTICE:  OLD: (1,hi)
+NOTICE:  trig_row_before(23, skidoo) BEFORE ROW DELETE ON rem1
+NOTICE:  OLD: (10,"hi remote")
+NOTICE:  trig_row_before(23, skidoo) BEFORE ROW DELETE ON rem1
+NOTICE:  OLD: (2,bye)
+NOTICE:  trig_row_before(23, skidoo) BEFORE ROW DELETE ON rem1
+NOTICE:  OLD: (11,"bye remote")
+NOTICE:  trig_row_after(23, skidoo) AFTER ROW DELETE ON rem1
+NOTICE:  OLD: (1,hi)
+NOTICE:  trig_row_after(23, skidoo) AFTER ROW DELETE ON rem1
+NOTICE:  OLD: (10,"hi remote")
+NOTICE:  trig_row_after(23, skidoo) AFTER ROW DELETE ON rem1
+NOTICE:  OLD: (2,bye)
+NOTICE:  trig_row_after(23, skidoo) AFTER ROW DELETE ON rem1
+NOTICE:  OLD: (11,"bye remote")
+NOTICE:  trigger_func(<NULL>) called: action = DELETE, when = AFTER, level = STATEMENT
+insert into rem1 values(1,'insert');
+NOTICE:  trigger_func(<NULL>) called: action = INSERT, when = BEFORE, level = STATEMENT
+NOTICE:  trig_row_before(23, skidoo) BEFORE ROW INSERT ON rem1
+NOTICE:  NEW: (1,insert)
+NOTICE:  trig_row_after(23, skidoo) AFTER ROW INSERT ON rem1
+NOTICE:  NEW: (1,insert)
+NOTICE:  trigger_func(<NULL>) called: action = INSERT, when = AFTER, level = STATEMENT
+update rem1 set f2  = 'update' where f1 = 1;
+NOTICE:  trigger_func(<NULL>) called: action = UPDATE, when = BEFORE, level = STATEMENT
+NOTICE:  trig_row_before(23, skidoo) BEFORE ROW UPDATE ON rem1
+NOTICE:  OLD: (1,insert),NEW: (1,update)
+NOTICE:  trig_row_after(23, skidoo) AFTER ROW UPDATE ON rem1
+NOTICE:  OLD: (1,insert),NEW: (1,update)
+NOTICE:  trigger_func(<NULL>) called: action = UPDATE, when = AFTER, level = STATEMENT
+update rem1 set f2 = f2 || f2;
+NOTICE:  trigger_func(<NULL>) called: action = UPDATE, when = BEFORE, level = STATEMENT
+NOTICE:  trig_row_before(23, skidoo) BEFORE ROW UPDATE ON rem1
+NOTICE:  OLD: (1,update),NEW: (1,updateupdate)
+NOTICE:  trig_row_after(23, skidoo) AFTER ROW UPDATE ON rem1
+NOTICE:  OLD: (1,update),NEW: (1,updateupdate)
+NOTICE:  trigger_func(<NULL>) called: action = UPDATE, when = AFTER, level = STATEMENT
+-- cleanup
+DROP TRIGGER trig_row_before ON rem1;
+DROP TRIGGER trig_row_after ON rem1;
+DROP TRIGGER trig_stmt_before ON rem1;
+DROP TRIGGER trig_stmt_after ON rem1;
+DELETE from rem1;
+-- Test WHEN conditions
+CREATE TRIGGER trig_row_before_insupd
+BEFORE INSERT OR UPDATE ON rem1
+FOR EACH ROW
+WHEN (NEW.f2 like '%update%')
+EXECUTE PROCEDURE trigger_data(23,'skidoo');
+CREATE TRIGGER trig_row_after_insupd
+AFTER INSERT OR UPDATE ON rem1
+FOR EACH ROW
+WHEN (NEW.f2 like '%update%')
+EXECUTE PROCEDURE trigger_data(23,'skidoo');
+-- Insert or update not matching: nothing happens
+INSERT INTO rem1 values(1, 'insert');
+UPDATE rem1 set f2 = 'test';
+-- Insert or update matching: triggers are fired
+INSERT INTO rem1 values(2, 'update');
+NOTICE:  trig_row_before_insupd(23, skidoo) BEFORE ROW INSERT ON rem1
+NOTICE:  NEW: (2,update)
+NOTICE:  trig_row_after_insupd(23, skidoo) AFTER ROW INSERT ON rem1
+NOTICE:  NEW: (2,update)
+UPDATE rem1 set f2 = 'update update' where f1 = '2';
+NOTICE:  trig_row_before_insupd(23, skidoo) BEFORE ROW UPDATE ON rem1
+NOTICE:  OLD: (2,update),NEW: (2,"update update")
+NOTICE:  trig_row_after_insupd(23, skidoo) AFTER ROW UPDATE ON rem1
+NOTICE:  OLD: (2,update),NEW: (2,"update update")
+CREATE TRIGGER trig_row_before_delete
+BEFORE DELETE ON rem1
+FOR EACH ROW
+WHEN (OLD.f2 like '%update%')
+EXECUTE PROCEDURE trigger_data(23,'skidoo');
+CREATE TRIGGER trig_row_after_delete
+AFTER DELETE ON rem1
+FOR EACH ROW
+WHEN (OLD.f2 like '%update%')
+EXECUTE PROCEDURE trigger_data(23,'skidoo');
+-- Trigger is fired for f1=2, not for f1=1
+DELETE FROM rem1;
+NOTICE:  trig_row_before_delete(23, skidoo) BEFORE ROW DELETE ON rem1
+NOTICE:  OLD: (2,"update update")
+NOTICE:  trig_row_after_delete(23, skidoo) AFTER ROW DELETE ON rem1
+NOTICE:  OLD: (2,"update update")
+-- cleanup
+DROP TRIGGER trig_row_before_insupd ON rem1;
+DROP TRIGGER trig_row_after_insupd ON rem1;
+DROP TRIGGER trig_row_before_delete ON rem1;
+DROP TRIGGER trig_row_after_delete ON rem1;
+-- Test various RETURN statements in BEFORE triggers.
+CREATE FUNCTION trig_row_before_insupdate() RETURNS TRIGGER AS $$
+  BEGIN
+    NEW.f2 := NEW.f2 || ' triggered !';
+    RETURN NEW;
+  END
+$$ language plpgsql;
+CREATE TRIGGER trig_row_before_insupd
+BEFORE INSERT OR UPDATE ON rem1
+FOR EACH ROW EXECUTE PROCEDURE trig_row_before_insupdate();
+-- The new values should have 'triggered' appended
+INSERT INTO rem1 values(1, 'insert');
+SELECT * from loc1;
+ f1 |         f2         
+----+--------------------
+  1 | insert triggered !
+(1 row)
+
+INSERT INTO rem1 values(2, 'insert') RETURNING f2;
+         f2         
+--------------------
+ insert triggered !
+(1 row)
+
+SELECT * from loc1;
+ f1 |         f2         
+----+--------------------
+  1 | insert triggered !
+  2 | insert triggered !
+(2 rows)
+
+UPDATE rem1 set f2 = '';
+SELECT * from loc1;
+ f1 |      f2      
+----+--------------
+  1 |  triggered !
+  2 |  triggered !
+(2 rows)
+
+UPDATE rem1 set f2 = 'skidoo' RETURNING f2;
+         f2         
+--------------------
+ skidoo triggered !
+ skidoo triggered !
+(2 rows)
+
+SELECT * from loc1;
+ f1 |         f2         
+----+--------------------
+  1 | skidoo triggered !
+  2 | skidoo triggered !
+(2 rows)
+
+DELETE FROM rem1;
+-- Add a second trigger, to check that the changes are propagated correctly
+-- from trigger to trigger
+CREATE TRIGGER trig_row_before_insupd2
+BEFORE INSERT OR UPDATE ON rem1
+FOR EACH ROW EXECUTE PROCEDURE trig_row_before_insupdate();
+INSERT INTO rem1 values(1, 'insert');
+SELECT * from loc1;
+ f1 |               f2               
+----+--------------------------------
+  1 | insert triggered ! triggered !
+(1 row)
+
+INSERT INTO rem1 values(2, 'insert') RETURNING f2;
+               f2               
+--------------------------------
+ insert triggered ! triggered !
+(1 row)
+
+SELECT * from loc1;
+ f1 |               f2               
+----+--------------------------------
+  1 | insert triggered ! triggered !
+  2 | insert triggered ! triggered !
+(2 rows)
+
+UPDATE rem1 set f2 = '';
+SELECT * from loc1;
+ f1 |            f2            
+----+--------------------------
+  1 |  triggered ! triggered !
+  2 |  triggered ! triggered !
+(2 rows)
+
+UPDATE rem1 set f2 = 'skidoo' RETURNING f2;
+               f2               
+--------------------------------
+ skidoo triggered ! triggered !
+ skidoo triggered ! triggered !
+(2 rows)
+
+SELECT * from loc1;
+ f1 |               f2               
+----+--------------------------------
+  1 | skidoo triggered ! triggered !
+  2 | skidoo triggered ! triggered !
+(2 rows)
+
+DROP TRIGGER trig_row_before_insupd ON rem1;
+DROP TRIGGER trig_row_before_insupd2 ON rem1;
+DELETE from rem1;
+INSERT INTO rem1 VALUES (1, 'test');
+-- Test with a trigger returning NULL
+CREATE FUNCTION trig_null() RETURNS TRIGGER AS $$
+  BEGIN
+    RETURN NULL;
+  END
+$$ language plpgsql;
+CREATE TRIGGER trig_null
+BEFORE INSERT OR UPDATE OR DELETE ON rem1
+FOR EACH ROW EXECUTE PROCEDURE trig_null();
+-- Nothing should have changed.
+INSERT INTO rem1 VALUES (2, 'test2');
+SELECT * from loc1;
+ f1 |  f2  
+----+------
+  1 | test
+(1 row)
+
+UPDATE rem1 SET f2 = 'test2';
+SELECT * from loc1;
+ f1 |  f2  
+----+------
+  1 | test
+(1 row)
+
+DELETE from rem1;
+SELECT * from loc1;
+ f1 |  f2  
+----+------
+  1 | test
+(1 row)
+
+DROP TRIGGER trig_null ON rem1;
+DELETE from rem1;
+-- Test a combination of local and remote triggers
+CREATE TRIGGER trig_row_before
+BEFORE INSERT OR UPDATE OR DELETE ON rem1
+FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
+CREATE TRIGGER trig_row_after
+AFTER INSERT OR UPDATE OR DELETE ON rem1
+FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
+CREATE TRIGGER trig_local_before BEFORE INSERT OR UPDATE ON loc1
+FOR EACH ROW EXECUTE PROCEDURE trig_row_before_insupdate();
+INSERT INTO rem1(f2) VALUES ('test');
+NOTICE:  trig_row_before(23, skidoo) BEFORE ROW INSERT ON rem1
+NOTICE:  NEW: (12,test)
+NOTICE:  trig_row_after(23, skidoo) AFTER ROW INSERT ON rem1
+NOTICE:  NEW: (12,"test triggered !")
+UPDATE rem1 SET f2 = 'testo';
+NOTICE:  trig_row_before(23, skidoo) BEFORE ROW UPDATE ON rem1
+NOTICE:  OLD: (12,"test triggered !"),NEW: (12,testo)
+NOTICE:  trig_row_after(23, skidoo) AFTER ROW UPDATE ON rem1
+NOTICE:  OLD: (12,"test triggered !"),NEW: (12,"testo triggered !")
+-- Test returning system attributes
+INSERT INTO rem1(f2) VALUES ('test') RETURNING ctid, xmin, xmax;
+NOTICE:  trig_row_before(23, skidoo) BEFORE ROW INSERT ON rem1
+NOTICE:  NEW: (13,test)
+NOTICE:  trig_row_after(23, skidoo) AFTER ROW INSERT ON rem1
+NOTICE:  NEW: (13,"test triggered !")
+  ctid  | xmin |    xmax    
+--------+------+------------
+ (0,27) |  180 | 4294967295
+(1 row)
+

@@ -43,9 +43,10 @@ CREATE [ CONSTRAINT ] TRIGGER <replaceable class="PARAMETER">name</replaceable> 
 
   <para>
    <command>CREATE TRIGGER</command> creates a new trigger.  The
-   trigger will be associated with the specified table or view and will
-   execute the specified function <replaceable
-   class="parameter">function_name</replaceable> when certain events occur.
+   trigger will be associated with the specified table, view, or foreign table
+   and will execute the specified
+   function <replaceable class="parameter">function_name</replaceable> when
+   certain events occur.
   </para>
 
   <para>
@@ -93,7 +94,7 @@ CREATE [ CONSTRAINT ] TRIGGER <replaceable class="PARAMETER">name</replaceable> 
 
   <para>
    The following table summarizes which types of triggers may be used on
-   tables and views:
+   tables, views, and foreign tables:
   </para>
 
   <informaltable id="supported-trigger-types">
@@ -110,8 +111,8 @@ CREATE [ CONSTRAINT ] TRIGGER <replaceable class="PARAMETER">name</replaceable> 
      <row>
       <entry align="center" morerows="1"><literal>BEFORE</></entry>
       <entry align="center"><command>INSERT</>/<command>UPDATE</>/<command>DELETE</></entry>
-      <entry align="center">Tables</entry>
-      <entry align="center">Tables and views</entry>
+      <entry align="center">Tables and foreign tables</entry>
+      <entry align="center">Tables, views, and foreign tables</entry>
      </row>
      <row>
       <entry align="center"><command>TRUNCATE</></entry>
@@ -121,8 +122,8 @@ CREATE [ CONSTRAINT ] TRIGGER <replaceable class="PARAMETER">name</replaceable> 
      <row>
       <entry align="center" morerows="1"><literal>AFTER</></entry>
       <entry align="center"><command>INSERT</>/<command>UPDATE</>/<command>DELETE</></entry>
-      <entry align="center">Tables</entry>
-      <entry align="center">Tables and views</entry>
+      <entry align="center">Tables and foreign tables</entry>
+      <entry align="center">Tables, views, and foreign tables</entry>
      </row>
      <row>
       <entry align="center"><command>TRUNCATE</></entry>
@@ -164,13 +165,13 @@ CREATE [ CONSTRAINT ] TRIGGER <replaceable class="PARAMETER">name</replaceable> 
    <firstterm>constraint trigger</>.  This is the same as a regular trigger
    except that the timing of the trigger firing can be adjusted using
    <xref linkend="SQL-SET-CONSTRAINTS">.
-   Constraint triggers must be <literal>AFTER ROW</> triggers.  They can
-   be fired either at the end of the statement causing the triggering event,
-   or at the end of the containing transaction; in the latter case they are
-   said to be <firstterm>deferred</>.  A pending deferred-trigger firing can
-   also be forced to happen immediately by using <command>SET CONSTRAINTS</>.
-   Constraint triggers are expected to raise an exception when the constraints
-   they implement are violated.
+   Constraint triggers must be <literal>AFTER ROW</> triggers on tables.  They
+   can be fired either at the end of the statement causing the triggering
+   event, or at the end of the containing transaction; in the latter case they
+   are said to be <firstterm>deferred</>.  A pending deferred-trigger firing
+   can also be forced to happen immediately by using <command>SET
+   CONSTRAINTS</>.  Constraint triggers are expected to raise an exception
+   when the constraints they implement are violated.
   </para>
 
   <para>
@@ -244,8 +245,8 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
     <term><replaceable class="parameter">table_name</replaceable></term>
     <listitem>
      <para>
-      The name (optionally schema-qualified) of the table or view the trigger
-      is for.
+      The name (optionally schema-qualified) of the table, view, or foreign
+      table the trigger is for.
      </para>
     </listitem>
    </varlistentry>
@@ -480,6 +481,14 @@ CREATE TRIGGER view_insert
 
  <refsect1 id="SQL-CREATETRIGGER-compatibility">
   <title>Compatibility</title>
+
+  <!--
+   It's not clear whether SQL/MED contemplates triggers on foreign tables.
+   Its <drop basic column definition> General Rules do mention the possibility
+   of a reference from a trigger column list.  On the other hand, nothing
+   overrides the fact that CREATE TRIGGER only targets base tables.  For now,
+   do not document the compatibility status of triggers on foreign tables.
+  -->
 
   <para>
    The <command>CREATE TRIGGER</command> statement in

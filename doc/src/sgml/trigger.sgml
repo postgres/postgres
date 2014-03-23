@@ -33,20 +33,21 @@
    <para>
     A trigger is a specification that the database should automatically
     execute a particular function whenever a certain type of operation is
-    performed.  Triggers can be attached to both tables and views.
+    performed.  Triggers can be attached to tables, views, and foreign tables.
   </para>
 
   <para>
-    On tables, triggers can be defined to execute either before or after any
-    <command>INSERT</command>, <command>UPDATE</command>, or
-    <command>DELETE</command> operation, either once per modified row,
+    On tables and foreign tables, triggers can be defined to execute either
+    before or after any <command>INSERT</command>, <command>UPDATE</command>,
+    or <command>DELETE</command> operation, either once per modified row,
     or once per <acronym>SQL</acronym> statement.
     <command>UPDATE</command> triggers can moreover be set to fire only if
     certain columns are mentioned in the <literal>SET</literal> clause of the
     <command>UPDATE</command> statement.
     Triggers can also fire for <command>TRUNCATE</command> statements.
     If a trigger event occurs, the trigger's function is called at the
-    appropriate time to handle the event.
+    appropriate time to handle the event.  Foreign tables do not support the
+    TRUNCATE statement at all.
    </para>
 
    <para>
@@ -111,10 +112,10 @@
     triggers fire immediately before a particular row is operated on,
     while row-level <literal>AFTER</> triggers fire at the end of the
     statement (but before any statement-level <literal>AFTER</> triggers).
-    These types of triggers may only be defined on tables.  Row-level
-    <literal>INSTEAD OF</> triggers may only be defined on views, and fire
-    immediately as each row in the view is identified as needing to be
-    operated on.
+    These types of triggers may only be defined on tables and foreign tables.
+    Row-level <literal>INSTEAD OF</> triggers may only be defined on views,
+    and fire immediately as each row in the view is identified as needing to
+    be operated on.
    </para>
 
    <para>
@@ -548,7 +549,8 @@ typedef struct TriggerData
         <command>DELETE</command> then this is what you should return
         from the function if you don't want to replace the row with
         a different one (in the case of <command>INSERT</command>) or
-        skip the operation.
+        skip the operation.  For triggers on foreign tables, values of system
+        columns herein are unspecified.
        </para>
       </listitem>
      </varlistentry>
@@ -563,7 +565,8 @@ typedef struct TriggerData
         <command>DELETE</command>. This is what you have to return
         from the function if the event is an <command>UPDATE</command>
         and you don't want to replace this row by a different one or
-        skip the operation.
+        skip the operation.  For triggers on foreign tables, values of system
+        columns herein are unspecified.
        </para>
       </listitem>
      </varlistentry>

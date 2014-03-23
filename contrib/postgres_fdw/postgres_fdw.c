@@ -108,7 +108,7 @@ enum FdwScanPrivateIndex
  * 1) INSERT/UPDATE/DELETE statement text to be sent to the remote server
  * 2) Integer list of target attribute numbers for INSERT/UPDATE
  *	  (NIL for a DELETE)
- * 3) Boolean flag showing if there's a RETURNING clause
+ * 3) Boolean flag showing if the remote query has a RETURNING clause
  * 4) Integer list of attribute numbers retrieved by RETURNING, if any
  */
 enum FdwModifyPrivateIndex
@@ -1246,7 +1246,7 @@ postgresPlanForeignModify(PlannerInfo *root,
 	 */
 	return list_make4(makeString(sql.data),
 					  targetAttrs,
-					  makeInteger((returningList != NIL)),
+					  makeInteger((retrieved_attrs != NIL)),
 					  retrieved_attrs);
 }
 

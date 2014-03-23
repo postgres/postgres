@@ -309,15 +309,17 @@ ExecInsert(TupleTableSlot *slot,
  *		delete and oldtuple is NULL.  When deleting from a view,
  *		oldtuple is passed to the INSTEAD OF triggers and identifies
  *		what to delete, and tupleid is invalid.  When deleting from a
- *		foreign table, both tupleid and oldtuple are NULL; the FDW has
- *		to figure out which row to delete using data from the planSlot.
+ *		foreign table, tupleid is invalid; the FDW has to figure out
+ *		which row to delete using data from the planSlot.  oldtuple is
+ *		passed to foreign table triggers; it is NULL when the foreign
+ *		table has no relevant triggers.
  *
  *		Returns RETURNING result if any, otherwise NULL.
  * ----------------------------------------------------------------
  */
 static TupleTableSlot *
 ExecDelete(ItemPointer tupleid,
-		   HeapTupleHeader oldtuple,
+		   HeapTuple oldtuple,
 		   TupleTableSlot *planSlot,
 		   EPQState *epqstate,
 		   EState *estate,
@@ -342,7 +344,7 @@ ExecDelete(ItemPointer tupleid,
 		bool		dodelete;
 
 		dodelete = ExecBRDeleteTriggers(estate, epqstate, resultRelInfo,
-										tupleid);
+										tupleid, oldtuple);
 
 		if (!dodelete)			/* "do nothing" */
 			return NULL;
@@ -352,16 +354,10 @@ ExecDelete(ItemPointer tupleid,
 	if (resultRelInfo->ri_TrigDesc &&
 		resultRelInfo->ri_TrigDesc->trig_delete_instead_row)
 	{
-		HeapTupleData tuple;
 		bool		dodelete;
 
 		Assert(oldtuple != NULL);
-		tuple.t_data = oldtuple;
-		tuple.t_len = HeapTupleHeaderGetDatumLength(oldtuple);
-		ItemPointerSetInvalid(&(tuple.t_self));
-		tuple.t_tableOid = InvalidOid;
-
-		dodelete = ExecIRDeleteTriggers(estate, resultRelInfo, &tuple);
+		dodelete = ExecIRDeleteTriggers(estate, resultRelInfo, oldtuple);
 
 		if (!dodelete)			/* "do nothing" */
 			return NULL;
@@ -488,7 +484,7 @@ ldelete:;
 		(estate->es_processed)++;
 
 	/* AFTER ROW DELETE Triggers */
-	ExecARDeleteTriggers(estate, resultRelInfo, tupleid);
+	ExecARDeleteTriggers(estate, resultRelInfo, tupleid, oldtuple);
 
 	/* Process RETURNING if present */
 	if (resultRelInfo->ri_projectReturning)
@@ -512,10 +508,7 @@ ldelete:;
 			slot = estate->es_trig_tuple_slot;
 			if (oldtuple != NULL)
 			{
-				deltuple.t_data = oldtuple;
-				deltuple.t_len = HeapTupleHeaderGetDatumLength(oldtuple);
-				ItemPointerSetInvalid(&(deltuple.t_self));
-				deltuple.t_tableOid = InvalidOid;
+				deltuple = *oldtuple;
 				delbuffer = InvalidBuffer;
 			}
 			else
@@ -564,15 +557,17 @@ ldelete:;
  *		update and oldtuple is NULL.  When updating a view, oldtuple
  *		is passed to the INSTEAD OF triggers and identifies what to
  *		update, and tupleid is invalid.  When updating a foreign table,
- *		both tupleid and oldtuple are NULL; the FDW has to figure out
- *		which row to update using data from the planSlot.
+ *		tupleid is invalid; the FDW has to figure out which row to
+ *		update using data from the planSlot.  oldtuple is passed to
+ *		foreign table triggers; it is NULL when the foreign table has
+ *		no relevant triggers.
  *
  *		Returns RETURNING result if any, otherwise NULL.
  * ----------------------------------------------------------------
  */
 static TupleTableSlot *
 ExecUpdate(ItemPointer tupleid,
-		   HeapTupleHeader oldtuple,
+		   HeapTuple oldtuple,
 		   TupleTableSlot *slot,
 		   TupleTableSlot *planSlot,
 		   EPQState *epqstate,
@@ -609,7 +604,7 @@ ExecUpdate(ItemPointer tupleid,
 		resultRelInfo->ri_TrigDesc->trig_update_before_row)
 	{
 		slot = ExecBRUpdateTriggers(estate, epqstate, resultRelInfo,
-									tupleid, slot);
+									tupleid, oldtuple, slot);
 
 		if (slot == NULL)		/* "do nothing" */
 			return NULL;
@@ -622,16 +617,8 @@ ExecUpdate(ItemPointer tupleid,
 	if (resultRelInfo->ri_TrigDesc &&
 		resultRelInfo->ri_TrigDesc->trig_update_instead_row)
 	{
-		HeapTupleData oldtup;
-
-		Assert(oldtuple != NULL);
-		oldtup.t_data = oldtuple;
-		oldtup.t_len = HeapTupleHeaderGetDatumLength(oldtuple);
-		ItemPointerSetInvalid(&(oldtup.t_self));
-		oldtup.t_tableOid = InvalidOid;
-
 		slot = ExecIRUpdateTriggers(estate, resultRelInfo,
-									&oldtup, slot);
+									oldtuple, slot);
 
 		if (slot == NULL)		/* "do nothing" */
 			return NULL;
@@ -788,7 +775,7 @@ lreplace:;
 		(estate->es_processed)++;
 
 	/* AFTER ROW UPDATE Triggers */
-	ExecARUpdateTriggers(estate, resultRelInfo, tupleid, tuple,
+	ExecARUpdateTriggers(estate, resultRelInfo, tupleid, oldtuple, tuple,
 						 recheckIndexes);
 
 	list_free(recheckIndexes);
@@ -873,7 +860,8 @@ ExecModifyTable(ModifyTableState *node)
 	TupleTableSlot *planSlot;
 	ItemPointer tupleid = NULL;
 	ItemPointerData tuple_ctid;
-	HeapTupleHeader oldtuple = NULL;
+	HeapTupleData oldtupdata;
+	HeapTuple	oldtuple;
 
 	/*
 	 * This should NOT get called during EvalPlanQual; we should have passed a
@@ -958,6 +946,7 @@ ExecModifyTable(ModifyTableState *node)
 		EvalPlanQualSetSlot(&node->mt_epqstate, planSlot);
 		slot = planSlot;
 
+		oldtuple = NULL;
 		if (junkfilter != NULL)
 		{
 			/*
@@ -984,11 +973,21 @@ ExecModifyTable(ModifyTableState *node)
 												 * ctid!! */
 					tupleid = &tuple_ctid;
 				}
-				else if (relkind == RELKIND_FOREIGN_TABLE)
-				{
-					/* do nothing; FDW must fetch any junk attrs it wants */
-				}
-				else
+				/*
+				 * Use the wholerow attribute, when available, to reconstruct
+				 * the old relation tuple.
+				 *
+				 * Foreign table updates have a wholerow attribute when the
+				 * relation has an AFTER ROW trigger.  Note that the wholerow
+				 * attribute does not carry system columns.  Foreign table
+				 * triggers miss seeing those, except that we know enough here
+				 * to set t_tableOid.  Quite separately from this, the FDW may
+				 * fetch its own junk attrs to identify the row.
+				 *
+				 * Other relevant relkinds, currently limited to views, always
+				 * have a wholerow attribute.
+				 */
+				else if (AttributeNumberIsValid(junkfilter->jf_junkAttNo))
 				{
 					datum = ExecGetJunkAttribute(slot,
 												 junkfilter->jf_junkAttNo,
@@ -997,8 +996,19 @@ ExecModifyTable(ModifyTableState *node)
 					if (isNull)
 						elog(ERROR, "wholerow is NULL");
 
-					oldtuple = DatumGetHeapTupleHeader(datum);
+					oldtupdata.t_data = DatumGetHeapTupleHeader(datum);
+					oldtupdata.t_len =
+						HeapTupleHeaderGetDatumLength(oldtupdata.t_data);
+					ItemPointerSetInvalid(&(oldtupdata.t_self));
+					/* Historically, view triggers see invalid t_tableOid. */
+					oldtupdata.t_tableOid =
+						(relkind == RELKIND_VIEW) ? InvalidOid :
+						RelationGetRelid(resultRelInfo->ri_RelationDesc);
+
+					oldtuple = &oldtupdata;
 				}
+				else
+					Assert(relkind == RELKIND_FOREIGN_TABLE);
 			}
 
 			/*
@@ -1334,7 +1344,11 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 					}
 					else if (relkind == RELKIND_FOREIGN_TABLE)
 					{
-						/* FDW must fetch any junk attrs it wants */
+						/*
+						 * When there is an AFTER trigger, there should be a
+						 * wholerow attribute.
+						 */
+						j->jf_junkAttNo = ExecFindJunkAttribute(j, "wholerow");
 					}
 					else
 					{

@@ -1199,7 +1199,7 @@ static void
 rewriteTargetListUD(Query *parsetree, RangeTblEntry *target_rte,
 					Relation target_relation)
 {
-	Var		   *var;
+	Var		   *var = NULL;
 	const char *attrname;
 	TargetEntry *tle;
 
@@ -1231,7 +1231,26 @@ rewriteTargetListUD(Query *parsetree, RangeTblEntry *target_rte,
 			fdwroutine->AddForeignUpdateTargets(parsetree, target_rte,
 												target_relation);
 
-		return;
+		/*
+		 * If we have a row-level trigger corresponding to the operation, emit
+		 * a whole-row Var so that executor will have the "old" row to pass to
+		 * the trigger.  Alas, this misses system columns.
+		 */
+		if (target_relation->trigdesc &&
+			((parsetree->commandType == CMD_UPDATE &&
+			  (target_relation->trigdesc->trig_update_after_row ||
+			   target_relation->trigdesc->trig_update_before_row)) ||
+			 (parsetree->commandType == CMD_DELETE &&
+			  (target_relation->trigdesc->trig_delete_after_row ||
+			   target_relation->trigdesc->trig_delete_before_row))))
+		{
+			var = makeWholeRowVar(target_rte,
+								  parsetree->resultRelation,
+								  0,
+								  false);
+
+			attrname = "wholerow";
+		}
 	}
 	else
 	{
@@ -1247,12 +1266,15 @@ rewriteTargetListUD(Query *parsetree, RangeTblEntry *target_rte,
 		attrname = "wholerow";
 	}
 
-	tle = makeTargetEntry((Expr *) var,
-						  list_length(parsetree->targetList) + 1,
-						  pstrdup(attrname),
-						  true);
+	if (var != NULL)
+	{
+		tle = makeTargetEntry((Expr *) var,
+							  list_length(parsetree->targetList) + 1,
+							  pstrdup(attrname),
+							  true);
 
-	parsetree->targetList = lappend(parsetree->targetList, tle);
+		parsetree->targetList = lappend(parsetree->targetList, tle);
+	}
 }
 
 

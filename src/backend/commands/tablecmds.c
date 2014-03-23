@@ -3180,6 +3180,9 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		case AT_DisableTrig:	/* DISABLE TRIGGER variants */
 		case AT_DisableTrigAll:
 		case AT_DisableTrigUser:
+			ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
+			pass = AT_PASS_MISC;
+			break;
 		case AT_EnableRule:		/* ENABLE/DISABLE RULE variants */
 		case AT_EnableAlwaysRule:
 		case AT_EnableReplicaRule:

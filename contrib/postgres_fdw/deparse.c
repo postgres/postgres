@@ -110,6 +110,7 @@ static void deparseTargetList(StringInfo buf,
 				  List **retrieved_attrs);
 static void deparseReturningList(StringInfo buf, PlannerInfo *root,
 					 Index rtindex, Relation rel,
+					 bool trig_after_row,
 					 List *returningList,
 					 List **retrieved_attrs);
 static void deparseColumnRef(StringInfo buf, int varno, int varattno,
@@ -875,11 +876,9 @@ deparseInsertSql(StringInfo buf, PlannerInfo *root,
 	else
 		appendStringInfoString(buf, " DEFAULT VALUES");
 
-	if (returningList)
-		deparseReturningList(buf, root, rtindex, rel, returningList,
-							 retrieved_attrs);
-	else
-		*retrieved_attrs = NIL;
+	deparseReturningList(buf, root, rtindex, rel,
+					   rel->trigdesc && rel->trigdesc->trig_insert_after_row,
+						 returningList, retrieved_attrs);
 }
 
 /*
@@ -919,11 +918,9 @@ deparseUpdateSql(StringInfo buf, PlannerInfo *root,
 	}
 	appendStringInfoString(buf, " WHERE ctid = $1");
 
-	if (returningList)
-		deparseReturningList(buf, root, rtindex, rel, returningList,
-							 retrieved_attrs);
-	else
-		*retrieved_attrs = NIL;
+	deparseReturningList(buf, root, rtindex, rel,
+					   rel->trigdesc && rel->trigdesc->trig_update_after_row,
+						 returningList, retrieved_attrs);
 }
 
 /*
@@ -943,34 +940,48 @@ deparseDeleteSql(StringInfo buf, PlannerInfo *root,
 	deparseRelation(buf, rel);
 	appendStringInfoString(buf, " WHERE ctid = $1");
 
-	if (returningList)
-		deparseReturningList(buf, root, rtindex, rel, returningList,
-							 retrieved_attrs);
-	else
-		*retrieved_attrs = NIL;
+	deparseReturningList(buf, root, rtindex, rel,
+					   rel->trigdesc && rel->trigdesc->trig_delete_after_row,
+						 returningList, retrieved_attrs);
 }
 
 /*
- * deparse RETURNING clause of INSERT/UPDATE/DELETE
+ * Add a RETURNING clause, if needed, to an INSERT/UPDATE/DELETE.
  */
 static void
 deparseReturningList(StringInfo buf, PlannerInfo *root,
 					 Index rtindex, Relation rel,
+					 bool trig_after_row,
 					 List *returningList,
 					 List **retrieved_attrs)
 {
-	Bitmapset  *attrs_used;
+	Bitmapset  *attrs_used = NULL;
 
-	/*
-	 * We need the attrs mentioned in the query's RETURNING list.
-	 */
-	attrs_used = NULL;
-	pull_varattnos((Node *) returningList, rtindex,
-				   &attrs_used);
+	if (trig_after_row)
+	{
+		/* whole-row reference acquires all non-system columns */
+		attrs_used =
+			bms_make_singleton(0 - FirstLowInvalidHeapAttributeNumber);
+	}
 
-	appendStringInfoString(buf, " RETURNING ");
-	deparseTargetList(buf, root, rtindex, rel, attrs_used,
-					  retrieved_attrs);
+	if (returningList != NIL)
+	{
+		/*
+		 * We need the attrs, non-system and system, mentioned in the local
+		 * query's RETURNING list.
+		 */
+		pull_varattnos((Node *) returningList, rtindex,
+					   &attrs_used);
+	}
+
+	if (attrs_used != NULL)
+	{
+		appendStringInfoString(buf, " RETURNING ");
+		deparseTargetList(buf, root, rtindex, rel, attrs_used,
+						  retrieved_attrs);
+	}
+	else
+		*retrieved_attrs = NIL;
 }
 
 /*
