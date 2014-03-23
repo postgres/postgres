@@ -3805,10 +3805,14 @@ AfterTriggerEndQuery(EState *estate)
 	 * IMMEDIATE: all events we have decided to defer will be available for it
 	 * to fire.
 	 *
-	 * We loop in case a trigger queues more events at the same query level
-	 * (is that even possible?).  Be careful here: firing a trigger could
-	 * result in query_stack being repalloc'd, so we can't save its address
-	 * across afterTriggerInvokeEvents calls.
+	 * We loop in case a trigger queues more events at the same query level.
+	 * Ordinary trigger functions, including all PL/pgSQL trigger functions,
+	 * will instead fire any triggers in a dedicated query level.  Foreign key
+	 * enforcement triggers do add to the current query level, thanks to their
+	 * passing fire_triggers = false to SPI_execute_snapshot().  Other
+	 * C-language triggers might do likewise.  Be careful here: firing a
+	 * trigger could result in query_stack being repalloc'd, so we can't save
+	 * its address across afterTriggerInvokeEvents calls.
 	 *
 	 * If we find no firable events, we don't have to increment
 	 * firing_counter.
@@ -4046,7 +4050,9 @@ AfterTriggerEndSubXact(bool isCommit)
 
 		/*
 		 * Release any event lists from queries being aborted, and restore
-		 * query_depth to its pre-subxact value.
+		 * query_depth to its pre-subxact value.  This assumes that a
+		 * subtransaction will not add events to query levels started in a
+		 * earlier transaction state.
 		 */
 		while (afterTriggers->query_depth > afterTriggers->depth_stack[my_level])
 		{
