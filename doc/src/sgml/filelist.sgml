@@ -22,6 +22,7 @@
 <!ENTITY dml        SYSTEM "dml.sgml">
 <!ENTITY func       SYSTEM "func.sgml">
 <!ENTITY indices    SYSTEM "indices.sgml">
+<!ENTITY json       SYSTEM "json.sgml">
 <!ENTITY mvcc       SYSTEM "mvcc.sgml">
 <!ENTITY perform    SYSTEM "perform.sgml">
 <!ENTITY queries    SYSTEM "queries.sgml">

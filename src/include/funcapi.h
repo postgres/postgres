@@ -293,6 +293,15 @@ extern void end_MultiFuncCall(PG_FUNCTION_ARGS, FuncCallContext *funcctx);
 		PG_RETURN_DATUM(_result); \
 	} while (0)
 
+#define SRF_RETURN_NEXT_NULL(_funcctx) \
+	do { \
+		ReturnSetInfo	   *rsi; \
+		(_funcctx)->call_cntr++; \
+		rsi = (ReturnSetInfo *) fcinfo->resultinfo; \
+		rsi->isDone = ExprMultipleResult; \
+		PG_RETURN_NULL(); \
+	} while (0)
+
 #define  SRF_RETURN_DONE(_funcctx) \
 	do { \
 		ReturnSetInfo	   *rsi; \

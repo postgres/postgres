@@ -359,4 +359,8 @@ DATA(insert ( 1560 1560 1685 i f ));
 DATA(insert ( 1562 1562 1687 i f ));
 DATA(insert ( 1700 1700 1703 i f ));
 
+/* json to/from jsonb */
+DATA(insert ( 114 3802 0 e i ));
+DATA(insert ( 3802 114 0 e i ));
+
 #endif   /* PG_CAST_H */

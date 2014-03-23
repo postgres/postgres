@@ -21,11 +21,11 @@ OBJS = acl.o arrayfuncs.o array_selfuncs.o array_typanalyze.o \
 	cash.o char.o date.o datetime.o datum.o dbsize.o domains.o \
 	encode.o enum.o float.o format_type.o formatting.o genfile.o \
 	geo_ops.o geo_selfuncs.o inet_cidr_ntop.o inet_net_pton.o int.o \
-	int8.o json.o jsonfuncs.o like.o \
-	lockfuncs.o mac.o misc.o nabstime.o name.o network.o numeric.o \
-	numutils.o oid.o oracle_compat.o orderedsetaggs.o \
-	pg_lzcompress.o pg_locale.o pg_lsn.o pgstatfuncs.o \
-	pseudotypes.o quote.o rangetypes.o rangetypes_gist.o \
+	int8.o json.o jsonb.o jsonb_gin.o jsonb_op.o jsonb_util.o \
+	jsonfuncs.o like.o lockfuncs.o mac.o misc.o nabstime.o name.o \
+	network.o numeric.o numutils.o oid.o oracle_compat.o \
+	orderedsetaggs.o pg_lzcompress.o pg_locale.o pg_lsn.o \
+	pgstatfuncs.o pseudotypes.o quote.o rangetypes.o rangetypes_gist.o \
 	rangetypes_selfuncs.o rangetypes_spgist.o rangetypes_typanalyze.o \
 	regexp.o regproc.o ri_triggers.o rowtypes.o ruleutils.o \
 	selfuncs.o tid.o timestamp.o trigfuncs.o \

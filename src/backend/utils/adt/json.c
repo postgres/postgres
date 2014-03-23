@@ -210,22 +210,17 @@ Datum
 json_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-	text	   *result;
 	char	   *str;
 	int			nbytes;
 	JsonLexContext *lex;
 
 	str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
 
-	result = palloc(nbytes + VARHDRSZ);
-	SET_VARSIZE(result, nbytes + VARHDRSZ);
-	memcpy(VARDATA(result), str, nbytes);
-
 	/* Validate it. */
-	lex = makeJsonLexContext(result, false);
+	lex = makeJsonLexContextCstringLen(str, nbytes, false);
 	pg_parse_json(lex, &nullSemAction);
 
-	PG_RETURN_TEXT_P(result);
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(str, nbytes));
 }
 
 /*
@@ -236,15 +231,26 @@ json_recv(PG_FUNCTION_ARGS)
  *
  * Without is better as it makes the processing faster, so only make one
  * if really required.
+ *
+ * If you already have the json as a text* value, use the first of these
+ * functions, otherwise use  makeJsonLexContextCstringLen().
  */
 JsonLexContext *
 makeJsonLexContext(text *json, bool need_escapes)
 {
+	return makeJsonLexContextCstringLen(VARDATA(json),
+										VARSIZE(json) - VARHDRSZ,
+										need_escapes);
+}
+
+JsonLexContext *
+makeJsonLexContextCstringLen(char *json, int len, bool need_escapes)
+{
 	JsonLexContext *lex = palloc0(sizeof(JsonLexContext));
 
-	lex->input = lex->token_terminator = lex->line_start = VARDATA(json);
+	lex->input = lex->token_terminator = lex->line_start = json;
 	lex->line_number = 1;
-	lex->input_length = VARSIZE(json) - VARHDRSZ;
+	lex->input_length = len;
 	if (need_escapes)
 		lex->strval = makeStringInfo();
 	return lex;
@@ -1274,7 +1280,7 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 			pfree(outputstr);
 			break;
 		case TYPCATEGORY_JSON:
-			/* JSON will already be escaped */
+			/* JSON and JSONB will already be escaped */
 			outputstr = OidOutputFunctionCall(typoutputfunc, val);
 			appendStringInfoString(result, outputstr);
 			pfree(outputstr);
@@ -1406,7 +1412,7 @@ array_to_json_internal(Datum array, StringInfo result, bool use_line_feeds)
 		tcategory = TYPCATEGORY_JSON_CAST;
 	else if (element_type == RECORDOID)
 		tcategory = TYPCATEGORY_COMPOSITE;
-	else if (element_type == JSONOID)
+	else if (element_type == JSONOID || element_type == JSONBOID)
 		tcategory = TYPCATEGORY_JSON;
 	else
 		tcategory = TypeCategory(element_type);
@@ -1501,7 +1507,8 @@ composite_to_json(Datum composite, StringInfo result, bool use_line_feeds)
 			tcategory = TYPCATEGORY_ARRAY;
 		else if (tupdesc->attrs[i]->atttypid == RECORDOID)
 			tcategory = TYPCATEGORY_COMPOSITE;
-		else if (tupdesc->attrs[i]->atttypid == JSONOID)
+		else if (tupdesc->attrs[i]->atttypid == JSONOID ||
+				 tupdesc->attrs[i]->atttypid == JSONBOID)
 			tcategory = TYPCATEGORY_JSON;
 		else
 			tcategory = TypeCategory(tupdesc->attrs[i]->atttypid);
@@ -1689,7 +1696,7 @@ to_json(PG_FUNCTION_ARGS)
 		tcategory = TYPCATEGORY_ARRAY;
 	else if (val_type == RECORDOID)
 		tcategory = TYPCATEGORY_COMPOSITE;
-	else if (val_type == JSONOID)
+	else if (val_type == JSONOID || val_type == JSONBOID)
 		tcategory = TYPCATEGORY_JSON;
 	else
 		tcategory = TypeCategory(val_type);
@@ -1783,7 +1790,7 @@ json_agg_transfn(PG_FUNCTION_ARGS)
 		tcategory = TYPCATEGORY_ARRAY;
 	else if (val_type == RECORDOID)
 		tcategory = TYPCATEGORY_COMPOSITE;
-	else if (val_type == JSONOID)
+	else if (val_type == JSONOID || val_type == JSONBOID)
 		tcategory = TYPCATEGORY_JSON;
 	else
 		tcategory = TypeCategory(val_type);
@@ -2346,11 +2353,14 @@ escape_json(StringInfo buf, const char *str)
 Datum
 json_typeof(PG_FUNCTION_ARGS)
 {
-	text	   *json = PG_GETARG_TEXT_P(0);
+	text	   *json;
 
-	JsonLexContext *lex = makeJsonLexContext(json, false);
+	JsonLexContext *lex;
 	JsonTokenType tok;
 	char	   *type;
+
+	json = PG_GETARG_TEXT_P(0);
+	lex = makeJsonLexContext(json, false);
 
 	/* Lex exactly one token from the input and check its type. */
 	json_lex(lex);

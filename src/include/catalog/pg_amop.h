@@ -778,6 +778,33 @@ DATA(insert (	4017   25 25 14 s	667 4000 0 ));
 DATA(insert (	4017   25 25 15 s	666 4000 0 ));
 
 /*
+ * btree jsonb_ops
+ */
+DATA(insert (	4033   3802 3802 1 s	3242 403 0 ));
+DATA(insert (	4033   3802 3802 2 s	3244 403 0 ));
+DATA(insert (	4033   3802 3802 3 s	3240 403 0 ));
+DATA(insert (	4033   3802 3802 4 s	3245 403 0 ));
+DATA(insert (	4033   3802 3802 5 s	3243 403 0 ));
+
+/*
+ * hash jsonb ops
+ */
+DATA(insert (	4034   3802 3802 1 s 3240 405 0 ));
+
+/*
+ * GIN jsonb ops
+ */
+DATA(insert (	4036   3802 3802 7 s 3246 2742 0 ));
+DATA(insert (	4036   3802 25 9 s 3247 2742 0 ));
+DATA(insert (	4036   3802 1009 10 s 3248 2742 0 ));
+DATA(insert (	4036   3802 1009 11 s 3249 2742 0 ));
+
+/*
+ * GIN jsonb hash ops
+ */
+DATA(insert (	4037   3802 3802 7 s 3246 2742 0 ));
+
+/*
  * SP-GiST range_ops
  */
 DATA(insert (	3474   3831 3831 1 s	3893 4000 0 ));

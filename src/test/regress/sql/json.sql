@@ -136,8 +136,8 @@ CREATE TEMP TABLE test_json (
 
 INSERT INTO test_json VALUES
 ('scalar','"a scalar"'),
-('array','["zero", "one","two",null,"four","five"]'),
-('object','{"field1":"val1","field2":"val2","field3":null}');
+('array','["zero", "one","two",null,"four","five", [1,2,3],{"f1":9}]'),
+('object','{"field1":"val1","field2":"val2","field3":null, "field4": 4, "field5": [1,2,3], "field6": {"f1":9}}');
 
 SELECT test_json -> 'x'
 FROM test_json
@@ -175,6 +175,13 @@ SELECT test_json->>2
 FROM test_json
 WHERE json_type = 'array';
 
+SELECT test_json ->> 6 FROM test_json WHERE json_type = 'array';
+SELECT test_json ->> 7 FROM test_json WHERE json_type = 'array';
+
+SELECT test_json ->> 'field4' FROM test_json WHERE json_type = 'object';
+SELECT test_json ->> 'field5' FROM test_json WHERE json_type = 'object';
+SELECT test_json ->> 'field6' FROM test_json WHERE json_type = 'object';
+
 SELECT json_object_keys(test_json)
 FROM test_json
 WHERE json_type = 'scalar';
@@ -186,6 +193,13 @@ WHERE json_type = 'array';
 SELECT json_object_keys(test_json)
 FROM test_json
 WHERE json_type = 'object';
+
+-- test extending object_keys resultset - initial resultset size is 256
+
+select count(*) from
+    (select json_object_keys(json_object(array_agg(g)))
+     from (select unnest(array['f'||n,n::text])as g
+           from generate_series(1,300) as n) x ) y;
 
 -- nulls
 

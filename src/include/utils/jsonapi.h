@@ -100,11 +100,17 @@ typedef struct JsonSemAction
 extern void pg_parse_json(JsonLexContext *lex, JsonSemAction *sem);
 
 /*
- * constructor for JsonLexContext, with or without strval element.
+ * constructors for JsonLexContext, with or without strval element.
  * If supplied, the strval element will contain a de-escaped version of
  * the lexeme. However, doing this imposes a performance penalty, so
  * it should be avoided if the de-escaped lexeme is not required.
+ *
+ * If you already have the json as a text* value, use the first of these
+ * functions, otherwise use  makeJsonLexContextCstringLen().
  */
 extern JsonLexContext *makeJsonLexContext(text *json, bool need_escapes);
+extern JsonLexContext *makeJsonLexContextCstringLen(char *json,
+													int len,
+													bool need_escapes);
 
 #endif   /* JSONAPI_H */

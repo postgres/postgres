@@ -1,4 +1,4 @@
-/* contrib/hstore/hstore--1.1.sql */
+/* contrib/hstore/hstore--1.3.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION hstore" to load this file. \quit
@@ -245,6 +245,19 @@ CREATE CAST (hstore AS json)
 CREATE FUNCTION hstore_to_json_loose(hstore)
 RETURNS json
 AS 'MODULE_PATHNAME', 'hstore_to_json_loose'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE FUNCTION hstore_to_jsonb(hstore)
+RETURNS jsonb
+AS 'MODULE_PATHNAME', 'hstore_to_jsonb'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE CAST (hstore AS jsonb)
+  WITH FUNCTION hstore_to_jsonb(hstore);
+
+CREATE FUNCTION hstore_to_jsonb_loose(hstore)
+RETURNS jsonb
+AS 'MODULE_PATHNAME', 'hstore_to_jsonb_loose'
 LANGUAGE C IMMUTABLE STRICT;
 
 CREATE FUNCTION hstore(record)

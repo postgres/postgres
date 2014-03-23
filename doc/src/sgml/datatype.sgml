@@ -139,7 +139,13 @@
       <row>
        <entry><type>json</type></entry>
        <entry></entry>
-       <entry>JSON data</entry>
+       <entry>textual JSON data</entry>
+      </row>
+
+      <row>
+       <entry><type>jsonb</type></entry>
+       <entry></entry>
+       <entry>binary JSON data, decomposed</entry>
       </row>
 
       <row>
@@ -4220,34 +4226,7 @@ SET xmloption TO { DOCUMENT | CONTENT };
    </sect2>
   </sect1>
 
-  <sect1 id="datatype-json">
-   <title><acronym>JSON</> Type</title>
-
-   <indexterm zone="datatype-json">
-    <primary>JSON</primary>
-   </indexterm>
-
-   <para>
-    The <type>json</type> data type can be used to store JSON (JavaScript
-    Object Notation) data, as specified in <ulink
-    url="http://www.ietf.org/rfc/rfc4627.txt">RFC 4627</ulink>.  Such
-    data can also be stored as <type>text</type>, but the
-    <type>json</type> data type has the advantage of checking that each
-    stored value is a valid JSON value.  There are also related support
-    functions available; see <xref linkend="functions-json">.
-   </para>
-
-   <para>
-    <productname>PostgreSQL</productname> allows only one server encoding
-    per database.  It is therefore not possible for JSON to conform rigidly
-    to the specification unless the server encoding is UTF-8.  Attempts to
-    directly include characters which cannot be represented in the server
-    encoding will fail; conversely, characters which can be represented in
-    the server encoding but not in UTF-8 will be allowed.
-    <literal>\uXXXX</literal> escapes are allowed regardless of the server
-    encoding, and are checked only for syntactic correctness.
-   </para>
-  </sect1>
+  &json;
 
   &array;
 

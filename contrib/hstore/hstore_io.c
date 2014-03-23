@@ -12,6 +12,7 @@
 #include "libpq/pqformat.h"
 #include "utils/builtins.h"
 #include "utils/json.h"
+#include "utils/jsonb.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/typcache.h"
@@ -1373,4 +1374,168 @@ hstore_to_json(PG_FUNCTION_ARGS)
 	appendStringInfoChar(&dst, '}');
 
 	PG_RETURN_TEXT_P(cstring_to_text(dst.data));
+}
+
+PG_FUNCTION_INFO_V1(hstore_to_jsonb);
+Datum		hstore_to_jsonb(PG_FUNCTION_ARGS);
+Datum
+hstore_to_jsonb(PG_FUNCTION_ARGS)
+{
+	HStore	   *in = PG_GETARG_HS(0);
+	int			i;
+	int			count = HS_COUNT(in);
+	char	   *base = STRPTR(in);
+	HEntry	   *entries = ARRPTR(in);
+	JsonbParseState *state = NULL;
+	JsonbValue *res;
+
+	res = pushJsonbValue(&state, WJB_BEGIN_OBJECT, NULL);
+
+	for (i = 0; i < count; i++)
+	{
+		JsonbValue key, val;
+
+		key.estSize = sizeof(JEntry);
+		key.type = jbvString;
+		key.string.len = HS_KEYLEN(entries, i);
+		key.string.val = pnstrdup(HS_KEY(entries, base, i), key.string.len);
+		key.estSize += key.string.len;
+
+		res = pushJsonbValue(&state, WJB_KEY, &key);
+
+		if (HS_VALISNULL(entries, i))
+		{
+			val.estSize = sizeof(JEntry);
+			val.type = jbvNull;
+		}
+		else
+		{
+			val.estSize = sizeof(JEntry);
+			val.type = jbvString;
+			val.string.len = HS_VALLEN(entries, i);
+			val.string.val = pnstrdup(HS_VAL(entries, base, i), val.string.len);
+			val.estSize += val.string.len;
+		}
+		res = pushJsonbValue(&state, WJB_VALUE, &val);
+	}
+
+	res = pushJsonbValue(&state, WJB_END_OBJECT, NULL);
+
+	PG_RETURN_POINTER(JsonbValueToJsonb(res));
+}
+
+PG_FUNCTION_INFO_V1(hstore_to_jsonb_loose);
+Datum		hstore_to_jsonb_loose(PG_FUNCTION_ARGS);
+Datum
+hstore_to_jsonb_loose(PG_FUNCTION_ARGS)
+{
+	HStore	   *in = PG_GETARG_HS(0);
+	int			i;
+	int			count = HS_COUNT(in);
+	char	   *base = STRPTR(in);
+	HEntry	   *entries = ARRPTR(in);
+	JsonbParseState *state = NULL;
+	JsonbValue *res;
+	StringInfoData tmp;
+	bool        is_number;
+
+	initStringInfo(&tmp);
+
+	res = pushJsonbValue(&state, WJB_BEGIN_OBJECT, NULL);
+
+	for (i = 0; i < count; i++)
+	{
+		JsonbValue key, val;
+
+		key.estSize = sizeof(JEntry);
+		key.type = jbvString;
+		key.string.len = HS_KEYLEN(entries, i);
+		key.string.val = pnstrdup(HS_KEY(entries, base, i), key.string.len);
+		key.estSize += key.string.len;
+
+		res = pushJsonbValue(&state, WJB_KEY, &key);
+
+		val.estSize = sizeof(JEntry);
+
+		if (HS_VALISNULL(entries, i))
+		{
+			val.type = jbvNull;
+		}
+		/* guess that values of 't' or 'f' are booleans */
+		else if (HS_VALLEN(entries, i) == 1 && *(HS_VAL(entries, base, i)) == 't')
+		{
+			val.type = jbvBool;
+			val.boolean = true;
+		}
+		else if (HS_VALLEN(entries, i) == 1 && *(HS_VAL(entries, base, i)) == 'f')
+		{
+			val.type = jbvBool;
+			val.boolean = false;
+		}
+		else
+		{
+			is_number = false;
+			resetStringInfo(&tmp);
+
+			appendBinaryStringInfo(&tmp, HS_VAL(entries, base, i), HS_VALLEN(entries, i));
+
+			/*
+			 * don't treat something with a leading zero followed by another
+			 * digit as numeric - could be a zip code or similar
+			 */
+			if (tmp.len > 0 &&
+				!(tmp.data[0] == '0' &&
+				  isdigit((unsigned char) tmp.data[1])) &&
+				strspn(tmp.data, "+-0123456789Ee.") == tmp.len)
+			{
+				/*
+				 * might be a number. See if we can input it as a numeric
+				 * value. Ignore any actual parsed value.
+				 */
+				char	   *endptr = "junk";
+				long		lval;
+
+				lval = strtol(tmp.data, &endptr, 10);
+				(void) lval;
+				if (*endptr == '\0')
+				{
+					/*
+					 * strol man page says this means the whole string is
+					 * valid
+					 */
+					is_number = true;
+				}
+				else
+				{
+					/* not an int - try a double */
+					double		dval;
+
+					dval = strtod(tmp.data, &endptr);
+					(void) dval;
+					if (*endptr == '\0')
+						is_number = true;
+				}
+			}
+			if (is_number)
+			{
+				val.type = jbvNumeric;
+				val.numeric = DatumGetNumeric(
+					DirectFunctionCall3(numeric_in, CStringGetDatum(tmp.data), 0, -1));
+				val.estSize += VARSIZE_ANY(val.numeric) +sizeof(JEntry);
+			}
+			else
+			{
+				val.estSize = sizeof(JEntry);
+				val.type = jbvString;
+				val.string.len = HS_VALLEN(entries, i);
+				val.string.val = pnstrdup(HS_VAL(entries, base, i), val.string.len);
+				val.estSize += val.string.len;
+			}
+		}
+		res = pushJsonbValue(&state, WJB_VALUE, &val);
+	}
+
+	res = pushJsonbValue(&state, WJB_END_OBJECT, NULL);
+
+	PG_RETURN_POINTER(JsonbValueToJsonb(res));
 }
