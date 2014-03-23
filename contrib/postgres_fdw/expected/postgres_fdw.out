@@ -2804,14 +2804,14 @@ NOTICE:  trig_row_before(23, skidoo) BEFORE ROW UPDATE ON rem1
 NOTICE:  OLD: (12,"test triggered !"),NEW: (12,testo)
 NOTICE:  trig_row_after(23, skidoo) AFTER ROW UPDATE ON rem1
 NOTICE:  OLD: (12,"test triggered !"),NEW: (12,"testo triggered !")
--- Test returning system attributes
-INSERT INTO rem1(f2) VALUES ('test') RETURNING ctid, xmin, xmax;
+-- Test returning a system attribute
+INSERT INTO rem1(f2) VALUES ('test') RETURNING ctid;
 NOTICE:  trig_row_before(23, skidoo) BEFORE ROW INSERT ON rem1
 NOTICE:  NEW: (13,test)
 NOTICE:  trig_row_after(23, skidoo) AFTER ROW INSERT ON rem1
 NOTICE:  NEW: (13,"test triggered !")
-  ctid  | xmin |    xmax    
---------+------+------------
- (0,27) |  180 | 4294967295
+  ctid  
+--------
+ (0,27)
 (1 row)
 

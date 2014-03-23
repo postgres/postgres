@@ -604,5 +604,5 @@ FOR EACH ROW EXECUTE PROCEDURE trig_row_before_insupdate();
 INSERT INTO rem1(f2) VALUES ('test');
 UPDATE rem1 SET f2 = 'testo';
 
--- Test returning system attributes
-INSERT INTO rem1(f2) VALUES ('test') RETURNING ctid, xmin, xmax;
+-- Test returning a system attribute
+INSERT INTO rem1(f2) VALUES ('test') RETURNING ctid;
