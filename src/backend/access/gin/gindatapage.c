@@ -1303,10 +1303,9 @@ addItemsToLeaf(disassembledLeaf *leaf, ItemPointer newItems, int nNewItems)
 		if (!cur->items)
 			cur->items = ginPostingListDecode(cur->seg, &cur->nitems);
 
-		tmpitems = palloc((cur->nitems + nthis) * sizeof(ItemPointerData));
-		ntmpitems = ginMergeItemPointers(tmpitems,
-										 cur->items, cur->nitems,
-										 nextnew, nthis);
+		tmpitems = ginMergeItemPointers(cur->items, cur->nitems,
+										nextnew, nthis,
+										&ntmpitems);
 		if (ntmpitems != cur->nitems)
 		{
 			cur->items = tmpitems;

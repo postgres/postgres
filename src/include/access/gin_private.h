@@ -919,9 +919,9 @@ extern int ginPostingListDecodeAllSegmentsToTbm(GinPostingList *ptr, int totalsi
 
 extern ItemPointer ginPostingListDecodeAllSegments(GinPostingList *ptr, int len, int *ndecoded);
 extern ItemPointer ginPostingListDecode(GinPostingList *ptr, int *ndecoded);
-extern int ginMergeItemPointers(ItemPointerData *dst,
-					 ItemPointerData *a, uint32 na,
-					 ItemPointerData *b, uint32 nb);
+extern ItemPointer ginMergeItemPointers(ItemPointerData *a, uint32 na,
+					 ItemPointerData *b, uint32 nb,
+					 int *nmerged);
 
 /*
  * Merging the results of several gin scans compares item pointers a lot,

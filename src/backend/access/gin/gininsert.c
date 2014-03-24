@@ -67,12 +67,9 @@ addItemPointersToLeafTuple(GinState *ginstate,
 	/* merge the old and new posting lists */
 	oldItems = ginReadTuple(ginstate, attnum, old, &oldNPosting);
 
-	newNPosting = oldNPosting + nitem;
-	newItems = (ItemPointerData *) palloc(sizeof(ItemPointerData) * newNPosting);
-
-	newNPosting = ginMergeItemPointers(newItems,
-									   items, nitem,
-									   oldItems, oldNPosting);
+	newItems = ginMergeItemPointers(items, nitem,
+									oldItems, oldNPosting,
+									&newNPosting);
 
 	/* Compress the posting list, and try to a build tuple with room for it */
 	res = NULL;

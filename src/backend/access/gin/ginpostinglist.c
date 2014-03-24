@@ -346,20 +346,18 @@ ginPostingListDecodeAllSegmentsToTbm(GinPostingList *ptr, int len,
 
 /*
  * Merge two ordered arrays of itempointers, eliminating any duplicates.
- * Returns the number of items in the result.
- * Caller is responsible that there is enough space at *dst.
  *
- * It's OK if 'dst' overlaps with the *beginning* of one of the arguments.
+ * Returns a palloc'd array, and *nmerged is set to the number of items in
+ * the result, after eliminating duplicates.
  */
-int
-ginMergeItemPointers(ItemPointerData *dst,
-					 ItemPointerData *a, uint32 na,
-					 ItemPointerData *b, uint32 nb)
+ItemPointer
+ginMergeItemPointers(ItemPointerData *a, uint32 na,
+					 ItemPointerData *b, uint32 nb,
+					 int *nmerged)
 {
-	ItemPointerData *dptr = dst;
-	ItemPointerData *aptr = a,
-			   *bptr = b;
-	int			result;
+	ItemPointerData *dst;
+
+	dst = (ItemPointer) palloc((na + nb) * sizeof(ItemPointerData));
 
 	/*
 	 * If the argument arrays don't overlap, we can just append them to
@@ -367,18 +365,22 @@ ginMergeItemPointers(ItemPointerData *dst,
 	 */
 	if (na == 0 || nb == 0 || ginCompareItemPointers(&a[na - 1], &b[0]) < 0)
 	{
-		memmove(dst, a, na * sizeof(ItemPointerData));
-		memmove(&dst[na], b, nb * sizeof(ItemPointerData));
-		result = na + nb;
+		memcpy(dst, a, na * sizeof(ItemPointerData));
+		memcpy(&dst[na], b, nb * sizeof(ItemPointerData));
+		*nmerged = na + nb;
 	}
 	else if (ginCompareItemPointers(&b[nb - 1], &a[0]) < 0)
 	{
-		memmove(dst, b, nb * sizeof(ItemPointerData));
-		memmove(&dst[nb], a, na * sizeof(ItemPointerData));
-		result = na + nb;
+		memcpy(dst, b, nb * sizeof(ItemPointerData));
+		memcpy(&dst[nb], a, na * sizeof(ItemPointerData));
+		*nmerged = na + nb;
 	}
 	else
 	{
+		ItemPointerData *dptr = dst;
+		ItemPointerData *aptr = a;
+		ItemPointerData *bptr = b;
+
 		while (aptr - a < na && bptr - b < nb)
 		{
 			int			cmp = ginCompareItemPointers(aptr, bptr);
@@ -401,8 +403,8 @@ ginMergeItemPointers(ItemPointerData *dst,
 		while (bptr - b < nb)
 			*dptr++ = *bptr++;
 
-		result = dptr - dst;
+		*nmerged = dptr - dst;
 	}
 
-	return result;
+	return dst;
 }
