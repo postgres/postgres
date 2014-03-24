@@ -596,6 +596,20 @@ S. T. Coleridge (1772-1834)
         0.1
 (1 row)
 
+SELECT ts_rank_cd(strip(to_tsvector('both stripped')),
+                  to_tsquery('both & stripped'));
+ ts_rank_cd 
+------------
+          0
+(1 row)
+
+SELECT ts_rank_cd(to_tsvector('unstripped') || strip(to_tsvector('stripped')),
+                  to_tsquery('unstripped & stripped'));
+ ts_rank_cd 
+------------
+          0
+(1 row)
+
 --headline tests
 SELECT ts_headline('english', '
 Day after day, day after day,

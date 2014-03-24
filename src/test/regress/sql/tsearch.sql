@@ -165,6 +165,12 @@ Water, water, every where,
 S. T. Coleridge (1772-1834)
 '), to_tsquery('english', 'ocean'));
 
+SELECT ts_rank_cd(strip(to_tsvector('both stripped')),
+                  to_tsquery('both & stripped'));
+
+SELECT ts_rank_cd(to_tsvector('unstripped') || strip(to_tsvector('stripped')),
+                  to_tsquery('unstripped & stripped'));
+
 --headline tests
 SELECT ts_headline('english', '
 Day after day, day after day,
