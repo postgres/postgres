@@ -130,7 +130,6 @@ btree_xlog_insert(bool isleaf, bool ismeta,
 {
 	xl_btree_insert *xlrec = (xl_btree_insert *) XLogRecGetData(record);
 	Buffer		buffer;
-	Buffer		cbuffer = InvalidBuffer;
 	Page		page;
 	char	   *datapos;
 	int			datalen;
@@ -158,6 +157,15 @@ btree_xlog_insert(bool isleaf, bool ismeta,
 		datalen -= sizeof(xl_btree_metadata);
 	}
 
+	/*
+	 * Insertion to an internal page finishes an incomplete split at the
+	 * child level.  Clear the incomplete-split flag in the child.  Note:
+	 * during normal operation, the child and parent pages are locked at the
+	 * same time, so that clearing the flag and inserting the downlink appear
+	 * atomic to other backends.  We don't bother with that during replay,
+	 * because readers don't care about the incomplete-split flag and there
+	 * cannot be updates happening.
+	 */
 	if (!isleaf)
 	{
 		if (record->xl_info & XLR_BKP_BLOCK(0))
@@ -193,9 +201,6 @@ btree_xlog_insert(bool isleaf, bool ismeta,
 			UnlockReleaseBuffer(buffer);
 		}
 	}
-
-	if (BufferIsValid(cbuffer))
-		UnlockReleaseBuffer(cbuffer);
 
 	/*
 	 * Note: in normal operation, we'd update the metapage while still holding
@@ -273,7 +278,8 @@ btree_xlog_split(bool onleft, bool isroot,
 
 	/*
 	 * Clear the incomplete split flag on the left sibling of the child page
-	 * this is a downlink for.
+	 * this is a downlink for.  (Like in btree_xlog_insert, this can be done
+	 * before locking the other pages)
 	 */
 	if (!isleaf)
 	{
