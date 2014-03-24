@@ -5377,7 +5377,8 @@ int PQclientEncoding(const PGconn *<replaceable>conn</replaceable>);
 </synopsis>
 
       Note that it returns the encoding ID, not a symbolic string
-      such as <literal>EUC_JP</literal>. To convert an encoding ID to an encoding name, you
+      such as <literal>EUC_JP</literal>. If unsuccessful, it returns -1.
+      To convert an encoding ID to an encoding name, you
       can use:
 
 <synopsis>
