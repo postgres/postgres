@@ -885,7 +885,9 @@ SELECT plainto_tsquery('english', 'The Fat &amp; Rats:C');
         ranking for the given document vector and query, as described in
         Clarke, Cormack, and Tudhope's "Relevance Ranking for One to Three
         Term Queries" in the journal "Information Processing and Management",
-        1999.
+        1999.  Cover density is similar to <function>ts_rank</> ranking
+        except that the proximity of matching lexemes to each other is
+        taken into consideration.
        </para>
 
        <para>
