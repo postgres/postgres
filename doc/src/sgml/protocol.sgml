@@ -1451,11 +1451,12 @@ The commands accepted in walsender mode are:
   </varlistentry>
 
   <varlistentry>
-    <term><literal>START_REPLICATION</literal> [<literal>SLOT</literal> <replaceable class="parameter">slotname</>] [<literal>PHYSICAL</literal>] <replaceable class="parameter">XXX/XXX</> <literal>TIMELINE</literal> <replaceable class="parameter">tli</></term>
+    <term><literal>START_REPLICATION</literal> [<literal>SLOT</literal> <replaceable class="parameter">slotname</>] [<literal>PHYSICAL</literal>] <replaceable class="parameter">XXX/XXX</> [<literal>TIMELINE</literal> <replaceable class="parameter">tli</>]</term>
     <listitem>
      <para>
       Instructs server to start streaming WAL, starting at
-      WAL position <replaceable class="parameter">XXX/XXX</>. If specified,
+      WAL position <replaceable class="parameter">XXX/XXX</>.
+      If <literal>TIMELINE</literal> option is specified,
       streaming starts on timeline <replaceable class="parameter">tli</>;
       otherwise, the server's current timeline is selected. The server can
       reply with an error, e.g. if the requested section of WAL has already
