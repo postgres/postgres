@@ -115,9 +115,6 @@ SELECT '{"x":"y"}'::jsonb = '{"x":"z"}'::jsonb;
 SELECT '{"x":"y"}'::jsonb <> '{"x":"y"}'::jsonb;
 SELECT '{"x":"y"}'::jsonb <> '{"x":"z"}'::jsonb;
 
-CREATE TABLE testjsonb (j jsonb);
-\copy testjsonb FROM 'data/jsonb.data'
-
 -- containment
 SELECT jsonb_contains('{"a":"b", "b":1, "c":null}', '{"a":"b"}');
 SELECT jsonb_contains('{"a":"b", "b":1, "c":null}', '{"a":"b", "c":null}');

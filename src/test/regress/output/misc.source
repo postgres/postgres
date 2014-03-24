@@ -680,6 +680,7 @@ SELECT user_relns() AS user_relns
  test_range_gist
  test_range_spgist
  test_tsvector
+ testjsonb
  text_tbl
  time_tbl
  timestamp_tbl
@@ -697,7 +698,7 @@ SELECT user_relns() AS user_relns
  tvvmv
  varchar_tbl
  xacttest
-(119 rows)
+(120 rows)
 
 SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer')));
  name 

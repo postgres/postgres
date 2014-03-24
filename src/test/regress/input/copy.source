@@ -41,6 +41,8 @@ COPY hash_f8_heap FROM '@abs_srcdir@/data/hash.data';
 
 COPY test_tsvector FROM '@abs_srcdir@/data/tsearch.data';
 
+COPY testjsonb FROM '@abs_srcdir@/data/jsonb.data';
+
 -- the data in this file has a lot of duplicates in the index key
 -- fields, leading to long bucket chains and lots of table expansion.
 -- this is therefore a stress test of the bucket overflow code (unlike
