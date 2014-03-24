@@ -169,7 +169,7 @@ CTRL-C
     </indexterm>
     <title>Logical Decoding</title>
     <para>
-     Logical decoding is the the process of extracting all persistent changes
+     Logical decoding is the process of extracting all persistent changes
      to a database's tables into a coherent, easy to understand format which
      can be interpreted without detailed knowledge of the database's internal
      state.

@@ -24,7 +24,7 @@
   There are two JSON data types: <type>json</> and <type>jsonb</>.
   Both accept <emphasis>almost</emphasis> identical sets of values as
   input.  The major practical difference is one of efficiency.  The
-  <type>json</> data type stores an exact copy of the the input text,
+  <type>json</> data type stores an exact copy of the input text,
   which processing functions must continually reparse, while
   <type>jsonb</> data is stored in a decomposed binary format that
   makes it slightly less efficient to input due to added serialization

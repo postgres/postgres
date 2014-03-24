@@ -1089,7 +1089,7 @@ begin:;
 	 * has progressed. There is a small fixed number of insertion locks,
 	 * determined by the num_xloginsert_locks GUC. When an inserter crosses a
 	 * page boundary, it updates the value stored in the lock to the how far it
-	 * has inserted, to allow the the previous buffer to be flushed.
+	 * has inserted, to allow the previous buffer to be flushed.
 	 *
 	 * Holding onto an insertion lock also protects RedoRecPtr and
 	 * fullPageWrites from changing until the insertion is finished.
