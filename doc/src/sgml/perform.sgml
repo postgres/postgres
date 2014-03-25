@@ -1574,6 +1574,15 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
 
      <listitem>
       <para>
+       Turn off <xref linkend="guc-synchronous-commit">;  there might be no
+       need to force <acronym>WAL</acronym> writes to disk on every
+       commit.  This setting does risk transaction loss (though not data
+       corruption) in case of a crash of the <emphasis>database</>.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        Turn off <xref linkend="guc-full-page-writes">;  there is no need
        to guard against partial page writes.
       </para>
@@ -1590,12 +1599,12 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
 
      <listitem>
       <para>
-       Turn off <xref linkend="guc-synchronous-commit">;  there might be no
-       need to write the <acronym>WAL</acronym> to disk on every
-       commit.  This setting does risk transaction loss (though not data
-       corruption) in case of a crash of the <emphasis>database</> alone.
+       Create <link linkend="SQL-CREATETABLE-UNLOGGED">unlogged
+       tables</link> to avoid <acronym>WAL</acronym> writes, though it
+       makes the tables non-crash-safe.
       </para>
      </listitem>
+
     </itemizedlist>
    </para>
   </sect1>
