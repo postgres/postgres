@@ -7955,6 +7955,7 @@ XLogReportParameters(void)
 		{
 			XLogRecData rdata;
 			xl_parameter_change xlrec;
+			XLogRecPtr	recptr;
 
 			xlrec.MaxConnections = MaxConnections;
 			xlrec.max_prepared_xacts = max_prepared_xacts;
@@ -7966,7 +7967,8 @@ XLogReportParameters(void)
 			rdata.len = sizeof(xlrec);
 			rdata.next = NULL;
 
-			XLogInsert(RM_XLOG_ID, XLOG_PARAMETER_CHANGE, &rdata);
+			recptr = XLogInsert(RM_XLOG_ID, XLOG_PARAMETER_CHANGE, &rdata);
+			XLogFlush(recptr);
 		}
 
 		ControlFile->MaxConnections = MaxConnections;
