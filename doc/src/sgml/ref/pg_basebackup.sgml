@@ -41,9 +41,9 @@ PostgreSQL documentation
 
   <para>
    <application>pg_basebackup</application> makes a binary copy of the database
-   cluster files, while making sure the system is automatically put in and
+   cluster files, while making sure the system is put in and
    out of backup mode automatically. Backups are always taken of the entire
-   database cluster, it is not possible to back up individual databases or
+   database cluster; it is not possible to back up individual databases or
    database objects. For individual database backups, a tool such as
    <xref linkend="APP-PGDUMP"> must be used.
   </para>
