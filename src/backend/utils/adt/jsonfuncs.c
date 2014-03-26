@@ -2029,8 +2029,8 @@ json_to_record(PG_FUNCTION_ARGS)
 static inline Datum
 populate_record_worker(FunctionCallInfo fcinfo, bool have_record_arg)
 {
-	Oid			argtype;
-	Oid			jtype = get_fn_expr_argtype(fcinfo->flinfo, have_record_arg ? 1 : 0);
+	int         json_arg_num =  have_record_arg ? 1 : 0;
+	Oid			jtype = get_fn_expr_argtype(fcinfo->flinfo, json_arg_num);
 	text	   *json;
 	Jsonb	   *jb = NULL;
 	bool		use_json_as_text;
@@ -2049,12 +2049,12 @@ populate_record_worker(FunctionCallInfo fcinfo, bool have_record_arg)
 
 	Assert(jtype == JSONOID || jtype == JSONBOID);
 
-	use_json_as_text = PG_ARGISNULL(have_record_arg ? 2 : 1) ? false :
-		PG_GETARG_BOOL(have_record_arg ? 2 : 1);
+	use_json_as_text = PG_ARGISNULL(json_arg_num + 1) ? false :
+		PG_GETARG_BOOL(json_arg_num + 1);
 
 	if (have_record_arg)
 	{
-		argtype = get_fn_expr_argtype(fcinfo->flinfo, 0);
+		Oid argtype = get_fn_expr_argtype(fcinfo->flinfo, 0);
 
 		if (!type_is_rowtype(argtype))
 			ereport(ERROR,
@@ -2091,8 +2091,6 @@ populate_record_worker(FunctionCallInfo fcinfo, bool have_record_arg)
 	else
 	{							/* json{b}_to_record case */
 
-		use_json_as_text = PG_ARGISNULL(1) ? false : PG_GETARG_BOOL(1);
-
 		if (PG_ARGISNULL(0))
 			PG_RETURN_NULL();
 
@@ -2108,7 +2106,7 @@ populate_record_worker(FunctionCallInfo fcinfo, bool have_record_arg)
 	if (jtype == JSONOID)
 	{
 		/* just get the text */
-		json = PG_GETARG_TEXT_P(have_record_arg ? 1 : 0);
+		json = PG_GETARG_TEXT_P(json_arg_num);
 
 		json_hash = get_json_object_as_hash(json, "json_populate_record", use_json_as_text);
 
@@ -2123,7 +2121,7 @@ populate_record_worker(FunctionCallInfo fcinfo, bool have_record_arg)
 	}
 	else
 	{
-		jb = PG_GETARG_JSONB(have_record_arg ? 1 : 0);
+		jb = PG_GETARG_JSONB(json_arg_num);
 
 		/* same logic as for json */
 		if (!have_record_arg && rec)
@@ -2591,8 +2589,8 @@ json_to_recordset(PG_FUNCTION_ARGS)
 static inline Datum
 populate_recordset_worker(FunctionCallInfo fcinfo, bool have_record_arg)
 {
-	Oid			argtype;
-	Oid			jtype = get_fn_expr_argtype(fcinfo->flinfo, have_record_arg ? 1 : 0);
+	int         json_arg_num = have_record_arg ? 1 : 0;
+	Oid			jtype = get_fn_expr_argtype(fcinfo->flinfo, json_arg_num);
 	bool		use_json_as_text;
 	ReturnSetInfo *rsi;
 	MemoryContext old_cxt;
@@ -2604,22 +2602,16 @@ populate_recordset_worker(FunctionCallInfo fcinfo, bool have_record_arg)
 	int			ncolumns;
 	PopulateRecordsetState *state;
 
+	use_json_as_text = PG_ARGISNULL(json_arg_num + 1) ? false : PG_GETARG_BOOL(json_arg_num + 1);
+
 	if (have_record_arg)
 	{
-		argtype = get_fn_expr_argtype(fcinfo->flinfo, 0);
-
-		use_json_as_text = PG_ARGISNULL(2) ? false : PG_GETARG_BOOL(2);
+		Oid argtype = get_fn_expr_argtype(fcinfo->flinfo, 0);
 
 		if (!type_is_rowtype(argtype))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("first argument of json_populate_recordset must be a row type")));
-	}
-	else
-	{
-		argtype = InvalidOid;
-
-		use_json_as_text = PG_ARGISNULL(1) ? false : PG_GETARG_BOOL(1);
+					 errmsg("first argument must be a row type")));
 	}
 
 	rsi = (ReturnSetInfo *) fcinfo->resultinfo;
@@ -2647,23 +2639,13 @@ populate_recordset_worker(FunctionCallInfo fcinfo, bool have_record_arg)
 						"that cannot accept type record")));
 
 	/* if the json is null send back an empty set */
-	if (have_record_arg)
-	{
-		if (PG_ARGISNULL(1))
-			PG_RETURN_NULL();
+	if (PG_ARGISNULL(json_arg_num))
+		PG_RETURN_NULL();
 
-		if (PG_ARGISNULL(0))
-			rec = NULL;
-		else
-			rec = PG_GETARG_HEAPTUPLEHEADER(0);
-	}
-	else
-	{
-		if (PG_ARGISNULL(1))
-			PG_RETURN_NULL();
-
+	if (!have_record_arg || PG_ARGISNULL(0))
 		rec = NULL;
-	}
+	else
+		rec = PG_GETARG_HEAPTUPLEHEADER(0);
 
 	tupType = tupdesc->tdtypeid;
 	tupTypmod = tupdesc->tdtypmod;
