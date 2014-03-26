@@ -2160,6 +2160,8 @@ populate_record_worker(FunctionCallInfo fcinfo, bool have_record_arg)
 		my_extra = (RecordIOData *) fcinfo->flinfo->fn_extra;
 		my_extra->record_type = InvalidOid;
 		my_extra->record_typmod = 0;
+		my_extra->ncolumns = ncolumns;
+		MemSet(my_extra->columns, 0, sizeof(ColumnIOData) * ncolumns);
 	}
 
 	if (have_record_arg && (my_extra->record_type != tupType ||
