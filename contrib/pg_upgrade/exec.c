@@ -102,7 +102,7 @@ static DWORD       mainThreadId = 0;
 
 		for (iter = 0; iter < 4 && log == NULL; iter++)
 		{
-			sleep(1);
+			pg_usleep(1000000);		/* 1 sec */
 			log = fopen(log_file, "a");
 		}
 	}

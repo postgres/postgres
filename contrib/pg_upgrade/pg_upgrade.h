@@ -83,7 +83,6 @@ extern char *output_files[];
 #define pg_copy_file		CopyFile
 #define pg_mv_file			pgrename
 #define pg_link_file		win32_pghardlink
-#define sleep(x)			Sleep(x * 1000)
 #define PATH_SEPARATOR		'\\'
 #define RM_CMD				"DEL /q"
 #define RMDIR_CMD			"RMDIR /s/q"
