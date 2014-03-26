@@ -92,6 +92,17 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-f</option></term>
+      <term><option>--follow</option></term>
+      <listitem>
+       <para>
+        After reaching the end of valid WAL, keep polling once per second for
+        new WAL to appear.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-n <replaceable>limit</replaceable></option></term>
       <term><option>--limit=<replaceable>limit</replaceable></option></term>
       <listitem>
