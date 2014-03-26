@@ -476,7 +476,6 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 {
 	PyObject   *volatile plntup;
 	PyObject   *volatile plkeys;
-	PyObject   *volatile platt;
 	PyObject   *volatile plval;
 	PyObject   *volatile plstr;
 	HeapTuple	rtup;
@@ -489,7 +488,7 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 	char	   *volatile modnulls;
 	TupleDesc	tupdesc;
 
-	plntup = plkeys = platt = plval = plstr = NULL;
+	plntup = plkeys = plval = plstr = NULL;
 	modattrs = NULL;
 	modvalues = NULL;
 	modnulls = NULL;
@@ -499,10 +498,10 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 		if ((plntup = PyDict_GetItemString(pltd, "new")) == NULL)
 			ereport(ERROR,
 					(errmsg("TD[\"new\"] deleted, cannot modify row")));
+		Py_INCREF(plntup);
 		if (!PyDict_Check(plntup))
 			ereport(ERROR,
 					(errmsg("TD[\"new\"] is not a dictionary")));
-		Py_INCREF(plntup);
 
 		plkeys = PyDict_Keys(plntup);
 		natts = PyList_Size(plkeys);
@@ -515,6 +514,7 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 
 		for (i = 0; i < natts; i++)
 		{
+			PyObject   *platt;
 			char	   *src;
 
 			platt = PyList_GetItem(plkeys, i);
