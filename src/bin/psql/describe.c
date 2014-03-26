@@ -2345,14 +2345,19 @@ describeOneTableDetails(const char *schemaname,
 			printTableAddFooter(&cont, buf.data);
 		}
 
-		if ((tableinfo.relkind == 'r' || tableinfo.relkind == 'm') &&
-			tableinfo.relreplident != 'd' && tableinfo.relreplident != 'i')
+		if (verbose && (tableinfo.relkind == 'r' || tableinfo.relkind == 'm') &&
+			strcmp(schemaname, "pg_catalog") != 0)
 		{
 			const char *s = _("Replica Identity");
 
 			printfPQExpBuffer(&buf, "%s: %s",
 							  s,
-							  tableinfo.relreplident == 'n' ? "NOTHING" : "FULL");
+							  tableinfo.relreplident == 'd' ? "DEFAULT" :
+							  tableinfo.relreplident == 'f' ? "FULL" :
+							  tableinfo.relreplident == 'i' ? "USING INDEX" :
+							  tableinfo.relreplident == 'n' ? "NOTHING" :
+							  "???");
+
 			printTableAddFooter(&cont, buf.data);
 		}
 
