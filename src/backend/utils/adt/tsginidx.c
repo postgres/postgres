@@ -308,6 +308,8 @@ gin_tsquery_triconsistent(PG_FUNCTION_ARGS)
 	bool		recheck;
 
 	/* The query requires recheck only if it involves weights */
+	recheck = false;
+
 	if (query->size > 0)
 	{
 		QueryItem  *item;
