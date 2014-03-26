@@ -2015,6 +2015,12 @@ jsonb_populate_record(PG_FUNCTION_ARGS)
 }
 
 Datum
+jsonb_to_record(PG_FUNCTION_ARGS)
+{
+	return populate_record_worker(fcinfo, false);
+}
+
+Datum
 json_populate_record(PG_FUNCTION_ARGS)
 {
 	return populate_record_worker(fcinfo, true);
@@ -2449,6 +2455,24 @@ jsonb_populate_recordset(PG_FUNCTION_ARGS)
 	return populate_recordset_worker(fcinfo, true);
 }
 
+Datum
+jsonb_to_recordset(PG_FUNCTION_ARGS)
+{
+	return populate_recordset_worker(fcinfo, false);
+}
+
+Datum
+json_populate_recordset(PG_FUNCTION_ARGS)
+{
+	return populate_recordset_worker(fcinfo, true);
+}
+
+Datum
+json_to_recordset(PG_FUNCTION_ARGS)
+{
+	return populate_recordset_worker(fcinfo, false);
+}
+
 static void
 make_row_from_rec_and_jsonb(Jsonb * element, PopulateRecordsetState *state)
 {
@@ -2569,18 +2593,6 @@ make_row_from_rec_and_jsonb(Jsonb * element, PopulateRecordsetState *state)
 	rettuple = heap_form_tuple(tupdesc, values, nulls);
 
 	tuplestore_puttuple(state->tuple_store, rettuple);
-}
-
-Datum
-json_populate_recordset(PG_FUNCTION_ARGS)
-{
-	return populate_recordset_worker(fcinfo, true);
-}
-
-Datum
-json_to_recordset(PG_FUNCTION_ARGS)
-{
-	return populate_recordset_worker(fcinfo, false);
 }
 
 /*

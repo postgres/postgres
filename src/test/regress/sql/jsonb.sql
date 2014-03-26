@@ -319,6 +319,14 @@ SELECT jsonb '{ "a":  "the Copyright \u00a9 sign" }' ->> 'a' AS correct_in_utf8;
 SELECT jsonb '{ "a":  "dollar \u0024 character" }' ->> 'a' AS correct_everyWHERE;
 SELECT jsonb '{ "a":  "null \u0000 escape" }' ->> 'a' AS not_unescaped;
 
+-- jsonb_to_record and jsonb_to_recordset
+
+select * from jsonb_to_record('{"a":1,"b":"foo","c":"bar"}',true)
+    as x(a int, b text, d text);
+
+select * from jsonb_to_recordset('[{"a":1,"b":"foo","d":false},{"a":2,"b":"bar","c":true}]',false)
+    as x(a int, b text, c boolean);
+
 -- indexing
 SELECT count(*) FROM testjsonb WHERE j @> '{"wait":null}';
 SELECT count(*) FROM testjsonb WHERE j @> '{"wait":"CC"}';

@@ -1430,6 +1430,22 @@ SELECT jsonb '{ "a":  "null \u0000 escape" }' ->> 'a' AS not_unescaped;
  null \u0000 escape
 (1 row)
 
+-- jsonb_to_record and jsonb_to_recordset
+select * from jsonb_to_record('{"a":1,"b":"foo","c":"bar"}',true)
+    as x(a int, b text, d text);
+ a |  b  | d 
+---+-----+---
+ 1 | foo | 
+(1 row)
+
+select * from jsonb_to_recordset('[{"a":1,"b":"foo","d":false},{"a":2,"b":"bar","c":true}]',false)
+    as x(a int, b text, c boolean);
+ a |  b  | c 
+---+-----+---
+ 1 | foo | 
+ 2 | bar | t
+(2 rows)
+
 -- indexing
 SELECT count(*) FROM testjsonb WHERE j @> '{"wait":null}';
  count 

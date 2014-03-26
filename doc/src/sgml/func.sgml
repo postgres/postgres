@@ -10444,7 +10444,13 @@ table2-mapping
    <primary>json_to_record</primary>
   </indexterm>
   <indexterm>
+   <primary>jsonb_to_record</primary>
+  </indexterm>
+  <indexterm>
    <primary>json_to_recordset</primary>
+  </indexterm>
+  <indexterm>
+   <primary>jsonb_to_recordset</primary>
   </indexterm>
 
   <table id="functions-json-processing-table">
@@ -10649,9 +10655,9 @@ table2-mapping
        <entry><literal>number</literal></entry>
       </row>
       <row>
-       <entry>
-         <literal>json_to_record(json, nested_as_text bool)</literal>
-       </entry>
+       <entry><para><literal>json_to_record(json [, nested_as_text bool=false])</literal>
+          </para><para><literal>jsonb_to_record(jsonb [, nested_as_text bool=false])</literal>
+       </para></entry>
        <entry><type>record</type></entry>
        <entry>
          Returns an arbitrary record from a JSON object.  As with all functions 
@@ -10670,9 +10676,9 @@ table2-mapping
        </entry>
       </row>
       <row>
-       <entry>
-         <literal>json_to_recordset(json, nested_as_text bool)</literal>
-       </entry>
+       <entry><para><literal>json_to_recordset(json [, nested_as_text bool=false])</literal>
+         </para><para><literal>jsonb_to_recordset(jsonb [, nested_as_text bool=false])</literal>
+       </para></entry>
        <entry><type>setof record</type></entry>
        <entry>
          Returns an arbitrary set of records from a JSON object.  As with 

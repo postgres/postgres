@@ -4546,6 +4546,10 @@ DATA(insert OID = 3209 (  jsonb_populate_record    PGNSP PGUID 12 1 0 0 0 f f f 
 DESCR("get record fields from a jsonb object");
 DATA(insert OID = 3475 (  jsonb_populate_recordset	PGNSP PGUID 12 1 100 0 0 f f f f f t s 3 0 2283 "2283 3802 16" _null_ _null_ _null_ _null_ jsonb_populate_recordset _null_ _null_ _null_ ));
 DESCR("get set of records with fields from a jsonb array of objects");
+DATA(insert OID = 3490 (  jsonb_to_record	   PGNSP PGUID 12 1 0 0 0 f f f f f f s 2 0 2249 "3802 16" _null_ _null_ _null_ _null_ jsonb_to_record _null_ _null_ _null_ ));
+DESCR("get record fields from a json object");
+DATA(insert OID = 3491 (  jsonb_to_recordset  PGNSP PGUID 12 1 100 0 0 f f f f f t s 2 0 2249 "3802 16" _null_ _null_ _null_ _null_ jsonb_to_recordset _null_ _null_ _null_ ));
+DESCR("get set of records with fields from a json array of objects");
 DATA(insert OID = 3210 (  jsonb_typeof				PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 25 "3802" _null_ _null_ _null_ _null_ jsonb_typeof _null_ _null_ _null_ ));
 DESCR("get the type of a jsonb value");
 DATA(insert OID = 4038 (  jsonb_ne		   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "3802 3802" _null_ _null_ _null_ _null_ jsonb_ne _null_ _null_ _null_ ));
