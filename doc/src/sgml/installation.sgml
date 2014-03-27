@@ -205,12 +205,8 @@ su - postgres
       language, you need a <productname>Python</productname>
       installation with the header files and
       the <application>distutils</application> module.  The minimum
-      required version is <productname>Python</productname> 2.3.
-      For full functionality, a 2.3.x installation must include the
-      separately-available <filename>cdecimal</> module; in particular
-      the <application>PL/Python</> regression tests will not pass if that
-      is missing.
-      <productname>Python 3</productname> is supported if it's
+      required version is <productname>Python</productname>
+      2.3.  <productname>Python 3</productname> is supported if it's
       version 3.1 or later; but see
       <![%standalone-include[the <application>PL/Python</> documentation]]>
       <![%standalone-ignore[<xref linkend="plpython-python23">]]>
