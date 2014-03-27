@@ -799,6 +799,7 @@ JsonbIteratorNext(JsonbIterator ** it, JsonbValue * val, bool skipNested)
 	}
 
 	elog(ERROR, "invalid iterator state");
+	return -1;
 }
 
 /*
@@ -1039,6 +1040,7 @@ JsonbDeepContains(JsonbIterator ** val, JsonbIterator ** mContained)
 	}
 
 	elog(ERROR, "unexpectedly fell off end of jsonb container");
+	return false;
 }
 
 /*
@@ -1172,6 +1174,7 @@ compareJsonbScalarValue(JsonbValue * aScalar, JsonbValue * bScalar)
 		}
 	}
 	elog(ERROR, "jsonb scalar type mismatch");
+	return -1;
 }
 
 /*
