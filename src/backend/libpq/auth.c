@@ -1559,9 +1559,8 @@ auth_peer(hbaPort *port)
 	char		ident_user[IDENT_USERNAME_MAX + 1];
 	uid_t		uid;
 	gid_t		gid;
-	struct passwd *pass;
+	struct passwd *pw;
 
-	errno = 0;
 	if (getpeereid(port->sock, &uid, &gid) != 0)
 	{
 		/* Provide special error message if getpeereid is a stub */
@@ -1576,17 +1575,17 @@ auth_peer(hbaPort *port)
 		return STATUS_ERROR;
 	}
 
-	pass = getpwuid(uid);
-
-	if (pass == NULL)
+	errno = 0;					/* clear errno before call */
+	pw = getpwuid(uid);
+	if (!pw)
 	{
 		ereport(LOG,
-				(errmsg("local user with ID %d does not exist",
-						(int) uid)));
+				(errmsg("failed to look up local user id %ld: %s",
+				(long) uid, errno ? strerror(errno) : _("user does not exist"))));
 		return STATUS_ERROR;
 	}
 
-	strlcpy(ident_user, pass->pw_name, IDENT_USERNAME_MAX + 1);
+	strlcpy(ident_user, pw->pw_name, IDENT_USERNAME_MAX + 1);
 
 	return check_usermap(port->hba->usermap, port->user_name, ident_user, false);
 }
