@@ -1554,18 +1554,13 @@ DROP TABLE alter2.tt8;
 DROP SCHEMA alter2;
 
 -- Check that we map relation oids to filenodes and back correctly.
--- Don't display all the mappings so the test output doesn't change
--- all the time, but make sure we actually do test some values.
+-- Only display bad mappings so the test output doesn't change all the
+-- time.
 SELECT
-    SUM((mapped_oid != oid OR mapped_oid IS NULL)::int) incorrectly_mapped,
-    count(*) > 200 have_mappings
-FROM (
-    SELECT
-        oid, reltablespace, relfilenode, relname,
-        pg_filenode_relation(reltablespace, pg_relation_filenode(oid)) mapped_oid
-    FROM pg_class
-    WHERE relkind IN ('r', 'i', 'S', 't', 'm')
-    ) mapped;
+    oid, mapped_oid, reltablespace, relfilenode, relname
+FROM pg_class,
+    pg_filenode_relation(reltablespace, pg_relation_filenode(oid)) AS mapped_oid
+WHERE relkind IN ('r', 'i', 'S', 't', 'm') AND mapped_oid IS DISTINCT FROM oid;
 
 -- Checks on creating and manipulation of user defined relations in
 -- pg_catalog.
