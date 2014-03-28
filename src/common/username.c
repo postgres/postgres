@@ -54,6 +54,8 @@ get_user_name(char **errstr)
 	static char username[256 + 1];
 	DWORD		len = sizeof(username) - 1;
 
+	*errstr = NULL;
+
 	if (!GetUserName(username, &len))
 	{
 		*errstr = psprintf(_("user name lookup failure: %s"), strerror(errno));
