@@ -170,6 +170,7 @@ Indexes:
     "test_replica_identity_unique_nondefer" UNIQUE CONSTRAINT, btree (keya, keyb)
     "test_replica_identity_hash" hash (nonkey)
     "test_replica_identity_keyab" btree (keya, keyb)
+Replica Identity: FULL
 
 ALTER TABLE test_replica_identity REPLICA IDENTITY NOTHING;
 SELECT relreplident FROM pg_class WHERE oid = 'test_replica_identity'::regclass;

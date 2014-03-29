@@ -104,7 +104,6 @@ View definition:
     tv.totamt
    FROM tv
   ORDER BY tv.type;
-Replica Identity: DEFAULT
 
 \d+ tvm
                     Materialized view "public.tvm"
@@ -117,7 +116,6 @@ View definition:
     tv.totamt
    FROM tv
   ORDER BY tv.type;
-Replica Identity: DEFAULT
 
 \d+ tvvm
                     Materialized view "public.tvvm"
@@ -127,7 +125,6 @@ Replica Identity: DEFAULT
 View definition:
  SELECT tvv.grandtot
    FROM tvv;
-Replica Identity: DEFAULT
 
 \d+ bb
                      Materialized view "public.bb"
@@ -139,7 +136,6 @@ Indexes:
 View definition:
  SELECT tvvmv.grandtot
    FROM tvvmv;
-Replica Identity: DEFAULT
 
 -- test schema behavior
 CREATE SCHEMA mvschema;
@@ -156,7 +152,6 @@ Indexes:
 View definition:
  SELECT sum(tvm.totamt) AS grandtot
    FROM mvschema.tvm;
-Replica Identity: DEFAULT
 
 SET search_path = mvschema, public;
 \d+ tvm
@@ -170,7 +165,6 @@ View definition:
     tv.totamt
    FROM tv
   ORDER BY tv.type;
-Replica Identity: DEFAULT
 
 -- modify the underlying table data
 INSERT INTO t VALUES (6, 'z', 13);
@@ -375,7 +369,6 @@ UNION ALL
          SELECT v_test2.moo,
             3 * v_test2.moo
            FROM v_test2;
-Replica Identity: DEFAULT
 
 CREATE MATERIALIZED VIEW mv_test3 AS SELECT * FROM mv_test2 WHERE moo = 12345;
 SELECT relispopulated FROM pg_class WHERE oid = 'mv_test3'::regclass;
