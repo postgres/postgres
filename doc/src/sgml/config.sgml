@@ -469,6 +469,15 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         This parameter can only be set at server start.
        </para>
+
+       <para>
+        This parameter is irrelevant on systems, notably Solaris as of Solaris
+        10, that ignore socket permissions entirely.  There, one can achieve a
+        similar effect by pointing <varname>unix_socket_directories</> to a
+        directory having search permission limited to the desired audience.
+        This parameter is also irrelevant on Windows, which does not have
+        Unix-domain sockets.
+       </para>
       </listitem>
      </varlistentry>
 
