@@ -252,9 +252,10 @@ typedef struct _tableInfo
 	/* these two are set only if table is a sequence owned by a column: */
 	Oid			owning_tab;		/* OID of table owning sequence */
 	int			owning_col;		/* attr # of column owning sequence */
-	int			relpages;
+	int			relpages;		/* table's size in pages (from pg_class) */
 
 	bool		interesting;	/* true if need to collect more data */
+	bool		postponed_def;	/* matview must be postponed into post-data */
 
 	/*
 	 * These fields are computed only if we decide the table is interesting
