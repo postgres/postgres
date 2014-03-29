@@ -109,6 +109,7 @@ static const char *progname;
 static char *logfilename;
 static FILE *logfile;
 static char *difffilename;
+static char *sockdir;
 
 static _resultmap *resultmap = NULL;
 
@@ -768,8 +769,7 @@ initialize_environment(void)
 		 * the wrong postmaster, or otherwise behave in nondefault ways. (Note
 		 * we also use psql's -X switch consistently, so that ~/.psqlrc files
 		 * won't mess things up.)  Also, set PGPORT to the temp port, and set
-		 * or unset PGHOST depending on whether we are using TCP or Unix
-		 * sockets.
+		 * PGHOST depending on whether we are using TCP or Unix sockets.
 		 */
 		unsetenv("PGDATABASE");
 		unsetenv("PGUSER");
@@ -781,7 +781,24 @@ initialize_environment(void)
 		if (hostname != NULL)
 			doputenv("PGHOST", hostname);
 		else
-			unsetenv("PGHOST");
+		{
+			sockdir = getenv("PG_REGRESS_SOCK_DIR");
+			if (!sockdir)
+			{
+				/*
+				 * Since initdb creates the data directory with secure
+				 * permissions, we place the socket there.  This ensures no
+				 * other OS user can open our socket to exploit our use of
+				 * trust authentication.  Compared to using the compiled-in
+				 * DEFAULT_PGSOCKET_DIR, this also permits testing to work in
+				 * builds that relocate it to a directory not writable to the
+				 * build/test user.
+				 */
+				sockdir = malloc(strlen(temp_install) + sizeof("/data"));
+				sprintf(sockdir, "%s/data", temp_install);
+			}
+			doputenv("PGHOST", sockdir);
+		}
 		unsetenv("PGHOSTADDR");
 		if (port != -1)
 		{
@@ -2253,10 +2270,11 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		 */
 		header(_("starting postmaster"));
 		snprintf(buf, sizeof(buf),
-				 SYSTEMQUOTE "\"%s/postgres\" -D \"%s/data\" -F%s -c \"listen_addresses=%s\" > \"%s/log/postmaster.log\" 2>&1" SYSTEMQUOTE,
-				 bindir, temp_install,
-				 debug ? " -d 5" : "",
-				 hostname ? hostname : "",
+				 SYSTEMQUOTE "\"%s/postgres\" -D \"%s/data\" -F%s "
+				 "-c \"listen_addresses=%s\" -k \"%s\" "
+				 "> \"%s/log/postmaster.log\" 2>&1" SYSTEMQUOTE,
+				 bindir, temp_install, debug ? " -d 5" : "",
+				 hostname ? hostname : "", sockdir ? sockdir : "",
 				 outputdir);
 		postmaster_pid = spawn_process(buf);
 		if (postmaster_pid == INVALID_PID)
