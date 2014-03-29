@@ -4796,6 +4796,8 @@ getTables(Archive *fout, int *numTables)
 			selectDumpableTable(&tblinfo[i]);
 		tblinfo[i].interesting = tblinfo[i].dobj.dump;
 
+		tblinfo[i].postponed_def = false; /* might get set during sort */
+
 		/*
 		 * Read-lock target tables to make sure they aren't DROPPED or altered
 		 * in schema before we get around to dumping them.
@@ -13611,7 +13613,8 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			(tbinfo->relkind == RELKIND_VIEW) ? NULL : tbinfo->reltablespace,
 				 tbinfo->rolname,
 			   (strcmp(reltypename, "TABLE") == 0) ? tbinfo->hasoids : false,
-				 reltypename, SECTION_PRE_DATA,
+				 reltypename,
+				 tbinfo->postponed_def ? SECTION_POST_DATA : SECTION_PRE_DATA,
 				 q->data, delq->data, NULL,
 				 NULL, 0,
 				 NULL, NULL);

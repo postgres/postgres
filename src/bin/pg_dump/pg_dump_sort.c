@@ -798,6 +798,7 @@ repairTypeFuncLoop(DumpableObject *typeobj, DumpableObject *funcobj)
  * will be an implicit dependency in the other direction, we need to break
  * the loop.  If there are no other objects in the loop then we can remove
  * the implicit dependency and leave the ON SELECT rule non-separate.
+ * This applies to matviews, as well.
  */
 static void
 repairViewRuleLoop(DumpableObject *viewobj,
@@ -814,7 +815,9 @@ repairViewRuleLoop(DumpableObject *viewobj,
  * Because findLoop() finds shorter cycles before longer ones, it's likely
  * that we will have previously fired repairViewRuleLoop() and removed the
  * rule's dependency on the view.  Put it back to ensure the rule won't be
- * emitted before the view...
+ * emitted before the view.
+ *
+ * Note: this approach does *not* work for matviews, at the moment.
  */
 static void
 repairViewRuleMultiLoop(DumpableObject *viewobj,
@@ -839,6 +842,30 @@ repairViewRuleMultiLoop(DumpableObject *viewobj,
 	addObjectDependency(ruleobj, viewobj->dumpId);
 	/* now that rule is separate, it must be post-data */
 	addObjectDependency(ruleobj, postDataBoundId);
+}
+
+/*
+ * If a matview is involved in a multi-object loop, we can't currently fix
+ * that by splitting off the rule.	As a stopgap, we try to fix it by
+ * dropping the constraint that the matview be dumped in the pre-data section.
+ * This is sufficient to handle cases where a matview depends on some unique
+ * index, as can happen if it has a GROUP BY for example.
+ *
+ * Note that the "next object" is not necessarily the matview itself;
+ * it could be the matview's rowtype, for example.  We may come through here
+ * several times while removing all the pre-data linkages.
+ */
+static void
+repairMatViewBoundaryMultiLoop(DumpableObject *matviewobj,
+							   DumpableObject *boundaryobj,
+							   DumpableObject *nextobj)
+{
+	TableInfo  *matviewinfo = (TableInfo *) matviewobj;
+
+	/* remove boundary's dependency on object after it in loop */
+	removeObjectDependency(boundaryobj, nextobj->dumpId);
+	/* mark matview as postponed into post-data section */
+	matviewinfo->postponed_def = true;
 }
 
 /*
@@ -956,10 +983,12 @@ repairDependencyLoop(DumpableObject **loop,
 		return;
 	}
 
-	/* View and its ON SELECT rule */
+	/* View (including matview) and its ON SELECT rule */
 	if (nLoop == 2 &&
 		loop[0]->objType == DO_TABLE &&
 		loop[1]->objType == DO_RULE &&
+		(((TableInfo *) loop[0])->relkind == 'v' ||		/* RELKIND_VIEW */
+		 ((TableInfo *) loop[0])->relkind == 'm') &&	/* RELKIND_MATVIEW */
 		((RuleInfo *) loop[1])->ev_type == '1' &&
 		((RuleInfo *) loop[1])->is_instead &&
 		((RuleInfo *) loop[1])->ruletable == (TableInfo *) loop[0])
@@ -970,6 +999,8 @@ repairDependencyLoop(DumpableObject **loop,
 	if (nLoop == 2 &&
 		loop[1]->objType == DO_TABLE &&
 		loop[0]->objType == DO_RULE &&
+		(((TableInfo *) loop[1])->relkind == 'v' ||		/* RELKIND_VIEW */
+		 ((TableInfo *) loop[1])->relkind == 'm') &&	/* RELKIND_MATVIEW */
 		((RuleInfo *) loop[0])->ev_type == '1' &&
 		((RuleInfo *) loop[0])->is_instead &&
 		((RuleInfo *) loop[0])->ruletable == (TableInfo *) loop[1])
@@ -978,12 +1009,13 @@ repairDependencyLoop(DumpableObject **loop,
 		return;
 	}
 
-	/* Indirect loop involving view and ON SELECT rule */
+	/* Indirect loop involving view (but not matview) and ON SELECT rule */
 	if (nLoop > 2)
 	{
 		for (i = 0; i < nLoop; i++)
 		{
-			if (loop[i]->objType == DO_TABLE)
+			if (loop[i]->objType == DO_TABLE &&
+				((TableInfo *) loop[i])->relkind == 'v')		/* RELKIND_VIEW */
 			{
 				for (j = 0; j < nLoop; j++)
 				{
@@ -993,6 +1025,30 @@ repairDependencyLoop(DumpableObject **loop,
 						((RuleInfo *) loop[j])->ruletable == (TableInfo *) loop[i])
 					{
 						repairViewRuleMultiLoop(loop[i], loop[j]);
+						return;
+					}
+				}
+			}
+		}
+	}
+
+	/* Indirect loop involving matview and data boundary */
+	if (nLoop > 2)
+	{
+		for (i = 0; i < nLoop; i++)
+		{
+			if (loop[i]->objType == DO_TABLE &&
+				((TableInfo *) loop[i])->relkind == 'm')		/* RELKIND_MATVIEW */
+			{
+				for (j = 0; j < nLoop; j++)
+				{
+					if (loop[j]->objType == DO_PRE_DATA_BOUNDARY)
+					{
+						DumpableObject *nextobj;
+
+						nextobj = (j < nLoop - 1) ? loop[j + 1] : loop[0];
+						repairMatViewBoundaryMultiLoop(loop[i], loop[j],
+													   nextobj);
 						return;
 					}
 				}
