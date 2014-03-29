@@ -22,8 +22,6 @@ case $testhost in
 	*)		LISTEN_ADDRESSES="" ;;
 esac
 
-POSTMASTER_OPTS="-F -c listen_addresses=$LISTEN_ADDRESSES"
-
 temp_root=$PWD/tmp_check
 
 if [ "$1" = '--install' ]; then
@@ -79,8 +77,13 @@ PGSERVICE="";         unset PGSERVICE
 PGSSLMODE="";         unset PGSSLMODE
 PGREQUIRESSL="";      unset PGREQUIRESSL
 PGCONNECT_TIMEOUT=""; unset PGCONNECT_TIMEOUT
-PGHOST="";            unset PGHOST
 PGHOSTADDR="";        unset PGHOSTADDR
+
+# Select a socket directory, similarly to pg_regress.c
+PGHOST=${PG_REGRESS_SOCK_DIR-$PGDATA}
+export PGHOST
+
+POSTMASTER_OPTS="-F -c listen_addresses=$LISTEN_ADDRESSES -k \"$PGHOST\""
 
 logdir=$PWD/log
 rm -rf "$logdir"

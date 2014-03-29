@@ -58,21 +58,14 @@ gmake check
 
   <warning>
    <para>
-    This test method starts a temporary server, which is configured to accept
-    any connection originating on the local machine.  Any local user can gain
-    database superuser privileges when connecting to this server, and could
-    in principle exploit all privileges of the operating-system user running
-    the tests.  Therefore, it is not recommended that you use <literal>gmake
-    check</> on machines shared with untrusted users.  Instead, run the tests
-    after completing the installation, as described in the next section.
-   </para>
-
-   <para>
-    On Unix-like machines, this danger can be avoided if the temporary
-    server's socket file is made inaccessible to other users, for example
-    by running the tests in a protected chroot.  On Windows, the temporary
-    server opens a locally-accessible TCP socket, so filesystem protections
-    cannot help.
+    On systems lacking Unix-domain sockets, notably Windows, this test method
+    starts a temporary server configured to accept any connection originating
+    on the local machine.  Any local user can gain database superuser
+    privileges when connecting to this server, and could in principle exploit
+    all privileges of the operating-system user running the tests.  Therefore,
+    it is not recommended that you use <literal>gmake check</> on an affected
+    system shared with untrusted users.  Instead, run the tests after
+    completing the installation, as described in the next section.
    </para>
   </warning>
 
@@ -110,6 +103,17 @@ gmake check
 gmake MAX_CONNECTIONS=10 check
 </screen>
     runs no more than ten tests concurrently.
+   </para>
+
+   <para>
+    To protect your operating system user account, the test driver places the
+    server's socket in a relative subdirectory inaccessible to other users.
+    Since most systems constrain the length of socket paths well
+    below <literal>_POSIX_PATH_MAX</>, testing may fail to start from a
+    directory with a long name.  Work around this problem by pointing
+    the <envar>PG_REGRESS_SOCK_DIR</> environment variable to a substitute
+    socket directory having a shorter path.  On a multi-user system, give that
+    directory mode <literal>0700</>.
    </para>
   </sect2>
 
