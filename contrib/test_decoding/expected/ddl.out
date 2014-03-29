@@ -196,11 +196,11 @@ COMMIT;
 SELECT count(*), min(data), max(data)
 FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0')
 GROUP BY substring(data, 1, 24)
-ORDER BY 1;
+ORDER BY 1,2;
  count |                       min                       |                                  max                                   
 -------+-------------------------------------------------+------------------------------------------------------------------------
-     1 | COMMIT                                          | COMMIT
      1 | BEGIN                                           | BEGIN
+     1 | COMMIT                                          | COMMIT
  20467 | table public.tr_etoomuch: DELETE: id[integer]:1 | table public.tr_etoomuch: UPDATE: id[integer]:9999 data[integer]:-9999
 (3 rows)
 

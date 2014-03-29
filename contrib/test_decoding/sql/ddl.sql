@@ -112,7 +112,7 @@ COMMIT;
 SELECT count(*), min(data), max(data)
 FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0')
 GROUP BY substring(data, 1, 24)
-ORDER BY 1;
+ORDER BY 1,2;
 
 /*
  * check whether we decode subtransactions correctly in relation with each
