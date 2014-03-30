@@ -5,7 +5,7 @@ OBJS = test_decoding.o
 
 # Note: because we don't tell the Makefile there are any regression tests,
 # we have to clean those result files explicitly
-EXTRA_CLEAN = -r $(pg_regress_clean_files)
+EXTRA_CLEAN = $(pg_regress_clean_files) ./regression_output ./isolation_output
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
@@ -40,10 +40,12 @@ submake-test_decoding:
 REGRESSCHECKS=ddl rewrite toast permissions decoding_in_xact binary
 
 regresscheck: all | submake-regress submake-test_decoding
+	$(MKDIR_P) regression_output
 	$(pg_regress_check) \
 	    --temp-config $(top_srcdir)/contrib/test_decoding/logical.conf \
 	    --temp-install=./tmp_check \
 	    --extra-install=contrib/test_decoding \
+	    --outputdir=./regression_output \
 	    $(REGRESSCHECKS)
 
 regresscheck-install-force: | submake-regress submake-test_decoding
@@ -54,9 +56,11 @@ regresscheck-install-force: | submake-regress submake-test_decoding
 ISOLATIONCHECKS=mxact delayed_startup concurrent_ddl_dml
 
 isolationcheck: all | submake-isolation submake-test_decoding
+	$(MKDIR_P) isolation_output
 	$(pg_isolation_regress_check) \
 	    --temp-config $(top_srcdir)/contrib/test_decoding/logical.conf \
 	    --extra-install=contrib/test_decoding \
+	    --outputdir=./isolation_output \
 	    $(ISOLATIONCHECKS)
 
 isolationcheck-install-force: all | submake-isolation submake-test_decoding
