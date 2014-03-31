@@ -2474,6 +2474,7 @@ SetBufferCommitInfoNeedsSave(Buffer buffer)
 		{
 			/* Do vacuum cost accounting */
 			VacuumPageDirty++;
+			pgBufferUsage.shared_blks_dirtied++;
 			if (VacuumCostActive)
 				VacuumCostBalance += VacuumCostPageDirty;
 		}
