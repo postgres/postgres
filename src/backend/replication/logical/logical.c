@@ -402,7 +402,7 @@ CreateDecodingContext(XLogRecPtr start_lsn,
 	/* call output plugin initialization callback */
 	old_context = MemoryContextSwitchTo(ctx->context);
 	if (ctx->callbacks.startup_cb != NULL)
-		startup_cb_wrapper(ctx, &ctx->options, true);
+		startup_cb_wrapper(ctx, &ctx->options, false);
 	MemoryContextSwitchTo(old_context);
 
 	ereport(LOG,
