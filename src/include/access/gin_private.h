@@ -406,7 +406,8 @@ typedef struct
 	 * whose split this insertion finishes. As BlockIdData[2] (beware of adding
 	 * fields before this that would make them not 16-bit aligned)
 	 *
-	 * 2. one of the following structs, depending on tree type.
+	 * 2. an ginxlogInsertEntry or ginxlogRecompressDataLeaf struct, depending
+	 * on tree type.
 	 *
 	 * NB: the below structs are only 16-bit aligned when appended to a
 	 * ginxlogInsert struct! Beware of adding fields to them that require
@@ -421,14 +422,38 @@ typedef struct
 	IndexTupleData tuple;	/* variable length */
 } ginxlogInsertEntry;
 
+
 typedef struct
 {
-	uint16		length;
-	uint16		unmodifiedsize;
+	uint16		nactions;
 
-	/* compressed segments, variable length */
-	char		newdata[1];
+	/* Variable number of 'actions' follow */
 } ginxlogRecompressDataLeaf;
+
+/*
+ * Note: this struct is currently not used in code, and only acts as
+ * documentation. The WAL record format is as specified here, but the code
+ * uses straight access through a Pointer and memcpy to read/write these.
+ */
+typedef struct
+{
+	uint8		segno;		/* segment this action applies to */
+	char		type;		/* action type (see below) */
+
+	/*
+	 * Action-specific data follows. For INSERT and REPLACE actions that is a
+	 * GinPostingList struct. For ADDITEMS, a uint16 for the number of items
+	 * added, followed by the items themselves as ItemPointers. DELETE actions
+	 * have no further data.
+	 */
+} ginxlogSegmentAction;
+
+/* Action types */
+#define GIN_SEGMENT_UNMODIFIED	0	/* no action (not used in WAL records) */
+#define GIN_SEGMENT_DELETE		1	/* a whole segment is removed */
+#define GIN_SEGMENT_INSERT		2	/* a whole segment is added */
+#define GIN_SEGMENT_REPLACE		3	/* a segment is replaced */
+#define GIN_SEGMENT_ADDITEMS	4	/* items are added to existing segment */
 
 typedef struct
 {

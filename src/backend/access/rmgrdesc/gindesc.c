@@ -25,6 +25,57 @@ desc_node(StringInfo buf, RelFileNode node, BlockNumber blkno)
 					 node.spcNode, node.dbNode, node.relNode, blkno);
 }
 
+static void
+desc_recompress_leaf(StringInfo buf, ginxlogRecompressDataLeaf *insertData)
+{
+	int			i;
+	char	   *walbuf = ((char *) insertData) + sizeof(ginxlogRecompressDataLeaf);
+
+	appendStringInfo(buf, " %d segments:", (int) insertData->nactions);
+
+	for (i = 0; i < insertData->nactions; i++)
+	{
+		uint8		a_segno = *((uint8 *) (walbuf++));
+		uint8		a_action = *((uint8 *) (walbuf++));
+		uint16		nitems = 0;
+		int			newsegsize = 0;
+
+		if (a_action == GIN_SEGMENT_INSERT ||
+			a_action == GIN_SEGMENT_REPLACE)
+		{
+			newsegsize = SizeOfGinPostingList((GinPostingList *) walbuf);
+			walbuf += SHORTALIGN(newsegsize);
+		}
+
+		if (a_action == GIN_SEGMENT_ADDITEMS)
+		{
+			memcpy(&nitems, walbuf, sizeof(uint16));
+			walbuf += sizeof(uint16);
+			walbuf += nitems * sizeof(ItemPointerData);
+		}
+
+		switch(a_action)
+		{
+			case GIN_SEGMENT_ADDITEMS:
+				appendStringInfo(buf, " %d (add %d items)", a_segno, nitems);
+				break;
+			case GIN_SEGMENT_DELETE:
+				appendStringInfo(buf, " %d (delete)", a_segno);
+				break;
+			case GIN_SEGMENT_INSERT:
+				appendStringInfo(buf, " %d (insert)", a_segno);
+				break;
+			case GIN_SEGMENT_REPLACE:
+				appendStringInfo(buf, " %d (replace)", a_segno);
+				break;
+			default:
+				appendStringInfo(buf, " %d unknown action %d ???", a_segno, a_action);
+				/* cannot decode unrecognized actions further */
+				return;
+		}
+	}
+}
+
 void
 gin_desc(StringInfo buf, uint8 xl_info, char *rec)
 {
@@ -70,9 +121,10 @@ gin_desc(StringInfo buf, uint8 xl_info, char *rec)
 					ginxlogRecompressDataLeaf *insertData =
 						(ginxlogRecompressDataLeaf *) payload;
 
-					appendStringInfo(buf, " unmodified: %u length: %u (compressed)",
-									 insertData->unmodifiedsize,
-									 insertData->length);
+					if (xl_info & XLR_BKP_BLOCK(0))
+						appendStringInfo(buf, " (full page image)");
+					else
+						desc_recompress_leaf(buf, insertData);
 				}
 				else
 				{
@@ -105,9 +157,10 @@ gin_desc(StringInfo buf, uint8 xl_info, char *rec)
 				ginxlogVacuumDataLeafPage *xlrec = (ginxlogVacuumDataLeafPage *) rec;
 				appendStringInfoString(buf, "Vacuum data leaf page, ");
 				desc_node(buf, xlrec->node, xlrec->blkno);
-				appendStringInfo(buf, " unmodified: %u length: %u",
-							 xlrec->data.unmodifiedsize,
-							 xlrec->data.length);
+				if (xl_info & XLR_BKP_BLOCK(0))
+					appendStringInfo(buf, " (full page image)");
+				else
+					desc_recompress_leaf(buf, &xlrec->data);
 			}
 			break;
 		case XLOG_GIN_DELETE_PAGE:
