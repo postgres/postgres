@@ -47,20 +47,22 @@ typedef struct GinStatsData
 	int32		ginVersion;
 } GinStatsData;
 
-/* ginlogic.c */
-enum GinLogicValueEnum
-{
-	GIN_FALSE = 0,			/* item is not present / does not match */
-	GIN_TRUE = 1,			/* item is present / matches */
-	GIN_MAYBE = 2			/* don't know if item is present / don't know if
+/*
+ * A ternary value used by tri-consistent functions.
+ *
+ * For convenience, this is compatible with booleans. A boolean can be
+ * safely cast to a GinTernaryValue.
+ */
+typedef char GinTernaryValue;
+
+#define GIN_FALSE		0	/* item is not present / does not match */
+#define GIN_TRUE		1	/* item is present / matches */
+#define GIN_MAYBE		2	/* don't know if item is present / don't know if
 							 * matches */
-};
 
-typedef char GinLogicValue;
-
-#define DatumGetGinLogicValue(X) ((GinLogicValue)(X))
-#define GinLogicValueGetDatum(X) ((Datum)(X))
-#define PG_RETURN_GIN_LOGIC_VALUE(x) return GinLogicValueGetDatum(x)
+#define DatumGetGinTernaryValue(X) ((GinTernaryValue)(X))
+#define GinTernaryValueGetDatum(X) ((Datum)(X))
+#define PG_RETURN_GIN_TERNARY_VALUE(x) return GinTernaryValueGetDatum(x)
 
 /* GUC parameter */
 extern PGDLLIMPORT int GinFuzzySearchLimit;

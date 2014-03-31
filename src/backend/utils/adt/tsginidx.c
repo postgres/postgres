@@ -173,12 +173,12 @@ gin_extract_tsquery(PG_FUNCTION_ARGS)
 typedef struct
 {
 	QueryItem  *first_item;
-	GinLogicValue *check;
+	GinTernaryValue *check;
 	int		   *map_item_operand;
 	bool	   *need_recheck;
 } GinChkVal;
 
-static GinLogicValue
+static GinTernaryValue
 checkcondition_gin(void *checkval, QueryOperand *val)
 {
 	GinChkVal  *gcv = (GinChkVal *) checkval;
@@ -202,11 +202,11 @@ checkcondition_gin(void *checkval, QueryOperand *val)
  * checkval can be used to pass information to the callback. TS_execute doesn't
  * do anything with it.
  */
-static GinLogicValue
+static GinTernaryValue
 TS_execute_ternary(QueryItem *curitem, void *checkval,
-				   GinLogicValue (*chkcond) (void *checkval, QueryOperand *val))
+				   GinTernaryValue (*chkcond) (void *checkval, QueryOperand *val))
 {
-	GinLogicValue val1, val2, result;
+	GinTernaryValue val1, val2, result;
 	/* since this function recurses, it could be driven to stack overflow */
 	check_stack_depth();
 
@@ -297,14 +297,14 @@ gin_tsquery_consistent(PG_FUNCTION_ARGS)
 Datum
 gin_tsquery_triconsistent(PG_FUNCTION_ARGS)
 {
-	GinLogicValue *check = (GinLogicValue *) PG_GETARG_POINTER(0);
+	GinTernaryValue *check = (GinTernaryValue *) PG_GETARG_POINTER(0);
 
 	/* StrategyNumber strategy = PG_GETARG_UINT16(1); */
 	TSQuery		query = PG_GETARG_TSQUERY(2);
 
 	/* int32	nkeys = PG_GETARG_INT32(3); */
 	Pointer    *extra_data = (Pointer *) PG_GETARG_POINTER(4);
-	GinLogicValue res = GIN_FALSE;
+	GinTernaryValue res = GIN_FALSE;
 	bool		recheck;
 
 	/* The query requires recheck only if it involves weights */
@@ -332,7 +332,7 @@ gin_tsquery_triconsistent(PG_FUNCTION_ARGS)
 			res = GIN_MAYBE;
 	}
 
-	PG_RETURN_GIN_LOGIC_VALUE(res);
+	PG_RETURN_GIN_TERNARY_VALUE(res);
 }
 
 /*

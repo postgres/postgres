@@ -288,12 +288,12 @@ gin_consistent_jsonb(PG_FUNCTION_ARGS)
 Datum
 gin_triconsistent_jsonb(PG_FUNCTION_ARGS)
 {
-	GinLogicValue   *check = (GinLogicValue *) PG_GETARG_POINTER(0);
+	GinTernaryValue *check = (GinTernaryValue *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);
 	/* Jsonb	   *query = PG_GETARG_JSONB(2); */
 	int32		nkeys = PG_GETARG_INT32(3);
 	/* Pointer	   *extra_data = (Pointer *) PG_GETARG_POINTER(4); */
-	GinLogicValue	res = GIN_TRUE;
+	GinTernaryValue res = GIN_TRUE;
 
 	int32		i;
 
@@ -366,7 +366,7 @@ gin_triconsistent_jsonb(PG_FUNCTION_ARGS)
 	else
 		elog(ERROR, "unrecognized strategy number: %d", strategy);
 
-	PG_RETURN_GIN_LOGIC_VALUE(res);
+	PG_RETURN_GIN_TERNARY_VALUE(res);
 }
 
 /*
@@ -414,12 +414,12 @@ gin_consistent_jsonb_hash(PG_FUNCTION_ARGS)
 Datum
 gin_triconsistent_jsonb_hash(PG_FUNCTION_ARGS)
 {
-	GinLogicValue   *check = (GinLogicValue *) PG_GETARG_POINTER(0);
+	GinTernaryValue *check = (GinTernaryValue *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);
 	/* Jsonb	   *query = PG_GETARG_JSONB(2); */
 	int32		nkeys = PG_GETARG_INT32(3);
 	/* Pointer	   *extra_data = (Pointer *) PG_GETARG_POINTER(4); */
-	GinLogicValue	res = GIN_TRUE;
+	GinTernaryValue res = GIN_TRUE;
 	int32			i;
 	bool			has_maybe = false;
 
@@ -455,7 +455,7 @@ gin_triconsistent_jsonb_hash(PG_FUNCTION_ARGS)
 	if (!has_maybe && res == GIN_TRUE)
 		res = GIN_MAYBE;
 
-	PG_RETURN_GIN_LOGIC_VALUE(res);
+	PG_RETURN_GIN_TERNARY_VALUE(res);
 }
 
 Datum

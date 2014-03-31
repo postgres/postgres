@@ -873,7 +873,7 @@ keyGetItem(GinState *ginstate, MemoryContext tempCtx, GinScanKey key,
 	uint32		i;
 	bool		haveLossyEntry;
 	GinScanEntry entry;
-	GinLogicValue res;
+	GinTernaryValue res;
 	MemoryContext oldCtx;
 	bool		allFinished;
 

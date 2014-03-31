@@ -58,7 +58,7 @@ trueConsistentFn(GinScanKey key)
 	key->recheckCurItem = false;
 	return true;
 }
-static GinLogicValue
+static GinTernaryValue
 trueTriConsistentFn(GinScanKey key)
 {
 	return GIN_TRUE;
@@ -91,17 +91,18 @@ directBoolConsistentFn(GinScanKey key)
 /*
  * A helper function for calling a native ternary logic consistent function.
  */
-static GinLogicValue
+static GinTernaryValue
 directTriConsistentFn(GinScanKey key)
 {
-	return DatumGetGinLogicValue(FunctionCall7Coll(key->triConsistentFmgrInfo,
-										  key->collation,
-										  PointerGetDatum(key->entryRes),
-										  UInt16GetDatum(key->strategy),
-										  key->query,
-										  UInt32GetDatum(key->nuserentries),
-										  PointerGetDatum(key->extra_data),
-										  PointerGetDatum(key->queryValues),
+	return DatumGetGinTernaryValue(FunctionCall7Coll(
+									   key->triConsistentFmgrInfo,
+									   key->collation,
+									   PointerGetDatum(key->entryRes),
+									   UInt16GetDatum(key->strategy),
+									   key->query,
+									   UInt32GetDatum(key->nuserentries),
+									   PointerGetDatum(key->extra_data),
+									   PointerGetDatum(key->queryValues),
 									 PointerGetDatum(key->queryCategories)));
 }
 
@@ -113,15 +114,16 @@ directTriConsistentFn(GinScanKey key)
 static bool
 shimBoolConsistentFn(GinScanKey key)
 {
-	GinLogicValue result;
-	result = DatumGetGinLogicValue(FunctionCall7Coll(key->triConsistentFmgrInfo,
-										  key->collation,
-										  PointerGetDatum(key->entryRes),
-										  UInt16GetDatum(key->strategy),
-										  key->query,
-										  UInt32GetDatum(key->nuserentries),
-										  PointerGetDatum(key->extra_data),
-										  PointerGetDatum(key->queryValues),
+	GinTernaryValue result;
+	result = DatumGetGinTernaryValue(FunctionCall7Coll(
+										 key->triConsistentFmgrInfo,
+										 key->collation,
+										 PointerGetDatum(key->entryRes),
+										 UInt16GetDatum(key->strategy),
+										 key->query,
+										 UInt32GetDatum(key->nuserentries),
+										 PointerGetDatum(key->extra_data),
+										 PointerGetDatum(key->queryValues),
 									 PointerGetDatum(key->queryCategories)));
 	if (result == GIN_MAYBE)
 	{
@@ -147,7 +149,7 @@ shimBoolConsistentFn(GinScanKey key)
  *
  * NB: This function modifies the key->entryRes array!
  */
-static GinLogicValue
+static GinTernaryValue
 shimTriConsistentFn(GinScanKey key)
 {
 	int			nmaybe;
@@ -155,7 +157,7 @@ shimTriConsistentFn(GinScanKey key)
 	int			i;
 	bool		boolResult;
 	bool		recheck = false;
-	GinLogicValue curResult;
+	GinTernaryValue curResult;
 
 	/*
 	 * Count how many MAYBE inputs there are, and store their indexes in

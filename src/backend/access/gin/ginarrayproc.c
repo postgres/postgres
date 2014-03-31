@@ -225,7 +225,7 @@ ginarrayconsistent(PG_FUNCTION_ARGS)
 Datum
 ginarraytriconsistent(PG_FUNCTION_ARGS)
 {
-	GinLogicValue *check = (GinLogicValue *) PG_GETARG_POINTER(0);
+	GinTernaryValue *check = (GinTernaryValue *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);
 
 	/* ArrayType  *query = PG_GETARG_ARRAYTYPE_P(2); */
@@ -234,7 +234,7 @@ ginarraytriconsistent(PG_FUNCTION_ARGS)
 	/* Pointer	   *extra_data = (Pointer *) PG_GETARG_POINTER(4); */
 	/* Datum	   *queryKeys = (Datum *) PG_GETARG_POINTER(5); */
 	bool	   *nullFlags = (bool *) PG_GETARG_POINTER(6);
-	GinLogicValue	res;
+	GinTernaryValue res;
 	int32		i;
 
 	switch (strategy)
@@ -300,5 +300,5 @@ ginarraytriconsistent(PG_FUNCTION_ARGS)
 			res = false;
 	}
 
-	PG_RETURN_GIN_LOGIC_VALUE(res);
+	PG_RETURN_GIN_TERNARY_VALUE(res);
 }
