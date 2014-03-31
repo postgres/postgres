@@ -238,7 +238,7 @@ typedef struct
 	uint32		count[FAST_PATH_STRONG_LOCK_HASH_PARTITIONS];
 } FastPathStrongRelationLockData;
 
-static FastPathStrongRelationLockData *FastPathStrongRelationLocks;
+static volatile FastPathStrongRelationLockData *FastPathStrongRelationLocks;
 
 
 /*
