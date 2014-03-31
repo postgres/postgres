@@ -2707,6 +2707,7 @@ MarkBufferDirtyHint(Buffer buffer, bool buffer_std)
 		if (dirtied)
 		{
 			VacuumPageDirty++;
+			pgBufferUsage.shared_blks_dirtied++;
 			if (VacuumCostActive)
 				VacuumCostBalance += VacuumCostPageDirty;
 		}
