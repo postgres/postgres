@@ -543,6 +543,8 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 
 		MarkBufferDirty(rbuffer);
 		MarkBufferDirty(stack->buffer);
+		if (BufferIsValid(childbuf))
+			MarkBufferDirty(childbuf);
 
 		/*
 		 * Restore the temporary copies over the real buffers. But don't free
@@ -571,6 +573,8 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 			PageSetLSN(BufferGetPage(rbuffer), recptr);
 			if (stack->parent == NULL)
 				PageSetLSN(BufferGetPage(lbuffer), recptr);
+			if (BufferIsValid(childbuf))
+				PageSetLSN(childpage, recptr);
 		}
 		END_CRIT_SECTION();
 
