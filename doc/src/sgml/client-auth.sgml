@@ -275,7 +275,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
 
       <para>
        If a host name is specified (anything that is not an IP address
-       or a special key word is processed as a potential host name),
+       or a special key word is treated as a host name),
        that name is compared with the result of a reverse name
        resolution of the client's IP address (e.g., reverse DNS
        lookup, if DNS is used).  Host name comparisons are case
@@ -310,22 +310,28 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        the client's host name instead of the IP address in the log.
       </para>
 
+      <para>
+       This field only applies to <literal>host</literal>,
+       <literal>hostssl</literal>, and <literal>hostnossl</> records.
+      </para>
+
       <sidebar>
        <para>
-        Occasionally, users have wondered why host names are handled
-        in this seemingly complicated way with two name resolutions
-        and requiring reverse lookup of IP addresses, which is
-        sometimes not set up or points to some undesirable host name.
-        It is primarily for efficiency: A connection attempt requires
-        two resolver lookups of the current client's address.  If
-        there is resolver problem with that address, it becomes only
+        Users sometimes wonder why host names are handled
+        in this seemingly complicated way, with two name resolutions
+        including a reverse lookup of the client's IP address.  This
+        complicates use of the feature in case the client's reverse DNS
+        entry is not set up or yields some undesirable host name.
+        It is done primarily for efficiency: this way, a connection attempt
+        requires at most two resolver lookups, one reverse and one forward.
+        If there is a resolver problem with some address, it becomes only
         that client's problem.  A hypothetical alternative
-        implementation which only does forward lookups would have to
+        implementation that only did forward lookups would have to
         resolve every host name mentioned in
-        <filename>pg_hba.conf</filename> at every connection attempt.
-        That would already be slow by itself.  And if there is a
-        resolver problem with one of the host names, it becomes
-        everyone's problem.
+        <filename>pg_hba.conf</filename> during every connection attempt.
+        That could be quite slow if many names are listed.
+        And if there is a resolver problem with one of the host names,
+        it becomes everyone's problem.
        </para>
 
        <para>
@@ -340,11 +346,6 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
         Apache HTTP Server and TCP Wrappers.
        </para>
       </sidebar>
-
-      <para>
-       This field only applies to <literal>host</literal>,
-       <literal>hostssl</literal>, and <literal>hostnossl</> records.
-      </para>
      </listitem>
     </varlistentry>
 
