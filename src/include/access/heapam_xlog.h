@@ -349,6 +349,8 @@ typedef struct xl_heap_new_cid
 	xl_heaptid target;
 } xl_heap_new_cid;
 
+#define SizeOfHeapNewCid (offsetof(xl_heap_new_cid, target) + SizeOfHeapTid)
+
 /* logical rewrite xlog record header */
 typedef struct xl_heap_rewrite_mapping
 {
@@ -359,8 +361,6 @@ typedef struct xl_heap_rewrite_mapping
 	uint32				num_mappings; /* Number of in-memory mappings */
 	XLogRecPtr			start_lsn;	/* Insert LSN at begin of rewrite */
 } xl_heap_rewrite_mapping;
-
-#define SizeOfHeapNewCid (offsetof(xl_heap_new_cid, target) + SizeOfHeapTid)
 
 extern void HeapTupleHeaderAdvanceLatestRemovedXid(HeapTupleHeader tuple,
 									   TransactionId *latestRemovedXid);
