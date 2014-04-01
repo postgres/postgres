@@ -1,6 +1,6 @@
 /* -------------------------------------------------------------------------
  *
- * contrib/sepgsql/label.c
+ * contrib/sepgsql/relation.c
  *
  * Routines corresponding to relation/attribute objects
  *
