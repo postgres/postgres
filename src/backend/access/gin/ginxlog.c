@@ -564,12 +564,8 @@ ginRedoVacuumPage(XLogRecPtr lsn, XLogRecord *record)
 	Assert(xlrec->hole_offset < BLCKSZ);
 	Assert(xlrec->hole_length < BLCKSZ);
 
-	/* If we have a full-page image, restore it and we're done */
-	if (record->xl_info & XLR_BKP_BLOCK(0))
-	{
-		(void) RestoreBackupBlock(lsn, record, 0, false, false);
-		return;
-	}
+	/* Backup blocks are not used, we'll re-initialize the page always. */
+	Assert(!(record->xl_info & XLR_BKP_BLOCK_MASK));
 
 	buffer = XLogReadBuffer(xlrec->node, xlrec->blkno, true);
 	if (!BufferIsValid(buffer))
