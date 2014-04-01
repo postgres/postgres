@@ -910,6 +910,10 @@ _bt_insertonpg(Relation rel,
 			{
 				PageSetLSN(metapg, recptr);
 			}
+			if (BufferIsValid(cbuf))
+			{
+				PageSetLSN(BufferGetPage(cbuf), recptr);
+			}
 
 			PageSetLSN(page, recptr);
 		}
@@ -1401,6 +1405,10 @@ _bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
 		if (!P_RIGHTMOST(ropaque))
 		{
 			PageSetLSN(spage, recptr);
+		}
+		if (!isleaf)
+		{
+			PageSetLSN(BufferGetPage(cbuf), recptr);
 		}
 	}
 
