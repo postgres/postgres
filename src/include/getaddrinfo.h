@@ -82,6 +82,9 @@
 #ifndef NI_NUMERICSERV
 #define NI_NUMERICSERV	2
 #endif
+#ifndef NI_NAMEREQD
+#define NI_NAMEREQD		4
+#endif
 
 #ifndef NI_MAXHOST
 #define NI_MAXHOST	1025
