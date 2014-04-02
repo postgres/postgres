@@ -104,6 +104,20 @@ extern int	ssl_renegotiation_limit;
  * still available when a backend is running (see MyProcPort).	The data
  * it points to must also be malloc'd, or else palloc'd in TopMemoryContext,
  * so that it survives into PostgresMain execution!
+ *
+ * remote_hostname is set if we did a successful reverse lookup of the
+ * client's IP address during connection setup.
+ * remote_hostname_resolv tracks the state of hostname verification:
+ *	+1 = remote_hostname is known to resolve to client's IP address
+ *	-1 = remote_hostname is known NOT to resolve to client's IP address
+ *	 0 = we have not done the forward DNS lookup yet
+ *	-2 = there was an error in name resolution
+ * If reverse lookup of the client IP address fails, remote_hostname will be
+ * left NULL while remote_hostname_resolv is set to -2.  If reverse lookup
+ * succeeds but forward lookup fails, remote_hostname_resolv is also set to -2
+ * (the case is distinguishable because remote_hostname isn't NULL).  In
+ * either of the -2 cases, remote_hostname_errcode saves the lookup return
+ * code for possible later use with gai_strerror.
  */
 
 typedef struct Port
@@ -116,12 +130,8 @@ typedef struct Port
 	char	   *remote_host;	/* name (or ip addr) of remote host */
 	char	   *remote_hostname;/* name (not ip addr) of remote host, if
 								 * available */
-	int			remote_hostname_resolv; /* +1 = remote_hostname is known to
-										 * resolve to client's IP address; -1
-										 * = remote_hostname is known NOT to
-										 * resolve to client's IP address; 0 =
-										 * we have not done the forward DNS
-										 * lookup yet */
+	int			remote_hostname_resolv; /* see above */
+	int			remote_hostname_errcode;		/* see above */
 	char	   *remote_port;	/* text rep of remote port */
 	CAC_state	canAcceptConnections;	/* postmaster connection status */
 
