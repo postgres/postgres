@@ -3379,6 +3379,7 @@ static void
 BackendInitialize(Port *port)
 {
 	int			status;
+	int			ret;
 	char		remote_host[NI_MAXHOST];
 	char		remote_port[NI_MAXSERV];
 	char		remote_ps_data[NI_MAXHOST];
@@ -3440,21 +3441,13 @@ BackendInitialize(Port *port)
 	 */
 	remote_host[0] = '\0';
 	remote_port[0] = '\0';
-	if (pg_getnameinfo_all(&port->raddr.addr, port->raddr.salen,
+	if ((ret = pg_getnameinfo_all(&port->raddr.addr, port->raddr.salen,
 						   remote_host, sizeof(remote_host),
 						   remote_port, sizeof(remote_port),
-					   (log_hostname ? 0 : NI_NUMERICHOST) | NI_NUMERICSERV))
-	{
-		int			ret = pg_getnameinfo_all(&port->raddr.addr, port->raddr.salen,
-											 remote_host, sizeof(remote_host),
-											 remote_port, sizeof(remote_port),
-											 NI_NUMERICHOST | NI_NUMERICSERV);
-
-		if (ret)
-			ereport(WARNING,
-					(errmsg_internal("pg_getnameinfo_all() failed: %s",
-									 gai_strerror(ret))));
-	}
+				  (log_hostname ? 0 : NI_NUMERICHOST) | NI_NUMERICSERV)) != 0)
+		ereport(WARNING,
+				(errmsg_internal("pg_getnameinfo_all() failed: %s",
+								 gai_strerror(ret))));
 	if (remote_port[0] == '\0')
 		snprintf(remote_ps_data, sizeof(remote_ps_data), "%s", remote_host);
 	else
@@ -3478,8 +3471,23 @@ BackendInitialize(Port *port)
 	 */
 	port->remote_host = strdup(remote_host);
 	port->remote_port = strdup(remote_port);
-	if (log_hostname)
-		port->remote_hostname = port->remote_host;
+
+	/*
+	 * If we did a reverse lookup to name, we might as well save the results
+	 * rather than possibly repeating the lookup during authentication.
+	 *
+	 * Note that we don't want to specify NI_NAMEREQD above, because then we'd
+	 * get nothing useful for a client without an rDNS entry.  Therefore, we
+	 * must check whether we got a numeric IPv4 or IPv6 address, and not save
+	 * it into remote_hostname if so.  (This test is conservative and might
+	 * sometimes classify a hostname as numeric, but an error in that
+	 * direction is safe; it only results in a possible extra lookup.)
+	 */
+	if (log_hostname &&
+		ret == 0 &&
+		strspn(remote_host, "0123456789.") < strlen(remote_host) &&
+		strspn(remote_host, "0123456789ABCDEFabcdef:") < strlen(remote_host))
+		port->remote_hostname = strdup(remote_host);
 
 	/*
 	 * Ready to begin client interaction.  We will give up and exit(1) after a

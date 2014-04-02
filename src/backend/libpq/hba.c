@@ -598,35 +598,47 @@ check_hostname(hbaPort *port, const char *hostname)
 	int			ret;
 	bool		found;
 
+	/* Quick out if remote host name already known bad */
+	if (port->remote_hostname_resolv < 0)
+		return false;
+
 	/* Lookup remote host name if not already done */
 	if (!port->remote_hostname)
 	{
 		char		remote_hostname[NI_MAXHOST];
 
-		if (pg_getnameinfo_all(&port->raddr.addr, port->raddr.salen,
-							   remote_hostname, sizeof(remote_hostname),
-							   NULL, 0,
-							   0))
+		ret = pg_getnameinfo_all(&port->raddr.addr, port->raddr.salen,
+								 remote_hostname, sizeof(remote_hostname),
+								 NULL, 0,
+								 NI_NAMEREQD);
+		if (ret != 0)
+		{
+			/* remember failure; don't complain in the postmaster log yet */
+			port->remote_hostname_resolv = -2;
+			port->remote_hostname_errcode = ret;
 			return false;
+		}
 
 		port->remote_hostname = pstrdup(remote_hostname);
 	}
 
+	/* Now see if remote host name matches this pg_hba line */
 	if (!hostname_match(hostname, port->remote_hostname))
 		return false;
 
-	/* Lookup IP from host name and check against original IP */
-
+	/* If we already verified the forward lookup, we're done */
 	if (port->remote_hostname_resolv == +1)
 		return true;
-	if (port->remote_hostname_resolv == -1)
-		return false;
 
+	/* Lookup IP from host name and check against original IP */
 	ret = getaddrinfo(port->remote_hostname, NULL, NULL, &gai_result);
 	if (ret != 0)
-		ereport(ERROR,
-				(errmsg("could not translate host name \"%s\" to address: %s",
-						port->remote_hostname, gai_strerror(ret))));
+	{
+		/* remember failure; don't complain in the postmaster log yet */
+		port->remote_hostname_resolv = -2;
+		port->remote_hostname_errcode = ret;
+		return false;
+	}
 
 	found = false;
 	for (gai = gai_result; gai; gai = gai->ai_next)
