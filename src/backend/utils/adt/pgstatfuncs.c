@@ -694,7 +694,8 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 						clean_ipv6_addr(beentry->st_clientaddr.addr.ss_family, remote_host);
 						values[9] = DirectFunctionCall1(inet_in,
 											   CStringGetDatum(remote_host));
-						if (beentry->st_clienthostname)
+						if (beentry->st_clienthostname &&
+							beentry->st_clienthostname[0])
 							values[10] = CStringGetTextDatum(beentry->st_clienthostname);
 						else
 							nulls[10] = true;
