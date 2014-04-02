@@ -1397,9 +1397,9 @@ hstore_to_jsonb(PG_FUNCTION_ARGS)
 
 		key.estSize = sizeof(JEntry);
 		key.type = jbvString;
-		key.string.len = HS_KEYLEN(entries, i);
-		key.string.val = pnstrdup(HS_KEY(entries, base, i), key.string.len);
-		key.estSize += key.string.len;
+		key.val.string.len = HS_KEYLEN(entries, i);
+		key.val.string.val = pnstrdup(HS_KEY(entries, base, i), key.val.string.len);
+		key.estSize += key.val.string.len;
 
 		res = pushJsonbValue(&state, WJB_KEY, &key);
 
@@ -1412,9 +1412,9 @@ hstore_to_jsonb(PG_FUNCTION_ARGS)
 		{
 			val.estSize = sizeof(JEntry);
 			val.type = jbvString;
-			val.string.len = HS_VALLEN(entries, i);
-			val.string.val = pnstrdup(HS_VAL(entries, base, i), val.string.len);
-			val.estSize += val.string.len;
+			val.val.string.len = HS_VALLEN(entries, i);
+			val.val.string.val = pnstrdup(HS_VAL(entries, base, i), val.val.string.len);
+			val.estSize += val.val.string.len;
 		}
 		res = pushJsonbValue(&state, WJB_VALUE, &val);
 	}
@@ -1449,9 +1449,9 @@ hstore_to_jsonb_loose(PG_FUNCTION_ARGS)
 
 		key.estSize = sizeof(JEntry);
 		key.type = jbvString;
-		key.string.len = HS_KEYLEN(entries, i);
-		key.string.val = pnstrdup(HS_KEY(entries, base, i), key.string.len);
-		key.estSize += key.string.len;
+		key.val.string.len = HS_KEYLEN(entries, i);
+		key.val.string.val = pnstrdup(HS_KEY(entries, base, i), key.val.string.len);
+		key.estSize += key.val.string.len;
 
 		res = pushJsonbValue(&state, WJB_KEY, &key);
 
@@ -1465,12 +1465,12 @@ hstore_to_jsonb_loose(PG_FUNCTION_ARGS)
 		else if (HS_VALLEN(entries, i) == 1 && *(HS_VAL(entries, base, i)) == 't')
 		{
 			val.type = jbvBool;
-			val.boolean = true;
+			val.val.boolean = true;
 		}
 		else if (HS_VALLEN(entries, i) == 1 && *(HS_VAL(entries, base, i)) == 'f')
 		{
 			val.type = jbvBool;
-			val.boolean = false;
+			val.val.boolean = false;
 		}
 		else
 		{
@@ -1519,17 +1519,17 @@ hstore_to_jsonb_loose(PG_FUNCTION_ARGS)
 			if (is_number)
 			{
 				val.type = jbvNumeric;
-				val.numeric = DatumGetNumeric(
+				val.val.numeric = DatumGetNumeric(
 					DirectFunctionCall3(numeric_in, CStringGetDatum(tmp.data), 0, -1));
-				val.estSize += VARSIZE_ANY(val.numeric) +sizeof(JEntry);
+				val.estSize += VARSIZE_ANY(val.val.numeric) +sizeof(JEntry);
 			}
 			else
 			{
 				val.estSize = sizeof(JEntry);
 				val.type = jbvString;
-				val.string.len = HS_VALLEN(entries, i);
-				val.string.val = pnstrdup(HS_VAL(entries, base, i), val.string.len);
-				val.estSize += val.string.len;
+				val.val.string.len = HS_VALLEN(entries, i);
+				val.val.string.val = pnstrdup(HS_VAL(entries, base, i), val.val.string.len);
+				val.estSize += val.val.string.len;
 			}
 		}
 		res = pushJsonbValue(&state, WJB_VALUE, &val);

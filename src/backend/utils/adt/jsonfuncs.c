@@ -295,9 +295,9 @@ jsonb_object_keys(PG_FUNCTION_ARGS)
 			{
 				char	   *cstr;
 
-				cstr = palloc(v.string.len + 1 * sizeof(char));
-				memcpy(cstr, v.string.val, v.string.len);
-				cstr[v.string.len] = '\0';
+				cstr = palloc(v.val.string.len + 1 * sizeof(char));
+				memcpy(cstr, v.val.string.val, v.val.string.len);
+				cstr[v.val.string.len] = '\0';
 				state->result[state->result_count++] = cstr;
 			}
 		}
@@ -491,7 +491,7 @@ jsonb_object_field(PG_FUNCTION_ARGS)
 
 		if (r == WJB_KEY)
 		{
-			if (klen == v.string.len && strncmp(key, v.string.val, klen) == 0)
+			if (klen == v.val.string.len && strncmp(key, v.val.string.val, klen) == 0)
 			{
 				/*
 				 * The next thing the iterator fetches should be the value, no
@@ -552,7 +552,7 @@ jsonb_object_field_text(PG_FUNCTION_ARGS)
 
 		if (r == WJB_KEY)
 		{
-			if (klen == v.string.len && strncmp(key, v.string.val, klen) == 0)
+			if (klen == v.val.string.len && strncmp(key, v.val.string.val, klen) == 0)
 			{
 				text	   *result;
 
@@ -568,7 +568,7 @@ jsonb_object_field_text(PG_FUNCTION_ARGS)
 				 */
 				if (v.type == jbvString)
 				{
-					result = cstring_to_text_with_len(v.string.val, v.string.len);
+					result = cstring_to_text_with_len(v.val.string.val, v.val.string.len);
 				}
 				else if (v.type == jbvNull)
 				{
@@ -699,7 +699,7 @@ jsonb_array_element_text(PG_FUNCTION_ARGS)
 
 				if (v.type == jbvString)
 				{
-					result = cstring_to_text_with_len(v.string.val, v.string.len);
+					result = cstring_to_text_with_len(v.val.string.val, v.val.string.len);
 				}
 				else if (v.type == jbvNull)
 				{
@@ -1209,11 +1209,11 @@ get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text)
 
 		if (jbvp->type == jbvBinary)
 		{
-			JsonbIterator  *it = JsonbIteratorInit(jbvp->binary.data);
+			JsonbIterator  *it = JsonbIteratorInit(jbvp->val.binary.data);
 			int				r;
 
 			r = JsonbIteratorNext(&it, &tv, true);
-			superHeader = (JsonbSuperHeader) jbvp->binary.data;
+			superHeader = (JsonbSuperHeader) jbvp->val.binary.data;
 			have_object = r == WJB_BEGIN_OBJECT;
 			have_array = r == WJB_BEGIN_ARRAY;
 		}
@@ -1227,7 +1227,7 @@ get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text)
 	if (as_text)
 	{
 		if (jbvp->type == jbvString)
-			PG_RETURN_TEXT_P(cstring_to_text_with_len(jbvp->string.val, jbvp->string.len));
+			PG_RETURN_TEXT_P(cstring_to_text_with_len(jbvp->val.string.val, jbvp->val.string.len));
 		else if (jbvp->type == jbvNull)
 			PG_RETURN_NULL();
 	}
@@ -1443,7 +1443,7 @@ each_worker_jsonb(FunctionCallInfo fcinfo, bool as_text)
 			/* Use the tmp context so we can clean up after each tuple is done */
 			old_cxt = MemoryContextSwitchTo(tmp_cxt);
 
-			key = cstring_to_text_with_len(v.string.val, v.string.len);
+			key = cstring_to_text_with_len(v.val.string.val, v.val.string.len);
 
 			/*
 			 * The next thing the iterator fetches should be the value, no
@@ -1468,7 +1468,7 @@ each_worker_jsonb(FunctionCallInfo fcinfo, bool as_text)
 					if (v.type == jbvString)
 					{
 						/* In text mode, scalar strings should be dequoted */
-						sv = cstring_to_text_with_len(v.string.val, v.string.len);
+						sv = cstring_to_text_with_len(v.val.string.val, v.val.string.len);
 					}
 					else
 					{
@@ -1788,7 +1788,7 @@ elements_worker_jsonb(FunctionCallInfo fcinfo, bool as_text)
 					if (v.type == jbvString)
 					{
 						/* in text mode scalar strings should be dequoted */
-						sv = cstring_to_text_with_len(v.string.val, v.string.len);
+						sv = cstring_to_text_with_len(v.val.string.val, v.val.string.len);
 					}
 					else
 					{
@@ -2270,18 +2270,18 @@ populate_record_worker(FunctionCallInfo fcinfo, bool have_record_arg)
 			else
 			{
 				if (v->type == jbvString)
-					s = pnstrdup(v->string.val, v->string.len);
+					s = pnstrdup(v->val.string.val, v->val.string.len);
 				else if (v->type == jbvBool)
-					s = pnstrdup((v->boolean) ? "t" : "f", 1);
+					s = pnstrdup((v->val.boolean) ? "t" : "f", 1);
 				else if (v->type == jbvNumeric)
 					s = DatumGetCString(DirectFunctionCall1(numeric_out,
-											   PointerGetDatum(v->numeric)));
+											   PointerGetDatum(v->val.numeric)));
 				else if (!use_json_as_text)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 							 errmsg("cannot populate with a nested object unless use_json_as_text is true")));
 				else if (v->type == jbvBinary)
-					s = JsonbToCString(NULL, v->binary.data, v->binary.len);
+					s = JsonbToCString(NULL, v->val.binary.data, v->val.binary.len);
 				else
 					elog(ERROR, "invalid jsonb type");
 			}
@@ -2570,18 +2570,18 @@ make_row_from_rec_and_jsonb(Jsonb * element, PopulateRecordsetState *state)
 			char	   *s = NULL;
 
 			if (v->type == jbvString)
-				s = pnstrdup(v->string.val, v->string.len);
+				s = pnstrdup(v->val.string.val, v->val.string.len);
 			else if (v->type == jbvBool)
-				s = pnstrdup((v->boolean) ? "t" : "f", 1);
+				s = pnstrdup((v->val.boolean) ? "t" : "f", 1);
 			else if (v->type == jbvNumeric)
 				s = DatumGetCString(DirectFunctionCall1(numeric_out,
-											   PointerGetDatum(v->numeric)));
+											   PointerGetDatum(v->val.numeric)));
 			else if (!state->use_json_as_text)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("cannot populate with a nested object unless use_json_as_text is true")));
 			else if (v->type == jbvBinary)
-				s = JsonbToCString(NULL, v->binary.data, v->binary.len);
+				s = JsonbToCString(NULL, v->val.binary.data, v->val.binary.len);
 			else
 				elog(ERROR, "invalid jsonb type");
 
@@ -3027,8 +3027,8 @@ findJsonbValueFromSuperHeaderLen(JsonbSuperHeader sheader, uint32 flags,
 	JsonbValue	k;
 
 	k.type = jbvString;
-	k.string.val = key;
-	k.string.len = keylen;
+	k.val.string.val = key;
+	k.val.string.len = keylen;
 
 	return findJsonbValueFromSuperHeader(sheader, flags, NULL, &k);
 }

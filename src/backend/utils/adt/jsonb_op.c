@@ -31,8 +31,8 @@ jsonb_exists(PG_FUNCTION_ARGS)
 	 * top level.  No recursion occurs.
 	 */
 	kval.type = jbvString;
-	kval.string.val = VARDATA_ANY(key);
-	kval.string.len = VARSIZE_ANY_EXHDR(key);
+	kval.val.string.val = VARDATA_ANY(key);
+	kval.val.string.len = VARSIZE_ANY_EXHDR(key);
 
 	v = findJsonbValueFromSuperHeader(VARDATA(jb),
 									  JB_FOBJECT | JB_FARRAY,
@@ -52,7 +52,7 @@ jsonb_exists_any(PG_FUNCTION_ARGS)
 				lowbound = 0;
 	int			i;
 
-	if (arrKey == NULL || arrKey->object.nPairs == 0)
+	if (arrKey == NULL || arrKey->val.object.nPairs == 0)
 		PG_RETURN_BOOL(false);
 
 	if (JB_ROOT_IS_OBJECT(jb))
@@ -64,12 +64,12 @@ jsonb_exists_any(PG_FUNCTION_ARGS)
 	 * each search can start one entry past the previous "found" entry, or at
 	 * the lower bound of the last search.
 	 */
-	for (i = 0; i < arrKey->array.nElems; i++)
+	for (i = 0; i < arrKey->val.array.nElems; i++)
 	{
 		if (findJsonbValueFromSuperHeader(VARDATA(jb),
 										  JB_FOBJECT | JB_FARRAY,
 										  plowbound,
-										  arrKey->array.elems + i) != NULL)
+										  arrKey->val.array.elems + i) != NULL)
 			PG_RETURN_BOOL(true);
 	}
 
@@ -86,7 +86,7 @@ jsonb_exists_all(PG_FUNCTION_ARGS)
 	uint32		lowbound = 0;
 	int			i;
 
-	if (arrKey == NULL || arrKey->array.nElems == 0)
+	if (arrKey == NULL || arrKey->val.array.nElems == 0)
 		PG_RETURN_BOOL(true);
 
 	if (JB_ROOT_IS_OBJECT(jb))
@@ -98,12 +98,12 @@ jsonb_exists_all(PG_FUNCTION_ARGS)
 	 * each search can start one entry past the previous "found" entry, or at
 	 * the lower bound of the last search.
 	 */
-	for (i = 0; i < arrKey->array.nElems; i++)
+	for (i = 0; i < arrKey->val.array.nElems; i++)
 	{
 		if (findJsonbValueFromSuperHeader(VARDATA(jb),
 										  JB_FOBJECT | JB_FARRAY,
 										  plowbound,
-										  arrKey->array.elems + i) == NULL)
+										  arrKey->val.array.elems + i) == NULL)
 			PG_RETURN_BOOL(false);
 	}
 

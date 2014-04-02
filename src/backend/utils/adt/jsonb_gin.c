@@ -618,7 +618,7 @@ make_scalar_key(const JsonbValue * scalarVal, char flag)
 			item = make_text_key("n", 1, flag);
 			break;
 		case jbvBool:
-			item = make_text_key(scalarVal->boolean ? "t" : "f", 1, flag);
+			item = make_text_key(scalarVal->val.boolean ? "t" : "f", 1, flag);
 			break;
 		case jbvNumeric:
 			/*
@@ -630,12 +630,12 @@ make_scalar_key(const JsonbValue * scalarVal, char flag)
 			 * storing a "union" type in the GIN B-Tree, and indexing Jsonb
 			 * strings takes precedence.
 			 */
-			cstr = numeric_normalize(scalarVal->numeric);
+			cstr = numeric_normalize(scalarVal->val.numeric);
 			item = make_text_key(cstr, strlen(cstr), flag);
 			pfree(cstr);
 			break;
 		case jbvString:
-			item = make_text_key(scalarVal->string.val, scalarVal->string.len,
+			item = make_text_key(scalarVal->val.string.val, scalarVal->val.string.len,
 								 flag);
 			break;
 		default:

@@ -247,9 +247,9 @@ jsonb_in_object_field_start(void *pstate, char *fname, bool isnull)
 
 	Assert (fname != NULL);
 	v.type = jbvString;
-	v.string.len = checkStringLen(strlen(fname));
-	v.string.val = pnstrdup(fname, v.string.len);
-	v.estSize = sizeof(JEntry) + v.string.len;
+	v.val.string.len = checkStringLen(strlen(fname));
+	v.val.string.val = pnstrdup(fname, v.val.string.len);
+	v.estSize = sizeof(JEntry) + v.val.string.len;
 
 	_state->res = pushJsonbValue(&_state->parseState, WJB_KEY, &v);
 }
@@ -263,15 +263,15 @@ jsonb_put_escaped_value(StringInfo out, JsonbValue * scalarVal)
 			appendBinaryStringInfo(out, "null", 4);
 			break;
 		case jbvString:
-			escape_json(out, pnstrdup(scalarVal->string.val, scalarVal->string.len));
+			escape_json(out, pnstrdup(scalarVal->val.string.val, scalarVal->val.string.len));
 			break;
 		case jbvNumeric:
 			appendStringInfoString(out,
 								   DatumGetCString(DirectFunctionCall1(numeric_out,
-																	   PointerGetDatum(scalarVal->numeric))));
+																	   PointerGetDatum(scalarVal->val.numeric))));
 			break;
 		case jbvBool:
-			if (scalarVal->boolean)
+			if (scalarVal->val.boolean)
 				appendBinaryStringInfo(out, "true", 4);
 			else
 				appendBinaryStringInfo(out, "false", 5);
@@ -298,9 +298,9 @@ jsonb_in_scalar(void *pstate, char *token, JsonTokenType tokentype)
 		case JSON_TOKEN_STRING:
 			Assert (token != NULL);
 			v.type = jbvString;
-			v.string.len = checkStringLen(strlen(token));
-			v.string.val = pnstrdup(token, v.string.len);
-			v.estSize += v.string.len;
+			v.val.string.len = checkStringLen(strlen(token));
+			v.val.string.val = pnstrdup(token, v.val.string.len);
+			v.estSize += v.val.string.len;
 			break;
 		case JSON_TOKEN_NUMBER:
 			/*
@@ -309,16 +309,16 @@ jsonb_in_scalar(void *pstate, char *token, JsonTokenType tokentype)
 			 */
 			Assert (token != NULL);
 			v.type = jbvNumeric;
-			v.numeric = DatumGetNumeric(DirectFunctionCall3(numeric_in, CStringGetDatum(token), 0, -1));
-			v.estSize += VARSIZE_ANY(v.numeric) + sizeof(JEntry) /* alignment */ ;
+			v.val.numeric = DatumGetNumeric(DirectFunctionCall3(numeric_in, CStringGetDatum(token), 0, -1));
+			v.estSize += VARSIZE_ANY(v.val.numeric) + sizeof(JEntry) /* alignment */ ;
 			break;
 		case JSON_TOKEN_TRUE:
 			v.type = jbvBool;
-			v.boolean = true;
+			v.val.boolean = true;
 			break;
 		case JSON_TOKEN_FALSE:
 			v.type = jbvBool;
-			v.boolean = false;
+			v.val.boolean = false;
 			break;
 		case JSON_TOKEN_NULL:
 			v.type = jbvNull;
@@ -335,8 +335,8 @@ jsonb_in_scalar(void *pstate, char *token, JsonTokenType tokentype)
 		JsonbValue	va;
 
 		va.type = jbvArray;
-		va.array.rawScalar = true;
-		va.array.nElems = 1;
+		va.val.array.rawScalar = true;
+		va.val.array.nElems = 1;
 
 		_state->res = pushJsonbValue(&_state->parseState, WJB_BEGIN_ARRAY, &va);
 		_state->res = pushJsonbValue(&_state->parseState, WJB_ELEM, &v);
@@ -399,7 +399,7 @@ JsonbToCString(StringInfo out, JsonbSuperHeader in, int estimated_len)
 					appendBinaryStringInfo(out, ", ", 2);
 				first = true;
 
-				if (!v.array.rawScalar)
+				if (!v.val.array.rawScalar)
 					appendStringInfoChar(out, '[');
 				level++;
 				break;
@@ -448,7 +448,7 @@ JsonbToCString(StringInfo out, JsonbSuperHeader in, int estimated_len)
 				break;
 			case WJB_END_ARRAY:
 				level--;
-				if (!v.array.rawScalar)
+				if (!v.val.array.rawScalar)
 					appendStringInfoChar(out, ']');
 				first = false;
 				break;

@@ -141,7 +141,7 @@ typedef struct
 
 /*
  * JsonbValue:  In-memory representation of Jsonb.  This is a convenient
- * deserialized representation, that can easily support using the anonymous
+ * deserialized representation, that can easily support using the "val"
  * union across underlying types during manipulation.  The Jsonb on-disk
  * representation has various alignment considerations.
  */
@@ -192,7 +192,7 @@ struct JsonbValue
 			int			len;
 			char	   *data;
 		} binary;
-	};
+	} val;
 };
 
 /*
