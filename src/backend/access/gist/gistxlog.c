@@ -434,7 +434,7 @@ gistXLogSplit(RelFileNode node, BlockNumber blkno, bool page_is_leaf,
 			  BlockNumber origrlink, GistNSN orignsn,
 			  Buffer leftchildbuf)
 {
-	XLogRecData *rdata;
+	XLogRecData rdata[GIST_MAX_SPLIT_PAGES * 2 + 2];
 	gistxlogPageSplit xlrec;
 	SplitedPageLayout *ptr;
 	int			npage = 0,
@@ -443,8 +443,12 @@ gistXLogSplit(RelFileNode node, BlockNumber blkno, bool page_is_leaf,
 
 	for (ptr = dist; ptr; ptr = ptr->next)
 		npage++;
-
-	rdata = (XLogRecData *) palloc(sizeof(XLogRecData) * (npage * 2 + 2));
+	/*
+	 * the caller should've checked this already, but doesn't hurt to check
+	 * again.
+	 */
+	if (npage > GIST_MAX_SPLIT_PAGES)
+		elog(ERROR, "GiST page split into too many halves");
 
 	xlrec.node = node;
 	xlrec.origblkno = blkno;
@@ -493,7 +497,6 @@ gistXLogSplit(RelFileNode node, BlockNumber blkno, bool page_is_leaf,
 
 	recptr = XLogInsert(RM_GIST_ID, XLOG_GIST_PAGE_SPLIT, rdata);
 
-	pfree(rdata);
 	return recptr;
 }
 
@@ -516,13 +519,11 @@ gistXLogUpdate(RelFileNode node, Buffer buffer,
 			   IndexTuple *itup, int ituplen,
 			   Buffer leftchildbuf)
 {
-	XLogRecData *rdata;
+	XLogRecData rdata[MaxIndexTuplesPerPage + 3];
 	gistxlogPageUpdate xlrec;
 	int			cur,
 				i;
 	XLogRecPtr	recptr;
-
-	rdata = (XLogRecData *) palloc(sizeof(XLogRecData) * (3 + ituplen));
 
 	xlrec.node = node;
 	xlrec.blkno = BufferGetBlockNumber(buffer);
@@ -570,6 +571,5 @@ gistXLogUpdate(RelFileNode node, Buffer buffer,
 
 	recptr = XLogInsert(RM_GIST_ID, XLOG_GIST_PAGE_UPDATE, rdata);
 
-	pfree(rdata);
 	return recptr;
 }

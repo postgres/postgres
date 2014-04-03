@@ -356,6 +356,7 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate,
 		SplitedPageLayout rootpg;
 		BlockNumber blkno = BufferGetBlockNumber(buffer);
 		bool		is_rootsplit;
+		int			npage;
 
 		is_rootsplit = (blkno == GIST_ROOT_BLKNO);
 
@@ -375,6 +376,19 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate,
 		}
 		itvec = gistjoinvector(itvec, &tlen, itup, ntup);
 		dist = gistSplit(state->r, page, itvec, tlen, giststate);
+
+		/*
+		 * Check that split didn't produce too many pages.
+		 */
+		npage = 0;
+		for (ptr = dist; ptr; ptr = ptr->next)
+			npage++;
+		/* in a root split, we'll add one more page to the list below */
+		if (is_rootsplit)
+			npage++;
+		if (npage > GIST_MAX_SPLIT_PAGES)
+			elog(ERROR, "GiST page split into too many halves (%d, maximum %d)",
+				 npage, GIST_MAX_SPLIT_PAGES);
 
 		/*
 		 * Set up pages to work with. Allocate new buffers for all but the
