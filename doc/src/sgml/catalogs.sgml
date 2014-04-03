@@ -6415,16 +6415,27 @@
 
   <para>
    The <structfield>pid</structfield> column can be joined to the
-   <structfield>procpid</structfield> column of the
-   <structname>pg_stat_activity</structname> view to get more
-   information on the session holding or waiting to hold each lock.
+   <structfield>procpid</structfield> column of the <link
+   linkend="monitoring-stats-views"><structname>pg_stat_activity</structname></link>
+   view to get more
+   information on the session holding or waiting to hold each lock,
+   for example
+<programlisting>
+SELECT * FROM pg_locks pl LEFT JOIN pg_stat_activity psa
+    ON pl.pid = psa.procpid;
+</programlisting>
    Also, if you are using prepared transactions, the
-   <structfield>transaction</> column can be joined to the
-   <structfield>transaction</structfield> column of the
-   <structname>pg_prepared_xacts</structname> view to get more
-   information on prepared transactions that hold locks.
+   <structfield>virtualtransaction</> column can be joined to the
+   <structfield>transaction</structfield> column of the <link
+   linkend="view-pg-prepared-xacts"><structname>pg_prepared_xacts</structname></link>
+   view to get more information on prepared transactions that hold locks.
    (A prepared transaction can never be waiting for a lock,
    but it continues to hold the locks it acquired while running.)
+   For example:
+<programlisting>
+SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
+    ON pl.virtualtransaction = '-1/' || ppx.transaction;
+</programlisting>
   </para>
 
  </sect1>
