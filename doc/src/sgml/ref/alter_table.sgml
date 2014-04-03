@@ -854,14 +854,18 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
     When a column is added with <literal>ADD COLUMN</literal>, all existing
     rows in the table are initialized with the column's default value
     (NULL if no <literal>DEFAULT</> clause is specified).
+    If there is no <literal>DEFAULT</> clause, this is merely a metadata
+    change and does not require any immediate update of the table's data;
+    the added NULL values are supplied on readout, instead.
    </para>
 
    <para>
-    Adding a column with a non-null default or changing the type of an
-    existing column will require the entire table and indexes to be rewritten.
-    As an exception, if the <literal>USING</> clause does not change the column
+    Adding a column with a <literal>DEFAULT</> clause or changing the type of
+    an existing column will require the entire table and its indexes to be
+    rewritten.  As an exception when changing the type of an existing column,
+    if the <literal>USING</> clause does not change the column
     contents and the old type is either binary coercible to the new type or
-    an unconstrained domain over the new type, a table rewrite is not needed,
+    an unconstrained domain over the new type, a table rewrite is not needed;
     but any indexes on the affected columns must still be rebuilt.  Adding or
     removing a system <literal>oid</> column also requires rewriting the entire
     table.  Table and/or index rebuilds may take a significant amount of time
