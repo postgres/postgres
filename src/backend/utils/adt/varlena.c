@@ -3834,16 +3834,15 @@ concat_internal(const char *sepstr, int argidx,
 			return NULL;
 
 		/*
-		 * Non-null argument had better be an array
-		 *
-		 * Correct values are ensured by parser check, but this function
-		 * can be called directly, bypassing the parser, so we should do
-		 * some minimal check too - this form of call requires correctly set
-		 * expr argtype in flinfo.
+		 * Non-null argument had better be an array.  We assume that any call
+		 * context that could let get_fn_expr_variadic return true will have
+		 * checked that a VARIADIC-labeled parameter actually is an array.	So
+		 * it should be okay to just Assert that it's an array rather than
+		 * doing a full-fledged error check.
 		 */
-		Assert(OidIsValid(get_fn_expr_argtype(fcinfo->flinfo, argidx)));
-		Assert(OidIsValid(get_element_type(get_fn_expr_argtype(fcinfo->flinfo, argidx))));
+		Assert(OidIsValid(get_base_element_type(get_fn_expr_argtype(fcinfo->flinfo, argidx))));
 
+		/* OK, safe to fetch the array value */
 		arr = PG_GETARG_ARRAYTYPE_P(argidx);
 
 		/*
@@ -4063,16 +4062,15 @@ text_format(PG_FUNCTION_ARGS)
 		else
 		{
 			/*
-			 * Non-null argument had better be an array
-			 *
-			 * Correct values are ensured by parser check, but this function
-			 * can be called directly, bypassing the parser, so we should do
-			 * some minimal check too - this form of call requires correctly set
-			 * expr argtype in flinfo.
+			 * Non-null argument had better be an array.  We assume that any
+			 * call context that could let get_fn_expr_variadic return true
+			 * will have checked that a VARIADIC-labeled parameter actually is
+			 * an array.  So it should be okay to just Assert that it's an
+			 * array rather than doing a full-fledged error check.
 			 */
-			Assert(OidIsValid(get_fn_expr_argtype(fcinfo->flinfo, 1)));
-			Assert(OidIsValid(get_element_type(get_fn_expr_argtype(fcinfo->flinfo, 1))));
+			Assert(OidIsValid(get_base_element_type(get_fn_expr_argtype(fcinfo->flinfo, 1))));
 
+			/* OK, safe to fetch the array value */
 			arr = PG_GETARG_ARRAYTYPE_P(1);
 
 			/* Get info about array element type */

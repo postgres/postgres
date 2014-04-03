@@ -559,7 +559,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 * If it's a variadic function call, transform the last nvargs arguments
 	 * into an array --- unless it's an "any" variadic.
 	 */
-	if (nvargs > 0 && declared_arg_types[nargs - 1] != ANYOID)
+	if (nvargs > 0 && vatype != ANYOID)
 	{
 		ArrayExpr  *newa = makeNode(ArrayExpr);
 		int			non_var_args = nargs - nvargs;
@@ -587,19 +587,19 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	}
 
 	/*
-	 * When function is called with an explicit VARIADIC labeled parameter,
-	 * and the declared_arg_type is "any", then sanity check the actual
-	 * parameter type now - it must be an array.
+	 * If an "any" variadic is called with explicit VARIADIC marking, insist
+	 * that the variadic parameter be of some array type.
 	 */
 	if (nargs > 0 && vatype == ANYOID && func_variadic)
 	{
-		Oid		va_arr_typid = actual_arg_types[nargs - 1];
+		Oid			va_arr_typid = actual_arg_types[nargs - 1];
 
-		if (!OidIsValid(get_element_type(va_arr_typid)))
+		if (!OidIsValid(get_base_element_type(va_arr_typid)))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("VARIADIC argument must be an array"),
-			  parser_errposition(pstate, exprLocation((Node *) llast(fargs)))));
+					 parser_errposition(pstate,
+									  exprLocation((Node *) llast(fargs)))));
 	}
 
 	/* build the appropriate output structure */
@@ -1253,6 +1253,7 @@ func_get_detail(List *funcname,
 	*rettype = InvalidOid;
 	*retset = false;
 	*nvargs = 0;
+	*vatype = InvalidOid;
 	*true_typeids = NULL;
 	if (argdefaults)
 		*argdefaults = NIL;
@@ -1364,6 +1365,7 @@ func_get_detail(List *funcname,
 					*rettype = targetType;
 					*retset = false;
 					*nvargs = 0;
+					*vatype = InvalidOid;
 					*true_typeids = argtypes;
 					return FUNCDETAIL_COERCION;
 				}
