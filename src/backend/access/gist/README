@@ -135,7 +135,7 @@ that didn't need to be split.
 
 This differs from the insertion algorithm in the original paper. In the
 original paper, you first walk down the tree until you reach a leaf page, and
-then you adjust the downlink in the parent, and propagating the adjustment up,
+then you adjust the downlink in the parent, and propagate the adjustment up,
 all the way up to the root in the worst case. But we adjust the downlinks to
 cover the new key already when we walk down, so that when we reach the leaf
 page, we don't need to update the parents anymore, except to insert the
