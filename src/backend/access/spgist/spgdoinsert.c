@@ -122,7 +122,8 @@ cmpOffsetNumbers(const void *a, const void *b)
  *
  * NB: this is used during WAL replay, so beware of trying to make it too
  * smart.  In particular, it shouldn't use "state" except for calling
- * spgFormDeadTuple().
+ * spgFormDeadTuple().  This is also used in a critical section, so no
+ * pallocs either!
  */
 void
 spgPageIndexMultiDelete(SpGistState *state, Page page,
@@ -131,7 +132,7 @@ spgPageIndexMultiDelete(SpGistState *state, Page page,
 						BlockNumber blkno, OffsetNumber offnum)
 {
 	OffsetNumber firstItem;
-	OffsetNumber *sortednos;
+	OffsetNumber sortednos[MaxIndexTuplesPerPage];
 	SpGistDeadTuple tuple = NULL;
 	int			i;
 
@@ -145,7 +146,6 @@ spgPageIndexMultiDelete(SpGistState *state, Page page,
 	 * replacement tuples.)  However, we must not scribble on the caller's
 	 * array, so we have to make a copy.
 	 */
-	sortednos = (OffsetNumber *) palloc(sizeof(OffsetNumber) * nitems);
 	memcpy(sortednos, itemnos, sizeof(OffsetNumber) * nitems);
 	if (nitems > 1)
 		qsort(sortednos, nitems, sizeof(OffsetNumber), cmpOffsetNumbers);
@@ -173,8 +173,6 @@ spgPageIndexMultiDelete(SpGistState *state, Page page,
 		else if (tupstate == SPGIST_PLACEHOLDER)
 			SpGistPageGetOpaque(page)->nPlaceholder++;
 	}
-
-	pfree(sortednos);
 }
 
 /*

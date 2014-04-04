@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"
+#include "access/itup.h"
 #include "access/xlog.h"
 #include "storage/checksum.h"
 #include "utils/memutils.h"
@@ -418,8 +419,6 @@ PageRepairFragmentation(Page page)
 	Offset		pd_lower = ((PageHeader) page)->pd_lower;
 	Offset		pd_upper = ((PageHeader) page)->pd_upper;
 	Offset		pd_special = ((PageHeader) page)->pd_special;
-	itemIdSort	itemidbase,
-				itemidptr;
 	ItemId		lp;
 	int			nline,
 				nstorage,
@@ -469,10 +468,11 @@ PageRepairFragmentation(Page page)
 		((PageHeader) page)->pd_upper = pd_special;
 	}
 	else
-	{							/* nstorage != 0 */
+	{
 		/* Need to compact the page the hard way */
-		itemidbase = (itemIdSort) palloc(sizeof(itemIdSortData) * nstorage);
-		itemidptr = itemidbase;
+		itemIdSortData itemidbase[MaxHeapTuplesPerPage];
+		itemIdSort	itemidptr = itemidbase;
+
 		totallen = 0;
 		for (i = 0; i < nline; i++)
 		{
@@ -517,8 +517,6 @@ PageRepairFragmentation(Page page)
 		}
 
 		((PageHeader) page)->pd_upper = upper;
-
-		pfree(itemidbase);
 	}
 
 	/* Set hint bit for PageAddItem */
@@ -767,8 +765,8 @@ PageIndexMultiDelete(Page page, OffsetNumber *itemnos, int nitems)
 	Offset		pd_lower = phdr->pd_lower;
 	Offset		pd_upper = phdr->pd_upper;
 	Offset		pd_special = phdr->pd_special;
-	itemIdSort	itemidbase,
-				itemidptr;
+	itemIdSortData	itemidbase[MaxIndexTuplesPerPage];
+	itemIdSort	itemidptr;
 	ItemId		lp;
 	int			nline,
 				nused;
@@ -779,6 +777,8 @@ PageIndexMultiDelete(Page page, OffsetNumber *itemnos, int nitems)
 	unsigned	offset;
 	int			nextitm;
 	OffsetNumber offnum;
+
+	Assert(nitems < MaxIndexTuplesPerPage);
 
 	/*
 	 * If there aren't very many items to delete, then retail
@@ -814,7 +814,6 @@ PageIndexMultiDelete(Page page, OffsetNumber *itemnos, int nitems)
 	 * still validity-checking.
 	 */
 	nline = PageGetMaxOffsetNumber(page);
-	itemidbase = (itemIdSort) palloc(sizeof(itemIdSortData) * nline);
 	itemidptr = itemidbase;
 	totallen = 0;
 	nused = 0;
@@ -880,8 +879,6 @@ PageIndexMultiDelete(Page page, OffsetNumber *itemnos, int nitems)
 
 	phdr->pd_lower = SizeOfPageHeaderData + nused * sizeof(ItemIdData);
 	phdr->pd_upper = upper;
-
-	pfree(itemidbase);
 }
 
 
