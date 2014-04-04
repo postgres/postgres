@@ -558,7 +558,10 @@ ParallelBackupStart(ArchiveHandle *AH, RestoreOptions *ropt)
 		{
 			/* we are the worker */
 			int			j;
-			int			pipefd[2] = {pipeMW[PIPE_READ], pipeWM[PIPE_WRITE]};
+			int			pipefd[2];
+
+			pipefd[0] = pipeMW[PIPE_READ];
+			pipefd[1] = pipeWM[PIPE_WRITE];
 
 			/*
 			 * Store the fds for the reverse communication in pstate. Actually

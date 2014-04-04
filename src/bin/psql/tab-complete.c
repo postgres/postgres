@@ -781,7 +781,7 @@ static const pgsql_thing_t words_after_create[] = {
 
 
 /* Forward declaration of functions */
-static char **psql_completion(char *text, int start, int end);
+static char **psql_completion(const char *text, int start, int end);
 static char *create_command_generator(const char *text, int state);
 static char *drop_command_generator(const char *text, int state);
 static char *complete_from_query(const char *text, int state);
@@ -790,7 +790,7 @@ static char *_complete_from_query(int is_schema_query,
 					 const char *text, int state);
 static char *complete_from_list(const char *text, int state);
 static char *complete_from_const(const char *text, int state);
-static char **complete_from_variables(char *text,
+static char **complete_from_variables(const char *text,
 						const char *prefix, const char *suffix);
 static char *complete_from_files(const char *text, int state);
 
@@ -812,7 +812,7 @@ void
 initialize_readline(void)
 {
 	rl_readline_name = (char *) pset.progname;
-	rl_attempted_completion_function = (void *) psql_completion;
+	rl_attempted_completion_function = psql_completion;
 
 	rl_basic_word_break_characters = WORD_BREAKS;
 
@@ -834,7 +834,7 @@ initialize_readline(void)
  * completion_matches() function, so we don't have to worry about it.
  */
 static char **
-psql_completion(char *text, int start, int end)
+psql_completion(const char *text, int start, int end)
 {
 	/* This is the variable we'll return. */
 	char	  **matches = NULL;
@@ -3847,7 +3847,7 @@ complete_from_const(const char *text, int state)
  * to support quoting usages.
  */
 static char **
-complete_from_variables(char *text, const char *prefix, const char *suffix)
+complete_from_variables(const char *text, const char *prefix, const char *suffix)
 {
 	char	  **matches;
 	char	  **varnames;
