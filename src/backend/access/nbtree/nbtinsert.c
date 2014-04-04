@@ -1726,8 +1726,10 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	BTPageOpaque rootopaque;
 	ItemId		itemid;
 	IndexTuple	item;
-	Size		itemsz;
-	IndexTuple	new_item;
+	IndexTuple	left_item;
+	Size		left_item_sz;
+	IndexTuple	right_item;
+	Size		right_item_sz;
 	Buffer		metabuf;
 	Page		metapg;
 	BTMetaPageData *metad;
@@ -1745,6 +1747,26 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_WRITE);
 	metapg = BufferGetPage(metabuf);
 	metad = BTPageGetMeta(metapg);
+
+	/*
+	 * Create downlink item for left page (old root).  Since this will be the
+	 * first item in a non-leaf page, it implicitly has minus-infinity key
+	 * value, so we need not store any actual key in it.
+	 */
+	left_item_sz = sizeof(IndexTupleData);
+	left_item = (IndexTuple) palloc(left_item_sz);
+	left_item->t_info = left_item_sz;
+	ItemPointerSet(&(left_item->t_tid), lbkno, P_HIKEY);
+
+	/*
+	 * Create downlink item for right page.  The key for it is obtained from
+	 * the "high key" position in the left page.
+	 */
+	itemid = PageGetItemId(lpage, P_HIKEY);
+	right_item_sz = ItemIdGetLength(itemid);
+	item = (IndexTuple) PageGetItem(lpage, itemid);
+	right_item = CopyIndexTuple(item);
+	ItemPointerSet(&(right_item->t_tid), rbkno, P_HIKEY);
 
 	/* NO EREPORT(ERROR) from here till newroot op is logged */
 	START_CRIT_SECTION();
@@ -1764,16 +1786,6 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	metad->btm_fastlevel = rootopaque->btpo.level;
 
 	/*
-	 * Create downlink item for left page (old root).  Since this will be the
-	 * first item in a non-leaf page, it implicitly has minus-infinity key
-	 * value, so we need not store any actual key in it.
-	 */
-	itemsz = sizeof(IndexTupleData);
-	new_item = (IndexTuple) palloc(itemsz);
-	new_item->t_info = itemsz;
-	ItemPointerSet(&(new_item->t_tid), lbkno, P_HIKEY);
-
-	/*
 	 * Insert the left page pointer into the new root page.  The root page is
 	 * the rightmost page on its level so there is no "high key" in it; the
 	 * two items will go into positions P_HIKEY and P_FIRSTKEY.
@@ -1781,32 +1793,20 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	 * Note: we *must* insert the two items in item-number order, for the
 	 * benefit of _bt_restore_page().
 	 */
-	if (PageAddItem(rootpage, (Item) new_item, itemsz, P_HIKEY,
+	if (PageAddItem(rootpage, (Item) left_item, left_item_sz, P_HIKEY,
 					false, false) == InvalidOffsetNumber)
 		elog(PANIC, "failed to add leftkey to new root page"
 			 " while splitting block %u of index \"%s\"",
 			 BufferGetBlockNumber(lbuf), RelationGetRelationName(rel));
-	pfree(new_item);
-
-	/*
-	 * Create downlink item for right page.  The key for it is obtained from
-	 * the "high key" position in the left page.
-	 */
-	itemid = PageGetItemId(lpage, P_HIKEY);
-	itemsz = ItemIdGetLength(itemid);
-	item = (IndexTuple) PageGetItem(lpage, itemid);
-	new_item = CopyIndexTuple(item);
-	ItemPointerSet(&(new_item->t_tid), rbkno, P_HIKEY);
 
 	/*
 	 * insert the right page pointer into the new root page.
 	 */
-	if (PageAddItem(rootpage, (Item) new_item, itemsz, P_FIRSTKEY,
+	if (PageAddItem(rootpage, (Item) right_item, right_item_sz, P_FIRSTKEY,
 					false, false) == InvalidOffsetNumber)
 		elog(PANIC, "failed to add rightkey to new root page"
 			 " while splitting block %u of index \"%s\"",
 			 BufferGetBlockNumber(lbuf), RelationGetRelationName(rel));
-	pfree(new_item);
 
 	MarkBufferDirty(rootbuf);
 	MarkBufferDirty(metabuf);
@@ -1853,6 +1853,9 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 
 	/* done with metapage */
 	_bt_relbuf(rel, metabuf);
+
+	pfree(left_item);
+	pfree(right_item);
 
 	return rootbuf;
 }
