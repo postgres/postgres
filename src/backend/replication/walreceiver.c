@@ -1196,9 +1196,19 @@ ProcessWalSndrMessage(XLogRecPtr walEnd, TimestampTz sendTime)
 	SpinLockRelease(&walrcv->mutex);
 
 	if (log_min_messages <= DEBUG2)
+	{
+		char	   *sendtime;
+		char	   *receipttime;
+
+		/* Copy because timestamptz_to_str returns a static buffer */
+		sendtime = pstrdup(timestamptz_to_str(sendTime));
+		receipttime = pstrdup(timestamptz_to_str(lastMsgReceiptTime));
 		elog(DEBUG2, "sendtime %s receipttime %s replication apply delay %d ms transfer latency %d ms",
-			 timestamptz_to_str(sendTime),
-			 timestamptz_to_str(lastMsgReceiptTime),
+			 sendtime,
+			 receipttime,
 			 GetReplicationApplyDelay(),
 			 GetReplicationTransferLatency());
+		pfree(sendtime);
+		pfree(receipttime);
+	}
 }
