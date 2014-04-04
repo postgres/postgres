@@ -2289,6 +2289,7 @@ XLogFileInit(uint32 log, uint32 seg,
 {
 	char		path[MAXPGPATH];
 	char		tmppath[MAXPGPATH];
+	char		zbuffer_raw[BLCKSZ + MAXIMUM_ALIGNOF];
 	char	   *zbuffer;
 	uint32		installed_log;
 	uint32		installed_seg;
@@ -2346,11 +2347,11 @@ XLogFileInit(uint32 log, uint32 seg,
 	 * fdatasync(2) or O_DSYNC will be sufficient to sync future writes to the
 	 * log file.
 	 *
-	 * Note: palloc zbuffer, instead of just using a local char array, to
-	 * ensure it is reasonably well-aligned; this may save a few cycles
-	 * transferring data to the kernel.
+	 * Note: ensure the buffer is reasonably well-aligned; this may save a few
+	 * cycles transferring data to the kernel.
 	 */
-	zbuffer = (char *) palloc0(XLOG_BLCKSZ);
+	zbuffer = (char *) MAXALIGN(zbuffer_raw);
+	memset(zbuffer, 0, BLCKSZ);
 	for (nbytes = 0; nbytes < XLogSegSize; nbytes += XLOG_BLCKSZ)
 	{
 		errno = 0;
@@ -2370,7 +2371,6 @@ XLogFileInit(uint32 log, uint32 seg,
 					 errmsg("could not write to file \"%s\": %m", tmppath)));
 		}
 	}
-	pfree(zbuffer);
 
 	if (pg_fsync(fd) != 0)
 		ereport(ERROR,
