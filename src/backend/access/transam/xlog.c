@@ -8077,6 +8077,42 @@ CreateCheckPoint(int flags)
 	TRACE_POSTGRESQL_CHECKPOINT_START(flags);
 
 	/*
+	 * Get the other info we need for the checkpoint record.
+	 */
+	LWLockAcquire(XidGenLock, LW_SHARED);
+	checkPoint.nextXid = ShmemVariableCache->nextXid;
+	checkPoint.oldestXid = ShmemVariableCache->oldestXid;
+	checkPoint.oldestXidDB = ShmemVariableCache->oldestXidDB;
+	LWLockRelease(XidGenLock);
+
+	/* Increase XID epoch if we've wrapped around since last checkpoint */
+	checkPoint.nextXidEpoch = ControlFile->checkPointCopy.nextXidEpoch;
+	if (checkPoint.nextXid < ControlFile->checkPointCopy.nextXid)
+		checkPoint.nextXidEpoch++;
+
+	LWLockAcquire(OidGenLock, LW_SHARED);
+	checkPoint.nextOid = ShmemVariableCache->nextOid;
+	if (!shutdown)
+		checkPoint.nextOid += ShmemVariableCache->oidCount;
+	LWLockRelease(OidGenLock);
+
+	MultiXactGetCheckptMulti(shutdown,
+							 &checkPoint.nextMulti,
+							 &checkPoint.nextMultiOffset,
+							 &checkPoint.oldestMulti,
+							 &checkPoint.oldestMultiDB);
+
+	/*
+	 * Having constructed the checkpoint record, ensure all shmem disk buffers
+	 * and commit-log buffers are flushed to disk.
+	 *
+	 * This I/O could fail for various reasons.  If so, we will fail to
+	 * complete the checkpoint, but there is no reason to force a system
+	 * panic. Accordingly, exit critical section while doing it.
+	 */
+	END_CRIT_SECTION();
+
+	/*
 	 * In some cases there are groups of actions that must all occur on one
 	 * side or the other of a checkpoint record. Before flushing the
 	 * checkpoint record we must explicitly wait for any backend currently
@@ -8115,42 +8151,6 @@ CreateCheckPoint(int flags)
 		} while (HaveVirtualXIDsDelayingChkpt(vxids, nvxids));
 	}
 	pfree(vxids);
-
-	/*
-	 * Get the other info we need for the checkpoint record.
-	 */
-	LWLockAcquire(XidGenLock, LW_SHARED);
-	checkPoint.nextXid = ShmemVariableCache->nextXid;
-	checkPoint.oldestXid = ShmemVariableCache->oldestXid;
-	checkPoint.oldestXidDB = ShmemVariableCache->oldestXidDB;
-	LWLockRelease(XidGenLock);
-
-	/* Increase XID epoch if we've wrapped around since last checkpoint */
-	checkPoint.nextXidEpoch = ControlFile->checkPointCopy.nextXidEpoch;
-	if (checkPoint.nextXid < ControlFile->checkPointCopy.nextXid)
-		checkPoint.nextXidEpoch++;
-
-	LWLockAcquire(OidGenLock, LW_SHARED);
-	checkPoint.nextOid = ShmemVariableCache->nextOid;
-	if (!shutdown)
-		checkPoint.nextOid += ShmemVariableCache->oidCount;
-	LWLockRelease(OidGenLock);
-
-	MultiXactGetCheckptMulti(shutdown,
-							 &checkPoint.nextMulti,
-							 &checkPoint.nextMultiOffset,
-							 &checkPoint.oldestMulti,
-							 &checkPoint.oldestMultiDB);
-
-	/*
-	 * Having constructed the checkpoint record, ensure all shmem disk buffers
-	 * and commit-log buffers are flushed to disk.
-	 *
-	 * This I/O could fail for various reasons.  If so, we will fail to
-	 * complete the checkpoint, but there is no reason to force a system
-	 * panic. Accordingly, exit critical section while doing it.
-	 */
-	END_CRIT_SECTION();
 
 	CheckPointGuts(checkPoint.redo, flags);
 
