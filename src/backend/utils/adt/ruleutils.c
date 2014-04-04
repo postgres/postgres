@@ -8604,7 +8604,7 @@ generate_relation_name(Oid relid, List *namespaces)
  *
  * If we're dealing with a potentially variadic function (in practice, this
  * means a FuncExpr and not some other way of calling the function), then
- * was_variadic must specify whether VARIADIC appeared in the original call,
+ * was_variadic should specify whether variadic arguments have been merged,
  * and *use_variadic_p will be set to indicate whether to print VARIADIC in
  * the output.	For non-FuncExpr cases, was_variadic should be FALSE and
  * use_variadic_p can be NULL.
@@ -8639,14 +8639,16 @@ generate_function_name(Oid funcid, int nargs, List *argnames, Oid *argtypes,
 	 * since it affects the lookup rules in func_get_detail().
 	 *
 	 * Currently, we always print VARIADIC if the function is variadic and
-	 * takes a variadic type other than ANY.  (In principle, if VARIADIC
-	 * wasn't originally specified and the array actual argument is
-	 * deconstructable, we could print the array elements separately and not
-	 * print VARIADIC, thus more nearly reproducing the original input.  For
-	 * the moment that seems like too much complication for the benefit.)
-	 * However, if the function takes VARIADIC ANY, then the parser didn't
-	 * fold the arguments together into an array, so we must print VARIADIC if
-	 * and only if it was used originally.
+	 * takes a variadic type other than ANY.  However, if the function takes
+	 * VARIADIC ANY, then the parser didn't fold the arguments together into
+	 * an array, so we must print VARIADIC if and only if it was used
+	 * originally.
+	 *
+	 * Note: with the current definition of funcvariadic, we could just set
+	 * use_variadic = was_variadic, which indeed is the solution adopted in
+	 * 9.4.  However, in rules/views stored before 9.3.5, funcvariadic will
+	 * reflect the previous definition (was VARIADIC written in the call?).
+	 * So in 9.3 we cannot trust it unless the function is VARIADIC ANY.
 	 */
 	if (use_variadic_p)
 	{

@@ -374,6 +374,11 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		newa->location = exprLocation((Node *) vargs);
 
 		fargs = lappend(fargs, newa);
+
+		/* We could not have had VARIADIC marking before ... */
+		Assert(!func_variadic);
+		/* ... but now, it's a VARIADIC call */
+		func_variadic = true;
 	}
 
 	/* build the appropriate output structure */

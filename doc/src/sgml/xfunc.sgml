@@ -3154,9 +3154,10 @@ CREATE OR REPLACE FUNCTION retcomposite(IN integer, IN integer,
      is zero based.  <function>get_call_result_type</> can also be used
      as an alternative to <function>get_fn_expr_rettype</>.
      There is also <function>get_fn_expr_variadic</>, which can be used to
-     find out whether the call contained an explicit <literal>VARIADIC</>
-     keyword.  This is primarily useful for <literal>VARIADIC "any"</>
-     functions, as described below.
+     find out whether variadic arguments have been merged into an array.
+     This is primarily useful for <literal>VARIADIC "any"</> functions,
+     since such merging will always have occurred for variadic functions
+     taking ordinary array types.
     </para>
 
     <para>
