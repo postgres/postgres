@@ -608,7 +608,10 @@ make_absolute_path(const char *path)
 			}
 			else
 			{
+				int			save_errno = errno;
+
 				free(buf);
+				errno = save_errno;
 #ifndef FRONTEND
 				elog(ERROR, "could not get current working directory: %m");
 #else
