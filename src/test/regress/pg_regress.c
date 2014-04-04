@@ -1855,33 +1855,6 @@ create_role(const char *rolename, const _stringlist * granted_dbs)
 	}
 }
 
-static char *
-make_absolute_path(const char *in)
-{
-	char	   *result;
-
-	if (is_absolute_path(in))
-		result = strdup(in);
-	else
-	{
-		static char cwdbuf[MAXPGPATH];
-
-		if (!cwdbuf[0])
-		{
-			if (!getcwd(cwdbuf, sizeof(cwdbuf)))
-			{
-				fprintf(stderr, _("could not get current working directory: %s\n"), strerror(errno));
-				exit(2);
-			}
-		}
-
-		result = psprintf("%s/%s", cwdbuf, in);
-	}
-
-	canonicalize_path(result);
-	return result;
-}
-
 static void
 help(void)
 {

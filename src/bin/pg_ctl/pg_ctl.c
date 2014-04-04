@@ -1387,7 +1387,19 @@ pgwin32_CommandLine(bool registration)
 						  register_servicename);
 
 	if (pg_config)
-		appendPQExpBuffer(cmdLine, " -D \"%s\"", pg_config);
+	{
+		/* We need the -D path to be absolute */
+		char	   *dataDir;
+
+		if ((dataDir = make_absolute_path(pg_config)) == NULL)
+		{
+			/* make_absolute_path already reported the error */
+			exit(1);
+		}
+		make_native_path(dataDir);
+		appendPQExpBuffer(cmdLine, " -D \"%s\"", dataDir);
+		free(dataDir);
+	}
 
 	if (registration && do_wait)
 		appendPQExpBuffer(cmdLine, " -w");

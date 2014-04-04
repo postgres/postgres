@@ -296,7 +296,6 @@ extern void SetCurrentRoleId(Oid roleid, bool is_superuser);
 
 extern void SetDataDir(const char *dir);
 extern void ChangeToDataDir(void);
-extern char *make_absolute_path(const char *path);
 
 /* in utils/misc/superuser.c */
 extern bool superuser(void);	/* current user is superuser */
