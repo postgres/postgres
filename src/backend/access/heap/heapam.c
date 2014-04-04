@@ -2717,6 +2717,21 @@ l1:
 	/* replace cid with a combo cid if necessary */
 	HeapTupleHeaderAdjustCmax(tp.t_data, &cid, &iscombo);
 
+	/*
+	 * If this is the first possibly-multixact-able operation in the current
+	 * transaction, set my per-backend OldestMemberMXactId setting. We can be
+	 * certain that the transaction will never become a member of any older
+	 * MultiXactIds than that.	(We have to do this even if we end up just
+	 * using our own TransactionId below, since some other backend could
+	 * incorporate our XID into a MultiXact immediately afterwards.)
+	 */
+	MultiXactIdSetOldestMember();
+
+	compute_new_xmax_infomask(HeapTupleHeaderGetRawXmax(tp.t_data),
+							  tp.t_data->t_infomask, tp.t_data->t_infomask2,
+							  xid, LockTupleExclusive, true,
+							  &new_xmax, &new_infomask, &new_infomask2);
+
 	START_CRIT_SECTION();
 
 	/*
@@ -2735,21 +2750,6 @@ l1:
 		visibilitymap_clear(relation, BufferGetBlockNumber(buffer),
 							vmbuffer);
 	}
-
-	/*
-	 * If this is the first possibly-multixact-able operation in the current
-	 * transaction, set my per-backend OldestMemberMXactId setting. We can be
-	 * certain that the transaction will never become a member of any older
-	 * MultiXactIds than that.	(We have to do this even if we end up just
-	 * using our own TransactionId below, since some other backend could
-	 * incorporate our XID into a MultiXact immediately afterwards.)
-	 */
-	MultiXactIdSetOldestMember();
-
-	compute_new_xmax_infomask(HeapTupleHeaderGetRawXmax(tp.t_data),
-							  tp.t_data->t_infomask, tp.t_data->t_infomask2,
-							  xid, LockTupleExclusive, true,
-							  &new_xmax, &new_infomask, &new_infomask2);
 
 	/* store transaction information of xact deleting the tuple */
 	tp.t_data->t_infomask &= ~(HEAP_XMAX_BITS | HEAP_MOVED);
