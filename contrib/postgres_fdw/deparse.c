@@ -1548,15 +1548,7 @@ deparseFuncExpr(FuncExpr *node, deparse_expr_cxt *context)
 	procform = (Form_pg_proc) GETSTRUCT(proctup);
 
 	/* Check if need to print VARIADIC (cf. ruleutils.c) */
-	if (OidIsValid(procform->provariadic))
-	{
-		if (procform->provariadic != ANYOID)
-			use_variadic = true;
-		else
-			use_variadic = node->funcvariadic;
-	}
-	else
-		use_variadic = false;
+	use_variadic = node->funcvariadic;
 
 	/* Print schema name only if it's not pg_catalog */
 	if (procform->pronamespace != PG_CATALOG_NAMESPACE)

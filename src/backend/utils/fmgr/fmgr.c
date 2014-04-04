@@ -2449,6 +2449,8 @@ get_call_expr_arg_stable(Node *expr, int argnum)
  * Get the VARIADIC flag from the function invocation
  *
  * Returns false (the default assumption) if information is not available
+ *
+ * Note this is generally only of interest to VARIADIC ANY functions
  */
 bool
 get_fn_expr_variadic(FmgrInfo *flinfo)

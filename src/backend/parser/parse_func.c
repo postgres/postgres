@@ -556,6 +556,17 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	make_fn_arguments(pstate, fargs, actual_arg_types, declared_arg_types);
 
 	/*
+	 * If the function isn't actually variadic, forget any VARIADIC decoration
+	 * on the call.  (Perhaps we should throw an error instead, but
+	 * historically we've allowed people to write that.)
+	 */
+	if (!OidIsValid(vatype))
+	{
+		Assert(nvargs == 0);
+		func_variadic = false;
+	}
+
+	/*
 	 * If it's a variadic function call, transform the last nvargs arguments
 	 * into an array --- unless it's an "any" variadic.
 	 */
@@ -584,6 +595,11 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		newa->location = exprLocation((Node *) vargs);
 
 		fargs = lappend(fargs, newa);
+
+		/* We could not have had VARIADIC marking before ... */
+		Assert(!func_variadic);
+		/* ... but now, it's a VARIADIC call */
+		func_variadic = true;
 	}
 
 	/*
