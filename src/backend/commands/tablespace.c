@@ -559,6 +559,7 @@ create_tablespace_directories(const char *location, const Oid tablespaceoid)
 {
 	char	   *linkloc;
 	char	   *location_with_version_dir;
+	struct stat st;
 
 	linkloc = psprintf("pg_tblspc/%u", tablespaceoid);
 	location_with_version_dir = psprintf("%s/%s", location,
@@ -585,8 +586,6 @@ create_tablespace_directories(const char *location, const Oid tablespaceoid)
 
 	if (InRecovery)
 	{
-		struct stat st;
-
 		/*
 		 * Our theory for replaying a CREATE is to forcibly drop the target
 		 * subdirectory if present, and then recreate it. This may be more
@@ -620,14 +619,32 @@ create_tablespace_directories(const char *location, const Oid tablespaceoid)
 							location_with_version_dir)));
 	}
 
-	/* Remove old symlink in recovery, in case it points to the wrong place */
+	/*
+	 * In recovery, remove old symlink, in case it points to the wrong place.
+	 *
+	 * On Windows, junction points act like directories so we must be able to
+	 * apply rmdir; in general it seems best to make this code work like the
+	 * symlink removal code in destroy_tablespace_directories, except that
+	 * failure to remove is always an ERROR.
+	 */
 	if (InRecovery)
 	{
-		if (unlink(linkloc) < 0 && errno != ENOENT)
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not remove symbolic link \"%s\": %m",
-							linkloc)));
+		if (lstat(linkloc, &st) == 0 && S_ISDIR(st.st_mode))
+		{
+			if (rmdir(linkloc) < 0)
+				ereport(ERROR,
+						(errcode_for_file_access(),
+						 errmsg("could not remove directory \"%s\": %m",
+								linkloc)));
+		}
+		else
+		{
+			if (unlink(linkloc) < 0 && errno != ENOENT)
+				ereport(ERROR,
+						(errcode_for_file_access(),
+						 errmsg("could not remove symbolic link \"%s\": %m",
+								linkloc)));
+		}
 	}
 
 	/*
