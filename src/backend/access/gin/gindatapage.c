@@ -1706,22 +1706,16 @@ createPostingTree(Relation index, ItemPointerData *items, uint32 nitems,
 {
 	BlockNumber blkno;
 	Buffer		buffer;
+	Page		tmppage;
 	Page		page;
 	Pointer		ptr;
 	int			nrootitems;
 	int			rootsize;
 
-	/*
-	 * Create the root page.
-	 */
-	buffer = GinNewBuffer(index);
-	page = BufferGetPage(buffer);
-	blkno = BufferGetBlockNumber(buffer);
-
-	START_CRIT_SECTION();
-
-	GinInitPage(page, GIN_DATA | GIN_LEAF | GIN_COMPRESSED, BLCKSZ);
-	GinPageGetOpaque(page)->rightlink = InvalidBlockNumber;
+	/* Construct the new root page in memory first. */
+	tmppage = (Page) palloc(BLCKSZ);
+	GinInitPage(tmppage, GIN_DATA | GIN_LEAF | GIN_COMPRESSED, BLCKSZ);
+	GinPageGetOpaque(tmppage)->rightlink = InvalidBlockNumber;
 
 	/*
 	 * Write as many of the items to the root page as fit. In segments
@@ -1729,7 +1723,7 @@ createPostingTree(Relation index, ItemPointerData *items, uint32 nitems,
 	 */
 	nrootitems = 0;
 	rootsize = 0;
-	ptr = (Pointer) GinDataLeafPageGetPostingList(page);
+	ptr = (Pointer) GinDataLeafPageGetPostingList(tmppage);
 	while (nrootitems < nitems)
 	{
 		GinPostingList *segment;
@@ -1750,10 +1744,19 @@ createPostingTree(Relation index, ItemPointerData *items, uint32 nitems,
 		nrootitems += npacked;
 		pfree(segment);
 	}
-	GinDataLeafPageSetPostingListSize(page, rootsize);
-	MarkBufferDirty(buffer);
+	GinDataLeafPageSetPostingListSize(tmppage, rootsize);
 
-	elog(DEBUG2, "created GIN posting tree with %d items", nrootitems);
+	/*
+	 * All set. Get a new physical page, and copy the in-memory page to it.
+	 */
+	buffer = GinNewBuffer(index);
+	page = BufferGetPage(buffer);
+	blkno = BufferGetBlockNumber(buffer);
+
+	START_CRIT_SECTION();
+
+	PageRestoreTempPage(tmppage, page);
+	MarkBufferDirty(buffer);
 
 	if (RelationNeedsWAL(index))
 	{
@@ -1786,6 +1789,8 @@ createPostingTree(Relation index, ItemPointerData *items, uint32 nitems,
 	/* During index build, count the newly-added data page */
 	if (buildStats)
 		buildStats->nDataPages++;
+
+	elog(DEBUG2, "created GIN posting tree with %d items", nrootitems);
 
 	/*
 	 * Add any remaining TIDs to the newly-created posting tree.

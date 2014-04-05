@@ -637,6 +637,20 @@ RESET enable_indexscan;
 RESET enable_bitmapscan;
 
 --
+-- Try a GIN index with a lot of items with same key. (GIN creates a posting
+-- tree when there are enough duplicates)
+--
+CREATE TABLE array_gin_test (a int[]);
+
+INSERT INTO array_gin_test SELECT ARRAY[1, g%5, g] FROM generate_series(1, 10000) g;
+
+CREATE INDEX array_gin_test_idx ON array_gin_test USING gin (a);
+
+SELECT COUNT(*) FROM array_gin_test WHERE a @> '{2}';
+
+DROP TABLE array_gin_test;
+
+--
 -- HASH
 --
 CREATE INDEX hash_i4_index ON hash_i4_heap USING hash (random int4_ops);
