@@ -1962,9 +1962,11 @@ adjust_data_dir(void)
 	else
 		my_exec_path = pg_strdup(exec_path);
 
-	snprintf(cmd, MAXPGPATH, SYSTEMQUOTE "\"%s\" %s%s -C data_directory" SYSTEMQUOTE,
-			 my_exec_path, pgdata_opt ? pgdata_opt : "", post_opts ?
-			 post_opts : "");
+	/* it's important for -C to be the first option, see main.c */
+	snprintf(cmd, MAXPGPATH, SYSTEMQUOTE "\"%s\" -C data_directory %s%s" SYSTEMQUOTE,
+			 my_exec_path,
+			 pgdata_opt ? pgdata_opt : "",
+			 post_opts ? post_opts : "");
 
 	fd = popen(cmd, "r");
 	if (fd == NULL || fgets(filename, sizeof(filename), fd) == NULL)
