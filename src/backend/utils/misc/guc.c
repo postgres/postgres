@@ -5225,9 +5225,23 @@ set_config_option(const char *name, const char *value,
 				 * ignore it in existing backends.	This is a tad klugy, but
 				 * necessary because we don't re-read the config file during
 				 * backend start.
+				 *
+				 * In EXEC_BACKEND builds, this works differently: we load all
+				 * nondefault settings from the CONFIG_EXEC_PARAMS file during
+				 * backend start.  In that case we must accept PGC_SIGHUP
+				 * settings, so as to have the same value as if we'd forked
+				 * from the postmaster.  We detect this situation by checking
+				 * IsInitProcessingMode, which is a bit ugly, but it doesn't
+				 * seem worth passing down an explicit flag saying we're doing
+				 * read_nondefault_variables().
 				 */
+#ifdef EXEC_BACKEND
+				if (IsUnderPostmaster && !IsInitProcessingMode())
+					return -1;
+#else
 				if (IsUnderPostmaster)
 					return -1;
+#endif
 			}
 			else if (context != PGC_POSTMASTER && context != PGC_BACKEND &&
 					 source != PGC_S_CLIENT)
@@ -7635,6 +7649,12 @@ read_nondefault_variables(void)
 	int			varsourceline;
 	GucSource	varsource;
 	GucContext	varscontext;
+
+	/*
+	 * Assert that PGC_BACKEND case in set_config_option() will do the right
+	 * thing.
+	 */
+	Assert(IsInitProcessingMode());
 
 	/*
 	 * Open file
