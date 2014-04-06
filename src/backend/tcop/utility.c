@@ -908,7 +908,7 @@ ProcessUtilitySlow(Node *parsetree,
 													InvalidOid);
 
 							/*
-							 * Let AlterTableCreateToastTable decide if this
+							 * Let NewRelationCreateToastTable decide if this
 							 * one needs a secondary relation too.
 							 */
 							CommandCounterIncrement();
@@ -927,7 +927,7 @@ ProcessUtilitySlow(Node *parsetree,
 												   toast_options,
 												   true);
 
-							AlterTableCreateToastTable(relOid, toast_options);
+							NewRelationCreateToastTable(relOid, toast_options);
 						}
 						else if (IsA(stmt, CreateForeignTableStmt))
 						{

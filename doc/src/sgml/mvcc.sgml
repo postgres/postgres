@@ -865,7 +865,9 @@ ERROR:  could not serialize access due to read/write dependencies among transact
         <para>
          Acquired by <command>VACUUM</command> (without <option>FULL</option>),
          <command>ANALYZE</>, <command>CREATE INDEX CONCURRENTLY</>, and
-         some forms of <command>ALTER TABLE</command>.
+         <command>ALTER TABLE VALIDATE</command> and other
+         <command>ALTER TABLE</command> variants (for full details see
+         <xref linkend="SQL-ALTERTABLE">).
         </para>
        </listitem>
       </varlistentry>
@@ -951,10 +953,11 @@ ERROR:  could not serialize access due to read/write dependencies among transact
         </para>
 
         <para>
-         Acquired by the <command>ALTER TABLE</>, <command>DROP TABLE</>,
+         Acquired by the <command>DROP TABLE</>,
          <command>TRUNCATE</command>, <command>REINDEX</command>,
          <command>CLUSTER</command>, and <command>VACUUM FULL</command>
-         commands.
+         commands. Many forms of <command>ALTER TABLE</> also acquire
+         a lock at this level (see <xref linkend="SQL-ALTERTABLE">).
          This is also the default lock mode for <command>LOCK TABLE</command>
          statements that do not specify a mode explicitly.
         </para>

@@ -2685,10 +2685,8 @@ AlterTableLookupRelation(AlterTableStmt *stmt, LOCKMODE lockmode)
  * the whole operation; we don't have to do anything special to clean up.
  *
  * The caller must lock the relation, with an appropriate lock level
- * for the subcommands requested. Any subcommand that needs to rewrite
- * tuples in the table forces the whole command to be executed with
- * AccessExclusiveLock (actually, that is currently required always, but
- * we hope to relax it at some point).	We pass the lock level down
+ * for the subcommands requested, using AlterTableGetLockLevel(stmt->cmds)
+ * or higher. We pass the lock level down
  * so that we can apply it recursively to inherited tables. Note that the
  * lock level we want as we recurse might well be higher than required for
  * that specific subcommand. So we pass down the overall lock requirement,
@@ -2750,35 +2748,24 @@ AlterTableInternal(Oid relid, List *cmds, bool recurse)
  * ALTER TABLE RENAME which is treated as a different statement type T_RenameStmt
  * and does not travel through this section of code and cannot be combined with
  * any of the subcommands given here.
+ *
+ * Note that Hot Standby only knows about AccessExclusiveLocks on the master
+ * so any changes that might affect SELECTs running on standbys need to use
+ * AccessExclusiveLocks even if you think a lesser lock would do, unless you
+ * have a solution for that also.
+ *
+ * Also note that pg_dump uses only an AccessShareLock, meaning that anything
+ * that takes a lock less than AccessExclusiveLock can change object definitions
+ * while pg_dump is running. Be careful to check that the appropriate data is
+ * derived by pg_dump using an MVCC snapshot, rather than syscache lookups,
+ * otherwise we might end up with an inconsistent dump that can't restore.
  */
 LOCKMODE
 AlterTableGetLockLevel(List *cmds)
 {
 	/*
-	 * Late in 9.1 dev cycle a number of issues were uncovered with access to
-	 * catalog relations, leading to the decision to re-enforce all DDL at
-	 * AccessExclusiveLock level by default.
-	 *
-	 * The issues are that there is a pervasive assumption in the code that
-	 * the catalogs will not be read unless an AccessExclusiveLock is held. If
-	 * that rule is relaxed, we must protect against a number of potential
-	 * effects - infrequent, but proven possible with test cases where
-	 * multiple DDL operations occur in a stream against frequently accessed
-	 * tables.
-	 *
-	 * 1. Catalog tables were read using SnapshotNow, which has a race bug that
-	 * allows a scan to return no valid rows even when one is present in the
-	 * case of a commit of a concurrent update of the catalog table.
-	 * SnapshotNow also ignores transactions in progress, so takes the latest
-	 * committed version without waiting for the latest changes.
-	 *
-	 * 2. Relcache needs to be internally consistent, so unless we lock the
-	 * definition during reads we have no way to guarantee that.
-	 *
-	 * 3. Catcache access isn't coordinated at all so refreshes can occur at
-	 * any time.
+	 * This only works if we read catalog tables using MVCC snapshots.
 	 */
-#ifdef REDUCED_ALTER_TABLE_LOCK_LEVELS
 	ListCell   *lcmd;
 	LOCKMODE	lockmode = ShareUpdateExclusiveLock;
 
@@ -2790,28 +2777,58 @@ AlterTableGetLockLevel(List *cmds)
 		switch (cmd->subtype)
 		{
 				/*
-				 * Need AccessExclusiveLock for these subcommands because they
-				 * affect or potentially affect both read and write
-				 * operations.
-				 *
-				 * New subcommand types should be added here by default.
+				 * These subcommands rewrite the heap, so require full locks.
 				 */
 			case AT_AddColumn:	/* may rewrite heap, in some cases and visible
 								 * to SELECT */
-			case AT_DropColumn:	/* change visible to SELECT */
-			case AT_AddColumnToView:	/* CREATE VIEW */
+			case AT_SetTableSpace:		/* must rewrite heap */
 			case AT_AlterColumnType:	/* must rewrite heap */
+			case AT_AddOids:			/* must rewrite heap */
+				cmd_lockmode = AccessExclusiveLock;
+				break;
+
+				/*
+				 * These subcommands may require addition of toast tables. If we
+				 * add a toast table to a table currently being scanned, we
+				 * might miss data added to the new toast table by concurrent
+				 * insert transactions.
+				 */
+			case AT_SetStorage:			/* may add toast tables, see ATRewriteCatalogs() */
+				cmd_lockmode = AccessExclusiveLock;
+				break;
+
+				/*
+				 * Removing constraints can affect SELECTs that have been
+				 * optimised assuming the constraint holds true.
+				 */
 			case AT_DropConstraint:		/* as DROP INDEX */
-			case AT_AddOids:	/* must rewrite heap */
-			case AT_DropOids:	/* calls AT_DropColumn */
+			case AT_DropNotNull:		/* may change some SQL plans */
+				cmd_lockmode = AccessExclusiveLock;
+				break;
+
+				/*
+				 * Subcommands that may be visible to concurrent SELECTs
+				 */
+			case AT_DropColumn:			/* change visible to SELECT */
+			case AT_AddColumnToView:	/* CREATE VIEW */
+			case AT_DropOids:			/* calls AT_DropColumn */
 			case AT_EnableAlwaysRule:	/* may change SELECT rules */
 			case AT_EnableReplicaRule:	/* may change SELECT rules */
-			case AT_EnableRule:	/* may change SELECT rules */
+			case AT_EnableRule:			/* may change SELECT rules */
 			case AT_DisableRule:		/* may change SELECT rules */
+				cmd_lockmode = AccessExclusiveLock;
+				break;
+
+				/*
+				 * Changing owner may remove implicit SELECT privileges
+				 */
 			case AT_ChangeOwner:		/* change visible to SELECT */
-			case AT_SetTableSpace:		/* must rewrite heap */
-			case AT_DropNotNull:		/* may change some SQL plans */
-			case AT_SetNotNull:
+				cmd_lockmode = AccessExclusiveLock;
+				break;
+
+				/*
+				 * Changing foreign table options may affect optimisation.
+				 */
 			case AT_GenericOptions:
 			case AT_AlterColumnGenericOptions:
 				cmd_lockmode = AccessExclusiveLock;
@@ -2819,6 +2836,7 @@ AlterTableGetLockLevel(List *cmds)
 
 				/*
 				 * These subcommands affect write operations only.
+				 * XXX Theoretically, these could be ShareRowExclusiveLock.
 				 */
 			case AT_ColumnDefault:
 			case AT_ProcessedConstraint:		/* becomes AT_AddConstraint */
@@ -2832,10 +2850,12 @@ AlterTableGetLockLevel(List *cmds)
 			case AT_DisableTrig:
 			case AT_DisableTrigAll:
 			case AT_DisableTrigUser:
+			case AT_AlterConstraint:
 			case AT_AddIndex:	/* from ADD CONSTRAINT */
 			case AT_AddIndexConstraint:
 			case AT_ReplicaIdentity:
-				cmd_lockmode = ShareRowExclusiveLock;
+			case AT_SetNotNull:
+				cmd_lockmode = AccessExclusiveLock;
 				break;
 
 			case AT_AddConstraint:
@@ -2854,8 +2874,10 @@ AlterTableGetLockLevel(List *cmds)
 							 * could reduce the lock strength to ShareLock if
 							 * we can work out how to allow concurrent catalog
 							 * updates.
+							 * XXX Might be set down to ShareRowExclusiveLock
+							 * but requires further analysis.
 							 */
-							cmd_lockmode = ShareRowExclusiveLock;
+							cmd_lockmode = AccessExclusiveLock;
 							break;
 						case CONSTR_FOREIGN:
 
@@ -2863,12 +2885,15 @@ AlterTableGetLockLevel(List *cmds)
 							 * We add triggers to both tables when we add a
 							 * Foreign Key, so the lock level must be at least
 							 * as strong as CREATE TRIGGER.
+							 * XXX Might be set down to ShareRowExclusiveLock
+							 * though trigger info is accessed by
+							 * pg_get_triggerdef
 							 */
-							cmd_lockmode = ShareRowExclusiveLock;
+							cmd_lockmode = AccessExclusiveLock;
 							break;
 
 						default:
-							cmd_lockmode = ShareRowExclusiveLock;
+							cmd_lockmode = AccessExclusiveLock;
 					}
 				}
 				break;
@@ -2879,22 +2904,31 @@ AlterTableGetLockLevel(List *cmds)
 				 * behaviour, while queries started after we commit will see
 				 * new behaviour. No need to prevent reads or writes to the
 				 * subtable while we hook it up though.
+				 * Changing the TupDesc may be a problem, so keep highest lock.
 				 */
 			case AT_AddInherit:
 			case AT_DropInherit:
-				cmd_lockmode = ShareUpdateExclusiveLock;
+				cmd_lockmode = AccessExclusiveLock;
 				break;
 
 				/*
 				 * These subcommands affect implicit row type conversion. They
-				 * have affects similar to CREATE/DROP CAST on queries.  We
+				 * have affects similar to CREATE/DROP CAST on queries.
 				 * don't provide for invalidating parse trees as a result of
-				 * such changes.  Do avoid concurrent pg_class updates,
-				 * though.
+				 * such changes, so we keep these at AccessExclusiveLock.
 				 */
 			case AT_AddOf:
 			case AT_DropOf:
-				cmd_lockmode = ShareUpdateExclusiveLock;
+				cmd_lockmode = AccessExclusiveLock;
+				break;
+
+				/*
+				 * Only used by CREATE OR REPLACE VIEW which must conflict
+				 * with an SELECTs currently using the view.
+				 */
+			case AT_ReplaceRelOptions:
+				cmd_lockmode = AccessExclusiveLock;
+				break;
 
 				/*
 				 * These subcommands affect general strategies for performance
@@ -2906,18 +2940,31 @@ AlterTableGetLockLevel(List *cmds)
 				 * applies: we don't currently allow concurrent catalog
 				 * updates.
 				 */
-			case AT_SetStatistics:
-			case AT_ClusterOn:
-			case AT_DropCluster:
-			case AT_SetRelOptions:
-			case AT_ResetRelOptions:
-			case AT_ReplaceRelOptions:
-			case AT_SetOptions:
-			case AT_ResetOptions:
-			case AT_SetStorage:
-			case AT_AlterConstraint:
-			case AT_ValidateConstraint:
+			case AT_SetStatistics:		/* Uses MVCC in getTableAttrs() */
+			case AT_ClusterOn:			/* Uses MVCC in getIndexes() */
+			case AT_DropCluster:		/* Uses MVCC in getIndexes() */
+			case AT_SetOptions:			/* Uses MVCC in getTableAttrs() */
+			case AT_ResetOptions:		/* Uses MVCC in getTableAttrs() */
 				cmd_lockmode = ShareUpdateExclusiveLock;
+				break;
+
+			case AT_ValidateConstraint:	/* Uses MVCC in getConstraints() */
+				cmd_lockmode = ShareUpdateExclusiveLock;
+				break;
+
+				/*
+				 * Rel options are more complex than first appears. Options
+				 * are set here for tables, views and indexes; for historical
+				 * reasons these can all be used with ALTER TABLE, so we
+				 * can't decide between them using the basic grammar.
+				 *
+				 * XXX Look in detail at each option to determine lock level,
+				 * e.g.
+				 *   cmd_lockmode = GetRelOptionsLockLevel((List *) cmd->def);
+				 */
+			case AT_SetRelOptions:		/* Uses MVCC in getIndexes() and getTables() */
+			case AT_ResetRelOptions:	/* Uses MVCC in getIndexes() and getTables() */
+				cmd_lockmode = AccessExclusiveLock;
 				break;
 
 			default:			/* oops */
@@ -2932,9 +2979,6 @@ AlterTableGetLockLevel(List *cmds)
 		if (cmd_lockmode > lockmode)
 			lockmode = cmd_lockmode;
 	}
-#else
-	LOCKMODE	lockmode = AccessExclusiveLock;
-#endif
 
 	return lockmode;
 }
@@ -3272,7 +3316,7 @@ ATRewriteCatalogs(List **wqueue, LOCKMODE lockmode)
 
 		if (tab->relkind == RELKIND_RELATION ||
 			tab->relkind == RELKIND_MATVIEW)
-			AlterTableCreateToastTable(tab->relid, (Datum) 0);
+			AlterTableCreateToastTable(tab->relid, (Datum) 0, lockmode);
 	}
 }
 
@@ -3586,7 +3630,7 @@ ATRewriteTables(List **wqueue, LOCKMODE lockmode)
 
 			/* Create transient table that will receive the modified data */
 			OIDNewHeap = make_new_heap(tab->relid, NewTableSpace, false,
-									   AccessExclusiveLock);
+									   lockmode);
 
 			/*
 			 * Copy the heap data into the new table with the desired

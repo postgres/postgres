@@ -84,7 +84,10 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
 
   <para>
    <command>ALTER TABLE</command> changes the definition of an existing table.
-   There are several subforms:
+   There are several subforms described below. Note that the lock level required
+   may differ for each subform. An <literal>ACCESS EXCLUSIVE</literal> lock is held
+   unless explicitly noted. When multiple subcommands are listed, the lock
+   held will be the strictest one required from any subcommand.
 
   <variablelist>
    <varlistentry>
@@ -181,6 +184,9 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
       <productname>PostgreSQL</productname> query planner, refer to
       <xref linkend="planner-stats">.
      </para>
+     <para>
+      SET STATISTICS acquires a <literal>SHARE UPDATE EXCLUSIVE</literal> lock.
+     </para>
     </listitem>
    </varlistentry>
 
@@ -212,6 +218,10 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
       the number of distinct values normally.  For more information on the use
       of statistics by the <productname>PostgreSQL</productname> query
       planner, refer to <xref linkend="planner-stats">.
+     </para>
+     <para>
+      Changing per-attribute options acquires a
+      <literal>SHARE UPDATE EXCLUSIVE</literal> lock.
      </para>
     </listitem>
    </varlistentry>
@@ -338,11 +348,17 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
       Nothing happens if the constraint is already marked valid.
      </para>
      <para>
-      Validation can be a long process on larger tables and currently requires
-      an <literal>ACCESS EXCLUSIVE</literal> lock.  The value of separating
+      Validation can be a long process on larger tables. The value of separating
       validation from initial creation is that you can defer validation to less
       busy times, or can be used to give additional time to correct pre-existing
-      errors while preventing new errors.
+      errors while preventing new errors. Note also that validation on its own
+      does not prevent normal write commands against the table while it runs.
+     </para>
+     <para>
+      Validation acquires only a <literal>SHARE UPDATE EXCLUSIVE</literal> lock
+      on the table being altered. If the constraint is a foreign key then
+      a <literal>ROW SHARE</literal> lock is also required on
+      the table referenced by the constraint.
      </para>
     </listitem>
    </varlistentry>
@@ -408,6 +424,9 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
       <xref linkend="SQL-CLUSTER">
       operations.  It does not actually re-cluster the table.
      </para>
+     <para>
+      Changing cluster options acquires a <literal>SHARE UPDATE EXCLUSIVE</literal> lock.
+     </para>
     </listitem>
    </varlistentry>
 
@@ -419,6 +438,9 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
       <xref linkend="SQL-CLUSTER">
       index specification from the table.  This affects
       future cluster operations that don't specify an index.
+     </para>
+     <para>
+      Changing cluster options acquires a <literal>SHARE UPDATE EXCLUSIVE</literal> lock.
      </para>
     </listitem>
    </varlistentry>
@@ -1075,6 +1097,14 @@ ALTER TABLE ONLY distributors DROP CONSTRAINT zipchk;
    To add a foreign key constraint to a table:
 <programlisting>
 ALTER TABLE distributors ADD CONSTRAINT distfk FOREIGN KEY (address) REFERENCES addresses (address);
+</programlisting>
+  </para>
+
+  <para>
+   To add a foreign key constraint to a table with the least impact on other work:
+<programlisting>
+ALTER TABLE distributors ADD CONSTRAINT distfk FOREIGN KEY (address) REFERENCES addresses (address) NOT VALID;
+ALTER TABLE distributors VALIDATE CONSTRAINT distfk;
 </programlisting>
   </para>
 

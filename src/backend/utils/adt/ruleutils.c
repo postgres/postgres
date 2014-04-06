@@ -54,6 +54,7 @@
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
+#include "utils/snapmgr.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 #include "utils/typcache.h"
@@ -1284,6 +1285,9 @@ pg_get_constraintdef_string(Oid constraintId)
 	return pg_get_constraintdef_worker(constraintId, true, 0);
 }
 
+/*
+ * As of 9.4, we now use an MVCC snapshot for this.
+ */
 static char *
 pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 							int prettyFlags)
@@ -1291,10 +1295,34 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 	HeapTuple	tup;
 	Form_pg_constraint conForm;
 	StringInfoData buf;
+	SysScanDesc	scandesc;
+	ScanKeyData scankey[1];
+	Snapshot    snapshot = RegisterSnapshot(GetTransactionSnapshot());
+	Relation	relation = heap_open(ConstraintRelationId, AccessShareLock);
 
-	tup = SearchSysCache1(CONSTROID, ObjectIdGetDatum(constraintId));
+	ScanKeyInit(&scankey[0],
+				ObjectIdAttributeNumber,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(constraintId));
+
+	scandesc = systable_beginscan(relation,
+									ConstraintOidIndexId,
+									true,
+									snapshot,
+									1,
+									scankey);
+
+	/*
+	 * We later use the tuple with SysCacheGetAttr() as if we
+	 * had obtained it via SearchSysCache, which works fine.
+	 */
+	tup = systable_getnext(scandesc);
+
+	UnregisterSnapshot(snapshot);
+
 	if (!HeapTupleIsValid(tup)) /* should not happen */
 		elog(ERROR, "cache lookup failed for constraint %u", constraintId);
+
 	conForm = (Form_pg_constraint) GETSTRUCT(tup);
 
 	initStringInfo(&buf);
@@ -1575,7 +1603,8 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 		appendStringInfoString(&buf, " NOT VALID");
 
 	/* Cleanup */
-	ReleaseSysCache(tup);
+	systable_endscan(scandesc);
+	heap_close(relation, AccessShareLock);
 
 	return buf.data;
 }

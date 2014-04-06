@@ -162,6 +162,14 @@ static bool eoxact_list_overflowed = false;
 			eoxact_list_overflowed = true; \
 	} while (0)
 
+/*
+ * EOXactTupleDescArray stores TupleDescs that (might) need AtEOXact
+ * cleanup work.  The array expands as needed; there is no hashtable because
+ * we don't need to access individual items except at EOXact.
+ */
+static TupleDesc *EOXactTupleDescArray;
+static int NextEOXactTupleDescNum = 0;
+static int EOXactTupleDescArrayLen = 0;
 
 /*
  *		macros to manipulate the lookup hashtables
@@ -220,11 +228,12 @@ static HTAB *OpClassCache = NULL;
 
 /* non-export function prototypes */
 
-static void RelationDestroyRelation(Relation relation);
+static void RelationDestroyRelation(Relation relation, bool remember_tupdesc);
 static void RelationClearRelation(Relation relation, bool rebuild);
 
 static void RelationReloadIndexInfo(Relation relation);
 static void RelationFlushRelation(Relation relation);
+static void RememberToFreeTupleDescAtEOX(TupleDesc td);
 static void AtEOXact_cleanup(Relation relation, bool isCommit);
 static void AtEOSubXact_cleanup(Relation relation, bool isCommit,
 					SubTransactionId mySubid, SubTransactionId parentSubid);
@@ -1858,7 +1867,7 @@ RelationReloadIndexInfo(Relation relation)
  *	Caller must already have unhooked the entry from the hash table.
  */
 static void
-RelationDestroyRelation(Relation relation)
+RelationDestroyRelation(Relation relation, bool remember_tupdesc)
 {
 	Assert(RelationHasReferenceCountZero(relation));
 
@@ -1878,7 +1887,20 @@ RelationDestroyRelation(Relation relation)
 	/* can't use DecrTupleDescRefCount here */
 	Assert(relation->rd_att->tdrefcount > 0);
 	if (--relation->rd_att->tdrefcount == 0)
-		FreeTupleDesc(relation->rd_att);
+	{
+		/*
+		 * If we Rebuilt a relcache entry during a transaction then its
+		 * possible we did that because the TupDesc changed as the result
+		 * of an ALTER TABLE that ran at less than AccessExclusiveLock.
+		 * It's possible someone copied that TupDesc, in which case the
+		 * copy would point to free'd memory. So if we rebuild an entry
+		 * we keep the TupDesc around until end of transaction, to be safe.
+		 */
+		if (remember_tupdesc)
+			RememberToFreeTupleDescAtEOX(relation->rd_att);
+		else
+			FreeTupleDesc(relation->rd_att);
+	}
 	list_free(relation->rd_indexlist);
 	bms_free(relation->rd_indexattr);
 	FreeTriggerDesc(relation->trigdesc);
@@ -1992,7 +2014,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 		RelationCacheDelete(relation);
 
 		/* And release storage */
-		RelationDestroyRelation(relation);
+		RelationDestroyRelation(relation, false);
 	}
 	else if (!IsTransactionState())
 	{
@@ -2059,7 +2081,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 		{
 			/* Should only get here if relation was deleted */
 			RelationCacheDelete(relation);
-			RelationDestroyRelation(relation);
+			RelationDestroyRelation(relation, false);
 			elog(ERROR, "relation %u deleted while still in use", save_relid);
 		}
 
@@ -2121,7 +2143,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 #undef SWAPFIELD
 
 		/* And now we can throw away the temporary entry */
-		RelationDestroyRelation(newrel);
+		RelationDestroyRelation(newrel, !keep_tupdesc);
 	}
 }
 
@@ -2359,6 +2381,33 @@ RelationCloseSmgrByOid(Oid relationId)
 	RelationCloseSmgr(relation);
 }
 
+void
+RememberToFreeTupleDescAtEOX(TupleDesc td)
+{
+	if (EOXactTupleDescArray == NULL)
+	{
+		MemoryContext	oldcxt;
+		oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
+
+		EOXactTupleDescArray = (TupleDesc *) palloc(16 * sizeof(TupleDesc));
+		EOXactTupleDescArrayLen = 16;
+		NextEOXactTupleDescNum = 0;
+		MemoryContextSwitchTo(oldcxt);
+	}
+	else if (NextEOXactTupleDescNum >= EOXactTupleDescArrayLen)
+	{
+		int32       	newlen = EOXactTupleDescArrayLen * 2;
+
+		Assert(EOXactTupleDescArrayLen > 0);
+
+		EOXactTupleDescArray = (TupleDesc *) repalloc(EOXactTupleDescArray,
+														newlen * sizeof(TupleDesc));
+		EOXactTupleDescArrayLen = newlen;
+	}
+
+	EOXactTupleDescArray[NextEOXactTupleDescNum++] = td;
+}
+
 /*
  * AtEOXact_RelationCache
  *
@@ -2414,9 +2463,20 @@ AtEOXact_RelationCache(bool isCommit)
 		}
 	}
 
-	/* Now we're out of the transaction and can clear the list */
+	if (EOXactTupleDescArrayLen > 0)
+	{
+		Assert(EOXactTupleDescArray != NULL);
+		for (i = 0; i < NextEOXactTupleDescNum; i++)
+			FreeTupleDesc(EOXactTupleDescArray[i]);
+		pfree(EOXactTupleDescArray);
+		EOXactTupleDescArray = NULL;
+	}
+
+	/* Now we're out of the transaction and can clear the lists */
 	eoxact_list_len = 0;
 	eoxact_list_overflowed = false;
+	NextEOXactTupleDescNum = 0;
+	EOXactTupleDescArrayLen = 0;
 }
 
 /*

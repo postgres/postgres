@@ -14,10 +14,16 @@
 #ifndef TOASTING_H
 #define TOASTING_H
 
+#include "storage/lock.h"
+
 /*
  * toasting.c prototypes
  */
-extern void AlterTableCreateToastTable(Oid relOid, Datum reloptions);
+extern void NewRelationCreateToastTable(Oid relOid, Datum reloptions);
+extern void NewHeapCreateToastTable(Oid relOid, Datum reloptions,
+									LOCKMODE lockmode);
+extern void AlterTableCreateToastTable(Oid relOid, Datum reloptions,
+									LOCKMODE lockmode);
 extern void BootstrapToastTable(char *relName,
 					Oid toastOid, Oid toastIndexOid);
 

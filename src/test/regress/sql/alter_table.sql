@@ -1283,6 +1283,9 @@ and c.relname != 'my_locks'
 group by c.relname;
 
 create table alterlock (f1 int primary key, f2 text);
+insert into alterlock values (1, 'foo');
+create table alterlock2 (f3 int primary key, f1 int);
+insert into alterlock2 values (1, 1);
 
 begin; alter table alterlock alter column f2 set statistics 150;
 select * from my_locks order by 1;
@@ -1324,7 +1327,33 @@ begin; alter table alterlock alter column f2 set default 'x';
 select * from my_locks order by 1;
 rollback;
 
+begin;
+create trigger ttdummy
+	before delete or update on alterlock
+	for each row
+	execute procedure
+	ttdummy (1, 1);
+select * from my_locks order by 1;
+rollback;
+
+begin;
+select * from my_locks order by 1;
+alter table alterlock2 add foreign key (f1) references alterlock (f1);
+select * from my_locks order by 1;
+rollback;
+
+begin;
+alter table alterlock2
+add constraint alterlock2nv foreign key (f1) references alterlock (f1) NOT VALID;
+select * from my_locks order by 1;
+commit;
+begin;
+alter table alterlock2 validate constraint alterlock2nv;
+select * from my_locks order by 1;
+rollback;
+
 -- cleanup
+drop table alterlock2;
 drop table alterlock;
 drop view my_locks;
 drop type lockmodes;

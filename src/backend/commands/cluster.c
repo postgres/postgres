@@ -408,10 +408,10 @@ cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose)
 /*
  * Verify that the specified heap and index are valid to cluster on
  *
- * Side effect: obtains exclusive lock on the index.  The caller should
- * already have exclusive lock on the table, so the index lock is likely
- * redundant, but it seems best to grab it anyway to ensure the index
- * definition can't change under us.
+ * Side effect: obtains lock on the index.  The caller may
+ * in some cases already have AccessExclusiveLock on the table, but
+ * not in all cases so we can't rely on the table-level lock for
+ * protection here.
  */
 void
 check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck, LOCKMODE lockmode)
@@ -696,10 +696,10 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, bool forcetemp,
 	 *
 	 * If the relation doesn't have a TOAST table already, we can't need one
 	 * for the new relation.  The other way around is possible though: if some
-	 * wide columns have been dropped, AlterTableCreateToastTable can decide
+	 * wide columns have been dropped, NewHeapCreateToastTable can decide
 	 * that no TOAST table is needed for the new table.
 	 *
-	 * Note that AlterTableCreateToastTable ends with CommandCounterIncrement,
+	 * Note that NewHeapCreateToastTable ends with CommandCounterIncrement,
 	 * so that the TOAST table will be visible for insertion.
 	 */
 	toastid = OldHeap->rd_rel->reltoastrelid;
@@ -714,7 +714,7 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, bool forcetemp,
 		if (isNull)
 			reloptions = (Datum) 0;
 
-		AlterTableCreateToastTable(OIDNewHeap, reloptions);
+		NewHeapCreateToastTable(OIDNewHeap, reloptions, lockmode);
 
 		ReleaseSysCache(tuple);
 	}

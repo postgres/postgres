@@ -27,6 +27,7 @@
 #include "catalog/toasting.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
+#include "storage/lock.h"
 #include "utils/builtins.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
@@ -34,13 +35,15 @@
 /* Potentially set by contrib/pg_upgrade_support functions */
 Oid			binary_upgrade_next_toast_pg_type_oid = InvalidOid;
 
+static void CheckAndCreateToastTable(Oid relOid, Datum reloptions,
+					LOCKMODE lockmode, bool check);
 static bool create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
-				   Datum reloptions);
+					Datum reloptions, LOCKMODE lockmode, bool check);
 static bool needs_toast_table(Relation rel);
 
 
 /*
- * AlterTableCreateToastTable
+ * CreateToastTable variants
  *		If the table needs a toast table, and doesn't already have one,
  *		then create a toast table for it.
  *
@@ -52,21 +55,32 @@ static bool needs_toast_table(Relation rel);
  * to end with CommandCounterIncrement if it makes any changes.
  */
 void
-AlterTableCreateToastTable(Oid relOid, Datum reloptions)
+AlterTableCreateToastTable(Oid relOid, Datum reloptions, LOCKMODE lockmode)
+{
+	CheckAndCreateToastTable(relOid, reloptions, lockmode, true);
+}
+
+void
+NewHeapCreateToastTable(Oid relOid, Datum reloptions, LOCKMODE lockmode)
+{
+	CheckAndCreateToastTable(relOid, reloptions, lockmode, false);
+}
+
+void
+NewRelationCreateToastTable(Oid relOid, Datum reloptions)
+{
+	CheckAndCreateToastTable(relOid, reloptions, AccessExclusiveLock, false);
+}
+
+static void
+CheckAndCreateToastTable(Oid relOid, Datum reloptions, LOCKMODE lockmode, bool check)
 {
 	Relation	rel;
 
-	/*
-	 * Grab an exclusive lock on the target table, since we'll update its
-	 * pg_class tuple. This is redundant for all present uses, since caller
-	 * will have such a lock already.  But the lock is needed to ensure that
-	 * concurrent readers of the pg_class tuple won't have visibility issues,
-	 * so let's be safe.
-	 */
-	rel = heap_open(relOid, AccessExclusiveLock);
+	rel = heap_open(relOid, lockmode);
 
 	/* create_toast_table does all the work */
-	(void) create_toast_table(rel, InvalidOid, InvalidOid, reloptions);
+	(void) create_toast_table(rel, InvalidOid, InvalidOid, reloptions, lockmode, check);
 
 	heap_close(rel, NoLock);
 }
@@ -91,7 +105,8 @@ BootstrapToastTable(char *relName, Oid toastOid, Oid toastIndexOid)
 						relName)));
 
 	/* create_toast_table does all the work */
-	if (!create_toast_table(rel, toastOid, toastIndexOid, (Datum) 0))
+	if (!create_toast_table(rel, toastOid, toastIndexOid, (Datum) 0,
+								AccessExclusiveLock, false))
 		elog(ERROR, "\"%s\" does not require a toast table",
 			 relName);
 
@@ -107,7 +122,8 @@ BootstrapToastTable(char *relName, Oid toastOid, Oid toastIndexOid)
  * bootstrap they can be nonzero to specify hand-assigned OIDs
  */
 static bool
-create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptions)
+create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
+				   Datum reloptions, LOCKMODE lockmode, bool check)
 {
 	Oid			relOid = RelationGetRelid(rel);
 	HeapTuple	reltup;
@@ -159,6 +175,13 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 		(!IsBinaryUpgrade ||
 		 !OidIsValid(binary_upgrade_next_toast_pg_class_oid)))
 		return false;
+
+	/*
+	 * If requested check lockmode is sufficient. This is a cross check
+	 * in case of errors or conflicting decisions in earlier code.
+	 */
+	if (check && lockmode != AccessExclusiveLock)
+		elog(ERROR, "AccessExclusiveLock required to add toast table.");
 
 	/*
 	 * Create the toast table and its index

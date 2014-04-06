@@ -359,7 +359,7 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 
 	/*
 	 * If necessary, create a TOAST table for the target table.  Note that
-	 * AlterTableCreateToastTable ends with CommandCounterIncrement(), so that
+	 * NewRelationCreateToastTable ends with CommandCounterIncrement(), so that
 	 * the TOAST table will be visible for insertion.
 	 */
 	CommandCounterIncrement();
@@ -373,7 +373,7 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 
 	(void) heap_reloptions(RELKIND_TOASTVALUE, toast_options, true);
 
-	AlterTableCreateToastTable(intoRelationId, toast_options);
+	NewRelationCreateToastTable(intoRelationId, toast_options);
 
 	/* Create the "view" part of a materialized view. */
 	if (is_matview)
