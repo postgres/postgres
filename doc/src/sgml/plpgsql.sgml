@@ -4711,6 +4711,56 @@ a_output := a_output || $$ if v_$$ || referrer_keys.kind || $$ like '$$
   </variablelist>
 
   </sect2>
+  <sect2 id="plpgsql-extra-checks">
+   <title>Additional compile-time checks</title>
+
+   <para>
+    To aid the user in finding instances of simple but common problems before
+    they cause harm, <application>PL/PgSQL</> provides additional
+    <replaceable>checks</>. When enabled, depending on the configuration, they
+    can be used to emit either a <literal>WARNING</> or an <literal>ERROR</>
+    during the compilation of a function. A function which has received
+    a <literal>WARNING</> can be executed without producing further messages,
+    so you are advised to test in a separate development environment.
+   </para>
+
+ <para>
+  These additional checks are enabled through the configuration variables
+  <varname>plpgsql.extra_warnings</> for warnings and 
+  <varname>plpgsql.extra_errors</> for errors. Both can be set either to
+  a comma-separated list of checks, <literal>"none"</> or <literal>"all"</>.
+  The default is <literal>"none"</>. Currently the list of available checks
+  includes only one:
+  <variablelist>
+   <varlistentry>
+    <term><varname>shadowed_variables</varname></term>
+    <listitem>
+     <para>
+      Checks if a declaration shadows a previously defined variable. 
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+
+  The following example shows the effect of <varname>plpgsql.extra_warnings</>
+  set to <varname>shadowed_variables</>:
+<programlisting>
+SET plpgsql.extra_warnings TO 'shadowed_variables';
+
+CREATE FUNCTION foo(f1 int) RETURNS int AS $$
+DECLARE
+f1 int;
+BEGIN
+RETURN f1;
+END
+$$ LANGUAGE plpgsql;
+WARNING:  variable "f1" shadows a previously defined variable
+LINE 3: f1 int;
+        ^
+CREATE FUNCTION
+</programlisting>
+ </para>
+ </sect2>
  </sect1>
 
   <!-- **** Porting from Oracle PL/SQL **** -->

@@ -3208,6 +3208,128 @@ select footest();
 ERROR:  query returned more than one row
 DETAIL:  parameters: p1 = '2', p3 = 'foo'
 CONTEXT:  PL/pgSQL function footest() line 10 at SQL statement
+-- test warnings and errors
+set plpgsql.extra_warnings to 'all';
+set plpgsql.extra_warnings to 'none';
+set plpgsql.extra_errors to 'all';
+set plpgsql.extra_errors to 'none';
+-- test warnings when shadowing a variable
+set plpgsql.extra_warnings to 'shadowed_variables';
+-- simple shadowing of input and output parameters
+create or replace function shadowtest(in1 int)
+	returns table (out1 int) as $$
+declare
+in1 int;
+out1 int;
+begin
+end
+$$ language plpgsql;
+WARNING:  variable "in1" shadows a previously defined variable
+LINE 4: in1 int;
+        ^
+WARNING:  variable "out1" shadows a previously defined variable
+LINE 5: out1 int;
+        ^
+select shadowtest(1);
+ shadowtest 
+------------
+(0 rows)
+
+set plpgsql.extra_warnings to 'shadowed_variables';
+select shadowtest(1);
+ shadowtest 
+------------
+(0 rows)
+
+create or replace function shadowtest(in1 int)
+	returns table (out1 int) as $$
+declare
+in1 int;
+out1 int;
+begin
+end
+$$ language plpgsql;
+WARNING:  variable "in1" shadows a previously defined variable
+LINE 4: in1 int;
+        ^
+WARNING:  variable "out1" shadows a previously defined variable
+LINE 5: out1 int;
+        ^
+select shadowtest(1);
+ shadowtest 
+------------
+(0 rows)
+
+drop function shadowtest(int);
+-- shadowing in a second DECLARE block
+create or replace function shadowtest()
+	returns void as $$
+declare
+f1 int;
+begin
+	declare
+	f1 int;
+	begin
+	end;
+end$$ language plpgsql;
+WARNING:  variable "f1" shadows a previously defined variable
+LINE 7:  f1 int;
+         ^
+drop function shadowtest();
+-- several levels of shadowing
+create or replace function shadowtest(in1 int)
+	returns void as $$
+declare
+in1 int;
+begin
+	declare
+	in1 int;
+	begin
+	end;
+end$$ language plpgsql;
+WARNING:  variable "in1" shadows a previously defined variable
+LINE 4: in1 int;
+        ^
+WARNING:  variable "in1" shadows a previously defined variable
+LINE 7:  in1 int;
+         ^
+drop function shadowtest(int);
+-- shadowing in cursor definitions
+create or replace function shadowtest()
+	returns void as $$
+declare
+f1 int;
+c1 cursor (f1 int) for select 1;
+begin
+end$$ language plpgsql;
+WARNING:  variable "f1" shadows a previously defined variable
+LINE 5: c1 cursor (f1 int) for select 1;
+                   ^
+drop function shadowtest();
+-- test errors when shadowing a variable
+set plpgsql.extra_errors to 'shadowed_variables';
+create or replace function shadowtest(f1 int)
+	returns boolean as $$
+declare f1 int; begin return 1; end $$ language plpgsql;
+ERROR:  variable "f1" shadows a previously defined variable
+LINE 3: declare f1 int; begin return 1; end $$ language plpgsql;
+                ^
+select shadowtest(1);
+ERROR:  function shadowtest(integer) does not exist
+LINE 1: select shadowtest(1);
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+reset plpgsql.extra_errors;
+reset plpgsql.extra_warnings;
+create or replace function shadowtest(f1 int)
+	returns boolean as $$
+declare f1 int; begin return 1; end $$ language plpgsql;
+select shadowtest(1);
+ shadowtest 
+------------
+ t
+(1 row)
+
 -- test scrollable cursor support
 create function sc_test() returns setof integer as $$
 declare

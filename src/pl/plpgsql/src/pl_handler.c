@@ -25,6 +25,11 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
+
+static bool plpgsql_extra_checks_check_hook(char **newvalue, void **extra, GucSource source);
+static void plpgsql_extra_warnings_assign_hook(const char *newvalue, void *extra);
+static void plpgsql_extra_errors_assign_hook(const char *newvalue, void *extra);
+
 PG_MODULE_MAGIC;
 
 /* Custom GUC variable */
@@ -39,8 +44,87 @@ int			plpgsql_variable_conflict = PLPGSQL_RESOLVE_ERROR;
 
 bool		plpgsql_print_strict_params = false;
 
+char		*plpgsql_extra_warnings_string = NULL;
+char		*plpgsql_extra_errors_string = NULL;
+int			plpgsql_extra_warnings;
+int			plpgsql_extra_errors;
+
 /* Hook for plugins */
 PLpgSQL_plugin **plugin_ptr = NULL;
+
+
+static bool
+plpgsql_extra_checks_check_hook(char **newvalue, void **extra, GucSource source)
+{
+	char	   *rawstring;
+	List	   *elemlist;
+	ListCell   *l;
+	int		    extrachecks = 0;
+	int		   *myextra;
+
+	if (pg_strcasecmp(*newvalue, "all") == 0)
+		extrachecks = PLPGSQL_XCHECK_ALL;
+	else if (pg_strcasecmp(*newvalue, "none") == 0)
+		extrachecks = PLPGSQL_XCHECK_NONE;
+	else
+	{
+		/* Need a modifiable copy of string */
+		rawstring = pstrdup(*newvalue);
+
+		/* Parse string into list of identifiers */
+		if (!SplitIdentifierString(rawstring, ',', &elemlist))
+		{
+			/* syntax error in list */
+			GUC_check_errdetail("List syntax is invalid.");
+			pfree(rawstring);
+			list_free(elemlist);
+			return false;
+		}
+
+		foreach(l, elemlist)
+		{
+			char	   *tok = (char *) lfirst(l);
+
+			if (pg_strcasecmp(tok, "shadowed_variables") == 0)
+				extrachecks |= PLPGSQL_XCHECK_SHADOWVAR;
+			else if (pg_strcasecmp(tok, "all") == 0 || pg_strcasecmp(tok, "none") == 0)
+			{
+				GUC_check_errdetail("Key word \"%s\" cannot be combined with other key words.", tok);
+				pfree(rawstring);
+				list_free(elemlist);
+				return false;
+			}
+			else
+			{
+				GUC_check_errdetail("Unrecognized key word: \"%s\".", tok);
+				pfree(rawstring);
+				list_free(elemlist);
+				return false;
+			}
+		}
+
+		pfree(rawstring);
+		list_free(elemlist);
+	}
+
+	myextra = (int *) malloc(sizeof(int));
+	*myextra = extrachecks;
+	*extra = (void *) myextra;
+
+	return true;
+}
+
+static void
+plpgsql_extra_warnings_assign_hook(const char *newvalue, void *extra)
+{
+	plpgsql_extra_warnings = *((int *) extra);
+}
+
+static void
+plpgsql_extra_errors_assign_hook(const char *newvalue, void *extra)
+{
+	plpgsql_extra_errors = *((int *) extra);
+}
 
 
 /*
@@ -75,6 +159,26 @@ _PG_init(void)
 							 false,
 							 PGC_USERSET, 0,
 							 NULL, NULL, NULL);
+
+	DefineCustomStringVariable("plpgsql.extra_warnings",
+							   gettext_noop("List of programming constructs which should produce a warning."),
+							   NULL,
+							   &plpgsql_extra_warnings_string,
+							   "none",
+							   PGC_USERSET, GUC_LIST_INPUT,
+							   plpgsql_extra_checks_check_hook,
+							   plpgsql_extra_warnings_assign_hook,
+							   NULL);
+
+	DefineCustomStringVariable("plpgsql.extra_errors",
+							   gettext_noop("List of programming constructs which should produce an error."),
+							   NULL,
+							   &plpgsql_extra_errors_string,
+							   "none",
+							   PGC_USERSET, GUC_LIST_INPUT,
+							   plpgsql_extra_checks_check_hook,
+							   plpgsql_extra_errors_assign_hook,
+							   NULL);
 
 	EmitWarningsOnPlaceholders("plpgsql");
 

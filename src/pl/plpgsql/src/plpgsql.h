@@ -739,6 +739,10 @@ typedef struct PLpgSQL_function
 
 	bool		print_strict_params;
 
+	/* extra checks */
+	int 		extra_warnings;
+	int 		extra_errors;
+
 	int			ndatums;
 	PLpgSQL_datum **datums;
 	PLpgSQL_stmt_block *action;
@@ -880,6 +884,14 @@ extern IdentifierLookup plpgsql_IdentifierLookup;
 extern int	plpgsql_variable_conflict;
 
 extern bool plpgsql_print_strict_params;
+
+/* extra compile-time checks */
+#define PLPGSQL_XCHECK_NONE			0
+#define PLPGSQL_XCHECK_SHADOWVAR	1
+#define PLPGSQL_XCHECK_ALL			((int) ~0)
+
+extern int plpgsql_extra_warnings;
+extern int plpgsql_extra_errors;
 
 extern bool plpgsql_check_syntax;
 extern bool plpgsql_DumpExecTree;
