@@ -176,6 +176,9 @@ decode_varbyte(unsigned char **ptr)
  * 'maxsize' bytes in size.  The number items in the returned segment is
  * returned in *nwritten. If it's not equal to nipd, not all the items fit
  * in 'maxsize', and only the first *nwritten were encoded.
+ *
+ * The allocated size of the returned struct is short-aligned, and the padding
+ * byte at the end, if any, is zero.
  */
 GinPostingList *
 ginCompressPostingList(const ItemPointer ipd, int nipd, int maxsize,
@@ -188,9 +191,12 @@ ginCompressPostingList(const ItemPointer ipd, int nipd, int maxsize,
 	unsigned char *ptr;
 	unsigned char *endptr;
 
+	maxsize = SHORTALIGN_DOWN(maxsize);
+
 	result = palloc(maxsize);
 
 	maxbytes = maxsize - offsetof(GinPostingList, bytes);
+	Assert(maxbytes > 0);
 
 	/* Store the first special item */
 	result->first = ipd[0];
@@ -227,6 +233,13 @@ ginCompressPostingList(const ItemPointer ipd, int nipd, int maxsize,
 		prev = val;
 	}
 	result->nbytes = ptr - result->bytes;
+
+	/*
+	 * If we wrote an odd number of bytes, zero out the padding byte at the
+	 * end.
+	 */
+	if (result->nbytes != SHORTALIGN(result->nbytes))
+		result->bytes[result->nbytes] = 0;
 
 	if (nwritten)
 		*nwritten = totalpacked;
