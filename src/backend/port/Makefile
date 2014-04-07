@@ -43,6 +43,6 @@ else
 endif
 
 distclean clean:
-	rm -f ipc_test ipc_test.o tas_cpp.s
+	rm -f tas_cpp.s
 	$(MAKE) -C darwin clean
 	$(MAKE) -C win32 clean
