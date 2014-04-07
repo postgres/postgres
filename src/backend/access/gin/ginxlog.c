@@ -461,7 +461,9 @@ ginRedoSplit(XLogRecPtr lsn, XLogRecord *record)
 				rbuffer;
 	Page		lpage,
 				rpage;
-	uint32		flags = 0;
+	uint32		flags;
+	uint32		lflags,
+				rflags;
 	char	   *payload;
 	bool		isLeaf = (data->flags & GIN_INSERT_ISLEAF) != 0;
 	bool		isData = (data->flags & GIN_INSERT_ISDATA) != 0;
@@ -481,6 +483,7 @@ ginRedoSplit(XLogRecPtr lsn, XLogRecord *record)
 			ginRedoClearIncompleteSplit(lsn, data->node, data->leftChildBlkno);
 	}
 
+	flags = 0;
 	if (isLeaf)
 		flags |= GIN_LEAF;
 	if (isData)
@@ -488,15 +491,19 @@ ginRedoSplit(XLogRecPtr lsn, XLogRecord *record)
 	if (isLeaf && isData)
 		flags |= GIN_COMPRESSED;
 
+	lflags = rflags = flags;
+	if (!isRoot)
+		lflags |= GIN_INCOMPLETE_SPLIT;
+
 	lbuffer = XLogReadBuffer(data->node, data->lblkno, true);
 	Assert(BufferIsValid(lbuffer));
 	lpage = (Page) BufferGetPage(lbuffer);
-	GinInitBuffer(lbuffer, flags);
+	GinInitBuffer(lbuffer, lflags);
 
 	rbuffer = XLogReadBuffer(data->node, data->rblkno, true);
 	Assert(BufferIsValid(rbuffer));
 	rpage = (Page) BufferGetPage(rbuffer);
-	GinInitBuffer(rbuffer, flags);
+	GinInitBuffer(rbuffer, rflags);
 
 	GinPageGetOpaque(lpage)->rightlink = BufferGetBlockNumber(rbuffer);
 	GinPageGetOpaque(rpage)->rightlink = isRoot ? InvalidBlockNumber : data->rrlink;
