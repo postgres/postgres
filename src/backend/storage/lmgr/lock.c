@@ -1516,6 +1516,7 @@ AbortStrongLockAcquire(void)
 	fasthashcode = FastPathStrongLockHashPartition(locallock->hashcode);
 	Assert(locallock->holdsStrongLockCount == TRUE);
 	SpinLockAcquire(&FastPathStrongRelationLocks->mutex);
+	Assert(FastPathStrongRelationLocks->count[fasthashcode] > 0);
 	FastPathStrongRelationLocks->count[fasthashcode]--;
 	locallock->holdsStrongLockCount = FALSE;
 	StrongLockInProgress = NULL;
@@ -2882,6 +2883,7 @@ LockRefindAndRelease(LockMethod lockMethodTable, PGPROC *proc,
 		uint32		fasthashcode = FastPathStrongLockHashPartition(hashcode);
 
 		SpinLockAcquire(&FastPathStrongRelationLocks->mutex);
+		Assert(FastPathStrongRelationLocks->count[fasthashcode] > 0);
 		FastPathStrongRelationLocks->count[fasthashcode]--;
 		SpinLockRelease(&FastPathStrongRelationLocks->mutex);
 	}
