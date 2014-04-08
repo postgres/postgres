@@ -183,7 +183,6 @@ gistRedoPageUpdateRecord(XLogRecPtr lsn, XLogRecord *record)
 		GistPageSetLeaf(page);
 	}
 
-	GistPageGetOpaque(page)->rightlink = InvalidBlockNumber;
 	PageSetLSN(page, lsn);
 	PageSetTLI(page, ThisTimeLineID);
 	MarkBufferDirty(buffer);
