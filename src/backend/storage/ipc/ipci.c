@@ -90,6 +90,8 @@ RequestAddinShmemSpace(Size size)
 void
 CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 {
+	PGShmemHeader *shim = NULL;
+
 	if (!IsUnderPostmaster)
 	{
 		PGShmemHeader *seghdr;
@@ -149,7 +151,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		/*
 		 * Create the shmem segment
 		 */
-		seghdr = PGSharedMemoryCreate(size, makePrivate, port);
+		seghdr = PGSharedMemoryCreate(size, makePrivate, port, &shim);
 
 		InitShmemAccess(seghdr);
 
@@ -254,7 +256,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 
 	/* Initialize dynamic shared memory facilities. */
 	if (!IsUnderPostmaster)
-		dsm_postmaster_startup();
+		dsm_postmaster_startup(shim);
 
 	/*
 	 * Now give loadable modules a chance to set up their shmem allocations

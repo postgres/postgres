@@ -117,7 +117,8 @@ PGSharedMemoryIsInUse(unsigned long id1, unsigned long id2)
  *
  */
 PGShmemHeader *
-PGSharedMemoryCreate(Size size, bool makePrivate, int port)
+PGSharedMemoryCreate(Size size, bool makePrivate, int port,
+					 PGShmemHeader **shim)
 {
 	void	   *memAddress;
 	PGShmemHeader *hdr;
@@ -245,12 +246,14 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 	 */
 	hdr->totalsize = size;
 	hdr->freeoffset = MAXALIGN(sizeof(PGShmemHeader));
+	hdr->dsm_control = 0;
 
 	/* Save info for possible future use */
 	UsedShmemSegAddr = memAddress;
 	UsedShmemSegSize = size;
 	UsedShmemSegID = hmap2;
 
+	*shim = NULL;
 	return hdr;
 }
 
@@ -289,6 +292,7 @@ PGSharedMemoryReAttach(void)
 			 hdr, origUsedShmemSegAddr);
 	if (hdr->magic != PGShmemMagic)
 		elog(FATAL, "reattaching to shared memory returned non-PostgreSQL memory");
+	dsm_set_control_handle(hdr->dsm_control);
 
 	UsedShmemSegAddr = hdr;		/* probably redundant */
 }

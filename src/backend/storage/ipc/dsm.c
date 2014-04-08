@@ -39,13 +39,11 @@
 #include "storage/dsm.h"
 #include "storage/ipc.h"
 #include "storage/lwlock.h"
+#include "storage/pg_shmem.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/resowner_private.h"
 
-#define PG_DYNSHMEM_STATE_FILE			PG_DYNSHMEM_DIR "/state"
-#define PG_DYNSHMEM_NEW_STATE_FILE		PG_DYNSHMEM_DIR "/state.new"
-#define PG_DYNSHMEM_STATE_BUFSIZ		512
 #define PG_DYNSHMEM_CONTROL_MAGIC		0x9a503d32
 
 /*
@@ -95,10 +93,7 @@ typedef struct dsm_control_header
 	dsm_control_item	item[FLEXIBLE_ARRAY_MEMBER];
 } dsm_control_header;
 
-static void dsm_cleanup_using_control_segment(void);
 static void dsm_cleanup_for_mmap(void);
-static bool dsm_read_state_file(dsm_handle *h);
-static void dsm_write_state_file(dsm_handle h);
 static void dsm_postmaster_shutdown(int code, Datum arg);
 static dsm_segment *dsm_create_descriptor(void);
 static bool dsm_control_segment_sane(dsm_control_header *control,
@@ -146,7 +141,7 @@ static void	*dsm_control_impl_private = NULL;
  * startup time.
  */
 void
-dsm_postmaster_startup(void)
+dsm_postmaster_startup(PGShmemHeader *shim)
 {
 	void	   *dsm_control_address = NULL;
 	uint32		maxitems;
@@ -159,26 +154,13 @@ dsm_postmaster_startup(void)
 		return;
 
 	/*
-	 * Check for, and remove, shared memory segments left behind by a dead
-	 * postmaster.  This isn't necessary on Windows, which always removes them
-	 * when the last reference is gone.
+	 * If we're using the mmap implementations, clean up any leftovers.
+	 * Cleanup isn't needed on Windows, and happens earlier in startup for
+	 * POSIX and System V shared memory, via a direct call to
+	 * dsm_cleanup_using_control_segment.
 	 */
-	switch (dynamic_shared_memory_type)
-	{
-		case DSM_IMPL_POSIX:
-		case DSM_IMPL_SYSV:
-			dsm_cleanup_using_control_segment();
-			break;
-		case DSM_IMPL_MMAP:
-			dsm_cleanup_for_mmap();
-			break;
-		case DSM_IMPL_WINDOWS:
-			/* Nothing to do. */
-			break;
-		default:
-			elog(ERROR, "unknown dynamic shared memory type: %d",
-				 dynamic_shared_memory_type);
-	}
+	if (dynamic_shared_memory_type == DSM_IMPL_MMAP)
+		dsm_cleanup_for_mmap();
 
 	/* Determine size for new control segment. */
 	maxitems = PG_DYNSHMEM_FIXED_SLOTS
@@ -187,23 +169,30 @@ dsm_postmaster_startup(void)
 		maxitems);
 	segsize = dsm_control_bytes_needed(maxitems);
 
-	/* Loop until we find an unused identifier for the new control segment. */
+	/*
+	 * Loop until we find an unused identifier for the new control segment.
+	 * We sometimes use 0 as a sentinel value indicating that no control
+	 * segment is known to exist, so avoid using that value for a real
+	 * control segment.
+	 */
 	for (;;)
 	{
 		Assert(dsm_control_address == NULL);
 		Assert(dsm_control_mapped_size == 0);
 		dsm_control_handle = random();
+		if (dsm_control_handle == 0)
+			continue;
 		if (dsm_impl_op(DSM_OP_CREATE, dsm_control_handle, segsize,
 						&dsm_control_impl_private, &dsm_control_address,
 						&dsm_control_mapped_size, ERROR))
 			break;
 	}
 	dsm_control = dsm_control_address;
-	on_shmem_exit(dsm_postmaster_shutdown, 0);
+	on_shmem_exit(dsm_postmaster_shutdown, PointerGetDatum(shim));
 	elog(DEBUG2,
 		 "created dynamic shared memory control segment %u (%zu bytes)",
 		 dsm_control_handle, segsize);
-	dsm_write_state_file(dsm_control_handle);
+	shim->dsm_control = dsm_control_handle;
 
 	/* Initialize control segment. */
 	dsm_control->magic = PG_DYNSHMEM_CONTROL_MAGIC;
@@ -216,8 +205,8 @@ dsm_postmaster_startup(void)
  * invocation still exists.  If so, remove the dynamic shared memory
  * segments to which it refers, and then the control segment itself.
  */
-static void
-dsm_cleanup_using_control_segment(void)
+void
+dsm_cleanup_using_control_segment(dsm_handle old_control_handle)
 {
 	void	   *mapped_address = NULL;
 	void	   *junk_mapped_address = NULL;
@@ -227,14 +216,10 @@ dsm_cleanup_using_control_segment(void)
 	Size		junk_mapped_size = 0;
 	uint32		nitems;
 	uint32		i;
-	dsm_handle	old_control_handle;
 	dsm_control_header *old_control;
 
-	/*
-	 * Read the state file.  If it doesn't exist or is empty, there's nothing
-	 * more to do.
-	 */
-	if (!dsm_read_state_file(&old_control_handle))
+	/* If dynamic shared memory is disabled, there's nothing to do. */
+	if (dynamic_shared_memory_type == DSM_IMPL_NONE)
 		return;
 
 	/*
@@ -347,111 +332,6 @@ dsm_cleanup_for_mmap(void)
 }
 
 /*
- * Read and parse the state file.
- *
- * If the state file is empty or the contents are garbled, it probably means
- * that the operating system rebooted before the data written by the previous
- * postmaster made it to disk.  In that case, we can just ignore it; any shared
- * memory from before the reboot should be gone anyway.
- */
-static bool
-dsm_read_state_file(dsm_handle *h)
-{
-	int			statefd;
-	char		statebuf[PG_DYNSHMEM_STATE_BUFSIZ];
-	int			nbytes = 0;
-	char	   *endptr,
-			   *s;
-	dsm_handle	handle;
-
-	/* Read the state file to get the ID of the old control segment. */
-	statefd = BasicOpenFile(PG_DYNSHMEM_STATE_FILE, O_RDONLY | PG_BINARY, 0);
-	if (statefd < 0)
-	{
-		if (errno == ENOENT)
-			return false;
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not open file \"%s\": %m",
-					PG_DYNSHMEM_STATE_FILE)));
-	}
-	nbytes = read(statefd, statebuf, PG_DYNSHMEM_STATE_BUFSIZ - 1);
-	if (nbytes < 0)
-	{
-		close(statefd);
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not read file \"%s\": %m",
-					PG_DYNSHMEM_STATE_FILE)));
-	}
-	/* make sure buffer is NUL terminated */
-	statebuf[nbytes] = '\0';
-	close(statefd);
-
-	/*
-	 * We expect to find the handle of the old control segment here,
-	 * on a line by itself.
-	 */
-	handle = strtoul(statebuf, &endptr, 10);
-	for (s = endptr; *s == ' ' || *s == '\t'; ++s)
-		;
-	if (*s != '\n' && *s != '\0')
-		return false;
-
-	/* Looks good. */
-	*h = handle;
-	return true;
-}
-
-/*
- * Write our control segment handle to the state file, so that if the
- * postmaster is killed without running it's on_shmem_exit hooks, the
- * next postmaster can clean things up after restart.
- */
-static void
-dsm_write_state_file(dsm_handle h)
-{
-	int			statefd;
-	char		statebuf[PG_DYNSHMEM_STATE_BUFSIZ];
-	int			nbytes;
-
-	/* Create or truncate the file. */
-	statefd = open(PG_DYNSHMEM_NEW_STATE_FILE,
-				   O_RDWR | O_CREAT | O_TRUNC | PG_BINARY, 0600);
-	if (statefd < 0)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not create file \"%s\": %m",
-					PG_DYNSHMEM_NEW_STATE_FILE)));
-
-	/* Write contents. */
-	snprintf(statebuf, PG_DYNSHMEM_STATE_BUFSIZ, "%u\n", dsm_control_handle);
-	nbytes = strlen(statebuf);
-	if (write(statefd, statebuf, nbytes) != nbytes)
-	{
-		if (errno == 0)
-			errno = ENOSPC;		/* if no error signalled, assume no space */
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not write file \"%s\": %m",
-					PG_DYNSHMEM_NEW_STATE_FILE)));
-	}
-
-	/* Close file. */
-	close(statefd);
-
-	/*
-	 * Atomically rename file into place, so that no one ever sees a partially
-	 * written state file.
-	 */
-	if (rename(PG_DYNSHMEM_NEW_STATE_FILE, PG_DYNSHMEM_STATE_FILE) < 0)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not rename file \"%s\": %m",
-					PG_DYNSHMEM_NEW_STATE_FILE)));
-}
-
-/*
  * At shutdown time, we iterate over the control segment and remove all
  * remaining dynamic shared memory segments.  We avoid throwing errors here;
  * the postmaster is shutting down either way, and this is just non-critical
@@ -466,6 +346,7 @@ dsm_postmaster_shutdown(int code, Datum arg)
 	void	   *junk_mapped_address = NULL;
 	void	   *junk_impl_private = NULL;
 	Size		junk_mapped_size = 0;
+	PGShmemHeader *shim = (PGShmemHeader *) DatumGetPointer(arg);
 
 	/*
 	 * If some other backend exited uncleanly, it might have corrupted the
@@ -510,13 +391,7 @@ dsm_postmaster_shutdown(int code, Datum arg)
 				&dsm_control_impl_private, &dsm_control_address,
 				&dsm_control_mapped_size, LOG);
 	dsm_control = dsm_control_address;
-
-	/* And, finally, remove the state file. */
-	if (unlink(PG_DYNSHMEM_STATE_FILE) < 0)
-		ereport(LOG,
-				(errcode_for_file_access(),
-				 errmsg("could not unlink file \"%s\": %m",
-					PG_DYNSHMEM_STATE_FILE)));
+	shim->dsm_control = 0;
 }
 
 /*
@@ -536,25 +411,18 @@ dsm_backend_startup(void)
 
 #ifdef EXEC_BACKEND
 	{
-		dsm_handle	control_handle;
 		void	   *control_address = NULL;
 
-		/* Read the control segment information from the state file. */
-		if (!dsm_read_state_file(&control_handle))
-			ereport(ERROR,
-					(errcode(ERRCODE_INTERNAL_ERROR),
-					 errmsg("could not parse dynamic shared memory state file")));
-
 		/* Attach control segment. */
-		dsm_impl_op(DSM_OP_ATTACH, control_handle, 0,
+		Assert(dsm_control_handle != 0);
+		dsm_impl_op(DSM_OP_ATTACH, dsm_control_handle, 0,
 					&dsm_control_impl_private, &control_address,
 					&dsm_control_mapped_size, ERROR);
-		dsm_control_handle = control_handle;
 		dsm_control = control_address;
 		/* If control segment doesn't look sane, something is badly wrong. */
 		if (!dsm_control_segment_sane(dsm_control, dsm_control_mapped_size))
 		{
-			dsm_impl_op(DSM_OP_DETACH, control_handle, 0,
+			dsm_impl_op(DSM_OP_DETACH, dsm_control_handle, 0,
 						&dsm_control_impl_private, &control_address,
 						&dsm_control_mapped_size, WARNING);
 			ereport(FATAL,
@@ -566,6 +434,20 @@ dsm_backend_startup(void)
 
 	dsm_init_done = true;
 }
+
+#ifdef EXEC_BACKEND
+/*
+ * When running under EXEC_BACKEND, we get a callback here when the main
+ * shared memory segment is re-attached, so that we can record the control
+ * handle retrieved from it.
+ */
+void
+dsm_set_control_handle(dsm_handle h)
+{
+	Assert(dsm_control_handle == 0 && h != 0);
+	dsm_control_handle = h;
+}
+#endif
 
 /*
  * Create a new dynamic shared memory segment.
