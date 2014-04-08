@@ -17494,7 +17494,7 @@ FOR EACH ROW EXECUTE PROCEDURE suppress_redundant_updates_trigger();
    </para>
 
    <para>
-    <function>pg_event_trigger_dropped_objects</> returns a list of all object
+    <function>pg_event_trigger_dropped_objects</> returns a list of all objects
     dropped by the command in whose <literal>sql_drop</> event it is called.
     If called in any other context,
     <function>pg_event_trigger_dropped_objects</> raises an error.
