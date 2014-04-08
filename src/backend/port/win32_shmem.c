@@ -253,7 +253,7 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port,
 	UsedShmemSegSize = size;
 	UsedShmemSegID = hmap2;
 
-	*shim = NULL;
+	*shim = hdr;
 	return hdr;
 }
 
