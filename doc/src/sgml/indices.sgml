@@ -239,6 +239,8 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
 
    (See <xref linkend="functions-geometry"> for the meaning of
    these operators.)
+   The GiST operator classes included in the standard distribution are
+   documented in <xref linkend="gist-builtin-opclasses-table">.
    Many other GiST operator
    classes are available in the <literal>contrib</> collection or as separate
    projects.  For more information see <xref linkend="GiST">.
@@ -253,6 +255,8 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
 </programlisting>
    which finds the ten places closest to a given target point.  The ability
    to do this is again dependent on the particular operator class being used.
+   In <xref linkend="gist-builtin-opclasses-table">, operators that can be
+   used in this way are listed in the column <quote>Ordering Operators</>.
   </para>
 
   <para>
@@ -283,6 +287,8 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
 
    (See <xref linkend="functions-geometry"> for the meaning of
    these operators.)
+   The SP-GiST operator classes included in the standard distribution are
+   documented in <xref linkend="spgist-builtin-opclasses-table">.
    For more information see <xref linkend="SPGiST">.
   </para>
 
@@ -314,6 +320,8 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
 
    (See <xref linkend="functions-array"> for the meaning of
    these operators.)
+   The GIN operator classes included in the standard distribution are
+   documented in <xref linkend="gin-builtin-opclasses-table">.
    Many other GIN operator
    classes are available in the <literal>contrib</> collection or as separate
    projects.  For more information see <xref linkend="GIN">.
@@ -1003,7 +1011,9 @@ CREATE INDEX test_index ON test_table (col varchar_pattern_ops);
 
 <programlisting>
 SELECT am.amname AS index_method,
-       opc.opcname AS opclass_name
+       opc.opcname AS opclass_name,
+       opc.opcintype::regtype AS indexed_type,
+       opc.opcdefault AS is_default
     FROM pg_am am, pg_opclass opc
     WHERE opc.opcmethod = am.oid
     ORDER BY index_method, opclass_name;
@@ -1018,6 +1028,22 @@ SELECT am.amname AS index_method,
    classes for each of the types must be grouped into the same operator
    family.  The cross-type operators are members of the family, but are not
    associated with any single class within the family.
+  </para>
+
+  <para>
+    This expanded version of the previous query shows the operator family
+    each operator class belongs to:
+<programlisting>
+SELECT am.amname AS index_method,
+       opc.opcname AS opclass_name,
+       opf.opfname AS opfamily_name,
+       opc.opcintype::regtype AS indexed_type,
+       opc.opcdefault AS is_default
+    FROM pg_am am, pg_opclass opc, pg_opfamily opf
+    WHERE opc.opcmethod = am.oid AND
+          opc.opcfamily = opf.oid
+    ORDER BY index_method, opclass_name;
+</programlisting>
   </para>
 
   <para>

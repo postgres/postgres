@@ -53,6 +53,93 @@
 
 </sect1>
 
+<sect1 id="spgist-builtin-opclasses">
+ <title>Built-in Operator Classes</title>
+
+ <para>
+  The core <productname>PostgreSQL</> distribution
+  includes the <acronym>SP-GiST</acronym> operator classes shown in
+  <xref linkend="spgist-builtin-opclasses-table">.
+ </para>
+
+  <table id="spgist-builtin-opclasses-table">
+   <title>Built-in <acronym>SP-GiST</acronym> Operator Classes</title>
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Indexed Data Type</entry>
+      <entry>Indexable Operators</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry><literal>kd_point_ops</></entry>
+      <entry><type>point</></entry>
+      <entry>
+       <literal>&lt;&lt;</>
+       <literal>&lt;@</>
+       <literal>&lt;^</>
+       <literal>&gt;&gt;</>
+       <literal>&gt;^</>
+       <literal>~=</>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>quad_point_ops</></entry>
+      <entry><type>point</></entry>
+      <entry>
+       <literal>&lt;&lt;</>
+       <literal>&lt;@</>
+       <literal>&lt;^</>
+       <literal>&gt;&gt;</>
+       <literal>&gt;^</>
+       <literal>~=</>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>range_ops</></entry>
+      <entry>any range type</entry>
+      <entry>
+       <literal>&amp;&amp;</>
+       <literal>&amp;&lt;</>
+       <literal>&amp;&gt;</>
+       <literal>-|-</>
+       <literal>&lt;&lt;</>
+       <literal>&lt;@</>
+       <literal>=</>
+       <literal>&gt;&gt;</>
+       <literal>@&gt;</>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>text_ops</></entry>
+      <entry><type>text</></entry>
+      <entry>
+       <literal>&lt;</>
+       <literal>&lt;=</>
+       <literal>=</>
+       <literal>&gt;</>
+       <literal>&gt;=</>
+       <literal>~&lt;=~</>
+       <literal>~&lt;~</>
+       <literal>~&gt;=~</>
+       <literal>~&gt;~</>
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ <para>
+  Of the two operator classes for type <type>point</>,
+  <literal>quad_point_ops</> is the default.  <literal>kd_point_ops</>
+  supports the same operators but uses a different index data structure which
+  may offer better performance in some applications.
+ </para>
+
+</sect1>
+
 <sect1 id="spgist-extensibility">
  <title>Extensibility</title>
 

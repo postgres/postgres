@@ -40,6 +40,184 @@
 
 </sect1>
 
+<sect1 id="gist-builtin-opclasses">
+ <title>Built-in Operator Classes</title>
+
+ <para>
+  The core <productname>PostgreSQL</> distribution
+  includes the <acronym>GiST</acronym> operator classes shown in
+  <xref linkend="gist-builtin-opclasses-table">.
+  (Some of the optional modules described in <xref linkend="contrib">
+  provide additional <acronym>GiST</acronym> operator classes.)
+ </para>
+
+  <table id="gist-builtin-opclasses-table">
+   <title>Built-in <acronym>GiST</acronym> Operator Classes</title>
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Indexed Data Type</entry>
+      <entry>Indexable Operators</entry>
+      <entry>Ordering Operators</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry><literal>box_ops</></entry>
+      <entry><type>box</></entry>
+      <entry>
+       <literal>&amp;&amp;</>
+       <literal>&amp;&gt;</>
+       <literal>&amp;&lt;</>
+       <literal>&amp;&lt;|</>
+       <literal>&gt;&gt;</>
+       <literal>&lt;&lt;</>
+       <literal>&lt;&lt;|</>
+       <literal>&lt;@</>
+       <literal>@&gt;</>
+       <literal>@</>
+       <literal>|&amp;&gt;</>
+       <literal>|&gt;&gt;</>
+       <literal>~</>
+       <literal>~=</>
+      </entry>
+      <entry>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>circle_ops</></entry>
+      <entry><type>circle</></entry>
+      <entry>
+       <literal>&amp;&amp;</>
+       <literal>&amp;&gt;</>
+       <literal>&amp;&lt;</>
+       <literal>&amp;&lt;|</>
+       <literal>&gt;&gt;</>
+       <literal>&lt;&lt;</>
+       <literal>&lt;&lt;|</>
+       <literal>&lt;@</>
+       <literal>@&gt;</>
+       <literal>@</>
+       <literal>|&amp;&gt;</>
+       <literal>|&gt;&gt;</>
+       <literal>~</>
+       <literal>~=</>
+      </entry>
+      <entry>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>inet_ops</></entry>
+      <entry><type>inet</>, <type>cidr</></entry>
+      <entry>
+       <literal>&amp;&amp;</>
+       <literal>&gt;&gt;</>
+       <literal>&gt;&gt;=</>
+       <literal>&gt;</>
+       <literal>&gt;=</>
+       <literal>&lt;&gt;</>
+       <literal>&lt;&lt;</>
+       <literal>&lt;&lt;=</>
+       <literal>&lt;</>
+       <literal>&lt;=</>
+       <literal>=</>
+      </entry>
+      <entry>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>point_ops</></entry>
+      <entry><type>point</></entry>
+      <entry>
+       <literal>&gt;&gt;</>
+       <literal>&gt;^</>
+       <literal>&lt;&lt;</>
+       <literal>&lt;@</>
+       <literal>&lt;@</>
+       <literal>&lt;@</>
+       <literal>&lt;^</>
+       <literal>~=</>
+      </entry>
+      <entry>
+       <literal>&lt;-&gt;</>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>poly_ops</></entry>
+      <entry><type>polygon</></entry>
+      <entry>
+       <literal>&amp;&amp;</>
+       <literal>&amp;&gt;</>
+       <literal>&amp;&lt;</>
+       <literal>&amp;&lt;|</>
+       <literal>&gt;&gt;</>
+       <literal>&lt;&lt;</>
+       <literal>&lt;&lt;|</>
+       <literal>&lt;@</>
+       <literal>@&gt;</>
+       <literal>@</>
+       <literal>|&amp;&gt;</>
+       <literal>|&gt;&gt;</>
+       <literal>~</>
+       <literal>~=</>
+      </entry>
+      <entry>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>range_ops</></entry>
+      <entry>any range type</entry>
+      <entry>
+       <literal>&amp;&amp;</>
+       <literal>&amp;&gt;</>
+       <literal>&amp;&lt;</>
+       <literal>&gt;&gt;</>
+       <literal>&lt;&lt;</>
+       <literal>&lt;@</>
+       <literal>-|-</>
+       <literal>=</>
+       <literal>@&gt;</>
+       <literal>@&gt;</>
+      </entry>
+      <entry>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>tsquery_ops</></entry>
+      <entry><type>tsquery</></entry>
+      <entry>
+       <literal>&lt;@</>
+       <literal>@&gt;</>
+      </entry>
+      <entry>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>tsvector_ops</></entry>
+      <entry><type>tsvector</></entry>
+      <entry>
+       <literal>@@</>
+      </entry>
+      <entry>
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ <para>
+  For historical reasons, the <literal>inet_ops</> operator class is
+  not the default class for types <type>inet</> and <type>cidr</>.
+  To use it, mention the class name in <command>CREATE INDEX</>,
+  for example
+<programlisting>
+CREATE INDEX ON my_table USING gist (my_inet_column inet_ops);
+</programlisting>
+ </para>
+
+</sect1>
+
 <sect1 id="gist-extensibility">
  <title>Extensibility</title>
 

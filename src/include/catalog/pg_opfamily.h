@@ -78,6 +78,7 @@ DATA(insert OID = 1971 (	405		float_ops		PGNSP PGUID ));
 DATA(insert OID = 1974 (	403		network_ops		PGNSP PGUID ));
 #define NETWORK_BTREE_FAM_OID 1974
 DATA(insert OID = 1975 (	405		network_ops		PGNSP PGUID ));
+DATA(insert OID = 3550 (	783		network_ops		PGNSP PGUID ));
 DATA(insert OID = 1976 (	403		integer_ops		PGNSP PGUID ));
 #define INTEGER_BTREE_FAM_OID 1976
 DATA(insert OID = 1977 (	405		integer_ops		PGNSP PGUID ));

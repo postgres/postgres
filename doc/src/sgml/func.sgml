@@ -8434,8 +8434,9 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
    <xref linkend="cidr-inet-operators-table"> shows the operators
    available for the <type>cidr</type> and <type>inet</type> types.
    The operators <literal>&lt;&lt;</literal>,
-   <literal>&lt;&lt;=</literal>, <literal>&gt;&gt;</literal>, and
-   <literal>&gt;&gt;=</literal> test for subnet inclusion.  They
+   <literal>&lt;&lt;=</literal>, <literal>&gt;&gt;</literal>,
+   <literal>&gt;&gt;=</literal>, and <literal>&amp;&amp;</literal>
+   test for subnet inclusion.  They
    consider only the network parts of the two addresses (ignoring any
    host part) and determine whether one network is identical to
    or a subnet of the other.
@@ -8484,12 +8485,12 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
        </row>
        <row>
         <entry> <literal>&lt;&lt;</literal> </entry>
-        <entry>is contained within</entry>
+        <entry>is contained by</entry>
         <entry><literal>inet '192.168.1.5' &lt;&lt; inet '192.168.1/24'</literal></entry>
        </row>
        <row>
         <entry> <literal>&lt;&lt;=</literal> </entry>
-        <entry>is contained within or equals</entry>
+        <entry>is contained by or equals</entry>
         <entry><literal>inet '192.168.1/24' &lt;&lt;= inet '192.168.1/24'</literal></entry>
        </row>
        <row>
@@ -8501,6 +8502,11 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <entry> <literal>&gt;&gt;=</literal> </entry>
         <entry>contains or equals</entry>
         <entry><literal>inet '192.168.1/24' &gt;&gt;= inet '192.168.1/24'</literal></entry>
+       </row>
+       <row>
+        <entry> <literal>&amp;&amp;</literal> </entry>
+        <entry>contains or is contained by</entry>
+        <entry><literal>inet '192.168.1/24' &amp;&amp; inet '192.168.1.80/28'</literal></entry>
        </row>
        <row>
         <entry> <literal>~</literal> </entry>

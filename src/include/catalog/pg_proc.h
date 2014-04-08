@@ -2120,6 +2120,7 @@ DATA(insert OID = 927 (  network_sub		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 1
 DATA(insert OID = 928 (  network_subeq		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "869 869" _null_ _null_ _null_ _null_	network_subeq _null_ _null_ _null_ ));
 DATA(insert OID = 929 (  network_sup		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "869 869" _null_ _null_ _null_ _null_	network_sup _null_ _null_ _null_ ));
 DATA(insert OID = 930 (  network_supeq		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "869 869" _null_ _null_ _null_ _null_	network_supeq _null_ _null_ _null_ ));
+DATA(insert OID = 3551 (  network_overlap	PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "869 869" _null_ _null_ _null_ _null_	network_overlap _null_ _null_ _null_ ));
 
 /* inet/cidr functions */
 DATA(insert OID = 598 (  abbrev				PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 25 "869" _null_ _null_ _null_ _null_	inet_abbrev _null_ _null_ _null_ ));
@@ -2165,6 +2166,28 @@ DATA(insert OID = 2630 (  inetpl			PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 869 
 DATA(insert OID = 2631 (  int8pl_inet		PGNSP PGUID 14 1 0 0 0 f f f f t f i 2 0 869 "20 869" _null_ _null_ _null_ _null_	"select $2 + $1" _null_ _null_ _null_ ));
 DATA(insert OID = 2632 (  inetmi_int8		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 869 "869 20" _null_ _null_ _null_ _null_	inetmi_int8 _null_ _null_ _null_ ));
 DATA(insert OID = 2633 (  inetmi			PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 20 "869 869" _null_ _null_ _null_ _null_	inetmi _null_ _null_ _null_ ));
+
+/* GiST support for inet and cidr */
+DATA(insert OID = 3553 (  inet_gist_consistent	PGNSP PGUID 12 1 0 0 0 f f f f t f i 5 0 16 "2281 869 23 26 2281" _null_ _null_ _null_ _null_ inet_gist_consistent _null_ _null_ _null_ ));
+DESCR("GiST support");
+DATA(insert OID = 3554 (  inet_gist_union		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 2281 "2281 2281" _null_ _null_ _null_ _null_ inet_gist_union _null_ _null_ _null_ ));
+DESCR("GiST support");
+DATA(insert OID = 3555 (  inet_gist_compress	PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 2281 "2281" _null_ _null_ _null_ _null_ inet_gist_compress _null_ _null_ _null_ ));
+DESCR("GiST support");
+DATA(insert OID = 3556 (  inet_gist_decompress	PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 2281 "2281" _null_ _null_ _null_ _null_ inet_gist_decompress _null_ _null_ _null_ ));
+DESCR("GiST support");
+DATA(insert OID = 3557 (  inet_gist_penalty		PGNSP PGUID 12 1 0 0 0 f f f f t f i 3 0 2281 "2281 2281 2281" _null_ _null_ _null_ _null_ inet_gist_penalty _null_ _null_ _null_ ));
+DESCR("GiST support");
+DATA(insert OID = 3558 (  inet_gist_picksplit	PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 2281 "2281 2281" _null_ _null_ _null_ _null_ inet_gist_picksplit _null_ _null_ _null_ ));
+DESCR("GiST support");
+DATA(insert OID = 3559 (  inet_gist_same		PGNSP PGUID 12 1 0 0 0 f f f f t f i 3 0 2281 "869 869 2281" _null_ _null_ _null_ _null_ inet_gist_same _null_ _null_ _null_ ));
+DESCR("GiST support");
+
+/* Selectivity estimation for inet and cidr */
+DATA(insert OID = 3560 (  networksel		   PGNSP PGUID 12 1 0 0 0 f f f f t f s 4 0 701 "2281 26 2281 23" _null_ _null_ _null_ _null_	networksel _null_ _null_ _null_ ));
+DESCR("restriction selectivity for network operators");
+DATA(insert OID = 3561 (  networkjoinsel	   PGNSP PGUID 12 1 0 0 0 f f f f t f s 5 0 701 "2281 26 2281 21 2281" _null_ _null_ _null_ _null_	networkjoinsel _null_ _null_ _null_ ));
+DESCR("join selectivity for network operators");
 
 DATA(insert OID = 1690 ( time_mi_time		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 1186 "1083 1083" _null_ _null_ _null_ _null_	time_mi_time _null_ _null_ _null_ ));
 

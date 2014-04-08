@@ -906,6 +906,7 @@ extern Datum network_sub(PG_FUNCTION_ARGS);
 extern Datum network_subeq(PG_FUNCTION_ARGS);
 extern Datum network_sup(PG_FUNCTION_ARGS);
 extern Datum network_supeq(PG_FUNCTION_ARGS);
+extern Datum network_overlap(PG_FUNCTION_ARGS);
 extern Datum network_network(PG_FUNCTION_ARGS);
 extern Datum network_netmask(PG_FUNCTION_ARGS);
 extern Datum network_hostmask(PG_FUNCTION_ARGS);
