@@ -1556,7 +1556,7 @@ OpernameGetOprid(List *names, Oid oprleft, Oid oprright)
  * will be InvalidOid for a prefix or postfix oprkind.	nargs is 2, too.
  */
 FuncCandidateList
-OpernameGetCandidates(List *names, char oprkind)
+OpernameGetCandidates(List *names, char oprkind, bool missing_schema_ok)
 {
 	FuncCandidateList resultList = NULL;
 	char	   *resultSpace = NULL;
@@ -1573,7 +1573,9 @@ OpernameGetCandidates(List *names, char oprkind)
 	if (schemaname)
 	{
 		/* use exact schema given */
-		namespaceId = LookupExplicitNamespace(schemaname, false);
+		namespaceId = LookupExplicitNamespace(schemaname, missing_schema_ok);
+		if (missing_schema_ok && !OidIsValid(namespaceId))
+			return NULL;
 	}
 	else
 	{

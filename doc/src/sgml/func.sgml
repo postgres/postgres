@@ -15279,6 +15279,22 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
     <primary>collation for</primary>
    </indexterm>
 
+   <indexterm>
+    <primary>to_regclass</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>to_regproc</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>to_regoper</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>to_regtype</primary>
+   </indexterm>
+
   <para>
    <xref linkend="functions-info-catalog-table"> lists functions that
    extract information from the system catalogs.
@@ -15449,6 +15465,26 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <entry><type>text</type></entry>
        <entry>get the collation of the argument</entry>
       </row>
+      <row>
+       <entry><literal><function>to_regclass(<parameter>rel_name</parameter>)</function></literal></entry>
+       <entry><type>regclass</type></entry>
+       <entry>get the oid of the named relation</entry>
+      </row>
+      <row>
+       <entry><literal><function>to_regproc(<parameter>func_name</parameter>)</function></literal></entry>
+       <entry><type>regproc</type></entry>
+       <entry>get the oid of the named function</entry>
+      </row>
+      <row>
+       <entry><literal><function>to_regoper(<parameter>operator_name</parameter>)</function></literal></entry>
+       <entry><type>regoper</type></entry>
+       <entry>get the oid of the named operator</entry>
+      </row>
+      <row>
+       <entry><literal><function>to_regtype(<parameter>type_name</parameter>)</function></literal></entry>
+       <entry><type>regtype</type></entry>
+       <entry>get the oid of the named type</entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
@@ -15612,6 +15648,18 @@ SELECT collation for ('foo' COLLATE "de_DE");
   The value might be quoted and schema-qualified.  If no collation is derived
   for the argument expression, then a null value is returned.  If the argument
   is not of a collatable data type, then an error is raised.
+  </para>
+
+  <para>
+   The <function>to_regclass</function>, <function>to_regproc</function>,
+   <function>to_regoper</function> and <function>to_regtype</function>
+   translate relation, function, operator, and type names to objects of
+   type <type>regclass</>, <type>regproc</>, <type>regoper</> and
+   <type>regtype</>, respectively.  These functions differ from a cast from
+   text in that they don't accept a numeric OID, and that they return null
+   rather than throwing an error if the name is not found (or, for
+   <function>to_regproc</function> and <function>to_regoper</function>, if
+   the given name matches multiple objects).
   </para>
 
    <indexterm>

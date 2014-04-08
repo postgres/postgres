@@ -173,6 +173,8 @@ DATA(insert OID =  44 (  regprocin		   PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 
 DESCR("I/O");
 DATA(insert OID =  45 (  regprocout		   PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 2275 "24" _null_ _null_ _null_ _null_ regprocout _null_ _null_ _null_ ));
 DESCR("I/O");
+DATA(insert OID = 3494 (  to_regproc		PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 24 "2275" _null_ _null_ _null_ _null_ to_regproc _null_ _null_ _null_ ));
+DESCR("convert proname to regproc");
 DATA(insert OID =  46 (  textin			   PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 25 "2275" _null_ _null_ _null_ _null_ textin _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID =  47 (  textout		   PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 2275 "25" _null_ _null_ _null_ _null_ textout _null_ _null_ _null_ ));
@@ -3304,6 +3306,8 @@ DATA(insert OID = 2214 (  regoperin			PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 2
 DESCR("I/O");
 DATA(insert OID = 2215 (  regoperout		PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 2275 "2203" _null_ _null_ _null_ _null_ regoperout _null_ _null_ _null_ ));
 DESCR("I/O");
+DATA(insert OID = 3492 (  to_regoper		PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 2203 "2275" _null_ _null_ _null_ _null_ to_regoper _null_ _null_ _null_ ));
+DESCR("convert operator name to regoper");
 DATA(insert OID = 2216 (  regoperatorin		PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 2204 "2275" _null_ _null_ _null_ _null_ regoperatorin _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 2217 (  regoperatorout	PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 2275 "2204" _null_ _null_ _null_ _null_ regoperatorout _null_ _null_ _null_ ));
@@ -3312,10 +3316,14 @@ DATA(insert OID = 2218 (  regclassin		PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 2
 DESCR("I/O");
 DATA(insert OID = 2219 (  regclassout		PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 2275 "2205" _null_ _null_ _null_ _null_ regclassout _null_ _null_ _null_ ));
 DESCR("I/O");
+DATA(insert OID = 3495 (  to_regclass		PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 2205 "2275" _null_ _null_ _null_ _null_ to_regclass _null_ _null_ _null_ ));
+DESCR("convert classname to regclass");
 DATA(insert OID = 2220 (  regtypein			PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 2206 "2275" _null_ _null_ _null_ _null_ regtypein _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 2221 (  regtypeout		PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 2275 "2206" _null_ _null_ _null_ _null_ regtypeout _null_ _null_ _null_ ));
 DESCR("I/O");
+DATA(insert OID = 3493 (  to_regtype		PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 2206 "2275" _null_ _null_ _null_ _null_ to_regtype _null_ _null_ _null_ ));
+DESCR("convert type name to regtype");
 DATA(insert OID = 1079 (  regclass			PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 2205 "25" _null_ _null_ _null_ _null_	text_regclass _null_ _null_ _null_ ));
 DESCR("convert text to regclass");
 

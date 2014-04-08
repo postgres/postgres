@@ -1,0 +1,188 @@
+--
+-- regproc
+--
+/* If objects exist, return oids */
+-- without schemaname
+SELECT regoper('||/');
+ regoper 
+---------
+ ||/
+(1 row)
+
+SELECT regproc('now');
+ regproc 
+---------
+ now
+(1 row)
+
+SELECT regclass('pg_class');
+ regclass 
+----------
+ pg_class
+(1 row)
+
+SELECT regtype('int4');
+ regtype 
+---------
+ integer
+(1 row)
+
+SELECT to_regoper('||/');
+ to_regoper 
+------------
+ ||/
+(1 row)
+
+SELECT to_regproc('now');
+ to_regproc 
+------------
+ now
+(1 row)
+
+SELECT to_regclass('pg_class');
+ to_regclass 
+-------------
+ pg_class
+(1 row)
+
+SELECT to_regtype('int4');
+ to_regtype 
+------------
+ integer
+(1 row)
+
+-- with schemaname
+SELECT regoper('pg_catalog.||/');
+ regoper 
+---------
+ ||/
+(1 row)
+
+SELECT regproc('pg_catalog.now');
+ regproc 
+---------
+ now
+(1 row)
+
+SELECT regclass('pg_catalog.pg_class');
+ regclass 
+----------
+ pg_class
+(1 row)
+
+SELECT regtype('pg_catalog.int4');
+ regtype 
+---------
+ integer
+(1 row)
+
+SELECT to_regoper('pg_catalog.||/');
+ to_regoper 
+------------
+ ||/
+(1 row)
+
+SELECT to_regproc('pg_catalog.now');
+ to_regproc 
+------------
+ now
+(1 row)
+
+SELECT to_regclass('pg_catalog.pg_class');
+ to_regclass 
+-------------
+ pg_class
+(1 row)
+
+SELECT to_regtype('pg_catalog.int4');
+ to_regtype 
+------------
+ integer
+(1 row)
+
+/* If objects don't exist, raise errors. */
+-- without schemaname
+SELECT regoper('||//');
+ERROR:  operator does not exist: ||//
+LINE 3: SELECT regoper('||//');
+                       ^
+SELECT regproc('know');
+ERROR:  function "know" does not exist
+LINE 1: SELECT regproc('know');
+                       ^
+SELECT regclass('pg_classes');
+ERROR:  relation "pg_classes" does not exist
+LINE 1: SELECT regclass('pg_classes');
+                        ^
+SELECT regtype('int3');
+ERROR:  type "int3" does not exist
+LINE 1: SELECT regtype('int3');
+                       ^
+-- with schemaname
+SELECT regoper('ng_catalog.||/');
+ERROR:  schema "ng_catalog" does not exist
+LINE 1: SELECT regoper('ng_catalog.||/');
+                       ^
+SELECT regproc('ng_catalog.now');
+ERROR:  schema "ng_catalog" does not exist
+LINE 1: SELECT regproc('ng_catalog.now');
+                       ^
+SELECT regclass('ng_catalog.pg_class');
+ERROR:  schema "ng_catalog" does not exist
+LINE 1: SELECT regclass('ng_catalog.pg_class');
+                        ^
+SELECT regtype('ng_catalog.int4');
+ERROR:  schema "ng_catalog" does not exist
+LINE 1: SELECT regtype('ng_catalog.int4');
+                       ^
+/* If objects don't exist, return NULL with no error. */
+-- without schemaname
+SELECT to_regoper('||//');
+ to_regoper 
+------------
+ 
+(1 row)
+
+SELECT to_regproc('know');
+ to_regproc 
+------------
+ 
+(1 row)
+
+SELECT to_regclass('pg_classes');
+ to_regclass 
+-------------
+ 
+(1 row)
+
+SELECT to_regtype('int3');
+ to_regtype 
+------------
+ 
+(1 row)
+
+-- with schemaname
+SELECT to_regoper('ng_catalog.||/');
+ to_regoper 
+------------
+ 
+(1 row)
+
+SELECT to_regproc('ng_catalog.now');
+ to_regproc 
+------------
+ 
+(1 row)
+
+SELECT to_regclass('ng_catalog.pg_class');
+ to_regclass 
+-------------
+ 
+(1 row)
+
+SELECT to_regtype('ng_catalog.int4');
+ to_regtype 
+------------
+ 
+(1 row)
+

@@ -76,7 +76,8 @@ extern FuncCandidateList FuncnameGetCandidates(List *names,
 extern bool FunctionIsVisible(Oid funcid);
 
 extern Oid	OpernameGetOprid(List *names, Oid oprleft, Oid oprright);
-extern FuncCandidateList OpernameGetCandidates(List *names, char oprkind);
+extern FuncCandidateList OpernameGetCandidates(List *names, char oprkind,
+					  bool missing_schema_ok);
 extern bool OperatorIsVisible(Oid oprid);
 
 extern Oid	OpclassnameGetOpcid(Oid amid, const char *opcname);

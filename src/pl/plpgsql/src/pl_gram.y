@@ -3492,7 +3492,7 @@ parse_datatype(const char *string, int location)
 	error_context_stack = &syntax_errcontext;
 
 	/* Let the main parser try to parse it under standard SQL rules */
-	parseTypeString(string, &type_id, &typmod);
+	parseTypeString(string, &type_id, &typmod, false);
 
 	/* Restore former ereport callback */
 	error_context_stack = syntax_errcontext.previous;

@@ -2165,7 +2165,7 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 						typIOParam;
 			int32		typmod;
 
-			parseTypeString(args[i], &typId, &typmod);
+			parseTypeString(args[i], &typId, &typmod, false);
 
 			getTypeInputInfo(typId, &typInput, &typIOParam);
 

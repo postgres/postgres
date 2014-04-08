@@ -20,6 +20,7 @@ test: enum
 test: money
 test: rangetypes
 test: pg_lsn
+test: regproc
 test: strings
 test: numerology
 test: point

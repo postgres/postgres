@@ -153,6 +153,31 @@ regprocin(PG_FUNCTION_ARGS)
 }
 
 /*
+ * to_regproc	- converts "proname" to proc OID
+ *
+ * If the name is not found, we return NULL.
+ */
+Datum
+to_regproc(PG_FUNCTION_ARGS)
+{
+	char	   *pro_name = PG_GETARG_CSTRING(0);
+	List	   *names;
+	FuncCandidateList clist;
+
+	/*
+	 * Parse the name into components and see if it matches any pg_proc entries
+	 * in the current search path.
+	 */
+	names = stringToQualifiedNameList(pro_name);
+	clist = FuncnameGetCandidates(names, -1, NIL, false, false, true);
+
+	if (clist == NULL || clist->next != NULL)
+		PG_RETURN_NULL();
+
+	PG_RETURN_OID(clist->oid);
+}
+
+/*
  * regprocout		- converts proc OID to "pro_name"
  */
 Datum
@@ -502,7 +527,7 @@ regoperin(PG_FUNCTION_ARGS)
 	 * pg_operator entries in the current search path.
 	 */
 	names = stringToQualifiedNameList(opr_name_or_oid);
-	clist = OpernameGetCandidates(names, '\0');
+	clist = OpernameGetCandidates(names, '\0', false);
 
 	if (clist == NULL)
 		ereport(ERROR,
@@ -517,6 +542,31 @@ regoperin(PG_FUNCTION_ARGS)
 	result = clist->oid;
 
 	PG_RETURN_OID(result);
+}
+
+/*
+ * to_regoper		- converts "oprname" to operator OID
+ *
+ * If the name is not found, we return NULL.
+ */
+Datum
+to_regoper(PG_FUNCTION_ARGS)
+{
+	char	   *opr_name = PG_GETARG_CSTRING(0);
+	List	   *names;
+	FuncCandidateList clist;
+
+	/*
+	 * Parse the name into components and see if it matches any pg_operator
+	 * entries in the current search path.
+	 */
+	names = stringToQualifiedNameList(opr_name);
+	clist = OpernameGetCandidates(names, '\0', true);
+
+	if (clist == NULL || clist->next != NULL)
+		PG_RETURN_NULL();
+
+	PG_RETURN_OID(clist->oid);
 }
 
 /*
@@ -558,7 +608,7 @@ regoperout(PG_FUNCTION_ARGS)
 			 * qualify it.
 			 */
 			clist = OpernameGetCandidates(list_make1(makeString(oprname)),
-										  '\0');
+										  '\0', false);
 			if (clist != NULL && clist->next == NULL &&
 				clist->oid == oprid)
 				result = pstrdup(oprname);
@@ -873,6 +923,33 @@ regclassin(PG_FUNCTION_ARGS)
 }
 
 /*
+ * to_regclass		- converts "classname" to class OID
+ *
+ * If the name is not found, we return NULL.
+ */
+Datum
+to_regclass(PG_FUNCTION_ARGS)
+{
+	char	   *class_name = PG_GETARG_CSTRING(0);
+	Oid			result;
+	List	   *names;
+
+	/*
+	 * Parse the name into components and see if it matches any pg_class entries
+	 * in the current search path.
+	 */
+	names = stringToQualifiedNameList(class_name);
+
+	/* We might not even have permissions on this relation; don't lock it. */
+	result = RangeVarGetRelid(makeRangeVarFromNameList(names), NoLock, true);
+
+	if (OidIsValid(result))
+		PG_RETURN_OID(result);
+	else
+		PG_RETURN_NULL();
+}
+
+/*
  * regclassout		- converts class OID to "class_name"
  */
 Datum
@@ -1028,9 +1105,32 @@ regtypein(PG_FUNCTION_ARGS)
 	 * Normal case: invoke the full parser to deal with special cases such as
 	 * array syntax.
 	 */
-	parseTypeString(typ_name_or_oid, &result, &typmod);
+	parseTypeString(typ_name_or_oid, &result, &typmod, false);
 
 	PG_RETURN_OID(result);
+}
+
+/*
+ * to_regtype		- converts "typename" to type OID
+ *
+ * If the name is not found, we return NULL.
+ */
+Datum
+to_regtype(PG_FUNCTION_ARGS)
+{
+	char	   *typ_name = PG_GETARG_CSTRING(0);
+	Oid			result;
+	int32		typmod;
+
+	/*
+	 * Invoke the full parser to deal with special cases such as array syntax.
+	 */
+	parseTypeString(typ_name, &result, &typmod, true);
+
+	if (OidIsValid(result))
+		PG_RETURN_OID(result);
+	else
+		PG_RETURN_NULL();
 }
 
 /*
@@ -1523,7 +1623,7 @@ parseNameAndArgTypes(const char *string, bool allowNone, List **names,
 		else
 		{
 			/* Use full parser to resolve the type name */
-			parseTypeString(typename, &typeid, &typmod);
+			parseTypeString(typename, &typeid, &typmod, false);
 		}
 		if (*nargs >= FUNC_MAX_ARGS)
 			ereport(ERROR,

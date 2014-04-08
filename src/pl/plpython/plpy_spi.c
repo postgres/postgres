@@ -113,7 +113,7 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 			 *information for input conversion.
 			 ********************************************************/
 
-			parseTypeString(sptr, &typeId, &typmod);
+			parseTypeString(sptr, &typeId, &typmod, false);
 
 			typeTup = SearchSysCache1(TYPEOID,
 									  ObjectIdGetDatum(typeId));

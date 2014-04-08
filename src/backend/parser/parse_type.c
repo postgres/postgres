@@ -706,9 +706,12 @@ pts_error_callback(void *arg)
  * Given a string that is supposed to be a SQL-compatible type declaration,
  * such as "int4" or "integer" or "character varying(32)", parse
  * the string and convert it to a type OID and type modifier.
+ * If missing_ok is true, InvalidOid is returned rather than raising an error
+ * when the type name is not found.
  */
 void
-parseTypeString(const char *str, Oid *typeid_p, int32 *typmod_p)
+parseTypeString(const char *str, Oid *typeid_p, int32 *typmod_p,
+				bool missing_ok)
 {
 	StringInfoData buf;
 	List	   *raw_parsetree_list;
@@ -717,6 +720,7 @@ parseTypeString(const char *str, Oid *typeid_p, int32 *typmod_p)
 	TypeCast   *typecast;
 	TypeName   *typeName;
 	ErrorContextCallback ptserrcontext;
+	Type		tup;
 
 	/* make sure we give useful error for empty input */
 	if (strspn(str, " \t\n\r\f") == strlen(str))
@@ -782,7 +786,28 @@ parseTypeString(const char *str, Oid *typeid_p, int32 *typmod_p)
 	if (typeName->setof)
 		goto fail;
 
-	typenameTypeIdAndMod(NULL, typeName, typeid_p, typmod_p);
+	tup = LookupTypeName(NULL, typeName, typmod_p, missing_ok);
+	if (tup == NULL)
+	{
+		if (!missing_ok)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					errmsg("type \"%s\" does not exist",
+							TypeNameToString(typeName)),
+					parser_errposition(NULL, typeName->location)));
+		*typeid_p = InvalidOid;
+	}
+	else
+	{
+		if (!((Form_pg_type) GETSTRUCT(tup))->typisdefined)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					errmsg("type \"%s\" is only a shell",
+							TypeNameToString(typeName)),
+					parser_errposition(NULL, typeName->location)));
+		*typeid_p = HeapTupleGetOid(tup);
+		ReleaseSysCache(tup);
+	}
 
 	pfree(buf.data);
 
