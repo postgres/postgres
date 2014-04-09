@@ -361,7 +361,7 @@ PostgreSQL documentation
       <term><option>--checkpoint=<replaceable class="parameter">fast|spread</replaceable></option></term>
       <listitem>
        <para>
-        Sets checkpoint mode to fast or spread (default).
+        Sets checkpoint mode to fast or spread (default) (see <xref linkend="backup-lowlevel-base-backup">).
        </para>
       </listitem>
      </varlistentry>
