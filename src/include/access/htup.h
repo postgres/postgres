@@ -16,7 +16,7 @@
 
 #include "storage/itemptr.h"
 
-/* typedefs and forward declarations for structs defined in htup.h */
+/* typedefs and forward declarations for structs defined in htup_details.h */
 
 typedef struct HeapTupleHeaderData HeapTupleHeaderData;
 
