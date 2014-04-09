@@ -3234,8 +3234,8 @@ ReleasePredicateLocks(bool isCommit)
 	 *
 	 * If this value is changing, we don't care that much whether we get the
 	 * old or new value -- it is just used to determine how far
-	 * GlobalSerizableXmin must advance before this transaction can be fully
-	 * cleaned up.	The worst that could happen is we wait for one more
+	 * GlobalSerializableXmin must advance before this transaction can be
+	 * fully cleaned up.  The worst that could happen is we wait for one more
 	 * transaction to complete before freeing some RAM; correctness of visible
 	 * behavior is not affected.
 	 */

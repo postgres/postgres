@@ -136,7 +136,7 @@
 /*
  * This struct contains the current state of the snapshot building
  * machinery. Besides a forward declaration in the header, it is not exposed
- * to the public, so we can easily change it's contents.
+ * to the public, so we can easily change its contents.
  */
 struct SnapBuild
 {
@@ -607,7 +607,7 @@ SnapBuildExportSnapshot(SnapBuild *builder)
 /*
  * Reset a previously SnapBuildExportSnapshot()'ed snapshot if there is
  * any. Aborts the previously started transaction and resets the resource
- * owner back to it's original value.
+ * owner back to its original value.
  */
 void
 SnapBuildClearExportedSnapshot()
@@ -1033,7 +1033,7 @@ SnapBuildCommitTxn(SnapBuild *builder, XLogRecPtr lsn, TransactionId xid,
 		SnapBuildAddCommittedTxn(builder, xid);
 	}
 
-	/* if there's any reason to build a historic snapshot, to so now */
+	/* if there's any reason to build a historic snapshot, do so now */
 	if (forced_timetravel || top_needs_timetravel || sub_needs_timetravel)
 	{
 		/*
@@ -1093,7 +1093,7 @@ SnapBuildCommitTxn(SnapBuild *builder, XLogRecPtr lsn, TransactionId xid,
  */
 
 /*
- * Process a running xacts record, and use it's information to first build a
+ * Process a running xacts record, and use its information to first build a
  * historic snapshot and later to release resources that aren't needed
  * anymore.
  */
@@ -1404,8 +1404,8 @@ typedef struct SnapBuildOnDisk
 /*
  * Store/Load a snapshot from disk, depending on the snapshot builder's state.
  *
- * Supposed to be used by external (i.e. not snapbuild.c) code that just reada
- * record that's a potential location for a serialized snapshot.
+ * Supposed to be used by external (i.e. not snapbuild.c) code that just read
+ * a record that's a potential location for a serialized snapshot.
  */
 void
 SnapBuildSerializationPoint(SnapBuild *builder, XLogRecPtr lsn)
