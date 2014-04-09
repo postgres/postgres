@@ -303,7 +303,8 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type, const int bra
 
 					ECPGdump_a_simple(o, name,
 									  type->u.element->type,
-									  type->u.element->size, type->size, NULL, prefix, type->u.element->counter);
+									  type->u.element->size, type->size, struct_sizeof ? struct_sizeof : NULL,
+									  prefix, type->u.element->counter);
 
 					if (ind_type != NULL)
 					{
@@ -481,11 +482,19 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 				sprintf(offset, "sizeof(%s)", ecpg_type_name(type));
 				break;
 		}
-
-		if (atoi(arrsize) < 0)
+		
+		/*
+		 * Array size would be -1 for addresses of members within structure,
+		 * when pointer to structure is being dumped.
+		 */
+		if (atoi(arrsize) < 0 && !siz)
 			strcpy(arrsize, "1");
 
-		if (siz == NULL || strlen(siz) == 0 || strcmp(arrsize, "0") == 0 || strcmp(arrsize, "1") == 0)
+		/*
+		 * If siz i.e. the size of structure of which this variable is part of,
+		 * that gives the offset to the next element, if required 
+		 */
+		if (siz == NULL || strlen(siz) == 0)
 			fprintf(o, "\n\t%s,%s,(long)%s,(long)%s,%s, ", get_type(type), variable, varcharsize, arrsize, offset);
 		else
 			fprintf(o, "\n\t%s,%s,(long)%s,(long)%s,%s, ", get_type(type), variable, varcharsize, arrsize, siz);

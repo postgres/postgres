@@ -235,10 +235,10 @@ if (sqlca.sqlcode < 0) sqlprint();}
     }
 
     { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select * from customers limit 1", ECPGt_EOIT, 
-	ECPGt_varchar,&(custs4.name),(long)50,(long)1,sizeof(struct varchar_4), 
-	ECPGt_short,&(inds[0].name_ind),(long)1,(long)1,sizeof(short), 
-	ECPGt_int,&(custs4.phone),(long)1,(long)1,sizeof(int), 
-	ECPGt_short,&(inds[0].phone_ind),(long)1,(long)1,sizeof(short), ECPGt_EORT);
+	ECPGt_varchar,&(custs4.name),(long)50,(long)1,sizeof( struct customer4 ), 
+	ECPGt_short,&(inds[0].name_ind),(long)1,(long)1,sizeof( struct ind ), 
+	ECPGt_int,&(custs4.phone),(long)1,(long)1,sizeof( struct customer4 ), 
+	ECPGt_short,&(inds[0].phone_ind),(long)1,(long)1,sizeof( struct ind ), ECPGt_EORT);
 #line 80 "array_of_struct.pgc"
 
 if (sqlca.sqlcode == ECPG_NOT_FOUND) sqlprint();

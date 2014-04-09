@@ -207,12 +207,12 @@ if (sqlca.sqlcode < 0) exit (1);}
 	while (1) {
 		strcpy(msg, "fetch");
 		{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch cur", ECPGt_EOIT, 
-	ECPGt_varchar,&(p->name),(long)BUFFERSIZ,(long)1,sizeof(struct varchar_1), 
-	ECPGt_int,&(i->ind_name),(long)1,(long)1,sizeof(int), 
-	ECPGt_long,&(p->birth.born),(long)1,(long)1,sizeof(long), 
-	ECPGt_long,&(i->ind_birth.born),(long)1,(long)1,sizeof(long), 
-	ECPGt_short,&(p->birth.age),(long)1,(long)1,sizeof(short), 
-	ECPGt_short,&(i->ind_birth.age),(long)1,(long)1,sizeof(short), 
+	ECPGt_varchar,&(p->name),(long)BUFFERSIZ,(long)-1,sizeof( struct birthinfo ), 
+	ECPGt_int,&(i->ind_name),(long)1,(long)-1,sizeof( struct birthinfo ), 
+	ECPGt_long,&(p->birth.born),(long)1,(long)1,sizeof( struct birthinfo ), 
+	ECPGt_long,&(i->ind_birth.born),(long)1,(long)1,sizeof( struct birthinfo ), 
+	ECPGt_short,&(p->birth.age),(long)1,(long)1,sizeof( struct birthinfo ), 
+	ECPGt_short,&(i->ind_birth.age),(long)1,(long)1,sizeof( struct birthinfo ), 
 	ECPGt_char,&(married),(long)0,(long)1,(1)*sizeof(char), 
 	ECPGt_long,&(ind_married),(long)1,(long)1,sizeof(long), 
 	ECPGt_int,&(children.integer),(long)1,(long)1,sizeof(int), 
