@@ -13,6 +13,7 @@
 #include "postgres.h"
 
 #include "miscadmin.h"
+#include "storage/dsm.h"
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
 
