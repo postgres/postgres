@@ -1,0 +1,100 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+exec sql include ../regression;
+
+EXEC SQL WHENEVER sqlerror sqlprint;
+EXEC SQL WHENEVER sqlwarning sqlprint;
+EXEC SQL WHENEVER not found sqlprint;
+
+EXEC SQL TYPE customer IS
+    struct
+    {
+        varchar name[50];
+        int     phone;
+    };
+
+EXEC SQL TYPE cust_ind IS
+    struct ind
+    {
+        short   name_ind;
+        short   phone_ind;
+    };
+
+int main()
+{
+    EXEC SQL begin declare section;
+      customer  *custs1 = (customer *) malloc(sizeof(customer) * 10);
+      cust_ind  *inds = (cust_ind *) malloc(sizeof(cust_ind) * 10);
+      typedef struct
+      {
+        varchar name[50];
+        int     phone;
+      } customer2;
+      customer2  *custs2 = (customer2 *) malloc(sizeof(customer2) * 10);
+
+      struct customer3
+      {
+        char name[50];
+        int     phone;
+      } *custs3 = (struct customer3 *) malloc(sizeof(struct customer3) * 10);
+
+      struct customer4
+      {
+        varchar name[50];
+        int     phone;
+      } *custs4 = (struct customer4 *) malloc(sizeof(struct customer4));
+
+      int r;
+      varchar onlyname[2][50];
+    EXEC SQL end declare section;
+
+    ECPGdebug(1, stderr);
+
+    EXEC SQL connect to REGRESSDB1;
+
+    EXEC SQL create table customers (c varchar(50), p int);
+    EXEC SQL insert into customers values ('John Doe', '12345');
+    EXEC SQL insert into customers values ('Jane Doe', '67890');
+
+    EXEC SQL select * INTO :custs1:inds from customers limit 2;
+    printf("custs1:\n");
+    for (r = 0; r < 2; r++)
+    {
+	    printf( "name  - %s\n", custs1[r].name.arr );
+	    printf( "phone - %d\n", custs1[r].phone );
+    }
+
+    EXEC SQL select * INTO :custs2:inds from customers limit 2;
+    printf("\ncusts2:\n");
+    for (r = 0; r < 2; r++)
+    {
+	    printf( "name  - %s\n", custs2[r].name.arr );
+	    printf( "phone - %d\n", custs2[r].phone );
+    }
+
+    EXEC SQL select * INTO :custs3:inds from customers limit 2;
+    printf("\ncusts3:\n");
+    for (r = 0; r < 2; r++)
+    {
+	    printf( "name  - %s\n", custs3[r].name );
+	    printf( "phone - %d\n", custs3[r].phone );
+    }
+
+    EXEC SQL select * INTO :custs4:inds from customers limit 1;
+    printf("\ncusts4:\n");
+    printf( "name  - %s\n", custs4->name.arr );
+    printf( "phone - %d\n", custs4->phone );
+
+    EXEC SQL select c INTO :onlyname from customers limit 2;
+    printf("\nname:\n");
+    for (r = 0; r < 2; r++)
+    {
+	    printf( "name  - %s\n", onlyname[r].arr );
+    }
+
+    EXEC SQL disconnect all;
+
+	/* All the memory will anyway be freed at the end */
+    return( 0 );
+}
