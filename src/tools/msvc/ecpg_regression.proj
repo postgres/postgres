@@ -36,6 +36,9 @@
   <CreateProperty Value="-c" Condition="'%(Pgc.FileName)'=='array_of_struct'">
    <Output TaskParameter="Value" PropertyName="ECPGPARAM" />
   </CreateProperty>
+  <CreateProperty Value="-c" Condition="'%(Pgc.FileName)'=='pointer_to_struct'">
+   <Output TaskParameter="Value" PropertyName="ECPGPARAM" />
+  </CreateProperty>
   <CreateProperty Value="-r questionmarks" Condition="'%(Pgc.FileName)'=='oldexec'">
    <Output TaskParameter="Value" PropertyName="ECPGPARAM" />
   </CreateProperty>
