@@ -679,6 +679,12 @@ testdb=&gt;
     <xref linkend="SQL-LISTEN"> and
     <xref linkend="SQL-NOTIFY">.
     </para>
+
+    <para>
+    While C-style block comments are passed to the server for
+    processing and removal, SQL-standard comments are removed by
+    <application>psql</application>.
+    </para>
   </refsect2>
 
   <refsect2 id="APP-PSQL-meta-commands">
