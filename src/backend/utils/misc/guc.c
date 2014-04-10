@@ -2543,6 +2543,7 @@ static struct config_int ConfigureNamesInt[] =
 		{"track_activity_query_size", PGC_POSTMASTER, RESOURCES_MEM,
 			gettext_noop("Sets the size reserved for pg_stat_activity.query, in bytes."),
 			NULL,
+			/* There is no _bytes_ unit, so the user can't supply units for this. */
 		},
 		&pgstat_track_activity_query_size,
 		1024, 100, 102400,
