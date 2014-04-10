@@ -729,11 +729,18 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
 		/* A bitmap result */
 		BlockNumber advancePastBlk = GinItemPointerGetBlockNumber(&advancePast);
 		OffsetNumber advancePastOff = GinItemPointerGetOffsetNumber(&advancePast);
+		bool		gotitem = false;
 
 		do
 		{
-			if (entry->matchResult == NULL ||
-				entry->offset >= entry->matchResult->ntuples)
+			/*
+			 * If we've exhausted all items on this block, move to next block
+			 * in the bitmap.
+			 */
+			while (entry->matchResult == NULL ||
+				   (entry->matchResult->ntuples >= 0 &&
+					entry->offset >= entry->matchResult->ntuples) ||
+				   entry->matchResult->blockno < advancePastBlk)
 			{
 				entry->matchResult = tbm_iterate(entry->matchIterator);
 
@@ -747,18 +754,6 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
 				}
 
 				/*
-				 * If all the matches on this page are <= advancePast, skip
-				 * to next page.
-				 */
-				if (entry->matchResult->blockno < advancePastBlk ||
-					(entry->matchResult->blockno == advancePastBlk &&
-					 entry->matchResult->offsets[entry->offset] <= advancePastOff))
-				{
-					entry->offset = entry->matchResult->ntuples;
-					continue;
-				}
-
-				/*
 				 * Reset counter to the beginning of entry->matchResult. Note:
 				 * entry->offset is still greater than matchResult->ntuples if
 				 * matchResult is lossy.  So, on next call we will get next
@@ -766,30 +761,43 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
 				 */
 				entry->offset = 0;
 			}
+			if (entry->isFinished)
+				break;
 
+			/*
+			 * We're now on the first page after advancePast which has any
+			 * items on it. If it's a lossy result, return that.
+			 */
 			if (entry->matchResult->ntuples < 0)
 			{
-				/*
-				 * lossy result, so we need to check the whole page
-				 */
 				ItemPointerSetLossyPage(&entry->curItem,
 										entry->matchResult->blockno);
 
 				/*
 				 * We might as well fall out of the loop; we could not
 				 * estimate number of results on this page to support correct
-				 * reducing of result even if it's enabled
+				 * reducing of result even if it's enabled.
 				 */
+				gotitem = true;
 				break;
 			}
-
+			/*
+			 * Not a lossy page. Skip over any offsets <= advancePast, and
+			 * return that.
+			 */
 			if (entry->matchResult->blockno == advancePastBlk)
 			{
 				/*
-				 * Skip to the right offset on this page. We already checked
-				 * in above loop that there is at least one item > advancePast
-				 * on the page.
+				 * First, do a quick check against the last offset on the page.
+				 * If that's > advancePast, so are all the other offsets.
 				 */
+				if (entry->matchResult->offsets[entry->matchResult->ntuples - 1] <= advancePastOff)
+				{
+					entry->offset = entry->matchResult->ntuples;
+					continue;
+				}
+
+				/* Otherwise scan to find the first item > advancePast */
 				while (entry->matchResult->offsets[entry->offset] <= advancePastOff)
 					entry->offset++;
 			}
@@ -798,7 +806,8 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
 						   entry->matchResult->blockno,
 						   entry->matchResult->offsets[entry->offset]);
 			entry->offset++;
-		} while (entry->reduceResult == TRUE && dropItem(entry));
+			gotitem = true;
+		} while (!gotitem || (entry->reduceResult == TRUE && dropItem(entry)));
 	}
 	else if (!BufferIsValid(entry->buffer))
 	{
