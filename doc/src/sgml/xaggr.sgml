@@ -132,6 +132,161 @@ CREATE AGGREGATE avg (float8)
   </note>
 
   <para>
+   Aggregate function calls in SQL allow <literal>DISTINCT</>
+   and <literal>ORDER BY</> options that control which rows are fed
+   to the aggregate's transition function and in what order.  These
+   options are implemented behind the scenes and are not the concern
+   of the aggregate's support functions.
+  </para>
+
+  <para>
+   For further details see the
+   <xref linkend="sql-createaggregate">
+   command.
+  </para>
+
+ <sect2 id="xaggr-moving-aggregates">
+  <title>Moving-Aggregate Mode</title>
+
+  <indexterm>
+   <primary>moving-aggregate mode</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>aggregate function</primary>
+   <secondary>moving aggregate</secondary>
+  </indexterm>
+
+  <para>
+   Aggregate functions can optionally support <firstterm>moving-aggregate
+   mode</>, which allows substantially faster execution of aggregate
+   functions within windows with moving frame starting points.
+   (See <xref linkend="tutorial-window">
+   and <xref linkend="syntax-window-functions"> for information about use of
+   aggregate functions as window functions.)
+   The basic idea is that in addition to a normal <quote>forward</>
+   transition function, the aggregate provides an <firstterm>inverse
+   transition function</>, which allows rows to be removed from the
+   aggregate's running state value when they exit the window frame.
+   For example a <function>sum</> aggregate, which uses addition as the
+   forward transition function, would use subtraction as the inverse
+   transition function.  Without an inverse transition function, the window
+   function mechanism must recalculate the aggregate from scratch each time
+   the frame starting point moves, resulting in run time proportional to the
+   number of input rows times the average frame length.  With an inverse
+   transition function, the run time is only proportional to the number of
+   input rows.
+  </para>
+
+  <para>
+   The inverse transition function is passed the current state value and the
+   aggregate input value(s) for the earliest row included in the current
+   state.  It must reconstruct what the state value would have been if the
+   given input value had never been aggregated, but only the rows following
+   it.  This sometimes requires that the forward transition function keep
+   more state than is needed for plain aggregation mode.  Therefore, the
+   moving-aggregate mode uses a completely separate implementation from the
+   plain mode: it has its own state data type, its own forward transition
+   function, and its own final function if needed.  These can be the same as
+   the plain mode's data type and functions, if there is no need for extra
+   state.
+  </para>
+
+  <para>
+   As an example, we could extend the <function>sum</> aggregate given above
+   to support moving-aggregate mode like this:
+
+<programlisting>
+CREATE AGGREGATE sum (complex)
+(
+    sfunc = complex_add,
+    stype = complex,
+    initcond = '(0,0)',
+    msfunc = complex_add,
+    minvfunc = complex_sub,
+    mstype = complex,
+    minitcond = '(0,0)'
+);
+</programlisting>
+
+   The parameters whose names begin with <literal>m</> define the
+   moving-aggregate implementation.  Except for the inverse transition
+   function <literal>minvfunc</>, they correspond to the plain-aggregate
+   parameters without <literal>m</>.
+  </para>
+
+  <para>
+   The forward transition function for moving-aggregate mode is not allowed
+   to return NULL as the new state value.  If the inverse transition
+   function returns NULL, this is taken as an indication that the inverse
+   function cannot reverse the state calculation for this particular input,
+   and so the aggregate calculation will be redone from scratch for the
+   current frame starting position.  This convention allows moving-aggregate
+   mode to be used in situations where there are some infrequent cases that
+   are impractical to reverse out of the running state value.  The inverse
+   transition function can <quote>punt</> on these cases, and yet still come
+   out ahead so long as it can work for most cases.  As an example, an
+   aggregate working with floating-point numbers might choose to punt when
+   a <literal>NaN</> (not a number) input has to be removed from the running
+   state value.
+  </para>
+
+  <para>
+   When writing moving-aggregate support functions, it is important to be
+   sure that the inverse transition function can reconstruct the correct
+   state value exactly.  Otherwise there might be user-visible differences
+   in results depending on whether the moving-aggregate mode is used.
+   An example of an aggregate for which adding an inverse transition
+   function seems easy at first, yet where this requirement cannot be met
+   is <function>sum</> over <type>float4</> or <type>float8</> inputs.  A
+   naive declaration of <function>sum(<type>float8</>)</function> could be
+
+<programlisting>
+CREATE AGGREGATE unsafe_sum (float8)
+(
+    stype = float8,
+    sfunc = float8pl,
+    mstype = float8,
+    msfunc = float8pl,
+    minvfunc = float8mi
+);
+</programlisting>
+
+   This aggregate, however, can give wildly different results than it would
+   have without the inverse transition function. For example, consider
+
+<programlisting>
+SELECT
+  unsafe_sum(x) OVER (ORDER BY n ROWS BETWEEN CURRENT ROW AND 1 FOLLOWING)
+FROM (VALUES (1, 1.0e20::float8),
+             (2, 1.0::float8)) AS v (n,x);
+</programlisting>
+
+   This query returns <literal>0</> as its second result, rather than the
+   expected answer of <literal>1</>.  The cause is the limited precision of
+   floating-point values: adding <literal>1</> to <literal>1e20</> results
+   in <literal>1e20</> again, and so subtracting <literal>1e20</> from that
+   yields <literal>0</>, not <literal>1</>.  Note that this is a limitation
+   of floating-point arithmetic in general, not a limitation
+   of <productname>PostgreSQL</>.
+  </para>
+
+ </sect2>
+
+ <sect2 id="xaggr-polymorphic-aggregates">
+  <title>Polymorphic and Variadic Aggregates</title>
+
+  <indexterm>
+   <primary>aggregate function</primary>
+   <secondary>polymorphic</secondary>
+  </indexterm>
+
+  <indexterm>
+   <primary>aggregate function</primary>
+   <secondary>variadic</secondary>
+  </indexterm>
+
+  <para>
    Aggregate functions can use polymorphic
    state transition functions or final functions, so that the same functions
    can be used to implement multiple aggregates.
@@ -189,8 +344,8 @@ SELECT attrelid::regclass, array_accum(atttypid::regtype)
    by declaring its last argument as a <literal>VARIADIC</> array, in much
    the same fashion as for regular functions; see
    <xref linkend="xfunc-sql-variadic-functions">.  The aggregate's transition
-   function must have the same array type as its last argument.  The
-   transition function typically would also be marked <literal>VARIADIC</>,
+   function(s) must have the same array type as their last argument.  The
+   transition function(s) typically would also be marked <literal>VARIADIC</>,
    but this is not strictly required.
   </para>
 
@@ -220,13 +375,15 @@ SELECT myaggregate(a, b, c ORDER BY a) FROM ...
    </para>
   </note>
 
-  <para>
-   Aggregate function calls in SQL allow <literal>DISTINCT</>
-   and <literal>ORDER BY</> options that control which rows are fed
-   to the aggregate's transition function and in what order.  These
-   options are implemented behind the scenes and are not the concern
-   of the aggregate's support functions.
-  </para>
+ </sect2>
+
+ <sect2 id="xaggr-ordered-set-aggregates">
+  <title>Ordered-Set Aggregates</title>
+
+  <indexterm>
+   <primary>aggregate function</primary>
+   <secondary>ordered set</secondary>
+  </indexterm>
 
   <para>
    The aggregates we have been describing so far are <quote>normal</>
@@ -312,6 +469,21 @@ SELECT percentile_disc(0.5) WITHIN GROUP (ORDER BY income) FROM households;
   </para>
 
   <para>
+   Currently, ordered-set aggregates cannot be used as window functions,
+   and therefore there is no need for them to support moving-aggregate mode.
+  </para>
+
+ </sect2>
+
+ <sect2 id="xaggr-support-functions">
+  <title>Support Functions for Aggregates</title>
+
+  <indexterm>
+   <primary>aggregate function</primary>
+   <secondary>support functions for</secondary>
+  </indexterm>
+
+  <para>
    A function written in C can detect that it is being called as an
    aggregate transition or final function by calling
    <function>AggCheckCallContext</>, for example:
@@ -341,9 +513,6 @@ if (AggCheckCallContext(fcinfo, NULL))
    source code.
   </para>
 
-  <para>
-   For further details see the
-   <xref linkend="sql-createaggregate">
-   command.
-  </para>
+ </sect2>
+
  </sect1>

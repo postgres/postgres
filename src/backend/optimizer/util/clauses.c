@@ -471,7 +471,11 @@ count_agg_clauses_walker(Node *node, count_agg_clauses_context *context)
 
 		Assert(aggref->agglevelsup == 0);
 
-		/* fetch info about aggregate from pg_aggregate */
+		/*
+		 * Fetch info about aggregate from pg_aggregate.  Note it's correct to
+		 * ignore the moving-aggregate variant, since what we're concerned
+		 * with here is aggregates not window functions.
+		 */
 		aggTuple = SearchSysCache1(AGGFNOID,
 								   ObjectIdGetDatum(aggref->aggfnoid));
 		if (!HeapTupleIsValid(aggTuple))

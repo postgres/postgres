@@ -1798,8 +1798,10 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 								aggref->aggtype,
 								aggref->inputcollid,
 								transfn_oid,
+								InvalidOid,		/* invtrans is not needed here */
 								finalfn_oid,
 								&transfnexpr,
+								NULL,
 								&finalfnexpr);
 
 		/* set up infrastructure for calling the transfn and finalfn */
@@ -1847,7 +1849,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		 * type and transtype are the same (or at least binary-compatible), so
 		 * that it's OK to use the first aggregated input value as the initial
 		 * transValue.	This should have been checked at agg definition time,
-		 * but just in case...
+		 * but we must check again in case the transfn's strictness property
+		 * has been changed.
 		 */
 		if (peraggstate->transfn.fn_strict && peraggstate->initValueIsNull)
 		{
@@ -2126,6 +2129,12 @@ ExecReScanAgg(AggState *node)
 		ExecReScan(node->ss.ps.lefttree);
 }
 
+
+/***********************************************************************
+ * API exposed to aggregate functions
+ ***********************************************************************/
+
+
 /*
  * AggCheckCallContext - test if a SQL function is being called as an aggregate
  *
@@ -2152,7 +2161,7 @@ AggCheckCallContext(FunctionCallInfo fcinfo, MemoryContext *aggcontext)
 	if (fcinfo->context && IsA(fcinfo->context, WindowAggState))
 	{
 		if (aggcontext)
-			*aggcontext = ((WindowAggState *) fcinfo->context)->aggcontext;
+			*aggcontext = ((WindowAggState *) fcinfo->context)->curaggcontext;
 		return AGG_CONTEXT_WINDOW;
 	}
 

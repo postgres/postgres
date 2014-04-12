@@ -387,6 +387,24 @@
       <entry>Final function (zero if none)</entry>
      </row>
      <row>
+      <entry><structfield>aggmtransfn</structfield></entry>
+      <entry><type>regproc</type></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
+      <entry>Forward transition function for moving-aggregate mode (zero if none)</entry>
+     </row>
+     <row>
+      <entry><structfield>aggminvtransfn</structfield></entry>
+      <entry><type>regproc</type></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
+      <entry>Inverse transition function for moving-aggregate mode (zero if none)</entry>
+     </row>
+     <row>
+      <entry><structfield>aggmfinalfn</structfield></entry>
+      <entry><type>regproc</type></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
+      <entry>Final function for moving-aggregate mode (zero if none)</entry>
+     </row>
+     <row>
       <entry><structfield>aggsortop</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.oid</literal></entry>
@@ -406,6 +424,20 @@
        data, or zero to use a default estimate</entry>
      </row>
      <row>
+      <entry><structfield>aggmtranstype</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
+      <entry>Data type of the aggregate function's internal transition (state)
+       data for moving-aggregate mode (zero if none)</entry>
+     </row>
+     <row>
+      <entry><structfield>aggmtransspace</structfield></entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>Approximate average size (in bytes) of the transition state data
+       for moving-aggregate mode, or zero to use a default estimate</entry>
+     </row>
+     <row>
       <entry><structfield>agginitval</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
@@ -413,6 +445,17 @@
        The initial value of the transition state.  This is a text
        field containing the initial value in its external string
        representation.  If this field is null, the transition state
+       value starts out null.
+      </entry>
+     </row>
+     <row>
+      <entry><structfield>aggminitval</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>
+       The initial value of the transition state for moving-aggregate mode.
+       This is a text field containing the initial value in its external
+       string representation.  If this field is null, the transition state
        value starts out null.
       </entry>
      </row>

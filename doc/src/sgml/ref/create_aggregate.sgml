@@ -27,6 +27,12 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> ( [ <replacea
     [ , SSPACE = <replaceable class="PARAMETER">state_data_size</replaceable> ]
     [ , FINALFUNC = <replaceable class="PARAMETER">ffunc</replaceable> ]
     [ , INITCOND = <replaceable class="PARAMETER">initial_condition</replaceable> ]
+    [ , MSFUNC = <replaceable class="PARAMETER">msfunc</replaceable> ]
+    [ , MINVFUNC = <replaceable class="PARAMETER">minvfunc</replaceable> ]
+    [ , MSTYPE = <replaceable class="PARAMETER">mstate_data_type</replaceable> ]
+    [ , MSSPACE = <replaceable class="PARAMETER">mstate_data_size</replaceable> ]
+    [ , MFINALFUNC = <replaceable class="PARAMETER">mffunc</replaceable> ]
+    [ , MINITCOND = <replaceable class="PARAMETER">minitial_condition</replaceable> ]
     [ , SORTOP = <replaceable class="PARAMETER">sort_operator</replaceable> ]
 )
 
@@ -49,6 +55,12 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
     [ , SSPACE = <replaceable class="PARAMETER">state_data_size</replaceable> ]
     [ , FINALFUNC = <replaceable class="PARAMETER">ffunc</replaceable> ]
     [ , INITCOND = <replaceable class="PARAMETER">initial_condition</replaceable> ]
+    [ , MSFUNC = <replaceable class="PARAMETER">sfunc</replaceable> ]
+    [ , MINVFUNC = <replaceable class="PARAMETER">invfunc</replaceable> ]
+    [ , MSTYPE = <replaceable class="PARAMETER">state_data_type</replaceable> ]
+    [ , MSSPACE = <replaceable class="PARAMETER">state_data_size</replaceable> ]
+    [ , MFINALFUNC = <replaceable class="PARAMETER">ffunc</replaceable> ]
+    [ , MINITCOND = <replaceable class="PARAMETER">initial_condition</replaceable> ]
     [ , SORTOP = <replaceable class="PARAMETER">sort_operator</replaceable> ]
 )
 </synopsis>
@@ -84,7 +96,7 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
   </para>
 
   <para>
-   An aggregate function is made from one or two ordinary
+   A simple aggregate function is made from one or two ordinary
    functions:
    a state transition function
    <replaceable class="PARAMETER">sfunc</replaceable>,
@@ -126,7 +138,7 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
    values are ignored (the function is not called and the previous state value
    is retained).  If the initial state value is null, then at the first row
    with all-nonnull input values, the first argument value replaces the state
-   value, and the transition function is invoked at subsequent rows with
+   value, and the transition function is invoked at each subsequent row with
    all-nonnull input values.
    This is handy for implementing aggregates like <function>max</function>.
    Note that this behavior is only available when
@@ -152,6 +164,18 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
    the option of returning a null value.  For example, the final function for
    <function>avg</function> returns null when it sees there were zero
    input rows.
+  </para>
+
+  <para>
+   An aggregate can optionally support <firstterm>moving-aggregate mode</>,
+   as described in <xref linkend="xaggr-moving-aggregates">.  This requires
+   specifying the <literal>MSFUNC</>, <literal>MINVFUNC</>,
+   and <literal>MSTYPE</> parameters, and optionally
+   the <literal>MSPACE</>, <literal>MFINALFUNC</>,
+   and <literal>MINITCOND</> parameters.  Except for <literal>MINVFUNC</>,
+   these parameters work like the corresponding simple-aggregate parameters
+   without <literal>M</>; they define a separate implementation of the
+   aggregate that includes an inverse transition function.
   </para>
 
   <para>
@@ -197,8 +221,8 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
   <para>
    To be able to create an aggregate function, you must
    have <literal>USAGE</literal> privilege on the argument types, the state
-   type, and the return type, as well as <literal>EXECUTE</literal> privilege
-   on the transition and final functions.
+   type(s), and the return type, as well as <literal>EXECUTE</literal>
+   privilege on the transition and final functions.
   </para>
  </refsect1>
 
@@ -360,6 +384,79 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    </varlistentry>
 
    <varlistentry>
+    <term><replaceable class="PARAMETER">msfunc</replaceable></term>
+    <listitem>
+     <para>
+      The name of the forward state transition function to be called for each
+      input row in moving-aggregate mode.  This is exactly like the regular
+      transition function, except that its first argument and result are of
+      type <replaceable>mstate_data_type</>, which might be different
+      from <replaceable>state_data_type</>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">minvfunc</replaceable></term>
+    <listitem>
+     <para>
+      The name of the inverse state transition function to be used in
+      moving-aggregate mode.  This function has the same argument and
+      result types as <replaceable>msfunc</>, but it is used to remove
+      a value from the current aggregate state, rather than add a value to
+      it.  The inverse transition function must have the same strictness
+      attribute as the forward state transition function.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">mstate_data_type</replaceable></term>
+    <listitem>
+     <para>
+      The data type for the aggregate's state value, when using
+      moving-aggregate mode.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">mstate_data_size</replaceable></term>
+    <listitem>
+     <para>
+      The approximate average size (in bytes) of the aggregate's state
+      value, when using moving-aggregate mode.  This works the same as 
+      <replaceable>state_data_size</>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">mffunc</replaceable></term>
+    <listitem>
+     <para>
+      The name of the final function called to compute the aggregate's
+      result after all input rows have been traversed, when using
+      moving-aggregate mode.  This works the same as <replaceable>ffunc</>,
+      except that its input type is <replaceable>mstate_data_type</>.
+      The aggregate result type determined by <replaceable>mffunc</>
+      and <replaceable>mstate_data_type</> must match that determined by the
+      aggregate's regular implementation.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">minitial_condition</replaceable></term>
+    <listitem>
+     <para>
+      The initial setting for the state value, when using moving-aggregate
+      mode.  This works the same as <replaceable>initial_condition</>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><replaceable class="PARAMETER">sort_operator</replaceable></term>
     <listitem>
      <para>
@@ -398,6 +495,49 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
   <title>Notes</title>
 
    <para>
+    If an aggregate supports moving-aggregate mode, it will improve
+    calculation efficiency when the aggregate is used as a window function
+    for a window with moving frame start (that is, a frame start mode other
+    than <literal>UNBOUNDED PRECEDING</>).  Conceptually, the forward
+    transition function adds input values to the aggregate's state when
+    they enter the window frame from the bottom, and the inverse transition
+    function removes them again when they leave the frame at the top.  So,
+    when values are removed, they are always removed in the same order they
+    were added.  Whenever the inverse transition function is invoked, it will
+    thus receive the earliest added but not yet removed argument value(s).
+    The inverse transition function can assume that at least one row will
+    remain in the current state after it removes the oldest row.  (When this
+    would not be the case, the window function mechanism simply starts a
+    fresh aggregation, rather than using the inverse transition function.)
+   </para>
+
+   <para>
+    The forward transition function for moving-aggregate mode is not
+    allowed to return NULL as the new state value. If the inverse
+    transition function returns NULL, this is taken as an indication that
+    the inverse function cannot reverse the state calculation for this
+    particular input, and so the aggregate calculation will be redone from
+    scratch for the current frame starting position.  This convention
+    allows moving-aggregate mode to be used in situations where there are
+    some infrequent cases that are impractical to reverse out of the
+    running state value.
+   </para>
+
+   <para>
+    If no moving-aggregate implementation is supplied,
+    the aggregate can still be used with moving frames,
+    but <productname>PostgreSQL</productname> will recompute the whole
+    aggregation whenever the start of the frame moves.
+    Note that whether or not the aggregate supports moving-aggregate
+    mode, <productname>PostgreSQL</productname> can handle a moving frame
+    end without recalculation; this is done by continuing to add new values
+    to the aggregate's state.  It is assumed that the final function does
+    not damage the aggregate's state value, so that the aggregation can be
+    continued even after an aggregate result value has been obtained for
+    one set of frame boundaries.
+   </para>
+
+   <para>
     The syntax for ordered-set aggregates allows <literal>VARIADIC</>
     to be specified for both the last direct parameter and the last
     aggregated (<literal>WITHIN GROUP</>) parameter.  However, the
@@ -414,6 +554,11 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
     that match the <literal>VARIADIC "any"</> parameter are the hypothetical
     ones; any preceding parameters represent additional direct arguments
     that are not constrained to match the aggregated arguments.
+   </para>
+
+   <para>
+    Currently, ordered-set aggregates do not need to support
+    moving-aggregate mode, since they cannot be used as window functions.
    </para>
  </refsect1>
 

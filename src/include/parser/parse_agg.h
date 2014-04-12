@@ -39,8 +39,10 @@ extern void build_aggregate_fnexprs(Oid *agg_input_types,
 						Oid agg_result_type,
 						Oid agg_input_collation,
 						Oid transfn_oid,
+						Oid invtransfn_oid,
 						Oid finalfn_oid,
 						Expr **transfnexpr,
+						Expr **invtransfnexpr,
 						Expr **finalfnexpr);
 
 #endif   /* PARSE_AGG_H */

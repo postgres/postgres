@@ -90,3 +90,38 @@ alter aggregate my_rank(VARIADIC "any" ORDER BY VARIADIC "any")
  public | test_rank            | bigint           | VARIADIC "any" ORDER BY VARIADIC "any" | 
 (2 rows)
 
+-- moving-aggregate options
+CREATE AGGREGATE sumdouble (float8)
+(
+    stype = float8,
+    sfunc = float8pl,
+    mstype = float8,
+    msfunc = float8pl,
+    minvfunc = float8mi
+);
+-- invalid: nonstrict inverse with strict forward function
+CREATE FUNCTION float8mi_n(float8, float8) RETURNS float8 AS
+$$ SELECT $1 - $2; $$
+LANGUAGE SQL;
+CREATE AGGREGATE invalidsumdouble (float8)
+(
+    stype = float8,
+    sfunc = float8pl,
+    mstype = float8,
+    msfunc = float8pl,
+    minvfunc = float8mi_n
+);
+ERROR:  strictness of aggregate's forward and inverse transition functions must match
+-- invalid: non-matching result types
+CREATE FUNCTION float8mi_int(float8, float8) RETURNS int AS
+$$ SELECT CAST($1 - $2 AS INT); $$
+LANGUAGE SQL;
+CREATE AGGREGATE wrongreturntype (float8)
+(
+    stype = float8,
+    sfunc = float8pl,
+    mstype = float8,
+    msfunc = float8pl,
+    minvfunc = float8mi_int
+);
+ERROR:  return type of inverse transition function float8mi_int is not double precision

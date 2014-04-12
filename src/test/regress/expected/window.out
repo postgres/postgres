@@ -1071,3 +1071,226 @@ SELECT nth_value_def(ten) OVER (PARTITION BY four), ten, four
              1 |   3 |    3
 (10 rows)
 
+--
+-- Test the basic moving-aggregate machinery
+--
+-- create aggregates that record the series of transform calls (these are
+-- intentionally not true inverses)
+CREATE FUNCTION logging_sfunc_nonstrict(text, anyelement) RETURNS text AS
+$$ SELECT COALESCE($1, '') || '*' || quote_nullable($2) $$
+LANGUAGE SQL IMMUTABLE;
+CREATE FUNCTION logging_msfunc_nonstrict(text, anyelement) RETURNS text AS
+$$ SELECT COALESCE($1, '') || '+' || quote_nullable($2) $$
+LANGUAGE SQL IMMUTABLE;
+CREATE FUNCTION logging_minvfunc_nonstrict(text, anyelement) RETURNS text AS
+$$ SELECT $1 || '-' || quote_nullable($2) $$
+LANGUAGE SQL IMMUTABLE;
+CREATE AGGREGATE logging_agg_nonstrict (anyelement)
+(
+	stype = text,
+	sfunc = logging_sfunc_nonstrict,
+	mstype = text,
+	msfunc = logging_msfunc_nonstrict,
+	minvfunc = logging_minvfunc_nonstrict
+);
+CREATE AGGREGATE logging_agg_nonstrict_initcond (anyelement)
+(
+	stype = text,
+	sfunc = logging_sfunc_nonstrict,
+	mstype = text,
+	msfunc = logging_msfunc_nonstrict,
+	minvfunc = logging_minvfunc_nonstrict,
+	initcond = 'I',
+	minitcond = 'MI'
+);
+CREATE FUNCTION logging_sfunc_strict(text, anyelement) RETURNS text AS
+$$ SELECT $1 || '*' || quote_nullable($2) $$
+LANGUAGE SQL STRICT IMMUTABLE;
+CREATE FUNCTION logging_msfunc_strict(text, anyelement) RETURNS text AS
+$$ SELECT $1 || '+' || quote_nullable($2) $$
+LANGUAGE SQL STRICT IMMUTABLE;
+CREATE FUNCTION logging_minvfunc_strict(text, anyelement) RETURNS text AS
+$$ SELECT $1 || '-' || quote_nullable($2) $$
+LANGUAGE SQL STRICT IMMUTABLE;
+CREATE AGGREGATE logging_agg_strict (text)
+(
+	stype = text,
+	sfunc = logging_sfunc_strict,
+	mstype = text,
+	msfunc = logging_msfunc_strict,
+	minvfunc = logging_minvfunc_strict
+);
+CREATE AGGREGATE logging_agg_strict_initcond (anyelement)
+(
+	stype = text,
+	sfunc = logging_sfunc_strict,
+	mstype = text,
+	msfunc = logging_msfunc_strict,
+	minvfunc = logging_minvfunc_strict,
+	initcond = 'I',
+	minitcond = 'MI'
+);
+-- test strict and non-strict cases
+SELECT
+	p::text || ',' || i::text || ':' || COALESCE(v::text, 'NULL') AS row,
+	logging_agg_nonstrict(v) over wnd as nstrict,
+	logging_agg_nonstrict_initcond(v) over wnd as nstrict_init,
+	logging_agg_strict(v::text) over wnd as strict,
+	logging_agg_strict_initcond(v) over wnd as strict_init
+FROM (VALUES
+	(1, 1, NULL),
+	(1, 2, 'a'),
+	(1, 3, 'b'),
+	(1, 4, NULL),
+	(1, 5, NULL),
+	(1, 6, 'c'),
+	(2, 1, NULL),
+	(2, 2, 'x'),
+	(3, 1, 'z')
+) AS t(p, i, v)
+WINDOW wnd AS (PARTITION BY P ORDER BY i ROWS BETWEEN 1 PRECEDING AND CURRENT ROW)
+ORDER BY p, i;
+   row    |                    nstrict                    |                  nstrict_init                   |  strict   |  strict_init   
+----------+-----------------------------------------------+-------------------------------------------------+-----------+----------------
+ 1,1:NULL | +NULL                                         | MI+NULL                                         |           | MI
+ 1,2:a    | +NULL+'a'                                     | MI+NULL+'a'                                     | a         | MI+'a'
+ 1,3:b    | +NULL+'a'-NULL+'b'                            | MI+NULL+'a'-NULL+'b'                            | a+'b'     | MI+'a'+'b'
+ 1,4:NULL | +NULL+'a'-NULL+'b'-'a'+NULL                   | MI+NULL+'a'-NULL+'b'-'a'+NULL                   | a+'b'-'a' | MI+'a'+'b'-'a'
+ 1,5:NULL | +NULL+'a'-NULL+'b'-'a'+NULL-'b'+NULL          | MI+NULL+'a'-NULL+'b'-'a'+NULL-'b'+NULL          |           | MI
+ 1,6:c    | +NULL+'a'-NULL+'b'-'a'+NULL-'b'+NULL-NULL+'c' | MI+NULL+'a'-NULL+'b'-'a'+NULL-'b'+NULL-NULL+'c' | c         | MI+'c'
+ 2,1:NULL | +NULL                                         | MI+NULL                                         |           | MI
+ 2,2:x    | +NULL+'x'                                     | MI+NULL+'x'                                     | x         | MI+'x'
+ 3,1:z    | +'z'                                          | MI+'z'                                          | z         | MI+'z'
+(9 rows)
+
+-- and again, but with filter
+SELECT
+	p::text || ',' || i::text || ':' ||
+		CASE WHEN f THEN COALESCE(v::text, 'NULL') ELSE '-' END as row,
+	logging_agg_nonstrict(v) filter(where f) over wnd as nstrict_filt,
+	logging_agg_nonstrict_initcond(v) filter(where f) over wnd as nstrict_init_filt,
+	logging_agg_strict(v::text) filter(where f) over wnd as strict_filt,
+	logging_agg_strict_initcond(v) filter(where f) over wnd as strict_init_filt
+FROM (VALUES
+	(1, 1, true,  NULL),
+	(1, 2, false, 'a'),
+	(1, 3, true,  'b'),
+	(1, 4, false, NULL),
+	(1, 5, false, NULL),
+	(1, 6, false, 'c'),
+	(2, 1, false, NULL),
+	(2, 2, true,  'x'),
+	(3, 1, true,  'z')
+) AS t(p, i, f, v)
+WINDOW wnd AS (PARTITION BY p ORDER BY i ROWS BETWEEN 1 PRECEDING AND CURRENT ROW)
+ORDER BY p, i;
+   row    | nstrict_filt | nstrict_init_filt | strict_filt | strict_init_filt 
+----------+--------------+-------------------+-------------+------------------
+ 1,1:NULL | +NULL        | MI+NULL           |             | MI
+ 1,2:-    | +NULL        | MI+NULL           |             | MI
+ 1,3:b    | +'b'         | MI+'b'            | b           | MI+'b'
+ 1,4:-    | +'b'         | MI+'b'            | b           | MI+'b'
+ 1,5:-    |              | MI                |             | MI
+ 1,6:-    |              | MI                |             | MI
+ 2,1:-    |              | MI                |             | MI
+ 2,2:x    | +'x'         | MI+'x'            | x           | MI+'x'
+ 3,1:z    | +'z'         | MI+'z'            | z           | MI+'z'
+(9 rows)
+
+-- test that volatile arguments disable moving-aggregate mode
+SELECT
+	i::text || ':' || COALESCE(v::text, 'NULL') as row,
+	logging_agg_strict(v::text)
+		over wnd as inverse,
+	logging_agg_strict(v::text || CASE WHEN random() < 0 then '?' ELSE '' END)
+		over wnd as noinverse
+FROM (VALUES
+	(1, 'a'),
+	(2, 'b'),
+	(3, 'c')
+) AS t(i, v)
+WINDOW wnd AS (ORDER BY i ROWS BETWEEN 1 PRECEDING AND CURRENT ROW)
+ORDER BY i;
+ row |    inverse    | noinverse 
+-----+---------------+-----------
+ 1:a | a             | a
+ 2:b | a+'b'         | a*'b'
+ 3:c | a+'b'-'a'+'c' | b*'c'
+(3 rows)
+
+SELECT
+	i::text || ':' || COALESCE(v::text, 'NULL') as row,
+	logging_agg_strict(v::text) filter(where true)
+		over wnd as inverse,
+	logging_agg_strict(v::text) filter(where random() >= 0)
+		over wnd as noinverse
+FROM (VALUES
+	(1, 'a'),
+	(2, 'b'),
+	(3, 'c')
+) AS t(i, v)
+WINDOW wnd AS (ORDER BY i ROWS BETWEEN 1 PRECEDING AND CURRENT ROW)
+ORDER BY i;
+ row |    inverse    | noinverse 
+-----+---------------+-----------
+ 1:a | a             | a
+ 2:b | a+'b'         | a*'b'
+ 3:c | a+'b'-'a'+'c' | b*'c'
+(3 rows)
+
+-- test that non-overlapping windows don't use inverse transitions
+SELECT
+	logging_agg_strict(v::text) OVER wnd
+FROM (VALUES
+	(1, 'a'),
+	(2, 'b'),
+	(3, 'c')
+) AS t(i, v)
+WINDOW wnd AS (ORDER BY i ROWS BETWEEN CURRENT ROW AND CURRENT ROW)
+ORDER BY i;
+ logging_agg_strict 
+--------------------
+ a
+ b
+ c
+(3 rows)
+
+-- test that returning NULL from the inverse transition functions
+-- restarts the aggregation from scratch. The second aggregate is supposed
+-- to test cases where only some aggregates restart, the third one checks
+-- that one aggregate restarting doesn't cause others to restart.
+CREATE FUNCTION sum_int_randrestart_minvfunc(int4, int4) RETURNS int4 AS
+$$ SELECT CASE WHEN random() < 0.2 THEN NULL ELSE $1 - $2 END $$
+LANGUAGE SQL STRICT;
+CREATE AGGREGATE sum_int_randomrestart (int4)
+(
+	stype = int4,
+	sfunc = int4pl,
+	mstype = int4,
+	msfunc = int4pl,
+	minvfunc = sum_int_randrestart_minvfunc
+);
+WITH
+vs AS (
+	SELECT i, (random() * 100)::int4 AS v
+	FROM generate_series(1, 100) AS i
+),
+sum_following AS (
+	SELECT i, SUM(v) OVER
+		(ORDER BY i DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS s
+	FROM vs
+)
+SELECT DISTINCT
+	sum_following.s = sum_int_randomrestart(v) OVER fwd AS eq1,
+	-sum_following.s = sum_int_randomrestart(-v) OVER fwd AS eq2,
+	100*3+(vs.i-1)*3 = length(logging_agg_nonstrict(''::text) OVER fwd) AS eq3
+FROM vs
+JOIN sum_following ON sum_following.i = vs.i
+WINDOW fwd AS (
+	ORDER BY vs.i ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING
+);
+ eq1 | eq2 | eq3 
+-----+-----+-----
+ t   | t   | t
+(1 row)
+
