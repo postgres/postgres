@@ -2371,30 +2371,55 @@ window_gettupleslot(WindowObject winobj, int64 pos, TupleTableSlot *slot)
 	tuplestore_select_read_pointer(winstate->buffer, winobj->readptr);
 
 	/*
-	 * There's no API to refetch the tuple at the current position. We have to
-	 * move one tuple forward, and then one backward.  (We don't do it the
-	 * other way because we might try to fetch the row before our mark, which
-	 * isn't allowed.)  XXX this case could stand to be optimized.
+	 * Advance or rewind until we are within one tuple of the one we want.
 	 */
-	if (winobj->seekpos == pos)
+	if (winobj->seekpos < pos - 1)
 	{
+		if (!tuplestore_skiptuples(winstate->buffer,
+								   pos - 1 - winobj->seekpos,
+								   true))
+			elog(ERROR, "unexpected end of tuplestore");
+		winobj->seekpos = pos - 1;
+	}
+	else if (winobj->seekpos > pos + 1)
+	{
+		if (!tuplestore_skiptuples(winstate->buffer,
+								   winobj->seekpos - (pos + 1),
+								   false))
+			elog(ERROR, "unexpected end of tuplestore");
+		winobj->seekpos = pos + 1;
+	}
+	else if (winobj->seekpos == pos)
+	{
+		/*
+		 * There's no API to refetch the tuple at the current position.  We
+		 * have to move one tuple forward, and then one backward.  (We don't
+		 * do it the other way because we might try to fetch the row before
+		 * our mark, which isn't allowed.)  XXX this case could stand to be
+		 * optimized.
+		 */
 		tuplestore_advance(winstate->buffer, true);
 		winobj->seekpos++;
 	}
 
-	while (winobj->seekpos > pos)
+	/*
+	 * Now we should be on the tuple immediately before or after the one we
+	 * want, so just fetch forwards or backwards as appropriate.
+	 */
+	if (winobj->seekpos > pos)
 	{
 		if (!tuplestore_gettupleslot(winstate->buffer, false, true, slot))
 			elog(ERROR, "unexpected end of tuplestore");
 		winobj->seekpos--;
 	}
-
-	while (winobj->seekpos < pos)
+	else
 	{
 		if (!tuplestore_gettupleslot(winstate->buffer, true, true, slot))
 			elog(ERROR, "unexpected end of tuplestore");
 		winobj->seekpos++;
 	}
+
+	Assert(winobj->seekpos == pos);
 
 	MemoryContextSwitchTo(oldcontext);
 
@@ -2478,16 +2503,20 @@ WinSetMarkPosition(WindowObject winobj, int64 markpos)
 	if (markpos < winobj->markpos)
 		elog(ERROR, "cannot move WindowObject's mark position backward");
 	tuplestore_select_read_pointer(winstate->buffer, winobj->markptr);
-	while (markpos > winobj->markpos)
+	if (markpos > winobj->markpos)
 	{
-		tuplestore_advance(winstate->buffer, true);
-		winobj->markpos++;
+		tuplestore_skiptuples(winstate->buffer,
+							  markpos - winobj->markpos,
+							  true);
+		winobj->markpos = markpos;
 	}
 	tuplestore_select_read_pointer(winstate->buffer, winobj->readptr);
-	while (markpos > winobj->seekpos)
+	if (markpos > winobj->seekpos)
 	{
-		tuplestore_advance(winstate->buffer, true);
-		winobj->seekpos++;
+		tuplestore_skiptuples(winstate->buffer,
+							  markpos - winobj->seekpos,
+							  true);
+		winobj->seekpos = markpos;
 	}
 }
 

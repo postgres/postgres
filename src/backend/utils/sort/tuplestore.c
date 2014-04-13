@@ -57,6 +57,7 @@
 #include "access/htup_details.h"
 #include "commands/tablespace.h"
 #include "executor/executor.h"
+#include "miscadmin.h"
 #include "storage/buffile.h"
 #include "utils/memutils.h"
 #include "utils/resowner.h"
@@ -1065,8 +1066,7 @@ tuplestore_gettupleslot(Tuplestorestate *state, bool forward,
  * tuplestore_advance - exported function to adjust position without fetching
  *
  * We could optimize this case to avoid palloc/pfree overhead, but for the
- * moment it doesn't seem worthwhile.  (XXX this probably needs to be
- * reconsidered given the needs of window functions.)
+ * moment it doesn't seem worthwhile.
  */
 bool
 tuplestore_advance(Tuplestorestate *state, bool forward)
@@ -1085,6 +1085,75 @@ tuplestore_advance(Tuplestorestate *state, bool forward)
 	else
 	{
 		return false;
+	}
+}
+
+/*
+ * Advance over N tuples in either forward or back direction,
+ * without returning any data.	N<=0 is a no-op.
+ * Returns TRUE if successful, FALSE if ran out of tuples.
+ */
+bool
+tuplestore_skiptuples(Tuplestorestate *state, int64 ntuples, bool forward)
+{
+	TSReadPointer *readptr = &state->readptrs[state->activeptr];
+
+	Assert(forward || (readptr->eflags & EXEC_FLAG_BACKWARD));
+
+	if (ntuples <= 0)
+		return true;
+
+	switch (state->status)
+	{
+		case TSS_INMEM:
+			if (forward)
+			{
+				if (readptr->eof_reached)
+					return false;
+				if (state->memtupcount - readptr->current >= ntuples)
+				{
+					readptr->current += ntuples;
+					return true;
+				}
+				readptr->current = state->memtupcount;
+				readptr->eof_reached = true;
+				return false;
+			}
+			else
+			{
+				if (readptr->eof_reached)
+				{
+					readptr->current = state->memtupcount;
+					readptr->eof_reached = false;
+					ntuples--;
+				}
+				if (readptr->current - state->memtupdeleted > ntuples)
+				{
+					readptr->current -= ntuples;
+					return true;
+				}
+				Assert(!state->truncated);
+				readptr->current = state->memtupdeleted;
+				return false;
+			}
+			break;
+
+		default:
+			/* We don't currently try hard to optimize other cases */
+			while (ntuples-- > 0)
+			{
+				void	   *tuple;
+				bool		should_free;
+
+				tuple = tuplestore_gettuple(state, forward, &should_free);
+
+				if (tuple == NULL)
+					return false;
+				if (should_free)
+					pfree(tuple);
+				CHECK_FOR_INTERRUPTS();
+			}
+			return true;
 	}
 }
 
