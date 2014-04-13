@@ -944,21 +944,25 @@ CREATE TABLE t1 (a int, b float, c text);
 CREATE INDEX t1_a_idx ON t1(a);
 INSERT INTO t1
 SELECT i,i,'t1' FROM generate_series(1,10) g(i);
+ANALYZE t1;
 
 CREATE TABLE t11 (d text) INHERITS (t1);
 CREATE INDEX t11_a_idx ON t11(a);
 INSERT INTO t11
 SELECT i,i,'t11','t11d' FROM generate_series(1,10) g(i);
+ANALYZE t11;
 
 CREATE TABLE t12 (e int[]) INHERITS (t1);
 CREATE INDEX t12_a_idx ON t12(a);
 INSERT INTO t12
 SELECT i,i,'t12','{1,2}'::int[] FROM generate_series(1,10) g(i);
+ANALYZE t12;
 
 CREATE TABLE t111 () INHERITS (t11, t12);
 CREATE INDEX t111_a_idx ON t111(a);
 INSERT INTO t111
 SELECT i,i,'t111','t111d','{1,1,1}'::int[] FROM generate_series(1,10) g(i);
+ANALYZE t111;
 
 CREATE VIEW v1 WITH (security_barrier=true) AS
 SELECT *, (SELECT d FROM t11 WHERE t11.a = t1.a LIMIT 1) AS d
