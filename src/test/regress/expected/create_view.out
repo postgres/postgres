@@ -252,7 +252,7 @@ CREATE VIEW mysecview4 WITH (security_barrier)
        AS SELECT * FROM tbl1 WHERE a <> 0;
 CREATE VIEW mysecview5 WITH (security_barrier=100)	-- Error
        AS SELECT * FROM tbl1 WHERE a > 100;
-ERROR:  security_barrier requires a Boolean value
+ERROR:  invalid value for boolean option "security_barrier": 100
 CREATE VIEW mysecview6 WITH (invalid_option)		-- Error
        AS SELECT * FROM tbl1 WHERE a < 100;
 ERROR:  unrecognized parameter "invalid_option"

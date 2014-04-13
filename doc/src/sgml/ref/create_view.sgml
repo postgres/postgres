@@ -323,12 +323,6 @@ CREATE VIEW vista AS SELECT text 'Hello World' AS hello;
        or set-returning functions.
       </para>
      </listitem>
-
-     <listitem>
-      <para>
-       The view must not have the <literal>security_barrier</> property.
-      </para>
-     </listitem>
     </itemizedlist>
    </para>
 
@@ -359,6 +353,19 @@ CREATE VIEW vista AS SELECT text 'Hello World' AS hello;
     visible through the view.  The <literal>CHECK OPTION</> may be used to
     prevent <command>INSERT</> and <command>UPDATE</> commands from creating
     such rows that are not visible through the view.
+   </para>
+
+   <para>
+    If an automatically updatable view is marked with the
+    <literal>security_barrier</> property then all the view's <literal>WHERE</>
+    conditions (and any conditions using operators which are marked as LEAKPROOF)
+    will always be evaluated before any conditions that a user of the view has
+    added.   See <xref linkend="rules-privileges"> for full details.  Note that,
+    due to this, rows which are not ultimately returned (because they do not
+    pass the user's <literal>WHERE</> conditions) may still end up being locked.
+    <command>EXPLAIN</command> can be used to see which conditions are
+    applied at the relation level (and therefore do not lock rows) and which are
+    not.
    </para>
 
    <para>

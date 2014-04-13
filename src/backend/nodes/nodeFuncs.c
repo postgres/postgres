@@ -2020,6 +2020,9 @@ range_table_walker(List *rtable,
 					return true;
 				break;
 		}
+
+		if (walker(rte->securityQuals, context))
+			return true;
 	}
 	return false;
 }
@@ -2755,6 +2758,7 @@ range_table_mutator(List *rtable,
 				MUTATE(newrte->values_lists, rte->values_lists, List *);
 				break;
 		}
+		MUTATE(newrte->securityQuals, rte->securityQuals, List *);
 		newrt = lappend(newrt, newrte);
 	}
 	return newrt;

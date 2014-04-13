@@ -22,12 +22,10 @@ CREATE VIEW rw_view14 AS SELECT ctid, a, b FROM base_tbl; -- System columns may 
 CREATE VIEW rw_view15 AS SELECT a, upper(b) FROM base_tbl; -- Expression/function may be part of an updatable view
 CREATE VIEW rw_view16 AS SELECT a, b, a AS aa FROM base_tbl; -- Repeated column may be part of an updatable view
 CREATE VIEW ro_view17 AS SELECT * FROM ro_view1; -- Base relation not updatable
-CREATE VIEW ro_view18 WITH (security_barrier = true)
-  AS SELECT * FROM base_tbl; -- Security barrier views not updatable
-CREATE VIEW ro_view19 AS SELECT * FROM (VALUES(1)) AS tmp(a); -- VALUES in rangetable
+CREATE VIEW ro_view18 AS SELECT * FROM (VALUES(1)) AS tmp(a); -- VALUES in rangetable
 CREATE SEQUENCE seq;
-CREATE VIEW ro_view20 AS SELECT * FROM seq; -- View based on a sequence
-CREATE VIEW ro_view21 AS SELECT a, b, generate_series(1, a) g FROM base_tbl; -- SRF in targetlist not supported
+CREATE VIEW ro_view19 AS SELECT * FROM seq; -- View based on a sequence
+CREATE VIEW ro_view20 AS SELECT a, b, generate_series(1, a) g FROM base_tbl; -- SRF in targetlist not supported
 SELECT table_name, is_insertable_into
   FROM information_schema.tables
  WHERE table_name LIKE E'r_\\_view%'
@@ -44,7 +42,6 @@ SELECT table_name, is_insertable_into
  ro_view19  | NO
  ro_view2   | NO
  ro_view20  | NO
- ro_view21  | NO
  ro_view3   | NO
  ro_view4   | NO
  ro_view5   | NO
@@ -55,7 +52,7 @@ SELECT table_name, is_insertable_into
  rw_view14  | YES
  rw_view15  | YES
  rw_view16  | YES
-(21 rows)
+(20 rows)
 
 SELECT table_name, is_updatable, is_insertable_into
   FROM information_schema.views
@@ -73,7 +70,6 @@ SELECT table_name, is_updatable, is_insertable_into
  ro_view19  | NO           | NO
  ro_view2   | NO           | NO
  ro_view20  | NO           | NO
- ro_view21  | NO           | NO
  ro_view3   | NO           | NO
  ro_view4   | NO           | NO
  ro_view5   | NO           | NO
@@ -84,7 +80,7 @@ SELECT table_name, is_updatable, is_insertable_into
  rw_view14  | YES          | YES
  rw_view15  | YES          | YES
  rw_view16  | YES          | YES
-(21 rows)
+(20 rows)
 
 SELECT table_name, column_name, is_updatable
   FROM information_schema.columns
@@ -103,23 +99,21 @@ SELECT table_name, column_name, is_updatable
  ro_view17  | a             | NO
  ro_view17  | b             | NO
  ro_view18  | a             | NO
- ro_view18  | b             | NO
- ro_view19  | a             | NO
+ ro_view19  | sequence_name | NO
+ ro_view19  | last_value    | NO
+ ro_view19  | start_value   | NO
+ ro_view19  | increment_by  | NO
+ ro_view19  | max_value     | NO
+ ro_view19  | min_value     | NO
+ ro_view19  | cache_value   | NO
+ ro_view19  | log_cnt       | NO
+ ro_view19  | is_cycled     | NO
+ ro_view19  | is_called     | NO
  ro_view2   | a             | NO
  ro_view2   | b             | NO
- ro_view20  | sequence_name | NO
- ro_view20  | last_value    | NO
- ro_view20  | start_value   | NO
- ro_view20  | increment_by  | NO
- ro_view20  | max_value     | NO
- ro_view20  | min_value     | NO
- ro_view20  | cache_value   | NO
- ro_view20  | log_cnt       | NO
- ro_view20  | is_cycled     | NO
- ro_view20  | is_called     | NO
- ro_view21  | a             | NO
- ro_view21  | b             | NO
- ro_view21  | g             | NO
+ ro_view20  | a             | NO
+ ro_view20  | b             | NO
+ ro_view20  | g             | NO
  ro_view3   | ?column?      | NO
  ro_view4   | count         | NO
  ro_view5   | a             | NO
@@ -140,7 +134,7 @@ SELECT table_name, column_name, is_updatable
  rw_view16  | a             | YES
  rw_view16  | b             | YES
  rw_view16  | aa            | YES
-(48 rows)
+(46 rows)
 
 -- Read-only views
 DELETE FROM ro_view1;
@@ -268,24 +262,20 @@ INSERT INTO ro_view17 VALUES (3, 'ROW 3');
 ERROR:  cannot insert into view "ro_view1"
 DETAIL:  Views containing DISTINCT are not automatically updatable.
 HINT:  To enable inserting into the view, provide an INSTEAD OF INSERT trigger or an unconditional ON INSERT DO INSTEAD rule.
-INSERT INTO ro_view18 VALUES (3, 'ROW 3');
-ERROR:  cannot insert into view "ro_view18"
-DETAIL:  Security-barrier views are not automatically updatable.
-HINT:  To enable inserting into the view, provide an INSTEAD OF INSERT trigger or an unconditional ON INSERT DO INSTEAD rule.
-DELETE FROM ro_view19;
-ERROR:  cannot delete from view "ro_view19"
+DELETE FROM ro_view18;
+ERROR:  cannot delete from view "ro_view18"
 DETAIL:  Views that do not select from a single table or view are not automatically updatable.
 HINT:  To enable deleting from the view, provide an INSTEAD OF DELETE trigger or an unconditional ON DELETE DO INSTEAD rule.
-UPDATE ro_view20 SET max_value=1000;
-ERROR:  cannot update view "ro_view20"
+UPDATE ro_view19 SET max_value=1000;
+ERROR:  cannot update view "ro_view19"
 DETAIL:  Views that do not select from a single table or view are not automatically updatable.
 HINT:  To enable updating the view, provide an INSTEAD OF UPDATE trigger or an unconditional ON UPDATE DO INSTEAD rule.
-UPDATE ro_view21 SET b=upper(b);
-ERROR:  cannot update view "ro_view21"
+UPDATE ro_view20 SET b=upper(b);
+ERROR:  cannot update view "ro_view20"
 DETAIL:  Views that return set-returning functions are not automatically updatable.
 HINT:  To enable updating the view, provide an INSTEAD OF UPDATE trigger or an unconditional ON UPDATE DO INSTEAD rule.
 DROP TABLE base_tbl CASCADE;
-NOTICE:  drop cascades to 17 other objects
+NOTICE:  drop cascades to 16 other objects
 DETAIL:  drop cascades to view ro_view1
 drop cascades to view ro_view17
 drop cascades to view ro_view2
@@ -299,13 +289,12 @@ drop cascades to view ro_view11
 drop cascades to view ro_view13
 drop cascades to view rw_view15
 drop cascades to view rw_view16
-drop cascades to view ro_view18
-drop cascades to view ro_view21
+drop cascades to view ro_view20
 drop cascades to view ro_view4
 drop cascades to view rw_view14
-DROP VIEW ro_view10, ro_view12, ro_view19;
+DROP VIEW ro_view10, ro_view12, ro_view18;
 DROP SEQUENCE seq CASCADE;
-NOTICE:  drop cascades to view ro_view20
+NOTICE:  drop cascades to view ro_view19
 -- simple updatable view
 CREATE TABLE base_tbl (a int PRIMARY KEY, b text DEFAULT 'Unspecified');
 INSERT INTO base_tbl SELECT i, 'Row ' || i FROM generate_series(-2, 2) g(i);
@@ -1740,3 +1729,554 @@ DROP TABLE base_tbl CASCADE;
 NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to view rw_view1
 drop cascades to view rw_view2
+-- security barrier view
+CREATE TABLE base_tbl (person text, visibility text);
+INSERT INTO base_tbl VALUES ('Tom', 'public'),
+                            ('Dick', 'private'),
+                            ('Harry', 'public');
+CREATE VIEW rw_view1 AS
+  SELECT person FROM base_tbl WHERE visibility = 'public';
+CREATE FUNCTION snoop(anyelement)
+RETURNS boolean AS
+$$
+BEGIN
+  RAISE NOTICE 'snooped value: %', $1;
+  RETURN true;
+END;
+$$
+LANGUAGE plpgsql COST 0.000001;
+CREATE OR REPLACE FUNCTION leakproof(anyelement)
+RETURNS boolean AS
+$$
+BEGIN
+  RETURN true;
+END;
+$$
+LANGUAGE plpgsql STRICT IMMUTABLE LEAKPROOF;
+SELECT * FROM rw_view1 WHERE snoop(person);
+NOTICE:  snooped value: Tom
+NOTICE:  snooped value: Dick
+NOTICE:  snooped value: Harry
+ person 
+--------
+ Tom
+ Harry
+(2 rows)
+
+UPDATE rw_view1 SET person=person WHERE snoop(person);
+NOTICE:  snooped value: Tom
+NOTICE:  snooped value: Dick
+NOTICE:  snooped value: Harry
+DELETE FROM rw_view1 WHERE NOT snoop(person);
+NOTICE:  snooped value: Dick
+NOTICE:  snooped value: Tom
+NOTICE:  snooped value: Harry
+ALTER VIEW rw_view1 SET (security_barrier = true);
+SELECT table_name, is_insertable_into
+  FROM information_schema.tables
+ WHERE table_name = 'rw_view1';
+ table_name | is_insertable_into 
+------------+--------------------
+ rw_view1   | YES
+(1 row)
+
+SELECT table_name, is_updatable, is_insertable_into
+  FROM information_schema.views
+ WHERE table_name = 'rw_view1';
+ table_name | is_updatable | is_insertable_into 
+------------+--------------+--------------------
+ rw_view1   | YES          | YES
+(1 row)
+
+SELECT table_name, column_name, is_updatable
+  FROM information_schema.columns
+ WHERE table_name = 'rw_view1'
+ ORDER BY ordinal_position;
+ table_name | column_name | is_updatable 
+------------+-------------+--------------
+ rw_view1   | person      | YES
+(1 row)
+
+SELECT * FROM rw_view1 WHERE snoop(person);
+NOTICE:  snooped value: Tom
+NOTICE:  snooped value: Harry
+ person 
+--------
+ Tom
+ Harry
+(2 rows)
+
+UPDATE rw_view1 SET person=person WHERE snoop(person);
+NOTICE:  snooped value: Tom
+NOTICE:  snooped value: Harry
+DELETE FROM rw_view1 WHERE NOT snoop(person);
+NOTICE:  snooped value: Tom
+NOTICE:  snooped value: Harry
+EXPLAIN (costs off) SELECT * FROM rw_view1 WHERE snoop(person);
+                  QUERY PLAN                   
+-----------------------------------------------
+ Subquery Scan on rw_view1
+   Filter: snoop(rw_view1.person)
+   ->  Seq Scan on base_tbl
+         Filter: (visibility = 'public'::text)
+(4 rows)
+
+EXPLAIN (costs off) UPDATE rw_view1 SET person=person WHERE snoop(person);
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Update on base_tbl base_tbl_1
+   ->  Subquery Scan on base_tbl
+         Filter: snoop(base_tbl.person)
+         ->  Seq Scan on base_tbl base_tbl_2
+               Filter: (visibility = 'public'::text)
+(5 rows)
+
+EXPLAIN (costs off) DELETE FROM rw_view1 WHERE NOT snoop(person);
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Delete on base_tbl base_tbl_1
+   ->  Subquery Scan on base_tbl
+         Filter: (NOT snoop(base_tbl.person))
+         ->  Seq Scan on base_tbl base_tbl_2
+               Filter: (visibility = 'public'::text)
+(5 rows)
+
+-- security barrier view on top of security barrier view
+CREATE VIEW rw_view2 WITH (security_barrier = true) AS
+  SELECT * FROM rw_view1 WHERE snoop(person);
+SELECT table_name, is_insertable_into
+  FROM information_schema.tables
+ WHERE table_name = 'rw_view2';
+ table_name | is_insertable_into 
+------------+--------------------
+ rw_view2   | YES
+(1 row)
+
+SELECT table_name, is_updatable, is_insertable_into
+  FROM information_schema.views
+ WHERE table_name = 'rw_view2';
+ table_name | is_updatable | is_insertable_into 
+------------+--------------+--------------------
+ rw_view2   | YES          | YES
+(1 row)
+
+SELECT table_name, column_name, is_updatable
+  FROM information_schema.columns
+ WHERE table_name = 'rw_view2'
+ ORDER BY ordinal_position;
+ table_name | column_name | is_updatable 
+------------+-------------+--------------
+ rw_view2   | person      | YES
+(1 row)
+
+SELECT * FROM rw_view2 WHERE snoop(person);
+NOTICE:  snooped value: Tom
+NOTICE:  snooped value: Tom
+NOTICE:  snooped value: Harry
+NOTICE:  snooped value: Harry
+ person 
+--------
+ Tom
+ Harry
+(2 rows)
+
+UPDATE rw_view2 SET person=person WHERE snoop(person);
+NOTICE:  snooped value: Tom
+NOTICE:  snooped value: Tom
+NOTICE:  snooped value: Harry
+NOTICE:  snooped value: Harry
+DELETE FROM rw_view2 WHERE NOT snoop(person);
+NOTICE:  snooped value: Tom
+NOTICE:  snooped value: Tom
+NOTICE:  snooped value: Harry
+NOTICE:  snooped value: Harry
+EXPLAIN (costs off) SELECT * FROM rw_view2 WHERE snoop(person);
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Subquery Scan on rw_view2
+   Filter: snoop(rw_view2.person)
+   ->  Subquery Scan on rw_view1
+         Filter: snoop(rw_view1.person)
+         ->  Seq Scan on base_tbl
+               Filter: (visibility = 'public'::text)
+(6 rows)
+
+EXPLAIN (costs off) UPDATE rw_view2 SET person=person WHERE snoop(person);
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Update on base_tbl base_tbl_1
+   ->  Subquery Scan on base_tbl
+         Filter: snoop(base_tbl.person)
+         ->  Subquery Scan on base_tbl_2
+               Filter: snoop(base_tbl_2.person)
+               ->  Seq Scan on base_tbl base_tbl_3
+                     Filter: (visibility = 'public'::text)
+(7 rows)
+
+EXPLAIN (costs off) DELETE FROM rw_view2 WHERE NOT snoop(person);
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Delete on base_tbl base_tbl_1
+   ->  Subquery Scan on base_tbl
+         Filter: (NOT snoop(base_tbl.person))
+         ->  Subquery Scan on base_tbl_2
+               Filter: snoop(base_tbl_2.person)
+               ->  Seq Scan on base_tbl base_tbl_3
+                     Filter: (visibility = 'public'::text)
+(7 rows)
+
+DROP TABLE base_tbl CASCADE;
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to view rw_view1
+drop cascades to view rw_view2
+-- security barrier view on top of table with rules
+CREATE TABLE base_tbl(id int PRIMARY KEY, data text, deleted boolean);
+INSERT INTO base_tbl VALUES (1, 'Row 1', false), (2, 'Row 2', true);
+CREATE RULE base_tbl_ins_rule AS ON INSERT TO base_tbl
+  WHERE EXISTS (SELECT 1 FROM base_tbl t WHERE t.id = new.id)
+  DO INSTEAD
+    UPDATE base_tbl SET data = new.data, deleted = false WHERE id = new.id;
+CREATE RULE base_tbl_del_rule AS ON DELETE TO base_tbl
+  DO INSTEAD
+    UPDATE base_tbl SET deleted = true WHERE id = old.id;
+CREATE VIEW rw_view1 WITH (security_barrier=true) AS
+  SELECT id, data FROM base_tbl WHERE NOT deleted;
+SELECT * FROM rw_view1;
+ id | data  
+----+-------
+  1 | Row 1
+(1 row)
+
+EXPLAIN (costs off) DELETE FROM rw_view1 WHERE id = 1 AND snoop(data);
+                               QUERY PLAN                                
+-------------------------------------------------------------------------
+ Update on base_tbl base_tbl_1
+   ->  Nested Loop
+         ->  Index Scan using base_tbl_pkey on base_tbl base_tbl_1
+               Index Cond: (id = 1)
+         ->  Subquery Scan on base_tbl
+               Filter: snoop(base_tbl.data)
+               ->  Index Scan using base_tbl_pkey on base_tbl base_tbl_2
+                     Index Cond: (id = 1)
+                     Filter: (NOT deleted)
+(9 rows)
+
+DELETE FROM rw_view1 WHERE id = 1 AND snoop(data);
+NOTICE:  snooped value: Row 1
+EXPLAIN (costs off) INSERT INTO rw_view1 VALUES (2, 'New row 2');
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Insert on base_tbl
+   InitPlan 1 (returns $0)
+     ->  Index Only Scan using base_tbl_pkey on base_tbl t
+           Index Cond: (id = 2)
+   ->  Result
+         One-Time Filter: ($0 IS NOT TRUE)
+ 
+ Update on base_tbl
+   InitPlan 1 (returns $0)
+     ->  Index Only Scan using base_tbl_pkey on base_tbl t
+           Index Cond: (id = 2)
+   ->  Result
+         One-Time Filter: $0
+         ->  Index Scan using base_tbl_pkey on base_tbl
+               Index Cond: (id = 2)
+(15 rows)
+
+INSERT INTO rw_view1 VALUES (2, 'New row 2');
+SELECT * FROM base_tbl;
+ id |   data    | deleted 
+----+-----------+---------
+  1 | Row 1     | t
+  2 | New row 2 | f
+(2 rows)
+
+DROP TABLE base_tbl CASCADE;
+NOTICE:  drop cascades to view rw_view1
+-- security barrier view based on inheiritance set
+CREATE TABLE t1 (a int, b float, c text);
+CREATE INDEX t1_a_idx ON t1(a);
+INSERT INTO t1
+SELECT i,i,'t1' FROM generate_series(1,10) g(i);
+CREATE TABLE t11 (d text) INHERITS (t1);
+CREATE INDEX t11_a_idx ON t11(a);
+INSERT INTO t11
+SELECT i,i,'t11','t11d' FROM generate_series(1,10) g(i);
+CREATE TABLE t12 (e int[]) INHERITS (t1);
+CREATE INDEX t12_a_idx ON t12(a);
+INSERT INTO t12
+SELECT i,i,'t12','{1,2}'::int[] FROM generate_series(1,10) g(i);
+CREATE TABLE t111 () INHERITS (t11, t12);
+NOTICE:  merging multiple inherited definitions of column "a"
+NOTICE:  merging multiple inherited definitions of column "b"
+NOTICE:  merging multiple inherited definitions of column "c"
+CREATE INDEX t111_a_idx ON t111(a);
+INSERT INTO t111
+SELECT i,i,'t111','t111d','{1,1,1}'::int[] FROM generate_series(1,10) g(i);
+CREATE VIEW v1 WITH (security_barrier=true) AS
+SELECT *, (SELECT d FROM t11 WHERE t11.a = t1.a LIMIT 1) AS d
+FROM t1
+WHERE a > 5 AND EXISTS(SELECT 1 FROM t12 WHERE t12.a = t1.a);
+SELECT * FROM v1 WHERE a=3; -- should not see anything
+ a | b | c | d 
+---+---+---+---
+(0 rows)
+
+SELECT * FROM v1 WHERE a=8;
+ a | b |  c   |  d   
+---+---+------+------
+ 8 | 8 | t1   | t11d
+ 8 | 8 | t11  | t11d
+ 8 | 8 | t12  | t11d
+ 8 | 8 | t111 | t11d
+(4 rows)
+
+EXPLAIN (VERBOSE, COSTS OFF)
+UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a = 3;
+                                           QUERY PLAN                                            
+-------------------------------------------------------------------------------------------------
+ Update on public.t1 t1_4
+   ->  Subquery Scan on t1
+         Output: 100, t1.b, t1.c, t1.ctid
+         Filter: snoop(t1.a)
+         ->  Hash Join
+               Output: t1_5.ctid, t1_5.a, t1_5.b, t1_5.c
+               Hash Cond: (t12.a = t1_5.a)
+               ->  HashAggregate
+                     Output: t12.a
+                     Group Key: t12.a
+                     ->  Append
+                           ->  Seq Scan on public.t12
+                                 Output: t12.a
+                           ->  Seq Scan on public.t111
+                                 Output: t111.a
+               ->  Hash
+                     Output: t1_5.ctid, t1_5.a, t1_5.b, t1_5.c
+                     ->  Index Scan using t1_a_idx on public.t1 t1_5
+                           Output: t1_5.ctid, t1_5.a, t1_5.b, t1_5.c
+                           Index Cond: ((t1_5.a > 5) AND (t1_5.a = 3))
+                           Filter: leakproof(t1_5.a)
+   ->  Subquery Scan on t1_1
+         Output: 100, t1_1.b, t1_1.c, t1_1.d, t1_1.ctid
+         Filter: snoop(t1_1.a)
+         ->  Hash Join
+               Output: t11.ctid, t11.a, t11.b, t11.c, t11.d
+               Hash Cond: (t12_1.a = t11.a)
+               ->  HashAggregate
+                     Output: t12_1.a
+                     Group Key: t12_1.a
+                     ->  Append
+                           ->  Seq Scan on public.t12 t12_1
+                                 Output: t12_1.a
+                           ->  Seq Scan on public.t111 t111_1
+                                 Output: t111_1.a
+               ->  Hash
+                     Output: t11.ctid, t11.a, t11.b, t11.c, t11.d
+                     ->  Index Scan using t11_a_idx on public.t11
+                           Output: t11.ctid, t11.a, t11.b, t11.c, t11.d
+                           Index Cond: ((t11.a > 5) AND (t11.a = 3))
+                           Filter: leakproof(t11.a)
+   ->  Subquery Scan on t1_2
+         Output: 100, t1_2.b, t1_2.c, t1_2.e, t1_2.ctid
+         Filter: snoop(t1_2.a)
+         ->  Hash Join
+               Output: t12_2.ctid, t12_2.a, t12_2.b, t12_2.c, t12_2.e
+               Hash Cond: (t12_3.a = t12_2.a)
+               ->  HashAggregate
+                     Output: t12_3.a
+                     Group Key: t12_3.a
+                     ->  Append
+                           ->  Seq Scan on public.t12 t12_3
+                                 Output: t12_3.a
+                           ->  Seq Scan on public.t111 t111_2
+                                 Output: t111_2.a
+               ->  Hash
+                     Output: t12_2.ctid, t12_2.a, t12_2.b, t12_2.c, t12_2.e
+                     ->  Index Scan using t12_a_idx on public.t12 t12_2
+                           Output: t12_2.ctid, t12_2.a, t12_2.b, t12_2.c, t12_2.e
+                           Index Cond: ((t12_2.a > 5) AND (t12_2.a = 3))
+                           Filter: leakproof(t12_2.a)
+   ->  Subquery Scan on t1_3
+         Output: 100, t1_3.b, t1_3.c, t1_3.d, t1_3.e, t1_3.ctid
+         Filter: snoop(t1_3.a)
+         ->  Hash Join
+               Output: t111_3.ctid, t111_3.a, t111_3.b, t111_3.c, t111_3.d, t111_3.e
+               Hash Cond: (t12_4.a = t111_3.a)
+               ->  HashAggregate
+                     Output: t12_4.a
+                     Group Key: t12_4.a
+                     ->  Append
+                           ->  Seq Scan on public.t12 t12_4
+                                 Output: t12_4.a
+                           ->  Seq Scan on public.t111 t111_4
+                                 Output: t111_4.a
+               ->  Hash
+                     Output: t111_3.ctid, t111_3.a, t111_3.b, t111_3.c, t111_3.d, t111_3.e
+                     ->  Index Scan using t111_a_idx on public.t111 t111_3
+                           Output: t111_3.ctid, t111_3.a, t111_3.b, t111_3.c, t111_3.d, t111_3.e
+                           Index Cond: ((t111_3.a > 5) AND (t111_3.a = 3))
+                           Filter: leakproof(t111_3.a)
+(81 rows)
+
+UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a = 3;
+SELECT * FROM v1 WHERE a=100; -- Nothing should have been changed to 100
+ a | b | c | d 
+---+---+---+---
+(0 rows)
+
+SELECT * FROM t1 WHERE a=100; -- Nothing should have been changed to 100
+ a | b | c 
+---+---+---
+(0 rows)
+
+EXPLAIN (VERBOSE, COSTS OFF)
+UPDATE v1 SET a=a+1 WHERE snoop(a) AND leakproof(a) AND a = 8;
+                                           QUERY PLAN                                            
+-------------------------------------------------------------------------------------------------
+ Update on public.t1 t1_4
+   ->  Subquery Scan on t1
+         Output: (t1.a + 1), t1.b, t1.c, t1.ctid
+         Filter: snoop(t1.a)
+         ->  Hash Join
+               Output: t1_5.a, t1_5.ctid, t1_5.b, t1_5.c
+               Hash Cond: (t12.a = t1_5.a)
+               ->  HashAggregate
+                     Output: t12.a
+                     Group Key: t12.a
+                     ->  Append
+                           ->  Seq Scan on public.t12
+                                 Output: t12.a
+                           ->  Seq Scan on public.t111
+                                 Output: t111.a
+               ->  Hash
+                     Output: t1_5.a, t1_5.ctid, t1_5.b, t1_5.c
+                     ->  Index Scan using t1_a_idx on public.t1 t1_5
+                           Output: t1_5.a, t1_5.ctid, t1_5.b, t1_5.c
+                           Index Cond: ((t1_5.a > 5) AND (t1_5.a = 8))
+                           Filter: leakproof(t1_5.a)
+   ->  Subquery Scan on t1_1
+         Output: (t1_1.a + 1), t1_1.b, t1_1.c, t1_1.d, t1_1.ctid
+         Filter: snoop(t1_1.a)
+         ->  Hash Join
+               Output: t11.a, t11.ctid, t11.b, t11.c, t11.d
+               Hash Cond: (t12_1.a = t11.a)
+               ->  HashAggregate
+                     Output: t12_1.a
+                     Group Key: t12_1.a
+                     ->  Append
+                           ->  Seq Scan on public.t12 t12_1
+                                 Output: t12_1.a
+                           ->  Seq Scan on public.t111 t111_1
+                                 Output: t111_1.a
+               ->  Hash
+                     Output: t11.a, t11.ctid, t11.b, t11.c, t11.d
+                     ->  Index Scan using t11_a_idx on public.t11
+                           Output: t11.a, t11.ctid, t11.b, t11.c, t11.d
+                           Index Cond: ((t11.a > 5) AND (t11.a = 8))
+                           Filter: leakproof(t11.a)
+   ->  Subquery Scan on t1_2
+         Output: (t1_2.a + 1), t1_2.b, t1_2.c, t1_2.e, t1_2.ctid
+         Filter: snoop(t1_2.a)
+         ->  Hash Join
+               Output: t12_2.a, t12_2.ctid, t12_2.b, t12_2.c, t12_2.e
+               Hash Cond: (t12_3.a = t12_2.a)
+               ->  HashAggregate
+                     Output: t12_3.a
+                     Group Key: t12_3.a
+                     ->  Append
+                           ->  Seq Scan on public.t12 t12_3
+                                 Output: t12_3.a
+                           ->  Seq Scan on public.t111 t111_2
+                                 Output: t111_2.a
+               ->  Hash
+                     Output: t12_2.a, t12_2.ctid, t12_2.b, t12_2.c, t12_2.e
+                     ->  Index Scan using t12_a_idx on public.t12 t12_2
+                           Output: t12_2.a, t12_2.ctid, t12_2.b, t12_2.c, t12_2.e
+                           Index Cond: ((t12_2.a > 5) AND (t12_2.a = 8))
+                           Filter: leakproof(t12_2.a)
+   ->  Subquery Scan on t1_3
+         Output: (t1_3.a + 1), t1_3.b, t1_3.c, t1_3.d, t1_3.e, t1_3.ctid
+         Filter: snoop(t1_3.a)
+         ->  Hash Join
+               Output: t111_3.a, t111_3.ctid, t111_3.b, t111_3.c, t111_3.d, t111_3.e
+               Hash Cond: (t12_4.a = t111_3.a)
+               ->  HashAggregate
+                     Output: t12_4.a
+                     Group Key: t12_4.a
+                     ->  Append
+                           ->  Seq Scan on public.t12 t12_4
+                                 Output: t12_4.a
+                           ->  Seq Scan on public.t111 t111_4
+                                 Output: t111_4.a
+               ->  Hash
+                     Output: t111_3.a, t111_3.ctid, t111_3.b, t111_3.c, t111_3.d, t111_3.e
+                     ->  Index Scan using t111_a_idx on public.t111 t111_3
+                           Output: t111_3.a, t111_3.ctid, t111_3.b, t111_3.c, t111_3.d, t111_3.e
+                           Index Cond: ((t111_3.a > 5) AND (t111_3.a = 8))
+                           Filter: leakproof(t111_3.a)
+(81 rows)
+
+UPDATE v1 SET a=a+1 WHERE snoop(a) AND leakproof(a) AND a = 8;
+NOTICE:  snooped value: 8
+NOTICE:  snooped value: 8
+NOTICE:  snooped value: 8
+NOTICE:  snooped value: 8
+SELECT * FROM v1 WHERE b=8;
+ a | b |  c   |  d   
+---+---+------+------
+ 9 | 8 | t111 | t11d
+ 9 | 8 | t12  | t11d
+ 9 | 8 | t11  | t11d
+ 9 | 8 | t1   | t11d
+(4 rows)
+
+DELETE FROM v1 WHERE snoop(a) AND leakproof(a); -- should not delete everything, just where a>5
+NOTICE:  snooped value: 10
+NOTICE:  snooped value: 9
+NOTICE:  snooped value: 9
+NOTICE:  snooped value: 6
+NOTICE:  snooped value: 7
+NOTICE:  snooped value: 10
+NOTICE:  snooped value: 9
+NOTICE:  snooped value: 9
+NOTICE:  snooped value: 6
+NOTICE:  snooped value: 7
+NOTICE:  snooped value: 10
+NOTICE:  snooped value: 9
+NOTICE:  snooped value: 9
+NOTICE:  snooped value: 6
+NOTICE:  snooped value: 7
+NOTICE:  snooped value: 6
+NOTICE:  snooped value: 7
+NOTICE:  snooped value: 9
+NOTICE:  snooped value: 10
+NOTICE:  snooped value: 9
+TABLE t1; -- verify all a<=5 are intact
+ a | b |  c   
+---+---+------
+ 1 | 1 | t1
+ 2 | 2 | t1
+ 3 | 3 | t1
+ 4 | 4 | t1
+ 5 | 5 | t1
+ 1 | 1 | t11
+ 2 | 2 | t11
+ 3 | 3 | t11
+ 4 | 4 | t11
+ 5 | 5 | t11
+ 1 | 1 | t12
+ 2 | 2 | t12
+ 3 | 3 | t12
+ 4 | 4 | t12
+ 5 | 5 | t12
+ 1 | 1 | t111
+ 2 | 2 | t111
+ 3 | 3 | t111
+ 4 | 4 | t111
+ 5 | 5 | t111
+(20 rows)
+
+DROP TABLE t1, t11, t12, t111 CASCADE;
+NOTICE:  drop cascades to view v1
+DROP FUNCTION snoop(anyelement);
+DROP FUNCTION leakproof(anyelement);

@@ -801,6 +801,7 @@ typedef struct RangeTblEntry
 	Oid			checkAsUser;	/* if valid, check access as this role */
 	Bitmapset  *selectedCols;	/* columns needing SELECT permission */
 	Bitmapset  *modifiedCols;	/* columns needing INSERT/UPDATE permission */
+	List	   *securityQuals;	/* any security barrier quals to apply */
 } RangeTblEntry;
 
 /*

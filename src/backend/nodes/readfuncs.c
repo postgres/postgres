@@ -1252,6 +1252,7 @@ _readRangeTblEntry(void)
 	READ_OID_FIELD(checkAsUser);
 	READ_BITMAPSET_FIELD(selectedCols);
 	READ_BITMAPSET_FIELD(modifiedCols);
+	READ_NODE_FIELD(securityQuals);
 
 	READ_DONE();
 }

@@ -25,12 +25,10 @@ CREATE VIEW rw_view14 AS SELECT ctid, a, b FROM base_tbl; -- System columns may 
 CREATE VIEW rw_view15 AS SELECT a, upper(b) FROM base_tbl; -- Expression/function may be part of an updatable view
 CREATE VIEW rw_view16 AS SELECT a, b, a AS aa FROM base_tbl; -- Repeated column may be part of an updatable view
 CREATE VIEW ro_view17 AS SELECT * FROM ro_view1; -- Base relation not updatable
-CREATE VIEW ro_view18 WITH (security_barrier = true)
-  AS SELECT * FROM base_tbl; -- Security barrier views not updatable
-CREATE VIEW ro_view19 AS SELECT * FROM (VALUES(1)) AS tmp(a); -- VALUES in rangetable
+CREATE VIEW ro_view18 AS SELECT * FROM (VALUES(1)) AS tmp(a); -- VALUES in rangetable
 CREATE SEQUENCE seq;
-CREATE VIEW ro_view20 AS SELECT * FROM seq; -- View based on a sequence
-CREATE VIEW ro_view21 AS SELECT a, b, generate_series(1, a) g FROM base_tbl; -- SRF in targetlist not supported
+CREATE VIEW ro_view19 AS SELECT * FROM seq; -- View based on a sequence
+CREATE VIEW ro_view20 AS SELECT a, b, generate_series(1, a) g FROM base_tbl; -- SRF in targetlist not supported
 
 SELECT table_name, is_insertable_into
   FROM information_schema.tables
@@ -87,13 +85,12 @@ SELECT * FROM base_tbl;
 DELETE FROM rw_view16 WHERE a=-3; -- should be OK
 -- Read-only views
 INSERT INTO ro_view17 VALUES (3, 'ROW 3');
-INSERT INTO ro_view18 VALUES (3, 'ROW 3');
-DELETE FROM ro_view19;
-UPDATE ro_view20 SET max_value=1000;
-UPDATE ro_view21 SET b=upper(b);
+DELETE FROM ro_view18;
+UPDATE ro_view19 SET max_value=1000;
+UPDATE ro_view20 SET b=upper(b);
 
 DROP TABLE base_tbl CASCADE;
-DROP VIEW ro_view10, ro_view12, ro_view19;
+DROP VIEW ro_view10, ro_view12, ro_view18;
 DROP SEQUENCE seq CASCADE;
 
 -- simple updatable view
@@ -828,3 +825,166 @@ CREATE VIEW rw_view2 AS
   SELECT * FROM rw_view1 WHERE a > b WITH LOCAL CHECK OPTION;
 INSERT INTO rw_view2 VALUES (2,3); -- ok, but not in view (doesn't fail rw_view2's check)
 DROP TABLE base_tbl CASCADE;
+
+-- security barrier view
+
+CREATE TABLE base_tbl (person text, visibility text);
+INSERT INTO base_tbl VALUES ('Tom', 'public'),
+                            ('Dick', 'private'),
+                            ('Harry', 'public');
+
+CREATE VIEW rw_view1 AS
+  SELECT person FROM base_tbl WHERE visibility = 'public';
+
+CREATE FUNCTION snoop(anyelement)
+RETURNS boolean AS
+$$
+BEGIN
+  RAISE NOTICE 'snooped value: %', $1;
+  RETURN true;
+END;
+$$
+LANGUAGE plpgsql COST 0.000001;
+
+CREATE OR REPLACE FUNCTION leakproof(anyelement)
+RETURNS boolean AS
+$$
+BEGIN
+  RETURN true;
+END;
+$$
+LANGUAGE plpgsql STRICT IMMUTABLE LEAKPROOF;
+
+SELECT * FROM rw_view1 WHERE snoop(person);
+UPDATE rw_view1 SET person=person WHERE snoop(person);
+DELETE FROM rw_view1 WHERE NOT snoop(person);
+
+ALTER VIEW rw_view1 SET (security_barrier = true);
+
+SELECT table_name, is_insertable_into
+  FROM information_schema.tables
+ WHERE table_name = 'rw_view1';
+
+SELECT table_name, is_updatable, is_insertable_into
+  FROM information_schema.views
+ WHERE table_name = 'rw_view1';
+
+SELECT table_name, column_name, is_updatable
+  FROM information_schema.columns
+ WHERE table_name = 'rw_view1'
+ ORDER BY ordinal_position;
+
+SELECT * FROM rw_view1 WHERE snoop(person);
+UPDATE rw_view1 SET person=person WHERE snoop(person);
+DELETE FROM rw_view1 WHERE NOT snoop(person);
+
+EXPLAIN (costs off) SELECT * FROM rw_view1 WHERE snoop(person);
+EXPLAIN (costs off) UPDATE rw_view1 SET person=person WHERE snoop(person);
+EXPLAIN (costs off) DELETE FROM rw_view1 WHERE NOT snoop(person);
+
+-- security barrier view on top of security barrier view
+
+CREATE VIEW rw_view2 WITH (security_barrier = true) AS
+  SELECT * FROM rw_view1 WHERE snoop(person);
+
+SELECT table_name, is_insertable_into
+  FROM information_schema.tables
+ WHERE table_name = 'rw_view2';
+
+SELECT table_name, is_updatable, is_insertable_into
+  FROM information_schema.views
+ WHERE table_name = 'rw_view2';
+
+SELECT table_name, column_name, is_updatable
+  FROM information_schema.columns
+ WHERE table_name = 'rw_view2'
+ ORDER BY ordinal_position;
+
+SELECT * FROM rw_view2 WHERE snoop(person);
+UPDATE rw_view2 SET person=person WHERE snoop(person);
+DELETE FROM rw_view2 WHERE NOT snoop(person);
+
+EXPLAIN (costs off) SELECT * FROM rw_view2 WHERE snoop(person);
+EXPLAIN (costs off) UPDATE rw_view2 SET person=person WHERE snoop(person);
+EXPLAIN (costs off) DELETE FROM rw_view2 WHERE NOT snoop(person);
+
+DROP TABLE base_tbl CASCADE;
+
+-- security barrier view on top of table with rules
+
+CREATE TABLE base_tbl(id int PRIMARY KEY, data text, deleted boolean);
+INSERT INTO base_tbl VALUES (1, 'Row 1', false), (2, 'Row 2', true);
+
+CREATE RULE base_tbl_ins_rule AS ON INSERT TO base_tbl
+  WHERE EXISTS (SELECT 1 FROM base_tbl t WHERE t.id = new.id)
+  DO INSTEAD
+    UPDATE base_tbl SET data = new.data, deleted = false WHERE id = new.id;
+
+CREATE RULE base_tbl_del_rule AS ON DELETE TO base_tbl
+  DO INSTEAD
+    UPDATE base_tbl SET deleted = true WHERE id = old.id;
+
+CREATE VIEW rw_view1 WITH (security_barrier=true) AS
+  SELECT id, data FROM base_tbl WHERE NOT deleted;
+
+SELECT * FROM rw_view1;
+
+EXPLAIN (costs off) DELETE FROM rw_view1 WHERE id = 1 AND snoop(data);
+DELETE FROM rw_view1 WHERE id = 1 AND snoop(data);
+
+EXPLAIN (costs off) INSERT INTO rw_view1 VALUES (2, 'New row 2');
+INSERT INTO rw_view1 VALUES (2, 'New row 2');
+
+SELECT * FROM base_tbl;
+
+DROP TABLE base_tbl CASCADE;
+
+-- security barrier view based on inheiritance set
+CREATE TABLE t1 (a int, b float, c text);
+CREATE INDEX t1_a_idx ON t1(a);
+INSERT INTO t1
+SELECT i,i,'t1' FROM generate_series(1,10) g(i);
+
+CREATE TABLE t11 (d text) INHERITS (t1);
+CREATE INDEX t11_a_idx ON t11(a);
+INSERT INTO t11
+SELECT i,i,'t11','t11d' FROM generate_series(1,10) g(i);
+
+CREATE TABLE t12 (e int[]) INHERITS (t1);
+CREATE INDEX t12_a_idx ON t12(a);
+INSERT INTO t12
+SELECT i,i,'t12','{1,2}'::int[] FROM generate_series(1,10) g(i);
+
+CREATE TABLE t111 () INHERITS (t11, t12);
+CREATE INDEX t111_a_idx ON t111(a);
+INSERT INTO t111
+SELECT i,i,'t111','t111d','{1,1,1}'::int[] FROM generate_series(1,10) g(i);
+
+CREATE VIEW v1 WITH (security_barrier=true) AS
+SELECT *, (SELECT d FROM t11 WHERE t11.a = t1.a LIMIT 1) AS d
+FROM t1
+WHERE a > 5 AND EXISTS(SELECT 1 FROM t12 WHERE t12.a = t1.a);
+
+SELECT * FROM v1 WHERE a=3; -- should not see anything
+SELECT * FROM v1 WHERE a=8;
+
+EXPLAIN (VERBOSE, COSTS OFF)
+UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a = 3;
+UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a = 3;
+
+SELECT * FROM v1 WHERE a=100; -- Nothing should have been changed to 100
+SELECT * FROM t1 WHERE a=100; -- Nothing should have been changed to 100
+
+EXPLAIN (VERBOSE, COSTS OFF)
+UPDATE v1 SET a=a+1 WHERE snoop(a) AND leakproof(a) AND a = 8;
+UPDATE v1 SET a=a+1 WHERE snoop(a) AND leakproof(a) AND a = 8;
+
+SELECT * FROM v1 WHERE b=8;
+
+DELETE FROM v1 WHERE snoop(a) AND leakproof(a); -- should not delete everything, just where a>5
+
+TABLE t1; -- verify all a<=5 are intact
+
+DROP TABLE t1, t11, t12, t111 CASCADE;
+DROP FUNCTION snoop(anyelement);
+DROP FUNCTION leakproof(anyelement);

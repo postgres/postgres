@@ -8910,7 +8910,6 @@ ATExecSetRelOptions(Relation rel, List *defList, AlterTableType operation,
 		List	   *view_options = untransformRelOptions(newOptions);
 		ListCell   *cell;
 		bool		check_option = false;
-		bool		security_barrier = false;
 
 		foreach(cell, view_options)
 		{
@@ -8918,8 +8917,6 @@ ATExecSetRelOptions(Relation rel, List *defList, AlterTableType operation,
 
 			if (pg_strcasecmp(defel->defname, "check_option") == 0)
 				check_option = true;
-			if (pg_strcasecmp(defel->defname, "security_barrier") == 0)
-				security_barrier = defGetBoolean(defel);
 		}
 
 		/*
@@ -8929,8 +8926,7 @@ ATExecSetRelOptions(Relation rel, List *defList, AlterTableType operation,
 		if (check_option)
 		{
 			const char *view_updatable_error =
-				view_query_is_auto_updatable(view_query,
-											 security_barrier, true);
+				view_query_is_auto_updatable(view_query, true);
 
 			if (view_updatable_error)
 				ereport(ERROR,

@@ -2023,8 +2023,7 @@ view_col_is_auto_updatable(RangeTblRef *rtr, TargetEntry *tle)
  * updatable.
  */
 const char *
-view_query_is_auto_updatable(Query *viewquery, bool security_barrier,
-							 bool check_cols)
+view_query_is_auto_updatable(Query *viewquery, bool check_cols)
 {
 	RangeTblRef *rtr;
 	RangeTblEntry *base_rte;
@@ -2096,14 +2095,6 @@ view_query_is_auto_updatable(Query *viewquery, bool security_barrier,
 
 	if (expression_returns_set((Node *) viewquery->targetList))
 		return gettext_noop("Views that return set-returning functions are not automatically updatable.");
-
-	/*
-	 * For now, we also don't support security-barrier views, because of the
-	 * difficulty of keeping upper-level qual expressions away from
-	 * lower-level data.  This might get relaxed in the future.
-	 */
-	if (security_barrier)
-		return gettext_noop("Security-barrier views are not automatically updatable.");
 
 	/*
 	 * The view query should select from a single base relation, which must be
@@ -2353,9 +2344,7 @@ relation_is_updatable(Oid reloid,
 	{
 		Query	   *viewquery = get_view_query(rel);
 
-		if (view_query_is_auto_updatable(viewquery,
-										 RelationIsSecurityView(rel),
-										 false) == NULL)
+		if (view_query_is_auto_updatable(viewquery, false) == NULL)
 		{
 			Bitmapset  *updatable_cols;
 			int			auto_events;
@@ -2510,7 +2499,6 @@ rewriteTargetView(Query *parsetree, Relation view)
 
 	auto_update_detail =
 		view_query_is_auto_updatable(viewquery,
-									 RelationIsSecurityView(view),
 									 parsetree->commandType != CMD_DELETE);
 
 	if (auto_update_detail)
@@ -2714,6 +2702,14 @@ rewriteTargetView(Query *parsetree, Relation view)
 												   view_targetlist);
 
 	/*
+	 * Move any security barrier quals from the view RTE onto the new target
+	 * RTE.  Any such quals should now apply to the new target RTE and will not
+	 * reference the original view RTE in the rewritten query.
+	 */
+	new_rte->securityQuals = view_rte->securityQuals;
+	view_rte->securityQuals = NIL;
+
+	/*
 	 * For UPDATE/DELETE, rewriteTargetListUD will have added a wholerow junk
 	 * TLE for the view to the end of the targetlist, which we no longer need.
 	 * Remove it to avoid unnecessary work when we process the targetlist.
@@ -2793,6 +2789,10 @@ rewriteTargetView(Query *parsetree, Relation view)
 	 * only adjust their varnos to reference the new target (just the same as
 	 * we did with the view targetlist).
 	 *
+	 * Note that there is special-case handling for the quals of a security
+	 * barrier view, since they need to be kept separate from any user-supplied
+	 * quals, so these quals are kept on the new target RTE.
+	 *
 	 * For INSERT, the view's quals can be ignored in the main query.
 	 */
 	if (parsetree->commandType != CMD_INSERT &&
@@ -2801,7 +2801,25 @@ rewriteTargetView(Query *parsetree, Relation view)
 		Node	   *viewqual = (Node *) copyObject(viewquery->jointree->quals);
 
 		ChangeVarNodes(viewqual, base_rt_index, new_rt_index, 0);
-		AddQual(parsetree, (Node *) viewqual);
+
+		if (RelationIsSecurityView(view))
+		{
+			/*
+			 * Note: the parsetree has been mutated, so the new_rte pointer is
+			 * stale and needs to be re-computed.
+			 */
+			new_rte = rt_fetch(new_rt_index, parsetree->rtable);
+			new_rte->securityQuals = lcons(viewqual, new_rte->securityQuals);
+
+			/*
+			 * Make sure that the query is marked correctly if the added qual
+			 * has sublinks.
+			 */
+			if (!parsetree->hasSubLinks)
+				parsetree->hasSubLinks = checkExprHasSubLink(viewqual);
+		}
+		else
+			AddQual(parsetree, (Node *) viewqual);
 	}
 
 	/*
@@ -2863,9 +2881,8 @@ rewriteTargetView(Query *parsetree, Relation view)
 				 * Make sure that the query is marked correctly if the added
 				 * qual has sublinks.  We can skip this check if the query is
 				 * already marked, or if the command is an UPDATE, in which
-				 * case the same qual will have already been added to the
-				 * query's WHERE clause, and AddQual will have already done
-				 * this check.
+				 * case the same qual will have already been added, and this
+				 * check will already have been done.
 				 */
 				if (!parsetree->hasSubLinks &&
 					parsetree->commandType != CMD_UPDATE)

@@ -396,7 +396,6 @@ DefineView(ViewStmt *stmt, const char *queryString)
 	RangeVar   *view;
 	ListCell   *cell;
 	bool		check_option;
-	bool		security_barrier;
 
 	/*
 	 * Run parse analysis to convert the raw parse tree to a Query.  Note this
@@ -451,7 +450,6 @@ DefineView(ViewStmt *stmt, const char *queryString)
 	 * specified.
 	 */
 	check_option = false;
-	security_barrier = false;
 
 	foreach(cell, stmt->options)
 	{
@@ -459,8 +457,6 @@ DefineView(ViewStmt *stmt, const char *queryString)
 
 		if (pg_strcasecmp(defel->defname, "check_option") == 0)
 			check_option = true;
-		if (pg_strcasecmp(defel->defname, "security_barrier") == 0)
-			security_barrier = defGetBoolean(defel);
 	}
 
 	/*
@@ -470,7 +466,7 @@ DefineView(ViewStmt *stmt, const char *queryString)
 	if (check_option)
 	{
 		const char *view_updatable_error =
-			view_query_is_auto_updatable(viewParse, security_barrier, true);
+			view_query_is_auto_updatable(viewParse, true);
 
 		if (view_updatable_error)
 			ereport(ERROR,
