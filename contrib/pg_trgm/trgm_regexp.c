@@ -227,14 +227,14 @@
  * Numbers based on analysis of real-life texts.
  */
 const float4 penalties[8] = {
-	1.0,						/* "aaa" */
-	3.5,						/* "aa " */
-	0.0,						/* "a a" (impossible) */
-	0.0,						/* "a  " (impossible) */
-	4.2,						/* " aa" */
-	2.1,						/* " a " */
-	25.0,						/* "  a" */
-	0.0							/* "   " (impossible) */
+	1.0f,						/* "aaa" */
+	3.5f,						/* "aa " */
+	0.0f,						/* "a a" (impossible) */
+	0.0f,						/* "a  " (impossible) */
+	4.2f,						/* " aa" */
+	2.1f,						/* " a " */
+	25.0f,						/* "  a" */
+	0.0f						/* "   " (impossible) */
 };
 
 /* Struct representing a single pg_wchar, converted back to multibyte form */
