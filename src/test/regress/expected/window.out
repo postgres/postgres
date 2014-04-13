@@ -1769,3 +1769,15 @@ SELECT to_char(SUM(n::float8) OVER (ORDER BY i ROWS BETWEEN CURRENT ROW AND 1 FO
                       1.0
 (2 rows)
 
+SELECT i, b, bool_and(b) OVER w, bool_or(b) OVER w
+  FROM (VALUES (1,true), (2,true), (3,false), (4,false), (5,true)) v(i,b)
+  WINDOW w AS (ORDER BY i ROWS BETWEEN CURRENT ROW AND 1 FOLLOWING);
+ i | b | bool_and | bool_or 
+---+---+----------+---------
+ 1 | t | t        | t
+ 2 | t | f        | t
+ 3 | f | f        | f
+ 4 | f | f        | t
+ 5 | t | t        | t
+(5 rows)
+

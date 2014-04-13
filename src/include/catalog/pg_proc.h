@@ -3915,6 +3915,14 @@ DATA(insert OID = 2515 ( booland_statefunc			   PGNSP PGUID 12 1 0 0 0 f f f f t
 DESCR("aggregate transition function");
 DATA(insert OID = 2516 ( boolor_statefunc			   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "16 16" _null_ _null_ _null_ _null_ boolor_statefunc _null_ _null_ _null_ ));
 DESCR("aggregate transition function");
+DATA(insert OID = 3496 ( bool_accum					   PGNSP PGUID 12 1 0 0 0 f f f f f f i 2 0 2281 "2281 16" _null_ _null_ _null_ _null_ bool_accum _null_ _null_ _null_ ));
+DESCR("aggregate transition function");
+DATA(insert OID = 3497 ( bool_accum_inv				   PGNSP PGUID 12 1 0 0 0 f f f f f f i 2 0 2281 "2281 16" _null_ _null_ _null_ _null_ bool_accum_inv _null_ _null_ _null_ ));
+DESCR("aggregate transition function");
+DATA(insert OID = 3498 ( bool_alltrue				   PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 16 "2281" _null_ _null_ _null_ _null_ bool_alltrue _null_ _null_ _null_ ));
+DESCR("aggregate final function");
+DATA(insert OID = 3499 ( bool_anytrue				   PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 16 "2281" _null_ _null_ _null_ _null_ bool_anytrue _null_ _null_ _null_ ));
+DESCR("aggregate final function");
 DATA(insert OID = 2517 ( bool_and					   PGNSP PGUID 12 1 0 0 0 t f f f f f i 1 0 16 "16" _null_ _null_ _null_ _null_ aggregate_dummy _null_ _null_ _null_ ));
 DESCR("boolean-and aggregate");
 /* ANY, SOME? These names conflict with subquery operators. See doc. */

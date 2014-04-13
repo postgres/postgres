@@ -121,6 +121,10 @@ extern Datum boolle(PG_FUNCTION_ARGS);
 extern Datum boolge(PG_FUNCTION_ARGS);
 extern Datum booland_statefunc(PG_FUNCTION_ARGS);
 extern Datum boolor_statefunc(PG_FUNCTION_ARGS);
+extern Datum bool_accum(PG_FUNCTION_ARGS);
+extern Datum bool_accum_inv(PG_FUNCTION_ARGS);
+extern Datum bool_alltrue(PG_FUNCTION_ARGS);
+extern Datum bool_anytrue(PG_FUNCTION_ARGS);
 extern bool parse_bool(const char *value, bool *result);
 extern bool parse_bool_with_len(const char *value, size_t len, bool *result);
 

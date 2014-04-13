@@ -617,3 +617,7 @@ FROM (VALUES(1,1::numeric),(2,2),(3,'NaN'),(4,3),(5,4)) t(a,b);
 -- hard about it.
 SELECT to_char(SUM(n::float8) OVER (ORDER BY i ROWS BETWEEN CURRENT ROW AND 1 FOLLOWING),'999999999999999999999D9')
   FROM (VALUES(1,1e20),(2,1)) n(i,n);
+
+SELECT i, b, bool_and(b) OVER w, bool_or(b) OVER w
+  FROM (VALUES (1,true), (2,true), (3,false), (4,false), (5,true)) v(i,b)
+  WINDOW w AS (ORDER BY i ROWS BETWEEN CURRENT ROW AND 1 FOLLOWING);
