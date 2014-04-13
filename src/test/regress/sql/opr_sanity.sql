@@ -760,14 +760,14 @@ WHERE a.aggfnoid = p.oid AND
     a.aggminitval IS NULL AND
     NOT binary_coercible(p.proargtypes[0], a.aggmtranstype);
 
--- transfn and mtransfn should have same strictness setting.
+-- mtransfn and minvtransfn should have same strictness setting.
 
-SELECT a.aggfnoid::oid, p.proname, ptr.oid, ptr.proname, mptr.oid, mptr.proname
-FROM pg_aggregate AS a, pg_proc AS p, pg_proc AS ptr, pg_proc AS mptr
+SELECT a.aggfnoid::oid, p.proname, ptr.oid, ptr.proname, iptr.oid, iptr.proname
+FROM pg_aggregate AS a, pg_proc AS p, pg_proc AS ptr, pg_proc AS iptr
 WHERE a.aggfnoid = p.oid AND
-    a.aggtransfn = ptr.oid AND
-    a.aggmtransfn = mptr.oid AND
-    ptr.proisstrict != mptr.proisstrict;
+    a.aggmtransfn = ptr.oid AND
+    a.aggminvtransfn = iptr.oid AND
+    ptr.proisstrict != iptr.proisstrict;
 
 -- Cross-check aggsortop (if present) against pg_operator.
 -- We expect to find entries for bool_and, bool_or, every, max, and min.

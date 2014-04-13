@@ -717,13 +717,58 @@ int8inc(PG_FUNCTION_ARGS)
 	}
 }
 
+Datum
+int8dec(PG_FUNCTION_ARGS)
+{
+	/*
+	 * When int8 is pass-by-reference, we provide this special case to avoid
+	 * palloc overhead for COUNT(): when called as an aggregate, we know that
+	 * the argument is modifiable local storage, so just update it in-place.
+	 * (If int8 is pass-by-value, then of course this is useless as well as
+	 * incorrect, so just ifdef it out.)
+	 */
+#ifndef USE_FLOAT8_BYVAL		/* controls int8 too */
+	if (AggCheckCallContext(fcinfo, NULL))
+	{
+		int64	   *arg = (int64 *) PG_GETARG_POINTER(0);
+		int64		result;
+
+		result = *arg - 1;
+		/* Overflow check */
+		if (result > 0 && *arg < 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					 errmsg("bigint out of range")));
+
+		*arg = result;
+		PG_RETURN_POINTER(arg);
+	}
+	else
+#endif
+	{
+		/* Not called as an aggregate, so just do it the dumb way */
+		int64		arg = PG_GETARG_INT64(0);
+		int64		result;
+
+		result = arg - 1;
+		/* Overflow check */
+		if (result > 0 && arg < 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					 errmsg("bigint out of range")));
+
+		PG_RETURN_INT64(result);
+	}
+}
+
+
 /*
- * These functions are exactly like int8inc but are used for aggregates that
- * count only non-null values.	Since the functions are declared strict,
- * the null checks happen before we ever get here, and all we need do is
- * increment the state value.  We could actually make these pg_proc entries
- * point right at int8inc, but then the opr_sanity regression test would
- * complain about mismatched entries for a built-in function.
+ * These functions are exactly like int8inc/int8dec but are used for
+ * aggregates that count only non-null values.	Since the functions are
+ * declared strict, the null checks happen before we ever get here, and all we
+ * need do is increment the state value.  We could actually make these pg_proc
+ * entries point right at int8inc/int8dec, but then the opr_sanity regression
+ * test would complain about mismatched entries for a built-in function.
  */
 
 Datum
@@ -736,6 +781,12 @@ Datum
 int8inc_float8_float8(PG_FUNCTION_ARGS)
 {
 	return int8inc(fcinfo);
+}
+
+Datum
+int8dec_any(PG_FUNCTION_ARGS)
+{
+	return int8dec(fcinfo);
 }
 
 

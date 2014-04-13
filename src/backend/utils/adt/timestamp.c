@@ -3229,7 +3229,6 @@ interval_mi(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("interval out of range")));
 
-
 	PG_RETURN_INTERVAL_P(result);
 }
 
@@ -3376,12 +3375,18 @@ interval_div(PG_FUNCTION_ARGS)
 }
 
 /*
- * interval_accum and interval_avg implement the AVG(interval) aggregate.
+ * interval_accum, interval_accum_inv, and interval_avg implement the
+ * AVG(interval) aggregate.
  *
  * The transition datatype for this aggregate is a 2-element array of
  * intervals, where the first is the running sum and the second contains
  * the number of values so far in its 'time' field.  This is a bit ugly
  * but it beats inventing a specialized datatype for the purpose.
+ *
+ * NOTE: The inverse transition function cannot guarantee exact results
+ * when using float8 timestamps.  However, int8 timestamps are now the
+ * norm, and the probable range of values is not so wide that disastrous
+ * cancellation is likely even with float8, so we'll ignore the risk.
  */
 
 Datum
@@ -3402,22 +3407,48 @@ interval_accum(PG_FUNCTION_ARGS)
 	if (ndatums != 2)
 		elog(ERROR, "expected 2-element interval array");
 
-	/*
-	 * XXX memcpy, instead of just extracting a pointer, to work around buggy
-	 * array code: it won't ensure proper alignment of Interval objects on
-	 * machines where double requires 8-byte alignment. That should be fixed,
-	 * but in the meantime...
-	 *
-	 * Note: must use DatumGetPointer here, not DatumGetIntervalP, else some
-	 * compilers optimize into double-aligned load/store anyway.
-	 */
-	memcpy((void *) &sumX, DatumGetPointer(transdatums[0]), sizeof(Interval));
-	memcpy((void *) &N, DatumGetPointer(transdatums[1]), sizeof(Interval));
+	sumX = *(DatumGetIntervalP(transdatums[0]));
+	N = *(DatumGetIntervalP(transdatums[1]));
 
 	newsum = DatumGetIntervalP(DirectFunctionCall2(interval_pl,
 												   IntervalPGetDatum(&sumX),
 												 IntervalPGetDatum(newval)));
 	N.time += 1;
+
+	transdatums[0] = IntervalPGetDatum(newsum);
+	transdatums[1] = IntervalPGetDatum(&N);
+
+	result = construct_array(transdatums, 2,
+							 INTERVALOID, sizeof(Interval), false, 'd');
+
+	PG_RETURN_ARRAYTYPE_P(result);
+}
+
+Datum
+interval_accum_inv(PG_FUNCTION_ARGS)
+{
+	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
+	Interval   *newval = PG_GETARG_INTERVAL_P(1);
+	Datum	   *transdatums;
+	int			ndatums;
+	Interval	sumX,
+				N;
+	Interval   *newsum;
+	ArrayType  *result;
+
+	deconstruct_array(transarray,
+					  INTERVALOID, sizeof(Interval), false, 'd',
+					  &transdatums, NULL, &ndatums);
+	if (ndatums != 2)
+		elog(ERROR, "expected 2-element interval array");
+
+	sumX = *(DatumGetIntervalP(transdatums[0]));
+	N = *(DatumGetIntervalP(transdatums[1]));
+
+	newsum = DatumGetIntervalP(DirectFunctionCall2(interval_mi,
+												   IntervalPGetDatum(&sumX),
+												 IntervalPGetDatum(newval)));
+	N.time -= 1;
 
 	transdatums[0] = IntervalPGetDatum(newsum);
 	transdatums[1] = IntervalPGetDatum(&N);
@@ -3443,17 +3474,8 @@ interval_avg(PG_FUNCTION_ARGS)
 	if (ndatums != 2)
 		elog(ERROR, "expected 2-element interval array");
 
-	/*
-	 * XXX memcpy, instead of just extracting a pointer, to work around buggy
-	 * array code: it won't ensure proper alignment of Interval objects on
-	 * machines where double requires 8-byte alignment. That should be fixed,
-	 * but in the meantime...
-	 *
-	 * Note: must use DatumGetPointer here, not DatumGetIntervalP, else some
-	 * compilers optimize into double-aligned load/store anyway.
-	 */
-	memcpy((void *) &sumX, DatumGetPointer(transdatums[0]), sizeof(Interval));
-	memcpy((void *) &N, DatumGetPointer(transdatums[1]), sizeof(Interval));
+	sumX = *(DatumGetIntervalP(transdatums[0]));
+	N = *(DatumGetIntervalP(transdatums[1]));
 
 	/* SQL defines AVG of no values to be NULL */
 	if (N.time == 0)
@@ -3461,7 +3483,7 @@ interval_avg(PG_FUNCTION_ARGS)
 
 	return DirectFunctionCall2(interval_div,
 							   IntervalPGetDatum(&sumX),
-							   Float8GetDatum(N.time));
+							   Float8GetDatum((double) N.time));
 }
 
 
