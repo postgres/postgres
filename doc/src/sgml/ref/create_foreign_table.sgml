@@ -49,7 +49,7 @@ CREATE FOREIGN TABLE [ IF NOT EXISTS ] <replaceable class="PARAMETER">table_name
    schema.  Otherwise it is created in the current schema.
    The name of the foreign table must be
    distinct from the name of any other foreign table, table, sequence, index,
-   or view in the same schema.
+   view, or materialized view in the same schema.
   </para>
 
   <para>
