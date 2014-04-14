@@ -285,8 +285,7 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 	GinPageGetOpaque(page)->flags = GIN_DELETED;
 
 	MarkBufferDirty(pBuffer);
-	if (leftBlkno != InvalidBlockNumber)
-		MarkBufferDirty(lBuffer);
+	MarkBufferDirty(lBuffer);
 	MarkBufferDirty(dBuffer);
 
 	if (RelationNeedsWAL(gvs->index))
@@ -294,7 +293,6 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 		XLogRecPtr	recptr;
 		XLogRecData rdata[4];
 		ginxlogDeletePage data;
-		int			n;
 
 		data.node = gvs->index->rd_node;
 		data.blkno = deleteBlkno;
@@ -315,32 +313,22 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 		rdata[1].len = 0;
 		rdata[1].next = rdata + 2;
 
-		if (leftBlkno != InvalidBlockNumber)
-		{
-			rdata[2].buffer = lBuffer;
-			rdata[2].buffer_std = FALSE;
-			rdata[2].data = NULL;
-			rdata[2].len = 0;
-			rdata[2].next = rdata + 3;
-			n = 3;
-		}
-		else
-			n = 2;
+		rdata[2].buffer = lBuffer;
+		rdata[2].buffer_std = FALSE;
+		rdata[2].data = NULL;
+		rdata[2].len = 0;
+		rdata[2].next = rdata + 3;
 
-		rdata[n].buffer = InvalidBuffer;
-		rdata[n].buffer_std = FALSE;
-		rdata[n].len = sizeof(ginxlogDeletePage);
-		rdata[n].data = (char *) &data;
-		rdata[n].next = NULL;
+		rdata[3].buffer = InvalidBuffer;
+		rdata[3].buffer_std = FALSE;
+		rdata[3].len = sizeof(ginxlogDeletePage);
+		rdata[3].data = (char *) &data;
+		rdata[3].next = NULL;
 
 		recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_DELETE_PAGE, rdata);
 		PageSetLSN(page, recptr);
 		PageSetLSN(parentPage, recptr);
-		if (leftBlkno != InvalidBlockNumber)
-		{
-			page = BufferGetPage(lBuffer);
-			PageSetLSN(page, recptr);
-		}
+		PageSetLSN(BufferGetPage(lBuffer), recptr);
 	}
 
 	if (!isParentRoot)
