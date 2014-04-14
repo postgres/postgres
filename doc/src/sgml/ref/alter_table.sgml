@@ -740,7 +740,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
       <term><replaceable class="PARAMETER">constraint_name</replaceable></term>
       <listitem>
        <para>
-        Name of an existing constraint to drop.
+        Name of a new or existing constraint.
        </para>
       </listitem>
      </varlistentry>
