@@ -944,6 +944,21 @@ SELECT pg_stop_backup();
    </para>
 
    <para>
+    It is often a good idea to also omit from the backup dump the files
+    within the cluster's <filename>pg_replslot/</> directory, so that
+    replication slots that exist on the master do not become part of the
+    backup.  Otherwise, the subsequent use of the backup to create a standby
+    may result in indefinite retention of WAL files on the standby, and
+    possibly bloat on the master if hot standby feedback is enabled, because
+    the clients that are using those replication slots will still be connecting
+    to and updating the slots on the master, not the standby.  Even if the
+    backup is only intended for use in creating a new master, copying the
+    replication slots isn't expected to be particularly useful, since the
+    contents of those slots will likely be badly out of date by the time
+    the new master comes on line.
+   </para>
+
+   <para>
     It's also worth noting that the <function>pg_start_backup</> function
     makes a file named <filename>backup_label</> in the database cluster
     directory, which is removed by <function>pg_stop_backup</>.
