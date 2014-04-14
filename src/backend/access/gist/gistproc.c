@@ -926,7 +926,9 @@ gist_box_leaf_consistent(BOX *key, BOX *query, StrategyNumber strategy)
 													PointerGetDatum(query)));
 			break;
 		default:
-			retval = FALSE;
+			elog(ERROR, "unrecognized strategy number: %d", strategy);
+			retval = false;		/* keep compiler quiet */
+			break;
 	}
 	return retval;
 }
@@ -1015,7 +1017,9 @@ rtree_internal_consistent(BOX *key, BOX *query, StrategyNumber strategy)
 													PointerGetDatum(query)));
 			break;
 		default:
-			retval = FALSE;
+			elog(ERROR, "unrecognized strategy number: %d", strategy);
+			retval = false;		/* keep compiler quiet */
+			break;
 	}
 	return retval;
 }
@@ -1306,7 +1310,9 @@ gist_point_consistent_internal(StrategyNumber strategy,
 			}
 			break;
 		default:
-			elog(ERROR, "unknown strategy number: %d", strategy);
+			elog(ERROR, "unrecognized strategy number: %d", strategy);
+			result = false;		/* keep compiler quiet */
+			break;
 	}
 
 	return result;
@@ -1422,8 +1428,9 @@ gist_point_consistent(PG_FUNCTION_ARGS)
 			}
 			break;
 		default:
-			elog(ERROR, "unknown strategy number: %d", strategy);
+			elog(ERROR, "unrecognized strategy number: %d", strategy);
 			result = false;		/* keep compiler quiet */
+			break;
 	}
 
 	PG_RETURN_BOOL(result);
@@ -1445,8 +1452,9 @@ gist_point_distance(PG_FUNCTION_ARGS)
 									   PG_GETARG_POINT_P(1));
 			break;
 		default:
-			elog(ERROR, "unknown strategy number: %d", strategy);
+			elog(ERROR, "unrecognized strategy number: %d", strategy);
 			distance = 0.0;		/* keep compiler quiet */
+			break;
 	}
 
 	PG_RETURN_FLOAT8(distance);
