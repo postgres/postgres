@@ -582,8 +582,8 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
     <term><literal>OWNER</literal></term>
     <listitem>
      <para>
-      This form changes the owner of the table, sequence, or view to the
-      specified user.
+      This form changes the owner of the table, sequence, view, materialized view,
+      or foreign table to the specified user.
      </para>
     </listitem>
    </varlistentry>
@@ -625,8 +625,9 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
     <listitem>
      <para>
       The <literal>RENAME</literal> forms change the name of a table
-      (or an index, sequence, or view), the name of an individual column in
-      a table, or the name of a constraint of the table. There is no effect on the stored data.
+      (or an index, sequence, view, materialized view, or foreign table), the name
+      of an individual column in a table, or the name of a constraint of the table.
+      There is no effect on the stored data.
      </para>
     </listitem>
    </varlistentry>
