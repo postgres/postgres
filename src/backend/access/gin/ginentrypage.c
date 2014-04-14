@@ -554,14 +554,14 @@ entryPlaceToPage(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 	data.offset = off;
 
 	rdata[cnt].buffer = buf;
-	rdata[cnt].buffer_std = false;
+	rdata[cnt].buffer_std = true;
 	rdata[cnt].data = (char *) &data;
 	rdata[cnt].len = offsetof(ginxlogInsertEntry, tuple);
 	rdata[cnt].next = &rdata[cnt + 1];
 	cnt++;
 
 	rdata[cnt].buffer = buf;
-	rdata[cnt].buffer_std = false;
+	rdata[cnt].buffer_std = true;
 	rdata[cnt].data = (char *) insertData->entry;
 	rdata[cnt].len = IndexTupleSize(insertData->entry);
 	rdata[cnt].next = NULL;
