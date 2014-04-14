@@ -301,6 +301,13 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 		data.leftBlkno = leftBlkno;
 		data.rightLink = GinPageGetOpaque(page)->rightlink;
 
+		/*
+		 * We can't pass buffer_std = TRUE, because we didn't set pd_lower
+		 * on pre-9.4 versions. The page might've been binary-upgraded from
+		 * an older version, and hence not have pd_lower set correctly.
+		 * Ditto for the left page, but removing the item from the parent
+		 * updated its pd_lower, so we know that's OK at this point.
+		 */
 		rdata[0].buffer = dBuffer;
 		rdata[0].buffer_std = FALSE;
 		rdata[0].data = NULL;
@@ -308,7 +315,7 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 		rdata[0].next = rdata + 1;
 
 		rdata[1].buffer = pBuffer;
-		rdata[1].buffer_std = FALSE;
+		rdata[1].buffer_std = TRUE;
 		rdata[1].data = NULL;
 		rdata[1].len = 0;
 		rdata[1].next = rdata + 2;

@@ -96,7 +96,7 @@ ginRedoCreatePTree(XLogRecPtr lsn, XLogRecord *record)
 	/* Place page data */
 	memcpy(GinDataLeafPageGetPostingList(page), ptr, data->size);
 
-	GinDataLeafPageSetPostingListSize(page, data->size);
+	GinDataPageSetDataSize(page, data->size);
 
 	PageSetLSN(page, lsn);
 
@@ -169,7 +169,7 @@ ginRedoRecompress(Page page, ginxlogRecompressDataLeaf *data)
 		totalsize = SizeOfGinPostingList(plist);
 
 		memcpy(GinDataLeafPageGetPostingList(page), plist, totalsize);
-		GinDataLeafPageSetPostingListSize(page, totalsize);
+		GinDataPageSetDataSize(page, totalsize);
 		GinPageSetCompressed(page);
 		GinPageGetOpaque(page)->maxoff = InvalidOffsetNumber;
 	}
@@ -296,7 +296,7 @@ ginRedoRecompress(Page page, ginxlogRecompressDataLeaf *data)
 	}
 
 	totalsize = segmentend - (Pointer) GinDataLeafPageGetPostingList(page);
-	GinDataLeafPageSetPostingListSize(page, totalsize);
+	GinDataPageSetDataSize(page, totalsize);
 }
 
 static void
@@ -423,14 +423,14 @@ ginRedoSplitData(Page lpage, Page rpage, void *rdata)
 		Pointer		lptr = (Pointer) rdata + sizeof(ginxlogSplitDataLeaf);
 		Pointer		rptr = lptr + data->lsize;
 
-		Assert(data->lsize > 0 && data->lsize <= GinDataLeafMaxContentSize);
-		Assert(data->rsize > 0 && data->rsize <= GinDataLeafMaxContentSize);
+		Assert(data->lsize > 0 && data->lsize <= GinDataPageMaxDataSize);
+		Assert(data->rsize > 0 && data->rsize <= GinDataPageMaxDataSize);
 
 		memcpy(GinDataLeafPageGetPostingList(lpage), lptr, data->lsize);
 		memcpy(GinDataLeafPageGetPostingList(rpage), rptr, data->rsize);
 
-		GinDataLeafPageSetPostingListSize(lpage, data->lsize);
-		GinDataLeafPageSetPostingListSize(rpage, data->rsize);
+		GinDataPageSetDataSize(lpage, data->lsize);
+		GinDataPageSetDataSize(rpage, data->rsize);
 		*GinDataPageGetRightBound(lpage) = data->lrightbound;
 		*GinDataPageGetRightBound(rpage) = data->rrightbound;
 	}

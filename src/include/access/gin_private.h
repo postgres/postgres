@@ -257,11 +257,6 @@ typedef signed char GinNullCategory;
 	(GinPostingList *) ((PageGetContents(page) + MAXALIGN(sizeof(ItemPointerData))))
 #define GinDataLeafPageGetPostingListSize(page) \
 	(((PageHeader) page)->pd_lower - MAXALIGN(SizeOfPageHeaderData) - MAXALIGN(sizeof(ItemPointerData)))
-#define GinDataLeafPageSetPostingListSize(page, size) \
-	{ \
-		Assert(size <= GinDataLeafMaxContentSize); \
-		((PageHeader) page)->pd_lower = (size) + MAXALIGN(SizeOfPageHeaderData) + MAXALIGN(sizeof(ItemPointerData)); \
-	}
 
 #define GinDataLeafPageIsEmpty(page) \
 	(GinPageIsCompressed(page) ? (GinDataLeafPageGetPostingListSize(page) == 0) : (GinPageGetOpaque(page)->maxoff < FirstOffsetNumber))
@@ -281,13 +276,25 @@ typedef signed char GinNullCategory;
 #define GinDataPageGetPostingItem(page, i)	\
 	((PostingItem *) (GinDataPageGetData(page) + ((i)-1) * sizeof(PostingItem)))
 
-#define GinNonLeafDataPageGetFreeSpace(page)	\
-	(BLCKSZ - MAXALIGN(SizeOfPageHeaderData) \
-	 - MAXALIGN(sizeof(ItemPointerData)) \
-	 - GinPageGetOpaque(page)->maxoff * sizeof(PostingItem)	\
-	 - MAXALIGN(sizeof(GinPageOpaqueData)))
+/*
+ * Note: there is no GinDataPageGetDataSize macro, because before version
+ * 9.4, we didn't set pd_lower on data pages. There can be pages in the index
+ * that were binary-upgraded from earlier versions and still have an invalid
+ * pd_lower, so we cannot trust it in general. Compressed posting tree leaf
+ * pages are new in 9.4, however, so we can trust them; see
+ * GinDataLeafPageGetPostingListSize.
+ */
+#define GinDataPageSetDataSize(page, size) \
+	{ \
+		Assert(size <= GinDataPageMaxDataSize); \
+		((PageHeader) page)->pd_lower = (size) + MAXALIGN(SizeOfPageHeaderData) + MAXALIGN(sizeof(ItemPointerData)); \
+	}
 
-#define GinDataLeafMaxContentSize	\
+#define GinNonLeafDataPageGetFreeSpace(page)	\
+	(GinDataPageMaxDataSize - \
+	 GinPageGetOpaque(page)->maxoff * sizeof(PostingItem))
+
+#define GinDataPageMaxDataSize	\
 	(BLCKSZ - MAXALIGN(SizeOfPageHeaderData) \
 	 - MAXALIGN(sizeof(ItemPointerData)) \
 	 - MAXALIGN(sizeof(GinPageOpaqueData)))
