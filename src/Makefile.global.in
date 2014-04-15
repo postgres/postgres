@@ -1,5 +1,6 @@
 # -*-makefile-*-
 # src/Makefile.global.in
+# @configure_input@
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
