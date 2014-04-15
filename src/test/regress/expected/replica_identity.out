@@ -152,14 +152,14 @@ SELECT relreplident FROM pg_class WHERE oid = 'test_replica_identity'::regclass;
  f
 (1 row)
 
-\d test_replica_identity
-                         Table "public.test_replica_identity"
- Column |  Type   |                             Modifiers                              
---------+---------+--------------------------------------------------------------------
- id     | integer | not null default nextval('test_replica_identity_id_seq'::regclass)
- keya   | text    | not null
- keyb   | text    | not null
- nonkey | text    | 
+\d+ test_replica_identity
+                                             Table "public.test_replica_identity"
+ Column |  Type   |                             Modifiers                              | Storage  | Stats target | Description 
+--------+---------+--------------------------------------------------------------------+----------+--------------+-------------
+ id     | integer | not null default nextval('test_replica_identity_id_seq'::regclass) | plain    |              | 
+ keya   | text    | not null                                                           | extended |              | 
+ keyb   | text    | not null                                                           | extended |              | 
+ nonkey | text    |                                                                    | extended |              | 
 Indexes:
     "test_replica_identity_pkey" PRIMARY KEY, btree (id)
     "test_replica_identity_expr" UNIQUE, btree (keya, keyb, (3))

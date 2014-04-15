@@ -2345,13 +2345,14 @@ describeOneTableDetails(const char *schemaname,
 			printTableAddFooter(&cont, buf.data);
 		}
 
-		if ((tableinfo.relkind == 'r' || tableinfo.relkind == 'm') &&
+		if (verbose && (tableinfo.relkind == 'r' || tableinfo.relkind == 'm') &&
 			/*
 			 * No need to display default values;  we already display a
 			 * REPLICA IDENTITY marker on indexes.
 			 */
-			tableinfo.relreplident != 'd' && tableinfo.relreplident != 'i' &&
-			strcmp(schemaname, "pg_catalog") != 0)
+			tableinfo.relreplident != 'i' &&
+			((strcmp(schemaname, "pg_catalog") != 0 && tableinfo.relreplident != 'd') ||
+			 (strcmp(schemaname, "pg_catalog") == 0 && tableinfo.relreplident != 'n')))
 		{
 			const char *s = _("Replica Identity");
 
@@ -2365,14 +2366,8 @@ describeOneTableDetails(const char *schemaname,
 		}
 
 		/* OIDs, if verbose and not a materialized view */
-		if (verbose && tableinfo.relkind != 'm')
-		{
-			const char *s = _("Has OIDs");
-
-			printfPQExpBuffer(&buf, "%s: %s", s,
-							  (tableinfo.hasoids ? _("yes") : _("no")));
-			printTableAddFooter(&cont, buf.data);
-		}
+		if (verbose && tableinfo.relkind != 'm' && tableinfo.hasoids)
+			printTableAddFooter(&cont, _("Has OIDs: yes"));
 
 		/* Tablespace info */
 		add_tablespace_footer(&cont, tableinfo.relkind, tableinfo.tablespace,

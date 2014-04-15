@@ -684,7 +684,6 @@ COMMENT ON COLUMN ft1.c1 IS 'ft1.c1';
  c3     | date    |           |                                | plain    |              | 
 Server: s0
 FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
-Has OIDs: no
 
 \det+
                                  List of foreign tables
@@ -743,7 +742,6 @@ ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 SET STATISTICS -1;
  c10    | integer |           | (p1 'v1')                      | plain    |              | 
 Server: s0
 FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
-Has OIDs: no
 
 -- can't change the column type if it's used elsewhere
 CREATE TABLE use_ft1_column_type (x ft1);

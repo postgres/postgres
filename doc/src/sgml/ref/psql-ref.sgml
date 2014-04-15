@@ -951,7 +951,9 @@ testdb=&gt;
         The command form <literal>\d+</literal> is identical, except that
         more information is displayed: any comments associated with the
         columns of the table are shown, as is the presence of OIDs in the
-        table, the view definition if the relation is a view.
+        table, the view definition if the relation is a view, a non-default 
+        <link linkend="SQL-CREATETABLE-REPLICA-IDENTITY">replica
+        identity</link> setting.
         </para>
 
         <para>

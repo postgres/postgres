@@ -608,12 +608,14 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
      <para>
       This form changes the information which is written to the write-ahead log
       to identify rows which are updated or deleted.  This option has no effect
-      except when logical replication is in use.  <literal>DEFAULT</> records the 
+      except when logical replication is in use.  <literal>DEFAULT</>
+      (the default for non-system tables) records the 
       old values of the columns of the primary key, if any.  <literal>USING INDEX</>
       records the old values of the columns covered by the named index, which
       must be unique, not partial, not deferrable, and include only columns marked
       <literal>NOT NULL</>.  <literal>FULL</> records the old values of all columns
       in the row.  <literal>NOTHING</> records no information about the old row.
+      (This is the default for system tables.)
       In all cases, no old values are logged unless at least one of the columns
       that would be logged differs between the old and new versions of the row.
      </para>
