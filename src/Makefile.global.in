@@ -779,7 +779,7 @@ gcda_files := $(wildcard *.gcda)
 
 lcov.info: $(gcda_files)
 	rm -f *.gcov
-	$(if $^,$(LCOV) -d . -c -o $@ $(LCOVFLAGS))
+	$(if $^,$(LCOV) -d . -c -o $@ $(LCOVFLAGS) --gcov-tool $(GCOV))
 
 %.c.gcov: %.gcda | lcov.info
 	$(GCOV) -b -f -p -o . $(GCOVFLAGS) $*.c >$*.c.gcov.out
