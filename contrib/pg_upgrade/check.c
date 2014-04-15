@@ -565,62 +565,12 @@ create_script_for_cluster_analyze(char **analyze_script_file_name)
 			"--analyze-only" : "--analyze", ECHO_QUOTE);
 	fprintf(script, "echo%s\n\n", ECHO_BLANK);
 
-#ifndef WIN32
-	fprintf(script, "sleep 2\n");
-	fprintf(script, "PGOPTIONS='-c default_statistics_target=1 -c vacuum_cost_delay=0'\n");
-	/* only need to export once */
-	fprintf(script, "export PGOPTIONS\n");
-#else
-	fprintf(script, "REM simulate sleep 2\n");
-	fprintf(script, "PING 1.1.1.1 -n 1 -w 2000 > nul\n");
-	fprintf(script, "SET PGOPTIONS=-c default_statistics_target=1 -c vacuum_cost_delay=0\n");
-#endif
-
-	fprintf(script, "echo %sGenerating minimal optimizer statistics (1 target)%s\n",
-			ECHO_QUOTE, ECHO_QUOTE);
-	fprintf(script, "echo %s--------------------------------------------------%s\n",
-			ECHO_QUOTE, ECHO_QUOTE);
-	fprintf(script, "\"%s/vacuumdb\" %s--all --analyze-only\n",
+	fprintf(script, "\"%s/vacuumdb\" %s--all --analyze-in-stages\n",
 			new_cluster.bindir, user_specification);
-	fprintf(script, "echo%s\n", ECHO_BLANK);
-	fprintf(script, "echo %sThe server is now available with minimal optimizer statistics.%s\n",
-			ECHO_QUOTE, ECHO_QUOTE);
-	fprintf(script, "echo %sQuery performance will be optimal once this script completes.%s\n",
-			ECHO_QUOTE, ECHO_QUOTE);
-	fprintf(script, "echo%s\n\n", ECHO_BLANK);
-
-#ifndef WIN32
-	fprintf(script, "sleep 2\n");
-	fprintf(script, "PGOPTIONS='-c default_statistics_target=10'\n");
-#else
-	fprintf(script, "REM simulate sleep\n");
-	fprintf(script, "PING 1.1.1.1 -n 1 -w 2000 > nul\n");
-	fprintf(script, "SET PGOPTIONS=-c default_statistics_target=10\n");
-#endif
-
-	fprintf(script, "echo %sGenerating medium optimizer statistics (10 targets)%s\n",
-			ECHO_QUOTE, ECHO_QUOTE);
-	fprintf(script, "echo %s---------------------------------------------------%s\n",
-			ECHO_QUOTE, ECHO_QUOTE);
-	fprintf(script, "\"%s/vacuumdb\" %s--all --analyze-only\n",
-			new_cluster.bindir, user_specification);
-	fprintf(script, "echo%s\n\n", ECHO_BLANK);
-
-#ifndef WIN32
-	fprintf(script, "unset PGOPTIONS\n");
-#else
-	fprintf(script, "SET PGOPTIONS\n");
-#endif
-
-	fprintf(script, "echo %sGenerating default (full) optimizer statistics (100 targets?)%s\n",
-			ECHO_QUOTE, ECHO_QUOTE);
-	fprintf(script, "echo %s-------------------------------------------------------------%s\n",
-			ECHO_QUOTE, ECHO_QUOTE);
-	fprintf(script, "\"%s/vacuumdb\" %s--all %s\n", new_cluster.bindir,
-			user_specification,
 	/* Did we copy the free space files? */
-			(GET_MAJOR_VERSION(old_cluster.major_version) >= 804) ?
-			"--analyze-only" : "--analyze");
+	if (GET_MAJOR_VERSION(old_cluster.major_version) < 804)
+		fprintf(script, "\"%s/vacuumdb\" %s--all\n", new_cluster.bindir,
+				user_specification);
 
 	fprintf(script, "echo%s\n\n", ECHO_BLANK);
 	fprintf(script, "echo %sDone%s\n",

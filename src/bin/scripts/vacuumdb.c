@@ -16,12 +16,12 @@
 
 
 static void vacuum_one_database(const char *dbname, bool full, bool verbose,
-					bool and_analyze, bool analyze_only, bool freeze,
+					bool and_analyze, bool analyze_only, bool analyze_in_stages, bool freeze,
 					const char *table, const char *host, const char *port,
 					const char *username, enum trivalue prompt_password,
 					const char *progname, bool echo);
 static void vacuum_all_databases(bool full, bool verbose, bool and_analyze,
-					 bool analyze_only, bool freeze,
+					 bool analyze_only, bool analyze_in_stages, bool freeze,
 					 const char *maintenance_db,
 					 const char *host, const char *port,
 					 const char *username, enum trivalue prompt_password,
@@ -50,6 +50,7 @@ main(int argc, char *argv[])
 		{"full", no_argument, NULL, 'f'},
 		{"verbose", no_argument, NULL, 'v'},
 		{"maintenance-db", required_argument, NULL, 2},
+		{"analyze-in-stages", no_argument, NULL, 3},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -67,6 +68,7 @@ main(int argc, char *argv[])
 	bool		quiet = false;
 	bool		and_analyze = false;
 	bool		analyze_only = false;
+	bool		analyze_in_stages = false;
 	bool		freeze = false;
 	bool		alldb = false;
 	bool		full = false;
@@ -130,6 +132,9 @@ main(int argc, char *argv[])
 			case 2:
 				maintenance_db = pg_strdup(optarg);
 				break;
+			case 3:
+				analyze_in_stages = analyze_only = true;
+				break;
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
@@ -189,7 +194,7 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 
-		vacuum_all_databases(full, verbose, and_analyze, analyze_only, freeze,
+		vacuum_all_databases(full, verbose, and_analyze, analyze_only, analyze_in_stages, freeze,
 							 maintenance_db, host, port, username,
 							 prompt_password, progname, echo, quiet);
 	}
@@ -212,7 +217,7 @@ main(int argc, char *argv[])
 			for (cell = tables.head; cell; cell = cell->next)
 			{
 				vacuum_one_database(dbname, full, verbose, and_analyze,
-									analyze_only,
+									analyze_only, analyze_in_stages,
 									freeze, cell->val,
 									host, port, username, prompt_password,
 									progname, echo);
@@ -220,7 +225,7 @@ main(int argc, char *argv[])
 		}
 		else
 			vacuum_one_database(dbname, full, verbose, and_analyze,
-								analyze_only,
+								analyze_only, analyze_in_stages,
 								freeze, NULL,
 								host, port, username, prompt_password,
 								progname, echo);
@@ -231,8 +236,25 @@ main(int argc, char *argv[])
 
 
 static void
+run_vacuum_command(PGconn *conn, const char *sql, bool echo, const char *dbname, const char *table, const char *progname)
+{
+	if (!executeMaintenanceCommand(conn, sql, echo))
+	{
+		if (table)
+			fprintf(stderr, _("%s: vacuuming of table \"%s\" in database \"%s\" failed: %s"),
+					progname, table, dbname, PQerrorMessage(conn));
+		else
+			fprintf(stderr, _("%s: vacuuming of database \"%s\" failed: %s"),
+					progname, dbname, PQerrorMessage(conn));
+		PQfinish(conn);
+		exit(1);
+	}
+}
+
+
+static void
 vacuum_one_database(const char *dbname, bool full, bool verbose, bool and_analyze,
-					bool analyze_only, bool freeze, const char *table,
+					bool analyze_only, bool analyze_in_stages, bool freeze, const char *table,
 					const char *host, const char *port,
 					const char *username, enum trivalue prompt_password,
 					const char *progname, bool echo)
@@ -300,17 +322,30 @@ vacuum_one_database(const char *dbname, bool full, bool verbose, bool and_analyz
 		appendPQExpBuffer(&sql, " %s", table);
 	appendPQExpBufferStr(&sql, ";");
 
-	if (!executeMaintenanceCommand(conn, sql.data, echo))
+	if (analyze_in_stages)
 	{
-		if (table)
-			fprintf(stderr, _("%s: vacuuming of table \"%s\" in database \"%s\" failed: %s"),
-					progname, table, dbname, PQerrorMessage(conn));
-		else
-			fprintf(stderr, _("%s: vacuuming of database \"%s\" failed: %s"),
-					progname, dbname, PQerrorMessage(conn));
-		PQfinish(conn);
-		exit(1);
+		const char *stage_commands[] = {
+			"SET default_statistics_target=1; SET vacuum_cost_delay=0;",
+			"SET default_statistics_target=10; RESET vacuum_cost_delay;",
+			"RESET default_statistics_target;"
+		};
+		const char *stage_messages[] = {
+			gettext_noop("Generating minimal optimizer statistics (1 target)"),
+			gettext_noop("Generating medium optimizer statistics (10 targets)"),
+			gettext_noop("Generating default (full) optimizer statistics")
+		};
+		int i;
+
+		for (i = 0; i < 3; i++)
+		{
+			puts(gettext(stage_messages[i]));
+			executeCommand(conn, stage_commands[i], progname, echo);
+			run_vacuum_command(conn, sql.data, echo, dbname, table, progname);
+		}
 	}
+	else
+		run_vacuum_command(conn, sql.data, echo, dbname, NULL, progname);
+
 	PQfinish(conn);
 	termPQExpBuffer(&sql);
 }
@@ -318,7 +353,7 @@ vacuum_one_database(const char *dbname, bool full, bool verbose, bool and_analyz
 
 static void
 vacuum_all_databases(bool full, bool verbose, bool and_analyze, bool analyze_only,
-					 bool freeze, const char *maintenance_db,
+					 bool analyze_in_stages, bool freeze, const char *maintenance_db,
 					 const char *host, const char *port,
 					 const char *username, enum trivalue prompt_password,
 					 const char *progname, bool echo, bool quiet)
@@ -343,6 +378,7 @@ vacuum_all_databases(bool full, bool verbose, bool and_analyze, bool analyze_onl
 		}
 
 		vacuum_one_database(dbname, full, verbose, and_analyze, analyze_only,
+							analyze_in_stages,
 						 freeze, NULL, host, port, username, prompt_password,
 							progname, echo);
 	}
@@ -369,6 +405,8 @@ help(const char *progname)
 	printf(_("  -V, --version                   output version information, then exit\n"));
 	printf(_("  -z, --analyze                   update optimizer statistics\n"));
 	printf(_("  -Z, --analyze-only              only update optimizer statistics\n"));
+	printf(_("      --analyze-in-stages         only update optimizer statistics, in multiple\n"
+			 "                                  stages for faster results\n"));
 	printf(_("  -?, --help                      show this help, then exit\n"));
 	printf(_("\nConnection options:\n"));
 	printf(_("  -h, --host=HOSTNAME       database server host or socket directory\n"));

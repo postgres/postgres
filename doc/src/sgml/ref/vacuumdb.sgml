@@ -204,6 +204,26 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--analyze-in-stages</option></term>
+      <listitem>
+       <para>
+        Only calculate statistics for use by the optimizer (no vacuum),
+        like <option>--analyze-only</option>.  Run several (currently three)
+        stages of analyze with different configuration settings, to produce
+        usable statistics faster.
+       </para>
+
+       <para>
+        This option is useful to analyze a database that was newly populated
+        from a restored dump or by <command>pg_upgrade</command>.  This option
+        will try to create some statistics as fast as possible, to make the
+        database usable, and then produce full statistics in the subsequent
+        stages.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
        <term><option>-?</></term>
        <term><option>--help</></term>
        <listitem>
