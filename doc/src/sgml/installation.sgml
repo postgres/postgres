@@ -333,7 +333,8 @@ su - postgres
       <application>Perl</> 5.8 or later is needed to build from a Git checkout,
       or if you changed the input files for any of the build steps that
       use Perl scripts.  If building on Windows you will need
-      <application>Perl</> in any case.
+      <application>Perl</> in any case.  <application>Perl</application> is
+      also required to run some test suites.
      </para>
     </listitem>
    </itemizedlist>

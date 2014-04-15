@@ -66,9 +66,9 @@ check check-tests: all
 check check-tests installcheck installcheck-parallel installcheck-tests:
 	$(MAKE) -C src/test/regress $@
 
-$(call recurse,check-world,src/test src/pl src/interfaces/ecpg contrib,check)
+$(call recurse,check-world,src/test src/pl src/interfaces/ecpg contrib src/bin,check)
 
-$(call recurse,installcheck-world,src/test src/pl src/interfaces/ecpg contrib,installcheck)
+$(call recurse,installcheck-world,src/test src/pl src/interfaces/ecpg contrib src/bin,installcheck)
 
 GNUmakefile: GNUmakefile.in $(top_builddir)/config.status
 	./config.status $@

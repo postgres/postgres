@@ -48,3 +48,9 @@ clean distclean maintainer-clean:
 	rm -f pg_basebackup$(X) pg_receivexlog$(X) pg_recvlogical$(X) \
 		pg_basebackup.o pg_receivexlog.o pg_recvlogical.o \
 		$(OBJS)
+
+check: all
+	$(prove_check)
+
+installcheck:
+	$(prove_installcheck)

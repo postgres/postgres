@@ -1817,6 +1817,11 @@ PGAC_PATH_COLLATEINDEX
 AC_CHECK_PROGS(XSLTPROC, xsltproc)
 AC_CHECK_PROGS(OSX, [osx sgml2xml sx])
 
+#
+# Check for test tools
+#
+AC_CHECK_PROGS(PROVE, prove)
+
 # Thread testing
 
 # We have to run the thread test near the end so we have all our symbols

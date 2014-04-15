@@ -204,6 +204,12 @@ make installcheck-world
      located in <filename>src/test/isolation</>.
     </para>
    </listitem>
+   <listitem>
+    <para>
+     Tests of client programs under <filename>src/bin</filename>.  See
+     also <xref linkend="regress-tap">.
+    </para>
+   </listitem>
   </itemizedlist>
 
   <para>
@@ -658,6 +664,28 @@ float8:out:i.86-.*-openbsd=float8-small-is-zero.out
     equally valid in all contexts.
    </para>
 
+  </sect1>
+
+  <sect1 id="regress-tap">
+   <title>TAP Tests</title>
+
+   <para>
+    The client program tests under <filename>src/bin</filename> use the Perl
+    TAP tools and are run by <command>prove</command>.  You can pass
+    command-line options to <command>prove</command> by setting
+    the <command>make</command> variable <varname>PROVE_FLAGS</>, for example:
+<programlisting>
+make -C src/bin check PROVE_FLAGS='--reverse'
+</programlisting>
+    The default is <literal>--verbose</literal>.  See the manual page
+    of <command>prove</command> for more information.
+   </para>
+
+   <para>
+    The tests written in Perl require the Perl
+    module <literal>IPC::Run</literal>, otherwise most tests will be skipped.
+    This module is available from CPAN or an operating system package.
+   </para>
   </sect1>
 
   <sect1 id="regress-coverage">
