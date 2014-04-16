@@ -2388,7 +2388,11 @@ include 'filename'
         processes). The default is zero, meaning replication is
         disabled. WAL sender processes count towards the total number
         of connections, so the parameter cannot be set higher than
-        <xref linkend="guc-max-connections">.  This parameter can only
+        <xref linkend="guc-max-connections">.  Abrupt streaming client
+        disconnection might cause an orphaned connection slot until
+        a timeout is reached, so this parameter should be set slightly
+        higher than the maximum number of expected clients so disconnected
+        clients can immediately reconnect.  This parameter can only
         be set at server start. <varname>wal_level</> must be set to
         <literal>archive</> or higher to allow connections from standby
         servers.
