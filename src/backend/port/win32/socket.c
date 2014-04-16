@@ -132,7 +132,7 @@ int
 pgwin32_waitforsinglesocket(SOCKET s, int what, int timeout)
 {
 	static HANDLE waitevent = INVALID_HANDLE_VALUE;
-	static SOCKET current_socket = -1;
+	static SOCKET current_socket = INVALID_SOCKET;
 	static int	isUDP = 0;
 	HANDLE		events[2];
 	int			r;
