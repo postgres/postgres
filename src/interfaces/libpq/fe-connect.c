@@ -1632,8 +1632,23 @@ keep_going:						/* We will come back to here until there is
 					conn->raddr.salen = addr_cur->ai_addrlen;
 
 					/* Open a socket */
-					conn->sock = socket(addr_cur->ai_family, SOCK_STREAM, 0);
-					if (conn->sock < 0)
+					{
+						/*
+						 * While we use 'pgsocket' as the socket type in the
+						 * backend, we use 'int' for libpq socket values.
+						 * This requires us to map PGINVALID_SOCKET to -1
+						 * on Windows.
+						 * See http://msdn.microsoft.com/en-us/library/windows/desktop/ms740516%28v=vs.85%29.aspx
+						 */
+						pgsocket sock = socket(addr_cur->ai_family, SOCK_STREAM, 0);
+#ifdef WIN32
+						if (sock == PGINVALID_SOCKET)
+							conn->sock = -1;
+						else
+#endif
+							conn->sock = sock;
+					}
+					if (conn->sock == -1)
 					{
 						/*
 						 * ignore socket() failure if we have more addresses
@@ -3136,7 +3151,7 @@ internal_cancel(SockAddr *raddr, int be_pid, int be_key,
 				char *errbuf, int errbufsize)
 {
 	int			save_errno = SOCK_ERRNO;
-	int			tmpsock = -1;
+	pgsocket	tmpsock = PGINVALID_SOCKET;
 	char		sebuf[256];
 	int			maxlen;
 	struct
@@ -3149,7 +3164,7 @@ internal_cancel(SockAddr *raddr, int be_pid, int be_key,
 	 * We need to open a temporary connection to the postmaster. Do this with
 	 * only kernel calls.
 	 */
-	if ((tmpsock = socket(raddr->addr.ss_family, SOCK_STREAM, 0)) < 0)
+	if ((tmpsock = socket(raddr->addr.ss_family, SOCK_STREAM, 0)) == PGINVALID_SOCKET)
 	{
 		strlcpy(errbuf, "PQcancel() -- socket() failed: ", errbufsize);
 		goto cancel_errReturn;
@@ -3220,7 +3235,7 @@ cancel_errReturn:
 				maxlen);
 		strcat(errbuf, "\n");
 	}
-	if (tmpsock >= 0)
+	if (tmpsock != PGINVALID_SOCKET)
 		closesocket(tmpsock);
 	SOCK_ERRNO_SET(save_errno);
 	return FALSE;
@@ -5300,6 +5315,15 @@ PQerrorMessage(const PGconn *conn)
 	return conn->errorMessage.data;
 }
 
+/*
+ * In Windows, socket values are unsigned, and an invalid socket value
+ * (INVALID_SOCKET) is ~0, which equals -1 in comparisons (with no compiler
+ * warning). Ideally we would return an unsigned value for PQsocket() on
+ * Windows, but that would cause the function's return value to differ from
+ * Unix, so we just return -1 for invalid sockets.
+ * http://msdn.microsoft.com/en-us/library/windows/desktop/cc507522%28v=vs.85%29.aspx
+ * http://stackoverflow.com/questions/10817252/why-is-invalid-socket-defined-as-0-in-winsock2-h-c
+ */
 int
 PQsocket(const PGconn *conn)
 {
