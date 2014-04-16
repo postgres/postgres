@@ -99,19 +99,19 @@ usage(void)
 	printf(_("\nOutput format options:\n"));
 	printf(_("  -A, --no-align           unaligned table output mode\n"));
 	printf(_("  -F, --field-separator=STRING\n"
-	   "                           set field separator (default: \"%s\")\n"),
+			 "                           field separator for unaligned output (default: \"%s\")\n"),
 		   DEFAULT_FIELD_SEP);
 	printf(_("  -H, --html               HTML table output mode\n"));
 	printf(_("  -P, --pset=VAR[=ARG]     set printing option VAR to ARG (see \\pset command)\n"));
 	printf(_("  -R, --record-separator=STRING\n"
-	"                           set record separator (default: newline)\n"));
+			 "                           record separator for unaligned output (default: newline)\n"));
 	printf(_("  -t, --tuples-only        print rows only\n"));
 	printf(_("  -T, --table-attr=TEXT    set HTML table tag attributes (e.g., width, border)\n"));
 	printf(_("  -x, --expanded           turn on expanded table output\n"));
 	printf(_("  -z, --field-separator-zero\n"
-		   "                           set field separator to zero byte\n"));
+			 "                           set field separator for unaligned output to zero byte\n"));
 	printf(_("  -0, --record-separator-zero\n"
-		  "                           set record separator to zero byte\n"));
+			 "                           set record separator for unaligned output to zero byte\n"));
 
 	printf(_("\nConnection options:\n"));
 	/* Display default host */
