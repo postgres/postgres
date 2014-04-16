@@ -636,7 +636,7 @@ $ <userinput>psql postgresql://dbmaster:5433/mydb?sslmode=require</userinput>
     </para>
 
     <para>
-     If at least one of standard input or standard output are a
+     If both standard input and standard output are a
      terminal, then <application>psql</application> sets the client
      encoding to <quote>auto</quote>, which will detect the
      appropriate client encoding from the locale settings
