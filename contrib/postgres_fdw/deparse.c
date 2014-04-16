@@ -132,6 +132,10 @@ static void deparseRelabelType(RelabelType *node, deparse_expr_cxt *context);
 static void deparseBoolExpr(BoolExpr *node, deparse_expr_cxt *context);
 static void deparseNullTest(NullTest *node, deparse_expr_cxt *context);
 static void deparseArrayExpr(ArrayExpr *node, deparse_expr_cxt *context);
+static void printRemoteParam(int paramindex, Oid paramtype, int32 paramtypmod,
+				 deparse_expr_cxt *context);
+static void printRemotePlaceholder(Oid paramtype, int32 paramtypmod,
+					   deparse_expr_cxt *context);
 
 
 /*
@@ -1283,16 +1287,11 @@ deparseVar(Var *node, deparse_expr_cxt *context)
 				*context->params_list = lappend(*context->params_list, node);
 			}
 
-			appendStringInfo(buf, "$%d", pindex);
-			appendStringInfo(buf, "::%s",
-							 format_type_with_typemod(node->vartype,
-													  node->vartypmod));
+			printRemoteParam(pindex, node->vartype, node->vartypmod, context);
 		}
 		else
 		{
-			appendStringInfo(buf, "(SELECT null::%s)",
-							 format_type_with_typemod(node->vartype,
-													  node->vartypmod));
+			printRemotePlaceholder(node->vartype, node->vartypmod, context);
 		}
 	}
 }
@@ -1399,26 +1398,12 @@ deparseConst(Const *node, deparse_expr_cxt *context)
  *
  * If we're generating the query "for real", add the Param to
  * context->params_list if it's not already present, and then use its index
- * in that list as the remote parameter number.
- *
- * If we're just generating the query for EXPLAIN, replace the Param with
- * a dummy expression "(SELECT null::<type>)".	In all extant versions of
- * Postgres, the planner will see that as an unknown constant value, which is
- * what we want.  (If we sent a Param, recent versions might try to use the
- * value supplied for the Param as an estimated or even constant value, which
- * we don't want.)  This might need adjustment if we ever make the planner
- * flatten scalar subqueries.
- *
- * Note: we label the Param's type explicitly rather than relying on
- * transmitting a numeric type OID in PQexecParams().  This allows us to
- * avoid assuming that types have the same OIDs on the remote side as they
- * do locally --- they need only have the same names.
+ * in that list as the remote parameter number.  During EXPLAIN, there's
+ * no need to identify a parameter number.
  */
 static void
 deparseParam(Param *node, deparse_expr_cxt *context)
 {
-	StringInfo	buf = context->buf;
-
 	if (context->params_list)
 	{
 		int			pindex = 0;
@@ -1438,16 +1423,11 @@ deparseParam(Param *node, deparse_expr_cxt *context)
 			*context->params_list = lappend(*context->params_list, node);
 		}
 
-		appendStringInfo(buf, "$%d", pindex);
-		appendStringInfo(buf, "::%s",
-						 format_type_with_typemod(node->paramtype,
-												  node->paramtypmod));
+		printRemoteParam(pindex, node->paramtype, node->paramtypmod, context);
 	}
 	else
 	{
-		appendStringInfo(buf, "(SELECT null::%s)",
-						 format_type_with_typemod(node->paramtype,
-												  node->paramtypmod));
+		printRemotePlaceholder(node->paramtype, node->paramtypmod, context);
 	}
 }
 
@@ -1815,4 +1795,48 @@ deparseArrayExpr(ArrayExpr *node, deparse_expr_cxt *context)
 	if (node->elements == NIL)
 		appendStringInfo(buf, "::%s",
 						 format_type_with_typemod(node->array_typeid, -1));
+}
+
+/*
+ * Print the representation of a parameter to be sent to the remote side.
+ *
+ * Note: we always label the Param's type explicitly rather than relying on
+ * transmitting a numeric type OID in PQexecParams().  This allows us to
+ * avoid assuming that types have the same OIDs on the remote side as they
+ * do locally --- they need only have the same names.
+ */
+static void
+printRemoteParam(int paramindex, Oid paramtype, int32 paramtypmod,
+				 deparse_expr_cxt *context)
+{
+	StringInfo	buf = context->buf;
+	char	   *ptypename = format_type_with_typemod(paramtype, paramtypmod);
+
+	appendStringInfo(buf, "$%d::%s", paramindex, ptypename);
+}
+
+/*
+ * Print the representation of a placeholder for a parameter that will be
+ * sent to the remote side at execution time.
+ *
+ * This is used when we're just trying to EXPLAIN the remote query.
+ * We don't have the actual value of the runtime parameter yet, and we don't
+ * want the remote planner to generate a plan that depends on such a value
+ * anyway.	Thus, we can't do something simple like "$1::paramtype".
+ * Instead, we emit "((SELECT null::paramtype)::paramtype)".
+ * In all extant versions of Postgres, the planner will see that as an unknown
+ * constant value, which is what we want.  This might need adjustment if we
+ * ever make the planner flatten scalar subqueries.  Note: the reason for the
+ * apparently useless outer cast is to ensure that the representation as a
+ * whole will be parsed as an a_expr and not a select_with_parens; the latter
+ * would do the wrong thing in the context "x = ANY(...)".
+ */
+static void
+printRemotePlaceholder(Oid paramtype, int32 paramtypmod,
+					   deparse_expr_cxt *context)
+{
+	StringInfo	buf = context->buf;
+	char	   *ptypename = format_type_with_typemod(paramtype, paramtypmod);
+
+	appendStringInfo(buf, "((SELECT null::%s)::%s)", ptypename, ptypename);
 }
