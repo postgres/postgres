@@ -13,6 +13,18 @@ SELECT	ctid, aggfinalfn
 FROM	pg_catalog.pg_aggregate fk
 WHERE	aggfinalfn != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.aggfinalfn);
+SELECT	ctid, aggmtransfn
+FROM	pg_catalog.pg_aggregate fk
+WHERE	aggmtransfn != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.aggmtransfn);
+SELECT	ctid, aggminvtransfn
+FROM	pg_catalog.pg_aggregate fk
+WHERE	aggminvtransfn != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.aggminvtransfn);
+SELECT	ctid, aggmfinalfn
+FROM	pg_catalog.pg_aggregate fk
+WHERE	aggmfinalfn != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.aggmfinalfn);
 SELECT	ctid, aggsortop
 FROM	pg_catalog.pg_aggregate fk
 WHERE	aggsortop != 0 AND
@@ -21,6 +33,10 @@ SELECT	ctid, aggtranstype
 FROM	pg_catalog.pg_aggregate fk
 WHERE	aggtranstype != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.aggtranstype);
+SELECT	ctid, aggmtranstype
+FROM	pg_catalog.pg_aggregate fk
+WHERE	aggmtranstype != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.aggmtranstype);
 SELECT	ctid, amkeytype
 FROM	pg_catalog.pg_am fk
 WHERE	amkeytype != 0 AND
@@ -73,6 +89,10 @@ SELECT	ctid, amvacuumcleanup
 FROM	pg_catalog.pg_am fk
 WHERE	amvacuumcleanup != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.amvacuumcleanup);
+SELECT	ctid, amcanreturn
+FROM	pg_catalog.pg_am fk
+WHERE	amcanreturn != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.amcanreturn);
 SELECT	ctid, amcostestimate
 FROM	pg_catalog.pg_am fk
 WHERE	amcostestimate != 0 AND
@@ -441,6 +461,14 @@ SELECT	ctid, staop3
 FROM	pg_catalog.pg_statistic fk
 WHERE	staop3 != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator pk WHERE pk.oid = fk.staop3);
+SELECT	ctid, staop4
+FROM	pg_catalog.pg_statistic fk
+WHERE	staop4 != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator pk WHERE pk.oid = fk.staop4);
+SELECT	ctid, staop5
+FROM	pg_catalog.pg_statistic fk
+WHERE	staop5 != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator pk WHERE pk.oid = fk.staop5);
 SELECT	ctid, spcowner
 FROM	pg_catalog.pg_tablespace fk
 WHERE	spcowner != 0 AND
