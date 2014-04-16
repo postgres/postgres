@@ -361,6 +361,7 @@ struct pg_conn
 	PGnotify   *notifyTail;		/* newest unreported Notify msg */
 
 	/* Connection data */
+	/* See PQconnectPoll() for how we use 'int' and not 'pgsocket'. */
 	int			sock;			/* Unix FD for socket, -1 if not connected */
 	SockAddr	laddr;			/* Local address */
 	SockAddr	raddr;			/* Remote address */
