@@ -3563,12 +3563,37 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 	}
 
 	/*
-	 * Initialize connection to the server.  We do an explicit bind because we
-	 * want to return 2 if the bind fails.
+	 * Perform an explicit anonymous bind.
+	 * LDAP does not require that an anonymous bind is preformed explicitly,
+	 * but we want to distinguish between the case where LDAP bind does not
+	 * succeed within PGLDAP_TIMEOUT seconds (return 2 to continue parsing
+	 * the service control file) and the case where querying the LDAP server
+	 * fails (return 1 to end parsing).
+	 * Unfortunately there is no way of setting a timeout that works for
+	 * both Windows and OpenLDAP.
 	 */
+#ifdef WIN32
+	/* the nonstandard ldap_connect function performs an anonymous bind */
+	if (ldap_connect(ld, &time) != LDAP_SUCCESS)
+	{
+		/* error or timeout in ldap_connect */
+		free(url);
+		ldap_unbind(ld);
+		return 2;
+	}
+#else /* WIN32 */
+	/* in OpenLDAP, use the LDAP_OPT_NETWORK_TIMEOUT option */
+	if (ldap_set_option(ld, LDAP_OPT_NETWORK_TIMEOUT, &time) != LDAP_SUCCESS)
+	{
+		free(url);
+		ldap_unbind(ld);
+		return 3;
+	}
+
+	/* anonymous bind */
 	if ((msgid = ldap_simple_bind(ld, NULL, NULL)) == -1)
 	{
-		/* error in ldap_simple_bind() */
+		/* error or network timeout */
 		free(url);
 		ldap_unbind(ld);
 		return 2;
@@ -3579,17 +3604,24 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 	if ((rc = ldap_result(ld, msgid, LDAP_MSG_ALL, &time, &res)) == -1 ||
 		res == NULL)
 	{
+		/* error or timeout */
 		if (res != NULL)
-		{
-			/* timeout */
 			ldap_msgfree(res);
-		}
-		/* error in ldap_result() */
 		free(url);
 		ldap_unbind(ld);
 		return 2;
 	}
 	ldap_msgfree(res);
+
+	/* reset timeout */
+	time.tv_sec = -1;
+	if (ldap_set_option(ld, LDAP_OPT_NETWORK_TIMEOUT, &time) != LDAP_SUCCESS)
+	{
+		free(url);
+		ldap_unbind(ld);
+		return 3;
+	}
+#endif /* WIN32 */
 
 	/* search */
 	res = NULL;
