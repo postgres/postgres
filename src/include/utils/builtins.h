@@ -602,6 +602,7 @@ extern char *regexp_fixed_prefix(text *text_re, bool case_insensitive,
 extern Datum regprocin(PG_FUNCTION_ARGS);
 extern Datum regprocout(PG_FUNCTION_ARGS);
 extern Datum to_regproc(PG_FUNCTION_ARGS);
+extern Datum to_regprocedure(PG_FUNCTION_ARGS);
 extern Datum regprocrecv(PG_FUNCTION_ARGS);
 extern Datum regprocsend(PG_FUNCTION_ARGS);
 extern Datum regprocedurein(PG_FUNCTION_ARGS);
@@ -613,6 +614,7 @@ extern Datum regoperout(PG_FUNCTION_ARGS);
 extern Datum regoperrecv(PG_FUNCTION_ARGS);
 extern Datum regopersend(PG_FUNCTION_ARGS);
 extern Datum to_regoper(PG_FUNCTION_ARGS);
+extern Datum to_regoperator(PG_FUNCTION_ARGS);
 extern Datum regoperatorin(PG_FUNCTION_ARGS);
 extern Datum regoperatorout(PG_FUNCTION_ARGS);
 extern Datum regoperatorrecv(PG_FUNCTION_ARGS);

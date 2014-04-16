@@ -15294,7 +15294,15 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    </indexterm>
 
    <indexterm>
+    <primary>to_regprocedure</primary>
+   </indexterm>
+
+   <indexterm>
     <primary>to_regoper</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>to_regoperator</primary>
    </indexterm>
 
    <indexterm>
@@ -15482,8 +15490,18 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <entry>get the oid of the named function</entry>
       </row>
       <row>
+       <entry><literal><function>to_regprocedure(<parameter>func_name</parameter>)</function></literal></entry>
+       <entry><type>regprocedure</type></entry>
+       <entry>get the oid of the named function</entry>
+      </row>
+      <row>
        <entry><literal><function>to_regoper(<parameter>operator_name</parameter>)</function></literal></entry>
        <entry><type>regoper</type></entry>
+       <entry>get the oid of the named operator</entry>
+      </row>
+      <row>
+       <entry><literal><function>to_regoperator(<parameter>operator_name</parameter>)</function></literal></entry>
+       <entry><type>regoperator</type></entry>
        <entry>get the oid of the named operator</entry>
       </row>
       <row>
@@ -15658,10 +15676,12 @@ SELECT collation for ('foo' COLLATE "de_DE");
 
   <para>
    The <function>to_regclass</function>, <function>to_regproc</function>,
-   <function>to_regoper</function> and <function>to_regtype</function>
-   translate relation, function, operator, and type names to objects of
-   type <type>regclass</>, <type>regproc</>, <type>regoper</> and
-   <type>regtype</>, respectively.  These functions differ from a cast from
+   <function>to_regprocedure</function>, <function>to_regoper</function>,
+   <function>to_regoperator</function>, and <function>to_regtype</function>
+   functions translate relation, function, operator, and type names to objects
+   of type <type>regclass</>, <type>regproc</>, <type>regprocedure</type>,
+   <type>regoper</>, <type>regoperator</type>, and <type>regtype</>,
+   respectively.  These functions differ from a cast from
    text in that they don't accept a numeric OID, and that they return null
    rather than throwing an error if the name is not found (or, for
    <function>to_regproc</function> and <function>to_regoper</function>, if

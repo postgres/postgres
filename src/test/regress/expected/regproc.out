@@ -9,10 +9,22 @@ SELECT regoper('||/');
  ||/
 (1 row)
 
+SELECT regoperator('+(int4,int4)');
+    regoperator     
+--------------------
+ +(integer,integer)
+(1 row)
+
 SELECT regproc('now');
  regproc 
 ---------
  now
+(1 row)
+
+SELECT regprocedure('abs(numeric)');
+ regprocedure 
+--------------
+ abs(numeric)
 (1 row)
 
 SELECT regclass('pg_class');
@@ -33,10 +45,22 @@ SELECT to_regoper('||/');
  ||/
 (1 row)
 
+SELECT to_regoperator('+(int4,int4)');
+   to_regoperator   
+--------------------
+ +(integer,integer)
+(1 row)
+
 SELECT to_regproc('now');
  to_regproc 
 ------------
  now
+(1 row)
+
+SELECT to_regprocedure('abs(numeric)');
+ to_regprocedure 
+-----------------
+ abs(numeric)
 (1 row)
 
 SELECT to_regclass('pg_class');
@@ -58,10 +82,22 @@ SELECT regoper('pg_catalog.||/');
  ||/
 (1 row)
 
+SELECT regoperator('pg_catalog.+(int4,int4)');
+    regoperator     
+--------------------
+ +(integer,integer)
+(1 row)
+
 SELECT regproc('pg_catalog.now');
  regproc 
 ---------
  now
+(1 row)
+
+SELECT regprocedure('pg_catalog.abs(numeric)');
+ regprocedure 
+--------------
+ abs(numeric)
 (1 row)
 
 SELECT regclass('pg_catalog.pg_class');
@@ -88,6 +124,12 @@ SELECT to_regproc('pg_catalog.now');
  now
 (1 row)
 
+SELECT to_regprocedure('pg_catalog.abs(numeric)');
+ to_regprocedure 
+-----------------
+ abs(numeric)
+(1 row)
+
 SELECT to_regclass('pg_catalog.pg_class');
  to_regclass 
 -------------
@@ -106,10 +148,18 @@ SELECT regoper('||//');
 ERROR:  operator does not exist: ||//
 LINE 3: SELECT regoper('||//');
                        ^
+SELECT regoperator('++(int4,int4)');
+ERROR:  operator does not exist: ++(int4,int4)
+LINE 1: SELECT regoperator('++(int4,int4)');
+                           ^
 SELECT regproc('know');
 ERROR:  function "know" does not exist
 LINE 1: SELECT regproc('know');
                        ^
+SELECT regprocedure('absinthe(numeric)');
+ERROR:  function "absinthe(numeric)" does not exist
+LINE 1: SELECT regprocedure('absinthe(numeric)');
+                            ^
 SELECT regclass('pg_classes');
 ERROR:  relation "pg_classes" does not exist
 LINE 1: SELECT regclass('pg_classes');
@@ -123,10 +173,18 @@ SELECT regoper('ng_catalog.||/');
 ERROR:  schema "ng_catalog" does not exist
 LINE 1: SELECT regoper('ng_catalog.||/');
                        ^
+SELECT regoperator('ng_catalog.+(int4,int4)');
+ERROR:  operator does not exist: ng_catalog.+(int4,int4)
+LINE 1: SELECT regoperator('ng_catalog.+(int4,int4)');
+                           ^
 SELECT regproc('ng_catalog.now');
 ERROR:  schema "ng_catalog" does not exist
 LINE 1: SELECT regproc('ng_catalog.now');
                        ^
+SELECT regprocedure('ng_catalog.abs(numeric)');
+ERROR:  schema "ng_catalog" does not exist
+LINE 1: SELECT regprocedure('ng_catalog.abs(numeric)');
+                            ^
 SELECT regclass('ng_catalog.pg_class');
 ERROR:  schema "ng_catalog" does not exist
 LINE 1: SELECT regclass('ng_catalog.pg_class');
@@ -143,9 +201,21 @@ SELECT to_regoper('||//');
  
 (1 row)
 
+SELECT to_regoperator('++(int4,int4)');
+ to_regoperator 
+----------------
+ 
+(1 row)
+
 SELECT to_regproc('know');
  to_regproc 
 ------------
+ 
+(1 row)
+
+SELECT to_regprocedure('absinthe(numeric)');
+ to_regprocedure 
+-----------------
  
 (1 row)
 
@@ -168,9 +238,21 @@ SELECT to_regoper('ng_catalog.||/');
  
 (1 row)
 
+SELECT to_regoperator('ng_catalog.+(int4,int4)');
+ to_regoperator 
+----------------
+ 
+(1 row)
+
 SELECT to_regproc('ng_catalog.now');
  to_regproc 
 ------------
+ 
+(1 row)
+
+SELECT to_regprocedure('ng_catalog.abs(numeric)');
+ to_regprocedure 
+-----------------
  
 (1 row)
 
