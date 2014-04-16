@@ -2717,12 +2717,12 @@ getObjectIdentity(const ObjectAddress *object)
 
 		case OCLASS_PROC:
 			appendStringInfoString(&buffer,
-							 format_procedure_qualified(object->objectId));
+							   format_procedure_qualified(object->objectId));
 			break;
 
 		case OCLASS_TYPE:
 			appendStringInfoString(&buffer,
-							 format_type_be_qualified(object->objectId));
+								 format_type_be_qualified(object->objectId));
 			break;
 
 		case OCLASS_CAST:
@@ -2816,7 +2816,7 @@ getObjectIdentity(const ObjectAddress *object)
 						 object->objectId);
 				conForm = (Form_pg_conversion) GETSTRUCT(conTup);
 				appendStringInfoString(&buffer,
-								 quote_identifier(NameStr(conForm->conname)));
+								quote_identifier(NameStr(conForm->conname)));
 				ReleaseSysCache(conTup);
 				break;
 			}
@@ -2884,7 +2884,7 @@ getObjectIdentity(const ObjectAddress *object)
 
 		case OCLASS_OPERATOR:
 			appendStringInfoString(&buffer,
-							 format_operator_qualified(object->objectId));
+								format_operator_qualified(object->objectId));
 			break;
 
 		case OCLASS_OPCLASS:
@@ -2911,7 +2911,7 @@ getObjectIdentity(const ObjectAddress *object)
 				amForm = (Form_pg_am) GETSTRUCT(amTup);
 
 				appendStringInfoString(&buffer,
-								 quote_qualified_identifier(schema,
+									   quote_qualified_identifier(schema,
 												 NameStr(opcForm->opcname)));
 				appendStringInfo(&buffer, " for %s",
 								 quote_identifier(NameStr(amForm->amname)));
@@ -3070,7 +3070,7 @@ getObjectIdentity(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for namespace %u",
 						 object->objectId);
 				appendStringInfoString(&buffer,
-								 quote_identifier(nspname));
+									   quote_identifier(nspname));
 				break;
 			}
 
@@ -3078,6 +3078,7 @@ getObjectIdentity(const ObjectAddress *object)
 			{
 				HeapTuple	tup;
 				Form_pg_ts_parser formParser;
+				char	   *schema;
 
 				tup = SearchSysCache1(TSPARSEROID,
 									  ObjectIdGetDatum(object->objectId));
@@ -3085,8 +3086,10 @@ getObjectIdentity(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for text search parser %u",
 						 object->objectId);
 				formParser = (Form_pg_ts_parser) GETSTRUCT(tup);
+				schema = get_namespace_name(formParser->prsnamespace);
 				appendStringInfoString(&buffer,
-							 quote_identifier(NameStr(formParser->prsname)));
+									   quote_qualified_identifier(schema,
+											  NameStr(formParser->prsname)));
 				ReleaseSysCache(tup);
 				break;
 			}
@@ -3095,6 +3098,7 @@ getObjectIdentity(const ObjectAddress *object)
 			{
 				HeapTuple	tup;
 				Form_pg_ts_dict formDict;
+				char	   *schema;
 
 				tup = SearchSysCache1(TSDICTOID,
 									  ObjectIdGetDatum(object->objectId));
@@ -3102,8 +3106,10 @@ getObjectIdentity(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for text search dictionary %u",
 						 object->objectId);
 				formDict = (Form_pg_ts_dict) GETSTRUCT(tup);
+				schema = get_namespace_name(formDict->dictnamespace);
 				appendStringInfoString(&buffer,
-							  quote_identifier(NameStr(formDict->dictname)));
+									   quote_qualified_identifier(schema,
+											   NameStr(formDict->dictname)));
 				ReleaseSysCache(tup);
 				break;
 			}
@@ -3112,6 +3118,7 @@ getObjectIdentity(const ObjectAddress *object)
 			{
 				HeapTuple	tup;
 				Form_pg_ts_template formTmpl;
+				char	   *schema;
 
 				tup = SearchSysCache1(TSTEMPLATEOID,
 									  ObjectIdGetDatum(object->objectId));
@@ -3119,8 +3126,11 @@ getObjectIdentity(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for text search template %u",
 						 object->objectId);
 				formTmpl = (Form_pg_ts_template) GETSTRUCT(tup);
+				schema = get_namespace_name(formTmpl->tmplnamespace);
 				appendStringInfoString(&buffer,
-							  quote_identifier(NameStr(formTmpl->tmplname)));
+									   quote_qualified_identifier(schema,
+											   NameStr(formTmpl->tmplname)));
+				pfree(schema);
 				ReleaseSysCache(tup);
 				break;
 			}
@@ -3129,6 +3139,7 @@ getObjectIdentity(const ObjectAddress *object)
 			{
 				HeapTuple	tup;
 				Form_pg_ts_config formCfg;
+				char	   *schema;
 
 				tup = SearchSysCache1(TSCONFIGOID,
 									  ObjectIdGetDatum(object->objectId));
@@ -3136,8 +3147,10 @@ getObjectIdentity(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for text search configuration %u",
 						 object->objectId);
 				formCfg = (Form_pg_ts_config) GETSTRUCT(tup);
+				schema = get_namespace_name(formCfg->cfgnamespace);
 				appendStringInfoString(&buffer,
-								 quote_identifier(NameStr(formCfg->cfgname)));
+									   quote_qualified_identifier(schema,
+												 NameStr(formCfg->cfgname)));
 				ReleaseSysCache(tup);
 				break;
 			}
@@ -3148,7 +3161,7 @@ getObjectIdentity(const ObjectAddress *object)
 
 				username = GetUserNameFromId(object->objectId);
 				appendStringInfoString(&buffer,
-								 quote_identifier(username));
+									   quote_identifier(username));
 				break;
 			}
 
@@ -3161,7 +3174,7 @@ getObjectIdentity(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for database %u",
 						 object->objectId);
 				appendStringInfoString(&buffer,
-								 quote_identifier(datname));
+									   quote_identifier(datname));
 				break;
 			}
 
@@ -3174,7 +3187,7 @@ getObjectIdentity(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for tablespace %u",
 						 object->objectId);
 				appendStringInfoString(&buffer,
-								 quote_identifier(tblspace));
+									   quote_identifier(tblspace));
 				break;
 			}
 
@@ -3193,7 +3206,7 @@ getObjectIdentity(const ObjectAddress *object)
 
 				srv = GetForeignServer(object->objectId);
 				appendStringInfoString(&buffer,
-								 quote_identifier(srv->servername));
+									   quote_identifier(srv->servername));
 				break;
 			}
 
@@ -3377,8 +3390,8 @@ getRelationIdentity(StringInfo buffer, Oid relid)
 
 	schema = get_namespace_name(relForm->relnamespace);
 	appendStringInfoString(buffer,
-					 quote_qualified_identifier(schema,
-												NameStr(relForm->relname)));
+						   quote_qualified_identifier(schema,
+												 NameStr(relForm->relname)));
 
 	ReleaseSysCache(relTup);
 }
