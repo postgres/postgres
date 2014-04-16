@@ -3079,7 +3079,7 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent, bool use_lock)
 {
 	char		path[MAXPGPATH];
 	char		tmppath[MAXPGPATH];
-	char		zbuffer_raw[BLCKSZ + MAXIMUM_ALIGNOF];
+	char		zbuffer_raw[XLOG_BLCKSZ + MAXIMUM_ALIGNOF];
 	char	   *zbuffer;
 	XLogSegNo	installed_segno;
 	int			max_advance;
@@ -3139,7 +3139,7 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent, bool use_lock)
 	 * cycles transferring data to the kernel.
 	 */
 	zbuffer = (char *) MAXALIGN(zbuffer_raw);
-	memset(zbuffer, 0, BLCKSZ);
+	memset(zbuffer, 0, XLOG_BLCKSZ);
 	for (nbytes = 0; nbytes < XLogSegSize; nbytes += XLOG_BLCKSZ)
 	{
 		errno = 0;
