@@ -162,7 +162,15 @@ sub plcheck
     {
         next unless -d "$pl/sql" && -d "$pl/expected";
         my $lang = $pl eq 'tcl' ? 'pltcl' : $pl;
-        next unless -d "../../$Config/$lang";
+		if ($lang eq 'plpython')
+		{
+			next unless -d "../../$Config/plpython2";
+			$lang = 'plpythonu';
+		}
+		else
+		{
+			next unless -d "../../$Config/$lang";
+		}
         $lang = 'plpythonu' if $lang eq 'plpython';
         my @lang_args = ("--load-extension=$lang");
         chdir $pl;
