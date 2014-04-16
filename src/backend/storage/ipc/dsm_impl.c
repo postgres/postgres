@@ -693,6 +693,15 @@ dsm_impl_windows(dsm_op op, dsm_handle handle, Size request_size,
 								 size_high, 	/* Upper 32 bits of size */
 								 size_low,		/* Lower 32 bits of size */
 								 name);
+		if (!hmap)
+		{
+			_dosmaperr(GetLastError());
+			ereport(elevel,
+					(errcode_for_dynamic_shared_memory(),
+					 errmsg("could not create shared memory segment \"%s\": %m",
+							name)));
+			return false;
+		}
 		_dosmaperr(GetLastError());
 		if (errno == EEXIST)
 		{
@@ -711,16 +720,15 @@ dsm_impl_windows(dsm_op op, dsm_handle handle, Size request_size,
 		hmap = OpenFileMapping(FILE_MAP_WRITE | FILE_MAP_READ,
 							   FALSE,		/* do not inherit the name */
 							   name);		/* name of mapping object */
-		_dosmaperr(GetLastError());
-	}
-
-	if (!hmap)
-	{
-		ereport(elevel,
-				(errcode_for_dynamic_shared_memory(),
-				 errmsg("could not open shared memory segment \"%s\": %m",
-					name)));
-		return false;
+		if (!hmap)
+		{
+			_dosmaperr(GetLastError());
+			ereport(elevel,
+					(errcode_for_dynamic_shared_memory(),
+					 errmsg("could not open shared memory segment \"%s\": %m",
+							name)));
+			return false;
+		}
 	}
 
 	/* Map it. */
