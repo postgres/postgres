@@ -1360,7 +1360,7 @@ pgpipe(int handles[2])
 		closesocket(s);
 		return -1;
 	}
-	if ((handles[1] = socket(PF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
+	if ((handles[1] = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
 	{
 		write_msg(modulename, "pgpipe: could not create second socket: error code %d\n",
 				  WSAGetLastError());
