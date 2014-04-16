@@ -2449,7 +2449,7 @@ XLogFileInit(uint32 log, uint32 seg,
 {
 	char		path[MAXPGPATH];
 	char		tmppath[MAXPGPATH];
-	char		zbuffer_raw[BLCKSZ + MAXIMUM_ALIGNOF];
+	char		zbuffer_raw[XLOG_BLCKSZ + MAXIMUM_ALIGNOF];
 	char	   *zbuffer;
 	uint32		installed_log;
 	uint32		installed_seg;
@@ -2511,7 +2511,7 @@ XLogFileInit(uint32 log, uint32 seg,
 	 * cycles transferring data to the kernel.
 	 */
 	zbuffer = (char *) MAXALIGN(zbuffer_raw);
-	memset(zbuffer, 0, BLCKSZ);
+	memset(zbuffer, 0, XLOG_BLCKSZ);
 	for (nbytes = 0; nbytes < XLogSegSize; nbytes += XLOG_BLCKSZ)
 	{
 		errno = 0;
