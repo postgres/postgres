@@ -55,7 +55,7 @@ pgpipe(int handles[2])
 		closesocket(s);
 		return -1;
 	}
-	if ((handles[1] = socket(PF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
+	if ((handles[1] = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
 	{
 		ereport(LOG, (errmsg_internal("pgpipe failed to create socket 2: %ui", WSAGetLastError())));
 		closesocket(s);
