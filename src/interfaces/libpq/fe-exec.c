@@ -2549,7 +2549,7 @@ PQfn(PGconn *conn,
 	/* clear the error string */
 	resetPQExpBuffer(&conn->errorMessage);
 
-	if (conn->sock < 0 || conn->asyncStatus != PGASYNC_IDLE ||
+	if (conn->sock == PGINVALID_SOCKET || conn->asyncStatus != PGASYNC_IDLE ||
 		conn->result != NULL)
 	{
 		printfPQExpBuffer(&conn->errorMessage,

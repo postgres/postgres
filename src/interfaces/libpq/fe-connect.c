@@ -398,9 +398,9 @@ pqDropConnection(PGconn *conn)
 	/* Drop any SSL state */
 	pqsecure_close(conn);
 	/* Close the socket itself */
-	if (conn->sock >= 0)
+	if (conn->sock != PGINVALID_SOCKET)
 		closesocket(conn->sock);
-	conn->sock = -1;
+	conn->sock = PGINVALID_SOCKET;
 	/* Discard any unread/unsent data */
 	conn->inStart = conn->inCursor = conn->inEnd = 0;
 	conn->outCount = 0;
@@ -1631,24 +1631,8 @@ keep_going:						/* We will come back to here until there is
 						   addr_cur->ai_addrlen);
 					conn->raddr.salen = addr_cur->ai_addrlen;
 
-					/* Open a socket */
-					{
-						/*
-						 * While we use 'pgsocket' as the socket type in the
-						 * backend, we use 'int' for libpq socket values.
-						 * This requires us to map PGINVALID_SOCKET to -1
-						 * on Windows.
-						 * See http://msdn.microsoft.com/en-us/library/windows/desktop/ms740516%28v=vs.85%29.aspx
-						 */
-						pgsocket sock = socket(addr_cur->ai_family, SOCK_STREAM, 0);
-#ifdef WIN32
-						if (sock == PGINVALID_SOCKET)
-							conn->sock = -1;
-						else
-#endif
-							conn->sock = sock;
-					}
-					if (conn->sock == -1)
+					conn->sock = socket(addr_cur->ai_family, SOCK_STREAM, 0);
+					if (conn->sock == PGINVALID_SOCKET)
 					{
 						/*
 						 * ignore socket() failure if we have more addresses
@@ -2717,7 +2701,7 @@ makeEmptyPGconn(void)
 	conn->client_encoding = PG_SQL_ASCII;
 	conn->std_strings = false;	/* unless server says differently */
 	conn->verbosity = PQERRORS_DEFAULT;
-	conn->sock = -1;
+	conn->sock = PGINVALID_SOCKET;
 	conn->auth_req_received = false;
 	conn->password_needed = false;
 	conn->dot_pgpass_used = false;
@@ -2882,7 +2866,7 @@ closePGconn(PGconn *conn)
 	 * Note that the protocol doesn't allow us to send Terminate messages
 	 * during the startup phase.
 	 */
-	if (conn->sock >= 0 && conn->status == CONNECTION_OK)
+	if (conn->sock != PGINVALID_SOCKET && conn->status == CONNECTION_OK)
 	{
 		/*
 		 * Try to send "close connection" message to backend. Ignore any
@@ -3103,7 +3087,7 @@ PQgetCancel(PGconn *conn)
 	if (!conn)
 		return NULL;
 
-	if (conn->sock < 0)
+	if (conn->sock == PGINVALID_SOCKET)
 		return NULL;
 
 	cancel = malloc(sizeof(PGcancel));
@@ -3284,7 +3268,7 @@ PQrequestCancel(PGconn *conn)
 	if (!conn)
 		return FALSE;
 
-	if (conn->sock < 0)
+	if (conn->sock == PGINVALID_SOCKET)
 	{
 		strlcpy(conn->errorMessage.data,
 				"PQrequestCancel() -- connection is not open\n",
@@ -5361,7 +5345,7 @@ PQsocket(const PGconn *conn)
 {
 	if (!conn)
 		return -1;
-	return conn->sock;
+	return (conn->sock != PGINVALID_SOCKET) ? conn->sock : -1;
 }
 
 int
