@@ -16,7 +16,6 @@
 
 #include <time.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #ifdef WIN32
 #include <io.h>
 #endif

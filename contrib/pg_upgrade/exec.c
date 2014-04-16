@@ -12,7 +12,6 @@
 #include "pg_upgrade.h"
 
 #include <fcntl.h>
-#include <unistd.h>
 #include <sys/types.h>
 
 static void check_data_dir(const char *pg_data);
