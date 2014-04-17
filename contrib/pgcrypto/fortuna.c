@@ -34,6 +34,7 @@
 #include <sys/time.h>
 #include <time.h>
 
+#include "px.h"
 #include "rijndael.h"
 #include "sha2.h"
 #include "fortuna.h"
@@ -169,7 +170,7 @@ md_result(MD_CTX * ctx, uint8 *dst)
 
 	memcpy(&tmp, ctx, sizeof(*ctx));
 	SHA256_Final(dst, &tmp);
-	memset(&tmp, 0, sizeof(tmp));
+	px_memset(&tmp, 0, sizeof(tmp));
 }
 
 /*
@@ -243,7 +244,7 @@ enough_time_passed(FState *st)
 	if (ok)
 		memcpy(last, &tv, sizeof(tv));
 
-	memset(&tv, 0, sizeof(tv));
+	px_memset(&tv, 0, sizeof(tv));
 
 	return ok;
 }
@@ -290,8 +291,8 @@ reseed(FState *st)
 	/* use new key */
 	ciph_init(&st->ciph, st->key, BLOCK);
 
-	memset(&key_md, 0, sizeof(key_md));
-	memset(buf, 0, BLOCK);
+	px_memset(&key_md, 0, sizeof(key_md));
+	px_memset(buf, 0, BLOCK);
 }
 
 /*
@@ -341,8 +342,8 @@ add_entropy(FState *st, const uint8 *data, unsigned len)
 	if (pos == 0)
 		st->pool0_bytes += len;
 
-	memset(hash, 0, BLOCK);
-	memset(&md, 0, sizeof(md));
+	px_memset(hash, 0, BLOCK);
+	px_memset(&md, 0, sizeof(md));
 }
 
 /*
@@ -378,7 +379,7 @@ startup_tricks(FState *st)
 		encrypt_counter(st, buf + CIPH_BLOCK);
 		md_update(&st->pool[i], buf, BLOCK);
 	}
-	memset(buf, 0, BLOCK);
+	px_memset(buf, 0, BLOCK);
 
 	/* Hide the key. */
 	rekey(st);
