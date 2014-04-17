@@ -11,6 +11,8 @@
 
 #include "pg_upgrade.h"
 
+#include <sys/types.h>
+
 static void get_tablespace_paths(void);
 static void set_tablespace_directory_suffix(ClusterInfo *cluster);
 
@@ -66,8 +68,38 @@ get_tablespace_paths(void)
 	i_spclocation = PQfnumber(res, "spclocation");
 
 	for (tblnum = 0; tblnum < os_info.num_old_tablespaces; tblnum++)
+	{
+		struct stat statBuf;
+
 		os_info.old_tablespaces[tblnum] = pg_strdup(
 									 PQgetvalue(res, tblnum, i_spclocation));
+
+		/*
+		 * Check that the tablespace path exists and is a directory.
+		 * Effectively, this is checking only for tables/indexes in
+		 * non-existent tablespace directories.  Databases located in
+		 * non-existent tablespaces already throw a backend error.
+		 * Non-existent tablespace directories can occur when a data
+		 * directory that contains user tablespaces is moved as part
+		 * of pg_upgrade preparation and the symbolic links are not
+		 * updated.
+		 */
+		if (stat(os_info.old_tablespaces[tblnum], &statBuf) != 0)
+		{
+			if (errno == ENOENT)
+				report_status(PG_FATAL,
+							  "tablespace directory \"%s\" does not exist\n",
+							  os_info.old_tablespaces[tblnum]);
+			else
+				report_status(PG_FATAL,
+							  "cannot stat() tablespace directory \"%s\": %s\n",
+							  os_info.old_tablespaces[tblnum], getErrorText(errno));
+		}
+		if (!S_ISDIR(statBuf.st_mode))
+				report_status(PG_FATAL,
+							  "tablespace path \"%s\" is not a directory\n",
+							  os_info.old_tablespaces[tblnum]);
+	}
 
 	PQclear(res);
 
