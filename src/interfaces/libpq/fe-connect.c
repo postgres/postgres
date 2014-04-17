@@ -2610,11 +2610,13 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 	int			port = LDAP_DEF_PORT,
 				scope,
 				rc,
-				msgid,
 				size,
 				state,
 				oldstate,
 				i;
+#ifndef WIN32
+	int			msgid;
+#endif
 	bool		found_keyword;
 	char	   *url,
 			   *hostname,
@@ -2759,11 +2761,13 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 
 	/*
 	 * Perform an explicit anonymous bind.
-	 * LDAP does not require that an anonymous bind is preformed explicitly,
+	 *
+	 * LDAP does not require that an anonymous bind is performed explicitly,
 	 * but we want to distinguish between the case where LDAP bind does not
 	 * succeed within PGLDAP_TIMEOUT seconds (return 2 to continue parsing
 	 * the service control file) and the case where querying the LDAP server
 	 * fails (return 1 to end parsing).
+	 *
 	 * Unfortunately there is no way of setting a timeout that works for
 	 * both Windows and OpenLDAP.
 	 */
@@ -2776,7 +2780,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 		ldap_unbind(ld);
 		return 2;
 	}
-#else /* WIN32 */
+#else /* !WIN32 */
 	/* in OpenLDAP, use the LDAP_OPT_NETWORK_TIMEOUT option */
 	if (ldap_set_option(ld, LDAP_OPT_NETWORK_TIMEOUT, &time) != LDAP_SUCCESS)
 	{
@@ -3031,7 +3035,8 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 
 	return 0;
 }
-#endif
+
+#endif	/* USE_LDAP */
 
 #define MAXBUFSIZE 256
 
