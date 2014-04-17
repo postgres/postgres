@@ -11102,6 +11102,12 @@ CheckForStandbyTrigger(void)
 		fast_promote = true;
 		return true;
 	}
+	else if (errno != ENOENT)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not stat trigger file \"%s\": %m",
+						TriggerFile)));
+
 	return false;
 }
 
