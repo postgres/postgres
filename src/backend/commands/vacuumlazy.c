@@ -1214,6 +1214,13 @@ lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 	PageRepairFragmentation(page);
 
 	/*
+	 * Now that we have removed the dead tuples from the page, once again
+	 * check if the page has become all-visible.
+	 */
+	if (heap_page_is_all_visible(onerel, buffer, &visibility_cutoff_xid))
+		PageSetAllVisible(page);
+
+	/*
 	 * Mark buffer dirty before we write WAL.
 	 */
 	MarkBufferDirty(buffer);
@@ -1231,14 +1238,13 @@ lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 	}
 
 	/*
-	 * Now that we have removed the dead tuples from the page, once again
-	 * check if the page has become all-visible.
+	 * All the changes to the heap page have been done. If the all-visible
+	 * flag is now set, also set the VM bit.
 	 */
-	if (!visibilitymap_test(onerel, blkno, vmbuffer) &&
-		heap_page_is_all_visible(onerel, buffer, &visibility_cutoff_xid))
+	if (PageIsAllVisible(page) &&
+		!visibilitymap_test(onerel, blkno, vmbuffer))
 	{
 		Assert(BufferIsValid(*vmbuffer));
-		PageSetAllVisible(page);
 		visibilitymap_set(onerel, blkno, buffer, InvalidXLogRecPtr, *vmbuffer,
 						  visibility_cutoff_xid);
 	}
