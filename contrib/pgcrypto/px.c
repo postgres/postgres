@@ -104,6 +104,12 @@ px_strerror(int err)
 	return "Bad error code";
 }
 
+/* memset that must not be optimized away */
+void
+px_memset(void *ptr, int c, size_t len)
+{
+	memset(ptr, c, len);
+}
 
 const char *
 px_resolve_alias(const PX_Alias *list, const char *name)
@@ -331,7 +337,7 @@ combo_free(PX_Combo *cx)
 {
 	if (cx->cipher)
 		px_cipher_free(cx->cipher);
-	memset(cx, 0, sizeof(*cx));
+	px_memset(cx, 0, sizeof(*cx));
 	px_free(cx);
 }
 

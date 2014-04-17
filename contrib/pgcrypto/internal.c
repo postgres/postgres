@@ -143,7 +143,7 @@ int_md5_free(PX_MD *h)
 {
 	MD5_CTX    *ctx = (MD5_CTX *) h->p.ptr;
 
-	memset(ctx, 0, sizeof(*ctx));
+	px_memset(ctx, 0, sizeof(*ctx));
 	px_free(ctx);
 	px_free(h);
 }
@@ -191,7 +191,7 @@ int_sha1_free(PX_MD *h)
 {
 	SHA1_CTX   *ctx = (SHA1_CTX *) h->p.ptr;
 
-	memset(ctx, 0, sizeof(*ctx));
+	px_memset(ctx, 0, sizeof(*ctx));
 	px_free(ctx);
 	px_free(h);
 }
@@ -266,7 +266,7 @@ intctx_free(PX_Cipher *c)
 
 	if (cx)
 	{
-		memset(cx, 0, sizeof *cx);
+		px_memset(cx, 0, sizeof *cx);
 		px_free(cx);
 	}
 	px_free(c);
@@ -659,7 +659,7 @@ system_reseed(void)
 		skip = buf[0] >= SYSTEM_RESEED_CHANCE;
 	}
 	/* clear 1 byte */
-	memset(buf, 0, sizeof(buf));
+	px_memset(buf, 0, sizeof(buf));
 
 	if (skip)
 		return;
@@ -669,7 +669,7 @@ system_reseed(void)
 		fortuna_add_entropy(buf, n);
 
 	seed_time = t;
-	memset(buf, 0, sizeof(buf));
+	px_memset(buf, 0, sizeof(buf));
 }
 
 int
