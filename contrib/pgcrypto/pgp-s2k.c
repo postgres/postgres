@@ -75,6 +75,7 @@ calc_s2k_simple(PGP_S2K *s2k, PX_MD *md, const uint8 *key,
 			remain = 0;
 		}
 	}
+	px_memset(buf, 0, sizeof(buf));
 	return 0;
 }
 
@@ -118,6 +119,7 @@ calc_s2k_salted(PGP_S2K *s2k, PX_MD *md, const uint8 *key, unsigned key_len)
 			remain = 0;
 		}
 	}
+	px_memset(buf, 0, sizeof(buf));
 	return 0;
 }
 
@@ -189,6 +191,7 @@ calc_s2k_iter_salted(PGP_S2K *s2k, PX_MD *md, const uint8 *key,
 			remain = 0;
 		}
 	}
+	px_memset(buf, 0, sizeof(buf));
 	return 0;
 }
 
