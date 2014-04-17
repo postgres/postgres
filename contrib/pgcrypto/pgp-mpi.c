@@ -72,7 +72,7 @@ pgp_mpi_free(PGP_MPI *mpi)
 {
 	if (mpi == NULL)
 		return 0;
-	memset(mpi, 0, sizeof(*mpi) + mpi->bytes);
+	px_memset(mpi, 0, sizeof(*mpi) + mpi->bytes);
 	px_free(mpi);
 	return 0;
 }

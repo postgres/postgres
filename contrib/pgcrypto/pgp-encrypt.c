@@ -128,7 +128,7 @@ mdc_flush(PushFilter *dst, void *priv)
 	px_md_finish(md, pkt + 2);
 
 	res = pushf_write(dst, pkt, 2 + MDC_DIGEST_LEN);
-	memset(pkt, 0, 2 + MDC_DIGEST_LEN);
+	px_memset(pkt, 0, 2 + MDC_DIGEST_LEN);
 	return res;
 }
 
@@ -217,7 +217,7 @@ encrypt_free(void *priv)
 {
 	struct EncStat *st = priv;
 
-	memset(st, 0, sizeof(*st));
+	px_memset(st, 0, sizeof(*st));
 	px_free(st);
 }
 
@@ -299,7 +299,7 @@ pkt_stream_free(void *priv)
 {
 	struct PktStreamStat *st = priv;
 
-	memset(st, 0, sizeof(*st));
+	px_memset(st, 0, sizeof(*st));
 	px_free(st);
 }
 
@@ -490,7 +490,7 @@ write_prefix(PGP_Context *ctx, PushFilter *dst)
 	prefix[bs + 1] = prefix[bs - 1];
 
 	res = pushf_write(dst, prefix, bs + 2);
-	memset(prefix, 0, bs + 2);
+	px_memset(prefix, 0, bs + 2);
 	return res < 0 ? res : 0;
 }
 
@@ -552,7 +552,7 @@ write_symenc_sesskey(PGP_Context *ctx, PushFilter *dst)
 	if (res >= 0)
 		res = pushf_write(dst, pkt, pktlen);
 
-	memset(pkt, 0, pktlen);
+	px_memset(pkt, 0, pktlen);
 	return res;
 }
 

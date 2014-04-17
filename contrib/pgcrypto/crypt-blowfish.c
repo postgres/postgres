@@ -34,8 +34,8 @@
 
 #include "postgres.h"
 
-#include "px.h"
 #include "px-crypt.h"
+#include "px.h"
 
 #ifdef __i386__
 #define BF_ASM				0	/* 1 */
@@ -617,7 +617,7 @@ _crypt_blowfish_rn(const char *key, const char *setting,
 	count = (BF_word) 1 << ((setting[4] - '0') * 10 + (setting[5] - '0'));
 	if (count < 16 || BF_decode(data.binary.salt, &setting[7], 16))
 	{
-		memset(data.binary.salt, 0, sizeof(data.binary.salt));
+		px_memset(data.binary.salt, 0, sizeof(data.binary.salt));
 		return NULL;
 	}
 	BF_swap(data.binary.salt, 4);
@@ -730,7 +730,7 @@ _crypt_blowfish_rn(const char *key, const char *setting,
 /* Overwrite the most obvious sensitive data we have on the stack. Note
  * that this does not guarantee there's no sensitive data left on the
  * stack and/or in registers; I'm not aware of portable code that does. */
-	memset(&data, 0, sizeof(data));
+	px_memset(&data, 0, sizeof(data));
 
 	return output;
 }
