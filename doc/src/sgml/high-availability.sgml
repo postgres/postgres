@@ -1889,9 +1889,14 @@ if (!triggered)
     situation will be no worse than if the standby queries were running
     directly on the primary server, and you are still getting the benefit of
     off-loading execution onto the standby.
-    <varname>max_standby_archive_delay</> must be kept large in this case,
-    because delayed WAL files might already contain entries that conflict with
-    the desired standby queries.
+    If standby servers connect and disconnect frequently, you
+    might want to make adjustments to handle the period when
+    <varname>hot_standby_feedback</> feedback is not being provided.
+    For example, consider increasing <varname>max_standby_archive_delay</>
+    so that queries are not rapidly cancelled by conflicts in WAL archive
+    files during disconnected periods.  You should also consider increasing
+    <varname>max_standby_streaming_delay</> to avoid rapid cancellations
+    by newly-arrived streaming WAL entries after reconnection.
    </para>
 
    <para>
