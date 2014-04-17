@@ -508,7 +508,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 
 	/*
 	 * Close down the query and free resources.  Include time for this in the
-	 * total runtime (although it should be pretty minimal).
+	 * total execution time (although it should be pretty minimal).
 	 */
 	INSTR_TIME_SET_CURRENT(starttime);
 
@@ -527,10 +527,10 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 	if (es->analyze)
 	{
 		if (es->format == EXPLAIN_FORMAT_TEXT)
-			appendStringInfo(es->str, "Total runtime: %.3f ms\n",
+			appendStringInfo(es->str, "Execution time: %.3f ms\n",
 							 1000.0 * totaltime);
 		else
-			ExplainPropertyFloat("Total Runtime", 1000.0 * totaltime,
+			ExplainPropertyFloat("Execution Time", 1000.0 * totaltime,
 								 3, es);
 	}
 

@@ -584,7 +584,7 @@ WHERE t1.unique1 &lt; 10 AND t1.unique2 = t2.unique2;
    -&gt;  Index Scan using tenk2_unique2 on tenk2 t2  (cost=0.29..7.91 rows=1 width=244) (actual time=0.021..0.022 rows=1 loops=10)
          Index Cond: (unique2 = t1.unique2)
  Planning time: 0.181 ms
- Total runtime: 0.501 ms
+ Execution time: 0.501 ms
 </screen>
 
     Note that the <quote>actual time</quote> values are in milliseconds of
@@ -633,7 +633,7 @@ WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2 ORDER BY t1.fivethous;
                      -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..5.04 rows=101 width=0) (actual time=0.049..0.049 rows=100 loops=1)
                            Index Cond: (unique1 &lt; 100)
  Planning time: 0.194 ms
- Total runtime: 8.008 ms
+ Execution time: 8.008 ms
 </screen>
 
     The Sort node shows the sort method used (in particular, whether the sort
@@ -657,7 +657,7 @@ EXPLAIN ANALYZE SELECT * FROM tenk1 WHERE ten &lt; 7;
    Filter: (ten &lt; 7)
    Rows Removed by Filter: 3000
  Planning time: 0.083 ms
- Total runtime: 5.905 ms
+ Execution time: 5.905 ms
 </screen>
 
     These counts can be particularly valuable for filter conditions applied at
@@ -680,7 +680,7 @@ EXPLAIN ANALYZE SELECT * FROM polygon_tbl WHERE f1 @&gt; polygon '(0.5,2.0)';
    Filter: (f1 @&gt; '((0.5,2))'::polygon)
    Rows Removed by Filter: 4
  Planning time: 0.040 ms
- Total runtime: 0.083 ms
+ Execution time: 0.083 ms
 </screen>
 
     The planner thinks (quite correctly) that this sample table is too small
@@ -699,7 +699,7 @@ EXPLAIN ANALYZE SELECT * FROM polygon_tbl WHERE f1 @&gt; polygon '(0.5,2.0)';
    Index Cond: (f1 @&gt; '((0.5,2))'::polygon)
    Rows Removed by Index Recheck: 1
  Planning time: 0.034 ms
- Total runtime: 0.144 ms
+ Execution time: 0.144 ms
 </screen>
 
     Here we can see that the index returned one candidate row, which was
@@ -730,7 +730,7 @@ EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM tenk1 WHERE unique1 &lt; 100 AND unique
                Index Cond: (unique2 &gt; 9000)
                Buffers: shared hit=5
  Planning time: 0.088 ms
- Total runtime: 0.423 ms
+ Execution time: 0.423 ms
 </screen>
 
     The numbers provided by <literal>BUFFERS</> help to identify which parts
@@ -758,7 +758,7 @@ EXPLAIN ANALYZE UPDATE tenk1 SET hundred = hundred + 1 WHERE unique1 &lt; 100;
          -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..5.04 rows=101 width=0) (actual time=0.043..0.043 rows=100 loops=1)
                Index Cond: (unique1 &lt; 100)
  Planning time: 0.079 ms
- Total runtime: 14.727 ms
+ Execution time: 14.727 ms
 
 ROLLBACK;
 </screen>
@@ -781,7 +781,7 @@ ROLLBACK;
    </para>
 
    <para>
-    The <literal>Total runtime</literal> shown by <command>EXPLAIN
+    The <literal>Execution time</literal> shown by <command>EXPLAIN
     ANALYZE</command> includes executor start-up and shut-down time, as well
     as the time to run any triggers that are fired, but it does not include
     parsing, rewriting, or planning time.
@@ -792,7 +792,7 @@ ROLLBACK;
     The total time spent in each trigger
     (either <literal>BEFORE</> or <literal>AFTER</>) is also shown separately.
     Note that deferred constraint triggers will not be executed
-    until end of transaction and are thus not shown at all by
+    until end of transaction and are thus not considered at all by
     <command>EXPLAIN ANALYZE</command>.
    </para>
 
@@ -844,7 +844,7 @@ EXPLAIN ANALYZE SELECT * FROM tenk1 WHERE unique1 &lt; 100 AND unique2 &gt; 9000
          Filter: (unique1 &lt; 100)
          Rows Removed by Filter: 287
  Planning time: 0.096 ms
- Total runtime: 0.336 ms
+ Execution time: 0.336 ms
 </screen>
 
     the estimated cost and row count for the Index Scan node are shown as

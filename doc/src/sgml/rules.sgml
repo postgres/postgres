@@ -993,11 +993,17 @@ REFRESH MATERIALIZED VIEW sales_summary;
 
 <para>
     Another use for a materialized view is to allow faster access to data
-    brought across from a remote system, through a foreign data wrapper.
+    brought across from a remote system through a foreign data wrapper.
     A simple example using <literal>file_fdw</literal> is below, with timings,
     but since this is using cache on the local system the performance
-    difference on a foreign data wrapper to a remote system could be greater.
+    difference compared to access to a remote system would usually be greater
+    than shown here.  Notice we are also exploiting the ability to put an
+    index on the materialized view, whereas <literal>file_fdw</literal> does
+    not support indexes; this advantage might not apply for other sorts of
+    foreign data access.
+</para>
 
+<para>
     Setup:
 
 <programlisting>
@@ -1005,7 +1011,7 @@ CREATE EXTENSION file_fdw;
 CREATE SERVER local_file FOREIGN DATA WRAPPER file_fdw;
 CREATE FOREIGN TABLE words (word text NOT NULL)
   SERVER local_file
-  OPTIONS (filename '/etc/dictionaries-common/words');
+  OPTIONS (filename '/usr/share/dict/words');
 CREATE MATERIALIZED VIEW wrd AS SELECT * FROM words;
 CREATE UNIQUE INDEX wrd_word ON wrd (word);
 CREATE EXTENSION pg_trgm;
@@ -1024,26 +1030,28 @@ SELECT count(*) FROM words WHERE word = 'caterpiler';
 (1 row)
 </programlisting>
 
-    The plan is:
+    With <command>EXPLAIN ANALYZE</>, we see:
 
 <programlisting>
- Aggregate  (cost=4125.19..4125.20 rows=1 width=0) (actual time=26.013..26.014 rows=1 loops=1)
-   ->  Foreign Scan on words  (cost=0.00..4124.70 rows=196 width=0) (actual time=26.011..26.011 rows=0 loops=1)
+ Aggregate  (cost=21763.99..21764.00 rows=1 width=0) (actual time=188.180..188.181 rows=1 loops=1)
+   -&gt;  Foreign Scan on words  (cost=0.00..21761.41 rows=1032 width=0) (actual time=188.177..188.177 rows=0 loops=1)
          Filter: (word = 'caterpiler'::text)
-         Rows Removed by Filter: 99171
-         Foreign File: /etc/dictionaries-common/words
-         Foreign File Size: 938848
- Total runtime: 26.081 ms
+         Rows Removed by Filter: 479829
+         Foreign File: /usr/share/dict/words
+         Foreign File Size: 4953699
+ Planning time: 0.118 ms
+ Execution time: 188.273 ms
 </programlisting>
 
     If the materialized view is used instead, the query is much faster:
 
 <programlisting>
- Aggregate  (cost=4.44..4.45 rows=1 width=0) (actual time=0.074..0.074 rows=1 loops=1)
-   ->  Index Only Scan using wrd_word on wrd  (cost=0.42..4.44 rows=1 width=0) (actual time=0.071..0.071 rows=0 loops=1)
+ Aggregate  (cost=4.44..4.45 rows=1 width=0) (actual time=0.042..0.042 rows=1 loops=1)
+   -&gt;  Index Only Scan using wrd_word on wrd  (cost=0.42..4.44 rows=1 width=0) (actual time=0.039..0.039 rows=0 loops=1)
          Index Cond: (word = 'caterpiler'::text)
          Heap Fetches: 0
- Total runtime: 0.119 ms
+ Planning time: 0.164 ms
+ Execution time: 0.117 ms
 </programlisting>
 
     Either way, the word is spelled wrong, so let's look for what we might
@@ -1068,23 +1076,25 @@ SELECT word FROM words ORDER BY word <-> 'caterpiler' LIMIT 10;
 </programlisting>
 
 <programlisting>
- Limit  (cost=2195.70..2195.72 rows=10 width=32) (actual time=218.904..218.906 rows=10 loops=1)
-   ->  Sort  (cost=2195.70..2237.61 rows=16765 width=32) (actual time=218.902..218.904 rows=10 loops=1)
-         Sort Key: ((word <-> 'caterpiler'::text))
+ Limit  (cost=11583.61..11583.64 rows=10 width=32) (actual time=1431.591..1431.594 rows=10 loops=1)
+   -&gt;  Sort  (cost=11583.61..11804.76 rows=88459 width=32) (actual time=1431.589..1431.591 rows=10 loops=1)
+         Sort Key: ((word &lt;-&gt; 'caterpiler'::text))
          Sort Method: top-N heapsort  Memory: 25kB
-         ->  Foreign Scan on words  (cost=0.00..1833.41 rows=16765 width=32) (actual time=0.046..200.965 rows=99171 loops=1)
-               Foreign File: /etc/dictionaries-common/words
-               Foreign File Size: 938848
- Total runtime: 218.966 ms
+         -&gt;  Foreign Scan on words  (cost=0.00..9672.05 rows=88459 width=32) (actual time=0.057..1286.455 rows=479829 loops=1)
+               Foreign File: /usr/share/dict/words
+               Foreign File Size: 4953699
+ Planning time: 0.128 ms
+ Execution time: 1431.679 ms
 </programlisting>
 
     Using the materialized view:
 
 <programlisting>
- Limit  (cost=0.28..1.02 rows=10 width=9) (actual time=24.916..25.079 rows=10 loops=1)
-   ->  Index Scan using wrd_trgm on wrd  (cost=0.28..7383.70 rows=99171 width=9) (actual time=24.914..25.076 rows=10 loops=1)
-         Order By: (word <-> 'caterpiler'::text)
- Total runtime: 25.884 ms
+ Limit  (cost=0.29..1.06 rows=10 width=10) (actual time=187.222..188.257 rows=10 loops=1)
+   -&gt;  Index Scan using wrd_trgm on wrd  (cost=0.29..37020.87 rows=479829 width=10) (actual time=187.219..188.252 rows=10 loops=1)
+         Order By: (word &lt;-&gt; 'caterpiler'::text)
+ Planning time: 0.196 ms
+ Execution time: 198.640 ms
 </programlisting>
 
     If you can tolerate periodic update of the remote data to the local

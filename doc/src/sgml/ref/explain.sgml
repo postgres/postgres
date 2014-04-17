@@ -408,7 +408,7 @@ EXPLAIN ANALYZE EXECUTE query(100, 200);
    -&gt;  Index Scan using test_pkey on test  (cost=0.29..9.29 rows=50 width=8) (actual time=0.039..0.091 rows=99 loops=1)
          Index Cond: ((id &gt; $1) AND (id &lt; $2))
  Planning time: 0.197 ms
- Total runtime: 0.225 ms
+ Execution time: 0.225 ms
 (5 rows)
 </programlisting>
   </para>
