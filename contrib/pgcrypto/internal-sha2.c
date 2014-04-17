@@ -84,7 +84,7 @@ int_sha224_free(PX_MD *h)
 {
 	SHA224_CTX *ctx = (SHA224_CTX *) h->p.ptr;
 
-	memset(ctx, 0, sizeof(*ctx));
+	px_memset(ctx, 0, sizeof(*ctx));
 	px_free(ctx);
 	px_free(h);
 }
@@ -132,7 +132,7 @@ int_sha256_free(PX_MD *h)
 {
 	SHA256_CTX *ctx = (SHA256_CTX *) h->p.ptr;
 
-	memset(ctx, 0, sizeof(*ctx));
+	px_memset(ctx, 0, sizeof(*ctx));
 	px_free(ctx);
 	px_free(h);
 }
@@ -180,7 +180,7 @@ int_sha384_free(PX_MD *h)
 {
 	SHA384_CTX *ctx = (SHA384_CTX *) h->p.ptr;
 
-	memset(ctx, 0, sizeof(*ctx));
+	px_memset(ctx, 0, sizeof(*ctx));
 	px_free(ctx);
 	px_free(h);
 }
@@ -228,7 +228,7 @@ int_sha512_free(PX_MD *h)
 {
 	SHA512_CTX *ctx = (SHA512_CTX *) h->p.ptr;
 
-	memset(ctx, 0, sizeof(*ctx));
+	px_memset(ctx, 0, sizeof(*ctx));
 	px_free(ctx);
 	px_free(h);
 }
