@@ -85,7 +85,7 @@ void
 pgp_cfb_free(PGP_CFB *ctx)
 {
 	px_cipher_free(ctx->ciph);
-	memset(ctx, 0, sizeof(*ctx));
+	px_memset(ctx, 0, sizeof(*ctx));
 	px_free(ctx);
 }
 

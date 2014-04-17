@@ -40,6 +40,7 @@
 
 #include <sys/param.h>
 
+#include "px.h"
 #include "sha2.h"
 
 /*
@@ -570,7 +571,7 @@ SHA256_Final(uint8 digest[], SHA256_CTX *context)
 	}
 
 	/* Clean up state data: */
-	memset(context, 0, sizeof(*context));
+	px_memset(context, 0, sizeof(*context));
 }
 
 
@@ -899,7 +900,7 @@ SHA512_Final(uint8 digest[], SHA512_CTX *context)
 	}
 
 	/* Zero out state data */
-	memset(context, 0, sizeof(*context));
+	px_memset(context, 0, sizeof(*context));
 }
 
 
@@ -944,7 +945,7 @@ SHA384_Final(uint8 digest[], SHA384_CTX *context)
 	}
 
 	/* Zero out state data */
-	memset(context, 0, sizeof(*context));
+	px_memset(context, 0, sizeof(*context));
 }
 
 /*** SHA-224: *********************************************************/
@@ -987,5 +988,5 @@ SHA224_Final(uint8 digest[], SHA224_CTX *context)
 	}
 
 	/* Clean up state data: */
-	memset(context, 0, sizeof(*context));
+	px_memset(context, 0, sizeof(*context));
 }

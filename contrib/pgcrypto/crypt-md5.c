@@ -89,7 +89,7 @@ px_crypt_md5(const char *pw, const char *salt, char *passwd, unsigned dstlen)
 		px_md_update(ctx, final, pl > MD5_SIZE ? MD5_SIZE : pl);
 
 	/* Don't leave anything around in vm they could use. */
-	memset(final, 0, sizeof final);
+	px_memset(final, 0, sizeof final);
 
 	/* Then something really weird... */
 	for (i = strlen(pw); i; i >>= 1)
@@ -154,7 +154,7 @@ px_crypt_md5(const char *pw, const char *salt, char *passwd, unsigned dstlen)
 	*p = '\0';
 
 	/* Don't leave anything around in vm they could use. */
-	memset(final, 0, sizeof final);
+	px_memset(final, 0, sizeof final);
 
 	px_md_free(ctx1);
 	px_md_free(ctx);

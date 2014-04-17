@@ -69,7 +69,7 @@ mbuf_free(MBuf *mbuf)
 {
 	if (mbuf->own_data)
 	{
-		memset(mbuf->data, 0, mbuf->buf_end - mbuf->data);
+		px_memset(mbuf->data, 0, mbuf->buf_end - mbuf->data);
 		px_free(mbuf->data);
 	}
 	px_free(mbuf);
@@ -249,11 +249,11 @@ pullf_free(PullFilter *pf)
 
 	if (pf->buf)
 	{
-		memset(pf->buf, 0, pf->buflen);
+		px_memset(pf->buf, 0, pf->buflen);
 		px_free(pf->buf);
 	}
 
-	memset(pf, 0, sizeof(*pf));
+	px_memset(pf, 0, sizeof(*pf));
 	px_free(pf);
 }
 
@@ -298,7 +298,7 @@ pullf_read_max(PullFilter *pf, int len, uint8 **data_p, uint8 *tmpbuf)
 		if (res < 0)
 		{
 			/* so the caller must clear only on success */
-			memset(tmpbuf, 0, total);
+			px_memset(tmpbuf, 0, total);
 			return res;
 		}
 		if (res == 0)
@@ -415,11 +415,11 @@ pushf_free(PushFilter *mp)
 
 	if (mp->buf)
 	{
-		memset(mp->buf, 0, mp->block_size);
+		px_memset(mp->buf, 0, mp->block_size);
 		px_free(mp->buf);
 	}
 
-	memset(mp, 0, sizeof(*mp));
+	px_memset(mp, 0, sizeof(*mp));
 	px_free(mp);
 }
 

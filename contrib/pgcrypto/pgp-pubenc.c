@@ -73,7 +73,7 @@ pad_eme_pkcs1_v15(uint8 *data, int data_len, int res_len, uint8 **res_p)
 
 	if (res < 0)
 	{
-		memset(buf, 0, res_len);
+		px_memset(buf, 0, res_len);
 		px_free(buf);
 		return res;
 	}
@@ -123,10 +123,10 @@ create_secmsg(PGP_Context *ctx, PGP_MPI **msg_p, int full_bytes)
 
 	if (padded)
 	{
-		memset(padded, 0, full_bytes);
+		px_memset(padded, 0, full_bytes);
 		px_free(padded);
 	}
-	memset(secmsg, 0, klen + 3);
+	px_memset(secmsg, 0, klen + 3);
 	px_free(secmsg);
 
 	if (res >= 0)

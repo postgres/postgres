@@ -77,7 +77,7 @@ hmac_init(PX_HMAC *h, const uint8 *key, unsigned klen)
 		h->p.opad[i] = keybuf[i] ^ HMAC_OPAD;
 	}
 
-	memset(keybuf, 0, bs);
+	px_memset(keybuf, 0, bs);
 	px_free(keybuf);
 
 	px_md_update(md, h->p.ipad, bs);
@@ -119,7 +119,7 @@ hmac_finish(PX_HMAC *h, uint8 *dst)
 	px_md_update(md, buf, hlen);
 	px_md_finish(md, dst);
 
-	memset(buf, 0, hlen);
+	px_memset(buf, 0, hlen);
 	px_free(buf);
 }
 
@@ -131,8 +131,8 @@ hmac_free(PX_HMAC *h)
 	bs = px_md_block_size(h->md);
 	px_md_free(h->md);
 
-	memset(h->p.ipad, 0, bs);
-	memset(h->p.opad, 0, bs);
+	px_memset(h->p.ipad, 0, bs);
+	px_memset(h->p.opad, 0, bs);
 	px_free(h->p.ipad);
 	px_free(h->p.opad);
 	px_free(h);
