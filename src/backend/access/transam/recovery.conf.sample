@@ -139,8 +139,8 @@
 # primary as soon as possible. If you want to explicitly delay the replay of
 # committed transactions from the master, specify a recovery apply delay.
 # For example, if you set this parameter to 5min, the standby will replay
-# each transaction commit only when the system time on the standby is least
-# five minutes past the commit time reported by the master.
+# each transaction commit only when the system time on the standby is at
+# least five minutes past the commit time reported by the master.
 #
 #min_recovery_apply_delay = 0
 #
