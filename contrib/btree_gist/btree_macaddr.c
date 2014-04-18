@@ -24,13 +24,6 @@ PG_FUNCTION_INFO_V1(gbt_macad_consistent);
 PG_FUNCTION_INFO_V1(gbt_macad_penalty);
 PG_FUNCTION_INFO_V1(gbt_macad_same);
 
-Datum		gbt_macad_compress(PG_FUNCTION_ARGS);
-Datum		gbt_macad_union(PG_FUNCTION_ARGS);
-Datum		gbt_macad_picksplit(PG_FUNCTION_ARGS);
-Datum		gbt_macad_consistent(PG_FUNCTION_ARGS);
-Datum		gbt_macad_penalty(PG_FUNCTION_ARGS);
-Datum		gbt_macad_same(PG_FUNCTION_ARGS);
-
 
 static bool
 gbt_macadgt(const void *a, const void *b)

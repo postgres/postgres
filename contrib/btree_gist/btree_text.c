@@ -19,15 +19,6 @@ PG_FUNCTION_INFO_V1(gbt_bpchar_consistent);
 PG_FUNCTION_INFO_V1(gbt_text_penalty);
 PG_FUNCTION_INFO_V1(gbt_text_same);
 
-Datum		gbt_text_compress(PG_FUNCTION_ARGS);
-Datum		gbt_bpchar_compress(PG_FUNCTION_ARGS);
-Datum		gbt_text_union(PG_FUNCTION_ARGS);
-Datum		gbt_text_picksplit(PG_FUNCTION_ARGS);
-Datum		gbt_text_consistent(PG_FUNCTION_ARGS);
-Datum		gbt_bpchar_consistent(PG_FUNCTION_ARGS);
-Datum		gbt_text_penalty(PG_FUNCTION_ARGS);
-Datum		gbt_text_same(PG_FUNCTION_ARGS);
-
 
 /* define for comparison */
 

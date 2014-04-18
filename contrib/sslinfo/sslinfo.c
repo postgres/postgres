@@ -22,16 +22,6 @@
 PG_MODULE_MAGIC;
 
 
-Datum		ssl_is_used(PG_FUNCTION_ARGS);
-Datum		ssl_version(PG_FUNCTION_ARGS);
-Datum		ssl_cipher(PG_FUNCTION_ARGS);
-Datum		ssl_client_cert_present(PG_FUNCTION_ARGS);
-Datum		ssl_client_serial(PG_FUNCTION_ARGS);
-Datum		ssl_client_dn_field(PG_FUNCTION_ARGS);
-Datum		ssl_issuer_field(PG_FUNCTION_ARGS);
-Datum		ssl_client_dn(PG_FUNCTION_ARGS);
-Datum		ssl_issuer_dn(PG_FUNCTION_ARGS);
-
 static Datum X509_NAME_field_to_text(X509_NAME *name, text *fieldName);
 static Datum X509_NAME_to_text(X509_NAME *name);
 static Datum ASN1_STRING_to_text(ASN1_STRING *str);

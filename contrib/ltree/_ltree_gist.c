@@ -14,22 +14,11 @@
 
 
 PG_FUNCTION_INFO_V1(_ltree_compress);
-Datum		_ltree_compress(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(_ltree_same);
-Datum		_ltree_same(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(_ltree_union);
-Datum		_ltree_union(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(_ltree_penalty);
-Datum		_ltree_penalty(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(_ltree_picksplit);
-Datum		_ltree_picksplit(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(_ltree_consistent);
-Datum		_ltree_consistent(PG_FUNCTION_ARGS);
 
 #define GETENTRY(vec,pos) ((ltree_gist *) DatumGetPointer((vec)->vector[(pos)].key))
 #define NEXTVAL(x) ( (ltree*)( (char*)(x) + INTALIGN( VARSIZE(x) ) ) )

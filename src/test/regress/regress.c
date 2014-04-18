@@ -28,18 +28,10 @@
 #define RDELIM			')'
 #define DELIM			','
 
-extern Datum regress_dist_ptpath(PG_FUNCTION_ARGS);
-extern Datum regress_path_dist(PG_FUNCTION_ARGS);
 extern PATH *poly2path(POLYGON *poly);
-extern Datum interpt_pp(PG_FUNCTION_ARGS);
 extern void regress_lseg_construct(LSEG *lseg, Point *pt1, Point *pt2);
-extern Datum overpaid(PG_FUNCTION_ARGS);
-extern Datum boxarea(PG_FUNCTION_ARGS);
 extern char *reverse_name(char *string);
 extern int	oldstyle_length(int n, text *t);
-extern Datum int44in(PG_FUNCTION_ARGS);
-extern Datum int44out(PG_FUNCTION_ARGS);
-extern Datum make_tuple_indirect(PG_FUNCTION_ARGS);
 
 #ifdef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
@@ -236,7 +228,6 @@ typedef struct
 
 WIDGET	   *widget_in(char *str);
 char	   *widget_out(WIDGET * widget);
-extern Datum pt_in_widget(PG_FUNCTION_ARGS);
 
 #define NARGS	3
 
@@ -341,7 +332,6 @@ static int	fd17b_level = 0;
 static int	fd17a_level = 0;
 static bool fd17b_recursion = true;
 static bool fd17a_recursion = true;
-extern Datum funny_dup17(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(funny_dup17);
 
@@ -452,9 +442,6 @@ funny_dup17(PG_FUNCTION_ARGS)
 
 	return PointerGetDatum(tuple);
 }
-
-extern Datum ttdummy(PG_FUNCTION_ARGS);
-extern Datum set_ttdummy(PG_FUNCTION_ARGS);
 
 #define TTDUMMY_INFINITY	999999
 

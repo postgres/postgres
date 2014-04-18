@@ -16,10 +16,6 @@
 
 PG_MODULE_MAGIC;
 
-extern Datum check_primary_key(PG_FUNCTION_ARGS);
-extern Datum check_foreign_key(PG_FUNCTION_ARGS);
-
-
 typedef struct
 {
 	char	   *ident;

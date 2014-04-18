@@ -22,9 +22,6 @@
 PG_MODULE_MAGIC;
 
 /* AbsoluteTime currabstime(void); */
-Datum		timetravel(PG_FUNCTION_ARGS);
-Datum		set_timetravel(PG_FUNCTION_ARGS);
-Datum		get_timetravel(PG_FUNCTION_ARGS);
 
 typedef struct
 {

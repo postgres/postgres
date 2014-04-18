@@ -17,22 +17,11 @@ PG_MODULE_MAGIC;
 float4		trgm_limit = 0.3f;
 
 PG_FUNCTION_INFO_V1(set_limit);
-Datum		set_limit(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(show_limit);
-Datum		show_limit(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(show_trgm);
-Datum		show_trgm(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(similarity);
-Datum		similarity(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(similarity_dist);
-Datum		similarity_dist(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(similarity_op);
-Datum		similarity_op(PG_FUNCTION_ARGS);
 
 
 Datum

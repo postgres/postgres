@@ -40,11 +40,6 @@
 
 PG_MODULE_MAGIC;
 
-Datum		pg_file_write(PG_FUNCTION_ARGS);
-Datum		pg_file_rename(PG_FUNCTION_ARGS);
-Datum		pg_file_unlink(PG_FUNCTION_ARGS);
-Datum		pg_logdir_ls(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(pg_file_write);
 PG_FUNCTION_INFO_V1(pg_file_rename);
 PG_FUNCTION_INFO_V1(pg_file_unlink);

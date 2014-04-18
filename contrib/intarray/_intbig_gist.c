@@ -20,14 +20,6 @@ PG_FUNCTION_INFO_V1(g_intbig_picksplit);
 PG_FUNCTION_INFO_V1(g_intbig_union);
 PG_FUNCTION_INFO_V1(g_intbig_same);
 
-Datum		g_intbig_consistent(PG_FUNCTION_ARGS);
-Datum		g_intbig_compress(PG_FUNCTION_ARGS);
-Datum		g_intbig_decompress(PG_FUNCTION_ARGS);
-Datum		g_intbig_penalty(PG_FUNCTION_ARGS);
-Datum		g_intbig_picksplit(PG_FUNCTION_ARGS);
-Datum		g_intbig_union(PG_FUNCTION_ARGS);
-Datum		g_intbig_same(PG_FUNCTION_ARGS);
-
 /* Number of one-bits in an unsigned byte */
 static const uint8 number_of_ones[256] = {
 	0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4,
@@ -49,11 +41,7 @@ static const uint8 number_of_ones[256] = {
 };
 
 PG_FUNCTION_INFO_V1(_intbig_in);
-Datum		_intbig_in(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(_intbig_out);
-Datum		_intbig_out(PG_FUNCTION_ARGS);
-
 
 Datum
 _intbig_in(PG_FUNCTION_ARGS)

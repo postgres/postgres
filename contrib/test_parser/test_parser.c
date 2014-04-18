@@ -38,23 +38,13 @@ typedef struct
 } LexDescr;
 
 /*
- * prototypes
- */
-PG_FUNCTION_INFO_V1(testprs_start);
-Datum		testprs_start(PG_FUNCTION_ARGS);
-
-PG_FUNCTION_INFO_V1(testprs_getlexeme);
-Datum		testprs_getlexeme(PG_FUNCTION_ARGS);
-
-PG_FUNCTION_INFO_V1(testprs_end);
-Datum		testprs_end(PG_FUNCTION_ARGS);
-
-PG_FUNCTION_INFO_V1(testprs_lextype);
-Datum		testprs_lextype(PG_FUNCTION_ARGS);
-
-/*
  * functions
  */
+PG_FUNCTION_INFO_V1(testprs_start);
+PG_FUNCTION_INFO_V1(testprs_getlexeme);
+PG_FUNCTION_INFO_V1(testprs_end);
+PG_FUNCTION_INFO_V1(testprs_lextype);
+
 Datum
 testprs_start(PG_FUNCTION_ARGS)
 {

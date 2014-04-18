@@ -47,12 +47,6 @@
  * Those functions which have text-type input arg will be deprecated
  * in the future release.
  */
-extern Datum pgstatindex(PG_FUNCTION_ARGS);
-extern Datum pgstatindexbyid(PG_FUNCTION_ARGS);
-extern Datum pg_relpages(PG_FUNCTION_ARGS);
-extern Datum pg_relpagesbyid(PG_FUNCTION_ARGS);
-extern Datum pgstatginindex(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(pgstatindex);
 PG_FUNCTION_INFO_V1(pgstatindexbyid);
 PG_FUNCTION_INFO_V1(pg_relpages);

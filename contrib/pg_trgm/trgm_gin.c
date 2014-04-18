@@ -10,16 +10,9 @@
 
 
 PG_FUNCTION_INFO_V1(gin_extract_trgm);
-Datum		gin_extract_trgm(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(gin_extract_value_trgm);
-Datum		gin_extract_value_trgm(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(gin_extract_query_trgm);
-Datum		gin_extract_query_trgm(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(gin_trgm_consistent);
-Datum		gin_trgm_consistent(PG_FUNCTION_ARGS);
 
 /*
  * This function can only be called if a pre-9.1 version of the GIN operator

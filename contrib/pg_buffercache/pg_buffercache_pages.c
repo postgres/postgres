@@ -19,8 +19,6 @@
 
 PG_MODULE_MAGIC;
 
-Datum		pg_buffercache_pages(PG_FUNCTION_ARGS);
-
 
 /*
  * Record structure holding the to be exposed cache data.

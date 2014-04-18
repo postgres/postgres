@@ -28,10 +28,6 @@
 
 PG_MODULE_MAGIC;
 
-Datum		get_raw_page(PG_FUNCTION_ARGS);
-Datum		get_raw_page_fork(PG_FUNCTION_ARGS);
-Datum		page_header(PG_FUNCTION_ARGS);
-
 static bytea *get_raw_page_internal(text *relname, ForkNumber forknum,
 					  BlockNumber blkno);
 

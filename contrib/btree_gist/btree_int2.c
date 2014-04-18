@@ -23,14 +23,6 @@ PG_FUNCTION_INFO_V1(gbt_int2_distance);
 PG_FUNCTION_INFO_V1(gbt_int2_penalty);
 PG_FUNCTION_INFO_V1(gbt_int2_same);
 
-Datum		gbt_int2_compress(PG_FUNCTION_ARGS);
-Datum		gbt_int2_union(PG_FUNCTION_ARGS);
-Datum		gbt_int2_picksplit(PG_FUNCTION_ARGS);
-Datum		gbt_int2_consistent(PG_FUNCTION_ARGS);
-Datum		gbt_int2_distance(PG_FUNCTION_ARGS);
-Datum		gbt_int2_penalty(PG_FUNCTION_ARGS);
-Datum		gbt_int2_same(PG_FUNCTION_ARGS);
-
 static bool
 gbt_int2gt(const void *a, const void *b)
 {
@@ -96,7 +88,6 @@ static const gbtree_ninfo tinfo =
 
 
 PG_FUNCTION_INFO_V1(int2_dist);
-Datum		int2_dist(PG_FUNCTION_ARGS);
 Datum
 int2_dist(PG_FUNCTION_ARGS)
 {

@@ -19,16 +19,6 @@ PG_MODULE_MAGIC;
  */
 
 static int32 citextcmp(text *left, text *right, Oid collid);
-extern Datum citext_cmp(PG_FUNCTION_ARGS);
-extern Datum citext_hash(PG_FUNCTION_ARGS);
-extern Datum citext_eq(PG_FUNCTION_ARGS);
-extern Datum citext_ne(PG_FUNCTION_ARGS);
-extern Datum citext_gt(PG_FUNCTION_ARGS);
-extern Datum citext_ge(PG_FUNCTION_ARGS);
-extern Datum citext_lt(PG_FUNCTION_ARGS);
-extern Datum citext_le(PG_FUNCTION_ARGS);
-extern Datum citext_smaller(PG_FUNCTION_ARGS);
-extern Datum citext_larger(PG_FUNCTION_ARGS);
 
 /*
  *		=================

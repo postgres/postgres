@@ -42,9 +42,6 @@ PG_MODULE_MAGIC;
 PG_FUNCTION_INFO_V1(pgstattuple);
 PG_FUNCTION_INFO_V1(pgstattuplebyid);
 
-extern Datum pgstattuple(PG_FUNCTION_ARGS);
-extern Datum pgstattuplebyid(PG_FUNCTION_ARGS);
-
 /*
  * struct pgstattuple_type
  *

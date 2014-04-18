@@ -192,8 +192,6 @@ static pltcl_proc_desc *pltcl_current_prodesc = NULL;
 /**********************************************************************
  * Forward declarations
  **********************************************************************/
-Datum		pltcl_call_handler(PG_FUNCTION_ARGS);
-Datum		pltclu_call_handler(PG_FUNCTION_ARGS);
 void		_PG_init(void);
 
 static void pltcl_init_interp(pltcl_interp_desc *interp_desc, bool pltrusted);

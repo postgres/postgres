@@ -47,19 +47,6 @@ PG_FUNCTION_INFO_V1(cube_ll_coord);
 PG_FUNCTION_INFO_V1(cube_ur_coord);
 PG_FUNCTION_INFO_V1(cube_subset);
 
-Datum		cube_in(PG_FUNCTION_ARGS);
-Datum		cube_a_f8_f8(PG_FUNCTION_ARGS);
-Datum		cube_a_f8(PG_FUNCTION_ARGS);
-Datum		cube_out(PG_FUNCTION_ARGS);
-Datum		cube_f8(PG_FUNCTION_ARGS);
-Datum		cube_f8_f8(PG_FUNCTION_ARGS);
-Datum		cube_c_f8(PG_FUNCTION_ARGS);
-Datum		cube_c_f8_f8(PG_FUNCTION_ARGS);
-Datum		cube_dim(PG_FUNCTION_ARGS);
-Datum		cube_ll_coord(PG_FUNCTION_ARGS);
-Datum		cube_ur_coord(PG_FUNCTION_ARGS);
-Datum		cube_subset(PG_FUNCTION_ARGS);
-
 /*
 ** GiST support methods
 */
@@ -72,14 +59,6 @@ PG_FUNCTION_INFO_V1(g_cube_picksplit);
 PG_FUNCTION_INFO_V1(g_cube_union);
 PG_FUNCTION_INFO_V1(g_cube_same);
 
-Datum		g_cube_consistent(PG_FUNCTION_ARGS);
-Datum		g_cube_compress(PG_FUNCTION_ARGS);
-Datum		g_cube_decompress(PG_FUNCTION_ARGS);
-Datum		g_cube_penalty(PG_FUNCTION_ARGS);
-Datum		g_cube_picksplit(PG_FUNCTION_ARGS);
-Datum		g_cube_union(PG_FUNCTION_ARGS);
-Datum		g_cube_same(PG_FUNCTION_ARGS);
-
 /*
 ** B-tree support functions
 */
@@ -90,14 +69,6 @@ PG_FUNCTION_INFO_V1(cube_gt);
 PG_FUNCTION_INFO_V1(cube_le);
 PG_FUNCTION_INFO_V1(cube_ge);
 PG_FUNCTION_INFO_V1(cube_cmp);
-
-Datum		cube_eq(PG_FUNCTION_ARGS);
-Datum		cube_ne(PG_FUNCTION_ARGS);
-Datum		cube_lt(PG_FUNCTION_ARGS);
-Datum		cube_gt(PG_FUNCTION_ARGS);
-Datum		cube_le(PG_FUNCTION_ARGS);
-Datum		cube_ge(PG_FUNCTION_ARGS);
-Datum		cube_cmp(PG_FUNCTION_ARGS);
 
 /*
 ** R-tree support functions
@@ -110,23 +81,12 @@ PG_FUNCTION_INFO_V1(cube_union);
 PG_FUNCTION_INFO_V1(cube_inter);
 PG_FUNCTION_INFO_V1(cube_size);
 
-Datum		cube_contains(PG_FUNCTION_ARGS);
-Datum		cube_contained(PG_FUNCTION_ARGS);
-Datum		cube_overlap(PG_FUNCTION_ARGS);
-Datum		cube_union(PG_FUNCTION_ARGS);
-Datum		cube_inter(PG_FUNCTION_ARGS);
-Datum		cube_size(PG_FUNCTION_ARGS);
-
 /*
 ** miscellaneous
 */
 PG_FUNCTION_INFO_V1(cube_distance);
 PG_FUNCTION_INFO_V1(cube_is_point);
 PG_FUNCTION_INFO_V1(cube_enlarge);
-
-Datum		cube_distance(PG_FUNCTION_ARGS);
-Datum		cube_is_point(PG_FUNCTION_ARGS);
-Datum		cube_enlarge(PG_FUNCTION_ARGS);
 
 /*
 ** For internal use only

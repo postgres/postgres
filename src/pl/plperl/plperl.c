@@ -240,12 +240,6 @@ static plperl_call_data *current_call_data = NULL;
 /**********************************************************************
  * Forward declarations
  **********************************************************************/
-Datum		plperl_call_handler(PG_FUNCTION_ARGS);
-Datum		plperl_inline_handler(PG_FUNCTION_ARGS);
-Datum		plperl_validator(PG_FUNCTION_ARGS);
-Datum		plperlu_call_handler(PG_FUNCTION_ARGS);
-Datum		plperlu_inline_handler(PG_FUNCTION_ARGS);
-Datum		plperlu_validator(PG_FUNCTION_ARGS);
 void		_PG_init(void);
 
 static PerlInterpreter *plperl_init_interp(void);

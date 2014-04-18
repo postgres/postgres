@@ -23,8 +23,6 @@ PG_FUNCTION_INFO_V1(test_shm_mq);
 PG_FUNCTION_INFO_V1(test_shm_mq_pipelined);
 
 void		_PG_init(void);
-Datum		test_shm_mq(PG_FUNCTION_ARGS);
-Datum		test_shm_mq_pipelined(PG_FUNCTION_ARGS);
 
 static void verify_message(Size origlen, char *origdata, Size newlen,
 			   char *newdata);

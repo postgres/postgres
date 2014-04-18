@@ -228,8 +228,6 @@ typedef struct
 /*
  * SQL functions
  */
-extern Datum postgres_fdw_handler(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(postgres_fdw_handler);
 
 /*

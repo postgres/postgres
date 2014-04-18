@@ -27,10 +27,6 @@
 PG_MODULE_MAGIC;
 
 
-/* forward declarations */
-Datum		triggered_change_notification(PG_FUNCTION_ARGS);
-
-
 /*
  * Copy from s (for source) to r (for result), wrapping with q (quote)
  * characters and doubling any quote characters found.

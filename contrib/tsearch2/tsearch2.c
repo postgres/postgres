@@ -45,7 +45,7 @@ static Oid	current_parser_oid = InvalidOid;
 					 CStringGetDatum(text_to_cstring(text))))
 
 #define UNSUPPORTED_FUNCTION(name)						\
-	Datum name(PG_FUNCTION_ARGS);						\
+	PG_FUNCTION_INFO_V1(name);							\
 	Datum												\
 	name(PG_FUNCTION_ARGS)								\
 	{													\
@@ -57,29 +57,10 @@ static Oid	current_parser_oid = InvalidOid;
 		/* keep compiler quiet */						\
 		PG_RETURN_NULL();								\
 	}													\
-	PG_FUNCTION_INFO_V1(name)
+	extern int no_such_variable
 
 static Oid	GetCurrentDict(void);
 static Oid	GetCurrentParser(void);
-
-Datum		tsa_lexize_byname(PG_FUNCTION_ARGS);
-Datum		tsa_lexize_bycurrent(PG_FUNCTION_ARGS);
-Datum		tsa_set_curdict(PG_FUNCTION_ARGS);
-Datum		tsa_set_curdict_byname(PG_FUNCTION_ARGS);
-Datum		tsa_token_type_current(PG_FUNCTION_ARGS);
-Datum		tsa_set_curprs(PG_FUNCTION_ARGS);
-Datum		tsa_set_curprs_byname(PG_FUNCTION_ARGS);
-Datum		tsa_parse_current(PG_FUNCTION_ARGS);
-Datum		tsa_set_curcfg(PG_FUNCTION_ARGS);
-Datum		tsa_set_curcfg_byname(PG_FUNCTION_ARGS);
-Datum		tsa_to_tsvector_name(PG_FUNCTION_ARGS);
-Datum		tsa_to_tsquery_name(PG_FUNCTION_ARGS);
-Datum		tsa_plainto_tsquery_name(PG_FUNCTION_ARGS);
-Datum		tsa_headline_byname(PG_FUNCTION_ARGS);
-Datum		tsa_ts_stat(PG_FUNCTION_ARGS);
-Datum		tsa_tsearch2(PG_FUNCTION_ARGS);
-Datum		tsa_rewrite_accum(PG_FUNCTION_ARGS);
-Datum		tsa_rewrite_finish(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(tsa_lexize_byname);
 PG_FUNCTION_INFO_V1(tsa_lexize_bycurrent);

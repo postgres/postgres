@@ -10,7 +10,6 @@
 #include "_int.h"
 
 PG_FUNCTION_INFO_V1(ginint4_queryextract);
-Datum		ginint4_queryextract(PG_FUNCTION_ARGS);
 
 Datum
 ginint4_queryextract(PG_FUNCTION_ARGS)
@@ -108,7 +107,6 @@ ginint4_queryextract(PG_FUNCTION_ARGS)
 }
 
 PG_FUNCTION_INFO_V1(ginint4_consistent);
-Datum		ginint4_consistent(PG_FUNCTION_ARGS);
 
 Datum
 ginint4_consistent(PG_FUNCTION_ARGS)

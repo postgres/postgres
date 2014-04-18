@@ -22,20 +22,12 @@ PG_FUNCTION_INFO_V1(_lt_q_rregex);
 PG_FUNCTION_INFO_V1(_ltxtq_exec);
 PG_FUNCTION_INFO_V1(_ltxtq_rexec);
 
-Datum		_ltree_r_isparent(PG_FUNCTION_ARGS);
-Datum		_ltree_r_risparent(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(_ltree_extract_isparent);
 PG_FUNCTION_INFO_V1(_ltree_extract_risparent);
 PG_FUNCTION_INFO_V1(_ltq_extract_regex);
 PG_FUNCTION_INFO_V1(_ltxtq_extract_exec);
-Datum		_ltree_extract_isparent(PG_FUNCTION_ARGS);
-Datum		_ltree_extract_risparent(PG_FUNCTION_ARGS);
-Datum		_ltq_extract_regex(PG_FUNCTION_ARGS);
-Datum		_ltxtq_extract_exec(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(_lca);
-Datum		_lca(PG_FUNCTION_ARGS);
 
 typedef Datum (*PGCALL2) (PG_FUNCTION_ARGS);
 

@@ -35,10 +35,6 @@
 #include "utils/rel.h"
 
 
-extern Datum bt_metap(PG_FUNCTION_ARGS);
-extern Datum bt_page_items(PG_FUNCTION_ARGS);
-extern Datum bt_page_stats(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(bt_metap);
 PG_FUNCTION_INFO_V1(bt_page_items);
 PG_FUNCTION_INFO_V1(bt_page_stats);

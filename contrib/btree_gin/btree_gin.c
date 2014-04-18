@@ -32,7 +32,6 @@ typedef struct QueryInfo
 
 #define  GIN_EXTRACT_VALUE(type)											\
 PG_FUNCTION_INFO_V1(gin_extract_value_##type);								\
-Datum		gin_extract_value_##type(PG_FUNCTION_ARGS);						\
 Datum																		\
 gin_extract_value_##type(PG_FUNCTION_ARGS)									\
 {																			\
@@ -59,7 +58,6 @@ gin_extract_value_##type(PG_FUNCTION_ARGS)									\
 
 #define GIN_EXTRACT_QUERY(type)												\
 PG_FUNCTION_INFO_V1(gin_extract_query_##type);								\
-Datum		gin_extract_query_##type(PG_FUNCTION_ARGS);						\
 Datum																		\
 gin_extract_query_##type(PG_FUNCTION_ARGS)									\
 {																			\
@@ -109,7 +107,6 @@ gin_extract_query_##type(PG_FUNCTION_ARGS)									\
  */
 #define GIN_COMPARE_PREFIX(type)											\
 PG_FUNCTION_INFO_V1(gin_compare_prefix_##type);								\
-Datum		gin_compare_prefix_##type(PG_FUNCTION_ARGS);					\
 Datum																		\
 gin_compare_prefix_##type(PG_FUNCTION_ARGS)									\
 {																			\
@@ -182,7 +179,6 @@ gin_compare_prefix_##type(PG_FUNCTION_ARGS)									\
 
 
 PG_FUNCTION_INFO_V1(gin_btree_consistent);
-Datum		gin_btree_consistent(PG_FUNCTION_ARGS);
 Datum
 gin_btree_consistent(PG_FUNCTION_ARGS)
 {
@@ -404,7 +400,6 @@ GIN_SUPPORT(varbit)
 #define NUMERIC_IS_LEFTMOST(x)	((x) == NULL)
 
 PG_FUNCTION_INFO_V1(gin_numeric_cmp);
-Datum		gin_numeric_cmp(PG_FUNCTION_ARGS);
 
 Datum
 gin_numeric_cmp(PG_FUNCTION_ARGS)

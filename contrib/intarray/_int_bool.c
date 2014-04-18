@@ -10,17 +10,9 @@
 
 PG_FUNCTION_INFO_V1(bqarr_in);
 PG_FUNCTION_INFO_V1(bqarr_out);
-Datum		bqarr_in(PG_FUNCTION_ARGS);
-Datum		bqarr_out(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(boolop);
-Datum		boolop(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(rboolop);
-Datum		rboolop(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(querytree);
-Datum		querytree(PG_FUNCTION_ARGS);
 
 
 /* parser's states */

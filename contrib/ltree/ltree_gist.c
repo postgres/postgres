@@ -13,10 +13,7 @@
 #define NEXTVAL(x) ( (lquery*)( (char*)(x) + INTALIGN( VARSIZE(x) ) ) )
 
 PG_FUNCTION_INFO_V1(ltree_gist_in);
-Datum		ltree_gist_in(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(ltree_gist_out);
-Datum		ltree_gist_out(PG_FUNCTION_ARGS);
 
 Datum
 ltree_gist_in(PG_FUNCTION_ARGS)
@@ -37,25 +34,12 @@ ltree_gist_out(PG_FUNCTION_ARGS)
 }
 
 PG_FUNCTION_INFO_V1(ltree_compress);
-Datum		ltree_compress(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(ltree_decompress);
-Datum		ltree_decompress(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(ltree_same);
-Datum		ltree_same(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(ltree_union);
-Datum		ltree_union(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(ltree_penalty);
-Datum		ltree_penalty(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(ltree_picksplit);
-Datum		ltree_picksplit(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(ltree_consistent);
-Datum		ltree_consistent(PG_FUNCTION_ARGS);
 
 #define ISEQ(a,b)	( (a)->numlevel == (b)->numlevel && ltree_compare(a,b)==0 )
 #define GETENTRY(vec,pos) ((ltree_gist *) DatumGetPointer((vec)->vector[(pos)].key))

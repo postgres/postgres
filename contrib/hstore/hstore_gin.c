@@ -22,7 +22,6 @@
 #define NULLFLAG	'N'
 
 PG_FUNCTION_INFO_V1(gin_extract_hstore);
-Datum		gin_extract_hstore(PG_FUNCTION_ARGS);
 
 /* Build an indexable text value */
 static text *
@@ -76,7 +75,6 @@ gin_extract_hstore(PG_FUNCTION_ARGS)
 }
 
 PG_FUNCTION_INFO_V1(gin_extract_hstore_query);
-Datum		gin_extract_hstore_query(PG_FUNCTION_ARGS);
 
 Datum
 gin_extract_hstore_query(PG_FUNCTION_ARGS)
@@ -148,7 +146,6 @@ gin_extract_hstore_query(PG_FUNCTION_ARGS)
 }
 
 PG_FUNCTION_INFO_V1(gin_consistent_hstore);
-Datum		gin_consistent_hstore(PG_FUNCTION_ARGS);
 
 Datum
 gin_consistent_hstore(PG_FUNCTION_ARGS)

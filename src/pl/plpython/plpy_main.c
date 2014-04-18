@@ -40,16 +40,6 @@
 #endif
 
 extern void _PG_init(void);
-extern Datum plpython_validator(PG_FUNCTION_ARGS);
-extern Datum plpython_call_handler(PG_FUNCTION_ARGS);
-extern Datum plpython_inline_handler(PG_FUNCTION_ARGS);
-
-#if PY_MAJOR_VERSION < 3
-/* Define aliases plpython2_call_handler etc */
-extern Datum plpython2_validator(PG_FUNCTION_ARGS);
-extern Datum plpython2_call_handler(PG_FUNCTION_ARGS);
-extern Datum plpython2_inline_handler(PG_FUNCTION_ARGS);
-#endif
 
 PG_MODULE_MAGIC;
 
@@ -58,6 +48,7 @@ PG_FUNCTION_INFO_V1(plpython_call_handler);
 PG_FUNCTION_INFO_V1(plpython_inline_handler);
 
 #if PY_MAJOR_VERSION < 3
+/* Define aliases plpython2_call_handler etc */
 PG_FUNCTION_INFO_V1(plpython2_validator);
 PG_FUNCTION_INFO_V1(plpython2_call_handler);
 PG_FUNCTION_INFO_V1(plpython2_inline_handler);

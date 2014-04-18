@@ -38,25 +38,6 @@ PG_FUNCTION_INFO_V1(ltree2text);
 PG_FUNCTION_INFO_V1(text2ltree);
 PG_FUNCTION_INFO_V1(ltreeparentsel);
 
-Datum		ltree_cmp(PG_FUNCTION_ARGS);
-Datum		ltree_lt(PG_FUNCTION_ARGS);
-Datum		ltree_le(PG_FUNCTION_ARGS);
-Datum		ltree_eq(PG_FUNCTION_ARGS);
-Datum		ltree_ne(PG_FUNCTION_ARGS);
-Datum		ltree_ge(PG_FUNCTION_ARGS);
-Datum		ltree_gt(PG_FUNCTION_ARGS);
-Datum		nlevel(PG_FUNCTION_ARGS);
-Datum		subltree(PG_FUNCTION_ARGS);
-Datum		subpath(PG_FUNCTION_ARGS);
-Datum		ltree_index(PG_FUNCTION_ARGS);
-Datum		ltree_addltree(PG_FUNCTION_ARGS);
-Datum		ltree_addtext(PG_FUNCTION_ARGS);
-Datum		ltree_textadd(PG_FUNCTION_ARGS);
-Datum		lca(PG_FUNCTION_ARGS);
-Datum		ltree2text(PG_FUNCTION_ARGS);
-Datum		text2ltree(PG_FUNCTION_ARGS);
-Datum		ltreeparentsel(PG_FUNCTION_ARGS);
-
 int
 ltree_compare(const ltree *a, const ltree *b)
 {

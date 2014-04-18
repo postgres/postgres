@@ -45,18 +45,6 @@
 
 PG_MODULE_MAGIC;
 
-
-/*
- * External declarations for exported functions
- */
-extern Datum levenshtein_with_costs(PG_FUNCTION_ARGS);
-extern Datum levenshtein(PG_FUNCTION_ARGS);
-extern Datum levenshtein_less_equal_with_costs(PG_FUNCTION_ARGS);
-extern Datum levenshtein_less_equal(PG_FUNCTION_ARGS);
-extern Datum metaphone(PG_FUNCTION_ARGS);
-extern Datum soundex(PG_FUNCTION_ARGS);
-extern Datum difference(PG_FUNCTION_ARGS);
-
 /*
  * Soundex
  */

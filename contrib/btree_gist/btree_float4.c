@@ -23,14 +23,6 @@ PG_FUNCTION_INFO_V1(gbt_float4_distance);
 PG_FUNCTION_INFO_V1(gbt_float4_penalty);
 PG_FUNCTION_INFO_V1(gbt_float4_same);
 
-Datum		gbt_float4_compress(PG_FUNCTION_ARGS);
-Datum		gbt_float4_union(PG_FUNCTION_ARGS);
-Datum		gbt_float4_picksplit(PG_FUNCTION_ARGS);
-Datum		gbt_float4_consistent(PG_FUNCTION_ARGS);
-Datum		gbt_float4_distance(PG_FUNCTION_ARGS);
-Datum		gbt_float4_penalty(PG_FUNCTION_ARGS);
-Datum		gbt_float4_same(PG_FUNCTION_ARGS);
-
 static bool
 gbt_float4gt(const void *a, const void *b)
 {
@@ -96,7 +88,6 @@ static const gbtree_ninfo tinfo =
 
 
 PG_FUNCTION_INFO_V1(float4_dist);
-Datum		float4_dist(PG_FUNCTION_ARGS);
 Datum
 float4_dist(PG_FUNCTION_ARGS)
 {

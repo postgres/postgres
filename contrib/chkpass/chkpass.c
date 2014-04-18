@@ -39,18 +39,6 @@ typedef struct chkpass
 	char		password[16];
 } chkpass;
 
-/*
- * Various forward declarations:
- */
-
-Datum		chkpass_in(PG_FUNCTION_ARGS);
-Datum		chkpass_out(PG_FUNCTION_ARGS);
-Datum		chkpass_rout(PG_FUNCTION_ARGS);
-
-/* Only equal or not equal make sense */
-Datum		chkpass_eq(PG_FUNCTION_ARGS);
-Datum		chkpass_ne(PG_FUNCTION_ARGS);
-
 
 /* This function checks that the password is a good one
  * It's just a placeholder for now */

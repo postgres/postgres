@@ -41,23 +41,6 @@
 /*
  * public functions
  */
-Datum		pgp_sym_encrypt_text(PG_FUNCTION_ARGS);
-Datum		pgp_sym_encrypt_bytea(PG_FUNCTION_ARGS);
-Datum		pgp_sym_decrypt_text(PG_FUNCTION_ARGS);
-Datum		pgp_sym_decrypt_bytea(PG_FUNCTION_ARGS);
-
-Datum		pgp_pub_encrypt_text(PG_FUNCTION_ARGS);
-Datum		pgp_pub_encrypt_bytea(PG_FUNCTION_ARGS);
-Datum		pgp_pub_decrypt_text(PG_FUNCTION_ARGS);
-Datum		pgp_pub_decrypt_bytea(PG_FUNCTION_ARGS);
-
-Datum		pgp_key_id_w(PG_FUNCTION_ARGS);
-
-Datum		pg_armor(PG_FUNCTION_ARGS);
-Datum		pg_dearmor(PG_FUNCTION_ARGS);
-
-/* function headers */
-
 PG_FUNCTION_INFO_V1(pgp_sym_encrypt_bytea);
 PG_FUNCTION_INFO_V1(pgp_sym_encrypt_text);
 PG_FUNCTION_INFO_V1(pgp_sym_decrypt_bytea);

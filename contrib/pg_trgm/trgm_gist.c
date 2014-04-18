@@ -28,34 +28,15 @@ typedef struct
 
 
 PG_FUNCTION_INFO_V1(gtrgm_in);
-Datum		gtrgm_in(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(gtrgm_out);
-Datum		gtrgm_out(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(gtrgm_compress);
-Datum		gtrgm_compress(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(gtrgm_decompress);
-Datum		gtrgm_decompress(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(gtrgm_consistent);
-Datum		gtrgm_consistent(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(gtrgm_distance);
-Datum		gtrgm_distance(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(gtrgm_union);
-Datum		gtrgm_union(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(gtrgm_same);
-Datum		gtrgm_same(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(gtrgm_penalty);
-Datum		gtrgm_penalty(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(gtrgm_picksplit);
-Datum		gtrgm_picksplit(PG_FUNCTION_ARGS);
 
 /* Number of one-bits in an unsigned byte */
 static const uint8 number_of_ones[256] = {

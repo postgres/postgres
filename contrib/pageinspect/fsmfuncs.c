@@ -25,8 +25,6 @@
 #include "storage/fsm_internals.h"
 #include "utils/builtins.h"
 
-Datum		fsm_page_contents(PG_FUNCTION_ARGS);
-
 /*
  * Dumps the contents of a FSM page.
  */

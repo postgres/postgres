@@ -194,7 +194,6 @@ extern Pairs *hstoreArrayToPairs(ArrayType *a, int *npairs);
 #if HSTORE_POLLUTE_NAMESPACE
 #define HSTORE_POLLUTE(newname_,oldname_) \
 	PG_FUNCTION_INFO_V1(oldname_);		  \
-	Datum oldname_(PG_FUNCTION_ARGS);	  \
 	Datum newname_(PG_FUNCTION_ARGS);	  \
 	Datum oldname_(PG_FUNCTION_ARGS) { return newname_(fcinfo); } \
 	extern int no_such_variable

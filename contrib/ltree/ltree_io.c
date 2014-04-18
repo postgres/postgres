@@ -12,16 +12,9 @@
 #include "crc32.h"
 
 PG_FUNCTION_INFO_V1(ltree_in);
-Datum		ltree_in(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(ltree_out);
-Datum		ltree_out(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(lquery_in);
-Datum		lquery_in(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(lquery_out);
-Datum		lquery_out(PG_FUNCTION_ARGS);
 
 
 #define UNCHAR ereport(ERROR, \

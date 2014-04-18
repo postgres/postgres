@@ -26,15 +26,6 @@ PG_FUNCTION_INFO_V1(gbt_intv_distance);
 PG_FUNCTION_INFO_V1(gbt_intv_penalty);
 PG_FUNCTION_INFO_V1(gbt_intv_same);
 
-Datum		gbt_intv_compress(PG_FUNCTION_ARGS);
-Datum		gbt_intv_decompress(PG_FUNCTION_ARGS);
-Datum		gbt_intv_union(PG_FUNCTION_ARGS);
-Datum		gbt_intv_picksplit(PG_FUNCTION_ARGS);
-Datum		gbt_intv_consistent(PG_FUNCTION_ARGS);
-Datum		gbt_intv_distance(PG_FUNCTION_ARGS);
-Datum		gbt_intv_penalty(PG_FUNCTION_ARGS);
-Datum		gbt_intv_same(PG_FUNCTION_ARGS);
-
 
 static bool
 gbt_intvgt(const void *a, const void *b)
@@ -129,7 +120,6 @@ abs_interval(Interval *a)
 }
 
 PG_FUNCTION_INFO_V1(interval_dist);
-Datum		interval_dist(PG_FUNCTION_ARGS);
 Datum
 interval_dist(PG_FUNCTION_ARGS)
 {

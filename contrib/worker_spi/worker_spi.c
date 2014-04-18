@@ -47,7 +47,6 @@ PG_FUNCTION_INFO_V1(worker_spi_launch);
 
 void		_PG_init(void);
 void		worker_spi_main(Datum);
-Datum		worker_spi_launch(PG_FUNCTION_ARGS);
 
 /* flags set by signal handlers */
 static volatile sig_atomic_t got_sighup = false;

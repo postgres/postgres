@@ -18,10 +18,6 @@ PG_MODULE_MAGIC;
 #define atooid(x)  ((Oid) strtoul((x), NULL, 10))
 
 
-/* forward declarations */
-Datum		lo_manage(PG_FUNCTION_ARGS);
-
-
 /*
  * This is the trigger that protects us from orphaned large objects
  */

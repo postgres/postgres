@@ -23,14 +23,6 @@ PG_FUNCTION_INFO_V1(gbt_oid_distance);
 PG_FUNCTION_INFO_V1(gbt_oid_penalty);
 PG_FUNCTION_INFO_V1(gbt_oid_same);
 
-Datum		gbt_oid_compress(PG_FUNCTION_ARGS);
-Datum		gbt_oid_union(PG_FUNCTION_ARGS);
-Datum		gbt_oid_picksplit(PG_FUNCTION_ARGS);
-Datum		gbt_oid_consistent(PG_FUNCTION_ARGS);
-Datum		gbt_oid_distance(PG_FUNCTION_ARGS);
-Datum		gbt_oid_penalty(PG_FUNCTION_ARGS);
-Datum		gbt_oid_same(PG_FUNCTION_ARGS);
-
 
 static bool
 gbt_oidgt(const void *a, const void *b)
@@ -103,7 +95,6 @@ static const gbtree_ninfo tinfo =
 
 
 PG_FUNCTION_INFO_V1(oid_dist);
-Datum		oid_dist(PG_FUNCTION_ARGS);
 Datum
 oid_dist(PG_FUNCTION_ARGS)
 {

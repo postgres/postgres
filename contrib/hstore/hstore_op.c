@@ -127,7 +127,6 @@ hstoreArrayToPairs(ArrayType *a, int *npairs)
 
 
 PG_FUNCTION_INFO_V1(hstore_fetchval);
-Datum		hstore_fetchval(PG_FUNCTION_ARGS);
 Datum
 hstore_fetchval(PG_FUNCTION_ARGS)
 {
@@ -149,7 +148,6 @@ hstore_fetchval(PG_FUNCTION_ARGS)
 
 
 PG_FUNCTION_INFO_V1(hstore_exists);
-Datum		hstore_exists(PG_FUNCTION_ARGS);
 Datum
 hstore_exists(PG_FUNCTION_ARGS)
 {
@@ -163,7 +161,6 @@ hstore_exists(PG_FUNCTION_ARGS)
 
 
 PG_FUNCTION_INFO_V1(hstore_exists_any);
-Datum		hstore_exists_any(PG_FUNCTION_ARGS);
 Datum
 hstore_exists_any(PG_FUNCTION_ARGS)
 {
@@ -198,7 +195,6 @@ hstore_exists_any(PG_FUNCTION_ARGS)
 
 
 PG_FUNCTION_INFO_V1(hstore_exists_all);
-Datum		hstore_exists_all(PG_FUNCTION_ARGS);
 Datum
 hstore_exists_all(PG_FUNCTION_ARGS)
 {
@@ -233,7 +229,6 @@ hstore_exists_all(PG_FUNCTION_ARGS)
 
 
 PG_FUNCTION_INFO_V1(hstore_defined);
-Datum		hstore_defined(PG_FUNCTION_ARGS);
 Datum
 hstore_defined(PG_FUNCTION_ARGS)
 {
@@ -249,7 +244,6 @@ hstore_defined(PG_FUNCTION_ARGS)
 
 
 PG_FUNCTION_INFO_V1(hstore_delete);
-Datum		hstore_delete(PG_FUNCTION_ARGS);
 Datum
 hstore_delete(PG_FUNCTION_ARGS)
 {
@@ -296,7 +290,6 @@ hstore_delete(PG_FUNCTION_ARGS)
 
 
 PG_FUNCTION_INFO_V1(hstore_delete_array);
-Datum		hstore_delete_array(PG_FUNCTION_ARGS);
 Datum
 hstore_delete_array(PG_FUNCTION_ARGS)
 {
@@ -376,7 +369,6 @@ hstore_delete_array(PG_FUNCTION_ARGS)
 
 
 PG_FUNCTION_INFO_V1(hstore_delete_hstore);
-Datum		hstore_delete_hstore(PG_FUNCTION_ARGS);
 Datum
 hstore_delete_hstore(PG_FUNCTION_ARGS)
 {
@@ -476,7 +468,6 @@ hstore_delete_hstore(PG_FUNCTION_ARGS)
 
 
 PG_FUNCTION_INFO_V1(hstore_concat);
-Datum		hstore_concat(PG_FUNCTION_ARGS);
 Datum
 hstore_concat(PG_FUNCTION_ARGS)
 {
@@ -575,7 +566,6 @@ hstore_concat(PG_FUNCTION_ARGS)
 
 
 PG_FUNCTION_INFO_V1(hstore_slice_to_array);
-Datum		hstore_slice_to_array(PG_FUNCTION_ARGS);
 Datum
 hstore_slice_to_array(PG_FUNCTION_ARGS)
 {
@@ -639,7 +629,6 @@ hstore_slice_to_array(PG_FUNCTION_ARGS)
 
 
 PG_FUNCTION_INFO_V1(hstore_slice_to_hstore);
-Datum		hstore_slice_to_hstore(PG_FUNCTION_ARGS);
 Datum
 hstore_slice_to_hstore(PG_FUNCTION_ARGS)
 {
@@ -702,7 +691,6 @@ hstore_slice_to_hstore(PG_FUNCTION_ARGS)
 
 
 PG_FUNCTION_INFO_V1(hstore_akeys);
-Datum		hstore_akeys(PG_FUNCTION_ARGS);
 Datum
 hstore_akeys(PG_FUNCTION_ARGS)
 {
@@ -738,7 +726,6 @@ hstore_akeys(PG_FUNCTION_ARGS)
 
 
 PG_FUNCTION_INFO_V1(hstore_avals);
-Datum		hstore_avals(PG_FUNCTION_ARGS);
 Datum
 hstore_avals(PG_FUNCTION_ARGS)
 {
@@ -835,7 +822,6 @@ hstore_to_array_internal(HStore *hs, int ndims)
 }
 
 PG_FUNCTION_INFO_V1(hstore_to_array);
-Datum		hstore_to_array(PG_FUNCTION_ARGS);
 Datum
 hstore_to_array(PG_FUNCTION_ARGS)
 {
@@ -846,7 +832,6 @@ hstore_to_array(PG_FUNCTION_ARGS)
 }
 
 PG_FUNCTION_INFO_V1(hstore_to_matrix);
-Datum		hstore_to_matrix(PG_FUNCTION_ARGS);
 Datum
 hstore_to_matrix(PG_FUNCTION_ARGS)
 {
@@ -895,7 +880,6 @@ setup_firstcall(FuncCallContext *funcctx, HStore *hs,
 
 
 PG_FUNCTION_INFO_V1(hstore_skeys);
-Datum		hstore_skeys(PG_FUNCTION_ARGS);
 Datum
 hstore_skeys(PG_FUNCTION_ARGS)
 {
@@ -930,7 +914,6 @@ hstore_skeys(PG_FUNCTION_ARGS)
 
 
 PG_FUNCTION_INFO_V1(hstore_svals);
-Datum		hstore_svals(PG_FUNCTION_ARGS);
 Datum
 hstore_svals(PG_FUNCTION_ARGS)
 {
@@ -979,7 +962,6 @@ hstore_svals(PG_FUNCTION_ARGS)
 
 
 PG_FUNCTION_INFO_V1(hstore_contains);
-Datum		hstore_contains(PG_FUNCTION_ARGS);
 Datum
 hstore_contains(PG_FUNCTION_ARGS)
 {
@@ -1026,7 +1008,6 @@ hstore_contains(PG_FUNCTION_ARGS)
 
 
 PG_FUNCTION_INFO_V1(hstore_contained);
-Datum		hstore_contained(PG_FUNCTION_ARGS);
 Datum
 hstore_contained(PG_FUNCTION_ARGS)
 {
@@ -1038,7 +1019,6 @@ hstore_contained(PG_FUNCTION_ARGS)
 
 
 PG_FUNCTION_INFO_V1(hstore_each);
-Datum		hstore_each(PG_FUNCTION_ARGS);
 Datum
 hstore_each(PG_FUNCTION_ARGS)
 {
@@ -1100,7 +1080,6 @@ hstore_each(PG_FUNCTION_ARGS)
  */
 
 PG_FUNCTION_INFO_V1(hstore_cmp);
-Datum		hstore_cmp(PG_FUNCTION_ARGS);
 Datum
 hstore_cmp(PG_FUNCTION_ARGS)
 {
@@ -1182,7 +1161,6 @@ hstore_cmp(PG_FUNCTION_ARGS)
 
 
 PG_FUNCTION_INFO_V1(hstore_eq);
-Datum		hstore_eq(PG_FUNCTION_ARGS);
 Datum
 hstore_eq(PG_FUNCTION_ARGS)
 {
@@ -1194,7 +1172,6 @@ hstore_eq(PG_FUNCTION_ARGS)
 }
 
 PG_FUNCTION_INFO_V1(hstore_ne);
-Datum		hstore_ne(PG_FUNCTION_ARGS);
 Datum
 hstore_ne(PG_FUNCTION_ARGS)
 {
@@ -1206,7 +1183,6 @@ hstore_ne(PG_FUNCTION_ARGS)
 }
 
 PG_FUNCTION_INFO_V1(hstore_gt);
-Datum		hstore_gt(PG_FUNCTION_ARGS);
 Datum
 hstore_gt(PG_FUNCTION_ARGS)
 {
@@ -1218,7 +1194,6 @@ hstore_gt(PG_FUNCTION_ARGS)
 }
 
 PG_FUNCTION_INFO_V1(hstore_ge);
-Datum		hstore_ge(PG_FUNCTION_ARGS);
 Datum
 hstore_ge(PG_FUNCTION_ARGS)
 {
@@ -1230,7 +1205,6 @@ hstore_ge(PG_FUNCTION_ARGS)
 }
 
 PG_FUNCTION_INFO_V1(hstore_lt);
-Datum		hstore_lt(PG_FUNCTION_ARGS);
 Datum
 hstore_lt(PG_FUNCTION_ARGS)
 {
@@ -1242,7 +1216,6 @@ hstore_lt(PG_FUNCTION_ARGS)
 }
 
 PG_FUNCTION_INFO_V1(hstore_le);
-Datum		hstore_le(PG_FUNCTION_ARGS);
 Datum
 hstore_le(PG_FUNCTION_ARGS)
 {
@@ -1255,7 +1228,6 @@ hstore_le(PG_FUNCTION_ARGS)
 
 
 PG_FUNCTION_INFO_V1(hstore_hash);
-Datum		hstore_hash(PG_FUNCTION_ARGS);
 Datum
 hstore_hash(PG_FUNCTION_ARGS)
 {

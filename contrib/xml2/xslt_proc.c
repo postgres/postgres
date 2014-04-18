@@ -32,10 +32,6 @@
 #endif   /* USE_LIBXSLT */
 
 
-/* externally accessible functions */
-
-Datum		xslt_process(PG_FUNCTION_ARGS);
-
 #ifdef USE_LIBXSLT
 
 /* declarations to come from xpath.c */

@@ -401,7 +401,6 @@ hstorePairs(Pairs *pairs, int32 pcount, int32 buflen)
 
 
 PG_FUNCTION_INFO_V1(hstore_in);
-Datum		hstore_in(PG_FUNCTION_ARGS);
 Datum
 hstore_in(PG_FUNCTION_ARGS)
 {
@@ -422,7 +421,6 @@ hstore_in(PG_FUNCTION_ARGS)
 
 
 PG_FUNCTION_INFO_V1(hstore_recv);
-Datum		hstore_recv(PG_FUNCTION_ARGS);
 Datum
 hstore_recv(PG_FUNCTION_ARGS)
 {
@@ -486,7 +484,6 @@ hstore_recv(PG_FUNCTION_ARGS)
 
 
 PG_FUNCTION_INFO_V1(hstore_from_text);
-Datum		hstore_from_text(PG_FUNCTION_ARGS);
 Datum
 hstore_from_text(PG_FUNCTION_ARGS)
 {
@@ -523,7 +520,6 @@ hstore_from_text(PG_FUNCTION_ARGS)
 
 
 PG_FUNCTION_INFO_V1(hstore_from_arrays);
-Datum		hstore_from_arrays(PG_FUNCTION_ARGS);
 Datum
 hstore_from_arrays(PG_FUNCTION_ARGS)
 {
@@ -641,7 +637,6 @@ hstore_from_arrays(PG_FUNCTION_ARGS)
 
 
 PG_FUNCTION_INFO_V1(hstore_from_array);
-Datum		hstore_from_array(PG_FUNCTION_ARGS);
 Datum
 hstore_from_array(PG_FUNCTION_ARGS)
 {
@@ -755,7 +750,6 @@ typedef struct RecordIOData
 } RecordIOData;
 
 PG_FUNCTION_INFO_V1(hstore_from_record);
-Datum		hstore_from_record(PG_FUNCTION_ARGS);
 Datum
 hstore_from_record(PG_FUNCTION_ARGS)
 {
@@ -909,7 +903,6 @@ hstore_from_record(PG_FUNCTION_ARGS)
 
 
 PG_FUNCTION_INFO_V1(hstore_populate_record);
-Datum		hstore_populate_record(PG_FUNCTION_ARGS);
 Datum
 hstore_populate_record(PG_FUNCTION_ARGS)
 {
@@ -1122,7 +1115,6 @@ cpw(char *dst, char *src, int len)
 }
 
 PG_FUNCTION_INFO_V1(hstore_out);
-Datum		hstore_out(PG_FUNCTION_ARGS);
 Datum
 hstore_out(PG_FUNCTION_ARGS)
 {
@@ -1194,7 +1186,6 @@ hstore_out(PG_FUNCTION_ARGS)
 
 
 PG_FUNCTION_INFO_V1(hstore_send);
-Datum		hstore_send(PG_FUNCTION_ARGS);
 Datum
 hstore_send(PG_FUNCTION_ARGS)
 {
@@ -1241,7 +1232,6 @@ hstore_send(PG_FUNCTION_ARGS)
  * (think zip codes or phone numbers starting with 0).
  */
 PG_FUNCTION_INFO_V1(hstore_to_json_loose);
-Datum		hstore_to_json_loose(PG_FUNCTION_ARGS);
 Datum
 hstore_to_json_loose(PG_FUNCTION_ARGS)
 {
@@ -1333,7 +1323,6 @@ hstore_to_json_loose(PG_FUNCTION_ARGS)
 }
 
 PG_FUNCTION_INFO_V1(hstore_to_json);
-Datum		hstore_to_json(PG_FUNCTION_ARGS);
 Datum
 hstore_to_json(PG_FUNCTION_ARGS)
 {
@@ -1377,7 +1366,6 @@ hstore_to_json(PG_FUNCTION_ARGS)
 }
 
 PG_FUNCTION_INFO_V1(hstore_to_jsonb);
-Datum		hstore_to_jsonb(PG_FUNCTION_ARGS);
 Datum
 hstore_to_jsonb(PG_FUNCTION_ARGS)
 {
@@ -1425,7 +1413,6 @@ hstore_to_jsonb(PG_FUNCTION_ARGS)
 }
 
 PG_FUNCTION_INFO_V1(hstore_to_jsonb_loose);
-Datum		hstore_to_jsonb_loose(PG_FUNCTION_ARGS);
 Datum
 hstore_to_jsonb_loose(PG_FUNCTION_ARGS)
 {

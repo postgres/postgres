@@ -357,7 +357,6 @@ hstoreUpgrade(Datum orig)
 
 
 PG_FUNCTION_INFO_V1(hstore_version_diag);
-Datum		hstore_version_diag(PG_FUNCTION_ARGS);
 Datum
 hstore_version_diag(PG_FUNCTION_ARGS)
 {

@@ -25,19 +25,6 @@
 PG_MODULE_MAGIC;
 #endif
 
-Datum		set_next_pg_type_oid(PG_FUNCTION_ARGS);
-Datum		set_next_array_pg_type_oid(PG_FUNCTION_ARGS);
-Datum		set_next_toast_pg_type_oid(PG_FUNCTION_ARGS);
-
-Datum		set_next_heap_pg_class_oid(PG_FUNCTION_ARGS);
-Datum		set_next_index_pg_class_oid(PG_FUNCTION_ARGS);
-Datum		set_next_toast_pg_class_oid(PG_FUNCTION_ARGS);
-
-Datum		set_next_pg_enum_oid(PG_FUNCTION_ARGS);
-Datum		set_next_pg_authid_oid(PG_FUNCTION_ARGS);
-
-Datum		create_empty_extension(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(set_next_pg_type_oid);
 PG_FUNCTION_INFO_V1(set_next_array_pg_type_oid);
 PG_FUNCTION_INFO_V1(set_next_toast_pg_type_oid);

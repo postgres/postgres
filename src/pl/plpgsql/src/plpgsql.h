@@ -950,9 +950,6 @@ extern void plpgsql_HashTableInit(void);
  * ----------
  */
 extern void _PG_init(void);
-extern Datum plpgsql_call_handler(PG_FUNCTION_ARGS);
-extern Datum plpgsql_inline_handler(PG_FUNCTION_ARGS);
-extern Datum plpgsql_validator(PG_FUNCTION_ARGS);
 
 /* ----------
  * Functions in pl_exec.c

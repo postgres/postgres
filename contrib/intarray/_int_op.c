@@ -17,14 +17,6 @@ PG_FUNCTION_INFO_V1(_int_overlap);
 PG_FUNCTION_INFO_V1(_int_union);
 PG_FUNCTION_INFO_V1(_int_inter);
 
-Datum		_int_different(PG_FUNCTION_ARGS);
-Datum		_int_same(PG_FUNCTION_ARGS);
-Datum		_int_contains(PG_FUNCTION_ARGS);
-Datum		_int_contained(PG_FUNCTION_ARGS);
-Datum		_int_overlap(PG_FUNCTION_ARGS);
-Datum		_int_union(PG_FUNCTION_ARGS);
-Datum		_int_inter(PG_FUNCTION_ARGS);
-
 Datum
 _int_contained(PG_FUNCTION_ARGS)
 {
@@ -188,19 +180,6 @@ PG_FUNCTION_INFO_V1(intarray_push_array);
 PG_FUNCTION_INFO_V1(intarray_del_elem);
 PG_FUNCTION_INFO_V1(intset_union_elem);
 PG_FUNCTION_INFO_V1(intset_subtract);
-Datum		intset(PG_FUNCTION_ARGS);
-Datum		icount(PG_FUNCTION_ARGS);
-Datum		sort(PG_FUNCTION_ARGS);
-Datum		sort_asc(PG_FUNCTION_ARGS);
-Datum		sort_desc(PG_FUNCTION_ARGS);
-Datum		uniq(PG_FUNCTION_ARGS);
-Datum		idx(PG_FUNCTION_ARGS);
-Datum		subarray(PG_FUNCTION_ARGS);
-Datum		intarray_push_elem(PG_FUNCTION_ARGS);
-Datum		intarray_push_array(PG_FUNCTION_ARGS);
-Datum		intarray_del_elem(PG_FUNCTION_ARGS);
-Datum		intset_union_elem(PG_FUNCTION_ARGS);
-Datum		intset_subtract(PG_FUNCTION_ARGS);
 
 Datum
 intset(PG_FUNCTION_ARGS)

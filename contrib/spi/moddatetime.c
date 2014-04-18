@@ -23,8 +23,6 @@ OH, me, I'm Terry Mackintosh <terry@terrym.com>
 
 PG_MODULE_MAGIC;
 
-extern Datum moddatetime(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(moddatetime);
 
 Datum

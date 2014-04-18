@@ -69,10 +69,7 @@ typedef struct
 #define WISH_F(a,b,c) (double)( -(double)(((a)-(b))*((a)-(b))*((a)-(b)))*(c) )
 
 PG_FUNCTION_INFO_V1(ghstore_in);
-Datum		ghstore_in(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(ghstore_out);
-Datum		ghstore_out(PG_FUNCTION_ARGS);
 
 
 Datum
@@ -96,14 +93,6 @@ PG_FUNCTION_INFO_V1(ghstore_penalty);
 PG_FUNCTION_INFO_V1(ghstore_picksplit);
 PG_FUNCTION_INFO_V1(ghstore_union);
 PG_FUNCTION_INFO_V1(ghstore_same);
-
-Datum		ghstore_consistent(PG_FUNCTION_ARGS);
-Datum		ghstore_compress(PG_FUNCTION_ARGS);
-Datum		ghstore_decompress(PG_FUNCTION_ARGS);
-Datum		ghstore_penalty(PG_FUNCTION_ARGS);
-Datum		ghstore_picksplit(PG_FUNCTION_ARGS);
-Datum		ghstore_union(PG_FUNCTION_ARGS);
-Datum		ghstore_same(PG_FUNCTION_ARGS);
 
 Datum
 ghstore_compress(PG_FUNCTION_ARGS)

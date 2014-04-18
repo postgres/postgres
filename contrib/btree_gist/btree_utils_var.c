@@ -29,7 +29,6 @@ typedef struct
 
 
 PG_FUNCTION_INFO_V1(gbt_var_decompress);
-Datum		gbt_var_decompress(PG_FUNCTION_ARGS);
 
 
 Datum

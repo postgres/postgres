@@ -19,14 +19,6 @@ PG_FUNCTION_INFO_V1(gbt_bit_consistent);
 PG_FUNCTION_INFO_V1(gbt_bit_penalty);
 PG_FUNCTION_INFO_V1(gbt_bit_same);
 
-Datum		gbt_bit_compress(PG_FUNCTION_ARGS);
-Datum		gbt_bit_union(PG_FUNCTION_ARGS);
-Datum		gbt_bit_picksplit(PG_FUNCTION_ARGS);
-Datum		gbt_bit_consistent(PG_FUNCTION_ARGS);
-Datum		gbt_bit_penalty(PG_FUNCTION_ARGS);
-Datum		gbt_bit_same(PG_FUNCTION_ARGS);
-
-
 
 /* define for comparison */
 

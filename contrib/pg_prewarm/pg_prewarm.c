@@ -28,8 +28,6 @@
 
 PG_MODULE_MAGIC;
 
-extern Datum pg_prewarm(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(pg_prewarm);
 
 typedef enum

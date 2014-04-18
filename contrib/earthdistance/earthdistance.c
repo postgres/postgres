@@ -99,8 +99,6 @@ geo_distance_internal(Point *pt1, Point *pt2)
 
 #ifdef USE_FLOAT8_BYVAL
 
-Datum		geo_distance(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(geo_distance);
 
 Datum

@@ -27,16 +27,6 @@ PG_FUNCTION_INFO_V1(gbt_timetz_consistent);
 PG_FUNCTION_INFO_V1(gbt_time_penalty);
 PG_FUNCTION_INFO_V1(gbt_time_same);
 
-Datum		gbt_time_compress(PG_FUNCTION_ARGS);
-Datum		gbt_timetz_compress(PG_FUNCTION_ARGS);
-Datum		gbt_time_union(PG_FUNCTION_ARGS);
-Datum		gbt_time_picksplit(PG_FUNCTION_ARGS);
-Datum		gbt_time_consistent(PG_FUNCTION_ARGS);
-Datum		gbt_time_distance(PG_FUNCTION_ARGS);
-Datum		gbt_timetz_consistent(PG_FUNCTION_ARGS);
-Datum		gbt_time_penalty(PG_FUNCTION_ARGS);
-Datum		gbt_time_same(PG_FUNCTION_ARGS);
-
 
 #ifdef USE_FLOAT8_BYVAL
 #define TimeADTGetDatumFast(X) TimeADTGetDatum(X)
@@ -145,7 +135,6 @@ static const gbtree_ninfo tinfo =
 
 
 PG_FUNCTION_INFO_V1(time_dist);
-Datum		time_dist(PG_FUNCTION_ARGS);
 Datum
 time_dist(PG_FUNCTION_ARGS)
 {

@@ -23,13 +23,6 @@ PG_FUNCTION_INFO_V1(gbt_numeric_consistent);
 PG_FUNCTION_INFO_V1(gbt_numeric_penalty);
 PG_FUNCTION_INFO_V1(gbt_numeric_same);
 
-Datum		gbt_numeric_compress(PG_FUNCTION_ARGS);
-Datum		gbt_numeric_union(PG_FUNCTION_ARGS);
-Datum		gbt_numeric_picksplit(PG_FUNCTION_ARGS);
-Datum		gbt_numeric_consistent(PG_FUNCTION_ARGS);
-Datum		gbt_numeric_penalty(PG_FUNCTION_ARGS);
-Datum		gbt_numeric_same(PG_FUNCTION_ARGS);
-
 
 /* define for comparison */
 

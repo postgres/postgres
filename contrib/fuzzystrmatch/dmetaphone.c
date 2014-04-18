@@ -114,9 +114,6 @@ The remaining code is authored by Andrew Dunstan <amdunstan@ncshp.org> and
 #include <stdarg.h>
 #include <assert.h>
 
-extern Datum dmetaphone(PG_FUNCTION_ARGS);
-extern Datum dmetaphone_alt(PG_FUNCTION_ARGS);
-
 /* prototype for the main function we got from the perl module */
 static void DoubleMetaphone(char *, char **);
 

@@ -21,14 +21,6 @@ PG_FUNCTION_INFO_V1(g_int_picksplit);
 PG_FUNCTION_INFO_V1(g_int_union);
 PG_FUNCTION_INFO_V1(g_int_same);
 
-Datum		g_int_consistent(PG_FUNCTION_ARGS);
-Datum		g_int_compress(PG_FUNCTION_ARGS);
-Datum		g_int_decompress(PG_FUNCTION_ARGS);
-Datum		g_int_penalty(PG_FUNCTION_ARGS);
-Datum		g_int_picksplit(PG_FUNCTION_ARGS);
-Datum		g_int_union(PG_FUNCTION_ARGS);
-Datum		g_int_same(PG_FUNCTION_ARGS);
-
 
 /*
 ** The GiST Consistent method for _intments

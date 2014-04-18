@@ -348,6 +348,7 @@ typedef const Pg_finfo_record *(*PGFInfoFunction) (void);
  *	doesn't hurt to add PGDLLIMPORT in case they don't.
  */
 #define PG_FUNCTION_INFO_V1(funcname) \
+Datum funcname(PG_FUNCTION_ARGS); \
 extern PGDLLEXPORT const Pg_finfo_record * CppConcat(pg_finfo_,funcname)(void); \
 const Pg_finfo_record * \
 CppConcat(pg_finfo_,funcname) (void) \

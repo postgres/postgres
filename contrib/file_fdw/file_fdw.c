@@ -102,9 +102,6 @@ typedef struct FileFdwExecutionState
 /*
  * SQL functions
  */
-extern Datum file_fdw_handler(PG_FUNCTION_ARGS);
-extern Datum file_fdw_validator(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(file_fdw_handler);
 PG_FUNCTION_INFO_V1(file_fdw_validator);
 

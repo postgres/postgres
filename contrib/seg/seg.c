@@ -52,13 +52,6 @@ PG_FUNCTION_INFO_V1(seg_lower);
 PG_FUNCTION_INFO_V1(seg_upper);
 PG_FUNCTION_INFO_V1(seg_center);
 
-Datum		seg_in(PG_FUNCTION_ARGS);
-Datum		seg_out(PG_FUNCTION_ARGS);
-Datum		seg_size(PG_FUNCTION_ARGS);
-Datum		seg_lower(PG_FUNCTION_ARGS);
-Datum		seg_upper(PG_FUNCTION_ARGS);
-Datum		seg_center(PG_FUNCTION_ARGS);
-
 /*
 ** GiST support methods
 */

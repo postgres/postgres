@@ -25,13 +25,6 @@ PG_FUNCTION_INFO_V1(gbt_inet_consistent);
 PG_FUNCTION_INFO_V1(gbt_inet_penalty);
 PG_FUNCTION_INFO_V1(gbt_inet_same);
 
-Datum		gbt_inet_compress(PG_FUNCTION_ARGS);
-Datum		gbt_inet_union(PG_FUNCTION_ARGS);
-Datum		gbt_inet_picksplit(PG_FUNCTION_ARGS);
-Datum		gbt_inet_consistent(PG_FUNCTION_ARGS);
-Datum		gbt_inet_penalty(PG_FUNCTION_ARGS);
-Datum		gbt_inet_same(PG_FUNCTION_ARGS);
-
 
 static bool
 gbt_inetgt(const void *a, const void *b)

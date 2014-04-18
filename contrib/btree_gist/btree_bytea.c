@@ -18,13 +18,6 @@ PG_FUNCTION_INFO_V1(gbt_bytea_consistent);
 PG_FUNCTION_INFO_V1(gbt_bytea_penalty);
 PG_FUNCTION_INFO_V1(gbt_bytea_same);
 
-Datum		gbt_bytea_compress(PG_FUNCTION_ARGS);
-Datum		gbt_bytea_union(PG_FUNCTION_ARGS);
-Datum		gbt_bytea_picksplit(PG_FUNCTION_ARGS);
-Datum		gbt_bytea_consistent(PG_FUNCTION_ARGS);
-Datum		gbt_bytea_penalty(PG_FUNCTION_ARGS);
-Datum		gbt_bytea_same(PG_FUNCTION_ARGS);
-
 
 /* define for comparison */
 

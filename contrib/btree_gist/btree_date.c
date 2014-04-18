@@ -24,14 +24,6 @@ PG_FUNCTION_INFO_V1(gbt_date_distance);
 PG_FUNCTION_INFO_V1(gbt_date_penalty);
 PG_FUNCTION_INFO_V1(gbt_date_same);
 
-Datum		gbt_date_compress(PG_FUNCTION_ARGS);
-Datum		gbt_date_union(PG_FUNCTION_ARGS);
-Datum		gbt_date_picksplit(PG_FUNCTION_ARGS);
-Datum		gbt_date_consistent(PG_FUNCTION_ARGS);
-Datum		gbt_date_distance(PG_FUNCTION_ARGS);
-Datum		gbt_date_penalty(PG_FUNCTION_ARGS);
-Datum		gbt_date_same(PG_FUNCTION_ARGS);
-
 static bool
 gbt_dategt(const void *a, const void *b)
 {
@@ -115,7 +107,6 @@ static const gbtree_ninfo tinfo =
 
 
 PG_FUNCTION_INFO_V1(date_dist);
-Datum		date_dist(PG_FUNCTION_ARGS);
 Datum
 date_dist(PG_FUNCTION_ARGS)
 {

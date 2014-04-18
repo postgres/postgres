@@ -30,8 +30,6 @@
 #include "utils/builtins.h"
 #include "miscadmin.h"
 
-Datum		heap_page_items(PG_FUNCTION_ARGS);
-
 
 /*
  * bits_to_text
