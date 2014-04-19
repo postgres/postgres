@@ -42,7 +42,7 @@
       </indexterm>
       <listitem>
        <para>
-        The shell command to execute to retrieve an archived segment of
+        The local shell command to execute to retrieve an archived segment of
         the WAL file series. This parameter is required for archive recovery,
         but optional for streaming replication.
         Any <literal>%f</> in the string is

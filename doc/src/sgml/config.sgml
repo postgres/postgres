@@ -2279,7 +2279,7 @@ include 'filename'
       </indexterm>
       <listitem>
        <para>
-        The shell command to execute to archive a completed WAL file
+        The local shell command to execute to archive a completed WAL file
         segment.  Any <literal>%p</> in the string is
         replaced by the path name of the file to archive, and any
         <literal>%f</> is replaced by only the file name.
