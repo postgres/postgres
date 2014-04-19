@@ -187,6 +187,12 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
     wrapper program around this command, provided for convenience.
    </para>
 
+   <para>
+    Database-level configuration parameters (set via <xref
+    linkend="sql-alterdatabase">) are not copied from the template
+    database.
+   </para>
+
   <para>
    Although it is possible to copy a database other than <literal>template1</>
    by specifying its name as the template, this is not (yet) intended as
