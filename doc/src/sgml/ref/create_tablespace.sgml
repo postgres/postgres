@@ -50,6 +50,14 @@ CREATE TABLESPACE <replaceable class="parameter">tablespace_name</replaceable>
    <command>CREATE INDEX</> or <command>ADD CONSTRAINT</> to have the data
    files for these objects stored within the specified tablespace.
   </para>
+
+  <warning>
+   <para>
+    A tablespace cannot be used independently of the cluster in which it
+    is defined;  see <xref linkend="manage-ag-tablespaces"/>.
+   </para>
+  </warning>
+
  </refsect1>
 
  <refsect1>

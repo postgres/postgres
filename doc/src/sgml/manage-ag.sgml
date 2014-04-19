@@ -379,17 +379,34 @@ dropdb <replaceable class="parameter">dbname</replaceable>
    expensive, slower disk system.
   </para>
 
+  <warning>
+   <para>
+     Even though located outside the main PostgreSQL data directory,
+     tablespaces are an integral part of the database cluster and
+     <emphasis>cannot</emphasis> be treated as an autonomous collection
+     of data files. They are dependent on metadata contained in the main
+     data directory, and therefore cannot be attached to a different
+     database cluster or backed up individually.  Similarly, if you lose
+     a tablespace (file deletion, disk failure, etc), the database cluster
+     might become unreadable or unable to start.  Placing a tablespace
+     on a temporary file system like a ramdisk risks the reliability of
+     the entire cluster.
+   </para>
+  </warning>
+
   <para>
    To define a tablespace, use the <xref
    linkend="sql-createtablespace">
    command, for example:<indexterm><primary>CREATE TABLESPACE</></>:
 <programlisting>
-CREATE TABLESPACE fastspace LOCATION '/mnt/sda1/postgresql/data';
+CREATE TABLESPACE fastspace LOCATION '/ssd1/postgresql/data';
 </programlisting>
    The location must be an existing, empty directory that is owned by
    the <productname>PostgreSQL</> operating system user.  All objects subsequently
    created within the tablespace will be stored in files underneath this
-   directory.
+   directory.  The location must not be on removable or transient storage,
+   as the cluster might fail to function if the tablespace is missing
+   or lost.
   </para>
 
   <note>
