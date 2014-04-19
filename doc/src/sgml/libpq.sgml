@@ -131,15 +131,15 @@ PGconn *PQconnectdbParams(const char * const *keywords,
       <para>
        The passed arrays can be empty to use all default parameters, or can
        contain one or more parameter settings. They should be matched in length.
-       Processing will stop with the last non-<symbol>NULL</symbol> element
-       of the <literal>keywords</literal> array.
+       Processing will stop at the first <symbol>NULL</symbol> element
+       in the <literal>keywords</literal> array.
       </para>
 
       <para>
-       If  any  parameter is unspecified, then the corresponding
-       environment variable (see <xref linkend="libpq-envars">)
-       is checked. If the  environment  variable is not set either,
-       then the indicated built-in defaults are used.
+       If  any  parameter is NULL or an emptry string, the corresponding
+       environment variable (see <xref linkend="libpq-envars">) is checked.
+       If the  environment  variable is not set either, then the indicated
+       built-in defaults are used.
       </para>
 
       <para>
