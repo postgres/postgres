@@ -130,7 +130,7 @@ typedef struct GinMetaPageData
 #define GinPageRightMost(page) ( GinPageGetOpaque(page)->rightlink == InvalidBlockNumber)
 
 /*
- * We use our own ItemPointerGet(BlockNumber|GetOffsetNumber)
+ * We use our own ItemPointerGet(BlockNumber|OffsetNumber)
  * to avoid Asserts, since sometimes the ip_posid isn't "valid"
  */
 #define GinItemPointerGetBlockNumber(pointer) \
