@@ -181,7 +181,7 @@ algorithms.
   GinSetPostingTree macro.
 
 * If IndexTupleHasNulls(itup) is true, the null category byte can be
-  accessed/set with GinGetNullCategory(itup) / GinSetNullCategory(itup,c)
+  accessed/set with GinGetNullCategory(itup,gs) / GinSetNullCategory(itup,gs,c)
 
 * The posting list is not present and must not be accessed.
 
