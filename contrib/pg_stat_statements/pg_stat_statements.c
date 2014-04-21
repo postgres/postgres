@@ -614,6 +614,9 @@ pgss_post_parse_analyze(ParseState *pstate, Query *query)
 {
 	pgssJumbleState jstate;
 
+	if (prev_post_parse_analyze_hook)
+		prev_post_parse_analyze_hook(pstate, query);
+
 	/* Assert we didn't do this already */
 	Assert(query->queryId == 0);
 
