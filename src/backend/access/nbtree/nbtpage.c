@@ -996,7 +996,7 @@ _bt_lock_branch_parent(Relation rel, BlockNumber child, BTStack stack,
 
 	/* Locate the parent's downlink (updating the stack entry if needed) */
 	ItemPointerSet(&(stack->bts_btentry.t_tid), child, P_HIKEY);
-	pbuf = _bt_getstackbuf(rel, stack, BT_READ);
+	pbuf = _bt_getstackbuf(rel, stack, BT_WRITE);
 	if (pbuf == InvalidBuffer)
 		elog(ERROR, "failed to re-find parent key in index \"%s\" for deletion target page %u",
 			 RelationGetRelationName(rel), child);
