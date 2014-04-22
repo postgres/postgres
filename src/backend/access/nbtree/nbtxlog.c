@@ -27,13 +27,6 @@
  * had been its upper part (pd_upper to pd_special).  We assume that the
  * tuples had been added to the page in item-number order, and therefore
  * the one with highest item number appears first (lowest on the page).
- *
- * NOTE: the way this routine is coded, the rebuilt page will have the items
- * in correct itemno sequence, but physically the opposite order from the
- * original, because we insert them in the opposite of itemno order.  This
- * does not matter in any current btree code, but it's something to keep an
- * eye on.	Is it worth changing just on general principles?  See also the
- * notes in btree_xlog_split().
  */
 static void
 _bt_restore_page(Page page, char *from, int len)
@@ -41,14 +34,35 @@ _bt_restore_page(Page page, char *from, int len)
 	IndexTupleData itupdata;
 	Size		itemsz;
 	char	   *end = from + len;
+	Item		items[MaxIndexTuplesPerPage];
+	uint16		itemsizes[MaxIndexTuplesPerPage];
+	int			i;
+	int			nitems;
 
-	for (; from < end;)
+	/*
+	 * To get the items back in the original order, we add them to the page
+	 * in reverse.  To figure out where one tuple ends and another begins,
+	 * we have to scan them in forward order first.
+	 */
+	i = 0;
+	while (from < end)
 	{
 		/* Need to copy tuple header due to alignment considerations */
 		memcpy(&itupdata, from, sizeof(IndexTupleData));
 		itemsz = IndexTupleDSize(itupdata);
 		itemsz = MAXALIGN(itemsz);
-		if (PageAddItem(page, (Item) from, itemsz, FirstOffsetNumber,
+
+		items[i] = (Item) from;
+		itemsizes[i] = itemsz;
+		i++;
+
+		from += itemsz;
+	}
+	nitems = i;
+
+	for (i = nitems - 1; i >= 0; i--)
+	{
+		if (PageAddItem(page, items[i], itemsizes[i], nitems - i,
 						false, false) == InvalidOffsetNumber)
 			elog(PANIC, "_bt_restore_page: cannot add item to page");
 		from += itemsz;
@@ -332,10 +346,13 @@ btree_xlog_split(bool onleft, bool isroot,
 		if (BufferIsValid(lbuf))
 		{
 			/*
-			 * Note that this code ensures that the items remaining on the
-			 * left page are in the correct item number order, but it does not
-			 * reproduce the physical order they would have had.  Is this
-			 * worth changing?	See also _bt_restore_page().
+			 * To retain the same physical order of the tuples that they had,
+			 * we initialize a temporary empty page for the left page and add
+			 * all the items to that in item number order.  This mirrors how
+			 * _bt_split() works.  It's not strictly required to retain the
+			 * same physical order, as long as the items are in the correct
+			 * item number order, but it helps debugging.  See also
+			 * _bt_restore_page(), which does the same for the right page.
 			 */
 			Page		lpage = (Page) BufferGetPage(lbuf);
 			BTPageOpaque lopaque = (BTPageOpaque) PageGetSpecialPointer(lpage);
@@ -343,45 +360,52 @@ btree_xlog_split(bool onleft, bool isroot,
 			if (lsn > PageGetLSN(lpage))
 			{
 				OffsetNumber off;
-				OffsetNumber maxoff = PageGetMaxOffsetNumber(lpage);
-				OffsetNumber deletable[MaxOffsetNumber];
-				int			ndeletable = 0;
+				Page		newlpage;
+				OffsetNumber leftoff;
 
-				/*
-				 * Remove the items from the left page that were copied to the
-				 * right page.	Also remove the old high key, if any. (We must
-				 * remove everything before trying to insert any items, else
-				 * we risk not having enough space.)
-				 */
-				if (!P_RIGHTMOST(lopaque))
-				{
-					deletable[ndeletable++] = P_HIKEY;
-
-					/*
-					 * newitemoff is given to us relative to the original
-					 * page's item numbering, so adjust it for this deletion.
-					 */
-					newitemoff--;
-				}
-				for (off = xlrec->firstright; off <= maxoff; off++)
-					deletable[ndeletable++] = off;
-				if (ndeletable > 0)
-					PageIndexMultiDelete(lpage, deletable, ndeletable);
-
-				/*
-				 * Add the new item if it was inserted on left page.
-				 */
-				if (onleft)
-				{
-					if (PageAddItem(lpage, newitem, newitemsz, newitemoff,
-									false, false) == InvalidOffsetNumber)
-						elog(PANIC, "failed to add new item to left page after split");
-				}
+				newlpage = PageGetTempPageCopySpecial(lpage);
 
 				/* Set high key */
-				if (PageAddItem(lpage, left_hikey, left_hikeysz,
+				leftoff = P_HIKEY;
+				if (PageAddItem(newlpage, left_hikey, left_hikeysz,
 								P_HIKEY, false, false) == InvalidOffsetNumber)
 					elog(PANIC, "failed to add high key to left page after split");
+				leftoff = OffsetNumberNext(leftoff);
+
+				for (off = P_FIRSTDATAKEY(lopaque); off < xlrec->firstright; off++)
+				{
+					ItemId		itemid;
+					Size		itemsz;
+					Item		item;
+
+					/* add the new item if it was inserted on left page */
+					if (onleft && off == newitemoff)
+					{
+						if (PageAddItem(newlpage, newitem, newitemsz, leftoff,
+										false, false) == InvalidOffsetNumber)
+							elog(ERROR, "failed to add new item to left page after split");
+						leftoff = OffsetNumberNext(leftoff);
+					}
+
+					itemid = PageGetItemId(lpage, off);
+					itemsz = ItemIdGetLength(itemid);
+					item = PageGetItem(lpage, itemid);
+					if (PageAddItem(newlpage, item, itemsz, leftoff,
+									false, false) == InvalidOffsetNumber)
+						elog(ERROR, "failed to add old item to left page after split");
+					leftoff = OffsetNumberNext(leftoff);
+				}
+
+				/* cope with possibility that newitem goes at the end */
+				if (onleft && off == newitemoff)
+				{
+					if (PageAddItem(newlpage, newitem, newitemsz, leftoff,
+									false, false) == InvalidOffsetNumber)
+						elog(ERROR, "failed to add new item to left page after split");
+					leftoff = OffsetNumberNext(leftoff);
+				}
+
+				PageRestoreTempPage(newlpage, lpage);
 
 				/* Fix opaque fields */
 				lopaque->btpo_flags = BTP_INCOMPLETE_SPLIT;
