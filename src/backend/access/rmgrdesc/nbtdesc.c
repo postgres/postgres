@@ -131,7 +131,7 @@ btree_desc(StringInfo buf, uint8 xl_info, char *rec)
 				appendStringInfoString(buf, "mark_page_halfdead: ");
 				out_target(buf, &(xlrec->target));
 				appendStringInfo(buf, "; downlink %u; leaf %u; left %u; right %u",
-								 xlrec->leafblk, xlrec->leftblk, xlrec->rightblk, xlrec->downlink);
+								 xlrec->downlink, xlrec->leafblk, xlrec->leftblk, xlrec->rightblk);
 				break;
 			}
 		case XLOG_BTREE_UNLINK_PAGE_META:
@@ -141,7 +141,7 @@ btree_desc(StringInfo buf, uint8 xl_info, char *rec)
 
 				appendStringInfo(buf, "unlink_page: rel %u/%u/%u; ",
 								 xlrec->node.spcNode, xlrec->node.dbNode, xlrec->node.relNode);
-				appendStringInfo(buf, "dead %u; left %u; right %u; btpo_xact %u",
+				appendStringInfo(buf, "dead %u; left %u; right %u; btpo_xact %u; ",
 								 xlrec->deadblk, xlrec->leftsib, xlrec->rightsib, xlrec->btpo_xact);
 				appendStringInfo(buf, "leaf %u; leafleft %u; leafright %u; downlink %u",
 								 xlrec->leafblk, xlrec->leafleftsib, xlrec->leafrightsib, xlrec->downlink);
