@@ -230,15 +230,12 @@ child page, as an ItemPointer. The right bound of the page is stored right
 after the page header, before the PostingItem array.
 
 Posting tree leaf pages also use the standard PageHeader and opaque struct,
-and the right bound of the page is stored right after the page header,
-but the page content comprises of 0-32 compressed posting lists, and an
-additional array of regular uncompressed item pointers. The compressed posting
-lists are stored one after each other, between page header and pd_lower. The
-uncompressed array is stored between pd_upper and pd_special. The space
-between pd_lower and pd_upper is unused, which allows full-page images of
-posting tree leaf pages to skip the unused space in middle (buffer_std = true
-in XLogRecData). For historical reasons, this does not apply to internal
-pages, or uncompressed leaf pages migrated from earlier versions.
+and the right bound of the page is stored right after the page header, but
+the page content comprises of a number of compressed posting lists. The
+compressed posting lists are stored one after each other, between page header
+and pd_lower. The space between pd_lower and pd_upper is unused, which allows
+full-page images of posting tree leaf pages to skip the unused space in middle
+(buffer_std = true in XLogRecData).
 
 The item pointers are stored in a number of independent compressed posting
 lists (also called segments), instead of one big one, to make random access
@@ -247,14 +244,6 @@ have to read the list from the beginning, but when the items are split into
 multiple lists, you can first skip over to the list containing the item you're
 looking for, and read only that segment. Also, an update only needs to
 re-encode the affected segment.
-
-The uncompressed items array is used for insertions, to avoid re-encoding
-a compressed list on every update. If there is room on a page, an insertion
-simply inserts the new item to the right place in the uncompressed array.
-When a page becomes full, it is rewritten, merging all the uncompressed items
-are into the compressed lists.  When reading, the uncompressed array and the
-compressed lists are read in tandem, and merged into one stream of sorted
-item pointers.
 
 Posting List Compression
 ------------------------
