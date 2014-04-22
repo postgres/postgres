@@ -183,13 +183,11 @@ CTRL-C
    </sect2>
 
    <sect2>
-    <indexterm>
-     <primary>Logical Replication Slot</primary>
-    </indexterm>
-    <indexterm>
-     <primary>Replication Slot</primary>
-    </indexterm>
     <title>Replication Slots</title>
+    <indexterm>
+     <primary>replication slot</primary>
+     <secondary>logical replication</secondary>
+    </indexterm>
     <para>
      In the context of logical replication, a slot represents a stream of
      changes which can be replayed to a client in the order they were made on

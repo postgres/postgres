@@ -876,8 +876,9 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
 
   <sect2 id="streaming-replication-slots">
    <title>Replication Slots</title>
-   <indexterm zone="high-availability">
-    <primary>Replication Slots</primary>
+   <indexterm>
+    <primary>replication slot</primary>
+    <secondary>streaming replication</secondary>
    </indexterm>
    <para>
     Replication slots provide an automated way to ensure that the master does
