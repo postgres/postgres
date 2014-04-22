@@ -307,6 +307,7 @@ fill_seq_with_data(Relation rel, HeapTuple tuple)
 	Buffer		buf;
 	Page		page;
 	sequence_magic *sm;
+	OffsetNumber offnum;
 
 	/* Initialize first page of relation with special magic number */
 
@@ -319,55 +320,32 @@ fill_seq_with_data(Relation rel, HeapTuple tuple)
 	sm = (sequence_magic *) PageGetSpecialPointer(page);
 	sm->magic = SEQ_MAGIC;
 
-	/* hack: ensure heap_insert will insert on the just-created page */
-	RelationSetTargetBlock(rel, 0);
-
 	/* Now insert sequence tuple */
-	simple_heap_insert(rel, tuple);
 
-	Assert(ItemPointerGetOffsetNumber(&(tuple->t_self)) == FirstOffsetNumber);
+	LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 
 	/*
-	 * Two special hacks here:
-	 *
-	 * 1. Since VACUUM does not process sequences, we have to force the tuple
+	 * Since VACUUM does not process sequences, we have to force the tuple
 	 * to have xmin = FrozenTransactionId now.	Otherwise it would become
 	 * invisible to SELECTs after 2G transactions.	It is okay to do this
 	 * because if the current transaction aborts, no other xact will ever
 	 * examine the sequence tuple anyway.
-	 *
-	 * 2. Even though heap_insert emitted a WAL log record, we have to emit an
-	 * XLOG_SEQ_LOG record too, since (a) the heap_insert record will not have
-	 * the right xmin, and (b) REDO of the heap_insert record would re-init
-	 * page and sequence magic number would be lost.  This means two log
-	 * records instead of one :-(
 	 */
-	LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
+	HeapTupleHeaderSetXmin(tuple->t_data, FrozenTransactionId);
+	HeapTupleHeaderSetXminFrozen(tuple->t_data);
+	HeapTupleHeaderSetCmin(tuple->t_data, FirstCommandId);
+	HeapTupleHeaderSetXmax(tuple->t_data, InvalidTransactionId);
+	tuple->t_data->t_infomask |= HEAP_XMAX_INVALID;
+	ItemPointerSet(&tuple->t_data->t_ctid, 0, FirstOffsetNumber);
 
 	START_CRIT_SECTION();
 
-	{
-		/*
-		 * Note that the "tuple" structure is still just a local tuple record
-		 * created by heap_form_tuple; its t_data pointer doesn't point at the
-		 * disk buffer.  To scribble on the disk buffer we need to fetch the
-		 * item pointer.  But do the same to the local tuple, since that will
-		 * be the source for the WAL log record, below.
-		 */
-		ItemId		itemId;
-		Item		item;
-
-		itemId = PageGetItemId((Page) page, FirstOffsetNumber);
-		item = PageGetItem((Page) page, itemId);
-
-		HeapTupleHeaderSetXmin((HeapTupleHeader) item, FrozenTransactionId);
-		HeapTupleHeaderSetXminFrozen((HeapTupleHeader) item);
-
-		HeapTupleHeaderSetXmin(tuple->t_data, FrozenTransactionId);
-		HeapTupleHeaderSetXminFrozen(tuple->t_data);
-	}
-
 	MarkBufferDirty(buf);
+
+	offnum = PageAddItem(page, (Item) tuple->t_data, tuple->t_len,
+						 InvalidOffsetNumber, false, false);
+	if (offnum != FirstOffsetNumber)
+		elog(ERROR, "failed to add sequence tuple to page");
 
 	/* XLOG stuff */
 	if (RelationNeedsWAL(rel))
@@ -1576,9 +1554,8 @@ seq_redo(XLogRecPtr lsn, XLogRecord *record)
 	page = (Page) BufferGetPage(buffer);
 
 	/*
-	 * We must always reinit the page and reinstall the magic number (see
-	 * comments in fill_seq_with_data).  However, since this WAL record type
-	 * is also used for updating sequences, it's possible that a hot-standby
+	 * We always reinit the page.  However, since this WAL record type is
+	 * also used for updating sequences, it's possible that a hot-standby
 	 * backend is examining the page concurrently; so we mustn't transiently
 	 * trash the buffer.  The solution is to build the correct new page
 	 * contents in local workspace and then memcpy into the buffer.  Then only
