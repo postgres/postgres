@@ -271,7 +271,6 @@ SELECT * FROM vistest;
 COMMIT;
 SELECT * FROM vistest;
 -- Test FORCE_NOT_NULL and FORCE_NULL options
--- should succeed with "b" set to an empty string and "c" set to NULL
 CREATE TEMP TABLE forcetest (
     a INT NOT NULL,
     b TEXT NOT NULL,
@@ -280,19 +279,20 @@ CREATE TEMP TABLE forcetest (
     e TEXT
 );
 \pset null NULL
+-- should succeed with no effect ("b" remains an empty string, "c" remains NULL)
 BEGIN;
 COPY forcetest (a, b, c) FROM STDIN WITH (FORMAT csv, FORCE_NOT_NULL(b), FORCE_NULL(c));
 1,,""
 \.
 COMMIT;
 SELECT b, c FROM forcetest WHERE a = 1;
--- should succeed with no effect ("b" remains an empty string, "c" remains NULL)
+-- should succeed, FORCE_NULL and FORCE_NOT_NULL can be both specified
 BEGIN;
-COPY forcetest (a, b, c) FROM STDIN WITH (FORMAT csv, FORCE_NOT_NULL(b), FORCE_NULL(c));
-2,,""
+COPY forcetest (a, b, c, d) FROM STDIN WITH (FORMAT csv, FORCE_NOT_NULL(c,d), FORCE_NULL(c,d));
+2,'a',,""
 \.
 COMMIT;
-SELECT b, c FROM forcetest WHERE a = 2;
+SELECT c, d FROM forcetest WHERE a = 2;
 -- should fail with not-null constraint violation
 BEGIN;
 COPY forcetest (a, b, c) FROM STDIN WITH (FORMAT csv, FORCE_NULL(b), FORCE_NOT_NULL(c));

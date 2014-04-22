@@ -487,6 +487,13 @@ COPY <replaceable class="parameter">count</replaceable>
     <command>VACUUM</command> to recover the wasted space.
    </para>
 
+   <para>
+    <literal>FORCE_NULL</> and <literal>FORCE_NOT_NULL</> can be used
+    simultaneously on the same column. This has as result to convert quoted
+    null strings to null values and to convert unquoted null strings to
+    empty strings.
+   </para>
+
  </refsect1>
 
  <refsect1>

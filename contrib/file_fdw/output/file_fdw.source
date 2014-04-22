@@ -115,6 +115,9 @@ SELECT * FROM text_csv;
  ABC   | abc    |        | 
 (5 rows)
 
+-- force_not_null and force_null can be used together on the same column
+ALTER FOREIGN TABLE text_csv ALTER COLUMN word1 OPTIONS (force_null 'true');
+ALTER FOREIGN TABLE text_csv ALTER COLUMN word3 OPTIONS (force_not_null 'true');
 -- force_not_null is not allowed to be specified at any foreign object level:
 ALTER FOREIGN DATA WRAPPER file_fdw OPTIONS (ADD force_not_null '*'); -- ERROR
 ERROR:  invalid option "force_not_null"
@@ -128,10 +131,6 @@ HINT:  There are no valid options in this context.
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (force_not_null '*'); -- ERROR
 ERROR:  invalid option "force_not_null"
 HINT:  Valid options in this context are: filename, format, header, delimiter, quote, escape, null, encoding
--- force_not_null cannot be specified together with force_null
-ALTER FOREIGN TABLE text_csv ALTER COLUMN word1 OPTIONS (force_null 'true'); --ERROR
-ERROR:  conflicting or redundant options
-HINT:  option "force_null" cannot be used together with "force_not_null"
 -- force_null is not allowed to be specified at any foreign object level:
 ALTER FOREIGN DATA WRAPPER file_fdw OPTIONS (ADD force_null '*'); -- ERROR
 ERROR:  invalid option "force_null"
@@ -145,10 +144,6 @@ HINT:  There are no valid options in this context.
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (force_null '*'); -- ERROR
 ERROR:  invalid option "force_null"
 HINT:  Valid options in this context are: filename, format, header, delimiter, quote, escape, null, encoding
--- force_null cannot be specified together with force_not_null
-ALTER FOREIGN TABLE text_csv ALTER COLUMN word3 OPTIONS (force_not_null 'true'); --ERROR
-ERROR:  conflicting or redundant options
-HINT:  option "force_not_null" cannot be used together with "force_null"
 -- basic query tests
 SELECT * FROM agg_text WHERE b > 10.0 ORDER BY a;
   a  |   b    
