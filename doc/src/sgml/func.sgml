@@ -10099,6 +10099,7 @@ table2-mapping
         <entry>Right Operand Type</entry>
         <entry>Description</entry>
         <entry>Example</entry>
+        <entry>Example Result</entry>
        </row>
       </thead>
       <tbody>
@@ -10106,37 +10107,43 @@ table2-mapping
         <entry><literal>-&gt;</literal></entry>
         <entry>int</entry>
         <entry>Get JSON array element</entry>
-        <entry><literal>'[1,2,3]'::json-&gt;2</literal></entry>
+        <entry><literal>'[{"a":"foo"},{"a":"bar"},{"a":"baz"}]'::json-&gt;2</literal></entry>
+        <entry><literal>{"a":"baz"}</literal></entry>
        </row>
        <row>
         <entry><literal>-&gt;</literal></entry>
         <entry>text</entry>
         <entry>Get JSON object field</entry>
-        <entry><literal>'{"a":1,"b":2}'::json-&gt;'b'</literal></entry>
+        <entry><literal>'{"a": {"b":"foo"}}'::json-&gt;'a'</literal></entry>
+        <entry><literal>{"b":"foo"}</literal></entry>
        </row>
         <row>
         <entry><literal>-&gt;&gt;</literal></entry>
         <entry>int</entry>
         <entry>Get JSON array element as text</entry>
         <entry><literal>'[1,2,3]'::json-&gt;&gt;2</literal></entry>
+        <entry><literal>3</literal></entry>
        </row>
        <row>
         <entry><literal>-&gt;&gt;</literal></entry>
         <entry>text</entry>
         <entry>Get JSON object field as text</entry>
         <entry><literal>'{"a":1,"b":2}'::json-&gt;&gt;'b'</literal></entry>
+        <entry><literal>2</literal></entry>
        </row>
        <row>
         <entry><literal>#&gt;</literal></entry>
         <entry>text[]</entry>
-        <entry>Get JSON object at specified path</entry>
-        <entry><literal>'{"a":[1,2,3],"b":[4,5,6]}'::json#&gt;'{a,2}'</literal></entry>
+        <entry>Get JSON object at specified path</entry>        
+        <entry><literal>'{"a": {"b":{"c": "foo"}}}'::json#&gt;'{a,b}'</literal></entry>
+        <entry><literal>{"c": "foo"}</literal></entry>
        </row>
        <row>
         <entry><literal>#&gt;&gt;</literal></entry>
         <entry>text[]</entry>
         <entry>Get JSON object at specified path as text</entry>
         <entry><literal>'{"a":[1,2,3],"b":[4,5,6]}'::json#&gt;&gt;'{a,2}'</literal></entry>
+        <entry><literal>3</literal></entry>
        </row>
       </tbody>
      </tgroup>
