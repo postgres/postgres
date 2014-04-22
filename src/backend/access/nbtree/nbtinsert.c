@@ -2120,6 +2120,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 
 		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_NEWROOT, rdata);
 
+		PageSetLSN(lpage, recptr);
 		PageSetLSN(rootpage, recptr);
 		PageSetLSN(metapg, recptr);
 	}
