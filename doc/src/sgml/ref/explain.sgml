@@ -228,8 +228,9 @@ ROLLBACK;
      <para>
       Any <command>SELECT</>, <command>INSERT</>, <command>UPDATE</>,
       <command>DELETE</>, <command>VALUES</>, <command>EXECUTE</>,
-      <command>DECLARE</>, or <command>CREATE TABLE AS</command>
-      statement, whose execution plan you wish to see.
+      <command>DECLARE</>, <command>CREATE TABLE AS</>, or
+      <command>CREATE MATERIALIZED VIEW AS</> statement, whose execution
+      plan you wish to see.
      </para>
     </listitem>
    </varlistentry>
