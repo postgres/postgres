@@ -996,9 +996,9 @@ _bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
 	/* rightpage was already initialized by _bt_getbuf */
 
 	/*
-	 * Copy the original page's LSN and TLI into leftpage, which will become
-	 * the updated version of the page.  We need this because XLogInsert will
-	 * examine these fields and possibly dump them in a page image.
+	 * Copy the original page's LSN into leftpage, which will become the
+	 * updated version of the page.  We need this because XLogInsert will
+	 * examine the LSN and possibly dump it in a page image.
 	 */
 	PageSetLSN(leftpage, PageGetLSN(origpage));
 
