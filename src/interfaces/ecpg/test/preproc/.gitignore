@@ -12,6 +12,8 @@
 /init.c
 /outofscope
 /outofscope.c
+/pointer_to_struct
+/pointer_to_struct.c
 /strings
 /strings.c
 /type
