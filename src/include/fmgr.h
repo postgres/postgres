@@ -54,8 +54,7 @@ typedef struct FmgrInfo
 {
 	PGFunction	fn_addr;		/* pointer to function or handler to be called */
 	Oid			fn_oid;			/* OID of function (NOT of handler, if any) */
-	short		fn_nargs;		/* 0..FUNC_MAX_ARGS, or -1 if variable arg
-								 * count */
+	short		fn_nargs;		/* number of input args (0..FUNC_MAX_ARGS) */
 	bool		fn_strict;		/* function is "strict" (NULL in => NULL out) */
 	bool		fn_retset;		/* function returns a set */
 	unsigned char fn_stats;		/* collect stats if track_functions > this */
