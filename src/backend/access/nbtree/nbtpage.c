@@ -1303,6 +1303,10 @@ _bt_pagedel(Relation rel, Buffer buf)
 	return ndeleted;
 }
 
+/*
+ * First stage of page deletion.  Remove the downlink to the top of the
+ * branch being deleted, and mark the leaf page as half-dead.
+ */
 static bool
 _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
 {
@@ -1317,6 +1321,7 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
 	OffsetNumber topoff;
 	OffsetNumber nextoffset;
 	IndexTuple	itup;
+	IndexTupleData trunctuple;
 
 	page = BufferGetPage(leafbuf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -1406,12 +1411,17 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	opaque->btpo_flags |= BTP_HALF_DEAD;
 
-	itemid = PageGetItemId(page, P_HIKEY);
-	itup = (IndexTuple) PageGetItem(page, itemid);
-	if (target == leafblkno)
-		ItemPointerSetInvalid(&(itup->t_tid));
+	PageIndexTupleDelete(page, P_HIKEY);
+	Assert(PageGetMaxOffsetNumber(page) == 0);
+	MemSet(&trunctuple, 0, sizeof(IndexTupleData));
+	trunctuple.t_info = sizeof(IndexTupleData);
+	if (target != leafblkno)
+		ItemPointerSet(&trunctuple.t_tid, target, P_HIKEY);
 	else
-		ItemPointerSet(&(itup->t_tid), target, P_HIKEY);
+		ItemPointerSetInvalid(&trunctuple.t_tid);
+	if (PageAddItem(page, (Item) &trunctuple, sizeof(IndexTupleData), P_HIKEY,
+					false, false) == InvalidOffsetNumber)
+		elog(ERROR, "could not add dummy high key to half-dead page");
 
 	/* Must mark buffers dirty before XLogInsert */
 	MarkBufferDirty(topparent);
@@ -1427,7 +1437,10 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
 		xlrec.target.node = rel->rd_node;
 		ItemPointerSet(&(xlrec.target.tid), BufferGetBlockNumber(topparent), topoff);
 		xlrec.leafblk = leafblkno;
-		xlrec.downlink = target;
+		if (target != leafblkno)
+			xlrec.topparent = target;
+		else
+			xlrec.topparent = InvalidBlockNumber;
 
 		page = BufferGetPage(leafbuf);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -1768,7 +1781,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 		xlrec.leafblk = leafblkno;
 		xlrec.leafleftsib = leafleftsib;
 		xlrec.leafrightsib = leafrightsib;
-		xlrec.downlink = nextchild;
+		xlrec.topparent = nextchild;
 
 		rdata[0].data = (char *) &xlrec;
 		rdata[0].len = SizeOfBtreeUnlinkPage;

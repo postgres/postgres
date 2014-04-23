@@ -379,13 +379,15 @@ typedef struct xl_btree_vacuum
 typedef struct xl_btree_mark_page_halfdead
 {
 	xl_btreetid target;			/* deleted tuple id in parent page */
+
+	/* information needed to recreate the leaf page: */
 	BlockNumber leafblk;		/* leaf block ultimately being deleted */
 	BlockNumber leftblk;		/* leaf block's left sibling, if any */
 	BlockNumber rightblk;		/* leaf block's right sibling */
-	BlockNumber downlink;		/* next child down in the branch */
+	BlockNumber topparent;		/* topmost internal page in the branch */
 } xl_btree_mark_page_halfdead;
 
-#define SizeOfBtreeMarkPageHalfDead	(offsetof(xl_btree_mark_page_halfdead, downlink) + sizeof(BlockNumber))
+#define SizeOfBtreeMarkPageHalfDead	(offsetof(xl_btree_mark_page_halfdead, topparent) + sizeof(BlockNumber))
 
 /*
  * This is what we need to know about deletion of a btree page.  Note we do
@@ -406,7 +408,7 @@ typedef struct xl_btree_unlink_page
 	BlockNumber	leafblk;
 	BlockNumber	leafleftsib;
 	BlockNumber	leafrightsib;
-	BlockNumber	downlink;		/* next child down in the branch */
+	BlockNumber	topparent;		/* next child down in the branch */
 
 	TransactionId btpo_xact;	/* value of btpo.xact for use in recovery */
 	/* xl_btree_metadata FOLLOWS IF XLOG_BTREE_UNLINK_PAGE_META */
