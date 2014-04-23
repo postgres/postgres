@@ -897,8 +897,7 @@ logical_heap_rewrite_flush_mappings(RewriteState state)
 
 		/* write all mappings consecutively */
 		len = src->num_mappings * sizeof(LogicalRewriteMappingData);
-		waldata = palloc(len);
-		waldata_start = waldata;
+		waldata_start = waldata = palloc(len);
 
 		/*
 		 * collect data we need to write out, but don't modify ondisk data yet
@@ -921,6 +920,9 @@ logical_heap_rewrite_flush_mappings(RewriteState state)
 			src->num_mappings--;
 		}
 
+		Assert(src->num_mappings == 0);
+		Assert(waldata == waldata_start + len);
+
 		/*
 		 * Note that we deviate from the usual WAL coding practices here,
 		 * check the above "Logical rewrite support" comment for reasoning.
@@ -933,8 +935,6 @@ logical_heap_rewrite_flush_mappings(RewriteState state)
 							written, len)));
 		src->off += len;
 
-		Assert(src->num_mappings == 0);
-
 		rdata[1].data = waldata_start;
 		rdata[1].len = len;
 		rdata[1].buffer = InvalidBuffer;
@@ -943,6 +943,7 @@ logical_heap_rewrite_flush_mappings(RewriteState state)
 		/* write xlog record */
 		XLogInsert(RM_HEAP2_ID, XLOG_HEAP2_REWRITE, rdata);
 
+		pfree(waldata_start);
 	}
 	Assert(state->rs_num_rewrite_mappings == 0);
 }
