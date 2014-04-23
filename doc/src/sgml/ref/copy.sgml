@@ -490,7 +490,7 @@ COPY <replaceable class="parameter">count</replaceable>
    <para>
     <literal>FORCE_NULL</> and <literal>FORCE_NOT_NULL</> can be used
     simultaneously on the same column. This results in converting quoted
-    empty strings to null values and unquoted empty strings to empty strings.
+    null strings to null values and unquoted null strings to empty strings.
    </para>
 
  </refsect1>
