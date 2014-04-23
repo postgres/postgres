@@ -6541,8 +6541,8 @@ log_newpage(RelFileNode *rnode, ForkNumber forkNum, BlockNumber blkno,
 	recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_NEWPAGE, rdata);
 
 	/*
-	 * The page may be uninitialized. If so, we can't set the LSN and TLI
-	 * because that would corrupt the page.
+	 * The page may be uninitialized. If so, we can't set the LSN because
+	 * that would corrupt the page.
 	 */
 	if (!PageIsNew(page))
 	{
