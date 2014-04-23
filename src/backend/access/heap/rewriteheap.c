@@ -897,7 +897,7 @@ logical_heap_rewrite_flush_mappings(RewriteState state)
 
 		/* write all mappings consecutively */
 		len = src->num_mappings * sizeof(LogicalRewriteMappingData);
-		waldata = MemoryContextAlloc(state->rs_cxt, len);
+		waldata = palloc(len);
 		waldata_start = waldata;
 
 		/*
@@ -943,7 +943,6 @@ logical_heap_rewrite_flush_mappings(RewriteState state)
 		/* write xlog record */
 		XLogInsert(RM_HEAP2_ID, XLOG_HEAP2_REWRITE, rdata);
 
-		pfree(waldata);
 	}
 	Assert(state->rs_num_rewrite_mappings == 0);
 }
