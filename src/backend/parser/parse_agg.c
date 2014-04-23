@@ -1199,7 +1199,7 @@ void
 build_aggregate_fnexprs(Oid *agg_input_types,
 						int agg_num_inputs,
 						int agg_num_direct_inputs,
-						bool agg_ordered_set,
+						int num_finalfn_inputs,
 						bool agg_variadic,
 						Oid agg_state_type,
 						Oid agg_result_type,
@@ -1292,19 +1292,17 @@ build_aggregate_fnexprs(Oid *agg_input_types,
 	argp->location = -1;
 	args = list_make1(argp);
 
-	if (agg_ordered_set)
+	/* finalfn may take additional args, which match agg's input types */
+	for (i = 0; i < num_finalfn_inputs - 1; i++)
 	{
-		for (i = 0; i < agg_num_inputs; i++)
-		{
-			argp = makeNode(Param);
-			argp->paramkind = PARAM_EXEC;
-			argp->paramid = -1;
-			argp->paramtype = agg_input_types[i];
-			argp->paramtypmod = -1;
-			argp->paramcollid = agg_input_collation;
-			argp->location = -1;
-			args = lappend(args, argp);
-		}
+		argp = makeNode(Param);
+		argp->paramkind = PARAM_EXEC;
+		argp->paramid = -1;
+		argp->paramtype = agg_input_types[i];
+		argp->paramtypmod = -1;
+		argp->paramcollid = agg_input_collation;
+		argp->location = -1;
+		args = lappend(args, argp);
 	}
 
 	*finalfnexpr = (Expr *) makeFuncExpr(finalfn_oid,

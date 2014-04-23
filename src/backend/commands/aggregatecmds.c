@@ -64,6 +64,8 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 	List	   *mtransfuncName = NIL;
 	List	   *minvtransfuncName = NIL;
 	List	   *mfinalfuncName = NIL;
+	bool		finalfuncExtraArgs = false;
+	bool		mfinalfuncExtraArgs = false;
 	List	   *sortoperatorName = NIL;
 	TypeName   *baseType = NULL;
 	TypeName   *transType = NULL;
@@ -128,6 +130,10 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 			minvtransfuncName = defGetQualifiedName(defel);
 		else if (pg_strcasecmp(defel->defname, "mfinalfunc") == 0)
 			mfinalfuncName = defGetQualifiedName(defel);
+		else if (pg_strcasecmp(defel->defname, "finalfunc_extra") == 0)
+			finalfuncExtraArgs = defGetBoolean(defel);
+		else if (pg_strcasecmp(defel->defname, "mfinalfunc_extra") == 0)
+			mfinalfuncExtraArgs = defGetBoolean(defel);
 		else if (pg_strcasecmp(defel->defname, "sortop") == 0)
 			sortoperatorName = defGetQualifiedName(defel);
 		else if (pg_strcasecmp(defel->defname, "basetype") == 0)
@@ -380,6 +386,8 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 						   mtransfuncName,		/* fwd trans function name */
 						   minvtransfuncName,	/* inv trans function name */
 						   mfinalfuncName,		/* final function name */
+						   finalfuncExtraArgs,
+						   mfinalfuncExtraArgs,
 						   sortoperatorName,	/* sort operator name */
 						   transTypeId, /* transition data type */
 						   transSpace,	/* transition space */

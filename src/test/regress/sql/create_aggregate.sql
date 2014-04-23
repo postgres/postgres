@@ -85,13 +85,15 @@ create aggregate least_agg(variadic items anyarray) (
 create aggregate my_percentile_disc(float8 ORDER BY anyelement) (
   stype = internal,
   sfunc = ordered_set_transition,
-  finalfunc = percentile_disc_final
+  finalfunc = percentile_disc_final,
+  finalfunc_extra = true
 );
 
 create aggregate my_rank(VARIADIC "any" ORDER BY VARIADIC "any") (
   stype = internal,
   sfunc = ordered_set_transition_multi,
   finalfunc = rank_final,
+  finalfunc_extra = true,
   hypothetical
 );
 

@@ -226,6 +226,24 @@ FROM pg_proc as p1
 WHERE p1.prorettype = 'internal'::regtype AND NOT
     'internal'::regtype = ANY (p1.proargtypes);
 
+-- Look for functions that return a polymorphic type and do not have any
+-- polymorphic argument.  Calls of such functions would be unresolvable
+-- at parse time.  As of 9.4 this query should find only some input functions
+-- associated with these pseudotypes.
+
+SELECT p1.oid, p1.proname
+FROM pg_proc as p1
+WHERE p1.prorettype IN
+    ('anyelement'::regtype, 'anyarray'::regtype, 'anynonarray'::regtype,
+     'anyenum'::regtype, 'anyrange'::regtype)
+  AND NOT
+    ('anyelement'::regtype = ANY (p1.proargtypes) OR
+     'anyarray'::regtype = ANY (p1.proargtypes) OR
+     'anynonarray'::regtype = ANY (p1.proargtypes) OR
+     'anyenum'::regtype = ANY (p1.proargtypes) OR
+     'anyrange'::regtype = ANY (p1.proargtypes))
+ORDER BY 2;
+
 -- Check for length inconsistencies between the various argument-info arrays.
 
 SELECT p1.oid, p1.proname
@@ -646,16 +664,16 @@ WHERE a.aggfnoid = p.oid AND
     (pfn.proretset OR
      NOT binary_coercible(pfn.prorettype, p.prorettype) OR
      NOT binary_coercible(a.aggtranstype, pfn.proargtypes[0]) OR
-     CASE WHEN a.aggkind = 'n' THEN pfn.pronargs != 1
-     ELSE pfn.pronargs != p.pronargs + 1
-       OR (p.pronargs > 0 AND
+     CASE WHEN a.aggfinalextra THEN pfn.pronargs != p.pronargs + 1
+          ELSE pfn.pronargs != a.aggnumdirectargs + 1 END
+     OR (pfn.pronargs > 1 AND
          NOT binary_coercible(p.proargtypes[0], pfn.proargtypes[1]))
-       OR (p.pronargs > 1 AND
+     OR (pfn.pronargs > 2 AND
          NOT binary_coercible(p.proargtypes[1], pfn.proargtypes[2]))
-       OR (p.pronargs > 2 AND
+     OR (pfn.pronargs > 3 AND
          NOT binary_coercible(p.proargtypes[2], pfn.proargtypes[3]))
-       -- we could carry the check further, but 3 args is enough for now
-     END);
+     -- we could carry the check further, but 3 args is enough for now
+    );
 
 -- If transfn is strict then either initval should be non-NULL, or
 -- input type should match transtype so that the first non-null input
@@ -738,16 +756,16 @@ WHERE a.aggfnoid = p.oid AND
     (pfn.proretset OR
      NOT binary_coercible(pfn.prorettype, p.prorettype) OR
      NOT binary_coercible(a.aggmtranstype, pfn.proargtypes[0]) OR
-     CASE WHEN a.aggkind = 'n' THEN pfn.pronargs != 1
-     ELSE pfn.pronargs != p.pronargs + 1
-       OR (p.pronargs > 0 AND
+     CASE WHEN a.aggmfinalextra THEN pfn.pronargs != p.pronargs + 1
+          ELSE pfn.pronargs != a.aggnumdirectargs + 1 END
+     OR (pfn.pronargs > 1 AND
          NOT binary_coercible(p.proargtypes[0], pfn.proargtypes[1]))
-       OR (p.pronargs > 1 AND
+     OR (pfn.pronargs > 2 AND
          NOT binary_coercible(p.proargtypes[1], pfn.proargtypes[2]))
-       OR (p.pronargs > 2 AND
+     OR (pfn.pronargs > 3 AND
          NOT binary_coercible(p.proargtypes[2], pfn.proargtypes[3]))
-       -- we could carry the check further, but 3 args is enough for now
-     END);
+     -- we could carry the check further, but 3 args is enough for now
+    );
 
 -- If mtransfn is strict then either minitval should be non-NULL, or
 -- input type should match mtranstype so that the first non-null input

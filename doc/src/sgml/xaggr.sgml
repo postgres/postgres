@@ -127,7 +127,7 @@ CREATE AGGREGATE avg (float8)
    <function>float8_accum</> requires a three-element array, not just
    two elements, because it accumulates the sum of squares as well as
    the sum and count of the inputs.  This is so that it can be used for
-   some other aggregates besides <function>avg</>.
+   some other aggregates as well as <function>avg</>.
    </para>
   </note>
 
@@ -182,7 +182,7 @@ CREATE AGGREGATE avg (float8)
    The inverse transition function is passed the current state value and the
    aggregate input value(s) for the earliest row included in the current
    state.  It must reconstruct what the state value would have been if the
-   given input value had never been aggregated, but only the rows following
+   given input row had never been aggregated, but only the rows following
    it.  This sometimes requires that the forward transition function keep
    more state than is needed for plain aggregation mode.  Therefore, the
    moving-aggregate mode uses a completely separate implementation from the
@@ -340,6 +340,47 @@ SELECT attrelid::regclass, array_accum(atttypid::regtype)
   </para>
 
   <para>
+   Ordinarily, an aggregate function with a polymorphic result type has a
+   polymorphic state type, as in the above example.  This is necessary
+   because otherwise the final function cannot be declared sensibly: it
+   would need to have a polymorphic result type but no polymorphic argument
+   type, which <command>CREATE FUNCTION</> will reject on the grounds that
+   the result type cannot be deduced from a call.  But sometimes it is
+   inconvenient to use a polymorphic state type.  The most common case is
+   where the aggregate support functions are to be written in C and the
+   state type should be declared as <type>internal</> because there is
+   no SQL-level equivalent for it.  To address this case, it is possible to
+   declare the final function as taking extra <quote>dummy</> arguments
+   that match the input arguments of the aggregate.  Such dummy arguments
+   are always passed as NULLs since no specific value is available when the
+   final function is called.  Their only use is to allow a polymorphic
+   final function's result type to be connected to the aggregate's input
+   type(s).  For example, the definition of the built-in
+   aggregate <function>array_agg</> is equivalent to
+
+<programlisting>
+CREATE FUNCTION array_agg_transfn(internal, anyelement)
+  RETURNS internal ...;
+CREATE FUNCTION array_agg_finalfn(internal, anyelement)
+  RETURNS anyarray ...;
+
+CREATE AGGREGATE array_agg (anyelement)
+(
+    sfunc = array_agg_transfn,
+    stype = internal,
+    finalfunc = array_agg_finalfn,
+    finalfunc_extra
+);
+</programlisting>
+
+   Here, the <literal>finalfunc_extra</> option specifies that the final
+   function receives, in addition to the state value, extra dummy
+   argument(s) corresponding to the aggregate's input argument(s).
+   The extra <type>anyelement</> argument allows the declaration
+   of <function>array_agg_finalfn</> to be valid.
+  </para>
+
+  <para>
    An aggregate function can be made to accept a varying number of arguments
    by declaring its last argument as a <literal>VARIADIC</> array, in much
    the same fashion as for regular functions; see
@@ -401,15 +442,23 @@ SELECT myaggregate(a, b, c ORDER BY a) FROM ...
    definition of <function>percentile_disc</> is equivalent to:
 
 <programlisting>
+CREATE FUNCTION ordered_set_transition(internal, anyelement)
+  RETURNS internal ...;
+CREATE FUNCTION percentile_disc_final(internal, float8, anyelement)
+  RETURNS anyelement ...;
+
 CREATE AGGREGATE percentile_disc (float8 ORDER BY anyelement)
 (
     sfunc = ordered_set_transition,
     stype = internal,
-    finalfunc = percentile_disc_final
+    finalfunc = percentile_disc_final,
+    finalfunc_extra
 );
 </programlisting>
 
-   which could be used to obtain a median household income like this:
+   This aggregate takes a <type>float8</> direct argument (the percentile
+   fraction) and an aggregated input that can be of any sortable data type.
+   It could be used to obtain a median household income like this:
 
 <programlisting>
 SELECT percentile_disc(0.5) WITHIN GROUP (ORDER BY income) FROM households;
@@ -447,25 +496,12 @@ SELECT percentile_disc(0.5) WITHIN GROUP (ORDER BY income) FROM households;
    same definition as for normal aggregates, but note that the direct
    arguments (if any) are not provided.  The final function receives
    the last state value, the values of the direct arguments if any,
-   and null values corresponding to the aggregated input(s).  While the
-   null values seem useless at first sight, they are important because
-   they make it possible to include the data types of the aggregated
-   input(s) in the final function's signature, which may be necessary
-   to resolve the output type of a polymorphic aggregate.  For example,
-   the built-in <function>mode()</> ordered-set aggregate takes a
-   single aggregated column of any sortable data type and returns a
-   value of that same type.  This is possible because the final function
-   is declared as <literal>mode_final(internal, anyelement) returns
-   anyelement</>, with the <type>anyelement</> parameter corresponding
-   to the dummy null argument that represents the aggregated column.
-   The actual data is conveyed in the <type>internal</>-type state
-   value, but type resolution needs a parse-time indication of what the
-   result data type will be, and the dummy argument provides that.
-   In the example of <function>percentile_disc</>, the support functions
-   are respectively declared as
-   <literal>ordered_set_transition(internal, "any") returns internal</>
-   and <literal>percentile_disc_final(internal, float8, anyelement)
-   returns anyelement</>.
+   and (if <literal>finalfunc_extra</> is specified) NULL values
+   corresponding to the aggregated input(s).  As with normal
+   aggregates, <literal>finalfunc_extra</> is only really useful if the
+   aggregate is polymorphic; then the extra dummy argument(s) are needed
+   to connect the final function's result type to the aggregate's input
+   type(s).
   </para>
 
   <para>

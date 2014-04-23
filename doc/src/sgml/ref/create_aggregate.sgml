@@ -26,12 +26,14 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> ( [ <replacea
     STYPE = <replaceable class="PARAMETER">state_data_type</replaceable>
     [ , SSPACE = <replaceable class="PARAMETER">state_data_size</replaceable> ]
     [ , FINALFUNC = <replaceable class="PARAMETER">ffunc</replaceable> ]
+    [ , FINALFUNC_EXTRA ]
     [ , INITCOND = <replaceable class="PARAMETER">initial_condition</replaceable> ]
     [ , MSFUNC = <replaceable class="PARAMETER">msfunc</replaceable> ]
     [ , MINVFUNC = <replaceable class="PARAMETER">minvfunc</replaceable> ]
     [ , MSTYPE = <replaceable class="PARAMETER">mstate_data_type</replaceable> ]
     [ , MSSPACE = <replaceable class="PARAMETER">mstate_data_size</replaceable> ]
     [ , MFINALFUNC = <replaceable class="PARAMETER">mffunc</replaceable> ]
+    [ , MFINALFUNC_EXTRA ]
     [ , MINITCOND = <replaceable class="PARAMETER">minitial_condition</replaceable> ]
     [ , SORTOP = <replaceable class="PARAMETER">sort_operator</replaceable> ]
 )
@@ -42,6 +44,7 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> ( [ [ <replac
     STYPE = <replaceable class="PARAMETER">state_data_type</replaceable>
     [ , SSPACE = <replaceable class="PARAMETER">state_data_size</replaceable> ]
     [ , FINALFUNC = <replaceable class="PARAMETER">ffunc</replaceable> ]
+    [ , FINALFUNC_EXTRA ]
     [ , INITCOND = <replaceable class="PARAMETER">initial_condition</replaceable> ]
     [ , HYPOTHETICAL ]
 )
@@ -54,12 +57,14 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
     STYPE = <replaceable class="PARAMETER">state_data_type</replaceable>
     [ , SSPACE = <replaceable class="PARAMETER">state_data_size</replaceable> ]
     [ , FINALFUNC = <replaceable class="PARAMETER">ffunc</replaceable> ]
+    [ , FINALFUNC_EXTRA ]
     [ , INITCOND = <replaceable class="PARAMETER">initial_condition</replaceable> ]
     [ , MSFUNC = <replaceable class="PARAMETER">sfunc</replaceable> ]
     [ , MINVFUNC = <replaceable class="PARAMETER">invfunc</replaceable> ]
     [ , MSTYPE = <replaceable class="PARAMETER">state_data_type</replaceable> ]
     [ , MSSPACE = <replaceable class="PARAMETER">state_data_size</replaceable> ]
     [ , MFINALFUNC = <replaceable class="PARAMETER">ffunc</replaceable> ]
+    [ , MFINALFUNC_EXTRA ]
     [ , MINITCOND = <replaceable class="PARAMETER">initial_condition</replaceable> ]
     [ , SORTOP = <replaceable class="PARAMETER">sort_operator</replaceable> ]
 )
@@ -167,11 +172,24 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
   </para>
 
   <para>
+   Sometimes it is useful to declare the final function as taking not just
+   the state value, but extra parameters corresponding to the aggregate's
+   input values.  The main reason for doing this is if the final function
+   is polymorphic and the state value's data type would be inadequate to
+   pin down the result type.  These extra parameters are always passed as
+   NULL (and so the final function must not be strict when
+   the <literal>FINALFUNC_EXTRA</> option is used), but nonetheless they
+   are valid parameters.  The final function could for example make use
+   of <function>get_fn_expr_argtype</> to identify the actual argument type
+   in the current call.
+  </para>
+
+  <para>
    An aggregate can optionally support <firstterm>moving-aggregate mode</>,
    as described in <xref linkend="xaggr-moving-aggregates">.  This requires
    specifying the <literal>MSFUNC</>, <literal>MINVFUNC</>,
    and <literal>MSTYPE</> parameters, and optionally
-   the <literal>MSPACE</>, <literal>MFINALFUNC</>,
+   the <literal>MSPACE</>, <literal>MFINALFUNC</>, <literal>MFINALFUNC_EXTRA</>,
    and <literal>MINITCOND</> parameters.  Except for <literal>MINVFUNC</>,
    these parameters work like the corresponding simple-aggregate parameters
    without <literal>M</>; they define a separate implementation of the
@@ -361,12 +379,16 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
      <para>
       For ordered-set (including hypothetical-set) aggregates, the
       final function receives not only the final state value,
-      but also the values of all the direct arguments, followed by
-      null values corresponding to each aggregated argument.
-      (The reason for including the aggregated arguments in the function
-      signature is that this may be necessary to allow correct resolution
-      of the aggregate result type, when a polymorphic aggregate is
-      being defined.)
+      but also the values of all the direct arguments.
+     </para>
+
+     <para>
+      If <literal>FINALFUNC_EXTRA</> is specified, then in addition to the
+      final state value and any direct arguments, the final function
+      receives extra NULL values corresponding to the aggregate's regular
+      (aggregated) arguments.  This is mainly useful to allow correct
+      resolution of the aggregate result type when a polymorphic aggregate
+      is being defined.
      </para>
     </listitem>
    </varlistentry>
@@ -438,9 +460,11 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
       The name of the final function called to compute the aggregate's
       result after all input rows have been traversed, when using
       moving-aggregate mode.  This works the same as <replaceable>ffunc</>,
-      except that its input type is <replaceable>mstate_data_type</>.
+      except that its first argument's type
+      is <replaceable>mstate_data_type</> and extra dummy arguments are
+      specified by writing <literal>MFINALFUNC_EXTRA</>.
       The aggregate result type determined by <replaceable>mffunc</>
-      and <replaceable>mstate_data_type</> must match that determined by the
+      or <replaceable>mstate_data_type</> must match that determined by the
       aggregate's regular implementation.
      </para>
     </listitem>
@@ -493,6 +517,13 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
 
  <refsect1>
   <title>Notes</title>
+
+   <para>
+    In parameters that specify support function names, you can write
+    a schema name if needed, for example <literal>SFUNC = public.sum</>.
+    Do not write argument types there, however &mdash; the argument types
+    of the support functions are determined from other parameters.
+   </para>
 
    <para>
     If an aggregate supports moving-aggregate mode, it will improve

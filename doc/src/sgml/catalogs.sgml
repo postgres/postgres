@@ -405,6 +405,18 @@
       <entry>Final function for moving-aggregate mode (zero if none)</entry>
      </row>
      <row>
+      <entry><structfield>aggfinalextra</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>True to pass extra dummy arguments to aggfinalfn</entry>
+     </row>
+     <row>
+      <entry><structfield>aggmfinalextra</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>True to pass extra dummy arguments to aggmfinalfn</entry>
+     </row>
+     <row>
       <entry><structfield>aggsortop</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.oid</literal></entry>

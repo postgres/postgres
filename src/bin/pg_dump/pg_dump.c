@@ -11551,6 +11551,8 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	int			i_aggmtransfn;
 	int			i_aggminvtransfn;
 	int			i_aggmfinalfn;
+	int			i_aggfinalextra;
+	int			i_aggmfinalextra;
 	int			i_aggsortop;
 	int			i_hypothetical;
 	int			i_aggtranstype;
@@ -11565,6 +11567,8 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	const char *aggmtransfn;
 	const char *aggminvtransfn;
 	const char *aggmfinalfn;
+	bool		aggfinalextra;
+	bool		aggmfinalextra;
 	const char *aggsortop;
 	char	   *aggsortconvop;
 	bool		hypothetical;
@@ -11596,11 +11600,12 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 						  "aggfinalfn, aggtranstype::pg_catalog.regtype, "
 						  "aggmtransfn, aggminvtransfn, aggmfinalfn, "
 						  "aggmtranstype::pg_catalog.regtype, "
+						  "aggfinalextra, aggmfinalextra, "
 						  "aggsortop::pg_catalog.regoperator, "
-						  "(aggkind = 'h') as hypothetical, "
+						  "(aggkind = 'h') AS hypothetical, "
 						  "aggtransspace, agginitval, "
 						  "aggmtransspace, aggminitval, "
-						  "'t'::boolean AS convertok, "
+						  "true AS convertok, "
 						  "pg_catalog.pg_get_function_arguments(p.oid) AS funcargs, "
 						  "pg_catalog.pg_get_function_identity_arguments(p.oid) AS funciargs "
 					  "FROM pg_catalog.pg_aggregate a, pg_catalog.pg_proc p "
@@ -11614,11 +11619,12 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 						  "aggfinalfn, aggtranstype::pg_catalog.regtype, "
 						  "'-' AS aggmtransfn, '-' AS aggminvtransfn, "
 						  "'-' AS aggmfinalfn, 0 AS aggmtranstype, "
+						  "false AS aggfinalextra, false AS aggmfinalextra, "
 						  "aggsortop::pg_catalog.regoperator, "
-						  "false as hypothetical, "
+						  "false AS hypothetical, "
 						  "0 AS aggtransspace, agginitval, "
 						  "0 AS aggmtransspace, NULL AS aggminitval, "
-						  "'t'::boolean AS convertok, "
+						  "true AS convertok, "
 						  "pg_catalog.pg_get_function_arguments(p.oid) AS funcargs, "
 						  "pg_catalog.pg_get_function_identity_arguments(p.oid) AS funciargs "
 					  "FROM pg_catalog.pg_aggregate a, pg_catalog.pg_proc p "
@@ -11632,11 +11638,12 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 						  "aggfinalfn, aggtranstype::pg_catalog.regtype, "
 						  "'-' AS aggmtransfn, '-' AS aggminvtransfn, "
 						  "'-' AS aggmfinalfn, 0 AS aggmtranstype, "
+						  "false AS aggfinalextra, false AS aggmfinalextra, "
 						  "aggsortop::pg_catalog.regoperator, "
-						  "false as hypothetical, "
+						  "false AS hypothetical, "
 						  "0 AS aggtransspace, agginitval, "
 						  "0 AS aggmtransspace, NULL AS aggminitval, "
-						  "'t'::boolean AS convertok "
+						  "true AS convertok "
 						  "FROM pg_catalog.pg_aggregate a, pg_catalog.pg_proc p "
 						  "WHERE a.aggfnoid = p.oid "
 						  "AND p.oid = '%u'::pg_catalog.oid",
@@ -11648,11 +11655,12 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 						  "aggfinalfn, aggtranstype::pg_catalog.regtype, "
 						  "'-' AS aggmtransfn, '-' AS aggminvtransfn, "
 						  "'-' AS aggmfinalfn, 0 AS aggmtranstype, "
+						  "false AS aggfinalextra, false AS aggmfinalextra, "
 						  "0 AS aggsortop, "
-						  "'f'::boolean as hypothetical, "
+						  "false AS hypothetical, "
 						  "0 AS aggtransspace, agginitval, "
 						  "0 AS aggmtransspace, NULL AS aggminitval, "
-						  "'t'::boolean AS convertok "
+						  "true AS convertok "
 					  "FROM pg_catalog.pg_aggregate a, pg_catalog.pg_proc p "
 						  "WHERE a.aggfnoid = p.oid "
 						  "AND p.oid = '%u'::pg_catalog.oid",
@@ -11664,11 +11672,12 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 						  "format_type(aggtranstype, NULL) AS aggtranstype, "
 						  "'-' AS aggmtransfn, '-' AS aggminvtransfn, "
 						  "'-' AS aggmfinalfn, 0 AS aggmtranstype, "
+						  "false AS aggfinalextra, false AS aggmfinalextra, "
 						  "0 AS aggsortop, "
-						  "'f'::boolean as hypothetical, "
+						  "false AS hypothetical, "
 						  "0 AS aggtransspace, agginitval, "
 						  "0 AS aggmtransspace, NULL AS aggminitval, "
-						  "'t'::boolean AS convertok "
+						  "true AS convertok "
 						  "FROM pg_aggregate "
 						  "WHERE oid = '%u'::oid",
 						  agginfo->aggfn.dobj.catId.oid);
@@ -11680,8 +11689,9 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 						  "(SELECT typname FROM pg_type WHERE oid = aggtranstype1) AS aggtranstype, "
 						  "'-' AS aggmtransfn, '-' AS aggminvtransfn, "
 						  "'-' AS aggmfinalfn, 0 AS aggmtranstype, "
+						  "false AS aggfinalextra, false AS aggmfinalextra, "
 						  "0 AS aggsortop, "
-						  "'f'::boolean as hypothetical, "
+						  "false AS hypothetical, "
 						  "0 AS aggtransspace, agginitval1 AS agginitval, "
 						  "0 AS aggmtransspace, NULL AS aggminitval, "
 						  "(aggtransfn2 = 0 and aggtranstype2 = 0 and agginitval2 is null) AS convertok "
@@ -11697,6 +11707,8 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	i_aggmtransfn = PQfnumber(res, "aggmtransfn");
 	i_aggminvtransfn = PQfnumber(res, "aggminvtransfn");
 	i_aggmfinalfn = PQfnumber(res, "aggmfinalfn");
+	i_aggfinalextra = PQfnumber(res, "aggfinalextra");
+	i_aggmfinalextra = PQfnumber(res, "aggmfinalextra");
 	i_aggsortop = PQfnumber(res, "aggsortop");
 	i_hypothetical = PQfnumber(res, "hypothetical");
 	i_aggtranstype = PQfnumber(res, "aggtranstype");
@@ -11712,6 +11724,8 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	aggmtransfn = PQgetvalue(res, 0, i_aggmtransfn);
 	aggminvtransfn = PQgetvalue(res, 0, i_aggminvtransfn);
 	aggmfinalfn = PQgetvalue(res, 0, i_aggmfinalfn);
+	aggfinalextra = (PQgetvalue(res, 0, i_aggfinalextra)[0] == 't');
+	aggmfinalextra = (PQgetvalue(res, 0, i_aggmfinalextra)[0] == 't');
 	aggsortop = PQgetvalue(res, 0, i_aggsortop);
 	hypothetical = (PQgetvalue(res, 0, i_hypothetical)[0] == 't');
 	aggtranstype = PQgetvalue(res, 0, i_aggtranstype);
@@ -11791,6 +11805,8 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	{
 		appendPQExpBuffer(details, ",\n    FINALFUNC = %s",
 						  aggfinalfn);
+		if (aggfinalextra)
+			appendPQExpBufferStr(details, ",\n    FINALFUNC_EXTRA");
 	}
 
 	if (strcmp(aggmtransfn, "-") != 0)
@@ -11817,6 +11833,8 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	{
 		appendPQExpBuffer(details, ",\n    MFINALFUNC = %s",
 						  aggmfinalfn);
+		if (aggmfinalextra)
+			appendPQExpBufferStr(details, ",\n    MFINALFUNC_EXTRA");
 	}
 
 	aggsortconvop = convertOperatorReference(fout, aggsortop);
