@@ -2300,7 +2300,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
      <entry>(char *, int, LWLockMode)</entry>
      <entry>Probe that fires when an LWLock has been acquired.
       arg0 is the LWLock's tranche.
-      arg1 is the LWLock's offset within its trance.
+      arg1 is the LWLock's offset within its tranche.
       arg2 is the requested lock mode, either exclusive or shared.</entry>
     </row>
     <row>
@@ -2309,7 +2309,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
      <entry>Probe that fires when an LWLock has been released (but note
       that any released waiters have not yet been awakened).
       arg0 is the LWLock's tranche.
-      arg1 is the LWLock's offset within its trance.</entry>
+      arg1 is the LWLock's offset within its tranche.</entry>
     </row>
     <row>
      <entry>lwlock-wait-start</entry>
@@ -2317,7 +2317,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
      <entry>Probe that fires when an LWLock was not immediately available and
       a server process has begun to wait for the lock to become available.
       arg0 is the LWLock's tranche.
-      arg1 is the LWLock's offset within its trance.
+      arg1 is the LWLock's offset within its tranche.
       arg2 is the requested lock mode, either exclusive or shared.</entry>
     </row>
     <row>
@@ -2326,7 +2326,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
      <entry>Probe that fires when a server process has been released from its
       wait for an LWLock (it does not actually have the lock yet).
       arg0 is the LWLock's tranche.
-      arg1 is the LWLock's offset within its trance.
+      arg1 is the LWLock's offset within its tranche.
       arg2 is the requested lock mode, either exclusive or shared.</entry>
     </row>
     <row>
@@ -2335,7 +2335,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
      <entry>Probe that fires when an LWLock was successfully acquired when the
       caller specified no waiting.
       arg0 is the LWLock's tranche.
-      arg1 is the LWLock's offset within its trance.
+      arg1 is the LWLock's offset within its tranche.
       arg2 is the requested lock mode, either exclusive or shared.</entry>
     </row>
     <row>
@@ -2344,7 +2344,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
      <entry>Probe that fires when an LWLock was not successfully acquired when
       the caller specified no waiting.
       arg0 is the LWLock's tranche.
-      arg1 is the LWLock's offset within its trance.
+      arg1 is the LWLock's offset within its tranche.
       arg2 is the requested lock mode, either exclusive or shared.</entry>
     </row>
     <row>
