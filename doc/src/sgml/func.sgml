@@ -10092,7 +10092,7 @@ table2-mapping
 
   <table id="functions-json-op-table">
      <title><type>json</> and <type>jsonb</> Operators</title>
-     <tgroup cols="4">
+     <tgroup cols="5">
       <thead>
        <row>
         <entry>Operator</entry>
