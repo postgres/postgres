@@ -227,9 +227,9 @@ btbuildempty(PG_FUNCTION_ARGS)
 					BTREE_METAPAGE, metapage);
 
 	/*
-	 * An immediate sync is require even if we xlog'd the page, because the
+	 * An immediate sync is required even if we xlog'd the page, because the
 	 * write did not go through shared_buffers and therefore a concurrent
-	 * checkpoint may have move the redo pointer past our xlog record.
+	 * checkpoint may have moved the redo pointer past our xlog record.
 	 */
 	smgrimmedsync(index->rd_smgr, INIT_FORKNUM);
 
