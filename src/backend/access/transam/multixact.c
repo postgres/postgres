@@ -457,7 +457,7 @@ MultiXactIdExpand(MultiXactId multi, TransactionId xid, MultiXactStatus status)
 	for (i = 0, j = 0; i < nmembers; i++)
 	{
 		if (TransactionIdIsInProgress(members[i].xid) ||
-			((members[i].status > MultiXactStatusForUpdate) &&
+			(ISUPDATE_from_mxstatus(members[i].status) &&
 			 TransactionIdDidCommit(members[i].xid)))
 		{
 			newMembers[j].xid = members[i].xid;
@@ -711,6 +711,22 @@ MultiXactIdCreateFromMembers(int nmembers, MultiXactMember *members)
 	{
 		debug_elog2(DEBUG2, "Create: in cache!");
 		return multi;
+	}
+
+	/* Verify that there is a single update Xid among the given members. */
+	{
+		int			i;
+		bool		has_update = false;
+
+		for (i = 0; i < nmembers; i++)
+		{
+			if (ISUPDATE_from_mxstatus(members[i].status))
+			{
+				if (has_update)
+					elog(ERROR, "new multixact has more than one updating member");
+				has_update = true;
+			}
+		}
 	}
 
 	/*

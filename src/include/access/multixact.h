@@ -48,6 +48,10 @@ typedef enum
 
 #define MaxMultiXactStatus MultiXactStatusUpdate
 
+/* does a status value correspond to a tuple update? */
+#define ISUPDATE_from_mxstatus(status) \
+			((status) > MultiXactStatusForUpdate)
+
 
 typedef struct MultiXactMember
 {
