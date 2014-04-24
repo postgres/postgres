@@ -1756,7 +1756,7 @@ DATA(insert OID = 1576 (  setval			PGNSP PGUID 12 1 0 0 0 f f f f t f v 2 0 20 "
 DESCR("set sequence value");
 DATA(insert OID = 1765 (  setval			PGNSP PGUID 12 1 0 0 0 f f f f t f v 3 0 20 "2205 20 16" _null_ _null_ _null_ _null_ setval3_oid _null_ _null_ _null_ ));
 DESCR("set sequence value and is_called status");
-DATA(insert OID = 3078 (  pg_sequence_parameters	PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 2249 "26" "{23,20,20,20,20,16}" "{i,o,o,o,o,o}" "{sequence_oid,start_value,minimum_value,maximum_value,increment,cycle_option}" _null_ pg_sequence_parameters _null_ _null_ _null_));
+DATA(insert OID = 3078 (  pg_sequence_parameters	PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 2249 "26" "{26,20,20,20,20,16}" "{i,o,o,o,o,o}" "{sequence_oid,start_value,minimum_value,maximum_value,increment,cycle_option}" _null_ pg_sequence_parameters _null_ _null_ _null_));
 DESCR("sequence parameters, for use by information schema");
 
 DATA(insert OID = 1579 (  varbit_in			PGNSP PGUID 12 1 0 0 0 f f f f t f i 3 0 1562 "2275 26 23" _null_ _null_ _null_ _null_ varbit_in _null_ _null_ _null_ ));
@@ -2915,7 +2915,7 @@ DESCR("view members of a multixactid");
 DATA(insert OID = 3537 (  pg_describe_object		PGNSP PGUID 12 1 0 0 0 f f f f t f s 3 0 25 "26 26 23" _null_ _null_ _null_ _null_ pg_describe_object _null_ _null_ _null_ ));
 DESCR("get identification of SQL object");
 
-DATA(insert OID = 3839 (  pg_identify_object		PGNSP PGUID 12 1 0 0 0 f f f f t f s 3 0 2249 "26 26 23" "{26,23,23,25,25,25,25}" "{i,i,i,o,o,o,o}" "{classid,objid,subobjid,type,schema,name,identity}" _null_ pg_identify_object _null_ _null_ _null_ ));
+DATA(insert OID = 3839 (  pg_identify_object		PGNSP PGUID 12 1 0 0 0 f f f f t f s 3 0 2249 "26 26 23" "{26,26,23,25,25,25,25}" "{i,i,i,o,o,o,o}" "{classid,objid,subobjid,type,schema,name,identity}" _null_ pg_identify_object _null_ _null_ _null_ ));
 DESCR("get machine-parseable identification of SQL object");
 
 DATA(insert OID = 2079 (  pg_table_is_visible		PGNSP PGUID 12 10 0 0 0 f f f f t f s 1 0 16 "26" _null_ _null_ _null_ _null_ pg_table_is_visible _null_ _null_ _null_ ));
