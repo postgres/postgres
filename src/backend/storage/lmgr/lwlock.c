@@ -350,8 +350,9 @@ CreateLWLocks(void)
 	if (LWLockTrancheArray == NULL)
 	{
 		LWLockTranchesAllocated = 16;
-		LWLockTrancheArray = MemoryContextAlloc(TopMemoryContext,
-			LWLockTranchesAllocated * sizeof(LWLockTranche *));
+		LWLockTrancheArray = (LWLockTranche **)
+			MemoryContextAlloc(TopMemoryContext,
+							   LWLockTranchesAllocated * sizeof(LWLockTranche *));
 	}
 
 	MainLWLockTranche.name = "main";
@@ -423,11 +424,12 @@ LWLockRegisterTranche(int tranche_id, LWLockTranche *tranche)
 	{
 		int		i = LWLockTranchesAllocated;
 
-		while (i < tranche_id)
+		while (i <= tranche_id)
 			i *= 2;
 
-		LWLockTrancheArray = repalloc(LWLockTrancheArray,
-									  i * sizeof(LWLockTranche *));
+		LWLockTrancheArray = (LWLockTranche **)
+			repalloc(LWLockTrancheArray,
+					 i * sizeof(LWLockTranche *));
 		LWLockTranchesAllocated = i;
 	}
 
