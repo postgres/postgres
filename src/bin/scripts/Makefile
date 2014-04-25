@@ -63,12 +63,11 @@ installdirs:
 uninstall:
 	rm -f $(addprefix '$(DESTDIR)$(bindir)'/, $(addsuffix $(X), $(PROGRAMS)))
 
-
 clean distclean maintainer-clean:
 	rm -f $(addsuffix $(X), $(PROGRAMS)) $(addsuffix .o, $(PROGRAMS))
 	rm -f common.o dumputils.o kwlookup.o keywords.o print.o mbprint.o $(WIN32RES)
 	rm -f dumputils.c print.c mbprint.c kwlookup.c keywords.c
-
+	rm -rf tmp_check
 
 check: all
 	$(prove_check)
