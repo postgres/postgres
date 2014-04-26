@@ -4889,15 +4889,16 @@ BootStrapXLOG(void)
 	 * field, as being about as unique as we can easily get.  (Think not to
 	 * use random(), since it hasn't been seeded and there's no portable way
 	 * to seed it other than the system clock value...)  The upper half of the
-	 * uint64 value is just the tv_sec part, while the lower half is the XOR
-	 * of tv_sec and tv_usec.  This is to ensure that we don't lose uniqueness
-	 * unnecessarily if "uint64" is really only 32 bits wide.  A person
-	 * knowing this encoding can determine the initialization time of the
-	 * installation, which could perhaps be useful sometimes.
+	 * uint64 value is just the tv_sec part, while the lower half contains the
+	 * tv_usec part (which must fit in 20 bits), plus 12 bits from our current
+	 * PID for a little extra uniqueness.  A person knowing this encoding can
+	 * determine the initialization time of the installation, which could
+	 * perhaps be useful sometimes.
 	 */
 	gettimeofday(&tv, NULL);
 	sysidentifier = ((uint64) tv.tv_sec) << 32;
-	sysidentifier |= (uint32) (tv.tv_sec | tv.tv_usec);
+	sysidentifier |= ((uint64) tv.tv_usec) << 12;
+	sysidentifier |= getpid() & 0xFFF;
 
 	/* First timeline ID is always 1 */
 	ThisTimeLineID = 1;
