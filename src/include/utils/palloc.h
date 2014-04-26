@@ -35,12 +35,10 @@
  */
 typedef struct MemoryContextData *MemoryContext;
 
-#ifndef FRONTEND
-
 /*
  * CurrentMemoryContext is the default allocation context for palloc().
- * We declare it here so that palloc() can be a macro.	Avoid accessing it
- * directly!  Instead, use MemoryContextSwitchTo() to change the setting.
+ * Avoid accessing it directly!  Instead, use MemoryContextSwitchTo()
+ * to change the setting.
  */
 extern PGDLLIMPORT MemoryContext CurrentMemoryContext;
 
@@ -50,6 +48,11 @@ extern PGDLLIMPORT MemoryContext CurrentMemoryContext;
 extern void *MemoryContextAlloc(MemoryContext context, Size size);
 extern void *MemoryContextAllocZero(MemoryContext context, Size size);
 extern void *MemoryContextAllocZeroAligned(MemoryContext context, Size size);
+
+extern void *palloc(Size size);
+extern void *palloc0(Size size);
+extern void *repalloc(void *pointer, Size size);
+extern void pfree(void *pointer);
 
 /*
  * The result of palloc() is always word-aligned, so we can skip testing
@@ -89,13 +92,8 @@ MemoryContextSwitchTo(MemoryContext context)
  * allocated in a context, not with malloc().
  */
 extern char *MemoryContextStrdup(MemoryContext context, const char *string);
-#endif   /* !FRONTEND */
 
 extern char *pstrdup(const char *in);
 extern char *pnstrdup(const char *in, Size len);
-extern void *palloc(Size size);
-extern void *palloc0(Size size);
-extern void pfree(void *pointer);
-extern void *repalloc(void *pointer, Size size);
 
 #endif   /* PALLOC_H */
