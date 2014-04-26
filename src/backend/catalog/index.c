@@ -389,7 +389,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 			to->attalign = typeTup->typalign;
 			to->attstattarget = -1;
 			to->attcacheoff = -1;
-			to->atttypmod = -1;
+			to->atttypmod = exprTypmod(indexkey);
 			to->attislocal = true;
 			to->attcollation = collationObjectId[i];
 
