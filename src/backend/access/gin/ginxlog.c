@@ -587,6 +587,11 @@ ginRedoInsertListPage(XLogRecPtr lsn, XLogRecord *record)
 				tupsize;
 	IndexTuple	tuples = (IndexTuple) (XLogRecGetData(record) + sizeof(ginxlogInsertListPage));
 
+	/*
+	 * If we have a full-page image, we're done.  (As the code stands, we
+	 * never create full-page images, but we used to.  Cope if we're
+	 * reading WAL generated with an older minor version.)
+	 */
 	if (record->xl_info & XLR_BKP_BLOCK_1)
 		return;
 
@@ -617,6 +622,7 @@ ginRedoInsertListPage(XLogRecPtr lsn, XLogRecord *record)
 			elog(ERROR, "failed to add item to index page");
 
 		tuples = (IndexTuple) (((char *) tuples) + tupsize);
+		off++;
 	}
 
 	PageSetLSN(page, lsn);
