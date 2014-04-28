@@ -1161,6 +1161,7 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 	struct lineptr *hlineptr,
 			   *dlineptr;
 	bool		is_pager = false;
+	int			output_columns = 0;		/* Width of interactive console */
 
 	if (cancel_pressed)
 		return;
@@ -1234,24 +1235,86 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 			fprintf(fout, "%s\n", cont->title);
 	}
 
+	/*
+	 * Choose target output width: \pset columns, or $COLUMNS, or ioctl
+	 */
+	if (cont->opt->columns > 0)
+		output_columns = cont->opt->columns;
+	else if ((fout == stdout && isatty(fileno(stdout))) || is_pager)
+	{
+		if (cont->opt->env_columns > 0)
+			output_columns = cont->opt->env_columns;
+#ifdef TIOCGWINSZ
+		else
+		{
+			struct winsize screen_size;
+
+			if (ioctl(fileno(stdout), TIOCGWINSZ, &screen_size) != -1)
+				output_columns = screen_size.ws_col;
+		}
+#endif
+	}
+
+	if (cont->opt->format == PRINT_WRAPPED)
+	{
+		/* Calculate the available width to wrap the columns to after
+		 * subtracting the maximum header width and separators. At a minimum
+		 * enough to print "[ RECORD N ]" */
+		unsigned int width, swidth;
+
+		if (opt_border == 0)
+			swidth = 1; /* "header data" */
+		else if (opt_border == 1)
+			swidth = 3; /* "header | data" */
+		else if (opt_border > 1)
+			swidth = 7; /* "| header | data |" */
+
+		/* Wrap to maximum width */
+		width = dwidth + swidth + hwidth;
+		if ((output_columns > 0) && (width > output_columns))
+		{
+			dwidth = output_columns - hwidth - swidth;
+			width = output_columns;
+		}
+
+		/* Wrap to minimum width */
+		if (!opt_tuples_only)
+		{
+			int delta = 1 + log10(cont->nrows) - width;
+			if (opt_border == 0)
+				delta += 6; /* "* RECORD " */
+			else if (opt_border == 1)
+				delta += 10; /* "-[ RECORD  ]" */
+			else if (opt_border == 2)
+				delta += 15; /* "+-[ RECORD  ]-+" */
+
+			if (delta > 0)
+				dwidth += delta;
+		}
+		else if (dwidth < 3)
+			dwidth = 3;
+	}
+
 	/* print records */
 	for (i = 0, ptr = cont->cells; *ptr; i++, ptr++)
 	{
 		printTextRule pos;
-		int			line_count,
+		int			dline,
+					hline,
 					dcomplete,
-					hcomplete;
+					hcomplete,
+					offset,
+					chars_to_output;
 
 		if (cancel_pressed)
 			break;
 
 		if (i == 0)
 			pos = PRINT_RULE_TOP;
-		else if (!(*(ptr + 1)))
-			pos = PRINT_RULE_BOTTOM;
 		else
 			pos = PRINT_RULE_MIDDLE;
 
+		/* Print record header (e.g. "[ RECORD N ]") above each record */
 		if (i % cont->ncolumns == 0)
 		{
 			if (!opt_tuples_only)
@@ -1270,48 +1333,120 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 		pg_wcsformat((const unsigned char *) *ptr, strlen(*ptr), encoding,
 					 dlineptr, dheight);
 
-		line_count = 0;
+		/* Loop through header and data in parallel dealing with newlines and
+		 * wrapped lines until they're both exhausted */
+		dline = hline = 0;
 		dcomplete = hcomplete = 0;
+		offset = 0;
+		chars_to_output = dlineptr[dline].width;
 		while (!dcomplete || !hcomplete)
 		{
+			/* Left border */
 			if (opt_border == 2)
-				fprintf(fout, "%s ", dformat->leftvrule);
+				fprintf(fout, "%s", dformat->leftvrule);
+
+			/* Header (never wrapped so just need to deal with newlines) */
 			if (!hcomplete)
 			{
-				fprintf(fout, "%-s%*s", hlineptr[line_count].ptr,
-						hwidth - hlineptr[line_count].width, "");
+				int swidth, twidth = hwidth + 1;
+				fputs(hline? format->header_nl_left: " ", fout);
+				strlen_max_width((char *) hlineptr[hline].ptr, &twidth,
+								 encoding);
+				fprintf(fout, "%-s", hlineptr[hline].ptr);
 
-				if (!hlineptr[line_count + 1].ptr)
+				swidth = hwidth - twidth;
+				if (swidth > 0) /* spacer */
+					fprintf(fout, "%*s", swidth, " ");
+
+				if (hlineptr[hline + 1].ptr)
+				{
+					/* More lines after this one due to a newline */
+					fputs(format->header_nl_right, fout);
+					hline++;
+				} 
+				else 
+				{
+					/* This was the last line of the header */
+					fputs(" ", fout);
 					hcomplete = 1;
+				}
 			}
 			else
-				fprintf(fout, "%*s", hwidth, "");
+			{
+				/* Header exhausted but more data for column */
+				fprintf(fout, "%*s", hwidth + 2, "");
+			}
 
+			/* Separator */
 			if (opt_border > 0)
-				fprintf(fout, " %s ", dformat->midvrule);
-			else
-				fputc(' ', fout);
+			{
+				if (offset)
+					fputs(format->midvrule_wrap, fout);
+				else if (!dline)
+					fputs(dformat->midvrule, fout);
+				else if (dline)
+					fputs(format->midvrule_nl, fout);
+				else
+					fputs(format->midvrule_blank, fout);
+			}
 
+			/* Data */
 			if (!dcomplete)
 			{
-				if (opt_border < 2)
-					fprintf(fout, "%s\n", dlineptr[line_count].ptr);
-				else
-					fprintf(fout, "%-s%*s %s\n", dlineptr[line_count].ptr,
-							dwidth - dlineptr[line_count].width, "",
-							dformat->rightvrule);
+				int target_width,
+					bytes_to_output,
+					swidth;
 
-				if (!dlineptr[line_count + 1].ptr)
+				fputs(!dcomplete && !offset? " ": format->wrap_left, fout);
+
+				target_width = dwidth;
+				bytes_to_output = strlen_max_width(dlineptr[dline].ptr + offset,
+												   &target_width, encoding);
+				fputnbytes(fout, (char *)(dlineptr[dline].ptr + offset),
+						   bytes_to_output);
+
+				chars_to_output -= target_width;
+				offset += bytes_to_output;
+
+				/* spacer */
+				swidth = dwidth - target_width;
+				if (swidth > 0)
+					fprintf(fout, "%*s", swidth, "");
+
+				if (chars_to_output)
+				{
+					/* continuing a wrapped column */
+					fputs(format->wrap_right, fout);
+				}
+				else if (dlineptr[dline + 1].ptr)
+				{
+					/* reached a newline in the column */
+					fputs(format->nl_right, fout);
+					dline++;
+					offset = 0;
+					chars_to_output = dlineptr[dline].width;
+				}
+				else
+				{
+					/* reached the end of the cell */
+					fputs(" ", fout);
 					dcomplete = 1;
+				}
+
+				if (opt_border == 2)
+					fputs(dformat->rightvrule, fout);
+
+				fputs("\n", fout);
 			}
 			else
 			{
+				/* data exhausted (this can occur if header is longer than the
+				 * data due to newlines in the header) */
 				if (opt_border < 2)
-					fputc('\n', fout);
+					fputs("\n", fout);
 				else
-					fprintf(fout, "%*s %s\n", dwidth, "", dformat->rightvrule);
+					fprintf(fout, "%*s  %s\n", dwidth, "", dformat->rightvrule);
 			}
-			line_count++;
 		}
 	}
 
