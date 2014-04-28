@@ -814,12 +814,10 @@ ginRedoInsertListPage(XLogRecPtr lsn, XLogRecord *record)
 				tupsize;
 	IndexTuple	tuples = (IndexTuple) (XLogRecGetData(record) + sizeof(ginxlogInsertListPage));
 
-	/* If we have a full-page image, restore it and we're done */
-	if (record->xl_info & XLR_BKP_BLOCK(0))
-	{
-		(void) RestoreBackupBlock(lsn, record, 0, false, false);
-		return;
-	}
+	/*
+	 * Backup blocks are not used, we always re-initialize the page.
+	 */
+	Assert(!(record->xl_info & XLR_BKP_BLOCK_MASK));
 
 	buffer = XLogReadBuffer(data->node, data->blkno, true);
 	Assert(BufferIsValid(buffer));
@@ -848,6 +846,7 @@ ginRedoInsertListPage(XLogRecPtr lsn, XLogRecord *record)
 			elog(ERROR, "failed to add item to index page");
 
 		tuples = (IndexTuple) (((char *) tuples) + tupsize);
+		off++;
 	}
 
 	PageSetLSN(page, lsn);
