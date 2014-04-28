@@ -720,7 +720,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">type</replaceable></term>
+      <term><replaceable class="PARAMETER">data_type</replaceable></term>
       <listitem>
        <para>
         Data type of the new column, or new data type for an existing
@@ -805,7 +805,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
       <term><replaceable class="PARAMETER">index_name</replaceable></term>
       <listitem>
        <para>
-        The index name on which the table should be marked for clustering.
+        The name of an existing index.
        </para>
       </listitem>
      </varlistentry>
