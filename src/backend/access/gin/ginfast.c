@@ -120,8 +120,7 @@ writeListPage(Relation index, Buffer buffer,
 		rdata[0].len = sizeof(ginxlogInsertListPage);
 		rdata[0].next = rdata + 1;
 
-		rdata[1].buffer = buffer;
-		rdata[1].buffer_std = true;
+		rdata[1].buffer = InvalidBuffer;
 		rdata[1].data = workspace;
 		rdata[1].len = size;
 		rdata[1].next = NULL;
