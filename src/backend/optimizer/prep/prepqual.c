@@ -293,7 +293,7 @@ canonicalize_qual(Expr *qual)
 	/*
 	 * Pull up redundant subclauses in OR-of-AND trees.  We do this only
 	 * within the top-level AND/OR structure; there's no point in looking
-	 * deeper.
+	 * deeper.	Also remove any NULL constants in the top-level structure.
 	 */
 	newqual = find_duplicate_ors(qual);
 
@@ -393,6 +393,13 @@ pull_ors(List *orlist)
  *	  OR clauses to which the inverse OR distributive law might apply.
  *	  Only the top-level AND/OR structure is searched.
  *
+ * While at it, we remove any NULL constants within the top-level AND/OR
+ * structure, eg "x OR NULL::boolean" is reduced to "x".  In general that
+ * would change the result, so eval_const_expressions can't do it; but at
+ * top level of WHERE, we don't need to distinguish between FALSE and NULL
+ * results, so it's valid to treat NULL::boolean the same as FALSE and then
+ * simplify AND/OR accordingly.
+ *
  * Returns the modified qualification.	AND/OR flatness is preserved.
  */
 static Expr *
@@ -405,12 +412,30 @@ find_duplicate_ors(Expr *qual)
 
 		/* Recurse */
 		foreach(temp, ((BoolExpr *) qual)->args)
-			orlist = lappend(orlist, find_duplicate_ors(lfirst(temp)));
+		{
+			Expr	   *arg = (Expr *) lfirst(temp);
 
-		/*
-		 * Don't need pull_ors() since this routine will never introduce an OR
-		 * where there wasn't one before.
-		 */
+			arg = find_duplicate_ors(arg);
+
+			/* Get rid of any constant inputs */
+			if (arg && IsA(arg, Const))
+			{
+				Const	   *carg = (Const *) arg;
+
+				/* Drop constant FALSE or NULL */
+				if (carg->constisnull || !DatumGetBool(carg->constvalue))
+					continue;
+				/* constant TRUE, so OR reduces to TRUE */
+				return arg;
+			}
+
+			orlist = lappend(orlist, arg);
+		}
+
+		/* Flatten any ORs pulled up to just below here */
+		orlist = pull_ors(orlist);
+
+		/* Now we can look for duplicate ORs */
 		return process_duplicate_ors(orlist);
 	}
 	else if (and_clause((Node *) qual))
@@ -420,10 +445,38 @@ find_duplicate_ors(Expr *qual)
 
 		/* Recurse */
 		foreach(temp, ((BoolExpr *) qual)->args)
-			andlist = lappend(andlist, find_duplicate_ors(lfirst(temp)));
+		{
+			Expr	   *arg = (Expr *) lfirst(temp);
+
+			arg = find_duplicate_ors(arg);
+
+			/* Get rid of any constant inputs */
+			if (arg && IsA(arg, Const))
+			{
+				Const	   *carg = (Const *) arg;
+
+				/* Drop constant TRUE */
+				if (!carg->constisnull && DatumGetBool(carg->constvalue))
+					continue;
+				/* constant FALSE or NULL, so AND reduces to FALSE */
+				return (Expr *) makeBoolConst(false, false);
+			}
+
+			andlist = lappend(andlist, arg);
+		}
+
 		/* Flatten any ANDs introduced just below here */
 		andlist = pull_ands(andlist);
-		/* The AND list can't get shorter, so result is always an AND */
+
+		/* AND of no inputs reduces to TRUE */
+		if (andlist == NIL)
+			return (Expr *) makeBoolConst(true, false);
+
+		/* Single-expression AND just reduces to that expression */
+		if (list_length(andlist) == 1)
+			return (Expr *) linitial(andlist);
+
+		/* Else we still need an AND node */
 		return make_andclause(andlist);
 	}
 	else
@@ -447,11 +500,13 @@ process_duplicate_ors(List *orlist)
 	List	   *neworlist;
 	ListCell   *temp;
 
+	/* OR of no inputs reduces to FALSE */
 	if (orlist == NIL)
-		return NULL;			/* probably can't happen */
-	if (list_length(orlist) == 1)		/* single-expression OR (can this
-										 * happen?) */
-		return linitial(orlist);
+		return (Expr *) makeBoolConst(false, false);
+
+	/* Single-expression OR just reduces to that expression */
+	if (list_length(orlist) == 1)
+		return (Expr *) linitial(orlist);
 
 	/*
 	 * Choose the shortest AND clause as the reference list --- obviously, any

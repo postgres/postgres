@@ -2741,3 +2741,14 @@ ORDER BY thousand;
         1 |     1001
 (2 rows)
 
+--
+-- Check elimination of constant-NULL subexpressions
+--
+explain (costs off)
+  select * from tenk1 where (thousand, tenthous) in ((1,1001), (null,null));
+                      QUERY PLAN                      
+------------------------------------------------------
+ Index Scan using tenk1_thous_tenthous on tenk1
+   Index Cond: ((thousand = 1) AND (tenthous = 1001))
+(2 rows)
+
