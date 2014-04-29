@@ -1350,7 +1350,7 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 			{
 				int swidth, twidth = hwidth + 1;
 				fputs(hline? format->header_nl_left: " ", fout);
-				strlen_max_width((char *) hlineptr[hline].ptr, &twidth,
+				strlen_max_width(hlineptr[hline].ptr, &twidth,
 								 encoding);
 				fprintf(fout, "%-s", hlineptr[hline].ptr);
 
