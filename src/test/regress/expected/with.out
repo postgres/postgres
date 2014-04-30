@@ -300,48 +300,48 @@ SELECT * FROM vsubdepartment ORDER BY name;
 
 -- Check reverse listing
 SELECT pg_get_viewdef('vsubdepartment'::regclass);
-                    pg_get_viewdef                     
--------------------------------------------------------
-  WITH RECURSIVE subdepartment AS (                   +
-                  SELECT department.id,               +
-                     department.parent_department,    +
-                     department.name                  +
-                    FROM department                   +
-                   WHERE (department.name = 'A'::text)+
-         UNION ALL                                    +
-                  SELECT d.id,                        +
-                     d.parent_department,             +
-                     d.name                           +
-                    FROM department d,                +
-                     subdepartment sd                 +
-                   WHERE (d.parent_department = sd.id)+
-         )                                            +
-  SELECT subdepartment.id,                            +
-     subdepartment.parent_department,                 +
-     subdepartment.name                               +
+                pg_get_viewdef                 
+-----------------------------------------------
+  WITH RECURSIVE subdepartment AS (           +
+          SELECT department.id,               +
+             department.parent_department,    +
+             department.name                  +
+            FROM department                   +
+           WHERE (department.name = 'A'::text)+
+         UNION ALL                            +
+          SELECT d.id,                        +
+             d.parent_department,             +
+             d.name                           +
+            FROM department d,                +
+             subdepartment sd                 +
+           WHERE (d.parent_department = sd.id)+
+         )                                    +
+  SELECT subdepartment.id,                    +
+     subdepartment.parent_department,         +
+     subdepartment.name                       +
     FROM subdepartment;
 (1 row)
 
 SELECT pg_get_viewdef('vsubdepartment'::regclass, true);
-                   pg_get_viewdef                    
------------------------------------------------------
-  WITH RECURSIVE subdepartment AS (                 +
-                  SELECT department.id,             +
-                     department.parent_department,  +
-                     department.name                +
-                    FROM department                 +
-                   WHERE department.name = 'A'::text+
-         UNION ALL                                  +
-                  SELECT d.id,                      +
-                     d.parent_department,           +
-                     d.name                         +
-                    FROM department d,              +
-                     subdepartment sd               +
-                   WHERE d.parent_department = sd.id+
-         )                                          +
-  SELECT subdepartment.id,                          +
-     subdepartment.parent_department,               +
-     subdepartment.name                             +
+               pg_get_viewdef                
+---------------------------------------------
+  WITH RECURSIVE subdepartment AS (         +
+          SELECT department.id,             +
+             department.parent_department,  +
+             department.name                +
+            FROM department                 +
+           WHERE department.name = 'A'::text+
+         UNION ALL                          +
+          SELECT d.id,                      +
+             d.parent_department,           +
+             d.name                         +
+            FROM department d,              +
+             subdepartment sd               +
+           WHERE d.parent_department = sd.id+
+         )                                  +
+  SELECT subdepartment.id,                  +
+     subdepartment.parent_department,       +
+     subdepartment.name                     +
     FROM subdepartment;
 (1 row)
 
@@ -360,11 +360,11 @@ SELECT sum(n) FROM t;
  sum    | bigint |           | plain   | 
 View definition:
  WITH RECURSIVE t(n) AS (
-                 VALUES (1)
+         VALUES (1)
         UNION ALL
-                 SELECT t_1.n + 1
-                   FROM t t_1
-                  WHERE t_1.n < 100
+         SELECT t_1.n + 1
+           FROM t t_1
+          WHERE t_1.n < 100
         )
  SELECT sum(t.n) AS sum
    FROM t;
