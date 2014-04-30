@@ -1355,14 +1355,17 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 						change->data.tp.oldtuple == NULL)
 						continue;
 					else if (reloid == InvalidOid)
-						elog(ERROR, "could not lookup relation %s",
-							 relpathperm(change->data.tp.relnode, MAIN_FORKNUM));
+						elog(ERROR, "could not map filenode \"%s\" to relation OID",
+							 relpathperm(change->data.tp.relnode,
+										 MAIN_FORKNUM));
 
 					relation = RelationIdGetRelation(reloid);
 
 					if (relation == NULL)
-						elog(ERROR, "could open relation descriptor %s",
-							 relpathperm(change->data.tp.relnode, MAIN_FORKNUM));
+						elog(ERROR, "could not open relation with OID %u (for filenode \"%s\")",
+							 reloid,
+							 relpathperm(change->data.tp.relnode,
+										 MAIN_FORKNUM));
 
 					if (RelationIsLogicallyLogged(relation))
 					{
@@ -1475,7 +1478,7 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 
 		/* this is just a sanity check against bad output plugin behaviour */
 		if (GetCurrentTransactionIdIfAny() != InvalidTransactionId)
-			elog(ERROR, "output plugin used xid %u",
+			elog(ERROR, "output plugin used XID %u",
 				 GetCurrentTransactionId());
 
 		/* make sure there's no cache pollution */
@@ -1903,7 +1906,7 @@ ReorderBufferSerializeTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
 	Size		spilled = 0;
 	char		path[MAXPGPATH];
 
-	elog(DEBUG2, "spill %u changes in tx %u to disk",
+	elog(DEBUG2, "spill %u changes in XID %u to disk",
 		 (uint32) txn->nentries_mem, txn->xid);
 
 	/* do the same to all child TXs */
@@ -2086,7 +2089,7 @@ ReorderBufferSerializeChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 		CloseTransientFile(fd);
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not write to xid %u's data file: %m",
+				 errmsg("could not write to data file for XID %u: %m",
 						txn->xid)));
 	}
 
@@ -2189,7 +2192,7 @@ ReorderBufferRestoreChanges(ReorderBuffer *rb, ReorderBufferTXN *txn,
 		else if (readBytes != sizeof(ReorderBufferDiskChange))
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("incomplete read from reorderbuffer spill file: read %d instead of %u",
+					 errmsg("incomplete read from reorderbuffer spill file: read %d instead of %u bytes",
 							readBytes,
 							(uint32) sizeof(ReorderBufferDiskChange))));
 
@@ -2209,7 +2212,7 @@ ReorderBufferRestoreChanges(ReorderBuffer *rb, ReorderBufferTXN *txn,
 		else if (readBytes != ondisk->size - sizeof(ReorderBufferDiskChange))
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not read from reorderbuffer spill file: read %d instead of %u",
+					 errmsg("could not read from reorderbuffer spill file: read %d instead of %u bytes",
 							readBytes,
 							(uint32) (ondisk->size - sizeof(ReorderBufferDiskChange)))));
 
@@ -2815,7 +2818,7 @@ ApplyLogicalMappingFile(HTAB *tuplecid_data, Oid relid, const char *fname)
 		else if (readBytes != sizeof(LogicalRewriteMappingData))
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not read file \"%s\", read %d instead of %d",
+					 errmsg("could not read from file \"%s\": read %d instead of %d bytes",
 							path, readBytes,
 							(int32) sizeof(LogicalRewriteMappingData))));
 
@@ -2928,7 +2931,7 @@ UpdateLogicalMappings(HTAB *tuplecid_data, Oid relid, Snapshot snapshot)
 		if (sscanf(mapping_de->d_name, LOGICAL_REWRITE_FORMAT,
 				   &f_dboid, &f_relid, &f_hi, &f_lo,
 				   &f_mapped_xid, &f_create_xid) != 6)
-			elog(ERROR, "could not parse fname %s", mapping_de->d_name);
+			elog(ERROR, "could not parse filename \"%s\"", mapping_de->d_name);
 
 		f_lsn = ((uint64) f_hi) << 32 | f_lo;
 
@@ -2971,7 +2974,7 @@ UpdateLogicalMappings(HTAB *tuplecid_data, Oid relid, Snapshot snapshot)
 	for(off = 0; off < list_length(files); off++)
 	{
 		RewriteMappingFile *f = files_a[off];
-		elog(DEBUG1, "applying mapping: %s in %u", f->fname,
+		elog(DEBUG1, "applying mapping: \"%s\" in %u", f->fname,
 			snapshot->subxip[0]);
 		ApplyLogicalMappingFile(tuplecid_data, relid, f->fname);
 		pfree(f);
