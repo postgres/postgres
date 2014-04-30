@@ -85,14 +85,14 @@ select * from vw_ord;
 (1 row)
 
 select definition from pg_views where viewname='vw_ord';
-                            definition                             
--------------------------------------------------------------------
-  SELECT v.n,                                                     +
-     z.a,                                                         +
-     z.b,                                                         +
-     z.ord                                                        +
-    FROM (( VALUES (1)) v(n)                                      +
-    JOIN foot(1) WITH ORDINALITY z(a, b, ord) ON ((v.n = z.ord)));
+                             definition                              
+---------------------------------------------------------------------
+  SELECT v.n,                                                       +
+     z.a,                                                           +
+     z.b,                                                           +
+     z.ord                                                          +
+    FROM (( VALUES (1)) v(n)                                        +
+      JOIN foot(1) WITH ORDINALITY z(a, b, ord) ON ((v.n = z.ord)));
 (1 row)
 
 drop view vw_ord;
@@ -112,16 +112,16 @@ select * from vw_ord;
 (1 row)
 
 select definition from pg_views where viewname='vw_ord';
-                                         definition                                          
----------------------------------------------------------------------------------------------
-  SELECT v.n,                                                                               +
-     z.a,                                                                                   +
-     z.b,                                                                                   +
-     z.c,                                                                                   +
-     z.d,                                                                                   +
-     z.ord                                                                                  +
-    FROM (( VALUES (1)) v(n)                                                                +
-    JOIN ROWS FROM(foot(1), foot(2)) WITH ORDINALITY z(a, b, c, d, ord) ON ((v.n = z.ord)));
+                                          definition                                           
+-----------------------------------------------------------------------------------------------
+  SELECT v.n,                                                                                 +
+     z.a,                                                                                     +
+     z.b,                                                                                     +
+     z.c,                                                                                     +
+     z.d,                                                                                     +
+     z.ord                                                                                    +
+    FROM (( VALUES (1)) v(n)                                                                  +
+      JOIN ROWS FROM(foot(1), foot(2)) WITH ORDINALITY z(a, b, c, d, ord) ON ((v.n = z.ord)));
 (1 row)
 
 drop view vw_ord;

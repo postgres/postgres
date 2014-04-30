@@ -1294,13 +1294,13 @@ pg_available_extension_versions| SELECT e.name,
     e.requires,
     e.comment
    FROM (pg_available_extension_versions() e(name, version, superuser, relocatable, schema, requires, comment)
-   LEFT JOIN pg_extension x ON (((e.name = x.extname) AND (e.version = x.extversion))));
+     LEFT JOIN pg_extension x ON (((e.name = x.extname) AND (e.version = x.extversion))));
 pg_available_extensions| SELECT e.name,
     e.default_version,
     x.extversion AS installed_version,
     e.comment
    FROM (pg_available_extensions() e(name, default_version, comment)
-   LEFT JOIN pg_extension x ON ((e.name = x.extname)));
+     LEFT JOIN pg_extension x ON ((e.name = x.extname)));
 pg_cursors| SELECT c.name,
     c.statement,
     c.is_holdable,
@@ -1321,10 +1321,10 @@ pg_indexes| SELECT n.nspname AS schemaname,
     t.spcname AS tablespace,
     pg_get_indexdef(i.oid) AS indexdef
    FROM ((((pg_index x
-   JOIN pg_class c ON ((c.oid = x.indrelid)))
-   JOIN pg_class i ON ((i.oid = x.indexrelid)))
-   LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
-   LEFT JOIN pg_tablespace t ON ((t.oid = i.reltablespace)))
+     JOIN pg_class c ON ((c.oid = x.indrelid)))
+     JOIN pg_class i ON ((i.oid = x.indexrelid)))
+     LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
+     LEFT JOIN pg_tablespace t ON ((t.oid = i.reltablespace)))
   WHERE ((c.relkind = ANY (ARRAY['r'::"char", 'm'::"char"])) AND (i.relkind = 'i'::"char"));
 pg_locks| SELECT l.locktype,
     l.database,
@@ -1350,8 +1350,8 @@ pg_matviews| SELECT n.nspname AS schemaname,
     c.relispopulated AS ispopulated,
     pg_get_viewdef(c.oid) AS definition
    FROM ((pg_class c
-   LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
-   LEFT JOIN pg_tablespace t ON ((t.oid = c.reltablespace)))
+     LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
+     LEFT JOIN pg_tablespace t ON ((t.oid = c.reltablespace)))
   WHERE (c.relkind = 'm'::"char");
 pg_prepared_statements| SELECT p.name,
     p.statement,
@@ -1365,8 +1365,8 @@ pg_prepared_xacts| SELECT p.transaction,
     u.rolname AS owner,
     d.datname AS database
    FROM ((pg_prepared_xact() p(transaction, gid, prepared, ownerid, dbid)
-   LEFT JOIN pg_authid u ON ((p.ownerid = u.oid)))
-   LEFT JOIN pg_database d ON ((p.dbid = d.oid)));
+     LEFT JOIN pg_authid u ON ((p.ownerid = u.oid)))
+     LEFT JOIN pg_database d ON ((p.dbid = d.oid)));
 pg_replication_slots| SELECT l.slot_name,
     l.plugin,
     l.slot_type,
@@ -1377,7 +1377,7 @@ pg_replication_slots| SELECT l.slot_name,
     l.catalog_xmin,
     l.restart_lsn
    FROM (pg_get_replication_slots() l(slot_name, plugin, slot_type, datoid, active, xmin, catalog_xmin, restart_lsn)
-   LEFT JOIN pg_database d ON ((l.datoid = d.oid)));
+     LEFT JOIN pg_database d ON ((l.datoid = d.oid)));
 pg_roles| SELECT pg_authid.rolname,
     pg_authid.rolsuper,
     pg_authid.rolinherit,
@@ -1392,14 +1392,14 @@ pg_roles| SELECT pg_authid.rolname,
     s.setconfig AS rolconfig,
     pg_authid.oid
    FROM (pg_authid
-   LEFT JOIN pg_db_role_setting s ON (((pg_authid.oid = s.setrole) AND (s.setdatabase = (0)::oid))));
+     LEFT JOIN pg_db_role_setting s ON (((pg_authid.oid = s.setrole) AND (s.setdatabase = (0)::oid))));
 pg_rules| SELECT n.nspname AS schemaname,
     c.relname AS tablename,
     r.rulename,
     pg_get_ruledef(r.oid) AS definition
    FROM ((pg_rewrite r
-   JOIN pg_class c ON ((c.oid = r.ev_class)))
-   LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
+     JOIN pg_class c ON ((c.oid = r.ev_class)))
+     LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
   WHERE (r.rulename <> '_RETURN'::name);
 pg_seclabels|        (        (        (        (        (        (        (        (        (         SELECT l.objoid,
                                                                                     l.classoid,
@@ -1420,9 +1420,9 @@ pg_seclabels|        (        (        (        (        (        (        (    
                                                                                     l.provider,
                                                                                     l.label
                                                                                    FROM ((pg_seclabel l
-                                                                              JOIN pg_class rel ON (((l.classoid = rel.tableoid) AND (l.objoid = rel.oid))))
-                                                                         JOIN pg_namespace nsp ON ((rel.relnamespace = nsp.oid)))
-                                                                        WHERE (l.objsubid = 0)
+                                                                                     JOIN pg_class rel ON (((l.classoid = rel.tableoid) AND (l.objoid = rel.oid))))
+                                                                                     JOIN pg_namespace nsp ON ((rel.relnamespace = nsp.oid)))
+                                                                                  WHERE (l.objsubid = 0)
                                                                         UNION ALL
                                                                                  SELECT l.objoid,
                                                                                     l.classoid,
@@ -1437,10 +1437,10 @@ pg_seclabels|        (        (        (        (        (        (        (    
                                                                                     l.provider,
                                                                                     l.label
                                                                                    FROM (((pg_seclabel l
-                                                                              JOIN pg_class rel ON (((l.classoid = rel.tableoid) AND (l.objoid = rel.oid))))
-                                                                         JOIN pg_attribute att ON (((rel.oid = att.attrelid) AND (l.objsubid = att.attnum))))
-                                                                    JOIN pg_namespace nsp ON ((rel.relnamespace = nsp.oid)))
-                                                                   WHERE (l.objsubid <> 0))
+                                                                                     JOIN pg_class rel ON (((l.classoid = rel.tableoid) AND (l.objoid = rel.oid))))
+                                                                                     JOIN pg_attribute att ON (((rel.oid = att.attrelid) AND (l.objsubid = att.attnum))))
+                                                                                     JOIN pg_namespace nsp ON ((rel.relnamespace = nsp.oid)))
+                                                                                  WHERE (l.objsubid <> 0))
                                                                 UNION ALL
                                                                          SELECT l.objoid,
                                                                             l.classoid,
@@ -1459,9 +1459,9 @@ pg_seclabels|        (        (        (        (        (        (        (    
                                                                             l.provider,
                                                                             l.label
                                                                            FROM ((pg_seclabel l
-                                                                      JOIN pg_proc pro ON (((l.classoid = pro.tableoid) AND (l.objoid = pro.oid))))
-                                                                 JOIN pg_namespace nsp ON ((pro.pronamespace = nsp.oid)))
-                                                                WHERE (l.objsubid = 0))
+                                                                             JOIN pg_proc pro ON (((l.classoid = pro.tableoid) AND (l.objoid = pro.oid))))
+                                                                             JOIN pg_namespace nsp ON ((pro.pronamespace = nsp.oid)))
+                                                                          WHERE (l.objsubid = 0))
                                                         UNION ALL
                                                                  SELECT l.objoid,
                                                                     l.classoid,
@@ -1478,9 +1478,9 @@ pg_seclabels|        (        (        (        (        (        (        (    
                                                                     l.provider,
                                                                     l.label
                                                                    FROM ((pg_seclabel l
-                                                              JOIN pg_type typ ON (((l.classoid = typ.tableoid) AND (l.objoid = typ.oid))))
-                                                         JOIN pg_namespace nsp ON ((typ.typnamespace = nsp.oid)))
-                                                        WHERE (l.objsubid = 0))
+                                                                     JOIN pg_type typ ON (((l.classoid = typ.tableoid) AND (l.objoid = typ.oid))))
+                                                                     JOIN pg_namespace nsp ON ((typ.typnamespace = nsp.oid)))
+                                                                  WHERE (l.objsubid = 0))
                                                 UNION ALL
                                                          SELECT l.objoid,
                                                             l.classoid,
@@ -1491,8 +1491,8 @@ pg_seclabels|        (        (        (        (        (        (        (    
                                                             l.provider,
                                                             l.label
                                                            FROM (pg_seclabel l
-                                                      JOIN pg_largeobject_metadata lom ON ((l.objoid = lom.oid)))
-                                                     WHERE ((l.classoid = ('pg_largeobject'::regclass)::oid) AND (l.objsubid = 0)))
+                                                             JOIN pg_largeobject_metadata lom ON ((l.objoid = lom.oid)))
+                                                          WHERE ((l.classoid = ('pg_largeobject'::regclass)::oid) AND (l.objsubid = 0)))
                                         UNION ALL
                                                  SELECT l.objoid,
                                                     l.classoid,
@@ -1503,8 +1503,8 @@ pg_seclabels|        (        (        (        (        (        (        (    
                                                     l.provider,
                                                     l.label
                                                    FROM (pg_seclabel l
-                                              JOIN pg_language lan ON (((l.classoid = lan.tableoid) AND (l.objoid = lan.oid))))
-                                             WHERE (l.objsubid = 0))
+                                                     JOIN pg_language lan ON (((l.classoid = lan.tableoid) AND (l.objoid = lan.oid))))
+                                                  WHERE (l.objsubid = 0))
                                 UNION ALL
                                          SELECT l.objoid,
                                             l.classoid,
@@ -1515,8 +1515,8 @@ pg_seclabels|        (        (        (        (        (        (        (    
                                             l.provider,
                                             l.label
                                            FROM (pg_seclabel l
-                                      JOIN pg_namespace nsp ON (((l.classoid = nsp.tableoid) AND (l.objoid = nsp.oid))))
-                                     WHERE (l.objsubid = 0))
+                                             JOIN pg_namespace nsp ON (((l.classoid = nsp.tableoid) AND (l.objoid = nsp.oid))))
+                                          WHERE (l.objsubid = 0))
                         UNION ALL
                                  SELECT l.objoid,
                                     l.classoid,
@@ -1527,8 +1527,8 @@ pg_seclabels|        (        (        (        (        (        (        (    
                                     l.provider,
                                     l.label
                                    FROM (pg_seclabel l
-                              JOIN pg_event_trigger evt ON (((l.classoid = evt.tableoid) AND (l.objoid = evt.oid))))
-                             WHERE (l.objsubid = 0))
+                                     JOIN pg_event_trigger evt ON (((l.classoid = evt.tableoid) AND (l.objoid = evt.oid))))
+                                  WHERE (l.objsubid = 0))
                 UNION ALL
                          SELECT l.objoid,
                             l.classoid,
@@ -1539,7 +1539,7 @@ pg_seclabels|        (        (        (        (        (        (        (    
                             l.provider,
                             l.label
                            FROM (pg_shseclabel l
-                      JOIN pg_database dat ON (((l.classoid = dat.tableoid) AND (l.objoid = dat.oid)))))
+                             JOIN pg_database dat ON (((l.classoid = dat.tableoid) AND (l.objoid = dat.oid)))))
         UNION ALL
                  SELECT l.objoid,
                     l.classoid,
@@ -1550,7 +1550,7 @@ pg_seclabels|        (        (        (        (        (        (        (    
                     l.provider,
                     l.label
                    FROM (pg_shseclabel l
-              JOIN pg_tablespace spc ON (((l.classoid = spc.tableoid) AND (l.objoid = spc.oid)))))
+                     JOIN pg_tablespace spc ON (((l.classoid = spc.tableoid) AND (l.objoid = spc.oid)))))
 UNION ALL
          SELECT l.objoid,
             l.classoid,
@@ -1561,7 +1561,7 @@ UNION ALL
             l.provider,
             l.label
            FROM (pg_shseclabel l
-      JOIN pg_authid rol ON (((l.classoid = rol.tableoid) AND (l.objoid = rol.oid))));
+             JOIN pg_authid rol ON (((l.classoid = rol.tableoid) AND (l.objoid = rol.oid))));
 pg_settings| SELECT a.name,
     a.setting,
     a.unit,
@@ -1589,7 +1589,7 @@ pg_shadow| SELECT pg_authid.rolname AS usename,
     (pg_authid.rolvaliduntil)::abstime AS valuntil,
     s.setconfig AS useconfig
    FROM (pg_authid
-   LEFT JOIN pg_db_role_setting s ON (((pg_authid.oid = s.setrole) AND (s.setdatabase = (0)::oid))))
+     LEFT JOIN pg_db_role_setting s ON (((pg_authid.oid = s.setrole) AND (s.setdatabase = (0)::oid))))
   WHERE pg_authid.rolcanlogin;
 pg_stat_activity| SELECT s.datid,
     d.datname,
@@ -1622,9 +1622,9 @@ pg_stat_all_indexes| SELECT c.oid AS relid,
     pg_stat_get_tuples_returned(i.oid) AS idx_tup_read,
     pg_stat_get_tuples_fetched(i.oid) AS idx_tup_fetch
    FROM (((pg_class c
-   JOIN pg_index x ON ((c.oid = x.indrelid)))
-   JOIN pg_class i ON ((i.oid = x.indexrelid)))
-   LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
+     JOIN pg_index x ON ((c.oid = x.indrelid)))
+     JOIN pg_class i ON ((i.oid = x.indexrelid)))
+     LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
   WHERE (c.relkind = ANY (ARRAY['r'::"char", 't'::"char", 'm'::"char"]));
 pg_stat_all_tables| SELECT c.oid AS relid,
     n.nspname AS schemaname,
@@ -1649,8 +1649,8 @@ pg_stat_all_tables| SELECT c.oid AS relid,
     pg_stat_get_analyze_count(c.oid) AS analyze_count,
     pg_stat_get_autoanalyze_count(c.oid) AS autoanalyze_count
    FROM ((pg_class c
-   LEFT JOIN pg_index i ON ((c.oid = i.indrelid)))
-   LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
+     LEFT JOIN pg_index i ON ((c.oid = i.indrelid)))
+     LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
   WHERE (c.relkind = ANY (ARRAY['r'::"char", 't'::"char", 'm'::"char"]))
   GROUP BY c.oid, n.nspname, c.relname;
 pg_stat_archiver| SELECT s.archived_count,
@@ -1761,7 +1761,7 @@ pg_stat_user_functions| SELECT p.oid AS funcid,
     pg_stat_get_function_total_time(p.oid) AS total_time,
     pg_stat_get_function_self_time(p.oid) AS self_time
    FROM (pg_proc p
-   LEFT JOIN pg_namespace n ON ((n.oid = p.pronamespace)))
+     LEFT JOIN pg_namespace n ON ((n.oid = p.pronamespace)))
   WHERE ((p.prolang <> (12)::oid) AND (pg_stat_get_function_calls(p.oid) IS NOT NULL));
 pg_stat_user_indexes| SELECT pg_stat_all_indexes.relid,
     pg_stat_all_indexes.indexrelid,
@@ -1809,8 +1809,8 @@ pg_stat_xact_all_tables| SELECT c.oid AS relid,
     pg_stat_get_xact_tuples_deleted(c.oid) AS n_tup_del,
     pg_stat_get_xact_tuples_hot_updated(c.oid) AS n_tup_hot_upd
    FROM ((pg_class c
-   LEFT JOIN pg_index i ON ((c.oid = i.indrelid)))
-   LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
+     LEFT JOIN pg_index i ON ((c.oid = i.indrelid)))
+     LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
   WHERE (c.relkind = ANY (ARRAY['r'::"char", 't'::"char", 'm'::"char"]))
   GROUP BY c.oid, n.nspname, c.relname;
 pg_stat_xact_sys_tables| SELECT pg_stat_xact_all_tables.relid,
@@ -1833,7 +1833,7 @@ pg_stat_xact_user_functions| SELECT p.oid AS funcid,
     pg_stat_get_xact_function_total_time(p.oid) AS total_time,
     pg_stat_get_xact_function_self_time(p.oid) AS self_time
    FROM (pg_proc p
-   LEFT JOIN pg_namespace n ON ((n.oid = p.pronamespace)))
+     LEFT JOIN pg_namespace n ON ((n.oid = p.pronamespace)))
   WHERE ((p.prolang <> (12)::oid) AND (pg_stat_get_xact_function_calls(p.oid) IS NOT NULL));
 pg_stat_xact_user_tables| SELECT pg_stat_xact_all_tables.relid,
     pg_stat_xact_all_tables.schemaname,
@@ -1856,9 +1856,9 @@ pg_statio_all_indexes| SELECT c.oid AS relid,
     (pg_stat_get_blocks_fetched(i.oid) - pg_stat_get_blocks_hit(i.oid)) AS idx_blks_read,
     pg_stat_get_blocks_hit(i.oid) AS idx_blks_hit
    FROM (((pg_class c
-   JOIN pg_index x ON ((c.oid = x.indrelid)))
-   JOIN pg_class i ON ((i.oid = x.indexrelid)))
-   LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
+     JOIN pg_index x ON ((c.oid = x.indrelid)))
+     JOIN pg_class i ON ((i.oid = x.indexrelid)))
+     LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
   WHERE (c.relkind = ANY (ARRAY['r'::"char", 't'::"char", 'm'::"char"]));
 pg_statio_all_sequences| SELECT c.oid AS relid,
     n.nspname AS schemaname,
@@ -1866,7 +1866,7 @@ pg_statio_all_sequences| SELECT c.oid AS relid,
     (pg_stat_get_blocks_fetched(c.oid) - pg_stat_get_blocks_hit(c.oid)) AS blks_read,
     pg_stat_get_blocks_hit(c.oid) AS blks_hit
    FROM (pg_class c
-   LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
+     LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
   WHERE (c.relkind = 'S'::"char");
 pg_statio_all_tables| SELECT c.oid AS relid,
     n.nspname AS schemaname,
@@ -1880,10 +1880,10 @@ pg_statio_all_tables| SELECT c.oid AS relid,
     (sum((pg_stat_get_blocks_fetched(x.indexrelid) - pg_stat_get_blocks_hit(x.indexrelid))))::bigint AS tidx_blks_read,
     (sum(pg_stat_get_blocks_hit(x.indexrelid)))::bigint AS tidx_blks_hit
    FROM ((((pg_class c
-   LEFT JOIN pg_index i ON ((c.oid = i.indrelid)))
-   LEFT JOIN pg_class t ON ((c.reltoastrelid = t.oid)))
-   LEFT JOIN pg_index x ON ((t.oid = x.indrelid)))
-   LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
+     LEFT JOIN pg_index i ON ((c.oid = i.indrelid)))
+     LEFT JOIN pg_class t ON ((c.reltoastrelid = t.oid)))
+     LEFT JOIN pg_index x ON ((t.oid = x.indrelid)))
+     LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
   WHERE (c.relkind = ANY (ARRAY['r'::"char", 't'::"char", 'm'::"char"]))
   GROUP BY c.oid, n.nspname, c.relname, t.oid, x.indrelid;
 pg_statio_sys_indexes| SELECT pg_statio_all_indexes.relid,
@@ -2008,9 +2008,9 @@ pg_stats| SELECT n.nspname AS schemaname,
             ELSE NULL::real[]
         END AS elem_count_histogram
    FROM (((pg_statistic s
-   JOIN pg_class c ON ((c.oid = s.starelid)))
-   JOIN pg_attribute a ON (((c.oid = a.attrelid) AND (a.attnum = s.staattnum))))
-   LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
+     JOIN pg_class c ON ((c.oid = s.starelid)))
+     JOIN pg_attribute a ON (((c.oid = a.attrelid) AND (a.attnum = s.staattnum))))
+     LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
   WHERE ((NOT a.attisdropped) AND has_column_privilege(c.oid, a.attnum, 'select'::text));
 pg_tables| SELECT n.nspname AS schemaname,
     c.relname AS tablename,
@@ -2020,8 +2020,8 @@ pg_tables| SELECT n.nspname AS schemaname,
     c.relhasrules AS hasrules,
     c.relhastriggers AS hastriggers
    FROM ((pg_class c
-   LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
-   LEFT JOIN pg_tablespace t ON ((t.oid = c.reltablespace)))
+     LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
+     LEFT JOIN pg_tablespace t ON ((t.oid = c.reltablespace)))
   WHERE (c.relkind = 'r'::"char");
 pg_timezone_abbrevs| SELECT pg_timezone_abbrevs.abbrev,
     pg_timezone_abbrevs.utc_offset,
@@ -2055,14 +2055,14 @@ pg_user_mappings| SELECT u.oid AS umid,
             ELSE NULL::text[]
         END AS umoptions
    FROM ((pg_user_mapping u
-   LEFT JOIN pg_authid a ON ((a.oid = u.umuser)))
-   JOIN pg_foreign_server s ON ((u.umserver = s.oid)));
+     LEFT JOIN pg_authid a ON ((a.oid = u.umuser)))
+     JOIN pg_foreign_server s ON ((u.umserver = s.oid)));
 pg_views| SELECT n.nspname AS schemaname,
     c.relname AS viewname,
     pg_get_userbyid(c.relowner) AS viewowner,
     pg_get_viewdef(c.oid) AS definition
    FROM (pg_class c
-   LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
+     LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
   WHERE (c.relkind = 'v'::"char");
 rtest_v1| SELECT rtest_t1.a,
     rtest_t1.b
