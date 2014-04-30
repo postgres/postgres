@@ -810,7 +810,7 @@ get_bin_version(ClusterInfo *cluster)
 	FILE	   *output;
 	int			pre_dot, post_dot;
 
-	snprintf(cmd, sizeof(cmd), "\"%s/pg_ctl\" --version", cluster->bindir);
+	snprintf(cmd, sizeof(cmd), SYSTEMQUOTE "\"%s/pg_ctl\" --version" SYSTEMQUOTE, cluster->bindir);
 
 	if ((output = popen(cmd, "r")) == NULL)
 		pg_log(PG_FATAL, "Could not get pg_ctl version data: %s\n",
