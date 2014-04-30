@@ -406,7 +406,8 @@ shm_mq_receive(shm_mq_handle *mqh, Size *nbytesp, void **datap, bool nowait)
 			if (shm_mq_get_sender(mq) == NULL)
 				return SHM_MQ_WOULD_BLOCK;
 		}
-		else if (!shm_mq_wait_internal(mq, &mq->mq_sender, mqh->mqh_handle))
+		else if (!shm_mq_wait_internal(mq, &mq->mq_sender, mqh->mqh_handle)
+				 && shm_mq_get_sender(mq) == NULL)
 		{
 			mq->mq_detached = true;
 			return SHM_MQ_DETACHED;
