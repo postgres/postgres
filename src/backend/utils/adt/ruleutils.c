@@ -71,6 +71,8 @@
 #define PRETTYINDENT_JOIN		4
 #define PRETTYINDENT_VAR		4
 
+#define PRETTYINDENT_LIMIT		40		/* wrap limit */
+
 /* Pretty flags */
 #define PRETTYFLAG_PAREN		1
 #define PRETTYFLAG_INDENT		2
@@ -6391,14 +6393,36 @@ appendContextKeyword(deparse_context *context, const char *str,
 
 	if (PRETTY_INDENT(context))
 	{
+		int			indentAmount;
+
 		context->indentLevel += indentBefore;
 
 		/* remove any trailing spaces currently in the buffer ... */
 		removeStringInfoSpaces(buf);
 		/* ... then add a newline and some spaces */
 		appendStringInfoChar(buf, '\n');
-		appendStringInfoSpaces(buf,
-							   Max(context->indentLevel, 0) + indentPlus);
+
+		if (context->indentLevel < PRETTYINDENT_LIMIT)
+			indentAmount = Max(context->indentLevel, 0) + indentPlus;
+		else
+		{
+			/*
+			 * If we're indented more than PRETTYINDENT_LIMIT characters, try
+			 * to conserve horizontal space by reducing the per-level
+			 * indentation.  For best results the scale factor here should
+			 * divide all the indent amounts that get added to indentLevel
+			 * (PRETTYINDENT_STD, etc).  It's important that the indentation
+			 * not grow unboundedly, else deeply-nested trees use O(N^2)
+			 * whitespace; so we also wrap modulo PRETTYINDENT_LIMIT.
+			 */
+			indentAmount = PRETTYINDENT_LIMIT +
+				(context->indentLevel - PRETTYINDENT_LIMIT) /
+				(PRETTYINDENT_STD / 2);
+			indentAmount %= PRETTYINDENT_LIMIT;
+			/* scale/wrap logic affects indentLevel, but not indentPlus */
+			indentAmount += indentPlus;
+		}
+		appendStringInfoSpaces(buf, indentAmount);
 
 		appendStringInfoString(buf, str);
 
