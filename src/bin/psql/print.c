@@ -1266,7 +1266,7 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 			swidth = 1; /* "header data" */
 		else if (opt_border == 1)
 			swidth = 3; /* "header | data" */
-		else if (opt_border > 1)
+		else
 			swidth = 7; /* "| header | data |" */
 
 		/* Wrap to maximum width */
@@ -1285,7 +1285,7 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 				delta += 6; /* "* RECORD " */
 			else if (opt_border == 1)
 				delta += 10; /* "-[ RECORD  ]" */
-			else if (opt_border == 2)
+			else
 				delta += 15; /* "+-[ RECORD  ]-+" */
 
 			if (delta > 0)
