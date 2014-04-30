@@ -4714,42 +4714,59 @@ get_setop_query(Node *setOp, Query *query, deparse_context *context,
 	else if (IsA(setOp, SetOperationStmt))
 	{
 		SetOperationStmt *op = (SetOperationStmt *) setOp;
-
-		if (PRETTY_INDENT(context))
-		{
-			context->indentLevel += PRETTYINDENT_STD;
-			appendStringInfoSpaces(buf, PRETTYINDENT_STD);
-		}
+		int			subindent;
 
 		/*
-		 * We force parens whenever nesting two SetOperationStmts. There are
-		 * some cases in which parens are needed around a leaf query too, but
-		 * those are more easily handled at the next level down (see code
-		 * above).
+		 * We force parens when nesting two SetOperationStmts, except when the
+		 * lefthand input is another setop of the same kind.  Syntactically,
+		 * we could omit parens in rather more cases, but it seems best to use
+		 * parens to flag cases where the setop operator changes.  If we use
+		 * parens, we also increase the indentation level for the child query.
+		 *
+		 * There are some cases in which parens are needed around a leaf query
+		 * too, but those are more easily handled at the next level down (see
+		 * code above).
 		 */
-		need_paren = !IsA(op->larg, RangeTblRef);
+		if (IsA(op->larg, SetOperationStmt))
+		{
+			SetOperationStmt *lop = (SetOperationStmt *) op->larg;
+
+			if (op->op == lop->op && op->all == lop->all)
+				need_paren = false;
+			else
+				need_paren = true;
+		}
+		else
+			need_paren = false;
 
 		if (need_paren)
+		{
 			appendStringInfoChar(buf, '(');
-		get_setop_query(op->larg, query, context, resultDesc);
-		if (need_paren)
-			appendStringInfoChar(buf, ')');
+			subindent = PRETTYINDENT_STD;
+			appendContextKeyword(context, "", subindent, 0, 0);
+		}
+		else
+			subindent = 0;
 
-		if (!PRETTY_INDENT(context))
+		get_setop_query(op->larg, query, context, resultDesc);
+
+		if (need_paren)
+			appendContextKeyword(context, ") ", -subindent, 0, 0);
+		else if (PRETTY_INDENT(context))
+			appendContextKeyword(context, "", -subindent, 0, 0);
+		else
 			appendStringInfoChar(buf, ' ');
+
 		switch (op->op)
 		{
 			case SETOP_UNION:
-				appendContextKeyword(context, "UNION ",
-									 -PRETTYINDENT_STD, PRETTYINDENT_STD, 0);
+				appendStringInfoString(buf, "UNION ");
 				break;
 			case SETOP_INTERSECT:
-				appendContextKeyword(context, "INTERSECT ",
-									 -PRETTYINDENT_STD, PRETTYINDENT_STD, 0);
+				appendStringInfoString(buf, "INTERSECT ");
 				break;
 			case SETOP_EXCEPT:
-				appendContextKeyword(context, "EXCEPT ",
-									 -PRETTYINDENT_STD, PRETTYINDENT_STD, 0);
+				appendStringInfoString(buf, "EXCEPT ");
 				break;
 			default:
 				elog(ERROR, "unrecognized set op: %d",
@@ -4758,19 +4775,29 @@ get_setop_query(Node *setOp, Query *query, deparse_context *context,
 		if (op->all)
 			appendStringInfoString(buf, "ALL ");
 
-		if (PRETTY_INDENT(context))
-			appendContextKeyword(context, "", 0, 0, 0);
+		/* Always parenthesize if RHS is another setop */
+		need_paren = IsA(op->rarg, SetOperationStmt);
 
-		need_paren = !IsA(op->rarg, RangeTblRef);
-
+		/*
+		 * The indentation code here is deliberately a bit different from that
+		 * for the lefthand input, because we want the line breaks in
+		 * different places.
+		 */
 		if (need_paren)
+		{
 			appendStringInfoChar(buf, '(');
+			subindent = PRETTYINDENT_STD;
+		}
+		else
+			subindent = 0;
+		appendContextKeyword(context, "", subindent, 0, 0);
+
 		get_setop_query(op->rarg, query, context, resultDesc);
-		if (need_paren)
-			appendStringInfoChar(buf, ')');
 
 		if (PRETTY_INDENT(context))
-			context->indentLevel -= PRETTYINDENT_STD;
+			context->indentLevel -= subindent;
+		if (need_paren)
+			appendContextKeyword(context, ")", 0, 0, 0);
 	}
 	else
 	{
