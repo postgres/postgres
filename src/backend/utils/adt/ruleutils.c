@@ -66,8 +66,7 @@
 
 /* Indent counts */
 #define PRETTYINDENT_STD		8
-#define PRETTYINDENT_JOIN	   13
-#define PRETTYINDENT_JOIN_ON	(PRETTYINDENT_JOIN-PRETTYINDENT_STD)
+#define PRETTYINDENT_JOIN		4
 #define PRETTYINDENT_VAR		4
 
 /* Pretty flags */
@@ -8122,27 +8121,32 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 			case JOIN_INNER:
 				if (j->quals)
 					appendContextKeyword(context, " JOIN ",
-										 -PRETTYINDENT_JOIN,
-										 PRETTYINDENT_JOIN, 2);
+										 -PRETTYINDENT_STD,
+										 PRETTYINDENT_STD,
+										 PRETTYINDENT_JOIN);
 				else
 					appendContextKeyword(context, " CROSS JOIN ",
-										 -PRETTYINDENT_JOIN,
-										 PRETTYINDENT_JOIN, 1);
+										 -PRETTYINDENT_STD,
+										 PRETTYINDENT_STD,
+										 PRETTYINDENT_JOIN);
 				break;
 			case JOIN_LEFT:
 				appendContextKeyword(context, " LEFT JOIN ",
-									 -PRETTYINDENT_JOIN,
-									 PRETTYINDENT_JOIN, 2);
+									 -PRETTYINDENT_STD,
+									 PRETTYINDENT_STD,
+									 PRETTYINDENT_JOIN);
 				break;
 			case JOIN_FULL:
 				appendContextKeyword(context, " FULL JOIN ",
-									 -PRETTYINDENT_JOIN,
-									 PRETTYINDENT_JOIN, 2);
+									 -PRETTYINDENT_STD,
+									 PRETTYINDENT_STD,
+									 PRETTYINDENT_JOIN);
 				break;
 			case JOIN_RIGHT:
 				appendContextKeyword(context, " RIGHT JOIN ",
-									 -PRETTYINDENT_JOIN,
-									 PRETTYINDENT_JOIN, 2);
+									 -PRETTYINDENT_STD,
+									 PRETTYINDENT_STD,
+									 PRETTYINDENT_JOIN);
 				break;
 			default:
 				elog(ERROR, "unrecognized join type: %d",
@@ -8154,8 +8158,6 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 		get_from_clause_item(j->rarg, query, context);
 		if (need_paren_on_right)
 			appendStringInfoChar(buf, ')');
-
-		context->indentLevel -= PRETTYINDENT_JOIN_ON;
 
 		if (j->usingClause)
 		{
