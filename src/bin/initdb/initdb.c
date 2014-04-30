@@ -1330,7 +1330,7 @@ bootstrap_template1(void)
 	unsetenv("PGCLIENTENCODING");
 
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" --boot -x1 %s %s",
+			 SYSTEMQUOTE "\"%s\" --boot -x1 %s %s" SYSTEMQUOTE,
 			 backend_exec, boot_options, talkargs);
 
 	PG_CMD_OPEN;
@@ -1369,7 +1369,7 @@ setup_auth(void)
 	fflush(stdout);
 
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
+			 SYSTEMQUOTE "\"%s\" %s template1 >%s" SYSTEMQUOTE,
 			 backend_exec, backend_options,
 			 DEVNULL);
 
@@ -1447,7 +1447,7 @@ get_set_pwd(void)
 	fflush(stdout);
 
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
+			 SYSTEMQUOTE "\"%s\" %s template1 >%s" SYSTEMQUOTE,
 			 backend_exec, backend_options,
 			 DEVNULL);
 
@@ -1545,7 +1545,7 @@ setup_depend(void)
 	fflush(stdout);
 
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
+			 SYSTEMQUOTE "\"%s\" %s template1 >%s" SYSTEMQUOTE,
 			 backend_exec, backend_options,
 			 DEVNULL);
 
@@ -1578,7 +1578,7 @@ setup_sysviews(void)
 	 * We use -j here to avoid backslashing stuff in system_views.sql
 	 */
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s -j template1 >%s",
+			 SYSTEMQUOTE "\"%s\" %s -j template1 >%s" SYSTEMQUOTE,
 			 backend_exec, backend_options,
 			 DEVNULL);
 
@@ -1609,7 +1609,7 @@ setup_description(void)
 	fflush(stdout);
 
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
+			 SYSTEMQUOTE "\"%s\" %s template1 >%s" SYSTEMQUOTE,
 			 backend_exec, backend_options,
 			 DEVNULL);
 
@@ -1661,7 +1661,7 @@ setup_conversion(void)
 	fflush(stdout);
 
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
+			 SYSTEMQUOTE "\"%s\" %s template1 >%s" SYSTEMQUOTE,
 			 backend_exec, backend_options,
 			 DEVNULL);
 
@@ -1699,7 +1699,7 @@ setup_dictionary(void)
 	 * We use -j here to avoid backslashing stuff
 	 */
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s -j template1 >%s",
+			 SYSTEMQUOTE "\"%s\" %s -j template1 >%s" SYSTEMQUOTE,
 			 backend_exec, backend_options,
 			 DEVNULL);
 
@@ -1750,7 +1750,7 @@ setup_privileges(void)
 	fflush(stdout);
 
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
+			 SYSTEMQUOTE "\"%s\" %s template1 >%s" SYSTEMQUOTE,
 			 backend_exec, backend_options,
 			 DEVNULL);
 
@@ -1813,7 +1813,7 @@ setup_schema(void)
 	 * We use -j here to avoid backslashing stuff in information_schema.sql
 	 */
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s -j template1 >%s",
+			 SYSTEMQUOTE "\"%s\" %s -j template1 >%s" SYSTEMQUOTE,
 			 backend_exec, backend_options,
 			 DEVNULL);
 
@@ -1830,7 +1830,7 @@ setup_schema(void)
 	PG_CMD_CLOSE;
 
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
+			 SYSTEMQUOTE "\"%s\" %s template1 >%s" SYSTEMQUOTE,
 			 backend_exec, backend_options,
 			 DEVNULL);
 
@@ -1864,7 +1864,7 @@ load_plpgsql(void)
 	fflush(stdout);
 
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
+			 SYSTEMQUOTE "\"%s\" %s template1 >%s" SYSTEMQUOTE,
 			 backend_exec, backend_options,
 			 DEVNULL);
 
@@ -1889,7 +1889,7 @@ vacuum_db(void)
 	fflush(stdout);
 
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
+			 SYSTEMQUOTE "\"%s\" %s template1 >%s" SYSTEMQUOTE,
 			 backend_exec, backend_options,
 			 DEVNULL);
 
@@ -1943,7 +1943,7 @@ make_template0(void)
 	fflush(stdout);
 
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
+			 SYSTEMQUOTE "\"%s\" %s template1 >%s" SYSTEMQUOTE,
 			 backend_exec, backend_options,
 			 DEVNULL);
 
@@ -1974,7 +1974,7 @@ make_postgres(void)
 	fflush(stdout);
 
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
+			 SYSTEMQUOTE "\"%s\" %s template1 >%s" SYSTEMQUOTE,
 			 backend_exec, backend_options,
 			 DEVNULL);
 
