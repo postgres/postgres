@@ -25,7 +25,6 @@
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
-#include "common/relpath.h"
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "parser/keywords.h"

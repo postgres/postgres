@@ -14,13 +14,17 @@
 #ifndef CATALOG_H
 #define CATALOG_H
 
+/*
+ *	'pgrminclude ignore' needed here because CppAsString2() does not throw
+ *	an error if the symbol is not defined.
+ */
+#include "catalog/catversion.h" /* pgrminclude ignore */
 #include "catalog/pg_class.h"
-#include "storage/relfilenode.h"
 #include "utils/relcache.h"
 
-extern ForkNumber forkname_to_number(char *forkName);
-
-extern char *GetDatabasePath(Oid dbNode, Oid spcNode);
+#define OIDCHARS		10		/* max chars printed by %u */
+#define TABLESPACE_VERSION_DIRECTORY	"PG_" PG_MAJORVERSION "_" \
+									CppAsString2(CATALOG_VERSION_NO)
 
 
 extern bool IsSystemRelation(Relation relation);

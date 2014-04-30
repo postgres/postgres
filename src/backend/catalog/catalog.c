@@ -37,62 +37,11 @@
 #include "catalog/pg_shseclabel.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/toasting.h"
-#include "common/relpath.h"
 #include "miscadmin.h"
 #include "storage/fd.h"
 #include "utils/fmgroids.h"
 #include "utils/rel.h"
 #include "utils/tqual.h"
-
-
-
-/*
- * forkname_to_number - look up fork number by name
- */
-ForkNumber
-forkname_to_number(char *forkName)
-{
-	ForkNumber	forkNum;
-
-	for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
-		if (strcmp(forkNames[forkNum], forkName) == 0)
-			return forkNum;
-
-	ereport(ERROR,
-			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			 errmsg("invalid fork name"),
-			 errhint("Valid fork names are \"main\", \"fsm\", and \"vm\".")));
-	return InvalidForkNumber;	/* keep compiler quiet */
-}
-
-/*
- * GetDatabasePath			- construct path to a database dir
- *
- * Result is a palloc'd string.
- *
- * XXX this must agree with relpath()!
- */
-char *
-GetDatabasePath(Oid dbNode, Oid spcNode)
-{
-	if (spcNode == GLOBALTABLESPACE_OID)
-	{
-		/* Shared system relations live in {datadir}/global */
-		Assert(dbNode == 0);
-		return pstrdup("global");
-	}
-	else if (spcNode == DEFAULTTABLESPACE_OID)
-	{
-		/* The default tablespace is {datadir}/base */
-		return psprintf("base/%u", dbNode);
-	}
-	else
-	{
-		/* All other tablespaces are accessed via symlinks */
-		return psprintf("pg_tblspc/%u/%s/%u",
-						spcNode, TABLESPACE_VERSION_DIRECTORY, dbNode);
-	}
-}
 
 
 /*

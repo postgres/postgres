@@ -18,8 +18,8 @@
 #include <time.h>
 
 #include "access/xlog_internal.h"		/* for pg_start/stop_backup */
+#include "catalog/catalog.h"
 #include "catalog/pg_type.h"
-#include "common/relpath.h"
 #include "lib/stringinfo.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"

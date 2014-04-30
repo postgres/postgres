@@ -35,7 +35,6 @@
 
 #include "catalog/catalog.h"
 #include "catalog/storage.h"
-#include "common/relpath.h"
 #include "executor/instrument.h"
 #include "miscadmin.h"
 #include "pg_trace.h"

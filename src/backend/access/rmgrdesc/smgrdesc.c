@@ -16,7 +16,6 @@
 
 #include "catalog/catalog.h"
 #include "catalog/storage_xlog.h"
-#include "common/relpath.h"
 
 
 void

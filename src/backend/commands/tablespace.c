@@ -68,7 +68,6 @@
 #include "commands/tablecmds.h"
 #include "commands/tablespace.h"
 #include "commands/user.h"
-#include "common/relpath.h"
 #include "miscadmin.h"
 #include "postmaster/bgwriter.h"
 #include "storage/fd.h"
@@ -278,11 +277,11 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 
 	/*
 	 * Check that location isn't too long. Remember that we're going to append
-	 * 'PG_XXX/<dboid>/<relid>.<nnn>'.	FYI, we never actually reference the
-	 * whole path, but mkdir() uses the first two parts.
+	 * 'PG_XXX/<dboid>/<relid>_<fork>.<nnn>'.  FYI, we never actually
+	 * reference the whole path here, but mkdir() uses the first two parts.
 	 */
 	if (strlen(location) + 1 + strlen(TABLESPACE_VERSION_DIRECTORY) + 1 +
-		OIDCHARS + 1 + OIDCHARS + 1 + OIDCHARS > MAXPGPATH)
+		OIDCHARS + 1 + OIDCHARS + 1 + FORKNAMECHARS + 1 + OIDCHARS > MAXPGPATH)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				 errmsg("tablespace location \"%s\" is too long",

@@ -51,7 +51,6 @@
 #include "commands/tablespace.h"
 #include "commands/trigger.h"
 #include "commands/typecmds.h"
-#include "common/relpath.h"
 #include "executor/executor.h"
 #include "foreign/foreign.h"
 #include "miscadmin.h"

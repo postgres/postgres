@@ -1,6 +1,8 @@
 /*-------------------------------------------------------------------------
  * relpath.c
- *		Shared frontend/backend code to find out pathnames of relation files
+ *		Shared frontend/backend code to compute pathnames of relation files
+ *
+ * This module also contains some logic associated with fork names.
  *
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -16,18 +18,18 @@
 #include "postgres_fe.h"
 #endif
 
+#include "catalog/catalog.h"
 #include "catalog/pg_tablespace.h"
 #include "common/relpath.h"
 #include "storage/backendid.h"
 
-#define FORKNAMECHARS	4		/* max chars for a fork name */
 
 /*
  * Lookup table of fork name by fork number.
  *
- * If you add a new entry, remember to update the errhint below, and the
- * documentation for pg_relation_size(). Also keep FORKNAMECHARS above
- * up-to-date.
+ * If you add a new entry, remember to update the errhint in
+ * forkname_to_number() below, and update the SGML documentation for
+ * pg_relation_size().
  */
 const char *const forkNames[] = {
 	"main",						/* MAIN_FORKNUM */
@@ -35,6 +37,32 @@ const char *const forkNames[] = {
 	"vm",						/* VISIBILITYMAP_FORKNUM */
 	"init"						/* INIT_FORKNUM */
 };
+
+/*
+ * forkname_to_number - look up fork number by name
+ *
+ * In backend, we throw an error for no match; in frontend, we just
+ * return InvalidForkNumber.
+ */
+ForkNumber
+forkname_to_number(const char *forkName)
+{
+	ForkNumber	forkNum;
+
+	for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
+		if (strcmp(forkNames[forkNum], forkName) == 0)
+			return forkNum;
+
+#ifndef FRONTEND
+	ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("invalid fork name"),
+			 errhint("Valid fork names are \"main\", \"fsm\", "
+					 "\"vm\", and \"init\".")));
+#endif
+
+	return InvalidForkNumber;
+}
 
 /*
  * forkname_chars
@@ -63,80 +91,117 @@ forkname_chars(const char *str, ForkNumber *fork)
 			return len;
 		}
 	}
+	if (fork)
+		*fork = InvalidForkNumber;
 	return 0;
 }
 
+
 /*
- * relpathbackend - construct path to a relation's file
+ * GetDatabasePath - construct path to a database directory
  *
  * Result is a palloc'd string.
+ *
+ * XXX this must agree with GetRelationPath()!
  */
 char *
-relpathbackend(RelFileNode rnode, BackendId backend, ForkNumber forknum)
+GetDatabasePath(Oid dbNode, Oid spcNode)
+{
+	if (spcNode == GLOBALTABLESPACE_OID)
+	{
+		/* Shared system relations live in {datadir}/global */
+		Assert(dbNode == 0);
+		return pstrdup("global");
+	}
+	else if (spcNode == DEFAULTTABLESPACE_OID)
+	{
+		/* The default tablespace is {datadir}/base */
+		return psprintf("base/%u", dbNode);
+	}
+	else
+	{
+		/* All other tablespaces are accessed via symlinks */
+		return psprintf("pg_tblspc/%u/%s/%u",
+						spcNode, TABLESPACE_VERSION_DIRECTORY, dbNode);
+	}
+}
+
+/*
+ * GetRelationPath - construct path to a relation's file
+ *
+ * Result is a palloc'd string.
+ *
+ * Note: ideally, backendId would be declared as type BackendId, but relpath.h
+ * would have to include a backend-only header to do that; doesn't seem worth
+ * the trouble considering BackendId is just int anyway.
+ */
+char *
+GetRelationPath(Oid dbNode, Oid spcNode, Oid relNode,
+				int backendId, ForkNumber forkNumber)
 {
 	char	   *path;
 
-	if (rnode.spcNode == GLOBALTABLESPACE_OID)
+	if (spcNode == GLOBALTABLESPACE_OID)
 	{
 		/* Shared system relations live in {datadir}/global */
-		Assert(rnode.dbNode == 0);
-		Assert(backend == InvalidBackendId);
-		if (forknum != MAIN_FORKNUM)
+		Assert(dbNode == 0);
+		Assert(backendId == InvalidBackendId);
+		if (forkNumber != MAIN_FORKNUM)
 			path = psprintf("global/%u_%s",
-					 rnode.relNode, forkNames[forknum]);
+							relNode, forkNames[forkNumber]);
 		else
-			path = psprintf("global/%u", rnode.relNode);
+			path = psprintf("global/%u", relNode);
 	}
-	else if (rnode.spcNode == DEFAULTTABLESPACE_OID)
+	else if (spcNode == DEFAULTTABLESPACE_OID)
 	{
 		/* The default tablespace is {datadir}/base */
-		if (backend == InvalidBackendId)
+		if (backendId == InvalidBackendId)
 		{
-			if (forknum != MAIN_FORKNUM)
+			if (forkNumber != MAIN_FORKNUM)
 				path = psprintf("base/%u/%u_%s",
-						 rnode.dbNode, rnode.relNode,
-						 forkNames[forknum]);
+								dbNode, relNode,
+								forkNames[forkNumber]);
 			else
 				path = psprintf("base/%u/%u",
-						 rnode.dbNode, rnode.relNode);
+								dbNode, relNode);
 		}
 		else
 		{
-			if (forknum != MAIN_FORKNUM)
+			if (forkNumber != MAIN_FORKNUM)
 				path = psprintf("base/%u/t%d_%u_%s",
-						 rnode.dbNode, backend, rnode.relNode,
-						 forkNames[forknum]);
+								dbNode, backendId, relNode,
+								forkNames[forkNumber]);
 			else
 				path = psprintf("base/%u/t%d_%u",
-						 rnode.dbNode, backend, rnode.relNode);
+								dbNode, backendId, relNode);
 		}
 	}
 	else
 	{
 		/* All other tablespaces are accessed via symlinks */
-		if (backend == InvalidBackendId)
+		if (backendId == InvalidBackendId)
 		{
-			if (forknum != MAIN_FORKNUM)
+			if (forkNumber != MAIN_FORKNUM)
 				path = psprintf("pg_tblspc/%u/%s/%u/%u_%s",
-						 rnode.spcNode, TABLESPACE_VERSION_DIRECTORY,
-						 rnode.dbNode, rnode.relNode,
-						 forkNames[forknum]);
+								spcNode, TABLESPACE_VERSION_DIRECTORY,
+								dbNode, relNode,
+								forkNames[forkNumber]);
 			else
 				path = psprintf("pg_tblspc/%u/%s/%u/%u",
-						 rnode.spcNode, TABLESPACE_VERSION_DIRECTORY,
-						 rnode.dbNode, rnode.relNode);
+								spcNode, TABLESPACE_VERSION_DIRECTORY,
+								dbNode, relNode);
 		}
 		else
 		{
-			if (forknum != MAIN_FORKNUM)
+			if (forkNumber != MAIN_FORKNUM)
 				path = psprintf("pg_tblspc/%u/%s/%u/t%d_%u_%s",
-						 rnode.spcNode, TABLESPACE_VERSION_DIRECTORY,
-						 rnode.dbNode, backend, rnode.relNode,
-						 forkNames[forknum]);
+								spcNode, TABLESPACE_VERSION_DIRECTORY,
+								dbNode, backendId, relNode,
+								forkNames[forkNumber]);
 			else
 				path = psprintf("pg_tblspc/%u/%s/%u/t%d_%u",
-						 rnode.spcNode, TABLESPACE_VERSION_DIRECTORY,
-						 rnode.dbNode, backend, rnode.relNode);
+								spcNode, TABLESPACE_VERSION_DIRECTORY,
+								dbNode, backendId, relNode);
 		}
 	}
 	return path;

@@ -16,7 +16,6 @@
 #include "postgres.h"
 
 #include "catalog/catalog.h"
-#include "common/relpath.h"
 #include "executor/instrument.h"
 #include "storage/buf_internals.h"
 #include "storage/bufmgr.h"

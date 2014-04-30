@@ -50,28 +50,20 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
-#include "miscadmin.h"
-
 #include "access/rewriteheap.h"
 #include "access/transam.h"
 #include "access/tuptoaster.h"
 #include "access/xact.h"
-
 #include "catalog/catalog.h"
-
-#include "common/relpath.h"
-
 #include "lib/binaryheap.h"
-
+#include "miscadmin.h"
 #include "replication/logical.h"
 #include "replication/reorderbuffer.h"
 #include "replication/slot.h"
 #include "replication/snapbuild.h" /* just for SnapBuildSnapDecRefcount */
-
 #include "storage/bufmgr.h"
 #include "storage/fd.h"
 #include "storage/sinval.h"
-
 #include "utils/builtins.h"
 #include "utils/combocid.h"
 #include "utils/memdebug.h"
@@ -79,6 +71,7 @@
 #include "utils/relcache.h"
 #include "utils/relfilenodemap.h"
 #include "utils/tqual.h"
+
 
 /* entry for a hash table we use to map from xid to our transaction state */
 typedef struct ReorderBufferTXNByIdEnt

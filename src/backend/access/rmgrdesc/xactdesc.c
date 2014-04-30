@@ -16,7 +16,6 @@
 
 #include "access/xact.h"
 #include "catalog/catalog.h"
-#include "common/relpath.h"
 #include "storage/sinval.h"
 #include "utils/timestamp.h"
 
