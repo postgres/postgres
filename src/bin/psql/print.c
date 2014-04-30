@@ -1363,8 +1363,8 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 					/* More lines after this one due to a newline */
 					fputs(format->header_nl_right, fout);
 					hline++;
-				} 
-				else 
+				}
+				else
 				{
 					/* This was the last line of the header */
 					fputs(" ", fout);
