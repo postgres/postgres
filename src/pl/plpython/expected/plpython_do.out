@@ -4,9 +4,9 @@ CONTEXT:  PL/Python anonymous code block
 DO $$ plpy.notice("This is plpython2u.") $$ LANGUAGE plpython2u;
 NOTICE:  This is plpython2u.
 CONTEXT:  PL/Python anonymous code block
-DO $$ nonsense $$ LANGUAGE plpythonu;
-ERROR:  NameError: global name 'nonsense' is not defined
+DO $$ raise Exception("error test") $$ LANGUAGE plpythonu;
+ERROR:  Exception: error test
 CONTEXT:  Traceback (most recent call last):
   PL/Python anonymous code block, line 1, in <module>
-    nonsense 
+    raise Exception("error test") 
 PL/Python anonymous code block
