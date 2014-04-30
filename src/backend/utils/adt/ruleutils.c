@@ -35,6 +35,7 @@
 #include "commands/tablespace.h"
 #include "executor/spi.h"
 #include "funcapi.h"
+#include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
@@ -2416,6 +2417,10 @@ get_query_def(Query *query, StringInfo buf, List *parentnamespace,
 	deparse_context context;
 	deparse_namespace dpns;
 
+	/* Guard against excessively long or deeply-nested queries */
+	CHECK_FOR_INTERRUPTS();
+	check_stack_depth();
+
 	/*
 	 * Before we begin to examine the query, acquire locks on referenced
 	 * relations, and fix up deleted columns in JOIN RTEs.	This ensures
@@ -2865,6 +2870,10 @@ get_setop_query(Node *setOp, Query *query, deparse_context *context,
 {
 	StringInfo	buf = context->buf;
 	bool		need_paren;
+
+	/* Guard against excessively long or deeply-nested queries */
+	CHECK_FOR_INTERRUPTS();
+	check_stack_depth();
 
 	if (IsA(setOp, RangeTblRef))
 	{
@@ -4511,6 +4520,10 @@ get_rule_expr(Node *node, deparse_context *context,
 
 	if (node == NULL)
 		return;
+
+	/* Guard against excessively long or deeply-nested queries */
+	CHECK_FOR_INTERRUPTS();
+	check_stack_depth();
 
 	/*
 	 * Each level of get_rule_expr must emit an indivisible term
