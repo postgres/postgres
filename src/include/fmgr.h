@@ -294,7 +294,7 @@ extern struct varlena *pg_detoast_datum_packed(struct varlena * datum);
 #define PG_RETURN_TEXT_P(x)    PG_RETURN_POINTER(x)
 #define PG_RETURN_BPCHAR_P(x)  PG_RETURN_POINTER(x)
 #define PG_RETURN_VARCHAR_P(x) PG_RETURN_POINTER(x)
-#define PG_RETURN_HEAPTUPLEHEADER(x)  PG_RETURN_POINTER(x)
+#define PG_RETURN_HEAPTUPLEHEADER(x)  return HeapTupleHeaderGetDatum(x)
 
 
 /*-------------------------------------------------------------------------

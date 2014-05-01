@@ -886,8 +886,6 @@ ExecEvalWholeRowFast(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 {
 	Var		   *variable = (Var *) wrvstate->xprstate.expr;
 	TupleTableSlot *slot;
-	HeapTuple	tuple;
-	TupleDesc	tupleDesc;
 	HeapTupleHeader dtuple;
 
 	if (isDone)
@@ -915,31 +913,19 @@ ExecEvalWholeRowFast(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 	if (wrvstate->wrv_junkFilter != NULL)
 		slot = ExecFilterJunk(wrvstate->wrv_junkFilter, slot);
 
-	tuple = ExecFetchSlotTuple(slot);
-	tupleDesc = slot->tts_tupleDescriptor;
-
 	/*
-	 * We have to make a copy of the tuple so we can safely insert the Datum
-	 * overhead fields, which are not set in on-disk tuples.
+	 * Copy the slot tuple and make sure any toasted fields get detoasted.
 	 */
-	dtuple = (HeapTupleHeader) palloc(tuple->t_len);
-	memcpy((char *) dtuple, (char *) tuple->t_data, tuple->t_len);
-
-	HeapTupleHeaderSetDatumLength(dtuple, tuple->t_len);
+	dtuple = DatumGetHeapTupleHeader(ExecFetchSlotTupleDatum(slot));
 
 	/*
-	 * If the Var identifies a named composite type, label the tuple with that
-	 * type; otherwise use what is in the tupleDesc.
+	 * If the Var identifies a named composite type, label the datum with that
+	 * type; otherwise we'll use the slot's info.
 	 */
 	if (variable->vartype != RECORDOID)
 	{
 		HeapTupleHeaderSetTypeId(dtuple, variable->vartype);
 		HeapTupleHeaderSetTypMod(dtuple, variable->vartypmod);
-	}
-	else
-	{
-		HeapTupleHeaderSetTypeId(dtuple, tupleDesc->tdtypeid);
-		HeapTupleHeaderSetTypMod(dtuple, tupleDesc->tdtypmod);
 	}
 
 	return PointerGetDatum(dtuple);
@@ -1015,13 +1001,13 @@ ExecEvalWholeRowSlow(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 	}
 
 	/*
-	 * We have to make a copy of the tuple so we can safely insert the Datum
-	 * overhead fields, which are not set in on-disk tuples.
+	 * Copy the slot tuple and make sure any toasted fields get detoasted.
 	 */
-	dtuple = (HeapTupleHeader) palloc(tuple->t_len);
-	memcpy((char *) dtuple, (char *) tuple->t_data, tuple->t_len);
+	dtuple = DatumGetHeapTupleHeader(ExecFetchSlotTupleDatum(slot));
 
-	HeapTupleHeaderSetDatumLength(dtuple, tuple->t_len);
+	/*
+	 * Reset datum's type ID fields to match the Var.
+	 */
 	HeapTupleHeaderSetTypeId(dtuple, variable->vartype);
 	HeapTupleHeaderSetTypMod(dtuple, variable->vartypmod);
 
