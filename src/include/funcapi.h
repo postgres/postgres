@@ -200,6 +200,8 @@ extern TupleDesc build_function_result_tupdesc_t(HeapTuple procTuple);
  * HeapTuple BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values) -
  *		build a HeapTuple given user data in C string form. values is an array
  *		of C strings, one for each attribute of the return tuple.
+ * Datum HeapTupleHeaderGetDatum(HeapTupleHeader tuple) - convert a
+ *		HeapTupleHeader to a Datum.
  *
  * Macro declarations:
  * HeapTupleGetDatum(HeapTuple tuple) - convert a HeapTuple to a Datum.
@@ -216,9 +218,9 @@ extern TupleDesc build_function_result_tupdesc_t(HeapTuple procTuple);
  *----------
  */
 
-#define HeapTupleGetDatum(_tuple)		PointerGetDatum((_tuple)->t_data)
+#define HeapTupleGetDatum(tuple)		HeapTupleHeaderGetDatum((tuple)->t_data)
 /* obsolete version of above */
-#define TupleGetDatum(_slot, _tuple)	PointerGetDatum((_tuple)->t_data)
+#define TupleGetDatum(_slot, _tuple)	HeapTupleGetDatum(_tuple)
 
 extern TupleDesc RelationNameGetTupleDesc(const char *relname);
 extern TupleDesc TypeGetTupleDesc(Oid typeoid, List *colaliases);
@@ -227,6 +229,7 @@ extern TupleDesc TypeGetTupleDesc(Oid typeoid, List *colaliases);
 extern TupleDesc BlessTupleDesc(TupleDesc tupdesc);
 extern AttInMetadata *TupleDescGetAttInMetadata(TupleDesc tupdesc);
 extern HeapTuple BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values);
+extern Datum HeapTupleHeaderGetDatum(HeapTupleHeader tuple);
 extern TupleTableSlot *TupleDescGetSlot(TupleDesc tupdesc);
 
 

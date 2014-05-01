@@ -4140,18 +4140,17 @@ exec_eval_datum(PLpgSQL_execstate *estate,
 				tup = make_tuple_from_row(estate, row, row->rowtupdesc);
 				if (tup == NULL)	/* should not happen */
 					elog(ERROR, "row not compatible with its own tupdesc");
-				MemoryContextSwitchTo(oldcontext);
 				*typeid = row->rowtupdesc->tdtypeid;
 				*typetypmod = row->rowtupdesc->tdtypmod;
 				*value = HeapTupleGetDatum(tup);
 				*isnull = false;
+				MemoryContextSwitchTo(oldcontext);
 				break;
 			}
 
 		case PLPGSQL_DTYPE_REC:
 			{
 				PLpgSQL_rec *rec = (PLpgSQL_rec *) datum;
-				HeapTupleData worktup;
 
 				if (!HeapTupleIsValid(rec->tup))
 					ereport(ERROR,
@@ -4163,21 +4162,12 @@ exec_eval_datum(PLpgSQL_execstate *estate,
 				/* Make sure we have a valid type/typmod setting */
 				BlessTupleDesc(rec->tupdesc);
 
-				/*
-				 * In a trigger, the NEW and OLD parameters are likely to be
-				 * on-disk tuples that don't have the desired Datum fields.
-				 * Copy the tuple body and insert the right values.
-				 */
 				oldcontext = MemoryContextSwitchTo(estate->eval_econtext->ecxt_per_tuple_memory);
-				heap_copytuple_with_tuple(rec->tup, &worktup);
-				HeapTupleHeaderSetDatumLength(worktup.t_data, worktup.t_len);
-				HeapTupleHeaderSetTypeId(worktup.t_data, rec->tupdesc->tdtypeid);
-				HeapTupleHeaderSetTypMod(worktup.t_data, rec->tupdesc->tdtypmod);
-				MemoryContextSwitchTo(oldcontext);
 				*typeid = rec->tupdesc->tdtypeid;
 				*typetypmod = rec->tupdesc->tdtypmod;
-				*value = HeapTupleGetDatum(&worktup);
+				*value = heap_copy_tuple_as_datum(rec->tup, rec->tupdesc);
 				*isnull = false;
+				MemoryContextSwitchTo(oldcontext);
 				break;
 			}
 
