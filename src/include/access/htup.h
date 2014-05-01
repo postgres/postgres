@@ -349,6 +349,9 @@ do { \
 	(tup)->t_infomask2 = ((tup)->t_infomask2 & ~HEAP_NATTS_MASK) | (natts) \
 )
 
+#define HeapTupleHeaderHasExternal(tup) \
+		(((tup)->t_infomask & HEAP_HASEXTERNAL) != 0)
+
 
 /*
  * BITMAPLEN(NATTS) -
@@ -825,6 +828,7 @@ extern Datum heap_getsysattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
 				bool *isnull);
 extern HeapTuple heap_copytuple(HeapTuple tuple);
 extern void heap_copytuple_with_tuple(HeapTuple src, HeapTuple dest);
+extern Datum heap_copy_tuple_as_datum(HeapTuple tuple, TupleDesc tupleDesc);
 extern HeapTuple heap_form_tuple(TupleDesc tupleDescriptor,
 				Datum *values, bool *isnull);
 extern HeapTuple heap_modify_tuple(HeapTuple tuple,

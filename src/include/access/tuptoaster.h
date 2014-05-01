@@ -143,16 +143,14 @@ extern struct varlena *heap_tuple_untoast_attr_slice(struct varlena * attr,
 extern HeapTuple toast_flatten_tuple(HeapTuple tup, TupleDesc tupleDesc);
 
 /* ----------
- * toast_flatten_tuple_attribute -
+ * toast_flatten_tuple_to_datum -
  *
- *	If a Datum is of composite type, "flatten" it to contain no toasted fields.
- *	This must be invoked on any potentially-composite field that is to be
- *	inserted into a tuple.	Doing this preserves the invariant that toasting
- *	goes only one level deep in a tuple.
+ *	"Flatten" a tuple containing out-of-line toasted fields into a Datum.
  * ----------
  */
-extern Datum toast_flatten_tuple_attribute(Datum value,
-							  Oid typeId, int32 typeMod);
+extern Datum toast_flatten_tuple_to_datum(HeapTupleHeader tup,
+							 uint32 tup_len,
+							 TupleDesc tupleDesc);
 
 /* ----------
  * toast_compress_datum -
