@@ -5252,9 +5252,16 @@
     <tbody>
      <row>
       <entry><structfield>slot_name</structfield></entry>
-      <entry><type>text</type></entry>
+      <entry><type>name</type></entry>
       <entry></entry>
       <entry>A unique, cluster-wide identifier for the replication slot</entry>
+     </row>
+
+     <row>
+      <entry><structfield>plugin</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>The basename of the shared object containing the output plugin this logical slot is using, or null for physical slots.</entry>
      </row>
 
      <row>
@@ -5262,13 +5269,6 @@
       <entry><type>text</type></entry>
       <entry></entry>
       <entry>The slot type - <literal>physical</> or <literal>logical</></entry>
-     </row>
-
-     <row>
-      <entry><structfield>plugin</structfield></entry>
-      <entry><type>text</type></entry>
-      <entry></entry>
-      <entry>The basename of the shared object containing the output plugin this logical slot is using, or null for physical slots.</entry>
      </row>
 
      <row>
@@ -5305,21 +5305,13 @@
      </row>
 
      <row>
-      <entry><structfield>xmin</structfield></entry>
-      <entry><type>xid</type></entry>
-      <entry></entry>
-      <entry>The oldest transaction that this slot needs the database to
-      retain.  <literal>VACUUM</literal> cannot remove catalog tuples deleted
-      by any later transaction.
-      </entry>
-     </row>
-
-     <row>
       <entry><structfield>catalog_xmin</structfield></entry>
       <entry><type>xid</type></entry>
       <entry></entry>
-      <entry>The <literal>xmin</literal>, or oldest transaction ID, that this
-      slot forces to be retained in the system catalogs. </entry>
+      <entry>The oldest transaction affecting the system catalogs that this
+      slot needs the database to retain.  <literal>VACUUM</literal> cannot
+      remove catalog tuples deleted by any later transaction.
+      </entry>
      </row>
 
      <row>
