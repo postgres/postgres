@@ -158,6 +158,11 @@ index_form_tuple(TupleDesc tupleDescriptor,
 	if (tupmask & HEAP_HASVARWIDTH)
 		infomask |= INDEX_VAR_MASK;
 
+	/* Also assert we got rid of external attributes */
+#ifdef TOAST_INDEX_HACK
+	Assert((tupmask & HEAP_HASEXTERNAL) == 0);
+#endif
+
 	/*
 	 * Here we make sure that the size will fit in the field reserved for it
 	 * in t_info.
