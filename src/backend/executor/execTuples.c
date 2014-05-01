@@ -89,6 +89,7 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"
+#include "access/tuptoaster.h"
 #include "funcapi.h"
 #include "catalog/pg_type.h"
 #include "nodes/nodeFuncs.h"
@@ -700,27 +701,21 @@ ExecFetchSlotMinimalTuple(TupleTableSlot *slot)
  *		ExecFetchSlotTupleDatum
  *			Fetch the slot's tuple as a composite-type Datum.
  *
- *		We convert the slot's contents to local physical-tuple form,
- *		and fill in the Datum header fields.  Note that the result
- *		always points to storage owned by the slot.
+ *		The result is always freshly palloc'd in the caller's memory context.
  * --------------------------------
  */
 Datum
 ExecFetchSlotTupleDatum(TupleTableSlot *slot)
 {
 	HeapTuple	tup;
-	HeapTupleHeader td;
 	TupleDesc	tupdesc;
 
-	/* Make sure we can scribble on the slot contents ... */
-	tup = ExecMaterializeSlot(slot);
-	/* ... and set up the composite-Datum header fields, in case not done */
-	td = tup->t_data;
+	/* Fetch slot's contents in regular-physical-tuple form */
+	tup = ExecFetchSlotTuple(slot);
 	tupdesc = slot->tts_tupleDescriptor;
-	HeapTupleHeaderSetDatumLength(td, tup->t_len);
-	HeapTupleHeaderSetTypeId(td, tupdesc->tdtypeid);
-	HeapTupleHeaderSetTypMod(td, tupdesc->tdtypmod);
-	return PointerGetDatum(td);
+
+	/* Convert to Datum form */
+	return heap_copy_tuple_as_datum(tup, tupdesc);
 }
 
 /* --------------------------------
@@ -1131,6 +1126,66 @@ BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
 
 	return tuple;
 }
+
+/*
+ * HeapTupleHeaderGetDatum - convert a HeapTupleHeader pointer to a Datum.
+ *
+ * This must *not* get applied to an on-disk tuple; the tuple should be
+ * freshly made by heap_form_tuple or some wrapper routine for it (such as
+ * BuildTupleFromCStrings).  Be sure also that the tupledesc used to build
+ * the tuple has a properly "blessed" rowtype.
+ *
+ * Formerly this was a macro equivalent to PointerGetDatum, relying on the
+ * fact that heap_form_tuple fills in the appropriate tuple header fields
+ * for a composite Datum.  However, we now require that composite Datums not
+ * contain any external TOAST pointers.  We do not want heap_form_tuple itself
+ * to enforce that; more specifically, the rule applies only to actual Datums
+ * and not to HeapTuple structures.  Therefore, HeapTupleHeaderGetDatum is
+ * now a function that detects whether there are externally-toasted fields
+ * and constructs a new tuple with inlined fields if so.  We still need
+ * heap_form_tuple to insert the Datum header fields, because otherwise this
+ * code would have no way to obtain a tupledesc for the tuple.
+ *
+ * Note that if we do build a new tuple, it's palloc'd in the current
+ * memory context.	Beware of code that changes context between the initial
+ * heap_form_tuple/etc call and calling HeapTuple(Header)GetDatum.
+ *
+ * For performance-critical callers, it could be worthwhile to take extra
+ * steps to ensure that there aren't TOAST pointers in the output of
+ * heap_form_tuple to begin with.  It's likely however that the costs of the
+ * typcache lookup and tuple disassembly/reassembly are swamped by TOAST
+ * dereference costs, so that the benefits of such extra effort would be
+ * minimal.
+ *
+ * XXX it would likely be better to create wrapper functions that produce
+ * a composite Datum from the field values in one step.  However, there's
+ * enough code using the existing APIs that we couldn't get rid of this
+ * hack anytime soon.
+ */
+Datum
+HeapTupleHeaderGetDatum(HeapTupleHeader tuple)
+{
+	Datum		result;
+	TupleDesc	tupDesc;
+
+	/* No work if there are no external TOAST pointers in the tuple */
+	if (!HeapTupleHeaderHasExternal(tuple))
+		return PointerGetDatum(tuple);
+
+	/* Use the type data saved by heap_form_tuple to look up the rowtype */
+	tupDesc = lookup_rowtype_tupdesc(HeapTupleHeaderGetTypeId(tuple),
+									 HeapTupleHeaderGetTypMod(tuple));
+
+	/* And do the flattening */
+	result = toast_flatten_tuple_to_datum(tuple,
+										HeapTupleHeaderGetDatumLength(tuple),
+										  tupDesc);
+
+	ReleaseTupleDesc(tupDesc);
+
+	return result;
+}
+
 
 /*
  * Functions for sending tuples to the frontend (or other specified destination)

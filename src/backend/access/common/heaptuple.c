@@ -617,6 +617,41 @@ heap_copytuple_with_tuple(HeapTuple src, HeapTuple dest)
 	memcpy((char *) dest->t_data, (char *) src->t_data, src->t_len);
 }
 
+/* ----------------
+ *		heap_copy_tuple_as_datum
+ *
+ *		copy a tuple as a composite-type Datum
+ * ----------------
+ */
+Datum
+heap_copy_tuple_as_datum(HeapTuple tuple, TupleDesc tupleDesc)
+{
+	HeapTupleHeader td;
+
+	/*
+	 * If the tuple contains any external TOAST pointers, we have to inline
+	 * those fields to meet the conventions for composite-type Datums.
+	 */
+	if (HeapTupleHasExternal(tuple))
+		return toast_flatten_tuple_to_datum(tuple->t_data,
+											tuple->t_len,
+											tupleDesc);
+
+	/*
+	 * Fast path for easy case: just make a palloc'd copy and insert the
+	 * correct composite-Datum header fields (since those may not be set if
+	 * the given tuple came from disk, rather than from heap_form_tuple).
+	 */
+	td = (HeapTupleHeader) palloc(tuple->t_len);
+	memcpy((char *) td, (char *) tuple->t_data, tuple->t_len);
+
+	HeapTupleHeaderSetDatumLength(td, tuple->t_len);
+	HeapTupleHeaderSetTypeId(td, tupleDesc->tdtypeid);
+	HeapTupleHeaderSetTypMod(td, tupleDesc->tdtypmod);
+
+	return PointerGetDatum(td);
+}
+
 /*
  * heap_form_tuple
  *		construct a tuple from the given values[] and isnull[] arrays,
@@ -635,7 +670,6 @@ heap_form_tuple(TupleDesc tupleDescriptor,
 				data_len;
 	int			hoff;
 	bool		hasnull = false;
-	Form_pg_attribute *att = tupleDescriptor->attrs;
 	int			numberOfAttributes = tupleDescriptor->natts;
 	int			i;
 
@@ -646,28 +680,14 @@ heap_form_tuple(TupleDesc tupleDescriptor,
 						numberOfAttributes, MaxTupleAttributeNumber)));
 
 	/*
-	 * Check for nulls and embedded tuples; expand any toasted attributes in
-	 * embedded tuples.  This preserves the invariant that toasting can only
-	 * go one level deep.
-	 *
-	 * We can skip calling toast_flatten_tuple_attribute() if the attribute
-	 * couldn't possibly be of composite type.  All composite datums are
-	 * varlena and have alignment 'd'; furthermore they aren't arrays. Also,
-	 * if an attribute is already toasted, it must have been sent to disk
-	 * already and so cannot contain toasted attributes.
+	 * Check for nulls
 	 */
 	for (i = 0; i < numberOfAttributes; i++)
 	{
 		if (isnull[i])
-			hasnull = true;
-		else if (att[i]->attlen == -1 &&
-				 att[i]->attalign == 'd' &&
-				 att[i]->attndims == 0 &&
-				 !VARATT_IS_EXTENDED(DatumGetPointer(values[i])))
 		{
-			values[i] = toast_flatten_tuple_attribute(values[i],
-													  att[i]->atttypid,
-													  att[i]->atttypmod);
+			hasnull = true;
+			break;
 		}
 	}
 
@@ -697,7 +717,8 @@ heap_form_tuple(TupleDesc tupleDescriptor,
 
 	/*
 	 * And fill in the information.  Note we fill the Datum fields even though
-	 * this tuple may never become a Datum.
+	 * this tuple may never become a Datum.  This lets HeapTupleHeaderGetDatum
+	 * identify the tuple type if needed.
 	 */
 	tuple->t_len = len;
 	ItemPointerSetInvalid(&(tuple->t_self));
@@ -1389,7 +1410,6 @@ heap_form_minimal_tuple(TupleDesc tupleDescriptor,
 				data_len;
 	int			hoff;
 	bool		hasnull = false;
-	Form_pg_attribute *att = tupleDescriptor->attrs;
 	int			numberOfAttributes = tupleDescriptor->natts;
 	int			i;
 
@@ -1400,28 +1420,14 @@ heap_form_minimal_tuple(TupleDesc tupleDescriptor,
 						numberOfAttributes, MaxTupleAttributeNumber)));
 
 	/*
-	 * Check for nulls and embedded tuples; expand any toasted attributes in
-	 * embedded tuples.  This preserves the invariant that toasting can only
-	 * go one level deep.
-	 *
-	 * We can skip calling toast_flatten_tuple_attribute() if the attribute
-	 * couldn't possibly be of composite type.  All composite datums are
-	 * varlena and have alignment 'd'; furthermore they aren't arrays. Also,
-	 * if an attribute is already toasted, it must have been sent to disk
-	 * already and so cannot contain toasted attributes.
+	 * Check for nulls
 	 */
 	for (i = 0; i < numberOfAttributes; i++)
 	{
 		if (isnull[i])
-			hasnull = true;
-		else if (att[i]->attlen == -1 &&
-				 att[i]->attalign == 'd' &&
-				 att[i]->attndims == 0 &&
-				 !VARATT_IS_EXTENDED(values[i]))
 		{
-			values[i] = toast_flatten_tuple_attribute(values[i],
-													  att[i]->atttypid,
-													  att[i]->atttypmod);
+			hasnull = true;
+			break;
 		}
 	}
 

@@ -742,12 +742,7 @@ SPI_returntuple(HeapTuple tuple, TupleDesc tupdesc)
 		oldcxt = MemoryContextSwitchTo(_SPI_current->savedcxt);
 	}
 
-	dtup = (HeapTupleHeader) palloc(tuple->t_len);
-	memcpy((char *) dtup, (char *) tuple->t_data, tuple->t_len);
-
-	HeapTupleHeaderSetDatumLength(dtup, tuple->t_len);
-	HeapTupleHeaderSetTypeId(dtup, tupdesc->tdtypeid);
-	HeapTupleHeaderSetTypMod(dtup, tupdesc->tdtypmod);
+	dtup = DatumGetHeapTupleHeader(heap_copy_tuple_as_datum(tuple, tupdesc));
 
 	if (oldcxt)
 		MemoryContextSwitchTo(oldcxt);

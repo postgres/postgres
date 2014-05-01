@@ -810,5 +810,14 @@ make_tuple_indirect(PG_FUNCTION_ARGS)
 
 	MemoryContextSwitchTo(old_context);
 
-	PG_RETURN_HEAPTUPLEHEADER(newtup->t_data);
+	/*
+	 * We intentionally don't use PG_RETURN_HEAPTUPLEHEADER here, because that
+	 * would cause the indirect toast pointers to be flattened out of the
+	 * tuple immediately, rendering subsequent testing irrelevant.  So just
+	 * return the HeapTupleHeader pointer as-is.  This violates the general
+	 * rule that composite Datums shouldn't contain toast pointers, but so
+	 * long as the regression test scripts don't insert the result of this
+	 * function into a container type (record, array, etc) it should be OK.
+	 */
+	PG_RETURN_POINTER(newtup->t_data);
 }
