@@ -953,7 +953,6 @@ postquel_get_single_result(TupleTableSlot *slot,
 		/* We must return the whole tuple as a Datum. */
 		fcinfo->isnull = false;
 		value = ExecFetchSlotTupleDatum(slot);
-		value = datumCopy(value, fcache->typbyval, fcache->typlen);
 	}
 	else
 	{

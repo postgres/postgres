@@ -438,3 +438,20 @@ insert into t1 (f1[5].q1) values(42);
 select * from t1;
 update t1 set f1[5].q2 = 43;
 select * from t1;
+
+-- Check that arrays of composites are safely detoasted when needed
+
+create temp table src (f1 text);
+insert into src
+  select string_agg(random()::text,'') from generate_series(1,10000);
+create type textandtext as (c1 text, c2 text);
+create temp table dest (f1 textandtext[]);
+insert into dest select array[row(f1,f1)::textandtext] from src;
+select length(md5((f1[1]).c2)) from dest;
+delete from src;
+select length(md5((f1[1]).c2)) from dest;
+truncate table src;
+drop table src;
+select length(md5((f1[1]).c2)) from dest;
+drop table dest;
+drop type textandtext;
