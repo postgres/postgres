@@ -172,11 +172,14 @@ typedef struct
  * query to ensure it can be referenced unambiguously.
  *
  * Another problem is that a JOIN USING clause requires the columns to be
- * merged to have the same aliases in both input RTEs.	To handle that, we do
- * USING-column alias assignment in a recursive traversal of the query's
- * jointree.  When descending through a JOIN with USING, we preassign the
- * USING column names to the child columns, overriding other rules for column
- * alias assignment.
+ * merged to have the same aliases in both input RTEs, and that no other
+ * columns in those RTEs or their children conflict with the USING names.
+ * To handle that, we do USING-column alias assignment in a recursive
+ * traversal of the query's jointree.  When descending through a JOIN with
+ * USING, we preassign the USING column names to the child columns, overriding
+ * other rules for column alias assignment.  We also mark each RTE with a list
+ * of all USING column names selected for joins containing that RTE, so that
+ * when we assign other columns' aliases later, we can avoid conflicts.
  *
  * Another problem is that if a JOIN's input tables have had columns added or
  * deleted since the query was parsed, we must generate a column alias list
@@ -226,6 +229,9 @@ typedef struct
 
 	/* This flag tells whether we should actually print a column alias list */
 	bool		printaliases;
+
+	/* This list has all names used as USING names in joins above this RTE */
+	List	   *parentUsing;	/* names assigned to parent merged columns */
 
 	/*
 	 * If this struct is for a JOIN RTE, we fill these fields during the
@@ -304,7 +310,8 @@ static void set_deparse_for_query(deparse_namespace *dpns, Query *query,
 					  List *parent_namespaces);
 static void set_simple_column_names(deparse_namespace *dpns);
 static bool has_dangerous_join_using(deparse_namespace *dpns, Node *jtnode);
-static void set_using_names(deparse_namespace *dpns, Node *jtnode);
+static void set_using_names(deparse_namespace *dpns, Node *jtnode,
+				List *parentUsing);
 static void set_relation_column_names(deparse_namespace *dpns,
 						  RangeTblEntry *rte,
 						  deparse_columns *colinfo);
@@ -2579,7 +2586,7 @@ set_deparse_for_query(deparse_namespace *dpns, Query *query,
 		 * Select names for columns merged by USING, via a recursive pass over
 		 * the query jointree.
 		 */
-		set_using_names(dpns, (Node *) query->jointree);
+		set_using_names(dpns, (Node *) query->jointree, NIL);
 	}
 
 	/*
@@ -2713,9 +2720,12 @@ has_dangerous_join_using(deparse_namespace *dpns, Node *jtnode)
  *
  * Column alias info is saved in the dpns->rtable_columns list, which is
  * assumed to be filled with pre-zeroed deparse_columns structs.
+ *
+ * parentUsing is a list of all USING aliases assigned in parent joins of
+ * the current jointree node.  (The passed-in list must not be modified.)
  */
 static void
-set_using_names(deparse_namespace *dpns, Node *jtnode)
+set_using_names(deparse_namespace *dpns, Node *jtnode, List *parentUsing)
 {
 	if (IsA(jtnode, RangeTblRef))
 	{
@@ -2727,7 +2737,7 @@ set_using_names(deparse_namespace *dpns, Node *jtnode)
 		ListCell   *lc;
 
 		foreach(lc, f->fromlist)
-			set_using_names(dpns, (Node *) lfirst(lc));
+			set_using_names(dpns, (Node *) lfirst(lc), parentUsing);
 	}
 	else if (IsA(jtnode, JoinExpr))
 	{
@@ -2807,6 +2817,9 @@ set_using_names(deparse_namespace *dpns, Node *jtnode)
 		 */
 		if (j->usingClause)
 		{
+			/* Copy the input parentUsing list so we don't modify it */
+			parentUsing = list_copy(parentUsing);
+
 			/* USING names must correspond to the first join output columns */
 			expand_colnames_array_to(colinfo, list_length(j->usingClause));
 			i = 0;
@@ -2836,6 +2849,7 @@ set_using_names(deparse_namespace *dpns, Node *jtnode)
 
 				/* Remember selected names for use later */
 				colinfo->usingNames = lappend(colinfo->usingNames, colname);
+				parentUsing = lappend(parentUsing, colname);
 
 				/* Push down to left column, unless it's a system column */
 				if (leftattnos[i] > 0)
@@ -2855,9 +2869,13 @@ set_using_names(deparse_namespace *dpns, Node *jtnode)
 			}
 		}
 
+		/* Mark child deparse_columns structs with correct parentUsing info */
+		leftcolinfo->parentUsing = parentUsing;
+		rightcolinfo->parentUsing = parentUsing;
+
 		/* Now recursively assign USING column names in children */
-		set_using_names(dpns, j->larg);
-		set_using_names(dpns, j->rarg);
+		set_using_names(dpns, j->larg, parentUsing);
+		set_using_names(dpns, j->rarg, parentUsing);
 	}
 	else
 		elog(ERROR, "unrecognized node type: %d",
@@ -3317,6 +3335,15 @@ colname_is_unique(char *colname, deparse_namespace *dpns,
 
 	/* Also check against USING-column names that must be globally unique */
 	foreach(lc, dpns->using_names)
+	{
+		char	   *oldname = (char *) lfirst(lc);
+
+		if (strcmp(oldname, colname) == 0)
+			return false;
+	}
+
+	/* Also check against names already assigned for parent-join USING cols */
+	foreach(lc, colinfo->parentUsing)
 	{
 		char	   *oldname = (char *) lfirst(lc);
 
