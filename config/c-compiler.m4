@@ -19,7 +19,18 @@ fi])# PGAC_C_SIGNED
 
 # PGAC_C_INLINE
 # -------------
-# Check if the C compiler understands inline functions.
+# Check if the C compiler understands inline functions without being
+# noisy about unused static inline functions. Some older compilers
+# understand inline functions (as tested by AC_C_INLINE) but warn about
+# them if they aren't used in a translation unit.
+#
+# This test used to just define an inline function, but some compilers
+# (notably clang) got too smart and now warn about unused static
+# inline functions when defined inside a .c file, but not when defined
+# in an included header. Since the latter is what we want to use, test
+# to see if the warning appears when the function is in a header file.
+# Not pretty, but it works.
+#
 # Defines: inline, PG_USE_INLINE
 AC_DEFUN([PGAC_C_INLINE],
 [AC_C_INLINE
@@ -28,7 +39,7 @@ AC_CACHE_CHECK([for quiet inline (no complaint if unreferenced)], pgac_cv_c_inli
   if test "$ac_cv_c_inline" != no; then
     pgac_c_inline_save_werror=$ac_c_werror_flag
     ac_c_werror_flag=yes
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([static inline int fun () {return 0;}],[])],
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([#include "$srcdir/config/test_quiet_include.h"],[])],
                    [pgac_cv_c_inline_quietly=yes])
     ac_c_werror_flag=$pgac_c_inline_save_werror
   fi])

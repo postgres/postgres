@@ -15345,7 +15345,7 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-static inline int fun () {return 0;}
+#include "$srcdir/config/test_quiet_include.h"
 int
 main ()
 {
