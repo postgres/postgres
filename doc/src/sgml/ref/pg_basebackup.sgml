@@ -588,7 +588,7 @@ PostgreSQL documentation
   <para>
    <application>pg_basebackup</application> works with servers of the same
    or an older major version, down to 9.1. However, WAL streaming mode (-X
-   stream) only works with server version 9.3.
+   stream) only works with server version 9.3 and later.
   </para>
  </refsect1>
 
