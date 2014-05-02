@@ -417,6 +417,24 @@ alter table tt9 drop column xx;
 
 select pg_get_viewdef('vv5', true);
 
+--
+-- Another corner case is that we might add a column to a table below a
+-- JOIN USING, and thereby make the USING column name ambiguous
+--
+
+create table tt11 (x int, y int);
+create table tt12 (x int, z int);
+create table tt13 (z int, q int);
+
+create view vv6 as select x,y,z,q from
+  (tt11 join tt12 using(x)) join tt13 using(z);
+
+select pg_get_viewdef('vv6', true);
+
+alter table tt11 add column z int;
+
+select pg_get_viewdef('vv6', true);
+
 -- clean up all the random objects we made above
 set client_min_messages = warning;
 DROP SCHEMA temp_view_test CASCADE;
