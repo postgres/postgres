@@ -8115,11 +8115,13 @@ newsame:;
 
 	if (xlrec->flags & XLOG_HEAP_PREFIX_FROM_OLD)
 	{
+		Assert(samepage);
 		memcpy(&prefixlen, recdata, sizeof(uint16));
 		recdata += sizeof(uint16);
 	}
 	if (xlrec->flags & XLOG_HEAP_SUFFIX_FROM_OLD)
 	{
+		Assert(samepage);
 		memcpy(&suffixlen, recdata, sizeof(uint16));
 		recdata += sizeof(uint16);
 	}
