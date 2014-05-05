@@ -2231,15 +2231,25 @@
        <para>
         Have <link
         linkend="pgstatstatements"><application>pg_stat_statements</></link>
-        use a flat file for query text storage, allowing higher limits
-        (Peter Geoghegan)
+        use a flat file for query text storage (Peter Geoghegan)
        </para>
 
        <para>
-        Also add the ability to retrieve all
-        <application>pg_stat_statements</> information except the query
-        text.  This allows programs to reuse the query text already
-        retrieved by referencing queryid.
+        This removes the limitation on query text length, and allows a
+        higher default number of unique statements to be tracked.
+        (Peter Geoghegan)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add the ability to retrieve all <application>pg_stat_statements</>
+        information except the query text (Peter Geoghegan)
+       </para>
+
+       <para>
+        This allows programs to reuse the query text already retrieved
+        by referencing <structname>queryid</>.
        </para>
       </listitem>
 
