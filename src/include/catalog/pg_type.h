@@ -392,7 +392,7 @@ DATA(insert OID = 604 (  polygon   PGNSP PGUID -1 f b G f t \054 0	 0 1027 poly_
 DESCR("geometric polygon '(pt1,...)'");
 #define POLYGONOID		604
 
-DATA(insert OID = 628 (  line	   PGNSP PGUID 32 f b G f t \054 0 701 629 line_in line_out line_recv line_send - - - d p f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 628 (  line	   PGNSP PGUID 24 f b G f t \054 0 701 629 line_in line_out line_recv line_send - - - d p f 0 -1 0 0 _null_ _null_ _null_ ));
 DESCR("geometric line");
 #define LINEOID			628
 DATA(insert OID = 629 (  _line	   PGNSP PGUID	-1 f b A f t \054 0 628 0 array_in array_out array_recv array_send - - array_typanalyze d x f 0 -1 0 0 _null_ _null_ _null_ ));
