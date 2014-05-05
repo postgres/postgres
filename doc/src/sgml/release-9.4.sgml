@@ -138,11 +138,13 @@
 
     <listitem>
      <para>
-      Remove system column pg_class.reltoastidxid (Michael Paquier)
+      Use the last specified recovery_target if multiple are specified (Heikki Linnakangas)
      </para>
+    </listitem>
 
+    <listitem>
      <para>
-      Instead use normal index access methods.
+      Remove system column pg_class.reltoastidxid (Michael Paquier)
      </para>
     </listitem>
 
@@ -217,6 +219,22 @@
 
       <listitem>
        <para>
+        Allow background workers to be dynamically registered, started and terminated (Robert Haas)
+       </para>
+
+       <para>
+        worker_spi_launch() in worker_spi shows an example of its use.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow dynamic allocation of shared memory segments (Robert Haas, Amit Kapila)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Improve SSL renegotiation handling (&Aacute;lvaro Herrera)
        </para>
       </listitem>
@@ -235,22 +253,6 @@
       <listitem>
        <para>
         Improve randomness of the database system identifier (Tom Lane)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow background workers to be dynamically started and terminated (Robert Haas)
-       </para>
-
-       <para>
-        worker_spi_launch() in worker_spi shows an example if its use.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow dynamic allocation of shared memory segments (Robert Haas, Amit Kapila)
        </para>
       </listitem>
 
@@ -285,6 +287,18 @@
 
        <para>
         Such indexes improve subnet and supernet lookups and ordering comparisons.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Fix race condition in B-tree page deletion (Heikki Linnakangas)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Make the handling of interrupted B-tree page splits more robust (Heikki Linnakangas)
        </para>
       </listitem>
 
@@ -335,7 +349,7 @@
        </para>
 
        <para>
-        This avoids later freezing overhead.
+        This avoids the need to freeze the tuples in the future.
        </para>
       </listitem>
 
@@ -347,7 +361,7 @@
 
       <listitem>
        <para>
-        Improve speed of accessing many sequence values (David Rowley)
+        Improve speed of accesessing many different sequences in the same session (David Rowley)
        </para>
       </listitem>
 
@@ -371,7 +385,12 @@
 
       <listitem>
        <para>
-        Use memory barriers to avoid some spinlock use (Heikki Linnakangas)
+        Auto-resize the catalog cache (Heikki Linnakangas)
+       </para>
+
+       <para>
+        This reduces memory consumption for backends accessing only a few tables, and improves performance for backend accessing many
+        tables.
        </para>
       </listitem>
 
@@ -469,7 +488,7 @@
 
       <listitem>
        <para>
-        Add huge_pages configuration parameter to attempt to use huge translation look-aside buffer (TLB) pages on Linux (Christian Kruse,
+        Add huge_pages configuration parameter to enable huge translation look-aside buffer (TLB) pages on Linux (Christian Kruse,
         Richard Poole, Abhijit Menon-Sen)
        </para>
 
@@ -514,12 +533,6 @@
       <listitem>
        <para>
         Allow printf-style space padding to be specified in log_line_prefix (David Rowley)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add configuration variable data_checksums to report whether data page checksums are enabled (Bernd Helmle)
        </para>
       </listitem>
 
@@ -617,12 +630,6 @@
 
       <listitem>
        <para>
-        Use the last specified recovery_target if multiple are specified (Heikki Linnakangas)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         pg_switch_xlog() now clears the trailing unused space in the WAL file (Heikki Linnakangas)
        </para>
 
@@ -637,26 +644,46 @@
        </para>
 
        <para>
-        Description?  Logical only?
+        Replication slots allow preservation of resources like WAL files on the
+        primary that are needed by standby servers.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Improve return codes from external recovery commands (Peter Eisentraut)
+        Reduce spinlock contention during WAL replay (Heikki Linnakangas)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Write WAL records of running transactions every 15 seconds ? (Andres Freund)
+        Report failure return codes from external recovery commands (Peter Eisentraut)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Write WAL records of running transactions more frequently (Andres Freund)
+       </para>
+
+       <para>
+        This allows standby servers to start faster and cleanup resources
+        more aggressively.
        </para>
       </listitem>
 
      </itemizedlist>
 
      <sect4>
-      <title>Logical Change-Set Encoding</title>
+      <title>Logical Change-Set Extraction</title>
+
+      <para>
+       The new Logical change-set extraction feature allows database
+       changes to be optionally recorded in <emphasis>logical</> format
+       in the WAL.  This format can be easily processed by external tools.
+       In previous releases, only binary changes were recorded in the
+       WAL.  To implement this feature, the following changes were made:
+      </para>
 
       <itemizedlist>
 
@@ -845,7 +872,7 @@
 
       <listitem>
        <para>
-        Allow security barrier views automatically updateable (Dean Rasheed)
+        Allow security barrier views to be automatically updateable (Dean Rasheed)
        </para>
       </listitem>
 
@@ -978,11 +1005,13 @@
 
        <listitem>
         <para>
-         Add structured (non-text) data type (jsonb) for storing JSON data (Oleg Bartunov,  Teodor Sigaev, Peter Geoghegan and Andrew Dunstan)
+         Add structured (non-text) data type (jsonb) for storing JSON data (Oleg Bartunov, Teodor Sigaev,
+         Alexander Korotkov, Peter Geoghegan, and Andrew Dunstan)
         </para>
 
         <para>
-         This data type allows faster indexing and access to json keys/value pairs.
+         This data type allows for faster indexing and access to json key/value
+         pairs, as well as efficient indexing of all key/value pairs in a JSON document.
         </para>
        </listitem>
 
@@ -1098,11 +1127,8 @@
 
       <listitem>
        <para>
-        Add functions pg_filenode_relation() and pg_relation_filepath() to do relation/relfilenode conversions (Andres Freund)
-       </para>
-
-       <para>
-        These use a new pg_class index to speed lookups.
+        Add function pg_filenode_relation() to allow for more efficient
+        filenode to relation lookups  (Andres Freund)
        </para>
       </listitem>
 
@@ -1540,22 +1566,11 @@
 
       <listitem>
        <para>
-        Improve the way tuples are frozen, to preserve forensic information ((Robert Haas, Andres Freund)
+        Improve the way tuples are frozen, to preserve forensic information (Robert Haas, Andres Freund)
        </para>
 
        <para>
-        Code that inspects tuple flag bits will need to be modified
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Auto-resize the catalog cache (Heikki Linnakangas)
-       </para>
-
-       <para>
-        This reduces memory consumption for backends accessing only a few tables, and improves performance for backend accessing many
-        tables.
+        Code that inspects tuple flag bits will need to be modified.
        </para>
       </listitem>
 
@@ -1575,13 +1590,13 @@
        </para>
 
        <para>
-        All existing uses have been switched to more appropriate snapshot types.
+        All existing uses have been switched to more appropriate snapshot
+        types.  Catalog scans now use MVCC snapshots.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Use an MVCC snapshot (rather than SnapshotNow) for catalog scans (Robert Haas)
        </para>
       </listitem>
 
@@ -1599,7 +1614,7 @@
 
       <listitem>
        <para>
-        Use printf() modifier "z" to specify size_t values (Andres Freund)
+        Add printf() modifier "z" to specify size_t values (Andres Freund)
        </para>
       </listitem>
 
@@ -1623,13 +1638,7 @@
 
       <listitem>
        <para>
-        Memory barrier changes?
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Improve spinlock speed on x86_64 CPUs (test on i386?) (Heikki Linnakangas)
+        Improve spinlock speed on x86_64 CPUs (Heikki Linnakangas)
        </para>
       </listitem>
 
@@ -1641,13 +1650,19 @@
 
       <listitem>
        <para>
+        Remove IRIX port (Robert Haas)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Reduce the number of semaphores required by --disable-spinlocks (Robert Haas)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Rewrite duplicate_oids Unix hell script in Perl (Andrew Dunstan)
+        Rewrite duplicate_oids Unix shell script in Perl (Andrew Dunstan)
        </para>
       </listitem>
 
@@ -1730,12 +1745,6 @@
 
        <para>
         pgindent is also now smarter about blank lines around preprocessor conditionals.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Remove IRIX port (Robert Haas)
        </para>
       </listitem>
 
