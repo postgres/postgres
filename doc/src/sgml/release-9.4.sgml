@@ -488,7 +488,7 @@
 
       <listitem>
        <para>
-        Add huge_pages configuration parameter to enable huge translation look-aside buffer (TLB) pages on Linux (Christian Kruse,
+        Add huge_pages configuration parameter to use huge memory pages on Linux (Christian Kruse,
         Richard Poole, Abhijit Menon-Sen)
        </para>
 
