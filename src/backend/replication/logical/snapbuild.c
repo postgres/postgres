@@ -1431,7 +1431,7 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 	char		path[MAXPGPATH];
 	int			ret;
 	struct stat stat_buf;
-	uint32		sz;
+	Size		sz;
 
 	Assert(lsn != InvalidXLogRecPtr);
 	Assert(builder->last_serialized_snapshot == InvalidXLogRecPtr ||
