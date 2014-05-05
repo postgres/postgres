@@ -88,9 +88,9 @@ ReceiveSharedInvalidMessages(
 	/* Deal with any messages still pending from an outer recursion */
 	while (nextmsg < nummsgs)
 	{
-		SharedInvalidationMessage *msg = &messages[nextmsg++];
+		SharedInvalidationMessage msg = messages[nextmsg++];
 
-		invalFunction(msg);
+		invalFunction(&msg);
 	}
 
 	do
@@ -116,9 +116,9 @@ ReceiveSharedInvalidMessages(
 
 		while (nextmsg < nummsgs)
 		{
-			SharedInvalidationMessage *msg = &messages[nextmsg++];
+			SharedInvalidationMessage msg = messages[nextmsg++];
 
-			invalFunction(msg);
+			invalFunction(&msg);
 		}
 
 		/*
