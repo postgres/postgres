@@ -707,8 +707,9 @@ _CloseArchive(ArchiveHandle *AH)
 	if (AH->mode == archModeWrite)
 	{
 		WriteHead(AH);
+		/* Remember TOC's seek position for use below */
 		tpos = ftello(AH->FH);
-		if (tpos < 0)
+		if (tpos < 0 && ctx->hasSeek)
 			exit_horribly(modulename, "could not determine seek position in archive file: %s\n",
 						  strerror(errno));
 		WriteToc(AH);
@@ -899,17 +900,20 @@ _getFilePos(ArchiveHandle *AH, lclContext *ctx)
 
 	if (ctx->hasSeek)
 	{
+		/*
+		 * Prior to 1.7 (pg7.3) we relied on the internally maintained
+		 * pointer.  Now we rely on ftello() always, unless the file has been
+		 * found to not support it.  For debugging purposes, print a warning
+		 * if the internal pointer disagrees, so that we're more likely to
+		 * notice if something's broken about the internal position tracking.
+		 */
 		pos = ftello(AH->FH);
-		if (pos != ctx->filePos)
-		{
-			write_msg(modulename, "WARNING: ftell mismatch with expected position -- ftell used\n");
+		if (pos < 0)
+			exit_horribly(modulename, "could not determine seek position in archive file: %s\n",
+						  strerror(errno));
 
-			/*
-			 * Prior to 1.7 (pg7.3) we relied on the internally maintained
-			 * pointer. Now we rely on ftello() always, unless the file has
-			 * been found to not support it.
-			 */
-		}
+		if (pos != ctx->filePos)
+			write_msg(modulename, "WARNING: ftell mismatch with expected position -- ftell used\n");
 	}
 	else
 		pos = ctx->filePos;
