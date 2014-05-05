@@ -3155,7 +3155,7 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="datatype-line">
     <title>Lines</title>
 
     <indexterm>
@@ -3187,7 +3187,7 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="datatype-lseg">
     <title>Line Segments</title>
 
     <indexterm>
@@ -3302,7 +3302,7 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="datatype-polygon">
     <title>Polygons</title>
 
     <indexterm>
@@ -3335,7 +3335,7 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="datatype-circle">
     <title>Circles</title>
 
     <indexterm>
