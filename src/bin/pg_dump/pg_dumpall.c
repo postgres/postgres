@@ -1666,7 +1666,7 @@ runPgDump(const char *dbname)
 	PQExpBuffer cmd = createPQExpBuffer();
 	int			ret;
 
-	appendPQExpBuffer(cmd, SYSTEMQUOTE "\"%s\" %s", pg_dump_bin,
+	appendPQExpBuffer(cmd, "\"%s\" %s", pg_dump_bin,
 					  pgdumpopts->data);
 
 	/*
@@ -1686,8 +1686,6 @@ runPgDump(const char *dbname)
 	doConnStrQuoting(connstrbuf, dbname);
 
 	doShellQuoting(cmd, connstrbuf->data);
-
-	appendPQExpBufferStr(cmd, SYSTEMQUOTE);
 
 	if (verbose)
 		fprintf(stderr, _("%s: running \"%s\"\n"), progname, cmd->data);

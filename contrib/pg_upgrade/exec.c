@@ -59,14 +59,14 @@ static DWORD       mainThreadId = 0;
 		mainThreadId = GetCurrentThreadId();
 #endif
 
-	written = strlcpy(cmd, SYSTEMQUOTE, sizeof(cmd));
+	written = 0;
 	va_start(ap, fmt);
 	written += vsnprintf(cmd + written, MAXCMDLEN - written, fmt, ap);
 	va_end(ap);
 	if (written >= MAXCMDLEN)
 		pg_fatal("command too long\n");
 	written += snprintf(cmd + written, MAXCMDLEN - written,
-						" >> \"%s\" 2>&1" SYSTEMQUOTE, log_file);
+						" >> \"%s\" 2>&1", log_file);
 	if (written >= MAXCMDLEN)
 		pg_fatal("command too long\n");
 

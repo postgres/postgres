@@ -1936,10 +1936,10 @@ editFile(const char *fname, int lineno)
 					editorName, fname);
 #else
 	if (lineno > 0)
-		sys = psprintf(SYSTEMQUOTE "\"%s\" %s%d \"%s\"" SYSTEMQUOTE,
+		sys = psprintf("\"%s\" %s%d \"%s\"",
 				editorName, editor_lineno_arg, lineno, fname);
 	else
-		sys = psprintf(SYSTEMQUOTE "\"%s\" \"%s\"" SYSTEMQUOTE,
+		sys = psprintf("\"%s\" \"%s\"",
 					editorName, fname);
 #endif
 	result = system(sys);
@@ -2643,7 +2643,7 @@ do_shell(const char *command)
 #ifndef WIN32
 		sys = psprintf("exec %s", shellName);
 #else
-		sys = psprintf(SYSTEMQUOTE "\"%s\"" SYSTEMQUOTE, shellName);
+		sys = psprintf("\"%s\"", shellName);
 #endif
 		result = system(sys);
 		free(sys);

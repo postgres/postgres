@@ -435,11 +435,11 @@ start_postmaster(void)
 	 * the PID without having to rely on reading it back from the pidfile.
 	 */
 	if (log_file != NULL)
-		snprintf(cmd, MAXPGPATH, SYSTEMQUOTE "\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1 &" SYSTEMQUOTE,
+		snprintf(cmd, MAXPGPATH, "\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1 &",
 				 exec_path, pgdata_opt, post_opts,
 				 DEVNULL, log_file);
 	else
-		snprintf(cmd, MAXPGPATH, SYSTEMQUOTE "\"%s\" %s%s < \"%s\" 2>&1 &" SYSTEMQUOTE,
+		snprintf(cmd, MAXPGPATH, "\"%s\" %s%s < \"%s\" 2>&1 &",
 				 exec_path, pgdata_opt, post_opts, DEVNULL);
 
 	return system(cmd);
@@ -453,10 +453,10 @@ start_postmaster(void)
 	PROCESS_INFORMATION pi;
 
 	if (log_file != NULL)
-		snprintf(cmd, MAXPGPATH, "CMD /C " SYSTEMQUOTE "\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1" SYSTEMQUOTE,
+		snprintf(cmd, MAXPGPATH, "CMD /C \"\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1\"",
 				 exec_path, pgdata_opt, post_opts, DEVNULL, log_file);
 	else
-		snprintf(cmd, MAXPGPATH, "CMD /C " SYSTEMQUOTE "\"%s\" %s%s < \"%s\" 2>&1" SYSTEMQUOTE,
+		snprintf(cmd, MAXPGPATH, "CMD /C \"\"%s\" %s%s < \"%s\" 2>&1\"",
 				 exec_path, pgdata_opt, post_opts, DEVNULL);
 
 	if (!CreateRestrictedProcess(cmd, &pi, false))
@@ -814,10 +814,10 @@ do_init(void)
 		post_opts = "";
 
 	if (!silent_mode)
-		snprintf(cmd, MAXPGPATH, SYSTEMQUOTE "\"%s\" %s%s" SYSTEMQUOTE,
+		snprintf(cmd, MAXPGPATH, "\"%s\" %s%s",
 				 exec_path, pgdata_opt, post_opts);
 	else
-		snprintf(cmd, MAXPGPATH, SYSTEMQUOTE "\"%s\" %s%s > \"%s\"" SYSTEMQUOTE,
+		snprintf(cmd, MAXPGPATH, "\"%s\" %s%s > \"%s\"",
 				 exec_path, pgdata_opt, post_opts, DEVNULL);
 
 	if (system(cmd) != 0)
@@ -2035,7 +2035,7 @@ adjust_data_dir(void)
 		my_exec_path = pg_strdup(exec_path);
 
 	/* it's important for -C to be the first option, see main.c */
-	snprintf(cmd, MAXPGPATH, SYSTEMQUOTE "\"%s\" -C data_directory %s%s" SYSTEMQUOTE,
+	snprintf(cmd, MAXPGPATH, "\"%s\" -C data_directory %s%s",
 			 my_exec_path,
 			 pgdata_opt ? pgdata_opt : "",
 			 post_opts ? post_opts : "");

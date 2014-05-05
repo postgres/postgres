@@ -115,37 +115,6 @@ extern BOOL AddUserToTokenDacl(HANDLE hToken);
 #define DEVNULL "/dev/null"
 #endif
 
-/*
- *	Win32 needs double quotes at the beginning and end of system()
- *	strings.  If not, it gets confused with multiple quoted strings.
- *	It also requires double-quotes around the executable name and
- *	any files used for redirection.  Other args can use single-quotes.
- *
- *	Generated using Win32 "CMD /?":
- *
- *	1. If all of the following conditions are met, then quote characters
- *	on the command line are preserved:
- *
- *	 - no /S switch
- *	 - exactly two quote characters
- *	 - no special characters between the two quote characters, where special
- *	   is one of: &<>()@^|
- *	 - there are one or more whitespace characters between the two quote
- *	   characters
- *	 - the string between the two quote characters is the name of an
- *	   executable file.
- *
- *	 2. Otherwise, old behavior is to see if the first character is a quote
- *	 character and if so, strip the leading character and remove the last
- *	 quote character on the command line, preserving any text after the last
- *	 quote character.
- */
-#if defined(WIN32) && !defined(__CYGWIN__)
-#define SYSTEMQUOTE "\""
-#else
-#define SYSTEMQUOTE ""
-#endif
-
 /* Portable delay handling */
 extern void pg_usleep(long microsec);
 
@@ -332,12 +301,16 @@ extern FILE *pgwin32_fopen(const char *, const char *);
 #define		fopen(a,b) pgwin32_fopen(a,b)
 #endif
 
-#ifndef popen
-#define popen(a,b) _popen(a,b)
-#endif
-#ifndef pclose
+/*
+ * system() and popen() replacements to enclose the command in an extra
+ * pair of quotes.
+ */
+extern int pgwin32_system(const char *command);
+extern FILE *pgwin32_popen(const char *command, const char *type);
+
+#define system(a) pgwin32_system(a)
+#define popen(a,b) pgwin32_popen(a,b)
 #define pclose(a) _pclose(a)
-#endif
 
 /* New versions of MingW have gettimeofday, old mingw and msvc don't */
 #ifndef HAVE_GETTIMEOFDAY

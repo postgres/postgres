@@ -110,7 +110,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	pg_putenv("LC_ALL", NULL);
 	pg_putenv("LC_MESSAGES", "C");
 
-	snprintf(cmd, sizeof(cmd), SYSTEMQUOTE "\"%s/%s \"%s\"" SYSTEMQUOTE,
+	snprintf(cmd, sizeof(cmd), "\"%s/%s \"%s\"",
 			 cluster->bindir,
 			 live_check ? "pg_controldata\"" : "pg_resetxlog\" -n",
 			 cluster->pgdata);

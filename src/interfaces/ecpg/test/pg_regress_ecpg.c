@@ -137,7 +137,7 @@ ecpg_start_test(const char *testname,
 	snprintf(inprg, sizeof(inprg), "%s/%s", inputdir, testname);
 
 	snprintf(cmd, sizeof(cmd),
-			 SYSTEMQUOTE "\"%s\" >\"%s\" 2>\"%s\"" SYSTEMQUOTE,
+			 "\"%s\" >\"%s\" 2>\"%s\"",
 			 inprg,
 			 outfile_stdout,
 			 outfile_stderr);
