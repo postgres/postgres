@@ -547,9 +547,6 @@ StreamLog(void)
 	}
 	PQclear(res);
 
-	if (copybuf != NULL)
-		PQfreemem(copybuf);
-
 	if (outfd != -1 && strcmp(outfile, "-") != 0)
 	{
 		int64 t = feGetCurrentTimestamp();
@@ -563,6 +560,11 @@ StreamLog(void)
 	}
 	outfd = -1;
 error:
+	if (copybuf != NULL)
+	{
+		PQfreemem(copybuf);
+		copybuf = NULL;
+	}
 	destroyPQExpBuffer(query);
 	PQfinish(conn);
 	conn = NULL;
