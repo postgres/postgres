@@ -456,7 +456,7 @@ ReorderBufferGetTupleBuf(ReorderBuffer *rb)
 		tuple = slist_container(ReorderBufferTupleBuf, node,
 								slist_pop_head_node(&rb->cached_tuplebufs));
 #ifdef USE_ASSERT_CHECKING
-		memset(tuple, 0xdeadbeef, sizeof(ReorderBufferTupleBuf));
+		memset(tuple, 0xa9, sizeof(ReorderBufferTupleBuf));
 #endif
 	}
 	else
