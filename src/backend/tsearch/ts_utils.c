@@ -25,8 +25,8 @@
 
 /*
  * Given the base name and extension of a tsearch config file, return
- * its full path name.	The base name is assumed to be user-supplied,
- * and is checked to prevent pathname attacks.	The extension is assumed
+ * its full path name.  The base name is assumed to be user-supplied,
+ * and is checked to prevent pathname attacks.  The extension is assumed
  * to be safe.
  *
  * The result is a palloc'd string.
@@ -39,7 +39,7 @@ get_tsearch_config_filename(const char *basename,
 	char	   *result;
 
 	/*
-	 * We limit the basename to contain a-z, 0-9, and underscores.	This may
+	 * We limit the basename to contain a-z, 0-9, and underscores.  This may
 	 * be overly restrictive, but we don't want to allow access to anything
 	 * outside the tsearch_data directory, so for instance '/' *must* be
 	 * rejected, and on some platforms '\' and ':' are risky as well. Allowing
@@ -69,7 +69,7 @@ comparestr(const void *a, const void *b)
 
 /*
  * Reads a stop-word file. Each word is run through 'wordop'
- * function, if given.	wordop may either modify the input in-place,
+ * function, if given.  wordop may either modify the input in-place,
  * or palloc a new version.
  */
 void

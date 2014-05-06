@@ -38,7 +38,7 @@ static int	history_lines_added;
  *	Preserve newlines in saved queries by mapping '\n' to NL_IN_HISTORY
  *
  *	It is assumed NL_IN_HISTORY will never be entered by the user
- *	nor appear inside a multi-byte string.	0x00 is not properly
+ *	nor appear inside a multi-byte string.  0x00 is not properly
  *	handled by the readline routines so it can not be used
  *	for this purpose.
  */
@@ -162,7 +162,7 @@ pg_send_history(PQExpBuffer history_buf)
  *
  * Caller *must* have set up sigint_interrupt_jmp before calling.
  *
- * Note: we re-use a static PQExpBuffer for each call.	This is to avoid
+ * Note: we re-use a static PQExpBuffer for each call.  This is to avoid
  * leaking memory if interrupted by SIGINT.
  */
 char *
@@ -396,7 +396,7 @@ saveHistory(char *fname, int max_lines, bool appendFlag, bool encodeFlag)
 			/* truncate what we have ... */
 			if (max_lines >= 0)
 				stifle_history(max_lines);
-			/* ... and overwrite file.	Tough luck for concurrent sessions. */
+			/* ... and overwrite file.  Tough luck for concurrent sessions. */
 			errno = 0;
 			(void) write_history(fname);
 			if (errno == 0)

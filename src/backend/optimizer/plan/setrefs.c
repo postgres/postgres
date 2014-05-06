@@ -132,7 +132,7 @@ static bool extract_query_dependencies_walker(Node *node,
 /*
  * set_plan_references
  *
- * This is the final processing pass of the planner/optimizer.	The plan
+ * This is the final processing pass of the planner/optimizer.  The plan
  * tree is complete; we just have to adjust some representational details
  * for the convenience of the executor:
  *
@@ -181,7 +181,7 @@ static bool extract_query_dependencies_walker(Node *node,
  * and glob->invalItems (for everything else).
  *
  * Notice that we modify Plan nodes in-place, but use expression_tree_mutator
- * to process targetlist and qual expressions.	We can assume that the Plan
+ * to process targetlist and qual expressions.  We can assume that the Plan
  * nodes were just built by the planner and are not multiply referenced, but
  * it's not so safe to assume that for expression tree nodes.
  */
@@ -227,7 +227,7 @@ set_plan_references(PlannerGlobal *glob, Plan *plan,
 		 * We do this even though the RTE might be unreferenced in the plan
 		 * tree; this would correspond to cases such as views that were
 		 * expanded, child tables that were eliminated by constraint
-		 * exclusion, etc.	Schema invalidation on such a rel must still force
+		 * exclusion, etc.  Schema invalidation on such a rel must still force
 		 * rebuilding of the plan.
 		 *
 		 * Note we don't bother to avoid duplicate list entries.  We could,
@@ -413,7 +413,7 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 			/*
 			 * These plan types don't actually bother to evaluate their
 			 * targetlists, because they just return their unmodified input
-			 * tuples.	Even though the targetlist won't be used by the
+			 * tuples.  Even though the targetlist won't be used by the
 			 * executor, we fix it up for possible use by EXPLAIN (not to
 			 * mention ease of debugging --- wrong varnos are very confusing).
 			 */
@@ -431,7 +431,7 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 
 				/*
 				 * Like the plan types above, LockRows doesn't evaluate its
-				 * tlist or quals.	But we have to fix up the RT indexes in
+				 * tlist or quals.  But we have to fix up the RT indexes in
 				 * its rowmarks.
 				 */
 				set_dummy_tlist_references(plan, rtoffset);
@@ -666,7 +666,7 @@ set_subqueryscan_references(PlannerGlobal *glob,
 	else
 	{
 		/*
-		 * Keep the SubqueryScan node.	We have to do the processing that
+		 * Keep the SubqueryScan node.  We have to do the processing that
 		 * set_plan_references would otherwise have done on it.  Notice we do
 		 * not do set_upper_references() here, because a SubqueryScan will
 		 * always have been created with correct references to its subplan's
@@ -879,7 +879,7 @@ fix_scan_expr_mutator(Node *node, fix_scan_expr_context *context)
 
 		/*
 		 * We should not see any Vars marked INNER, but in a nestloop inner
-		 * scan there could be OUTER Vars.	Leave them alone.
+		 * scan there could be OUTER Vars.  Leave them alone.
 		 */
 		Assert(var->varno != INNER);
 		if (var->varno > 0 && var->varno != OUTER)
@@ -1002,7 +1002,7 @@ set_join_references(PlannerGlobal *glob, Join *join, int rtoffset)
  *
  * To handle bitmap-scan plan trees, we have to be able to recurse down
  * to the bottom BitmapIndexScan nodes; likewise, appendrel indexscans
- * require recursing through Append nodes.	This is split out as a separate
+ * require recursing through Append nodes.  This is split out as a separate
  * function so that it can recurse.
  *
  * Note we do *not* apply any rtoffset for non-join Vars; this is because
@@ -1017,7 +1017,7 @@ set_inner_join_references(PlannerGlobal *glob, Plan *inner_plan,
 	{
 		/*
 		 * An index is being used to reduce the number of tuples scanned in
-		 * the inner relation.	If there are join clauses being used with the
+		 * the inner relation.  If there are join clauses being used with the
 		 * index, we must update their outer-rel var nodes to refer to the
 		 * outer side of the join.
 		 */
@@ -1308,7 +1308,7 @@ set_dummy_tlist_references(Plan *plan, int rtoffset)
  *
  * In most cases, subplan tlists will be "flat" tlists with only Vars,
  * so we try to optimize that case by extracting information about Vars
- * in advance.	Matching a parent tlist to a child is still an O(N^2)
+ * in advance.  Matching a parent tlist to a child is still an O(N^2)
  * operation, but at least with a much smaller constant factor than plain
  * tlist_member() searches.
  *
@@ -1758,7 +1758,7 @@ fix_upper_expr_mutator(Node *node, fix_upper_expr_context *context)
  * adjust any Vars that refer to other tables to reference junk tlist
  * entries in the top subplan's targetlist.  Vars referencing the result
  * table should be left alone, however (the executor will evaluate them
- * using the actual heap tuple, after firing triggers if any).	In the
+ * using the actual heap tuple, after firing triggers if any).  In the
  * adjusted RETURNING list, result-table Vars will still have their
  * original varno, but Vars for other rels will have varno OUTER.
  *

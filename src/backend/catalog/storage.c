@@ -34,7 +34,7 @@
  * that have been created or deleted in the current transaction.  When
  * a relation is created, we create the physical file immediately, but
  * remember it so that we can delete the file again if the current
- * transaction is aborted.	Conversely, a deletion request is NOT
+ * transaction is aborted.  Conversely, a deletion request is NOT
  * executed immediately, but is just entered in the list.  When and if
  * the transaction commits, we can delete the physical file.
  *

@@ -2,7 +2,7 @@
  * re_*comp and friends - compile REs
  * This file #includes several others (see the bottom).
  *
- * Copyright (c) 1998, 1999 Henry Spencer.	All rights reserved.
+ * Copyright (c) 1998, 1999 Henry Spencer.  All rights reserved.
  *
  * Development of this software was funded, in part, by Cray Research Inc.,
  * UUNET Communications Services Inc., Sun Microsystems Inc., and Scriptics
@@ -556,7 +556,7 @@ makesearch(struct vars * v,
 	 * constraints, often knowing when you were in the pre state tells you
 	 * little; it's the next state(s) that are informative.  But some of them
 	 * may have other inarcs, i.e. it may be possible to make actual progress
-	 * and then return to one of them.	We must de-optimize such cases,
+	 * and then return to one of them.  We must de-optimize such cases,
 	 * splitting each such state into progress and no-progress states.
 	 */
 
@@ -602,7 +602,7 @@ makesearch(struct vars * v,
  * parse - parse an RE
  *
  * This is actually just the top level, which parses a bunch of branches
- * tied together with '|'.	They appear in the tree as the left children
+ * tied together with '|'.  They appear in the tree as the left children
  * of a chain of '|' subres.
  */
 static struct subre *
@@ -1328,7 +1328,7 @@ bracket(struct vars * v,
 /*
  * cbracket - handle complemented bracket expression
  * We do it by calling bracket() with dummy endpoints, and then complementing
- * the result.	The alternative would be to invoke rainbow(), and then delete
+ * the result.  The alternative would be to invoke rainbow(), and then delete
  * arcs as the b.e. is seen... but that gets messy.
  */
 static void

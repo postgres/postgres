@@ -339,7 +339,7 @@ make_subplan(PlannerInfo *root, Query *orig_subquery, SubLinkType subLinkType,
 	Node	   *result;
 
 	/*
-	 * Copy the source Query node.	This is a quick and dirty kluge to resolve
+	 * Copy the source Query node.  This is a quick and dirty kluge to resolve
 	 * the fact that the parser can generate trees with multiple links to the
 	 * same sub-Query node, but the planner wants to scribble on the Query.
 	 * Try to clean this up when we do querytree redesign...
@@ -364,7 +364,7 @@ make_subplan(PlannerInfo *root, Query *orig_subquery, SubLinkType subLinkType,
 	 * path/costsize.c.
 	 *
 	 * XXX If an ANY subplan is uncorrelated, build_subplan may decide to hash
-	 * its output.	In that case it would've been better to specify full
+	 * its output.  In that case it would've been better to specify full
 	 * retrieval.  At present, however, we can only check hashability after
 	 * we've made the subplan :-(.  (Determining whether it'll fit in work_mem
 	 * is the really hard part.)  Therefore, we don't want to be too
@@ -403,7 +403,7 @@ make_subplan(PlannerInfo *root, Query *orig_subquery, SubLinkType subLinkType,
 	/*
 	 * If it's a correlated EXISTS with an unimportant targetlist, we might be
 	 * able to transform it to the equivalent of an IN and then implement it
-	 * by hashing.	We don't have enough information yet to tell which way is
+	 * by hashing.  We don't have enough information yet to tell which way is
 	 * likely to be better (it depends on the expected number of executions of
 	 * the EXISTS qual, and we are much too early in planning the outer query
 	 * to be able to guess that).  So we generate both plans, if possible, and
@@ -630,7 +630,7 @@ build_subplan(PlannerInfo *root, Plan *plan, List *rtable, List *rowmarks,
 		 * Otherwise, we have the option to tack a Material node onto the top
 		 * of the subplan, to reduce the cost of reading it repeatedly.  This
 		 * is pointless for a direct-correlated subplan, since we'd have to
-		 * recompute its results each time anyway.	For uncorrelated/undirect
+		 * recompute its results each time anyway.  For uncorrelated/undirect
 		 * correlated subplans, we add Material unless the subplan's top plan
 		 * node would materialize its output anyway.  Also, if enable_material
 		 * is false, then the user does not want us to materialize anything
@@ -657,10 +657,10 @@ build_subplan(PlannerInfo *root, Plan *plan, List *rtable, List *rowmarks,
 
 	/*
 	 * A parameterless subplan (not initplan) should be prepared to handle
-	 * REWIND efficiently.	If it has direct parameters then there's no point
+	 * REWIND efficiently.  If it has direct parameters then there's no point
 	 * since it'll be reset on each scan anyway; and if it's an initplan then
 	 * there's no point since it won't get re-run without parameter changes
-	 * anyway.	The input of a hashed subplan doesn't need REWIND either.
+	 * anyway.  The input of a hashed subplan doesn't need REWIND either.
 	 */
 	if (splan->parParam == NIL && !isInitPlan && !splan->useHashTable)
 		root->glob->rewindPlanIDs = bms_add_member(root->glob->rewindPlanIDs,
@@ -763,7 +763,7 @@ generate_subquery_vars(PlannerInfo *root, List *tlist, Index varno)
 /*
  * convert_testexpr: convert the testexpr given by the parser into
  * actually executable form.  This entails replacing PARAM_SUBLINK Params
- * with Params or Vars representing the results of the sub-select.	The
+ * with Params or Vars representing the results of the sub-select.  The
  * nodes to be substituted are passed in as the List result from
  * generate_subquery_params or generate_subquery_vars.
  */
@@ -865,7 +865,7 @@ testexpr_is_hashable(Node *testexpr)
 	 *
 	 * The combining operators must be hashable and strict. The need for
 	 * hashability is obvious, since we want to use hashing. Without
-	 * strictness, behavior in the presence of nulls is too unpredictable.	We
+	 * strictness, behavior in the presence of nulls is too unpredictable.  We
 	 * actually must assume even more than plain strictness: they can't yield
 	 * NULL for non-null inputs, either (see nodeSubplan.c).  However, hash
 	 * indexes and hash joins assume that too.
@@ -954,7 +954,7 @@ SS_process_ctes(PlannerInfo *root)
 		}
 
 		/*
-		 * Copy the source Query node.	Probably not necessary, but let's keep
+		 * Copy the source Query node.  Probably not necessary, but let's keep
 		 * this similar to make_subplan.
 		 */
 		subquery = (Query *) copyObject(cte->ctequery);
@@ -980,7 +980,7 @@ SS_process_ctes(PlannerInfo *root)
 			elog(ERROR, "unexpected outer reference in CTE query");
 
 		/*
-		 * Make a SubPlan node for it.	This is just enough unlike
+		 * Make a SubPlan node for it.  This is just enough unlike
 		 * build_subplan that we can't share code.
 		 *
 		 * Note plan_id, plan_name, and cost fields are set further down.
@@ -1205,7 +1205,7 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 
 	/*
 	 * See if the subquery can be simplified based on the knowledge that it's
-	 * being used in EXISTS().	If we aren't able to get rid of its
+	 * being used in EXISTS().  If we aren't able to get rid of its
 	 * targetlist, we have to fail, because the pullup operation leaves us
 	 * with noplace to evaluate the targetlist.
 	 */
@@ -1254,9 +1254,9 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	 * what pull_up_subqueries has to go through.
 	 *
 	 * In fact, it's even easier than what convert_ANY_sublink_to_join has to
-	 * do.	The machinations of simplify_EXISTS_query ensured that there is
+	 * do.  The machinations of simplify_EXISTS_query ensured that there is
 	 * nothing interesting in the subquery except an rtable and jointree, and
-	 * even the jointree FromExpr no longer has quals.	So we can just append
+	 * even the jointree FromExpr no longer has quals.  So we can just append
 	 * the rtable to our own and use the FromExpr in our jointree. But first,
 	 * adjust all level-zero varnos in the subquery to account for the rtable
 	 * merger.
@@ -1386,7 +1386,7 @@ simplify_EXISTS_query(Query *query)
  *
  * On success, the modified subselect is returned, and we store a suitable
  * upper-level test expression at *testexpr, plus a list of the subselect's
- * output Params at *paramIds.	(The test expression is already Param-ified
+ * output Params at *paramIds.  (The test expression is already Param-ified
  * and hence need not go through convert_testexpr, which is why we have to
  * deal with the Param IDs specially.)
  *
@@ -1545,7 +1545,7 @@ convert_EXISTS_to_ANY(PlannerInfo *root, Query *subselect,
 		return NULL;
 
 	/*
-	 * Also reject sublinks in the stuff we intend to pull up.	(It might be
+	 * Also reject sublinks in the stuff we intend to pull up.  (It might be
 	 * possible to support this, but doesn't seem worth the complication.)
 	 */
 	if (contain_subplans((Node *) leftargs))
@@ -1744,7 +1744,7 @@ process_sublinks_mutator(Node *node, process_sublinks_context *context)
 	 * is needed for a bare List.)
 	 *
 	 * Anywhere within the top-level AND/OR clause structure, we can tell
-	 * make_subplan() that NULL and FALSE are interchangeable.	So isTopQual
+	 * make_subplan() that NULL and FALSE are interchangeable.  So isTopQual
 	 * propagates down in both cases.  (Note that this is unlike the meaning
 	 * of "top level qual" used in most other places in Postgres.)
 	 */
@@ -1850,7 +1850,7 @@ SS_finalize_plan(PlannerInfo *root, Plan *plan, bool attach_initplans)
 	 * Now determine the set of params that are validly referenceable in this
 	 * query level; to wit, those available from outer query levels plus the
 	 * output parameters of any local initPlans.  (We do not include output
-	 * parameters of regular subplans.	Those should only appear within the
+	 * parameters of regular subplans.  Those should only appear within the
 	 * testexpr of SubPlan nodes, and are taken care of locally within
 	 * finalize_primnode.  Likewise, special parameters that are generated by
 	 * nodes such as ModifyTable are handled within finalize_plan.)
@@ -2008,7 +2008,7 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 			/*
 			 * In a SubqueryScan, SS_finalize_plan has already been run on the
 			 * subplan by the inner invocation of subquery_planner, so there's
-			 * no need to do it again.	Instead, just pull out the subplan's
+			 * no need to do it again.  Instead, just pull out the subplan's
 			 * extParams list, which represents the params it needs from my
 			 * level and higher levels.
 			 */
@@ -2293,7 +2293,7 @@ finalize_primnode(Node *node, finalize_primnode_context *context)
 
 		/*
 		 * Remove any param IDs of output parameters of the subplan that were
-		 * referenced in the testexpr.	These are not interesting for
+		 * referenced in the testexpr.  These are not interesting for
 		 * parameter change signaling since we always re-evaluate the subplan.
 		 * Note that this wouldn't work too well if there might be uses of the
 		 * same param IDs elsewhere in the plan, but that can't happen because

@@ -8,9 +8,9 @@
  * (tracked by separate refcounts on each snapshot), its memory can be freed.
  *
  * These arrangements let us reset MyProc->xmin when there are no snapshots
- * referenced by this transaction.	(One possible improvement would be to be
+ * referenced by this transaction.  (One possible improvement would be to be
  * able to advance Xmin when the snapshot with the earliest Xmin is no longer
- * referenced.	That's a bit harder though, it requires more locking, and
+ * referenced.  That's a bit harder though, it requires more locking, and
  * anyway it should be rather uncommon to keep snapshots referenced for too
  * long.)
  *
@@ -59,7 +59,7 @@ static Snapshot SecondarySnapshot = NULL;
  * mode, we don't want it to say that BootstrapTransactionId is in progress.
  *
  * RecentGlobalXmin is initialized to InvalidTransactionId, to ensure that no
- * one tries to use a stale value.	Readers should ensure that it has been set
+ * one tries to use a stale value.  Readers should ensure that it has been set
  * to something else before using it.
  */
 TransactionId TransactionXmin = FirstNormalTransactionId;
@@ -263,7 +263,7 @@ FreeSnapshot(Snapshot snapshot)
  *
  * If the passed snapshot is a statically-allocated one, or it is possibly
  * subject to a future command counter update, create a new long-lived copy
- * with active refcount=1.	Otherwise, only increment the refcount.
+ * with active refcount=1.  Otherwise, only increment the refcount.
  */
 void
 PushActiveSnapshot(Snapshot snap)

@@ -729,7 +729,7 @@ static bool CacheInitialized = false;
  * InitCatalogCache - initialize the caches
  *
  * Note that no database access is done here; we only allocate memory
- * and initialize the cache structure.	Interrogation of the database
+ * and initialize the cache structure.  Interrogation of the database
  * to complete initialization of a cache happens upon first use
  * of that cache.
  */
@@ -966,7 +966,7 @@ SearchSysCacheExistsAttName(Oid relid, const char *attname)
  *		extract a specific attribute.
  *
  * This is equivalent to using heap_getattr() on a tuple fetched
- * from a non-cached relation.	Usually, this is only used for attributes
+ * from a non-cached relation.  Usually, this is only used for attributes
  * that could be NULL or variable length; the fixed-size attributes in
  * a system table are accessed just by mapping the tuple onto the C struct
  * declarations from include/catalog/.

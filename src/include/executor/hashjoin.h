@@ -41,7 +41,7 @@
  * If nbatch > 1 then tuples that don't belong in first batch get saved
  * into inner-batch temp files. The same statements apply for the
  * first scan of the outer relation, except we write tuples to outer-batch
- * temp files.	After finishing the first scan, we do the following for
+ * temp files.  After finishing the first scan, we do the following for
  * each remaining batch:
  *	1. Read tuples from inner batch file, load into hash buckets.
  *	2. Read tuples from outer batch file, match to hash buckets and output.
@@ -130,7 +130,7 @@ typedef struct HashJoinTableData
 
 	/*
 	 * These arrays are allocated for the life of the hash join, but only if
-	 * nbatch > 1.	A file is opened only when we first write a tuple into it
+	 * nbatch > 1.  A file is opened only when we first write a tuple into it
 	 * (otherwise its pointer remains NULL).  Note that the zero'th array
 	 * elements never get used, since we will process rather than dump out any
 	 * tuples of batch zero.

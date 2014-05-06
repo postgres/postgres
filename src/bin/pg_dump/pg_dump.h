@@ -76,10 +76,10 @@ typedef struct SimpleStringList
  *
  * NOTE: the structures described here live for the entire pg_dump run;
  * and in most cases we make a struct for every object we can find in the
- * catalogs, not only those we are actually going to dump.	Hence, it's
+ * catalogs, not only those we are actually going to dump.  Hence, it's
  * best to store a minimal amount of per-object info in these structs,
  * and retrieve additional per-object info when and if we dump a specific
- * object.	In particular, try to avoid retrieving expensive-to-compute
+ * object.  In particular, try to avoid retrieving expensive-to-compute
  * information until it's known to be needed.  We do, however, have to
  * store enough info to determine whether an object should be dumped and
  * what order to dump in.
@@ -327,12 +327,12 @@ typedef struct _triggerInfo
 } TriggerInfo;
 
 /*
- * struct ConstraintInfo is used for all constraint types.	However we
+ * struct ConstraintInfo is used for all constraint types.  However we
  * use a different objType for foreign key constraints, to make it easier
  * to sort them the way we want.
  *
  * Note: condeferrable and condeferred are currently only valid for
- * unique/primary-key constraints.	Otherwise that info is in condef.
+ * unique/primary-key constraints.  Otherwise that info is in condef.
  */
 typedef struct _constraintInfo
 {

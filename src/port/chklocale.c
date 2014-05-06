@@ -321,7 +321,7 @@ pg_get_encoding_from_locale(const char *ctype)
 
 	/*
 	 * We print a warning if we got a CODESET string but couldn't recognize
-	 * it.	This means we need another entry in the table.
+	 * it.  This means we need another entry in the table.
 	 */
 #ifdef FRONTEND
 	fprintf(stderr, _("could not determine encoding for locale \"%s\": codeset is \"%s\""),

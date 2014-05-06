@@ -155,7 +155,7 @@ lnext:
 				tuple.t_self = copyTuple->t_self;
 
 				/*
-				 * Need to run a recheck subquery.	Initialize EPQ state if we
+				 * Need to run a recheck subquery.  Initialize EPQ state if we
 				 * didn't do so already.
 				 */
 				if (!epq_started)
@@ -186,7 +186,7 @@ lnext:
 	{
 		/*
 		 * First, fetch a copy of any rows that were successfully locked
-		 * without any update having occurred.	(We do this in a separate pass
+		 * without any update having occurred.  (We do this in a separate pass
 		 * so as to avoid overhead in the common case where there are no
 		 * concurrent updates.)
 		 */
@@ -313,7 +313,7 @@ ExecInitLockRows(LockRows *node, EState *estate, int eflags)
 		aerm = ExecBuildAuxRowMark(erm, outerPlan->targetlist);
 
 		/*
-		 * Only locking rowmarks go into our own list.	Non-locking marks are
+		 * Only locking rowmarks go into our own list.  Non-locking marks are
 		 * passed off to the EvalPlanQual machinery.  This is because we don't
 		 * want to bother fetching non-locked rows unless we actually have to
 		 * do an EPQ recheck.

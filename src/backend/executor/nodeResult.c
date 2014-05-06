@@ -300,7 +300,7 @@ ExecReScanResult(ResultState *node, ExprContext *exprCtxt)
 
 	/*
 	 * If chgParam of subnode is not null then plan will be re-scanned by
-	 * first ExecProcNode.	However, if caller is passing us an exprCtxt then
+	 * first ExecProcNode.  However, if caller is passing us an exprCtxt then
 	 * forcibly rescan the subnode now, so that we can pass the exprCtxt down
 	 * to the subnode (needed for gated indexscan).
 	 */

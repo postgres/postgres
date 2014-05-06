@@ -152,7 +152,7 @@ extern unsigned char pg_tolower(unsigned char ch);
 
 /*
  * Versions of libintl >= 0.13 try to replace printf() and friends with
- * macros to their own versions that understand the %$ format.	We do the
+ * macros to their own versions that understand the %$ format.  We do the
  * same, so disable their macros, if they exist.
  */
 #ifdef vsnprintf

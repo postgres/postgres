@@ -28,11 +28,11 @@ static pageCnvCtx *loadConverterPlugin(migratorContext *ctx,
  *	the PageLayoutVersion of the new cluster.  If the versions differ, this
  *	function loads a converter plugin and returns a pointer to a pageCnvCtx
  *	object (in *result) that knows how to convert pages from the old format
- *	to the new format.	If the versions are identical, this function just
+ *	to the new format.  If the versions are identical, this function just
  *	returns a NULL pageCnvCtx pointer to indicate that page-by-page conversion
  *	is not required.
  *
- *	If successful this function sets *result and returns NULL.	If an error
+ *	If successful this function sets *result and returns NULL.  If an error
  *	occurs, this function returns an error message in the form of an null-terminated
  *	string.
  */
@@ -122,7 +122,7 @@ getPageVersion(migratorContext *ctx, uint16 *version, const char *pathName)
  *	This function loads a page-converter plugin library and grabs a
  *	pointer to each of the (interesting) functions provided by that
  *	plugin.  The name of the plugin library is derived from the given
- *	newPageVersion and oldPageVersion.	If a plugin is found, this
+ *	newPageVersion and oldPageVersion.  If a plugin is found, this
  *	function returns a pointer to a pageCnvCtx object (which will contain
  *	a collection of plugin function pointers). If the required plugin
  *	is not found, this function returns NULL.

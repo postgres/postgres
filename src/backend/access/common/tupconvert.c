@@ -5,7 +5,7 @@
  *
  * These functions provide conversion between rowtypes that are logically
  * equivalent but might have columns in a different order or different sets
- * of dropped columns.	There is some overlap of functionality with the
+ * of dropped columns.  There is some overlap of functionality with the
  * executor's "junkfilter" routines, but these functions work on bare
  * HeapTuples rather than TupleTableSlots.
  *

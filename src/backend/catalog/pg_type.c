@@ -376,7 +376,7 @@ TypeCreate(Oid newTypeOid,
 	if (HeapTupleIsValid(tup))
 	{
 		/*
-		 * check that the type is not already defined.	It may exist as a
+		 * check that the type is not already defined.  It may exist as a
 		 * shell type, however.
 		 */
 		if (((Form_pg_type) GETSTRUCT(tup))->typisdefined)

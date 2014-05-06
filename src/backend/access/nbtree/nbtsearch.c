@@ -49,7 +49,7 @@ static bool _bt_endpoint(IndexScanDesc scan, ScanDirection dir);
  *
  * NOTE that the returned buffer is read-locked regardless of the access
  * parameter.  However, access = BT_WRITE will allow an empty root page
- * to be created and returned.	When access = BT_READ, an empty index
+ * to be created and returned.  When access = BT_READ, an empty index
  * will result in *bufP being set to InvalidBuffer.
  */
 BTStack
@@ -226,7 +226,7 @@ _bt_moveright(Relation rel,
  * (or leaf keys > given scankey when nextkey is true).
  *
  * This procedure is not responsible for walking right, it just examines
- * the given page.	_bt_binsrch() has no lock or refcount side effects
+ * the given page.  _bt_binsrch() has no lock or refcount side effects
  * on the buffer.
  */
 OffsetNumber
@@ -358,7 +358,7 @@ _bt_compare(Relation rel,
 	/*
 	 * The scan key is set up with the attribute number associated with each
 	 * term in the key.  It is important that, if the index is multi-key, the
-	 * scan contain the first k key attributes, and that they be in order.	If
+	 * scan contain the first k key attributes, and that they be in order.  If
 	 * you think about how multi-key ordering works, you'll understand why
 	 * this is.
 	 *
@@ -397,7 +397,7 @@ _bt_compare(Relation rel,
 			/*
 			 * The sk_func needs to be passed the index value as left arg and
 			 * the sk_argument as right arg (they might be of different
-			 * types).	Since it is convenient for callers to think of
+			 * types).  Since it is convenient for callers to think of
 			 * _bt_compare as comparing the scankey to the index item, we have
 			 * to flip the sign of the comparison result.  (Unless it's a DESC
 			 * column, in which case we *don't* flip the sign.)
@@ -425,7 +425,7 @@ _bt_compare(Relation rel,
  *	_bt_first() -- Find the first item in a scan.
  *
  *		We need to be clever about the direction of scan, the search
- *		conditions, and the tree ordering.	We find the first item (or,
+ *		conditions, and the tree ordering.  We find the first item (or,
  *		if backwards scan, the last item) in the tree that satisfies the
  *		qualifications in the scan key.  On success exit, the page containing
  *		the current index tuple is pinned but not locked, and data about
@@ -478,7 +478,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	 * We want to identify the keys that can be used as starting boundaries;
 	 * these are =, >, or >= keys for a forward scan or =, <, <= keys for
 	 * a backwards scan.  We can use keys for multiple attributes so long as
-	 * the prior attributes had only =, >= (resp. =, <=) keys.	Once we accept
+	 * the prior attributes had only =, >= (resp. =, <=) keys.  Once we accept
 	 * a > or < boundary or find an attribute with no boundary (which can be
 	 * thought of as the same as "> -infinity"), we can't use keys for any
 	 * attributes to its right, because it would break our simplistic notion
@@ -641,7 +641,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			 * even if the row comparison is of ">" or "<" type, because the
 			 * condition applied to all but the last row member is effectively
 			 * ">=" or "<=", and so the extra keys don't break the positioning
-			 * scheme.	But, by the same token, if we aren't able to use all
+			 * scheme.  But, by the same token, if we aren't able to use all
 			 * the row members, then the part of the row comparison that we
 			 * did use has to be treated as just a ">=" or "<=" condition, and
 			 * so we'd better adjust strat_total accordingly.
@@ -758,7 +758,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 
 			/*
 			 * Find first item >= scankey, then back up one to arrive at last
-			 * item < scankey.	(Note: this positioning strategy is only used
+			 * item < scankey.  (Note: this positioning strategy is only used
 			 * for a backward scan, so that is always the correct starting
 			 * position.)
 			 */
@@ -807,7 +807,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 		case BTGreaterEqualStrategyNumber:
 
 			/*
-			 * Find first item >= scankey.	(This is only used for forward
+			 * Find first item >= scankey.  (This is only used for forward
 			 * scans.)
 			 */
 			nextkey = false;
@@ -878,7 +878,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	 *
 	 * The actually desired starting point is either this item or the prior
 	 * one, or in the end-of-page case it's the first item on the next page or
-	 * the last item on this page.	Adjust the starting offset if needed. (If
+	 * the last item on this page.  Adjust the starting offset if needed. (If
 	 * this results in an offset before the first item or after the last one,
 	 * _bt_readpage will report no items found, and then we'll step to the
 	 * next page as needed.)
@@ -1161,7 +1161,7 @@ _bt_steppage(IndexScanDesc scan, ScanDirection dir)
 		 * than the walk-right case because of the possibility that the page
 		 * to our left splits while we are in flight to it, plus the
 		 * possibility that the page we were on gets deleted after we leave
-		 * it.	See nbtree/README for details.
+		 * it.  See nbtree/README for details.
 		 */
 		for (;;)
 		{
@@ -1255,7 +1255,7 @@ _bt_walk_left(Relation rel, Buffer buf)
 		 * anymore, not that its left sibling got split more than four times.
 		 *
 		 * Note that it is correct to test P_ISDELETED not P_IGNORE here,
-		 * because half-dead pages are still in the sibling chain.	Caller
+		 * because half-dead pages are still in the sibling chain.  Caller
 		 * must reject half-dead pages if wanted.
 		 */
 		tries = 0;
@@ -1281,7 +1281,7 @@ _bt_walk_left(Relation rel, Buffer buf)
 		if (P_ISDELETED(opaque))
 		{
 			/*
-			 * It was deleted.	Move right to first nondeleted page (there
+			 * It was deleted.  Move right to first nondeleted page (there
 			 * must be one); that is the page that has acquired the deleted
 			 * one's keyspace, so stepping left from it will take us where we
 			 * want to be.
@@ -1325,7 +1325,7 @@ _bt_walk_left(Relation rel, Buffer buf)
  * _bt_get_endpoint() -- Find the first or last page on a given tree level
  *
  * If the index is empty, we will return InvalidBuffer; any other failure
- * condition causes ereport().	We will not return a dead page.
+ * condition causes ereport().  We will not return a dead page.
  *
  * The returned buffer is pinned and read-locked.
  */

@@ -276,7 +276,7 @@ ExecFunctionReScan(FunctionScanState *node, ExprContext *exprCtxt)
 	/*
 	 * Here we have a choice whether to drop the tuplestore (and recompute the
 	 * function outputs) or just rescan it.  We must recompute if the
-	 * expression contains parameters, else we rescan.	XXX maybe we should
+	 * expression contains parameters, else we rescan.  XXX maybe we should
 	 * recompute if the function is volatile?
 	 */
 	if (node->ss.ps.chgParam != NULL)

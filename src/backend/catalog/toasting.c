@@ -326,7 +326,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 }
 
 /*
- * Check to see whether the table needs a TOAST table.	It does only if
+ * Check to see whether the table needs a TOAST table.  It does only if
  * (1) there are any toastable attributes, and (2) the maximum length
  * of a tuple could exceed TOAST_TUPLE_THRESHOLD.  (We don't want to
  * create a toast table for something like "f1 varchar(20)".)

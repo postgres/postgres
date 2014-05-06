@@ -6,7 +6,7 @@
  * PostgreSQL requires counting semaphores (the kind that keep track of
  * multiple unlock operations, and will allow an equal number of subsequent
  * lock operations before blocking).  The underlying implementation is
- * not the same on every platform.	This file defines the API that must
+ * not the same on every platform.  This file defines the API that must
  * be provided by each port.
  *
  *

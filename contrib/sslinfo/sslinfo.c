@@ -104,7 +104,7 @@ ssl_client_serial(PG_FUNCTION_ARGS)
  * current database encoding if possible.  Any invalid characters are
  * replaced by question marks.
  *
- * Parameter: str - OpenSSL ASN1_STRING structure.	Memory managment
+ * Parameter: str - OpenSSL ASN1_STRING structure.  Memory managment
  * of this structure is responsibility of caller.
  *
  * Returns Datum, which can be directly returned from a C language SQL

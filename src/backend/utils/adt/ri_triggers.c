@@ -2004,11 +2004,11 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 
 			/*
 			 * "MATCH <unspecified>" only changes columns corresponding to the
-			 * referenced columns that have changed in pk_rel.	This means the
+			 * referenced columns that have changed in pk_rel.  This means the
 			 * "SET attrn=NULL [, attrn=NULL]" string will be change as well.
 			 * In this case, we need to build a temporary plan rather than use
 			 * our cached plan, unless the update happens to change all
-			 * columns in the key.	Fortunately, for the most common case of a
+			 * columns in the key.  Fortunately, for the most common case of a
 			 * single-column foreign key, this will be true.
 			 *
 			 * In case you're wondering, the inequality check works because we
@@ -2732,7 +2732,7 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 	 * Temporarily increase work_mem so that the check query can be executed
 	 * more efficiently.  It seems okay to do this because the query is simple
 	 * enough to not use a multiple of work_mem, and one typically would not
-	 * have many large foreign-key validations happening concurrently.	So
+	 * have many large foreign-key validations happening concurrently.  So
 	 * this seems to meet the criteria for being considered a "maintenance"
 	 * operation, and accordingly we use maintenance_work_mem.
 	 *
@@ -3425,7 +3425,7 @@ ri_ReportViolation(RI_QueryKey *qkey, const char *constrname,
 				 errhint("This is most likely due to a rule having rewritten the query.")));
 
 	/*
-	 * Determine which relation to complain about.	If tupdesc wasn't passed
+	 * Determine which relation to complain about.  If tupdesc wasn't passed
 	 * by caller, assume the violator tuple came from there.
 	 */
 	onfk = (qkey->constr_queryno == RI_PLAN_CHECK_LOOKUPPK);

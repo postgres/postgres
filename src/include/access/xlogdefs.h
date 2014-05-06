@@ -25,8 +25,8 @@
  * NOTE: the "log file number" is somewhat misnamed, since the actual files
  * making up the XLOG are much smaller than 4Gb.  Each actual file is an
  * XLogSegSize-byte "segment" of a logical log file having the indicated
- * xlogid.	The log file number and segment number together identify a
- * physical XLOG file.	Segment number and offset within the physical file
+ * xlogid.  The log file number and segment number together identify a
+ * physical XLOG file.  Segment number and offset within the physical file
  * are computed from xrecoff div and mod XLogSegSize.
  */
 typedef struct XLogRecPtr
@@ -86,7 +86,7 @@ typedef uint32 TimeLineID;
 /*
  *	Because O_DIRECT bypasses the kernel buffers, and because we never
  *	read those buffers except during crash recovery, it is a win to use
- *	it in all cases where we sync on each write().	We could allow O_DIRECT
+ *	it in all cases where we sync on each write().  We could allow O_DIRECT
  *	with fsync(), but because skipping the kernel buffer forces writes out
  *	quickly, it seems best just to use it for O_SYNC.  It is hard to imagine
  *	how fsync() could be a win for O_DIRECT compared to O_SYNC and O_DIRECT.
@@ -102,7 +102,7 @@ typedef uint32 TimeLineID;
 /*
  * This chunk of hackery attempts to determine which file sync methods
  * are available on the current platform, and to choose an appropriate
- * default method.	We assume that fsync() is always available, and that
+ * default method.  We assume that fsync() is always available, and that
  * configure determined whether fdatasync() is.
  */
 #if defined(O_SYNC)

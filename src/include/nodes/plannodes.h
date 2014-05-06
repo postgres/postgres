@@ -209,7 +209,7 @@ typedef struct RecursiveUnion
  *	 BitmapAnd node -
  *		Generate the intersection of the results of sub-plans.
  *
- * The subplans must be of types that yield tuple bitmaps.	The targetlist
+ * The subplans must be of types that yield tuple bitmaps.  The targetlist
  * and qual fields of the plan are unused and are always NIL.
  * ----------------
  */
@@ -223,7 +223,7 @@ typedef struct BitmapAnd
  *	 BitmapOr node -
  *		Generate the union of the results of sub-plans.
  *
- * The subplans must be of types that yield tuple bitmaps.	The targetlist
+ * The subplans must be of types that yield tuple bitmaps.  The targetlist
  * and qual fields of the plan are unused and are always NIL.
  * ----------------
  */
@@ -257,15 +257,15 @@ typedef Scan SeqScan;
  * in the same form it appeared in the query WHERE condition.  Each should
  * be of the form (indexkey OP comparisonval) or (comparisonval OP indexkey).
  * The indexkey is a Var or expression referencing column(s) of the index's
- * base table.	The comparisonval might be any expression, but it won't use
+ * base table.  The comparisonval might be any expression, but it won't use
  * any columns of the base table.
  *
  * indexqual has the same form, but the expressions have been commuted if
  * necessary to put the indexkeys on the left, and the indexkeys are replaced
  * by Var nodes identifying the index columns (varattno is the index column
  * position, not the base table's column, even though varno is for the base
- * table).	This is a bit hokey ... would be cleaner to use a special-purpose
- * node type that could not be mistaken for a regular Var.	But it will do
+ * table).  This is a bit hokey ... would be cleaner to use a special-purpose
+ * node type that could not be mistaken for a regular Var.  But it will do
  * for now.
  * ----------------
  */
@@ -282,7 +282,7 @@ typedef struct IndexScan
  *		bitmap index scan node
  *
  * BitmapIndexScan delivers a bitmap of potential tuple locations;
- * it does not access the heap itself.	The bitmap is used by an
+ * it does not access the heap itself.  The bitmap is used by an
  * ancestor BitmapHeapScan node, possibly after passing through
  * intermediate BitmapAnd and/or BitmapOr nodes to combine it with
  * the results of other BitmapIndexScans.
@@ -342,13 +342,13 @@ typedef struct TidScan
  * purposes.
  *
  * Note: we store the sub-plan in the type-specific subplan field, not in
- * the generic lefttree field as you might expect.	This is because we do
+ * the generic lefttree field as you might expect.  This is because we do
  * not want plan-tree-traversal routines to recurse into the subplan without
  * knowing that they are changing Query contexts.
  *
  * Note: subrtable is used just to carry the subquery rangetable from
  * createplan.c to setrefs.c; it should always be NIL by the time the
- * executor sees the plan.	Similarly for subrowmark.
+ * executor sees the plan.  Similarly for subrowmark.
  * ----------------
  */
 typedef struct SubqueryScan
@@ -447,7 +447,7 @@ typedef struct NestLoop
  *
  * The expected ordering of each mergeable column is described by a btree
  * opfamily OID, a direction (BTLessStrategyNumber or BTGreaterStrategyNumber)
- * and a nulls-first flag.	Note that the two sides of each mergeclause may
+ * and a nulls-first flag.  Note that the two sides of each mergeclause may
  * be of different datatypes, but they are ordered the same way according to
  * the common opfamily.  The operator in each mergeclause must be an equality
  * operator of the indicated opfamily.
@@ -681,7 +681,7 @@ typedef enum RowMarkType
  *	   plan-time representation of FOR UPDATE/SHARE clauses
  *
  * When doing UPDATE, DELETE, or SELECT FOR UPDATE/SHARE, we create a separate
- * PlanRowMark node for each non-target relation in the query.	Relations that
+ * PlanRowMark node for each non-target relation in the query.  Relations that
  * are not specified as FOR UPDATE/SHARE are marked ROW_MARK_REFERENCE (if
  * real tables) or ROW_MARK_COPY (if not).
  *
@@ -727,7 +727,7 @@ typedef struct PlanRowMark
  *
  * We track the objects on which a PlannedStmt depends in two ways:
  * relations are recorded as a simple list of OIDs, and everything else
- * is represented as a list of PlanInvalItems.	A PlanInvalItem is designed
+ * is represented as a list of PlanInvalItems.  A PlanInvalItem is designed
  * to be used with the syscache invalidation mechanism, so it identifies a
  * system catalog entry by cache ID and tuple TID.
  */

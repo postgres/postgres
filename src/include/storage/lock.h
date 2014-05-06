@@ -43,7 +43,7 @@ extern bool Debug_deadlocks;
 /*
  * Top-level transactions are identified by VirtualTransactionIDs comprising
  * the BackendId of the backend running the xact, plus a locally-assigned
- * LocalTransactionId.	These are guaranteed unique over the short term,
+ * LocalTransactionId.  These are guaranteed unique over the short term,
  * but will be reused after a database restart; hence they should never
  * be stored on disk.
  *
@@ -159,7 +159,7 @@ typedef uint16 LOCKMETHODID;
 
 /*
  * LOCKTAG is the key information needed to look up a LOCK item in the
- * lock hashtable.	A LOCKTAG value uniquely identifies a lockable object.
+ * lock hashtable.  A LOCKTAG value uniquely identifies a lockable object.
  *
  * The LockTagType enum defines the different kinds of objects we can lock.
  * We can handle up to 256 different LockTagTypes.
@@ -212,7 +212,7 @@ typedef struct LOCKTAG
 
 /*
  * These macros define how we map logical IDs of lockable objects into
- * the physical fields of LOCKTAG.	Use these to set up LOCKTAG values,
+ * the physical fields of LOCKTAG.  Use these to set up LOCKTAG values,
  * rather than accessing the fields directly.  Note multiple eval of target!
  */
 #define SET_LOCKTAG_RELATION(locktag,dboid,reloid) \
@@ -324,14 +324,14 @@ typedef struct LOCK
  * a PROCLOCK struct.
  *
  * PROCLOCKTAG is the key information needed to look up a PROCLOCK item in the
- * proclock hashtable.	A PROCLOCKTAG value uniquely identifies the combination
+ * proclock hashtable.  A PROCLOCKTAG value uniquely identifies the combination
  * of a lockable object and a holder/waiter for that object.  (We can use
  * pointers here because the PROCLOCKTAG need only be unique for the lifespan
  * of the PROCLOCK, and it will never outlive the lock or the proc.)
  *
  * Internally to a backend, it is possible for the same lock to be held
  * for different purposes: the backend tracks transaction locks separately
- * from session locks.	However, this is not reflected in the shared-memory
+ * from session locks.  However, this is not reflected in the shared-memory
  * state: we only track which backend(s) hold the lock.  This is OK since a
  * backend can never block itself.
  *
@@ -342,7 +342,7 @@ typedef struct LOCK
  * as soon as convenient.
  *
  * releaseMask is workspace for LockReleaseAll(): it shows the locks due
- * to be released during the current call.	This must only be examined or
+ * to be released during the current call.  This must only be examined or
  * set by the backend owning the PROCLOCK.
  *
  * Each PROCLOCK object is linked into lists for both the associated LOCK
@@ -375,7 +375,7 @@ typedef struct PROCLOCK
 
 /*
  * Each backend also maintains a local hash table with information about each
- * lock it is currently interested in.	In particular the local table counts
+ * lock it is currently interested in.  In particular the local table counts
  * the number of times that lock has been acquired.  This allows multiple
  * requests for the same lock to be executed without additional accesses to
  * shared memory.  We also track the number of lock acquisitions per
@@ -420,7 +420,7 @@ typedef struct LOCALLOCK
 
 /*
  * This struct holds information passed from lmgr internals to the lock
- * listing user-level functions (in lockfuncs.c).	For each PROCLOCK in
+ * listing user-level functions (in lockfuncs.c).   For each PROCLOCK in
  * the system, copies of the PROCLOCK object and associated PGPROC and
  * LOCK objects are stored.  Note there will often be multiple copies
  * of the same PGPROC or LOCK --- to detect whether two are the same,

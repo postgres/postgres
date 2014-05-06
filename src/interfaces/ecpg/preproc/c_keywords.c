@@ -57,7 +57,7 @@ static const ScanKeyword ScanCKeywords[] = {
 
 
 /*
- * Do a binary search using plain strcmp() comparison.	This is much like
+ * Do a binary search using plain strcmp() comparison.  This is much like
  * ScanKeywordLookup(), except we want case-sensitive matching.
  */
 const ScanKeyword *

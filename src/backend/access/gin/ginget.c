@@ -1293,10 +1293,10 @@ scanGetItem(IndexScanDesc scan, ItemPointer advancePast,
 		 * case like
 		 *
 		 *		stream 1		stream 2
-		 *		...				...
+		 *		...             ...
 		 *		42/6			42/7
 		 *		50/1			42/0xffff
-		 *		...				...
+		 *		...             ...
 		 *
 		 * We would conclude that 42/6 is not a match and advance stream 1,
 		 * thus never detecting the match to the lossy pointer in stream 2.
@@ -1368,10 +1368,10 @@ gingetbitmap(PG_FUNCTION_ARGS)
 
 	/*
 	 * First, scan the pending list and collect any matching entries into the
-	 * bitmap.	After we scan a pending item, some other backend could post it
+	 * bitmap.  After we scan a pending item, some other backend could post it
 	 * into the main index, and so we might visit it a second time during the
 	 * main scan.  This is okay because we'll just re-set the same bit in the
-	 * bitmap.	(The possibility of duplicate visits is a major reason why GIN
+	 * bitmap.  (The possibility of duplicate visits is a major reason why GIN
 	 * can't support the amgettuple API, however.) Note that it would not do
 	 * to scan the main index before the pending list, since concurrent
 	 * cleanup could then make us miss entries entirely.

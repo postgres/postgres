@@ -85,7 +85,7 @@ intr2num(const Interval *i)
 
 /*
  * INTERVALSIZE should be the actual size-on-disk of an Interval, as shown
- * in pg_type.	This might be less than sizeof(Interval) if the compiler
+ * in pg_type.  This might be less than sizeof(Interval) if the compiler
  * insists on adding alignment padding at the end of the struct.
  */
 #define INTERVALSIZE 16

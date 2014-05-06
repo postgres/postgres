@@ -466,7 +466,7 @@ add_real_reloption(bits32 kinds, char *name, char *desc, double default_val,
  *		Add a new string reloption
  *
  * "validator" is an optional function pointer that can be used to test the
- * validity of the values.	It must elog(ERROR) when the argument string is
+ * validity of the values.  It must elog(ERROR) when the argument string is
  * not acceptable for the variable.  Note that the default value must pass
  * the validation.
  */
@@ -533,7 +533,7 @@ add_string_reloption(bits32 kinds, char *name, char *desc, char *default_val,
  * Note that this is not responsible for determining whether the options
  * are valid, but it does check that namespaces for all the options given are
  * listed in validnsps.  The NULL namespace is always valid and needs not be
- * explicitely listed.	Passing a NULL pointer means that only the NULL
+ * explicitely listed.  Passing a NULL pointer means that only the NULL
  * namespace is valid.
  *
  * Both oldOptions and the result are text arrays (or NULL for "default"),
@@ -806,7 +806,7 @@ extractRelOptions(HeapTuple tuple, TupleDesc tupdesc, Oid amoptions)
  * is returned.
  *
  * Note: values of type int, bool and real are allocated as part of the
- * returned array.	Values of type string are allocated separately and must
+ * returned array.  Values of type string are allocated separately and must
  * be freed by the caller.
  */
 relopt_value *

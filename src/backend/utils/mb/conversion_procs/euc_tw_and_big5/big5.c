@@ -231,7 +231,7 @@ static unsigned short BinarySearchRange
 				/*
 				 * NOTE: big5 high_byte: 0xa1-0xfe, low_byte: 0x40-0x7e,
 				 * 0xa1-0xfe (radicals: 0x00-0x3e, 0x3f-0x9c) big5 radix is
-				 * 0x9d.					 [region_low, region_high] We
+				 * 0x9d.                     [region_low, region_high] We
 				 * should remember big5 has two different regions (above).
 				 * There is a bias for the distance between these regions.
 				 * 0xa1 - 0x7e + bias = 1 (Distance between 0xa1 and 0x7e is

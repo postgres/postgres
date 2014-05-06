@@ -29,7 +29,7 @@
  * tuple header on disk, it's very important not to waste space with
  * structure padding bytes.  The struct is designed to be six bytes long
  * (it contains three int16 fields) but a few compilers will pad it to
- * eight bytes unless coerced.	We apply appropriate persuasion where
+ * eight bytes unless coerced.  We apply appropriate persuasion where
  * possible, and to cope with unpersuadable compilers, we try to use
  * "SizeOfIptrData" rather than "sizeof(ItemPointerData)" when computing
  * on-disk sizes.

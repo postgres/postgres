@@ -6,7 +6,7 @@
  * This module handles sorting of heap tuples, index tuples, or single
  * Datums (and could easily support other kinds of sortable objects,
  * if necessary).  It works efficiently for both small and large amounts
- * of data.  Small amounts are sorted in-memory using qsort().	Large
+ * of data.  Small amounts are sorted in-memory using qsort().  Large
  * amounts are sorted using temporary files and a standard external sort
  * algorithm.
  *

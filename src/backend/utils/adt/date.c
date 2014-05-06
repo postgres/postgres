@@ -1257,7 +1257,7 @@ AdjustTimeForTypmod(TimeADT *time, int32 typmod)
 		 * Note: this round-to-nearest code is not completely consistent about
 		 * rounding values that are exactly halfway between integral values.
 		 * On most platforms, rint() will implement round-to-nearest-even, but
-		 * the integer code always rounds up (away from zero).	Is it worth
+		 * the integer code always rounds up (away from zero).  Is it worth
 		 * trying to be consistent?
 		 */
 #ifdef HAVE_INT64_TIMESTAMP
@@ -1606,7 +1606,7 @@ time_interval(PG_FUNCTION_ARGS)
  * Convert interval to time data type.
  *
  * This is defined as producing the fractional-day portion of the interval.
- * Therefore, we can just ignore the months field.	It is not real clear
+ * Therefore, we can just ignore the months field.  It is not real clear
  * what to do with negative intervals, but we choose to subtract the floor,
  * so that, say, '-2 hours' becomes '22:00:00'.
  */
@@ -2596,7 +2596,7 @@ timetz_zone(PG_FUNCTION_ARGS)
 	pg_tz	   *tzp;
 
 	/*
-	 * Look up the requested timezone.	First we look in the date token table
+	 * Look up the requested timezone.  First we look in the date token table
 	 * (to handle cases like "EST"), and if that fails, we look in the
 	 * timezone database (to handle cases like "America/New_York").  (This
 	 * matches the order in which timestamp input checks the cases; it's

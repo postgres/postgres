@@ -302,7 +302,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	 * A minimum expectation therefore is that the caller have execute
 	 * privilege with grant option.  Since we don't have a way to make the
 	 * opclass go away if the grant option is revoked, we choose instead to
-	 * require ownership of the functions.	It's also not entirely clear what
+	 * require ownership of the functions.  It's also not entirely clear what
 	 * permissions should be required on the datatype, but ownership seems
 	 * like a safe choice.
 	 *
@@ -589,7 +589,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 					opclassoid, procedures, false);
 
 	/*
-	 * Create dependencies for the opclass proper.	Note: we do not create a
+	 * Create dependencies for the opclass proper.  Note: we do not create a
 	 * dependency link to the AM, because we don't currently support DROP
 	 * ACCESS METHOD.
 	 */
@@ -2113,7 +2113,7 @@ AlterOpFamilyOwner_oid(Oid opfamilyOid, Oid newOwnerId)
 }
 
 /*
- * The first parameter is pg_opfamily, opened and suitably locked.	The second
+ * The first parameter is pg_opfamily, opened and suitably locked.  The second
  * parameter is a copy of the tuple from pg_opfamily we want to modify.
  */
 static void

@@ -198,7 +198,7 @@ DefineOperator(List *names, List *parameters)
 	functionOid = LookupFuncName(functionName, nargs, typeId, false);
 
 	/*
-	 * We require EXECUTE rights for the function.	This isn't strictly
+	 * We require EXECUTE rights for the function.  This isn't strictly
 	 * necessary, since EXECUTE will be checked at any attempted use of the
 	 * operator, but it seems like a good idea anyway.
 	 */

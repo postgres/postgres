@@ -18,7 +18,7 @@
  * to produce a new database.
  *
  * For largely-historical reasons, the template1 database is the one built
- * by the basic bootstrap process.	After it is complete, template0 and
+ * by the basic bootstrap process.  After it is complete, template0 and
  * the default database, postgres, are made just by copying template1.
  *
  * To create template1, we run the postgres (backend) program in bootstrap
@@ -776,7 +776,7 @@ find_matching_ts_config(const char *lc_type)
 
 	/*
 	 * Convert lc_ctype to a language name by stripping everything after an
-	 * underscore.	Just for paranoia, we also stop at '.' or '@'.
+	 * underscore.  Just for paranoia, we also stop at '.' or '@'.
 	 */
 	if (lc_type == NULL)
 		langname = xstrdup("");
@@ -1722,7 +1722,7 @@ setup_dictionary(void)
 /*
  * Set up privileges
  *
- * We mark most system catalogs as world-readable.	We don't currently have
+ * We mark most system catalogs as world-readable.  We don't currently have
  * to touch functions, languages, or databases, because their default
  * permissions are OK.
  *
@@ -2051,7 +2051,7 @@ check_ok(void)
  *
  * Note: this is used to process both postgresql.conf entries and SQL
  * string literals.  Since postgresql.conf strings are defined to treat
- * backslashes as escapes, we have to double backslashes here.	Hence,
+ * backslashes as escapes, we have to double backslashes here.  Hence,
  * when using this for a SQL string literal, use E'' syntax.
  *
  * We do not need to worry about encoding considerations because all

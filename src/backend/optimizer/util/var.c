@@ -260,7 +260,7 @@ contain_var_clause_walker(Node *node, void *context)
  *
  *	  Returns true if any such Var found.
  *
- * Will recurse into sublinks.	Also, may be invoked directly on a Query.
+ * Will recurse into sublinks.  Also, may be invoked directly on a Query.
  */
 bool
 contain_vars_of_level(Node *node, int levelsup)
@@ -320,10 +320,10 @@ contain_vars_of_level_walker(Node *node, int *sublevels_up)
  *	  Find the parse location of any Var of the specified query level.
  *
  * Returns -1 if no such Var is in the querytree, or if they all have
- * unknown parse location.	(The former case is probably caller error,
+ * unknown parse location.  (The former case is probably caller error,
  * but we don't bother to distinguish it from the latter case.)
  *
- * Will recurse into sublinks.	Also, may be invoked directly on a Query.
+ * Will recurse into sublinks.  Also, may be invoked directly on a Query.
  *
  * Note: it might seem appropriate to merge this functionality into
  * contain_vars_of_level, but that would complicate that function's API.
@@ -396,7 +396,7 @@ locate_var_of_level_walker(Node *node,
  * Returns -1 if no such Var is in the querytree, or if they all have
  * unknown parse location.
  *
- * Will recurse into sublinks.	Also, may be invoked directly on a Query.
+ * Will recurse into sublinks.  Also, may be invoked directly on a Query.
  */
 int
 locate_var_of_relation(Node *node, int relid, int levelsup)
@@ -470,7 +470,7 @@ locate_var_of_relation_walker(Node *node,
  *
  *	  -1 is returned if the clause has no variables at all.
  *
- * Will recurse into sublinks.	Also, may be invoked directly on a Query.
+ * Will recurse into sublinks.  Also, may be invoked directly on a Query.
  */
 int
 find_minimum_var_level(Node *node)
@@ -627,7 +627,7 @@ find_minimum_var_level_walker(Node *node,
  *	  Upper-level vars (with varlevelsup > 0) are not included.
  *	  (These probably represent errors too, but we don't complain.)
  *
- *	  Returns list of nodes found.	Note the nodes themselves are not
+ *	  Returns list of nodes found.  Note the nodes themselves are not
  *	  copied, only referenced.
  *
  * Does not examine subqueries, therefore must only be used after reduction
@@ -682,7 +682,7 @@ pull_var_clause_walker(Node *node, pull_var_clause_context *context)
  * flatten_join_alias_vars
  *	  Replace Vars that reference JOIN outputs with references to the original
  *	  relation variables instead.  This allows quals involving such vars to be
- *	  pushed down.	Whole-row Vars that reference JOIN relations are expanded
+ *	  pushed down.  Whole-row Vars that reference JOIN relations are expanded
  *	  into RowExpr constructs that name the individual output Vars.  This
  *	  is necessary since we will not scan the JOIN as a base relation, which
  *	  is the only way that the executor can directly handle whole-row Vars.

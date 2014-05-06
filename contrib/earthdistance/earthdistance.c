@@ -91,7 +91,7 @@ geo_distance_internal(Point *pt1, Point *pt2)
  *	 distance between the points in miles on earth's surface
  *
  * If float8 is passed-by-value, the oldstyle version-0 calling convention
- * is unportable, so we use version-1.	However, if it's passed-by-reference,
+ * is unportable, so we use version-1.  However, if it's passed-by-reference,
  * continue to use oldstyle.  This is just because we'd like earthdistance
  * to serve as a canary for any unintentional breakage of version-0 functions
  * with float8 results.

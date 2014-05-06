@@ -668,7 +668,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 		 * Optional optimized word wrap. Shrink columns with a high max/avg
 		 * ratio.  Slighly bias against wider columns. (Increases chance a
 		 * narrow column will fit in its cell.)  If available columns is
-		 * positive...	and greater than the width of the unshrinkable column
+		 * positive...  and greater than the width of the unshrinkable column
 		 * headers
 		 */
 		if (output_columns > 0 && output_columns >= total_header_width)
@@ -2167,7 +2167,7 @@ printTableAddCell(printTableContent *const content, const char *cell,
  * strdup'd, so there is no need to keep the original footer string around.
  *
  * Footers are never translated by the function.  If you want the footer
- * translated you must do so yourself, before calling printTableAddFooter.	The
+ * translated you must do so yourself, before calling printTableAddFooter.  The
  * reason this works differently to headers and cells is that footers tend to
  * be made of up individually translated components, rather than being
  * translated as a whole.
@@ -2506,7 +2506,7 @@ get_line_style(const printTableOpt *opt)
 
 /*
  * Compute the byte distance to the end of the string or *target_width
- * display character positions, whichever comes first.	Update *target_width
+ * display character positions, whichever comes first.  Update *target_width
  * to be the number of display character positions actually filled.
  */
 static int

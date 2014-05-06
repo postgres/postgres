@@ -43,7 +43,7 @@ typedef struct
  * For a saved plan, the _SPI_plan struct and the argument type array are in
  * the plancxt (which can be really small).  All the other subsidiary state
  * is in plancache entries identified by plancache_list (note: the list cells
- * themselves are in plancxt).	We rely on plancache.c to keep the cache
+ * themselves are in plancxt).  We rely on plancache.c to keep the cache
  * entries up-to-date as needed.  The plancxt is a child of CacheMemoryContext
  * since it should persist until explicitly destroyed.
  *

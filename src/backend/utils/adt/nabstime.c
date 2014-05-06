@@ -198,7 +198,7 @@ tm2abstime(struct pg_tm * tm, int tz)
 	sec = tm->tm_sec + tz + (tm->tm_min + (day * HOURS_PER_DAY + tm->tm_hour) * MINS_PER_HOUR) * SECS_PER_MINUTE;
 
 	/*
-	 * check for overflow.	We need a little slop here because the H/M/S plus
+	 * check for overflow.  We need a little slop here because the H/M/S plus
 	 * TZ offset could add up to more than 1 day.
 	 */
 	if ((day >= MAX_DAYNUM - 10 && sec < 0) ||
@@ -1156,7 +1156,7 @@ tintervalsame(PG_FUNCTION_ARGS)
  * tinterval comparison routines
  *
  * Note: comparison is based on the lengths of the tintervals, not on
- * endpoint value.	This is pretty bogus, but since it's only a legacy
+ * endpoint value.  This is pretty bogus, but since it's only a legacy
  * datatype I'm not going to propose changing it.
  */
 static int

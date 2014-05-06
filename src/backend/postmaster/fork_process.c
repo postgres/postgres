@@ -72,7 +72,7 @@ fork_process(void)
 		 * stupid, but the kernel hackers seem uninterested in improving it.)
 		 * Therefore it's often a good idea to protect the postmaster by
 		 * setting its oom_adj value negative (which has to be done in a
-		 * root-owned startup script).	If you just do that much, all child
+		 * root-owned startup script).  If you just do that much, all child
 		 * processes will also be protected against OOM kill, which might not
 		 * be desirable.  You can then choose to build with LINUX_OOM_ADJ
 		 * #defined to 0, or some other value that you want child processes to

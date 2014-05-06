@@ -62,10 +62,10 @@
  * when we are obeying an override search path spec that says not to use the
  * temp namespace, or the temp namespace is included in the explicit list.)
  *
- * 2. The system catalog namespace is always searched.	If the system
+ * 2. The system catalog namespace is always searched.  If the system
  * namespace is present in the explicit path then it will be searched in
  * the specified order; otherwise it will be searched after TEMP tables and
- * *before* the explicit list.	(It might seem that the system namespace
+ * *before* the explicit list.  (It might seem that the system namespace
  * should be implicitly last, but this behavior appears to be required by
  * SQL99.  Also, this provides a way to search the system namespace first
  * without thereby making it the default creation target namespace.)
@@ -83,7 +83,7 @@
  * to refer to the current backend's temp namespace.  This is usually also
  * ignorable if the temp namespace hasn't been set up, but there's a special
  * case: if "pg_temp" appears first then it should be the default creation
- * target.	We kluge this case a little bit so that the temp namespace isn't
+ * target.  We kluge this case a little bit so that the temp namespace isn't
  * set up until the first attempt to create something in it.  (The reason for
  * klugery is that we can't create the temp namespace outside a transaction,
  * but initial GUC processing of search_path happens outside a transaction.)
@@ -94,7 +94,7 @@
  * In bootstrap mode, the search path is set equal to "pg_catalog", so that
  * the system namespace is the only one searched or inserted into.
  * initdb is also careful to set search_path to "pg_catalog" for its
- * post-bootstrap standalone backend runs.	Otherwise the default search
+ * post-bootstrap standalone backend runs.  Otherwise the default search
  * path is determined by GUC.  The factory default path contains the PUBLIC
  * namespace (if it exists), preceded by the user's personal namespace
  * (if one exists).
@@ -158,13 +158,13 @@ static List *overrideStack = NIL;
 /*
  * myTempNamespace is InvalidOid until and unless a TEMP namespace is set up
  * in a particular backend session (this happens when a CREATE TEMP TABLE
- * command is first executed).	Thereafter it's the OID of the temp namespace.
+ * command is first executed).  Thereafter it's the OID of the temp namespace.
  *
  * myTempToastNamespace is the OID of the namespace for my temp tables' toast
- * tables.	It is set when myTempNamespace is, and is InvalidOid before that.
+ * tables.  It is set when myTempNamespace is, and is InvalidOid before that.
  *
  * myTempNamespaceSubID shows whether we've created the TEMP namespace in the
- * current subtransaction.	The flag propagates up the subtransaction tree,
+ * current subtransaction.  The flag propagates up the subtransaction tree,
  * so the main transaction will correctly recognize the flag if all
  * intermediate subtransactions commit.  When it is InvalidSubTransactionId,
  * we either haven't made the TEMP namespace yet, or have successfully
@@ -575,7 +575,7 @@ TypeIsVisible(Oid typid)
  * and the returned nvargs will always be zero.
  *
  * If expand_defaults is true, functions that could match after insertion of
- * default argument values will also be retrieved.	In this case the returned
+ * default argument values will also be retrieved.  In this case the returned
  * structs could have nargs > passed-in nargs, and ndargs is set to the number
  * of additional args (which can be retrieved from the function's
  * proargdefaults entry).
@@ -731,7 +731,7 @@ FuncnameGetCandidates(List *names, int nargs, List *argnames,
 			 * Call uses positional notation
 			 *
 			 * Check if function is variadic, and get variadic element type if
-			 * so.	If expand_variadic is false, we should just ignore
+			 * so.  If expand_variadic is false, we should just ignore
 			 * variadic-ness.
 			 */
 			if (pronargs <= nargs && expand_variadic)
@@ -861,7 +861,7 @@ FuncnameGetCandidates(List *names, int nargs, List *argnames,
 			if (prevResult)
 			{
 				/*
-				 * We have a match with a previous result.	Decide which one
+				 * We have a match with a previous result.  Decide which one
 				 * to keep, or mark it ambiguous if we can't decide.  The
 				 * logic here is preference > 0 means prefer the old result,
 				 * preference < 0 means prefer the new, preference = 0 means
@@ -1246,7 +1246,7 @@ OpernameGetOprid(List *names, Oid oprleft, Oid oprright)
  * identical entries in later namespaces.
  *
  * The returned items always have two args[] entries --- one or the other
- * will be InvalidOid for a prefix or postfix oprkind.	nargs is 2, too.
+ * will be InvalidOid for a prefix or postfix oprkind.  nargs is 2, too.
  */
 FuncCandidateList
 OpernameGetCandidates(List *names, char oprkind)
@@ -2124,7 +2124,7 @@ TSConfigGetCfgid(List *names, bool failOK)
 /*
  * TSConfigIsVisible
  *		Determine whether a text search configuration (identified by OID)
- *		is visible in the current search path.	Visible means "would be found
+ *		is visible in the current search path.  Visible means "would be found
  *		by searching for the unqualified text search configuration name".
  */
 bool
@@ -2611,7 +2611,7 @@ GetTempNamespaceBackendId(Oid namespaceId)
 
 /*
  * GetTempToastNamespace - get the OID of my temporary-toast-table namespace,
- * which must already be assigned.	(This is only used when creating a toast
+ * which must already be assigned.  (This is only used when creating a toast
  * table for a temp table, so we must have already done InitTempTableNamespace)
  */
 Oid
@@ -2703,7 +2703,7 @@ PushOverrideSearchPath(OverrideSearchPath *newpath)
 		firstNS = linitial_oid(oidlist);
 
 	/*
-	 * Add any implicitly-searched namespaces to the list.	Note these go on
+	 * Add any implicitly-searched namespaces to the list.  Note these go on
 	 * the front, not the back; also notice that we do not check USAGE
 	 * permissions for these.
 	 */
@@ -2944,7 +2944,7 @@ recomputeNamespacePath(void)
 	}
 
 	/*
-	 * Remember the first member of the explicit list.	(Note: this is
+	 * Remember the first member of the explicit list.  (Note: this is
 	 * nominally wrong if temp_missing, but we need it anyway to distinguish
 	 * explicit from implicit mention of pg_catalog.)
 	 */
@@ -2954,7 +2954,7 @@ recomputeNamespacePath(void)
 		firstNS = linitial_oid(oidlist);
 
 	/*
-	 * Add any implicitly-searched namespaces to the list.	Note these go on
+	 * Add any implicitly-searched namespaces to the list.  Note these go on
 	 * the front, not the back; also notice that we do not check USAGE
 	 * permissions for these.
 	 */
@@ -3009,7 +3009,7 @@ InitTempTableNamespace(void)
 
 	/*
 	 * First, do permission check to see if we are authorized to make temp
-	 * tables.	We use a nonstandard error message here since "databasename:
+	 * tables.  We use a nonstandard error message here since "databasename:
 	 * permission denied" might be a tad cryptic.
 	 *
 	 * Note that ACL_CREATE_TEMP rights are rechecked in pg_namespace_aclmask;
@@ -3028,9 +3028,9 @@ InitTempTableNamespace(void)
 	 * Do not allow a Hot Standby slave session to make temp tables.  Aside
 	 * from problems with modifying the system catalogs, there is a naming
 	 * conflict: pg_temp_N belongs to the session with BackendId N on the
-	 * master, not to a slave session with the same BackendId.	We should not
+	 * master, not to a slave session with the same BackendId.  We should not
 	 * be able to get here anyway due to XactReadOnly checks, but let's just
-	 * make real sure.	Note that this also backstops various operations that
+	 * make real sure.  Note that this also backstops various operations that
 	 * allow XactReadOnly transactions to modify temp tables; they'd need
 	 * RecoveryInProgress checks if not for this.
 	 */
@@ -3289,7 +3289,7 @@ assign_search_path(const char *newval, bool doit, GucSource source)
 
 	/*
 	 * If we aren't inside a transaction, we cannot do database access so
-	 * cannot verify the individual names.	Must accept the list on faith.
+	 * cannot verify the individual names.  Must accept the list on faith.
 	 */
 	if (source >= PGC_S_INTERACTIVE && IsTransactionState())
 	{
@@ -3300,7 +3300,7 @@ assign_search_path(const char *newval, bool doit, GucSource source)
 		 * for USAGE rights, either; should we?
 		 *
 		 * When source == PGC_S_TEST, we are checking the argument of an ALTER
-		 * DATABASE SET or ALTER USER SET command.	It could be that the
+		 * DATABASE SET or ALTER USER SET command.  It could be that the
 		 * intended use of the search path is for some other database, so we
 		 * should not error out if it mentions schemas not present in the
 		 * current database.  We reduce the message to NOTICE instead.
@@ -3408,7 +3408,7 @@ fetch_search_path(bool includeImplicit)
 	/*
 	 * If the temp namespace should be first, force it to exist.  This is so
 	 * that callers can trust the result to reflect the actual default
-	 * creation namespace.	It's a bit bogus to do this here, since
+	 * creation namespace.  It's a bit bogus to do this here, since
 	 * current_schema() is supposedly a stable function without side-effects,
 	 * but the alternatives seem worse.
 	 */
@@ -3430,7 +3430,7 @@ fetch_search_path(bool includeImplicit)
 
 /*
  * Fetch the active search path into a caller-allocated array of OIDs.
- * Returns the number of path entries.	(If this is more than sarray_len,
+ * Returns the number of path entries.  (If this is more than sarray_len,
  * then the data didn't fit and is not all stored.)
  *
  * The returned list always includes the implicitly-prepended namespaces,

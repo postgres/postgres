@@ -40,7 +40,7 @@ typedef struct
 } WalDataMessageHeader;
 
 /*
- * Maximum data payload in a WAL data message.	Must be >= XLOG_BLCKSZ.
+ * Maximum data payload in a WAL data message.  Must be >= XLOG_BLCKSZ.
  *
  * We don't have a good idea of what a good value would be; there's some
  * overhead per message in both walsender and walreceiver, but on the other

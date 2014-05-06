@@ -30,7 +30,7 @@ static bool tlist_matches_tupdesc(PlanState *ps, List *tlist, Index varno, Tuple
  * ExecScanFetch -- fetch next potential tuple
  *
  * This routine is concerned with substituting a test tuple if we are
- * inside an EvalPlanQual recheck.	If we aren't, just execute
+ * inside an EvalPlanQual recheck.  If we aren't, just execute
  * the access method's next-tuple routine.
  */
 static inline TupleTableSlot *
@@ -152,7 +152,7 @@ ExecScan(ScanState *node,
 	ResetExprContext(econtext);
 
 	/*
-	 * get a tuple from the access method.	Loop until we obtain a tuple that
+	 * get a tuple from the access method.  Loop until we obtain a tuple that
 	 * passes the qualification.
 	 */
 	for (;;)

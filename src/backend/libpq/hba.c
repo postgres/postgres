@@ -57,8 +57,8 @@ static List *parsed_hba_lines = NIL;
 
 /*
  * These variables hold the pre-parsed contents of the ident usermap
- * configuration file.	ident_lines is a list of sublists, one sublist for
- * each (non-empty, non-comment) line of the file.	The sublist items are
+ * configuration file.  ident_lines is a list of sublists, one sublist for
+ * each (non-empty, non-comment) line of the file.  The sublist items are
  * palloc'd strings, one string per token on the line.  Note there will always
  * be at least one token, since blank lines are not entered in the data
  * structure.  ident_line_nums is an integer list containing the actual line
@@ -1833,7 +1833,7 @@ load_ident(void)
 
 /*
  *	Determine what authentication method should be used when accessing database
- *	"database" from frontend "raddr", user "user".	Return the method and
+ *	"database" from frontend "raddr", user "user".  Return the method and
  *	an optional argument (stored in fields of *port), and STATUS_OK.
  *
  *	Note that STATUS_ERROR indicates a problem with the hba config file.

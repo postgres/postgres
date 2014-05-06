@@ -40,7 +40,7 @@
  * losing any flexibility if a replan turns out to be necessary.
  *
  * Note: the string referenced by commandTag is not subsidiary storage;
- * it is assumed to be a compile-time-constant string.	As with portals,
+ * it is assumed to be a compile-time-constant string.  As with portals,
  * commandTag shall be NULL if and only if the original query string (before
  * rewriting) was an empty string.
  */

@@ -150,7 +150,7 @@ ResourceOwnerCreate(ResourceOwner parent, const char *name)
  *		but don't delete the owner objects themselves.
  *
  * Note that this executes just one phase of release, and so typically
- * must be called three times.	We do it this way because (a) we want to
+ * must be called three times.  We do it this way because (a) we want to
  * do all the recursion separately for each phase, thereby preserving
  * the needed order of operations; and (b) xact.c may have other operations
  * to do between the phases.
@@ -224,7 +224,7 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 		 *
 		 * During a commit, there shouldn't be any remaining pins --- that
 		 * would indicate failure to clean up the executor correctly --- so
-		 * issue warnings.	In the abort case, just clean up quietly.
+		 * issue warnings.  In the abort case, just clean up quietly.
 		 *
 		 * We are careful to do the releasing back-to-front, so as to avoid
 		 * O(N^2) behavior in ResourceOwnerForgetBuffer().
@@ -373,7 +373,7 @@ ResourceOwnerDelete(ResourceOwner owner)
 	/*
 	 * We delink the owner from its parent before deleting it, so that if
 	 * there's an error we won't have deleted/busted owners still attached to
-	 * the owner tree.	Better a leak than a crash.
+	 * the owner tree.  Better a leak than a crash.
 	 */
 	ResourceOwnerNewParent(owner, NULL);
 
@@ -565,7 +565,7 @@ ResourceOwnerForgetBuffer(ResourceOwner owner, Buffer buffer)
 
 		/*
 		 * Scan back-to-front because it's more likely we are releasing a
-		 * recently pinned buffer.	This isn't always the case of course, but
+		 * recently pinned buffer.  This isn't always the case of course, but
 		 * it's the way to bet.
 		 */
 		for (i = nb1; i >= 0; i--)

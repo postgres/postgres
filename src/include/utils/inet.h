@@ -40,7 +40,7 @@ typedef struct
 /*
  * Both INET and CIDR addresses are represented within Postgres as varlena
  * objects, ie, there is a varlena header in front of the struct type
- * depicted above.	This struct depicts what we actually have in memory
+ * depicted above.  This struct depicts what we actually have in memory
  * in "uncompressed" cases.  Note that since the maximum data size is only
  * 18 bytes, INET/CIDR will invariably be stored into tuples using the
  * 1-byte-header varlena format.  However, we have to be prepared to cope

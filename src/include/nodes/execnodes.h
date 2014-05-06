@@ -90,14 +90,14 @@ typedef struct ExprContext_CB
  *
  *		This class holds the "current context" information
  *		needed to evaluate expressions for doing tuple qualifications
- *		and tuple projections.	For example, if an expression refers
+ *		and tuple projections.  For example, if an expression refers
  *		to an attribute in the current inner tuple then we need to know
  *		what the current inner tuple is and so we look at the expression
  *		context.
  *
  *	There are two memory contexts associated with an ExprContext:
  *	* ecxt_per_query_memory is a query-lifespan context, typically the same
- *	  context the ExprContext node itself is allocated in.	This context
+ *	  context the ExprContext node itself is allocated in.  This context
  *	  can be used for purposes such as storing function call cache info.
  *	* ecxt_per_tuple_memory is a short-term context for expression results.
  *	  As the name suggests, it will typically be reset once per tuple,
@@ -200,9 +200,9 @@ typedef struct ReturnSetInfo
  *		Nodes which need to do projections create one of these.
  *
  *		ExecProject() evaluates the tlist, forms a tuple, and stores it
- *		in the given slot.	Note that the result will be a "virtual" tuple
+ *		in the given slot.  Note that the result will be a "virtual" tuple
  *		unless ExecMaterializeSlot() is then called to force it to be
- *		converted to a physical tuple.	The slot must have a tupledesc
+ *		converted to a physical tuple.  The slot must have a tupledesc
  *		that matches the output of the tlist!
  *
  *		The planner very often produces tlists that consist entirely of
@@ -257,7 +257,7 @@ typedef struct ProjectionInfo
  *	  in emitted tuples.  For example, when we do an UPDATE query,
  *	  the planner adds a "junk" entry to the targetlist so that the tuples
  *	  returned to ExecutePlan() contain an extra attribute: the ctid of
- *	  the tuple to be updated.	This is needed to do the update, but we
+ *	  the tuple to be updated.  This is needed to do the update, but we
  *	  don't want the ctid to be part of the stored new tuple!  So, we
  *	  apply a "junk filter" to remove the junk attributes and form the
  *	  real output tuple.  The junkfilter code also provides routines to
@@ -387,7 +387,7 @@ typedef struct EState
 
 	/*
 	 * These fields are for re-evaluating plan quals when an updated tuple is
-	 * substituted in READ COMMITTED mode.	es_epqTuple[] contains tuples that
+	 * substituted in READ COMMITTED mode.  es_epqTuple[] contains tuples that
 	 * scan plan nodes should return instead of whatever they'd normally
 	 * return, or NULL if nothing to return; es_epqTupleSet[] is true if a
 	 * particular array entry is valid; and es_epqScanDone[] is state to
@@ -649,7 +649,7 @@ typedef struct FuncExprState
 
 	/*
 	 * In some cases we need to compute a tuple descriptor for the function's
-	 * output.	If so, it's stored here.
+	 * output.  If so, it's stored here.
 	 */
 	TupleDesc	funcResultDesc;
 	bool		funcReturnsTuple;		/* valid when funcResultDesc isn't
@@ -675,7 +675,7 @@ typedef struct FuncExprState
 
 	/*
 	 * Flag to remember whether we have registered a shutdown callback for
-	 * this FuncExprState.	We do so only if funcResultStore or setArgsValid
+	 * this FuncExprState.  We do so only if funcResultStore or setArgsValid
 	 * has been set at least once (since all the callback is for is to release
 	 * the tuplestore or clear setArgsValid).
 	 */
@@ -1381,7 +1381,7 @@ typedef struct CteScanState
  *	 WorkTableScanState information
  *
  *		WorkTableScan nodes are used to scan the work table created by
- *		a RecursiveUnion node.	We locate the RecursiveUnion node
+ *		a RecursiveUnion node.  We locate the RecursiveUnion node
  *		during executor startup.
  * ----------------
  */
@@ -1676,7 +1676,7 @@ typedef struct WindowAggState
  *	 UniqueState information
  *
  *		Unique nodes are used "on top of" sort nodes to discard
- *		duplicate tuples returned from the sort phase.	Basically
+ *		duplicate tuples returned from the sort phase.  Basically
  *		all it does is compare the current tuple from the subplan
  *		with the previously fetched tuple (stored in its result slot).
  *		If the two are identical in all interesting fields, then

@@ -391,7 +391,7 @@ win32_pghardlink(const char *src, const char *dst)
 /*
  * copy_dir()
  *
- *	Copies either a directory or a single file within a directory.	If the
+ *	Copies either a directory or a single file within a directory.  If the
  *	source argument names a directory, we recursively copy that directory,
  *	otherwise we copy a single file.
  */

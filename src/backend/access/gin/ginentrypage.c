@@ -104,7 +104,7 @@ GinFormTuple(Relation index, GinState *ginstate,
 		 * Gin tuple without any ItemPointers should be large enough to keep
 		 * one ItemPointer, to prevent inconsistency between
 		 * ginHeapTupleFastCollect and ginEntryInsert called by
-		 * ginHeapTupleInsert.	ginHeapTupleFastCollect forms tuple without
+		 * ginHeapTupleInsert.  ginHeapTupleFastCollect forms tuple without
 		 * extra pointer to heap, but ginEntryInsert (called for pending list
 		 * cleanup during vacuum) will form the same tuple with one
 		 * ItemPointer.

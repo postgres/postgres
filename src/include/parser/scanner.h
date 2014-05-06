@@ -4,7 +4,7 @@
  *		API for the core scanner (flex machine)
  *
  * The core scanner is also used by PL/pgsql, so we provide a public API
- * for it.	However, the rest of the backend is only expected to use the
+ * for it.  However, the rest of the backend is only expected to use the
  * higher-level API provided by parser.h.
  *
  *
@@ -58,7 +58,7 @@ typedef union core_YYSTYPE
 
 /*
  * The YY_EXTRA data that a flex scanner allows us to pass around.
- * Private state needed by the core scanner goes here.	Note that the actual
+ * Private state needed by the core scanner goes here.  Note that the actual
  * yy_extra struct may be larger and have this as its first component, thus
  * allowing the calling parser to keep some fields of its own in YY_EXTRA.
  */

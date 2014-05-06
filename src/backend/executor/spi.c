@@ -253,7 +253,7 @@ AtEOSubXact_SPI(bool isCommit, SubTransactionId mySubid)
 		}
 
 		/*
-		 * Pop the stack entry and reset global variables.	Unlike
+		 * Pop the stack entry and reset global variables.  Unlike
 		 * SPI_finish(), we don't risk switching to memory contexts that might
 		 * be already gone.
 		 */
@@ -1030,7 +1030,7 @@ SPI_cursor_open(const char *name, SPIPlanPtr plan,
 /*
  * SPI_cursor_open_with_args()
  *
- * Parse and plan a query and open it as a portal.	Like SPI_execute_with_args,
+ * Parse and plan a query and open it as a portal.  Like SPI_execute_with_args,
  * we can tell the planner to rely on the parameter values as constants,
  * because the plan will only be used once.
  */
@@ -1214,7 +1214,7 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 	}
 
 	/*
-	 * Disallow SCROLL with SELECT FOR UPDATE.	This is not redundant with the
+	 * Disallow SCROLL with SELECT FOR UPDATE.  This is not redundant with the
 	 * check in transformDeclareCursorStmt because the cursor options might
 	 * not have come through there.
 	 */
@@ -1484,7 +1484,7 @@ SPI_plan_is_valid(SPIPlanPtr plan)
 /*
  * SPI_result_code_string --- convert any SPI return code to a string
  *
- * This is often useful in error messages.	Most callers will probably
+ * This is often useful in error messages.  Most callers will probably
  * only pass negative (error-case) codes, but for generality we recognize
  * the success codes too.
  */
@@ -1925,7 +1925,7 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 
 			/*
 			 * The last canSetTag query sets the status values returned to the
-			 * caller.	Be careful to free any tuptables not returned, to
+			 * caller.  Be careful to free any tuptables not returned, to
 			 * avoid intratransaction memory leak.
 			 */
 			if (canSetTag)

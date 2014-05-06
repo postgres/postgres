@@ -36,7 +36,7 @@ typedef struct
 	 */
 
 	/*
-	 * Statistics.	These counters should be wide enough that they can't
+	 * Statistics.  These counters should be wide enough that they can't
 	 * overflow during a single bgwriter cycle.
 	 */
 	uint32		completePasses; /* Complete cycles of the clock sweep */
@@ -129,7 +129,7 @@ StrategyGetBuffer(BufferAccessStrategy strategy, bool *lock_held)
 
 	/*
 	 * We count buffer allocation requests so that the bgwriter can estimate
-	 * the rate of buffer consumption.	Note that buffers recycled by a
+	 * the rate of buffer consumption.  Note that buffers recycled by a
 	 * strategy object are intentionally not counted here.
 	 */
 	StrategyControl->numBufferAllocs++;
@@ -248,7 +248,7 @@ StrategyFreeBuffer(volatile BufferDesc *buf)
  *
  * In addition, we return the completed-pass count (which is effectively
  * the higher-order bits of nextVictimBuffer) and the count of recent buffer
- * allocs if non-NULL pointers are passed.	The alloc count is reset after
+ * allocs if non-NULL pointers are passed.  The alloc count is reset after
  * being read.
  */
 int
@@ -442,7 +442,7 @@ GetBufferFromRing(BufferAccessStrategy strategy)
 
 	/*
 	 * If the slot hasn't been filled yet, tell the caller to allocate a new
-	 * buffer with the normal allocation strategy.	He will then fill this
+	 * buffer with the normal allocation strategy.  He will then fill this
 	 * slot by calling AddBufferToRing with the new buffer.
 	 */
 	bufnum = strategy->buffers[strategy->current];
@@ -495,7 +495,7 @@ AddBufferToRing(BufferAccessStrategy strategy, volatile BufferDesc *buf)
  *
  * When a nondefault strategy is used, the buffer manager calls this function
  * when it turns out that the buffer selected by StrategyGetBuffer needs to
- * be written out and doing so would require flushing WAL too.	This gives us
+ * be written out and doing so would require flushing WAL too.  This gives us
  * a chance to choose a different victim.
  *
  * Returns true if buffer manager should ask for a new victim, and false

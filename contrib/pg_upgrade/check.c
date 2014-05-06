@@ -270,7 +270,7 @@ check_cluster_compatibility(migratorContext *ctx, bool live_check)
 	FILE	   *lib_test;
 
 	/*
-	 * Test pg_upgrade_support.so is in the proper place.	 We cannot copy it
+	 * Test pg_upgrade_support.so is in the proper place.    We cannot copy it
 	 * ourselves because install directories are typically root-owned.
 	 */
 	snprintf(libfile, sizeof(libfile), "%s/pg_upgrade_support%s", ctx->new.libpath,

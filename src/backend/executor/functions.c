@@ -44,7 +44,7 @@ typedef struct
 } DR_sqlfunction;
 
 /*
- * We have an execution_state record for each query in a function.	Each
+ * We have an execution_state record for each query in a function.  Each
  * record contains a plantree for its query.  If the query is currently in
  * F_EXEC_RUN state then there's a QueryDesc too.
  */
@@ -329,7 +329,7 @@ init_sql_fcache(FmgrInfo *finfo, bool lazyEvalOK)
 	 * any polymorphic arguments.
 	 *
 	 * Note: we set fcache->returnsTuple according to whether we are returning
-	 * the whole tuple result or just a single column.	In the latter case we
+	 * the whole tuple result or just a single column.  In the latter case we
 	 * clear returnsTuple because we need not act different from the scalar
 	 * result case, even if it's a rowtype column.  (However, we have to force
 	 * lazy eval mode in that case; otherwise we'd need extra code to expand
@@ -574,7 +574,7 @@ postquel_get_single_result(TupleTableSlot *slot,
 	/*
 	 * Set up to return the function value.  For pass-by-reference datatypes,
 	 * be sure to allocate the result in resultcontext, not the current memory
-	 * context (which has query lifespan).	We can't leave the data in the
+	 * context (which has query lifespan).  We can't leave the data in the
 	 * TupleTableSlot because we intend to clear the slot before returning.
 	 */
 	oldcontext = MemoryContextSwitchTo(resultcontext);
@@ -717,7 +717,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 		 * Break from loop if we didn't shut down (implying we got a
 		 * lazily-evaluated row).  Otherwise we'll press on till the whole
 		 * function is done, relying on the tuplestore to keep hold of the
-		 * data to eventually be returned.	This is necessary since an
+		 * data to eventually be returned.  This is necessary since an
 		 * INSERT/UPDATE/DELETE RETURNING that sets the result might be
 		 * followed by additional rule-inserted commands, and we want to
 		 * finish doing all those commands before we return anything.
@@ -773,7 +773,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 		else if (fcache->lazyEval)
 		{
 			/*
-			 * We are done with a lazy evaluation.	Clean up.
+			 * We are done with a lazy evaluation.  Clean up.
 			 */
 			tuplestore_clear(fcache->tstore);
 
@@ -797,8 +797,8 @@ fmgr_sql(PG_FUNCTION_ARGS)
 		else
 		{
 			/*
-			 * We are done with a non-lazy evaluation.	Return whatever is in
-			 * the tuplestore.	(It is now caller's responsibility to free the
+			 * We are done with a non-lazy evaluation.  Return whatever is in
+			 * the tuplestore.  (It is now caller's responsibility to free the
 			 * tuplestore when done.)
 			 */
 			rsi->returnMode = SFRM_Materialize;
@@ -903,7 +903,7 @@ sql_exec_error_callback(void *arg)
 
 	/*
 	 * Try to determine where in the function we failed.  If there is a query
-	 * with non-null QueryDesc, finger it.	(We check this rather than looking
+	 * with non-null QueryDesc, finger it.  (We check this rather than looking
 	 * for F_EXEC_RUN state, so that errors during ExecutorStart or
 	 * ExecutorEnd are blamed on the appropriate query; see postquel_start and
 	 * postquel_end.)
@@ -1217,7 +1217,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 		/*
 		 * Verify that the targetlist matches the return tuple type. We scan
 		 * the non-deleted attributes to ensure that they match the datatypes
-		 * of the non-resjunk columns.	For deleted attributes, insert NULL
+		 * of the non-resjunk columns.  For deleted attributes, insert NULL
 		 * result columns if the caller asked for that.
 		 */
 		tupnatts = tupdesc->natts;

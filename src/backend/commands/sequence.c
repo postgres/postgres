@@ -60,7 +60,7 @@ typedef struct sequence_magic
  * rely on the relcache, since it's only, well, a cache, and may decide to
  * discard entries.)
  *
- * XXX We use linear search to find pre-existing SeqTable entries.	This is
+ * XXX We use linear search to find pre-existing SeqTable entries.  This is
  * good when only a small number of sequences are touched in a session, but
  * would suck with many different sequences.  Perhaps use a hashtable someday.
  */
@@ -234,8 +234,8 @@ DefineSequence(CreateSeqStmt *seq)
 	 * Two special hacks here:
 	 *
 	 * 1. Since VACUUM does not process sequences, we have to force the tuple
-	 * to have xmin = FrozenTransactionId now.	Otherwise it would become
-	 * invisible to SELECTs after 2G transactions.	It is okay to do this
+	 * to have xmin = FrozenTransactionId now.  Otherwise it would become
+	 * invisible to SELECTs after 2G transactions.  It is okay to do this
 	 * because if the current transaction aborts, no other xact will ever
 	 * examine the sequence tuple anyway.
 	 *
@@ -496,7 +496,7 @@ nextval_internal(Oid relid)
 	}
 
 	/*
-	 * Decide whether we should emit a WAL log record.	If so, force up the
+	 * Decide whether we should emit a WAL log record.  If so, force up the
 	 * fetch count to grab SEQ_LOG_VALS more values than we actually need to
 	 * cache.  (These will then be usable without logging.)
 	 *
@@ -867,7 +867,7 @@ setval3_oid(PG_FUNCTION_ARGS)
  * Open the sequence and acquire AccessShareLock if needed
  *
  * If we haven't touched the sequence already in this transaction,
- * we need to acquire AccessShareLock.	We arrange for the lock to
+ * we need to acquire AccessShareLock.  We arrange for the lock to
  * be owned by the top transaction, so that we don't need to do it
  * more than once per xact.
  */

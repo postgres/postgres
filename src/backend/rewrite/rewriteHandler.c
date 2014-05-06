@@ -197,7 +197,7 @@ AcquireRewriteLocks(Query *parsetree,
 						/*
 						 * The elements of an alias list have to refer to
 						 * earlier RTEs of the same rtable, because that's the
-						 * order the planner builds things in.	So we already
+						 * order the planner builds things in.  So we already
 						 * processed the referenced RTE, and so it's safe to
 						 * use get_rte_attribute_is_dropped on it. (This might
 						 * not hold after rewriting or planning, but it's OK
@@ -359,7 +359,7 @@ rewriteRuleAction(Query *parsetree,
 	/*
 	 * Generate expanded rtable consisting of main parsetree's rtable plus
 	 * rule action's rtable; this becomes the complete rtable for the rule
-	 * action.	Some of the entries may be unused after we finish rewriting,
+	 * action.  Some of the entries may be unused after we finish rewriting,
 	 * but we leave them all in place for two reasons:
 	 *
 	 * We'd have a much harder job to adjust the query's varnos if we
@@ -425,7 +425,7 @@ rewriteRuleAction(Query *parsetree,
 	 * that if the rule action refers to OLD, its jointree will add a
 	 * reference to rt_index.  If the rule action doesn't refer to OLD, but
 	 * either the rule_qual or the user query quals do, then we need to keep
-	 * the original rtindex in the jointree to provide data for the quals.	We
+	 * the original rtindex in the jointree to provide data for the quals.  We
 	 * don't want the original rtindex to be joined twice, however, so avoid
 	 * keeping it if the rule action mentions it.
 	 *
@@ -447,7 +447,7 @@ rewriteRuleAction(Query *parsetree,
 		{
 			/*
 			 * If sub_action is a setop, manipulating its jointree will do no
-			 * good at all, because the jointree is dummy.	(Perhaps someday
+			 * good at all, because the jointree is dummy.  (Perhaps someday
 			 * we could push the joining and quals down to the member
 			 * statements of the setop?)
 			 */
@@ -603,7 +603,7 @@ adjustJoinTreeList(Query *parsetree, bool removert, int rt_index)
  * then junk fields (these in no particular order).
  *
  * We must do items 1 and 2 before firing rewrite rules, else rewritten
- * references to NEW.foo will produce wrong or incomplete results.	Item 3
+ * references to NEW.foo will produce wrong or incomplete results.  Item 3
  * is not needed for rewriting, but will be needed by the planner, and we
  * can do it essentially for free while handling items 1 and 2.
  *
@@ -787,7 +787,7 @@ process_matched_tle(TargetEntry *src_tle,
 	}
 
 	/*----------
-	 * Multiple assignments to same attribute.	Allow only if all are
+	 * Multiple assignments to same attribute.  Allow only if all are
 	 * FieldStore or ArrayRef assignment operations.  This is a bit
 	 * tricky because what we may actually be looking at is a nest of
 	 * such nodes; consider
@@ -805,7 +805,7 @@ process_matched_tle(TargetEntry *src_tle,
 	 * assignments appear to occur left-to-right.
 	 *
 	 * For FieldStore, instead of nesting we can generate a single
-	 * FieldStore with multiple target fields.	We must nest when
+	 * FieldStore with multiple target fields.  We must nest when
 	 * ArrayRefs are involved though.
 	 *----------
 	 */
@@ -1307,7 +1307,7 @@ markQueryForLocking(Query *qry, Node *jtnode,
  *	in the given tree.
  *
  * NOTE: although this has the form of a walker, we cheat and modify the
- * SubLink nodes in-place.	It is caller's responsibility to ensure that
+ * SubLink nodes in-place.  It is caller's responsibility to ensure that
  * no unwanted side-effects occur!
  *
  * This is unlike most of the other routines that recurse into subselects,
@@ -1490,7 +1490,7 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
  * not just "NOT x" which the planner is much smarter about, else we will
  * do the wrong thing when the qual evaluates to NULL.)
  *
- * The rule_qual may contain references to OLD or NEW.	OLD references are
+ * The rule_qual may contain references to OLD or NEW.  OLD references are
  * replaced by references to the specified rt_index (the relation that the
  * rule applies to).  NEW references are only possible for INSERT and UPDATE
  * queries on the relation itself, and so they should be replaced by copies
@@ -1560,7 +1560,7 @@ CopyAndAddInvertedQual(Query *parsetree,
  * rows that the qualified action doesn't act on.  (If there are multiple
  * qualified INSTEAD rules, we AND all the negated quals onto a single
  * modified original query.)  We won't execute the original, unmodified
- * query if we find either qualified or unqualified INSTEAD rules.	If
+ * query if we find either qualified or unqualified INSTEAD rules.  If
  * we find both, the modified original query is discarded too.
  */
 static List *
@@ -1951,7 +1951,7 @@ QueryRewrite(Query *parsetree)
 	 *
 	 * If the original query is still in the list, it sets the command tag.
 	 * Otherwise, the last INSTEAD query of the same kind as the original is
-	 * allowed to set the tag.	(Note these rules can leave us with no query
+	 * allowed to set the tag.  (Note these rules can leave us with no query
 	 * setting the tag.  The tcop code has to cope with this by setting up a
 	 * default tag based on the original un-rewritten query.)
 	 *

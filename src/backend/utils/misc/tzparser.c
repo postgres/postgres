@@ -193,7 +193,7 @@ addToArray(tzEntry **base, int *arraysize, int n,
 
 	/*
 	 * Search the array for a duplicate; as a useful side effect, the array is
-	 * maintained in sorted order.	We use strcmp() to ensure we match the
+	 * maintained in sorted order.  We use strcmp() to ensure we match the
 	 * sort order datetime.c expects.
 	 */
 	arrayptr = *base;

@@ -1727,7 +1727,7 @@ DESCR("exponential");
 
 /*
  * This form of obj_description is now deprecated, since it will fail if
- * OIDs are not unique across system catalogs.	Use the other forms instead.
+ * OIDs are not unique across system catalogs.  Use the other forms instead.
  */
 DATA(insert OID = 1348 (  obj_description	 PGNSP PGUID 14 100 0 0 f f f t f s 1 0 25 "26" _null_ _null_ _null_ _null_ "select description from pg_catalog.pg_description where objoid = $1 and objsubid = 0" _null_ _null_ _null_ ));
 DESCR("get description for object id (deprecated)");
@@ -4788,7 +4788,7 @@ DESCR("fetch the Nth row value");
 #define PROVOLATILE_VOLATILE	'v'		/* can change even within a scan */
 
 /*
- * Symbolic values for proargmodes column.	Note that these must agree with
+ * Symbolic values for proargmodes column.  Note that these must agree with
  * the FunctionParameterMode enum in parsenodes.h; we declare them here to
  * be accessible from either header.
  */

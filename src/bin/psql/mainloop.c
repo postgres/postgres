@@ -277,7 +277,7 @@ MainLoop(FILE *source)
 				 * If we added a newline to query_buf, and nothing else has
 				 * been inserted in query_buf by the lexer, then strip off the
 				 * newline again.  This avoids any change to query_buf when a
-				 * line contains only a backslash command.	Also, in this
+				 * line contains only a backslash command.  Also, in this
 				 * situation we force out any previous lines as a separate
 				 * history entry; we don't want SQL and backslash commands
 				 * intermixed in history if at all possible.
@@ -419,7 +419,7 @@ MainLoop(FILE *source)
  * psqlscan.c is #include'd here instead of being compiled on its own.
  * This is because we need postgres_fe.h to be read before any system
  * include files, else things tend to break on platforms that have
- * multiple infrastructures for stdio.h and so on.	flex is absolutely
+ * multiple infrastructures for stdio.h and so on.  flex is absolutely
  * uncooperative about that, so we can't compile psqlscan.c on its own.
  */
 #include "psqlscan.c"

@@ -1026,7 +1026,7 @@ postmaster_is_alive(pid_t pid)
 	 * postmaster we are after.
 	 *
 	 * Don't believe that our own PID or parent shell's PID is the postmaster,
-	 * either.	(Windows hasn't got getppid(), though.)
+	 * either.  (Windows hasn't got getppid(), though.)
 	 */
 	if (pid == getpid())
 		return false;

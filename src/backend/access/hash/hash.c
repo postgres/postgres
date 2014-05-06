@@ -76,7 +76,7 @@ hashbuild(PG_FUNCTION_ARGS)
 	 * (assuming their hash codes are pretty random) there will be no locality
 	 * of access to the index, and if the index is bigger than available RAM
 	 * then we'll thrash horribly.  To prevent that scenario, we can sort the
-	 * tuples by (expected) bucket number.	However, such a sort is useless
+	 * tuples by (expected) bucket number.  However, such a sort is useless
 	 * overhead when the index does fit in RAM.  We choose to sort if the
 	 * initial index size exceeds NBuffers.
 	 *
@@ -233,7 +233,7 @@ hashgettuple(PG_FUNCTION_ARGS)
 		/*
 		 * An insertion into the current index page could have happened while
 		 * we didn't have read lock on it.  Re-find our position by looking
-		 * for the TID we previously returned.	(Because we hold share lock on
+		 * for the TID we previously returned.  (Because we hold share lock on
 		 * the bucket, no deletions or splits could have occurred; therefore
 		 * we can expect that the TID still exists in the current index page,
 		 * at an offset >= where we were.)
@@ -510,7 +510,7 @@ hashbulkdelete(PG_FUNCTION_ARGS)
 	/*
 	 * Read the metapage to fetch original bucket and tuple counts.  Also, we
 	 * keep a copy of the last-seen metapage so that we can use its
-	 * hashm_spares[] values to compute bucket page addresses.	This is a bit
+	 * hashm_spares[] values to compute bucket page addresses.  This is a bit
 	 * hokey but perfectly safe, since the interesting entries in the spares
 	 * array cannot change under us; and it beats rereading the metapage for
 	 * each bucket.
@@ -641,7 +641,7 @@ loop_top:
 	{
 		/*
 		 * Otherwise, our count is untrustworthy since we may have
-		 * double-scanned tuples in split buckets.	Proceed by dead-reckoning.
+		 * double-scanned tuples in split buckets.  Proceed by dead-reckoning.
 		 * (Note: we still return estimated_count = false, because using this
 		 * count is better than not updating reltuples at all.)
 		 */

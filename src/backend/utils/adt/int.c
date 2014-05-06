@@ -641,7 +641,7 @@ int4pl(PG_FUNCTION_ARGS)
 	result = arg1 + arg2;
 
 	/*
-	 * Overflow check.	If the inputs are of different signs then their sum
+	 * Overflow check.  If the inputs are of different signs then their sum
 	 * cannot overflow.  If the inputs are of the same sign, their sum had
 	 * better be that sign too.
 	 */
@@ -662,8 +662,8 @@ int4mi(PG_FUNCTION_ARGS)
 	result = arg1 - arg2;
 
 	/*
-	 * Overflow check.	If the inputs are of the same sign then their
-	 * difference cannot overflow.	If they are of different signs then the
+	 * Overflow check.  If the inputs are of the same sign then their
+	 * difference cannot overflow.  If they are of different signs then the
 	 * result should be of the same sign as the first input.
 	 */
 	if (!SAMESIGN(arg1, arg2) && !SAMESIGN(result, arg1))
@@ -683,7 +683,7 @@ int4mul(PG_FUNCTION_ARGS)
 	result = arg1 * arg2;
 
 	/*
-	 * Overflow check.	We basically check to see if result / arg2 gives arg1
+	 * Overflow check.  We basically check to see if result / arg2 gives arg1
 	 * again.  There are two cases where this fails: arg2 = 0 (which cannot
 	 * overflow) and arg1 = INT_MIN, arg2 = -1 (where the division itself will
 	 * overflow and thus incorrectly match).
@@ -793,7 +793,7 @@ int2pl(PG_FUNCTION_ARGS)
 	result = arg1 + arg2;
 
 	/*
-	 * Overflow check.	If the inputs are of different signs then their sum
+	 * Overflow check.  If the inputs are of different signs then their sum
 	 * cannot overflow.  If the inputs are of the same sign, their sum had
 	 * better be that sign too.
 	 */
@@ -814,8 +814,8 @@ int2mi(PG_FUNCTION_ARGS)
 	result = arg1 - arg2;
 
 	/*
-	 * Overflow check.	If the inputs are of the same sign then their
-	 * difference cannot overflow.	If they are of different signs then the
+	 * Overflow check.  If the inputs are of the same sign then their
+	 * difference cannot overflow.  If they are of different signs then the
 	 * result should be of the same sign as the first input.
 	 */
 	if (!SAMESIGN(arg1, arg2) && !SAMESIGN(result, arg1))
@@ -896,7 +896,7 @@ int24pl(PG_FUNCTION_ARGS)
 	result = arg1 + arg2;
 
 	/*
-	 * Overflow check.	If the inputs are of different signs then their sum
+	 * Overflow check.  If the inputs are of different signs then their sum
 	 * cannot overflow.  If the inputs are of the same sign, their sum had
 	 * better be that sign too.
 	 */
@@ -917,8 +917,8 @@ int24mi(PG_FUNCTION_ARGS)
 	result = arg1 - arg2;
 
 	/*
-	 * Overflow check.	If the inputs are of the same sign then their
-	 * difference cannot overflow.	If they are of different signs then the
+	 * Overflow check.  If the inputs are of the same sign then their
+	 * difference cannot overflow.  If they are of different signs then the
 	 * result should be of the same sign as the first input.
 	 */
 	if (!SAMESIGN(arg1, arg2) && !SAMESIGN(result, arg1))
@@ -938,7 +938,7 @@ int24mul(PG_FUNCTION_ARGS)
 	result = arg1 * arg2;
 
 	/*
-	 * Overflow check.	We basically check to see if result / arg2 gives arg1
+	 * Overflow check.  We basically check to see if result / arg2 gives arg1
 	 * again.  There is one case where this fails: arg2 = 0 (which cannot
 	 * overflow).
 	 *
@@ -984,7 +984,7 @@ int42pl(PG_FUNCTION_ARGS)
 	result = arg1 + arg2;
 
 	/*
-	 * Overflow check.	If the inputs are of different signs then their sum
+	 * Overflow check.  If the inputs are of different signs then their sum
 	 * cannot overflow.  If the inputs are of the same sign, their sum had
 	 * better be that sign too.
 	 */
@@ -1005,8 +1005,8 @@ int42mi(PG_FUNCTION_ARGS)
 	result = arg1 - arg2;
 
 	/*
-	 * Overflow check.	If the inputs are of the same sign then their
-	 * difference cannot overflow.	If they are of different signs then the
+	 * Overflow check.  If the inputs are of the same sign then their
+	 * difference cannot overflow.  If they are of different signs then the
 	 * result should be of the same sign as the first input.
 	 */
 	if (!SAMESIGN(arg1, arg2) && !SAMESIGN(result, arg1))
@@ -1026,7 +1026,7 @@ int42mul(PG_FUNCTION_ARGS)
 	result = arg1 * arg2;
 
 	/*
-	 * Overflow check.	We basically check to see if result / arg1 gives arg2
+	 * Overflow check.  We basically check to see if result / arg1 gives arg2
 	 * again.  There is one case where this fails: arg1 = 0 (which cannot
 	 * overflow).
 	 *

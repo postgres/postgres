@@ -36,7 +36,7 @@
  *	Create a constraint table entry.
  *
  * Subsidiary records (such as triggers or indexes to implement the
- * constraint) are *not* created here.	But we do make dependency links
+ * constraint) are *not* created here.  But we do make dependency links
  * from the constraint to the things it depends on.
  */
 Oid
@@ -298,7 +298,7 @@ CreateConstraintEntry(const char *constraintName,
 	{
 		/*
 		 * Register normal dependency on the unique index that supports a
-		 * foreign-key constraint.	(Note: for indexes associated with unique
+		 * foreign-key constraint.  (Note: for indexes associated with unique
 		 * or primary-key constraints, the dependency runs the other way, and
 		 * is not made here.)
 		 */

@@ -3,7 +3,7 @@
  * tqual.h
  *	  POSTGRES "time qualification" definitions, ie, tuple visibility rules.
  *
- *	  Should be moved/renamed...	- vadim 07/28/98
+ *	  Should be moved/renamed...    - vadim 07/28/98
  *
  * Portions Copyright (c) 1996-2010, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California

@@ -910,7 +910,7 @@ DropRole(DropRoleStmt *stmt)
 		ReleaseSysCache(tuple);
 
 		/*
-		 * Remove role from the pg_auth_members table.	We have to remove all
+		 * Remove role from the pg_auth_members table.  We have to remove all
 		 * tuples that show it as either a role or a member.
 		 *
 		 * XXX what about grantor entries?	Maybe we should do one heap scan.
@@ -1005,7 +1005,7 @@ RenameRole(const char *oldname, const char *newname)
 	 * XXX Client applications probably store the session user somewhere, so
 	 * renaming it could cause confusion.  On the other hand, there may not be
 	 * an actual problem besides a little confusion, so think about this and
-	 * decide.	Same for SET ROLE ... we don't restrict renaming the current
+	 * decide.  Same for SET ROLE ... we don't restrict renaming the current
 	 * effective userid, though.
 	 */
 
@@ -1257,7 +1257,7 @@ AddRoleMems(const char *rolename, Oid roleid,
 
 	/*
 	 * Check permissions: must have createrole or admin option on the role to
-	 * be changed.	To mess with a superuser role, you gotta be superuser.
+	 * be changed.  To mess with a superuser role, you gotta be superuser.
 	 */
 	if (superuser_arg(roleid))
 	{
@@ -1403,7 +1403,7 @@ DelRoleMems(const char *rolename, Oid roleid,
 
 	/*
 	 * Check permissions: must have createrole or admin option on the role to
-	 * be changed.	To mess with a superuser role, you gotta be superuser.
+	 * be changed.  To mess with a superuser role, you gotta be superuser.
 	 */
 	if (superuser_arg(roleid))
 	{

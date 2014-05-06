@@ -30,7 +30,7 @@
  *
  *		If the query specifies RETURNING, then the ModifyTable returns a
  *		RETURNING tuple after completing each row insert, update, or delete.
- *		It must be called again to continue the operation.	Without RETURNING,
+ *		It must be called again to continue the operation.  Without RETURNING,
  *		we just loop within the node until all the work is done, then
  *		return NULL.  This avoids useless call/return overhead.
  */
@@ -309,7 +309,7 @@ ExecDelete(ItemPointer tupleid,
 	 *
 	 * Note: if es_crosscheck_snapshot isn't InvalidSnapshot, we check that
 	 * the row to be deleted is visible to that snapshot, and throw a can't-
-	 * serialize error if not.	This is a special-case behavior needed for
+	 * serialize error if not.  This is a special-case behavior needed for
 	 * referential integrity updates in serializable transactions.
 	 */
 ldelete:;
@@ -375,7 +375,7 @@ ldelete:;
 	{
 		/*
 		 * We have to put the target tuple into a slot, which means first we
-		 * gotta fetch it.	We can use the trigger tuple slot.
+		 * gotta fetch it.  We can use the trigger tuple slot.
 		 */
 		TupleTableSlot *slot = estate->es_trig_tuple_slot;
 		TupleTableSlot *rslot;
@@ -415,7 +415,7 @@ ldelete:;
  *		note: we can't run UPDATE queries with transactions
  *		off because UPDATEs are actually INSERTs and our
  *		scan will mistakenly loop forever, updating the tuple
- *		it just inserted..	This should be fixed but until it
+ *		it just inserted..  This should be fixed but until it
  *		is, we don't want to get stuck in an infinite loop
  *		which corrupts your database..
  *
@@ -487,7 +487,7 @@ lreplace:;
 	 *
 	 * Note: if es_crosscheck_snapshot isn't InvalidSnapshot, we check that
 	 * the row to be updated is visible to that snapshot, and throw a can't-
-	 * serialize error if not.	This is a special-case behavior needed for
+	 * serialize error if not.  This is a special-case behavior needed for
 	 * referential integrity updates in serializable transactions.
 	 */
 	result = heap_update(resultRelationDesc, tupleid, tuple,
@@ -541,7 +541,7 @@ lreplace:;
 	 * Note: instead of having to update the old index tuples associated with
 	 * the heap tuple, all we do is form and insert new index tuples. This is
 	 * because UPDATEs are actually DELETEs and INSERTs, and index tuple
-	 * deletion is done later by VACUUM (see notes in ExecDelete).	All we do
+	 * deletion is done later by VACUUM (see notes in ExecDelete).  All we do
 	 * here is insert new index tuples.  -cim 9/27/89
 	 */
 
@@ -841,7 +841,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 
 		/*
 		 * Initialize result tuple slot and assign its rowtype using the first
-		 * RETURNING list.	We assume the rest will look the same.
+		 * RETURNING list.  We assume the rest will look the same.
 		 */
 		tupDesc = ExecTypeFromTL((List *) linitial(node->returningLists),
 								 false);
@@ -888,7 +888,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	/*
 	 * If we have any secondary relations in an UPDATE or DELETE, they need to
 	 * be treated like non-locked relations in SELECT FOR UPDATE, ie, the
-	 * EvalPlanQual mechanism needs to be told about them.	Locate the
+	 * EvalPlanQual mechanism needs to be told about them.  Locate the
 	 * relevant ExecRowMarks.
 	 */
 	foreach(l, node->rowMarks)
@@ -929,7 +929,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	 * no need to look first.
 	 *
 	 * If there are multiple result relations, each one needs its own junk
-	 * filter.	Note multiple rels are only possible for UPDATE/DELETE, so we
+	 * filter.  Note multiple rels are only possible for UPDATE/DELETE, so we
 	 * can't be fooled by some needing a filter and some not.
 	 *
 	 * This section of code is also a convenient place to verify that the

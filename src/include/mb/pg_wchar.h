@@ -10,7 +10,7 @@
  *
  *	NOTES
  *		This is used both by the backend and by libpq, but should not be
- *		included by libpq client programs.	In particular, a libpq client
+ *		included by libpq client programs.  In particular, a libpq client
  *		should not assume that the encoding IDs used by the version of libpq
  *		it's linked to match up with the IDs declared here.
  *
@@ -40,7 +40,7 @@ typedef unsigned int pg_wchar;
 
 /*
  * Leading byte types or leading prefix byte for MULE internal code.
- * See http://www.xemacs.org for more details.	(there is a doc titled
+ * See http://www.xemacs.org for more details.  (there is a doc titled
  * "XEmacs Internals Manual", "MULE Character Sets and Encodings"
  * section.)
  */

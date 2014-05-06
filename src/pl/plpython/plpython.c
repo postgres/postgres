@@ -1288,7 +1288,7 @@ PLy_function_delete_args(PLyProcedure *proc)
  */
 
 /* PLy_procedure_get: returns a cached PLyProcedure, or creates, stores and
- * returns a new PLyProcedure.	fcinfo is the call info, tgreloid is the
+ * returns a new PLyProcedure.  fcinfo is the call info, tgreloid is the
  * relation OID when calling a trigger, or InvalidOid (zero) for ordinary
  * function calls.
  */
@@ -1339,7 +1339,7 @@ PLy_procedure_get(FunctionCallInfo fcinfo, Oid tgreloid)
 	if (OidIsValid(tgreloid))
 	{
 		/*
-		 * Input/output conversion for trigger tuples.	Use the result
+		 * Input/output conversion for trigger tuples.  Use the result
 		 * TypeInfo variable to store the tuple conversion info.  We do this
 		 * over again on each call to cover the possibility that the
 		 * relation's tupdesc changed since the trigger was last called.
@@ -1794,7 +1794,7 @@ PLy_output_datum_func2(PLyObToDatum *arg, HeapTuple typeTup)
 
 	/*
 	 * Select a conversion function to convert Python objects to PostgreSQL
-	 * datums.	Most data types can go through the generic function.
+	 * datums.  Most data types can go through the generic function.
 	 */
 	switch (getBaseType(element_type ? element_type : arg->typoid))
 	{
@@ -2100,7 +2100,7 @@ PLyDict_FromTuple(PLyTypeInfo *info, HeapTuple tuple, TupleDesc desc)
 }
 
 /*
- * Convert a Python object to a PostgreSQL bool datum.	This can't go
+ * Convert a Python object to a PostgreSQL bool datum.  This can't go
  * through the generic conversion function, because Python attaches a
  * Boolean value to everything, more things than the PostgreSQL bool
  * type can parse.
@@ -3495,7 +3495,7 @@ PLy_exception_set_plural(PyObject *exc,
 
 /* Emit a PG error or notice, together with any available info about
  * the current Python error, previously set by PLy_exception_set().
- * This should be used to propagate Python errors into PG.	If fmt is
+ * This should be used to propagate Python errors into PG.  If fmt is
  * NULL, the Python error becomes the primary error message, otherwise
  * it becomes the detail.
  */
@@ -3678,7 +3678,7 @@ PLy_free(void *ptr)
 
 /*
  * Convert a Python unicode object to a Python string/bytes object in
- * PostgreSQL server encoding.	Reference ownership is passed to the
+ * PostgreSQL server encoding.  Reference ownership is passed to the
  * caller.
  */
 static PyObject *
@@ -3743,7 +3743,7 @@ PLyUnicode_Bytes(PyObject *unicode)
  * function.  The result is palloc'ed.
  *
  * Note that this function is disguised as PyString_AsString() when
- * using Python 3.	That function retuns a pointer into the internal
+ * using Python 3.  That function retuns a pointer into the internal
  * memory of the argument, which isn't exactly the interface of this
  * function.  But in either case you get a rather short-lived
  * reference that you ought to better leave alone.
@@ -3761,7 +3761,7 @@ PLyUnicode_AsString(PyObject *unicode)
 #if PY_MAJOR_VERSION >= 3
 /*
  * Convert a C string in the PostgreSQL server encoding to a Python
- * unicode object.	Reference ownership is passed to the caller.
+ * unicode object.  Reference ownership is passed to the caller.
  */
 static PyObject *
 PLyUnicode_FromString(const char *s)

@@ -57,8 +57,8 @@
  * single result from the user's viewpoint.  However, the rule rewriter
  * may expand the single source query to zero or many actual queries.)
  *
- * PORTAL_ONE_SELECT: the portal contains one single SELECT query.	We run
- * the Executor incrementally as results are demanded.	This strategy also
+ * PORTAL_ONE_SELECT: the portal contains one single SELECT query.  We run
+ * the Executor incrementally as results are demanded.  This strategy also
  * supports holdable cursors (the Executor results can be dumped into a
  * tuplestore for access after transaction completion).
  *

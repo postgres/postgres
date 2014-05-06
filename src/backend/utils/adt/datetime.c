@@ -352,7 +352,7 @@ j2date(int jd, int *year, int *month, int *day)
  * j2day - convert Julian date to day-of-week (0..6 == Sun..Sat)
  *
  * Note: various places use the locution j2day(date - 1) to produce a
- * result according to the convention 0..6 = Mon..Sun.	This is a bit of
+ * result according to the convention 0..6 = Mon..Sun.  This is a bit of
  * a crock, but will work as long as the computation here is just a modulo.
  */
 int
@@ -2469,7 +2469,7 @@ DecodeNumber(int flen, char *str, bool haveTextMonth, int fmask,
 
 			/*
 			 * Nothing so far; make a decision about what we think the input
-			 * is.	There used to be lots of heuristics here, but the
+			 * is.  There used to be lots of heuristics here, but the
 			 * consensus now is to be paranoid.  It *must* be either
 			 * YYYY-MM-DD (with a more-than-two-digit year field), or the
 			 * field order defined by DateOrder.
@@ -2502,9 +2502,9 @@ DecodeNumber(int flen, char *str, bool haveTextMonth, int fmask,
 			{
 				/*
 				 * We are at the first numeric field of a date that included a
-				 * textual month name.	We want to support the variants
+				 * textual month name.  We want to support the variants
 				 * MON-DD-YYYY, DD-MON-YYYY, and YYYY-MON-DD as unambiguous
-				 * inputs.	We will also accept MON-DD-YY or DD-MON-YY in
+				 * inputs.  We will also accept MON-DD-YY or DD-MON-YY in
 				 * either DMY or MDY modes, as well as YY-MON-DD in YMD mode.
 				 */
 				if (flen >= 3 || DateOrder == DATEORDER_YMD)
@@ -3312,7 +3312,7 @@ DecodeISO8601Interval(char *str,
 			return dterr;
 
 		/*
-		 * Note: we could step off the end of the string here.	Code below
+		 * Note: we could step off the end of the string here.  Code below
 		 * *must* exit the loop if unit == '\0'.
 		 */
 		unit = *str++;
@@ -4097,7 +4097,7 @@ EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 
 /*
  * We've been burnt by stupid errors in the ordering of the datetkn tables
- * once too often.	Arrange to check them during postmaster start.
+ * once too often.  Arrange to check them during postmaster start.
  */
 static bool
 CheckDateTokenTable(const char *tablename, const datetkn *base, int nel)

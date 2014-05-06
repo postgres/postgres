@@ -117,7 +117,7 @@ static void RoleMembershipCacheCallback(Datum arg, int cacheid, ItemPointer tupl
 /*
  * getid
  *		Consumes the first alphanumeric string (identifier) found in string
- *		's', ignoring any leading white space.	If it finds a double quote
+ *		's', ignoring any leading white space.  If it finds a double quote
  *		it returns the word inside the quotes.
  *
  * RETURNS:
@@ -223,7 +223,7 @@ putid(char *p, const char *s)
  *
  * RETURNS:
  *		the string position in 's' immediately following the ACL
- *		specification.	Also:
+ *		specification.  Also:
  *		- loads the structure pointed to by 'aip' with the appropriate
  *		  UID/GID, id type identifier and mode type values.
  */
@@ -937,7 +937,7 @@ aclupdate(const Acl *old_acl, const AclItem *mod_aip,
 	}
 
 	/*
-	 * Remove abandoned privileges (cascading revoke).	Currently we can only
+	 * Remove abandoned privileges (cascading revoke).  Currently we can only
 	 * handle this when the grantee is not PUBLIC.
 	 */
 	if ((old_goptions & ~new_goptions) != 0)
@@ -1003,7 +1003,7 @@ aclnewowner(const Acl *old_acl, Oid oldOwnerId, Oid newOwnerId)
 
 	/*
 	 * If the old ACL contained any references to the new owner, then we may
-	 * now have generated an ACL containing duplicate entries.	Find them and
+	 * now have generated an ACL containing duplicate entries.  Find them and
 	 * merge them so that there are not duplicates.  (This is relatively
 	 * expensive since we use a stupid O(N^2) algorithm, but it's unlikely to
 	 * be the normal case.)
@@ -1014,7 +1014,7 @@ aclnewowner(const Acl *old_acl, Oid oldOwnerId, Oid newOwnerId)
 	 * remove privilege-free entries, should there be any in the input.)  dst
 	 * is the next output slot, targ is the currently considered input slot
 	 * (always >= dst), and src scans entries to the right of targ looking for
-	 * duplicates.	Once an entry has been emitted to dst it is known
+	 * duplicates.  Once an entry has been emitted to dst it is known
 	 * duplicate-free and need not be considered anymore.
 	 */
 	if (newpresent)
@@ -2398,7 +2398,7 @@ column_privilege_check(Oid tableoid, AttrNumber attnum,
 	 * existence of the pg_class row before risking calling pg_class_aclcheck.
 	 * Note: it might seem there's a race condition against concurrent DROP,
 	 * but really it's safe because there will be no syscache flush between
-	 * here and there.	So if we see the row in the syscache, so will
+	 * here and there.  So if we see the row in the syscache, so will
 	 * pg_class_aclcheck.
 	 */
 	if (!SearchSysCacheExists1(RELOID, ObjectIdGetDatum(tableoid)))
@@ -4774,14 +4774,14 @@ count_one_bits(AclMode mask)
  * The grantor must always be either the object owner or some role that has
  * been explicitly granted grant options.  This ensures that all granted
  * privileges appear to flow from the object owner, and there are never
- * multiple "original sources" of a privilege.	Therefore, if the would-be
+ * multiple "original sources" of a privilege.  Therefore, if the would-be
  * grantor is a member of a role that has the needed grant options, we have
  * to do the grant as that role instead.
  *
  * It is possible that the would-be grantor is a member of several roles
  * that have different subsets of the desired grant options, but no one
  * role has 'em all.  In this case we pick a role with the largest number
- * of desired options.	Ties are broken in favor of closer ancestors.
+ * of desired options.  Ties are broken in favor of closer ancestors.
  *
  * roleId: the role attempting to do the GRANT/REVOKE
  * privileges: the privileges to be granted/revoked

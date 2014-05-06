@@ -514,7 +514,7 @@ pg_size_pretty(PG_FUNCTION_ARGS)
  * This is expected to be used in queries like
  *		SELECT pg_relation_filenode(oid) FROM pg_class;
  * That leads to a couple of choices.  We work from the pg_class row alone
- * rather than actually opening each relation, for efficiency.	We don't
+ * rather than actually opening each relation, for efficiency.  We don't
  * fail if we can't find the relation --- some rows might be visible in
  * the query's MVCC snapshot but already dead according to SnapshotNow.
  * (Note: we could avoid using the catcache, but there's little point

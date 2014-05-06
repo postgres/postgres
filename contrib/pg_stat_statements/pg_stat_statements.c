@@ -916,7 +916,7 @@ pgss_memsize(void)
  * caller must hold an exclusive lock on pgss->lock
  *
  * Note: despite needing exclusive lock, it's not an error for the target
- * entry to already exist.	This is because pgss_store releases and
+ * entry to already exist.  This is because pgss_store releases and
  * reacquires lock after failing to find a match; so someone else could
  * have made the entry while we waited to get exclusive lock.
  */

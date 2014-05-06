@@ -20,12 +20,12 @@
  *
  * The other categories, LC_MONETARY, LC_NUMERIC, and LC_TIME are also
  * settable at run-time.  However, we don't actually set those locale
- * categories permanently.	This would have bizarre effects like no
+ * categories permanently.  This would have bizarre effects like no
  * longer accepting standard floating-point literals in some locales.
  * Instead, we only set the locales briefly when needed, cache the
  * required information obtained from localeconv(), and set them back.
  * The cached information is only used by the formatting functions
- * (to_char, etc.) and the money type.	For the user, this should all be
+ * (to_char, etc.) and the money type.  For the user, this should all be
  * transparent.
  *
  * !!! NOW HEAR THIS !!!
@@ -39,7 +39,7 @@
  *				fail = true;
  *			setlocale(category, save);
  * DOES NOT WORK RELIABLY: on some platforms the second setlocale() call
- * will change the memory save is pointing at.	To do this sort of thing
+ * will change the memory save is pointing at.  To do this sort of thing
  * safely, you *must* pstrdup what setlocale returns the first time.
  *
  * FYI, The Open Group locale standard is defined here:

@@ -4,7 +4,7 @@
  *	  Routines to preprocess the parse tree target list
  *
  * This module takes care of altering the query targetlist as needed for
- * INSERT, UPDATE, and DELETE queries.	For INSERT and UPDATE queries,
+ * INSERT, UPDATE, and DELETE queries.  For INSERT and UPDATE queries,
  * the targetlist must contain an entry for each attribute of the target
  * relation in the correct order.  For both UPDATE and DELETE queries,
  * we need a junk targetlist entry holding the CTID attribute --- the
@@ -81,7 +81,7 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 	 * for "update" and "delete" queries, add ctid of the result relation into
 	 * the target list so that the ctid will propagate through execution and
 	 * ExecutePlan() will be able to identify the right tuple to replace or
-	 * delete.	This extra field is marked "junk" so that it is not stored
+	 * delete.  This extra field is marked "junk" so that it is not stored
 	 * back into the tuple.
 	 */
 	if (command_type == CMD_UPDATE || command_type == CMD_DELETE)
@@ -174,7 +174,7 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 	/*
 	 * If the query has a RETURNING list, add resjunk entries for any Vars
 	 * used in RETURNING that belong to other relations.  We need to do this
-	 * to make these Vars available for the RETURNING calculation.	Vars that
+	 * to make these Vars available for the RETURNING calculation.  Vars that
 	 * belong to the result rel don't need to be added, because they will be
 	 * made to refer to the actual heap tuple.
 	 */
@@ -284,9 +284,9 @@ expand_targetlist(List *tlist, int command_type,
 			 * When generating a NULL constant for a dropped column, we label
 			 * it INT4 (any other guaranteed-to-exist datatype would do as
 			 * well). We can't label it with the dropped column's datatype
-			 * since that might not exist anymore.	It does not really matter
+			 * since that might not exist anymore.  It does not really matter
 			 * what we claim the type is, since NULL is NULL --- its
-			 * representation is datatype-independent.	This could perhaps
+			 * representation is datatype-independent.  This could perhaps
 			 * confuse code comparing the finished plan to the target
 			 * relation, however.
 			 */
@@ -363,7 +363,7 @@ expand_targetlist(List *tlist, int command_type,
 	/*
 	 * The remaining tlist entries should be resjunk; append them all to the
 	 * end of the new tlist, making sure they have resnos higher than the last
-	 * real attribute.	(Note: although the rewriter already did such
+	 * real attribute.  (Note: although the rewriter already did such
 	 * renumbering, we have to do it again here in case we are doing an UPDATE
 	 * in a table with dropped columns, or an inheritance child table with
 	 * extra columns.)

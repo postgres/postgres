@@ -381,7 +381,7 @@ gseg_picksplit(GistEntryVector *entryvec,
 	rt_seg_size(datum_r, &size_r);
 
 	/*
-	 * Now split up the regions between the two seeds.	An important property
+	 * Now split up the regions between the two seeds.  An important property
 	 * of this split algorithm is that the split vector v has the indices of
 	 * items to be split in order in its left and right vectors.  We exploit
 	 * this property by doing a merge in the code that actually splits the
@@ -397,7 +397,7 @@ gseg_picksplit(GistEntryVector *entryvec,
 	{
 		/*
 		 * If we've already decided where to place this item, just put it on
-		 * the right list.	Otherwise, we need to figure out which page needs
+		 * the right list.  Otherwise, we need to figure out which page needs
 		 * the least enlargement in order to store the item.
 		 */
 

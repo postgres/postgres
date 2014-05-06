@@ -255,7 +255,7 @@ do { \
  *	DAYS_PER_MONTH is very imprecise.  The more accurate value is
  *	365.2425/12 = 30.436875, or '30 days 10:29:06'.  Right now we only
  *	return an integral number of days, but someday perhaps we should
- *	also return a 'time' value to be used as well.	ISO 8601 suggests
+ *	also return a 'time' value to be used as well.  ISO 8601 suggests
  *	30 days.
  */
 #define DAYS_PER_MONTH	30		/* assumes exactly 30 days per month */

@@ -552,9 +552,9 @@ pgarch_archiveXlog(char *xlog)
 	{
 		/*
 		 * If either the shell itself, or a called command, died on a signal,
-		 * abort the archiver.	We do this because system() ignores SIGINT and
+		 * abort the archiver.  We do this because system() ignores SIGINT and
 		 * SIGQUIT while waiting; so a signal is very likely something that
-		 * should have interrupted us too.	If we overreact it's no big deal,
+		 * should have interrupted us too.  If we overreact it's no big deal,
 		 * the postmaster will just start the archiver again.
 		 *
 		 * Per the Single Unix Spec, shells report exit status > 128 when a

@@ -92,7 +92,7 @@ typedef struct SysScanDescData *SysScanDesc;
  * blocking to see if a conflicting transaction commits.
  *
  * For deferrable unique constraints, UNIQUE_CHECK_PARTIAL is specified at
- * insertion time.	The index AM should test if the tuple is unique, but
+ * insertion time.  The index AM should test if the tuple is unique, but
  * should not throw error, block, or prevent the insertion if the tuple
  * appears not to be unique.  We'll recheck later when it is time for the
  * constraint to be enforced.  The AM must return true if the tuple is
@@ -101,7 +101,7 @@ typedef struct SysScanDescData *SysScanDesc;
  *
  * When it is time to recheck the deferred constraint, a pseudo-insertion
  * call is made with UNIQUE_CHECK_EXISTING.  The tuple is already in the
- * index in this case, so it should not be inserted again.	Rather, just
+ * index in this case, so it should not be inserted again.  Rather, just
  * check for conflicting live tuples (possibly blocking).
  */
 typedef enum IndexUniqueCheck

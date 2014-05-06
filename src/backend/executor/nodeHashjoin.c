@@ -108,7 +108,7 @@ ExecHashJoin(HashJoinState *node)
 		 * If the outer relation is completely empty, we can quit without
 		 * building the hash table.  However, for an inner join it is only a
 		 * win to check this when the outer relation's startup cost is less
-		 * than the projected cost of building the hash table.	Otherwise it's
+		 * than the projected cost of building the hash table.  Otherwise it's
 		 * best to build the hash table first and see if the inner relation is
 		 * empty.  (When it's an outer join, we should always make this check,
 		 * since we aren't going to be able to skip the join on the strength
@@ -116,7 +116,7 @@ ExecHashJoin(HashJoinState *node)
 		 *
 		 * If we are rescanning the join, we make use of information gained on
 		 * the previous scan: don't bother to try the prefetch if the previous
-		 * scan found the outer relation nonempty.	This is not 100% reliable
+		 * scan found the outer relation nonempty.  This is not 100% reliable
 		 * since with new parameters the outer relation might yield different
 		 * results, but it's a good heuristic.
 		 *
@@ -428,7 +428,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 	 * tuple slot of the Hash node (which is our inner plan).  we do this
 	 * because Hash nodes don't return tuples via ExecProcNode() -- instead
 	 * the hash join node uses ExecScanHashBucket() to get at the contents of
-	 * the hash table.	-cim 6/9/91
+	 * the hash table.  -cim 6/9/91
 	 */
 	{
 		HashState  *hashstate = (HashState *) innerPlanState(hjstate);
@@ -797,7 +797,7 @@ ExecHashJoinSaveTuple(MinimalTuple tuple, uint32 hashvalue,
 
 /*
  * ExecHashJoinGetSavedTuple
- *		read the next tuple from a batch file.	Return NULL if no more.
+ *		read the next tuple from a batch file.  Return NULL if no more.
  *
  * On success, *hashvalue is set to the tuple's hash value, and the tuple
  * itself is stored in the given slot.

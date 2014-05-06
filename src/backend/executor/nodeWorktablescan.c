@@ -84,7 +84,7 @@ ExecWorkTableScan(WorkTableScanState *node)
 {
 	/*
 	 * On the first call, find the ancestor RecursiveUnion's state via the
-	 * Param slot reserved for it.	(We can't do this during node init because
+	 * Param slot reserved for it.  (We can't do this during node init because
 	 * there are corner cases where we'll get the init call before the
 	 * RecursiveUnion does.)
 	 */

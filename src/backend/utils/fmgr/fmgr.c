@@ -91,7 +91,7 @@ static Datum fmgr_security_definer(PG_FUNCTION_ARGS);
 
 
 /*
- * Lookup routines for builtin-function table.	We can search by either Oid
+ * Lookup routines for builtin-function table.  We can search by either Oid
  * or name, but search by Oid is much faster.
  */
 
@@ -574,7 +574,7 @@ clear_external_function_hash(void *filehandle)
  * Copy an FmgrInfo struct
  *
  * This is inherently somewhat bogus since we can't reliably duplicate
- * language-dependent subsidiary info.	We cheat by zeroing fn_extra,
+ * language-dependent subsidiary info.  We cheat by zeroing fn_extra,
  * instead, meaning that subsidiary info will have to be recomputed.
  */
 void
@@ -854,7 +854,7 @@ fmgr_oldstyle(PG_FUNCTION_ARGS)
 
 
 /*
- * Support for security-definer and proconfig-using functions.	We support
+ * Support for security-definer and proconfig-using functions.  We support
  * both of these features using the same call handler, because they are
  * often used together and it would be inefficient (as well as notationally
  * messy) to have two levels of call handler involved.
@@ -869,11 +869,11 @@ struct fmgr_security_definer_cache
 /*
  * Function handler for security-definer/proconfig functions.  We extract the
  * OID of the actual function and do a fmgr lookup again.  Then we fetch the
- * pg_proc row and copy the owner ID and proconfig fields.	(All this info
+ * pg_proc row and copy the owner ID and proconfig fields.  (All this info
  * is cached for the duration of the current query.)  To execute a call,
  * we temporarily replace the flinfo with the cached/looked-up one, while
  * keeping the outer fcinfo (which contains all the actual arguments, etc.)
- * intact.	This is not re-entrant, but then the fcinfo itself can't be used
+ * intact.  This is not re-entrant, but then the fcinfo itself can't be used
  * re-entrantly anyway.
  */
 static Datum
@@ -949,7 +949,7 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 
 	/*
 	 * We don't need to restore GUC or userid settings on error, because the
-	 * ensuing xact or subxact abort will do that.	The PG_TRY block is only
+	 * ensuing xact or subxact abort will do that.  The PG_TRY block is only
 	 * needed to clean up the flinfo link.
 	 */
 	save_flinfo = fcinfo->flinfo;
@@ -998,7 +998,7 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 /*
  * These are for invocation of a specifically named function with a
  * directly-computed parameter list.  Note that neither arguments nor result
- * are allowed to be NULL.	Also, the function cannot be one that needs to
+ * are allowed to be NULL.  Also, the function cannot be one that needs to
  * look at FmgrInfo, since there won't be any.
  */
 Datum
@@ -1543,8 +1543,8 @@ FunctionCall9(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 /*
  * These are for invocation of a function identified by OID with a
  * directly-computed parameter list.  Note that neither arguments nor result
- * are allowed to be NULL.	These are essentially fmgr_info() followed
- * by FunctionCallN().	If the same function is to be invoked repeatedly,
+ * are allowed to be NULL.  These are essentially fmgr_info() followed
+ * by FunctionCallN().  If the same function is to be invoked repeatedly,
  * do the fmgr_info() once and then use FunctionCallN().
  */
 Datum
@@ -1853,7 +1853,7 @@ OidFunctionCall9(Oid functionId, Datum arg1, Datum arg2,
  *
  * One important difference from the bare function call is that we will
  * push any active SPI context, allowing SPI-using I/O functions to be
- * called from other SPI functions without extra notation.	This is a hack,
+ * called from other SPI functions without extra notation.  This is a hack,
  * but the alternative of expecting all SPI functions to do SPI_push/SPI_pop
  * around I/O calls seems worse.
  */
