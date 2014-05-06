@@ -11667,6 +11667,12 @@ esac
 esac
 
   case " $LIBOBJS " in
+  *" system.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS system.$ac_objext"
+ ;;
+esac
+
+  case " $LIBOBJS " in
   *" win32env.$ac_objext "* ) ;;
   *) LIBOBJS="$LIBOBJS win32env.$ac_objext"
  ;;
