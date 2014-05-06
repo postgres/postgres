@@ -374,7 +374,7 @@ CheckServerVersionForStreaming(PGconn *conn)
 		fprintf(stderr, _("%s: incompatible server version %s; streaming is only supported with server version %s\n"),
 				progname,
 				serverver ? serverver : "'unknown'",
-				"9.3");
+				"9.3 or 9.4");
 		return false;
 	}
 	return true;
