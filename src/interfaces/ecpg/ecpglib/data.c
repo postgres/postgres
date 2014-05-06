@@ -455,6 +455,14 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					{
 						char	   *str = (char *) (var + offset * act_tuple);
 
+						/*
+						 * If varcharsize is unknown and the offset is that of
+						 * char *, then this variable represents the array of
+						 * character pointers. So, use extra indirection.
+						 */
+						if (varcharsize == 0 && offset == sizeof(char *))
+							str = *(char **)str;
+
 						if (varcharsize == 0 || varcharsize > size)
 						{
 							strncpy(str, pval, size + 1);
