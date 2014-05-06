@@ -2361,8 +2361,8 @@
        </para>
 
        <para>
-        This allows programs to reuse the query text already retrieved
-        by referencing <structname>queryid</>.
+        This allows monitoring tools to only fetch query texts for newly
+        observe entries, as determined by <structname>queryid</>.
        </para>
       </listitem>
 
