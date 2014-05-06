@@ -566,6 +566,10 @@ dsm_attach(dsm_handle h)
 		if (dsm_control->item[i].refcnt == 0)
 			continue;
 
+		/* If the handle doesn't match, it's not the slot we want. */
+		if (dsm_control->item[i].handle != seg->handle)
+			continue;
+
 		/*
 		 * If the reference count is 1, the slot is still in use, but the
 		 * segment is in the process of going away.  Treat that as if we
@@ -574,13 +578,10 @@ dsm_attach(dsm_handle h)
 		if (dsm_control->item[i].refcnt == 1)
 			break;
 
-		/* Otherwise, if the descriptor matches, we've found a match. */
-		if (dsm_control->item[i].handle == seg->handle)
-		{
-			dsm_control->item[i].refcnt++;
-			seg->control_slot = i;
-			break;
-		}
+		/* Otherwise we've found a match. */
+		dsm_control->item[i].refcnt++;
+		seg->control_slot = i;
+		break;
 	}
 	LWLockRelease(DynamicSharedMemoryControlLock);
 
