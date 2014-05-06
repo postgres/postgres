@@ -367,14 +367,24 @@ CheckServerVersionForStreaming(PGconn *conn)
 	minServerMajor = 903;
 	maxServerMajor = PG_VERSION_NUM / 100;
 	serverMajor = PQserverVersion(conn) / 100;
-	if (serverMajor < minServerMajor || serverMajor > maxServerMajor)
+	if (serverMajor < minServerMajor)
 	{
 		const char *serverver = PQparameterStatus(conn, "server_version");
 
-		fprintf(stderr, _("%s: incompatible server version %s; streaming is only supported with server version %s\n"),
+		fprintf(stderr, _("%s: incompatible server version %s; client does not support streaming from server versions older than %s\n"),
 				progname,
 				serverver ? serverver : "'unknown'",
-				"9.3 or 9.4");
+				"9.3");
+		return false;
+	}
+	else if (serverMajor > maxServerMajor)
+	{
+		const char *serverver = PQparameterStatus(conn, "server_version");
+
+		fprintf(stderr, _("%s: incompatible server version %s; client does not support streaming from server versions newer than %s\n"),
+				progname,
+				serverver ? serverver : "'unknown'",
+				PG_VERSION);
 		return false;
 	}
 	return true;
