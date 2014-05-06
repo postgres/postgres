@@ -558,15 +558,15 @@ _tarReadRaw(ArchiveHandle *AH, void *buf, size_t len, TAR_MEMBER *th, FILE *fh)
 			if (th->zFH)
 			{
 				res = GZREAD(&((char *) buf)[used], 1, len, th->zFH);
-				if (res != len && !GZEOF(fh))
+				if (res != len && !GZEOF(th->zFH))
 					exit_horribly(modulename,
 					"could not read from input file: %s\n", strerror(errno));
 			}
 			else
 			{
 				res = fread(&((char *) buf)[used], 1, len, th->nFH);
-				if (res != len && !feof(fh))
-					READ_ERROR_EXIT(fh);
+				if (res != len && !feof(th->nFH))
+					READ_ERROR_EXIT(th->nFH);
 			}
 		}
 		else
