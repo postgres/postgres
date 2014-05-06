@@ -76,7 +76,7 @@ LargeObjectCreate(Oid loid)
 }
 
 /*
- * Drop a large object having the given LO identifier.	Both the data pages
+ * Drop a large object having the given LO identifier.  Both the data pages
  * and metadata must be dropped.
  */
 void

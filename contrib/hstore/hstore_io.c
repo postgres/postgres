@@ -1245,7 +1245,7 @@ hstore_to_json_loose(PG_FUNCTION_ARGS)
 				dst;
 
 	if (count == 0)
-		PG_RETURN_TEXT_P(cstring_to_text_with_len("{}",2));
+		PG_RETURN_TEXT_P(cstring_to_text_with_len("{}", 2));
 
 	initStringInfo(&tmp);
 	initStringInfo(&dst);
@@ -1335,7 +1335,7 @@ hstore_to_json(PG_FUNCTION_ARGS)
 				dst;
 
 	if (count == 0)
-		PG_RETURN_TEXT_P(cstring_to_text_with_len("{}",2));
+		PG_RETURN_TEXT_P(cstring_to_text_with_len("{}", 2));
 
 	initStringInfo(&tmp);
 	initStringInfo(&dst);
@@ -1381,7 +1381,8 @@ hstore_to_jsonb(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < count; i++)
 	{
-		JsonbValue key, val;
+		JsonbValue	key,
+					val;
 
 		key.estSize = sizeof(JEntry);
 		key.type = jbvString;
@@ -1424,7 +1425,7 @@ hstore_to_jsonb_loose(PG_FUNCTION_ARGS)
 	JsonbParseState *state = NULL;
 	JsonbValue *res;
 	StringInfoData tmp;
-	bool        is_number;
+	bool		is_number;
 
 	initStringInfo(&tmp);
 
@@ -1432,7 +1433,8 @@ hstore_to_jsonb_loose(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < count; i++)
 	{
-		JsonbValue key, val;
+		JsonbValue	key,
+					val;
 
 		key.estSize = sizeof(JEntry);
 		key.type = jbvString;
@@ -1507,7 +1509,8 @@ hstore_to_jsonb_loose(PG_FUNCTION_ARGS)
 			{
 				val.type = jbvNumeric;
 				val.val.numeric = DatumGetNumeric(
-					DirectFunctionCall3(numeric_in, CStringGetDatum(tmp.data), 0, -1));
+												  DirectFunctionCall3(numeric_in, CStringGetDatum(tmp.data), 0, -1));
+
 				val.estSize += VARSIZE_ANY(val.val.numeric) +sizeof(JEntry);
 			}
 			else

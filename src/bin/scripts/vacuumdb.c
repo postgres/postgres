@@ -16,7 +16,7 @@
 
 
 static void vacuum_one_database(const char *dbname, bool full, bool verbose,
-					bool and_analyze, bool analyze_only, bool analyze_in_stages, bool freeze,
+	bool and_analyze, bool analyze_only, bool analyze_in_stages, bool freeze,
 					const char *table, const char *host, const char *port,
 					const char *username, enum trivalue prompt_password,
 					const char *progname, bool echo);
@@ -254,7 +254,7 @@ run_vacuum_command(PGconn *conn, const char *sql, bool echo, const char *dbname,
 
 static void
 vacuum_one_database(const char *dbname, bool full, bool verbose, bool and_analyze,
-					bool analyze_only, bool analyze_in_stages, bool freeze, const char *table,
+   bool analyze_only, bool analyze_in_stages, bool freeze, const char *table,
 					const char *host, const char *port,
 					const char *username, enum trivalue prompt_password,
 					const char *progname, bool echo)
@@ -334,7 +334,7 @@ vacuum_one_database(const char *dbname, bool full, bool verbose, bool and_analyz
 			gettext_noop("Generating medium optimizer statistics (10 targets)"),
 			gettext_noop("Generating default (full) optimizer statistics")
 		};
-		int i;
+		int			i;
 
 		for (i = 0; i < 3; i++)
 		{
@@ -353,7 +353,7 @@ vacuum_one_database(const char *dbname, bool full, bool verbose, bool and_analyz
 
 static void
 vacuum_all_databases(bool full, bool verbose, bool and_analyze, bool analyze_only,
-					 bool analyze_in_stages, bool freeze, const char *maintenance_db,
+			 bool analyze_in_stages, bool freeze, const char *maintenance_db,
 					 const char *host, const char *port,
 					 const char *username, enum trivalue prompt_password,
 					 const char *progname, bool echo, bool quiet)
@@ -406,7 +406,7 @@ help(const char *progname)
 	printf(_("  -z, --analyze                   update optimizer statistics\n"));
 	printf(_("  -Z, --analyze-only              only update optimizer statistics\n"));
 	printf(_("      --analyze-in-stages         only update optimizer statistics, in multiple\n"
-			 "                                  stages for faster results\n"));
+		   "                                  stages for faster results\n"));
 	printf(_("  -?, --help                      show this help, then exit\n"));
 	printf(_("\nConnection options:\n"));
 	printf(_("  -h, --host=HOSTNAME       database server host or socket directory\n"));

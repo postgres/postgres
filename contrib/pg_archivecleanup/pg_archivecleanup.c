@@ -113,7 +113,7 @@ CleanupPriorWALFiles(void)
 
 			/*
 			 * We ignore the timeline part of the XLOG segment identifiers in
-			 * deciding whether a segment is still needed.	This ensures that
+			 * deciding whether a segment is still needed.  This ensures that
 			 * we won't prematurely remove a segment from a parent timeline.
 			 * We could probably be a little more proactive about removing
 			 * segments of non-parent timelines, but that would be a whole lot
@@ -140,7 +140,7 @@ CleanupPriorWALFiles(void)
 				{
 					/*
 					 * Prints the name of the file to be removed and skips the
-					 * actual removal.	The regular printout is so that the
+					 * actual removal.  The regular printout is so that the
 					 * user can pipe the output into some other program.
 					 */
 					printf("%s\n", WALFilePath);

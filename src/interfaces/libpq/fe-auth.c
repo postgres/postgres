@@ -742,9 +742,9 @@ pg_fe_getauthname(void)
 	pglock_thread();
 
 	/*
-	 *	We document PQconndefaults() to return NULL for a memory allocation
-	 *	failure.  We don't have an API to return a user name lookup failure,
-	 *	so we just assume it always succeeds.
+	 * We document PQconndefaults() to return NULL for a memory allocation
+	 * failure.  We don't have an API to return a user name lookup failure, so
+	 * we just assume it always succeeds.
 	 */
 #ifdef WIN32
 	if (GetUserName(username, &namesize))
@@ -767,7 +767,7 @@ pg_fe_getauthname(void)
  *
  * This is intended to be used by client applications that wish to send
  * commands like ALTER USER joe PASSWORD 'pwd'.  The password need not
- * be sent in cleartext if it is encrypted on the client side.	This is
+ * be sent in cleartext if it is encrypted on the client side.  This is
  * good because it ensures the cleartext password won't end up in logs,
  * pg_stat displays, etc.  We export the function so that clients won't
  * be dependent on low-level details like whether the enceyption is MD5

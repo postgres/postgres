@@ -4,7 +4,7 @@
  *		Track statement execution times across a whole database cluster.
  *
  * Execution costs are totalled for each distinct source query, and kept in
- * a shared hashtable.	(We track only as many distinct queries as will fit
+ * a shared hashtable.  (We track only as many distinct queries as will fit
  * in the designated amount of shared memory.)
  *
  * As of Postgres 9.2, this module normalizes query entries.  Normalization
@@ -15,7 +15,7 @@
  *
  * Normalization is implemented by fingerprinting queries, selectively
  * serializing those fields of each query tree's nodes that are judged to be
- * essential to the query.	This is referred to as a query jumble.	This is
+ * essential to the query.  This is referred to as a query jumble.  This is
  * distinct from a regular serialization in that various extraneous
  * information is ignored as irrelevant or not essential to the query, such
  * as the collations of Vars and, most notably, the values of constants.
@@ -615,7 +615,7 @@ pgss_shmem_startup(void)
 	 * because we remove that file on startup; it acts inversely to
 	 * PGSS_DUMP_FILE, in that it is only supposed to be around when the
 	 * server is running, whereas PGSS_DUMP_FILE is only supposed to be around
-	 * when the server is not running.	Leaving the file creates no danger of
+	 * when the server is not running.  Leaving the file creates no danger of
 	 * a newly restored database having a spurious record of execution costs,
 	 * which is what we're really concerned about here.
 	 */
@@ -702,7 +702,7 @@ pgss_shmem_shutdown(int code, Datum arg)
 
 	/*
 	 * When serializing to disk, we store query texts immediately after their
-	 * entry data.	Any orphaned query texts are thereby excluded.
+	 * entry data.  Any orphaned query texts are thereby excluded.
 	 */
 	hash_seq_init(&hash_seq, pgss_hash);
 	while ((entry = hash_seq_search(&hash_seq)) != NULL)
@@ -1363,9 +1363,9 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 
 	/*
 	 * We'd like to load the query text file (if needed) while not holding any
-	 * lock on pgss->lock.	In the worst case we'll have to do this again
+	 * lock on pgss->lock.  In the worst case we'll have to do this again
 	 * after we have the lock, but it's unlikely enough to make this a win
-	 * despite occasional duplicated work.	We need to reload if anybody
+	 * despite occasional duplicated work.  We need to reload if anybody
 	 * writes to the file (either a retail qtext_store(), or a garbage
 	 * collection) between this point and where we've gotten shared lock.  If
 	 * a qtext_store is actually in progress when we look, we might as well
@@ -1572,7 +1572,7 @@ pgss_memsize(void)
  * would be difficult to demonstrate this even under artificial conditions.)
  *
  * Note: despite needing exclusive lock, it's not an error for the target
- * entry to already exist.	This is because pgss_store releases and
+ * entry to already exist.  This is because pgss_store releases and
  * reacquires lock after failing to find a match; so someone else could
  * have made the entry while we waited to get exclusive lock.
  */
@@ -1692,13 +1692,13 @@ entry_dealloc(void)
  * have it handy, so we require them to pass it too.
  *
  * If successful, returns true, and stores the new entry's offset in the file
- * into *query_offset.	Also, if gc_count isn't NULL, *gc_count is set to the
+ * into *query_offset.  Also, if gc_count isn't NULL, *gc_count is set to the
  * number of garbage collections that have occurred so far.
  *
  * On failure, returns false.
  *
  * At least a shared lock on pgss->lock must be held by the caller, so as
- * to prevent a concurrent garbage collection.	Share-lock-holding callers
+ * to prevent a concurrent garbage collection.  Share-lock-holding callers
  * should pass a gc_count pointer to obtain the number of garbage collections,
  * so that they can recheck the count after obtaining exclusive lock to
  * detect whether a garbage collection occurred (and removed this entry).
@@ -1940,7 +1940,7 @@ gc_qtexts(void)
 	/*
 	 * When called from pgss_store, some other session might have proceeded
 	 * with garbage collection in the no-lock-held interim of lock strength
-	 * escalation.	Check once more that this is actually necessary.
+	 * escalation.  Check once more that this is actually necessary.
 	 */
 	if (!need_gc_qtexts())
 		return;
@@ -2005,7 +2005,7 @@ gc_qtexts(void)
 	}
 
 	/*
-	 * Truncate away any now-unused space.	If this fails for some odd reason,
+	 * Truncate away any now-unused space.  If this fails for some odd reason,
 	 * we log it, but there's no need to fail.
 	 */
 	if (ftruncate(fileno(qfile), extent) != 0)
@@ -2258,7 +2258,7 @@ JumbleRangeTable(pgssJumbleState *jstate, List *rtable)
  *
  * Note: the reason we don't simply use expression_tree_walker() is that the
  * point of that function is to support tree walkers that don't care about
- * most tree node types, but here we care about all types.	We should complain
+ * most tree node types, but here we care about all types.  We should complain
  * about any unrecognized node type.
  */
 static void
@@ -2772,7 +2772,7 @@ generate_normalized_query(pgssJumbleState *jstate, const char *query,
  * a problem.
  *
  * Duplicate constant pointers are possible, and will have their lengths
- * marked as '-1', so that they are later ignored.	(Actually, we assume the
+ * marked as '-1', so that they are later ignored.  (Actually, we assume the
  * lengths were initialized as -1 to start with, and don't change them here.)
  *
  * N.B. There is an assumption that a '-' character at a Const location begins
@@ -2841,7 +2841,7 @@ fill_in_constant_lengths(pgssJumbleState *jstate, const char *query)
 					 * adjustment of location to that of the leading '-'
 					 * operator in the event of a negative constant.  It is
 					 * also useful for our purposes to start from the minus
-					 * symbol.	In this way, queries like "select * from foo
+					 * symbol.  In this way, queries like "select * from foo
 					 * where bar = 1" and "select * from foo where bar = -2"
 					 * will have identical normalized query strings.
 					 */

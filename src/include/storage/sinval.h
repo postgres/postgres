@@ -34,8 +34,8 @@
  * updates and deletions in system catalogs (see CacheInvalidateHeapTuple).
  * An update can generate two inval events, one for the old tuple and one for
  * the new, but this is reduced to one event if the tuple's hash key doesn't
- * change.	Note that the inval events themselves don't actually say whether
- * the tuple is being inserted or deleted.	Also, since we transmit only a
+ * change.  Note that the inval events themselves don't actually say whether
+ * the tuple is being inserted or deleted.  Also, since we transmit only a
  * hash key, there is a small risk of unnecessary invalidations due to chance
  * matches of hash keys.
  *

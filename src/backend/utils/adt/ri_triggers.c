@@ -698,7 +698,7 @@ ri_restrict_del(TriggerData *trigdata, bool is_no_action)
 
 			/*
 			 * If another PK row now exists providing the old key values, we
-			 * should not do anything.	However, this check should only be
+			 * should not do anything.  However, this check should only be
 			 * made in the NO ACTION case; in RESTRICT cases we don't wish to
 			 * allow another row to be substituted.
 			 */
@@ -922,7 +922,7 @@ ri_restrict_upd(TriggerData *trigdata, bool is_no_action)
 
 			/*
 			 * If another PK row now exists providing the old key values, we
-			 * should not do anything.	However, this check should only be
+			 * should not do anything.  However, this check should only be
 			 * made in the NO ACTION case; in RESTRICT cases we don't wish to
 			 * allow another row to be substituted.
 			 */
@@ -1850,7 +1850,7 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 			 * believe no check is necessary.  So we need to do another lookup
 			 * now and in case a reference still exists, abort the operation.
 			 * That is already implemented in the NO ACTION trigger, so just
-			 * run it.	(This recheck is only needed in the SET DEFAULT case,
+			 * run it.  (This recheck is only needed in the SET DEFAULT case,
 			 * since CASCADE would remove such rows, while SET NULL is certain
 			 * to result in rows that satisfy the FK constraint.)
 			 */
@@ -2041,7 +2041,7 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 			 * believe no check is necessary.  So we need to do another lookup
 			 * now and in case a reference still exists, abort the operation.
 			 * That is already implemented in the NO ACTION trigger, so just
-			 * run it.	(This recheck is only needed in the SET DEFAULT case,
+			 * run it.  (This recheck is only needed in the SET DEFAULT case,
 			 * since CASCADE must change the FK key values, while SET NULL is
 			 * certain to result in rows that satisfy the FK constraint.)
 			 */
@@ -2397,7 +2397,7 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 	 * Temporarily increase work_mem so that the check query can be executed
 	 * more efficiently.  It seems okay to do this because the query is simple
 	 * enough to not use a multiple of work_mem, and one typically would not
-	 * have many large foreign-key validations happening concurrently.	So
+	 * have many large foreign-key validations happening concurrently.  So
 	 * this seems to meet the criteria for being considered a "maintenance"
 	 * operation, and accordingly we use maintenance_work_mem.
 	 *
@@ -2451,7 +2451,7 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 
 		/*
 		 * The columns to look at in the result tuple are 1..N, not whatever
-		 * they are in the fk_rel.	Hack up riinfo so that the subroutines
+		 * they are in the fk_rel.  Hack up riinfo so that the subroutines
 		 * called here will behave properly.
 		 *
 		 * In addition to this, we have to pass the correct tupdesc to
@@ -3180,7 +3180,7 @@ ri_ReportViolation(const RI_ConstraintInfo *riinfo,
 				 errhint("This is most likely due to a rule having rewritten the query.")));
 
 	/*
-	 * Determine which relation to complain about.	If tupdesc wasn't passed
+	 * Determine which relation to complain about.  If tupdesc wasn't passed
 	 * by caller, assume the violator tuple came from there.
 	 */
 	onfk = (queryno == RI_PLAN_CHECK_LOOKUPPK);

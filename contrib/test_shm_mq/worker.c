@@ -30,8 +30,8 @@
 
 static void handle_sigterm(SIGNAL_ARGS);
 static void attach_to_queues(dsm_segment *seg, shm_toc *toc,
-							 int myworkernumber, shm_mq_handle **inqhp,
-							 shm_mq_handle **outqhp);
+				 int myworkernumber, shm_mq_handle **inqhp,
+				 shm_mq_handle **outqhp);
 static void copy_messages(shm_mq_handle *inqh, shm_mq_handle *outqh);
 
 /*
@@ -48,7 +48,7 @@ void
 test_shm_mq_main(Datum main_arg)
 {
 	dsm_segment *seg;
-	shm_toc	   *toc;
+	shm_toc    *toc;
 	shm_mq_handle *inqh;
 	shm_mq_handle *outqh;
 	volatile test_shm_mq_header *hdr;
@@ -58,12 +58,12 @@ test_shm_mq_main(Datum main_arg)
 	/*
 	 * Establish signal handlers.
 	 *
-	 * We want CHECK_FOR_INTERRUPTS() to kill off this worker process just
-	 * as it would a normal user backend.  To make that happen, we establish
-	 * a signal handler that is a stripped-down version of die().  We don't
-	 * have any equivalent of the backend's command-read loop, where interrupts
-	 * can be processed immediately, so make sure ImmediateInterruptOK is
-	 * turned off.
+	 * We want CHECK_FOR_INTERRUPTS() to kill off this worker process just as
+	 * it would a normal user backend.  To make that happen, we establish a
+	 * signal handler that is a stripped-down version of die().  We don't have
+	 * any equivalent of the backend's command-read loop, where interrupts can
+	 * be processed immediately, so make sure ImmediateInterruptOK is turned
+	 * off.
 	 */
 	pqsignal(SIGTERM, handle_sigterm);
 	ImmediateInterruptOK = false;
@@ -76,8 +76,8 @@ test_shm_mq_main(Datum main_arg)
 	 * memory segment to which we must attach for further instructions.  In
 	 * order to attach to dynamic shared memory, we need a resource owner.
 	 * Once we've mapped the segment in our address space, attach to the table
-	 * of contents so we can locate the various data structures we'll need
-	 * to find within the segment.
+	 * of contents so we can locate the various data structures we'll need to
+	 * find within the segment.
 	 */
 	CurrentResourceOwner = ResourceOwnerCreate(NULL, "test_shm_mq worker");
 	seg = dsm_attach(DatumGetInt32(main_arg));
@@ -89,7 +89,7 @@ test_shm_mq_main(Datum main_arg)
 	if (toc == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("bad magic number in dynamic shared memory segment")));
+			   errmsg("bad magic number in dynamic shared memory segment")));
 
 	/*
 	 * Acquire a worker number.
@@ -114,8 +114,8 @@ test_shm_mq_main(Datum main_arg)
 	attach_to_queues(seg, toc, myworkernumber, &inqh, &outqh);
 
 	/*
-	 * Indicate that we're fully initialized and ready to begin the main
-	 * part of the parallel operation.
+	 * Indicate that we're fully initialized and ready to begin the main part
+	 * of the parallel operation.
 	 *
 	 * Once we signal that we're ready, the user backend is entitled to assume
 	 * that our on_dsm_detach callbacks will fire before we disconnect from

@@ -40,8 +40,8 @@
 typedef struct TablespaceListCell
 {
 	struct TablespaceListCell *next;
-	char old_dir[MAXPGPATH];
-	char new_dir[MAXPGPATH];
+	char		old_dir[MAXPGPATH];
+	char		new_dir[MAXPGPATH];
 } TablespaceListCell;
 
 typedef struct TablespaceList
@@ -54,15 +54,15 @@ typedef struct TablespaceList
 static char *basedir = NULL;
 static TablespaceList tablespace_dirs = {NULL, NULL};
 static char *xlog_dir = "";
-static char	format = 'p';		/* p(lain)/t(ar) */
+static char format = 'p';		/* p(lain)/t(ar) */
 static char *label = "pg_basebackup base backup";
-static bool	showprogress = false;
-static int verbose = 0;
+static bool showprogress = false;
+static int	verbose = 0;
 static int	compresslevel = 0;
-static bool	includewal = false;
-static bool	streamwal = false;
-static bool	fastcheckpoint = false;
-static bool	writerecoveryconf = false;
+static bool includewal = false;
+static bool streamwal = false;
+static bool fastcheckpoint = false;
+static bool writerecoveryconf = false;
 static int	standby_message_timeout = 10 * 1000;		/* 10 sec = default */
 static pg_time_t last_progress_report = 0;
 static int32 maxrate = 0;		/* no limit by default */
@@ -113,18 +113,20 @@ static void update_tablespace_symlink(Oid oid, const char *old_dir);
 static void tablespace_list_append(const char *arg);
 
 
-static void disconnect_and_exit(int code)
+static void
+disconnect_and_exit(int code)
 {
 	if (conn != NULL)
 		PQfinish(conn);
 
 #ifndef WIN32
+
 	/*
-	 * On windows, our background thread dies along with the process.
-	 * But on Unix, if we have started a subprocess, we want to kill
-	 * it off so it doesn't remain running trying to stream data.
+	 * On windows, our background thread dies along with the process. But on
+	 * Unix, if we have started a subprocess, we want to kill it off so it
+	 * doesn't remain running trying to stream data.
 	 */
-	if (bgchild> 0)
+	if (bgchild > 0)
 		kill(bgchild, SIGTERM);
 #endif
 
@@ -140,21 +142,21 @@ static void
 tablespace_list_append(const char *arg)
 {
 	TablespaceListCell *cell = (TablespaceListCell *) pg_malloc0(sizeof(TablespaceListCell));
-	char		*dst;
-	char		*dst_ptr;
-	const char	*arg_ptr;
+	char	   *dst;
+	char	   *dst_ptr;
+	const char *arg_ptr;
 
 	dst_ptr = dst = cell->old_dir;
 	for (arg_ptr = arg; *arg_ptr; arg_ptr++)
 	{
 		if (dst_ptr - dst >= MAXPGPATH)
 		{
-			fprintf(stderr, _("%s: directory name too long\n"),	progname);
+			fprintf(stderr, _("%s: directory name too long\n"), progname);
 			exit(1);
 		}
 
 		if (*arg_ptr == '\\' && *(arg_ptr + 1) == '=')
-			;  /* skip backslash escaping = */
+			;					/* skip backslash escaping = */
 		else if (*arg_ptr == '=' && (arg_ptr == arg || *(arg_ptr - 1) != '\\'))
 		{
 			if (*cell->new_dir)
@@ -177,10 +179,12 @@ tablespace_list_append(const char *arg)
 		exit(1);
 	}
 
-	/* This check isn't absolutely necessary.  But all tablespaces are created
+	/*
+	 * This check isn't absolutely necessary.  But all tablespaces are created
 	 * with absolute directories, so specifying a non-absolute path here would
 	 * just never match, possibly confusing users.  It's also good to be
-	 * consistent with the new_dir check. */
+	 * consistent with the new_dir check.
+	 */
 	if (!is_absolute_path(cell->old_dir))
 	{
 		fprintf(stderr, _("%s: old directory not absolute in tablespace mapping: %s\n"),
@@ -232,7 +236,7 @@ usage(void)
 	printf(_("  -R, --write-recovery-conf\n"
 			 "                         write recovery.conf after backup\n"));
 	printf(_("  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
-			 "                         relocate tablespace in OLDDIR to NEWDIR\n"));
+	  "                         relocate tablespace in OLDDIR to NEWDIR\n"));
 	printf(_("  -x, --xlog             include required WAL files in backup (fetch mode)\n"));
 	printf(_("  -X, --xlog-method=fetch|stream\n"
 			 "                         include required WAL files with specified method\n"));
@@ -296,7 +300,7 @@ reached_end_position(XLogRecPtr segendpos, uint32 timeline,
 						lo;
 
 			MemSet(xlogend, 0, sizeof(xlogend));
-			r = read(bgpipe[0], xlogend, sizeof(xlogend)-1);
+			r = read(bgpipe[0], xlogend, sizeof(xlogend) - 1);
 			if (r < 0)
 			{
 				fprintf(stderr, _("%s: could not read from ready pipe: %s\n"),
@@ -536,7 +540,7 @@ progress_report(int tablespacenum, const char *filename, bool force)
 
 	now = time(NULL);
 	if (now == last_progress_report && !force)
-		return; /* Max once per second */
+		return;					/* Max once per second */
 
 	last_progress_report = now;
 	percent = totalsize ? (int) ((totaldone / 1024) * 100 / totalsize) : 0;
@@ -614,7 +618,7 @@ parse_max_rate(char *src)
 {
 	double		result;
 	char	   *after_num;
-	char	*suffix = NULL;
+	char	   *suffix = NULL;
 
 	errno = 0;
 	result = strtod(src, &after_num);
@@ -644,8 +648,8 @@ parse_max_rate(char *src)
 	}
 
 	/*
-	 * Evaluate suffix, after skipping over possible whitespace.
-	 * Lack of suffix means kilobytes.
+	 * Evaluate suffix, after skipping over possible whitespace. Lack of
+	 * suffix means kilobytes.
 	 */
 	while (*after_num != '\0' && isspace((unsigned char) *after_num))
 		after_num++;
@@ -681,8 +685,8 @@ parse_max_rate(char *src)
 	if ((uint64) result != (uint64) ((uint32) result))
 	{
 		fprintf(stderr,
-			_("%s: transfer rate \"%s\" exceeds integer range\n"),
-			progname, src);
+				_("%s: transfer rate \"%s\" exceeds integer range\n"),
+				progname, src);
 		exit(1);
 	}
 
@@ -1114,7 +1118,7 @@ update_tablespace_symlink(Oid oid, const char *old_dir)
 
 	if (strcmp(old_dir, new_dir) != 0)
 	{
-		char *linkloc = psprintf("%s/pg_tblspc/%d", basedir, oid);
+		char	   *linkloc = psprintf("%s/pg_tblspc/%d", basedir, oid);
 
 		if (unlink(linkloc) != 0 && errno != ENOENT)
 		{
@@ -1742,7 +1746,8 @@ BaseBackup(void)
 		 */
 		if (format == 'p' && !PQgetisnull(res, i, 1))
 		{
-			char *path = (char *) get_tablespace_mapping(PQgetvalue(res, i, 1));
+			char	   *path = (char *) get_tablespace_mapping(PQgetvalue(res, i, 1));
+
 			verify_dir_is_empty_or_create(path);
 		}
 	}
@@ -1791,7 +1796,8 @@ BaseBackup(void)
 	{
 		for (i = 0; i < PQntuples(res); i++)
 		{
-			Oid tblspc_oid = atooid(PQgetvalue(res, i, 0));
+			Oid			tblspc_oid = atooid(PQgetvalue(res, i, 0));
+
 			if (tblspc_oid)
 				update_tablespace_symlink(tblspc_oid, PQgetvalue(res, i, 1));
 		}

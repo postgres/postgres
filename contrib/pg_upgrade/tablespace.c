@@ -28,7 +28,7 @@ init_tablespaces(void)
 	if (os_info.num_old_tablespaces > 0 &&
 	strcmp(old_cluster.tablespace_suffix, new_cluster.tablespace_suffix) == 0)
 		pg_fatal("Cannot upgrade to/from the same system catalog version when\n"
-			   "using tablespaces.\n");
+				 "using tablespaces.\n");
 }
 
 
@@ -78,10 +78,9 @@ get_tablespace_paths(void)
 		 * Effectively, this is checking only for tables/indexes in
 		 * non-existent tablespace directories.  Databases located in
 		 * non-existent tablespaces already throw a backend error.
-		 * Non-existent tablespace directories can occur when a data
-		 * directory that contains user tablespaces is moved as part
-		 * of pg_upgrade preparation and the symbolic links are not
-		 * updated.
+		 * Non-existent tablespace directories can occur when a data directory
+		 * that contains user tablespaces is moved as part of pg_upgrade
+		 * preparation and the symbolic links are not updated.
 		 */
 		if (stat(os_info.old_tablespaces[tblnum], &statBuf) != 0)
 		{
@@ -91,13 +90,13 @@ get_tablespace_paths(void)
 							  os_info.old_tablespaces[tblnum]);
 			else
 				report_status(PG_FATAL,
-							  "cannot stat() tablespace directory \"%s\": %s\n",
-							  os_info.old_tablespaces[tblnum], getErrorText(errno));
+						   "cannot stat() tablespace directory \"%s\": %s\n",
+					   os_info.old_tablespaces[tblnum], getErrorText(errno));
 		}
 		if (!S_ISDIR(statBuf.st_mode))
-				report_status(PG_FATAL,
-							  "tablespace path \"%s\" is not a directory\n",
-							  os_info.old_tablespaces[tblnum]);
+			report_status(PG_FATAL,
+						  "tablespace path \"%s\" is not a directory\n",
+						  os_info.old_tablespaces[tblnum]);
 	}
 
 	PQclear(res);

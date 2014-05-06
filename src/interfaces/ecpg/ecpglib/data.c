@@ -461,7 +461,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						 * character pointers. So, use extra indirection.
 						 */
 						if (varcharsize == 0 && offset == sizeof(char *))
-							str = *(char **)str;
+							str = *(char **) str;
 
 						if (varcharsize == 0 || varcharsize > size)
 						{

@@ -34,8 +34,8 @@
 PG_MODULE_MAGIC;
 
 /* These must be available to pg_dlsym() */
-extern void		_PG_init(void);
-extern void		_PG_output_plugin_init(OutputPluginCallbacks *cb);
+extern void _PG_init(void);
+extern void _PG_output_plugin_init(OutputPluginCallbacks *cb);
 
 typedef struct
 {
@@ -45,7 +45,7 @@ typedef struct
 } TestDecodingData;
 
 static void pg_decode_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
-							  bool is_init);
+				  bool is_init);
 static void pg_decode_shutdown(LogicalDecodingContext *ctx);
 static void pg_decode_begin_txn(LogicalDecodingContext *ctx,
 					ReorderBufferTXN *txn);
@@ -110,8 +110,8 @@ pg_decode_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 			else if (!parse_bool(strVal(elem->arg), &data->include_xids))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("could not parse value \"%s\" for parameter \"%s\"",
-								strVal(elem->arg), elem->defname)));
+				  errmsg("could not parse value \"%s\" for parameter \"%s\"",
+						 strVal(elem->arg), elem->defname)));
 		}
 		else if (strcmp(elem->defname, "include-timestamp") == 0)
 		{
@@ -120,20 +120,20 @@ pg_decode_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 			else if (!parse_bool(strVal(elem->arg), &data->include_timestamp))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("could not parse value \"%s\" for parameter \"%s\"",
-								strVal(elem->arg), elem->defname)));
+				  errmsg("could not parse value \"%s\" for parameter \"%s\"",
+						 strVal(elem->arg), elem->defname)));
 		}
 		else if (strcmp(elem->defname, "force-binary") == 0)
 		{
-			bool force_binary;
+			bool		force_binary;
 
 			if (elem->arg == NULL)
 				continue;
 			else if (!parse_bool(strVal(elem->arg), &force_binary))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("could not parse value \"%s\" for parameter \"%s\"",
-								strVal(elem->arg), elem->defname)));
+				  errmsg("could not parse value \"%s\" for parameter \"%s\"",
+						 strVal(elem->arg), elem->defname)));
 
 			if (force_binary)
 				opt->output_type = OUTPUT_PLUGIN_BINARY_OUTPUT;
@@ -318,7 +318,8 @@ tuple_to_stringinfo(StringInfo s, TupleDesc tupdesc, HeapTuple tuple, bool skip_
 						  OidOutputFunctionCall(typoutput, origval));
 		else
 		{
-			Datum		val;		/* definitely detoasted Datum */
+			Datum		val;	/* definitely detoasted Datum */
+
 			val = PointerGetDatum(PG_DETOAST_DATUM(origval));
 			print_literal(s, typid, OidOutputFunctionCall(typoutput, val));
 		}
@@ -349,9 +350,9 @@ pg_decode_change(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 	appendStringInfoString(ctx->out, "table ");
 	appendStringInfoString(ctx->out,
 						   quote_qualified_identifier(
-							   get_namespace_name(
-								   get_rel_namespace(RelationGetRelid(relation))),
-							   NameStr(class_form->relname)));
+													  get_namespace_name(
+							  get_rel_namespace(RelationGetRelid(relation))),
+											  NameStr(class_form->relname)));
 	appendStringInfoString(ctx->out, ":");
 
 	switch (change->action)

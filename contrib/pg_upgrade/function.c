@@ -296,7 +296,7 @@ check_loadable_libraries(void)
 		 * plpython2u language was created with library name plpython2.so as a
 		 * symbolic link to plpython.so.  In Postgres 9.1, only the
 		 * plpython2.so library was created, and both plpythonu and plpython2u
-		 * pointing to it.	For this reason, any reference to library name
+		 * pointing to it.  For this reason, any reference to library name
 		 * "plpython" in an old PG <= 9.1 cluster must look for "plpython2" in
 		 * the new cluster.
 		 *
@@ -327,7 +327,7 @@ check_loadable_libraries(void)
 
 			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
 				pg_fatal("Could not open file \"%s\": %s\n",
-					   output_path, getErrorText(errno));
+						 output_path, getErrorText(errno));
 			fprintf(script, "Could not load library \"%s\"\n%s\n",
 					lib,
 					PQerrorMessage(conn));
@@ -343,10 +343,10 @@ check_loadable_libraries(void)
 		fclose(script);
 		pg_log(PG_REPORT, "fatal\n");
 		pg_fatal("Your installation references loadable libraries that are missing from the\n"
-			   "new installation.  You can add these libraries to the new installation,\n"
-			   "or remove the functions using them from the old installation.  A list of\n"
-			   "problem libraries is in the file:\n"
-			   "    %s\n\n", output_path);
+				 "new installation.  You can add these libraries to the new installation,\n"
+				 "or remove the functions using them from the old installation.  A list of\n"
+				 "problem libraries is in the file:\n"
+				 "    %s\n\n", output_path);
 	}
 	else
 		check_ok();

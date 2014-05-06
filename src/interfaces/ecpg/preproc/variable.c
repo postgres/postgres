@@ -437,7 +437,8 @@ remove_variable_from_list(struct arguments ** list, struct variable * var)
 void
 dump_variables(struct arguments * list, int mode)
 {
-	char   *str_zero = mm_strdup("0");
+	char	   *str_zero = mm_strdup("0");
+
 	if (list == NULL)
 		return;
 
@@ -529,7 +530,7 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 
 	if (pointer_len > 2)
 		mmfatal(PARSE_ERROR, ngettext("multilevel pointers (more than 2 levels) are not supported; found %d level",
-												"multilevel pointers (more than 2 levels) are not supported; found %d levels", pointer_len),
+									  "multilevel pointers (more than 2 levels) are not supported; found %d levels", pointer_len),
 				pointer_len);
 
 	if (pointer_len > 1 && type_enum != ECPGt_char && type_enum != ECPGt_unsigned_char && type_enum != ECPGt_string)

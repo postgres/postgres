@@ -40,9 +40,9 @@ _bt_restore_page(Page page, char *from, int len)
 	int			nitems;
 
 	/*
-	 * To get the items back in the original order, we add them to the page
-	 * in reverse.  To figure out where one tuple ends and another begins,
-	 * we have to scan them in forward order first.
+	 * To get the items back in the original order, we add them to the page in
+	 * reverse.  To figure out where one tuple ends and another begins, we
+	 * have to scan them in forward order first.
 	 */
 	i = 0;
 	while (from < end)
@@ -97,7 +97,7 @@ _bt_restore_meta(RelFileNode rnode, XLogRecPtr lsn,
 	pageop->btpo_flags = BTP_META;
 
 	/*
-	 * Set pd_lower just past the end of the metadata.	This is not essential
+	 * Set pd_lower just past the end of the metadata.  This is not essential
 	 * but it makes the page look compressible to xlog.c.
 	 */
 	((PageHeader) metapg)->pd_lower =
@@ -118,7 +118,7 @@ static void
 _bt_clear_incomplete_split(XLogRecPtr lsn, XLogRecord *record,
 						   RelFileNode rnode, BlockNumber cblock)
 {
-	Buffer buf;
+	Buffer		buf;
 
 	buf = XLogReadBuffer(rnode, cblock, false);
 	if (BufferIsValid(buf))
@@ -128,6 +128,7 @@ _bt_clear_incomplete_split(XLogRecPtr lsn, XLogRecord *record,
 		if (lsn > PageGetLSN(page))
 		{
 			BTPageOpaque pageop = (BTPageOpaque) PageGetSpecialPointer(page);
+
 			Assert((pageop->btpo_flags & BTP_INCOMPLETE_SPLIT) != 0);
 			pageop->btpo_flags &= ~BTP_INCOMPLETE_SPLIT;
 
@@ -153,6 +154,7 @@ btree_xlog_insert(bool isleaf, bool ismeta,
 
 	datapos = (char *) xlrec + SizeOfBtreeInsert;
 	datalen = record->xl_len - SizeOfBtreeInsert;
+
 	/*
 	 * if this insert finishes a split at lower level, extract the block
 	 * number of the (left) child.
@@ -172,10 +174,10 @@ btree_xlog_insert(bool isleaf, bool ismeta,
 	}
 
 	/*
-	 * Insertion to an internal page finishes an incomplete split at the
-	 * child level.  Clear the incomplete-split flag in the child.  Note:
-	 * during normal operation, the child and parent pages are locked at the
-	 * same time, so that clearing the flag and inserting the downlink appear
+	 * Insertion to an internal page finishes an incomplete split at the child
+	 * level.  Clear the incomplete-split flag in the child.  Note: during
+	 * normal operation, the child and parent pages are locked at the same
+	 * time, so that clearing the flag and inserting the downlink appear
 	 * atomic to other backends.  We don't bother with that during replay,
 	 * because readers don't care about the incomplete-split flag and there
 	 * cannot be updates happening.
@@ -279,9 +281,10 @@ btree_xlog_split(bool onleft, bool isroot,
 		datapos += left_hikeysz;
 		datalen -= left_hikeysz;
 	}
+
 	/*
-	 * If this insertion finishes an incomplete split, get the block number
-	 * of the child.
+	 * If this insertion finishes an incomplete split, get the block number of
+	 * the child.
 	 */
 	if (!isleaf && !(record->xl_info & XLR_BKP_BLOCK(1)))
 	{
@@ -439,7 +442,7 @@ btree_xlog_split(bool onleft, bool isroot,
 		 * the backup block containing right sibling is 2 or 3, depending
 		 * whether this was a leaf or internal page.
 		 */
-		int		rnext_index = isleaf ? 2 : 3;
+		int			rnext_index = isleaf ? 2 : 3;
 
 		if (record->xl_info & XLR_BKP_BLOCK(rnext_index))
 			(void) RestoreBackupBlock(lsn, record, rnext_index, false, false);
@@ -620,7 +623,7 @@ btree_xlog_delete_get_latestRemovedXid(xl_btree_delete *xlrec)
 
 	/*
 	 * In what follows, we have to examine the previous state of the index
-	 * page, as well as the heap page(s) it points to.	This is only valid if
+	 * page, as well as the heap page(s) it points to.  This is only valid if
 	 * WAL replay has reached a consistent database state; which means that
 	 * the preceding check is not just an optimization, but is *necessary*. We
 	 * won't have let in any user sessions before we reach consistency.
@@ -629,9 +632,9 @@ btree_xlog_delete_get_latestRemovedXid(xl_btree_delete *xlrec)
 		elog(PANIC, "btree_xlog_delete_get_latestRemovedXid: cannot operate with inconsistent data");
 
 	/*
-	 * Get index page.	If the DB is consistent, this should not fail, nor
+	 * Get index page.  If the DB is consistent, this should not fail, nor
 	 * should any of the heap page fetches below.  If one does, we return
-	 * InvalidTransactionId to cancel all HS transactions.	That's probably
+	 * InvalidTransactionId to cancel all HS transactions.  That's probably
 	 * overkill, but it's safe, and certainly better than panicking here.
 	 */
 	ibuffer = XLogReadBuffer(xlrec->node, xlrec->block, false);
@@ -716,9 +719,9 @@ btree_xlog_delete_get_latestRemovedXid(xl_btree_delete *xlrec)
 	/*
 	 * If all heap tuples were LP_DEAD then we will be returning
 	 * InvalidTransactionId here, which avoids conflicts. This matches
-	 * existing logic which assumes that LP_DEAD tuples must already be
-	 * older than the latestRemovedXid on the cleanup record that
-	 * set them as LP_DEAD, hence must already have generated a conflict.
+	 * existing logic which assumes that LP_DEAD tuples must already be older
+	 * than the latestRemovedXid on the cleanup record that set them as
+	 * LP_DEAD, hence must already have generated a conflict.
 	 */
 	return latestRemovedXid;
 }
@@ -735,7 +738,7 @@ btree_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 	 * If we have any conflict processing to do, it must happen before we
 	 * update the page.
 	 *
-	 * Btree delete records can conflict with standby queries.	You might
+	 * Btree delete records can conflict with standby queries.  You might
 	 * think that vacuum records would conflict as well, but we've handled
 	 * that already.  XLOG_HEAP2_CLEANUP_INFO records provide the highest xid
 	 * cleaned by the vacuum of the heap and so we can resolve any conflicts
@@ -828,7 +831,7 @@ btree_xlog_mark_page_halfdead(uint8 info, XLogRecPtr lsn, XLogRecord *record)
 				ItemId		itemid;
 				IndexTuple	itup;
 				OffsetNumber nextoffset;
-				BlockNumber	rightsib;
+				BlockNumber rightsib;
 
 				poffset = ItemPointerGetOffsetNumber(&(xlrec->target.tid));
 

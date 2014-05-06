@@ -4,7 +4,7 @@
  *	  POSTGRES inter-process communication definitions.
  *
  * This file is misnamed, as it no longer has much of anything directly
- * to do with IPC.	The functionality here is concerned with managing
+ * to do with IPC.  The functionality here is concerned with managing
  * exit-time cleanup for either a postmaster or a backend.
  *
  *
@@ -90,7 +90,7 @@ static int	on_proc_exit_index,
  *		-cim 2/6/90
  *
  *		Unfortunately, we can't really guarantee that add-on code
- *		obeys the rule of not calling exit() directly.	So, while
+ *		obeys the rule of not calling exit() directly.  So, while
  *		this is the preferred way out of the system, we also register
  *		an atexit callback that will make sure cleanup happens.
  * ----------------------------------------------------------------
@@ -109,7 +109,7 @@ proc_exit(int code)
 		 * fixed file name, each backend will overwrite earlier profiles. To
 		 * fix that, we create a separate subdirectory for each backend
 		 * (./gprof/pid) and 'cd' to that subdirectory before we exit() - that
-		 * forces mcleanup() to write each profile into its own directory.	We
+		 * forces mcleanup() to write each profile into its own directory.  We
 		 * end up with something like: $PGDATA/gprof/8829/gmon.out
 		 * $PGDATA/gprof/8845/gmon.out ...
 		 *
@@ -219,16 +219,16 @@ shmem_exit(int code)
 	/*
 	 * Call before_shmem_exit callbacks.
 	 *
-	 * These should be things that need most of the system to still be
-	 * up and working, such as cleanup of temp relations, which requires
-	 * catalog access; or things that need to be completed because later
-	 * cleanup steps depend on them, such as releasing lwlocks.
+	 * These should be things that need most of the system to still be up and
+	 * working, such as cleanup of temp relations, which requires catalog
+	 * access; or things that need to be completed because later cleanup steps
+	 * depend on them, such as releasing lwlocks.
 	 */
 	elog(DEBUG3, "shmem_exit(%d): %d before_shmem_exit callbacks to make",
 		 code, before_shmem_exit_index);
 	while (--before_shmem_exit_index >= 0)
 		(*before_shmem_exit_list[before_shmem_exit_index].function) (code,
-					before_shmem_exit_list[before_shmem_exit_index].arg);
+						before_shmem_exit_list[before_shmem_exit_index].arg);
 	before_shmem_exit_index = 0;
 
 	/*
@@ -241,9 +241,9 @@ shmem_exit(int code)
 	 * callback before invoking it, so that we don't get stuck in an infinite
 	 * loop if one of those callbacks itself throws an ERROR or FATAL.
 	 *
-	 * Note that explicitly calling this function here is quite different
-	 * from registering it as an on_shmem_exit callback for precisely this
-	 * reason: if one dynamic shared memory callback errors out, the remaining
+	 * Note that explicitly calling this function here is quite different from
+	 * registering it as an on_shmem_exit callback for precisely this reason:
+	 * if one dynamic shared memory callback errors out, the remaining
 	 * callbacks will still be invoked.  Thus, hard-coding this call puts it
 	 * equal footing with callbacks for the main shared memory segment.
 	 */
@@ -261,7 +261,7 @@ shmem_exit(int code)
 		 code, on_shmem_exit_index);
 	while (--on_shmem_exit_index >= 0)
 		(*on_shmem_exit_list[on_shmem_exit_index].function) (code,
-					on_shmem_exit_list[on_shmem_exit_index].arg);
+								on_shmem_exit_list[on_shmem_exit_index].arg);
 	on_shmem_exit_index = 0;
 }
 
@@ -287,7 +287,7 @@ atexit_callback(void)
  *		on_proc_exit
  *
  *		this function adds a callback function to the list of
- *		functions invoked by proc_exit().	-cim 2/6/90
+ *		functions invoked by proc_exit().   -cim 2/6/90
  * ----------------------------------------------------------------
  */
 void
@@ -380,7 +380,7 @@ cancel_before_shmem_exit(pg_on_exit_callback function, Datum arg)
 {
 	if (before_shmem_exit_index > 0 &&
 		before_shmem_exit_list[before_shmem_exit_index - 1].function
-			== function &&
+		== function &&
 		before_shmem_exit_list[before_shmem_exit_index - 1].arg == arg)
 		--before_shmem_exit_index;
 }

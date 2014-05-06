@@ -26,7 +26,7 @@
 /*
  * tlist_member
  *	  Finds the (first) member of the given tlist whose expression is
- *	  equal() to the given expression.	Result is NULL if no such member.
+ *	  equal() to the given expression.  Result is NULL if no such member.
  */
 TargetEntry *
 tlist_member(Node *node, List *targetlist)

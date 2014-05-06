@@ -26,7 +26,7 @@
  *	for a module and should never be allocated after the shared memory
  *	initialization phase.  Hash tables have a fixed maximum size, but
  *	their actual size can vary dynamically.  When entries are added
- *	to the table, more space is allocated.	Queues link data structures
+ *	to the table, more space is allocated.  Queues link data structures
  *	that have been allocated either within fixed-size structures or as hash
  *	buckets.  Each shared data structure has a string name to identify
  *	it (assigned in the module that declares it).
@@ -40,7 +40,7 @@
  *		The shmem index has two purposes: first, it gives us
  *	a simple model of how the world looks when a backend process
  *	initializes.  If something is present in the shmem index,
- *	it is initialized.	If it is not, it is uninitialized.	Second,
+ *	it is initialized.  If it is not, it is uninitialized.  Second,
  *	the shmem index allows us to allocate shared memory on demand
  *	instead of trying to preallocate structures and hard-wire the
  *	sizes and locations in header files.  If you are using a lot
@@ -55,8 +55,8 @@
  *	pointers using the method described in (b) above.
  *
  *		(d) memory allocation model: shared memory can never be
- *	freed, once allocated.	 Each hash table has its own free list,
- *	so hash buckets can be reused when an item is deleted.	However,
+ *	freed, once allocated.   Each hash table has its own free list,
+ *	so hash buckets can be reused when an item is deleted.  However,
  *	if one hash table grows very large and then shrinks, its space
  *	cannot be redistributed to other tables.  We could build a simple
  *	hash bucket garbage collector if need be.  Right now, it seems
@@ -232,7 +232,7 @@ InitShmemIndex(void)
 	 *
 	 * Since ShmemInitHash calls ShmemInitStruct, which expects the ShmemIndex
 	 * hashtable to exist already, we have a bit of a circularity problem in
-	 * initializing the ShmemIndex itself.	The special "ShmemIndex" hash
+	 * initializing the ShmemIndex itself.  The special "ShmemIndex" hash
 	 * table name will tell ShmemInitStruct to fake it.
 	 */
 	info.keysize = SHMEM_INDEX_KEYSIZE;
@@ -309,7 +309,7 @@ ShmemInitHash(const char *name, /* table string name for shmem index */
  * ShmemInitStruct -- Create/attach to a structure in shared memory.
  *
  *		This is called during initialization to find or allocate
- *		a data structure in shared memory.	If no other process
+ *		a data structure in shared memory.  If no other process
  *		has created the structure, this routine allocates space
  *		for it.  If it exists already, a pointer to the existing
  *		structure is returned.
@@ -318,7 +318,7 @@ ShmemInitHash(const char *name, /* table string name for shmem index */
  *		already in the shmem index (hence, already initialized).
  *
  *	Note: before Postgres 9.0, this function returned NULL for some failure
- *	cases.	Now, it always throws error instead, so callers need not check
+ *	cases.  Now, it always throws error instead, so callers need not check
  *	for NULL.
  */
 void *
@@ -350,7 +350,7 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 			 * be trying to init the shmem index itself.
 			 *
 			 * Notice that the ShmemIndexLock is released before the shmem
-			 * index has been initialized.	This should be OK because no other
+			 * index has been initialized.  This should be OK because no other
 			 * process can be accessing shared memory yet.
 			 */
 			Assert(shmemseghdr->index == NULL);

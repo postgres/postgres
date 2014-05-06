@@ -31,7 +31,7 @@
  * segment and page numbers in SimpleLruTruncate (see PagePrecedes()).
  *
  * Note: slru.c currently assumes that segment file names will be four hex
- * digits.	This sets a lower bound on the segment size (64K transactions
+ * digits.  This sets a lower bound on the segment size (64K transactions
  * for 32-bit TransactionIds).
  */
 #define SLRU_PAGES_PER_SEGMENT	32
@@ -55,7 +55,7 @@ typedef enum
  */
 typedef struct SlruSharedData
 {
-	LWLock     *ControlLock;
+	LWLock	   *ControlLock;
 
 	/* Number of buffers managed by this SLRU structure */
 	int			num_slots;
@@ -69,7 +69,7 @@ typedef struct SlruSharedData
 	bool	   *page_dirty;
 	int		   *page_number;
 	int		   *page_lru_count;
-	LWLock    **buffer_locks;
+	LWLock	  **buffer_locks;
 
 	/*
 	 * Optional array of WAL flush LSNs associated with entries in the SLRU

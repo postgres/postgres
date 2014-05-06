@@ -34,8 +34,8 @@ generate_old_dump(void)
 
 	/*
 	 * Set umask for this function, all functions it calls, and all
-	 * subprocesses/threads it creates.	 We can't use fopen_priv()
-	 * as Windows uses threads and umask is process-global.
+	 * subprocesses/threads it creates.  We can't use fopen_priv() as Windows
+	 * uses threads and umask is process-global.
 	 */
 	old_umask = umask(S_IRWXG | S_IRWXO);
 

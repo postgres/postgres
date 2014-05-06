@@ -64,7 +64,7 @@ typedef struct
  * Spurious wakeups must be expected.  Make sure that the flag is cleared
  * in the error path.
  */
-bool set_latch_on_sigusr1;
+bool		set_latch_on_sigusr1;
 
 static ProcSignalSlot *ProcSignalSlots = NULL;
 static volatile ProcSignalSlot *MyProcSignalSlot = NULL;

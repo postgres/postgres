@@ -40,7 +40,7 @@
  * configuration file, or by client request in the connection startup
  * packet (e.g., from libpq's PGOPTIONS variable).  Furthermore, an
  * already-started backend will ignore changes to such an option in the
- * configuration file.	The idea is that these options are fixed for a
+ * configuration file.  The idea is that these options are fixed for a
  * given backend once it's started, but they can vary across backends.
  *
  * SUSET options can be set at postmaster startup, with the SIGHUP
@@ -326,7 +326,7 @@ extern bool parse_real(const char *value, double *result);
 extern int set_config_option(const char *name, const char *value,
 				  GucContext context, GucSource source,
 				  GucAction action, bool changeVal, int elevel);
-extern void AlterSystemSetConfigFile(AlterSystemStmt * setstmt);
+extern void AlterSystemSetConfigFile(AlterSystemStmt *setstmt);
 extern char *GetConfigOptionByName(const char *name, const char **varname);
 extern void GetConfigOptionByNum(int varnum, const char **values, bool *noshow);
 extern int	GetNumConfigOptions(void);

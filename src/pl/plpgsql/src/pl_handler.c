@@ -44,8 +44,8 @@ int			plpgsql_variable_conflict = PLPGSQL_RESOLVE_ERROR;
 
 bool		plpgsql_print_strict_params = false;
 
-char		*plpgsql_extra_warnings_string = NULL;
-char		*plpgsql_extra_errors_string = NULL;
+char	   *plpgsql_extra_warnings_string = NULL;
+char	   *plpgsql_extra_errors_string = NULL;
 int			plpgsql_extra_warnings;
 int			plpgsql_extra_errors;
 
@@ -59,7 +59,7 @@ plpgsql_extra_checks_check_hook(char **newvalue, void **extra, GucSource source)
 	char	   *rawstring;
 	List	   *elemlist;
 	ListCell   *l;
-	int		    extrachecks = 0;
+	int			extrachecks = 0;
 	int		   *myextra;
 
 	if (pg_strcasecmp(*newvalue, "all") == 0)

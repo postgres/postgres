@@ -85,7 +85,8 @@ scanPostingTree(Relation index, GinScanEntry scanEntry,
 		page = BufferGetPage(buffer);
 		if ((GinPageGetOpaque(page)->flags & GIN_DELETED) == 0)
 		{
-			int n = GinDataLeafPageGetItemsToTbm(page, scanEntry->matchBitmap);
+			int			n = GinDataLeafPageGetItemsToTbm(page, scanEntry->matchBitmap);
+
 			scanEntry->predictNumberResult += n;
 		}
 
@@ -100,7 +101,7 @@ scanPostingTree(Relation index, GinScanEntry scanEntry,
 
 /*
  * Collects TIDs into scanEntry->matchBitmap for all heap tuples that
- * match the search entry.	This supports three different match modes:
+ * match the search entry.  This supports three different match modes:
  *
  * 1. Partial-match support: scan from current point until the
  *	  comparePartialFn says we're done.
@@ -196,7 +197,7 @@ collectMatchBitmap(GinBtreeData *btree, GinBtreeStack *stack,
 			/*
 			 * In ALL mode, we are not interested in null items, so we can
 			 * stop if we get to a null-item placeholder (which will be the
-			 * last entry for a given attnum).	We do want to include NULL_KEY
+			 * last entry for a given attnum).  We do want to include NULL_KEY
 			 * and EMPTY_ITEM entries, though.
 			 */
 			if (icategory == GIN_CAT_NULL_ITEM)
@@ -407,7 +408,7 @@ restartScanEntry:
 		else if (GinGetNPosting(itup) > 0)
 		{
 			entry->list = ginReadTuple(ginstate, entry->attnum, itup,
-				&entry->nlist);
+									   &entry->nlist);
 			entry->predictNumberResult = entry->nlist;
 
 			entry->isFinished = FALSE;
@@ -463,11 +464,11 @@ startScanKey(GinState *ginstate, GinScanOpaque so, GinScanKey key)
 	 * considerably, if the frequent term can be put in the additional set.
 	 *
 	 * There can be many legal ways to divide them entries into these two
-	 * sets. A conservative division is to just put everything in the
-	 * required set, but the more you can put in the additional set, the more
-	 * you can skip during the scan. To maximize skipping, we try to put as
-	 * many frequent items as possible into additional, and less frequent
-	 * ones into required. To do that, sort the entries by frequency
+	 * sets. A conservative division is to just put everything in the required
+	 * set, but the more you can put in the additional set, the more you can
+	 * skip during the scan. To maximize skipping, we try to put as many
+	 * frequent items as possible into additional, and less frequent ones into
+	 * required. To do that, sort the entries by frequency
 	 * (predictNumberResult), and put entries into the required set in that
 	 * order, until the consistent function says that none of the remaining
 	 * entries can form a match, without any items from the required set. The
@@ -635,8 +636,8 @@ entryLoadMoreItems(GinState *ginstate, GinScanEntry entry, ItemPointerData advan
 		if (stepright)
 		{
 			/*
-			 * We've processed all the entries on this page. If it was the last
-			 * page in the tree, we're done.
+			 * We've processed all the entries on this page. If it was the
+			 * last page in the tree, we're done.
 			 */
 			if (GinPageRightMost(page))
 			{
@@ -647,8 +648,8 @@ entryLoadMoreItems(GinState *ginstate, GinScanEntry entry, ItemPointerData advan
 			}
 
 			/*
-			 * Step to next page, following the right link. then find the first
-			 * ItemPointer greater than advancePast.
+			 * Step to next page, following the right link. then find the
+			 * first ItemPointer greater than advancePast.
 			 */
 			entry->buffer = ginStepRight(entry->buffer,
 										 ginstate->index,
@@ -658,7 +659,7 @@ entryLoadMoreItems(GinState *ginstate, GinScanEntry entry, ItemPointerData advan
 		stepright = true;
 
 		if (GinPageGetOpaque(page)->flags & GIN_DELETED)
-			continue;		/* page was deleted by concurrent vacuum */
+			continue;			/* page was deleted by concurrent vacuum */
 
 		/*
 		 * The first item > advancePast might not be on this page, but
@@ -781,6 +782,7 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
 				gotitem = true;
 				break;
 			}
+
 			/*
 			 * Not a lossy page. Skip over any offsets <= advancePast, and
 			 * return that.
@@ -788,8 +790,9 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
 			if (entry->matchResult->blockno == advancePastBlk)
 			{
 				/*
-				 * First, do a quick check against the last offset on the page.
-				 * If that's > advancePast, so are all the other offsets.
+				 * First, do a quick check against the last offset on the
+				 * page. If that's > advancePast, so are all the other
+				 * offsets.
 				 */
 				if (entry->matchResult->offsets[entry->matchResult->ntuples - 1] <= advancePastOff)
 				{
@@ -890,8 +893,8 @@ keyGetItem(GinState *ginstate, MemoryContext tempCtx, GinScanKey key,
 
 	/*
 	 * We might have already tested this item; if so, no need to repeat work.
-	 * (Note: the ">" case can happen, if advancePast is exact but we previously
-	 * had to set curItem to a lossy-page pointer.)
+	 * (Note: the ">" case can happen, if advancePast is exact but we
+	 * previously had to set curItem to a lossy-page pointer.)
 	 */
 	if (ginCompareItemPointers(&key->curItem, &advancePast) > 0)
 		return;
@@ -942,8 +945,8 @@ keyGetItem(GinState *ginstate, MemoryContext tempCtx, GinScanKey key,
 	/*
 	 * Ok, we now know that there are no matches < minItem.
 	 *
-	 * If minItem is lossy, it means that there were no exact items on
-	 * the page among requiredEntries, because lossy pointers sort after exact
+	 * If minItem is lossy, it means that there were no exact items on the
+	 * page among requiredEntries, because lossy pointers sort after exact
 	 * items. However, there might be exact items for the same page among
 	 * additionalEntries, so we mustn't advance past them.
 	 */
@@ -1085,6 +1088,7 @@ keyGetItem(GinState *ginstate, MemoryContext tempCtx, GinScanKey key,
 		if (entry->isFinished)
 			key->entryRes[i] = GIN_FALSE;
 #if 0
+
 		/*
 		 * This case can't currently happen, because we loaded all the entries
 		 * for this item earlier.
@@ -1119,6 +1123,7 @@ keyGetItem(GinState *ginstate, MemoryContext tempCtx, GinScanKey key,
 			break;
 
 		default:
+
 			/*
 			 * the 'default' case shouldn't happen, but if the consistent
 			 * function returns something bogus, this is the safe result
@@ -1129,11 +1134,10 @@ keyGetItem(GinState *ginstate, MemoryContext tempCtx, GinScanKey key,
 	}
 
 	/*
-	 * We have a tuple, and we know if it matches or not. If it's a
-	 * non-match, we could continue to find the next matching tuple, but
-	 * let's break out and give scanGetItem a chance to advance the other
-	 * keys. They might be able to skip past to a much higher TID, allowing
-	 * us to save work.
+	 * We have a tuple, and we know if it matches or not. If it's a non-match,
+	 * we could continue to find the next matching tuple, but let's break out
+	 * and give scanGetItem a chance to advance the other keys. They might be
+	 * able to skip past to a much higher TID, allowing us to save work.
 	 */
 
 	/* clean up after consistentFn calls */
@@ -1165,14 +1169,14 @@ scanGetItem(IndexScanDesc scan, ItemPointerData advancePast,
 	 * matching item.
 	 *
 	 * This logic works only if a keyGetItem stream can never contain both
-	 * exact and lossy pointers for the same page.	Else we could have a
+	 * exact and lossy pointers for the same page.  Else we could have a
 	 * case like
 	 *
 	 *		stream 1		stream 2
-	 *		...				...
+	 *		...             ...
 	 *		42/6			42/7
 	 *		50/1			42/0xffff
-	 *		...				...
+	 *		...             ...
 	 *
 	 * We would conclude that 42/6 is not a match and advance stream 1,
 	 * thus never detecting the match to the lossy pointer in stream 2.
@@ -1205,12 +1209,11 @@ scanGetItem(IndexScanDesc scan, ItemPointerData advancePast,
 			}
 
 			/*
-			 * It's a match. We can conclude that nothing < matches, so
-			 * the other key streams can skip to this item.
+			 * It's a match. We can conclude that nothing < matches, so the
+			 * other key streams can skip to this item.
 			 *
-			 * Beware of lossy pointers, though; from a lossy pointer, we
-			 * can only conclude that nothing smaller than this *block*
-			 * matches.
+			 * Beware of lossy pointers, though; from a lossy pointer, we can
+			 * only conclude that nothing smaller than this *block* matches.
 			 */
 			if (ItemPointerIsLossyPage(&key->curItem))
 			{
@@ -1229,8 +1232,8 @@ scanGetItem(IndexScanDesc scan, ItemPointerData advancePast,
 			}
 
 			/*
-			 * If this is the first key, remember this location as a
-			 * potential match, and proceed to check the rest of the keys.
+			 * If this is the first key, remember this location as a potential
+			 * match, and proceed to check the rest of the keys.
 			 *
 			 * Otherwise, check if this is the same item that we checked the
 			 * previous keys for (or a lossy pointer for the same page). If
@@ -1247,7 +1250,7 @@ scanGetItem(IndexScanDesc scan, ItemPointerData advancePast,
 				if (ItemPointerIsLossyPage(&key->curItem) ||
 					ItemPointerIsLossyPage(item))
 				{
-					Assert (GinItemPointerGetBlockNumber(&key->curItem) >= GinItemPointerGetBlockNumber(item));
+					Assert(GinItemPointerGetBlockNumber(&key->curItem) >= GinItemPointerGetBlockNumber(item));
 					match = (GinItemPointerGetBlockNumber(&key->curItem) ==
 							 GinItemPointerGetBlockNumber(item));
 				}
@@ -1264,8 +1267,8 @@ scanGetItem(IndexScanDesc scan, ItemPointerData advancePast,
 
 	/*
 	 * Now *item contains the first ItemPointer after previous result that
-	 * satisfied all the keys for that exact TID, or a lossy reference
-	 * to the same page.
+	 * satisfied all the keys for that exact TID, or a lossy reference to the
+	 * same page.
 	 *
 	 * We must return recheck = true if any of the keys are marked recheck.
 	 */
@@ -1776,10 +1779,10 @@ gingetbitmap(PG_FUNCTION_ARGS)
 
 	/*
 	 * First, scan the pending list and collect any matching entries into the
-	 * bitmap.	After we scan a pending item, some other backend could post it
+	 * bitmap.  After we scan a pending item, some other backend could post it
 	 * into the main index, and so we might visit it a second time during the
 	 * main scan.  This is okay because we'll just re-set the same bit in the
-	 * bitmap.	(The possibility of duplicate visits is a major reason why GIN
+	 * bitmap.  (The possibility of duplicate visits is a major reason why GIN
 	 * can't support the amgettuple API, however.) Note that it would not do
 	 * to scan the main index before the pending list, since concurrent
 	 * cleanup could then make us miss entries entirely.

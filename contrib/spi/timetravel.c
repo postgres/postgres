@@ -45,17 +45,17 @@ static EPlan *find_plan(char *ident, EPlan **eplan, int *nplans);
 
 /*
  * timetravel () --
- *		1.	IF an update affects tuple with stop_date eq INFINITY
+ *		1.  IF an update affects tuple with stop_date eq INFINITY
  *			then form (and return) new tuple with start_date eq current date
  *			and stop_date eq INFINITY [ and update_user eq current user ]
  *			and all other column values as in new tuple, and insert tuple
  *			with old data and stop_date eq current date
  *			ELSE - skip updation of tuple.
- *		2.	IF an delete affects tuple with stop_date eq INFINITY
+ *		2.  IF an delete affects tuple with stop_date eq INFINITY
  *			then insert the same tuple with stop_date eq current date
  *			[ and delete_user eq current user ]
  *			ELSE - skip deletion of tuple.
- *		3.	On INSERT, if start_date is NULL then current date will be
+ *		3.  On INSERT, if start_date is NULL then current date will be
  *			inserted, if stop_date is NULL then INFINITY will be inserted.
  *			[ and insert_user eq current user, update_user and delete_user
  *			eq NULL ]

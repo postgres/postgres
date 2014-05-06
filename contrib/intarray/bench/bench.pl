@@ -80,7 +80,7 @@ else
 	$outf = ($opt{u}) ? 'distinct( message.mid )' : 'message.mid';
 }
 my $sql =
-	"select $outf from "
+    "select $outf from "
   . join(', ', keys %table)
   . " where "
   . join(' AND ', @where) . ';';

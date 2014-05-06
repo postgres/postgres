@@ -7,7 +7,7 @@
  * "union" of a set of INET/CIDR values.  It works like this:
  * 1. If the values are not all of the same IP address family, the "union"
  * is a dummy value with family number zero, minbits zero, commonbits zero,
- * address all zeroes.	Otherwise:
+ * address all zeroes.  Otherwise:
  * 2. The union has the common IP address family number.
  * 3. The union's minbits value is the smallest netmask length ("ip_bits")
  * of all the input values.
@@ -202,8 +202,8 @@ inet_gist_consistent(PG_FUNCTION_ARGS)
 	 *
 	 * Compare available common prefix bits to the query, but not beyond
 	 * either the query's netmask or the minimum netmask among the represented
-	 * values.	If these bits don't match the query, we have our answer (and
-	 * may or may not need to descend, depending on the operator).	If they do
+	 * values.  If these bits don't match the query, we have our answer (and
+	 * may or may not need to descend, depending on the operator).  If they do
 	 * match, and we are not at a leaf, we descend in all cases.
 	 *
 	 * Note this is the final check for operators that only consider the
@@ -682,7 +682,7 @@ inet_gist_picksplit(PG_FUNCTION_ARGS)
 		{
 			/*
 			 * If there's more than 2 families, all but maxfamily go into the
-			 * left union.	This could only happen if the inputs include some
+			 * left union.  This could only happen if the inputs include some
 			 * IPv4, some IPv6, and some already-multiple-family unions.
 			 */
 			tmp = DatumGetInetKeyP(ent[i].key);
@@ -741,7 +741,7 @@ inet_gist_picksplit(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Compute the union value for each side from scratch.	In most cases we
+	 * Compute the union value for each side from scratch.  In most cases we
 	 * could approximate the union values with what we already know, but this
 	 * ensures that each side has minbits and commonbits set as high as
 	 * possible.

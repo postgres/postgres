@@ -53,7 +53,7 @@ static void trim_trailing_separator(char *path);
 /*
  * skip_drive
  *
- * On Windows, a path may begin with "C:" or "//network/".	Advance over
+ * On Windows, a path may begin with "C:" or "//network/".  Advance over
  * this and point to the effective start of the path.
  */
 #ifdef WIN32
@@ -226,6 +226,7 @@ canonicalize_path(char *path)
 	int			pending_strips;
 
 #ifdef WIN32
+
 	/*
 	 * The Windows command processor will accept suitably quoted paths with
 	 * forward slashes, but barfs badly with mixed forward and back slashes.
@@ -276,7 +277,7 @@ canonicalize_path(char *path)
 	 * Remove any trailing uses of "." and process ".." ourselves
 	 *
 	 * Note that "/../.." should reduce to just "/", while "../.." has to be
-	 * kept as-is.	In the latter case we put back mistakenly trimmed ".."
+	 * kept as-is.  In the latter case we put back mistakenly trimmed ".."
 	 * components below.  Also note that we want a Windows drive spec to be
 	 * visible to trim_directory(), but it's not part of the logic that's
 	 * looking at the name components; hence distinction between path and
@@ -375,6 +376,7 @@ path_is_relative_and_below_cwd(const char *path)
 	else if (path_contains_parent_reference(path))
 		return false;
 #ifdef WIN32
+
 	/*
 	 * On Win32, a drive letter _not_ followed by a slash, e.g. 'E:abc', is
 	 * relative to the cwd on that drive, or the drive's root directory if

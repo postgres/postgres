@@ -12,7 +12,7 @@
  *	  src/backend/access/nbtree/nbtpage.c
  *
  *	NOTES
- *	   Postgres btree pages look like ordinary relation pages.	The opaque
+ *	   Postgres btree pages look like ordinary relation pages.  The opaque
  *	   data at high addresses includes pointers to left and right siblings
  *	   and flag data describing page state.  The first page in a btree, page
  *	   zero, is special -- it stores meta-information describing the tree.
@@ -36,7 +36,7 @@ static bool _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf,
 static bool _bt_lock_branch_parent(Relation rel, BlockNumber child,
 					   BTStack stack, Buffer *topparent, OffsetNumber *topoff,
 					   BlockNumber *target, BlockNumber *rightsib);
-static void  _bt_log_reuse_page(Relation rel, BlockNumber blkno,
+static void _bt_log_reuse_page(Relation rel, BlockNumber blkno,
 				   TransactionId latestRemovedXid);
 
 /*
@@ -62,7 +62,7 @@ _bt_initmetapage(Page page, BlockNumber rootbknum, uint32 level)
 	metaopaque->btpo_flags = BTP_META;
 
 	/*
-	 * Set pd_lower just past the end of the metadata.	This is not essential
+	 * Set pd_lower just past the end of the metadata.  This is not essential
 	 * but it makes the page look compressible to xlog.c.
 	 */
 	((PageHeader) page)->pd_lower =
@@ -80,7 +80,7 @@ _bt_initmetapage(Page page, BlockNumber rootbknum, uint32 level)
  *
  *		The access type parameter (BT_READ or BT_WRITE) controls whether
  *		a new root page will be created or not.  If access = BT_READ,
- *		and no root page exists, we just return InvalidBuffer.	For
+ *		and no root page exists, we just return InvalidBuffer.  For
  *		BT_WRITE, we try to create the root page if it doesn't exist.
  *		NOTE that the returned root page will have only a read lock set
  *		on it even if access = BT_WRITE!
@@ -197,7 +197,7 @@ _bt_getroot(Relation rel, int access)
 			/*
 			 * Metadata initialized by someone else.  In order to guarantee no
 			 * deadlocks, we have to release the metadata page and start all
-			 * over again.	(Is that really true? But it's hardly worth trying
+			 * over again.  (Is that really true? But it's hardly worth trying
 			 * to optimize this case.)
 			 */
 			_bt_relbuf(rel, metabuf);
@@ -254,7 +254,7 @@ _bt_getroot(Relation rel, int access)
 		END_CRIT_SECTION();
 
 		/*
-		 * swap root write lock for read lock.	There is no danger of anyone
+		 * swap root write lock for read lock.  There is no danger of anyone
 		 * else accessing the new root page while it's unlocked, since no one
 		 * else knows where it is yet.
 		 */
@@ -322,7 +322,7 @@ _bt_getroot(Relation rel, int access)
  * By the time we acquire lock on the root page, it might have been split and
  * not be the true root anymore.  This is okay for the present uses of this
  * routine; we only really need to be able to move up at least one tree level
- * from whatever non-root page we were at.	If we ever do need to lock the
+ * from whatever non-root page we were at.  If we ever do need to lock the
  * one true root page, we could loop here, re-reading the metapage on each
  * failure.  (Note that it wouldn't do to hold the lock on the metapage while
  * moving to the root --- that'd deadlock against any concurrent root split.)
@@ -497,7 +497,7 @@ _bt_checkpage(Relation rel, Buffer buf)
 	/*
 	 * ReadBuffer verifies that every newly-read page passes
 	 * PageHeaderIsValid, which means it either contains a reasonably sane
-	 * page header or is all-zero.	We have to defend against the all-zero
+	 * page header or is all-zero.  We have to defend against the all-zero
 	 * case, however.
 	 */
 	if (PageIsNew(page))
@@ -564,7 +564,7 @@ _bt_log_reuse_page(Relation rel, BlockNumber blkno, TransactionId latestRemovedX
 /*
  *	_bt_getbuf() -- Get a buffer by block number for read or write.
  *
- *		blkno == P_NEW means to get an unallocated index page.	The page
+ *		blkno == P_NEW means to get an unallocated index page.  The page
  *		will be initialized before returning it.
  *
  *		When this routine returns, the appropriate lock is set on the
@@ -595,7 +595,7 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 		 * First see if the FSM knows of any free pages.
 		 *
 		 * We can't trust the FSM's report unreservedly; we have to check that
-		 * the page is still free.	(For example, an already-free page could
+		 * the page is still free.  (For example, an already-free page could
 		 * have been re-used between the time the last VACUUM scanned it and
 		 * the time the VACUUM made its FSM updates.)
 		 *
@@ -774,7 +774,7 @@ _bt_page_recyclable(Page page)
 /*
  * Delete item(s) from a btree page during VACUUM.
  *
- * This must only be used for deleting leaf items.	Deleting an item on a
+ * This must only be used for deleting leaf items.  Deleting an item on a
  * non-leaf page has to be done as part of an atomic action that includes
  * deleting the page it points to.
  *
@@ -842,7 +842,7 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
 
 		/*
 		 * The target-offsets array is not in the buffer, but pretend that it
-		 * is.	When XLogInsert stores the whole buffer, the offsets array
+		 * is.  When XLogInsert stores the whole buffer, the offsets array
 		 * need not be stored too.
 		 */
 		if (nitems > 0)
@@ -1049,11 +1049,12 @@ _bt_lock_branch_parent(Relation rel, BlockNumber child, BTStack stack,
 				lbuf = _bt_getbuf(rel, leftsib, BT_READ);
 				lpage = BufferGetPage(lbuf);
 				lopaque = (BTPageOpaque) PageGetSpecialPointer(lpage);
+
 				/*
 				 * If the left sibling was concurrently split, so that its
-				 * next-pointer doesn't point to the current page anymore,
-				 * the split that created the current page must be completed.
-				 * (We don't allow splitting an incompletely split page again
+				 * next-pointer doesn't point to the current page anymore, the
+				 * split that created the current page must be completed. (We
+				 * don't allow splitting an incompletely split page again
 				 * until the previous split has been completed)
 				 */
 				if (lopaque->btpo_next == parent &&
@@ -1066,7 +1067,7 @@ _bt_lock_branch_parent(Relation rel, BlockNumber child, BTStack stack,
 			}
 
 			return _bt_lock_branch_parent(rel, parent, stack->bts_parent,
-										  topparent, topoff, target, rightsib);
+										topparent, topoff, target, rightsib);
 		}
 		else
 		{
@@ -1112,6 +1113,7 @@ _bt_pagedel(Relation rel, Buffer buf)
 	bool		rightsib_empty;
 	Page		page;
 	BTPageOpaque opaque;
+
 	/*
 	 * "stack" is a search stack leading (approximately) to the target page.
 	 * It is initially NULL, but when iterating, we keep it to avoid
@@ -1140,24 +1142,24 @@ _bt_pagedel(Relation rel, Buffer buf)
 			 * was never supposed to leave half-dead pages in the tree, it was
 			 * just a transient state, but it was nevertheless possible in
 			 * error scenarios. We don't know how to deal with them here. They
-			 * are harmless as far as searches are considered, but inserts into
-			 * the deleted keyspace could add out-of-order downlinks in the
-			 * upper levels. Log a notice, hopefully the admin will notice and
-			 * reindex.
+			 * are harmless as far as searches are considered, but inserts
+			 * into the deleted keyspace could add out-of-order downlinks in
+			 * the upper levels. Log a notice, hopefully the admin will notice
+			 * and reindex.
 			 */
 			if (P_ISHALFDEAD(opaque))
 				ereport(LOG,
 						(errcode(ERRCODE_INDEX_CORRUPTED),
-						 errmsg("index \"%s\" contains a half-dead internal page",
-								RelationGetRelationName(rel)),
+					errmsg("index \"%s\" contains a half-dead internal page",
+						   RelationGetRelationName(rel)),
 						 errhint("This can be caused by an interrupt VACUUM in version 9.3 or older, before upgrade. Please REINDEX it.")));
 			_bt_relbuf(rel, buf);
 			return ndeleted;
 		}
 
 		/*
-		 * We can never delete rightmost pages nor root pages.  While at
-		 * it, check that page is not already deleted and is empty.
+		 * We can never delete rightmost pages nor root pages.  While at it,
+		 * check that page is not already deleted and is empty.
 		 *
 		 * To keep the algorithm simple, we also never delete an incompletely
 		 * split page (they should be rare enough that this doesn't make any
@@ -1167,10 +1169,10 @@ _bt_pagedel(Relation rel, Buffer buf)
 		 * left half of an incomplete split, but ensuring that it's not the
 		 * right half is more complicated.  For that, we have to check that
 		 * the left sibling doesn't have its INCOMPLETE_SPLIT flag set.  On
-		 * the first iteration, we temporarily release the lock on the
-		 * current page, and check the left sibling and also construct a
-		 * search stack to.  On subsequent iterations, we know we stepped right
-		 * from a page that passed these tests, so it's OK.
+		 * the first iteration, we temporarily release the lock on the current
+		 * page, and check the left sibling and also construct a search stack
+		 * to.  On subsequent iterations, we know we stepped right from a page
+		 * that passed these tests, so it's OK.
 		 */
 		if (P_RIGHTMOST(opaque) || P_ISROOT(opaque) || P_ISDELETED(opaque) ||
 			P_FIRSTDATAKEY(opaque) <= PageGetMaxOffsetNumber(page) ||
@@ -1184,9 +1186,9 @@ _bt_pagedel(Relation rel, Buffer buf)
 		}
 
 		/*
-		 * First, remove downlink pointing to the page (or a parent of the page,
-		 * if we are going to delete a taller branch), and mark the page as
-		 * half-dead.
+		 * First, remove downlink pointing to the page (or a parent of the
+		 * page, if we are going to delete a taller branch), and mark the page
+		 * as half-dead.
 		 */
 		if (!P_ISHALFDEAD(opaque))
 		{
@@ -1205,7 +1207,7 @@ _bt_pagedel(Relation rel, Buffer buf)
 				ItemId		itemid;
 				IndexTuple	targetkey;
 				Buffer		lbuf;
-				BlockNumber	leftsib;
+				BlockNumber leftsib;
 
 				itemid = PageGetItemId(page, P_HIKEY);
 				targetkey = CopyIndexTuple((IndexTuple) PageGetItem(page, itemid));
@@ -1219,9 +1221,9 @@ _bt_pagedel(Relation rel, Buffer buf)
 				LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 
 				/*
-				 * Fetch the left sibling, to check that it's not marked
-				 * with INCOMPLETE_SPLIT flag.  That would mean that the
-				 * page to-be-deleted doesn't have a downlink, and the page
+				 * Fetch the left sibling, to check that it's not marked with
+				 * INCOMPLETE_SPLIT flag.  That would mean that the page
+				 * to-be-deleted doesn't have a downlink, and the page
 				 * deletion algorithm isn't prepared to handle that.
 				 */
 				if (!P_LEFTMOST(opaque))
@@ -1267,7 +1269,7 @@ _bt_pagedel(Relation rel, Buffer buf)
 
 		/*
 		 * Then unlink it from its siblings.  Each call to
-		 *_bt_unlink_halfdead_page unlinks the topmost page from the branch,
+		 * _bt_unlink_halfdead_page unlinks the topmost page from the branch,
 		 * making it shallower.  Iterate until the leaf page is gone.
 		 */
 		rightsib_empty = false;
@@ -1291,8 +1293,8 @@ _bt_pagedel(Relation rel, Buffer buf)
 		 * is that it was the rightmost child of the parent. Now that we
 		 * removed the downlink for this page, the right sibling might now be
 		 * the only child of the parent, and could be removed. It would be
-		 * picked up by the next vacuum anyway, but might as well try to remove
-		 * it now, so loop back to process the right sibling.
+		 * picked up by the next vacuum anyway, but might as well try to
+		 * remove it now, so loop back to process the right sibling.
 		 */
 		if (!rightsib_empty)
 			break;
@@ -1310,9 +1312,9 @@ _bt_pagedel(Relation rel, Buffer buf)
 static bool
 _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
 {
-	BlockNumber	leafblkno;
+	BlockNumber leafblkno;
 	BlockNumber leafrightsib;
-	BlockNumber	target;
+	BlockNumber target;
 	BlockNumber rightsib;
 	ItemId		itemid;
 	Page		page;
@@ -1351,7 +1353,7 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
 
 	/*
 	 * Check that the parent-page index items we're about to delete/overwrite
-	 * contain what we expect.	This can fail if the index has become corrupt
+	 * contain what we expect.  This can fail if the index has become corrupt
 	 * for some reason.  We want to throw any error before entering the
 	 * critical section --- otherwise it'd be a PANIC.
 	 *
@@ -1490,9 +1492,9 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 	BlockNumber leafblkno = BufferGetBlockNumber(leafbuf);
 	BlockNumber leafleftsib;
 	BlockNumber leafrightsib;
-	BlockNumber	target;
-	BlockNumber	leftsib;
-	BlockNumber	rightsib;
+	BlockNumber target;
+	BlockNumber leftsib;
+	BlockNumber rightsib;
 	Buffer		lbuf = InvalidBuffer;
 	Buffer		buf;
 	Buffer		rbuf;
@@ -1506,7 +1508,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 	int			targetlevel;
 	ItemPointer leafhikey;
 	BlockNumber nextchild;
-	BlockNumber	topblkno;
+	BlockNumber topblkno;
 
 	page = BufferGetPage(leafbuf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -1596,7 +1598,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 		lbuf = InvalidBuffer;
 
 	/*
-	 * Next write-lock the target page itself.	It should be okay to take just
+	 * Next write-lock the target page itself.  It should be okay to take just
 	 * a write lock not a superexclusive lock, since no scans would stop on an
 	 * empty page.
 	 */
@@ -1605,9 +1607,9 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
 	/*
-	 * Check page is still empty etc, else abandon deletion.  This is just
-	 * for paranoia's sake; a half-dead page cannot resurrect because there
-	 * can be only one vacuum process running at a time.
+	 * Check page is still empty etc, else abandon deletion.  This is just for
+	 * paranoia's sake; a half-dead page cannot resurrect because there can be
+	 * only one vacuum process running at a time.
 	 */
 	if (P_RIGHTMOST(opaque) || P_ISROOT(opaque) || P_ISDELETED(opaque))
 	{
@@ -1733,7 +1735,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 	 * we're in VACUUM and would not otherwise have an XID.  Having already
 	 * updated links to the target, ReadNewTransactionId() suffices as an
 	 * upper bound.  Any scan having retained a now-stale link is advertising
-	 * in its PGXACT an xmin less than or equal to the value we read here.	It
+	 * in its PGXACT an xmin less than or equal to the value we read here.  It
 	 * will continue to do so, holding back RecentGlobalXmin, for the duration
 	 * of that scan.
 	 */

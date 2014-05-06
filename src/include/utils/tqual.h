@@ -3,7 +3,7 @@
  * tqual.h
  *	  POSTGRES "time qualification" definitions, ie, tuple visibility rules.
  *
- *	  Should be moved/renamed...	- vadim 07/28/98
+ *	  Should be moved/renamed...    - vadim 07/28/98
  *
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -76,7 +76,7 @@ extern bool HeapTupleSatisfiesToast(HeapTuple htup,
 extern bool HeapTupleSatisfiesDirty(HeapTuple htup,
 						Snapshot snapshot, Buffer buffer);
 extern bool HeapTupleSatisfiesHistoricMVCC(HeapTuple htup,
-						Snapshot snapshot, Buffer buffer);
+							   Snapshot snapshot, Buffer buffer);
 
 /* Special "satisfies" routines with different APIs */
 extern HTSU_Result HeapTupleSatisfiesUpdate(HeapTuple htup,
@@ -95,8 +95,8 @@ extern bool HeapTupleHeaderIsOnlyLocked(HeapTupleHeader tuple);
  * details this is implemented in reorderbuffer.c not tqual.c.
  */
 extern bool ResolveCminCmaxDuringDecoding(struct HTAB *tuplecid_data,
-										  Snapshot snapshot,
-										  HeapTuple htup,
-										  Buffer buffer,
-										  CommandId *cmin, CommandId *cmax);
+							  Snapshot snapshot,
+							  HeapTuple htup,
+							  Buffer buffer,
+							  CommandId *cmin, CommandId *cmax);
 #endif   /* TQUAL_H */

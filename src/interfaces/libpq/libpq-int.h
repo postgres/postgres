@@ -365,7 +365,8 @@ struct pg_conn
 
 	/* Connection data */
 	/* See PQconnectPoll() for how we use 'int' and not 'pgsocket'. */
-	pgsocket	sock;			/* FD for socket, PGINVALID_SOCKET if unconnected */
+	pgsocket	sock;			/* FD for socket, PGINVALID_SOCKET if
+								 * unconnected */
 	SockAddr	laddr;			/* Local address */
 	SockAddr	raddr;			/* Remote address */
 	ProtocolVersion pversion;	/* FE/BE protocol version in use */

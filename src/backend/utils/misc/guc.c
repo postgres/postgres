@@ -496,7 +496,7 @@ static int	max_identifier_length;
 static int	block_size;
 static int	segment_size;
 static int	wal_block_size;
-static bool	data_checksums;
+static bool data_checksums;
 static int	wal_segment_size;
 static bool integer_datetimes;
 static int	effective_io_concurrency;
@@ -2148,7 +2148,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&max_replication_slots,
-		0, 0, MAX_BACKENDS /* XXX?*/,
+		0, 0, MAX_BACKENDS /* XXX? */ ,
 		NULL, NULL, NULL
 	},
 
@@ -2543,7 +2543,11 @@ static struct config_int ConfigureNamesInt[] =
 		{"track_activity_query_size", PGC_POSTMASTER, RESOURCES_MEM,
 			gettext_noop("Sets the size reserved for pg_stat_activity.query, in bytes."),
 			NULL,
-			/* There is no _bytes_ unit, so the user can't supply units for this. */
+
+			/*
+			 * There is no _bytes_ unit, so the user can't supply units for
+			 * this.
+			 */
 		},
 		&pgstat_track_activity_query_size,
 		1024, 100, 102400,
@@ -3778,7 +3782,7 @@ get_guc_variables(void)
 
 
 /*
- * Build the sorted array.	This is split out so that it could be
+ * Build the sorted array.  This is split out so that it could be
  * re-executed after startup (eg, we could allow loadable modules to
  * add vars, and then we'd need to re-sort).
  */
@@ -3935,7 +3939,7 @@ add_placeholder_variable(const char *name, int elevel)
 
 	/*
 	 * The char* is allocated at the end of the struct since we have no
-	 * 'static' place to point to.	Note that the current value, as well as
+	 * 'static' place to point to.  Note that the current value, as well as
 	 * the boot and reset values, start out NULL.
 	 */
 	var->variable = (char **) (var + 1);
@@ -3977,7 +3981,7 @@ find_option(const char *name, bool create_placeholders, int elevel)
 		return *res;
 
 	/*
-	 * See if the name is an obsolete name for a variable.	We assume that the
+	 * See if the name is an obsolete name for a variable.  We assume that the
 	 * set of supported old names is short enough that a brute-force search is
 	 * the best way.
 	 */
@@ -4636,7 +4640,7 @@ NewGUCNestLevel(void)
 /*
  * Do GUC processing at transaction or subtransaction commit or abort, or
  * when exiting a function that has proconfig settings, or when undoing a
- * transient assignment to some GUC variables.	(The name is thus a bit of
+ * transient assignment to some GUC variables.  (The name is thus a bit of
  * a misnomer; perhaps it should be ExitGUCNestLevel or some such.)
  * During abort, we discard all GUC settings that were applied at nesting
  * levels >= nestLevel.  nestLevel == 1 corresponds to the main transaction.
@@ -5357,7 +5361,7 @@ validate_conf_option(struct config_generic * record, const char *name,
 					{
 						ereport(elevel,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("parameter \"%s\" requires a Boolean value",
+						  errmsg("parameter \"%s\" requires a Boolean value",
 								 name)));
 						return 0;
 					}
@@ -5387,8 +5391,8 @@ validate_conf_option(struct config_generic * record, const char *name,
 					{
 						ereport(elevel,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("invalid value for parameter \"%s\": \"%s\"",
-								 name, value),
+						 errmsg("invalid value for parameter \"%s\": \"%s\"",
+								name, value),
 								 hintmsg ? errhint("%s", _(hintmsg)) : 0));
 						return 0;
 					}
@@ -5398,7 +5402,7 @@ validate_conf_option(struct config_generic * record, const char *name,
 						ereport(elevel,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 								 errmsg("%d is outside the valid range for parameter \"%s\" (%d .. %d)",
-										*((int *) newval), name, conf->min, conf->max)));
+							*((int *) newval), name, conf->min, conf->max)));
 						return 0;
 					}
 
@@ -5425,7 +5429,7 @@ validate_conf_option(struct config_generic * record, const char *name,
 					{
 						ereport(elevel,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("parameter \"%s\" requires a numeric value",
+						  errmsg("parameter \"%s\" requires a numeric value",
 								 name)));
 						return 0;
 					}
@@ -5435,7 +5439,7 @@ validate_conf_option(struct config_generic * record, const char *name,
 						ereport(elevel,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 								 errmsg("%g is outside the valid range for parameter \"%s\" (%g .. %g)",
-										*((double *) newval), name, conf->min, conf->max)));
+						 *((double *) newval), name, conf->min, conf->max)));
 						return 0;
 					}
 
@@ -5512,9 +5516,9 @@ validate_conf_option(struct config_generic * record, const char *name,
 
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("invalid value for parameter \"%s\": \"%s\"",
-										name, value),
-										hintmsg ? errhint("%s", _(hintmsg)) : 0));
+						 errmsg("invalid value for parameter \"%s\": \"%s\"",
+								name, value),
+								 hintmsg ? errhint("%s", _(hintmsg)) : 0));
 
 						if (hintmsg != NULL)
 							pfree(hintmsg);
@@ -5667,7 +5671,7 @@ set_config_option(const char *name, const char *value,
 				 * If a PGC_BACKEND parameter is changed in the config file,
 				 * we want to accept the new value in the postmaster (whence
 				 * it will propagate to subsequently-started backends), but
-				 * ignore it in existing backends.	This is a tad klugy, but
+				 * ignore it in existing backends.  This is a tad klugy, but
 				 * necessary because we don't re-read the config file during
 				 * backend start.
 				 *
@@ -5724,7 +5728,7 @@ set_config_option(const char *name, const char *value,
 	 * An exception might be made if the reset value is assumed to be "safe".
 	 *
 	 * Note: this flag is currently used for "session_authorization" and
-	 * "role".	We need to prohibit changing these inside a local userid
+	 * "role".  We need to prohibit changing these inside a local userid
 	 * context because when we exit it, GUC won't be notified, leaving things
 	 * out of sync.  (This could be fixed by forcing a new GUC nesting level,
 	 * but that would change behavior in possibly-undesirable ways.)  Also, we
@@ -6515,7 +6519,7 @@ flatten_set_variable_args(const char *name, List *args)
 				else
 				{
 					/*
-					 * Plain string literal or identifier.	For quote mode,
+					 * Plain string literal or identifier.  For quote mode,
 					 * quote it if it's not a vanilla identifier.
 					 */
 					if (flags & GUC_LIST_QUOTE)
@@ -6681,7 +6685,7 @@ replace_auto_config_value(ConfigVariable **head_p, ConfigVariable **tail_p,
  * configuration file (PG_AUTOCONF_FILENAME) intact.
  */
 void
-AlterSystemSetConfigFile(AlterSystemStmt * altersysstmt)
+AlterSystemSetConfigFile(AlterSystemStmt *altersysstmt)
 {
 	char	   *name;
 	char	   *value;
@@ -6698,7 +6702,7 @@ AlterSystemSetConfigFile(AlterSystemStmt * altersysstmt)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to execute ALTER SYSTEM command"))));
+			 (errmsg("must be superuser to execute ALTER SYSTEM command"))));
 
 	/*
 	 * Validate the name and arguments [value1, value2 ... ].
@@ -6724,7 +6728,7 @@ AlterSystemSetConfigFile(AlterSystemStmt * altersysstmt)
 	if (record == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("unrecognized configuration parameter \"%s\"", name)));
+			   errmsg("unrecognized configuration parameter \"%s\"", name)));
 
 	if ((record->context == PGC_INTERNAL) ||
 		(record->flags & GUC_DISALLOW_IN_FILE))
@@ -6737,7 +6741,7 @@ AlterSystemSetConfigFile(AlterSystemStmt * altersysstmt)
 							  ERROR, true, NULL,
 							  &newextra))
 		ereport(ERROR,
-				(errmsg("invalid value for parameter \"%s\": \"%s\"", name, value)));
+		(errmsg("invalid value for parameter \"%s\": \"%s\"", name, value)));
 
 
 	/*
@@ -6754,8 +6758,8 @@ AlterSystemSetConfigFile(AlterSystemStmt * altersysstmt)
 	 * One backend is allowed to operate on file PG_AUTOCONF_FILENAME, to
 	 * ensure that we need to update the contents of the file with
 	 * AutoFileLock. To ensure crash safety, first the contents are written to
-	 * a temporary file which is then renameed to PG_AUTOCONF_FILENAME. In case
-	 * there exists a temp file from previous crash, that can be reused.
+	 * a temporary file which is then renameed to PG_AUTOCONF_FILENAME. In
+	 * case there exists a temp file from previous crash, that can be reused.
 	 */
 
 	LWLockAcquire(AutoFileLock, LW_EXCLUSIVE);
@@ -6846,6 +6850,7 @@ ExecSetVariableStmt(VariableSetStmt *stmt, bool isTopLevel)
 									 0);
 			break;
 		case VAR_SET_MULTI:
+
 			/*
 			 * Special-case SQL syntaxes.  The TRANSACTION and SESSION
 			 * CHARACTERISTICS cases effectively set more than one variable
@@ -7131,7 +7136,7 @@ define_custom_variable(struct config_generic * variable)
 	 * variable.  Essentially, we need to duplicate all the active and stacked
 	 * values, but with appropriate validation and datatype adjustment.
 	 *
-	 * If an assignment fails, we report a WARNING and keep going.	We don't
+	 * If an assignment fails, we report a WARNING and keep going.  We don't
 	 * want to throw ERROR for bad values, because it'd bollix the add-on
 	 * module that's presumably halfway through getting loaded.  In such cases
 	 * the default or previous state will become active instead.
@@ -7159,7 +7164,7 @@ define_custom_variable(struct config_generic * variable)
 	/*
 	 * Free up as much as we conveniently can of the placeholder structure.
 	 * (This neglects any stack items, so it's possible for some memory to be
-	 * leaked.	Since this can only happen once per session per variable, it
+	 * leaked.  Since this can only happen once per session per variable, it
 	 * doesn't seem worth spending much code on.)
 	 */
 	set_string_field(pHolder, pHolder->variable, NULL);
@@ -7232,7 +7237,7 @@ reapply_stacked_values(struct config_generic * variable,
 	else
 	{
 		/*
-		 * We are at the end of the stack.	If the active/previous value is
+		 * We are at the end of the stack.  If the active/previous value is
 		 * different from the reset value, it must represent a previously
 		 * committed session value.  Apply it, and then drop the stack entry
 		 * that set_config_option will have created under the impression that
@@ -8424,7 +8429,7 @@ ParseLongOption(const char *string, char **name, char **value)
 
 /*
  * Handle options fetched from pg_db_role_setting.setconfig,
- * pg_proc.proconfig, etc.	Caller must specify proper context/source/action.
+ * pg_proc.proconfig, etc.  Caller must specify proper context/source/action.
  *
  * The array parameter must be an array of TEXT (it must not be NULL).
  */
@@ -8705,7 +8710,7 @@ GUCArrayReset(ArrayType *array)
  * Validate a proposed option setting for GUCArrayAdd/Delete/Reset.
  *
  * name is the option name.  value is the proposed value for the Add case,
- * or NULL for the Delete/Reset cases.	If skipIfNoPermissions is true, it's
+ * or NULL for the Delete/Reset cases.  If skipIfNoPermissions is true, it's
  * not an error to have no permissions to set the option.
  *
  * Returns TRUE if OK, FALSE if skipIfNoPermissions is true and user does not
@@ -8786,7 +8791,7 @@ validate_option_array_item(const char *name, const char *value,
  * ERRCODE_INVALID_PARAMETER_VALUE SQLSTATE for check hook failures.
  *
  * Note that GUC_check_errmsg() etc are just macros that result in a direct
- * assignment to the associated variables.	That is ugly, but forced by the
+ * assignment to the associated variables.  That is ugly, but forced by the
  * limitations of C's macro mechanisms.
  */
 void

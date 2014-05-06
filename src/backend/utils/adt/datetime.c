@@ -351,7 +351,7 @@ j2date(int jd, int *year, int *month, int *day)
  * j2day - convert Julian date to day-of-week (0..6 == Sun..Sat)
  *
  * Note: various places use the locution j2day(date - 1) to produce a
- * result according to the convention 0..6 = Mon..Sun.	This is a bit of
+ * result according to the convention 0..6 = Mon..Sun.  This is a bit of
  * a crock, but will work as long as the computation here is just a modulo.
  */
 int
@@ -819,10 +819,11 @@ DecodeDateTime(char **field, int *ftype, int nf,
 		switch (ftype[i])
 		{
 			case DTK_DATE:
+
 				/*
-				 * Integral julian day with attached time zone?
-				 * All other forms with JD will be separated into
-				 * distinct fields, so we handle just this case here.
+				 * Integral julian day with attached time zone? All other
+				 * forms with JD will be separated into distinct fields, so we
+				 * handle just this case here.
 				 */
 				if (ptype == DTK_JULIAN)
 				{
@@ -849,6 +850,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 					ptype = 0;
 					break;
 				}
+
 				/*
 				 * Already have a date? Then this might be a time zone name
 				 * with embedded punctuation (e.g. "America/New_York") or a
@@ -1158,17 +1160,18 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						if (dterr < 0)
 							return dterr;
 					}
+
 					/*
 					 * Is this a YMD or HMS specification, or a year number?
 					 * YMD and HMS are required to be six digits or more, so
 					 * if it is 5 digits, it is a year.  If it is six or more
 					 * more digits, we assume it is YMD or HMS unless no date
-					 * and no time values have been specified.  This forces
-					 * 6+ digit years to be at the end of the string, or to use
+					 * and no time values have been specified.  This forces 6+
+					 * digit years to be at the end of the string, or to use
 					 * the ISO date specification.
 					 */
 					else if (flen >= 6 && (!(fmask & DTK_DATE_M) ||
-							 !(fmask & DTK_TIME_M)))
+										   !(fmask & DTK_TIME_M)))
 					{
 						dterr = DecodeNumberField(flen, field[i], fmask,
 												  &tmask, tm,
@@ -2490,7 +2493,7 @@ DecodeNumber(int flen, char *str, bool haveTextMonth, int fmask,
 
 			/*
 			 * Nothing so far; make a decision about what we think the input
-			 * is.	There used to be lots of heuristics here, but the
+			 * is.  There used to be lots of heuristics here, but the
 			 * consensus now is to be paranoid.  It *must* be either
 			 * YYYY-MM-DD (with a more-than-two-digit year field), or the
 			 * field order defined by DateOrder.
@@ -2523,9 +2526,9 @@ DecodeNumber(int flen, char *str, bool haveTextMonth, int fmask,
 			{
 				/*
 				 * We are at the first numeric field of a date that included a
-				 * textual month name.	We want to support the variants
+				 * textual month name.  We want to support the variants
 				 * MON-DD-YYYY, DD-MON-YYYY, and YYYY-MON-DD as unambiguous
-				 * inputs.	We will also accept MON-DD-YY or DD-MON-YY in
+				 * inputs.  We will also accept MON-DD-YY or DD-MON-YY in
 				 * either DMY or MDY modes, as well as YY-MON-DD in YMD mode.
 				 */
 				if (flen >= 3 || DateOrder == DATEORDER_YMD)
@@ -2654,6 +2657,7 @@ DecodeNumberField(int len, char *str, int fmask,
 		if (len >= 6)
 		{
 			*tmask = DTK_DATE_M;
+
 			/*
 			 * Start from end and consider first 2 as Day, next 2 as Month,
 			 * and the rest as Year.
@@ -2890,7 +2894,7 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 				Assert(*field[i] == '-' || *field[i] == '+');
 
 				/*
-				 * Check for signed hh:mm or hh:mm:ss.	If so, process exactly
+				 * Check for signed hh:mm or hh:mm:ss.  If so, process exactly
 				 * like DTK_TIME case above, plus handling the sign.
 				 */
 				if (strchr(field[i] + 1, ':') != NULL &&
@@ -2978,8 +2982,8 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 					type = DTK_MONTH;
 					if (*field[i] == '-')
 						val2 = -val2;
-					if (((double)val * MONTHS_PER_YEAR + val2) > INT_MAX ||
-						((double)val * MONTHS_PER_YEAR + val2) < INT_MIN)
+					if (((double) val * MONTHS_PER_YEAR + val2) > INT_MAX ||
+						((double) val * MONTHS_PER_YEAR + val2) < INT_MIN)
 						return DTERR_FIELD_OVERFLOW;
 					val = val * MONTHS_PER_YEAR + val2;
 					fval = 0;
@@ -3327,7 +3331,7 @@ DecodeISO8601Interval(char *str,
 			return dterr;
 
 		/*
-		 * Note: we could step off the end of the string here.	Code below
+		 * Note: we could step off the end of the string here.  Code below
 		 * *must* exit the loop if unit == '\0'.
 		 */
 		unit = *str++;
@@ -4130,7 +4134,7 @@ EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 
 /*
  * We've been burnt by stupid errors in the ordering of the datetkn tables
- * once too often.	Arrange to check them during postmaster start.
+ * once too often.  Arrange to check them during postmaster start.
  */
 static bool
 CheckDateTokenTable(const char *tablename, const datetkn *base, int nel)

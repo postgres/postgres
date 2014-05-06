@@ -42,7 +42,7 @@ pgkill(int pid, int sig)
 	/* special case for SIGKILL: just ask the system to terminate the target */
 	if (sig == SIGKILL)
 	{
-		HANDLE prochandle;
+		HANDLE		prochandle;
 
 		if ((prochandle = OpenProcess(PROCESS_TERMINATE, FALSE, (DWORD) pid)) == NULL)
 		{

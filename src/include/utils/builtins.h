@@ -318,7 +318,7 @@ extern Datum btnamecmp(PG_FUNCTION_ARGS);
 extern Datum bttextcmp(PG_FUNCTION_ARGS);
 
 /*
- *		Per-opclass sort support functions for new btrees.	Like the
+ *		Per-opclass sort support functions for new btrees.  Like the
  *		functions above, these are stored in pg_amproc; most are defined in
  *		access/nbtree/nbtcompare.c
  */

@@ -69,7 +69,7 @@ main(int argc, char *argv[])
 
 	/*
 	 * Remember the physical location of the initially given argv[] array for
-	 * possible use by ps display.	On some platforms, the argv[] storage must
+	 * possible use by ps display.  On some platforms, the argv[] storage must
 	 * be overwritten in order to set the process title for ps. In such cases
 	 * save_ps_display_args makes and returns a new copy of the argv[] array.
 	 *
@@ -98,10 +98,10 @@ main(int argc, char *argv[])
 	MemoryContextInit();
 
 	/*
-	 * Set up locale information from environment.	Note that LC_CTYPE and
+	 * Set up locale information from environment.  Note that LC_CTYPE and
 	 * LC_COLLATE will be overridden later from pg_control if we are in an
 	 * already-initialized database.  We set them here so that they will be
-	 * available to fill pg_control during initdb.	LC_MESSAGES will get set
+	 * available to fill pg_control during initdb.  LC_MESSAGES will get set
 	 * later during GUC option processing, but we set it here to allow startup
 	 * error messages to be localized.
 	 */
@@ -109,6 +109,7 @@ main(int argc, char *argv[])
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("postgres"));
 
 #ifdef WIN32
+
 	/*
 	 * Windows uses codepages rather than the environment, so we work around
 	 * that by querying the environment explicitly first for LC_COLLATE and
@@ -202,6 +203,7 @@ main(int argc, char *argv[])
 #endif
 
 #ifdef WIN32
+
 	/*
 	 * Start our win32 signal implementation
 	 *
@@ -227,9 +229,9 @@ main(int argc, char *argv[])
 
 
 /*
- * Place platform-specific startup hacks here.	This is the right
+ * Place platform-specific startup hacks here.  This is the right
  * place to put code that must be executed early in the launch of any new
- * server process.	Note that this code will NOT be executed when a backend
+ * server process.  Note that this code will NOT be executed when a backend
  * or sub-bootstrap process is forked, unless we are in a fork/exec
  * environment (ie EXEC_BACKEND is defined).
  *

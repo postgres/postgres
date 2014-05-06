@@ -31,7 +31,7 @@
 /*
  * We have to use postgres.h not postgres_fe.h here, because there's so much
  * backend-only stuff in the XLOG include files we need.  But we need a
- * frontend-ish environment otherwise.	Hence this ugly hack.
+ * frontend-ish environment otherwise.  Hence this ugly hack.
  */
 #define FRONTEND 1
 
@@ -802,7 +802,7 @@ FindEndOfXLOG(void)
 
 	/*
 	 * Initialize the max() computation using the last checkpoint address from
-	 * old pg_control.	Note that for the moment we are working with segment
+	 * old pg_control.  Note that for the moment we are working with segment
 	 * numbering according to the old xlog seg size.
 	 */
 	segs_per_xlogid = (UINT64CONST(0x0000000100000000) / ControlFile.xlog_seg_size);

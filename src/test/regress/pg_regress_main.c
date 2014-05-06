@@ -24,9 +24,9 @@
  */
 static PID_TYPE
 psql_start_test(const char *testname,
-				_stringlist ** resultfiles,
-				_stringlist ** expectfiles,
-				_stringlist ** tags)
+				_stringlist **resultfiles,
+				_stringlist **expectfiles,
+				_stringlist **tags)
 {
 	PID_TYPE	pid;
 	char		infile[MAXPGPATH];

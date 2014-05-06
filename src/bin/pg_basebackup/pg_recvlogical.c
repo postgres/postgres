@@ -31,27 +31,27 @@
 #define RECONNECT_SLEEP_TIME 5
 
 /* Global Options */
-static char    *outfile = NULL;
-static int		verbose = 0;
-static int		noloop = 0;
-static int		standby_message_timeout = 10 * 1000;		/* 10 sec = default */
-static int		fsync_interval = 10 * 1000;		/* 10 sec = default */
+static char *outfile = NULL;
+static int	verbose = 0;
+static int	noloop = 0;
+static int	standby_message_timeout = 10 * 1000;		/* 10 sec = default */
+static int	fsync_interval = 10 * 1000; /* 10 sec = default */
 static XLogRecPtr startpos = InvalidXLogRecPtr;
-static bool		do_create_slot = false;
-static bool		do_start_slot = false;
-static bool		do_drop_slot = false;
+static bool do_create_slot = false;
+static bool do_start_slot = false;
+static bool do_drop_slot = false;
 
 /* filled pairwise with option, value. value may be NULL */
-static char	  **options;
-static size_t	noptions = 0;
+static char **options;
+static size_t noptions = 0;
 static const char *plugin = "test_decoding";
 
 /* Global State */
-static int		outfd = -1;
+static int	outfd = -1;
 static volatile sig_atomic_t time_to_abort = false;
 static volatile sig_atomic_t output_reopen = false;
-static int64	output_last_fsync = -1;
-static bool		output_unsynced = false;
+static int64 output_last_fsync = -1;
+static bool output_unsynced = false;
 static XLogRecPtr output_written_lsn = InvalidXLogRecPtr;
 static XLogRecPtr output_fsync_lsn = InvalidXLogRecPtr;
 
@@ -111,8 +111,8 @@ sendFeedback(PGconn *conn, int64 now, bool force, bool replyRequested)
 
 	/*
 	 * we normally don't want to send superfluous feedbacks, but if it's
-	 * because of a timeout we need to, otherwise wal_sender_timeout will
-	 * kill us.
+	 * because of a timeout we need to, otherwise wal_sender_timeout will kill
+	 * us.
 	 */
 	if (!force &&
 		last_written_lsn == output_written_lsn &&
@@ -121,21 +121,21 @@ sendFeedback(PGconn *conn, int64 now, bool force, bool replyRequested)
 
 	if (verbose)
 		fprintf(stderr,
-				_("%s: confirming write up to %X/%X, flush to %X/%X (slot %s)\n"),
+		   _("%s: confirming write up to %X/%X, flush to %X/%X (slot %s)\n"),
 				progname,
-				(uint32) (output_written_lsn >> 32), (uint32) output_written_lsn,
+			(uint32) (output_written_lsn >> 32), (uint32) output_written_lsn,
 				(uint32) (output_fsync_lsn >> 32), (uint32) output_fsync_lsn,
 				replication_slot);
 
 	replybuf[len] = 'r';
 	len += 1;
-	fe_sendint64(output_written_lsn, &replybuf[len]);		/* write */
+	fe_sendint64(output_written_lsn, &replybuf[len]);	/* write */
 	len += 8;
 	fe_sendint64(output_fsync_lsn, &replybuf[len]);		/* flush */
 	len += 8;
-	fe_sendint64(InvalidXLogRecPtr, &replybuf[len]);		/* apply */
+	fe_sendint64(InvalidXLogRecPtr, &replybuf[len]);	/* apply */
 	len += 8;
-	fe_sendint64(now, &replybuf[len]);			/* sendTime */
+	fe_sendint64(now, &replybuf[len]);	/* sendTime */
 	len += 8;
 	replybuf[len] = replyRequested ? 1 : 0;		/* replyRequested */
 	len += 1;
@@ -227,7 +227,7 @@ StreamLog(void)
 
 	/* Initiate the replication stream at specified location */
 	appendPQExpBuffer(query, "START_REPLICATION SLOT \"%s\" LOGICAL %X/%X",
-					  replication_slot, (uint32) (startpos >> 32), (uint32) startpos);
+			 replication_slot, (uint32) (startpos >> 32), (uint32) startpos);
 
 	/* print options if there are any */
 	if (noptions)
@@ -549,7 +549,7 @@ StreamLog(void)
 
 	if (outfd != -1 && strcmp(outfile, "-") != 0)
 	{
-		int64 t = feGetCurrentTimestamp();
+		int64		t = feGetCurrentTimestamp();
 
 		/* no need to jump to error on failure here, we're finishing anyway */
 		OutputFsync(t);
@@ -693,8 +693,8 @@ main(int argc, char **argv)
 /* replication options */
 			case 'o':
 				{
-					char *data = pg_strdup(optarg);
-					char *val = strchr(data, '=');
+					char	   *data = pg_strdup(optarg);
+					char	   *val = strchr(data, '=');
 
 					if (val != NULL)
 					{
@@ -704,7 +704,7 @@ main(int argc, char **argv)
 					}
 
 					noptions += 1;
-					options = pg_realloc(options, sizeof(char*) * noptions * 2);
+					options = pg_realloc(options, sizeof(char *) * noptions * 2);
 
 					options[(noptions - 1) * 2] = data;
 					options[(noptions - 1) * 2 + 1] = val;

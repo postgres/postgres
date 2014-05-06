@@ -30,13 +30,13 @@
  *	  impersonations.
  *
  *	  Another benefit of EDH is that it allows the backend and
- *	  clients to use DSA keys.	DSA keys can only provide digital
+ *	  clients to use DSA keys.  DSA keys can only provide digital
  *	  signatures, not encryption, and are often acceptable in
  *	  jurisdictions where RSA keys are unacceptable.
  *
  *	  The downside to EDH is that it makes it impossible to
  *	  use ssldump(1) if there's a problem establishing an SSL
- *	  session.	In this case you'll need to temporarily disable
+ *	  session.  In this case you'll need to temporarily disable
  *	  EDH by commenting out the callback.
  *
  *	  ...
@@ -119,7 +119,7 @@ char	   *SSLCipherSuites = NULL;
 char	   *SSLECDHCurve;
 
 /* GUC variable: if false, prefer client ciphers */
-bool	   SSLPreferServerCiphers;
+bool		SSLPreferServerCiphers;
 
 /* ------------------------------------------------------------ */
 /*						 Hardcoded values						*/

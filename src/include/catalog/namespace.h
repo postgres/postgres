@@ -20,7 +20,7 @@
 
 /*
  *	This structure holds a list of possible functions or operators
- *	found by namespace lookup.	Each function/operator is identified
+ *	found by namespace lookup.  Each function/operator is identified
  *	by OID and by argument types; the list must be pruned by type
  *	resolution rules that are embodied in the parser, not here.
  *	See FuncnameGetCandidates's comments for more info.

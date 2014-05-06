@@ -152,10 +152,10 @@ AggregateCreate(const char *aggName,
 				 errdetail("An aggregate using a polymorphic transition type must have at least one polymorphic argument.")));
 
 	/*
-	 * An ordered-set aggregate that is VARIADIC must be VARIADIC ANY.	In
+	 * An ordered-set aggregate that is VARIADIC must be VARIADIC ANY.  In
 	 * principle we could support regular variadic types, but it would make
 	 * things much more complicated because we'd have to assemble the correct
-	 * subsets of arguments into array values.	Since no standard aggregates
+	 * subsets of arguments into array values.  Since no standard aggregates
 	 * have use for such a case, we aren't bothering for now.
 	 */
 	if (AGGKIND_IS_ORDERED_SET(aggKind) && OidIsValid(variadicArgType) &&
@@ -167,7 +167,7 @@ AggregateCreate(const char *aggName,
 	/*
 	 * If it's a hypothetical-set aggregate, there must be at least as many
 	 * direct arguments as aggregated ones, and the last N direct arguments
-	 * must match the aggregated ones in type.	(We have to check this again
+	 * must match the aggregated ones in type.  (We have to check this again
 	 * when the aggregate is called, in case ANY is involved, but it makes
 	 * sense to reject the aggregate definition now if the declared arg types
 	 * don't match up.)  It's unconditionally OK if numDirectArgs == numArgs,

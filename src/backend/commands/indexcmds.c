@@ -102,7 +102,7 @@ static void RangeVarCallbackForReindexIndex(const RangeVar *relation,
  * concrete benefit for core types.
 
  * When a comparison or exclusion operator has a polymorphic input type, the
- * actual input types must also match.	This defends against the possibility
+ * actual input types must also match.  This defends against the possibility
  * that operators could vary behavior in response to get_fn_expr_argtype().
  * At present, this hazard is theoretical: check_exclusion_constraint() and
  * all core index access methods decline to set fn_expr for such calls.
@@ -349,11 +349,11 @@ DefineIndex(Oid relationId,
 	 * index build; but for concurrent builds we allow INSERT/UPDATE/DELETE
 	 * (but not VACUUM).
 	 *
-	 * NB: Caller is responsible for making sure that relationId refers
-	 * to the relation on which the index should be built; except in bootstrap
-	 * mode, this will typically require the caller to have already locked
-	 * the relation.  To avoid lock upgrade hazards, that lock should be at
-	 * least as strong as the one we take here.
+	 * NB: Caller is responsible for making sure that relationId refers to the
+	 * relation on which the index should be built; except in bootstrap mode,
+	 * this will typically require the caller to have already locked the
+	 * relation.  To avoid lock upgrade hazards, that lock should be at least
+	 * as strong as the one we take here.
 	 */
 	lockmode = stmt->concurrent ? ShareUpdateExclusiveLock : ShareLock;
 	rel = heap_open(relationId, lockmode);
@@ -433,7 +433,7 @@ DefineIndex(Oid relationId,
 	}
 
 	/*
-	 * Force shared indexes into the pg_global tablespace.	This is a bit of a
+	 * Force shared indexes into the pg_global tablespace.  This is a bit of a
 	 * hack but seems simpler than marking them in the BKI commands.  On the
 	 * other hand, if it's not shared, don't allow it to be placed there.
 	 */
@@ -628,7 +628,7 @@ DefineIndex(Oid relationId,
 	/*
 	 * For a concurrent build, it's important to make the catalog entries
 	 * visible to other transactions before we start to build the index. That
-	 * will prevent them from making incompatible HOT updates.	The new index
+	 * will prevent them from making incompatible HOT updates.  The new index
 	 * will be marked not indisready and not indisvalid, so that no one else
 	 * tries to either insert into it or use it for queries.
 	 *
@@ -676,7 +676,7 @@ DefineIndex(Oid relationId,
 	 * indexes.  We have waited out all the existing transactions and any new
 	 * transaction will have the new index in its list, but the index is still
 	 * marked as "not-ready-for-inserts".  The index is consulted while
-	 * deciding HOT-safety though.	This arrangement ensures that no new HOT
+	 * deciding HOT-safety though.  This arrangement ensures that no new HOT
 	 * chains can be created where the new tuple and the old tuple in the
 	 * chain have different index keys.
 	 *
@@ -736,7 +736,7 @@ DefineIndex(Oid relationId,
 
 	/*
 	 * Now take the "reference snapshot" that will be used by validate_index()
-	 * to filter candidate tuples.	Beware!  There might still be snapshots in
+	 * to filter candidate tuples.  Beware!  There might still be snapshots in
 	 * use that treat some transaction as in-progress that our reference
 	 * snapshot treats as committed.  If such a recently-committed transaction
 	 * deleted tuples in the table, we will not include them in the index; yet
@@ -761,7 +761,7 @@ DefineIndex(Oid relationId,
 	 * Drop the reference snapshot.  We must do this before waiting out other
 	 * snapshot holders, else we will deadlock against other processes also
 	 * doing CREATE INDEX CONCURRENTLY, which would see our snapshot as one
-	 * they must wait for.	But first, save the snapshot's xmin to use as
+	 * they must wait for.  But first, save the snapshot's xmin to use as
 	 * limitXmin for GetCurrentVirtualXIDs().
 	 */
 	limitXmin = snapshot->xmin;
@@ -771,7 +771,7 @@ DefineIndex(Oid relationId,
 
 	/*
 	 * The index is now valid in the sense that it contains all currently
-	 * interesting tuples.	But since it might not contain tuples deleted just
+	 * interesting tuples.  But since it might not contain tuples deleted just
 	 * before the reference snap was taken, we have to wait out any
 	 * transactions that might have older snapshots.  Obtain a list of VXIDs
 	 * of such transactions, and wait for them individually.
@@ -786,7 +786,7 @@ DefineIndex(Oid relationId,
 	 *
 	 * We can also exclude autovacuum processes and processes running manual
 	 * lazy VACUUMs, because they won't be fazed by missing index entries
-	 * either.	(Manual ANALYZEs, however, can't be excluded because they
+	 * either.  (Manual ANALYZEs, however, can't be excluded because they
 	 * might be within transactions that are going to do arbitrary operations
 	 * later.)
 	 *
@@ -875,7 +875,7 @@ CheckMutability(Expr *expr)
 {
 	/*
 	 * First run the expression through the planner.  This has a couple of
-	 * important consequences.	First, function default arguments will get
+	 * important consequences.  First, function default arguments will get
 	 * inserted, which may affect volatility (consider "default now()").
 	 * Second, inline-able functions will get inlined, which may allow us to
 	 * conclude that the function is really less volatile than it's marked. As
@@ -898,7 +898,7 @@ CheckMutability(Expr *expr)
  *		Checks that the given partial-index predicate is valid.
  *
  * This used to also constrain the form of the predicate to forms that
- * indxpath.c could do something with.	However, that seems overly
+ * indxpath.c could do something with.  However, that seems overly
  * restrictive.  One useful application of partial indexes is to apply
  * a UNIQUE constraint across a subset of a table, and in that scenario
  * any evaluatable predicate will work.  So accept any predicate here
@@ -1009,7 +1009,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 			attcollation = exprCollation(expr);
 
 			/*
-			 * Strip any top-level COLLATE clause.	This ensures that we treat
+			 * Strip any top-level COLLATE clause.  This ensures that we treat
 			 * "x COLLATE y" and "(x COLLATE y)" alike.
 			 */
 			while (IsA(expr, CollateExpr))
@@ -1215,7 +1215,7 @@ GetIndexOpClass(List *opclass, Oid attrType,
 	 * 2000/07/30
 	 *
 	 * Release 7.2 renames timestamp_ops to timestamptz_ops, so suppress that
-	 * too for awhile.	I'm starting to think we need a better approach. tgl
+	 * too for awhile.  I'm starting to think we need a better approach. tgl
 	 * 2000/10/01
 	 *
 	 * Release 8.0 removes bigbox_ops (which was dead code for a long while
@@ -1284,7 +1284,7 @@ GetIndexOpClass(List *opclass, Oid attrType,
 						NameListToString(opclass), accessMethodName)));
 
 	/*
-	 * Verify that the index operator class accepts this datatype.	Note we
+	 * Verify that the index operator class accepts this datatype.  Note we
 	 * will accept binary compatibility.
 	 */
 	opClassId = HeapTupleGetOid(tuple);
@@ -1305,7 +1305,7 @@ GetIndexOpClass(List *opclass, Oid attrType,
  * GetDefaultOpClass
  *
  * Given the OIDs of a datatype and an access method, find the default
- * operator class, if any.	Returns InvalidOid if there is none.
+ * operator class, if any.  Returns InvalidOid if there is none.
  */
 Oid
 GetDefaultOpClass(Oid type_id, Oid am_id)
@@ -1400,7 +1400,7 @@ GetDefaultOpClass(Oid type_id, Oid am_id)
  *	Create a name for an implicitly created index, sequence, constraint, etc.
  *
  *	The parameters are typically: the original table name, the original field
- *	name, and a "type" string (such as "seq" or "pkey").	The field name
+ *	name, and a "type" string (such as "seq" or "pkey").    The field name
  *	and/or type can be NULL if not relevant.
  *
  *	The result is a palloc'd string.
@@ -1408,7 +1408,7 @@ GetDefaultOpClass(Oid type_id, Oid am_id)
  *	The basic result we want is "name1_name2_label", omitting "_name2" or
  *	"_label" when those parameters are NULL.  However, we must generate
  *	a name with less than NAMEDATALEN characters!  So, we truncate one or
- *	both names if necessary to make a short-enough string.	The label part
+ *	both names if necessary to make a short-enough string.  The label part
  *	is never truncated (so it had better be reasonably short).
  *
  *	The caller is responsible for checking uniqueness of the generated
@@ -1603,7 +1603,7 @@ ChooseIndexNameAddition(List *colnames)
 
 /*
  * Select the actual names to be used for the columns of an index, given the
- * list of IndexElems for the columns.	This is mostly about ensuring the
+ * list of IndexElems for the columns.  This is mostly about ensuring the
  * names are unique so we don't get a conflicting-attribute-names error.
  *
  * Returns a List of plain strings (char *, not String nodes).
@@ -1714,7 +1714,7 @@ RangeVarCallbackForReindexIndex(const RangeVar *relation,
 	/*
 	 * If the relation does exist, check whether it's an index.  But note that
 	 * the relation might have been dropped between the time we did the name
-	 * lookup and now.	In that case, there's nothing to do.
+	 * lookup and now.  In that case, there's nothing to do.
 	 */
 	relkind = get_rel_relkind(relId);
 	if (!relkind)

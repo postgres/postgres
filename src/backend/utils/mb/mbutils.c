@@ -55,7 +55,7 @@
 /*
  * We maintain a simple linked list caching the fmgr lookup info for the
  * currently selected conversion functions, as well as any that have been
- * selected previously in the current session.	(We remember previous
+ * selected previously in the current session.  (We remember previous
  * settings because we must be able to restore a previous setting during
  * transaction rollback, without doing any fresh catalog accesses.)
  *
@@ -102,7 +102,7 @@ static int	cliplen(const char *str, int len, int limit);
 
 
 /*
- * Prepare for a future call to SetClientEncoding.	Success should mean
+ * Prepare for a future call to SetClientEncoding.  Success should mean
  * that SetClientEncoding is guaranteed to succeed for this encoding request.
  *
  * (But note that success before backend_startup_complete does not guarantee
@@ -174,7 +174,7 @@ PrepareClientEncoding(int encoding)
 
 		/*
 		 * We cannot yet remove any older entry for the same encoding pair,
-		 * since it could still be in use.	SetClientEncoding will clean up.
+		 * since it could still be in use.  SetClientEncoding will clean up.
 		 */
 
 		return 0;				/* success */
@@ -183,8 +183,8 @@ PrepareClientEncoding(int encoding)
 	{
 		/*
 		 * If we're not in a live transaction, the only thing we can do is
-		 * restore a previous setting using the cache.	This covers all
-		 * transaction-rollback cases.	The only case it might not work for is
+		 * restore a previous setting using the cache.  This covers all
+		 * transaction-rollback cases.  The only case it might not work for is
 		 * trying to change client_encoding on the fly by editing
 		 * postgresql.conf and SIGHUP'ing.  Which would probably be a stupid
 		 * thing to do anyway.
@@ -564,7 +564,7 @@ pg_client_to_server(const char *s, int len)
  * See the notes about string conversion functions at the top of this file.
  *
  * Unlike the other string conversion functions, this will apply validation
- * even if encoding == DatabaseEncoding->encoding.	This is because this is
+ * even if encoding == DatabaseEncoding->encoding.  This is because this is
  * used to process data coming in from outside the database, and we never
  * want to just assume validity.
  */
@@ -592,7 +592,7 @@ pg_any_to_server(const char *s, int len, int encoding)
 		 * the selected client_encoding.  If the client encoding is ASCII-safe
 		 * then we just do a straight validation under that encoding.  For an
 		 * ASCII-unsafe encoding we have a problem: we dare not pass such data
-		 * to the parser but we have no way to convert it.	We compromise by
+		 * to the parser but we have no way to convert it.  We compromise by
 		 * rejecting the data if it contains any non-ASCII characters.
 		 */
 		if (PG_VALID_BE_ENCODING(encoding))
@@ -965,11 +965,11 @@ raw_pg_bind_textdomain_codeset(const char *domainname, int encoding)
  * On most platforms, gettext defaults to the codeset implied by LC_CTYPE.
  * When that matches the database encoding, we don't need to do anything.  In
  * CREATE DATABASE, we enforce or trust that the locale's codeset matches the
- * database encoding, except for the C locale.	(On Windows, we also permit a
+ * database encoding, except for the C locale.  (On Windows, we also permit a
  * discrepancy under the UTF8 encoding.)  For the C locale, explicitly bind
  * gettext to the right codeset.
  *
- * On Windows, gettext defaults to the Windows ANSI code page.	This is a
+ * On Windows, gettext defaults to the Windows ANSI code page.  This is a
  * convenient departure for software that passes the strings to Windows ANSI
  * APIs, but we don't do that.  Compel gettext to use database encoding or,
  * failing that, the LC_CTYPE encoding as it would on other platforms.

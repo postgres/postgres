@@ -32,8 +32,9 @@
 typedef struct GinPageOpaqueData
 {
 	BlockNumber rightlink;		/* next page if any */
-	OffsetNumber maxoff;		/* number of PostingItems on GIN_DATA & ~GIN_LEAF page.
-								 * On GIN_LIST page, number of heap tuples. */
+	OffsetNumber maxoff;		/* number of PostingItems on GIN_DATA &
+								 * ~GIN_LEAF page. On GIN_LIST page, number of
+								 * heap tuples. */
 	uint16		flags;			/* see bit definitions below */
 } GinPageOpaqueData;
 
@@ -45,7 +46,8 @@ typedef GinPageOpaqueData *GinPageOpaque;
 #define GIN_META		  (1 << 3)
 #define GIN_LIST		  (1 << 4)
 #define GIN_LIST_FULLROW  (1 << 5)		/* makes sense only on GIN_LIST page */
-#define GIN_INCOMPLETE_SPLIT (1 << 6)	/* page was split, but parent not updated */
+#define GIN_INCOMPLETE_SPLIT (1 << 6)	/* page was split, but parent not
+										 * updated */
 #define GIN_COMPRESSED	  (1 << 7)
 
 /* Page numbers of fixed-location pages */
@@ -119,8 +121,8 @@ typedef struct GinMetaPageData
 #define GinPageSetList(page)   ( GinPageGetOpaque(page)->flags |= GIN_LIST )
 #define GinPageHasFullRow(page)    ( GinPageGetOpaque(page)->flags & GIN_LIST_FULLROW )
 #define GinPageSetFullRow(page)   ( GinPageGetOpaque(page)->flags |= GIN_LIST_FULLROW )
-#define GinPageIsCompressed(page)    ( GinPageGetOpaque(page)->flags & GIN_COMPRESSED )
-#define GinPageSetCompressed(page)   ( GinPageGetOpaque(page)->flags |= GIN_COMPRESSED )
+#define GinPageIsCompressed(page)	 ( GinPageGetOpaque(page)->flags & GIN_COMPRESSED )
+#define GinPageSetCompressed(page)	 ( GinPageGetOpaque(page)->flags |= GIN_COMPRESSED )
 
 #define GinPageIsDeleted(page) ( GinPageGetOpaque(page)->flags & GIN_DELETED)
 #define GinPageSetDeleted(page)    ( GinPageGetOpaque(page)->flags |= GIN_DELETED)
@@ -371,9 +373,9 @@ typedef struct GinState
  */
 typedef struct
 {
-	ItemPointerData first;	/* first item in this posting list (unpacked) */
-	uint16		nbytes;		/* number of bytes that follow */
-	unsigned char bytes[1];	/* varbyte encoded items (variable length) */
+	ItemPointerData first;		/* first item in this posting list (unpacked) */
+	uint16		nbytes;			/* number of bytes that follow */
+	unsigned char bytes[1];		/* varbyte encoded items (variable length) */
 } GinPostingList;
 
 #define SizeOfGinPostingList(plist) (offsetof(GinPostingList, bytes) + SHORTALIGN((plist)->nbytes) )
@@ -404,14 +406,14 @@ typedef struct
 {
 	RelFileNode node;
 	BlockNumber blkno;
-	uint16		flags;		/* GIN_SPLIT_ISLEAF and/or GIN_SPLIT_ISDATA */
+	uint16		flags;			/* GIN_SPLIT_ISLEAF and/or GIN_SPLIT_ISDATA */
 
 	/*
 	 * FOLLOWS:
 	 *
 	 * 1. if not leaf page, block numbers of the left and right child pages
-	 * whose split this insertion finishes. As BlockIdData[2] (beware of adding
-	 * fields before this that would make them not 16-bit aligned)
+	 * whose split this insertion finishes. As BlockIdData[2] (beware of
+	 * adding fields before this that would make them not 16-bit aligned)
 	 *
 	 * 2. an ginxlogInsertEntry or ginxlogRecompressDataLeaf struct, depending
 	 * on tree type.
@@ -426,7 +428,7 @@ typedef struct
 {
 	OffsetNumber offset;
 	bool		isDelete;
-	IndexTupleData tuple;	/* variable length */
+	IndexTupleData tuple;		/* variable length */
 } ginxlogInsertEntry;
 
 
@@ -444,8 +446,8 @@ typedef struct
  */
 typedef struct
 {
-	uint8		segno;		/* segment this action applies to */
-	char		type;		/* action type (see below) */
+	uint8		segno;			/* segment this action applies to */
+	char		type;			/* action type (see below) */
 
 	/*
 	 * Action-specific data follows. For INSERT and REPLACE actions that is a
@@ -453,14 +455,14 @@ typedef struct
 	 * added, followed by the items themselves as ItemPointers. DELETE actions
 	 * have no further data.
 	 */
-} ginxlogSegmentAction;
+}	ginxlogSegmentAction;
 
 /* Action types */
-#define GIN_SEGMENT_UNMODIFIED	0	/* no action (not used in WAL records) */
-#define GIN_SEGMENT_DELETE		1	/* a whole segment is removed */
-#define GIN_SEGMENT_INSERT		2	/* a whole segment is added */
-#define GIN_SEGMENT_REPLACE		3	/* a segment is replaced */
-#define GIN_SEGMENT_ADDITEMS	4	/* items are added to existing segment */
+#define GIN_SEGMENT_UNMODIFIED	0		/* no action (not used in WAL records) */
+#define GIN_SEGMENT_DELETE		1		/* a whole segment is removed */
+#define GIN_SEGMENT_INSERT		2		/* a whole segment is added */
+#define GIN_SEGMENT_REPLACE		3		/* a segment is replaced */
+#define GIN_SEGMENT_ADDITEMS	4		/* items are added to existing segment */
 
 typedef struct
 {
@@ -476,9 +478,10 @@ typedef struct ginxlogSplit
 	RelFileNode node;
 	BlockNumber lblkno;
 	BlockNumber rblkno;
-	BlockNumber rrlink;				/* right link, or root's blocknumber if root split */
-	BlockNumber	leftChildBlkno;		/* valid on a non-leaf split */
-	BlockNumber	rightChildBlkno;
+	BlockNumber rrlink;			/* right link, or root's blocknumber if root
+								 * split */
+	BlockNumber leftChildBlkno; /* valid on a non-leaf split */
+	BlockNumber rightChildBlkno;
 	uint16		flags;
 
 	/* follows: one of the following structs */
@@ -726,7 +729,7 @@ extern ItemPointer ginReadTuple(GinState *ginstate, OffsetNumber attnum,
 
 /* gindatapage.c */
 extern ItemPointer GinDataLeafPageGetItems(Page page, int *nitems, ItemPointerData advancePast);
-extern int GinDataLeafPageGetItemsToTbm(Page page, TIDBitmap *tbm);
+extern int	GinDataLeafPageGetItemsToTbm(Page page, TIDBitmap *tbm);
 extern BlockNumber createPostingTree(Relation index,
 				  ItemPointerData *items, uint32 nitems,
 				  GinStatsData *buildStats);
@@ -763,7 +766,7 @@ extern void ginVacuumPostingTreeLeaf(Relation rel, Buffer buf, GinVacuumState *g
  *
  * In each GinScanKeyData, nentries is the true number of entries, while
  * nuserentries is the number that extractQueryFn returned (which is what
- * we report to consistentFn).	The "user" entries must come first.
+ * we report to consistentFn).  The "user" entries must come first.
  */
 typedef struct GinScanKeyData *GinScanKey;
 
@@ -780,8 +783,8 @@ typedef struct GinScanKeyData
 	GinScanEntry *scanEntry;
 
 	/*
-	 * At least one of the entries in requiredEntries must be present for
-	 * a tuple to match the overall qual.
+	 * At least one of the entries in requiredEntries must be present for a
+	 * tuple to match the overall qual.
 	 *
 	 * additionalEntries contains entries that are needed by the consistent
 	 * function to decide if an item matches, but are not sufficient to
@@ -946,8 +949,8 @@ extern void ginInsertCleanup(GinState *ginstate,
 /* ginpostinglist.c */
 
 extern GinPostingList *ginCompressPostingList(const ItemPointer ptrs, int nptrs,
-								   int maxsize, int *nwritten);
-extern int ginPostingListDecodeAllSegmentsToTbm(GinPostingList *ptr, int totalsize, TIDBitmap *tbm);
+					   int maxsize, int *nwritten);
+extern int	ginPostingListDecodeAllSegmentsToTbm(GinPostingList *ptr, int totalsize, TIDBitmap *tbm);
 
 extern ItemPointer ginPostingListDecodeAllSegments(GinPostingList *ptr, int len, int *ndecoded);
 extern ItemPointer ginPostingListDecode(GinPostingList *ptr, int *ndecoded);
@@ -965,8 +968,8 @@ extern ItemPointer ginMergeItemPointers(ItemPointerData *a, uint32 na,
 static inline int
 ginCompareItemPointers(ItemPointer a, ItemPointer b)
 {
-	uint64 ia = (uint64) a->ip_blkid.bi_hi << 32 | (uint64) a->ip_blkid.bi_lo << 16 | a->ip_posid;
-	uint64 ib = (uint64) b->ip_blkid.bi_hi << 32 | (uint64) b->ip_blkid.bi_lo << 16 | b->ip_posid;
+	uint64		ia = (uint64) a->ip_blkid.bi_hi << 32 | (uint64) a->ip_blkid.bi_lo << 16 | a->ip_posid;
+	uint64		ib = (uint64) b->ip_blkid.bi_hi << 32 | (uint64) b->ip_blkid.bi_lo << 16 | b->ip_posid;
 
 	if (ia == ib)
 		return 0;

@@ -134,7 +134,7 @@ static int ldapServiceLookup(const char *purl, PQconninfoOption *options,
  *
  * PQconninfoOptions[] is a constant static array that we use to initialize
  * a dynamically allocated working copy.  All the "val" fields in
- * PQconninfoOptions[] *must* be NULL.	In a working copy, non-null "val"
+ * PQconninfoOptions[] *must* be NULL.  In a working copy, non-null "val"
  * fields point to malloc'd strings that should be freed when the working
  * array is freed (see PQconninfoFree).
  *
@@ -389,7 +389,7 @@ pgthreadlock_t pg_g_threadlock = default_threadlock;
  *		pqDropConnection
  *
  * Close any physical connection to the server, and reset associated
- * state inside the connection object.	We don't release state that
+ * state inside the connection object.  We don't release state that
  * would be needed to reconnect, though.
  */
 void
@@ -544,7 +544,7 @@ PQping(const char *conninfo)
  * See comment for PQconnectdbParams for the definition of the string format.
  *
  * Returns a PGconn*.  If NULL is returned, a malloc error has occurred, and
- * you should not attempt to proceed with this connection.	If the status
+ * you should not attempt to proceed with this connection.  If the status
  * field of the connection returned is CONNECTION_BAD, an error has
  * occurred. In this case you should call PQfinish on the result, (perhaps
  * inspecting the error message first).  Other fields of the structure may not
@@ -619,7 +619,7 @@ PQconnectStartParams(const char *const * keywords,
  * See comment for PQconnectdb for the definition of the string format.
  *
  * Returns a PGconn*.  If NULL is returned, a malloc error has occurred, and
- * you should not attempt to proceed with this connection.	If the status
+ * you should not attempt to proceed with this connection.  If the status
  * field of the connection returned is CONNECTION_BAD, an error has
  * occurred. In this case you should call PQfinish on the result, (perhaps
  * inspecting the error message first).  Other fields of the structure may not
@@ -856,7 +856,7 @@ connectOptions2(PGconn *conn)
  * and their current default values.
  *
  * NOTE: as of PostgreSQL 7.0, the returned array is dynamically allocated
- * and should be freed when no longer needed via PQconninfoFree().	(In prior
+ * and should be freed when no longer needed via PQconninfoFree().  (In prior
  * versions, the returned array was static, but that's not thread-safe.)
  * Pre-7.0 applications that use this function will see a small memory leak
  * until they are updated to call PQconninfoFree.
@@ -1480,7 +1480,7 @@ connectDBComplete(PGconn *conn)
 	for (;;)
 	{
 		/*
-		 * Wait, if necessary.	Note that the initial state (just after
+		 * Wait, if necessary.  Note that the initial state (just after
 		 * PQconnectStart) is to wait for the socket to select for writing.
 		 */
 		switch (flag)
@@ -1542,7 +1542,7 @@ connectDBComplete(PGconn *conn)
  *		will not block.
  *	 o	If you do not supply an IP address for the remote host (i.e. you
  *		supply a host name instead) then PQconnectStart will block on
- *		gethostbyname.	You will be fine if using Unix sockets (i.e. by
+ *		gethostbyname.  You will be fine if using Unix sockets (i.e. by
  *		supplying neither a host name nor a host address).
  *	 o	If your backend wants to use Kerberos authentication then you must
  *		supply both a host name and a host address, otherwise this function
@@ -1606,7 +1606,7 @@ PQconnectPoll(PGconn *conn)
 								 libpq_gettext(
 											   "invalid connection state, "
 								 "probably indicative of memory corruption\n"
-											));
+											   ));
 			goto error_return;
 	}
 
@@ -1809,7 +1809,7 @@ keep_going:						/* We will come back to here until there is
 					/*
 					 * This connection failed --- set up error report, then
 					 * close socket (do it this way in case close() affects
-					 * the value of errno...).	We will ignore the connect()
+					 * the value of errno...).  We will ignore the connect()
 					 * failure and keep going if there are more addresses.
 					 */
 					connectFailureMessage(conn, SOCK_ERRNO);
@@ -2097,7 +2097,7 @@ keep_going:						/* We will come back to here until there is
 					{
 						/*
 						 * Server failure of some sort, such as failure to
-						 * fork a backend process.	We need to process and
+						 * fork a backend process.  We need to process and
 						 * report the error message, which might be formatted
 						 * according to either protocol 2 or protocol 3.
 						 * Rather than duplicate the code for that, we flip
@@ -2478,7 +2478,7 @@ keep_going:						/* We will come back to here until there is
 						/*
 						 * If we tried to send application_name, check to see
 						 * if the error is about that --- pre-9.0 servers will
-						 * reject it at this stage of the process.	If so,
+						 * reject it at this stage of the process.  If so,
 						 * close the connection and retry without sending
 						 * application_name.  We could possibly get a false
 						 * SQLSTATE match here and retry uselessly, but there
@@ -2624,9 +2624,9 @@ internal_ping(PGconn *conn)
 
 	/*
 	 * If we failed to get any ERROR response from the postmaster, report
-	 * PQPING_NO_RESPONSE.	This result could be somewhat misleading for a
+	 * PQPING_NO_RESPONSE.  This result could be somewhat misleading for a
 	 * pre-7.4 server, since it won't send back a SQLSTATE, but those are long
-	 * out of support.	Another corner case where the server could return a
+	 * out of support.  Another corner case where the server could return a
 	 * failure without a SQLSTATE is fork failure, but NO_RESPONSE isn't
 	 * totally unreasonable for that anyway.  We expect that every other
 	 * failure case in a modern server will produce a report with a SQLSTATE.
@@ -2666,6 +2666,7 @@ makeEmptyPGconn(void)
 	PGconn	   *conn;
 
 #ifdef WIN32
+
 	/*
 	 * Make sure socket support is up and running.
 	 */
@@ -2853,7 +2854,7 @@ freePGconn(PGconn *conn)
  *	 - properly close a connection to the backend
  *
  * This should reset or release all transient state, but NOT the connection
- * parameters.	On exit, the PGconn should be in condition to start a fresh
+ * parameters.  On exit, the PGconn should be in condition to start a fresh
  * connection with the same parameters (see PQreset()).
  */
 static void
@@ -2982,7 +2983,7 @@ PQreset(PGconn *conn)
 		if (connectDBStart(conn) && connectDBComplete(conn))
 		{
 			/*
-			 * Notify event procs of successful reset.	We treat an event proc
+			 * Notify event procs of successful reset.  We treat an event proc
 			 * failure as disabling the connection ... good idea?
 			 */
 			int			i;
@@ -3042,7 +3043,7 @@ PQresetPoll(PGconn *conn)
 		if (status == PGRES_POLLING_OK)
 		{
 			/*
-			 * Notify event procs of successful reset.	We treat an event proc
+			 * Notify event procs of successful reset.  We treat an event proc
 			 * failure as disabling the connection ... good idea?
 			 */
 			int			i;
@@ -3231,7 +3232,7 @@ cancel_errReturn:
  * Returns TRUE if able to send the cancel request, FALSE if not.
  *
  * On failure, an error message is stored in *errbuf, which must be of size
- * errbufsize (recommended size is 256 bytes).	*errbuf is not changed on
+ * errbufsize (recommended size is 256 bytes).  *errbuf is not changed on
  * success return.
  */
 int
@@ -3516,12 +3517,12 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 	 *
 	 * LDAP does not require that an anonymous bind is performed explicitly,
 	 * but we want to distinguish between the case where LDAP bind does not
-	 * succeed within PGLDAP_TIMEOUT seconds (return 2 to continue parsing
-	 * the service control file) and the case where querying the LDAP server
-	 * fails (return 1 to end parsing).
+	 * succeed within PGLDAP_TIMEOUT seconds (return 2 to continue parsing the
+	 * service control file) and the case where querying the LDAP server fails
+	 * (return 1 to end parsing).
 	 *
-	 * Unfortunately there is no way of setting a timeout that works for
-	 * both Windows and OpenLDAP.
+	 * Unfortunately there is no way of setting a timeout that works for both
+	 * Windows and OpenLDAP.
 	 */
 #ifdef WIN32
 	/* the nonstandard ldap_connect function performs an anonymous bind */
@@ -3532,7 +3533,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 		ldap_unbind(ld);
 		return 2;
 	}
-#else /* !WIN32 */
+#else							/* !WIN32 */
 	/* in OpenLDAP, use the LDAP_OPT_NETWORK_TIMEOUT option */
 	if (ldap_set_option(ld, LDAP_OPT_NETWORK_TIMEOUT, &time) != LDAP_SUCCESS)
 	{
@@ -3572,7 +3573,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 		ldap_unbind(ld);
 		return 3;
 	}
-#endif /* WIN32 */
+#endif   /* WIN32 */
 
 	/* search */
 	res = NULL;
@@ -3788,7 +3789,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 	return 0;
 }
 
-#endif	/* USE_LDAP */
+#endif   /* USE_LDAP */
 
 #define MAXBUFSIZE 256
 
@@ -4008,7 +4009,7 @@ parseServiceFile(const char *serviceFile,
  *		PQconninfoParse
  *
  * Parse a string like PQconnectdb() would do and return the
- * resulting connection options array.	NULL is returned on failure.
+ * resulting connection options array.  NULL is returned on failure.
  * The result contains only options specified directly in the string,
  * not any possible default values.
  *
@@ -4461,8 +4462,8 @@ conninfo_add_defaults(PQconninfoOption *options, PQExpBuffer errorMessage)
 
 	/*
 	 * If there's a service spec, use it to obtain any not-explicitly-given
-	 * parameters.  Ignore error if no error message buffer is passed
-	 * because there is no way to pass back the failure message.
+	 * parameters.  Ignore error if no error message buffer is passed because
+	 * there is no way to pass back the failure message.
 	 */
 	if (parseServiceInfo(options, errorMessage) != 0 && errorMessage)
 		return false;
@@ -4792,7 +4793,7 @@ cleanup:
  * Connection URI parameters parser routine
  *
  * If successful, returns true while connOptions is filled with parsed
- * parameters.	Otherwise, returns false and fills errorMessage appropriately.
+ * parameters.  Otherwise, returns false and fills errorMessage appropriately.
  *
  * Destructively modifies 'params' buffer.
  */

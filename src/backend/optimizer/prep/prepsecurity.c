@@ -33,7 +33,7 @@ typedef struct
 	Relation	rel;			/* RTE relation at rt_index */
 	List	   *targetlist;		/* Targetlist for new subquery RTE */
 	List	   *colnames;		/* Column names in subquery RTE */
-	List	   *vars_processed;	/* List of Vars already processed */
+	List	   *vars_processed; /* List of Vars already processed */
 } security_barrier_replace_vars_context;
 
 static void expand_security_qual(PlannerInfo *root, List *tlist, int rt_index,
@@ -43,7 +43,7 @@ static void security_barrier_replace_vars(Node *node,
 							  security_barrier_replace_vars_context *context);
 
 static bool security_barrier_replace_vars_walker(Node *node,
-									 security_barrier_replace_vars_context *context);
+							 security_barrier_replace_vars_context *context);
 
 
 /*
@@ -97,6 +97,7 @@ expand_security_quals(PlannerInfo *root, List *tlist)
 		if (rt_index == parse->resultRelation)
 		{
 			RangeTblEntry *newrte = copyObject(rte);
+
 			parse->rtable = lappend(parse->rtable, newrte);
 			parse->resultRelation = list_length(parse->rtable);
 
@@ -117,11 +118,11 @@ expand_security_quals(PlannerInfo *root, List *tlist)
 			rte->modifiedCols = NULL;
 
 			/*
-			 * For the most part, Vars referencing the original relation should
-			 * remain as they are, meaning that they pull OLD values from the
-			 * expanded RTE.  But in the RETURNING list and in any WITH CHECK
-			 * OPTION quals, we want such Vars to represent NEW values, so
-			 * change them to reference the new RTE.
+			 * For the most part, Vars referencing the original relation
+			 * should remain as they are, meaning that they pull OLD values
+			 * from the expanded RTE.  But in the RETURNING list and in any
+			 * WITH CHECK OPTION quals, we want such Vars to represent NEW
+			 * values, so change them to reference the new RTE.
 			 */
 			ChangeVarNodes((Node *) parse->returningList, rt_index,
 						   parse->resultRelation, 0);
@@ -141,7 +142,8 @@ expand_security_quals(PlannerInfo *root, List *tlist)
 		 */
 		while (rte->securityQuals != NIL)
 		{
-			Node   *qual = (Node *) linitial(rte->securityQuals);
+			Node	   *qual = (Node *) linitial(rte->securityQuals);
+
 			rte->securityQuals = list_delete_first(rte->securityQuals);
 
 			ChangeVarNodes(qual, rt_index, 1, 0);
@@ -160,14 +162,14 @@ static void
 expand_security_qual(PlannerInfo *root, List *tlist, int rt_index,
 					 RangeTblEntry *rte, Node *qual)
 {
-	Query		   *parse = root->parse;
-	Oid				relid = rte->relid;
-	Query		   *subquery;
-	RangeTblEntry  *subrte;
-	RangeTblRef	   *subrtr;
-	PlanRowMark	   *rc;
+	Query	   *parse = root->parse;
+	Oid			relid = rte->relid;
+	Query	   *subquery;
+	RangeTblEntry *subrte;
+	RangeTblRef *subrtr;
+	PlanRowMark *rc;
 	security_barrier_replace_vars_context context;
-	ListCell	   *cell;
+	ListCell   *cell;
 
 	/*
 	 * There should only be 2 possible cases:
@@ -182,6 +184,7 @@ expand_security_qual(PlannerInfo *root, List *tlist, int rt_index,
 	switch (rte->rtekind)
 	{
 		case RTE_RELATION:
+
 			/*
 			 * Turn the relation RTE into a security barrier subquery RTE,
 			 * moving all permissions checks down into the subquery.
@@ -204,7 +207,7 @@ expand_security_qual(PlannerInfo *root, List *tlist, int rt_index,
 			rte->relid = InvalidOid;
 			rte->subquery = subquery;
 			rte->security_barrier = true;
-			rte->inh = false;			/* must not be set for a subquery */
+			rte->inh = false;	/* must not be set for a subquery */
 
 			/* the permissions checks have now been moved down */
 			rte->requiredPerms = 0;
@@ -219,9 +222,9 @@ expand_security_qual(PlannerInfo *root, List *tlist, int rt_index,
 			 * Note that we can't push the user-defined quals down since they
 			 * may included untrusted functions and that means that we will
 			 * end up locking all rows which pass the securityQuals, even if
-			 * those rows don't pass the user-defined quals.  This is currently
-			 * documented behavior, but it'd be nice to come up with a better
-			 * solution some day.
+			 * those rows don't pass the user-defined quals.  This is
+			 * currently documented behavior, but it'd be nice to come up with
+			 * a better solution some day.
 			 */
 			rc = get_plan_rowmark(root->rowMarks, rt_index);
 			if (rc != NULL)
@@ -277,6 +280,7 @@ expand_security_qual(PlannerInfo *root, List *tlist, int rt_index,
 			break;
 
 		case RTE_SUBQUERY:
+
 			/*
 			 * Build a new subquery that includes all the same columns as the
 			 * original subquery.
@@ -288,8 +292,8 @@ expand_security_qual(PlannerInfo *root, List *tlist, int rt_index,
 
 			foreach(cell, rte->subquery->targetList)
 			{
-				TargetEntry	   *tle;
-				Var			   *var;
+				TargetEntry *tle;
+				Var		   *var;
 
 				tle = (TargetEntry *) lfirst(cell);
 				var = makeVarFromTargetEntry(1, tle);
@@ -333,7 +337,7 @@ expand_security_qual(PlannerInfo *root, List *tlist, int rt_index,
  * variable that needs to be exposed by the security barrier subquery RTE.
  *
  * NOTE: although this has the form of a walker, we cheat and modify the
- * nodes in-place.	The given expression tree should have been copied
+ * nodes in-place.  The given expression tree should have been copied
  * earlier to ensure that no unwanted side-effects occur!
  */
 static void
@@ -355,7 +359,7 @@ security_barrier_replace_vars(Node *node,
 
 static bool
 security_barrier_replace_vars_walker(Node *node,
-									 security_barrier_replace_vars_context *context)
+							  security_barrier_replace_vars_context *context)
 {
 	if (node == NULL)
 		return false;
@@ -405,7 +409,7 @@ security_barrier_replace_vars_walker(Node *node,
 				Form_pg_attribute att_tup;
 
 				att_tup = SystemAttributeDefinition(var->varattno,
-													context->rel->rd_rel->relhasoids);
+										   context->rel->rd_rel->relhasoids);
 				attname = NameStr(att_tup->attname);
 			}
 			else if (var->varattno == InvalidAttrNumber)

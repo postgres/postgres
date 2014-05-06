@@ -125,8 +125,8 @@ typedef struct CopyStateData
 	bool	   *force_quote_flags;		/* per-column CSV FQ flags */
 	List	   *force_notnull;	/* list of column names */
 	bool	   *force_notnull_flags;	/* per-column CSV FNN flags */
-	List	   *force_null;	/* list of column names */
-	bool	   *force_null_flags;	/* per-column CSV FN flags */
+	List	   *force_null;		/* list of column names */
+	bool	   *force_null_flags;		/* per-column CSV FN flags */
 	bool		convert_selectively;	/* do selective binary conversion? */
 	List	   *convert_select; /* list of column names (can be NIL) */
 	bool	   *convert_select_flags;	/* per-column CSV/TEXT CS flags */
@@ -189,7 +189,7 @@ typedef struct CopyStateData
 
 	/*
 	 * Finally, raw_buf holds raw data read from the data source (file or
-	 * client connection).	CopyReadLine parses this data sufficiently to
+	 * client connection).  CopyReadLine parses this data sufficiently to
 	 * locate line boundaries, then transfers the data to line_buf and
 	 * converts it.  Note: we guarantee that there is a \0 at
 	 * raw_buf[raw_buf_len].
@@ -215,7 +215,7 @@ typedef struct
  * function call overhead in tight COPY loops.
  *
  * We must use "if (1)" because the usual "do {...} while(0)" wrapper would
- * prevent the continue/break processing from working.	We end the "if (1)"
+ * prevent the continue/break processing from working.  We end the "if (1)"
  * with "else ((void) 0)" to ensure the "if" does not unintentionally match
  * any "else" in the calling code, and to avoid any compiler warnings about
  * empty statements.  See http://www.cit.gu.edu.au/~anthony/info/C/C.macros.
@@ -549,7 +549,7 @@ CopySendEndOfRow(CopyState cstate)
  * CopyGetData reads data from the source (file or frontend)
  *
  * We attempt to read at least minread, and at most maxread, bytes from
- * the source.	The actual number of bytes read is returned; if this is
+ * the source.  The actual number of bytes read is returned; if this is
  * less than minread, EOF was detected.
  *
  * Note: when copying from the frontend, we expect a proper EOF mark per
@@ -766,7 +766,7 @@ CopyLoadRawBuf(CopyState cstate)
  * we also support copying the output of an arbitrary SELECT query.
  *
  * If <pipe> is false, transfer is between the table and the file named
- * <filename>.	Otherwise, transfer is between the table and our regular
+ * <filename>.  Otherwise, transfer is between the table and our regular
  * input/output stream. The latter could be either stdin/stdout or a
  * socket, depending on whether we're running under Postmaster control.
  *
@@ -1203,7 +1203,7 @@ ProcessCopyOptions(CopyState cstate,
 	if (cstate->force_null != NIL && !is_from)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			  errmsg("COPY force null only available using COPY FROM")));
+				 errmsg("COPY force null only available using COPY FROM")));
 
 	/* Don't allow the delimiter to appear in the null string. */
 	if (strchr(cstate->null_print, cstate->delim[0]) != NULL)
@@ -1298,7 +1298,7 @@ BeginCopy(bool is_from,
 					 errmsg("COPY (SELECT) WITH OIDS is not supported")));
 
 		/*
-		 * Run parse analysis and rewrite.	Note this also acquires sufficient
+		 * Run parse analysis and rewrite.  Note this also acquires sufficient
 		 * locks on the source table(s).
 		 *
 		 * Because the parser and planner tend to scribble on their input, we
@@ -1428,8 +1428,8 @@ BeginCopy(bool is_from,
 			if (!list_member_int(cstate->attnumlist, attnum))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-				errmsg("FORCE NULL column \"%s\" not referenced by COPY",
-					   NameStr(tupDesc->attrs[attnum - 1]->attname))));
+					errmsg("FORCE NULL column \"%s\" not referenced by COPY",
+						   NameStr(tupDesc->attrs[attnum - 1]->attname))));
 			cstate->force_null_flags[attnum - 1] = true;
 		}
 	}
@@ -1730,7 +1730,7 @@ CopyTo(CopyState cstate)
 	 * Create a temporary memory context that we can reset once per row to
 	 * recover palloc'd memory.  This avoids any problems with leaks inside
 	 * datatype output routines, and should be faster than retail pfree's
-	 * anyway.	(We don't need a whole econtext as CopyFrom does.)
+	 * anyway.  (We don't need a whole econtext as CopyFrom does.)
 	 */
 	cstate->rowcontext = AllocSetContextCreate(CurrentMemoryContext,
 											   "COPY TO",
@@ -2248,8 +2248,8 @@ CopyFrom(CopyState cstate)
 		{
 			/*
 			 * Reset the per-tuple exprcontext. We can only do this if the
-			 * tuple buffer is empty. (Calling the context the per-tuple memory
-			 * context is a bit of a misnomer now.)
+			 * tuple buffer is empty. (Calling the context the per-tuple
+			 * memory context is a bit of a misnomer now.)
 			 */
 			ResetPerTupleExprContext(estate);
 		}
@@ -2569,19 +2569,20 @@ BeginCopyFrom(Relation rel,
 				num_defaults++;
 
 				/*
-				 * If a default expression looks at the table being loaded, then
-				 * it could give the wrong answer when using multi-insert. Since
-				 * database access can be dynamic this is hard to test for
-				 * exactly, so we use the much wider test of whether the
-				 * default expression is volatile. We allow for the special case
-				 * of when the default expression is the nextval() of a sequence
-				 * which in this specific case is known to be safe for use with
-				 * the multi-insert optimisation. Hence we use this special case
-				 * function checker rather than the standard check for
+				 * If a default expression looks at the table being loaded,
+				 * then it could give the wrong answer when using
+				 * multi-insert. Since database access can be dynamic this is
+				 * hard to test for exactly, so we use the much wider test of
+				 * whether the default expression is volatile. We allow for
+				 * the special case of when the default expression is the
+				 * nextval() of a sequence which in this specific case is
+				 * known to be safe for use with the multi-insert
+				 * optimisation. Hence we use this special case function
+				 * checker rather than the standard check for
 				 * contain_volatile_functions().
 				 */
 				if (!volatile_defexprs)
-					volatile_defexprs = contain_volatile_functions_not_nextval((Node *)defexpr);
+					volatile_defexprs = contain_volatile_functions_not_nextval((Node *) defexpr);
 			}
 		}
 	}
@@ -2861,8 +2862,8 @@ NextCopyFrom(CopyState cstate, ExprContext *econtext,
 
 			if (cstate->csv_mode)
 			{
-				if(string == NULL &&
-				   cstate->force_notnull_flags[m])
+				if (string == NULL &&
+					cstate->force_notnull_flags[m])
 				{
 					/*
 					 * FORCE_NOT_NULL option is set and column is NULL -
@@ -2870,14 +2871,14 @@ NextCopyFrom(CopyState cstate, ExprContext *econtext,
 					 */
 					string = cstate->null_print;
 				}
-				else if(string != NULL && cstate->force_null_flags[m]
-						&& strcmp(string,cstate->null_print) == 0 )
+				else if (string != NULL && cstate->force_null_flags[m]
+						 && strcmp(string, cstate->null_print) == 0)
 				{
 					/*
-					 * FORCE_NULL option is set and column matches the NULL string.
-					 * It must have been quoted, or otherwise the string would already
-					 * have been set to NULL.
-					 * Convert it to NULL as specified.
+					 * FORCE_NULL option is set and column matches the NULL
+					 * string. It must have been quoted, or otherwise the
+					 * string would already have been set to NULL. Convert it
+					 * to NULL as specified.
 					 */
 					string = NULL;
 				}
@@ -2920,7 +2921,7 @@ NextCopyFrom(CopyState cstate, ExprContext *econtext,
 			 * if client chooses to send that now.
 			 *
 			 * Note that we MUST NOT try to read more data in an old-protocol
-			 * copy, since there is no protocol-level EOF marker then.	We
+			 * copy, since there is no protocol-level EOF marker then.  We
 			 * could go either way for copy from file, but choose to throw
 			 * error if there's data after the EOF marker, for consistency
 			 * with the new-protocol case.
@@ -2982,7 +2983,7 @@ NextCopyFrom(CopyState cstate, ExprContext *econtext,
 
 	/*
 	 * Now compute and insert any defaults available for the columns not
-	 * provided by the input data.	Anything not processed here or above will
+	 * provided by the input data.  Anything not processed here or above will
 	 * remain NULL.
 	 */
 	for (i = 0; i < num_defaults; i++)
@@ -3017,7 +3018,7 @@ EndCopyFrom(CopyState cstate)
  * server encoding.
  *
  * Result is true if read was terminated by EOF, false if terminated
- * by newline.	The terminating newline or EOF marker is not included
+ * by newline.  The terminating newline or EOF marker is not included
  * in the final value of line_buf.
  */
 static bool
@@ -3173,7 +3174,7 @@ CopyReadLineText(CopyState cstate)
 		 * of read-ahead and avoid the many calls to
 		 * IF_NEED_REFILL_AND_NOT_EOF_CONTINUE(), but the COPY_OLD_FE protocol
 		 * does not allow us to read too far ahead or we might read into the
-		 * next data, so we read-ahead only as far we know we can.	One
+		 * next data, so we read-ahead only as far we know we can.  One
 		 * optimization would be to read-ahead four byte here if
 		 * cstate->copy_dest != COPY_OLD_FE, but it hardly seems worth it,
 		 * considering the size of the buffer.
@@ -3183,7 +3184,7 @@ CopyReadLineText(CopyState cstate)
 			REFILL_LINEBUF;
 
 			/*
-			 * Try to read some more data.	This will certainly reset
+			 * Try to read some more data.  This will certainly reset
 			 * raw_buf_index to zero, and raw_buf_ptr must go with it.
 			 */
 			if (!CopyLoadRawBuf(cstate))
@@ -3241,7 +3242,7 @@ CopyReadLineText(CopyState cstate)
 			/*
 			 * Updating the line count for embedded CR and/or LF chars is
 			 * necessarily a little fragile - this test is probably about the
-			 * best we can do.	(XXX it's arguable whether we should do this
+			 * best we can do.  (XXX it's arguable whether we should do this
 			 * at all --- is cur_lineno a physical or logical count?)
 			 */
 			if (in_quote && c == (cstate->eol_type == EOL_NL ? '\n' : '\r'))
@@ -3420,7 +3421,7 @@ CopyReadLineText(CopyState cstate)
 				 * after a backslash is special, so we skip over that second
 				 * character too.  If we didn't do that \\. would be
 				 * considered an eof-of copy, while in non-CSV mode it is a
-				 * literal backslash followed by a period.	In CSV mode,
+				 * literal backslash followed by a period.  In CSV mode,
 				 * backslashes are not special, so we want to process the
 				 * character after the backslash just like a normal character,
 				 * so we don't increment in those cases.
@@ -3523,7 +3524,7 @@ CopyReadAttributesText(CopyState cstate)
 	/*
 	 * The de-escaped attributes will certainly not be longer than the input
 	 * data line, so we can just force attribute_buf to be large enough and
-	 * then transfer data without any checks for enough space.	We need to do
+	 * then transfer data without any checks for enough space.  We need to do
 	 * it this way because enlarging attribute_buf mid-stream would invalidate
 	 * pointers already stored into cstate->raw_fields[].
 	 */
@@ -3753,7 +3754,7 @@ CopyReadAttributesCSV(CopyState cstate)
 	/*
 	 * The de-escaped attributes will certainly not be longer than the input
 	 * data line, so we can just force attribute_buf to be large enough and
-	 * then transfer data without any checks for enough space.	We need to do
+	 * then transfer data without any checks for enough space.  We need to do
 	 * it this way because enlarging attribute_buf mid-stream would invalidate
 	 * pointers already stored into cstate->raw_fields[].
 	 */
@@ -3968,7 +3969,7 @@ CopyAttributeOutText(CopyState cstate, char *string)
 	/*
 	 * We have to grovel through the string searching for control characters
 	 * and instances of the delimiter character.  In most cases, though, these
-	 * are infrequent.	To avoid overhead from calling CopySendData once per
+	 * are infrequent.  To avoid overhead from calling CopySendData once per
 	 * character, we dump out all characters between escaped characters in a
 	 * single call.  The loop invariant is that the data from "start" to "ptr"
 	 * can be sent literally, but hasn't yet been.

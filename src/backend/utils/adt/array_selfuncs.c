@@ -524,7 +524,7 @@ mcelem_array_selec(ArrayType *array, TypeCacheEntry *typentry,
 
 /*
  * Estimate selectivity of "column @> const" and "column && const" based on
- * most common element statistics.	This estimation assumes element
+ * most common element statistics.  This estimation assumes element
  * occurrences are independent.
  *
  * mcelem (of length nmcelem) and numbers (of length nnumbers) are from
@@ -689,7 +689,7 @@ mcelem_array_contain_overlap_selec(Datum *mcelem, int nmcelem,
  * In the "column @> const" and "column && const" cases, we usually have a
  * "const" with low number of elements (otherwise we have selectivity close
  * to 0 or 1 respectively).  That's why the effect of dependence related
- * to distinct element count distribution is negligible there.	In the
+ * to distinct element count distribution is negligible there.  In the
  * "column <@ const" case, number of elements is usually high (otherwise we
  * have selectivity close to 0).  That's why we should do a correction with
  * the array distinct element count distribution here.
@@ -848,7 +848,7 @@ mcelem_array_contained_selec(Datum *mcelem, int nmcelem,
 	/*
 	 * The presence of many distinct rare elements materially decreases
 	 * selectivity.  Use the Poisson distribution to estimate the probability
-	 * of a column value having zero occurrences of such elements.	See above
+	 * of a column value having zero occurrences of such elements.  See above
 	 * for the definition of "rest".
 	 */
 	mult *= exp(-rest);
@@ -856,7 +856,7 @@ mcelem_array_contained_selec(Datum *mcelem, int nmcelem,
 	/*----------
 	 * Using the distinct element count histogram requires
 	 *		O(unique_nitems * (nmcelem + unique_nitems))
-	 * operations.	Beyond a certain computational cost threshold, it's
+	 * operations.  Beyond a certain computational cost threshold, it's
 	 * reasonable to sacrifice accuracy for decreased planning time.  We limit
 	 * the number of operations to EFFORT * nmcelem; since nmcelem is limited
 	 * by the column's statistics target, the work done is user-controllable.
@@ -868,7 +868,7 @@ mcelem_array_contained_selec(Datum *mcelem, int nmcelem,
 	 * elements to start with, we'd have to remove any discarded elements'
 	 * frequencies from "mult", but since this is only an approximation
 	 * anyway, we don't bother with that.  Therefore it's sufficient to qsort
-	 * elem_selec[] and take the largest elements.	(They will no longer match
+	 * elem_selec[] and take the largest elements.  (They will no longer match
 	 * up with the elements of array_data[], but we don't care.)
 	 *----------
 	 */
@@ -878,7 +878,7 @@ mcelem_array_contained_selec(Datum *mcelem, int nmcelem,
 		unique_nitems > EFFORT * nmcelem / (nmcelem + unique_nitems))
 	{
 		/*
-		 * Use the quadratic formula to solve for largest allowable N.	We
+		 * Use the quadratic formula to solve for largest allowable N.  We
 		 * have A = 1, B = nmcelem, C = - EFFORT * nmcelem.
 		 */
 		double		b = (double) nmcelem;
@@ -953,7 +953,7 @@ calc_hist(const float4 *hist, int nhist, int n)
 
 	/*
 	 * frac is a probability contribution for each interval between histogram
-	 * values.	We have nhist - 1 intervals, so contribution of each one will
+	 * values.  We have nhist - 1 intervals, so contribution of each one will
 	 * be 1 / (nhist - 1).
 	 */
 	frac = 1.0f / ((float) (nhist - 1));
@@ -1020,8 +1020,8 @@ calc_hist(const float4 *hist, int nhist, int n)
  * "rest" is the sum of the probabilities of all low-probability events not
  * included in p.
  *
- * Imagine matrix M of size (n + 1) x (m + 1).	Element M[i,j] denotes the
- * probability that exactly j of first i events occur.	Obviously M[0,0] = 1.
+ * Imagine matrix M of size (n + 1) x (m + 1).  Element M[i,j] denotes the
+ * probability that exactly j of first i events occur.  Obviously M[0,0] = 1.
  * For any constant j, each increment of i increases the probability iff the
  * event occurs.  So, by the law of total probability:
  *	M[i,j] = M[i - 1, j] * (1 - p[i]) + M[i - 1, j - 1] * p[i]
@@ -1143,7 +1143,7 @@ floor_log2(uint32 n)
 
 /*
  * find_next_mcelem binary-searches a most common elements array, starting
- * from *index, for the first member >= value.	It saves the position of the
+ * from *index, for the first member >= value.  It saves the position of the
  * match into *index and returns true if it's an exact match.  (Note: we
  * assume the mcelem elements are distinct so there can't be more than one
  * exact match.)

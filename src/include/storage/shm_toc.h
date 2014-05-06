@@ -40,8 +40,8 @@ extern void *shm_toc_lookup(shm_toc *toc, uint64 key);
  */
 typedef struct
 {
-	Size	space_for_chunks;
-	Size	number_of_keys;
+	Size		space_for_chunks;
+	Size		number_of_keys;
 } shm_toc_estimator;
 
 #define shm_toc_initialize_estimator(e) \

@@ -41,7 +41,7 @@ main(int argc, char **argv)
 
 	bool		quiet = false;
 
-	PGPing rv;
+	PGPing		rv;
 	PQconninfoOption *opts = NULL;
 	PQconninfoOption *defs = NULL;
 	PQconninfoOption *opt;

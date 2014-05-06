@@ -208,7 +208,7 @@ extern RestoreOptions *NewRestoreOptions(void);
 extern void SortTocFromFile(Archive *AHX, RestoreOptions *ropt);
 
 /* Convenience functions used only when writing DATA */
-extern void	archputs(const char *s, Archive *AH);
+extern void archputs(const char *s, Archive *AH);
 extern int
 archprintf(Archive *AH, const char *fmt,...)
 /* This extension allows gcc to check the format string */

@@ -381,18 +381,18 @@ get_rel_oids(Oid relid, const RangeVar *vacrel)
  *
  * The output parameters are:
  * - oldestXmin is the cutoff value used to distinguish whether tuples are
- *   DEAD or RECENTLY_DEAD (see HeapTupleSatisfiesVacuum).
+ *	 DEAD or RECENTLY_DEAD (see HeapTupleSatisfiesVacuum).
  * - freezeLimit is the Xid below which all Xids are replaced by
- *   FrozenTransactionId during vacuum.
+ *	 FrozenTransactionId during vacuum.
  * - xidFullScanLimit (computed from table_freeze_age parameter)
- *   represents a minimum Xid value; a table whose relfrozenxid is older than
- *   this will have a full-table vacuum applied to it, to freeze tuples across
- *   the whole table.  Vacuuming a table younger than this value can use a
- *   partial scan.
+ *	 represents a minimum Xid value; a table whose relfrozenxid is older than
+ *	 this will have a full-table vacuum applied to it, to freeze tuples across
+ *	 the whole table.  Vacuuming a table younger than this value can use a
+ *	 partial scan.
  * - multiXactCutoff is the value below which all MultiXactIds are removed from
- *   Xmax.
+ *	 Xmax.
  * - mxactFullScanLimit is a value against which a table's relminmxid value is
- *   compared to produce a full-table vacuum, as with xidFullScanLimit.
+ *	 compared to produce a full-table vacuum, as with xidFullScanLimit.
  *
  * xidFullScanLimit and mxactFullScanLimit can be passed as NULL if caller is
  * not interested.
@@ -417,9 +417,9 @@ vacuum_set_xid_limits(Relation rel,
 	MultiXactId safeMxactLimit;
 
 	/*
-	 * We can always ignore processes running lazy vacuum.	This is because we
+	 * We can always ignore processes running lazy vacuum.  This is because we
 	 * use these values only for deciding which tuples we must keep in the
-	 * tables.	Since lazy vacuum doesn't write its XID anywhere, it's safe to
+	 * tables.  Since lazy vacuum doesn't write its XID anywhere, it's safe to
 	 * ignore it.  In theory it could be problematic to ignore lazy vacuums in
 	 * a full vacuum, but keep in mind that only one vacuum process can be
 	 * working on a particular table at any time, and that each vacuum is
@@ -566,7 +566,7 @@ vacuum_set_xid_limits(Relation rel,
  *		If we scanned the whole relation then we should just use the count of
  *		live tuples seen; but if we did not, we should not trust the count
  *		unreservedly, especially not in VACUUM, which may have scanned a quite
- *		nonrandom subset of the table.	When we have only partial information,
+ *		nonrandom subset of the table.  When we have only partial information,
  *		we take the old value of pg_class.reltuples as a measurement of the
  *		tuple density in the unscanned pages.
  *
@@ -712,7 +712,7 @@ vac_update_relstats(Relation relation,
 
 	/*
 	 * If we have discovered that there are no indexes, then there's no
-	 * primary key either.	This could be done more thoroughly...
+	 * primary key either.  This could be done more thoroughly...
 	 */
 	if (pgcform->relhaspkey && !hasindex)
 	{
@@ -772,7 +772,7 @@ vac_update_relstats(Relation relation,
  *		truncate pg_clog and pg_multixact.
  *
  *		We violate transaction semantics here by overwriting the database's
- *		existing pg_database tuple with the new value.	This is reasonably
+ *		existing pg_database tuple with the new value.  This is reasonably
  *		safe since the new value is correct whether or not this transaction
  *		commits.  As with vac_update_relstats, this avoids leaving dead tuples
  *		behind after a VACUUM.
@@ -892,7 +892,7 @@ vac_update_datfrozenxid(void)
  *		Also update the XID wrap limit info maintained by varsup.c.
  *
  *		The passed XID is simply the one I just wrote into my pg_database
- *		entry.	It's used to initialize the "min" calculation.
+ *		entry.  It's used to initialize the "min" calculation.
  *
  *		This routine is only invoked when we've managed to change our
  *		DB's datfrozenxid entry, or we found that the shared XID-wrap-limit
@@ -976,7 +976,7 @@ vac_truncate_clog(TransactionId frozenXID, MultiXactId minMulti)
 	/*
 	 * Update the wrap limit for GetNewTransactionId and creation of new
 	 * MultiXactIds.  Note: these functions will also signal the postmaster
-	 * for an(other) autovac cycle if needed.	XXX should we avoid possibly
+	 * for an(other) autovac cycle if needed.   XXX should we avoid possibly
 	 * signalling twice?
 	 */
 	SetTransactionIdLimit(frozenXID, oldestxid_datoid);
@@ -988,7 +988,7 @@ vac_truncate_clog(TransactionId frozenXID, MultiXactId minMulti)
  *	vacuum_rel() -- vacuum one heap relation
  *
  *		Doing one heap at a time incurs extra overhead, since we need to
- *		check that the heap exists again just before we vacuum it.	The
+ *		check that the heap exists again just before we vacuum it.  The
  *		reason that we do this is so that vacuuming can be spread across
  *		many small transactions.  Otherwise, two-phase locking would require
  *		us to lock the entire database during one pass of the vacuum cleaner.
@@ -1045,7 +1045,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound)
 	}
 
 	/*
-	 * Check for user-requested abort.	Note we want this to be inside a
+	 * Check for user-requested abort.  Note we want this to be inside a
 	 * transaction, so xact.c doesn't issue useless WARNING.
 	 */
 	CHECK_FOR_INTERRUPTS();
@@ -1092,7 +1092,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound)
 	 *
 	 * We allow the user to vacuum a table if he is superuser, the table
 	 * owner, or the database owner (but in the latter case, only if it's not
-	 * a shared relation).	pg_class_ownercheck includes the superuser case.
+	 * a shared relation).  pg_class_ownercheck includes the superuser case.
 	 *
 	 * Note we choose to treat permissions failure as a WARNING and keep
 	 * trying to vacuum the rest of the DB --- is this appropriate?
@@ -1220,7 +1220,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound)
 	/*
 	 * If the relation has a secondary toast rel, vacuum that too while we
 	 * still hold the session lock on the master table.  Note however that
-	 * "analyze" will not get done on the toast table.	This is good, because
+	 * "analyze" will not get done on the toast table.  This is good, because
 	 * the toaster always uses hardcoded index access and statistics are
 	 * totally unimportant for toast relations.
 	 */
@@ -1239,7 +1239,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound)
 
 /*
  * Open all the vacuumable indexes of the given relation, obtaining the
- * specified kind of lock on each.	Return an array of Relation pointers for
+ * specified kind of lock on each.  Return an array of Relation pointers for
  * the indexes into *Irel, and the number of indexes into *nindexes.
  *
  * We consider an index vacuumable if it is marked insertable (IndexIsReady).
@@ -1289,7 +1289,7 @@ vac_open_indexes(Relation relation, LOCKMODE lockmode,
 }
 
 /*
- * Release the resources acquired by vac_open_indexes.	Optionally release
+ * Release the resources acquired by vac_open_indexes.  Optionally release
  * the locks (say NoLock to keep 'em).
  */
 void

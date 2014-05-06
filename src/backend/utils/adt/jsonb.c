@@ -22,7 +22,7 @@ typedef struct JsonbInState
 {
 	JsonbParseState *parseState;
 	JsonbValue *res;
-}	JsonbInState;
+} JsonbInState;
 
 static inline Datum jsonb_from_cstring(char *json, int len);
 static size_t checkStringLen(size_t len);
@@ -31,9 +31,9 @@ static void jsonb_in_object_end(void *pstate);
 static void jsonb_in_array_start(void *pstate);
 static void jsonb_in_array_end(void *pstate);
 static void jsonb_in_object_field_start(void *pstate, char *fname, bool isnull);
-static void jsonb_put_escaped_value(StringInfo out, JsonbValue * scalarVal);
+static void jsonb_put_escaped_value(StringInfo out, JsonbValue *scalarVal);
 static void jsonb_in_scalar(void *pstate, char *token, JsonTokenType tokentype);
-char *JsonbToCString(StringInfo out, char *in, int estimated_len);
+char	   *JsonbToCString(StringInfo out, char *in, int estimated_len);
 
 /*
  * jsonb type input function
@@ -245,7 +245,7 @@ jsonb_in_object_field_start(void *pstate, char *fname, bool isnull)
 	JsonbInState *_state = (JsonbInState *) pstate;
 	JsonbValue	v;
 
-	Assert (fname != NULL);
+	Assert(fname != NULL);
 	v.type = jbvString;
 	v.val.string.len = checkStringLen(strlen(fname));
 	v.val.string.val = pnstrdup(fname, v.val.string.len);
@@ -255,7 +255,7 @@ jsonb_in_object_field_start(void *pstate, char *fname, bool isnull)
 }
 
 static void
-jsonb_put_escaped_value(StringInfo out, JsonbValue * scalarVal)
+jsonb_put_escaped_value(StringInfo out, JsonbValue *scalarVal)
 {
 	switch (scalarVal->type)
 	{
@@ -267,8 +267,8 @@ jsonb_put_escaped_value(StringInfo out, JsonbValue * scalarVal)
 			break;
 		case jbvNumeric:
 			appendStringInfoString(out,
-								   DatumGetCString(DirectFunctionCall1(numeric_out,
-																	   PointerGetDatum(scalarVal->val.numeric))));
+							 DatumGetCString(DirectFunctionCall1(numeric_out,
+								  PointerGetDatum(scalarVal->val.numeric))));
 			break;
 		case jbvBool:
 			if (scalarVal->val.boolean)
@@ -296,21 +296,23 @@ jsonb_in_scalar(void *pstate, char *token, JsonTokenType tokentype)
 	{
 
 		case JSON_TOKEN_STRING:
-			Assert (token != NULL);
+			Assert(token != NULL);
 			v.type = jbvString;
 			v.val.string.len = checkStringLen(strlen(token));
 			v.val.string.val = pnstrdup(token, v.val.string.len);
 			v.estSize += v.val.string.len;
 			break;
 		case JSON_TOKEN_NUMBER:
+
 			/*
-			 * No need to check size of numeric values, because maximum numeric
-			 * size is well below the JsonbValue restriction
+			 * No need to check size of numeric values, because maximum
+			 * numeric size is well below the JsonbValue restriction
 			 */
-			Assert (token != NULL);
+			Assert(token != NULL);
 			v.type = jbvNumeric;
 			v.val.numeric = DatumGetNumeric(DirectFunctionCall3(numeric_in, CStringGetDatum(token), 0, -1));
-			v.estSize += VARSIZE_ANY(v.val.numeric) + sizeof(JEntry) /* alignment */ ;
+
+			v.estSize += VARSIZE_ANY(v.val.numeric) +sizeof(JEntry) /* alignment */ ;
 			break;
 		case JSON_TOKEN_TRUE:
 			v.type = jbvBool;

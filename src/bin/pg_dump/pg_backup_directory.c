@@ -357,7 +357,7 @@ _WriteData(ArchiveHandle *AH, const void *data, size_t dLen)
 
 	/* Are we aborting? */
 	checkAborting(AH);
-	
+
 	if (dLen > 0 && cfwrite(data, dLen, ctx->dataFH) != dLen)
 		WRITE_ERROR_EXIT;
 
@@ -408,7 +408,7 @@ _PrintFileData(ArchiveHandle *AH, char *filename, RestoreOptions *ropt)
 		ahwrite(buf, 1, cnt, AH);
 
 	free(buf);
-	if (cfclose(cfp) != 0)
+	if (cfclose(cfp) !=0)
 		exit_horribly(modulename, "could not close data file: %s\n",
 					  strerror(errno));
 }
@@ -543,8 +543,8 @@ _ReadBuf(ArchiveHandle *AH, void *buf, size_t len)
 	lclContext *ctx = (lclContext *) AH->formatData;
 
 	/*
-	 * If there was an I/O error, we already exited in cfread(),
-	 * so here we exit on short reads.
+	 * If there was an I/O error, we already exited in cfread(), so here we
+	 * exit on short reads.
 	 */
 	if (cfread(buf, len, ctx->dataFH) != len)
 		exit_horribly(modulename,

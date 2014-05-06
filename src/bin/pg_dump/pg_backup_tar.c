@@ -560,7 +560,7 @@ _tarReadRaw(ArchiveHandle *AH, void *buf, size_t len, TAR_MEMBER *th, FILE *fh)
 				res = GZREAD(&((char *) buf)[used], 1, len, th->zFH);
 				if (res != len && !GZEOF(fh))
 					exit_horribly(modulename,
-							"could not read from input file: %s\n", strerror(errno));
+					"could not read from input file: %s\n", strerror(errno));
 			}
 			else
 			{
@@ -821,7 +821,7 @@ _ReadBuf(ArchiveHandle *AH, void *buf, size_t len)
 		/* We already would have exited for errors on reads, must be EOF */
 		exit_horribly(modulename,
 					  "could not read from input file: end of file\n");
-	
+
 	ctx->filePos += len;
 	return;
 }

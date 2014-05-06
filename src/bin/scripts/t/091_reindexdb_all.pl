@@ -8,4 +8,7 @@ start_test_server $tempdir;
 
 $ENV{PGOPTIONS} = '--client-min-messages=WARNING';
 
-issues_sql_like(['reindexdb', '-a'], qr/statement: REINDEX.*statement: REINDEX/s, 'reindex all databases');
+issues_sql_like(
+	[ 'reindexdb', '-a' ],
+	qr/statement: REINDEX.*statement: REINDEX/s,
+	'reindex all databases');

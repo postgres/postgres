@@ -45,7 +45,7 @@ static char blockbuffer[BLCKSZ];
  *
  * The first argument is the relation to be prewarmed; the second controls
  * how prewarming is done; legal options are 'prefetch', 'read', and 'buffer'.
- * The third is the name of the relation fork to be prewarmed.	The fourth
+ * The third is the name of the relation fork to be prewarmed.  The fourth
  * and fifth arguments specify the first and last block to be prewarmed.
  * If the fourth argument is NULL, it will be taken as 0; if the fifth argument
  * is NULL, it will be taken as the number of blocks in the relation.  The

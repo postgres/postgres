@@ -204,9 +204,12 @@ checkcondition_gin(void *checkval, QueryOperand *val)
  */
 static GinTernaryValue
 TS_execute_ternary(QueryItem *curitem, void *checkval,
-				   GinTernaryValue (*chkcond) (void *checkval, QueryOperand *val))
+			  GinTernaryValue (*chkcond) (void *checkval, QueryOperand *val))
 {
-	GinTernaryValue val1, val2, result;
+	GinTernaryValue val1,
+				val2,
+				result;
+
 	/* since this function recurses, it could be driven to stack overflow */
 	check_stack_depth();
 
@@ -223,7 +226,7 @@ TS_execute_ternary(QueryItem *curitem, void *checkval,
 
 		case OP_AND:
 			val1 = TS_execute_ternary(curitem + curitem->qoperator.left,
-															checkval, chkcond);
+									  checkval, chkcond);
 			if (val1 == GIN_FALSE)
 				return GIN_FALSE;
 			val2 = TS_execute_ternary(curitem + 1, checkval, chkcond);
@@ -236,7 +239,7 @@ TS_execute_ternary(QueryItem *curitem, void *checkval,
 
 		case OP_OR:
 			val1 = TS_execute_ternary(curitem + curitem->qoperator.left,
-															checkval, chkcond);
+									  checkval, chkcond);
 			if (val1 == GIN_TRUE)
 				return GIN_TRUE;
 			val2 = TS_execute_ternary(curitem + 1, checkval, chkcond);
@@ -339,7 +342,7 @@ gin_tsquery_triconsistent(PG_FUNCTION_ARGS)
  * Formerly, gin_extract_tsvector had only two arguments.  Now it has three,
  * but we still need a pg_proc entry with two args to support reloading
  * pre-9.1 contrib/tsearch2 opclass declarations.  This compatibility
- * function should go away eventually.	(Note: you might say "hey, but the
+ * function should go away eventually.  (Note: you might say "hey, but the
  * code above is only *using* two args, so let's just declare it that way".
  * If you try that you'll find the opr_sanity regression test complains.)
  */

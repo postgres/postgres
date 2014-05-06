@@ -210,7 +210,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 
 		/*
 		 * If the previous iteration of this loop locked what is still the
-		 * correct target bucket, we are done.	Otherwise, drop any old lock
+		 * correct target bucket, we are done.  Otherwise, drop any old lock
 		 * and lock what now appears to be the correct bucket.
 		 */
 		if (retry)
@@ -269,7 +269,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
  *	_hash_step() -- step to the next valid item in a scan in the bucket.
  *
  *		If no valid record exists in the requested direction, return
- *		false.	Else, return true and set the hashso_curpos for the
+ *		false.  Else, return true and set the hashso_curpos for the
  *		scan to the right thing.
  *
  *		'bufP' points to the current buffer, which is pinned and read-locked.

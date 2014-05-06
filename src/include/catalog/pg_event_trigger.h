@@ -22,7 +22,7 @@
 #include "catalog/genbki.h"
 
 /* ----------------
- *		pg_event_trigger definition.	cpp turns this into
+ *		pg_event_trigger definition.    cpp turns this into
  *		typedef struct FormData_pg_event_trigger
  * ----------------
  */

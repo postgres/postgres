@@ -6,7 +6,7 @@
  * Lightweight locks are intended primarily to provide mutual exclusion of
  * access to shared-memory data structures.  Therefore, they offer both
  * exclusive and shared lock modes (to support read/write and read-only
- * access to a shared object).	There are few other frammishes.  User-level
+ * access to a shared object).  There are few other frammishes.  User-level
  * locking should be done with the full lock manager --- which depends on
  * LWLocks to protect its shared state.
  *
@@ -54,7 +54,7 @@ extern slock_t *ShmemLock;
  * to the current backend.
  */
 static LWLockTranche **LWLockTrancheArray = NULL;
-static int LWLockTranchesAllocated = 0;
+static int	LWLockTranchesAllocated = 0;
 
 #define T_NAME(lock) \
 	(LWLockTrancheArray[(lock)->tranche]->name)
@@ -91,18 +91,18 @@ static bool LWLockAcquireCommon(LWLock *l, LWLockMode mode, uint64 *valptr,
 #ifdef LWLOCK_STATS
 typedef struct lwlock_stats_key
 {
-	int		tranche;
-	int		instance;
-} lwlock_stats_key;
+	int			tranche;
+	int			instance;
+}	lwlock_stats_key;
 
 typedef struct lwlock_stats
 {
-	lwlock_stats_key	key;
-	int		sh_acquire_count;
-	int		ex_acquire_count;
-	int		block_count;
-	int		spin_delay_count;
-} lwlock_stats;
+	lwlock_stats_key key;
+	int			sh_acquire_count;
+	int			ex_acquire_count;
+	int			block_count;
+	int			spin_delay_count;
+}	lwlock_stats;
 
 static int	counts_for_pid = 0;
 static HTAB *lwlock_stats_htab;
@@ -173,7 +173,7 @@ print_lwlock_stats(int code, Datum arg)
 	while ((lwstats = (lwlock_stats *) hash_seq_search(&scan)) != NULL)
 	{
 		fprintf(stderr,
-				"PID %d lwlock %s %d: shacq %u exacq %u blk %u spindelay %u\n",
+			  "PID %d lwlock %s %d: shacq %u exacq %u blk %u spindelay %u\n",
 				MyProcPid, LWLockTrancheArray[lwstats->key.tranche]->name,
 				lwstats->key.instance, lwstats->sh_acquire_count,
 				lwstats->ex_acquire_count, lwstats->block_count,
@@ -186,9 +186,9 @@ print_lwlock_stats(int code, Datum arg)
 static lwlock_stats *
 get_lwlock_stats_entry(LWLock *lock)
 {
-	lwlock_stats_key	key;
+	lwlock_stats_key key;
 	lwlock_stats *lwstats;
-	bool	found;
+	bool		found;
 
 	/* Set up local count state first time through in a given process */
 	if (counts_for_pid != MyProcPid)
@@ -270,7 +270,7 @@ NumLWLocks(void)
  *		a loadable module.
  *
  * This is only useful if called from the _PG_init hook of a library that
- * is loaded into the postmaster via shared_preload_libraries.	Once
+ * is loaded into the postmaster via shared_preload_libraries.  Once
  * shared memory has been allocated, calls will be ignored.  (We could
  * raise an error, but it seems better to make it a no-op, so that
  * libraries containing such calls can be reloaded if needed.)
@@ -339,12 +339,12 @@ CreateLWLocks(void)
 		 * before the first LWLock.  LWLockCounter[0] is the allocation
 		 * counter for lwlocks, LWLockCounter[1] is the maximum number that
 		 * can be allocated from the main array, and LWLockCounter[2] is the
-		 *  allocation counter for tranches.
+		 * allocation counter for tranches.
 		 */
 		LWLockCounter = (int *) ((char *) MainLWLockArray - 3 * sizeof(int));
 		LWLockCounter[0] = NUM_FIXED_LWLOCKS;
 		LWLockCounter[1] = numLocks;
-		LWLockCounter[2] = 1;			/* 0 is the main array */
+		LWLockCounter[2] = 1;	/* 0 is the main array */
 	}
 
 	if (LWLockTrancheArray == NULL)
@@ -352,7 +352,7 @@ CreateLWLocks(void)
 		LWLockTranchesAllocated = 16;
 		LWLockTrancheArray = (LWLockTranche **)
 			MemoryContextAlloc(TopMemoryContext,
-							   LWLockTranchesAllocated * sizeof(LWLockTranche *));
+						  LWLockTranchesAllocated * sizeof(LWLockTranche *));
 	}
 
 	MainLWLockTranche.name = "main";
@@ -422,7 +422,7 @@ LWLockRegisterTranche(int tranche_id, LWLockTranche *tranche)
 
 	if (tranche_id >= LWLockTranchesAllocated)
 	{
-		int		i = LWLockTranchesAllocated;
+		int			i = LWLockTranchesAllocated;
 
 		while (i <= tranche_id)
 			i *= 2;
@@ -534,7 +534,7 @@ LWLockAcquireCommon(LWLock *l, LWLockMode mode, uint64 *valptr, uint64 val)
 	 * in the presence of contention.  The efficiency of being able to do that
 	 * outweighs the inefficiency of sometimes wasting a process dispatch
 	 * cycle because the lock is not free when a released waiter finally gets
-	 * to run.	See pgsql-hackers archives for 29-Dec-01.
+	 * to run.  See pgsql-hackers archives for 29-Dec-01.
 	 */
 	for (;;)
 	{
@@ -731,7 +731,7 @@ LWLockConditionalAcquire(LWLock *l, LWLockMode mode)
 /*
  * LWLockAcquireOrWait - Acquire lock, or wait until it's free
  *
- * The semantics of this function are a bit funky.	If the lock is currently
+ * The semantics of this function are a bit funky.  If the lock is currently
  * free, it is acquired in the given mode, and the function returns true.  If
  * the lock isn't immediately free, the function waits until it is released
  * and returns false, but does not acquire the lock.
@@ -920,8 +920,8 @@ LWLockWaitForVar(LWLock *l, uint64 *valptr, uint64 oldval, uint64 *newval)
 		return true;
 
 	/*
-	 * Lock out cancel/die interrupts while we sleep on the lock.  There is
-	 * no cleanup mechanism to remove us from the wait queue if we got
+	 * Lock out cancel/die interrupts while we sleep on the lock.  There is no
+	 * cleanup mechanism to remove us from the wait queue if we got
 	 * interrupted.
 	 */
 	HOLD_INTERRUPTS();

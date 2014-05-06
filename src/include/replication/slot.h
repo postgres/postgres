@@ -96,11 +96,11 @@ typedef struct ReplicationSlot
 	 * data that's still needed for decoding purposes, even after a crash;
 	 * otherwise, decoding will produce wrong answers.  Ordinary streaming
 	 * replication also needs to prevent old row versions from being removed
-	 * too soon, but the worst consequence we might encounter there is unwanted
-	 * query cancellations on the standby.  Thus, for logical decoding,
-	 * this value represents the latest xmin that has actually been
-	 * written to disk, whereas for streaming replication, it's just the
-	 * same as the persistent value (data.xmin).
+	 * too soon, but the worst consequence we might encounter there is
+	 * unwanted query cancellations on the standby.  Thus, for logical
+	 * decoding, this value represents the latest xmin that has actually been
+	 * written to disk, whereas for streaming replication, it's just the same
+	 * as the persistent value (data.xmin).
 	 */
 	TransactionId effective_xmin;
 	TransactionId effective_catalog_xmin;
@@ -148,7 +148,7 @@ extern void ReplicationSlotsShmemInit(void);
 
 /* management of individual slots */
 extern void ReplicationSlotCreate(const char *name, bool db_specific,
-								  ReplicationSlotPersistency p);
+					  ReplicationSlotPersistency p);
 extern void ReplicationSlotPersist(void);
 extern void ReplicationSlotDrop(const char *name);
 
@@ -175,4 +175,4 @@ extern Datum pg_create_logical_replication_slot(PG_FUNCTION_ARGS);
 extern Datum pg_drop_replication_slot(PG_FUNCTION_ARGS);
 extern Datum pg_get_replication_slots(PG_FUNCTION_ARGS);
 
-#endif /* SLOT_H */
+#endif   /* SLOT_H */

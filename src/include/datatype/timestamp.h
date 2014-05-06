@@ -83,7 +83,7 @@ typedef struct
  *	DAYS_PER_MONTH is very imprecise.  The more accurate value is
  *	365.2425/12 = 30.436875, or '30 days 10:29:06'.  Right now we only
  *	return an integral number of days, but someday perhaps we should
- *	also return a 'time' value to be used as well.	ISO 8601 suggests
+ *	also return a 'time' value to be used as well.  ISO 8601 suggests
  *	30 days.
  */
 #define DAYS_PER_MONTH	30		/* assumes exactly 30 days per month */
@@ -109,7 +109,7 @@ typedef struct
  * We allow numeric timezone offsets up to 15:59:59 either way from Greenwich.
  * Currently, the record holders for wackiest offsets in actual use are zones
  * Asia/Manila, at -15:56:00 until 1844, and America/Metlakatla, at +15:13:42
- * until 1867.	If we were to reject such values we would fail to dump and
+ * until 1867.  If we were to reject such values we would fail to dump and
  * restore old timestamptz values with these zone settings.
  */
 #define MAX_TZDISP_HOUR		15	/* maximum allowed hour part */

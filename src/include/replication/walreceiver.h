@@ -70,7 +70,7 @@ typedef struct
 
 	/*
 	 * receivedUpto-1 is the last byte position that has already been
-	 * received, and receivedTLI is the timeline it came from.	At the first
+	 * received, and receivedTLI is the timeline it came from.  At the first
 	 * startup of walreceiver, these are set to receiveStart and
 	 * receiveStartTLI. After that, walreceiver updates these whenever it
 	 * flushes the received WAL to disk.
@@ -81,7 +81,7 @@ typedef struct
 	/*
 	 * latestChunkStart is the starting byte position of the current "batch"
 	 * of received WAL.  It's actually the same as the previous value of
-	 * receivedUpto before the last flush to disk.	Startup process can use
+	 * receivedUpto before the last flush to disk.  Startup process can use
 	 * this to detect whether it's keeping up or not.
 	 */
 	XLogRecPtr	latestChunkStart;
@@ -104,8 +104,8 @@ typedef struct
 	char		conninfo[MAXCONNINFO];
 
 	/*
-	 * replication slot name; is also used for walreceiver to connect with
-	 * the primary
+	 * replication slot name; is also used for walreceiver to connect with the
+	 * primary
 	 */
 	char		slotname[NAMEDATALEN];
 

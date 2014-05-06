@@ -70,6 +70,7 @@ static const struct FileFdwOption valid_options[] = {
 	{"encoding", ForeignTableRelationId},
 	{"force_not_null", AttributeRelationId},
 	{"force_null", AttributeRelationId},
+
 	/*
 	 * force_quote is not supported by file_fdw because it's for COPY TO.
 	 */
@@ -253,6 +254,7 @@ file_fdw_validator(PG_FUNCTION_ARGS)
 						 errmsg("conflicting or redundant options")));
 			filename = defGetString(def);
 		}
+
 		/*
 		 * force_not_null is a boolean option; after validation we can discard
 		 * it - it will be retrieved later in get_file_fdw_attribute_options()
@@ -397,7 +399,7 @@ get_file_fdw_attribute_options(Oid relid)
 	List	   *fnncolumns = NIL;
 	List	   *fncolumns = NIL;
 
-	List *options = NIL;
+	List	   *options = NIL;
 
 	rel = heap_open(relid, AccessShareLock);
 	tupleDesc = RelationGetDescr(rel);
@@ -443,12 +445,15 @@ get_file_fdw_attribute_options(Oid relid)
 
 	heap_close(rel, AccessShareLock);
 
-	/* Return DefElem only when some column(s) have force_not_null / force_null options set */
+	/*
+	 * Return DefElem only when some column(s) have force_not_null /
+	 * force_null options set
+	 */
 	if (fnncolumns != NIL)
 		options = lappend(options, makeDefElem("force_not_null", (Node *) fnncolumns));
 
 	if (fncolumns != NIL)
-		options = lappend(options,makeDefElem("force_null", (Node *) fncolumns));
+		options = lappend(options, makeDefElem("force_null", (Node *) fncolumns));
 
 	return options;
 }
@@ -508,7 +513,7 @@ fileGetForeignPaths(PlannerInfo *root,
 				   &startup_cost, &total_cost);
 
 	/*
-	 * Create a ForeignPath node and add it as only possible path.	We use the
+	 * Create a ForeignPath node and add it as only possible path.  We use the
 	 * fdw_private list of the path to carry the convert_selectively option;
 	 * it will be propagated into the fdw_private list of the Plan node.
 	 */
@@ -921,7 +926,7 @@ estimate_size(PlannerInfo *root, RelOptInfo *baserel,
 		 * planner's idea of the relation width; which is bogus if not all
 		 * columns are being read, not to mention that the text representation
 		 * of a row probably isn't the same size as its internal
-		 * representation.	Possibly we could do something better, but the
+		 * representation.  Possibly we could do something better, but the
 		 * real answer to anyone who complains is "ANALYZE" ...
 		 */
 		int			tuple_width;
@@ -986,7 +991,7 @@ estimate_costs(PlannerInfo *root, RelOptInfo *baserel,
  * which must have at least targrows entries.
  * The actual number of rows selected is returned as the function result.
  * We also count the total number of rows in the file and return it into
- * *totalrows.	Note that *totaldeadrows is always set to 0.
+ * *totalrows.  Note that *totaldeadrows is always set to 0.
  *
  * Note that the returned list of rows is not always in order by physical
  * position in the file.  Therefore, correlation estimates derived later

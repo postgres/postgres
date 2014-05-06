@@ -114,9 +114,9 @@ typedef struct buftag
  *
  * Note: buf_hdr_lock must be held to examine or change the tag, flags,
  * usage_count, refcount, or wait_backend_pid fields.  buf_id field never
- * changes after initialization, so does not need locking.	freeNext is
+ * changes after initialization, so does not need locking.  freeNext is
  * protected by the BufFreelistLock not buf_hdr_lock.  The LWLocks can take
- * care of themselves.	The buf_hdr_lock is *not* used to control access to
+ * care of themselves.  The buf_hdr_lock is *not* used to control access to
  * the data in the buffer!
  *
  * An exception is that if we have the buffer pinned, its tag can't change
@@ -127,7 +127,7 @@ typedef struct buftag
  *
  * We can't physically remove items from a disk page if another backend has
  * the buffer pinned.  Hence, a backend may need to wait for all other pins
- * to go away.	This is signaled by storing its own PID into
+ * to go away.  This is signaled by storing its own PID into
  * wait_backend_pid and setting flag bit BM_PIN_COUNT_WAITER.  At present,
  * there can be only one such waiter per buffer.
  *
@@ -147,7 +147,7 @@ typedef struct sbufdesc
 	int			buf_id;			/* buffer's index number (from 0) */
 	int			freeNext;		/* link in freelist chain */
 
-	LWLock     *io_in_progress_lock;	/* to wait for I/O to complete */
+	LWLock	   *io_in_progress_lock;	/* to wait for I/O to complete */
 	LWLock	   *content_lock;	/* to lock access to buffer contents */
 } BufferDesc;
 

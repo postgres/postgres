@@ -26,7 +26,7 @@ typedef enum RmgrIds
 {
 #include "access/rmgrlist.h"
 	RM_NEXT_ID
-}	RmgrIds;
+} RmgrIds;
 
 #undef PG_RMGR
 

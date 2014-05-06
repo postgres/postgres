@@ -137,8 +137,8 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 	SendXlogRecPtrResult(startptr, starttli);
 
 	/*
-	 * Calculate the relative path of temporary statistics directory
-	 * in order to skip the files which are located in that directory later.
+	 * Calculate the relative path of temporary statistics directory in order
+	 * to skip the files which are located in that directory later.
 	 */
 	if (is_absolute_path(pgstat_stat_directory) &&
 		strncmp(pgstat_stat_directory, DataDir, datadirpathlen) == 0)
@@ -231,8 +231,8 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 				(int64) opt->maxrate * (int64) 1024 / THROTTLING_FREQUENCY;
 
 			/*
-			 * The minimum amount of time for throttling_sample
-			 * bytes to be transfered.
+			 * The minimum amount of time for throttling_sample bytes to be
+			 * transfered.
 			 */
 			elapsed_min_unit = USECS_PER_SEC / THROTTLING_FREQUENCY;
 
@@ -613,7 +613,7 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 				ereport(ERROR,
 						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 						 errmsg("%d is outside the valid range for parameter \"%s\" (%d .. %d)",
-								(int) maxrate, "MAX_RATE", MAX_RATE_LOWER, MAX_RATE_UPPER)));
+				(int) maxrate, "MAX_RATE", MAX_RATE_LOWER, MAX_RATE_UPPER)));
 
 			opt->maxrate = (uint32) maxrate;
 			o_maxrate = true;
@@ -841,7 +841,7 @@ sendFileWithContent(const char *filename, const char *content)
 
 /*
  * Include the tablespace directory pointed to by 'path' in the output tar
- * stream.	If 'sizeonly' is true, we just calculate a total length and return
+ * stream.  If 'sizeonly' is true, we just calculate a total length and return
  * it, without actually sending anything.
  *
  * Only used to send auxiliary tablespaces, not PGDATA.
@@ -975,7 +975,7 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces)
 		 * always created there.
 		 */
 		if ((statrelpath != NULL && strcmp(pathbuf, statrelpath) == 0) ||
-			strncmp(de->d_name, PG_STAT_TMP_DIR, strlen(PG_STAT_TMP_DIR)) == 0)
+		  strncmp(de->d_name, PG_STAT_TMP_DIR, strlen(PG_STAT_TMP_DIR)) == 0)
 		{
 			if (!sizeonly)
 				_tarWriteHeader(pathbuf + basepathlen + 1, NULL, &statbuf);
@@ -1270,14 +1270,14 @@ throttle(size_t increment)
 		 * the maximum time to sleep. Thus the cast to long is safe.
 		 */
 		wait_result = WaitLatch(&MyWalSnd->latch,
-								WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
+							 WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
 								(long) (sleep / 1000));
 	}
 	else
 	{
 		/*
-		 * The actual transfer rate is below the limit.  A negative value would
-		 * distort the adjustment of throttled_last.
+		 * The actual transfer rate is below the limit.  A negative value
+		 * would distort the adjustment of throttled_last.
 		 */
 		wait_result = 0;
 		sleep = 0;

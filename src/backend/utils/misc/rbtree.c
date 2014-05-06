@@ -13,7 +13,7 @@
  *
  * Red-black trees are a type of balanced binary tree wherein (1) any child of
  * a red node is always black, and (2) every path from root to leaf traverses
- * an equal number of black nodes.	From these properties, it follows that the
+ * an equal number of black nodes.  From these properties, it follows that the
  * longest path from root to leaf is only about twice as long as the shortest,
  * so lookups are guaranteed to run in O(lg n) time.
  *
@@ -102,7 +102,7 @@ static RBNode sentinel = {InitialState, RBBLACK, RBNIL, RBNIL, NULL};
  * valid data!	freefunc can be NULL if caller doesn't require retail
  * space reclamation.
  *
- * The RBTree node is palloc'd in the caller's memory context.	Note that
+ * The RBTree node is palloc'd in the caller's memory context.  Note that
  * all contents of the tree are actually allocated by the caller, not here.
  *
  * Since tree contents are managed by the caller, there is currently not
@@ -282,10 +282,10 @@ rb_rotate_right(RBTree *rb, RBNode *x)
 /*
  * Maintain Red-Black tree balance after inserting node x.
  *
- * The newly inserted node is always initially marked red.	That may lead to
+ * The newly inserted node is always initially marked red.  That may lead to
  * a situation where a red node has a red child, which is prohibited.  We can
  * always fix the problem by a series of color changes and/or "rotations",
- * which move the problem progressively higher up in the tree.	If one of the
+ * which move the problem progressively higher up in the tree.  If one of the
  * two red nodes is the root, we can always fix the problem by changing the
  * root from red to black.
  *
@@ -296,7 +296,7 @@ static void
 rb_insert_fixup(RBTree *rb, RBNode *x)
 {
 	/*
-	 * x is always a red node.	Initially, it is the newly inserted node. Each
+	 * x is always a red node.  Initially, it is the newly inserted node. Each
 	 * iteration of this loop moves it higher up in the tree.
 	 */
 	while (x != rb->root && x->parent->color == RBRED)
@@ -481,7 +481,7 @@ rb_delete_fixup(RBTree *rb, RBNode *x)
 	while (x != rb->root && x->color == RBBLACK)
 	{
 		/*
-		 * Left and right cases are symmetric.	Any nodes that are children of
+		 * Left and right cases are symmetric.  Any nodes that are children of
 		 * x have a black-height one less than the remainder of the nodes in
 		 * the tree.  We rotate and recolor nodes to move the problem up the
 		 * tree: at some stage we'll either fix the problem, or reach the root

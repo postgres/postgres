@@ -47,7 +47,7 @@ ginVacuumItemPointers(GinVacuumState *gvs, ItemPointerData *items,
 {
 	int			i,
 				remaining = 0;
-	ItemPointer	tmpitems = NULL;
+	ItemPointer tmpitems = NULL;
 
 	/*
 	 * Iterate over TIDs array
@@ -208,8 +208,8 @@ ginVacuumPostingTreeLeaves(GinVacuumState *gvs, BlockNumber blkno, bool isRoot, 
 	}
 
 	/*
-	 * if we have root and there are empty pages in tree, then we don't release
-	 * lock to go further processing and guarantee that tree is unused
+	 * if we have root and there are empty pages in tree, then we don't
+	 * release lock to go further processing and guarantee that tree is unused
 	 */
 	if (!(isRoot && hasVoidPage))
 	{
@@ -236,7 +236,7 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 	Buffer		pBuffer;
 	Page		page,
 				parentPage;
-	BlockNumber	rightlink;
+	BlockNumber rightlink;
 
 	/*
 	 * Lock the pages in the same order as an insertion would, to avoid
@@ -302,11 +302,11 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 		data.rightLink = GinPageGetOpaque(page)->rightlink;
 
 		/*
-		 * We can't pass buffer_std = TRUE, because we didn't set pd_lower
-		 * on pre-9.4 versions. The page might've been binary-upgraded from
-		 * an older version, and hence not have pd_lower set correctly.
-		 * Ditto for the left page, but removing the item from the parent
-		 * updated its pd_lower, so we know that's OK at this point.
+		 * We can't pass buffer_std = TRUE, because we didn't set pd_lower on
+		 * pre-9.4 versions. The page might've been binary-upgraded from an
+		 * older version, and hence not have pd_lower set correctly. Ditto for
+		 * the left page, but removing the item from the parent updated its
+		 * pd_lower, so we know that's OK at this point.
 		 */
 		rdata[0].buffer = dBuffer;
 		rdata[0].buffer_std = FALSE;
@@ -538,7 +538,8 @@ ginVacuumEntryPage(GinVacuumState *gvs, Buffer buffer, BlockNumber *roots, uint3
 				}
 
 				/*
-				 * if we already created a temporary page, make changes in place
+				 * if we already created a temporary page, make changes in
+				 * place
 				 */
 				if (tmppage == origpage)
 				{

@@ -31,7 +31,7 @@ typedef struct ItemIdData
 typedef ItemIdData *ItemId;
 
 /*
- * lp_flags has these possible states.	An UNUSED line pointer is available
+ * lp_flags has these possible states.  An UNUSED line pointer is available
  * for immediate re-use, the other states are not.
  */
 #define LP_UNUSED		0		/* unused (should always have lp_len=0) */

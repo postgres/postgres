@@ -188,7 +188,7 @@ parseCommandLine(int argc, char *argv[])
 
 			default:
 				pg_fatal("Try \"%s --help\" for more information.\n",
-					   os_info.progname);
+						 os_info.progname);
 				break;
 		}
 	}
@@ -211,8 +211,9 @@ parseCommandLine(int argc, char *argv[])
 	/* Turn off read-only mode;  add prefix to PGOPTIONS? */
 	if (getenv("PGOPTIONS"))
 	{
-		char *pgoptions = psprintf("%s %s", FIX_DEFAULT_READ_ONLY,
-									getenv("PGOPTIONS"));
+		char	   *pgoptions = psprintf("%s %s", FIX_DEFAULT_READ_ONLY,
+										 getenv("PGOPTIONS"));
+
 		pg_putenv("PGOPTIONS", pgoptions);
 		pfree(pgoptions);
 	}
@@ -319,8 +320,8 @@ check_required_directory(char **dirpath, char **configpath,
 		}
 		else
 			pg_fatal("You must identify the directory where the %s.\n"
-				   "Please use the %s command-line option or the %s environment variable.\n",
-				   description, cmdLineOption, envVarName);
+					 "Please use the %s command-line option or the %s environment variable.\n",
+					 description, cmdLineOption, envVarName);
 	}
 
 	/*
@@ -373,7 +374,7 @@ adjust_data_dir(ClusterInfo *cluster)
 
 	/*
 	 * We don't have a data directory yet, so we can't check the PG version,
-	 * so this might fail --- only works for PG 9.2+.	If this fails,
+	 * so this might fail --- only works for PG 9.2+.   If this fails,
 	 * pg_upgrade will fail anyway because the data files will not be found.
 	 */
 	snprintf(cmd, sizeof(cmd), "\"%s/postmaster\" -D \"%s\" -C data_directory",
@@ -382,7 +383,7 @@ adjust_data_dir(ClusterInfo *cluster)
 	if ((output = popen(cmd, "r")) == NULL ||
 		fgets(cmd_output, sizeof(cmd_output), output) == NULL)
 		pg_fatal("Could not get data directory using %s: %s\n",
-			   cmd, getErrorText(errno));
+				 cmd, getErrorText(errno));
 
 	pclose(output);
 

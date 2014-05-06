@@ -57,7 +57,7 @@ static timeout_params *volatile active_timeouts[MAX_TIMEOUTS];
  * Note that we don't bother to reset any pending timer interrupt when we
  * disable the signal handler; it's not really worth the cycles to do so,
  * since the probability of the interrupt actually occurring while we have
- * it disabled is low.	See comments in schedule_alarm() about that.
+ * it disabled is low.  See comments in schedule_alarm() about that.
  */
 static volatile sig_atomic_t alarm_enabled = false;
 
@@ -69,7 +69,7 @@ static volatile sig_atomic_t alarm_enabled = false;
  * Internal helper functions
  *
  * For all of these, it is caller's responsibility to protect them from
- * interruption by the signal handler.	Generally, call disable_alarm()
+ * interruption by the signal handler.  Generally, call disable_alarm()
  * first to prevent interruption, then update state, and last call
  * schedule_alarm(), which will re-enable the signal handler if needed.
  *****************************************************************************/
@@ -144,7 +144,7 @@ enable_timeout(TimeoutId id, TimestampTz now, TimestampTz fin_time)
 	Assert(all_timeouts[id].timeout_handler != NULL);
 
 	/*
-	 * If this timeout was already active, momentarily disable it.	We
+	 * If this timeout was already active, momentarily disable it.  We
 	 * interpret the call as a directive to reschedule the timeout.
 	 */
 	i = find_active_timeout(id);
@@ -152,7 +152,7 @@ enable_timeout(TimeoutId id, TimestampTz now, TimestampTz fin_time)
 		remove_timeout_index(i);
 
 	/*
-	 * Find out the index where to insert the new timeout.	We sort by
+	 * Find out the index where to insert the new timeout.  We sort by
 	 * fin_time, and for equal fin_time by priority.
 	 */
 	for (i = 0; i < num_active_timeouts; i++)
@@ -214,18 +214,18 @@ schedule_alarm(TimestampTz now)
 		 *
 		 * Because we didn't bother to reset the timer in disable_alarm(),
 		 * it's possible that a previously-set interrupt will fire between
-		 * enable_alarm() and setitimer().	This is safe, however.	There are
+		 * enable_alarm() and setitimer().  This is safe, however.  There are
 		 * two possible outcomes:
 		 *
 		 * 1. The signal handler finds nothing to do (because the nearest
 		 * timeout event is still in the future).  It will re-set the timer
-		 * and return.	Then we'll overwrite the timer value with a new one.
+		 * and return.  Then we'll overwrite the timer value with a new one.
 		 * This will mean that the timer fires a little later than we
 		 * intended, but only by the amount of time it takes for the signal
 		 * handler to do nothing useful, which shouldn't be much.
 		 *
 		 * 2. The signal handler executes and removes one or more timeout
-		 * events.	When it returns, either the queue is now empty or the
+		 * events.  When it returns, either the queue is now empty or the
 		 * frontmost event is later than the one we looked at above.  So we'll
 		 * overwrite the timer value with one that is too soon (plus or minus
 		 * the signal handler's execution time), causing a useless interrupt
@@ -266,14 +266,14 @@ handle_sig_alarm(SIGNAL_ARGS)
 	 * mainline is waiting for a lock).  If SIGINT or similar arrives while
 	 * this code is running, we'd lose control and perhaps leave our data
 	 * structures in an inconsistent state.  Disable immediate interrupts, and
-	 * just to be real sure, bump the holdoff counter as well.	(The reason
+	 * just to be real sure, bump the holdoff counter as well.  (The reason
 	 * for this belt-and-suspenders-too approach is to make sure that nothing
 	 * bad happens if a timeout handler calls code that manipulates
 	 * ImmediateInterruptOK.)
 	 *
 	 * Note: it's possible for a SIGINT to interrupt handle_sig_alarm before
 	 * we manage to do this; the net effect would be as if the SIGALRM event
-	 * had been silently lost.	Therefore error recovery must include some
+	 * had been silently lost.  Therefore error recovery must include some
 	 * action that will allow any lost interrupt to be rescheduled.  Disabling
 	 * some or all timeouts is sufficient, or if that's not appropriate,
 	 * reschedule_timeouts() can be called.  Also, the signal blocking hazard
@@ -434,7 +434,7 @@ RegisterTimeout(TimeoutId id, timeout_handler_proc handler)
  *
  * This can be used during error recovery in case query cancel resulted in loss
  * of a SIGALRM event (due to longjmp'ing out of handle_sig_alarm before it
- * could do anything).	But note it's not necessary if any of the public
+ * could do anything).  But note it's not necessary if any of the public
  * enable_ or disable_timeout functions are called in the same area, since
  * those all do schedule_alarm() internally if needed.
  */
@@ -503,7 +503,7 @@ enable_timeout_at(TimeoutId id, TimestampTz fin_time)
  * Enable multiple timeouts at once.
  *
  * This works like calling enable_timeout_after() and/or enable_timeout_at()
- * multiple times.	Use this to reduce the number of GetCurrentTimestamp()
+ * multiple times.  Use this to reduce the number of GetCurrentTimestamp()
  * and setitimer() calls needed to establish multiple timeouts.
  */
 void

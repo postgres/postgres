@@ -310,7 +310,8 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type, const int bra
 					{
 						if (ind_type->type == ECPGt_NO_INDICATOR)
 						{
-							char   *str_neg_one = mm_strdup("-1");
+							char	   *str_neg_one = mm_strdup("-1");
+
 							ECPGdump_a_simple(o, ind_name, ind_type->type, ind_type->size, str_neg_one, NULL, ind_prefix, 0);
 							free(str_neg_one);
 						}
@@ -324,7 +325,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type, const int bra
 			break;
 		case ECPGt_struct:
 			{
-				char   *str_one = mm_strdup("1");
+				char	   *str_one = mm_strdup("1");
 
 				if (indicator_set && ind_type->type != ECPGt_struct)
 					mmfatal(INDICATOR_NOT_STRUCT, "indicator for struct has to be a struct");
@@ -338,10 +339,13 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type, const int bra
 			break;
 		case ECPGt_char_variable:
 			{
-				/* Allocate for each, as there are code-paths where the values get stomped on. */
-				char   *str_varchar_one = mm_strdup("1");
-				char   *str_arr_one = mm_strdup("1");
-				char   *str_neg_one = mm_strdup("-1");
+				/*
+				 * Allocate for each, as there are code-paths where the values
+				 * get stomped on.
+				 */
+				char	   *str_varchar_one = mm_strdup("1");
+				char	   *str_arr_one = mm_strdup("1");
+				char	   *str_neg_one = mm_strdup("-1");
 
 				if (indicator_set && (ind_type->type == ECPGt_struct || ind_type->type == ECPGt_array))
 					mmfatal(INDICATOR_NOT_SIMPLE, "indicator for simple data type has to be simple");
@@ -357,9 +361,12 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type, const int bra
 			break;
 		case ECPGt_descriptor:
 			{
-				/* Allocate for each, as there are code-paths where the values get stomped on. */
-				char   *str_neg_one = mm_strdup("-1");
-				char   *ind_type_neg_one = mm_strdup("-1");
+				/*
+				 * Allocate for each, as there are code-paths where the values
+				 * get stomped on.
+				 */
+				char	   *str_neg_one = mm_strdup("-1");
+				char	   *ind_type_neg_one = mm_strdup("-1");
 
 				if (indicator_set && (ind_type->type == ECPGt_struct || ind_type->type == ECPGt_array))
 					mmfatal(INDICATOR_NOT_SIMPLE, "indicator for simple data type has to be simple");
@@ -374,9 +381,12 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type, const int bra
 			break;
 		default:
 			{
-				/* Allocate for each, as there are code-paths where the values get stomped on. */
-				char   *str_neg_one = mm_strdup("-1");
-				char   *ind_type_neg_one = mm_strdup("-1");
+				/*
+				 * Allocate for each, as there are code-paths where the values
+				 * get stomped on.
+				 */
+				char	   *str_neg_one = mm_strdup("-1");
+				char	   *ind_type_neg_one = mm_strdup("-1");
 
 				if (indicator_set && (ind_type->type == ECPGt_struct || ind_type->type == ECPGt_array))
 					mmfatal(INDICATOR_NOT_SIMPLE, "indicator for simple data type has to be simple");
@@ -448,35 +458,36 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 			case ECPGt_unsigned_char:
 			case ECPGt_char_variable:
 			case ECPGt_string:
-			{
-				char	*sizeof_name = "char";
-				/*
-				 * we have to use the pointer except for arrays with given
-				 * bounds, ecpglib will distinguish between * and []
-				 */
-				if ((atoi(varcharsize) > 1 ||
-					 (atoi(arrsize) > 0) ||
-				 (atoi(varcharsize) == 0 && strcmp(varcharsize, "0") != 0) ||
-					 (atoi(arrsize) == 0 && strcmp(arrsize, "0") != 0))
-					&& siz == NULL)
 				{
-					sprintf(variable, "(%s%s)", prefix ? prefix : "", name);
-					if ((type == ECPGt_char || type == ECPGt_unsigned_char) &&
-						strcmp(varcharsize, "0") == 0)
-					{
-						/*
-						 * If this is an array of char *, the offset would be
-						 * sizeof(char *) and not sizeof(char).
-						 */
-						sizeof_name = "char *";
-					}
-				}
-				else
-					sprintf(variable, "&(%s%s)", prefix ? prefix : "", name);
+					char	   *sizeof_name = "char";
 
-				sprintf(offset, "(%s)*sizeof(%s)", strcmp(varcharsize, "0") == 0 ? "1" : varcharsize, sizeof_name);
-				break;
-			}
+					/*
+					 * we have to use the pointer except for arrays with given
+					 * bounds, ecpglib will distinguish between * and []
+					 */
+					if ((atoi(varcharsize) > 1 ||
+						 (atoi(arrsize) > 0) ||
+						 (atoi(varcharsize) == 0 && strcmp(varcharsize, "0") != 0) ||
+						 (atoi(arrsize) == 0 && strcmp(arrsize, "0") != 0))
+						&& siz == NULL)
+					{
+						sprintf(variable, "(%s%s)", prefix ? prefix : "", name);
+						if ((type == ECPGt_char || type == ECPGt_unsigned_char) &&
+							strcmp(varcharsize, "0") == 0)
+						{
+							/*
+							 * If this is an array of char *, the offset would
+							 * be sizeof(char *) and not sizeof(char).
+							 */
+							sizeof_name = "char *";
+						}
+					}
+					else
+						sprintf(variable, "&(%s%s)", prefix ? prefix : "", name);
+
+					sprintf(offset, "(%s)*sizeof(%s)", strcmp(varcharsize, "0") == 0 ? "1" : varcharsize, sizeof_name);
+					break;
+				}
 			case ECPGt_numeric:
 
 				/*
@@ -542,8 +553,8 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 			strcpy(arrsize, "1");
 
 		/*
-		 * If siz i.e. the size of structure of which this variable is part of,
-		 * that gives the offset to the next element, if required
+		 * If siz i.e. the size of structure of which this variable is part
+		 * of, that gives the offset to the next element, if required
 		 */
 		if (siz == NULL || strlen(siz) == 0)
 			fprintf(o, "\n\t%s,%s,(long)%s,(long)%s,%s, ", get_type(type), variable, varcharsize, arrsize, offset);

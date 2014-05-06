@@ -89,13 +89,13 @@
  *				 ... other errxxx() fields as needed ...));
  *
  * The error level is required, and so is a primary error message (errmsg
- * or errmsg_internal).  All else is optional.	errcode() defaults to
+ * or errmsg_internal).  All else is optional.  errcode() defaults to
  * ERRCODE_INTERNAL_ERROR if elevel is ERROR or more, ERRCODE_WARNING
  * if elevel is WARNING, or ERRCODE_SUCCESSFUL_COMPLETION if elevel is
  * NOTICE or below.
  *
  * ereport_domain() allows a message domain to be specified, for modules that
- * wish to use a different message catalog from the backend's.	To avoid having
+ * wish to use a different message catalog from the backend's.  To avoid having
  * one copy of the default text domain per .o file, we define it as NULL here
  * and have errstart insert the default text domain.  Modules can either use
  * ereport_domain() directly, or preferably they can override the TEXTDOMAIN

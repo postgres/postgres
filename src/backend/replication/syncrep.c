@@ -117,8 +117,8 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 	 * set.  See SyncRepUpdateSyncStandbysDefined.
 	 *
 	 * Also check that the standby hasn't already replied. Unlikely race
-	 * condition but we'll be fetching that cache line anyway so it's likely to
-	 * be a low cost check.
+	 * condition but we'll be fetching that cache line anyway so it's likely
+	 * to be a low cost check.
 	 */
 	if (!WalSndCtl->sync_standbys_defined ||
 		XactCommitLSN <= WalSndCtl->lsn[mode])
@@ -517,7 +517,7 @@ SyncRepGetStandbyPriority(void)
 }
 
 /*
- * Walk the specified queue from head.	Set the state of any backends that
+ * Walk the specified queue from head.  Set the state of any backends that
  * need to be woken, remove them from the queue, and then wake them.
  * Pass all = true to wake whole queue; otherwise, just wake up to
  * the walsender's LSN.

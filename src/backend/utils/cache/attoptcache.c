@@ -46,7 +46,7 @@ typedef struct
  *		Flush all cache entries when pg_attribute is updated.
  *
  * When pg_attribute is updated, we must flush the cache entry at least
- * for that attribute.	Currently, we just flush them all.	Since attribute
+ * for that attribute.  Currently, we just flush them all.  Since attribute
  * options are not currently used in performance-critical paths (such as
  * query execution), this seems OK.
  */

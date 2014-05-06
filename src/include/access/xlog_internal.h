@@ -123,7 +123,7 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
  * Compute ID and segment from an XLogRecPtr.
  *
  * For XLByteToSeg, do the computation at face value.  For XLByteToPrevSeg,
- * a boundary byte is taken to be in the previous segment.	This is suitable
+ * a boundary byte is taken to be in the previous segment.  This is suitable
  * for deciding which segment to write given a pointer to a record end,
  * for example.
  */
@@ -261,7 +261,7 @@ extern XLogRecPtr RequestXLogSwitch(void);
 extern void GetOldestRestartPoint(XLogRecPtr *oldrecptr, TimeLineID *oldtli);
 
 /*
- * Exported for the functions in timeline.c and xlogarchive.c.	Only valid
+ * Exported for the functions in timeline.c and xlogarchive.c.  Only valid
  * in the startup process.
  */
 extern bool ArchiveRecoveryRequested;

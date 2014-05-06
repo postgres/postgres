@@ -99,7 +99,7 @@ appendStringInfo(StringInfo str, const char *fmt,...)
  * appendStringInfoVA
  *
  * Attempt to format text data under the control of fmt (an sprintf-style
- * format string) and append it to whatever is already in str.	If successful
+ * format string) and append it to whatever is already in str.  If successful
  * return zero; if not (because there's not enough space), return an estimate
  * of the space needed, without modifying str.  Typically the caller should
  * pass the return value to enlargeStringInfo() before trying again; see
@@ -247,7 +247,7 @@ enlargeStringInfo(StringInfo str, int needed)
 	int			newlen;
 
 	/*
-	 * Guard against out-of-range "needed" values.	Without this, we can get
+	 * Guard against out-of-range "needed" values.  Without this, we can get
 	 * an overflow or infinite loop in the following.
 	 */
 	if (needed < 0)				/* should not happen */

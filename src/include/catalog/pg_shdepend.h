@@ -33,7 +33,7 @@ CATALOG(pg_shdepend,1214) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
 	/*
 	 * Identification of the dependent (referencing) object.
 	 *
-	 * These fields are all zeroes for a DEPENDENCY_PIN entry.	Also, dbid can
+	 * These fields are all zeroes for a DEPENDENCY_PIN entry.  Also, dbid can
 	 * be zero to denote a shared object.
 	 */
 	Oid			dbid;			/* OID of database containing object */

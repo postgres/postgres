@@ -69,32 +69,32 @@ typedef struct LogicalDecodingContext
 	/*
 	 * State for writing output.
 	 */
-	bool accept_writes;
-	bool prepared_write;
-	XLogRecPtr write_location;
+	bool		accept_writes;
+	bool		prepared_write;
+	XLogRecPtr	write_location;
 	TransactionId write_xid;
 } LogicalDecodingContext;
 
 extern void CheckLogicalDecodingRequirements(void);
 
 extern LogicalDecodingContext *CreateInitDecodingContext(char *plugin,
-							List *output_plugin_options,
-							XLogPageReadCB read_page,
-						 LogicalOutputPluginWriterPrepareWrite prepare_write,
-							LogicalOutputPluginWriterWrite do_write);
+						  List *output_plugin_options,
+						  XLogPageReadCB read_page,
+						  LogicalOutputPluginWriterPrepareWrite prepare_write,
+						  LogicalOutputPluginWriterWrite do_write);
 extern LogicalDecodingContext *CreateDecodingContext(
-							XLogRecPtr	start_lsn,
-							List *output_plugin_options,
-							XLogPageReadCB read_page,
-						 LogicalOutputPluginWriterPrepareWrite prepare_write,
-							LogicalOutputPluginWriterWrite do_write);
+					  XLogRecPtr start_lsn,
+					  List *output_plugin_options,
+					  XLogPageReadCB read_page,
+					  LogicalOutputPluginWriterPrepareWrite prepare_write,
+					  LogicalOutputPluginWriterWrite do_write);
 extern void DecodingContextFindStartpoint(LogicalDecodingContext *ctx);
 extern bool DecodingContextReady(LogicalDecodingContext *ctx);
 extern void FreeDecodingContext(LogicalDecodingContext *ctx);
 
 extern void LogicalIncreaseXminForSlot(XLogRecPtr lsn, TransactionId xmin);
 extern void LogicalIncreaseRestartDecodingForSlot(XLogRecPtr current_lsn,
-												   XLogRecPtr restart_lsn);
+									  XLogRecPtr restart_lsn);
 extern void LogicalConfirmReceivedLocation(XLogRecPtr lsn);
 
 #endif

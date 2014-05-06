@@ -228,9 +228,9 @@ FindStreamingStart(uint32 *tli)
 		XLogRecPtr	high_ptr;
 
 		/*
-		 * Move the starting pointer to the start of the next segment, if
-		 * the highest one we saw was completed. Otherwise start streaming
-		 * from the beginning of the .partial segment.
+		 * Move the starting pointer to the start of the next segment, if the
+		 * highest one we saw was completed. Otherwise start streaming from
+		 * the beginning of the .partial segment.
 		 */
 		if (!high_ispartial)
 			high_segno++;

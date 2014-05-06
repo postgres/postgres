@@ -310,6 +310,7 @@ main(int argc, char *argv[])
 	if (roles.head != NULL)
 	{
 		SimpleStringListCell *cell;
+
 		appendPQExpBufferStr(&sql, " IN ROLE ");
 
 		for (cell = roles.head; cell; cell = cell->next)

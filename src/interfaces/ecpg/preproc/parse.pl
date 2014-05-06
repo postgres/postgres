@@ -42,13 +42,13 @@ my %replace_token = (
 
 # or in the block
 my %replace_string = (
-	'WITH_TIME'    => 'with time',
+	'WITH_TIME'       => 'with time',
 	'WITH_ORDINALITY' => 'with ordinality',
-	'NULLS_FIRST'  => 'nulls first',
-	'NULLS_LAST'   => 'nulls last',
-	'TYPECAST'     => '::',
-	'DOT_DOT'      => '..',
-	'COLON_EQUALS' => ':=',);
+	'NULLS_FIRST'     => 'nulls first',
+	'NULLS_LAST'      => 'nulls last',
+	'TYPECAST'        => '::',
+	'DOT_DOT'         => '..',
+	'COLON_EQUALS'    => ':=',);
 
 # specific replace_types for specific non-terminals - never include the ':'
 # ECPG-only replace_types are defined in ecpg-replace_types

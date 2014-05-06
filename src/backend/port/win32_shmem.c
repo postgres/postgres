@@ -79,7 +79,7 @@ GetSharedMemName(void)
  * Is a previously-existing shmem segment still existing and in use?
  *
  * The point of this exercise is to detect the case where a prior postmaster
- * crashed, but it left child backends that are still running.	Therefore
+ * crashed, but it left child backends that are still running.  Therefore
  * we only care about shmem segments that are associated with the intended
  * DataDir.  This is an important consideration since accidental matches of
  * shmem segment IDs are reasonably common.

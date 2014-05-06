@@ -377,7 +377,7 @@ PLy_output_datum_func2(PLyObToDatum *arg, HeapTuple typeTup)
 
 	/*
 	 * Select a conversion function to convert Python objects to PostgreSQL
-	 * datums.	Most data types can go through the generic function.
+	 * datums.  Most data types can go through the generic function.
 	 */
 	switch (getBaseType(element_type ? element_type : arg->typoid))
 	{
@@ -427,6 +427,7 @@ static void
 PLy_input_datum_func2(PLyDatumToOb *arg, Oid typeOid, HeapTuple typeTup)
 {
 	Form_pg_type typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
+
 	/* It's safe to handle domains of array types as its base array type. */
 	Oid			element_type = get_base_element_type(typeOid);
 
@@ -647,7 +648,7 @@ PLyList_FromArray(PLyDatumToOb *arg, Datum d)
 }
 
 /*
- * Convert a Python object to a PostgreSQL bool datum.	This can't go
+ * Convert a Python object to a PostgreSQL bool datum.  This can't go
  * through the generic conversion function, because Python attaches a
  * Boolean value to everything, more things than the PostgreSQL bool
  * type can parse.
@@ -809,7 +810,7 @@ static Datum
 PLySequence_ToArray(PLyObToDatum *arg, int32 typmod, PyObject *plrv)
 {
 	ArrayType  *array;
-	Datum       rv;
+	Datum		rv;
 	int			i;
 	Datum	   *elems;
 	bool	   *nulls;
@@ -847,6 +848,7 @@ PLySequence_ToArray(PLyObToDatum *arg, int32 typmod, PyObject *plrv)
 	lbs = 1;
 	array = construct_md_array(elems, nulls, 1, &len, &lbs,
 							   get_base_element_type(arg->typoid), arg->elm->typlen, arg->elm->typbyval, arg->elm->typalign);
+
 	/*
 	 * If the result type is a domain of array, the resulting array must be
 	 * checked.

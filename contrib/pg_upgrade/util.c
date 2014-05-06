@@ -82,7 +82,7 @@ prep_status(const char *fmt,...)
 
 
 static
- __attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 0)))
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 0)))
 void
 pg_log_v(eLogType type, const char *fmt, va_list ap)
 {
@@ -280,7 +280,7 @@ pg_putenv(const char *var, const char *val)
 
 		/*
 		 * Do not free envstr because it becomes part of the environment on
-		 * some operating systems.	See port/unsetenv.c::unsetenv.
+		 * some operating systems.  See port/unsetenv.c::unsetenv.
 		 */
 #else
 		SetEnvironmentVariableA(var, val);

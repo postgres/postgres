@@ -27,7 +27,7 @@
  * pg_control data.  pg_resetxlog cannot be run while the server is running
  * so we use pg_controldata;  pg_controldata doesn't provide all the fields
  * we need to actually perform the upgrade, but it provides enough for
- * check mode.	We do not implement pg_resetxlog -n because it is hard to
+ * check mode.  We do not implement pg_resetxlog -n because it is hard to
  * return valid xid data for a running server.
  */
 void
@@ -119,7 +119,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 
 	if ((output = popen(cmd, "r")) == NULL)
 		pg_fatal("Could not get control data using %s: %s\n",
-			   cmd, getErrorText(errno));
+				 cmd, getErrorText(errno));
 
 	/* Only pre-8.4 has these so if they are not set below we will check later */
 	cluster->controldata.lc_collate = NULL;
@@ -156,8 +156,8 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			for (p = bufin; *p; p++)
 				if (!isascii(*p))
 					pg_fatal("The 8.3 cluster's pg_controldata is incapable of outputting ASCII, even\n"
-						   "with LANG=C.  You must upgrade this cluster to a newer version of PostgreSQL\n"
-						   "8.3 to fix this bug.  PostgreSQL 8.3.7 and later are known to work properly.\n");
+							 "with LANG=C.  You must upgrade this cluster to a newer version of PostgreSQL\n"
+							 "8.3 to fix this bug.  PostgreSQL 8.3.7 and later are known to work properly.\n");
 		}
 #endif
 
@@ -606,8 +606,8 @@ check_control_data(ControlData *oldctrl,
 		 * This is a common 8.3 -> 8.4 upgrade problem, so we are more verbose
 		 */
 		pg_fatal("You will need to rebuild the new server with configure option\n"
-			   "--disable-integer-datetimes or get server binaries built with those\n"
-			   "options.\n");
+				 "--disable-integer-datetimes or get server binaries built with those\n"
+				 "options.\n");
 	}
 
 	/*

@@ -276,7 +276,7 @@ float4in(PG_FUNCTION_ARGS)
 			/*
 			 * Some platforms return ERANGE for denormalized numbers (those
 			 * that are not zero, but are too close to zero to have full
-			 * precision).	We'd prefer not to throw error for that, so try to
+			 * precision).  We'd prefer not to throw error for that, so try to
 			 * detect whether it's a "real" out-of-range condition by checking
 			 * to see if the result is zero or huge.
 			 */
@@ -475,7 +475,7 @@ float8in(PG_FUNCTION_ARGS)
 			/*
 			 * Some platforms return ERANGE for denormalized numbers (those
 			 * that are not zero, but are too close to zero to have full
-			 * precision).	We'd prefer not to throw error for that, so try to
+			 * precision).  We'd prefer not to throw error for that, so try to
 			 * detect whether it's a "real" out-of-range condition by checking
 			 * to see if the result is zero or huge.
 			 */
@@ -2054,7 +2054,7 @@ float8_stddev_samp(PG_FUNCTION_ARGS)
  * in that order.  Note that Y is the first argument to the aggregates!
  *
  * It might seem attractive to optimize this by having multiple accumulator
- * functions that only calculate the sums actually needed.	But on most
+ * functions that only calculate the sums actually needed.  But on most
  * modern machines, a couple of extra floating-point multiplies will be
  * insignificant compared to the other per-tuple overhead, so I've chosen
  * to minimize code space instead.

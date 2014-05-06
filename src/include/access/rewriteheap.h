@@ -34,10 +34,10 @@ extern bool rewrite_heap_dead_tuple(RewriteState state, HeapTuple oldTuple);
  */
 typedef struct LogicalRewriteMappingData
 {
-	RelFileNode		old_node;
-	RelFileNode		new_node;
-	ItemPointerData	old_tid;
-	ItemPointerData	new_tid;
+	RelFileNode old_node;
+	RelFileNode new_node;
+	ItemPointerData old_tid;
+	ItemPointerData new_tid;
 } LogicalRewriteMappingData;
 
 /* ---
@@ -52,6 +52,6 @@ typedef struct LogicalRewriteMappingData
  * ---
  */
 #define LOGICAL_REWRITE_FORMAT "map-%x-%x-%X_%X-%x-%x"
-void CheckPointLogicalRewriteHeap(void);
+void		CheckPointLogicalRewriteHeap(void);
 
 #endif   /* REWRITE_HEAP_H */

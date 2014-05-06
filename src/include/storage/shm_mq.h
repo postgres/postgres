@@ -28,9 +28,9 @@ typedef struct shm_mq_handle shm_mq_handle;
 /* Possible results of a send or receive operation. */
 typedef enum
 {
-	SHM_MQ_SUCCESS,			/* Sent or received a message. */
-	SHM_MQ_WOULD_BLOCK,		/* Not completed; retry later. */
-	SHM_MQ_DETACHED			/* Other process has detached queue. */
+	SHM_MQ_SUCCESS,				/* Sent or received a message. */
+	SHM_MQ_WOULD_BLOCK,			/* Not completed; retry later. */
+	SHM_MQ_DETACHED				/* Other process has detached queue. */
 } shm_mq_result;
 
 /*

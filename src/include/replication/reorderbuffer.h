@@ -1,6 +1,6 @@
 /*
  * reorderbuffer.h
- *    PostgreSQL logical replay/reorder buffer management.
+ *	  PostgreSQL logical replay/reorder buffer management.
  *
  * Copyright (c) 2012-2014, PostgreSQL Global Development Group
  *
@@ -79,7 +79,7 @@ typedef struct ReorderBufferChange
 			ReorderBufferTupleBuf *oldtuple;
 			/* valid for INSERT || UPDATE */
 			ReorderBufferTupleBuf *newtuple;
-		} tp;
+		}			tp;
 
 		/* New snapshot, set when action == *_INTERNAL_SNAPSHOT */
 		Snapshot	snapshot;
@@ -102,7 +102,7 @@ typedef struct ReorderBufferChange
 			CommandId	cmax;
 			CommandId	combocid;
 		}			tuplecid;
-	} data;
+	}			data;
 
 	/*
 	 * While in use this is how a change is linked into a transactions,
@@ -161,7 +161,7 @@ typedef struct ReorderBufferTXN
 	/*
 	 * Commit time, only known when we read the actual commit record.
 	 */
-	TimestampTz	commit_time;
+	TimestampTz commit_time;
 
 	/*
 	 * Base snapshot or NULL.
@@ -329,12 +329,12 @@ ReorderBufferChange *ReorderBufferGetChange(ReorderBuffer *);
 void		ReorderBufferReturnChange(ReorderBuffer *, ReorderBufferChange *);
 
 void		ReorderBufferQueueChange(ReorderBuffer *, TransactionId, XLogRecPtr lsn, ReorderBufferChange *);
-void		ReorderBufferCommit(ReorderBuffer *, TransactionId,
-							XLogRecPtr commit_lsn, XLogRecPtr end_lsn,
-							TimestampTz commit_time);
+void ReorderBufferCommit(ReorderBuffer *, TransactionId,
+					XLogRecPtr commit_lsn, XLogRecPtr end_lsn,
+					TimestampTz commit_time);
 void		ReorderBufferAssignChild(ReorderBuffer *, TransactionId, TransactionId, XLogRecPtr commit_lsn);
-void		ReorderBufferCommitChild(ReorderBuffer *, TransactionId, TransactionId,
-									 XLogRecPtr commit_lsn, XLogRecPtr end_lsn);
+void ReorderBufferCommitChild(ReorderBuffer *, TransactionId, TransactionId,
+						 XLogRecPtr commit_lsn, XLogRecPtr end_lsn);
 void		ReorderBufferAbort(ReorderBuffer *, TransactionId, XLogRecPtr lsn);
 void		ReorderBufferAbortOld(ReorderBuffer *, TransactionId xid);
 void		ReorderBufferForget(ReorderBuffer *, TransactionId, XLogRecPtr lsn);

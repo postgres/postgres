@@ -7,7 +7,7 @@
  * lists that an object could be in.  List links are embedded directly into
  * the objects, and thus no extra memory management overhead is required.
  * (Of course, if only a small proportion of existing objects are in a list,
- * the link fields in the remainder would be wasted space.	But usually,
+ * the link fields in the remainder would be wasted space.  But usually,
  * it saves space to not have separately-allocated list nodes.)
  *
  * None of the functions here allocate any memory; they just manipulate
@@ -77,7 +77,7 @@
  *
  * While a simple iteration is useful, we sometimes also want to manipulate
  * the list while iterating.  There is a different iterator element and looping
- * construct for that.	Suppose we want to delete tables that meet a certain
+ * construct for that.  Suppose we want to delete tables that meet a certain
  * criterion:
  *
  * dlist_mutable_iter miter;
@@ -213,7 +213,7 @@ typedef struct slist_head
  *
  * It's allowed to modify the list while iterating, with the exception of
  * deleting the iterator's current node; deletion of that node requires
- * care if the iteration is to be continued afterward.	(Doing so and also
+ * care if the iteration is to be continued afterward.  (Doing so and also
  * deleting or inserting adjacent list elements might misbehave; also, if
  * the user frees the current node's storage, continuing the iteration is
  * not safe.)
@@ -233,7 +233,7 @@ typedef struct slist_iter
  * iteration use the 'cur' member.
  *
  * The only list modification allowed while iterating is to remove the current
- * node via slist_delete_current() (*not* slist_delete()).	Insertion or
+ * node via slist_delete_current() (*not* slist_delete()).  Insertion or
  * deletion of nodes adjacent to the current node would misbehave.
  */
 typedef struct slist_mutable_iter
@@ -271,7 +271,7 @@ extern void slist_check(slist_head *head);
 
 /*
  * We want the functions below to be inline; but if the compiler doesn't
- * support that, fall back on providing them as regular functions.	See
+ * support that, fall back on providing them as regular functions.  See
  * STATIC_IF_INLINE in c.h.
  */
 #ifndef PG_USE_INLINE
@@ -574,7 +574,7 @@ dlist_tail_node(dlist_head *head)
 
 /*
  * We want the functions below to be inline; but if the compiler doesn't
- * support that, fall back on providing them as regular functions.	See
+ * support that, fall back on providing them as regular functions.  See
  * STATIC_IF_INLINE in c.h.
  */
 #ifndef PG_USE_INLINE
@@ -740,7 +740,7 @@ slist_delete_current(slist_mutable_iter *iter)
  *
  * It's allowed to modify the list while iterating, with the exception of
  * deleting the iterator's current node; deletion of that node requires
- * care if the iteration is to be continued afterward.	(Doing so and also
+ * care if the iteration is to be continued afterward.  (Doing so and also
  * deleting or inserting adjacent list elements might misbehave; also, if
  * the user frees the current node's storage, continuing the iteration is
  * not safe.)
@@ -758,7 +758,7 @@ slist_delete_current(slist_mutable_iter *iter)
  * Access the current element with iter.cur.
  *
  * The only list modification allowed while iterating is to remove the current
- * node via slist_delete_current() (*not* slist_delete()).	Insertion or
+ * node via slist_delete_current() (*not* slist_delete()).  Insertion or
  * deletion of nodes adjacent to the current node would misbehave.
  */
 #define slist_foreach_modify(iter, lhead)									\

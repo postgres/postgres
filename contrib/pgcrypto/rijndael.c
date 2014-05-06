@@ -7,12 +7,12 @@
 /*		   RIJNDAEL by Joan Daemen and Vincent Rijmen					*/
 /*																		*/
 /* which is a candidate algorithm in the Advanced Encryption Standard	*/
-/* programme of the US National Institute of Standards and Technology.	*/
+/* programme of the US National Institute of Standards and Technology.  */
 /*																		*/
 /* Copyright in this implementation is held by Dr B R Gladman but I		*/
 /* hereby give permission for its free direct or derivative use subject */
 /* to acknowledgment of its origin and compliance with any conditions	*/
-/* that the originators of the algorithm place on its exploitation.		*/
+/* that the originators of the algorithm place on its exploitation.     */
 /*																		*/
 /* Dr Brian Gladman (gladman@seven77.demon.co.uk) 14th January 1999		*/
 
@@ -188,7 +188,7 @@ gen_tabs(void)
 	/* rijndael specification is in big endian format with	*/
 	/* bit 0 as the most significant bit. In the remainder	*/
 	/* of the specification the bits are numbered from the	*/
-	/* least significant end of a byte.						*/
+	/* least significant end of a byte.                     */
 
 	for (i = 0; i < 256; ++i)
 	{

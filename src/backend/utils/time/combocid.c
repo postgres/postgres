@@ -15,7 +15,7 @@
  * this module.
  *
  * To allow reusing existing combo cids, we also keep a hash table that
- * maps cmin,cmax pairs to combo cids.	This keeps the data structure size
+ * maps cmin,cmax pairs to combo cids.  This keeps the data structure size
  * reasonable in most cases, since the number of unique pairs used by any
  * one transaction is likely to be small.
  *
@@ -148,8 +148,8 @@ HeapTupleHeaderAdjustCmax(HeapTupleHeader tup,
 	/*
 	 * If we're marking a tuple deleted that was inserted by (any
 	 * subtransaction of) our transaction, we need to use a combo command id.
-	 * Test for HeapTupleHeaderXminCommitted() first, because it's cheaper than a
-	 * TransactionIdIsCurrentTransactionId call.
+	 * Test for HeapTupleHeaderXminCommitted() first, because it's cheaper
+	 * than a TransactionIdIsCurrentTransactionId call.
 	 */
 	if (!HeapTupleHeaderXminCommitted(tup) &&
 		TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetRawXmin(tup)))

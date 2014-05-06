@@ -52,7 +52,7 @@ exec_prog(const char *log_file, const char *opt_log_file,
 	va_list		ap;
 
 #ifdef WIN32
-static DWORD       mainThreadId = 0;
+	static DWORD mainThreadId = 0;
 
 	/* We assume we are called from the primary thread first */
 	if (mainThreadId == 0)
@@ -73,14 +73,15 @@ static DWORD       mainThreadId = 0;
 	pg_log(PG_VERBOSE, "%s\n", cmd);
 
 #ifdef WIN32
+
 	/*
-	 * For some reason, Windows issues a file-in-use error if we write data
-	 * to the log file from a non-primary thread just before we create a
-	 * subprocess that also writes to the same log file.  One fix is to
-	 * sleep for 100ms.  A cleaner fix is to write to the log file _after_
-	 * the subprocess has completed, so we do this only when writing from
-	 * a non-primary thread.  fflush(), running system() twice, and
-	 * pre-creating the file do not see to help.
+	 * For some reason, Windows issues a file-in-use error if we write data to
+	 * the log file from a non-primary thread just before we create a
+	 * subprocess that also writes to the same log file.  One fix is to sleep
+	 * for 100ms.  A cleaner fix is to write to the log file _after_ the
+	 * subprocess has completed, so we do this only when writing from a
+	 * non-primary thread.  fflush(), running system() twice, and pre-creating
+	 * the file do not see to help.
 	 */
 	if (mainThreadId != GetCurrentThreadId())
 		result = system(cmd);
@@ -101,7 +102,7 @@ static DWORD       mainThreadId = 0;
 
 		for (iter = 0; iter < 4 && log == NULL; iter++)
 		{
-			pg_usleep(1000000);		/* 1 sec */
+			pg_usleep(1000000); /* 1 sec */
 			log = fopen(log_file, "a");
 		}
 	}
@@ -154,11 +155,12 @@ static DWORD       mainThreadId = 0;
 	}
 
 #ifndef WIN32
+
 	/*
 	 * We can't do this on Windows because it will keep the "pg_ctl start"
 	 * output filename open until the server stops, so we do the \n\n above on
 	 * that platform.  We use a unique filename for "pg_ctl start" that is
-	 * never reused while the server is running, so it works fine.	We could
+	 * never reused while the server is running, so it works fine.  We could
 	 * log these commands to a third file, but that just adds complexity.
 	 */
 	if ((log = fopen(log_file, "a")) == NULL)
@@ -189,7 +191,7 @@ pid_lock_file_exists(const char *datadir)
 		/* ENOTDIR means we will throw a more useful error later */
 		if (errno != ENOENT && errno != ENOTDIR)
 			pg_fatal("could not open file \"%s\" for reading: %s\n",
-				   path, getErrorText(errno));
+					 path, getErrorText(errno));
 
 		return false;
 	}
@@ -238,7 +240,7 @@ win32_check_directory_write_permissions(void)
 	int			fd;
 
 	/*
-	 * We open a file we would normally create anyway.	We do this even in
+	 * We open a file we would normally create anyway.  We do this even in
 	 * 'check' mode, which isn't ideal, but this is the best we can do.
 	 */
 	if ((fd = open(GLOBALS_DUMP_FILE, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR)) < 0)
@@ -255,7 +257,7 @@ win32_check_directory_write_permissions(void)
  *
  *	This function validates the given cluster directory - we search for a
  *	small set of subdirectories that we expect to find in a valid $PGDATA
- *	directory.	If any of the subdirectories are missing (or secured against
+ *	directory.  If any of the subdirectories are missing (or secured against
  *	us) we display an error message and exit()
  *
  */
@@ -295,7 +297,7 @@ check_data_dir(const char *pg_data)
  * check_bin_dir()
  *
  *	This function searches for the executables that we expect to find
- *	in the binaries directory.	If we find that a required executable
+ *	in the binaries directory.  If we find that a required executable
  *	is missing (or secured against us), we display an error message and
  *	exit().
  */
@@ -349,10 +351,10 @@ validate_exec(const char *dir, const char *cmdName)
 	 */
 	if (stat(path, &buf) < 0)
 		pg_fatal("check for \"%s\" failed: %s\n",
-			   path, getErrorText(errno));
+				 path, getErrorText(errno));
 	else if (!S_ISREG(buf.st_mode))
 		pg_fatal("check for \"%s\" failed: not an executable file\n",
-			   path);
+				 path);
 
 	/*
 	 * Ensure that the file is both executable and readable (required for
@@ -364,7 +366,7 @@ validate_exec(const char *dir, const char *cmdName)
 	if ((buf.st_mode & S_IRUSR) == 0)
 #endif
 		pg_fatal("check for \"%s\" failed: cannot read file (permission denied)\n",
-			   path);
+				 path);
 
 #ifndef WIN32
 	if (access(path, X_OK) != 0)
@@ -372,5 +374,5 @@ validate_exec(const char *dir, const char *cmdName)
 	if ((buf.st_mode & S_IXUSR) == 0)
 #endif
 		pg_fatal("check for \"%s\" failed: cannot execute (permission denied)\n",
-			   path);
+				 path);
 }

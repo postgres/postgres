@@ -668,7 +668,7 @@ typedef struct PLpgSQL_func_hashkey
 	/*
 	 * For a trigger function, the OID of the relation triggered on is part of
 	 * the hash key --- we want to compile the trigger separately for each
-	 * relation it is used with, in case the rowtype is different.	Zero if
+	 * relation it is used with, in case the rowtype is different.  Zero if
 	 * not called as a trigger.
 	 */
 	Oid			trigrelOid;
@@ -740,8 +740,8 @@ typedef struct PLpgSQL_function
 	bool		print_strict_params;
 
 	/* extra checks */
-	int 		extra_warnings;
-	int 		extra_errors;
+	int			extra_warnings;
+	int			extra_errors;
 
 	int			ndatums;
 	PLpgSQL_datum **datums;
@@ -827,7 +827,7 @@ typedef struct PLpgSQL_execstate
  *
  * Also, immediately before any call to func_setup, PL/pgSQL fills in the
  * error_callback and assign_expr fields with pointers to its own
- * plpgsql_exec_error_callback and exec_assign_expr functions.	This is
+ * plpgsql_exec_error_callback and exec_assign_expr functions.  This is
  * a somewhat ad-hoc expedient to simplify life for debugger plugins.
  */
 
@@ -890,8 +890,8 @@ extern bool plpgsql_print_strict_params;
 #define PLPGSQL_XCHECK_SHADOWVAR	1
 #define PLPGSQL_XCHECK_ALL			((int) ~0)
 
-extern int plpgsql_extra_warnings;
-extern int plpgsql_extra_errors;
+extern int	plpgsql_extra_warnings;
+extern int	plpgsql_extra_errors;
 
 extern bool plpgsql_check_syntax;
 extern bool plpgsql_DumpExecTree;

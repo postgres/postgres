@@ -86,7 +86,7 @@ static void show_sort_group_keys(PlanState *planstate, const char *qlabel,
 static void show_sort_info(SortState *sortstate, ExplainState *es);
 static void show_hash_info(HashState *hashstate, ExplainState *es);
 static void show_tidbitmap_info(BitmapHeapScanState *planstate,
-								ExplainState *es);
+					ExplainState *es);
 static void show_instrumentation_count(const char *qlabel, int which,
 						   PlanState *planstate, ExplainState *es);
 static void show_foreignscan_info(ForeignScanState *fsstate, ExplainState *es);
@@ -197,7 +197,7 @@ ExplainQuery(ExplainStmt *stmt, const char *queryString,
 	 * plancache.c.
 	 *
 	 * Because the rewriter and planner tend to scribble on the input, we make
-	 * a preliminary copy of the source querytree.	This prevents problems in
+	 * a preliminary copy of the source querytree.  This prevents problems in
 	 * the case that the EXPLAIN is in a portal or plpgsql function and is
 	 * executed repeatedly.  (See also the same hack in DECLARE CURSOR and
 	 * PREPARE.)  XXX FIXME someday.
@@ -320,8 +320,9 @@ ExplainOneQuery(Query *query, IntoClause *into, ExplainState *es,
 		(*ExplainOneQuery_hook) (query, into, es, queryString, params);
 	else
 	{
-		PlannedStmt	*plan;
-		instr_time	planstart, planduration;
+		PlannedStmt *plan;
+		instr_time	planstart,
+					planduration;
 
 		INSTR_TIME_SET_CURRENT(planstart);
 
@@ -493,7 +494,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 
 	if (es->costs && planduration)
 	{
-		double plantime = INSTR_TIME_GET_DOUBLE(*planduration);
+		double		plantime = INSTR_TIME_GET_DOUBLE(*planduration);
 
 		if (es->format == EXPLAIN_FORMAT_TEXT)
 			appendStringInfo(es->str, "Planning time: %.3f ms\n",
@@ -542,7 +543,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
  *	  convert a QueryDesc's plan tree to text and append it to es->str
  *
  * The caller should have set up the options fields of *es, as well as
- * initializing the output buffer es->str.	Other fields in *es are
+ * initializing the output buffer es->str.  Other fields in *es are
  * initialized here.
  *
  * NB: will not work on utility statements
@@ -567,7 +568,7 @@ ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc)
  *	  es->str
  *
  * The caller should have set up the options fields of *es, as well as
- * initializing the output buffer es->str.	Other fields in *es are
+ * initializing the output buffer es->str.  Other fields in *es are
  * initialized here.
  */
 void
@@ -2193,7 +2194,7 @@ show_modifytable_info(ModifyTableState *mtstate, ExplainState *es)
 
 	/*
 	 * If the first target relation is a foreign table, call its FDW to
-	 * display whatever additional fields it wants to.	For now, we ignore the
+	 * display whatever additional fields it wants to.  For now, we ignore the
 	 * possibility of other targets being foreign tables, although the API for
 	 * ExplainForeignModify is designed to allow them to be processed.
 	 */
@@ -2692,7 +2693,7 @@ ExplainXMLTag(const char *tagname, int flags, ExplainState *es)
 /*
  * Emit a JSON line ending.
  *
- * JSON requires a comma after each property but the last.	To facilitate this,
+ * JSON requires a comma after each property but the last.  To facilitate this,
  * in JSON format, the text emitted for each property begins just prior to the
  * preceding line-break (and comma, if applicable).
  */
@@ -2713,7 +2714,7 @@ ExplainJSONLineEnding(ExplainState *es)
  * YAML lines are ordinarily indented by two spaces per indentation level.
  * The text emitted for each property begins just prior to the preceding
  * line-break, except for the first property in an unlabelled group, for which
- * it begins immediately after the "- " that introduces the group.	The first
+ * it begins immediately after the "- " that introduces the group.  The first
  * property of the group appears on the same line as the opening "- ".
  */
 static void

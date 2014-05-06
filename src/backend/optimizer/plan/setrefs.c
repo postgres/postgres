@@ -145,7 +145,7 @@ static bool extract_query_dependencies_walker(Node *node,
 /*
  * set_plan_references
  *
- * This is the final processing pass of the planner/optimizer.	The plan
+ * This is the final processing pass of the planner/optimizer.  The plan
  * tree is complete; we just have to adjust some representational details
  * for the convenience of the executor:
  *
@@ -189,7 +189,7 @@ static bool extract_query_dependencies_walker(Node *node,
  * and root->glob->invalItems (for everything else).
  *
  * Notice that we modify Plan nodes in-place, but use expression_tree_mutator
- * to process targetlist and qual expressions.	We can assume that the Plan
+ * to process targetlist and qual expressions.  We can assume that the Plan
  * nodes were just built by the planner and are not multiply referenced, but
  * it's not so safe to assume that for expression tree nodes.
  */
@@ -262,7 +262,7 @@ add_rtes_to_flat_rtable(PlannerInfo *root, bool recursing)
 	/*
 	 * If there are any dead subqueries, they are not referenced in the Plan
 	 * tree, so we must add RTEs contained in them to the flattened rtable
-	 * separately.	(If we failed to do this, the executor would not perform
+	 * separately.  (If we failed to do this, the executor would not perform
 	 * expected permission checks for tables mentioned in such subqueries.)
 	 *
 	 * Note: this pass over the rangetable can't be combined with the previous
@@ -292,7 +292,7 @@ add_rtes_to_flat_rtable(PlannerInfo *root, bool recursing)
 				/*
 				 * The subquery might never have been planned at all, if it
 				 * was excluded on the basis of self-contradictory constraints
-				 * in our query level.	In this case apply
+				 * in our query level.  In this case apply
 				 * flatten_unplanned_rtes.
 				 *
 				 * If it was planned but the plan is dummy, we assume that it
@@ -591,7 +591,7 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 			/*
 			 * These plan types don't actually bother to evaluate their
 			 * targetlists, because they just return their unmodified input
-			 * tuples.	Even though the targetlist won't be used by the
+			 * tuples.  Even though the targetlist won't be used by the
 			 * executor, we fix it up for possible use by EXPLAIN (not to
 			 * mention ease of debugging --- wrong varnos are very confusing).
 			 */
@@ -609,7 +609,7 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 
 				/*
 				 * Like the plan types above, LockRows doesn't evaluate its
-				 * tlist or quals.	But we have to fix up the RT indexes in
+				 * tlist or quals.  But we have to fix up the RT indexes in
 				 * its rowmarks.
 				 */
 				set_dummy_tlist_references(plan, rtoffset);
@@ -727,7 +727,7 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 					 * Set up the visible plan targetlist as being the same as
 					 * the first RETURNING list. This is for the use of
 					 * EXPLAIN; the executor won't pay any attention to the
-					 * targetlist.	We postpone this step until here so that
+					 * targetlist.  We postpone this step until here so that
 					 * we don't have to do set_returning_clause_references()
 					 * twice on identical targetlists.
 					 */
@@ -953,7 +953,7 @@ set_subqueryscan_references(PlannerInfo *root,
 	else
 	{
 		/*
-		 * Keep the SubqueryScan node.	We have to do the processing that
+		 * Keep the SubqueryScan node.  We have to do the processing that
 		 * set_plan_references would otherwise have done on it.  Notice we do
 		 * not do set_upper_references() here, because a SubqueryScan will
 		 * always have been created with correct references to its subplan's
@@ -1425,7 +1425,7 @@ set_dummy_tlist_references(Plan *plan, int rtoffset)
  *
  * In most cases, subplan tlists will be "flat" tlists with only Vars,
  * so we try to optimize that case by extracting information about Vars
- * in advance.	Matching a parent tlist to a child is still an O(N^2)
+ * in advance.  Matching a parent tlist to a child is still an O(N^2)
  * operation, but at least with a much smaller constant factor than plain
  * tlist_member() searches.
  *
@@ -1870,7 +1870,7 @@ fix_upper_expr_mutator(Node *node, fix_upper_expr_context *context)
  * adjust any Vars that refer to other tables to reference junk tlist
  * entries in the top subplan's targetlist.  Vars referencing the result
  * table should be left alone, however (the executor will evaluate them
- * using the actual heap tuple, after firing triggers if any).	In the
+ * using the actual heap tuple, after firing triggers if any).  In the
  * adjusted RETURNING list, result-table Vars will have their original
  * varno (plus rtoffset), but Vars for other rels will have varno OUTER_VAR.
  *

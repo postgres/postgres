@@ -7,7 +7,7 @@
  *
  * We use tuplesort.c to sort the given index tuples into order.
  * Then we scan the index tuples in order and build the btree pages
- * for each level.	We load source tuples into leaf-level pages.
+ * for each level.  We load source tuples into leaf-level pages.
  * Whenever we fill a page at one level, we add a link to it to its
  * parent level (starting a new parent level if necessary).  When
  * done, we write out each final page on each level, adding it to
@@ -42,11 +42,11 @@
  *
  * Since the index will never be used unless it is completely built,
  * from a crash-recovery point of view there is no need to WAL-log the
- * steps of the build.	After completing the index build, we can just sync
+ * steps of the build.  After completing the index build, we can just sync
  * the whole file to disk using smgrimmedsync() before exiting this module.
  * This can be seen to be sufficient for crash recovery by considering that
  * it's effectively equivalent to what would happen if a CHECKPOINT occurred
- * just after the index build.	However, it is clearly not sufficient if the
+ * just after the index build.  However, it is clearly not sufficient if the
  * DBA is using the WAL log for PITR or replication purposes, since another
  * machine would not be able to reconstruct the index from WAL.  Therefore,
  * we log the completed index pages to WAL if and only if WAL archiving is
@@ -89,7 +89,7 @@ struct BTSpool
 };
 
 /*
- * Status record for a btree page being built.	We have one of these
+ * Status record for a btree page being built.  We have one of these
  * for each active tree level.
  *
  * The reason we need to store a copy of the minimum key is that we'll
@@ -160,7 +160,7 @@ _bt_spoolinit(Relation heap, Relation index, bool isunique, bool isdead)
 	 * We size the sort area as maintenance_work_mem rather than work_mem to
 	 * speed index creation.  This should be OK since a single backend can't
 	 * run multiple index creations in parallel.  Note that creation of a
-	 * unique index actually requires two BTSpool objects.	We expect that the
+	 * unique index actually requires two BTSpool objects.  We expect that the
 	 * second one (for dead tuples) won't get very full, so we give it only
 	 * work_mem.
 	 */
@@ -298,7 +298,7 @@ _bt_blwritepage(BTWriteState *wstate, Page page, BlockNumber blkno)
 	PageSetChecksumInplace(page, blkno);
 
 	/*
-	 * Now write the page.	There's no need for smgr to schedule an fsync for
+	 * Now write the page.  There's no need for smgr to schedule an fsync for
 	 * this write; we'll do it ourselves before ending the build.
 	 */
 	if (blkno == wstate->btws_pages_written)
@@ -423,14 +423,14 @@ _bt_sortaddtup(Page page,
  * A leaf page being built looks like:
  *
  * +----------------+---------------------------------+
- * | PageHeaderData | linp0 linp1 linp2 ...			  |
+ * | PageHeaderData | linp0 linp1 linp2 ...           |
  * +-----------+----+---------------------------------+
  * | ... linpN |									  |
  * +-----------+--------------------------------------+
  * |	 ^ last										  |
  * |												  |
  * +-------------+------------------------------------+
- * |			 | itemN ...						  |
+ * |			 | itemN ...                          |
  * +-------------+------------------+-----------------+
  * |		  ... item3 item2 item1 | "special space" |
  * +--------------------------------+-----------------+
@@ -492,9 +492,9 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 									RelationGetRelationName(wstate->index))));
 
 	/*
-	 * Check to see if page is "full".	It's definitely full if the item won't
+	 * Check to see if page is "full".  It's definitely full if the item won't
 	 * fit.  Otherwise, compare to the target freespace derived from the
-	 * fillfactor.	However, we must put at least two items on each page, so
+	 * fillfactor.  However, we must put at least two items on each page, so
 	 * disregard fillfactor if we don't have that many.
 	 */
 	if (pgspc < itupsz || (pgspc < state->btps_full && last_off > P_FIRSTKEY))
@@ -567,7 +567,7 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 		}
 
 		/*
-		 * Write out the old page.	We never need to touch it again, so we can
+		 * Write out the old page.  We never need to touch it again, so we can
 		 * free the opage workspace too.
 		 */
 		_bt_blwritepage(wstate, opage, oblkno);
@@ -804,7 +804,7 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 
 	/*
 	 * If the index is WAL-logged, we must fsync it down to disk before it's
-	 * safe to commit the transaction.	(For a non-WAL-logged index we don't
+	 * safe to commit the transaction.  (For a non-WAL-logged index we don't
 	 * care since the index will be uninteresting after a crash anyway.)
 	 *
 	 * It's obvious that we must do this when not WAL-logging the build. It's

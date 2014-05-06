@@ -33,7 +33,7 @@
  *				   /
  *				Append -------+------+------+--- nil
  *				/	\		  |		 |		|
- *			  nil	nil		 ...	...    ...
+ *			  nil	nil		 ...    ...    ...
  *								 subplans
  *
  *		Append nodes are currently used for unions, and to support

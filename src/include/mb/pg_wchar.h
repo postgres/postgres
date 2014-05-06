@@ -10,7 +10,7 @@
  *
  *	NOTES
  *		This is used both by the backend and by libpq, but should not be
- *		included by libpq client programs.	In particular, a libpq client
+ *		included by libpq client programs.  In particular, a libpq client
  *		should not assume that the encoding IDs used by the version of libpq
  *		it's linked to match up with the IDs declared here.
  *
@@ -45,13 +45,13 @@ typedef unsigned int pg_wchar;
  * MULE Internal Encoding (MIC)
  *
  * This encoding follows the design used within XEmacs; it is meant to
- * subsume many externally-defined character sets.	Each character includes
+ * subsume many externally-defined character sets.  Each character includes
  * identification of the character set it belongs to, so the encoding is
  * general but somewhat bulky.
  *
  * Currently PostgreSQL supports 5 types of MULE character sets:
  *
- * 1) 1-byte ASCII characters.	Each byte is below 0x80.
+ * 1) 1-byte ASCII characters.  Each byte is below 0x80.
  *
  * 2) "Official" single byte charsets such as ISO-8859-1 (Latin1).
  *	  Each MULE character consists of 2 bytes: LC1 + C1, where LC1 is
@@ -65,7 +65,7 @@ typedef unsigned int pg_wchar;
  *	  LCPRV1 is either 0x9a (if LC12 is in the range 0xa0 to 0xdf)
  *	  or 0x9b (if LC12 is in the range 0xe0 to 0xef).
  *
- * 4) "Official" multibyte charsets such as JIS X0208.	Each MULE
+ * 4) "Official" multibyte charsets such as JIS X0208.  Each MULE
  *	  character consists of 3 bytes: LC2 + C1 + C2, where LC2 is
  *	  an identifier for the charset (in the range 0x90 to 0x99) and C1
  *	  and C2 form the character code (each in the range 0xa0 to 0xff).
@@ -304,7 +304,7 @@ typedef enum pg_enc
 
 /*
  * Table for mapping an encoding number to official encoding name and
- * possibly other subsidiary data.	Be careful to check encoding number
+ * possibly other subsidiary data.  Be careful to check encoding number
  * before accessing a table entry!
  *
  * if (PG_VALID_ENCODING(encoding))

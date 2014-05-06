@@ -266,7 +266,7 @@ is_libpq_option(const char *keyword)
 
 /*
  * Generate key-value arrays which include only libpq options from the
- * given list (which can contain any kind of options).	Caller must have
+ * given list (which can contain any kind of options).  Caller must have
  * allocated large-enough arrays.  Returns number of options found.
  */
 int

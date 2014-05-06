@@ -22,12 +22,12 @@
 
 typedef struct PathHashStack
 {
-	uint32	hash;
+	uint32		hash;
 	struct PathHashStack *parent;
-}	PathHashStack;
+} PathHashStack;
 
 static text *make_text_key(const char *str, int len, char flag);
-static text *make_scalar_key(const JsonbValue * scalarVal, char flag);
+static text *make_scalar_key(const JsonbValue *scalarVal, char flag);
 
 /*
  *
@@ -97,14 +97,14 @@ gin_extract_jsonb(PG_FUNCTION_ARGS)
 		 * JsonbExistsStrategyNumber.  Our definition of existence does not
 		 * allow for checking the existence of a non-jbvString element (just
 		 * like the definition of the underlying operator), because the
-		 * operator takes a text rhs argument (which is taken as a proxy for an
-		 * equivalent Jsonb string).
+		 * operator takes a text rhs argument (which is taken as a proxy for
+		 * an equivalent Jsonb string).
 		 *
 		 * The way existence is represented does not preclude an alternative
 		 * existence operator, that takes as its rhs value an arbitrarily
-		 * internally-typed Jsonb.  The only reason that isn't the case here is
-		 * that the existence operator is only really intended to determine if
-		 * an object has a certain key (object pair keys are of course
+		 * internally-typed Jsonb.  The only reason that isn't the case here
+		 * is that the existence operator is only really intended to determine
+		 * if an object has a certain key (object pair keys are of course
 		 * invariably strings), which is extended to jsonb arrays.  You could
 		 * think of the default Jsonb definition of existence as being
 		 * equivalent to a definition where all types of scalar array elements
@@ -116,11 +116,11 @@ gin_extract_jsonb(PG_FUNCTION_ARGS)
 		 * JsonbExistsStrategyNumber, since we know that keys are strings for
 		 * both objects and arrays, and don't have to further account for type
 		 * mismatch.  Not having to set the reset flag makes it less than
-		 * tempting to tighten up the definition of existence to preclude array
-		 * elements entirely, which would arguably be a simpler alternative.
-		 * In any case the infrastructure used to implement the existence
-		 * operator could trivially support this hypothetical, slightly
-		 * distinct definition of existence.
+		 * tempting to tighten up the definition of existence to preclude
+		 * array elements entirely, which would arguably be a simpler
+		 * alternative. In any case the infrastructure used to implement the
+		 * existence operator could trivially support this hypothetical,
+		 * slightly distinct definition of existence.
 		 */
 		switch (r)
 		{
@@ -290,8 +290,10 @@ gin_triconsistent_jsonb(PG_FUNCTION_ARGS)
 {
 	GinTernaryValue *check = (GinTernaryValue *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);
+
 	/* Jsonb	   *query = PG_GETARG_JSONB(2); */
 	int32		nkeys = PG_GETARG_INT32(3);
+
 	/* Pointer	   *extra_data = (Pointer *) PG_GETARG_POINTER(4); */
 	GinTernaryValue res = GIN_TRUE;
 
@@ -299,7 +301,7 @@ gin_triconsistent_jsonb(PG_FUNCTION_ARGS)
 
 	if (strategy == JsonbContainsStrategyNumber)
 	{
-		bool	has_maybe = false;
+		bool		has_maybe = false;
 
 		/*
 		 * All extracted keys must be present.  Combination of GIN_MAYBE and
@@ -323,8 +325,9 @@ gin_triconsistent_jsonb(PG_FUNCTION_ARGS)
 		/*
 		 * Index doesn't have information about correspondence of Jsonb keys
 		 * and values (as distinct from GIN keys, which a key/value pair is
-		 * stored as), so invariably we recheck.  This is also reflected in how
-		 * GIN_MAYBE is given in response to there being no GIN_MAYBE input.
+		 * stored as), so invariably we recheck.  This is also reflected in
+		 * how GIN_MAYBE is given in response to there being no GIN_MAYBE
+		 * input.
 		 */
 		if (!has_maybe && res == GIN_TRUE)
 			res = GIN_MAYBE;
@@ -379,8 +382,10 @@ gin_consistent_jsonb_hash(PG_FUNCTION_ARGS)
 {
 	bool	   *check = (bool *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);
+
 	/* Jsonb	   *query = PG_GETARG_JSONB(2); */
 	int32		nkeys = PG_GETARG_INT32(3);
+
 	/* Pointer	   *extra_data = (Pointer *) PG_GETARG_POINTER(4); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(5);
 	bool		res = true;
@@ -390,13 +395,13 @@ gin_consistent_jsonb_hash(PG_FUNCTION_ARGS)
 		elog(ERROR, "unrecognized strategy number: %d", strategy);
 
 	/*
-	 * jsonb_hash_ops index doesn't have information about correspondence
-	 * of Jsonb keys and values (as distinct from GIN keys, which a
-	 * key/value pair is stored as), so invariably we recheck.  Besides,
-	 * there are some special rules around the containment of raw scalar
-	 * arrays and regular arrays that are not represented here.  However,
-	 * if all of the keys are not present, that's sufficient reason to
-	 * return false and finish immediately.
+	 * jsonb_hash_ops index doesn't have information about correspondence of
+	 * Jsonb keys and values (as distinct from GIN keys, which a key/value
+	 * pair is stored as), so invariably we recheck.  Besides, there are some
+	 * special rules around the containment of raw scalar arrays and regular
+	 * arrays that are not represented here.  However, if all of the keys are
+	 * not present, that's sufficient reason to return false and finish
+	 * immediately.
 	 */
 	*recheck = true;
 	for (i = 0; i < nkeys; i++)
@@ -416,12 +421,14 @@ gin_triconsistent_jsonb_hash(PG_FUNCTION_ARGS)
 {
 	GinTernaryValue *check = (GinTernaryValue *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);
+
 	/* Jsonb	   *query = PG_GETARG_JSONB(2); */
 	int32		nkeys = PG_GETARG_INT32(3);
+
 	/* Pointer	   *extra_data = (Pointer *) PG_GETARG_POINTER(4); */
 	GinTernaryValue res = GIN_TRUE;
-	int32			i;
-	bool			has_maybe = false;
+	int32		i;
+	bool		has_maybe = false;
 
 	if (strategy != JsonbContainsStrategyNumber)
 		elog(ERROR, "unrecognized strategy number: %d", strategy);
@@ -447,10 +454,10 @@ gin_triconsistent_jsonb_hash(PG_FUNCTION_ARGS)
 
 	/*
 	 * jsonb_hash_ops index doesn't have information about correspondence of
-	 * Jsonb keys and values (as distinct from GIN keys, which for this opclass
-	 * are a hash of a pair, or a hash of just an element), so invariably we
-	 * recheck.  This is also reflected in how GIN_MAYBE is given in response
-	 * to there being no GIN_MAYBE input.
+	 * Jsonb keys and values (as distinct from GIN keys, which for this
+	 * opclass are a hash of a pair, or a hash of just an element), so
+	 * invariably we recheck.  This is also reflected in how GIN_MAYBE is
+	 * given in response to there being no GIN_MAYBE input.
 	 */
 	if (!has_maybe && res == GIN_TRUE)
 		res = GIN_MAYBE;
@@ -488,7 +495,7 @@ gin_extract_jsonb_hash(PG_FUNCTION_ARGS)
 
 	while ((r = JsonbIteratorNext(&it, &v, false)) != WJB_DONE)
 	{
-		PathHashStack  *tmp;
+		PathHashStack *tmp;
 
 		if (i >= total)
 		{
@@ -513,10 +520,10 @@ gin_extract_jsonb_hash(PG_FUNCTION_ARGS)
 					/*
 					 * We pass forward hashes from previous container nesting
 					 * levels so that nested arrays with an outermost nested
-					 * object will have element hashes mixed with the outermost
-					 * key.  It's also somewhat useful to have nested objects
-					 * innermost values have hashes that are a function of not
-					 * just their own key, but outer keys too.
+					 * object will have element hashes mixed with the
+					 * outermost key.  It's also somewhat useful to have
+					 * nested objects innermost values have hashes that are a
+					 * function of not just their own key, but outer keys too.
 					 */
 					stack->hash = tmp->hash;
 				}
@@ -526,7 +533,7 @@ gin_extract_jsonb_hash(PG_FUNCTION_ARGS)
 					 * At least nested level, initialize with stable container
 					 * type proxy value
 					 */
-					stack->hash = (r == WJB_BEGIN_ARRAY)? JB_FARRAY:JB_FOBJECT;
+					stack->hash = (r == WJB_BEGIN_ARRAY) ? JB_FARRAY : JB_FOBJECT;
 				}
 				stack->parent = tmp;
 				break;
@@ -607,7 +614,7 @@ make_text_key(const char *str, int len, char flag)
  * Create a textual representation of a jsonbValue for GIN storage.
  */
 static text *
-make_scalar_key(const JsonbValue * scalarVal, char flag)
+make_scalar_key(const JsonbValue *scalarVal, char flag)
 {
 	text	   *item;
 	char	   *cstr;
@@ -621,6 +628,7 @@ make_scalar_key(const JsonbValue * scalarVal, char flag)
 			item = make_text_key(scalarVal->val.boolean ? "t" : "f", 1, flag);
 			break;
 		case jbvNumeric:
+
 			/*
 			 * A normalized textual representation, free of trailing zeroes is
 			 * is required.

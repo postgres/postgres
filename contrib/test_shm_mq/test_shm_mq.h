@@ -28,18 +28,18 @@
  */
 typedef struct
 {
-	slock_t			mutex;
-	int				workers_total;
-	int				workers_attached;
-	int				workers_ready;
+	slock_t		mutex;
+	int			workers_total;
+	int			workers_attached;
+	int			workers_ready;
 } test_shm_mq_header;
 
 /* Set up dynamic shared memory and background workers for test run. */
 extern void test_shm_mq_setup(int64 queue_size, int32 nworkers,
-							  dsm_segment **seg, shm_mq_handle **output,
-							  shm_mq_handle **input);
+				  dsm_segment **seg, shm_mq_handle **output,
+				  shm_mq_handle **input);
 
 /* Main entrypoint for a worker. */
-extern void	test_shm_mq_main(Datum);
+extern void test_shm_mq_main(Datum);
 
 #endif

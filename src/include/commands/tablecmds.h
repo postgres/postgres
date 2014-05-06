@@ -79,5 +79,5 @@ extern void RangeVarCallbackOwnsTable(const RangeVar *relation,
 						  Oid relId, Oid oldRelId, void *arg);
 
 extern void RangeVarCallbackOwnsRelation(const RangeVar *relation,
-						  Oid relId, Oid oldRelId, void *noCatalogs);
+							 Oid relId, Oid oldRelId, void *noCatalogs);
 #endif   /* TABLECMDS_H */

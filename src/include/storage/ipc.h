@@ -4,7 +4,7 @@
  *	  POSTGRES inter-process communication definitions.
  *
  * This file is misnamed, as it no longer has much of anything directly
- * to do with IPC.	The functionality here is concerned with managing
+ * to do with IPC.  The functionality here is concerned with managing
  * exit-time cleanup for either a postmaster or a backend.
  *
  *

@@ -33,7 +33,7 @@
  *	  which may involve joins but not any fancier features.
  *
  * Since query_planner does not handle the toplevel processing (grouping,
- * sorting, etc) it cannot select the best path by itself.	Instead, it
+ * sorting, etc) it cannot select the best path by itself.  Instead, it
  * returns the RelOptInfo for the top level of joining, and the caller
  * (grouping_planner) can choose one of the surviving paths for the rel.
  * Normally it would choose either the rel's cheapest path, or the cheapest
@@ -63,7 +63,7 @@ query_planner(PlannerInfo *root, List *tlist,
 
 	/*
 	 * If the query has an empty join tree, then it's something easy like
-	 * "SELECT 2+2;" or "INSERT ... VALUES()".	Fall through quickly.
+	 * "SELECT 2+2;" or "INSERT ... VALUES()".  Fall through quickly.
 	 */
 	if (parse->jointree->fromlist == NIL)
 	{
@@ -129,7 +129,7 @@ query_planner(PlannerInfo *root, List *tlist,
 	/*
 	 * Examine the targetlist and join tree, adding entries to baserel
 	 * targetlists for all referenced Vars, and generating PlaceHolderInfo
-	 * entries for all referenced PlaceHolderVars.	Restrict and join clauses
+	 * entries for all referenced PlaceHolderVars.  Restrict and join clauses
 	 * are added to appropriate lists belonging to the mentioned relations. We
 	 * also build EquivalenceClasses for provably equivalent expressions. The
 	 * SpecialJoinInfo list is also built to hold information about join order
@@ -153,7 +153,7 @@ query_planner(PlannerInfo *root, List *tlist,
 
 	/*
 	 * If we formed any equivalence classes, generate additional restriction
-	 * clauses as appropriate.	(Implied join clauses are formed on-the-fly
+	 * clauses as appropriate.  (Implied join clauses are formed on-the-fly
 	 * later.)
 	 */
 	generate_base_implied_equalities(root);
@@ -168,14 +168,14 @@ query_planner(PlannerInfo *root, List *tlist,
 	/*
 	 * Examine any "placeholder" expressions generated during subquery pullup.
 	 * Make sure that the Vars they need are marked as needed at the relevant
-	 * join level.	This must be done before join removal because it might
+	 * join level.  This must be done before join removal because it might
 	 * cause Vars or placeholders to be needed above a join when they weren't
 	 * so marked before.
 	 */
 	fix_placeholder_input_needed_levels(root);
 
 	/*
-	 * Remove any useless outer joins.	Ideally this would be done during
+	 * Remove any useless outer joins.  Ideally this would be done during
 	 * jointree preprocessing, but the necessary information isn't available
 	 * until we've built baserel data structures and classified qual clauses.
 	 */

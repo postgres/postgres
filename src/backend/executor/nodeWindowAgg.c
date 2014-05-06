@@ -4,7 +4,7 @@
  *	  routines to handle WindowAgg nodes.
  *
  * A WindowAgg node evaluates "window functions" across suitable partitions
- * of the input tuple set.	Any one WindowAgg works for just a single window
+ * of the input tuple set.  Any one WindowAgg works for just a single window
  * specification, though it can evaluate multiple window functions sharing
  * identical window specifications.  The input tuples are required to be
  * delivered in sorted order, with the PARTITION BY columns (if any) as
@@ -14,7 +14,7 @@
  *
  * Since window functions can require access to any or all of the rows in
  * the current partition, we accumulate rows of the partition into a
- * tuplestore.	The window functions are called using the WindowObject API
+ * tuplestore.  The window functions are called using the WindowObject API
  * so that they can access those rows as needed.
  *
  * We also support using plain aggregate functions as window functions.
@@ -280,7 +280,7 @@ advance_windowaggregate(WindowAggState *winstate,
 	{
 		/*
 		 * For a strict transfn, nothing happens when there's a NULL input; we
-		 * just keep the prior transValue.	Note transValueCount doesn't
+		 * just keep the prior transValue.  Note transValueCount doesn't
 		 * change either.
 		 */
 		for (i = 1; i <= numArguments; i++)
@@ -330,7 +330,7 @@ advance_windowaggregate(WindowAggState *winstate,
 	}
 
 	/*
-	 * OK to call the transition function.	Set winstate->curaggcontext while
+	 * OK to call the transition function.  Set winstate->curaggcontext while
 	 * calling it, for possible use by AggCheckCallContext.
 	 */
 	InitFunctionCallInfoData(*fcinfo, &(peraggstate->transfn),
@@ -362,7 +362,7 @@ advance_windowaggregate(WindowAggState *winstate,
 
 	/*
 	 * If pass-by-ref datatype, must copy the new value into aggcontext and
-	 * pfree the prior transValue.	But if transfn returned a pointer to its
+	 * pfree the prior transValue.  But if transfn returned a pointer to its
 	 * first input, we don't need to do anything.
 	 */
 	if (!peraggstate->transtypeByVal &&
@@ -485,7 +485,7 @@ advance_windowaggregate_base(WindowAggState *winstate,
 	}
 
 	/*
-	 * OK to call the inverse transition function.	Set
+	 * OK to call the inverse transition function.  Set
 	 * winstate->curaggcontext while calling it, for possible use by
 	 * AggCheckCallContext.
 	 */
@@ -513,7 +513,7 @@ advance_windowaggregate_base(WindowAggState *winstate,
 
 	/*
 	 * If pass-by-ref datatype, must copy the new value into aggcontext and
-	 * pfree the prior transValue.	But if invtransfn returned a pointer to
+	 * pfree the prior transValue.  But if invtransfn returned a pointer to
 	 * its first input, we don't need to do anything.
 	 *
 	 * Note: the checks for null values here will never fire, but it seems
@@ -827,7 +827,7 @@ eval_windowaggregates(WindowAggState *winstate)
 	 *
 	 * We assume that aggregates using the shared context always restart if
 	 * *any* aggregate restarts, and we may thus clean up the shared
-	 * aggcontext if that is the case.	Private aggcontexts are reset by
+	 * aggcontext if that is the case.  Private aggcontexts are reset by
 	 * initialize_windowaggregate() if their owning aggregate restarts. If we
 	 * aren't restarting an aggregate, we need to free any previously saved
 	 * result for it, else we'll leak memory.
@@ -864,9 +864,9 @@ eval_windowaggregates(WindowAggState *winstate)
 	 * (i.e., frameheadpos) and aggregatedupto, while restarted aggregates
 	 * contain no rows.  If there are any restarted aggregates, we must thus
 	 * begin aggregating anew at frameheadpos, otherwise we may simply
-	 * continue at aggregatedupto.	We must remember the old value of
+	 * continue at aggregatedupto.  We must remember the old value of
 	 * aggregatedupto to know how long to skip advancing non-restarted
-	 * aggregates.	If we modify aggregatedupto, we must also clear
+	 * aggregates.  If we modify aggregatedupto, we must also clear
 	 * agg_row_slot, per the loop invariant below.
 	 */
 	aggregatedupto_nonrestarted = winstate->aggregatedupto;
@@ -881,7 +881,7 @@ eval_windowaggregates(WindowAggState *winstate)
 	 * Advance until we reach a row not in frame (or end of partition).
 	 *
 	 * Note the loop invariant: agg_row_slot is either empty or holds the row
-	 * at position aggregatedupto.	We advance aggregatedupto after processing
+	 * at position aggregatedupto.  We advance aggregatedupto after processing
 	 * a row.
 	 */
 	for (;;)
@@ -1142,7 +1142,7 @@ spool_tuples(WindowAggState *winstate, int64 pos)
 
 	/*
 	 * If the tuplestore has spilled to disk, alternate reading and writing
-	 * becomes quite expensive due to frequent buffer flushes.	It's cheaper
+	 * becomes quite expensive due to frequent buffer flushes.  It's cheaper
 	 * to force the entire partition to get spooled in one go.
 	 *
 	 * XXX this is a horrid kluge --- it'd be better to fix the performance
@@ -1239,7 +1239,7 @@ release_partition(WindowAggState *winstate)
  * to our window framing rule
  *
  * The caller must have already determined that the row is in the partition
- * and fetched it into a slot.	This function just encapsulates the framing
+ * and fetched it into a slot.  This function just encapsulates the framing
  * rules.
  */
 static bool
@@ -1341,7 +1341,7 @@ row_is_in_frame(WindowAggState *winstate, int64 pos, TupleTableSlot *slot)
  *
  * Uses the winobj's read pointer for any required fetches; hence, if the
  * frame mode is one that requires row comparisons, the winobj's mark must
- * not be past the currently known frame head.	Also uses the specified slot
+ * not be past the currently known frame head.  Also uses the specified slot
  * for any required fetches.
  */
 static void
@@ -1446,7 +1446,7 @@ update_frameheadpos(WindowObject winobj, TupleTableSlot *slot)
  *
  * Uses the winobj's read pointer for any required fetches; hence, if the
  * frame mode is one that requires row comparisons, the winobj's mark must
- * not be past the currently known frame tail.	Also uses the specified slot
+ * not be past the currently known frame tail.  Also uses the specified slot
  * for any required fetches.
  */
 static void
@@ -1789,8 +1789,8 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	winstate->ss.ps.state = estate;
 
 	/*
-	 * Create expression contexts.	We need two, one for per-input-tuple
-	 * processing and one for per-output-tuple processing.	We cheat a little
+	 * Create expression contexts.  We need two, one for per-input-tuple
+	 * processing and one for per-output-tuple processing.  We cheat a little
 	 * by using ExecAssignExprContext() to build both.
 	 */
 	ExecAssignExprContext(estate, &winstate->ss.ps);
@@ -2288,7 +2288,7 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 
 	/*
 	 * Insist that forward and inverse transition functions have the same
-	 * strictness setting.	Allowing them to differ would require handling
+	 * strictness setting.  Allowing them to differ would require handling
 	 * more special cases in advance_windowaggregate and
 	 * advance_windowaggregate_base, for no discernible benefit.  This should
 	 * have been checked at agg definition time, but we must check again in
@@ -2467,7 +2467,7 @@ window_gettupleslot(WindowObject winobj, int64 pos, TupleTableSlot *slot)
  * requested amount of space.  Subsequent calls just return the same chunk.
  *
  * Memory obtained this way is normally used to hold state that should be
- * automatically reset for each new partition.	If a window function wants
+ * automatically reset for each new partition.  If a window function wants
  * to hold state across the whole query, fcinfo->fn_extra can be used in the
  * usual way for that.
  */

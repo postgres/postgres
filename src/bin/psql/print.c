@@ -253,7 +253,7 @@ print_separator(struct separator sep, FILE *fout)
 
 /*
  * Return the list of explicitly-requested footers or, when applicable, the
- * default "(xx rows)" footer.	Always omit the default footer when given
+ * default "(xx rows)" footer.  Always omit the default footer when given
  * non-default footers, "\pset footer off", or a specific instruction to that
  * effect from a calling backslash command.  Vertical formats number each row,
  * making the default footer redundant; they do not call this function.
@@ -689,7 +689,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 		 * Optional optimized word wrap. Shrink columns with a high max/avg
 		 * ratio.  Slighly bias against wider columns. (Increases chance a
 		 * narrow column will fit in its cell.)  If available columns is
-		 * positive...	and greater than the width of the unshrinkable column
+		 * positive...  and greater than the width of the unshrinkable column
 		 * headers
 		 */
 		if (output_columns > 0 && output_columns >= total_header_width)
@@ -1257,17 +1257,20 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 
 	if (cont->opt->format == PRINT_WRAPPED)
 	{
-		/* Calculate the available width to wrap the columns to after
+		/*
+		 * Calculate the available width to wrap the columns to after
 		 * subtracting the maximum header width and separators. At a minimum
-		 * enough to print "[ RECORD N ]" */
-		unsigned int width, swidth;
+		 * enough to print "[ RECORD N ]"
+		 */
+		unsigned int width,
+					swidth;
 
 		if (opt_border == 0)
-			swidth = 1; /* "header data" */
+			swidth = 1;			/* "header data" */
 		else if (opt_border == 1)
-			swidth = 3; /* "header | data" */
+			swidth = 3;			/* "header | data" */
 		else
-			swidth = 7; /* "| header | data |" */
+			swidth = 7;			/* "| header | data |" */
 
 		/* Wrap to maximum width */
 		width = dwidth + swidth + hwidth;
@@ -1280,13 +1283,14 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 		/* Wrap to minimum width */
 		if (!opt_tuples_only)
 		{
-			int delta = 1 + log10(cont->nrows) - width;
+			int			delta = 1 + log10(cont->nrows) - width;
+
 			if (opt_border == 0)
-				delta += 6; /* "* RECORD " */
+				delta += 6;		/* "* RECORD " */
 			else if (opt_border == 1)
-				delta += 10; /* "-[ RECORD  ]" */
+				delta += 10;	/* "-[ RECORD  ]" */
 			else
-				delta += 15; /* "+-[ RECORD  ]-+" */
+				delta += 15;	/* "+-[ RECORD  ]-+" */
 
 			if (delta > 0)
 				dwidth += delta;
@@ -1333,8 +1337,10 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 		pg_wcsformat((const unsigned char *) *ptr, strlen(*ptr), encoding,
 					 dlineptr, dheight);
 
-		/* Loop through header and data in parallel dealing with newlines and
-		 * wrapped lines until they're both exhausted */
+		/*
+		 * Loop through header and data in parallel dealing with newlines and
+		 * wrapped lines until they're both exhausted
+		 */
 		dline = hline = 0;
 		dcomplete = hcomplete = 0;
 		offset = 0;
@@ -1348,8 +1354,10 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 			/* Header (never wrapped so just need to deal with newlines) */
 			if (!hcomplete)
 			{
-				int swidth, twidth = hwidth + 1;
-				fputs(hline? format->header_nl_left: " ", fout);
+				int			swidth,
+							twidth = hwidth + 1;
+
+				fputs(hline ? format->header_nl_left : " ", fout);
 				strlen_max_width(hlineptr[hline].ptr, &twidth,
 								 encoding);
 				fprintf(fout, "%-s", hlineptr[hline].ptr);
@@ -1393,16 +1401,16 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 			/* Data */
 			if (!dcomplete)
 			{
-				int target_width,
-					bytes_to_output,
-					swidth;
+				int			target_width,
+							bytes_to_output,
+							swidth;
 
-				fputs(!dcomplete && !offset? " ": format->wrap_left, fout);
+				fputs(!dcomplete && !offset ? " " : format->wrap_left, fout);
 
 				target_width = dwidth;
 				bytes_to_output = strlen_max_width(dlineptr[dline].ptr + offset,
 												   &target_width, encoding);
-				fputnbytes(fout, (char *)(dlineptr[dline].ptr + offset),
+				fputnbytes(fout, (char *) (dlineptr[dline].ptr + offset),
 						   bytes_to_output);
 
 				chars_to_output -= target_width;
@@ -1440,8 +1448,10 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 			}
 			else
 			{
-				/* data exhausted (this can occur if header is longer than the
-				 * data due to newlines in the header) */
+				/*
+				 * data exhausted (this can occur if header is longer than the
+				 * data due to newlines in the header)
+				 */
 				if (opt_border < 2)
 					fputs("\n", fout);
 				else
@@ -2510,7 +2520,7 @@ printTableAddCell(printTableContent *const content, char *cell,
  * strdup'd, so there is no need to keep the original footer string around.
  *
  * Footers are never translated by the function.  If you want the footer
- * translated you must do so yourself, before calling printTableAddFooter.	The
+ * translated you must do so yourself, before calling printTableAddFooter.  The
  * reason this works differently to headers and cells is that footers tend to
  * be made of up individually translated components, rather than being
  * translated as a whole.
@@ -2846,7 +2856,7 @@ get_line_style(const printTableOpt *opt)
 
 /*
  * Compute the byte distance to the end of the string or *target_width
- * display character positions, whichever comes first.	Update *target_width
+ * display character positions, whichever comes first.  Update *target_width
  * to be the number of display character positions actually filled.
  */
 static int

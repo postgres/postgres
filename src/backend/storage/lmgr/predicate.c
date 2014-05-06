@@ -32,11 +32,11 @@
  * examining the MVCC data.)
  *
  * (1)	Besides tuples actually read, they must cover ranges of tuples
- *		which would have been read based on the predicate.	This will
+ *		which would have been read based on the predicate.  This will
  *		require modelling the predicates through locks against database
  *		objects such as pages, index ranges, or entire tables.
  *
- * (2)	They must be kept in RAM for quick access.	Because of this, it
+ * (2)	They must be kept in RAM for quick access.  Because of this, it
  *		isn't possible to always maintain tuple-level granularity -- when
  *		the space allocated to store these approaches exhaustion, a
  *		request for a lock may need to scan for situations where a single
@@ -49,7 +49,7 @@
  *
  * (4)	While they are associated with a transaction, they must survive
  *		a successful COMMIT of that transaction, and remain until all
- *		overlapping transactions complete.	This even means that they
+ *		overlapping transactions complete.  This even means that they
  *		must survive termination of the transaction's process.  If a
  *		top level transaction is rolled back, however, it is immediately
  *		flagged so that it can be ignored, and its SIREAD locks can be
@@ -90,7 +90,7 @@
  *			may yet matter because they overlap still-active transactions.
  *
  *	SerializablePredicateLockListLock
- *		- Protects the linked list of locks held by a transaction.	Note
+ *		- Protects the linked list of locks held by a transaction.  Note
  *			that the locks themselves are also covered by the partition
  *			locks of their respective lock targets; this lock only affects
  *			the linked list connecting the locks related to a transaction.
@@ -101,11 +101,11 @@
  *		- It is relatively infrequent that another process needs to
  *			modify the list for a transaction, but it does happen for such
  *			things as index page splits for pages with predicate locks and
- *			freeing of predicate locked pages by a vacuum process.	When
+ *			freeing of predicate locked pages by a vacuum process.  When
  *			removing a lock in such cases, the lock itself contains the
  *			pointers needed to remove it from the list.  When adding a
  *			lock in such cases, the lock can be added using the anchor in
- *			the transaction structure.	Neither requires walking the list.
+ *			the transaction structure.  Neither requires walking the list.
  *		- Cleaning up the list for a terminated transaction is sometimes
  *			not done on a retail basis, in which case no lock is required.
  *		- Due to the above, a process accessing its active transaction's
@@ -355,7 +355,7 @@ int			max_predicate_locks_per_xact;		/* set by guc.c */
 
 /*
  * This provides a list of objects in order to track transactions
- * participating in predicate locking.	Entries in the list are fixed size,
+ * participating in predicate locking.  Entries in the list are fixed size,
  * and reside in shared memory.  The memory address of an entry must remain
  * fixed during its lifetime.  The list will be protected from concurrent
  * update externally; no provision is made in this code to manage that.  The
@@ -547,7 +547,7 @@ SerializationNeededForWrite(Relation relation)
 
 /*
  * These functions are a simple implementation of a list for this specific
- * type of struct.	If there is ever a generalized shared memory list, we
+ * type of struct.  If there is ever a generalized shared memory list, we
  * should probably switch to that.
  */
 static SERIALIZABLEXACT *
@@ -767,7 +767,7 @@ OldSerXidPagePrecedesLogically(int p, int q)
 	int			diff;
 
 	/*
-	 * We have to compare modulo (OLDSERXID_MAX_PAGE+1)/2.	Both inputs should
+	 * We have to compare modulo (OLDSERXID_MAX_PAGE+1)/2.  Both inputs should
 	 * be in the range 0..OLDSERXID_MAX_PAGE.
 	 */
 	Assert(p >= 0 && p <= OLDSERXID_MAX_PAGE);
@@ -929,7 +929,7 @@ OldSerXidAdd(TransactionId xid, SerCommitSeqNo minConflictCommitSeqNo)
 }
 
 /*
- * Get the minimum commitSeqNo for any conflict out for the given xid.	For
+ * Get the minimum commitSeqNo for any conflict out for the given xid.  For
  * a transaction which exists but has no conflict out, InvalidSerCommitSeqNo
  * will be returned.
  */
@@ -982,7 +982,7 @@ OldSerXidSetActiveSerXmin(TransactionId xid)
 	/*
 	 * When no sxacts are active, nothing overlaps, set the xid values to
 	 * invalid to show that there are no valid entries.  Don't clear headPage,
-	 * though.	A new xmin might still land on that page, and we don't want to
+	 * though.  A new xmin might still land on that page, and we don't want to
 	 * repeatedly zero out the same page.
 	 */
 	if (!TransactionIdIsValid(xid))
@@ -1467,7 +1467,7 @@ SummarizeOldestCommittedSxact(void)
 
 	/*
 	 * Grab the first sxact off the finished list -- this will be the earliest
-	 * commit.	Remove it from the list.
+	 * commit.  Remove it from the list.
 	 */
 	sxact = (SERIALIZABLEXACT *)
 		SHMQueueNext(FinishedSerializableTransactions,
@@ -1620,7 +1620,7 @@ SetSerializableTransactionSnapshot(Snapshot snapshot,
 	/*
 	 * We do not allow SERIALIZABLE READ ONLY DEFERRABLE transactions to
 	 * import snapshots, since there's no way to wait for a safe snapshot when
-	 * we're using the snap we're told to.	(XXX instead of throwing an error,
+	 * we're using the snap we're told to.  (XXX instead of throwing an error,
 	 * we could just ignore the XactDeferrable flag?)
 	 */
 	if (XactReadOnly && XactDeferrable)
@@ -1669,7 +1669,7 @@ GetSerializableTransactionSnapshotInt(Snapshot snapshot,
 	 * release SerializableXactHashLock to call SummarizeOldestCommittedSxact,
 	 * this means we have to create the sxact first, which is a bit annoying
 	 * (in particular, an elog(ERROR) in procarray.c would cause us to leak
-	 * the sxact).	Consider refactoring to avoid this.
+	 * the sxact).  Consider refactoring to avoid this.
 	 */
 #ifdef TEST_OLDSERXID
 	SummarizeOldestCommittedSxact();
@@ -2051,7 +2051,7 @@ RemoveTargetIfNoLongerUsed(PREDICATELOCKTARGET *target, uint32 targettaghash)
 /*
  * Delete child target locks owned by this process.
  * This implementation is assuming that the usage of each target tag field
- * is uniform.	No need to make this hard if we don't have to.
+ * is uniform.  No need to make this hard if we don't have to.
  *
  * We aren't acquiring lightweight locks for the predicate lock or lock
  * target structures associated with this transaction unless we're going
@@ -2092,7 +2092,7 @@ DeleteChildTargetLocks(const PREDICATELOCKTARGETTAG *newtargettag)
 		if (TargetTagIsCoveredBy(oldtargettag, *newtargettag))
 		{
 			uint32		oldtargettaghash;
-			LWLock	    *partitionLock;
+			LWLock	   *partitionLock;
 			PREDICATELOCK *rmpredlock PG_USED_FOR_ASSERTS_ONLY;
 
 			oldtargettaghash = PredicateLockTargetTagHashCode(&oldtargettag);
@@ -2497,7 +2497,7 @@ PredicateLockTuple(Relation relation, HeapTuple tuple, Snapshot snapshot)
 	}
 
 	/*
-	 * Do quick-but-not-definitive test for a relation lock first.	This will
+	 * Do quick-but-not-definitive test for a relation lock first.  This will
 	 * never cause a return when the relation is *not* locked, but will
 	 * occasionally let the check continue when there really *is* a relation
 	 * level lock.
@@ -2809,7 +2809,7 @@ exit:
  * transaction which is not serializable.
  *
  * NOTE: This is currently only called with transfer set to true, but that may
- * change.	If we decide to clean up the locks from a table on commit of a
+ * change.  If we decide to clean up the locks from a table on commit of a
  * transaction which executed DROP TABLE, the false condition will be useful.
  */
 static void
@@ -2890,7 +2890,7 @@ DropAllPredicateLocksFromTable(Relation relation, bool transfer)
 			continue;			/* already the right lock */
 
 		/*
-		 * If we made it here, we have work to do.	We make sure the heap
+		 * If we made it here, we have work to do.  We make sure the heap
 		 * relation lock exists, then we walk the list of predicate locks for
 		 * the old target we found, moving all locks to the heap relation lock
 		 * -- unless they already hold that.
@@ -3338,7 +3338,7 @@ ReleasePredicateLocks(bool isCommit)
 	}
 
 	/*
-	 * Release all outConflicts to committed transactions.	If we're rolling
+	 * Release all outConflicts to committed transactions.  If we're rolling
 	 * back clear them all.  Set SXACT_FLAG_CONFLICT_OUT if any point to
 	 * previously committed transactions.
 	 */
@@ -3657,7 +3657,7 @@ ClearOldPredicateLocks(void)
  * matter -- but keep the transaction entry itself and any outConflicts.
  *
  * When the summarize flag is set, we've run short of room for sxact data
- * and must summarize to the SLRU.	Predicate locks are transferred to a
+ * and must summarize to the SLRU.  Predicate locks are transferred to a
  * dummy "old" transaction, with duplicate locks on a single target
  * collapsing to a single lock with the "latest" commitSeqNo from among
  * the conflicting locks..
@@ -3850,7 +3850,7 @@ XidIsConcurrent(TransactionId xid)
 /*
  * CheckForSerializableConflictOut
  *		We are reading a tuple which has been modified.  If it is visible to
- *		us but has been deleted, that indicates a rw-conflict out.	If it's
+ *		us but has been deleted, that indicates a rw-conflict out.  If it's
  *		not visible and was created by a concurrent (overlapping)
  *		serializable transaction, that is also a rw-conflict out,
  *
@@ -3937,7 +3937,7 @@ CheckForSerializableConflictOut(bool visible, Relation relation,
 	Assert(TransactionIdFollowsOrEquals(xid, TransactionXmin));
 
 	/*
-	 * Find top level xid.	Bail out if xid is too early to be a conflict, or
+	 * Find top level xid.  Bail out if xid is too early to be a conflict, or
 	 * if it's our own xid.
 	 */
 	if (TransactionIdEquals(xid, GetTopTransactionIdIfAny()))
@@ -4002,7 +4002,7 @@ CheckForSerializableConflictOut(bool visible, Relation relation,
 
 	/*
 	 * We have a conflict out to a transaction which has a conflict out to a
-	 * summarized transaction.	That summarized transaction must have
+	 * summarized transaction.  That summarized transaction must have
 	 * committed first, and we can't tell when it committed in relation to our
 	 * snapshot acquisition, so something needs to be canceled.
 	 */
@@ -4036,7 +4036,7 @@ CheckForSerializableConflictOut(bool visible, Relation relation,
 		&& (!SxactHasConflictOut(sxact)
 			|| MySerializableXact->SeqNo.lastCommitBeforeSnapshot < sxact->SeqNo.earliestOutConflictCommit))
 	{
-		/* Read-only transaction will appear to run first.	No conflict. */
+		/* Read-only transaction will appear to run first.  No conflict. */
 		LWLockRelease(SerializableXactHashLock);
 		return;
 	}
@@ -4282,8 +4282,8 @@ CheckForSerializableConflictIn(Relation relation, HeapTuple tuple,
 		SET_PREDICATELOCKTARGETTAG_TUPLE(targettag,
 										 relation->rd_node.dbNode,
 										 relation->rd_id,
-								  ItemPointerGetBlockNumber(&(tuple->t_self)),
-								ItemPointerGetOffsetNumber(&(tuple->t_self)));
+								 ItemPointerGetBlockNumber(&(tuple->t_self)),
+							   ItemPointerGetOffsetNumber(&(tuple->t_self)));
 		CheckTargetForConflictsIn(&targettag);
 	}
 
@@ -4627,7 +4627,7 @@ OnConflict_CheckForSerializationFailure(const SERIALIZABLEXACT *reader,
  *
  * If a dangerous structure is found, the pivot (the near conflict) is
  * marked for death, because rolling back another transaction might mean
- * that we flail without ever making progress.	This transaction is
+ * that we flail without ever making progress.  This transaction is
  * committing writes, so letting it commit ensures progress.  If we
  * canceled the far conflict, it might immediately fail again on retry.
  */

@@ -130,7 +130,7 @@ extern unsigned char pg_ascii_tolower(unsigned char ch);
 
 /*
  * Versions of libintl >= 0.13 try to replace printf() and friends with
- * macros to their own versions that understand the %$ format.	We do the
+ * macros to their own versions that understand the %$ format.  We do the
  * same, so disable their macros, if they exist.
  */
 #ifdef vsnprintf
@@ -305,7 +305,7 @@ extern FILE *pgwin32_fopen(const char *, const char *);
  * system() and popen() replacements to enclose the command in an extra
  * pair of quotes.
  */
-extern int pgwin32_system(const char *command);
+extern int	pgwin32_system(const char *command);
 extern FILE *pgwin32_popen(const char *command, const char *type);
 
 #define system(a) pgwin32_system(a)

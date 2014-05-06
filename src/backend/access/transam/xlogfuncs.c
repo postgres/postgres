@@ -429,7 +429,7 @@ pg_is_in_recovery(PG_FUNCTION_ARGS)
 Datum
 pg_xlog_location_diff(PG_FUNCTION_ARGS)
 {
-	Datum	result;
+	Datum		result;
 
 	result = DirectFunctionCall2(pg_lsn_mi,
 								 PG_GETARG_DATUM(0),

@@ -19,17 +19,17 @@
 
 typedef struct shm_toc_entry
 {
-	uint64		key;					/* Arbitrary identifier */
-	uint64		offset;					/* Bytes offset */
+	uint64		key;			/* Arbitrary identifier */
+	uint64		offset;			/* Bytes offset */
 } shm_toc_entry;
 
 struct shm_toc
 {
-	uint64		toc_magic;				/* Magic number for this TOC */
-	slock_t		toc_mutex;				/* Spinlock for mutual exclusion */
-	Size		toc_total_bytes;		/* Bytes managed by this TOC */
+	uint64		toc_magic;		/* Magic number for this TOC */
+	slock_t		toc_mutex;		/* Spinlock for mutual exclusion */
+	Size		toc_total_bytes;	/* Bytes managed by this TOC */
 	Size		toc_allocated_bytes;	/* Bytes allocated of those managed */
-	Size		toc_nentry;				/* Number of entries in TOC */
+	Size		toc_nentry;		/* Number of entries in TOC */
 	shm_toc_entry toc_entry[FLEXIBLE_ARRAY_MEMBER];
 };
 
@@ -39,7 +39,7 @@ struct shm_toc
 shm_toc *
 shm_toc_create(uint64 magic, void *address, Size nbytes)
 {
-	shm_toc	   *toc = (shm_toc *) address;
+	shm_toc    *toc = (shm_toc *) address;
 
 	Assert(nbytes > offsetof(shm_toc, toc_entry));
 	toc->toc_magic = magic;
@@ -58,7 +58,7 @@ shm_toc_create(uint64 magic, void *address, Size nbytes)
 extern shm_toc *
 shm_toc_attach(uint64 magic, void *address)
 {
-	shm_toc	   *toc = (shm_toc *) address;
+	shm_toc    *toc = (shm_toc *) address;
 
 	if (toc->toc_magic != magic)
 		return NULL;
@@ -96,7 +96,7 @@ shm_toc_allocate(shm_toc *toc, Size nbytes)
 	total_bytes = vtoc->toc_total_bytes;
 	allocated_bytes = vtoc->toc_allocated_bytes;
 	nentry = vtoc->toc_nentry;
-	toc_bytes = offsetof(shm_toc, toc_entry) + nentry * sizeof(shm_toc_entry)
+	toc_bytes = offsetof(shm_toc, toc_entry) +nentry * sizeof(shm_toc_entry)
 		+ allocated_bytes;
 
 	/* Check for memory exhaustion and overflow. */
@@ -132,7 +132,7 @@ shm_toc_freespace(shm_toc *toc)
 	nentry = vtoc->toc_nentry;
 	SpinLockRelease(&toc->toc_mutex);
 
-	toc_bytes = offsetof(shm_toc, toc_entry) + nentry * sizeof(shm_toc_entry);
+	toc_bytes = offsetof(shm_toc, toc_entry) +nentry * sizeof(shm_toc_entry);
 	Assert(allocated_bytes + BUFFERALIGN(toc_bytes) <= total_bytes);
 	return total_bytes - (allocated_bytes + BUFFERALIGN(toc_bytes));
 }
@@ -176,7 +176,7 @@ shm_toc_insert(shm_toc *toc, uint64 key, void *address)
 	total_bytes = vtoc->toc_total_bytes;
 	allocated_bytes = vtoc->toc_allocated_bytes;
 	nentry = vtoc->toc_nentry;
-	toc_bytes = offsetof(shm_toc, toc_entry) + nentry * sizeof(shm_toc_entry)
+	toc_bytes = offsetof(shm_toc, toc_entry) +nentry * sizeof(shm_toc_entry)
 		+ allocated_bytes;
 
 	/* Check for memory exhaustion and overflow. */
@@ -241,6 +241,6 @@ Size
 shm_toc_estimate(shm_toc_estimator *e)
 {
 	return add_size(offsetof(shm_toc, toc_entry),
-			   add_size(mul_size(e->number_of_keys, sizeof(shm_toc_entry)),
-						e->space_for_chunks));
+				 add_size(mul_size(e->number_of_keys, sizeof(shm_toc_entry)),
+						  e->space_for_chunks));
 }

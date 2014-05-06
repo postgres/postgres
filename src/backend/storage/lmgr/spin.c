@@ -5,7 +5,7 @@
  *
  *
  * For machines that have test-and-set (TAS) instructions, s_lock.h/.c
- * define the spinlock implementation.	This file contains only a stub
+ * define the spinlock implementation.  This file contains only a stub
  * implementation for spinlocks using PGSemaphores.  Unless semaphores
  * are implemented in a way that doesn't involve a kernel call, this
  * is too slow to be very useful :-(
@@ -74,7 +74,7 @@ SpinlockSemas(void)
 extern void
 SpinlockSemaInit(PGSemaphore spinsemas)
 {
-	int	i;
+	int			i;
 
 	for (i = 0; i < NUM_SPINLOCK_SEMAPHORES; ++i)
 		PGSemaphoreCreate(&spinsemas[i]);
@@ -88,7 +88,7 @@ SpinlockSemaInit(PGSemaphore spinsemas)
 void
 s_init_lock_sema(volatile slock_t *lock)
 {
-	static int counter = 0;
+	static int	counter = 0;
 
 	*lock = (++counter) % NUM_SPINLOCK_SEMAPHORES;
 }

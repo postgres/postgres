@@ -63,7 +63,7 @@ PageInit(Page page, Size pageSize, Size specialSize)
  * PageIsVerified
  *		Check that the page header and checksum (if any) appear valid.
  *
- * This is called when a page has just been read in from disk.	The idea is
+ * This is called when a page has just been read in from disk.  The idea is
  * to cheaply detect trashed pages before we go nuts following bogus item
  * pointers, testing invalid transaction identifiers, etc.
  *
@@ -155,7 +155,7 @@ PageIsVerified(Page page, BlockNumber blkno)
 /*
  *	PageAddItem
  *
- *	Add an item to a page.	Return value is offset at which it was
+ *	Add an item to a page.  Return value is offset at which it was
  *	inserted, or InvalidOffsetNumber if there's not room to insert.
  *
  *	If overwrite is true, we just store the item at the specified
@@ -769,7 +769,7 @@ PageIndexTupleDelete(Page page, OffsetNumber offnum)
  * PageIndexMultiDelete
  *
  * This routine handles the case of deleting multiple tuples from an
- * index page at once.	It is considerably faster than a loop around
+ * index page at once.  It is considerably faster than a loop around
  * PageIndexTupleDelete ... however, the caller *must* supply the array
  * of item numbers to be deleted in item number order!
  */
@@ -780,7 +780,7 @@ PageIndexMultiDelete(Page page, OffsetNumber *itemnos, int nitems)
 	Offset		pd_lower = phdr->pd_lower;
 	Offset		pd_upper = phdr->pd_upper;
 	Offset		pd_special = phdr->pd_special;
-	itemIdSortData	itemidbase[MaxIndexTuplesPerPage];
+	itemIdSortData itemidbase[MaxIndexTuplesPerPage];
 	itemIdSort	itemidptr;
 	ItemId		lp;
 	int			nline,
@@ -903,7 +903,7 @@ PageIndexMultiDelete(Page page, OffsetNumber *itemnos, int nitems)
  * If checksums are disabled, or if the page is not initialized, just return
  * the input.  Otherwise, we must make a copy of the page before calculating
  * the checksum, to prevent concurrent modifications (e.g. setting hint bits)
- * from making the final checksum invalid.	It doesn't matter if we include or
+ * from making the final checksum invalid.  It doesn't matter if we include or
  * exclude hints during the copy, as long as we write a valid page and
  * associated checksum.
  *

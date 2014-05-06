@@ -28,7 +28,7 @@ typedef struct SnapshotData *Snapshot;
  * function.
  */
 typedef bool (*SnapshotSatisfiesFunc) (HeapTuple htup,
-									   Snapshot snapshot, Buffer buffer);
+										   Snapshot snapshot, Buffer buffer);
 
 /*
  * Struct representing all kind of possible snapshots.
@@ -39,7 +39,7 @@ typedef bool (*SnapshotSatisfiesFunc) (HeapTuple htup,
  * * Historic MVCC snapshots used during logical decoding
  * * snapshots passed to HeapTupleSatisfiesDirty()
  * * snapshots used for SatisfiesAny, Toast, Self where no members are
- *   accessed.
+ *	 accessed.
  *
  * TODO: It's probably a good idea to split this struct using a NodeTag
  * similar to how parser and executor nodes are handled, with one type for
@@ -62,16 +62,18 @@ typedef struct SnapshotData
 	 */
 	TransactionId xmin;			/* all XID < xmin are visible to me */
 	TransactionId xmax;			/* all XID >= xmax are invisible to me */
+
 	/*
 	 * For normal MVCC snapshot this contains the all xact IDs that are in
 	 * progress, unless the snapshot was taken during recovery in which case
-	 * it's empty. For historic MVCC snapshots, the meaning is inverted,
-	 * i.e. it contains *committed* transactions between xmin and xmax.
+	 * it's empty. For historic MVCC snapshots, the meaning is inverted, i.e.
+	 * it contains *committed* transactions between xmin and xmax.
 	 */
 	TransactionId *xip;
 	uint32		xcnt;			/* # of xact ids in xip[] */
 	/* note: all ids in xip[] satisfy xmin <= xip[i] < xmax */
 	int32		subxcnt;		/* # of xact ids in subxip[] */
+
 	/*
 	 * For non-historic MVCC snapshots, this contains subxact IDs that are in
 	 * progress (and other transactions that are in progress if taken during

@@ -339,7 +339,7 @@ do_copy(const char *args)
 	if (!options->program)
 	{
 		struct stat st;
-		int result;
+		int			result;
 
 		/* make sure the specified file is not a directory */
 		if ((result = fstat(fileno(copystream), &st)) < 0)
@@ -628,7 +628,8 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary, PGresult **res)
 					/*
 					 * This code erroneously assumes '\.' on a line alone
 					 * inside a quoted CSV string terminates the \copy.
-					 * http://www.postgresql.org/message-id/E1TdNVQ-0001ju-GO@wrigleys.postgresql.org
+					 * http://www.postgresql.org/message-id/E1TdNVQ-0001ju-GO@w
+					 * rigleys.postgresql.org
 					 */
 					if (strcmp(buf, "\\.\n") == 0 ||
 						strcmp(buf, "\\.\r\n") == 0)
@@ -677,7 +678,7 @@ copyin_cleanup:
 	 * COPY FROM STDIN commands.  We keep trying PQputCopyEnd() in the hope
 	 * it'll work eventually.  (What's actually likely to happen is that in
 	 * attempting to flush the data, libpq will eventually realize that the
-	 * connection is lost.	But that's fine; it will get us out of COPY_IN
+	 * connection is lost.  But that's fine; it will get us out of COPY_IN
 	 * state, which is what we need.)
 	 */
 	while (*res = PQgetResult(conn), PQresultStatus(*res) == PGRES_COPY_IN)

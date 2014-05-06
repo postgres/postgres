@@ -13,6 +13,6 @@
 #ifndef RELFILENODEMAP_H
 #define RELFILENODEMAP_H
 
-extern Oid RelidByRelfilenode(Oid reltablespace, Oid relfilenode);
+extern Oid	RelidByRelfilenode(Oid reltablespace, Oid relfilenode);
 
 #endif   /* RELFILENODEMAP_H */

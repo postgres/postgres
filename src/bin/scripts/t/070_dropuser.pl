@@ -11,6 +11,9 @@ my $tempdir = tempdir;
 start_test_server $tempdir;
 
 psql 'postgres', 'CREATE ROLE foobar1';
-issues_sql_like(['dropuser', 'foobar1'], qr/statement: DROP ROLE foobar1/, 'SQL DROP ROLE run');
+issues_sql_like(
+	[ 'dropuser', 'foobar1' ],
+	qr/statement: DROP ROLE foobar1/,
+	'SQL DROP ROLE run');
 
-command_fails(['dropuser', 'nonexistent'], 'fails with nonexistent user');
+command_fails([ 'dropuser', 'nonexistent' ], 'fails with nonexistent user');

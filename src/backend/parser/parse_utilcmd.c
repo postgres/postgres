@@ -157,7 +157,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	stmt = (CreateStmt *) copyObject(stmt);
 
 	/*
-	 * Look up the creation namespace.	This also checks permissions on the
+	 * Look up the creation namespace.  This also checks permissions on the
 	 * target namespace, locks it against concurrent drops, checks for a
 	 * preexisting relation in that namespace with the same name, and updates
 	 * stmt->relation->relpersistence if the select namespace is temporary.
@@ -183,7 +183,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	 * If the target relation name isn't schema-qualified, make it so.  This
 	 * prevents some corner cases in which added-on rewritten commands might
 	 * think they should apply to other relations that have the same name and
-	 * are earlier in the search path.	But a local temp table is effectively
+	 * are earlier in the search path.  But a local temp table is effectively
 	 * specified to be in pg_temp, so no need for anything extra in that case.
 	 */
 	if (stmt->relation->schemaname == NULL
@@ -672,7 +672,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 	if (cxt->isforeign)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("LIKE is not supported for creating foreign tables")));
+			   errmsg("LIKE is not supported for creating foreign tables")));
 
 	relation = relation_openrv(table_like_clause->relation, AccessShareLock);
 
@@ -712,7 +712,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 	constr = tupleDesc->constr;
 
 	/*
-	 * Initialize column number map for map_variable_attnos().	We need this
+	 * Initialize column number map for map_variable_attnos().  We need this
 	 * since dropped columns in the source table aren't copied, so the new
 	 * table can have different column numbers.
 	 */
@@ -927,7 +927,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 
 	/*
 	 * Close the parent rel, but keep our AccessShareLock on it until xact
-	 * commit.	That will prevent someone else from deleting or ALTERing the
+	 * commit.  That will prevent someone else from deleting or ALTERing the
 	 * parent before the child is committed.
 	 */
 	heap_close(relation, NoLock);
@@ -1608,7 +1608,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 					 parser_errposition(cxt->pstate, constraint->location)));
 
 		/*
-		 * Insist on it being a btree.	That's the only kind that supports
+		 * Insist on it being a btree.  That's the only kind that supports
 		 * uniqueness at the moment anyway; but we must have an index that
 		 * exactly matches what you'd get from plain ADD CONSTRAINT syntax,
 		 * else dump and reload will produce a different index (breaking
@@ -1635,7 +1635,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 
 			/*
 			 * We shouldn't see attnum == 0 here, since we already rejected
-			 * expression indexes.	If we do, SystemAttributeDefinition will
+			 * expression indexes.  If we do, SystemAttributeDefinition will
 			 * throw an error.
 			 */
 			if (attnum > 0)
@@ -1649,7 +1649,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 			attname = pstrdup(NameStr(attform->attname));
 
 			/*
-			 * Insist on default opclass and sort options.	While the index
+			 * Insist on default opclass and sort options.  While the index
 			 * would still work as a constraint with non-default settings, it
 			 * might not provide exactly the same uniqueness semantics as
 			 * you'd get from a normally-created constraint; and there's also
@@ -1900,7 +1900,7 @@ transformFKConstraints(CreateStmtContext *cxt,
  * transformIndexStmt - parse analysis for CREATE INDEX and ALTER TABLE
  *
  * Note: this is a no-op for an index not using either index expressions or
- * a predicate expression.	There are several code paths that create indexes
+ * a predicate expression.  There are several code paths that create indexes
  * without bothering to call this, because they know they don't have any
  * such expressions to deal with.
  *
@@ -2023,7 +2023,7 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 
 	/*
 	 * To avoid deadlock, make sure the first thing we do is grab
-	 * AccessExclusiveLock on the target relation.	This will be needed by
+	 * AccessExclusiveLock on the target relation.  This will be needed by
 	 * DefineQueryRewrite(), and we don't want to grab a lesser lock
 	 * beforehand.
 	 */

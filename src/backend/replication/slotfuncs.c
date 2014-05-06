@@ -53,7 +53,7 @@ pg_create_physical_replication_slot(PG_FUNCTION_ARGS)
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 
-	/* acquire replication slot, this will check for conflicting names*/
+	/* acquire replication slot, this will check for conflicting names */
 	ReplicationSlotCreate(NameStr(*name), false, RS_PERSISTENT);
 
 	values[0] = NameGetDatum(&MyReplicationSlot->data.name);
@@ -97,8 +97,7 @@ pg_create_logical_replication_slot(PG_FUNCTION_ARGS)
 	Assert(!MyReplicationSlot);
 
 	/*
-	 * Acquire a logical decoding slot, this will check for conflicting
-	 * names.
+	 * Acquire a logical decoding slot, this will check for conflicting names.
 	 */
 	ReplicationSlotCreate(NameStr(*name), true, RS_EPHEMERAL);
 
@@ -106,8 +105,8 @@ pg_create_logical_replication_slot(PG_FUNCTION_ARGS)
 	 * Create logical decoding context, to build the initial snapshot.
 	 */
 	ctx = CreateInitDecodingContext(
-		NameStr(*plugin), NIL,
-		logical_read_local_xlog_page, NULL, NULL);
+									NameStr(*plugin), NIL,
+									logical_read_local_xlog_page, NULL, NULL);
 
 	/* build initial snapshot, might take a while */
 	DecodingContextFindStartpoint(ctx);

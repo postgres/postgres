@@ -10,8 +10,8 @@
  * high-precision-timing APIs on yet other platforms.
  *
  * The basic data type is instr_time, which all callers should treat as an
- * opaque typedef.	instr_time can store either an absolute time (of
- * unspecified reference time) or an interval.	The operations provided
+ * opaque typedef.  instr_time can store either an absolute time (of
+ * unspecified reference time) or an interval.  The operations provided
  * for it are:
  *
  * INSTR_TIME_IS_ZERO(t)			is t equal to zero?

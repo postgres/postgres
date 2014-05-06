@@ -257,14 +257,16 @@ get_pgpid(bool is_status_request)
 	{
 		if (errno == ENOENT)
 			printf(_("%s: directory \"%s\" does not exist\n"), progname,
-					 pg_data);
+				   pg_data);
 		else
 			printf(_("%s: cannot access directory \"%s\"\n"), progname,
-					 pg_data);
+				   pg_data);
+
 		/*
-		 * The Linux Standard Base Core Specification 3.1 says this should return
-		 * '4, program or service status is unknown'
-		 * https://refspecs.linuxbase.org/LSB_3.1.0/LSB-Core-generic/LSB-Core-generic/iniscrptact.html
+		 * The Linux Standard Base Core Specification 3.1 says this should
+		 * return '4, program or service status is unknown'
+		 * https://refspecs.linuxbase.org/LSB_3.1.0/LSB-Core-generic/LSB-Core-g
+		 * eneric/iniscrptact.html
 		 */
 		exit(is_status_request ? 4 : 1);
 	}
@@ -272,7 +274,7 @@ get_pgpid(bool is_status_request)
 	if (stat(version_file, &statbuf) != 0 && errno == ENOENT)
 	{
 		printf(_("%s: directory \"%s\" is not a database cluster directory\n"),
-				 progname, pg_data);
+			   progname, pg_data);
 		exit(is_status_request ? 4 : 1);
 	}
 
@@ -401,8 +403,8 @@ readfile(const char *path)
 void
 free_readfile(char **optlines)
 {
-	char   *curr_line = NULL;
-	int		i = 0;
+	char	   *curr_line = NULL;
+	int			i = 0;
 
 	if (!optlines)
 		return;
@@ -506,7 +508,7 @@ test_postmaster_connection(bool do_checkpoint)
 			 *		6	9.1+ server, shared memory not created
 			 *		7	9.1+ server, shared memory created
 			 *
-			 * This code does not support pre-9.1 servers.	On Unix machines
+			 * This code does not support pre-9.1 servers.  On Unix machines
 			 * we could consider extracting the port number from the shmem
 			 * key, but that (a) is not robust, and (b) doesn't help with
 			 * finding out the socket directory.  And it wouldn't work anyway
@@ -539,7 +541,7 @@ test_postmaster_connection(bool do_checkpoint)
 					time_t		pmstart;
 
 					/*
-					 * Make sanity checks.	If it's for a standalone backend
+					 * Make sanity checks.  If it's for a standalone backend
 					 * (negative PID), or the recorded start time is before
 					 * pg_ctl started, then either we are looking at the wrong
 					 * data directory, or this is a pre-existing pidfile that
@@ -660,7 +662,7 @@ test_postmaster_connection(bool do_checkpoint)
 
 		/*
 		 * If we've been able to identify the child postmaster's PID, check
-		 * the process is still alive.	This covers cases where the postmaster
+		 * the process is still alive.  This covers cases where the postmaster
 		 * successfully created the pidfile but then crashed without removing
 		 * it.
 		 */
@@ -755,7 +757,7 @@ read_post_opts(void)
 				{
 					*arg1 = '\0';		/* terminate so we get only program
 										 * name */
-					post_opts = pg_strdup(arg1 + 1); /* point past whitespace */
+					post_opts = pg_strdup(arg1 + 1);	/* point past whitespace */
 				}
 				if (exec_path == NULL)
 					exec_path = pg_strdup(optline);
@@ -1162,8 +1164,8 @@ do_promote(void)
 	}
 
 	/*
-	 * For 9.3 onwards, "fast" promotion is performed. Promotion
-	 * with a full checkpoint is still possible by writing a file called
+	 * For 9.3 onwards, "fast" promotion is performed. Promotion with a full
+	 * checkpoint is still possible by writing a file called
 	 * "fallback_promote" instead of "promote"
 	 */
 	snprintf(promote_file, MAXPGPATH, "%s/promote", pg_data);
@@ -1211,7 +1213,7 @@ postmaster_is_alive(pid_t pid)
 	 * postmaster we are after.
 	 *
 	 * Don't believe that our own PID or parent shell's PID is the postmaster,
-	 * either.	(Windows hasn't got getppid(), though.)
+	 * either.  (Windows hasn't got getppid(), though.)
 	 */
 	if (pid == getpid())
 		return false;
@@ -1273,7 +1275,8 @@ do_status(void)
 	/*
 	 * The Linux Standard Base Core Specification 3.1 says this should return
 	 * '3, program is not running'
-	 * https://refspecs.linuxbase.org/LSB_3.1.0/LSB-Core-generic/LSB-Core-generic/iniscrptact.html
+	 * https://refspecs.linuxbase.org/LSB_3.1.0/LSB-Core-generic/LSB-Core-gener
+	 * ic/iniscrptact.html
 	 */
 	exit(3);
 }
@@ -1298,20 +1301,23 @@ static bool
 IsWindowsXPOrGreater(void)
 {
 	OSVERSIONINFO osv;
+
 	osv.dwOSVersionInfoSize = sizeof(osv);
 
-	 /* Windows XP = Version 5.1 */
-	return (!GetVersionEx(&osv) || /* could not get version */
+	/* Windows XP = Version 5.1 */
+	return (!GetVersionEx(&osv) ||		/* could not get version */
 			osv.dwMajorVersion > 5 || (osv.dwMajorVersion == 5 && osv.dwMinorVersion >= 1));
 }
 
-static bool IsWindows7OrGreater(void)
+static bool
+IsWindows7OrGreater(void)
 {
 	OSVERSIONINFO osv;
+
 	osv.dwOSVersionInfoSize = sizeof(osv);
 
-	 /* Windows 7 = Version 6.0 */
-	return (!GetVersionEx(&osv) || /* could not get version */
+	/* Windows 7 = Version 6.0 */
+	return (!GetVersionEx(&osv) ||		/* could not get version */
 			osv.dwMajorVersion > 6 || (osv.dwMajorVersion == 6 && osv.dwMinorVersion >= 0));
 }
 #endif

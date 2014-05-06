@@ -112,7 +112,7 @@ readdir(DIR *d)
 int
 closedir(DIR *d)
 {
-	int ret = 0;
+	int			ret = 0;
 
 	if (d->handle != INVALID_HANDLE_VALUE)
 		ret = !FindClose(d->handle);

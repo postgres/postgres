@@ -67,6 +67,7 @@ initGinState(GinState *state, Relation index)
 		fmgr_info_copy(&(state->extractQueryFn[i]),
 					   index_getprocinfo(index, i + 1, GIN_EXTRACTQUERY_PROC),
 					   CurrentMemoryContext);
+
 		/*
 		 * Check opclass capability to do tri-state or binary logic consistent
 		 * check.
@@ -74,14 +75,14 @@ initGinState(GinState *state, Relation index)
 		if (index_getprocid(index, i + 1, GIN_TRICONSISTENT_PROC) != InvalidOid)
 		{
 			fmgr_info_copy(&(state->triConsistentFn[i]),
-			   index_getprocinfo(index, i + 1, GIN_TRICONSISTENT_PROC),
+					 index_getprocinfo(index, i + 1, GIN_TRICONSISTENT_PROC),
 						   CurrentMemoryContext);
 		}
 
 		if (index_getprocid(index, i + 1, GIN_CONSISTENT_PROC) != InvalidOid)
 		{
 			fmgr_info_copy(&(state->consistentFn[i]),
-						   index_getprocinfo(index, i + 1, GIN_CONSISTENT_PROC),
+						index_getprocinfo(index, i + 1, GIN_CONSISTENT_PROC),
 						   CurrentMemoryContext);
 		}
 
@@ -458,7 +459,7 @@ ginExtractEntries(GinState *ginstate, OffsetNumber attnum,
 	 * If there's more than one key, sort and unique-ify.
 	 *
 	 * XXX Using qsort here is notationally painful, and the overhead is
-	 * pretty bad too.	For small numbers of keys it'd likely be better to use
+	 * pretty bad too.  For small numbers of keys it'd likely be better to use
 	 * a simple insertion sort.
 	 */
 	if (*nentries > 1)

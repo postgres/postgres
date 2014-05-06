@@ -232,7 +232,7 @@ FunctionNext(FunctionScanState *node)
 	}
 
 	/*
-	 * If alldone, we just return the previously-cleared scanslot.	Otherwise,
+	 * If alldone, we just return the previously-cleared scanslot.  Otherwise,
 	 * finish creating the virtual tuple.
 	 */
 	if (!alldone)
@@ -449,8 +449,8 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 	 * Create the combined TupleDesc
 	 *
 	 * If there is just one function without ordinality, the scan result
-	 * tupdesc is the same as the function result tupdesc --- except that
-	 * we may stuff new names into it below, so drop any rowtype label.
+	 * tupdesc is the same as the function result tupdesc --- except that we
+	 * may stuff new names into it below, so drop any rowtype label.
 	 */
 	if (scanstate->simple)
 	{

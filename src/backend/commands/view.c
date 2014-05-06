@@ -52,7 +52,7 @@ validateWithCheckOption(char *value)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("invalid value for \"check_option\" option"),
-			  errdetail("Valid values are \"local\", and \"cascaded\".")));
+				 errdetail("Valid values are \"local\", and \"cascaded\".")));
 	}
 }
 
@@ -344,11 +344,11 @@ UpdateRangeTableOfViewParse(Oid viewOid, Query *viewParse)
 			   *rt_entry2;
 
 	/*
-	 * Make a copy of the given parsetree.	It's not so much that we don't
+	 * Make a copy of the given parsetree.  It's not so much that we don't
 	 * want to scribble on our input, it's that the parser has a bad habit of
 	 * outputting multiple links to the same subtree for constructs like
 	 * BETWEEN, and we mustn't have OffsetVarNodes increment the varno of a
-	 * Var node twice.	copyObject will expand any multiply-referenced subtree
+	 * Var node twice.  copyObject will expand any multiply-referenced subtree
 	 * into multiple copies.
 	 */
 	viewParse = (Query *) copyObject(viewParse);
@@ -460,13 +460,13 @@ DefineView(ViewStmt *stmt, const char *queryString)
 	}
 
 	/*
-	 * If the check option is specified, look to see if the view is
-	 * actually auto-updatable or not.
+	 * If the check option is specified, look to see if the view is actually
+	 * auto-updatable or not.
 	 */
 	if (check_option)
 	{
 		const char *view_updatable_error =
-			view_query_is_auto_updatable(viewParse, true);
+		view_query_is_auto_updatable(viewParse, true);
 
 		if (view_updatable_error)
 			ereport(ERROR,
@@ -513,7 +513,7 @@ DefineView(ViewStmt *stmt, const char *queryString)
 
 	/*
 	 * If the user didn't explicitly ask for a temporary view, check whether
-	 * we need one implicitly.	We allow TEMP to be inserted automatically as
+	 * we need one implicitly.  We allow TEMP to be inserted automatically as
 	 * long as the CREATE command is consistent with that --- no explicit
 	 * schema name.
 	 */

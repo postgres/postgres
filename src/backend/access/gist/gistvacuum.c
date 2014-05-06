@@ -49,7 +49,7 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 		stats->estimated_count = info->estimated_count;
 
 		/*
-		 * XXX the above is wrong if index is partial.	Would it be OK to just
+		 * XXX the above is wrong if index is partial.  Would it be OK to just
 		 * return NULL, or is there work we must do below?
 		 */
 	}

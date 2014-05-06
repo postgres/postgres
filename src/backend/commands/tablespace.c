@@ -31,7 +31,7 @@
  * To allow CREATE DATABASE to give a new database a default tablespace
  * that's different from the template database's default, we make the
  * provision that a zero in pg_class.reltablespace means the database's
- * default tablespace.	Without this, CREATE DATABASE would have to go in
+ * default tablespace.  Without this, CREATE DATABASE would have to go in
  * and munge the system catalogs of the new database.
  *
  *
@@ -281,7 +281,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	 * reference the whole path here, but mkdir() uses the first two parts.
 	 */
 	if (strlen(location) + 1 + strlen(TABLESPACE_VERSION_DIRECTORY) + 1 +
-		OIDCHARS + 1 + OIDCHARS + 1 + FORKNAMECHARS + 1 + OIDCHARS > MAXPGPATH)
+	  OIDCHARS + 1 + OIDCHARS + 1 + FORKNAMECHARS + 1 + OIDCHARS > MAXPGPATH)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				 errmsg("tablespace location \"%s\" is too long",
@@ -488,7 +488,7 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 		 * Not all files deleted?  However, there can be lingering empty files
 		 * in the directories, left behind by for example DROP TABLE, that
 		 * have been scheduled for deletion at next checkpoint (see comments
-		 * in mdunlink() for details).	We could just delete them immediately,
+		 * in mdunlink() for details).  We could just delete them immediately,
 		 * but we can't tell them apart from important data files that we
 		 * mustn't delete.  So instead, we force a checkpoint which will clean
 		 * out any lingering files, and try again.
@@ -562,10 +562,10 @@ create_tablespace_directories(const char *location, const Oid tablespaceoid)
 
 	linkloc = psprintf("pg_tblspc/%u", tablespaceoid);
 	location_with_version_dir = psprintf("%s/%s", location,
-			TABLESPACE_VERSION_DIRECTORY);
+										 TABLESPACE_VERSION_DIRECTORY);
 
 	/*
-	 * Attempt to coerce target directory to safe permissions.	If this fails,
+	 * Attempt to coerce target directory to safe permissions.  If this fails,
 	 * it doesn't exist or has the wrong owner.
 	 */
 	if (chmod(location, S_IRWXU) != 0)
@@ -666,7 +666,7 @@ create_tablespace_directories(const char *location, const Oid tablespaceoid)
  * Attempt to remove filesystem infrastructure for the tablespace.
  *
  * 'redo' indicates we are redoing a drop from XLOG; in that case we should
- * not throw an ERROR for problems, just LOG them.	The worst consequence of
+ * not throw an ERROR for problems, just LOG them.  The worst consequence of
  * not removing files here would be failure to release some disk space, which
  * does not justify throwing an error that would require manual intervention
  * to get the database running again.
@@ -684,7 +684,7 @@ destroy_tablespace_directories(Oid tablespaceoid, bool redo)
 	struct stat st;
 
 	linkloc_with_version_dir = psprintf("pg_tblspc/%u/%s", tablespaceoid,
-			TABLESPACE_VERSION_DIRECTORY);
+										TABLESPACE_VERSION_DIRECTORY);
 
 	/*
 	 * Check if the tablespace still contains any files.  We try to rmdir each
@@ -701,10 +701,10 @@ destroy_tablespace_directories(Oid tablespaceoid, bool redo)
 	 *
 	 * If redo is true then ENOENT is a likely outcome here, and we allow it
 	 * to pass without comment.  In normal operation we still allow it, but
-	 * with a warning.	This is because even though ProcessUtility disallows
+	 * with a warning.  This is because even though ProcessUtility disallows
 	 * DROP TABLESPACE in a transaction block, it's possible that a previous
 	 * DROP failed and rolled back after removing the tablespace directories
-	 * and/or symlink.	We want to allow a new DROP attempt to succeed at
+	 * and/or symlink.  We want to allow a new DROP attempt to succeed at
 	 * removing the catalog entries (and symlink if still present), so we
 	 * should not give a hard error here.
 	 */
@@ -1119,8 +1119,8 @@ AlterTableSpaceMove(AlterTableSpaceMoveStmt *stmt)
 
 		/*
 		 * Handle permissions-checking here since we are locking the tables
-		 * and also to avoid doing a bunch of work only to fail part-way.
-		 * Note that permissions will also be checked by AlterTableInternal().
+		 * and also to avoid doing a bunch of work only to fail part-way. Note
+		 * that permissions will also be checked by AlterTableInternal().
 		 *
 		 * Caller must be considered an owner on the table to move it.
 		 */
@@ -1179,7 +1179,7 @@ check_default_tablespace(char **newval, void **extra, GucSource source)
 {
 	/*
 	 * If we aren't inside a transaction, we cannot do database access so
-	 * cannot verify the name.	Must accept the value on faith.
+	 * cannot verify the name.  Must accept the value on faith.
 	 */
 	if (IsTransactionState())
 	{
@@ -1290,7 +1290,7 @@ check_temp_tablespaces(char **newval, void **extra, GucSource source)
 
 	/*
 	 * If we aren't inside a transaction, we cannot do database access so
-	 * cannot verify the individual names.	Must accept the list on faith.
+	 * cannot verify the individual names.  Must accept the list on faith.
 	 * Fortunately, there's then also no need to pass the data to fd.c.
 	 */
 	if (IsTransactionState())

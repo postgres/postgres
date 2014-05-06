@@ -215,7 +215,7 @@ is_foreign_expr(PlannerInfo *root,
  * We must check that the expression contains only node types we can deparse,
  * that all types/functions/operators are safe to send (which we approximate
  * as being built-in), and that all collations used in the expression derive
- * from Vars of the foreign table.	Because of the latter, the logic is
+ * from Vars of the foreign table.  Because of the latter, the logic is
  * pretty close to assign_collations_walker() in parse_collate.c, though we
  * can assume here that the given expression is valid.
  */
@@ -245,7 +245,7 @@ foreign_expr_walker(Node *node,
 
 				/*
 				 * If the Var is from the foreign table, we consider its
-				 * collation (if any) safe to use.	If it is from another
+				 * collation (if any) safe to use.  If it is from another
 				 * table, we treat its collation the same way as we would a
 				 * Param's collation, ie it's not safe for it to have a
 				 * non-default collation.
@@ -371,7 +371,7 @@ foreign_expr_walker(Node *node,
 
 				/*
 				 * Detect whether node is introducing a collation not derived
-				 * from a foreign Var.	(If so, we just mark it unsafe for now
+				 * from a foreign Var.  (If so, we just mark it unsafe for now
 				 * rather than immediately returning false, since the parent
 				 * node might not care.)
 				 */
@@ -658,7 +658,7 @@ is_builtin(Oid oid)
 
 /*
  * Construct a simple SELECT statement that retrieves desired columns
- * of the specified foreign table, and append it to "buf".	The output
+ * of the specified foreign table, and append it to "buf".  The output
  * contains just "SELECT ... FROM tablename".
  *
  * We also create an integer List of the columns being retrieved, which is
@@ -746,7 +746,7 @@ deparseTargetList(StringInfo buf,
 	}
 
 	/*
-	 * Add ctid if needed.	We currently don't support retrieving any other
+	 * Add ctid if needed.  We currently don't support retrieving any other
 	 * system columns.
 	 */
 	if (bms_is_member(SelfItemPointerAttributeNumber - FirstLowInvalidHeapAttributeNumber,
@@ -1447,7 +1447,7 @@ deparseArrayRef(ArrayRef *node, deparse_expr_cxt *context)
 	/*
 	 * Deparse referenced array expression first.  If that expression includes
 	 * a cast, we have to parenthesize to prevent the array subscript from
-	 * being taken as typename decoration.	We can avoid that in the typical
+	 * being taken as typename decoration.  We can avoid that in the typical
 	 * case of subscripting a Var, but otherwise do it.
 	 */
 	if (IsA(node->refexpr, Var))
@@ -1559,7 +1559,7 @@ deparseFuncExpr(FuncExpr *node, deparse_expr_cxt *context)
 }
 
 /*
- * Deparse given operator expression.	To avoid problems around
+ * Deparse given operator expression.   To avoid problems around
  * priority of operations, we always parenthesize the arguments.
  */
 static void
@@ -1656,7 +1656,7 @@ deparseDistinctExpr(DistinctExpr *node, deparse_expr_cxt *context)
 }
 
 /*
- * Deparse given ScalarArrayOpExpr expression.	To avoid problems
+ * Deparse given ScalarArrayOpExpr expression.  To avoid problems
  * around priority of operations, we always parenthesize the arguments.
  */
 static void
@@ -1822,7 +1822,7 @@ printRemoteParam(int paramindex, Oid paramtype, int32 paramtypmod,
  * This is used when we're just trying to EXPLAIN the remote query.
  * We don't have the actual value of the runtime parameter yet, and we don't
  * want the remote planner to generate a plan that depends on such a value
- * anyway.	Thus, we can't do something simple like "$1::paramtype".
+ * anyway.  Thus, we can't do something simple like "$1::paramtype".
  * Instead, we emit "((SELECT null::paramtype)::paramtype)".
  * In all extant versions of Postgres, the planner will see that as an unknown
  * constant value, which is what we want.  This might need adjustment if we

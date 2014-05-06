@@ -473,7 +473,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	 * Before entering the main loop, establish the invariant that
 	 * next_not_all_visible_block is the next block number >= blkno that's not
 	 * all-visible according to the visibility map, or nblocks if there's no
-	 * such block.	Also, we set up the skipping_all_visible_blocks flag,
+	 * such block.  Also, we set up the skipping_all_visible_blocks flag,
 	 * which is needed because we need hysteresis in the decision: once we've
 	 * started skipping blocks, we may as well skip everything up to the next
 	 * not-all-visible block.
@@ -706,10 +706,10 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 				 * It's possible that another backend has extended the heap,
 				 * initialized the page, and then failed to WAL-log the page
 				 * due to an ERROR.  Since heap extension is not WAL-logged,
-				 * recovery might try to replay our record setting the
-				 * page all-visible and find that the page isn't initialized,
-				 * which will cause a PANIC.  To prevent that, check whether
-				 * the page has been previously WAL-logged, and if not, do that
+				 * recovery might try to replay our record setting the page
+				 * all-visible and find that the page isn't initialized, which
+				 * will cause a PANIC.  To prevent that, check whether the
+				 * page has been previously WAL-logged, and if not, do that
 				 * now.
 				 */
 				if (RelationNeedsWAL(onerel) &&
@@ -834,8 +834,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 					 * NB: Like with per-tuple hint bits, we can't set the
 					 * PD_ALL_VISIBLE flag if the inserter committed
 					 * asynchronously. See SetHintBits for more info. Check
-					 * that the tuple is hinted xmin-committed because
-					 * of that.
+					 * that the tuple is hinted xmin-committed because of
+					 * that.
 					 */
 					if (all_visible)
 					{
@@ -972,7 +972,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			/*
 			 * It should never be the case that the visibility map page is set
 			 * while the page-level bit is clear, but the reverse is allowed
-			 * (if checksums are not enabled).	Regardless, set the both bits
+			 * (if checksums are not enabled).  Regardless, set the both bits
 			 * so that we get back in sync.
 			 *
 			 * NB: If the heap page is all-visible but the VM bit is not set,
@@ -1034,8 +1034,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		/*
 		 * If we remembered any tuples for deletion, then the page will be
 		 * visited again by lazy_vacuum_heap, which will compute and record
-		 * its post-compaction free space.	If not, then we're done with this
-		 * page, so remember its free space as-is.	(This path will always be
+		 * its post-compaction free space.  If not, then we're done with this
+		 * page, so remember its free space as-is.  (This path will always be
 		 * taken if there are no indexes.)
 		 */
 		if (vacrelstats->num_dead_tuples == prev_dead_count)
@@ -1635,9 +1635,9 @@ static void
 lazy_space_alloc(LVRelStats *vacrelstats, BlockNumber relblocks)
 {
 	long		maxtuples;
-	int			vac_work_mem =  IsAutoVacuumWorkerProcess() &&
-									autovacuum_work_mem != -1 ?
-								autovacuum_work_mem : maintenance_work_mem;
+	int			vac_work_mem = IsAutoVacuumWorkerProcess() &&
+	autovacuum_work_mem != -1 ?
+	autovacuum_work_mem : maintenance_work_mem;
 
 	if (vacrelstats->hasindex)
 	{

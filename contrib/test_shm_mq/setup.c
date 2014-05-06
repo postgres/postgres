@@ -25,7 +25,7 @@
 
 typedef struct
 {
-	int		nworkers;
+	int			nworkers;
 	BackgroundWorkerHandle *handle[FLEXIBLE_ARRAY_MEMBER];
 } worker_state;
 
@@ -34,7 +34,7 @@ static void setup_dynamic_shared_memory(int64 queue_size, int nworkers,
 							test_shm_mq_header **hdrp,
 							shm_mq **outp, shm_mq **inp);
 static worker_state *setup_background_workers(int nworkers,
-											  dsm_segment *seg);
+						 dsm_segment *seg);
 static void cleanup_background_workers(dsm_segment *seg, Datum arg);
 static void wait_for_workers_to_become_ready(worker_state *wstate,
 								 volatile test_shm_mq_header *hdr);
@@ -50,9 +50,9 @@ test_shm_mq_setup(int64 queue_size, int32 nworkers, dsm_segment **segp,
 {
 	dsm_segment *seg;
 	test_shm_mq_header *hdr;
-	shm_mq	   *outq = NULL;		/* placate compiler */
-	shm_mq	   *inq = NULL;			/* placate compiler */
-	worker_state	   *wstate;
+	shm_mq	   *outq = NULL;	/* placate compiler */
+	shm_mq	   *inq = NULL;		/* placate compiler */
+	worker_state *wstate;
 
 	/* Set up a dynamic shared memory segment. */
 	setup_dynamic_shared_memory(queue_size, nworkers, &seg, &hdr, &outq, &inq);
@@ -69,8 +69,8 @@ test_shm_mq_setup(int64 queue_size, int32 nworkers, dsm_segment **segp,
 	wait_for_workers_to_become_ready(wstate, hdr);
 
 	/*
-	 * Once we reach this point, all workers are ready.  We no longer need
-	 * to kill them if we die; they'll die on their own as the message queues
+	 * Once we reach this point, all workers are ready.  We no longer need to
+	 * kill them if we die; they'll die on their own as the message queues
 	 * shut down.
 	 */
 	cancel_on_dsm_detach(seg, cleanup_background_workers,
@@ -90,11 +90,11 @@ setup_dynamic_shared_memory(int64 queue_size, int nworkers,
 							dsm_segment **segp, test_shm_mq_header **hdrp,
 							shm_mq **outp, shm_mq **inp)
 {
-	shm_toc_estimator	e;
-	int					i;
-	Size			segsize;
-	dsm_segment	   *seg;
-	shm_toc		   *toc;
+	shm_toc_estimator e;
+	int			i;
+	Size		segsize;
+	dsm_segment *seg;
+	shm_toc    *toc;
 	test_shm_mq_header *hdr;
 
 	/* Ensure a valid queue size. */
@@ -140,7 +140,7 @@ setup_dynamic_shared_memory(int64 queue_size, int nworkers,
 	/* Set up one message queue per worker, plus one. */
 	for (i = 0; i <= nworkers; ++i)
 	{
-		shm_mq		   *mq;
+		shm_mq	   *mq;
 
 		mq = shm_mq_create(shm_toc_allocate(toc, (Size) queue_size),
 						   (Size) queue_size);
@@ -171,10 +171,10 @@ setup_dynamic_shared_memory(int64 queue_size, int nworkers,
 static worker_state *
 setup_background_workers(int nworkers, dsm_segment *seg)
 {
-	MemoryContext	oldcontext;
+	MemoryContext oldcontext;
 	BackgroundWorker worker;
-	worker_state	*wstate;
-	int		i;
+	worker_state *wstate;
+	int			i;
 
 	/*
 	 * We need the worker_state object and the background worker handles to
@@ -194,16 +194,16 @@ setup_background_workers(int nworkers, dsm_segment *seg)
 	 * Arrange to kill all the workers if we abort before all workers are
 	 * finished hooking themselves up to the dynamic shared memory segment.
 	 *
-	 * If we die after all the workers have finished hooking themselves up
-	 * to the dynamic shared memory segment, we'll mark the two queues to
-	 * which we're directly connected as detached, and the worker(s)
-	 * connected to those queues will exit, marking any other queues to
-	 * which they are connected as detached.  This will cause any
-	 * as-yet-unaware workers connected to those queues to exit in their
-	 * turn, and so on, until everybody exits.
+	 * If we die after all the workers have finished hooking themselves up to
+	 * the dynamic shared memory segment, we'll mark the two queues to which
+	 * we're directly connected as detached, and the worker(s) connected to
+	 * those queues will exit, marking any other queues to which they are
+	 * connected as detached.  This will cause any as-yet-unaware workers
+	 * connected to those queues to exit in their turn, and so on, until
+	 * everybody exits.
 	 *
-	 * But suppose the workers which are supposed to connect to the queues
-	 * to which we're directly attached exit due to some error before they
+	 * But suppose the workers which are supposed to connect to the queues to
+	 * which we're directly attached exit due to some error before they
 	 * actually attach the queues.  The remaining workers will have no way of
 	 * knowing this.  From their perspective, they're still waiting for those
 	 * workers to start, when in fact they've already died.
@@ -255,8 +255,8 @@ static void
 wait_for_workers_to_become_ready(worker_state *wstate,
 								 volatile test_shm_mq_header *hdr)
 {
-	bool	save_set_latch_on_sigusr1;
-	bool	result = false;
+	bool		save_set_latch_on_sigusr1;
+	bool		result = false;
 
 	save_set_latch_on_sigusr1 = set_latch_on_sigusr1;
 	set_latch_on_sigusr1 = true;
@@ -265,7 +265,7 @@ wait_for_workers_to_become_ready(worker_state *wstate,
 	{
 		for (;;)
 		{
-			int workers_ready;
+			int			workers_ready;
 
 			/* If all the workers are ready, we have succeeded. */
 			SpinLockAcquire(&hdr->mutex);
@@ -310,13 +310,13 @@ wait_for_workers_to_become_ready(worker_state *wstate,
 static bool
 check_worker_status(worker_state *wstate)
 {
-	int	n;
+	int			n;
 
 	/* If any workers (or the postmaster) have died, we have failed. */
 	for (n = 0; n < wstate->nworkers; ++n)
 	{
 		BgwHandleStatus status;
-		pid_t	pid;
+		pid_t		pid;
 
 		status = GetBackgroundWorkerPid(wstate->handle[n], &pid);
 		if (status == BGWH_STOPPED || status == BGWH_POSTMASTER_DIED)

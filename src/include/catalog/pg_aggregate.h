@@ -104,7 +104,7 @@ typedef FormData_pg_aggregate *Form_pg_aggregate;
 #define Anum_pg_aggregate_aggminitval		17
 
 /*
- * Symbolic values for aggkind column.	We distinguish normal aggregates
+ * Symbolic values for aggkind column.  We distinguish normal aggregates
  * from ordered-set aggregates (which have two sets of arguments, namely
  * direct and aggregated arguments) and from hypothetical-set aggregates
  * (which are a subclass of ordered-set aggregates in which the last

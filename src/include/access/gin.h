@@ -55,10 +55,10 @@ typedef struct GinStatsData
  */
 typedef char GinTernaryValue;
 
-#define GIN_FALSE		0	/* item is not present / does not match */
-#define GIN_TRUE		1	/* item is present / matches */
-#define GIN_MAYBE		2	/* don't know if item is present / don't know if
-							 * matches */
+#define GIN_FALSE		0		/* item is not present / does not match */
+#define GIN_TRUE		1		/* item is present / matches */
+#define GIN_MAYBE		2		/* don't know if item is present / don't know
+								 * if matches */
 
 #define DatumGetGinTernaryValue(X) ((GinTernaryValue)(X))
 #define GinTernaryValueGetDatum(X) ((Datum)(X))

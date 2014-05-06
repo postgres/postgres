@@ -10,7 +10,7 @@
  *
  * To simplify life for the SysV implementation, the ID is assumed to
  * consist of two unsigned long values (these are key and ID in SysV
- * terms).	Other platforms may ignore the second value if they need
+ * terms).  Other platforms may ignore the second value if they need
  * only one ID number.
  *
  *
@@ -42,7 +42,7 @@ typedef struct PGShmemHeader	/* standard header for all Postgres shmem */
 } PGShmemHeader;
 
 /* GUC variable */
-extern int huge_pages;
+extern int	huge_pages;
 
 /* Possible values for huge_pages */
 typedef enum
@@ -50,7 +50,7 @@ typedef enum
 	HUGE_PAGES_OFF,
 	HUGE_PAGES_ON,
 	HUGE_PAGES_TRY
-} HugePagesType;
+}	HugePagesType;
 
 #ifndef WIN32
 extern unsigned long UsedShmemSegID;

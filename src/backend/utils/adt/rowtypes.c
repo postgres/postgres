@@ -279,7 +279,7 @@ record_in(PG_FUNCTION_ARGS)
 	/*
 	 * We cannot return tuple->t_data because heap_form_tuple allocates it as
 	 * part of a larger chunk, and our caller may expect to be able to pfree
-	 * our result.	So must copy the info into a new palloc chunk.
+	 * our result.  So must copy the info into a new palloc chunk.
 	 */
 	result = (HeapTupleHeader) palloc(tuple->t_len);
 	memcpy(result, tuple->t_data, tuple->t_len);
@@ -623,7 +623,7 @@ record_recv(PG_FUNCTION_ARGS)
 	/*
 	 * We cannot return tuple->t_data because heap_form_tuple allocates it as
 	 * part of a larger chunk, and our caller may expect to be able to pfree
-	 * our result.	So must copy the info into a new palloc chunk.
+	 * our result.  So must copy the info into a new palloc chunk.
 	 */
 	result = (HeapTupleHeader) palloc(tuple->t_len);
 	memcpy(result, tuple->t_data, tuple->t_len);
@@ -861,7 +861,7 @@ record_cmp(FunctionCallInfo fcinfo)
 
 	/*
 	 * Scan corresponding columns, allowing for dropped columns in different
-	 * places in the two rows.	i1 and i2 are physical column indexes, j is
+	 * places in the two rows.  i1 and i2 are physical column indexes, j is
 	 * the logical column index.
 	 */
 	i1 = i2 = j = 0;
@@ -1097,7 +1097,7 @@ record_eq(PG_FUNCTION_ARGS)
 
 	/*
 	 * Scan corresponding columns, allowing for dropped columns in different
-	 * places in the two rows.	i1 and i2 are physical column indexes, j is
+	 * places in the two rows.  i1 and i2 are physical column indexes, j is
 	 * the logical column index.
 	 */
 	i1 = i2 = j = 0;
@@ -1356,7 +1356,7 @@ record_image_cmp(FunctionCallInfo fcinfo)
 
 	/*
 	 * Scan corresponding columns, allowing for dropped columns in different
-	 * places in the two rows.	i1 and i2 are physical column indexes, j is
+	 * places in the two rows.  i1 and i2 are physical column indexes, j is
 	 * the logical column index.
 	 */
 	i1 = i2 = j = 0;
@@ -1390,11 +1390,12 @@ record_image_cmp(FunctionCallInfo fcinfo)
 							format_type_be(tupdesc2->attrs[i2]->atttypid),
 							j + 1)));
 
-			/*
-			 * The same type should have the same length (or both should be variable).
-			 */
-			Assert(tupdesc1->attrs[i1]->attlen ==
-				   tupdesc2->attrs[i2]->attlen);
+		/*
+		 * The same type should have the same length (or both should be
+		 * variable).
+		 */
+		Assert(tupdesc1->attrs[i1]->attlen ==
+			   tupdesc2->attrs[i2]->attlen);
 
 		/*
 		 * We consider two NULLs equal; NULL > not-NULL.
@@ -1421,8 +1422,8 @@ record_image_cmp(FunctionCallInfo fcinfo)
 			{
 				Size		len1,
 							len2;
-				struct varlena	   *arg1val;
-				struct varlena	   *arg2val;
+				struct varlena *arg1val;
+				struct varlena *arg2val;
 
 				len1 = toast_raw_datum_size(values1[i1]);
 				len2 = toast_raw_datum_size(values2[i2]);
@@ -1632,7 +1633,7 @@ record_image_eq(PG_FUNCTION_ARGS)
 
 	/*
 	 * Scan corresponding columns, allowing for dropped columns in different
-	 * places in the two rows.	i1 and i2 are physical column indexes, j is
+	 * places in the two rows.  i1 and i2 are physical column indexes, j is
 	 * the logical column index.
 	 */
 	i1 = i2 = j = 0;
@@ -1690,8 +1691,8 @@ record_image_eq(PG_FUNCTION_ARGS)
 					result = false;
 				else
 				{
-					struct varlena	   *arg1val;
-					struct varlena	   *arg2val;
+					struct varlena *arg1val;
+					struct varlena *arg2val;
 
 					arg1val = PG_DETOAST_DATUM_PACKED(values1[i1]);
 					arg2val = PG_DETOAST_DATUM_PACKED(values2[i2]);

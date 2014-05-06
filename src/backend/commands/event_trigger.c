@@ -606,7 +606,7 @@ filter_event_trigger(const char **tag, EventTriggerCacheItem *item)
 }
 
 /*
- * Setup for running triggers for the given event.	Return value is an OID list
+ * Setup for running triggers for the given event.  Return value is an OID list
  * of functions to run; if there are any, trigdata is filled with an
  * appropriate EventTriggerData for them to receive.
  */
@@ -625,7 +625,7 @@ EventTriggerCommonSetup(Node *parsetree,
 	 * invoked to match up exactly with the list that CREATE EVENT TRIGGER
 	 * accepts.  This debugging cross-check will throw an error if this
 	 * function is invoked for a command tag that CREATE EVENT TRIGGER won't
-	 * accept.	(Unfortunately, there doesn't seem to be any simple, automated
+	 * accept.  (Unfortunately, there doesn't seem to be any simple, automated
 	 * way to verify that CREATE EVENT TRIGGER doesn't accept extra stuff that
 	 * never reaches this control point.)
 	 *
@@ -655,7 +655,7 @@ EventTriggerCommonSetup(Node *parsetree,
 
 	/*
 	 * Filter list of event triggers by command tag, and copy them into our
-	 * memory context.	Once we start running the command trigers, or indeed
+	 * memory context.  Once we start running the command trigers, or indeed
 	 * once we do anything at all that touches the catalogs, an invalidation
 	 * might leave cachelist pointing at garbage, so we must do this before we
 	 * can do much else.
@@ -783,7 +783,7 @@ EventTriggerSQLDrop(Node *parsetree)
 		return;
 
 	/*
-	 * Use current state to determine whether this event fires at all.	If
+	 * Use current state to determine whether this event fires at all.  If
 	 * there are no triggers for the sql_drop event, then we don't have
 	 * anything to do here.  Note that dropped object collection is disabled
 	 * if this is the case, so even if we were to try to run, the list would
@@ -798,7 +798,7 @@ EventTriggerSQLDrop(Node *parsetree)
 									  &trigdata);
 
 	/*
-	 * Nothing to do if run list is empty.	Note this shouldn't happen,
+	 * Nothing to do if run list is empty.  Note this shouldn't happen,
 	 * because if there are no sql_drop events, then objects-to-drop wouldn't
 	 * have been collected in the first place and we would have quitted above.
 	 */
@@ -813,7 +813,7 @@ EventTriggerSQLDrop(Node *parsetree)
 
 	/*
 	 * Make sure pg_event_trigger_dropped_objects only works when running
-	 * these triggers.	Use PG_TRY to ensure in_sql_drop is reset even when
+	 * these triggers.  Use PG_TRY to ensure in_sql_drop is reset even when
 	 * one trigger fails.  (This is perhaps not necessary, as the currentState
 	 * variable will be removed shortly by our caller, but it seems better to
 	 * play safe.)
@@ -1053,7 +1053,7 @@ EventTriggerBeginCompleteQuery(void)
  * returned false previously.
  *
  * Note: this might be called in the PG_CATCH block of a failing transaction,
- * so be wary of running anything unnecessary.	(In particular, it's probably
+ * so be wary of running anything unnecessary.  (In particular, it's probably
  * unwise to try to allocate memory.)
  */
 void

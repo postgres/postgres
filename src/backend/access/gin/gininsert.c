@@ -40,7 +40,7 @@ typedef struct
  * Adds array of item pointers to tuple's posting list, or
  * creates posting tree and tuple pointing to tree in case
  * of not enough space.  Max size of tuple is defined in
- * GinFormTuple().	Returns a new, modified index tuple.
+ * GinFormTuple().  Returns a new, modified index tuple.
  * items[] must be in sorted order with no duplicates.
  */
 static IndexTuple

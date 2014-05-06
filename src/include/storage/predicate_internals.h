@@ -128,7 +128,7 @@ typedef struct SERIALIZABLEXACT
  * The following types are used to provide an ad hoc list for holding
  * SERIALIZABLEXACT objects.  An HTAB is overkill, since there is no need to
  * access these by key -- there are direct pointers to these objects where
- * needed.	If a shared memory list is created, these types can probably be
+ * needed.  If a shared memory list is created, these types can probably be
  * eliminated in favor of using the general solution.
  */
 typedef struct PredXactListElementData
@@ -311,9 +311,9 @@ typedef struct PREDICATELOCKTAG
  * The PREDICATELOCK struct represents an individual lock.
  *
  * An entry can be created here when the related database object is read, or
- * by promotion of multiple finer-grained targets.	All entries related to a
+ * by promotion of multiple finer-grained targets.  All entries related to a
  * serializable transaction are removed when that serializable transaction is
- * cleaned up.	Entries can also be removed when they are combined into a
+ * cleaned up.  Entries can also be removed when they are combined into a
  * single coarser-grained lock entry.
  */
 typedef struct PREDICATELOCK
@@ -384,7 +384,7 @@ typedef struct PredicateLockData
 
 /*
  * These macros define how we map logical IDs of lockable objects into the
- * physical fields of PREDICATELOCKTARGETTAG.	Use these to set up values,
+ * physical fields of PREDICATELOCKTARGETTAG.   Use these to set up values,
  * rather than accessing the fields directly.  Note multiple eval of target!
  */
 #define SET_PREDICATELOCKTARGETTAG_RELATION(locktag,dboid,reloid) \
@@ -450,7 +450,7 @@ typedef struct TwoPhasePredicateXactRecord
 typedef struct TwoPhasePredicateLockRecord
 {
 	PREDICATELOCKTARGETTAG target;
-	uint32		filler;  /* to avoid length change in back-patched fix */
+	uint32		filler;			/* to avoid length change in back-patched fix */
 } TwoPhasePredicateLockRecord;
 
 typedef struct TwoPhasePredicateRecord

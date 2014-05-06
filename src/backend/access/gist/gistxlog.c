@@ -38,7 +38,7 @@ static MemoryContext opCtx;		/* working memory for operations */
  * follow-right flag, because that change is not included in the full-page
  * image.  To be sure that the intermediate state with the wrong flag value is
  * not visible to concurrent Hot Standby queries, this function handles
- * restoring the full-page image as well as updating the flag.	(Note that
+ * restoring the full-page image as well as updating the flag.  (Note that
  * we never need to do anything else to the child page in the current WAL
  * action.)
  */
@@ -89,7 +89,7 @@ gistRedoPageUpdateRecord(XLogRecPtr lsn, XLogRecord *record)
 
 	/*
 	 * We need to acquire and hold lock on target page while updating the left
-	 * child page.	If we have a full-page image of target page, getting the
+	 * child page.  If we have a full-page image of target page, getting the
 	 * lock is a side-effect of restoring that image.  Note that even if the
 	 * target page no longer exists, we'll still attempt to replay the change
 	 * on the child page.
@@ -387,6 +387,7 @@ gistXLogSplit(RelFileNode node, BlockNumber blkno, bool page_is_leaf,
 
 	for (ptr = dist; ptr; ptr = ptr->next)
 		npage++;
+
 	/*
 	 * the caller should've checked this already, but doesn't hurt to check
 	 * again.

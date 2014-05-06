@@ -29,14 +29,14 @@
 
 /* Get information on varlena Jsonb */
 #define JB_ROOT_COUNT(jbp_)		( *(uint32*) VARDATA(jbp_) & JB_CMASK)
-#define JB_ROOT_IS_SCALAR(jbp_)	( *(uint32*) VARDATA(jbp_) & JB_FSCALAR)
-#define JB_ROOT_IS_OBJECT(jbp_)	( *(uint32*) VARDATA(jbp_) & JB_FOBJECT)
+#define JB_ROOT_IS_SCALAR(jbp_) ( *(uint32*) VARDATA(jbp_) & JB_FSCALAR)
+#define JB_ROOT_IS_OBJECT(jbp_) ( *(uint32*) VARDATA(jbp_) & JB_FOBJECT)
 #define JB_ROOT_IS_ARRAY(jbp_)	( *(uint32*) VARDATA(jbp_) & JB_FARRAY)
 
 /* Jentry macros */
 #define JENTRY_POSMASK			0x0FFFFFFF
 #define JENTRY_ISFIRST			0x80000000
-#define JENTRY_TYPEMASK 		(~(JENTRY_POSMASK | JENTRY_ISFIRST))
+#define JENTRY_TYPEMASK			(~(JENTRY_POSMASK | JENTRY_ISFIRST))
 #define JENTRY_ISSTRING			0x00000000
 #define JENTRY_ISNUMERIC		0x10000000
 #define JENTRY_ISNEST			0x20000000
@@ -55,9 +55,9 @@
 #define JBE_ISBOOL_FALSE(je_)	(JBE_ISBOOL(je_) && !JBE_ISBOOL_TRUE(je_))
 
 /* Get offset for Jentry  */
-#define JBE_ENDPOS(je_) 		((je_).header & JENTRY_POSMASK)
-#define JBE_OFF(je_) 			(JBE_ISFIRST(je_) ? 0 : JBE_ENDPOS((&(je_))[-1]))
-#define JBE_LEN(je_) 			(JBE_ISFIRST(je_) ? \
+#define JBE_ENDPOS(je_)			((je_).header & JENTRY_POSMASK)
+#define JBE_OFF(je_)			(JBE_ISFIRST(je_) ? 0 : JBE_ENDPOS((&(je_))[-1]))
+#define JBE_LEN(je_)			(JBE_ISFIRST(je_) ? \
 								 JBE_ENDPOS(je_) \
 								 : JBE_ENDPOS(je_) - JBE_ENDPOS((&(je_))[-1]))
 
@@ -98,7 +98,7 @@
 
 typedef struct JsonbPair JsonbPair;
 typedef struct JsonbValue JsonbValue;
-typedef	char*  JsonbSuperHeader;
+typedef char *JsonbSuperHeader;
 
 /*
  * Jsonbs are varlena objects, so must meet the varlena convention that the
@@ -128,19 +128,19 @@ typedef struct
  * have one per element.
  *
  * The position offset points to the _end_ so that we can get the length by
- * subtraction from the previous entry.	 The JENTRY_ISFIRST flag indicates if
+ * subtraction from the previous entry.  The JENTRY_ISFIRST flag indicates if
  * there is a previous entry.
  */
 typedef struct
 {
-	uint32		header;		/* Shares some flags with superheader */
-}	JEntry;
+	uint32		header;			/* Shares some flags with superheader */
+} JEntry;
 
 #define IsAJsonbScalar(jsonbval)	((jsonbval)->type >= jbvNull && \
 									 (jsonbval)->type <= jbvBool)
 
 /*
- * JsonbValue:  In-memory representation of Jsonb.  This is a convenient
+ * JsonbValue:	In-memory representation of Jsonb.  This is a convenient
  * deserialized representation, that can easily support using the "val"
  * union across underlying types during manipulation.  The Jsonb on-disk
  * representation has various alignment considerations.
@@ -159,40 +159,39 @@ struct JsonbValue
 		jbvObject,
 		/* Binary (i.e. struct Jsonb) jbvArray/jbvObject */
 		jbvBinary
-	} type;		/* Influences sort order */
+	}			type;			/* Influences sort order */
 
-	int				estSize;	/* Estimated size of node (including
-								 * subnodes) */
+	int			estSize;		/* Estimated size of node (including subnodes) */
 
 	union
 	{
-		Numeric		numeric;
+		Numeric numeric;
 		bool		boolean;
 		struct
 		{
 			int			len;
-			char	   *val;		/* Not necessarily null-terminated */
-		} string;		/* String primitive type */
+			char	   *val;	/* Not necessarily null-terminated */
+		}			string;		/* String primitive type */
 
 		struct
 		{
 			int			nElems;
 			JsonbValue *elems;
-			bool		rawScalar;	/* Top-level "raw scalar" array? */
-		} array;		/* Array container type */
+			bool		rawScalar;		/* Top-level "raw scalar" array? */
+		}			array;		/* Array container type */
 
 		struct
 		{
-			int			nPairs;		/* 1 pair, 2 elements */
+			int			nPairs; /* 1 pair, 2 elements */
 			JsonbPair  *pairs;
-		} object;		/* Associative container type */
+		}			object;		/* Associative container type */
 
 		struct
 		{
 			int			len;
 			char	   *data;
-		} binary;
-	} val;
+		}			binary;
+	}			val;
 };
 
 /*
@@ -236,11 +235,11 @@ typedef struct JsonbIterator
 	char	   *buffer;
 
 	/* Current value */
-	uint32		containerType; /* Never of value JB_FSCALAR, since
-								* scalars will appear in pseudo-arrays */
-	uint32		nElems;		   /* Number of elements in metaArray
-								* (will be nPairs for objects) */
-	bool		isScalar;	   /* Pseudo-array scalar value? */
+	uint32		containerType;	/* Never of value JB_FSCALAR, since scalars
+								 * will appear in pseudo-arrays */
+	uint32		nElems;			/* Number of elements in metaArray (will be
+								 * nPairs for objects) */
+	bool		isScalar;		/* Pseudo-array scalar value? */
 	JEntry	   *meta;
 
 	/* Current item in buffer (up to nElems, but must * 2 for objects) */
@@ -287,6 +286,7 @@ extern Datum gin_extract_jsonb(PG_FUNCTION_ARGS);
 extern Datum gin_extract_jsonb_query(PG_FUNCTION_ARGS);
 extern Datum gin_consistent_jsonb(PG_FUNCTION_ARGS);
 extern Datum gin_triconsistent_jsonb(PG_FUNCTION_ARGS);
+
 /* GIN hash opclass functions */
 extern Datum gin_extract_jsonb_hash(PG_FUNCTION_ARGS);
 extern Datum gin_extract_jsonb_query_hash(PG_FUNCTION_ARGS);
@@ -294,27 +294,27 @@ extern Datum gin_consistent_jsonb_hash(PG_FUNCTION_ARGS);
 extern Datum gin_triconsistent_jsonb_hash(PG_FUNCTION_ARGS);
 
 /* Support functions */
-extern int	compareJsonbSuperHeaderValue(JsonbSuperHeader a,
-										 JsonbSuperHeader b);
+extern int compareJsonbSuperHeaderValue(JsonbSuperHeader a,
+							 JsonbSuperHeader b);
 extern JsonbValue *findJsonbValueFromSuperHeader(JsonbSuperHeader sheader,
-												 uint32 flags,
-												 uint32 *lowbound,
-												 JsonbValue *key);
+							  uint32 flags,
+							  uint32 *lowbound,
+							  JsonbValue *key);
 extern JsonbValue *getIthJsonbValueFromSuperHeader(JsonbSuperHeader sheader,
-												   uint32 i);
-extern JsonbValue *pushJsonbValue(JsonbParseState ** pstate, int seq,
-								  JsonbValue *scalarVal);
+								uint32 i);
+extern JsonbValue *pushJsonbValue(JsonbParseState **pstate, int seq,
+			   JsonbValue *scalarVal);
 extern JsonbIterator *JsonbIteratorInit(JsonbSuperHeader buffer);
 extern int JsonbIteratorNext(JsonbIterator **it, JsonbValue *val,
-							 bool skipNested);
+				  bool skipNested);
 extern Jsonb *JsonbValueToJsonb(JsonbValue *val);
-extern bool JsonbDeepContains(JsonbIterator ** val,
-							  JsonbIterator ** mContained);
+extern bool JsonbDeepContains(JsonbIterator **val,
+				  JsonbIterator **mContained);
 extern JsonbValue *arrayToJsonbSortedArray(ArrayType *a);
-extern void JsonbHashScalarValue(const JsonbValue * scalarVal, uint32 * hash);
+extern void JsonbHashScalarValue(const JsonbValue *scalarVal, uint32 *hash);
 
 /* jsonb.c support function */
 extern char *JsonbToCString(StringInfo out, JsonbSuperHeader in,
-							int estimated_len);
+			   int estimated_len);
 
 #endif   /* __JSONB_H__ */

@@ -54,7 +54,7 @@ extern char *GetRelationPath(Oid dbNode, Oid spcNode, Oid relNode,
 				int backendId, ForkNumber forkNumber);
 
 /*
- * Wrapper macros for GetRelationPath.	Beware of multiple
+ * Wrapper macros for GetRelationPath.  Beware of multiple
  * evaluation of the RelFileNode or RelFileNodeBackend argument!
  */
 

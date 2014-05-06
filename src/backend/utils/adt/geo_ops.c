@@ -32,7 +32,10 @@
  * Internal routines
  */
 
-enum path_delim { PATH_NONE, PATH_OPEN, PATH_CLOSED };
+enum path_delim
+{
+	PATH_NONE, PATH_OPEN, PATH_CLOSED
+};
 
 static int	point_inside(Point *p, int npts, Point *plist);
 static int	lseg_crossing(double x, double y, double px, double py);
@@ -1024,7 +1027,7 @@ line_out(PG_FUNCTION_ARGS)
 Datum
 line_recv(PG_FUNCTION_ARGS)
 {
-	StringInfo  buf = (StringInfo) PG_GETARG_POINTER(0);
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
 	LINE	   *line;
 
 	line = (LINE *) palloc(sizeof(LINE));
@@ -1386,7 +1389,7 @@ path_in(PG_FUNCTION_ARGS)
 	}
 
 	base_size = sizeof(path->p[0]) * npts;
-	size = offsetof(PATH, p[0]) + base_size;
+	size = offsetof(PATH, p[0]) +base_size;
 
 	/* Check for integer overflow */
 	if (base_size / npts != sizeof(path->p[0]) || size <= base_size)
@@ -3448,7 +3451,7 @@ poly_in(PG_FUNCTION_ARGS)
 			  errmsg("invalid input syntax for type polygon: \"%s\"", str)));
 
 	base_size = sizeof(poly->p[0]) * npts;
-	size = offsetof(POLYGON, p[0]) + base_size;
+	size = offsetof(POLYGON, p[0]) +base_size;
 
 	/* Check for integer overflow */
 	if (base_size / npts != sizeof(poly->p[0]) || size <= base_size)

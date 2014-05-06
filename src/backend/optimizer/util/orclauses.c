@@ -50,7 +50,7 @@ static void consider_new_or_clause(PlannerInfo *root, RelOptInfo *rel,
  *
  * The added quals are partially redundant with the original OR, and therefore
  * would cause the size of the joinrel to be underestimated when it is finally
- * formed.	(This would be true of a full transformation to CNF as well; the
+ * formed.  (This would be true of a full transformation to CNF as well; the
  * fault is not really in the transformation, but in clauselist_selectivity's
  * inability to recognize redundant conditions.)  We can compensate for this
  * redundancy by changing the cached selectivity of the original OR clause,
@@ -60,10 +60,10 @@ static void consider_new_or_clause(PlannerInfo *root, RelOptInfo *rel,
  * and on the fact that the same RestrictInfo node will appear in every
  * joininfo list that might be used when the joinrel is formed.
  * And it doesn't work in cases where the size estimation is nonlinear
- * (i.e., outer and IN joins).	But it beats not doing anything.
+ * (i.e., outer and IN joins).  But it beats not doing anything.
  *
  * We examine each base relation to see if join clauses associated with it
- * contain extractable restriction conditions.	If so, add those conditions
+ * contain extractable restriction conditions.  If so, add those conditions
  * to the rel's baserestrictinfo and update the cached selectivities of the
  * join clauses.  Note that the same join clause will be examined afresh
  * from the point of view of each baserel that participates in it, so its
@@ -129,7 +129,7 @@ static bool
 is_safe_restriction_clause_for(RestrictInfo *rinfo, RelOptInfo *rel)
 {
 	/*
-	 * We want clauses that mention the rel, and only the rel.	So in
+	 * We want clauses that mention the rel, and only the rel.  So in
 	 * particular pseudoconstant clauses can be rejected quickly.  Then check
 	 * the clause's Var membership.
 	 */
@@ -168,7 +168,7 @@ extract_or_clause(RestrictInfo *or_rinfo, RelOptInfo *rel)
 	 * in those nodes to make is_safe_restriction_clause_for()'s checks
 	 * cheaper.  We'll strip those nodes from the returned tree, though,
 	 * meaning that fresh ones will be built if the clause is accepted as a
-	 * restriction clause.	This might seem wasteful --- couldn't we re-use
+	 * restriction clause.  This might seem wasteful --- couldn't we re-use
 	 * the existing RestrictInfos?	But that'd require assuming that
 	 * selectivity and other cached data is computed exactly the same way for
 	 * a restriction clause as for a join clause, which seems undesirable.
@@ -193,7 +193,7 @@ extract_or_clause(RestrictInfo *or_rinfo, RelOptInfo *rel)
 				if (restriction_is_or_clause(rinfo))
 				{
 					/*
-					 * Recurse to deal with nested OR.	Note we *must* recurse
+					 * Recurse to deal with nested OR.  Note we *must* recurse
 					 * here, this isn't just overly-tense optimization: we
 					 * have to descend far enough to find and strip all
 					 * RestrictInfos in the expression.
@@ -314,7 +314,7 @@ consider_new_or_clause(PlannerInfo *root, RelOptInfo *rel,
 		SpecialJoinInfo sjinfo;
 
 		/*
-		 * Make up a SpecialJoinInfo for JOIN_INNER semantics.	(Compare
+		 * Make up a SpecialJoinInfo for JOIN_INNER semantics.  (Compare
 		 * approx_tuple_count() in costsize.c.)
 		 */
 		sjinfo.type = T_SpecialJoinInfo;

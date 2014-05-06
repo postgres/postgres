@@ -35,7 +35,7 @@ typedef struct XactLockTableWaitInfo
 {
 	XLTW_Oper	oper;
 	Relation	rel;
-	ItemPointer	ctid;
+	ItemPointer ctid;
 } XactLockTableWaitInfo;
 
 static void XactLockTableWaitErrorCb(void *arg);
@@ -80,7 +80,7 @@ SetLocktagRelationOid(LOCKTAG *tag, Oid relid)
 /*
  *		LockRelationOid
  *
- * Lock a relation given only its OID.	This should generally be used
+ * Lock a relation given only its OID.  This should generally be used
  * before attempting to open the relation's relcache entry.
  */
 void
@@ -268,7 +268,7 @@ LockHasWaitersRelation(Relation relation, LOCKMODE lockmode)
 /*
  *		LockRelationIdForSession
  *
- * This routine grabs a session-level lock on the target relation.	The
+ * This routine grabs a session-level lock on the target relation.  The
  * session lock persists across transaction boundaries.  It will be removed
  * when UnlockRelationIdForSession() is called, or if an ereport(ERROR) occurs,
  * or if the backend exits.
@@ -471,7 +471,7 @@ XactLockTableInsert(TransactionId xid)
  *
  * Delete the lock showing that the given transaction ID is running.
  * (This is never used for main transaction IDs; those locks are only
- * released implicitly at transaction end.	But we do use it for subtrans IDs.)
+ * released implicitly at transaction end.  But we do use it for subtrans IDs.)
  */
 void
 XactLockTableDelete(TransactionId xid)
@@ -494,7 +494,7 @@ XactLockTableDelete(TransactionId xid)
  * subtransaction, we will exit as soon as it aborts or its top parent commits.
  * It takes some extra work to ensure this, because to save on shared memory
  * the XID lock of a subtransaction is released when it ends, whether
- * successfully or unsuccessfully.	So we have to check if it's "still running"
+ * successfully or unsuccessfully.  So we have to check if it's "still running"
  * and if so wait for its parent.
  */
 void
@@ -663,7 +663,7 @@ WaitForLockersMultiple(List *locktags, LOCKMODE lockmode)
 
 	/*
 	 * Note: GetLockConflicts() never reports our own xid, hence we need not
-	 * check for that.	Also, prepared xacts are not reported, which is fine
+	 * check for that.  Also, prepared xacts are not reported, which is fine
 	 * since they certainly aren't going to do anything anymore.
 	 */
 
@@ -690,7 +690,7 @@ WaitForLockersMultiple(List *locktags, LOCKMODE lockmode)
 void
 WaitForLockers(LOCKTAG heaplocktag, LOCKMODE lockmode)
 {
-	List   *l;
+	List	   *l;
 
 	l = list_make1(&heaplocktag);
 	WaitForLockersMultiple(l, lockmode);

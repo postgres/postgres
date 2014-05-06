@@ -1048,7 +1048,7 @@ exec_command(const char *cmd,
 		{
 			/* list all variables */
 
-			int i;
+			int			i;
 			static const char *const my_list[] = {
 				"border", "columns", "expanded", "fieldsep",
 				"footer", "format", "linestyle", "null",
@@ -1930,17 +1930,17 @@ editFile(const char *fname, int lineno)
 #ifndef WIN32
 	if (lineno > 0)
 		sys = psprintf("exec %s %s%d '%s'",
-					editorName, editor_lineno_arg, lineno, fname);
+					   editorName, editor_lineno_arg, lineno, fname);
 	else
 		sys = psprintf("exec %s '%s'",
-					editorName, fname);
+					   editorName, fname);
 #else
 	if (lineno > 0)
 		sys = psprintf("\"%s\" %s%d \"%s\"",
-				editorName, editor_lineno_arg, lineno, fname);
+					   editorName, editor_lineno_arg, lineno, fname);
 	else
 		sys = psprintf("\"%s\" \"%s\"",
-					editorName, fname);
+					   editorName, fname);
 #endif
 	result = system(sys);
 	if (result == -1)
@@ -2463,7 +2463,7 @@ printPsetInfo(const char *param, struct printQueryOpt *popt)
 			printf(_("Border style (%s) unset.\n"), param);
 		else
 			printf(_("Border style (%s) is %d.\n"), param,
-				popt->topt.border);
+				   popt->topt.border);
 	}
 
 	/* show the target width for the wrapped format */
@@ -2473,7 +2473,7 @@ printPsetInfo(const char *param, struct printQueryOpt *popt)
 			printf(_("Target width (%s) unset.\n"), param);
 		else
 			printf(_("Target width (%s) is %d.\n"), param,
-				popt->topt.columns);
+				   popt->topt.columns);
 	}
 
 	/* show expanded/vertical mode */
@@ -2494,7 +2494,7 @@ printPsetInfo(const char *param, struct printQueryOpt *popt)
 			printf(_("Field separator (%s) is zero byte.\n"), param);
 		else
 			printf(_("Field separator (%s) is \"%s\".\n"), param,
-				popt->topt.fieldSep.separator);
+				   popt->topt.fieldSep.separator);
 	}
 
 	else if (strcmp(param, "fieldsep_zero") == 0)
@@ -2518,21 +2518,21 @@ printPsetInfo(const char *param, struct printQueryOpt *popt)
 			printf(_("Output format (%s) is aligned.\n"), param);
 		else
 			printf(_("Output format (%s) is %s.\n"), param,
-				_align2string(popt->topt.format));
+				   _align2string(popt->topt.format));
 	}
 
 	/* show table line style */
 	else if (strcmp(param, "linestyle") == 0)
 	{
 		printf(_("Line style (%s) is %s.\n"), param,
-			get_line_style(&popt->topt)->name);
+			   get_line_style(&popt->topt)->name);
 	}
 
 	/* show null display */
 	else if (strcmp(param, "null") == 0)
 	{
 		printf(_("Null display (%s) is \"%s\".\n"), param,
-			popt->nullPrint ? popt->nullPrint : "");
+			   popt->nullPrint ? popt->nullPrint : "");
 	}
 
 	/* show locale-aware numeric output */
@@ -2564,7 +2564,7 @@ printPsetInfo(const char *param, struct printQueryOpt *popt)
 			printf(_("Record separator (%s) is <newline>.\n"), param);
 		else
 			printf(_("Record separator (%s) is \"%s\".\n"), param,
-				popt->topt.recordSep.separator);
+				   popt->topt.recordSep.separator);
 	}
 
 	else if (strcmp(param, "recordsep_zero") == 0)
@@ -2577,7 +2577,7 @@ printPsetInfo(const char *param, struct printQueryOpt *popt)
 	{
 		if (popt->topt.tableAttr)
 			printf(_("Table attribute (%s) is \"%s\".\n"), param,
-				popt->topt.tableAttr);
+				   popt->topt.tableAttr);
 		else
 			printf(_("Table attributes (%s) unset.\n"), param);
 	}

@@ -255,7 +255,7 @@ feGetCurrentTimestamp(void)
  */
 void
 feTimestampDifference(int64 start_time, int64 stop_time,
-						 long *secs, int *microsecs)
+					  long *secs, int *microsecs)
 {
 	int64		diff = stop_time - start_time;
 
@@ -277,8 +277,8 @@ feTimestampDifference(int64 start_time, int64 stop_time,
  */
 bool
 feTimestampDifferenceExceeds(int64 start_time,
-								int64 stop_time,
-								int msec)
+							 int64 stop_time,
+							 int msec)
 {
 	int64		diff = stop_time - start_time;
 

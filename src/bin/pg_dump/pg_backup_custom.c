@@ -610,7 +610,7 @@ static int
 _WriteByte(ArchiveHandle *AH, const int i)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
-	int res;
+	int			res;
 
 	if ((res = fputc(i, AH->FH)) == EOF)
 		WRITE_ERROR_EXIT;

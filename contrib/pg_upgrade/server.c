@@ -240,28 +240,26 @@ start_postmaster(ClusterInfo *cluster, bool throw_error)
 		return false;
 
 	/*
-	 * We set this here to make sure atexit() shuts down the server,
-	 * but only if we started the server successfully.  We do it
-	 * before checking for connectivity in case the server started but
-	 * there is a connectivity failure.  If pg_ctl did not return success,
-	 * we will exit below.
+	 * We set this here to make sure atexit() shuts down the server, but only
+	 * if we started the server successfully.  We do it before checking for
+	 * connectivity in case the server started but there is a connectivity
+	 * failure.  If pg_ctl did not return success, we will exit below.
 	 *
 	 * Pre-9.1 servers do not have PQping(), so we could be leaving the server
-	 * running if authentication was misconfigured, so someday we might went to
-	 * be more aggressive about doing server shutdowns even if pg_ctl fails,
-	 * but now (2013-08-14) it seems prudent to be cautious.  We don't want to
-	 * shutdown a server that might have been accidentally started during the
-	 * upgrade.
+	 * running if authentication was misconfigured, so someday we might went
+	 * to be more aggressive about doing server shutdowns even if pg_ctl
+	 * fails, but now (2013-08-14) it seems prudent to be cautious.  We don't
+	 * want to shutdown a server that might have been accidentally started
+	 * during the upgrade.
 	 */
 	if (pg_ctl_return)
 		os_info.running_cluster = cluster;
 
 	/*
-	 * pg_ctl -w might have failed because the server couldn't be started,
-	 * or there might have been a connection problem in _checking_ if the
-	 * server has started.  Therefore, even if pg_ctl failed, we continue
-	 * and test for connectivity in case we get a connection reason for the
-	 * failure.
+	 * pg_ctl -w might have failed because the server couldn't be started, or
+	 * there might have been a connection problem in _checking_ if the server
+	 * has started.  Therefore, even if pg_ctl failed, we continue and test
+	 * for connectivity in case we get a connection reason for the failure.
 	 */
 	if ((conn = get_db_conn(cluster, "template1")) == NULL ||
 		PQstatus(conn) != CONNECTION_OK)
@@ -271,18 +269,19 @@ start_postmaster(ClusterInfo *cluster, bool throw_error)
 		if (conn)
 			PQfinish(conn);
 		pg_fatal("could not connect to %s postmaster started with the command:\n"
-			   "%s\n",
-			   CLUSTER_NAME(cluster), cmd);
+				 "%s\n",
+				 CLUSTER_NAME(cluster), cmd);
 	}
 	PQfinish(conn);
 
 	/*
 	 * If pg_ctl failed, and the connection didn't fail, and throw_error is
-	 * enabled, fail now.  This could happen if the server was already running.
+	 * enabled, fail now.  This could happen if the server was already
+	 * running.
 	 */
 	if (!pg_ctl_return)
 		pg_fatal("pg_ctl failed to start the %s server, or connection failed\n",
-			   CLUSTER_NAME(cluster));
+				 CLUSTER_NAME(cluster));
 
 	return true;
 }
@@ -340,7 +339,7 @@ check_pghost_envvar(void)
 				(strcmp(value, "localhost") != 0 && strcmp(value, "127.0.0.1") != 0 &&
 				 strcmp(value, "::1") != 0 && value[0] != '/'))
 				pg_fatal("libpq environment variable %s has a non-local server value: %s\n",
-					   option->envvar, value);
+						 option->envvar, value);
 		}
 	}
 

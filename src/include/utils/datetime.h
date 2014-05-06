@@ -261,7 +261,7 @@ extern const int day_tab[2][13];
 
 /*
  * Datetime input parsing routines (ParseDateTime, DecodeDateTime, etc)
- * return zero or a positive value on success.	On failure, they return
+ * return zero or a positive value on success.  On failure, they return
  * one of these negative code values.  DateTimeParseError may be used to
  * produce a correct ereport.
  */
@@ -283,7 +283,7 @@ extern int ParseDateTime(const char *timestr, char *workbuf, size_t buflen,
 extern int DecodeDateTime(char **field, int *ftype,
 			   int nf, int *dtype,
 			   struct pg_tm * tm, fsec_t *fsec, int *tzp);
-extern int DecodeTimezone(char *str, int *tzp);
+extern int	DecodeTimezone(char *str, int *tzp);
 extern int DecodeTimeOnly(char **field, int *ftype,
 			   int nf, int *dtype,
 			   struct pg_tm * tm, fsec_t *fsec, int *tzp);

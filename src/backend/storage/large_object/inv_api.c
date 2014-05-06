@@ -266,10 +266,10 @@ inv_open(Oid lobjId, int flags, MemoryContext mcxt)
 				 errmsg("large object %u does not exist", lobjId)));
 
 	/*
-	 * We must register the snapshot in TopTransaction's resowner, because
-	 * it must stay alive until the LO is closed rather than until the
-	 * current portal shuts down. Do this after checking that the LO exists,
-	 * to avoid leaking the snapshot if an error is thrown.
+	 * We must register the snapshot in TopTransaction's resowner, because it
+	 * must stay alive until the LO is closed rather than until the current
+	 * portal shuts down. Do this after checking that the LO exists, to avoid
+	 * leaking the snapshot if an error is thrown.
 	 */
 	if (snapshot)
 		snapshot = RegisterSnapshotOnOwner(snapshot,
@@ -809,7 +809,7 @@ inv_truncate(LargeObjectDesc *obj_desc, int64 len)
 
 	/*
 	 * If we found the page of the truncation point we need to truncate the
-	 * data in it.	Otherwise if we're in a hole, we need to create a page to
+	 * data in it.  Otherwise if we're in a hole, we need to create a page to
 	 * mark the end of data.
 	 */
 	if (olddata != NULL && olddata->pageno == pageno)

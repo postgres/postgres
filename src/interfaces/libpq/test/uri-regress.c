@@ -2,7 +2,7 @@
  * uri-regress.c
  *		A test program for libpq URI format
  *
- * This is a helper for libpq conninfo regression testing.	It takes a single
+ * This is a helper for libpq conninfo regression testing.  It takes a single
  * conninfo string as a parameter, parses it using PQconninfoParse, and then
  * prints out the values from the parsed PQconninfoOption struct that differ
  * from the defaults (obtained from PQconndefaults).

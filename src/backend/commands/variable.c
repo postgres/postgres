@@ -176,7 +176,7 @@ check_datestyle(char **newval, void **extra, GucSource source)
 	}
 
 	/*
-	 * Prepare the canonical string to return.	GUC wants it malloc'd.
+	 * Prepare the canonical string to return.  GUC wants it malloc'd.
 	 */
 	result = (char *) malloc(32);
 	if (!result)
@@ -257,7 +257,7 @@ check_timezone(char **newval, void **extra, GucSource source)
 	if (pg_strncasecmp(*newval, "interval", 8) == 0)
 	{
 		/*
-		 * Support INTERVAL 'foo'.	This is for SQL spec compliance, not
+		 * Support INTERVAL 'foo'.  This is for SQL spec compliance, not
 		 * because it has any actual real-world usefulness.
 		 */
 		const char *valueptr = *newval;
@@ -281,7 +281,7 @@ check_timezone(char **newval, void **extra, GucSource source)
 
 		/*
 		 * Try to parse it.  XXX an invalid interval format will result in
-		 * ereport(ERROR), which is not desirable for GUC.	We did what we
+		 * ereport(ERROR), which is not desirable for GUC.  We did what we
 		 * could to guard against this in flatten_set_variable_args, but a
 		 * string coming in from postgresql.conf might contain anything.
 		 */
@@ -466,7 +466,7 @@ show_log_timezone(void)
  * We allow idempotent changes (r/w -> r/w and r/o -> r/o) at any time, and
  * we also always allow changes from read-write to read-only.  However,
  * read-only may be changed to read-write only when in a top-level transaction
- * that has not yet taken an initial snapshot.	Can't do it in a hot standby
+ * that has not yet taken an initial snapshot.  Can't do it in a hot standby
  * slave, either.
  *
  * If we are not in a transaction at all, just allow the change; it means
@@ -627,7 +627,7 @@ check_transaction_deferrable(bool *newval, void **extra, GucSource source)
  *
  * We can't roll back the random sequence on error, and we don't want
  * config file reloads to affect it, so we only want interactive SET SEED
- * commands to set it.	We use the "extra" storage to ensure that rollbacks
+ * commands to set it.  We use the "extra" storage to ensure that rollbacks
  * don't try to do the operation again.
  */
 
@@ -903,7 +903,7 @@ const char *
 show_role(void)
 {
 	/*
-	 * Check whether SET ROLE is active; if not return "none".	This is a
+	 * Check whether SET ROLE is active; if not return "none".  This is a
 	 * kluge to deal with the fact that SET SESSION AUTHORIZATION logically
 	 * resets SET ROLE to NONE, but we cannot set the GUC role variable from
 	 * assign_session_authorization (because we haven't got enough info to

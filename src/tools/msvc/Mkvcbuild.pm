@@ -375,7 +375,7 @@ sub mkvcbuild
 	$pgreceivexlog->AddFile('src\bin\pg_basebackup\pg_receivexlog.c');
 	$pgreceivexlog->AddLibrary('ws2_32.lib');
 
-	my $pgrecvlogical= AddSimpleFrontend('pg_basebackup', 1);
+	my $pgrecvlogical = AddSimpleFrontend('pg_basebackup', 1);
 	$pgrecvlogical->{name} = 'pg_recvlogical';
 	$pgrecvlogical->AddFile('src\bin\pg_basebackup\pg_recvlogical.c');
 	$pgrecvlogical->AddLibrary('ws2_32.lib');

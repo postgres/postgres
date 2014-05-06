@@ -86,7 +86,7 @@ typedef struct SchemaQuery
 
 	/*
 	 * Selection condition --- only rows meeting this condition are candidates
-	 * to display.	If catname mentions multiple tables, include the necessary
+	 * to display.  If catname mentions multiple tables, include the necessary
 	 * join condition here.  For example, "c.relkind = 'r'". Write NULL (not
 	 * an empty string) if not needed.
 	 */
@@ -481,7 +481,7 @@ static const SchemaQuery Query_for_list_of_matviews = {
  * restricted to names matching a partially entered name.  In these queries,
  * the first %s will be replaced by the text entered so far (suitably escaped
  * to become a SQL literal string).  %d will be replaced by the length of the
- * string (in unescaped form).	A second and third %s, if present, will be
+ * string (in unescaped form).  A second and third %s, if present, will be
  * replaced by a suitably-escaped version of the string provided in
  * completion_info_charp.  A fourth and fifth %s are similarly replaced by
  * completion_info_charp2.
@@ -942,7 +942,7 @@ psql_completion(const char *text, int start, int end)
 		{"AGGREGATE", "COLLATION", "CONVERSION", "DATABASE", "DEFAULT PRIVILEGES", "DOMAIN",
 			"EVENT TRIGGER", "EXTENSION", "FOREIGN DATA WRAPPER", "FOREIGN TABLE", "FUNCTION",
 			"GROUP", "INDEX", "LANGUAGE", "LARGE OBJECT", "MATERIALIZED VIEW", "OPERATOR",
-			 "ROLE", "RULE", "SCHEMA", "SERVER", "SEQUENCE", "SYSTEM SET", "TABLE",
+			"ROLE", "RULE", "SCHEMA", "SERVER", "SEQUENCE", "SYSTEM SET", "TABLE",
 			"TABLESPACE", "TEXT SEARCH", "TRIGGER", "TYPE",
 		"USER", "USER MAPPING FOR", "VIEW", NULL};
 
@@ -1023,7 +1023,7 @@ psql_completion(const char *text, int start, int end)
 			 pg_strcasecmp(prev2_wd, "TRIGGER") == 0)
 	{
 		static const char *const list_ALTER_EVENT_TRIGGER[] =
-			{"DISABLE", "ENABLE", "OWNER TO", "RENAME TO", NULL};
+		{"DISABLE", "ENABLE", "OWNER TO", "RENAME TO", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTER_EVENT_TRIGGER);
 	}
@@ -1035,7 +1035,7 @@ psql_completion(const char *text, int start, int end)
 			 pg_strcasecmp(prev_wd, "ENABLE") == 0)
 	{
 		static const char *const list_ALTER_EVENT_TRIGGER_ENABLE[] =
-			{"REPLICA", "ALWAYS", NULL};
+		{"REPLICA", "ALWAYS", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTER_EVENT_TRIGGER_ENABLE);
 	}
@@ -1385,7 +1385,7 @@ psql_completion(const char *text, int start, int end)
 		static const char *const list_ALTER2[] =
 		{"ADD", "ALTER", "CLUSTER ON", "DISABLE", "DROP", "ENABLE", "INHERIT",
 			"NO INHERIT", "RENAME", "RESET", "OWNER TO", "SET",
-		 "VALIDATE CONSTRAINT", "REPLICA IDENTITY", NULL};
+		"VALIDATE CONSTRAINT", "REPLICA IDENTITY", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTER2);
 	}
@@ -3451,9 +3451,9 @@ psql_completion(const char *text, int start, int end)
 	{
 		static const char *const my_list[] =
 		{"border", "columns", "expanded", "fieldsep", "fieldsep_zero",
-		 "footer", "format", "linestyle", "null", "numericlocale",
-		 "pager", "recordsep", "recordsep_zero", "tableattr", "title",
-		 "tuples_only", NULL};
+			"footer", "format", "linestyle", "null", "numericlocale",
+			"pager", "recordsep", "recordsep_zero", "tableattr", "title",
+		"tuples_only", NULL};
 
 		COMPLETE_WITH_LIST_CS(my_list);
 	}
@@ -3721,7 +3721,7 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 
 			/*
 			 * When fetching relation names, suppress system catalogs unless
-			 * the input-so-far begins with "pg_".	This is a compromise
+			 * the input-so-far begins with "pg_".  This is a compromise
 			 * between not offering system catalogs for completion at all, and
 			 * having them swamp the result when the input is just "p".
 			 */
@@ -4094,7 +4094,7 @@ exec_query(const char *query)
 
 
 /*
- * Return the nwords word(s) before point.	Words are returned right to left,
+ * Return the nwords word(s) before point.  Words are returned right to left,
  * that is, previous_words[0] gets the last word before point.
  * If we run out of words, remaining array elements are set to empty strings.
  * Each array element is filled with a malloc'd string.

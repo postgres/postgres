@@ -49,7 +49,7 @@ static int	recv_and_check_password_packet(Port *port, char **logdetail);
 /* Max size of username ident server can return */
 #define IDENT_USERNAME_MAX 512
 
-/* Standard TCP port number for Ident service.	Assigned by IANA */
+/* Standard TCP port number for Ident service.  Assigned by IANA */
 #define IDENT_PORT 113
 
 static int	ident_inet(hbaPort *port);
@@ -677,7 +677,7 @@ recv_password_packet(Port *port)
 			(errmsg("received password packet")));
 
 	/*
-	 * Return the received string.	Note we do not attempt to do any
+	 * Return the received string.  Note we do not attempt to do any
 	 * character-set conversion on it; since we don't yet know the client's
 	 * encoding, there wouldn't be much point.
 	 */
@@ -1387,7 +1387,7 @@ interpret_ident_response(const char *ident_response,
 /*
  *	Talk to the ident server on host "remote_ip_addr" and find out who
  *	owns the tcp connection from his port "remote_port" to port
- *	"local_port_addr" on host "local_ip_addr".	Return the user name the
+ *	"local_port_addr" on host "local_ip_addr".  Return the user name the
  *	ident server gives as "*ident_user".
  *
  *	IP addresses and port numbers are in network byte order.
@@ -1591,7 +1591,7 @@ auth_peer(hbaPort *port)
 	{
 		ereport(LOG,
 				(errmsg("failed to look up local user id %ld: %s",
-				(long) uid, errno ? strerror(errno) : _("user does not exist"))));
+		   (long) uid, errno ? strerror(errno) : _("user does not exist"))));
 		return STATUS_ERROR;
 	}
 
@@ -2006,8 +2006,8 @@ CheckLDAPAuth(Port *port)
 		attributes[1] = NULL;
 
 		filter = psprintf("(%s=%s)",
-				attributes[0],
-				port->user_name);
+						  attributes[0],
+						  port->user_name);
 
 		r = ldap_search_s(ldap,
 						  port->hba->ldapbasedn,
@@ -2095,9 +2095,9 @@ CheckLDAPAuth(Port *port)
 	}
 	else
 		fulluser = psprintf("%s%s%s",
-				port->hba->ldapprefix ? port->hba->ldapprefix : "",
-				port->user_name,
-				port->hba->ldapsuffix ? port->hba->ldapsuffix : "");
+						  port->hba->ldapprefix ? port->hba->ldapprefix : "",
+							port->user_name,
+						 port->hba->ldapsuffix ? port->hba->ldapsuffix : "");
 
 	r = ldap_simple_bind_s(ldap, fulluser, passwd);
 	ldap_unbind(ldap);

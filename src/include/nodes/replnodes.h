@@ -17,7 +17,8 @@
 #include "access/xlogdefs.h"
 #include "nodes/pg_list.h"
 
-typedef enum ReplicationKind {
+typedef enum ReplicationKind
+{
 	REPLICATION_KIND_PHYSICAL,
 	REPLICATION_KIND_LOGICAL
 } ReplicationKind;
@@ -51,9 +52,9 @@ typedef struct BaseBackupCmd
 typedef struct CreateReplicationSlotCmd
 {
 	NodeTag		type;
-	char       *slotname;
+	char	   *slotname;
 	ReplicationKind kind;
-	char       *plugin;
+	char	   *plugin;
 } CreateReplicationSlotCmd;
 
 
@@ -64,7 +65,7 @@ typedef struct CreateReplicationSlotCmd
 typedef struct DropReplicationSlotCmd
 {
 	NodeTag		type;
-	char       *slotname;
+	char	   *slotname;
 } DropReplicationSlotCmd;
 
 
@@ -79,7 +80,7 @@ typedef struct StartReplicationCmd
 	char	   *slotname;
 	TimeLineID	timeline;
 	XLogRecPtr	startpoint;
-	List       *options;
+	List	   *options;
 } StartReplicationCmd;
 
 

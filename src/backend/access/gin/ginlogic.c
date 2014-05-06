@@ -47,7 +47,7 @@
  * Maximum number of MAYBE inputs that shimTriConsistentFn will try to
  * resolve by calling all combinations.
  */
-#define	MAX_MAYBE_ENTRIES	4
+#define MAX_MAYBE_ENTRIES	4
 
 /*
  * Dummy consistent functions for an EVERYTHING key.  Just claim it matches.
@@ -95,14 +95,14 @@ static GinTernaryValue
 directTriConsistentFn(GinScanKey key)
 {
 	return DatumGetGinTernaryValue(FunctionCall7Coll(
-									   key->triConsistentFmgrInfo,
-									   key->collation,
-									   PointerGetDatum(key->entryRes),
-									   UInt16GetDatum(key->strategy),
-									   key->query,
-									   UInt32GetDatum(key->nuserentries),
-									   PointerGetDatum(key->extra_data),
-									   PointerGetDatum(key->queryValues),
+												  key->triConsistentFmgrInfo,
+													 key->collation,
+											  PointerGetDatum(key->entryRes),
+											   UInt16GetDatum(key->strategy),
+													 key->query,
+										   UInt32GetDatum(key->nuserentries),
+											PointerGetDatum(key->extra_data),
+										   PointerGetDatum(key->queryValues),
 									 PointerGetDatum(key->queryCategories)));
 }
 
@@ -115,15 +115,16 @@ static bool
 shimBoolConsistentFn(GinScanKey key)
 {
 	GinTernaryValue result;
+
 	result = DatumGetGinTernaryValue(FunctionCall7Coll(
-										 key->triConsistentFmgrInfo,
-										 key->collation,
-										 PointerGetDatum(key->entryRes),
-										 UInt16GetDatum(key->strategy),
-										 key->query,
-										 UInt32GetDatum(key->nuserentries),
-										 PointerGetDatum(key->extra_data),
-										 PointerGetDatum(key->queryValues),
+												  key->triConsistentFmgrInfo,
+													   key->collation,
+											  PointerGetDatum(key->entryRes),
+											   UInt16GetDatum(key->strategy),
+													   key->query,
+										   UInt32GetDatum(key->nuserentries),
+											PointerGetDatum(key->extra_data),
+										   PointerGetDatum(key->queryValues),
 									 PointerGetDatum(key->queryCategories)));
 	if (result == GIN_MAYBE)
 	{
@@ -240,8 +241,8 @@ ginInitConsistentFunction(GinState *ginstate, GinScanKey key)
 			key->boolConsistentFn = shimBoolConsistentFn;
 
 		if (OidIsValid(ginstate->triConsistentFn[key->attnum - 1].fn_oid))
-			key->triConsistentFn =  directTriConsistentFn;
+			key->triConsistentFn = directTriConsistentFn;
 		else
-			key->triConsistentFn =  shimTriConsistentFn;
+			key->triConsistentFn = shimTriConsistentFn;
 	}
 }

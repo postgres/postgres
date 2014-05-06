@@ -90,7 +90,7 @@ t_isprint(const char *ptr)
 
 
 /*
- * Set up to read a file using tsearch_readline().	This facility is
+ * Set up to read a file using tsearch_readline().  This facility is
  * better than just reading the file directly because it provides error
  * context pointing to the specific line where a problem is detected.
  *
@@ -168,7 +168,7 @@ tsearch_readline_callback(void *arg)
 
 	/*
 	 * We can't include the text of the config line for errors that occur
-	 * during t_readline() itself.	This is only partly a consequence of our
+	 * during t_readline() itself.  This is only partly a consequence of our
 	 * arms-length use of that routine: the major cause of such errors is
 	 * encoding violations, and we daren't try to print error messages
 	 * containing badly-encoded data.

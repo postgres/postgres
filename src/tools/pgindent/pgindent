@@ -25,12 +25,12 @@ my $extra_opts = "";
 my ($typedefs_file, $typedef_str, $code_base, $excludes, $indent, $build);
 
 my %options = (
-	"typedefs=s"  => \$typedefs_file,
-	"list-of-typedefs=s"  => \$typedef_str,
-	"code-base=s" => \$code_base,
-	"excludes=s"  => \$excludes,
-	"indent=s"    => \$indent,
-	"build"       => \$build,);
+	"typedefs=s"         => \$typedefs_file,
+	"list-of-typedefs=s" => \$typedef_str,
+	"code-base=s"        => \$code_base,
+	"excludes=s"         => \$excludes,
+	"indent=s"           => \$indent,
+	"build"              => \$build,);
 GetOptions(%options) || die "bad command line argument\n";
 
 run_build($code_base) if ($build);
@@ -394,8 +394,12 @@ sub entab
 	print $tmp_fh $source;
 	$tmp_fh->close();
 
-	open(my $entab, '-|',
-		"$entab -d -t8 -qc " . $tmp_fh->filename . " | $entab -t4 -qc | $entab -d -t4 -m");
+	open(
+		my $entab,
+		'-|',
+		"$entab -d -t8 -qc "
+		  . $tmp_fh->filename
+		  . " | $entab -t4 -qc | $entab -d -t4 -m");
 	local ($/) = undef;
 	$source = <$entab>;
 	close($entab);

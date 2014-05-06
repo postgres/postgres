@@ -43,7 +43,7 @@ typedef struct
 
 typedef struct
 {
-	RelfilenodeMapKey key;	/* lookup key - must be first */
+	RelfilenodeMapKey key;		/* lookup key - must be first */
 	Oid			relid;			/* pg_class.oid */
 } RelfilenodeMapEntry;
 
@@ -143,10 +143,10 @@ RelidByRelfilenode(Oid reltablespace, Oid relfilenode)
 {
 	RelfilenodeMapKey key;
 	RelfilenodeMapEntry *entry;
-	bool found;
+	bool		found;
 	SysScanDesc scandesc;
-	Relation relation;
-	HeapTuple ntp;
+	Relation	relation;
+	HeapTuple	ntp;
 	ScanKeyData skey[2];
 	Oid			relid;
 
@@ -222,8 +222,9 @@ RelidByRelfilenode(Oid reltablespace, Oid relfilenode)
 #ifdef USE_ASSERT_CHECKING
 			if (assert_enabled)
 			{
-				bool isnull;
-				Oid check;
+				bool		isnull;
+				Oid			check;
+
 				check = fastgetattr(ntp, Anum_pg_class_reltablespace,
 									RelationGetDescr(relation),
 									&isnull);

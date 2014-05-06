@@ -37,7 +37,7 @@
  *		9)		system-specific hacks
  *
  * NOTE: since this file is included by both frontend and backend modules, it's
- * almost certainly wrong to put an "extern" declaration here.	typedefs and
+ * almost certainly wrong to put an "extern" declaration here.  typedefs and
  * macros are the kind of thing that might go here.
  *
  *----------------------------------------------------------------
@@ -117,7 +117,7 @@
 
 /*
  *	Use this to mark string constants as needing translation at some later
- *	time, rather than immediately.	This is useful for cases where you need
+ *	time, rather than immediately.  This is useful for cases where you need
  *	access to the original string and translated string, and for cases where
  *	immediate translation is not possible, like when initializing global
  *	variables.
@@ -376,7 +376,7 @@ typedef struct
  *		Variable-length datatypes all share the 'struct varlena' header.
  *
  * NOTE: for TOASTable types, this is an oversimplification, since the value
- * may be compressed or moved out-of-line.	However datatype-specific routines
+ * may be compressed or moved out-of-line.  However datatype-specific routines
  * are mostly content to deal with de-TOASTed values only, and of course
  * client-side routines should never see a TOASTed value.  But even in a
  * de-TOASTed value, beware of touching vl_len_ directly, as its representation
@@ -406,7 +406,7 @@ typedef struct varlena VarChar; /* var-length char, ie SQL varchar(n) */
 /*
  * Specialized array types.  These are physically laid out just the same
  * as regular arrays (so that the regular array subscripting code works
- * with them).	They exist as distinct types mostly for historical reasons:
+ * with them).  They exist as distinct types mostly for historical reasons:
  * they have nonstandard I/O behavior which we don't want to change for fear
  * of breaking applications that look at the system catalogs.  There is also
  * an implementation issue for oidvector: it's part of the primary key for
@@ -449,7 +449,7 @@ typedef NameData *Name;
 
 /*
  * Support macros for escaping strings.  escape_backslash should be TRUE
- * if generating a non-standard-conforming string.	Prefixing a string
+ * if generating a non-standard-conforming string.  Prefixing a string
  * with ESCAPE_STRING_SYNTAX guarantees it is non-standard-conforming.
  * Beware of multiple evaluation of the "ch" argument!
  */
@@ -580,7 +580,7 @@ typedef NameData *Name;
 #define AssertArg(condition)
 #define AssertState(condition)
 #define Trap(condition, errorType)
-#define TrapMacro(condition, errorType)	(true)
+#define TrapMacro(condition, errorType) (true)
 
 #elif defined(FRONTEND)
 
@@ -635,7 +635,7 @@ typedef NameData *Name;
  * throw a compile error using the "errmessage" (a string literal).
  *
  * gcc 4.6 and up supports _Static_assert(), but there are bizarre syntactic
- * placement restrictions.	These macros make it safe to use as a statement
+ * placement restrictions.  These macros make it safe to use as a statement
  * or in an expression, respectively.
  *
  * Otherwise we fall back on a kluge that assumes the compiler will complain
@@ -717,7 +717,7 @@ typedef NameData *Name;
  *	datum) and add a null, do not do it with StrNCpy(..., len+1).  That
  *	might seem to work, but it fetches one byte more than there is in the
  *	text object.  One fine day you'll have a SIGSEGV because there isn't
- *	another byte before the end of memory.	Don't laugh, we've had real
+ *	another byte before the end of memory.  Don't laugh, we've had real
  *	live bug reports from real live users over exactly this mistake.
  *	Do it honestly with "memcpy(dst,src,len); dst[len] = '\0';", instead.
  */
@@ -743,7 +743,7 @@ typedef NameData *Name;
  *	Exactly the same as standard library function memset(), but considerably
  *	faster for zeroing small word-aligned structures (such as parsetree nodes).
  *	This has to be a macro because the main point is to avoid function-call
- *	overhead.	However, we have also found that the loop is faster than
+ *	overhead.   However, we have also found that the loop is faster than
  *	native libc memset() on some platforms, even those with assembler
  *	memset() functions.  More research needs to be done, perhaps with
  *	MEMSET_LOOP_LIMIT tests in configure.
@@ -847,7 +847,7 @@ typedef NameData *Name;
  *
  * The function bodies must be defined in the module header prefixed by
  * STATIC_IF_INLINE, protected by a cpp symbol that the module's .c file must
- * define.	If the compiler doesn't support inline functions, the function
+ * define.  If the compiler doesn't support inline functions, the function
  * definitions are pulled in by the .c file as regular (not inline) symbols.
  *
  * The header must also declare the functions' prototypes, protected by
@@ -917,7 +917,7 @@ typedef NameData *Name;
  *				Section 9: system-specific hacks
  *
  *		This should be limited to things that absolutely have to be
- *		included in every source file.	The port-specific header file
+ *		included in every source file.  The port-specific header file
  *		is usually a better place for this sort of thing.
  * ----------------------------------------------------------------
  */
@@ -926,7 +926,7 @@ typedef NameData *Name;
  *	NOTE:  this is also used for opening text files.
  *	WIN32 treats Control-Z as EOF in files opened in text mode.
  *	Therefore, we open files in binary mode on Win32 so we can read
- *	literal control-Z.	The other affect is that we see CRLF, but
+ *	literal control-Z.  The other affect is that we see CRLF, but
  *	that is OK because we can already handle those cleanly.
  */
 #if defined(WIN32) || defined(__CYGWIN__)

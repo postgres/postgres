@@ -709,7 +709,7 @@ xpath_table(PG_FUNCTION_ARGS)
 
 			/*
 			 * Clear the values array, so that not-well-formed documents
-			 * return NULL in all columns.	Note that this also means that
+			 * return NULL in all columns.  Note that this also means that
 			 * spare columns will be NULL.
 			 */
 			for (j = 0; j < ret_tupdesc->natts; j++)

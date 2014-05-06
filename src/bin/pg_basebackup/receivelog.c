@@ -328,9 +328,9 @@ sendFeedback(PGconn *conn, XLogRecPtr blockpos, int64 now, bool replyRequested)
 	else
 		fe_sendint64(InvalidXLogRecPtr, &replybuf[len]);		/* flush */
 	len += 8;
-	fe_sendint64(InvalidXLogRecPtr, &replybuf[len]);		/* apply */
+	fe_sendint64(InvalidXLogRecPtr, &replybuf[len]);	/* apply */
 	len += 8;
-	fe_sendint64(now, &replybuf[len]);		/* sendTime */
+	fe_sendint64(now, &replybuf[len]);	/* sendTime */
 	len += 8;
 	replybuf[len] = replyRequested ? 1 : 0;		/* replyRequested */
 	len += 1;
@@ -437,8 +437,8 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 		 * reporting the flush position makes one eligible as a synchronous
 		 * replica. People shouldn't include generic names in
 		 * synchronous_standby_names, but we've protected them against it so
-		 * far, so let's continue to do so in the situations when possible.
-		 * If they've got a slot, though, we need to report the flush position,
+		 * far, so let's continue to do so in the situations when possible. If
+		 * they've got a slot, though, we need to report the flush position,
 		 * so that the master can remove WAL.
 		 */
 		reportFlushPosition = true;
@@ -766,7 +766,7 @@ HandleCopyStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 		now = feGetCurrentTimestamp();
 		if (still_sending && standby_message_timeout > 0 &&
 			feTimestampDifferenceExceeds(last_status, now,
-											standby_message_timeout))
+										 standby_message_timeout))
 		{
 			/* Time to send feedback! */
 			if (!sendFeedback(conn, blockpos, now, false))

@@ -101,7 +101,7 @@ fork_process(void)
 #endif   /* LINUX_OOM_SCORE_ADJ */
 
 		/*
-		 * Older Linux kernels have oom_adj not oom_score_adj.	This works
+		 * Older Linux kernels have oom_adj not oom_score_adj.  This works
 		 * similarly except with a different scale of adjustment values. If
 		 * it's necessary to build Postgres to work with either API, you can
 		 * define both LINUX_OOM_SCORE_ADJ and LINUX_OOM_ADJ.

@@ -561,7 +561,7 @@ cfopen(const char *path, const char *mode, int compression)
 int
 cfread(void *ptr, int size, cfp *fp)
 {
-	int ret;
+	int			ret;
 
 	if (size == 0)
 		return 0;
@@ -598,7 +598,7 @@ cfwrite(const void *ptr, int size, cfp *fp)
 int
 cfgetc(cfp *fp)
 {
-	int ret;
+	int			ret;
 
 #ifdef HAVE_LIBZ
 	if (fp->compressedfp)
@@ -608,10 +608,10 @@ cfgetc(cfp *fp)
 		{
 			if (!gzeof(fp->compressedfp))
 				exit_horribly(modulename,
-						"could not read from input file: %s\n", strerror(errno));
+					"could not read from input file: %s\n", strerror(errno));
 			else
 				exit_horribly(modulename,
-						"could not read from input file: end of file\n");
+							"could not read from input file: end of file\n");
 		}
 	}
 	else

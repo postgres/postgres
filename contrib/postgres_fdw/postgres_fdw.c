@@ -90,7 +90,7 @@ typedef struct PgFdwRelationInfo
  * 2) Integer list of attribute numbers retrieved by the SELECT
  *
  * These items are indexed with the enum FdwScanPrivateIndex, so an item
- * can be fetched with list_nth().	For example, to get the SELECT statement:
+ * can be fetched with list_nth().  For example, to get the SELECT statement:
  *		sql = strVal(list_nth(fdw_private, FdwScanPrivateSelectSql));
  */
 enum FdwScanPrivateIndex
@@ -424,8 +424,8 @@ postgresGetForeignRelSize(PlannerInfo *root,
 
 	/*
 	 * If the table or the server is configured to use remote estimates,
-	 * identify which user to do remote access as during planning.	This
-	 * should match what ExecCheckRTEPerms() does.	If we fail due to lack of
+	 * identify which user to do remote access as during planning.  This
+	 * should match what ExecCheckRTEPerms() does.  If we fail due to lack of
 	 * permissions, the query would have failed at runtime anyway.
 	 */
 	if (fpinfo->use_remote_estimate)
@@ -447,7 +447,7 @@ postgresGetForeignRelSize(PlannerInfo *root,
 
 	/*
 	 * Identify which attributes will need to be retrieved from the remote
-	 * server.	These include all attrs needed for joins or final output, plus
+	 * server.  These include all attrs needed for joins or final output, plus
 	 * all attrs used in the local_conds.  (Note: if we end up using a
 	 * parameterized scan, it's possible that some of the join clauses will be
 	 * sent to the remote and thus we wouldn't really need to retrieve the
@@ -487,7 +487,7 @@ postgresGetForeignRelSize(PlannerInfo *root,
 	if (fpinfo->use_remote_estimate)
 	{
 		/*
-		 * Get cost/size estimates with help of remote server.	Save the
+		 * Get cost/size estimates with help of remote server.  Save the
 		 * values in fpinfo so we don't need to do it again to generate the
 		 * basic foreign path.
 		 */
@@ -757,7 +757,7 @@ postgresGetForeignPlan(PlannerInfo *root,
 	 * remote-safety.
 	 *
 	 * Note: the join clauses we see here should be the exact same ones
-	 * previously examined by postgresGetForeignPaths.	Possibly it'd be worth
+	 * previously examined by postgresGetForeignPaths.  Possibly it'd be worth
 	 * passing forward the classification work done then, rather than
 	 * repeating it here.
 	 *
@@ -898,7 +898,7 @@ postgresBeginForeignScan(ForeignScanState *node, int eflags)
 	node->fdw_state = (void *) fsstate;
 
 	/*
-	 * Identify which user to do the remote access as.	This should match what
+	 * Identify which user to do the remote access as.  This should match what
 	 * ExecCheckRTEPerms() does.
 	 */
 	rte = rt_fetch(fsplan->scan.scanrelid, estate->es_range_table);
@@ -962,7 +962,7 @@ postgresBeginForeignScan(ForeignScanState *node, int eflags)
 	 * Prepare remote-parameter expressions for evaluation.  (Note: in
 	 * practice, we expect that all these expressions will be just Params, so
 	 * we could possibly do something more efficient than using the full
-	 * expression-eval machinery for this.	But probably there would be little
+	 * expression-eval machinery for this.  But probably there would be little
 	 * benefit, and it'd require postgres_fdw to know more than is desirable
 	 * about Param evaluation.)
 	 */
@@ -1038,8 +1038,8 @@ postgresReScanForeignScan(ForeignScanState *node)
 
 	/*
 	 * If any internal parameters affecting this node have changed, we'd
-	 * better destroy and recreate the cursor.	Otherwise, rewinding it should
-	 * be good enough.	If we've only fetched zero or one batch, we needn't
+	 * better destroy and recreate the cursor.  Otherwise, rewinding it should
+	 * be good enough.  If we've only fetched zero or one batch, we needn't
 	 * even rewind the cursor, just rescan what we have.
 	 */
 	if (node->ss.ps.chgParam != NULL)
@@ -1145,9 +1145,9 @@ postgresAddForeignUpdateTargets(Query *parsetree,
  * Note: currently, the plan tree generated for UPDATE/DELETE will always
  * include a ForeignScan that retrieves ctids (using SELECT FOR UPDATE)
  * and then the ModifyTable node will have to execute individual remote
- * UPDATE/DELETE commands.	If there are no local conditions or joins
+ * UPDATE/DELETE commands.  If there are no local conditions or joins
  * needed, it'd be better to let the scan node do UPDATE/DELETE RETURNING
- * and then do nothing at ModifyTable.	Room for future optimization ...
+ * and then do nothing at ModifyTable.  Room for future optimization ...
  */
 static List *
 postgresPlanForeignModify(PlannerInfo *root,
@@ -1285,7 +1285,7 @@ postgresBeginForeignModify(ModifyTableState *mtstate,
 	fmstate->rel = rel;
 
 	/*
-	 * Identify which user to do the remote access as.	This should match what
+	 * Identify which user to do the remote access as.  This should match what
 	 * ExecCheckRTEPerms() does.
 	 */
 	rte = rt_fetch(resultRelInfo->ri_RangeTableIndex, estate->es_range_table);
@@ -1850,7 +1850,7 @@ get_remote_estimate(const char *sql, PGconn *conn,
 			pgfdw_report_error(ERROR, res, conn, false, sql);
 
 		/*
-		 * Extract cost numbers for topmost plan node.	Note we search for a
+		 * Extract cost numbers for topmost plan node.  Note we search for a
 		 * left paren from the end of the line to avoid being confused by
 		 * other uses of parentheses.
 		 */
@@ -1972,7 +1972,7 @@ create_cursor(ForeignScanState *node)
 	 * Notice that we pass NULL for paramTypes, thus forcing the remote server
 	 * to infer types for all parameters.  Since we explicitly cast every
 	 * parameter (see deparse.c), the "inference" is trivial and will produce
-	 * the desired result.	This allows us to avoid assuming that the remote
+	 * the desired result.  This allows us to avoid assuming that the remote
 	 * server has the same OIDs we do for the parameters' types.
 	 *
 	 * We don't use a PG_TRY block here, so be careful not to throw error
@@ -2081,7 +2081,7 @@ fetch_more_data(ForeignScanState *node)
  * user-visible computations.
  *
  * We use the equivalent of a function SET option to allow the settings to
- * persist only until the caller calls reset_transmission_modes().	If an
+ * persist only until the caller calls reset_transmission_modes().  If an
  * error is thrown in between, guc.c will take care of undoing the settings.
  *
  * The return value is the nestlevel that must be passed to
@@ -2093,7 +2093,7 @@ set_transmission_modes(void)
 	int			nestlevel = NewGUCNestLevel();
 
 	/*
-	 * The values set here should match what pg_dump does.	See also
+	 * The values set here should match what pg_dump does.  See also
 	 * configure_remote_session in connection.c.
 	 */
 	if (DateStyle != USE_ISO_DATES)
@@ -2299,7 +2299,7 @@ postgresAnalyzeForeignTable(Relation relation,
 	*func = postgresAcquireSampleRowsFunc;
 
 	/*
-	 * Now we have to get the number of pages.	It's annoying that the ANALYZE
+	 * Now we have to get the number of pages.  It's annoying that the ANALYZE
 	 * API requires us to return that now, because it forces some duplication
 	 * of effort between this routine and postgresAcquireSampleRowsFunc.  But
 	 * it's probably not worth redefining that API at this point.
@@ -2356,7 +2356,7 @@ postgresAnalyzeForeignTable(Relation relation,
  * which must have at least targrows entries.
  * The actual number of rows selected is returned as the function result.
  * We also count the total number of rows in the table and return it into
- * *totalrows.	Note that *totaldeadrows is always set to 0.
+ * *totalrows.  Note that *totaldeadrows is always set to 0.
  *
  * Note that the returned list of rows is not always in order by physical
  * position in the table.  Therefore, correlation estimates derived later
@@ -2687,7 +2687,7 @@ make_tuple_from_result_row(PGresult *res,
 
 /*
  * Callback function which is called when error occurs during column value
- * conversion.	Print names of column and relation.
+ * conversion.  Print names of column and relation.
  */
 static void
 conversion_error_callback(void *arg)

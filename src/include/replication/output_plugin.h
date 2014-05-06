@@ -32,7 +32,7 @@ typedef struct OutputPluginOptions
  * Type of the shared library symbol _PG_output_plugin_init that is looked up
  * when loading an output plugin shared library.
  */
-typedef void (*LogicalOutputPluginInit)(struct OutputPluginCallbacks *cb);
+typedef void (*LogicalOutputPluginInit) (struct OutputPluginCallbacks *cb);
 
 /*
  * Callback that gets called in a user-defined plugin. ctx->private_data can
@@ -43,8 +43,8 @@ typedef void (*LogicalOutputPluginInit)(struct OutputPluginCallbacks *cb);
  */
 typedef void (*LogicalDecodeStartupCB) (
 										  struct LogicalDecodingContext *ctx,
-										  OutputPluginOptions *options,
-										  bool is_init
+												OutputPluginOptions *options,
+													bool is_init
 );
 
 /*
@@ -92,7 +92,7 @@ typedef struct OutputPluginCallbacks
 	LogicalDecodeShutdownCB shutdown_cb;
 } OutputPluginCallbacks;
 
-void OutputPluginPrepareWrite(struct LogicalDecodingContext *ctx, bool last_write);
-void OutputPluginWrite(struct LogicalDecodingContext *ctx, bool last_write);
+void		OutputPluginPrepareWrite(struct LogicalDecodingContext *ctx, bool last_write);
+void		OutputPluginWrite(struct LogicalDecodingContext *ctx, bool last_write);
 
 #endif   /* OUTPUT_PLUGIN_H */

@@ -33,7 +33,7 @@ extern slock_t dummy_spinlock;
  *
  * A read barrier must act as a compiler barrier, and in addition must
  * guarantee that any loads issued prior to the barrier are completed before
- * any loads issued after the barrier.	Similarly, a write barrier acts
+ * any loads issued after the barrier.  Similarly, a write barrier acts
  * as a compiler barrier, and also orders stores.  Read and write barriers
  * are thus weaker than a full memory barrier, but stronger than a compiler
  * barrier.  In practice, on machines with strong memory ordering, read and

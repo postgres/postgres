@@ -52,7 +52,7 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 
 		if (old_rel->reloid != new_rel->reloid)
 			pg_fatal("Mismatch of relation OID in database \"%s\": old OID %d, new OID %d\n",
-				   old_db->db_name, old_rel->reloid, new_rel->reloid);
+					 old_db->db_name, old_rel->reloid, new_rel->reloid);
 
 		/*
 		 * TOAST table names initially match the heap pg_class oid. In
@@ -69,9 +69,9 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 			  strcmp(old_rel->nspname, "pg_toast") != 0) &&
 			 strcmp(old_rel->relname, new_rel->relname) != 0))
 			pg_fatal("Mismatch of relation names in database \"%s\": "
-				   "old name \"%s.%s\", new name \"%s.%s\"\n",
-				   old_db->db_name, old_rel->nspname, old_rel->relname,
-				   new_rel->nspname, new_rel->relname);
+					 "old name \"%s.%s\", new name \"%s.%s\"\n",
+					 old_db->db_name, old_rel->nspname, old_rel->relname,
+					 new_rel->nspname, new_rel->relname);
 
 		create_rel_filename_map(old_pgdata, new_pgdata, old_db, new_db,
 								old_rel, new_rel, maps + num_maps);
@@ -84,7 +84,7 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 	 */
 	if (old_db->rel_arr.nrels != new_db->rel_arr.nrels)
 		pg_fatal("old and new databases \"%s\" have a different number of relations\n",
-			   old_db->db_name);
+				 old_db->db_name);
 
 	*nmaps = num_maps;
 	return maps;
@@ -270,7 +270,8 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 				i_relfilenode,
 				i_reltablespace;
 	char		query[QUERY_ALLOC];
-	char	   *last_namespace = NULL, *last_tablespace = NULL;
+	char	   *last_namespace = NULL,
+			   *last_tablespace = NULL;
 
 	/*
 	 * pg_largeobject contains user data that does not appear in pg_dumpall
@@ -322,7 +323,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 							  "SELECT reltoastrelid "
 							  "FROM info_rels i JOIN pg_catalog.pg_class c "
 							  "		ON i.reloid = c.oid "
-							  "		AND c.reltoastrelid != %u", InvalidOid));
+						  "		AND c.reltoastrelid != %u", InvalidOid));
 	PQclear(executeQueryOrDie(conn,
 							  "INSERT INTO info_rels "
 							  "SELECT indexrelid "
@@ -373,9 +374,9 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 		curr->nsp_alloc = false;
 
 		/*
-		 * Many of the namespace and tablespace strings are identical,
-		 * so we try to reuse the allocated string pointers where possible
-		 * to reduce memory consumption.
+		 * Many of the namespace and tablespace strings are identical, so we
+		 * try to reuse the allocated string pointers where possible to reduce
+		 * memory consumption.
 		 */
 		/* Can we reuse the previous string allocation? */
 		if (last_namespace && strcmp(nspname, last_namespace) == 0)

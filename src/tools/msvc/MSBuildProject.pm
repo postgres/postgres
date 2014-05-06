@@ -18,7 +18,7 @@ sub _new
 	bless($self, $classname);
 
 	$self->{filenameExtension} = '.vcxproj';
-	$self->{ToolsVersion} = '4.0';
+	$self->{ToolsVersion}      = '4.0';
 
 	return $self;
 }
@@ -415,7 +415,7 @@ sub new
 	my $self      = $classname->SUPER::_new(@_);
 	bless($self, $classname);
 
-	$self->{vcver} = '11.00';
+	$self->{vcver}           = '11.00';
 	$self->{PlatformToolset} = 'v110';
 
 	return $self;
@@ -458,9 +458,9 @@ sub new
 	my $self      = $classname->SUPER::_new(@_);
 	bless($self, $classname);
 
-	$self->{vcver} = '12.00';
+	$self->{vcver}           = '12.00';
 	$self->{PlatformToolset} = 'v120';
-	$self->{ToolsVersion} = '12.0';
+	$self->{ToolsVersion}    = '12.0';
 
 	return $self;
 }

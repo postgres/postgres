@@ -855,7 +855,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 
 						for (element = 0; element < var->arrsize; element++)
 						{
-							int result;
+							int			result;
 
 							nval = PGTYPESnumeric_new();
 							if (!nval)
@@ -890,7 +890,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 					}
 					else
 					{
-						int result;
+						int			result;
 
 						nval = PGTYPESnumeric_new();
 						if (!nval)
@@ -1345,8 +1345,8 @@ ecpg_build_params(struct statement * stmt)
 		}
 
 		/*
-		 * now tobeinserted points to an area that contains the next parameter;
-		 * now find the position in the string where it belongs
+		 * now tobeinserted points to an area that contains the next
+		 * parameter; now find the position in the string where it belongs
 		 */
 		if ((position = next_insert(stmt->command, position, stmt->questionmarks) + 1) == 0)
 		{
@@ -1512,9 +1512,9 @@ ecpg_execute(struct statement * stmt)
  *
  * Parameters
  *	stmt	statement structure holding the PGresult and
- *		    the list of output variables
+ *			the list of output variables
  *	clear_result
- *		    PQclear() the result upon returning from this function
+ *			PQclear() the result upon returning from this function
  *
  * Returns success as boolean. Also an SQL error is raised in case of failure.
  *-------
@@ -1930,14 +1930,14 @@ ecpg_do_prologue(int lineno, const int compat, const int force_indicator,
 			var->arrsize = va_arg(args, long);
 			var->offset = va_arg(args, long);
 
-			/* 
-			 * Unknown array size means pointer to an array.
-			 * Unknown varcharsize usually also means pointer. But if the
-			 * type is character and the array size is known, it is an
-			 * array of pointers to char, so use var->pointer as it is.
+			/*
+			 * Unknown array size means pointer to an array. Unknown
+			 * varcharsize usually also means pointer. But if the type is
+			 * character and the array size is known, it is an array of
+			 * pointers to char, so use var->pointer as it is.
 			 */
 			if (var->arrsize == 0 ||
-			    (var->varcharsize == 0 && ((var->type != ECPGt_char && var->type != ECPGt_unsigned_char) || (var->arrsize <= 1))))
+				(var->varcharsize == 0 && ((var->type != ECPGt_char && var->type != ECPGt_unsigned_char) || (var->arrsize <= 1))))
 				var->value = *((char **) (var->pointer));
 			else
 				var->value = var->pointer;

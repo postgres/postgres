@@ -265,7 +265,7 @@ createdb(const CreatedbStmt *stmt)
 	 * To create a database, must have createdb privilege and must be able to
 	 * become the target role (this does not imply that the target role itself
 	 * must have createdb privilege).  The latter provision guards against
-	 * "giveaway" attacks.	Note that a superuser will always have both of
+	 * "giveaway" attacks.  Note that a superuser will always have both of
 	 * these privileges a fortiori.
 	 */
 	if (!have_createdb_privilege())
@@ -397,7 +397,7 @@ createdb(const CreatedbStmt *stmt)
 		/*
 		 * If we are trying to change the default tablespace of the template,
 		 * we require that the template not have any files in the new default
-		 * tablespace.	This is necessary because otherwise the copied
+		 * tablespace.  This is necessary because otherwise the copied
 		 * database would contain pg_class rows that refer to its default
 		 * tablespace both explicitly (by OID) and implicitly (as zero), which
 		 * would cause problems.  For example another CREATE DATABASE using
@@ -433,7 +433,7 @@ createdb(const CreatedbStmt *stmt)
 	}
 
 	/*
-	 * Check for db name conflict.	This is just to give a more friendly error
+	 * Check for db name conflict.  This is just to give a more friendly error
 	 * message than "unique index violation".  There's a race condition but
 	 * we're willing to accept the less friendly message in that case.
 	 */
@@ -498,7 +498,7 @@ createdb(const CreatedbStmt *stmt)
 
 	/*
 	 * We deliberately set datacl to default (NULL), rather than copying it
-	 * from the template database.	Copying it would be a bad idea when the
+	 * from the template database.  Copying it would be a bad idea when the
 	 * owner is not the same as the template's owner.
 	 */
 	new_record_nulls[Anum_pg_database_datacl - 1] = true;
@@ -751,7 +751,8 @@ dropdb(const char *dbname, bool missing_ok)
 	HeapTuple	tup;
 	int			notherbackends;
 	int			npreparedxacts;
-	int			nslots, nslots_active;
+	int			nslots,
+				nslots_active;
 
 	/*
 	 * Look up the target database's OID, and get exclusive lock on it. We
@@ -1160,7 +1161,7 @@ movedb(const char *dbname, const char *tblspcname)
 
 	/*
 	 * Use an ENSURE block to make sure we remove the debris if the copy fails
-	 * (eg, due to out-of-disk-space).	This is not a 100% solution, because
+	 * (eg, due to out-of-disk-space).  This is not a 100% solution, because
 	 * of the possibility of failure during transaction commit, but it should
 	 * handle most scenarios.
 	 */
@@ -1647,7 +1648,7 @@ get_db_info(const char *name, LOCKMODE lockmode,
 			LockSharedObject(DatabaseRelationId, dbOid, 0, lockmode);
 
 		/*
-		 * And now, re-fetch the tuple by OID.	If it's still there and still
+		 * And now, re-fetch the tuple by OID.  If it's still there and still
 		 * the same name, we win; else, drop the lock and loop back to try
 		 * again.
 		 */

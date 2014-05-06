@@ -17,7 +17,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.	IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -74,7 +74,7 @@ add_block_entropy(PX_MD *md, text *data)
 }
 
 /*
- * Mix user data into RNG.	It is for user own interests to have
+ * Mix user data into RNG.  It is for user own interests to have
  * RNG state shuffled.
  */
 static void
@@ -291,7 +291,7 @@ set_arg(PGP_Context *ctx, char *key, char *val,
 }
 
 /*
- * Find next word.	Handle ',' and '=' as words.  Skip whitespace.
+ * Find next word.  Handle ',' and '=' as words.  Skip whitespace.
  * Put word info into res_p, res_len.
  * Returns ptr to next word.
  */

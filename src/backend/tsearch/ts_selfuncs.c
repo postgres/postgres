@@ -319,7 +319,7 @@ tsquery_opr_selec(QueryItem *item, char *operand,
 			 * exclusive.  We treat occurrences as independent events.
 			 *
 			 * This is only a good plan if we have a pretty fair number of
-			 * MCELEMs available; we set the threshold at 100.	If no stats or
+			 * MCELEMs available; we set the threshold at 100.  If no stats or
 			 * insufficient stats, arbitrarily use DEFAULT_TS_MATCH_SEL*4.
 			 */
 			if (lookup == NULL || length < 100)

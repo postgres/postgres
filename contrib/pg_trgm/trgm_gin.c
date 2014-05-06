@@ -114,7 +114,7 @@ gin_extract_query_trgm(PG_FUNCTION_ARGS)
 			{
 				/*
 				 * Successful regex processing: store NFA-like graph as
-				 * extra_data.	GIN API requires an array of nentries
+				 * extra_data.  GIN API requires an array of nentries
 				 * Pointers, but we just put the same value in each element.
 				 */
 				trglen = ARRNELEM(trg);

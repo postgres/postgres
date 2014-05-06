@@ -11,6 +11,9 @@ my $tempdir = tempdir;
 start_test_server $tempdir;
 
 psql 'postgres', 'CREATE DATABASE foobar1';
-issues_sql_like(['dropdb', 'foobar1'], qr/statement: DROP DATABASE foobar1/, 'SQL DROP DATABASE run');
+issues_sql_like(
+	[ 'dropdb', 'foobar1' ],
+	qr/statement: DROP DATABASE foobar1/,
+	'SQL DROP DATABASE run');
 
-command_fails(['dropdb', 'nonexistent'], 'fails with nonexistent database');
+command_fails([ 'dropdb', 'nonexistent' ], 'fails with nonexistent database');

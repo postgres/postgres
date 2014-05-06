@@ -130,7 +130,7 @@ GetStandbyLimitTime(void)
 
 	/*
 	 * The cutoff time is the last WAL data receipt time plus the appropriate
-	 * delay variable.	Delay of -1 means wait forever.
+	 * delay variable.  Delay of -1 means wait forever.
 	 */
 	GetXLogReceiptTime(&rtime, &fromStream);
 	if (fromStream)
@@ -475,7 +475,7 @@ SendRecoveryConflictWithBufferPin(ProcSignalReason reason)
  * determine whether an actual deadlock condition is present: the lock we
  * need to wait for might be unrelated to any held by the Startup process.
  * Sooner or later, this mechanism should get ripped out in favor of somehow
- * accounting for buffer locks in DeadLockCheck().	However, errors here
+ * accounting for buffer locks in DeadLockCheck().  However, errors here
  * seem to be very low-probability in practice, so for now it's not worth
  * the trouble.
  */
@@ -867,7 +867,7 @@ standby_redo(XLogRecPtr lsn, XLogRecord *record)
 XLogRecPtr
 LogStandbySnapshot(void)
 {
-	XLogRecPtr recptr;
+	XLogRecPtr	recptr;
 	RunningTransactions running;
 	xl_standby_lock *locks;
 	int			nlocks;
@@ -889,8 +889,8 @@ LogStandbySnapshot(void)
 	running = GetRunningTransactionData();
 
 	/*
-	 * GetRunningTransactionData() acquired ProcArrayLock, we must release
-	 * it. For Hot Standby this can be done before inserting the WAL record
+	 * GetRunningTransactionData() acquired ProcArrayLock, we must release it.
+	 * For Hot Standby this can be done before inserting the WAL record
 	 * because ProcArrayApplyRecoveryInfo() rechecks the commit status using
 	 * the clog. For logical decoding, though, the lock can't be released
 	 * early becuase the clog might be "in the future" from the POV of the
@@ -977,9 +977,9 @@ LogCurrentRunningXacts(RunningTransactions CurrRunningXacts)
 	/*
 	 * Ensure running_xacts information is synced to disk not too far in the
 	 * future. We don't want to stall anything though (i.e. use XLogFlush()),
-	 * so we let the wal writer do it during normal
-	 * operation. XLogSetAsyncXactLSN() conveniently will mark the LSN as
-	 * to-be-synced and nudge the WALWriter into action if sleeping. Check
+	 * so we let the wal writer do it during normal operation.
+	 * XLogSetAsyncXactLSN() conveniently will mark the LSN as to-be-synced
+	 * and nudge the WALWriter into action if sleeping. Check
 	 * XLogBackgroundFlush() for details why a record might not be flushed
 	 * without it.
 	 */

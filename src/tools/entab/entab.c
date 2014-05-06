@@ -114,7 +114,7 @@ main(int argc, char **argv)
 	-q (protect quotes)\n\
 	-s minimum_spaces\n\
 	-t tab_width\n",
-					 cp);
+						cp);
 				exit(0);
 		}
 
@@ -179,9 +179,9 @@ main(int argc, char **argv)
 					if (col_in_tab == tab_size)
 					{
 						/*
-						 * Is the next character going to be a tab?  We do
-						 * tab replacement in the current spot if the next
-						 * char is going to be a tab and ignore min_spaces.
+						 * Is the next character going to be a tab?  We do tab
+						 * replacement in the current spot if the next char is
+						 * going to be a tab and ignore min_spaces.
 						 */
 						nxt_spaces = 0;
 						while (1)
@@ -249,7 +249,7 @@ main(int argc, char **argv)
 					else if (*src != '\r' && *src != '\n')
 						escaped = FALSE;
 
-					/* reached newline/CR;  clip line? */
+					/* reached newline/CR;	clip line? */
 					if ((*src == '\r' || *src == '\n') &&
 						clip_lines == TRUE &&
 						quote_char == ' ' &&

@@ -224,10 +224,10 @@ typedef struct
 {
 	Point		center;
 	double		radius;
-}	WIDGET;
+} WIDGET;
 
 WIDGET	   *widget_in(char *str);
-char	   *widget_out(WIDGET * widget);
+char	   *widget_out(WIDGET *widget);
 
 #define NARGS	3
 
@@ -258,13 +258,13 @@ widget_in(char *str)
 }
 
 char *
-widget_out(WIDGET * widget)
+widget_out(WIDGET *widget)
 {
 	if (widget == NULL)
 		return NULL;
 
 	return psprintf("(%g,%g,%g)",
-			widget->center.x, widget->center.y, widget->radius);
+					widget->center.x, widget->center.y, widget->radius);
 }
 
 PG_FUNCTION_INFO_V1(pt_in_widget);
@@ -789,6 +789,7 @@ make_tuple_indirect(PG_FUNCTION_ARGS)
 		else
 		{
 			struct varlena *oldattr = attr;
+
 			attr = palloc0(VARSIZE_ANY(oldattr));
 			memcpy(attr, oldattr, VARSIZE_ANY(oldattr));
 		}

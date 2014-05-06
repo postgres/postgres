@@ -23,7 +23,7 @@
  * mapped catalogs can only be relocated by operations such as VACUUM FULL
  * and CLUSTER, which make no transactionally-significant changes: it must be
  * safe for the new file to replace the old, even if the transaction itself
- * aborts.	An important factor here is that the indexes and toast table of
+ * aborts.  An important factor here is that the indexes and toast table of
  * a mapped catalog must also be mapped, so that the rewrites/relocations of
  * all these files commit in a single map file update rather than being tied
  * to transaction commit.
@@ -57,13 +57,13 @@
 /*
  * The map file is critical data: we have no automatic method for recovering
  * from loss or corruption of it.  We use a CRC so that we can detect
- * corruption.	To minimize the risk of failed updates, the map file should
+ * corruption.  To minimize the risk of failed updates, the map file should
  * be kept to no more than one standard-size disk sector (ie 512 bytes),
  * and we use overwrite-in-place rather than playing renaming games.
  * The struct layout below is designed to occupy exactly 512 bytes, which
  * might make filesystem updates a bit more efficient.
  *
- * Entries in the mappings[] array are in no particular order.	We could
+ * Entries in the mappings[] array are in no particular order.  We could
  * speed searching by insisting on OID order, but it really shouldn't be
  * worth the trouble given the intended size of the mapping sets.
  */
@@ -90,7 +90,7 @@ typedef struct RelMapFile
 
 /*
  * The currently known contents of the shared map file and our database's
- * local map file are stored here.	These can be reloaded from disk
+ * local map file are stored here.  These can be reloaded from disk
  * immediately whenever we receive an update sinval message.
  */
 static RelMapFile shared_map;
@@ -346,7 +346,7 @@ merge_map_updates(RelMapFile *map, const RelMapFile *updates, bool add_okay)
  * RelationMapRemoveMapping
  *
  * Remove a relation's entry in the map.  This is only allowed for "active"
- * (but not committed) local mappings.	We need it so we can back out the
+ * (but not committed) local mappings.  We need it so we can back out the
  * entry for the transient target file when doing VACUUM FULL/CLUSTER on
  * a mapped relation.
  */
@@ -374,7 +374,7 @@ RelationMapRemoveMapping(Oid relationId)
  * RelationMapInvalidate
  *
  * This routine is invoked for SI cache flush messages.  We must re-read
- * the indicated map file.	However, we might receive a SI message in a
+ * the indicated map file.  However, we might receive a SI message in a
  * process that hasn't yet, and might never, load the mapping files;
  * for example the autovacuum launcher, which *must not* try to read
  * a local map since it is attached to no particular database.
@@ -442,7 +442,7 @@ AtCCI_RelationMap(void)
  *
  * During commit, this must be called as late as possible before the actual
  * transaction commit, so as to minimize the window where the transaction
- * could still roll back after committing map changes.	Although nothing
+ * could still roll back after committing map changes.  Although nothing
  * critically bad happens in such a case, we still would prefer that it
  * not happen, since we'd possibly be losing useful updates to the relations'
  * pg_class row(s).
@@ -509,7 +509,7 @@ AtPrepare_RelationMap(void)
 /*
  * CheckPointRelationMap
  *
- * This is called during a checkpoint.	It must ensure that any relation map
+ * This is called during a checkpoint.  It must ensure that any relation map
  * updates that were WAL-logged before the start of the checkpoint are
  * securely flushed to disk and will not need to be replayed later.  This
  * seems unlikely to be a performance-critical issue, so we use a simple
@@ -700,7 +700,7 @@ load_relmap_file(bool shared)
  *
  * Because this may be called during WAL replay when MyDatabaseId,
  * DatabasePath, etc aren't valid, we require the caller to pass in suitable
- * values.	The caller is also responsible for being sure no concurrent
+ * values.  The caller is also responsible for being sure no concurrent
  * map update could be happening.
  */
 static void
@@ -820,7 +820,7 @@ write_relmap_file(bool shared, RelMapFile *newmap,
 
 	/*
 	 * Make sure that the files listed in the map are not deleted if the outer
-	 * transaction aborts.	This had better be within the critical section
+	 * transaction aborts.  This had better be within the critical section
 	 * too: it's not likely to fail, but if it did, we'd arrive at transaction
 	 * abort with the files still vulnerable.  PANICing will leave things in a
 	 * good state on-disk.

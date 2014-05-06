@@ -41,7 +41,7 @@
 #error -ffast-math is known to break this code
 #endif
 
-#define SAMESIGN(a,b)   (((a) < 0) == ((b) < 0))
+#define SAMESIGN(a,b)	(((a) < 0) == ((b) < 0))
 
 #ifndef INT64_MAX
 #define INT64_MAX	INT64CONST(0x7FFFFFFFFFFFFFFF)
@@ -391,7 +391,7 @@ AdjustTimestampForTypmod(Timestamp *time, int32 typmod)
 		 * Note: this round-to-nearest code is not completely consistent about
 		 * rounding values that are exactly halfway between integral values.
 		 * On most platforms, rint() will implement round-to-nearest-even, but
-		 * the integer code always rounds up (away from zero).	Is it worth
+		 * the integer code always rounds up (away from zero).  Is it worth
 		 * trying to be consistent?
 		 */
 #ifdef HAVE_INT64_TIMESTAMP
@@ -488,7 +488,7 @@ timestamptz_in(PG_FUNCTION_ARGS)
  * if it's acceptable.  Otherwise, an error is thrown.
  */
 static int
-parse_sane_timezone(struct pg_tm *tm, text *zone)
+parse_sane_timezone(struct pg_tm * tm, text *zone)
 {
 	char		tzname[TZ_STRLEN_MAX + 1];
 	int			rt;
@@ -497,7 +497,7 @@ parse_sane_timezone(struct pg_tm *tm, text *zone)
 	text_to_cstring_buffer(zone, tzname, sizeof(tzname));
 
 	/*
-	 * Look up the requested timezone.	First we try to interpret it as a
+	 * Look up the requested timezone.  First we try to interpret it as a
 	 * numeric timezone specification; if DecodeTimezone decides it doesn't
 	 * like the format, we look in the date token table (to handle cases like
 	 * "EST"), and if that also fails, we look in the timezone database (to
@@ -507,7 +507,7 @@ parse_sane_timezone(struct pg_tm *tm, text *zone)
 	 * offset abbreviations.)
 	 *
 	 * Note pg_tzset happily parses numeric input that DecodeTimezone would
-	 * reject.	To avoid having it accept input that would otherwise be seen
+	 * reject.  To avoid having it accept input that would otherwise be seen
 	 * as invalid, it's enough to disallow having a digit in the first
 	 * position of our input string.
 	 */
@@ -528,7 +528,7 @@ parse_sane_timezone(struct pg_tm *tm, text *zone)
 		if (rt == DTERR_TZDISP_OVERFLOW)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("numeric time zone \"%s\" out of range", tzname)));
+				   errmsg("numeric time zone \"%s\" out of range", tzname)));
 		else if (rt != DTERR_BAD_FORMAT)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -997,7 +997,7 @@ interval_send(PG_FUNCTION_ARGS)
 
 /*
  * The interval typmod stores a "range" in its high 16 bits and a "precision"
- * in its low 16 bits.	Both contribute to defining the resolution of the
+ * in its low 16 bits.  Both contribute to defining the resolution of the
  * type.  Range addresses resolution granules larger than one second, and
  * precision specifies resolution below one second.  This representation can
  * express all SQL standard resolutions, but we implement them all in terms of
@@ -1205,7 +1205,7 @@ interval_transform(PG_FUNCTION_ARGS)
 
 		/*
 		 * Temporally-smaller fields occupy higher positions in the range
-		 * bitmap.	Since only the temporally-smallest bit matters for length
+		 * bitmap.  Since only the temporally-smallest bit matters for length
 		 * coercion purposes, we compare the last-set bits in the ranges.
 		 * Precision, which is to say, sub-second precision, only affects
 		 * ranges that include SECOND.
@@ -1294,7 +1294,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		 * that fields to the right of the last one specified are zeroed out,
 		 * but those to the left of it remain valid.  Thus for example there
 		 * is no operational difference between INTERVAL YEAR TO MONTH and
-		 * INTERVAL MONTH.	In some cases we could meaningfully enforce that
+		 * INTERVAL MONTH.  In some cases we could meaningfully enforce that
 		 * higher-order fields are zero; for example INTERVAL DAY could reject
 		 * nonzero "month" field.  However that seems a bit pointless when we
 		 * can't do it consistently.  (We cannot enforce a range limit on the
@@ -1304,9 +1304,9 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		 *
 		 * Note: before PG 8.4 we interpreted a limited set of fields as
 		 * actually causing a "modulo" operation on a given value, potentially
-		 * losing high-order as well as low-order information.	But there is
+		 * losing high-order as well as low-order information.  But there is
 		 * no support for such behavior in the standard, and it seems fairly
-		 * undesirable on data consistency grounds anyway.	Now we only
+		 * undesirable on data consistency grounds anyway.  Now we only
 		 * perform truncation or rounding of low-order fields.
 		 */
 		if (range == INTERVAL_FULL_RANGE)
@@ -1426,7 +1426,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 			/*
 			 * Note: this round-to-nearest code is not completely consistent
 			 * about rounding values that are exactly halfway between integral
-			 * values.	On most platforms, rint() will implement
+			 * values.  On most platforms, rint() will implement
 			 * round-to-nearest-even, but the integer code always rounds up
 			 * (away from zero).  Is it worth trying to be consistent?
 			 */
@@ -1470,7 +1470,7 @@ make_interval(PG_FUNCTION_ARGS)
 	Interval   *result;
 
 	/*
-	 * Reject out-of-range inputs.	We really ought to check the integer
+	 * Reject out-of-range inputs.  We really ought to check the integer
 	 * inputs as well, but it's not entirely clear what limits to apply.
 	 */
 	if (isinf(secs) || isnan(secs))
@@ -1718,7 +1718,7 @@ timestamptz_to_time_t(TimestampTz t)
  * Produce a C-string representation of a TimestampTz.
  *
  * This is mostly for use in emitting messages.  The primary difference
- * from timestamptz_out is that we force the output format to ISO.	Note
+ * from timestamptz_out is that we force the output format to ISO.  Note
  * also that the result is in a static buffer, not pstrdup'd.
  */
 const char *
@@ -1862,7 +1862,7 @@ recalc_t:
 	 *
 	 * First, convert to an integral timestamp, avoiding possibly
 	 * platform-specific roundoff-in-wrong-direction errors, and adjust to
-	 * Unix epoch.	Then see if we can convert to pg_time_t without loss. This
+	 * Unix epoch.  Then see if we can convert to pg_time_t without loss. This
 	 * coding avoids hardwiring any assumptions about the width of pg_time_t,
 	 * so it should behave sanely on machines without int64.
 	 */
@@ -2010,7 +2010,7 @@ recalc:
 int
 tm2interval(struct pg_tm * tm, fsec_t fsec, Interval *span)
 {
-	double total_months = (double)tm->tm_year * MONTHS_PER_YEAR + tm->tm_mon;
+	double		total_months = (double) tm->tm_year * MONTHS_PER_YEAR + tm->tm_mon;
 
 	if (total_months > INT_MAX || total_months < INT_MIN)
 		return -1;
@@ -4888,7 +4888,7 @@ timestamp_zone(PG_FUNCTION_ARGS)
 		PG_RETURN_TIMESTAMPTZ(timestamp);
 
 	/*
-	 * Look up the requested timezone.	First we look in the date token table
+	 * Look up the requested timezone.  First we look in the date token table
 	 * (to handle cases like "EST"), and if that fails, we look in the
 	 * timezone database (to handle cases like "America/New_York").  (This
 	 * matches the order in which timestamp input checks the cases; it's
@@ -5061,7 +5061,7 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 		PG_RETURN_TIMESTAMP(timestamp);
 
 	/*
-	 * Look up the requested timezone.	First we look in the date token table
+	 * Look up the requested timezone.  First we look in the date token table
 	 * (to handle cases like "EST"), and if that fails, we look in the
 	 * timezone database (to handle cases like "America/New_York").  (This
 	 * matches the order in which timestamp input checks the cases; it's

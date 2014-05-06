@@ -42,11 +42,12 @@
 #include "storage/fd.h"
 
 /* private date for writing out data */
-typedef struct DecodingOutputState {
+typedef struct DecodingOutputState
+{
 	Tuplestorestate *tupstore;
-	TupleDesc tupdesc;
-	bool binary_output;
-	int64 returned_rows;
+	TupleDesc	tupdesc;
+	bool		binary_output;
+	int64		returned_rows;
 } DecodingOutputState;
 
 /*
@@ -91,7 +92,7 @@ LogicalOutputWrite(LogicalDecodingContext *ctx, XLogRecPtr lsn, TransactionId xi
 
 	/* ick, but cstring_to_text_with_len works for bytea perfectly fine */
 	values[2] = PointerGetDatum(
-		cstring_to_text_with_len(ctx->out->data, ctx->out->len));
+					cstring_to_text_with_len(ctx->out->data, ctx->out->len));
 
 	tuplestore_putvalues(p->tupstore, p->tupdesc, values, nulls);
 	p->returned_rows++;
@@ -412,7 +413,7 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 		InvalidateSystemCaches();
 
 		while ((startptr != InvalidXLogRecPtr && startptr < end_of_wal) ||
-			   (ctx->reader->EndRecPtr && ctx->reader->EndRecPtr < end_of_wal))
+			 (ctx->reader->EndRecPtr && ctx->reader->EndRecPtr < end_of_wal))
 		{
 			XLogRecord *record;
 			char	   *errm = NULL;
@@ -474,7 +475,8 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 Datum
 pg_logical_slot_get_changes(PG_FUNCTION_ARGS)
 {
-	Datum ret = pg_logical_slot_get_changes_guts(fcinfo, true, false);
+	Datum		ret = pg_logical_slot_get_changes_guts(fcinfo, true, false);
+
 	return ret;
 }
 
@@ -484,7 +486,8 @@ pg_logical_slot_get_changes(PG_FUNCTION_ARGS)
 Datum
 pg_logical_slot_peek_changes(PG_FUNCTION_ARGS)
 {
-	Datum ret = pg_logical_slot_get_changes_guts(fcinfo, false, false);
+	Datum		ret = pg_logical_slot_get_changes_guts(fcinfo, false, false);
+
 	return ret;
 }
 
@@ -494,7 +497,8 @@ pg_logical_slot_peek_changes(PG_FUNCTION_ARGS)
 Datum
 pg_logical_slot_get_binary_changes(PG_FUNCTION_ARGS)
 {
-	Datum ret = pg_logical_slot_get_changes_guts(fcinfo, true, true);
+	Datum		ret = pg_logical_slot_get_changes_guts(fcinfo, true, true);
+
 	return ret;
 }
 
@@ -504,6 +508,7 @@ pg_logical_slot_get_binary_changes(PG_FUNCTION_ARGS)
 Datum
 pg_logical_slot_peek_binary_changes(PG_FUNCTION_ARGS)
 {
-	Datum ret = pg_logical_slot_get_changes_guts(fcinfo, false, true);
+	Datum		ret = pg_logical_slot_get_changes_guts(fcinfo, false, true);
+
 	return ret;
 }

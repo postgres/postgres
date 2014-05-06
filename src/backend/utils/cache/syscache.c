@@ -803,16 +803,17 @@ static CatCache *SysCache[
 static int	SysCacheSize = lengthof(cacheinfo);
 static bool CacheInitialized = false;
 
-static Oid SysCacheRelationOid[lengthof(cacheinfo)];
-static int SysCacheRelationOidSize;
+static Oid	SysCacheRelationOid[
+								lengthof(cacheinfo)];
+static int	SysCacheRelationOidSize;
 
-static int oid_compare(const void *a, const void *b);
+static int	oid_compare(const void *a, const void *b);
 
 /*
  * InitCatalogCache - initialize the caches
  *
  * Note that no database access is done here; we only allocate memory
- * and initialize the cache structure.	Interrogation of the database
+ * and initialize the cache structure.  Interrogation of the database
  * to complete initialization of a cache happens upon first use
  * of that cache.
  */
@@ -1063,7 +1064,7 @@ SearchSysCacheExistsAttName(Oid relid, const char *attname)
  *		extract a specific attribute.
  *
  * This is equivalent to using heap_getattr() on a tuple fetched
- * from a non-cached relation.	Usually, this is only used for attributes
+ * from a non-cached relation.  Usually, this is only used for attributes
  * that could be NULL or variable length; the fixed-size attributes in
  * a system table are accessed just by mapping the tuple onto the C struct
  * declarations from include/catalog/.
@@ -1176,12 +1177,12 @@ RelationInvalidatesSnapshotsOnly(Oid relid)
 bool
 RelationHasSysCache(Oid relid)
 {
-	int		low = 0,
-			high = SysCacheRelationOidSize - 1;
+	int			low = 0,
+				high = SysCacheRelationOidSize - 1;
 
 	while (low <= high)
 	{
-		int middle = low + (high - low) / 2;
+		int			middle = low + (high - low) / 2;
 
 		if (SysCacheRelationOid[middle] == relid)
 			return true;
@@ -1201,8 +1202,8 @@ RelationHasSysCache(Oid relid)
 static int
 oid_compare(const void *a, const void *b)
 {
-	Oid		oa = *((Oid *) a);
-	Oid		ob = *((Oid *) b);
+	Oid			oa = *((Oid *) a);
+	Oid			ob = *((Oid *) b);
 
 	if (oa == ob)
 		return 0;

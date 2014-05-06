@@ -20,7 +20,7 @@
  * been changed to just <offset> as the notion of having multiple pages
  * within a block has been removed.
  *
- * the 'offset' abstraction is somewhat confusing.	it is NOT a byte
+ * the 'offset' abstraction is somewhat confusing.  it is NOT a byte
  * offset within the page; instead, it is an offset into the line
  * pointer array contained on every page that store (heap or index)
  * tuples.

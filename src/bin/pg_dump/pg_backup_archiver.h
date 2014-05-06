@@ -132,7 +132,7 @@ struct ParallelState;
 		exit_horribly(modulename, "could not write to output file: %s\n", \
 					  strerror(errno)); \
 	} while (0)
- 
+
 typedef enum T_Action
 {
 	ACT_DUMP,

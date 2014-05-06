@@ -5,7 +5,7 @@
  * This file supplies pg_erand48(), pg_lrand48(), and pg_srand48(), which
  * are just like erand48(), lrand48(), and srand48() except that we use
  * our own implementation rather than the one provided by the operating
- * system.	We used to test for an operating system version rather than
+ * system.  We used to test for an operating system version rather than
  * unconditionally using our own, but (1) some versions of Cygwin have a
  * buggy erand48() that always returns zero and (2) as of 2011, glibc's
  * erand48() is strangely coded to be almost-but-not-quite thread-safe,

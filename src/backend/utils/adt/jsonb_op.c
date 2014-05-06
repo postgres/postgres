@@ -69,7 +69,7 @@ jsonb_exists_any(PG_FUNCTION_ARGS)
 		if (findJsonbValueFromSuperHeader(VARDATA(jb),
 										  JB_FOBJECT | JB_FARRAY,
 										  plowbound,
-										  arrKey->val.array.elems + i) != NULL)
+										arrKey->val.array.elems + i) != NULL)
 			PG_RETURN_BOOL(true);
 	}
 
@@ -103,7 +103,7 @@ jsonb_exists_all(PG_FUNCTION_ARGS)
 		if (findJsonbValueFromSuperHeader(VARDATA(jb),
 										  JB_FOBJECT | JB_FARRAY,
 										  plowbound,
-										  arrKey->val.array.elems + i) == NULL)
+										arrKey->val.array.elems + i) == NULL)
 			PG_RETURN_BOOL(false);
 	}
 
@@ -116,7 +116,8 @@ jsonb_contains(PG_FUNCTION_ARGS)
 	Jsonb	   *val = PG_GETARG_JSONB(0);
 	Jsonb	   *tmpl = PG_GETARG_JSONB(1);
 
-	JsonbIterator *it1, *it2;
+	JsonbIterator *it1,
+			   *it2;
 
 	if (JB_ROOT_COUNT(val) < JB_ROOT_COUNT(tmpl) ||
 		JB_ROOT_IS_OBJECT(val) != JB_ROOT_IS_OBJECT(tmpl))
@@ -135,7 +136,8 @@ jsonb_contained(PG_FUNCTION_ARGS)
 	Jsonb	   *tmpl = PG_GETARG_JSONB(0);
 	Jsonb	   *val = PG_GETARG_JSONB(1);
 
-	JsonbIterator *it1, *it2;
+	JsonbIterator *it1,
+			   *it2;
 
 	if (JB_ROOT_COUNT(val) < JB_ROOT_COUNT(tmpl) ||
 		JB_ROOT_IS_OBJECT(val) != JB_ROOT_IS_OBJECT(tmpl))
@@ -209,7 +211,6 @@ jsonb_le(PG_FUNCTION_ARGS)
 Datum
 jsonb_ge(PG_FUNCTION_ARGS)
 {
-
 	Jsonb	   *jba = PG_GETARG_JSONB(0);
 	Jsonb	   *jbb = PG_GETARG_JSONB(1);
 	bool		res;
@@ -270,7 +271,7 @@ jsonb_hash(PG_FUNCTION_ARGS)
 	{
 		switch (r)
 		{
-			/* Rotation is left to JsonbHashScalarValue() */
+				/* Rotation is left to JsonbHashScalarValue() */
 			case WJB_BEGIN_ARRAY:
 				hash ^= JB_FARRAY;
 				break;

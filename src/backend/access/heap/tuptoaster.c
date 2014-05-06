@@ -53,11 +53,11 @@ static struct varlena *toast_fetch_datum(struct varlena * attr);
 static struct varlena *toast_fetch_datum_slice(struct varlena * attr,
 						int32 sliceoffset, int32 length);
 static int toast_open_indexes(Relation toastrel,
-							  LOCKMODE lock,
-							  Relation **toastidxs,
-							  int *num_indexes);
+				   LOCKMODE lock,
+				   Relation **toastidxs,
+				   int *num_indexes);
 static void toast_close_indexes(Relation *toastidxs, int num_indexes,
-								LOCKMODE lock);
+					LOCKMODE lock);
 
 
 /* ----------
@@ -91,8 +91,9 @@ heap_tuple_fetch_attr(struct varlena * attr)
 		 * to persist a Datum for unusually long time, like in a HOLD cursor.
 		 */
 		struct varatt_indirect redirect;
+
 		VARATT_EXTERNAL_GET_POINTER(redirect, attr);
-		attr = (struct varlena *)redirect.pointer;
+		attr = (struct varlena *) redirect.pointer;
 
 		/* nested indirect Datums aren't allowed */
 		Assert(!VARATT_IS_EXTERNAL_INDIRECT(attr));
@@ -147,8 +148,9 @@ heap_tuple_untoast_attr(struct varlena * attr)
 	else if (VARATT_IS_EXTERNAL_INDIRECT(attr))
 	{
 		struct varatt_indirect redirect;
+
 		VARATT_EXTERNAL_GET_POINTER(redirect, attr);
-		attr = (struct varlena *)redirect.pointer;
+		attr = (struct varlena *) redirect.pointer;
 
 		/* nested indirect Datums aren't allowed */
 		Assert(!VARATT_IS_EXTERNAL_INDIRECT(attr));
@@ -217,6 +219,7 @@ heap_tuple_untoast_attr_slice(struct varlena * attr,
 	else if (VARATT_IS_EXTERNAL_INDIRECT(attr))
 	{
 		struct varatt_indirect redirect;
+
 		VARATT_EXTERNAL_GET_POINTER(redirect, attr);
 
 		/* nested indirect Datums aren't allowed */
@@ -299,6 +302,7 @@ toast_raw_datum_size(Datum value)
 	else if (VARATT_IS_EXTERNAL_INDIRECT(attr))
 	{
 		struct varatt_indirect toast_pointer;
+
 		VARATT_EXTERNAL_GET_POINTER(toast_pointer, attr);
 
 		/* nested indirect Datums aren't allowed */
@@ -354,6 +358,7 @@ toast_datum_size(Datum value)
 	else if (VARATT_IS_EXTERNAL_INDIRECT(attr))
 	{
 		struct varatt_indirect toast_pointer;
+
 		VARATT_EXTERNAL_GET_POINTER(toast_pointer, attr);
 
 		/* nested indirect Datums aren't allowed */
@@ -597,7 +602,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 			 * We took care of UPDATE above, so any external value we find
 			 * still in the tuple must be someone else's we cannot reuse.
 			 * Fetch it back (without decompression, unless we are forcing
-			 * PLAIN storage).	If necessary, we'll push it out as a new
+			 * PLAIN storage).  If necessary, we'll push it out as a new
 			 * external value below.
 			 */
 			if (VARATT_IS_EXTERNAL(new_value))
@@ -740,7 +745,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 
 	/*
 	 * Second we look for attributes of attstorage 'x' or 'e' that are still
-	 * inline.	But skip this if there's no toast table to push them to.
+	 * inline.  But skip this if there's no toast table to push them to.
 	 */
 	while (heap_compute_data_size(tupleDesc,
 								  toast_values, toast_isnull) > maxDataLen &&
@@ -850,7 +855,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 	}
 
 	/*
-	 * Finally we store attributes of type 'm' externally.	At this point we
+	 * Finally we store attributes of type 'm' externally.  At this point we
 	 * increase the target tuple size, so that 'm' attributes aren't stored
 	 * externally unless really necessary.
 	 */
@@ -1438,7 +1443,7 @@ toast_save_datum(Relation rel, Datum value,
 				 * those versions could easily reference the same toast value.
 				 * When we copy the second or later version of such a row,
 				 * reusing the OID will mean we select an OID that's already
-				 * in the new toast table.	Check for that, and if so, just
+				 * in the new toast table.  Check for that, and if so, just
 				 * fall through without writing the data again.
 				 *
 				 * While annoying and ugly-looking, this is a good thing
@@ -1467,7 +1472,7 @@ toast_save_datum(Relation rel, Datum value,
 			{
 				toast_pointer.va_valueid =
 					GetNewOidWithIndex(toastrel,
-									   RelationGetRelid(toastidxs[validIndex]),
+									 RelationGetRelid(toastidxs[validIndex]),
 									   (AttrNumber) 1);
 			} while (toastid_valueid_exists(rel->rd_toastoid,
 											toast_pointer.va_valueid));
@@ -1488,7 +1493,7 @@ toast_save_datum(Relation rel, Datum value,
 	 */
 	while (data_todo > 0)
 	{
-		int i;
+		int			i;
 
 		/*
 		 * Calculate the size of this chunk
@@ -1506,7 +1511,7 @@ toast_save_datum(Relation rel, Datum value,
 		heap_insert(toastrel, toasttup, mycid, options, NULL);
 
 		/*
-		 * Create the index entry.	We cheat a little here by not using
+		 * Create the index entry.  We cheat a little here by not using
 		 * FormIndexDatum: this relies on the knowledge that the index columns
 		 * are the same as the initial columns of the table for all the
 		 * indexes.
@@ -1656,8 +1661,8 @@ toastrel_valueid_exists(Relation toastrel, Oid valueid)
 	 * Is there any such chunk?
 	 */
 	toastscan = systable_beginscan(toastrel,
-						   RelationGetRelid(toastidxs[validIndex]),
-						   true, SnapshotToast, 1, &toastkey);
+								   RelationGetRelid(toastidxs[validIndex]),
+								   true, SnapshotToast, 1, &toastkey);
 
 	if (systable_getnext(toastscan) != NULL)
 		result = true;
@@ -2126,7 +2131,8 @@ toast_open_indexes(Relation toastrel,
 	/* Fetch the first valid index in list */
 	for (i = 0; i < *num_indexes; i++)
 	{
-		Relation toastidx = (*toastidxs)[i];
+		Relation	toastidx = (*toastidxs)[i];
+
 		if (toastidx->rd_index->indisvalid)
 		{
 			res = i;
@@ -2136,14 +2142,14 @@ toast_open_indexes(Relation toastrel,
 	}
 
 	/*
-	 * Free index list, not necessary anymore as relations are opened
-	 * and a valid index has been found.
+	 * Free index list, not necessary anymore as relations are opened and a
+	 * valid index has been found.
 	 */
 	list_free(indexlist);
 
 	/*
-	 * The toast relation should have one valid index, so something is
-	 * going wrong if there is nothing.
+	 * The toast relation should have one valid index, so something is going
+	 * wrong if there is nothing.
 	 */
 	if (!found)
 		elog(ERROR, "no valid index found for toast relation with Oid %d",
@@ -2161,7 +2167,7 @@ toast_open_indexes(Relation toastrel,
 static void
 toast_close_indexes(Relation *toastidxs, int num_indexes, LOCKMODE lock)
 {
-	int i;
+	int			i;
 
 	/* Close relations and clean up things */
 	for (i = 0; i < num_indexes; i++)

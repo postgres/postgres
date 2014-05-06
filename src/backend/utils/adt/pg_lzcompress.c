@@ -576,9 +576,9 @@ pglz_compress(const char *source, int32 slen, PGLZ_Header *dest,
 
 	/*
 	 * Experiments suggest that these hash sizes work pretty well. A large
-	 * hash table minimizes collision, but has a higher startup cost. For
-	 * a small input, the startup cost dominates. The table size must be
-	 * a power of two.
+	 * hash table minimizes collision, but has a higher startup cost. For a
+	 * small input, the startup cost dominates. The table size must be a power
+	 * of two.
 	 */
 	if (slen < 128)
 		hashsz = 512;
@@ -615,7 +615,7 @@ pglz_compress(const char *source, int32 slen, PGLZ_Header *dest,
 
 		/*
 		 * If we've emitted more than first_success_by bytes without finding
-		 * anything compressible at all, fail.	This lets us fall out
+		 * anything compressible at all, fail.  This lets us fall out
 		 * reasonably quickly when looking at incompressible input (such as
 		 * pre-compressed data).
 		 */
@@ -639,7 +639,7 @@ pglz_compress(const char *source, int32 slen, PGLZ_Header *dest,
 							  hist_next, hist_recycle,
 							  dp, dend, mask);
 				dp++;			/* Do not do this ++ in the line above! */
-				/* The macro would do it four times - Jan.	*/
+				/* The macro would do it four times - Jan.  */
 			}
 			found_match = true;
 		}
@@ -653,7 +653,7 @@ pglz_compress(const char *source, int32 slen, PGLZ_Header *dest,
 						  hist_next, hist_recycle,
 						  dp, dend, mask);
 			dp++;				/* Do not do this ++ in the line above! */
-			/* The macro would do it four times - Jan.	*/
+			/* The macro would do it four times - Jan.  */
 		}
 	}
 

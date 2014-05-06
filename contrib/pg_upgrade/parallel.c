@@ -339,10 +339,10 @@ reap_child(bool wait_for_child)
 		thread_handles[thread_num] = thread_handles[parallel_jobs - 1];
 
 		/*
-		 * Move last active thead arg struct into the now-dead slot,
-		 * and the now-dead slot to the end for reuse by the next thread.
-		 * Though the thread struct is in use by another thread, we can
-		 * safely swap the struct pointers within the array.
+		 * Move last active thead arg struct into the now-dead slot, and the
+		 * now-dead slot to the end for reuse by the next thread. Though the
+		 * thread struct is in use by another thread, we can safely swap the
+		 * struct pointers within the array.
 		 */
 		tmp_args = cur_thread_args[thread_num];
 		cur_thread_args[thread_num] = cur_thread_args[parallel_jobs - 1];

@@ -106,7 +106,7 @@ describeAggregates(const char *pattern, bool verbose, bool showSystem)
 
 	if (!showSystem && !pattern)
 		appendPQExpBufferStr(&buf, "      AND n.nspname <> 'pg_catalog'\n"
-						  "      AND n.nspname <> 'information_schema'\n");
+							 "      AND n.nspname <> 'information_schema'\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
 						  "n.nspname", "p.proname", NULL,
@@ -449,7 +449,7 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 
 	if (!showSystem && !pattern)
 		appendPQExpBufferStr(&buf, "      AND n.nspname <> 'pg_catalog'\n"
-						  "      AND n.nspname <> 'information_schema'\n");
+							 "      AND n.nspname <> 'information_schema'\n");
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1, 2, 4;");
 
@@ -542,7 +542,7 @@ describeTypes(const char *pattern, bool verbose, bool showSystem)
 	 */
 	appendPQExpBufferStr(&buf, "WHERE (t.typrelid = 0 ");
 	appendPQExpBufferStr(&buf, "OR (SELECT c.relkind = 'c' FROM pg_catalog.pg_class c "
-					  "WHERE c.oid = t.typrelid))\n");
+						 "WHERE c.oid = t.typrelid))\n");
 
 	/*
 	 * do not include array types (before 8.3 we have to use the assumption
@@ -555,7 +555,7 @@ describeTypes(const char *pattern, bool verbose, bool showSystem)
 
 	if (!showSystem && !pattern)
 		appendPQExpBufferStr(&buf, "      AND n.nspname <> 'pg_catalog'\n"
-								   "      AND n.nspname <> 'information_schema'\n");
+							 "      AND n.nspname <> 'information_schema'\n");
 
 	/* Match name pattern against either internal or external name */
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
@@ -777,7 +777,7 @@ permissionsList(const char *pattern)
 
 	appendPQExpBufferStr(&buf, "\nFROM pg_catalog.pg_class c\n"
 	   "     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n"
-					  "WHERE c.relkind IN ('r', 'v', 'm', 'S', 'f')\n");
+						 "WHERE c.relkind IN ('r', 'v', 'm', 'S', 'f')\n");
 
 	/*
 	 * Unless a schema pattern is specified, we suppress system and temp
@@ -958,7 +958,7 @@ objectDescription(const char *pattern, bool showSystem)
 
 		if (!showSystem && !pattern)
 			appendPQExpBufferStr(&buf, "      AND n.nspname <> 'pg_catalog'\n"
-								 "      AND n.nspname <> 'information_schema'\n");
+							"      AND n.nspname <> 'information_schema'\n");
 
 		processSQLNamePattern(pset.db, &buf, pattern, true, false,
 							  "n.nspname", "o.opcname", NULL,
@@ -987,7 +987,7 @@ objectDescription(const char *pattern, bool showSystem)
 
 		if (!showSystem && !pattern)
 			appendPQExpBufferStr(&buf, "      AND n.nspname <> 'pg_catalog'\n"
-								 "      AND n.nspname <> 'information_schema'\n");
+							"      AND n.nspname <> 'information_schema'\n");
 
 		processSQLNamePattern(pset.db, &buf, pattern, true, false,
 							  "n.nspname", "opf.opfname", NULL,
@@ -1363,8 +1363,8 @@ describeOneTableDetails(const char *schemaname,
 		appendPQExpBufferStr(&buf, ",\n  NULL AS indexdef");
 	if (tableinfo.relkind == 'f' && pset.sversion >= 90200)
 		appendPQExpBufferStr(&buf, ",\n  CASE WHEN attfdwoptions IS NULL THEN '' ELSE "
-						  "  '(' || array_to_string(ARRAY(SELECT quote_ident(option_name) ||  ' ' || quote_literal(option_value)  FROM "
-						  "  pg_options_to_table(attfdwoptions)), ', ') || ')' END AS attfdwoptions");
+							 "  '(' || array_to_string(ARRAY(SELECT quote_ident(option_name) ||  ' ' || quote_literal(option_value)  FROM "
+							 "  pg_options_to_table(attfdwoptions)), ', ') || ')' END AS attfdwoptions");
 	else
 		appendPQExpBufferStr(&buf, ",\n  NULL AS attfdwoptions");
 	if (verbose)
@@ -1612,13 +1612,13 @@ describeOneTableDetails(const char *schemaname,
 		if (pset.sversion >= 90000)
 			appendPQExpBufferStr(&buf,
 								 "  (NOT i.indimmediate) AND "
-								"EXISTS (SELECT 1 FROM pg_catalog.pg_constraint "
+							"EXISTS (SELECT 1 FROM pg_catalog.pg_constraint "
 								 "WHERE conrelid = i.indrelid AND "
 								 "conindid = i.indexrelid AND "
 								 "contype IN ('p','u','x') AND "
 								 "condeferrable) AS condeferrable,\n"
 								 "  (NOT i.indimmediate) AND "
-								"EXISTS (SELECT 1 FROM pg_catalog.pg_constraint "
+							"EXISTS (SELECT 1 FROM pg_catalog.pg_constraint "
 								 "WHERE conrelid = i.indrelid AND "
 								 "conindid = i.indexrelid AND "
 								 "contype IN ('p','u','x') AND "
@@ -1755,11 +1755,11 @@ describeOneTableDetails(const char *schemaname,
 			if (pset.sversion >= 90000)
 				appendPQExpBufferStr(&buf,
 						   "pg_catalog.pg_get_constraintdef(con.oid, true), "
-								  "contype, condeferrable, condeferred");
+									 "contype, condeferrable, condeferred");
 			else
 				appendPQExpBufferStr(&buf,
-									 "null AS constraintdef, null AS contype, "
-									 "false AS condeferrable, false AS condeferred");
+								   "null AS constraintdef, null AS contype, "
+							 "false AS condeferrable, false AS condeferred");
 			if (pset.sversion >= 90400)
 				appendPQExpBufferStr(&buf, ", i.indisreplident");
 			else
@@ -2188,7 +2188,7 @@ describeOneTableDetails(const char *schemaname,
 									printfPQExpBuffer(&buf, _("Disabled triggers:"));
 								break;
 							case 2:
-									printfPQExpBuffer(&buf, _("Disabled internal triggers:"));
+								printfPQExpBuffer(&buf, _("Disabled internal triggers:"));
 								break;
 							case 3:
 								printfPQExpBuffer(&buf, _("Triggers firing always:"));
@@ -2346,10 +2346,11 @@ describeOneTableDetails(const char *schemaname,
 		}
 
 		if (verbose && (tableinfo.relkind == 'r' || tableinfo.relkind == 'm') &&
-			/*
-			 * No need to display default values;  we already display a
-			 * REPLICA IDENTITY marker on indexes.
-			 */
+
+		/*
+		 * No need to display default values;  we already display a REPLICA
+		 * IDENTITY marker on indexes.
+		 */
 			tableinfo.relreplident != 'i' &&
 			((strcmp(schemaname, "pg_catalog") != 0 && tableinfo.relreplident != 'd') ||
 			 (strcmp(schemaname, "pg_catalog") == 0 && tableinfo.relreplident != 'n')))
@@ -2817,7 +2818,7 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 	if (showForeign)
 		appendPQExpBufferStr(&buf, "'f',");
 
-	appendPQExpBufferStr(&buf, "''");		/* dummy */
+	appendPQExpBufferStr(&buf, "''");	/* dummy */
 	appendPQExpBufferStr(&buf, ")\n");
 
 	if (!showSystem && !pattern)
@@ -2997,7 +2998,7 @@ listDomains(const char *pattern, bool verbose, bool showSystem)
 	if (verbose)
 		appendPQExpBufferStr(&buf,
 							 "     LEFT JOIN pg_catalog.pg_description d "
-							 "ON d.classoid = t.tableoid AND d.objoid = t.oid "
+						   "ON d.classoid = t.tableoid AND d.objoid = t.oid "
 							 "AND d.objsubid = 0\n");
 
 	appendPQExpBufferStr(&buf, "WHERE t.typtype = 'd'\n");
@@ -3039,7 +3040,7 @@ listConversions(const char *pattern, bool verbose, bool showSystem)
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
 	static const bool translate_columns[] =
-		{false, false, false, false, true, false};
+	{false, false, false, false, true, false};
 
 	initPQExpBuffer(&buf);
 
@@ -3078,7 +3079,7 @@ listConversions(const char *pattern, bool verbose, bool showSystem)
 
 	if (!showSystem && !pattern)
 		appendPQExpBufferStr(&buf, "  AND n.nspname <> 'pg_catalog'\n"
-						  "  AND n.nspname <> 'information_schema'\n");
+							 "  AND n.nspname <> 'information_schema'\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
 						  "n.nspname", "c.conname", NULL,
@@ -3129,7 +3130,7 @@ listEventTriggers(const char *pattern, bool verbose)
 					  "  when 'D' then '%s' end as \"%s\",\n"
 					  " e.evtfoid::pg_catalog.regproc as \"%s\", "
 					  "pg_catalog.array_to_string(array(select x"
-					  " from pg_catalog.unnest(evttags) as t(x)), ', ') as \"%s\"",
+				" from pg_catalog.unnest(evttags) as t(x)), ', ') as \"%s\"",
 					  gettext_noop("Name"),
 					  gettext_noop("Event"),
 					  gettext_noop("Owner"),
@@ -3307,11 +3308,11 @@ listCollations(const char *pattern, bool verbose, bool showSystem)
 
 	appendPQExpBufferStr(&buf,
 			  "\nFROM pg_catalog.pg_collation c, pg_catalog.pg_namespace n\n"
-					  "WHERE n.oid = c.collnamespace\n");
+						 "WHERE n.oid = c.collnamespace\n");
 
 	if (!showSystem && !pattern)
 		appendPQExpBufferStr(&buf, "      AND n.nspname <> 'pg_catalog'\n"
-						  "      AND n.nspname <> 'information_schema'\n");
+							 "      AND n.nspname <> 'information_schema'\n");
 
 	/*
 	 * Hide collations that aren't usable in the current database's encoding.
@@ -4106,7 +4107,7 @@ listForeignServers(const char *pattern, bool verbose)
 	if (verbose)
 		appendPQExpBufferStr(&buf,
 							 "LEFT JOIN pg_description d\n       "
-							 "ON d.classoid = s.tableoid AND d.objoid = s.oid "
+						   "ON d.classoid = s.tableoid AND d.objoid = s.oid "
 							 "AND d.objsubid = 0\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern, false, false,
@@ -4426,7 +4427,7 @@ listOneExtensionContents(const char *extname, const char *oid)
  * printACLColumn
  *
  * Helper function for consistently formatting ACL (privilege) columns.
- * The proper targetlist entry is appended to buf.	Note lack of any
+ * The proper targetlist entry is appended to buf.  Note lack of any
  * whitespace or comma decoration.
  */
 static void

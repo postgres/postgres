@@ -197,7 +197,7 @@ ginarrayconsistent(PG_FUNCTION_ARGS)
 
 			/*
 			 * Must have all elements in check[] true; no discrimination
-			 * against nulls here.	This is because array_contain_compare and
+			 * against nulls here.  This is because array_contain_compare and
 			 * array_eq handle nulls differently ...
 			 */
 			res = true;
@@ -279,9 +279,10 @@ ginarraytriconsistent(PG_FUNCTION_ARGS)
 			res = GIN_MAYBE;
 			break;
 		case GinEqualStrategy:
+
 			/*
 			 * Must have all elements in check[] true; no discrimination
-			 * against nulls here.	This is because array_contain_compare and
+			 * against nulls here.  This is because array_contain_compare and
 			 * array_eq handle nulls differently ...
 			 */
 			res = GIN_MAYBE;

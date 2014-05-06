@@ -112,11 +112,11 @@ typedef struct RelationData
 	TriggerDesc *trigdesc;		/* Trigger info, or NULL if rel has none */
 
 	/*
-	 * The index chosen as the relation's replication identity or
-	 * InvalidOid. Only set correctly if RelationGetIndexList has been
+	 * The index chosen as the relation's replication identity or InvalidOid.
+	 * Only set correctly if RelationGetIndexList has been
 	 * called/rd_indexvalid > 0.
 	 */
-	Oid rd_replidindex;
+	Oid			rd_replidindex;
 
 	/*
 	 * rd_options is set whenever rd_rel is loaded into the relcache entry.
@@ -142,7 +142,7 @@ typedef struct RelationData
 	 * Note: rd_amcache is available for index AMs to cache private data about
 	 * an index.  This must be just a cache since it may get reset at any time
 	 * (in particular, it will get reset by a relcache inval message for the
-	 * index).	If used, it must point to a single memory chunk palloc'd in
+	 * index).  If used, it must point to a single memory chunk palloc'd in
 	 * rd_indexcxt.  A relcache reset will include freeing that chunk and
 	 * setting rd_amcache = NULL.
 	 */
@@ -165,7 +165,7 @@ typedef struct RelationData
 	 * foreign-table support
 	 *
 	 * rd_fdwroutine must point to a single memory chunk palloc'd in
-	 * CacheMemoryContext.	It will be freed and reset to NULL on a relcache
+	 * CacheMemoryContext.  It will be freed and reset to NULL on a relcache
 	 * reset.
 	 */
 
@@ -220,7 +220,8 @@ typedef struct StdRdOptions
 	AutoVacOpts autovacuum;		/* autovacuum-related options */
 	bool		security_barrier;		/* for views */
 	int			check_option_offset;	/* for views */
-	bool		user_catalog_table;		/* use as an additional catalog relation */
+	bool		user_catalog_table;		/* use as an additional catalog
+										 * relation */
 } StdRdOptions;
 
 #define HEAP_MIN_FILLFACTOR			10
@@ -274,7 +275,7 @@ typedef struct StdRdOptions
 	((relation)->rd_options &&												\
 	 ((StdRdOptions *) (relation)->rd_options)->check_option_offset != 0 ?	\
 	 strcmp((char *) (relation)->rd_options +								\
-			((StdRdOptions *) (relation)->rd_options)->check_option_offset,	\
+			((StdRdOptions *) (relation)->rd_options)->check_option_offset, \
 			"local") == 0 : false)
 
 /*
@@ -286,13 +287,13 @@ typedef struct StdRdOptions
 	((relation)->rd_options &&												\
 	 ((StdRdOptions *) (relation)->rd_options)->check_option_offset != 0 ?	\
 	 strcmp((char *) (relation)->rd_options +								\
-			((StdRdOptions *) (relation)->rd_options)->check_option_offset,	\
+			((StdRdOptions *) (relation)->rd_options)->check_option_offset, \
 			"cascaded") == 0 : false)
 
 /*
  * RelationIsUsedAsCatalogTable
  *		Returns whether the relation should be treated as a catalog table
- *      from the pov of logical decoding.
+ *		from the pov of logical decoding.
  */
 #define RelationIsUsedAsCatalogTable(relation)	\
 	((relation)->rd_options ?				\
@@ -398,7 +399,7 @@ typedef struct StdRdOptions
  * RelationGetTargetBlock
  *		Fetch relation's current insertion target block.
  *
- * Returns InvalidBlockNumber if there is no current target block.	Note
+ * Returns InvalidBlockNumber if there is no current target block.  Note
  * that the target block status is discarded on any smgr-level invalidation.
  */
 #define RelationGetTargetBlock(relation) \

@@ -210,7 +210,7 @@ make_restrictinfo_internal(Expr *clause,
 
 	/*
 	 * Fill in all the cacheable fields with "not yet set" markers. None of
-	 * these will be computed until/unless needed.	Note in particular that we
+	 * these will be computed until/unless needed.  Note in particular that we
 	 * don't mark a binary opclause as mergejoinable or hashjoinable here;
 	 * that happens only if it appears in the right context (top level of a
 	 * joinclause list).

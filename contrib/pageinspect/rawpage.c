@@ -208,7 +208,8 @@ page_header(PG_FUNCTION_ARGS)
 	/* pageinspect >= 1.2 uses pg_lsn instead of text for the LSN field. */
 	if (tupdesc->attrs[0]->atttypid == TEXTOID)
 	{
-		char	lsnchar[64];
+		char		lsnchar[64];
+
 		snprintf(lsnchar, sizeof(lsnchar), "%X/%X",
 				 (uint32) (lsn >> 32), (uint32) lsn);
 		values[0] = CStringGetTextDatum(lsnchar);

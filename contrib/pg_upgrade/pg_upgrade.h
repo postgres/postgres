@@ -142,10 +142,10 @@ typedef struct
  */
 typedef struct
 {
-	const char		*old_tablespace;
-	const char		*new_tablespace;
-	const char		*old_tablespace_suffix;
-	const char		*new_tablespace_suffix;
+	const char *old_tablespace;
+	const char *new_tablespace;
+	const char *old_tablespace_suffix;
+	const char *new_tablespace_suffix;
 	Oid			old_db_oid;
 	Oid			new_db_oid;
 
@@ -167,7 +167,8 @@ typedef struct
 {
 	Oid			db_oid;			/* oid of the database */
 	char	   *db_name;		/* database name */
-	char		db_tablespace[MAXPGPATH]; /* database default tablespace path */
+	char		db_tablespace[MAXPGPATH];		/* database default tablespace
+												 * path */
 	RelInfoArr	rel_arr;		/* array of all user relinfos */
 } DbInfo;
 
@@ -454,7 +455,7 @@ pg_log(eLogType type, const char *fmt,...)
 __attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
 void
 pg_fatal(const char *fmt,...)
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2),noreturn));
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2), noreturn));
 void		end_progress_output(void);
 void
 prep_status(const char *fmt,...)

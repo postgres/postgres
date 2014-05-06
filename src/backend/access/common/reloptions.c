@@ -540,7 +540,7 @@ add_real_reloption(bits32 kinds, char *name, char *desc, double default_val,
  *		Add a new string reloption
  *
  * "validator" is an optional function pointer that can be used to test the
- * validity of the values.	It must elog(ERROR) when the argument string is
+ * validity of the values.  It must elog(ERROR) when the argument string is
  * not acceptable for the variable.  Note that the default value must pass
  * the validation.
  */
@@ -868,7 +868,7 @@ extractRelOptions(HeapTuple tuple, TupleDesc tupdesc, Oid amoptions)
  * is returned.
  *
  * Note: values of type int, bool and real are allocated as part of the
- * returned array.	Values of type string are allocated separately and must
+ * returned array.  Values of type string are allocated separately and must
  * be freed by the caller.
  */
 relopt_value *
@@ -1205,7 +1205,7 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 		{"check_option", RELOPT_TYPE_STRING,
 		offsetof(StdRdOptions, check_option_offset)},
 		{"user_catalog_table", RELOPT_TYPE_BOOL,
-		 offsetof(StdRdOptions, user_catalog_table)}
+		offsetof(StdRdOptions, user_catalog_table)}
 	};
 
 	options = parseRelOptions(reloptions, validate, kind, &numoptions);

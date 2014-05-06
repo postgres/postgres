@@ -54,7 +54,7 @@ struct xl_running_xacts;
 extern void CheckPointSnapBuild(void);
 
 extern SnapBuild *AllocateSnapshotBuilder(struct ReorderBuffer *cache,
-						  TransactionId xmin_horizon, XLogRecPtr start_lsn);
+						TransactionId xmin_horizon, XLogRecPtr start_lsn);
 extern void FreeSnapshotBuilder(SnapBuild *cache);
 
 extern void SnapBuildSnapDecRefcount(Snapshot snap);
@@ -67,17 +67,17 @@ extern SnapBuildState SnapBuildCurrentState(SnapBuild *snapstate);
 extern bool SnapBuildXactNeedsSkip(SnapBuild *snapstate, XLogRecPtr ptr);
 
 extern void SnapBuildCommitTxn(SnapBuild *builder, XLogRecPtr lsn,
-							   TransactionId xid, int nsubxacts,
-							   TransactionId *subxacts);
+				   TransactionId xid, int nsubxacts,
+				   TransactionId *subxacts);
 extern void SnapBuildAbortTxn(SnapBuild *builder, XLogRecPtr lsn,
-							  TransactionId xid, int nsubxacts,
-							  TransactionId *subxacts);
+				  TransactionId xid, int nsubxacts,
+				  TransactionId *subxacts);
 extern bool SnapBuildProcessChange(SnapBuild *builder, TransactionId xid,
-								   XLogRecPtr lsn);
+					   XLogRecPtr lsn);
 extern void SnapBuildProcessNewCid(SnapBuild *builder, TransactionId xid,
-								   XLogRecPtr lsn, struct xl_heap_new_cid *cid);
+					   XLogRecPtr lsn, struct xl_heap_new_cid *cid);
 extern void SnapBuildProcessRunningXacts(SnapBuild *builder, XLogRecPtr lsn,
-										 struct xl_running_xacts *running);
+							 struct xl_running_xacts *running);
 extern void SnapBuildSerializationPoint(SnapBuild *builder, XLogRecPtr lsn);
 
 #endif   /* SNAPBUILD_H */

@@ -300,8 +300,8 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	signaled = WIFSIGNALED(rc) || WEXITSTATUS(rc) > 125;
 
 	ereport(signaled ? FATAL : DEBUG2,
-		(errmsg("could not restore file \"%s\" from archive: %s",
-				xlogfname, wait_result_to_str(rc))));
+			(errmsg("could not restore file \"%s\" from archive: %s",
+					xlogfname, wait_result_to_str(rc))));
 
 not_available:
 

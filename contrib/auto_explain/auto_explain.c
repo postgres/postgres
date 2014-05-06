@@ -116,7 +116,7 @@ _PG_init(void)
 
 	DefineCustomBoolVariable("auto_explain.log_triggers",
 							 "Include trigger statistics in plans.",
-							 "This has no effect unless log_analyze is also set.",
+						"This has no effect unless log_analyze is also set.",
 							 &auto_explain_log_triggers,
 							 false,
 							 PGC_SUSET,

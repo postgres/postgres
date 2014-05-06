@@ -10,7 +10,7 @@
  *
  * The caller is responsible for creating the new heap, all catalog
  * changes, supplying the tuples to be written to the new heap, and
- * rebuilding indexes.	The caller must hold AccessExclusiveLock on the
+ * rebuilding indexes.  The caller must hold AccessExclusiveLock on the
  * target table, because we assume no one else is writing into it.
  *
  * To use the facility:
@@ -43,7 +43,7 @@
  * to substitute the correct ctid instead.
  *
  * For each ctid reference from A -> B, we might encounter either A first
- * or B first.	(Note that a tuple in the middle of a chain is both A and B
+ * or B first.  (Note that a tuple in the middle of a chain is both A and B
  * of different pairs.)
  *
  * If we encounter A first, we'll store the tuple in the unresolved_tups
@@ -58,11 +58,11 @@
  * and can write A immediately with the correct ctid.
  *
  * Entries in the hash tables can be removed as soon as the later tuple
- * is encountered.	That helps to keep the memory usage down.  At the end,
+ * is encountered.  That helps to keep the memory usage down.  At the end,
  * both tables are usually empty; we should have encountered both A and B
  * of each pair.  However, it's possible for A to be RECENTLY_DEAD and B
  * entirely DEAD according to HeapTupleSatisfiesVacuum, because the test
- * for deadness using OldestXmin is not exact.	In such a case we might
+ * for deadness using OldestXmin is not exact.  In such a case we might
  * encounter B first, and skip it, and find A later.  Then A would be added
  * to unresolved_tups, and stay there until end of the rewrite.  Since
  * this case is very unusual, we don't worry about the memory usage.
@@ -78,7 +78,7 @@
  * of CLUSTERing on an unchanging key column, we'll see all the versions
  * of a given tuple together anyway, and so the peak memory usage is only
  * proportional to the number of RECENTLY_DEAD versions of a single row, not
- * in the whole table.	Note that if we do fail halfway through a CLUSTER,
+ * in the whole table.  Note that if we do fail halfway through a CLUSTER,
  * the old table is still valid, so failure is not catastrophic.
  *
  * We can't use the normal heap_insert function to insert into the new
@@ -143,13 +143,13 @@ typedef struct RewriteStateData
 	BlockNumber rs_blockno;		/* block where page will go */
 	bool		rs_buffer_valid;	/* T if any tuples in buffer */
 	bool		rs_use_wal;		/* must we WAL-log inserts? */
-	bool		rs_logical_rewrite; /* do we need to do logical rewriting */
+	bool		rs_logical_rewrite;		/* do we need to do logical rewriting */
 	TransactionId rs_oldest_xmin;		/* oldest xmin used by caller to
 										 * determine tuple visibility */
 	TransactionId rs_freeze_xid;/* Xid that will be used as freeze cutoff
 								 * point */
-	TransactionId rs_logical_xmin;	/* Xid that will be used as cutoff
-									 * point for logical rewrites */
+	TransactionId rs_logical_xmin;		/* Xid that will be used as cutoff
+										 * point for logical rewrites */
 	MultiXactId rs_cutoff_multi;/* MultiXactId that will be used as cutoff
 								 * point for multixacts */
 	MemoryContext rs_cxt;		/* for hash tables and entries and tuples in
@@ -158,7 +158,7 @@ typedef struct RewriteStateData
 	HTAB	   *rs_unresolved_tups;		/* unmatched A tuples */
 	HTAB	   *rs_old_new_tid_map;		/* unmatched B tuples */
 	HTAB	   *rs_logical_mappings;	/* logical remapping files */
-	uint32		rs_num_rewrite_mappings; /* # in memory mappings */
+	uint32		rs_num_rewrite_mappings;		/* # in memory mappings */
 }	RewriteStateData;
 
 /*
@@ -199,12 +199,12 @@ typedef OldToNewMappingData *OldToNewMapping;
  */
 typedef struct RewriteMappingFile
 {
-	TransactionId		xid;		/* xid that might need to see the row */
-	int					vfd;		/* fd of mappings file */
-	off_t				off;		/* how far have we written yet */
-	uint32				num_mappings; /* number of in-memory mappings */
-	dlist_head			mappings;	/* list of in-memory mappings */
-	char				path[MAXPGPATH]; /* path, for error messages */
+	TransactionId xid;			/* xid that might need to see the row */
+	int			vfd;			/* fd of mappings file */
+	off_t		off;			/* how far have we written yet */
+	uint32		num_mappings;	/* number of in-memory mappings */
+	dlist_head	mappings;		/* list of in-memory mappings */
+	char		path[MAXPGPATH];	/* path, for error messages */
 } RewriteMappingFile;
 
 /*
@@ -213,8 +213,8 @@ typedef struct RewriteMappingFile
  */
 typedef struct RewriteMappingDataEntry
 {
-	LogicalRewriteMappingData map;	/* map between old and new location of
-									 * the tuple */
+	LogicalRewriteMappingData map;		/* map between old and new location of
+										 * the tuple */
 	dlist_node	node;
 } RewriteMappingDataEntry;
 
@@ -346,7 +346,7 @@ end_heap_rewrite(RewriteState state)
 	}
 
 	/*
-	 * If the rel is WAL-logged, must fsync before commit.	We use heap_sync
+	 * If the rel is WAL-logged, must fsync before commit.  We use heap_sync
 	 * to ensure that the toast table gets fsync'd too.
 	 *
 	 * It's obvious that we must do this when not WAL-logging. It's less
@@ -617,7 +617,7 @@ rewrite_heap_dead_tuple(RewriteState state, HeapTuple old_tuple)
 }
 
 /*
- * Insert a tuple to the new relation.	This has to track heap_insert
+ * Insert a tuple to the new relation.  This has to track heap_insert
  * and its subsidiary functions!
  *
  * t_self of the tuple is set to the new TID of the tuple. If t_ctid of the
@@ -866,13 +866,13 @@ logical_heap_rewrite_flush_mappings(RewriteState state)
 	hash_seq_init(&seq_status, state->rs_logical_mappings);
 	while ((src = (RewriteMappingFile *) hash_seq_search(&seq_status)) != NULL)
 	{
-		XLogRecData		rdata[2];
-		char		   *waldata;
-		char		   *waldata_start;
+		XLogRecData rdata[2];
+		char	   *waldata;
+		char	   *waldata_start;
 		xl_heap_rewrite_mapping xlrec;
-		Oid				dboid;
-		uint32			len;
-		int				written;
+		Oid			dboid;
+		uint32		len;
+		int			written;
 
 		/* this file hasn't got any new mappings */
 		if (src->num_mappings == 0)
@@ -962,14 +962,14 @@ logical_end_heap_rewrite(RewriteState state)
 		return;
 
 	/* writeout remaining in-memory entries */
-	if (state->rs_num_rewrite_mappings > 0 )
+	if (state->rs_num_rewrite_mappings > 0)
 		logical_heap_rewrite_flush_mappings(state);
 
 	/* Iterate over all mappings we have written and fsync the files. */
 	hash_seq_init(&seq_status, state->rs_logical_mappings);
 	while ((src = (RewriteMappingFile *) hash_seq_search(&seq_status)) != NULL)
 	{
-		if(FileSync(src->vfd) != 0)
+		if (FileSync(src->vfd) != 0)
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not fsync file \"%s\": %m", src->path)));
@@ -985,10 +985,10 @@ static void
 logical_rewrite_log_mapping(RewriteState state, TransactionId xid,
 							LogicalRewriteMappingData *map)
 {
-	RewriteMappingFile		   *src;
-	RewriteMappingDataEntry	   *pmap;
-	Oid							relid;
-	bool						found;
+	RewriteMappingFile *src;
+	RewriteMappingDataEntry *pmap;
+	Oid			relid;
+	bool		found;
 
 	relid = RelationGetRelid(state->rs_old_rel);
 
@@ -1027,7 +1027,7 @@ logical_rewrite_log_mapping(RewriteState state, TransactionId xid,
 		if (src->vfd < 0)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not create file \"%s\": %m",	path)));
+					 errmsg("could not create file \"%s\": %m", path)));
 	}
 
 	pmap = MemoryContextAlloc(state->rs_cxt,
@@ -1041,7 +1041,7 @@ logical_rewrite_log_mapping(RewriteState state, TransactionId xid,
 	 * Write out buffer every time we've too many in-memory entries across all
 	 * mapping files.
 	 */
-	if (state->rs_num_rewrite_mappings >= 1000 /* arbitrary number */)
+	if (state->rs_num_rewrite_mappings >= 1000 /* arbitrary number */ )
 		logical_heap_rewrite_flush_mappings(state);
 }
 
@@ -1054,11 +1054,11 @@ logical_rewrite_heap_tuple(RewriteState state, ItemPointerData old_tid,
 						   HeapTuple new_tuple)
 {
 	ItemPointerData new_tid = new_tuple->t_self;
-	TransactionId	cutoff = state->rs_logical_xmin;
-	TransactionId	xmin;
-	TransactionId	xmax;
-	bool			do_log_xmin = false;
-	bool			do_log_xmax = false;
+	TransactionId cutoff = state->rs_logical_xmin;
+	TransactionId xmin;
+	TransactionId xmax;
+	bool		do_log_xmin = false;
+	bool		do_log_xmax = false;
 	LogicalRewriteMappingData map;
 
 	/* no logical rewrite in progress, we don't need to log anything */
@@ -1147,7 +1147,8 @@ heap_xlog_logical_rewrite(XLogRecPtr lsn, XLogRecord *r)
 	if (fd < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not create file \"%s\": %m",	path)));
+				 errmsg("could not create file \"%s\": %m", path)));
+
 	/*
 	 * Truncate all data that's not guaranteed to have been safely fsynced (by
 	 * previous record or by the last checkpoint).
@@ -1174,6 +1175,7 @@ heap_xlog_logical_rewrite(XLogRecPtr lsn, XLogRecord *r)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not write to file \"%s\": %m", path)));
+
 	/*
 	 * Now fsync all previously written data. We could improve things and only
 	 * do this for the last write to a file, but the required bookkeeping
@@ -1222,13 +1224,14 @@ CheckPointLogicalRewriteHeap(void)
 	mappings_dir = AllocateDir("pg_llog/mappings");
 	while ((mapping_de = ReadDir(mappings_dir, "pg_llog/mappings")) != NULL)
 	{
-		struct stat	statbuf;
+		struct stat statbuf;
 		Oid			dboid;
 		Oid			relid;
 		XLogRecPtr	lsn;
 		TransactionId rewrite_xid;
 		TransactionId create_xid;
-		uint32		hi,	lo;
+		uint32		hi,
+					lo;
 
 		if (strcmp(mapping_de->d_name, ".") == 0 ||
 			strcmp(mapping_de->d_name, "..") == 0)
@@ -1244,7 +1247,7 @@ CheckPointLogicalRewriteHeap(void)
 
 		if (sscanf(mapping_de->d_name, LOGICAL_REWRITE_FORMAT,
 				   &dboid, &relid, &hi, &lo, &rewrite_xid, &create_xid) != 6)
-			elog(ERROR,"could not parse filename \"%s\"", mapping_de->d_name);
+			elog(ERROR, "could not parse filename \"%s\"", mapping_de->d_name);
 
 		lsn = ((uint64) hi) << 32 | lo;
 
@@ -1258,7 +1261,7 @@ CheckPointLogicalRewriteHeap(void)
 		}
 		else
 		{
-			int		fd = OpenTransientFile(path, O_RDONLY | PG_BINARY, 0);
+			int			fd = OpenTransientFile(path, O_RDONLY | PG_BINARY, 0);
 
 			/*
 			 * The file cannot vanish due to concurrency since this function
@@ -1269,6 +1272,7 @@ CheckPointLogicalRewriteHeap(void)
 				ereport(ERROR,
 						(errcode_for_file_access(),
 						 errmsg("could not open file \"%s\": %m", path)));
+
 			/*
 			 * We could try to avoid fsyncing files that either haven't
 			 * changed or have only been created since the checkpoint's start,

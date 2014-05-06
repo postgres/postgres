@@ -71,7 +71,7 @@ static bool isQueryUsingTempRelation_walker(Node *node, void *context);
  *
  * A qualified refname (schemaname != NULL) can only match a relation RTE
  * that (a) has no alias and (b) is for the same relation identified by
- * schemaname.refname.	In this case we convert schemaname.refname to a
+ * schemaname.refname.  In this case we convert schemaname.refname to a
  * relation OID and search by relid, rather than by alias name.  This is
  * peculiar, but it's what SQL says to do.
  */
@@ -181,7 +181,7 @@ scanNameSpaceForRefname(ParseState *pstate, const char *refname, int location)
 
 /*
  * Search the query's table namespace for a relation RTE matching the
- * given relation OID.	Return the RTE if a unique match, or NULL
+ * given relation OID.  Return the RTE if a unique match, or NULL
  * if no match.  Raise error if multiple matches.
  *
  * See the comments for refnameRangeTblEntry to understand why this
@@ -285,7 +285,7 @@ isFutureCTE(ParseState *pstate, const char *refname)
  *
  * This is different from refnameRangeTblEntry in that it considers every
  * entry in the ParseState's rangetable(s), not only those that are currently
- * visible in the p_namespace list(s).	This behavior is invalid per the SQL
+ * visible in the p_namespace list(s).  This behavior is invalid per the SQL
  * spec, and it may give ambiguous results (there might be multiple equally
  * valid matches, but only one will be returned).  This must be used ONLY
  * as a heuristic in giving suitable error messages.  See errorMissingRTE.
@@ -308,8 +308,8 @@ searchRangeTableForRel(ParseState *pstate, RangeVar *relation)
 	 * relation.
 	 *
 	 * NB: It's not critical that RangeVarGetRelid return the correct answer
-	 * here in the face of concurrent DDL.	If it doesn't, the worst case
-	 * scenario is a less-clear error message.	Also, the tables involved in
+	 * here in the face of concurrent DDL.  If it doesn't, the worst case
+	 * scenario is a less-clear error message.  Also, the tables involved in
 	 * the query are already locked, which reduces the number of cases in
 	 * which surprising behavior can occur.  So we do the name lookup
 	 * unlocked.
@@ -431,7 +431,7 @@ check_lateral_ref_ok(ParseState *pstate, ParseNamespaceItem *nsitem,
 
 /*
  * given an RTE, return RT index (starting with 1) of the entry,
- * and optionally get its nesting depth (0 = current).	If sublevels_up
+ * and optionally get its nesting depth (0 = current).  If sublevels_up
  * is NULL, only consider rels at the current nesting level.
  * Raises error if RTE not found.
  */
@@ -585,11 +585,11 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname,
 
 		/* In constraint check, no system column is allowed except tableOid */
 		if (pstate->p_expr_kind == EXPR_KIND_CHECK_CONSTRAINT &&
-			attnum < InvalidAttrNumber && attnum !=  TableOidAttributeNumber)
+			attnum < InvalidAttrNumber && attnum != TableOidAttributeNumber)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 					 errmsg("system column \"%s\" reference in check constraint is invalid",
-						colname),
+							colname),
 					 parser_errposition(pstate, location)));
 
 		if (attnum != InvalidAttrNumber)
@@ -673,7 +673,7 @@ colNameToVar(ParseState *pstate, char *colname, bool localonly,
  *
  * This is different from colNameToVar in that it considers every entry in
  * the ParseState's rangetable(s), not only those that are currently visible
- * in the p_namespace list(s).	This behavior is invalid per the SQL spec,
+ * in the p_namespace list(s).  This behavior is invalid per the SQL spec,
  * and it may give ambiguous results (there might be multiple equally valid
  * matches, but only one will be returned).  This must be used ONLY as a
  * heuristic in giving suitable error messages.  See errorMissingColumn.
@@ -1016,7 +1016,7 @@ addRangeTableEntry(ParseState *pstate,
 
 	/*
 	 * Get the rel's OID.  This access also ensures that we have an up-to-date
-	 * relcache entry for the rel.	Since this is typically the first access
+	 * relcache entry for the rel.  Since this is typically the first access
 	 * to a rel in a statement, be careful to get the right access level
 	 * depending on whether we're doing SELECT FOR UPDATE/SHARE.
 	 */
@@ -2580,7 +2580,7 @@ get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 				 * Dropped attributes are only possible with functions that
 				 * return named composite types.  In such a case we have to
 				 * look up the result type to see if it currently has this
-				 * column dropped.	So first, loop over the funcs until we
+				 * column dropped.  So first, loop over the funcs until we
 				 * find the one that covers the requested column.
 				 */
 				foreach(lc, rte->functions)
@@ -2811,7 +2811,7 @@ errorMissingRTE(ParseState *pstate, RangeVar *relation)
 
 	/*
 	 * Check to see if there are any potential matches in the query's
-	 * rangetable.	(Note: cases involving a bad schema name in the RangeVar
+	 * rangetable.  (Note: cases involving a bad schema name in the RangeVar
 	 * will throw error immediately here.  That seems OK.)
 	 */
 	rte = searchRangeTableForRel(pstate, relation);
@@ -2865,7 +2865,7 @@ errorMissingColumn(ParseState *pstate,
 	RangeTblEntry *rte;
 
 	/*
-	 * If relname was given, just play dumb and report it.	(In practice, a
+	 * If relname was given, just play dumb and report it.  (In practice, a
 	 * bad qualification name should end up at errorMissingRTE, not here, so
 	 * no need to work hard on this case.)
 	 */

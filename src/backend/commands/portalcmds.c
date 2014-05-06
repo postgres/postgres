@@ -4,7 +4,7 @@
  *	  Utility commands affecting portals (that is, SQL cursor commands)
  *
  * Note: see also tcop/pquery.c, which implements portal operations for
- * the FE/BE protocol.	This module uses pquery.c for some operations.
+ * the FE/BE protocol.  This module uses pquery.c for some operations.
  * And both modules depend on utils/mmgr/portalmem.c, which controls
  * storage management for portals (but doesn't run any queries in them).
  *
@@ -89,7 +89,7 @@ PerformCursorOpen(PlannedStmt *stmt, ParamListInfo params,
 
 	/*----------
 	 * Also copy the outer portal's parameter list into the inner portal's
-	 * memory context.	We want to pass down the parameter values in case we
+	 * memory context.  We want to pass down the parameter values in case we
 	 * had a command like
 	 *		DECLARE c CURSOR FOR SELECT ... WHERE foo = $1
 	 * This will have been parsed using the outer parameter set and the
@@ -106,7 +106,7 @@ PerformCursorOpen(PlannedStmt *stmt, ParamListInfo params,
 	 *
 	 * If the user didn't specify a SCROLL type, allow or disallow scrolling
 	 * based on whether it would require any additional runtime overhead to do
-	 * so.	Also, we disallow scrolling for FOR UPDATE cursors.
+	 * so.  Also, we disallow scrolling for FOR UPDATE cursors.
 	 */
 	portal->cursorOptions = cstmt->options;
 	if (!(portal->cursorOptions & (CURSOR_OPT_SCROLL | CURSOR_OPT_NO_SCROLL)))
@@ -365,7 +365,7 @@ PersistHoldablePortal(Portal portal)
 		ExecutorRewind(queryDesc);
 
 		/*
-		 * Change the destination to output to the tuplestore.	Note we tell
+		 * Change the destination to output to the tuplestore.  Note we tell
 		 * the tuplestore receiver to detoast all data passed through it.
 		 */
 		queryDesc->dest = CreateDestReceiver(DestTuplestore);

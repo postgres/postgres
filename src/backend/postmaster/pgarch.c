@@ -487,14 +487,20 @@ pgarch_ArchiverCopyLoop(void)
 				/* successful */
 				pgarch_archiveDone(xlog);
 
-				/* Tell the collector about the WAL file that we successfully archived */
+				/*
+				 * Tell the collector about the WAL file that we successfully
+				 * archived
+				 */
 				pgstat_send_archiver(xlog, false);
 
 				break;			/* out of inner retry loop */
 			}
 			else
 			{
-				/* Tell the collector about the WAL file that we failed to archive */
+				/*
+				 * Tell the collector about the WAL file that we failed to
+				 * archive
+				 */
 				pgstat_send_archiver(xlog, true);
 
 				if (++failures >= NUM_ARCHIVE_RETRIES)
@@ -590,9 +596,9 @@ pgarch_archiveXlog(char *xlog)
 	{
 		/*
 		 * If either the shell itself, or a called command, died on a signal,
-		 * abort the archiver.	We do this because system() ignores SIGINT and
+		 * abort the archiver.  We do this because system() ignores SIGINT and
 		 * SIGQUIT while waiting; so a signal is very likely something that
-		 * should have interrupted us too.	If we overreact it's no big deal,
+		 * should have interrupted us too.  If we overreact it's no big deal,
 		 * the postmaster will just start the archiver again.
 		 *
 		 * Per the Single Unix Spec, shells report exit status > 128 when a

@@ -279,7 +279,7 @@ ResetSequence(Oid seq_relid)
 	seq->log_cnt = 0;
 
 	/*
-	 * Create a new storage file for the sequence.	We want to keep the
+	 * Create a new storage file for the sequence.  We want to keep the
 	 * sequence's relfrozenxid at 0, since it won't contain any unfrozen XIDs.
 	 * Same with relminmxid, since a sequence will never contain multixacts.
 	 */
@@ -325,9 +325,9 @@ fill_seq_with_data(Relation rel, HeapTuple tuple)
 	LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 
 	/*
-	 * Since VACUUM does not process sequences, we have to force the tuple
-	 * to have xmin = FrozenTransactionId now.	Otherwise it would become
-	 * invisible to SELECTs after 2G transactions.	It is okay to do this
+	 * Since VACUUM does not process sequences, we have to force the tuple to
+	 * have xmin = FrozenTransactionId now.  Otherwise it would become
+	 * invisible to SELECTs after 2G transactions.  It is okay to do this
 	 * because if the current transaction aborts, no other xact will ever
 	 * examine the sequence tuple anyway.
 	 */
@@ -487,7 +487,7 @@ nextval(PG_FUNCTION_ARGS)
 	 * XXX: This is not safe in the presence of concurrent DDL, but acquiring
 	 * a lock here is more expensive than letting nextval_internal do it,
 	 * since the latter maintains a cache that keeps us from hitting the lock
-	 * manager more than once per transaction.	It's not clear whether the
+	 * manager more than once per transaction.  It's not clear whether the
 	 * performance penalty is material in practice, but for now, we do it this
 	 * way.
 	 */
@@ -567,7 +567,7 @@ nextval_internal(Oid relid)
 	}
 
 	/*
-	 * Decide whether we should emit a WAL log record.	If so, force up the
+	 * Decide whether we should emit a WAL log record.  If so, force up the
 	 * fetch count to grab SEQ_LOG_VALS more values than we actually need to
 	 * cache.  (These will then be usable without logging.)
 	 *
@@ -674,7 +674,7 @@ nextval_internal(Oid relid)
 	 * We must mark the buffer dirty before doing XLogInsert(); see notes in
 	 * SyncOneBuffer().  However, we don't apply the desired changes just yet.
 	 * This looks like a violation of the buffer update protocol, but it is in
-	 * fact safe because we hold exclusive lock on the buffer.	Any other
+	 * fact safe because we hold exclusive lock on the buffer.  Any other
 	 * process, including a checkpoint, that tries to examine the buffer
 	 * contents will block until we release the lock, and then will see the
 	 * final state that we install below.
@@ -936,7 +936,7 @@ setval3_oid(PG_FUNCTION_ARGS)
  * Open the sequence and acquire AccessShareLock if needed
  *
  * If we haven't touched the sequence already in this transaction,
- * we need to acquire AccessShareLock.	We arrange for the lock to
+ * we need to acquire AccessShareLock.  We arrange for the lock to
  * be owned by the top transaction, so that we don't need to do it
  * more than once per xact.
  */
@@ -1037,7 +1037,7 @@ init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel)
 
 	/*
 	 * If the sequence has been transactionally replaced since we last saw it,
-	 * discard any cached-but-unissued values.	We do not touch the currval()
+	 * discard any cached-but-unissued values.  We do not touch the currval()
 	 * state, however.
 	 */
 	if (seqrel->rd_rel->relfilenode != elm->filenode)
@@ -1554,13 +1554,13 @@ seq_redo(XLogRecPtr lsn, XLogRecord *record)
 	page = (Page) BufferGetPage(buffer);
 
 	/*
-	 * We always reinit the page.  However, since this WAL record type is
-	 * also used for updating sequences, it's possible that a hot-standby
-	 * backend is examining the page concurrently; so we mustn't transiently
-	 * trash the buffer.  The solution is to build the correct new page
-	 * contents in local workspace and then memcpy into the buffer.  Then only
-	 * bytes that are supposed to change will change, even transiently. We
-	 * must palloc the local page for alignment reasons.
+	 * We always reinit the page.  However, since this WAL record type is also
+	 * used for updating sequences, it's possible that a hot-standby backend
+	 * is examining the page concurrently; so we mustn't transiently trash the
+	 * buffer.  The solution is to build the correct new page contents in
+	 * local workspace and then memcpy into the buffer.  Then only bytes that
+	 * are supposed to change will change, even transiently. We must palloc
+	 * the local page for alignment reasons.
 	 */
 	localpage = (Page) palloc(BufferGetPageSize(buffer));
 

@@ -704,7 +704,7 @@ main(int argc, char **argv)
 				break;
 			else
 			{
-				pg_usleep(1000000L);		/* 1 second */
+				pg_usleep(1000000L);	/* 1 second */
 				continue;
 			}
 		}

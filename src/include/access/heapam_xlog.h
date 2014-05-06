@@ -43,7 +43,7 @@
  */
 #define XLOG_HEAP_INIT_PAGE		0x80
 /*
- * We ran out of opcodes, so heapam.c now has a second RmgrId.	These opcodes
+ * We ran out of opcodes, so heapam.c now has a second RmgrId.  These opcodes
  * are associated with RM_HEAP2_ID, but are not logically different from
  * the ones above associated with RM_HEAP_ID.  XLOG_HEAP_OPMASK applies to
  * these, too.
@@ -71,7 +71,7 @@
 #define XLOG_HEAP_SUFFIX_FROM_OLD			(1<<6)
 
 /* convenience macro for checking whether any form of old tuple was logged */
-#define XLOG_HEAP_CONTAINS_OLD 						\
+#define XLOG_HEAP_CONTAINS_OLD						\
 	(XLOG_HEAP_CONTAINS_OLD_TUPLE | XLOG_HEAP_CONTAINS_OLD_KEY)
 
 /*
@@ -126,11 +126,11 @@ typedef struct xl_heap_header
  */
 typedef struct xl_heap_header_len
 {
-	uint16      t_len;
+	uint16		t_len;
 	xl_heap_header header;
 } xl_heap_header_len;
 
-#define SizeOfHeapHeaderLen	(offsetof(xl_heap_header_len, header) + SizeOfHeapHeader)
+#define SizeOfHeapHeaderLen (offsetof(xl_heap_header_len, header) + SizeOfHeapHeader)
 
 /* This is what we need to know about insert */
 typedef struct xl_heap_insert
@@ -179,7 +179,7 @@ typedef struct xl_heap_update
 	TransactionId old_xmax;		/* xmax of the old tuple */
 	TransactionId new_xmax;		/* xmax of the new tuple */
 	ItemPointerData newtid;		/* new inserted tuple id */
-	uint8		old_infobits_set;	/* infomask bits to set on old tuple */
+	uint8		old_infobits_set;		/* infomask bits to set on old tuple */
 	uint8		flags;
 
 	/*
@@ -335,18 +335,20 @@ typedef struct xl_heap_new_cid
 	 * transactions
 	 */
 	TransactionId top_xid;
-	CommandId cmin;
-	CommandId cmax;
+	CommandId	cmin;
+	CommandId	cmax;
+
 	/*
-	 * don't really need the combocid since we have the actual values
-	 * right in this struct, but the padding makes it free and its
-	 * useful for debugging.
+	 * don't really need the combocid since we have the actual values right in
+	 * this struct, but the padding makes it free and its useful for
+	 * debugging.
 	 */
-	CommandId combocid;
+	CommandId	combocid;
+
 	/*
 	 * Store the relfilenode/ctid pair to facilitate lookups.
 	 */
-	xl_heaptid target;
+	xl_heaptid	target;
 } xl_heap_new_cid;
 
 #define SizeOfHeapNewCid (offsetof(xl_heap_new_cid, target) + SizeOfHeapTid)
@@ -354,12 +356,12 @@ typedef struct xl_heap_new_cid
 /* logical rewrite xlog record header */
 typedef struct xl_heap_rewrite_mapping
 {
-	TransactionId		mapped_xid;	/* xid that might need to see the row */
-	Oid					mapped_db;	/* DbOid or InvalidOid for shared rels */
-	Oid					mapped_rel;	/* Oid of the mapped relation */
-	off_t				offset;		/* How far have we written so far */
-	uint32				num_mappings; /* Number of in-memory mappings */
-	XLogRecPtr			start_lsn;	/* Insert LSN at begin of rewrite */
+	TransactionId mapped_xid;	/* xid that might need to see the row */
+	Oid			mapped_db;		/* DbOid or InvalidOid for shared rels */
+	Oid			mapped_rel;		/* Oid of the mapped relation */
+	off_t		offset;			/* How far have we written so far */
+	uint32		num_mappings;	/* Number of in-memory mappings */
+	XLogRecPtr	start_lsn;		/* Insert LSN at begin of rewrite */
 } xl_heap_rewrite_mapping;
 
 extern void HeapTupleHeaderAdvanceLatestRemovedXid(HeapTupleHeader tuple,

@@ -58,7 +58,7 @@ static Relids adjust_relid_set(Relids relids, int oldrelid, int newrelid);
  *	specified query level.
  *
  * The objective of this routine is to detect whether there are aggregates
- * belonging to the given query level.	Aggregates belonging to subqueries
+ * belonging to the given query level.  Aggregates belonging to subqueries
  * or outer queries do NOT cause a true result.  We must recurse into
  * subqueries to detect outer-reference aggregates that logically belong to
  * the specified query level.
@@ -113,7 +113,7 @@ contain_aggs_of_level_walker(Node *node,
  *	  Find the parse location of any aggregate of the specified query level.
  *
  * Returns -1 if no such agg is in the querytree, or if they all have
- * unknown parse location.	(The former case is probably caller error,
+ * unknown parse location.  (The former case is probably caller error,
  * but we don't bother to distinguish it from the latter case.)
  *
  * Note: it might seem appropriate to merge this functionality into
@@ -208,7 +208,7 @@ contain_windowfuncs_walker(Node *node, void *context)
  *	  Find the parse location of any windowfunc of the current query level.
  *
  * Returns -1 if no such windowfunc is in the querytree, or if they all have
- * unknown parse location.	(The former case is probably caller error,
+ * unknown parse location.  (The former case is probably caller error,
  * but we don't bother to distinguish it from the latter case.)
  *
  * Note: it might seem appropriate to merge this functionality into
@@ -287,11 +287,11 @@ checkExprHasSubLink_walker(Node *node, void *context)
  *
  * Find all Var nodes in the given tree with varlevelsup == sublevels_up,
  * and increment their varno fields (rangetable indexes) by 'offset'.
- * The varnoold fields are adjusted similarly.	Also, adjust other nodes
+ * The varnoold fields are adjusted similarly.  Also, adjust other nodes
  * that contain rangetable indexes, such as RangeTblRef and JoinExpr.
  *
  * NOTE: although this has the form of a walker, we cheat and modify the
- * nodes in-place.	The given expression tree should have been copied
+ * nodes in-place.  The given expression tree should have been copied
  * earlier to ensure that no unwanted side-effects occur!
  */
 
@@ -449,11 +449,11 @@ offset_relid_set(Relids relids, int offset)
  *
  * Find all Var nodes in the given tree belonging to a specific relation
  * (identified by sublevels_up and rt_index), and change their varno fields
- * to 'new_index'.	The varnoold fields are changed too.  Also, adjust other
+ * to 'new_index'.  The varnoold fields are changed too.  Also, adjust other
  * nodes that contain rangetable indexes, such as RangeTblRef and JoinExpr.
  *
  * NOTE: although this has the form of a walker, we cheat and modify the
- * nodes in-place.	The given expression tree should have been copied
+ * nodes in-place.  The given expression tree should have been copied
  * earlier to ensure that no unwanted side-effects occur!
  */
 
@@ -646,7 +646,7 @@ adjust_relid_set(Relids relids, int oldrelid, int newrelid)
  * Likewise for other nodes containing levelsup fields, such as Aggref.
  *
  * NOTE: although this has the form of a walker, we cheat and modify the
- * Var nodes in-place.	The given expression tree should have been copied
+ * Var nodes in-place.  The given expression tree should have been copied
  * earlier to ensure that no unwanted side-effects occur!
  */
 
@@ -1157,7 +1157,7 @@ replace_rte_variables_mutator(Node *node,
  * If the expression tree contains a whole-row Var for the target RTE,
  * the Var is not changed but *found_whole_row is returned as TRUE.
  * For most callers this is an error condition, but we leave it to the caller
- * to report the error so that useful context can be provided.	(In some
+ * to report the error so that useful context can be provided.  (In some
  * usages it would be appropriate to modify the Var's vartype and insert a
  * ConvertRowtypeExpr node to map back to the original vartype.  We might
  * someday extend this function's API to support that.  For now, the only

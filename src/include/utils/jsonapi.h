@@ -110,7 +110,7 @@ extern void pg_parse_json(JsonLexContext *lex, JsonSemAction *sem);
  */
 extern JsonLexContext *makeJsonLexContext(text *json, bool need_escapes);
 extern JsonLexContext *makeJsonLexContextCstringLen(char *json,
-													int len,
-													bool need_escapes);
+							 int len,
+							 bool need_escapes);
 
 #endif   /* JSONAPI_H */

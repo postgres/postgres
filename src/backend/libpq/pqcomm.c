@@ -447,7 +447,7 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 		/*
 		 * Note: This might fail on some OS's, like Linux older than
 		 * 2.4.21-pre3, that don't have the IPV6_V6ONLY socket option, and map
-		 * ipv4 addresses to ipv6.	It will show ::ffff:ipv4 for all ipv4
+		 * ipv4 addresses to ipv6.  It will show ::ffff:ipv4 for all ipv4
 		 * connections.
 		 */
 		err = bind(fd, addr->ai_addr, addr->ai_addrlen);
@@ -692,6 +692,7 @@ StreamConnection(pgsocket server_fd, Port *port)
 		}
 
 #ifdef WIN32
+
 		/*
 		 * This is a Win32 socket optimization.  The ideal size is 32k.
 		 * http://support.microsoft.com/kb/823764/EN-US/
@@ -1126,7 +1127,7 @@ pq_getmessage(StringInfo s, int maxlen)
 	if (len > 0)
 	{
 		/*
-		 * Allocate space for message.	If we run out of room (ridiculously
+		 * Allocate space for message.  If we run out of room (ridiculously
 		 * large message), we will elog(ERROR), but we want to discard the
 		 * message body so as not to lose communication sync.
 		 */

@@ -6,12 +6,12 @@
  * NOTE: an object is identified by the OID of the row that primarily
  * defines the object, plus the OID of the table that that row appears in.
  * For example, a function is identified by the OID of its pg_proc row
- * plus the pg_class OID of table pg_proc.	This allows unique identification
+ * plus the pg_class OID of table pg_proc.  This allows unique identification
  * of objects without assuming that OIDs are unique across tables.
  *
  * Since attributes don't have OIDs of their own, we identify an attribute
  * comment by the objoid+classoid of its parent table, plus an "objsubid"
- * giving the attribute column number.	"objsubid" must be zero in a comment
+ * giving the attribute column number.  "objsubid" must be zero in a comment
  * for a table itself, so that it is distinct from any column comment.
  * Currently, objsubid is unused and zero for all other kinds of objects,
  * but perhaps it might be useful someday to associate comments with
@@ -39,7 +39,7 @@
 #include "catalog/genbki.h"
 
 /* ----------------
- *		pg_description definition.	cpp turns this into
+ *		pg_description definition.  cpp turns this into
  *		typedef struct FormData_pg_description
  * ----------------
  */

@@ -49,8 +49,8 @@ typedef struct
 	dlist_head	segments;		/* a list of leafSegmentInfos */
 
 	/*
-	 * The following fields represent how the segments are split across
-	 * pages, if a page split is required. Filled in by leafRepackItems.
+	 * The following fields represent how the segments are split across pages,
+	 * if a page split is required. Filled in by leafRepackItems.
 	 */
 	dlist_node *lastleft;		/* last segment on left page */
 	int			lsize;			/* total size on left page */
@@ -61,7 +61,7 @@ typedef struct
 
 typedef struct
 {
-	dlist_node	node;		/* linked list pointers */
+	dlist_node	node;			/* linked list pointers */
 
 	/*-------------
 	 * 'action' indicates the status of this in-memory segment, compared to
@@ -83,9 +83,9 @@ typedef struct
 	int			nmodifieditems;
 
 	/*
-	 * The following fields represent the items in this segment. If 'items'
-	 * is not NULL, it contains a palloc'd array of the itemsin this segment.
-	 * If 'seg' is not NULL, it contains the items in an already-compressed
+	 * The following fields represent the items in this segment. If 'items' is
+	 * not NULL, it contains a palloc'd array of the itemsin this segment. If
+	 * 'seg' is not NULL, it contains the items in an already-compressed
 	 * format. It can point to an on-disk page (!modified), or a palloc'd
 	 * segment in memory. If both are set, they must represent the same items.
 	 */
@@ -386,7 +386,7 @@ GinDataPageAddPostingItem(Page page, PostingItem *data, OffsetNumber offset)
 		if (offset != maxoff + 1)
 			memmove(ptr + sizeof(PostingItem),
 					ptr,
-					(maxoff - offset + 1) * sizeof(PostingItem));
+					(maxoff - offset + 1) *sizeof(PostingItem));
 	}
 	memcpy(ptr, data, sizeof(PostingItem));
 
@@ -436,8 +436,8 @@ dataPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 	int			maxitems = items->nitem - items->curitem;
 	Page		page = BufferGetPage(buf);
 	int			i;
-	ItemPointerData	rbound;
-	ItemPointerData	lbound;
+	ItemPointerData rbound;
+	ItemPointerData lbound;
 	bool		needsplit;
 	bool		append;
 	int			segsize;
@@ -451,7 +451,7 @@ dataPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 
 	Assert(GinPageIsData(page));
 
-	rbound  = *GinDataPageGetRightBound(page);
+	rbound = *GinDataPageGetRightBound(page);
 
 	/*
 	 * Count how many of the new items belong to this page.
@@ -464,8 +464,8 @@ dataPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 			{
 				/*
 				 * This needs to go to some other location in the tree. (The
-				 * caller should've chosen the insert location so that at least
-				 * the first item goes here.)
+				 * caller should've chosen the insert location so that at
+				 * least the first item goes here.)
 				 */
 				Assert(i > 0);
 				break;
@@ -553,7 +553,7 @@ dataPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 	/* Add the new items to the segments */
 	if (!addItemsToLeaf(leaf, newItems, maxitems))
 	{
-		 /* all items were duplicates, we have nothing to do */
+		/* all items were duplicates, we have nothing to do */
 		items->curitem += maxitems;
 
 		MemoryContextSwitchTo(oldCxt);
@@ -680,7 +680,7 @@ dataPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 
 		Assert(GinPageRightMost(page) ||
 			   ginCompareItemPointers(GinDataPageGetRightBound(*newlpage),
-									  GinDataPageGetRightBound(*newrpage)) < 0);
+								   GinDataPageGetRightBound(*newrpage)) < 0);
 
 		if (append)
 			elog(DEBUG2, "appended %d items to block %u; split %d/%d (%d to go)",
@@ -769,16 +769,16 @@ ginVacuumPostingTreeLeaf(Relation indexrel, Buffer buffer, GinVacuumState *gvs)
 	 * We don't try to re-encode the segments here, even though some of them
 	 * might be really small now that we've removed some items from them. It
 	 * seems like a waste of effort, as there isn't really any benefit from
-	 * larger segments per se; larger segments only help to pack more items
-	 * in the same space. We might as well delay doing that until the next
+	 * larger segments per se; larger segments only help to pack more items in
+	 * the same space. We might as well delay doing that until the next
 	 * insertion, which will need to re-encode at least part of the page
 	 * anyway.
 	 *
-	 * Also note if the page was in uncompressed, pre-9.4 format before, it
-	 * is now represented as one huge segment that contains all the items.
-	 * It might make sense to split that, to speed up random access, but we
-	 * don't bother. You'll have to REINDEX anyway if you want the full gain
-	 * of the new tighter index format.
+	 * Also note if the page was in uncompressed, pre-9.4 format before, it is
+	 * now represented as one huge segment that contains all the items. It
+	 * might make sense to split that, to speed up random access, but we don't
+	 * bother. You'll have to REINDEX anyway if you want the full gain of the
+	 * new tighter index format.
 	 */
 	if (removedsomething)
 	{
@@ -795,6 +795,7 @@ ginVacuumPostingTreeLeaf(Relation indexrel, Buffer buffer, GinVacuumState *gvs)
 		{
 			leafSegmentInfo *seginfo = dlist_container(leafSegmentInfo, node,
 													   iter.cur);
+
 			if (seginfo->action != GIN_SEGMENT_UNMODIFIED)
 				modified = true;
 			if (modified && seginfo->action != GIN_SEGMENT_DELETE)
@@ -862,10 +863,11 @@ constructLeafRecompressWALData(Buffer buf, disassembledLeaf *leaf)
 	}
 
 	walbufbegin = palloc(
-		sizeof(ginxlogRecompressDataLeaf) +
-		BLCKSZ + 			/* max size needed to hold the segment data */
-		nmodified * 2 +		/* (segno + action) per action */
-		sizeof(XLogRecData));
+						 sizeof(ginxlogRecompressDataLeaf) +
+						 BLCKSZ +		/* max size needed to hold the segment
+										 * data */
+						 nmodified * 2 +		/* (segno + action) per action */
+						 sizeof(XLogRecData));
 	walbufend = walbufbegin;
 
 	recompress_xlog = (ginxlogRecompressDataLeaf *) walbufend;
@@ -965,9 +967,9 @@ dataPlaceToPageLeafRecompress(Buffer buf, disassembledLeaf *leaf)
 	int			segsize;
 
 	/*
-	 * If the page was in pre-9.4 format before, convert the header, and
-	 * force all segments to be copied to the page whether they were modified
-	 * or not.
+	 * If the page was in pre-9.4 format before, convert the header, and force
+	 * all segments to be copied to the page whether they were modified or
+	 * not.
 	 */
 	if (!GinPageIsCompressed(page))
 	{
@@ -1022,6 +1024,7 @@ dataPlaceToPageLeafSplit(Buffer buf, disassembledLeaf *leaf,
 	dlist_node *node;
 	dlist_node *firstright;
 	leafSegmentInfo *seginfo;
+
 	/* these must be static so they can be returned to caller */
 	static ginxlogSplitDataLeaf split_xlog;
 	static XLogRecData rdata[3];
@@ -1121,6 +1124,7 @@ dataPlaceToPageInternal(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 	Page		page = BufferGetPage(buf);
 	OffsetNumber off = stack->off;
 	PostingItem *pitem;
+
 	/* these must be static so they can be returned to caller */
 	static XLogRecData rdata;
 	static ginxlogInsertDataInternal data;
@@ -1198,7 +1202,7 @@ dataSplitPageInternal(GinBtree btree, Buffer origbuf,
 	int			nrightitems;
 	Size		pageSize = PageGetPageSize(oldpage);
 	ItemPointerData oldbound = *GinDataPageGetRightBound(oldpage);
-	ItemPointer	bound;
+	ItemPointer bound;
 	Page		lpage;
 	Page		rpage;
 	OffsetNumber separator;
@@ -1216,8 +1220,8 @@ dataSplitPageInternal(GinBtree btree, Buffer origbuf,
 	*prdata = rdata;
 
 	/*
-	 * First construct a new list of PostingItems, which includes all the
-	 * old items, and the new item.
+	 * First construct a new list of PostingItems, which includes all the old
+	 * items, and the new item.
 	 */
 	memcpy(allitems, GinDataPageGetPostingItem(oldpage, FirstOffsetNumber),
 		   (off - 1) * sizeof(PostingItem));
@@ -1402,8 +1406,8 @@ addItemsToLeaf(disassembledLeaf *leaf, ItemPointer newItems, int nNewItems)
 	leafSegmentInfo *newseg;
 
 	/*
-	 * If the page is completely empty, just construct one new segment to
-	 * hold all the new items.
+	 * If the page is completely empty, just construct one new segment to hold
+	 * all the new items.
 	 */
 	if (dlist_is_empty(&leaf->segments))
 	{
@@ -1418,9 +1422,9 @@ addItemsToLeaf(disassembledLeaf *leaf, ItemPointer newItems, int nNewItems)
 
 	dlist_foreach(iter, &leaf->segments)
 	{
-		leafSegmentInfo *cur = (leafSegmentInfo *)  dlist_container(leafSegmentInfo, node, iter.cur);
+		leafSegmentInfo *cur = (leafSegmentInfo *) dlist_container(leafSegmentInfo, node, iter.cur);
 		int			nthis;
-		ItemPointer	tmpitems;
+		ItemPointer tmpitems;
 		int			ntmpitems;
 
 		/*
@@ -1434,7 +1438,7 @@ addItemsToLeaf(disassembledLeaf *leaf, ItemPointer newItems, int nNewItems)
 			ItemPointerData next_first;
 
 			next = (leafSegmentInfo *) dlist_container(leafSegmentInfo, node,
-								   dlist_next_node(&leaf->segments, iter.cur));
+								 dlist_next_node(&leaf->segments, iter.cur));
 			if (next->items)
 				next_first = next->items[0];
 			else
@@ -1556,27 +1560,27 @@ leafRepackItems(disassembledLeaf *leaf, ItemPointer remaining)
 			if (seginfo->seg == NULL)
 			{
 				if (seginfo->nitems > GinPostingListSegmentMaxSize)
-					npacked = 0; /* no chance that it would fit. */
+					npacked = 0;	/* no chance that it would fit. */
 				else
 				{
 					seginfo->seg = ginCompressPostingList(seginfo->items,
 														  seginfo->nitems,
-												   GinPostingListSegmentMaxSize,
+												GinPostingListSegmentMaxSize,
 														  &npacked);
 				}
 				if (npacked != seginfo->nitems)
 				{
 					/*
-					 * Too large. Compress again to the target size, and create
-					 * a new segment to represent the remaining items. The new
-					 * segment is inserted after this one, so it will be
-					 * processed in the next iteration of this loop.
+					 * Too large. Compress again to the target size, and
+					 * create a new segment to represent the remaining items.
+					 * The new segment is inserted after this one, so it will
+					 * be processed in the next iteration of this loop.
 					 */
 					if (seginfo->seg)
 						pfree(seginfo->seg);
 					seginfo->seg = ginCompressPostingList(seginfo->items,
 														  seginfo->nitems,
-											   GinPostingListSegmentTargetSize,
+											 GinPostingListSegmentTargetSize,
 														  &npacked);
 					if (seginfo->action != GIN_SEGMENT_INSERT)
 						seginfo->action = GIN_SEGMENT_REPLACE;
@@ -1596,7 +1600,7 @@ leafRepackItems(disassembledLeaf *leaf, ItemPointer remaining)
 			 */
 			if (SizeOfGinPostingList(seginfo->seg) < GinPostingListSegmentMinSize && next_node)
 			{
-				int		nmerged;
+				int			nmerged;
 
 				nextseg = dlist_container(leafSegmentInfo, node, next_node);
 
@@ -1741,8 +1745,8 @@ createPostingTree(Relation index, ItemPointerData *items, uint32 nitems,
 	GinPageGetOpaque(tmppage)->rightlink = InvalidBlockNumber;
 
 	/*
-	 * Write as many of the items to the root page as fit. In segments
-	 * of max GinPostingListSegmentMaxSize bytes each.
+	 * Write as many of the items to the root page as fit. In segments of max
+	 * GinPostingListSegmentMaxSize bytes each.
 	 */
 	nrootitems = 0;
 	rootsize = 0;

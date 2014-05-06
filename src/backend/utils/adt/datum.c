@@ -181,7 +181,7 @@ datumIsEqual(Datum value1, Datum value2, bool typByVal, int typLen)
 		/*
 		 * just compare the two datums. NOTE: just comparing "len" bytes will
 		 * not do the work, because we do not know how these bytes are aligned
-		 * inside the "Datum".	We assume instead that any given datatype is
+		 * inside the "Datum".  We assume instead that any given datatype is
 		 * consistent about how it fills extraneous bits in the Datum.
 		 */
 		res = (value1 == value2);

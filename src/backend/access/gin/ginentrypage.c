@@ -135,7 +135,8 @@ GinFormTuple(GinState *ginstate,
 	 */
 	if (data)
 	{
-		char *ptr = GinGetPosting(itup);
+		char	   *ptr = GinGetPosting(itup);
+
 		memcpy(ptr, data, dataSize);
 	}
 
@@ -162,7 +163,7 @@ ginReadTuple(GinState *ginstate, OffsetNumber attnum, IndexTuple itup,
 {
 	Pointer		ptr = GinGetPosting(itup);
 	int			nipd = GinGetNPosting(itup);
-	ItemPointer	ipd;
+	ItemPointer ipd;
 	int			ndecoded;
 
 	if (GinItupIsCompressed(itup))
@@ -192,7 +193,7 @@ ginReadTuple(GinState *ginstate, OffsetNumber attnum, IndexTuple itup,
  * Form a non-leaf entry tuple by copying the key data from the given tuple,
  * which can be either a leaf or non-leaf entry tuple.
  *
- * Any posting list in the source tuple is not copied.	The specified child
+ * Any posting list in the source tuple is not copied.  The specified child
  * block number is inserted into t_tid.
  */
 static IndexTuple

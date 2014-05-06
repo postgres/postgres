@@ -209,7 +209,7 @@ AcquireRewriteLocks(Query *parsetree,
 						/*
 						 * The elements of an alias list have to refer to
 						 * earlier RTEs of the same rtable, because that's the
-						 * order the planner builds things in.	So we already
+						 * order the planner builds things in.  So we already
 						 * processed the referenced RTE, and so it's safe to
 						 * use get_rte_attribute_is_dropped on it. (This might
 						 * not hold after rewriting or planning, but it's OK
@@ -371,7 +371,7 @@ rewriteRuleAction(Query *parsetree,
 	/*
 	 * Generate expanded rtable consisting of main parsetree's rtable plus
 	 * rule action's rtable; this becomes the complete rtable for the rule
-	 * action.	Some of the entries may be unused after we finish rewriting,
+	 * action.  Some of the entries may be unused after we finish rewriting,
 	 * but we leave them all in place for two reasons:
 	 *
 	 * We'd have a much harder job to adjust the query's varnos if we
@@ -437,7 +437,7 @@ rewriteRuleAction(Query *parsetree,
 	 * that if the rule action refers to OLD, its jointree will add a
 	 * reference to rt_index.  If the rule action doesn't refer to OLD, but
 	 * either the rule_qual or the user query quals do, then we need to keep
-	 * the original rtindex in the jointree to provide data for the quals.	We
+	 * the original rtindex in the jointree to provide data for the quals.  We
 	 * don't want the original rtindex to be joined twice, however, so avoid
 	 * keeping it if the rule action mentions it.
 	 *
@@ -459,7 +459,7 @@ rewriteRuleAction(Query *parsetree,
 		{
 			/*
 			 * If sub_action is a setop, manipulating its jointree will do no
-			 * good at all, because the jointree is dummy.	(Perhaps someday
+			 * good at all, because the jointree is dummy.  (Perhaps someday
 			 * we could push the joining and quals down to the member
 			 * statements of the setop?)
 			 */
@@ -668,7 +668,7 @@ adjustJoinTreeList(Query *parsetree, bool removert, int rt_index)
  * then junk fields (these in no particular order).
  *
  * We must do items 1,2,3 before firing rewrite rules, else rewritten
- * references to NEW.foo will produce wrong or incomplete results.	Item 4
+ * references to NEW.foo will produce wrong or incomplete results.  Item 4
  * is not needed for rewriting, but will be needed by the planner, and we
  * can do it essentially for free while handling the other items.
  *
@@ -876,7 +876,7 @@ process_matched_tle(TargetEntry *src_tle,
 	}
 
 	/*----------
-	 * Multiple assignments to same attribute.	Allow only if all are
+	 * Multiple assignments to same attribute.  Allow only if all are
 	 * FieldStore or ArrayRef assignment operations.  This is a bit
 	 * tricky because what we may actually be looking at is a nest of
 	 * such nodes; consider
@@ -894,7 +894,7 @@ process_matched_tle(TargetEntry *src_tle,
 	 * assignments appear to occur left-to-right.
 	 *
 	 * For FieldStore, instead of nesting we can generate a single
-	 * FieldStore with multiple target fields.	We must nest when
+	 * FieldStore with multiple target fields.  We must nest when
 	 * ArrayRefs are involved though.
 	 *----------
 	 */
@@ -1186,7 +1186,7 @@ rewriteValuesRTE(RangeTblEntry *rte, Relation target_relation, List *attrnos)
  * rewriteTargetListUD - rewrite UPDATE/DELETE targetlist as needed
  *
  * This function adds a "junk" TLE that is needed to allow the executor to
- * find the original row for the update or delete.	When the target relation
+ * find the original row for the update or delete.  When the target relation
  * is a regular table, the junk TLE emits the ctid attribute of the original
  * row.  When the target relation is a view, there is no ctid, so we instead
  * emit a whole-row Var that will contain the "old" values of the view row.
@@ -1375,9 +1375,9 @@ ApplyRetrieveRule(Query *parsetree,
 		 * fine as the result relation.
 		 *
 		 * For UPDATE/DELETE, we need to expand the view so as to have source
-		 * data for the operation.	But we also need an unmodified RTE to
+		 * data for the operation.  But we also need an unmodified RTE to
 		 * serve as the target.  So, copy the RTE and add the copy to the
-		 * rangetable.	Note that the copy does not get added to the jointree.
+		 * rangetable.  Note that the copy does not get added to the jointree.
 		 * Also note that there's a hack in fireRIRrules to avoid calling this
 		 * function again when it arrives at the copied RTE.
 		 */
@@ -1549,7 +1549,7 @@ markQueryForLocking(Query *qry, Node *jtnode,
  *	in the given tree.
  *
  * NOTE: although this has the form of a walker, we cheat and modify the
- * SubLink nodes in-place.	It is caller's responsibility to ensure that
+ * SubLink nodes in-place.  It is caller's responsibility to ensure that
  * no unwanted side-effects occur!
  *
  * This is unlike most of the other routines that recurse into subselects,
@@ -1745,7 +1745,7 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
  * not just "NOT x" which the planner is much smarter about, else we will
  * do the wrong thing when the qual evaluates to NULL.)
  *
- * The rule_qual may contain references to OLD or NEW.	OLD references are
+ * The rule_qual may contain references to OLD or NEW.  OLD references are
  * replaced by references to the specified rt_index (the relation that the
  * rule applies to).  NEW references are only possible for INSERT and UPDATE
  * queries on the relation itself, and so they should be replaced by copies
@@ -1818,7 +1818,7 @@ CopyAndAddInvertedQual(Query *parsetree,
  * rows that the qualified action doesn't act on.  (If there are multiple
  * qualified INSTEAD rules, we AND all the negated quals onto a single
  * modified original query.)  We won't execute the original, unmodified
- * query if we find either qualified or unqualified INSTEAD rules.	If
+ * query if we find either qualified or unqualified INSTEAD rules.  If
  * we find both, the modified original query is discarded too.
  */
 static List *
@@ -2174,8 +2174,8 @@ view_cols_are_auto_updatable(Query *viewquery,
 	ListCell   *cell;
 
 	/*
-	 * The caller should have verified that this view is auto-updatable and
-	 * so there should be a single base relation.
+	 * The caller should have verified that this view is auto-updatable and so
+	 * there should be a single base relation.
 	 */
 	Assert(list_length(viewquery->jointree->fromlist) == 1);
 	rtr = (RangeTblRef *) linitial(viewquery->jointree->fromlist);
@@ -2212,7 +2212,7 @@ view_cols_are_auto_updatable(Query *viewquery,
 		}
 	}
 
-	return NULL;			/* all the required view columns are updatable */
+	return NULL;				/* all the required view columns are updatable */
 }
 
 
@@ -2227,7 +2227,7 @@ view_cols_are_auto_updatable(Query *viewquery,
  * updatability.
  *
  * This is used for the information_schema views, which have separate concepts
- * of "updatable" and "trigger updatable".	A relation is "updatable" if it
+ * of "updatable" and "trigger updatable".  A relation is "updatable" if it
  * can be updated without the need for triggers (either because it has a
  * suitable RULE, or because it is simple enough to be automatically updated).
  * A relation is "trigger updatable" if it has a suitable INSTEAD OF trigger.
@@ -2239,7 +2239,7 @@ view_cols_are_auto_updatable(Query *viewquery,
  * to have trigger updatability included in the result.
  *
  * The return value is a bitmask of rule event numbers indicating which of
- * the INSERT, UPDATE and DELETE operations are supported.	(We do it this way
+ * the INSERT, UPDATE and DELETE operations are supported.  (We do it this way
  * so that we can test for UPDATE plus DELETE support in a single call.)
  */
 int
@@ -2354,9 +2354,9 @@ relation_is_updatable(Oid reloid,
 
 			/*
 			 * Determine which of the view's columns are updatable. If there
-			 * are none within the set of columns we are looking at, then
-			 * the view doesn't support INSERT/UPDATE, but it may still
-			 * support DELETE.
+			 * are none within the set of columns we are looking at, then the
+			 * view doesn't support INSERT/UPDATE, but it may still support
+			 * DELETE.
 			 */
 			view_cols_are_auto_updatable(viewquery, NULL,
 										 &updatable_cols, NULL);
@@ -2365,9 +2365,9 @@ relation_is_updatable(Oid reloid,
 				updatable_cols = bms_int_members(updatable_cols, include_cols);
 
 			if (bms_is_empty(updatable_cols))
-				auto_events = (1 << CMD_DELETE); /* May support DELETE */
+				auto_events = (1 << CMD_DELETE);		/* May support DELETE */
 			else
-				auto_events = ALL_EVENTS; /* May support all events */
+				auto_events = ALL_EVENTS;		/* May support all events */
 
 			/*
 			 * The base relation must also support these update commands.
@@ -2476,7 +2476,7 @@ adjust_view_column_set(Bitmapset *cols, List *targetlist)
  *	  the view's base relation becomes the target relation.
  *
  * Note that the base relation here may itself be a view, which may or may not
- * have INSTEAD OF triggers or rules to handle the update.	That is handled by
+ * have INSTEAD OF triggers or rules to handle the update.  That is handled by
  * the recursion in RewriteQuery.
  */
 static Query *
@@ -2573,18 +2573,18 @@ rewriteTargetView(Query *parsetree, Relation view)
 				case CMD_INSERT:
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("cannot insert into column \"%s\" of view \"%s\"",
-									non_updatable_col,
-									RelationGetRelationName(view)),
-							 errdetail_internal("%s", _(auto_update_detail))));
+					errmsg("cannot insert into column \"%s\" of view \"%s\"",
+						   non_updatable_col,
+						   RelationGetRelationName(view)),
+						   errdetail_internal("%s", _(auto_update_detail))));
 					break;
 				case CMD_UPDATE:
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("cannot update column \"%s\" of view \"%s\"",
-									non_updatable_col,
-									RelationGetRelationName(view)),
-							 errdetail_internal("%s", _(auto_update_detail))));
+						 errmsg("cannot update column \"%s\" of view \"%s\"",
+								non_updatable_col,
+								RelationGetRelationName(view)),
+						   errdetail_internal("%s", _(auto_update_detail))));
 					break;
 				default:
 					elog(ERROR, "unrecognized CmdType: %d",
@@ -2688,7 +2688,7 @@ rewriteTargetView(Query *parsetree, Relation view)
 	 * that does not correspond to what happens in ordinary SELECT usage of a
 	 * view: all referenced columns must have read permission, even if
 	 * optimization finds that some of them can be discarded during query
-	 * transformation.	The flattening we're doing here is an optional
+	 * transformation.  The flattening we're doing here is an optional
 	 * optimization, too.  (If you are unpersuaded and want to change this,
 	 * note that applying adjust_view_column_set to view_rte->selectedCols is
 	 * clearly *not* the right answer, since that neglects base-rel columns
@@ -2703,8 +2703,8 @@ rewriteTargetView(Query *parsetree, Relation view)
 
 	/*
 	 * Move any security barrier quals from the view RTE onto the new target
-	 * RTE.  Any such quals should now apply to the new target RTE and will not
-	 * reference the original view RTE in the rewritten query.
+	 * RTE.  Any such quals should now apply to the new target RTE and will
+	 * not reference the original view RTE in the rewritten query.
 	 */
 	new_rte->securityQuals = view_rte->securityQuals;
 	view_rte->securityQuals = NIL;
@@ -2790,8 +2790,8 @@ rewriteTargetView(Query *parsetree, Relation view)
 	 * we did with the view targetlist).
 	 *
 	 * Note that there is special-case handling for the quals of a security
-	 * barrier view, since they need to be kept separate from any user-supplied
-	 * quals, so these quals are kept on the new target RTE.
+	 * barrier view, since they need to be kept separate from any
+	 * user-supplied quals, so these quals are kept on the new target RTE.
 	 *
 	 * For INSERT, the view's quals can be ignored in the main query.
 	 */
@@ -2836,13 +2836,14 @@ rewriteTargetView(Query *parsetree, Relation view)
 		 * If the parent view has a cascaded check option, treat this view as
 		 * if it also had a cascaded check option.
 		 *
-		 * New WithCheckOptions are added to the start of the list, so if there
-		 * is a cascaded check option, it will be the first item in the list.
+		 * New WithCheckOptions are added to the start of the list, so if
+		 * there is a cascaded check option, it will be the first item in the
+		 * list.
 		 */
 		if (parsetree->withCheckOptions != NIL)
 		{
 			WithCheckOption *parent_wco =
-				(WithCheckOption *) linitial(parsetree->withCheckOptions);
+			(WithCheckOption *) linitial(parsetree->withCheckOptions);
 
 			if (parent_wco->cascaded)
 			{
@@ -3089,7 +3090,7 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 
 			/*
 			 * At this point product_queries contains any DO ALSO rule
-			 * actions. Add the rewritten query before or after those.	This
+			 * actions. Add the rewritten query before or after those.  This
 			 * must match the handling the original query would have gotten
 			 * below, if we allowed it to be included again.
 			 */
@@ -3309,7 +3310,7 @@ QueryRewrite(Query *parsetree)
 	 *
 	 * If the original query is still in the list, it sets the command tag.
 	 * Otherwise, the last INSTEAD query of the same kind as the original is
-	 * allowed to set the tag.	(Note these rules can leave us with no query
+	 * allowed to set the tag.  (Note these rules can leave us with no query
 	 * setting the tag.  The tcop code has to cope with this by setting up a
 	 * default tag based on the original un-rewritten query.)
 	 *

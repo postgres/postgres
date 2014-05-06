@@ -358,6 +358,7 @@ calculate_toast_table_size(Oid toastrelid)
 	foreach(lc, indexlist)
 	{
 		Relation	toastIdxRel;
+
 		toastIdxRel = relation_open(lfirst_oid(lc),
 									AccessShareLock);
 		for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
@@ -689,7 +690,7 @@ pg_size_pretty_numeric(PG_FUNCTION_ARGS)
  * This is expected to be used in queries like
  *		SELECT pg_relation_filenode(oid) FROM pg_class;
  * That leads to a couple of choices.  We work from the pg_class row alone
- * rather than actually opening each relation, for efficiency.	We don't
+ * rather than actually opening each relation, for efficiency.  We don't
  * fail if we can't find the relation --- some rows might be visible in
  * the query's MVCC snapshot even though the relations have been dropped.
  * (Note: we could avoid using the catcache, but there's little point

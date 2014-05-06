@@ -4,7 +4,7 @@
  *	  Support getaddrinfo() on platforms that don't have it.
  *
  * We also supply getnameinfo() here, assuming that the platform will have
- * it if and only if it has getaddrinfo().	If this proves false on some
+ * it if and only if it has getaddrinfo().  If this proves false on some
  * platform, we'll need to split this file and provide a separate configure
  * test for getnameinfo().
  *
@@ -144,6 +144,7 @@ getaddrinfo(const char *node, const char *service,
 	struct addrinfo hints;
 
 #ifdef WIN32
+
 	/*
 	 * If Windows has native IPv6 support, use the native Windows routine.
 	 * Otherwise, fall through and use our own code.
@@ -266,6 +267,7 @@ freeaddrinfo(struct addrinfo * res)
 	if (res)
 	{
 #ifdef WIN32
+
 		/*
 		 * If Windows has native IPv6 support, use the native Windows routine.
 		 * Otherwise, fall through and use our own code.
@@ -357,6 +359,7 @@ getnameinfo(const struct sockaddr * sa, int salen,
 			char *service, int servicelen, int flags)
 {
 #ifdef WIN32
+
 	/*
 	 * If Windows has native IPv6 support, use the native Windows routine.
 	 * Otherwise, fall through and use our own code.

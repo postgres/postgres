@@ -36,9 +36,9 @@
 Oid			binary_upgrade_next_toast_pg_type_oid = InvalidOid;
 
 static void CheckAndCreateToastTable(Oid relOid, Datum reloptions,
-					LOCKMODE lockmode, bool check);
+						 LOCKMODE lockmode, bool check);
 static bool create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
-					Datum reloptions, LOCKMODE lockmode, bool check);
+				   Datum reloptions, LOCKMODE lockmode, bool check);
 static bool needs_toast_table(Relation rel);
 
 
@@ -106,7 +106,7 @@ BootstrapToastTable(char *relName, Oid toastOid, Oid toastIndexOid)
 
 	/* create_toast_table does all the work */
 	if (!create_toast_table(rel, toastOid, toastIndexOid, (Datum) 0,
-								AccessExclusiveLock, false))
+							AccessExclusiveLock, false))
 		elog(ERROR, "\"%s\" does not require a toast table",
 			 relName);
 
@@ -177,8 +177,8 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 		return false;
 
 	/*
-	 * If requested check lockmode is sufficient. This is a cross check
-	 * in case of errors or conflicting decisions in earlier code.
+	 * If requested check lockmode is sufficient. This is a cross check in
+	 * case of errors or conflicting decisions in earlier code.
 	 */
 	if (check && lockmode != AccessExclusiveLock)
 		elog(ERROR, "AccessExclusiveLock required to add toast table.");
@@ -362,7 +362,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 }
 
 /*
- * Check to see whether the table needs a TOAST table.	It does only if
+ * Check to see whether the table needs a TOAST table.  It does only if
  * (1) there are any toastable attributes, and (2) the maximum length
  * of a tuple could exceed TOAST_TUPLE_THRESHOLD.  (We don't want to
  * create a toast table for something like "f1 varchar(20)".)

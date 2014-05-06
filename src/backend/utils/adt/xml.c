@@ -19,7 +19,7 @@
  * fail.  For one thing, this avoids having to manage variant catalog
  * installations.  But it also has nice effects such as that you can
  * dump a database containing XML type data even if the server is not
- * linked with libxml.	Thus, make sure xml_out() works even if nothing
+ * linked with libxml.  Thus, make sure xml_out() works even if nothing
  * else does.
  */
 
@@ -286,7 +286,7 @@ xml_out(PG_FUNCTION_ARGS)
 	xmltype    *x = PG_GETARG_XML_P(0);
 
 	/*
-	 * xml_out removes the encoding property in all cases.	This is because we
+	 * xml_out removes the encoding property in all cases.  This is because we
 	 * cannot control from here whether the datum will be converted to a
 	 * different client encoding, so we'd do more harm than good by including
 	 * it.
@@ -454,7 +454,7 @@ xmlcomment(PG_FUNCTION_ARGS)
 
 /*
  * TODO: xmlconcat needs to merge the notations and unparsed entities
- * of the argument values.	Not very important in practice, though.
+ * of the argument values.  Not very important in practice, though.
  */
 xmltype *
 xmlconcat(List *args)
@@ -589,7 +589,7 @@ xmlelement(XmlExprState *xmlExpr, ExprContext *econtext)
 
 	/*
 	 * We first evaluate all the arguments, then start up libxml and create
-	 * the result.	This avoids issues if one of the arguments involves a call
+	 * the result.  This avoids issues if one of the arguments involves a call
 	 * to some other function or subsystem that wants to use libxml on its own
 	 * terms.
 	 */
@@ -926,7 +926,7 @@ pg_xml_init_library(void)
  * pg_xml_init --- set up for use of libxml and register an error handler
  *
  * This should be called by each function that is about to use libxml
- * facilities and requires error handling.	It initializes libxml with
+ * facilities and requires error handling.  It initializes libxml with
  * pg_xml_init_library() and establishes our libxml error handler.
  *
  * strictness determines which errors are reported and which are ignored.
@@ -972,7 +972,7 @@ pg_xml_init(PgXmlStrictness strictness)
 
 	/*
 	 * Verify that xmlSetStructuredErrorFunc set the context variable we
-	 * expected it to.	If not, the error context pointer we just saved is not
+	 * expected it to.  If not, the error context pointer we just saved is not
 	 * the correct thing to restore, and since that leaves us without a way to
 	 * restore the context in pg_xml_done, we must fail.
 	 *
@@ -1129,7 +1129,7 @@ parse_xml_decl(const xmlChar *str, size_t *lenp,
 	int			utf8len;
 
 	/*
-	 * Only initialize libxml.	We don't need error handling here, but we do
+	 * Only initialize libxml.  We don't need error handling here, but we do
 	 * need to make sure libxml is initialized before calling any of its
 	 * functions.  Note that this is safe (and a no-op) if caller has already
 	 * done pg_xml_init().
@@ -1272,7 +1272,7 @@ finished:
 
 /*
  * Write an XML declaration.  On output, we adjust the XML declaration
- * as follows.	(These rules are the moral equivalent of the clause
+ * as follows.  (These rules are the moral equivalent of the clause
  * "Serialization of an XML value" in the SQL standard.)
  *
  * We try to avoid generating an XML declaration if possible.  This is
@@ -1496,7 +1496,7 @@ xml_pstrdup(const char *string)
 /*
  * xmlPgEntityLoader --- entity loader callback function
  *
- * Silently prevent any external entity URL from being loaded.	We don't want
+ * Silently prevent any external entity URL from being loaded.  We don't want
  * to throw an error, so instead make the entity appear to expand to an empty
  * string.
  *
@@ -1665,8 +1665,8 @@ xml_errorHandler(void *data, xmlErrorPtr error)
 	chopStringInfoNewlines(errorBuf);
 
 	/*
-	 * Legacy error handling mode.	err_occurred is never set, we just add the
-	 * message to err_buf.	This mode exists because the xml2 contrib module
+	 * Legacy error handling mode.  err_occurred is never set, we just add the
+	 * message to err_buf.  This mode exists because the xml2 contrib module
 	 * uses our error-handling infrastructure, but we don't want to change its
 	 * behaviour since it's deprecated anyway.  This is also why we don't
 	 * distinguish between notices, warnings and errors here --- the old-style
@@ -1887,7 +1887,7 @@ map_sql_identifier_to_xml_name(char *ident, bool fully_escaped,
 static char *
 unicode_to_sqlchar(pg_wchar c)
 {
-	char		utf8string[8];			/* need room for trailing zero */
+	char		utf8string[8];	/* need room for trailing zero */
 	char	   *result;
 
 	memset(utf8string, 0, sizeof(utf8string));
@@ -1939,8 +1939,8 @@ map_xml_name_to_sql_identifier(char *name)
  *
  * When xml_escape_strings is true, then certain characters in string
  * values are replaced by entity references (&lt; etc.), as specified
- * in SQL/XML:2008 section 9.8 GR 9) a) iii).	This is normally what is
- * wanted.	The false case is mainly useful when the resulting value
+ * in SQL/XML:2008 section 9.8 GR 9) a) iii).   This is normally what is
+ * wanted.  The false case is mainly useful when the resulting value
  * is used with xmlTextWriterWriteAttribute() to write out an
  * attribute, because that function does the escaping itself.
  */
@@ -2221,13 +2221,13 @@ _SPI_strdup(const char *s)
  *
  * There are two kinds of mappings: Mapping SQL data (table contents)
  * to XML documents, and mapping SQL structure (the "schema") to XML
- * Schema.	And there are functions that do both at the same time.
+ * Schema.  And there are functions that do both at the same time.
  *
  * Then you can map a database, a schema, or a table, each in both
  * ways.  This breaks down recursively: Mapping a database invokes
  * mapping schemas, which invokes mapping tables, which invokes
  * mapping rows, which invokes mapping columns, although you can't
- * call the last two from the outside.	Because of this, there are a
+ * call the last two from the outside.  Because of this, there are a
  * number of xyz_internal() functions which are to be called both from
  * the function manager wrapper and from some upper layer in a
  * recursive call.
@@ -2236,7 +2236,7 @@ _SPI_strdup(const char *s)
  * nulls, tableforest, and targetns mean.
  *
  * Some style guidelines for XML output: Use double quotes for quoting
- * XML attributes.	Indent XML elements by two spaces, but remember
+ * XML attributes.  Indent XML elements by two spaces, but remember
  * that a lot of code is called recursively at different levels, so
  * it's better not to indent rather than create output that indents
  * and outdents weirdly.  Add newlines to make the output look nice.
@@ -2400,12 +2400,12 @@ cursor_to_xml(PG_FUNCTION_ARGS)
  * Write the start tag of the root element of a data mapping.
  *
  * top_level means that this is the very top level of the eventual
- * output.	For example, when the user calls table_to_xml, then a call
+ * output.  For example, when the user calls table_to_xml, then a call
  * with a table name to this function is the top level.  When the user
  * calls database_to_xml, then a call with a schema name to this
  * function is not the top level.  If top_level is false, then the XML
  * namespace declarations are omitted, because they supposedly already
- * appeared earlier in the output.	Repeating them is not wrong, but
+ * appeared earlier in the output.  Repeating them is not wrong, but
  * it looks ugly.
  */
 static void
@@ -2937,7 +2937,7 @@ map_multipart_sql_identifier_to_xml_name(char *a, char *b, char *c, char *d)
 
 	if (a)
 		appendStringInfoString(&result,
-						 map_sql_identifier_to_xml_name(a, true, true));
+							   map_sql_identifier_to_xml_name(a, true, true));
 	if (b)
 		appendStringInfo(&result, ".%s",
 						 map_sql_identifier_to_xml_name(b, true, true));
@@ -3348,7 +3348,7 @@ map_sql_typecoll_to_xmlschema_types(List *tupdesc_list)
  * SQL/XML:2008 sections 9.5 and 9.6.
  *
  * (The distinction between 9.5 and 9.6 is basically that 9.6 adds
- * a name attribute, which this function does.	The name-less version
+ * a name attribute, which this function does.  The name-less version
  * 9.5 doesn't appear to be required anywhere.)
  */
 static const char *
@@ -3362,11 +3362,11 @@ map_sql_type_to_xmlschema_type(Oid typeoid, int typmod)
 	if (typeoid == XMLOID)
 	{
 		appendStringInfoString(&result,
-						 "<xsd:complexType mixed=\"true\">\n"
-						 "  <xsd:sequence>\n"
-						 "    <xsd:any name=\"element\" minOccurs=\"0\" maxOccurs=\"unbounded\" processContents=\"skip\"/>\n"
-						 "  </xsd:sequence>\n"
-						 "</xsd:complexType>\n");
+							   "<xsd:complexType mixed=\"true\">\n"
+							   "  <xsd:sequence>\n"
+							   "    <xsd:any name=\"element\" minOccurs=\"0\" maxOccurs=\"unbounded\" processContents=\"skip\"/>\n"
+							   "  </xsd:sequence>\n"
+							   "</xsd:complexType>\n");
 	}
 	else
 	{
@@ -3440,12 +3440,12 @@ map_sql_type_to_xmlschema_type(Oid typeoid, int typmod)
 
 			case FLOAT8OID:
 				appendStringInfoString(&result,
-								 "  <xsd:restriction base=\"xsd:double\"></xsd:restriction>\n");
+									   "  <xsd:restriction base=\"xsd:double\"></xsd:restriction>\n");
 				break;
 
 			case BOOLOID:
 				appendStringInfoString(&result,
-								 "  <xsd:restriction base=\"xsd:boolean\"></xsd:restriction>\n");
+									   "  <xsd:restriction base=\"xsd:boolean\"></xsd:restriction>\n");
 				break;
 
 			case TIMEOID:
@@ -3496,9 +3496,9 @@ map_sql_type_to_xmlschema_type(Oid typeoid, int typmod)
 
 			case DATEOID:
 				appendStringInfoString(&result,
-								 "  <xsd:restriction base=\"xsd:date\">\n"
-								 "    <xsd:pattern value=\"\\p{Nd}{4}-\\p{Nd}{2}-\\p{Nd}{2}\"/>\n"
-								 "  </xsd:restriction>\n");
+									"  <xsd:restriction base=\"xsd:date\">\n"
+									   "    <xsd:pattern value=\"\\p{Nd}{4}-\\p{Nd}{2}-\\p{Nd}{2}\"/>\n"
+									   "  </xsd:restriction>\n");
 				break;
 
 			default:
@@ -3524,7 +3524,7 @@ map_sql_type_to_xmlschema_type(Oid typeoid, int typmod)
 
 /*
  * Map an SQL row to an XML element, taking the row from the active
- * SPI cursor.	See also SQL/XML:2008 section 9.10.
+ * SPI cursor.  See also SQL/XML:2008 section 9.10.
  */
 static void
 SPI_sql_row_to_xmlelement(int rownum, StringInfo result, char *tablename,

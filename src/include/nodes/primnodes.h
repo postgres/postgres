@@ -33,7 +33,7 @@
  *
  * Note: colnames is a list of Value nodes (always strings).  In Alias structs
  * associated with RTEs, there may be entries corresponding to dropped
- * columns; these are normally empty strings ("").	See parsenodes.h for info.
+ * columns; these are normally empty strings ("").  See parsenodes.h for info.
  */
 typedef struct Alias
 {
@@ -234,7 +234,7 @@ typedef struct Param
  * ressortgroupref indexes to let them be referenced by SortGroupClause
  * entries in the aggorder and/or aggdistinct lists.  This represents ORDER BY
  * and DISTINCT operations to be applied to the aggregate input rows before
- * they are passed to the transition function.	The grammar only allows a
+ * they are passed to the transition function.  The grammar only allows a
  * simple "DISTINCT" specifier for the arguments, but we use the full
  * query-level representation to allow more code sharing.
  *
@@ -293,7 +293,7 @@ typedef struct WindowFunc
  * entire new modified array value.
  *
  * If reflowerindexpr = NIL, then we are fetching or storing a single array
- * element at the subscripts given by refupperindexpr.	Otherwise we are
+ * element at the subscripts given by refupperindexpr.  Otherwise we are
  * fetching or storing an array slice, that is a rectangular subarray
  * with lower and upper bounds given by the index expressions.
  * reflowerindexpr must be the same length as refupperindexpr when it
@@ -340,7 +340,7 @@ typedef enum CoercionContext
  * NB: equal() ignores CoercionForm fields, therefore this *must* not carry
  * any semantically significant information.  We need that behavior so that
  * the planner will consider equivalent implicit and explicit casts to be
- * equivalent.	In cases where those actually behave differently, the coercion
+ * equivalent.  In cases where those actually behave differently, the coercion
  * function's arguments will be different.
  */
 typedef enum CoercionForm
@@ -459,7 +459,7 @@ typedef struct ScalarArrayOpExpr
  *
  * Notice the arguments are given as a List.  For NOT, of course the list
  * must always have exactly one element.  For AND and OR, the executor can
- * handle any number of arguments.	The parser generally treats AND and OR
+ * handle any number of arguments.  The parser generally treats AND and OR
  * as binary and so it typically only produces two-element lists, but the
  * optimizer will flatten trees of AND and OR nodes to produce longer lists
  * when possible.  There are also a few special cases where more arguments
@@ -482,7 +482,7 @@ typedef struct BoolExpr
  * SubLink
  *
  * A SubLink represents a subselect appearing in an expression, and in some
- * cases also the combining operator(s) just above it.	The subLinkType
+ * cases also the combining operator(s) just above it.  The subLinkType
  * indicates the form of the expression represented:
  *	EXISTS_SUBLINK		EXISTS(SELECT ...)
  *	ALL_SUBLINK			(lefthand) op ALL (SELECT ...)
@@ -509,7 +509,7 @@ typedef struct BoolExpr
  *
  * NOTE: in the raw output of gram.y, testexpr contains just the raw form
  * of the lefthand expression (if any), and operName is the String name of
- * the combining operator.	Also, subselect is a raw parsetree.  During parse
+ * the combining operator.  Also, subselect is a raw parsetree.  During parse
  * analysis, the parser transforms testexpr into a complete boolean expression
  * that compares the lefthand value(s) to PARAM_SUBLINK nodes representing the
  * output columns of the subselect.  And subselect is transformed to a Query.
@@ -567,7 +567,7 @@ typedef struct SubLink
  * list).  In this case testexpr is NULL to avoid duplication.
  *
  * The planner also derives lists of the values that need to be passed into
- * and out of the subplan.	Input values are represented as a list "args" of
+ * and out of the subplan.  Input values are represented as a list "args" of
  * expressions to be evaluated in the outer-query context (currently these
  * args are always just Vars, but in principle they could be any expression).
  * The values are assigned to the global PARAM_EXEC params indexed by parParam
@@ -658,7 +658,7 @@ typedef struct FieldSelect
  * portion of a column.
  *
  * A single FieldStore can actually represent updates of several different
- * fields.	The parser only generates FieldStores with single-element lists,
+ * fields.  The parser only generates FieldStores with single-element lists,
  * but the planner will collapse multiple updates of the same base column
  * into one FieldStore.
  * ----------------
@@ -790,7 +790,7 @@ typedef struct CollateExpr
  * and the testexpr in the second case.
  *
  * In the raw grammar output for the second form, the condition expressions
- * of the WHEN clauses are just the comparison values.	Parse analysis
+ * of the WHEN clauses are just the comparison values.  Parse analysis
  * converts these to valid boolean expressions of the form
  *		CaseTestExpr '=' compexpr
  * where the CaseTestExpr node is a placeholder that emits the correct
@@ -864,22 +864,22 @@ typedef struct ArrayExpr
  *
  * Note: the list of fields must have a one-for-one correspondence with
  * physical fields of the associated rowtype, although it is okay for it
- * to be shorter than the rowtype.	That is, the N'th list element must
+ * to be shorter than the rowtype.  That is, the N'th list element must
  * match up with the N'th physical field.  When the N'th physical field
  * is a dropped column (attisdropped) then the N'th list element can just
- * be a NULL constant.	(This case can only occur for named composite types,
+ * be a NULL constant.  (This case can only occur for named composite types,
  * not RECORD types, since those are built from the RowExpr itself rather
  * than vice versa.)  It is important not to assume that length(args) is
  * the same as the number of columns logically present in the rowtype.
  *
  * colnames provides field names in cases where the names can't easily be
- * obtained otherwise.	Names *must* be provided if row_typeid is RECORDOID.
+ * obtained otherwise.  Names *must* be provided if row_typeid is RECORDOID.
  * If row_typeid identifies a known composite type, colnames can be NIL to
  * indicate the type's cataloged field names apply.  Note that colnames can
  * be non-NIL even for a composite type, and typically is when the RowExpr
  * was created by expanding a whole-row Var.  This is so that we can retain
  * the column alias names of the RTE that the Var referenced (which would
- * otherwise be very difficult to extract from the parsetree).	Like the
+ * otherwise be very difficult to extract from the parsetree).  Like the
  * args list, colnames is one-for-one with physical fields of the rowtype.
  */
 typedef struct RowExpr
@@ -892,7 +892,7 @@ typedef struct RowExpr
 	 * Note: we deliberately do NOT store a typmod.  Although a typmod will be
 	 * associated with specific RECORD types at runtime, it will differ for
 	 * different backends, and so cannot safely be stored in stored
-	 * parsetrees.	We must assume typmod -1 for a RowExpr node.
+	 * parsetrees.  We must assume typmod -1 for a RowExpr node.
 	 *
 	 * We don't need to store a collation either.  The result type is
 	 * necessarily composite, and composite types never have a collation.
@@ -978,7 +978,7 @@ typedef struct MinMaxExpr
  * 'args' carries all other arguments.
  *
  * Note: result type/typmod/collation are not stored, but can be deduced
- * from the XmlExprOp.	The type/typmod fields are just used for display
+ * from the XmlExprOp.  The type/typmod fields are just used for display
  * purposes, and are NOT necessarily the true result type of the node.
  * (We also use type == InvalidOid to mark a not-yet-parse-analyzed XmlExpr.)
  */
@@ -1064,8 +1064,8 @@ typedef struct BooleanTest
  *
  * CoerceToDomain represents the operation of coercing a value to a domain
  * type.  At runtime (and not before) the precise set of constraints to be
- * checked will be determined.	If the value passes, it is returned as the
- * result; if not, an error is raised.	Note that this is equivalent to
+ * checked will be determined.  If the value passes, it is returned as the
+ * result; if not, an error is raised.  Note that this is equivalent to
  * RelabelType in the scenario where no constraints are applied.
  */
 typedef struct CoerceToDomain
@@ -1081,7 +1081,7 @@ typedef struct CoerceToDomain
 
 /*
  * Placeholder node for the value to be processed by a domain's check
- * constraint.	This is effectively like a Param, but can be implemented more
+ * constraint.  This is effectively like a Param, but can be implemented more
  * simply since we need only one replacement value at a time.
  *
  * Note: the typeId/typeMod/collation will be set from the domain's base type,
@@ -1101,7 +1101,7 @@ typedef struct CoerceToDomainValue
  * Placeholder node for a DEFAULT marker in an INSERT or UPDATE command.
  *
  * This is not an executable expression: it must be replaced by the actual
- * column default expression during rewriting.	But it is convenient to
+ * column default expression during rewriting.  But it is convenient to
  * treat it as an expression node during parsing and rewriting.
  */
 typedef struct SetToDefault
@@ -1143,14 +1143,14 @@ typedef struct CurrentOfExpr
  * single expression tree.
  *
  * In a SELECT's targetlist, resno should always be equal to the item's
- * ordinal position (counting from 1).	However, in an INSERT or UPDATE
+ * ordinal position (counting from 1).  However, in an INSERT or UPDATE
  * targetlist, resno represents the attribute number of the destination
  * column for the item; so there may be missing or out-of-order resnos.
  * It is even legal to have duplicated resnos; consider
  *		UPDATE table SET arraycol[1] = ..., arraycol[2] = ..., ...
  * The two meanings come together in the executor, because the planner
  * transforms INSERT/UPDATE tlists into a normalized form with exactly
- * one entry for each column of the destination table.	Before that's
+ * one entry for each column of the destination table.  Before that's
  * happened, however, it is risky to assume that resno == position.
  * Generally get_tle_by_resno() should be used rather than list_nth()
  * to fetch tlist entries by resno, and only in SELECT should you assume
@@ -1159,25 +1159,25 @@ typedef struct CurrentOfExpr
  * resname is required to represent the correct column name in non-resjunk
  * entries of top-level SELECT targetlists, since it will be used as the
  * column title sent to the frontend.  In most other contexts it is only
- * a debugging aid, and may be wrong or even NULL.	(In particular, it may
+ * a debugging aid, and may be wrong or even NULL.  (In particular, it may
  * be wrong in a tlist from a stored rule, if the referenced column has been
- * renamed by ALTER TABLE since the rule was made.	Also, the planner tends
+ * renamed by ALTER TABLE since the rule was made.  Also, the planner tends
  * to store NULL rather than look up a valid name for tlist entries in
  * non-toplevel plan nodes.)  In resjunk entries, resname should be either
  * a specific system-generated name (such as "ctid") or NULL; anything else
  * risks confusing ExecGetJunkAttribute!
  *
  * ressortgroupref is used in the representation of ORDER BY, GROUP BY, and
- * DISTINCT items.	Targetlist entries with ressortgroupref=0 are not
+ * DISTINCT items.  Targetlist entries with ressortgroupref=0 are not
  * sort/group items.  If ressortgroupref>0, then this item is an ORDER BY,
- * GROUP BY, and/or DISTINCT target value.	No two entries in a targetlist
+ * GROUP BY, and/or DISTINCT target value.  No two entries in a targetlist
  * may have the same nonzero ressortgroupref --- but there is no particular
  * meaning to the nonzero values, except as tags.  (For example, one must
  * not assume that lower ressortgroupref means a more significant sort key.)
  * The order of the associated SortGroupClause lists determine the semantics.
  *
  * resorigtbl/resorigcol identify the source of the column, if it is a
- * simple reference to a column of a base table (or view).	If it is not
+ * simple reference to a column of a base table (or view).  If it is not
  * a simple reference, these fields are zeroes.
  *
  * If resjunk is true then the column is a working column (such as a sort key)
@@ -1217,7 +1217,7 @@ typedef struct TargetEntry
  *
  * NOTE: the qualification expressions present in JoinExpr nodes are
  * *in addition to* the query's main WHERE clause, which appears as the
- * qual of the top-level FromExpr.	The reason for associating quals with
+ * qual of the top-level FromExpr.  The reason for associating quals with
  * specific nodes in the jointree is that the position of a qual is critical
  * when outer joins are present.  (If we enforce a qual too soon or too late,
  * that may cause the outer join to produce the wrong set of NULL-extended
@@ -1253,7 +1253,7 @@ typedef struct RangeTblRef
  * If he writes NATURAL then parse analysis generates the equivalent USING()
  * list, and from that fills in "quals" with the right equality comparisons.
  * If he writes USING() then "quals" is filled with equality comparisons.
- * If he writes ON() then only "quals" is set.	Note that NATURAL/USING
+ * If he writes ON() then only "quals" is set.  Note that NATURAL/USING
  * are not equivalent to ON() since they also affect the output column list.
  *
  * alias is an Alias node representing the AS alias-clause attached to the
@@ -1262,7 +1262,7 @@ typedef struct RangeTblRef
  * restricts visibility of the tables/columns inside it.
  *
  * During parse analysis, an RTE is created for the Join, and its index
- * is filled into rtindex.	This RTE is present mainly so that Vars can
+ * is filled into rtindex.  This RTE is present mainly so that Vars can
  * be created that refer to the outputs of the join.  The planner sometimes
  * generates JoinExprs internally; these can have rtindex = 0 if there are
  * no join alias variables referencing such joins.

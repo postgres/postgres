@@ -251,6 +251,7 @@ ginFindParents(GinBtree btree, GinBtreeStack *stack)
 			Assert(blkno != btree->rootBlkno);
 			ptr->blkno = blkno;
 			ptr->buffer = buffer;
+
 			/*
 			 * parent may be wrong, but if so, the ginFinishSplit call will
 			 * recurse to call ginFindParents again to fix it.
@@ -328,7 +329,8 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 	GinPlaceToPageRC rc;
 	uint16		xlflags = 0;
 	Page		childpage = NULL;
-	Page		newlpage = NULL, newrpage = NULL;
+	Page		newlpage = NULL,
+				newrpage = NULL;
 
 	if (GinPageIsData(page))
 		xlflags |= GIN_INSERT_ISDATA;
@@ -346,8 +348,8 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 	}
 
 	/*
-	 * Try to put the incoming tuple on the page. placeToPage will decide
-	 * if the page needs to be split.
+	 * Try to put the incoming tuple on the page. placeToPage will decide if
+	 * the page needs to be split.
 	 */
 	rc = btree->placeToPage(btree, stack->buffer, stack,
 							insertdata, updateblkno,
@@ -371,7 +373,7 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 			XLogRecPtr	recptr;
 			XLogRecData rdata[3];
 			ginxlogInsert xlrec;
-			BlockIdData	childblknos[2];
+			BlockIdData childblknos[2];
 
 			xlrec.node = btree->index->rd_node;
 			xlrec.blkno = BufferGetBlockNumber(stack->buffer);
@@ -449,7 +451,8 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 		data.flags = xlflags;
 		if (childbuf != InvalidBuffer)
 		{
-			Page childpage = BufferGetPage(childbuf);
+			Page		childpage = BufferGetPage(childbuf);
+
 			GinPageGetOpaque(childpage)->flags &= ~GIN_INCOMPLETE_SPLIT;
 
 			data.leftChildBlkno = BufferGetBlockNumber(childbuf);
@@ -505,8 +508,8 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 
 			/*
 			 * Construct a new root page containing downlinks to the new left
-			 * and right pages. (do this in a temporary copy first rather
-			 * than overwriting the original page directly, so that we can still
+			 * and right pages. (do this in a temporary copy first rather than
+			 * overwriting the original page directly, so that we can still
 			 * abort gracefully if this fails.)
 			 */
 			newrootpg = PageGetTempPage(newrpage);
@@ -604,7 +607,7 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 	else
 	{
 		elog(ERROR, "unknown return code from GIN placeToPage method: %d", rc);
-		return false;		/* keep compiler quiet */
+		return false;			/* keep compiler quiet */
 	}
 }
 
@@ -627,8 +630,8 @@ ginFinishSplit(GinBtree btree, GinBtreeStack *stack, bool freestack,
 	bool		first = true;
 
 	/*
-	 * freestack == false when we encounter an incompletely split page during a
-	 * scan, while freestack == true is used in the normal scenario that a
+	 * freestack == false when we encounter an incompletely split page during
+	 * a scan, while freestack == true is used in the normal scenario that a
 	 * split is finished right after the initial insert.
 	 */
 	if (!freestack)
@@ -650,8 +653,8 @@ ginFinishSplit(GinBtree btree, GinBtreeStack *stack, bool freestack,
 		 * then continue with the current one.
 		 *
 		 * Note: we have to finish *all* incomplete splits we encounter, even
-		 * if we have to move right. Otherwise we might choose as the target
-		 * a page that has no downlink in the parent, and splitting it further
+		 * if we have to move right. Otherwise we might choose as the target a
+		 * page that has no downlink in the parent, and splitting it further
 		 * would fail.
 		 */
 		if (GinPageIsIncompleteSplit(BufferGetPage(parent->buffer)))

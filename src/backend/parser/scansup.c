@@ -132,7 +132,7 @@ downcase_truncate_identifier(const char *ident, int len, bool warn)
 {
 	char	   *result;
 	int			i;
-	bool        enc_is_single_byte;
+	bool		enc_is_single_byte;
 
 	result = palloc(len + 1);
 	enc_is_single_byte = pg_database_encoding_max_length() == 1;
@@ -143,8 +143,8 @@ downcase_truncate_identifier(const char *ident, int len, bool warn)
 	 * locale-aware translation.  However, there are some locales where this
 	 * is not right either (eg, Turkish may do strange things with 'i' and
 	 * 'I').  Our current compromise is to use tolower() for characters with
-	 * the high bit set, as long as they aren't part of a multi-byte character,
-	 * and use an ASCII-only downcasing for 7-bit characters.
+	 * the high bit set, as long as they aren't part of a multi-byte
+	 * character, and use an ASCII-only downcasing for 7-bit characters.
 	 */
 	for (i = 0; i < len; i++)
 	{

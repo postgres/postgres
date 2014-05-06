@@ -122,7 +122,7 @@ get_rewrite_oid(Oid relid, const char *rulename, bool missing_ok)
  * Find rule oid, given only a rule name but no rel OID.
  *
  * If there's more than one, it's an error.  If there aren't any, that's an
- * error, too.	In general, this should be avoided - it is provided to support
+ * error, too.  In general, this should be avoided - it is provided to support
  * syntax that is compatible with pre-7.3 versions of PG, where rule names
  * were unique across the entire database.
  */

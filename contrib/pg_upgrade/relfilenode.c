@@ -37,7 +37,7 @@ transfer_all_new_tablespaces(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 	/*
 	 * Transfering files by tablespace is tricky because a single database can
 	 * use multiple tablespaces.  For non-parallel mode, we just pass a NULL
-	 * tablespace path, which matches all tablespaces.	In parallel mode, we
+	 * tablespace path, which matches all tablespaces.  In parallel mode, we
 	 * pass the default tablespace and all user-created tablespaces and let
 	 * those operations happen in parallel.
 	 */
@@ -108,7 +108,7 @@ transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 
 		if (new_dbnum >= new_db_arr->ndbs)
 			pg_fatal("old database \"%s\" not found in the new cluster\n",
-				   old_db->db_name);
+					 old_db->db_name);
 
 		n_maps = 0;
 		mappings = gen_db_file_maps(old_db, new_db, &n_maps, old_pgdata,
@@ -135,7 +135,7 @@ transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 /*
  * get_pg_database_relfilenode()
  *
- *	Retrieves the relfilenode for a few system-catalog tables.	We need these
+ *	Retrieves the relfilenode for a few system-catalog tables.  We need these
  *	relfilenodes later in the upgrade process.
  */
 void
@@ -259,8 +259,8 @@ transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
 					return;
 				else
 					pg_fatal("error while checking for file existence \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
-						   map->nspname, map->relname, old_file, new_file,
-						   getErrorText(errno));
+							 map->nspname, map->relname, old_file, new_file,
+							 getErrorText(errno));
 			}
 			close(fd);
 		}
@@ -272,7 +272,7 @@ transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
 
 		if ((user_opts.transfer_mode == TRANSFER_MODE_LINK) && (pageConverter != NULL))
 			pg_fatal("This upgrade requires page-by-page conversion, "
-				   "you must use copy mode instead of link mode.\n");
+					 "you must use copy mode instead of link mode.\n");
 
 		if (user_opts.transfer_mode == TRANSFER_MODE_COPY)
 		{
@@ -280,7 +280,7 @@ transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
 
 			if ((msg = copyAndUpdateFile(pageConverter, old_file, new_file, true)) != NULL)
 				pg_fatal("error while copying relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
-					   map->nspname, map->relname, old_file, new_file, msg);
+						 map->nspname, map->relname, old_file, new_file, msg);
 		}
 		else
 		{
@@ -288,7 +288,7 @@ transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
 
 			if ((msg = linkAndUpdateFile(pageConverter, old_file, new_file)) != NULL)
 				pg_fatal("error while creating link for relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
-					   map->nspname, map->relname, old_file, new_file, msg);
+						 map->nspname, map->relname, old_file, new_file, msg);
 		}
 	}
 

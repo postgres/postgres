@@ -129,7 +129,7 @@ typedef enum PgStat_Single_Reset_Type
  *
  * Many of the event counters are nontransactional, ie, we count events
  * in committed and aborted transactions alike.  For these, we just count
- * directly in the PgStat_TableStatus.	However, delta_live_tuples,
+ * directly in the PgStat_TableStatus.  However, delta_live_tuples,
  * delta_dead_tuples, and changed_tuples must be derived from event counts
  * with awareness of whether the transaction or subtransaction committed or
  * aborted.  Hence, we also keep a stack of per-(sub)transaction status
@@ -367,10 +367,10 @@ typedef struct PgStat_MsgAnalyze
  */
 typedef struct PgStat_MsgArchiver
 {
-	PgStat_MsgHdr	m_hdr;
-	bool			m_failed; /* Failed attempt */
-	char			m_xlog[MAX_XFN_CHARS + 1];
-	TimestampTz		m_timestamp;
+	PgStat_MsgHdr m_hdr;
+	bool		m_failed;		/* Failed attempt */
+	char		m_xlog[MAX_XFN_CHARS + 1];
+	TimestampTz m_timestamp;
 } PgStat_MsgArchiver;
 
 /* ----------
@@ -636,10 +636,12 @@ typedef struct PgStat_StatFuncEntry
 typedef struct PgStat_ArchiverStats
 {
 	PgStat_Counter archived_count;		/* archival successes */
-	char last_archived_wal[MAX_XFN_CHARS + 1];	/* last WAL file archived */
-	TimestampTz last_archived_timestamp;	/* last archival success time */
-	PgStat_Counter failed_count;		/* failed archival attempts */
-	char last_failed_wal[MAX_XFN_CHARS + 1];	/* WAL file involved in last failure */
+	char		last_archived_wal[MAX_XFN_CHARS + 1];	/* last WAL file
+														 * archived */
+	TimestampTz last_archived_timestamp;		/* last archival success time */
+	PgStat_Counter failed_count;	/* failed archival attempts */
+	char		last_failed_wal[MAX_XFN_CHARS + 1];		/* WAL file involved in
+														 * last failure */
 	TimestampTz last_failed_timestamp;	/* last archival failure time */
 	TimestampTz stat_reset_timestamp;
 } PgStat_ArchiverStats;
@@ -757,8 +759,8 @@ typedef struct LocalPgBackendStatus
 	TransactionId backend_xid;
 
 	/*
-	 * The xmin of the current session if available, InvalidTransactionId
-	 * if not.
+	 * The xmin of the current session if available, InvalidTransactionId if
+	 * not.
 	 */
 	TransactionId backend_xmin;
 } LocalPgBackendStatus;

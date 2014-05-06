@@ -50,7 +50,7 @@ static int levenshtein_internal(text *s, text *t,
  * array.
  *
  * If max_d >= 0, we only need to provide an accurate answer when that answer
- * is less than or equal to the bound.	From any cell in the matrix, there is
+ * is less than or equal to the bound.  From any cell in the matrix, there is
  * theoretical "minimum residual distance" from that cell to the last column
  * of the final row.  This minimum residual distance is zero when the
  * untransformed portions of the strings are of equal length (because we might
@@ -141,7 +141,7 @@ levenshtein_internal(text *s, text *t,
 	stop_column = m + 1;
 
 	/*
-	 * If max_d >= 0, determine whether the bound is impossibly tight.	If so,
+	 * If max_d >= 0, determine whether the bound is impossibly tight.  If so,
 	 * return max_d + 1 immediately.  Otherwise, determine whether it's tight
 	 * enough to limit the computation we must perform.  If so, figure out
 	 * initial stop column.
@@ -168,7 +168,7 @@ levenshtein_internal(text *s, text *t,
 			 * need to fill in.  If the string is growing, the theoretical
 			 * minimum distance already incorporates the cost of deleting the
 			 * number of characters necessary to make the two strings equal in
-			 * length.	Each additional deletion forces another insertion, so
+			 * length.  Each additional deletion forces another insertion, so
 			 * the best-case total cost increases by ins_c + del_c. If the
 			 * string is shrinking, the minimum theoretical cost assumes no
 			 * excess deletions; that is, we're starting no further right than
@@ -246,7 +246,7 @@ levenshtein_internal(text *s, text *t,
 		/*
 		 * The main loop fills in curr, but curr[0] needs a special case: to
 		 * transform the first 0 characters of s into the first j characters
-		 * of t, we must perform j insertions.	However, if start_column > 0,
+		 * of t, we must perform j insertions.  However, if start_column > 0,
 		 * this special case does not apply.
 		 */
 		if (start_column == 0)

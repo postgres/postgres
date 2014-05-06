@@ -54,7 +54,7 @@ desc_recompress_leaf(StringInfo buf, ginxlogRecompressDataLeaf *insertData)
 			walbuf += nitems * sizeof(ItemPointerData);
 		}
 
-		switch(a_action)
+		switch (a_action)
 		{
 			case GIN_SEGMENT_ADDITEMS:
 				appendStringInfo(buf, " %d (add %d items)", a_segno, nitems);
@@ -94,13 +94,13 @@ gin_desc(StringInfo buf, uint8 xl_info, char *rec)
 		case XLOG_GIN_INSERT:
 			{
 				ginxlogInsert *xlrec = (ginxlogInsert *) rec;
-				char	*payload = rec + sizeof(ginxlogInsert);
+				char	   *payload = rec + sizeof(ginxlogInsert);
 
 				appendStringInfoString(buf, "Insert item, ");
 				desc_node(buf, xlrec->node, xlrec->blkno);
 				appendStringInfo(buf, " isdata: %c isleaf: %c",
-								 (xlrec->flags & GIN_INSERT_ISDATA) ? 'T' : 'F',
-								 (xlrec->flags & GIN_INSERT_ISLEAF) ? 'T' : 'F');
+							  (xlrec->flags & GIN_INSERT_ISDATA) ? 'T' : 'F',
+							 (xlrec->flags & GIN_INSERT_ISLEAF) ? 'T' : 'F');
 				if (!(xlrec->flags & GIN_INSERT_ISLEAF))
 				{
 					BlockNumber leftChildBlkno;
@@ -115,11 +115,11 @@ gin_desc(StringInfo buf, uint8 xl_info, char *rec)
 				}
 				if (!(xlrec->flags & GIN_INSERT_ISDATA))
 					appendStringInfo(buf, " isdelete: %c",
-									 (((ginxlogInsertEntry *) payload)->isDelete) ? 'T' : 'F');
+					(((ginxlogInsertEntry *) payload)->isDelete) ? 'T' : 'F');
 				else if (xlrec->flags & GIN_INSERT_ISLEAF)
 				{
 					ginxlogRecompressDataLeaf *insertData =
-						(ginxlogRecompressDataLeaf *) payload;
+					(ginxlogRecompressDataLeaf *) payload;
 
 					if (xl_info & XLR_BKP_BLOCK(0))
 						appendStringInfo(buf, " (full page image)");
@@ -129,10 +129,11 @@ gin_desc(StringInfo buf, uint8 xl_info, char *rec)
 				else
 				{
 					ginxlogInsertDataInternal *insertData = (ginxlogInsertDataInternal *) payload;
+
 					appendStringInfo(buf, " pitem: %u-%u/%u",
-									 PostingItemGetBlockNumber(&insertData->newitem),
-									 ItemPointerGetBlockNumber(&insertData->newitem.key),
-									 ItemPointerGetOffsetNumber(&insertData->newitem.key));
+							 PostingItemGetBlockNumber(&insertData->newitem),
+						 ItemPointerGetBlockNumber(&insertData->newitem.key),
+					   ItemPointerGetOffsetNumber(&insertData->newitem.key));
 				}
 			}
 			break;
@@ -144,8 +145,8 @@ gin_desc(StringInfo buf, uint8 xl_info, char *rec)
 				desc_node(buf, ((ginxlogSplit *) rec)->node, ((ginxlogSplit *) rec)->lblkno);
 				appendStringInfo(buf, " isrootsplit: %c", (((ginxlogSplit *) rec)->flags & GIN_SPLIT_ROOT) ? 'T' : 'F');
 				appendStringInfo(buf, " isdata: %c isleaf: %c",
-								 (xlrec->flags & GIN_INSERT_ISDATA) ? 'T' : 'F',
-								 (xlrec->flags & GIN_INSERT_ISLEAF) ? 'T' : 'F');
+							  (xlrec->flags & GIN_INSERT_ISDATA) ? 'T' : 'F',
+							 (xlrec->flags & GIN_INSERT_ISLEAF) ? 'T' : 'F');
 			}
 			break;
 		case XLOG_GIN_VACUUM_PAGE:
@@ -155,6 +156,7 @@ gin_desc(StringInfo buf, uint8 xl_info, char *rec)
 		case XLOG_GIN_VACUUM_DATA_LEAF_PAGE:
 			{
 				ginxlogVacuumDataLeafPage *xlrec = (ginxlogVacuumDataLeafPage *) rec;
+
 				appendStringInfoString(buf, "Vacuum data leaf page, ");
 				desc_node(buf, xlrec->node, xlrec->blkno);
 				if (xl_info & XLR_BKP_BLOCK(0))

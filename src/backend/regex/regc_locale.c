@@ -30,7 +30,7 @@
  *
  * THE AUTHORS AND DISTRIBUTORS SPECIFICALLY DISCLAIM ANY WARRANTIES,
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.	THIS SOFTWARE
+ * FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.  THIS SOFTWARE
  * IS PROVIDED ON AN "AS IS" BASIS, AND THE AUTHORS AND DISTRIBUTORS HAVE
  * NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR
  * MODIFICATIONS.
@@ -38,7 +38,7 @@
  * GOVERNMENT USE: If you are acquiring this software on behalf of the
  * U.S. government, the Government shall have only "Restricted Rights"
  * in the software and related documentation as defined in the Federal
- * Acquisition Regulations (FARs) in Clause 52.227.19 (c) (2).	If you
+ * Acquisition Regulations (FARs) in Clause 52.227.19 (c) (2).  If you
  * are acquiring the software on behalf of the Department of Defense, the
  * software shall be classified as "Commercial Computer Software" and the
  * Government shall have only "Restricted Rights" as defined in Clause
@@ -667,7 +667,7 @@ allcases(struct vars * v,		/* context */
 /*
  * cmp - chr-substring compare
  *
- * Backrefs need this.	It should preferably be efficient.
+ * Backrefs need this.  It should preferably be efficient.
  * Note that it does not need to report anything except equal/unequal.
  * Note also that the length is exact, and the comparison should not
  * stop at embedded NULs!

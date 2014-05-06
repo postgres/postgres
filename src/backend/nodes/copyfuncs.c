@@ -4,7 +4,7 @@
  *	  Copy functions for Postgres tree nodes.
  *
  * NOTE: we currently support copying all node types found in parse and
- * plan trees.	We do not support copying executor state trees; there
+ * plan trees.  We do not support copying executor state trees; there
  * is no need for that, and no point in maintaining all the code that
  * would be needed.  We also do not support copying Path trees, mainly
  * because the circular linkages between RelOptInfo and Path nodes can't
@@ -30,7 +30,7 @@
 
 /*
  * Macros to simplify copying of different kinds of fields.  Use these
- * wherever possible to reduce the chance for silly typos.	Note that these
+ * wherever possible to reduce the chance for silly typos.  Note that these
  * hard-wire the convention that the local variables in a Copy routine are
  * named 'newnode' and 'from'.
  */
@@ -1038,7 +1038,7 @@ _copyIntoClause(const IntoClause *from)
 
 /*
  * We don't need a _copyExpr because Expr is an abstract supertype which
- * should never actually get instantiated.	Also, since it has no common
+ * should never actually get instantiated.  Also, since it has no common
  * fields except NodeTag, there's no need for a helper routine to factor
  * out copying the common fields...
  */
@@ -3300,7 +3300,7 @@ _copyReplicaIdentityStmt(const ReplicaIdentityStmt *from)
 }
 
 static AlterSystemStmt *
-_copyAlterSystemStmt(const AlterSystemStmt * from)
+_copyAlterSystemStmt(const AlterSystemStmt *from)
 {
 	AlterSystemStmt *newnode = makeNode(AlterSystemStmt);
 

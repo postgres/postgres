@@ -126,9 +126,9 @@ encode_varbyte(uint64 val, unsigned char **ptr)
 static uint64
 decode_varbyte(unsigned char **ptr)
 {
-	uint64 val;
+	uint64		val;
 	unsigned char *p = *ptr;
-	uint64 c;
+	uint64		c;
 
 	c = *(p++);
 	val = c & 0x7F;
@@ -210,7 +210,7 @@ ginCompressPostingList(const ItemPointer ipd, int nipd, int maxsize,
 		uint64		val = itemptr_to_uint64(&ipd[totalpacked]);
 		uint64		delta = val - prev;
 
-		Assert (val > prev);
+		Assert(val > prev);
 
 		if (endptr - ptr >= 6)
 			encode_varbyte(delta, &ptr);
@@ -225,7 +225,7 @@ ginCompressPostingList(const ItemPointer ipd, int nipd, int maxsize,
 
 			encode_varbyte(delta, &p);
 			if (p - buf > (endptr - ptr))
-				break; /* output is full */
+				break;			/* output is full */
 
 			memcpy(ptr, buf, p - buf);
 			ptr += (p - buf);
@@ -286,7 +286,7 @@ ginPostingListDecode(GinPostingList *plist, int *ndecoded)
 ItemPointer
 ginPostingListDecodeAllSegments(GinPostingList *segment, int len, int *ndecoded_out)
 {
-	ItemPointer	result;
+	ItemPointer result;
 	int			nallocated;
 	uint64		val;
 	char	   *endseg = ((char *) segment) + len;
@@ -349,7 +349,7 @@ ginPostingListDecodeAllSegmentsToTbm(GinPostingList *ptr, int len,
 									 TIDBitmap *tbm)
 {
 	int			ndecoded;
-	ItemPointer	items;
+	ItemPointer items;
 
 	items = ginPostingListDecodeAllSegments(ptr, len, &ndecoded);
 	tbm_add_tuples(tbm, items, ndecoded, false);
@@ -374,8 +374,8 @@ ginMergeItemPointers(ItemPointerData *a, uint32 na,
 	dst = (ItemPointer) palloc((na + nb) * sizeof(ItemPointerData));
 
 	/*
-	 * If the argument arrays don't overlap, we can just append them to
-	 * each other.
+	 * If the argument arrays don't overlap, we can just append them to each
+	 * other.
 	 */
 	if (na == 0 || nb == 0 || ginCompareItemPointers(&a[na - 1], &b[0]) < 0)
 	{

@@ -185,7 +185,7 @@ typedef HashMetaPageData *HashMetaPage;
 #define ALL_SET					((uint32) ~0)
 
 /*
- * Bitmap pages do not contain tuples.	They do contain the standard
+ * Bitmap pages do not contain tuples.  They do contain the standard
  * page headers and trailers; however, everything in between is a
  * giant bit array.  The number of bits that fit on a page obviously
  * depends on the page size and the header/trailer overhead.  We require

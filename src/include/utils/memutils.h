@@ -49,8 +49,8 @@
  * All chunks allocated by any memory context manager are required to be
  * preceded by a StandardChunkHeader at a spacing of STANDARDCHUNKHEADERSIZE.
  * A currently-allocated chunk must contain a backpointer to its owning
- * context as well as the allocated size of the chunk.	The backpointer is
- * used by pfree() and repalloc() to find the context to call.	The allocated
+ * context as well as the allocated size of the chunk.  The backpointer is
+ * used by pfree() and repalloc() to find the context to call.  The allocated
  * size is not absolutely essential, but it's expected to be needed by any
  * reasonable implementation.
  */

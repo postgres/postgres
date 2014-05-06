@@ -300,7 +300,7 @@ range_gist_penalty(PG_FUNCTION_ARGS)
 		else if (orig_lower.infinite && orig_upper.infinite)
 		{
 			/*
-			 * Original range requires broadening.	(-inf; +inf) is most far
+			 * Original range requires broadening.  (-inf; +inf) is most far
 			 * from normal range in this case.
 			 */
 			*penalty = 2 * CONTAIN_EMPTY_PENALTY;
@@ -497,7 +497,7 @@ range_gist_penalty(PG_FUNCTION_ARGS)
 /*
  * The GiST PickSplit method for ranges
  *
- * Primarily, we try to segregate ranges of different classes.	If splitting
+ * Primarily, we try to segregate ranges of different classes.  If splitting
  * ranges of the same class, use the appropriate split method for that class.
  */
 Datum
@@ -668,7 +668,7 @@ range_gist_same(PG_FUNCTION_ARGS)
 
 	/*
 	 * range_eq will ignore the RANGE_CONTAIN_EMPTY flag, so we have to check
-	 * that for ourselves.	More generally, if the entries have been properly
+	 * that for ourselves.  More generally, if the entries have been properly
 	 * normalized, then unequal flags bytes must mean unequal ranges ... so
 	 * let's just test all the flag bits at once.
 	 */
@@ -816,7 +816,7 @@ range_gist_consistent_int(TypeCacheEntry *typcache, StrategyNumber strategy,
 
 			/*
 			 * Empty ranges are contained by anything, so if key is or
-			 * contains any empty ranges, we must descend into it.	Otherwise,
+			 * contains any empty ranges, we must descend into it.  Otherwise,
 			 * descend only if key overlaps the query.
 			 */
 			if (RangeIsOrContainsEmpty(key))

@@ -467,7 +467,7 @@ static void getRelationIdentity(StringInfo buffer, Oid relid);
  * drop operation.
  *
  * Note: If the object is not found, we don't give any indication of the
- * reason.	(It might have been a missing schema if the name was qualified, or
+ * reason.  (It might have been a missing schema if the name was qualified, or
  * an inexistant type name in case of a cast, function or operator; etc).
  * Currently there is only one caller that might be interested in such info, so
  * we don't spend much effort here.  If more callers start to care, it might be
@@ -665,7 +665,7 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 
 		/*
 		 * If we're dealing with a relation or attribute, then the relation is
-		 * already locked.	Otherwise, we lock it now.
+		 * already locked.  Otherwise, we lock it now.
 		 */
 		if (address.classId != RelationRelationId)
 		{

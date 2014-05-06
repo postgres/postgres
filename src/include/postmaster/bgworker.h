@@ -6,7 +6,7 @@
  * including normal transactions.
  *
  * Any external module loaded via shared_preload_libraries can register a
- * worker.	Workers can also be registered dynamically at runtime.  In either
+ * worker.  Workers can also be registered dynamically at runtime.  In either
  * case, the worker process is forked from the postmaster and runs the
  * user-supplied "main" function.  This code may connect to a database and
  * run transactions.  Workers can remain active indefinitely, but will be
@@ -77,7 +77,7 @@ typedef enum
 
 typedef struct BackgroundWorker
 {
-	char	    bgw_name[BGW_MAXLEN];
+	char		bgw_name[BGW_MAXLEN];
 	int			bgw_flags;
 	BgWorkerStartTime bgw_start_time;
 	int			bgw_restart_time;		/* in seconds, or BGW_NEVER_RESTART */
@@ -85,7 +85,7 @@ typedef struct BackgroundWorker
 	char		bgw_library_name[BGW_MAXLEN];	/* only if bgw_main is NULL */
 	char		bgw_function_name[BGW_MAXLEN];	/* only if bgw_main is NULL */
 	Datum		bgw_main_arg;
-	pid_t		bgw_notify_pid;		/* SIGUSR1 this backend on start/stop */
+	pid_t		bgw_notify_pid; /* SIGUSR1 this backend on start/stop */
 } BackgroundWorker;
 
 typedef enum BgwHandleStatus
@@ -104,12 +104,13 @@ extern void RegisterBackgroundWorker(BackgroundWorker *worker);
 
 /* Register a new bgworker from a regular backend */
 extern bool RegisterDynamicBackgroundWorker(BackgroundWorker *worker,
-											BackgroundWorkerHandle **handle);
+								BackgroundWorkerHandle **handle);
 
 /* Query the status of a bgworker */
 extern BgwHandleStatus GetBackgroundWorkerPid(BackgroundWorkerHandle *handle,
 					   pid_t *pidp);
-extern BgwHandleStatus WaitForBackgroundWorkerStartup(BackgroundWorkerHandle *
+extern BgwHandleStatus
+WaitForBackgroundWorkerStartup(BackgroundWorkerHandle *
 							   handle, pid_t *pid);
 
 /* Terminate a bgworker */

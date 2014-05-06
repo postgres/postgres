@@ -18,7 +18,7 @@
 typedef struct dsm_segment dsm_segment;
 
 /* Startup and shutdown functions. */
-struct PGShmemHeader;		/* avoid including pg_shmem.h */
+struct PGShmemHeader;			/* avoid including pg_shmem.h */
 extern void dsm_cleanup_using_control_segment(dsm_handle old_control_handle);
 extern void dsm_postmaster_startup(struct PGShmemHeader *);
 extern void dsm_backend_shutdown(void);
@@ -50,7 +50,7 @@ typedef void (*on_dsm_detach_callback) (dsm_segment *, Datum arg);
 extern void on_dsm_detach(dsm_segment *seg,
 			  on_dsm_detach_callback function, Datum arg);
 extern void cancel_on_dsm_detach(dsm_segment *seg,
-			  on_dsm_detach_callback function, Datum arg);
+					 on_dsm_detach_callback function, Datum arg);
 extern void reset_on_dsm_detach(void);
 
 #endif   /* DSM_H */

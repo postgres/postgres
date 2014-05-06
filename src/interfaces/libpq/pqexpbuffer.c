@@ -166,7 +166,7 @@ resetPQExpBuffer(PQExpBuffer str)
  * Make sure there is enough space for 'needed' more bytes in the buffer
  * ('needed' does not include the terminating null).
  *
- * Returns 1 if OK, 0 if failed to enlarge buffer.	(In the latter case
+ * Returns 1 if OK, 0 if failed to enlarge buffer.  (In the latter case
  * the buffer is left in "broken" state.)
  */
 int
@@ -180,7 +180,7 @@ enlargePQExpBuffer(PQExpBuffer str, size_t needed)
 
 	/*
 	 * Guard against ridiculous "needed" values, which can occur if we're fed
-	 * bogus data.	Without this, we can get an overflow or infinite loop in
+	 * bogus data.  Without this, we can get an overflow or infinite loop in
 	 * the following.
 	 */
 	if (needed >= ((size_t) INT_MAX - str->len))
@@ -207,7 +207,7 @@ enlargePQExpBuffer(PQExpBuffer str, size_t needed)
 
 	/*
 	 * Clamp to INT_MAX in case we went past it.  Note we are assuming here
-	 * that INT_MAX <= UINT_MAX/2, else the above loop could overflow.	We
+	 * that INT_MAX <= UINT_MAX/2, else the above loop could overflow.  We
 	 * will still have newlen >= needed.
 	 */
 	if (newlen > (size_t) INT_MAX)
@@ -228,7 +228,7 @@ enlargePQExpBuffer(PQExpBuffer str, size_t needed)
 /*
  * printfPQExpBuffer
  * Format text data under the control of fmt (an sprintf-like format string)
- * and insert it into str.	More space is allocated to str if necessary.
+ * and insert it into str.  More space is allocated to str if necessary.
  * This is a convenience routine that does the same thing as
  * resetPQExpBuffer() followed by appendPQExpBuffer().
  */
@@ -319,7 +319,7 @@ appendPQExpBufferVA(PQExpBuffer str, const char *fmt, va_list args)
 		/*
 		 * Note: some versions of vsnprintf return the number of chars
 		 * actually stored, not the total space needed as C99 specifies.  And
-		 * at least one returns -1 on failure.	Be conservative about
+		 * at least one returns -1 on failure.  Be conservative about
 		 * believing whether the print worked.
 		 */
 		if (nprinted >= 0 && (size_t) nprinted < avail - 1)

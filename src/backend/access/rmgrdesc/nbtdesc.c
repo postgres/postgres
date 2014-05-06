@@ -140,7 +140,7 @@ btree_desc(StringInfo buf, uint8 xl_info, char *rec)
 				xl_btree_unlink_page *xlrec = (xl_btree_unlink_page *) rec;
 
 				appendStringInfo(buf, "unlink_page: rel %u/%u/%u; ",
-								 xlrec->node.spcNode, xlrec->node.dbNode, xlrec->node.relNode);
+				xlrec->node.spcNode, xlrec->node.dbNode, xlrec->node.relNode);
 				appendStringInfo(buf, "dead %u; left %u; right %u; btpo_xact %u; ",
 								 xlrec->deadblk, xlrec->leftsib, xlrec->rightsib, xlrec->btpo_xact);
 				appendStringInfo(buf, "leaf %u; leafleft %u; leafright %u; topparent %u",

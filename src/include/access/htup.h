@@ -45,12 +45,12 @@ typedef MinimalTupleData *MinimalTuple;
  *	 This is the output format of heap_form_tuple and related routines.
  *
  * * Separately allocated tuple: t_data points to a palloc'd chunk that
- *	 is not adjacent to the HeapTupleData.	(This case is deprecated since
+ *	 is not adjacent to the HeapTupleData.  (This case is deprecated since
  *	 it's difficult to tell apart from case #1.  It should be used only in
  *	 limited contexts where the code knows that case #1 will never apply.)
  *
  * * Separately allocated minimal tuple: t_data points MINIMAL_TUPLE_OFFSET
- *	 bytes before the start of a MinimalTuple.	As with the previous case,
+ *	 bytes before the start of a MinimalTuple.  As with the previous case,
  *	 this can't be told apart from case #1 by inspection; code setting up
  *	 or destroying this representation has to know what it's doing.
  *
