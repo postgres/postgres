@@ -2034,10 +2034,13 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 			exit_horribly(modulename, "input file appears to be a text format dump. Please use psql.\n");
 		}
 
-		if (AH->lookaheadLen != 512 && feof(fh))
-			exit_horribly(modulename, "input file does not appear to be a valid archive (too short?)\n");
-		else
-			READ_ERROR_EXIT(fh);
+		if (AH->lookaheadLen != 512)
+		{
+			if (feof(fh))
+				exit_horribly(modulename, "input file does not appear to be a valid archive (too short?)\n");
+			else
+				READ_ERROR_EXIT(fh);
+		}
 
 		if (!isValidTarHeader(AH->lookahead))
 			exit_horribly(modulename, "input file does not appear to be a valid archive\n");
