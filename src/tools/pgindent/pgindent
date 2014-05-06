@@ -395,7 +395,7 @@ sub entab
 	$tmp_fh->close();
 
 	open(my $entab, '-|',
-		"$entab -d -t8 -qc " . $tmp_fh->filename . " | $entab -t4 -qc");
+		"$entab -d -t8 -qc " . $tmp_fh->filename . " | $entab -t4 -qc | $entab -d -t4 -m");
 	local ($/) = undef;
 	$source = <$entab>;
 	close($entab);
