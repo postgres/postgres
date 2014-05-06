@@ -11,7 +11,7 @@
  *	  src/backend/access/hash/hashfunc.c
  *
  * NOTES
- *	  These functions are stored in pg_amproc.	For each operator class
+ *	  These functions are stored in pg_amproc.  For each operator class
  *	  defined for hash indexes, they compute the hash value of the argument.
  *
  *	  Additional hash functions appear in /utils/adt/ files for various
@@ -158,7 +158,7 @@ hashtext(PG_FUNCTION_ARGS)
 	/*
 	 * Note: this is currently identical in behavior to hashvarlena, but keep
 	 * it as a separate function in case we someday want to do something
-	 * different in non-C locales.	(See also hashbpchar, if so.)
+	 * different in non-C locales.  (See also hashbpchar, if so.)
 	 */
 	result = hash_any((unsigned char *) VARDATA_ANY(key),
 					  VARSIZE_ANY_EXHDR(key));
@@ -236,7 +236,7 @@ hashvarlena(PG_FUNCTION_ARGS)
  *
  * This allows some parallelism.  Read-after-writes are good at doubling
  * the number of bits affected, so the goal of mixing pulls in the opposite
- * direction from the goal of parallelism.	I did what I could.  Rotates
+ * direction from the goal of parallelism.  I did what I could.  Rotates
  * seem to cost as much as shifts on every machine I could lay my hands on,
  * and rotates are much kinder to the top and bottom bits, so I used rotates.
  *----------
@@ -270,7 +270,7 @@ hashvarlena(PG_FUNCTION_ARGS)
  * substantial performance increase since final() does not need to
  * do well in reverse, but is does need to affect all output bits.
  * mix(), on the other hand, does not need to affect all output
- * bits (affecting 32 bits is enough).	The original hash function had
+ * bits (affecting 32 bits is enough).  The original hash function had
  * a single mixing operation that had to satisfy both sets of requirements
  * and was slower as a result.
  *----------
@@ -291,7 +291,7 @@ hashvarlena(PG_FUNCTION_ARGS)
  *		k		: the key (the unaligned variable-length array of bytes)
  *		len		: the length of the key, counting by bytes
  *
- * Returns a uint32 value.	Every bit of the key affects every bit of
+ * Returns a uint32 value.  Every bit of the key affects every bit of
  * the return value.  Every 1-bit and 2-bit delta achieves avalanche.
  * About 6*len+35 instructions. The best hash table sizes are powers
  * of 2.  There is no need to do mod a prime (mod is sooo slow!).

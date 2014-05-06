@@ -20,7 +20,7 @@
  * TransactionIdDidCommit will both return true.  If we check only
  * TransactionIdDidCommit, we could consider a tuple committed when a
  * later GetSnapshotData call will still think the originating transaction
- * is in progress, which leads to application-level inconsistency.	The
+ * is in progress, which leads to application-level inconsistency.  The
  * upshot is that we gotta check TransactionIdIsInProgress first in all
  * code paths, except for a few cases where we are looking at
  * subtransactions of our own main transaction and so there can't be any
@@ -89,13 +89,13 @@ static bool XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot);
  * just refrain from setting the hint bit until some future re-examination
  * of the tuple.
  *
- * We can always set hint bits when marking a transaction aborted.	(Some
+ * We can always set hint bits when marking a transaction aborted.  (Some
  * code in heapam.c relies on that!)
  *
  * Also, if we are cleaning up HEAP_MOVED_IN or HEAP_MOVED_OFF entries, then
  * we can always set the hint bits, since pre-9.0 VACUUM FULL always used
  * synchronous commits and didn't move tuples that weren't previously
- * hinted.	(This is not known by this subroutine, but is applied by its
+ * hinted.  (This is not known by this subroutine, but is applied by its
  * callers.)  Note: old-style VACUUM FULL is gone, but we have to keep this
  * module's support for MOVED_OFF/MOVED_IN flag bits for as long as we
  * support in-place update from pre-9.0 databases.
@@ -482,7 +482,7 @@ HeapTupleSatisfiesAny(HeapTupleHeader tuple, Snapshot snapshot, Buffer buffer)
  * This is a simplified version that only checks for VACUUM moving conditions.
  * It's appropriate for TOAST usage because TOAST really doesn't want to do
  * its own time qual checks; if you can see the main table row that contains
- * a TOAST reference, you should be able to see the TOASTed value.	However,
+ * a TOAST reference, you should be able to see the TOASTed value.  However,
  * vacuuming a TOAST table is independent of the main table, and in case such
  * a vacuum fails partway through, we'd better do this much checking.
  *
@@ -1052,7 +1052,7 @@ HeapTupleSatisfiesMVCC(HeapTupleHeader tuple, Snapshot snapshot,
  *	we mainly want to know is if a tuple is potentially visible to *any*
  *	running transaction.  If so, it can't be removed yet by VACUUM.
  *
- * OldestXmin is a cutoff XID (obtained from GetOldestXmin()).	Tuples
+ * OldestXmin is a cutoff XID (obtained from GetOldestXmin()).  Tuples
  * deleted by XIDs >= OldestXmin are deemed "recently dead"; they might
  * still be visible to some open transaction, so we can't remove them,
  * even if we see that the deleting transaction has committed.
@@ -1138,7 +1138,7 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin,
 	}
 
 	/*
-	 * Okay, the inserter committed, so it was good at some point.	Now what
+	 * Okay, the inserter committed, so it was good at some point.  Now what
 	 * about the deleting transaction?
 	 */
 	if (tuple->t_infomask & HEAP_XMAX_INVALID)
@@ -1227,7 +1227,7 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin,
  *	in lieu of HeapTupleSatisifesVacuum when the tuple has just been
  *	tested by HeapTupleSatisfiesMVCC and, therefore, any hint bits that
  *	can be set should already be set.  We assume that if no hint bits
- *	either for xmin or xmax, the transaction is still running.	This is
+ *	either for xmin or xmax, the transaction is still running.  This is
  *	therefore faster than HeapTupleSatisfiesVacuum, because we don't
  *	consult CLOG (and also because we don't need to give an exact answer,
  *	just whether or not the tuple is surely dead).
@@ -1277,7 +1277,7 @@ XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot)
 
 	/*
 	 * Make a quick range check to eliminate most XIDs without looking at the
-	 * xip arrays.	Note that this is OK even if we convert a subxact XID to
+	 * xip arrays.  Note that this is OK even if we convert a subxact XID to
 	 * its parent below, because a subxact with XID < xmin has surely also got
 	 * a parent with XID < xmin, while one with XID >= xmax must belong to a
 	 * parent that was not yet committed at the time of this snapshot.

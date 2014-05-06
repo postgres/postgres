@@ -259,12 +259,12 @@ ExecScanSubPlan(SubPlanState *node,
 	 * semantics for ANY_SUBLINK or AND semantics for ALL_SUBLINK.
 	 * (ROWCOMPARE_SUBLINK doesn't allow multiple tuples from the subplan.)
 	 * NULL results from the combining operators are handled according to the
-	 * usual SQL semantics for OR and AND.	The result for no input tuples is
+	 * usual SQL semantics for OR and AND.  The result for no input tuples is
 	 * FALSE for ANY_SUBLINK, TRUE for ALL_SUBLINK, NULL for
 	 * ROWCOMPARE_SUBLINK.
 	 *
 	 * For EXPR_SUBLINK we require the subplan to produce no more than one
-	 * tuple, else an error is raised.	If zero tuples are produced, we return
+	 * tuple, else an error is raised.  If zero tuples are produced, we return
 	 * NULL.  Assuming we get a tuple, we just use its first column (there can
 	 * be only one non-junk column in this case).
 	 *
@@ -407,7 +407,7 @@ ExecScanSubPlan(SubPlanState *node,
 	else if (!found)
 	{
 		/*
-		 * deal with empty subplan result.	result/isNull were previously
+		 * deal with empty subplan result.  result/isNull were previously
 		 * initialized correctly for all sublink types except EXPR and
 		 * ROWCOMPARE; for those, return NULL.
 		 */
@@ -892,7 +892,7 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
  *
  * This is called from ExecEvalParamExec() when the value of a PARAM_EXEC
  * parameter is requested and the param's execPlan field is set (indicating
- * that the param has not yet been evaluated).	This allows lazy evaluation
+ * that the param has not yet been evaluated).  This allows lazy evaluation
  * of initplans: we don't run the subplan until/unless we need its output.
  * Note that this routine MUST clear the execPlan fields of the plan's
  * output parameters after evaluating them!
@@ -1120,7 +1120,7 @@ ExecInitAlternativeSubPlan(AlternativeSubPlan *asplan, PlanState *parent)
 	/*
 	 * Select the one to be used.  For this, we need an estimate of the number
 	 * of executions of the subplan.  We use the number of output rows
-	 * expected from the parent plan node.	This is a good estimate if we are
+	 * expected from the parent plan node.  This is a good estimate if we are
 	 * in the parent's targetlist, and an underestimate (but probably not by
 	 * more than a factor of 2) if we are in the qual.
 	 */

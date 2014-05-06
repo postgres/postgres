@@ -512,12 +512,12 @@ json_lex_string(JsonLexContext *lex)
  *	   begin with a '0'.
  *
  * (3) An optional decimal part, consisting of a period ('.') followed by
- *	   one or more digits.	(Note: While this part can be omitted
+ *	   one or more digits.  (Note: While this part can be omitted
  *	   completely, it's not OK to have only the decimal point without
  *	   any digits afterwards.)
  *
  * (4) An optional exponent part, consisting of 'e' or 'E', optionally
- *	   followed by '+' or '-', followed by one or more digits.	(Note:
+ *	   followed by '+' or '-', followed by one or more digits.  (Note:
  *	   As with the decimal part, if 'e' or 'E' is present, it must be
  *	   followed by at least one digit.)
  *
@@ -582,7 +582,7 @@ json_lex_number(JsonLexContext *lex, char *s, bool *num_err)
 	}
 
 	/*
-	 * Check for trailing garbage.	As in json_lex(), any alphanumeric stuff
+	 * Check for trailing garbage.  As in json_lex(), any alphanumeric stuff
 	 * here should be considered part of the token for error-reporting
 	 * purposes.
 	 */

@@ -8,7 +8,7 @@
  * a dumbed-down version of tuplesort.c; it does no sorting of tuples
  * but can only store and regurgitate a sequence of tuples.  However,
  * because no sort is required, it is allowed to start reading the sequence
- * before it has all been written.	This is particularly useful for cursors,
+ * before it has all been written.  This is particularly useful for cursors,
  * because it allows random access within the already-scanned portion of
  * a query without having to process the underlying scan to completion.
  * Also, it is possible to support multiple independent read pointers.

@@ -109,7 +109,7 @@ static char **save_argv;
  * from being clobbered by subsequent ps_display actions.
  *
  * (The original argv[] will not be overwritten by this routine, but may be
- * overwritten during init_ps_display.	Also, the physical location of the
+ * overwritten during init_ps_display.  Also, the physical location of the
  * environment strings may be moved, so this should be called before any code
  * that might try to hang onto a getenv() result.)
  */
@@ -210,7 +210,7 @@ save_ps_display_args(int argc, char **argv)
 
 /*
  * Call this once during subprocess startup to set the identification
- * values.	At this point, the original argv[] array may be overwritten.
+ * values.  At this point, the original argv[] array may be overwritten.
  */
 void
 init_ps_display(const char *username, const char *dbname,
@@ -360,7 +360,7 @@ set_ps_display(const char *activity, bool force)
 
 /*
  * Returns what's currently in the ps display, in case someone needs
- * it.	Note that only the activity part is returned.  On some platforms
+ * it.  Note that only the activity part is returned.  On some platforms
  * the string will not be null-terminated, so return the effective
  * length into *displen.
  */

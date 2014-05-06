@@ -246,7 +246,7 @@ PLy_exec_trigger(FunctionCallInfo fcinfo, PLyProcedure *proc)
 	Assert(CALLED_AS_TRIGGER(fcinfo));
 
 	/*
-	 * Input/output conversion for trigger tuples.	Use the result TypeInfo
+	 * Input/output conversion for trigger tuples.  Use the result TypeInfo
 	 * variable to store the tuple conversion info.  We do this over again on
 	 * each call to cover the possibility that the relation's tupdesc changed
 	 * since the trigger was last called. PLy_input_tuple_funcs and

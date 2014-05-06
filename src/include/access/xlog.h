@@ -31,11 +31,11 @@
  * where there can be zero to four backup blocks (as signaled by xl_info flag
  * bits).  XLogRecord structs always start on MAXALIGN boundaries in the WAL
  * files, and we round up SizeOfXLogRecord so that the rmgr data is also
- * guaranteed to begin on a MAXALIGN boundary.	However, no padding is added
+ * guaranteed to begin on a MAXALIGN boundary.  However, no padding is added
  * to align BkpBlock structs or backup block data.
  *
  * NOTE: xl_len counts only the rmgr data, not the XLogRecord header,
- * and also not any backup blocks.	xl_tot_len counts everything.  Neither
+ * and also not any backup blocks.  xl_tot_len counts everything.  Neither
  * length field is rounded up to an alignment boundary.
  */
 typedef struct XLogRecord
@@ -106,7 +106,7 @@ extern int	sync_method;
  * value (ignoring InvalidBuffer) appearing in the rdata chain.
  *
  * When buffer is valid, caller must set buffer_std to indicate whether the
- * page uses standard pd_lower/pd_upper header fields.	If this is true, then
+ * page uses standard pd_lower/pd_upper header fields.  If this is true, then
  * XLOG is allowed to omit the free space between pd_lower and pd_upper from
  * the backed-up page image.  Note that even when buffer_std is false, the
  * page MUST have an LSN field as its first eight bytes!

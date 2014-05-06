@@ -974,7 +974,7 @@ PGTYPESnumeric_sub(numeric *var1, numeric *var2, numeric *result)
  * mul_var() -
  *
  *	Multiplication on variable level. Product of var1 * var2 is stored
- *	in result.	Accuracy of result is determined by global_rscale.
+ *	in result.  Accuracy of result is determined by global_rscale.
  * ----------
  */
 int

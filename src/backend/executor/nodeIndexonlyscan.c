@@ -88,7 +88,7 @@ IndexOnlyNext(IndexOnlyScanState *node)
 		 * Note on Memory Ordering Effects: visibilitymap_test does not lock
 		 * the visibility map buffer, and therefore the result we read here
 		 * could be slightly stale.  However, it can't be stale enough to
-		 * matter.	It suffices to show that (1) there is a read barrier
+		 * matter.  It suffices to show that (1) there is a read barrier
 		 * between the time we read the index TID and the time we test the
 		 * visibility map; and (2) there is a write barrier between the time
 		 * some other concurrent process clears the visibility map bit and the
@@ -113,7 +113,7 @@ IndexOnlyNext(IndexOnlyScanState *node)
 			/*
 			 * Only MVCC snapshots are supported here, so there should be no
 			 * need to keep following the HOT chain once a visible entry has
-			 * been found.	If we did want to allow that, we'd need to keep
+			 * been found.  If we did want to allow that, we'd need to keep
 			 * more state to remember not to call index_getnext_tid next time.
 			 */
 			if (scandesc->xs_continue_hot)
@@ -122,7 +122,7 @@ IndexOnlyNext(IndexOnlyScanState *node)
 			/*
 			 * Note: at this point we are holding a pin on the heap page, as
 			 * recorded in scandesc->xs_cbuf.  We could release that pin now,
-			 * but it's not clear whether it's a win to do so.	The next index
+			 * but it's not clear whether it's a win to do so.  The next index
 			 * entry might require a visit to the same heap page.
 			 */
 		}

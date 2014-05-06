@@ -26,7 +26,7 @@
 /*
  * The CATALOG definition has to refer to the type of rolvaliduntil as
  * "timestamptz" (lower case) so that bootstrap mode recognizes it.  But
- * the C header files define this type as TimestampTz.	Since the field is
+ * the C header files define this type as TimestampTz.  Since the field is
  * potentially-null and therefore can't be accessed directly from C code,
  * there is no particular need for the C struct definition to show the
  * field type as TimestampTz --- instead we just make it int.

@@ -40,7 +40,7 @@
  * configuration file, or by client request in the connection startup
  * packet (e.g., from libpq's PGOPTIONS variable).  Furthermore, an
  * already-started backend will ignore changes to such an option in the
- * configuration file.	The idea is that these options are fixed for a
+ * configuration file.  The idea is that these options are fixed for a
  * given backend once it's started, but they can vary across backends.
  *
  * SUSET options can be set at postmaster startup, with the SIGHUP
@@ -74,7 +74,7 @@ typedef enum
  *
  * PGC_S_TEST is used when testing values to be stored as per-database or
  * per-user defaults ("doit" will always be false, so this never gets stored
- * as the actual source of any value).	This is an interactive case, but
+ * as the actual source of any value).  This is an interactive case, but
  * it needs its own source value because some assign hooks need to make
  * different validity checks in this case.
  *

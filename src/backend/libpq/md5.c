@@ -2,7 +2,7 @@
  *	md5.c
  *
  *	Implements	the  MD5 Message-Digest Algorithm as specified in
- *	RFC  1321.	This  implementation  is a simple one, in that it
+ *	RFC  1321.  This  implementation  is a simple one, in that it
  *	needs  every  input  byte  to  be  buffered  before doing any
  *	calculations.  I  do  not  expect  this  file  to be used for
  *	general  purpose  MD5'ing  of large amounts of data, only for

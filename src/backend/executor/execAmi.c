@@ -316,7 +316,7 @@ ExecMarkPos(PlanState *node)
  *
  * NOTE: the semantics of this are that the first ExecProcNode following
  * the restore operation will yield the same tuple as the first one following
- * the mark operation.	It is unspecified what happens to the plan node's
+ * the mark operation.  It is unspecified what happens to the plan node's
  * result TupleTableSlot.  (In most cases the result slot is unchanged by
  * a restore, but the node may choose to clear it or to load it with the
  * restored-to tuple.)	Hence the caller should discard any previously
@@ -396,7 +396,7 @@ ExecSupportsMarkRestore(NodeTag plantype)
 			/*
 			 * T_Result only supports mark/restore if it has a child plan that
 			 * does, so we do not have enough information to give a really
-			 * correct answer.	However, for current uses it's enough to
+			 * correct answer.  However, for current uses it's enough to
 			 * always say "false", because this routine is not asked about
 			 * gating Result plans, only base-case Results.
 			 */

@@ -30,7 +30,7 @@
  * the analyzed-and-rewritten query tree, and rebuild it when next needed.
  *
  * An actual execution plan, represented by CachedPlan, is derived from the
- * CachedPlanSource when we need to execute the query.	The plan could be
+ * CachedPlanSource when we need to execute the query.  The plan could be
  * either generic (usable with any set of plan parameters) or custom (for a
  * specific set of parameters).  plancache.c contains the logic that decides
  * which way to do it for any particular execution.  If we are using a generic
@@ -69,7 +69,7 @@
  * plan is always treated as unsaved.
  *
  * Note: the string referenced by commandTag is not subsidiary storage;
- * it is assumed to be a compile-time-constant string.	As with portals,
+ * it is assumed to be a compile-time-constant string.  As with portals,
  * commandTag shall be NULL if and only if the original query string (before
  * rewriting) was an empty string.
  */
@@ -113,7 +113,7 @@ typedef struct CachedPlanSource
  * CachedPlan represents an execution plan derived from a CachedPlanSource.
  * The reference count includes both the link from the parent CachedPlanSource
  * (if any), and any active plan executions, so the plan can be discarded
- * exactly when refcount goes to zero.	Both the struct itself and the
+ * exactly when refcount goes to zero.  Both the struct itself and the
  * subsidiary data live in the context denoted by the context field.
  * This makes it easy to free a no-longer-needed cached plan.  (However,
  * if is_oneshot is true, the context does not belong solely to the CachedPlan

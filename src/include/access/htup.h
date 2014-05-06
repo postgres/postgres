@@ -70,7 +70,7 @@
  *
  * We store five "virtual" fields Xmin, Cmin, Xmax, Cmax, and Xvac in three
  * physical fields.  Xmin and Xmax are always really stored, but Cmin, Cmax
- * and Xvac share a field.	This works because we know that Cmin and Cmax
+ * and Xvac share a field.  This works because we know that Cmin and Cmax
  * are only interesting for the lifetime of the inserting and deleting
  * transaction respectively.  If a tuple is inserted and deleted in the same
  * transaction, we store a "combo" command id that can be mapped to the real
@@ -82,7 +82,7 @@
  * ie, an insert-in-progress or delete-in-progress tuple.)
  *
  * A word about t_ctid: whenever a new tuple is stored on disk, its t_ctid
- * is initialized with its own TID (location).	If the tuple is ever updated,
+ * is initialized with its own TID (location).  If the tuple is ever updated,
  * its t_ctid is changed to point to the replacement version of the tuple.
  * Thus, a tuple is the latest version of its row iff XMAX is invalid or
  * t_ctid points to itself (in which case, if XMAX is valid, the tuple is
@@ -97,10 +97,10 @@
  * check fails, one may assume that there is no live descendant version.
  *
  * Following the fixed header fields, the nulls bitmap is stored (beginning
- * at t_bits).	The bitmap is *not* stored if t_infomask shows that there
+ * at t_bits).  The bitmap is *not* stored if t_infomask shows that there
  * are no nulls in the tuple.  If an OID field is present (as indicated by
  * t_infomask), then it is stored just before the user data, which begins at
- * the offset shown by t_hoff.	Note that t_hoff must be a multiple of
+ * the offset shown by t_hoff.  Note that t_hoff must be a multiple of
  * MAXALIGN.
  */
 
@@ -207,7 +207,7 @@ typedef HeapTupleHeaderData *HeapTupleHeader;
 /*
  * HeapTupleHeader accessor macros
  *
- * Note: beware of multiple evaluations of "tup" argument.	But the Set
+ * Note: beware of multiple evaluations of "tup" argument.  But the Set
  * macros evaluate their other argument only once.
  */
 
@@ -427,7 +427,7 @@ do { \
  * MinimalTuple is an alternative representation that is used for transient
  * tuples inside the executor, in places where transaction status information
  * is not required, the tuple rowtype is known, and shaving off a few bytes
- * is worthwhile because we need to store many tuples.	The representation
+ * is worthwhile because we need to store many tuples.  The representation
  * is chosen so that tuple access routines can work with either full or
  * minimal tuples via a HeapTupleData pointer structure.  The access routines
  * see no difference, except that they must not access the transaction status
@@ -451,7 +451,7 @@ do { \
  * the MINIMAL_TUPLE_OFFSET distance.  t_len does not include that, however.
  *
  * MINIMAL_TUPLE_DATA_OFFSET is the offset to the first useful (non-pad) data
- * other than the length word.	tuplesort.c and tuplestore.c use this to avoid
+ * other than the length word.  tuplesort.c and tuplestore.c use this to avoid
  * writing the padding to disk.
  */
 #define MINIMAL_TUPLE_OFFSET \
@@ -503,12 +503,12 @@ typedef MinimalTupleData *MinimalTuple;
  *	 This is the output format of heap_form_tuple and related routines.
  *
  * * Separately allocated tuple: t_data points to a palloc'd chunk that
- *	 is not adjacent to the HeapTupleData.	(This case is deprecated since
+ *	 is not adjacent to the HeapTupleData.  (This case is deprecated since
  *	 it's difficult to tell apart from case #1.  It should be used only in
  *	 limited contexts where the code knows that case #1 will never apply.)
  *
  * * Separately allocated minimal tuple: t_data points MINIMAL_TUPLE_OFFSET
- *	 bytes before the start of a MinimalTuple.	As with the previous case,
+ *	 bytes before the start of a MinimalTuple.  As with the previous case,
  *	 this can't be told apart from case #1 by inspection; code setting up
  *	 or destroying this representation has to know what it's doing.
  *
@@ -601,7 +601,7 @@ typedef HeapTupleData *HeapTuple;
  */
 #define XLOG_HEAP_INIT_PAGE		0x80
 /*
- * We ran out of opcodes, so heapam.c now has a second RmgrId.	These opcodes
+ * We ran out of opcodes, so heapam.c now has a second RmgrId.  These opcodes
  * are associated with RM_HEAP2_ID, but are not logically different from
  * the ones above associated with RM_HEAP_ID.  XLOG_HEAP_OPMASK applies to
  * these, too.
@@ -869,7 +869,7 @@ extern Datum fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
  *		and set *isnull == true.  Otherwise, we set *isnull == false.
  *
  *		<tup> is the pointer to the heap tuple.  <attnum> is the attribute
- *		number of the column (field) caller wants.	<tupleDesc> is a
+ *		number of the column (field) caller wants.  <tupleDesc> is a
  *		pointer to the structure describing the row and all its fields.
  * ----------------
  */

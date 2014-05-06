@@ -105,7 +105,7 @@ sepgsql_get_client_label(void)
  * sepgsql_set_client_label
  *
  * This routine tries to switch the current security label of the client, and
- * checks related permissions.	The supplied new label shall be added to the
+ * checks related permissions.  The supplied new label shall be added to the
  * client_label_pending list, then saved at transaction-commit time to ensure
  * transaction-awareness.
  */
@@ -160,7 +160,7 @@ sepgsql_set_client_label(const char *new_label)
 /*
  * sepgsql_xact_callback
  *
- * A callback routine of transaction commit/abort/prepare.	Commmit or abort
+ * A callback routine of transaction commit/abort/prepare.  Commmit or abort
  * changes in the client_label_pending list.
  */
 static void

@@ -27,7 +27,7 @@
  *
  * Note: the intent of this function is to make a static, self-contained
  * set of parameter values.  If dynamic parameter hooks are present, we
- * intentionally do not copy them into the result.	Rather, we forcibly
+ * intentionally do not copy them into the result.  Rather, we forcibly
  * instantiate all available parameter values and copy the datum values.
  */
 ParamListInfo

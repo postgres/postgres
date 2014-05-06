@@ -11,7 +11,7 @@
  * regd_count and count it in RegisteredSnapshots, but this reference is not
  * tracked by a resource owner. We used to use the TopTransactionResourceOwner
  * to track this snapshot reference, but that introduces logical circularity
- * and thus makes it impossible to clean up in a sane fashion.	It's better to
+ * and thus makes it impossible to clean up in a sane fashion.  It's better to
  * handle this reference as an internally-tracked registration, so that this
  * module is entirely lower-level than ResourceOwners.
  *
@@ -20,9 +20,9 @@
  * tracked by any resource owner.
  *
  * These arrangements let us reset MyPgXact->xmin when there are no snapshots
- * referenced by this transaction.	(One possible improvement would be to be
+ * referenced by this transaction.  (One possible improvement would be to be
  * able to advance Xmin when the snapshot with the earliest Xmin is no longer
- * referenced.	That's a bit harder though, it requires more locking, and
+ * referenced.  That's a bit harder though, it requires more locking, and
  * anyway it should be rather uncommon to keep temporary snapshots referenced
  * for too long.)
  *
@@ -56,7 +56,7 @@
  * CurrentSnapshot points to the only snapshot taken in transaction-snapshot
  * mode, and to the latest one taken in a read-committed transaction.
  * SecondarySnapshot is a snapshot that's always up-to-date as of the current
- * instant, even in transaction-snapshot mode.	It should only be used for
+ * instant, even in transaction-snapshot mode.  It should only be used for
  * special-purpose code (say, RI checking.)
  *
  * These SnapshotData structs are static to simplify memory allocation
@@ -75,7 +75,7 @@ static Snapshot SecondarySnapshot = NULL;
  * mode, we don't want it to say that BootstrapTransactionId is in progress.
  *
  * RecentGlobalXmin is initialized to InvalidTransactionId, to ensure that no
- * one tries to use a stale value.	Readers should ensure that it has been set
+ * one tries to use a stale value.  Readers should ensure that it has been set
  * to something else before using it.
  */
 TransactionId TransactionXmin = FirstNormalTransactionId;
@@ -113,7 +113,7 @@ static int	RegisteredSnapshots = 0;
 bool		FirstSnapshotSet = false;
 
 /*
- * Remember the serializable transaction snapshot, if any.	We cannot trust
+ * Remember the serializable transaction snapshot, if any.  We cannot trust
  * FirstSnapshotSet in combination with IsolationUsesXactSnapshot(), because
  * GUC may be reset before us, changing the value of IsolationUsesXactSnapshot.
  */
@@ -285,7 +285,7 @@ SetTransactionSnapshot(Snapshot sourcesnap, TransactionId sourcexid)
 
 	/*
 	 * In transaction-snapshot mode, the first snapshot must live until end of
-	 * xact, so we must make a copy of it.	Furthermore, if we're running in
+	 * xact, so we must make a copy of it.  Furthermore, if we're running in
 	 * serializable mode, predicate.c needs to do its own processing.
 	 */
 	if (IsolationUsesXactSnapshot())
@@ -381,7 +381,7 @@ FreeSnapshot(Snapshot snapshot)
  *
  * If the passed snapshot is a statically-allocated one, or it is possibly
  * subject to a future command counter update, create a new long-lived copy
- * with active refcount=1.	Otherwise, only increment the refcount.
+ * with active refcount=1.  Otherwise, only increment the refcount.
  */
 void
 PushActiveSnapshot(Snapshot snap)
@@ -750,7 +750,7 @@ ExportSnapshot(Snapshot snapshot)
 	 * However, we haven't got enough information to do that, since we don't
 	 * know if we're at top level or not.  For example, we could be inside a
 	 * plpgsql function that is going to fire off other transactions via
-	 * dblink.	Rather than disallow perfectly legitimate usages, don't make a
+	 * dblink.  Rather than disallow perfectly legitimate usages, don't make a
 	 * check.
 	 *
 	 * Also note that we don't make any restriction on the transaction's
@@ -963,7 +963,7 @@ parseXidFromText(const char *prefix, char **s, const char *filename)
 
 /*
  * ImportSnapshot
- *		Import a previously exported snapshot.	The argument should be a
+ *		Import a previously exported snapshot.  The argument should be a
  *		filename in SNAPSHOT_EXPORT_DIR.  Load the snapshot from that file.
  *		This is called by "SET TRANSACTION SNAPSHOT 'foo'".
  */

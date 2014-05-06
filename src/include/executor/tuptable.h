@@ -33,7 +33,7 @@
  *
  * A "minimal" tuple is handled similarly to a palloc'd regular tuple.
  * At present, minimal tuples never are stored in buffers, so there is no
- * parallel to case 1.	Note that a minimal tuple has no "system columns".
+ * parallel to case 1.  Note that a minimal tuple has no "system columns".
  * (Actually, it could have an OID, but we have no need to access the OID.)
  *
  * A "virtual" tuple is an optimization used to minimize physical data
@@ -43,7 +43,7 @@
  * a lower plan node's output TupleTableSlot, or to a function result
  * constructed in a plan node's per-tuple econtext.  It is the responsibility
  * of the generating plan node to be sure these resources are not released
- * for as long as the virtual tuple needs to be valid.	We only use virtual
+ * for as long as the virtual tuple needs to be valid.  We only use virtual
  * tuples in the result slots of plan nodes --- tuples to be copied anywhere
  * else need to be "materialized" into physical tuples.  Note also that a
  * virtual tuple does not have any "system columns".
@@ -57,11 +57,11 @@
  * payloads when this is the case.
  *
  * The Datum/isnull arrays of a TupleTableSlot serve double duty.  When the
- * slot contains a virtual tuple, they are the authoritative data.	When the
+ * slot contains a virtual tuple, they are the authoritative data.  When the
  * slot contains a physical tuple, the arrays contain data extracted from
  * the tuple.  (In this state, any pass-by-reference Datums point into
  * the physical tuple.)  The extracted information is built "lazily",
- * ie, only as needed.	This serves to avoid repeated extraction of data
+ * ie, only as needed.  This serves to avoid repeated extraction of data
  * from the physical tuple.
  *
  * A TupleTableSlot can also be "empty", holding no valid data.  This is
@@ -88,7 +88,7 @@
  * buffer page.)
  *
  * tts_nvalid indicates the number of valid columns in the tts_values/isnull
- * arrays.	When the slot is holding a "virtual" tuple this must be equal
+ * arrays.  When the slot is holding a "virtual" tuple this must be equal
  * to the descriptor's natts.  When the slot is holding a physical tuple
  * this is equal to the number of columns we have extracted (we always
  * extract columns from left to right, so there are no holes).
@@ -102,7 +102,7 @@
  * has only a minimal and not also a regular physical tuple, then tts_tuple
  * points at tts_minhdr and the fields of that struct are set correctly
  * for access to the minimal tuple; in particular, tts_minhdr.t_data points
- * MINIMAL_TUPLE_OFFSET bytes before tts_mintuple.	This allows column
+ * MINIMAL_TUPLE_OFFSET bytes before tts_mintuple.  This allows column
  * extraction to treat the case identically to regular physical tuples.
  *
  * tts_slow/tts_off are saved state for slot_deform_tuple, and should not

@@ -167,7 +167,7 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 
 /*
  * Drop some settings from the catalog.  These can be for a particular
- * database, or for a particular role.	(It is of course possible to do both
+ * database, or for a particular role.  (It is of course possible to do both
  * too, but it doesn't make sense for current uses.)
  */
 void

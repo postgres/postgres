@@ -47,7 +47,7 @@ pg_dlerror(void)
 
 /*
  * These routines were taken from the Apache source, but were made
- * available with a PostgreSQL-compatible license.	Kudos Wilfredo
+ * available with a PostgreSQL-compatible license.  Kudos Wilfredo
  * Sánchez <wsanchez@apple.com>.
  */
 

@@ -747,7 +747,7 @@ estimate_size(PlannerInfo *root, RelOptInfo *baserel,
 		 * planner's idea of the relation width; which is bogus if not all
 		 * columns are being read, not to mention that the text representation
 		 * of a row probably isn't the same size as its internal
-		 * representation.	Possibly we could do something better, but the
+		 * representation.  Possibly we could do something better, but the
 		 * real answer to anyone who complains is "ANALYZE" ...
 		 */
 		int			tuple_width;
@@ -812,7 +812,7 @@ estimate_costs(PlannerInfo *root, RelOptInfo *baserel,
  * which must have at least targrows entries.
  * The actual number of rows selected is returned as the function result.
  * We also count the total number of rows in the file and return it into
- * *totalrows.	Note that *totaldeadrows is always set to 0.
+ * *totalrows.  Note that *totaldeadrows is always set to 0.
  *
  * Note that the returned list of rows is not always in order by physical
  * position in the file.  Therefore, correlation estimates derived later

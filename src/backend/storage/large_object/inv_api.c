@@ -797,7 +797,7 @@ inv_truncate(LargeObjectDesc *obj_desc, int len)
 
 	/*
 	 * If we found the page of the truncation point we need to truncate the
-	 * data in it.	Otherwise if we're in a hole, we need to create a page to
+	 * data in it.  Otherwise if we're in a hole, we need to create a page to
 	 * mark the end of data.
 	 */
 	if (olddata != NULL && olddata->pageno == pageno)

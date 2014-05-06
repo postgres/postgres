@@ -61,7 +61,7 @@ make_placeholder_expr(PlannerInfo *root, Expr *expr, Relids phrels)
  * We build PlaceHolderInfos only for PHVs that are still present in the
  * simplified query passed to query_planner().
  *
- * Note: this should only be called after query_planner() has started.	Also,
+ * Note: this should only be called after query_planner() has started.  Also,
  * create_new_ph must not be TRUE after deconstruct_jointree begins, because
  * make_outerjoininfo assumes that we already know about all placeholders.
  */
@@ -259,7 +259,7 @@ mark_placeholder_maybe_needed(PlannerInfo *root, PlaceHolderInfo *phinfo,
 	 * but they aren't going to be needed where the outer PHV is referenced.
 	 * Rather, they'll be needed where the outer PHV is evaluated.  We can
 	 * estimate that (conservatively) as the syntactic location of the PHV's
-	 * expression.	Recurse to take care of any such PHVs.
+	 * expression.  Recurse to take care of any such PHVs.
 	 */
 	mark_placeholders_in_expr(root, (Node *) phinfo->ph_var->phexpr,
 							  phinfo->ph_var->phrels);

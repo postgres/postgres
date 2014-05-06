@@ -41,7 +41,7 @@ fillFakeState(SpGistState *state, spgxlogState stateSrc)
 }
 
 /*
- * Add a leaf tuple, or replace an existing placeholder tuple.	This is used
+ * Add a leaf tuple, or replace an existing placeholder tuple.  This is used
  * to replay SpGistPageAddNewItem() operations.  If the offset points at an
  * existing tuple, it had better be a placeholder tuple.
  */
@@ -473,7 +473,7 @@ spgRedoAddNode(XLogRecPtr lsn, XLogRecord *record)
 		}
 
 		/*
-		 * Update parent downlink.	Since parent could be in either of the
+		 * Update parent downlink.  Since parent could be in either of the
 		 * previous two buffers, it's a bit tricky to determine which BKP bit
 		 * applies.
 		 */
@@ -816,7 +816,7 @@ spgRedoPickSplit(XLogRecPtr lsn, XLogRecord *record)
 	bbi++;
 
 	/*
-	 * Now we can release the leaf-page locks.	It's okay to do this before
+	 * Now we can release the leaf-page locks.  It's okay to do this before
 	 * updating the parent downlink.
 	 */
 	if (BufferIsValid(srcBuffer))

@@ -736,7 +736,7 @@ range_adjacent_internal(TypeCacheEntry *typcache, RangeType *r1, RangeType *r2)
 	/*
 	 * Given two ranges A..B and C..D, where B < C, the ranges are adjacent if
 	 * and only if the range B..C is empty, where inclusivity of these two
-	 * bounds is inverted compared to the original bounds.	For discrete
+	 * bounds is inverted compared to the original bounds.  For discrete
 	 * ranges, we have to rely on the canonicalization function to normalize
 	 * B..C to empty if it contains no elements of the subtype.  (If there is
 	 * no canonicalization function, it's impossible for such a range to
@@ -1453,7 +1453,7 @@ tstzrange_subdiff(PG_FUNCTION_ARGS)
  *
  * This is for use by range-related functions that follow the convention
  * of using the fn_extra field as a pointer to the type cache entry for
- * the range type.	Functions that need to cache more information than
+ * the range type.  Functions that need to cache more information than
  * that must fend for themselves.
  */
 TypeCacheEntry *
@@ -1477,7 +1477,7 @@ range_get_typcache(FunctionCallInfo fcinfo, Oid rngtypid)
  * range_serialize: construct a range value from bounds and empty-flag
  *
  * This does not force canonicalization of the range value.  In most cases,
- * external callers should only be canonicalization functions.	Note that
+ * external callers should only be canonicalization functions.  Note that
  * we perform some datatype-independent canonicalization checks anyway.
  */
 RangeType *
@@ -1814,7 +1814,7 @@ range_cmp_bounds(TypeCacheEntry *typcache, RangeBound *b1, RangeBound *b2)
  * Compare two range boundary point values, returning <0, 0, or >0 according
  * to whether b1 is less than, equal to, or greater than b2.
  *
- * This is similar to but simpler than range_cmp_bounds().	We just compare
+ * This is similar to but simpler than range_cmp_bounds().  We just compare
  * the values held in b1 and b2, ignoring inclusive/exclusive flags.  The
  * lower/upper flags only matter for infinities, where they tell us if the
  * infinity is plus or minus.
@@ -2295,7 +2295,7 @@ range_contains_elem_internal(TypeCacheEntry *typcache, RangeType *r, Datum val)
 
 /*
  * datum_compute_size() and datum_write() are used to insert the bound
- * values into a range object.	They are modeled after heaptuple.c's
+ * values into a range object.  They are modeled after heaptuple.c's
  * heap_compute_data_size() and heap_fill_tuple(), but we need not handle
  * null values here.  TYPE_IS_PACKABLE must test the same conditions as
  * heaptuple.c's ATT_IS_PACKABLE macro.

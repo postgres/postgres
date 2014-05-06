@@ -192,7 +192,7 @@ fmtId(const char *rawid)
  * standard_conforming_strings settings.
  *
  * This is essentially equivalent to libpq's PQescapeStringInternal,
- * except for the output buffer structure.	We need it in situations
+ * except for the output buffer structure.  We need it in situations
  * where we do not have a PGconn available.  Where we do,
  * appendStringLiteralConn is a better choice.
  */
@@ -367,7 +367,7 @@ appendByteaLiteral(PQExpBuffer buf, const unsigned char *str, size_t length,
 	/*
 	 * This implementation is hard-wired to produce hex-format output. We do
 	 * not know the server version the output will be loaded into, so making
-	 * an intelligent format choice is impossible.	It might be better to
+	 * an intelligent format choice is impossible.  It might be better to
 	 * always use the old escaped format.
 	 */
 	if (!enlargePQExpBuffer(buf, 2 * length + 5))
@@ -424,7 +424,7 @@ parse_version(const char *versionString)
  * into individual items.
  *
  * On success, returns true and sets *itemarray and *nitems to describe
- * an array of individual strings.	On parse failure, returns false;
+ * an array of individual strings.  On parse failure, returns false;
  * *itemarray may exist or be NULL.
  *
  * NOTE: free'ing itemarray is sufficient to deallocate the working storage.
@@ -564,7 +564,7 @@ buildACLCommands(const char *name, const char *subname,
 	/*
 	 * At the end, these two will be pasted together to form the result. But
 	 * the owner privileges need to go before the other ones to keep the
-	 * dependencies valid.	In recent versions this is normally the case, but
+	 * dependencies valid.  In recent versions this is normally the case, but
 	 * in old versions they come after the PUBLIC privileges and that results
 	 * in problems if we need to run REVOKE on the owner privileges.
 	 */
@@ -737,7 +737,7 @@ buildDefaultACLCommands(const char *type, const char *nspname,
 
 	/*
 	 * We incorporate the target role directly into the command, rather than
-	 * playing around with SET ROLE or anything like that.	This is so that a
+	 * playing around with SET ROLE or anything like that.  This is so that a
 	 * permissions error leads to nothing happening, rather than changing
 	 * default privileges for the wrong user.
 	 */
@@ -765,7 +765,7 @@ buildDefaultACLCommands(const char *type, const char *nspname,
  *
  * The returned grantee string will be the dequoted username or groupname
  * (preceded with "group " in the latter case).  The returned grantor is
- * the dequoted grantor name or empty.	Privilege characters are decoded
+ * the dequoted grantor name or empty.  Privilege characters are decoded
  * and split between privileges with grant option (privswgo) and without
  * (privs).
  *
@@ -1004,7 +1004,7 @@ AddAcl(PQExpBuffer aclbuf, const char *keyword, const char *subname)
  * namevar: name of query variable to match against an object-name pattern.
  * altnamevar: NULL, or name of an alternative variable to match against name.
  * visibilityrule: clause to use if we want to restrict to visible objects
- * (for example, "pg_catalog.pg_table_is_visible(p.oid)").	Can be NULL.
+ * (for example, "pg_catalog.pg_table_is_visible(p.oid)").  Can be NULL.
  *
  * Formatting note: the text already present in buf should end with a newline.
  * The appended text, if any, will end with one too.
@@ -1051,7 +1051,7 @@ processSQLNamePattern(PGconn *conn, PQExpBuffer buf, const char *pattern,
 	 * last alternatives which is not what we want.
 	 *
 	 * Note: the result of this pass is the actual regexp pattern(s) we want
-	 * to execute.	Quoting/escaping into SQL literal format will be done
+	 * to execute.  Quoting/escaping into SQL literal format will be done
 	 * below using appendStringLiteralConn().
 	 */
 	appendPQExpBufferStr(&namebuf, "^(");
@@ -1307,7 +1307,7 @@ vwrite_msg(const char *modulename, const char *fmt, va_list ap)
 
 
 /*
- * Fail and die, with a message to stderr.	Parameters as for write_msg.
+ * Fail and die, with a message to stderr.  Parameters as for write_msg.
  */
 void
 exit_horribly(const char *modulename, const char *fmt,...)

@@ -39,7 +39,7 @@ CATALOG(pg_statistic,2619) BKI_WITHOUT_OIDS
 	float4		stanullfrac;
 
 	/*
-	 * stawidth is the average width in bytes of non-null entries.	For
+	 * stawidth is the average width in bytes of non-null entries.  For
 	 * fixed-width datatypes this is of course the same as the typlen, but for
 	 * var-width types it is more useful.  Note that this is the average width
 	 * of the data as actually stored, post-TOASTing (eg, for a
@@ -59,7 +59,7 @@ CATALOG(pg_statistic,2619) BKI_WITHOUT_OIDS
 	 * The special negative case allows us to cope with columns that are
 	 * unique (stadistinct = -1) or nearly so (for example, a column in
 	 * which values appear about twice on the average could be represented
-	 * by stadistinct = -0.5).	Because the number-of-rows statistic in
+	 * by stadistinct = -0.5).  Because the number-of-rows statistic in
 	 * pg_class may be updated more frequently than pg_statistic is, it's
 	 * important to be able to describe such situations as a multiple of
 	 * the number of rows, rather than a fixed number of distinct values.
@@ -71,8 +71,8 @@ CATALOG(pg_statistic,2619) BKI_WITHOUT_OIDS
 	/* ----------------
 	 * To allow keeping statistics on different kinds of datatypes,
 	 * we do not hard-wire any particular meaning for the remaining
-	 * statistical fields.	Instead, we provide several "slots" in which
-	 * statistical data can be placed.	Each slot includes:
+	 * statistical fields.  Instead, we provide several "slots" in which
+	 * statistical data can be placed.  Each slot includes:
 	 *		kind			integer code identifying kind of data (see below)
 	 *		op				OID of associated operator, if needed
 	 *		numbers			float4 array (for statistical values)
@@ -105,7 +105,7 @@ CATALOG(pg_statistic,2619) BKI_WITHOUT_OIDS
 
 	/*
 	 * Values in these arrays are values of the column's data type, or of some
-	 * related type such as an array element type.	We presently have to cheat
+	 * related type such as an array element type.  We presently have to cheat
 	 * quite a bit to allow polymorphic arrays of this kind, but perhaps
 	 * someday it'll be a less bogus facility.
 	 */
@@ -168,8 +168,8 @@ typedef FormData_pg_statistic *Form_pg_statistic;
  * operators.
  *
  * Code reading the pg_statistic relation should not assume that a particular
- * data "kind" will appear in any particular slot.	Instead, search the
- * stakind fields to see if the desired data is available.	(The standard
+ * data "kind" will appear in any particular slot.  Instead, search the
+ * stakind fields to see if the desired data is available.  (The standard
  * function get_attstatsslot() may be used for this.)
  */
 
@@ -196,7 +196,7 @@ typedef FormData_pg_statistic *Form_pg_statistic;
  * the K most common non-null values appearing in the column, and stanumbers
  * contains their frequencies (fractions of total row count).  The values
  * shall be ordered in decreasing frequency.  Note that since the arrays are
- * variable-size, K may be chosen by the statistics collector.	Values should
+ * variable-size, K may be chosen by the statistics collector.  Values should
  * not appear in MCV unless they have been observed to occur more than once;
  * a unique column will have no MCV slot.
  */
@@ -208,13 +208,13 @@ typedef FormData_pg_statistic *Form_pg_statistic;
  * more than one histogram could appear, if a datatype has more than one
  * useful sort operator.)  stavalues contains M (>=2) non-null values that
  * divide the non-null column data values into M-1 bins of approximately equal
- * population.	The first stavalues item is the MIN and the last is the MAX.
+ * population.  The first stavalues item is the MIN and the last is the MAX.
  * stanumbers is not used and should be NULL.  IMPORTANT POINT: if an MCV
  * slot is also provided, then the histogram describes the data distribution
  * *after removing the values listed in MCV* (thus, it's a "compressed
  * histogram" in the technical parlance).  This allows a more accurate
  * representation of the distribution of a column with some very-common
- * values.	In a column with only a few distinct values, it's possible that
+ * values.  In a column with only a few distinct values, it's possible that
  * the MCV list describes the entire data population; in this case the
  * histogram reduces to empty and should be omitted.
  */
@@ -225,7 +225,7 @@ typedef FormData_pg_statistic *Form_pg_statistic;
  * of table tuples and the ordering of data values of this column, as seen
  * by the "<" operator identified by staop.  (As with the histogram, more
  * than one entry could theoretically appear.)	stavalues is not used and
- * should be NULL.	stanumbers contains a single entry, the correlation
+ * should be NULL.  stanumbers contains a single entry, the correlation
  * coefficient between the sequence of data values and the sequence of
  * their actual tuple positions.  The coefficient ranges from +1 to -1.
  */
@@ -234,7 +234,7 @@ typedef FormData_pg_statistic *Form_pg_statistic;
 /*
  * A "most common elements" slot is similar to a "most common values" slot,
  * except that it stores the most common non-null *elements* of the column
- * values.	This is useful when the column datatype is an array or some other
+ * values.  This is useful when the column datatype is an array or some other
  * type with identifiable elements (for instance, tsvector).  staop contains
  * the equality operator appropriate to the element type.  stavalues contains
  * the most common element values, and stanumbers their frequencies.  Unlike
@@ -258,7 +258,7 @@ typedef FormData_pg_statistic *Form_pg_statistic;
 /*
  * A "distinct elements count histogram" slot describes the distribution of
  * the number of distinct element values present in each row of an array-type
- * column.	Only non-null rows are considered, and only non-null elements.
+ * column.  Only non-null rows are considered, and only non-null elements.
  * staop contains the equality operator appropriate to the element type.
  * stavalues is not used and should be NULL.  The last member of stanumbers is
  * the average count of distinct element values over all non-null rows.  The

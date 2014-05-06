@@ -79,7 +79,7 @@ static void transformLockingClause(ParseState *pstate, Query *qry,
  * Optionally, information about $n parameter types can be supplied.
  * References to $n indexes not defined by paramTypes[] are disallowed.
  *
- * The result is a Query node.	Optimizable statements require considerable
+ * The result is a Query node.  Optimizable statements require considerable
  * transformation, while utility-type statements are simply hung off
  * a dummy CMD_UTILITY Query node.
  */
@@ -445,7 +445,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	/*
 	 * If a non-nil rangetable/namespace was passed in, and we are doing
 	 * INSERT/SELECT, arrange to pass the rangetable/namespace down to the
-	 * SELECT.	This can only happen if we are inside a CREATE RULE, and in
+	 * SELECT.  This can only happen if we are inside a CREATE RULE, and in
 	 * that case we want the rule's OLD and NEW rtable entries to appear as
 	 * part of the SELECT's rtable, not as outer references for it.  (Kluge!)
 	 * The SELECT's joinlist is not affected however.  We must do this before
@@ -632,7 +632,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 			 * We must assign collations now because assign_query_collations
 			 * doesn't process rangetable entries.  We just assign all the
 			 * collations independently in each row, and don't worry about
-			 * whether they are consistent vertically.	The outer INSERT query
+			 * whether they are consistent vertically.  The outer INSERT query
 			 * isn't going to care about the collations of the VALUES columns,
 			 * so it's not worth the effort to identify a common collation for
 			 * each one here.  (But note this does have one user-visible
@@ -668,7 +668,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		 * Another thing we can't currently support is NEW/OLD references in
 		 * rules --- seems we'd need something like SQL99's LATERAL construct
 		 * to ensure that the values would be available while evaluating the
-		 * VALUES RTE.	This is a shame.  FIXME
+		 * VALUES RTE.  This is a shame.  FIXME
 		 */
 		if (list_length(pstate->p_rtable) != 1 &&
 			contain_vars_of_level((Node *) exprsLists, 0))
@@ -705,7 +705,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		 *			INSERT INTO foo VALUES(bar.*)
 		 *
 		 * The sublist is just computed directly as the Query's targetlist,
-		 * with no VALUES RTE.	So it works just like SELECT without FROM.
+		 * with no VALUES RTE.  So it works just like SELECT without FROM.
 		 *----------
 		 */
 		List	   *valuesLists = selectStmt->valuesLists;
@@ -814,7 +814,7 @@ transformInsertRow(ParseState *pstate, List *exprlist,
 	 * Check length of expr list.  It must not have more expressions than
 	 * there are target columns.  We allow fewer, but only if no explicit
 	 * columns list was given (the remaining columns are implicitly
-	 * defaulted).	Note we must check this *after* transformation because
+	 * defaulted).  Note we must check this *after* transformation because
 	 * that could expand '*' into multiple items.
 	 */
 	if (list_length(exprlist) > list_length(icolumns))
@@ -883,7 +883,7 @@ transformInsertRow(ParseState *pstate, List *exprlist,
  *	  return -1 if expression isn't a RowExpr or a Var referencing one.
  *
  * This is currently used only for hint purposes, so we aren't terribly
- * tense about recognizing all possible cases.	The Var case is interesting
+ * tense about recognizing all possible cases.  The Var case is interesting
  * because that's what we'll get in the INSERT ... SELECT (...) case.
  */
 static int
@@ -1461,7 +1461,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	/*
 	 * As a first step towards supporting sort clauses that are expressions
 	 * using the output columns, generate a varnamespace entry that makes the
-	 * output columns visible.	A Join RTE node is handy for this, since we
+	 * output columns visible.  A Join RTE node is handy for this, since we
 	 * can easily control the Vars generated upon matches.
 	 *
 	 * Note: we don't yet do anything useful with such cases, but at least
@@ -1542,7 +1542,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
  *		Recursively transform leaves and internal nodes of a set-op tree
  *
  * In addition to returning the transformed node, if targetlist isn't NULL
- * then we return a list of its non-resjunk TargetEntry nodes.	For a leaf
+ * then we return a list of its non-resjunk TargetEntry nodes.  For a leaf
  * set-op node these are the actual targetlist entries; otherwise they are
  * dummy entries created to carry the type, typmod, collation, and location
  * (for error messages) of each output column of the set-op node.  This info
@@ -1756,7 +1756,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 				rescoltypmod = -1;
 
 			/*
-			 * Verify the coercions are actually possible.	If not, we'd fail
+			 * Verify the coercions are actually possible.  If not, we'd fail
 			 * later anyway, but we want to fail now while we have sufficient
 			 * context to produce an error cursor position.
 			 *
@@ -1765,7 +1765,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 			 * child query's semantics.
 			 *
 			 * If a child expression is an UNKNOWN-type Const or Param, we
-			 * want to replace it with the coerced expression.	This can only
+			 * want to replace it with the coerced expression.  This can only
 			 * happen when the child is a leaf set-op node.  It's safe to
 			 * replace the expression because if the child query's semantics
 			 * depended on the type of this output column, it'd have already

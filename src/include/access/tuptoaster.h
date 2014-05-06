@@ -59,7 +59,7 @@
  * The code will also consider moving MAIN data out-of-line, but only as a
  * last resort if the previous steps haven't reached the target tuple size.
  * In this phase we use a different target size, currently equal to the
- * largest tuple that will fit on a heap page.	This is reasonable since
+ * largest tuple that will fit on a heap page.  This is reasonable since
  * the user has told us to keep the data in-line if at all possible.
  */
 #define TOAST_TUPLES_PER_PAGE_MAIN	1
@@ -75,7 +75,7 @@
 
 /*
  * When we store an oversize datum externally, we divide it into chunks
- * containing at most TOAST_MAX_CHUNK_SIZE data bytes.	This number *must*
+ * containing at most TOAST_MAX_CHUNK_SIZE data bytes.  This number *must*
  * be small enough that the completed toast-table tuple (including the
  * ID and sequence fields and all overhead) will fit on a page.
  * The coding here sets the size on the theory that we want to fit

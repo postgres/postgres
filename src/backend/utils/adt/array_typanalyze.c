@@ -160,13 +160,13 @@ array_typanalyze(PG_FUNCTION_ARGS)
  * compute_array_stats() -- compute statistics for a array column
  *
  * This function computes statistics useful for determining selectivity of
- * the array operators <@, &&, and @>.	It is invoked by ANALYZE via the
+ * the array operators <@, &&, and @>.  It is invoked by ANALYZE via the
  * compute_stats hook after sample rows have been collected.
  *
  * We also invoke the standard compute_stats function, which will compute
  * "scalar" statistics relevant to the btree-style array comparison operators.
  * However, exact duplicates of an entire array may be rare despite many
- * arrays sharing individual elements.	This especially afflicts long arrays,
+ * arrays sharing individual elements.  This especially afflicts long arrays,
  * which are also liable to lack all scalar statistics due to the low
  * WIDTH_THRESHOLD used in analyze.c.  So, in addition to the standard stats,
  * we find the most common array elements and compute a histogram of distinct
@@ -201,7 +201,7 @@ array_typanalyze(PG_FUNCTION_ARGS)
  * In the absence of a principled basis for other particular values, we
  * follow ts_typanalyze() and use parameters s = 0.07/K, epsilon = s/10.
  * But we leave out the correction for stopwords, which do not apply to
- * arrays.	These parameters give bucket width w = K/0.007 and maximum
+ * arrays.  These parameters give bucket width w = K/0.007 and maximum
  * expected hashtable size of about 1000 * K.
  *
  * Elements may repeat within an array.  Since duplicates do not change the
@@ -463,7 +463,7 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 
 		/*
 		 * Construct an array of the interesting hashtable items, that is,
-		 * those meeting the cutoff frequency (s - epsilon)*N.	Also identify
+		 * those meeting the cutoff frequency (s - epsilon)*N.  Also identify
 		 * the minimum and maximum frequencies among these items.
 		 *
 		 * Since epsilon = s/10 and bucket_width = 1/epsilon, the cutoff
@@ -498,7 +498,7 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 
 		/*
 		 * If we obtained more elements than we really want, get rid of those
-		 * with least frequencies.	The easiest way is to qsort the array into
+		 * with least frequencies.  The easiest way is to qsort the array into
 		 * descending frequency order and truncate the array.
 		 */
 		if (num_mcelem < track_len)
@@ -532,7 +532,7 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 			/*
 			 * We sorted statistics on the element value, but we want to be
 			 * able to find the minimal and maximal frequencies without going
-			 * through all the values.	We also want the frequency of null
+			 * through all the values.  We also want the frequency of null
 			 * elements.  Store these three values at the end of mcelem_freqs.
 			 */
 			mcelem_values = (Datum *) palloc(num_mcelem * sizeof(Datum));
@@ -623,7 +623,7 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 			 * (compare the histogram-making loop in compute_scalar_stats()).
 			 * But instead of that we have the sorted_count_items[] array,
 			 * which holds unique DEC values with their frequencies (that is,
-			 * a run-length-compressed version of the full array).	So we
+			 * a run-length-compressed version of the full array).  So we
 			 * control advancing through sorted_count_items[] with the
 			 * variable "frac", which is defined as (x - y) * (num_hist - 1),
 			 * where x is the index in the notional DECs array corresponding

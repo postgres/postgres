@@ -357,7 +357,7 @@ adjust_data_dir(ClusterInfo *cluster)
 
 	/*
 	 * We don't have a data directory yet, so we can't check the PG version,
-	 * so this might fail --- only works for PG 9.2+.	If this fails,
+	 * so this might fail --- only works for PG 9.2+.   If this fails,
 	 * pg_upgrade will fail anyway because the data files will not be found.
 	 */
 	snprintf(cmd, sizeof(cmd), "\"%s/postmaster\" -D \"%s\" -C data_directory",

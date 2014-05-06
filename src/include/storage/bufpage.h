@@ -26,7 +26,7 @@
  * disk page is always a slotted page of the form:
  *
  * +----------------+---------------------------------+
- * | PageHeaderData | linp1 linp2 linp3 ...			  |
+ * | PageHeaderData | linp1 linp2 linp3 ...           |
  * +-----------+----+---------------------------------+
  * | ... linpN |									  |
  * +-----------+--------------------------------------+
@@ -34,7 +34,7 @@
  * |												  |
  * |			 v pd_upper							  |
  * +-------------+------------------------------------+
- * |			 | tupleN ...						  |
+ * |			 | tupleN ...                         |
  * +-------------+------------------+-----------------+
  * |	   ... tuple3 tuple2 tuple1 | "special space" |
  * +--------------------------------+-----------------+
@@ -65,7 +65,7 @@
  *
  * AM-specific per-page data (if any) is kept in the area marked "special
  * space"; each AM has an "opaque" structure defined somewhere that is
- * stored as the page trailer.	an access method should always
+ * stored as the page trailer.  an access method should always
  * initialize its pages with PageInit and then set its own opaque
  * fields.
  */
@@ -104,7 +104,7 @@ typedef uint16 LocationIndex;
  * like a good idea).
  *
  * pd_prune_xid is a hint field that helps determine whether pruning will be
- * useful.	It is currently unused in index pages.
+ * useful.  It is currently unused in index pages.
  *
  * The page version number and page size are packed together into a single
  * uint16 field.  This is for historical reasons: before PostgreSQL 7.3,

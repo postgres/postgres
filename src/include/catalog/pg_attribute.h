@@ -161,7 +161,7 @@ CATALOG(pg_attribute,1249) BKI_BOOTSTRAP BKI_WITHOUT_OIDS BKI_ROWTYPE_OID(75) BK
 
 /*
  * ATTRIBUTE_FIXED_PART_SIZE is the size of the fixed-layout,
- * guaranteed-not-null part of a pg_attribute row.	This is in fact as much
+ * guaranteed-not-null part of a pg_attribute row.  This is in fact as much
  * of the row as gets copied into tuple descriptors, so don't expect you
  * can access fields beyond attcollation except in a real tuple!
  */

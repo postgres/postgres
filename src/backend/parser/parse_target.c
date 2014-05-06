@@ -177,7 +177,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
  * This is the identical transformation to transformTargetList, except that
  * the input list elements are bare expressions without ResTarget decoration,
  * and the output elements are likewise just expressions without TargetEntry
- * decoration.	We use this for ROW() and VALUES() constructs.
+ * decoration.  We use this for ROW() and VALUES() constructs.
  */
 List *
 transformExpressionList(ParseState *pstate, List *exprlist)
@@ -342,7 +342,7 @@ markTargetListOrigin(ParseState *pstate, TargetEntry *tle,
 
 /*
  * transformAssignedExpr()
- *	This is used in INSERT and UPDATE statements only.	It prepares an
+ *	This is used in INSERT and UPDATE statements only.  It prepares an
  *	expression for assignment to a column of the target table.
  *	This includes coercing the given value to the target column's type
  *	(if necessary), and dealing with any subfield names or subscripts
@@ -360,7 +360,7 @@ markTargetListOrigin(ParseState *pstate, TargetEntry *tle,
  *
  * Note: location points at the target column name (SET target or INSERT
  * column name list entry), and must therefore be -1 in an INSERT that
- * omits the column name list.	So we should usually prefer to use
+ * omits the column name list.  So we should usually prefer to use
  * exprLocation(expr) for errors that can happen in a default INSERT.
  */
 Expr *
@@ -424,7 +424,7 @@ transformAssignedExpr(ParseState *pstate,
 
 	/*
 	 * If there is indirection on the target column, prepare an array or
-	 * subfield assignment expression.	This will generate a new column value
+	 * subfield assignment expression.  This will generate a new column value
 	 * that the source value has been inserted into, which can then be placed
 	 * in the new tuple constructed by INSERT or UPDATE.
 	 */
@@ -529,7 +529,7 @@ updateTargetListEntry(ParseState *pstate,
 
 	/*
 	 * Set the resno to identify the target column --- the rewriter and
-	 * planner depend on this.	We also set the resname to identify the target
+	 * planner depend on this.  We also set the resname to identify the target
 	 * column, but this is only for debugging purposes; it should not be
 	 * relied on.  (In particular, it might be out of date in a stored rule.)
 	 */
@@ -977,7 +977,7 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 		 *
 		 * Note: this code is a lot like transformColumnRef; it's tempting to
 		 * call that instead and then replace the resulting whole-row Var with
-		 * a list of Vars.	However, that would leave us with the RTE's
+		 * a list of Vars.  However, that would leave us with the RTE's
 		 * selectedCols bitmap showing the whole row as needing select
 		 * permission, as well as the individual columns.  That would be
 		 * incorrect (since columns added later shouldn't need select
@@ -996,7 +996,7 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 		}			crserr = CRSERR_NO_RTE;
 
 		/*
-		 * Give the PreParseColumnRefHook, if any, first shot.	If it returns
+		 * Give the PreParseColumnRefHook, if any, first shot.  If it returns
 		 * non-null then we should use that expression.
 		 */
 		if (pstate->p_pre_columnref_hook != NULL)
@@ -1239,7 +1239,7 @@ ExpandRowReference(ParseState *pstate, Node *expr,
 
 	/*
 	 * If the rowtype expression is a whole-row Var, we can expand the fields
-	 * as simple Vars.	Note: if the RTE is a relation, this case leaves us
+	 * as simple Vars.  Note: if the RTE is a relation, this case leaves us
 	 * with the RTE's selectedCols bitmap showing the whole row as needing
 	 * select permission, as well as the individual columns.  However, we can
 	 * only get here for weird notations like (table.*).*, so it's not worth
@@ -1321,7 +1321,7 @@ ExpandRowReference(ParseState *pstate, Node *expr,
  *		Get the tuple descriptor for a Var of type RECORD, if possible.
  *
  * Since no actual table or view column is allowed to have type RECORD, such
- * a Var must refer to a JOIN or FUNCTION RTE or to a subquery output.	We
+ * a Var must refer to a JOIN or FUNCTION RTE or to a subquery output.  We
  * drill down to find the ultimate defining expression and attempt to infer
  * the tupdesc from it.  We ereport if we can't determine the tupdesc.
  *
@@ -1404,7 +1404,7 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 				{
 					/*
 					 * Recurse into the sub-select to see what its Var refers
-					 * to.	We have to build an additional level of ParseState
+					 * to.  We have to build an additional level of ParseState
 					 * to keep in step with varlevelsup in the subselect.
 					 */
 					ParseState	mypstate;
@@ -1478,7 +1478,7 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 
 	/*
 	 * We now have an expression we can't expand any more, so see if
-	 * get_expr_result_type() can do anything with it.	If not, pass to
+	 * get_expr_result_type() can do anything with it.  If not, pass to
 	 * lookup_rowtype_tupdesc() which will probably fail, but will give an
 	 * appropriate error message while failing.
 	 */

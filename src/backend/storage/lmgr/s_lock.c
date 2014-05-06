@@ -78,7 +78,7 @@ s_lock(volatile slock_t *lock, const char *file, int line)
 	 *
 	 * We time out and declare error after NUM_DELAYS delays (thus, exactly
 	 * that many tries).  With the given settings, this will usually take 2 or
-	 * so minutes.	It seems better to fix the total number of tries (and thus
+	 * so minutes.  It seems better to fix the total number of tries (and thus
 	 * the probability of unintended failure) than to fix the total time
 	 * spent.
 	 *
@@ -141,7 +141,7 @@ s_lock(volatile slock_t *lock, const char *file, int line)
 	 * Note: spins_per_delay is local within our current process. We want to
 	 * average these observations across multiple backends, since it's
 	 * relatively rare for this function to even get entered, and so a single
-	 * backend might not live long enough to converge on a good value.	That
+	 * backend might not live long enough to converge on a good value.  That
 	 * is handled by the two routines below.
 	 */
 	if (cur_delay == 0)
@@ -180,7 +180,7 @@ update_spins_per_delay(int shared_spins_per_delay)
 	/*
 	 * We use an exponential moving average with a relatively slow adaption
 	 * rate, so that noise in any one backend's result won't affect the shared
-	 * value too much.	As long as both inputs are within the allowed range,
+	 * value too much.  As long as both inputs are within the allowed range,
 	 * the result must be too, so we need not worry about clamping the result.
 	 *
 	 * We deliberately truncate rather than rounding; this is so that single

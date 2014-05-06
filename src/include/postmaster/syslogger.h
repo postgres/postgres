@@ -20,7 +20,7 @@
  * here is to divide long messages into chunks that are not more than
  * PIPE_BUF bytes long, which according to POSIX spec must be written into
  * the pipe atomically.  The pipe reader then uses the protocol headers to
- * reassemble the parts of a message into a single string.	The reader can
+ * reassemble the parts of a message into a single string.  The reader can
  * also cope with non-protocol data coming down the pipe, though we cannot
  * guarantee long strings won't get split apart.
  *

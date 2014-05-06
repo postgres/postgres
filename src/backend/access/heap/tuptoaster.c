@@ -550,7 +550,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 			 * We took care of UPDATE above, so any external value we find
 			 * still in the tuple must be someone else's we cannot reuse.
 			 * Fetch it back (without decompression, unless we are forcing
-			 * PLAIN storage).	If necessary, we'll push it out as a new
+			 * PLAIN storage).  If necessary, we'll push it out as a new
 			 * external value below.
 			 */
 			if (VARATT_IS_EXTERNAL(new_value))
@@ -693,7 +693,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 
 	/*
 	 * Second we look for attributes of attstorage 'x' or 'e' that are still
-	 * inline.	But skip this if there's no toast table to push them to.
+	 * inline.  But skip this if there's no toast table to push them to.
 	 */
 	while (heap_compute_data_size(tupleDesc,
 								  toast_values, toast_isnull) > maxDataLen &&
@@ -803,7 +803,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 	}
 
 	/*
-	 * Finally we store attributes of type 'm' externally.	At this point we
+	 * Finally we store attributes of type 'm' externally.  At this point we
 	 * increase the target tuple size, so that 'm' attributes aren't stored
 	 * externally unless really necessary.
 	 */
@@ -1349,7 +1349,7 @@ toast_save_datum(Relation rel, Datum value,
 				 * those versions could easily reference the same toast value.
 				 * When we copy the second or later version of such a row,
 				 * reusing the OID will mean we select an OID that's already
-				 * in the new toast table.	Check for that, and if so, just
+				 * in the new toast table.  Check for that, and if so, just
 				 * fall through without writing the data again.
 				 *
 				 * While annoying and ugly-looking, this is a good thing
@@ -1415,7 +1415,7 @@ toast_save_datum(Relation rel, Datum value,
 		heap_insert(toastrel, toasttup, mycid, options, NULL);
 
 		/*
-		 * Create the index entry.	We cheat a little here by not using
+		 * Create the index entry.  We cheat a little here by not using
 		 * FormIndexDatum: this relies on the knowledge that the index columns
 		 * are the same as the initial columns of the table.
 		 *

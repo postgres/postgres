@@ -4,7 +4,7 @@
  *		Track statement execution times across a whole database cluster.
  *
  * Execution costs are totalled for each distinct source query, and kept in
- * a shared hashtable.	(We track only as many distinct queries as will fit
+ * a shared hashtable.  (We track only as many distinct queries as will fit
  * in the designated amount of shared memory.)
  *
  * As of Postgres 9.2, this module normalizes query entries.  Normalization
@@ -15,7 +15,7 @@
  *
  * Normalization is implemented by fingerprinting queries, selectively
  * serializing those fields of each query tree's nodes that are judged to be
- * essential to the query.	This is referred to as a query jumble.	This is
+ * essential to the query.  This is referred to as a query jumble.  This is
  * distinct from a regular serialization in that various extraneous
  * information is ignored as irrelevant or not essential to the query, such
  * as the collations of Vars and, most notably, the values of constants.
@@ -1228,7 +1228,7 @@ pgss_memsize(void)
  * would be difficult to demonstrate this even under artificial conditions.)
  *
  * Note: despite needing exclusive lock, it's not an error for the target
- * entry to already exist.	This is because pgss_store releases and
+ * entry to already exist.  This is because pgss_store releases and
  * reacquires lock after failing to find a match; so someone else could
  * have made the entry while we waited to get exclusive lock.
  */
@@ -1487,7 +1487,7 @@ JumbleRangeTable(pgssJumbleState *jstate, List *rtable)
  *
  * Note: the reason we don't simply use expression_tree_walker() is that the
  * point of that function is to support tree walkers that don't care about
- * most tree node types, but here we care about all types.	We should complain
+ * most tree node types, but here we care about all types.  We should complain
  * about any unrecognized node type.
  */
 static void
@@ -2009,7 +2009,7 @@ generate_normalized_query(pgssJumbleState *jstate, const char *query,
  * a problem.
  *
  * Duplicate constant pointers are possible, and will have their lengths
- * marked as '-1', so that they are later ignored.	(Actually, we assume the
+ * marked as '-1', so that they are later ignored.  (Actually, we assume the
  * lengths were initialized as -1 to start with, and don't change them here.)
  *
  * N.B. There is an assumption that a '-' character at a Const location begins
@@ -2078,7 +2078,7 @@ fill_in_constant_lengths(pgssJumbleState *jstate, const char *query)
 					 * adjustment of location to that of the leading '-'
 					 * operator in the event of a negative constant.  It is
 					 * also useful for our purposes to start from the minus
-					 * symbol.	In this way, queries like "select * from foo
+					 * symbol.  In this way, queries like "select * from foo
 					 * where bar = 1" and "select * from foo where bar = -2"
 					 * will have identical normalized query strings.
 					 */

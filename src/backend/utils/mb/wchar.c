@@ -1507,7 +1507,7 @@ pg_utf8_islegal(const unsigned char *source, int length)
  *
  * Not knowing anything about the properties of the encoding in use, we just
  * keep incrementing the last byte until we get a validly-encoded result,
- * or we run out of values to try.	We don't bother to try incrementing
+ * or we run out of values to try.  We don't bother to try incrementing
  * higher-order bytes, so there's no growth in runtime for wider characters.
  * (If we did try to do that, we'd need to consider the likelihood that 255
  * is not a valid final byte in the encoding.)
@@ -1537,7 +1537,7 @@ pg_generic_charinc(unsigned char *charptr, int len)
  * For a one-byte character less than 0x7F, we just increment the byte.
  *
  * For a multibyte character, every byte but the first must fall between 0x80
- * and 0xBF; and the first byte must be between 0xC0 and 0xF4.	We increment
+ * and 0xBF; and the first byte must be between 0xC0 and 0xF4.  We increment
  * the last byte that's not already at its maximum value.  If we can't find a
  * byte that's less than the maximum allowable value, we simply fail.  We also
  * need some special-case logic to skip regions used for surrogate pair

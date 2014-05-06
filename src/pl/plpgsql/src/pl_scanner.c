@@ -44,7 +44,7 @@ IdentifierLookup plpgsql_IdentifierLookup = IDENTIFIER_LOOKUP_NORMAL;
  *
  * For the most part, the reserved keywords are those that start a PL/pgSQL
  * statement (and so would conflict with an assignment to a variable of the
- * same name).	We also don't sweat it much about reserving keywords that
+ * same name).  We also don't sweat it much about reserving keywords that
  * are reserved in the core grammar.  Try to avoid reserving other words.
  */
 
@@ -165,7 +165,7 @@ typedef struct
 
 /*
  * Scanner working state.  At some point we might wish to fold all this
- * into a YY_EXTRA struct.	For the moment, there is no need for plpgsql's
+ * into a YY_EXTRA struct.  For the moment, there is no need for plpgsql's
  * lexer to be re-entrant, and the notational burden of passing a yyscanner
  * pointer around is great enough to not want to do it without need.
  */
@@ -333,7 +333,7 @@ plpgsql_yylex(void)
 
 /*
  * Internal yylex function.  This wraps the core lexer and adds one feature:
- * a token pushback stack.	We also make a couple of trivial single-token
+ * a token pushback stack.  We also make a couple of trivial single-token
  * translations from what the core lexer does to what we want, in particular
  * interfacing from the core_YYSTYPE to YYSTYPE union.
  */
@@ -509,7 +509,7 @@ plpgsql_yyerror(const char *message)
 		/*
 		 * If we have done any lookahead then flex will have restored the
 		 * character after the end-of-token.  Zap it again so that we report
-		 * only the single token here.	This modifies scanbuf but we no longer
+		 * only the single token here.  This modifies scanbuf but we no longer
 		 * care about that.
 		 */
 		yytext[plpgsql_yyleng] = '\0';

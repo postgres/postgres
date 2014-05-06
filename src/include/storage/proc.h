@@ -22,7 +22,7 @@
 
 /*
  * Each backend advertises up to PGPROC_MAX_CACHED_SUBXIDS TransactionIds
- * for non-aborted subtransactions of its current top transaction.	These
+ * for non-aborted subtransactions of its current top transaction.  These
  * have to be treated as running XIDs by other backends.
  *
  * We also keep track of whether the cache overflowed (ie, the transaction has
@@ -59,7 +59,7 @@ struct XidCache
  * Each backend has a PGPROC struct in shared memory.  There is also a list of
  * currently-unused PGPROC structs that will be reallocated to new backends.
  *
- * links: list link for any list the PGPROC is in.	When waiting for a lock,
+ * links: list link for any list the PGPROC is in.  When waiting for a lock,
  * the PGPROC is linked into that lock's waitProcs queue.  A recycled PGPROC
  * is linked into ProcGlobal's freeProcs list.
  *
@@ -131,7 +131,7 @@ struct PGPROC
 
 	struct XidCache subxids;	/* cache for subtransaction XIDs */
 
-	/* Per-backend LWLock.	Protects fields below. */
+	/* Per-backend LWLock.  Protects fields below. */
 	LWLockId	backendLock;	/* protects the fields below */
 
 	/* Lock manager data, recording fast-path locks taken by this backend. */
@@ -150,7 +150,7 @@ extern PGDLLIMPORT struct PGXACT *MyPgXact;
 
 /*
  * Prior to PostgreSQL 9.2, the fields below were stored as part of the
- * PGPROC.	However, benchmarking revealed that packing these particular
+ * PGPROC.  However, benchmarking revealed that packing these particular
  * members into a separate array as tightly as possible sped up GetSnapshotData
  * considerably on systems with many CPU cores, by reducing the number of
  * cache lines needing to be fetched.  Thus, think very carefully before adding

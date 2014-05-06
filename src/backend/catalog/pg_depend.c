@@ -49,7 +49,7 @@ recordDependencyOn(const ObjectAddress *depender,
 
 /*
  * Record multiple dependencies (of the same kind) for a single dependent
- * object.	This has a little less overhead than recording each separately.
+ * object.  This has a little less overhead than recording each separately.
  */
 void
 recordMultipleDependencies(const ObjectAddress *depender,
@@ -126,7 +126,7 @@ recordMultipleDependencies(const ObjectAddress *depender,
 
 /*
  * If we are executing a CREATE EXTENSION operation, mark the given object
- * as being a member of the extension.	Otherwise, do nothing.
+ * as being a member of the extension.  Otherwise, do nothing.
  *
  * This must be called during creation of any user-definable object type
  * that could be a member of an extension.
@@ -185,7 +185,7 @@ recordDependencyOnCurrentExtension(const ObjectAddress *object,
  * (possibly with some differences from before).
  *
  * If skipExtensionDeps is true, we do not delete any dependencies that
- * show that the given object is a member of an extension.	This avoids
+ * show that the given object is a member of an extension.  This avoids
  * needing a lot of extra logic to fetch and recreate that dependency.
  */
 long
@@ -491,7 +491,7 @@ getExtensionOfObject(Oid classId, Oid objectId)
  * Detect whether a sequence is marked as "owned" by a column
  *
  * An ownership marker is an AUTO dependency from the sequence to the
- * column.	If we find one, store the identity of the owning column
+ * column.  If we find one, store the identity of the owning column
  * into *tableId and *colId and return TRUE; else return FALSE.
  *
  * Note: if there's more than one such pg_depend entry then you get

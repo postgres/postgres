@@ -186,7 +186,7 @@ main(int argc, char **argv)
 
 	/*
 	 * Build the query we'll use to detect lock contention among sessions in
-	 * the test specification.	Most of the time, we could get away with
+	 * the test specification.  Most of the time, we could get away with
 	 * simply checking whether a session is waiting for *any* lock: we don't
 	 * exactly expect concurrent use of test tables.  However, autovacuum will
 	 * occasionally take AccessExclusiveLock to truncate a table, and we must
@@ -675,11 +675,11 @@ teardown:
 /*
  * Our caller already sent the query associated with this step.  Wait for it
  * to either complete or (if given the STEP_NONBLOCK flag) to block while
- * waiting for a lock.	We assume that any lock wait will persist until we
+ * waiting for a lock.  We assume that any lock wait will persist until we
  * have executed additional steps in the permutation.
  *
  * When calling this function on behalf of a given step for a second or later
- * time, pass the STEP_RETRY flag.	This only affects the messages printed.
+ * time, pass the STEP_RETRY flag.  This only affects the messages printed.
  *
  * If the connection returns an error, the message is saved in step->errormsg.
  * Caller should call report_error_message shortly after this, to have it

@@ -376,11 +376,11 @@ UpdateRangeTableOfViewParse(Oid viewOid, Query *viewParse)
 			   *rt_entry2;
 
 	/*
-	 * Make a copy of the given parsetree.	It's not so much that we don't
+	 * Make a copy of the given parsetree.  It's not so much that we don't
 	 * want to scribble on our input, it's that the parser has a bad habit of
 	 * outputting multiple links to the same subtree for constructs like
 	 * BETWEEN, and we mustn't have OffsetVarNodes increment the varno of a
-	 * Var node twice.	copyObject will expand any multiply-referenced subtree
+	 * Var node twice.  copyObject will expand any multiply-referenced subtree
 	 * into multiple copies.
 	 */
 	viewParse = (Query *) copyObject(viewParse);
@@ -500,7 +500,7 @@ DefineView(ViewStmt *stmt, const char *queryString)
 
 	/*
 	 * If the user didn't explicitly ask for a temporary view, check whether
-	 * we need one implicitly.	We allow TEMP to be inserted automatically as
+	 * we need one implicitly.  We allow TEMP to be inserted automatically as
 	 * long as the CREATE command is consistent with that --- no explicit
 	 * schema name.
 	 */

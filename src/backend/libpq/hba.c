@@ -74,11 +74,11 @@ static MemoryContext parsed_hba_context = NULL;
 
 /*
  * These variables hold the pre-parsed contents of the ident usermap
- * configuration file.	ident_lines is a triple-nested list of lines, fields
+ * configuration file.  ident_lines is a triple-nested list of lines, fields
  * and tokens, as returned by tokenize_file.  There will be one line in
- * ident_lines for each (non-empty, non-comment) line of the file.	Note there
+ * ident_lines for each (non-empty, non-comment) line of the file.  Note there
  * will always be at least one field, since blank lines are not entered in the
- * data structure.	ident_line_nums is an integer list containing the actual
+ * data structure.  ident_line_nums is an integer list containing the actual
  * line number for each line represented in ident_lines.  ident_context is
  * the memory context holding all this.
  */
@@ -1704,7 +1704,7 @@ check_hba(hbaPort *port)
  * Read the config file and create a List of HbaLine records for the contents.
  *
  * The configuration is read into a temporary list, and if any parse error
- * occurs the old list is kept in place and false is returned.	Only if the
+ * occurs the old list is kept in place and false is returned.  Only if the
  * whole file parses OK is the list replaced, and the function returns true.
  *
  * On a false result, caller will take care of reporting a FATAL error in case
@@ -2093,7 +2093,7 @@ load_ident(void)
 
 /*
  *	Determine what authentication method should be used when accessing database
- *	"database" from frontend "raddr", user "user".	Return the method and
+ *	"database" from frontend "raddr", user "user".  Return the method and
  *	an optional argument (stored in fields of *port), and STATUS_OK.
  *
  *	If the file does not contain any entry matching the request, we return

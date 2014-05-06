@@ -3566,7 +3566,7 @@ get_guc_variables(void)
 
 
 /*
- * Build the sorted array.	This is split out so that it could be
+ * Build the sorted array.  This is split out so that it could be
  * re-executed after startup (eg, we could allow loadable modules to
  * add vars, and then we'd need to re-sort).
  */
@@ -3723,7 +3723,7 @@ add_placeholder_variable(const char *name, int elevel)
 
 	/*
 	 * The char* is allocated at the end of the struct since we have no
-	 * 'static' place to point to.	Note that the current value, as well as
+	 * 'static' place to point to.  Note that the current value, as well as
 	 * the boot and reset values, start out NULL.
 	 */
 	var->variable = (char **) (var + 1);
@@ -3765,7 +3765,7 @@ find_option(const char *name, bool create_placeholders, int elevel)
 		return *res;
 
 	/*
-	 * See if the name is an obsolete name for a variable.	We assume that the
+	 * See if the name is an obsolete name for a variable.  We assume that the
 	 * set of supported old names is short enough that a brute-force search is
 	 * the best way.
 	 */
@@ -4421,7 +4421,7 @@ NewGUCNestLevel(void)
 /*
  * Do GUC processing at transaction or subtransaction commit or abort, or
  * when exiting a function that has proconfig settings, or when undoing a
- * transient assignment to some GUC variables.	(The name is thus a bit of
+ * transient assignment to some GUC variables.  (The name is thus a bit of
  * a misnomer; perhaps it should be ExitGUCNestLevel or some such.)
  * During abort, we discard all GUC settings that were applied at nesting
  * levels >= nestLevel.  nestLevel == 1 corresponds to the main transaction.
@@ -5222,7 +5222,7 @@ set_config_option(const char *name, const char *value,
 				 * If a PGC_BACKEND parameter is changed in the config file,
 				 * we want to accept the new value in the postmaster (whence
 				 * it will propagate to subsequently-started backends), but
-				 * ignore it in existing backends.	This is a tad klugy, but
+				 * ignore it in existing backends.  This is a tad klugy, but
 				 * necessary because we don't re-read the config file during
 				 * backend start.
 				 *
@@ -5279,7 +5279,7 @@ set_config_option(const char *name, const char *value,
 	 * An exception might be made if the reset value is assumed to be "safe".
 	 *
 	 * Note: this flag is currently used for "session_authorization" and
-	 * "role".	We need to prohibit changing these inside a local userid
+	 * "role".  We need to prohibit changing these inside a local userid
 	 * context because when we exit it, GUC won't be notified, leaving things
 	 * out of sync.  (This could be fixed by forcing a new GUC nesting level,
 	 * but that would change behavior in possibly-undesirable ways.)  Also, we
@@ -6144,7 +6144,7 @@ flatten_set_variable_args(const char *name, List *args)
 				else
 				{
 					/*
-					 * Plain string literal or identifier.	For quote mode,
+					 * Plain string literal or identifier.  For quote mode,
 					 * quote it if it's not a vanilla identifier.
 					 */
 					if (flags & GUC_LIST_QUOTE)
@@ -6461,7 +6461,7 @@ define_custom_variable(struct config_generic * variable)
 	 * variable.  Essentially, we need to duplicate all the active and stacked
 	 * values, but with appropriate validation and datatype adjustment.
 	 *
-	 * If an assignment fails, we report a WARNING and keep going.	We don't
+	 * If an assignment fails, we report a WARNING and keep going.  We don't
 	 * want to throw ERROR for bad values, because it'd bollix the add-on
 	 * module that's presumably halfway through getting loaded.  In such cases
 	 * the default or previous state will become active instead.
@@ -6489,7 +6489,7 @@ define_custom_variable(struct config_generic * variable)
 	/*
 	 * Free up as much as we conveniently can of the placeholder structure.
 	 * (This neglects any stack items, so it's possible for some memory to be
-	 * leaked.	Since this can only happen once per session per variable, it
+	 * leaked.  Since this can only happen once per session per variable, it
 	 * doesn't seem worth spending much code on.)
 	 */
 	set_string_field(pHolder, pHolder->variable, NULL);
@@ -6562,7 +6562,7 @@ reapply_stacked_values(struct config_generic * variable,
 	else
 	{
 		/*
-		 * We are at the end of the stack.	If the active/previous value is
+		 * We are at the end of the stack.  If the active/previous value is
 		 * different from the reset value, it must represent a previously
 		 * committed session value.  Apply it, and then drop the stack entry
 		 * that set_config_option will have created under the impression that
@@ -7749,7 +7749,7 @@ ParseLongOption(const char *string, char **name, char **value)
 
 /*
  * Handle options fetched from pg_db_role_setting.setconfig,
- * pg_proc.proconfig, etc.	Caller must specify proper context/source/action.
+ * pg_proc.proconfig, etc.  Caller must specify proper context/source/action.
  *
  * The array parameter must be an array of TEXT (it must not be NULL).
  */
@@ -8031,7 +8031,7 @@ GUCArrayReset(ArrayType *array)
  * Validate a proposed option setting for GUCArrayAdd/Delete/Reset.
  *
  * name is the option name.  value is the proposed value for the Add case,
- * or NULL for the Delete/Reset cases.	If skipIfNoPermissions is true, it's
+ * or NULL for the Delete/Reset cases.  If skipIfNoPermissions is true, it's
  * not an error to have no permissions to set the option.
  *
  * Returns TRUE if OK, FALSE if skipIfNoPermissions is true and user does not
@@ -8112,7 +8112,7 @@ validate_option_array_item(const char *name, const char *value,
  * ERRCODE_INVALID_PARAMETER_VALUE SQLSTATE for check hook failures.
  *
  * Note that GUC_check_errmsg() etc are just macros that result in a direct
- * assignment to the associated variables.	That is ugly, but forced by the
+ * assignment to the associated variables.  That is ugly, but forced by the
  * limitations of C's macro mechanisms.
  */
 void

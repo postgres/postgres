@@ -164,7 +164,7 @@ spgbuildempty(PG_FUNCTION_ARGS)
 	page = (Page) palloc(BLCKSZ);
 	SpGistInitMetapage(page);
 
-	/* Write the page.	If archiving/streaming, XLOG it. */
+	/* Write the page.  If archiving/streaming, XLOG it. */
 	smgrwrite(index->rd_smgr, INIT_FORKNUM, SPGIST_METAPAGE_BLKNO,
 			  (char *) page, true);
 	if (XLogIsNeeded())
@@ -230,7 +230,7 @@ spginsert(PG_FUNCTION_ARGS)
 	/*
 	 * We might have to repeat spgdoinsert() multiple times, if conflicts
 	 * occur with concurrent insertions.  If so, reset the insertCtx each time
-	 * to avoid cumulative memory consumption.	That means we also have to
+	 * to avoid cumulative memory consumption.  That means we also have to
 	 * redo initSpGistState(), but it's cheap enough not to matter.
 	 */
 	while (!spgdoinsert(index, &spgstate, ht_ctid, *values, *isnull))

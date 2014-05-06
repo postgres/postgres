@@ -318,7 +318,7 @@ oidparse(Node *node)
 
 			/*
 			 * Values too large for int4 will be represented as Float
-			 * constants by the lexer.	Accept these if they are valid OID
+			 * constants by the lexer.  Accept these if they are valid OID
 			 * strings.
 			 */
 			return oidin_subr(strVal(node), NULL);

@@ -41,7 +41,7 @@ extern PGDLLIMPORT ResourceOwner TopTransactionResourceOwner;
 
 /*
  * Resource releasing is done in three phases: pre-locks, locks, and
- * post-locks.	The pre-lock phase must release any resources that are
+ * post-locks.  The pre-lock phase must release any resources that are
  * visible to other backends (such as pinned buffers); this ensures that
  * when we release a lock that another backend may be waiting on, it will
  * see us as being fully out of our transaction.  The post-lock phase

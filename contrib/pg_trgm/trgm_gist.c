@@ -196,7 +196,7 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 
 	/*
 	 * Store both the strategy number and extracted trigrams in cache, because
-	 * trigram extraction is relatively CPU-expensive.	We must include
+	 * trigram extraction is relatively CPU-expensive.  We must include
 	 * strategy number because trigram extraction depends on strategy.
 	 *
 	 * The cached structure contains the strategy number, then the input query

@@ -21,21 +21,21 @@
  * There is an autovacuum shared memory area, where the launcher stores
  * information about the database it wants vacuumed.  When it wants a new
  * worker to start, it sets a flag in shared memory and sends a signal to the
- * postmaster.	Then postmaster knows nothing more than it must start a worker;
- * so it forks a new child, which turns into a worker.	This new process
+ * postmaster.  Then postmaster knows nothing more than it must start a worker;
+ * so it forks a new child, which turns into a worker.  This new process
  * connects to shared memory, and there it can inspect the information that the
  * launcher has set up.
  *
  * If the fork() call fails in the postmaster, it sets a flag in the shared
  * memory area, and sends a signal to the launcher.  The launcher, upon
  * noticing the flag, can try starting the worker again by resending the
- * signal.	Note that the failure can only be transient (fork failure due to
+ * signal.  Note that the failure can only be transient (fork failure due to
  * high load, memory pressure, too many processes, etc); more permanent
  * problems, like failure to connect to a database, are detected later in the
  * worker and dealt with just by having the worker exit normally.  The launcher
  * will launch a new worker again later, per schedule.
  *
- * When the worker is done vacuuming it sends SIGUSR2 to the launcher.	The
+ * When the worker is done vacuuming it sends SIGUSR2 to the launcher.  The
  * launcher then wakes up and is able to launch another worker, if the schedule
  * is so tight that a new worker is needed immediately.  At this time the
  * launcher can also balance the settings for the various remaining workers'
@@ -231,7 +231,7 @@ typedef enum
 
 /*-------------
  * The main autovacuum shmem struct.  On shared memory we store this main
- * struct and the array of WorkerInfo structs.	This struct keeps:
+ * struct and the array of WorkerInfo structs.  This struct keeps:
  *
  * av_signal		set by other processes to indicate various conditions
  * av_launcherpid	the PID of the autovacuum launcher
@@ -413,7 +413,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 
 	/*
 	 * If possible, make this process a group leader, so that the postmaster
-	 * can signal any child processes too.	(autovacuum probably never has any
+	 * can signal any child processes too.  (autovacuum probably never has any
 	 * child processes, but for consistency we make all postmaster child
 	 * processes do this.)
 	 */
@@ -423,7 +423,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 #endif
 
 	/*
-	 * Set up signal handlers.	We operate on databases much like a regular
+	 * Set up signal handlers.  We operate on databases much like a regular
 	 * backend, so we use the same signal handling.  See equivalent code in
 	 * tcop/postgres.c.
 	 */
@@ -531,7 +531,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 
 	/*
 	 * Force zero_damaged_pages OFF in the autovac process, even if it is set
-	 * in postgresql.conf.	We don't really want such a dangerous option being
+	 * in postgresql.conf.  We don't really want such a dangerous option being
 	 * applied non-interactively.
 	 */
 	SetConfigOption("zero_damaged_pages", "false", PGC_SUSET, PGC_S_OVERRIDE);
@@ -848,7 +848,7 @@ launcher_determine_sleep(bool canlaunch, bool recursing, struct timeval * nap)
  * this the "new" database, because when the database was already present on
  * the list, we expect that this function is not called at all).  The
  * preexisting list, if any, will be used to preserve the order of the
- * databases in the autovacuum_naptime period.	The new database is put at the
+ * databases in the autovacuum_naptime period.  The new database is put at the
  * end of the interval.  The actual values are not saved, which should not be
  * much of a problem.
  */
@@ -1061,7 +1061,7 @@ db_comparator(const void *a, const void *b)
  *
  * Bare-bones procedure for starting an autovacuum worker from the launcher.
  * It determines what database to work on, sets up shared memory stuff and
- * signals postmaster to start the worker.	It fails gracefully if invoked when
+ * signals postmaster to start the worker.  It fails gracefully if invoked when
  * autovacuum_workers are already active.
  *
  * Return value is the OID of the database that the worker is going to process,
@@ -1314,7 +1314,7 @@ launch_worker(TimestampTz now)
 
 /*
  * Called from postmaster to signal a failure to fork a process to become
- * worker.	The postmaster should kill(SIGUSR2) the launcher shortly
+ * worker.  The postmaster should kill(SIGUSR2) the launcher shortly
  * after calling this function.
  */
 void
@@ -1466,7 +1466,7 @@ AutoVacWorkerMain(int argc, char *argv[])
 
 	/*
 	 * If possible, make this process a group leader, so that the postmaster
-	 * can signal any child processes too.	(autovacuum probably never has any
+	 * can signal any child processes too.  (autovacuum probably never has any
 	 * child processes, but for consistency we make all postmaster child
 	 * processes do this.)
 	 */
@@ -1476,7 +1476,7 @@ AutoVacWorkerMain(int argc, char *argv[])
 #endif
 
 	/*
-	 * Set up signal handlers.	We operate on databases much like a regular
+	 * Set up signal handlers.  We operate on databases much like a regular
 	 * backend, so we use the same signal handling.  See equivalent code in
 	 * tcop/postgres.c.
 	 *
@@ -1527,7 +1527,7 @@ AutoVacWorkerMain(int argc, char *argv[])
 		EmitErrorReport();
 
 		/*
-		 * We can now go away.	Note that because we called InitProcess, a
+		 * We can now go away.  Note that because we called InitProcess, a
 		 * callback was registered to do ProcKill, which will clean up
 		 * necessary state.
 		 */
@@ -1541,7 +1541,7 @@ AutoVacWorkerMain(int argc, char *argv[])
 
 	/*
 	 * Force zero_damaged_pages OFF in the autovac process, even if it is set
-	 * in postgresql.conf.	We don't really want such a dangerous option being
+	 * in postgresql.conf.  We don't really want such a dangerous option being
 	 * applied non-interactively.
 	 */
 	SetConfigOption("zero_damaged_pages", "false", PGC_SUSET, PGC_S_OVERRIDE);
@@ -1667,7 +1667,7 @@ FreeWorkerInfo(int code, Datum arg)
 		/*
 		 * Wake the launcher up so that he can launch a new worker immediately
 		 * if required.  We only save the launcher's PID in local memory here;
-		 * the actual signal will be sent when the PGPROC is recycled.	Note
+		 * the actual signal will be sent when the PGPROC is recycled.  Note
 		 * that we always do this, so that the launcher can rebalance the cost
 		 * limit setting of the remaining workers.
 		 *
@@ -1781,7 +1781,7 @@ autovac_balance_cost(void)
 
 			/*
 			 * We put a lower bound of 1 on the cost_limit, to avoid division-
-			 * by-zero in the vacuum code.	Also, in case of roundoff trouble
+			 * by-zero in the vacuum code.  Also, in case of roundoff trouble
 			 * in these calculations, let's be sure we don't ever set
 			 * cost_limit to more than the base value.
 			 */
@@ -1828,7 +1828,7 @@ get_database_list(void)
 	/*
 	 * Start a transaction so we can access pg_database, and get a snapshot.
 	 * We don't have a use for the snapshot itself, but we're interested in
-	 * the secondary effect that it sets RecentGlobalXmin.	(This is critical
+	 * the secondary effect that it sets RecentGlobalXmin.  (This is critical
 	 * for anything that reads heap pages, because HOT may decide to prune
 	 * them even if the process doesn't attempt to modify any tuples.)
 	 */
@@ -2245,14 +2245,14 @@ do_autovacuum(void)
 		}
 
 		/*
-		 * Ok, good to go.	Store the table in shared memory before releasing
+		 * Ok, good to go.  Store the table in shared memory before releasing
 		 * the lock so that other workers don't vacuum it concurrently.
 		 */
 		MyWorkerInfo->wi_tableoid = relid;
 		LWLockRelease(AutovacuumScheduleLock);
 
 		/*
-		 * Remember the prevailing values of the vacuum cost GUCs.	We have to
+		 * Remember the prevailing values of the vacuum cost GUCs.  We have to
 		 * restore these at the bottom of the loop, else we'll compute wrong
 		 * values in the next iteration of autovac_balance_cost().
 		 */
@@ -2281,7 +2281,7 @@ do_autovacuum(void)
 
 		/*
 		 * Save the relation name for a possible error message, to avoid a
-		 * catalog lookup in case of an error.	If any of these return NULL,
+		 * catalog lookup in case of an error.  If any of these return NULL,
 		 * then the relation has been dropped since last we checked; skip it.
 		 * Note: they must live in a long-lived memory context because we call
 		 * vacuum and analyze in different transactions.
@@ -2693,7 +2693,7 @@ relation_needs_vacanalyze(Oid relid,
 	{
 		/*
 		 * Skip a table not found in stat hash, unless we have to force vacuum
-		 * for anti-wrap purposes.	If it's not acted upon, there's no need to
+		 * for anti-wrap purposes.  If it's not acted upon, there's no need to
 		 * vacuum it.
 		 */
 		*dovacuum = force_vacuum;
@@ -2895,7 +2895,7 @@ AutoVacuumShmemInit(void)
  *		Refresh pgstats data for an autovacuum process
  *
  * Cause the next pgstats read operation to obtain fresh data, but throttle
- * such refreshing in the autovacuum launcher.	This is mostly to avoid
+ * such refreshing in the autovacuum launcher.  This is mostly to avoid
  * rereading the pgstats files too many times in quick succession when there
  * are many databases.
  *

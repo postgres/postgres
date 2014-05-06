@@ -20,7 +20,7 @@
  * To avoid version-skew problems, this file must not use declarations
  * from pg_wchar.h: the encoding IDs we are dealing with are determined
  * by the libpq.so we are linked with, and that might not match the
- * numbers we see at compile time.	(If this file were inside libpq,
+ * numbers we see at compile time.  (If this file were inside libpq,
  * the problem would go away...)
  *
  * Hence, we have our own definition of pg_wchar, and we get the values

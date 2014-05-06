@@ -74,7 +74,7 @@ static bool reconsider_full_join_clause(PlannerInfo *root,
  *
  * If below_outer_join is true, then the clause was found below the nullable
  * side of an outer join, so its sides might validly be both NULL rather than
- * strictly equal.	We can still deduce equalities in such cases, but we take
+ * strictly equal.  We can still deduce equalities in such cases, but we take
  * care to mark an EquivalenceClass if it came from any such clauses.  Also,
  * we have to check that both sides are either pseudo-constants or strict
  * functions of Vars, else they might not both go to NULL above the outer
@@ -141,9 +141,9 @@ process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
 									   collation);
 
 	/*
-	 * Reject clauses of the form X=X.	These are not as redundant as they
+	 * Reject clauses of the form X=X.  These are not as redundant as they
 	 * might seem at first glance: assuming the operator is strict, this is
-	 * really an expensive way to write X IS NOT NULL.	So we must not risk
+	 * really an expensive way to write X IS NOT NULL.  So we must not risk
 	 * just losing the clause, which would be possible if there is already a
 	 * single-element EquivalenceClass containing X.  The case is not common
 	 * enough to be worth contorting the EC machinery for, so just reject the
@@ -187,14 +187,14 @@ process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
 	 * Sweep through the existing EquivalenceClasses looking for matches to
 	 * item1 and item2.  These are the possible outcomes:
 	 *
-	 * 1. We find both in the same EC.	The equivalence is already known, so
+	 * 1. We find both in the same EC.  The equivalence is already known, so
 	 * there's nothing to do.
 	 *
 	 * 2. We find both in different ECs.  Merge the two ECs together.
 	 *
 	 * 3. We find just one.  Add the other to its EC.
 	 *
-	 * 4. We find neither.	Make a new, two-entry EC.
+	 * 4. We find neither.  Make a new, two-entry EC.
 	 *
 	 * Note: since all ECs are built through this process or the similar
 	 * search in get_eclass_for_sort_expr(), it's impossible that we'd match
@@ -406,7 +406,7 @@ process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
  * Also, the expression's exposed collation must match the EC's collation.
  * This is important because in comparisons like "foo < bar COLLATE baz",
  * only one of the expressions has the correct exposed collation as we receive
- * it from the parser.	Forcing both of them to have it ensures that all
+ * it from the parser.  Forcing both of them to have it ensures that all
  * variant spellings of such a construct behave the same.  Again, we can
  * stick on a RelabelType to force the right exposed collation.  (It might
  * work to not label the collation at all in EC members, but this is risky
@@ -511,22 +511,22 @@ add_eq_member(EquivalenceClass *ec, Expr *expr, Relids relids,
  *	  single-member EquivalenceClass for it.
  *
  * expr is the expression, and nullable_relids is the set of base relids
- * that are potentially nullable below it.	We actually only care about
+ * that are potentially nullable below it.  We actually only care about
  * the set of such relids that are used in the expression; but for caller
  * convenience, we perform that intersection step here.  The caller need
  * only be sure that nullable_relids doesn't omit any nullable rels that
  * might appear in the expr.
  *
  * sortref is the SortGroupRef of the originating SortGroupClause, if any,
- * or zero if not.	(It should never be zero if the expression is volatile!)
+ * or zero if not.  (It should never be zero if the expression is volatile!)
  *
  * If rel is not NULL, it identifies a specific relation we're considering
  * a path for, and indicates that child EC members for that relation can be
- * considered.	Otherwise child members are ignored.  (Note: since child EC
+ * considered.  Otherwise child members are ignored.  (Note: since child EC
  * members aren't guaranteed unique, a non-NULL value means that there could
  * be more than one EC that matches the expression; if so it's order-dependent
  * which one you get.  This is annoying but it only happens in corner cases,
- * so for now we live with just reporting the first match.	See also
+ * so for now we live with just reporting the first match.  See also
  * generate_implied_equalities_for_indexcol and match_pathkeys_to_index.)
  *
  * If create_it is TRUE, we'll build a new EquivalenceClass when there is no
@@ -680,7 +680,7 @@ get_eclass_for_sort_expr(PlannerInfo *root,
  *
  * When an EC contains pseudoconstants, our strategy is to generate
  * "member = const1" clauses where const1 is the first constant member, for
- * every other member (including other constants).	If we are able to do this
+ * every other member (including other constants).  If we are able to do this
  * then we don't need any "var = var" comparisons because we've successfully
  * constrained all the vars at their points of creation.  If we fail to
  * generate any of these clauses due to lack of cross-type operators, we fall
@@ -705,7 +705,7 @@ get_eclass_for_sort_expr(PlannerInfo *root,
  * "WHERE a.x = b.y AND b.y = a.z", the scheme breaks down if we cannot
  * generate "a.x = a.z" as a restriction clause for A.)  In this case we mark
  * the EC "ec_broken" and fall back to regurgitating its original source
- * RestrictInfos at appropriate times.	We do not try to retract any derived
+ * RestrictInfos at appropriate times.  We do not try to retract any derived
  * clauses already generated from the broken EC, so the resulting plan could
  * be poor due to bad selectivity estimates caused by redundant clauses.  But
  * the correct solution to that is to fix the opfamilies ...
@@ -968,8 +968,8 @@ generate_base_implied_equalities_broken(PlannerInfo *root,
  * built any join RelOptInfos.
  *
  * An annoying special case for parameterized scans is that the inner rel can
- * be an appendrel child (an "other rel").	In this case we must generate
- * appropriate clauses using child EC members.	add_child_rel_equivalences
+ * be an appendrel child (an "other rel").  In this case we must generate
+ * appropriate clauses using child EC members.  add_child_rel_equivalences
  * must already have been done for the child rel.
  *
  * The results are sufficient for use in merge, hash, and plain nestloop join
@@ -983,7 +983,7 @@ generate_base_implied_equalities_broken(PlannerInfo *root,
  * we consider different join paths, we avoid generating multiple copies:
  * whenever we select a particular pair of EquivalenceMembers to join,
  * we check to see if the pair matches any original clause (in ec_sources)
- * or previously-built clause (in ec_derives).	This saves memory and allows
+ * or previously-built clause (in ec_derives).  This saves memory and allows
  * re-use of information cached in RestrictInfos.
  *
  * join_relids should always equal bms_union(outer_relids, inner_rel->relids).
@@ -1079,7 +1079,7 @@ generate_join_implied_equalities_normal(PlannerInfo *root,
 	 * First, scan the EC to identify member values that are computable at the
 	 * outer rel, at the inner rel, or at this relation but not in either
 	 * input rel.  The outer-rel members should already be enforced equal,
-	 * likewise for the inner-rel members.	We'll need to create clauses to
+	 * likewise for the inner-rel members.  We'll need to create clauses to
 	 * enforce that any newly computable members are all equal to each other
 	 * as well as to at least one input member, plus enforce at least one
 	 * outer-rel member equal to at least one inner-rel member.
@@ -1105,7 +1105,7 @@ generate_join_implied_equalities_normal(PlannerInfo *root,
 	}
 
 	/*
-	 * First, select the joinclause if needed.	We can equate any one outer
+	 * First, select the joinclause if needed.  We can equate any one outer
 	 * member to any one inner member, but we have to find a datatype
 	 * combination for which an opfamily member operator exists.  If we have
 	 * choices, we prefer simple Var members (possibly with RelabelType) since
@@ -1323,8 +1323,8 @@ create_join_clause(PlannerInfo *root,
 
 	/*
 	 * Search to see if we already built a RestrictInfo for this pair of
-	 * EquivalenceMembers.	We can use either original source clauses or
-	 * previously-derived clauses.	The check on opno is probably redundant,
+	 * EquivalenceMembers.  We can use either original source clauses or
+	 * previously-derived clauses.  The check on opno is probably redundant,
 	 * but be safe ...
 	 */
 	foreach(lc, ec->ec_sources)
@@ -1455,7 +1455,7 @@ create_join_clause(PlannerInfo *root,
  *
  * Outer join clauses that are marked outerjoin_delayed are special: this
  * condition means that one or both VARs might go to null due to a lower
- * outer join.	We can still push a constant through the clause, but only
+ * outer join.  We can still push a constant through the clause, but only
  * if its operator is strict; and we *have to* throw the clause back into
  * regular joinclause processing.  By keeping the strict join clause,
  * we ensure that any null-extended rows that are mistakenly generated due
@@ -1649,7 +1649,7 @@ reconsider_outer_join_clause(PlannerInfo *root, RestrictInfo *rinfo,
 
 		/*
 		 * Yes it does!  Try to generate a clause INNERVAR = CONSTANT for each
-		 * CONSTANT in the EC.	Note that we must succeed with at least one
+		 * CONSTANT in the EC.  Note that we must succeed with at least one
 		 * constant before we can decide to throw away the outer-join clause.
 		 */
 		match = false;
@@ -2045,7 +2045,7 @@ mutate_eclass_expressions(PlannerInfo *root,
  * is a redundant list of clauses equating the index column to each of
  * the other-relation values it is known to be equal to.  Any one of
  * these clauses can be used to create a parameterized indexscan, and there
- * is no value in using more than one.	(But it *is* worthwhile to create
+ * is no value in using more than one.  (But it *is* worthwhile to create
  * a separate parameterized path for each one, since that leads to different
  * join orders.)
  */
@@ -2093,7 +2093,7 @@ generate_implied_equalities_for_indexcol(PlannerInfo *root,
 		 * the target relation.  (Unlike regular members, the same expression
 		 * could be a child member of more than one EC.  Therefore, it's
 		 * potentially order-dependent which EC a child relation's index
-		 * column gets matched to.	This is annoying but it only happens in
+		 * column gets matched to.  This is annoying but it only happens in
 		 * corner cases, so for now we live with just reporting the first
 		 * match.  See also get_eclass_for_sort_expr.)
 		 */
@@ -2169,7 +2169,7 @@ generate_implied_equalities_for_indexcol(PlannerInfo *root,
  *		a joinclause involving the two given relations.
  *
  * This is essentially a very cut-down version of
- * generate_join_implied_equalities().	Note it's OK to occasionally say "yes"
+ * generate_join_implied_equalities().  Note it's OK to occasionally say "yes"
  * incorrectly.  Hence we don't bother with details like whether the lack of a
  * cross-type operator might prevent the clause from actually being generated.
  */
@@ -2205,7 +2205,7 @@ have_relevant_eclass_joinclause(PlannerInfo *root,
 		 * OK as a possibly-overoptimistic heuristic.
 		 *
 		 * We don't test ec_has_const either, even though a const eclass won't
-		 * generate real join clauses.	This is because if we had "WHERE a.x =
+		 * generate real join clauses.  This is because if we had "WHERE a.x =
 		 * b.y and a.x = 42", it is worth considering a join between a and b,
 		 * since the join result is likely to be small even though it'll end
 		 * up being an unqualified nestloop.
@@ -2262,7 +2262,7 @@ has_relevant_eclass_joinclause(PlannerInfo *root, RelOptInfo *rel1)
  *	  against the specified relation.
  *
  * This is just a heuristic test and doesn't have to be exact; it's better
- * to say "yes" incorrectly than "no".	Hence we don't bother with details
+ * to say "yes" incorrectly than "no".  Hence we don't bother with details
  * like whether the lack of a cross-type operator might prevent the clause
  * from actually being generated.
  */
@@ -2283,7 +2283,7 @@ eclass_useful_for_merging(EquivalenceClass *eclass,
 
 	/*
 	 * Note we don't test ec_broken; if we did, we'd need a separate code path
-	 * to look through ec_sources.	Checking the members anyway is OK as a
+	 * to look through ec_sources.  Checking the members anyway is OK as a
 	 * possibly-overoptimistic heuristic.
 	 */
 

@@ -71,12 +71,12 @@ static void check_hashjoinable(RestrictInfo *restrictinfo);
  *	  appearing in the jointree.
  *
  * The initial invocation must pass root->parse->jointree as the value of
- * jtnode.	Internally, the function recurses through the jointree.
+ * jtnode.  Internally, the function recurses through the jointree.
  *
  * At the end of this process, there should be one baserel RelOptInfo for
  * every non-join RTE that is used in the query.  Therefore, this routine
  * is the only place that should call build_simple_rel with reloptkind
- * RELOPT_BASEREL.	(Note: build_simple_rel recurses internally to build
+ * RELOPT_BASEREL.  (Note: build_simple_rel recurses internally to build
  * "other rel" RelOptInfos for the members of any appendrels we find here.)
  */
 void
@@ -196,7 +196,7 @@ add_vars_to_targetlist(PlannerInfo *root, List *vars,
 
 			/*
 			 * If we are creating PlaceHolderInfos, mark them with the correct
-			 * maybe-needed locations.	Otherwise, it's too late to change
+			 * maybe-needed locations.  Otherwise, it's too late to change
 			 * that.
 			 */
 			if (create_new_ph)
@@ -218,7 +218,7 @@ add_vars_to_targetlist(PlannerInfo *root, List *vars,
  * deconstruct_jointree
  *	  Recursively scan the query's join tree for WHERE and JOIN/ON qual
  *	  clauses, and add these to the appropriate restrictinfo and joininfo
- *	  lists belonging to base RelOptInfos.	Also, add SpecialJoinInfo nodes
+ *	  lists belonging to base RelOptInfos.  Also, add SpecialJoinInfo nodes
  *	  to root->join_info_list for any outer joins appearing in the query tree.
  *	  Return a "joinlist" data structure showing the join order decisions
  *	  that need to be made by make_one_rel().
@@ -235,9 +235,9 @@ add_vars_to_targetlist(PlannerInfo *root, List *vars,
  * be evaluated at the lowest level where all the variables it mentions are
  * available.  However, we cannot push a qual down into the nullable side(s)
  * of an outer join since the qual might eliminate matching rows and cause a
- * NULL row to be incorrectly emitted by the join.	Therefore, we artificially
+ * NULL row to be incorrectly emitted by the join.  Therefore, we artificially
  * OR the minimum-relids of such an outer join into the required_relids of
- * clauses appearing above it.	This forces those clauses to be delayed until
+ * clauses appearing above it.  This forces those clauses to be delayed until
  * application of the outer join (or maybe even higher in the join tree).
  */
 List *
@@ -377,7 +377,7 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 		 * regard for whether this level is an outer join, which is correct.
 		 * Then we place our own join quals, which are restricted by lower
 		 * outer joins in any case, and are forced to this level if this is an
-		 * outer join and they mention the outer side.	Finally, if this is an
+		 * outer join and they mention the outer side.  Finally, if this is an
 		 * outer join, we create a join_info_list entry for the join.  This
 		 * will prevent quals above us in the join tree that use those rels
 		 * from being pushed down below this level.  (It's okay for upper
@@ -594,7 +594,7 @@ make_outerjoininfo(PlannerInfo *root,
 	 * any nullable rel is FOR UPDATE/SHARE.
 	 *
 	 * You might be wondering why this test isn't made far upstream in the
-	 * parser.	It's because the parser hasn't got enough info --- consider
+	 * parser.  It's because the parser hasn't got enough info --- consider
 	 * FOR UPDATE applied to a view.  Only after rewriting and flattening do
 	 * we know whether the view contains an outer join.
 	 *
@@ -649,7 +649,7 @@ make_outerjoininfo(PlannerInfo *root,
 	min_lefthand = bms_intersect(clause_relids, left_rels);
 
 	/*
-	 * Similarly for required RHS.	But here, we must also include any lower
+	 * Similarly for required RHS.  But here, we must also include any lower
 	 * inner joins, to ensure we don't try to commute with any of them.
 	 */
 	min_righthand = bms_int_members(bms_union(clause_relids, inner_join_rels),
@@ -701,7 +701,7 @@ make_outerjoininfo(PlannerInfo *root,
 		 * Here, we have to consider that "our join condition" includes any
 		 * clauses that syntactically appeared above the lower OJ and below
 		 * ours; those are equivalent to degenerate clauses in our OJ and must
-		 * be treated as such.	Such clauses obviously can't reference our
+		 * be treated as such.  Such clauses obviously can't reference our
 		 * LHS, and they must be non-strict for the lower OJ's RHS (else
 		 * reduce_outer_joins would have reduced the lower OJ to a plain
 		 * join).  Hence the other ways in which we handle clauses within our
@@ -785,7 +785,7 @@ make_outerjoininfo(PlannerInfo *root,
  * distribute_qual_to_rels
  *	  Add clause information to either the baserestrictinfo or joininfo list
  *	  (depending on whether the clause is a join) of each base relation
- *	  mentioned in the clause.	A RestrictInfo node is created and added to
+ *	  mentioned in the clause.  A RestrictInfo node is created and added to
  *	  the appropriate list for each rel.  Alternatively, if the clause uses a
  *	  mergejoinable operator and is not delayed by outer-join rules, enter
  *	  the left- and right-side expressions into the query's list of
@@ -867,10 +867,10 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	 * gating Result plan node.  We put such a clause into the regular
 	 * RestrictInfo lists for the moment, but eventually createplan.c will
 	 * pull it out and make a gating Result node immediately above whatever
-	 * plan node the pseudoconstant clause is assigned to.	It's usually best
+	 * plan node the pseudoconstant clause is assigned to.  It's usually best
 	 * to put a gating node as high in the plan tree as possible. If we are
 	 * not below an outer join, we can actually push the pseudoconstant qual
-	 * all the way to the top of the tree.	If we are below an outer join, we
+	 * all the way to the top of the tree.  If we are below an outer join, we
 	 * leave the qual at its original syntactic level (we could push it up to
 	 * just below the outer join, but that seems more complex than it's
 	 * worth).
@@ -924,7 +924,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	 * Note: it is not immediately obvious that a simple boolean is enough
 	 * for this: if for some reason we were to attach a degenerate qual to
 	 * its original join level, it would need to be treated as an outer join
-	 * qual there.	However, this cannot happen, because all the rels the
+	 * qual there.  However, this cannot happen, because all the rels the
 	 * clause mentions must be in the outer join's min_righthand, therefore
 	 * the join it needs must be formed before the outer join; and we always
 	 * attach quals to the lowest level where they can be evaluated.  But
@@ -958,7 +958,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 		 * We can't use such a clause to deduce equivalence (the left and
 		 * right sides might be unequal above the join because one of them has
 		 * gone to NULL) ... but we might be able to use it for more limited
-		 * deductions, if it is mergejoinable.	So consider adding it to the
+		 * deductions, if it is mergejoinable.  So consider adding it to the
 		 * lists of set-aside outer-join clauses.
 		 */
 		is_pushed_down = false;
@@ -988,7 +988,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	else
 	{
 		/*
-		 * Normal qual clause or degenerate outer-join clause.	Either way, we
+		 * Normal qual clause or degenerate outer-join clause.  Either way, we
 		 * can mark it as pushed-down.
 		 */
 		is_pushed_down = true;
@@ -1107,7 +1107,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	 *
 	 * In all cases, it's important to initialize the left_ec and right_ec
 	 * fields of a mergejoinable clause, so that all possibly mergejoinable
-	 * expressions have representations in EquivalenceClasses.	If
+	 * expressions have representations in EquivalenceClasses.  If
 	 * process_equivalence is successful, it will take care of that;
 	 * otherwise, we have to call initialize_mergeclause_eclasses to do it.
 	 */
@@ -1183,7 +1183,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
  * For an is_pushed_down qual, we can evaluate the qual as soon as (1) we have
  * all the rels it mentions, and (2) we are at or above any outer joins that
  * can null any of these rels and are below the syntactic location of the
- * given qual.	We must enforce (2) because pushing down such a clause below
+ * given qual.  We must enforce (2) because pushing down such a clause below
  * the OJ might cause the OJ to emit null-extended rows that should not have
  * been formed, or that should have been rejected by the clause.  (This is
  * only an issue for non-strict quals, since if we can prove a qual mentioning
@@ -1209,7 +1209,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
  * required relids overlap the LHS too) causes that OJ's delay_upper_joins
  * flag to be set TRUE.  This will prevent any higher-level OJs from
  * being interchanged with that OJ, which would result in not having any
- * correct place to evaluate the qual.	(The case we care about here is a
+ * correct place to evaluate the qual.  (The case we care about here is a
  * sub-select WHERE clause within the RHS of some outer join.  The WHERE
  * clause must effectively be treated as a degenerate clause of that outer
  * join's condition.  Rather than trying to match such clauses with joins
@@ -1606,7 +1606,7 @@ check_mergejoinable(RestrictInfo *restrictinfo)
  *	  info fields in the restrictinfo.
  *
  *	  Currently, we support hashjoin for binary opclauses where
- *	  the operator is a hashjoinable operator.	The arguments can be
+ *	  the operator is a hashjoinable operator.  The arguments can be
  *	  anything --- as long as there are no volatile functions in them.
  */
 static void

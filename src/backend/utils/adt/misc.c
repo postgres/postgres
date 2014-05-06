@@ -118,7 +118,7 @@ pg_signal_backend(int pid, int sig)
 	 * recycled for a new process, before reaching here?  Then we'd be trying
 	 * to kill the wrong thing.  Seems near impossible when sequential pid
 	 * assignment and wraparound is used.  Perhaps it could happen on a system
-	 * where pid re-use is randomized.	That race condition possibility seems
+	 * where pid re-use is randomized.  That race condition possibility seems
 	 * too unlikely to worry about.
 	 */
 
@@ -138,7 +138,7 @@ pg_signal_backend(int pid, int sig)
 }
 
 /*
- * Signal to cancel a backend process.	This is allowed if you are superuser or
+ * Signal to cancel a backend process.  This is allowed if you are superuser or
  * have the same role as the process being canceled.
  */
 Datum
@@ -331,7 +331,7 @@ pg_tablespace_location(PG_FUNCTION_ARGS)
 
 	/*
 	 * It's useful to apply this function to pg_class.reltablespace, wherein
-	 * zero means "the database's default tablespace".	So, rather than
+	 * zero means "the database's default tablespace".  So, rather than
 	 * throwing an error for zero, we choose to assume that's what is meant.
 	 */
 	if (tablespaceOid == InvalidOid)
@@ -389,7 +389,7 @@ pg_sleep(PG_FUNCTION_ARGS)
 	 * pg_usleep's upper bound on allowed delays.
 	 *
 	 * By computing the intended stop time initially, we avoid accumulation of
-	 * extra delay across multiple sleeps.	This also ensures we won't delay
+	 * extra delay across multiple sleeps.  This also ensures we won't delay
 	 * less than the specified time if pg_usleep is interrupted by other
 	 * signals such as SIGHUP.
 	 */

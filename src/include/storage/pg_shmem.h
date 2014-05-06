@@ -10,7 +10,7 @@
  *
  * To simplify life for the SysV implementation, the ID is assumed to
  * consist of two unsigned long values (these are key and ID in SysV
- * terms).	Other platforms may ignore the second value if they need
+ * terms).  Other platforms may ignore the second value if they need
  * only one ID number.
  *
  *

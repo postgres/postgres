@@ -562,7 +562,7 @@ typedef enum JoinType
 	/*
 	 * Semijoins and anti-semijoins (as defined in relational theory) do not
 	 * appear in the SQL JOIN syntax, but there are standard idioms for
-	 * representing them (e.g., using EXISTS).	The planner recognizes these
+	 * representing them (e.g., using EXISTS).  The planner recognizes these
 	 * cases and converts them to joins.  So the planner and executor must
 	 * support these codes.  NOTE: in JOIN_SEMI output, it is unspecified
 	 * which matching RHS row is joined to.  In JOIN_ANTI output, the row is
@@ -586,7 +586,7 @@ typedef enum JoinType
 /*
  * OUTER joins are those for which pushed-down quals must behave differently
  * from the join's own quals.  This is in fact everything except INNER and
- * SEMI joins.	However, this macro must also exclude the JOIN_UNIQUE symbols
+ * SEMI joins.  However, this macro must also exclude the JOIN_UNIQUE symbols
  * since those are temporary proxies for what will eventually be an INNER
  * join.
  *

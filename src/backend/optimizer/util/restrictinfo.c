@@ -152,7 +152,7 @@ make_restrictinfo_from_bitmapqual(Path *bitmapqual,
 		/*
 		 * Here, we only detect qual-free subplans.  A qual-free subplan would
 		 * cause us to generate "... OR true ..."  which we may as well reduce
-		 * to just "true".	We do not try to eliminate redundant subclauses
+		 * to just "true".  We do not try to eliminate redundant subclauses
 		 * because (a) it's not as likely as in the AND case, and (b) we might
 		 * well be working with hundreds or even thousands of OR conditions,
 		 * perhaps from a long IN list.  The performance of list_append_unique
@@ -250,7 +250,7 @@ make_restrictinfo_from_bitmapqual(Path *bitmapqual,
 				 * We know that the index predicate must have been implied by
 				 * the query condition as a whole, but it may or may not be
 				 * implied by the conditions that got pushed into the
-				 * bitmapqual.	Avoid generating redundant conditions.
+				 * bitmapqual.  Avoid generating redundant conditions.
 				 */
 				if (!predicate_implied_by(list_make1(pred), result))
 					result = lappend(result,
@@ -397,7 +397,7 @@ make_restrictinfo_internal(Expr *clause,
 
 	/*
 	 * Fill in all the cacheable fields with "not yet set" markers. None of
-	 * these will be computed until/unless needed.	Note in particular that we
+	 * these will be computed until/unless needed.  Note in particular that we
 	 * don't mark a binary opclause as mergejoinable or hashjoinable here;
 	 * that happens only if it appears in the right context (top level of a
 	 * joinclause list).

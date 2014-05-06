@@ -29,23 +29,23 @@
  *
  *	If we successfully complete the transaction, we have to broadcast all
  *	these invalidation events to other backends (via the SI message queue)
- *	so that they can flush obsolete entries from their caches.	Note we have
+ *	so that they can flush obsolete entries from their caches.  Note we have
  *	to record the transaction commit before sending SI messages, otherwise
  *	the other backends won't see our updated tuples as good.
  *
  *	When a subtransaction aborts, we can process and discard any events
- *	it has queued.	When a subtransaction commits, we just add its events
+ *	it has queued.  When a subtransaction commits, we just add its events
  *	to the pending lists of the parent transaction.
  *
  *	In short, we need to remember until xact end every insert or delete
- *	of a tuple that might be in the system caches.	Updates are treated as
+ *	of a tuple that might be in the system caches.  Updates are treated as
  *	two events, delete + insert, for simplicity.  (If the update doesn't
  *	change the tuple hash value, catcache.c optimizes this into one event.)
  *
  *	We do not need to register EVERY tuple operation in this way, just those
- *	on tuples in relations that have associated catcaches.	We do, however,
+ *	on tuples in relations that have associated catcaches.  We do, however,
  *	have to register every operation on every tuple that *could* be in a
- *	catcache, whether or not it currently is in our cache.	Also, if the
+ *	catcache, whether or not it currently is in our cache.  Also, if the
  *	tuple is in a relation that has multiple catcaches, we need to register
  *	an invalidation message for each such catcache.  catcache.c's
  *	PrepareToInvalidateCacheTuple() routine provides the knowledge of which
@@ -110,7 +110,7 @@
 /*
  * To minimize palloc traffic, we keep pending requests in successively-
  * larger chunks (a slightly more sophisticated version of an expansible
- * array).	All request types can be stored as SharedInvalidationMessage
+ * array).  All request types can be stored as SharedInvalidationMessage
  * records.  The ordering of requests within a list is never significant.
  */
 typedef struct InvalidationChunk
@@ -598,7 +598,7 @@ AcceptInvalidationMessages(void)
 	 *
 	 * If you're a glutton for punishment, try CLOBBER_CACHE_RECURSIVELY. This
 	 * slows things by at least a factor of 10000, so I wouldn't suggest
-	 * trying to run the entire regression tests that way.	It's useful to try
+	 * trying to run the entire regression tests that way.  It's useful to try
 	 * a few simple tests, to make sure that cache reload isn't subject to
 	 * internal cache-flush hazards, but after you've done a few thousand
 	 * recursive reloads it's unlikely you'll learn more.
@@ -811,12 +811,12 @@ ProcessCommittedInvalidationMessages(SharedInvalidationMessage *msgs,
  * If isCommit, we must send out the messages in our PriorCmdInvalidMsgs list
  * to the shared invalidation message queue.  Note that these will be read
  * not only by other backends, but also by our own backend at the next
- * transaction start (via AcceptInvalidationMessages).	This means that
+ * transaction start (via AcceptInvalidationMessages).  This means that
  * we can skip immediate local processing of anything that's still in
  * CurrentCmdInvalidMsgs, and just send that list out too.
  *
  * If not isCommit, we are aborting, and must locally process the messages
- * in PriorCmdInvalidMsgs.	No messages need be sent to other backends,
+ * in PriorCmdInvalidMsgs.  No messages need be sent to other backends,
  * since they'll not have seen our changed tuples anyway.  We can forget
  * about CurrentCmdInvalidMsgs too, since those changes haven't touched
  * the caches yet.
@@ -875,11 +875,11 @@ AtEOXact_Inval(bool isCommit)
  * parent's PriorCmdInvalidMsgs list.
  *
  * If not isCommit, we are aborting, and must locally process the messages
- * in PriorCmdInvalidMsgs.	No messages need be sent to other backends.
+ * in PriorCmdInvalidMsgs.  No messages need be sent to other backends.
  * We can forget about CurrentCmdInvalidMsgs too, since those changes haven't
  * touched the caches yet.
  *
- * In any case, pop the transaction stack.	We need not physically free memory
+ * In any case, pop the transaction stack.  We need not physically free memory
  * here, since CurTransactionContext is about to be emptied anyway
  * (if aborting).  Beware of the possibility of aborting the same nesting
  * level twice, though.
@@ -935,7 +935,7 @@ AtEOSubXact_Inval(bool isCommit)
  *		in a transaction.
  *
  * Here, we send no messages to the shared queue, since we don't know yet if
- * we will commit.	We do need to locally process the CurrentCmdInvalidMsgs
+ * we will commit.  We do need to locally process the CurrentCmdInvalidMsgs
  * list, so as to flush our caches of any entries we have outdated in the
  * current command.  We then move the current-cmd list over to become part
  * of the prior-cmds list.
@@ -1037,7 +1037,7 @@ CacheInvalidateHeapTuple(Relation relation,
 		 * This essentially means that only backends in this same database
 		 * will react to the relcache flush request.  This is in fact
 		 * appropriate, since only those backends could see our pg_attribute
-		 * change anyway.  It looks a bit ugly though.	(In practice, shared
+		 * change anyway.  It looks a bit ugly though.  (In practice, shared
 		 * relations can't have schema changes after bootstrap, so we should
 		 * never come here for a shared rel anyway.)
 		 */
@@ -1049,7 +1049,7 @@ CacheInvalidateHeapTuple(Relation relation,
 
 		/*
 		 * When a pg_index row is updated, we should send out a relcache inval
-		 * for the index relation.	As above, we don't know the shared status
+		 * for the index relation.  As above, we don't know the shared status
 		 * of the index, but in practice it doesn't matter since indexes of
 		 * shared catalogs can't have such updates.
 		 */
@@ -1157,7 +1157,7 @@ CacheInvalidateRelcacheByRelid(Oid relid)
  *
  * Sending this type of invalidation msg forces other backends to close open
  * smgr entries for the rel.  This should be done to flush dangling open-file
- * references when the physical rel is being dropped or truncated.	Because
+ * references when the physical rel is being dropped or truncated.  Because
  * these are nontransactional (i.e., not-rollback-able) operations, we just
  * send the inval message immediately without any queuing.
  *

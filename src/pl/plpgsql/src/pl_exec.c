@@ -55,7 +55,7 @@ typedef struct
  * creates its own "eval_econtext" ExprContext within this estate for
  * per-evaluation workspace.  eval_econtext is freed at normal function exit,
  * and the EState is freed at transaction end (in case of error, we assume
- * that the abort mechanisms clean it all up).	Furthermore, any exception
+ * that the abort mechanisms clean it all up).  Furthermore, any exception
  * block within a function has to have its own eval_econtext separate from
  * the containing function's, so that we can clean up ExprContext callbacks
  * properly at subtransaction exit.  We maintain a stack that tracks the
@@ -63,7 +63,7 @@ typedef struct
  *
  * This arrangement is a bit tedious to maintain, but it's worth the trouble
  * so that we don't have to re-prepare simple expressions on each trip through
- * a function.	(We assume the case to optimize is many repetitions of a
+ * a function.  (We assume the case to optimize is many repetitions of a
  * function within a transaction.)
  */
 typedef struct SimpleEcontextStackEntry
@@ -528,7 +528,7 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 	 *
 	 * We make the tupdescs available in both records even though only one may
 	 * have a value.  This allows parsing of record references to succeed in
-	 * functions that are used for multiple trigger types.	For example, we
+	 * functions that are used for multiple trigger types.  For example, we
 	 * might have a test like "if (TG_OP = 'INSERT' and NEW.foo = 'xyz')",
 	 * which should parse regardless of the current trigger type.
 	 */
@@ -3084,7 +3084,7 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 
 	/*
 	 * Check for error, and set FOUND if appropriate (for historical reasons
-	 * we set FOUND only for certain query types).	Also Assert that we
+	 * we set FOUND only for certain query types).  Also Assert that we
 	 * identified the statement type the same as SPI did.
 	 */
 	switch (rc)
@@ -3780,7 +3780,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 										 var->datatype->typlen);
 
 				/*
-				 * Now free the old value.	(We can't do this any earlier
+				 * Now free the old value.  (We can't do this any earlier
 				 * because of the possibility that we are assigning the var's
 				 * old value to it, eg "foo := foo".  We could optimize out
 				 * the assignment altogether in such cases, but it's too
@@ -4177,7 +4177,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
  * At present this doesn't handle PLpgSQL_expr or PLpgSQL_arrayelem datums.
  *
  * NOTE: caller must not modify the returned value, since it points right
- * at the stored value in the case of pass-by-reference datatypes.	In some
+ * at the stored value in the case of pass-by-reference datatypes.  In some
  * cases we have to palloc a return value, and in such cases we put it into
  * the estate's short-term memory context.
  */
@@ -4689,7 +4689,7 @@ exec_for_query(PLpgSQL_execstate *estate, PLpgSQL_stmt_forq *stmt,
 	PinPortal(portal);
 
 	/*
-	 * Fetch the initial tuple(s).	If prefetching is allowed then we grab a
+	 * Fetch the initial tuple(s).  If prefetching is allowed then we grab a
 	 * few more rows to avoid multiple trips through executor startup
 	 * overhead.
 	 */
@@ -4827,7 +4827,7 @@ loop_exit:
  * Because we only store one execution tree for a simple expression, we
  * can't handle recursion cases.  So, if we see the tree is already busy
  * with an evaluation in the current xact, we just return FALSE and let the
- * caller run the expression the hard way.	(Other alternatives such as
+ * caller run the expression the hard way.  (Other alternatives such as
  * creating a new tree for a recursive call either introduce memory leaks,
  * or add enough bookkeeping to be doubtful wins anyway.)  Another case that
  * is covered by the expr_simple_in_use test is where a previous execution
@@ -5055,7 +5055,7 @@ setup_param_list(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 		estate->cur_expr = expr;
 
 		/*
-		 * Also make sure this is set before parser hooks need it.	There is
+		 * Also make sure this is set before parser hooks need it.  There is
 		 * no need to save and restore, since the value is always correct once
 		 * set.  (Should be set already, but let's be sure.)
 		 */
@@ -5097,7 +5097,7 @@ plpgsql_param_fetch(ParamListInfo params, int paramid)
 
 	/*
 	 * Do nothing if asked for a value that's not supposed to be used by this
-	 * SQL expression.	This avoids unwanted evaluations when functions such
+	 * SQL expression.  This avoids unwanted evaluations when functions such
 	 * as copyParamList try to materialize all the values.
 	 */
 	if (!bms_is_member(dno, expr->paramnos))
@@ -5348,7 +5348,7 @@ convert_value_to_string(PLpgSQL_execstate *estate, Datum value, Oid valtype)
  *
  * Note: the estate's eval_econtext is used for temporary storage, and may
  * also contain the result Datum if we have to do a conversion to a pass-
- * by-reference data type.	Be sure to do an exec_eval_cleanup() call when
+ * by-reference data type.  Be sure to do an exec_eval_cleanup() call when
  * done with the result.
  * ----------
  */
@@ -5880,7 +5880,7 @@ plpgsql_create_econtext(PLpgSQL_execstate *estate)
 
 	/*
 	 * Create an EState for evaluation of simple expressions, if there's not
-	 * one already in the current transaction.	The EState is made a child of
+	 * one already in the current transaction.  The EState is made a child of
 	 * TopTransactionContext so it will have the right lifespan.
 	 */
 	if (simple_eval_estate == NULL)

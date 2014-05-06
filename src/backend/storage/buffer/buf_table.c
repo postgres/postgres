@@ -3,7 +3,7 @@
  * buf_table.c
  *	  routines for mapping BufferTags to buffer indexes.
  *
- * Note: the routines in this file do no locking of their own.	The caller
+ * Note: the routines in this file do no locking of their own.  The caller
  * must hold a suitable lock on the appropriate BufMappingLock, as specified
  * in the comments.  We can't do the locking inside these functions because
  * in most cases the caller needs to adjust the buffer header contents
@@ -112,7 +112,7 @@ BufTableLookup(BufferTag *tagPtr, uint32 hashcode)
  *		Insert a hashtable entry for given tag and buffer ID,
  *		unless an entry already exists for that tag
  *
- * Returns -1 on successful insertion.	If a conflicting entry exists
+ * Returns -1 on successful insertion.  If a conflicting entry exists
  * already, returns the buffer ID in that entry.
  *
  * Caller must hold exclusive lock on BufMappingLock for tag's partition

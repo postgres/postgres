@@ -48,7 +48,7 @@ typedef struct
  * adequate locks to prevent other backends from messing with the tables.
  *
  * For a saved plan, the plancxt is made a child of CacheMemoryContext
- * since it should persist until explicitly destroyed.	Likewise, the
+ * since it should persist until explicitly destroyed.  Likewise, the
  * plancache entries will be under CacheMemoryContext since we tell
  * plancache.c to save them.  We rely on plancache.c to keep the cache
  * entries up-to-date as needed in the face of invalidation events.

@@ -14,19 +14,19 @@
  * 1. The output collation of each expression node, or InvalidOid if it
  * returns a noncollatable data type.  This can also be InvalidOid if the
  * result type is collatable but the collation is indeterminate.
- * 2. The collation to be used in executing each function.	InvalidOid means
+ * 2. The collation to be used in executing each function.  InvalidOid means
  * that there are no collatable inputs or their collation is indeterminate.
  * This value is only stored in node types that might call collation-using
  * functions.
  *
  * You might think we could get away with storing only one collation per
- * node, but the two concepts really need to be kept distinct.	Otherwise
+ * node, but the two concepts really need to be kept distinct.  Otherwise
  * it's too confusing when a function produces a collatable output type but
  * has no collatable inputs or produces noncollatable output from collatable
  * inputs.
  *
  * Cases with indeterminate collation might result in an error being thrown
- * at runtime.	If we knew exactly which functions require collation
+ * at runtime.  If we knew exactly which functions require collation
  * information, we could throw those errors at parse time instead.
  *
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
@@ -231,7 +231,7 @@ select_common_collation(ParseState *pstate, List *exprs, bool none_ok)
  *		Recursive guts of collation processing.
  *
  * Nodes with no children (eg, Vars, Consts, Params) must have been marked
- * when built.	All upper-level nodes are marked here.
+ * when built.  All upper-level nodes are marked here.
  *
  * Note: if this is invoked directly on a List, it will attempt to infer a
  * common collation for all the list members.  In particular, it will throw
@@ -511,7 +511,7 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 
 			/*
 			 * TargetEntry can have only one child, and should bubble that
-			 * state up to its parent.	We can't use the general-case code
+			 * state up to its parent.  We can't use the general-case code
 			 * below because exprType and friends don't work on TargetEntry.
 			 */
 			collation = loccontext.collation;
@@ -526,7 +526,7 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 			 * There are some cases where there might not be a failure, for
 			 * example if the planner chooses to use hash aggregation instead
 			 * of sorting for grouping; but it seems better to predictably
-			 * throw an error.	(Compare transformSetOperationTree, which will
+			 * throw an error.  (Compare transformSetOperationTree, which will
 			 * throw error for indeterminate collation of set-op columns, even
 			 * though the planner might be able to implement the set-op
 			 * without sorting.)
@@ -564,7 +564,7 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 				 * SubLink.  Act as though the Query returns its first output
 				 * column, which indeed is what it does for EXPR_SUBLINK and
 				 * ARRAY_SUBLINK cases.  In the cases where the SubLink
-				 * returns boolean, this info will be ignored.	Special case:
+				 * returns boolean, this info will be ignored.  Special case:
 				 * in EXISTS, the Query might return no columns, in which case
 				 * we need do nothing.
 				 *

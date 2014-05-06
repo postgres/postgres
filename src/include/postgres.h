@@ -33,7 +33,7 @@
  *	in the backend environment, but are of no interest outside the backend.
  *
  *	Simple type definitions live in c.h, where they are shared with
- *	postgres_fe.h.	We do that since those type definitions are needed by
+ *	postgres_fe.h.  We do that since those type definitions are needed by
  *	frontend modules that want to deal with binary data transmission to or
  *	from the backend.  Type definitions in this file should be for
  *	representations that never escape the backend, such as Datum or
@@ -55,7 +55,7 @@
 
 /*
  * struct varatt_external is a "TOAST pointer", that is, the information
- * needed to fetch a stored-out-of-line Datum.	The data is compressed
+ * needed to fetch a stored-out-of-line Datum.  The data is compressed
  * if and only if va_extsize < va_rawsize - VARHDRSZ.  This struct must not
  * contain any padding, because we sometimes compare pointers using memcmp.
  *
@@ -127,7 +127,7 @@ typedef struct
  * The "xxx" bits are the length field (which includes itself in all cases).
  * In the big-endian case we mask to extract the length, in the little-endian
  * case we shift.  Note that in both cases the flag bits are in the physically
- * first byte.	Also, it is not possible for a 1-byte length word to be zero;
+ * first byte.  Also, it is not possible for a 1-byte length word to be zero;
  * this lets us disambiguate alignment padding bytes from the start of an
  * unaligned datum.  (We now *require* pad bytes to be filled with zero!)
  */

@@ -30,7 +30,7 @@ static char *get_source_line(const char *src, int lineno);
 /*
  * Emit a PG error or notice, together with any available info about
  * the current Python error, previously set by PLy_exception_set().
- * This should be used to propagate Python errors into PG.	If fmt is
+ * This should be used to propagate Python errors into PG.  If fmt is
  * NULL, the Python error becomes the primary error message, otherwise
  * it becomes the detail.  If there is a Python traceback, it is put
  * in the context.

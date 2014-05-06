@@ -443,7 +443,7 @@ ginHeapTupleFastInsert(GinState *ginstate, GinTupleCollector *collector)
  * Create temporary index tuples for a single indexable item (one index column
  * for the heap tuple specified by ht_ctid), and append them to the array
  * in *collector.  They will subsequently be written out using
- * ginHeapTupleFastInsert.	Note that to guarantee consistent state, all
+ * ginHeapTupleFastInsert.  Note that to guarantee consistent state, all
  * temp tuples for a given heap tuple must be written in one call to
  * ginHeapTupleFastInsert.
  */
@@ -712,7 +712,7 @@ processPendingPage(BuildAccumulator *accum, KeyArray *ka,
  *
  * This can be called concurrently by multiple backends, so it must cope.
  * On first glance it looks completely not concurrent-safe and not crash-safe
- * either.	The reason it's okay is that multiple insertion of the same entry
+ * either.  The reason it's okay is that multiple insertion of the same entry
  * is detected and treated as a no-op by gininsert.c.  If we crash after
  * posting entries to the main index and before removing them from the
  * pending list, it's okay because when we redo the posting later on, nothing
@@ -766,7 +766,7 @@ ginInsertCleanup(GinState *ginstate,
 	LockBuffer(metabuffer, GIN_UNLOCK);
 
 	/*
-	 * Initialize.	All temporary space will be in opCtx
+	 * Initialize.  All temporary space will be in opCtx
 	 */
 	opCtx = AllocSetContextCreate(CurrentMemoryContext,
 								  "GIN insert cleanup temporary context",
@@ -860,7 +860,7 @@ ginInsertCleanup(GinState *ginstate,
 
 			/*
 			 * While we left the page unlocked, more stuff might have gotten
-			 * added to it.  If so, process those entries immediately.	There
+			 * added to it.  If so, process those entries immediately.  There
 			 * shouldn't be very many, so we don't worry about the fact that
 			 * we're doing this with exclusive lock. Insertion algorithm
 			 * guarantees that inserted row(s) will not continue on next page.

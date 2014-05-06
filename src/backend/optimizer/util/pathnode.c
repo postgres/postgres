@@ -128,11 +128,11 @@ compare_fractional_path_costs(Path *path1, Path *path2,
  *
  * The fuzz_factor argument must be 1.0 plus delta, where delta is the
  * fraction of the smaller cost that is considered to be a significant
- * difference.	For example, fuzz_factor = 1.01 makes the fuzziness limit
+ * difference.  For example, fuzz_factor = 1.01 makes the fuzziness limit
  * be 1% of the smaller cost.
  *
  * The two paths are said to have "equal" costs if both startup and total
- * costs are fuzzily the same.	Path1 is said to be better than path2 if
+ * costs are fuzzily the same.  Path1 is said to be better than path2 if
  * it has fuzzily better startup cost and fuzzily no worse total cost,
  * or if it has fuzzily better total cost and fuzzily no worse startup cost.
  * Path2 is better than path1 if the reverse holds.  Finally, if one path
@@ -190,9 +190,9 @@ compare_path_costs_fuzzily(Path *path1, Path *path2, double fuzz_factor)
  *	  and save them in the rel's cheapest-path fields.
  *
  * Only unparameterized paths are considered candidates for cheapest_startup
- * and cheapest_total.	The cheapest_parameterized_paths list collects paths
+ * and cheapest_total.  The cheapest_parameterized_paths list collects paths
  * that are cheapest-total for their parameterization (i.e., there is no
- * cheaper path with the same or weaker parameterization).	This list always
+ * cheaper path with the same or weaker parameterization).  This list always
  * includes the unparameterized cheapest-total path, too.
  *
  * This is normally called only after we've finished constructing the path
@@ -294,8 +294,8 @@ set_cheapest(RelOptInfo *parent_rel)
  *
  *	  There is one policy decision embedded in this function, along with its
  *	  sibling add_path_precheck: we treat all parameterized paths as having
- *	  NIL pathkeys, so that they compete only on cost.	This is to reduce
- *	  the number of parameterized paths that are kept.	See discussion in
+ *	  NIL pathkeys, so that they compete only on cost.  This is to reduce
+ *	  the number of parameterized paths that are kept.  See discussion in
  *	  src/backend/optimizer/README.
  *
  *	  The pathlist is kept sorted by total_cost, with cheaper paths
@@ -358,7 +358,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 		p1_next = lnext(p1);
 
 		/*
-		 * Do a fuzzy cost comparison with 1% fuzziness limit.	(XXX does this
+		 * Do a fuzzy cost comparison with 1% fuzziness limit.  (XXX does this
 		 * percentage need to be user-configurable?)
 		 */
 		costcmp = compare_path_costs_fuzzily(new_path, old_path, 1.01);
@@ -531,7 +531,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
  *	  and have lower bounds for its costs.
  *
  * Note that we do not know the path's rowcount, since getting an estimate for
- * that is too expensive to do before prechecking.	We assume here that paths
+ * that is too expensive to do before prechecking.  We assume here that paths
  * of a superset parameterization will generate fewer rows; if that holds,
  * then paths with different parameterizations cannot dominate each other
  * and so we can simply ignore existing paths of another parameterization.
@@ -942,7 +942,7 @@ create_append_path(RelOptInfo *rel, List *subpaths, Relids required_outer)
 	 * Compute rows and costs as sums of subplan rows and costs.  We charge
 	 * nothing extra for the Append itself, which perhaps is too optimistic,
 	 * but since it doesn't do any selection or projection, it is a pretty
-	 * cheap node.	If you change this, see also make_append().
+	 * cheap node.  If you change this, see also make_append().
 	 */
 	pathnode->path.rows = 0;
 	pathnode->path.startup_cost = 0;
@@ -1491,7 +1491,7 @@ translate_sub_tlist(List *tlist, int relid)
  *
  * colnos is an integer list of output column numbers (resno's).  We are
  * interested in whether rows consisting of just these columns are certain
- * to be distinct.	"Distinctness" is defined according to whether the
+ * to be distinct.  "Distinctness" is defined according to whether the
  * corresponding upper-level equality operators listed in opids would think
  * the values are distinct.  (Note: the opids entries could be cross-type
  * operators, and thus not exactly the equality operators that the subquery
@@ -1612,7 +1612,7 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
  * distinct_col_search - subroutine for query_is_distinct_for
  *
  * If colno is in colnos, return the corresponding element of opids,
- * else return InvalidOid.	(We expect colnos does not contain duplicates,
+ * else return InvalidOid.  (We expect colnos does not contain duplicates,
  * so the result is well-defined.)
  */
 static Oid
@@ -2005,10 +2005,10 @@ create_hashjoin_path(PlannerInfo *root,
 
 	/*
 	 * A hashjoin never has pathkeys, since its output ordering is
-	 * unpredictable due to possible batching.	XXX If the inner relation is
+	 * unpredictable due to possible batching.  XXX If the inner relation is
 	 * small enough, we could instruct the executor that it must not batch,
 	 * and then we could assume that the output inherits the outer relation's
-	 * ordering, which might save a sort step.	However there is considerable
+	 * ordering, which might save a sort step.  However there is considerable
 	 * downside if our estimate of the inner relation size is badly off. For
 	 * the moment we don't risk it.  (Note also that if we wanted to take this
 	 * seriously, joinpath.c would have to consider many more paths for the
@@ -2035,7 +2035,7 @@ create_hashjoin_path(PlannerInfo *root,
  * same parameterization level, ensuring that they all enforce the same set
  * of join quals (and thus that that parameterization can be attributed to
  * an append path built from such paths).  Currently, only a few path types
- * are supported here, though more could be added at need.	We return NULL
+ * are supported here, though more could be added at need.  We return NULL
  * if we can't reparameterize the given path.
  *
  * Note: we intentionally do not pass created paths to add_path(); it would
@@ -2067,7 +2067,7 @@ reparameterize_path(PlannerInfo *root, Path *path,
 				/*
 				 * We can't use create_index_path directly, and would not want
 				 * to because it would re-compute the indexqual conditions
-				 * which is wasted effort.	Instead we hack things a bit:
+				 * which is wasted effort.  Instead we hack things a bit:
 				 * flat-copy the path node, revise its param_info, and redo
 				 * the cost estimate.
 				 */

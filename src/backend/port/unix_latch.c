@@ -237,7 +237,7 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 	/*
 	 * Initialize timeout if requested.  We must record the current time so
 	 * that we can determine the remaining timeout if the poll() or select()
-	 * is interrupted.	(On some platforms, select() will update the contents
+	 * is interrupted.  (On some platforms, select() will update the contents
 	 * of "tv" for us, but unfortunately we can't rely on that.)
 	 */
 	if (wakeEvents & WL_TIMEOUT)
@@ -495,7 +495,7 @@ SetLatch(volatile Latch *latch)
 	/*
 	 * XXX there really ought to be a memory barrier operation right here, to
 	 * ensure that any flag variables we might have changed get flushed to
-	 * main memory before we check/set is_set.	Without that, we have to
+	 * main memory before we check/set is_set.  Without that, we have to
 	 * require that callers provide their own synchronization for machines
 	 * with weak memory ordering (see latch.h).
 	 */
@@ -554,7 +554,7 @@ ResetLatch(volatile Latch *latch)
 	/*
 	 * XXX there really ought to be a memory barrier operation right here, to
 	 * ensure that the write to is_set gets flushed to main memory before we
-	 * examine any flag variables.	Otherwise a concurrent SetLatch might
+	 * examine any flag variables.  Otherwise a concurrent SetLatch might
 	 * falsely conclude that it needn't signal us, even though we have missed
 	 * seeing some flag updates that SetLatch was supposed to inform us of.
 	 * For the moment, callers must supply their own synchronization of flag

@@ -1081,7 +1081,7 @@ top:
 
 			/*
 			 * getrand() neeeds to be able to subtract max from min and add
-			 * one the result without overflowing.	Since we know max > min,
+			 * one the result without overflowing.  Since we know max > min,
 			 * we can detect overflow just by checking for a negative result.
 			 * But we must check both that the subtraction doesn't overflow,
 			 * and that adding one to the result doesn't overflow either.

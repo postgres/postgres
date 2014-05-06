@@ -297,7 +297,7 @@ check_loadable_libraries(void)
 		 * plpython2u language was created with library name plpython2.so as a
 		 * symbolic link to plpython.so.  In Postgres 9.1, only the
 		 * plpython2.so library was created, and both plpythonu and plpython2u
-		 * pointing to it.	For this reason, any reference to library name
+		 * pointing to it.  For this reason, any reference to library name
 		 * "plpython" in an old PG <= 9.1 cluster must look for "plpython2" in
 		 * the new cluster.
 		 *

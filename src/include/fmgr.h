@@ -101,7 +101,7 @@ extern void fmgr_info_copy(FmgrInfo *dstinfo, FmgrInfo *srcinfo,
 
 /*
  * This macro initializes all the fields of a FunctionCallInfoData except
- * for the arg[] and argnull[] arrays.	Performance testing has shown that
+ * for the arg[] and argnull[] arrays.  Performance testing has shown that
  * the fastest way to set up argnull[] for small numbers of arguments is to
  * explicitly set each required element to false, so we don't try to zero
  * out the argnull[] array in the macro.
@@ -118,7 +118,7 @@ extern void fmgr_info_copy(FmgrInfo *dstinfo, FmgrInfo *srcinfo,
 
 /*
  * This macro invokes a function given a filled-in FunctionCallInfoData
- * struct.	The macro result is the returned Datum --- but note that
+ * struct.  The macro result is the returned Datum --- but note that
  * caller must still check fcinfo->isnull!	Also, if function is strict,
  * it is caller's responsibility to verify that no null arguments are present
  * before calling.
@@ -167,11 +167,11 @@ extern void fmgr_info_copy(FmgrInfo *dstinfo, FmgrInfo *srcinfo,
  * which are varlena types).  pg_detoast_datum() gives you either the input
  * datum (if not toasted) or a detoasted copy allocated with palloc().
  * pg_detoast_datum_copy() always gives you a palloc'd copy --- use it
- * if you need a modifiable copy of the input.	Caller is expected to have
+ * if you need a modifiable copy of the input.  Caller is expected to have
  * checked for null inputs first, if necessary.
  *
  * pg_detoast_datum_packed() will return packed (1-byte header) datums
- * unmodified.	It will still expand an externally toasted or compressed datum.
+ * unmodified.  It will still expand an externally toasted or compressed datum.
  * The resulting datum can be accessed using VARSIZE_ANY() and VARDATA_ANY()
  * (beware of multiple evaluations in those macros!)
  *
@@ -202,7 +202,7 @@ extern struct varlena *pg_detoast_datum_packed(struct varlena * datum);
 	pg_detoast_datum_packed((struct varlena *) DatumGetPointer(datum))
 
 /*
- * Support for cleaning up detoasted copies of inputs.	This must only
+ * Support for cleaning up detoasted copies of inputs.  This must only
  * be used for pass-by-ref datatypes, and normally would only be used
  * for toastable types.  If the given pointer is different from the
  * original argument, assume it's a palloc'd detoasted copy, and pfree it.
@@ -319,7 +319,7 @@ extern struct varlena *pg_detoast_datum_packed(struct varlena * datum);
  * Dynamically loaded functions may use either the version-1 ("new style")
  * or version-0 ("old style") calling convention.  Version 1 is the call
  * convention defined in this header file; version 0 is the old "plain C"
- * convention.	A version-1 function must be accompanied by the macro call
+ * convention.  A version-1 function must be accompanied by the macro call
  *
  *		PG_FUNCTION_INFO_V1(function_name);
  *
@@ -500,8 +500,8 @@ extern Datum FunctionCall9Coll(FmgrInfo *flinfo, Oid collation,
 
 /* These are for invocation of a function identified by OID with a
  * directly-computed parameter list.  Note that neither arguments nor result
- * are allowed to be NULL.	These are essentially FunctionLookup() followed
- * by FunctionCallN().	If the same function is to be invoked repeatedly,
+ * are allowed to be NULL.  These are essentially FunctionLookup() followed
+ * by FunctionCallN().  If the same function is to be invoked repeatedly,
  * do the FunctionLookup() once and then use FunctionCallN().
  */
 extern Datum OidFunctionCall0Coll(Oid functionId, Oid collation);
@@ -655,7 +655,7 @@ extern int AggCheckCallContext(FunctionCallInfo fcinfo,
  * We allow plugin modules to hook function entry/exit.  This is intended
  * as support for loadable security policy modules, which may want to
  * perform additional privilege checks on function entry or exit, or to do
- * other internal bookkeeping.	To make this possible, such modules must be
+ * other internal bookkeeping.  To make this possible, such modules must be
  * able not only to support normal function entry and exit, but also to trap
  * the case where we bail out due to an error; and they must also be able to
  * prevent inlining.

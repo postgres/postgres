@@ -364,7 +364,7 @@ ExecHashTableCreate(Hash *node, List *hashOperators, bool keepNulls)
 
 	/*
 	 * Set up for skew optimization, if possible and there's a need for more
-	 * than one batch.	(In a one-batch join, there's no point in it.)
+	 * than one batch.  (In a one-batch join, there's no point in it.)
 	 */
 	if (nbatch > 1)
 		ExecHashBuildSkewHash(hashtable, node, num_skew_mcvs);
@@ -406,7 +406,7 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 
 	/*
 	 * Estimate tupsize based on footprint of tuple in hashtable... note this
-	 * does not allow for any palloc overhead.	The manipulations of spaceUsed
+	 * does not allow for any palloc overhead.  The manipulations of spaceUsed
 	 * don't count palloc overhead either.
 	 */
 	tupsize = HJTUPLE_OVERHEAD +
@@ -458,7 +458,7 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 	/*
 	 * Set nbuckets to achieve an average bucket load of NTUP_PER_BUCKET when
 	 * memory is filled.  Set nbatch to the smallest power of 2 that appears
-	 * sufficient.	The Min() steps limit the results so that the pointer
+	 * sufficient.  The Min() steps limit the results so that the pointer
 	 * arrays we'll try to allocate do not exceed work_mem.
 	 */
 	max_pointers = (work_mem * 1024L) / sizeof(void *);
@@ -497,8 +497,8 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 
 	/*
 	 * Both nbuckets and nbatch must be powers of 2 to make
-	 * ExecHashGetBucketAndBatch fast.	We already fixed nbatch; now inflate
-	 * nbuckets to the next larger power of 2.	We also force nbuckets to not
+	 * ExecHashGetBucketAndBatch fast.  We already fixed nbatch; now inflate
+	 * nbuckets to the next larger power of 2.  We also force nbuckets to not
 	 * be real small, by starting the search at 2^10.  (Note: above we made
 	 * sure that nbuckets is not more than INT_MAX / 2, so this loop cannot
 	 * overflow, nor can the final shift to recalculate nbuckets.)
@@ -816,7 +816,7 @@ ExecHashGetHashValue(HashJoinTable hashtable,
 		 * the hash support function as strict even if the operator is not.
 		 *
 		 * Note: currently, all hashjoinable operators must be strict since
-		 * the hash index AM assumes that.	However, it takes so little extra
+		 * the hash index AM assumes that.  However, it takes so little extra
 		 * code here to allow non-strict that we may as well do it.
 		 */
 		if (isNull)
@@ -1236,7 +1236,7 @@ ExecHashBuildSkewHash(HashJoinTable hashtable, Hash *node, int mcvsToUse)
 			/*
 			 * While we have not hit a hole in the hashtable and have not hit
 			 * the desired bucket, we have collided with some previous hash
-			 * value, so try the next bucket location.	NB: this code must
+			 * value, so try the next bucket location.  NB: this code must
 			 * match ExecHashGetSkewBucket.
 			 */
 			bucket = hashvalue & (nbuckets - 1);
@@ -1434,7 +1434,7 @@ ExecHashRemoveNextSkewBucket(HashJoinTable hashtable)
 	 * NOTE: this is not nearly as simple as it looks on the surface, because
 	 * of the possibility of collisions in the hashtable.  Suppose that hash
 	 * values A and B collide at a particular hashtable entry, and that A was
-	 * entered first so B gets shifted to a different table entry.	If we were
+	 * entered first so B gets shifted to a different table entry.  If we were
 	 * to remove A first then ExecHashGetSkewBucket would mistakenly start
 	 * reporting that B is not in the hashtable, because it would hit the NULL
 	 * before finding B.  However, we always remove entries in the reverse
