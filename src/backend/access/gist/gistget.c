@@ -31,7 +31,7 @@
  *
  * On success return for a heap tuple, *recheck_p is set to indicate
  * whether recheck is needed.  We recheck if any of the consistent() functions
- * request it.	recheck is not interesting when examining a non-leaf entry,
+ * request it.  recheck is not interesting when examining a non-leaf entry,
  * since we must visit the lower index page if there's any doubt.
  *
  * If we are doing an ordered scan, so->distances[] is filled with distance
@@ -62,7 +62,7 @@ gistindex_keytest(IndexScanDesc scan,
 
 	/*
 	 * If it's a leftover invalid tuple from pre-9.1, treat it as a match with
-	 * minimum possible distances.	This means we'll always follow it to the
+	 * minimum possible distances.  This means we'll always follow it to the
 	 * referenced page.
 	 */
 	if (GistTupleIsInvalid(tuple))
@@ -224,7 +224,7 @@ gistindex_keytest(IndexScanDesc scan,
  * ntids: if not NULL, gistgetbitmap's output tuple counter
  *
  * If tbm/ntids aren't NULL, we are doing an amgetbitmap scan, and heap
- * tuples should be reported directly into the bitmap.	If they are NULL,
+ * tuples should be reported directly into the bitmap.  If they are NULL,
  * we're doing a plain or ordered indexscan.  For a plain indexscan, heap
  * tuple TIDs are returned into so->pageData[].  For an ordered indexscan,
  * heap tuple TIDs are pushed into individual search queue items.

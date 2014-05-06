@@ -464,7 +464,7 @@ restart:
  * We avoid doing this unless absolutely necessary; in most installations
  * it will never happen.  The reason is that updating existing pg_enum
  * entries creates hazards for other backends that are concurrently reading
- * pg_enum with SnapshotNow semantics.	A concurrent SnapshotNow scan could
+ * pg_enum with SnapshotNow semantics.  A concurrent SnapshotNow scan could
  * see both old and new versions of an updated row as valid, or neither of
  * them, if the commit happens between scanning the two versions.  It's
  * also quite likely for a concurrent scan to see an inconsistent set of

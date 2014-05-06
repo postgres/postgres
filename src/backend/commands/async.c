@@ -151,7 +151,7 @@
  *
  * This struct declaration has the maximal length, but in a real queue entry
  * the data area is only big enough for the actual channel and payload strings
- * (each null-terminated).	AsyncQueueEntryEmptySize is the minimum possible
+ * (each null-terminated).  AsyncQueueEntryEmptySize is the minimum possible
  * entry size, if both channel and payload strings are empty (but note it
  * doesn't include alignment padding).
  *
@@ -267,7 +267,7 @@ static SlruCtlData AsyncCtlData;
  *
  * The most data we can have in the queue at a time is QUEUE_MAX_PAGE/2
  * pages, because more than that would confuse slru.c into thinking there
- * was a wraparound condition.	With the default BLCKSZ this means there
+ * was a wraparound condition.  With the default BLCKSZ this means there
  * can be up to 8GB of queued-and-not-read data.
  *
  * Note: it's possible to redefine QUEUE_MAX_PAGE with a smaller multiple of
@@ -397,7 +397,7 @@ asyncQueuePagePrecedes(int p, int q)
 	int			diff;
 
 	/*
-	 * We have to compare modulo (QUEUE_MAX_PAGE+1)/2.	Both inputs should be
+	 * We have to compare modulo (QUEUE_MAX_PAGE+1)/2.  Both inputs should be
 	 * in the range 0..QUEUE_MAX_PAGE.
 	 */
 	Assert(p >= 0 && p <= QUEUE_MAX_PAGE);
@@ -828,7 +828,7 @@ PreCommit_Notify(void)
 		while (nextNotify != NULL)
 		{
 			/*
-			 * Add the pending notifications to the queue.	We acquire and
+			 * Add the pending notifications to the queue.  We acquire and
 			 * release AsyncQueueLock once per page, which might be overkill
 			 * but it does allow readers to get in while we're doing this.
 			 *
@@ -1044,12 +1044,12 @@ Exec_UnlistenAllCommit(void)
  * The reason that this is not done in AtCommit_Notify is that there is
  * a nonzero chance of errors here (for example, encoding conversion errors
  * while trying to format messages to our frontend).  An error during
- * AtCommit_Notify would be a PANIC condition.	The timing is also arranged
+ * AtCommit_Notify would be a PANIC condition.  The timing is also arranged
  * to ensure that a transaction's self-notifies are delivered to the frontend
  * before it gets the terminating ReadyForQuery message.
  *
  * Note that we send signals and process the queue even if the transaction
- * eventually aborted.	This is because we need to clean out whatever got
+ * eventually aborted.  This is because we need to clean out whatever got
  * added to the queue.
  *
  * NOTE: we are outside of any transaction here.
@@ -1139,7 +1139,7 @@ IsListeningOn(const char *channel)
 
 /*
  * Remove our entry from the listeners array when we are no longer listening
- * on any channel.	NB: must not fail if we're already not listening.
+ * on any channel.  NB: must not fail if we're already not listening.
  */
 static void
 asyncQueueUnregister(void)
@@ -1181,7 +1181,7 @@ asyncQueueIsFull(void)
 	/*
 	 * The queue is full if creating a new head page would create a page that
 	 * logically precedes the current global tail pointer, ie, the head
-	 * pointer would wrap around compared to the tail.	We cannot create such
+	 * pointer would wrap around compared to the tail.  We cannot create such
 	 * a head page for fear of confusing slru.c.  For safety we round the tail
 	 * pointer back to a segment boundary (compare the truncation logic in
 	 * asyncQueueAdvanceTail).
@@ -1200,7 +1200,7 @@ asyncQueueIsFull(void)
 
 /*
  * Advance the QueuePosition to the next entry, assuming that the current
- * entry is of length entryLength.	If we jump to a new page the function
+ * entry is of length entryLength.  If we jump to a new page the function
  * returns true, else false.
  */
 static bool
@@ -1269,7 +1269,7 @@ asyncQueueNotificationToEntry(Notification *n, AsyncQueueEntry *qe)
  * the last byte which simplifies reading the page later.
  *
  * We are passed the list cell containing the next notification to write
- * and return the first still-unwritten cell back.	Eventually we will return
+ * and return the first still-unwritten cell back.  Eventually we will return
  * NULL indicating all is done.
  *
  * We are holding AsyncQueueLock already from the caller and grab AsyncCtlLock
@@ -1346,7 +1346,7 @@ asyncQueueAddEntries(ListCell *nextNotify)
 			 * Page is full, so we're done here, but first fill the next page
 			 * with zeroes.  The reason to do this is to ensure that slru.c's
 			 * idea of the head page is always the same as ours, which avoids
-			 * boundary problems in SimpleLruTruncate.	The test in
+			 * boundary problems in SimpleLruTruncate.  The test in
 			 * asyncQueueIsFull() ensured that there is room to create this
 			 * page without overrunning the queue.
 			 */
@@ -1520,7 +1520,7 @@ AtAbort_Notify(void)
 	/*
 	 * If we LISTEN but then roll back the transaction after PreCommit_Notify,
 	 * we have registered as a listener but have not made any entry in
-	 * listenChannels.	In that case, deregister again.
+	 * listenChannels.  In that case, deregister again.
 	 */
 	if (amRegisteredListener && listenChannels == NIL)
 		asyncQueueUnregister();
@@ -1773,7 +1773,7 @@ EnableNotifyInterrupt(void)
  *		is disabled until the next EnableNotifyInterrupt call.
  *
  *		The PROCSIG_CATCHUP_INTERRUPT signal handler also needs to call this,
- *		so as to prevent conflicts if one signal interrupts the other.	So we
+ *		so as to prevent conflicts if one signal interrupts the other.  So we
  *		must return the previous state of the flag.
  */
 bool
@@ -1868,7 +1868,7 @@ asyncQueueReadAllNotifications(void)
 			/*
 			 * We copy the data from SLRU into a local buffer, so as to avoid
 			 * holding the AsyncCtlLock while we are examining the entries and
-			 * possibly transmitting them to our frontend.	Copy only the part
+			 * possibly transmitting them to our frontend.  Copy only the part
 			 * of the page we will actually inspect.
 			 */
 			slotno = SimpleLruReadPage_ReadOnly(AsyncCtl, curpage,
@@ -1942,7 +1942,7 @@ asyncQueueReadAllNotifications(void)
  * and deliver relevant ones to my frontend.
  *
  * The current page must have been fetched into page_buffer from shared
- * memory.	(We could access the page right in shared memory, but that
+ * memory.  (We could access the page right in shared memory, but that
  * would imply holding the AsyncCtlLock throughout this routine.)
  *
  * We stop if we reach the "stop" position, or reach a notification from an
@@ -2148,7 +2148,7 @@ NotifyMyFrontEnd(const char *channel, const char *payload, int32 srcPid)
 		pq_endmessage(&buf);
 
 		/*
-		 * NOTE: we do not do pq_flush() here.	For a self-notify, it will
+		 * NOTE: we do not do pq_flush() here.  For a self-notify, it will
 		 * happen at the end of the transaction, and for incoming notifies
 		 * ProcessIncomingNotify will do it after finding all the notifies.
 		 */

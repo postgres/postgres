@@ -667,7 +667,7 @@ copyin_cleanup:
 	 * COPY FROM STDIN commands.  We keep trying PQputCopyEnd() in the hope
 	 * it'll work eventually.  (What's actually likely to happen is that in
 	 * attempting to flush the data, libpq will eventually realize that the
-	 * connection is lost.	But that's fine; it will get us out of COPY_IN
+	 * connection is lost.  But that's fine; it will get us out of COPY_IN
 	 * state, which is what we need.)
 	 */
 	while (res = PQgetResult(conn), PQresultStatus(res) == PGRES_COPY_IN)

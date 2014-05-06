@@ -675,7 +675,7 @@ ginRedoDeleteListPages(XLogRecPtr lsn, XLogRecord *record)
 
 	/*
 	 * In normal operation, shiftList() takes exclusive lock on all the
-	 * pages-to-be-deleted simultaneously.	During replay, however, it should
+	 * pages-to-be-deleted simultaneously.  During replay, however, it should
 	 * be all right to lock them one at a time.  This is dependent on the fact
 	 * that we are deleting pages from the head of the list, and that readers
 	 * share-lock the next page before releasing the one they are on. So we

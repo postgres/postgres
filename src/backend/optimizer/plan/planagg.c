@@ -10,9 +10,9 @@
  *		 ORDER BY col ASC/DESC
  *		 LIMIT 1)
  * Given a suitable index on tab.col, this can be much faster than the
- * generic scan-all-the-rows aggregation plan.	We can handle multiple
+ * generic scan-all-the-rows aggregation plan.  We can handle multiple
  * MIN/MAX aggregates by generating multiple subqueries, and their
- * orderings can be different.	However, if the query contains any
+ * orderings can be different.  However, if the query contains any
  * non-optimizable aggregates, there's no point since we'll have to
  * scan all the rows anyway.
  *
@@ -128,7 +128,7 @@ preprocess_minmax_aggregates(PlannerInfo *root, List *tlist)
 
 	/*
 	 * Scan the tlist and HAVING qual to find all the aggregates and verify
-	 * all are MIN/MAX aggregates.	Stop as soon as we find one that isn't.
+	 * all are MIN/MAX aggregates.  Stop as soon as we find one that isn't.
 	 */
 	aggs_list = NIL;
 	if (find_minmax_aggs_walker((Node *) tlist, &aggs_list))
@@ -163,7 +163,7 @@ preprocess_minmax_aggregates(PlannerInfo *root, List *tlist)
 		 * We can use either an ordering that gives NULLS FIRST or one that
 		 * gives NULLS LAST; furthermore there's unlikely to be much
 		 * performance difference between them, so it doesn't seem worth
-		 * costing out both ways if we get a hit on the first one.	NULLS
+		 * costing out both ways if we get a hit on the first one.  NULLS
 		 * FIRST is more likely to be available if the operator is a
 		 * reverse-sort operator, so try that first if reverse.
 		 */

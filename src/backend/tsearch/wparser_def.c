@@ -330,7 +330,7 @@ TParserInit(char *str, int len)
 
 	/*
 	 * Use of %.*s here is a bit risky since it can misbehave if the data is
-	 * not in what libc thinks is the prevailing encoding.	However, since
+	 * not in what libc thinks is the prevailing encoding.  However, since
 	 * this is just a debugging aid, we choose to live with that.
 	 */
 	fprintf(stderr, "parsing \"%.*s\"\n", len, str);

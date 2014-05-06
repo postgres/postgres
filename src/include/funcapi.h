@@ -129,7 +129,7 @@ typedef struct FuncCallContext
  *		Given a function's call info record, determine the kind of datatype
  *		it is supposed to return.  If resultTypeId isn't NULL, *resultTypeId
  *		receives the actual datatype OID (this is mainly useful for scalar
- *		result types).	If resultTupleDesc isn't NULL, *resultTupleDesc
+ *		result types).  If resultTupleDesc isn't NULL, *resultTupleDesc
  *		receives a pointer to a TupleDesc when the result is of a composite
  *		type, or NULL when it's a scalar result or the rowtype could not be
  *		determined.  NB: the tupledesc should be copied if it is to be

@@ -194,7 +194,7 @@ ExecReScanSubqueryScan(SubqueryScanState *node)
 
 	/*
 	 * ExecReScan doesn't know about my subplan, so I have to do
-	 * changed-parameter signaling myself.	This is just as well, because the
+	 * changed-parameter signaling myself.  This is just as well, because the
 	 * subplan has its own memory context in which its chgParam state lives.
 	 */
 	if (node->ss.ps.chgParam != NULL)

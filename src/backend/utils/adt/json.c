@@ -588,10 +588,10 @@ json_lex(JsonLexContext *lex)
 
 					/*
 					 * We're not dealing with a string, number, legal
-					 * punctuation mark, or end of string.	The only legal
+					 * punctuation mark, or end of string.  The only legal
 					 * tokens we might find here are true, false, and null,
 					 * but for error reporting purposes we scan until we see a
-					 * non-alphanumeric character.	That way, we can report
+					 * non-alphanumeric character.  That way, we can report
 					 * the whole word as an unexpected token, rather than just
 					 * some unintuitive prefix thereof.
 					 */
@@ -885,12 +885,12 @@ json_lex_string(JsonLexContext *lex)
  *	   begin with a '0'.
  *
  * (3) An optional decimal part, consisting of a period ('.') followed by
- *	   one or more digits.	(Note: While this part can be omitted
+ *	   one or more digits.  (Note: While this part can be omitted
  *	   completely, it's not OK to have only the decimal point without
  *	   any digits afterwards.)
  *
  * (4) An optional exponent part, consisting of 'e' or 'E', optionally
- *	   followed by '+' or '-', followed by one or more digits.	(Note:
+ *	   followed by '+' or '-', followed by one or more digits.  (Note:
  *	   As with the decimal part, if 'e' or 'E' is present, it must be
  *	   followed by at least one digit.)
  *
@@ -968,7 +968,7 @@ json_lex_number(JsonLexContext *lex, char *s, bool *num_err)
 	}
 
 	/*
-	 * Check for trailing garbage.	As in json_lex(), any alphanumeric stuff
+	 * Check for trailing garbage.  As in json_lex(), any alphanumeric stuff
 	 * here should be considered part of the token for error-reporting
 	 * purposes.
 	 */
@@ -1763,7 +1763,7 @@ json_agg_transfn(PG_FUNCTION_ARGS)
 
 	/*
 	 * The transition type for array_agg() is declared to be "internal", which
-	 * is a pass-by-value type the same size as a pointer.	So we can safely
+	 * is a pass-by-value type the same size as a pointer.  So we can safely
 	 * pass the ArrayBuildState pointer through nodeAgg.c's machinations.
 	 */
 	PG_RETURN_POINTER(state);

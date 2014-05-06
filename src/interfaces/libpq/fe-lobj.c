@@ -899,7 +899,7 @@ lo_initialize(PGconn *conn)
 	MemSet((char *) lobjfuncs, 0, sizeof(PGlobjfuncs));
 
 	/*
-	 * Execute the query to get all the functions at once.	In 7.3 and later
+	 * Execute the query to get all the functions at once.  In 7.3 and later
 	 * we need to be schema-safe.  lo_create only exists in 8.1 and up.
 	 * lo_truncate only exists in 8.3 and up.
 	 */

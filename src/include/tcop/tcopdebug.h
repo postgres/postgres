@@ -24,7 +24,7 @@
 
 /* ----------------
  *		TCOP_SHOWSTATS controls whether or not buffer and
- *		access method statistics are shown for each query.	-cim 2/9/89
+ *		access method statistics are shown for each query.  -cim 2/9/89
  * ----------------
  */
 #undef TCOP_SHOWSTATS

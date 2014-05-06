@@ -32,7 +32,7 @@
  *				   /
  *				MergeAppend---+------+------+--- nil
  *				/	\		  |		 |		|
- *			  nil	nil		 ...	...    ...
+ *			  nil	nil		 ...    ...    ...
  *								 subplans
  */
 

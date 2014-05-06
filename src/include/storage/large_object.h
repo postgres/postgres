@@ -70,7 +70,7 @@ typedef struct LargeObjectDesc
 #define LOBLKSIZE		(BLCKSZ / 4)
 
 /*
- * Maximum length in bytes for a large object.	To make this larger, we'd
+ * Maximum length in bytes for a large object.  To make this larger, we'd
  * have to widen pg_largeobject.pageno as well as various internal variables.
  */
 #define MAX_LARGE_OBJECT_SIZE	((int64) INT_MAX * LOBLKSIZE)

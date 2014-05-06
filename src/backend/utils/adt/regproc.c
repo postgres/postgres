@@ -85,7 +85,7 @@ regprocin(PG_FUNCTION_ARGS)
 
 	/*
 	 * In bootstrap mode we assume the given name is not schema-qualified, and
-	 * just search pg_proc for a unique match.	This is needed for
+	 * just search pg_proc for a unique match.  This is needed for
 	 * initializing other system catalogs (pg_namespace may not exist yet, and
 	 * certainly there are no schemas other than pg_catalog).
 	 */
@@ -270,7 +270,7 @@ regprocedurein(PG_FUNCTION_ARGS)
 	/*
 	 * Else it's a name and arguments.  Parse the name and arguments, look up
 	 * potential matches in the current namespace search list, and scan to see
-	 * which one exactly matches the given argument types.	(There will not be
+	 * which one exactly matches the given argument types.  (There will not be
 	 * more than one match.)
 	 *
 	 * XXX at present, this code will not work in bootstrap mode, hence this
@@ -319,7 +319,7 @@ format_procedure_qualified(Oid procedure_oid)
  * Routine to produce regprocedure names; see format_procedure above.
  *
  * force_qualify says whether to schema-qualify; if true, the name is always
- * qualified regardless of search_path visibility.	Otherwise the name is only
+ * qualified regardless of search_path visibility.  Otherwise the name is only
  * qualified if the function is not in path.
  */
 static char *
@@ -453,7 +453,7 @@ regoperin(PG_FUNCTION_ARGS)
 
 	/*
 	 * In bootstrap mode we assume the given name is not schema-qualified, and
-	 * just search pg_operator for a unique match.	This is needed for
+	 * just search pg_operator for a unique match.  This is needed for
 	 * initializing other system catalogs (pg_namespace may not exist yet, and
 	 * certainly there are no schemas other than pg_catalog).
 	 */
@@ -642,7 +642,7 @@ regoperatorin(PG_FUNCTION_ARGS)
 	/*
 	 * Else it's a name and arguments.  Parse the name and arguments, look up
 	 * potential matches in the current namespace search list, and scan to see
-	 * which one exactly matches the given argument types.	(There will not be
+	 * which one exactly matches the given argument types.  (There will not be
 	 * more than one match.)
 	 *
 	 * XXX at present, this code will not work in bootstrap mode, hence this
@@ -897,7 +897,7 @@ regclassout(PG_FUNCTION_ARGS)
 
 		/*
 		 * In bootstrap mode, skip the fancy namespace stuff and just return
-		 * the class name.	(This path is only needed for debugging output
+		 * the class name.  (This path is only needed for debugging output
 		 * anyway.)
 		 */
 		if (IsBootstrapProcessingMode())
@@ -1389,7 +1389,7 @@ stringToQualifiedNameList(const char *string)
 
 /*
  * Given a C string, parse it into a qualified function or operator name
- * followed by a parenthesized list of type names.	Reduce the
+ * followed by a parenthesized list of type names.  Reduce the
  * type names to an array of OIDs (returned into *nargs and *argtypes;
  * the argtypes array should be of size FUNC_MAX_ARGS).  The function or
  * operator name is returned to *names as a List of Strings.

@@ -37,7 +37,7 @@ transfer_all_new_tablespaces(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 	/*
 	 * Transfering files by tablespace is tricky because a single database can
 	 * use multiple tablespaces.  For non-parallel mode, we just pass a NULL
-	 * tablespace path, which matches all tablespaces.	In parallel mode, we
+	 * tablespace path, which matches all tablespaces.  In parallel mode, we
 	 * pass the default tablespace and all user-created tablespaces and let
 	 * those operations happen in parallel.
 	 */
@@ -135,7 +135,7 @@ transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 /*
  * get_pg_database_relfilenode()
  *
- *	Retrieves the relfilenode for a few system-catalog tables.	We need these
+ *	Retrieves the relfilenode for a few system-catalog tables.  We need these
  *	relfilenodes later in the upgrade process.
  */
 void

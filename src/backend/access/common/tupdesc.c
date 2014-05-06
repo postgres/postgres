@@ -540,7 +540,7 @@ TupleDescInitEntryCollation(TupleDesc desc,
  * Given a relation schema (list of ColumnDef nodes), build a TupleDesc.
  *
  * Note: the default assumption is no OIDs; caller may modify the returned
- * TupleDesc if it wants OIDs.	Also, tdtypeid will need to be filled in
+ * TupleDesc if it wants OIDs.  Also, tdtypeid will need to be filled in
  * later on.
  */
 TupleDesc

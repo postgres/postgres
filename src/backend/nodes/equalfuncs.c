@@ -11,7 +11,7 @@
  * be handled easily in a simple depth-first traversal.
  *
  * Currently, in fact, equal() doesn't know how to compare Plan trees
- * either.	This might need to be fixed someday.
+ * either.  This might need to be fixed someday.
  *
  * NOTE: it is intentional that parse location fields (in nodes that have
  * one) are not compared.  This is because we want, for example, a variable
@@ -34,8 +34,8 @@
 
 
 /*
- * Macros to simplify comparison of different kinds of fields.	Use these
- * wherever possible to reduce the chance for silly typos.	Note that these
+ * Macros to simplify comparison of different kinds of fields.  Use these
+ * wherever possible to reduce the chance for silly typos.  Note that these
  * hard-wire the convention that the local variables in an Equal routine are
  * named 'a' and 'b'.
  */
@@ -131,7 +131,7 @@ _equalIntoClause(const IntoClause *a, const IntoClause *b)
 
 /*
  * We don't need an _equalExpr because Expr is an abstract supertype which
- * should never actually get instantiated.	Also, since it has no common
+ * should never actually get instantiated.  Also, since it has no common
  * fields except NodeTag, there's no need for a helper routine to factor
  * out comparing the common fields...
  */
@@ -759,9 +759,9 @@ static bool
 _equalPlaceHolderVar(const PlaceHolderVar *a, const PlaceHolderVar *b)
 {
 	/*
-	 * We intentionally do not compare phexpr.	Two PlaceHolderVars with the
+	 * We intentionally do not compare phexpr.  Two PlaceHolderVars with the
 	 * same ID and levelsup should be considered equal even if the contained
-	 * expressions have managed to mutate to different states.	This will
+	 * expressions have managed to mutate to different states.  This will
 	 * happen during final plan construction when there are nested PHVs, since
 	 * the inner PHV will get replaced by a Param in some copies of the outer
 	 * PHV.  Another way in which it can happen is that initplan sublinks

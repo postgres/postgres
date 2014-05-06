@@ -405,7 +405,7 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 
 					/*
 					 * GETBIT() tests may give false positives, due to limited
-					 * size of the sign array.	But since trigramsMatchGraph()
+					 * size of the sign array.  But since trigramsMatchGraph()
 					 * implements a monotone boolean function, false positives
 					 * in the check array can't lead to false negative answer.
 					 * So we can apply trigramsMatchGraph despite uncertainty,

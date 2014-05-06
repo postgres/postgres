@@ -81,7 +81,7 @@ optionListToArray(List *options)
 
 
 /*
- * Transform a list of DefElem into text array format.	This is substantially
+ * Transform a list of DefElem into text array format.  This is substantially
  * the same thing as optionListToArray(), except we recognize SET/ADD/DROP
  * actions for modifying an existing list of options, which is passed in
  * Datum form as oldOptions.  Also, if fdwvalidator isn't InvalidOid
@@ -125,7 +125,7 @@ transformGenericOptions(Oid catalogId,
 
 		/*
 		 * It is possible to perform multiple SET/DROP actions on the same
-		 * option.	The standard permits this, as long as the options to be
+		 * option.  The standard permits this, as long as the options to be
 		 * added are unique.  Note that an unspecified action is taken to be
 		 * ADD.
 		 */

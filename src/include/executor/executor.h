@@ -36,7 +36,7 @@
  * REWIND indicates that the plan node should try to efficiently support
  * rescans without parameter changes.  (Nodes must support ExecReScan calls
  * in any case, but if this flag was not given, they are at liberty to do it
- * through complete recalculation.	Note that a parameter change forces a
+ * through complete recalculation.  Note that a parameter change forces a
  * full recalculation in any case.)
  *
  * BACKWARD indicates that the plan node must respect the es_direction flag.
@@ -51,7 +51,7 @@
  * is responsible for there being a trigger context for them to be queued in.
  *
  * WITH/WITHOUT_OIDS tell the executor to emit tuples with or without space
- * for OIDs, respectively.	These are currently used only for CREATE TABLE AS.
+ * for OIDs, respectively.  These are currently used only for CREATE TABLE AS.
  * If neither is set, the plan may or may not produce tuples including OIDs.
  */
 #define EXEC_FLAG_EXPLAIN_ONLY	0x0001	/* EXPLAIN, no ANALYZE */

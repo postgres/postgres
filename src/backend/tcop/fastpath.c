@@ -44,8 +44,8 @@
  * each fastpath call as a separate transaction command, and so the
  * cached data could never actually have been reused.  If it had worked
  * as intended, it would have had problems anyway with dangling references
- * in the FmgrInfo struct.	So, forget about caching and just repeat the
- * syscache fetches on each usage.	They're not *that* expensive.
+ * in the FmgrInfo struct.  So, forget about caching and just repeat the
+ * syscache fetches on each usage.  They're not *that* expensive.
  */
 struct fp_info
 {
@@ -205,7 +205,7 @@ fetch_fp_info(Oid func_id, struct fp_info * fip)
 
 	/*
 	 * Since the validity of this structure is determined by whether the
-	 * funcid is OK, we clear the funcid here.	It must not be set to the
+	 * funcid is OK, we clear the funcid here.  It must not be set to the
 	 * correct value until we are about to return with a good struct fp_info,
 	 * since we can be interrupted (i.e., with an ereport(ERROR, ...)) at any
 	 * time.  [No longer really an issue since we don't save the struct
@@ -257,7 +257,7 @@ fetch_fp_info(Oid func_id, struct fp_info * fip)
  * RETURNS:
  *		0 if successful completion, EOF if frontend connection lost.
  *
- * Note: All ordinary errors result in ereport(ERROR,...).	However,
+ * Note: All ordinary errors result in ereport(ERROR,...).  However,
  * if we lose the frontend connection there is no one to ereport to,
  * and no use in proceeding...
  *
@@ -526,7 +526,7 @@ parse_fcall_arguments(StringInfo msgBuf, struct fp_info * fip,
 
 			/*
 			 * Since stringinfo.c keeps a trailing null in place even for
-			 * binary data, the contents of abuf are a valid C string.	We
+			 * binary data, the contents of abuf are a valid C string.  We
 			 * have to do encoding conversion before calling the typinput
 			 * routine, though.
 			 */

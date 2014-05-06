@@ -4,7 +4,7 @@
  *	  POSTGRES inter-process communication definitions.
  *
  * This file is misnamed, as it no longer has much of anything directly
- * to do with IPC.	The functionality here is concerned with managing
+ * to do with IPC.  The functionality here is concerned with managing
  * exit-time cleanup for either a postmaster or a backend.
  *
  *
@@ -84,7 +84,7 @@ static int	on_proc_exit_index,
  *		-cim 2/6/90
  *
  *		Unfortunately, we can't really guarantee that add-on code
- *		obeys the rule of not calling exit() directly.	So, while
+ *		obeys the rule of not calling exit() directly.  So, while
  *		this is the preferred way out of the system, we also register
  *		an atexit callback that will make sure cleanup happens.
  * ----------------------------------------------------------------
@@ -103,7 +103,7 @@ proc_exit(int code)
 		 * fixed file name, each backend will overwrite earlier profiles. To
 		 * fix that, we create a separate subdirectory for each backend
 		 * (./gprof/pid) and 'cd' to that subdirectory before we exit() - that
-		 * forces mcleanup() to write each profile into its own directory.	We
+		 * forces mcleanup() to write each profile into its own directory.  We
 		 * end up with something like: $PGDATA/gprof/8829/gmon.out
 		 * $PGDATA/gprof/8845/gmon.out ...
 		 *
@@ -246,7 +246,7 @@ atexit_callback(void)
  *		on_proc_exit
  *
  *		this function adds a callback function to the list of
- *		functions invoked by proc_exit().	-cim 2/6/90
+ *		functions invoked by proc_exit().   -cim 2/6/90
  * ----------------------------------------------------------------
  */
 void
@@ -273,7 +273,7 @@ on_proc_exit(pg_on_exit_callback function, Datum arg)
  *		on_shmem_exit
  *
  *		this function adds a callback function to the list of
- *		functions invoked by shmem_exit().	-cim 2/6/90
+ *		functions invoked by shmem_exit().  -cim 2/6/90
  * ----------------------------------------------------------------
  */
 void

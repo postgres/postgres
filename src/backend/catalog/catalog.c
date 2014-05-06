@@ -220,7 +220,7 @@ IsReservedName(const char *name)
  *
  * Hard-wiring this list is pretty grotty, but we really need it so that
  * we can compute the locktag for a relation (and then lock it) without
- * having already read its pg_class entry.	If we try to retrieve relisshared
+ * having already read its pg_class entry.  If we try to retrieve relisshared
  * from pg_class with no pre-existing lock, there is a race condition against
  * anyone who is concurrently committing a change to the pg_class entry:
  * since we read system catalog entries under SnapshotNow, it's possible
@@ -289,7 +289,7 @@ IsSharedRelation(Oid relationId)
  * Since the OID is not immediately inserted into the table, there is a
  * race condition here; but a problem could occur only if someone else
  * managed to cycle through 2^32 OIDs and generate the same OID before we
- * finish inserting our row.  This seems unlikely to be a problem.	Note
+ * finish inserting our row.  This seems unlikely to be a problem.  Note
  * that if we had to *commit* the row to end the race condition, the risk
  * would be rather higher; therefore we use SnapshotDirty in the test,
  * so that we will see uncommitted rows.
@@ -335,7 +335,7 @@ GetNewOid(Relation relation)
  * This is exported separately because there are cases where we want to use
  * an index that will not be recognized by RelationGetOidIndex: TOAST tables
  * have indexes that are usable, but have multiple columns and are on
- * ordinary columns rather than a true OID column.	This code will work
+ * ordinary columns rather than a true OID column.  This code will work
  * anyway, so long as the OID is the index's first column.  The caller must
  * pass in the actual heap attnum of the OID column, however.
  *

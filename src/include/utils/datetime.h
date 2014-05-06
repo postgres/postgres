@@ -259,7 +259,7 @@ extern const int day_tab[2][13];
 
 /*
  * Datetime input parsing routines (ParseDateTime, DecodeDateTime, etc)
- * return zero or a positive value on success.	On failure, they return
+ * return zero or a positive value on success.  On failure, they return
  * one of these negative code values.  DateTimeParseError may be used to
  * produce a correct ereport.
  */

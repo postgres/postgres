@@ -15,7 +15,7 @@
  * Check whether a variable's name is allowed.
  *
  * We allow any non-ASCII character, as well as ASCII letters, digits, and
- * underscore.	Keep this in sync with the definition of variable_char in
+ * underscore.  Keep this in sync with the definition of variable_char in
  * psqlscan.l.
  */
 static bool

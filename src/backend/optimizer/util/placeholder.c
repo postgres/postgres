@@ -60,7 +60,7 @@ make_placeholder_expr(PlannerInfo *root, Expr *expr, Relids phrels)
  * We build PlaceHolderInfos only for PHVs that are still present in the
  * simplified query passed to query_planner().
  *
- * Note: this should only be called after query_planner() has started.	Also,
+ * Note: this should only be called after query_planner() has started.  Also,
  * create_new_ph must not be TRUE after deconstruct_jointree begins, because
  * make_outerjoininfo assumes that we already know about all placeholders.
  */
@@ -94,7 +94,7 @@ find_placeholder_info(PlannerInfo *root, PlaceHolderVar *phv,
 	/*
 	 * Any referenced rels that are outside the PHV's syntactic scope are
 	 * LATERAL references, which should be included in ph_lateral but not in
-	 * ph_eval_at.	If no referenced rels are within the syntactic scope,
+	 * ph_eval_at.  If no referenced rels are within the syntactic scope,
 	 * force evaluation at the syntactic location.
 	 */
 	rels_used = pull_varnos((Node *) phv->phexpr);

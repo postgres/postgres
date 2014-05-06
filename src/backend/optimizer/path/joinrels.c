@@ -213,7 +213,7 @@ join_search_one_level(PlannerInfo *root, int level)
 
 		/*----------
 		 * When special joins are involved, there may be no legal way
-		 * to make an N-way join for some values of N.	For example consider
+		 * to make an N-way join for some values of N.  For example consider
 		 *
 		 * SELECT ... FROM t1 WHERE
 		 *	 x IN (SELECT ... FROM t2,t3 WHERE ...) AND
@@ -337,7 +337,7 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 	ListCell   *l;
 
 	/*
-	 * Ensure output params are set on failure return.	This is just to
+	 * Ensure output params are set on failure return.  This is just to
 	 * suppress uninitialized-variable warnings from overly anal compilers.
 	 */
 	*sjinfo_p = NULL;
@@ -345,7 +345,7 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 
 	/*
 	 * If we have any special joins, the proposed join might be illegal; and
-	 * in any case we have to determine its join type.	Scan the join info
+	 * in any case we have to determine its join type.  Scan the join info
 	 * list for conflicts.
 	 */
 	match_sjinfo = NULL;
@@ -609,7 +609,7 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 
 	/*
 	 * If it's a plain inner join, then we won't have found anything in
-	 * join_info_list.	Make up a SpecialJoinInfo so that selectivity
+	 * join_info_list.  Make up a SpecialJoinInfo so that selectivity
 	 * estimation functions will know what's being joined.
 	 */
 	if (sjinfo == NULL)
@@ -916,7 +916,7 @@ have_join_order_restriction(PlannerInfo *root,
  *
  * Essentially, this tests whether have_join_order_restriction() could
  * succeed with this rel and some other one.  It's OK if we sometimes
- * say "true" incorrectly.	(Therefore, we don't bother with the relatively
+ * say "true" incorrectly.  (Therefore, we don't bother with the relatively
  * expensive has_legal_joinclause test.)
  */
 static bool
@@ -1027,7 +1027,7 @@ is_dummy_rel(RelOptInfo *rel)
  * dummy.
  *
  * Also, when called during GEQO join planning, we are in a short-lived
- * memory context.	We must make sure that the dummy path attached to a
+ * memory context.  We must make sure that the dummy path attached to a
  * baserel survives the GEQO cycle, else the baserel is trashed for future
  * GEQO cycles.  On the other hand, when we are marking a joinrel during GEQO,
  * we don't want the dummy path to clutter the main planning context.  Upshot

@@ -82,11 +82,11 @@ geqo_eval(PlannerInfo *root, Gene *tour, int num_gene)
 	 * not already contain some entries.  The newly added entries will be
 	 * recycled by the MemoryContextDelete below, so we must ensure that the
 	 * list is restored to its former state before exiting.  We can do this by
-	 * truncating the list to its original length.	NOTE this assumes that any
+	 * truncating the list to its original length.  NOTE this assumes that any
 	 * added entries are appended at the end!
 	 *
 	 * We also must take care not to mess up the outer join_rel_hash, if there
-	 * is one.	We can do this by just temporarily setting the link to NULL.
+	 * is one.  We can do this by just temporarily setting the link to NULL.
 	 * (If we are dealing with enough join rels, which we very likely are, a
 	 * new hash table will get built and used locally.)
 	 *
@@ -217,7 +217,7 @@ gimme_tree(PlannerInfo *root, Gene *tour, int num_gene)
  * Merge a "clump" into the list of existing clumps for gimme_tree.
  *
  * We try to merge the clump into some existing clump, and repeat if
- * successful.	When no more merging is possible, insert the clump
+ * successful.  When no more merging is possible, insert the clump
  * into the list, preserving the list ordering rule (namely, that
  * clumps of larger size appear earlier).
  *
@@ -268,7 +268,7 @@ merge_clump(PlannerInfo *root, List *clumps, Clump *new_clump, bool force)
 
 				/*
 				 * Recursively try to merge the enlarged old_clump with
-				 * others.	When no further merge is possible, we'll reinsert
+				 * others.  When no further merge is possible, we'll reinsert
 				 * it into the list.
 				 */
 				return merge_clump(root, clumps, old_clump, force);
@@ -279,7 +279,7 @@ merge_clump(PlannerInfo *root, List *clumps, Clump *new_clump, bool force)
 
 	/*
 	 * No merging is possible, so add new_clump as an independent clump, in
-	 * proper order according to size.	We can be fast for the common case
+	 * proper order according to size.  We can be fast for the common case
 	 * where it has size 1 --- it should always go at the end.
 	 */
 	if (clumps == NIL || new_clump->size == 1)

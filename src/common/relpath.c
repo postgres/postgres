@@ -40,7 +40,7 @@ const char *forkNames[] = {
  * forkname_chars
  *		We use this to figure out whether a filename could be a relation
  *		fork (as opposed to an oddly named stray file that somehow ended
- *		up in the database directory).	If the passed string begins with
+ *		up in the database directory).  If the passed string begins with
  *		a fork name (other than the main fork name), we return its length,
  *		and set *fork (if not NULL) to the fork number.  If not, we return 0.
  *

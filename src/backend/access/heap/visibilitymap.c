@@ -27,7 +27,7 @@
  * the sense that we make sure that whenever a bit is set, we know the
  * condition is true, but if a bit is not set, it might or might not be true.
  *
- * Clearing a visibility map bit is not separately WAL-logged.	The callers
+ * Clearing a visibility map bit is not separately WAL-logged.  The callers
  * must make sure that whenever a bit is cleared, the bit is cleared on WAL
  * replay of the updating operation as well.
  *
@@ -36,9 +36,9 @@
  * it may still be the case that every tuple on the page is visible to all
  * transactions; we just don't know that for certain.  The difficulty is that
  * there are two bits which are typically set together: the PD_ALL_VISIBLE bit
- * on the page itself, and the visibility map bit.	If a crash occurs after the
+ * on the page itself, and the visibility map bit.  If a crash occurs after the
  * visibility map page makes it to disk and before the updated heap page makes
- * it to disk, redo must set the bit on the heap page.	Otherwise, the next
+ * it to disk, redo must set the bit on the heap page.  Otherwise, the next
  * insert, update, or delete on the heap page will fail to realize that the
  * visibility map bit must be cleared, possibly causing index-only scans to
  * return wrong answers.
@@ -59,10 +59,10 @@
  * the buffer lock over any I/O that may be required to read in the visibility
  * map page.  To avoid this, we examine the heap page before locking it;
  * if the page-level PD_ALL_VISIBLE bit is set, we pin the visibility map
- * bit.  Then, we lock the buffer.	But this creates a race condition: there
+ * bit.  Then, we lock the buffer.  But this creates a race condition: there
  * is a possibility that in the time it takes to lock the buffer, the
  * PD_ALL_VISIBLE bit gets set.  If that happens, we have to unlock the
- * buffer, pin the visibility map page, and relock the buffer.	This shouldn't
+ * buffer, pin the visibility map page, and relock the buffer.  This shouldn't
  * happen often, because only VACUUM currently sets visibility map bits,
  * and the race will only occur if VACUUM processes a given page at almost
  * exactly the same time that someone tries to further modify it.
@@ -227,9 +227,9 @@ visibilitymap_pin_ok(BlockNumber heapBlk, Buffer buf)
  *	visibilitymap_set - set a bit on a previously pinned page
  *
  * recptr is the LSN of the XLOG record we're replaying, if we're in recovery,
- * or InvalidXLogRecPtr in normal running.	The page LSN is advanced to the
+ * or InvalidXLogRecPtr in normal running.  The page LSN is advanced to the
  * one provided; in normal running, we generate a new XLOG record and set the
- * page LSN to that value.	cutoff_xid is the largest xmin on the page being
+ * page LSN to that value.  cutoff_xid is the largest xmin on the page being
  * marked all-visible; it is needed for Hot Standby, and can be
  * InvalidTransactionId if the page contains no tuples.
  *
@@ -320,10 +320,10 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
  * releasing *buf after it's done testing and setting bits.
  *
  * NOTE: This function is typically called without a lock on the heap page,
- * so somebody else could change the bit just after we look at it.	In fact,
+ * so somebody else could change the bit just after we look at it.  In fact,
  * since we don't lock the visibility map page either, it's even possible that
  * someone else could have changed the bit just before we look at it, but yet
- * we might see the old value.	It is the caller's responsibility to deal with
+ * we might see the old value.  It is the caller's responsibility to deal with
  * all concurrency issues!
  */
 bool
@@ -526,7 +526,7 @@ vm_readbuf(Relation rel, BlockNumber blkno, bool extend)
 
 	/*
 	 * We might not have opened the relation at the smgr level yet, or we
-	 * might have been forced to close it by a sinval message.	The code below
+	 * might have been forced to close it by a sinval message.  The code below
 	 * won't necessarily notice relation extension immediately when extend =
 	 * false, so we rely on sinval messages to ensure that our ideas about the
 	 * size of the map aren't too far out of date.

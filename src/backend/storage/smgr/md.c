@@ -87,7 +87,7 @@
  *	not needed because of an mdtruncate() operation.  The reason for leaving
  *	them present at size zero, rather than unlinking them, is that other
  *	backends and/or the checkpointer might be holding open file references to
- *	such segments.	If the relation expands again after mdtruncate(), such
+ *	such segments.  If the relation expands again after mdtruncate(), such
  *	that a deactivated segment becomes active again, it is important that
  *	such file references still be valid --- else data might get written
  *	out to an unlinked old copy of a segment file that will eventually
@@ -124,7 +124,7 @@ static MemoryContext MdCxt;		/* context for all md.c allocations */
  * we keep track of pending fsync operations: we need to remember all relation
  * segments that have been written since the last checkpoint, so that we can
  * fsync them down to disk before completing the next checkpoint.  This hash
- * table remembers the pending operations.	We use a hash table mostly as
+ * table remembers the pending operations.  We use a hash table mostly as
  * a convenient way of merging duplicate requests.
  *
  * We use a similar mechanism to remember no-longer-needed files that can
@@ -292,7 +292,7 @@ mdcreate(SMgrRelation reln, ForkNumber forkNum, bool isRedo)
 		 * During bootstrap, there are cases where a system relation will be
 		 * accessed (by internal backend processes) before the bootstrap
 		 * script nominally creates it.  Therefore, allow the file to exist
-		 * already, even if isRedo is not set.	(See also mdopen)
+		 * already, even if isRedo is not set.  (See also mdopen)
 		 */
 		if (isRedo || IsBootstrapProcessingMode())
 			fd = PathNameOpenFile(path, O_RDWR | PG_BINARY, 0600);
@@ -337,7 +337,7 @@ mdcreate(SMgrRelation reln, ForkNumber forkNum, bool isRedo)
  * if the contents of the file were repopulated by subsequent WAL entries.
  * But if we didn't WAL-log insertions, but instead relied on fsyncing the
  * file after populating it (as for instance CLUSTER and CREATE INDEX do),
- * the contents of the file would be lost forever.	By leaving the empty file
+ * the contents of the file would be lost forever.  By leaving the empty file
  * until after the next checkpoint, we prevent reassignment of the relfilenode
  * number until it's safe, because relfilenode assignment skips over any
  * existing file.
@@ -350,7 +350,7 @@ mdcreate(SMgrRelation reln, ForkNumber forkNum, bool isRedo)
  *
  * All the above applies only to the relation's main fork; other forks can
  * just be removed immediately, since they are not needed to prevent the
- * relfilenode number from being recycled.	Also, we do not carefully
+ * relfilenode number from being recycled.  Also, we do not carefully
  * track whether other forks have been created or not, but just attempt to
  * unlink them unconditionally; so we should never complain about ENOENT.
  *
@@ -367,7 +367,7 @@ mdunlink(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo)
 {
 	/*
 	 * We have to clean out any pending fsync requests for the doomed
-	 * relation, else the next mdsync() will fail.	There can't be any such
+	 * relation, else the next mdsync() will fail.  There can't be any such
 	 * requests for a temp relation, though.  We can send just one request
 	 * even when deleting multiple forks, since the fsync queuing code accepts
 	 * the "InvalidForkNumber = all forks" convention.
@@ -504,7 +504,7 @@ mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	/*
 	 * Note: because caller usually obtained blocknum by calling mdnblocks,
 	 * which did a seek(SEEK_END), this seek is often redundant and will be
-	 * optimized away by fd.c.	It's not redundant, however, if there is a
+	 * optimized away by fd.c.  It's not redundant, however, if there is a
 	 * partial page at the end of the file. In that case we want to try to
 	 * overwrite the partial page with a full page.  It's also not redundant
 	 * if bufmgr.c had to dump another buffer of the same file to make room
@@ -804,9 +804,9 @@ mdnblocks(SMgrRelation reln, ForkNumber forknum)
 	 * exactly RELSEG_SIZE long, and it's useless to recheck that each time.
 	 *
 	 * NOTE: this assumption could only be wrong if another backend has
-	 * truncated the relation.	We rely on higher code levels to handle that
+	 * truncated the relation.  We rely on higher code levels to handle that
 	 * scenario by closing and re-opening the md fd, which is handled via
-	 * relcache flush.	(Since the checkpointer doesn't participate in
+	 * relcache flush.  (Since the checkpointer doesn't participate in
 	 * relcache flush, it could have segment chain entries for inactive
 	 * segments; that's OK because the checkpointer never needs to compute
 	 * relation size.)
@@ -1000,7 +1000,7 @@ mdsync(void)
 
 	/*
 	 * If we are in the checkpointer, the sync had better include all fsync
-	 * requests that were queued by backends up to this point.	The tightest
+	 * requests that were queued by backends up to this point.  The tightest
 	 * race condition that could occur is that a buffer that must be written
 	 * and fsync'd for the checkpoint could have been dumped by a backend just
 	 * before it was visited by BufferSync().  We know the backend will have
@@ -1116,7 +1116,7 @@ mdsync(void)
 				 * that have been deleted (unlinked) by the time we get to
 				 * them. Rather than just hoping an ENOENT (or EACCES on
 				 * Windows) error can be ignored, what we do on error is
-				 * absorb pending requests and then retry.	Since mdunlink()
+				 * absorb pending requests and then retry.  Since mdunlink()
 				 * queues a "cancel" message before actually unlinking, the
 				 * fsync request is guaranteed to be marked canceled after the
 				 * absorb if it really was this case. DROP DATABASE likewise
@@ -1220,7 +1220,7 @@ mdsync(void)
 
 		/*
 		 * We've finished everything that was requested before we started to
-		 * scan the entry.	If no new requests have been inserted meanwhile,
+		 * scan the entry.  If no new requests have been inserted meanwhile,
 		 * remove the entry.  Otherwise, update its cycle counter, as all the
 		 * requests now in it must have arrived during this cycle.
 		 */
@@ -1325,7 +1325,7 @@ mdpostckpt(void)
 
 		/*
 		 * As in mdsync, we don't want to stop absorbing fsync requests for a
-		 * long time when there are many deletions to be done.	We can safely
+		 * long time when there are many deletions to be done.  We can safely
 		 * call AbsorbFsyncRequests() at this point in the loop (note it might
 		 * try to delete list entries).
 		 */
@@ -1450,7 +1450,7 @@ RememberFsyncRequest(RelFileNode rnode, ForkNumber forknum, BlockNumber segno)
 			/*
 			 * We can't just delete the entry since mdsync could have an
 			 * active hashtable scan.  Instead we delete the bitmapsets; this
-			 * is safe because of the way mdsync is coded.	We also set the
+			 * is safe because of the way mdsync is coded.  We also set the
 			 * "canceled" flags so that mdsync can tell that a cancel arrived
 			 * for the fork(s).
 			 */
@@ -1552,7 +1552,7 @@ RememberFsyncRequest(RelFileNode rnode, ForkNumber forknum, BlockNumber segno)
 
 		/*
 		 * NB: it's intentional that we don't change cycle_ctr if the entry
-		 * already exists.	The cycle_ctr must represent the oldest fsync
+		 * already exists.  The cycle_ctr must represent the oldest fsync
 		 * request that could be in the entry.
 		 */
 
@@ -1723,7 +1723,7 @@ _mdfd_getseg(SMgrRelation reln, ForkNumber forknum, BlockNumber blkno,
 		{
 			/*
 			 * Normally we will create new segments only if authorized by the
-			 * caller (i.e., we are doing mdextend()).	But when doing WAL
+			 * caller (i.e., we are doing mdextend()).  But when doing WAL
 			 * recovery, create segments anyway; this allows cases such as
 			 * replaying WAL data that has a write into a high-numbered
 			 * segment of a relation that was later deleted.  We want to go

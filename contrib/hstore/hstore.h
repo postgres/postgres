@@ -12,7 +12,7 @@
  * HEntry: there is one of these for each key _and_ value in an hstore
  *
  * the position offset points to the _end_ so that we can get the length
- * by subtraction from the previous entry.	the ISFIRST flag lets us tell
+ * by subtraction from the previous entry.  the ISFIRST flag lets us tell
  * whether there is a previous entry.
  */
 typedef struct

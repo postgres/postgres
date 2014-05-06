@@ -19,14 +19,14 @@
  *	Ultrix and SunOS provide BSD signal(2) semantics by default.
  *
  *	SVID2 and POSIX signal(2) semantics differ from BSD signal(2)
- *	semantics.	We can use the POSIX sigaction(2) on systems that
+ *	semantics.  We can use the POSIX sigaction(2) on systems that
  *	allow us to request restartable signals (SA_RESTART).
  *
  *	Some systems don't allow restartable signals at all unless we
  *	link to a special BSD library.
  *
  *	We devoutly hope that there aren't any Unix-oid systems that provide
- *	neither POSIX signals nor BSD signals.	The alternative is to do
+ *	neither POSIX signals nor BSD signals.  The alternative is to do
  *	signal-handler reinstallation, which doesn't work well at all.
  *
  *	Windows, of course, is resolutely in a class by itself.  In the backend,

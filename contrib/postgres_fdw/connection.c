@@ -83,7 +83,7 @@ static void pgfdw_subxact_callback(SubXactEvent event,
  * the right subtransaction nesting depth if we didn't do that already.
  *
  * will_prep_stmt must be true if caller intends to create any prepared
- * statements.	Since those don't go away automatically at transaction end
+ * statements.  Since those don't go away automatically at transaction end
  * (not even on error), we need this flag to cue manual cleanup.
  *
  * XXX Note that caching connections theoretically requires a mechanism to
@@ -152,7 +152,7 @@ GetConnection(ForeignServer *server, UserMapping *user,
 
 	/*
 	 * If cache entry doesn't have a connection, we have to establish a new
-	 * connection.	(If connect_pg_server throws an error, the cache entry
+	 * connection.  (If connect_pg_server throws an error, the cache entry
 	 * will be left in a valid empty state.)
 	 */
 	if (entry->conn == NULL)
@@ -273,10 +273,10 @@ connect_pg_server(ForeignServer *server, UserMapping *user)
 }
 
 /*
- * For non-superusers, insist that the connstr specify a password.	This
+ * For non-superusers, insist that the connstr specify a password.  This
  * prevents a password from being picked up from .pgpass, a service file,
  * the environment, etc.  We don't want the postgres user's passwords
- * to be accessible to non-superusers.	(See also dblink_connstr_check in
+ * to be accessible to non-superusers.  (See also dblink_connstr_check in
  * contrib/dblink.)
  */
 static void
@@ -323,10 +323,10 @@ configure_remote_session(PGconn *conn)
 	/*
 	 * Set remote timezone; this is basically just cosmetic, since all
 	 * transmitted and returned timestamptzs should specify a zone explicitly
-	 * anyway.	However it makes the regression test outputs more predictable.
+	 * anyway.  However it makes the regression test outputs more predictable.
 	 *
 	 * We don't risk setting remote zone equal to ours, since the remote
-	 * server might use a different timezone database.	Instead, use UTC
+	 * server might use a different timezone database.  Instead, use UTC
 	 * (quoted, because very old servers are picky about case).
 	 */
 	do_sql_command(conn, "SET timezone = 'UTC'");

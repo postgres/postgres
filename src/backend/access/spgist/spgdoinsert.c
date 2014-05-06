@@ -25,7 +25,7 @@
 /*
  * SPPageDesc tracks all info about a page we are inserting into.  In some
  * situations it actually identifies a tuple, or even a specific node within
- * an inner tuple.	But any of the fields can be invalid.  If the buffer
+ * an inner tuple.  But any of the fields can be invalid.  If the buffer
  * field is valid, it implies we hold pin and exclusive lock on that buffer.
  * page pointer should be valid exactly when buffer is.
  */
@@ -249,7 +249,7 @@ addLeafTuple(Relation index, SpGistState *state, SpGistLeafTuple leafTuple,
 	else
 	{
 		/*
-		 * Tuple must be inserted into existing chain.	We mustn't change the
+		 * Tuple must be inserted into existing chain.  We mustn't change the
 		 * chain's head address, but we don't need to chase the entire chain
 		 * to put the tuple at the end; we can insert it second.
 		 *
@@ -814,7 +814,7 @@ doPickSplit(Relation index, SpGistState *state,
 	 * We may not actually insert new tuple because another picksplit may be
 	 * necessary due to too large value, but we will try to allocate enough
 	 * space to include it; and in any case it has to be included in the input
-	 * for the picksplit function.	So don't increment nToInsert yet.
+	 * for the picksplit function.  So don't increment nToInsert yet.
 	 */
 	in.datums[in.nTuples] = SGLTDATUM(newLeafTuple, state);
 	heapPtrs[in.nTuples] = newLeafTuple->heapPtr;
@@ -872,7 +872,7 @@ doPickSplit(Relation index, SpGistState *state,
 	/*
 	 * Check to see if the picksplit function failed to separate the values,
 	 * ie, it put them all into the same child node.  If so, select allTheSame
-	 * mode and create a random split instead.	See comments for
+	 * mode and create a random split instead.  See comments for
 	 * checkAllTheSame as to why we need to know if the new leaf tuples could
 	 * fit on one page.
 	 */
@@ -1037,7 +1037,7 @@ doPickSplit(Relation index, SpGistState *state,
 										&xlrec.initDest);
 
 		/*
-		 * Attempt to assign node groups to the two pages.	We might fail to
+		 * Attempt to assign node groups to the two pages.  We might fail to
 		 * do so, even if totalLeafSizes is less than the available space,
 		 * because we can't split a group across pages.
 		 */
@@ -1917,7 +1917,7 @@ spgdoinsert(Relation index, SpGistState *state,
 		if (current.blkno == InvalidBlockNumber)
 		{
 			/*
-			 * Create a leaf page.	If leafSize is too large to fit on a page,
+			 * Create a leaf page.  If leafSize is too large to fit on a page,
 			 * we won't actually use the page yet, but it simplifies the API
 			 * for doPickSplit to always have a leaf page at hand; so just
 			 * quietly limit our request to a page size.
@@ -2120,7 +2120,7 @@ spgdoinsert(Relation index, SpGistState *state,
 									 out.result.addNode.nodeLabel);
 
 					/*
-					 * Retry insertion into the enlarged node.	We assume that
+					 * Retry insertion into the enlarged node.  We assume that
 					 * we'll get a MatchNode result this time.
 					 */
 					goto process_inner_tuple;

@@ -38,7 +38,7 @@
  * where x's are unspecified bits.  The two's complement negative is formed
  * by inverting all the bits and adding one.  Inversion gives
  *				yyyyyy01111
- * where each y is the inverse of the corresponding x.	Incrementing gives
+ * where each y is the inverse of the corresponding x.  Incrementing gives
  *				yyyyyy10000
  * and then ANDing with the original value gives
  *				00000010000
@@ -797,7 +797,7 @@ bms_join(Bitmapset *a, Bitmapset *b)
 /*----------
  * bms_first_member - find and remove first member of a set
  *
- * Returns -1 if set is empty.	NB: set is destructively modified!
+ * Returns -1 if set is empty.  NB: set is destructively modified!
  *
  * This is intended as support for iterating through the members of a set.
  * The typical pattern is

@@ -9,7 +9,7 @@
  *
  * An NFA contains one or more states, numbered 0..N-1.  There is an initial
  * state, as well as a final state --- reaching the final state denotes
- * successful matching of an input string.	Each state except the final one
+ * successful matching of an input string.  Each state except the final one
  * has some out-arcs that lead to successor states, each arc being labeled
  * with a color that represents one or more concrete character codes.
  * (The colors of a state's out-arcs need not be distinct, since this is an

@@ -108,7 +108,7 @@ static void ApplyExtensionUpdates(Oid extensionOid,
 /*
  * get_extension_oid - given an extension name, look up the OID
  *
- * If missing_ok is false, throw an error if extension name not found.	If
+ * If missing_ok is false, throw an error if extension name not found.  If
  * true, just return InvalidOid.
  */
 Oid
@@ -257,9 +257,9 @@ check_valid_extension_name(const char *extensionname)
 				 errdetail("Extension names must not contain \"--\".")));
 
 	/*
-	 * No leading or trailing dash either.	(We could probably allow this, but
+	 * No leading or trailing dash either.  (We could probably allow this, but
 	 * it would require much care in filename parsing and would make filenames
-	 * visually if not formally ambiguous.	Since there's no real-world use
+	 * visually if not formally ambiguous.  Since there's no real-world use
 	 * case, let's just forbid it.)
 	 */
 	if (extensionname[0] == '-' || extensionname[namelen - 1] == '-')
@@ -435,7 +435,7 @@ get_extension_script_filename(ExtensionControlFile *control,
 
 /*
  * Parse contents of primary or auxiliary control file, and fill in
- * fields of *control.	We parse primary file if version == NULL,
+ * fields of *control.  We parse primary file if version == NULL,
  * else the optional auxiliary file for that version.
  *
  * Control files are supposed to be very short, half a dozen lines,
@@ -677,7 +677,7 @@ read_extension_script_file(const ExtensionControlFile *control,
  * filename is used only to report errors.
  *
  * Note: it's tempting to just use SPI to execute the string, but that does
- * not work very well.	The really serious problem is that SPI will parse,
+ * not work very well.  The really serious problem is that SPI will parse,
  * analyze, and plan the whole string before executing any of it; of course
  * this fails if there are any plannable statements referring to objects
  * created earlier in the script.  A lesser annoyance is that SPI insists
@@ -852,7 +852,7 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 	/*
 	 * Set creating_extension and related variables so that
 	 * recordDependencyOnCurrentExtension and other functions do the right
-	 * things.	On failure, ensure we reset these variables.
+	 * things.  On failure, ensure we reset these variables.
 	 */
 	creating_extension = true;
 	CurrentExtensionObject = extensionOid;
@@ -1096,7 +1096,7 @@ identify_update_path(ExtensionControlFile *control,
  * is still good.
  *
  * Result is a List of names of versions to transition through (the initial
- * version is *not* included).	Returns NIL if no such path.
+ * version is *not* included).  Returns NIL if no such path.
  */
 static List *
 find_update_path(List *evi_list,
@@ -1197,7 +1197,7 @@ CreateExtension(CreateExtensionStmt *stmt)
 	check_valid_extension_name(stmt->extname);
 
 	/*
-	 * Check for duplicate extension name.	The unique index on
+	 * Check for duplicate extension name.  The unique index on
 	 * pg_extension.extname would catch this anyway, and serves as a backstop
 	 * in case of race conditions; but this is a friendlier error message, and
 	 * besides we need a check to support IF NOT EXISTS.
@@ -1364,7 +1364,7 @@ CreateExtension(CreateExtensionStmt *stmt)
 	{
 		/*
 		 * The extension is not relocatable and the author gave us a schema
-		 * for it.	We create the schema here if it does not already exist.
+		 * for it.  We create the schema here if it does not already exist.
 		 */
 		schemaName = control->schema;
 		schemaOid = get_namespace_oid(schemaName, true);
@@ -1593,7 +1593,7 @@ RemoveExtensionById(Oid extId)
 	 * might write "DROP EXTENSION foo" in foo's own script files, as because
 	 * errors in dependency management in extension script files could give
 	 * rise to cases where an extension is dropped as a result of recursing
-	 * from some contained object.	Because of that, we must test for the case
+	 * from some contained object.  Because of that, we must test for the case
 	 * here, not at some higher level of the DROP EXTENSION command.
 	 */
 	if (extId == CurrentExtensionObject)
@@ -1624,7 +1624,7 @@ RemoveExtensionById(Oid extId)
 
 /*
  * This function lists the available extensions (one row per primary control
- * file in the control directory).	We parse each control file and report the
+ * file in the control directory).  We parse each control file and report the
  * interesting fields.
  *
  * The system view pg_available_extensions provides a user interface to this
@@ -1733,7 +1733,7 @@ pg_available_extensions(PG_FUNCTION_ARGS)
 
 /*
  * This function lists the available extension versions (one row per
- * extension installation script).	For each version, we parse the related
+ * extension installation script).  For each version, we parse the related
  * control file(s) and report the interesting fields.
  *
  * The system view pg_available_extension_versions provides a user interface
@@ -2521,7 +2521,7 @@ AlterExtensionNamespace(List *names, const char *newschema)
 		Oid			dep_oldNspOid;
 
 		/*
-		 * Ignore non-membership dependencies.	(Currently, the only other
+		 * Ignore non-membership dependencies.  (Currently, the only other
 		 * case we could see here is a normal dependency from another
 		 * extension.)
 		 */
@@ -2933,7 +2933,7 @@ ExecAlterExtensionContentsStmt(AlterExtensionContentsStmt *stmt)
 
 		/*
 		 * Prevent a schema from being added to an extension if the schema
-		 * contains the extension.	That would create a dependency loop.
+		 * contains the extension.  That would create a dependency loop.
 		 */
 		if (object.classId == NamespaceRelationId &&
 			object.objectId == get_extension_schema(extension.objectId))

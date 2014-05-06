@@ -37,7 +37,7 @@ static int	numCatalogIds = 0;
 
 /*
  * These variables are static to avoid the notational cruft of having to pass
- * them into findTableByOid() and friends.	For each of these arrays, we
+ * them into findTableByOid() and friends.  For each of these arrays, we
  * build a sorted-by-OID index array immediately after it's built, and then
  * we use binary search in findTableByOid() and friends.  (qsort'ing the base
  * arrays themselves would be simpler, but it doesn't work because pg_dump.c
@@ -487,7 +487,7 @@ findObjectByDumpId(DumpId dumpId)
  *
  * We use binary search in a sorted list that is built on first call.
  * If AssignDumpId() and findObjectByCatalogId() calls were freely intermixed,
- * the code would work, but possibly be very slow.	In the current usage
+ * the code would work, but possibly be very slow.  In the current usage
  * pattern that does not happen, indeed we build the list at most twice.
  */
 DumpableObject *

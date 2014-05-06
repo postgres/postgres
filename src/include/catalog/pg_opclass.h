@@ -17,10 +17,10 @@
  * don't support partial indexes on system catalogs.)
  *
  * Normally opckeytype = InvalidOid (zero), indicating that the data stored
- * in the index is the same as the data in the indexed column.	If opckeytype
+ * in the index is the same as the data in the indexed column.  If opckeytype
  * is nonzero then it indicates that a conversion step is needed to produce
  * the stored index data, which will be of type opckeytype (which might be
- * the same or different from the input datatype).	Performing such a
+ * the same or different from the input datatype).  Performing such a
  * conversion is the responsibility of the index access method --- not all
  * AMs support this.
  *
@@ -42,7 +42,7 @@
 #include "catalog/genbki.h"
 
 /* ----------------
- *		pg_opclass definition.	cpp turns this into
+ *		pg_opclass definition.  cpp turns this into
  *		typedef struct FormData_pg_opclass
  * ----------------
  */

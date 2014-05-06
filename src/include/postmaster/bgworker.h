@@ -6,9 +6,9 @@
  * including normal transactions.
  *
  * Any external module loaded via shared_preload_libraries can register a
- * worker.	Then, at the appropriate time, the worker process is forked from
+ * worker.  Then, at the appropriate time, the worker process is forked from
  * the postmaster and runs the user-supplied "main" function.  This code may
- * connect to a database and run transactions.	Once started, it stays active
+ * connect to a database and run transactions.  Once started, it stays active
  * until shutdown or crash.  The process should sleep during periods of
  * inactivity.
  *

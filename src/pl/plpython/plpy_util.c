@@ -55,7 +55,7 @@ PLy_free(void *ptr)
 
 /*
  * Convert a Python unicode object to a Python string/bytes object in
- * PostgreSQL server encoding.	Reference ownership is passed to the
+ * PostgreSQL server encoding.  Reference ownership is passed to the
  * caller.
  */
 PyObject *
@@ -123,7 +123,7 @@ PLyUnicode_Bytes(PyObject *unicode)
  * function.  The result is palloc'ed.
  *
  * Note that this function is disguised as PyString_AsString() when
- * using Python 3.	That function retuns a pointer into the internal
+ * using Python 3.  That function retuns a pointer into the internal
  * memory of the argument, which isn't exactly the interface of this
  * function.  But in either case you get a rather short-lived
  * reference that you ought to better leave alone.
@@ -141,7 +141,7 @@ PLyUnicode_AsString(PyObject *unicode)
 #if PY_MAJOR_VERSION >= 3
 /*
  * Convert a C string in the PostgreSQL server encoding to a Python
- * unicode object.	Reference ownership is passed to the caller.
+ * unicode object.  Reference ownership is passed to the caller.
  */
 PyObject *
 PLyUnicode_FromString(const char *s)

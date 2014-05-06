@@ -173,7 +173,7 @@ static Material *make_material(Plan *lefttree);
 /*
  * create_plan
  *	  Creates the access plan for a query by recursively processing the
- *	  desired tree of pathnodes, starting at the node 'best_path'.	For
+ *	  desired tree of pathnodes, starting at the node 'best_path'.  For
  *	  every pathnode found, we create a corresponding plan node containing
  *	  appropriate id, target list, and qualification information.
  *
@@ -288,7 +288,7 @@ create_scan_plan(PlannerInfo *root, Path *best_path)
 	/*
 	 * For table scans, rather than using the relation targetlist (which is
 	 * only those Vars actually needed by the query), we prefer to generate a
-	 * tlist containing all Vars in order.	This will allow the executor to
+	 * tlist containing all Vars in order.  This will allow the executor to
 	 * optimize away projection of the table tuples, if possible.  (Note that
 	 * planner.c may replace the tlist we generate here, forcing projection to
 	 * occur.)
@@ -525,7 +525,7 @@ use_physical_tlist(PlannerInfo *root, RelOptInfo *rel)
  *
  * If the plan node immediately above a scan would prefer to get only
  * needed Vars and not a physical tlist, it must call this routine to
- * undo the decision made by use_physical_tlist().	Currently, Hash, Sort,
+ * undo the decision made by use_physical_tlist().  Currently, Hash, Sort,
  * and Material nodes want this, so they don't have to store useless columns.
  */
 static void
@@ -656,7 +656,7 @@ create_join_plan(PlannerInfo *root, JoinPath *best_path)
 
 	/*
 	 * * Expensive function pullups may have pulled local predicates * into
-	 * this path node.	Put them in the qpqual of the plan node. * JMH,
+	 * this path node.  Put them in the qpqual of the plan node. * JMH,
 	 * 6/15/92
 	 */
 	if (get_loc_restrictinfo(best_path) != NIL)
@@ -1172,10 +1172,10 @@ create_indexscan_plan(PlannerInfo *root,
 	/*
 	 * The qpqual list must contain all restrictions not automatically handled
 	 * by the index, other than pseudoconstant clauses which will be handled
-	 * by a separate gating plan node.	All the predicates in the indexquals
+	 * by a separate gating plan node.  All the predicates in the indexquals
 	 * will be checked (either by the index itself, or by nodeIndexscan.c),
 	 * but if there are any "special" operators involved then they must be
-	 * included in qpqual.	The upshot is that qpqual must contain
+	 * included in qpqual.  The upshot is that qpqual must contain
 	 * scan_clauses minus whatever appears in indexquals.
 	 *
 	 * In normal cases simple pointer equality checks will be enough to spot
@@ -1312,15 +1312,15 @@ create_bitmap_scan_plan(PlannerInfo *root,
 	/*
 	 * The qpqual list must contain all restrictions not automatically handled
 	 * by the index, other than pseudoconstant clauses which will be handled
-	 * by a separate gating plan node.	All the predicates in the indexquals
+	 * by a separate gating plan node.  All the predicates in the indexquals
 	 * will be checked (either by the index itself, or by
 	 * nodeBitmapHeapscan.c), but if there are any "special" operators
-	 * involved then they must be added to qpqual.	The upshot is that qpqual
+	 * involved then they must be added to qpqual.  The upshot is that qpqual
 	 * must contain scan_clauses minus whatever appears in indexquals.
 	 *
 	 * This loop is similar to the comparable code in create_indexscan_plan(),
 	 * but with some differences because it has to compare the scan clauses to
-	 * stripped (no RestrictInfos) indexquals.	See comments there for more
+	 * stripped (no RestrictInfos) indexquals.  See comments there for more
 	 * info.
 	 *
 	 * In normal cases simple equal() checks will be enough to spot duplicate
@@ -1365,7 +1365,7 @@ create_bitmap_scan_plan(PlannerInfo *root,
 
 	/*
 	 * When dealing with special operators, we will at this point have
-	 * duplicate clauses in qpqual and bitmapqualorig.	We may as well drop
+	 * duplicate clauses in qpqual and bitmapqualorig.  We may as well drop
 	 * 'em from bitmapqualorig, since there's no point in making the tests
 	 * twice.
 	 */
@@ -1480,7 +1480,7 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 		/*
 		 * Here, we only detect qual-free subplans.  A qual-free subplan would
 		 * cause us to generate "... OR true ..."  which we may as well reduce
-		 * to just "true".	We do not try to eliminate redundant subclauses
+		 * to just "true".  We do not try to eliminate redundant subclauses
 		 * because (a) it's not as likely as in the AND case, and (b) we might
 		 * well be working with hundreds or even thousands of OR conditions,
 		 * perhaps from a long IN list.  The performance of list_append_unique
@@ -1576,7 +1576,7 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 			/*
 			 * We know that the index predicate must have been implied by the
 			 * query condition as a whole, but it may or may not be implied by
-			 * the conditions that got pushed into the bitmapqual.	Avoid
+			 * the conditions that got pushed into the bitmapqual.  Avoid
 			 * generating redundant conditions.
 			 */
 			if (!predicate_implied_by(list_make1(pred), ipath->indexclauses))
@@ -1963,14 +1963,14 @@ create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
 	Assert(rte->rtekind == RTE_RELATION);
 
 	/*
-	 * Sort clauses into best execution order.	We do this first since the FDW
+	 * Sort clauses into best execution order.  We do this first since the FDW
 	 * might have more info than we do and wish to adjust the ordering.
 	 */
 	scan_clauses = order_qual_clauses(root, scan_clauses);
 
 	/*
 	 * Let the FDW perform its processing on the restriction clauses and
-	 * generate the plan node.	Note that the FDW might remove restriction
+	 * generate the plan node.  Note that the FDW might remove restriction
 	 * clauses that it intends to execute remotely, or even add more (if it
 	 * has selected some join clauses for remote use but also wants them
 	 * rechecked locally).
@@ -2624,7 +2624,7 @@ replace_nestloop_params_mutator(Node *node, PlannerInfo *root)
 			 *
 			 * Note that after doing this, we might have different
 			 * representations of the contents of the same PHV in different
-			 * parts of the plan tree.	This is OK because equal() will just
+			 * parts of the plan tree.  This is OK because equal() will just
 			 * match on phid/phlevelsup, so setrefs.c will still recognize an
 			 * upper-level reference to a lower-level copy of the same PHV.
 			 */
@@ -2802,7 +2802,7 @@ fix_indexqual_references(PlannerInfo *root, IndexPath *index_path)
 
 			/*
 			 * Check to see if the indexkey is on the right; if so, commute
-			 * the clause.	The indexkey should be the side that refers to
+			 * the clause.  The indexkey should be the side that refers to
 			 * (only) the base relation.
 			 */
 			if (!bms_equal(rinfo->left_relids, index->rel->relids))
@@ -2896,7 +2896,7 @@ fix_indexqual_references(PlannerInfo *root, IndexPath *index_path)
  *
  * This is a simplified version of fix_indexqual_references.  The input does
  * not have RestrictInfo nodes, and we assume that indxpath.c already
- * commuted the clauses to put the index keys on the left.	Also, we don't
+ * commuted the clauses to put the index keys on the left.  Also, we don't
  * bother to support any cases except simple OpExprs, since nothing else
  * is allowed for ordering operators.
  */
@@ -3135,7 +3135,7 @@ order_qual_clauses(PlannerInfo *root, List *clauses)
 
 	/*
 	 * Sort.  We don't use qsort() because it's not guaranteed stable for
-	 * equal keys.	The expected number of entries is small enough that a
+	 * equal keys.  The expected number of entries is small enough that a
 	 * simple insertion sort should be good enough.
 	 */
 	for (i = 1; i < nitems; i++)
@@ -3786,7 +3786,7 @@ make_sort(PlannerInfo *root, Plan *lefttree, int numCols,
  * prepare_sort_from_pathkeys
  *	  Prepare to sort according to given pathkeys
  *
- * This is used to set up for both Sort and MergeAppend nodes.	It calculates
+ * This is used to set up for both Sort and MergeAppend nodes.  It calculates
  * the executor's representation of the sort key information, and adjusts the
  * plan targetlist if needed to add resjunk sort columns.
  *
@@ -3799,7 +3799,7 @@ make_sort(PlannerInfo *root, Plan *lefttree, int numCols,
  *
  * We must convert the pathkey information into arrays of sort key column
  * numbers, sort operator OIDs, collation OIDs, and nulls-first flags,
- * which is the representation the executor wants.	These are returned into
+ * which is the representation the executor wants.  These are returned into
  * the output parameters *p_numsortkeys etc.
  *
  * When looking for matches to an EquivalenceClass's members, we will only
@@ -4241,7 +4241,7 @@ make_material(Plan *lefttree)
  * materialize_finished_plan: stick a Material node atop a completed plan
  *
  * There are a couple of places where we want to attach a Material node
- * after completion of subquery_planner().	This currently requires hackery.
+ * after completion of subquery_planner().  This currently requires hackery.
  * Since subquery_planner has already run SS_finalize_plan on the subplan
  * tree, we have to kluge up parameter lists for the Material node.
  * Possibly this could be fixed by postponing SS_finalize_plan processing
@@ -4447,7 +4447,7 @@ make_group(PlannerInfo *root,
 
 /*
  * distinctList is a list of SortGroupClauses, identifying the targetlist items
- * that should be considered by the Unique filter.	The input path must
+ * that should be considered by the Unique filter.  The input path must
  * already be sorted accordingly.
  */
 Unique *
@@ -4465,7 +4465,7 @@ make_unique(Plan *lefttree, List *distinctList)
 
 	/*
 	 * Charge one cpu_operator_cost per comparison per input tuple. We assume
-	 * all columns get compared at most of the tuples.	(XXX probably this is
+	 * all columns get compared at most of the tuples.  (XXX probably this is
 	 * an overestimate.)
 	 */
 	plan->total_cost += cpu_operator_cost * plan->plan_rows * numCols;
@@ -4721,7 +4721,7 @@ make_result(PlannerInfo *root,
  *	  Build a ModifyTable plan node
  *
  * Currently, we don't charge anything extra for the actual table modification
- * work, nor for the RETURNING expressions if any.	It would only be window
+ * work, nor for the RETURNING expressions if any.  It would only be window
  * dressing, since these are always top-level nodes and there is no way for
  * the costs to change any higher-level planning choices.  But we might want
  * to make it look better sometime.

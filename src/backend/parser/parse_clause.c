@@ -152,7 +152,7 @@ transformFromClause(ParseState *pstate, List *frmList)
  *
  *	  If alsoSource is true, add the target to the query's joinlist and
  *	  namespace.  For INSERT, we don't want the target to be joined to;
- *	  it's a destination of tuples, not a source.	For UPDATE/DELETE,
+ *	  it's a destination of tuples, not a source.   For UPDATE/DELETE,
  *	  we do need to scan or join the target.  (NOTE: we do not bother
  *	  to check for namespace conflict; we assume that the namespace was
  *	  initially empty in these cases.)
@@ -222,7 +222,7 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
  * Simplify InhOption (yes/no/default) into boolean yes/no.
  *
  * The reason we do things this way is that we don't want to examine the
- * SQL_inheritance option flag until parse_analyze() is run.	Otherwise,
+ * SQL_inheritance option flag until parse_analyze() is run.    Otherwise,
  * we'd do the wrong thing with query strings that intermix SET commands
  * with queries.
  */
@@ -399,7 +399,7 @@ transformJoinOnClause(ParseState *pstate, JoinExpr *j, List *namespace)
 	/*
 	 * The namespace that the join expression should see is just the two
 	 * subtrees of the JOIN plus any outer references from upper pstate
-	 * levels.	Temporarily set this pstate's namespace accordingly.  (We need
+	 * levels.  Temporarily set this pstate's namespace accordingly.  (We need
 	 * not check for refname conflicts, because transformFromClauseItem()
 	 * already did.)  All namespace items are marked visible regardless of
 	 * LATERAL state.
@@ -493,7 +493,7 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	pstate->p_expr_kind = EXPR_KIND_NONE;
 
 	/*
-	 * Check that we got something reasonable.	Many of these conditions are
+	 * Check that we got something reasonable.  Many of these conditions are
 	 * impossible given restrictions of the grammar, but check 'em anyway.
 	 */
 	if (!IsA(query, Query) ||
@@ -527,7 +527,7 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 
 	/*
 	 * Get function name for possible use as alias.  We use the same
-	 * transformation rules as for a SELECT output expression.	For a FuncCall
+	 * transformation rules as for a SELECT output expression.  For a FuncCall
 	 * node, the result will be the function name, but it is possible for the
 	 * grammar to hand back other node types.
 	 */
@@ -605,10 +605,10 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
  * (We could extract this from the function return node, but it saves cycles
  * to pass it back separately.)
  *
- * *top_rti: receives the rangetable index of top_rte.	(Ditto.)
+ * *top_rti: receives the rangetable index of top_rte.  (Ditto.)
  *
  * *namespace: receives a List of ParseNamespaceItems for the RTEs exposed
- * as table/column names by this item.	(The lateral_only flags in these items
+ * as table/column names by this item.  (The lateral_only flags in these items
  * are indeterminate and should be explicitly set by the caller before use.)
  */
 static Node *
@@ -721,7 +721,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		 * right side, by temporarily adding them to the pstate's namespace
 		 * list.  Per SQL:2008, if the join type is not INNER or LEFT then the
 		 * left-side names must still be exposed, but it's an error to
-		 * reference them.	(Stupid design, but that's what it says.)  Hence,
+		 * reference them.  (Stupid design, but that's what it says.)  Hence,
 		 * we always push them into the namespace, but mark them as not
 		 * lateral_ok if the jointype is wrong.
 		 *
@@ -985,7 +985,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		 *
 		 * Note: if there are nested alias-less JOINs, the lower-level ones
 		 * will remain in the list although they have neither p_rel_visible
-		 * nor p_cols_visible set.	We could delete such list items, but it's
+		 * nor p_cols_visible set.  We could delete such list items, but it's
 		 * unclear that it's worth expending cycles to do so.
 		 */
 		if (j->alias != NULL)
@@ -1322,9 +1322,9 @@ checkTargetlistEntrySQL92(ParseState *pstate, TargetEntry *tle,
  *
  * This function supports the old SQL92 ORDER BY interpretation, where the
  * expression is an output column name or number.  If we fail to find a
- * match of that sort, we fall through to the SQL99 rules.	For historical
+ * match of that sort, we fall through to the SQL99 rules.  For historical
  * reasons, Postgres also allows this interpretation for GROUP BY, though
- * the standard never did.	However, for GROUP BY we prefer a SQL99 match.
+ * the standard never did.  However, for GROUP BY we prefer a SQL99 match.
  * This function is *not* used for WINDOW definitions.
  *
  * node		the ORDER BY, GROUP BY, or DISTINCT ON expression to be matched
@@ -1342,7 +1342,7 @@ findTargetlistEntrySQL92(ParseState *pstate, Node *node, List **tlist,
 	 *
 	 * 1. Bare ColumnName (no qualifier or subscripts)
 	 *	  For a bare identifier, we search for a matching column name
-	 *	  in the existing target list.	Multiple matches are an error
+	 *	  in the existing target list.  Multiple matches are an error
 	 *	  unless they refer to identical values; for example,
 	 *	  we allow	SELECT a, a FROM table ORDER BY a
 	 *	  but not	SELECT a AS b, b FROM table ORDER BY b
@@ -1351,7 +1351,7 @@ findTargetlistEntrySQL92(ParseState *pstate, Node *node, List **tlist,
 	 *	  For GROUP BY, it is incorrect to match the grouping item against
 	 *	  targetlist entries: according to SQL92, an identifier in GROUP BY
 	 *	  is a reference to a column name exposed by FROM, not to a target
-	 *	  list column.	However, many implementations (including pre-7.0
+	 *	  list column.  However, many implementations (including pre-7.0
 	 *	  PostgreSQL) accept this anyway.  So for GROUP BY, we look first
 	 *	  to see if the identifier matches any FROM column name, and only
 	 *	  try for a targetlist name if it doesn't.  This ensures that we
@@ -1509,7 +1509,7 @@ findTargetlistEntrySQL99(ParseState *pstate, Node *node, List **tlist,
 	/*
 	 * Convert the untransformed node to a transformed expression, and search
 	 * for a match in the tlist.  NOTE: it doesn't really matter whether there
-	 * is more than one match.	Also, we are willing to match an existing
+	 * is more than one match.  Also, we are willing to match an existing
 	 * resjunk target here, though the SQL92 cases above must ignore resjunk
 	 * targets.
 	 */
@@ -1537,7 +1537,7 @@ findTargetlistEntrySQL99(ParseState *pstate, Node *node, List **tlist,
 
 	/*
 	 * If no matches, construct a new target entry which is appended to the
-	 * end of the target list.	This target is given resjunk = TRUE so that it
+	 * end of the target list.  This target is given resjunk = TRUE so that it
 	 * will not be projected into the final tuple.
 	 */
 	target_result = transformTargetEntry(pstate, node, expr, exprKind,
@@ -1748,7 +1748,7 @@ transformWindowDefinitions(ParseState *pstate,
 		 * <window clause> syntax rule 10 and general rule 1.  The frame
 		 * clause rule is especially bizarre because it makes "OVER foo"
 		 * different from "OVER (foo)", and requires the latter to throw an
-		 * error if foo has a nondefault frame clause.	Well, ours not to
+		 * error if foo has a nondefault frame clause.  Well, ours not to
 		 * reason why, but we do go out of our way to throw a useful error
 		 * message for such cases.
 		 */
@@ -1851,7 +1851,7 @@ transformDistinctClause(ParseState *pstate,
 
 	/*
 	 * The distinctClause should consist of all ORDER BY items followed by all
-	 * other non-resjunk targetlist items.	There must not be any resjunk
+	 * other non-resjunk targetlist items.  There must not be any resjunk
 	 * ORDER BY items --- that would imply that we are sorting by a value that
 	 * isn't necessarily unique within a DISTINCT group, so the results
 	 * wouldn't be well-defined.  This construction ensures we follow the rule
@@ -1974,7 +1974,7 @@ transformDistinctOnClause(ParseState *pstate, List *distinctlist,
 
 	/*
 	 * Now add any remaining DISTINCT ON items, using default sort/group
-	 * semantics for their data types.	(Note: this is pretty questionable; if
+	 * semantics for their data types.  (Note: this is pretty questionable; if
 	 * the ORDER BY list doesn't include all the DISTINCT ON items and more
 	 * besides, you certainly aren't using DISTINCT ON in the intended way,
 	 * and you probably aren't going to get consistent results.  It might be

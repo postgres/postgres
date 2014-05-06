@@ -59,7 +59,7 @@ charout(PG_FUNCTION_ARGS)
  *		charrecv			- converts external binary format to char
  *
  * The external representation is one byte, with no character set
- * conversion.	This is somewhat dubious, perhaps, but in many
+ * conversion.  This is somewhat dubious, perhaps, but in many
  * cases people use char for a 1-byte binary type.
  */
 Datum

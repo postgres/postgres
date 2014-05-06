@@ -185,7 +185,7 @@ worker_spi_main(Datum main_arg)
 	initialize_worker_spi(table);
 
 	/*
-	 * Quote identifiers passed to us.	Note that this must be done after
+	 * Quote identifiers passed to us.  Note that this must be done after
 	 * initialize_worker_spi, because that routine assumes the names are not
 	 * quoted.
 	 *
@@ -247,7 +247,7 @@ worker_spi_main(Datum main_arg)
 		 * StartTransactionCommand() call should be preceded by a
 		 * SetCurrentStatementStartTimestamp() call, which sets both the time
 		 * for the statement we're about the run, and also the transaction
-		 * start time.	Also, each other query sent to SPI should probably be
+		 * start time.  Also, each other query sent to SPI should probably be
 		 * preceded by SetCurrentStatementStartTimestamp(), so that statement
 		 * start time is always up to date.
 		 *

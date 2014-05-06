@@ -2,7 +2,7 @@
  *
  * postmaster.c
  *	  This program acts as a clearing house for requests to the
- *	  POSTGRES system.	Frontend programs send a startup message
+ *	  POSTGRES system.  Frontend programs send a startup message
  *	  to the Postmaster and the postmaster uses the info in the
  *	  message to setup a backend process.
  *
@@ -15,7 +15,7 @@
  *	  The postmaster process creates the shared memory and semaphore
  *	  pools during startup, but as a rule does not touch them itself.
  *	  In particular, it is not a member of the PGPROC array of backends
- *	  and so it cannot participate in lock-manager operations.	Keeping
+ *	  and so it cannot participate in lock-manager operations.  Keeping
  *	  the postmaster away from shared memory operations makes it simpler
  *	  and more reliable.  The postmaster is almost always able to recover
  *	  from crashes of individual backends by resetting shared memory;
@@ -146,7 +146,7 @@
  * children we have and send them appropriate signals when necessary.
  *
  * "Special" children such as the startup, bgwriter and autovacuum launcher
- * tasks are not in this list.	Autovacuum worker and walsender are in it.
+ * tasks are not in this list.  Autovacuum worker and walsender are in it.
  * Also, "dead_end" children are in it: these are children launched just for
  * the purpose of sending a friendly rejection message to a would-be client.
  * We must track them because they are attached to shared memory, but we know
@@ -163,7 +163,7 @@ typedef struct bkend
 	int			child_slot;		/* PMChildSlot for this backend, if any */
 
 	/*
-	 * Flavor of backend or auxiliary process.	Note that BACKEND_TYPE_WALSND
+	 * Flavor of backend or auxiliary process.  Note that BACKEND_TYPE_WALSND
 	 * backends initially announce themselves as BACKEND_TYPE_NORMAL, so if
 	 * bkend_type is normal, you should check for a recent transition.
 	 */
@@ -183,7 +183,7 @@ static Backend *ShmemBackendArray;
  * List of background workers.
  *
  * A worker that requests a database connection during registration will have
- * rw_backend set, and will be present in BackendList.	Note: do not rely on
+ * rw_backend set, and will be present in BackendList.  Note: do not rely on
  * rw_backend being non-NULL for shmem-connected workers!
  */
 typedef struct RegisteredBgWorker
@@ -236,10 +236,10 @@ static char ExtraOptions[MAXPGPATH];
 
 /*
  * These globals control the behavior of the postmaster in case some
- * backend dumps core.	Normally, it kills all peers of the dead backend
+ * backend dumps core.  Normally, it kills all peers of the dead backend
  * and reinitializes shared memory.  By specifying -s or -n, we can have
  * the postmaster stop (rather than kill) peers and not reinitialize
- * shared data structures.	(Reinit is currently dead code, though.)
+ * shared data structures.  (Reinit is currently dead code, though.)
  */
 static bool Reinit = true;
 static int	SendStop = false;
@@ -289,7 +289,7 @@ static bool RecoveryError = false;		/* T if WAL recovery failed */
  * state and the startup process is launched. The startup process begins by
  * reading the control file and other preliminary initialization steps.
  * In a normal startup, or after crash recovery, the startup process exits
- * with exit code 0 and we switch to PM_RUN state.	However, archive recovery
+ * with exit code 0 and we switch to PM_RUN state.  However, archive recovery
  * is handled specially since it takes much longer and we would like to support
  * hot standby during archive recovery.
  *
@@ -298,7 +298,7 @@ static bool RecoveryError = false;		/* T if WAL recovery failed */
  * checkpointer are launched, while the startup process continues applying WAL.
  * If Hot Standby is enabled, then, after reaching a consistent point in WAL
  * redo, startup process signals us again, and we switch to PM_HOT_STANDBY
- * state and begin accepting connections to perform read-only queries.	When
+ * state and begin accepting connections to perform read-only queries.  When
  * archive recovery is finished, the startup process exits with exit code 0
  * and we switch to PM_RUN state.
  *
@@ -629,7 +629,7 @@ PostmasterMain(int argc, char *argv[])
 	opterr = 1;
 
 	/*
-	 * Parse command-line options.	CAUTION: keep this in sync with
+	 * Parse command-line options.  CAUTION: keep this in sync with
 	 * tcop/postgres.c (the option sets should not conflict) and with the
 	 * common help() function in main/main.c.
 	 */
@@ -1228,7 +1228,7 @@ PostmasterMain(int argc, char *argv[])
 
 
 	/*
-	 * Remove old temporary files.	At this point there can be no other
+	 * Remove old temporary files.  At this point there can be no other
 	 * Postgres processes running in this directory, so this should be safe.
 	 */
 	RemovePgTempFiles();
@@ -1452,7 +1452,7 @@ DetermineSleepTime(struct timeval * timeout)
 
 		/*
 		 * When there are crashed bgworkers, we sleep just long enough that
-		 * they are restarted when they request to be.	Scan the list to
+		 * they are restarted when they request to be.  Scan the list to
 		 * determine the minimum of all wakeup times according to most recent
 		 * crash time and requested restart interval.
 		 */
@@ -1723,7 +1723,7 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 	{
 		/*
 		 * EOF after SSLdone probably means the client didn't like our
-		 * response to NEGOTIATE_SSL_CODE.	That's not an error condition, so
+		 * response to NEGOTIATE_SSL_CODE.  That's not an error condition, so
 		 * don't clutter the log with a complaint.
 		 */
 		if (!SSLdone)
@@ -1848,7 +1848,7 @@ retry1:
 		int32		offset = sizeof(ProtocolVersion);
 
 		/*
-		 * Scan packet body for name/option pairs.	We can assume any string
+		 * Scan packet body for name/option pairs.  We can assume any string
 		 * beginning within the packet body is null-terminated, thanks to
 		 * zeroing extra byte above.
 		 */
@@ -2268,7 +2268,7 @@ reset_shared(int port)
 	 *
 	 * Note: in each "cycle of life" we will normally assign the same IPC keys
 	 * (if using SysV shmem and/or semas), since the port number is used to
-	 * determine IPC keys.	This helps ensure that we will clean up dead IPC
+	 * determine IPC keys.  This helps ensure that we will clean up dead IPC
 	 * objects if the postmaster crashes and is restarted.
 	 */
 	CreateSharedMemoryAndSemaphores(false, port);
@@ -2629,7 +2629,7 @@ reaper(SIGNAL_ARGS)
 				/*
 				 * OK, we saw normal exit of the checkpointer after it's been
 				 * told to shut down.  We expect that it wrote a shutdown
-				 * checkpoint.	(If for some reason it didn't, recovery will
+				 * checkpoint.  (If for some reason it didn't, recovery will
 				 * occur on next postmaster start.)
 				 *
 				 * At this point we should have no normal backend children
@@ -2705,7 +2705,7 @@ reaper(SIGNAL_ARGS)
 		/*
 		 * Was it the autovacuum launcher?	Normal exit can be ignored; we'll
 		 * start a new one at the next iteration of the postmaster's main
-		 * loop, if necessary.	Any other exit condition is treated as a
+		 * loop, if necessary.  Any other exit condition is treated as a
 		 * crash.
 		 */
 		if (pid == AutoVacPID)
@@ -2847,7 +2847,7 @@ CleanupBackgroundWorker(int pid,
 		if (!ReleasePostmasterChildSlot(rw->rw_child_slot))
 		{
 			/*
-			 * Uh-oh, the child failed to clean itself up.	Treat as a crash
+			 * Uh-oh, the child failed to clean itself up.  Treat as a crash
 			 * after all.
 			 */
 			rw->rw_crashed_at = GetCurrentTimestamp();
@@ -2931,7 +2931,7 @@ CleanupBackend(int pid,
 				if (!ReleasePostmasterChildSlot(bp->child_slot))
 				{
 					/*
-					 * Uh-oh, the child failed to clean itself up.	Treat as a
+					 * Uh-oh, the child failed to clean itself up.  Treat as a
 					 * crash after all.
 					 */
 					HandleChildCrash(pid, exitstatus, _("server process"));
@@ -3004,7 +3004,7 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 		else
 		{
 			/*
-			 * This worker is still alive.	Unless we did so already, tell it
+			 * This worker is still alive.  Unless we did so already, tell it
 			 * to commit hara-kiri.
 			 *
 			 * SIGQUIT is the special signal that says exit without proc_exit
@@ -3328,7 +3328,7 @@ PostmasterStateMachine(void)
 			if (FatalError)
 			{
 				/*
-				 * Start waiting for dead_end children to die.	This state
+				 * Start waiting for dead_end children to die.  This state
 				 * change causes ServerLoop to stop creating new ones.
 				 */
 				pmState = PM_WAIT_DEAD_END;
@@ -3427,7 +3427,7 @@ PostmasterStateMachine(void)
 
 	/*
 	 * If we've been told to shut down, we exit as soon as there are no
-	 * remaining children.	If there was a crash, cleanup will occur at the
+	 * remaining children.  If there was a crash, cleanup will occur at the
 	 * next startup.  (Before PostgreSQL 8.3, we tried to recover from the
 	 * crash before exiting, but that seems unwise if we are quitting because
 	 * we got SIGTERM from init --- there may well not be time for recovery
@@ -3503,7 +3503,7 @@ PostmasterStateMachine(void)
  * system().
  *
  * There is a race condition for recently-forked children: they might not
- * have executed setsid() yet.	So we signal the child directly as well as
+ * have executed setsid() yet.  So we signal the child directly as well as
  * the group.  We assume such a child will handle the signal before trying
  * to spawn any grandchild processes.  We also assume that signaling the
  * child twice will not cause any problems.
@@ -3724,7 +3724,7 @@ BackendStartup(Port *port)
 
 /*
  * Try to report backend fork() failure to client before we close the
- * connection.	Since we do not care to risk blocking the postmaster on
+ * connection.  Since we do not care to risk blocking the postmaster on
  * this connection, we set the connection to non-blocking and try only once.
  *
  * This is grungy special-purpose code; we cannot use backend libpq since
@@ -3778,7 +3778,7 @@ BackendInitialize(Port *port)
 	/*
 	 * PreAuthDelay is a debugging aid for investigating problems in the
 	 * authentication cycle: it can be set in postgresql.conf to allow time to
-	 * attach to the newly-forked backend with a debugger.	(See also
+	 * attach to the newly-forked backend with a debugger.  (See also
 	 * PostAuthDelay, which we allow clients to pass through PGOPTIONS, but it
 	 * is not honored until after authentication.)
 	 */
@@ -3805,7 +3805,7 @@ BackendInitialize(Port *port)
 
 	/*
 	 * If possible, make this process a group leader, so that the postmaster
-	 * can signal any child processes too.	(We do this now on the off chance
+	 * can signal any child processes too.  (We do this now on the off chance
 	 * that something might spawn a child process during authentication.)
 	 */
 #ifdef HAVE_SETSID
@@ -3815,7 +3815,7 @@ BackendInitialize(Port *port)
 
 	/*
 	 * We arrange for a simple exit(1) if we receive SIGTERM or SIGQUIT or
-	 * timeout while trying to collect the startup packet.	Otherwise the
+	 * timeout while trying to collect the startup packet.  Otherwise the
 	 * postmaster cannot shutdown the database FAST or IMMED cleanly if a
 	 * buggy client fails to send the packet promptly.
 	 */
@@ -3902,7 +3902,7 @@ BackendInitialize(Port *port)
 	status = ProcessStartupPacket(port, false);
 
 	/*
-	 * Stop here if it was bad or a cancel packet.	ProcessStartupPacket
+	 * Stop here if it was bad or a cancel packet.  ProcessStartupPacket
 	 * already did any appropriate error reporting.
 	 */
 	if (status != STATUS_OK)
@@ -4453,7 +4453,7 @@ SubPostmasterMain(int argc, char *argv[])
 	read_nondefault_variables();
 
 	/*
-	 * Reload any libraries that were preloaded by the postmaster.	Since we
+	 * Reload any libraries that were preloaded by the postmaster.  Since we
 	 * exec'd this process, those libraries didn't come along with us; but we
 	 * should load them into all child processes to be consistent with the
 	 * non-EXEC_BACKEND behavior.
@@ -4506,7 +4506,7 @@ SubPostmasterMain(int argc, char *argv[])
 		 *
 		 * This prevents a randomized stack base address that causes child
 		 * shared memory to be at a different address than the parent, making
-		 * it impossible to attached to shared memory.	Return the value to
+		 * it impossible to attached to shared memory.  Return the value to
 		 * '1' when finished.
 		 */
 		CreateSharedMemoryAndSemaphores(false, 0);
@@ -4626,7 +4626,7 @@ ExitPostmaster(int status)
 	/* should cleanup shared memory and kill all backends */
 
 	/*
-	 * Not sure of the semantics here.	When the Postmaster dies, should the
+	 * Not sure of the semantics here.  When the Postmaster dies, should the
 	 * backends all be killed? probably not.
 	 *
 	 * MUST		-- vadim 05-10-1999
@@ -4924,7 +4924,7 @@ CountChildren(int target)
 /*
  * StartChildProcess -- start an auxiliary process for the postmaster
  *
- * xlop determines what kind of child will be started.	All child types
+ * xlop determines what kind of child will be started.  All child types
  * initially go to AuxiliaryProcessMain, which will handle common setup.
  *
  * Return value of StartChildProcess is subprocess' PID, or 0 if failed
@@ -5148,7 +5148,7 @@ CreateOptsFile(int argc, char *argv[], char *fullprogname)
  * These arrays include regular backends, autovac workers, walsenders
  * and background workers, but not special children nor dead_end children.
  * This allows the arrays to have a fixed maximum size, to wit the same
- * too-many-children limit enforced by canAcceptConnections().	The exact value
+ * too-many-children limit enforced by canAcceptConnections().  The exact value
  * isn't too critical as long as it's more than MaxBackends.
  */
 int
@@ -5355,9 +5355,9 @@ bgworker_quickdie(SIGNAL_ARGS)
 	on_exit_reset();
 
 	/*
-	 * Note we do exit(0) here, not exit(2) like quickdie.	The reason is that
+	 * Note we do exit(0) here, not exit(2) like quickdie.  The reason is that
 	 * we don't want to be seen this worker as independently crashed, because
-	 * then postmaster would delay restarting it again afterwards.	If some
+	 * then postmaster would delay restarting it again afterwards.  If some
 	 * idiot DBA manually sends SIGQUIT to a random bgworker, the "dead man
 	 * switch" will ensure that postmaster sees this as a crash.
 	 */
@@ -5508,7 +5508,7 @@ StartBackgroundWorker(void)
 #endif
 
 	/*
-	 * Note that in normal processes, we would call InitPostgres here.	For a
+	 * Note that in normal processes, we would call InitPostgres here.  For a
 	 * worker, however, we don't know what database to connect to, yet; so we
 	 * need to wait until the user code does it via
 	 * BackgroundWorkerInitializeConnection().
@@ -6172,7 +6172,7 @@ ShmemBackendArrayRemove(Backend *bn)
 #ifdef WIN32
 
 /*
- * Subset implementation of waitpid() for Windows.	We assume pid is -1
+ * Subset implementation of waitpid() for Windows.  We assume pid is -1
  * (that is, check all child processes) and options is WNOHANG (don't wait).
  */
 static pid_t

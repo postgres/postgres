@@ -128,7 +128,7 @@ forget_matching_deletion(RelFileNode node, BlockNumber delblk)
  * in correct itemno sequence, but physically the opposite order from the
  * original, because we insert them in the opposite of itemno order.  This
  * does not matter in any current btree code, but it's something to keep an
- * eye on.	Is it worth changing just on general principles?  See also the
+ * eye on.  Is it worth changing just on general principles?  See also the
  * notes in btree_xlog_split().
  */
 static void
@@ -179,7 +179,7 @@ _bt_restore_meta(RelFileNode rnode, XLogRecPtr lsn,
 	pageop->btpo_flags = BTP_META;
 
 	/*
-	 * Set pd_lower just past the end of the metadata.	This is not essential
+	 * Set pd_lower just past the end of the metadata.  This is not essential
 	 * but it makes the page look compressible to xlog.c.
 	 */
 	((PageHeader) metapg)->pd_lower =
@@ -387,7 +387,7 @@ btree_xlog_split(bool onleft, bool isroot,
 
 				/*
 				 * Remove the items from the left page that were copied to the
-				 * right page.	Also remove the old high key, if any. (We must
+				 * right page.  Also remove the old high key, if any. (We must
 				 * remove everything before trying to insert any items, else
 				 * we risk not having enough space.)
 				 */
@@ -625,7 +625,7 @@ btree_xlog_delete_get_latestRemovedXid(xl_btree_delete *xlrec)
 
 	/*
 	 * In what follows, we have to examine the previous state of the index
-	 * page, as well as the heap page(s) it points to.	This is only valid if
+	 * page, as well as the heap page(s) it points to.  This is only valid if
 	 * WAL replay has reached a consistent database state; which means that
 	 * the preceding check is not just an optimization, but is *necessary*. We
 	 * won't have let in any user sessions before we reach consistency.
@@ -634,9 +634,9 @@ btree_xlog_delete_get_latestRemovedXid(xl_btree_delete *xlrec)
 		elog(PANIC, "btree_xlog_delete_get_latestRemovedXid: cannot operate with inconsistent data");
 
 	/*
-	 * Get index page.	If the DB is consistent, this should not fail, nor
+	 * Get index page.  If the DB is consistent, this should not fail, nor
 	 * should any of the heap page fetches below.  If one does, we return
-	 * InvalidTransactionId to cancel all HS transactions.	That's probably
+	 * InvalidTransactionId to cancel all HS transactions.  That's probably
 	 * overkill, but it's safe, and certainly better than panicking here.
 	 */
 	ibuffer = XLogReadBuffer(xlrec->node, xlrec->block, false);
@@ -740,7 +740,7 @@ btree_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 	 * If we have any conflict processing to do, it must happen before we
 	 * update the page.
 	 *
-	 * Btree delete records can conflict with standby queries.	You might
+	 * Btree delete records can conflict with standby queries.  You might
 	 * think that vacuum records would conflict as well, but we've handled
 	 * that already.  XLOG_HEAP2_CLEANUP_INFO records provide the highest xid
 	 * cleaned by the vacuum of the heap and so we can resolve any conflicts

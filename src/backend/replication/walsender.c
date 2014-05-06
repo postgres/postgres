@@ -72,7 +72,7 @@
 #include "utils/timestamp.h"
 
 /*
- * Maximum data payload in a WAL data message.	Must be >= XLOG_BLCKSZ.
+ * Maximum data payload in a WAL data message.  Must be >= XLOG_BLCKSZ.
  *
  * We don't have a good idea of what a good value would be; there's some
  * overhead per message in both walsender and walreceiver, but on the other
@@ -942,7 +942,7 @@ ProcessStandbyHSFeedbackMessage(void)
 	 * perhaps far enough to make feedbackXmin wrap around.  In that case the
 	 * xmin we set here would be "in the future" and have no effect.  No point
 	 * in worrying about this since it's too late to save the desired data
-	 * anyway.	Assuming that the standby sends us an increasing sequence of
+	 * anyway.  Assuming that the standby sends us an increasing sequence of
 	 * xmins, this could only happen during the first reply cycle, else our
 	 * own xmin would prevent nextXid from advancing so far.
 	 *
@@ -1526,7 +1526,7 @@ XLogSend(bool *caughtup)
 		 *
 		 * Attempt to send all data that's already been written out and
 		 * fsync'd to disk.  We cannot go further than what's been written out
-		 * given the current implementation of XLogRead().	And in any case
+		 * given the current implementation of XLogRead().  And in any case
 		 * it's unsafe to send WAL that is not securely down to disk on the
 		 * master: if the master subsequently crashes and restarts, slaves
 		 * must not have applied any WAL that gets lost on the master.

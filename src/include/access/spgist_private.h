@@ -185,7 +185,7 @@ typedef struct SpGistCache
 
 
 /*
- * SPGiST tuple types.	Note: inner, leaf, and dead tuple structs
+ * SPGiST tuple types.  Note: inner, leaf, and dead tuple structs
  * must have the same tupstate field in the same position!	Real inner and
  * leaf tuples always have tupstate = LIVE; if the state is something else,
  * use the SpGistDeadTuple struct to inspect the tuple.

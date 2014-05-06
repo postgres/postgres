@@ -120,7 +120,7 @@ pq_sendbytes(StringInfo buf, const char *data, int datalen)
  *		pq_sendcountedtext - append a counted text string (with character set conversion)
  *
  * The data sent to the frontend by this routine is a 4-byte count field
- * followed by the string.	The count includes itself or not, as per the
+ * followed by the string.  The count includes itself or not, as per the
  * countincludesself flag (pre-3.0 protocol requires it to include itself).
  * The passed text string need not be null-terminated, and the data sent
  * to the frontend isn't either.

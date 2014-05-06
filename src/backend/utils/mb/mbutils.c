@@ -29,7 +29,7 @@
 /*
  * We maintain a simple linked list caching the fmgr lookup info for the
  * currently selected conversion functions, as well as any that have been
- * selected previously in the current session.	(We remember previous
+ * selected previously in the current session.  (We remember previous
  * settings because we must be able to restore a previous setting during
  * transaction rollback, without doing any fresh catalog accesses.)
  *
@@ -76,7 +76,7 @@ static int	cliplen(const char *str, int len, int limit);
 
 
 /*
- * Prepare for a future call to SetClientEncoding.	Success should mean
+ * Prepare for a future call to SetClientEncoding.  Success should mean
  * that SetClientEncoding is guaranteed to succeed for this encoding request.
  *
  * (But note that success before backend_startup_complete does not guarantee
@@ -148,7 +148,7 @@ PrepareClientEncoding(int encoding)
 
 		/*
 		 * We cannot yet remove any older entry for the same encoding pair,
-		 * since it could still be in use.	SetClientEncoding will clean up.
+		 * since it could still be in use.  SetClientEncoding will clean up.
 		 */
 
 		return 0;				/* success */
@@ -157,8 +157,8 @@ PrepareClientEncoding(int encoding)
 	{
 		/*
 		 * If we're not in a live transaction, the only thing we can do is
-		 * restore a previous setting using the cache.	This covers all
-		 * transaction-rollback cases.	The only case it might not work for is
+		 * restore a previous setting using the cache.  This covers all
+		 * transaction-rollback cases.  The only case it might not work for is
 		 * trying to change client_encoding on the fly by editing
 		 * postgresql.conf and SIGHUP'ing.  Which would probably be a stupid
 		 * thing to do anyway.
@@ -316,7 +316,7 @@ pg_get_client_encoding_name(void)
  *
  * CAUTION: although the presence of a length argument means that callers
  * can pass non-null-terminated strings, care is required because the same
- * string will be passed back if no conversion occurs.	Such callers *must*
+ * string will be passed back if no conversion occurs.  Such callers *must*
  * check whether result == src and handle that case differently.
  *
  * Note: we try to avoid raising error, since that could get us into
@@ -572,7 +572,7 @@ pg_any_to_server(const char *s, int len, int encoding)
 		 * the selected client_encoding.  If the client encoding is ASCII-safe
 		 * then we just do a straight validation under that encoding.  For an
 		 * ASCII-unsafe encoding we have a problem: we dare not pass such data
-		 * to the parser but we have no way to convert it.	We compromise by
+		 * to the parser but we have no way to convert it.  We compromise by
 		 * rejecting the data if it contains any non-ASCII characters.
 		 */
 		if (PG_VALID_BE_ENCODING(encoding))

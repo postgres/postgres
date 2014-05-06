@@ -114,13 +114,13 @@ ts_typanalyze(PG_FUNCTION_ARGS)
  *	language's frequency table, where K is the target number of entries in
  *	the MCELEM array plus an arbitrary constant, meant to reflect the fact
  *	that the most common words in any language would usually be stopwords
- *	so we will not actually see them in the input.	We assume that the
+ *	so we will not actually see them in the input.  We assume that the
  *	distribution of word frequencies (including the stopwords) follows Zipf's
  *	law with an exponent of 1.
  *
  *	Assuming Zipfian distribution, the frequency of the K'th word is equal
  *	to 1/(K * H(W)) where H(n) is 1/2 + 1/3 + ... + 1/n and W is the number of
- *	words in the language.	Putting W as one million, we get roughly 0.07/K.
+ *	words in the language.  Putting W as one million, we get roughly 0.07/K.
  *	Assuming top 10 words are stopwords gives s = 0.07/(K + 10).  We set
  *	epsilon = s/10, which gives bucket width w = (K + 10)/0.007 and
  *	maximum expected hashtable size of about 1000 * (K + 10).
@@ -161,7 +161,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 	TrackItem  *item;
 
 	/*
-	 * We want statistics_target * 10 lexemes in the MCELEM array.	This
+	 * We want statistics_target * 10 lexemes in the MCELEM array.  This
 	 * multiplier is pretty arbitrary, but is meant to reflect the fact that
 	 * the number of individual lexeme values tracked in pg_statistic ought to
 	 * be more than the number of values for a simple scalar column.
@@ -232,7 +232,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 
 		/*
 		 * We loop through the lexemes in the tsvector and add them to our
-		 * tracking hashtable.	Note: the hashtable entries will point into
+		 * tracking hashtable.  Note: the hashtable entries will point into
 		 * the (detoasted) tsvector value, therefore we cannot free that
 		 * storage until we're done.
 		 */
@@ -299,7 +299,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 
 		/*
 		 * Construct an array of the interesting hashtable items, that is,
-		 * those meeting the cutoff frequency (s - epsilon)*N.	Also identify
+		 * those meeting the cutoff frequency (s - epsilon)*N.  Also identify
 		 * the minimum and maximum frequencies among these items.
 		 *
 		 * Since epsilon = s/10 and bucket_width = 1/epsilon, the cutoff
@@ -332,7 +332,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 
 		/*
 		 * If we obtained more lexemes than we really want, get rid of those
-		 * with least frequencies.	The easiest way is to qsort the array into
+		 * with least frequencies.  The easiest way is to qsort the array into
 		 * descending frequency order and truncate the array.
 		 */
 		if (num_mcelem < track_len)
@@ -363,7 +363,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 			 * they get sorted on frequencies. The rationale is that we
 			 * usually search through most common elements looking for a
 			 * specific value, so we can grab its frequency.  When values are
-			 * presorted we can employ binary search for that.	See
+			 * presorted we can employ binary search for that.  See
 			 * ts_selfuncs.c for a real usage scenario.
 			 */
 			qsort(sort_table, num_mcelem, sizeof(TrackItem *),

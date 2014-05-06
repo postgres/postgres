@@ -104,7 +104,7 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 
 	/*
 	 * For materialized views, lock down security-restricted operations and
-	 * arrange to make GUC variable changes local to this command.	This is
+	 * arrange to make GUC variable changes local to this command.  This is
 	 * not necessary for security, but this keeps the behavior similar to
 	 * REFRESH MATERIALIZED VIEW.  Otherwise, one could create a materialized
 	 * view not possible to refresh.
@@ -124,9 +124,9 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	 * plancache.c.
 	 *
 	 * Because the rewriter and planner tend to scribble on the input, we make
-	 * a preliminary copy of the source querytree.	This prevents problems in
+	 * a preliminary copy of the source querytree.  This prevents problems in
 	 * the case that CTAS is in a portal or plpgsql function and is executed
-	 * repeatedly.	(See also the same hack in EXPLAIN and PREPARE.)
+	 * repeatedly.  (See also the same hack in EXPLAIN and PREPARE.)
 	 */
 	rewritten = QueryRewrite((Query *) copyObject(query));
 
@@ -141,7 +141,7 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 
 	/*
 	 * Use a snapshot with an updated command ID to ensure this query sees
-	 * results of any previously executed queries.	(This could only matter if
+	 * results of any previously executed queries.  (This could only matter if
 	 * the planner executed an allegedly-stable function that changed the
 	 * database contents, but let's do it anyway to be parallel to the EXPLAIN
 	 * code path.)

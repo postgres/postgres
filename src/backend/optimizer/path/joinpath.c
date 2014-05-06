@@ -107,7 +107,7 @@ add_paths_to_joinrel(PlannerInfo *root,
 
 	/*
 	 * If it's SEMI or ANTI join, compute correction factors for cost
-	 * estimation.	These will be the same for all paths.
+	 * estimation.  These will be the same for all paths.
 	 */
 	if (jointype == JOIN_SEMI || jointype == JOIN_ANTI)
 		compute_semi_anti_join_factors(root, outerrel, innerrel,
@@ -122,7 +122,7 @@ add_paths_to_joinrel(PlannerInfo *root,
 	 * to the parameter source rel instead of joining to the other input rel.
 	 * This restriction reduces the number of parameterized paths we have to
 	 * deal with at higher join levels, without compromising the quality of
-	 * the resulting plan.	We express the restriction as a Relids set that
+	 * the resulting plan.  We express the restriction as a Relids set that
 	 * must overlap the parameterization of any proposed join path.
 	 */
 	foreach(lc, root->join_info_list)
@@ -155,7 +155,7 @@ add_paths_to_joinrel(PlannerInfo *root,
 	 * However, when a LATERAL subquery is involved, we have to be a bit
 	 * laxer, because there will simply not be any paths for the joinrel that
 	 * aren't parameterized by whatever the subquery is parameterized by,
-	 * unless its parameterization is resolved within the joinrel.	Hence, add
+	 * unless its parameterization is resolved within the joinrel.  Hence, add
 	 * to param_source_rels anything that is laterally referenced in either
 	 * input and is not in the join already.
 	 */
@@ -208,7 +208,7 @@ add_paths_to_joinrel(PlannerInfo *root,
 
 	/*
 	 * 1. Consider mergejoin paths where both relations must be explicitly
-	 * sorted.	Skip this if we can't mergejoin.
+	 * sorted.  Skip this if we can't mergejoin.
 	 */
 	if (mergejoin_allowed)
 		sort_inner_and_outer(root, joinrel, outerrel, innerrel,
@@ -233,7 +233,7 @@ add_paths_to_joinrel(PlannerInfo *root,
 
 	/*
 	 * 3. Consider paths where the inner relation need not be explicitly
-	 * sorted.	This includes mergejoins only (nestloops were already built in
+	 * sorted.  This includes mergejoins only (nestloops were already built in
 	 * match_unsorted_outer).
 	 *
 	 * Diked out as redundant 2/13/2000 -- tgl.  There isn't any really
@@ -507,7 +507,7 @@ try_hashjoin_path(PlannerInfo *root,
  * We already know that the clause is a binary opclause referencing only the
  * rels in the current join.  The point here is to check whether it has the
  * form "outerrel_expr op innerrel_expr" or "innerrel_expr op outerrel_expr",
- * rather than mixing outer and inner vars on either side.	If it matches,
+ * rather than mixing outer and inner vars on either side.  If it matches,
  * we set the transient flag outer_is_left to identify which side is which.
  */
 static inline bool
@@ -572,7 +572,7 @@ sort_inner_and_outer(PlannerInfo *root,
 	 * sort.
 	 *
 	 * This function intentionally does not consider parameterized input
-	 * paths, except when the cheapest-total is parameterized.	If we did so,
+	 * paths, except when the cheapest-total is parameterized.  If we did so,
 	 * we'd have a combinatorial explosion of mergejoin paths of dubious
 	 * value.  This interacts with decisions elsewhere that also discriminate
 	 * against mergejoins with parameterized inputs; see comments in
@@ -619,7 +619,7 @@ sort_inner_and_outer(PlannerInfo *root,
 	 *
 	 * Actually, it's not quite true that every mergeclause ordering will
 	 * generate a different path order, because some of the clauses may be
-	 * partially redundant (refer to the same EquivalenceClasses).	Therefore,
+	 * partially redundant (refer to the same EquivalenceClasses).  Therefore,
 	 * what we do is convert the mergeclause list to a list of canonical
 	 * pathkeys, and then consider different orderings of the pathkeys.
 	 *
@@ -713,7 +713,7 @@ sort_inner_and_outer(PlannerInfo *root,
  * cheapest-total inner-indexscan path (if any), and one on the
  * cheapest-startup inner-indexscan path (if different).
  *
- * We also consider mergejoins if mergejoin clauses are available.	We have
+ * We also consider mergejoins if mergejoin clauses are available.  We have
  * two ways to generate the inner path for a mergejoin: sort the cheapest
  * inner path, or use an inner path that is already suitably ordered for the
  * merge.  If we have several mergeclauses, it could be that there is no inner
@@ -845,8 +845,8 @@ match_unsorted_outer(PlannerInfo *root,
 
 		/*
 		 * If we need to unique-ify the outer path, it's pointless to consider
-		 * any but the cheapest outer.	(XXX we don't consider parameterized
-		 * outers, nor inners, for unique-ified cases.	Should we?)
+		 * any but the cheapest outer.  (XXX we don't consider parameterized
+		 * outers, nor inners, for unique-ified cases.  Should we?)
 		 */
 		if (save_jointype == JOIN_UNIQUE_OUTER)
 		{
@@ -887,7 +887,7 @@ match_unsorted_outer(PlannerInfo *root,
 		{
 			/*
 			 * Consider nestloop joins using this outer path and various
-			 * available paths for the inner relation.	We consider the
+			 * available paths for the inner relation.  We consider the
 			 * cheapest-total paths for each available parameterization of the
 			 * inner relation, including the unparameterized case.
 			 */
@@ -1042,7 +1042,7 @@ match_unsorted_outer(PlannerInfo *root,
 
 			/*
 			 * Look for an inner path ordered well enough for the first
-			 * 'sortkeycnt' innersortkeys.	NB: trialsortkeys list is modified
+			 * 'sortkeycnt' innersortkeys.  NB: trialsortkeys list is modified
 			 * destructively, which is why we made a copy...
 			 */
 			trialsortkeys = list_truncate(trialsortkeys, sortkeycnt);

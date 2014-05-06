@@ -96,7 +96,7 @@ pg_signal_backend(int pid, int sig)
 	/*
 	 * BackendPidGetProc returns NULL if the pid isn't valid; but by the time
 	 * we reach kill(), a process for which we get a valid proc here might
-	 * have terminated on its own.	There's no way to acquire a lock on an
+	 * have terminated on its own.  There's no way to acquire a lock on an
 	 * arbitrary process to prevent that. But since so far all the callers of
 	 * this mechanism involve some request for ending the process anyway, that
 	 * it might end on its own first is not a problem.
@@ -120,7 +120,7 @@ pg_signal_backend(int pid, int sig)
 	 * recycled for a new process, before reaching here?  Then we'd be trying
 	 * to kill the wrong thing.  Seems near impossible when sequential pid
 	 * assignment and wraparound is used.  Perhaps it could happen on a system
-	 * where pid re-use is randomized.	That race condition possibility seems
+	 * where pid re-use is randomized.  That race condition possibility seems
 	 * too unlikely to worry about.
 	 */
 
@@ -140,7 +140,7 @@ pg_signal_backend(int pid, int sig)
 }
 
 /*
- * Signal to cancel a backend process.	This is allowed if you are superuser or
+ * Signal to cancel a backend process.  This is allowed if you are superuser or
  * have the same role as the process being canceled.
  */
 Datum
@@ -333,7 +333,7 @@ pg_tablespace_location(PG_FUNCTION_ARGS)
 
 	/*
 	 * It's useful to apply this function to pg_class.reltablespace, wherein
-	 * zero means "the database's default tablespace".	So, rather than
+	 * zero means "the database's default tablespace".  So, rather than
 	 * throwing an error for zero, we choose to assume that's what is meant.
 	 */
 	if (tablespaceOid == InvalidOid)
@@ -391,7 +391,7 @@ pg_sleep(PG_FUNCTION_ARGS)
 	 * loop.
 	 *
 	 * By computing the intended stop time initially, we avoid accumulation of
-	 * extra delay across multiple sleeps.	This also ensures we won't delay
+	 * extra delay across multiple sleeps.  This also ensures we won't delay
 	 * less than the specified time when WaitLatch is terminated early by a
 	 * non-query-cancelling signal such as SIGHUP.
 	 */
@@ -558,7 +558,7 @@ pg_relation_is_updatable(PG_FUNCTION_ARGS)
  * non-updatable columns.
  *
  * Also, this function encapsulates the decision about just what
- * information_schema.columns.is_updatable actually means.	It's not clear
+ * information_schema.columns.is_updatable actually means.  It's not clear
  * whether deletability of the column's relation should be required, so
  * we want that decision in C code where we could change it without initdb.
  */

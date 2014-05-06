@@ -86,7 +86,7 @@ typedef Node *(*CoerceParamHook) (ParseState *pstate, Param *param,
  * links to current parse state of outer query.
  *
  * p_sourcetext: source string that generated the raw parsetree being
- * analyzed, or NULL if not available.	(The string is used only to
+ * analyzed, or NULL if not available.  (The string is used only to
  * generate cursor positions in error messages: we need it to convert
  * byte-wise locations in parse structures to character-wise cursor
  * positions.)
@@ -115,7 +115,7 @@ typedef Node *(*CoerceParamHook) (ParseState *pstate, Param *param,
  * is not an RTE, rather "visibility" means you could make an RTE from it.
  *
  * p_future_ctes: list of CommonTableExprs (WITH items) that are not yet
- * visible due to scope rules.	This is used to help improve error messages.
+ * visible due to scope rules.  This is used to help improve error messages.
  *
  * p_parent_cte: CommonTableExpr that immediately contains the current query,
  * if any.
@@ -181,7 +181,7 @@ struct ParseState
  *
  * While processing the FROM clause, namespace items may appear with
  * p_lateral_only set, meaning they are visible only to LATERAL
- * subexpressions.	(The pstate's p_lateral_active flag tells whether we are
+ * subexpressions.  (The pstate's p_lateral_active flag tells whether we are
  * inside such a subexpression at the moment.)	If p_lateral_ok is not set,
  * it's an error to actually use such a namespace item.  One might think it
  * would be better to just exclude such items from visibility, but the wording

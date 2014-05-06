@@ -25,7 +25,7 @@
 #include "catalog/genbki.h"
 
 /* ----------------
- *		pg_rewrite definition.	cpp turns this into
+ *		pg_rewrite definition.  cpp turns this into
  *		typedef struct FormData_pg_rewrite
  * ----------------
  */

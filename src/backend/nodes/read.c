@@ -85,21 +85,21 @@ stringToNode(char *str)
  *	  Backslashes themselves must also be backslashed for consistency.
  *	  Any other character can be, but need not be, backslashed as well.
  *	* If the resulting token is '<>' (with no backslash), it is returned
- *	  as a non-NULL pointer to the token but with length == 0.	Note that
+ *	  as a non-NULL pointer to the token but with length == 0.  Note that
  *	  there is no other way to get a zero-length token.
  *
  * Returns a pointer to the start of the next token, and the length of the
- * token (including any embedded backslashes!) in *length.	If there are
+ * token (including any embedded backslashes!) in *length.  If there are
  * no more tokens, NULL and 0 are returned.
  *
  * NOTE: this routine doesn't remove backslashes; the caller must do so
  * if necessary (see "debackslash").
  *
  * NOTE: prior to release 7.0, this routine also had a special case to treat
- * a token starting with '"' as extending to the next '"'.	This code was
+ * a token starting with '"' as extending to the next '"'.  This code was
  * broken, however, since it would fail to cope with a string containing an
  * embedded '"'.  I have therefore removed this special case, and instead
- * introduced rules for using backslashes to quote characters.	Higher-level
+ * introduced rules for using backslashes to quote characters.  Higher-level
  * code should add backslashes to a string constant to ensure it is treated
  * as a single token.
  */
@@ -259,7 +259,7 @@ nodeTokenType(char *token, int length)
  *	  Slightly higher-level reader.
  *
  * This routine applies some semantic knowledge on top of the purely
- * lexical tokenizer pg_strtok().	It can read
+ * lexical tokenizer pg_strtok().   It can read
  *	* Value token nodes (integers, floats, or strings);
  *	* General nodes (via parseNodeString() from readfuncs.c);
  *	* Lists of the above;

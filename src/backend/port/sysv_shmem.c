@@ -250,7 +250,7 @@ IpcMemoryDelete(int status, Datum shmId)
  * Is a previously-existing shmem segment still existing and in use?
  *
  * The point of this exercise is to detect the case where a prior postmaster
- * crashed, but it left child backends that are still running.	Therefore
+ * crashed, but it left child backends that are still running.  Therefore
  * we only care about shmem segments that are associated with the intended
  * DataDir.  This is an important consideration since accidental matches of
  * shmem segment IDs are reasonably common.
@@ -349,14 +349,14 @@ PGSharedMemoryIsInUse(unsigned long id1, unsigned long id2)
  * the storage.
  *
  * Dead Postgres segments are recycled if found, but we do not fail upon
- * collision with non-Postgres shmem segments.	The idea here is to detect and
+ * collision with non-Postgres shmem segments.  The idea here is to detect and
  * re-use keys that may have been assigned by a crashed postmaster or backend.
  *
  * makePrivate means to always create a new segment, rather than attach to
  * or recycle any existing segment.
  *
  * The port number is passed for possible use as a key (for SysV, we use
- * it to generate the starting shmem key).	In a standalone backend,
+ * it to generate the starting shmem key).  In a standalone backend,
  * zero will be passed.
  */
 PGShmemHeader *
@@ -537,7 +537,7 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 /*
  * PGSharedMemoryReAttach
  *
- * Re-attach to an already existing shared memory segment.	In the non
+ * Re-attach to an already existing shared memory segment.  In the non
  * EXEC_BACKEND case this is not used, because postmaster children inherit
  * the shared memory segment attachment via fork().
  *
@@ -579,7 +579,7 @@ PGSharedMemoryReAttach(void)
  *
  * Detach from the shared memory segment, if still attached.  This is not
  * intended for use by the process that originally created the segment
- * (it will have an on_shmem_exit callback registered to do that).	Rather,
+ * (it will have an on_shmem_exit callback registered to do that).  Rather,
  * this is for subprocesses that have inherited an attachment and want to
  * get rid of it.
  */

@@ -48,7 +48,7 @@
  * Range	 Category
  * 0	- 31   0
  * 32	- 63   1
- * ...	  ...  ...
+ * ...    ...  ...
  * 8096 - 8127 253
  * 8128 - 8163 254
  * 8164 - 8192 255
@@ -123,7 +123,7 @@ static uint8 fsm_vacuum_page(Relation rel, FSMAddress addr, bool *eof);
  * will turn out to have too little space available by the time the caller
  * gets a lock on it.  In that case, the caller should report the actual
  * amount of free space available on that page and then try again (see
- * RecordAndGetPageWithFreeSpace).	If InvalidBlockNumber is returned,
+ * RecordAndGetPageWithFreeSpace).  If InvalidBlockNumber is returned,
  * extend the relation.
  */
 BlockNumber

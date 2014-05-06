@@ -199,7 +199,7 @@ XLogReadRecord(XLogReaderState *state, XLogRecPtr RecPtr, char **errormsg)
 			randAccess = true;
 
 		/*
-		 * RecPtr is pointing to end+1 of the previous WAL record.	If we're
+		 * RecPtr is pointing to end+1 of the previous WAL record.  If we're
 		 * at a page boundary, no more records can fit on the current page. We
 		 * must skip over the page header, but we can't do that until we've
 		 * read in the page, since the header size is variable.
@@ -277,7 +277,7 @@ XLogReadRecord(XLogReaderState *state, XLogRecPtr RecPtr, char **errormsg)
 	/*
 	 * If the whole record header is on this page, validate it immediately.
 	 * Otherwise do just a basic sanity check on xl_tot_len, and validate the
-	 * rest of the header after reading it from the next page.	The xl_tot_len
+	 * rest of the header after reading it from the next page.  The xl_tot_len
 	 * check is necessary here to ensure that we enter the "Need to reassemble
 	 * record" code path below; otherwise we might fail to apply
 	 * ValidXLogRecordHeader at all.
@@ -572,7 +572,7 @@ err:
  * Validate an XLOG record header.
  *
  * This is just a convenience subroutine to avoid duplicated code in
- * XLogReadRecord.	It's not intended for use from anywhere else.
+ * XLogReadRecord.  It's not intended for use from anywhere else.
  */
 static bool
 ValidXLogRecordHeader(XLogReaderState *state, XLogRecPtr RecPtr,
@@ -661,7 +661,7 @@ ValidXLogRecordHeader(XLogReaderState *state, XLogRecPtr RecPtr,
  * data to read in) until we've checked the CRCs.
  *
  * We assume all of the record (that is, xl_tot_len bytes) has been read
- * into memory at *record.	Also, ValidXLogRecordHeader() has accepted the
+ * into memory at *record.  Also, ValidXLogRecordHeader() has accepted the
  * record's header, which means in particular that xl_tot_len is at least
  * SizeOfXlogRecord, so it is safe to fetch xl_len.
  */

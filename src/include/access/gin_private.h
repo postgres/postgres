@@ -569,7 +569,7 @@ extern void ginPrepareDataScan(GinBtree btree, Relation index);
  *
  * In each GinScanKeyData, nentries is the true number of entries, while
  * nuserentries is the number that extractQueryFn returned (which is what
- * we report to consistentFn).	The "user" entries must come first.
+ * we report to consistentFn).  The "user" entries must come first.
  */
 typedef struct GinScanKeyData *GinScanKey;
 

@@ -494,7 +494,7 @@ smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo)
 	}
 
 	/*
-	 * Get rid of any remaining buffers for the relations.	bufmgr will just
+	 * Get rid of any remaining buffers for the relations.  bufmgr will just
 	 * drop them without bothering to write the contents.
 	 */
 	DropRelFileNodesAllBuffers(rnodes, nrels);
@@ -679,7 +679,7 @@ smgrtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks)
 	 * Send a shared-inval message to force other backends to close any smgr
 	 * references they may have for this rel.  This is useful because they
 	 * might have open file pointers to segments that got removed, and/or
-	 * smgr_targblock variables pointing past the new rel end.	(The inval
+	 * smgr_targblock variables pointing past the new rel end.  (The inval
 	 * message will come back to our backend, too, causing a
 	 * probably-unnecessary local smgr flush.  But we don't expect that this
 	 * is a performance-critical path.)  As in the unlink code, we want to be

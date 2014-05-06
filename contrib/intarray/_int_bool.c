@@ -353,7 +353,7 @@ gin_bool_consistent(QUERYTYPE *query, bool *check)
 		return FALSE;
 
 	/*
-	 * Set up data for checkcondition_gin.	This must agree with the query
+	 * Set up data for checkcondition_gin.  This must agree with the query
 	 * extraction code in ginint4_queryextract.
 	 */
 	gcv.first = items;

@@ -204,7 +204,7 @@ DefineRule(RuleStmt *stmt, const char *queryString)
 	transformRuleStmt(stmt, queryString, &actions, &whereClause);
 
 	/*
-	 * Find and lock the relation.	Lock level should match
+	 * Find and lock the relation.  Lock level should match
 	 * DefineQueryRewrite.
 	 */
 	relId = RangeVarGetRelid(stmt->relation, AccessExclusiveLock, false);
@@ -412,7 +412,7 @@ DefineQueryRewrite(char *rulename,
 		 *
 		 * If so, check that the relation is empty because the storage for the
 		 * relation is going to be deleted.  Also insist that the rel not have
-		 * any triggers, indexes, or child tables.	(Note: these tests are too
+		 * any triggers, indexes, or child tables.  (Note: these tests are too
 		 * strict, because they will reject relations that once had such but
 		 * don't anymore.  But we don't really care, because this whole
 		 * business of converting relations to views is just a kluge to allow
@@ -715,7 +715,7 @@ checkRuleResultList(List *targetList, TupleDesc resultDesc, bool isSelect,
  * Note: for a view (ON SELECT rule), the checkAsUser field of the OLD
  * RTE entry will be overridden when the view rule is expanded, and the
  * checkAsUser field of the NEW entry is irrelevant because that entry's
- * requiredPerms bits will always be zero.	However, for other types of rules
+ * requiredPerms bits will always be zero.  However, for other types of rules
  * it's important to set these fields to match the rule owner.  So we just set
  * them always.
  */

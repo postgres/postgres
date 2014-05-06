@@ -35,7 +35,7 @@ static int32 typenameTypeMod(ParseState *pstate, const TypeName *typeName,
 /*
  * LookupTypeName
  *		Given a TypeName object, lookup the pg_type syscache entry of the type.
- *		Returns NULL if no such type can be found.	If the type is found,
+ *		Returns NULL if no such type can be found.  If the type is found,
  *		the typmod value represented in the TypeName struct is computed and
  *		stored into *typmod_p.
  *
@@ -48,7 +48,7 @@ static int32 typenameTypeMod(ParseState *pstate, const TypeName *typeName,
  *
  * typmod_p can be passed as NULL if the caller does not care to know the
  * typmod value, but the typmod decoration (if any) will be validated anyway,
- * except in the case where the type is not found.	Note that if the type is
+ * except in the case where the type is not found.  Note that if the type is
  * found but is a shell, and there is typmod decoration, an error will be
  * thrown --- this is intentional.
  *
@@ -113,7 +113,7 @@ LookupTypeName(ParseState *pstate, const TypeName *typeName,
 		 * Look up the field.
 		 *
 		 * XXX: As no lock is taken here, this might fail in the presence of
-		 * concurrent DDL.	But taking a lock would carry a performance
+		 * concurrent DDL.  But taking a lock would carry a performance
 		 * penalty and would also require a permissions check.
 		 */
 		relid = RangeVarGetRelid(rel, NoLock, false);
@@ -578,7 +578,7 @@ typeTypeCollation(Type typ)
 
 /*
  * Given a type structure and a string, returns the internal representation
- * of that string.	The "string" can be NULL to perform conversion of a NULL
+ * of that string.  The "string" can be NULL to perform conversion of a NULL
  * (which might result in failure, if the input function rejects NULLs).
  */
 Datum
@@ -602,7 +602,7 @@ stringTypeDatum(Type tp, char *string, int32 atttypmod)
 	 * instability in the input function is that comparison of Const nodes
 	 * relies on bytewise comparison of the datums, so if the input function
 	 * leaves garbage then subexpressions that should be identical may not get
-	 * recognized as such.	See pgsql-hackers discussion of 2008-04-04.
+	 * recognized as such.  See pgsql-hackers discussion of 2008-04-04.
 	 */
 	if (string && !typform->typbyval)
 	{
@@ -649,7 +649,7 @@ pts_error_callback(void *arg)
 
 	/*
 	 * Currently we just suppress any syntax error position report, rather
-	 * than transforming to an "internal query" error.	It's unlikely that a
+	 * than transforming to an "internal query" error.  It's unlikely that a
 	 * type name is complex enough to need positioning.
 	 */
 	errposition(0);

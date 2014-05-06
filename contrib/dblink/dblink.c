@@ -2397,7 +2397,7 @@ get_tuple_of_interest(Relation rel, int *pkattnums, int pknumatts, char **src_pk
 	 * Build sql statement to look up tuple of interest, ie, the one matching
 	 * src_pkattvals.  We used to use "SELECT *" here, but it's simpler to
 	 * generate a result tuple that matches the table's physical structure,
-	 * with NULLs for any dropped columns.	Otherwise we have to deal with two
+	 * with NULLs for any dropped columns.  Otherwise we have to deal with two
 	 * different tupdescs and everything's very confusing.
 	 */
 	appendStringInfoString(&buf, "SELECT ");
@@ -2623,7 +2623,7 @@ dblink_security_check(PGconn *conn, remoteConn *rconn)
 }
 
 /*
- * For non-superusers, insist that the connstr specify a password.	This
+ * For non-superusers, insist that the connstr specify a password.  This
  * prevents a password from being picked up from .pgpass, a service file,
  * the environment, etc.  We don't want the postgres user's passwords
  * to be accessible to non-superusers.

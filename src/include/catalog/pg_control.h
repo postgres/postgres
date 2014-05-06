@@ -102,9 +102,9 @@ typedef struct ControlFileData
 	uint64		system_identifier;
 
 	/*
-	 * Version identifier information.	Keep these fields at the same offset,
+	 * Version identifier information.  Keep these fields at the same offset,
 	 * especially pg_control_version; they won't be real useful if they move
-	 * around.	(For historical reasons they must be 8 bytes into the file
+	 * around.  (For historical reasons they must be 8 bytes into the file
 	 * rather than immediately at the front.)
 	 *
 	 * pg_control_version identifies the format of pg_control itself.

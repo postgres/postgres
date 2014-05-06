@@ -239,7 +239,7 @@ exprType(const Node *expr)
 /*
  *	exprTypmod -
  *	  returns the type-specific modifier of the expression's result type,
- *	  if it can be determined.	In many cases, it can't and we return -1.
+ *	  if it can be determined.  In many cases, it can't and we return -1.
  */
 int32
 exprTypmod(const Node *expr)
@@ -1477,8 +1477,8 @@ leftmostLoc(int loc1, int loc2)
  *
  * The walker routine should return "false" to continue the tree walk, or
  * "true" to abort the walk and immediately return "true" to the top-level
- * caller.	This can be used to short-circuit the traversal if the walker
- * has found what it came for.	"false" is returned to the top-level caller
+ * caller.  This can be used to short-circuit the traversal if the walker
+ * has found what it came for.  "false" is returned to the top-level caller
  * iff no invocation of the walker returned "true".
  *
  * The node types handled by expression_tree_walker include all those
@@ -1516,7 +1516,7 @@ leftmostLoc(int loc1, int loc2)
  *
  * expression_tree_walker will handle SubPlan nodes by recursing normally
  * into the "testexpr" and the "args" list (which are expressions belonging to
- * the outer plan).  It will not touch the completed subplan, however.	Since
+ * the outer plan).  It will not touch the completed subplan, however.  Since
  * there is no link to the original Query, it is not possible to recurse into
  * subselects of an already-planned expression tree.  This is OK for current
  * uses, but may need to be revisited in future.
@@ -2553,7 +2553,7 @@ expression_tree_mutator(Node *node,
  * This routine exists just to reduce the number of places that need to know
  * where all the expression subtrees of a Query are.  Note it can be used
  * for starting a walk at top level of a Query regardless of whether the
- * mutator intends to descend into subqueries.	It is also useful for
+ * mutator intends to descend into subqueries.  It is also useful for
  * descending into subqueries within a mutator.
  *
  * Some callers want to suppress mutating of certain items in the Query,
@@ -2563,7 +2563,7 @@ expression_tree_mutator(Node *node,
  * indicated items.  (More flag bits may be added as needed.)
  *
  * Normally the Query node itself is copied, but some callers want it to be
- * modified in-place; they must pass QTW_DONT_COPY_QUERY in flags.	All
+ * modified in-place; they must pass QTW_DONT_COPY_QUERY in flags.  All
  * modified substructure is safely copied in any case.
  */
 Query *

@@ -37,7 +37,7 @@
  *
  *	int TAS(slock_t *lock)
  *		Atomic test-and-set instruction.  Attempt to acquire the lock,
- *		but do *not* wait.	Returns 0 if successful, nonzero if unable
+ *		but do *not* wait.  Returns 0 if successful, nonzero if unable
  *		to acquire the lock.
  *
  *	int TAS_SPIN(slock_t *lock)

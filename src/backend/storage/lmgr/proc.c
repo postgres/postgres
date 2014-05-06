@@ -229,10 +229,10 @@ InitProcGlobal(void)
 
 		/*
 		 * Newly created PGPROCs for normal backends, autovacuum and bgworkers
-		 * must be queued up on the appropriate free list.	Because there can
+		 * must be queued up on the appropriate free list.  Because there can
 		 * only ever be a small, fixed number of auxiliary processes, no free
 		 * list is used in that case; InitAuxiliaryProcess() instead uses a
-		 * linear search.	PGPROCs for prepared transactions are added to a
+		 * linear search.   PGPROCs for prepared transactions are added to a
 		 * free list by TwoPhaseShmemInit().
 		 */
 		if (i < MaxConnections)
@@ -291,7 +291,7 @@ InitProcess(void)
 		elog(ERROR, "you already exist");
 
 	/*
-	 * Initialize process-local latch support.	This could fail if the kernel
+	 * Initialize process-local latch support.  This could fail if the kernel
 	 * is low on resources, and if so we want to exit cleanly before acquiring
 	 * any shared-memory resources.
 	 */
@@ -400,7 +400,7 @@ InitProcess(void)
 
 	/*
 	 * We might be reusing a semaphore that belonged to a failed process. So
-	 * be careful and reinitialize its value here.	(This is not strictly
+	 * be careful and reinitialize its value here.  (This is not strictly
 	 * necessary anymore, but seems like a good idea for cleanliness.)
 	 */
 	PGSemaphoreReset(&MyProc->sem);
@@ -450,7 +450,7 @@ InitProcessPhase2(void)
  *
  * Auxiliary processes are presently not expected to wait for real (lockmgr)
  * locks, so we need not set up the deadlock checker.  They are never added
- * to the ProcArray or the sinval messaging mechanism, either.	They also
+ * to the ProcArray or the sinval messaging mechanism, either.  They also
  * don't get a VXID assigned, since this is only useful when we actually
  * hold lockmgr locks.
  *
@@ -476,7 +476,7 @@ InitAuxiliaryProcess(void)
 		elog(ERROR, "you already exist");
 
 	/*
-	 * Initialize process-local latch support.	This could fail if the kernel
+	 * Initialize process-local latch support.  This could fail if the kernel
 	 * is low on resources, and if so we want to exit cleanly before acquiring
 	 * any shared-memory resources.
 	 */
@@ -557,7 +557,7 @@ InitAuxiliaryProcess(void)
 
 	/*
 	 * We might be reusing a semaphore that belonged to a failed process. So
-	 * be careful and reinitialize its value here.	(This is not strictly
+	 * be careful and reinitialize its value here.  (This is not strictly
 	 * necessary anymore, but seems like a good idea for cleanliness.)
 	 */
 	PGSemaphoreReset(&MyProc->sem);
@@ -715,7 +715,7 @@ LockErrorCleanup(void)
 
 	/*
 	 * We used to do PGSemaphoreReset() here to ensure that our proc's wait
-	 * semaphore is reset to zero.	This prevented a leftover wakeup signal
+	 * semaphore is reset to zero.  This prevented a leftover wakeup signal
 	 * from remaining in the semaphore if someone else had granted us the lock
 	 * we wanted before we were able to remove ourselves from the wait-list.
 	 * However, now that ProcSleep loops until waitStatus changes, a leftover
@@ -847,7 +847,7 @@ ProcKill(int code, Datum arg)
 
 /*
  * AuxiliaryProcKill() -- Cut-down version of ProcKill for auxiliary
- *		processes (bgwriter, etc).	The PGPROC and sema are not released, only
+ *		processes (bgwriter, etc).  The PGPROC and sema are not released, only
  *		marked as not-in-use.
  */
 static void
@@ -973,7 +973,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 	 *
 	 * Special case: if I find I should go in front of some waiter, check to
 	 * see if I conflict with already-held locks or the requests before that
-	 * waiter.	If not, then just grant myself the requested lock immediately.
+	 * waiter.  If not, then just grant myself the requested lock immediately.
 	 * This is the same as the test for immediate grant in LockAcquire, except
 	 * we are only considering the part of the wait queue before my insertion
 	 * point.
@@ -992,7 +992,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 				if (lockMethodTable->conflictTab[lockmode] & proc->heldLocks)
 				{
 					/*
-					 * Yes, so we have a deadlock.	Easiest way to clean up
+					 * Yes, so we have a deadlock.  Easiest way to clean up
 					 * correctly is to call RemoveFromWaitQueue(), but we
 					 * can't do that until we are *on* the wait queue. So, set
 					 * a flag to check below, and break out of loop.  Also,
@@ -1114,8 +1114,8 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 
 	/*
 	 * If someone wakes us between LWLockRelease and PGSemaphoreLock,
-	 * PGSemaphoreLock will not block.	The wakeup is "saved" by the semaphore
-	 * implementation.	While this is normally good, there are cases where a
+	 * PGSemaphoreLock will not block.  The wakeup is "saved" by the semaphore
+	 * implementation.  While this is normally good, there are cases where a
 	 * saved wakeup might be leftover from a previous operation (for example,
 	 * we aborted ProcWaitForSignal just before someone did ProcSendSignal).
 	 * So, loop to wait again if the waitStatus shows we haven't been granted
@@ -1135,7 +1135,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 
 		/*
 		 * waitStatus could change from STATUS_WAITING to something else
-		 * asynchronously.	Read it just once per loop to prevent surprising
+		 * asynchronously.  Read it just once per loop to prevent surprising
 		 * behavior (such as missing log messages).
 		 */
 		myWaitStatus = MyProc->waitStatus;
@@ -1544,10 +1544,10 @@ check_done:
  * This can share the semaphore normally used for waiting for locks,
  * since a backend could never be waiting for a lock and a signal at
  * the same time.  As with locks, it's OK if the signal arrives just
- * before we actually reach the waiting state.	Also as with locks,
+ * before we actually reach the waiting state.  Also as with locks,
  * it's necessary that the caller be robust against bogus wakeups:
  * always check that the desired state has occurred, and wait again
- * if not.	This copes with possible "leftover" wakeups.
+ * if not.  This copes with possible "leftover" wakeups.
  */
 void
 ProcWaitForSignal(void)

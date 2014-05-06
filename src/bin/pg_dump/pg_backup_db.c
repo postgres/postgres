@@ -60,7 +60,7 @@ _check_database_version(ArchiveHandle *AH)
 /*
  * Reconnect to the server.  If dbname is not NULL, use that database,
  * else the one associated with the archive handle.  If username is
- * not NULL, use that user name, else the one from the handle.	If
+ * not NULL, use that user name, else the one from the handle.  If
  * both the database and the user match the existing connection already,
  * nothing will be done.
  *
@@ -101,7 +101,7 @@ ReconnectToServer(ArchiveHandle *AH, const char *dbname, const char *username)
  *
  * Note: it's not really all that sensible to use a single-entry password
  * cache if the username keeps changing.  In current usage, however, the
- * username never does change, so one savedPassword is sufficient.	We do
+ * username never does change, so one savedPassword is sufficient.  We do
  * update the cache on the off chance that the password has changed since the
  * start of the run.
  */

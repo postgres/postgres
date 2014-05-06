@@ -35,7 +35,7 @@ static YYLTYPE lookahead_yylloc;	/* yylloc for lookahead token */
  * Intermediate filter between parser and base lexer (base_yylex in scan.l).
  *
  * The filter is needed because in some cases the standard SQL grammar
- * requires more than one token lookahead.	We reduce these cases to one-token
+ * requires more than one token lookahead.  We reduce these cases to one-token
  * lookahead by combining tokens here, in order to keep the grammar LALR(1).
  *
  * Using a filter is simpler than trying to recognize multiword tokens

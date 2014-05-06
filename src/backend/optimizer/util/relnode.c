@@ -262,7 +262,7 @@ RelOptInfo *
 find_join_rel(PlannerInfo *root, Relids relids)
 {
 	/*
-	 * Switch to using hash lookup when list grows "too long".	The threshold
+	 * Switch to using hash lookup when list grows "too long".  The threshold
 	 * is arbitrary and is known only here.
 	 */
 	if (!root->join_rel_hash && list_length(root->join_rel_list) > 32)
@@ -448,7 +448,7 @@ build_join_rel(PlannerInfo *root,
 
 	/*
 	 * Also, if dynamic-programming join search is active, add the new joinrel
-	 * to the appropriate sublist.	Note: you might think the Assert on number
+	 * to the appropriate sublist.  Note: you might think the Assert on number
 	 * of members should be for equality, but some of the level 1 rels might
 	 * have been joinrels already, so we can only assert <=.
 	 */
@@ -529,7 +529,7 @@ build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
  *	  the join list need only be computed once for any join RelOptInfo.
  *	  The join list is fully determined by the set of rels making up the
  *	  joinrel, so we should get the same results (up to ordering) from any
- *	  candidate pair of sub-relations.	But the restriction list is whatever
+ *	  candidate pair of sub-relations.  But the restriction list is whatever
  *	  is not handled in the sub-relations, so it depends on which
  *	  sub-relations are considered.
  *
@@ -538,7 +538,7 @@ build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
  *	  we put it into the joininfo list for the joinrel.  Otherwise,
  *	  the clause is now a restrict clause for the joined relation, and we
  *	  return it to the caller of build_joinrel_restrictlist() to be stored in
- *	  join paths made from this pair of sub-relations.	(It will not need to
+ *	  join paths made from this pair of sub-relations.  (It will not need to
  *	  be considered further up the join tree.)
  *
  *	  In many case we will find the same RestrictInfos in both input
@@ -557,7 +557,7 @@ build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
  *
  * NB: Formerly, we made deep(!) copies of each input RestrictInfo to pass
  * up to the join relation.  I believe this is no longer necessary, because
- * RestrictInfo nodes are no longer context-dependent.	Instead, just include
+ * RestrictInfo nodes are no longer context-dependent.  Instead, just include
  * the original nodes in the lists made for the join relation.
  */
 static List *
@@ -577,7 +577,7 @@ build_joinrel_restrictlist(PlannerInfo *root,
 	result = subbuild_joinrel_restrictlist(joinrel, inner_rel->joininfo, result);
 
 	/*
-	 * Add on any clauses derived from EquivalenceClasses.	These cannot be
+	 * Add on any clauses derived from EquivalenceClasses.  These cannot be
 	 * redundant with the clauses in the joininfo lists, so don't bother
 	 * checking.
 	 */
@@ -915,7 +915,7 @@ get_joinrel_parampathinfo(PlannerInfo *root, RelOptInfo *joinrel,
 										  *restrict_clauses);
 
 	/*
-	 * And now we can build the ParamPathInfo.	No point in saving the
+	 * And now we can build the ParamPathInfo.  No point in saving the
 	 * input-pair-dependent clause list, though.
 	 *
 	 * Note: in GEQO mode, we'll be called in a temporary memory context, but
@@ -935,8 +935,8 @@ get_joinrel_parampathinfo(PlannerInfo *root, RelOptInfo *joinrel,
  *		Get the ParamPathInfo for a parameterized path for an append relation.
  *
  * For an append relation, the rowcount estimate will just be the sum of
- * the estimates for its children.	However, we still need a ParamPathInfo
- * to flag the fact that the path requires parameters.	So this just creates
+ * the estimates for its children.  However, we still need a ParamPathInfo
+ * to flag the fact that the path requires parameters.  So this just creates
  * a suitable struct with zero ppi_rows (and no ppi_clauses either, since
  * the Append node isn't responsible for checking quals).
  */

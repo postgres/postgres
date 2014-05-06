@@ -758,7 +758,7 @@ sendFileWithContent(const char *filename, const char *content)
 
 /*
  * Include the tablespace directory pointed to by 'path' in the output tar
- * stream.	If 'sizeonly' is true, we just calculate a total length and return
+ * stream.  If 'sizeonly' is true, we just calculate a total length and return
  * it, without actually sending anything.
  *
  * Only used to send auxiliary tablespaces, not PGDATA.

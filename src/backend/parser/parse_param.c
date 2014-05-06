@@ -256,7 +256,7 @@ variable_coerce_param_hook(ParseState *pstate, Param *param,
  * of parsing with parse_variable_parameters.
  *
  * Note: this code intentionally does not check that all parameter positions
- * were used, nor that all got non-UNKNOWN types assigned.	Caller of parser
+ * were used, nor that all got non-UNKNOWN types assigned.  Caller of parser
  * should enforce that if it's important.
  */
 void

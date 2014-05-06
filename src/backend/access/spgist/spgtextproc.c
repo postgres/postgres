@@ -26,11 +26,11 @@
  * In the worst case, a inner tuple in a text radix tree could have as many
  * as 256 nodes (one for each possible byte value).  Each node can take 16
  * bytes on MAXALIGN=8 machines.  The inner tuple must fit on an index page
- * of size BLCKSZ.	Rather than assuming we know the exact amount of overhead
+ * of size BLCKSZ.  Rather than assuming we know the exact amount of overhead
  * imposed by page headers, tuple headers, etc, we leave 100 bytes for that
  * (the actual overhead should be no more than 56 bytes at this writing, so
  * there is slop in this number).  So we can safely create prefixes up to
- * BLCKSZ - 256 * 16 - 100 bytes long.	Unfortunately, because 256 * 16 is
+ * BLCKSZ - 256 * 16 - 100 bytes long.  Unfortunately, because 256 * 16 is
  * already 4K, there is no safe prefix length when BLCKSZ is less than 8K;
  * it is always possible to get "SPGiST inner tuple size exceeds maximum"
  * if there are too many distinct next-byte values at a given place in the
@@ -327,7 +327,7 @@ spg_text_picksplit(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Sort by label bytes so that we can group the values into nodes.	This
+	 * Sort by label bytes so that we can group the values into nodes.  This
 	 * also ensures that the nodes are ordered by label value, allowing the
 	 * use of binary search in searchChar.
 	 */
@@ -377,7 +377,7 @@ spg_text_inner_consistent(PG_FUNCTION_ARGS)
 
 	/*
 	 * Reconstruct values represented at this tuple, including parent data,
-	 * prefix of this tuple if any, and the node label if any.	in->level
+	 * prefix of this tuple if any, and the node label if any.  in->level
 	 * should be the length of the previously reconstructed value, and the
 	 * number of bytes added here is prefixSize or prefixSize + 1.
 	 *

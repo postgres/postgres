@@ -414,7 +414,7 @@ gistchoose(Relation r, Page p, IndexTuple it,	/* it has compressed entry */
 	 * some inserts to go to other equally-good subtrees.
 	 *
 	 * keep_current_best is -1 if we haven't yet had to make a random choice
-	 * whether to keep the current best tuple.	If we have done so, and
+	 * whether to keep the current best tuple.  If we have done so, and
 	 * decided to keep it, keep_current_best is 1; if we've decided to
 	 * replace, keep_current_best is 0.  (This state will be reset to -1 as
 	 * soon as we've made the replacement, but sometimes we make the choice in
@@ -456,7 +456,7 @@ gistchoose(Relation r, Page p, IndexTuple it,	/* it has compressed entry */
 			{
 				/*
 				 * New best penalty for column.  Tentatively select this tuple
-				 * as the target, and record the best penalty.	Then reset the
+				 * as the target, and record the best penalty.  Then reset the
 				 * next column's penalty to "unknown" (and indirectly, the
 				 * same for all the ones to its right).  This will force us to
 				 * adopt this tuple's penalty values as the best for all the
@@ -475,7 +475,7 @@ gistchoose(Relation r, Page p, IndexTuple it,	/* it has compressed entry */
 			{
 				/*
 				 * The current tuple is exactly as good for this column as the
-				 * best tuple seen so far.	The next iteration of this loop
+				 * best tuple seen so far.  The next iteration of this loop
 				 * will compare the next column.
 				 */
 			}
@@ -681,7 +681,7 @@ gistcheckpage(Relation rel, Buffer buf)
 	/*
 	 * ReadBuffer verifies that every newly-read page passes
 	 * PageHeaderIsValid, which means it either contains a reasonably sane
-	 * page header or is all-zero.	We have to defend against the all-zero
+	 * page header or is all-zero.  We have to defend against the all-zero
 	 * case, however.
 	 */
 	if (PageIsNew(page))

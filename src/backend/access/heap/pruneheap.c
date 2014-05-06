@@ -100,7 +100,7 @@ heap_page_prune_opt(Relation relation, Buffer buffer, TransactionId OldestXmin)
 	 * Checking free space here is questionable since we aren't holding any
 	 * lock on the buffer; in the worst case we could get a bogus answer. It's
 	 * unlikely to be *seriously* wrong, though, since reading either pd_lower
-	 * or pd_upper is probably atomic.	Avoiding taking a lock seems more
+	 * or pd_upper is probably atomic.  Avoiding taking a lock seems more
 	 * important than sometimes getting a wrong answer in what is after all
 	 * just a heuristic estimate.
 	 */
@@ -315,8 +315,8 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
  * OldestXmin is the cutoff XID used to identify dead tuples.
  *
  * We don't actually change the page here, except perhaps for hint-bit updates
- * caused by HeapTupleSatisfiesVacuum.	We just add entries to the arrays in
- * prstate showing the changes to be made.	Items to be redirected are added
+ * caused by HeapTupleSatisfiesVacuum.  We just add entries to the arrays in
+ * prstate showing the changes to be made.  Items to be redirected are added
  * to the redirected[] array (two entries per redirection); items to be set to
  * LP_DEAD state are added to nowdead[]; and items to be set to LP_UNUSED
  * state are added to nowunused[].
@@ -358,7 +358,7 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 			 * We need this primarily to handle aborted HOT updates, that is,
 			 * XMIN_INVALID heap-only tuples.  Those might not be linked to by
 			 * any chain, since the parent tuple might be re-updated before
-			 * any pruning occurs.	So we have to be able to reap them
+			 * any pruning occurs.  So we have to be able to reap them
 			 * separately from chain-pruning.  (Note that
 			 * HeapTupleHeaderIsHotUpdated will never return true for an
 			 * XMIN_INVALID tuple, so this code will work even when there were
@@ -544,7 +544,7 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 
 		/*
 		 * If the root entry had been a normal tuple, we are deleting it, so
-		 * count it in the result.	But changing a redirect (even to DEAD
+		 * count it in the result.  But changing a redirect (even to DEAD
 		 * state) doesn't count.
 		 */
 		if (ItemIdIsNormal(rootlp))
@@ -633,7 +633,7 @@ heap_prune_record_unused(PruneState *prstate, OffsetNumber offnum)
  * buffer, and is inside a critical section.
  *
  * This is split out because it is also used by heap_xlog_clean()
- * to replay the WAL record when needed after a crash.	Note that the
+ * to replay the WAL record when needed after a crash.  Note that the
  * arguments are identical to those of log_heap_clean().
  */
 void

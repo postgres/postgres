@@ -76,12 +76,12 @@ wchareq(char *p1, char *p2)
 
 /*
  * Formerly we had a routine iwchareq() here that tried to do case-insensitive
- * comparison of multibyte characters.	It did not work at all, however,
+ * comparison of multibyte characters.  It did not work at all, however,
  * because it relied on tolower() which has a single-byte API ... and
  * towlower() wouldn't be much better since we have no suitably cheap way
  * of getting a single character transformed to the system's wchar_t format.
  * So now, we just downcase the strings using lower() and apply regular LIKE
- * comparison.	This should be revisited when we install better locale support.
+ * comparison.  This should be revisited when we install better locale support.
  */
 
 /*

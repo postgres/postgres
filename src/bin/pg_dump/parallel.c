@@ -166,7 +166,7 @@ GetMyPSlot(ParallelState *pstate)
 }
 
 /*
- * Fail and die, with a message to stderr.	Parameters as for write_msg.
+ * Fail and die, with a message to stderr.  Parameters as for write_msg.
  *
  * This is defined in parallel.c, because in parallel mode, things are more
  * complicated. If the worker process does exit_horribly(), we forward its
@@ -670,7 +670,7 @@ ParallelBackupEnd(ArchiveHandle *AH, ParallelState *pstate)
  * AH->MasterStartParallelItemPtr, a routine of the output format. This
  * function's arguments are the parents archive handle AH (containing the full
  * catalog information), the TocEntry that the worker should work on and a
- * T_Action act indicating whether this is a backup or a restore item.	The
+ * T_Action act indicating whether this is a backup or a restore item.  The
  * function then converts the TocEntry assignment into a string that is then
  * sent over to the worker process. In the simplest case that would be
  * something like "DUMP 1234", with 1234 being the TocEntry id.

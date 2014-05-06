@@ -181,7 +181,7 @@ transformWithClause(ParseState *pstate, WithClause *withClause)
 		checkWellFormedRecursion(&cstate);
 
 		/*
-		 * Set up the ctenamespace for parse analysis.	Per spec, all the WITH
+		 * Set up the ctenamespace for parse analysis.  Per spec, all the WITH
 		 * items are visible to all others, so stuff them all in before parse
 		 * analysis.  We build the list in safe processing order so that the
 		 * planner can process the queries in sequence.
@@ -207,7 +207,7 @@ transformWithClause(ParseState *pstate, WithClause *withClause)
 	{
 		/*
 		 * For non-recursive WITH, just analyze each CTE in sequence and then
-		 * add it to the ctenamespace.	This corresponds to the spec's
+		 * add it to the ctenamespace.  This corresponds to the spec's
 		 * definition of the scope of each WITH name.  However, to allow error
 		 * reports to be aware of the possibility of an erroneous reference,
 		 * we maintain a list in p_future_ctes of the not-yet-visible CTEs.
@@ -245,7 +245,7 @@ analyzeCTE(ParseState *pstate, CommonTableExpr *cte)
 	cte->ctequery = (Node *) query;
 
 	/*
-	 * Check that we got something reasonable.	These first two cases should
+	 * Check that we got something reasonable.  These first two cases should
 	 * be prevented by the grammar.
 	 */
 	if (!IsA(query, Query))
@@ -393,7 +393,7 @@ analyzeCTETargetList(ParseState *pstate, CommonTableExpr *cte, List *tlist)
 
 		/*
 		 * If the CTE is recursive, force the exposed column type of any
-		 * "unknown" column to "text".	This corresponds to the fact that
+		 * "unknown" column to "text".  This corresponds to the fact that
 		 * SELECT 'foo' UNION SELECT 'bar' will ultimately produce text. We
 		 * might see "unknown" as a result of an untyped literal in the
 		 * non-recursive term's select list, and if we don't convert to text

@@ -277,7 +277,7 @@ executeMaintenanceCommand(PGconn *conn, const char *query, bool echo)
 }
 
 /*
- * Check yes/no answer in a localized way.	1=yes, 0=no, -1=neither.
+ * Check yes/no answer in a localized way.  1=yes, 0=no, -1=neither.
  */
 
 /* translator: abbreviation for "yes" */

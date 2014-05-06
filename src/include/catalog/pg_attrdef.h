@@ -22,7 +22,7 @@
 #include "catalog/genbki.h"
 
 /* ----------------
- *		pg_attrdef definition.	cpp turns this into
+ *		pg_attrdef definition.  cpp turns this into
  *		typedef struct FormData_pg_attrdef
  * ----------------
  */

@@ -48,7 +48,7 @@ typedef enum ForkNumber
  * spcNode identifies the tablespace of the relation.  It corresponds to
  * pg_tablespace.oid.
  *
- * dbNode identifies the database of the relation.	It is zero for
+ * dbNode identifies the database of the relation.  It is zero for
  * "shared" relations (those common to all databases of a cluster).
  * Nonzero dbNode values correspond to pg_database.oid.
  *
@@ -70,7 +70,7 @@ typedef enum ForkNumber
  * is a "mapped" relation, whose current true filenode number is available
  * from relmapper.c.  Again, this case is NOT allowed in RelFileNodes.
  *
- * Note: various places use RelFileNode in hashtable keys.	Therefore,
+ * Note: various places use RelFileNode in hashtable keys.  Therefore,
  * there *must not* be any unused padding bytes in this struct.  That
  * should be safe as long as all the fields are of type Oid.
  */
@@ -83,7 +83,7 @@ typedef struct RelFileNode
 
 /*
  * Augmenting a relfilenode with the backend ID provides all the information
- * we need to locate the physical storage.	The backend ID is InvalidBackendId
+ * we need to locate the physical storage.  The backend ID is InvalidBackendId
  * for regular relations (those accessible to more than one backend), or the
  * owning backend's ID for backend-local relations.  Backend-local relations
  * are always transient and removed in case of a database crash; they are
