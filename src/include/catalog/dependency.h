@@ -52,7 +52,7 @@
  * DEPENDENCY_PIN ('p'): there is no dependent object; this type of entry
  * is a signal that the system itself depends on the referenced object,
  * and so that object must never be deleted.  Entries of this type are
- * created only during initdb.	The fields for the dependent object
+ * created only during initdb.  The fields for the dependent object
  * contain zeroes.
  *
  * Other dependency flavors may be needed in future.

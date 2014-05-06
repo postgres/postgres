@@ -46,14 +46,14 @@ __attribute__((format(printf, 2, 3)));
  * double quoted if it contains funny characters or matches a keyword.
  *
  * If typemod is NULL then we are formatting a type name in a context where
- * no typemod is available, eg a function argument or result type.	This
+ * no typemod is available, eg a function argument or result type.  This
  * yields a slightly different result from specifying typemod = -1 in some
  * cases.  Given typemod = -1 we feel compelled to produce an output that
  * the parser will interpret as having typemod -1, so that pg_dump will
- * produce CREATE TABLE commands that recreate the original state.	But
+ * produce CREATE TABLE commands that recreate the original state.  But
  * given NULL typemod, we assume that the parser's interpretation of
  * typemod doesn't matter, and so we are willing to output a slightly
- * "prettier" representation of the same type.	For example, type = bpchar
+ * "prettier" representation of the same type.  For example, type = bpchar
  * and typemod = NULL gets you "character", whereas typemod = -1 gets you
  * "bpchar" --- the former will be interpreted as character(1) by the
  * parser, which does not yield typemod -1.
@@ -137,7 +137,7 @@ format_type_internal(Oid type_oid, int32 typemod,
 
 	/*
 	 * Check if it's an array (and not a domain --- we don't want to show the
-	 * substructure of a domain type).	Fixed-length array types such as
+	 * substructure of a domain type).  Fixed-length array types such as
 	 * "name" shouldn't get deconstructed either.  As of Postgres 8.1, rather
 	 * than checking typlen we check the toast property, and don't deconstruct
 	 * "plain storage" array types --- this is because we don't want to show

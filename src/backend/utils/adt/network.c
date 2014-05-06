@@ -29,7 +29,7 @@ static int	ip_addrsize(inet *inetptr);
 static inet *internal_inetpl(inet *ip, int64 addend);
 
 /*
- *	Access macros.	We use VARDATA_ANY so that we can process short-header
+ *	Access macros.  We use VARDATA_ANY so that we can process short-header
  *	varlena values without detoasting them.  This requires a trick:
  *	VARDATA_ANY assumes the varlena header is already filled in, which is
  *	not the case when constructing a new value (until SET_INET_VARSIZE is
@@ -88,7 +88,7 @@ network_in(char *src, bool is_cidr)
 	dst = (inet *) palloc0(sizeof(inet));
 
 	/*
-	 * First, check to see if this is an IPv6 or IPv4 address.	IPv6 addresses
+	 * First, check to see if this is an IPv6 or IPv4 address.  IPv6 addresses
 	 * will have a : somewhere in them (several, in fact) so if there is one
 	 * present, assume it's V6, otherwise assume it's V4.
 	 */
@@ -193,7 +193,7 @@ cidr_out(PG_FUNCTION_ARGS)
  * family, bits, is_cidr, address length, address in network byte order.
  *
  * Presence of is_cidr is largely for historical reasons, though it might
- * allow some code-sharing on the client side.	We send it correctly on
+ * allow some code-sharing on the client side.  We send it correctly on
  * output, but ignore the value on input.
  */
 static inet *
@@ -1392,7 +1392,7 @@ inetmi(PG_FUNCTION_ARGS)
 		/*
 		 * We form the difference using the traditional complement, increment,
 		 * and add rule, with the increment part being handled by starting the
-		 * carry off at 1.	If you don't think integer arithmetic is done in
+		 * carry off at 1.  If you don't think integer arithmetic is done in
 		 * two's complement, too bad.
 		 */
 		int			nb = ip_addrsize(ip);
@@ -1414,7 +1414,7 @@ inetmi(PG_FUNCTION_ARGS)
 			else
 			{
 				/*
-				 * Input wider than int64: check for overflow.	All bytes to
+				 * Input wider than int64: check for overflow.  All bytes to
 				 * the left of what will fit should be 0 or 0xFF, depending on
 				 * sign of the now-complete result.
 				 */
@@ -1445,9 +1445,9 @@ inetmi(PG_FUNCTION_ARGS)
  * XXX This should go away someday!
  *
  * This is a kluge needed because we don't yet support zones in stored inet
- * values.	Since the result of getnameinfo() might include a zone spec,
+ * values.  Since the result of getnameinfo() might include a zone spec,
  * call this to remove it anywhere we want to feed getnameinfo's output to
- * network_in.	Beats failing entirely.
+ * network_in.  Beats failing entirely.
  *
  * An alternative approach would be to let network_in ignore %-parts for
  * itself, but that would mean we'd silently drop zone specs in user input,

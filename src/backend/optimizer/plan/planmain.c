@@ -35,7 +35,7 @@
  *	  which may involve joins but not any fancier features.
  *
  * Since query_planner does not handle the toplevel processing (grouping,
- * sorting, etc) it cannot select the best path by itself.	It selects
+ * sorting, etc) it cannot select the best path by itself.  It selects
  * two paths: the cheapest path that produces all the required tuples,
  * independent of any ordering considerations, and the cheapest path that
  * produces the expected fraction of the required tuples in the required
@@ -59,7 +59,7 @@
  *				does not use grouping
  *
  * Note: the PlannerInfo node also includes a query_pathkeys field, which is
- * both an input and an output of query_planner().	The input value signals
+ * both an input and an output of query_planner().  The input value signals
  * query_planner that the indicated sort order is wanted in the final output
  * plan.  But this value has not yet been "canonicalized", since the needed
  * info does not get computed until we scan the qual clauses.  We canonicalize
@@ -103,7 +103,7 @@ query_planner(PlannerInfo *root, List *tlist,
 
 	/*
 	 * If the query has an empty join tree, then it's something easy like
-	 * "SELECT 2+2;" or "INSERT ... VALUES()".	Fall through quickly.
+	 * "SELECT 2+2;" or "INSERT ... VALUES()".  Fall through quickly.
 	 */
 	if (parse->jointree->fromlist == NIL)
 	{
@@ -179,7 +179,7 @@ query_planner(PlannerInfo *root, List *tlist,
 
 	/*
 	 * We should now have size estimates for every actual table involved in
-	 * the query, so we can compute total_table_pages.	Note that appendrels
+	 * the query, so we can compute total_table_pages.  Note that appendrels
 	 * are not double-counted here, even though we don't bother to distinguish
 	 * RelOptInfos for appendrel parents, because the parents will still have
 	 * size zero.
@@ -227,14 +227,14 @@ query_planner(PlannerInfo *root, List *tlist,
 
 	/*
 	 * If we formed any equivalence classes, generate additional restriction
-	 * clauses as appropriate.	(Implied join clauses are formed on-the-fly
+	 * clauses as appropriate.  (Implied join clauses are formed on-the-fly
 	 * later.)
 	 */
 	generate_base_implied_equalities(root);
 
 	/*
 	 * We have completed merging equivalence sets, so it's now possible to
-	 * convert the requested query_pathkeys to canonical form.	Also
+	 * convert the requested query_pathkeys to canonical form.  Also
 	 * canonicalize the groupClause, windowClause, distinctClause and
 	 * sortClause pathkeys for use later.
 	 */
@@ -294,7 +294,7 @@ query_planner(PlannerInfo *root, List *tlist,
 		/*
 		 * If both GROUP BY and ORDER BY are specified, we will need two
 		 * levels of sort --- and, therefore, certainly need to read all the
-		 * tuples --- unless ORDER BY is a subset of GROUP BY.	Likewise if we
+		 * tuples --- unless ORDER BY is a subset of GROUP BY.  Likewise if we
 		 * have both DISTINCT and GROUP BY, or if we have a window
 		 * specification not compatible with the GROUP BY.
 		 */

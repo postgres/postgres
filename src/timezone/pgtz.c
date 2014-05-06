@@ -130,7 +130,7 @@ pg_open_tzfile(const char *name, char *canonname)
 
 /*
  * Scan specified directory for a case-insensitive match to fname
- * (of length fnamelen --- fname may not be null terminated!).	If found,
+ * (of length fnamelen --- fname may not be null terminated!).  If found,
  * copy the actual filename into canonname and return true.
  */
 static bool
@@ -153,7 +153,7 @@ scan_directory_ci(const char *dirname, const char *fname, int fnamelen,
 	while ((direntry = ReadDir(dirdesc, dirname)) != NULL)
 	{
 		/*
-		 * Ignore . and .., plus any other "hidden" files.	This is a security
+		 * Ignore . and .., plus any other "hidden" files.  This is a security
 		 * measure to prevent access to files outside the timezone directory.
 		 */
 		if (direntry->d_name[0] == '.')
@@ -524,7 +524,7 @@ identify_system_timezone(void)
 		return resultbuf;
 
 	/*
-	 * Did not find the timezone.  Fallback to use a GMT zone.	Note that the
+	 * Did not find the timezone.  Fallback to use a GMT zone.  Note that the
 	 * zic timezone database names the GMT-offset zones in POSIX style: plus
 	 * is west of Greenwich.  It's unfortunate that this is opposite of SQL
 	 * conventions.  Should we therefore change the names? Probably not...
@@ -543,7 +543,7 @@ identify_system_timezone(void)
  * Recursively scan the timezone database looking for the best match to
  * the system timezone behavior.
  *
- * tzdir points to a buffer of size MAXPGPATH.	On entry, it holds the
+ * tzdir points to a buffer of size MAXPGPATH.  On entry, it holds the
  * pathname of a directory containing TZ files.  We internally modify it
  * to hold pathnames of sub-directories and files, but must restore it
  * to its original contents before exit.
@@ -1380,7 +1380,7 @@ tz_acceptable(pg_tz *tz)
 
 
 /*
- * Get a pg_tz struct for the given timezone name.	Returns NULL if name
+ * Get a pg_tz struct for the given timezone name.  Returns NULL if name
  * is invalid or not an "acceptable" zone.
  */
 static pg_tz *
@@ -1438,7 +1438,7 @@ select_default_timezone(void)
  *
  * This is called before GUC variable initialization begins.  Its purpose
  * is to ensure that elog.c has a pgtz variable available to format timestamps
- * with, in case log_line_prefix is set to a value requiring that.	We cannot
+ * with, in case log_line_prefix is set to a value requiring that.  We cannot
  * set log_timezone yet.
  */
 void

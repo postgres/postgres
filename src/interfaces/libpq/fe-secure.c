@@ -1370,7 +1370,7 @@ open_client_SSL(PGconn *conn)
 					 * these will be detected by client_cert_cb() which is
 					 * called from SSL_connect().  We want to return that
 					 * error message and not the rather unhelpful error that
-					 * OpenSSL itself returns.	So check to see if an error
+					 * OpenSSL itself returns.  So check to see if an error
 					 * message was already stored.
 					 */
 					if (conn->errorMessage.len == 0)
@@ -1545,7 +1545,7 @@ PQgetssl(PGconn *conn)
 #if defined(ENABLE_THREAD_SAFETY) && !defined(WIN32)
 
 /*
- *	Block SIGPIPE for this thread.	This prevents send()/write() from exiting
+ *	Block SIGPIPE for this thread.  This prevents send()/write() from exiting
  *	the application.
  */
 int
@@ -1584,7 +1584,7 @@ pq_block_sigpipe(sigset_t *osigset, bool *sigpipe_pending)
  *	Discard any pending SIGPIPE and reset the signal mask.
  *
  * Note: we are effectively assuming here that the C library doesn't queue
- * up multiple SIGPIPE events.	If it did, then we'd accidentally leave
+ * up multiple SIGPIPE events.  If it did, then we'd accidentally leave
  * ours in the queue when an event was already pending and we got another.
  * As long as it doesn't queue multiple events, we're OK because the caller
  * can't tell the difference.
@@ -1595,7 +1595,7 @@ pq_block_sigpipe(sigset_t *osigset, bool *sigpipe_pending)
  * gotten one, pass got_epipe = TRUE.
  *
  * We do not want this to change errno, since if it did that could lose
- * the error code from a preceding send().	We essentially assume that if
+ * the error code from a preceding send().  We essentially assume that if
  * we were able to do pq_block_sigpipe(), this can't fail.
  */
 void

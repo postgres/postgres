@@ -73,7 +73,7 @@ static bool check_parameter_resolution_walker(Node *node, ParseState *pstate);
  * Optionally, information about $n parameter types can be supplied.
  * References to $n indexes not defined by paramTypes[] are disallowed.
  *
- * The result is a Query node.	Optimizable statements require considerable
+ * The result is a Query node.  Optimizable statements require considerable
  * transformation, while utility-type statements are simply hung off
  * a dummy CMD_UTILITY Query node.
  */
@@ -371,7 +371,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	/*
 	 * If a non-nil rangetable/namespace was passed in, and we are doing
 	 * INSERT/SELECT, arrange to pass the rangetable/namespace down to the
-	 * SELECT.	This can only happen if we are inside a CREATE RULE, and in
+	 * SELECT.  This can only happen if we are inside a CREATE RULE, and in
 	 * that case we want the rule's OLD and NEW rtable entries to appear as
 	 * part of the SELECT's rtable, not as outer references for it.  (Kluge!)
 	 * The SELECT's joinlist is not affected however.  We must do this before
@@ -588,7 +588,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		 * Another thing we can't currently support is NEW/OLD references in
 		 * rules --- seems we'd need something like SQL99's LATERAL construct
 		 * to ensure that the values would be available while evaluating the
-		 * VALUES RTE.	This is a shame.  FIXME
+		 * VALUES RTE.  This is a shame.  FIXME
 		 */
 		if (list_length(pstate->p_rtable) != 1 &&
 			contain_vars_of_level((Node *) exprsLists, 0))
@@ -624,7 +624,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		 *			INSERT INTO foo VALUES(bar.*)
 		 *
 		 * The sublist is just computed directly as the Query's targetlist,
-		 * with no VALUES RTE.	So it works just like SELECT without FROM.
+		 * with no VALUES RTE.  So it works just like SELECT without FROM.
 		 *----------
 		 */
 		List	   *valuesLists = selectStmt->valuesLists;
@@ -737,7 +737,7 @@ transformInsertRow(ParseState *pstate, List *exprlist,
 	 * Check length of expr list.  It must not have more expressions than
 	 * there are target columns.  We allow fewer, but only if no explicit
 	 * columns list was given (the remaining columns are implicitly
-	 * defaulted).	Note we must check this *after* transformation because
+	 * defaulted).  Note we must check this *after* transformation because
 	 * that could expand '*' into multiple items.
 	 */
 	if (list_length(exprlist) > list_length(icolumns))
@@ -1282,7 +1282,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	/*
 	 * As a first step towards supporting sort clauses that are expressions
 	 * using the output columns, generate a varnamespace entry that makes the
-	 * output columns visible.	A Join RTE node is handy for this, since we
+	 * output columns visible.  A Join RTE node is handy for this, since we
 	 * can easily control the Vars generated upon matches.
 	 *
 	 * Note: we don't yet do anything useful with such cases, but at least

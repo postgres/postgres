@@ -22,7 +22,7 @@
 /*
  * Index tuple header structure
  *
- * All index tuples start with IndexTupleData.	If the HasNulls bit is set,
+ * All index tuples start with IndexTupleData.  If the HasNulls bit is set,
  * this is followed by an IndexAttributeBitMapData.  The index attribute
  * values follow, beginning at a MAXALIGN boundary.
  *

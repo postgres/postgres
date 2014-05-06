@@ -71,7 +71,7 @@ static void warnAutoRange(ParseState *pstate, RangeVar *relation);
  *
  * A qualified refname (schemaname != NULL) can only match a relation RTE
  * that (a) has no alias and (b) is for the same relation identified by
- * schemaname.refname.	In this case we convert schemaname.refname to a
+ * schemaname.refname.  In this case we convert schemaname.refname to a
  * relation OID and search by relid, rather than by alias name.  This is
  * peculiar, but it's what SQL92 says to do.
  */
@@ -150,7 +150,7 @@ scanNameSpaceForRefname(ParseState *pstate, const char *refname, int location)
 
 /*
  * Search the query's table namespace for a relation RTE matching the
- * given relation OID.	Return the RTE if a unique match, or NULL
+ * given relation OID.  Return the RTE if a unique match, or NULL
  * if no match.  Raise error if multiple matches (which shouldn't
  * happen if the namespace was checked correctly when it was created).
  *
@@ -343,7 +343,7 @@ checkNameSpaceConflicts(ParseState *pstate, List *namespace1,
 
 /*
  * given an RTE, return RT index (starting with 1) of the entry,
- * and optionally get its nesting depth (0 = current).	If sublevels_up
+ * and optionally get its nesting depth (0 = current).  If sublevels_up
  * is NULL, only consider rels at the current nesting level.
  * Raises error if RTE not found.
  */
@@ -924,7 +924,7 @@ addRangeTableEntry(ParseState *pstate,
 
 	/*
 	 * Get the rel's OID.  This access also ensures that we have an up-to-date
-	 * relcache entry for the rel.	Since this is typically the first access
+	 * relcache entry for the rel.  Since this is typically the first access
 	 * to a rel in a statement, be careful to get the right access level
 	 * depending on whether we're doing SELECT FOR UPDATE/SHARE.
 	 */
@@ -2453,7 +2453,7 @@ warnAutoRange(ParseState *pstate, RangeVar *relation)
 
 	/*
 	 * Check to see if there are any potential matches in the query's
-	 * rangetable.	This affects the message we provide.
+	 * rangetable.  This affects the message we provide.
 	 */
 	rte = searchRangeTable(pstate, relation);
 

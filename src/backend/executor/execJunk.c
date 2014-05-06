@@ -54,7 +54,7 @@
  *
  * Initialize the Junk filter.
  *
- * The source targetlist is passed in.	The output tuple descriptor is
+ * The source targetlist is passed in.  The output tuple descriptor is
  * built from the non-junk tlist entries, plus the passed specification
  * of whether to include room for an OID or not.
  * An optional resultSlot can be passed as well.

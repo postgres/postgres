@@ -30,7 +30,7 @@
  *
  * An SMgrRelation may have an "owner", which is just a pointer to it from
  * somewhere else; smgr.c will clear this pointer if the SMgrRelation is
- * closed.	We use this to avoid dangling pointers from relcache to smgr
+ * closed.  We use this to avoid dangling pointers from relcache to smgr
  * without having to make the smgr explicitly aware of relcache.  There
  * can't be more than one "owner" pointer per SMgrRelation, but that's
  * all we need.
@@ -47,7 +47,7 @@ typedef struct SMgrRelationData
 
 	/*
 	 * Fields below here are intended to be private to smgr.c and its
-	 * submodules.	Do not touch them from elsewhere.
+	 * submodules.  Do not touch them from elsewhere.
 	 */
 	int			smgr_which;		/* storage manager selector */
 

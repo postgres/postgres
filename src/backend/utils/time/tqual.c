@@ -20,7 +20,7 @@
  * TransactionIdDidCommit will both return true.  If we check only
  * TransactionIdDidCommit, we could consider a tuple committed when a
  * later GetSnapshotData call will still think the originating transaction
- * is in progress, which leads to application-level inconsistency.	The
+ * is in progress, which leads to application-level inconsistency.  The
  * upshot is that we gotta check TransactionIdIsInProgress first in all
  * code paths, except for a few cases where we are looking at
  * subtransactions of our own main transaction and so there can't be any
@@ -87,12 +87,12 @@ static bool XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot);
  * buffer, so we can't use the LSN to interlock this; we have to just refrain
  * from setting the hint bit until some future re-examination of the tuple.
  *
- * We can always set hint bits when marking a transaction aborted.	(Some
+ * We can always set hint bits when marking a transaction aborted.  (Some
  * code in heapam.c relies on that!)
  *
  * Also, if we are cleaning up HEAP_MOVED_IN or HEAP_MOVED_OFF entries, then
  * we can always set the hint bits, since VACUUM FULL always uses synchronous
- * commits and doesn't move tuples that weren't previously hinted.	(This is
+ * commits and doesn't move tuples that weren't previously hinted.  (This is
  * not known by this subroutine, but is applied by its callers.)
  *
  * Normal commits may be asynchronous, so for those we need to get the LSN
@@ -483,7 +483,7 @@ HeapTupleSatisfiesAny(HeapTupleHeader tuple, Snapshot snapshot, Buffer buffer)
  * This is a simplified version that only checks for VACUUM moving conditions.
  * It's appropriate for TOAST usage because TOAST really doesn't want to do
  * its own time qual checks; if you can see the main table row that contains
- * a TOAST reference, you should be able to see the TOASTed value.	However,
+ * a TOAST reference, you should be able to see the TOASTed value.  However,
  * vacuuming a TOAST table is independent of the main table, and in case such
  * a vacuum fails partway through, we'd better do this much checking.
  *
@@ -1045,7 +1045,7 @@ HeapTupleSatisfiesMVCC(HeapTupleHeader tuple, Snapshot snapshot,
  *	we mainly want to know is if a tuple is potentially visible to *any*
  *	running transaction.  If so, it can't be removed yet by VACUUM.
  *
- * OldestXmin is a cutoff XID (obtained from GetOldestXmin()).	Tuples
+ * OldestXmin is a cutoff XID (obtained from GetOldestXmin()).  Tuples
  * deleted by XIDs >= OldestXmin are deemed "recently dead"; they might
  * still be visible to some open transaction, so we can't remove them,
  * even if we see that the deleting transaction has committed.
@@ -1129,7 +1129,7 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin,
 	}
 
 	/*
-	 * Okay, the inserter committed, so it was good at some point.	Now what
+	 * Okay, the inserter committed, so it was good at some point.  Now what
 	 * about the deleting transaction?
 	 */
 	if (tuple->t_infomask & HEAP_XMAX_INVALID)
@@ -1228,7 +1228,7 @@ XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot)
 
 	/*
 	 * Make a quick range check to eliminate most XIDs without looking at the
-	 * xip arrays.	Note that this is OK even if we convert a subxact XID to
+	 * xip arrays.  Note that this is OK even if we convert a subxact XID to
 	 * its parent below, because a subxact with XID < xmin has surely also got
 	 * a parent with XID < xmin, while one with XID >= xmax must belong to a
 	 * parent that was not yet committed at the time of this snapshot.
@@ -1244,7 +1244,7 @@ XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot)
 	/*
 	 * If the snapshot contains full subxact data, the fastest way to check
 	 * things is just to compare the given XID against both subxact XIDs and
-	 * top-level XIDs.	If the snapshot overflowed, we have to use pg_subtrans
+	 * top-level XIDs.  If the snapshot overflowed, we have to use pg_subtrans
 	 * to convert a subxact XID to its parent XID, but then we need only look
 	 * at top-level XIDs not subxacts.
 	 */
@@ -1268,7 +1268,7 @@ XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot)
 
 		/*
 		 * If xid was indeed a subxact, we might now have an xid < xmin, so
-		 * recheck to avoid an array scan.	No point in rechecking xmax.
+		 * recheck to avoid an array scan.  No point in rechecking xmax.
 		 */
 		if (TransactionIdPrecedes(xid, snapshot->xmin))
 			return false;

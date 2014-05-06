@@ -92,8 +92,8 @@ free_parsestate(ParseState *pstate)
  * is a dummy (always 0, in fact).
  *
  * The locations stored in raw parsetrees are byte offsets into the source
- * string.	We have to convert them to 1-based character indexes for reporting
- * to clients.	(We do things this way to avoid unnecessary overhead in the
+ * string.  We have to convert them to 1-based character indexes for reporting
+ * to clients.  (We do things this way to avoid unnecessary overhead in the
  * normal non-error case: computing character indexes would be much more
  * expensive than storing token offsets.)
  */
@@ -122,7 +122,7 @@ parser_errposition(ParseState *pstate, int location)
  * Sometimes the parser calls functions that aren't part of the parser
  * subsystem and can't reasonably be passed a ParseState; yet we would
  * like any errors thrown in those functions to be tagged with a parse
- * error location.	Use this function to set up an error context stack
+ * error location.  Use this function to set up an error context stack
  * entry that will accomplish that.  Usage pattern:
  *
  *		declare a local variable "ParseCallbackState pcbstate"
@@ -235,7 +235,7 @@ transformArrayType(Oid arrayType)
  *
  * In an array assignment, we are given a destination array value plus a
  * source value that is to be assigned to a single element or a slice of
- * that array.	We produce an expression that represents the new array value
+ * that array.  We produce an expression that represents the new array value
  * with the source data inserted into the right part of the array.
  *
  * pstate		Parse state

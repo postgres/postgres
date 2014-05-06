@@ -111,7 +111,7 @@ ExecLimit(LimitState *node)
 
 			/*
 			 * The subplan is known to return no tuples (or not more than
-			 * OFFSET tuples, in general).	So we return no tuples.
+			 * OFFSET tuples, in general).  So we return no tuples.
 			 */
 			return NULL;
 

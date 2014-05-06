@@ -2904,7 +2904,7 @@ get_guc_variables(void)
 
 
 /*
- * Build the sorted array.	This is split out so that it could be
+ * Build the sorted array.  This is split out so that it could be
  * re-executed after startup (eg, we could allow loadable modules to
  * add vars, and then we'd need to re-sort).
  */
@@ -3062,7 +3062,7 @@ add_placeholder_variable(const char *name, int elevel)
 
 	/*
 	 * The char* is allocated at the end of the struct since we have no
-	 * 'static' place to point to.	Note that the current value, as well as
+	 * 'static' place to point to.  Note that the current value, as well as
 	 * the boot and reset values, start out NULL.
 	 */
 	var->variable = (char **) (var + 1);
@@ -3140,7 +3140,7 @@ find_option(const char *name, bool create_placeholders, int elevel)
 		return *res;
 
 	/*
-	 * See if the name is an obsolete name for a variable.	We assume that the
+	 * See if the name is an obsolete name for a variable.  We assume that the
 	 * set of supported old names is short enough that a brute-force search is
 	 * the best way.
 	 */
@@ -3259,7 +3259,7 @@ InitializeGUCOptions(void)
 
 	/*
 	 * For historical reasons, some GUC parameters can receive defaults from
-	 * environment variables.  Process those settings.	NB: if you add or
+	 * environment variables.  Process those settings.  NB: if you add or
 	 * remove anything here, see also ProcessConfigFile().
 	 */
 
@@ -3775,7 +3775,7 @@ AtStart_GUC(void)
 
 /*
  * Enter a new nesting level for GUC values.  This is called at subtransaction
- * start and when entering a function that has proconfig settings.	NOTE that
+ * start and when entering a function that has proconfig settings.  NOTE that
  * we must not risk error here, else subtransaction start will be unhappy.
  */
 int
@@ -3820,7 +3820,7 @@ AtEOXact_GUC(bool isCommit, int nestLevel)
 		GucStack   *stack;
 
 		/*
-		 * Process and pop each stack entry within the nest level.	To
+		 * Process and pop each stack entry within the nest level.  To
 		 * simplify fmgr_security_definer(), we allow failure exit from a
 		 * function-with-SET-options to be recovered at the surrounding
 		 * transaction or subtransaction abort; so there could be more than
@@ -4577,7 +4577,7 @@ set_config_option(const char *name, const char *value,
 				/*
 				 * We are reading a PGC_POSTMASTER var from postgresql.conf.
 				 * We can't change the setting, so give a warning if the DBA
-				 * tries to change it.	(Throwing an error would be more
+				 * tries to change it.  (Throwing an error would be more
 				 * consistent, but seems overly rigid.)
 				 */
 				if (changeVal && !is_newvalue_equal(record, value))
@@ -4622,7 +4622,7 @@ set_config_option(const char *name, const char *value,
 				 * If a PGC_BACKEND parameter is changed in the config file,
 				 * we want to accept the new value in the postmaster (whence
 				 * it will propagate to subsequently-started backends), but
-				 * ignore it in existing backends.	This is a tad klugy, but
+				 * ignore it in existing backends.  This is a tad klugy, but
 				 * necessary because we don't re-read the config file during
 				 * backend start.
 				 *
@@ -5181,7 +5181,7 @@ set_config_sourcefile(const char *name, char *sourcefile, int sourceline)
 
 /*
  * Set a config option to the given value. See also set_config_option,
- * this is just the wrapper to be called from outside GUC.	NB: this
+ * this is just the wrapper to be called from outside GUC.  NB: this
  * is used only for non-transactional operations.
  *
  * Note: there is no support here for setting source file/line, as it
@@ -5318,7 +5318,7 @@ IsSuperuserConfigOption(const char *name)
  * report (in addition to the generic "invalid value for option FOO" that
  * guc.c will provide).  Note that the result might be ERROR or a lower
  * level, so the caller must be prepared for control to return from ereport,
- * or not.	If control does return, return false/NULL from the hook function.
+ * or not.  If control does return, return false/NULL from the hook function.
  *
  * At some point it'd be nice to replace this with a mechanism that allows
  * the custom message to become the DETAIL line of guc.c's generic message.
@@ -5463,7 +5463,7 @@ flatten_set_variable_args(const char *name, List *args)
 				else
 				{
 					/*
-					 * Plain string literal or identifier.	For quote mode,
+					 * Plain string literal or identifier.  For quote mode,
 					 * quote it if it's not a vanilla identifier.
 					 */
 					if (flags & GUC_LIST_QUOTE)
@@ -6555,7 +6555,7 @@ _ShowOption(struct config_generic * record, bool use_units)
 				{
 					/*
 					 * Use int64 arithmetic to avoid overflows in units
-					 * conversion.	If INT64_IS_BUSTED we might overflow
+					 * conversion.  If INT64_IS_BUSTED we might overflow
 					 * anyway and print bogus answers, but there are few
 					 * enough such machines that it doesn't seem worth trying
 					 * harder.
@@ -7029,7 +7029,7 @@ ParseLongOption(const char *string, char **name, char **value)
 
 /*
  * Handle options fetched from pg_database.datconfig, pg_authid.rolconfig,
- * pg_proc.proconfig, etc.	Caller must specify proper context/source/action.
+ * pg_proc.proconfig, etc.  Caller must specify proper context/source/action.
  *
  * The array parameter must be an array of TEXT (it must not be NULL).
  */
@@ -7626,7 +7626,7 @@ assign_timezone_abbreviations(const char *newval, bool doit, GucSource source)
 
 		/*
 		 * If reading config file, only the postmaster should bleat loudly
-		 * about problems.	Otherwise, it's just this one process doing it,
+		 * about problems.  Otherwise, it's just this one process doing it,
 		 * and we use WARNING message level.
 		 */
 		if (source == PGC_S_FILE)

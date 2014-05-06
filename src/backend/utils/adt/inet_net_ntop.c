@@ -203,7 +203,7 @@ inet_cidr_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 	}
 	else
 	{
-		/* Copy src to private buffer.	Zero host part. */
+		/* Copy src to private buffer.  Zero host part. */
 		p = (bits + 7) / 8;
 		memcpy(inbuf, src, p);
 		memset(inbuf + p, 0, 16 - p);

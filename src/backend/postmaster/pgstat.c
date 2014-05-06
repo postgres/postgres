@@ -329,7 +329,7 @@ pgstat_init(void)
 	 * On some platforms, pg_getaddrinfo_all() may return multiple addresses
 	 * only one of which will actually work (eg, both IPv6 and IPv4 addresses
 	 * when kernel will reject IPv6).  Worse, the failure may occur at the
-	 * bind() or perhaps even connect() stage.	So we must loop through the
+	 * bind() or perhaps even connect() stage.  So we must loop through the
 	 * results till we find a working combination. We will generate LOG
 	 * messages, but no error, for bogus combinations.
 	 */
@@ -593,7 +593,7 @@ pgstat_start(void)
 	/*
 	 * Do nothing if too soon since last collector start.  This is a safety
 	 * valve to protect against continuous respawn attempts if the collector
-	 * is dying immediately at launch.	Note that since we will be re-called
+	 * is dying immediately at launch.  Note that since we will be re-called
 	 * from the postmaster main loop, we will get another chance later.
 	 */
 	curtime = time(NULL);
@@ -1219,7 +1219,7 @@ pgstat_report_analyze(Relation rel, PgStat_Counter livetuples,
 	 * have counted such rows as live or dead respectively. Because we will
 	 * report our counts of such rows at transaction end, we should subtract
 	 * off these counts from what we send to the collector now, else they'll
-	 * be double-counted after commit.	(This approach also ensures that the
+	 * be double-counted after commit.  (This approach also ensures that the
 	 * collector ends up with the right numbers if we abort instead of
 	 * committing.)
 	 */
@@ -1820,7 +1820,7 @@ AtPrepare_PgStat(void)
  *		Clean up after successful PREPARE.
  *
  * All we need do here is unlink the transaction stats state from the
- * nontransactional state.	The nontransactional action counts will be
+ * nontransactional state.  The nontransactional action counts will be
  * reported to the stats collector immediately, while the effects on live
  * and dead tuple counts are preserved in the 2PC state file.
  *
@@ -2425,12 +2425,12 @@ pgstat_read_current_status(void)
  * pgstat_get_backend_current_activity() -
  *
  *	Return a string representing the current activity of the backend with
- *	the specified PID.	This looks directly at the BackendStatusArray,
+ *	the specified PID.  This looks directly at the BackendStatusArray,
  *	and so will provide current information regardless of the age of our
  *	transaction's snapshot of the status array.
  *
  *	It is the caller's responsibility to invoke this only for backends whose
- *	state is expected to remain stable while the result is in use.	The
+ *	state is expected to remain stable while the result is in use.  The
  *	only current use is in deadlock reporting, where we can expect that
  *	the target backend is blocked on a lock.  (There are corner cases
  *	where the target's wait could get aborted while we are looking at it,
@@ -2579,7 +2579,7 @@ pgstat_send_bgwriter(void)
 /* ----------
  * PgstatCollectorMain() -
  *
- *	Start up the statistics collector process.	This is the body of the
+ *	Start up the statistics collector process.  This is the body of the
  *	postmaster child process.
  *
  *	The argc/argv parameters are valid only in EXEC_BACKEND case.
@@ -2608,7 +2608,7 @@ PgstatCollectorMain(int argc, char *argv[])
 
 	/*
 	 * If possible, make this process a group leader, so that the postmaster
-	 * can signal any child processes too.	(pgstat probably never has any
+	 * can signal any child processes too.  (pgstat probably never has any
 	 * child processes, but for consistency we make all postmaster child
 	 * processes do this.)
 	 */
@@ -2655,7 +2655,7 @@ PgstatCollectorMain(int argc, char *argv[])
 	pgStatDBHash = pgstat_read_statsfile(InvalidOid, true);
 
 	/*
-	 * Setup the descriptor set for select(2).	Since only one bit in the set
+	 * Setup the descriptor set for select(2).  Since only one bit in the set
 	 * ever changes, we need not repeat FD_ZERO each time.
 	 */
 #if !defined(HAVE_POLL) && !defined(WIN32)
@@ -2668,7 +2668,7 @@ PgstatCollectorMain(int argc, char *argv[])
 	 *
 	 * For performance reasons, we don't want to do a PostmasterIsAlive() test
 	 * after every message; instead, do it only when select()/poll() is
-	 * interrupted by timeout.	In essence, we'll stay alive as long as
+	 * interrupted by timeout.  In essence, we'll stay alive as long as
 	 * backends keep sending us stuff often, even if the postmaster is gone.
 	 */
 	for (;;)
@@ -3391,14 +3391,14 @@ backend_read_statsfile(void)
 
 	/*
 	 * We set the minimum acceptable timestamp to PGSTAT_STAT_INTERVAL msec
-	 * before now.	This indirectly ensures that the collector needn't write
+	 * before now.  This indirectly ensures that the collector needn't write
 	 * the file more often than PGSTAT_STAT_INTERVAL.  In an autovacuum
 	 * worker, however, we want a lower delay to avoid using stale data, so we
 	 * use PGSTAT_RETRY_DELAY (since the number of worker is low, this
 	 * shouldn't be a problem).
 	 *
 	 * Note that we don't recompute min_ts after sleeping; so we might end up
-	 * accepting a file a bit older than PGSTAT_STAT_INTERVAL.	In practice
+	 * accepting a file a bit older than PGSTAT_STAT_INTERVAL.  In practice
 	 * that shouldn't happen, though, as long as the sleep time is less than
 	 * PGSTAT_STAT_INTERVAL; and we don't want to lie to the collector about
 	 * what our cutoff time really is.
@@ -3462,7 +3462,7 @@ pgstat_setup_memcxt(void)
 /* ----------
  * pgstat_clear_snapshot() -
  *
- *	Discard any data collected in the current transaction.	Any subsequent
+ *	Discard any data collected in the current transaction.  Any subsequent
  *	request will cause new snapshots to be read.
  *
  *	This is also invoked during transaction commit or abort to discard

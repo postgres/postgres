@@ -191,7 +191,7 @@ join_search_one_level(PlannerInfo *root, int level, List **joinrels)
 	 * SELECT * FROM a,b,c WHERE (a.f1 + b.f2 + c.f3) = 0;
 	 *
 	 * The join clause will be usable at level 3, but at level 2 we have no
-	 * choice but to make cartesian joins.	We consider only left-sided and
+	 * choice but to make cartesian joins.  We consider only left-sided and
 	 * right-sided cartesian joins in this case (no bushy).
 	 */
 	if (result_rels == NIL)
@@ -221,7 +221,7 @@ join_search_one_level(PlannerInfo *root, int level, List **joinrels)
 
 		/*----------
 		 * When special joins are involved, there may be no legal way
-		 * to make an N-way join for some values of N.	For example consider
+		 * to make an N-way join for some values of N.  For example consider
 		 *
 		 * SELECT ... FROM t1 WHERE
 		 *	 x IN (SELECT ... FROM t2,t3 WHERE ...) AND
@@ -355,7 +355,7 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 	ListCell   *l;
 
 	/*
-	 * Ensure output params are set on failure return.	This is just to
+	 * Ensure output params are set on failure return.  This is just to
 	 * suppress uninitialized-variable warnings from overly anal compilers.
 	 */
 	*sjinfo_p = NULL;
@@ -363,7 +363,7 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 
 	/*
 	 * If we have any special joins, the proposed join might be illegal; and
-	 * in any case we have to determine its join type.	Scan the join info
+	 * in any case we have to determine its join type.  Scan the join info
 	 * list for conflicts.
 	 */
 	match_sjinfo = NULL;
@@ -586,7 +586,7 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 
 	/*
 	 * If it's a plain inner join, then we won't have found anything in
-	 * join_info_list.	Make up a SpecialJoinInfo so that selectivity
+	 * join_info_list.  Make up a SpecialJoinInfo so that selectivity
 	 * estimation functions will know what's being joined.
 	 */
 	if (sjinfo == NULL)
@@ -850,7 +850,7 @@ have_join_order_restriction(PlannerInfo *root,
  *
  * Essentially, this tests whether have_join_order_restriction() could
  * succeed with this rel and some other one.  It's OK if we sometimes
- * say "true" incorrectly.	(Therefore, we don't bother with the relatively
+ * say "true" incorrectly.  (Therefore, we don't bother with the relatively
  * expensive has_legal_joinclause test.)
  */
 static bool

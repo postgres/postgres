@@ -52,7 +52,7 @@
  *	  * ExecInitNode() notices that it is looking at a nest loop and
  *		as the code below demonstrates, it calls ExecInitNestLoop().
  *		Eventually this calls ExecInitNode() on the right and left subplans
- *		and so forth until the entire plan is initialized.	The result
+ *		and so forth until the entire plan is initialized.  The result
  *		of ExecInitNode() is a plan state tree built with the same structure
  *		as the underlying plan tree.
  *
@@ -642,7 +642,7 @@ ExecCountSlotsNode(Plan *node)
  *		at 'node'.
  *
  *		After this operation, the query plan will not be able to
- *		processed any further.	This should be called only after
+ *		processed any further.  This should be called only after
  *		the query plan has been fully executed.
  * ----------------------------------------------------------------
  */

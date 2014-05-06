@@ -636,7 +636,7 @@ dblink_fetch(PG_FUNCTION_ARGS)
 							"the specified FROM clause rowtype")));
 
 		/*
-		 * fast track when no results.	We could exit earlier, but then we'd
+		 * fast track when no results.  We could exit earlier, but then we'd
 		 * not report error if the result tuple type is wrong.
 		 */
 		if (funcctx->max_calls < 1)
@@ -2257,7 +2257,7 @@ dblink_security_check(PGconn *conn, remoteConn *rconn)
 }
 
 /*
- * For non-superusers, insist that the connstr specify a password.	This
+ * For non-superusers, insist that the connstr specify a password.  This
  * prevents a password from being picked up from .pgpass, a service file,
  * the environment, etc.  We don't want the postgres user's passwords
  * to be accessible to non-superusers.

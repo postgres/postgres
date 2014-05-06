@@ -4,7 +4,7 @@
  *	  routines to handle WindowAgg nodes.
  *
  * A WindowAgg node evaluates "window functions" across suitable partitions
- * of the input tuple set.	Any one WindowAgg works for just a single window
+ * of the input tuple set.  Any one WindowAgg works for just a single window
  * specification, though it can evaluate multiple window functions sharing
  * identical window specifications.  The input tuples are required to be
  * delivered in sorted order, with the PARTITION BY columns (if any) as
@@ -14,7 +14,7 @@
  *
  * Since window functions can require access to any or all of the rows in
  * the current partition, we accumulate rows of the partition into a
- * tuplestore.	The window functions are called using the WindowObject API
+ * tuplestore.  The window functions are called using the WindowObject API
  * so that they can access those rows as needed.
  *
  * We also support using plain aggregate functions as window functions.
@@ -295,7 +295,7 @@ advance_windowaggregate(WindowAggState *winstate,
 
 	/*
 	 * If pass-by-ref datatype, must copy the new value into wincontext and
-	 * pfree the prior transValue.	But if transfn returned a pointer to its
+	 * pfree the prior transValue.  But if transfn returned a pointer to its
 	 * first input, we don't need to do anything.
 	 */
 	if (!peraggstate->transtypeByVal &&
@@ -427,7 +427,7 @@ eval_windowaggregates(WindowAggState *winstate)
 	 * TODO: In the future, we should implement the full SQL-standard set of
 	 * framing rules.  We could implement the other cases by recalculating the
 	 * aggregates whenever a row exits the frame.  That would be pretty slow,
-	 * though.	For aggregates like SUM and COUNT we could implement a
+	 * though.  For aggregates like SUM and COUNT we could implement a
 	 * "negative transition function" that would be called for each row as it
 	 * exits the frame.  We'd have to think about avoiding recalculation of
 	 * volatile arguments of aggregate functions, too.
@@ -467,7 +467,7 @@ eval_windowaggregates(WindowAggState *winstate)
 	 * Advance until we reach a row not in frame (or end of partition).
 	 *
 	 * Note the loop invariant: agg_row_slot is either empty or holds the row
-	 * at position aggregatedupto.	The agg_ptr read pointer must always point
+	 * at position aggregatedupto.  The agg_ptr read pointer must always point
 	 * to the next row to read into agg_row_slot.
 	 */
 	agg_row_slot = winstate->agg_row_slot;
@@ -712,7 +712,7 @@ spool_tuples(WindowAggState *winstate, int64 pos)
 
 	/*
 	 * If the tuplestore has spilled to disk, alternate reading and writing
-	 * becomes quite expensive due to frequent buffer flushes.	It's cheaper
+	 * becomes quite expensive due to frequent buffer flushes.  It's cheaper
 	 * to force the entire partition to get spooled in one go.
 	 *
 	 * XXX this is a horrid kluge --- it'd be better to fix the performance
@@ -803,7 +803,7 @@ release_partition(WindowAggState *winstate)
  * to our window framing rule
  *
  * The caller must have already determined that the row is in the partition
- * and fetched it into a slot.	This function just encapsulates the framing
+ * and fetched it into a slot.  This function just encapsulates the framing
  * rules.
  */
 static bool
@@ -1090,8 +1090,8 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	winstate->ss.ps.state = estate;
 
 	/*
-	 * Create expression contexts.	We need two, one for per-input-tuple
-	 * processing and one for per-output-tuple processing.	We cheat a little
+	 * Create expression contexts.  We need two, one for per-input-tuple
+	 * processing and one for per-output-tuple processing.  We cheat a little
 	 * by using ExecAssignExprContext() to build both.
 	 */
 	ExecAssignExprContext(estate, &winstate->ss.ps);
@@ -1621,7 +1621,7 @@ window_gettupleslot(WindowObject winobj, int64 pos, TupleTableSlot *slot)
  * requested amount of space.  Subsequent calls just return the same chunk.
  *
  * Memory obtained this way is normally used to hold state that should be
- * automatically reset for each new partition.	If a window function wants
+ * automatically reset for each new partition.  If a window function wants
  * to hold state across the whole query, fcinfo->fn_extra can be used in the
  * usual way for that.
  */

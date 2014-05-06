@@ -44,7 +44,7 @@ typedef enum ForkNumber
  * spcNode identifies the tablespace of the relation.  It corresponds to
  * pg_tablespace.oid.
  *
- * dbNode identifies the database of the relation.	It is zero for
+ * dbNode identifies the database of the relation.  It is zero for
  * "shared" relations (those common to all databases of a cluster).
  * Nonzero dbNode values correspond to pg_database.oid.
  *

@@ -66,7 +66,7 @@ static HTAB *TypeCacheHash = NULL;
  *
  * Stored record types are remembered in a linear array of TupleDescs,
  * which can be indexed quickly with the assigned typmod.  There is also
- * a hash table to speed searches for matching TupleDescs.	The hash key
+ * a hash table to speed searches for matching TupleDescs.  The hash key
  * uses just the first N columns' type OIDs, and so we may have multiple
  * entries with the same hash key.
  */
@@ -294,7 +294,7 @@ lookup_type_cache(Oid type_id, int flags)
 
 		/*
 		 * Link to the tupdesc and increment its refcount (we assert it's a
-		 * refcounted descriptor).	We don't use IncrTupleDescRefCount() for
+		 * refcounted descriptor).  We don't use IncrTupleDescRefCount() for
 		 * this, because the reference mustn't be entered in the current
 		 * resource owner; it can outlive the current query.
 		 */

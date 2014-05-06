@@ -52,7 +52,7 @@ static int	recv_and_check_password_packet(Port *port);
 /* Max size of username ident server can return */
 #define IDENT_USERNAME_MAX 512
 
-/* Standard TCP port number for Ident service.	Assigned by IANA */
+/* Standard TCP port number for Ident service.  Assigned by IANA */
 #define IDENT_PORT 113
 
 static int	authident(hbaPort *port);
@@ -580,7 +580,7 @@ recv_password_packet(Port *port)
 			(errmsg("received password packet")));
 
 	/*
-	 * Return the received string.	Note we do not attempt to do any
+	 * Return the received string.  Note we do not attempt to do any
 	 * character-set conversion on it; since we don't yet know the client's
 	 * encoding, there wouldn't be much point.
 	 */
@@ -1480,7 +1480,7 @@ interpret_ident_response(const char *ident_response,
 /*
  *	Talk to the ident server on host "remote_ip_addr" and find out who
  *	owns the tcp connection from his port "remote_port" to port
- *	"local_port_addr" on host "local_ip_addr".	Return the user name the
+ *	"local_port_addr" on host "local_ip_addr".  Return the user name the
  *	ident server gives as "*ident_user".
  *
  *	IP addresses and port numbers are in network byte order.
@@ -1842,7 +1842,7 @@ ident_unix(int sock, char *ident_user)
 
 /*
  *	Determine the username of the initiator of the connection described
- *	by "port".	Then look in the usermap file under the usermap
+ *	by "port".  Then look in the usermap file under the usermap
  *	port->hba->usermap and see if that user is equivalent to Postgres user
  *	port->user.
  *

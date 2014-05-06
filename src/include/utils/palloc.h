@@ -6,9 +6,9 @@
  * This file contains the basic memory allocation interface that is
  * needed by almost every backend module.  It is included directly by
  * postgres.h, so the definitions here are automatically available
- * everywhere.	Keep it lean!
+ * everywhere.  Keep it lean!
  *
- * Memory allocation occurs within "contexts".	Every chunk obtained from
+ * Memory allocation occurs within "contexts".  Every chunk obtained from
  * palloc()/MemoryContextAlloc() is allocated within a specific context.
  * The entire contents of a context can be freed easily and quickly by
  * resetting or deleting the context --- this is both faster and less
@@ -29,7 +29,7 @@
 #define PALLOC_H
 
 /*
- * Type MemoryContextData is declared in nodes/memnodes.h.	Most users
+ * Type MemoryContextData is declared in nodes/memnodes.h.  Most users
  * of memory allocation should just treat it as an abstract type, so we
  * do not provide the struct contents here.
  */
@@ -37,7 +37,7 @@ typedef struct MemoryContextData *MemoryContext;
 
 /*
  * CurrentMemoryContext is the default allocation context for palloc().
- * We declare it here so that palloc() can be a macro.	Avoid accessing it
+ * We declare it here so that palloc() can be a macro.  Avoid accessing it
  * directly!  Instead, use MemoryContextSwitchTo() to change the setting.
  */
 extern PGDLLIMPORT MemoryContext CurrentMemoryContext;

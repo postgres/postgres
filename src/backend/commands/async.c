@@ -53,7 +53,7 @@
  *	  transaction.
  *
  * Like NOTIFY, LISTEN and UNLISTEN just add the desired action to a list
- * of pending actions.	If we reach transaction commit, the changes are
+ * of pending actions.  If we reach transaction commit, the changes are
  * applied to pg_listener just before executing any pending NOTIFYs.  This
  * method is necessary because to avoid race conditions, we must hold lock
  * on pg_listener from when we insert a new listener tuple until we commit.
@@ -133,8 +133,8 @@ static List *upperPendingActions = NIL; /* list of upper-xact lists */
 
 /*
  * State for outbound notifies consists of a list of all relnames NOTIFYed
- * in the current transaction.	We do not actually perform a NOTIFY until
- * and unless the transaction commits.	pendingNotifies is NIL if no
+ * in the current transaction.  We do not actually perform a NOTIFY until
+ * and unless the transaction commits.  pendingNotifies is NIL if no
  * NOTIFYs have been done in the current transaction.
  *
  * The list is kept in CurTransactionContext.  In subtransactions, each
@@ -636,7 +636,7 @@ Send_Notify(Relation lRel)
 			 * If someone has already notified this listener, we don't bother
 			 * modifying the table, but we do still send a SIGUSR2 signal,
 			 * just in case that backend missed the earlier signal for some
-			 * reason.	It's OK to send the signal first, because the other
+			 * reason.  It's OK to send the signal first, because the other
 			 * guy can't read pg_listener until we unlock it.
 			 */
 			if (kill(listenerPID, SIGUSR2) < 0)
@@ -791,7 +791,7 @@ NotifyInterruptHandler(SIGNAL_ARGS)
 	int			save_errno = errno;
 
 	/*
-	 * Note: this is a SIGNAL HANDLER.	You must be very wary what you do
+	 * Note: this is a SIGNAL HANDLER.  You must be very wary what you do
 	 * here. Some helpful soul had this routine sprinkled with TPRINTFs, which
 	 * would likely lead to corruption of stdio buffers if they were ever
 	 * turned on.
@@ -1071,7 +1071,7 @@ NotifyMyFrontEnd(char *relname, int32 listenerPID)
 		pq_endmessage(&buf);
 
 		/*
-		 * NOTE: we do not do pq_flush() here.	For a self-notify, it will
+		 * NOTE: we do not do pq_flush() here.  For a self-notify, it will
 		 * happen at the end of the transaction, and for incoming notifies
 		 * ProcessIncomingNotify will do it after finding all the notifies.
 		 */
@@ -1124,7 +1124,7 @@ notify_twophase_postcommit(TransactionId xid, uint16 info,
 	/*
 	 * Set up to issue the NOTIFY at the end of my own current transaction.
 	 * (XXX this has some issues if my own transaction later rolls back, or if
-	 * there is any significant delay before I commit.	OK for now because we
+	 * there is any significant delay before I commit.  OK for now because we
 	 * disallow COMMIT PREPARED inside a transaction block.)
 	 */
 	Async_Notify((char *) recdata);

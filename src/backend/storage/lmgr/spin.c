@@ -5,7 +5,7 @@
  *
  *
  * For machines that have test-and-set (TAS) instructions, s_lock.h/.c
- * define the spinlock implementation.	This file contains only a stub
+ * define the spinlock implementation.  This file contains only a stub
  * implementation for spinlocks using PGSemaphores.  Unless semaphores
  * are implemented in a way that doesn't involve a kernel call, this
  * is too slow to be very useful :-(

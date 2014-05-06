@@ -114,7 +114,7 @@ FindMyDatabase(const char *name, Oid *db_id, Oid *db_tablespace)
  * FindMyDatabaseByOid
  *
  * As above, but the actual database Id is known.  Return its name and the
- * tablespace OID.	Return TRUE if found, FALSE if not.  The same restrictions
+ * tablespace OID.  Return TRUE if found, FALSE if not.  The same restrictions
  * as FindMyDatabase apply.
  */
 static bool
@@ -201,7 +201,7 @@ CheckMyDatabase(const char *name, bool am_superuser)
 					name)));
 
 		/*
-		 * Check privilege to connect to the database.	(The am_superuser test
+		 * Check privilege to connect to the database.  (The am_superuser test
 		 * is redundant, but since we have the flag, might as well check it
 		 * and save a few cycles.)
 		 */
@@ -217,7 +217,7 @@ CheckMyDatabase(const char *name, bool am_superuser)
 		 * Check connection limit for this database.
 		 *
 		 * There is a race condition here --- we create our PGPROC before
-		 * checking for other PGPROCs.	If two backends did this at about the
+		 * checking for other PGPROCs.  If two backends did this at about the
 		 * same time, they might both think they were over the limit, while
 		 * ideally one should succeed and one fail.  Getting that to work
 		 * exactly seems more trouble than it is worth, however; instead we
@@ -355,7 +355,7 @@ BaseInit(void)
  *		Initialize POSTGRES.
  *
  * The database can be specified by name, using the in_dbname parameter, or by
- * OID, using the dboid parameter.	In the latter case, the computed database
+ * OID, using the dboid parameter.  In the latter case, the computed database
  * name is passed out to the caller as a palloc'ed string in out_dbname.
  *
  * In bootstrap mode no parameters are used.

@@ -3,7 +3,7 @@
  *
  * This file contains various configuration symbols and limits.  In
  * all cases, changing them is only useful in very rare situations or
- * for developers.	If you edit any of these, be sure to do a *full*
+ * for developers.  If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
  * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.39 2009/06/11 14:49:08 momjian Exp $
@@ -60,8 +60,8 @@
 
 /*
  * Define this if you want to allow the lo_import and lo_export SQL
- * functions to be executed by ordinary users.	By default these
- * functions are only available to the Postgres superuser.	CAUTION:
+ * functions to be executed by ordinary users.  By default these
+ * functions are only available to the Postgres superuser.  CAUTION:
  * These functions are SECURITY HOLES since they can read and write
  * any file that the PostgreSQL server has permission to access.  If
  * you turn this on, don't say we didn't warn you.
@@ -140,7 +140,7 @@
 
 /*
  * This is the default directory in which AF_UNIX socket files are
- * placed.	Caution: changing this risks breaking your existing client
+ * placed.  Caution: changing this risks breaking your existing client
  * applications, which are likely to continue to look in the old
  * directory.  But if you just hate the idea of sockets in /tmp,
  * here's where to twiddle it.  You can also override this at runtime
@@ -153,7 +153,7 @@
  * MAX_RANDOM_VALUE.  Currently, all known implementations yield
  * 0..2^31-1, so we just hardwire this constant.  We could do a
  * configure test if it proves to be necessary.  CAUTION: Think not to
- * replace this with RAND_MAX.	RAND_MAX defines the maximum value of
+ * replace this with RAND_MAX.  RAND_MAX defines the maximum value of
  * the older rand() function, which is often different from --- and
  * considerably inferior to --- random().
  */
@@ -178,7 +178,7 @@
 
 /*
  * Define this to check memory allocation errors (scribbling on more
- * bytes than were allocated).	Right now, this gets defined
+ * bytes than were allocated).  Right now, this gets defined
  * automatically if --enable-cassert.
  */
 #ifdef USE_ASSERT_CHECKING
@@ -188,7 +188,7 @@
 /*
  * Define this to cause palloc()'d memory to be filled with random data, to
  * facilitate catching code that depends on the contents of uninitialized
- * memory.	Caution: this is horrendously expensive.
+ * memory.  Caution: this is horrendously expensive.
  */
 /* #define RANDOMIZE_ALLOCATED_MEMORY */
 

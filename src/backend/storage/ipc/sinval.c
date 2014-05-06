@@ -26,7 +26,7 @@
  * Because backends sitting idle will not be reading sinval events, we
  * need a way to give an idle backend a swift kick in the rear and make
  * it catch up before the sinval queue overflows and forces it to go
- * through a cache reset exercise.	This is done by sending SIGUSR1
+ * through a cache reset exercise.  This is done by sending SIGUSR1
  * to any backend that gets too far behind.
  *
  * State for catchup events consists of two flags: one saying whether
@@ -65,7 +65,7 @@ SendSharedInvalidMessages(const SharedInvalidationMessage *msgs, int n)
  * NOTE: it is entirely possible for this routine to be invoked recursively
  * as a consequence of processing inside the invalFunction or resetFunction.
  * Furthermore, such a recursive call must guarantee that all outstanding
- * inval messages have been processed before it exits.	This is the reason
+ * inval messages have been processed before it exits.  This is the reason
  * for the strange-looking choice to use a statically allocated buffer array
  * and counters; it's so that a recursive call can process messages already
  * sucked out of sinvaladt.c.
@@ -131,7 +131,7 @@ ReceiveSharedInvalidMessages(
 	 * We are now caught up.  If we received a catchup signal, reset that
 	 * flag, and call SICleanupQueue().  This is not so much because we need
 	 * to flush dead messages right now, as that we want to pass on the
-	 * catchup signal to the next slowest backend.	"Daisy chaining" the
+	 * catchup signal to the next slowest backend.  "Daisy chaining" the
 	 * catchup signal this way avoids creating spikes in system load for what
 	 * should be just a background maintenance activity.
 	 */
@@ -151,7 +151,7 @@ ReceiveSharedInvalidMessages(
  *
  * If we are idle (catchupInterruptEnabled is set), we can safely
  * invoke ProcessCatchupEvent directly.  Otherwise, just set a flag
- * to do it later.	(Note that it's quite possible for normal processing
+ * to do it later.  (Note that it's quite possible for normal processing
  * of the current transaction to cause ReceiveSharedInvalidMessages()
  * to be run later on; in that case the flag will get cleared again,
  * since there's no longer any reason to do anything.)
@@ -162,7 +162,7 @@ CatchupInterruptHandler(SIGNAL_ARGS)
 	int			save_errno = errno;
 
 	/*
-	 * Note: this is a SIGNAL HANDLER.	You must be very wary what you do
+	 * Note: this is a SIGNAL HANDLER.  You must be very wary what you do
 	 * here.
 	 */
 
@@ -231,7 +231,7 @@ CatchupInterruptHandler(SIGNAL_ARGS)
  * EnableCatchupInterrupt
  *
  * This is called by the PostgresMain main loop just before waiting
- * for a frontend command.	We process any pending catchup events,
+ * for a frontend command.  We process any pending catchup events,
  * and enable the signal handler to process future events directly.
  *
  * NOTE: the signal handler starts out disabled, and stays so until
@@ -276,7 +276,7 @@ EnableCatchupInterrupt(void)
  * DisableCatchupInterrupt
  *
  * This is called by the PostgresMain main loop just after receiving
- * a frontend command.	Signal handler execution of catchup events
+ * a frontend command.  Signal handler execution of catchup events
  * is disabled until the next EnableCatchupInterrupt call.
  *
  * The SIGUSR2 signal handler also needs to call this, so as to

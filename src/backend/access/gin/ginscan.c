@@ -201,7 +201,7 @@ newScanKey(IndexScanDesc scan)
 		{
 			/*
 			 * extractQueryFn signals that nothing can match, so we can just
-			 * set isVoidRes flag.	No need to examine any more keys.
+			 * set isVoidRes flag.  No need to examine any more keys.
 			 */
 			so->isVoidRes = true;
 			break;
@@ -210,9 +210,9 @@ newScanKey(IndexScanDesc scan)
 		if (entryValues == NULL || nEntryValues == 0)
 		{
 			/*
-			 * extractQueryFn signals that everything matches.	This would
+			 * extractQueryFn signals that everything matches.  This would
 			 * require a full scan, which we can't do, but perhaps there is
-			 * another scankey that provides a restriction to use.	So we keep
+			 * another scankey that provides a restriction to use.  So we keep
 			 * going and check only at the end.
 			 */
 			continue;

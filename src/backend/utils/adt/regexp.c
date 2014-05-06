@@ -143,7 +143,7 @@ RE_compile_and_cache(text *text_re, int cflags)
 	char		errMsg[100];
 
 	/*
-	 * Look for a match among previously compiled REs.	Since the data
+	 * Look for a match among previously compiled REs.  Since the data
 	 * structure is self-organizing with most-used entries at the front, our
 	 * search strategy can just be to scan from the front.
 	 */
@@ -191,7 +191,7 @@ RE_compile_and_cache(text *text_re, int cflags)
 
 		/*
 		 * Here and in other places in this file, do CHECK_FOR_INTERRUPTS
-		 * before reporting a regex error.	This is so that if the regex
+		 * before reporting a regex error.  This is so that if the regex
 		 * library aborts and returns REG_CANCEL, we don't print an error
 		 * message that implies the regex was invalid.
 		 */
@@ -296,7 +296,7 @@ RE_wchar_execute(regex_t *re, pg_wchar *data, int data_len,
  *	dat_len --- the length of the data string
  *	nmatch, pmatch	--- optional return area for match details
  *
- * Data is given in the database encoding.	We internally
+ * Data is given in the database encoding.  We internally
  * convert to array of pg_wchar which is what Spencer's regex package wants.
  */
 static bool
@@ -698,7 +698,7 @@ similar_escape(PG_FUNCTION_ARGS)
 	 * which is bizarre enough to require some explanation.  "***:" is a
 	 * director prefix to force the regex to be treated as an ARE regardless
 	 * of the current regex_flavor setting.  We need "^" and "$" to force
-	 * the pattern to match the entire input string as per SQL99 spec.	The
+	 * the pattern to match the entire input string as per SQL99 spec.  The
 	 * "(?:" and ")" are a non-capturing set of parens; we have to have
 	 * parens in case the string contains "|", else the "^" and "$" will
 	 * be bound into the first and last alternatives which is not what we

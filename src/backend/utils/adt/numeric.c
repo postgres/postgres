@@ -49,7 +49,7 @@
  * Numeric values are represented in a base-NBASE floating point format.
  * Each "digit" ranges from 0 to NBASE-1.  The type NumericDigit is signed
  * and wide enough to store a digit.  We assume that NBASE*NBASE can fit in
- * an int.	Although the purely calculational routines could handle any even
+ * an int.  Although the purely calculational routines could handle any even
  * NBASE that's less than sqrt(INT_MAX), in practice we are only interested
  * in NBASE a power of ten, so that I/O conversions and decimal rounding
  * are easy.  Also, it's actually more efficient if NBASE is rather less than
@@ -90,19 +90,19 @@ typedef int16 NumericDigit;
 
 
 /* ----------
- * NumericVar is the format we use for arithmetic.	The digit-array part
+ * NumericVar is the format we use for arithmetic.  The digit-array part
  * is the same as the NumericData storage format, but the header is more
  * complex.
  *
  * The value represented by a NumericVar is determined by the sign, weight,
  * ndigits, and digits[] array.
  * Note: the first digit of a NumericVar's value is assumed to be multiplied
- * by NBASE ** weight.	Another way to say it is that there are weight+1
+ * by NBASE ** weight.  Another way to say it is that there are weight+1
  * digits before the decimal point.  It is possible to have weight < 0.
  *
  * buf points at the physical start of the palloc'd digit buffer for the
- * NumericVar.	digits points at the first digit in actual use (the one
- * with the specified weight).	We normally leave an unused digit or two
+ * NumericVar.  digits points at the first digit in actual use (the one
+ * with the specified weight).  We normally leave an unused digit or two
  * (preset to zeroes) between buf and digits, so that there is room to store
  * a carry out of the top digit without reallocating space.  We just need to
  * decrement digits (and increment weight) to make room for the carry digit.
@@ -702,7 +702,7 @@ numeric_uminus(PG_FUNCTION_ARGS)
 
 	/*
 	 * The packed format is known to be totally zero digit trimmed always. So
-	 * we can identify a ZERO by the fact that there are no digits at all.	Do
+	 * we can identify a ZERO by the fact that there are no digits at all.  Do
 	 * nothing to a zero.
 	 */
 	if (VARSIZE(num) != NUMERIC_HDRSZ)
@@ -1708,7 +1708,7 @@ numeric_sqrt(PG_FUNCTION_ARGS)
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
 	/*
-	 * Unpack the argument and determine the result scale.	We choose a scale
+	 * Unpack the argument and determine the result scale.  We choose a scale
 	 * to give at least NUMERIC_MIN_SIG_DIGITS significant digits; but in any
 	 * case not less than the input's dscale.
 	 */
@@ -1761,7 +1761,7 @@ numeric_exp(PG_FUNCTION_ARGS)
 		PG_RETURN_NUMERIC(make_result(&const_nan));
 
 	/*
-	 * Unpack the argument and determine the result scale.	We choose a scale
+	 * Unpack the argument and determine the result scale.  We choose a scale
 	 * to give at least NUMERIC_MIN_SIG_DIGITS significant digits; but in any
 	 * case not less than the input's dscale.
 	 */
@@ -2367,9 +2367,9 @@ numeric_avg_accum(PG_FUNCTION_ARGS)
 
 /*
  * Integer data types all use Numeric accumulators to share code and
- * avoid risk of overflow.	For int2 and int4 inputs, Numeric accumulation
+ * avoid risk of overflow.  For int2 and int4 inputs, Numeric accumulation
  * is overkill for the N and sum(X) values, but definitely not overkill
- * for the sum(X*X) value.	Hence, we use int2_accum and int4_accum only
+ * for the sum(X*X) value.  Hence, we use int2_accum and int4_accum only
  * for stddev/variance --- there are faster special-purpose accumulator
  * routines for SUM and AVG of these datatypes.
  */
@@ -2632,7 +2632,7 @@ numeric_stddev_pop(PG_FUNCTION_ARGS)
  * the initial condition of the transition data value needs to be NULL. This
  * means we can't rely on ExecAgg to automatically insert the first non-null
  * data value into the transition data: it doesn't know how to do the type
- * conversion.	The upshot is that these routines have to be marked non-strict
+ * conversion.  The upshot is that these routines have to be marked non-strict
  * and handle substitution of the first non-null input themselves.
  */
 
@@ -3045,7 +3045,7 @@ set_var_from_str(const char *str, const char *cp, NumericVar *dest)
 
 	/*
 	 * We first parse the string to extract decimal digits and determine the
-	 * correct decimal weight.	Then convert to NBASE representation.
+	 * correct decimal weight.  Then convert to NBASE representation.
 	 */
 	switch (*cp)
 	{
@@ -3514,7 +3514,7 @@ apply_typmod(NumericVar *var, int32 typmod)
 /*
  * Convert numeric to int8, rounding if needed.
  *
- * If overflow, return FALSE (no error is raised).	Return TRUE if okay.
+ * If overflow, return FALSE (no error is raised).  Return TRUE if okay.
  *
  *	CAUTION: var's contents may be modified by rounding!
  */
@@ -3978,7 +3978,7 @@ sub_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
  * mul_var() -
  *
  *	Multiplication on variable level. Product of var1 * var2 is stored
- *	in result.	Result is rounded to no more than rscale fractional digits.
+ *	in result.  Result is rounded to no more than rscale fractional digits.
  */
 static void
 mul_var(NumericVar *var1, NumericVar *var2, NumericVar *result,
@@ -4022,7 +4022,7 @@ mul_var(NumericVar *var1, NumericVar *var2, NumericVar *result,
 	/*
 	 * Determine number of result digits to compute.  If the exact result
 	 * would have more than rscale fractional digits, truncate the computation
-	 * with MUL_GUARD_DIGITS guard digits.	We do that by pretending that one
+	 * with MUL_GUARD_DIGITS guard digits.  We do that by pretending that one
 	 * or both inputs have fewer digits than they really do.
 	 */
 	res_ndigits = var1ndigits + var2ndigits + 1;
@@ -4265,7 +4265,7 @@ div_var(NumericVar *var1, NumericVar *var2, NumericVar *result,
 		 *
 		 * We need the first divisor digit to be >= NBASE/2.  If it isn't,
 		 * make it so by scaling up both the divisor and dividend by the
-		 * factor "d".	(The reason for allocating dividend[0] above is to
+		 * factor "d".  (The reason for allocating dividend[0] above is to
 		 * leave room for possible carry here.)
 		 */
 		if (divisor[1] < HALF_NBASE)
@@ -4309,7 +4309,7 @@ div_var(NumericVar *var1, NumericVar *var2, NumericVar *result,
 
 			/*
 			 * If next2digits are 0, then quotient digit must be 0 and there's
-			 * no need to adjust the working dividend.	It's worth testing
+			 * no need to adjust the working dividend.  It's worth testing
 			 * here to fall out ASAP when processing trailing zeroes in a
 			 * dividend.
 			 */
@@ -4327,7 +4327,7 @@ div_var(NumericVar *var1, NumericVar *var2, NumericVar *result,
 			/*
 			 * Adjust quotient digit if it's too large.  Knuth proves that
 			 * after this step, the quotient digit will be either correct or
-			 * just one too large.	(Note: it's OK to use dividend[j+2] here
+			 * just one too large.  (Note: it's OK to use dividend[j+2] here
 			 * because we know the divisor length is at least 2.)
 			 */
 			while (divisor2 * qhat >
@@ -4502,7 +4502,7 @@ div_var_fast(NumericVar *var1, NumericVar *var2, NumericVar *result,
 	 * dividend's digits (plus appended zeroes to reach the desired precision
 	 * including guard digits).  Each step of the main loop computes an
 	 * (approximate) quotient digit and stores it into div[], removing one
-	 * position of dividend space.	A final pass of carry propagation takes
+	 * position of dividend space.  A final pass of carry propagation takes
 	 * care of any mistaken quotient digits.
 	 */
 	div = (int *) palloc0((div_ndigits + 1) * sizeof(int));
@@ -5359,7 +5359,7 @@ power_var_int(NumericVar *base, int exp, NumericVar *result, int rscale)
 
 	/*
 	 * The general case repeatedly multiplies base according to the bit
-	 * pattern of exp.	We do the multiplications with some extra precision.
+	 * pattern of exp.  We do the multiplications with some extra precision.
 	 */
 	neg = (exp < 0);
 	exp = Abs(exp);

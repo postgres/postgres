@@ -180,7 +180,7 @@ validate_exec(const char *path)
  * that are part of our installation relative to the executable.
  *
  * This function is not thread-safe because it calls validate_exec(),
- * which calls getgrgid().	This function should be used only in
+ * which calls getgrgid().  This function should be used only in
  * non-threaded binaries, not in library routines.
  */
 int

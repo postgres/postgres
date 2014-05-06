@@ -20,7 +20,7 @@
 
 /*
  * Each backend advertises up to PGPROC_MAX_CACHED_SUBXIDS TransactionIds
- * for non-aborted subtransactions of its current top transaction.	These
+ * for non-aborted subtransactions of its current top transaction.  These
  * have to be treated as running XIDs by other backends.
  *
  * We also keep track of whether the cache overflowed (ie, the transaction has
@@ -51,7 +51,7 @@ struct XidCache
  * Each backend has a PGPROC struct in shared memory.  There is also a list of
  * currently-unused PGPROC structs that will be reallocated to new backends.
  *
- * links: list link for any list the PGPROC is in.	When waiting for a lock,
+ * links: list link for any list the PGPROC is in.  When waiting for a lock,
  * the PGPROC is linked into that lock's waitProcs queue.  A recycled PGPROC
  * is linked into ProcGlobal's freeProcs list.
  *

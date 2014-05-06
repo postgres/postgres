@@ -14,7 +14,7 @@
  *
  * Package for managing doubly-linked lists in shared memory.
  * The only tricky thing is that SHM_QUEUE will usually be a field
- * in a larger record.	SHMQueueNext has to return a pointer
+ * in a larger record.  SHMQueueNext has to return a pointer
  * to the record itself instead of a pointer to the SHMQueue field
  * of the record.  It takes an extra parameter and does some extra
  * pointer arithmetic to do this correctly.

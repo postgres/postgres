@@ -41,7 +41,7 @@
  *
  *		At the end of a scan, the AM's endscan routine undoes the locking,
  *		but does *not* call IndexScanEnd --- the higher-level index_endscan
- *		routine does that.	(We can't do it in the AM because index_endscan
+ *		routine does that.  (We can't do it in the AM because index_endscan
  *		still needs to touch the IndexScanDesc after calling the AM.)
  *
  *		Because of this, the AM does not have a choice whether to call
@@ -336,7 +336,7 @@ systable_endscan(SysScanDesc sysscan)
  * index order.  Also, for largely historical reasons, the index to use
  * is opened and locked by the caller, not here.
  *
- * Currently we do not support non-index-based scans here.	(In principle
+ * Currently we do not support non-index-based scans here.  (In principle
  * we could do a heapscan and sort, but the uses are in places that
  * probably don't need to still work with corrupted catalog indexes.)
  * For the moment, therefore, these functions are merely the thinnest of

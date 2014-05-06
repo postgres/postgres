@@ -78,7 +78,7 @@ static void AfterTriggerSaveEvent(ResultRelInfo *relinfo, int event,
  *
  * constraintOid, if nonzero, says that this trigger is being created
  * internally to implement that constraint.  A suitable pg_depend entry will
- * be made to link the trigger to that constraint.	constraintOid is zero when
+ * be made to link the trigger to that constraint.  constraintOid is zero when
  * executing a user-entered CREATE TRIGGER command.
  *
  * If checkPermissions is true we require ACL_TRIGGER permissions on the
@@ -185,7 +185,7 @@ CreateTrigger(CreateTrigStmt *stmt, Oid relOid, Oid refRelOid,
 	if (funcrettype != TRIGGEROID)
 	{
 		/*
-		 * We allow OPAQUE just so we can load old dump files.	When we see a
+		 * We allow OPAQUE just so we can load old dump files.  When we see a
 		 * trigger function declared OPAQUE, change it to TRIGGER.
 		 */
 		if (funcrettype == OPAQUEOID)
@@ -207,7 +207,7 @@ CreateTrigger(CreateTrigStmt *stmt, Oid relOid, Oid refRelOid,
 	 * references one of the built-in RI_FKey trigger functions, assume it is
 	 * from a dump of a pre-7.3 foreign key constraint, and take steps to
 	 * convert this legacy representation into a regular foreign key
-	 * constraint.	Ugly, but necessary for loading old dump files.
+	 * constraint.  Ugly, but necessary for loading old dump files.
 	 */
 	if (stmt->isconstraint && !OidIsValid(constraintOid) &&
 		list_length(stmt->args) >= 6 &&
@@ -411,7 +411,7 @@ CreateTrigger(CreateTrigStmt *stmt, Oid relOid, Oid refRelOid,
 	{
 		/*
 		 * It's for a constraint, so make it an internal dependency of the
-		 * constraint.	We can skip depending on the relations, as there'll be
+		 * constraint.  We can skip depending on the relations, as there'll be
 		 * an indirect dependency via the constraint.
 		 */
 		referenced.classId = ConstraintRelationId;
@@ -451,7 +451,7 @@ CreateTrigger(CreateTrigStmt *stmt, Oid relOid, Oid refRelOid,
  * full-fledged foreign key constraints.
  *
  * The conversion is complex because a pre-7.3 foreign key involved three
- * separate triggers, which were reported separately in dumps.	While the
+ * separate triggers, which were reported separately in dumps.  While the
  * single trigger on the referencing table adds no new information, we need
  * to know the trigger functions of both of the triggers on the referenced
  * table to build the constraint declaration.  Also, due to lack of proper
@@ -2290,7 +2290,7 @@ typedef SetConstraintStateData *SetConstraintState;
  * Per-trigger-event data
  *
  * The actual per-event data, AfterTriggerEventData, includes DONE/IN_PROGRESS
- * status bits and one or two tuple CTIDs.	Each event record also has an
+ * status bits and one or two tuple CTIDs.  Each event record also has an
  * associated AfterTriggerSharedData that is shared across all instances
  * of similar events within a "chunk".
  *
@@ -2304,7 +2304,7 @@ typedef SetConstraintStateData *SetConstraintState;
  * Although this is mutable state, we can keep it in AfterTriggerSharedData
  * because all instances of the same type of event in a given event list will
  * be fired at the same time, if they were queued between the same firing
- * cycles.	So we need only ensure that ats_firing_id is zero when attaching
+ * cycles.  So we need only ensure that ats_firing_id is zero when attaching
  * a new event to an existing AfterTriggerSharedData record.
  */
 typedef uint32 TriggerFlags;
@@ -2351,7 +2351,7 @@ typedef struct AfterTriggerEventDataOneCtid
 /*
  * To avoid palloc overhead, we keep trigger events in arrays in successively-
  * larger chunks (a slightly more sophisticated version of an expansible
- * array).	The space between CHUNK_DATA_START and freeptr is occupied by
+ * array).  The space between CHUNK_DATA_START and freeptr is occupied by
  * AfterTriggerEventData records; the space between endfree and endptr is
  * occupied by AfterTriggerSharedData records.
  */
@@ -2393,7 +2393,7 @@ typedef struct AfterTriggerEventList
  *
  * firing_counter is incremented for each call of afterTriggerInvokeEvents.
  * We mark firable events with the current firing cycle's ID so that we can
- * tell which ones to work on.	This ensures sane behavior if a trigger
+ * tell which ones to work on.  This ensures sane behavior if a trigger
  * function chooses to do SET CONSTRAINTS: the inner SET CONSTRAINTS will
  * only fire those events that weren't already scheduled for firing.
  *
@@ -2401,7 +2401,7 @@ typedef struct AfterTriggerEventList
  * This is saved and restored across failed subtransactions.
  *
  * events is the current list of deferred events.  This is global across
- * all subtransactions of the current transaction.	In a subtransaction
+ * all subtransactions of the current transaction.  In a subtransaction
  * abort, we know that the events added by the subtransaction are at the
  * end of the list, so it is relatively easy to discard them.  The event
  * list chunks themselves are stored in event_cxt.
@@ -2429,12 +2429,12 @@ typedef struct AfterTriggerEventList
  * which we similarly use to clean up at subtransaction abort.
  *
  * firing_stack is a stack of copies of subtransaction-start-time
- * firing_counter.	We use this to recognize which deferred triggers were
+ * firing_counter.  We use this to recognize which deferred triggers were
  * fired (or marked for firing) within an aborted subtransaction.
  *
  * We use GetCurrentTransactionNestLevel() to determine the correct array
  * index in these stacks.  maxtransdepth is the number of allocated entries in
- * each stack.	(By not keeping our own stack pointer, we can avoid trouble
+ * each stack.  (By not keeping our own stack pointer, we can avoid trouble
  * in cases where errors during subxact abort cause multiple invocations
  * of AfterTriggerEndSubXact() at the same nesting depth.)
  */
@@ -2702,7 +2702,7 @@ afterTriggerRestoreEventList(AfterTriggerEventList *events,
  *	single trigger function.
  *
  *	Frequently, this will be fired many times in a row for triggers of
- *	a single relation.	Therefore, we cache the open relation and provide
+ *	a single relation.  Therefore, we cache the open relation and provide
  *	fmgr lookup cache space at the caller level.  (For triggers fired at
  *	the end of a query, we can even piggyback on the executor's state.)
  *
@@ -3219,7 +3219,7 @@ AfterTriggerFireDeferred(void)
 	}
 
 	/*
-	 * Run all the remaining triggers.	Loop until they are all gone, in case
+	 * Run all the remaining triggers.  Loop until they are all gone, in case
 	 * some trigger queues more for us to do.
 	 */
 	while (afterTriggerMarkEvents(events, NULL, false))
@@ -3282,7 +3282,7 @@ AfterTriggerBeginSubXact(void)
 	int			my_level = GetCurrentTransactionNestLevel();
 
 	/*
-	 * Ignore call if the transaction is in aborted state.	(Probably
+	 * Ignore call if the transaction is in aborted state.  (Probably
 	 * shouldn't happen?)
 	 */
 	if (afterTriggers == NULL)
@@ -3361,7 +3361,7 @@ AfterTriggerEndSubXact(bool isCommit)
 	CommandId	subxact_firing_id;
 
 	/*
-	 * Ignore call if the transaction is in aborted state.	(Probably
+	 * Ignore call if the transaction is in aborted state.  (Probably
 	 * unneeded)
 	 */
 	if (afterTriggers == NULL)
@@ -3493,7 +3493,7 @@ SetConstraintStateCopy(SetConstraintState origstate)
 }
 
 /*
- * Add a per-trigger item to a SetConstraintState.	Returns possibly-changed
+ * Add a per-trigger item to a SetConstraintState.  Returns possibly-changed
  * pointer to the state object (it will change if we have to repalloc).
  */
 static SetConstraintState
@@ -3599,7 +3599,7 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 
 			/*
 			 * If we're given the schema name with the constraint, look only
-			 * in that schema.	If given a bare constraint name, use the
+			 * in that schema.  If given a bare constraint name, use the
 			 * search path to find the first matching constraint.
 			 */
 			if (constraint->schemaname)
@@ -3766,7 +3766,7 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 
 			/*
 			 * Make sure a snapshot has been established in case trigger
-			 * functions need one.	Note that we avoid setting a snapshot if
+			 * functions need one.  Note that we avoid setting a snapshot if
 			 * we don't find at least one trigger that has to be fired now.
 			 * This is so that BEGIN; SET CONSTRAINTS ...; SET TRANSACTION
 			 * ISOLATION LEVEL SERIALIZABLE; ... works properly.  (If we are
@@ -3826,7 +3826,7 @@ AfterTriggerPendingOnRel(Oid relid)
 		AfterTriggerShared evtshared = GetTriggerSharedData(event);
 
 		/*
-		 * We can ignore completed events.	(Even if a DONE flag is rolled
+		 * We can ignore completed events.  (Even if a DONE flag is rolled
 		 * back by subxact abort, it's OK because the effects of the TRUNCATE
 		 * or whatever must get rolled back too.)
 		 */

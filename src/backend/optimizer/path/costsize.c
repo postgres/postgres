@@ -24,7 +24,7 @@
  *
  * Obviously, taking constants for these values is an oversimplification,
  * but it's tough enough to get any useful estimates even at this level of
- * detail.	Note that all of these parameters are user-settable, in case
+ * detail.  Note that all of these parameters are user-settable, in case
  * the default values are drastically off for a particular platform.
  *
  * We compute two separate costs for each path:
@@ -428,7 +428,7 @@ cost_index(IndexPath *path, PlannerInfo *root,
  * computed for us by query_planner.
  *
  * Caller is expected to have ensured that tuples_fetched is greater than zero
- * and rounded to integer (see clamp_row_est).	The result will likewise be
+ * and rounded to integer (see clamp_row_est).  The result will likewise be
  * greater than zero and integral.
  */
 double
@@ -617,7 +617,7 @@ cost_bitmap_heap_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
 	/*
 	 * For small numbers of pages we should charge random_page_cost apiece,
 	 * while if nearly all the table's pages are being read, it's more
-	 * appropriate to charge seq_page_cost apiece.	The effect is nonlinear,
+	 * appropriate to charge seq_page_cost apiece.  The effect is nonlinear,
 	 * too. For lack of a better idea, interpolate like this to determine the
 	 * cost per page.
 	 */
@@ -688,7 +688,7 @@ cost_bitmap_tree_node(Path *path, Cost *cost, Selectivity *selec)
  *		Estimate the cost of a BitmapAnd node
  *
  * Note that this considers only the costs of index scanning and bitmap
- * creation, not the eventual heap access.	In that sense the object isn't
+ * creation, not the eventual heap access.  In that sense the object isn't
  * truly a Path, but it has enough path-like properties (costs in particular)
  * to warrant treating it as one.
  */
@@ -745,7 +745,7 @@ cost_bitmap_or_node(BitmapOrPath *path, PlannerInfo *root)
 	/*
 	 * We estimate OR selectivity on the assumption that the inputs are
 	 * non-overlapping, since that's often the case in "x IN (list)" type
-	 * situations.	Of course, we clamp to 1.0 at the end.
+	 * situations.  Of course, we clamp to 1.0 at the end.
 	 *
 	 * The runtime cost of the BitmapOr itself is estimated at 100x
 	 * cpu_operator_cost for each tbm_union needed.  Probably too small,
@@ -821,7 +821,7 @@ cost_tidscan(Path *path, PlannerInfo *root,
 
 	/*
 	 * We must force TID scan for WHERE CURRENT OF, because only nodeTidscan.c
-	 * understands how to do it correctly.	Therefore, honor enable_tidscan
+	 * understands how to do it correctly.  Therefore, honor enable_tidscan
 	 * only when CURRENT OF isn't present.  Also note that cost_qual_eval
 	 * counts a CurrentOfExpr as having startup cost disable_cost, which we
 	 * subtract off here; that's to prevent other plan types such as seqscan
@@ -955,7 +955,7 @@ cost_valuesscan(Path *path, PlannerInfo *root, RelOptInfo *baserel)
  *
  * Note: this is used for both self-reference and regular CTEs; the
  * possible cost differences are below the threshold of what we could
- * estimate accurately anyway.	Note that the costs of evaluating the
+ * estimate accurately anyway.  Note that the costs of evaluating the
  * referenced CTE query are added into the final plan as initplan costs,
  * and should NOT be counted here.
  */
@@ -1039,7 +1039,7 @@ cost_recursive_union(Plan *runion, Plan *nrterm, Plan *rterm)
  * If the total volume exceeds work_mem, we switch to a tape-style merge
  * algorithm.  There will still be about t*log2(t) tuple comparisons in
  * total, but we will also need to write and read each tuple once per
- * merge pass.	We expect about ceil(logM(r)) merge passes where r is the
+ * merge pass.  We expect about ceil(logM(r)) merge passes where r is the
  * number of initial runs formed and M is the merge order used by tuplesort.c.
  * Since the average initial run should be about twice work_mem, we have
  *		disk traffic = 2 * relsize * ceil(logM(p / (2*work_mem)))
@@ -1215,7 +1215,7 @@ cost_material(Path *path,
 	startup_cost += cpu_tuple_cost * 0.1 * tuples;
 
 	/*
-	 * Also charge a small amount per extracted tuple.	We use cpu_tuple_cost
+	 * Also charge a small amount per extracted tuple.  We use cpu_tuple_cost
 	 * so that it doesn't appear worthwhile to materialize a bare seqscan.
 	 */
 	run_cost += cpu_tuple_cost * tuples;
@@ -1253,7 +1253,7 @@ cost_agg(Path *path, PlannerInfo *root,
 	 * group otherwise.  We charge cpu_tuple_cost for each output tuple.
 	 *
 	 * Note: in this cost model, AGG_SORTED and AGG_HASHED have exactly the
-	 * same total CPU cost, but AGG_SORTED has lower startup cost.	If the
+	 * same total CPU cost, but AGG_SORTED has lower startup cost.  If the
 	 * input path is already sorted appropriately, AGG_SORTED should be
 	 * preferred (since it has no risk of memory overflow).  This will happen
 	 * as long as the computed total costs are indeed exactly equal --- but if
@@ -1578,7 +1578,7 @@ cost_mergejoin(MergePath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	qp_qual_cost.per_tuple -= merge_qual_cost.per_tuple;
 
 	/*
-	 * Get approx # tuples passing the mergequals.	We use approx_tuple_count
+	 * Get approx # tuples passing the mergequals.  We use approx_tuple_count
 	 * here because we need an estimate done with JOIN_INNER semantics.
 	 */
 	mergejointuples = approx_tuple_count(root, &path->jpath, mergeclauses);
@@ -1595,7 +1595,7 @@ cost_mergejoin(MergePath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	 * estimated approximately as size of merge join output minus size of
 	 * inner relation. Assume that the distinct key values are 1, 2, ..., and
 	 * denote the number of values of each key in the outer relation as m1,
-	 * m2, ...; in the inner relation, n1, n2, ...	Then we have
+	 * m2, ...; in the inner relation, n1, n2, ...  Then we have
 	 *
 	 * size of join = m1 * n1 + m2 * n2 + ...
 	 *
@@ -1606,7 +1606,7 @@ cost_mergejoin(MergePath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	 * This equation works correctly for outer tuples having no inner match
 	 * (nk = 0), but not for inner tuples having no outer match (mk = 0); we
 	 * are effectively subtracting those from the number of rescanned tuples,
-	 * when we should not.	Can we do better without expensive selectivity
+	 * when we should not.  Can we do better without expensive selectivity
 	 * computations?
 	 *
 	 * The whole issue is moot if we are working from a unique-ified outer
@@ -1801,7 +1801,7 @@ cost_mergejoin(MergePath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	/*
 	 * For each tuple that gets through the mergejoin proper, we charge
 	 * cpu_tuple_cost plus the cost of evaluating additional restriction
-	 * clauses that are to be applied at the join.	(This is pessimistic since
+	 * clauses that are to be applied at the join.  (This is pessimistic since
 	 * not all of the quals may get evaluated at each tuple.)
 	 *
 	 * Note: we could adjust for SEMI/ANTI joins skipping some qual
@@ -2026,7 +2026,7 @@ cost_hashjoin(HashPath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	 * If inner relation is too big then we will need to "batch" the join,
 	 * which implies writing and reading most of the tuples to disk an extra
 	 * time.  Charge seq_page_cost per page, since the I/O should be nice and
-	 * sequential.	Writing the inner rel counts as startup cost, all the rest
+	 * sequential.  Writing the inner rel counts as startup cost, all the rest
 	 * as run cost.
 	 */
 	if (numbatches > 1)
@@ -2118,7 +2118,7 @@ cost_hashjoin(HashPath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	/*
 	 * For each tuple that gets through the hashjoin proper, we charge
 	 * cpu_tuple_cost plus the cost of evaluating additional restriction
-	 * clauses that are to be applied at the join.	(This is pessimistic since
+	 * clauses that are to be applied at the join.  (This is pessimistic since
 	 * not all of the quals may get evaluated at each tuple.)
 	 */
 	startup_cost += qp_qual_cost.startup;
@@ -2171,7 +2171,7 @@ cost_subplan(PlannerInfo *root, SubPlan *subplan, Plan *plan)
 	{
 		/*
 		 * Otherwise we will be rescanning the subplan output on each
-		 * evaluation.	We need to estimate how much of the output we will
+		 * evaluation.  We need to estimate how much of the output we will
 		 * actually need to scan.  NOTE: this logic should agree with the
 		 * tuple_fraction estimates used by make_subplan() in
 		 * plan/subselect.c.
@@ -2326,14 +2326,14 @@ cost_qual_eval_walker(Node *node, cost_qual_eval_context *context)
 	 *
 	 * Note that Aggref and WindowFunc nodes are (and should be) treated like
 	 * Vars --- whatever execution cost they have is absorbed into
-	 * plan-node-specific costing.	As far as expression evaluation is
+	 * plan-node-specific costing.  As far as expression evaluation is
 	 * concerned they're just like Vars.
 	 *
 	 * Should we try to account for the possibility of short-circuit
 	 * evaluation of AND/OR?  Probably *not*, because that would make the
 	 * results depend on the clause ordering, and we are not in any position
 	 * to expect that the current ordering of the clauses is the one that's
-	 * going to end up being used.	(Is it worth applying order_qual_clauses
+	 * going to end up being used.  (Is it worth applying order_qual_clauses
 	 * much earlier in the planning process to fix this?)
 	 */
 	if (IsA(node, FuncExpr))
@@ -2434,7 +2434,7 @@ cost_qual_eval_walker(Node *node, cost_qual_eval_context *context)
 	else if (IsA(node, AlternativeSubPlan))
 	{
 		/*
-		 * Arbitrarily use the first alternative plan for costing.	(We should
+		 * Arbitrarily use the first alternative plan for costing.  (We should
 		 * certainly only include one alternative, and we don't yet have
 		 * enough information to know which one the executor is most likely to
 		 * use.)
@@ -2560,7 +2560,7 @@ adjust_semi_join(PlannerInfo *root, JoinPath *path, SpecialJoinInfo *sjinfo,
 	/*
 	 * jselec can be interpreted as the fraction of outer-rel rows that have
 	 * any matches (this is true for both SEMI and ANTI cases).  And nselec is
-	 * the fraction of the Cartesian product that matches.	So, the average
+	 * the fraction of the Cartesian product that matches.  So, the average
 	 * number of matches for each outer-rel row that has at least one match is
 	 * nselec * inner_rows / jselec.
 	 *
@@ -2583,7 +2583,7 @@ adjust_semi_join(PlannerInfo *root, JoinPath *path, SpecialJoinInfo *sjinfo,
 
 	/*
 	 * If requested, check whether the inner path uses all the joinquals as
-	 * indexquals.	(If that's true, we can assume that an unmatched outer
+	 * indexquals.  (If that's true, we can assume that an unmatched outer
 	 * tuple is cheap to process, whereas otherwise it's probably expensive.)
 	 */
 	if (indexed_join_quals)
@@ -2740,7 +2740,7 @@ set_joinrel_size_estimates(PlannerInfo *root, RelOptInfo *rel,
 	double		nrows;
 
 	/*
-	 * Compute joinclause selectivity.	Note that we are only considering
+	 * Compute joinclause selectivity.  Note that we are only considering
 	 * clauses that become restriction clauses at this join level; we are not
 	 * double-counting them because they were not considered in estimating the
 	 * sizes of the component rels.
@@ -2798,7 +2798,7 @@ set_joinrel_size_estimates(PlannerInfo *root, RelOptInfo *rel,
 	 *
 	 * If we are doing an outer join, take that into account: the joinqual
 	 * selectivity has to be clamped using the knowledge that the output must
-	 * be at least as large as the non-nullable input.	However, any
+	 * be at least as large as the non-nullable input.  However, any
 	 * pushed-down quals are applied after the outer join, so their
 	 * selectivity applies fully.
 	 *
@@ -2945,7 +2945,7 @@ set_cte_size_estimates(PlannerInfo *root, RelOptInfo *rel, Plan *cteplan)
  * NB: this works best on plain relations because it prefers to look at
  * real Vars.  It will fail to make use of pg_statistic info when applied
  * to a subquery relation, even if the subquery outputs are simple vars
- * that we could have gotten info for.	Is it worth trying to be smarter
+ * that we could have gotten info for.  Is it worth trying to be smarter
  * about subqueries?
  *
  * The per-attribute width estimates are cached for possible re-use while

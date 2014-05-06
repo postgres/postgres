@@ -141,7 +141,7 @@ ProcArrayAdd(PGPROC *proc)
 	if (arrayP->numProcs >= arrayP->maxProcs)
 	{
 		/*
-		 * Ooops, no room.	(This really shouldn't happen, since there is a
+		 * Ooops, no room.  (This really shouldn't happen, since there is a
 		 * fixed supply of PGPROC structs too, and so we should have failed
 		 * earlier.)
 		 */
@@ -326,7 +326,7 @@ ProcArrayClearTransaction(PGPROC *proc)
  * We can find this out cheaply too.
  *
  * 3. Search the SubTrans tree to find the Xid's topmost parent, and then
- * see if that is running according to PGPROC.	This is the slowest, but
+ * see if that is running according to PGPROC.  This is the slowest, but
  * sadly it has to be done always if the other two failed, unless we see
  * that the cached subxact sets are complete (none have overflowed).
  *
@@ -569,9 +569,9 @@ TransactionIdIsActive(TransactionId xid)
  * ignored.
  *
  * This is used by VACUUM to decide which deleted tuples must be preserved
- * in a table.	allDbs = TRUE is needed for shared relations, but allDbs =
+ * in a table.  allDbs = TRUE is needed for shared relations, but allDbs =
  * FALSE is sufficient for non-shared relations, since only backends in my
- * own database could ever see the tuples in them.	Also, we can ignore
+ * own database could ever see the tuples in them.  Also, we can ignore
  * concurrently running lazy VACUUMs because (a) they must be working on other
  * tables, and (b) they don't need to do snapshot-based lookups.
  *
@@ -766,7 +766,7 @@ GetSnapshotData(Snapshot snapshot)
 
 		/*
 		 * If the transaction has been assigned an xid < xmax we add it to the
-		 * snapshot, and update xmin if necessary.	There's no need to store
+		 * snapshot, and update xmin if necessary.  There's no need to store
 		 * XIDs >= xmax, since we'll treat them as running anyway.  We don't
 		 * bother to examine their subxids either.
 		 *
@@ -791,7 +791,7 @@ GetSnapshotData(Snapshot snapshot)
 		 * while holding the ProcArrayLock.
 		 *
 		 * The other backend can add more subxids concurrently, but cannot
-		 * remove any.	Hence it's important to fetch nxids just once. Should
+		 * remove any.  Hence it's important to fetch nxids just once. Should
 		 * be safe to use memcpy, though.  (We needn't worry about missing any
 		 * xids added concurrently, because they must postdate xmax.)
 		 *
@@ -990,7 +990,7 @@ BackendPidGetProc(int pid)
  * Only main transaction Ids are considered.  This function is mainly
  * useful for determining what backend owns a lock.
  *
- * Beware that not every xact has an XID assigned.	However, as long as you
+ * Beware that not every xact has an XID assigned.  However, as long as you
  * only call this using an XID found on disk, you're safe.
  */
 int
@@ -1050,7 +1050,7 @@ IsBackendPid(int pid)
  * some snapshot we have.  Since we examine the procarray with only shared
  * lock, there are race conditions: a backend could set its xmin just after
  * we look.  Indeed, on multiprocessors with weak memory ordering, the
- * other backend could have set its xmin *before* we look.	We know however
+ * other backend could have set its xmin *before* we look.  We know however
  * that such a backend must have held shared ProcArrayLock overlapping our
  * own hold of ProcArrayLock, else we would see its xmin update.  Therefore,
  * any snapshot the other backend is taking concurrently with our scan cannot
@@ -1319,7 +1319,7 @@ CountOtherDBBackends(Oid databaseId, int *nbackends, int *nprepared)
  * XidCacheRemoveRunningXids
  *
  * Remove a bunch of TransactionIds from the list of known-running
- * subtransactions for my backend.	Both the specified xid and those in
+ * subtransactions for my backend.  Both the specified xid and those in
  * the xids[] array (of length nxids) are removed from the subxids cache.
  * latestXid must be the latest XID among the group.
  */

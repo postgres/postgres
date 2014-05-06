@@ -4,7 +4,7 @@
  *	  The postgres vacuum cleaner.
  *
  * This file includes the "full" version of VACUUM, as well as control code
- * used by all three of full VACUUM, lazy VACUUM, and ANALYZE.	See
+ * used by all three of full VACUUM, lazy VACUUM, and ANALYZE.  See
  * vacuumlazy.c and analyze.c for the rest of the code for the latter two.
  *
  *
@@ -314,7 +314,7 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 	 * certainly not be the desired behavior.  (This only applies to VACUUM
 	 * FULL, though.  We could in theory run lazy VACUUM inside a transaction
 	 * block, but we choose to disallow that case because we'd rather commit
-	 * as soon as possible after finishing the vacuum.	This is mainly so that
+	 * as soon as possible after finishing the vacuum.  This is mainly so that
 	 * we can let go the AccessExclusiveLock that we may be holding.)
 	 *
 	 * ANALYZE (without VACUUM) can run either way.
@@ -604,9 +604,9 @@ vacuum_set_xid_limits(int freeze_min_age,
 	TransactionId safeLimit;
 
 	/*
-	 * We can always ignore processes running lazy vacuum.	This is because we
+	 * We can always ignore processes running lazy vacuum.  This is because we
 	 * use these values only for deciding which tuples we must keep in the
-	 * tables.	Since lazy vacuum doesn't write its XID anywhere, it's safe to
+	 * tables.  Since lazy vacuum doesn't write its XID anywhere, it's safe to
 	 * ignore it.  In theory it could be problematic to ignore lazy vacuums on
 	 * a full vacuum, but keep in mind that only one vacuum process can be
 	 * working on a particular table at any time, and that each vacuum is
@@ -832,7 +832,7 @@ vac_update_relstats(Relation relation,
 
 	/*
 	 * If we have discovered that there are no indexes, then there's no
-	 * primary key either.	This could be done more thoroughly...
+	 * primary key either.  This could be done more thoroughly...
 	 */
 	if (!hasindex)
 	{
@@ -882,7 +882,7 @@ vac_update_relstats(Relation relation,
  *		advance pg_database.datfrozenxid, also try to truncate pg_clog.
  *
  *		We violate transaction semantics here by overwriting the database's
- *		existing pg_database tuple with the new value.	This is reasonably
+ *		existing pg_database tuple with the new value.  This is reasonably
  *		safe since the new value is correct whether or not this transaction
  *		commits.  As with vac_update_relstats, this avoids leaving dead tuples
  *		behind after a VACUUM.
@@ -988,7 +988,7 @@ vac_update_datfrozenxid(void)
  *		Also update the XID wrap limit info maintained by varsup.c.
  *
  *		The passed XID is simply the one I just wrote into my pg_database
- *		entry.	It's used to initialize the "min" calculation.
+ *		entry.  It's used to initialize the "min" calculation.
  *
  *		This routine is shared by full and lazy VACUUM.  Note that it's
  *		only invoked when we've managed to change our DB's datfrozenxid
@@ -1079,7 +1079,7 @@ vac_truncate_clog(TransactionId frozenXID)
  *	vacuum_rel() -- vacuum one heap relation
  *
  *		Doing one heap at a time incurs extra overhead, since we need to
- *		check that the heap exists again just before we vacuum it.	The
+ *		check that the heap exists again just before we vacuum it.  The
  *		reason that we do this is so that vacuuming can be spread across
  *		many small transactions.  Otherwise, two-phase locking would require
  *		us to lock the entire database during one pass of the vacuum cleaner.
@@ -1137,7 +1137,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound)
 	}
 
 	/*
-	 * Check for user-requested abort.	Note we want this to be inside a
+	 * Check for user-requested abort.  Note we want this to be inside a
 	 * transaction, so xact.c doesn't issue useless WARNING.
 	 */
 	CHECK_FOR_INTERRUPTS();
@@ -1169,7 +1169,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound)
 	 *
 	 * We allow the user to vacuum a table if he is superuser, the table
 	 * owner, or the database owner (but in the latter case, only if it's not
-	 * a shared relation).	pg_class_ownercheck includes the superuser case.
+	 * a shared relation).  pg_class_ownercheck includes the superuser case.
 	 *
 	 * Note we choose to treat permissions failure as a WARNING and keep
 	 * trying to vacuum the rest of the DB --- is this appropriate?
@@ -1290,7 +1290,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound)
 	/*
 	 * If the relation has a secondary toast rel, vacuum that too while we
 	 * still hold the session lock on the master table.  Note however that
-	 * "analyze" will not get done on the toast table.	This is good, because
+	 * "analyze" will not get done on the toast table.  This is good, because
 	 * the toaster always uses hardcoded index access and statistics are
 	 * totally unimportant for toast relations.
 	 */
@@ -1498,10 +1498,10 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 		 * dirty.  To ensure that invalid data doesn't get written to disk, we
 		 * must take exclusive buffer lock wherever we potentially modify
 		 * pages.  In fact, we insist on cleanup lock so that we can safely
-		 * call heap_page_prune().	(This might be overkill, since the
+		 * call heap_page_prune().  (This might be overkill, since the
 		 * bgwriter pays no attention to individual tuples, but on the other
 		 * hand it's unlikely that the bgwriter has this particular page
-		 * pinned at this instant.	So violating the coding rule would buy us
+		 * pinned at this instant.  So violating the coding rule would buy us
 		 * little anyway.)
 		 */
 		LockBufferForCleanup(buf);
@@ -1619,7 +1619,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 					 * live tuples have XMIN_COMMITTED set --- see comments in
 					 * repair_frag()'s walk-along-page loop.  Use of async
 					 * commit may prevent HeapTupleSatisfiesVacuum from
-					 * setting the bit for a recently committed tuple.	Rather
+					 * setting the bit for a recently committed tuple.  Rather
 					 * than trying to handle this corner case, we just give up
 					 * and don't shrink.
 					 */
@@ -1764,7 +1764,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 
 				/*
 				 * Here we are building a temporary copy of the page with dead
-				 * tuples removed.	Below we will apply
+				 * tuples removed.  Below we will apply
 				 * PageRepairFragmentation to the copy, so that we can
 				 * determine how much space will be available after removal of
 				 * dead tuples.  But note we are NOT changing the real page
@@ -1828,7 +1828,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 		/*
 		 * Add the page to vacuum_pages if it requires reaping, and add it to
 		 * fraged_pages if it has a useful amount of free space.  "Useful"
-		 * means enough for a minimal-sized tuple.	But we don't know that
+		 * means enough for a minimal-sized tuple.  But we don't know that
 		 * accurately near the start of the relation, so add pages
 		 * unconditionally if they have >= BLCKSZ/10 free space.  Also
 		 * forcibly add pages with no live tuples, to avoid confusing the
@@ -2242,7 +2242,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			 * xmin xact completes.
 			 *
 			 * To be on the safe side, we abandon the repair_frag process if
-			 * we cannot find the parent tuple in vtlinks.	This may be overly
+			 * we cannot find the parent tuple in vtlinks.  This may be overly
 			 * conservative; AFAICS it would be safe to move the chain.
 			 *
 			 * Also, because we distinguish DEAD and RECENTLY_DEAD tuples
@@ -2347,7 +2347,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					}
 
 					/*
-					 * Must check for DEAD or MOVED_IN tuple, too.	This could
+					 * Must check for DEAD or MOVED_IN tuple, too.  This could
 					 * potentially update hint bits, so we'd better hold the
 					 * buffer content lock.
 					 */
@@ -2520,7 +2520,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				if (chain_move_failed)
 				{
 					/*
-					 * Undo changes to offsets_used state.	We don't bother
+					 * Undo changes to offsets_used state.  We don't bother
 					 * cleaning up the amount-free state, since we're not
 					 * going to do any further tuple motion.
 					 */
@@ -2798,7 +2798,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 		 * that VACUUM FULL always uses sync commit, too.)	The transaction
 		 * continues to be shown as running in the ProcArray.
 		 *
-		 * XXX This desperately needs to be revisited.	Any failure after this
+		 * XXX This desperately needs to be revisited.  Any failure after this
 		 * point will result in a PANIC "cannot abort transaction nnn, it was
 		 * already committed"!  As a precaution, we prevent cancel interrupts
 		 * after this point to mitigate this problem; caller is responsible for
@@ -3535,7 +3535,7 @@ scan_index(Relation indrel, double num_tuples)
 			  pg_rusage_show(&ru0))));
 
 	/*
-	 * Check for tuple count mismatch.	If the index is partial, then it's OK
+	 * Check for tuple count mismatch.  If the index is partial, then it's OK
 	 * for it to have fewer tuples than the heap; else we got trouble.
 	 */
 	if (!stats->estimated_count &&
@@ -3614,7 +3614,7 @@ vacuum_index(VacPageList vacpagelist, Relation indrel,
 					   pg_rusage_show(&ru0))));
 
 	/*
-	 * Check for tuple count mismatch.	If the index is partial, then it's OK
+	 * Check for tuple count mismatch.  If the index is partial, then it's OK
 	 * for it to have fewer tuples than the heap; else we got trouble.
 	 */
 	if (!stats->estimated_count &&
@@ -3763,7 +3763,7 @@ vpage_insert(VacPageList vacpagelist, VacPage vpnew)
 /*
  * vac_bsearch: just like standard C library routine bsearch(),
  * except that we first test to see whether the target key is outside
- * the range of the table entries.	This case is handled relatively slowly
+ * the range of the table entries.  This case is handled relatively slowly
  * by the normal binary search algorithm (ie, no faster than any other key)
  * but it occurs often enough in VACUUM to be worth optimizing.
  */
@@ -3854,7 +3854,7 @@ vac_cmp_vtlinks(const void *left, const void *right)
 
 /*
  * Open all the vacuumable indexes of the given relation, obtaining the
- * specified kind of lock on each.	Return an array of Relation pointers for
+ * specified kind of lock on each.  Return an array of Relation pointers for
  * the indexes into *Irel, and the number of indexes into *nindexes.
  *
  * We consider an index vacuumable if it is marked insertable (IndexIsReady).
@@ -3904,7 +3904,7 @@ vac_open_indexes(Relation relation, LOCKMODE lockmode,
 }
 
 /*
- * Release the resources acquired by vac_open_indexes.	Optionally release
+ * Release the resources acquired by vac_open_indexes.  Optionally release
  * the locks (say NoLock to keep 'em).
  */
 void
@@ -3967,7 +3967,7 @@ PageGetFreeSpaceWithFillFactor(Relation relation, Page page)
 {
 	/*
 	 * It is correct to use PageGetExactFreeSpace() here, *not*
-	 * PageGetHeapFreeSpace().	This is because (a) we do our own, exact
+	 * PageGetHeapFreeSpace().  This is because (a) we do our own, exact
 	 * accounting for whether line pointers must be added, and (b) we will
 	 * recycle any LP_DEAD line pointers before starting to add rows to a
 	 * page, but that may not have happened yet at the time this function is

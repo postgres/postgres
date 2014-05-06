@@ -22,7 +22,7 @@
 #include "catalog/genbki.h"
 
 /* ----------------
- *		pg_trigger definition.	cpp turns this into
+ *		pg_trigger definition.  cpp turns this into
  *		typedef struct FormData_pg_trigger
  *
  * Note: when tgconstraint is nonzero, tgisconstraint must be true, and

@@ -4,7 +4,7 @@
  *	  heap scan synchronization support
  *
  * When multiple backends run a sequential scan on the same table, we try
- * to keep them synchronized to reduce the overall I/O needed.	The goal is
+ * to keep them synchronized to reduce the overall I/O needed.  The goal is
  * to read each page into shared buffer cache only once, and let all backends
  * that take part in the shared scan process the page before it falls out of
  * the cache.
@@ -26,7 +26,7 @@
  * don't want such queries to slow down others.
  *
  * There can realistically only be a few large sequential scans on different
- * tables in progress at any time.	Therefore we just keep the scan positions
+ * tables in progress at any time.  Therefore we just keep the scan positions
  * in a small LRU list which we scan every time we need to look up or update a
  * scan position.  The whole mechanism is only applied for tables exceeding
  * a threshold size (but that is not the concern of this module).
@@ -245,7 +245,7 @@ ss_search(RelFileNode relfilenode, BlockNumber location, bool set)
  * relation, or 0 if no valid location is found.
  *
  * We expect the caller has just done RelationGetNumberOfBlocks(), and
- * so that number is passed in rather than computing it again.	The result
+ * so that number is passed in rather than computing it again.  The result
  * is guaranteed less than relnblocks (assuming that's > 0).
  */
 BlockNumber

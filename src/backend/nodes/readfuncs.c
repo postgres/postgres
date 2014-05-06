@@ -12,7 +12,7 @@
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
- *	  never have occasion to read them in.	(There was once code here that
+ *	  never have occasion to read them in.  (There was once code here that
  *	  claimed to read them, but it was broken as well as unused.)  We
  *	  never read executor state trees, either.
  *
@@ -34,7 +34,7 @@
 
 /*
  * Macros to simplify reading of different kinds of fields.  Use these
- * wherever possible to reduce the chance for silly typos.	Note that these
+ * wherever possible to reduce the chance for silly typos.  Note that these
  * hard-wire conventions about the names of the local variables in a Read
  * routine.
  */
@@ -127,7 +127,7 @@
 /*
  * NOTE: use atoi() to read values written with %d, or atoui() to read
  * values written with %u in outfuncs.c.  An exception is OID values,
- * for which use atooid().	(As of 7.1, outfuncs.c writes OIDs as %u,
+ * for which use atooid().  (As of 7.1, outfuncs.c writes OIDs as %u,
  * but this will probably change in the future.)
  */
 #define atoui(x)  ((unsigned int) strtoul((x), NULL, 10))
@@ -539,7 +539,7 @@ _readOpExpr(void)
 	/*
 	 * The opfuncid is stored in the textual format primarily for debugging
 	 * and documentation reasons.  We want to always read it as zero to force
-	 * it to be re-looked-up in the pg_operator entry.	This ensures that
+	 * it to be re-looked-up in the pg_operator entry.  This ensures that
 	 * stored rules don't have hidden dependencies on operators' functions.
 	 * (We don't currently support an ALTER OPERATOR command, but might
 	 * someday.)
@@ -568,7 +568,7 @@ _readDistinctExpr(void)
 	/*
 	 * The opfuncid is stored in the textual format primarily for debugging
 	 * and documentation reasons.  We want to always read it as zero to force
-	 * it to be re-looked-up in the pg_operator entry.	This ensures that
+	 * it to be re-looked-up in the pg_operator entry.  This ensures that
 	 * stored rules don't have hidden dependencies on operators' functions.
 	 * (We don't currently support an ALTER OPERATOR command, but might
 	 * someday.)
@@ -597,7 +597,7 @@ _readScalarArrayOpExpr(void)
 	/*
 	 * The opfuncid is stored in the textual format primarily for debugging
 	 * and documentation reasons.  We want to always read it as zero to force
-	 * it to be re-looked-up in the pg_operator entry.	This ensures that
+	 * it to be re-looked-up in the pg_operator entry.  This ensures that
 	 * stored rules don't have hidden dependencies on operators' functions.
 	 * (We don't currently support an ALTER OPERATOR command, but might
 	 * someday.)
@@ -921,7 +921,7 @@ _readNullIfExpr(void)
 	/*
 	 * The opfuncid is stored in the textual format primarily for debugging
 	 * and documentation reasons.  We want to always read it as zero to force
-	 * it to be re-looked-up in the pg_operator entry.	This ensures that
+	 * it to be re-looked-up in the pg_operator entry.  This ensures that
 	 * stored rules don't have hidden dependencies on operators' functions.
 	 * (We don't currently support an ALTER OPERATOR command, but might
 	 * someday.)

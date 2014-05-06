@@ -169,7 +169,7 @@ typedef struct Result
  *		Generate the concatenation of the results of sub-plans.
  *
  * Append nodes are sometimes used to switch between several result relations
- * (when the target of an UPDATE or DELETE is an inheritance set).	Such a
+ * (when the target of an UPDATE or DELETE is an inheritance set).  Such a
  * node will have isTarget true.  The Append executor is then responsible
  * for updating the executor state to point at the correct target relation
  * whenever it switches subplans.
@@ -206,7 +206,7 @@ typedef struct RecursiveUnion
  *	 BitmapAnd node -
  *		Generate the intersection of the results of sub-plans.
  *
- * The subplans must be of types that yield tuple bitmaps.	The targetlist
+ * The subplans must be of types that yield tuple bitmaps.  The targetlist
  * and qual fields of the plan are unused and are always NIL.
  * ----------------
  */
@@ -220,7 +220,7 @@ typedef struct BitmapAnd
  *	 BitmapOr node -
  *		Generate the union of the results of sub-plans.
  *
- * The subplans must be of types that yield tuple bitmaps.	The targetlist
+ * The subplans must be of types that yield tuple bitmaps.  The targetlist
  * and qual fields of the plan are unused and are always NIL.
  * ----------------
  */
@@ -254,15 +254,15 @@ typedef Scan SeqScan;
  * in the same form it appeared in the query WHERE condition.  Each should
  * be of the form (indexkey OP comparisonval) or (comparisonval OP indexkey).
  * The indexkey is a Var or expression referencing column(s) of the index's
- * base table.	The comparisonval might be any expression, but it won't use
+ * base table.  The comparisonval might be any expression, but it won't use
  * any columns of the base table.
  *
  * indexqual has the same form, but the expressions have been commuted if
  * necessary to put the indexkeys on the left, and the indexkeys are replaced
  * by Var nodes identifying the index columns (varattno is the index column
  * position, not the base table's column, even though varno is for the base
- * table).	This is a bit hokey ... would be cleaner to use a special-purpose
- * node type that could not be mistaken for a regular Var.	But it will do
+ * table).  This is a bit hokey ... would be cleaner to use a special-purpose
+ * node type that could not be mistaken for a regular Var.  But it will do
  * for now.
  * ----------------
  */
@@ -279,7 +279,7 @@ typedef struct IndexScan
  *		bitmap index scan node
  *
  * BitmapIndexScan delivers a bitmap of potential tuple locations;
- * it does not access the heap itself.	The bitmap is used by an
+ * it does not access the heap itself.  The bitmap is used by an
  * ancestor BitmapHeapScan node, possibly after passing through
  * intermediate BitmapAnd and/or BitmapOr nodes to combine it with
  * the results of other BitmapIndexScans.
@@ -339,7 +339,7 @@ typedef struct TidScan
  * purposes.
  *
  * Note: we store the sub-plan in the type-specific subplan field, not in
- * the generic lefttree field as you might expect.	This is because we do
+ * the generic lefttree field as you might expect.  This is because we do
  * not want plan-tree-traversal routines to recurse into the subplan without
  * knowing that they are changing Query contexts.
  *
@@ -443,7 +443,7 @@ typedef struct NestLoop
  *
  * The expected ordering of each mergeable column is described by a btree
  * opfamily OID, a direction (BTLessStrategyNumber or BTGreaterStrategyNumber)
- * and a nulls-first flag.	Note that the two sides of each mergeclause may
+ * and a nulls-first flag.  Note that the two sides of each mergeclause may
  * be of different datatypes, but they are ordered the same way according to
  * the common opfamily.  The operator in each mergeclause must be an equality
  * operator of the indicated opfamily.
@@ -636,7 +636,7 @@ typedef struct Limit
  *
  * We track the objects on which a PlannedStmt depends in two ways:
  * relations are recorded as a simple list of OIDs, and everything else
- * is represented as a list of PlanInvalItems.	A PlanInvalItem is designed
+ * is represented as a list of PlanInvalItems.  A PlanInvalItem is designed
  * to be used with the syscache invalidation mechanism, so it identifies a
  * system catalog entry by cache ID and tuple TID.
  */

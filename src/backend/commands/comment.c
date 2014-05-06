@@ -540,7 +540,7 @@ CommentRelation(int objtype, List *relname, char *comment)
  * such as a table's column. The routine will check security
  * restrictions and then attempt to look up the specified
  * attribute. If successful, a comment is added/dropped, else an
- * ereport() exception is thrown.	The parameters are the relation
+ * ereport() exception is thrown.   The parameters are the relation
  * and attribute names, and the comment
  */
 static void
@@ -1403,7 +1403,7 @@ CommentLargeObject(List *qualname, char *comment)
 
 			/*
 			 * Values too large for int4 will be represented as Float
-			 * constants by the lexer.	Accept these if they are valid OID
+			 * constants by the lexer.  Accept these if they are valid OID
 			 * strings.
 			 */
 			loid = DatumGetObjectId(DirectFunctionCall1(oidin,

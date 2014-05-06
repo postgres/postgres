@@ -59,7 +59,7 @@ static void addRangeClause(RangeQueryClause **rqlist, Node *clause,
  * See clause_selectivity() for the meaning of the additional parameters.
  *
  * Our basic approach is to take the product of the selectivities of the
- * subclauses.	However, that's only right if the subclauses have independent
+ * subclauses.  However, that's only right if the subclauses have independent
  * probabilities, and in reality they are often NOT independent.  So,
  * we want to be smarter where we can.
 
@@ -76,12 +76,12 @@ static void addRangeClause(RangeQueryClause **rqlist, Node *clause,
  * see that hisel is the fraction of the range below the high bound, while
  * losel is the fraction above the low bound; so hisel can be interpreted
  * directly as a 0..1 value but we need to convert losel to 1-losel before
- * interpreting it as a value.	Then the available range is 1-losel to hisel.
+ * interpreting it as a value.  Then the available range is 1-losel to hisel.
  * However, this calculation double-excludes nulls, so really we need
  * hisel + losel + null_frac - 1.)
  *
  * If either selectivity is exactly DEFAULT_INEQ_SEL, we forget this equation
- * and instead use DEFAULT_RANGE_INEQ_SEL.	The same applies if the equation
+ * and instead use DEFAULT_RANGE_INEQ_SEL.  The same applies if the equation
  * yields an impossible (negative) result.
  *
  * A free side-effect is that we can recognize redundant inequalities such
@@ -175,7 +175,7 @@ clauselist_selectivity(PlannerInfo *root,
 			{
 				/*
 				 * If it's not a "<" or ">" operator, just merge the
-				 * selectivity in generically.	But if it's the right oprrest,
+				 * selectivity in generically.  But if it's the right oprrest,
 				 * add the clause to rqlist for later processing.
 				 */
 				switch (get_oprrest(expr->opno))
@@ -460,14 +460,14 @@ treat_as_join_clause(Node *clause, RestrictInfo *rinfo,
  * nestloop join's inner relation --- varRelid should then be the ID of the
  * inner relation.
  *
- * When varRelid is 0, all variables are treated as variables.	This
+ * When varRelid is 0, all variables are treated as variables.  This
  * is appropriate for ordinary join clauses and restriction clauses.
  *
  * jointype is the join type, if the clause is a join clause.  Pass JOIN_INNER
  * if the clause isn't a join clause.
  *
  * sjinfo is NULL for a non-join clause, otherwise it provides additional
- * context information about the join being performed.	There are some
+ * context information about the join being performed.  There are some
  * special cases:
  *	1. For a special (not INNER) join, sjinfo is always a member of
  *	   root->join_info_list.
@@ -502,7 +502,7 @@ clause_selectivity(PlannerInfo *root,
 		/*
 		 * If the clause is marked pseudoconstant, then it will be used as a
 		 * gating qual and should not affect selectivity estimates; hence
-		 * return 1.0.	The only exception is that a constant FALSE may be
+		 * return 1.0.  The only exception is that a constant FALSE may be
 		 * taken as having selectivity 0.0, since it will surely mean no rows
 		 * out of the plan.  This case is simple enough that we need not
 		 * bother caching the result.
@@ -521,11 +521,11 @@ clause_selectivity(PlannerInfo *root,
 
 		/*
 		 * If possible, cache the result of the selectivity calculation for
-		 * the clause.	We can cache if varRelid is zero or the clause
+		 * the clause.  We can cache if varRelid is zero or the clause
 		 * contains only vars of that relid --- otherwise varRelid will affect
 		 * the result, so mustn't cache.  Outer join quals might be examined
 		 * with either their join's actual jointype or JOIN_INNER, so we need
-		 * two cache variables to remember both cases.	Note: we assume the
+		 * two cache variables to remember both cases.  Note: we assume the
 		 * result won't change if we are switching the input relations or
 		 * considering a unique-ified case, so we only need one cache variable
 		 * for all non-JOIN_INNER cases.
@@ -682,7 +682,7 @@ clause_selectivity(PlannerInfo *root,
 		/*
 		 * This is not an operator, so we guess at the selectivity. THIS IS A
 		 * HACK TO GET V4 OUT THE DOOR.  FUNCS SHOULD BE ABLE TO HAVE
-		 * SELECTIVITIES THEMSELVES.	   -- JMH 7/9/92
+		 * SELECTIVITIES THEMSELVES.       -- JMH 7/9/92
 		 */
 		s1 = (Selectivity) 0.3333333;
 	}

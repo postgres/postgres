@@ -82,7 +82,7 @@ bool		XLOG_DEBUG = false;
  * future XLOG segment as long as there aren't already XLOGfileslop future
  * segments; else we'll delete it.  This could be made a separate GUC
  * variable, but at present I think it's sufficient to hardwire it as
- * 2*CheckPointSegments+1.	Under normal conditions, a checkpoint will free
+ * 2*CheckPointSegments+1.  Under normal conditions, a checkpoint will free
  * no more than 2*CheckPointSegments log segments, and we want to recycle all
  * of them; the +1 allows boundary cases to happen without wasting a
  * delete/create-segment cycle.
@@ -185,7 +185,7 @@ static bool recoveryStopAfter;
  *
  * expectedTLIs: an integer list of recoveryTargetTLI and the TLIs of
  * its known parents, newest first (so recoveryTargetTLI is always the
- * first list member).	Only these TLIs are expected to be seen in the WAL
+ * first list member).  Only these TLIs are expected to be seen in the WAL
  * segments we read, and indeed only these TLIs will be considered as
  * candidate WAL files to open at all.
  *
@@ -213,9 +213,9 @@ XLogRecPtr	XactLastRecEnd = {0, 0};
 /*
  * RedoRecPtr is this backend's local copy of the REDO record pointer
  * (which is almost but not quite the same as a pointer to the most recent
- * CHECKPOINT record).	We update this from the shared-memory copy,
+ * CHECKPOINT record).  We update this from the shared-memory copy,
  * XLogCtl->Insert.RedoRecPtr, whenever we can safely do so (ie, when we
- * hold the Insert lock).  See XLogInsert for details.	We are also allowed
+ * hold the Insert lock).  See XLogInsert for details.  We are also allowed
  * to update from XLogCtl->Insert.RedoRecPtr if we hold the info_lck;
  * see GetRedoRecPtr.  A freshly spawned backend obtains the value during
  * InitXLOGAccess.
@@ -247,7 +247,7 @@ static XLogRecPtr RedoRecPtr;
  * without needing to grab info_lck as well.
  *
  * XLogCtl->Insert.LogwrtResult may lag behind the reality of the other two,
- * but is updated when convenient.	Again, it exists for the convenience of
+ * but is updated when convenient.  Again, it exists for the convenience of
  * code that is already holding WALInsertLock but not the other locks.
  *
  * The unshared LogwrtResult may lag behind any or all of these, and again
@@ -1730,7 +1730,7 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible, bool xlog_switch)
 	{
 		/*
 		 * Could get here without iterating above loop, in which case we might
-		 * have no open file or the wrong one.	However, we do not need to
+		 * have no open file or the wrong one.  However, we do not need to
 		 * fsync more than one file.
 		 */
 		if (sync_method != SYNC_METHOD_OPEN &&
@@ -1994,9 +1994,9 @@ XLogFlush(XLogRecPtr record)
  * We normally flush only completed blocks; but if there is nothing to do on
  * that basis, we check for unflushed async commits in the current incomplete
  * block, and flush through the latest one of those.  Thus, if async commits
- * are not being used, we will flush complete blocks only.	We can guarantee
+ * are not being used, we will flush complete blocks only.  We can guarantee
  * that async commits reach disk after at most three cycles; normally only
- * one or two.	(We allow XLogWrite to write "flexibly", meaning it can stop
+ * one or two.  (We allow XLogWrite to write "flexibly", meaning it can stop
  * at the end of the buffer ring; this makes a difference only with very high
  * load or long wal_writer_delay, but imposes one extra cycle for the worst
  * case for async commits.)
@@ -2147,7 +2147,7 @@ XLogNeedsFlush(XLogRecPtr record)
  * log, seg: identify segment to be created/opened.
  *
  * *use_existent: if TRUE, OK to use a pre-existing file (else, any
- * pre-existing file will be deleted).	On return, TRUE if a pre-existing
+ * pre-existing file will be deleted).  On return, TRUE if a pre-existing
  * file was used.
  *
  * use_lock: if TRUE, acquire ControlFileLock while moving file into
@@ -2217,11 +2217,11 @@ XLogFileInit(uint32 log, uint32 seg,
 				 errmsg("could not create file \"%s\": %m", tmppath)));
 
 	/*
-	 * Zero-fill the file.	We have to do this the hard way to ensure that all
+	 * Zero-fill the file.  We have to do this the hard way to ensure that all
 	 * the file space has really been allocated --- on platforms that allow
 	 * "holes" in files, just seeking to the end doesn't allocate intermediate
 	 * space.  This way, we know that we have all the space and (after the
-	 * fsync below) that all the indirect blocks are down on disk.	Therefore,
+	 * fsync below) that all the indirect blocks are down on disk.  Therefore,
 	 * fdatasync(2) or O_DSYNC will be sufficient to sync future writes to the
 	 * log file.
 	 *
@@ -2309,7 +2309,7 @@ XLogFileInit(uint32 log, uint32 seg,
  *		a different timeline)
  *
  * Currently this is only used during recovery, and so there are no locking
- * considerations.	But we should be just as tense as XLogFileInit to avoid
+ * considerations.  But we should be just as tense as XLogFileInit to avoid
  * emplacing a bogus file.
  */
 static void
@@ -2544,7 +2544,7 @@ XLogFileRead(uint32 log, uint32 seg, int emode)
 	 * the timelines listed in expectedTLIs.
 	 *
 	 * We expect curFileTLI on entry to be the TLI of the preceding file in
-	 * sequence, or 0 if there was no predecessor.	We do not allow curFileTLI
+	 * sequence, or 0 if there was no predecessor.  We do not allow curFileTLI
 	 * to go backwards; this prevents us from picking up the wrong file when a
 	 * parent timeline extends to higher segment numbers than the child we
 	 * want to read.
@@ -2612,7 +2612,7 @@ XLogFileClose(void)
 
 	/*
 	 * WAL segment files will not be re-read in normal operation, so we advise
-	 * the OS to release any cached pages.	But do not do so if WAL archiving
+	 * the OS to release any cached pages.  But do not do so if WAL archiving
 	 * is active, because archiver process could use the cache to read the WAL
 	 * segment.  Also, don't bother with it if we are using O_DIRECT, since
 	 * the kernel is presumably not caching in that case.
@@ -3064,7 +3064,7 @@ RemoveOldXlogFiles(uint32 log, uint32 seg, XLogRecPtr endptr)
 	{
 		/*
 		 * We ignore the timeline part of the XLOG segment identifiers in
-		 * deciding whether a segment is still needed.	This ensures that we
+		 * deciding whether a segment is still needed.  This ensures that we
 		 * won't prematurely remove a segment from a parent timeline. We could
 		 * probably be a little more proactive about removing segments of
 		 * non-parent timelines, but that would be a whole lot more
@@ -3260,7 +3260,7 @@ CleanupBackupHistory(void)
  * ignoring them as already applied, but that's not a huge drawback.
  *
  * If 'cleanup' is true, a cleanup lock is used when restoring blocks.
- * Otherwise, a normal exclusive lock is used.	At the moment, that's just
+ * Otherwise, a normal exclusive lock is used.  At the moment, that's just
  * pro forma, because there can't be any regular backends in the system
  * during recovery.  The 'cleanup' argument applies to all backup blocks
  * in the WAL record, that suffices for now.
@@ -3778,7 +3778,7 @@ next_record_is_invalid:;
  * Check whether the xlog header of a page just read in looks valid.
  *
  * This is just a convenience subroutine to avoid duplicated code in
- * ReadRecord.	It's not intended for use from anywhere else.
+ * ReadRecord.  It's not intended for use from anywhere else.
  */
 static bool
 ValidXLOGHeader(XLogPageHeader hdr, int emode)
@@ -3894,7 +3894,7 @@ ValidXLOGHeader(XLogPageHeader hdr, int emode)
  * Try to read a timeline's history file.
  *
  * If successful, return the list of component TLIs (the given TLI followed by
- * its ancestor TLIs).	If we can't find the history file, assume that the
+ * its ancestor TLIs).  If we can't find the history file, assume that the
  * timeline has no parents, and return a list of just the specified timeline
  * ID.
  */
@@ -4059,7 +4059,7 @@ findNewestTimeLine(TimeLineID startTLI)
  *	endTLI et al: ID of the last used WAL file, for annotation purposes
  *
  * Currently this is only used during recovery, and so there are no locking
- * considerations.	But we should be just as tense as XLogFileInit to avoid
+ * considerations.  But we should be just as tense as XLogFileInit to avoid
  * emplacing a bogus file.
  */
 static void
@@ -4228,7 +4228,7 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
  * I/O routines for pg_control
  *
  * *ControlFile is a buffer in shared memory that holds an image of the
- * contents of pg_control.	WriteControlFile() initializes pg_control
+ * contents of pg_control.  WriteControlFile() initializes pg_control
  * given a preloaded buffer, ReadControlFile() loads the buffer from
  * the pg_control file (during postmaster or standalone-backend startup),
  * and UpdateControlFile() rewrites pg_control after we modify xlog state.
@@ -4955,7 +4955,7 @@ readRecoveryCommandFile(void)
 
 	/*
 	 * If user specified recovery_target_timeline, validate it or compute the
-	 * "latest" value.	We can't do this until after we've gotten the restore
+	 * "latest" value.  We can't do this until after we've gotten the restore
 	 * command and set InArchiveRecovery, because we need to fetch timeline
 	 * history files from the archive.
 	 */
@@ -5015,7 +5015,7 @@ exitArchiveRecovery(TimeLineID endTLI, uint32 endLogId, uint32 endLogSeg)
 	 * the existing xlog segment (if any) with the archival version.  This is
 	 * because whatever is in XLOGDIR is very possibly older than what we have
 	 * from the archives, since it could have come from restoring a PGDATA
-	 * backup.	In any case, the archival version certainly is more
+	 * backup.  In any case, the archival version certainly is more
 	 * descriptive of what our current database state is, because that is what
 	 * we replayed from.
 	 *
@@ -5725,8 +5725,8 @@ StartupXLOG(void)
 	/*
 	 * Consider whether we need to assign a new timeline ID.
 	 *
-	 * If we are doing an archive recovery, we always assign a new ID.	This
-	 * handles a couple of issues.	If we stopped short of the end of WAL
+	 * If we are doing an archive recovery, we always assign a new ID.  This
+	 * handles a couple of issues.  If we stopped short of the end of WAL
 	 * during recovery, then we are clearly generating a new timeline and must
 	 * assign it a unique new ID.  Even if we ran to the end, modifying the
 	 * current last segment is problematic because it may result in trying to
@@ -5774,7 +5774,7 @@ StartupXLOG(void)
 
 	/*
 	 * Tricky point here: readBuf contains the *last* block that the LastRec
-	 * record spans, not the one it starts in.	The last block is indeed the
+	 * record spans, not the one it starts in.  The last block is indeed the
 	 * one we want to use.
 	 */
 	Assert(readOff == (XLogCtl->xlblocks[0].xrecoff - XLOG_BLCKSZ) % XLogSegSize);
@@ -5805,7 +5805,7 @@ StartupXLOG(void)
 		 * Write.curridx must point to the *next* page (see XLogWrite()).
 		 *
 		 * Note: it might seem we should do AdvanceXLInsertBuffer() here, but
-		 * this is sufficient.	The first actual attempt to insert a log
+		 * this is sufficient.  The first actual attempt to insert a log
 		 * record will advance the insert state.
 		 */
 		XLogCtl->Write.curridx = NextBufIdx(0);
@@ -6460,7 +6460,7 @@ CreateCheckPoint(int flags)
 	/*
 	 * If this isn't a shutdown or forced checkpoint, and we have not inserted
 	 * any XLOG records since the start of the last checkpoint, skip the
-	 * checkpoint.	The idea here is to avoid inserting duplicate checkpoints
+	 * checkpoint.  The idea here is to avoid inserting duplicate checkpoints
 	 * when the system is idle. That wastes log space, and more importantly it
 	 * exposes us to possible loss of both current and previous checkpoint
 	 * records if the machine crashes just as we're writing the update.
@@ -6726,9 +6726,9 @@ CreateCheckPoint(int flags)
 
 	/*
 	 * Truncate pg_subtrans if possible.  We can throw away all data before
-	 * the oldest XMIN of any running transaction.	No future transaction will
+	 * the oldest XMIN of any running transaction.  No future transaction will
 	 * attempt to reference any pg_subtrans entry older than that (see Asserts
-	 * in subtrans.c).	During recovery, though, we mustn't do this because
+	 * in subtrans.c).  During recovery, though, we mustn't do this because
 	 * StartupSUBTRANS hasn't been called yet.
 	 */
 	if (!RecoveryInProgress())
@@ -6956,7 +6956,7 @@ XLogPutNextOid(Oid nextOid)
 	 * We need not flush the NEXTOID record immediately, because any of the
 	 * just-allocated OIDs could only reach disk as part of a tuple insert or
 	 * update that would have its own XLOG record that must follow the NEXTOID
-	 * record.	Therefore, the standard buffer LSN interlock applied to those
+	 * record.  Therefore, the standard buffer LSN interlock applied to those
 	 * records will ensure no such OID reaches disk before the NEXTOID record
 	 * does.
 	 *
@@ -7323,7 +7323,7 @@ pg_start_backup(PG_FUNCTION_ARGS)
 	 * during an on-line backup even if not doing so at other times, because
 	 * it's quite possible for the backup dump to obtain a "torn" (partially
 	 * written) copy of a database page if it reads the page concurrently with
-	 * our write to the same page.	This can be fixed as long as the first
+	 * our write to the same page.  This can be fixed as long as the first
 	 * write to the page in the WAL sequence is a full-page write. Hence, we
 	 * turn on forcePageWrites and then force a CHECKPOINT, to ensure there
 	 * are no dirty pages in shared memory that might get dumped while the
@@ -7364,7 +7364,7 @@ pg_start_backup(PG_FUNCTION_ARGS)
 	PG_ENSURE_ERROR_CLEANUP(pg_start_backup_callback, (Datum) 0);
 	{
 		/*
-		 * Force a CHECKPOINT.	Aside from being necessary to prevent torn
+		 * Force a CHECKPOINT.  Aside from being necessary to prevent torn
 		 * page problems, this guarantees that two successive backup runs will
 		 * have different checkpoint positions and hence different history
 		 * file names, even if nothing happened in between.
@@ -7829,7 +7829,7 @@ pg_xlogfile_name(PG_FUNCTION_ARGS)
  *
  * If we see a backup_label during recovery, we assume that we are recovering
  * from a backup dump file, and we therefore roll forward from the checkpoint
- * identified by the label file, NOT what pg_control says.	This avoids the
+ * identified by the label file, NOT what pg_control says.  This avoids the
  * problem that pg_control might have been archived one or more checkpoints
  * later than the start of the dump, and so if we rely on it as the start
  * point, we will fail to restore a consistent database state.
@@ -8037,7 +8037,7 @@ startupproc_quickdie(SIGNAL_ARGS)
 	on_exit_reset();
 
 	/*
-	 * Note we do exit(2) not exit(0).	This is to force the postmaster into a
+	 * Note we do exit(2) not exit(0).  This is to force the postmaster into a
 	 * system reset cycle if some idiot DBA sends a manual SIGQUIT to a random
 	 * backend.  This is necessary precisely because we don't clean up our
 	 * shared memory state.  (The "dead man switch" mechanism in pmsignal.c

@@ -271,7 +271,7 @@ MainLoop(FILE *source)
 				 * If we added a newline to query_buf, and nothing else has
 				 * been inserted in query_buf by the lexer, then strip off the
 				 * newline again.  This avoids any change to query_buf when a
-				 * line contains only a backslash command.	Also, in this
+				 * line contains only a backslash command.  Also, in this
 				 * situation we force out any previous lines as a separate
 				 * history entry; we don't want SQL and backslash commands
 				 * intermixed in history if at all possible.

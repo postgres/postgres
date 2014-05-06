@@ -23,7 +23,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.	IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -118,7 +118,7 @@ typedef int int32_t;
  * representation is to store one bit per byte in an array of bytes.  Bit N of
  * the NBS spec is stored as the LSB of the Nth byte (index N-1) in the array.
  * Another representation stores the 64 bits in 8 bytes, with bits 1..8 in the
- * first byte, 9..16 in the second, and so on.	The DES spec apparently has
+ * first byte, 9..16 in the second, and so on.  The DES spec apparently has
  * bit 1 in the MSB of the first byte, but that is particularly noxious so we
  * bit-reverse each byte so that bit 1 is the LSB of the first byte, bit 8 is
  * the MSB of the first byte.  Specifically, the 64-bit input data and key are
@@ -126,21 +126,21 @@ typedef int int32_t;
  * MSB format.
  *
  * DES operates internally on groups of 32 bits which are expanded to 48 bits
- * by permutation E and shrunk back to 32 bits by the S boxes.	To speed up
+ * by permutation E and shrunk back to 32 bits by the S boxes.  To speed up
  * the computation, the expansion is applied only once, the expanded
  * representation is maintained during the encryption, and a compression
- * permutation is applied only at the end.	To speed up the S-box lookups,
+ * permutation is applied only at the end.  To speed up the S-box lookups,
  * the 48 bits are maintained as eight 6 bit groups, one per byte, which
  * directly feed the eight S-boxes.  Within each byte, the 6 bits are the
- * most significant ones.  The low two bits of each byte are zero.	(Thus,
+ * most significant ones.  The low two bits of each byte are zero.  (Thus,
  * bit 1 of the 48 bit E expansion is stored as the "4"-valued bit of the
  * first byte in the eight byte representation, bit 2 of the 48 bit value is
  * the "8"-valued bit, and so on.)	In fact, a combined "SPE"-box lookup is
  * used, in which the output is the 64 bit result of an S-box lookup which
  * has been permuted by P and expanded by E, and is ready for use in the next
  * iteration.  Two 32-bit wide tables, SPE[0] and SPE[1], are used for this
- * lookup.	Since each byte in the 48 bit path is a multiple of four, indexed
- * lookup of SPE[0] and SPE[1] is simple and fast.	The key schedule and
+ * lookup.  Since each byte in the 48 bit path is a multiple of four, indexed
+ * lookup of SPE[0] and SPE[1] is simple and fast.  The key schedule and
  * "salt" are also converted to this 8*(6+2) format.  The SPE table size is
  * 8*64*8 = 4K bytes.
  *
@@ -154,7 +154,7 @@ typedef int int32_t;
  * The byte-order problem is unfortunate, since on the one hand it is good
  * to have a machine-independent C_block representation (bits 1..8 in the
  * first byte, etc.), and on the other hand it is good for the LSB of the
- * first byte to be the LSB of i0.	We cannot have both these things, so we
+ * first byte to be the LSB of i0.  We cannot have both these things, so we
  * currently use the "little-endian" representation and avoid any multi-byte
  * operations that depend on byte order.  This largely precludes use of the
  * 64-bit datatype since the relative order of i0 and i1 are unknown.  It
@@ -181,13 +181,13 @@ typedef int int32_t;
  * IE3264: MSB->LSB conversion, initial permutation, and expansion.
  *	This is done by collecting the 32 even-numbered bits and applying
  *	a 32->64 bit transformation, and then collecting the 32 odd-numbered
- *	bits and applying the same transformation.	Since there are only
+ *	bits and applying the same transformation.  Since there are only
  *	32 input bits, the IE3264 transformation table is half the size of
  *	the usual table.
  * CF6464: Compression, final permutation, and LSB->MSB conversion.
  *	This is done by two trivial 48->32 bit compressions to obtain
  *	a 64-bit block (the bit numbering is given in the "CIFP" table)
- *	followed by a 64->64 bit "cleanup" transformation.	(It would
+ *	followed by a 64->64 bit "cleanup" transformation.  (It would
  *	be possible to group the bits in the 64-bit block so that 2
  *	identical 32->32 bit transformations could be used instead,
  *	saving a factor of 4 in space and possibly 2 in time, but
@@ -206,7 +206,7 @@ typedef int int32_t;
  *	transforms 56 bits into 48 bits, dropping 8 bits, so PC2 is not
  *	invertible.  We get around that problem by using a modified PC2
  *	which retains the 8 otherwise-lost bits in the unused low-order
- *	bits of each byte.	The low-order bits are cleared when the
+ *	bits of each byte.  The low-order bits are cleared when the
  *	codes are stored into the key schedule.
  * PC2ROT[1]: Same as PC2ROT[0], but with two rotations.
  *	This is faster than applying PC2ROT[0] twice,
@@ -215,7 +215,7 @@ typedef int int32_t;
  *
  * The salting is a simple permutation applied to the 48-bit result of E.
  * Specifically, if bit i (1 <= i <= 24) of the salt is set then bits i and
- * i+24 of the result are swapped.	The salt is thus a 24 bit number, with
+ * i+24 of the result are swapped.  The salt is thus a 24 bit number, with
  * 16777216 possible values.  (The original salt was 12 bits and could not
  * swap bits 13..24 with 36..48.)
  *
@@ -467,7 +467,7 @@ static C_block PC2ROT[2][64 / CHUNKBITS][1 << CHUNKBITS];
 /* Initial permutation/expansion table */
 static C_block IE3264[32 / CHUNKBITS][1 << CHUNKBITS];
 
-/* Table that combines the S, P, and E operations.	*/
+/* Table that combines the S, P, and E operations.  */
 static int32_t SPE[2][8][64];
 
 /* compressed/interleaved => final permutation table */

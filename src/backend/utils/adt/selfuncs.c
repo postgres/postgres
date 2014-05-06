@@ -72,7 +72,7 @@
  *		float8 oprjoin (internal, oid, internal, int2, internal);
  *
  * (Before Postgres 8.4, join estimators had only the first four of these
- * parameters.	That signature is still allowed, but deprecated.)  The
+ * parameters.  That signature is still allowed, but deprecated.)  The
  * relationship between jointype and sjinfo is explained in the comments for
  * clause_selectivity() --- the short version is that jointype is usually
  * best ignored in favor of examining sjinfo.
@@ -179,7 +179,7 @@ static Const *string_to_bytea_const(const char *str, size_t str_len);
  *
  * Note: this routine is also used to estimate selectivity for some
  * operators that are not "=" but have comparable selectivity behavior,
- * such as "~=" (geometric approximate-match).	Even for "=", we must
+ * such as "~=" (geometric approximate-match).  Even for "=", we must
  * keep in mind that the left and right datatypes may differ.
  */
 Datum
@@ -264,7 +264,7 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 		/*
 		 * Is the constant "=" to any of the column's most common values?
 		 * (Although the given operator may not really be "=", we will assume
-		 * that seeing whether it returns TRUE is an appropriate test.	If you
+		 * that seeing whether it returns TRUE is an appropriate test.  If you
 		 * don't like this, maybe you shouldn't be using eqsel for your
 		 * operator...)
 		 */
@@ -395,7 +395,7 @@ var_eq_non_const(VariableStatData *vardata, Oid operator,
 		 * result averaged over all possible values whether common or
 		 * uncommon.  (Essentially, we are assuming that the not-yet-known
 		 * comparison value is equally likely to be any of the possible
-		 * values, regardless of their frequency in the table.	Is that a good
+		 * values, regardless of their frequency in the table.  Is that a good
 		 * idea?)
 		 */
 		selec = 1.0 - stats->stanullfrac;
@@ -614,7 +614,7 @@ mcv_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
  * essentially using the histogram just as a representative sample.  However,
  * small histograms are unlikely to be all that representative, so the caller
  * should be prepared to fall back on some other estimation approach when the
- * histogram is missing or very small.	It may also be prudent to combine this
+ * histogram is missing or very small.  It may also be prudent to combine this
  * approach with another one when the histogram is small.
  *
  * If the actual histogram size is not at least min_hist_size, we won't bother
@@ -632,7 +632,7 @@ mcv_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
  *
  * Note that the result disregards both the most-common-values (if any) and
  * null entries.  The caller is expected to combine this result with
- * statistics for those portions of the column population.	It may also be
+ * statistics for those portions of the column population.  It may also be
  * prudent to clamp the result range, ie, disbelieve exact 0 or 1 outputs.
  */
 double
@@ -803,7 +803,7 @@ ineq_histogram_selectivity(VariableStatData *vardata,
 
 						/*
 						 * Watch out for the possibility that we got a NaN or
-						 * Infinity from the division.	This can happen
+						 * Infinity from the division.  This can happen
 						 * despite the previous checks, if for example "low"
 						 * is -Infinity.
 						 */
@@ -818,7 +818,7 @@ ineq_histogram_selectivity(VariableStatData *vardata,
 					 * Ideally we'd produce an error here, on the grounds that
 					 * the given operator shouldn't have scalarXXsel
 					 * registered as its selectivity func unless we can deal
-					 * with its operand types.	But currently, all manner of
+					 * with its operand types.  But currently, all manner of
 					 * stuff is invoking scalarXXsel, so give a default
 					 * estimate until that can be fixed.
 					 */
@@ -844,7 +844,7 @@ ineq_histogram_selectivity(VariableStatData *vardata,
 
 			/*
 			 * The histogram boundaries are only approximate to begin with,
-			 * and may well be out of date anyway.	Therefore, don't believe
+			 * and may well be out of date anyway.  Therefore, don't believe
 			 * extremely small or large selectivity estimates.
 			 */
 			if (hist_selec < 0.0001)
@@ -1035,7 +1035,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 
 	/*
 	 * If this is for a NOT LIKE or similar operator, get the corresponding
-	 * positive-match operator and work with that.	Set result to the correct
+	 * positive-match operator and work with that.  Set result to the correct
 	 * default estimate, too.
 	 */
 	if (negate)
@@ -1234,7 +1234,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 		/*
 		 * If we have most-common-values info, add up the fractions of the MCV
 		 * entries that satisfy MCV OP PATTERN.  These fractions contribute
-		 * directly to the result selectivity.	Also add up the total fraction
+		 * directly to the result selectivity.  Also add up the total fraction
 		 * represented by MCV entries.
 		 */
 		mcv_selec = mcv_selectivity(&vardata, &opproc, constval, true,
@@ -2032,9 +2032,9 @@ eqjoinsel_inner(Oid operator,
 	if (have_mcvs1 && have_mcvs2)
 	{
 		/*
-		 * We have most-common-value lists for both relations.	Run through
+		 * We have most-common-value lists for both relations.  Run through
 		 * the lists to see which MCVs actually join to each other with the
-		 * given operator.	This allows us to determine the exact join
+		 * given operator.  This allows us to determine the exact join
 		 * selectivity for the portion of the relations represented by the MCV
 		 * lists.  We still have to estimate for the remaining population, but
 		 * in a skewed distribution this gives us a big leg up in accuracy.
@@ -2066,7 +2066,7 @@ eqjoinsel_inner(Oid operator,
 
 		/*
 		 * Note we assume that each MCV will match at most one member of the
-		 * other MCV list.	If the operator isn't really equality, there could
+		 * other MCV list.  If the operator isn't really equality, there could
 		 * be multiple matches --- but we don't look for them, both for speed
 		 * and because the math wouldn't add up...
 		 */
@@ -2273,9 +2273,9 @@ eqjoinsel_semi(Oid operator,
 	if (have_mcvs1 && have_mcvs2 && OidIsValid(operator))
 	{
 		/*
-		 * We have most-common-value lists for both relations.	Run through
+		 * We have most-common-value lists for both relations.  Run through
 		 * the lists to see which MCVs actually join to each other with the
-		 * given operator.	This allows us to determine the exact join
+		 * given operator.  This allows us to determine the exact join
 		 * selectivity for the portion of the relations represented by the MCV
 		 * lists.  We still have to estimate for the remaining population, but
 		 * in a skewed distribution this gives us a big leg up in accuracy.
@@ -2306,7 +2306,7 @@ eqjoinsel_semi(Oid operator,
 
 		/*
 		 * Note we assume that each MCV will match at most one member of the
-		 * other MCV list.	If the operator isn't really equality, there could
+		 * other MCV list.  If the operator isn't really equality, there could
 		 * be multiple matches --- but we don't look for them, both for speed
 		 * and because the math wouldn't add up...
 		 */
@@ -2342,7 +2342,7 @@ eqjoinsel_semi(Oid operator,
 
 		/*
 		 * Now we need to estimate the fraction of relation 1 that has at
-		 * least one join partner.	We know for certain that the matched MCVs
+		 * least one join partner.  We know for certain that the matched MCVs
 		 * do, so that gives us a lower bound, but we're really in the dark
 		 * about everything else.  Our crude approach is: if nd1 <= nd2 then
 		 * assume all non-null rel1 rows have join partners, else assume for
@@ -2939,11 +2939,11 @@ add_unique_group_var(PlannerInfo *root, List *varinfos,
  * case (all possible cross-product terms actually appear as groups) since
  * very often the grouped-by Vars are highly correlated.  Our current approach
  * is as follows:
- *	1.	Expressions yielding boolean are assumed to contribute two groups,
+ *	1.  Expressions yielding boolean are assumed to contribute two groups,
  *		independently of their content, and are ignored in the subsequent
- *		steps.	This is mainly because tests like "col IS NULL" break the
+ *		steps.  This is mainly because tests like "col IS NULL" break the
  *		heuristic used in step 2 especially badly.
- *	2.	Reduce the given expressions to a list of unique Vars used.  For
+ *	2.  Reduce the given expressions to a list of unique Vars used.  For
  *		example, GROUP BY a, a + b is treated the same as GROUP BY a, b.
  *		It is clearly correct not to count the same Var more than once.
  *		It is also reasonable to treat f(x) the same as x: f() cannot
@@ -2953,14 +2953,14 @@ add_unique_group_var(PlannerInfo *root, List *varinfos,
  *		As a special case, if a GROUP BY expression can be matched to an
  *		expressional index for which we have statistics, then we treat the
  *		whole expression as though it were just a Var.
- *	3.	If the list contains Vars of different relations that are known equal
+ *	3.  If the list contains Vars of different relations that are known equal
  *		due to equivalence classes, then drop all but one of the Vars from each
  *		known-equal set, keeping the one with smallest estimated # of values
  *		(since the extra values of the others can't appear in joined rows).
  *		Note the reason we only consider Vars of different relations is that
  *		if we considered ones of the same rel, we'd be double-counting the
  *		restriction selectivity of the equality in the next step.
- *	4.	For Vars within a single source rel, we multiply together the numbers
+ *	4.  For Vars within a single source rel, we multiply together the numbers
  *		of values, clamp to the number of rows in the rel (divided by 10 if
  *		more than one Var), and then multiply by the selectivity of the
  *		restriction clauses for that rel.  When there's more than one Var,
@@ -2971,7 +2971,7 @@ add_unique_group_var(PlannerInfo *root, List *varinfos,
  *		by the restriction selectivity is effectively assuming that the
  *		restriction clauses are independent of the grouping, which is a crummy
  *		assumption, but it's hard to do better.
- *	5.	If there are Vars from multiple rels, we repeat step 4 for each such
+ *	5.  If there are Vars from multiple rels, we repeat step 4 for each such
  *		rel, and multiply the results together.
  * Note that rels not containing grouped Vars are ignored completely, as are
  * join clauses.  Such rels cannot increase the number of groups, and we
@@ -3002,7 +3002,7 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows)
 		return 1.0;
 
 	/*
-	 * Count groups derived from boolean grouping expressions.	For other
+	 * Count groups derived from boolean grouping expressions.  For other
 	 * expressions, find the unique Vars used, treating an expression as a Var
 	 * if we can find stats for it.  For each one, record the statistical
 	 * estimate of number of distinct values (total in its table, without
@@ -3089,7 +3089,7 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows)
 	 * Group Vars by relation and estimate total numdistinct.
 	 *
 	 * For each iteration of the outer loop, we process the frontmost Var in
-	 * varinfos, plus all other Vars in the same relation.	We remove these
+	 * varinfos, plus all other Vars in the same relation.  We remove these
 	 * Vars from the newvarinfos list for the next iteration. This is the
 	 * easiest way to group Vars of same rel together.
 	 */
@@ -3190,11 +3190,11 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows)
  * distribution, so this will have to do for now.
  *
  * We are passed the number of buckets the executor will use for the given
- * input relation.	If the data were perfectly distributed, with the same
+ * input relation.  If the data were perfectly distributed, with the same
  * number of tuples going into each available bucket, then the bucketsize
  * fraction would be 1/nbuckets.  But this happy state of affairs will occur
  * only if (a) there are at least nbuckets distinct data values, and (b)
- * we have a not-too-skewed data distribution.	Otherwise the buckets will
+ * we have a not-too-skewed data distribution.  Otherwise the buckets will
  * be nonuniformly occupied.  If the other relation in the join has a key
  * distribution similar to this one's, then the most-loaded buckets are
  * exactly those that will be probed most often.  Therefore, the "average"
@@ -3368,7 +3368,7 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 	 * operators to estimate selectivity for the other's.  This is outright
 	 * wrong in some cases --- in particular signed versus unsigned
 	 * interpretation could trip us up.  But it's useful enough in the
-	 * majority of cases that we do it anyway.	Should think about more
+	 * majority of cases that we do it anyway.  Should think about more
 	 * rigorous ways to do it.
 	 */
 	switch (valuetypid)
@@ -3953,7 +3953,7 @@ get_restriction_variable(PlannerInfo *root, List *args, int varRelid,
 	right = (Node *) lsecond(args);
 
 	/*
-	 * Examine both sides.	Note that when varRelid is nonzero, Vars of other
+	 * Examine both sides.  Note that when varRelid is nonzero, Vars of other
 	 * relations will be treated as pseudoconstants.
 	 */
 	examine_variable(root, left, varRelid, vardata);
@@ -4122,7 +4122,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 			 * XXX This means the Var comes from a JOIN or sub-SELECT. Later
 			 * add code to dig down into the join etc and see if we can trace
 			 * the variable to something with stats.  (But beware of
-			 * sub-SELECTs with DISTINCT/GROUP BY/etc.	Perhaps there are no
+			 * sub-SELECTs with DISTINCT/GROUP BY/etc.  Perhaps there are no
 			 * cases where this would really be useful, because we'd have
 			 * flattened the subselect if it is??)
 			 */
@@ -4133,7 +4133,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 
 	/*
 	 * Okay, it's a more complicated expression.  Determine variable
-	 * membership.	Note that when varRelid isn't zero, only vars of that
+	 * membership.  Note that when varRelid isn't zero, only vars of that
 	 * relation are considered "real" vars.
 	 */
 	varnos = pull_varnos(basenode);
@@ -4182,13 +4182,13 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 	if (onerel)
 	{
 		/*
-		 * We have an expression in vars of a single relation.	Try to match
+		 * We have an expression in vars of a single relation.  Try to match
 		 * it to expressional index columns, in hopes of finding some
 		 * statistics.
 		 *
 		 * XXX it's conceivable that there are multiple matches with different
 		 * index opfamilies; if so, we need to pick one that matches the
-		 * operator we are estimating for.	FIXME later.
+		 * operator we are estimating for.  FIXME later.
 		 */
 		ListCell   *ilist;
 
@@ -4284,7 +4284,7 @@ get_variable_numdistinct(VariableStatData *vardata)
 	double		ntuples;
 
 	/*
-	 * Determine the stadistinct value to use.	There are cases where we can
+	 * Determine the stadistinct value to use.  There are cases where we can
 	 * get an estimate even without a pg_statistic entry, or can get a better
 	 * value than is in pg_statistic.
 	 */
@@ -4755,7 +4755,7 @@ pattern_fixed_prefix(Const *patt, Pattern_Type ptype,
  * together with info about MCVs and NULLs.
  *
  * We use the >= and < operators from the specified btree opfamily to do the
- * estimation.	The given variable and Const must be of the associated
+ * estimation.  The given variable and Const must be of the associated
  * datatype.
  *
  * XXX Note: we make use of the upper bound to estimate operator selectivity
@@ -4814,7 +4814,7 @@ prefix_selectivity(VariableStatData *vardata,
 
 		/*
 		 * Merge the two selectivities in the same way as for a range query
-		 * (see clauselist_selectivity()).	Note that we don't need to worry
+		 * (see clauselist_selectivity()).  Note that we don't need to worry
 		 * about double-exclusion of nulls, since ineq_histogram_selectivity
 		 * doesn't count those anyway.
 		 */
@@ -5038,7 +5038,7 @@ regex_selectivity(const char *patt, int pattlen, bool case_insensitive,
  * that is not a bulletproof guarantee that an extension of the string might
  * not sort after it; an example is that "foo " is less than "foo!", but it
  * is not clear that a "dictionary" sort ordering will consider "foo!" less
- * than "foo bar".	CAUTION: Therefore, this function should be used only for
+ * than "foo bar".  CAUTION: Therefore, this function should be used only for
  * estimation purposes when working in a non-C locale.
  *
  * To try to catch most cases where an extended string might otherwise sort
@@ -5383,9 +5383,9 @@ genericcostestimate(PlannerInfo *root,
 	 * The above calculations are all per-index-scan.  However, if we are in a
 	 * nestloop inner scan, we can expect the scan to be repeated (with
 	 * different search keys) for each row of the outer relation.  Likewise,
-	 * ScalarArrayOpExpr quals result in multiple index scans.	This creates
+	 * ScalarArrayOpExpr quals result in multiple index scans.  This creates
 	 * the potential for cache effects to reduce the number of disk page
-	 * fetches needed.	We want to estimate the average per-scan I/O cost in
+	 * fetches needed.  We want to estimate the average per-scan I/O cost in
 	 * the presence of caching.
 	 *
 	 * We use the Mackert-Lohman formula (see costsize.c for details) to
@@ -5457,7 +5457,7 @@ genericcostestimate(PlannerInfo *root,
 	 * evaluated once at the start of the scan to reduce them to runtime keys
 	 * to pass to the index AM (see nodeIndexscan.c).  We model the per-tuple
 	 * CPU costs as cpu_index_tuple_cost plus one cpu_operator_cost per
-	 * indexqual operator.	Because we have numIndexTuples as a per-scan
+	 * indexqual operator.  Because we have numIndexTuples as a per-scan
 	 * number, we have to multiply by num_sa_scans to get the correct result
 	 * for ScalarArrayOpExpr cases.
 	 *
@@ -5528,7 +5528,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 	 * the index scan).  Additional quals can suppress visits to the heap, so
 	 * it's OK to count them in indexSelectivity, but they should not count
 	 * for estimating numIndexTuples.  So we must examine the given indexQuals
-	 * to find out which ones count as boundary quals.	We rely on the
+	 * to find out which ones count as boundary quals.  We rely on the
 	 * knowledge that they are given in index column order.
 	 *
 	 * For a RowCompareExpr, we consider only the first column, just as

@@ -50,7 +50,7 @@ typedef struct BkpBlock
 
 /*
  * When there is not enough space on current page for whole record, we
- * continue on the next page with continuation record.	(However, the
+ * continue on the next page with continuation record.  (However, the
  * XLogRecord header will never be split across pages; if there's less than
  * SizeOfXLogRecord space left at the end of a page, we just waste it.)
  *
@@ -155,7 +155,7 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
  * Compute ID and segment from an XLogRecPtr.
  *
  * For XLByteToSeg, do the computation at face value.  For XLByteToPrevSeg,
- * a boundary byte is taken to be in the previous segment.	This is suitable
+ * a boundary byte is taken to be in the previous segment.  This is suitable
  * for deciding which segment to write given a pointer to a record end,
  * for example.  (We can assume xrecoff is not zero, since no valid recptr
  * can have that.)

@@ -24,15 +24,15 @@
 #ifndef WILDABBR
 /*----------
  * Someone might make incorrect use of a time zone abbreviation:
- *	1.	They might reference tzname[0] before calling tzset (explicitly
+ *	1.  They might reference tzname[0] before calling tzset (explicitly
  *		or implicitly).
- *	2.	They might reference tzname[1] before calling tzset (explicitly
+ *	2.  They might reference tzname[1] before calling tzset (explicitly
  *		or implicitly).
- *	3.	They might reference tzname[1] after setting to a time zone
+ *	3.  They might reference tzname[1] after setting to a time zone
  *		in which Daylight Saving Time is never observed.
- *	4.	They might reference tzname[0] after setting to a time zone
+ *	4.  They might reference tzname[0] after setting to a time zone
  *		in which Standard Time is never observed.
- *	5.	They might reference tm.TM_ZONE after calling offtime.
+ *	5.  They might reference tm.TM_ZONE after calling offtime.
  * What's best to do in the above cases is open to debate;
  * for now, we just set things up so that in any of the five cases
  * WILDABBR is used. Another possibility:	initialize tzname[0] to the
@@ -1451,7 +1451,7 @@ pg_get_timezone_offset(const pg_tz *tz, long int *gmtoff)
 {
 	/*
 	 * The zone could have more than one ttinfo, if it's historically used
-	 * more than one abbreviation.	We return TRUE as long as they all have
+	 * more than one abbreviation.  We return TRUE as long as they all have
 	 * the same gmtoff.
 	 */
 	const struct state *sp;

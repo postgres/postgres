@@ -3378,7 +3378,7 @@ do_to_timestamp(text *date_txt, text *fmt,
 	{
 		/*
 		 * The month and day field have not been set, so we use the
-		 * day-of-year field to populate them.	Depending on the date mode,
+		 * day-of-year field to populate them.  Depending on the date mode,
 		 * this field may be interpreted as a Gregorian day-of-year, or an ISO
 		 * week date day-of-year.
 		 */

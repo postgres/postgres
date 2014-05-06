@@ -21,7 +21,7 @@
  *	  the old heap_create_with_catalog, amcreate, and amdestroy.
  *	  those routines will soon call these routines using the function
  *	  manager,
- *	  just like the poorly named "NewXXX" routines do.	The
+ *	  just like the poorly named "NewXXX" routines do.  The
  *	  "New" routines are all going to die soon, once and for all!
  *		-cim 1/13/91
  *
@@ -177,7 +177,7 @@ SystemAttributeDefinition(AttrNumber attno, bool relhasoids)
 
 /*
  * If the given name is a system attribute name, return a Form_pg_attribute
- * pointer for a prototype definition.	If not, return NULL.
+ * pointer for a prototype definition.  If not, return NULL.
  */
 Form_pg_attribute
 SystemAttributeByName(const char *attname, bool relhasoids)
@@ -513,7 +513,7 @@ CheckAttributeType(const char *attname, Oid atttypid,
  * Caller has already opened and locked pg_attribute.  new_attribute is the
  * attribute to insert (but we ignore its attacl, if indeed it has one).
  *
- * indstate is the index state for CatalogIndexInsert.	It can be passed as
+ * indstate is the index state for CatalogIndexInsert.  It can be passed as
  * NULL, in which case we'll fetch the necessary info.  (Don't do this when
  * inserting multiple attributes, because it's a tad more expensive.)
  *
@@ -720,7 +720,7 @@ InsertPgClassTuple(Relation pg_class_desc,
 	tup = heap_form_tuple(RelationGetDescr(pg_class_desc), values, nulls);
 
 	/*
-	 * The new tuple must have the oid already chosen for the rel.	Sure would
+	 * The new tuple must have the oid already chosen for the rel.  Sure would
 	 * be embarrassing to do this sort of thing in polite company.
 	 */
 	HeapTupleSetOid(tup, new_rel_oid);
@@ -969,7 +969,7 @@ heap_create_with_catalog(const char *relname,
 	/*
 	 * Decide whether to create an array type over the relation's rowtype. We
 	 * do not create any array types for system catalogs (ie, those made
-	 * during initdb).	We create array types for regular relations, views,
+	 * during initdb).  We create array types for regular relations, views,
 	 * and composite types ... but not, eg, for toast tables or sequences.
 	 */
 	if (IsUnderPostmaster && (relkind == RELKIND_RELATION ||
@@ -1121,8 +1121,8 @@ heap_create_with_catalog(const char *relname,
  *		RelationRemoveInheritance
  *
  * Formerly, this routine checked for child relations and aborted the
- * deletion if any were found.	Now we rely on the dependency mechanism
- * to check for or delete child relations.	By the time we get here,
+ * deletion if any were found.  Now we rely on the dependency mechanism
+ * to check for or delete child relations.  By the time we get here,
  * there are no children and we need only remove any pg_inherits rows
  * linking this relation to its parent(s).
  */
@@ -1368,7 +1368,7 @@ RemoveAttrDefault(Oid relid, AttrNumber attnum,
 /*
  *		RemoveAttrDefaultById
  *
- * Remove a pg_attrdef entry specified by OID.	This is the guts of
+ * Remove a pg_attrdef entry specified by OID.  This is the guts of
  * attribute-default removal.  Note it should be called via performDeletion,
  * not directly.
  */
@@ -1729,7 +1729,7 @@ StoreConstraints(Relation rel, List *cooked_constraints)
 
 	/*
 	 * Deparsing of constraint expressions will fail unless the just-created
-	 * pg_attribute tuples for this relation are made visible.	So, bump the
+	 * pg_attribute tuples for this relation are made visible.  So, bump the
 	 * command counter.  CAUTION: this will cause a relcache entry rebuild.
 	 */
 	CommandCounterIncrement();
@@ -1779,7 +1779,7 @@ StoreConstraints(Relation rel, List *cooked_constraints)
  * the default and constraint expressions added to the relation.
  *
  * NB: caller should have opened rel with AccessExclusiveLock, and should
- * hold that lock till end of transaction.	Also, we assume the caller has
+ * hold that lock till end of transaction.  Also, we assume the caller has
  * done a CommandCounterIncrement if necessary to make the relation's catalog
  * tuples visible.
  */
@@ -1921,7 +1921,7 @@ AddRelationNewConstraints(Relation rel,
 			checknames = lappend(checknames, ccname);
 
 			/*
-			 * Check against pre-existing constraints.	If we are allowed to
+			 * Check against pre-existing constraints.  If we are allowed to
 			 * merge with an existing constraint, there's no more to do here.
 			 * (We omit the duplicate constraint from the result, which is
 			 * what ATAddCheckConstraint wants.)
@@ -1937,7 +1937,7 @@ AddRelationNewConstraints(Relation rel,
 			 * column constraint and "tab_check" for a table constraint.  We
 			 * no longer have any info about the syntactic positioning of the
 			 * constraint phrase, so we approximate this by seeing whether the
-			 * expression references more than one column.	(If the user
+			 * expression references more than one column.  (If the user
 			 * played by the rules, the result is the same...)
 			 *
 			 * Note: pull_var_clause() doesn't descend into sublinks, but we
@@ -2317,7 +2317,7 @@ RemoveStatistics(Oid relid, AttrNumber attnum)
  * with the heap relation to zero tuples.
  *
  * The routine will truncate and then reconstruct the indexes on
- * the specified relation.	Caller must hold exclusive lock on rel.
+ * the specified relation.  Caller must hold exclusive lock on rel.
  */
 static void
 RelationTruncateIndexes(Relation heapRelation)
@@ -2357,7 +2357,7 @@ RelationTruncateIndexes(Relation heapRelation)
  *	 This routine deletes all data within all the specified relations.
  *
  * This is not transaction-safe!  There is another, transaction-safe
- * implementation in commands/tablecmds.c.	We now use this only for
+ * implementation in commands/tablecmds.c.  We now use this only for
  * ON COMMIT truncation of temporary tables, where it doesn't matter.
  */
 void
@@ -2447,7 +2447,7 @@ heap_truncate_check_FKs(List *relations, bool tempTables)
 		return;
 
 	/*
-	 * Otherwise, must scan pg_constraint.	We make one pass with all the
+	 * Otherwise, must scan pg_constraint.  We make one pass with all the
 	 * relations considered; if this finds nothing, then all is well.
 	 */
 	dependents = heap_truncate_find_FKs(oids);
@@ -2508,7 +2508,7 @@ heap_truncate_check_FKs(List *relations, bool tempTables)
  * behavior to change depending on chance locations of rows in pg_constraint.)
  *
  * Note: caller should already have appropriate lock on all rels mentioned
- * in relationIds.	Since adding or dropping an FK requires exclusive lock
+ * in relationIds.  Since adding or dropping an FK requires exclusive lock
  * on both rels, this ensures that the answer will be stable.
  */
 List *

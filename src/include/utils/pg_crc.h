@@ -73,7 +73,7 @@ extern CRCDLLIMPORT const uint32 pg_crc32_table[];
 /*
  * crc0 represents the LSBs of the 64-bit value, crc1 the MSBs.  Note that
  * with crc0 placed first, the output of 32-bit and 64-bit implementations
- * will be bit-compatible only on little-endian architectures.	If it were
+ * will be bit-compatible only on little-endian architectures.  If it were
  * important to make the two possible implementations bit-compatible on
  * all machines, we could do a configure test to decide how to order the
  * two fields, but it seems not worth the trouble.

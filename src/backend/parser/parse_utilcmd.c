@@ -150,7 +150,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	 * If the target relation name isn't schema-qualified, make it so.  This
 	 * prevents some corner cases in which added-on rewritten commands might
 	 * think they should apply to other relations that have the same name and
-	 * are earlier in the search path.	"istemp" is equivalent to a
+	 * are earlier in the search path.  "istemp" is equivalent to a
 	 * specification of pg_temp, so no need for anything extra in that case.
 	 */
 	if (stmt->relation->schemaname == NULL && !stmt->relation->istemp)
@@ -754,7 +754,7 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 
 	/*
 	 * Close the parent rel, but keep our AccessShareLock on it until xact
-	 * commit.	That will prevent someone else from deleting or ALTERing the
+	 * commit.  That will prevent someone else from deleting or ALTERing the
 	 * parent before the child is committed.
 	 */
 	heap_close(relation, NoLock);
@@ -1353,7 +1353,7 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt,
  * transformIndexStmt - parse analysis for CREATE INDEX
  *
  * Note: this is a no-op for an index not using either index expressions or
- * a predicate expression.	There are several code paths that create indexes
+ * a predicate expression.  There are several code paths that create indexes
  * without bothering to call this, because they know they don't have any
  * such expressions to deal with.
  *
@@ -1457,7 +1457,7 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 
 	/*
 	 * To avoid deadlock, make sure the first thing we do is grab
-	 * AccessExclusiveLock on the target relation.	This will be needed by
+	 * AccessExclusiveLock on the target relation.  This will be needed by
 	 * DefineQueryRewrite(), and we don't want to grab a lesser lock
 	 * beforehand.
 	 */

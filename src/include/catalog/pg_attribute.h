@@ -15,7 +15,7 @@
  *	  information from the DATA() statements.
  *
  *	  utils/cache/relcache.c requires hard-coded tuple descriptors
- *	  for some of the system catalogs.	So if the schema for any of
+ *	  for some of the system catalogs.  So if the schema for any of
  *	  these changes, be sure and change the appropriate Schema_xxx
  *	  macros!  -cim 2/5/91
  *
@@ -157,7 +157,7 @@ CATALOG(pg_attribute,1249) BKI_BOOTSTRAP BKI_WITHOUT_OIDS
 
 /*
  * ATTRIBUTE_FIXED_PART_SIZE is the size of the fixed-layout,
- * guaranteed-not-null part of a pg_attribute row.	This is in fact as much
+ * guaranteed-not-null part of a pg_attribute row.  This is in fact as much
  * of the row as gets copied into tuple descriptors, so don't expect you
  * can access fields beyond attinhcount except in a real tuple!
  */

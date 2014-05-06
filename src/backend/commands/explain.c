@@ -93,11 +93,11 @@ ExplainQuery(ExplainStmt *stmt, const char *queryString,
 	getParamListTypes(params, &param_types, &num_params);
 
 	/*
-	 * Run parse analysis and rewrite.	Note this also acquires sufficient
+	 * Run parse analysis and rewrite.  Note this also acquires sufficient
 	 * locks on the source table(s).
 	 *
 	 * Because the parser and planner tend to scribble on their input, we make
-	 * a preliminary copy of the source querytree.	This prevents problems in
+	 * a preliminary copy of the source querytree.  This prevents problems in
 	 * the case that the EXPLAIN is in a portal or plpgsql function and is
 	 * executed repeatedly.  (See also the same hack in DECLARE CURSOR and
 	 * PREPARE.)  XXX FIXME someday.

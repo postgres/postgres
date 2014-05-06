@@ -54,7 +54,7 @@ PageInit(Page page, Size pageSize, Size specialSize)
  * PageHeaderIsValid
  *		Check that the header fields of a page appear valid.
  *
- * This is called when a page has just been read in from disk.	The idea is
+ * This is called when a page has just been read in from disk.  The idea is
  * to cheaply detect trashed pages before we go nuts following bogus item
  * pointers, testing invalid transaction identifiers, etc.
  *
@@ -99,7 +99,7 @@ PageHeaderIsValid(PageHeader page)
 /*
  *	PageAddItem
  *
- *	Add an item to a page.	Return value is offset at which it was
+ *	Add an item to a page.  Return value is offset at which it was
  *	inserted, or InvalidOffsetNumber if there's not room to insert.
  *
  *	If overwrite is true, we just store the item at the specified
@@ -699,7 +699,7 @@ PageIndexTupleDelete(Page page, OffsetNumber offnum)
  * PageIndexMultiDelete
  *
  * This routine handles the case of deleting multiple tuples from an
- * index page at once.	It is considerably faster than a loop around
+ * index page at once.  It is considerably faster than a loop around
  * PageIndexTupleDelete ... however, the caller *must* supply the array
  * of item numbers to be deleted in item number order!
  */

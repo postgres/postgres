@@ -98,7 +98,7 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate, int eflags)
 	Assert(!(eflags & EXEC_FLAG_MARK));
 
 	/*
-	 * SubqueryScan should not have any "normal" children.	Also, if planner
+	 * SubqueryScan should not have any "normal" children.  Also, if planner
 	 * left anything in subrtable, it's fishy.
 	 */
 	Assert(outerPlan(node) == NULL);
@@ -209,7 +209,7 @@ ExecSubqueryReScan(SubqueryScanState *node, ExprContext *exprCtxt)
 
 	/*
 	 * ExecReScan doesn't know about my subplan, so I have to do
-	 * changed-parameter signaling myself.	This is just as well, because the
+	 * changed-parameter signaling myself.  This is just as well, because the
 	 * subplan has its own memory context in which its chgParam state lives.
 	 */
 	if (node->ss.ps.chgParam != NULL)

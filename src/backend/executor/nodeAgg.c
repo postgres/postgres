@@ -19,7 +19,7 @@
  *	  The agg's first input type and transtype must be the same in this case!
  *
  *	  If transfunc is marked "strict" then NULL input_values are skipped,
- *	  keeping the previous transvalue.	If transfunc is not strict then it
+ *	  keeping the previous transvalue.  If transfunc is not strict then it
  *	  is called for every input tuple and must deal with NULL initcond
  *	  or NULL input_values for itself.
  *
@@ -53,7 +53,7 @@
  *	  pass-by-ref inputs, but in the aggregate case we know the left input is
  *	  either the initial transition value or a previous function result, and
  *	  in either case its value need not be preserved.  See int8inc() for an
- *	  example.	Notice that advance_transition_function() is coded to avoid a
+ *	  example.  Notice that advance_transition_function() is coded to avoid a
  *	  data copy step when the previous transition value pointer is returned.
  *	  Also, some transition functions make use of the aggcontext to store
  *	  working state.
@@ -189,7 +189,7 @@ typedef struct AggStatePerGroupData
 
 	/*
 	 * Note: noTransValue initially has the same value as transValueIsNull,
-	 * and if true both are cleared to false at the same time.	They are not
+	 * and if true both are cleared to false at the same time.  They are not
 	 * the same though: if transfn later returns a NULL, we want to keep that
 	 * NULL and not auto-replace it with a later input value. Only the first
 	 * non-NULL input will be auto-substituted.
@@ -199,7 +199,7 @@ typedef struct AggStatePerGroupData
 /*
  * To implement hashed aggregation, we need a hashtable that stores a
  * representative tuple and an array of AggStatePerGroup structs for each
- * distinct set of GROUP BY column values.	We compute the hash key from
+ * distinct set of GROUP BY column values.  We compute the hash key from
  * the GROUP BY columns.
  */
 typedef struct AggHashEntryData *AggHashEntry;
@@ -384,7 +384,7 @@ advance_transition_function(AggState *aggstate,
 
 	/*
 	 * If pass-by-ref datatype, must copy the new value into aggcontext and
-	 * pfree the prior transValue.	But if transfn returned a pointer to its
+	 * pfree the prior transValue.  But if transfn returned a pointer to its
 	 * first input, we don't need to do anything.
 	 */
 	if (!peraggstate->transtypeByVal &&
@@ -408,7 +408,7 @@ advance_transition_function(AggState *aggstate,
 }
 
 /*
- * Advance all the aggregates for one input tuple.	The input tuple
+ * Advance all the aggregates for one input tuple.  The input tuple
  * has been stored in tmpcontext->ecxt_outertuple, so that it is accessible
  * to ExecEvalExpr.  pergroup is the array of per-group structs to use
  * (this might be in a hashtable entry).
@@ -470,7 +470,7 @@ advance_aggregates(AggState *aggstate, AggStatePerGroup pergroup)
 /*
  * Run the transition function for a DISTINCT aggregate.  This is called
  * after we have completed entering all the input values into the sort
- * object.	We complete the sort, read out the values in sorted order,
+ * object.  We complete the sort, read out the values in sorted order,
  * and run the transition function on each non-duplicate value.
  *
  * When called, CurrentMemoryContext should be the per-query context.
@@ -792,9 +792,9 @@ lookup_hash_entry(AggState *aggstate, TupleTableSlot *inputslot)
  *	  the appropriate attribute for each aggregate function use (Aggref
  *	  node) appearing in the targetlist or qual of the node.  The number
  *	  of tuples to aggregate over depends on whether grouped or plain
- *	  aggregation is selected.	In grouped aggregation, we produce a result
+ *	  aggregation is selected.  In grouped aggregation, we produce a result
  *	  row for each group; in plain aggregation there's a single result row
- *	  for the whole query.	In either case, the value of each aggregate is
+ *	  for the whole query.  In either case, the value of each aggregate is
  *	  stored in the expression context to be used when ExecProject evaluates
  *	  the result tuple.
  */
@@ -992,7 +992,7 @@ agg_retrieve_direct(AggState *aggstate)
 
 		/*
 		 * Use the representative input tuple for any references to
-		 * non-aggregated input columns in the qual and tlist.	(If we are not
+		 * non-aggregated input columns in the qual and tlist.  (If we are not
 		 * grouping, and there are no input rows at all, we will come here
 		 * with an empty firstSlot ... but if not grouping, there can't be any
 		 * references to non-aggregated input columns, so no problem.)
@@ -1216,8 +1216,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	aggstate->hashtable = NULL;
 
 	/*
-	 * Create expression contexts.	We need two, one for per-input-tuple
-	 * processing and one for per-output-tuple processing.	We cheat a little
+	 * Create expression contexts.  We need two, one for per-input-tuple
+	 * processing and one for per-output-tuple processing.  We cheat a little
 	 * by using ExecAssignExprContext() to build both.
 	 */
 	ExecAssignExprContext(estate, &aggstate->ss.ps);
@@ -1252,7 +1252,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	 * initialize child expressions
 	 *
 	 * Note: ExecInitExpr finds Aggrefs for us, and also checks that no aggs
-	 * contain other agg calls in their arguments.	This would make no sense
+	 * contain other agg calls in their arguments.  This would make no sense
 	 * under SQL semantics anyway (and it's forbidden by the spec). Because
 	 * that is true, we don't need to worry about evaluating the aggs in any
 	 * particular order.
@@ -1299,7 +1299,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		 * This is not an error condition: we might be using the Agg node just
 		 * to do hash-based grouping.  Even in the regular case,
 		 * constant-expression simplification could optimize away all of the
-		 * Aggrefs in the targetlist and qual.	So keep going, but force local
+		 * Aggrefs in the targetlist and qual.  So keep going, but force local
 		 * copy of numaggs positive so that palloc()s below don't choke.
 		 */
 		numaggs = 1;
@@ -1407,7 +1407,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		peraggstate->numArguments = numArguments;
 
 		/*
-		 * Get actual datatypes of the inputs.	These could be different from
+		 * Get actual datatypes of the inputs.  These could be different from
 		 * the agg's declared input types, when the agg accepts ANY or a
 		 * polymorphic type.
 		 */
@@ -1527,7 +1527,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		 * If the transfn is strict and the initval is NULL, make sure input
 		 * type and transtype are the same (or at least binary-compatible), so
 		 * that it's OK to use the first input value as the initial
-		 * transValue.	This should have been checked at agg definition time,
+		 * transValue.  This should have been checked at agg definition time,
 		 * but just in case...
 		 */
 		if (peraggstate->transfn.fn_strict && peraggstate->initValueIsNull)

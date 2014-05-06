@@ -59,7 +59,7 @@ geqo_eval(Gene *tour, int num_gene, GeqoEvalData *evaldata)
 	 * them an artificially bad fitness.
 	 *
 	 * init_tour() is aware of this rule and so we should never reject a tour
-	 * during the initial filling of the pool.	It seems difficult to persuade
+	 * during the initial filling of the pool.  It seems difficult to persuade
 	 * the recombination logic never to break the rule, however.
 	 */
 	if (num_gene >= 2 && tour[0] > tour[1])
@@ -86,11 +86,11 @@ geqo_eval(Gene *tour, int num_gene, GeqoEvalData *evaldata)
 	 * not already contain some entries.  The newly added entries will be
 	 * recycled by the MemoryContextDelete below, so we must ensure that the
 	 * list is restored to its former state before exiting.  We can do this by
-	 * truncating the list to its original length.	NOTE this assumes that any
+	 * truncating the list to its original length.  NOTE this assumes that any
 	 * added entries are appended at the end!
 	 *
 	 * We also must take care not to mess up the outer join_rel_hash, if there
-	 * is one.	We can do this by just temporarily setting the link to NULL.
+	 * is one.  We can do this by just temporarily setting the link to NULL.
 	 * (If we are dealing with enough join rels, which we very likely are, a
 	 * new hash table will get built and used locally.)
 	 */

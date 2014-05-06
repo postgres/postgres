@@ -43,7 +43,7 @@ static bool check_ungrouped_columns_walker(Node *node,
  *		Finish initial transformation of an aggregate call
  *
  * parse_func.c has recognized the function as an aggregate, and has set
- * up all the fields of the Aggref except agglevelsup.	Here we must
+ * up all the fields of the Aggref except agglevelsup.  Here we must
  * determine which query level the aggregate actually belongs to, set
  * agglevelsup accordingly, and mark p_hasAggs true in the corresponding
  * pstate level.
@@ -62,7 +62,7 @@ transformAggregateCall(ParseState *pstate, Aggref *agg)
 
 	/*
 	 * An aggregate can't directly contain another aggregate call of the same
-	 * level (though outer aggs are okay).	We can skip this check if we
+	 * level (though outer aggs are okay).  We can skip this check if we
 	 * didn't find any local vars or aggs.
 	 */
 	if (min_varlevel == 0)
@@ -276,7 +276,7 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	/*
 	 * If there are join alias vars involved, we have to flatten them to the
 	 * underlying vars, so that aliased and unaliased vars will be correctly
-	 * taken as equal.	We can skip the expense of doing this if no rangetable
+	 * taken as equal.  We can skip the expense of doing this if no rangetable
 	 * entries are RTE_JOIN kind. We use the planner's flatten_join_alias_vars
 	 * routine to do the flattening; it wants a PlannerInfo root node, which
 	 * fortunately can be mostly dummy.
@@ -314,7 +314,7 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	 *
 	 * Note: because we check resjunk tlist elements as well as regular ones,
 	 * this will also find ungrouped variables that came from ORDER BY and
-	 * WINDOW clauses.	For that matter, it's also going to examine the
+	 * WINDOW clauses.  For that matter, it's also going to examine the
 	 * grouping expressions themselves --- but they'll all pass the test ...
 	 */
 	clause = (Node *) qry->targetList;
@@ -345,7 +345,7 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
  *	Check for window functions where they shouldn't be.
  *
  *	We have to forbid window functions in WHERE, JOIN/ON, HAVING, GROUP BY,
- *	and window specifications.	(Other clauses, such as RETURNING and LIMIT,
+ *	and window specifications.  (Other clauses, such as RETURNING and LIMIT,
  *	have already been checked.)  Transformation of all these clauses must
  *	be completed already.
  */
@@ -501,7 +501,7 @@ check_ungrouped_columns_walker(Node *node,
 	/*
 	 * If we have an ungrouped Var of the original query level, we have a
 	 * failure.  Vars below the original query level are not a problem, and
-	 * neither are Vars from above it.	(If such Vars are ungrouped as far as
+	 * neither are Vars from above it.  (If such Vars are ungrouped as far as
 	 * their own query level is concerned, that's someone else's problem...)
 	 */
 	if (IsA(node, Var))

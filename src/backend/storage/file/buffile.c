@@ -29,7 +29,7 @@
  * that was current at that time.
  *
  * BufFile also supports temporary files that exceed the OS file size limit
- * (by opening multiple fd.c temporary files).	This is an essential feature
+ * (by opening multiple fd.c temporary files).  This is an essential feature
  * for sorts and hashjoins on large amounts of data.
  *-------------------------------------------------------------------------
  */
@@ -71,7 +71,7 @@ struct BufFile
 	bool		dirty;			/* does buffer need to be written? */
 
 	/*
-	 * resowner is the ResourceOwner to use for underlying temp files.	(We
+	 * resowner is the ResourceOwner to use for underlying temp files.  (We
 	 * don't need to remember the memory context we're using explicitly,
 	 * because after creation we only repalloc our arrays larger.)
 	 */
@@ -518,7 +518,7 @@ BufFileSeek(BufFile *file, int fileno, off_t offset, int whence)
 	{
 		/*
 		 * Seek is to a point within existing buffer; we can just adjust
-		 * pos-within-buffer, without flushing buffer.	Note this is OK
+		 * pos-within-buffer, without flushing buffer.  Note this is OK
 		 * whether reading or writing, but buffer remains dirty if we were
 		 * writing.
 		 */

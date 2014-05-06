@@ -138,7 +138,7 @@ PosixSemaphoreKill(sem_t * sem)
  *
  * This is called during postmaster start or shared memory reinitialization.
  * It should do whatever is needed to be able to support up to maxSemas
- * subsequent PGSemaphoreCreate calls.	Also, if any system resources
+ * subsequent PGSemaphoreCreate calls.  Also, if any system resources
  * are acquired here or in PGSemaphoreCreate, register an on_shmem_exit
  * callback to release them.
  *

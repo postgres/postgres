@@ -1527,7 +1527,7 @@ pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 	if (level == ERROR)
 	{
 		/*
-		 * We just pass the error back to Tcl.	If it's not caught, it'll
+		 * We just pass the error back to Tcl.  If it's not caught, it'll
 		 * eventually get converted to a PG error when we reach the call
 		 * handler.
 		 */

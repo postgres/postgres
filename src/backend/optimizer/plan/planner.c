@@ -172,7 +172,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 
 		/*
 		 * We document cursor_tuple_fraction as simply being a fraction, which
-		 * means the edge cases 0 and 1 have to be treated specially here.	We
+		 * means the edge cases 0 and 1 have to be treated specially here.  We
 		 * convert 1 to 0 ("all the tuples") and 0 to a very small fraction.
 		 */
 		if (tuple_fraction >= 1.0)
@@ -418,7 +418,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	 * to execute that we're better off doing it only once per group, despite
 	 * the loss of selectivity.  This is hard to estimate short of doing the
 	 * entire planning process twice, so we use a heuristic: clauses
-	 * containing subplans are left in HAVING.	Otherwise, we move or copy the
+	 * containing subplans are left in HAVING.  Otherwise, we move or copy the
 	 * HAVING clause into WHERE, in hopes of eliminating tuples before
 	 * aggregation instead of after.
 	 *
@@ -529,7 +529,7 @@ preprocess_expression(PlannerInfo *root, Node *expr, int kind)
 	 * Simplify constant expressions.
 	 *
 	 * Note: one essential effect here is to insert the current actual values
-	 * of any default arguments for functions.	To ensure that happens, we
+	 * of any default arguments for functions.  To ensure that happens, we
 	 * *must* process all expressions here.  Previous PG versions sometimes
 	 * skipped const-simplification if it didn't seem worth the trouble, but
 	 * we can't do that anymore.
@@ -798,7 +798,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 		/*
 		 * If there's a top-level ORDER BY, assume we have to fetch all the
-		 * tuples.	This might be too simplistic given all the hackery below
+		 * tuples.  This might be too simplistic given all the hackery below
 		 * to possibly avoid the sort; but the odds of accurate estimates here
 		 * are pretty low anyway.
 		 */
@@ -826,7 +826,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 		/*
 		 * We should not need to call preprocess_targetlist, since we must be
-		 * in a SELECT query node.	Instead, use the targetlist returned by
+		 * in a SELECT query node.  Instead, use the targetlist returned by
 		 * plan_set_operations (since this tells whether it returned any
 		 * resjunk columns!), and transfer any sort key information from the
 		 * original tlist.
@@ -910,7 +910,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		/*
 		 * Calculate pathkeys that represent grouping/ordering requirements.
 		 * Stash them in PlannerInfo so that query_planner can canonicalize
-		 * them after EquivalenceClasses have been formed.	The sortClause is
+		 * them after EquivalenceClasses have been formed.  The sortClause is
 		 * certainly sort-able, but GROUP BY and DISTINCT might not be, in
 		 * which case we just leave their pathkeys empty.
 		 */
@@ -984,7 +984,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		 * Note: if we have both ORDER BY and GROUP BY, and ORDER BY is a
 		 * superset of GROUP BY, it would be tempting to request sort by ORDER
 		 * BY --- but that might just leave us failing to exploit an available
-		 * sort order at all.  Needs more thought.	The choice for DISTINCT
+		 * sort order at all.  Needs more thought.  The choice for DISTINCT
 		 * versus ORDER BY is much easier, since we know that the parser
 		 * ensured that one is a superset of the other.
 		 */
@@ -1019,7 +1019,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 			/*
 			 * Executor doesn't support hashed aggregation with DISTINCT
-			 * aggregates.	(Doing so would imply storing *all* the input
+			 * aggregates.  (Doing so would imply storing *all* the input
 			 * values in the hash table, which seems like a certain loser.)
 			 */
 			can_hash = (agg_counts.numDistinctAggs == 0 &&
@@ -1102,7 +1102,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			/*
 			 * create_plan() returns a plan with just a "flat" tlist of
 			 * required Vars.  Usually we need to insert the sub_tlist as the
-			 * tlist of the top plan node.	However, we can skip that if we
+			 * tlist of the top plan node.  However, we can skip that if we
 			 * determined that whatever query_planner chose to return will be
 			 * good enough.
 			 */
@@ -1265,7 +1265,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				 * Furthermore, there cannot be any variables in either HAVING
 				 * or the targetlist, so we actually do not need the FROM
 				 * table at all!  We can just throw away the plan-so-far and
-				 * generate a Result node.	This is a sufficiently unusual
+				 * generate a Result node.  This is a sufficiently unusual
 				 * corner case that it's not worth contorting the structure of
 				 * this routine to avoid having to generate the plan in the
 				 * first place.
@@ -1314,7 +1314,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			 * make_sort_from_pathkeys won't add those on its own, and anyway
 			 * we want them evaluated only once at the bottom of the stack.
 			 * As we climb up the stack, we add outputs for the WindowFuncs
-			 * computed at each level.	Also, each input tlist has to present
+			 * computed at each level.  Also, each input tlist has to present
 			 * all the columns needed to sort the data for the next WindowAgg
 			 * step.  That's handled internally by make_sort_from_pathkeys,
 			 * but we need the copyObject steps here to ensure that each plan
@@ -1638,7 +1638,7 @@ is_dummy_plan(Plan *plan)
  * preprocess_limit - do pre-estimation for LIMIT and/or OFFSET clauses
  *
  * We try to estimate the values of the LIMIT/OFFSET clauses, and pass the
- * results back in *count_est and *offset_est.	These variables are set to
+ * results back in *count_est and *offset_est.  These variables are set to
  * 0 if the corresponding clause is not present, and -1 if it's present
  * but we couldn't estimate the value for it.  (The "0" convention is OK
  * for OFFSET but a little bit bogus for LIMIT: effectively we estimate
@@ -1647,7 +1647,7 @@ is_dummy_plan(Plan *plan)
  * be passed to make_limit, which see if you change this code.
  *
  * The return value is the suitably adjusted tuple_fraction to use for
- * planning the query.	This adjustment is not overridable, since it reflects
+ * planning the query.  This adjustment is not overridable, since it reflects
  * plan actions that grouping_planner() will certainly take, not assumptions
  * about context.
  */
@@ -1771,7 +1771,7 @@ preprocess_limit(PlannerInfo *root, double tuple_fraction,
 	else if (*offset_est != 0 && tuple_fraction > 0.0)
 	{
 		/*
-		 * We have an OFFSET but no LIMIT.	This acts entirely differently
+		 * We have an OFFSET but no LIMIT.  This acts entirely differently
 		 * from the LIMIT case: here, we need to increase rather than decrease
 		 * the caller's tuple_fraction, because the OFFSET acts to cause more
 		 * tuples to be fetched instead of fewer.  This only matters if we got
@@ -1786,7 +1786,7 @@ preprocess_limit(PlannerInfo *root, double tuple_fraction,
 
 		/*
 		 * If we have absolute counts from both caller and OFFSET, add them
-		 * together; likewise if they are both fractional.	If one is
+		 * together; likewise if they are both fractional.  If one is
 		 * fractional and the other absolute, we want to take the larger, and
 		 * we heuristically assume that's the fractional one.
 		 */
@@ -2057,7 +2057,7 @@ choose_hashed_grouping(PlannerInfo *root,
  * differences that it doesn't seem worth trying to unify the two functions.
  *
  * But note that making the two choices independently is a bit bogus in
- * itself.	If the two could be combined into a single choice operation
+ * itself.  If the two could be combined into a single choice operation
  * it'd probably be better, but that seems far too unwieldy to be practical,
  * especially considering that the combination of GROUP BY and DISTINCT
  * isn't very common in real queries.  By separating them, we are giving
@@ -2119,7 +2119,7 @@ choose_hashed_distinct(PlannerInfo *root,
 				  dNumDistinctRows, input_plan->plan_width, limit_tuples);
 
 	/*
-	 * Now for the GROUP case.	See comments in grouping_planner about the
+	 * Now for the GROUP case.  See comments in grouping_planner about the
 	 * sorting choices here --- this code should match that code.
 	 */
 	sorted_p.startup_cost = input_plan->startup_cost;
@@ -2185,7 +2185,7 @@ choose_hashed_distinct(PlannerInfo *root,
  * we want to pass this targetlist to the subplan:
  *		a,b,c,d,a+b
  * where the a+b target will be used by the Sort/Group steps, and the
- * other targets will be used for computing the final results.	(In the
+ * other targets will be used for computing the final results.  (In the
  * above example we could theoretically suppress the a and b targets and
  * pass down only c,d,a+b, but it's not really worth the trouble to
  * eliminate simple var references from the subplan.  We will avoid doing
@@ -2298,7 +2298,7 @@ make_subplanTargetList(PlannerInfo *root,
  *		Locate grouping columns in the tlist chosen by query_planner.
  *
  * This is only needed if we don't use the sub_tlist chosen by
- * make_subplanTargetList.	We have to forget the column indexes found
+ * make_subplanTargetList.  We have to forget the column indexes found
  * by that routine and re-locate the grouping exprs in the real sub_tlist.
  * We assume the grouping exprs are just Vars (see make_subplanTargetList).
  */
@@ -2329,11 +2329,11 @@ locate_grouping_columns(PlannerInfo *root,
 
 		/*
 		 * The grouping column returned by create_plan might not have the same
-		 * typmod as the original Var.	(This can happen in cases where a
+		 * typmod as the original Var.  (This can happen in cases where a
 		 * set-returning function has been inlined, so that we now have more
 		 * knowledge about what it returns than we did when the original Var
 		 * was created.)  So we can't use tlist_member() to search the tlist;
-		 * instead use tlist_member_match_var.	For safety, still check that
+		 * instead use tlist_member_match_var.  For safety, still check that
 		 * the vartype matches.
 		 */
 		if (!(groupexpr && IsA(groupexpr, Var)))
@@ -2562,7 +2562,7 @@ make_pathkeys_for_window(PlannerInfo *root, WindowClause *wc,
  * This depends on the behavior of make_pathkeys_for_window()!
  *
  * We are given the target WindowClause and an array of the input column
- * numbers associated with the resulting pathkeys.	In the easy case, there
+ * numbers associated with the resulting pathkeys.  In the easy case, there
  * are the same number of pathkey columns as partitioning + ordering columns
  * and we just have to copy some data around.  However, it's possible that
  * some of the original partitioning + ordering columns were eliminated as
@@ -2574,7 +2574,7 @@ make_pathkeys_for_window(PlannerInfo *root, WindowClause *wc,
  * determine which keys are significant.
  *
  * The method used here is a bit brute-force: add the sort columns to a list
- * one at a time and note when the resulting pathkey list gets longer.	But
+ * one at a time and note when the resulting pathkey list gets longer.  But
  * it's a sufficiently uncommon case that a faster way doesn't seem worth
  * the amount of code refactoring that'd be needed.
  *----------
@@ -2676,7 +2676,7 @@ get_column_info_for_window(PlannerInfo *root, WindowClause *wc, List *tlist,
  * Currently, we disallow sublinks in standalone expressions, so there's no
  * real "planning" involved here.  (That might not always be true though.)
  * What we must do is run eval_const_expressions to ensure that any function
- * default arguments get inserted.	The fact that constant subexpressions
+ * default arguments get inserted.  The fact that constant subexpressions
  * get simplified is a side-effect that is useful when the expression will
  * get evaluated more than once.  Also, we must fix operator function IDs.
  *

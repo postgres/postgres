@@ -233,7 +233,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 
 		/*
 		 * We loop through the lexemes in the tsvector and add them to our
-		 * tracking hashtable.	Note: the hashtable entries will point into
+		 * tracking hashtable.  Note: the hashtable entries will point into
 		 * the (detoasted) tsvector value, therefore we cannot free that
 		 * storage until we're done.
 		 */
@@ -364,7 +364,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 			 * they get sorted on frequencies. The rationale is that we
 			 * usually search through most common elements looking for a
 			 * specific value, so we can grab its frequency.  When values are
-			 * presorted we can employ binary search for that.	See
+			 * presorted we can employ binary search for that.  See
 			 * ts_selfuncs.c for a real usage scenario.
 			 */
 			qsort(sort_table, num_mcelem, sizeof(TrackItem *),

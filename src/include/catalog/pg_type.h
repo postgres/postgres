@@ -41,7 +41,7 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP
 
 	/*
 	 * For a fixed-size type, typlen is the number of bytes we use to
-	 * represent a value of this type, e.g. 4 for an int4.	But for a
+	 * represent a value of this type, e.g. 4 for an int4.  But for a
 	 * variable-length type, typlen is negative.  We use -1 to indicate a
 	 * "varlena" type (one that has a length word), -2 to indicate a
 	 * null-terminated C string.
@@ -50,7 +50,7 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP
 
 	/*
 	 * typbyval determines whether internal Postgres routines pass a value of
-	 * this type by value or by reference.	typbyval had better be FALSE if
+	 * this type by value or by reference.  typbyval had better be FALSE if
 	 * the length is not 1, 2, or 4 (or 8 on 8-byte-Datum machines).
 	 * Variable-length types are always passed by reference. Note that
 	 * typbyval can be false even if the length would allow pass-by-value;
@@ -70,7 +70,7 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP
 	/*
 	 * typcategory and typispreferred help the parser distinguish preferred
 	 * and non-preferred coercions.  The category can be any single ASCII
-	 * character (but not \0).	The categories used for built-in types are
+	 * character (but not \0).  The categories used for built-in types are
 	 * identified by the TYPCATEGORY macros below.
 	 */
 	char		typcategory;	/* arbitrary type classification */
@@ -79,7 +79,7 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP
 
 	/*
 	 * If typisdefined is false, the entry is only a placeholder (forward
-	 * reference).	We know the type name, but not yet anything else about it.
+	 * reference).  We know the type name, but not yet anything else about it.
 	 */
 	bool		typisdefined;
 
@@ -140,7 +140,7 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP
 	 * 'd' = DOUBLE alignment (8 bytes on many machines, but by no means all).
 	 *
 	 * See include/access/tupmacs.h for the macros that compute these
-	 * alignment requirements.	Note also that we allow the nominal alignment
+	 * alignment requirements.  Note also that we allow the nominal alignment
 	 * to be violated when storing "packed" varlenas; the TOAST mechanism
 	 * takes care of hiding that from most code.
 	 *
@@ -175,7 +175,7 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP
 
 	/*
 	 * Domains use typbasetype to show the base (or domain) type that the
-	 * domain is based on.	Zero if the type is not a domain.
+	 * domain is based on.  Zero if the type is not a domain.
 	 */
 	Oid			typbasetype;
 

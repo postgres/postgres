@@ -88,7 +88,7 @@ static List *get_tables_to_cluster(MemoryContext cluster_context);
  *
  * The single-relation case does not have any such overhead.
  *
- * We also allow a relation to be specified without index.	In that case,
+ * We also allow a relation to be specified without index.  In that case,
  * the indisclustered bit will be looked up, and an ERROR will be thrown
  * if there is no index with the bit set.
  *---------------------------------------------------------------------------
@@ -209,7 +209,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 												ALLOCSET_DEFAULT_MAXSIZE);
 
 		/*
-		 * Build the list of relations to cluster.	Note that this lives in
+		 * Build the list of relations to cluster.  Note that this lives in
 		 * cluster_context.
 		 */
 		rvs = get_tables_to_cluster(cluster_context);
@@ -245,7 +245,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
  *
  * This clusters the table by creating a new, clustered table and
  * swapping the relfilenodes of the new table and the old table, so
- * the OID of the original table is preserved.	Thus we do not lose
+ * the OID of the original table is preserved.  Thus we do not lose
  * GRANT, inheritance nor references to this table (this was a bug
  * in releases thru 7.3).
  *
@@ -264,7 +264,7 @@ cluster_rel(RelToCluster *rvtc, bool recheck, bool verbose)
 
 	/*
 	 * We grab exclusive access to the target rel and index for the duration
-	 * of the transaction.	(This is redundant for the single-transaction
+	 * of the transaction.  (This is redundant for the single-transaction
 	 * case, since cluster() already did it.)  The index lock is taken inside
 	 * check_index_is_clusterable.
 	 */
@@ -299,7 +299,7 @@ cluster_rel(RelToCluster *rvtc, bool recheck, bool verbose)
 		 * check in the "recheck" case is appropriate (which currently means
 		 * somebody is executing a database-wide CLUSTER), because there is
 		 * another check in cluster() which will stop any attempt to cluster
-		 * remote temp tables by name.	There is another check in
+		 * remote temp tables by name.  There is another check in
 		 * check_index_is_clusterable which is redundant, but we leave it for
 		 * extra safety.
 		 */
@@ -382,7 +382,7 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck)
 
 	/*
 	 * Disallow clustering on incomplete indexes (those that might not index
-	 * every row of the relation).	We could relax this by making a separate
+	 * every row of the relation).  We could relax this by making a separate
 	 * seqscan pass over the table to copy the missing rows, but that seems
 	 * expensive and tedious.
 	 */
@@ -592,7 +592,7 @@ rebuild_relation(Relation OldHeap, Oid indexOid)
 
 	/*
 	 * Create the new heap, using a temporary name in the same namespace as
-	 * the existing table.	NOTE: there is some risk of collision with user
+	 * the existing table.  NOTE: there is some risk of collision with user
 	 * relnames.  Working around this seems more trouble than it's worth; in
 	 * particular, we can't create the new heap in a different namespace from
 	 * the old, or we will have problems with the TEMP status of temp tables.
@@ -633,7 +633,7 @@ rebuild_relation(Relation OldHeap, Oid indexOid)
 
 	/*
 	 * Rebuild each index on the relation (but not the toast table, which is
-	 * all-new at this point).	We do not need CommandCounterIncrement()
+	 * all-new at this point).  We do not need CommandCounterIncrement()
 	 * because reindex_relation does it.
 	 *
 	 * Note: because index_build is called via reindex_relation, it will never
@@ -646,9 +646,9 @@ rebuild_relation(Relation OldHeap, Oid indexOid)
 
 	/*
 	 * At this point, everything is kosher except that the toast table's name
-	 * corresponds to the temporary table.	The name is irrelevant to the
+	 * corresponds to the temporary table.  The name is irrelevant to the
 	 * backend because it's referenced by OID, but users looking at the
-	 * catalogs could be confused.	Rename it to prevent this problem.
+	 * catalogs could be confused.  Rename it to prevent this problem.
 	 *
 	 * Note no lock required on the relation, because we already hold an
 	 * exclusive lock on it.
@@ -1130,7 +1130,7 @@ swap_relation_files(Oid r1, Oid r2, TransactionId frozenXid)
 	}
 
 	/*
-	 * Blow away the old relcache entries now.	We need this kluge because
+	 * Blow away the old relcache entries now.  We need this kluge because
 	 * relcache.c keeps a link to the smgr relation for the physical file, and
 	 * that will be out of date as soon as we do CommandCounterIncrement.
 	 * Whichever of the rels is the second to be cleared during cache

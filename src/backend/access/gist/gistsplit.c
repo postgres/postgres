@@ -72,7 +72,7 @@ gistunionsubkeyvec(GISTSTATE *giststate, IndexTuple *itvec,
  * Recompute unions of left- and right-side subkeys after a page split,
  * ignoring any tuples that are marked in spl->spl_dontcare[].
  *
- * Note: we always recompute union keys for all index columns.	In some cases
+ * Note: we always recompute union keys for all index columns.  In some cases
  * this might represent duplicate work for the leftmost column(s), but it's
  * not safe to assume that "zero penalty to move a tuple" means "the union
  * key doesn't change at all".  Penalty functions aren't 100% accurate.
@@ -161,7 +161,7 @@ findDontCares(Relation r, GISTSTATE *giststate, GISTENTRY *valvec,
 
 /*
  * Remove tuples that are marked don't-cares from the tuple index array a[]
- * of length *len.	This is applied separately to the spl_left and spl_right
+ * of length *len.  This is applied separately to the spl_left and spl_right
  * arrays.
  */
 static void
@@ -194,7 +194,7 @@ removeDontCares(OffsetNumber *a, int *len, const bool *dontcare)
 /*
  * Place a single don't-care tuple into either the left or right side of the
  * split, according to which has least penalty for merging the tuple into
- * the previously-computed union keys.	We need consider only columns starting
+ * the previously-computed union keys.  We need consider only columns starting
  * at attno.
  */
 static void
@@ -292,7 +292,7 @@ supportSecondarySplit(Relation r, GISTSTATE *giststate, int attno,
 
 		/*
 		 * There is only one previously defined union, so we just choose swap
-		 * or not by lowest penalty for that side.	We can only get here if a
+		 * or not by lowest penalty for that side.  We can only get here if a
 		 * secondary split happened to have all NULLs in its column in the
 		 * tuples that the outer recursion level had assigned to one side.
 		 * (Note that the null checks in gistSplitByKey don't prevent the
@@ -426,7 +426,7 @@ gistUserPicksplit(Relation r, GistEntryVector *entryvec, int attno, GistSplitVec
 	sv->spl_rdatum = v->spl_rattr[attno];
 
 	/*
-	 * Let the opclass-specific PickSplit method do its thing.	Note that at
+	 * Let the opclass-specific PickSplit method do its thing.  Note that at
 	 * this point we know there are no null keys in the entryvec.
 	 */
 	FunctionCall2(&giststate->picksplitFn[attno],

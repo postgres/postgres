@@ -7,7 +7,7 @@
  *	For example, the Oid type is part of the API of libpq and other libraries.
  *
  *	   Declarations which are specific to a particular interface should
- *	go in the header file for that interface (such as libpq-fe.h).	This
+ *	go in the header file for that interface (such as libpq-fe.h).  This
  *	file is only for fundamental Postgres declarations.
  *
  *	   User-written C functions don't count as "external to Postgres."

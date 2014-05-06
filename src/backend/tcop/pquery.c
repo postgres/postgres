@@ -519,7 +519,7 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot)
 											false);
 
 				/*
-				 * We do *not* call AfterTriggerBeginQuery() here.	We assume
+				 * We do *not* call AfterTriggerBeginQuery() here.  We assume
 				 * that a SELECT cannot queue any triggers.  It would be messy
 				 * to support triggers since the execution of the portal may
 				 * be interleaved with other queries.
@@ -564,7 +564,7 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot)
 
 				/*
 				 * We don't start the executor until we are told to run the
-				 * portal.	We do need to set up the result tupdesc.
+				 * portal.  We do need to set up the result tupdesc.
 				 */
 				{
 					PlannedStmt *pstmt;
@@ -917,7 +917,7 @@ PortalRunSelect(Portal portal,
 	Assert(queryDesc || portal->holdStore);
 
 	/*
-	 * Force the queryDesc destination to the right thing.	This supports
+	 * Force the queryDesc destination to the right thing.  This supports
 	 * MOVE, for example, which will pass in dest = DestNone.  This is okay to
 	 * change as long as we do it on every fetch.  (The Executor must not
 	 * assume that dest never changes.)
@@ -1163,7 +1163,7 @@ PortalRunUtility(Portal portal, Node *utilityStmt, bool isTopLevel,
 	elog(DEBUG3, "ProcessUtility");
 
 	/*
-	 * Set snapshot if utility stmt needs one.	Most reliable way to do this
+	 * Set snapshot if utility stmt needs one.  Most reliable way to do this
 	 * seems to be to enumerate those that do not need one; this is a short
 	 * list.  Transaction control, LOCK, and SET must *not* set a snapshot
 	 * since they need to be executable at the start of a serializable
@@ -1203,7 +1203,7 @@ PortalRunUtility(Portal portal, Node *utilityStmt, bool isTopLevel,
 
 	/*
 	 * Some utility commands may pop the ActiveSnapshot stack from under us,
-	 * so we only pop the stack if we actually see a snapshot set.	Note that
+	 * so we only pop the stack if we actually see a snapshot set.  Note that
 	 * the set of utility commands that do this must be the same set
 	 * disallowed to run inside a transaction; otherwise, we could be popping
 	 * a snapshot that belongs to some other operation.
@@ -1480,7 +1480,7 @@ DoPortalRunFetch(Portal portal,
 				 * Definition: Rewind to start, advance count-1 rows, return
 				 * next row (if any).  In practice, if the goal is less than
 				 * halfway back to the start, it's better to scan from where
-				 * we are.	In any case, we arrange to fetch the target row
+				 * we are.  In any case, we arrange to fetch the target row
 				 * going forwards.
 				 */
 				if (portal->posOverflow || portal->portalPos == LONG_MAX ||
@@ -1587,7 +1587,7 @@ DoPortalRunFetch(Portal portal,
 			 * If we are sitting on a row, back up one so we can re-fetch it.
 			 * If we are not sitting on a row, we still have to start up and
 			 * shut down the executor so that the destination is initialized
-			 * and shut down correctly; so keep going.	To PortalRunSelect,
+			 * and shut down correctly; so keep going.  To PortalRunSelect,
 			 * count == 0 means we will retrieve no row.
 			 */
 			if (on_row)

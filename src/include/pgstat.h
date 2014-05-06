@@ -104,7 +104,7 @@ typedef struct PgStat_TableCounts
  *
  * Most of the event counters are nontransactional, ie, we count events
  * in committed and aborted transactions alike.  For these, we just count
- * directly in the PgStat_TableStatus.	However, new_live_tuples and
+ * directly in the PgStat_TableStatus.  However, new_live_tuples and
  * new_dead_tuples must be derived from tuple insertion and deletion counts
  * with awareness of whether the transaction or subtransaction committed or
  * aborted.  Hence, we also keep a stack of per-(sub)transaction status

@@ -33,7 +33,7 @@
  *				   /
  *				Append -------+------+------+--- nil
  *				/	\		  |		 |		|
- *			  nil	nil		 ...	...    ...
+ *			  nil	nil		 ...    ...    ...
  *								 subplans
  *
  *		Append nodes are currently used for unions, and to support
@@ -345,7 +345,7 @@ ExecReScanAppend(AppendState *node, ExprContext *exprCtxt)
 
 		/*
 		 * If chgParam of subnode is not null then plan will be re-scanned by
-		 * first ExecProcNode.	However, if caller is passing us an exprCtxt
+		 * first ExecProcNode.  However, if caller is passing us an exprCtxt
 		 * then forcibly rescan all the subnodes now, so that we can pass the
 		 * exprCtxt down to the subnodes (needed for appendrel indexscan).
 		 */

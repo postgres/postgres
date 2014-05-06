@@ -252,7 +252,7 @@ ExecIndexEvalRuntimeKeys(ExprContext *econtext,
 
 		/*
 		 * For each run-time key, extract the run-time expression and evaluate
-		 * it with respect to the current outer tuple.	We then stick the
+		 * it with respect to the current outer tuple.  We then stick the
 		 * result into the proper scan key.
 		 *
 		 * Note: the result of the eval could be a pass-by-ref value that's
@@ -385,7 +385,7 @@ ExecIndexAdvanceArrayKeys(IndexArrayKeyInfo *arrayKeys, int numArrayKeys)
 	/*
 	 * Note we advance the rightmost array key most quickly, since it will
 	 * correspond to the lowest-order index column among the available
-	 * qualifications.	This is hypothesized to result in better locality of
+	 * qualifications.  This is hypothesized to result in better locality of
 	 * access in the index.
 	 */
 	for (j = numArrayKeys - 1; j >= 0; j--)
@@ -705,7 +705,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 	/*
 	 * If there are any RowCompareExpr quals, we need extra ScanKey entries
 	 * for them, and possibly extra runtime-key entries.  Count up what's
-	 * needed.	(The subsidiary ScanKey arrays for the RowCompareExprs could
+	 * needed.  (The subsidiary ScanKey arrays for the RowCompareExprs could
 	 * be allocated as separate chunks, but we have to count anyway to make
 	 * runtime_keys large enough, so might as well just do one palloc.)
 	 */

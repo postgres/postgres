@@ -425,7 +425,7 @@ LockGXact(const char *gid, Oid user)
 		/*
 		 * Note: it probably would be possible to allow committing from
 		 * another database; but at the moment NOTIFY is known not to work and
-		 * there may be some other issues as well.	Hence disallow until
+		 * there may be some other issues as well.  Hence disallow until
 		 * someone gets motivated to make it work.
 		 */
 		if (MyDatabaseId != gxact->proc.databaseId)
@@ -983,7 +983,7 @@ EndPrepare(GlobalTransaction gxact)
 	 * out the correct state file CRC, we have an inconsistency: the xact is
 	 * prepared according to WAL but not according to our on-disk state. We
 	 * use a critical section to force a PANIC if we are unable to complete
-	 * the write --- then, WAL replay should repair the inconsistency.	The
+	 * the write --- then, WAL replay should repair the inconsistency.  The
 	 * odds of a PANIC actually occurring should be very tiny given that we
 	 * were able to write the bogus CRC above.
 	 *
@@ -1021,7 +1021,7 @@ EndPrepare(GlobalTransaction gxact)
 				 errmsg("could not close two-phase state file: %m")));
 
 	/*
-	 * Mark the prepared transaction as valid.	As soon as xact.c marks MyProc
+	 * Mark the prepared transaction as valid.  As soon as xact.c marks MyProc
 	 * as not running our XID (which it will do immediately after this
 	 * function returns), others can commit/rollback the xact.
 	 *
@@ -1241,7 +1241,7 @@ FinishPreparedTransaction(const char *gid, bool isCommit)
 	/*
 	 * In case we fail while running the callbacks, mark the gxact invalid so
 	 * no one else will try to commit/rollback, and so it can be recycled
-	 * properly later.	It is still locked by our XID so it won't go away yet.
+	 * properly later.  It is still locked by our XID so it won't go away yet.
 	 *
 	 * (We assume it's safe to do this without taking TwoPhaseStateLock.)
 	 */
@@ -1435,7 +1435,7 @@ CheckPointTwoPhase(XLogRecPtr redo_horizon)
 	 *
 	 * This approach creates a race condition: someone else could delete a
 	 * GXACT between the time we release TwoPhaseStateLock and the time we try
-	 * to open its state file.	We handle this by special-casing ENOENT
+	 * to open its state file.  We handle this by special-casing ENOENT
 	 * failures: if we see that, we verify that the GXACT is no longer valid,
 	 * and if so ignore the failure.
 	 */
@@ -1515,7 +1515,7 @@ CheckPointTwoPhase(XLogRecPtr redo_horizon)
  *
  * We throw away any prepared xacts with main XID beyond nextXid --- if any
  * are present, it suggests that the DBA has done a PITR recovery to an
- * earlier point in time without cleaning out pg_twophase.	We dare not
+ * earlier point in time without cleaning out pg_twophase.  We dare not
  * try to recover such prepared xacts since they likely depend on database
  * state that doesn't exist now.
  *

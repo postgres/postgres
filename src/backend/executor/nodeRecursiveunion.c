@@ -329,7 +329,7 @@ ExecRecursiveUnionReScan(RecursiveUnionState *node, ExprContext *exprCtxt)
 
 	/*
 	 * if chgParam of subnode is not null then plan will be re-scanned by
-	 * first ExecProcNode.	Because of above, we only have to do this to the
+	 * first ExecProcNode.  Because of above, we only have to do this to the
 	 * non-recursive term.
 	 */
 	if (outerPlan->chgParam == NULL)

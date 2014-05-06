@@ -272,7 +272,7 @@ set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
  * set_append_rel_pathlist
  *	  Build access paths for an "append relation"
  *
- * The passed-in rel and RTE represent the entire append relation.	The
+ * The passed-in rel and RTE represent the entire append relation.  The
  * relation's contents are computed by appending together the output of
  * the individual member relations.  Note that in the inheritance case,
  * the first member relation is actually the same table as is mentioned in
@@ -342,7 +342,7 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 
 		/*
 		 * We have to copy the parent's targetlist and quals to the child,
-		 * with appropriate substitution of variables.	However, only the
+		 * with appropriate substitution of variables.  However, only the
 		 * baserestrictinfo quals are needed before we can check for
 		 * constraint exclusion; so do that first and then check to see if we
 		 * can disregard this child.
@@ -485,7 +485,7 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 
 	/*
 	 * Finally, build Append path and install it as the only access path for
-	 * the parent rel.	(Note: this is correct even if we have zero or one
+	 * the parent rel.  (Note: this is correct even if we have zero or one
 	 * live subpath due to constraint exclusion.)
 	 */
 	add_path(rel, (Path *) create_append_path(rel, subpaths));
@@ -889,7 +889,7 @@ make_rel_from_joinlist(PlannerInfo *root, List *joinlist)
  *		independent jointree items in the query.  This is > 1.
  *
  * 'initial_rels' is a list of RelOptInfo nodes for each independent
- *		jointree item.	These are the components to be joined together.
+ *		jointree item.  These are the components to be joined together.
  *		Note that levels_needed == list_length(initial_rels).
  *
  * Returns the final level of join relations, i.e., the relation that is
@@ -905,7 +905,7 @@ make_rel_from_joinlist(PlannerInfo *root, List *joinlist)
  * needed for these paths need have been instantiated.
  *
  * Note to plugin authors: the functions invoked during standard_join_search()
- * modify root->join_rel_list and root->join_rel_hash.	If you want to do more
+ * modify root->join_rel_list and root->join_rel_hash.  If you want to do more
  * than one join-order search, you'll probably need to save and restore the
  * original states of those data structures.  See geqo_eval() for an example.
  */
@@ -996,7 +996,7 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels)
  * column k is found to be unsafe to reference, we set unsafeColumns[k] to
  * TRUE, but we don't reject the subquery overall since column k might
  * not be referenced by some/all quals.  The unsafeColumns[] array will be
- * consulted later by qual_is_pushdown_safe().	It's better to do it this
+ * consulted later by qual_is_pushdown_safe().  It's better to do it this
  * way than to make the checks directly in qual_is_pushdown_safe(), because
  * when the subquery involves set operations we have to check the output
  * expressions in each arm of the set op.
@@ -1089,7 +1089,7 @@ recurse_pushdown_safe(Node *setOp, Query *topquery,
  * check_output_expressions - check subquery's output expressions for safety
  *
  * There are several cases in which it's unsafe to push down an upper-level
- * qual if it references a particular output column of a subquery.	We check
+ * qual if it references a particular output column of a subquery.  We check
  * each output column of the subquery and set unsafeColumns[k] to TRUE if
  * that column is unsafe for a pushed-down qual to reference.  The conditions
  * checked here are:
@@ -1107,7 +1107,7 @@ recurse_pushdown_safe(Node *setOp, Query *topquery,
  * of rows returned.  (This condition is vacuous for DISTINCT, because then
  * there are no non-DISTINCT output columns, so we needn't check.  But note
  * we are assuming that the qual can't distinguish values that the DISTINCT
- * operator sees as equal.	This is a bit shaky but we have no way to test
+ * operator sees as equal.  This is a bit shaky but we have no way to test
  * for the case, and it's unlikely enough that we shouldn't refuse the
  * optimization just because it could theoretically happen.)
  */

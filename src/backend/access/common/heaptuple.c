@@ -21,7 +21,7 @@
  * tuptoaster.c.
  *
  * This change will break any code that assumes it needn't detoast values
- * that have been put into a tuple but never sent to disk.	Hopefully there
+ * that have been put into a tuple but never sent to disk.  Hopefully there
  * are few such places.
  *
  * Varlenas still have alignment 'i' (or 'd') in pg_type/pg_attribute, since
@@ -427,7 +427,7 @@ nocachegetattr(HeapTuple tuple,
 
 		/*
 		 * Otherwise, check for non-fixed-length attrs up to and including
-		 * target.	If there aren't any, it's safe to cheaply initialize the
+		 * target.  If there aren't any, it's safe to cheaply initialize the
 		 * cached offsets for these attrs.
 		 */
 		if (HeapTupleHasVarWidth(tuple))
@@ -494,7 +494,7 @@ nocachegetattr(HeapTuple tuple,
 		 *
 		 * Note - This loop is a little tricky.  For each non-null attribute,
 		 * we have to first account for alignment padding before the attr,
-		 * then advance over the attr based on its length.	Nulls have no
+		 * then advance over the attr based on its length.  Nulls have no
 		 * storage and no alignment padding either.  We can use/set
 		 * attcacheoff until we reach either a null or a var-width attribute.
 		 */
@@ -590,7 +590,7 @@ heap_getsysattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
 
 			/*
 			 * cmin and cmax are now both aliases for the same field, which
-			 * can in fact also be a combo command id.	XXX perhaps we should
+			 * can in fact also be a combo command id.  XXX perhaps we should
 			 * return the "real" cmin or cmax if possible, that is if we are
 			 * inside the originating transaction?
 			 */
@@ -750,7 +750,7 @@ heap_form_tuple(TupleDesc tupleDescriptor,
 	len += data_len;
 
 	/*
-	 * Allocate and zero the space needed.	Note that the tuple body and
+	 * Allocate and zero the space needed.  Note that the tuple body and
 	 * HeapTupleData management structure are allocated in one chunk.
 	 */
 	tuple = (HeapTuple) palloc0(HEAPTUPLESIZE + len);

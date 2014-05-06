@@ -478,7 +478,7 @@ GetCurrentSubTransactionId(void)
  *
  * "used" must be TRUE if the caller intends to use the command ID to mark
  * inserted/updated/deleted tuples.  FALSE means the ID is being fetched
- * for read-only purposes (ie, as a snapshot validity cutoff).	See
+ * for read-only purposes (ie, as a snapshot validity cutoff).  See
  * CommandCounterIncrement() for discussion.
  */
 CommandId
@@ -565,7 +565,7 @@ TransactionIdIsCurrentTransactionId(TransactionId xid)
 
 	/*
 	 * We always say that BootstrapTransactionId is "not my transaction ID"
-	 * even when it is (ie, during bootstrap).	Along with the fact that
+	 * even when it is (ie, during bootstrap).  Along with the fact that
 	 * transam.c always treats BootstrapTransactionId as already committed,
 	 * this causes the tqual.c routines to see all tuples as committed, which
 	 * is what we need during bootstrap.  (Bootstrap mode only inserts tuples,
@@ -706,7 +706,7 @@ AtStart_Memory(void)
 	/*
 	 * If this is the first time through, create a private context for
 	 * AbortTransaction to work in.  By reserving some space now, we can
-	 * insulate AbortTransaction from out-of-memory scenarios.	Like
+	 * insulate AbortTransaction from out-of-memory scenarios.  Like
 	 * ErrorContext, we set it up with slow growth rate and a nonzero minimum
 	 * size, so that space will be reserved immediately.
 	 */
@@ -809,7 +809,7 @@ AtSubStart_ResourceOwner(void)
 	Assert(s->parent != NULL);
 
 	/*
-	 * Create a resource owner for the subtransaction.	We make it a child of
+	 * Create a resource owner for the subtransaction.  We make it a child of
 	 * the immediate parent's resource owner.
 	 */
 	s->curTransactionOwner =
@@ -829,7 +829,7 @@ AtSubStart_ResourceOwner(void)
  *	RecordTransactionCommit
  *
  * Returns latest XID among xact and its children, or InvalidTransactionId
- * if the xact has no XID.	(We compute that here just because it's easier.)
+ * if the xact has no XID.  (We compute that here just because it's easier.)
  *
  * This is exported only to support an ugly hack in VACUUM FULL.
  */
@@ -869,7 +869,7 @@ RecordTransactionCommit(void)
 
 		/*
 		 * If we didn't create XLOG entries, we're done here; otherwise we
-		 * should flush those entries the same as a commit record.	(An
+		 * should flush those entries the same as a commit record.  (An
 		 * example of a possible record that wouldn't cause an XID to be
 		 * assigned is a sequence advance record due to nextval() --- we want
 		 * to flush that to disk before reporting commit.)
@@ -890,7 +890,7 @@ RecordTransactionCommit(void)
 		BufmgrCommit();
 
 		/*
-		 * Mark ourselves as within our "commit critical section".	This
+		 * Mark ourselves as within our "commit critical section".  This
 		 * forces any concurrent checkpoint to wait until we've updated
 		 * pg_clog.  Without this, it is possible for the checkpoint to set
 		 * REDO after the XLOG record but fail to flush the pg_clog update to
@@ -898,7 +898,7 @@ RecordTransactionCommit(void)
 		 * crashes a little later.
 		 *
 		 * Note: we could, but don't bother to, set this flag in
-		 * RecordTransactionAbort.	That's because loss of a transaction abort
+		 * RecordTransactionAbort.  That's because loss of a transaction abort
 		 * is noncritical; the presumption would be that it aborted, anyway.
 		 *
 		 * It's safe to change the inCommit flag of our own backend without
@@ -943,7 +943,7 @@ RecordTransactionCommit(void)
 	 * Check if we want to commit asynchronously.  If the user has set
 	 * synchronous_commit = off, and we're not doing cleanup of any non-temp
 	 * rels nor committing any command that wanted to force sync commit, then
-	 * we can defer flushing XLOG.	(We must not allow asynchronous commit if
+	 * we can defer flushing XLOG.  (We must not allow asynchronous commit if
 	 * there are any non-temp tables to be deleted, because we might delete
 	 * the files before the COMMIT record is flushed to disk.  We do allow
 	 * asynchronous commit if all to-be-deleted tables are temporary though,
@@ -1178,7 +1178,7 @@ AtSubCommit_childXids(void)
  *	RecordTransactionAbort
  *
  * Returns latest XID among xact and its children, or InvalidTransactionId
- * if the xact has no XID.	(We compute that here just because it's easier.)
+ * if the xact has no XID.  (We compute that here just because it's easier.)
  */
 static TransactionId
 RecordTransactionAbort(bool isSubXact)
@@ -1195,7 +1195,7 @@ RecordTransactionAbort(bool isSubXact)
 
 	/*
 	 * If we haven't been assigned an XID, nobody will care whether we aborted
-	 * or not.	Hence, we're done in that case.  It does not matter if we have
+	 * or not.  Hence, we're done in that case.  It does not matter if we have
 	 * rels to delete (note that this routine is not responsible for actually
 	 * deleting 'em).  We cannot have any child XIDs, either.
 	 */
@@ -1211,7 +1211,7 @@ RecordTransactionAbort(bool isSubXact)
 	 * We have a valid XID, so we should write an ABORT record for it.
 	 *
 	 * We do not flush XLOG to disk here, since the default assumption after a
-	 * crash would be that we aborted, anyway.	For the same reason, we don't
+	 * crash would be that we aborted, anyway.  For the same reason, we don't
 	 * need to worry about interlocking against checkpoint start.
 	 */
 
@@ -1367,7 +1367,7 @@ AtSubAbort_childXids(void)
 
 	/*
 	 * We keep the child-XID arrays in TopTransactionContext (see
-	 * AtSubCommit_childXids).	This means we'd better free the array
+	 * AtSubCommit_childXids).  This means we'd better free the array
 	 * explicitly at abort to avoid leakage.
 	 */
 	if (s->childXids != NULL)
@@ -1517,7 +1517,7 @@ StartTransaction(void)
 	VirtualXactLockTableInsert(vxid);
 
 	/*
-	 * Advertise it in the proc array.	We assume assignment of
+	 * Advertise it in the proc array.  We assume assignment of
 	 * LocalTransactionID is atomic, and the backendId should be set already.
 	 */
 	Assert(MyProc->backendId == vxid.backendId);
@@ -1905,7 +1905,7 @@ PrepareTransaction(void)
 	XactLastRecEnd.xrecoff = 0;
 
 	/*
-	 * Let others know about no transaction in progress by me.	This has to be
+	 * Let others know about no transaction in progress by me.  This has to be
 	 * done *after* the prepared transaction has been marked valid, else
 	 * someone may think it is unlocked and recyclable.
 	 */
@@ -1914,7 +1914,7 @@ PrepareTransaction(void)
 	/*
 	 * This is all post-transaction cleanup.  Note that if an error is raised
 	 * here, it's too late to abort the transaction.  This should be just
-	 * noncritical resource releasing.	See notes in CommitTransaction.
+	 * noncritical resource releasing.  See notes in CommitTransaction.
 	 */
 
 	CallXactCallbacks(XACT_EVENT_PREPARE);
@@ -2078,7 +2078,7 @@ AbortTransaction(void)
 	ProcArrayEndTransaction(MyProc, latestXid);
 
 	/*
-	 * Post-abort cleanup.	See notes in CommitTransaction() concerning
+	 * Post-abort cleanup.  See notes in CommitTransaction() concerning
 	 * ordering.  We can skip all of it if the transaction failed before
 	 * creating a resource owner.
 	 */
@@ -2311,7 +2311,7 @@ CommitTransactionCommand(void)
 
 			/*
 			 * Here we were in a perfectly good transaction block but the user
-			 * told us to ROLLBACK anyway.	We have to abort the transaction
+			 * told us to ROLLBACK anyway.  We have to abort the transaction
 			 * and then clean up.
 			 */
 		case TBLOCK_ABORT_PENDING:
@@ -2331,7 +2331,7 @@ CommitTransactionCommand(void)
 
 			/*
 			 * We were just issued a SAVEPOINT inside a transaction block.
-			 * Start a subtransaction.	(DefineSavepoint already did
+			 * Start a subtransaction.  (DefineSavepoint already did
 			 * PushTransaction, so as to have someplace to put the SUBBEGIN
 			 * state.)
 			 */
@@ -2517,7 +2517,7 @@ AbortCurrentTransaction(void)
 			break;
 
 			/*
-			 * Here, we failed while trying to COMMIT.	Clean up the
+			 * Here, we failed while trying to COMMIT.  Clean up the
 			 * transaction and return to idle state (we do not want to stay in
 			 * the transaction).
 			 */
@@ -2579,7 +2579,7 @@ AbortCurrentTransaction(void)
 
 			/*
 			 * If we failed while trying to create a subtransaction, clean up
-			 * the broken subtransaction and abort the parent.	The same
+			 * the broken subtransaction and abort the parent.  The same
 			 * applies if we get a failure while ending a subtransaction.
 			 */
 		case TBLOCK_SUBBEGIN:
@@ -3108,7 +3108,7 @@ UserAbortTransactionBlock(void)
 			break;
 
 			/*
-			 * We are inside a subtransaction.	Mark everything up to top
+			 * We are inside a subtransaction.  Mark everything up to top
 			 * level as exitable.
 			 */
 		case TBLOCK_SUBINPROGRESS:
@@ -3240,7 +3240,7 @@ ReleaseSavepoint(List *options)
 			break;
 
 			/*
-			 * We are in a non-aborted subtransaction.	This is the only valid
+			 * We are in a non-aborted subtransaction.  This is the only valid
 			 * case.
 			 */
 		case TBLOCK_SUBINPROGRESS:
@@ -3296,7 +3296,7 @@ ReleaseSavepoint(List *options)
 
 	/*
 	 * Mark "commit pending" all subtransactions up to the target
-	 * subtransaction.	The actual commits will happen when control gets to
+	 * subtransaction.  The actual commits will happen when control gets to
 	 * CommitTransactionCommand.
 	 */
 	xact = CurrentTransactionState;
@@ -3394,7 +3394,7 @@ RollbackToSavepoint(List *options)
 
 	/*
 	 * Mark "abort pending" all subtransactions up to the target
-	 * subtransaction.	The actual aborts will happen when control gets to
+	 * subtransaction.  The actual aborts will happen when control gets to
 	 * CommitTransactionCommand.
 	 */
 	xact = CurrentTransactionState;
@@ -3793,7 +3793,7 @@ CommitSubTransaction(void)
 	CommandCounterIncrement();
 
 	/*
-	 * Prior to 8.4 we marked subcommit in clog at this point.	We now only
+	 * Prior to 8.4 we marked subcommit in clog at this point.  We now only
 	 * perform that step, if required, as part of the atomic update of the
 	 * whole transaction tree at top level commit or abort.
 	 */
@@ -4232,7 +4232,7 @@ TransStateAsString(TransState state)
 /*
  * xactGetCommittedChildren
  *
- * Gets the list of committed children of the current transaction.	The return
+ * Gets the list of committed children of the current transaction.  The return
  * value is the number of child transactions.  *ptr is set to point to an
  * array of TransactionIds.  The array is allocated in TopTransactionContext;
  * the caller should *not* pfree() it (this is a change from pre-8.4 code!).

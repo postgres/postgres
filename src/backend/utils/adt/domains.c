@@ -12,11 +12,11 @@
  * The overhead required for constraint checking can be high, since examining
  * the catalogs to discover the constraints for a given domain is not cheap.
  * We have three mechanisms for minimizing this cost:
- *	1.	In a nest of domains, we flatten the checking of all the levels
+ *	1.  In a nest of domains, we flatten the checking of all the levels
  *		into just one operation.
- *	2.	We cache the list of constraint items in the FmgrInfo struct
+ *	2.  We cache the list of constraint items in the FmgrInfo struct
  *		passed by the caller.
- *	3.	If there are CHECK constraints, we cache a standalone ExprContext
+ *	3.  If there are CHECK constraints, we cache a standalone ExprContext
  *		to evaluate them in.
  *
  *

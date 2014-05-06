@@ -21,7 +21,7 @@
   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
   EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-  NONINFRINGEMENT.	IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+  NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
   BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
   ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
   CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
@@ -211,7 +211,7 @@ static int	s_vcmp(mp_int a, int v);
 static mp_digit s_uadd(mp_digit *da, mp_digit *db, mp_digit *dc,
 	   mp_size size_a, mp_size size_b);
 
-/* Unsigned magnitude subtraction.	Assumes dc is big enough. */
+/* Unsigned magnitude subtraction.  Assumes dc is big enough. */
 static void s_usub(mp_digit *da, mp_digit *db, mp_digit *dc,
 	   mp_size size_a, mp_size size_b);
 
@@ -2275,7 +2275,7 @@ mp_error_string(mp_result res)
 /* }}} */
 
 /*------------------------------------------------------------------------*/
-/* Private functions for internal use.	These make assumptions.			  */
+/* Private functions for internal use.  These make assumptions.           */
 
 /* {{{ s_alloc(num) */
 

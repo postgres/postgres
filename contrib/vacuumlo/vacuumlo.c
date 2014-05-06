@@ -241,7 +241,7 @@ vacuumlo(char *database, struct _param * param)
 	PQclear(res);
 
 	/*
-	 * Run the actual deletes in a single transaction.	Note that this would
+	 * Run the actual deletes in a single transaction.  Note that this would
 	 * be a bad idea in pre-7.1 Postgres releases (since rolling back a table
 	 * delete used to cause problems), but it should be safe now.
 	 */

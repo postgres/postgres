@@ -116,7 +116,7 @@ ReadBufferBI(Relation relation, BlockNumber targetBlock,
  *	NOTE: it is unlikely, but not quite impossible, for otherBuffer to be the
  *	same buffer we select for insertion of the new tuple (this could only
  *	happen if space is freed in that page after heap_update finds there's not
- *	enough there).	In that case, the page will be pinned and locked only once.
+ *	enough there).  In that case, the page will be pinned and locked only once.
  *
  *	We normally use FSM to help us find free space.  However,
  *	if HEAP_INSERT_SKIP_FSM is specified, we just append a new empty page to
@@ -133,7 +133,7 @@ ReadBufferBI(Relation relation, BlockNumber targetBlock,
  *	for additional constraints needed for safe usage of this behavior.)
  *
  *	The caller can also provide a BulkInsertState object to optimize many
- *	insertions into the same relation.	This keeps a pin on the current
+ *	insertions into the same relation.  This keeps a pin on the current
  *	insertion target page (to save pin/unpin cycles) and also passes a
  *	BULKWRITE buffer selection strategy object to the buffer manager.
  *	Passing NULL for bistate selects the default behavior.
@@ -186,7 +186,7 @@ RelationGetBufferForTuple(Relation relation, Size len,
 
 	/*
 	 * We first try to put the tuple on the same page we last inserted a tuple
-	 * on, as cached in the BulkInsertState or relcache entry.	If that
+	 * on, as cached in the BulkInsertState or relcache entry.  If that
 	 * doesn't work, we ask the Free Space Map to locate a suitable page.
 	 * Since the FSM's info might be out of date, we have to be prepared to
 	 * loop around and retry multiple times. (To insure this isn't an infinite
@@ -218,7 +218,7 @@ RelationGetBufferForTuple(Relation relation, Size len,
 
 		/*
 		 * If the FSM knows nothing of the rel, try the last page before we
-		 * give up and extend.	This avoids one-tuple-per-page syndrome during
+		 * give up and extend.  This avoids one-tuple-per-page syndrome during
 		 * bootstrapping or in a recently-started system.
 		 */
 		if (targetBlock == InvalidBlockNumber)
@@ -279,7 +279,7 @@ RelationGetBufferForTuple(Relation relation, Size len,
 
 		/*
 		 * Not enough space, so we must give up our page locks and pin (if
-		 * any) and prepare to look elsewhere.	We don't care which order we
+		 * any) and prepare to look elsewhere.  We don't care which order we
 		 * unlock the two buffers in, so this can be slightly simpler than the
 		 * code above.
 		 */
@@ -321,7 +321,7 @@ RelationGetBufferForTuple(Relation relation, Size len,
 
 	/*
 	 * XXX This does an lseek - rather expensive - but at the moment it is the
-	 * only way to accurately determine how many blocks are in a relation.	Is
+	 * only way to accurately determine how many blocks are in a relation.  Is
 	 * it worth keeping an accurate file length in shared memory someplace,
 	 * rather than relying on the kernel to do it for us?
 	 */
@@ -341,7 +341,7 @@ RelationGetBufferForTuple(Relation relation, Size len,
 
 	/*
 	 * Release the file-extension lock; it's now OK for someone else to extend
-	 * the relation some more.	Note that we cannot release this lock before
+	 * the relation some more.  Note that we cannot release this lock before
 	 * we have buffer lock on the new page, or we risk a race condition
 	 * against vacuumlazy.c --- see comments therein.
 	 */

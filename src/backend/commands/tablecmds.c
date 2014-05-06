@@ -449,7 +449,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 							 &inheritOids, &old_constraints, &parentOidCount);
 
 	/*
-	 * Create a tuple descriptor from the relation schema.	Note that this
+	 * Create a tuple descriptor from the relation schema.  Note that this
 	 * deals with column names, types, and NOT NULL constraints, but not
 	 * default values or CHECK constraints; we handle those below.
 	 */
@@ -538,7 +538,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	CommandCounterIncrement();
 
 	/*
-	 * Open the new relation and acquire exclusive lock on it.	This isn't
+	 * Open the new relation and acquire exclusive lock on it.  This isn't
 	 * really necessary for locking out other backends (since they can't see
 	 * the new rel anyway until we commit), but it keeps the lock manager from
 	 * complaining about deadlock risks.
@@ -830,10 +830,10 @@ ExecuteTruncate(TruncateStmt *stmt)
 	}
 
 	/*
-	 * In CASCADE mode, suck in all referencing relations as well.	This
+	 * In CASCADE mode, suck in all referencing relations as well.  This
 	 * requires multiple iterations to find indirectly-dependent relations. At
 	 * each phase, we need to exclusive-lock new rels before looking for their
-	 * dependencies, else we might miss something.	Also, we check each rel as
+	 * dependencies, else we might miss something.  Also, we check each rel as
 	 * soon as we open it, to avoid a faux pas such as holding lock for a long
 	 * time on a rel we have no permissions for.
 	 */
@@ -959,7 +959,7 @@ ExecuteTruncate(TruncateStmt *stmt)
 
 		/*
 		 * Create a new empty storage file for the relation, and assign it as
-		 * the relfilenode value.	The old storage file is scheduled for
+		 * the relfilenode value.   The old storage file is scheduled for
 		 * deletion at commit.
 		 */
 		setNewRelfilenode(rel, RecentXmin);
@@ -1029,7 +1029,7 @@ ExecuteTruncate(TruncateStmt *stmt)
 }
 
 /*
- * Check that a given rel is safe to truncate.	Subroutine for ExecuteTruncate
+ * Check that a given rel is safe to truncate.  Subroutine for ExecuteTruncate
  */
 static void
 truncate_check_rel(Relation rel)
@@ -1367,7 +1367,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 
 		/*
 		 * Now copy the CHECK constraints of this parent, adjusting attnos
-		 * using the completed newattno[] map.	Identically named constraints
+		 * using the completed newattno[] map.  Identically named constraints
 		 * are merged if possible, else we throw error.
 		 */
 		if (constr && constr->num_check > 0)
@@ -1422,7 +1422,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 
 		/*
 		 * Close the parent rel, but keep our AccessShareLock on it until xact
-		 * commit.	That will prevent someone else from deleting or ALTERing
+		 * commit.  That will prevent someone else from deleting or ALTERing
 		 * the parent before the child is committed.
 		 */
 		heap_close(relation, NoLock);
@@ -1892,7 +1892,7 @@ renameatt(Oid myrelid,
 
 		/*
 		 * Scan through index columns to see if there's any simple index
-		 * entries for this attribute.	We ignore expressional entries.
+		 * entries for this attribute.  We ignore expressional entries.
 		 */
 		indextup = SearchSysCache(INDEXRELID,
 								  ObjectIdGetDatum(indexoid),
@@ -2040,7 +2040,7 @@ RenameRelationInternal(Oid myrelid, const char *newrelname, Oid namespaceId)
 						newrelname)));
 
 	/*
-	 * Update pg_class tuple with new relname.	(Scribbling on reltup is OK
+	 * Update pg_class tuple with new relname.  (Scribbling on reltup is OK
 	 * because it's a copy...)
 	 */
 	namestrcpy(&(relform->relname), newrelname);
@@ -2093,7 +2093,7 @@ RenameRelationInternal(Oid myrelid, const char *newrelname, Oid namespaceId)
  * We also reject these commands if there are any pending AFTER trigger events
  * for the rel.  This is certainly necessary for the rewriting variants of
  * ALTER TABLE, because they don't preserve tuple TIDs and so the pending
- * events would try to fetch the wrong tuples.	It might be overly cautious
+ * events would try to fetch the wrong tuples.  It might be overly cautious
  * in other cases, but again it seems better to err on the side of paranoia.
  *
  * REINDEX calls this with "rel" referencing the index to be rebuilt; here
@@ -2136,23 +2136,23 @@ CheckTableNotInUse(Relation rel, const char *stmt)
  *		3. Scan table(s) to check new constraints, and optionally recopy
  *		   the data into new table(s).
  * Phase 3 is not performed unless one or more of the subcommands requires
- * it.	The intention of this design is to allow multiple independent
+ * it.  The intention of this design is to allow multiple independent
  * updates of the table schema to be performed with only one pass over the
  * data.
  *
- * ATPrepCmd performs phase 1.	A "work queue" entry is created for
+ * ATPrepCmd performs phase 1.  A "work queue" entry is created for
  * each table to be affected (there may be multiple affected tables if the
  * commands traverse a table inheritance hierarchy).  Also we do preliminary
  * validation of the subcommands, including parse transformation of those
  * expressions that need to be evaluated with respect to the old table
  * schema.
  *
- * ATRewriteCatalogs performs phase 2 for each affected table.	(Note that
+ * ATRewriteCatalogs performs phase 2 for each affected table.  (Note that
  * phases 2 and 3 normally do no explicit recursion, since phase 1 already
  * did it --- although some subcommands have to recurse in phase 2 instead.)
  * Certain subcommands need to be performed before others to avoid
  * unnecessary conflicts; for example, DROP COLUMN should come before
- * ADD COLUMN.	Therefore phase 1 divides the subcommands into multiple
+ * ADD COLUMN.  Therefore phase 1 divides the subcommands into multiple
  * lists, one for each logical "pass" of phase 2.
  *
  * ATRewriteTables performs phase 3 for those tables that need it.
@@ -2453,7 +2453,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 /*
  * ATRewriteCatalogs
  *
- * Traffic cop for ALTER TABLE Phase 2 operations.	Subcommands are
+ * Traffic cop for ALTER TABLE Phase 2 operations.  Subcommands are
  * dispatched in a "safe" execution order (designed to avoid unnecessary
  * conflicts).
  */
@@ -3628,7 +3628,7 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	 * returned by AddRelationNewConstraints, so that the right thing happens
 	 * when a datatype's default applies.
 	 *
-	 * We skip this step completely for views.	For a view, we can only get
+	 * We skip this step completely for views.  For a view, we can only get
 	 * here from CREATE OR REPLACE VIEW, which historically doesn't set up
 	 * defaults, not even for domain-typed columns.  And in any case we
 	 * mustn't invoke Phase 3 on a view, since it has no storage.
@@ -3711,7 +3711,7 @@ add_column_datatype_dependency(Oid relid, int32 attnum, Oid typid)
 /*
  * ALTER TABLE SET WITH OIDS
  *
- * Basically this is an ADD COLUMN for the special OID column.	We have
+ * Basically this is an ADD COLUMN for the special OID column.  We have
  * to cons up a ColumnDef node because the ADD COLUMN code needs one.
  */
 static void
@@ -4090,7 +4090,7 @@ ATExecSetStorage(Relation rel, const char *colName, Node *newValue)
  *
  * DROP COLUMN cannot use the normal ALTER TABLE recursion mechanism,
  * because we have to decide at runtime whether to recurse or not depending
- * on whether attinhcount goes to zero or not.	(We can't check this in a
+ * on whether attinhcount goes to zero or not.  (We can't check this in a
  * static pre-pass because it won't handle multiple inheritance situations
  * correctly.)
  */
@@ -4515,7 +4515,7 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 /*
  * Add a foreign-key constraint to a single table
  *
- * Subroutine for ATExecAddConstraint.	Must already hold exclusive
+ * Subroutine for ATExecAddConstraint.  Must already hold exclusive
  * lock on the rel, and have done appropriate validity checks for it.
  * We do permissions checks here, however.
  */
@@ -4640,7 +4640,7 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 	 *
 	 * Note that we have to be careful about the difference between the actual
 	 * PK column type and the opclass' declared input type, which might be
-	 * only binary-compatible with it.	The declared opcintype is the right
+	 * only binary-compatible with it.  The declared opcintype is the right
 	 * thing to probe pg_amop with.
 	 */
 	if (numfks != numpks)
@@ -4854,10 +4854,10 @@ transformColumnNameList(Oid relId, List *colList,
  * transformFkeyGetPrimaryKey -
  *
  *	Look up the names, attnums, and types of the primary key attributes
- *	for the pkrel.	Also return the index OID and index opclasses of the
+ *	for the pkrel.  Also return the index OID and index opclasses of the
  *	index supporting the primary key.
  *
- *	All parameters except pkrel are output parameters.	Also, the function
+ *	All parameters except pkrel are output parameters.  Also, the function
  *	return value is the number of attributes in the primary key.
  *
  *	Used when the column list in the REFERENCES specification is omitted.
@@ -5644,7 +5644,7 @@ ATPrepAlterColumnType(List **wqueue,
 	ReleaseSysCache(tuple);
 
 	/*
-	 * The recursion case is handled by ATSimpleRecursion.	However, if we are
+	 * The recursion case is handled by ATSimpleRecursion.  However, if we are
 	 * told not to recurse, there had better not be any child tables; else the
 	 * alter would put them out of step.
 	 */
@@ -5709,7 +5709,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	 *
 	 * We remove any implicit coercion steps at the top level of the old
 	 * default expression; this has been agreed to satisfy the principle of
-	 * least surprise.	(The conversion to the new column type should act like
+	 * least surprise.  (The conversion to the new column type should act like
 	 * it started from what the user sees as the stored expression, and the
 	 * implicit coercions aren't going to be shown.)
 	 */
@@ -5738,7 +5738,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	 * and record enough information to let us recreate the objects.
 	 *
 	 * The actual recreation does not happen here, but only after we have
-	 * performed all the individual ALTER TYPE operations.	We have to save
+	 * performed all the individual ALTER TYPE operations.  We have to save
 	 * the info before executing ALTER TYPE, though, else the deparser will
 	 * get confused.
 	 *
@@ -5947,7 +5947,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	heap_close(depRel, RowExclusiveLock);
 
 	/*
-	 * Here we go --- change the recorded column type.	(Note heapTup is a
+	 * Here we go --- change the recorded column type.  (Note heapTup is a
 	 * copy of the syscache entry, so okay to scribble on.)
 	 */
 	attTup->atttypid = targettype;
@@ -6014,7 +6014,7 @@ ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab)
 
 	/*
 	 * Re-parse the index and constraint definitions, and attach them to the
-	 * appropriate work queue entries.	We do this before dropping because in
+	 * appropriate work queue entries.  We do this before dropping because in
 	 * the case of a FOREIGN KEY constraint, we might not yet have exclusive
 	 * lock on the table the constraint is attached to, and we need to get
 	 * that before dropping.  It's safe because the parser won't actually look
@@ -6939,7 +6939,7 @@ copy_relation_data(SMgrRelation src, SMgrRelation dst,
 			log_newpage(&dst->smgr_rnode, forkNum, blkno, page);
 
 		/*
-		 * Now write the page.	We say isTemp = true even if it's not a temp
+		 * Now write the page.  We say isTemp = true even if it's not a temp
 		 * rel, because there's no need for smgr to schedule an fsync for this
 		 * write; we'll do it ourselves below.
 		 */
@@ -7099,7 +7099,7 @@ ATExecAddInherit(Relation child_rel, RangeVar *parent)
 	MergeConstraintsIntoExisting(child_rel, parent_rel);
 
 	/*
-	 * OK, it looks valid.	Make the catalog entries that show inheritance.
+	 * OK, it looks valid.  Make the catalog entries that show inheritance.
 	 */
 	StoreCatalogInheritance1(RelationGetRelid(child_rel),
 							 RelationGetRelid(parent_rel),
@@ -8032,7 +8032,7 @@ AtEOXact_on_commit_actions(bool isCommit)
  * Post-subcommit or post-subabort cleanup for ON COMMIT management.
  *
  * During subabort, we can immediately remove entries created during this
- * subtransaction.	During subcommit, just relabel entries marked during
+ * subtransaction.  During subcommit, just relabel entries marked during
  * this subtransaction as being the parent's responsibility.
  */
 void

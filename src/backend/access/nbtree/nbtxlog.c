@@ -126,7 +126,7 @@ forget_matching_deletion(RelFileNode node, BlockNumber delblk)
  * in correct itemno sequence, but physically the opposite order from the
  * original, because we insert them in the opposite of itemno order.  This
  * does not matter in any current btree code, but it's something to keep an
- * eye on.	Is it worth changing just on general principles?  See also the
+ * eye on.  Is it worth changing just on general principles?  See also the
  * notes in btree_xlog_split().
  */
 static void
@@ -177,7 +177,7 @@ _bt_restore_meta(RelFileNode rnode, XLogRecPtr lsn,
 	pageop->btpo_flags = BTP_META;
 
 	/*
-	 * Set pd_lower just past the end of the metadata.	This is not essential
+	 * Set pd_lower just past the end of the metadata.  This is not essential
 	 * but it makes the page look compressible to xlog.c.
 	 */
 	((PageHeader) metapg)->pd_lower =
@@ -359,7 +359,7 @@ btree_xlog_split(bool onleft, bool isroot,
 	 * Reconstruct left (original) sibling if needed.  Note that this code
 	 * ensures that the items remaining on the left page are in the correct
 	 * item number order, but it does not reproduce the physical order they
-	 * would have had.	Is this worth changing?  See also _bt_restore_page().
+	 * would have had.  Is this worth changing?  See also _bt_restore_page().
 	 */
 	if (!(record->xl_info & XLR_BKP_BLOCK_1))
 	{
@@ -379,7 +379,7 @@ btree_xlog_split(bool onleft, bool isroot,
 
 				/*
 				 * Remove the items from the left page that were copied to the
-				 * right page.	Also remove the old high key, if any. (We must
+				 * right page.  Also remove the old high key, if any. (We must
 				 * remove everything before trying to insert any items, else
 				 * we risk not having enough space.)
 				 */

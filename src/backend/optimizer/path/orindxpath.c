@@ -41,7 +41,7 @@
  *
  * The added quals are partially redundant with the original OR, and therefore
  * will cause the size of the joinrel to be underestimated when it is finally
- * formed.	(This would be true of a full transformation to CNF as well; the
+ * formed.  (This would be true of a full transformation to CNF as well; the
  * fault is not really in the transformation, but in clauselist_selectivity's
  * inability to recognize redundant conditions.)  To minimize the collateral
  * damage, we want to minimize the number of quals added.  Therefore we do
@@ -56,7 +56,7 @@
  * it is finally formed.  This is a MAJOR HACK: it depends on the fact
  * that clause selectivities are cached and on the fact that the same
  * RestrictInfo node will appear in every joininfo list that might be used
- * when the joinrel is formed.	And it probably isn't right in cases where
+ * when the joinrel is formed.  And it probably isn't right in cases where
  * the size estimation is nonlinear (i.e., outer and IN joins).  But it
  * beats not doing anything.
  *
@@ -96,10 +96,10 @@ create_or_index_quals(PlannerInfo *root, RelOptInfo *rel)
 	 * enforced at the relation scan level.
 	 *
 	 * We must also ignore clauses that are marked !is_pushed_down (ie they
-	 * are themselves outer-join clauses).	It would be safe to extract an
+	 * are themselves outer-join clauses).  It would be safe to extract an
 	 * index condition from such a clause if we are within the nullable rather
 	 * than the non-nullable side of its join, but we haven't got enough
-	 * context here to tell which applies.	OR clauses in outer-join quals
+	 * context here to tell which applies.  OR clauses in outer-join quals
 	 * aren't exactly common, so we'll let that case go unoptimized for now.
 	 */
 	foreach(i, rel->joininfo)
@@ -114,7 +114,7 @@ create_or_index_quals(PlannerInfo *root, RelOptInfo *rel)
 			 * Use the generate_bitmap_or_paths() machinery to estimate the
 			 * value of each OR clause.  We can use regular restriction
 			 * clauses along with the OR clause contents to generate
-			 * indexquals.	We pass outer_rel = NULL so that sub-clauses that
+			 * indexquals.  We pass outer_rel = NULL so that sub-clauses that
 			 * are actually joins will be ignored.
 			 */
 			List	   *orpaths;

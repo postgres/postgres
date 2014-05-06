@@ -211,7 +211,7 @@ create_scan_plan(PlannerInfo *root, Path *best_path)
 	/*
 	 * For table scans, rather than using the relation targetlist (which is
 	 * only those Vars actually needed by the query), we prefer to generate a
-	 * tlist containing all Vars in order.	This will allow the executor to
+	 * tlist containing all Vars in order.  This will allow the executor to
 	 * optimize away projection of the table tuples, if possible.  (Note that
 	 * planner.c may replace the tlist we generate here, forcing projection to
 	 * occur.)
@@ -402,7 +402,7 @@ use_physical_tlist(PlannerInfo *root, RelOptInfo *rel)
  *
  * If the plan node immediately above a scan would prefer to get only
  * needed Vars and not a physical tlist, it must call this routine to
- * undo the decision made by use_physical_tlist().	Currently, Hash, Sort,
+ * undo the decision made by use_physical_tlist().  Currently, Hash, Sort,
  * and Material nodes want this, so they don't have to store useless columns.
  */
 static void
@@ -520,7 +520,7 @@ create_join_plan(PlannerInfo *root, JoinPath *best_path)
 
 	/*
 	 * * Expensive function pullups may have pulled local predicates * into
-	 * this path node.	Put them in the qpqual of the plan node. * JMH,
+	 * this path node.  Put them in the qpqual of the plan node. * JMH,
 	 * 6/15/92
 	 */
 	if (get_loc_restrictinfo(best_path) != NIL)
@@ -549,7 +549,7 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path)
 
 	/*
 	 * It is possible for the subplans list to contain only one entry, or even
-	 * no entries.	Handle these cases specially.
+	 * no entries.  Handle these cases specially.
 	 *
 	 * XXX ideally, if there's just one entry, we'd not bother to generate an
 	 * Append node but just return the single child.  At the moment this does
@@ -1078,7 +1078,7 @@ create_bitmap_scan_plan(PlannerInfo *root,
 
 	/*
 	 * When dealing with special operators, we will at this point have
-	 * duplicate clauses in qpqual and bitmapqualorig.	We may as well drop
+	 * duplicate clauses in qpqual and bitmapqualorig.  We may as well drop
 	 * 'em from bitmapqualorig, since there's no point in making the tests
 	 * twice.
 	 */
@@ -1168,7 +1168,7 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 		/*
 		 * Here, we only detect qual-free subplans.  A qual-free subplan would
 		 * cause us to generate "... OR true ..."  which we may as well reduce
-		 * to just "true".	We do not try to eliminate redundant subclauses
+		 * to just "true".  We do not try to eliminate redundant subclauses
 		 * because (a) it's not as likely as in the AND case, and (b) we might
 		 * well be working with hundreds or even thousands of OR conditions,
 		 * perhaps from a long IN list.  The performance of list_append_unique
@@ -1258,7 +1258,7 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 			/*
 			 * We know that the index predicate must have been implied by the
 			 * query condition as a whole, but it may or may not be implied by
-			 * the conditions that got pushed into the bitmapqual.	Avoid
+			 * the conditions that got pushed into the bitmapqual.  Avoid
 			 * generating redundant conditions.
 			 */
 			if (!predicate_implied_by(list_make1(pred), ipath->indexclauses))
@@ -2321,7 +2321,7 @@ order_qual_clauses(PlannerInfo *root, List *clauses)
 
 	/*
 	 * Sort.  We don't use qsort() because it's not guaranteed stable for
-	 * equal keys.	The expected number of entries is small enough that a
+	 * equal keys.  The expected number of entries is small enough that a
 	 * simple insertion sort should be good enough.
 	 */
 	for (i = 1; i < nitems; i++)
@@ -2867,7 +2867,7 @@ make_mergejoin(List *tlist,
  * make_sort --- basic routine to build a Sort plan node
  *
  * Caller must have built the sortColIdx, sortOperators, and nullsFirst
- * arrays already.	limit_tuples is as for cost_sort (in particular, pass
+ * arrays already.  limit_tuples is as for cost_sort (in particular, pass
  * -1 if no limit)
  */
 static Sort *
@@ -2906,7 +2906,7 @@ make_sort(PlannerInfo *root, Plan *lefttree, int numCols,
  * once as a sort key column; if so, the extra mentions are redundant.
  *
  * Caller is assumed to have allocated the arrays large enough for the
- * max possible number of columns.	Return value is the new column count.
+ * max possible number of columns.  Return value is the new column count.
  */
 static int
 add_sort_column(AttrNumber colIdx, Oid sortOp, bool nulls_first,
@@ -3008,7 +3008,7 @@ make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 			/*
 			 * Otherwise, we can sort by any non-constant expression listed in
 			 * the pathkey's EquivalenceClass.  For now, we take the first one
-			 * that corresponds to an available item in the tlist.	If there
+			 * that corresponds to an available item in the tlist.  If there
 			 * isn't any, use the first one that is an expression in the
 			 * input's vars.  (The non-const restriction only matters if the
 			 * EC is below_outer_join; but if it isn't, it won't contain
@@ -3264,7 +3264,7 @@ make_material(Plan *lefttree)
  * materialize_finished_plan: stick a Material node atop a completed plan
  *
  * There are a couple of places where we want to attach a Material node
- * after completion of subquery_planner().	This currently requires hackery.
+ * after completion of subquery_planner().  This currently requires hackery.
  * Since subquery_planner has already run SS_finalize_plan on the subplan
  * tree, we have to kluge up parameter lists for the Material node.
  * Possibly this could be fixed by postponing SS_finalize_plan processing
@@ -3476,7 +3476,7 @@ make_group(PlannerInfo *root,
 
 /*
  * distinctList is a list of SortGroupClauses, identifying the targetlist items
- * that should be considered by the Unique filter.	The input path must
+ * that should be considered by the Unique filter.  The input path must
  * already be sorted accordingly.
  */
 Unique *
@@ -3494,7 +3494,7 @@ make_unique(Plan *lefttree, List *distinctList)
 
 	/*
 	 * Charge one cpu_operator_cost per comparison per input tuple. We assume
-	 * all columns get compared at most of the tuples.	(XXX probably this is
+	 * all columns get compared at most of the tuples.  (XXX probably this is
 	 * an overestimate.)
 	 */
 	plan->total_cost += cpu_operator_cost * plan->plan_rows * numCols;

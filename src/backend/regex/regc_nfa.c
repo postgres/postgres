@@ -2,7 +2,7 @@
  * NFA utilities.
  * This file is #included by regcomp.c.
  *
- * Copyright (c) 1998, 1999 Henry Spencer.	All rights reserved.
+ * Copyright (c) 1998, 1999 Henry Spencer.  All rights reserved.
  *
  * Development of this software was funded, in part, by Cray Research Inc.,
  * UUNET Communications Services Inc., Sun Microsystems Inc., and Scriptics
@@ -1304,7 +1304,7 @@ fixempties(struct nfa * nfa,
 	}
 
 	/*
-	 * And remove any states that have become useless.	(This cleanup is not
+	 * And remove any states that have become useless.  (This cleanup is not
 	 * very thorough, and would be even less so if we tried to combine it with
 	 * the previous step; but cleanup() will take care of anything we miss.)
 	 */
@@ -1372,7 +1372,7 @@ replaceempty(struct nfa * nfa,
 	 * non-EMPTY out-arcs), we must keep it so, so always push forward in that
 	 * case.
 	 *
-	 * The fan-out/fan-in comparison should count only non-EMPTY arcs.	If
+	 * The fan-out/fan-in comparison should count only non-EMPTY arcs.  If
 	 * "from" is doomed, we can skip counting "to"'s arcs, since we want to
 	 * force taking the copyins path in that case.
 	 */

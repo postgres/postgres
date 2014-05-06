@@ -24,7 +24,7 @@
 #include "catalog/genbki.h"
 
 /* ----------------
- *		pg_ts_dict definition.	cpp turns this into
+ *		pg_ts_dict definition.  cpp turns this into
  *		typedef struct FormData_pg_ts_dict
  * ----------------
  */

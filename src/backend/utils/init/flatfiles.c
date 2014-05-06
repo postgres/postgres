@@ -173,7 +173,7 @@ name_okay(const char *str)
  * so we can set or update the XID wrap limit.
  *
  * Also, if "startup" is true, we tell relcache.c to clear out the relcache
- * init file in each database.	That's a bit nonmodular, but scanning
+ * init file in each database.  That's a bit nonmodular, but scanning
  * pg_database twice during system startup seems too high a price for keeping
  * things better separated.
  */
@@ -439,9 +439,9 @@ write_auth_file(Relation rel_authid, Relation rel_authmem)
 
 		/*
 		 * We can't use heap_getattr() here because during startup we will not
-		 * have any tupdesc for pg_authid.	Fortunately it's not too hard to
+		 * have any tupdesc for pg_authid.  Fortunately it's not too hard to
 		 * work around this.  rolpassword is the first possibly-null field so
-		 * we can compute its offset directly.	Note that this only works
+		 * we can compute its offset directly.  Note that this only works
 		 * reliably because the preceding field (rolconnlimit) is int4, and
 		 * therefore rolpassword is always 4-byte-aligned, and will be at the
 		 * same offset no matter whether it uses 1-byte or 4-byte header.
@@ -547,7 +547,7 @@ write_auth_file(Relation rel_authid, Relation rel_authmem)
 	heap_endscan(scan);
 
 	/*
-	 * Search for memberships.	We can skip all this if pg_auth_members is
+	 * Search for memberships.  We can skip all this if pg_auth_members is
 	 * empty.
 	 */
 	if (total_mem > 0)
@@ -926,7 +926,7 @@ AtEOSubXact_UpdateFlatFiles(bool isCommit,
  * or pg_auth_members via general-purpose INSERT/UPDATE/DELETE commands.
  *
  * It is sufficient for this to be a STATEMENT trigger since we don't
- * care which individual rows changed.	It doesn't much matter whether
+ * care which individual rows changed.  It doesn't much matter whether
  * it's a BEFORE or AFTER trigger.
  */
 Datum

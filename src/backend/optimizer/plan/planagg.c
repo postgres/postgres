@@ -64,7 +64,7 @@ static Oid	fetch_agg_sort_op(Oid aggfnoid);
  * generic scan-all-the-rows plan.
  *
  * We are passed the preprocessed tlist, and the best path
- * devised for computing the input of a standard Agg node.	If we are able
+ * devised for computing the input of a standard Agg node.  If we are able
  * to optimize all the aggregates, and the result is estimated to be cheaper
  * than the generic aggregate method, then generate and return a Plan that
  * does it that way.  Otherwise, return NULL.
@@ -127,7 +127,7 @@ optimize_minmax_aggregates(PlannerInfo *root, List *tlist, Path *best_path)
 	/*
 	 * Since this optimization is not applicable all that often, we want to
 	 * fall out before doing very much work if possible.  Therefore we do the
-	 * work in several passes.	The first pass scans the tlist and HAVING qual
+	 * work in several passes.  The first pass scans the tlist and HAVING qual
 	 * to find all the aggregates and verify that each of them is a MIN/MAX
 	 * aggregate.  If that succeeds, the second pass looks at each aggregate
 	 * to see if it is optimizable; if so we make an IndexPath describing how
@@ -480,7 +480,7 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info)
 	SortGroupClause *sortcl;
 
 	/*
-	 * Generate a suitably modified query.	Much of the work here is probably
+	 * Generate a suitably modified query.  Much of the work here is probably
 	 * unnecessary in the normal case, but we want to make it look good if
 	 * someone tries to EXPLAIN the result.
 	 */
@@ -523,7 +523,7 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info)
 											  FLOAT8PASSBYVAL);
 
 	/*
-	 * Generate the plan for the subquery.	We already have a Path for the
+	 * Generate the plan for the subquery.  We already have a Path for the
 	 * basic indexscan, but we have to convert it to a Plan and attach a LIMIT
 	 * node above it.
 	 *

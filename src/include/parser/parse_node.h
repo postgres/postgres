@@ -24,7 +24,7 @@
  * links to current parse state of outer query.
  *
  * p_sourcetext: source string that generated the raw parsetree being
- * analyzed, or NULL if not available.	(The string is used only to
+ * analyzed, or NULL if not available.  (The string is used only to
  * generate cursor positions in error messages: we need it to convert
  * byte-wise locations in parse structures to character-wise cursor
  * positions.)
@@ -59,7 +59,7 @@
  * to make an RTE before you can access a CTE.
  *
  * p_future_ctes: list of CommonTableExprs (WITH items) that are not yet
- * visible due to scope rules.	This is used to help improve error messages.
+ * visible due to scope rules.  This is used to help improve error messages.
  *
  * p_parent_cte: CommonTableExpr that immediately contains the current query,
  * if any.

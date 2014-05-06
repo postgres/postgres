@@ -459,9 +459,9 @@ main(int argc, char *argv[])
 	if (!data_only)
 	{
 		/*
-		 * If asked to --clean, do that first.	We can avoid detailed
+		 * If asked to --clean, do that first.  We can avoid detailed
 		 * dependency analysis because databases never depend on each other,
-		 * and tablespaces never depend on each other.	Roles could have
+		 * and tablespaces never depend on each other.  Roles could have
 		 * grants to each other, but DROP ROLE will clean those up silently.
 		 */
 		if (output_clean)
@@ -1094,7 +1094,7 @@ dumpCreateDB(PGconn *conn)
 	 * commands for just those databases with values different from defaults.
 	 *
 	 * We consider template0's encoding and locale (or, pre-7.1, template1's)
-	 * to define the installation default.	Pre-8.4 installations do not have
+	 * to define the installation default.  Pre-8.4 installations do not have
 	 * per-database locale settings; for them, every database must necessarily
 	 * be using the installation default, so there's no need to do anything
 	 * (which is good, since in very old versions there is no good way to find

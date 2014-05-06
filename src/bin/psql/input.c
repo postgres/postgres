@@ -29,7 +29,7 @@ char	   *psql_history;
  *	Preserve newlines in saved queries by mapping '\n' to NL_IN_HISTORY
  *
  *	It is assumed NL_IN_HISTORY will never be entered by the user
- *	nor appear inside a multi-byte string.	0x00 is not properly
+ *	nor appear inside a multi-byte string.  0x00 is not properly
  *	handled by the readline routines so it can not be used
  *	for this purpose.
  */
@@ -151,7 +151,7 @@ pg_send_history(PQExpBuffer history_buf)
  *
  * Caller *must* have set up sigint_interrupt_jmp before calling.
  *
- * Note: we re-use a static PQExpBuffer for each call.	This is to avoid
+ * Note: we re-use a static PQExpBuffer for each call.  This is to avoid
  * leaking memory if interrupted by SIGINT.
  */
 char *

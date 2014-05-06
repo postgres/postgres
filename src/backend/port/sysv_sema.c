@@ -258,7 +258,7 @@ IpcSemaphoreCreate(int numSems)
 
 		/*
 		 * Can only get here if some other process managed to create the same
-		 * sema key before we did.	Let him have that one, loop around to try
+		 * sema key before we did.  Let him have that one, loop around to try
 		 * next key.
 		 */
 	}
@@ -283,12 +283,12 @@ IpcSemaphoreCreate(int numSems)
  *
  * This is called during postmaster start or shared memory reinitialization.
  * It should do whatever is needed to be able to support up to maxSemas
- * subsequent PGSemaphoreCreate calls.	Also, if any system resources
+ * subsequent PGSemaphoreCreate calls.  Also, if any system resources
  * are acquired here or in PGSemaphoreCreate, register an on_shmem_exit
  * callback to release them.
  *
  * The port number is passed for possible use as a key (for SysV, we use
- * it to generate the starting semaphore key).	In a standalone backend,
+ * it to generate the starting semaphore key).  In a standalone backend,
  * zero will be passed.
  *
  * In the SysV implementation, we acquire semaphore sets on-demand; the
@@ -383,7 +383,7 @@ PGSemaphoreLock(PGSemaphore sema, bool interruptOK)
 	 * from the operation prematurely because we were sent a signal.  So we
 	 * try and lock the semaphore again.
 	 *
-	 * Each time around the loop, we check for a cancel/die interrupt.	On
+	 * Each time around the loop, we check for a cancel/die interrupt.  On
 	 * some platforms, if such an interrupt comes in while we are waiting, it
 	 * will cause the semop() call to exit with errno == EINTR, allowing us to
 	 * service the interrupt (if not in a critical section already) during the
@@ -401,7 +401,7 @@ PGSemaphoreLock(PGSemaphore sema, bool interruptOK)
 	 * do CHECK_FOR_INTERRUPTS; then, a die() interrupt in this interval will
 	 * execute directly.  However, there is a huge pitfall: there is another
 	 * window of a few instructions after the semop() before we are able to
-	 * reset ImmediateInterruptOK.	If an interrupt occurs then, we'll lose
+	 * reset ImmediateInterruptOK.  If an interrupt occurs then, we'll lose
 	 * control, which means that the lock has been acquired but our caller did
 	 * not get a chance to record the fact. Therefore, we only set
 	 * ImmediateInterruptOK if the caller tells us it's OK to do so, ie, the
@@ -414,9 +414,9 @@ PGSemaphoreLock(PGSemaphore sema, bool interruptOK)
 	 * On some platforms, signals marked SA_RESTART (which is most, for us)
 	 * will not interrupt the semop(); it will just keep waiting.  Therefore
 	 * it's necessary for cancel/die interrupts to be serviced directly by the
-	 * signal handler.	On these platforms the behavior is really the same
+	 * signal handler.  On these platforms the behavior is really the same
 	 * whether the signal arrives just before the semop() begins, or while it
-	 * is waiting.	The loop on EINTR is thus important only for other types
+	 * is waiting.  The loop on EINTR is thus important only for other types
 	 * of interrupts.
 	 */
 	do

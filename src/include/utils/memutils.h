@@ -30,7 +30,7 @@
  *		be summarily denied.
  *
  * XXX This is deliberately chosen to correspond to the limiting size
- * of varlena objects under TOAST.	See VARATT_MASK_SIZE in postgres.h.
+ * of varlena objects under TOAST.  See VARATT_MASK_SIZE in postgres.h.
  *
  * XXX Also, various places in aset.c assume they can compute twice an
  * allocation's size without overflow, so beware of raising this.
@@ -43,8 +43,8 @@
  * All chunks allocated by any memory context manager are required to be
  * preceded by a StandardChunkHeader at a spacing of STANDARDCHUNKHEADERSIZE.
  * A currently-allocated chunk must contain a backpointer to its owning
- * context as well as the allocated size of the chunk.	The backpointer is
- * used by pfree() and repalloc() to find the context to call.	The allocated
+ * context as well as the allocated size of the chunk.  The backpointer is
+ * used by pfree() and repalloc() to find the context to call.  The allocated
  * size is not absolutely essential, but it's expected to be needed by any
  * reasonable implementation.
  */

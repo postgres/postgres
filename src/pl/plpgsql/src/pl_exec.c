@@ -53,7 +53,7 @@ typedef struct
  * creates its own "eval_econtext" ExprContext within this estate for
  * per-evaluation workspace.  eval_econtext is freed at normal function exit,
  * and the EState is freed at transaction end (in case of error, we assume
- * that the abort mechanisms clean it all up).	Furthermore, any exception
+ * that the abort mechanisms clean it all up).  Furthermore, any exception
  * block within a function has to have its own eval_econtext separate from
  * the containing function's, so that we can clean up ExprContext callbacks
  * properly at subtransaction exit.  We maintain a stack that tracks the
@@ -61,7 +61,7 @@ typedef struct
  *
  * This arrangement is a bit tedious to maintain, but it's worth the trouble
  * so that we don't have to re-prepare simple expressions on each trip through
- * a function.	(We assume the case to optimize is many repetitions of a
+ * a function.  (We assume the case to optimize is many repetitions of a
  * function within a transaction.)
  */
 typedef struct SimpleEcontextStackEntry
@@ -2833,7 +2833,7 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 
 	/*
 	 * Check for error, and set FOUND if appropriate (for historical reasons
-	 * we set FOUND only for certain query types).	Also Assert that we
+	 * we set FOUND only for certain query types).  Also Assert that we
 	 * identified the statement type the same as SPI did.
 	 */
 	switch (rc)
@@ -3540,7 +3540,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 										 var->datatype->typlen);
 
 				/*
-				 * Now free the old value.	(We can't do this any earlier
+				 * Now free the old value.  (We can't do this any earlier
 				 * because of the possibility that we are assigning the var's
 				 * old value to it, eg "foo := foo".  We could optimize out
 				 * the assignment altogether in such cases, but it's too
@@ -3907,7 +3907,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
  * At present this doesn't handle PLpgSQL_expr or PLpgSQL_arrayelem datums.
  *
  * NOTE: caller must not modify the returned value, since it points right
- * at the stored value in the case of pass-by-reference datatypes.	In some
+ * at the stored value in the case of pass-by-reference datatypes.  In some
  * cases we have to palloc a return value, and in such cases we put it into
  * the estate's short-term memory context.
  */
@@ -4271,7 +4271,7 @@ exec_for_query(PLpgSQL_execstate *estate, PLpgSQL_stmt_forq *stmt,
 	PinPortal(portal);
 
 	/*
-	 * Fetch the initial tuple(s).	If prefetching is allowed then we grab a
+	 * Fetch the initial tuple(s).  If prefetching is allowed then we grab a
 	 * few more rows to avoid multiple trips through executor startup
 	 * overhead.
 	 */
@@ -5289,7 +5289,7 @@ plpgsql_create_econtext(PLpgSQL_execstate *estate)
 
 	/*
 	 * Create an EState for evaluation of simple expressions, if there's not
-	 * one already in the current transaction.	The EState is made a child of
+	 * one already in the current transaction.  The EState is made a child of
 	 * TopTransactionContext so it will have the right lifespan.
 	 */
 	if (simple_eval_estate == NULL)

@@ -407,7 +407,7 @@ error:
 
 
 /*
- * Handle one of the "string" options of COPY.	If the user gave a quoted
+ * Handle one of the "string" options of COPY.  If the user gave a quoted
  * string, pass it to the backend as-is; if it wasn't quoted then quote
  * and escape it.
  */

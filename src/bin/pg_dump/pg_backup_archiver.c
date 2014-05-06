@@ -563,8 +563,8 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te,
 					/*
 					 * In parallel restore, if we created the table earlier in
 					 * the run then we wrap the COPY in a transaction and
-					 * precede it with a TRUNCATE.	If archiving is not on
-					 * this prevents WAL-logging the COPY.	This obtains a
+					 * precede it with a TRUNCATE.  If archiving is not on
+					 * this prevents WAL-logging the COPY.  This obtains a
 					 * speedup similar to that from using single_txn mode in
 					 * non-parallel restores.
 					 */
@@ -2413,7 +2413,7 @@ _doSetSessionAuth(ArchiveHandle *AH, const char *user)
 	appendPQExpBuffer(cmd, "SET SESSION AUTHORIZATION ");
 
 	/*
-	 * SQL requires a string literal here.	Might as well be correct.
+	 * SQL requires a string literal here.  Might as well be correct.
 	 */
 	if (user && *user)
 		appendStringLiteralAHX(cmd, user, AH);
@@ -2544,7 +2544,7 @@ _becomeUser(ArchiveHandle *AH, const char *user)
 }
 
 /*
- * Become the owner of the the given TOC entry object.	If
+ * Become the owner of the the given TOC entry object.  If
  * changes in ownership are not allowed, this doesn't do anything.
  */
 static void
@@ -3233,7 +3233,7 @@ restore_toc_entries_parallel(ArchiveHandle *AH)
 	}
 
 	/*
-	 * Now close parent connection in prep for parallel steps.	We do this
+	 * Now close parent connection in prep for parallel steps.  We do this
 	 * mainly to ensure that we don't exceed the specified number of parallel
 	 * connections.
 	 */
@@ -3733,7 +3733,7 @@ fix_dependencies(ArchiveHandle *AH)
 	/*
 	 * For some of the steps here, it is convenient to have an array that
 	 * indexes the TOC entries by dump ID, rather than searching the TOC list
-	 * repeatedly.	Entries for dump IDs not present in the TOC will be NULL.
+	 * repeatedly.  Entries for dump IDs not present in the TOC will be NULL.
 	 *
 	 * NOTE: because maxDumpId is just the highest dump ID defined in the
 	 * archive, there might be dependencies for IDs > maxDumpId.  All uses
@@ -3759,7 +3759,7 @@ fix_dependencies(ArchiveHandle *AH)
 	 * Note: currently, a TABLE DATA should always have exactly one
 	 * dependency, on its TABLE item.  So we don't bother to search, but look
 	 * just at the first dependency.  We do trouble to make sure that it's a
-	 * TABLE, if possible.	However, if the dependency isn't in the archive
+	 * TABLE, if possible.  However, if the dependency isn't in the archive
 	 * then just assume it was a TABLE; this is to cover cases where the table
 	 * was suppressed but we have the data and some dependent post-data items.
 	 */
@@ -3809,7 +3809,7 @@ fix_dependencies(ArchiveHandle *AH)
 
 	/*
 	 * It is possible that the dependencies list items that are not in the
-	 * archive at all.	Subtract such items from the depCounts.
+	 * archive at all.  Subtract such items from the depCounts.
 	 */
 	for (te = AH->toc->next; te != AH->toc; te = te->next)
 	{

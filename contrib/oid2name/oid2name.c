@@ -430,7 +430,7 @@ sql_exec(PGconn *conn, const char *todo, bool quiet)
 }
 
 /*
- * Dump all databases.	There are no system objects to worry about.
+ * Dump all databases.  There are no system objects to worry about.
  */
 void
 sql_exec_dumpalldbs(PGconn *conn, struct options * opts)

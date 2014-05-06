@@ -94,7 +94,7 @@ typedef struct _psqlSettings
 
 	/*
 	 * The remaining fields are set by assign hooks associated with entries in
-	 * "vars".	They should not be set directly except by those hook
+	 * "vars".  They should not be set directly except by those hook
 	 * functions.
 	 */
 	bool		autocommit;

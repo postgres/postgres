@@ -13,7 +13,7 @@
  * We are willing to use at most maintenance_work_mem memory space to keep
  * track of dead tuples.  We initially allocate an array of TIDs of that size,
  * with an upper limit that depends on table size (this limit ensures we don't
- * allocate a huge area uselessly for vacuuming small tables).	If the array
+ * allocate a huge area uselessly for vacuuming small tables).  If the array
  * threatens to overflow, we suspend the heap scan phase and perform a pass of
  * index cleanup and page compaction, then resume the heap scan with an empty
  * TID array.
@@ -798,8 +798,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		/*
 		 * If we remembered any tuples for deletion, then the page will be
 		 * visited again by lazy_vacuum_heap, which will compute and record
-		 * its post-compaction free space.	If not, then we're done with this
-		 * page, so remember its free space as-is.	(This path will always be
+		 * its post-compaction free space.  If not, then we're done with this
+		 * page, so remember its free space as-is.  (This path will always be
 		 * taken if there are no indexes.)
 		 */
 		if (vacrelstats->num_dead_tuples == prev_dead_count)
@@ -1127,7 +1127,7 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 
 	/*
 	 * Note: once we have truncated, we *must* keep the exclusive lock until
-	 * commit.	The sinval message won't be sent until commit, and other
+	 * commit.  The sinval message won't be sent until commit, and other
 	 * backends must see it and reset their rd_targblock values before they
 	 * can safely access the table again.
 	 */

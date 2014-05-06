@@ -60,7 +60,7 @@ typedef StringInfoData *StringInfo;
  *
  * NOTE: some routines build up a string using StringInfo, and then
  * release the StringInfoData but return the data string itself to their
- * caller.	At that point the data string looks like a plain palloc'd
+ * caller.  At that point the data string looks like a plain palloc'd
  * string.
  *-------------------------
  */
@@ -100,7 +100,7 @@ __attribute__((format(printf, 2, 3)));
 /*------------------------
  * appendStringInfoVA
  * Attempt to format text data under the control of fmt (an sprintf-style
- * format string) and append it to whatever is already in str.	If successful
+ * format string) and append it to whatever is already in str.  If successful
  * return true; if not (because there's not enough space), return false
  * without modifying str.  Typically the caller would enlarge str and retry
  * on false return --- see appendStringInfo for standard usage pattern.

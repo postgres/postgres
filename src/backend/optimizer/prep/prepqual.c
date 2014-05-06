@@ -72,7 +72,7 @@ canonicalize_qual(Expr *qual)
 		return NULL;
 
 	/*
-	 * Push down NOTs.	We do this only in the top-level boolean expression,
+	 * Push down NOTs.  We do this only in the top-level boolean expression,
 	 * without examining arguments of operators/functions. The main reason for
 	 * doing this is to expose as much top-level AND/OR structure as we can,
 	 * so there's no point in descending further.
@@ -158,10 +158,10 @@ pull_ors(List *orlist)
  * find_nots
  *	  Traverse the qualification, looking for NOTs to take care of.
  *	  For NOT clauses, apply push_nots() to try to push down the NOT.
- *	  For AND and OR clause types, simply recurse.	Otherwise stop
+ *	  For AND and OR clause types, simply recurse.  Otherwise stop
  *	  recursing (we do not worry about structure below the top AND/OR tree).
  *
- * Returns the modified qualification.	AND/OR flatness is preserved.
+ * Returns the modified qualification.  AND/OR flatness is preserved.
  */
 static Expr *
 find_nots(Expr *qual)
@@ -303,7 +303,7 @@ push_nots(Expr *qual)
  *
  * This may seem like a fairly useless activity, but it turns out to be
  * applicable to many machine-generated queries, and there are also queries
- * in some of the TPC benchmarks that need it.	This was in fact almost the
+ * in some of the TPC benchmarks that need it.  This was in fact almost the
  * sole useful side-effect of the old prepqual code that tried to force
  * the query into canonical AND-of-ORs form: the canonical equivalent of
  *		((A AND B) OR (A AND C))
@@ -322,7 +322,7 @@ push_nots(Expr *qual)
  *	  OR clauses to which the inverse OR distributive law might apply.
  *	  Only the top-level AND/OR structure is searched.
  *
- * Returns the modified qualification.	AND/OR flatness is preserved.
+ * Returns the modified qualification.  AND/OR flatness is preserved.
  */
 static Expr *
 find_duplicate_ors(Expr *qual)

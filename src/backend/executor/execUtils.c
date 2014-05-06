@@ -439,7 +439,7 @@ FreeExprContext(ExprContext *econtext, bool isCommit)
  * ReScanExprContext
  *
  *		Reset an expression context in preparation for a rescan of its
- *		plan node.	This requires calling any registered shutdown callbacks,
+ *		plan node.  This requires calling any registered shutdown callbacks,
  *		since any partially complete set-returning-functions must be canceled.
  *
  * Note we make no assumption about the caller's memory context.
@@ -480,7 +480,7 @@ MakePerTupleExprContext(EState *estate)
 /* ----------------
  *		ExecAssignExprContext
  *
- *		This initializes the ps_ExprContext field.	It is only necessary
+ *		This initializes the ps_ExprContext field.  It is only necessary
  *		to do this for nodes which use ExecQual or ExecProject
  *		because those routines require an econtext. Other nodes that
  *		don't have to evaluate expressions don't need to do this.
@@ -526,7 +526,7 @@ ExecAssignResultTypeFromTL(PlanState *planstate)
 
 	/*
 	 * ExecTypeFromTL needs the parse-time representation of the tlist, not a
-	 * list of ExprStates.	This is good because some plan nodes don't bother
+	 * list of ExprStates.  This is good because some plan nodes don't bother
 	 * to set up planstate->targetlist ...
 	 */
 	tupDesc = ExecTypeFromTL(planstate->plan->targetlist, hasoid);
@@ -554,7 +554,7 @@ ExecGetResultType(PlanState *planstate)
  * the given tlist should be a list of ExprState nodes, not Expr nodes.
  *
  * inputDesc can be NULL, but if it is not, we check to see whether simple
- * Vars in the tlist match the descriptor.	It is important to provide
+ * Vars in the tlist match the descriptor.  It is important to provide
  * inputDesc for relation-scan plan nodes, as a cross check that the relation
  * hasn't been changed since the plan was made.  At higher levels of a plan,
  * there is no need to recheck.
@@ -756,7 +756,7 @@ ExecAssignProjectionInfo(PlanState *planstate,
  *
  * However ... there is no particular need to do it during ExecEndNode,
  * because FreeExecutorState will free any remaining ExprContexts within
- * the EState.	Letting FreeExecutorState do it allows the ExprContexts to
+ * the EState.  Letting FreeExecutorState do it allows the ExprContexts to
  * be freed in reverse order of creation, rather than order of creation as
  * will happen if we delete them here, which saves O(N^2) work in the list
  * cleanup inside FreeExprContext.
@@ -776,7 +776,7 @@ ExecFreeExprContext(PlanState *planstate)
  *		the following scan type support functions are for
  *		those nodes which are stubborn and return tuples in
  *		their Scan tuple slot instead of their Result tuple
- *		slot..	luck fur us, these nodes do not do projections
+ *		slot..  luck fur us, these nodes do not do projections
  *		so we don't have to worry about getting the ProjectionInfo
  *		right for them...  -cim 6/3/91
  * ----------------------------------------------------------------
@@ -1125,7 +1125,7 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 					   isnull);
 
 		/*
-		 * The index AM does the rest.	Note we suppress unique-index checks
+		 * The index AM does the rest.  Note we suppress unique-index checks
 		 * if we are being called from VACUUM, since VACUUM may need to move
 		 * dead tuples that have the same keys as live ones.
 		 */

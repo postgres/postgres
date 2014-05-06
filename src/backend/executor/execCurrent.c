@@ -138,7 +138,7 @@ execCurrentOf(CurrentOfExpr *cexpr,
 
 		/*
 		 * This table didn't produce the cursor's current row; some other
-		 * inheritance child of the same parent must have.	Signal caller to
+		 * inheritance child of the same parent must have.  Signal caller to
 		 * do nothing on this table.
 		 */
 		return false;

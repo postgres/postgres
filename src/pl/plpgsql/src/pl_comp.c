@@ -284,7 +284,7 @@ do_compile(FunctionCallInfo fcinfo,
 	MemoryContext func_cxt;
 
 	/*
-	 * Setup the scanner input and error info.	We assume that this function
+	 * Setup the scanner input and error info.  We assume that this function
 	 * cannot be invoked recursively, so there's no need to save and restore
 	 * the static variables used here.
 	 */
@@ -372,7 +372,7 @@ do_compile(FunctionCallInfo fcinfo,
 			 * needed permanently, so make them in tmp cxt.
 			 *
 			 * We also need to resolve any polymorphic input or output
-			 * argument types.	In validation mode we won't be able to, so we
+			 * argument types.  In validation mode we won't be able to, so we
 			 * arbitrarily assume we are dealing with integers.
 			 */
 			MemoryContextSwitchTo(compile_tmp_cxt);
@@ -457,7 +457,7 @@ do_compile(FunctionCallInfo fcinfo,
 
 			/*
 			 * If there's just one OUT parameter, out_param_varno points
-			 * directly to it.	If there's more than one, build a row that
+			 * directly to it.  If there's more than one, build a row that
 			 * holds all of them.
 			 */
 			if (num_out_args == 1)
@@ -1414,7 +1414,7 @@ plpgsql_parse_dblwordrowtype(char *word)
  *
  * The returned struct may be a PLpgSQL_var, PLpgSQL_row, or
  * PLpgSQL_rec depending on the given datatype, and is allocated via
- * palloc.	The struct is automatically added to the current datum
+ * palloc.  The struct is automatically added to the current datum
  * array, and optionally to the current namespace.
  */
 PLpgSQL_variable *
@@ -1872,7 +1872,7 @@ plpgsql_adddatum(PLpgSQL_datum *new)
  * last call.
  *
  * This is used around a DECLARE section to create a list of the VARs
- * that have to be initialized at block entry.	Note that VARs can also
+ * that have to be initialized at block entry.  Note that VARs can also
  * be created elsewhere than DECLARE, eg by a FOR-loop, but it is then
  * the responsibility of special-purpose code to initialize them.
  * ----------
@@ -2023,7 +2023,7 @@ plpgsql_resolve_polymorphic_argtypes(int numargs,
  * delete_function - clean up as much as possible of a stale function cache
  *
  * We can't release the PLpgSQL_function struct itself, because of the
- * possibility that there are fn_extra pointers to it.	We can release
+ * possibility that there are fn_extra pointers to it.  We can release
  * the subsidiary storage, but only if there are no active evaluations
  * in progress.  Otherwise we'll just leak that storage.  Since the
  * case would only occur if a pg_proc update is detected during a nested

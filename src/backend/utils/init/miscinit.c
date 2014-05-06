@@ -56,7 +56,7 @@ static char socketLockFile[MAXPGPATH];
  *
  * NOTE: "ignoring system indexes" means we do not use the system indexes
  * for lookups (either in hardwired catalog accesses or in planner-generated
- * plans).	We do, however, still update the indexes when a catalog
+ * plans).  We do, however, still update the indexes when a catalog
  * modification is made.
  * ----------------------------------------------------------------
  */
@@ -383,7 +383,7 @@ SetSessionUserId(Oid userid, bool is_superuser)
  * ever throw any kind of error.  This is because they are used by
  * StartTransaction and AbortTransaction to save/restore the settings,
  * and during the first transaction within a backend, the value to be saved
- * and perhaps restored is indeed invalid.	We have to be able to get
+ * and perhaps restored is indeed invalid.  We have to be able to get
  * through AbortTransaction without asserting in case InitPostgres fails.
  */
 void
@@ -514,7 +514,7 @@ InitializeSessionUserId(const char *rolename)
 		 * Check connection limit for this role.
 		 *
 		 * There is a race condition here --- we create our PGPROC before
-		 * checking for other PGPROCs.	If two backends did this at about the
+		 * checking for other PGPROCs.  If two backends did this at about the
 		 * same time, they might both think they were over the limit, while
 		 * ideally one should succeed and one fail.  Getting that to work
 		 * exactly seems more trouble than it is worth, however; instead we
@@ -628,7 +628,7 @@ GetCurrentRoleId(void)
  * Change Role ID while running (SET ROLE)
  *
  * If roleid is InvalidOid, we are doing SET ROLE NONE: revert to the
- * session user authorization.	In this case the is_superuser argument
+ * session user authorization.  In this case the is_superuser argument
  * is ignored.
  *
  * When roleid is not InvalidOid, the caller must have checked whether
@@ -752,7 +752,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 	pid_t		my_pid = getpid();
 
 	/*
-	 * We need a loop here because of race conditions.	But don't loop forever
+	 * We need a loop here because of race conditions.  But don't loop forever
 	 * (for example, a non-writable $PGDATA directory might cause a failure
 	 * that won't go away).  100 tries seems like plenty.
 	 */
@@ -761,7 +761,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 		/*
 		 * Try to create the lock file --- O_EXCL makes this atomic.
 		 *
-		 * Think not to make the file protection weaker than 0600.	See
+		 * Think not to make the file protection weaker than 0600.  See
 		 * comments below.
 		 */
 		fd = open(filename, O_RDWR | O_CREAT | O_EXCL, 0600);
@@ -815,10 +815,10 @@ CreateLockFile(const char *filename, bool amPostmaster,
 		 * the file must be stale (probably left over from a previous system
 		 * boot cycle).  We need this test because of the likelihood that a
 		 * reboot will assign exactly the same PID as we had in the previous
-		 * reboot.	Also, if there is just one more process launch in this
+		 * reboot.  Also, if there is just one more process launch in this
 		 * reboot than in the previous one, the lockfile might mention our
 		 * parent's PID.  We can reject that since we'd never be launched
-		 * directly by a competing postmaster.	We can't detect grandparent
+		 * directly by a competing postmaster.  We can't detect grandparent
 		 * processes unfortunately, but if the init script is written
 		 * carefully then all but the immediate parent shell will be
 		 * root-owned processes and so the kill test will fail with EPERM.
@@ -827,7 +827,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 		 * implies that the existing process has a different userid than we
 		 * do, which means it cannot be a competing postmaster.  A postmaster
 		 * cannot successfully attach to a data directory owned by a userid
-		 * other than its own.	(This is now checked directly in
+		 * other than its own.  (This is now checked directly in
 		 * checkDataDir(), but has been true for a long time because of the
 		 * restriction that the data directory isn't group- or
 		 * world-accessible.)  Also, since we create the lockfiles mode 600,
@@ -874,9 +874,9 @@ CreateLockFile(const char *filename, bool amPostmaster,
 		}
 
 		/*
-		 * No, the creating process did not exist.	However, it could be that
+		 * No, the creating process did not exist.  However, it could be that
 		 * the postmaster crashed (or more likely was kill -9'd by a clueless
-		 * admin) but has left orphan backends behind.	Check for this by
+		 * admin) but has left orphan backends behind.  Check for this by
 		 * looking to see if there is an associated shmem segment that is
 		 * still in use.
 		 *
@@ -913,7 +913,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 
 		/*
 		 * Looks like nobody's home.  Unlink the file and try again to create
-		 * it.	Need a loop because of possible race condition against other
+		 * it.  Need a loop because of possible race condition against other
 		 * would-be creators.
 		 */
 		if (unlink(filename) < 0)
@@ -1045,7 +1045,7 @@ TouchSocketLockFile(void)
  * lock file.
  *
  * This may be called multiple times in the life of a postmaster, if we
- * delete and recreate shmem due to backend crash.	Therefore, be prepared
+ * delete and recreate shmem due to backend crash.  Therefore, be prepared
  * to overwrite existing information.  (As of 7.1, a postmaster only creates
  * one shm seg at a time; but for the purposes here, if we did have more than
  * one then any one of them would do anyway.)
@@ -1093,7 +1093,7 @@ RecordSharedMemoryInLockFile(unsigned long id1, unsigned long id2)
 	ptr++;
 
 	/*
-	 * Append key information.	Format to try to keep it the same length
+	 * Append key information.  Format to try to keep it the same length
 	 * always (trailing junk won't hurt, but might confuse humans).
 	 */
 	sprintf(ptr, "%9lu %9lu\n", id1, id2);
@@ -1250,7 +1250,7 @@ load_libraries(const char *libraries, const char *gucname, bool restricted)
 
 	/*
 	 * Choose notice level: avoid repeat messages when re-loading a library
-	 * that was preloaded into the postmaster.	(Only possible in EXEC_BACKEND
+	 * that was preloaded into the postmaster.  (Only possible in EXEC_BACKEND
 	 * configurations)
 	 */
 #ifdef EXEC_BACKEND

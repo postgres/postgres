@@ -29,7 +29,7 @@
 /*
  * Max depth allowed in search tree during bulk inserts.  This is to keep from
  * degenerating to O(N^2) behavior when the tree is unbalanced due to sorted
- * or nearly-sorted input.	(Perhaps it would be better to use a balanced-tree
+ * or nearly-sorted input.  (Perhaps it would be better to use a balanced-tree
  * algorithm, but in common cases that would only add useless overhead.)
  */
 #define GIN_MAX_TREE_DEPTH 100

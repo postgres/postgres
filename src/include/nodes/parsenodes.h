@@ -152,7 +152,7 @@ typedef struct Query
  *	Supporting data structures for Parse Trees
  *
  *	Most of these node types appear in raw parsetrees output by the grammar,
- *	and get transformed to something else by the analyzer.	A few of them
+ *	and get transformed to something else by the analyzer.  A few of them
  *	are used as-is in transformed querytrees.
  ****************************************************************************/
 
@@ -166,7 +166,7 @@ typedef struct Query
  * be prespecified in typemod, otherwise typemod is unused.
  *
  * If pct_type is TRUE, then names is actually a field name and we look up
- * the type of that field.	Otherwise (the normal case), names is a type
+ * the type of that field.  Otherwise (the normal case), names is a type
  * name possibly qualified with schema and database name.
  */
 typedef struct TypeName
@@ -185,7 +185,7 @@ typedef struct TypeName
 /*
  * ColumnRef - specifies a reference to a column, or possibly a whole tuple
  *
- * The "fields" list must be nonempty.	It can contain string Value nodes
+ * The "fields" list must be nonempty.  It can contain string Value nodes
  * (representing names) and A_Star nodes (representing occurrence of a '*').
  * Currently, A_Star must appear only as the last list element --- the grammar
  * is responsible for enforcing this!
@@ -505,7 +505,7 @@ typedef struct IndexElem
 /*
  * DefElem - a generic "name = value" option definition
  *
- * In some contexts the name can be qualified.	Also, certain SQL commands
+ * In some contexts the name can be qualified.  Also, certain SQL commands
  * allow a SET/ADD/DROP action to be attached to option settings, so it's
  * convenient to carry a field for that too.  (Note: currently, it is our
  * practice that the grammar allows namespace and action only in statements
@@ -532,7 +532,7 @@ typedef struct DefElem
 /*
  * LockingClause - raw representation of FOR UPDATE/SHARE options
  *
- * Note: lockedRels == NIL means "all relations in query".	Otherwise it
+ * Note: lockedRels == NIL means "all relations in query".  Otherwise it
  * is a list of RangeVar nodes.  (We use RangeVar mainly because it carries
  * a location field --- currently, parse analysis insists on unqualified
  * names in LockingClause.)
@@ -584,8 +584,8 @@ typedef struct XmlSerialize
  *
  *	  In RELATION RTEs, the colnames in both alias and eref are indexed by
  *	  physical attribute number; this means there must be colname entries for
- *	  dropped columns.	When building an RTE we insert empty strings ("") for
- *	  dropped columns.	Note however that a stored rule may have nonempty
+ *	  dropped columns.  When building an RTE we insert empty strings ("") for
+ *	  dropped columns.  Note however that a stored rule may have nonempty
  *	  colnames for columns dropped since the rule was created (and for that
  *	  matter the colnames might be out of date due to column renamings).
  *	  The same comments apply to FUNCTION RTEs when the function's return type
@@ -593,9 +593,9 @@ typedef struct XmlSerialize
  *
  *	  In JOIN RTEs, the colnames in both alias and eref are one-to-one with
  *	  joinaliasvars entries.  A JOIN RTE will omit columns of its inputs when
- *	  those columns are known to be dropped at parse time.	Again, however,
+ *	  those columns are known to be dropped at parse time.  Again, however,
  *	  a stored rule might contain entries for columns dropped since the rule
- *	  was created.	(This is only possible for columns not actually referenced
+ *	  was created.  (This is only possible for columns not actually referenced
  *	  in the rule.)  When loading a stored rule, we replace the joinaliasvars
  *	  items for any such columns with null pointers.  (We can't simply delete
  *	  them from the joinaliasvars list, because that would affect the attnums
@@ -614,7 +614,7 @@ typedef struct XmlSerialize
  *	  decompiled queries.
  *
  *	  requiredPerms and checkAsUser specify run-time access permissions
- *	  checks to be performed at query startup.	The user must have *all*
+ *	  checks to be performed at query startup.  The user must have *all*
  *	  of the permissions that are OR'd together in requiredPerms (zero
  *	  indicates no permissions checking).  If checkAsUser is not zero,
  *	  then do the permissions checks using the access rights of that user,
@@ -668,7 +668,7 @@ typedef struct RangeTblEntry
 	 * Fields valid for a join RTE (else NULL/zero):
 	 *
 	 * joinaliasvars is a list of (usually) Vars corresponding to the columns
-	 * of the join result.	An alias Var referencing column K of the join
+	 * of the join result.  An alias Var referencing column K of the join
 	 * result can be replaced by the K'th element of joinaliasvars --- but to
 	 * simplify the task of reverse-listing aliases correctly, we do not do
 	 * that until planning time.  In detail: an element of joinaliasvars can
@@ -730,7 +730,7 @@ typedef struct RangeTblEntry
  * You might think that ORDER BY is only interested in defining ordering,
  * and GROUP/DISTINCT are only interested in defining equality.  However,
  * one way to implement grouping is to sort and then apply a "uniq"-like
- * filter.	So it's also interesting to keep track of possible sort operators
+ * filter.  So it's also interesting to keep track of possible sort operators
  * for GROUP/DISTINCT, and in particular to try to sort for the grouping
  * in a way that will also yield a requested ORDER BY ordering.  So we need
  * to be able to compare ORDER BY and GROUP/DISTINCT lists, which motivates
@@ -748,10 +748,10 @@ typedef struct RangeTblEntry
  * here, but it's cheap to get it along with the sortop, and requiring it
  * to be valid eases comparisons to grouping items.)
  *
- * In a grouping item, eqop must be valid.	If the eqop is a btree equality
+ * In a grouping item, eqop must be valid.  If the eqop is a btree equality
  * operator, then sortop should be set to a compatible ordering operator.
  * We prefer to set eqop/sortop/nulls_first to match any ORDER BY item that
- * the query presents for the same tlist item.	If there is none, we just
+ * the query presents for the same tlist item.  If there is none, we just
  * use the default ordering op for the datatype.
  *
  * If the tlist item's type has a hash opclass but no btree opclass, then
@@ -988,7 +988,7 @@ typedef struct SelectStmt
  * range table.  Its setOperations field shows the tree of set operations,
  * with leaf SelectStmt nodes replaced by RangeTblRef nodes, and internal
  * nodes replaced by SetOperationStmt nodes.  Information about the output
- * column types is added, too.	(Note that the child nodes do not necessarily
+ * column types is added, too.  (Note that the child nodes do not necessarily
  * produce these types directly, but we've checked that their output types
  * can be coerced to the output column type.)  Also, if it's not UNION ALL,
  * information about the types' sort/group semantics is provided in the form
@@ -1249,7 +1249,7 @@ typedef struct AccessPriv
  *
  * Note: because of the parsing ambiguity with the GRANT <privileges>
  * statement, granted_roles is a list of AccessPriv; the execution code
- * should complain if any column lists appear.	grantee_roles is a list
+ * should complain if any column lists appear.  grantee_roles is a list
  * of role names, as Value strings.
  * ----------------------
  */
@@ -1268,7 +1268,7 @@ typedef struct GrantRoleStmt
  *		Copy Statement
  *
  * We support "COPY relation FROM file", "COPY relation TO file", and
- * "COPY (query) TO file".	In any given CopyStmt, exactly one of "relation"
+ * "COPY (query) TO file".  In any given CopyStmt, exactly one of "relation"
  * and "query" must be non-NULL.
  * ----------------------
  */
@@ -1403,7 +1403,7 @@ typedef struct Constraint
  *
  * If skip_validation is true then we skip checking that the existing rows
  * in the table satisfy the constraint, and just install the catalog entries
- * for the constraint.	This is currently used only during CREATE TABLE
+ * for the constraint.  This is currently used only during CREATE TABLE
  * (when we know the table must be empty).
  * ----------
  */
@@ -1799,7 +1799,7 @@ typedef struct CommentStmt
  *		Declare Cursor Statement
  *
  * Note: the "query" field of DeclareCursorStmt is only used in the raw grammar
- * output.	After parse analysis it's set to null, and the Query points to the
+ * output.  After parse analysis it's set to null, and the Query points to the
  * DeclareCursorStmt, not vice versa.
  * ----------------------
  */

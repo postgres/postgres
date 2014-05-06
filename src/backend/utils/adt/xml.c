@@ -19,7 +19,7 @@
  * fail.  For one thing, this avoids having to manage variant catalog
  * installations.  But it also has nice effects such as that you can
  * dump a database containing XML type data even if the server is not
- * linked with libxml.	Thus, make sure xml_out() works even if nothing
+ * linked with libxml.  Thus, make sure xml_out() works even if nothing
  * else does.
  */
 
@@ -254,7 +254,7 @@ xml_out(PG_FUNCTION_ARGS)
 	xmltype    *x = PG_GETARG_XML_P(0);
 
 	/*
-	 * xml_out removes the encoding property in all cases.	This is because we
+	 * xml_out removes the encoding property in all cases.  This is because we
 	 * cannot control from here whether the datum will be converted to a
 	 * different client encoding, so we'd do more harm than good by including
 	 * it.
@@ -425,7 +425,7 @@ xmlcomment(PG_FUNCTION_ARGS)
 
 /*
  * TODO: xmlconcat needs to merge the notations and unparsed entities
- * of the argument values.	Not very important in practice, though.
+ * of the argument values.  Not very important in practice, though.
  */
 xmltype *
 xmlconcat(List *args)
@@ -559,7 +559,7 @@ xmlelement(XmlExprState *xmlExpr, ExprContext *econtext)
 
 	/*
 	 * We first evaluate all the arguments, then start up libxml and create
-	 * the result.	This avoids issues if one of the arguments involves a call
+	 * the result.  This avoids issues if one of the arguments involves a call
 	 * to some other function or subsystem that wants to use libxml on its own
 	 * terms.
 	 */
@@ -909,7 +909,7 @@ pg_xml_init(void)
 		resetStringInfo(xml_err_buf);
 
 		/*
-		 * We re-establish the error callback function every time.	This makes
+		 * We re-establish the error callback function every time.  This makes
 		 * it safe for other subsystems (PL/Perl, say) to also use libxml with
 		 * their own callbacks ... so long as they likewise set up the
 		 * callbacks on every use. It's cheap enough to not be worth worrying
@@ -1116,7 +1116,7 @@ finished:
 
 /*
  * Write an XML declaration.  On output, we adjust the XML declaration
- * as follows.	(These rules are the moral equivalent of the clause
+ * as follows.  (These rules are the moral equivalent of the clause
  * "Serialization of an XML value" in the SQL standard.)
  *
  * We try to avoid generating an XML declaration if possible.  This is
@@ -1637,8 +1637,8 @@ map_xml_name_to_sql_identifier(char *name)
  *
  * When xml_escape_strings is true, then certain characters in string
  * values are replaced by entity references (&lt; etc.), as specified
- * in SQL/XML:2003 section 9.16 GR 8) ii).	This is normally what is
- * wanted.	The false case is mainly useful when the resulting value
+ * in SQL/XML:2003 section 9.16 GR 8) ii).  This is normally what is
+ * wanted.  The false case is mainly useful when the resulting value
  * is used with xmlTextWriterWriteAttribute() to write out an
  * attribute, because that function does the escaping itself.  The SQL
  * standard of 2003 is somewhat buggy in this regard, so we do our
@@ -1886,7 +1886,7 @@ _SPI_strdup(const char *s)
  * SQL to XML mapping functions
  *
  * What follows below is intentionally organized so that you can read
- * along in the SQL/XML:2003 standard.	The functions are mostly split
+ * along in the SQL/XML:2003 standard.  The functions are mostly split
  * up and ordered they way the clauses lay out in the standards
  * document, and the identifiers are also aligned with the standard
  * text.  (SQL/XML:2006 appears to be ordered differently,
@@ -1896,13 +1896,13 @@ _SPI_strdup(const char *s)
  *
  * There are two kinds of mappings: Mapping SQL data (table contents)
  * to XML documents, and mapping SQL structure (the "schema") to XML
- * Schema.	And there are functions that do both at the same time.
+ * Schema.  And there are functions that do both at the same time.
  *
  * Then you can map a database, a schema, or a table, each in both
  * ways.  This breaks down recursively: Mapping a database invokes
  * mapping schemas, which invokes mapping tables, which invokes
  * mapping rows, which invokes mapping columns, although you can't
- * call the last two from the outside.	Because of this, there are a
+ * call the last two from the outside.  Because of this, there are a
  * number of xyz_internal() functions which are to be called both from
  * the function manager wrapper and from some upper layer in a
  * recursive call.
@@ -1911,7 +1911,7 @@ _SPI_strdup(const char *s)
  * nulls, tableforest, and targetns mean.
  *
  * Some style guidelines for XML output: Use double quotes for quoting
- * XML attributes.	Indent XML elements by two spaces, but remember
+ * XML attributes.  Indent XML elements by two spaces, but remember
  * that a lot of code is called recursively at different levels, so
  * it's better not to indent rather than create output that indents
  * and outdents weirdly.  Add newlines to make the output look nice.
@@ -2075,12 +2075,12 @@ cursor_to_xml(PG_FUNCTION_ARGS)
  * Write the start tag of the root element of a data mapping.
  *
  * top_level means that this is the very top level of the eventual
- * output.	For example, when the user calls table_to_xml, then a call
+ * output.  For example, when the user calls table_to_xml, then a call
  * with a table name to this function is the top level.  When the user
  * calls database_to_xml, then a call with a schema name to this
  * function is not the top level.  If top_level is false, then the XML
  * namespace declarations are omitted, because they supposedly already
- * appeared earlier in the output.	Repeating them is not wrong, but
+ * appeared earlier in the output.  Repeating them is not wrong, but
  * it looks ugly.
  */
 static void
@@ -3022,7 +3022,7 @@ map_sql_typecoll_to_xmlschema_types(List *tupdesc_list)
  * sections 9.11 and 9.15.
  *
  * (The distinction between 9.11 and 9.15 is basically that 9.15 adds
- * a name attribute, which this function does.	The name-less version
+ * a name attribute, which this function does.  The name-less version
  * 9.11 doesn't appear to be required anywhere.)
  */
 static const char *
@@ -3200,7 +3200,7 @@ map_sql_type_to_xmlschema_type(Oid typeoid, int typmod)
 
 /*
  * Map an SQL row to an XML element, taking the row from the active
- * SPI cursor.	See also SQL/XML:2003 section 9.12.
+ * SPI cursor.  See also SQL/XML:2003 section 9.12.
  */
 static void
 SPI_sql_row_to_xmlelement(int rownum, StringInfo result, char *tablename,

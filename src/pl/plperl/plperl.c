@@ -2086,7 +2086,7 @@ plperl_spi_execute_fetch_result(SPITupleTable *tuptable, int processed,
 
 /*
  * Note: plperl_return_next is called both in Postgres and Perl contexts.
- * We report any errors in Postgres fashion (via ereport).	If called in
+ * We report any errors in Postgres fashion (via ereport).  If called in
  * Perl context, it is SPI.xs's responsibility to catch the error and
  * convert to a Perl error.  We assume (perhaps without adequate justification)
  * that we need not abort the current transaction if the Perl code traps the

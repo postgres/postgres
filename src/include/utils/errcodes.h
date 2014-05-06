@@ -5,7 +5,7 @@
  *
  * The error code list is kept in its own source file for possible use by
  * automatic tools.  Each error code is identified by a five-character string
- * following the SQLSTATE conventions.	The exact representation of the
+ * following the SQLSTATE conventions.  The exact representation of the
  * string is determined by the MAKE_SQLSTATE() macro, which is not defined
  * in this file; it can be defined by the caller for special purposes.
  *

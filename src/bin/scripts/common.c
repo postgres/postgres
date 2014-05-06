@@ -226,7 +226,7 @@ executeMaintenanceCommand(PGconn *conn, const char *query, bool echo)
 }
 
 /*
- * "Safe" wrapper around strdup().	Pulled from psql/common.c
+ * "Safe" wrapper around strdup().  Pulled from psql/common.c
  */
 char *
 pg_strdup(const char *string)
@@ -248,7 +248,7 @@ pg_strdup(const char *string)
 }
 
 /*
- * Check yes/no answer in a localized way.	1=yes, 0=no, -1=neither.
+ * Check yes/no answer in a localized way.  1=yes, 0=no, -1=neither.
  */
 
 /* translator: abbreviation for "yes" */

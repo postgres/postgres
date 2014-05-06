@@ -125,7 +125,7 @@ static void intorel_destroy(DestReceiver *self);
  *		query plan
  *
  * Takes a QueryDesc previously created by CreateQueryDesc (it's not real
- * clear why we bother to separate the two functions, but...).	The tupDesc
+ * clear why we bother to separate the two functions, but...).  The tupDesc
  * field of the QueryDesc is filled in to describe the tuples that will be
  * returned, and the internal fields (estate and planstate) are set up.
  *
@@ -483,7 +483,7 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 	 * userid to check as: current user unless we have a setuid indication.
 	 *
 	 * Note: GetUserId() is presently fast enough that there's no harm in
-	 * calling it separately for each RTE.	If that stops being true, we could
+	 * calling it separately for each RTE.  If that stops being true, we could
 	 * call it once in ExecCheckRTPerms and pass the userid down from there.
 	 * But for now, no need for the extra clutter.
 	 */
@@ -1070,7 +1070,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		econtext = CreateExprContext(estate);
 
 		/*
-		 * Build a projection for each result rel.	Note that any SubPlans in
+		 * Build a projection for each result rel.  Note that any SubPlans in
 		 * the RETURNING lists get attached to the topmost plan node.
 		 */
 		Assert(list_length(plannedstmt->returningLists) == estate->es_num_result_relations);
@@ -1267,7 +1267,7 @@ ExecCheckPlanOutput(Relation resultRel, List *targetList)
  * if so it doesn't matter which one we pick.)  However, it is sometimes
  * necessary to fire triggers on other relations; this happens mainly when an
  * RI update trigger queues additional triggers on other relations, which will
- * be processed in the context of the outer query.	For efficiency's sake,
+ * be processed in the context of the outer query.  For efficiency's sake,
  * we want to have a ResultRelInfo for those triggers too; that can avoid
  * repeated re-opening of the relation.  (It also provides a way for EXPLAIN
  * ANALYZE to report the runtimes of such triggers.)  So we make additional
@@ -1925,7 +1925,7 @@ ExecDelete(ItemPointer tupleid,
 	 *
 	 * Note: if es_crosscheck_snapshot isn't InvalidSnapshot, we check that
 	 * the row to be deleted is visible to that snapshot, and throw a can't-
-	 * serialize error if not.	This is a special-case behavior needed for
+	 * serialize error if not.  This is a special-case behavior needed for
 	 * referential integrity updates in serializable transactions.
 	 */
 ldelete:;
@@ -1990,7 +1990,7 @@ ldelete:;
 	{
 		/*
 		 * We have to put the target tuple into a slot, which means first we
-		 * gotta fetch it.	We can use the trigger tuple slot.
+		 * gotta fetch it.  We can use the trigger tuple slot.
 		 */
 		TupleTableSlot *slot = estate->es_trig_tuple_slot;
 		HeapTupleData deltuple;
@@ -2019,7 +2019,7 @@ ldelete:;
  *		note: we can't run UPDATE queries with transactions
  *		off because UPDATEs are actually INSERTs and our
  *		scan will mistakenly loop forever, updating the tuple
- *		it just inserted..	This should be fixed but until it
+ *		it just inserted..  This should be fixed but until it
  *		is, we don't want to get stuck in an infinite loop
  *		which corrupts your database..
  * ----------------------------------------------------------------
@@ -2088,7 +2088,7 @@ lreplace:;
 	 *
 	 * Note: if es_crosscheck_snapshot isn't InvalidSnapshot, we check that
 	 * the row to be updated is visible to that snapshot, and throw a can't-
-	 * serialize error if not.	This is a special-case behavior needed for
+	 * serialize error if not.  This is a special-case behavior needed for
 	 * referential integrity updates in serializable transactions.
 	 */
 	result = heap_update(resultRelationDesc, tupleid, tuple,
@@ -2141,7 +2141,7 @@ lreplace:;
 	 * Note: instead of having to update the old index tuples associated with
 	 * the heap tuple, all we do is form and insert new index tuples. This is
 	 * because UPDATEs are actually DELETEs and INSERTs, and index tuple
-	 * deletion is done later by VACUUM (see notes in ExecDelete).	All we do
+	 * deletion is done later by VACUUM (see notes in ExecDelete).  All we do
 	 * here is insert new index tuples.  -cim 9/27/89
 	 */
 
@@ -2371,7 +2371,7 @@ EvalPlanQual(EState *estate, Index rti,
 		{
 			/*
 			 * If xmin isn't what we're expecting, the slot must have been
-			 * recycled and reused for an unrelated tuple.	This implies that
+			 * recycled and reused for an unrelated tuple.  This implies that
 			 * the latest version of the row was deleted, so we need do
 			 * nothing.  (Should be safe to examine xmin without getting
 			 * buffer's content lock, since xmin never changes in an existing
@@ -2479,7 +2479,7 @@ EvalPlanQual(EState *estate, Index rti,
 	*tid = tuple.t_self;
 
 	/*
-	 * Need to run a recheck subquery.	Find or create a PQ stack entry.
+	 * Need to run a recheck subquery.  Find or create a PQ stack entry.
 	 */
 	epq = estate->es_evalPlanQual;
 	endNode = true;
@@ -2716,7 +2716,7 @@ EvalPlanQualStart(evalPlanQual *epq, EState *estate, evalPlanQual *priorepq)
 
 	/*
 	 * Each epqstate must have its own es_evTupleNull state, but all the stack
-	 * entries share es_evTuple state.	This allows sub-rechecks to inherit
+	 * entries share es_evTuple state.  This allows sub-rechecks to inherit
 	 * the value being examined by an outer recheck.
 	 */
 	epqstate->es_evTupleNull = (bool *) palloc0(rtsize * sizeof(bool));
@@ -2766,7 +2766,7 @@ EvalPlanQualStart(evalPlanQual *epq, EState *estate, evalPlanQual *priorepq)
  *
  * This is a cut-down version of ExecutorEnd(); basically we want to do most
  * of the normal cleanup, but *not* close result relations (which we are
- * just sharing from the outer query).	We do, however, have to close any
+ * just sharing from the outer query).  We do, however, have to close any
  * trigger target relations that got opened, since those are not shared.
  */
 static void

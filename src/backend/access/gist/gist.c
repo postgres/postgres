@@ -191,7 +191,7 @@ gistbuildCallback(Relation index,
 	/*
 	 * Since we already have the index relation locked, we call gistdoinsert
 	 * directly.  Normal access method calls dispatch through gistinsert,
-	 * which locks the relation for write.	This is the right thing to do if
+	 * which locks the relation for write.  This is the right thing to do if
 	 * you're inserting single tups, but not when you're initializing the
 	 * whole index at once.
 	 *

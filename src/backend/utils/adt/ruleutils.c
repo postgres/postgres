@@ -736,7 +736,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, bool showTblSpc,
 	context = deparse_context_for(get_relation_name(indrelid), indrelid);
 
 	/*
-	 * Start the index definition.	Note that the index's name should never be
+	 * Start the index definition.  Note that the index's name should never be
 	 * schema-qualified, but the indexed rel's name may be.
 	 */
 	initStringInfo(&buf);
@@ -1138,7 +1138,7 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 												   prettyFlags, 0);
 
 				/*
-				 * Now emit the constraint definition.	There are cases where
+				 * Now emit the constraint definition.  There are cases where
 				 * the constraint expression will be fully parenthesized and
 				 * we don't need the outer parens ... but there are other
 				 * cases where we do need 'em.  Be conservative for now.
@@ -1914,7 +1914,7 @@ deparse_expression_pretty(Node *expr, List *dpcontext,
  *
  * Given the reference name (alias) and OID of a relation, build deparsing
  * context for an expression referencing only that relation (as varno 1,
- * varlevelsup 0).	This is sufficient for many uses of deparse_expression.
+ * varlevelsup 0).  This is sufficient for many uses of deparse_expression.
  * ----------
  */
 List *
@@ -1953,7 +1953,7 @@ deparse_context_for(const char *aliasname, Oid relid)
  * right child plans.  A special case is that a nestloop inner indexscan
  * might have OUTER Vars, but the outer side of the join is not a child
  * plan node.  To handle such cases the outer plan node must be passed
- * separately.	(Pass NULL for outer_plan otherwise.)
+ * separately.  (Pass NULL for outer_plan otherwise.)
  *
  * Note: plan and outer_plan really ought to be declared as "Plan *", but
  * we use "Node *" to avoid having to include plannodes.h in builtins.h.
@@ -2272,8 +2272,8 @@ get_query_def(Query *query, StringInfo buf, List *parentnamespace,
 
 	/*
 	 * Before we begin to examine the query, acquire locks on referenced
-	 * relations, and fix up deleted columns in JOIN RTEs.	This ensures
-	 * consistent results.	Note we assume it's OK to scribble on the passed
+	 * relations, and fix up deleted columns in JOIN RTEs.  This ensures
+	 * consistent results.  Note we assume it's OK to scribble on the passed
 	 * querytree!
 	 *
 	 * We are only deparsing the query (we are not about to execute it), so we
@@ -2687,7 +2687,7 @@ get_target_list(List *targetList, deparse_context *context,
 		}
 
 		/*
-		 * Figure out what the result column should be called.	In the context
+		 * Figure out what the result column should be called.  In the context
 		 * of a view, use the view's tuple descriptor (so as to pick up the
 		 * effects of any column RENAME that's been done on the view).
 		 * Otherwise, just use what we can find in the TLE.
@@ -2827,7 +2827,7 @@ get_rule_sortgroupclause(SortGroupClause *srt, List *tlist, bool force_colno,
 	 * expression is a constant, force it to be dumped with an explicit cast
 	 * as decoration --- this is because a simple integer constant is
 	 * ambiguous (and will be misinterpreted by findTargetlistEntry()) if we
-	 * dump it without any decoration.	Otherwise, just dump the expression
+	 * dump it without any decoration.  Otherwise, just dump the expression
 	 * normally.
 	 */
 	if (force_colno)
@@ -3323,7 +3323,7 @@ get_utility_query_def(Query *query, deparse_context *context)
  * push_plan: set up deparse_namespace to recurse into the tlist of a subplan
  *
  * When expanding an OUTER or INNER reference, we must push new outer/inner
- * subplans in case the referenced expression itself uses OUTER/INNER.	We
+ * subplans in case the referenced expression itself uses OUTER/INNER.  We
  * modify the top stack entry in-place to avoid affecting levelsup issues
  * (although in a Plan tree there really shouldn't be any).
  *
@@ -3575,9 +3575,9 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
  *
  * This is fairly straightforward except for the case of a Var of type RECORD.
  * Since no actual table or view column is allowed to have type RECORD, such
- * a Var must refer to a JOIN or FUNCTION RTE or to a subquery output.	We
+ * a Var must refer to a JOIN or FUNCTION RTE or to a subquery output.  We
  * drill down to find the ultimate defining expression and attempt to infer
- * the field name from it.	We ereport if we can't determine the name.
+ * the field name from it.  We ereport if we can't determine the name.
  *
  * levelsup is an extra offset to interpret the Var's varlevelsup correctly.
  */
@@ -3924,7 +3924,7 @@ get_name_for_var_field(Var *var, int fieldno,
 
 	/*
 	 * We now have an expression we can't expand any more, so see if
-	 * get_expr_result_type() can do anything with it.	If not, pass to
+	 * get_expr_result_type() can do anything with it.  If not, pass to
 	 * lookup_rowtype_tupdesc() which will probably fail, but will give an
 	 * appropriate error message while failing.
 	 */
@@ -4518,7 +4518,7 @@ get_rule_expr(Node *node, deparse_context *context,
 
 				/*
 				 * We cannot see an already-planned subplan in rule deparsing,
-				 * only while EXPLAINing a query plan.	We don't try to
+				 * only while EXPLAINing a query plan.  We don't try to
 				 * reconstruct the original SQL, just reference the subplan
 				 * that appears elsewhere in EXPLAIN's result.
 				 */
@@ -5465,7 +5465,7 @@ get_coercion_expr(Node *arg, deparse_context *context,
 	 * Since parse_coerce.c doesn't immediately collapse application of
 	 * length-coercion functions to constants, what we'll typically see in
 	 * such cases is a Const with typmod -1 and a length-coercion function
-	 * right above it.	Avoid generating redundant output. However, beware of
+	 * right above it.  Avoid generating redundant output. However, beware of
 	 * suppressing casts when the user actually wrote something like
 	 * 'foo'::text::char(3).
 	 */
@@ -5540,7 +5540,7 @@ get_const_expr(Const *constval, deparse_context *context, int showtype)
 				/*
 				 * These types are printed without quotes unless they contain
 				 * values that aren't accepted by the scanner unquoted (e.g.,
-				 * 'NaN').	Note that strtod() and friends might accept NaN,
+				 * 'NaN').  Note that strtod() and friends might accept NaN,
 				 * so we can't use that to test.
 				 *
 				 * In reality we only need to defend against infinity and NaN,
@@ -6164,7 +6164,7 @@ get_opclass_name(Oid opclass, Oid actual_datatype,
 	if (!OidIsValid(actual_datatype) ||
 		GetDefaultOpClass(actual_datatype, opcrec->opcmethod) != opclass)
 	{
-		/* Okay, we need the opclass name.	Do we need to qualify it? */
+		/* Okay, we need the opclass name.  Do we need to qualify it? */
 		opcname = NameStr(opcrec->opcname);
 		if (OpclassIsVisible(opclass))
 			appendStringInfo(buf, " %s", quote_identifier(opcname));
@@ -6458,7 +6458,7 @@ generate_relation_name(Oid relid, List *namespaces)
  *		given that it is being called with the specified actual arg types.
  *		(Arg types matter because of ambiguous-function resolution rules.)
  *
- * The result includes all necessary quoting and schema-prefixing.	We can
+ * The result includes all necessary quoting and schema-prefixing.  We can
  * also pass back an indication of whether the function is variadic.
  */
 static char *

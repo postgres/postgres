@@ -110,7 +110,7 @@ add_paths_to_joinrel(PlannerInfo *root,
 
 	/*
 	 * 3. Consider paths where the inner relation need not be explicitly
-	 * sorted.	This includes mergejoins only (nestloops were already built in
+	 * sorted.  This includes mergejoins only (nestloops were already built in
 	 * match_unsorted_outer).
 	 *
 	 * Diked out as redundant 2/13/2000 -- tgl.  There isn't any really
@@ -223,7 +223,7 @@ sort_inner_and_outer(PlannerInfo *root,
 	 *
 	 * Actually, it's not quite true that every mergeclause ordering will
 	 * generate a different path order, because some of the clauses may be
-	 * partially redundant (refer to the same EquivalenceClasses).	Therefore,
+	 * partially redundant (refer to the same EquivalenceClasses).  Therefore,
 	 * what we do is convert the mergeclause list to a list of canonical
 	 * pathkeys, and then consider different orderings of the pathkeys.
 	 *
@@ -316,7 +316,7 @@ sort_inner_and_outer(PlannerInfo *root,
  * cheapest-total inner-indexscan path (if any), and one on the
  * cheapest-startup inner-indexscan path (if different).
  *
- * We also consider mergejoins if mergejoin clauses are available.	We have
+ * We also consider mergejoins if mergejoin clauses are available.  We have
  * two ways to generate the inner path for a mergejoin: sort the cheapest
  * inner path, or use an inner path that is already suitably ordered for the
  * merge.  If we have several mergeclauses, it could be that there is no inner
@@ -639,7 +639,7 @@ match_unsorted_outer(PlannerInfo *root,
 
 			/*
 			 * Look for an inner path ordered well enough for the first
-			 * 'sortkeycnt' innersortkeys.	NB: trialsortkeys list is modified
+			 * 'sortkeycnt' innersortkeys.  NB: trialsortkeys list is modified
 			 * destructively, which is why we made a copy...
 			 */
 			trialsortkeys = list_truncate(trialsortkeys, sortkeycnt);
@@ -877,7 +877,7 @@ hash_inner_and_outer(PlannerInfo *root,
  * best_appendrel_indexscan
  *	  Finds the best available set of inner indexscans for a nestloop join
  *	  with the given append relation on the inside and the given outer_rel
- *	  outside.	Returns an AppendPath comprising the best inner scans, or
+ *	  outside.  Returns an AppendPath comprising the best inner scans, or
  *	  NULL if there are no possible inner indexscans.
  *
  * Note that we currently consider only cheapest-total-cost.  It's not

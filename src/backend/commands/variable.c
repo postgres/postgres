@@ -183,7 +183,7 @@ assign_datestyle(const char *value, bool doit, GucSource source)
 		return value;
 
 	/*
-	 * Prepare the canonical string to return.	GUC wants it malloc'd.
+	 * Prepare the canonical string to return.  GUC wants it malloc'd.
 	 */
 	result = (char *) malloc(32);
 	if (!result)
@@ -268,7 +268,7 @@ assign_timezone(const char *value, bool doit, GucSource source)
 
 		/*
 		 * Try to parse it.  XXX an invalid interval format will result in
-		 * ereport(ERROR), which is not desirable for GUC.	We did what we
+		 * ereport(ERROR), which is not desirable for GUC.  We did what we
 		 * could to guard against this in flatten_set_variable_args, but a
 		 * string coming in from postgresql.conf might contain anything.
 		 */
@@ -335,7 +335,7 @@ assign_timezone(const char *value, bool doit, GucSource source)
 			 *
 			 * During GUC initialization, since the timezone library isn't set
 			 * up yet, pg_get_timezone_name will return NULL and we will leave
-			 * the setting as UNKNOWN.	If this isn't overridden from the
+			 * the setting as UNKNOWN.  If this isn't overridden from the
 			 * config file then pg_timezone_initialize() will eventually
 			 * select a default value from the environment.
 			 */
@@ -391,7 +391,7 @@ assign_timezone(const char *value, bool doit, GucSource source)
 		return value;
 
 	/*
-	 * Prepare the canonical string to return.	GUC wants it malloc'd.
+	 * Prepare the canonical string to return.  GUC wants it malloc'd.
 	 */
 	if (HasCTZSet)
 	{
@@ -467,7 +467,7 @@ assign_log_timezone(const char *value, bool doit, GucSource source)
 		 *
 		 * During GUC initialization, since the timezone library isn't set up
 		 * yet, pg_get_timezone_name will return NULL and we will leave the
-		 * setting as UNKNOWN.	If this isn't overridden from the config file
+		 * setting as UNKNOWN.  If this isn't overridden from the config file
 		 * then pg_timezone_initialize() will eventually select a default
 		 * value from the environment.
 		 */
@@ -521,7 +521,7 @@ assign_log_timezone(const char *value, bool doit, GucSource source)
 		return value;
 
 	/*
-	 * Prepare the canonical string to return.	GUC wants it malloc'd.
+	 * Prepare the canonical string to return.  GUC wants it malloc'd.
 	 */
 	result = strdup(value);
 
@@ -656,7 +656,7 @@ assign_client_encoding(const char *value, bool doit, GucSource source)
 
 	/*
 	 * Note: if we are in startup phase then SetClientEncoding may not be able
-	 * to really set the encoding.	In this case we will assume that the
+	 * to really set the encoding.  In this case we will assume that the
 	 * encoding is okay, and InitializeClientEncoding() will fix things once
 	 * initialization is complete.
 	 */
@@ -684,7 +684,7 @@ assign_client_encoding(const char *value, bool doit, GucSource source)
  * limit on names, so we can tell whether we're being passed an initial
  * role name or a saved/restored value.  (NOTE: we rely on guc.c to have
  * properly truncated any incoming value, but not to truncate already-stored
- * values.	See GUC_IS_NAME processing.)
+ * values.  See GUC_IS_NAME processing.)
  */
 extern char *session_authorization_string;		/* in guc.c */
 

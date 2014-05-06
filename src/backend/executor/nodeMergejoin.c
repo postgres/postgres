@@ -41,7 +41,7 @@
  *
  *		Therefore, rather than directly executing the merge join clauses,
  *		we evaluate the left and right key expressions separately and then
- *		compare the columns one at a time (see MJCompare).	The planner
+ *		compare the columns one at a time (see MJCompare).  The planner
  *		passes us enough information about the sort ordering of the inputs
  *		to allow us to determine how to make the comparison.  We may use the
  *		appropriate btree comparison function, since Postgres' only notion
@@ -160,7 +160,7 @@ typedef enum
  * sort ordering for each merge key.  The mergejoinable operator is an
  * equality operator in this opfamily, and the two inputs are guaranteed to be
  * ordered in either increasing or decreasing (respectively) order according
- * to this opfamily, with nulls at the indicated end of the range.	This
+ * to this opfamily, with nulls at the indicated end of the range.  This
  * allows us to obtain the needed comparison function from the opfamily.
  */
 static MergeJoinClause
@@ -307,7 +307,7 @@ MJEvalOuterValues(MergeJoinState *mergestate)
 /*
  * MJEvalInnerValues
  *
- * Same as above, but for the inner tuple.	Here, we have to be prepared
+ * Same as above, but for the inner tuple.  Here, we have to be prepared
  * to load data from either the true current inner, or the marked inner,
  * so caller must tell us which slot to load from.
  */
@@ -435,7 +435,7 @@ MJCompare(MergeJoinState *mergestate)
 	/*
 	 * If we had any null comparison results or NULL-vs-NULL inputs, we do not
 	 * want to report that the tuples are equal.  Instead, if result is still
-	 * 0, change it to +1.	This will result in advancing the inner side of
+	 * 0, change it to +1.  This will result in advancing the inner side of
 	 * the join.
 	 *
 	 * Likewise, if there was a constant-false joinqual, do not report
@@ -749,7 +749,7 @@ ExecMergeJoin(MergeJoinState *node)
 				{
 					case MJEVAL_MATCHABLE:
 						/*
-						 * OK, we have the initial tuples.	Begin by skipping
+						 * OK, we have the initial tuples.  Begin by skipping
 						 * non-matching tuples.
 						 */
 						node->mj_JoinState = EXEC_MJ_SKIP_TEST;
@@ -1137,7 +1137,7 @@ ExecMergeJoin(MergeJoinState *node)
 					 *	which means that all subsequent outer tuples will be
 					 *	larger than our marked inner tuples.  So we need not
 					 *	revisit any of the marked tuples but can proceed to
-					 *	look for a match to the current inner.	If there's
+					 *	look for a match to the current inner.  If there's
 					 *	no more inners, no more matches are possible.
 					 * ----------------
 					 */
@@ -1525,7 +1525,7 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate, int eflags)
 	 * For certain types of inner child nodes, it is advantageous to issue
 	 * MARK every time we advance past an inner tuple we will never return to.
 	 * For other types, MARK on a tuple we cannot return to is a waste of
-	 * cycles.	Detect which case applies and set mj_ExtraMarks if we want to
+	 * cycles.  Detect which case applies and set mj_ExtraMarks if we want to
 	 * issue "unnecessary" MARK calls.
 	 *
 	 * Currently, only Material wants the extra MARKs, and it will be helpful

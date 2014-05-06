@@ -1113,7 +1113,7 @@ PLy_function_delete_args(PLyProcedure *proc)
  */
 
 /* PLy_procedure_get: returns a cached PLyProcedure, or creates, stores and
- * returns a new PLyProcedure.	fcinfo is the call info, tgreloid is the
+ * returns a new PLyProcedure.  fcinfo is the call info, tgreloid is the
  * relation OID when calling a trigger, or InvalidOid (zero) for ordinary
  * function calls.
  */
@@ -1166,7 +1166,7 @@ PLy_procedure_get(FunctionCallInfo fcinfo, Oid tgreloid)
 	if (OidIsValid(tgreloid))
 	{
 		/*
-		 * Input/output conversion for trigger tuples.	Use the result
+		 * Input/output conversion for trigger tuples.  Use the result
 		 * TypeInfo variable to store the tuple conversion info.  We do this
 		 * over again on each call to cover the possibility that the
 		 * relation's tupdesc changed since the trigger was last called.

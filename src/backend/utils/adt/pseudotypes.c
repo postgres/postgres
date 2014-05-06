@@ -6,7 +6,7 @@
  * A pseudo-type isn't really a type and never has any operations, but
  * we do need to supply input and output functions to satisfy the links
  * in the pseudo-type's entry in pg_type.  In most cases the functions
- * just throw an error if invoked.	(XXX the error messages here cover
+ * just throw an error if invoked.  (XXX the error messages here cover
  * the most common case, but might be confusing in some contexts.  Can
  * we do better?)
  *
@@ -138,7 +138,7 @@ anyarray_out(PG_FUNCTION_ARGS)
  * anyarray_recv		- binary input routine for pseudo-type ANYARRAY.
  *
  * XXX this could actually be made to work, since the incoming array
- * data will contain the element type OID.	Need to think through
+ * data will contain the element type OID.  Need to think through
  * type-safety issues before allowing it, however.
  */
 Datum
@@ -192,7 +192,7 @@ anyenum_out(PG_FUNCTION_ARGS)
  * void_in		- input routine for pseudo-type VOID.
  *
  * We allow this so that PL functions can return VOID without any special
- * hack in the PL handler.	Whatever value the PL thinks it's returning
+ * hack in the PL handler.  Whatever value the PL thinks it's returning
  * will just be ignored.
  */
 Datum

@@ -228,7 +228,7 @@ plpgsql_ns_additem(int itemtype, int itemno, const char *name)
  *
  * Note that this only searches for variables, not labels.
  *
- * name1 must be non-NULL.	Pass NULL for name2 and/or name3 if parsing a name
+ * name1 must be non-NULL.  Pass NULL for name2 and/or name3 if parsing a name
  * with fewer than three components.
  *
  * If names_used isn't NULL, *names_used receives the number of names
@@ -369,9 +369,9 @@ plpgsql_ns_rename(char *oldname, char *newname)
  * truncate to NAMEDATALEN.
  *
  * There may be several identifiers separated by dots and optional
- * whitespace.	Each one is converted to a separate palloc'd string.
+ * whitespace.  Each one is converted to a separate palloc'd string.
  * The caller passes the expected number of identifiers, as well as
- * a char* array to hold them.	It is an error if we find the wrong
+ * a char* array to hold them.  It is an error if we find the wrong
  * number of identifiers (cf grammar processing of fori_varname).
  *
  * NOTE: the input string has already been accepted by the flex lexer,

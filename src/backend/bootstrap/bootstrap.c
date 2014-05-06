@@ -94,7 +94,7 @@ static int	strtable_end = -1;	/* Tells us last occupied string space */
  * pg_type is created.
  *
  *		XXX several of these input/output functions do catalog scans
- *			(e.g., F_REGPROCIN scans pg_proc).	this obviously creates some
+ *			(e.g., F_REGPROCIN scans pg_proc).  this obviously creates some
  *			order dependencies in the catalog creation process.
  */
 struct typinfo
@@ -558,7 +558,7 @@ bootstrap_signals(void)
 }
 
 /*
- * Begin shutdown of an auxiliary process.	This is approximately the equivalent
+ * Begin shutdown of an auxiliary process.  This is approximately the equivalent
  * of ShutdownPostgres() in postinit.c.  We can't run transactions in an
  * auxiliary process, so most of the work of AbortTransaction() is not needed,
  * but we do need to make sure we've released any LWLocks we are holding.
@@ -867,7 +867,7 @@ cleanup(void)
  * and not an OID at all, until the first reference to a type not known in
  * TypInfo[].  At that point it will read and cache pg_type in the Typ array,
  * and subsequently return a real OID (and set the global pointer Ap to
- * point at the found row in Typ).	So caller must check whether Typ is
+ * point at the found row in Typ).  So caller must check whether Typ is
  * still NULL to determine what the return value is!
  * ----------------
  */
@@ -1118,7 +1118,7 @@ CompHash(char *str, int len)
  *		FindStr
  *
  *		This routine looks for the specified string in the hash
- *		table.	It returns a pointer to the hash node found,
+ *		table.  It returns a pointer to the hash node found,
  *		or NULL if the string is not in the table.
  * ----------------
  */
@@ -1213,9 +1213,9 @@ AddStr(char *str, int strlength, int mderef)
  *
  *		At bootstrap time, we define a bunch of indexes on system catalogs.
  *		We postpone actually building the indexes until just before we're
- *		finished with initialization, however.	This is because the indexes
+ *		finished with initialization, however.  This is because the indexes
  *		themselves have catalog entries, and those have to be included in the
- *		indexes on those catalogs.	Doing it in two phases is the simplest
+ *		indexes on those catalogs.  Doing it in two phases is the simplest
  *		way of making sure the indexes have the right contents at the end.
  */
 void
@@ -1228,7 +1228,7 @@ index_register(Oid heap,
 
 	/*
 	 * XXX mao 10/31/92 -- don't gc index reldescs, associated info at
-	 * bootstrap time.	we'll declare the indexes now, but want to create them
+	 * bootstrap time.  we'll declare the indexes now, but want to create them
 	 * later.
 	 */
 
