@@ -719,11 +719,11 @@ btree_xlog_delete_get_latestRemovedXid(xl_btree_delete *xlrec)
 	UnlockReleaseBuffer(ibuffer);
 
 	/*
-	 * XXX If all heap tuples were LP_DEAD then we will be returning
-	 * InvalidTransactionId here, causing conflict for all HS transactions.
-	 * That should happen very rarely (reasoning please?). Also note that
-	 * caller can't tell the difference between this case and the fast path
-	 * exit above. May need to change that in future.
+	 * If all heap tuples were LP_DEAD then we will be returning
+	 * InvalidTransactionId here, which avoids conflicts. This matches
+	 * existing logic which assumes that LP_DEAD tuples must already be
+	 * older than the latestRemovedXid on the cleanup record that
+	 * set them as LP_DEAD, hence must already have generated a conflict.
 	 */
 	return latestRemovedXid;
 }
