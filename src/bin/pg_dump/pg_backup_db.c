@@ -540,7 +540,7 @@ ExecuteSqlCommandBuf(ArchiveHandle *AH, const char *buf, size_t bufLen)
 		}
 	}
 
-	return 1;
+	return bufLen;
 }
 
 /*

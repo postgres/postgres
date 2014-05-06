@@ -855,7 +855,7 @@ _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt
  */
 
 /* Public */
-size_t
+void
 WriteData(Archive *AHX, const void *data, size_t dLen)
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
@@ -863,7 +863,9 @@ WriteData(Archive *AHX, const void *data, size_t dLen)
 	if (!AH->currToc)
 		exit_horribly(modulename, "internal error -- WriteData cannot be called outside the context of a DataDumper routine\n");
 
-	return (*AH->WriteDataPtr) (AH, data, dLen);
+	(*AH->WriteDataPtr) (AH, data, dLen);
+
+	return;
 }
 
 /*
@@ -1246,10 +1248,11 @@ SortTocFromFile(Archive *AHX, RestoreOptions *ropt)
  **********************/
 
 /* Public */
-int
+void
 archputs(const char *s, Archive *AH)
 {
-	return WriteData(AH, s, strlen(s));
+	WriteData(AH, s, strlen(s));
+	return;
 }
 
 /* Public */
@@ -1486,11 +1489,11 @@ dump_lo_buf(ArchiveHandle *AH)
  *	format to create a custom output routine to 'fake' a restore if it
  *	wants to generate a script (see TAR output).
  */
-int
+void
 ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH)
 {
-	size_t		res;
-
+	int bytes_written = 0;
+	
 	if (AH->writingBlob)
 	{
 		size_t		remaining = size * nmemb;
@@ -1509,23 +1512,12 @@ ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH)
 		memcpy((char *) AH->lo_buf + AH->lo_buf_used, ptr, remaining);
 		AH->lo_buf_used += remaining;
 
-		return size * nmemb;
+		bytes_written = size * nmemb;
 	}
 	else if (AH->gzOut)
-	{
-		res = GZWRITE(ptr, size, nmemb, AH->OF);
-		if (res != (nmemb * size))
-			exit_horribly(modulename, "could not write to output file: %s\n", strerror(errno));
-		return res;
-	}
+		bytes_written = GZWRITE(ptr, size, nmemb, AH->OF);
 	else if (AH->CustomOutPtr)
-	{
-		res = AH->CustomOutPtr (AH, ptr, size * nmemb);
-
-		if (res != (nmemb * size))
-			exit_horribly(modulename, "could not write to custom output routine\n");
-		return res;
-	}
+		bytes_written = AH->CustomOutPtr (AH, ptr, size * nmemb);
 	else
 	{
 		/*
@@ -1533,16 +1525,15 @@ ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH)
 		 * connected then send it to the DB.
 		 */
 		if (RestoringToDB(AH))
-			return ExecuteSqlCommandBuf(AH, (const char *) ptr, size * nmemb);
+			bytes_written  = ExecuteSqlCommandBuf(AH, (const char *) ptr, size * nmemb);
 		else
-		{
-			res = fwrite(ptr, size, nmemb, AH->OF);
-			if (res != nmemb)
-				exit_horribly(modulename, "could not write to output file: %s\n",
-							  strerror(errno));
-			return res;
-		}
+			bytes_written = fwrite(ptr, size, nmemb, AH->OF) * size;
 	}
+
+	if (bytes_written != size * nmemb)
+		WRITE_ERROR_EXIT;
+
+	return;
 }
 
 /* on some error, we may decide to go on... */
@@ -1847,8 +1838,11 @@ WriteStr(ArchiveHandle *AH, const char *c)
 
 	if (c)
 	{
-		res = WriteInt(AH, strlen(c));
-		res += (*AH->WriteBufPtr) (AH, c, strlen(c));
+		int len = strlen(c);
+		
+		res = WriteInt(AH, len);
+		(*AH->WriteBufPtr) (AH, c, len);
+		res += len;
 	}
 	else
 		res = WriteInt(AH, -1);
@@ -1868,8 +1862,7 @@ ReadStr(ArchiveHandle *AH)
 	else
 	{
 		buf = (char *) pg_malloc(l + 1);
-		if ((*AH->ReadBufPtr) (AH, (void *) buf, l) != l)
-			exit_horribly(modulename, "unexpected end of file\n");
+		(*AH->ReadBufPtr) (AH, (void *) buf, l);
 
 		buf[l] = '\0';
 	}
@@ -1950,9 +1943,7 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 						  strerror(errno));
 	}
 
-	cnt = fread(sig, 1, 5, fh);
-
-	if (cnt != 5)
+	if ((cnt = fread(sig, 1, 5, fh)) != 5)
 	{
 		if (ferror(fh))
 			exit_horribly(modulename, "could not read input file: %s\n", strerror(errno));
@@ -1975,12 +1966,12 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 		 * NB: this code must agree with ReadHead().
 		 */
 		if ((byteread = fgetc(fh)) == EOF)
-			exit_horribly(modulename, "could not read input file: %s\n", strerror(errno));
+			READ_ERROR_EXIT(fh);
 
 		AH->vmaj = byteread;
 
 		if ((byteread = fgetc(fh)) == EOF)
-			exit_horribly(modulename, "could not read input file: %s\n", strerror(errno));
+			READ_ERROR_EXIT(fh);
 
 		AH->vmin = byteread;
 
@@ -1992,7 +1983,7 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 		if (AH->vmaj > 1 || ((AH->vmaj == 1) && (AH->vmin > 0)))		/* Version > 1.0 */
 		{
 			if ((byteread = fgetc(fh)) == EOF)
-				exit_horribly(modulename, "could not read input file: %s\n", strerror(errno));
+				READ_ERROR_EXIT(fh);
 
 			AH->vrev = byteread;
 			AH->lookahead[AH->lookaheadLen++] = AH->vrev;
@@ -2004,20 +1995,20 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 		AH->version = ((AH->vmaj * 256 + AH->vmin) * 256 + AH->vrev) * 256 + 0;
 
 		if ((AH->intSize = fgetc(fh)) == EOF)
-			exit_horribly(modulename, "could not read input file: %s\n", strerror(errno));
+			READ_ERROR_EXIT(fh);
 		AH->lookahead[AH->lookaheadLen++] = AH->intSize;
 
 		if (AH->version >= K_VERS_1_7)
 		{
 			if ((AH->offSize = fgetc(fh)) == EOF)
-				exit_horribly(modulename, "could not read input file: %s\n", strerror(errno));
+				READ_ERROR_EXIT(fh);
 			AH->lookahead[AH->lookaheadLen++] = AH->offSize;
 		}
 		else
 			AH->offSize = AH->intSize;
 
 		if ((byteread = fgetc(fh)) == EOF)
-			exit_horribly(modulename, "could not read input file: %s\n", strerror(errno));
+			READ_ERROR_EXIT(fh);
 
 		AH->format = byteread;
 		AH->lookahead[AH->lookaheadLen++] = AH->format;
@@ -2029,6 +2020,7 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 		 * read first 512 byte header...
 		 */
 		cnt = fread(&AH->lookahead[AH->lookaheadLen], 1, 512 - AH->lookaheadLen, fh);
+		/* read failure is checked below */
 		AH->lookaheadLen += cnt;
 
 		if (AH->lookaheadLen >= strlen(TEXT_DUMPALL_HEADER) &&
@@ -2042,8 +2034,10 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 			exit_horribly(modulename, "input file appears to be a text format dump. Please use psql.\n");
 		}
 
-		if (AH->lookaheadLen != 512)
+		if (AH->lookaheadLen != 512 && feof(fh))
 			exit_horribly(modulename, "input file does not appear to be a valid archive (too short?)\n");
+		else
+			READ_ERROR_EXIT(fh);
 
 		if (!isValidTarHeader(AH->lookahead))
 			exit_horribly(modulename, "input file does not appear to be a valid archive\n");
@@ -3318,8 +3312,7 @@ ReadHead(ArchiveHandle *AH)
 	 */
 	if (!AH->readHeader)
 	{
-		if ((*AH->ReadBufPtr) (AH, tmpMag, 5) != 5)
-			exit_horribly(modulename, "unexpected end of file\n");
+		(*AH->ReadBufPtr) (AH, tmpMag, 5);
 
 		if (strncmp(tmpMag, "PGDMP", 5) != 0)
 			exit_horribly(modulename, "did not find magic string in file header\n");

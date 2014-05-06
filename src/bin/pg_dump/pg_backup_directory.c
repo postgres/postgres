@@ -66,11 +66,11 @@ static const char *modulename = gettext_noop("directory archiver");
 static void _ArchiveEntry(ArchiveHandle *AH, TocEntry *te);
 static void _StartData(ArchiveHandle *AH, TocEntry *te);
 static void _EndData(ArchiveHandle *AH, TocEntry *te);
-static size_t _WriteData(ArchiveHandle *AH, const void *data, size_t dLen);
+static void _WriteData(ArchiveHandle *AH, const void *data, size_t dLen);
 static int	_WriteByte(ArchiveHandle *AH, const int i);
 static int	_ReadByte(ArchiveHandle *);
-static size_t _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len);
-static size_t _ReadBuf(ArchiveHandle *AH, void *buf, size_t len);
+static void _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len);
+static void _ReadBuf(ArchiveHandle *AH, void *buf, size_t len);
 static void _CloseArchive(ArchiveHandle *AH);
 static void _ReopenArchive(ArchiveHandle *AH);
 static void _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
@@ -350,18 +350,18 @@ _StartData(ArchiveHandle *AH, TocEntry *te)
  *
  * We write the data to the open data file.
  */
-static size_t
+static void
 _WriteData(ArchiveHandle *AH, const void *data, size_t dLen)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 
-	if (dLen == 0)
-		return 0;
-
 	/* Are we aborting? */
 	checkAborting(AH);
+	
+	if (dLen > 0 && cfwrite(data, dLen, ctx->dataFH) != dLen)
+		WRITE_ERROR_EXIT;
 
-	return cfwrite(data, dLen, ctx->dataFH);
+	return;
 }
 
 /*
@@ -408,7 +408,7 @@ _PrintFileData(ArchiveHandle *AH, char *filename, RestoreOptions *ropt)
 		ahwrite(buf, 1, cnt, AH);
 
 	free(buf);
-	if (cfclose(cfp) !=0)
+	if (cfclose(cfp) != 0)
 		exit_horribly(modulename, "could not close data file: %s\n",
 					  strerror(errno));
 }
@@ -495,7 +495,7 @@ _WriteByte(ArchiveHandle *AH, const int i)
 	lclContext *ctx = (lclContext *) AH->formatData;
 
 	if (cfwrite(&c, 1, ctx->dataFH) != 1)
-		exit_horribly(modulename, "could not write byte\n");
+		WRITE_ERROR_EXIT;
 
 	return 1;
 }
@@ -510,34 +510,26 @@ static int
 _ReadByte(ArchiveHandle *AH)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
-	int			res;
 
-	res = cfgetc(ctx->dataFH);
-	if (res == EOF)
-		exit_horribly(modulename, "unexpected end of file\n");
-
-	return res;
+	return cfgetc(ctx->dataFH);
 }
 
 /*
  * Write a buffer of data to the archive.
  * Called by the archiver to write a block of bytes to the TOC or a data file.
  */
-static size_t
+static void
 _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
-	size_t		res;
 
 	/* Are we aborting? */
 	checkAborting(AH);
 
-	res = cfwrite(buf, len, ctx->dataFH);
-	if (res != len)
-		exit_horribly(modulename, "could not write to output file: %s\n",
-					  strerror(errno));
+	if (cfwrite(buf, len, ctx->dataFH) != len)
+		WRITE_ERROR_EXIT;
 
-	return res;
+	return;
 }
 
 /*
@@ -545,15 +537,20 @@ _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len)
  *
  * Called by the archiver to read a block of bytes from the archive
  */
-static size_t
+static void
 _ReadBuf(ArchiveHandle *AH, void *buf, size_t len)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
-	size_t		res;
 
-	res = cfread(buf, len, ctx->dataFH);
+	/*
+	 * If there was an I/O error, we already exited in cfread(),
+	 * so here we exit on short reads.
+	 */
+	if (cfread(buf, len, ctx->dataFH) != len)
+		exit_horribly(modulename,
+					  "could not read from input file: end of file\n");
 
-	return res;
+	return;
 }
 
 /*

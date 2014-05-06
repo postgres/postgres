@@ -45,10 +45,12 @@
 #define GZCLOSE(fh) gzclose(fh)
 #define GZWRITE(p, s, n, fh) gzwrite(fh, p, (n) * (s))
 #define GZREAD(p, s, n, fh) gzread(fh, p, (n) * (s))
+#define GZEOF(fh)	gzeof(fh)
 #else
 #define GZCLOSE(fh) fclose(fh)
 #define GZWRITE(p, s, n, fh) (fwrite(p, s, n, fh) * (s))
 #define GZREAD(p, s, n, fh) fread(p, s, n, fh)
+#define GZEOF(fh)	feof(fh)
 /* this is just the redefinition of a libz constant */
 #define Z_DEFAULT_COMPRESSION (-1)
 
@@ -115,6 +117,22 @@ struct _restoreList;
 struct ParallelArgs;
 struct ParallelState;
 
+#define READ_ERROR_EXIT(fd) \
+	do { \
+		if (feof(fd)) \
+			exit_horribly(modulename, \
+						  "could not read from input file: end of file\n"); \
+		else \
+			exit_horribly(modulename, \
+					"could not read from input file: %s\n", strerror(errno)); \
+	} while (0)
+
+#define WRITE_ERROR_EXIT \
+	do { \
+		exit_horribly(modulename, "could not write to output file: %s\n", \
+					  strerror(errno)); \
+	} while (0)
+ 
 typedef enum T_Action
 {
 	ACT_DUMP,
@@ -126,7 +144,7 @@ typedef void (*ReopenPtr) (struct _archiveHandle * AH);
 typedef void (*ArchiveEntryPtr) (struct _archiveHandle * AH, struct _tocEntry * te);
 
 typedef void (*StartDataPtr) (struct _archiveHandle * AH, struct _tocEntry * te);
-typedef size_t (*WriteDataPtr) (struct _archiveHandle * AH, const void *data, size_t dLen);
+typedef void (*WriteDataPtr) (struct _archiveHandle * AH, const void *data, size_t dLen);
 typedef void (*EndDataPtr) (struct _archiveHandle * AH, struct _tocEntry * te);
 
 typedef void (*StartBlobsPtr) (struct _archiveHandle * AH, struct _tocEntry * te);
@@ -136,8 +154,8 @@ typedef void (*EndBlobsPtr) (struct _archiveHandle * AH, struct _tocEntry * te);
 
 typedef int (*WriteBytePtr) (struct _archiveHandle * AH, const int i);
 typedef int (*ReadBytePtr) (struct _archiveHandle * AH);
-typedef size_t (*WriteBufPtr) (struct _archiveHandle * AH, const void *c, size_t len);
-typedef size_t (*ReadBufPtr) (struct _archiveHandle * AH, void *buf, size_t len);
+typedef void (*WriteBufPtr) (struct _archiveHandle * AH, const void *c, size_t len);
+typedef void (*ReadBufPtr) (struct _archiveHandle * AH, void *buf, size_t len);
 typedef void (*SaveArchivePtr) (struct _archiveHandle * AH);
 typedef void (*WriteExtraTocPtr) (struct _archiveHandle * AH, struct _tocEntry * te);
 typedef void (*ReadExtraTocPtr) (struct _archiveHandle * AH, struct _tocEntry * te);
@@ -413,7 +431,7 @@ extern bool isValidTarHeader(char *header);
 extern int	ReconnectToServer(ArchiveHandle *AH, const char *dbname, const char *newUser);
 extern void DropBlobIfExists(ArchiveHandle *AH, Oid oid);
 
-int			ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH);
+void		ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH);
 int			ahprintf(ArchiveHandle *AH, const char *fmt,...) __attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
 
 void		ahlog(ArchiveHandle *AH, int level, const char *fmt,...) __attribute__((format(PG_PRINTF_ATTRIBUTE, 3, 4)));

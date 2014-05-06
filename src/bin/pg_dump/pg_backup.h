@@ -180,7 +180,7 @@ extern void ArchiveEntry(Archive *AHX,
 			 DataDumperPtr dumpFn, void *dumpArg);
 
 /* Called to write *data* to the archive */
-extern size_t WriteData(Archive *AH, const void *data, size_t dLen);
+extern void WriteData(Archive *AH, const void *data, size_t dLen);
 
 extern int	StartBlob(Archive *AH, Oid oid);
 extern int	EndBlob(Archive *AH, Oid oid);
@@ -208,7 +208,7 @@ extern RestoreOptions *NewRestoreOptions(void);
 extern void SortTocFromFile(Archive *AHX, RestoreOptions *ropt);
 
 /* Convenience functions used only when writing DATA */
-extern int	archputs(const char *s, Archive *AH);
+extern void	archputs(const char *s, Archive *AH);
 extern int
 archprintf(Archive *AH, const char *fmt,...)
 /* This extension allows gcc to check the format string */

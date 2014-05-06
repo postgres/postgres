@@ -29,7 +29,7 @@ typedef enum
 } CompressionAlgorithm;
 
 /* Prototype for callback function to WriteDataToArchive() */
-typedef size_t (*WriteFunc) (ArchiveHandle *AH, const char *buf, size_t len);
+typedef void (*WriteFunc) (ArchiveHandle *AH, const char *buf, size_t len);
 
 /*
  * Prototype for callback function to ReadDataFromArchive()
@@ -50,7 +50,7 @@ typedef struct CompressorState CompressorState;
 extern CompressorState *AllocateCompressor(int compression, WriteFunc writeF);
 extern void ReadDataFromArchive(ArchiveHandle *AH, int compression,
 					ReadFunc readF);
-extern size_t WriteDataToArchive(ArchiveHandle *AH, CompressorState *cs,
+extern void WriteDataToArchive(ArchiveHandle *AH, CompressorState *cs,
 				   const void *data, size_t dLen);
 extern void EndCompressor(ArchiveHandle *AH, CompressorState *cs);
 

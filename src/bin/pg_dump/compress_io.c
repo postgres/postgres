@@ -86,14 +86,14 @@ static void InitCompressorZlib(CompressorState *cs, int level);
 static void DeflateCompressorZlib(ArchiveHandle *AH, CompressorState *cs,
 					  bool flush);
 static void ReadDataFromArchiveZlib(ArchiveHandle *AH, ReadFunc readF);
-static size_t WriteDataToArchiveZlib(ArchiveHandle *AH, CompressorState *cs,
+static void WriteDataToArchiveZlib(ArchiveHandle *AH, CompressorState *cs,
 					   const char *data, size_t dLen);
 static void EndCompressorZlib(ArchiveHandle *AH, CompressorState *cs);
 #endif
 
 /* Routines that support uncompressed data I/O */
 static void ReadDataFromArchiveNone(ArchiveHandle *AH, ReadFunc readF);
-static size_t WriteDataToArchiveNone(ArchiveHandle *AH, CompressorState *cs,
+static void WriteDataToArchiveNone(ArchiveHandle *AH, CompressorState *cs,
 					   const char *data, size_t dLen);
 
 /*
@@ -179,7 +179,7 @@ ReadDataFromArchive(ArchiveHandle *AH, int compression, ReadFunc readF)
 /*
  * Compress and write data to the output stream (via writeF).
  */
-size_t
+void
 WriteDataToArchive(ArchiveHandle *AH, CompressorState *cs,
 				   const void *data, size_t dLen)
 {
@@ -190,14 +190,16 @@ WriteDataToArchive(ArchiveHandle *AH, CompressorState *cs,
 	{
 		case COMPR_ALG_LIBZ:
 #ifdef HAVE_LIBZ
-			return WriteDataToArchiveZlib(AH, cs, data, dLen);
+			WriteDataToArchiveZlib(AH, cs, data, dLen);
 #else
 			exit_horribly(modulename, "not built with zlib support\n");
 #endif
+			break;
 		case COMPR_ALG_NONE:
-			return WriteDataToArchiveNone(AH, cs, data, dLen);
+			WriteDataToArchiveNone(AH, cs, data, dLen);
+			break;
 	}
-	return 0;					/* keep compiler quiet */
+	return;
 }
 
 /*
@@ -298,10 +300,7 @@ DeflateCompressorZlib(ArchiveHandle *AH, CompressorState *cs, bool flush)
 				 */
 				size_t		len = cs->zlibOutSize - zp->avail_out;
 
-				if (cs->writeF(AH, out, len) != len)
-					exit_horribly(modulename,
-								  "could not write to output file: %s\n",
-								  strerror(errno));
+				cs->writeF(AH, out, len);
 			}
 			zp->next_out = (void *) out;
 			zp->avail_out = cs->zlibOutSize;
@@ -312,7 +311,7 @@ DeflateCompressorZlib(ArchiveHandle *AH, CompressorState *cs, bool flush)
 	}
 }
 
-static size_t
+static void
 WriteDataToArchiveZlib(ArchiveHandle *AH, CompressorState *cs,
 					   const char *data, size_t dLen)
 {
@@ -320,11 +319,7 @@ WriteDataToArchiveZlib(ArchiveHandle *AH, CompressorState *cs,
 	cs->zp->avail_in = dLen;
 	DeflateCompressorZlib(AH, cs, false);
 
-	/*
-	 * we have either succeeded in writing dLen bytes or we have called
-	 * exit_horribly()
-	 */
-	return dLen;
+	return;
 }
 
 static void
@@ -427,19 +422,12 @@ ReadDataFromArchiveNone(ArchiveHandle *AH, ReadFunc readF)
 	free(buf);
 }
 
-static size_t
+static void
 WriteDataToArchiveNone(ArchiveHandle *AH, CompressorState *cs,
 					   const char *data, size_t dLen)
 {
-	/*
-	 * Any write function should do its own error checking but to make sure we
-	 * do a check here as well...
-	 */
-	if (cs->writeF(AH, data, dLen) != dLen)
-		exit_horribly(modulename,
-					  "could not write to output file: %s\n",
-					  strerror(errno));
-	return dLen;
+	cs->writeF(AH, data, dLen);
+	return;
 }
 
 
@@ -573,12 +561,27 @@ cfopen(const char *path, const char *mode, int compression)
 int
 cfread(void *ptr, int size, cfp *fp)
 {
+	int ret;
+
+	if (size == 0)
+		return 0;
+
 #ifdef HAVE_LIBZ
 	if (fp->compressedfp)
-		return gzread(fp->compressedfp, ptr, size);
+	{
+		ret = gzread(fp->compressedfp, ptr, size);
+		if (ret != size && !gzeof(fp->compressedfp))
+			exit_horribly(modulename,
+					"could not read from input file: %s\n", strerror(errno));
+	}
 	else
 #endif
-		return fread(ptr, 1, size, fp->uncompressedfp);
+	{
+		ret = fread(ptr, 1, size, fp->uncompressedfp);
+		if (ret != size && !feof(fp->uncompressedfp))
+			READ_ERROR_EXIT(fp->uncompressedfp);
+	}
+	return ret;
 }
 
 int
@@ -595,12 +598,31 @@ cfwrite(const void *ptr, int size, cfp *fp)
 int
 cfgetc(cfp *fp)
 {
+	int ret;
+
 #ifdef HAVE_LIBZ
 	if (fp->compressedfp)
-		return gzgetc(fp->compressedfp);
+	{
+		ret = gzgetc(fp->compressedfp);
+		if (ret == EOF)
+		{
+			if (!gzeof(fp->compressedfp))
+				exit_horribly(modulename,
+						"could not read from input file: %s\n", strerror(errno));
+			else
+				exit_horribly(modulename,
+						"could not read from input file: end of file\n");
+		}
+	}
 	else
 #endif
-		return fgetc(fp->uncompressedfp);
+	{
+		ret = fgetc(fp->uncompressedfp);
+		if (ret == EOF)
+			READ_ERROR_EXIT(fp->uncompressedfp);
+	}
+
+	return ret;
 }
 
 char *

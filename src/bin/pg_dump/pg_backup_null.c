@@ -30,12 +30,11 @@
 
 #include "libpq/libpq-fs.h"
 
-
-static size_t _WriteData(ArchiveHandle *AH, const void *data, size_t dLen);
-static size_t _WriteBlobData(ArchiveHandle *AH, const void *data, size_t dLen);
+static void _WriteData(ArchiveHandle *AH, const void *data, size_t dLen);
+static void _WriteBlobData(ArchiveHandle *AH, const void *data, size_t dLen);
 static void _EndData(ArchiveHandle *AH, TocEntry *te);
 static int	_WriteByte(ArchiveHandle *AH, const int i);
-static size_t _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len);
+static void _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len);
 static void _CloseArchive(ArchiveHandle *AH);
 static void _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
 static void _StartBlobs(ArchiveHandle *AH, TocEntry *te);
@@ -84,19 +83,19 @@ InitArchiveFmt_Null(ArchiveHandle *AH)
 /*
  * Called by dumper via archiver from within a data dump routine
  */
-static size_t
+static void
 _WriteData(ArchiveHandle *AH, const void *data, size_t dLen)
 {
-	/* Just send it to output */
+	/* Just send it to output, ahwrite() already errors on failure */
 	ahwrite(data, 1, dLen, AH);
-	return dLen;
+	return;
 }
 
 /*
  * Called by dumper via archiver from within a data dump routine
  * We substitute this for _WriteData while emitting a BLOB
  */
-static size_t
+static void
 _WriteBlobData(ArchiveHandle *AH, const void *data, size_t dLen)
 {
 	if (dLen > 0)
@@ -112,7 +111,7 @@ _WriteBlobData(ArchiveHandle *AH, const void *data, size_t dLen)
 
 		destroyPQExpBuffer(buf);
 	}
-	return dLen;
+	return;
 }
 
 static void
@@ -220,11 +219,11 @@ _WriteByte(ArchiveHandle *AH, const int i)
 	return 0;
 }
 
-static size_t
+static void
 _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len)
 {
 	/* Don't do anything */
-	return len;
+	return;
 }
 
 static void

@@ -42,12 +42,12 @@
 
 static void _ArchiveEntry(ArchiveHandle *AH, TocEntry *te);
 static void _StartData(ArchiveHandle *AH, TocEntry *te);
-static size_t _WriteData(ArchiveHandle *AH, const void *data, size_t dLen);
+static void _WriteData(ArchiveHandle *AH, const void *data, size_t dLen);
 static void _EndData(ArchiveHandle *AH, TocEntry *te);
 static int	_WriteByte(ArchiveHandle *AH, const int i);
 static int	_ReadByte(ArchiveHandle *);
-static size_t _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len);
-static size_t _ReadBuf(ArchiveHandle *AH, void *buf, size_t len);
+static void _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len);
+static void _ReadBuf(ArchiveHandle *AH, void *buf, size_t len);
 static void _CloseArchive(ArchiveHandle *AH);
 static void _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
 static void _WriteExtraToc(ArchiveHandle *AH, TocEntry *te);
@@ -548,13 +548,26 @@ _tarReadRaw(ArchiveHandle *AH, void *buf, size_t len, TAR_MEMBER *th, FILE *fh)
 	if (len > 0)
 	{
 		if (fh)
+		{
 			res = fread(&((char *) buf)[used], 1, len, fh);
+			if (res != len && !feof(fh))
+				READ_ERROR_EXIT(fh);
+		}
 		else if (th)
 		{
 			if (th->zFH)
+			{
 				res = GZREAD(&((char *) buf)[used], 1, len, th->zFH);
+				if (res != len && !GZEOF(fh))
+					exit_horribly(modulename,
+							"could not read from input file: %s\n", strerror(errno));
+			}
 			else
+			{
 				res = fread(&((char *) buf)[used], 1, len, th->nFH);
+				if (res != len && !feof(fh))
+					READ_ERROR_EXIT(fh);
+			}
 		}
 		else
 			exit_horribly(modulename, "internal error -- neither th nor fh specified in tarReadRaw()\n");
@@ -593,22 +606,19 @@ tarWrite(const void *buf, size_t len, TAR_MEMBER *th)
 	else
 		res = fwrite(buf, 1, len, th->nFH);
 
-	if (res != len)
-		exit_horribly(modulename,
-					"could not write to output file: %s\n", strerror(errno));
-
 	th->pos += res;
 	return res;
 }
 
-static size_t
+static void
 _WriteData(ArchiveHandle *AH, const void *data, size_t dLen)
 {
 	lclTocEntry *tctx = (lclTocEntry *) AH->currToc->formatData;
 
-	dLen = tarWrite(data, dLen, tctx->TH);
+	if (tarWrite(data, dLen, tctx->TH) != dLen)
+		WRITE_ERROR_EXIT;
 
-	return dLen;
+	return;
 }
 
 static void
@@ -766,13 +776,13 @@ static int
 _WriteByte(ArchiveHandle *AH, const int i)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
-	int			res;
 	char		b = i;			/* Avoid endian problems */
 
-	res = tarWrite(&b, 1, ctx->FH);
-	if (res != EOF)
-		ctx->filePos += res;
-	return res;
+	if (tarWrite(&b, 1, ctx->FH) != 1)
+		WRITE_ERROR_EXIT;
+
+	ctx->filePos += 1;
+	return 1;
 }
 
 static int
@@ -784,31 +794,36 @@ _ReadByte(ArchiveHandle *AH)
 
 	res = tarRead(&c, 1, ctx->FH);
 	if (res != 1)
-		exit_horribly(modulename, "unexpected end of file\n");
+		/* We already would have exited for errors on reads, must be EOF */
+		exit_horribly(modulename,
+					  "could not read from input file: end of file\n");
 	ctx->filePos += 1;
 	return c;
 }
 
-static size_t
+static void
 _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
-	size_t		res;
 
-	res = tarWrite(buf, len, ctx->FH);
-	ctx->filePos += res;
-	return res;
+	if (tarWrite(buf, len, ctx->FH) != len)
+		WRITE_ERROR_EXIT;
+
+	ctx->filePos += len;
 }
 
-static size_t
+static void
 _ReadBuf(ArchiveHandle *AH, void *buf, size_t len)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
-	size_t		res;
 
-	res = tarRead(buf, len, ctx->FH);
-	ctx->filePos += res;
-	return res;
+	if (tarRead(buf, len, ctx->FH) != len)
+		/* We already would have exited for errors on reads, must be EOF */
+		exit_horribly(modulename,
+					  "could not read from input file: end of file\n");
+	
+	ctx->filePos += len;
+	return;
 }
 
 static void
@@ -885,8 +900,7 @@ _CloseArchive(ArchiveHandle *AH)
 		for (i = 0; i < 512 * 2; i++)
 		{
 			if (fputc(0, ctx->tarFH) == EOF)
-				exit_horribly(modulename,
-					   "could not write null block at end of tar archive\n");
+				WRITE_ERROR_EXIT;
 		}
 	}
 
@@ -1084,13 +1098,12 @@ _tarAddFile(ArchiveHandle *AH, TAR_MEMBER *th)
 
 	while ((cnt = fread(buf, 1, sizeof(buf), tmp)) > 0)
 	{
-		res = fwrite(buf, 1, cnt, th->tarFH);
-		if (res != cnt)
-			exit_horribly(modulename,
-						  "could not write to output file: %s\n",
-						  strerror(errno));
+		if ((res = fwrite(buf, 1, cnt, th->tarFH)) != cnt)
+			WRITE_ERROR_EXIT;
 		len += res;
 	}
+	if (!feof(tmp))
+		READ_ERROR_EXIT(tmp);
 
 	if (fclose(tmp) != 0)		/* This *should* delete it... */
 		exit_horribly(modulename, "could not close temporary file: %s\n",
@@ -1111,7 +1124,7 @@ _tarAddFile(ArchiveHandle *AH, TAR_MEMBER *th)
 	for (i = 0; i < pad; i++)
 	{
 		if (fputc('\0', th->tarFH) == EOF)
-			exit_horribly(modulename, "could not output padding at end of tar member\n");
+			WRITE_ERROR_EXIT;
 	}
 
 	ctx->tarFHpos += len + pad;
@@ -1294,5 +1307,5 @@ _tarWriteHeader(TAR_MEMBER *th)
 
 	/* Now write the completed header. */
 	if (fwrite(h, 1, 512, th->tarFH) != 512)
-		exit_horribly(modulename, "could not write to output file: %s\n", strerror(errno));
+		WRITE_ERROR_EXIT;
 }

@@ -35,12 +35,12 @@
 
 static void _ArchiveEntry(ArchiveHandle *AH, TocEntry *te);
 static void _StartData(ArchiveHandle *AH, TocEntry *te);
-static size_t _WriteData(ArchiveHandle *AH, const void *data, size_t dLen);
+static void _WriteData(ArchiveHandle *AH, const void *data, size_t dLen);
 static void _EndData(ArchiveHandle *AH, TocEntry *te);
 static int	_WriteByte(ArchiveHandle *AH, const int i);
 static int	_ReadByte(ArchiveHandle *);
-static size_t _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len);
-static size_t _ReadBuf(ArchiveHandle *AH, void *buf, size_t len);
+static void _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len);
+static void _ReadBuf(ArchiveHandle *AH, void *buf, size_t len);
 static void _CloseArchive(ArchiveHandle *AH);
 static void _ReopenArchive(ArchiveHandle *AH);
 static void _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
@@ -86,7 +86,7 @@ typedef struct
 static void _readBlockHeader(ArchiveHandle *AH, int *type, int *id);
 static pgoff_t _getFilePos(ArchiveHandle *AH, lclContext *ctx);
 
-static size_t _CustomWriteFunc(ArchiveHandle *AH, const char *buf, size_t len);
+static void _CustomWriteFunc(ArchiveHandle *AH, const char *buf, size_t len);
 static size_t _CustomReadFunc(ArchiveHandle *AH, char **buf, size_t *buflen);
 
 /* translator: this is a module name */
@@ -315,16 +315,17 @@ _StartData(ArchiveHandle *AH, TocEntry *te)
  *
  * Mandatory.
  */
-static size_t
+static void
 _WriteData(ArchiveHandle *AH, const void *data, size_t dLen)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 	CompressorState *cs = ctx->cs;
 
-	if (dLen == 0)
-		return 0;
+	if (dLen > 0)
+		/* WriteDataToArchive() internally throws write errors */
+		WriteDataToArchive(AH, cs, data, dLen);
 
-	return WriteDataToArchive(AH, cs, data, dLen);
+	return;
 }
 
 /*
@@ -579,8 +580,7 @@ _skipData(ArchiveHandle *AH)
 			buf = (char *) pg_malloc(blkLen);
 			buflen = blkLen;
 		}
-		cnt = fread(buf, 1, blkLen, AH->FH);
-		if (cnt != blkLen)
+		if ((cnt = fread(buf, 1, blkLen, AH->FH)) != blkLen)
 		{
 			if (feof(AH->FH))
 				exit_horribly(modulename,
@@ -610,14 +610,13 @@ static int
 _WriteByte(ArchiveHandle *AH, const int i)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
-	int			res;
+	int res;
 
-	res = fputc(i, AH->FH);
-	if (res != EOF)
-		ctx->filePos += 1;
-	else
-		exit_horribly(modulename, "could not write byte: %s\n", strerror(errno));
-	return res;
+	if ((res = fputc(i, AH->FH)) == EOF)
+		WRITE_ERROR_EXIT;
+	ctx->filePos += 1;
+
+	return 1;
 }
 
 /*
@@ -636,7 +635,7 @@ _ReadByte(ArchiveHandle *AH)
 
 	res = getc(AH->FH);
 	if (res == EOF)
-		exit_horribly(modulename, "unexpected end of file\n");
+		READ_ERROR_EXIT(AH->FH);
 	ctx->filePos += 1;
 	return res;
 }
@@ -648,20 +647,16 @@ _ReadByte(ArchiveHandle *AH)
  *
  * Called by the archiver to write a block of bytes to the archive.
  */
-static size_t
+static void
 _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
-	size_t		res;
 
-	res = fwrite(buf, 1, len, AH->FH);
+	if (fwrite(buf, 1, len, AH->FH) != len)
+		WRITE_ERROR_EXIT;
+	ctx->filePos += len;
 
-	if (res != len)
-		exit_horribly(modulename,
-					"could not write to output file: %s\n", strerror(errno));
-
-	ctx->filePos += res;
-	return res;
+	return;
 }
 
 /*
@@ -671,16 +666,16 @@ _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len)
  *
  * Called by the archiver to read a block of bytes from the archive
  */
-static size_t
+static void
 _ReadBuf(ArchiveHandle *AH, void *buf, size_t len)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
-	size_t		res;
 
-	res = fread(buf, 1, len, AH->FH);
-	ctx->filePos += res;
+	if (fread(buf, 1, len, AH->FH) != len)
+		READ_ERROR_EXIT(AH->FH);
+	ctx->filePos += len;
 
-	return res;
+	return;
 }
 
 /*
@@ -959,15 +954,16 @@ _readBlockHeader(ArchiveHandle *AH, int *type, int *id)
  * Callback function for WriteDataToArchive. Writes one block of (compressed)
  * data to the archive.
  */
-static size_t
+static void
 _CustomWriteFunc(ArchiveHandle *AH, const char *buf, size_t len)
 {
 	/* never write 0-byte blocks (this should not happen) */
-	if (len == 0)
-		return 0;
-
-	WriteInt(AH, len);
-	return _WriteBuf(AH, buf, len);
+	if (len > 0)
+	{
+		WriteInt(AH, len);
+		_WriteBuf(AH, buf, len);
+	}
+	return;
 }
 
 /*
@@ -978,7 +974,6 @@ static size_t
 _CustomReadFunc(ArchiveHandle *AH, char **buf, size_t *buflen)
 {
 	size_t		blkLen;
-	size_t		cnt;
 
 	/* Read length */
 	blkLen = ReadInt(AH);
@@ -993,15 +988,8 @@ _CustomReadFunc(ArchiveHandle *AH, char **buf, size_t *buflen)
 		*buflen = blkLen;
 	}
 
-	cnt = _ReadBuf(AH, *buf, blkLen);
-	if (cnt != blkLen)
-	{
-		if (feof(AH->FH))
-			exit_horribly(modulename,
-						  "could not read from input file: end of file\n");
-		else
-			exit_horribly(modulename,
-					"could not read from input file: %s\n", strerror(errno));
-	}
-	return cnt;
+	/* exits app on read errors */
+	_ReadBuf(AH, *buf, blkLen);
+
+	return blkLen;
 }
