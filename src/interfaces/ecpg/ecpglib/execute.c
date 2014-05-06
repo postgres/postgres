@@ -1850,7 +1850,14 @@ ECPGdo(const int lineno, const int compat, const int force_indicator, const char
 			var->arrsize = va_arg(args, long);
 			var->offset = va_arg(args, long);
 
-			if (var->arrsize == 0 || var->varcharsize == 0)
+			/* 
+			 * Unknown array size means pointer to an array.
+			 * Unknown varcharsize usually also means pointer. But if the
+			 * type is character and the array size is known, it is an
+			 * array of pointers to char, so use var->pointer as it is.
+			 */
+			if (var->arrsize == 0 ||
+			    (var->varcharsize == 0 && ((var->type != ECPGt_char && var->type != ECPGt_unsigned_char) || (var->arrsize <= 1))))
 				var->value = *((char **) (var->pointer));
 			else
 				var->value = var->pointer;
