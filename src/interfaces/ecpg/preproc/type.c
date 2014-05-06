@@ -407,7 +407,8 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 			case ECPGt_unsigned_char:
 			case ECPGt_char_variable:
 			case ECPGt_string:
-
+			{
+				char	*sizeof_name = "char";
 				/*
 				 * we have to use the pointer except for arrays with given
 				 * bounds, ecpglib will distinguish between * and []
@@ -417,12 +418,24 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 				 (atoi(varcharsize) == 0 && strcmp(varcharsize, "0") != 0) ||
 					 (atoi(arrsize) == 0 && strcmp(arrsize, "0") != 0))
 					&& siz == NULL)
+				{
 					sprintf(variable, "(%s%s)", prefix ? prefix : "", name);
+					if ((type == ECPGt_char || type == ECPGt_unsigned_char) &&
+						strcmp(varcharsize, "0") == 0)
+					{
+						/*
+						 * If this is an array of char *, the offset would be
+						 * sizeof(char *) and not sizeof(char).
+						 */
+						sizeof_name = "char *";
+					}
+				}
 				else
 					sprintf(variable, "&(%s%s)", prefix ? prefix : "", name);
 
-				sprintf(offset, "(%s)*sizeof(char)", strcmp(varcharsize, "0") == 0 ? "1" : varcharsize);
+				sprintf(offset, "(%s)*sizeof(%s)", strcmp(varcharsize, "0") == 0 ? "1" : varcharsize, sizeof_name);
 				break;
+			}
 			case ECPGt_numeric:
 
 				/*
