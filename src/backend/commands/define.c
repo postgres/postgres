@@ -196,7 +196,7 @@ defGetInt64(DefElem *def)
 
 			/*
 			 * Values too large for int4 will be represented as Float
-			 * constants by the lexer.	Accept these if they are valid int8
+			 * constants by the lexer.  Accept these if they are valid int8
 			 * strings.
 			 */
 			return DatumGetInt64(DirectFunctionCall1(int8in,

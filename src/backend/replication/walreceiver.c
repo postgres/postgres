@@ -226,7 +226,7 @@ WalReceiverMain(void)
 
 	/*
 	 * If possible, make this process a group leader, so that the postmaster
-	 * can signal any child processes too.	(walreceiver probably never has
+	 * can signal any child processes too.  (walreceiver probably never has
 	 * any child processes, but for consistency we make all postmaster child
 	 * processes do this.)
 	 */
@@ -411,7 +411,7 @@ WalRcvQuickDieHandler(SIGNAL_ARGS)
 	on_exit_reset();
 
 	/*
-	 * Note we do exit(2) not exit(0).	This is to force the postmaster into a
+	 * Note we do exit(2) not exit(0).  This is to force the postmaster into a
 	 * system reset cycle if some idiot DBA sends a manual SIGQUIT to a random
 	 * backend.  This is necessary precisely because we don't clean up our
 	 * shared memory state.  (The "dead man switch" mechanism in pmsignal.c

@@ -33,7 +33,7 @@ generate_old_dump(void)
  *	split_old_dump
  *
  *	This function splits pg_dumpall output into global values and
- *	database creation, and per-db schemas.	This allows us to create
+ *	database creation, and per-db schemas.  This allows us to create
  *	the support functions between restoring these two parts of the
  *	dump.  We split on the first "\connect " after a CREATE ROLE
  *	username match;  this is where the per-db restore starts.

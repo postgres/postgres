@@ -438,7 +438,7 @@ ginExtractEntries(GinState *ginstate, OffsetNumber attnum,
 	 * If there's more than one key, sort and unique-ify.
 	 *
 	 * XXX Using qsort here is notationally painful, and the overhead is
-	 * pretty bad too.	For small numbers of keys it'd likely be better to use
+	 * pretty bad too.  For small numbers of keys it'd likely be better to use
 	 * a simple insertion sort.
 	 */
 	if (*nentries > 1)

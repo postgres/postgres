@@ -76,7 +76,7 @@ CollationCreate(const char *collname, Oid collnamespace,
 						collname, pg_encoding_to_char(collencoding))));
 
 	/*
-	 * Also forbid matching an any-encoding entry.	This test of course is not
+	 * Also forbid matching an any-encoding entry.  This test of course is not
 	 * backed up by the unique index, but it's not a problem since we don't
 	 * support adding any-encoding entries after initdb.
 	 */

@@ -4,7 +4,7 @@
  *	  POSTGRES shared cache invalidation data manager.
  *
  * The shared cache invalidation manager is responsible for transmitting
- * invalidation messages between backends.	Any message sent by any backend
+ * invalidation messages between backends.  Any message sent by any backend
  * must be delivered to all already-running backends before it can be
  * forgotten.  (If we run out of space, we instead deliver a "RESET"
  * message to backends that have fallen too far behind.)

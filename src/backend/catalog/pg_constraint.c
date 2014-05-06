@@ -37,7 +37,7 @@
  *	Create a constraint table entry.
  *
  * Subsidiary records (such as triggers or indexes to implement the
- * constraint) are *not* created here.	But we do make dependency links
+ * constraint) are *not* created here.  But we do make dependency links
  * from the constraint to the things it depends on.
  */
 Oid
@@ -301,7 +301,7 @@ CreateConstraintEntry(const char *constraintName,
 	{
 		/*
 		 * Register normal dependency on the unique index that supports a
-		 * foreign-key constraint.	(Note: for indexes associated with unique
+		 * foreign-key constraint.  (Note: for indexes associated with unique
 		 * or primary-key constraints, the dependency runs the other way, and
 		 * is not made here.)
 		 */
@@ -828,10 +828,10 @@ get_constraint_oid(Oid relid, const char *conname, bool missing_ok)
  * the rel of interest are Vars with the indicated varno/varlevelsup.
  *
  * Currently we only check to see if the rel has a primary key that is a
- * subset of the grouping_columns.	We could also use plain unique constraints
+ * subset of the grouping_columns.  We could also use plain unique constraints
  * if all their columns are known not null, but there's a problem: we need
  * to be able to represent the not-null-ness as part of the constraints added
- * to *constraintDeps.	FIXME whenever not-null constraints get represented
+ * to *constraintDeps.  FIXME whenever not-null constraints get represented
  * in pg_constraint.
  */
 bool

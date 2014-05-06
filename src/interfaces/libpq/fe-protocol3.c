@@ -166,7 +166,7 @@ pqParseInput3(PGconn *conn)
 			 * ERROR messages are displayed using the notice processor;
 			 * ParameterStatus is handled normally; anything else is just
 			 * dropped on the floor after displaying a suitable warning
-			 * notice.	(An ERROR is very possibly the backend telling us why
+			 * notice.  (An ERROR is very possibly the backend telling us why
 			 * it is about to close the connection, so we don't want to just
 			 * discard it...)
 			 */
@@ -367,7 +367,7 @@ pqParseInput3(PGconn *conn)
 				case 'd':		/* Copy Data */
 
 					/*
-					 * If we see Copy Data, just silently drop it.	This would
+					 * If we see Copy Data, just silently drop it.  This would
 					 * only occur if application exits COPY OUT mode too
 					 * early.
 					 */
@@ -376,7 +376,7 @@ pqParseInput3(PGconn *conn)
 				case 'c':		/* Copy Done */
 
 					/*
-					 * If we see Copy Done, just silently drop it.	This is
+					 * If we see Copy Done, just silently drop it.  This is
 					 * the normal case during PQendcopy.  We will keep
 					 * swallowing data, expecting to see command-complete for
 					 * the COPY command.
@@ -732,14 +732,14 @@ pqGetErrorNotice3(PGconn *conn, bool isError)
 
 	/*
 	 * Since the fields might be pretty long, we create a temporary
-	 * PQExpBuffer rather than using conn->workBuffer.	workBuffer is intended
-	 * for stuff that is expected to be short.	We shouldn't use
+	 * PQExpBuffer rather than using conn->workBuffer.  workBuffer is intended
+	 * for stuff that is expected to be short.  We shouldn't use
 	 * conn->errorMessage either, since this might be only a notice.
 	 */
 	initPQExpBuffer(&workBuf);
 
 	/*
-	 * Make a PGresult to hold the accumulated fields.	We temporarily lie
+	 * Make a PGresult to hold the accumulated fields.  We temporarily lie
 	 * about the result status, so that PQmakeEmptyPGresult doesn't uselessly
 	 * copy conn->errorMessage.
 	 */
@@ -928,7 +928,7 @@ reportErrorPosition(PQExpBuffer msg, const char *query, int loc, int encoding)
 	/*
 	 * Each character might occupy multiple physical bytes in the string, and
 	 * in some Far Eastern character sets it might take more than one screen
-	 * column as well.	We compute the starting byte offset and starting
+	 * column as well.  We compute the starting byte offset and starting
 	 * screen column of each logical character, and store these in qidx[] and
 	 * scridx[] respectively.
 	 */
@@ -956,8 +956,8 @@ reportErrorPosition(PQExpBuffer msg, const char *query, int loc, int encoding)
 	/*
 	 * Within the scanning loop, cno is the current character's logical
 	 * number, qoffset is its offset in wquery, and scroffset is its starting
-	 * logical screen column (all indexed from 0).	"loc" is the logical
-	 * character number of the error location.	We scan to determine loc_line
+	 * logical screen column (all indexed from 0).  "loc" is the logical
+	 * character number of the error location.  We scan to determine loc_line
 	 * (the 1-based line number containing loc) and ibeg/iend (first character
 	 * number and last+1 character number of the line containing loc). Note
 	 * that qidx[] and scridx[] are filled only as far as iend.
@@ -1390,7 +1390,7 @@ pqGetCopyData3(PGconn *conn, char **buffer, int async)
 	for (;;)
 	{
 		/*
-		 * Collect the next input message.	To make life simpler for async
+		 * Collect the next input message.  To make life simpler for async
 		 * callers, we keep returning 0 until the next message is fully
 		 * available, even if it is not Copy Data.
 		 */
@@ -1399,8 +1399,8 @@ pqGetCopyData3(PGconn *conn, char **buffer, int async)
 		{
 			/*
 			 * On end-of-copy, exit COPY_OUT or COPY_BOTH mode and let caller
-			 * read status with PQgetResult().	The normal case is that it's
-			 * Copy Done, but we let parseInput read that.	If error, we
+			 * read status with PQgetResult().  The normal case is that it's
+			 * Copy Done, but we let parseInput read that.  If error, we
 			 * expect the state was already changed.
 			 */
 			if (msgLength == -1)
@@ -1603,7 +1603,7 @@ pqEndcopy3(PGconn *conn)
 	/*
 	 * Non blocking connections may have to abort at this point.  If everyone
 	 * played the game there should be no problem, but in error scenarios the
-	 * expected messages may not have arrived yet.	(We are assuming that the
+	 * expected messages may not have arrived yet.  (We are assuming that the
 	 * backend's packetizing will ensure that CommandComplete arrives along
 	 * with the CopyDone; are there corner cases where that doesn't happen?)
 	 */

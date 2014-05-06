@@ -1,7 +1,7 @@
 /*
  * Internal interface definitions, etc., for the reg package
  *
- * Copyright (c) 1998, 1999 Henry Spencer.	All rights reserved.
+ * Copyright (c) 1998, 1999 Henry Spencer.  All rights reserved.
  *
  * Development of this software was funded, in part, by Cray Research Inc.,
  * UUNET Communications Services Inc., Sun Microsystems Inc., and Scriptics
@@ -126,8 +126,8 @@
 
 
 /*
- * We dissect a chr into byts for colormap table indexing.	Here we define
- * a byt, which will be the same as a byte on most machines...	The exact
+ * We dissect a chr into byts for colormap table indexing.  Here we define
+ * a byt, which will be the same as a byte on most machines...  The exact
  * size of a byt is not critical, but about 8 bits is good, and extraction
  * of 8-bit chunks is sometimes especially fast.
  */
@@ -156,9 +156,9 @@ typedef int pcolor;				/* what color promotes to */
 
 /*
  * A colormap is a tree -- more precisely, a DAG -- indexed at each level
- * by a byt of the chr, to map the chr to a color efficiently.	Because
+ * by a byt of the chr, to map the chr to a color efficiently.  Because
  * lower sections of the tree can be shared, it can exploit the usual
- * sparseness of such a mapping table.	The tree is always NBYTS levels
+ * sparseness of such a mapping table.  The tree is always NBYTS levels
  * deep (in the past it was shallower during construction but was "filled"
  * to full depth at the end of that); areas that are unaltered as yet point
  * to "fill blocks" which are entirely WHITE in color.

@@ -46,14 +46,14 @@ __attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
  * double quoted if it contains funny characters or matches a keyword.
  *
  * If typemod is NULL then we are formatting a type name in a context where
- * no typemod is available, eg a function argument or result type.	This
+ * no typemod is available, eg a function argument or result type.  This
  * yields a slightly different result from specifying typemod = -1 in some
  * cases.  Given typemod = -1 we feel compelled to produce an output that
  * the parser will interpret as having typemod -1, so that pg_dump will
- * produce CREATE TABLE commands that recreate the original state.	But
+ * produce CREATE TABLE commands that recreate the original state.  But
  * given NULL typemod, we assume that the parser's interpretation of
  * typemod doesn't matter, and so we are willing to output a slightly
- * "prettier" representation of the same type.	For example, type = bpchar
+ * "prettier" representation of the same type.  For example, type = bpchar
  * and typemod = NULL gets you "character", whereas typemod = -1 gets you
  * "bpchar" --- the former will be interpreted as character(1) by the
  * parser, which does not yield typemod -1.

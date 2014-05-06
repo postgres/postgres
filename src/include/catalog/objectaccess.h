@@ -12,7 +12,7 @@
 
 /*
  * Object access hooks are intended to be called just before or just after
- * performing certain actions on a SQL object.	This is intended as
+ * performing certain actions on a SQL object.  This is intended as
  * infrastructure for security or logging pluggins.
  *
  * OAT_POST_CREATE should be invoked just after the the object is created.

@@ -120,7 +120,7 @@ typedef enum PgStat_Single_Reset_Type
  *
  * Many of the event counters are nontransactional, ie, we count events
  * in committed and aborted transactions alike.  For these, we just count
- * directly in the PgStat_TableStatus.	However, delta_live_tuples,
+ * directly in the PgStat_TableStatus.  However, delta_live_tuples,
  * delta_dead_tuples, and changed_tuples must be derived from event counts
  * with awareness of whether the transaction or subtransaction committed or
  * aborted.  Hence, we also keep a stack of per-(sub)transaction status

@@ -20,12 +20,12 @@
  *
  * The other categories, LC_MONETARY, LC_NUMERIC, and LC_TIME are also
  * settable at run-time.  However, we don't actually set those locale
- * categories permanently.	This would have bizarre effects like no
+ * categories permanently.  This would have bizarre effects like no
  * longer accepting standard floating-point literals in some locales.
  * Instead, we only set the locales briefly when needed, cache the
  * required information obtained from localeconv(), and set them back.
  * The cached information is only used by the formatting functions
- * (to_char, etc.) and the money type.	For the user, this should all be
+ * (to_char, etc.) and the money type.  For the user, this should all be
  * transparent.
  *
  * !!! NOW HEAR THIS !!!
@@ -39,7 +39,7 @@
  *				fail = true;
  *			setlocale(category, save);
  * DOES NOT WORK RELIABLY: on some platforms the second setlocale() call
- * will change the memory save is pointing at.	To do this sort of thing
+ * will change the memory save is pointing at.  To do this sort of thing
  * safely, you *must* pstrdup what setlocale returns the first time.
  *
  * FYI, The Open Group locale standard is defined here:
@@ -253,7 +253,7 @@ check_locale(int category, const char *value)
  *
  * For most locale categories, the assign hook doesn't actually set the locale
  * permanently, just reset flags so that the next use will cache the
- * appropriate values.	(See explanation at the top of this file.)
+ * appropriate values.  (See explanation at the top of this file.)
  *
  * Note: we accept value = "" as selecting the postmaster's environment
  * value, whatever it was (so long as the environment setting is legal).
@@ -766,7 +766,7 @@ IsoLocaleName(const char *winlocname)
  * could fail if the locale is C, so str_tolower() shouldn't call it
  * in that case.
  *
- * Note that we currently lack any way to flush the cache.	Since we don't
+ * Note that we currently lack any way to flush the cache.  Since we don't
  * support ALTER COLLATION, this is OK.  The worst case is that someone
  * drops a collation, and a useless cache entry hangs around in existing
  * backends.
@@ -960,7 +960,7 @@ report_newlocale_failure(const char *localename)
 
 
 /*
- * Create a locale_t from a collation OID.	Results are cached for the
+ * Create a locale_t from a collation OID.  Results are cached for the
  * lifetime of the backend.  Thus, do not free the result with freelocale().
  *
  * As a special optimization, the default/database collation returns 0.
@@ -1143,7 +1143,7 @@ wchar2char(char *to, const wchar_t *from, size_t tolen, pg_locale_t locale)
  * This has almost the API of mbstowcs_l(), except that *from need not be
  * null-terminated; instead, the number of input bytes is specified as
  * fromlen.  Also, we ereport() rather than returning -1 for invalid
- * input encoding.	tolen is the maximum number of wchar_t's to store at *to.
+ * input encoding.  tolen is the maximum number of wchar_t's to store at *to.
  * The output will be zero-terminated iff there is room.
  */
 size_t

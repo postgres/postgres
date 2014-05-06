@@ -27,7 +27,7 @@
 #include "utils/relcache.h"
 
 /* ----------------
- *		pg_db_role_setting definition.	cpp turns this into
+ *		pg_db_role_setting definition.  cpp turns this into
  *		typedef struct FormData_pg_db_role_setting
  * ----------------
  */

@@ -147,7 +147,7 @@ win32_check_directory_write_permissions(void)
  *
  *	This function validates the given cluster directory - we search for a
  *	small set of subdirectories that we expect to find in a valid $PGDATA
- *	directory.	If any of the subdirectories are missing (or secured against
+ *	directory.  If any of the subdirectories are missing (or secured against
  *	us) we display an error message and exit()
  *
  */
@@ -187,7 +187,7 @@ check_data_dir(const char *pg_data)
  * check_bin_dir()
  *
  *	This function searches for the executables that we expect to find
- *	in the binaries directory.	If we find that a required executable
+ *	in the binaries directory.  If we find that a required executable
  *	is missing (or secured against us), we display an error message and
  *	exit().
  */

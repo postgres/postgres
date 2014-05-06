@@ -242,7 +242,7 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 
 	/*
 	 * If we're dealing with a relation or attribute, then the relation is
-	 * already locked.	If we're dealing with any other type of object, we
+	 * already locked.  If we're dealing with any other type of object, we
 	 * need to lock it and then verify that it still exists.
 	 */
 	if (address.classId != RelationRelationId)

@@ -278,7 +278,7 @@ pg_sleep(PG_FUNCTION_ARGS)
 	 * pg_usleep's upper bound on allowed delays.
 	 *
 	 * By computing the intended stop time initially, we avoid accumulation of
-	 * extra delay across multiple sleeps.	This also ensures we won't delay
+	 * extra delay across multiple sleeps.  This also ensures we won't delay
 	 * less than the specified time if pg_usleep is interrupted by other
 	 * signals such as SIGHUP.
 	 */

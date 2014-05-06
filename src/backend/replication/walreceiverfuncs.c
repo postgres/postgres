@@ -220,7 +220,7 @@ RequestXLogStreaming(XLogRecPtr recptr, const char *conninfo)
  * Returns the last+1 byte position that walreceiver has written.
  *
  * Optionally, returns the previous chunk start, that is the first byte
- * written in the most recent walreceiver flush cycle.	Callers not
+ * written in the most recent walreceiver flush cycle.  Callers not
  * interested in that value may pass NULL for latestChunkStart.
  */
 XLogRecPtr

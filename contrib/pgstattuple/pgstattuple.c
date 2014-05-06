@@ -299,7 +299,7 @@ pgstat_heap(Relation rel, FunctionCallInfo fcinfo)
 
 		/*
 		 * To avoid physically reading the table twice, try to do the
-		 * free-space scan in parallel with the heap scan.	However,
+		 * free-space scan in parallel with the heap scan.  However,
 		 * heap_getnext may find no tuples on a given page, so we cannot
 		 * simply examine the pages returned by the heap scan.
 		 */

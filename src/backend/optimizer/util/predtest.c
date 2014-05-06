@@ -135,7 +135,7 @@ predicate_implied_by(List *predicate_list, List *restrictinfo_list)
 
 	/*
 	 * If either input is a single-element list, replace it with its lone
-	 * member; this avoids one useless level of AND-recursion.	We only need
+	 * member; this avoids one useless level of AND-recursion.  We only need
 	 * to worry about this at top level, since eval_const_expressions should
 	 * have gotten rid of any trivial ANDs or ORs below that.
 	 */
@@ -193,7 +193,7 @@ predicate_refuted_by(List *predicate_list, List *restrictinfo_list)
 
 	/*
 	 * If either input is a single-element list, replace it with its lone
-	 * member; this avoids one useless level of AND-recursion.	We only need
+	 * member; this avoids one useless level of AND-recursion.  We only need
 	 * to worry about this at top level, since eval_const_expressions should
 	 * have gotten rid of any trivial ANDs or ORs below that.
 	 */
@@ -227,7 +227,7 @@ predicate_refuted_by(List *predicate_list, List *restrictinfo_list)
  *	OR-expr A => AND-expr B iff:	A => each of B's components
  *	OR-expr A => OR-expr B iff:		each of A's components => any of B's
  *
- * An "atom" is anything other than an AND or OR node.	Notice that we don't
+ * An "atom" is anything other than an AND or OR node.  Notice that we don't
  * have any special logic to handle NOT nodes; these should have been pushed
  * down or eliminated where feasible by prepqual.c.
  *
@@ -660,7 +660,7 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
 			 * We cannot make the stronger conclusion that B is refuted if B
 			 * implies A's arg; that would only prove that B is not-TRUE, not
 			 * that it's not NULL either.  Hence use equal() rather than
-			 * predicate_implied_by_recurse().	We could do the latter if we
+			 * predicate_implied_by_recurse().  We could do the latter if we
 			 * ever had a need for the weak form of refutation.
 			 */
 			not_arg = extract_strong_not_arg(clause);
@@ -822,7 +822,7 @@ predicate_classify(Node *clause, PredIterInfo info)
 }
 
 /*
- * PredIterInfo routines for iterating over regular Lists.	The iteration
+ * PredIterInfo routines for iterating over regular Lists.  The iteration
  * state variable is the next ListCell to visit.
  */
 static void
@@ -1016,13 +1016,13 @@ arrayexpr_cleanup_fn(PredIterInfo info)
  * implies another:
  *
  * A simple and general way is to see if they are equal(); this works for any
- * kind of expression.	(Actually, there is an implied assumption that the
+ * kind of expression.  (Actually, there is an implied assumption that the
  * functions in the expression are immutable, ie dependent only on their input
  * arguments --- but this was checked for the predicate by the caller.)
  *
  * When the predicate is of the form "foo IS NOT NULL", we can conclude that
  * the predicate is implied if the clause is a strict operator or function
- * that has "foo" as an input.	In this case the clause must yield NULL when
+ * that has "foo" as an input.  In this case the clause must yield NULL when
  * "foo" is NULL, which we can take as equivalent to FALSE because we know
  * we are within an AND/OR subtree of a WHERE clause.  (Again, "foo" is
  * already known immutable, so the clause will certainly always fail.)
@@ -1246,7 +1246,7 @@ list_member_strip(List *list, Expr *datum)
  *
  * The strategy numbers defined by btree indexes (see access/skey.h) are:
  *		(1) <	(2) <=	 (3) =	 (4) >=   (5) >
- * and in addition we use (6) to represent <>.	<> is not a btree-indexable
+ * and in addition we use (6) to represent <>.  <> is not a btree-indexable
  * operator, but we assume here that if an equality operator of a btree
  * opfamily has a negator operator, the negator behaves as <> for the opfamily.
  * (This convention is also known to get_op_btree_interpretation().)
@@ -1330,7 +1330,7 @@ static const StrategyNumber BT_refute_table[6][6] = {
  * if not able to prove it.
  *
  * What we look for here is binary boolean opclauses of the form
- * "foo op constant", where "foo" is the same in both clauses.	The operators
+ * "foo op constant", where "foo" is the same in both clauses.  The operators
  * and constants can be different but the operators must be in the same btree
  * operator family.  We use the above operator implication tables to
  * derive implications between nonidentical clauses.  (Note: "foo" is known
@@ -1420,7 +1420,7 @@ btree_predicate_proof(Expr *predicate, Node *clause, bool refute_it)
 	/*
 	 * Check for matching subexpressions on the non-Const sides.  We used to
 	 * only allow a simple Var, but it's about as easy to allow any
-	 * expression.	Remember we already know that the pred expression does not
+	 * expression.  Remember we already know that the pred expression does not
 	 * contain any non-immutable functions, so identical expressions should
 	 * yield identical results.
 	 */
@@ -1692,7 +1692,7 @@ get_btree_test_op(Oid pred_op, Oid clause_op, bool refute_it)
 			 * Last check: test_op must be immutable.
 			 *
 			 * Note that we require only the test_op to be immutable, not the
-			 * original clause_op.	(pred_op is assumed to have been checked
+			 * original clause_op.  (pred_op is assumed to have been checked
 			 * immutable by the caller.)  Essentially we are assuming that the
 			 * opfamily is consistent even if it contains operators that are
 			 * merely stable.

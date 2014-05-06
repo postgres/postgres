@@ -528,7 +528,7 @@ textlen(PG_FUNCTION_ARGS)
  *	Does the real work for textlen()
  *
  *	This is broken out so it can be called directly by other string processing
- *	functions.	Note that the argument is passed as a Datum, to indicate that
+ *	functions.  Note that the argument is passed as a Datum, to indicate that
  *	it may still be in compressed form.  We can avoid decompressing it at all
  *	in some cases.
  */
@@ -700,7 +700,7 @@ text_substr_no_len(PG_FUNCTION_ARGS)
  *	Does the real work for text_substr() and text_substr_no_len()
  *
  *	This is broken out so it can be called directly by other string processing
- *	functions.	Note that the argument is passed as a Datum, to indicate that
+ *	functions.  Note that the argument is passed as a Datum, to indicate that
  *	it may still be in compressed/toasted form.  We can avoid detoasting all
  *	of it in some cases.
  *
@@ -1050,7 +1050,7 @@ text_position_setup(text *t1, text *t2, TextPositionState *state)
 	 * searched (t1) and the "needle" is the pattern being sought (t2).
 	 *
 	 * If the needle is empty or bigger than the haystack then there is no
-	 * point in wasting cycles initializing the table.	We also choose not to
+	 * point in wasting cycles initializing the table.  We also choose not to
 	 * use B-M-H for needles of length 1, since the skip table can't possibly
 	 * save anything in that case.
 	 */
@@ -1066,7 +1066,7 @@ text_position_setup(text *t1, text *t2, TextPositionState *state)
 		 * declaration of TextPositionState allows up to 256 elements, but for
 		 * short search problems we don't really want to have to initialize so
 		 * many elements --- it would take too long in comparison to the
-		 * actual search time.	So we choose a useful skip table size based on
+		 * actual search time.  So we choose a useful skip table size based on
 		 * the haystack length minus the needle length.  The closer the needle
 		 * length is to the haystack length the less useful skipping becomes.
 		 *
@@ -1098,7 +1098,7 @@ text_position_setup(text *t1, text *t2, TextPositionState *state)
 			state->skiptable[i] = len2;
 
 		/*
-		 * Now examine the needle.	For each character except the last one,
+		 * Now examine the needle.  For each character except the last one,
 		 * set the corresponding table element to the appropriate skip
 		 * distance.  Note that when two characters share the same skip table
 		 * entry, the one later in the needle must determine the skip
@@ -1186,11 +1186,11 @@ text_position_next(int start_pos, TextPositionState *state)
 
 				/*
 				 * No match, so use the haystack char at hptr to decide how
-				 * far to advance.	If the needle had any occurrence of that
+				 * far to advance.  If the needle had any occurrence of that
 				 * character (or more precisely, one sharing the same
 				 * skiptable entry) before its last character, then we advance
 				 * far enough to align the last such needle character with
-				 * that haystack position.	Otherwise we can advance by the
+				 * that haystack position.  Otherwise we can advance by the
 				 * whole needle length.
 				 */
 				hptr += state->skiptable[(unsigned char) *hptr & skiptablemask];
@@ -1242,11 +1242,11 @@ text_position_next(int start_pos, TextPositionState *state)
 
 				/*
 				 * No match, so use the haystack char at hptr to decide how
-				 * far to advance.	If the needle had any occurrence of that
+				 * far to advance.  If the needle had any occurrence of that
 				 * character (or more precisely, one sharing the same
 				 * skiptable entry) before its last character, then we advance
 				 * far enough to align the last such needle character with
-				 * that haystack position.	Otherwise we can advance by the
+				 * that haystack position.  Otherwise we can advance by the
 				 * whole needle length.
 				 */
 				hptr += state->skiptable[*hptr & skiptablemask];
@@ -1281,7 +1281,7 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2, Oid collid)
 
 	/*
 	 * Unfortunately, there is no strncoll(), so in the non-C locale case we
-	 * have to do some memory copying.	This turns out to be significantly
+	 * have to do some memory copying.  This turns out to be significantly
 	 * slower, so we optimize the case where LC_COLLATE is C.  We also try to
 	 * optimize relatively-short strings by avoiding palloc/pfree overhead.
 	 */
@@ -2266,7 +2266,7 @@ textToQualifiedNameList(text *textval)
  * SplitIdentifierString --- parse a string containing identifiers
  *
  * This is the guts of textToQualifiedNameList, and is exported for use in
- * other situations such as parsing GUC variables.	In the GUC case, it's
+ * other situations such as parsing GUC variables.  In the GUC case, it's
  * important to avoid memory leaks, so the API is designed to minimize the
  * amount of stuff that needs to be allocated and freed.
  *
@@ -2274,7 +2274,7 @@ textToQualifiedNameList(text *textval)
  *	rawstring: the input string; must be overwritable!	On return, it's
  *			   been modified to contain the separated identifiers.
  *	separator: the separator punctuation expected between identifiers
- *			   (typically '.' or ',').	Whitespace may also appear around
+ *			   (typically '.' or ',').  Whitespace may also appear around
  *			   identifiers.
  * Outputs:
  *	namelist: filled with a palloc'd list of pointers to identifiers within
@@ -2343,7 +2343,7 @@ SplitIdentifierString(char *rawstring, char separator,
 			 *
 			 * XXX because we want to overwrite the input in-place, we cannot
 			 * support a downcasing transformation that increases the string
-			 * length.	This is not a problem given the current implementation
+			 * length.  This is not a problem given the current implementation
 			 * of downcase_truncate_identifier, but we'll probably have to do
 			 * something about this someday.
 			 */
@@ -2694,7 +2694,7 @@ check_replace_text_has_escape_char(const text *replace_text)
  * appendStringInfoRegexpSubstr
  *
  * Append replace_text to str, substituting regexp back references for
- * \n escapes.	start_ptr is the start of the match in the source string,
+ * \n escapes.  start_ptr is the start of the match in the source string,
  * at logical character position data_pos.
  */
 static void
@@ -2777,7 +2777,7 @@ appendStringInfoRegexpSubstr(StringInfo str, text *replace_text,
 		if (so != -1 && eo != -1)
 		{
 			/*
-			 * Copy the text that is back reference of regexp.	Note so and eo
+			 * Copy the text that is back reference of regexp.  Note so and eo
 			 * are counted in characters not bytes.
 			 */
 			char	   *chunk_start;

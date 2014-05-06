@@ -612,7 +612,7 @@ ltreeparentsel(PG_FUNCTION_ARGS)
 		/*
 		 * If the histogram is large enough, see what fraction of it the
 		 * constant is "<@" to, and assume that's representative of the
-		 * non-MCV population.	Otherwise use the default selectivity for the
+		 * non-MCV population.  Otherwise use the default selectivity for the
 		 * non-MCV population.
 		 */
 		selec = histogram_selectivity(&vardata, &contproc,

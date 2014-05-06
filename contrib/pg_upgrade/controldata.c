@@ -25,7 +25,7 @@
  * pg_control data.  pg_resetxlog cannot be run while the server is running
  * so we use pg_controldata;  pg_controldata doesn't provide all the fields
  * we need to actually perform the upgrade, but it provides enough for
- * check mode.	We do not implement pg_resetxlog -n because it is hard to
+ * check mode.  We do not implement pg_resetxlog -n because it is hard to
  * return valid xid data for a running server.
  */
 void

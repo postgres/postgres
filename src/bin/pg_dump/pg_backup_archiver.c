@@ -592,8 +592,8 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te,
 					/*
 					 * In parallel restore, if we created the table earlier in
 					 * the run then we wrap the COPY in a transaction and
-					 * precede it with a TRUNCATE.	If archiving is not on
-					 * this prevents WAL-logging the COPY.	This obtains a
+					 * precede it with a TRUNCATE.  If archiving is not on
+					 * this prevents WAL-logging the COPY.  This obtains a
 					 * speedup similar to that from using single_txn mode in
 					 * non-parallel restores.
 					 */
@@ -2543,7 +2543,7 @@ _doSetSessionAuth(ArchiveHandle *AH, const char *user)
 	appendPQExpBuffer(cmd, "SET SESSION AUTHORIZATION ");
 
 	/*
-	 * SQL requires a string literal here.	Might as well be correct.
+	 * SQL requires a string literal here.  Might as well be correct.
 	 */
 	if (user && *user)
 		appendStringLiteralAHX(cmd, user, AH);
@@ -2674,7 +2674,7 @@ _becomeUser(ArchiveHandle *AH, const char *user)
 }
 
 /*
- * Become the owner of the given TOC entry object.	If
+ * Become the owner of the given TOC entry object.  If
  * changes in ownership are not allowed, this doesn't do anything.
  */
 static void
@@ -3165,7 +3165,7 @@ ReadHead(ArchiveHandle *AH)
 	/*
 	 * If we haven't already read the header, do so.
 	 *
-	 * NB: this code must agree with _discoverArchiveFormat().	Maybe find a
+	 * NB: this code must agree with _discoverArchiveFormat().  Maybe find a
 	 * way to unify the cases?
 	 */
 	if (!AH->readHeader)
@@ -3276,7 +3276,7 @@ checkSeek(FILE *fp)
 		return false;
 
 	/*
-	 * Check that fseeko(SEEK_SET) works, too.	NB: we used to try to test
+	 * Check that fseeko(SEEK_SET) works, too.  NB: we used to try to test
 	 * this with fseeko(fp, 0, SEEK_CUR).  But some platforms treat that as a
 	 * successful no-op even on files that are otherwise unseekable.
 	 */
@@ -3317,7 +3317,7 @@ dumpTimestamp(ArchiveHandle *AH, const char *msg, time_t tim)
  *
  * Work is done in three phases.
  * First we process all SECTION_PRE_DATA tocEntries, in a single connection,
- * just as for a standard restore.	Second we process the remaining non-ACL
+ * just as for a standard restore.  Second we process the remaining non-ACL
  * steps in parallel worker children (threads on Windows, processes on Unix),
  * each of which connects separately to the database.  Finally we process all
  * the ACL entries in a single connection (that happens back in
@@ -3349,7 +3349,7 @@ restore_toc_entries_parallel(ArchiveHandle *AH)
 	 * Do all the early stuff in a single connection in the parent. There's no
 	 * great point in running it in parallel, in fact it will actually run
 	 * faster in a single connection because we avoid all the connection and
-	 * setup overhead.	Also, pg_dump is not currently very good about showing
+	 * setup overhead.  Also, pg_dump is not currently very good about showing
 	 * all the dependencies of SECTION_PRE_DATA items, so we do not risk
 	 * trying to process them out-of-order.
 	 */
@@ -3390,7 +3390,7 @@ restore_toc_entries_parallel(ArchiveHandle *AH)
 	}
 
 	/*
-	 * Now close parent connection in prep for parallel steps.	We do this
+	 * Now close parent connection in prep for parallel steps.  We do this
 	 * mainly to ensure that we don't exceed the specified number of parallel
 	 * connections.
 	 */
@@ -3413,7 +3413,7 @@ restore_toc_entries_parallel(ArchiveHandle *AH)
 	 * Initialize the lists of pending and ready items.  After this setup, the
 	 * pending list is everything that needs to be done but is blocked by one
 	 * or more dependencies, while the ready list contains items that have no
-	 * remaining dependencies.	Note: we don't yet filter out entries that
+	 * remaining dependencies.  Note: we don't yet filter out entries that
 	 * aren't going to be restored.  They might participate in dependency
 	 * chains connecting entries that should be restored, so we treat them as
 	 * live until we actually process them.
@@ -3980,7 +3980,7 @@ fix_dependencies(ArchiveHandle *AH)
 	 * Note: currently, a TABLE DATA should always have exactly one
 	 * dependency, on its TABLE item.  So we don't bother to search, but look
 	 * just at the first dependency.  We do trouble to make sure that it's a
-	 * TABLE, if possible.	However, if the dependency isn't in the archive
+	 * TABLE, if possible.  However, if the dependency isn't in the archive
 	 * then just assume it was a TABLE; this is to cover cases where the table
 	 * was suppressed but we have the data and some dependent post-data items.
 	 *

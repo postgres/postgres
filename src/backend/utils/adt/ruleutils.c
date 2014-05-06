@@ -877,7 +877,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 	context = deparse_context_for(get_relation_name(indrelid), indrelid);
 
 	/*
-	 * Start the index definition.	Note that the index's name should never be
+	 * Start the index definition.  Note that the index's name should never be
 	 * schema-qualified, but the indexed rel's name may be.
 	 */
 	initStringInfo(&buf);
@@ -1305,7 +1305,7 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 												   prettyFlags, 0);
 
 				/*
-				 * Now emit the constraint definition.	There are cases where
+				 * Now emit the constraint definition.  There are cases where
 				 * the constraint expression will be fully parenthesized and
 				 * we don't need the outer parens ... but there are other
 				 * cases where we do need 'em.  Be conservative for now.
@@ -2126,7 +2126,7 @@ deparse_expression_pretty(Node *expr, List *dpcontext,
  *
  * Given the reference name (alias) and OID of a relation, build deparsing
  * context for an expression referencing only that relation (as varno 1,
- * varlevelsup 0).	This is sufficient for many uses of deparse_expression.
+ * varlevelsup 0).  This is sufficient for many uses of deparse_expression.
  * ----------
  */
 List *
@@ -2211,7 +2211,7 @@ set_deparse_planstate(deparse_namespace *dpns, PlanState *ps)
 	 * We special-case Append and MergeAppend to pretend that the first child
 	 * plan is the OUTER referent; we have to interpret OUTER Vars in their
 	 * tlists according to one of the children, and the first one is the most
-	 * natural choice.	Likewise special-case ModifyTable to pretend that the
+	 * natural choice.  Likewise special-case ModifyTable to pretend that the
 	 * first child plan is the OUTER referent; this is to support RETURNING
 	 * lists containing references to non-target relations.
 	 */
@@ -2251,7 +2251,7 @@ set_deparse_planstate(deparse_namespace *dpns, PlanState *ps)
  * push_child_plan: temporarily transfer deparsing attention to a child plan
  *
  * When expanding an OUTER or INNER reference, we must adjust the deparse
- * context in case the referenced expression itself uses OUTER/INNER.	We
+ * context in case the referenced expression itself uses OUTER/INNER.   We
  * modify the top stack entry in-place to avoid affecting levelsup issues
  * (although in a Plan tree there really shouldn't be any).
  *
@@ -2615,8 +2615,8 @@ get_query_def(Query *query, StringInfo buf, List *parentnamespace,
 
 	/*
 	 * Before we begin to examine the query, acquire locks on referenced
-	 * relations, and fix up deleted columns in JOIN RTEs.	This ensures
-	 * consistent results.	Note we assume it's OK to scribble on the passed
+	 * relations, and fix up deleted columns in JOIN RTEs.  This ensures
+	 * consistent results.  Note we assume it's OK to scribble on the passed
 	 * querytree!
 	 *
 	 * We are only deparsing the query (we are not about to execute it), so we
@@ -3036,7 +3036,7 @@ get_target_list(List *targetList, deparse_context *context,
 		}
 
 		/*
-		 * Figure out what the result column should be called.	In the context
+		 * Figure out what the result column should be called.  In the context
 		 * of a view, use the view's tuple descriptor (so as to pick up the
 		 * effects of any column RENAME that's been done on the view).
 		 * Otherwise, just use what we can find in the TLE.
@@ -3176,7 +3176,7 @@ get_rule_sortgroupclause(SortGroupClause *srt, List *tlist, bool force_colno,
 	 * expression is a constant, force it to be dumped with an explicit cast
 	 * as decoration --- this is because a simple integer constant is
 	 * ambiguous (and will be misinterpreted by findTargetlistEntry()) if we
-	 * dump it without any decoration.	Otherwise, just dump the expression
+	 * dump it without any decoration.  Otherwise, just dump the expression
 	 * normally.
 	 */
 	if (force_colno)
@@ -4292,7 +4292,7 @@ get_name_for_var_field(Var *var, int fieldno,
 
 	/*
 	 * We now have an expression we can't expand any more, so see if
-	 * get_expr_result_type() can do anything with it.	If not, pass to
+	 * get_expr_result_type() can do anything with it.  If not, pass to
 	 * lookup_rowtype_tupdesc() which will probably fail, but will give an
 	 * appropriate error message while failing.
 	 */
@@ -4920,10 +4920,10 @@ get_rule_expr(Node *node, deparse_context *context,
 
 				/*
 				 * If there's a refassgnexpr, we want to print the node in the
-				 * format "array[subscripts] := refassgnexpr".	This is not
+				 * format "array[subscripts] := refassgnexpr".  This is not
 				 * legal SQL, so decompilation of INSERT or UPDATE statements
 				 * should always use processIndirection as part of the
-				 * statement-level syntax.	We should only see this when
+				 * statement-level syntax.  We should only see this when
 				 * EXPLAIN tries to print the targetlist of a plan resulting
 				 * from such a statement.
 				 */
@@ -5082,7 +5082,7 @@ get_rule_expr(Node *node, deparse_context *context,
 
 				/*
 				 * We cannot see an already-planned subplan in rule deparsing,
-				 * only while EXPLAINing a query plan.	We don't try to
+				 * only while EXPLAINing a query plan.  We don't try to
 				 * reconstruct the original SQL, just reference the subplan
 				 * that appears elsewhere in EXPLAIN's result.
 				 */
@@ -5155,14 +5155,14 @@ get_rule_expr(Node *node, deparse_context *context,
 				 * There is no good way to represent a FieldStore as real SQL,
 				 * so decompilation of INSERT or UPDATE statements should
 				 * always use processIndirection as part of the
-				 * statement-level syntax.	We should only get here when
+				 * statement-level syntax.  We should only get here when
 				 * EXPLAIN tries to print the targetlist of a plan resulting
 				 * from such a statement.  The plan case is even harder than
 				 * ordinary rules would be, because the planner tries to
 				 * collapse multiple assignments to the same field or subfield
 				 * into one FieldStore; so we can see a list of target fields
 				 * not just one, and the arguments could be FieldStores
-				 * themselves.	We don't bother to try to print the target
+				 * themselves.  We don't bother to try to print the target
 				 * field names; we just print the source arguments, with a
 				 * ROW() around them if there's more than one.  This isn't
 				 * terribly complete, but it's probably good enough for
@@ -6058,7 +6058,7 @@ get_coercion_expr(Node *arg, deparse_context *context,
 	 * Since parse_coerce.c doesn't immediately collapse application of
 	 * length-coercion functions to constants, what we'll typically see in
 	 * such cases is a Const with typmod -1 and a length-coercion function
-	 * right above it.	Avoid generating redundant output. However, beware of
+	 * right above it.  Avoid generating redundant output. However, beware of
 	 * suppressing casts when the user actually wrote something like
 	 * 'foo'::text::char(3).
 	 */
@@ -6140,7 +6140,7 @@ get_const_expr(Const *constval, deparse_context *context, int showtype)
 				/*
 				 * These types are printed without quotes unless they contain
 				 * values that aren't accepted by the scanner unquoted (e.g.,
-				 * 'NaN').	Note that strtod() and friends might accept NaN,
+				 * 'NaN').  Note that strtod() and friends might accept NaN,
 				 * so we can't use that to test.
 				 *
 				 * In reality we only need to defend against infinity and NaN,
@@ -6795,7 +6795,7 @@ get_opclass_name(Oid opclass, Oid actual_datatype,
 	if (!OidIsValid(actual_datatype) ||
 		GetDefaultOpClass(actual_datatype, opcrec->opcmethod) != opclass)
 	{
-		/* Okay, we need the opclass name.	Do we need to qualify it? */
+		/* Okay, we need the opclass name.  Do we need to qualify it? */
 		opcname = NameStr(opcrec->opcname);
 		if (OpclassIsVisible(opclass))
 			appendStringInfo(buf, " %s", quote_identifier(opcname));
@@ -7090,9 +7090,9 @@ generate_relation_name(Oid relid, List *namespaces)
  * generate_function_name
  *		Compute the name to display for a function specified by OID,
  *		given that it is being called with the specified actual arg names and
- *		types.	(Those matter because of ambiguous-function resolution rules.)
+ *		types.  (Those matter because of ambiguous-function resolution rules.)
  *
- * The result includes all necessary quoting and schema-prefixing.	We can
+ * The result includes all necessary quoting and schema-prefixing.  We can
  * also pass back an indication of whether the function is variadic.
  */
 static char *
@@ -7120,7 +7120,7 @@ generate_function_name(Oid funcid, int nargs, List *argnames,
 	/*
 	 * The idea here is to schema-qualify only if the parser would fail to
 	 * resolve the correct function given the unqualified func name with the
-	 * specified argtypes.	If the function is variadic, we should presume
+	 * specified argtypes.  If the function is variadic, we should presume
 	 * that VARIADIC will be included in the call.
 	 */
 	p_result = func_get_detail(list_make1(makeString(proname)),

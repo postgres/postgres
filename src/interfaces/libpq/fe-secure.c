@@ -1039,7 +1039,7 @@ destroy_ssl_system(void)
  *	Initialize (potentially) per-connection SSL data, namely the
  *	client certificate, private key, and trusted CA certs.
  *
- *	conn->ssl must already be created.	It receives the connection's client
+ *	conn->ssl must already be created.  It receives the connection's client
  *	certificate and private key.  Note however that certificates also get
  *	loaded into the SSL_context object, and are therefore accessible to all
  *	connections in this process.  This should be OK as long as there aren't
@@ -1404,7 +1404,7 @@ initialize_SSL(PGconn *conn)
 	{
 		/*
 		 * stat() failed; assume root file doesn't exist.  If sslmode is
-		 * verify-ca or verify-full, this is an error.	Otherwise, continue
+		 * verify-ca or verify-full, this is an error.  Otherwise, continue
 		 * without performing any server cert verification.
 		 */
 		if (conn->sslmode[0] == 'v')	/* "verify-ca" or "verify-full" */
@@ -1642,7 +1642,7 @@ PQgetssl(PGconn *conn)
 #if defined(ENABLE_THREAD_SAFETY) && !defined(WIN32)
 
 /*
- *	Block SIGPIPE for this thread.	This prevents send()/write() from exiting
+ *	Block SIGPIPE for this thread.  This prevents send()/write() from exiting
  *	the application.
  */
 int
@@ -1681,7 +1681,7 @@ pq_block_sigpipe(sigset_t *osigset, bool *sigpipe_pending)
  *	Discard any pending SIGPIPE and reset the signal mask.
  *
  * Note: we are effectively assuming here that the C library doesn't queue
- * up multiple SIGPIPE events.	If it did, then we'd accidentally leave
+ * up multiple SIGPIPE events.  If it did, then we'd accidentally leave
  * ours in the queue when an event was already pending and we got another.
  * As long as it doesn't queue multiple events, we're OK because the caller
  * can't tell the difference.
@@ -1692,7 +1692,7 @@ pq_block_sigpipe(sigset_t *osigset, bool *sigpipe_pending)
  * gotten one, pass got_epipe = TRUE.
  *
  * We do not want this to change errno, since if it did that could lose
- * the error code from a preceding send().	We essentially assume that if
+ * the error code from a preceding send().  We essentially assume that if
  * we were able to do pq_block_sigpipe(), this can't fail.
  */
 void

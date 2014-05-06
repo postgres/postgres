@@ -266,7 +266,7 @@ pg_putenv(const char *var, const char *val)
 
 		/*
 		 * Do not free envstr because it becomes part of the environment on
-		 * some operating systems.	See port/unsetenv.c::unsetenv.
+		 * some operating systems.  See port/unsetenv.c::unsetenv.
 		 */
 #else
 		SetEnvironmentVariableA(var, val);

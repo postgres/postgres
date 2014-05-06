@@ -38,7 +38,7 @@ CATALOG(pg_constraint,2606)
 	 * relations.  This is partly for backwards compatibility with past
 	 * Postgres practice, and partly because we don't want to have to obtain a
 	 * global lock to generate a globally unique name for a nameless
-	 * constraint.	We associate a namespace with constraint names only for
+	 * constraint.  We associate a namespace with constraint names only for
 	 * SQL-spec compatibility.
 	 */
 	NameData	conname;		/* name of this constraint */
@@ -57,7 +57,7 @@ CATALOG(pg_constraint,2606)
 
 	/*
 	 * contypid links to the pg_type row for a domain if this is a domain
-	 * constraint.	Otherwise it's 0.
+	 * constraint.  Otherwise it's 0.
 	 *
 	 * For SQL-style global ASSERTIONs, both conrelid and contypid would be
 	 * zero. This is not presently supported, however.
@@ -76,7 +76,7 @@ CATALOG(pg_constraint,2606)
 
 	/*
 	 * These fields, plus confkey, are only meaningful for a foreign-key
-	 * constraint.	Otherwise confrelid is 0 and the char fields are spaces.
+	 * constraint.  Otherwise confrelid is 0 and the char fields are spaces.
 	 */
 	Oid			confrelid;		/* relation referenced by foreign key */
 	char		confupdtype;	/* foreign key's ON UPDATE action */

@@ -15,7 +15,7 @@
  *
  * We use a control LWLock to protect the shared data structures, plus
  * per-buffer LWLocks that synchronize I/O for each buffer.  The control lock
- * must be held to examine or modify any shared state.	A process that is
+ * must be held to examine or modify any shared state.  A process that is
  * reading in or writing out a page buffer does not hold the control lock,
  * only the per-buffer lock for the buffer it is working on.
  *
@@ -34,7 +34,7 @@
  * could have happened while we didn't have the lock).
  *
  * As with the regular buffer manager, it is possible for another process
- * to re-dirty a page that is currently being written out.	This is handled
+ * to re-dirty a page that is currently being written out.  This is handled
  * by re-setting the page's page_dirty flag.
  *
  *
@@ -96,7 +96,7 @@ typedef struct SlruFlushData *SlruFlush;
  * page_lru_count entries to be "reset" to lower values than they should have,
  * in case a process is delayed while it executes this macro.  With care in
  * SlruSelectLRUPage(), this does little harm, and in any case the absolute
- * worst possible consequence is a nonoptimal choice of page to evict.	The
+ * worst possible consequence is a nonoptimal choice of page to evict.  The
  * gain from allowing concurrent reads of SLRU pages seems worth it.
  */
 #define SlruRecentlyUsed(shared, slotno)	\
@@ -483,7 +483,7 @@ SimpleLruReadPage_ReadOnly(SlruCtl ctl, int pageno, TransactionId xid)
  *
  * NOTE: only one write attempt is made here.  Hence, it is possible that
  * the page is still dirty at exit (if someone else re-dirtied it during
- * the write).	However, we *do* attempt a fresh write even if the page
+ * the write).  However, we *do* attempt a fresh write even if the page
  * is already being written; this is for checkpoints.
  *
  * Control lock must be held at entry, and will be held at exit.
@@ -592,7 +592,7 @@ SlruPhysicalReadPage(SlruCtl ctl, int pageno, int slotno)
 	 * In a crash-and-restart situation, it's possible for us to receive
 	 * commands to set the commit status of transactions whose bits are in
 	 * already-truncated segments of the commit log (see notes in
-	 * SlruPhysicalWritePage).	Hence, if we are InRecovery, allow the case
+	 * SlruPhysicalWritePage).  Hence, if we are InRecovery, allow the case
 	 * where the file doesn't exist, and return zeroes instead.
 	 */
 	fd = BasicOpenFile(path, O_RDWR | PG_BINARY, S_IRUSR | S_IWUSR);
@@ -1123,7 +1123,7 @@ restart:;
 		/*
 		 * Hmm, we have (or may have) I/O operations acting on the page, so
 		 * we've got to wait for them to finish and then start again. This is
-		 * the same logic as in SlruSelectLRUPage.	(XXX if page is dirty,
+		 * the same logic as in SlruSelectLRUPage.  (XXX if page is dirty,
 		 * wouldn't it be OK to just discard it without writing it?  For now,
 		 * keep the logic the same as it was.)
 		 */

@@ -291,7 +291,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 		/*
 		 * If the two paths compare differently for startup and total cost,
 		 * then we want to keep both, and we can skip the (much slower)
-		 * comparison of pathkeys.	If they compare the same, proceed with the
+		 * comparison of pathkeys.  If they compare the same, proceed with the
 		 * pathkeys comparison.  Note: this test relies on the fact that
 		 * compare_fuzzy_path_costs will only return 0 if both costs are
 		 * effectively equal (and, therefore, there's no need to call it twice
@@ -1187,7 +1187,7 @@ translate_sub_tlist(List *tlist, int relid)
  *
  * colnos is an integer list of output column numbers (resno's).  We are
  * interested in whether rows consisting of just these columns are certain
- * to be distinct.	"Distinctness" is defined according to whether the
+ * to be distinct.  "Distinctness" is defined according to whether the
  * corresponding upper-level equality operators listed in opids would think
  * the values are distinct.  (Note: the opids entries could be cross-type
  * operators, and thus not exactly the equality operators that the subquery
@@ -1308,7 +1308,7 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
  * distinct_col_search - subroutine for query_is_distinct_for
  *
  * If colno is in colnos, return the corresponding element of opids,
- * else return InvalidOid.	(We expect colnos does not contain duplicates,
+ * else return InvalidOid.  (We expect colnos does not contain duplicates,
  * so the result is well-defined.)
  */
 static Oid
@@ -1590,10 +1590,10 @@ create_hashjoin_path(PlannerInfo *root,
 
 	/*
 	 * A hashjoin never has pathkeys, since its output ordering is
-	 * unpredictable due to possible batching.	XXX If the inner relation is
+	 * unpredictable due to possible batching.  XXX If the inner relation is
 	 * small enough, we could instruct the executor that it must not batch,
 	 * and then we could assume that the output inherits the outer relation's
-	 * ordering, which might save a sort step.	However there is considerable
+	 * ordering, which might save a sort step.  However there is considerable
 	 * downside if our estimate of the inner relation size is badly off. For
 	 * the moment we don't risk it.  (Note also that if we wanted to take this
 	 * seriously, joinpath.c would have to consider many more paths for the

@@ -823,7 +823,7 @@ InitCatCache(int id,
  *		CatalogCacheInitializeCache
  *
  * This function does final initialization of a catcache: obtain the tuple
- * descriptor and set up the hash and equality function links.	We assume
+ * descriptor and set up the hash and equality function links.  We assume
  * that the relcache entry can be opened at this point!
  */
 #ifdef CACHEDEBUG
@@ -1048,7 +1048,7 @@ IndexScanOK(CatCache *cache, ScanKey cur_skey)
  *		if necessary (on the first access to a particular cache).
  *
  *		The result is NULL if not found, or a pointer to a HeapTuple in
- *		the cache.	The caller must not modify the tuple, and must call
+ *		the cache.  The caller must not modify the tuple, and must call
  *		ReleaseCatCache() when done with it.
  *
  * The search key values should be expressed as Datums of the key columns'
@@ -1175,8 +1175,8 @@ SearchCatCache(CatCache *cache,
 	 * the relation --- for example, due to shared-cache-inval messages being
 	 * processed during heap_open().  This is OK.  It's even possible for one
 	 * of those lookups to find and enter the very same tuple we are trying to
-	 * fetch here.	If that happens, we will enter a second copy of the tuple
-	 * into the cache.	The first copy will never be referenced again, and
+	 * fetch here.  If that happens, we will enter a second copy of the tuple
+	 * into the cache.  The first copy will never be referenced again, and
 	 * will eventually age out of the cache, so there's no functional problem.
 	 * This case is rare enough that it's not worth expending extra cycles to
 	 * detect.
@@ -1215,7 +1215,7 @@ SearchCatCache(CatCache *cache,
 	 *
 	 * In bootstrap mode, we don't build negative entries, because the cache
 	 * invalidation mechanism isn't alive and can't clear them if the tuple
-	 * gets created later.	(Bootstrap doesn't do UPDATEs, so it doesn't need
+	 * gets created later.  (Bootstrap doesn't do UPDATEs, so it doesn't need
 	 * cache inval for that.)
 	 */
 	if (ct == NULL)
@@ -1502,7 +1502,7 @@ SearchCatCacheList(CatCache *cache,
 		/*
 		 * We are now past the last thing that could trigger an elog before we
 		 * have finished building the CatCList and remembering it in the
-		 * resource owner.	So it's OK to fall out of the PG_TRY, and indeed
+		 * resource owner.  So it's OK to fall out of the PG_TRY, and indeed
 		 * we'd better do so before we start marking the members as belonging
 		 * to the list.
 		 */
@@ -1592,7 +1592,7 @@ ReleaseCatCacheList(CatCList *list)
 /*
  * CatalogCacheCreateEntry
  *		Create a new CatCTup entry, copying the given HeapTuple and other
- *		supplied data into it.	The new entry initially has refcount 0.
+ *		supplied data into it.  The new entry initially has refcount 0.
  */
 static CatCTup *
 CatalogCacheCreateEntry(CatCache *cache, HeapTuple ntp,
@@ -1727,7 +1727,7 @@ build_dummy_tuple(CatCache *cache, int nkeys, ScanKey skeys)
  *	the specified relation, find all catcaches it could be in, compute the
  *	correct hash value for each such catcache, and call the specified function
  *	to record the cache id, hash value, and tuple ItemPointer in inval.c's
- *	lists.	CatalogCacheIdInvalidate will be called later, if appropriate,
+ *	lists.  CatalogCacheIdInvalidate will be called later, if appropriate,
  *	using the recorded information.
  *
  *	Note that it is irrelevant whether the given tuple is actually loaded

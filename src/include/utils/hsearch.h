@@ -30,7 +30,7 @@ typedef int (*HashCompareFunc) (const void *key1, const void *key2,
 											Size keysize);
 
 /*
- * Key copying functions must have this signature.	The return value is not
+ * Key copying functions must have this signature.  The return value is not
  * used.  (The definition is set up to allow memcpy() and strncpy() to be
  * used directly.)
  */

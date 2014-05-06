@@ -26,9 +26,9 @@
 
 /*
  * The postmaster is signaled by its children by sending SIGUSR1.  The
- * specific reason is communicated via flags in shared memory.	We keep
+ * specific reason is communicated via flags in shared memory.  We keep
  * a boolean flag for each possible "reason", so that different reasons
- * can be signaled by different backends at the same time.	(However,
+ * can be signaled by different backends at the same time.  (However,
  * if the same reason is signaled more than once simultaneously, the
  * postmaster will observe it only once.)
  *
@@ -42,7 +42,7 @@
  * have three possible states: UNUSED, ASSIGNED, ACTIVE.  An UNUSED slot is
  * available for assignment.  An ASSIGNED slot is associated with a postmaster
  * child process, but either the process has not touched shared memory yet,
- * or it has successfully cleaned up after itself.	A ACTIVE slot means the
+ * or it has successfully cleaned up after itself.  A ACTIVE slot means the
  * process is actively using shared memory.  The slots are assigned to
  * child processes at random, and postmaster.c is responsible for tracking
  * which one goes with which PID.
@@ -297,7 +297,7 @@ PostmasterIsAlive(bool amDirectChild)
 	}
 
 	/*
-	 * Use kill() to see if the postmaster is still alive.	This can sometimes
+	 * Use kill() to see if the postmaster is still alive.  This can sometimes
 	 * give a false positive result, since the postmaster's PID may get
 	 * recycled, but it is good enough for existing uses by indirect children
 	 * and in debugging environments.

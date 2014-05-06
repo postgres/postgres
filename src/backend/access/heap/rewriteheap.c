@@ -10,7 +10,7 @@
  *
  * The caller is responsible for creating the new heap, all catalog
  * changes, supplying the tuples to be written to the new heap, and
- * rebuilding indexes.	The caller must hold AccessExclusiveLock on the
+ * rebuilding indexes.  The caller must hold AccessExclusiveLock on the
  * target table, because we assume no one else is writing into it.
  *
  * To use the facility:
@@ -43,7 +43,7 @@
  * to substitute the correct ctid instead.
  *
  * For each ctid reference from A -> B, we might encounter either A first
- * or B first.	(Note that a tuple in the middle of a chain is both A and B
+ * or B first.  (Note that a tuple in the middle of a chain is both A and B
  * of different pairs.)
  *
  * If we encounter A first, we'll store the tuple in the unresolved_tups
@@ -58,11 +58,11 @@
  * and can write A immediately with the correct ctid.
  *
  * Entries in the hash tables can be removed as soon as the later tuple
- * is encountered.	That helps to keep the memory usage down.  At the end,
+ * is encountered.  That helps to keep the memory usage down.  At the end,
  * both tables are usually empty; we should have encountered both A and B
  * of each pair.  However, it's possible for A to be RECENTLY_DEAD and B
  * entirely DEAD according to HeapTupleSatisfiesVacuum, because the test
- * for deadness using OldestXmin is not exact.	In such a case we might
+ * for deadness using OldestXmin is not exact.  In such a case we might
  * encounter B first, and skip it, and find A later.  Then A would be added
  * to unresolved_tups, and stay there until end of the rewrite.  Since
  * this case is very unusual, we don't worry about the memory usage.
@@ -78,7 +78,7 @@
  * of CLUSTERing on an unchanging key column, we'll see all the versions
  * of a given tuple together anyway, and so the peak memory usage is only
  * proportional to the number of RECENTLY_DEAD versions of a single row, not
- * in the whole table.	Note that if we do fail halfway through a CLUSTER,
+ * in the whole table.  Note that if we do fail halfway through a CLUSTER,
  * the old table is still valid, so failure is not catastrophic.
  *
  * We can't use the normal heap_insert function to insert into the new
@@ -277,7 +277,7 @@ end_heap_rewrite(RewriteState state)
 	}
 
 	/*
-	 * If the rel is WAL-logged, must fsync before commit.	We use heap_sync
+	 * If the rel is WAL-logged, must fsync before commit.  We use heap_sync
 	 * to ensure that the toast table gets fsync'd too.
 	 *
 	 * It's obvious that we must do this when not WAL-logging. It's less
@@ -337,7 +337,7 @@ rewrite_heap_tuple(RewriteState state,
 	 * very-old xmin or xmax, so that future VACUUM effort can be saved.
 	 *
 	 * Note we abuse heap_freeze_tuple() a bit here, since it's expecting to
-	 * be given a pointer to a tuple in a disk buffer.	It happens though that
+	 * be given a pointer to a tuple in a disk buffer.  It happens though that
 	 * we can get the right things to happen by passing InvalidBuffer for the
 	 * buffer.
 	 */
@@ -548,7 +548,7 @@ rewrite_heap_dead_tuple(RewriteState state, HeapTuple old_tuple)
 }
 
 /*
- * Insert a tuple to the new relation.	This has to track heap_insert
+ * Insert a tuple to the new relation.  This has to track heap_insert
  * and its subsidiary functions!
  *
  * t_self of the tuple is set to the new TID of the tuple. If t_ctid of the

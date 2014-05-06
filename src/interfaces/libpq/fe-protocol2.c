@@ -231,7 +231,7 @@ pqSetenvPoll(PGconn *conn)
 			case SETENV_STATE_QUERY1_SEND:
 				{
 					/*
-					 * Issue query to get information we need.	Here we must
+					 * Issue query to get information we need.  Here we must
 					 * use begin/commit in case autocommit is off by default
 					 * in a 7.3 server.
 					 *
@@ -865,7 +865,7 @@ pqGetErrorNotice2(PGconn *conn, bool isError)
 
 	/*
 	 * Since the message might be pretty long, we create a temporary
-	 * PQExpBuffer rather than using conn->workBuffer.	workBuffer is intended
+	 * PQExpBuffer rather than using conn->workBuffer.  workBuffer is intended
 	 * for stuff that is expected to be short.
 	 */
 	initPQExpBuffer(&workBuf);
@@ -959,10 +959,10 @@ failure:
 /*
  * checkXactStatus - attempt to track transaction-block status of server
  *
- * This is called each time we receive a command-complete message.	By
+ * This is called each time we receive a command-complete message.  By
  * watching for messages from BEGIN/COMMIT/ROLLBACK commands, we can do
  * a passable job of tracking the server's xact status.  BUT: this does
- * not work at all on 7.3 servers with AUTOCOMMIT OFF.	(Man, was that
+ * not work at all on 7.3 servers with AUTOCOMMIT OFF.  (Man, was that
  * feature ever a mistake.)  Caveat user.
  *
  * The tags known here are all those used as far back as 7.0; is it worth

@@ -40,7 +40,7 @@ VariableCache ShmemVariableCache = NULL;
  *
  * Note: when this is called, we are actually already inside a valid
  * transaction, since XIDs are now not allocated until the transaction
- * does something.	So it is safe to do a database lookup if we want to
+ * does something.  So it is safe to do a database lookup if we want to
  * issue a warning about XID wrap.
  */
 TransactionId
@@ -164,20 +164,20 @@ GetNewTransactionId(bool isSubXact)
 	/*
 	 * Now advance the nextXid counter.  This must not happen until after we
 	 * have successfully completed ExtendCLOG() --- if that routine fails, we
-	 * want the next incoming transaction to try it again.	We cannot assign
+	 * want the next incoming transaction to try it again.  We cannot assign
 	 * more XIDs until there is CLOG space for them.
 	 */
 	TransactionIdAdvance(ShmemVariableCache->nextXid);
 
 	/*
 	 * We must store the new XID into the shared ProcArray before releasing
-	 * XidGenLock.	This ensures that every active XID older than
+	 * XidGenLock.  This ensures that every active XID older than
 	 * latestCompletedXid is present in the ProcArray, which is essential for
 	 * correct OldestXmin tracking; see src/backend/access/transam/README.
 	 *
 	 * XXX by storing xid into MyProc without acquiring ProcArrayLock, we are
 	 * relying on fetch/store of an xid to be atomic, else other backends
-	 * might see a partially-set xid here.	But holding both locks at once
+	 * might see a partially-set xid here.  But holding both locks at once
 	 * would be a nasty concurrency hit.  So for now, assume atomicity.
 	 *
 	 * Note that readers of PGPROC xid fields should be careful to fetch the
@@ -287,7 +287,7 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid, Oid oldest_datoid)
 
 	/*
 	 * We'll start complaining loudly when we get within 10M transactions of
-	 * the stop point.	This is kind of arbitrary, but if you let your gas
+	 * the stop point.  This is kind of arbitrary, but if you let your gas
 	 * gauge get down to 1% of full, would you be looking for the next gas
 	 * station?  We need to be fairly liberal about this number because there
 	 * are lots of scenarios where most transactions are done by automatic
@@ -387,7 +387,7 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid, Oid oldest_datoid)
  * We primarily check whether oldestXidDB is valid.  The cases we have in
  * mind are that that database was dropped, or the field was reset to zero
  * by pg_resetxlog.  In either case we should force recalculation of the
- * wrap limit.	Also do it if oldestXid is old enough to be forcing
+ * wrap limit.  Also do it if oldestXid is old enough to be forcing
  * autovacuums or other actions; this ensures we update our state as soon
  * as possible once extra overhead is being incurred.
  */

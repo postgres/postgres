@@ -436,7 +436,7 @@ InitQueryHashTable(void)
  * copy.
  *
  * Exception: commandTag is presumed to be a pointer to a constant string,
- * or possibly NULL, so it need not be copied.	Note that commandTag should
+ * or possibly NULL, so it need not be copied.  Note that commandTag should
  * be NULL only if the original query (before rewriting) was empty.
  */
 void
@@ -550,7 +550,7 @@ FetchPreparedStatementResultDesc(PreparedStatement *stmt)
 
 /*
  * Given a prepared statement that returns tuples, extract the query
- * targetlist.	Returns NIL if the statement doesn't have a determinable
+ * targetlist.  Returns NIL if the statement doesn't have a determinable
  * targetlist.
  *
  * Note: this is pretty ugly, but since it's only used in corner cases like

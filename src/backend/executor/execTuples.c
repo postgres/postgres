@@ -4,7 +4,7 @@
  *	  Routines dealing with TupleTableSlots.  These are used for resource
  *	  management associated with tuples (eg, releasing buffer pins for
  *	  tuples in disk buffers, or freeing the memory occupied by transient
- *	  tuples).	Slots also provide access abstraction that lets us implement
+ *	  tuples).  Slots also provide access abstraction that lets us implement
  *	  "virtual" tuples to reduce data-copying overhead.
  *
  *	  Routines dealing with the type information for tuples. Currently,
@@ -260,7 +260,7 @@ ExecSetSlotDescriptor(TupleTableSlot *slot,		/* slot to change */
 	ExecClearTuple(slot);
 
 	/*
-	 * Release any old descriptor.	Also release old Datum/isnull arrays if
+	 * Release any old descriptor.  Also release old Datum/isnull arrays if
 	 * present (we don't bother to check if they could be re-used).
 	 */
 	if (slot->tts_tupleDescriptor)
@@ -310,7 +310,7 @@ ExecSetSlotDescriptor(TupleTableSlot *slot,		/* slot to change */
  * Another case where it is 'false' is when the referenced tuple is held
  * in a tuple table slot belonging to a lower-level executor Proc node.
  * In this case the lower-level slot retains ownership and responsibility
- * for eventually releasing the tuple.	When this method is used, we must
+ * for eventually releasing the tuple.  When this method is used, we must
  * be certain that the upper-level Proc node will lose interest in the tuple
  * sooner than the lower-level one does!  If you're not certain, copy the
  * lower-level tuple with heap_copytuple and let the upper-level table
@@ -649,7 +649,7 @@ ExecFetchSlotTuple(TupleTableSlot *slot)
  *			Fetch the slot's minimal physical tuple.
  *
  *		If the slot contains a virtual tuple, we convert it to minimal
- *		physical form.	The slot retains ownership of the minimal tuple.
+ *		physical form.  The slot retains ownership of the minimal tuple.
  *		If it contains a regular tuple we convert to minimal form and store
  *		that in addition to the regular tuple (not instead of, because
  *		callers may hold pointers to Datums within the regular tuple).
@@ -828,7 +828,7 @@ ExecCopySlot(TupleTableSlot *dstslot, TupleTableSlot *srcslot)
  *		ExecInit{Result,Scan,Extra}TupleSlot
  *
  *		These are convenience routines to initialize the specified slot
- *		in nodes inheriting the appropriate state.	ExecInitExtraTupleSlot
+ *		in nodes inheriting the appropriate state.  ExecInitExtraTupleSlot
  *		is used for initializing special-purpose slots.
  * --------------------------------
  */
@@ -1145,7 +1145,7 @@ BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
  * code would have no way to obtain a tupledesc for the tuple.
  *
  * Note that if we do build a new tuple, it's palloc'd in the current
- * memory context.	Beware of code that changes context between the initial
+ * memory context.  Beware of code that changes context between the initial
  * heap_form_tuple/etc call and calling HeapTuple(Header)GetDatum.
  *
  * For performance-critical callers, it could be worthwhile to take extra

@@ -404,7 +404,7 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 			 * such as temporary tables.)
 			 *
 			 * We approximate "never vacuumed" by "has relpages = 0", which
-			 * means this will also fire on genuinely empty relations.	Not
+			 * means this will also fire on genuinely empty relations.  Not
 			 * great, but fortunately that's a seldom-seen case in the real
 			 * world, and it shouldn't degrade the quality of the plan too
 			 * much anyway to err in this direction.
@@ -730,7 +730,7 @@ relation_excluded_by_constraints(PlannerInfo *root,
 		return false;
 
 	/*
-	 * OK to fetch the constraint expressions.	Include "col IS NOT NULL"
+	 * OK to fetch the constraint expressions.  Include "col IS NOT NULL"
 	 * expressions for attnotnull columns, in case we can refute those.
 	 */
 	constraint_pred = get_relation_constraints(root, rte->relid, rel, true);
@@ -778,7 +778,7 @@ relation_excluded_by_constraints(PlannerInfo *root,
  * Exception: if there are any dropped columns, we punt and return NIL.
  * Ideally we would like to handle the dropped-column case too.  However this
  * creates problems for ExecTypeFromTL, which may be asked to build a tupdesc
- * for a tlist that includes vars of no-longer-existent types.	In theory we
+ * for a tlist that includes vars of no-longer-existent types.  In theory we
  * could dig out the required info from the pg_attribute entries of the
  * relation, but that data is not readily available to ExecTypeFromTL.
  * For now, we don't apply the physical-tlist optimization when there are

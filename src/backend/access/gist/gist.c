@@ -216,7 +216,7 @@ gistbuildCallback(Relation index,
 	/*
 	 * Since we already have the index relation locked, we call gistdoinsert
 	 * directly.  Normal access method calls dispatch through gistinsert,
-	 * which locks the relation for write.	This is the right thing to do if
+	 * which locks the relation for write.  This is the right thing to do if
 	 * you're inserting single tups, but not when you're initializing the
 	 * whole index at once.
 	 *
@@ -1495,7 +1495,7 @@ initGISTstate(GISTSTATE *giststate, Relation index)
 		/*
 		 * If the index column has a specified collation, we should honor that
 		 * while doing comparisons.  However, we may have a collatable storage
-		 * type for a noncollatable indexed data type.	If there's no index
+		 * type for a noncollatable indexed data type.  If there's no index
 		 * collation then specify default collation in case the support
 		 * functions need collation.  This is harmless if the support
 		 * functions don't care about collation, so we just do it

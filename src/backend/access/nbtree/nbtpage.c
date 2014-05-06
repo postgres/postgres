@@ -12,7 +12,7 @@
  *	  src/backend/access/nbtree/nbtpage.c
  *
  *	NOTES
- *	   Postgres btree pages look like ordinary relation pages.	The opaque
+ *	   Postgres btree pages look like ordinary relation pages.  The opaque
  *	   data at high addresses includes pointers to left and right siblings
  *	   and flag data describing page state.  The first page in a btree, page
  *	   zero, is special -- it stores meta-information describing the tree.
@@ -57,7 +57,7 @@ _bt_initmetapage(Page page, BlockNumber rootbknum, uint32 level)
 	metaopaque->btpo_flags = BTP_META;
 
 	/*
-	 * Set pd_lower just past the end of the metadata.	This is not essential
+	 * Set pd_lower just past the end of the metadata.  This is not essential
 	 * but it makes the page look compressible to xlog.c.
 	 */
 	((PageHeader) page)->pd_lower =
@@ -75,7 +75,7 @@ _bt_initmetapage(Page page, BlockNumber rootbknum, uint32 level)
  *
  *		The access type parameter (BT_READ or BT_WRITE) controls whether
  *		a new root page will be created or not.  If access = BT_READ,
- *		and no root page exists, we just return InvalidBuffer.	For
+ *		and no root page exists, we just return InvalidBuffer.  For
  *		BT_WRITE, we try to create the root page if it doesn't exist.
  *		NOTE that the returned root page will have only a read lock set
  *		on it even if access = BT_WRITE!
@@ -192,7 +192,7 @@ _bt_getroot(Relation rel, int access)
 			/*
 			 * Metadata initialized by someone else.  In order to guarantee no
 			 * deadlocks, we have to release the metadata page and start all
-			 * over again.	(Is that really true? But it's hardly worth trying
+			 * over again.  (Is that really true? But it's hardly worth trying
 			 * to optimize this case.)
 			 */
 			_bt_relbuf(rel, metabuf);
@@ -257,7 +257,7 @@ _bt_getroot(Relation rel, int access)
 		CacheInvalidateRelcache(rel);
 
 		/*
-		 * swap root write lock for read lock.	There is no danger of anyone
+		 * swap root write lock for read lock.  There is no danger of anyone
 		 * else accessing the new root page while it's unlocked, since no one
 		 * else knows where it is yet.
 		 */
@@ -325,7 +325,7 @@ _bt_getroot(Relation rel, int access)
  * By the time we acquire lock on the root page, it might have been split and
  * not be the true root anymore.  This is okay for the present uses of this
  * routine; we only really need to be able to move up at least one tree level
- * from whatever non-root page we were at.	If we ever do need to lock the
+ * from whatever non-root page we were at.  If we ever do need to lock the
  * one true root page, we could loop here, re-reading the metapage on each
  * failure.  (Note that it wouldn't do to hold the lock on the metapage while
  * moving to the root --- that'd deadlock against any concurrent root split.)
@@ -424,7 +424,7 @@ _bt_checkpage(Relation rel, Buffer buf)
 	/*
 	 * ReadBuffer verifies that every newly-read page passes
 	 * PageHeaderIsValid, which means it either contains a reasonably sane
-	 * page header or is all-zero.	We have to defend against the all-zero
+	 * page header or is all-zero.  We have to defend against the all-zero
 	 * case, however.
 	 */
 	if (PageIsNew(page))
@@ -491,7 +491,7 @@ _bt_log_reuse_page(Relation rel, BlockNumber blkno, TransactionId latestRemovedX
 /*
  *	_bt_getbuf() -- Get a buffer by block number for read or write.
  *
- *		blkno == P_NEW means to get an unallocated index page.	The page
+ *		blkno == P_NEW means to get an unallocated index page.  The page
  *		will be initialized before returning it.
  *
  *		When this routine returns, the appropriate lock is set on the
@@ -522,7 +522,7 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 		 * First see if the FSM knows of any free pages.
 		 *
 		 * We can't trust the FSM's report unreservedly; we have to check that
-		 * the page is still free.	(For example, an already-free page could
+		 * the page is still free.  (For example, an already-free page could
 		 * have been re-used between the time the last VACUUM scanned it and
 		 * the time the VACUUM made its FSM updates.)
 		 *
@@ -701,7 +701,7 @@ _bt_page_recyclable(Page page)
 /*
  * Delete item(s) from a btree page.
  *
- * This must only be used for deleting leaf items.	Deleting an item on a
+ * This must only be used for deleting leaf items.  Deleting an item on a
  * non-leaf page has to be done as part of an atomic action that includes
  * deleting the page it points to.
  *
@@ -769,7 +769,7 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
 
 		/*
 		 * The target-offsets array is not in the buffer, but pretend that it
-		 * is.	When XLogInsert stores the whole buffer, the offsets array
+		 * is.  When XLogInsert stores the whole buffer, the offsets array
 		 * need not be stored too.
 		 */
 		if (nitems > 0)
@@ -1008,7 +1008,7 @@ _bt_pagedel(Relation rel, Buffer buf, BTStack stack)
 	BTPageOpaque opaque;
 
 	/*
-	 * We can never delete rightmost pages nor root pages.	While at it, check
+	 * We can never delete rightmost pages nor root pages.  While at it, check
 	 * that page is not already deleted and is empty.
 	 */
 	page = BufferGetPage(buf);
@@ -1080,7 +1080,7 @@ _bt_pagedel(Relation rel, Buffer buf, BTStack stack)
 			/*
 			 * During WAL recovery, we can't use _bt_search (for one reason,
 			 * it might invoke user-defined comparison functions that expect
-			 * facilities not available in recovery mode).	Instead, just set
+			 * facilities not available in recovery mode).  Instead, just set
 			 * up a dummy stack pointing to the left end of the parent tree
 			 * level, from which _bt_getstackbuf will walk right to the parent
 			 * page.  Painful, but we don't care too much about performance in
@@ -1115,7 +1115,7 @@ _bt_pagedel(Relation rel, Buffer buf, BTStack stack)
 	 * target page.  The sibling that was current a moment ago could have
 	 * split, so we may have to move right.  This search could fail if either
 	 * the sibling or the target page was deleted by someone else meanwhile;
-	 * if so, give up.	(Right now, that should never happen, since page
+	 * if so, give up.  (Right now, that should never happen, since page
 	 * deletion is only done in VACUUM and there shouldn't be multiple VACUUMs
 	 * concurrently on the same table.)
 	 */
@@ -1144,7 +1144,7 @@ _bt_pagedel(Relation rel, Buffer buf, BTStack stack)
 		lbuf = InvalidBuffer;
 
 	/*
-	 * Next write-lock the target page itself.	It should be okay to take just
+	 * Next write-lock the target page itself.  It should be okay to take just
 	 * a write lock not a superexclusive lock, since no scans would stop on an
 	 * empty page.
 	 */
@@ -1266,7 +1266,7 @@ _bt_pagedel(Relation rel, Buffer buf, BTStack stack)
 
 	/*
 	 * Check that the parent-page index items we're about to delete/overwrite
-	 * contain what we expect.	This can fail if the index has become corrupt
+	 * contain what we expect.  This can fail if the index has become corrupt
 	 * for some reason.  We want to throw any error before entering the
 	 * critical section --- otherwise it'd be a PANIC.
 	 *

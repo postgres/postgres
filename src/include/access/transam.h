@@ -69,7 +69,7 @@
  *		using the OID generator.  (We start the generator at 10000.)
  *
  *		OIDs beginning at 16384 are assigned from the OID generator
- *		during normal multiuser operation.	(We force the generator up to
+ *		during normal multiuser operation.  (We force the generator up to
  *		16384 as soon as we are in normal operation.)
  *
  * The choices of 10000 and 16384 are completely arbitrary, and can be moved

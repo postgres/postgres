@@ -261,7 +261,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 		if (funcrettype != LANGUAGE_HANDLEROID)
 		{
 			/*
-			 * We allow OPAQUE just so we can load old dump files.	When we
+			 * We allow OPAQUE just so we can load old dump files.  When we
 			 * see a handler function declared OPAQUE, change it to
 			 * LANGUAGE_HANDLER.  (This is probably obsolete and removable?)
 			 */

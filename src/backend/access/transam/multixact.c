@@ -4,15 +4,15 @@
  *		PostgreSQL multi-transaction-log manager
  *
  * The pg_multixact manager is a pg_clog-like manager that stores an array
- * of TransactionIds for each MultiXactId.	It is a fundamental part of the
- * shared-row-lock implementation.	A share-locked tuple stores a
+ * of TransactionIds for each MultiXactId.  It is a fundamental part of the
+ * shared-row-lock implementation.  A share-locked tuple stores a
  * MultiXactId in its Xmax, and a transaction that needs to wait for the
  * tuple to be unlocked can sleep on the potentially-several TransactionIds
  * that compose the MultiXactId.
  *
  * We use two SLRU areas, one for storing the offsets at which the data
  * starts for each MultiXactId in the other one.  This trick allows us to
- * store variable length arrays of TransactionIds.	(We could alternatively
+ * store variable length arrays of TransactionIds.  (We could alternatively
  * use one area containing counts and TransactionIds, with valid MultiXactId
  * values pointing at slots containing counts; but that way seems less robust
  * since it would get completely confused if someone inquired about a bogus
@@ -32,7 +32,7 @@
  *
  * Like clog.c, and unlike subtrans.c, we have to preserve state across
  * crashes and ensure that MXID and offset numbering increases monotonically
- * across a crash.	We do this in the same way as it's done for transaction
+ * across a crash.  We do this in the same way as it's done for transaction
  * IDs: the WAL record is guaranteed to contain evidence of every MXID we
  * could need to worry about, and we just make sure that at the end of
  * replay, the next-MXID and next-offset counters are at least as large as
@@ -64,13 +64,13 @@
 
 
 /*
- * Defines for MultiXactOffset page sizes.	A page is the same BLCKSZ as is
+ * Defines for MultiXactOffset page sizes.  A page is the same BLCKSZ as is
  * used everywhere else in Postgres.
  *
  * Note: because both MultiXactOffsets and TransactionIds are 32 bits and
  * wrap around at 0xFFFFFFFF, MultiXact page numbering also wraps around at
  * 0xFFFFFFFF/MULTIXACT_*_PER_PAGE, and segment numbering at
- * 0xFFFFFFFF/MULTIXACT_*_PER_PAGE/SLRU_SEGMENTS_PER_PAGE.	We need take no
+ * 0xFFFFFFFF/MULTIXACT_*_PER_PAGE/SLRU_SEGMENTS_PER_PAGE.  We need take no
  * explicit notice of that fact in this module, except when comparing segment
  * and page numbers in TruncateMultiXact
  * (see MultiXact{Offset,Member}PagePrecedes).
@@ -101,7 +101,7 @@ static SlruCtlData MultiXactMemberCtlData;
 #define MultiXactMemberCtl	(&MultiXactMemberCtlData)
 
 /*
- * MultiXact state shared across all backends.	All this state is protected
+ * MultiXact state shared across all backends.  All this state is protected
  * by MultiXactGenLock.  (We also use MultiXactOffsetControlLock and
  * MultiXactMemberControlLock to guard accesses to the two sets of SLRU
  * buffers.  For concurrency's sake, we avoid holding more than one of these
@@ -343,7 +343,7 @@ MultiXactIdExpand(MultiXactId multi, TransactionId xid)
 	/*
 	 * Determine which of the members of the MultiXactId are still running,
 	 * and use them to create a new one.  (Removing dead members is just an
-	 * optimization, but a useful one.	Note we have the same race condition
+	 * optimization, but a useful one.  Note we have the same race condition
 	 * here as above: j could be 0 at the end of the loop.)
 	 */
 	newMembers = (TransactionId *)
@@ -408,7 +408,7 @@ MultiXactIdIsRunning(MultiXactId multi)
 
 	/*
 	 * This could be made faster by having another entry point in procarray.c,
-	 * walking the PGPROC array only once for all the members.	But in most
+	 * walking the PGPROC array only once for all the members.  But in most
 	 * cases nmembers should be small enough that it doesn't much matter.
 	 */
 	for (i = 0; i < nmembers; i++)
@@ -527,7 +527,7 @@ MultiXactIdSetOldestMember(void)
  * The value to set is the oldest of nextMXact and all the valid per-backend
  * OldestMemberMXactId[] entries.  Because of the locking we do, we can be
  * certain that no subsequent call to MultiXactIdSetOldestMember can set
- * an OldestMemberMXactId[] entry older than what we compute here.	Therefore
+ * an OldestMemberMXactId[] entry older than what we compute here.  Therefore
  * there is no live transaction, now or later, that can be a member of any
  * MultiXactId older than the OldestVisibleMXactId we compute here.
  */
@@ -698,7 +698,7 @@ CreateMultiXactId(int nxids, TransactionId *xids)
 	 * heap_lock_tuple() to have put it there, and heap_lock_tuple() generates
 	 * an XLOG record that must follow ours.  The normal LSN interlock between
 	 * the data page and that XLOG record will ensure that our XLOG record
-	 * reaches disk first.	If the SLRU members/offsets data reaches disk
+	 * reaches disk first.  If the SLRU members/offsets data reaches disk
 	 * sooner than the XLOG record, we do not care because we'll overwrite it
 	 * with zeroes unless the XLOG record is there too; see notes at top of
 	 * this file.
@@ -805,7 +805,7 @@ RecordNewMultiXact(MultiXactId multi, MultiXactOffset offset,
  * GetNewMultiXactId
  *		Get the next MultiXactId.
  *
- * Also, reserve the needed amount of space in the "members" area.	The
+ * Also, reserve the needed amount of space in the "members" area.  The
  * starting offset of the reserved space is returned in *offset.
  *
  * This may generate XLOG records for expansion of the offsets and/or members
@@ -874,7 +874,7 @@ GetNewMultiXactId(int nxids, MultiXactOffset *offset)
 	 * until after file extension has succeeded!
 	 *
 	 * We don't care about MultiXactId wraparound here; it will be handled by
-	 * the next iteration.	But note that nextMXact may be InvalidMultiXactId
+	 * the next iteration.  But note that nextMXact may be InvalidMultiXactId
 	 * after this routine exits, so anyone else looking at the variable must
 	 * be prepared to deal with that.  Similarly, nextOffset may be zero, but
 	 * we won't use that as the actual start offset of the next multixact.
@@ -942,7 +942,7 @@ GetMultiXactIdMembers(MultiXactId multi, TransactionId **xids)
 	 * SLRU data if we did try to examine it.
 	 *
 	 * Conversely, an ID >= nextMXact shouldn't ever be seen here; if it is
-	 * seen, it implies undetected ID wraparound has occurred.	We just
+	 * seen, it implies undetected ID wraparound has occurred.  We just
 	 * silently assume that such an ID is no longer running.
 	 *
 	 * Shared lock is enough here since we aren't modifying any global state.
@@ -958,7 +958,7 @@ GetMultiXactIdMembers(MultiXactId multi, TransactionId **xids)
 
 	/*
 	 * Acquire the shared lock just long enough to grab the current counter
-	 * values.	We may need both nextMXact and nextOffset; see below.
+	 * values.  We may need both nextMXact and nextOffset; see below.
 	 */
 	LWLockAcquire(MultiXactGenLock, LW_SHARED);
 
@@ -976,12 +976,12 @@ GetMultiXactIdMembers(MultiXactId multi, TransactionId **xids)
 
 	/*
 	 * Find out the offset at which we need to start reading MultiXactMembers
-	 * and the number of members in the multixact.	We determine the latter as
+	 * and the number of members in the multixact.  We determine the latter as
 	 * the difference between this multixact's starting offset and the next
 	 * one's.  However, there are some corner cases to worry about:
 	 *
 	 * 1. This multixact may be the latest one created, in which case there is
-	 * no next one to look at.	In this case the nextOffset value we just
+	 * no next one to look at.  In this case the nextOffset value we just
 	 * saved is the correct endpoint.
 	 *
 	 * 2. The next multixact may still be in process of being filled in: that
@@ -992,11 +992,11 @@ GetMultiXactIdMembers(MultiXactId multi, TransactionId **xids)
 	 * (because we are careful to pre-zero offset pages). Because
 	 * GetNewMultiXactId will never return zero as the starting offset for a
 	 * multixact, when we read zero as the next multixact's offset, we know we
-	 * have this case.	We sleep for a bit and try again.
+	 * have this case.  We sleep for a bit and try again.
 	 *
 	 * 3. Because GetNewMultiXactId increments offset zero to offset one to
 	 * handle case #2, there is an ambiguity near the point of offset
-	 * wraparound.	If we see next multixact's offset is one, is that our
+	 * wraparound.  If we see next multixact's offset is one, is that our
 	 * multixact's actual endpoint, or did it end at zero with a subsequent
 	 * increment?  We handle this using the knowledge that if the zero'th
 	 * member slot wasn't filled, it'll contain zero, and zero isn't a valid
@@ -1388,7 +1388,7 @@ multixact_twophase_postabort(TransactionId xid, uint16 info,
 
 /*
  * Initialization of shared memory for MultiXact.  We use two SLRU areas,
- * thus double memory.	Also, reserve space for the shared MultiXactState
+ * thus double memory.  Also, reserve space for the shared MultiXactState
  * struct and the per-backend MultiXactId arrays (two of those, too).
  */
 Size
@@ -1448,7 +1448,7 @@ MultiXactShmemInit(void)
 
 /*
  * This func must be called ONCE on system install.  It creates the initial
- * MultiXact segments.	(The MultiXacts directories are assumed to have been
+ * MultiXact segments.  (The MultiXacts directories are assumed to have been
  * created by initdb, and MultiXactShmemInit must have been called already.)
  */
 void
@@ -1568,7 +1568,7 @@ TrimMultiXact(void)
 	MultiXactOffsetCtl->shared->latest_page_number = pageno;
 
 	/*
-	 * Zero out the remainder of the current offsets page.	See notes in
+	 * Zero out the remainder of the current offsets page.  See notes in
 	 * StartupCLOG() for motivation.
 	 */
 	entryno = MultiXactIdToOffsetEntry(multi);
@@ -1598,7 +1598,7 @@ TrimMultiXact(void)
 	MultiXactMemberCtl->shared->latest_page_number = pageno;
 
 	/*
-	 * Zero out the remainder of the current members page.	See notes in
+	 * Zero out the remainder of the current members page.  See notes in
 	 * TrimCLOG() for motivation.
 	 */
 	entryno = MXOffsetToMemberEntry(offset);
@@ -1799,7 +1799,7 @@ ExtendMultiXactMember(MultiXactOffset offset, int nmembers)
  * Remove all MultiXactOffset and MultiXactMember segments before the oldest
  * ones still of interest.
  *
- * This is called only during checkpoints.	We assume no more than one
+ * This is called only during checkpoints.  We assume no more than one
  * backend does this at a time.
  *
  * XXX do we have any issues with needing to checkpoint here?
@@ -1860,7 +1860,7 @@ TruncateMultiXact(void)
 		return;
 
 	/*
-	 * We need to determine where to truncate MultiXactMember.	If we found a
+	 * We need to determine where to truncate MultiXactMember.  If we found a
 	 * valid oldest MultiXactId, read its starting offset; otherwise we use
 	 * the nextOffset value we saved above.
 	 */

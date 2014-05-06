@@ -36,9 +36,9 @@ typedef uint16 BTCycleId;
  *	and status.  If the page is deleted, we replace the level with the
  *	next-transaction-ID value indicating when it is safe to reclaim the page.
  *
- *	We also store a "vacuum cycle ID".	When a page is split while VACUUM is
+ *	We also store a "vacuum cycle ID".  When a page is split while VACUUM is
  *	processing the index, a nonzero value associated with the VACUUM run is
- *	stored into both halves of the split page.	(If VACUUM is not running,
+ *	stored into both halves of the split page.  (If VACUUM is not running,
  *	both pages receive zero cycleids.)	This allows VACUUM to detect whether
  *	a page was split since it started, with a small probability of false match
  *	if the page was last split some exact multiple of MAX_BT_CYCLE_ID VACUUMs
@@ -75,7 +75,7 @@ typedef BTPageOpaqueData *BTPageOpaque;
 #define BTP_HAS_GARBAGE (1 << 6)	/* page has LP_DEAD tuples */
 
 /*
- * The max allowed value of a cycle ID is a bit less than 64K.	This is
+ * The max allowed value of a cycle ID is a bit less than 64K.  This is
  * for convenience of pg_filedump and similar utilities: we want to use
  * the last 2 bytes of special space as an index type indicator, and
  * restricting cycle ID lets btree use that space for vacuum cycle IDs
@@ -272,9 +272,9 @@ typedef struct xl_btree_insert
  * Note: the four XLOG_BTREE_SPLIT xl_info codes all use this data record.
  * The _L and _R variants indicate whether the inserted tuple went into the
  * left or right split page (and thus, whether newitemoff and the new item
- * are stored or not).	The _ROOT variants indicate that we are splitting
+ * are stored or not).  The _ROOT variants indicate that we are splitting
  * the root page, and thus that a newroot record rather than an insert or
- * split record should follow.	Note that a split record never carries a
+ * split record should follow.  Note that a split record never carries a
  * metapage update --- we'll do that in the parent-level update.
  */
 typedef struct xl_btree_split
@@ -287,13 +287,13 @@ typedef struct xl_btree_split
 	OffsetNumber firstright;	/* first item moved to right page */
 
 	/*
-	 * If level > 0, BlockIdData downlink follows.	(We use BlockIdData rather
+	 * If level > 0, BlockIdData downlink follows.  (We use BlockIdData rather
 	 * than BlockNumber for alignment reasons: SizeOfBtreeSplit is only 16-bit
 	 * aligned.)
 	 *
 	 * If level > 0, an IndexTuple representing the HIKEY of the left page
 	 * follows.  We don't need this on leaf pages, because it's the same as
-	 * the leftmost key in the new right page.	Also, it's suppressed if
+	 * the leftmost key in the new right page.  Also, it's suppressed if
 	 * XLogInsert chooses to store the left page's whole page image.
 	 *
 	 * In the _L variants, next are OffsetNumber newitemoff and the new item.
@@ -372,7 +372,7 @@ typedef struct xl_btree_vacuum
 /*
  * This is what we need to know about deletion of a btree page.  The target
  * identifies the tuple removed from the parent page (note that we remove
- * this tuple's downlink and the *following* tuple's key).	Note we do not
+ * this tuple's downlink and the *following* tuple's key).  Note we do not
  * store any content for the deleted page --- it is just rewritten as empty
  * during recovery, apart from resetting the btpo.xact.
  */
@@ -457,7 +457,7 @@ typedef BTStackData *BTStack;
  * BTScanOpaqueData is the btree-private state needed for an indexscan.
  * This consists of preprocessed scan keys (see _bt_preprocess_keys() for
  * details of the preprocessing), information about the current location
- * of the scan, and information about the marked location, if any.	(We use
+ * of the scan, and information about the marked location, if any.  (We use
  * BTScanPosData to represent the data needed for each of current and marked
  * locations.)	In addition we can remember some known-killed index entries
  * that must be marked before we can move off the current page.
@@ -465,9 +465,9 @@ typedef BTStackData *BTStack;
  * Index scans work a page at a time: we pin and read-lock the page, identify
  * all the matching items on the page and save them in BTScanPosData, then
  * release the read-lock while returning the items to the caller for
- * processing.	This approach minimizes lock/unlock traffic.  Note that we
+ * processing.  This approach minimizes lock/unlock traffic.  Note that we
  * keep the pin on the index page until the caller is done with all the items
- * (this is needed for VACUUM synchronization, see nbtree/README).	When we
+ * (this is needed for VACUUM synchronization, see nbtree/README).  When we
  * are ready to step to the next page, if the caller has told us any of the
  * items were killed, we re-lock the page to mark them killed, then unlock.
  * Finally we drop the pin and step to the next page in the appropriate
@@ -542,7 +542,7 @@ typedef BTScanOpaqueData *BTScanOpaque;
 
 /*
  * We use some private sk_flags bits in preprocessed scan keys.  We're allowed
- * to use bits 16-31 (see skey.h).	The uppermost bits are copied from the
+ * to use bits 16-31 (see skey.h).  The uppermost bits are copied from the
  * index's indoption[] array entry for the index attribute.
  */
 #define SK_BT_REQFWD	0x00010000		/* required to continue forward scan */

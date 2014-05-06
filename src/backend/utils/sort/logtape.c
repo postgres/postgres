@@ -7,14 +7,14 @@
  * tuplesort.c).  Merging is an ideal algorithm for tape devices, but if
  * we implement it on disk by creating a separate file for each "tape",
  * there is an annoying problem: the peak space usage is at least twice
- * the volume of actual data to be sorted.	(This must be so because each
+ * the volume of actual data to be sorted.  (This must be so because each
  * datum will appear in both the input and output tapes of the final
- * merge pass.	For seven-tape polyphase merge, which is otherwise a
+ * merge pass.  For seven-tape polyphase merge, which is otherwise a
  * pretty good algorithm, peak usage is more like 4x actual data volume.)
  *
  * We can work around this problem by recognizing that any one tape
  * dataset (with the possible exception of the final output) is written
- * and read exactly once in a perfectly sequential manner.	Therefore,
+ * and read exactly once in a perfectly sequential manner.  Therefore,
  * a datum once read will not be required again, and we can recycle its
  * space for use by the new tape dataset(s) being generated.  In this way,
  * the total space usage is essentially just the actual data volume, plus
@@ -55,7 +55,7 @@
  * To support the above policy of writing to the lowest free block,
  * ltsGetFreeBlock sorts the list of free block numbers into decreasing
  * order each time it is asked for a block and the list isn't currently
- * sorted.	This is an efficient way to handle it because we expect cycles
+ * sorted.  This is an efficient way to handle it because we expect cycles
  * of releasing many blocks followed by re-using many blocks, due to
  * tuplesort.c's "preread" behavior.
  *
@@ -117,7 +117,7 @@ typedef struct LogicalTape
 
 	/*
 	 * The total data volume in the logical tape is numFullBlocks * BLCKSZ +
-	 * lastBlockBytes.	BUT: we do not update lastBlockBytes during writing,
+	 * lastBlockBytes.  BUT: we do not update lastBlockBytes during writing,
 	 * only at completion of a write phase.
 	 */
 	long		numFullBlocks;	/* number of complete blocks in log tape */
@@ -157,7 +157,7 @@ struct LogicalTapeSet
 	 *
 	 * If blocksSorted is true then the block numbers in freeBlocks are in
 	 * *decreasing* order, so that removing the last entry gives us the lowest
-	 * free block.	We re-sort the blocks whenever a block is demanded; this
+	 * free block.  We re-sort the blocks whenever a block is demanded; this
 	 * should be reasonably efficient given the expected usage pattern.
 	 */
 	bool		forgetFreeSpace;	/* are we remembering free blocks? */
@@ -218,7 +218,7 @@ ltsWriteBlock(LogicalTapeSet *lts, long blocknum, void *buffer)
 /*
  * Read a block-sized buffer from the specified block of the underlying file.
  *
- * No need for an error return convention; we ereport() on any error.	This
+ * No need for an error return convention; we ereport() on any error.   This
  * module should never attempt to read a block it doesn't know is there.
  */
 static void
@@ -353,7 +353,7 @@ ltsRecordBlockNum(LogicalTapeSet *lts, IndirectBlock *indirect,
 
 /*
  * Reset a logical tape's indirect-block hierarchy after a write pass
- * to prepare for reading.	We dump out partly-filled blocks except
+ * to prepare for reading.  We dump out partly-filled blocks except
  * at the top of the hierarchy, and we rewind each level to the start.
  * This call returns the first data block number, or -1L if the tape
  * is empty.
@@ -540,7 +540,7 @@ LogicalTapeSetCreate(int ntapes)
 	/*
 	 * Initialize per-tape structs.  Note we allocate the I/O buffer and
 	 * first-level indirect block for a tape only when it is first actually
-	 * written to.	This avoids wasting memory space when tuplesort.c
+	 * written to.  This avoids wasting memory space when tuplesort.c
 	 * overestimates the number of tapes needed.
 	 */
 	for (i = 0; i < ntapes; i++)
@@ -591,7 +591,7 @@ LogicalTapeSetClose(LogicalTapeSet *lts)
  * Mark a logical tape set as not needing management of free space anymore.
  *
  * This should be called if the caller does not intend to write any more data
- * into the tape set, but is reading from un-frozen tapes.	Since no more
+ * into the tape set, but is reading from un-frozen tapes.  Since no more
  * writes are planned, remembering free blocks is no longer useful.  Setting
  * this flag lets us avoid wasting time and space in ltsReleaseBlock(), which
  * is not designed to handle large numbers of free blocks.
@@ -732,7 +732,7 @@ LogicalTapeRewind(LogicalTapeSet *lts, int tapenum, bool forWrite)
 	else
 	{
 		/*
-		 * Completion of a read phase.	Rewind and prepare for write.
+		 * Completion of a read phase.  Rewind and prepare for write.
 		 *
 		 * NOTE: we assume the caller has read the tape to the end; otherwise
 		 * untouched data and indirect blocks will not have been freed. We
@@ -826,7 +826,7 @@ LogicalTapeRead(LogicalTapeSet *lts, int tapenum,
  *
  * This *must* be called just at the end of a write pass, before the
  * tape is rewound (after rewind is too late!).  It performs a rewind
- * and switch to read mode "for free".	An immediately following rewind-
+ * and switch to read mode "for free".  An immediately following rewind-
  * for-read call is OK but not necessary.
  */
 void
@@ -862,7 +862,7 @@ LogicalTapeFreeze(LogicalTapeSet *lts, int tapenum)
 }
 
 /*
- * Backspace the tape a given number of bytes.	(We also support a more
+ * Backspace the tape a given number of bytes.  (We also support a more
  * general seek interface, see below.)
  *
  * *Only* a frozen-for-read tape can be backed up; we don't support
@@ -966,7 +966,7 @@ LogicalTapeSeek(LogicalTapeSet *lts, int tapenum,
 		return false;
 
 	/*
-	 * OK, advance or back up to the target block.	This implementation would
+	 * OK, advance or back up to the target block.  This implementation would
 	 * be pretty inefficient for long seeks, but we really aren't expecting
 	 * that (a seek over one tuple is typical).
 	 */
@@ -999,7 +999,7 @@ LogicalTapeSeek(LogicalTapeSet *lts, int tapenum,
  * Obtain current position in a form suitable for a later LogicalTapeSeek.
  *
  * NOTE: it'd be OK to do this during write phase with intention of using
- * the position for a seek after freezing.	Not clear if anyone needs that.
+ * the position for a seek after freezing.  Not clear if anyone needs that.
  */
 void
 LogicalTapeTell(LogicalTapeSet *lts, int tapenum,

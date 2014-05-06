@@ -12,16 +12,16 @@
  *
  * The plan cache manager itself is principally responsible for tracking
  * whether cached plans should be invalidated because of schema changes in
- * the objects they depend on.	When (and if) the next demand for a cached
+ * the objects they depend on.  When (and if) the next demand for a cached
  * plan occurs, the query will be replanned.  Note that this could result
  * in an error, for example if a column referenced by the query is no
- * longer present.	The creator of a cached plan can specify whether it
+ * longer present.  The creator of a cached plan can specify whether it
  * is allowable for the query to change output tupdesc on replan (this
  * could happen with "SELECT *" for example) --- if so, it's up to the
  * caller to notice changes and cope with them.
  *
  * Currently, we track exactly the dependencies of plans on relations and
- * user-defined functions.	On relcache invalidation events or pg_proc
+ * user-defined functions.  On relcache invalidation events or pg_proc
  * syscache invalidation events, we invalidate just those plans that depend
  * on the particular object being modified.  (Note: this scheme assumes
  * that any table modification that requires replanning will generate a
@@ -209,7 +209,7 @@ CreateCachedPlan(Node *raw_parse_tree,
  * avoids extra copy steps during plan construction.  If the query ever does
  * need replanning, we'll generate a separate new CachedPlan at that time, but
  * the CachedPlanSource and the initial CachedPlan share the caller-provided
- * context and go away together when neither is needed any longer.	(Because
+ * context and go away together when neither is needed any longer.  (Because
  * the parser and planner generate extra cruft in addition to their real
  * output, this approach means that the context probably contains a bunch of
  * useless junk as well as the useful trees.  Hence, this method is a
@@ -300,7 +300,7 @@ FastCreateCachedPlan(Node *raw_parse_tree,
  * CachedPlanSetParserHook: set up to use parser callback hooks
  *
  * Use this when a caller wants to manage parameter information via parser
- * callbacks rather than a fixed parameter-types list.	Beware that the
+ * callbacks rather than a fixed parameter-types list.  Beware that the
  * information pointed to by parserSetupArg must be valid for as long as
  * the cached plan might be replanned!
  */
@@ -377,7 +377,7 @@ StoreCachedPlan(CachedPlanSource *plansource,
 	{
 		/*
 		 * Planner already extracted dependencies, we don't have to ... except
-		 * in the case of EXPLAIN.	We assume here that EXPLAIN can't appear
+		 * in the case of EXPLAIN.  We assume here that EXPLAIN can't appear
 		 * in a list with other commands.
 		 */
 		plan->relationOids = plan->invalItems = NIL;
@@ -410,7 +410,7 @@ StoreCachedPlan(CachedPlanSource *plansource,
  * DropCachedPlan: destroy a cached plan.
  *
  * Actually this only destroys the CachedPlanSource: the referenced CachedPlan
- * is released, but not destroyed until its refcount goes to zero.	That
+ * is released, but not destroyed until its refcount goes to zero.  That
  * handles the situation where DropCachedPlan is called while the plan is
  * still in use.
  */
@@ -586,7 +586,7 @@ RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
 		}
 
 		/*
-		 * Check or update the result tupdesc.	XXX should we use a weaker
+		 * Check or update the result tupdesc.  XXX should we use a weaker
 		 * condition than equalTupleDescs() here?
 		 */
 		resultDesc = PlanCacheComputeResultDesc(slist);
@@ -651,7 +651,7 @@ RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
  *
  * Note: useResOwner = false is used for releasing references that are in
  * persistent data structures, such as the parent CachedPlanSource or a
- * Portal.	Transient references should be protected by a resource owner.
+ * Portal.  Transient references should be protected by a resource owner.
  */
 void
 ReleaseCachedPlan(CachedPlan *plan, bool useResOwner)
@@ -925,7 +925,7 @@ plan_list_is_transient(List *stmt_list)
 
 /*
  * PlanCacheComputeResultDesc: given a list of either fully-planned statements
- * or Queries, determine the result tupledesc it will produce.	Returns NULL
+ * or Queries, determine the result tupledesc it will produce.  Returns NULL
  * if the execution will not return tuples.
  *
  * Note: the result is created or copied into current memory context.

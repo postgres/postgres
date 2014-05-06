@@ -78,13 +78,13 @@ typedef struct catctup
 
 	/*
 	 * Each tuple in a cache is a member of a Dllist that stores the elements
-	 * of its hash bucket.	We keep each Dllist in LRU order to speed repeated
+	 * of its hash bucket.  We keep each Dllist in LRU order to speed repeated
 	 * lookups.
 	 */
 	Dlelem		cache_elem;		/* list member of per-bucket list */
 
 	/*
-	 * The tuple may also be a member of at most one CatCList.	(If a single
+	 * The tuple may also be a member of at most one CatCList.  (If a single
 	 * catcache is list-searched with varying numbers of keys, we may have to
 	 * make multiple entries for the same tuple because of this restriction.
 	 * Currently, that's not expected to be common, so we accept the potential
@@ -101,7 +101,7 @@ typedef struct catctup
 	 *
 	 * A negative cache entry is an assertion that there is no tuple matching
 	 * a particular key.  This is just as useful as a normal entry so far as
-	 * avoiding catalog searches is concerned.	Management of positive and
+	 * avoiding catalog searches is concerned.  Management of positive and
 	 * negative entries is identical.
 	 */
 	int			refcount;		/* number of active references */
@@ -120,7 +120,7 @@ typedef struct catclist
 
 	/*
 	 * A CatCList describes the result of a partial search, ie, a search using
-	 * only the first K key columns of an N-key cache.	We form the keys used
+	 * only the first K key columns of an N-key cache.  We form the keys used
 	 * into a tuple (with other attributes NULL) to represent the stored key
 	 * set.  The CatCList object contains links to cache entries for all the
 	 * table rows satisfying the partial key.  (Note: none of these will be

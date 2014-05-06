@@ -21,7 +21,7 @@ static const char *modulename = gettext_noop("sorter");
 /*
  * Sort priority for object types when dumping a pre-7.3 database.
  * Objects are sorted by priority levels, and within an equal priority level
- * by OID.	(This is a relatively crude hack to provide semi-reasonable
+ * by OID.  (This is a relatively crude hack to provide semi-reasonable
  * behavior for old databases without full dependency info.)  Note: collations,
  * extensions, text search, foreign-data, and default ACL objects can't really
  * happen here, so the rather bogus priorities for them don't matter.
@@ -280,11 +280,11 @@ sortDumpableObjects(DumpableObject **objs, int numObjs,
  * TopoSort -- topological sort of a dump list
  *
  * Generate a re-ordering of the dump list that satisfies all the dependency
- * constraints shown in the dump list.	(Each such constraint is a fact of a
+ * constraints shown in the dump list.  (Each such constraint is a fact of a
  * partial ordering.)  Minimize rearrangement of the list not needed to
  * achieve the partial ordering.
  *
- * The input is the list of numObjs objects in objs[].	This list is not
+ * The input is the list of numObjs objects in objs[].  This list is not
  * modified.
  *
  * Returns TRUE if able to build an ordering that satisfies all the
@@ -327,7 +327,7 @@ TopoSort(DumpableObject **objs,
 	 * linked list of items-ready-to-output as Knuth does, we maintain a heap
 	 * of their item numbers, which we can use as a priority queue.  This
 	 * turns the algorithm from O(N) to O(N log N) because each insertion or
-	 * removal of a heap item takes O(log N) time.	However, that's still
+	 * removal of a heap item takes O(log N) time.  However, that's still
 	 * plenty fast enough for this application.
 	 */
 
@@ -391,9 +391,9 @@ TopoSort(DumpableObject **objs,
 	}
 
 	/*--------------------
-	 * Now emit objects, working backwards in the output list.	At each step,
+	 * Now emit objects, working backwards in the output list.  At each step,
 	 * we use the priority heap to select the last item that has no remaining
-	 * before-constraints.	We remove that item from the heap, output it to
+	 * before-constraints.  We remove that item from the heap, output it to
 	 * ordering[], and decrease the beforeConstraints count of each of the
 	 * items it was constrained against.  Whenever an item's beforeConstraints
 	 * count is thereby decreased to zero, we insert it into the priority heap
@@ -521,7 +521,7 @@ removeHeapElement(int *heap, int heapLength)
  * before trying TopoSort again.  We can safely repair loops that are
  * disjoint (have no members in common); if we find overlapping loops
  * then we repair only the first one found, because the action taken to
- * repair the first might have repaired the other as well.	(If not,
+ * repair the first might have repaired the other as well.  (If not,
  * we'll fix it on the next go-round.)
  *
  * objs[] lists the objects TopoSort couldn't sort
@@ -1014,7 +1014,7 @@ repairDependencyLoop(DumpableObject **loop,
 	/*
 	 * If all the objects are TABLE_DATA items, what we must have is a
 	 * circular set of foreign key constraints (or a single self-referential
-	 * table).	Print an appropriate complaint and break the loop arbitrarily.
+	 * table).  Print an appropriate complaint and break the loop arbitrarily.
 	 */
 	for (i = 0; i < nLoop; i++)
 	{

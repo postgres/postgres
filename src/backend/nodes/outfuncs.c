@@ -13,7 +13,7 @@
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
  *	  have an output function defined here (as well as an input function
- *	  in readfuncs.c).	For use in debugging, we also provide output
+ *	  in readfuncs.c).  For use in debugging, we also provide output
  *	  functions for nodes that appear in raw parsetrees, path, and plan trees.
  *	  These nodes however need not have input functions.
  *
@@ -31,8 +31,8 @@
 
 
 /*
- * Macros to simplify output of different kinds of fields.	Use these
- * wherever possible to reduce the chance for silly typos.	Note that these
+ * Macros to simplify output of different kinds of fields.  Use these
+ * wherever possible to reduce the chance for silly typos.  Note that these
  * hard-wire conventions about the names of the local variables in an Out
  * routine.
  */

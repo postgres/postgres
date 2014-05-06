@@ -518,7 +518,7 @@ estimate_costs(PlannerInfo *root, RelOptInfo *baserel,
 
 	/*
 	 * Now estimate the number of rows returned by the scan after applying the
-	 * baserestrictinfo quals.	This is pretty bogus too, since the planner
+	 * baserestrictinfo quals.  This is pretty bogus too, since the planner
 	 * will have no stats about the relation, but it's better than nothing.
 	 */
 	nrows = ntuples *
@@ -534,7 +534,7 @@ estimate_costs(PlannerInfo *root, RelOptInfo *baserel,
 	baserel->rows = nrows;
 
 	/*
-	 * Now estimate costs.	We estimate costs almost the same way as
+	 * Now estimate costs.  We estimate costs almost the same way as
 	 * cost_seqscan(), thus assuming that I/O costs are equivalent to a
 	 * regular table file of the same size.  However, we take per-tuple CPU
 	 * costs as 10x of a seqscan, to account for the cost of parsing records.

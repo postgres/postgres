@@ -374,7 +374,7 @@ AdjustTimestampForTypmod(Timestamp *time, int32 typmod)
 		 * Note: this round-to-nearest code is not completely consistent about
 		 * rounding values that are exactly halfway between integral values.
 		 * On most platforms, rint() will implement round-to-nearest-even, but
-		 * the integer code always rounds up (away from zero).	Is it worth
+		 * the integer code always rounds up (away from zero).  Is it worth
 		 * trying to be consistent?
 		 */
 #ifdef HAVE_INT64_TIMESTAMP
@@ -973,7 +973,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		 * that fields to the right of the last one specified are zeroed out,
 		 * but those to the left of it remain valid.  Thus for example there
 		 * is no operational difference between INTERVAL YEAR TO MONTH and
-		 * INTERVAL MONTH.	In some cases we could meaningfully enforce that
+		 * INTERVAL MONTH.  In some cases we could meaningfully enforce that
 		 * higher-order fields are zero; for example INTERVAL DAY could reject
 		 * nonzero "month" field.  However that seems a bit pointless when we
 		 * can't do it consistently.  (We cannot enforce a range limit on the
@@ -982,9 +982,9 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		 *
 		 * Note: before PG 8.4 we interpreted a limited set of fields as
 		 * actually causing a "modulo" operation on a given value, potentially
-		 * losing high-order as well as low-order information.	But there is
+		 * losing high-order as well as low-order information.  But there is
 		 * no support for such behavior in the standard, and it seems fairly
-		 * undesirable on data consistency grounds anyway.	Now we only
+		 * undesirable on data consistency grounds anyway.  Now we only
 		 * perform truncation or rounding of low-order fields.
 		 */
 		if (range == INTERVAL_FULL_RANGE)
@@ -1104,7 +1104,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 			/*
 			 * Note: this round-to-nearest code is not completely consistent
 			 * about rounding values that are exactly halfway between integral
-			 * values.	On most platforms, rint() will implement
+			 * values.  On most platforms, rint() will implement
 			 * round-to-nearest-even, but the integer code always rounds up
 			 * (away from zero).  Is it worth trying to be consistent?
 			 */
@@ -1314,7 +1314,7 @@ timestamptz_to_time_t(TimestampTz t)
  * Produce a C-string representation of a TimestampTz.
  *
  * This is mostly for use in emitting messages.  The primary difference
- * from timestamptz_out is that we force the output format to ISO.	Note
+ * from timestamptz_out is that we force the output format to ISO.  Note
  * also that the result is in a static buffer, not pstrdup'd.
  */
 const char *
@@ -1484,7 +1484,7 @@ recalc_t:
 	 *
 	 * First, convert to an integral timestamp, avoiding possibly
 	 * platform-specific roundoff-in-wrong-direction errors, and adjust to
-	 * Unix epoch.	Then see if we can convert to pg_time_t without loss. This
+	 * Unix epoch.  Then see if we can convert to pg_time_t without loss. This
 	 * coding avoids hardwiring any assumptions about the width of pg_time_t,
 	 * so it should behave sanely on machines without int64.
 	 */
@@ -4407,7 +4407,7 @@ timestamp_zone(PG_FUNCTION_ARGS)
 		PG_RETURN_TIMESTAMPTZ(timestamp);
 
 	/*
-	 * Look up the requested timezone.	First we look in the date token table
+	 * Look up the requested timezone.  First we look in the date token table
 	 * (to handle cases like "EST"), and if that fails, we look in the
 	 * timezone database (to handle cases like "America/New_York").  (This
 	 * matches the order in which timestamp input checks the cases; it's
@@ -4581,7 +4581,7 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 		PG_RETURN_TIMESTAMP(timestamp);
 
 	/*
-	 * Look up the requested timezone.	First we look in the date token table
+	 * Look up the requested timezone.  First we look in the date token table
 	 * (to handle cases like "EST"), and if that fails, we look in the
 	 * timezone database (to handle cases like "America/New_York").  (This
 	 * matches the order in which timestamp input checks the cases; it's

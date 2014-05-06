@@ -166,7 +166,7 @@ printtup_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
  * or some similar function; it does not contain a full set of fields.
  * The targetlist will be NIL when executing a utility function that does
  * not have a plan.  If the targetlist isn't NIL then it is a Query node's
- * targetlist; it is up to us to ignore resjunk columns in it.	The formats[]
+ * targetlist; it is up to us to ignore resjunk columns in it.  The formats[]
  * array pointer might be NULL (if we are doing Describe on a prepared stmt);
  * send zeroes for the format codes in that case.
  */

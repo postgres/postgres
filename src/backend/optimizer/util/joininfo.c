@@ -73,7 +73,7 @@ have_relevant_joinclause(PlannerInfo *root,
  *	  Add 'restrictinfo' to the joininfo list of each relation it requires.
  *
  * Note that the same copy of the restrictinfo node is linked to by all the
- * lists it is in.	This allows us to exploit caching of information about
+ * lists it is in.  This allows us to exploit caching of information about
  * the restriction clause (but we must be careful that the information does
  * not depend on context).
  *

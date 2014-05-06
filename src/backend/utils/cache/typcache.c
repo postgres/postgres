@@ -11,7 +11,7 @@
  *
  * Several seemingly-odd choices have been made to support use of the type
  * cache by generic array and record handling routines, such as array_eq(),
- * record_cmp(), and hash_array().	Because those routines are used as index
+ * record_cmp(), and hash_array().  Because those routines are used as index
  * support operations, they cannot leak memory.  To allow them to execute
  * efficiently, all information that they would like to re-use across calls
  * is kept in the type cache.
@@ -99,7 +99,7 @@ typedef struct TypeCacheEnumData
  *
  * Stored record types are remembered in a linear array of TupleDescs,
  * which can be indexed quickly with the assigned typmod.  There is also
- * a hash table to speed searches for matching TupleDescs.	The hash key
+ * a hash table to speed searches for matching TupleDescs.  The hash key
  * uses just the first N columns' type OIDs, and so we may have multiple
  * entries with the same hash key.
  */
@@ -468,7 +468,7 @@ load_typcache_tupdesc(TypeCacheEntry *typentry)
 
 	/*
 	 * Link to the tupdesc and increment its refcount (we assert it's a
-	 * refcounted descriptor).	We don't use IncrTupleDescRefCount() for this,
+	 * refcounted descriptor).  We don't use IncrTupleDescRefCount() for this,
 	 * because the reference mustn't be entered in the current resource owner;
 	 * it can outlive the current query.
 	 */
@@ -1004,7 +1004,7 @@ load_enum_cache_data(TypeCacheEntry *tcache)
 	/*
 	 * Read all the information for members of the enum type.  We collect the
 	 * info in working memory in the caller's context, and then transfer it to
-	 * permanent memory in CacheMemoryContext.	This minimizes the risk of
+	 * permanent memory in CacheMemoryContext.  This minimizes the risk of
 	 * leaking memory from CacheMemoryContext in the event of an error partway
 	 * through.
 	 */

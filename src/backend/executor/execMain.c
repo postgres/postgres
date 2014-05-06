@@ -19,7 +19,7 @@
  *	ExecutorRun accepts direction and count arguments that specify whether
  *	the plan is to be executed forwards, backwards, and for how many tuples.
  *	In some cases ExecutorRun may be called multiple times to process all
- *	the tuples for a plan.	It is also acceptable to stop short of executing
+ *	the tuples for a plan.  It is also acceptable to stop short of executing
  *	the whole plan (but only if it is a SELECT).
  *
  *	ExecutorFinish must be called after the final ExecutorRun call and
@@ -337,12 +337,12 @@ standard_ExecutorRun(QueryDesc *queryDesc,
  *		ExecutorFinish
  *
  *		This routine must be called after the last ExecutorRun call.
- *		It performs cleanup such as firing AFTER triggers.	It is
+ *		It performs cleanup such as firing AFTER triggers.  It is
  *		separate from ExecutorEnd because EXPLAIN ANALYZE needs to
  *		include these actions in the total runtime.
  *
  *		We provide a function hook variable that lets loadable plugins
- *		get control when ExecutorFinish is called.	Such a plugin would
+ *		get control when ExecutorFinish is called.  Such a plugin would
  *		normally call standard_ExecutorFinish().
  *
  * ----------------------------------------------------------------
@@ -579,7 +579,7 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 	 * userid to check as: current user unless we have a setuid indication.
 	 *
 	 * Note: GetUserId() is presently fast enough that there's no harm in
-	 * calling it separately for each RTE.	If that stops being true, we could
+	 * calling it separately for each RTE.  If that stops being true, we could
 	 * call it once in ExecCheckRTPerms and pass the userid down from there.
 	 * But for now, no need for the extra clutter.
 	 */
@@ -1157,7 +1157,7 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
  * if so it doesn't matter which one we pick.)  However, it is sometimes
  * necessary to fire triggers on other relations; this happens mainly when an
  * RI update trigger queues additional triggers on other relations, which will
- * be processed in the context of the outer query.	For efficiency's sake,
+ * be processed in the context of the outer query.  For efficiency's sake,
  * we want to have a ResultRelInfo for those triggers too; that can avoid
  * repeated re-opening of the relation.  (It also provides a way for EXPLAIN
  * ANALYZE to report the runtimes of such triggers.)  So we make additional
@@ -1194,7 +1194,7 @@ ExecGetTriggerResultRel(EState *estate, Oid relid)
 	/*
 	 * Open the target relation's relcache entry.  We assume that an
 	 * appropriate lock is still held by the backend from whenever the trigger
-	 * event got queued, so we need take no new lock here.	Also, we need not
+	 * event got queued, so we need take no new lock here.  Also, we need not
 	 * recheck the relkind, so no need for CheckValidResultRel.
 	 */
 	rel = heap_open(relid, NoLock);
@@ -1295,7 +1295,7 @@ ExecPostprocessPlan(EState *estate)
 
 	/*
 	 * Run any secondary ModifyTable nodes to completion, in case the main
-	 * query did not fetch all rows from them.	(We do this to ensure that
+	 * query did not fetch all rows from them.  (We do this to ensure that
 	 * such nodes have predictable results.)
 	 */
 	foreach(lc, estate->es_auxmodifytables)
@@ -1708,7 +1708,7 @@ EvalPlanQual(EState *estate, EPQState *epqstate,
 	*tid = copyTuple->t_self;
 
 	/*
-	 * Need to run a recheck subquery.	Initialize or reinitialize EPQ state.
+	 * Need to run a recheck subquery.  Initialize or reinitialize EPQ state.
 	 */
 	EvalPlanQualBegin(epqstate, estate);
 
@@ -1792,7 +1792,7 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
 
 			/*
 			 * If xmin isn't what we're expecting, the slot must have been
-			 * recycled and reused for an unrelated tuple.	This implies that
+			 * recycled and reused for an unrelated tuple.  This implies that
 			 * the latest version of the row was deleted, so we need do
 			 * nothing.  (Should be safe to examine xmin without getting
 			 * buffer's content lock, since xmin never changes in an existing
@@ -2018,7 +2018,7 @@ EvalPlanQualGetTuple(EPQState *epqstate, Index rti)
 
 /*
  * Fetch the current row values for any non-locked relations that need
- * to be scanned by an EvalPlanQual operation.	origslot must have been set
+ * to be scanned by an EvalPlanQual operation.  origslot must have been set
  * to contain the current result row (top-level row) that we need to recheck.
  */
 void
@@ -2249,7 +2249,7 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 
 	/*
 	 * Each EState must have its own es_epqScanDone state, but if we have
-	 * nested EPQ checks they should share es_epqTuple arrays.	This allows
+	 * nested EPQ checks they should share es_epqTuple arrays.  This allows
 	 * sub-rechecks to inherit the values being examined by an outer recheck.
 	 */
 	estate->es_epqScanDone = (bool *) palloc0(rtsize * sizeof(bool));
@@ -2306,7 +2306,7 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
  *
  * This is a cut-down version of ExecutorEnd(); basically we want to do most
  * of the normal cleanup, but *not* close result relations (which we are
- * just sharing from the outer query).	We do, however, have to close any
+ * just sharing from the outer query).  We do, however, have to close any
  * trigger target relations that got opened, since those are not shared.
  * (There probably shouldn't be any of the latter, but just in case...)
  */

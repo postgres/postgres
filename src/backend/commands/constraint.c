@@ -49,7 +49,7 @@ unique_key_recheck(PG_FUNCTION_ARGS)
 	bool		isnull[INDEX_MAX_KEYS];
 
 	/*
-	 * Make sure this is being called as an AFTER ROW trigger.	Note:
+	 * Make sure this is being called as an AFTER ROW trigger.  Note:
 	 * translatable error strings are shared with ri_triggers.c, so resist the
 	 * temptation to fold the function name into them.
 	 */
@@ -86,7 +86,7 @@ unique_key_recheck(PG_FUNCTION_ARGS)
 	 * If the new_row is now dead (ie, inserted and then deleted within our
 	 * transaction), we can skip the check.  However, we have to be careful,
 	 * because this trigger gets queued only in response to index insertions;
-	 * which means it does not get queued for HOT updates.	The row we are
+	 * which means it does not get queued for HOT updates.  The row we are
 	 * called for might now be dead, but have a live HOT child, in which case
 	 * we still need to make the check.  Therefore we have to use
 	 * heap_hot_search, not just HeapTupleSatisfiesVisibility as is done in

@@ -19,7 +19,7 @@
  * of lossiness.  In theory we could fall back to page ranges at some
  * point, but for now that seems useless complexity.
  *
- * We also support the notion of candidate matches, or rechecking.	This
+ * We also support the notion of candidate matches, or rechecking.  This
  * means we know that a search need visit only some tuples on a page,
  * but we are not certain that all of those tuples are real matches.
  * So the eventual heap scan must recheck the quals for these tuples only,
@@ -49,7 +49,7 @@
 /*
  * The maximum number of tuples per page is not large (typically 256 with
  * 8K pages, or 1024 with 32K pages).  So there's not much point in making
- * the per-page bitmaps variable size.	We just legislate that the size
+ * the per-page bitmaps variable size.  We just legislate that the size
  * is this:
  */
 #define MAX_TUPLES_PER_PAGE  MaxHeapTuplesPerPage
@@ -62,10 +62,10 @@
  * for that page in the page table.
  *
  * We actually store both exact pages and lossy chunks in the same hash
- * table, using identical data structures.	(This is because dynahash.c's
+ * table, using identical data structures.  (This is because dynahash.c's
  * memory management doesn't allow space to be transferred easily from one
  * hashtable to another.)  Therefore it's best if PAGES_PER_CHUNK is the
- * same as MAX_TUPLES_PER_PAGE, or at least not too different.	But we
+ * same as MAX_TUPLES_PER_PAGE, or at least not too different.  But we
  * also want PAGES_PER_CHUNK to be a power of 2 to avoid expensive integer
  * remainder operations.  So, define it like this:
  */
@@ -143,7 +143,7 @@ struct TIDBitmap
 
 /*
  * When iterating over a bitmap in sorted order, a TBMIterator is used to
- * track our progress.	There can be several iterators scanning the same
+ * track our progress.  There can be several iterators scanning the same
  * bitmap concurrently.  Note that the bitmap becomes read-only as soon as
  * any iterator is created.
  */
@@ -791,7 +791,7 @@ tbm_find_pageentry(const TIDBitmap *tbm, BlockNumber pageno)
  *
  * If new, the entry is marked as an exact (non-chunk) entry.
  *
- * This may cause the table to exceed the desired memory size.	It is
+ * This may cause the table to exceed the desired memory size.  It is
  * up to the caller to call tbm_lossify() at the next safe point if so.
  */
 static PagetableEntry *
@@ -871,7 +871,7 @@ tbm_page_is_lossy(const TIDBitmap *tbm, BlockNumber pageno)
 /*
  * tbm_mark_page_lossy - mark the page number as lossily stored
  *
- * This may cause the table to exceed the desired memory size.	It is
+ * This may cause the table to exceed the desired memory size.  It is
  * up to the caller to call tbm_lossify() at the next safe point if so.
  */
 static void
@@ -892,7 +892,7 @@ tbm_mark_page_lossy(TIDBitmap *tbm, BlockNumber pageno)
 	chunk_pageno = pageno - bitno;
 
 	/*
-	 * Remove any extant non-lossy entry for the page.	If the page is its own
+	 * Remove any extant non-lossy entry for the page.  If the page is its own
 	 * chunk header, however, we skip this and handle the case below.
 	 */
 	if (bitno != 0)

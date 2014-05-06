@@ -77,7 +77,7 @@ static void AlterFunctionOwner_internal(Relation rel, HeapTuple tup,
  * allow a shell type to be used, or even created if the specified return type
  * doesn't exist yet.  (Without this, there's no way to define the I/O procs
  * for a new type.)  But SQL function creation won't cope, so error out if
- * the target language is SQL.	(We do this here, not in the SQL-function
+ * the target language is SQL.  (We do this here, not in the SQL-function
  * validator, so as not to produce a NOTICE and then an ERROR for the same
  * condition.)
  */
@@ -425,7 +425,7 @@ examine_parameter_list(List *parameters, Oid languageOid,
  * FUNCTION and ALTER FUNCTION and return it via one of the out
  * parameters. Returns true if the passed option was recognized. If
  * the out parameter we were going to assign to points to non-NULL,
- * raise a duplicate-clause error.	(We don't try to detect duplicate
+ * raise a duplicate-clause error.  (We don't try to detect duplicate
  * SET parameters though --- if you're redundant, the last one wins.)
  */
 static bool
@@ -721,7 +721,7 @@ interpret_AS_clause(Oid languageOid, const char *languageName,
 	{
 		/*
 		 * For "C" language, store the file name in probin and, when given,
-		 * the link symbol name in prosrc.	If link symbol is omitted,
+		 * the link symbol name in prosrc.  If link symbol is omitted,
 		 * substitute procedure name.  We also allow link symbol to be
 		 * specified as "-", since that was the habit in PG versions before
 		 * 8.4, and there might be dump files out there that don't translate
@@ -1572,7 +1572,7 @@ CreateCast(CreateCastStmt *stmt)
 		/*
 		 * Restricting the volatility of a cast function may or may not be a
 		 * good idea in the abstract, but it definitely breaks many old
-		 * user-defined types.	Disable this check --- tgl 2/1/03
+		 * user-defined types.  Disable this check --- tgl 2/1/03
 		 */
 #ifdef NOT_USED
 		if (procstruct->provolatile == PROVOLATILE_VOLATILE)
@@ -1636,7 +1636,7 @@ CreateCast(CreateCastStmt *stmt)
 
 		/*
 		 * We know that composite, enum and array types are never binary-
-		 * compatible with each other.	They all have OIDs embedded in them.
+		 * compatible with each other.  They all have OIDs embedded in them.
 		 *
 		 * Theoretically you could build a user-defined base type that is
 		 * binary-compatible with a composite, enum, or array type.  But we
@@ -1665,7 +1665,7 @@ CreateCast(CreateCastStmt *stmt)
 		 * We also disallow creating binary-compatibility casts involving
 		 * domains.  Casting from a domain to its base type is already
 		 * allowed, and casting the other way ought to go through domain
-		 * coercion to permit constraint checking.	Again, if you're intent on
+		 * coercion to permit constraint checking.  Again, if you're intent on
 		 * having your own semantics for that, create a no-op cast function.
 		 *
 		 * NOTE: if we were to relax this, the above checks for composites

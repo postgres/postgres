@@ -131,7 +131,7 @@ GetStandbyLimitTime(void)
 
 	/*
 	 * The cutoff time is the last WAL data receipt time plus the appropriate
-	 * delay variable.	Delay of -1 means wait forever.
+	 * delay variable.  Delay of -1 means wait forever.
 	 */
 	GetXLogReceiptTime(&rtime, &fromStream);
 	if (fromStream)

@@ -143,14 +143,14 @@ GetPortalByName(const char *name)
  *		Get the "primary" stmt within a portal, ie, the one marked canSetTag.
  *
  * Returns NULL if no such stmt.  If multiple PlannedStmt structs within the
- * portal are marked canSetTag, returns the first one.	Neither of these
+ * portal are marked canSetTag, returns the first one.  Neither of these
  * cases should occur in present usages of this function.
  *
  * Copes if given a list of Querys --- can't happen in a portal, but this
  * code also supports plancache.c, which needs both cases.
  *
  * Note: the reason this is just handed a List is so that plancache.c
- * can share the code.	For use with a portal, use PortalGetPrimaryStmt
+ * can share the code.  For use with a portal, use PortalGetPrimaryStmt
  * rather than calling this directly.
  */
 Node *
@@ -276,7 +276,7 @@ CreateNewPortal(void)
  * you can pass a constant string, perhaps "(query not available)".)
  *
  * commandTag shall be NULL if and only if the original query string
- * (before rewriting) was an empty string.	Also, the passed commandTag must
+ * (before rewriting) was an empty string.  Also, the passed commandTag must
  * be a pointer to a constant string, since it is not copied.
  *
  * If cplan is provided, then it is a cached plan containing the stmts,
@@ -479,7 +479,7 @@ PortalDrop(Portal portal, bool isTopCommit)
 
 	/*
 	 * Allow portalcmds.c to clean up the state it knows about, in particular
-	 * shutting down the executor if still active.	This step potentially runs
+	 * shutting down the executor if still active.  This step potentially runs
 	 * user-defined code so failure has to be expected.  It's the cleanup
 	 * hook's responsibility to not try to do that more than once, in the case
 	 * that failure occurs and then we come back to drop the portal again
@@ -506,12 +506,12 @@ PortalDrop(Portal portal, bool isTopCommit)
 	PortalReleaseCachedPlan(portal);
 
 	/*
-	 * Release any resources still attached to the portal.	There are several
+	 * Release any resources still attached to the portal.  There are several
 	 * cases being covered here:
 	 *
 	 * Top transaction commit (indicated by isTopCommit): normally we should
 	 * do nothing here and let the regular end-of-transaction resource
-	 * releasing mechanism handle these resources too.	However, if we have a
+	 * releasing mechanism handle these resources too.  However, if we have a
 	 * FAILED portal (eg, a cursor that got an error), we'd better clean up
 	 * its resources to avoid resource-leakage warning messages.
 	 *
@@ -523,7 +523,7 @@ PortalDrop(Portal portal, bool isTopCommit)
 	 * cleaned up in transaction abort.
 	 *
 	 * Ordinary portal drop: must release resources.  However, if the portal
-	 * is not FAILED then we do not release its locks.	The locks become the
+	 * is not FAILED then we do not release its locks.  The locks become the
 	 * responsibility of the transaction's ResourceOwner (since it is the
 	 * parent of the portal's owner) and will be released when the transaction
 	 * eventually ends.
@@ -610,7 +610,7 @@ PortalHashTableDeleteAll(void)
  * Holdable cursors created in this transaction need to be converted to
  * materialized form, since we are going to close down the executor and
  * release locks.  Non-holdable portals created in this transaction are
- * simply removed.	Portals remaining from prior transactions should be
+ * simply removed.  Portals remaining from prior transactions should be
  * left untouched.
  *
  * Returns TRUE if any portals changed state (possibly causing user-defined

@@ -164,7 +164,7 @@ GinShortenTuple(IndexTuple itup, uint32 nipd)
  * Form a non-leaf entry tuple by copying the key data from the given tuple,
  * which can be either a leaf or non-leaf entry tuple.
  *
- * Any posting list in the source tuple is not copied.	The specified child
+ * Any posting list in the source tuple is not copied.  The specified child
  * block number is inserted into t_tid.
  */
 static IndexTuple

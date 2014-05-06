@@ -4,7 +4,7 @@
  *	  Routines to preprocess the parse tree target list
  *
  * For INSERT and UPDATE queries, the targetlist must contain an entry for
- * each attribute of the target relation in the correct order.	For all query
+ * each attribute of the target relation in the correct order.  For all query
  * types, we may need to add junk tlist entries for Vars used in the RETURNING
  * list and row ID information needed for EvalPlanQual checking.
  *
@@ -80,7 +80,7 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 	/*
 	 * Add necessary junk columns for rowmarked rels.  These values are needed
 	 * for locking of rels selected FOR UPDATE/SHARE, and to do EvalPlanQual
-	 * rechecking.	See comments for PlanRowMark in plannodes.h.
+	 * rechecking.  See comments for PlanRowMark in plannodes.h.
 	 */
 	foreach(lc, root->rowMarks)
 	{
@@ -145,7 +145,7 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 	/*
 	 * If the query has a RETURNING list, add resjunk entries for any Vars
 	 * used in RETURNING that belong to other relations.  We need to do this
-	 * to make these Vars available for the RETURNING calculation.	Vars that
+	 * to make these Vars available for the RETURNING calculation.  Vars that
 	 * belong to the result rel don't need to be added, because they will be
 	 * made to refer to the actual heap tuple.
 	 */
@@ -253,9 +253,9 @@ expand_targetlist(List *tlist, int command_type,
 			 * When generating a NULL constant for a dropped column, we label
 			 * it INT4 (any other guaranteed-to-exist datatype would do as
 			 * well). We can't label it with the dropped column's datatype
-			 * since that might not exist anymore.	It does not really matter
+			 * since that might not exist anymore.  It does not really matter
 			 * what we claim the type is, since NULL is NULL --- its
-			 * representation is datatype-independent.	This could perhaps
+			 * representation is datatype-independent.  This could perhaps
 			 * confuse code comparing the finished plan to the target
 			 * relation, however.
 			 */
@@ -337,7 +337,7 @@ expand_targetlist(List *tlist, int command_type,
 	/*
 	 * The remaining tlist entries should be resjunk; append them all to the
 	 * end of the new tlist, making sure they have resnos higher than the last
-	 * real attribute.	(Note: although the rewriter already did such
+	 * real attribute.  (Note: although the rewriter already did such
 	 * renumbering, we have to do it again here in case we are doing an UPDATE
 	 * in a table with dropped columns, or an inheritance child table with
 	 * extra columns.)

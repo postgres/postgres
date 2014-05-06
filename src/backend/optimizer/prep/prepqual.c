@@ -54,12 +54,12 @@ static Expr *process_duplicate_ors(List *orlist);
  * Although this can be invoked on its own, it's mainly intended as a helper
  * for eval_const_expressions(), and that context drives several design
  * decisions.  In particular, if the input is already AND/OR flat, we must
- * preserve that property.	We also don't bother to recurse in situations
+ * preserve that property.  We also don't bother to recurse in situations
  * where we can assume that lower-level executions of eval_const_expressions
  * would already have simplified sub-clauses of the input.
  *
  * The difference between this and a simple make_notclause() is that this
- * tries to get rid of the NOT node by logical simplification.	It's clearly
+ * tries to get rid of the NOT node by logical simplification.  It's clearly
  * always a win if the NOT node can be eliminated altogether.  However, our
  * use of DeMorgan's laws could result in having more NOT nodes rather than
  * fewer.  We do that unconditionally anyway, because in WHERE clauses it's
@@ -152,7 +152,7 @@ negate_clause(Node *node)
 						 * those properties.  For example, if no direct child of
 						 * the given AND clause is an AND or a NOT-above-OR, then
 						 * the recursive calls of negate_clause() can't return any
-						 * OR clauses.	So we needn't call pull_ors() before
+						 * OR clauses.  So we needn't call pull_ors() before
 						 * building a new OR clause.  Similarly for the OR case.
 						 *--------------------
 						 */
@@ -374,7 +374,7 @@ pull_ors(List *orlist)
  *
  * This may seem like a fairly useless activity, but it turns out to be
  * applicable to many machine-generated queries, and there are also queries
- * in some of the TPC benchmarks that need it.	This was in fact almost the
+ * in some of the TPC benchmarks that need it.  This was in fact almost the
  * sole useful side-effect of the old prepqual code that tried to force
  * the query into canonical AND-of-ORs form: the canonical equivalent of
  *		((A AND B) OR (A AND C))
@@ -393,7 +393,7 @@ pull_ors(List *orlist)
  *	  OR clauses to which the inverse OR distributive law might apply.
  *	  Only the top-level AND/OR structure is searched.
  *
- * Returns the modified qualification.	AND/OR flatness is preserved.
+ * Returns the modified qualification.  AND/OR flatness is preserved.
  */
 static Expr *
 find_duplicate_ors(Expr *qual)

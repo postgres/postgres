@@ -29,14 +29,14 @@
  *
  * CreateDestReceiver returns a receiver object appropriate to the specified
  * destination.  The executor, as well as utility statements that can return
- * tuples, are passed the resulting DestReceiver* pointer.	Each executor run
+ * tuples, are passed the resulting DestReceiver* pointer.  Each executor run
  * or utility execution calls the receiver's rStartup method, then the
  * receiveSlot method (zero or more times), then the rShutdown method.
  * The same receiver object may be re-used multiple times; eventually it is
  * destroyed by calling its rDestroy method.
  *
  * In some cases, receiver objects require additional parameters that must
- * be passed to them after calling CreateDestReceiver.	Since the set of
+ * be passed to them after calling CreateDestReceiver.  Since the set of
  * parameters varies for different receiver types, this is not handled by
  * this module, but by direct calls from the calling code to receiver type
  * specific functions.
@@ -45,10 +45,10 @@
  * allocated object (for destination types that require no local state),
  * in which case rDestroy is a no-op.  Alternatively it can be a palloc'd
  * object that has DestReceiver as its first field and contains additional
- * fields (see printtup.c for an example).	These additional fields are then
+ * fields (see printtup.c for an example).  These additional fields are then
  * accessible to the DestReceiver functions by casting the DestReceiver*
- * pointer passed to them.	The palloc'd object is pfree'd by the rDestroy
- * method.	Note that the caller of CreateDestReceiver should take care to
+ * pointer passed to them.  The palloc'd object is pfree'd by the rDestroy
+ * method.  Note that the caller of CreateDestReceiver should take care to
  * do so in a memory context that is long-lived enough for the receiver
  * object not to disappear while still needed.
  *
@@ -79,7 +79,7 @@
  *		destination.  Someday this will probably need to be improved.
  *
  * Note: only the values DestNone, DestDebug, DestRemote are legal for the
- * global variable whereToSendOutput.	The other values may be used
+ * global variable whereToSendOutput.   The other values may be used
  * as the destination for individual commands.
  * ----------------
  */

@@ -49,7 +49,7 @@ static void trim_trailing_separator(char *path);
 /*
  * skip_drive
  *
- * On Windows, a path may begin with "C:" or "//network/".	Advance over
+ * On Windows, a path may begin with "C:" or "//network/".  Advance over
  * this and point to the effective start of the path.
  */
 #ifdef WIN32
@@ -262,7 +262,7 @@ canonicalize_path(char *path)
 	 * Remove any trailing uses of "." and process ".." ourselves
 	 *
 	 * Note that "/../.." should reduce to just "/", while "../.." has to be
-	 * kept as-is.	In the latter case we put back mistakenly trimmed ".."
+	 * kept as-is.  In the latter case we put back mistakenly trimmed ".."
 	 * components below.  Also note that we want a Windows drive spec to be
 	 * visible to trim_directory(), but it's not part of the logic that's
 	 * looking at the name components; hence distinction between path and

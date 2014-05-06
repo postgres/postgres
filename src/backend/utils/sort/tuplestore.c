@@ -8,7 +8,7 @@
  * a dumbed-down version of tuplesort.c; it does no sorting of tuples
  * but can only store and regurgitate a sequence of tuples.  However,
  * because no sort is required, it is allowed to start reading the sequence
- * before it has all been written.	This is particularly useful for cursors,
+ * before it has all been written.  This is particularly useful for cursors,
  * because it allows random access within the already-scanned portion of
  * a query without having to process the underlying scan to completion.
  * Also, it is possible to support multiple independent read pointers.
@@ -17,7 +17,7 @@
  * space limit specified by the caller.
  *
  * The (approximate) amount of memory allowed to the tuplestore is specified
- * in kilobytes by the caller.	We absorb tuples and simply store them in an
+ * in kilobytes by the caller.  We absorb tuples and simply store them in an
  * in-memory array as long as we haven't exceeded maxKBytes.  If we do exceed
  * maxKBytes, we dump all the tuples into a temp file and then read from that
  * when needed.
@@ -29,7 +29,7 @@
  * When the caller requests backward-scan capability, we write the temp file
  * in a format that allows either forward or backward scan.  Otherwise, only
  * forward scan is allowed.  A request for backward scan must be made before
- * putting any tuples into the tuplestore.	Rewind is normally allowed but
+ * putting any tuples into the tuplestore.  Rewind is normally allowed but
  * can be turned off via tuplestore_set_eflags; turning off rewind for all
  * read pointers enables truncation of the tuplestore at the oldest read point
  * for minimal memory usage.  (The caller must explicitly call tuplestore_trim
@@ -63,7 +63,7 @@
 
 
 /*
- * Possible states of a Tuplestore object.	These denote the states that
+ * Possible states of a Tuplestore object.  These denote the states that
  * persist between calls of Tuplestore routines.
  */
 typedef enum
@@ -82,7 +82,7 @@ typedef enum
  *
  * Special case: if eof_reached is true, then the pointer's read position is
  * implicitly equal to the write position, and current/file/offset aren't
- * maintained.	This way we need not update all the read pointers each time
+ * maintained.  This way we need not update all the read pointers each time
  * we write.
  */
 typedef struct
@@ -126,7 +126,7 @@ struct Tuplestorestate
 	void	   *(*copytup) (Tuplestorestate *state, void *tup);
 
 	/*
-	 * Function to write a stored tuple onto tape.	The representation of the
+	 * Function to write a stored tuple onto tape.  The representation of the
 	 * tuple on tape need not be the same as it is in memory; requirements on
 	 * the tape representation are given below.  After writing the tuple,
 	 * pfree() it, and increase state->availMem by the amount of memory space
@@ -194,7 +194,7 @@ struct Tuplestorestate
  * If state->backward is true, then the stored representation of
  * the tuple must be followed by another "unsigned int" that is a copy of the
  * length --- so the total tape space used is actually sizeof(unsigned int)
- * more than the stored length value.  This allows read-backwards.	When
+ * more than the stored length value.  This allows read-backwards.  When
  * state->backward is not set, the write/read routines may omit the extra
  * length word.
  *
@@ -290,7 +290,7 @@ tuplestore_begin_common(int eflags, bool interXact, int maxKBytes)
  * tuple store are allowed.
  *
  * interXact: if true, the files used for on-disk storage persist beyond the
- * end of the current transaction.	NOTE: It's the caller's responsibility to
+ * end of the current transaction.  NOTE: It's the caller's responsibility to
  * create such a tuplestore in a memory context and resource owner that will
  * also survive transaction boundaries, and to ensure the tuplestore is closed
  * when it's no longer wanted.
@@ -329,7 +329,7 @@ tuplestore_begin_heap(bool randomAccess, bool interXact, int maxKBytes)
  * any data into the tuplestore.
  *
  * eflags is a bitmask following the meanings used for executor node
- * startup flags (see executor.h).	tuplestore pays attention to these bits:
+ * startup flags (see executor.h).  tuplestore pays attention to these bits:
  *		EXEC_FLAG_REWIND		need rewind to start
  *		EXEC_FLAG_BACKWARD		need backward fetch
  * If tuplestore_set_eflags is not called, REWIND is allowed, and BACKWARD
@@ -739,7 +739,7 @@ tuplestore_puttuple_common(Tuplestorestate *state, void *tuple)
 
 /*
  * Fetch the next tuple in either forward or back direction.
- * Returns NULL if no more tuples.	If should_free is set, the
+ * Returns NULL if no more tuples.  If should_free is set, the
  * caller must pfree the returned tuple when done with it.
  *
  * Backward scan is only allowed if randomAccess was set true or

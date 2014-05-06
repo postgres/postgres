@@ -21,7 +21,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.	IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -104,7 +104,7 @@ int			base;
 	 * that is greater than this value, if followed by a legal input
 	 * character, is too big.  One that is equal to this value may be valid or
 	 * not; the limit between valid and invalid numbers is then based on the
-	 * last digit.	For instance, if the range for longs is
+	 * last digit.  For instance, if the range for longs is
 	 * [-2147483648..2147483647] and the input base is 10, cutoff will be set
 	 * to 214748364 and cutlim to either 7 (neg==0) or 8 (neg==1), meaning
 	 * that if we have accumulated a value > 214748364, or equal but the next

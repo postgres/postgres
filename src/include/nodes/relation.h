@@ -117,7 +117,7 @@ typedef struct PlannerGlobal
  *
  * This struct is conventionally called "root" in all the planner routines.
  * It holds links to all of the planner's working state, in addition to the
- * original Query.	Note that at present the planner extensively modifies
+ * original Query.  Note that at present the planner extensively modifies
  * the passed-in Query data structure; someday that should stop.
  *----------
  */
@@ -135,7 +135,7 @@ typedef struct PlannerInfo
 
 	/*
 	 * simple_rel_array holds pointers to "base rels" and "other rels" (see
-	 * comments for RelOptInfo for more info).	It is indexed by rangetable
+	 * comments for RelOptInfo for more info).  It is indexed by rangetable
 	 * index (so entry 0 is always wasted).  Entries can be NULL when an RTE
 	 * does not correspond to a base relation, such as a join RTE or an
 	 * unreferenced view RTE; or if the RelOptInfo hasn't been made yet.
@@ -156,7 +156,7 @@ typedef struct PlannerInfo
 	 * considered in this planning run.  For small problems we just scan the
 	 * list to do lookups, but when there are many join relations we build a
 	 * hash table for faster lookups.  The hash table is present and valid
-	 * when join_rel_hash is not NULL.	Note that we still maintain the list
+	 * when join_rel_hash is not NULL.  Note that we still maintain the list
 	 * even when using the hash table for lookups; this simplifies life for
 	 * GEQO.
 	 */
@@ -278,7 +278,7 @@ typedef struct PlannerInfo
  * Currently the only kind of otherrels are those made for member relations
  * of an "append relation", that is an inheritance set or UNION ALL subquery.
  * An append relation has a parent RTE that is a base rel, which represents
- * the entire append relation.	The member RTEs are otherrels.	The parent
+ * the entire append relation.  The member RTEs are otherrels.  The parent
  * is present in the query join tree but the members are not.  The member
  * RTEs and otherrels are used to plan the scans of the individual tables or
  * subqueries of the append set; then the parent baserel is given Append
@@ -290,7 +290,7 @@ typedef struct PlannerInfo
  * alias Vars are expanded to non-aliased form during preprocess_expression.
  *
  * Parts of this data structure are specific to various scan and join
- * mechanisms.	It didn't seem worth creating new node types for them.
+ * mechanisms.  It didn't seem worth creating new node types for them.
  *
  *		relids - Set of base-relation identifiers; it is a base relation
  *				if there is just one, a join relation if more than one
@@ -515,7 +515,7 @@ typedef struct IndexOptInfo
  * equal to each other, where "equal" is according to the rules of the btree
  * operator family(s) shown in ec_opfamilies, as well as the collation shown
  * by ec_collation.  (We restrict an EC to contain only equalities whose
- * operators belong to the same set of opfamilies.	This could probably be
+ * operators belong to the same set of opfamilies.  This could probably be
  * relaxed, but for now it's not worth the trouble, since nearly all equality
  * operators belong to only one btree opclass anyway.  Similarly, we suppose
  * that all or none of the input datatypes are collatable, so that a single
@@ -525,7 +525,7 @@ typedef struct IndexOptInfo
  * us represent knowledge about different sort orderings being equivalent.
  * Since every PathKey must reference an EquivalenceClass, we will end up
  * with single-member EquivalenceClasses whenever a sort key expression has
- * not been equivalenced to anything else.	It is also possible that such an
+ * not been equivalenced to anything else.  It is also possible that such an
  * EquivalenceClass will contain a volatile expression ("ORDER BY random()"),
  * which is a case that can't arise otherwise since clauses containing
  * volatile functions are never considered mergejoinable.  We mark such
@@ -538,7 +538,7 @@ typedef struct IndexOptInfo
  * We allow equality clauses appearing below the nullable side of an outer join
  * to form EquivalenceClasses, but these have a slightly different meaning:
  * the included values might be all NULL rather than all the same non-null
- * values.	See src/backend/optimizer/README for more on that point.
+ * values.  See src/backend/optimizer/README for more on that point.
  *
  * NB: if ec_merged isn't NULL, this class has been merged into another, and
  * should be ignored in favor of using the pointed-to class.
@@ -587,7 +587,7 @@ typedef struct EquivalenceClass
  *
  * em_datatype is usually the same as exprType(em_expr), but can be
  * different when dealing with a binary-compatible opfamily; in particular
- * anyarray_ops would never work without this.	Use em_datatype when
+ * anyarray_ops would never work without this.  Use em_datatype when
  * looking up a specific btree operator to work with this expression.
  */
 typedef struct EquivalenceMember
@@ -616,7 +616,7 @@ typedef struct EquivalenceMember
  * information.)
  *
  * Note: pk_strategy is either BTLessStrategyNumber (for ASC) or
- * BTGreaterStrategyNumber (for DESC).	We assume that all ordering-capable
+ * BTGreaterStrategyNumber (for DESC).  We assume that all ordering-capable
  * index types will use btree-compatible strategy numbers.
  */
 
@@ -728,11 +728,11 @@ typedef struct IndexPath
  *
  * The individual indexscans are represented by IndexPath nodes, and any
  * logic on top of them is represented by a tree of BitmapAndPath and
- * BitmapOrPath nodes.	Notice that we can use the same IndexPath node both
+ * BitmapOrPath nodes.  Notice that we can use the same IndexPath node both
  * to represent a regular IndexScan plan, and as the child of a BitmapHeapPath
  * that represents scanning the same index using a BitmapIndexScan.  The
  * startup_cost and total_cost figures of an IndexPath always represent the
- * costs to use it as a regular IndexScan.	The costs of a BitmapIndexScan
+ * costs to use it as a regular IndexScan.  The costs of a BitmapIndexScan
  * can be computed using the IndexPath's indextotalcost and indexselectivity.
  *
  * BitmapHeapPaths can be nestloop inner indexscans.  The isjoininner and
@@ -855,7 +855,7 @@ typedef struct MaterialPath
  *
  * This is unlike the other Path nodes in that it can actually generate
  * different plans: either hash-based or sort-based implementation, or a
- * no-op if the input path can be proven distinct already.	The decision
+ * no-op if the input path can be proven distinct already.  The decision
  * is sufficiently localized that it's not worth having separate Path node
  * types.  (Note: in the no-op case, we could eliminate the UniquePath node
  * entirely and just return the subpath; but it's convenient to have a
@@ -981,7 +981,7 @@ typedef struct HashPath
  * When we construct a join rel that includes all the base rels referenced
  * in a multi-relation restriction clause, we place that clause into the
  * joinrestrictinfo lists of paths for the join rel, if neither left nor
- * right sub-path includes all base rels referenced in the clause.	The clause
+ * right sub-path includes all base rels referenced in the clause.  The clause
  * will be applied at that join level, and will not propagate any further up
  * the join tree.  (Note: the "predicate migration" code was once intended to
  * push restriction clauses up and down the plan tree based on evaluation
@@ -1021,13 +1021,13 @@ typedef struct HashPath
  * that appeared elsewhere in the tree and were pushed down to the join rel
  * because they used no other rels.  That's what the is_pushed_down flag is
  * for; it tells us that a qual is not an OUTER JOIN qual for the set of base
- * rels listed in required_relids.	A clause that originally came from WHERE
+ * rels listed in required_relids.  A clause that originally came from WHERE
  * or an INNER JOIN condition will *always* have its is_pushed_down flag set.
  * It's possible for an OUTER JOIN clause to be marked is_pushed_down too,
  * if we decide that it can be pushed down into the nullable side of the join.
  * In that case it acts as a plain filter qual for wherever it gets evaluated.
  * (In short, is_pushed_down is only false for non-degenerate outer join
- * conditions.	Possibly we should rename it to reflect that meaning?)
+ * conditions.  Possibly we should rename it to reflect that meaning?)
  *
  * RestrictInfo nodes also contain an outerjoin_delayed flag, which is true
  * if the clause's applicability must be delayed due to any outer joins
@@ -1037,10 +1037,10 @@ typedef struct HashPath
  * forced null by some outer join below the clause.  outerjoin_delayed = true
  * is subtly different from nullable_relids != NULL: a clause might reference
  * some nullable rels and yet not be outerjoin_delayed because it also
- * references all the other rels of the outer join(s).	A clause that is not
+ * references all the other rels of the outer join(s).  A clause that is not
  * outerjoin_delayed can be enforced anywhere it is computable.
  *
- * In general, the referenced clause might be arbitrarily complex.	The
+ * In general, the referenced clause might be arbitrarily complex.  The
  * kinds of clauses we can handle as indexscan quals, mergejoin clauses,
  * or hashjoin clauses are limited (e.g., no volatile functions).  The code
  * for each kind of path is responsible for identifying the restrict clauses
@@ -1065,7 +1065,7 @@ typedef struct HashPath
  *
  * The pseudoconstant flag is set true if the clause contains no Vars of
  * the current query level and no volatile functions.  Such a clause can be
- * pulled out and used as a one-time qual in a gating Result node.	We keep
+ * pulled out and used as a one-time qual in a gating Result node.  We keep
  * pseudoconstant clauses in the same lists as other RestrictInfos so that
  * the regular clause-pushing machinery can assign them to the correct join
  * level, but they need to be treated specially for cost and selectivity
@@ -1075,7 +1075,7 @@ typedef struct HashPath
  *
  * When join clauses are generated from EquivalenceClasses, there may be
  * several equally valid ways to enforce join equivalence, of which we need
- * apply only one.	We mark clauses of this kind by setting parent_ec to
+ * apply only one.  We mark clauses of this kind by setting parent_ec to
  * point to the generating EquivalenceClass.  Multiple clauses with the same
  * parent_ec in the same join are redundant.
  */
@@ -1201,8 +1201,8 @@ typedef struct InnerIndexscanInfo
 
 /*
  * Placeholder node for an expression to be evaluated below the top level
- * of a plan tree.	This is used during planning to represent the contained
- * expression.	At the end of the planning process it is replaced by either
+ * of a plan tree.  This is used during planning to represent the contained
+ * expression.  At the end of the planning process it is replaced by either
  * the contained expression or a Var referring to a lower-level evaluation of
  * the contained expression.  Typically the evaluation occurs below an outer
  * join, and Var references above the outer join might thereby yield NULL
@@ -1226,9 +1226,9 @@ typedef struct PlaceHolderVar
  * "Special join" info.
  *
  * One-sided outer joins constrain the order of joining partially but not
- * completely.	We flatten such joins into the planner's top-level list of
+ * completely.  We flatten such joins into the planner's top-level list of
  * relations to join, but record information about each outer join in a
- * SpecialJoinInfo struct.	These structs are kept in the PlannerInfo node's
+ * SpecialJoinInfo struct.  These structs are kept in the PlannerInfo node's
  * join_info_list.
  *
  * Similarly, semijoins and antijoins created by flattening IN (subselect)
@@ -1256,7 +1256,7 @@ typedef struct PlaceHolderVar
  * to be evaluated after this join is formed (because it references the RHS).
  * Any outer joins that have such a clause and this join in their RHS cannot
  * commute with this join, because that would leave noplace to check the
- * pushed-down clause.	(We don't track this for FULL JOINs, either.)
+ * pushed-down clause.  (We don't track this for FULL JOINs, either.)
  *
  * join_quals is an implicit-AND list of the quals syntactically associated
  * with the join (they may or may not end up being applied at the join level).
@@ -1341,7 +1341,7 @@ typedef struct AppendRelInfo
 	/*
 	 * For an inheritance appendrel, the parent and child are both regular
 	 * relations, and we store their rowtype OIDs here for use in translating
-	 * whole-row Vars.	For a UNION-ALL appendrel, the parent and child are
+	 * whole-row Vars.  For a UNION-ALL appendrel, the parent and child are
 	 * both subqueries with no named rowtype, and we store InvalidOid here.
 	 */
 	Oid			parent_reltype; /* OID of parent's composite type */
@@ -1353,14 +1353,14 @@ typedef struct AppendRelInfo
 	 * used to translate Vars referencing the parent rel into references to
 	 * the child.  A list element is NULL if it corresponds to a dropped
 	 * column of the parent (this is only possible for inheritance cases, not
-	 * UNION ALL).	The list elements are always simple Vars for inheritance
+	 * UNION ALL).  The list elements are always simple Vars for inheritance
 	 * cases, but can be arbitrary expressions in UNION ALL cases.
 	 *
 	 * Notice we only store entries for user columns (attno > 0).  Whole-row
 	 * Vars are special-cased, and system columns (attno < 0) need no special
 	 * translation since their attnos are the same for all tables.
 	 *
-	 * Caution: the Vars have varlevelsup = 0.	Be careful to adjust as needed
+	 * Caution: the Vars have varlevelsup = 0.  Be careful to adjust as needed
 	 * when copying into a subquery.
 	 */
 	List	   *translated_vars;	/* Expressions in the child's Vars */
@@ -1377,7 +1377,7 @@ typedef struct AppendRelInfo
  * For each distinct placeholder expression generated during planning, we
  * store a PlaceHolderInfo node in the PlannerInfo node's placeholder_list.
  * This stores info that is needed centrally rather than in each copy of the
- * PlaceHolderVar.	The phid fields identify which PlaceHolderInfo goes with
+ * PlaceHolderVar.  The phid fields identify which PlaceHolderInfo goes with
  * each PlaceHolderVar.  Note that phid is unique throughout a planner run,
  * not just within a query level --- this is so that we need not reassign ID's
  * when pulling a subquery into its parent.

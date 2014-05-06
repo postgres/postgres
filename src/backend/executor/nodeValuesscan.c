@@ -213,7 +213,7 @@ ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 	planstate = &scanstate->ss.ps;
 
 	/*
-	 * Create expression contexts.	We need two, one for per-sublist
+	 * Create expression contexts.  We need two, one for per-sublist
 	 * processing and one for execScan.c to use for quals and projections. We
 	 * cheat a little by using ExecAssignExprContext() to build both.
 	 */

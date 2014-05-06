@@ -53,7 +53,7 @@ typedef struct tupleConstr
  * TupleDesc; with the exception that tdhasoid indicates if OID is present.
  *
  * If the tupdesc is known to correspond to a named rowtype (such as a table's
- * rowtype) then tdtypeid identifies that type and tdtypmod is -1.	Otherwise
+ * rowtype) then tdtypeid identifies that type and tdtypmod is -1.  Otherwise
  * tdtypeid is RECORDOID, and tdtypmod can be either -1 for a fully anonymous
  * row type, or a value >= 0 to allow the rowtype to be looked up in the
  * typcache.c type cache.

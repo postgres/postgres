@@ -193,7 +193,7 @@ mda_next_tuple(int n, int *curr, const int *span)
 
 /*
  * ArrayGetIntegerTypmods: verify that argument is a 1-D cstring array,
- * and get the contents converted to integers.	Returns a palloc'd array
+ * and get the contents converted to integers.  Returns a palloc'd array
  * and places the length at *n.
  */
 int32 *

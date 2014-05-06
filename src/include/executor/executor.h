@@ -36,7 +36,7 @@
  * REWIND indicates that the plan node should try to efficiently support
  * rescans without parameter changes.  (Nodes must support ExecReScan calls
  * in any case, but if this flag was not given, they are at liberty to do it
- * through complete recalculation.	Note that a parameter change forces a
+ * through complete recalculation.  Note that a parameter change forces a
  * full recalculation in any case.)
  *
  * BACKWARD indicates that the plan node must respect the es_direction flag.

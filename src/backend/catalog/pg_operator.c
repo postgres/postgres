@@ -316,7 +316,7 @@ OperatorShellMake(const char *operatorName,
  * specify operators that do not exist.  For example, if operator
  * "op" is being defined, the negator operator "negop" and the
  * commutator "commop" can also be defined without specifying
- * any information other than their names.	Since in order to
+ * any information other than their names.  Since in order to
  * add "op" to the PG_OPERATOR catalog, all the Oid's for these
  * operators must be placed in the fields of "op", a forward
  * declaration is done on the commutator and negator operators.
@@ -434,7 +434,7 @@ OperatorCreate(const char *operatorName,
 					   operatorName);
 
 	/*
-	 * Set up the other operators.	If they do not currently exist, create
+	 * Set up the other operators.  If they do not currently exist, create
 	 * shells in order to get ObjectId's.
 	 */
 

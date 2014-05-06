@@ -5,19 +5,19 @@
  *
  * dynahash.c supports both local-to-a-backend hash tables and hash tables in
  * shared memory.  For shared hash tables, it is the caller's responsibility
- * to provide appropriate access interlocking.	The simplest convention is
- * that a single LWLock protects the whole hash table.	Searches (HASH_FIND or
+ * to provide appropriate access interlocking.  The simplest convention is
+ * that a single LWLock protects the whole hash table.  Searches (HASH_FIND or
  * hash_seq_search) need only shared lock, but any update requires exclusive
  * lock.  For heavily-used shared tables, the single-lock approach creates a
  * concurrency bottleneck, so we also support "partitioned" locking wherein
  * there are multiple LWLocks guarding distinct subsets of the table.  To use
  * a hash table in partitioned mode, the HASH_PARTITION flag must be given
- * to hash_create.	This prevents any attempt to split buckets on-the-fly.
+ * to hash_create.  This prevents any attempt to split buckets on-the-fly.
  * Therefore, each hash bucket chain operates independently, and no fields
  * of the hash header change after init except nentries and freeList.
  * A partitioned table uses a spinlock to guard changes of those two fields.
  * This lets any subset of the hash buckets be treated as a separately
- * lockable partition.	We expect callers to use the low-order bits of a
+ * lockable partition.  We expect callers to use the low-order bits of a
  * lookup key's hash value as a partition number --- this will work because
  * of the way calc_bucket() maps hash values to bucket numbers.
  *
@@ -76,7 +76,7 @@
  * Constants
  *
  * A hash table has a top-level "directory", each of whose entries points
- * to a "segment" of ssize bucket headers.	The maximum number of hash
+ * to a "segment" of ssize bucket headers.  The maximum number of hash
  * buckets is thus dsize * ssize (but dsize may be expansible).  Of course,
  * the number of records in the table can be larger, but we don't want a
  * whole lot of records per bucket or performance goes down.
@@ -84,7 +84,7 @@
  * In a hash table allocated in shared memory, the directory cannot be
  * expanded because it must stay at a fixed address.  The directory size
  * should be selected using hash_select_dirsize (and you'd better have
- * a good idea of the maximum number of entries!).	For non-shared hash
+ * a good idea of the maximum number of entries!).  For non-shared hash
  * tables, the initial directory size can be left at the default.
  */
 #define DEF_SEGSIZE			   256
@@ -330,7 +330,7 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 	{
 		/*
 		 * ctl structure and directory are preallocated for shared memory
-		 * tables.	Note that HASH_DIRSIZE and HASH_ALLOC had better be set as
+		 * tables.  Note that HASH_DIRSIZE and HASH_ALLOC had better be set as
 		 * well.
 		 */
 		hashp->hctl = info->hctl;
@@ -779,7 +779,7 @@ calc_bucket(HASHHDR *hctl, uint32 hash_val)
  * the result is a dangling pointer that shouldn't be dereferenced!)
  *
  * HASH_ENTER will normally ereport a generic "out of memory" error if
- * it is unable to create a new entry.	The HASH_ENTER_NULL operation is
+ * it is unable to create a new entry.  The HASH_ENTER_NULL operation is
  * the same except it will return NULL if out of memory.  Note that
  * HASH_ENTER_NULL cannot be used with the default palloc-based allocator,
  * since palloc internally ereports on out-of-memory.
@@ -1245,7 +1245,7 @@ expand_table(HTAB *hashp)
 	}
 
 	/*
-	 * Relocate records to the new bucket.	NOTE: because of the way the hash
+	 * Relocate records to the new bucket.  NOTE: because of the way the hash
 	 * masking is done in calc_bucket, only one old bucket can need to be
 	 * split at this point.  With a different way of reducing the hash value,
 	 * that might not be true!
@@ -1394,7 +1394,7 @@ hash_corrupted(HTAB *hashp)
 {
 	/*
 	 * If the corruption is in a shared hashtable, we'd better force a
-	 * systemwide restart.	Otherwise, just shut down this one backend.
+	 * systemwide restart.  Otherwise, just shut down this one backend.
 	 */
 	if (hashp->isshared)
 		elog(PANIC, "hash table \"%s\" corrupted", hashp->tabname);
@@ -1439,7 +1439,7 @@ next_pow2_int(long num)
 /************************* SEQ SCAN TRACKING ************************/
 
 /*
- * We track active hash_seq_search scans here.	The need for this mechanism
+ * We track active hash_seq_search scans here.  The need for this mechanism
  * comes from the fact that a scan will get confused if a bucket split occurs
  * while it's in progress: it might visit entries twice, or even miss some
  * entirely (if it's partway through the same bucket that splits).  Hence
@@ -1459,7 +1459,7 @@ next_pow2_int(long num)
  *
  * This arrangement is reasonably robust if a transient hashtable is deleted
  * without notifying us.  The absolute worst case is we might inhibit splits
- * in another table created later at exactly the same address.	We will give
+ * in another table created later at exactly the same address.  We will give
  * a warning at transaction end for reference leaks, so any bugs leading to
  * lack of notification should be easy to catch.
  */

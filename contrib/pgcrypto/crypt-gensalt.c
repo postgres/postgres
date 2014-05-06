@@ -9,7 +9,7 @@
  * entirely in crypt_blowfish.c.
  *
  * Put bcrypt generator also here as crypt-blowfish.c
- * may not be compiled always.		  -- marko
+ * may not be compiled always.        -- marko
  */
 
 #include "postgres.h"

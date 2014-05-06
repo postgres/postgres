@@ -656,13 +656,13 @@ retry3:
 		/*
 		 * Hack to deal with the fact that some kernels will only give us back
 		 * 1 packet per recv() call, even if we asked for more and there is
-		 * more available.	If it looks like we are reading a long message,
+		 * more available.  If it looks like we are reading a long message,
 		 * loop back to recv() again immediately, until we run out of data or
 		 * buffer space.  Without this, the block-and-restart behavior of
 		 * libpq's higher levels leads to O(N^2) performance on long messages.
 		 *
 		 * Since we left-justified the data above, conn->inEnd gives the
-		 * amount of data already read in the current message.	We consider
+		 * amount of data already read in the current message.  We consider
 		 * the message "long" once we have acquired 32k ...
 		 */
 		if (conn->inEnd > 32768 &&

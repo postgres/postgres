@@ -154,7 +154,7 @@ btbuild(PG_FUNCTION_ARGS)
 	/*
 	 * If we are reindexing a pre-existing index, it is critical to send out a
 	 * relcache invalidation SI message to ensure all backends re-read the
-	 * index metapage.	We expect that the caller will ensure that happens
+	 * index metapage.  We expect that the caller will ensure that happens
 	 * (typically as a side effect of updating index stats, but it must happen
 	 * even if the stats don't change!)
 	 */
@@ -219,7 +219,7 @@ btbuildempty(PG_FUNCTION_ARGS)
 	metapage = (Page) palloc(BLCKSZ);
 	_bt_initmetapage(metapage, P_NONE, 0);
 
-	/* Write the page.	If archiving/streaming, XLOG it. */
+	/* Write the page.  If archiving/streaming, XLOG it. */
 	smgrwrite(index->rd_smgr, INIT_FORKNUM, BTREE_METAPAGE,
 			  (char *) metapage, true);
 	if (XLogIsNeeded())
@@ -292,11 +292,11 @@ btgettuple(PG_FUNCTION_ARGS)
 		if (scan->kill_prior_tuple)
 		{
 			/*
-			 * Yes, remember it for later.	(We'll deal with all such tuples
+			 * Yes, remember it for later.  (We'll deal with all such tuples
 			 * at once right before leaving the index page.)  The test for
 			 * numKilled overrun is not just paranoia: if the caller reverses
 			 * direction in the indexscan then the same item might get entered
-			 * multiple times.	It's not worth trying to optimize that, so we
+			 * multiple times.  It's not worth trying to optimize that, so we
 			 * don't detect it, but instead just forget any excess entries.
 			 */
 			if (so->killedItems == NULL)
@@ -862,7 +862,7 @@ restart:
 			vstate->lastBlockLocked = blkno;
 
 		/*
-		 * Check whether we need to recurse back to earlier pages.	What we
+		 * Check whether we need to recurse back to earlier pages.  What we
 		 * are concerned about is a page split that happened since we started
 		 * the vacuum scan.  If the split moved some tuples to a lower page
 		 * then we might have missed 'em.  If so, set up for tail recursion.

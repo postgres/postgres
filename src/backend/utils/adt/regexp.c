@@ -142,7 +142,7 @@ RE_compile_and_cache(text *text_re, int cflags, Oid collation)
 	char		errMsg[100];
 
 	/*
-	 * Look for a match among previously compiled REs.	Since the data
+	 * Look for a match among previously compiled REs.  Since the data
 	 * structure is self-organizing with most-used entries at the front, our
 	 * search strategy can just be to scan from the front.
 	 */
@@ -192,7 +192,7 @@ RE_compile_and_cache(text *text_re, int cflags, Oid collation)
 
 		/*
 		 * Here and in other places in this file, do CHECK_FOR_INTERRUPTS
-		 * before reporting a regex error.	This is so that if the regex
+		 * before reporting a regex error.  This is so that if the regex
 		 * library aborts and returns REG_CANCEL, we don't print an error
 		 * message that implies the regex was invalid.
 		 */
@@ -298,7 +298,7 @@ RE_wchar_execute(regex_t *re, pg_wchar *data, int data_len,
  *	dat_len --- the length of the data string
  *	nmatch, pmatch	--- optional return area for match details
  *
- * Data is given in the database encoding.	We internally
+ * Data is given in the database encoding.  We internally
  * convert to array of pg_wchar which is what Spencer's regex package wants.
  */
 static bool

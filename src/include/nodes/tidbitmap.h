@@ -26,7 +26,7 @@
 
 
 /*
- * Actual bitmap representation is private to tidbitmap.c.	Callers can
+ * Actual bitmap representation is private to tidbitmap.c.  Callers can
  * do IsA(x, TIDBitmap) on it, but nothing else.
  */
 typedef struct TIDBitmap TIDBitmap;

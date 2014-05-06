@@ -23,7 +23,7 @@
  * several implementation strategies depending on the situation:
  *
  * 1. In C/POSIX collations, we use hard-wired code.  We can't depend on
- * the <ctype.h> functions since those will obey LC_CTYPE.	Note that these
+ * the <ctype.h> functions since those will obey LC_CTYPE.  Note that these
  * collations don't give a fig about multibyte characters.
  *
  * 2. In the "default" collation (which is supposed to obey LC_CTYPE):
@@ -35,10 +35,10 @@
  *
  * 2b. In all other encodings, or on machines that lack <wctype.h>, we use
  * the <ctype.h> functions for pg_wchar values up to 255, and punt for values
- * above that.	This is only 100% correct in single-byte encodings such as
- * LATINn.	However, non-Unicode multibyte encodings are mostly Far Eastern
+ * above that.  This is only 100% correct in single-byte encodings such as
+ * LATINn.  However, non-Unicode multibyte encodings are mostly Far Eastern
  * character sets for which the properties being tested here aren't very
- * relevant for higher code values anyway.	The difficulty with using the
+ * relevant for higher code values anyway.  The difficulty with using the
  * <wctype.h> functions with non-Unicode multibyte encodings is that we can
  * have no certainty that the platform's wchar_t representation matches
  * what we do in pg_wchar conversions.

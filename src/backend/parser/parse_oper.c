@@ -447,7 +447,7 @@ oper(ParseState *pstate, List *opname, Oid ltypeId, Oid rtypeId,
  *
  *	This is tighter than oper() because it will not return an operator that
  *	requires coercion of the input datatypes (but binary-compatible operators
- *	are accepted).	Otherwise, the semantics are the same.
+ *	are accepted).  Otherwise, the semantics are the same.
  */
 Operator
 compatible_oper(ParseState *pstate, List *op, Oid arg1, Oid arg2,
@@ -980,7 +980,7 @@ make_scalar_array_op(ParseState *pstate, List *opname,
  * mapping is pretty expensive to compute, especially for ambiguous operators;
  * this is mainly because there are a *lot* of instances of popular operator
  * names such as "=", and we have to check each one to see which is the
- * best match.	So once we have identified the correct mapping, we save it
+ * best match.  So once we have identified the correct mapping, we save it
  * in a cache that need only be flushed on pg_operator or pg_cast change.
  * (pg_cast must be considered because changes in the set of implicit casts
  * affect the set of applicable operators for any given input datatype.)

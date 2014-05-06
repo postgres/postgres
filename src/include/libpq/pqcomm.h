@@ -153,7 +153,7 @@ extern bool Db_user_namespace;
 
 /*
  * In protocol 3.0 and later, the startup packet length is not fixed, but
- * we set an arbitrary limit on it anyway.	This is just to prevent simple
+ * we set an arbitrary limit on it anyway.  This is just to prevent simple
  * denial-of-service attacks via sending enough data to run the server
  * out of memory.
  */

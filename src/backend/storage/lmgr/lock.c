@@ -873,7 +873,7 @@ LockAcquireExtended(const LOCKTAG *locktag,
 
 	/*
 	 * If lock requested conflicts with locks requested by waiters, must join
-	 * wait queue.	Otherwise, check for conflict with already-held locks.
+	 * wait queue.  Otherwise, check for conflict with already-held locks.
 	 * (That's last because most complex check.)
 	 */
 	if (lockMethodTable->conflictTab[lockmode] & lock->waitMask)
@@ -950,7 +950,7 @@ LockAcquireExtended(const LOCKTAG *locktag,
 
 		/*
 		 * NOTE: do not do any material change of state between here and
-		 * return.	All required changes in locktable state must have been
+		 * return.  All required changes in locktable state must have been
 		 * done when the lock was granted to us --- see notes in WaitOnLock.
 		 */
 
@@ -980,7 +980,7 @@ LockAcquireExtended(const LOCKTAG *locktag,
 	{
 		/*
 		 * Decode the locktag back to the original values, to avoid sending
-		 * lots of empty bytes with every message.	See lock.h to check how a
+		 * lots of empty bytes with every message.  See lock.h to check how a
 		 * locktag is defined for LOCKTAG_RELATION
 		 */
 		LogAccessExclusiveLock(locktag->locktag_field1,
@@ -1045,7 +1045,7 @@ LockCheckConflicts(LockMethod lockMethodTable,
 	}
 
 	/*
-	 * Rats.  Something conflicts.	But it could still be my own lock. We have
+	 * Rats.  Something conflicts.  But it could still be my own lock. We have
 	 * to construct a conflict mask that does not reflect our own locks, but
 	 * only lock types held by other processes.
 	 */
@@ -1137,7 +1137,7 @@ UnGrantLock(LOCK *lock, LOCKMODE lockmode,
 
 	/*
 	 * We need only run ProcLockWakeup if the released lock conflicts with at
-	 * least one of the lock types requested by waiter(s).	Otherwise whatever
+	 * least one of the lock types requested by waiter(s).  Otherwise whatever
 	 * conflict made them wait must still exist.  NOTE: before MVCC, we could
 	 * skip wakeup if lock->granted[lockmode] was still positive. But that's
 	 * not true anymore, because the remaining granted locks might belong to
@@ -1157,7 +1157,7 @@ UnGrantLock(LOCK *lock, LOCKMODE lockmode,
 }
 
 /*
- * CleanUpLock -- clean up after releasing a lock.	We garbage-collect the
+ * CleanUpLock -- clean up after releasing a lock.  We garbage-collect the
  * proclock and lock objects if possible, and call ProcLockWakeup if there
  * are remaining requests and the caller says it's OK.  (Normally, this
  * should be called after UnGrantLock, and wakeupNeeded is the result from
@@ -1516,7 +1516,7 @@ LockRelease(const LOCKTAG *locktag, LOCKMODE lockmode, bool sessionLock)
 	}
 
 	/*
-	 * Decrease the total local count.	If we're still holding the lock, we're
+	 * Decrease the total local count.  If we're still holding the lock, we're
 	 * done.
 	 */
 	locallock->nLocks--;
@@ -2272,7 +2272,7 @@ PostPrepare_Locks(TransactionId xid)
 			/*
 			 * We cannot simply modify proclock->tag.myProc to reassign
 			 * ownership of the lock, because that's part of the hash key and
-			 * the proclock would then be in the wrong hash chain.	So, unlink
+			 * the proclock would then be in the wrong hash chain.  So, unlink
 			 * and delete the old proclock; create a new one with the right
 			 * contents; and link it into place.  We do it in this order to be
 			 * certain we won't run out of shared memory (the way dynahash.c
@@ -2394,7 +2394,7 @@ GetLockStatusData(void)
 	 * view of the state.
 	 *
 	 * Since this is a read-only operation, we take shared instead of
-	 * exclusive lock.	There's not a whole lot of point to this, because all
+	 * exclusive lock.  There's not a whole lot of point to this, because all
 	 * the normal operations require exclusive lock, but it doesn't hurt
 	 * anything either. It will at least allow two backends to do
 	 * GetLockStatusData in parallel.

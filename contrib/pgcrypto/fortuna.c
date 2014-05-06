@@ -17,7 +17,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.	IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -53,7 +53,7 @@
 
 /*
  * There is some confusion about whether and how to carry forward
- * the state of the pools.	Seems like original Fortuna does not
+ * the state of the pools.  Seems like original Fortuna does not
  * do it, resetting hash after each request.  I guess expecting
  * feeding to happen more often that requesting.   This is absolutely
  * unsuitable for pgcrypto, as nothing asynchronous happens here.
@@ -77,7 +77,7 @@
  * How many pools.
  *
  * Original Fortuna uses 32 pools, that means 32'th pool is
- * used not earlier than in 13th year.	This is a waste in
+ * used not earlier than in 13th year.  This is a waste in
  * pgcrypto, as we have very low-frequancy seeding.  Here
  * is preferable to have all entropy usable in reasonable time.
  *
@@ -296,7 +296,7 @@ reseed(FState *st)
 }
 
 /*
- * Pick a random pool.	This uses key bytes as random source.
+ * Pick a random pool.  This uses key bytes as random source.
  */
 static unsigned
 get_rand_pool(FState *st)

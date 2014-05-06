@@ -5,7 +5,7 @@
  *
  * The pg_subtrans manager is a pg_clog-like manager that stores the parent
  * transaction Id for each transaction.  It is a fundamental part of the
- * nested transactions implementation.	A main transaction has a parent
+ * nested transactions implementation.  A main transaction has a parent
  * of InvalidTransactionId, and each subtransaction has its immediate parent.
  * The tree can easily be walked from child to parent, but not in the
  * opposite direction.
@@ -191,7 +191,7 @@ SUBTRANSShmemInit(void)
  * must have been called already.)
  *
  * Note: it's not really necessary to create the initial segment now,
- * since slru.c would create it on first write anyway.	But we may as well
+ * since slru.c would create it on first write anyway.  But we may as well
  * do it to be sure the directory is set up correctly.
  */
 void

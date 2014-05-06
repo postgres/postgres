@@ -6,7 +6,7 @@
  * Lightweight locks are intended primarily to provide mutual exclusion of
  * access to shared-memory data structures.  Therefore, they offer both
  * exclusive and shared lock modes (to support read/write and read-only
- * access to a shared object).	There are few other frammishes.  User-level
+ * access to a shared object).  There are few other frammishes.  User-level
  * locking should be done with the full lock manager --- which depends on
  * LWLocks to protect its shared state.
  *
@@ -53,7 +53,7 @@ typedef struct LWLock
  * (LWLockIds are indexes into the array.)	We force the array stride to
  * be a power of 2, which saves a few cycles in indexing, but more
  * importantly also ensures that individual LWLocks don't cross cache line
- * boundaries.	This reduces cache contention problems, especially on AMD
+ * boundaries.  This reduces cache contention problems, especially on AMD
  * Opterons.  (Of course, we have to also ensure that the array start
  * address is suitably aligned.)
  *
@@ -200,7 +200,7 @@ NumLWLocks(void)
  *		a loadable module.
  *
  * This is only useful if called from the _PG_init hook of a library that
- * is loaded into the postmaster via shared_preload_libraries.	Once
+ * is loaded into the postmaster via shared_preload_libraries.  Once
  * shared memory has been allocated, calls will be ignored.  (We could
  * raise an error, but it seems better to make it a no-op, so that
  * libraries containing such calls can be reloaded if needed.)
@@ -378,7 +378,7 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 	 * in the presence of contention.  The efficiency of being able to do that
 	 * outweighs the inefficiency of sometimes wasting a process dispatch
 	 * cycle because the lock is not free when a released waiter finally gets
-	 * to run.	See pgsql-hackers archives for 29-Dec-01.
+	 * to run.  See pgsql-hackers archives for 29-Dec-01.
 	 */
 	for (;;)
 	{

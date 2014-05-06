@@ -40,7 +40,7 @@ static void canonicalize_all_pathkeys(PlannerInfo *root);
  *	  which may involve joins but not any fancier features.
  *
  * Since query_planner does not handle the toplevel processing (grouping,
- * sorting, etc) it cannot select the best path by itself.	It selects
+ * sorting, etc) it cannot select the best path by itself.  It selects
  * two paths: the cheapest path that produces all the required tuples,
  * independent of any ordering considerations, and the cheapest path that
  * produces the expected fraction of the required tuples in the required
@@ -64,7 +64,7 @@ static void canonicalize_all_pathkeys(PlannerInfo *root);
  *				does not use grouping
  *
  * Note: the PlannerInfo node also includes a query_pathkeys field, which is
- * both an input and an output of query_planner().	The input value signals
+ * both an input and an output of query_planner().  The input value signals
  * query_planner that the indicated sort order is wanted in the final output
  * plan.  But this value has not yet been "canonicalized", since the needed
  * info does not get computed until we scan the qual clauses.  We canonicalize
@@ -109,7 +109,7 @@ query_planner(PlannerInfo *root, List *tlist,
 
 	/*
 	 * If the query has an empty join tree, then it's something easy like
-	 * "SELECT 2+2;" or "INSERT ... VALUES()".	Fall through quickly.
+	 * "SELECT 2+2;" or "INSERT ... VALUES()".  Fall through quickly.
 	 */
 	if (parse->jointree->fromlist == NIL)
 	{
@@ -179,7 +179,7 @@ query_planner(PlannerInfo *root, List *tlist,
 	/*
 	 * Examine the targetlist and join tree, adding entries to baserel
 	 * targetlists for all referenced Vars, and generating PlaceHolderInfo
-	 * entries for all referenced PlaceHolderVars.	Restrict and join clauses
+	 * entries for all referenced PlaceHolderVars.  Restrict and join clauses
 	 * are added to appropriate lists belonging to the mentioned relations. We
 	 * also build EquivalenceClasses for provably equivalent expressions. The
 	 * SpecialJoinInfo list is also built to hold information about join order
@@ -201,7 +201,7 @@ query_planner(PlannerInfo *root, List *tlist,
 
 	/*
 	 * If we formed any equivalence classes, generate additional restriction
-	 * clauses as appropriate.	(Implied join clauses are formed on-the-fly
+	 * clauses as appropriate.  (Implied join clauses are formed on-the-fly
 	 * later.)
 	 */
 	generate_base_implied_equalities(root);
@@ -216,14 +216,14 @@ query_planner(PlannerInfo *root, List *tlist,
 	/*
 	 * Examine any "placeholder" expressions generated during subquery pullup.
 	 * Make sure that the Vars they need are marked as needed at the relevant
-	 * join level.	This must be done before join removal because it might
+	 * join level.  This must be done before join removal because it might
 	 * cause Vars or placeholders to be needed above a join when they weren't
 	 * so marked before.
 	 */
 	fix_placeholder_input_needed_levels(root);
 
 	/*
-	 * Remove any useless outer joins.	Ideally this would be done during
+	 * Remove any useless outer joins.  Ideally this would be done during
 	 * jointree preprocessing, but the necessary information isn't available
 	 * until we've built baserel data structures and classified qual clauses.
 	 */
@@ -308,7 +308,7 @@ query_planner(PlannerInfo *root, List *tlist,
 		/*
 		 * If both GROUP BY and ORDER BY are specified, we will need two
 		 * levels of sort --- and, therefore, certainly need to read all the
-		 * tuples --- unless ORDER BY is a subset of GROUP BY.	Likewise if we
+		 * tuples --- unless ORDER BY is a subset of GROUP BY.  Likewise if we
 		 * have both DISTINCT and GROUP BY, or if we have a window
 		 * specification not compatible with the GROUP BY.
 		 */

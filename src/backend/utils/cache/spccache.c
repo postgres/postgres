@@ -4,7 +4,7 @@
  *	  Tablespace cache management.
  *
  * We cache the parsed version of spcoptions for each tablespace to avoid
- * needing to reparse on every lookup.	Right now, there doesn't appear to
+ * needing to reparse on every lookup.  Right now, there doesn't appear to
  * be a measurable performance gain from doing this, but that might change
  * in the future as we add more options.
  *
@@ -128,7 +128,7 @@ get_tablespace(Oid spcid)
 		return spc;
 
 	/*
-	 * Not found in TableSpace cache.  Check catcache.	If we don't find a
+	 * Not found in TableSpace cache.  Check catcache.  If we don't find a
 	 * valid HeapTuple, it must mean someone has managed to request tablespace
 	 * details for a non-existent tablespace.  We'll just treat that case as
 	 * if no options were specified.
@@ -158,7 +158,7 @@ get_tablespace(Oid spcid)
 	}
 
 	/*
-	 * Now create the cache entry.	It's important to do this only after
+	 * Now create the cache entry.  It's important to do this only after
 	 * reading the pg_tablespace entry, since doing so could cause a cache
 	 * flush.
 	 */

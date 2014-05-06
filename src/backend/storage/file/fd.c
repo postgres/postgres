@@ -64,7 +64,7 @@
  * and other code that tries to open files without consulting fd.c.  This
  * is the number left free.  (While we can be pretty sure we won't get
  * EMFILE, there's never any guarantee that we won't get ENFILE due to
- * other processes chewing up FDs.	So it's a bad idea to try to open files
+ * other processes chewing up FDs.  So it's a bad idea to try to open files
  * without consulting fd.c.  Nonetheless we cannot control all code.)
  *
  * Because this is just a fixed setting, we are effectively assuming that
@@ -154,8 +154,8 @@ typedef struct vfd
 } Vfd;
 
 /*
- * Virtual File Descriptor array pointer and size.	This grows as
- * needed.	'File' values are indexes into this array.
+ * Virtual File Descriptor array pointer and size.  This grows as
+ * needed.  'File' values are indexes into this array.
  * Note that VfdCache[0] is not a usable VFD, just a list header.
  */
 static Vfd *VfdCache;
@@ -221,7 +221,7 @@ static int	nextTempTableSpace = 0;
  *
  * The Least Recently Used ring is a doubly linked list that begins and
  * ends on element zero.  Element zero is special -- it doesn't represent
- * a file and its "fd" field always == VFD_CLOSED.	Element zero is just an
+ * a file and its "fd" field always == VFD_CLOSED.  Element zero is just an
  * anchor that shows us the beginning/end of the ring.
  * Only VFD elements that are currently really open (have an FD assigned) are
  * in the Lru ring.  Elements that are "virtually" open can be recognized
@@ -379,7 +379,7 @@ InitFileAccess(void)
  * We stop counting if usable_fds reaches max_to_probe.  Note: a small
  * value of max_to_probe might result in an underestimate of already_open;
  * we must fill in any "gaps" in the set of used FDs before the calculation
- * of already_open will give the right answer.	In practice, max_to_probe
+ * of already_open will give the right answer.  In practice, max_to_probe
  * of a couple of dozen should be enough to ensure good results.
  *
  * We assume stdin (FD 0) is available for dup'ing
@@ -456,7 +456,7 @@ count_usable_fds(int max_to_probe, int *usable_fds, int *already_open)
 	pfree(fd);
 
 	/*
-	 * Return results.	usable_fds is just the number of successful dups. We
+	 * Return results.  usable_fds is just the number of successful dups. We
 	 * assume that the system limit is highestfd+1 (remember 0 is a legal FD
 	 * number) and so already_open is highestfd+1 - usable_fds.
 	 */
@@ -950,7 +950,7 @@ OpenTemporaryFile(bool interXact)
 
 	/*
 	 * If not, or if tablespace is bad, create in database's default
-	 * tablespace.	MyDatabaseTableSpace should normally be set before we get
+	 * tablespace.  MyDatabaseTableSpace should normally be set before we get
 	 * here, but just in case it isn't, fall back to pg_default tablespace.
 	 */
 	if (file <= 0)
@@ -1475,7 +1475,7 @@ reserveAllocatedDesc(void)
 /*
  * Routines that want to use stdio (ie, FILE*) should use AllocateFile
  * rather than plain fopen().  This lets fd.c deal with freeing FDs if
- * necessary to open the file.	When done, call FreeFile rather than fclose.
+ * necessary to open the file.  When done, call FreeFile rather than fclose.
  *
  * Note that files that will be open for any significant length of time
  * should NOT be handled this way, since they cannot share kernel file
@@ -1654,7 +1654,7 @@ TryAgain:
  * Read a directory opened with AllocateDir, ereport'ing any error.
  *
  * This is easier to use than raw readdir() since it takes care of some
- * otherwise rather tedious and error-prone manipulation of errno.	Also,
+ * otherwise rather tedious and error-prone manipulation of errno.  Also,
  * if you are happy with a generic error message for AllocateDir failure,
  * you can just do
  *
@@ -1770,7 +1770,7 @@ SetTempTablespaces(Oid *tableSpaces, int numSpaces)
 	numTempTableSpaces = numSpaces;
 
 	/*
-	 * Select a random starting point in the list.	This is to minimize
+	 * Select a random starting point in the list.  This is to minimize
 	 * conflicts between backends that are most likely sharing the same list
 	 * of temp tablespaces.  Note that if we create multiple temp files in the
 	 * same transaction, we'll advance circularly through the list --- this
@@ -1799,7 +1799,7 @@ TempTablespacesAreSet(void)
 /*
  * GetNextTempTableSpace
  *
- * Select the next temp tablespace to use.	A result of InvalidOid means
+ * Select the next temp tablespace to use.  A result of InvalidOid means
  * to use the current database's default tablespace.
  */
 Oid
