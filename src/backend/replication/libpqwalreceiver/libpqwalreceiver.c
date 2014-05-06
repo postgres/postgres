@@ -152,6 +152,7 @@ libpqrcv_identify_system(TimeLineID *primary_tli)
 			 GetSystemIdentifier());
 	if (strcmp(primary_sysid, standby_sysid) != 0)
 	{
+		primary_sysid = pstrdup(primary_sysid);
 		PQclear(res);
 		ereport(ERROR,
 				(errmsg("database system identifier differs between the primary and standby"),
