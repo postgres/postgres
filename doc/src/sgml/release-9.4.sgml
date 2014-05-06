@@ -2220,41 +2220,6 @@
 
       <listitem>
        <para>
-        Allow reporting of the <link
-        linkend="pgstatstatements"><application>pg_stat_statements</></link>'s
-        internal query hash identifier (Daniel Farina, Sameer Thakur,
-        Peter Geoghegan)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Have <link
-        linkend="pgstatstatements"><application>pg_stat_statements</></link>
-        use a flat file for query text storage (Peter Geoghegan)
-       </para>
-
-       <para>
-        This removes the limitation on query text length, and allows a
-        higher default number of unique statements to be tracked.
-        (Peter Geoghegan)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add the ability to retrieve all <application>pg_stat_statements</>
-        information except the query text (Peter Geoghegan)
-       </para>
-
-       <para>
-        This allows programs to reuse the query text already retrieved
-        by referencing <structname>queryid</>.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Fix <link linkend="pgstattuple"><application>pgstattuple</></link>
         to not report rows from uncommitted transactions as dead
         (Robert Haas)
@@ -2357,6 +2322,47 @@
       <listitem>
        <para>
         Add long options to pgbench (Fabien Coelho)
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect4>
+
+    <sect4>
+     <title><link linkend="pgstatstatements"><application>pg_stat_statements</></link></title>
+
+     <itemizedlist>
+
+      <listitem>
+       <para>
+        Have <application>pg_stat_statements</> use a flat file for query
+        text storage (Peter Geoghegan)
+       </para>
+
+       <para>
+        This removes the limitation on query text length, and allows a
+        higher default number of unique statements to be tracked.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow reporting of <application>pg_stat_statements</>'s internal
+        query hash identifier (Daniel Farina, Sameer Thakur, Peter
+        Geoghegan)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add the ability to retrieve all <application>pg_stat_statements</>
+        information except the query text (Peter Geoghegan)
+       </para>
+
+       <para>
+        This allows programs to reuse the query text already retrieved
+        by referencing <structname>queryid</>.
        </para>
       </listitem>
 
