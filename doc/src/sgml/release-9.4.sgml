@@ -2361,8 +2361,8 @@
        </para>
 
        <para>
-        This allows monitoring tools to only fetch query texts for newly
-        observe entries, as determined by <structname>queryid</>.
+        This allows monitoring tools to only fetch query text for newly
+        created entries, as reported in <structname>queryid</>.
        </para>
       </listitem>
 
