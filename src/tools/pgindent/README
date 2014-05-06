@@ -47,8 +47,10 @@ This can format all PostgreSQL *.c and *.h files, but excludes *.y, and
 	# stop is only necessary if it's going to install in a location with an
 	# already running server
 	pg_ctl stop
+	run configure
 	make -C src install
 	make -C contrib install
+	run initdb
 	pg_ctl start
 	make installcheck-world
 
