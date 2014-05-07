@@ -548,7 +548,7 @@ gin_extract_jsonb_hash(PG_FUNCTION_ARGS)
 			case WJB_VALUE:
 				/* Element/value case */
 				JsonbHashScalarValue(&v, &stack->hash);
-				entries[i++] = stack->hash;
+				entries[i++] = UInt32GetDatum(stack->hash);
 				break;
 			case WJB_END_ARRAY:
 			case WJB_END_OBJECT:
