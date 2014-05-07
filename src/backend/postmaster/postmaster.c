@@ -2864,17 +2864,17 @@ CleanupBackgroundWorker(int pid,
 				HandleChildCrash(pid, exitstatus, namebuf);
 				return true;
 			}
-		}
 
-		if (!ReleasePostmasterChildSlot(rw->rw_child_slot))
-		{
-			/*
-			 * Uh-oh, the child failed to clean itself up.  Treat as a crash
-			 * after all.
-			 */
-			rw->rw_crashed_at = GetCurrentTimestamp();
-			HandleChildCrash(pid, exitstatus, namebuf);
-			return true;
+			if (!ReleasePostmasterChildSlot(rw->rw_child_slot))
+			{
+				/*
+				 * Uh-oh, the child failed to clean itself up.  Treat as a
+				 * crash after all.
+				 */
+				rw->rw_crashed_at = GetCurrentTimestamp();
+				HandleChildCrash(pid, exitstatus, namebuf);
+				return true;
+			}
 		}
 
 		/* Get it out of the BackendList and clear out remaining data */
