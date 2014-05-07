@@ -32,18 +32,18 @@
 #ifdef _ECPG_INFORMIX_H
 
 #include "sqlda-compat.h"
-typedef struct sqlvar_compat	sqlvar_t;
-typedef struct sqlda_compat	sqlda_t;
+typedef struct sqlvar_compat sqlvar_t;
+typedef struct sqlda_compat sqlda_t;
 
 #else
 
 #include "sqlda-native.h"
-typedef struct sqlvar_struct	sqlvar_t;
-typedef struct sqlda_struct	sqlda_t;
+typedef struct sqlvar_struct sqlvar_t;
+typedef struct sqlda_struct sqlda_t;
 
 #endif
 
-#endif /* ECPG_SQLDA_H */
+#endif   /* ECPG_SQLDA_H */
 
 #line 7 "sqlda.pgc"
 
@@ -83,26 +83,26 @@ typedef struct sqlda_struct	sqlda_t;
 /*
  * Values used in sqlda->sqlvar[i]->sqltype
  */
-#define	SQLCHAR		ECPGt_char
-#define	SQLSMINT	ECPGt_short
-#define	SQLINT		ECPGt_int
-#define	SQLFLOAT	ECPGt_double
-#define	SQLSMFLOAT	ECPGt_float
-#define	SQLDECIMAL	ECPGt_decimal
-#define	SQLSERIAL	ECPGt_int
-#define	SQLDATE		ECPGt_date
-#define	SQLDTIME	ECPGt_timestamp
-#define	SQLTEXT		ECPGt_char
-#define	SQLVCHAR	ECPGt_char
-#define SQLINTERVAL     ECPGt_interval
-#define	SQLNCHAR	ECPGt_char
-#define	SQLNVCHAR	ECPGt_char
+#define SQLCHAR		ECPGt_char
+#define SQLSMINT	ECPGt_short
+#define SQLINT		ECPGt_int
+#define SQLFLOAT	ECPGt_double
+#define SQLSMFLOAT	ECPGt_float
+#define SQLDECIMAL	ECPGt_decimal
+#define SQLSERIAL	ECPGt_int
+#define SQLDATE		ECPGt_date
+#define SQLDTIME	ECPGt_timestamp
+#define SQLTEXT		ECPGt_char
+#define SQLVCHAR	ECPGt_char
+#define SQLINTERVAL		ECPGt_interval
+#define SQLNCHAR	ECPGt_char
+#define SQLNVCHAR	ECPGt_char
 #ifdef HAVE_LONG_LONG_INT_64
-#define	SQLINT8		ECPGt_long_long
-#define	SQLSERIAL8	ECPGt_long_long
+#define SQLINT8		ECPGt_long_long
+#define SQLSERIAL8	ECPGt_long_long
 #else
-#define	SQLINT8		ECPGt_long
-#define	SQLSERIAL8	ECPGt_long
+#define SQLINT8		ECPGt_long
+#define SQLSERIAL8	ECPGt_long
 #endif
 
 #endif   /* ndef ECPG_SQLTYPES_H */

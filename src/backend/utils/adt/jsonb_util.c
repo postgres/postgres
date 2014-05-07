@@ -953,10 +953,10 @@ JsonbDeepContains(JsonbIterator **val, JsonbIterator **mContained)
 		 * arrays.
 		 *
 		 * A raw scalar may contain another raw scalar, and an array may
-		 * contain a raw scalar, but a raw scalar may not contain an array.
-		 * We don't do something like this for the object case, since objects
-		 * can only contain pairs, never raw scalars (a pair is represented by
-		 * an rhs object argument with a single contained pair).
+		 * contain a raw scalar, but a raw scalar may not contain an array. We
+		 * don't do something like this for the object case, since objects can
+		 * only contain pairs, never raw scalars (a pair is represented by an
+		 * rhs object argument with a single contained pair).
 		 */
 		if (vval.val.array.rawScalar && !vcontained.val.array.rawScalar)
 			return false;
