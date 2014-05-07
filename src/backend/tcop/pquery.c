@@ -1661,6 +1661,9 @@ DoPortalRunFetch(Portal portal,
 static void
 DoPortalRewind(Portal portal)
 {
+	QueryDesc  *queryDesc;
+
+	/* Rewind holdStore, if we have one */
 	if (portal->holdStore)
 	{
 		MemoryContext oldcontext;
@@ -1669,8 +1672,15 @@ DoPortalRewind(Portal portal)
 		tuplestore_rescan(portal->holdStore);
 		MemoryContextSwitchTo(oldcontext);
 	}
-	if (PortalGetQueryDesc(portal))
-		ExecutorRewind(PortalGetQueryDesc(portal));
+
+	/* Rewind executor, if active */
+	queryDesc = PortalGetQueryDesc(portal);
+	if (queryDesc)
+	{
+		PushActiveSnapshot(queryDesc->snapshot);
+		ExecutorRewind(queryDesc);
+		PopActiveSnapshot();
+	}
 
 	portal->atStart = true;
 	portal->atEnd = false;
