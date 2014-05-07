@@ -394,6 +394,27 @@ BackgroundWorkerStopNotifications(pid_t pid)
 	}
 }
 
+/*
+ * Reset background worker crash state.
+ *
+ * We assume that, after a crash-and-restart cycle, background workers should
+ * be restarted immediately, instead of waiting for bgw_restart_time to
+ * elapse.
+ */
+void
+ResetBackgroundWorkerCrashTimes(void)
+{
+	slist_mutable_iter	iter;
+
+	slist_foreach_modify(iter, &BackgroundWorkerList)
+	{
+		RegisteredBgWorker *rw;
+
+		rw = slist_container(RegisteredBgWorker, rw_lnode, iter.cur);
+		rw->rw_crashed_at = 0;
+	}
+}
+
 #ifdef EXEC_BACKEND
 /*
  * In EXEC_BACKEND mode, workers use this to retrieve their details from
@@ -478,13 +499,14 @@ bgworker_quickdie(SIGNAL_ARGS)
 	on_exit_reset();
 
 	/*
-	 * Note we do exit(0) here, not exit(2) like quickdie.  The reason is that
-	 * we don't want to be seen this worker as independently crashed, because
-	 * then postmaster would delay restarting it again afterwards.  If some
-	 * idiot DBA manually sends SIGQUIT to a random bgworker, the "dead man
-	 * switch" will ensure that postmaster sees this as a crash.
+	 * Note we do exit(2) not exit(0).  This is to force the postmaster into a
+	 * system reset cycle if some idiot DBA sends a manual SIGQUIT to a random
+	 * backend.  This is necessary precisely because we don't clean up our
+	 * shared memory state.  (The "dead man switch" mechanism in pmsignal.c
+	 * should ensure the postmaster sees this as a crash, too, but no harm in
+	 * being doubly sure.)
 	 */
-	exit(0);
+	exit(2);
 }
 
 /*

@@ -43,6 +43,7 @@ extern void BackgroundWorkerStateChange(void);
 extern void ForgetBackgroundWorker(slist_mutable_iter *cur);
 extern void ReportBackgroundWorkerPID(RegisteredBgWorker *);
 extern void BackgroundWorkerStopNotifications(pid_t pid);
+extern void ResetBackgroundWorkerCrashTimes(void);
 
 /* Function to start a background worker, called from postmaster.c */
 extern void StartBackgroundWorker(void);

@@ -2616,7 +2616,7 @@ reaper(SIGNAL_ARGS)
 			if (PgStatPID == 0)
 				PgStatPID = pgstat_start();
 
-			/* some workers may be scheduled to start now */
+			/* workers may be scheduled to start now */
 			maybe_start_bgworker();
 
 			/* at this point we are really open for business */
@@ -2860,7 +2860,6 @@ CleanupBackgroundWorker(int pid,
 		{
 			if (!EXIT_STATUS_0(exitstatus) && !EXIT_STATUS_1(exitstatus))
 			{
-				rw->rw_crashed_at = GetCurrentTimestamp();
 				HandleChildCrash(pid, exitstatus, namebuf);
 				return true;
 			}
@@ -2871,7 +2870,6 @@ CleanupBackgroundWorker(int pid,
 				 * Uh-oh, the child failed to clean itself up.  Treat as a
 				 * crash after all.
 				 */
-				rw->rw_crashed_at = GetCurrentTimestamp();
 				HandleChildCrash(pid, exitstatus, namebuf);
 				return true;
 			}
@@ -3545,6 +3543,9 @@ PostmasterStateMachine(void)
 	{
 		ereport(LOG,
 				(errmsg("all server processes terminated; reinitializing")));
+
+		/* allow background workers to immediately restart */
+		ResetBackgroundWorkerCrashTimes();
 
 		shmem_exit(1);
 		reset_shared(PostPortNumber);
