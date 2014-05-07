@@ -167,8 +167,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
      <title>Join Types</title>
 
      <varlistentry>
-      <term>Cross join</term>
-
+      <term>Cross join
       <indexterm>
        <primary>join</primary>
        <secondary>cross</secondary>
@@ -177,6 +176,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
       <indexterm>
        <primary>cross join</primary>
       </indexterm>
+      </term>
 
       <listitem>
 <synopsis>
@@ -206,8 +206,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
      </varlistentry>
 
      <varlistentry>
-      <term>Qualified joins</term>
-
+      <term>Qualified joins
       <indexterm>
        <primary>join</primary>
        <secondary>outer</secondary>
@@ -216,6 +215,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
       <indexterm>
        <primary>outer join</primary>
       </indexterm>
+      </term>
 
       <listitem>
 <synopsis>
@@ -297,8 +297,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
         </varlistentry>
 
         <varlistentry>
-         <term><literal>LEFT OUTER JOIN</></term>
-
+         <term><literal>LEFT OUTER JOIN</>
          <indexterm>
           <primary>join</primary>
           <secondary>left</secondary>
@@ -307,6 +306,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
          <indexterm>
           <primary>left join</primary>
          </indexterm>
+         </term>
 
          <listitem>
           <para>
@@ -320,8 +320,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
         </varlistentry>
 
         <varlistentry>
-         <term><literal>RIGHT OUTER JOIN</></term>
-
+         <term><literal>RIGHT OUTER JOIN</>
          <indexterm>
           <primary>join</primary>
           <secondary>right</secondary>
@@ -330,6 +329,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
          <indexterm>
           <primary>right join</primary>
          </indexterm>
+         </term>
 
          <listitem>
           <para>

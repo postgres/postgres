@@ -788,12 +788,12 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
+       <term><option>--with-openssl</option>
        <indexterm>
         <primary>OpenSSL</primary>
         <seealso>SSL</seealso>
        </indexterm>
-
-       <term><option>--with-openssl</option></term>
+       </term>
        <listitem>
         <para>
          Build with support for <acronym>SSL</> (encrypted)
@@ -1070,10 +1070,11 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term><option>--with-system-tzdata=<replaceable>DIRECTORY</replaceable></option></term>
+       <term><option>--with-system-tzdata=<replaceable>DIRECTORY</replaceable></option>
        <indexterm>
         <primary>time zone data</primary>
        </indexterm>
+       </term>
        <listitem>
         <para>
          <productname>PostgreSQL</> includes its own time zone database,

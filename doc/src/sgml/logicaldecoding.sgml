@@ -164,10 +164,10 @@ CTRL-C
   <sect1 id="logicaldecoding-explanation">
    <title>Logical Decoding Concepts</title>
    <sect2>
+    <title>Logical Decoding</title>
     <indexterm>
      <primary>Logical Decoding</primary>
     </indexterm>
-    <title>Logical Decoding</title>
     <para>
      Logical decoding is the process of extracting all persistent changes
      to a database's tables into a coherent, easy to understand format which

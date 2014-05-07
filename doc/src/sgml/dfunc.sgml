@@ -56,8 +56,10 @@
 
   <variablelist>
    <varlistentry>
-    <term><systemitem class="osname">FreeBSD</></term>
-    <indexterm><primary>FreeBSD</><secondary>shared library</></>
+    <term>
+     <systemitem class="osname">FreeBSD</>
+     <indexterm><primary>FreeBSD</><secondary>shared library</></>
+    </term>
     <listitem>
      <para>
       The compiler flag to create <acronym>PIC</acronym> is
@@ -74,8 +76,10 @@ gcc -shared -o foo.so foo.o
    </varlistentry>
 
    <varlistentry>
-    <term><systemitem class="osname">HP-UX</></term>
-    <indexterm><primary>HP-UX</><secondary>shared library</></>
+    <term>
+     <systemitem class="osname">HP-UX</>
+     <indexterm><primary>HP-UX</><secondary>shared library</></>
+    </term>
     <listitem>
      <para>
       The compiler flag of the system compiler to create
@@ -101,8 +105,10 @@ ld -b -o foo.sl foo.o
    </varlistentry>
 
    <varlistentry>
-    <term><systemitem class="osname">Linux</></term>
-    <indexterm><primary>Linux</><secondary>shared library</></>
+    <term>
+     <systemitem class="osname">Linux</>
+     <indexterm><primary>Linux</><secondary>shared library</></>
+    </term>
     <listitem>
      <para>
       The compiler flag to create <acronym>PIC</acronym> is
@@ -120,8 +126,10 @@ cc -shared -o foo.so foo.o
    </varlistentry>
 
    <varlistentry>
-    <term><systemitem class="osname">Mac OS X</></term>
-    <indexterm><primary>Mac OS X</><secondary>shared library</></>
+    <term>
+     <systemitem class="osname">Mac OS X</>
+     <indexterm><primary>Mac OS X</><secondary>shared library</></>
+    </term>
     <listitem>
      <para>
       Here is an example.  It assumes the developer tools are installed.
@@ -134,8 +142,10 @@ cc -bundle -flat_namespace -undefined suppress -o foo.so foo.o
    </varlistentry>
 
    <varlistentry>
-    <term><systemitem class="osname">NetBSD</></term>
-    <indexterm><primary>NetBSD</><secondary>shared library</></>
+    <term>
+     <systemitem class="osname">NetBSD</>
+     <indexterm><primary>NetBSD</><secondary>shared library</></>
+    </term>
     <listitem>
      <para>
       The compiler flag to create <acronym>PIC</acronym> is
@@ -152,8 +162,10 @@ gcc -shared -o foo.so foo.o
    </varlistentry>
 
    <varlistentry>
-    <term><systemitem class="osname">OpenBSD</></term>
-    <indexterm><primary>OpenBSD</><secondary>shared library</></>
+    <term>
+     <systemitem class="osname">OpenBSD</>
+     <indexterm><primary>OpenBSD</><secondary>shared library</></>
+    </term>
     <listitem>
      <para>
       The compiler flag to create <acronym>PIC</acronym> is
@@ -168,8 +180,10 @@ ld -Bshareable -o foo.so foo.o
    </varlistentry>
 
    <varlistentry>
-    <term><systemitem class="osname">Solaris</></term>
-    <indexterm><primary>Solaris</><secondary>shared library</></>
+    <term>
+     <systemitem class="osname">Solaris</>
+     <indexterm><primary>Solaris</><secondary>shared library</></>
+    </term>
     <listitem>
      <para>
       The compiler flag to create <acronym>PIC</acronym> is
@@ -192,9 +206,11 @@ gcc -G -o foo.so foo.o
    </varlistentry>
 
    <varlistentry>
-    <term><systemitem class="osname">Tru64 UNIX</></term>
-    <indexterm><primary>Tru64 UNIX</><secondary>shared library</></>
-    <indexterm><primary>Digital UNIX</><see>Tru64 UNIX</></>
+    <term>
+     <systemitem class="osname">Tru64 UNIX</>
+     <indexterm><primary>Tru64 UNIX</><secondary>shared library</></>
+     <indexterm><primary>Digital UNIX</><see>Tru64 UNIX</></>
+    </term>
     <listitem>
      <para>
       <acronym>PIC</acronym> is the default, so the compilation command
@@ -211,8 +227,10 @@ ld -shared -expect_unresolved '*' -o foo.so foo.o
    </varlistentry>
 
    <varlistentry>
-    <term><systemitem class="osname">UnixWare</></term>
-    <indexterm><primary>UnixWare</><secondary>shared library</></>
+    <term>
+     <systemitem class="osname">UnixWare</>
+     <indexterm><primary>UnixWare</><secondary>shared library</></>
+    </term>
     <listitem>
      <para>
       The compiler flag to create <acronym>PIC</acronym> is <option>-K

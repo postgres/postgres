@@ -418,10 +418,13 @@ $$ LANGUAGE pltcl;
      </varlistentry>
 
      <varlistentry>
-      <indexterm>
-       <primary>spi_lastoid</primary>
-      </indexterm>
-      <term><function>spi_lastoid</></term>
+      <term>
+       <function>spi_lastoid</>
+       <indexterm>
+        <primary>spi_lastoid</primary>
+        <secondary>in PL/Tcl</secondary>
+       </indexterm>
+      </term>
       <listitem>
        <para>
         Returns the OID of the row inserted by the last
@@ -478,11 +481,13 @@ SELECT 'doesn''t' AS ret
      </varlistentry>
 
      <varlistentry>
-      <indexterm>
-       <primary>elog</primary>
-       <secondary>in PL/Tcl</secondary>
-      </indexterm>
-      <term><function>elog</> <replaceable>level</replaceable> <replaceable>msg</replaceable></term>
+      <term>
+       <function>elog</> <replaceable>level</replaceable> <replaceable>msg</replaceable>
+       <indexterm>
+        <primary>elog</primary>
+        <secondary>in PL/Tcl</secondary>
+       </indexterm>
+      </term>
       <listitem>
        <para>
         Emits a log or error message. Possible levels are

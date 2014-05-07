@@ -854,11 +854,11 @@ SELECT plainto_tsquery('english', 'The Fat &amp; Rats:C');
 
      <varlistentry>
 
-      <indexterm>
-       <primary>ts_rank</primary>
-      </indexterm>
-
       <term>
+       <indexterm>
+        <primary>ts_rank</primary>
+       </indexterm>
+
        <literal>ts_rank(<optional> <replaceable class="PARAMETER">weights</replaceable> <type>float4[]</>, </optional> <replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>, <replaceable class="PARAMETER">query</replaceable> <type>tsquery</> <optional>, <replaceable class="PARAMETER">normalization</replaceable> <type>integer</> </optional>) returns <type>float4</></literal>
       </term>
 
@@ -871,11 +871,11 @@ SELECT plainto_tsquery('english', 'The Fat &amp; Rats:C');
 
      <varlistentry>
 
+      <term>
       <indexterm>
        <primary>ts_rank_cd</primary>
       </indexterm>
 
-      <term>
        <literal>ts_rank_cd(<optional> <replaceable class="PARAMETER">weights</replaceable> <type>float4[]</>, </optional> <replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>, <replaceable class="PARAMETER">query</replaceable> <type>tsquery</> <optional>, <replaceable class="PARAMETER">normalization</replaceable> <type>integer</> </optional>) returns <type>float4</></literal>
       </term>
 
@@ -1221,11 +1221,11 @@ FROM (SELECT id, body, q, ts_rank_cd(ti, q) AS rank
 
     <varlistentry>
 
+     <term>
      <indexterm>
       <primary>tsvector concatenation</primary>
      </indexterm>
 
-     <term>
       <literal><type>tsvector</> || <type>tsvector</></literal>
      </term>
 
@@ -1260,11 +1260,11 @@ FROM (SELECT id, body, q, ts_rank_cd(ti, q) AS rank
 
     <varlistentry>
 
+     <term>
      <indexterm>
       <primary>setweight</primary>
      </indexterm>
 
-     <term>
       <literal>setweight(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>, <replaceable class="PARAMETER">weight</replaceable> <type>"char"</>) returns <type>tsvector</></literal>
      </term>
 
@@ -1288,11 +1288,11 @@ FROM (SELECT id, body, q, ts_rank_cd(ti, q) AS rank
     </varlistentry>
 
     <varlistentry>
+     <term>
      <indexterm>
       <primary>length(tsvector)</primary>
      </indexterm>
 
-     <term>
       <literal>length(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>) returns <type>integer</></literal>
      </term>
 
@@ -1305,11 +1305,11 @@ FROM (SELECT id, body, q, ts_rank_cd(ti, q) AS rank
 
     <varlistentry>
 
+     <term>
      <indexterm>
       <primary>strip</primary>
      </indexterm>
 
-     <term>
       <literal>strip(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>) returns <type>tsvector</></literal>
      </term>
 
@@ -1385,11 +1385,11 @@ FROM (SELECT id, body, q, ts_rank_cd(ti, q) AS rank
 
     <varlistentry>
 
+     <term>
      <indexterm>
       <primary>numnode</primary>
      </indexterm>
 
-     <term>
       <literal>numnode(<replaceable class="PARAMETER">query</replaceable> <type>tsquery</>) returns <type>integer</></literal>
      </term>
 
@@ -1419,11 +1419,11 @@ SELECT numnode('foo &amp; bar'::tsquery);
 
     <varlistentry>
 
+     <term>
      <indexterm>
       <primary>querytree</primary>
      </indexterm>
 
-     <term>
       <literal>querytree(<replaceable class="PARAMETER">query</replaceable> <type>tsquery</>) returns <type>text</></literal>
      </term>
 
@@ -3210,13 +3210,13 @@ SELECT plainto_tsquery('supernovae stars');
 
     <varlistentry>
 
+     <term>
      <indexterm zone="textsearch-indexes">
       <primary>index</primary>
       <secondary>GiST</secondary>
       <tertiary>text search</tertiary>
      </indexterm>
 
-     <term>
       <literal>CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING gist(<replaceable>column</replaceable>);</literal>
      </term>
 
@@ -3231,13 +3231,13 @@ SELECT plainto_tsquery('supernovae stars');
 
     <varlistentry>
 
+     <term>
      <indexterm zone="textsearch-indexes">
       <primary>index</primary>
       <secondary>GIN</secondary>
       <tertiary>text search</tertiary>
      </indexterm>
 
-     <term>
       <literal>CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING gin(<replaceable>column</replaceable>);</literal>
      </term>
 

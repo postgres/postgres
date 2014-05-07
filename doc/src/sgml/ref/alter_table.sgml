@@ -227,12 +227,13 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <indexterm>
-     <primary>TOAST</primary>
-     <secondary>per-column storage settings</secondary>
-    </indexterm>
-
-    <term><literal>SET STORAGE</literal></term>
+    <term>
+     <literal>SET STORAGE</literal>
+     <indexterm>
+      <primary>TOAST</primary>
+      <secondary>per-column storage settings</secondary>
+     </indexterm>
+    </term>
     <listitem>
      <para>
       This form sets the storage mode for a column. This controls whether this

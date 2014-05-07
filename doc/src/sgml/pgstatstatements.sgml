@@ -279,12 +279,11 @@
 
   <variablelist>
    <varlistentry>
-   <indexterm>
-    <primary>pg_stat_statements_reset</primary>
-   </indexterm>
-
     <term>
      <function>pg_stat_statements_reset() returns void</function>
+     <indexterm>
+      <primary>pg_stat_statements_reset</primary>
+     </indexterm>
     </term>
 
     <listitem>
@@ -297,13 +296,12 @@
    </varlistentry>
 
    <varlistentry>
-   <indexterm>
-    <primary>pg_stat_statements</primary>
-    <secondary>function</secondary>
-   </indexterm>
-
     <term>
      <function>pg_stat_statements(showtext boolean) returns setof record</function>
+     <indexterm>
+      <primary>pg_stat_statements</primary>
+      <secondary>function</secondary>
+     </indexterm>
     </term>
 
     <listitem>

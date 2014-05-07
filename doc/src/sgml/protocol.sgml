@@ -1428,8 +1428,7 @@ The commands accepted in walsender mode are:
   </varlistentry>
 
   <varlistentry>
-    <term><literal>CREATE_REPLICATION_SLOT</literal> <replaceable class="parameter">slotname</> <literal>PHYSICAL</literal></term>
-    <indexterm><primary>CREATE_REPLICATION_SLOT</primary></indexterm>
+    <term><literal>CREATE_REPLICATION_SLOT</literal> <replaceable class="parameter">slotname</> <literal>PHYSICAL</literal><indexterm><primary>CREATE_REPLICATION_SLOT</primary></indexterm></term>
     <listitem>
      <para>
       Create a physical replication

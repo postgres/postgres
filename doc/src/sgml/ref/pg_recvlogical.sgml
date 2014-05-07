@@ -4,6 +4,10 @@ PostgreSQL documentation
 -->
 
 <refentry id="app-pgrecvlogical">
+ <indexterm zone="app-pgrecvlogical">
+  <primary>pg_recvlogical</primary>
+ </indexterm>
+
  <refmeta>
   <refentrytitle><application>pg_recvlogical</application></refentrytitle>
   <manvolnum>1</manvolnum>
@@ -15,10 +19,6 @@ PostgreSQL documentation
   <refpurpose>Control logical decoding (see <xref linkend="logicaldecoding">)
    streams over a walsender connection.</refpurpose>
  </refnamediv>
-
- <indexterm zone="app-pgrecvlogical">
-  <primary>pg_recvlogical</primary>
- </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

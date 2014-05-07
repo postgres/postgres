@@ -17,11 +17,10 @@
 
   <variablelist>
    <varlistentry>
-   <indexterm>
-    <primary>pgstattuple</primary>
-   </indexterm>
-
     <term>
+     <indexterm>
+      <primary>pgstattuple</primary>
+     </indexterm>
      <function>pgstattuple(regclass) returns record</>
     </term>
 

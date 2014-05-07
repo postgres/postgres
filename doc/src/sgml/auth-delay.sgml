@@ -28,10 +28,10 @@
    <varlistentry>
     <term>
      <varname>auth_delay.milliseconds</varname> (<type>int</type>)
+     <indexterm>
+      <primary><varname>auth_delay.milliseconds</> configuration parameter</primary>
+     </indexterm>
     </term>
-    <indexterm>
-     <primary><varname>auth_delay.milliseconds</> configuration parameter</primary>
-    </indexterm>
     <listitem>
      <para>
       The number of milliseconds to wait before reporting an authentication

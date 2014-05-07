@@ -99,8 +99,8 @@
     <varlistentry>
     <term>
         the range table
-    </term>
       <indexterm><primary>range table</></>
+    </term>
     <listitem>
     <para>
         The range table is a list of relations that are used in the query.
@@ -150,8 +150,8 @@
     <varlistentry>
     <term>
         the target list
-    </term>
     <indexterm><primary>target list</></>
+    </term>
     <listitem>
     <para>
         The target list is a list of expressions that define the

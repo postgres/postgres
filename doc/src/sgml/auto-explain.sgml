@@ -46,10 +46,10 @@ LOAD 'auto_explain';
    <varlistentry>
     <term>
      <varname>auto_explain.log_min_duration</varname> (<type>integer</type>)
+     <indexterm>
+      <primary><varname>auto_explain.log_min_duration</> configuration parameter</primary>
+     </indexterm>
     </term>
-    <indexterm>
-     <primary><varname>auto_explain.log_min_duration</> configuration parameter</primary>
-    </indexterm>
     <listitem>
      <para>
       <varname>auto_explain.log_min_duration</varname> is the minimum statement
@@ -65,10 +65,10 @@ LOAD 'auto_explain';
    <varlistentry>
     <term>
      <varname>auto_explain.log_analyze</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>auto_explain.log_analyze</> configuration parameter</primary>
+     </indexterm>
     </term>
-    <indexterm>
-     <primary><varname>auto_explain.log_analyze</> configuration parameter</primary>
-    </indexterm>
     <listitem>
      <para>
       <varname>auto_explain.log_analyze</varname> causes <command>EXPLAIN ANALYZE</>
@@ -89,10 +89,10 @@ LOAD 'auto_explain';
    <varlistentry>
     <term>
      <varname>auto_explain.log_verbose</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>auto_explain.log_verbose</> configuration parameter</primary>
+     </indexterm>
     </term>
-    <indexterm>
-     <primary><varname>auto_explain.log_verbose</> configuration parameter</primary>
-    </indexterm>
     <listitem>
      <para>
       <varname>auto_explain.log_verbose</varname> causes <command>EXPLAIN VERBOSE</>
@@ -106,10 +106,10 @@ LOAD 'auto_explain';
    <varlistentry>
     <term>
      <varname>auto_explain.log_buffers</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>auto_explain.log_buffers</> configuration parameter</primary>
+     </indexterm>
     </term>
-    <indexterm>
-     <primary><varname>auto_explain.log_buffers</> configuration parameter</primary>
-    </indexterm>
     <listitem>
      <para>
       <varname>auto_explain.log_buffers</varname> causes <command>EXPLAIN
@@ -125,10 +125,10 @@ LOAD 'auto_explain';
    <varlistentry>
     <term>
      <varname>auto_explain.log_triggers</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>auto_explain.log_triggers</> configuration parameter</primary>
+     </indexterm>
     </term>
-    <indexterm>
-     <primary><varname>auto_explain.log_triggers</> configuration parameter</primary>
-    </indexterm>
     <listitem>
      <para>
       <varname>auto_explain.log_triggers</varname> causes trigger
@@ -143,10 +143,10 @@ LOAD 'auto_explain';
    <varlistentry>
     <term>
      <varname>auto_explain.log_format</varname> (<type>enum</type>)
+     <indexterm>
+      <primary><varname>auto_explain.log_format</> configuration parameter</primary>
+     </indexterm>
     </term>
-    <indexterm>
-     <primary><varname>auto_explain.log_format</> configuration parameter</primary>
-    </indexterm>
     <listitem>
      <para>
       <varname>auto_explain.log_format</varname> selects the
@@ -161,10 +161,10 @@ LOAD 'auto_explain';
    <varlistentry>
     <term>
      <varname>auto_explain.log_timing</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>auto_explain.log_timing</> configuration parameter</primary>
+     </indexterm>
     </term>
-    <indexterm>
-     <primary><varname>auto_explain.log_timing</> configuration parameter</primary>
-    </indexterm>
     <listitem>
      <para>
       <varname>auto_explain.log_timing</varname> causes <command>EXPLAIN
@@ -182,10 +182,10 @@ LOAD 'auto_explain';
    <varlistentry>
     <term>
      <varname>auto_explain.log_nested_statements</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>auto_explain.log_nested_statements</> configuration parameter</primary>
+     </indexterm>
     </term>
-    <indexterm>
-     <primary><varname>auto_explain.log_nested_statements</> configuration parameter</primary>
-    </indexterm>
     <listitem>
      <para>
       <varname>auto_explain.log_nested_statements</varname> causes nested

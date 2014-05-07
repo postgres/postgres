@@ -18,11 +18,11 @@
 
   <variablelist>
    <varlistentry>
-    <indexterm>
-     <primary>get_raw_page</primary>
-    </indexterm>
     <term>
      <function>get_raw_page(relname text, fork text, blkno int) returns bytea</function>
+     <indexterm>
+      <primary>get_raw_page</primary>
+     </indexterm>
     </term>
 
     <listitem>
@@ -52,11 +52,11 @@
    </varlistentry>
 
    <varlistentry>
-    <indexterm>
-     <primary>page_header</primary>
-    </indexterm>
     <term>
      <function>page_header(page bytea) returns record</function>
+     <indexterm>
+      <primary>page_header</primary>
+     </indexterm>
     </term>
 
     <listitem>
@@ -82,11 +82,11 @@ test=# SELECT * FROM page_header(get_raw_page('pg_class', 0));
    </varlistentry>
 
    <varlistentry>
-    <indexterm>
-     <primary>heap_page_items</primary>
-    </indexterm>
     <term>
      <function>heap_page_items(page bytea) returns setof record</function>
+     <indexterm>
+      <primary>heap_page_items</primary>
+     </indexterm>
     </term>
 
     <listitem>
@@ -110,11 +110,11 @@ test=# SELECT * FROM heap_page_items(get_raw_page('pg_class', 0));
    </varlistentry>
 
    <varlistentry>
-    <indexterm>
-     <primary>bt_metap</primary>
-    </indexterm>
     <term>
      <function>bt_metap(relname text) returns record</function>
+     <indexterm>
+      <primary>bt_metap</primary>
+     </indexterm>
     </term>
 
     <listitem>
@@ -136,11 +136,11 @@ fastlevel | 0
    </varlistentry>
 
    <varlistentry>
-    <indexterm>
-     <primary>bt_page_stats</primary>
-    </indexterm>
     <term>
      <function>bt_page_stats(relname text, blkno int) returns record</function>
+     <indexterm>
+      <primary>bt_page_stats</primary>
+     </indexterm>
     </term>
 
     <listitem>
@@ -167,11 +167,11 @@ btpo_flags    | 3
    </varlistentry>
 
    <varlistentry>
-    <indexterm>
-     <primary>bt_page_items</primary>
-    </indexterm>
     <term>
      <function>bt_page_items(relname text, blkno int) returns setof record</function>
+     <indexterm>
+      <primary>bt_page_items</primary>
+     </indexterm>
     </term>
 
     <listitem>
@@ -196,11 +196,11 @@ test=# SELECT * FROM bt_page_items('pg_cast_oid_index', 1);
    </varlistentry>
 
    <varlistentry>
-    <indexterm>
-     <primary>fsm_page_contents</primary>
-    </indexterm>
     <term>
      <function>fsm_page_contents(page bytea) returns text</function>
+     <indexterm>
+      <primary>fsm_page_contents</primary>
+     </indexterm>
     </term>
 
     <listitem>

@@ -712,8 +712,9 @@ psql: could not connect to server: No such file or directory
 
     <variablelist>
      <varlistentry>
-      <term><systemitem class="osname">AIX</></term>
+      <term><systemitem class="osname">AIX</>
       <indexterm><primary>AIX</><secondary>IPC configuration</></>
+      </term>
       <listitem>
        <para>
         At least as of version 5.1, it should not be necessary to do
@@ -734,8 +735,9 @@ psql: could not connect to server: No such file or directory
 
 
      <varlistentry>
-      <term><systemitem class="osname">FreeBSD</></term>
+      <term><systemitem class="osname">FreeBSD</>
       <indexterm><primary>FreeBSD</><secondary>IPC configuration</></>
+      </term>
       <listitem>
        <para>
         The default settings can be changed using
@@ -791,8 +793,9 @@ kern.ipc.semmnu=256
      </varlistentry>
 
      <varlistentry>
-      <term><systemitem class="osname">NetBSD</></term>
+      <term><systemitem class="osname">NetBSD</>
       <indexterm><primary>NetBSD</><secondary>IPC configuration</></>
+      </term>
       <listitem>
        <para>
         In <systemitem class="osname">NetBSD</> 5.0 and later,
@@ -822,8 +825,9 @@ kern.ipc.semmnu=256
      </varlistentry>
 
      <varlistentry>
-      <term><systemitem class="osname">OpenBSD</></term>
+      <term><systemitem class="osname">OpenBSD</>
       <indexterm><primary>OpenBSD</><secondary>IPC configuration</></>
+      </term>
       <listitem>
        <para>
         The options <varname>SYSVSHM</> and <varname>SYSVSEM</> need
@@ -854,8 +858,9 @@ option        SEMMAP=256
      </varlistentry>
 
      <varlistentry>
-      <term><systemitem class="osname">HP-UX</></term>
+      <term><systemitem class="osname">HP-UX</>
       <indexterm><primary>HP-UX</><secondary>IPC configuration</></>
+      </term>
       <listitem>
        <para>
         The default settings tend to suffice for normal installations.
@@ -875,8 +880,9 @@ option        SEMMAP=256
 
 
      <varlistentry>
-      <term><systemitem class="osname">Linux</></term>
+      <term><systemitem class="osname">Linux</>
       <indexterm><primary>Linux</><secondary>IPC configuration</></>
+      </term>
       <listitem>
        <para>
         The default maximum segment size is 32 MB, and the
@@ -917,8 +923,9 @@ option        SEMMAP=256
 
 
      <varlistentry>
-      <term><systemitem class="osname">Mac OS X</></term>
+      <term><systemitem class="osname">Mac OS X</>
       <indexterm><primary>Mac OS X</><secondary>IPC configuration</></>
+      </term>
       <listitem>
        <para>
         The recommended method for configuring shared memory in OS X
@@ -980,8 +987,9 @@ sysctl -w kern.sysv.shmall
 
 
      <varlistentry>
-      <term><systemitem class="osname">SCO OpenServer</></term>
+      <term><systemitem class="osname">SCO OpenServer</>
       <indexterm><primary>SCO OpenServer</><secondary>IPC configuration</></>
+      </term>
       <listitem>
        <para>
         In the default configuration, only 512 kB of shared memory per
@@ -1008,8 +1016,9 @@ sysctl -w kern.sysv.shmall
 
      <varlistentry>
       <term><systemitem class="osname">Solaris</> 2.6 to 2.9 (Solaris
-      6 to Solaris 9)</term>
+      6 to Solaris 9)
       <indexterm><primary>Solaris</><secondary>IPC configuration</></>
+      </term>
       <listitem>
        <para>
         The relevant settings can be changed in
@@ -1082,8 +1091,9 @@ project.max-msg-ids=(priv,4096,deny)
 
 
      <varlistentry>
-      <term><systemitem class="osname">UnixWare</></term>
+      <term><systemitem class="osname">UnixWare</>
       <indexterm><primary>UnixWare</><secondary>IPC configuration</></>
+      </term>
       <listitem>
        <para>
         On <productname>UnixWare</> 7, the maximum size for shared

@@ -256,10 +256,12 @@ $ sudo semodule -r sepgsql-regtest
 
   <variablelist>
    <varlistentry id="guc-sepgsql-permissive" xreflabel="sepgsql.permissive">
-    <term><varname>sepgsql.permissive</> (<type>boolean</type>)</term>
-    <indexterm>
-     <primary><varname>sepgsql.permissive</> configuration parameter</primary>
-    </indexterm>
+    <term>
+     <varname>sepgsql.permissive</> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>sepgsql.permissive</> configuration parameter</primary>
+     </indexterm>
+    </term>
     <listitem>
      <para>
       This parameter enables <filename>sepgsql</> to function
@@ -278,10 +280,12 @@ $ sudo semodule -r sepgsql-regtest
 
    </varlistentry>
    <varlistentry id="guc-sepgsql-debug-audit" xreflabel="sepgsql.debug_audit">
-    <term><varname>sepgsql.debug_audit</> (<type>boolean</>)</>
-    <indexterm>
-     <primary><varname>sepgsql.debug_audit</> configuration parameter</>
-    </indexterm>
+    <term>
+     <varname>sepgsql.debug_audit</> (<type>boolean</>)
+     <indexterm>
+      <primary><varname>sepgsql.debug_audit</> configuration parameter</>
+     </indexterm>
+    </term>
     <listitem>
      <para>
       This parameter enables the printing of audit messages regardless of

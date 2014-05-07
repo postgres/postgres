@@ -331,10 +331,11 @@ include 'filename'
 
      <variablelist>
      <varlistentry id="guc-data-directory" xreflabel="data_directory">
-      <term><varname>data_directory</varname> (<type>string</type>)</term>
+      <term><varname>data_directory</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>data_directory</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
          Specifies the directory to use for data storage.
@@ -344,10 +345,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-config-file" xreflabel="config_file">
-      <term><varname>config_file</varname> (<type>string</type>)</term>
+      <term><varname>config_file</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>config_file</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
          Specifies the main server configuration file
@@ -358,10 +360,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-hba-file" xreflabel="hba_file">
-      <term><varname>hba_file</varname> (<type>string</type>)</term>
+      <term><varname>hba_file</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>hba_file</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
          Specifies the configuration file for host-based authentication
@@ -372,10 +375,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-ident-file" xreflabel="ident_file">
-      <term><varname>ident_file</varname> (<type>string</type>)</term>
+      <term><varname>ident_file</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>ident_file</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
          Specifies the configuration file for
@@ -387,10 +391,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-external-pid-file" xreflabel="external_pid_file">
-      <term><varname>external_pid_file</varname> (<type>string</type>)</term>
+      <term><varname>external_pid_file</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>external_pid_file</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies the name of an additional process-ID (PID) file that the
@@ -450,10 +455,11 @@ include 'filename'
      <variablelist>
 
      <varlistentry id="guc-listen-addresses" xreflabel="listen_addresses">
-      <term><varname>listen_addresses</varname> (<type>string</type>)</term>
+      <term><varname>listen_addresses</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>listen_addresses</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
          Specifies the TCP/IP address(es) on which the server is
@@ -480,10 +486,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-port" xreflabel="port">
-      <term><varname>port</varname> (<type>integer</type>)</term>
+      <term><varname>port</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>port</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         The TCP port the server listens on; 5432 by default.  Note that the
@@ -494,10 +501,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-max-connections" xreflabel="max_connections">
-      <term><varname>max_connections</varname> (<type>integer</type>)</term>
+      <term><varname>max_connections</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>max_connections</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Determines the maximum number of concurrent connections to the
@@ -518,10 +526,11 @@ include 'filename'
      <varlistentry id="guc-superuser-reserved-connections"
      xreflabel="superuser_reserved_connections">
       <term><varname>superuser_reserved_connections</varname>
-      (<type>integer</type>)</term>
+      (<type>integer</type>)
       <indexterm>
        <primary><varname>superuser_reserved_connections</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Determines the number of connection <quote>slots</quote> that
@@ -544,10 +553,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-unix-socket-directories" xreflabel="unix_socket_directories">
-      <term><varname>unix_socket_directories</varname> (<type>string</type>)</term>
+      <term><varname>unix_socket_directories</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>unix_socket_directories</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies the directory of the Unix-domain socket(s) on which the
@@ -581,10 +591,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-unix-socket-group" xreflabel="unix_socket_group">
-      <term><varname>unix_socket_group</varname> (<type>string</type>)</term>
+      <term><varname>unix_socket_group</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>unix_socket_group</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Sets the owning group of the Unix-domain socket(s).  (The owning
@@ -605,10 +616,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-unix-socket-permissions" xreflabel="unix_socket_permissions">
-      <term><varname>unix_socket_permissions</varname> (<type>integer</type>)</term>
+      <term><varname>unix_socket_permissions</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>unix_socket_permissions</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Sets the access permissions of the Unix-domain socket(s).  Unix-domain
@@ -651,10 +663,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-bonjour" xreflabel="bonjour">
-      <term><varname>bonjour</varname> (<type>boolean</type>)</term>
+      <term><varname>bonjour</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>bonjour</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Enables advertising the server's existence via
@@ -665,10 +678,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-bonjour-name" xreflabel="bonjour_name">
-      <term><varname>bonjour_name</varname> (<type>string</type>)</term>
+      <term><varname>bonjour_name</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>bonjour_name</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies the <productname>Bonjour</productname> service
@@ -682,10 +696,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-tcp-keepalives-idle" xreflabel="tcp_keepalives_idle">
-      <term><varname>tcp_keepalives_idle</varname> (<type>integer</type>)</term>
+      <term><varname>tcp_keepalives_idle</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>tcp_keepalives_idle</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies the number of seconds of inactivity after which TCP
@@ -707,10 +722,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-tcp-keepalives-interval" xreflabel="tcp_keepalives_interval">
-      <term><varname>tcp_keepalives_interval</varname> (<type>integer</type>)</term>
+      <term><varname>tcp_keepalives_interval</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>tcp_keepalives_interval</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies the number of seconds after which a TCP keepalive message
@@ -732,10 +748,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-tcp-keepalives-count" xreflabel="tcp_keepalives_count">
-      <term><varname>tcp_keepalives_count</varname> (<type>integer</type>)</term>
+      <term><varname>tcp_keepalives_count</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>tcp_keepalives_count</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies the number of TCP keepalives that can be lost before
@@ -761,12 +778,13 @@ include 'filename'
 
      <variablelist>
      <varlistentry id="guc-authentication-timeout" xreflabel="authentication_timeout">
-      <term><varname>authentication_timeout</varname> (<type>integer</type>)</term>
+      <term><varname>authentication_timeout</varname> (<type>integer</type>)
       <indexterm><primary>timeout</><secondary>client authentication</></indexterm>
       <indexterm><primary>client authentication</><secondary>timeout during</></indexterm>
       <indexterm>
        <primary><varname>authentication_timeout</> configuration parameter</primary>
       </indexterm>
+      </term>
 
       <listitem>
        <para>
@@ -782,10 +800,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-ssl" xreflabel="ssl">
-      <term><varname>ssl</varname> (<type>boolean</type>)</term>
+      <term><varname>ssl</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>ssl</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Enables <acronym>SSL</> connections. Please read
@@ -798,10 +817,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-ssl-ca-file" xreflabel="ssl_ca_file">
-      <term><varname>ssl_ca_file</varname> (<type>string</type>)</term>
+      <term><varname>ssl_ca_file</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>ssl_ca_file</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies the name of the file containing the SSL server certificate
@@ -815,10 +835,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-ssl-cert-file" xreflabel="ssl_cert_file">
-      <term><varname>ssl_cert_file</varname> (<type>string</type>)</term>
+      <term><varname>ssl_cert_file</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>ssl_cert_file</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies the name of the file containing the SSL server certificate.
@@ -830,10 +851,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-ssl-crl-file" xreflabel="ssl_crl_file">
-      <term><varname>ssl_crl_file</varname> (<type>string</type>)</term>
+      <term><varname>ssl_crl_file</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>ssl_crl_file</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies the name of the file containing the SSL server certificate
@@ -847,10 +869,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-ssl-key-file" xreflabel="ssl_key_file">
-      <term><varname>ssl_key_file</varname> (<type>string</type>)</term>
+      <term><varname>ssl_key_file</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>ssl_key_file</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies the name of the file containing the SSL server private key.
@@ -862,10 +885,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-ssl-renegotiation-limit" xreflabel="ssl_renegotiation_limit">
-      <term><varname>ssl_renegotiation_limit</varname> (<type>integer</type>)</term>
+      <term><varname>ssl_renegotiation_limit</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>ssl_renegotiation_limit</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies how much data can flow over an <acronym>SSL</>-encrypted
@@ -890,10 +914,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-ssl-ciphers" xreflabel="ssl_ciphers">
-      <term><varname>ssl_ciphers</varname> (<type>string</type>)</term>
+      <term><varname>ssl_ciphers</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>ssl_ciphers</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies a list of <acronym>SSL</> cipher suites that are allowed to be
@@ -966,10 +991,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-ssl-prefer-server-ciphers" xreflabel="ssl_prefer_server_ciphers">
-      <term><varname>ssl_prefer_server_ciphers</varname> (<type>bool</type>)</term>
+      <term><varname>ssl_prefer_server_ciphers</varname> (<type>bool</type>)
       <indexterm>
        <primary><varname>ssl_prefer_server_ciphers</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies whether to use the server's SSL cipher preferences, rather
@@ -987,10 +1013,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-ssl-ecdh-curve" xreflabel="ssl_ecdh_curve">
-      <term><varname>ssl_ecdh_curve</varname> (<type>string</type>)</term>
+      <term><varname>ssl_ecdh_curve</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>ssl_ecdh_curve</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies the name of the curve to use in ECDH key exchanges.  The
@@ -1005,10 +1032,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-password-encryption" xreflabel="password_encryption">
-      <term><varname>password_encryption</varname> (<type>boolean</type>)</term>
+      <term><varname>password_encryption</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>password_encryption</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         When a password is specified in <xref
@@ -1023,10 +1051,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-krb-server-keyfile" xreflabel="krb_server_keyfile">
-      <term><varname>krb_server_keyfile</varname> (<type>string</type>)</term>
+      <term><varname>krb_server_keyfile</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>krb_server_keyfile</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Sets the location of the Kerberos server key file. See
@@ -1038,10 +1067,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-krb-caseins-users" xreflabel="krb_caseins_users">
-      <term><varname>krb_caseins_users</varname> (<type>boolean</type>)</term>
+      <term><varname>krb_caseins_users</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>krb_caseins_users</varname> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Sets whether GSSAPI user names should be treated
@@ -1053,10 +1083,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-db-user-namespace" xreflabel="db_user_namespace">
-      <term><varname>db_user_namespace</varname> (<type>boolean</type>)</term>
+      <term><varname>db_user_namespace</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>db_user_namespace</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         This parameter enables per-database user names.  It is off by default.
@@ -1115,10 +1146,11 @@ include 'filename'
 
      <variablelist>
      <varlistentry id="guc-shared-buffers" xreflabel="shared_buffers">
-      <term><varname>shared_buffers</varname> (<type>integer</type>)</term>
+      <term><varname>shared_buffers</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>shared_buffers</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Sets the amount of memory the database server uses for shared
@@ -1160,10 +1192,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-huge-pages" xreflabel="huge_pages">
-      <term><varname>huge_pages</varname> (<type>enum</type>)</term>
+      <term><varname>huge_pages</varname> (<type>enum</type>)
       <indexterm>
        <primary><varname>huge_pages</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Enables/disables the use of huge memory pages. Valid values are
@@ -1193,10 +1226,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-temp-buffers" xreflabel="temp_buffers">
-      <term><varname>temp_buffers</varname> (<type>integer</type>)</term>
+      <term><varname>temp_buffers</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>temp_buffers</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Sets the maximum number of temporary buffers used by each database
@@ -1221,10 +1255,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-max-prepared-transactions" xreflabel="max_prepared_transactions">
-      <term><varname>max_prepared_transactions</varname> (<type>integer</type>)</term>
+      <term><varname>max_prepared_transactions</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>max_prepared_transactions</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Sets the maximum number of transactions that can be in the
@@ -1253,10 +1288,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-work-mem" xreflabel="work_mem">
-      <term><varname>work_mem</varname> (<type>integer</type>)</term>
+      <term><varname>work_mem</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>work_mem</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies the amount of memory to be used by internal sort operations
@@ -1278,10 +1314,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-maintenance-work-mem" xreflabel="maintenance_work_mem">
-      <term><varname>maintenance_work_mem</varname> (<type>integer</type>)</term>
+      <term><varname>maintenance_work_mem</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>maintenance_work_mem</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies the maximum amount of memory to be used by maintenance
@@ -1305,10 +1342,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-autovacuum-work-mem" xreflabel="autovacuum_work_mem">
-      <term><varname>autovacuum_work_mem</varname> (<type>integer</type>)</term>
+      <term><varname>autovacuum_work_mem</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>autovacuum_work_mem</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies the maximum amount of memory to be used by each
@@ -1321,10 +1359,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-max-stack-depth" xreflabel="max_stack_depth">
-      <term><varname>max_stack_depth</varname> (<type>integer</type>)</term>
+      <term><varname>max_stack_depth</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>max_stack_depth</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies the maximum safe depth of the server's execution stack.
@@ -1353,10 +1392,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-dynamic-shared-memory-type" xreflabel="dynamic_shared_memory_type">
-      <term><varname>dynamic_shared_memory_type</varname> (<type>enum</type>)</term>
+      <term><varname>dynamic_shared_memory_type</varname> (<type>enum</type>)
       <indexterm>
        <primary><varname>dynamic_shared_memory_type</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies the dynamic shared memory implementation that the server
@@ -1386,10 +1426,11 @@ include 'filename'
 
      <variablelist>
      <varlistentry id="guc-temp-file-limit" xreflabel="temp_file_limit">
-      <term><varname>temp_file_limit</varname> (<type>integer</type>)</term>
+      <term><varname>temp_file_limit</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>temp_file_limit</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies the maximum amount of disk space that a session can use
@@ -1418,10 +1459,11 @@ include 'filename'
 
      <variablelist>
      <varlistentry id="guc-max-files-per-process" xreflabel="max_files_per_process">
-      <term><varname>max_files_per_process</varname> (<type>integer</type>)</term>
+      <term><varname>max_files_per_process</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>max_files_per_process</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Sets the maximum number of simultaneously open files allowed to each
@@ -1476,10 +1518,11 @@ include 'filename'
 
      <variablelist>
       <varlistentry id="guc-vacuum-cost-delay" xreflabel="vacuum_cost_delay">
-       <term><varname>vacuum_cost_delay</varname> (<type>integer</type>)</term>
+       <term><varname>vacuum_cost_delay</varname> (<type>integer</type>)
        <indexterm>
         <primary><varname>vacuum_cost_delay</> configuration parameter</primary>
        </indexterm>
+       </term>
        <listitem>
         <para>
          The length of time, in milliseconds, that the process will sleep
@@ -1503,10 +1546,11 @@ include 'filename'
       </varlistentry>
 
       <varlistentry id="guc-vacuum-cost-page-hit" xreflabel="vacuum_cost_page_hit">
-       <term><varname>vacuum_cost_page_hit</varname> (<type>integer</type>)</term>
+       <term><varname>vacuum_cost_page_hit</varname> (<type>integer</type>)
        <indexterm>
         <primary><varname>vacuum_cost_page_hit</> configuration parameter</primary>
        </indexterm>
+       </term>
        <listitem>
         <para>
          The estimated cost for vacuuming a buffer found in the shared buffer
@@ -1518,10 +1562,11 @@ include 'filename'
       </varlistentry>
 
       <varlistentry id="guc-vacuum-cost-page-miss" xreflabel="vacuum_cost_page_miss">
-       <term><varname>vacuum_cost_page_miss</varname> (<type>integer</type>)</term>
+       <term><varname>vacuum_cost_page_miss</varname> (<type>integer</type>)
        <indexterm>
         <primary><varname>vacuum_cost_page_miss</> configuration parameter</primary>
        </indexterm>
+       </term>
        <listitem>
         <para>
          The estimated cost for vacuuming a buffer that has to be read from
@@ -1533,10 +1578,11 @@ include 'filename'
       </varlistentry>
 
       <varlistentry id="guc-vacuum-cost-page-dirty" xreflabel="vacuum_cost_page_dirty">
-       <term><varname>vacuum_cost_page_dirty</varname> (<type>integer</type>)</term>
+       <term><varname>vacuum_cost_page_dirty</varname> (<type>integer</type>)
        <indexterm>
         <primary><varname>vacuum_cost_page_dirty</> configuration parameter</primary>
        </indexterm>
+       </term>
        <listitem>
         <para>
          The estimated cost charged when vacuum modifies a block that was
@@ -1548,10 +1594,11 @@ include 'filename'
       </varlistentry>
 
       <varlistentry id="guc-vacuum-cost-limit" xreflabel="vacuum_cost_limit">
-       <term><varname>vacuum_cost_limit</varname> (<type>integer</type>)</term>
+       <term><varname>vacuum_cost_limit</varname> (<type>integer</type>)
        <indexterm>
         <primary><varname>vacuum_cost_limit</> configuration parameter</primary>
        </indexterm>
+       </term>
        <listitem>
         <para>
          The accumulated cost that will cause the vacuuming process to sleep.
@@ -1595,10 +1642,11 @@ include 'filename'
 
      <variablelist>
       <varlistentry id="guc-bgwriter-delay" xreflabel="bgwriter_delay">
-       <term><varname>bgwriter_delay</varname> (<type>integer</type>)</term>
+       <term><varname>bgwriter_delay</varname> (<type>integer</type>)
        <indexterm>
         <primary><varname>bgwriter_delay</> configuration parameter</primary>
        </indexterm>
+       </term>
        <listitem>
         <para>
          Specifies the delay between activity rounds for the
@@ -1619,10 +1667,11 @@ include 'filename'
       </varlistentry>
 
       <varlistentry id="guc-bgwriter-lru-maxpages" xreflabel="bgwriter_lru_maxpages">
-       <term><varname>bgwriter_lru_maxpages</varname> (<type>integer</type>)</term>
+       <term><varname>bgwriter_lru_maxpages</varname> (<type>integer</type>)
        <indexterm>
         <primary><varname>bgwriter_lru_maxpages</> configuration parameter</primary>
        </indexterm>
+       </term>
        <listitem>
         <para>
          In each round, no more than this many buffers will be written
@@ -1637,10 +1686,11 @@ include 'filename'
       </varlistentry>
 
       <varlistentry id="guc-bgwriter-lru-multiplier" xreflabel="bgwriter_lru_multiplier">
-       <term><varname>bgwriter_lru_multiplier</varname> (<type>floating point</type>)</term>
+       <term><varname>bgwriter_lru_multiplier</varname> (<type>floating point</type>)
        <indexterm>
         <primary><varname>bgwriter_lru_multiplier</> configuration parameter</primary>
        </indexterm>
+       </term>
        <listitem>
         <para>
          The number of dirty buffers written in each round is based on the
@@ -1678,10 +1728,11 @@ include 'filename'
 
      <variablelist>
       <varlistentry id="guc-effective-io-concurrency" xreflabel="effective_io_concurrency">
-       <term><varname>effective_io_concurrency</varname> (<type>integer</type>)</term>
+       <term><varname>effective_io_concurrency</varname> (<type>integer</type>)
        <indexterm>
         <primary><varname>effective_io_concurrency</> configuration parameter</primary>
        </indexterm>
+       </term>
        <listitem>
         <para>
          Sets the number of concurrent disk I/O operations that
@@ -1721,10 +1772,11 @@ include 'filename'
       </varlistentry>
 
       <varlistentry id="guc-max-worker-processes" xreflabel="max_worker_processes">
-       <term><varname>max_worker_processes</varname> (<type>integer</type>)</term>
+       <term><varname>max_worker_processes</varname> (<type>integer</type>)
        <indexterm>
         <primary><varname>max_worker_processes</> configuration parameter</primary>
        </indexterm>
+       </term>
        <listitem>
         <para>
          Sets the maximum number of background processes that the system
@@ -1755,10 +1807,11 @@ include 'filename'
      <variablelist>
 
      <varlistentry id="guc-wal-level" xreflabel="wal_level">
-      <term><varname>wal_level</varname> (<type>enum</type>)</term>
+      <term><varname>wal_level</varname> (<type>enum</type>)
       <indexterm>
        <primary><varname>wal_level</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         <varname>wal_level</> determines how much information is written
@@ -1812,10 +1865,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-fsync" xreflabel="fsync">
-      <term><varname>fsync</varname> (<type>boolean</type>)</term>
+      <term><varname>fsync</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>fsync</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         If this parameter is on, the <productname>PostgreSQL</> server
@@ -1873,10 +1927,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-synchronous-commit" xreflabel="synchronous_commit">
-      <term><varname>synchronous_commit</varname> (<type>enum</type>)</term>
+      <term><varname>synchronous_commit</varname> (<type>enum</type>)
       <indexterm>
        <primary><varname>synchronous_commit</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies whether transaction commit will wait for WAL records
@@ -1942,10 +1997,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-wal-sync-method" xreflabel="wal_sync_method">
-      <term><varname>wal_sync_method</varname> (<type>enum</type>)</term>
+      <term><varname>wal_sync_method</varname> (<type>enum</type>)
       <indexterm>
        <primary><varname>wal_sync_method</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Method used for forcing WAL updates out to disk.
@@ -1997,10 +2053,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-full-page-writes" xreflabel="full_page_writes">
-      <term><varname>full_page_writes</varname> (<type>boolean</type>)</term>
+      <term><varname>full_page_writes</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>full_page_writes</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         When this parameter is on, the <productname>PostgreSQL</> server
@@ -2043,10 +2100,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-wal-log-hints" xreflabel="wal_log_hints">
-      <term><varname>wal_log_hints</varname> (<type>boolean</type>)</term>
+      <term><varname>wal_log_hints</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>wal_log_hints</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         When this parameter is <literal>on</>, the <productname>PostgreSQL</>
@@ -2069,10 +2127,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-wal-buffers" xreflabel="wal_buffers">
-      <term><varname>wal_buffers</varname> (<type>integer</type>)</term>
+      <term><varname>wal_buffers</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>wal_buffers</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         The amount of shared memory used for WAL data that has not yet been
@@ -2100,10 +2159,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-wal-writer-delay" xreflabel="wal_writer_delay">
-      <term><varname>wal_writer_delay</varname> (<type>integer</type>)</term>
+      <term><varname>wal_writer_delay</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>wal_writer_delay</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies the delay between activity rounds for the WAL writer.
@@ -2120,10 +2180,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-commit-delay" xreflabel="commit_delay">
-      <term><varname>commit_delay</varname> (<type>integer</type>)</term>
+      <term><varname>commit_delay</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>commit_delay</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         <varname>commit_delay</varname> adds a time delay, measured in
@@ -2155,10 +2216,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-commit-siblings" xreflabel="commit_siblings">
-      <term><varname>commit_siblings</varname> (<type>integer</type>)</term>
+      <term><varname>commit_siblings</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>commit_siblings</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Minimum number of concurrent open transactions to require
@@ -2177,10 +2239,11 @@ include 'filename'
 
     <variablelist>
      <varlistentry id="guc-checkpoint-segments" xreflabel="checkpoint_segments">
-      <term><varname>checkpoint_segments</varname> (<type>integer</type>)</term>
+      <term><varname>checkpoint_segments</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>checkpoint_segments</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Maximum number of log file segments between automatic WAL
@@ -2194,10 +2257,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-checkpoint-timeout" xreflabel="checkpoint_timeout">
-      <term><varname>checkpoint_timeout</varname> (<type>integer</type>)</term>
+      <term><varname>checkpoint_timeout</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>checkpoint_timeout</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Maximum time between automatic WAL checkpoints, in
@@ -2211,10 +2275,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-checkpoint-completion-target" xreflabel="checkpoint_completion_target">
-      <term><varname>checkpoint_completion_target</varname> (<type>floating point</type>)</term>
+      <term><varname>checkpoint_completion_target</varname> (<type>floating point</type>)
       <indexterm>
        <primary><varname>checkpoint_completion_target</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies the target of checkpoint completion, as a fraction of
@@ -2227,10 +2292,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-checkpoint-warning" xreflabel="checkpoint_warning">
-      <term><varname>checkpoint_warning</varname> (<type>integer</type>)</term>
+      <term><varname>checkpoint_warning</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>checkpoint_warning</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Write a message to the server log if checkpoints caused by
@@ -2253,10 +2319,11 @@ include 'filename'
 
     <variablelist>
      <varlistentry id="guc-archive-mode" xreflabel="archive_mode">
-      <term><varname>archive_mode</varname> (<type>boolean</type>)</term>
+      <term><varname>archive_mode</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>archive_mode</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         When <varname>archive_mode</> is enabled, completed WAL segments
@@ -2273,10 +2340,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-archive-command" xreflabel="archive_command">
-      <term><varname>archive_command</varname> (<type>string</type>)</term>
+      <term><varname>archive_command</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>archive_command</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         The local shell command to execute to archive a completed WAL file
@@ -2308,10 +2376,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-archive-timeout" xreflabel="archive_timeout">
-      <term><varname>archive_timeout</varname> (<type>integer</type>)</term>
+      <term><varname>archive_timeout</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>archive_timeout</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         The <xref linkend="guc-archive-command"> is only invoked for
@@ -2376,10 +2445,11 @@ include 'filename'
 
      <variablelist>
       <varlistentry id="guc-max-wal-senders" xreflabel="max_wal_senders">
-       <term><varname>max_wal_senders</varname> (<type>integer</type>)</term>
+       <term><varname>max_wal_senders</varname> (<type>integer</type>)
        <indexterm>
         <primary><varname>max_wal_senders</> configuration parameter</primary>
        </indexterm>
+       </term>
        <listitem>
        <para>
         Specifies the maximum number of concurrent connections from
@@ -2401,10 +2471,11 @@ include 'filename'
       </varlistentry>
 
       <varlistentry id="guc-max-replication-slots" xreflabel="max_replication_slots">
-       <term><varname>max_replication_slots</varname> (<type>integer</type>)</term>
+       <term><varname>max_replication_slots</varname> (<type>integer</type>)
        <indexterm>
         <primary><varname>max_replication_slots</> configuration parameter</primary>
        </indexterm>
+       </term>
        <listitem>
         <para>
          Specifies the maximum number of replication slots
@@ -2420,10 +2491,11 @@ include 'filename'
       </varlistentry>
 
       <varlistentry id="guc-wal-keep-segments" xreflabel="wal_keep_segments">
-       <term><varname>wal_keep_segments</varname> (<type>integer</type>)</term>
+       <term><varname>wal_keep_segments</varname> (<type>integer</type>)
        <indexterm>
         <primary><varname>wal_keep_segments</> configuration parameter</primary>
        </indexterm>
+       </term>
        <listitem>
        <para>
         Specifies the minimum number of past log file segments kept in the
@@ -2455,10 +2527,11 @@ include 'filename'
       </varlistentry>
 
      <varlistentry id="guc-wal-sender-timeout" xreflabel="wal_sender_timeout">
-      <term><varname>wal_sender_timeout</varname> (<type>integer</type>)</term>
+      <term><varname>wal_sender_timeout</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>wal_sender_timeout</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Terminate replication connections that are inactive longer
@@ -2493,10 +2566,11 @@ include 'filename'
     <variablelist>
 
      <varlistentry id="guc-synchronous-standby-names" xreflabel="synchronous_standby_names">
-      <term><varname>synchronous_standby_names</varname> (<type>string</type>)</term>
+      <term><varname>synchronous_standby_names</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>synchronous_standby_names</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies a comma-separated list of standby names that can support
@@ -2544,10 +2618,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-vacuum-defer-cleanup-age" xreflabel="vacuum_defer_cleanup_age">
-      <term><varname>vacuum_defer_cleanup_age</varname> (<type>integer</type>)</term>
+      <term><varname>vacuum_defer_cleanup_age</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>vacuum_defer_cleanup_age</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies the number of transactions by which <command>VACUUM</> and
@@ -2587,10 +2662,11 @@ include 'filename'
     <variablelist>
 
      <varlistentry id="guc-hot-standby" xreflabel="hot_standby">
-      <term><varname>hot_standby</varname> (<type>boolean</type>)</term>
+      <term><varname>hot_standby</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>hot_standby</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies whether or not you can connect and run queries during
@@ -2603,10 +2679,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-max-standby-archive-delay" xreflabel="max_standby_archive_delay">
-      <term><varname>max_standby_archive_delay</varname> (<type>integer</type>)</term>
+      <term><varname>max_standby_archive_delay</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>max_standby_archive_delay</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         When Hot Standby is active, this parameter determines how long the
@@ -2633,10 +2710,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-max-standby-streaming-delay" xreflabel="max_standby_streaming_delay">
-      <term><varname>max_standby_streaming_delay</varname> (<type>integer</type>)</term>
+      <term><varname>max_standby_streaming_delay</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>max_standby_streaming_delay</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         When Hot Standby is active, this parameter determines how long the
@@ -2664,10 +2742,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-wal-receiver-status-interval" xreflabel="wal_receiver_status_interval">
-      <term><varname>wal_receiver_status_interval</varname> (<type>integer</type>)</term>
+      <term><varname>wal_receiver_status_interval</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>wal_receiver_status_interval</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
       <para>
        Specifies the minimum frequency for the WAL receiver
@@ -2690,10 +2769,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-hot-standby-feedback" xreflabel="hot_standby">
-      <term><varname>hot_standby_feedback</varname> (<type>boolean</type>)</term>
+      <term><varname>hot_standby_feedback</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>hot_standby_feedback</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies whether or not a hot standby will send feedback to the primary
@@ -2715,10 +2795,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-wal-receiver-timeout" xreflabel="wal_receiver_timeout">
-      <term><varname>wal_receiver_timeout</varname> (<type>integer</type>)</term>
+      <term><varname>wal_receiver_timeout</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>wal_receiver_timeout</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Terminate replication connections that are inactive longer
@@ -2763,13 +2844,14 @@ include 'filename'
 
      <variablelist>
      <varlistentry id="guc-enable-bitmapscan" xreflabel="enable_bitmapscan">
-      <term><varname>enable_bitmapscan</varname> (<type>boolean</type>)</term>
+      <term><varname>enable_bitmapscan</varname> (<type>boolean</type>)
       <indexterm>
        <primary>bitmap scan</primary>
       </indexterm>
       <indexterm>
        <primary><varname>enable_bitmapscan</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Enables or disables the query planner's use of bitmap-scan plan
@@ -2779,10 +2861,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-enable-hashagg" xreflabel="enable_hashagg">
-      <term><varname>enable_hashagg</varname> (<type>boolean</type>)</term>
+      <term><varname>enable_hashagg</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>enable_hashagg</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Enables or disables the query planner's use of hashed
@@ -2792,10 +2875,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-enable-hashjoin" xreflabel="enable_hashjoin">
-      <term><varname>enable_hashjoin</varname> (<type>boolean</type>)</term>
+      <term><varname>enable_hashjoin</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>enable_hashjoin</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Enables or disables the query planner's use of hash-join plan
@@ -2805,13 +2889,14 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-enable-indexscan" xreflabel="enable_indexscan">
-      <term><varname>enable_indexscan</varname> (<type>boolean</type>)</term>
+      <term><varname>enable_indexscan</varname> (<type>boolean</type>)
       <indexterm>
        <primary>index scan</primary>
       </indexterm>
       <indexterm>
        <primary><varname>enable_indexscan</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Enables or disables the query planner's use of index-scan plan
@@ -2821,13 +2906,14 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-enable-indexonlyscan" xreflabel="enable_indexonlyscan">
-      <term><varname>enable_indexonlyscan</varname> (<type>boolean</type>)</term>
+      <term><varname>enable_indexonlyscan</varname> (<type>boolean</type>)
       <indexterm>
        <primary>index-only scan</primary>
       </indexterm>
       <indexterm>
        <primary><varname>enable_indexonlyscan</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Enables or disables the query planner's use of index-only-scan plan
@@ -2837,10 +2923,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-enable-material" xreflabel="enable_material">
-      <term><varname>enable_material</varname> (<type>boolean</type>)</term>
+      <term><varname>enable_material</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>enable_material</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Enables or disables the query planner's use of materialization.
@@ -2853,10 +2940,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-enable-mergejoin" xreflabel="enable_mergejoin">
-      <term><varname>enable_mergejoin</varname> (<type>boolean</type>)</term>
+      <term><varname>enable_mergejoin</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>enable_mergejoin</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Enables or disables the query planner's use of merge-join plan
@@ -2866,10 +2954,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-enable-nestloop" xreflabel="enable_nestloop">
-      <term><varname>enable_nestloop</varname> (<type>boolean</type>)</term>
+      <term><varname>enable_nestloop</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>enable_nestloop</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Enables or disables the query planner's use of nested-loop join
@@ -2882,13 +2971,14 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-enable-seqscan" xreflabel="enable_seqscan">
-      <term><varname>enable_seqscan</varname> (<type>boolean</type>)</term>
+      <term><varname>enable_seqscan</varname> (<type>boolean</type>)
       <indexterm>
        <primary>sequential scan</primary>
       </indexterm>
       <indexterm>
        <primary><varname>enable_seqscan</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Enables or disables the query planner's use of sequential scan
@@ -2901,10 +2991,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-enable-sort" xreflabel="enable_sort">
-      <term><varname>enable_sort</varname> (<type>boolean</type>)</term>
+      <term><varname>enable_sort</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>enable_sort</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Enables or disables the query planner's use of explicit sort
@@ -2917,10 +3008,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-enable-tidscan" xreflabel="enable_tidscan">
-      <term><varname>enable_tidscan</varname> (<type>boolean</type>)</term>
+      <term><varname>enable_tidscan</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>enable_tidscan</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Enables or disables the query planner's use of <acronym>TID</>
@@ -2959,10 +3051,11 @@ include 'filename'
      <variablelist>
 
      <varlistentry id="guc-seq-page-cost" xreflabel="seq_page_cost">
-      <term><varname>seq_page_cost</varname> (<type>floating point</type>)</term>
+      <term><varname>seq_page_cost</varname> (<type>floating point</type>)
       <indexterm>
        <primary><varname>seq_page_cost</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Sets the planner's estimate of the cost of a disk page fetch
@@ -2975,10 +3068,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-random-page-cost" xreflabel="random_page_cost">
-      <term><varname>random_page_cost</varname> (<type>floating point</type>)</term>
+      <term><varname>random_page_cost</varname> (<type>floating point</type>)
       <indexterm>
        <primary><varname>random_page_cost</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Sets the planner's estimate of the cost of a
@@ -3033,10 +3127,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-cpu-tuple-cost" xreflabel="cpu_tuple_cost">
-      <term><varname>cpu_tuple_cost</varname> (<type>floating point</type>)</term>
+      <term><varname>cpu_tuple_cost</varname> (<type>floating point</type>)
       <indexterm>
        <primary><varname>cpu_tuple_cost</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Sets the planner's estimate of the cost of processing
@@ -3047,10 +3142,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-cpu-index-tuple-cost" xreflabel="cpu_index_tuple_cost">
-      <term><varname>cpu_index_tuple_cost</varname> (<type>floating point</type>)</term>
+      <term><varname>cpu_index_tuple_cost</varname> (<type>floating point</type>)
       <indexterm>
        <primary><varname>cpu_index_tuple_cost</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Sets the planner's estimate of the cost of processing
@@ -3061,10 +3157,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-cpu-operator-cost" xreflabel="cpu_operator_cost">
-      <term><varname>cpu_operator_cost</varname> (<type>floating point</type>)</term>
+      <term><varname>cpu_operator_cost</varname> (<type>floating point</type>)
       <indexterm>
        <primary><varname>cpu_operator_cost</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Sets the planner's estimate of the cost of processing each
@@ -3075,10 +3172,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-effective-cache-size" xreflabel="effective_cache_size">
-      <term><varname>effective_cache_size</varname> (<type>integer</type>)</term>
+      <term><varname>effective_cache_size</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>effective_cache_size</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Sets the planner's assumption about the effective size of the
@@ -3128,7 +3226,7 @@ include 'filename'
      <variablelist>
 
      <varlistentry id="guc-geqo" xreflabel="geqo">
-      <term><varname>geqo</varname> (<type>boolean</type>)</term>
+      <term><varname>geqo</varname> (<type>boolean</type>)
       <indexterm>
        <primary>genetic query optimization</primary>
       </indexterm>
@@ -3139,6 +3237,7 @@ include 'filename'
       <indexterm>
        <primary><varname>geqo</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Enables or disables genetic query optimization.
@@ -3150,10 +3249,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-geqo-threshold" xreflabel="geqo_threshold">
-      <term><varname>geqo_threshold</varname> (<type>integer</type>)</term>
+      <term><varname>geqo_threshold</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>geqo_threshold</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Use genetic query optimization to plan queries with at least
@@ -3170,11 +3270,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-geqo-effort" xreflabel="geqo_effort">
-      <term><varname>geqo_effort</varname>
-      (<type>integer</type>)</term>
+      <term><varname>geqo_effort</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>geqo_effort</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Controls the trade-off between planning time and query plan
@@ -3196,10 +3296,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-geqo-pool-size" xreflabel="geqo_pool_size">
-      <term><varname>geqo_pool_size</varname> (<type>integer</type>)</term>
+      <term><varname>geqo_pool_size</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>geqo_pool_size</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Controls the pool size used by GEQO, that is the
@@ -3213,10 +3314,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-geqo-generations" xreflabel="geqo_generations">
-      <term><varname>geqo_generations</varname> (<type>integer</type>)</term>
+      <term><varname>geqo_generations</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>geqo_generations</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Controls the number of generations used by GEQO, that is
@@ -3230,10 +3332,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-geqo-selection-bias" xreflabel="geqo_selection_bias">
-      <term><varname>geqo_selection_bias</varname> (<type>floating point</type>)</term>
+      <term><varname>geqo_selection_bias</varname> (<type>floating point</type>)
       <indexterm>
        <primary><varname>geqo_selection_bias</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Controls the selection bias used by GEQO. The selection bias
@@ -3244,10 +3347,11 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-geqo-seed" xreflabel="geqo_seed">
-      <term><varname>geqo_seed</varname> (<type>floating point</type>)</term>
+      <term><varname>geqo_seed</varname> (<type>floating point</type>)
       <indexterm>
        <primary><varname>geqo_seed</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Controls the initial value of the random number generator used
@@ -3267,10 +3371,11 @@ include 'filename'
      <variablelist>
 
      <varlistentry id="guc-default-statistics-target" xreflabel="default_statistics_target">
-      <term><varname>default_statistics_target</varname> (<type>integer</type>)</term>
+      <term><varname>default_statistics_target</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>default_statistics_target</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Sets the default statistics target for table columns without
@@ -3285,13 +3390,14 @@ include 'filename'
      </varlistentry>
 
      <varlistentry id="guc-constraint-exclusion" xreflabel="constraint_exclusion">
-      <term><varname>constraint_exclusion</varname> (<type>enum</type>)</term>
+      <term><varname>constraint_exclusion</varname> (<type>enum</type>)
       <indexterm>
        <primary>constraint exclusion</primary>
       </indexterm>
       <indexterm>
        <primary><varname>constraint_exclusion</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Controls the query planner's use of table constraints to
@@ -3341,10 +3447,11 @@ SELECT * FROM parent WHERE key = 2400;
      </varlistentry>
 
      <varlistentry id="guc-cursor-tuple-fraction" xreflabel="cursor_tuple_fraction">
-      <term><varname>cursor_tuple_fraction</varname> (<type>floating point</type>)</term>
+      <term><varname>cursor_tuple_fraction</varname> (<type>floating point</type>)
       <indexterm>
        <primary><varname>cursor_tuple_fraction</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Sets the planner's estimate of the fraction of a cursor's rows that
@@ -3361,10 +3468,11 @@ SELECT * FROM parent WHERE key = 2400;
      </varlistentry>
 
      <varlistentry id="guc-from-collapse-limit" xreflabel="from_collapse_limit">
-      <term><varname>from_collapse_limit</varname> (<type>integer</type>)</term>
+      <term><varname>from_collapse_limit</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>from_collapse_limit</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         The planner will merge sub-queries into upper queries if the
@@ -3383,10 +3491,11 @@ SELECT * FROM parent WHERE key = 2400;
      </varlistentry>
 
      <varlistentry id="guc-join-collapse-limit" xreflabel="join_collapse_limit">
-      <term><varname>join_collapse_limit</varname> (<type>integer</type>)</term>
+      <term><varname>join_collapse_limit</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>join_collapse_limit</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         The planner will rewrite explicit <literal>JOIN</>
@@ -3438,10 +3547,11 @@ SELECT * FROM parent WHERE key = 2400;
      <variablelist>
 
      <varlistentry id="guc-log-destination" xreflabel="log_destination">
-      <term><varname>log_destination</varname> (<type>string</type>)</term>
+      <term><varname>log_destination</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>log_destination</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         <productname>PostgreSQL</productname> supports several methods
@@ -3495,10 +3605,11 @@ local0.*    /var/log/postgresql
      </varlistentry>
 
      <varlistentry id="guc-logging-collector" xreflabel="logging_collector">
-      <term><varname>logging_collector</varname> (<type>boolean</type>)</term>
+      <term><varname>logging_collector</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>logging_collector</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
          This parameter enables the <firstterm>logging collector</>, which
@@ -3541,10 +3652,11 @@ local0.*    /var/log/postgresql
      </varlistentry>
 
      <varlistentry id="guc-log-directory" xreflabel="log_directory">
-      <term><varname>log_directory</varname> (<type>string</type>)</term>
+      <term><varname>log_directory</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>log_directory</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         When <varname>logging_collector</> is enabled,
@@ -3558,10 +3670,11 @@ local0.*    /var/log/postgresql
      </varlistentry>
 
      <varlistentry id="guc-log-filename" xreflabel="log_filename">
-      <term><varname>log_filename</varname> (<type>string</type>)</term>
+      <term><varname>log_filename</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>log_filename</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         When <varname>logging_collector</varname> is enabled,
@@ -3605,10 +3718,11 @@ local0.*    /var/log/postgresql
      </varlistentry>
 
      <varlistentry id="guc-log-file-mode" xreflabel="log_file_mode">
-      <term><varname>log_file_mode</varname> (<type>integer</type>)</term>
+      <term><varname>log_file_mode</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>log_file_mode</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         On Unix systems this parameter sets the permissions for log files
@@ -3638,10 +3752,11 @@ local0.*    /var/log/postgresql
      </varlistentry>
 
      <varlistentry id="guc-log-rotation-age" xreflabel="log_rotation_age">
-      <term><varname>log_rotation_age</varname> (<type>integer</type>)</term>
+      <term><varname>log_rotation_age</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>log_rotation_age</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         When <varname>logging_collector</varname> is enabled,
@@ -3656,10 +3771,11 @@ local0.*    /var/log/postgresql
      </varlistentry>
 
      <varlistentry id="guc-log-rotation-size" xreflabel="log_rotation_size">
-      <term><varname>log_rotation_size</varname> (<type>integer</type>)</term>
+      <term><varname>log_rotation_size</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>log_rotation_size</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         When <varname>logging_collector</varname> is enabled,
@@ -3674,10 +3790,11 @@ local0.*    /var/log/postgresql
      </varlistentry>
 
      <varlistentry id="guc-log-truncate-on-rotation" xreflabel="log_truncate_on_rotation">
-      <term><varname>log_truncate_on_rotation</varname> (<type>boolean</type>)</term>
+      <term><varname>log_truncate_on_rotation</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>log_truncate_on_rotation</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         When <varname>logging_collector</varname> is enabled,
@@ -3716,10 +3833,11 @@ local0.*    /var/log/postgresql
      </varlistentry>
 
      <varlistentry id="guc-syslog-facility" xreflabel="syslog_facility">
-      <term><varname>syslog_facility</varname> (<type>enum</type>)</term>
+      <term><varname>syslog_facility</varname> (<type>enum</type>)
       <indexterm>
        <primary><varname>syslog_facility</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         When logging to <application>syslog</> is enabled, this parameter
@@ -3738,10 +3856,11 @@ local0.*    /var/log/postgresql
      </varlistentry>
 
      <varlistentry id="guc-syslog-ident" xreflabel="syslog_ident">
-      <term><varname>syslog_ident</varname> (<type>string</type>)</term>
+      <term><varname>syslog_ident</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>syslog_ident</> configuration parameter</primary>
       </indexterm>
+      </term>
        <listitem>
         <para>
          When logging to <application>syslog</> is enabled, this parameter
@@ -3756,10 +3875,11 @@ local0.*    /var/log/postgresql
       </varlistentry>
 
      <varlistentry id="guc-event-source" xreflabel="event_source">
-      <term><varname>event_source</varname> (<type>string</type>)</term>
+      <term><varname>event_source</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>event_source</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         When logging to <application>event log</> is enabled, this parameter
@@ -3780,10 +3900,11 @@ local0.*    /var/log/postgresql
      <variablelist>
 
      <varlistentry id="guc-client-min-messages" xreflabel="client_min_messages">
-      <term><varname>client_min_messages</varname> (<type>enum</type>)</term>
+      <term><varname>client_min_messages</varname> (<type>enum</type>)
       <indexterm>
        <primary><varname>client_min_messages</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Controls which message levels are sent to the client.
@@ -3801,10 +3922,11 @@ local0.*    /var/log/postgresql
      </varlistentry>
 
      <varlistentry id="guc-log-min-messages" xreflabel="log_min_messages">
-      <term><varname>log_min_messages</varname> (<type>enum</type>)</term>
+      <term><varname>log_min_messages</varname> (<type>enum</type>)
       <indexterm>
        <primary><varname>log_min_messages</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Controls which message levels are written to the server log.
@@ -3823,10 +3945,11 @@ local0.*    /var/log/postgresql
      </varlistentry>
 
      <varlistentry id="guc-log-min-error-statement" xreflabel="log_min_error_statement">
-      <term><varname>log_min_error_statement</varname> (<type>enum</type>)</term>
+      <term><varname>log_min_error_statement</varname> (<type>enum</type>)
       <indexterm>
        <primary><varname>log_min_error_statement</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Controls which SQL statements that cause an error
@@ -3850,10 +3973,11 @@ local0.*    /var/log/postgresql
      </varlistentry>
 
      <varlistentry id="guc-log-min-duration-statement" xreflabel="log_min_duration_statement">
-      <term><varname>log_min_duration_statement</varname> (<type>integer</type>)</term>
+      <term><varname>log_min_duration_statement</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>log_min_duration_statement</> configuration parameter</primary>
       </indexterm>
+      </term>
        <listitem>
         <para>
          Causes the duration of each completed statement to be logged
@@ -3985,10 +4109,11 @@ local0.*    /var/log/postgresql
      <variablelist>
 
      <varlistentry id="guc-application-name" xreflabel="application_name">
-      <term><varname>application_name</varname> (<type>string</type>)</term>
+      <term><varname>application_name</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>application_name</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         The <varname>application_name</varname> can be any string of less than
@@ -4005,18 +4130,21 @@ local0.*    /var/log/postgresql
      </varlistentry>
 
      <varlistentry>
-      <term><varname>debug_print_parse</varname> (<type>boolean</type>)</term>
-      <term><varname>debug_print_rewritten</varname> (<type>boolean</type>)</term>
-      <term><varname>debug_print_plan</varname> (<type>boolean</type>)</term>
+      <term><varname>debug_print_parse</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>debug_print_parse</> configuration parameter</primary>
       </indexterm>
+      </term>
+      <term><varname>debug_print_rewritten</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>debug_print_rewritten</> configuration parameter</primary>
       </indexterm>
+      </term>
+      <term><varname>debug_print_plan</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>debug_print_plan</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         These parameters enable various debugging output to be emitted.
@@ -4033,10 +4161,11 @@ local0.*    /var/log/postgresql
      </varlistentry>
 
      <varlistentry>
-      <term><varname>debug_pretty_print</varname> (<type>boolean</type>)</term>
+      <term><varname>debug_pretty_print</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>debug_pretty_print</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         When set, <varname>debug_pretty_print</varname> indents the messages
@@ -4050,10 +4179,11 @@ local0.*    /var/log/postgresql
      </varlistentry>
 
      <varlistentry id="guc-log-checkpoints" xreflabel="log_checkpoints">
-      <term><varname>log_checkpoints</varname> (<type>boolean</type>)</term>
+      <term><varname>log_checkpoints</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>log_checkpoints</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Causes checkpoints and restartpoints to be logged in the server log.
@@ -4066,10 +4196,11 @@ local0.*    /var/log/postgresql
      </varlistentry>
 
      <varlistentry id="guc-log-connections" xreflabel="log_connections">
-      <term><varname>log_connections</varname> (<type>boolean</type>)</term>
+      <term><varname>log_connections</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>log_connections</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Causes each attempted connection to the server to be logged,
@@ -4090,10 +4221,11 @@ local0.*    /var/log/postgresql
      </varlistentry>
 
      <varlistentry id="guc-log-disconnections" xreflabel="log_disconnections">
-      <term><varname>log_disconnections</varname> (<type>boolean</type>)</term>
+      <term><varname>log_disconnections</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>log_disconnections</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         This outputs a line in the server log similar to
@@ -4107,10 +4239,11 @@ local0.*    /var/log/postgresql
 
 
      <varlistentry id="guc-log-duration" xreflabel="log_duration">
-      <term><varname>log_duration</varname> (<type>boolean</type>)</term>
+      <term><varname>log_duration</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>log_duration</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Causes the duration of every completed statement to be logged.
@@ -4140,10 +4273,11 @@ local0.*    /var/log/postgresql
      </varlistentry>
 
      <varlistentry id="guc-log-error-verbosity" xreflabel="log_error_verbosity">
-      <term><varname>log_error_verbosity</varname> (<type>enum</type>)</term>
+      <term><varname>log_error_verbosity</varname> (<type>enum</type>)
       <indexterm>
        <primary><varname>log_error_verbosity</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Controls the amount of detail written in the server log for each
@@ -4161,10 +4295,11 @@ local0.*    /var/log/postgresql
      </varlistentry>
 
      <varlistentry id="guc-log-hostname" xreflabel="log_hostname">
-      <term><varname>log_hostname</varname> (<type>boolean</type>)</term>
+      <term><varname>log_hostname</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>log_hostname</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         By default, connection log messages only show the IP address of the
@@ -4178,10 +4313,11 @@ local0.*    /var/log/postgresql
      </varlistentry>
 
      <varlistentry id="guc-log-line-prefix" xreflabel="log_line_prefix">
-      <term><varname>log_line_prefix</varname> (<type>string</type>)</term>
+      <term><varname>log_line_prefix</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>log_line_prefix</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
          This is a <function>printf</>-style string that is output at the
@@ -4336,10 +4472,11 @@ FROM pg_stat_activity;
      </varlistentry>
 
      <varlistentry id="guc-log-lock-waits" xreflabel="log_lock_waits">
-      <term><varname>log_lock_waits</varname> (<type>boolean</type>)</term>
+      <term><varname>log_lock_waits</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>log_lock_waits</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Controls whether a log message is produced when a session waits
@@ -4351,10 +4488,11 @@ FROM pg_stat_activity;
      </varlistentry>
 
      <varlistentry id="guc-log-statement" xreflabel="log_statement">
-      <term><varname>log_statement</varname> (<type>enum</type>)</term>
+      <term><varname>log_statement</varname> (<type>enum</type>)
       <indexterm>
        <primary><varname>log_statement</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Controls which SQL statements are logged. Valid values are
@@ -4395,10 +4533,11 @@ FROM pg_stat_activity;
      </varlistentry>
 
      <varlistentry id="guc-log-temp-files" xreflabel="log_temp_files">
-      <term><varname>log_temp_files</varname> (<type>integer</type>)</term>
+      <term><varname>log_temp_files</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>log_temp_files</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Controls logging of temporary file names and sizes.
@@ -4415,10 +4554,11 @@ FROM pg_stat_activity;
      </varlistentry>
 
      <varlistentry id="guc-log-timezone" xreflabel="log_timezone">
-      <term><varname>log_timezone</varname> (<type>string</type>)</term>
+      <term><varname>log_timezone</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>log_timezone</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Sets the time zone used for timestamps written in the server log.
@@ -4579,10 +4719,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      <variablelist>
 
      <varlistentry id="guc-track-activities" xreflabel="track_activities">
-      <term><varname>track_activities</varname> (<type>boolean</type>)</term>
+      <term><varname>track_activities</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>track_activities</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Enables the collection of information on the currently
@@ -4598,10 +4739,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-track-activity-query-size" xreflabel="track_activity_query_size">
-      <term><varname>track_activity_query_size</varname> (<type>integer</type>)</term>
+      <term><varname>track_activity_query_size</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>track_activity_query_size</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
        Specifies the number of bytes reserved to track the currently
@@ -4614,10 +4756,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-track-counts" xreflabel="track_counts">
-      <term><varname>track_counts</varname> (<type>boolean</type>)</term>
+      <term><varname>track_counts</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>track_counts</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Enables collection of statistics on database activity.
@@ -4629,10 +4772,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-track-io-timing" xreflabel="track_io_timing">
-      <term><varname>track_io_timing</varname> (<type>boolean</type>)</term>
+      <term><varname>track_io_timing</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>track_io_timing</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Enables timing of database I/O calls.  This parameter is off by
@@ -4650,10 +4794,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-track-functions" xreflabel="track_functions">
-      <term><varname>track_functions</varname> (<type>enum</type>)</term>
+      <term><varname>track_functions</varname> (<type>enum</type>)
       <indexterm>
        <primary><varname>track_functions</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Enables tracking of function call counts and time used. Specify
@@ -4674,10 +4819,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-update-process-title" xreflabel="update_process_title">
-      <term><varname>update_process_title</varname> (<type>boolean</type>)</term>
+      <term><varname>update_process_title</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>update_process_title</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Enables updating of the process title every time a new SQL command
@@ -4690,10 +4836,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-stats-temp-directory" xreflabel="stats_temp_directory">
-      <term><varname>stats_temp_directory</varname> (<type>string</type>)</term>
+      <term><varname>stats_temp_directory</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>stats_temp_directory</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Sets the directory to store temporary statistics data in. This can be
@@ -4715,22 +4862,26 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      <variablelist>
 
      <varlistentry>
-      <term><varname>log_statement_stats</varname> (<type>boolean</type>)</term>
-      <term><varname>log_parser_stats</varname> (<type>boolean</type>)</term>
-      <term><varname>log_planner_stats</varname> (<type>boolean</type>)</term>
-      <term><varname>log_executor_stats</varname> (<type>boolean</type>)</term>
+      <term><varname>log_statement_stats</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>log_statement_stats</> configuration parameter</primary>
       </indexterm>
+      </term>
+      <term><varname>log_parser_stats</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>log_parser_stats</> configuration parameter</primary>
       </indexterm>
+      </term>
+      <term><varname>log_planner_stats</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>log_planner_stats</> configuration parameter</primary>
       </indexterm>
+      </term>
+      <term><varname>log_executor_stats</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>log_executor_stats</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         For each query, output performance statistics of the respective
@@ -4767,10 +4918,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
     <variablelist>
 
      <varlistentry id="guc-autovacuum" xreflabel="autovacuum">
-      <term><varname>autovacuum</varname> (<type>boolean</type>)</term>
+      <term><varname>autovacuum</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>autovacuum</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Controls whether the server should run the
@@ -4790,10 +4942,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-log-autovacuum-min-duration" xreflabel="log_autovacuum_min_duration">
-      <term><varname>log_autovacuum_min_duration</varname> (<type>integer</type>)</term>
+      <term><varname>log_autovacuum_min_duration</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>log_autovacuum_min_duration</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Causes each action executed by autovacuum to be logged if it ran for at
@@ -4812,10 +4965,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-autovacuum-max-workers" xreflabel="autovacuum_max_workers">
-      <term><varname>autovacuum_max_workers</varname> (<type>integer</type>)</term>
+      <term><varname>autovacuum_max_workers</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>autovacuum_max_workers</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies the maximum number of autovacuum processes (other than the
@@ -4826,10 +4980,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-autovacuum-naptime" xreflabel="autovacuum_naptime">
-      <term><varname>autovacuum_naptime</varname> (<type>integer</type>)</term>
+      <term><varname>autovacuum_naptime</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>autovacuum_naptime</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies the minimum delay between autovacuum runs on any given
@@ -4844,10 +4999,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-autovacuum-vacuum-threshold" xreflabel="autovacuum_vacuum_threshold">
-      <term><varname>autovacuum_vacuum_threshold</varname> (<type>integer</type>)</term>
+      <term><varname>autovacuum_vacuum_threshold</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>autovacuum_vacuum_threshold</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies the minimum number of updated or deleted tuples needed
@@ -4862,10 +5018,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-autovacuum-analyze-threshold" xreflabel="autovacuum_analyze_threshold">
-      <term><varname>autovacuum_analyze_threshold</varname> (<type>integer</type>)</term>
+      <term><varname>autovacuum_analyze_threshold</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>autovacuum_analyze_threshold</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies the minimum number of inserted, updated or deleted tuples
@@ -4880,10 +5037,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-autovacuum-vacuum-scale-factor" xreflabel="autovacuum_vacuum_scale_factor">
-      <term><varname>autovacuum_vacuum_scale_factor</varname> (<type>floating point</type>)</term>
+      <term><varname>autovacuum_vacuum_scale_factor</varname> (<type>floating point</type>)
       <indexterm>
        <primary><varname>autovacuum_vacuum_scale_factor</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies a fraction of the table size to add to
@@ -4899,10 +5057,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-autovacuum-analyze-scale-factor" xreflabel="autovacuum_analyze_scale_factor">
-      <term><varname>autovacuum_analyze_scale_factor</varname> (<type>floating point</type>)</term>
+      <term><varname>autovacuum_analyze_scale_factor</varname> (<type>floating point</type>)
       <indexterm>
        <primary><varname>autovacuum_analyze_scale_factor</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies a fraction of the table size to add to
@@ -4918,10 +5077,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-autovacuum-freeze-max-age" xreflabel="autovacuum_freeze_max_age">
-      <term><varname>autovacuum_freeze_max_age</varname> (<type>integer</type>)</term>
+      <term><varname>autovacuum_freeze_max_age</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>autovacuum_freeze_max_age</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies the maximum age (in transactions) that a table's
@@ -4945,10 +5105,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-autovacuum-multixact-freeze-max-age" xreflabel="autovacuum_multixact_freeze_max_age">
-      <term><varname>autovacuum_multixact_freeze_max_age</varname> (<type>integer</type>)</term>
+      <term><varname>autovacuum_multixact_freeze_max_age</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>autovacuum_multixact_freeze_max_age</varname> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies the maximum age (in multixacts) that a table's
@@ -4972,10 +5133,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-autovacuum-vacuum-cost-delay" xreflabel="autovacuum_vacuum_cost_delay">
-      <term><varname>autovacuum_vacuum_cost_delay</varname> (<type>integer</type>)</term>
+      <term><varname>autovacuum_vacuum_cost_delay</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>autovacuum_vacuum_cost_delay</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies the cost delay value that will be used in automatic
@@ -4991,10 +5153,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-autovacuum-vacuum-cost-limit" xreflabel="autovacuum_vacuum_cost_limit">
-      <term><varname>autovacuum_vacuum_cost_limit</varname> (<type>integer</type>)</term>
+      <term><varname>autovacuum_vacuum_cost_limit</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>autovacuum_vacuum_cost_limit</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies the cost limit value that will be used in automatic
@@ -5023,11 +5186,12 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      <variablelist>
 
      <varlistentry id="guc-search-path" xreflabel="search_path">
-      <term><varname>search_path</varname> (<type>string</type>)</term>
+      <term><varname>search_path</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>search_path</> configuration parameter</primary>
       </indexterm>
       <indexterm><primary>path</><secondary>for schemas</></>
+      </term>
       <listitem>
        <para>
         This variable specifies the order in which schemas are searched
@@ -5108,11 +5272,12 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-default-tablespace" xreflabel="default_tablespace">
-      <term><varname>default_tablespace</varname> (<type>string</type>)</term>
+      <term><varname>default_tablespace</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>default_tablespace</> configuration parameter</primary>
       </indexterm>
       <indexterm><primary>tablespace</><secondary>default</></>
+      </term>
       <listitem>
        <para>
         This variable specifies the default tablespace in which to create
@@ -5149,11 +5314,12 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-temp-tablespaces" xreflabel="temp_tablespaces">
-      <term><varname>temp_tablespaces</varname> (<type>string</type>)</term>
+      <term><varname>temp_tablespaces</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>temp_tablespaces</> configuration parameter</primary>
       </indexterm>
       <indexterm><primary>tablespace</><secondary>temporary</></>
+      </term>
       <listitem>
        <para>
         This variable specifies tablespaces in which to create temporary
@@ -5197,10 +5363,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-check-function-bodies" xreflabel="check_function_bodies">
-      <term><varname>check_function_bodies</varname> (<type>boolean</type>)</term>
+      <term><varname>check_function_bodies</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>check_function_bodies</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         This parameter is normally on. When set to <literal>off</>, it
@@ -5215,7 +5382,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-default-transaction-isolation" xreflabel="default_transaction_isolation">
-      <term><varname>default_transaction_isolation</varname> (<type>enum</type>)</term>
+      <term><varname>default_transaction_isolation</varname> (<type>enum</type>)
       <indexterm>
        <primary>transaction isolation level</primary>
        <secondary>setting default</secondary>
@@ -5223,6 +5390,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       <indexterm>
        <primary><varname>default_transaction_isolation</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Each SQL transaction has an isolation level, which can be
@@ -5241,7 +5409,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-default-transaction-read-only" xreflabel="default_transaction_read_only">
-      <term><varname>default_transaction_read_only</varname> (<type>boolean</type>)</term>
+      <term><varname>default_transaction_read_only</varname> (<type>boolean</type>)
       <indexterm>
        <primary>read-only transaction</primary>
        <secondary>setting default</secondary>
@@ -5249,6 +5417,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       <indexterm>
        <primary><varname>default_transaction_read_only</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         A read-only SQL transaction cannot alter non-temporary tables.
@@ -5263,7 +5432,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-default-transaction-deferrable" xreflabel="default_transaction_deferrable">
-      <term><varname>default_transaction_deferrable</varname> (<type>boolean</type>)</term>
+      <term><varname>default_transaction_deferrable</varname> (<type>boolean</type>)
       <indexterm>
        <primary>deferrable transaction</primary>
        <secondary>setting default</secondary>
@@ -5271,6 +5440,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       <indexterm>
        <primary><varname>default_transaction_deferrable</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         When running at the <literal>serializable</> isolation level,
@@ -5297,10 +5467,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
 
 
      <varlistentry id="guc-session-replication-role" xreflabel="session_replication_role">
-      <term><varname>session_replication_role</varname> (<type>enum</type>)</term>
+      <term><varname>session_replication_role</varname> (<type>enum</type>)
       <indexterm>
        <primary><varname>session_replication_role</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Controls firing of replication-related triggers and rules for the
@@ -5315,10 +5486,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-statement-timeout" xreflabel="statement_timeout">
-      <term><varname>statement_timeout</varname> (<type>integer</type>)</term>
+      <term><varname>statement_timeout</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>statement_timeout</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Abort any statement that takes more than the specified number of
@@ -5337,10 +5509,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-lock-timeout" xreflabel="lock_timeout">
-      <term><varname>lock_timeout</varname> (<type>integer</type>)</term>
+      <term><varname>lock_timeout</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>lock_timeout</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Abort any statement that waits longer than the specified number of
@@ -5371,10 +5544,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-vacuum-freeze-table-age" xreflabel="vacuum_freeze_table_age">
-      <term><varname>vacuum_freeze_table_age</varname> (<type>integer</type>)</term>
+      <term><varname>vacuum_freeze_table_age</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>vacuum_freeze_table_age</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         <command>VACUUM</> performs a whole-table scan if the table's
@@ -5392,10 +5566,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-vacuum-freeze-min-age" xreflabel="vacuum_freeze_min_age">
-      <term><varname>vacuum_freeze_min_age</varname> (<type>integer</type>)</term>
+      <term><varname>vacuum_freeze_min_age</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>vacuum_freeze_min_age</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies the cutoff age (in transactions) that <command>VACUUM</>
@@ -5413,10 +5588,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-vacuum-multixact-freeze-table-age" xreflabel="vacuum_multixact_freeze_table_age">
-      <term><varname>vacuum_multixact_freeze_table_age</varname> (<type>integer</type>)</term>
+      <term><varname>vacuum_multixact_freeze_table_age</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>vacuum_multixact_freeze_table_age</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         <command>VACUUM</> performs a whole-table scan if the table's
@@ -5433,10 +5609,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-vacuum-multixact-freeze-min-age" xreflabel="vacuum_multixact_freeze_min_age">
-      <term><varname>vacuum_multixact_freeze_min_age</varname> (<type>integer</type>)</term>
+      <term><varname>vacuum_multixact_freeze_min_age</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>vacuum_multixact_freeze_min_age</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Specifies the cutoff age (in multixacts) that <command>VACUUM</>
@@ -5454,10 +5631,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-bytea-output" xreflabel="bytea_output">
-      <term><varname>bytea_output</varname> (<type>enum</type>)</term>
+      <term><varname>bytea_output</varname> (<type>enum</type>)
       <indexterm>
        <primary><varname>bytea_output</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Sets the output format for values of type <type>bytea</type>.
@@ -5471,10 +5649,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-xmlbinary" xreflabel="xmlbinary">
-      <term><varname>xmlbinary</varname> (<type>enum</type>)</term>
+      <term><varname>xmlbinary</varname> (<type>enum</type>)
       <indexterm>
        <primary><varname>xmlbinary</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Sets how binary values are to be encoded in XML.  This applies
@@ -5498,7 +5677,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </varlistentry>
 
      <varlistentry id="guc-xmloption" xreflabel="xmloption">
-      <term><varname>xmloption</varname> (<type>enum</type>)</term>
+      <term><varname>xmloption</varname> (<type>enum</type>)
       <indexterm>
        <primary><varname>xmloption</> configuration parameter</primary>
       </indexterm>
@@ -5508,6 +5687,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       <indexterm>
        <primary>XML option</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Sets whether <literal>DOCUMENT</literal> or
@@ -5537,10 +5717,11 @@ SET XML OPTION { DOCUMENT | CONTENT };
      <variablelist>
 
      <varlistentry id="guc-datestyle" xreflabel="DateStyle">
-      <term><varname>DateStyle</varname> (<type>string</type>)</term>
+      <term><varname>DateStyle</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>DateStyle</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Sets the display format for date and time values, as well as the
@@ -5564,10 +5745,11 @@ SET XML OPTION { DOCUMENT | CONTENT };
      </varlistentry>
 
      <varlistentry id="guc-intervalstyle" xreflabel="IntervalStyle">
-      <term><varname>IntervalStyle</varname> (<type>enum</type>)</term>
+      <term><varname>IntervalStyle</varname> (<type>enum</type>)
       <indexterm>
        <primary><varname>IntervalStyle</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Sets the display format for interval values.
@@ -5594,11 +5776,12 @@ SET XML OPTION { DOCUMENT | CONTENT };
      </varlistentry>
 
      <varlistentry id="guc-timezone" xreflabel="TimeZone">
-      <term><varname>TimeZone</varname> (<type>string</type>)</term>
+      <term><varname>TimeZone</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>TimeZone</> configuration parameter</primary>
       </indexterm>
       <indexterm><primary>time zone</></>
+      </term>
       <listitem>
        <para>
         Sets the time zone for displaying and interpreting time stamps.
@@ -5611,11 +5794,12 @@ SET XML OPTION { DOCUMENT | CONTENT };
      </varlistentry>
 
      <varlistentry id="guc-timezone-abbreviations" xreflabel="timezone_abbreviations">
-      <term><varname>timezone_abbreviations</varname> (<type>string</type>)</term>
+      <term><varname>timezone_abbreviations</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>timezone_abbreviations</> configuration parameter</primary>
       </indexterm>
       <indexterm><primary>time zone names</></>
+      </term>
       <listitem>
        <para>
         Sets the collection of time zone abbreviations that will be accepted
@@ -5629,7 +5813,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
      </varlistentry>
 
      <varlistentry id="guc-extra-float-digits" xreflabel="extra_float_digits">
-      <term><varname>extra_float_digits</varname> (<type>integer</type>)</term>
+      <term><varname>extra_float_digits</varname> (<type>integer</type>)
       <indexterm>
        <primary>significant digits</primary>
       </indexterm>
@@ -5640,6 +5824,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
       <indexterm>
        <primary><varname>extra_float_digits</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         This parameter adjusts the number of digits displayed for
@@ -5656,11 +5841,12 @@ SET XML OPTION { DOCUMENT | CONTENT };
      </varlistentry>
 
      <varlistentry id="guc-client-encoding" xreflabel="client_encoding">
-      <term><varname>client_encoding</varname> (<type>string</type>)</term>
+      <term><varname>client_encoding</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>client_encoding</> configuration parameter</primary>
       </indexterm>
       <indexterm><primary>character set</></>
+      </term>
       <listitem>
        <para>
         Sets the client-side encoding (character set).
@@ -5672,10 +5858,11 @@ SET XML OPTION { DOCUMENT | CONTENT };
      </varlistentry>
 
      <varlistentry id="guc-lc-messages" xreflabel="lc_messages">
-      <term><varname>lc_messages</varname> (<type>string</type>)</term>
+      <term><varname>lc_messages</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>lc_messages</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Sets the language in which messages are displayed.  Acceptable
@@ -5703,10 +5890,11 @@ SET XML OPTION { DOCUMENT | CONTENT };
      </varlistentry>
 
      <varlistentry id="guc-lc-monetary" xreflabel="lc_monetary">
-      <term><varname>lc_monetary</varname> (<type>string</type>)</term>
+      <term><varname>lc_monetary</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>lc_monetary</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Sets the locale to use for formatting monetary amounts, for
@@ -5721,10 +5909,11 @@ SET XML OPTION { DOCUMENT | CONTENT };
      </varlistentry>
 
      <varlistentry id="guc-lc-numeric" xreflabel="lc_numeric">
-      <term><varname>lc_numeric</varname> (<type>string</type>)</term>
+      <term><varname>lc_numeric</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>lc_numeric</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Sets the locale to use for formatting numbers, for example
@@ -5739,10 +5928,11 @@ SET XML OPTION { DOCUMENT | CONTENT };
      </varlistentry>
 
      <varlistentry id="guc-lc-time" xreflabel="lc_time">
-      <term><varname>lc_time</varname> (<type>string</type>)</term>
+      <term><varname>lc_time</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>lc_time</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Sets the locale to use for formatting dates and times, for example
@@ -5757,10 +5947,11 @@ SET XML OPTION { DOCUMENT | CONTENT };
      </varlistentry>
 
      <varlistentry id="guc-default-text-search-config" xreflabel="default_text_search_config">
-      <term><varname>default_text_search_config</varname> (<type>string</type>)</term>
+      <term><varname>default_text_search_config</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>default_text_search_config</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Selects the text search configuration that is used by those variants
@@ -5824,13 +6015,14 @@ SET XML OPTION { DOCUMENT | CONTENT };
 
      <variablelist>
      <varlistentry id="guc-local-preload-libraries" xreflabel="local_preload_libraries">
-      <term><varname>local_preload_libraries</varname> (<type>string</type>)</term>
+      <term><varname>local_preload_libraries</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>local_preload_libraries</> configuration parameter</primary>
       </indexterm>
       <indexterm>
        <primary><filename>$libdir/plugins</></primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         This variable specifies one or more shared libraries that are to be
@@ -5862,10 +6054,11 @@ SET XML OPTION { DOCUMENT | CONTENT };
 
 
      <varlistentry id="guc-session-preload-libraries" xreflabel="session_preload_libraries">
-      <term><varname>session_preload_libraries</varname> (<type>string</type>)</term>
+      <term><varname>session_preload_libraries</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>session_preload_libraries</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         This variable specifies one or more shared libraries that are to be
@@ -5898,10 +6091,11 @@ SET XML OPTION { DOCUMENT | CONTENT };
      </varlistentry>
 
      <varlistentry id="guc-shared-preload-libraries" xreflabel="shared_preload_libraries">
-      <term><varname>shared_preload_libraries</varname> (<type>string</type>)</term>
+      <term><varname>shared_preload_libraries</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>shared_preload_libraries</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         This variable specifies one or more shared libraries to be preloaded at
@@ -5950,11 +6144,12 @@ SET XML OPTION { DOCUMENT | CONTENT };
      <variablelist>
 
      <varlistentry id="guc-dynamic-library-path" xreflabel="dynamic_library_path">
-      <term><varname>dynamic_library_path</varname> (<type>string</type>)</term>
+      <term><varname>dynamic_library_path</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>dynamic_library_path</> configuration parameter</primary>
       </indexterm>
       <indexterm><primary>dynamic loading</></>
+      </term>
       <listitem>
        <para>
         If a dynamically loadable module needs to be opened and the
@@ -6003,10 +6198,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry id="guc-gin-fuzzy-search-limit" xreflabel="gin_fuzzy_search_limit">
-      <term><varname>gin_fuzzy_search_limit</varname> (<type>integer</type>)</term>
+      <term><varname>gin_fuzzy_search_limit</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>gin_fuzzy_search_limit</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Soft upper limit of the size of the set returned by GIN index scans. For more
@@ -6025,7 +6221,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      <variablelist>
 
      <varlistentry id="guc-deadlock-timeout" xreflabel="deadlock_timeout">
-      <term><varname>deadlock_timeout</varname> (<type>integer</type>)</term>
+      <term><varname>deadlock_timeout</varname> (<type>integer</type>)
       <indexterm>
        <primary>deadlock</primary>
        <secondary>timeout during</secondary>
@@ -6037,6 +6233,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       <indexterm>
        <primary><varname>deadlock_timeout</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         This is the amount of time, in milliseconds, to wait on a lock
@@ -6067,10 +6264,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry id="guc-max-locks-per-transaction" xreflabel="max_locks_per_transaction">
-      <term><varname>max_locks_per_transaction</varname> (<type>integer</type>)</term>
+      <term><varname>max_locks_per_transaction</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>max_locks_per_transaction</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         The shared lock table tracks locks on
@@ -6098,10 +6296,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry id="guc-max-pred-locks-per-transaction" xreflabel="max_pred_locks_per_transaction">
-      <term><varname>max_pred_locks_per_transaction</varname> (<type>integer</type>)</term>
+      <term><varname>max_pred_locks_per_transaction</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>max_pred_locks_per_transaction</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         The shared predicate lock table tracks locks on
@@ -6135,10 +6334,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      <variablelist>
 
      <varlistentry id="guc-array-nulls" xreflabel="array_nulls">
-      <term><varname>array_nulls</varname> (<type>boolean</type>)</term>
+      <term><varname>array_nulls</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>array_nulls</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         This controls whether the array input parser recognizes
@@ -6160,11 +6360,12 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry id="guc-backslash-quote" xreflabel="backslash_quote">
-      <term><varname>backslash_quote</varname> (<type>enum</type>)</term>
+      <term><varname>backslash_quote</varname> (<type>enum</type>)
       <indexterm><primary>strings</><secondary>backslash quotes</></>
       <indexterm>
        <primary><varname>backslash_quote</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         This controls whether a quote mark can be represented by
@@ -6196,10 +6397,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry id="guc-default-with-oids" xreflabel="default_with_oids">
-      <term><varname>default_with_oids</varname> (<type>boolean</type>)</term>
+      <term><varname>default_with_oids</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>default_with_oids</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         This controls whether <command>CREATE TABLE</command> and
@@ -6224,11 +6426,12 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry id="guc-escape-string-warning" xreflabel="escape_string_warning">
-      <term><varname>escape_string_warning</varname> (<type>boolean</type>)</term>
+      <term><varname>escape_string_warning</varname> (<type>boolean</type>)
       <indexterm><primary>strings</><secondary>escape warning</></>
       <indexterm>
        <primary><varname>escape_string_warning</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         When on, a warning is issued if a backslash (<literal>\</>)
@@ -6247,10 +6450,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry id="guc-lo-compat-privileges" xreflabel="lo_compat_privileges">
-      <term><varname>lo_compat_privileges</varname> (<type>boolean</type>)</term>
+      <term><varname>lo_compat_privileges</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>lo_compat_privileges</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         In <productname>PostgreSQL</> releases prior to 9.0, large objects
@@ -6272,10 +6476,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
     <varlistentry id="guc-quote-all-identifiers" xreflabel="quote-all-identifiers">
-      <term><varname>quote_all_identifiers</varname> (<type>boolean</type>)</term>
+      <term><varname>quote_all_identifiers</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>quote_all_identifiers</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         When the database generates SQL, force all identifiers to be quoted,
@@ -6289,11 +6494,12 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry id="guc-sql-inheritance" xreflabel="sql_inheritance">
-      <term><varname>sql_inheritance</varname> (<type>boolean</type>)</term>
+      <term><varname>sql_inheritance</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>sql_inheritance</> configuration parameter</primary>
       </indexterm>
       <indexterm><primary>inheritance</></>
+      </term>
       <listitem>
        <para>
         This setting controls whether undecorated table references are
@@ -6318,11 +6524,12 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry id="guc-standard-conforming-strings" xreflabel="standard_conforming_strings">
-      <term><varname>standard_conforming_strings</varname> (<type>boolean</type>)</term>
+      <term><varname>standard_conforming_strings</varname> (<type>boolean</type>)
       <indexterm><primary>strings</><secondary>standard conforming</></>
       <indexterm>
        <primary><varname>standard_conforming_strings</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         This controls whether ordinary string literals
@@ -6342,10 +6549,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry id="guc-synchronize-seqscans" xreflabel="synchronize_seqscans">
-      <term><varname>synchronize_seqscans</varname> (<type>boolean</type>)</term>
+      <term><varname>synchronize_seqscans</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>synchronize_seqscans</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         This allows sequential scans of large tables to synchronize with each
@@ -6371,11 +6579,12 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      <variablelist>
 
      <varlistentry id="guc-transform-null-equals" xreflabel="transform_null_equals">
-      <term><varname>transform_null_equals</varname> (<type>boolean</type>)</term>
+      <term><varname>transform_null_equals</varname> (<type>boolean</type>)
       <indexterm><primary>IS NULL</></>
       <indexterm>
        <primary><varname>transform_null_equals</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         When on, expressions of the form <literal><replaceable>expr</> =
@@ -6427,10 +6636,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
     <variablelist>
 
      <varlistentry id="guc-exit-on-error" xreflabel="exit_on_error">
-      <term><varname>exit_on_error</varname> (<type>boolean</type>)</term>
+      <term><varname>exit_on_error</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>exit_on_error</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         If true, any error will terminate the current session.  By default,
@@ -6441,10 +6651,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry id="guc-restart-after-crash" xreflabel="restart_after_crash">
-      <term><varname>restart_after_crash</varname> (<type>boolean</type>)</term>
+      <term><varname>restart_after_crash</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>restart_after_crash</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         When set to true, which is the default, <productname>PostgreSQL</>
@@ -6478,10 +6689,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
     <variablelist>
 
      <varlistentry id="guc-block-size" xreflabel="block_size">
-      <term><varname>block_size</varname> (<type>integer</type>)</term>
+      <term><varname>block_size</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>block_size</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Reports the size of a disk block.  It is determined by the value
@@ -6495,10 +6707,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry id="guc-data-checksums" xreflabel="data_checksums">
-      <term><varname>data_checksums</varname> (<type>boolean</type>)</term>
+      <term><varname>data_checksums</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>data_checksums</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Reports whether data checksums are enabled for this cluster.
@@ -6508,10 +6721,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry id="guc-integer-datetimes" xreflabel="integer_datetimes">
-      <term><varname>integer_datetimes</varname> (<type>boolean</type>)</term>
+      <term><varname>integer_datetimes</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>integer_datetimes</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Reports whether <productname>PostgreSQL</> was built with
@@ -6524,10 +6738,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry id="guc-lc-collate" xreflabel="lc_collate">
-      <term><varname>lc_collate</varname> (<type>string</type>)</term>
+      <term><varname>lc_collate</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>lc_collate</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Reports the locale in which sorting of textual data is done.
@@ -6538,10 +6753,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry id="guc-lc-ctype" xreflabel="lc_ctype">
-      <term><varname>lc_ctype</varname> (<type>string</type>)</term>
+      <term><varname>lc_ctype</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>lc_ctype</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Reports the locale that determines character classifications.
@@ -6554,10 +6770,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry id="guc-max-function-args" xreflabel="max_function_args">
-      <term><varname>max_function_args</varname> (<type>integer</type>)</term>
+      <term><varname>max_function_args</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>max_function_args</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Reports the maximum number of function arguments. It is determined by
@@ -6568,10 +6785,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry id="guc-max-identifier-length" xreflabel="max_identifier_length">
-      <term><varname>max_identifier_length</varname> (<type>integer</type>)</term>
+      <term><varname>max_identifier_length</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>max_identifier_length</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Reports the maximum identifier length. It is determined as one
@@ -6585,10 +6803,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry id="guc-max-index-keys" xreflabel="max_index_keys">
-      <term><varname>max_index_keys</varname> (<type>integer</type>)</term>
+      <term><varname>max_index_keys</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>max_index_keys</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Reports the maximum number of index keys. It is determined by
@@ -6599,10 +6818,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry id="guc-segment-size" xreflabel="segment_size">
-      <term><varname>segment_size</varname> (<type>integer</type>)</term>
+      <term><varname>segment_size</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>segment_size</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Reports the number of blocks (pages) that can be stored within a file
@@ -6615,11 +6835,12 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry id="guc-server-encoding" xreflabel="server_encoding">
-      <term><varname>server_encoding</varname> (<type>string</type>)</term>
+      <term><varname>server_encoding</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>server_encoding</> configuration parameter</primary>
       </indexterm>
       <indexterm><primary>character set</></>
+      </term>
       <listitem>
        <para>
         Reports the database encoding (character set).
@@ -6631,10 +6852,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry id="guc-server-version" xreflabel="server_version">
-      <term><varname>server_version</varname> (<type>string</type>)</term>
+      <term><varname>server_version</varname> (<type>string</type>)
       <indexterm>
        <primary><varname>server_version</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Reports the version number of the server. It is determined by the
@@ -6644,10 +6866,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry id="guc-server-version-num" xreflabel="server_version_num">
-      <term><varname>server_version_num</varname> (<type>integer</type>)</term>
+      <term><varname>server_version_num</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>server_version_num</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Reports the version number of the server as an integer. It is determined
@@ -6657,10 +6880,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry id="guc-wal-block-size" xreflabel="wal_block_size">
-      <term><varname>wal_block_size</varname> (<type>integer</type>)</term>
+      <term><varname>wal_block_size</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>wal_block_size</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Reports the size of a WAL disk block.  It is determined by the value
@@ -6671,10 +6895,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry id="guc-wal-segment-size" xreflabel="wal_segment_size">
-      <term><varname>wal_segment_size</varname> (<type>integer</type>)</term>
+      <term><varname>wal_segment_size</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>wal_segment_size</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Reports the number of blocks (pages) in a WAL segment file.
@@ -6732,10 +6957,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
 
     <variablelist>
      <varlistentry id="guc-allow-system-table-mods" xreflabel="allow_system_table_mods">
-      <term><varname>allow_system_table_mods</varname> (<type>boolean</type>)</term>
+      <term><varname>allow_system_table_mods</varname> (<type>boolean</type>)
       <indexterm>
         <primary><varname>allow_system_table_mods</varname> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Allows modification of the structure of system tables.
@@ -6746,10 +6972,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry id="guc-debug-assertions" xreflabel="debug_assertions">
-      <term><varname>debug_assertions</varname> (<type>boolean</type>)</term>
+      <term><varname>debug_assertions</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>debug_assertions</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Turns on various assertion checks. This is a debugging aid. If
@@ -6767,10 +6994,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry id="guc-ignore-system-indexes" xreflabel="ignore_system_indexes">
-      <term><varname>ignore_system_indexes</varname> (<type>boolean</type>)</term>
+      <term><varname>ignore_system_indexes</varname> (<type>boolean</type>)
       <indexterm>
         <primary><varname>ignore_system_indexes</varname> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Ignore system indexes when reading system tables (but still
@@ -6782,10 +7010,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry id="guc-post-auth-delay" xreflabel="post_auth_delay">
-      <term><varname>post_auth_delay</varname> (<type>integer</type>)</term>
+      <term><varname>post_auth_delay</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>post_auth_delay</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         If nonzero, a delay of this many seconds occurs when a new
@@ -6798,10 +7027,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry id="guc-pre-auth-delay" xreflabel="pre_auth_delay">
-      <term><varname>pre_auth_delay</varname> (<type>integer</type>)</term>
+      <term><varname>pre_auth_delay</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>pre_auth_delay</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         If nonzero, a delay of this many seconds occurs just after a
@@ -6816,10 +7046,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry id="guc-trace-notify" xreflabel="trace_notify">
-      <term><varname>trace_notify</varname> (<type>boolean</type>)</term>
+      <term><varname>trace_notify</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>trace_notify</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Generates a great amount of debugging output for the
@@ -6833,10 +7064,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry id="guc-trace-recovery-messages" xreflabel="trace_recovery_messages">
-      <term><varname>trace_recovery_messages</varname> (<type>enum</type>)</term>
+      <term><varname>trace_recovery_messages</varname> (<type>enum</type>)
       <indexterm>
        <primary><varname>trace_recovery_messages</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Enables logging of recovery-related debugging output that otherwise
@@ -6858,10 +7090,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry id="guc-trace-sort" xreflabel="trace_sort">
-      <term><varname>trace_sort</varname> (<type>boolean</type>)</term>
+      <term><varname>trace_sort</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>trace_sort</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         If on, emit information about resource usage during sort operations.
@@ -6873,10 +7106,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      </varlistentry>
 
      <varlistentry>
-      <term><varname>trace_locks</varname> (<type>boolean</type>)</term>
+      <term><varname>trace_locks</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>trace_locks</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         If on, emit information about lock usage.  Information dumped
@@ -6913,10 +7147,11 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
      </varlistentry>
 
      <varlistentry>
-      <term><varname>trace_lwlocks</varname> (<type>boolean</type>)</term>
+      <term><varname>trace_lwlocks</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>trace_lwlocks</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         If on, emit information about lightweight lock usage.  Lightweight
@@ -6932,10 +7167,11 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
      </varlistentry>
 
      <varlistentry>
-      <term><varname>trace_userlocks</varname> (<type>boolean</type>)</term>
+      <term><varname>trace_userlocks</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>trace_userlocks</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         If on, emit information about user lock usage.  Output is the same
@@ -6950,10 +7186,11 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
      </varlistentry>
 
      <varlistentry>
-      <term><varname>trace_lock_oidmin</varname> (<type>integer</type>)</term>
+      <term><varname>trace_lock_oidmin</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>trace_lock_oidmin</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         If set, do not trace locks for tables below this OID. (use to avoid
@@ -6968,10 +7205,11 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
      </varlistentry>
 
      <varlistentry>
-      <term><varname>trace_lock_table</varname> (<type>integer</type>)</term>
+      <term><varname>trace_lock_table</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>trace_lock_table</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Unconditionally trace locks on this table (OID).
@@ -6985,10 +7223,11 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
      </varlistentry>
 
      <varlistentry>
-      <term><varname>debug_deadlocks</varname> (<type>boolean</type>)</term>
+      <term><varname>debug_deadlocks</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>debug_deadlocks</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         If set, dumps information about all current locks when a
@@ -7003,10 +7242,11 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
      </varlistentry>
 
      <varlistentry>
-      <term><varname>log_btree_build_stats</varname> (<type>boolean</type>)</term>
+      <term><varname>log_btree_build_stats</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>log_btree_build_stats</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         If set, logs system resource usage statistics (memory and CPU) on
@@ -7021,10 +7261,11 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
      </varlistentry>
 
      <varlistentry id="guc-wal-debug" xreflabel="wal_debug">
-      <term><varname>wal_debug</varname> (<type>boolean</type>)</term>
+      <term><varname>wal_debug</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>wal_debug</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         If on, emit WAL-related debugging output. This parameter is
@@ -7036,10 +7277,11 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
      </varlistentry>
 
     <varlistentry id="guc-ignore-checksum-failure" xreflabel="ignore_checksum_failure">
-      <term><varname>ignore_checksum_failure</varname> (<type>boolean</type>)</term>
+      <term><varname>ignore_checksum_failure</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>ignore_checksum_failure</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Only has effect if <xref linkend="app-initdb-data-checksums"> are enabled.
@@ -7060,10 +7302,11 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
      </varlistentry>
 
     <varlistentry id="guc-zero-damaged-pages" xreflabel="zero_damaged_pages">
-      <term><varname>zero_damaged_pages</varname> (<type>boolean</type>)</term>
+      <term><varname>zero_damaged_pages</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>zero_damaged_pages</> configuration parameter</primary>
       </indexterm>
+      </term>
       <listitem>
        <para>
         Detection of a damaged page header normally causes

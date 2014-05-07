@@ -2731,11 +2731,13 @@ bar
 
     <variablelist>
       <varlistentry>
-      <indexterm>
-       <primary>autocommit</primary>
-       <secondary>psql</secondary>
-      </indexterm>
-        <term><varname>AUTOCOMMIT</varname></term>
+      <term>
+       <varname>AUTOCOMMIT</varname>
+       <indexterm>
+        <primary>autocommit</primary>
+        <secondary>psql</secondary>
+       </indexterm>
+      </term>
         <listitem>
         <para>
         When <literal>on</> (the default), each SQL command is automatically
@@ -2971,11 +2973,13 @@ bar
       </varlistentry>
 
       <varlistentry>
-      <indexterm>
-       <primary>rollback</primary>
-       <secondary>psql</secondary>
-      </indexterm>
-        <term><varname>ON_ERROR_ROLLBACK</varname></term>
+      <term>
+       <varname>ON_ERROR_ROLLBACK</varname>
+       <indexterm>
+        <primary>rollback</primary>
+        <secondary>psql</secondary>
+       </indexterm>
+      </term>
         <listitem>
         <para>
         When <literal>on</>, if a statement in a transaction block
