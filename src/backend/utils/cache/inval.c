@@ -103,6 +103,7 @@
 #include "storage/smgr.h"
 #include "utils/catcache.h"
 #include "utils/inval.h"
+#include "utils/memdebug.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/relmapper.h"
@@ -332,6 +333,17 @@ AddCatcacheInvalidationMessage(InvalidationListHeader *hdr,
 	msg.cc.id = (int8) id;
 	msg.cc.dbId = dbId;
 	msg.cc.hashValue = hashValue;
+	/*
+	 * Define padding bytes in SharedInvalidationMessage structs to be
+	 * defined. Otherwise the sinvaladt.c ringbuffer, which is accessed by
+	 * multiple processes, will cause spurious valgrind warnings about
+	 * undefined memory being used. That's because valgrind remembers the
+	 * undefined bytes from the last local process's store, not realizing that
+	 * another process has written since, filling the previously uninitialized
+	 * bytes
+	 */
+	VALGRIND_MAKE_MEM_DEFINED(&msg, sizeof(msg));
+
 	AddInvalidationMessage(&hdr->cclist, &msg);
 }
 
@@ -347,6 +359,9 @@ AddCatalogInvalidationMessage(InvalidationListHeader *hdr,
 	msg.cat.id = SHAREDINVALCATALOG_ID;
 	msg.cat.dbId = dbId;
 	msg.cat.catId = catId;
+	/* check AddCatcacheInvalidationMessage() for an explanation */
+	VALGRIND_MAKE_MEM_DEFINED(&msg, sizeof(msg));
+
 	AddInvalidationMessage(&hdr->cclist, &msg);
 }
 
@@ -370,6 +385,9 @@ AddRelcacheInvalidationMessage(InvalidationListHeader *hdr,
 	msg.rc.id = SHAREDINVALRELCACHE_ID;
 	msg.rc.dbId = dbId;
 	msg.rc.relId = relId;
+	/* check AddCatcacheInvalidationMessage() for an explanation */
+	VALGRIND_MAKE_MEM_DEFINED(&msg, sizeof(msg));
+
 	AddInvalidationMessage(&hdr->rclist, &msg);
 }
 
@@ -393,6 +411,9 @@ AddSnapshotInvalidationMessage(InvalidationListHeader *hdr,
 	msg.sn.id = SHAREDINVALSNAPSHOT_ID;
 	msg.sn.dbId = dbId;
 	msg.sn.relId = relId;
+	/* check AddCatcacheInvalidationMessage() for an explanation */
+	VALGRIND_MAKE_MEM_DEFINED(&msg, sizeof(msg));
+
 	AddInvalidationMessage(&hdr->rclist, &msg);
 }
 
@@ -1242,6 +1263,9 @@ CacheInvalidateSmgr(RelFileNodeBackend rnode)
 	msg.sm.backend_hi = rnode.backend >> 16;
 	msg.sm.backend_lo = rnode.backend & 0xffff;
 	msg.sm.rnode = rnode.node;
+	/* check AddCatcacheInvalidationMessage() for an explanation */
+	VALGRIND_MAKE_MEM_DEFINED(&msg, sizeof(msg));
+
 	SendSharedInvalidMessages(&msg, 1);
 }
 
@@ -1267,6 +1291,9 @@ CacheInvalidateRelmap(Oid databaseId)
 
 	msg.rm.id = SHAREDINVALRELMAP_ID;
 	msg.rm.dbId = databaseId;
+	/* check AddCatcacheInvalidationMessage() for an explanation */
+	VALGRIND_MAKE_MEM_DEFINED(&msg, sizeof(msg));
+
 	SendSharedInvalidMessages(&msg, 1);
 }
 
