@@ -166,10 +166,16 @@ typedef struct BackgroundWorker
   </para>
 
   <para>
-   Background workers are expected to be continuously running; if they exit
-   cleanly, <command>postgres</> will restart them immediately.  Consider doing
-   interruptible sleep when they have nothing to do; this can be achieved by
-   calling <function>WaitLatch()</function>.  Make sure the
+   If <structfield>bgw_restart_time</structfield> for a background worker is
+   configured as <literal>BGW_NEVER_RESTART</>, or if it exits with an exit
+   code of 0 or is terminated by <function>TerminateBackgroundWorker</>,
+   it will be automatically unregistered by the postmaster on exit.
+   Otherwise, it will be restarted after the time period configured via
+   <structfield>bgw_restart_time</>, or immediately if the postmaster
+   reinitializes the cluster due to a backend failure.  Backends which need
+   to suspend execution only temporarily should use an interruptible sleep
+   rather than exiting; this can be achieved by calling
+   <function>WaitLatch()</function>. Make sure the
    <literal>WL_POSTMASTER_DEATH</> flag is set when calling that function, and
    verify the return code for a prompt exit in the emergency case that
    <command>postgres</> itself has terminated.

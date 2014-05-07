@@ -16,10 +16,10 @@
  * that the failure can only be transient (fork failure due to high load,
  * memory pressure, too many processes, etc); more permanent problems, like
  * failure to connect to a database, are detected later in the worker and dealt
- * with just by having the worker exit normally.  A worker which exits with a
- * return code of 0 will be immediately restarted by the postmaster.  A worker
- * which exits with a return code of 1 will be restarted after the configured
- * restart interval, or never if that interval is set to BGW_NEVER_RESTART.
+ * with just by having the worker exit normally. A worker which exits with
+ * a return code of 0 will never be restarted and will be removed from worker
+ * list. A worker which exits with a return code of 1 will be restarted after
+ * the configured restart interval (unless that interval is BGW_NEVER_RESTART).
  * The TerminateBackgroundWorker() function can be used to terminate a
  * dynamically registered background worker; the worker will be sent a SIGTERM
  * and will not be restarted after it exits.  Whenever the postmaster knows

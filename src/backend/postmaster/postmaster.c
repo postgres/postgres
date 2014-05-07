@@ -2845,11 +2845,17 @@ CleanupBackgroundWorker(int pid,
 		snprintf(namebuf, MAXPGPATH, "%s: %s", _("worker process"),
 				 rw->rw_worker.bgw_name);
 
-		/* Delay restarting any bgworker that exits with a nonzero status. */
 		if (!EXIT_STATUS_0(exitstatus))
+		{
+			/* Record timestamp, so we know when to restart the worker. */
 			rw->rw_crashed_at = GetCurrentTimestamp();
+		}
 		else
+		{
+			/* Zero exit status means terminate */
 			rw->rw_crashed_at = 0;
+			rw->rw_terminate = true;
+		}
 
 		/*
 		 * Additionally, for shared-memory-connected workers, just like a

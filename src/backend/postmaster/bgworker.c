@@ -884,8 +884,8 @@ RegisterDynamicBackgroundWorker(BackgroundWorker *worker,
  * running but is no longer.
  *
  * In the latter case, the worker may be stopped temporarily (if it is
- * configured for automatic restart, or if it exited with code 0) or gone
- * for good (if it is configured not to restart and exited with code 1).
+ * configured for automatic restart and exited non-zero) or gone for
+ * good (if it exited with code 0 or if it is configured not to restart).
  */
 BgwHandleStatus
 GetBackgroundWorkerPid(BackgroundWorkerHandle *handle, pid_t *pidp)
