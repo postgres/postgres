@@ -20,9 +20,11 @@
 #include "postmaster/bgworker_internals.h"
 #include "postmaster/postmaster.h"
 #include "storage/barrier.h"
+#include "storage/dsm.h"
 #include "storage/ipc.h"
 #include "storage/latch.h"
 #include "storage/lwlock.h"
+#include "storage/pg_shmem.h"
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "storage/procsignal.h"
@@ -400,12 +402,16 @@ BackgroundWorkerStopNotifications(pid_t pid)
 BackgroundWorker *
 BackgroundWorkerEntry(int slotno)
 {
+	static BackgroundWorker myEntry;
 	BackgroundWorkerSlot *slot;
 
 	Assert(slotno < BackgroundWorkerData->total_slots);
 	slot = &BackgroundWorkerData->slot[slotno];
 	Assert(slot->in_use);
-	return &slot->worker;		/* can't become free while we're still here */
+
+	/* must copy this in case we don't intend to retain shmem access */
+	memcpy(&myEntry, &slot->worker, sizeof myEntry);
+	return &myEntry;
 }
 #endif
 
@@ -542,6 +548,20 @@ StartBackgroundWorker(void)
 	snprintf(buf, MAXPGPATH, "bgworker: %s", worker->bgw_name);
 	init_ps_display(buf, "", "", "");
 
+	/*
+	 * If we're not supposed to have shared memory access, then detach from
+	 * shared memory.  If we didn't request shared memory access, the
+	 * postmaster won't force a cluster-wide restart if we exit unexpectedly,
+	 * so we'd better make sure that we don't mess anything up that would
+	 * require that sort of cleanup.
+	 */
+	if ((worker->bgw_flags & BGWORKER_SHMEM_ACCESS) == 0)
+	{
+		on_exit_reset();
+		dsm_detach_all();
+		PGSharedMemoryDetach();
+	}
+
 	SetProcessingMode(InitProcessing);
 
 	/* Apply PostAuthDelay */
@@ -616,19 +636,29 @@ StartBackgroundWorker(void)
 	/* We can now handle ereport(ERROR) */
 	PG_exception_stack = &local_sigjmp_buf;
 
-	/* Early initialization */
-	BaseInit();
-
 	/*
-	 * If necessary, create a per-backend PGPROC struct in shared memory,
-	 * except in the EXEC_BACKEND case where this was done in
-	 * SubPostmasterMain. We must do this before we can use LWLocks (and in
-	 * the EXEC_BACKEND case we already had to do some stuff with LWLocks).
+	 * If the background worker request shared memory access, set that up now;
+	 * else, detach all shared memory segments.
 	 */
-#ifndef EXEC_BACKEND
 	if (worker->bgw_flags & BGWORKER_SHMEM_ACCESS)
+	{
+		/*
+		 * Early initialization.  Some of this could be useful even for
+		 * background workers that aren't using shared memory, but they can
+		 * call the individual startup routines for those subsystems if needed.
+		 */
+		BaseInit();
+
+		/*
+		 * Create a per-backend PGPROC struct in shared memory, except in the
+		 * EXEC_BACKEND case where this was done in SubPostmasterMain. We must
+		 * do this before we can use LWLocks (and in the EXEC_BACKEND case we
+		 * already had to do some stuff with LWLocks).
+		 */
+#ifndef EXEC_BACKEND
 		InitProcess();
 #endif
+	}
 
 	/*
 	 * If bgw_main is set, we use that value as the initial entrypoint.
