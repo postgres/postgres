@@ -473,3 +473,14 @@ UPDATE cursor SET a = 2;
 FETCH ALL FROM c1;
 COMMIT;
 DROP TABLE cursor;
+
+-- Check rewinding a cursor containing a stable function in LIMIT,
+-- per bug report in 8336843.9833.1399385291498.JavaMail.root@quick
+begin;
+create function nochange(int) returns int
+  as 'select $1 limit 1' language sql stable;
+declare c cursor for select * from int8_tbl limit nochange(3);
+fetch all from c;
+move backward all in c;
+fetch all from c;
+rollback;
