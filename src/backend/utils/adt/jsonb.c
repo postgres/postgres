@@ -33,7 +33,6 @@ static void jsonb_in_array_end(void *pstate);
 static void jsonb_in_object_field_start(void *pstate, char *fname, bool isnull);
 static void jsonb_put_escaped_value(StringInfo out, JsonbValue *scalarVal);
 static void jsonb_in_scalar(void *pstate, char *token, JsonTokenType tokentype);
-char	   *JsonbToCString(StringInfo out, char *in, int estimated_len);
 
 /*
  * jsonb type input function
@@ -65,7 +64,7 @@ jsonb_recv(PG_FUNCTION_ARGS)
 	if (version == 1)
 		str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
 	else
-		elog(ERROR, "Unsupported jsonb version number %d", version);
+		elog(ERROR, "unsupported jsonb version number %d", version);
 
 	return jsonb_from_cstring(str, nbytes);
 }
@@ -79,7 +78,7 @@ jsonb_out(PG_FUNCTION_ARGS)
 	Jsonb	   *jb = PG_GETARG_JSONB(0);
 	char	   *out;
 
-	out = JsonbToCString(NULL, VARDATA(jb), VARSIZE(jb));
+	out = JsonbToCString(NULL, &jb->root, VARSIZE(jb));
 
 	PG_RETURN_CSTRING(out);
 }
@@ -97,7 +96,7 @@ jsonb_send(PG_FUNCTION_ARGS)
 	StringInfo	jtext = makeStringInfo();
 	int			version = 1;
 
-	(void) JsonbToCString(jtext, VARDATA(jb), VARSIZE(jb));
+	(void) JsonbToCString(jtext, &jb->root, VARSIZE(jb));
 
 	pq_begintypsend(&buf);
 	pq_sendint(&buf, version, 1);
@@ -130,7 +129,7 @@ jsonb_typeof(PG_FUNCTION_ARGS)
 	{
 		Assert(JB_ROOT_IS_SCALAR(in));
 
-		it = JsonbIteratorInit(VARDATA_ANY(in));
+		it = JsonbIteratorInit(&in->root);
 
 		/*
 		 * A root scalar is stored as an array of one element, so we get the
@@ -249,7 +248,6 @@ jsonb_in_object_field_start(void *pstate, char *fname, bool isnull)
 	v.type = jbvString;
 	v.val.string.len = checkStringLen(strlen(fname));
 	v.val.string.val = pnstrdup(fname, v.val.string.len);
-	v.estSize = sizeof(JEntry) + v.val.string.len;
 
 	_state->res = pushJsonbValue(&_state->parseState, WJB_KEY, &v);
 }
@@ -290,8 +288,6 @@ jsonb_in_scalar(void *pstate, char *token, JsonTokenType tokentype)
 	JsonbInState *_state = (JsonbInState *) pstate;
 	JsonbValue	v;
 
-	v.estSize = sizeof(JEntry);
-
 	switch (tokentype)
 	{
 
@@ -300,7 +296,6 @@ jsonb_in_scalar(void *pstate, char *token, JsonTokenType tokentype)
 			v.type = jbvString;
 			v.val.string.len = checkStringLen(strlen(token));
 			v.val.string.val = pnstrdup(token, v.val.string.len);
-			v.estSize += v.val.string.len;
 			break;
 		case JSON_TOKEN_NUMBER:
 
@@ -312,7 +307,6 @@ jsonb_in_scalar(void *pstate, char *token, JsonTokenType tokentype)
 			v.type = jbvNumeric;
 			v.val.numeric = DatumGetNumeric(DirectFunctionCall3(numeric_in, CStringGetDatum(token), 0, -1));
 
-			v.estSize += VARSIZE_ANY(v.val.numeric) +sizeof(JEntry) /* alignment */ ;
 			break;
 		case JSON_TOKEN_TRUE:
 			v.type = jbvBool;
@@ -374,7 +368,7 @@ jsonb_in_scalar(void *pstate, char *token, JsonTokenType tokentype)
  * if they are converting it to a text* object.
  */
 char *
-JsonbToCString(StringInfo out, JsonbSuperHeader in, int estimated_len)
+JsonbToCString(StringInfo out, JsonbContainer *in, int estimated_len)
 {
 	bool		first = true;
 	JsonbIterator *it;

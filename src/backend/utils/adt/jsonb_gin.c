@@ -80,7 +80,7 @@ gin_extract_jsonb(PG_FUNCTION_ARGS)
 
 	entries = (Datum *) palloc(sizeof(Datum) * total);
 
-	it = JsonbIteratorInit(VARDATA(jb));
+	it = JsonbIteratorInit(&jb->root);
 
 	while ((r = JsonbIteratorNext(&it, &v, false)) != WJB_DONE)
 	{
@@ -487,7 +487,7 @@ gin_extract_jsonb_hash(PG_FUNCTION_ARGS)
 
 	entries = (Datum *) palloc(sizeof(Datum) * total);
 
-	it = JsonbIteratorInit(VARDATA(jb));
+	it = JsonbIteratorInit(&jb->root);
 
 	tail.parent = NULL;
 	tail.hash = 0;
