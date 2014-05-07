@@ -1114,7 +1114,7 @@ arrayToJsonbSortedArray(ArrayType *array)
 }
 
 /*
- * Hash a JsonbValue scalar value, mixing in the hash value with an existing
+ * Hash a JsonbValue scalar value, mixing the hash value into an existing
  * hash provided by the caller.
  *
  * Some callers may wish to independently XOR in JB_FOBJECT and JB_FARRAY
@@ -1123,7 +1123,31 @@ arrayToJsonbSortedArray(ArrayType *array)
 void
 JsonbHashScalarValue(const JsonbValue *scalarVal, uint32 *hash)
 {
-	int			tmp;
+	uint32		tmp;
+
+	/* Compute hash value for scalarVal */
+	switch (scalarVal->type)
+	{
+		case jbvNull:
+			tmp = 0x01;
+			break;
+		case jbvString:
+			tmp = DatumGetUInt32(hash_any((const unsigned char *) scalarVal->val.string.val,
+										  scalarVal->val.string.len));
+			break;
+		case jbvNumeric:
+			/* Must hash equal numerics to equal hash codes */
+			tmp = DatumGetUInt32(DirectFunctionCall1(hash_numeric,
+								   NumericGetDatum(scalarVal->val.numeric)));
+			break;
+		case jbvBool:
+			tmp = scalarVal->val.boolean ? 0x02 : 0x04;
+			break;
+		default:
+			elog(ERROR, "invalid jsonb scalar type");
+			tmp = 0;			/* keep compiler quiet */
+			break;
+	}
 
 	/*
 	 * Combine hash values of successive keys, values and elements by rotating
@@ -1131,28 +1155,7 @@ JsonbHashScalarValue(const JsonbValue *scalarVal, uint32 *hash)
 	 * key/value/element's hash value.
 	 */
 	*hash = (*hash << 1) | (*hash >> 31);
-	switch (scalarVal->type)
-	{
-		case jbvNull:
-			*hash ^= 0x01;
-			return;
-		case jbvString:
-			tmp = hash_any((unsigned char *) scalarVal->val.string.val,
-						   scalarVal->val.string.len);
-			*hash ^= tmp;
-			return;
-		case jbvNumeric:
-			/* Must be unaffected by trailing zeroes */
-			tmp = DatumGetInt32(DirectFunctionCall1(hash_numeric,
-								   NumericGetDatum(scalarVal->val.numeric)));
-			*hash ^= tmp;
-			return;
-		case jbvBool:
-			*hash ^= scalarVal->val.boolean ? 0x02 : 0x04;
-			return;
-		default:
-			elog(ERROR, "invalid jsonb scalar type");
-	}
+	*hash ^= tmp;
 }
 
 /*
