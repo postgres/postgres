@@ -13,6 +13,7 @@
 /strlcpy.c
 /thread.c
 /win32error.c
+/win32setlocale.c
 /pgsleep.c
 /md5.c
 /ip.c
