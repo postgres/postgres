@@ -351,6 +351,7 @@ pqCheckOutBufferSpace(size_t bytes_needed, PGconn *conn)
 	int			newsize = conn->outBufSize;
 	char	   *newbuf;
 
+	/* Quick exit if we have enough space */
 	if (bytes_needed <= (size_t) newsize)
 		return 0;
 
@@ -414,6 +415,37 @@ pqCheckInBufferSpace(size_t bytes_needed, PGconn *conn)
 	int			newsize = conn->inBufSize;
 	char	   *newbuf;
 
+	/* Quick exit if we have enough space */
+	if (bytes_needed <= (size_t) newsize)
+		return 0;
+
+	/*
+	 * Before concluding that we need to enlarge the buffer, left-justify
+	 * whatever is in it and recheck.  The caller's value of bytes_needed
+	 * includes any data to the left of inStart, but we can delete that in
+	 * preference to enlarging the buffer.  It's slightly ugly to have this
+	 * function do this, but it's better than making callers worry about it.
+	 */
+	bytes_needed -= conn->inStart;
+
+	if (conn->inStart < conn->inEnd)
+	{
+		if (conn->inStart > 0)
+		{
+			memmove(conn->inBuffer, conn->inBuffer + conn->inStart,
+					conn->inEnd - conn->inStart);
+			conn->inEnd -= conn->inStart;
+			conn->inCursor -= conn->inStart;
+			conn->inStart = 0;
+		}
+	}
+	else
+	{
+		/* buffer is logically empty, reset it */
+		conn->inStart = conn->inCursor = conn->inEnd = 0;
+	}
+
+	/* Recheck whether we have enough space */
 	if (bytes_needed <= (size_t) newsize)
 		return 0;
 
