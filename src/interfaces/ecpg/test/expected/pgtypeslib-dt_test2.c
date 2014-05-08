@@ -61,7 +61,7 @@ static char *times[] = { "0:04",
 				  "1:59 PDT",
 				  "13:24:40 -8:00",
 				  "13:24:40.495+3",
-				  "13:24:40.123456789+3",
+				  "13:24:40.123456123+3",
 				  NULL };
 
 char *intervals[] = { "1 minute",
@@ -145,7 +145,8 @@ main(void)
 				sprintf(t, "%s %s", dates[i], times[j]);
 				ts1 = PGTYPEStimestamp_from_asc(t, NULL);
 				text = PGTYPEStimestamp_to_asc(ts1);
-				if (i != 19 || j != 3) /* timestamp as integer or double differ for this case */
+				/* skip outputs sensitive to USE_INTEGER_DATETIMES */
+				if (i != 19 || (j != 3 && j != 4))
 					printf("TS[%d,%d]: %s\n",
 						i, j, errno ? "-" : text);
 				free(text);
