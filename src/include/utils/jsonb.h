@@ -29,24 +29,40 @@ typedef enum
 	WJB_END_OBJECT
 } JsonbIteratorToken;
 
-/*
- * When using a GIN index for jsonb, we choose to index both keys and values.
- * The storage format is text, with K, or V prepended to the string to indicate
- * key/element or value/element.
- *
- * Jsonb Keys and string array elements are treated equivalently when
- * serialized to text index storage.  One day we may wish to create an opclass
- * that only indexes values, but for now keys and values are stored in GIN
- * indexes in a way that doesn't really consider their relationship to each
- * other.
- */
-#define JKEYELEM	'K'
-#define JVAL		'V'
-
+/* Strategy numbers for GIN index opclasses */
 #define JsonbContainsStrategyNumber		7
 #define JsonbExistsStrategyNumber		9
 #define JsonbExistsAnyStrategyNumber	10
 #define JsonbExistsAllStrategyNumber	11
+
+/*
+ * In the standard jsonb_ops GIN opclass for jsonb, we choose to index both
+ * keys and values.  The storage format is text.  The first byte of the text
+ * string distinguishes whether this is a key (always a string), null value,
+ * boolean value, numeric value, or string value.  However, array elements
+ * that are strings are marked as though they were keys; this imprecision
+ * supports the definition of the "exists" operator, which treats array
+ * elements like keys.  The remainder of the text string is empty for a null
+ * value, "t" or "f" for a boolean value, a normalized print representation of
+ * a numeric value, or the text of a string value.  However, if the length of
+ * this text representation would exceed JGIN_MAXLENGTH bytes, we instead hash
+ * the text representation and store an 8-hex-digit representation of the
+ * uint32 hash value, marking the prefix byte with an additional bit to
+ * distinguish that this has happened.  Hashing long strings saves space and
+ * ensures that we won't overrun the maximum entry length for a GIN index.
+ * (But JGIN_MAXLENGTH is quite a bit shorter than GIN's limit.  It's chosen
+ * to ensure that the on-disk text datum will have a short varlena header.)
+ * Note that when any hashed item appears in a query, we must recheck index
+ * matches against the heap tuple; currently, this costs nothing because we
+ * must always recheck for other reasons.
+ */
+#define JGINFLAG_KEY	0x01	/* key (or string array element) */
+#define JGINFLAG_NULL	0x02	/* null value */
+#define JGINFLAG_BOOL	0x03	/* boolean value */
+#define JGINFLAG_NUM	0x04	/* numeric value */
+#define JGINFLAG_STR	0x05	/* string value (if not an array element) */
+#define JGINFLAG_HASHED 0x10	/* OR'd into flag if value was hashed */
+#define JGIN_MAXLENGTH	125		/* max length of text part before hashing */
 
 /* Convenience macros */
 #define DatumGetJsonb(d)	((Jsonb *) PG_DETOAST_DATUM(d))
@@ -332,12 +348,12 @@ extern Datum gin_consistent_jsonb_hash(PG_FUNCTION_ARGS);
 extern Datum gin_triconsistent_jsonb_hash(PG_FUNCTION_ARGS);
 
 /* Support functions */
-extern int compareJsonbContainers(JsonbContainer *a, JsonbContainer *b);
+extern int	compareJsonbContainers(JsonbContainer *a, JsonbContainer *b);
 extern JsonbValue *findJsonbValueFromContainer(JsonbContainer *sheader,
-							  uint32 flags,
-							  JsonbValue *key);
+							uint32 flags,
+							JsonbValue *key);
 extern JsonbValue *getIthJsonbValueFromContainer(JsonbContainer *sheader,
-								uint32 i);
+							  uint32 i);
 extern JsonbValue *pushJsonbValue(JsonbParseState **pstate,
 			   JsonbIteratorToken seq, JsonbValue *scalarVal);
 extern JsonbIterator *JsonbIteratorInit(JsonbContainer *container);

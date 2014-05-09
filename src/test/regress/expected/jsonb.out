@@ -1483,6 +1483,12 @@ SELECT count(*) FROM testjsonb WHERE j ? 'public';
    194
 (1 row)
 
+SELECT count(*) FROM testjsonb WHERE j ? 'bar';
+ count 
+-------
+     0
+(1 row)
+
 SELECT count(*) FROM testjsonb WHERE j ?| ARRAY['public','disabled'];
  count 
 -------
@@ -1543,13 +1549,19 @@ SELECT count(*) FROM testjsonb WHERE j @> '{"array":["bar"]}';
 SELECT count(*) FROM testjsonb WHERE j @> '{}';
  count 
 -------
-  1009
+  1012
 (1 row)
 
 SELECT count(*) FROM testjsonb WHERE j ? 'public';
  count 
 -------
    194
+(1 row)
+
+SELECT count(*) FROM testjsonb WHERE j ? 'bar';
+ count 
+-------
+     0
 (1 row)
 
 SELECT count(*) FROM testjsonb WHERE j ?| ARRAY['public','disabled'];
@@ -1591,7 +1603,7 @@ RESET enable_seqscan;
 SELECT count(*) FROM (SELECT (jsonb_each(j)).key FROM testjsonb) AS wow;
  count 
 -------
-  4788
+  4791
 (1 row)
 
 SELECT key, count(*) FROM (SELECT (jsonb_each(j)).key FROM testjsonb) AS wow GROUP BY key ORDER BY count DESC, key;
@@ -1621,20 +1633,22 @@ SELECT key, count(*) FROM (SELECT (jsonb_each(j)).key FROM testjsonb) AS wow GRO
  abstract  |   161
  array     |     5
  age       |     2
-(24 rows)
+ foo       |     2
+ fool      |     1
+(26 rows)
 
 -- sort/hash
 SELECT count(distinct j) FROM testjsonb;
  count 
 -------
-   891
+   894
 (1 row)
 
 SET enable_hashagg = off;
 SELECT count(*) FROM (SELECT j FROM (SELECT * FROM testjsonb UNION ALL SELECT * FROM testjsonb) js GROUP BY j) js2;
  count 
 -------
-   891
+   894
 (1 row)
 
 SET enable_hashagg = on;
@@ -1642,7 +1656,7 @@ SET enable_sort = off;
 SELECT count(*) FROM (SELECT j FROM (SELECT * FROM testjsonb UNION ALL SELECT * FROM testjsonb) js GROUP BY j) js2;
  count 
 -------
-   891
+   894
 (1 row)
 
 SELECT distinct * FROM (values (jsonb '{}' || ''),('{}')) v(j);
@@ -1709,7 +1723,7 @@ SELECT count(*) FROM testjsonb WHERE j @> '{"age":25.0}';
 SELECT count(*) FROM testjsonb WHERE j @> '{}';
  count 
 -------
-  1009
+  1012
 (1 row)
 
 RESET enable_seqscan;

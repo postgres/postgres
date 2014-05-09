@@ -1006,4 +1006,7 @@
 {"wait":null, "line":1000}
 {"age":25}
 {"age":25.0}
+{"foo": {"bar": "baz"}}
+{"foo": {"blah": "baz"}}
+{"fool": {"bar": "baz"}}
 {}
