@@ -48,6 +48,18 @@ typedef enum					/* contexts of JSON parser */
 	JSON_PARSE_END				/* saw the end of a document, expect nothing */
 } JsonParseContext;
 
+typedef enum					/* type categories for datum_to_json */
+{
+	JSONTYPE_NULL,				/* null, so we didn't bother to identify */
+	JSONTYPE_BOOL,				/* boolean (built-in types only) */
+	JSONTYPE_NUMERIC,			/* numeric (ditto) */
+	JSONTYPE_JSON,				/* JSON itself */
+	JSONTYPE_ARRAY,				/* array */
+	JSONTYPE_COMPOSITE,			/* composite */
+	JSONTYPE_CAST,				/* something with an explicit cast to JSON */
+	JSONTYPE_OTHER				/* all else */
+} JsonTypeCategory;
+
 static inline void json_lex(JsonLexContext *lex);
 static inline void json_lex_string(JsonLexContext *lex);
 static inline void json_lex_number(JsonLexContext *lex, char *s, bool *num_err);
@@ -64,10 +76,15 @@ static void composite_to_json(Datum composite, StringInfo result,
 				  bool use_line_feeds);
 static void array_dim_to_json(StringInfo result, int dim, int ndims, int *dims,
 				  Datum *vals, bool *nulls, int *valcount,
-				  TYPCATEGORY tcategory, Oid typoutputfunc,
+				  JsonTypeCategory tcategory, Oid outfuncoid,
 				  bool use_line_feeds);
 static void array_to_json_internal(Datum array, StringInfo result,
 					   bool use_line_feeds);
+static void json_categorize_type(Oid typoid,
+					 JsonTypeCategory *tcategory,
+					 Oid *outfuncoid);
+static void datum_to_json(Datum val, bool is_null, StringInfo result,
+			  JsonTypeCategory tcategory, Oid outfuncoid);
 
 /* the null action object used for pure validation */
 static JsonSemAction nullSemAction =
@@ -139,14 +156,6 @@ lex_expect(JsonParseContext ctx, JsonLexContext *lex, JsonTokenType token)
 		report_parse_error(ctx, lex);;
 }
 
-/*
- * All the defined	type categories are upper case , so use lower case here
- * so we avoid any possible clash.
- */
-/* fake type category for JSON so we can distinguish it in datum_to_json */
-#define TYPCATEGORY_JSON 'j'
-/* fake category for types that have a cast to json */
-#define TYPCATEGORY_JSON_CAST 'c'
 /* chars to consider as part of an alphanumeric token */
 #define JSON_ALPHANUMERIC_CHAR(c)  \
 	(((c) >= 'a' && (c) <= 'z') || \
@@ -1210,14 +1219,91 @@ extract_mb_char(char *s)
 }
 
 /*
- * Turn a scalar Datum into JSON, appending the string to "result".
+ * Determine how we want to print values of a given type in datum_to_json.
  *
- * Hand off a non-scalar datum to composite_to_json or array_to_json_internal
- * as appropriate.
+ * Given the datatype OID, return its JsonTypeCategory, as well as the type's
+ * output function OID.  If the returned category is JSONTYPE_CAST, we
+ * return the OID of the type->JSON cast function instead.
+ */
+static void
+json_categorize_type(Oid typoid,
+					 JsonTypeCategory *tcategory,
+					 Oid *outfuncoid)
+{
+	bool		typisvarlena;
+
+	/*
+	 * We should look through domains here, but we'll wait till 9.4.
+	 */
+
+	/* We'll usually need to return the type output function */
+	getTypeOutputInfo(typoid, outfuncoid, &typisvarlena);
+
+	/* Check for known types */
+	switch (typoid)
+	{
+		case BOOLOID:
+			*tcategory = JSONTYPE_BOOL;
+			break;
+
+		case INT2OID:
+		case INT4OID:
+		case INT8OID:
+		case FLOAT4OID:
+		case FLOAT8OID:
+		case NUMERICOID:
+			*tcategory = JSONTYPE_NUMERIC;
+			break;
+
+		case JSONOID:
+			*tcategory = JSONTYPE_JSON;
+			break;
+
+		default:
+			/* Check for arrays and composites */
+			if (OidIsValid(get_element_type(typoid)))
+				*tcategory = JSONTYPE_ARRAY;
+			else if (type_is_rowtype(typoid))
+				*tcategory = JSONTYPE_COMPOSITE;
+			else
+			{
+				/* It's probably the general case ... */
+				*tcategory = JSONTYPE_OTHER;
+				/* but let's look for a cast to json, if it's not built-in */
+				if (typoid >= FirstNormalObjectId)
+				{
+					HeapTuple	tuple;
+
+					tuple = SearchSysCache2(CASTSOURCETARGET,
+											ObjectIdGetDatum(typoid),
+											ObjectIdGetDatum(JSONOID));
+					if (HeapTupleIsValid(tuple))
+					{
+						Form_pg_cast castForm = (Form_pg_cast) GETSTRUCT(tuple);
+
+						if (castForm->castmethod == COERCION_METHOD_FUNCTION)
+						{
+							*tcategory = JSONTYPE_CAST;
+							*outfuncoid = castForm->castfunc;
+						}
+
+						ReleaseSysCache(tuple);
+					}
+				}
+			}
+			break;
+	}
+}
+
+/*
+ * Turn a Datum into JSON text, appending the string to "result".
+ *
+ * tcategory and outfuncoid are from a previous call to json_categorize_type,
+ * except that if is_null is true then they can be invalid.
  */
 static void
 datum_to_json(Datum val, bool is_null, StringInfo result,
-			  TYPCATEGORY tcategory, Oid typoutputfunc)
+			  JsonTypeCategory tcategory, Oid outfuncoid)
 {
 	char	   *outputstr;
 	text	   *jsontext;
@@ -1232,20 +1318,20 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 
 	switch (tcategory)
 	{
-		case TYPCATEGORY_ARRAY:
+		case JSONTYPE_ARRAY:
 			array_to_json_internal(val, result, false);
 			break;
-		case TYPCATEGORY_COMPOSITE:
+		case JSONTYPE_COMPOSITE:
 			composite_to_json(val, result, false);
 			break;
-		case TYPCATEGORY_BOOLEAN:
+		case JSONTYPE_BOOL:
 			if (DatumGetBool(val))
 				appendStringInfoString(result, "true");
 			else
 				appendStringInfoString(result, "false");
 			break;
-		case TYPCATEGORY_NUMERIC:
-			outputstr = OidOutputFunctionCall(typoutputfunc, val);
+		case JSONTYPE_NUMERIC:
+			outputstr = OidOutputFunctionCall(outfuncoid, val);
 			/*
 			 * Don't call escape_json here if it's a valid JSON number.
 			 */
@@ -1258,21 +1344,22 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 				escape_json(result, outputstr);
 			pfree(outputstr);
 			break;
-		case TYPCATEGORY_JSON:
+		case JSONTYPE_JSON:
 			/* JSON will already be escaped */
-			outputstr = OidOutputFunctionCall(typoutputfunc, val);
+			outputstr = OidOutputFunctionCall(outfuncoid, val);
 			appendStringInfoString(result, outputstr);
 			pfree(outputstr);
 			break;
-		case TYPCATEGORY_JSON_CAST:
-			jsontext = DatumGetTextP(OidFunctionCall1(typoutputfunc, val));
+		case JSONTYPE_CAST:
+			/* outfuncoid refers to a cast function, not an output function */
+			jsontext = DatumGetTextP(OidFunctionCall1(outfuncoid, val));
 			outputstr = text_to_cstring(jsontext);
 			appendStringInfoString(result, outputstr);
 			pfree(outputstr);
 			pfree(jsontext);
 			break;
 		default:
-			outputstr = OidOutputFunctionCall(typoutputfunc, val);
+			outputstr = OidOutputFunctionCall(outfuncoid, val);
 			escape_json(result, outputstr);
 			pfree(outputstr);
 			break;
@@ -1286,8 +1373,8 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
  */
 static void
 array_dim_to_json(StringInfo result, int dim, int ndims, int *dims, Datum *vals,
-				  bool *nulls, int *valcount, TYPCATEGORY tcategory,
-				  Oid typoutputfunc, bool use_line_feeds)
+				  bool *nulls, int *valcount, JsonTypeCategory tcategory,
+				  Oid outfuncoid, bool use_line_feeds)
 {
 	int			i;
 	const char *sep;
@@ -1306,7 +1393,7 @@ array_dim_to_json(StringInfo result, int dim, int ndims, int *dims, Datum *vals,
 		if (dim + 1 == ndims)
 		{
 			datum_to_json(vals[*valcount], nulls[*valcount], result, tcategory,
-						  typoutputfunc);
+						  outfuncoid);
 			(*valcount)++;
 		}
 		else
@@ -1316,7 +1403,7 @@ array_dim_to_json(StringInfo result, int dim, int ndims, int *dims, Datum *vals,
 			 * we'll say no.
 			 */
 			array_dim_to_json(result, dim + 1, ndims, dims, vals, nulls,
-							  valcount, tcategory, typoutputfunc, false);
+							  valcount, tcategory, outfuncoid, false);
 		}
 	}
 
@@ -1339,12 +1426,9 @@ array_to_json_internal(Datum array, StringInfo result, bool use_line_feeds)
 	bool	   *nulls;
 	int16		typlen;
 	bool		typbyval;
-	char		typalign,
-				typdelim;
-	Oid			typioparam;
-	Oid			typoutputfunc;
-	TYPCATEGORY tcategory;
-	Oid			castfunc = InvalidOid;
+	char		typalign;
+	JsonTypeCategory tcategory;
+	Oid			outfuncoid;
 
 	ndim = ARR_NDIM(v);
 	dim = ARR_DIMS(v);
@@ -1356,44 +1440,18 @@ array_to_json_internal(Datum array, StringInfo result, bool use_line_feeds)
 		return;
 	}
 
-	get_type_io_data(element_type, IOFunc_output,
-					 &typlen, &typbyval, &typalign,
-					 &typdelim, &typioparam, &typoutputfunc);
+	get_typlenbyvalalign(element_type,
+						 &typlen, &typbyval, &typalign);
 
-	if (element_type > FirstNormalObjectId)
-	{
-		HeapTuple	tuple;
-		Form_pg_cast castForm;
-
-		tuple = SearchSysCache2(CASTSOURCETARGET,
-								ObjectIdGetDatum(element_type),
-								ObjectIdGetDatum(JSONOID));
-		if (HeapTupleIsValid(tuple))
-		{
-			castForm = (Form_pg_cast) GETSTRUCT(tuple);
-
-			if (castForm->castmethod == COERCION_METHOD_FUNCTION)
-				castfunc = typoutputfunc = castForm->castfunc;
-
-			ReleaseSysCache(tuple);
-		}
-	}
+	json_categorize_type(element_type,
+						 &tcategory, &outfuncoid);
 
 	deconstruct_array(v, element_type, typlen, typbyval,
 					  typalign, &elements, &nulls,
 					  &nitems);
 
-	if (castfunc != InvalidOid)
-		tcategory = TYPCATEGORY_JSON_CAST;
-	else if (element_type == RECORDOID)
-		tcategory = TYPCATEGORY_COMPOSITE;
-	else if (element_type == JSONOID)
-		tcategory = TYPCATEGORY_JSON;
-	else
-		tcategory = TypeCategory(element_type);
-
 	array_dim_to_json(result, 0, ndim, dim, elements, nulls, &count, tcategory,
-					  typoutputfunc, use_line_feeds);
+					  outfuncoid, use_line_feeds);
 
 	pfree(elements);
 	pfree(nulls);
@@ -1433,14 +1491,11 @@ composite_to_json(Datum composite, StringInfo result, bool use_line_feeds)
 
 	for (i = 0; i < tupdesc->natts; i++)
 	{
-		Datum		val,
-					origval;
+		Datum		val;
 		bool		isnull;
 		char	   *attname;
-		TYPCATEGORY tcategory;
-		Oid			typoutput;
-		bool		typisvarlena;
-		Oid			castfunc = InvalidOid;
+		JsonTypeCategory tcategory;
+		Oid			outfuncoid;
 
 		if (tupdesc->attrs[i]->attisdropped)
 			continue;
@@ -1453,55 +1508,18 @@ composite_to_json(Datum composite, StringInfo result, bool use_line_feeds)
 		escape_json(result, attname);
 		appendStringInfoChar(result, ':');
 
-		origval = heap_getattr(tuple, i + 1, tupdesc, &isnull);
+		val = heap_getattr(tuple, i + 1, tupdesc, &isnull);
 
-		getTypeOutputInfo(tupdesc->attrs[i]->atttypid,
-						  &typoutput, &typisvarlena);
-
-		if (tupdesc->attrs[i]->atttypid > FirstNormalObjectId)
+		if (isnull)
 		{
-			HeapTuple	cast_tuple;
-			Form_pg_cast castForm;
-
-			cast_tuple = SearchSysCache2(CASTSOURCETARGET,
-							   ObjectIdGetDatum(tupdesc->attrs[i]->atttypid),
-										 ObjectIdGetDatum(JSONOID));
-			if (HeapTupleIsValid(cast_tuple))
-			{
-				castForm = (Form_pg_cast) GETSTRUCT(cast_tuple);
-
-				if (castForm->castmethod == COERCION_METHOD_FUNCTION)
-					castfunc = typoutput = castForm->castfunc;
-
-				ReleaseSysCache(cast_tuple);
-			}
+			tcategory = JSONTYPE_NULL;
+			outfuncoid = InvalidOid;
 		}
-
-		if (castfunc != InvalidOid)
-			tcategory = TYPCATEGORY_JSON_CAST;
-		else if (tupdesc->attrs[i]->atttypid == RECORDARRAYOID)
-			tcategory = TYPCATEGORY_ARRAY;
-		else if (tupdesc->attrs[i]->atttypid == RECORDOID)
-			tcategory = TYPCATEGORY_COMPOSITE;
-		else if (tupdesc->attrs[i]->atttypid == JSONOID)
-			tcategory = TYPCATEGORY_JSON;
 		else
-			tcategory = TypeCategory(tupdesc->attrs[i]->atttypid);
+			json_categorize_type(tupdesc->attrs[i]->atttypid,
+								 &tcategory, &outfuncoid);
 
-		/*
-		 * If we have a toasted datum, forcibly detoast it here to avoid
-		 * memory leakage inside the type's output routine.
-		 */
-		if (typisvarlena && !isnull)
-			val = PointerGetDatum(PG_DETOAST_DATUM(origval));
-		else
-			val = origval;
-
-		datum_to_json(val, isnull, result, tcategory, typoutput);
-
-		/* Clean up detoasted copy, if any */
-		if (val != origval)
-			pfree(DatumGetPointer(val));
+		datum_to_json(val, isnull, result, tcategory, outfuncoid);
 	}
 
 	appendStringInfoChar(result, '}');
@@ -1580,71 +1598,23 @@ row_to_json_pretty(PG_FUNCTION_ARGS)
 Datum
 to_json(PG_FUNCTION_ARGS)
 {
+	Datum		val = PG_GETARG_DATUM(0);
 	Oid			val_type = get_fn_expr_argtype(fcinfo->flinfo, 0);
 	StringInfo	result;
-	Datum		orig_val,
-				val;
-	TYPCATEGORY tcategory;
-	Oid			typoutput;
-	bool		typisvarlena;
-	Oid			castfunc = InvalidOid;
+	JsonTypeCategory tcategory;
+	Oid			outfuncoid;
 
 	if (val_type == InvalidOid)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("could not determine input data type")));
 
+	json_categorize_type(val_type,
+						 &tcategory, &outfuncoid);
 
 	result = makeStringInfo();
 
-	orig_val = PG_ARGISNULL(0) ? (Datum) 0 : PG_GETARG_DATUM(0);
-
-	getTypeOutputInfo(val_type, &typoutput, &typisvarlena);
-
-	if (val_type > FirstNormalObjectId)
-	{
-		HeapTuple	tuple;
-		Form_pg_cast castForm;
-
-		tuple = SearchSysCache2(CASTSOURCETARGET,
-								ObjectIdGetDatum(val_type),
-								ObjectIdGetDatum(JSONOID));
-		if (HeapTupleIsValid(tuple))
-		{
-			castForm = (Form_pg_cast) GETSTRUCT(tuple);
-
-			if (castForm->castmethod == COERCION_METHOD_FUNCTION)
-				castfunc = typoutput = castForm->castfunc;
-
-			ReleaseSysCache(tuple);
-		}
-	}
-
-	if (castfunc != InvalidOid)
-		tcategory = TYPCATEGORY_JSON_CAST;
-	else if (val_type == RECORDARRAYOID)
-		tcategory = TYPCATEGORY_ARRAY;
-	else if (val_type == RECORDOID)
-		tcategory = TYPCATEGORY_COMPOSITE;
-	else if (val_type == JSONOID)
-		tcategory = TYPCATEGORY_JSON;
-	else
-		tcategory = TypeCategory(val_type);
-
-	/*
-	 * If we have a toasted datum, forcibly detoast it here to avoid memory
-	 * leakage inside the type's output routine.
-	 */
-	if (typisvarlena && orig_val != (Datum) 0)
-		val = PointerGetDatum(PG_DETOAST_DATUM(orig_val));
-	else
-		val = orig_val;
-
-	datum_to_json(val, false, result, tcategory, typoutput);
-
-	/* Clean up detoasted copy, if any */
-	if (val != orig_val)
-		pfree(DatumGetPointer(val));
+	datum_to_json(val, false, result, tcategory, outfuncoid);
 
 	PG_RETURN_TEXT_P(cstring_to_text(result->data));
 }
@@ -1659,12 +1629,9 @@ json_agg_transfn(PG_FUNCTION_ARGS)
 	MemoryContext aggcontext,
 				oldcontext;
 	StringInfo	state;
-	Datum		orig_val,
-				val;
-	TYPCATEGORY tcategory;
-	Oid			typoutput;
-	bool		typisvarlena;
-	Oid			castfunc = InvalidOid;
+	Datum		val;
+	JsonTypeCategory tcategory;
+	Oid			outfuncoid;
 
 	if (val_type == InvalidOid)
 		ereport(ERROR,
@@ -1681,9 +1648,9 @@ json_agg_transfn(PG_FUNCTION_ARGS)
 	{
 		/*
 		 * Make this StringInfo in a context where it will persist for the
-		 * duration off the aggregate call. It's only needed for this initial
-		 * piece, as the StringInfo routines make sure they use the right
-		 * context to enlarge the object if necessary.
+		 * duration of the aggregate call.  MemoryContextSwitchTo is only
+		 * needed the first time, as the StringInfo routines make sure they
+		 * use the right context to enlarge the object if necessary.
 		 */
 		oldcontext = MemoryContextSwitchTo(aggcontext);
 		state = makeStringInfo();
@@ -1700,66 +1667,24 @@ json_agg_transfn(PG_FUNCTION_ARGS)
 	/* fast path for NULLs */
 	if (PG_ARGISNULL(1))
 	{
-		orig_val = (Datum) 0;
-		datum_to_json(orig_val, true, state, 0, InvalidOid);
+		datum_to_json((Datum) 0, true, state, JSONTYPE_NULL, InvalidOid);
 		PG_RETURN_POINTER(state);
 	}
 
+	val = PG_GETARG_DATUM(1);
 
-	orig_val = PG_GETARG_DATUM(1);
+	/* XXX we do this every time?? */
+	json_categorize_type(val_type,
+						 &tcategory, &outfuncoid);
 
-	getTypeOutputInfo(val_type, &typoutput, &typisvarlena);
-
-	if (val_type > FirstNormalObjectId)
-	{
-		HeapTuple	tuple;
-		Form_pg_cast castForm;
-
-		tuple = SearchSysCache2(CASTSOURCETARGET,
-								ObjectIdGetDatum(val_type),
-								ObjectIdGetDatum(JSONOID));
-		if (HeapTupleIsValid(tuple))
-		{
-			castForm = (Form_pg_cast) GETSTRUCT(tuple);
-
-			if (castForm->castmethod == COERCION_METHOD_FUNCTION)
-				castfunc = typoutput = castForm->castfunc;
-
-			ReleaseSysCache(tuple);
-		}
-	}
-
-	if (castfunc != InvalidOid)
-		tcategory = TYPCATEGORY_JSON_CAST;
-	else if (val_type == RECORDARRAYOID)
-		tcategory = TYPCATEGORY_ARRAY;
-	else if (val_type == RECORDOID)
-		tcategory = TYPCATEGORY_COMPOSITE;
-	else if (val_type == JSONOID)
-		tcategory = TYPCATEGORY_JSON;
-	else
-		tcategory = TypeCategory(val_type);
-
-	/*
-	 * If we have a toasted datum, forcibly detoast it here to avoid memory
-	 * leakage inside the type's output routine.
-	 */
-	if (typisvarlena)
-		val = PointerGetDatum(PG_DETOAST_DATUM(orig_val));
-	else
-		val = orig_val;
-
+	/* add some whitespace if structured type and not first item */
 	if (!PG_ARGISNULL(0) &&
-	  (tcategory == TYPCATEGORY_ARRAY || tcategory == TYPCATEGORY_COMPOSITE))
+		(tcategory == JSONTYPE_ARRAY || tcategory == JSONTYPE_COMPOSITE))
 	{
 		appendStringInfoString(state, "\n ");
 	}
 
-	datum_to_json(val, false, state, tcategory, typoutput);
-
-	/* Clean up detoasted copy, if any */
-	if (val != orig_val)
-		pfree(DatumGetPointer(val));
+	datum_to_json(val, false, state, tcategory, outfuncoid);
 
 	/*
 	 * The transition type for array_agg() is declared to be "internal", which
