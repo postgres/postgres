@@ -1562,7 +1562,7 @@ add_json(Datum val, bool is_null, StringInfo result, Oid val_type, bool key_scal
 		tcategory = TYPCATEGORY_ARRAY;
 	else if (val_type == RECORDOID)
 		tcategory = TYPCATEGORY_COMPOSITE;
-	else if (val_type == JSONOID)
+	else if (val_type == JSONOID || val_type == JSONBOID)
 		tcategory = TYPCATEGORY_JSON;
 	else
 		tcategory = TypeCategory(val_type);
