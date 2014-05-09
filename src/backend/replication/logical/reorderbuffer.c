@@ -2064,15 +2064,15 @@ ReorderBufferSerializeChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 				if (snap->xcnt)
 				{
 					memcpy(data, snap->xip,
-						   sizeof(TransactionId) + snap->xcnt);
-					data += sizeof(TransactionId) + snap->xcnt;
+						   sizeof(TransactionId) * snap->xcnt);
+					data += sizeof(TransactionId) * snap->xcnt;
 				}
 
 				if (snap->subxcnt)
 				{
 					memcpy(data, snap->subxip,
-						   sizeof(TransactionId) + snap->subxcnt);
-					data += sizeof(TransactionId) + snap->subxcnt;
+						   sizeof(TransactionId) * snap->subxcnt);
+					data += sizeof(TransactionId) * snap->subxcnt;
 				}
 				break;
 			}
@@ -2168,15 +2168,12 @@ ReorderBufferRestoreChanges(ReorderBuffer *rb, ReorderBufferTXN *txn,
 
 		}
 
-		ReorderBufferSerializeReserve(rb, sizeof(ReorderBufferDiskChange));
-
-
 		/*
 		 * Read the statically sized part of a change which has information
 		 * about the total size. If we couldn't read a record, we're at the
 		 * end of this file.
 		 */
-
+		ReorderBufferSerializeReserve(rb, sizeof(ReorderBufferDiskChange));
 		readBytes = read(*fd, rb->outbuf, sizeof(ReorderBufferDiskChange));
 
 		/* eof */

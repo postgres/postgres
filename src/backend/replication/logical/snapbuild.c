@@ -307,8 +307,7 @@ AllocateSnapshotBuilder(ReorderBuffer *reorder,
 	builder->committed.xip =
 		palloc0(builder->committed.xcnt_space * sizeof(TransactionId));
 	builder->committed.includes_all_transactions = true;
-	builder->committed.xip =
-		palloc0(builder->committed.xcnt_space * sizeof(TransactionId));
+
 	builder->initial_xmin_horizon = xmin_horizon;
 	builder->transactions_after = start_lsn;
 
@@ -1691,7 +1690,7 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 
 	/* restore running xacts information */
 	sz = sizeof(TransactionId) * ondisk.builder.running.xcnt_space;
-	ondisk.builder.running.xip = MemoryContextAlloc(builder->context, sz);
+	ondisk.builder.running.xip = MemoryContextAllocZero(builder->context, sz);
 	readBytes = read(fd, ondisk.builder.running.xip, sz);
 	if (readBytes != sz)
 	{
@@ -1705,7 +1704,7 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 
 	/* restore committed xacts information */
 	sz = sizeof(TransactionId) * ondisk.builder.committed.xcnt;
-	ondisk.builder.committed.xip = MemoryContextAlloc(builder->context, sz);
+	ondisk.builder.committed.xip = MemoryContextAllocZero(builder->context, sz);
 	readBytes = read(fd, ondisk.builder.committed.xip, sz);
 	if (readBytes != sz)
 	{
@@ -1763,10 +1762,10 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 	}
 	ondisk.builder.committed.xip = NULL;
 
-	builder->running.xcnt = ondisk.builder.committed.xcnt;
+	builder->running.xcnt = ondisk.builder.running.xcnt;
 	if (builder->running.xip)
 		pfree(builder->running.xip);
-	builder->running.xcnt_space = ondisk.builder.committed.xcnt_space;
+	builder->running.xcnt_space = ondisk.builder.running.xcnt_space;
 	builder->running.xip = ondisk.builder.running.xip;
 
 	/* our snapshot is not interesting anymore, build a new one */
