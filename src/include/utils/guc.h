@@ -389,8 +389,4 @@ extern void assign_search_path(const char *newval, void *extra);
 extern bool check_wal_buffers(int *newval, void **extra, GucSource source);
 extern void assign_xlog_sync_method(int new_sync_method, void *extra);
 
-/* in optimizer/path/costsize.c */
-extern bool check_effective_cache_size(int *newval, void **extra, GucSource source);
-extern void set_default_effective_cache_size(void);
-
 #endif   /* GUC_H */

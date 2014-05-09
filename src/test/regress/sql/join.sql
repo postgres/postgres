@@ -721,8 +721,6 @@ select * from tenk1 a join tenk1 b on
 -- test placement of movable quals in a parameterized join tree
 --
 
-set effective_cache_size = '128MB';
-
 explain (costs off)
 select * from tenk1 t1 left join
   (tenk1 t2 join tenk1 t3 on t2.thousand = t3.unique2)

@@ -3194,16 +3194,8 @@ include 'filename'
         memory allocated by <productname>PostgreSQL</productname>, nor
         does it reserve kernel disk cache; it is used only for estimation
         purposes.  The system also does not assume data remains in
-        the disk cache between queries.
-       </para>
-
-       <para>
-        If <varname>effective_cache_size</> is set to -1, which is the
-        default, the value is replaced by an automatically selected value,
-        currently four times the size of <xref linkend="guc-shared-buffers">.
-        For recommended settings of <varname>shared_buffers</>, this should
-        give reasonable results if this database cluster can use most of the
-        memory on the server.
+        the disk cache between queries.  The default is 128 megabytes
+        (<literal>128MB</>).
        </para>
       </listitem>
      </varlistentry>

@@ -71,7 +71,6 @@
 #ifdef _MSC_VER
 #include <float.h>				/* for _isnan */
 #endif
-#include <limits.h>
 #include <math.h>
 
 #include "access/htup_details.h"
@@ -88,7 +87,6 @@
 #include "optimizer/planmain.h"
 #include "optimizer/restrictinfo.h"
 #include "parser/parsetree.h"
-#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/selfuncs.h"
 #include "utils/spccache.h"
@@ -104,7 +102,7 @@ double		cpu_tuple_cost = DEFAULT_CPU_TUPLE_COST;
 double		cpu_index_tuple_cost = DEFAULT_CPU_INDEX_TUPLE_COST;
 double		cpu_operator_cost = DEFAULT_CPU_OPERATOR_COST;
 
-int			effective_cache_size = -1;	/* will get replaced */
+int			effective_cache_size = DEFAULT_EFFECTIVE_CACHE_SIZE;
 
 Cost		disable_cost = 1.0e10;
 
@@ -4092,51 +4090,4 @@ static double
 page_size(double tuples, int width)
 {
 	return ceil(relation_byte_size(tuples, width) / BLCKSZ);
-}
-
-/*
- * GUC check_hook for effective_cache_size
- */
-bool
-check_effective_cache_size(int *newval, void **extra, GucSource source)
-{
-	/*
-	 * -1 is the documented way of requesting auto-tune, but we also treat
-	 * zero as meaning that, since we don't consider zero a valid setting.
-	 */
-	if (*newval <= 0)
-	{
-		/*
-		 * Substitute the auto-tune value, being wary of overflow.
-		 */
-		if (NBuffers < INT_MAX / 4)
-			*newval = NBuffers * 4;
-		else
-			*newval = INT_MAX;
-	}
-
-	Assert(*newval > 0);
-
-	return true;
-}
-
-/*
- * Initialize effective_cache_size at the end of GUC startup, or when
- * a setting in postgresql.conf is removed.
- *
- * Note: check_effective_cache_size() will have been called when the boot_val
- * was installed, but we will not have known the final value of NBuffers at
- * that time, which is why this has to be called at the end of GUC startup.
- */
-void
-set_default_effective_cache_size(void)
-{
-	/*
-	 * We let check_effective_cache_size() compute the actual setting.  Note
-	 * that this call is a no-op if the user has supplied a setting (since
-	 * that will have a higher priority than PGC_S_DYNAMIC_DEFAULT).
-	 */
-	SetConfigOption("effective_cache_size", "-1",
-					PGC_POSTMASTER, PGC_S_DYNAMIC_DEFAULT);
-	Assert(effective_cache_size > 0);
 }

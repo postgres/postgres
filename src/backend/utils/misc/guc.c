@@ -2512,8 +2512,8 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_BLOCKS,
 		},
 		&effective_cache_size,
-		-1, -1, INT_MAX,
-		check_effective_cache_size, NULL, NULL
+		DEFAULT_EFFECTIVE_CACHE_SIZE, 1, INT_MAX,
+		NULL, NULL, NULL
 	},
 
 	{
@@ -4371,9 +4371,6 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 	 * be the real desired default.
 	 */
 	pg_timezone_abbrev_initialize();
-
-	/* Also install the correct value for effective_cache_size */
-	set_default_effective_cache_size();
 
 	/*
 	 * Figure out where pg_hba.conf is, and make sure the path is absolute.
