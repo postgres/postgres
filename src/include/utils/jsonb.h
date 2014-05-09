@@ -130,17 +130,16 @@ typedef uint32 JEntry;
 
 #define JENTRY_POSMASK			0x0FFFFFFF
 #define JENTRY_TYPEMASK			0x70000000
-#define JENTRY_ISFIRST			0x80000000
 
 /* values stored in the type bits */
 #define JENTRY_ISSTRING			0x00000000
 #define JENTRY_ISNUMERIC		0x10000000
-#define JENTRY_ISCONTAINER		0x20000000		/* array or object */
-#define JENTRY_ISBOOL_FALSE		0x30000000
+#define JENTRY_ISBOOL_FALSE		0x20000000
+#define JENTRY_ISBOOL_TRUE		0x30000000
 #define JENTRY_ISNULL			0x40000000
-#define JENTRY_ISBOOL_TRUE		0x70000000
+#define JENTRY_ISCONTAINER		0x50000000		/* array or object */
 
-/* Note possible multiple evaluations, also access to prior array element */
+/* Note possible multiple evaluations */
 #define JBE_ISFIRST(je_)		(((je_) & JENTRY_ISFIRST) != 0)
 #define JBE_ISSTRING(je_)		(((je_) & JENTRY_TYPEMASK) == JENTRY_ISSTRING)
 #define JBE_ISNUMERIC(je_)		(((je_) & JENTRY_TYPEMASK) == JENTRY_ISNUMERIC)
@@ -150,12 +149,14 @@ typedef uint32 JEntry;
 #define JBE_ISBOOL_FALSE(je_)	(((je_) & JENTRY_TYPEMASK) == JENTRY_ISBOOL_FALSE)
 #define JBE_ISBOOL(je_)			(JBE_ISBOOL_TRUE(je_) || JBE_ISBOOL_FALSE(je_))
 
-/* Get offset for Jentry  */
+/*
+ * Macros for getting the offset and length of an element. Note multiple
+ * evaluations and access to prior array element.
+ */
 #define JBE_ENDPOS(je_)			((je_) & JENTRY_POSMASK)
-#define JBE_OFF(je_)			(JBE_ISFIRST(je_) ? 0 : JBE_ENDPOS((&(je_))[-1]))
-#define JBE_LEN(je_)			(JBE_ISFIRST(je_) ? \
-								 JBE_ENDPOS(je_) \
-								 : JBE_ENDPOS(je_) - JBE_ENDPOS((&(je_))[-1]))
+#define JBE_OFF(ja, i)			((i) == 0 ? 0 : JBE_ENDPOS((ja)[i - 1]))
+#define JBE_LEN(ja, i)			((i) == 0 ? JBE_ENDPOS((ja)[i]) \
+								 : JBE_ENDPOS((ja)[i]) - JBE_ENDPOS((ja)[i - 1]))
 
 /*
  * A jsonb array or object node, within a Jsonb Datum.
@@ -241,7 +242,7 @@ struct JsonbValue
 		{
 			int			len;
 			JsonbContainer *data;
-		}			binary;
+		}			binary;		/* Array or object, in on-disk format */
 	}			val;
 };
 
@@ -277,32 +278,29 @@ typedef struct JsonbParseState
  */
 typedef enum
 {
-	jbi_start = 0x0,
-	jbi_key,
-	jbi_value,
-	jbi_elem
+	JBI_ARRAY_START,
+	JBI_ARRAY_ELEM,
+	JBI_OBJECT_START,
+	JBI_OBJECT_KEY,
+	JBI_OBJECT_VALUE
 } JsonbIterState;
 
 typedef struct JsonbIterator
 {
-	/* Jsonb varlena buffer (may or may not be root) */
-	char	   *buffer;
-
-	/* Current value */
-	uint32		containerType;	/* Never of value JB_FSCALAR, since scalars
-								 * will appear in pseudo-arrays */
-	uint32		nElems;			/* Number of elements in metaArray (will be
+	/* Container being iterated */
+	JsonbContainer *container;
+	uint32		nElems;			/* Number of elements in children array (will be
 								 * nPairs for objects) */
 	bool		isScalar;		/* Pseudo-array scalar value? */
-	JEntry	   *meta;
+	JEntry	   *children;
 
 	/* Current item in buffer (up to nElems, but must * 2 for objects) */
 	int			i;
 
 	/*
-	 * Data proper.  Note that this points just past end of "meta" array.  We
-	 * use its metadata (Jentrys) with JBE_OFF() macro to find appropriate
-	 * offsets into this array.
+	 * Data proper.  This points just past end of children array.
+	 * We use the JBE_OFF() macro on the Jentrys to find offsets of each
+	 * child in this area.
 	 */
 	char	   *dataProper;
 

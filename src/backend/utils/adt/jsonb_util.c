@@ -21,20 +21,16 @@
 #include "utils/memutils.h"
 
 /*
- * Twice as many values may be stored within pairs (for an Object) than within
- * elements (for an Array), modulo the current MaxAllocSize limitation.  Note
- * that JSONB_MAX_PAIRS is derived from the number of possible pairs, not
- * values (as is the case for arrays and their elements), because we're
- * concerned about limitations on the representation of the number of pairs.
- * Over twice the memory is required to store n JsonbPairs as n JsonbValues.
- * It only takes exactly twice as much disk space for storage, though.  The
- * JsonbPair (not an actual pair of values) representation is used here because
- * that is what is subject to the MaxAllocSize restriction when building an
- * object.
+ * Maximum number of elements in an array (or key/value pairs in an object).
+ * This is limited by two things: the size of the JEntry array must fit
+ * in MaxAllocSize, and the number of elements (or pairs) must fit in the bits
+ * reserved for that in the JsonbContainer.header field.
+ *
+ * (the total size of an array's elements is also limited by JENTRY_POSMASK,
+ * but we're not concerned about that here)
  */
-#define JSONB_MAX_ELEMS (Min(MaxAllocSize / sizeof(JsonbValue), JENTRY_POSMASK))
-#define JSONB_MAX_PAIRS (Min(MaxAllocSize / sizeof(JsonbPair), \
-							 JENTRY_POSMASK))
+#define JSONB_MAX_ELEMS (Min(MaxAllocSize / sizeof(JsonbValue), JB_CMASK))
+#define JSONB_MAX_PAIRS (Min(MaxAllocSize / sizeof(JsonbPair), JB_CMASK))
 
 /*
  * convertState: a resizeable buffer used when constructing a Jsonb datum
@@ -46,7 +42,8 @@ typedef struct
 	int			allocatedsz;
 } convertState;
 
-static void fillJsonbValue(JEntry *entry, char *payload_base, JsonbValue *result);
+static void fillJsonbValue(JEntry *array, int index, char *base_addr,
+			   JsonbValue *result);
 static int	compareJsonbScalarValue(JsonbValue *a, JsonbValue *b);
 static int	lexicalCompareJsonbStringValue(const void *a, const void *b);
 static Jsonb *convertToJsonb(JsonbValue *val);
@@ -60,9 +57,7 @@ static void appendToBuffer(convertState *buffer, char *data, int len);
 static void copyToBuffer(convertState *buffer, int offset, char *data, int len);
 static short padBufferToInt(convertState *buffer);
 
-static void iteratorFromContainer(JsonbIterator *it, JsonbContainer *container);
-static bool formIterIsContainer(JsonbIterator **it, JsonbValue *val,
-					JEntry *ent, bool skipNested);
+static JsonbIterator *iteratorFromContainer(JsonbContainer *container, JsonbIterator *parent);
 static JsonbIterator *freeAndGetParent(JsonbIterator *it);
 static JsonbParseState *pushState(JsonbParseState **pstate);
 static void appendKey(JsonbParseState *pstate, JsonbValue *scalarVal);
@@ -276,7 +271,7 @@ JsonbValue *
 findJsonbValueFromContainer(JsonbContainer *container, uint32 flags,
 							JsonbValue *key)
 {
-	JEntry	   *array = container->children;
+	JEntry	   *children = container->children;
 	int			count = (container->header & JB_CMASK);
 	JsonbValue *result = palloc(sizeof(JsonbValue));
 
@@ -284,14 +279,12 @@ findJsonbValueFromContainer(JsonbContainer *container, uint32 flags,
 
 	if (flags & JB_FARRAY & container->header)
 	{
-		char	   *data = (char *) (array + (container->header & JB_CMASK));
+		char	   *base_addr = (char *) (children + count);
 		int			i;
 
 		for (i = 0; i < count; i++)
 		{
-			JEntry	   *e = array + i;
-
-			fillJsonbValue(e, data, result);
+			fillJsonbValue(children, i, base_addr, result);
 
 			if (key->type == result->type)
 			{
@@ -303,7 +296,7 @@ findJsonbValueFromContainer(JsonbContainer *container, uint32 flags,
 	else if (flags & JB_FOBJECT & container->header)
 	{
 		/* Since this is an object, account for *Pairs* of Jentrys */
-		char	   *data = (char *) (array + (container->header & JB_CMASK) * 2);
+		char	   *base_addr = (char *) (children + count * 2);
 		uint32		stopLow = 0,
 					stopMiddle;
 
@@ -313,7 +306,7 @@ findJsonbValueFromContainer(JsonbContainer *container, uint32 flags,
 		/* Binary search on object/pair keys *only* */
 		while (stopLow < count)
 		{
-			JEntry	   *entry;
+			int			index;
 			int			difference;
 			JsonbValue	candidate;
 
@@ -323,20 +316,18 @@ findJsonbValueFromContainer(JsonbContainer *container, uint32 flags,
 			 */
 			stopMiddle = stopLow + (count - stopLow) / 2;
 
-			entry = array + stopMiddle * 2;
+			index = stopMiddle * 2;
 
 			candidate.type = jbvString;
-			candidate.val.string.val = data + JBE_OFF(*entry);
-			candidate.val.string.len = JBE_LEN(*entry);
+			candidate.val.string.val = base_addr + JBE_OFF(children, index);
+			candidate.val.string.len = JBE_LEN(children, index);
 
 			difference = lengthCompareJsonbStringValue(&candidate, key);
 
 			if (difference == 0)
 			{
-				/* Found our value (from key/value pair) */
-				JEntry	   *v = entry + 1;
-
-				fillJsonbValue(v, data, result);
+				/* Found our key, return value */
+				fillJsonbValue(children, index + 1, base_addr, result);
 
 				return result;
 			}
@@ -364,71 +355,69 @@ JsonbValue *
 getIthJsonbValueFromContainer(JsonbContainer *container, uint32 i)
 {
 	JsonbValue *result;
-	JEntry	   *e;
-	char	   *data;
+	char	   *base_addr;
 	uint32		nelements;
 
 	if ((container->header & JB_FARRAY) == 0)
 		elog(ERROR, "not a jsonb array");
 
 	nelements = container->header & JB_CMASK;
+	base_addr = (char *) &container->children[nelements];
 
 	if (i >= nelements)
 		return NULL;
 
-	e = &container->children[i];
-
-	data = (char *) &container->children[nelements];
-
 	result = palloc(sizeof(JsonbValue));
 
-	fillJsonbValue(e, data, result);
+	fillJsonbValue(container->children, i, base_addr, result);
 
 	return result;
 }
 
 /*
- * Given the JEntry header, and the base address of the data that the offset
- * in the JEntry refers to, fill a JsonbValue.
+ * A helper function to fill in a JsonbValue to represent an element of an
+ * array, or a key or value of an object.
  *
- * An array or object will be returned as jbvBinary, ie. it won't be
+ * A nested array or object will be returned as jbvBinary, ie. it won't be
  * expanded.
  */
 static void
-fillJsonbValue(JEntry *entry, char *payload_base, JsonbValue *result)
+fillJsonbValue(JEntry *children, int index, char *base_addr, JsonbValue *result)
 {
-	if (JBE_ISNULL(*entry))
+	JEntry		entry = children[index];
+
+	if (JBE_ISNULL(entry))
 	{
 		result->type = jbvNull;
 	}
-	else if (JBE_ISSTRING(*entry))
+	else if (JBE_ISSTRING(entry))
 	{
 		result->type = jbvString;
-		result->val.string.val = payload_base + JBE_OFF(*entry);
-		result->val.string.len = JBE_LEN(*entry);
+		result->val.string.val = base_addr + JBE_OFF(children, index);
+		result->val.string.len = JBE_LEN(children, index);
 		Assert(result->val.string.len >= 0);
 	}
-	else if (JBE_ISNUMERIC(*entry))
+	else if (JBE_ISNUMERIC(entry))
 	{
 		result->type = jbvNumeric;
-		result->val.numeric = (Numeric) (payload_base + INTALIGN(JBE_OFF(*entry)));
+		result->val.numeric = (Numeric) (base_addr + INTALIGN(JBE_OFF(children, index)));
 	}
-	else if (JBE_ISBOOL_TRUE(*entry))
+	else if (JBE_ISBOOL_TRUE(entry))
 	{
 		result->type = jbvBool;
 		result->val.boolean = true;
 	}
-	else if (JBE_ISBOOL_FALSE(*entry))
+	else if (JBE_ISBOOL_FALSE(entry))
 	{
 		result->type = jbvBool;
 		result->val.boolean = false;
 	}
 	else
 	{
-		Assert(JBE_ISCONTAINER(*entry));
+		Assert(JBE_ISCONTAINER(entry));
 		result->type = jbvBinary;
-		result->val.binary.data = (JsonbContainer *) (payload_base + INTALIGN(JBE_OFF(*entry)));
-		result->val.binary.len = JBE_LEN(*entry) - (INTALIGN(JBE_OFF(*entry)) - JBE_OFF(*entry));
+		result->val.binary.data = (JsonbContainer *) (base_addr + INTALIGN(JBE_OFF(children, index)));
+		result->val.binary.len = JBE_LEN(children, index) - (INTALIGN(JBE_OFF(children, index)) - JBE_OFF(children, index));
 	}
 }
 
@@ -622,12 +611,7 @@ appendElement(JsonbParseState *pstate, JsonbValue *scalarVal)
 JsonbIterator *
 JsonbIteratorInit(JsonbContainer *container)
 {
-	JsonbIterator *it = palloc(sizeof(JsonbIterator));
-
-	iteratorFromContainer(it, container);
-	it->parent = NULL;
-
-	return it;
+	return iteratorFromContainer(container, NULL);
 }
 
 /*
@@ -661,21 +645,19 @@ JsonbIteratorInit(JsonbContainer *container)
 JsonbIteratorToken
 JsonbIteratorNext(JsonbIterator **it, JsonbValue *val, bool skipNested)
 {
-	JsonbIterState state;
-
-	/* Guard against stack overflow due to overly complex Jsonb */
-	check_stack_depth();
-
-	/* Recursive caller may have original caller's iterator */
 	if (*it == NULL)
 		return WJB_DONE;
 
-	state = (*it)->state;
-
-	if ((*it)->containerType == JB_FARRAY)
+	/*
+	 * When stepping into a nested container, we jump back here to start
+	 * processing the child. We will not recurse further in one call, because
+	 * processing the child will always begin in JBI_ARRAY_START or
+	 * JBI_OBJECT_START state.
+	 */
+recurse:
+	switch ((*it)->state)
 	{
-		if (state == jbi_start)
-		{
+		case JBI_ARRAY_START:
 			/* Set v to array on first array call */
 			val->type = jbvArray;
 			val->val.array.nElems = (*it)->nElems;
@@ -687,11 +669,10 @@ JsonbIteratorNext(JsonbIterator **it, JsonbValue *val, bool skipNested)
 			val->val.array.rawScalar = (*it)->isScalar;
 			(*it)->i = 0;
 			/* Set state for next call */
-			(*it)->state = jbi_elem;
+			(*it)->state = JBI_ARRAY_ELEM;
 			return WJB_BEGIN_ARRAY;
-		}
-		else if (state == jbi_elem)
-		{
+
+		case JBI_ARRAY_ELEM:
 			if ((*it)->i >= (*it)->nElems)
 			{
 				/*
@@ -703,27 +684,25 @@ JsonbIteratorNext(JsonbIterator **it, JsonbValue *val, bool skipNested)
 				*it = freeAndGetParent(*it);
 				return WJB_END_ARRAY;
 			}
-			else if (formIterIsContainer(it, val, &(*it)->meta[(*it)->i++],
-										 skipNested))
+
+			fillJsonbValue((*it)->children, (*it)->i++, (*it)->dataProper, val);
+
+			if (!IsAJsonbScalar(val) && !skipNested)
 			{
-				/*
-				 * New child iterator acquired within formIterIsContainer.
-				 * Recurse into container.  Don't directly return jbvBinary
-				 * value to top-level client.
-				 */
-				return JsonbIteratorNext(it, val, skipNested);
+				/* Recurse into container. */
+				*it = iteratorFromContainer(val->val.binary.data, *it);
+				goto recurse;
 			}
 			else
 			{
-				/* Scalar item in array */
+				/*
+				 * Scalar item in array (or a container and caller didn't
+				 * want us to recurse into it.
+				 */
 				return WJB_ELEM;
 			}
-		}
-	}
-	else if ((*it)->containerType == JB_FOBJECT)
-	{
-		if (state == jbi_start)
-		{
+
+		case JBI_OBJECT_START:
 			/* Set v to object on first object call */
 			val->type = jbvObject;
 			val->val.object.nPairs = (*it)->nElems;
@@ -734,11 +713,10 @@ JsonbIteratorNext(JsonbIterator **it, JsonbValue *val, bool skipNested)
 			 */
 			(*it)->i = 0;
 			/* Set state for next call */
-			(*it)->state = jbi_key;
+			(*it)->state = JBI_OBJECT_KEY;
 			return WJB_BEGIN_OBJECT;
-		}
-		else if (state == jbi_key)
-		{
+
+		case JBI_OBJECT_KEY:
 			if ((*it)->i >= (*it)->nElems)
 			{
 				/*
@@ -752,37 +730,35 @@ JsonbIteratorNext(JsonbIterator **it, JsonbValue *val, bool skipNested)
 			}
 			else
 			{
-				/*
-				 * Return binary item key (ensured by setting skipNested to
-				 * false directly).  No child iterator, no further recursion.
-				 * When control reaches here, it's probably from a recursive
-				 * call.
-				 */
-				if (formIterIsContainer(it, val, &(*it)->meta[(*it)->i * 2], false))
-					elog(ERROR, "unexpected container as object key");
+				/* Return key of a key/value pair.  */
+				fillJsonbValue((*it)->children, (*it)->i * 2, (*it)->dataProper, val);
+				if (val->type != jbvString)
+					elog(ERROR, "unexpected jsonb type as object key");
 
-				Assert(val->type == jbvString);
 				/* Set state for next call */
-				(*it)->state = jbi_value;
+				(*it)->state = JBI_OBJECT_VALUE;
 				return WJB_KEY;
 			}
-		}
-		else if (state == jbi_value)
-		{
+
+		case JBI_OBJECT_VALUE:
 			/* Set state for next call */
-			(*it)->state = jbi_key;
+			(*it)->state = JBI_OBJECT_KEY;
+
+			fillJsonbValue((*it)->children, ((*it)->i++) * 2 + 1,
+						   (*it)->dataProper, val);
 
 			/*
 			 * Value may be a container, in which case we recurse with new,
-			 * child iterator.  If it is, don't bother !skipNested callers
-			 * with dealing with the jbvBinary representation.
+			 * child iterator (unless the caller asked not to, by passing
+			 * skipNested).
 			 */
-			if (formIterIsContainer(it, val, &(*it)->meta[((*it)->i++) * 2 + 1],
-									skipNested))
-				return JsonbIteratorNext(it, val, skipNested);
+			if (!IsAJsonbScalar(val) && !skipNested)
+			{
+				*it = iteratorFromContainer(val->val.binary.data, *it);
+				goto recurse;
+			}
 			else
 				return WJB_VALUE;
-		}
 	}
 
 	elog(ERROR, "invalid iterator state");
@@ -792,26 +768,31 @@ JsonbIteratorNext(JsonbIterator **it, JsonbValue *val, bool skipNested)
 /*
  * Initialize an iterator for iterating all elements in a container.
  */
-static void
-iteratorFromContainer(JsonbIterator *it, JsonbContainer *container)
+static JsonbIterator *
+iteratorFromContainer(JsonbContainer *container, JsonbIterator *parent)
 {
-	it->containerType = container->header & (JB_FARRAY | JB_FOBJECT);
+	JsonbIterator *it;
+
+	it = palloc(sizeof(JsonbIterator));
+	it->container = container;
+	it->parent = parent;
 	it->nElems = container->header & JB_CMASK;
-	it->buffer = (char *) container;
 
 	/* Array starts just after header */
-	it->meta = container->children;
-	it->state = jbi_start;
+	it->children = container->children;
 
-	switch (it->containerType)
+	switch (container->header & (JB_FARRAY | JB_FOBJECT))
 	{
 		case JB_FARRAY:
 			it->dataProper =
-				(char *) it->meta + it->nElems * sizeof(JEntry);
+				(char *) it->children + it->nElems * sizeof(JEntry);
 			it->isScalar = (container->header & JB_FSCALAR) != 0;
 			/* This is either a "raw scalar", or an array */
 			Assert(!it->isScalar || it->nElems == 1);
+
+			it->state = JBI_ARRAY_START;
 			break;
+
 		case JB_FOBJECT:
 
 			/*
@@ -819,56 +800,15 @@ iteratorFromContainer(JsonbIterator *it, JsonbContainer *container)
 			 * Each key and each value contain Jentry metadata just the same.
 			 */
 			it->dataProper =
-				(char *) it->meta + it->nElems * sizeof(JEntry) * 2;
+				(char *) it->children + it->nElems * sizeof(JEntry) * 2;
+			it->state = JBI_OBJECT_START;
 			break;
+
 		default:
 			elog(ERROR, "unknown type of jsonb container");
 	}
-}
 
-/*
- * JsonbIteratorNext() worker
- *
- * Returns bool indicating if v was a non-jbvBinary container, and thus if
- * further recursion is required by caller (according to its skipNested
- * preference).  If it is required, we set the caller's iterator for further
- * recursion into the nested value.  If we're going to skip nested items, just
- * set v to a jbvBinary value, but don't set caller's iterator.
- *
- * Unlike with containers (either in this function or in any
- * JsonbIteratorNext() infrastructure), we fully convert from what is
- * ultimately a Jsonb on-disk representation, to a JsonbValue in-memory
- * representation (for scalar values only).  JsonbIteratorNext() initializes
- * container Jsonbvalues, but without a sane private buffer.  For scalar values
- * it has to be done for real (even if we don't actually allocate more memory
- * to do this.  The point is that our JsonbValues scalars can be passed around
- * anywhere).
- */
-static bool
-formIterIsContainer(JsonbIterator **it, JsonbValue *val, JEntry *ent,
-					bool skipNested)
-{
-	fillJsonbValue(ent, (*it)->dataProper, val);
-
-	if (IsAJsonbScalar(val) || skipNested)
-		return false;
-	else
-	{
-		/*
-		 * It's a container type, so setup caller's iterator to point to
-		 * that, and return indication of that.
-		 *
-		 * Get child iterator.
-		 */
-		JsonbIterator *child = palloc(sizeof(JsonbIterator));
-
-		iteratorFromContainer(child, val->val.binary.data);
-
-		child->parent = *it;
-		*it = child;
-
-		return true;
-	}
+	return it;
 }
 
 /*
@@ -949,7 +889,7 @@ JsonbDeepContains(JsonbIterator **val, JsonbIterator **mContained)
 			Assert(rcont == WJB_KEY);
 
 			/* First, find value by key... */
-			lhsVal = findJsonbValueFromContainer((JsonbContainer *) (*val)->buffer,
+			lhsVal = findJsonbValueFromContainer((*val)->container,
 												 JB_FOBJECT,
 												 &vcontained);
 
@@ -1051,7 +991,7 @@ JsonbDeepContains(JsonbIterator **val, JsonbIterator **mContained)
 
 			if (IsAJsonbScalar(&vcontained))
 			{
-				if (!findJsonbValueFromContainer((JsonbContainer *) (*val)->buffer,
+				if (!findJsonbValueFromContainer((*val)->container,
 												 JB_FARRAY,
 												 &vcontained))
 					return false;
@@ -1325,7 +1265,7 @@ convertToJsonb(JsonbValue *val)
 	convertJsonbValue(&buffer, &jentry, val, 0);
 
 	/*
-	 * Note: the JEntry of the root is not discarded. Therefore the root
+	 * Note: the JEntry of the root is discarded. Therefore the root
 	 * JsonbContainer struct must contain enough information to tell what
 	 * kind of value it is.
 	 */
@@ -1341,23 +1281,12 @@ convertToJsonb(JsonbValue *val)
  * Subroutine of convertJsonb: serialize a single JsonbValue into buffer.
  *
  * The JEntry header for this node is returned in *header. It is filled in
- * with the length of this value, but if
- * it is stored in an array or an object (which is always, except for the root
- * node), it is the caller's responsibility to adjust it with the offset
- * within the container.
+ * with the length of this value, but if it is stored in an array or an
+ * object (which is always, except for the root node), it is the caller's
+ * responsibility to adjust it with the offset within the container.
  *
  * If the value is an array or an object, this recurses. 'level' is only used
  * for debugging purposes.
-
- * As part of the process of converting an arbitrary JsonbValue to a Jsonb,
- * serialize and copy a scalar value into buffer.
- *
- * This is a worker function for putJsonbValueConversion() (itself a worker for
- * walkJsonbValueConversion()).  It handles the details with regard to Jentry
- * metadata peculiar to each scalar type.
- *
- * It is the callers responsibility to shift the offset if this is stored
- * in an array or object.
  */
 static void
 convertJsonbValue(convertState *buffer, JEntry *header, JsonbValue *val, int level)
@@ -1424,9 +1353,7 @@ convertJsonbArray(convertState *buffer, JEntry *pheader, JsonbValue *val, int le
 					 errmsg("total size of jsonb array elements exceeds the maximum of %u bytes",
 							JENTRY_POSMASK)));
 
-		if (i == 0)
-			meta |= JENTRY_ISFIRST;
-		else
+		if (i > 0)
 			meta = (meta & ~JENTRY_POSMASK) | totallen;
 		copyToBuffer(buffer, metaoffset, (char *) &meta, sizeof(JEntry));
 		metaoffset += sizeof(JEntry);
@@ -1478,9 +1405,7 @@ convertJsonbObject(convertState *buffer, JEntry *pheader, JsonbValue *val, int l
 					 errmsg("total size of jsonb array elements exceeds the maximum of %u bytes",
 							JENTRY_POSMASK)));
 
-		if (i == 0)
-			meta |= JENTRY_ISFIRST;
-		else
+		if (i > 0)
 			meta = (meta & ~JENTRY_POSMASK) | totallen;
 		copyToBuffer(buffer, metaoffset, (char *) &meta, sizeof(JEntry));
 		metaoffset += sizeof(JEntry);
