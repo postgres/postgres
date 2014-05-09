@@ -1,3 +1,6 @@
+# This file is included into the Makefiles of subdirectories of ecpg/test/,
+# so the file references have one more level of .. than you might expect.
+
 override CPPFLAGS := -I../../include -I$(top_srcdir)/src/interfaces/ecpg/include \
 	-I$(libpq_srcdir) $(CPPFLAGS)
 override CFLAGS += $(PTHREAD_CFLAGS)
@@ -5,13 +8,25 @@ override CFLAGS += $(PTHREAD_CFLAGS)
 override LDFLAGS := -L../../ecpglib -L../../pgtypeslib $(filter-out -l%, $(libpq)) $(LDFLAGS)
 override LIBS := -lecpg -lpgtypes $(filter -l%, $(libpq)) $(LIBS) $(PTHREAD_LIBS)
 
-ECPG = ../../preproc/ecpg --regression -I$(srcdir)/../../include
+# Standard way to invoke the ecpg preprocessor
+ECPG = ../../preproc/ecpg --regression -I$(srcdir)/../../include -I$(srcdir)
+
+# Files that most or all ecpg preprocessor test outputs depend on
+ECPG_TEST_DEPENDENCIES = ../../preproc/ecpg \
+	$(srcdir)/../regression.h \
+	$(srcdir)/../../include/sqlca.h \
+	$(srcdir)/../../include/sqlda.h \
+	$(srcdir)/../../include/sqltypes.h \
+	$(srcdir)/../../include/sql3types.h
 
 %: %.o
 	$(CC) $(CFLAGS) $< $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@
 
-%.c: %.pgc ../regression.h
-	$(ECPG) -o $@ -I$(srcdir) $<
+# Caution: this build rule is overridden in some child Makefiles
+# where it's necessary to use nondefault switches to ecpg;
+# make sure those rules match except for the extra switches.
+%.c: %.pgc $(ECPG_TEST_DEPENDENCIES)
+	$(ECPG) -o $@ $<
 
 clean:
 	rm -f $(TESTS) $(TESTS:%=%.o) $(TESTS:%=%.c)

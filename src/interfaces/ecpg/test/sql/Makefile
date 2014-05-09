@@ -26,5 +26,5 @@ TESTS = array array.c \
 
 all: $(TESTS)
 
-oldexec.c:	oldexec.pgc ../regression.h
-	$(ECPG) -r questionmarks -o $@ -I$(srcdir) $<
+oldexec.c: oldexec.pgc $(ECPG_TEST_DEPENDENCIES)
+	$(ECPG) -r questionmarks -o $@ $<
