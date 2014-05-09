@@ -3194,8 +3194,8 @@ include 'filename'
         memory allocated by <productname>PostgreSQL</productname>, nor
         does it reserve kernel disk cache; it is used only for estimation
         purposes.  The system also does not assume data remains in
-        the disk cache between queries.  The default is 128 megabytes
-        (<literal>128MB</>).
+        the disk cache between queries.  The default is 4 gigabytes
+        (<literal>4GB</>).
        </para>
       </listitem>
      </varlistentry>

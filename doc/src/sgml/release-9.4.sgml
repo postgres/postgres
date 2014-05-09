@@ -722,22 +722,22 @@
 
       <listitem>
        <para>
-        Auto-tune <link
-        linkend="guc-effective-cache-size"><varname>effective_cache_size</></link>
-        to be four-times shared buffers (Bruce Momjian, Tom Lane)
+        Increase <link
+        linkend="guc-work-mem"><varname>work_mem</></link> and <link
+        linkend="guc-maintenance-work-mem"><varname>maintenance_work_mem</></link>
+        defaults by four times (Bruce Momjian)
+       </para>
+
+       <para>
+        The new defaults are 4MB and 64MB respectively.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Increase <link
-        linkend="guc-work-mem"><varname>work_mem</></link> and <link
-        linkend="guc-maintenance-work-mem"><varname>maintenance_work_mem</></link>
-        defaults by four-times (Bruce Momjian)
-       </para>
-
-       <para>
-        The new defaults are 4MB and 64MB respectively.
+        Increase the default setting of <link
+        linkend="guc-effective-cache-size"><varname>effective_cache_size</></link>
+        to 4GB (Bruce Momjian, Tom Lane)
        </para>
       </listitem>
 

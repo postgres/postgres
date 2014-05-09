@@ -27,7 +27,7 @@
 #define DEFAULT_CPU_INDEX_TUPLE_COST 0.005
 #define DEFAULT_CPU_OPERATOR_COST  0.0025
 
-#define DEFAULT_EFFECTIVE_CACHE_SIZE  16384		/* measured in pages */
+#define DEFAULT_EFFECTIVE_CACHE_SIZE  524288	/* measured in pages */
 
 typedef enum
 {
