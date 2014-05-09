@@ -32,30 +32,20 @@
 #define JSONB_MAX_ELEMS (Min(MaxAllocSize / sizeof(JsonbValue), JB_CMASK))
 #define JSONB_MAX_PAIRS (Min(MaxAllocSize / sizeof(JsonbPair), JB_CMASK))
 
-/*
- * convertState: a resizeable buffer used when constructing a Jsonb datum
- */
-typedef struct
-{
-	char	   *buffer;
-	int			len;
-	int			allocatedsz;
-} convertState;
-
 static void fillJsonbValue(JEntry *array, int index, char *base_addr,
 			   JsonbValue *result);
 static int	compareJsonbScalarValue(JsonbValue *a, JsonbValue *b);
 static int	lexicalCompareJsonbStringValue(const void *a, const void *b);
 static Jsonb *convertToJsonb(JsonbValue *val);
-static void convertJsonbValue(convertState *buffer, JEntry *header, JsonbValue *val, int level);
-static void convertJsonbArray(convertState *buffer, JEntry *header, JsonbValue *val, int level);
-static void convertJsonbObject(convertState *buffer, JEntry *header, JsonbValue *val, int level);
-static void convertJsonbScalar(convertState *buffer, JEntry *header, JsonbValue *scalarVal);
+static void convertJsonbValue(StringInfo buffer, JEntry *header, JsonbValue *val, int level);
+static void convertJsonbArray(StringInfo buffer, JEntry *header, JsonbValue *val, int level);
+static void convertJsonbObject(StringInfo buffer, JEntry *header, JsonbValue *val, int level);
+static void convertJsonbScalar(StringInfo buffer, JEntry *header, JsonbValue *scalarVal);
 
-static int reserveFromBuffer(convertState *buffer, int len);
-static void appendToBuffer(convertState *buffer, char *data, int len);
-static void copyToBuffer(convertState *buffer, int offset, char *data, int len);
-static short padBufferToInt(convertState *buffer);
+static int reserveFromBuffer(StringInfo buffer, int len);
+static void appendToBuffer(StringInfo buffer, const char *data, int len);
+static void copyToBuffer(StringInfo buffer, int offset, const char *data, int len);
+static short padBufferToInt(StringInfo buffer);
 
 static JsonbIterator *iteratorFromContainer(JsonbContainer *container, JsonbIterator *parent);
 static JsonbIterator *freeAndGetParent(JsonbIterator *it);
@@ -1175,26 +1165,28 @@ lexicalCompareJsonbStringValue(const void *a, const void *b)
 
 /*
  * Reserve 'len' bytes, at the end of the buffer, enlarging it if necessary.
- * Returns the offset to the reserved area. The caller is expected to copy
- * the data to the reserved area later with copyToBuffer()
+ * Returns the offset to the reserved area. The caller is expected to fill
+ * the reserved area later with copyToBuffer().
  */
 static int
-reserveFromBuffer(convertState *buffer, int len)
+reserveFromBuffer(StringInfo buffer, int len)
 {
 	int			offset;
 
 	/* Make more room if needed */
-	if (buffer->len + len > buffer->allocatedsz)
-	{
-		buffer->allocatedsz *= 2;
-		buffer->buffer = repalloc(buffer->buffer, buffer->allocatedsz);
-	}
+	enlargeStringInfo(buffer, len);
 
 	/* remember current offset */
 	offset = buffer->len;
 
 	/* reserve the space */
 	buffer->len += len;
+
+	/*
+	 * Keep a trailing null in place, even though it's not useful for us;
+	 * it seems best to preserve the invariants of StringInfos.
+	 */
+	buffer->data[buffer->len] = '\0';
 
 	return offset;
 }
@@ -1203,16 +1195,16 @@ reserveFromBuffer(convertState *buffer, int len)
  * Copy 'len' bytes to a previously reserved area in buffer.
  */
 static void
-copyToBuffer(convertState *buffer, int offset, char *data, int len)
+copyToBuffer(StringInfo buffer, int offset, const char *data, int len)
 {
-	memcpy(buffer->buffer + offset, data, len);
+	memcpy(buffer->data + offset, data, len);
 }
 
 /*
  * A shorthand for reserveFromBuffer + copyToBuffer.
  */
 static void
-appendToBuffer(convertState *buffer, char *data, int len)
+appendToBuffer(StringInfo buffer, const char *data, int len)
 {
 	int			offset;
 
@@ -1226,17 +1218,19 @@ appendToBuffer(convertState *buffer, char *data, int len)
  * Returns the number of padding bytes appended.
  */
 static short
-padBufferToInt(convertState *buffer)
+padBufferToInt(StringInfo buffer)
 {
-	short		padlen,
-				p;
-	int			offset;
+	int			padlen,
+				p,
+				offset;
 
 	padlen = INTALIGN(buffer->len) - buffer->len;
 
 	offset = reserveFromBuffer(buffer, padlen);
+
+	/* padlen must be small, so this is probably faster than a memset */
 	for (p = 0; p < padlen; p++)
-		buffer->buffer[offset + p] = 0;
+		buffer->data[offset + p] = '\0';
 
 	return padlen;
 }
@@ -1247,7 +1241,7 @@ padBufferToInt(convertState *buffer)
 static Jsonb *
 convertToJsonb(JsonbValue *val)
 {
-	convertState buffer;
+	StringInfoData buffer;
 	JEntry		jentry;
 	Jsonb	   *res;
 
@@ -1255,9 +1249,7 @@ convertToJsonb(JsonbValue *val)
 	Assert(val->type != jbvBinary);
 
 	/* Allocate an output buffer. It will be enlarged as needed */
-	buffer.buffer = palloc(128);
-	buffer.len = 0;
-	buffer.allocatedsz = 128;
+	initStringInfo(&buffer);
 
 	/* Make room for the varlena header */
 	reserveFromBuffer(&buffer, sizeof(VARHDRSZ));
@@ -1270,7 +1262,7 @@ convertToJsonb(JsonbValue *val)
 	 * kind of value it is.
 	 */
 
-	res = (Jsonb *) buffer.buffer;
+	res = (Jsonb *) buffer.data;
 
 	SET_VARSIZE(res, buffer.len);
 
@@ -1289,7 +1281,7 @@ convertToJsonb(JsonbValue *val)
  * for debugging purposes.
  */
 static void
-convertJsonbValue(convertState *buffer, JEntry *header, JsonbValue *val, int level)
+convertJsonbValue(StringInfo buffer, JEntry *header, JsonbValue *val, int level)
 {
 	check_stack_depth();
 
@@ -1307,7 +1299,7 @@ convertJsonbValue(convertState *buffer, JEntry *header, JsonbValue *val, int lev
 }
 
 static void
-convertJsonbArray(convertState *buffer, JEntry *pheader, JsonbValue *val, int level)
+convertJsonbArray(StringInfo buffer, JEntry *pheader, JsonbValue *val, int level)
 {
 	int			offset;
 	int			metaoffset;
@@ -1366,7 +1358,7 @@ convertJsonbArray(convertState *buffer, JEntry *pheader, JsonbValue *val, int le
 }
 
 static void
-convertJsonbObject(convertState *buffer, JEntry *pheader, JsonbValue *val, int level)
+convertJsonbObject(StringInfo buffer, JEntry *pheader, JsonbValue *val, int level)
 {
 	uint32		header;
 	int			offset;
@@ -1431,7 +1423,7 @@ convertJsonbObject(convertState *buffer, JEntry *pheader, JsonbValue *val, int l
 }
 
 static void
-convertJsonbScalar(convertState *buffer, JEntry *jentry, JsonbValue *scalarVal)
+convertJsonbScalar(StringInfo buffer, JEntry *jentry, JsonbValue *scalarVal)
 {
 	int			numlen;
 	short		padlen;
