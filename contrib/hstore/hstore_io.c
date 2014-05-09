@@ -1386,7 +1386,7 @@ hstore_to_jsonb(PG_FUNCTION_ARGS)
 
 		key.type = jbvString;
 		key.val.string.len = HS_KEYLEN(entries, i);
-		key.val.string.val = pnstrdup(HS_KEY(entries, base, i), key.val.string.len);
+		key.val.string.val = HS_KEY(entries, base, i);
 
 		res = pushJsonbValue(&state, WJB_KEY, &key);
 
@@ -1398,7 +1398,7 @@ hstore_to_jsonb(PG_FUNCTION_ARGS)
 		{
 			val.type = jbvString;
 			val.val.string.len = HS_VALLEN(entries, i);
-			val.val.string.val = pnstrdup(HS_VAL(entries, base, i), val.val.string.len);
+			val.val.string.val = HS_VAL(entries, base, i);
 		}
 		res = pushJsonbValue(&state, WJB_VALUE, &val);
 	}
@@ -1433,7 +1433,7 @@ hstore_to_jsonb_loose(PG_FUNCTION_ARGS)
 
 		key.type = jbvString;
 		key.val.string.len = HS_KEYLEN(entries, i);
-		key.val.string.val = pnstrdup(HS_KEY(entries, base, i), key.val.string.len);
+		key.val.string.val = HS_KEY(entries, base, i);
 
 		res = pushJsonbValue(&state, WJB_KEY, &key);
 
@@ -1507,7 +1507,7 @@ hstore_to_jsonb_loose(PG_FUNCTION_ARGS)
 			{
 				val.type = jbvString;
 				val.val.string.len = HS_VALLEN(entries, i);
-				val.val.string.val = pnstrdup(HS_VAL(entries, base, i), val.val.string.len);
+				val.val.string.val = HS_VAL(entries, base, i);
 			}
 		}
 		res = pushJsonbValue(&state, WJB_VALUE, &val);

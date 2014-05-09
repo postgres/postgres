@@ -73,6 +73,10 @@ typedef void (*json_scalar_action) (void *state, char *token, JsonTokenType toke
  * point, Likewise, semstate can be NULL. Using an all-NULL structure amounts
  * to doing a pure parse with no side-effects, and is therefore exactly
  * what the json input routines do.
+ *
+ * The 'fname' and 'token' strings passed to these actions are palloc'd.
+ * They are not free'd or used further by the parser, so the action function
+ * is free to do what it wishes with them.
  */
 typedef struct JsonSemAction
 {

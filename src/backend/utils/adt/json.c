@@ -381,9 +381,6 @@ parse_object_field(JsonLexContext *lex, JsonSemAction *sem)
 
 	if (oend != NULL)
 		(*oend) (sem->semstate, fname, isnull);
-
-	if (fname != NULL)
-		pfree(fname);
 }
 
 static void

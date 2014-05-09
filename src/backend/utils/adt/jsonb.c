@@ -247,7 +247,7 @@ jsonb_in_object_field_start(void *pstate, char *fname, bool isnull)
 	Assert(fname != NULL);
 	v.type = jbvString;
 	v.val.string.len = checkStringLen(strlen(fname));
-	v.val.string.val = pnstrdup(fname, v.val.string.len);
+	v.val.string.val = fname;
 
 	_state->res = pushJsonbValue(&_state->parseState, WJB_KEY, &v);
 }
@@ -295,7 +295,7 @@ jsonb_in_scalar(void *pstate, char *token, JsonTokenType tokentype)
 			Assert(token != NULL);
 			v.type = jbvString;
 			v.val.string.len = checkStringLen(strlen(token));
-			v.val.string.val = pnstrdup(token, v.val.string.len);
+			v.val.string.val = token;
 			break;
 		case JSON_TOKEN_NUMBER:
 
