@@ -68,7 +68,7 @@ static JsonbParseState *pushState(JsonbParseState **pstate);
 static void appendKey(JsonbParseState *pstate, JsonbValue *scalarVal);
 static void appendValue(JsonbParseState *pstate, JsonbValue *scalarVal);
 static void appendElement(JsonbParseState *pstate, JsonbValue *scalarVal);
-static int	lengthCompareJsonbStringValue(const void *a, const void *b, void *arg);
+static int	lengthCompareJsonbStringValue(const void *a, const void *b);
 static int	lengthCompareJsonbPair(const void *a, const void *b, void *arg);
 static void uniqueifyJsonbObject(JsonbValue *object);
 
@@ -329,7 +329,7 @@ findJsonbValueFromContainer(JsonbContainer *container, uint32 flags,
 			candidate.val.string.val = data + JBE_OFF(*entry);
 			candidate.val.string.len = JBE_LEN(*entry);
 
-			difference = lengthCompareJsonbStringValue(&candidate, key, NULL);
+			difference = lengthCompareJsonbStringValue(&candidate, key);
 
 			if (difference == 0)
 			{
@@ -534,6 +534,86 @@ pushJsonbValue(JsonbParseState **pstate, JsonbIteratorToken seq,
 }
 
 /*
+ * pushJsonbValue() worker:  Iteration-like forming of Jsonb
+ */
+static JsonbParseState *
+pushState(JsonbParseState **pstate)
+{
+	JsonbParseState *ns = palloc(sizeof(JsonbParseState));
+
+	ns->next = *pstate;
+	return ns;
+}
+
+/*
+ * pushJsonbValue() worker:  Append a pair key to state when generating a Jsonb
+ */
+static void
+appendKey(JsonbParseState *pstate, JsonbValue *string)
+{
+	JsonbValue *object = &pstate->contVal;
+
+	Assert(object->type == jbvObject);
+	Assert(string->type == jbvString);
+
+	if (object->val.object.nPairs >= JSONB_MAX_PAIRS)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("number of jsonb object pairs exceeds the maximum allowed (%zu)",
+						JSONB_MAX_PAIRS)));
+
+	if (object->val.object.nPairs >= pstate->size)
+	{
+		pstate->size *= 2;
+		object->val.object.pairs = repalloc(object->val.object.pairs,
+											sizeof(JsonbPair) * pstate->size);
+	}
+
+	object->val.object.pairs[object->val.object.nPairs].key = *string;
+	object->val.object.pairs[object->val.object.nPairs].order = object->val.object.nPairs;
+}
+
+/*
+ * pushJsonbValue() worker:  Append a pair value to state when generating a
+ * Jsonb
+ */
+static void
+appendValue(JsonbParseState *pstate, JsonbValue *scalarVal)
+{
+	JsonbValue *object = &pstate->contVal;
+
+	Assert(object->type == jbvObject);
+
+	object->val.object.pairs[object->val.object.nPairs++].value = *scalarVal;
+}
+
+/*
+ * pushJsonbValue() worker:  Append an element to state when generating a Jsonb
+ */
+static void
+appendElement(JsonbParseState *pstate, JsonbValue *scalarVal)
+{
+	JsonbValue *array = &pstate->contVal;
+
+	Assert(array->type == jbvArray);
+
+	if (array->val.array.nElems >= JSONB_MAX_ELEMS)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("number of jsonb array elements exceeds the maximum allowed (%zu)",
+						JSONB_MAX_ELEMS)));
+
+	if (array->val.array.nElems >= pstate->size)
+	{
+		pstate->size *= 2;
+		array->val.array.elems = repalloc(array->val.array.elems,
+										  sizeof(JsonbValue) * pstate->size);
+	}
+
+	array->val.array.elems[array->val.array.nElems++] = *scalarVal;
+}
+
+/*
  * Given a JsonbContainer, expand to JsonbIterator to iterate over items
  * fully expanded to in-memory representation for manipulation.
  *
@@ -707,6 +787,101 @@ JsonbIteratorNext(JsonbIterator **it, JsonbValue *val, bool skipNested)
 
 	elog(ERROR, "invalid iterator state");
 	return -1;
+}
+
+/*
+ * Initialize an iterator for iterating all elements in a container.
+ */
+static void
+iteratorFromContainer(JsonbIterator *it, JsonbContainer *container)
+{
+	it->containerType = container->header & (JB_FARRAY | JB_FOBJECT);
+	it->nElems = container->header & JB_CMASK;
+	it->buffer = (char *) container;
+
+	/* Array starts just after header */
+	it->meta = container->children;
+	it->state = jbi_start;
+
+	switch (it->containerType)
+	{
+		case JB_FARRAY:
+			it->dataProper =
+				(char *) it->meta + it->nElems * sizeof(JEntry);
+			it->isScalar = (container->header & JB_FSCALAR) != 0;
+			/* This is either a "raw scalar", or an array */
+			Assert(!it->isScalar || it->nElems == 1);
+			break;
+		case JB_FOBJECT:
+
+			/*
+			 * Offset reflects that nElems indicates JsonbPairs in an object.
+			 * Each key and each value contain Jentry metadata just the same.
+			 */
+			it->dataProper =
+				(char *) it->meta + it->nElems * sizeof(JEntry) * 2;
+			break;
+		default:
+			elog(ERROR, "unknown type of jsonb container");
+	}
+}
+
+/*
+ * JsonbIteratorNext() worker
+ *
+ * Returns bool indicating if v was a non-jbvBinary container, and thus if
+ * further recursion is required by caller (according to its skipNested
+ * preference).  If it is required, we set the caller's iterator for further
+ * recursion into the nested value.  If we're going to skip nested items, just
+ * set v to a jbvBinary value, but don't set caller's iterator.
+ *
+ * Unlike with containers (either in this function or in any
+ * JsonbIteratorNext() infrastructure), we fully convert from what is
+ * ultimately a Jsonb on-disk representation, to a JsonbValue in-memory
+ * representation (for scalar values only).  JsonbIteratorNext() initializes
+ * container Jsonbvalues, but without a sane private buffer.  For scalar values
+ * it has to be done for real (even if we don't actually allocate more memory
+ * to do this.  The point is that our JsonbValues scalars can be passed around
+ * anywhere).
+ */
+static bool
+formIterIsContainer(JsonbIterator **it, JsonbValue *val, JEntry *ent,
+					bool skipNested)
+{
+	fillJsonbValue(ent, (*it)->dataProper, val);
+
+	if (IsAJsonbScalar(val) || skipNested)
+		return false;
+	else
+	{
+		/*
+		 * It's a container type, so setup caller's iterator to point to
+		 * that, and return indication of that.
+		 *
+		 * Get child iterator.
+		 */
+		JsonbIterator *child = palloc(sizeof(JsonbIterator));
+
+		iteratorFromContainer(child, val->val.binary.data);
+
+		child->parent = *it;
+		*it = child;
+
+		return true;
+	}
+}
+
+/*
+ * JsonbIteratorNext() worker:	Return parent, while freeing memory for current
+ * iterator
+ */
+static JsonbIterator *
+freeAndGetParent(JsonbIterator *it)
+{
+	JsonbIterator *v = it->parent;
+
+	pfree(it);
+	return v;
 }
 
 /*
@@ -1015,7 +1190,7 @@ compareJsonbScalarValue(JsonbValue *aScalar, JsonbValue *bScalar)
 			case jbvNull:
 				return 0;
 			case jbvString:
-				return lengthCompareJsonbStringValue(aScalar, bScalar, NULL);
+				return lengthCompareJsonbStringValue(aScalar, bScalar);
 			case jbvNumeric:
 				return DatumGetInt32(DirectFunctionCall2(numeric_cmp,
 									   PointerGetDatum(aScalar->val.numeric),
@@ -1059,7 +1234,7 @@ lexicalCompareJsonbStringValue(const void *a, const void *b)
  */
 
 /*
- * Rervere 'len' bytes, at the end of the buffer, enlarging it if necessary.
+ * Reserve 'len' bytes, at the end of the buffer, enlarging it if necessary.
  * Returns the offset to the reserved area. The caller is expected to copy
  * the data to the reserved area later with copyToBuffer()
  */
@@ -1368,181 +1543,6 @@ convertJsonbScalar(convertState *buffer, JEntry *jentry, JsonbValue *scalarVal)
 }
 
 /*
- * Initialize an iterator for iterating all elements in a container.
- */
-static void
-iteratorFromContainer(JsonbIterator *it, JsonbContainer *container)
-{
-	it->containerType = container->header & (JB_FARRAY | JB_FOBJECT);
-	it->nElems = container->header & JB_CMASK;
-	it->buffer = (char *) container;
-
-	/* Array starts just after header */
-	it->meta = container->children;
-	it->state = jbi_start;
-
-	switch (it->containerType)
-	{
-		case JB_FARRAY:
-			it->dataProper =
-				(char *) it->meta + it->nElems * sizeof(JEntry);
-			it->isScalar = (container->header & JB_FSCALAR) != 0;
-			/* This is either a "raw scalar", or an array */
-			Assert(!it->isScalar || it->nElems == 1);
-			break;
-		case JB_FOBJECT:
-
-			/*
-			 * Offset reflects that nElems indicates JsonbPairs in an object.
-			 * Each key and each value contain Jentry metadata just the same.
-			 */
-			it->dataProper =
-				(char *) it->meta + it->nElems * sizeof(JEntry) * 2;
-			break;
-		default:
-			elog(ERROR, "unknown type of jsonb container");
-	}
-}
-
-/*
- * JsonbIteratorNext() worker
- *
- * Returns bool indicating if v was a non-jbvBinary container, and thus if
- * further recursion is required by caller (according to its skipNested
- * preference).  If it is required, we set the caller's iterator for further
- * recursion into the nested value.  If we're going to skip nested items, just
- * set v to a jbvBinary value, but don't set caller's iterator.
- *
- * Unlike with containers (either in this function or in any
- * JsonbIteratorNext() infrastructure), we fully convert from what is
- * ultimately a Jsonb on-disk representation, to a JsonbValue in-memory
- * representation (for scalar values only).  JsonbIteratorNext() initializes
- * container Jsonbvalues, but without a sane private buffer.  For scalar values
- * it has to be done for real (even if we don't actually allocate more memory
- * to do this.  The point is that our JsonbValues scalars can be passed around
- * anywhere).
- */
-static bool
-formIterIsContainer(JsonbIterator **it, JsonbValue *val, JEntry *ent,
-					bool skipNested)
-{
-	fillJsonbValue(ent, (*it)->dataProper, val);
-
-	if (IsAJsonbScalar(val) || skipNested)
-		return false;
-	else
-	{
-		/*
-		 * It's a container type, so setup caller's iterator to point to
-		 * that, and return indication of that.
-		 *
-		 * Get child iterator.
-		 */
-		JsonbIterator *child = palloc(sizeof(JsonbIterator));
-
-		iteratorFromContainer(child, val->val.binary.data);
-
-		child->parent = *it;
-		*it = child;
-
-		return true;
-	}
-}
-
-/*
- * JsonbIteratorNext() worker:	Return parent, while freeing memory for current
- * iterator
- */
-static JsonbIterator *
-freeAndGetParent(JsonbIterator *it)
-{
-	JsonbIterator *v = it->parent;
-
-	pfree(it);
-	return v;
-}
-
-/*
- * pushJsonbValue() worker:  Iteration-like forming of Jsonb
- */
-static JsonbParseState *
-pushState(JsonbParseState **pstate)
-{
-	JsonbParseState *ns = palloc(sizeof(JsonbParseState));
-
-	ns->next = *pstate;
-	return ns;
-}
-
-/*
- * pushJsonbValue() worker:  Append a pair key to state when generating a Jsonb
- */
-static void
-appendKey(JsonbParseState *pstate, JsonbValue *string)
-{
-	JsonbValue *object = &pstate->contVal;
-
-	Assert(object->type == jbvObject);
-	Assert(string->type == jbvString);
-
-	if (object->val.object.nPairs >= JSONB_MAX_PAIRS)
-		ereport(ERROR,
-				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("number of jsonb object pairs exceeds the maximum allowed (%zu)",
-						JSONB_MAX_PAIRS)));
-
-	if (object->val.object.nPairs >= pstate->size)
-	{
-		pstate->size *= 2;
-		object->val.object.pairs = repalloc(object->val.object.pairs,
-											sizeof(JsonbPair) * pstate->size);
-	}
-
-	object->val.object.pairs[object->val.object.nPairs].key = *string;
-	object->val.object.pairs[object->val.object.nPairs].order = object->val.object.nPairs;
-}
-
-/*
- * pushJsonbValue() worker:  Append a pair value to state when generating a
- * Jsonb
- */
-static void
-appendValue(JsonbParseState *pstate, JsonbValue *scalarVal)
-{
-	JsonbValue *object = &pstate->contVal;
-
-	Assert(object->type == jbvObject);
-
-	object->val.object.pairs[object->val.object.nPairs++].value = *scalarVal;
-}
-
-/*
- * pushJsonbValue() worker:  Append an element to state when generating a Jsonb
- */
-static void
-appendElement(JsonbParseState *pstate, JsonbValue *scalarVal)
-{
-	JsonbValue *array = &pstate->contVal;
-
-	Assert(array->type == jbvArray);
-
-	if (array->val.array.nElems >= JSONB_MAX_ELEMS)
-		ereport(ERROR,
-				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("number of jsonb array elements exceeds the maximum allowed (%zu)",
-						JSONB_MAX_ELEMS)));
-
-	if (array->val.array.nElems >= pstate->size)
-	{
-		pstate->size *= 2;
-		array->val.array.elems = repalloc(array->val.array.elems,
-										  sizeof(JsonbValue) * pstate->size);
-	}
-
-	array->val.array.elems[array->val.array.nElems++] = *scalarVal;
-}
-
-/*
  * Compare two jbvString JsonbValue values, a and b.
  *
  * This is a special qsort_arg() comparator used to sort strings in certain
@@ -1553,13 +1553,9 @@ appendElement(JsonbParseState *pstate, JsonbValue *scalarVal)
  *
  * a and b are first sorted based on their length.  If a tie-breaker is
  * required, only then do we consider string binary equality.
- *
- * Third argument 'binequal' may point to a bool. If it's set, *binequal is set
- * to true iff a and b have full binary equality, since some callers have an
- * interest in whether the two values are equal or merely equivalent.
  */
 static int
-lengthCompareJsonbStringValue(const void *a, const void *b, void *binequal)
+lengthCompareJsonbStringValue(const void *a, const void *b)
 {
 	const JsonbValue *va = (const JsonbValue *) a;
 	const JsonbValue *vb = (const JsonbValue *) b;
@@ -1571,8 +1567,6 @@ lengthCompareJsonbStringValue(const void *a, const void *b, void *binequal)
 	if (va->val.string.len == vb->val.string.len)
 	{
 		res = memcmp(va->val.string.val, vb->val.string.val, va->val.string.len);
-		if (res == 0 && binequal)
-			*((bool *) binequal) = true;
 	}
 	else
 	{
@@ -1585,9 +1579,9 @@ lengthCompareJsonbStringValue(const void *a, const void *b, void *binequal)
 /*
  * qsort_arg() comparator to compare JsonbPair values.
  *
- * Function implemented in terms of lengthCompareJsonbStringValue(), and thus the
- * same "arg setting" hack will be applied here in respect of the pair's key
- * values.
+ * Third argument 'binequal' may point to a bool. If it's set, *binequal is set
+ * to true iff a and b have full binary equality, since some callers have an
+ * interest in whether the two values are equal or merely equivalent.
  *
  * N.B: String comparisons here are "length-wise"
  *
@@ -1600,7 +1594,9 @@ lengthCompareJsonbPair(const void *a, const void *b, void *binequal)
 	const JsonbPair *pb = (const JsonbPair *) b;
 	int			res;
 
-	res = lengthCompareJsonbStringValue(&pa->key, &pb->key, binequal);
+	res = lengthCompareJsonbStringValue(&pa->key, &pb->key);
+	if (res == 0 && binequal)
+		*((bool *) binequal) = true;
 
 	/*
 	 * Guarantee keeping order of equal pair.  Unique algorithm will prefer
@@ -1634,7 +1630,7 @@ uniqueifyJsonbObject(JsonbValue *object)
 		while (ptr - object->val.object.pairs < object->val.object.nPairs)
 		{
 			/* Avoid copying over duplicate */
-			if (lengthCompareJsonbStringValue(ptr, res, NULL) != 0)
+			if (lengthCompareJsonbStringValue(ptr, res) != 0)
 			{
 				res++;
 				if (ptr != res)
