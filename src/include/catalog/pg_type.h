@@ -607,7 +607,7 @@ DATA(insert OID = 3735 ( _regconfig		PGNSP PGUID -1 f b A f t \054 0 3734 0 arra
 DATA(insert OID = 3770 ( _regdictionary PGNSP PGUID -1 f b A f t \054 0 3769 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 
 /* jsonb */
-DATA(insert OID = 3802 ( jsonb			PGNSP PGUID -1 f b C f t \054 0 0 3807 jsonb_in jsonb_out jsonb_recv jsonb_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 3802 ( jsonb			PGNSP PGUID -1 f b U f t \054 0 0 3807 jsonb_in jsonb_out jsonb_recv jsonb_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
 DESCR("Binary JSON");
 #define JSONBOID 3802
 DATA(insert OID = 3807 ( _jsonb			PGNSP PGUID -1 f b A f t \054 0 3802 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
