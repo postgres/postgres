@@ -812,8 +812,6 @@ logical_begin_heap_rewrite(RewriteState state)
 	if (!state->rs_logical_rewrite)
 		return;
 
-	Assert(ReplicationSlotCtl != NULL);
-
 	ProcArrayGetReplicationSlotXmin(NULL, &logical_xmin);
 
 	/*
