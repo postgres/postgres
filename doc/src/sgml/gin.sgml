@@ -416,7 +416,7 @@
  <para>
   Of the two operator classes for type <type>jsonb</>, <literal>jsonb_ops</>
   is the default.  <literal>jsonb_hash_ops</> supports fewer operators but
-  will work with larger indexed values than <literal>jsonb_ops</> can support.
+  offers better performance for those operators.
  </para>
 
 </sect1>

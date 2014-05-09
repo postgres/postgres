@@ -15,118 +15,148 @@
   JSON data types are for storing JSON (JavaScript Object Notation)
   data, as specified in <ulink url="http://rfc7159.net/rfc7159">RFC
   7159</ulink>. Such data can also be stored as <type>text</type>, but
-  both JSON data types have the advantage of enforcing that each
-  stored value is a valid JSON value.  There are also related support
-  functions available; see <xref linkend="functions-json">.
+  the JSON data types have the advantage of enforcing that each
+  stored value is valid according to the JSON rules.  There are also
+  assorted JSON-specific functions available for data stored in these
+  data types; see <xref linkend="functions-json">.
  </para>
 
  <para>
   There are two JSON data types: <type>json</> and <type>jsonb</>.
-  Both accept <emphasis>almost</emphasis> identical sets of values as
+  They accept <emphasis>almost</> identical sets of values as
   input.  The major practical difference is one of efficiency.  The
   <type>json</> data type stores an exact copy of the input text,
-  which processing functions must continually reparse, while
+  which processing functions must reparse on each execution; while
   <type>jsonb</> data is stored in a decomposed binary format that
-  makes it slightly less efficient to input due to added serialization
+  makes it slightly slower to input due to added conversion
   overhead, but significantly faster to process, since it never needs
-  reparsing.  <type>jsonb</> also supports advanced
-  <acronym>GIN</acronym> indexing, which is a further significant
-  advantage.
+  reparsing.  <type>jsonb</> also supports indexing, which can be a
+  significant advantage.
  </para>
 
  <para>
-  The other difference between the types is that the <type>json</>
-  type is guaranteed to contain an exact copy of the input, including
-  preservation of semantically insignificant white space, and the
-  order of keys within JSON objects (although <type>jsonb</> will
-  preserve trailing zeros within a JSON number). Also, because the
-  exact text is kept, if a JSON object within the value contains the
-  same key more than once, and has been stored using the <type>json</>
-  type, all the key/value pairs are kept.  In that case, the
-  processing functions consider the last value as the operative one.
-  By contrast, <type>jsonb</> does not preserve white space, does not
-  preserve the order of object keys, and does not keep duplicate
-  object keys.  Only the last value for a key specified in the input
-  is kept.
+  Because the <type>json</> type stores an exact copy of the input text, it
+  will preserve semantically-insignificant white space between tokens, as
+  well as the order of keys within JSON objects. Also, if a JSON object
+  within the value contains the same key more than once, all the key/value
+  pairs are kept.  (The processing functions consider the last value as the
+  operative one.)  By contrast, <type>jsonb</> does not preserve white
+  space, does not preserve the order of object keys, and does not keep
+  duplicate object keys.  Only the last value for a key specified in the
+  input is kept.  <type>jsonb</> will preserve trailing zeros within a JSON
+  number, even though those are semantically insignificant for purposes such
+  as equality checks.
  </para>
 
  <para>
-  In general, most applications will prefer to store JSON data as
-  <type>jsonb</>, unless there are quite specialized needs.
+  In general, most applications should prefer to store JSON data as
+  <type>jsonb</>, unless there are quite specialized needs, such as
+  legacy assumptions about ordering of object keys.
  </para>
 
  <para>
-  <productname>PostgreSQL</productname> allows only one server
+  <productname>PostgreSQL</productname> allows only one character set
   encoding per database.  It is therefore not possible for the JSON
-  types to conform rigidly to the specification unless the server
+  types to conform rigidly to the JSON specification unless the database
   encoding is UTF-8. Attempts to directly include characters which
-  cannot be represented in the server encoding will fail; conversely,
-  characters which can be represented in the server encoding but not
+  cannot be represented in the database encoding will fail; conversely,
+  characters which can be represented in the database encoding but not
   in UTF-8 will be allowed.  <literal>\uXXXX</literal> escapes are
-  allowed regardless of the server encoding, and are checked only for
+  allowed regardless of the database encoding, and are checked only for
   syntactic correctness.
  </para>
 
  <sect2 id="json-types">
   <title>Mapping of RFC-7159/JSON Primitive Types to <productname>PostgreSQL</productname> Types</title>
   <table id="json-type-mapping-table">
-     <title>Mapping of type correspondence, notes</title>
+     <title>JSON scalar types and corresponding <productname>PostgreSQL</productname> types</title>
      <tgroup cols="3">
       <thead>
        <row>
-        <entry><productname>PostgreSQL</productname> type</entry>
         <entry>RFC-7159/JSON primitive type</entry>
+        <entry><productname>PostgreSQL</productname> type</entry>
         <entry>Notes</entry>
        </row>
       </thead>
       <tbody>
        <row>
-        <entry><type>text</></entry>
         <entry><type>string</></entry>
-        <entry>See general introductory notes on encoding and JSON</entry>
+        <entry><type>text</></entry>
+        <entry>See introductory notes on JSON and encoding</entry>
        </row>
        <row>
-        <entry><type>numeric</></entry>
         <entry><type>number</></entry>
+        <entry><type>numeric</></entry>
         <entry><literal>NaN</literal> and <literal>infinity</literal> values are disallowed</entry>
        </row>
        <row>
         <entry><type>boolean</></entry>
         <entry><type>boolean</></entry>
-        <entry>Only lowercase <literal>true</literal> and <literal>false</literal> values are accepted</entry>
+        <entry>Only lowercase <literal>true</literal> and <literal>false</literal> spellings are accepted</entry>
        </row>
        <row>
-        <entry><type>unknown</></entry>
         <entry><type>null</></entry>
-        <entry>SQL <literal>NULL</literal> is orthogonal.  NULL semantics do not apply.</entry>
+        <entry>(none)</entry>
+        <entry>SQL <literal>NULL</literal> is a different concept</entry>
        </row>
       </tbody>
      </tgroup>
    </table>
   <para>
-    Primitive types described by <acronym>RFC</> 7159 are effectively
-    internally mapped onto native
-    <productname>PostgreSQL</productname> types.  Therefore, there are
+    When converting textual JSON input into <type>jsonb</>,
+    the primitive types described by <acronym>RFC</> 7159 are effectively
+    mapped onto native
+    <productname>PostgreSQL</productname> types, as shown in
+    <xref linkend="json-type-mapping-table">.  Therefore, there are
     some very minor additional constraints on what constitutes valid
     <type>jsonb</type> that do not apply to the <type>json</type>
-    type, or to JSON in the abstract, that pertain to limits on what
-    can be represented by the underlying type system.  These
+    type, nor to JSON in the abstract, corresponding to limits on what
+    can be represented by the underlying data type.  Specifically,
+    <type>jsonb</> will reject numbers that are outside the range of
+    the <productname>PostgreSQL</productname> <type>numeric</> data type,
+    while <type>json</> will not.  Such
     implementation-defined restrictions are permitted by
-    <acronym>RFC</> 7159.  However, in practice problems are far more
-    likely to occur in other implementations which internally
+    <acronym>RFC</> 7159.  However, in practice such problems are far more
+    likely to occur in other implementations, as it is common to
     represent the <type>number</> JSON primitive type as IEEE 754
-    double precision floating point values, which <acronym>RFC</> 7159
-    explicitly anticipates and allows for.  When using JSON as an
+    double precision floating point (which <acronym>RFC</> 7159
+    explicitly anticipates and allows for).  When using JSON as an
     interchange format with such systems, the danger of losing numeric
-    precision in respect of data originally stored by
+    precision compared to data originally stored by
     <productname>PostgreSQL</productname> should be considered.
   </para>
-  <para>
-    Conversely, as noted above there are some minor restrictions on
-    the input format of JSON primitive types that do not apply to
-    corresponding <productname>PostgreSQL</productname> types.
-  </para>
 
+  <para>
+    Conversely, as noted in the table there are some minor restrictions on
+    the input format of JSON primitive types that do not apply to
+    the corresponding <productname>PostgreSQL</productname> types.
+  </para>
+ </sect2>
+
+ <sect2 id="json-keys-elements">
+  <title><type>jsonb</> Input and Output Syntax</title>
+  <para>
+   The input/output syntax for the JSON data types is as specified in
+   <acronym>RFC</> 7159.
+  </para>
+  <para>
+   The following are all valid <type>json</> (or <type>jsonb</>) expressions:
+  <programlisting>
+-- Simple scalar/primitive value (explicitly required by RFC-7159)
+SELECT '5'::json;
+
+-- Array of heterogeneous, primitive-typed elements
+SELECT '[1, 2, "foo", null]'::json;
+
+-- Object of heterogeneous key/value pairs of primitive types
+-- Note that key values are always strings
+SELECT '{"bar": "baz", "balance": 7.77, "active":false}'::json;
+  </programlisting>
+  </para>
+  <para>
+   Note the distinction between scalar/primitive values as array elements,
+   keys and values.
+  </para>
  </sect2>
 
  <sect2 id="json-querying">
@@ -144,46 +174,19 @@
    summarize a set of <quote>documents</> (datums) in a table.
   </para>
   <para>
-   <type>jsonb</> data is subject to the same concurrency control
+   <type>json</> data is subject to the same concurrency control
    considerations as any other datatype when stored in a table.
    Although storing large documents is practicable, in order to ensure
    correct behavior row-level locks are, quite naturally, acquired as
-   rows are updated.  Consider keeping <type>jsonb</> documents at a
+   rows are updated.  Consider keeping <type>json</> documents at a
    manageable size in order to decrease lock contention among updating
-   transactions.  Ideally, <type>jsonb</> documents should each
+   transactions.  Ideally, <type>json</> documents should each
    represent an atomic datum that business rules dictate cannot
    reasonably be further subdivided into smaller atomic datums that
    can be independently modified.
   </para>
  </sect2>
- <sect2 id="json-keys-elements">
-  <title><type>jsonb</> Input and Output Syntax</title>
-  <para>
-   In effect, <type>jsonb</> has an internal type system whose
-   implementation is defined in terms of several particular ordinary
-   <productname>PostgreSQL</productname> types.  The SQL parser does
-   not have direct knowledge of the internal types that constitute a
-   <type>jsonb</>.
-  </para>
-  <para>
-   The following are all valid <type>jsonb</> expressions:
-  <programlisting>
--- Simple scalar/primitive value (explicitly required by RFC-7159)
-SELECT '5'::jsonb;
 
--- Array of heterogeneous, primitive-typed elements
-SELECT '[1, 2, "foo", null]'::jsonb;
-
--- Object of heterogeneous key/value pairs of primitive types
--- Note that key values are always strings
-SELECT '{"bar": "baz", "balance": 7.77, "active":false}'::jsonb;
-  </programlisting>
-  </para>
-  <para>
-   Note the distinction between scalar/primitive values as elements,
-   keys and values.
-  </para>
- </sect2>
  <sect2 id="json-containment">
   <title><type>jsonb</> containment</title>
   <indexterm>
@@ -199,7 +202,7 @@ SELECT '{"bar": "baz", "balance": 7.77, "active":false}'::jsonb;
     technically, top-down, unordered <emphasis>subtree isomorphism</>
     may be tested.  Containment is conventionally tested using the
     <literal>@&gt;</> operator, which is made indexable by various
-    operator classes discussed later in this section.
+    operator classes discussed below.
   </para>
   <programlisting>
 -- Simple scalar/primitive values may contain only each other:
@@ -249,45 +252,47 @@ SELECT '{"p":1, "a":{"b":3, "q":11}, "i":77}'::jsonb @> '{"a":{"b":3}}'::jsonb;
   </programlisting>
   <para>
     The various containment operators, along with all other JSON
-    operators and support functions are documented fully within <xref
-    linkend="functions-json">, <xref
-    linkend="functions-jsonb-op-table">.
+    operators and support functions are documented in <xref
+    linkend="functions-json">.
   </para>
  </sect2>
+
  <sect2 id="json-indexing">
-  <title><type>jsonb</> GIN Indexing</title>
+  <title><type>jsonb</> Indexing</title>
   <indexterm>
     <primary>jsonb</primary>
     <secondary>indexes on</secondary>
   </indexterm>
-  <para>
-    <type>jsonb</> GIN indexes can be used to efficiently search among
-    more than one possible key/value pair within a single
-    <type>jsonb</> datum/document, among a large number of such
-    documents within a column in a table (i.e. among many rows).
-  </para>
-  <para>
-    <type>jsonb</> has GIN index support for the <literal>@&gt;</>,
-    <literal>?</>, <literal>?&amp;</> and <literal>?|</> operators.
-    The default GIN operator class makes all these operators
-    indexable:
-  </para>
-  <programlisting>
--- GIN index (default opclass)
-CREATE INDEX idxgin ON api USING GIN (jdoc);
 
--- GIN jsonb_hash_ops index
-CREATE INDEX idxginh ON api USING GIN (jdoc jsonb_hash_ops);
-  </programlisting>
   <para>
+    <type>jsonb</> GIN indexes can be used to efficiently search for
+    keys or key/value pairs occurring within a large number of
+    <type>jsonb</> documents (datums).
+    Two GIN <quote>operator classes</> are provided, offering different
+    performance and flexibility tradeoffs.
+  </para>
+  <para>
+    The default GIN operator class supports queries with the
+    <literal>@&gt;</>, <literal>?</>, <literal>?&amp;</> and <literal>?|</>
+    operators.
+    (For details of the semantics that these operators
+    implement, see <xref linkend="functions-jsonb-op-table">.)
+    An example of creating an index with this operator class is:
+  <programlisting>
+CREATE INDEX idxgin ON api USING gin (jdoc);
+  </programlisting>
     The non-default GIN operator class <literal>jsonb_hash_ops</>
     supports indexing the <literal>@&gt;</> operator only.
+    An example of creating an index with this operator class is:
+  <programlisting>
+CREATE INDEX idxginh ON api USING gin (jdoc jsonb_hash_ops);
+  </programlisting>
   </para>
+
   <para>
     Consider the example of a table that stores JSON documents
     retrieved from a third-party web service, with a documented schema
-    definition.  An example of a document retrieved from this web
-    service is as follows:
+    definition.  A typical document is:
     <programlisting>
 {
     "guid": "9c36adc1-7fb5-4d5b-83b4-90356a46061a",
@@ -305,85 +310,67 @@ CREATE INDEX idxginh ON api USING GIN (jdoc jsonb_hash_ops);
     ]
 }
     </programlisting>
-    If a GIN index is created on the table that stores these
-    documents, <literal>api</literal>, on its <literal>jdoc</>
-    <type>jsonb</> column, we can expect that queries like the
-    following may make use of the index:
+    We store these documents in a table named <structname>api</>,
+    in a <type>jsonb</> column named <structfield>jdoc</>.
+    If a GIN index is created on this column,
+    queries like the following can make use of the index:
     <programlisting>
 -- Note that both key and value have been specified
-SELECT jdoc->'guid', jdoc->'name' FROM api WHERE jdoc @&gt; '{"company": "Magnafone"}';
+SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"company": "Magnafone"}';
     </programlisting>
     However, the index could not be used for queries like the
-    following, due to the aforementioned nesting restriction:
+    following, because though the operator <literal>?</> is indexable,
+    it is not applied directly to the indexed column <structfield>jdoc</>:
     <programlisting>
-SELECT jdoc->'guid', jdoc->'name' FROM api WHERE jdoc -> 'tags' ? 'qui';
+SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc -&gt; 'tags' ? 'qui';
     </programlisting>
-    Still, with judicious use of expressional indexing, the above
+    Still, with judicious use of expression indexes, the above
     query can use an index scan.  If there is a requirement to find
     those records with a particular tag quickly, and the tags have a
     high cardinality across all documents, defining an index as
     follows is an effective approach to indexing:
   <programlisting>
--- Note that the "jsonb -> text" operator can only be called on an
--- object, so as a consequence of creating this index the root "jdoc"
--- datum must be an object.  This is enforced during insertion.
-CREATE INDEX idxgin ON api USING GIN ((jdoc -> 'tags'));
+-- Note that the "jsonb -&gt; text" operator can only be called on an
+-- object, so as a consequence of creating this index the root of each
+-- "jdoc" value must be an object.  This is enforced during insertion.
+CREATE INDEX idxgintags ON api USING gin ((jdoc -&gt; 'tags'));
   </programlisting>
+    Now, the <literal>WHERE</> clause <literal>jdoc -&gt; 'tags' ? 'qui'</>
+    will be recognized as an application of the indexable
+    operator <literal>?</> to the indexed
+    expression <literal>jdoc -&gt; 'tags'</>.
+    (More information on expression indexes can be found in <xref
+    linkend="indexes-expressional">.)
   </para>
   <para>
-    Expressional indexes are discussed in <xref
-    linkend="indexes-expressional">.
-  </para>
-  <para>
-    For the most flexible approach in terms of what may be indexed,
-    sophisticated querying on nested structures is possible by
-    exploiting containment.  At the cost of having to create an index
-    on the entire structure for each row, and not just a nested
-    subset, we may exploit containment semantics to get an equivalent
-    result with a non-expressional index on the entire <quote>jdoc</>
-    column, <emphasis>without</> ever having to create additional
-    expressional indexes against the document (provided only
-    containment will be tested).  While the index will be considerably
-    larger than our expression index, it will also be much more
-    flexible, allowing arbitrary structured searching.  Such an index
-    can generally be expected to help with a query like the following:
-  </para>
+    Another approach to querying is to exploit containment, for example:
   <programlisting>
-SELECT jdoc->'guid', jdoc->'name' FROM api WHERE jdoc @&gt; '{"tags": ["qui"]}';
+SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qui"]}';
   </programlisting>
-  <para>
-   For full details of the semantics that these indexable operators
-   implement, see <xref linkend="functions-json">, <xref
-   linkend="functions-jsonb-op-table">.
+    This approach uses a single GIN index covering everything in the
+    <literal>jdoc</> column, whereas our expression index stored only
+    data found under the <literal>tags</> key.  While the single-index
+    approach is certainly more flexible, targeted expression indexes
+    are likely to be smaller and faster to search than a single index.
   </para>
- </sect2>
- <sect2 id="json-opclass">
-  <title><type>jsonb</> non-default GIN operator class</title>
-  <indexterm>
-    <primary>jsonb</primary>
-    <secondary>indexes on</secondary>
-  </indexterm>
+
   <para>
-    Although only the <literal>@&gt;</> operator is made indexable, a
-    <literal>jsonb_hash_ops</literal> operator class GIN index has
-    some notable advantages over an equivalent GIN index of the
-    default GIN operator class for <type>jsonb</type>.  Search
-    operations typically perform considerably better, and the on-disk
-    size of a <literal>jsonb_hash_ops</literal> operator class GIN
-    index can be much smaller.
+    Although the <literal>jsonb_hash_ops</literal> operator class supports
+    only queries with the <literal>@&gt;</> operator, it has notable
+    performance advantages over the default operator
+    class <literal>jsonb_ops</literal>.  A <literal>jsonb_hash_ops</literal>
+    GIN index is usually much smaller than a <literal>jsonb_ops</literal>
+    index over the same data, and the specificity of searches is better,
+    particularly when queries contain tags that appear frequently in the
+    data.  Therefore search operations typically perform considerably better
+    than with the default operator class.
   </para>
- </sect2>
- <sect2 id="json-btree-indexing">
-  <title><type>jsonb</> B-Tree and hash indexing</title>
+
   <para>
-    <type>jsonb</type> comparisons and related operations are
-    <emphasis>type-wise</>, in that the underlying
-    <productname>PostgreSQL</productname> datatype comparators are
-    invoked recursively, much like a traditional composite type.
-  </para>
-  <para>
-    <type>jsonb</> also supports <type>btree</> and <type>hash</>
-    indexes.  Ordering between <type>jsonb</> datums is:
+    <type>jsonb</> also supports <literal>btree</> and <literal>hash</>
+    indexes.  These are usually useful only if it's important to check
+    equality of complete JSON documents.
+    The <literal>btree</> ordering for <type>jsonb</> datums is:
     <synopsis>
       <replaceable>Object</replaceable> > <replaceable>Array</replaceable> > <replaceable>Boolean</replaceable> > <replaceable>Number</replaceable> > <replaceable>String</replaceable> > <replaceable>Null</replaceable>
 
@@ -391,23 +378,24 @@ SELECT jdoc->'guid', jdoc->'name' FROM api WHERE jdoc @&gt; '{"tags": ["qui"]}';
 
       <replaceable>Array with n elements</replaceable> > <replaceable>array with n - 1 elements</replaceable>
     </synopsis>
-      Subsequently, individual primitive type comparators are invoked.
-      All comparisons of JSON primitive types occurs using the same
-      comparison rules as the underlying
-      <productname>PostgreSQL</productname> types.  Strings are
-      compared lexically, using the default database collation.
-      Objects with equal numbers of pairs are compared:
+      Objects with equal numbers of pairs are compared in the order:
     <synopsis>
       <replaceable>key-1</replaceable>, <replaceable>value-1</replaceable>, <replaceable>key-2</replaceable> ...
     </synopsis>
-      Note however that object keys are compared in their storage order, and in particular,
-      since shorter keys are stored before longer keys, this can lead to results that might be
-      unintuitive, such as:
-      <programlisting>{ "aa": 1, "c": 1} > {"b": 1, "d": 1}</programlisting>
+      Note however that object keys are compared in their storage order, and
+      in particular, since shorter keys are stored before longer keys, this
+      can lead to results that might be unintuitive, such as:
+<programlisting>
+{ "aa": 1, "c": 1} > {"b": 1, "d": 1}
+</programlisting>
       Similarly, arrays with equal numbers of elements are compared:
     <synopsis>
       <replaceable>element-1</replaceable>, <replaceable>element-2</replaceable> ...
     </synopsis>
+      Primitive JSON values are compared using the same
+      comparison rules as for the underlying
+      <productname>PostgreSQL</productname> data type.  Strings are
+      compared using the default database collation.
   </para>
  </sect2>
 </sect1>

@@ -10081,7 +10081,7 @@ table2-mapping
 
   <indexterm zone="functions-json">
     <primary>JSON</primary>
-    <secondary>Functions and operators</secondary>
+    <secondary>functions and operators</secondary>
   </indexterm>
 
    <para>
@@ -10105,43 +10105,43 @@ table2-mapping
       <tbody>
        <row>
         <entry><literal>-&gt;</literal></entry>
-        <entry>int</entry>
+        <entry><type>int</type></entry>
         <entry>Get JSON array element</entry>
         <entry><literal>'[{"a":"foo"},{"a":"bar"},{"a":"baz"}]'::json-&gt;2</literal></entry>
         <entry><literal>{"a":"baz"}</literal></entry>
        </row>
        <row>
         <entry><literal>-&gt;</literal></entry>
-        <entry>text</entry>
+        <entry><type>text</type></entry>
         <entry>Get JSON object field</entry>
         <entry><literal>'{"a": {"b":"foo"}}'::json-&gt;'a'</literal></entry>
         <entry><literal>{"b":"foo"}</literal></entry>
        </row>
         <row>
         <entry><literal>-&gt;&gt;</literal></entry>
-        <entry>int</entry>
-        <entry>Get JSON array element as text</entry>
+        <entry><type>int</type></entry>
+        <entry>Get JSON array element as <type>text</></entry>
         <entry><literal>'[1,2,3]'::json-&gt;&gt;2</literal></entry>
         <entry><literal>3</literal></entry>
        </row>
        <row>
         <entry><literal>-&gt;&gt;</literal></entry>
-        <entry>text</entry>
-        <entry>Get JSON object field as text</entry>
+        <entry><type>text</type></entry>
+        <entry>Get JSON object field as <type>text</></entry>
         <entry><literal>'{"a":1,"b":2}'::json-&gt;&gt;'b'</literal></entry>
         <entry><literal>2</literal></entry>
        </row>
        <row>
         <entry><literal>#&gt;</literal></entry>
-        <entry>text[]</entry>
+        <entry><type>text[]</type></entry>
         <entry>Get JSON object at specified path</entry>        
         <entry><literal>'{"a": {"b":{"c": "foo"}}}'::json#&gt;'{a,b}'</literal></entry>
         <entry><literal>{"c": "foo"}</literal></entry>
        </row>
        <row>
         <entry><literal>#&gt;&gt;</literal></entry>
-        <entry>text[]</entry>
-        <entry>Get JSON object at specified path as text</entry>
+        <entry><type>text[]</type></entry>
+        <entry>Get JSON object at specified path as <type>text</></entry>
         <entry><literal>'{"a":[1,2,3],"b":[4,5,6]}'::json#&gt;&gt;'{a,2}'</literal></entry>
         <entry><literal>3</literal></entry>
        </row>
@@ -10152,14 +10152,17 @@ table2-mapping
   <note>
    <para>
     There are parallel variants of these operators for both the
-    <type>json</type> and <type>jsonb</type> types.  In addition to
-    those operators common to both types, a further set of operators
-    exists for <type>jsonb</type> (which comprise the default
-    <acronym>GIN</acronym> operator class).
+    <type>json</type> and <type>jsonb</type> types.  The operators
+    return the same type as their left-hand input (either <type>json</type>
+    or <type>jsonb</type>), except for those specified as
+    returning <type>text</>, which coerce the value to text.
    </para>
   </note>
   <para>
-   The following are <type>jsonb</>-only operators, used by
+   In addition to those operators common to both types, some additional
+   operators exist only for <type>jsonb</type>, as shown
+   in <xref linkend="functions-jsonb-op-table">.
+   Many of these operators can be indexed by
    <type>jsonb</> operator classes.  For a full description of
    <type>jsonb</> containment semantics and nesting, see <xref
    linkend="json-containment">.  <xref linkend="json-indexing">
@@ -10167,7 +10170,7 @@ table2-mapping
    <type>jsonb</>.
   </para>
   <table id="functions-jsonb-op-table">
-     <title>Additonal JSONB Operators</title>
+     <title>Additional <type>jsonb</> Operators</title>
      <tgroup cols="4">
       <thead>
        <row>
@@ -10180,37 +10183,38 @@ table2-mapping
       <tbody>
        <row>
         <entry><literal>=</literal></entry>
-        <entry>jsonb</entry>
-        <entry>Is the jsonb equal to this jsonb?</entry>
+        <entry><type>jsonb</type></entry>
+        <entry>Are the two JSON values equal?</entry>
         <entry><literal>'[1,2,3]'::jsonb = '[1,2,3]'::jsonb</literal></entry>
        </row>
        <row>
         <entry><literal>@&gt;</literal></entry>
-        <entry>jsonb</entry>
-        <entry>Does the jsonb contain within it this jsonb?</entry>
+        <entry><type>jsonb</type></entry>
+        <entry>Does the left JSON value contain within it the right value?</entry>
         <entry><literal>'{"a":1, "b":2}'::jsonb &#64;&gt; '{"b":2}'::jsonb</literal></entry>
        </row>
        <row>
         <entry><literal>&lt;@</literal></entry>
-        <entry>jsonb</entry>
-        <entry>Does the jsonb have contained within it this jsonb?</entry>
+        <entry><type>jsonb</type></entry>
+        <entry>Is the left JSON value contained within the right value?</entry>
         <entry><literal>'{"b":2}'::jsonb &lt;@ '{"a":1, "b":2}'::jsonb</literal></entry>
        </row>
        <row>
         <entry><literal>?</literal></entry>
-        <entry>text</entry>
-        <entry>Does this key/element <emphasis>string</emphasis> exist?</entry>
+        <entry><type>text</type></entry>
+        <entry>Does the key/element <emphasis>string</emphasis> exist within
+        the JSON value?</entry>
         <entry><literal>'{"a":1, "b":2}'::jsonb ? 'b'</literal></entry>
        </row>
        <row>
         <entry><literal>?|</literal></entry>
-        <entry>text[]</entry>
+        <entry><type>text[]</type></entry>
         <entry>Do any of these key/element <emphasis>strings</emphasis> exist?</entry>
         <entry><literal>'{"a":1, "b":2, "c":3}'::jsonb ?| array['b', 'c']</literal></entry>
        </row>
        <row>
         <entry><literal>?&amp;</literal></entry>
-        <entry>text[]</entry>
+        <entry><type>text[]</type></entry>
         <entry>Do all of these key/element <emphasis>strings</emphasis> exist?</entry>
         <entry><literal>'["a", "b"]'::jsonb ?&amp; array['a', 'b']</literal></entry>
        </row>
@@ -10218,15 +10222,11 @@ table2-mapping
      </tgroup>
    </table>
 
-  <!--
-     The release notes contain a reference to "functions-json-table". Since
-     that table is now split in two, the id has been parked here so we don't
-     have to change the release notes.
-  -->
-  <para id="functions-json-table">
+  <para>
    <xref linkend="functions-json-creation-table"> shows the functions that are
    available for creating <type>json</type> values.
-   (see <xref linkend="datatype-json">)
+   (Currently, there are no equivalent functions for <type>jsonb</>, but you
+   can cast the result of one of these functions to <type>jsonb</>.)
   </para>
 
   <indexterm>
@@ -10250,11 +10250,10 @@ table2-mapping
 
   <table id="functions-json-creation-table">
     <title>JSON Creation Functions</title>
-    <tgroup cols="5">
+    <tgroup cols="4">
      <thead>
       <row>
        <entry>Function</entry>
-       <entry>Return Type</entry>
        <entry>Description</entry>
        <entry>Example</entry>
        <entry>Example Result</entry>
@@ -10265,7 +10264,6 @@ table2-mapping
        <entry>
          <literal>array_to_json(anyarray [, pretty_bool])</literal>
        </entry>
-       <entry><type>json</type></entry>
        <entry>
          Returns the array as JSON. A PostgreSQL multidimensional array
          becomes a JSON array of arrays. Line feeds will be added between
@@ -10278,7 +10276,6 @@ table2-mapping
        <entry>
          <literal>row_to_json(record [, pretty_bool])</literal>
        </entry>
-       <entry><type>json</type></entry>
        <entry>
          Returns the row as JSON. Line feeds will be added between level
          1 elements if <parameter>pretty_bool</parameter> is true.
@@ -10290,7 +10287,6 @@ table2-mapping
        <entry>
          <literal>to_json(anyelement)</literal>
        </entry>
-       <entry><type>json</type></entry>
        <entry>
          Returns the value as JSON. If the data type is not built in, and there
          is a cast from the type to <type>json</type>, the cast function will be used to
@@ -10305,43 +10301,29 @@ table2-mapping
        <entry>
          <literal>json_build_array(VARIADIC "any")</literal>
        </entry>
-       <entry><type>json</type></entry>
        <entry>
-         Builds a heterogeneously-typed json array out of a variadic argument list.
+         Builds a possibly-heterogeneously-typed JSON array out of a variadic
+         argument list.
        </entry>
-       <entry><literal>SELECT json_build_array(1,2,'3',4,5);</literal></entry>
-       <entry>
-<programlisting>
- json_build_array
--------------------
- [1, 2, "3", 4, 5]
- </programlisting>
-       </entry>
+       <entry><literal>json_build_array(1,2,'3',4,5)</literal></entry>
+       <entry><literal>[1, 2, "3", 4, 5]</literal></entry>
       </row>
       <row>
        <entry>
          <literal>json_build_object(VARIADIC "any")</literal>
        </entry>
-       <entry><type>json</type></entry>
        <entry>
-         Builds a JSON array out of a variadic argument list.  By
-         convention, the object is constructed out of alternating
-         name/value arguments.
+         Builds a JSON object out of a variadic argument list.  By
+         convention, the argument list consists of alternating
+         names and values.
        </entry>
-       <entry><literal>SELECT json_build_object('foo',1,'bar',2);</literal></entry>
-       <entry>
-<programlisting>
-   json_build_object
-------------------------
- {"foo" : 1, "bar" : 2}
- </programlisting>
-       </entry>
+       <entry><literal>json_build_object('foo',1,'bar',2)</literal></entry>
+       <entry><literal>{"foo" : 1, "bar" : 2}</literal></entry>
       </row>
       <row>
        <entry>
          <literal>json_object(text[])</literal>
        </entry>
-       <entry><type>json</type></entry>
        <entry>
          Builds a JSON object out of a text array.  The array must have either
          exactly one dimension with an even number of members, in which case
@@ -10349,42 +10331,28 @@ table2-mapping
          such that each inner array has exactly two elements, which
          are taken as a name/value pair.
        </entry>
-       <entry><literal>select * from json_object('{a, 1, b, "def", c, 3.5}')  or <literal>select json_object('{{a, 1},{b, "def"},{c, 3.5}}')</literal></literal></entry>
-       <entry>
-<programlisting>
-              json_object
----------------------------------------
- {"a" : "1", "b" : "def", "c" : "3.5"}
- </programlisting>
-       </entry>
+       <entry><para><literal>json_object('{a, 1, b, "def", c, 3.5}')</></para>
+        <para><literal>json_object('{{a, 1},{b, "def"},{c, 3.5}}')</></para></entry>
+       <entry><literal>{"a" : "1", "b" : "def", "c" : "3.5"}</literal></entry>
       </row>
       <row>
        <entry>
          <literal>json_object(keys text[], values text[])</literal>
        </entry>
-       <entry><type>json</type></entry>
        <entry>
-         The two-argument form of JSON object takes keys and values pairwise from two separate
+         This form of <function>json_object</> takes keys and values pairwise from two separate
          arrays. In all other respects it is identical to the one-argument form.
        </entry>
-       <entry><literal>select json_object('{a, b}', '{1,2}');</literal></entry>
-       <entry>
-<programlisting>
-      json_object
-------------------------
- {"a" : "1", "b" : "2"}
- </programlisting>
-       </entry>
+       <entry><literal>json_object('{a, b}', '{1,2}')</literal></entry>
+       <entry><literal>{"a" : "1", "b" : "2"}</literal></entry>
       </row>
      </tbody>
     </tgroup>
    </table>
 
-
   <para>
    <xref linkend="functions-json-processing-table"> shows the functions that
    are available for processing <type>json</type> and <type>jsonb</type> values.
-   (see <xref linkend="datatype-json">)
   </para>
 
   <indexterm>
@@ -10494,8 +10462,8 @@ table2-mapping
        <entry><para><literal>json_each(json)</literal>
          </para><para><literal>jsonb_each(jsonb)</literal>
        </para></entry>
-       <entry><para><literal>SETOF key text, value json</literal>
-         </para><para><literal>SETOF key text, value jsonb</literal>
+       <entry><para><literal>setof key text, value json</literal>
+         </para><para><literal>setof key text, value jsonb</literal>
        </para></entry>
        <entry>
          Expands the outermost JSON object into a set of key/value pairs.
@@ -10514,10 +10482,10 @@ table2-mapping
        <entry><para><literal>json_each_text(from_json json)</literal>
          </para><para><literal>jsonb_each_text(from_json jsonb)</literal>
        </para></entry>
-       <entry><type>SETOF key text, value text</type></entry>
+       <entry><type>setof key text, value text</type></entry>
        <entry>
          Expands the outermost JSON object into a set of key/value pairs. The
-         returned value will be of type text.
+         returned value will be of type <type>text</>.
        </entry>
        <entry><literal>select * from json_each_text('{"a":"foo", "b":"bar"}')</literal></entry>
        <entry>
@@ -10556,7 +10524,7 @@ table2-mapping
        <entry><para><literal>json_object_keys(json)</literal>
          </para><para><literal>jsonb_object_keys(jsonb)</literal>
        </para></entry>
-       <entry><type>SETOF text</type></entry>
+       <entry><type>setof text</type></entry>
        <entry>
           Returns set of keys in the JSON object.  Only the <quote>outer</quote> object will be displayed.
        </entry>
@@ -10595,7 +10563,7 @@ table2-mapping
        <entry><para><literal>json_populate_recordset(base anyelement, from_json json, [, use_json_as_text bool=false])</literal>
          </para><para><literal>jsonb_populate_recordset(base anyelement, from_json jsonb, [, use_json_as_text bool=false])</literal>
        </para></entry>
-       <entry><type>SETOF anyelement</type></entry>
+       <entry><type>setof anyelement</type></entry>
        <entry>
          Expands the outermost set of objects in <replaceable>from_json</replaceable> to a set
          whose columns match the record type defined by base.
@@ -10618,13 +10586,13 @@ table2-mapping
        <entry><para><literal>json_array_elements(json)</literal>
          </para><para><literal>jsonb_array_elements(jsonb)</literal>
        </para></entry>
-       <entry><para><type>SETOF json</type>
-         </para><para><type>SETOF jsonb</type>
+       <entry><para><type>setof json</type>
+         </para><para><type>setof jsonb</type>
        </para></entry>
        <entry>
          Expands a JSON array to a set of JSON values.
        </entry>
-       <entry><literal>SELECT * FROM json_array_elements('[1,true, [2,false]]')</literal></entry>
+       <entry><literal>select * from json_array_elements('[1,true, [2,false]]')</literal></entry>
        <entry>
 <programlisting>
    value
@@ -10639,11 +10607,11 @@ table2-mapping
        <entry><para><literal>json_array_elements_text(json)</literal>
          </para><para><literal>jsonb_array_elements_text(jsonb)</literal>
        </para></entry>
-       <entry><type>SETOF text</type></entry>
+       <entry><type>setof text</type></entry>
        <entry>
-         Expands a JSON array to a set of text values.
+         Expands a JSON array to a set of <type>text</> values.
        </entry>
-       <entry><literal>SELECT * FROM json_array_elements_text('["foo", "bar"]')</literal></entry>
+       <entry><literal>select * from json_array_elements_text('["foo", "bar"]')</literal></entry>
        <entry>
 <programlisting>
    value
@@ -10674,9 +10642,9 @@ table2-mapping
        <entry><type>record</type></entry>
        <entry>
          Returns an arbitrary record from a JSON object.  As with all functions 
-         returning 'record', the caller must explicitly define the structure of the record 
+         returning <type>record</>, the caller must explicitly define the structure of the record 
          when making the call. The input JSON must be an object, not a scalar or an array.
-         If nested_as_text is true, the function coerces nested complex elements to text.
+         If <literal>nested_as_text</> is true, the function coerces nested complex elements to text.
          Also, see notes below on columns and types.
        </entry>
        <entry><literal>select * from json_to_record('{"a":1,"b":[1,2,3],"c":"bar"}',true) as x(a int, b text, d text) </literal></entry>
@@ -10695,9 +10663,9 @@ table2-mapping
        <entry><type>setof record</type></entry>
        <entry>
          Returns an arbitrary set of records from a JSON object.  As with 
-         json_to_record, the structure of the record must be explicitly defined when making the
-         call.  However, with json_to_recordset the input JSON must be an array containing 
-         objects.  nested_as_text works as with json_to_record.
+         <function>json_to_record</>, the structure of the record must be explicitly defined when making the
+         call.  However, with <function>json_to_recordset</> the input JSON must be an array containing 
+         objects.  <literal>nested_as_text</> works as with <function>json_to_record</>.
        </entry>
        <entry><literal>select * from json_to_recordset('[{"a":1,"b":"foo"},{"a":"2","c":"bar"}]',true) as x(a int, b text);</literal></entry>
        <entry>
@@ -10715,56 +10683,60 @@ table2-mapping
 
   <note>
     <para>
-      The <type>json</type> functions and operators can impose stricter validity requirements
-      than the type's input functions. In particular, they check much more closely that any use
-      of Unicode surrogate pairs to designate characters outside the Unicode Basic Multilingual
-      Plane is correct.
+      The <type>json</type> functions and operators can impose stricter
+      validity requirements than the JSON types' input functions do. In
+      particular, they check much more closely that any use of Unicode
+      surrogate pairs to designate characters outside the Unicode Basic
+      Multilingual Plane is correct.
     </para>
   </note>
 
   <note>
     <para>
-      Many of these functions and operators will convert Unicode escapes
-      in the JSON text to the appropriate UTF8 character when the database encoding is UTF8. In
-      other encodings the escape sequence must be for an ASCII character, and any other code point
-      in a Unicode escape sequence will result in an error.
-      In general, it is best to avoid mixing Unicode escapes in JSON with a non-UTF8 database
-      encoding, if possible.
+      Many of these functions and operators will convert Unicode escapes in
+      the JSON text to the appropriate UTF8 character when the database
+      encoding is UTF8. In other encodings the escape sequence must be for an
+      ASCII character, and any other code point in a Unicode escape sequence
+      will result in an error.  In general, it is best to avoid mixing Unicode
+      escapes in JSON with a non-UTF8 database encoding, if possible.
     </para>
   </note>
 
   <note>
     <para>
-       In json_to_record and json_to_recordset, type-coercion from the JSON is
-       "best effort" and may not result in desired values for some types.  JSON
-       elements are matched to identical field names in the record definition,
-       and elements which do not exist in the JSON will simply be NULL.  JSON
-       elements which are not defined in the record template will
-       be omitted from the output.
+      In <function>json_to_record</> and <function>json_to_recordset</>,
+      type coercion from the JSON is <quote>best effort</> and may not result
+      in desired values for some types.  JSON elements are matched to
+      identical field names in the record definition, and elements which do
+      not exist in the JSON will simply be NULL.  JSON elements which are not
+      defined in the record template will be omitted from the output.
     </para>
   </note>
 
   <note>
     <para>
-      The <xref linkend="hstore"> extension has a cast from <type>hstore</type> to
-      <type>json</type>, so that converted <type>hstore</type> values are represented as JSON objects,
+      The <xref linkend="hstore"> extension has a cast
+      from <type>hstore</type> to <type>json</type>, so that
+      converted <type>hstore</type> values are represented as JSON objects,
       not as string values.
     </para>
   </note>
 
   <note>
     <para>
-      The <literal>json_typeof</> function's <literal>null</> return value should not be confused
-      with a SQL NULL.  While calling <literal>json_typeof('null'::json)</> will return <literal>null</>,
-      calling <literal>json_typeof(NULL::json)</> will return a SQL NULL.
+      The <literal>json_typeof</> function's <literal>null</> return value
+      should not be confused with a SQL NULL.  While
+      calling <literal>json_typeof('null'::json)</> will
+      return <literal>null</>, calling <literal>json_typeof(NULL::json)</>
+      will return a SQL NULL.
     </para>
   </note>
 
   <para>
-    See also <xref linkend="functions-aggregate"> about the aggregate
+    See also <xref linkend="functions-aggregate"> for the aggregate
     function <function>json_agg</function> which aggregates record
-    values as JSON efficiently, and the aggregate function
-    <function>json_object_agg</function>, which aggregates pairs of values
+    values as JSON, and the aggregate function
+    <function>json_object_agg</function> which aggregates pairs of values
     into a JSON object.
   </para>
  </sect1>

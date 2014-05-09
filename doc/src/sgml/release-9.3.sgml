@@ -3618,14 +3618,14 @@ ALTER EXTENSION hstore UPDATE;
       <listitem>
        <para>
         Allow <type>JSON</> values to be <link
-        linkend="functions-json-table">converted into records</link>
+        linkend="functions-json">converted into records</link>
         (Andrew Dunstan)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add <link linkend="functions-json-table">functions</link> to convert
+        Add <link linkend="functions-json">functions</link> to convert
         scalars, records, and <type>hstore</> values to <type>JSON</> (Andrew
         Dunstan)
        </para>
