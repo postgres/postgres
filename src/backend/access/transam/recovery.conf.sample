@@ -129,20 +129,20 @@
 #
 # By default, a standby server keeps restoring XLOG records from the
 # primary indefinitely. If you want to stop the standby mode, finish recovery
-# and open the system in read/write mode, specify path to a trigger file.
+# and open the system in read/write mode, specify a path to a trigger file.
 # The server will poll the trigger file path periodically and start as a
 # primary server when it's found.
 #
 #trigger_file = ''
 #
-# By default, a standby server keeps restoring XLOG records from the
-# primary as soon as possible. If you want to explicitly delay the replay of
-# committed transactions from the master, specify a recovery apply delay.
-# For example, if you set this parameter to 5min, the standby will replay
-# each transaction commit only when the system time on the standby is at
-# least five minutes past the commit time reported by the master.
+# By default, a standby server restores XLOG records from the primary as
+# soon as possible. If you want to explicitly delay the replay of committed
+# transactions from the master, specify a minimum apply delay. For example,
+# if you set this parameter to 5min, the standby will replay each transaction
+# commit only when the system time on the standby is at least five minutes
+# past the commit time reported by the master.
 #
-#min_recovery_apply_delay = 0
+#recovery_min_apply_delay = 0
 #
 #---------------------------------------------------------------------------
 # HOT STANDBY PARAMETERS

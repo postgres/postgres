@@ -223,7 +223,7 @@ static bool recoveryPauseAtTarget = true;
 static TransactionId recoveryTargetXid;
 static TimestampTz recoveryTargetTime;
 static char *recoveryTargetName;
-static int	min_recovery_apply_delay = 0;
+static int	recovery_min_apply_delay = 0;
 static TimestampTz recoveryDelayUntilTime;
 
 /* options taken from recovery.conf for XLOG streaming */
@@ -5236,18 +5236,19 @@ readRecoveryCommandFile(void)
 					(errmsg_internal("trigger_file = '%s'",
 									 TriggerFile)));
 		}
-		else if (strcmp(item->name, "min_recovery_apply_delay") == 0)
+		else if (strcmp(item->name, "recovery_min_apply_delay") == 0)
 		{
 			const char *hintmsg;
 
-			if (!parse_int(item->value, &min_recovery_apply_delay, GUC_UNIT_MS,
+			if (!parse_int(item->value, &recovery_min_apply_delay, GUC_UNIT_MS,
 						   &hintmsg))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("parameter \"%s\" requires a temporal value", "min_recovery_apply_delay"),
+						 errmsg("parameter \"%s\" requires a temporal value",
+								"recovery_min_apply_delay"),
 						 hintmsg ? errhint("%s", _(hintmsg)) : 0));
 			ereport(DEBUG2,
-					(errmsg("min_recovery_apply_delay = '%s'", item->value)));
+					(errmsg("recovery_min_apply_delay = '%s'", item->value)));
 		}
 		else
 			ereport(FATAL,
@@ -5669,7 +5670,7 @@ SetRecoveryPause(bool recoveryPause)
 }
 
 /*
- * When min_recovery_apply_delay is set, we wait long enough to make sure
+ * When recovery_min_apply_delay is set, we wait long enough to make sure
  * certain record types are applied at least that interval behind the master.
  *
  * Returns true if we waited.
@@ -5690,7 +5691,7 @@ recoveryApplyDelay(XLogRecord *record)
 	int			microsecs;
 
 	/* nothing to do if no delay configured */
-	if (min_recovery_apply_delay == 0)
+	if (recovery_min_apply_delay == 0)
 		return false;
 
 	/*
@@ -5711,7 +5712,7 @@ recoveryApplyDelay(XLogRecord *record)
 		return false;
 
 	recoveryDelayUntilTime =
-		TimestampTzPlusMilliseconds(xtime, min_recovery_apply_delay);
+		TimestampTzPlusMilliseconds(xtime, recovery_min_apply_delay);
 
 	/*
 	 * Exit without arming the latch if it's already past time to apply this

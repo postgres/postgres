@@ -775,10 +775,10 @@
 
       <listitem>
        <para>
-        Allow <link
+        Add <link
         linkend="recovery-config"><filename>recovery.conf</></link>
         parameter <link
-        linkend="min-recovery-apply-delay"><varname>min_recovery_apply_delay</></link>
+        linkend="recovery-min-apply-delay"><varname>recovery_min_apply_delay</></link>
         to force delayed replication (Robert Haas, Fabr&iacute;zio de
         Royes Mello, Simon Riggs)
        </para>
