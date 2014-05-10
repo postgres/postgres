@@ -741,7 +741,9 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
 			while (entry->matchResult == NULL ||
 				   (entry->matchResult->ntuples >= 0 &&
 					entry->offset >= entry->matchResult->ntuples) ||
-				   entry->matchResult->blockno < advancePastBlk)
+				   entry->matchResult->blockno < advancePastBlk ||
+				   (ItemPointerIsLossyPage(&advancePast) &&
+					entry->matchResult->blockno == advancePastBlk))
 			{
 				entry->matchResult = tbm_iterate(entry->matchIterator);
 
