@@ -395,7 +395,7 @@
       </entry>
      </row>
      <row>
-      <entry><literal>jsonb_hash_ops</></entry>
+      <entry><literal>jsonb_path_ops</></entry>
       <entry><type>jsonb</></entry>
       <entry>
        <literal>@&gt;</>
@@ -415,7 +415,7 @@
 
  <para>
   Of the two operator classes for type <type>jsonb</>, <literal>jsonb_ops</>
-  is the default.  <literal>jsonb_hash_ops</> supports fewer operators but
+  is the default.  <literal>jsonb_path_ops</> supports fewer operators but
   offers better performance for those operators.
   See <xref linkend="json-indexing"> for details.
  </para>

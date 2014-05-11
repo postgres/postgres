@@ -332,18 +332,18 @@ extern Datum jsonb_eq(PG_FUNCTION_ARGS);
 extern Datum jsonb_cmp(PG_FUNCTION_ARGS);
 extern Datum jsonb_hash(PG_FUNCTION_ARGS);
 
-/* GIN support functions */
+/* GIN support functions for jsonb_ops */
 extern Datum gin_compare_jsonb(PG_FUNCTION_ARGS);
 extern Datum gin_extract_jsonb(PG_FUNCTION_ARGS);
 extern Datum gin_extract_jsonb_query(PG_FUNCTION_ARGS);
 extern Datum gin_consistent_jsonb(PG_FUNCTION_ARGS);
 extern Datum gin_triconsistent_jsonb(PG_FUNCTION_ARGS);
 
-/* GIN hash opclass functions */
-extern Datum gin_extract_jsonb_hash(PG_FUNCTION_ARGS);
-extern Datum gin_extract_jsonb_query_hash(PG_FUNCTION_ARGS);
-extern Datum gin_consistent_jsonb_hash(PG_FUNCTION_ARGS);
-extern Datum gin_triconsistent_jsonb_hash(PG_FUNCTION_ARGS);
+/* GIN support functions for jsonb_path_ops */
+extern Datum gin_extract_jsonb_path(PG_FUNCTION_ARGS);
+extern Datum gin_extract_jsonb_query_path(PG_FUNCTION_ARGS);
+extern Datum gin_consistent_jsonb_path(PG_FUNCTION_ARGS);
+extern Datum gin_triconsistent_jsonb_path(PG_FUNCTION_ARGS);
 
 /* Support functions */
 extern int	compareJsonbContainers(JsonbContainer *a, JsonbContainer *b);

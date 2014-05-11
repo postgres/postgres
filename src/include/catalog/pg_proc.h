@@ -4645,13 +4645,13 @@ DATA(insert OID = 3484 (  gin_consistent_jsonb	PGNSP PGUID 12 1 0 0 0 f f f f t 
 DESCR("GIN support");
 DATA(insert OID = 3488 (  gin_triconsistent_jsonb	PGNSP PGUID 12 1 0 0 0 f f f f t f i 7 0 16 "2281 21 2277 23 2281 2281 2281" _null_ _null_ _null_ _null_ gin_triconsistent_jsonb _null_ _null_ _null_ ));
 DESCR("GIN support");
-DATA(insert OID = 3485 (  gin_extract_jsonb_hash  PGNSP PGUID 12 1 0 0 0 f f f f t f i 3 0 2281 "2281 2281 2281" _null_ _null_ _null_ _null_ gin_extract_jsonb_hash _null_ _null_ _null_ ));
+DATA(insert OID = 3485 (  gin_extract_jsonb_path  PGNSP PGUID 12 1 0 0 0 f f f f t f i 3 0 2281 "2281 2281 2281" _null_ _null_ _null_ _null_ gin_extract_jsonb_path _null_ _null_ _null_ ));
 DESCR("GIN support");
-DATA(insert OID = 3486 (  gin_extract_jsonb_query_hash	PGNSP PGUID 12 1 0 0 0 f f f f t f i 7 0 2281 "2277 2281 21 2281 2281 2281 2281" _null_ _null_ _null_ _null_ gin_extract_jsonb_query_hash _null_ _null_ _null_ ));
+DATA(insert OID = 3486 (  gin_extract_jsonb_query_path	PGNSP PGUID 12 1 0 0 0 f f f f t f i 7 0 2281 "2277 2281 21 2281 2281 2281 2281" _null_ _null_ _null_ _null_ gin_extract_jsonb_query_path _null_ _null_ _null_ ));
 DESCR("GIN support");
-DATA(insert OID = 3487 (  gin_consistent_jsonb_hash  PGNSP PGUID 12 1 0 0 0 f f f f t f i 8 0 16 "2281 21 2277 23 2281 2281 2281 2281" _null_ _null_ _null_ _null_ gin_consistent_jsonb_hash _null_ _null_ _null_ ));
+DATA(insert OID = 3487 (  gin_consistent_jsonb_path  PGNSP PGUID 12 1 0 0 0 f f f f t f i 8 0 16 "2281 21 2277 23 2281 2281 2281 2281" _null_ _null_ _null_ _null_ gin_consistent_jsonb_path _null_ _null_ _null_ ));
 DESCR("GIN support");
-DATA(insert OID = 3489 (  gin_triconsistent_jsonb_hash	PGNSP PGUID 12 1 0 0 0 f f f f t f i 7 0 16 "2281 21 2277 23 2281 2281 2281" _null_ _null_ _null_ _null_ gin_triconsistent_jsonb_hash _null_ _null_ _null_ ));
+DATA(insert OID = 3489 (  gin_triconsistent_jsonb_path	PGNSP PGUID 12 1 0 0 0 f f f f t f i 7 0 16 "2281 21 2277 23 2281 2281 2281" _null_ _null_ _null_ _null_ gin_triconsistent_jsonb_path _null_ _null_ _null_ ));
 DESCR("GIN support");
 
 /* txid */

@@ -156,7 +156,7 @@
    </table>
 
  <sect2 id="json-keys-elements">
-  <title><type>jsonb</> Input and Output Syntax</title>
+  <title>JSON Input and Output Syntax</title>
   <para>
    The input/output syntax for the JSON data types is as specified in
    <acronym>RFC</> 7159.
@@ -366,11 +366,11 @@ SELECT '"foo"'::jsonb ? 'foo';
   <programlisting>
 CREATE INDEX idxgin ON api USING gin (jdoc);
   </programlisting>
-    The non-default GIN operator class <literal>jsonb_hash_ops</>
+    The non-default GIN operator class <literal>jsonb_path_ops</>
     supports indexing the <literal>@&gt;</> operator only.
     An example of creating an index with this operator class is:
   <programlisting>
-CREATE INDEX idxginh ON api USING gin (jdoc jsonb_hash_ops);
+CREATE INDEX idxginp ON api USING gin (jdoc jsonb_path_ops);
   </programlisting>
   </para>
 
@@ -444,15 +444,50 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qu
   </para>
 
   <para>
-    Although the <literal>jsonb_hash_ops</literal> operator class supports
+    Although the <literal>jsonb_path_ops</literal> operator class supports
     only queries with the <literal>@&gt;</> operator, it has notable
     performance advantages over the default operator
-    class <literal>jsonb_ops</literal>.  A <literal>jsonb_hash_ops</literal>
+    class <literal>jsonb_ops</literal>.  A <literal>jsonb_path_ops</literal>
     index is usually much smaller than a <literal>jsonb_ops</literal>
     index over the same data, and the specificity of searches is better,
     particularly when queries contain keys that appear frequently in the
     data.  Therefore search operations typically perform better
     than with the default operator class.
+  </para>
+
+  <para>
+    The technical difference between a <literal>jsonb_ops</literal>
+    and a <literal>jsonb_path_ops</literal> GIN index is that the former
+    creates independent index items for each key and value in the data,
+    while the latter creates index items only for each value in the
+    data.<footnote><para>For this purpose, the term <quote>value</>
+    includes array elements, though JSON terminology sometimes considers
+    array elements distinct from values within objects.</para></footnote>
+    But in <literal>jsonb_path_ops</literal>, each index item is a hash
+    of both the value and the key(s) leading to it; for example to index
+    <literal>{"foo": {"bar": "baz"}}</literal>, a single index item would
+    be created incorporating all three of <literal>foo</>, <literal>bar</>,
+    and <literal>baz</> into the hash value.  Thus a containment query
+    looking for this structure would result in an extremely specific index
+    search; but there is no way at all to find out whether <literal>foo</>
+    appears as a key.  On the other hand, a <literal>jsonb_ops</literal>
+    index would create three index items representing <literal>foo</>,
+    <literal>bar</>, and <literal>baz</> separately; then to do the
+    containment query, it would look for rows containing all three of
+    these items.  While GIN indexes can perform such an AND search fairly
+    efficiently, it will still be less specific and slower than the
+    equivalent <literal>jsonb_path_ops</literal> search, especially if
+    there are a very large number of rows containing any single one of the
+    three index items.
+  </para>
+
+  <para>
+    A disadvantage of the <literal>jsonb_path_ops</literal> approach is
+    that it produces no index entries for JSON structures not containing
+    any values, such as <literal>{"a": {}}</literal>.  If a search for
+    documents containing such a structure is requested, it will require a
+    full-index scan, which is quite slow.  <literal>jsonb_path_ops</> is
+    therefore ill-suited for applications that often perform such searches.
   </para>
 
   <para>

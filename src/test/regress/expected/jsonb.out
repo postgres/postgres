@@ -1685,9 +1685,9 @@ SELECT count(*) FROM testjsonb WHERE j = '{"pos":98, "line":371, "node":"CBA", "
      1
 (1 row)
 
---gin hash
+--gin path opclass
 DROP INDEX jidx;
-CREATE INDEX jidx ON testjsonb USING gin (j jsonb_hash_ops);
+CREATE INDEX jidx ON testjsonb USING gin (j jsonb_path_ops);
 SET enable_seqscan = off;
 SELECT count(*) FROM testjsonb WHERE j @> '{"wait":null}';
  count 

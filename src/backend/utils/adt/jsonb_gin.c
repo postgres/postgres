@@ -315,9 +315,9 @@ gin_triconsistent_jsonb(PG_FUNCTION_ARGS)
 
 /*
  *
- * jsonb_hash_ops GIN opclass support functions
+ * jsonb_path_ops GIN opclass support functions
  *
- * In a jsonb_hash_ops index, the GIN keys are uint32 hashes, one per JSON
+ * In a jsonb_path_ops index, the GIN keys are uint32 hashes, one per JSON
  * value; but the JSON key(s) leading to each value are also included in its
  * hash computation.  This means we can only support containment queries,
  * but the index can distinguish, for example, {"foo": 42} from {"bar": 42}
@@ -326,7 +326,7 @@ gin_triconsistent_jsonb(PG_FUNCTION_ARGS)
  */
 
 Datum
-gin_extract_jsonb_hash(PG_FUNCTION_ARGS)
+gin_extract_jsonb_path(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *jb = PG_GETARG_JSONB(0);
 	int32	   *nentries = (int32 *) PG_GETARG_POINTER(1);
@@ -349,7 +349,7 @@ gin_extract_jsonb_hash(PG_FUNCTION_ARGS)
 	/* Otherwise, use 2 * root count as initial estimate of result size */
 	entries = (Datum *) palloc(sizeof(Datum) * total);
 
-	/* We keep a stack of hashes corresponding to parent key levels */
+	/* We keep a stack of partial hashes corresponding to parent key levels */
 	tail.parent = NULL;
 	tail.hash = 0;
 	stack = &tail;
@@ -439,7 +439,7 @@ gin_extract_jsonb_hash(PG_FUNCTION_ARGS)
 }
 
 Datum
-gin_extract_jsonb_query_hash(PG_FUNCTION_ARGS)
+gin_extract_jsonb_query_path(PG_FUNCTION_ARGS)
 {
 	int32	   *nentries = (int32 *) PG_GETARG_POINTER(1);
 	StrategyNumber strategy = PG_GETARG_UINT16(2);
@@ -449,9 +449,9 @@ gin_extract_jsonb_query_hash(PG_FUNCTION_ARGS)
 	if (strategy != JsonbContainsStrategyNumber)
 		elog(ERROR, "unrecognized strategy number: %d", strategy);
 
-	/* Query is a jsonb, so just apply gin_extract_jsonb_hash ... */
+	/* Query is a jsonb, so just apply gin_extract_jsonb_path ... */
 	entries = (Datum *)
-		DatumGetPointer(DirectFunctionCall2(gin_extract_jsonb_hash,
+		DatumGetPointer(DirectFunctionCall2(gin_extract_jsonb_path,
 											PG_GETARG_DATUM(0),
 											PointerGetDatum(nentries)));
 
@@ -463,7 +463,7 @@ gin_extract_jsonb_query_hash(PG_FUNCTION_ARGS)
 }
 
 Datum
-gin_consistent_jsonb_hash(PG_FUNCTION_ARGS)
+gin_consistent_jsonb_path(PG_FUNCTION_ARGS)
 {
 	bool	   *check = (bool *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);
@@ -480,13 +480,12 @@ gin_consistent_jsonb_hash(PG_FUNCTION_ARGS)
 		elog(ERROR, "unrecognized strategy number: %d", strategy);
 
 	/*
-	 * jsonb_hash_ops is necessarily lossy, not only because of hash
+	 * jsonb_path_ops is necessarily lossy, not only because of hash
 	 * collisions but also because it doesn't preserve complete information
 	 * about the structure of the JSON object.  Besides, there are some
-	 * special rules around the containment of raw scalar arrays and regular
-	 * arrays that are not handled here.  So we must always recheck a match.
-	 * However, if not all of the keys are present, the tuple certainly
-	 * doesn't match.
+	 * special rules around the containment of raw scalars in arrays that are
+	 * not handled here.  So we must always recheck a match.  However, if not
+	 * all of the keys are present, the tuple certainly doesn't match.
 	 */
 	*recheck = true;
 	for (i = 0; i < nkeys; i++)
@@ -502,7 +501,7 @@ gin_consistent_jsonb_hash(PG_FUNCTION_ARGS)
 }
 
 Datum
-gin_triconsistent_jsonb_hash(PG_FUNCTION_ARGS)
+gin_triconsistent_jsonb_path(PG_FUNCTION_ARGS)
 {
 	GinTernaryValue *check = (GinTernaryValue *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);

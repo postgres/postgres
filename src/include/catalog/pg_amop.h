@@ -787,12 +787,12 @@ DATA(insert (	4033   3802 3802 4 s	3245 403 0 ));
 DATA(insert (	4033   3802 3802 5 s	3243 403 0 ));
 
 /*
- * hash jsonb ops
+ * hash jsonb_ops
  */
 DATA(insert (	4034   3802 3802 1 s 3240 405 0 ));
 
 /*
- * GIN jsonb ops
+ * GIN jsonb_ops
  */
 DATA(insert (	4036   3802 3802 7 s 3246 2742 0 ));
 DATA(insert (	4036   3802 25 9 s 3247 2742 0 ));
@@ -800,7 +800,7 @@ DATA(insert (	4036   3802 1009 10 s 3248 2742 0 ));
 DATA(insert (	4036   3802 1009 11 s 3249 2742 0 ));
 
 /*
- * GIN jsonb hash ops
+ * GIN jsonb_path_ops
  */
 DATA(insert (	4037   3802 3802 7 s 3246 2742 0 ));
 
