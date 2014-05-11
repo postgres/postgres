@@ -120,8 +120,7 @@ ProcessConfigFile(GucContext context)
 				   *head,
 				   *tail;
 	int			i;
-	char		*ErrorConfFile;
-	char		*CallingFileName;
+	char		*ErrorConfFile = ConfigFileName;
 
 	/*
 	 * Config files are processed on startup (by the postmaster only)
@@ -136,9 +135,7 @@ ProcessConfigFile(GucContext context)
 	 */
 	elevel = IsUnderPostmaster ? DEBUG2 : LOG;
 
-	ErrorConfFile = ConfigFileName;
-
-	/* Parse the file into a list of option names and values */
+	/* Parse the main config file into a list of option names and values */
 	head = tail = NULL;
 
 	if (!ParseConfigFile(ConfigFileName, NULL, true, 0, elevel, &head, &tail))
@@ -149,17 +146,14 @@ ProcessConfigFile(GucContext context)
 	}
 
 	/*
-	 * Parse file PG_AUTOCONF_FILENAME after postgresql.conf to replace
-	 * parameters set by ALTER SYSTEM command. This file is present in
-	 * data directory, however when called during initdb data directory is not
-	 * set till this point, so use ConfigFile path which will be same.
+	 * Parse the PG_AUTOCONF_FILENAME file, if present, after the main file
+	 * to replace any parameters set by ALTER SYSTEM command.  Because this
+	 * file is in the data directory, we can't read it until the DataDir has
+	 * been set.
 	 */
-	if (data_directory)
-		CallingFileName = NULL;
-	else
-		CallingFileName = ConfigFileName;
-
-	if (!ParseConfigFile(PG_AUTOCONF_FILENAME, CallingFileName, false, 0, elevel, &head, &tail))
+	if (DataDir &&
+		!ParseConfigFile(PG_AUTOCONF_FILENAME, NULL, false, 0, elevel,
+						 &head, &tail))
 	{
 		/* Syntax error(s) detected in the file, so bail out */
 		error = true;
@@ -397,7 +391,7 @@ ProcessConfigFile(GucContext context)
 /*
  * Given a configuration file or directory location that may be a relative
  * path, return an absolute one.  We consider the location to be relative to
- * the directory holding the calling file.
+ * the directory holding the calling file, or to DataDir if no calling file.
  */
 static char *
 AbsoluteConfigLocation(const char *location, const char *calling_file)
@@ -417,10 +411,8 @@ AbsoluteConfigLocation(const char *location, const char *calling_file)
 		}
 		else
 		{
-			/*
-			 * calling_file is NULL, we make an absolute path from $PGDATA
-			 */
-			join_path_components(abs_path, data_directory, location);
+			AssertState(DataDir);
+			join_path_components(abs_path, DataDir, location);
 			canonicalize_path(abs_path);
 		}
 		return pstrdup(abs_path);

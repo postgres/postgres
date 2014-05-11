@@ -4364,6 +4364,14 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 	SetConfigOption("data_directory", DataDir, PGC_POSTMASTER, PGC_S_OVERRIDE);
 
 	/*
+	 * Now read the config file a second time, allowing any settings in
+	 * the PG_AUTOCONF_FILENAME file to take effect.  (This is pretty ugly,
+	 * but since we have to determine the DataDir before we can find the
+	 * autoconf file, the alternatives seem worse.)
+	 */
+	ProcessConfigFile(PGC_POSTMASTER);
+
+	/*
 	 * If timezone_abbreviations wasn't set in the configuration file, install
 	 * the default value.  We do it this way because we can't safely install a
 	 * "real" value until my_exec_path is set, which may not have happened
